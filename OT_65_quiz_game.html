@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quiz Shooter Game</title>
 	<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Teko:wght@400;700&display=swap" rel="stylesheet">
+
 
     <style>
         body {
@@ -23,36 +25,59 @@
 		}
 
 
-        #question-container {
-            margin-bottom: 10px;
-            font-size: 24px;
-			font-family: Arial, sans-serif; /* Ensures questions/answers stay in normal font */
-}
+		/* Question Section */
+		#question-container {
+			background-color: #00FF00;  /* Retro green */
+			color: black;  /* High contrast */
+			font-family: 'Teko', sans-serif;  /* Use Teko font */
+			font-size: 30px;  /* Adjust for readability */
+			width: 770px;  /* 800px - 2px left border - 2px right border */
+			padding: 15px;
+			text-align: center;
+			margin: 0 auto 10px auto;  /* Adds 10px spacing below */
+			border: 2px solid #00FF00;  /* Matches game field */
+		}
 
+
+		/* Restart Message */
 		#restart-message {
-			margin-top: 20px;  /* Adds space below the canvas */
-			font-size: 20px;  
-			font-family: Arial, sans-serif;
-			color: white;
-			text-align: center;  /* Centers text */
-			display: block;  /* Ensures it's visible */
-			position: relative;  /* Keeps it in flow of document */
-			z-index: 10;  /* Ensures it's on top */
+			font-family: 'Teko', sans-serif;
+			font-size: 30px;
+			color: white;  /* White text for visibility */
+			text-align: center;
+			margin-top: 20px;  /* Space below canvas */
 		}
 
 
 
         }
 
-        #answers {
-            font-size: 20px;
-        }
+		/* Answer Section */
+		#answers {
+			background-color: white;  /* Clean white background */
+			color: black;  /* Clear text visibility */
+			font-family: 'Teko', sans-serif;
+			font-size: 24px;
+			width: 770px;  /* Match canvas width minus border */
+			padding: 15px;
+			text-align: center;
+			margin: 0 auto 10px auto;  /* Adds 10px spacing below */
+			border: 2px solid white;  /* Matches game field */
+		}
+
+		/* Style the individual answer elements inside #answers */
+		#answers div {
+			font-family: 'Teko', sans-serif !important;  /* Ensure Teko applies */
+			font-size: 24px !important;  /* Force size increase */
+			margin-bottom: 10px;  /* Add space between answers */
+		}		
+		
     </style>
 </head>
 <body>
 
     <!-- Display quiz question and answers -->
-    <div id="question-container">...</div>
+    <div id="question-container">Bible Emoji Blaster</div>
     <div id="answers"></div>
     
     <!-- Game canvas -->
@@ -103,16 +128,6 @@
 		});
 		
 		
-		// 🖱️ Move player with mouse
-		canvas.addEventListener("mousemove", event => {
-			let rect = canvas.getBoundingClientRect();
-			let mouseX = event.clientX - rect.left;
-
-			// Keep player within the canvas bounds
-			if (mouseX > 50 && mouseX < canvas.width - 50) {
-				player.x = mouseX;
-			}
-		});
 
 		
 
@@ -164,13 +179,54 @@
 
         // Game states: title, playing, gameOver
 		let gameState = "title"; // Possible states: title, playing, preBoss, bossBattle, gameOver
+		
+		
+        // Oscillating Title Colors	
+		let colorIndex = 0;
+		let colorOscillation;
+		const titleColors = ["#00FF00", "#0077FF", "#AA00FF", "#FFFF00"]; // Green, Blue, Purple, Yellow
+
+		function startTitleScreenEffect() {
+			colorOscillation = setInterval(() => {
+				let currentColor = titleColors[colorIndex];
+				let questionBox = document.getElementById("question-container");
+
+				questionBox.style.backgroundColor = currentColor; // Change background
+				questionBox.style.borderColor = currentColor; // Change border
+
+				colorIndex = (colorIndex + 1) % titleColors.length; // Cycle through colors
+			}, 1000); // Change color every second
+		}
+
+		function stopTitleScreenEffect() {
+			clearInterval(colorOscillation); // Stop color oscillation
+			let questionBox = document.getElementById("question-container");
+			questionBox.style.backgroundColor = "#00FF00"; // Reset to green
+			questionBox.style.borderColor = "#00FF00"; // Reset border to green
+		}
+
+		// Start color animation when title screen loads
+		if (gameState === "title") {
+			startTitleScreenEffect();
+		}
+
+		// When game starts, stop the color change
+		canvas.addEventListener("click", () => {
+			if (gameState === "title") {
+				stopTitleScreenEffect();
+			}
+		});
+
+		
+		
+		
 		let upcomingBossName = ""; // 🌟 Stores the boss name for the transition screen
 		let bossActive = false;
 
 		// 🎮 List of Possible Bosses
 		const bossOptions = [
 			{
-				name: "Galactic Chicken Overlord",
+				name: "Galactic Chicken",
 				emoji: "🐔",
 				attackEmoji: "🥚",
 				attackType: "egg",
@@ -180,7 +236,7 @@
 			{
 				name: "Doom Bot 9000",
 				emoji: "🤖",
-				attackEmoji: "🔴",
+				attackEmoji: "💿",
 				attackType: "laser",
 				movementPattern: "circular",
 				specialAttack: "homingLaser"
@@ -344,15 +400,14 @@
 			alienShootingStartTime = Date.now() + alienShootingDelay;
 
 			// Randomize alien movement pattern
-			movementType = Math.floor(Math.random() * 4);
-
+			movementType = Math.floor(Math.random() * 9);
 			let centerX = canvas.width / 2;
 			let centerY = 180;
 			let questionData = questions[currentQuestionIndex];
 
 			for (let i = 0; i < 3; i++) {
 				aliens.push({
-					x: centerX + (i - 1) * 280,
+					x: centerX + (i - 1) * 250, // Determines alien spacing
 					y: centerY,
 					startX: centerX + (i - 1) * 280,
 					startY: centerY,
@@ -379,7 +434,6 @@
 		// 🔄 RESET GAME FUNCTION
 		// ===============================
 		function resetGame() {
-			console.log("Resetting game..."); // ✅ Debugging Log
 			gameState = "title";
 			gameOver = false;
 			bossActive = false; // ✅ Ensure boss mode resets
@@ -392,6 +446,7 @@
 			activeKeys = {}; // ✅ Reset player movement keys
 			canShoot = true; // ✅ Ensure shooting is enabled again
 			player.x = canvas.width / 2; // ✅ Reset player position
+			screenShakeAmount = 0;  // ✅ Ensure no leftover shake effect
 			initializeStars();
 			drawTitleScreen();
 			canvas.style.cursor = "default"; // Show cursor on title screen
@@ -405,15 +460,16 @@
 		// 🔄 LISTEN FOR "R" KEY TO RESTART
 		// ===============================
 		document.addEventListener("keydown", event => {
-			console.log(`Key Pressed: ${event.key}`); // ✅ Debugging Log
+
 			if (event.key.toLowerCase() === "r") {
-				console.log(`GameState: ${gameState}`); // ✅ Confirm Current State
-			}
-			if (event.key.toLowerCase() === "r" && gameState === "gameOver") {
-				console.log("Restarting Game..."); // ✅ Confirm Restart Triggered
-				resetGame();
+
+				// Allow restarting the game from ANY state (except during the transition screen)
+				if (gameState !== "preBoss") {
+					resetGame();
+				}
 			}
 		});
+
 
 
 
@@ -430,6 +486,9 @@
 			} else if (gameState === "playing" || gameState === "bossBattle") {
 				if (canShoot) {
 					bullets.push({ x: player.x, y: player.y - 20 });
+					
+					score -= 1; // 🔻 Decrease score every time the player shoots
+					
 					canShoot = false;
 					setTimeout(() => canShoot = true, 250);
 				}
@@ -464,19 +523,17 @@
 			if (shield.active) {
 				shield.timer--;
 
-				if (shield.timer <= 180) { // 3 seconds before disappearing
-					shield.pulsing = true;
-				}
-
 				if (shield.timer <= 0) {
 					shield.active = false;
+				} else if (shield.timer <= 180) { 
+					shield.pulsing = true; // Start pulsing effect before disappearing
 				}
 
-				// 🌀 Cycle through shield emoji every 6 frames
 				if (shield.pulsing && shield.timer % 6 === 0) {
 					shield.emojiIndex = (shield.emojiIndex + 1) % shield.emojis.length;
 				}
 			}
+
 
 
             // Player movement
@@ -512,8 +569,69 @@
                     }
                 } else if (alien.movementType === 3) {
                     // Sine wave horizontal
-                    alien.x = alien.startX + Math.sin(Date.now() / 300) * 80;
-                }
+                    alien.x = Math.max(50, Math.min(canvas.width - 50, alien.startX + Math.sin(Date.now() / 300) * 80));
+                } else if (alien.movementType === 4) { // Back-and-forth curve movement
+					alien.x += alien.direction * alien.speed;
+					alien.y = alien.startY + Math.sin(Date.now() / 200) * 50; // Smooth vertical curve
+
+					if (alien.x > canvas.width - 50 || alien.x < 50) {
+						alien.direction *= -1; // Switch direction when hitting screen edges
+					}
+				} else if (alien.movementType === 5) { // Random wobble movement
+					alien.x = Math.max(50, Math.min(canvas.width - 50, alien.x + (Math.random() - 0.5) * 4));
+					alien.y = Math.max(50, Math.min(250, alien.y + (Math.random() - 0.5) * 4));
+				} else if (alien.movementType === 6) { // Sideways Figure 8 (∞) movement
+					let timeFactor = Date.now() / 300; // Adjust speed of movement
+					alien.x = alien.startX + Math.sin(timeFactor) * 80; // Moves side to side
+					alien.y = alien.startY + Math.cos(timeFactor * 2) * 30; // Moves up and down
+				} else if (alien.movementType === 7) { // Bouncing Ball
+					let timeFactor = Date.now() / 500;
+					alien.y = alien.startY + Math.abs(Math.sin(timeFactor) * 60); // Simulate bounce
+				} else if (alien.movementType === 8) { // Teleport Dash (with boundary checks)
+					if (!alien.lastDashTime) alien.lastDashTime = Date.now();
+					if (!alien.isDashing) alien.isDashing = false;
+
+					if (Date.now() - alien.lastDashTime > 2000) { // Every 2 seconds
+						alien.isDashing = true; // Start dash
+						alien.lastDashTime = Date.now();
+
+						// Pick a random new position within safe bounds
+						let newX = Math.random() * (canvas.width - 100) + 50; // Ensures alien stays within 50px from edges
+						let newY = Math.random() * (canvas.height / 1.5) + 50; // 1.5 was originally 3
+
+						// Calculate speed toward target
+						let dx = newX - alien.x;
+						let dy = newY - alien.y;
+						let distance = Math.sqrt(dx * dx + dy * dy);
+
+						alien.dashSpeedX = (dx / distance) * 20; // Move quickly
+						alien.dashSpeedY = (dy / distance) * 20;
+					}
+
+					// Move rapidly to new position
+					if (alien.isDashing) {
+						alien.x += alien.dashSpeedX;
+						alien.y += alien.dashSpeedY;
+
+						// Stop dashing when close to the target
+						if (Math.abs(alien.dashSpeedX) > 0.1 || Math.abs(alien.dashSpeedY) > 0.1) {
+							alien.dashSpeedX *= 0.9; // Slow down as it reaches target
+							alien.dashSpeedY *= 0.9;
+						} else {
+							alien.isDashing = false; // Stop moving until next cycle
+						}
+					}
+
+					// ✅ Ensure aliens never go off-screen due to drift
+					alien.x = Math.max(50, Math.min(alien.x, canvas.width - 50));
+					alien.y = Math.max(50, Math.min(alien.y, canvas.height / 1.5));  // 1.5 was originally 3
+				}
+
+
+
+
+                
+                
             });
 
 			// ===============================
@@ -586,7 +704,6 @@
 
 						// 🔥 Delay removal but prevent further hits
 						setTimeout(() => {
-							console.log(`Removing alien at index ${aIndex}, current aliens:`, aliens);
 							aliens.splice(aIndex, 1);  // Remove alien safely
 
 							if (alien.answerIndex === questions[currentQuestionIndex].correct) {
@@ -626,6 +743,10 @@
         // 🎨 START BOSS BATTLE
         // ===============================
 		function startBossBattle() {
+			if (!boss.name) {  // Ensure boss has been assigned
+				boss = { ...bossOptions[Math.floor(Math.random() * bossOptions.length)] };
+			}
+			
 			gameState = "bossBattle"; // Change game state
 			bossActive = true;
 			bullets = [];
@@ -645,7 +766,7 @@
 			if (!boss.movePattern) {
 				// Assign fixed movement pattern based on boss name
 				switch (boss.name) {
-					case "Galactic Chicken Overlord":
+					case "Galactic Chicken":
 						boss.movePattern = "zigzag";  // 🐔 Chicken moves in zigzag
 						break;
 					case "Doom Bot 9000":
@@ -661,7 +782,7 @@
 
 			}
 
-			// console.log(`Boss Battle Started! Boss: ${boss.name} | Pattern: ${boss.movePattern}`);
+;
 		}
 
 
@@ -826,6 +947,7 @@
 					bulletBottom >= bossTop && bulletTop <= bossBottom) {
 					
 					boss.health -= 10;
+					score += 50; // 🎉 Award 50 points per hit on boss
 					explosions.push({ x: bullets[i].x, y: bullets[i].y, frames: 20 });
 					bullets.splice(i, 1);
 					i--; // Adjust loop index since we removed an item
@@ -838,7 +960,6 @@
 			// 💀 Game Over Condition
 			if (boss.health <= 0) {
 				gameState = "gameOver";
-				console.log("Game Over! Press R to restart.");
 			}
 
 
@@ -852,10 +973,11 @@
 
 		function drawBoss() {
 			
-			
-			
+                        ctx.setTransform(1, 0, 0, 1, 0, 0);  // ✅ Reset transformations			
 			ctx.clearRect(0, 0, canvas.width, canvas.height);
 			
+
+
 			// 📉 Apply screen shake
 			if (screenShakeAmount > 0) {
 				ctx.translate((Math.random() - 0.5) * screenShakeAmount, (Math.random() - 0.5) * screenShakeAmount);
@@ -926,6 +1048,14 @@
         // ===============================
         function drawGame() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.setTransform(1, 0, 0, 1, 0, 0);  // ✅ Reset any transformations (fixes shake issues)
+
+            // Apply screen shake if needed
+            if (screenShakeAmount > 0) {
+                ctx.translate((Math.random() - 0.5) * screenShakeAmount, (Math.random() - 0.5) * screenShakeAmount);
+                screenShakeAmount *= 0.9; // Gradually reduce shake effect
+       }
+
 
 		// ===============================
 		// 🎨 DRAW ALIEN BULLETS
@@ -1030,7 +1160,10 @@
 			ctx.fillText("You answered all the questions.", canvas.width / 2, canvas.height / 2 - 30);
 
 			// 🔥 Dynamically insert the boss name!
-			ctx.fillText(`Get ready to face ${upcomingBossName}!`, canvas.width / 2, canvas.height / 2 + 20);
+			ctx.fillText(`Get ready to face`, canvas.width / 2, canvas.height / 2 + 20);
+			ctx.font = "40px 'Press Start 2P', sans-serif";
+			ctx.fillStyle = "yellow";  
+			ctx.fillText(`${upcomingBossName}!`, canvas.width / 2, canvas.height / 2 + 80);
 		}
 
 
@@ -1049,7 +1182,8 @@
 			ctx.fillStyle = "white";
 			ctx.font = "20px 'Press Start 2P', sans-serif";  // ✅ Ensures font applies
 			ctx.textAlign = "center";
-			ctx.fillText(`${boss.emoji} ${boss.name} Defeated! 🎉`, canvas.width / 2, canvas.height / 2 - 80);
+			ctx.fillText(`${boss.emoji} ${boss.name}`, canvas.width / 2, canvas.height / 2 - 120);
+			ctx.fillText(`🎉 Defeated! 🎉`, canvas.width / 2, canvas.height / 2 - 80);
 
 
 			ctx.font = "14px 'Press Start 2P', sans-serif";  // ✅ Smaller text
@@ -1057,6 +1191,7 @@
 			ctx.fillText("Press 'R' to Restart", canvas.width / 2, canvas.height / 2 + 20);
 		}
 
+		let gameLoopActive = false;
 
         // ===============================
         // 🌀 GAME LOOP FUNCTION
