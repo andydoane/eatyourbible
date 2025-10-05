@@ -785,6 +785,7 @@ function spawnBonus(){
     if (lock || bonusPending > 0 || !bonusEl) return;
 bonusPending = BONUS_POINTS;
 ping('⭐️ Bonus +' + BONUS_POINTS + '!', 'success');
+  playTone('bonus');                 // ← add this line
 
     el.classList.add('hide');
     setTimeout(clearBonus, 220);
@@ -860,7 +861,7 @@ function playTone(type='ok'){
   const AC = window.AudioContext || window.webkitAudioContext;
   if (!AC) return;
 
-  // Reuse one AudioContext (created on first user gesture)
+  // Reuse one AudioContext
   playTone.ctx = playTone.ctx || new AC();
   const ctx = playTone.ctx;
 
@@ -868,13 +869,30 @@ function playTone(type='ok'){
   const g = ctx.createGain();
   o.connect(g); g.connect(ctx.destination);
 
-  // Defaults
-  let f = 880, dur = 0.14; // correct
-  if (type === 'bad'){ f = 200; dur = 0.18; }
-  if (type === 'time'){ f = 240; dur = 0.20; }
-
   const now = ctx.currentTime;
-  o.type = 'sine';
+
+  // Defaults: correct
+  let f = 880, dur = 0.14, wave = 'sine';
+  if (type === 'bad'){ f = 200; dur = 0.18; wave = 'sawtooth'; }
+  if (type === 'time'){ f = 240; dur = 0.20; wave = 'square'; }
+
+  // New: coin-y bonus chirp (quick upward sweep)
+  if (type === 'bonus'){
+    wave = 'triangle';
+    dur = 0.22;
+    o.type = wave;
+    o.frequency.setValueAtTime(600, now);
+    o.frequency.exponentialRampToValueAtTime(1300, now + 0.16);
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.22, now + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+    o.start(now);
+    o.stop(now + dur + 0.02);
+    return;
+  }
+
+  // Other tones
+  o.type = wave;
   o.frequency.setValueAtTime(f, now);
   g.gain.setValueAtTime(0.0001, now);
   g.gain.exponentialRampToValueAtTime(0.18, now + 0.01);
@@ -882,6 +900,15 @@ function playTone(type='ok'){
   o.start(now);
   o.stop(now + dur + 0.02);
 }
+
+// Keep this (called in startGame())
+function ensureAudioReady(){
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return;
+  playTone.ctx = playTone.ctx || new AC();
+  if (playTone.ctx.state === 'suspended') playTone.ctx.resume();
+}
+
 
 // Create/resume the context once after the user clicks Start (so timeouts can beep too)
 function ensureAudioReady(){
