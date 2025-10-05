@@ -538,6 +538,8 @@ window.addEventListener('keydown', (e)=>{
 function startGame(){
   // Reset state
   idx = 0; score = 0; correctCount = 0; lives = START_LIVES; updateHearts();
+ensureAudioReady();
+
   scoreEl.textContent = score;
   overOverlay.classList.remove('show');
   howOverlay.classList.remove('show');
@@ -652,6 +654,8 @@ wrap.addEventListener('click', (e) => {
 
 if (isCorrect){
   confettiBurst(b);
+playTone('ok');
+
 
 
   const base = Math.max(10, 5 + timeLeft);
@@ -674,6 +678,8 @@ heartsEl.classList.add('hurt');
   bonusPending = 0;       // lose any stored bonus on wrong
   clearBonus();
   ping('❌ Oops!', 'error');
+playTone('bad');
+
 }
 
 
@@ -715,6 +721,7 @@ updateHearts();
 heartsEl.classList.add('hurt');
 heartsEl.addEventListener('animationend', () => heartsEl.classList.remove('hurt'), { once:true });
 ping('⏳ Time up!', 'error');
+ensureAudioReady();
 bonusPending = 0;
 clearBonus();
 
@@ -847,6 +854,43 @@ function confettiBurst(el){
     s.addEventListener('animationend', () => s.remove(), { once:true });
   }
 }
+
+// ---- Beeps with Web Audio (no files) ----
+function playTone(type='ok'){
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return;
+
+  // Reuse one AudioContext (created on first user gesture)
+  playTone.ctx = playTone.ctx || new AC();
+  const ctx = playTone.ctx;
+
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.connect(g); g.connect(ctx.destination);
+
+  // Defaults
+  let f = 880, dur = 0.14; // correct
+  if (type === 'bad'){ f = 200; dur = 0.18; }
+  if (type === 'time'){ f = 240; dur = 0.20; }
+
+  const now = ctx.currentTime;
+  o.type = 'sine';
+  o.frequency.setValueAtTime(f, now);
+  g.gain.setValueAtTime(0.0001, now);
+  g.gain.exponentialRampToValueAtTime(0.18, now + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+  o.start(now);
+  o.stop(now + dur + 0.02);
+}
+
+// Create/resume the context once after the user clicks Start (so timeouts can beep too)
+function ensureAudioReady(){
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return;
+  playTone.ctx = playTone.ctx || new AC();
+  if (playTone.ctx.state === 'suspended') playTone.ctx.resume();
+}
+
 
 
 
