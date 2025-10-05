@@ -3,8 +3,27 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Emoji Balloon Pop Quiz</title>
+<title>God Creates People Quiz</title>
 <style>
+
+/* === Confetti (on correct) === */
+.confetti{
+  position:absolute;
+  pointer-events:none;
+  z-index:6;                  /* above toast (z:5) */
+  font-size:16px;
+  opacity:0;
+  transform: translate(-50%, -50%) scale(.8);
+  animation: confettiPop 600ms ease-out forwards;
+}
+@keyframes confettiPop{
+  0%   { opacity:0; transform: translate(-50%,-50%) scale(.8) }
+  25%  { opacity:1; transform: translate(-50%,-90%) scale(1) }
+  100% { opacity:0; transform: translate(-50%,-140%) scale(1.1) }
+}
+
+
+
   :root{
     --bg:#fafafa; --ink:#222; --panel:#ffffff; --accent:#4caf50; --wrong:#e53935;
   }
@@ -82,16 +101,18 @@
 /* The wrapper is what floats upward */
 .balloonWrap{
   position:absolute;
-  bottom:-80px;
+  bottom:-160px;               /* ↓ start further off-screen so any snap is invisible (was -80px) */
   animation: floatUp linear forwards;
+  animation-fill-mode: both;   /* ← keep the first/last keyframe applied */
   z-index:1;
 
-  /* NEW: width equals the lane width; center via translate */
   width: var(--lane-step);
-
-  /* small gutters so neighbors don’t touch */
   padding: 0 6px;
+
+  transform: translate(-50%, 0); /* ← baseline centering so there’s no horizontal snap */
+  will-change: transform;        /* (optional) smoother start */
 }
+
 
 
 
@@ -160,17 +181,61 @@ box-sizing: border-box; /* you already have this — keep it */
 }
 
 
-  .toast{
-    position:absolute; left:50%; transform:translateX(-50%);
-    bottom:18px; background:#000; color:#fff; padding:8px 12px; border-radius:999px;
-    opacity:0; transition:opacity .25s; pointer-events:none; font-size:14px; z-index:5;
-  }
-  .toast.show{opacity:.85}
+/* Big center badge */
+.toast{
+  position:absolute;
+  left:50%; top:50%;
+  transform: translate(-50%,-50%) scale(.92);
+  background:#111;
+  color:#fff;
+  padding:14px 18px;
+  border-radius:16px;
+  font-weight:800;
+  font-size: clamp(18px, 3.2vw, 32px);
+  line-height:1.1;
+  box-shadow:0 10px 30px rgba(0,0,0,.25);
+  opacity:0;
+  pointer-events:none;
+  transition: opacity .18s ease, transform .18s ease;
+  z-index: 5;
+}
+.toast.show{
+  opacity:1;
+  transform: translate(-50%,-50%) scale(1);
+}
+
+/* Color variants */
+.toast.success{
+  background: #16a34a;            /* green 600 */
+}
+.toast.error{
+  background: #dc2626;             /* red 600 */
+}
+.toast.info{
+  background: #111;
+}
+
+
+/* === Flying bonus emoji === */
+.bonus{
+  position:absolute;
+  z-index:4;                /* above balloons, below overlays */
+  font-size: clamp(34px, 6vw, 60px);  /* ← bigger & responsive */
+  line-height:1;
+  user-select:none;
+  cursor:pointer;
+  transition: left 900ms linear, top 900ms linear, transform 200ms ease, opacity 200ms ease;
+  will-change: left, top, transform, opacity;
+  text-shadow: 0 1px 0 #fff, 0 0 6px rgba(0,0,0,.25); /* readability */
+}
+.bonus:active{ transform: scale(.9) }
+.bonus.hide{ opacity:0; transform: scale(.6) }
+
 
   /* Overlays (start/how/over) — sit above everything in the playfield */
   .overlay{
     position:absolute; inset:0; display:none; place-items:center; text-align:center;
-    padding:24px; z-index:20; background:linear-gradient(#ffffffcc,#ffffffcc);
+    padding:24px; z-index:20;   background:#fff; /* or rgba(255,255,255,.98) */;
   }
   .overlay.show{display:grid}
   .stack{display:flex; flex-direction:column; gap:14px; align-items:center}
@@ -197,7 +262,7 @@ box-sizing: border-box; /* you already have this — keep it */
       <!-- Start -->
       <section class="overlay show" id="start">
         <div class="stack">
-          <div style="font-size:42px">🎈 Emoji Balloon Pop Quiz</div>
+          <div style="font-size:42px">🎈 Balloon Pop Quiz</div>
           <div class="small">Pop the correct answer balloon before it floats away!</div>
           <div class="small">Keyboard: 1–4 • Mobile: tap</div>
           <div style="display:flex; gap:10px">
@@ -213,7 +278,7 @@ box-sizing: border-box; /* you already have this — keep it */
           <div style="font-size:36px">📚 How to Play</div>
           <div style="max-width:600px">
             Balloons float up with answer choices.<br/>
-            Tap or click the correct one to score. Wrong pops cost a heart. Lose all ❤️ and it’s game over.
+            Tap or click the correct one to score. Wrong pops cost a heart.
           </div>
           <button class="btn" id="backBtn">Back</button>
         </div>
@@ -363,6 +428,7 @@ const COLUMNS = 4;
 
 /* ===== 3) STATE & ELEMENTS ===== */
 let idx = 0, score = 0, correctCount = 0, lives = START_LIVES, timer = null, timeLeft = 0, lock = false;
+let bonusEl = null, bonusTimer = null, bonusPending = 0;
 let activeBalloons = [];
 const screen = document.getElementById('screen');
 const questionEl = document.getElementById('question');
@@ -379,8 +445,16 @@ const finalEl      = document.getElementById('final');
 
 document.getElementById('startBtn').addEventListener('click', startGame);
 document.getElementById('againBtn').addEventListener('click', startGame);
-document.getElementById('howBtn').addEventListener('click', ()=> howOverlay.classList.add('show'));
-document.getElementById('backBtn').addEventListener('click', ()=> howOverlay.classList.remove('show'));
+document.getElementById('howBtn').addEventListener('click', ()=>{
+  startOverlay.classList.remove('show');   // hide Start
+  howOverlay.classList.add('show');        // show How-to
+});
+
+document.getElementById('backBtn').addEventListener('click', ()=>{
+  howOverlay.classList.remove('show');     // hide How-to
+  startOverlay.classList.add('show');      // show Start again
+});
+
 
 window.addEventListener('keydown', (e)=>{
   if(lock) return;
@@ -422,6 +496,8 @@ function shuffleIndices(n){
 
 function nextQuestion(){
   clearBalloons();
+  clearBonus();
+
   if(idx >= QUESTIONS.length){ endGame(); return; }
 
   lock = false;
@@ -448,6 +524,7 @@ activeBalloons = order.map((choiceIdx, i) => {
 
   const x = laneXs[i % laneXs.length];
   wrap.style.left = `${x}%`;
+wrap.style.transform = 'translate(-50%, 0)'; // baseline before animation
 
   const duration = BALLOON_TRAVEL_MS + rand(-800, 600);
   const delay = rand(0, 600);
@@ -503,17 +580,30 @@ wrap.addEventListener('click', (e) => {
     b.dataset.icon = isCorrect ? '🎉' : '💥';
     b.classList.add('pop');
 
-    if (isCorrect){
-      const pts = Math.max(10, 5 + timeLeft);
-      score += pts;
-      correctCount++;
-      scoreEl.textContent = score;
-      ping(`✅ Correct! +${pts}`);
-    } else {
-      if (lives > 0) lives--;
-      updateHearts();
-      ping('❌ Oops!');
-    }
+if (isCorrect){
+  confettiBurst(b);
+
+
+  const base = Math.max(10, 5 + timeLeft);
+  const pts  = base + bonusPending;
+  score += pts;
+  correctCount++;
+  scoreEl.textContent = score;
+
+  let msg = `✅ Correct! +${base}`;
+  if (bonusPending) msg += ` (+${bonusPending} bonus)`;
+  ping(msg, 'success');
+
+  bonusPending = 0;
+  clearBonus();           // remove bonus if still on screen
+} else {
+  if (lives > 0) lives--;
+  updateHearts();
+  bonusPending = 0;       // lose any stored bonus on wrong
+  clearBonus();
+  ping('❌ Oops!', 'error');
+}
+
 
     // after pop finishes, move to next question
     b.addEventListener('animationend', (e) => {
@@ -532,8 +622,7 @@ wrap.addEventListener('click', (e) => {
   screen.appendChild(wrap);
   return b; // keep the buttons in activeBalloons (keyboard still works)
 });
-
-
+spawnBonus();
 startTimer();
  
 
@@ -551,7 +640,10 @@ function startTimer(){
         lock = true;
 if (lives > 0) lives--;
 updateHearts();
-ping('⏳ Time up!');
+ping('⏳ Time up!', 'error');
+bonusPending = 0;
+clearBonus();
+
 
         setTimeout(()=>{
 idx++;
@@ -566,6 +658,9 @@ if (idx >= QUESTIONS.length) endGame(); else nextQuestion(); // only end after l
 function endGame(){
   clearInterval(timer);
   clearBalloons();
+clearBonus();
+bonusPending = 0;
+
   finalEl.textContent = `Score: ${score} • Correct: ${correctCount} / ${QUESTIONS.length}`;
   overOverlay.classList.add('show');
   // hide question again so it doesn't cover overlays in a replay
@@ -573,15 +668,112 @@ function endGame(){
 }
 
 function clearBalloons(){
-  activeBalloons.forEach(b=> b.remove());
+  document.querySelectorAll('.balloonWrap').forEach(w => w.remove());
   activeBalloons = [];
 }
 
-function ping(msg){
-  toast.textContent = msg;
-  toast.classList.add('show');
-  setTimeout(()=> toast.classList.remove('show'), 700);
+
+
+function spawnBonus(){
+  clearBonus();
+  bonusPending = 0; // reset each question
+
+  const el = document.createElement('div');
+  el.className = 'bonus';
+  el.setAttribute('role','button');
+  el.setAttribute('aria-label','Bonus');
+  el.setAttribute('tabindex','0');
+  el.textContent = '⭐️';
+  screen.appendChild(el);
+  bonusEl = el;
+
+  // place initial position
+  const p0 = randomInsideScreen();
+  setBonusPosition(p0.x, p0.y);
+
+  // move periodically
+  const move = () => {
+    const p = randomInsideScreen();
+    setBonusPosition(p.x, p.y);
+  };
+  move(); // first nudge
+  bonusTimer = setInterval(move, 1000 + rand(0, 800));
+
+  const claimBonus = (e) => {
+    if (e) { e.stopPropagation(); e.preventDefault && e.preventDefault(); }
+    if (lock || bonusPending > 0 || !bonusEl) return;
+    bonusPending = 5;                 // ★ tweak bonus value here
+    ping('⭐️ Bonus +5 ready!', 'success');
+    el.classList.add('hide');
+    setTimeout(clearBonus, 220);
+  };
+
+  el.addEventListener('click', claimBonus);
+  el.addEventListener('keydown', (e)=>{
+    if(e.key === 'Enter' || e.key === ' '){
+      claimBonus(e);
+    }
+  });
 }
+
+function setBonusPosition(x, y){
+  if(!bonusEl) return;
+  bonusEl.style.left = x + 'px';
+  bonusEl.style.top  = y + 'px';
+}
+
+function randomInsideScreen(){
+  const r = screen.getBoundingClientRect();
+  const pad = 24;                                // edge padding
+  const qh = (questionEl.offsetHeight || 0) + 20; // keep away from question bar
+
+  // measure current star size (fallbacks if not yet laid out)
+  const w = bonusEl ? bonusEl.offsetWidth  : 40;
+  const h = bonusEl ? bonusEl.offsetHeight : 40;
+
+  // coordinates in *screen local* space (since .bonus is appended to .screen)
+  const x = rand(pad, r.width  - pad - w);
+  const y = rand(Math.max(80, qh), r.height - pad - h);
+
+  return { x, y };
+}
+
+
+function clearBonus(){
+  if (bonusTimer){ clearInterval(bonusTimer); bonusTimer = null; }
+  if (bonusEl){ bonusEl.remove(); bonusEl = null; }
+}
+
+
+
+function ping(msg, kind = 'info'){
+  toast.textContent = msg;
+  toast.className = 'toast ' + (kind || 'info'); // reset + apply kind
+  // small reflow so the next classList.add triggers transition fresh
+  void toast.offsetWidth;
+  toast.classList.add('show');
+  setTimeout(()=> toast.classList.remove('show'), 900);
+}
+
+
+function confettiBurst(el){
+  const {left, top, width, height} = el.getBoundingClientRect();
+  const cx = left + width / 2;
+  const cy = top  + height / 2;
+
+  const pieces = ['🎉','✨','💥','🎊','⭐️'];
+  for (let i = 0; i < 6; i++){
+    const s = document.createElement('div');
+    s.className = 'confetti';
+    s.textContent = pieces[Math.floor(Math.random() * pieces.length)];
+    s.style.left = (cx + (Math.random()*80 - 40)) + 'px';
+    s.style.top  = (cy + (Math.random()*20 - 10)) + 'px';
+    document.body.appendChild(s);
+    s.addEventListener('animationend', () => s.remove(), { once:true });
+  }
+}
+
+
 
 function layoutLanes(cols){
   const step = 100/(cols+1);
