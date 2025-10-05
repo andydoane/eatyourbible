@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Emoji Balloon Pop Quiz</title>
+<style>
+  :root{
+    --bg:#fafafa; --ink:#222; --panel:#ffffff; --accent:#4caf50; --wrong:#e53935;
+  }
+  html,body{height:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";
+    display:flex; justify-content:center;
+  }
+  .game{ width:min(900px,100vw); height:100dvh; display:flex; flex-direction:column; }
+  header{
+    display:flex; gap:12px; align-items:center; justify-content:space-between;
+    padding:12px 16px; background:var(--panel); box-shadow:0 2px 10px rgba(0,0,0,.06);
+    position:sticky; top:0; z-index:10;
+  }
+  .hud{display:flex; gap:16px; align-items:center; flex-wrap:wrap}
+  .pill{background:#f1f1f1; padding:6px 10px; border-radius:999px; font-weight:600}
+  .hearts{font-size:20px; letter-spacing:2px}
+  .screen{ flex:1; position:relative; overflow:hidden; border-top:1px solid #eee;
+           background:linear-gradient(#ffffff,#f7faff); --lane-step: 20%;}
+  .question{
+    position:absolute; left:50%; transform:translateX(-50%);
+    top:10px; background:var(--panel); padding:10px 14px; border-radius:12px;
+    box-shadow:0 2px 10px rgba(0,0,0,.08); z-index:2; max-width:92%;
+    font-size:clamp(16px,2.4vw,22px); text-align:center; line-height:1.25;
+    display:none; /* hidden until Start */
+  }
+
+  .balloon:focus{outline:3px solid #cde7ff}
+
+/* number-on-top layout */
+
+.balloon .num{
+  font-weight: 800;
+  font-size: clamp(18px, 3.6vw, 28px);
+  line-height: 1;
+  margin-bottom: -2px;   /* tiny lift so it "floats" above the answer */
+}
+.balloon .row{
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+
+/* color variants for the 4 answer options */
+.balloon.c0{ background:#ffe8e8; border-color:#ffb3b3; }
+.balloon.c1{ background:#fff1cc; border-color:#ffd166; }
+.balloon.c2{ background:#e7f7e7; border-color:#9be29b; }
+.balloon.c3{ background:#e6f0ff; border-color:#a7c4ff; }
+
+/* make the big number match the color a bit */
+.balloon.c0 .num{ color:#c62828; }
+.balloon.c1 .num{ color:#b26a00; }
+.balloon.c2 .num{ color:#1b5e20; }
+.balloon.c3 .num{ color:#1a237e; }
+
+/* ensure good contrast for text row */
+.balloon.c0 .txt,
+.balloon.c1 .txt,
+.balloon.c2 .txt,
+.balloon.c3 .txt { color:#111; }
+
+
+
+
+  .balloon.correct{border-color:var(--accent)}
+  .balloon.wrong{border-color:var(--wrong)}
+@keyframes floatUp{
+  from { transform: translate(-50%, 0); }
+  to   { transform: translate(-50%, -120vh); }
+}
+
+/* === Wrapped balloon layout (Option B) === */
+/* The wrapper is what floats upward */
+.balloonWrap{
+  position:absolute;
+  bottom:-80px;
+  animation: floatUp linear forwards;
+  z-index:1;
+
+  /* NEW: width equals the lane width; center via translate */
+  width: var(--lane-step);
+
+  /* small gutters so neighbors don’t touch */
+  padding: 0 6px;
+}
+
+
+
+/* The actual button is centered and allowed to size naturally */
+.balloon{
+  position: relative;          /* ← add this */
+  animation: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  gap: 6px;
+
+  width: 100%;
+max-width: 240px;
+box-sizing: border-box; /* you already have this — keep it */
+
+  white-space: normal;
+
+  padding: 8px 12px;
+  border-radius: 16px;
+  border: 2px solid #ddd;
+  background: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  box-shadow: 0 4px 16px rgba(0,0,0,.08);
+  text-align: center;
+  /* optional but nice: */
+  box-sizing: border-box;
+}
+
+
+.balloon .txt{
+  font-size: clamp(14px, 2.4vw, 18px);
+  line-height: 1.2;
+  text-align: center;
+
+  /* NEW: only break long words when necessary, not between letters */
+  overflow-wrap: break-word;
+  word-break: normal;
+  hyphens: auto;
+}
+
+
+
+/* === Pop effect === */
+.balloon.pop{
+  animation: popBurst 280ms ease-out forwards !important; /* override float */
+  border-color: transparent;
+  background: transparent;
+}
+.balloon.pop > *{ opacity:0 } /* hide text while popping */
+.balloon.pop::after{
+  content: attr(data-icon); /* 🎉 or 💥 */
+  position:absolute; left:50%; top:50%;
+  transform: translate(-50%,-50%) scale(1);
+  font-size:28px;
+  pointer-events:none;
+}
+@keyframes popBurst{
+  0%   { transform: scale(1); opacity:1 }
+  40%  { transform: scale(1.18) }
+  100% { transform: scale(0.2); opacity:0 }
+}
+
+
+  .toast{
+    position:absolute; left:50%; transform:translateX(-50%);
+    bottom:18px; background:#000; color:#fff; padding:8px 12px; border-radius:999px;
+    opacity:0; transition:opacity .25s; pointer-events:none; font-size:14px; z-index:5;
+  }
+  .toast.show{opacity:.85}
+
+  /* Overlays (start/how/over) — sit above everything in the playfield */
+  .overlay{
+    position:absolute; inset:0; display:none; place-items:center; text-align:center;
+    padding:24px; z-index:20; background:linear-gradient(#ffffffcc,#ffffffcc);
+  }
+  .overlay.show{display:grid}
+  .stack{display:flex; flex-direction:column; gap:14px; align-items:center}
+  .btn{ border:none; background:#111; color:#fff; padding:12px 16px; border-radius:12px; font-weight:700; cursor:pointer}
+  .btn.secondary{background:#444}
+  .small{opacity:.75; font-size:14px}
+</style>
+</head>
+<body>
+  <div class="game" id="game">
+    <header>
+      <div class="hud">
+        <span class="pill" id="progress">Q 1 / 1</span>
+        <span class="pill">Score: <span id="score">0</span></span>
+        <span class="pill">Time: <span id="time">0</span>s</span>
+      </div>
+      <div class="hearts" id="hearts" aria-label="lives">❤️❤️❤️</div>
+    </header>
+
+    <main class="screen" id="screen" aria-live="polite">
+      <div class="question" id="question">Loading…</div>
+      <div class="toast" id="toast" role="status" aria-live="assertive"></div>
+
+      <!-- Start -->
+      <section class="overlay show" id="start">
+        <div class="stack">
+          <div style="font-size:42px">🎈 Emoji Balloon Pop Quiz</div>
+          <div class="small">Pop the correct answer balloon before it floats away!</div>
+          <div class="small">Keyboard: 1–4 • Mobile: tap</div>
+          <div style="display:flex; gap:10px">
+            <button class="btn" id="startBtn">Start</button>
+            <button class="btn secondary" id="howBtn">How to Play</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- How-to -->
+      <section class="overlay" id="how">
+        <div class="stack">
+          <div style="font-size:36px">📚 How to Play</div>
+          <div style="max-width:600px">
+            Balloons float up with answer choices.<br/>
+            Tap or click the correct one to score. Wrong pops cost a heart. Lose all ❤️ and it’s game over.
+          </div>
+          <button class="btn" id="backBtn">Back</button>
+        </div>
+      </section>
+
+      <!-- Game over -->
+      <section class="overlay" id="over">
+        <div class="stack">
+          <div style="font-size:34px">🏁 Game Over</div>
+          <div id="final"></div>
+          <button class="btn" id="againBtn">Play Again</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+<script>
+
+
+
+/* ===== QUESTIONS START HERE ===== */
+const QUESTIONS = [
+  {
+    q: "How did God create the first man?",
+    choices: [
+      "Formed from dust; God breathed life",
+      "From water and clay",
+      "Spoken into being only",
+      "Formed from stars"
+    ],
+    correct: 0,
+    emoji: "🌬️"
+  },
+  {
+    q: "Where did God put the man? What job did He give him?",
+    choices: [
+      "Garden of Eden; take care of it",
+      "City of Enoch; build it",
+      "Wilderness; hunt for food",
+      "Ark; feed the animals"
+    ],
+    correct: 0,
+    emoji: "🌿"
+  },
+  {
+    q: "What did God say was “not good”?",
+    choices: [
+      "For the man to be alone",
+      "Working on the Sabbath",
+      "Eating any fruit",
+      "Naming the animals"
+    ],
+    correct: 0,
+    emoji: "🙅"
+  },
+  {
+    q: "What did God say He would make for the man?",
+    choices: [
+      "A helper suitable for him",
+      "A great city",
+      "A sword to protect the garden",
+      "A temple to worship in"
+    ],
+    correct: 0,
+    emoji: "🤝"
+  },
+  {
+    q: "When God brought the animals to the man, what did he do?",
+    choices: [
+      "Named them",
+      "Built an altar",
+      "Counted them",
+      "Set them free"
+    ],
+    correct: 0,
+    emoji: "🐾"
+  },
+  {
+    q: "After naming all the animals, what did the man not find?",
+    choices: [
+      "A helper suitable for him",
+      "Enough food",
+      "A place to sleep",
+      "A pet dog"
+    ],
+    correct: 0,
+    emoji: "🕵️"
+  },
+  {
+    q: "How did God make a helper for the man?",
+    choices: [
+      "Put him to sleep, took a rib, formed a woman",
+      "Shaped another from dust",
+      "Spoke her into being only",
+      "Made her from the animals"
+    ],
+    correct: 0,
+    emoji: "🦴"
+  },
+  {
+    q: "When God brought the woman to the man, what did he say?",
+    choices: [
+      "Bone of my bones and flesh of my flesh",
+      "At last, a friend for me",
+      "You shall be called Eve",
+      "Welcome, my sister"
+    ],
+    correct: 0,
+    emoji: "💬"
+  },
+  {
+    q: "Both the man and the woman were made in God’s… what?",
+    choices: [
+      "Image and likeness",
+      "Temple",
+      "Garden",
+      "Spirit only"
+    ],
+    correct: 0,
+    emoji: "🪞"
+  },
+  {
+    q: "What did God tell the man and woman to do?",
+    choices: [
+      "Be fruitful, fill the earth, and rule over it",
+      "Build a tower",
+      "Stay in the garden forever",
+      "Wander the earth"
+    ],
+    correct: 0,
+    emoji: "🌍"
+  }
+];
+
+
+
+/* ===== QUESTIONS END HERE ===== */
+
+
+
+/* ===== 2) CONFIG ===== */
+const START_LIVES = 3;
+const BALLOON_TRAVEL_MS = 20000;
+// timer = travel time + max random duration (+800ms) + max start delay (+600ms) + 1s grace
+const PER_QUESTION_TIME = Math.ceil((BALLOON_TRAVEL_MS + 800 + 600) / 1000) + 1;
+const COLUMNS = 4;
+
+/* ===== 3) STATE & ELEMENTS ===== */
+let idx = 0, score = 0, correctCount = 0, lives = START_LIVES, timer = null, timeLeft = 0, lock = false;
+let activeBalloons = [];
+const screen = document.getElementById('screen');
+const questionEl = document.getElementById('question');
+const progressEl = document.getElementById('progress');
+const scoreEl = document.getElementById('score');
+const timeEl = document.getElementById('time');
+const heartsEl = document.getElementById('hearts');
+const toast = document.getElementById('toast');
+
+const startOverlay = document.getElementById('start');
+const overOverlay  = document.getElementById('over');
+const howOverlay   = document.getElementById('how');
+const finalEl      = document.getElementById('final');
+
+document.getElementById('startBtn').addEventListener('click', startGame);
+document.getElementById('againBtn').addEventListener('click', startGame);
+document.getElementById('howBtn').addEventListener('click', ()=> howOverlay.classList.add('show'));
+document.getElementById('backBtn').addEventListener('click', ()=> howOverlay.classList.remove('show'));
+
+window.addEventListener('keydown', (e)=>{
+  if(lock) return;
+  const map = {'1':0,'2':1,'3':2,'4':3};
+  if(e.key in map){
+    const i = map[e.key];
+    const b = activeBalloons.find(b=> +b.dataset.choiceIndex === i);
+    if(b) b.click();
+  }
+});
+
+function startGame(){
+  // Reset state
+  idx = 0; score = 0; correctCount = 0; lives = START_LIVES; updateHearts();
+  scoreEl.textContent = score;
+  overOverlay.classList.remove('show');
+  howOverlay.classList.remove('show');
+  startOverlay.classList.remove('show');
+  // show question box now that game is active
+  questionEl.style.display = 'block';
+  nextQuestion();
+}
+
+function updateHearts(){
+  const safeLives = Math.max(0, Math.min(START_LIVES, lives));
+  heartsEl.textContent = '❤️'.repeat(safeLives) + '🖤'.repeat(START_LIVES - safeLives);
+}
+
+
+function shuffleIndices(n){
+  const arr = Array.from({length: n}, (_, i) => i);
+  for (let i = n - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+
+function nextQuestion(){
+  clearBalloons();
+  if(idx >= QUESTIONS.length){ endGame(); return; }
+
+  lock = false;
+  const item = QUESTIONS[idx];
+  timeLeft = item.seconds ?? PER_QUESTION_TIME;
+
+  const order = shuffleIndices(item.choices.length);
+
+
+  progressEl.textContent = `Q ${idx+1} / ${QUESTIONS.length}`;
+  questionEl.textContent = (item.emoji? item.emoji+' ':'') + item.q;
+
+  const cols = Math.min(COLUMNS, item.choices.length);
+  const laneXs = layoutLanes(cols);
+  screen.style.setProperty('--lane-step', (100 / (cols + 1)) + '%');
+
+activeBalloons = order.map((choiceIdx, i) => {
+  const text = item.choices[choiceIdx];
+  const isCorrect = (choiceIdx === item.correct);
+
+  // wrapper that animates up
+  const wrap = document.createElement('div');
+  wrap.className = 'balloonWrap';
+
+  const x = laneXs[i % laneXs.length];
+  wrap.style.left = `${x}%`;
+
+  const duration = BALLOON_TRAVEL_MS + rand(-800, 600);
+  const delay = rand(0, 600);
+  wrap.style.animationDuration = duration + 'ms';
+  wrap.style.animationDelay = delay + 'ms';
+
+  // the actual button (centered inside wrap)
+  const b = document.createElement('button');
+  b.className = 'balloon';
+  b.classList.add(`c${i % 4}`);            // color by displayed slot 0–3
+  b.setAttribute('aria-label', `Choice ${i+1}: ${text}`);
+  b.dataset.choiceIndex = i;               // keyboard mapping uses this
+
+  // Top: big number
+  const num = document.createElement('span');
+  num.className = 'num';
+  num.textContent = (i + 1);
+
+  // Bottom: answer text
+  const row = document.createElement('span');
+  row.className = 'row';
+
+  const txt = document.createElement('span');
+  txt.className = 'txt';
+  txt.textContent = text;
+
+  row.appendChild(txt);
+  b.appendChild(num);
+  b.appendChild(row);
+  wrap.appendChild(b);
+
+// Let clicks on the wrapper (the whole lane) count as clicking the button
+wrap.addEventListener('click', (e) => {
+  if (lock) return;
+  // If the click wasn't directly on the button (or one of its children),
+  // forward it to the button so we don't double-trigger.
+  if (e.target !== b && !b.contains(e.target)) {
+    b.click();
+  }
+});
+
+
+  // CLICK -> pop & score
+  b.addEventListener('click', () => {
+    if (lock) return;
+    lock = true;
+    clearInterval(timer);
+
+    // pause the floating wrapper, not the button
+    wrap.style.animationPlayState = 'paused';
+
+    b.classList.add(isCorrect ? 'correct' : 'wrong');
+    b.dataset.icon = isCorrect ? '🎉' : '💥';
+    b.classList.add('pop');
+
+    if (isCorrect){
+      const pts = Math.max(10, 5 + timeLeft);
+      score += pts;
+      correctCount++;
+      scoreEl.textContent = score;
+      ping(`✅ Correct! +${pts}`);
+    } else {
+      if (lives > 0) lives--;
+      updateHearts();
+      ping('❌ Oops!');
+    }
+
+    // after pop finishes, move to next question
+    b.addEventListener('animationend', (e) => {
+      if (e.animationName !== 'popBurst') return;
+      idx++;
+      nextQuestion(); // keep going even if lives dropped to 0
+    }, { once:true });
+  });
+
+  // When the FLOAT animation ends, remove the whole wrapper
+  wrap.addEventListener('animationend', (e) => {
+    if (e.animationName !== 'floatUp') return;
+    wrap.remove();
+  });
+
+  screen.appendChild(wrap);
+  return b; // keep the buttons in activeBalloons (keyboard still works)
+});
+
+
+startTimer();
+ 
+
+}
+
+function startTimer(){
+  clearInterval(timer);
+  timeEl.textContent = timeLeft;
+  timer = setInterval(()=>{
+    timeLeft--;
+    timeEl.textContent = Math.max(0, timeLeft);
+    if(timeLeft <= 0){
+      clearInterval(timer);
+      if(!lock){
+        lock = true;
+if (lives > 0) lives--;
+updateHearts();
+ping('⏳ Time up!');
+
+        setTimeout(()=>{
+idx++;
+if (idx >= QUESTIONS.length) endGame(); else nextQuestion(); // only end after last question
+
+        }, 500);
+      }
+    }
+  }, 1000);
+}
+
+function endGame(){
+  clearInterval(timer);
+  clearBalloons();
+  finalEl.textContent = `Score: ${score} • Correct: ${correctCount} / ${QUESTIONS.length}`;
+  overOverlay.classList.add('show');
+  // hide question again so it doesn't cover overlays in a replay
+  questionEl.style.display = 'none';
+}
+
+function clearBalloons(){
+  activeBalloons.forEach(b=> b.remove());
+  activeBalloons = [];
+}
+
+function ping(msg){
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(()=> toast.classList.remove('show'), 700);
+}
+
+function layoutLanes(cols){
+  const step = 100/(cols+1);
+  return Array.from({length: cols}, (_,i)=> step*(i+1));
+}
+function rand(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+</script>
+</body>
+</html>
