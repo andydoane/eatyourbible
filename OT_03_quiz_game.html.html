@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Color Hunt Quiz</title>
+<style>
+:root{
+  --qaH: 120px;  /* reserved space for the question+answers; JS will keep this updated */
+  --bg:#fafafa; --ink:#222; --panel:#ffffff;
+  --good:#16a34a; --bad:#dc2626; --muted:#f1f1f1;
+
+  /* Light answer button colors */
+  --c0-light:#ffe8e8;
+  --c1-light:#fff1cc;
+  --c2-light:#e7f7e7;
+  --c3-light:#e6f0ff;
+
+  /* Dark grid versions of each */
+  --c0-dark:#c62828;  /* deeper red */
+  --c1-dark:#b26a00;  /* amber/brown */
+  --c2-dark:#1b5e20;  /* deep green */
+  --c3-dark:#1a237e;  /* navy indigo */
+}
+
+  html,body{height:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+    display:flex; justify-content:center;
+  }
+  .game{ width:min(1000px,100vw); height:100dvh; display:flex; flex-direction:column; }
+
+  header{
+    display:flex; gap:12px; align-items:center; justify-content:space-between;
+    padding:12px 16px; background:var(--panel); box-shadow:0 2px 10px rgba(0,0,0,.06);
+    position:sticky; top:0; z-index:10;
+  }
+  .hud{display:flex; gap:16px; align-items:center; flex-wrap:wrap}
+  .pill{background:var(--muted); padding:6px 10px; border-radius:999px; font-weight:700}
+  .screen{ flex:1; position:relative; overflow:hidden; border-top:1px solid #eee;
+           background: linear-gradient(#ffffff, #f6f8ff); }
+
+  /* Question & answers row */
+  .qa{
+    position:absolute; left:50%; transform:translateX(-50%);
+    top:10px; z-index:2; width:min(940px, 96%);
+    display:flex; flex-direction:column; gap:10px;
+    align-items:center;
+  }
+  .question{
+    background:var(--panel); padding:10px 14px; border-radius:12px;
+    box-shadow:0 2px 10px rgba(0,0,0,.08);
+    font-size:clamp(16px,2.2vw,22px); text-align:center; line-height:1.25;
+  }
+  .answers{
+    display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:10px; width:100%;
+  }
+  .ans{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    border-radius:12px; padding:10px 8px; font-weight:800; border:2px solid transparent;
+    box-shadow:0 2px 8px rgba(0,0,0,.06); user-select:none;
+  }
+  .ans .num{ font-weight:900; opacity:.9 }
+  .ans .txt{ text-align:center; font-size:clamp(14px,1.8vw,18px); line-height:1.2 }
+  /* four colorways — same tokens used in the grid */
+/* === ANSWER BUTTON COLORS (light) === */
+  .c0{ background:#ffe8e8; border-color:#ffb3b3; color:#111; }
+  .c1{ background:#fff1cc; border-color:#ffd166; color:#111; }
+  .c2{ background:#e7f7e7; border-color:#9be29b; color:#111; }
+  .c3{ background:#e6f0ff; border-color:#a7c4ff; color:#111; }
+
+/* === GRID COLORS (match border colors of buttons) === */
+  .cell.c0{ background:#ffb3b3; }
+  .cell.c1{ background:#ffd166; }
+  .cell.c2{ background:#9be29b; }
+  .cell.c3{ background:#a7c4ff; }
+
+  /* optional soft edge to keep them readable */
+  .cell.c0, .cell.c1, .cell.c2, .cell.c3 {
+    border:2px solid rgba(255,255,255,.25);
+  }
+
+
+
+  /* Grid */
+  .gridWrap{
+    position:absolute; inset:0; display:grid; place-items:center; padding:16px;
+    padding-top: calc(var(--qaH) + 12px); /* push grid down by QA height + a little gap */
+  }
+
+  .grid{
+    display:grid; grid-template-columns:repeat(10, 1fr); gap:8px;
+    width:min(880px, 92vw);
+  }
+  .cell{
+    border:2px solid transparent; border-radius:10px; height:0; padding-bottom:100%; /* perfect squares */
+    position:relative; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,.05);
+    transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  }
+  .cell:active{ transform: scale(.96) }
+  .cell.hit{ opacity:.35; cursor:default; filter:saturate(.6) }
+  .cell.rightNow{ box-shadow:0 0 0 6px rgba(22,163,74,.22), 0 6px 18px rgba(0,0,0,.10) }
+  .cell.wrongNow{ box-shadow:0 0 0 6px rgba(220,38,38,.22), 0 6px 18px rgba(0,0,0,.10) }
+
+  /* Toast (center badge) */
+  .toast{
+    position:absolute; left:50%; top:50%;
+    transform: translate(-50%,-50%) scale(.92);
+    background:#111; color:#fff; padding:14px 18px; border-radius:16px;
+    font-weight:900; font-size:clamp(18px, 3.2vw, 32px); line-height:1.1;
+    box-shadow:0 10px 30px rgba(0,0,0,.25); opacity:0; pointer-events:none;
+    transition: opacity .18s ease, transform .18s ease; z-index:5;
+  }
+  .toast.show{ opacity:1; transform: translate(-50%,-50%) scale(1) }
+  .toast.success{ background:var(--good) }
+  .toast.error{ background:var(--bad) }
+  .toast.info{ background:#111 }
+
+  /* Overlays */
+  .overlay{
+    position:absolute; inset:0; display:none; place-items:center; text-align:center;
+    padding:24px; z-index:20; background:#fff;
+  }
+  .overlay.show{display:grid}
+  .stack{display:flex; flex-direction:column; gap:14px; align-items:center}
+  .btn{ border:none; background:#111; color:#fff; padding:12px 16px; border-radius:12px; font-weight:800; cursor:pointer}
+  .btn.secondary{background:#444}
+  .small{opacity:.75; font-size:14px}
+
+  /* Final stats (same vibe as your balloon game) */
+  .finalStats{
+    display:flex; flex-direction:column; gap:12px; align-items:center; margin-top:4px;
+  }
+  @keyframes popIn{ 0%{ transform: translateY(6px) scale(.96); opacity:0 } 100%{ transform: translateY(0) scale(1); opacity:1 } }
+  .statBadge{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:12px 16px; border-radius:16px; font-weight:900; font-size:clamp(18px,3.2vw,28px); line-height:1.1; color:#fff;
+    box-shadow:0 10px 30px rgba(0,0,0,.22); animation: popIn 260ms ease-out both;
+  }
+  .statBadge.score   { background:#16a34a } /* green */
+  .statBadge.correct { background:#2563eb; animation-delay:.08s } /* blue */
+
+.betweenAnswer{
+  font-size: clamp(18px, 2.6vw, 28px);
+  font-weight: 800;
+  background: #fff;
+  color: #111;
+  padding: 12px 16px;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.10);
+  max-width: 720px;
+}
+
+
+  /* Tiny confetti for correct taps */
+  .confetti{
+    position:absolute; pointer-events:none; z-index:30; font-size:18px; opacity:0;
+    transform: translate(-50%,-50%) scale(.8); animation: confettiPop 600ms ease-out forwards;
+  }
+  @keyframes confettiPop{
+    0% { opacity:0; transform: translate(-50%,-50%) scale(.8) }
+    25%{ opacity:1; transform: translate(-50%,-90%) scale(1) }
+    100%{ opacity:0; transform: translate(-50%,-140%) scale(1.1) }
+  }
+</style>
+</head>
+<body>
+  <div class="game" id="game">
+    <header>
+      <div class="hud">
+        <span class="pill" id="progress">Q 1 / 1</span>
+        <span class="pill">Score: <span id="score">0</span></span>
+        <span class="pill">Time: <span id="time">0</span>s</span>
+      </div>
+    </header>
+
+    <main class="screen" id="screen" aria-live="polite">
+      <!-- Question / Answers -->
+      <div class="qa" id="qa" style="display:none">
+        <div class="question" id="question">Loading…</div>
+        <div class="answers" id="answers"></div>
+      </div>
+
+      <!-- Grid -->
+      <div class="gridWrap">
+        <div class="grid" id="grid" aria-label="color grid"></div>
+      </div>
+
+      <!-- Toast -->
+      <div class="toast" id="toast" role="status" aria-live="assertive"></div>
+
+      <!-- Start -->
+      <section class="overlay show" id="start">
+        <div class="stack">
+          <div style="font-size:42px">🎯 Color Hunt Quiz</div>
+          <div class="small">Tap the squares that match the <b>correct answer’s color</b> before time runs out.</div>
+          <div class="small">30 seconds per question • Mouse or touch</div>
+          <div style="display:flex; gap:10px">
+            <button class="btn" id="startBtn">Start</button>
+            <button class="btn secondary" id="howBtn">How to Play</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- How-to -->
+      <section class="overlay" id="how">
+        <div class="stack">
+          <div style="font-size:36px">📚 How to Play</div>
+          <div style="max-width:640px">
+            A Bible question appears with four answers. Each answer has its own color.<br/>
+            For 30 seconds, tap as many grid squares as you can that match the color of the <b>correct</b> answer.<br/>
+            Correct tap: +3 points • Wrong tap: −1 point.
+          </div>
+          <button class="btn" id="backBtn">Back</button>
+        </div>
+      </section>
+
+<!-- Between-rounds (shows the correct answer) -->
+<section class="overlay" id="between">
+  <div class="stack">
+    <div class="statBadge correct" role="status" aria-live="polite">✅ Correct Answer</div>
+    <div id="betweenText" class="betweenAnswer"></div>
+    <div class="small" id="betweenCountdown">(next question in 7s)</div>
+  </div>
+</section>
+
+
+
+      <!-- Game over -->
+      <section class="overlay" id="over">
+        <div class="stack">
+          <div style="font-size:34px">🏁 Game Over</div>
+          <div id="final"></div>
+          <button class="btn" id="againBtn">Play Again</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+<script>
+/* ===== 1) QUESTIONS =====
+   Each answer includes a fixed color key (c0..c3).
+   The grid uses the same four color classes. The correct answer’s color is the target to tap.
+*/
+
+
+// ===== START  OF QUESTIONS =====
+const QUESTIONS = [
+
+  {
+    q: "What did God say would happen if Adam & Eve ate the fruit of the tree of the Knowledge of good and evil?",
+    choices: [
+      { text: "They'd die", isCorrect: true },
+      { text: "They'd turn into angels" },
+      { text: "They'd live forever" },
+      { text: "They'd sleep for a week" }
+    ]
+  },
+  {
+    q: "Who was the serpent that came to Eve?",
+    choices: [
+      { text: "The devil", isCorrect: true },
+      { text: "Just a snake" },
+      { text: "An angel" },
+      { text: "Adam's pet" }
+    ]
+  },
+  {
+    q: "What did the serpent tell Eve?",
+    choices: [
+      { text: "You won't die; you'll be like God", isCorrect: true },
+      { text: "Don't touch the fruit" },
+      { text: "God doesn't love you" },
+      { text: "Run from Adam" }
+    ]
+  },
+  {
+    q: "After talking to the serpent, what did Eve do?",
+    choices: [
+      { text: "Ate it and gave some to Adam", isCorrect: true },
+      { text: "Told God right away" },
+      { text: "Threw the fruit away" },
+      { text: "Named the serpent" }
+    ]
+  },
+  {
+    q: "After eating, what did Adam and Eve realize?",
+    choices: [
+      { text: "They were naked and hid", isCorrect: true },
+      { text: "They could fly" },
+      { text: "They were angels" },
+      { text: "They forgot their names" }
+    ]
+  },
+  {
+    q: "What curse did God give the serpent?",
+    choices: [
+      { text: "Crawl on belly; crushed by Eve's son", isCorrect: true },
+      { text: "Lose its voice" },
+      { text: "Turn to dust" },
+      { text: "Live in the ocean" }
+    ]
+  },
+  {
+    q: "What curse did God give the woman?",
+    choices: [
+      { text: "Pain in childbirth; struggles with husband", isCorrect: true },
+      { text: "Grow thorns" },
+      { text: "Lose her voice" },
+      { text: "Never sleep" }
+    ]
+  },
+  {
+    q: "What curse did God give the man?",
+    choices: [
+      { text: "Hard work and death", isCorrect: true },
+      { text: "No more garden food" },
+      { text: "Forget Eve" },
+      { text: "Never rest" }
+    ]
+  },
+  {
+    q: "After the curses, what did God do?",
+    choices: [
+      { text: "Clothed them and sent them out", isCorrect: true },
+      { text: "Destroyed the garden" },
+      { text: "Made them build a city" },
+      { text: "Told them to swim away" }
+    ]
+  },
+  {
+    q: "Who is the Son of Eve who crushed the serpent?",
+    choices: [
+      { text: "Jesus—died and rose again", isCorrect: true },
+      { text: "Moses" },
+      { text: "Abraham" },
+      { text: "David" }
+    ]
+  }
+];
+
+// ===== END OF QUESTIONS =====
+
+
+
+/* ===== 2) CONFIG ===== */
+const GRID_SIZE = 10;             // 10x10
+const ROUND_TIME = 30;            // seconds per question
+const CORRECT_POINTS = 3;
+const WRONG_POINTS   = 1;         // deducted
+const COLORS = ["c0","c1","c2","c3"]; // must match CSS
+const BETWEEN_SECONDS = 7;  // how long to show the Correct Answer popup
+
+const SPEED_BONUS_PER_SECOND = 1;   // points per second left
+const SPEED_BONUS_CAP = Infinity;   // set to a number (e.g., 15) if you want a cap
+
+/* ===== 3) STATE & ELEMENTS ===== */
+let idx = 0, score = 0, correctSquares = 0, timeLeft = 0, timer = null;
+let incorrectSquares = 0;
+
+let targetColor = ""; // color class for correct answer this round
+let locked = false;
+let currentCorrectText = "";
+let betweenTimer = null;
+
+let roundCorrectTotal = 0;
+let roundCorrectHit   = 0;
+
+const screen    = document.getElementById('screen');
+const qaWrap    = document.getElementById('qa');
+const questionEl= document.getElementById('question');
+const answersEl = document.getElementById('answers');
+const gridEl    = document.getElementById('grid');
+const toast     = document.getElementById('toast');
+
+const betweenOverlay = document.getElementById('between');
+const betweenText    = document.getElementById('betweenText');
+const betweenCountdown = document.getElementById('betweenCountdown');
+
+
+const startOverlay = document.getElementById('start');
+const overOverlay  = document.getElementById('over');
+const howOverlay   = document.getElementById('how');
+const finalEl      = document.getElementById('final');
+
+const progressEl = document.getElementById('progress');
+const scoreEl    = document.getElementById('score');
+const timeEl     = document.getElementById('time');
+
+document.getElementById('startBtn').addEventListener('click', startGame);
+document.getElementById('againBtn').addEventListener('click', startGame);
+document.getElementById('howBtn').addEventListener('click', ()=>{ startOverlay.classList.remove('show'); howOverlay.classList.add('show'); });
+document.getElementById('backBtn').addEventListener('click', ()=>{ howOverlay.classList.remove('show'); startOverlay.classList.add('show'); });
+
+window.addEventListener('resize', updateGridOffset);
+
+
+['startBtn','againBtn','howBtn','backBtn'].forEach(id=>{
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('pointerdown', ensureAudioReady, { once:true });
+});
+
+function startGame(){
+  idx = 0; score = 0; correctSquares = 0;
+incorrectSquares = 0;
+
+  scoreEl.textContent = score;
+  startOverlay.classList.remove('show');
+  overOverlay.classList.remove('show');
+  howOverlay.classList.remove('show');
+  qaWrap.style.display = 'block';
+  updateGridOffset();
+  nextQuestion();
+}
+
+function nextQuestion(){
+  clearInterval(timer);
+  gridEl.innerHTML = "";
+  locked = false;
+
+  if (idx >= QUESTIONS.length){ endGame(); return; }
+
+  const item = QUESTIONS[idx];
+  progressEl.textContent = `Q ${idx+1} / ${QUESTIONS.length}`;
+  questionEl.textContent = item.q;
+
+  // Build a shuffled copy of choices and assign colors by display order
+  const choices = item.choices.map(c => ({ ...c })); // shallow copy
+  shuffleInPlace(choices);
+  choices.forEach((c, i) => { c.color = COLORS[i]; });
+
+  // Render answers row with their assigned colors
+  answersEl.innerHTML = "";
+  choices.forEach((c,i)=>{
+    const div = document.createElement('div');
+    div.className = `ans ${c.color}`;
+    div.innerHTML = `<span class="num">${i+1}.</span> <span class="txt">${c.text}</span>`;
+    answersEl.appendChild(div);
+  });
+  updateGridOffset();
+
+  // Determine target color from the correct choice after shuffling
+  const correctChoice = choices.find(c => c.isCorrect);
+  targetColor = correctChoice ? correctChoice.color : COLORS[0];
+
+  currentCorrectText = correctChoice ? correctChoice.text : "";
+
+
+  // Build an even-ish distribution of colors for the grid
+  const cells = buildColorBag(GRID_SIZE*GRID_SIZE, COLORS);
+  shuffleInPlace(cells);
+
+// Count how many cells match the target color for this round
+roundCorrectTotal = cells.filter(c => c === targetColor).length;
+roundCorrectHit   = 0;
+
+
+  // Render grid
+  cells.forEach(color=>{
+    const btn = document.createElement('button');
+    btn.className = `cell ${color}`;
+    btn.setAttribute('aria-label', `grid cell ${color}`);
+    btn.addEventListener('click', ()=>handleCellTap(btn, color));
+    gridEl.appendChild(btn);
+  });
+
+  // Timer
+  timeLeft = ROUND_TIME;
+  timeEl.textContent = timeLeft;
+  timer = setInterval(()=>{
+    timeLeft--;
+    timeEl.textContent = Math.max(0, timeLeft);
+    if (timeLeft <= 0){
+      clearInterval(timer);
+            locked = true;
+      ping('⏳ Time up!', 'info');
+      showBetweenAndAdvance();
+
+    }
+  }, 1000);
+}
+
+function handleCellTap(el, color){
+  if (locked || el.classList.contains('hit')) return;
+
+  el.classList.add('hit');
+  const right = (color === targetColor);
+  if (right){
+    score += CORRECT_POINTS;
+    correctSquares++;
+    scoreEl.textContent = score;
+    flashRight(el);
+    confettiBurst(el);
+    playTone('ok');
+    ping(`✅ +${CORRECT_POINTS}`, 'success');
+    roundCorrectHit++;
+if (roundCorrectHit >= roundCorrectTotal) {
+  // 🎉 All correct squares found — grant Speed Bonus and end the round early
+  clearInterval(timer);
+  locked = true;
+
+  const rawBonus   = Math.max(0, timeLeft) * SPEED_BONUS_PER_SECOND;
+  const bonus      = Math.min(rawBonus, SPEED_BONUS_CAP);
+  score += bonus;
+  scoreEl.textContent = score;
+
+  ping(`⚡ Speed Bonus! +${bonus}`, 'success');
+  // show the between-round popup instead of jumping immediately
+  setTimeout(()=>{ showBetweenAndAdvance(); }, 650);
+  return;
+
+}
+
+  } else {
+    score -= WRONG_POINTS;
+    scoreEl.textContent = score;
+         incorrectSquares++;
+    flashWrong(el);
+    playTone('bad');
+    ping(`❌ −${WRONG_POINTS}`, 'error');
+  }
+}
+
+/* ===== Helpers ===== */
+function showBetweenAndAdvance(){
+  // show the overlay with the correct answer
+  betweenText.textContent = currentCorrectText || "(not available)";
+  betweenOverlay.classList.add('show');
+
+  // simple countdown text
+  let left = BETWEEN_SECONDS;
+  betweenCountdown.textContent = `(next question in ${left}s)`;
+  if (betweenTimer) { clearInterval(betweenTimer); betweenTimer = null; }
+  betweenTimer = setInterval(()=>{
+    left--;
+    betweenCountdown.textContent = `(next question in ${Math.max(0,left)}s)`;
+    if (left <= 0){
+      clearInterval(betweenTimer);
+      betweenTimer = null;
+      betweenOverlay.classList.remove('show');
+      idx++;
+      if (idx >= QUESTIONS.length) endGame(); else nextQuestion();
+    }
+  }, 1000);
+}
+
+
+
+function updateGridOffset(){
+  // Measure how tall the question+answers section is
+  const h = qaWrap.offsetHeight || 0;
+  // Write that height into a CSS variable so the grid can move down
+  screen.style.setProperty('--qaH', h + 'px');
+}
+
+
+
+function buildColorBag(total, palette){
+  // Distribute colors as evenly as possible
+  const base = Math.floor(total / palette.length);
+  let remainder = total % palette.length;
+  const bag = [];
+  palette.forEach(col=>{
+    const count = base + (remainder > 0 ? 1 : 0);
+    for (let i=0;i<count;i++) bag.push(col);
+    remainder--;
+  });
+  return bag;
+}
+function shuffleInPlace(arr){
+  for (let i = arr.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
+
+function flashRight(el){
+  el.classList.add('rightNow');
+  setTimeout(()=> el.classList.remove('rightNow'), 220);
+}
+function flashWrong(el){
+  el.classList.add('wrongNow');
+  setTimeout(()=> el.classList.remove('wrongNow'), 220);
+}
+
+function ping(msg, kind='info'){
+  toast.textContent = msg;
+  toast.className = 'toast ' + (kind || 'info');
+  void toast.offsetWidth; // restart transition
+  toast.classList.add('show');
+  setTimeout(()=> toast.classList.remove('show'), 850);
+}
+
+function endGame(){
+  qaWrap.style.display = 'none';
+finalEl.innerHTML = `
+  <div class="finalStats">
+    <div class="statBadge score">🏆 Score: ${score}</div>
+    <div class="statBadge correct">✅ Correct squares: ${correctSquares}</div>
+    <div class="statBadge correct" style="background:#ef4444">❌ Incorrect squares: ${incorrectSquares}</div>
+  </div>
+`;
+
+  overOverlay.classList.add('show');
+}
+
+/* Tiny confetti burst at click point */
+function confettiBurst(el){
+  const rect = el.getBoundingClientRect();
+  const cx = rect.left + rect.width/2;
+  const cy = rect.top + rect.height/2;
+  const pieces = ['🎉','✨','⭐️','🎊'];
+  for (let i=0;i<4;i++){
+    const s = document.createElement('div');
+    s.className = 'confetti';
+    s.textContent = pieces[Math.floor(Math.random()*pieces.length)];
+    s.style.left = (cx + (Math.random()*60 - 30)) + 'px';
+    s.style.top  = (cy + (Math.random()*16 - 8)) + 'px';
+    document.body.appendChild(s);
+    s.addEventListener('animationend', ()=> s.remove(), { once:true });
+  }
+}
+
+/* ---- Beeps with Web Audio (no files) ---- */
+function playTone(type='ok'){
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return;
+  playTone.ctx = playTone.ctx || new AC();
+  const ctx = playTone.ctx;
+
+  if (type === 'ok') {
+    // 🎯 Randomly pick between 3 pop variants
+    const pops = ['short', 'soft', 'plucky'];
+    const choice = pops[Math.floor(Math.random() * pops.length)];
+    if (choice === 'short') return pop({type:'sine', f0:900, f1:650, dur:0.09, gain:0.8});
+    if (choice === 'soft')  return pop({type:'triangle', f0:520, f1:320, dur:0.12, gain:0.7, lowpass:1200});
+    if (choice === 'plucky')return pop({type:'sine', f0:500, f1:950, dur:0.10, gain:0.7});
+  }
+
+  // fallback tones
+  if (type === 'bad'){ return tone({type:'sawtooth', f:220, dur:0.18, g:0.28}); }
+
+  // default correct beep
+  return tone({type:'sine', f:880, dur:0.14, g:0.28});
+
+  // === helper mini-functions ===
+  function tone({type='sine', f=880, dur=0.14, g=0.28}){
+    const o = ctx.createOscillator();
+    const V = ctx.createGain();
+    o.type = type; o.frequency.value = f;
+    V.gain.setValueAtTime(0.0001, ctx.currentTime);
+    V.gain.exponentialRampToValueAtTime(g, ctx.currentTime+0.01);
+    V.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+dur);
+    o.connect(V); V.connect(ctx.destination);
+    o.start(); o.stop(ctx.currentTime + dur + 0.02);
+  }
+
+  function pop({type='sine', f0=900, f1=600, dur=0.1, gain=0.8, lowpass=null}={}){
+    const o = ctx.createOscillator();
+    const V = ctx.createGain();
+    let out = V;
+    o.type = type;
+    o.frequency.setValueAtTime(f0, ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(Math.max(40,f1), ctx.currentTime + dur*0.85);
+    V.gain.setValueAtTime(0.0001, ctx.currentTime);
+    V.gain.exponentialRampToValueAtTime(gain, ctx.currentTime + 0.008);
+    V.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
+    if (lowpass){
+      const lp = ctx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.setValueAtTime(lowpass, ctx.currentTime);
+      V.connect(lp); out = lp;
+    }
+    o.connect(V); out.connect(ctx.destination);
+    o.start(); o.stop(ctx.currentTime + dur + 0.02);
+  }
+}
+
+
+/* Create/resume + iOS unlock */
+function ensureAudioReady(){
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (!AC) return;
+  playTone.ctx = playTone.ctx || new AC();
+  const ctx = playTone.ctx;
+  if (ctx.state === 'suspended') ctx.resume();
+  if (!ensureAudioReady.unlocked){
+    try{
+      const buffer = ctx.createBuffer(1, 1, 22050);
+      const src = ctx.createBufferSource();
+      src.buffer = buffer; src.connect(ctx.destination); src.start(0);
+      ensureAudioReady.unlocked = true;
+    }catch(e){}
+  }
+}
+</script>
+</body>
+</html>
