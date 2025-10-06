@@ -294,6 +294,16 @@ box-sizing: border-box; /* you already have this — keep it */
   transition: left 900ms linear, top 900ms linear, transform 200ms ease, opacity 200ms ease;
   will-change: left, top, transform, opacity;
   text-shadow: 0 1px 0 #fff, 0 0 6px rgba(0,0,0,.25); /* readability */
+  /* bigger, finger-friendly hit target */
+  display: inline-grid;
+  place-items: center;
+  padding: 12px;              /* invisible clickable cushion */
+  min-width: 56px;            /* Apple/Google tap target guidance */
+  min-height: 56px;
+  border-radius: 999px;       /* round hit area */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+
 }
 .bonus:active{ transform: scale(.9) }
 .bonus.hide{ opacity:0; transform: scale(.6) }
@@ -776,6 +786,26 @@ function spawnBonus(){
   el.textContent = '⭐️';
   screen.appendChild(el);
   bonusEl = el;
+  // Let the star pause under a finger (helps taps land)
+  const pauseStar = () => {
+    if (lock || !bonusEl) return;
+    if (bonusTimer) { clearInterval(bonusTimer); bonusTimer = null; }
+    // freeze where it is (keep current position; no new moves)
+    el.style.transition = 'none';
+  };
+  const resumeStar = () => {
+    if (lock || !bonusEl) return;
+    // restore smooth movement and resume wandering
+    el.style.transition = 'left 900ms linear, top 900ms linear, transform 200ms ease, opacity 200ms ease';
+    move();
+    bonusTimer = setInterval(move, 1600 + rand(0, 900)); // a bit more dwell
+  };
+
+  // Pointer + touch fallbacks (older iPads)
+  el.addEventListener('pointerdown', pauseStar);
+  el.addEventListener('pointerup',   resumeStar);
+  el.addEventListener('touchstart',  pauseStar, { passive: true });
+  el.addEventListener('touchend',    resumeStar);
 
   // place initial position
   const p0 = randomInsideScreen();
@@ -787,7 +817,8 @@ function spawnBonus(){
     setBonusPosition(p.x, p.y);
   };
   move(); // first nudge
-  bonusTimer = setInterval(move, 1000 + rand(0, 800));
+  bonusTimer = setInterval(move, 1600 + rand(0, 900));
+
 
   const claimBonus = (e) => {
     if (e) { e.stopPropagation(); e.preventDefault && e.preventDefault(); }
