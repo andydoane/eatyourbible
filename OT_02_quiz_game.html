@@ -829,58 +829,77 @@ function spawnBonus(){
   el.textContent = '⭐️';
   screen.appendChild(el);
   bonusEl = el;
-  // Let the star pause under a finger (helps taps land)
+
+  // Freeze the star exactly where it is (prevents jump on mobile)
+  const freezeBonusPosition = () => {
+    if (!bonusEl) return;
+    const pr = screen.getBoundingClientRect();
+    const rr = bonusEl.getBoundingClientRect();
+    const x = rr.left - pr.left;
+    const y = rr.top  - pr.top;
+
+    // Write exact pixels back, THEN kill transitions next frame
+    bonusEl.style.left = x + 'px';
+    bonusEl.style.top  = y + 'px';
+    requestAnimationFrame(() => {
+      if (!bonusEl) return;
+      bonusEl.style.transition = 'none';
+    });
+  };
+
   const pauseStar = () => {
     if (lock || !bonusEl) return;
     if (bonusTimer) { clearInterval(bonusTimer); bonusTimer = null; }
-    // freeze where it is (keep current position; no new moves)
-    el.style.transition = 'none';
+    freezeBonusPosition(); // <- critical: no snap to end position
   };
+
   const resumeStar = () => {
     if (lock || !bonusEl) return;
-    // restore smooth movement and resume wandering
-    el.style.transition = 'left 900ms linear, top 900ms linear, transform 200ms ease, opacity 200ms ease';
+    bonusEl.style.transition = 'left 900ms linear, top 900ms linear, transform 200ms ease, opacity 200ms ease';
     move();
-    bonusTimer = setInterval(move, 1600 + rand(0, 900)); // a bit more dwell
+    bonusTimer = setInterval(move, 1600 + rand(0, 900));
   };
 
-  // Pointer + touch fallbacks (older iPads)
-  el.addEventListener('pointerdown', pauseStar);
-  el.addEventListener('pointerup',   resumeStar);
-  el.addEventListener('touchstart',  pauseStar, { passive: true });
-  el.addEventListener('touchend',    resumeStar);
-
-  // place initial position
+  // initial placement
   const p0 = randomInsideScreen();
   setBonusPosition(p0.x, p0.y);
 
-  // move periodically
+  // gentle wandering
   const move = () => {
     const p = randomInsideScreen();
     setBonusPosition(p.x, p.y);
   };
-  move(); // first nudge
+  move();
   bonusTimer = setInterval(move, 1600 + rand(0, 900));
 
-
+  // claim logic (idempotent)
   const claimBonus = (e) => {
     if (e) { e.stopPropagation(); e.preventDefault && e.preventDefault(); }
     if (lock || bonusPending > 0 || !bonusEl) return;
-bonusPending = BONUS_POINTS;
-ping('⭐️ Bonus +' + BONUS_POINTS + '!', 'success');
-  playTone('bonus');                 // ← add this line
-
+    bonusPending = BONUS_POINTS;
+    ping('⭐️ Bonus +' + BONUS_POINTS + '!', 'success');
+    playTone('bonus');
     el.classList.add('hide');
     setTimeout(clearBonus, 220);
   };
 
-  el.addEventListener('click', claimBonus);
-  el.addEventListener('keydown', (e)=>{
-    if(e.key === 'Enter' || e.key === ' '){
-      claimBonus(e);
-    }
+  // MOBILE-RELIABLE: claim on pointerdown and capture the pointer
+  el.addEventListener('pointerdown', (e) => {
+    try { e.target.setPointerCapture && e.target.setPointerCapture(e.pointerId); } catch(_) {}
+    pauseStar();    // freeze exactly where it is
+    claimBonus(e);  // award instantly on touch
   });
+
+  // keep keyboard accessibility
+  el.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') claimBonus(e);
+  });
+
+  // optional: let it wander again after the press ends
+  el.addEventListener('pointerup',     resumeStar);
+  el.addEventListener('pointercancel', resumeStar);
 }
+
 
 function setBonusPosition(x, y){
   if(!bonusEl) return;
