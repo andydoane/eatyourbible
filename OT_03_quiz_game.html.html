@@ -183,6 +183,42 @@ header{
 .statBadge.score   { background:#16a34a } /* green */
 .statBadge.correct { background:#2563eb; animation-delay:.08s } /* blue */
 
+/* Purple Bonus button to match the badges */
+#bonusBtn{
+  background:#7e22ce;                 /* rich purple */
+  color:#fff;
+  border:none;
+  border-radius:16px;
+  font-weight:800;
+  padding:12px 20px;
+  font-size:clamp(18px,3vw,24px);
+  box-shadow:0 10px 30px rgba(0,0,0,.22);
+  transition:transform .1s ease;
+}
+#bonusBtn:hover{ transform:scale(1.05); }
+
+
+/* === Bonus slot machine === */
+.bonusWrap{ display:grid; gap:14px; place-items:center; }
+.reels{
+  display:grid; grid-template-columns: repeat(3, 1fr);
+  gap:12px; width:min(420px, 92vw);
+}
+.reel{
+  background:#fff; color:#111; border:2px solid #ddd;
+  border-radius:16px; box-shadow:0 6px 18px rgba(0,0,0,.10);
+  cursor:pointer; padding:16px; height:100px;
+  display:grid; place-items:center;
+  font-size: clamp(28px, 8vw, 48px);
+  user-select:none; -webkit-tap-highlight-color: transparent;
+  transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
+}
+.reel:active{ transform: scale(.96) }
+.reel.spinning{ border-color:#a0c4ff; box-shadow:0 0 0 6px rgba(37,99,235,.18), 0 6px 18px rgba(0,0,0,.10) }
+.reel.stopped{ border-color:#9be29b; box-shadow:0 0 0 6px rgba(22,163,74,.18), 0 6px 18px rgba(0,0,0,.10) }
+.bonusMsg{ font-weight:800; font-size:clamp(16px, 2.6vw, 20px); }
+
+
 /* Between-screen answer card */
 .betweenAnswer{
   font-size: clamp(18px, 2.6vw, 28px);
@@ -283,11 +319,36 @@ header{
         </div>
       </section>
 
+<!-- Bonus Slot Machine -->
+<section class="overlay" id="bonus">
+  <div class="stack">
+    <div style="font-size:34px">🎰 Bonus Round</div>
+    <div class="small">Tap each reel to stop it. Match 3 = <b>x2 score</b>!</div>
+
+    <div class="bonusWrap">
+      <div class="reels">
+        <button class="reel" id="reel0" aria-label="reel 1">🍎</button>
+        <button class="reel" id="reel1" aria-label="reel 2">⭐️</button>
+        <button class="reel" id="reel2" aria-label="reel 3">🎈</button>
+      </div>
+      <div class="bonusMsg" id="bonusMsg">Tap a reel to stop it…</div>
+    </div>
+
+    <div style="display:flex; gap:10px">
+      <button class="btn secondary" id="bonusSkip">Skip</button>
+      <button class="btn" id="bonusBack" style="display:none">Back to Results</button>
+    </div>
+  </div>
+</section>
+
+
       <!-- Game over -->
       <section class="overlay" id="over">
         <div class="stack">
           <div style="font-size:34px">🏁 Game Over</div>
           <div id="final"></div>
+          <button class="btn" id="bonusBtn">Bonus Round 🎰</button>
+
           <button class="btn" id="againBtn">Play Again</button>
         </div>
       </section>
@@ -395,6 +456,8 @@ const QUESTIONS = [
 ];
 // ===== END OF QUESTIONS =====
 
+
+
 /* ===== CONFIG ===== */
 const GRID_SIZE = 6;          // 6 x 6 
 const ROUND_TIME = 30;         // seconds per question
@@ -406,6 +469,21 @@ const SPEED_BONUS_PER_SECOND = 1;
 const SPEED_BONUS_CAP = Infinity;
 
 /* ===== STATE & ELEMENTS ===== */
+// --- Bonus round state ---
+const bonusOverlay = document.getElementById('bonus');
+const bonusMsg     = document.getElementById('bonusMsg');
+const bonusSkip    = document.getElementById('bonusSkip');
+const bonusBack    = document.getElementById('bonusBack');
+const reelEls      = [document.getElementById('reel0'), document.getElementById('reel1'), document.getElementById('reel2')];
+
+const BONUS_EMOJIS = ['🍎','⭐️','💎','🍀','🔥','🎈'];
+let reelTimers = [null,null,null];
+let reelStopped = [false,false,false];
+let reelValues  = ['','',''];
+let bonusApplied = false;   // prevent applying x2 more than once
+
+
+
 let idx = 0, score = 0, correctSquares = 0, timeLeft = 0, timer = null;
 let incorrectSquares = 0;
 
@@ -455,6 +533,29 @@ if (portraitOkBtn) {
 
 
 document.getElementById('againBtn').addEventListener('click', startGame);
+
+// Open bonus round from Game Over
+const bonusBtn = document.getElementById('bonusBtn');
+if (bonusBtn){
+  bonusBtn.addEventListener('click', openBonus);
+}
+
+// Bonus controls
+if (bonusSkip){ bonusSkip.addEventListener('click', () => {
+  bonusOverlay.classList.remove('show');
+  overOverlay.classList.add('show');
+});}
+if (bonusBack){ bonusBack.addEventListener('click', () => {
+  bonusOverlay.classList.remove('show');
+  overOverlay.classList.add('show');
+});}
+
+// Tap to stop each reel
+reelEls.forEach((el, i) => {
+  el.addEventListener('click', () => stopReel(i));
+});
+
+
 document.getElementById('howBtn').addEventListener('click', ()=>{ startOverlay.classList.remove('show'); howOverlay.classList.add('show'); });
 document.getElementById('backBtn').addEventListener('click', ()=>{ howOverlay.classList.remove('show'); startOverlay.classList.add('show'); });
 
@@ -586,6 +687,89 @@ function handleCellTap(el, emo){
   }
 }
 
+
+// --- Bonus round functions ---
+function openBonus(){
+  overOverlay.classList.remove('show');
+  bonusOverlay.classList.add('show');
+  bonusMsg.textContent = 'Tap each reel to stop it. Match 3 = x2 score!';
+  bonusBack.style.display = 'none';
+  bonusApplied = false;
+
+  // reset state
+  reelStopped = [false,false,false];
+  reelValues  = ['','',''];
+
+  // start spinning
+  startReels();
+}
+
+function startReels(){
+  reelEls.forEach((el, i) => {
+    el.classList.add('spinning');
+    if (reelTimers[i]) clearInterval(reelTimers[i]);
+let idx = 0;  // index to step through emojis in order
+reelTimers[i] = setInterval(() => {
+  el.textContent = BONUS_EMOJIS[idx];
+  idx = (idx + 1) % BONUS_EMOJIS.length;  // loop back to start
+}, 180 + i*30);
+
+
+  });
+}
+
+function stopReel(i){
+  if (reelStopped[i]) return;
+  reelStopped[i] = true;
+  const el = reelEls[i];
+  el.classList.remove('spinning');
+  el.classList.add('stopped');
+
+  clearInterval(reelTimers[i]);
+  reelTimers[i] = null;
+  reelValues[i] = el.textContent;
+
+  if (reelStopped.every(Boolean)){
+    finishBonus();
+  }
+}
+
+function finishBonus(){
+  const [a,b,c] = reelValues;
+  if (a && a === b && b === c){
+    // JACKPOT! x2 total score (once)
+    if (!bonusApplied){
+      bonusApplied = true;
+      const before = score;
+      score = score * 2;
+      scoreEl.textContent = score;
+      bonusMsg.textContent = `🎉 JACKPOT! ${a}${b}${c}  — Score doubled: ${before} → ${score}`;
+    } else {
+      bonusMsg.textContent = `🎉 JACKPOT! ${a}${b}${c}`;
+    }
+  } else {
+    bonusMsg.textContent = `No match. Final score: ${score}`;
+  }
+
+  // allow returning to results
+  bonusBack.style.display = 'inline-block';
+  // refresh the results panel so numbers match
+  updateFinalStats();
+}
+
+// Rebuild the Game Over stats so they reflect any bonus change
+function updateFinalStats(){
+  finalEl.innerHTML = `
+    <div class="finalStats">
+      <div class="statBadge score">🏆 Score: ${score}</div>
+      <div class="statBadge correct">✅ Correct taps: ${correctSquares}</div>
+      <div class="statBadge correct" style="background:#ef4444">❌ Incorrect taps: ${incorrectSquares}</div>
+    </div>
+  `;
+}
+
+
+
 /* ===== Helpers ===== */
 function updateGridOffset(){
   // Measure the current height of the question + answers block
@@ -655,13 +839,7 @@ function ping(msg, kind='info'){
 
 function endGame(){
   qaWrap.style.display = 'none';
-  finalEl.innerHTML = `
-    <div class="finalStats">
-      <div class="statBadge score">🏆 Score: ${score}</div>
-      <div class="statBadge correct">✅ Correct taps: ${correctSquares}</div>
-      <div class="statBadge correct" style="background:#ef4444">❌ Incorrect taps: ${incorrectSquares}</div>
-    </div>
-  `;
+  updateFinalStats();             // build stats in one place
   overOverlay.classList.add('show');
 }
 
@@ -747,6 +925,20 @@ function ensureAudioReady(){
     }catch(e){}
   }
 }
+
+
+// --- Secret debug key: press "G" to jump straight to Game Over ---
+window.addEventListener('keydown', (e)=>{
+  if(e.key.toLowerCase() === 'g'){
+    clearInterval(timer);
+    qaWrap.style.display = 'none';
+    updateFinalStats();
+    overOverlay.classList.add('show');
+    console.log('💀 Secret shortcut: jumped to Game Over screen.');
+  }
+});
+
+
 </script>
 </body>
 </html>
