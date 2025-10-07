@@ -56,6 +56,13 @@ header{
   margin:auto;
 }
 
+/* Spacers between question, answers, and grid */
+.spacer{
+  width:100%;
+  height:clamp(6px, 1.5vh, 18px);
+}
+.spacer-top{ height:clamp(10px, 2vh, 24px); }
+.spacer-bottom{ height:clamp(14px, 3vh, 32px); }
 
 
 
@@ -99,9 +106,11 @@ header{
   justify-content:center;
   align-items:flex-start;
   padding:12px 16px;
+  padding-top: calc(var(--qaH, 0px) + 12px); /* pushes grid below QA */
   box-sizing:border-box;
   flex-direction:column;
 }
+
 
 .grid{
   display:grid;
@@ -210,10 +219,13 @@ header{
 
     <main class="screen" id="screen" aria-live="polite">
       <!-- Question / Answers -->
-      <div class="qa" id="qa" style="display:none">
-        <div class="question" id="question">Loading…</div>
-        <div class="answers" id="answers"></div>
-      </div>
+<div class="qa" id="qa" style="display:none">
+  <div class="question" id="question">Loading…</div>
+  <div class="spacer spacer-top"></div>
+  <div class="answers" id="answers"></div>
+  <div class="spacer spacer-bottom"></div>
+</div>
+
 
       <!-- Grid -->
       <div class="gridWrap">
@@ -604,10 +616,6 @@ function showBetweenAndAdvance(){
   }, 1000);
 }
 
-function updateGridOffset(){
-  const h = qaWrap.offsetHeight || 0;
-  screen.style.setProperty('--qaH', h + 'px');
-}
 
 function buildTokenBag(total, palette){
   // Distribute tokens (emojis) as evenly as possible
