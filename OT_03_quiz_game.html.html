@@ -187,8 +187,7 @@ header{
 
 
 
-<section class="overlay" id="start">
-
+      <section class="overlay show" id="start">
         <div class="stack">
           <div style="font-size:42px">😀 Emoji Hunt Quiz</div>
           <div class="small">Tap the emojis that match the <b>correct answer’s emoji</b> before time runs out.</div>
@@ -412,22 +411,7 @@ if (rotateOkBtn) {
 
 
 // Run on load and on resize
-window.addEventListener('load', () => {
-  // Handheld devices start on the Portrait screen (rotateNotice)
-  const isHandheld = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
-  const rotateNotice = document.getElementById('rotateNotice');
-  const startOverlay = document.getElementById('start');
-
-  if (isHandheld) {
-    rotateNotice.classList.add('show');   // show Portrait screen FIRST
-    startOverlay.classList.remove('show'); // keep Title hidden
-  } else {
-    // Desktop/laptop: skip Portrait screen and show Title immediately
-    rotateNotice.classList.remove('show');
-    startOverlay.classList.add('show');
-  }
-});
-
+window.addEventListener('load', checkOrientation);
 window.addEventListener('resize', checkOrientation);
 
 
