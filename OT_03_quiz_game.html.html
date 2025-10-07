@@ -47,7 +47,20 @@ header{
   line-height:1.25;
 }
 
-.answers{ display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:10px; width:100%; }
+.answers{
+  display:grid;
+  grid-template-columns:repeat(2, minmax(0,1fr));  /* 2 columns instead of 4 */
+  gap:12px 14px;                                  /* extra vertical spacing */
+  width:100%;
+  max-width:640px;                                /* keeps it tidy on large screens */
+  margin:auto;
+}
+
+@media (max-width: 480px){
+  .answers{ grid-template-columns:repeat(1, 1fr); }  /* stack on tiny phones */
+}
+
+
 /* === Emoji left, text right (single line) === */
 .ans{
   display:flex;
@@ -82,13 +95,31 @@ header{
 
 /* Grid */
 .gridWrap{
-  position:absolute; inset:0; display:grid; place-items:center; padding:16px;
-  padding-top: calc(var(--qaH, 0px) + 12px);
+  position:absolute;
+  inset:0;
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  padding:12px 16px;
+  box-sizing:border-box;
+  flex-direction:column;
 }
+
 .grid{
-  display:grid; grid-template-columns:repeat(6, 1fr); gap:8px;
-  width:min(880px, 92vw);
+  display:grid;
+  grid-template-columns:repeat(6, 1fr);
+  gap:6px;
+  width:min(90vw, 600px);
+  aspect-ratio:1 / 1;            /* keeps it square */
+  margin:auto;
+  flex-shrink:1;
 }
+
+@media (max-height:700px){
+  .grid{ width:min(88vw, 520px); gap:4px; }
+}
+
+
 .cell{
   /* square emoji tile */
   display:grid; place-items:center;
