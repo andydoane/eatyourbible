@@ -116,7 +116,8 @@ header{
   display:grid;
   grid-template-columns:repeat(6, 1fr);
   gap:6px;
-  width:min(90vw, 600px);
+  width:min(90vw, var(--gridH, 600px));
+
   aspect-ratio:1 / 1;            /* keeps it square */
   margin:auto;
   flex-shrink:1;
@@ -772,11 +773,21 @@ function updateFinalStats(){
 
 /* ===== Helpers ===== */
 function updateGridOffset(){
-  // Measure the current height of the question + answers block
-  const h = qaWrap.offsetHeight || 0;
-  // Write it to a CSS variable used by .gridWrap padding-top
-  screen.style.setProperty('--qaH', h + 'px');
+  // 1) Push the grid below the QA area
+  const qaH = qaWrap.offsetHeight || 0;
+  screen.style.setProperty('--qaH', qaH + 'px');
+
+  // 2) Fit the grid into the remaining height of the screen
+  // screen is the main play area below the header
+  const screenH = screen.clientHeight || window.innerHeight;
+  // padding/margins inside gridWrap (12 top/bottom already in your CSS)
+  const extra = 24;
+  const available = Math.max(200, screenH - qaH - extra); // pixels we can use for a square
+  // Clamp so it doesn’t get comically huge on big monitors
+  const gridPx = Math.min(available, 560);
+  screen.style.setProperty('--gridH', gridPx + 'px');
 }
+
 
 
 
