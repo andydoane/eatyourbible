@@ -63,12 +63,9 @@ header{
   padding-top: calc(var(--qaH) + 12px);
 }
 .grid{
-  display:grid;
-  gap:8px;
+  display:grid; grid-template-columns:repeat(6, 1fr); gap:8px;
   width:min(880px, 92vw);
-  grid-template-columns: repeat(var(--grid-cols, 10), 1fr);
 }
-
 .cell{
   /* square emoji tile */
   display:grid; place-items:center;
@@ -175,15 +172,6 @@ header{
       <div class="toast" id="toast" role="status" aria-live="assertive"></div>
 
       <!-- Start -->
-      <!-- Rotate Notice (for mobile landscape) -->
-    <section class="overlay" id="rotateNotice">
-        <div class="stack">
-        <div style="font-size:42px">📱 Please Rotate Your Screen</div>
-        <div class="small">This game works best in <b>vertical (portrait)</b> mode.</div>
-      </div>
-    </section>
-
-
       <section class="overlay show" id="start">
         <div class="stack">
           <div style="font-size:42px">😀 Emoji Hunt Quiz</div>
@@ -331,14 +319,7 @@ const QUESTIONS = [
 // ===== END OF QUESTIONS =====
 
 /* ===== CONFIG ===== */
-// Dynamically adjust grid size based on screen height
-const GRID_SIZE = window.innerHeight > 850 ? 10 :
-                  window.innerHeight > 700 ? 8 : 6;  // 10x10 desktop, 8x8 tablet, 6x6 phone
-
-// Update grid columns in CSS to match GRID_SIZE
-document.documentElement.style.setProperty('--grid-cols', GRID_SIZE);
-
-
+const GRID_SIZE = 6;          // 6 x 6 
 const ROUND_TIME = 30;         // seconds per question
 const CORRECT_POINTS = 3;
 const WRONG_POINTS   = 1;      // deducted
@@ -380,27 +361,6 @@ const scoreEl    = document.getElementById('score');
 const timeEl     = document.getElementById('time');
 
 document.getElementById('startBtn').addEventListener('click', startGame);
-
-// Detect landscape orientation and show rotate screen
-// Detect landscape orientation, but only show on small devices
-function checkOrientation() {
-  const rotateNotice = document.getElementById('rotateNotice');
-  const isSmallScreen = window.innerWidth < 900; // treat under 900px as mobile/tablet
-  const isLandscape = window.innerWidth > window.innerHeight;
-
-  if (isSmallScreen && isLandscape) {
-    rotateNotice.classList.add('show');
-  } else {
-    rotateNotice.classList.remove('show');
-  }
-}
-
-
-// Run on load and on resize
-window.addEventListener('load', checkOrientation);
-window.addEventListener('resize', checkOrientation);
-
-
 document.getElementById('againBtn').addEventListener('click', startGame);
 document.getElementById('howBtn').addEventListener('click', ()=>{ startOverlay.classList.remove('show'); howOverlay.classList.add('show'); });
 document.getElementById('backBtn').addEventListener('click', ()=>{ howOverlay.classList.remove('show'); startOverlay.classList.add('show'); });
