@@ -63,9 +63,12 @@ header{
   padding-top: calc(var(--qaH) + 12px);
 }
 .grid{
-  display:grid; grid-template-columns:repeat(6, 1fr); gap:8px;
+  display:grid;
+  gap:8px;
   width:min(880px, 92vw);
+  grid-template-columns: repeat(var(--grid-cols, 10), 1fr);
 }
+
 .cell{
   /* square emoji tile */
   display:grid; place-items:center;
@@ -172,7 +175,20 @@ header{
       <div class="toast" id="toast" role="status" aria-live="assertive"></div>
 
       <!-- Start -->
-      <section class="overlay show" id="start">
+      <!-- Rotate Notice (for mobile landscape) -->
+<!-- Rotate Notice (for mobile landscape) -->
+<section class="overlay" id="rotateNotice">
+  <div class="stack">
+    <div style="font-size:42px">📱 Use Vertical Mode</div>
+    <div class="small">If using a phone or tablet, this game works best in <b>vertical (portrait)</b> mode.</div>
+    <button class="btn" id="rotateOkBtn">OK</button>
+  </div>
+</section>
+
+
+
+<section class="overlay" id="start">
+
         <div class="stack">
           <div style="font-size:42px">😀 Emoji Hunt Quiz</div>
           <div class="small">Tap the emojis that match the <b>correct answer’s emoji</b> before time runs out.</div>
@@ -319,7 +335,14 @@ const QUESTIONS = [
 // ===== END OF QUESTIONS =====
 
 /* ===== CONFIG ===== */
-const GRID_SIZE = 6;          // 6 x 6 
+// Dynamically adjust grid size based on screen height
+const GRID_SIZE = window.innerHeight > 850 ? 10 :
+                  window.innerHeight > 700 ? 8 : 6;  // 10x10 desktop, 8x8 tablet, 6x6 phone
+
+// Update grid columns in CSS to match GRID_SIZE
+document.documentElement.style.setProperty('--grid-cols', GRID_SIZE);
+
+
 const ROUND_TIME = 30;         // seconds per question
 const CORRECT_POINTS = 3;
 const WRONG_POINTS   = 1;      // deducted
@@ -361,6 +384,53 @@ const scoreEl    = document.getElementById('score');
 const timeEl     = document.getElementById('time');
 
 document.getElementById('startBtn').addEventListener('click', startGame);
+
+// Detect landscape orientation — show only on touch devices (phones/tablets)
+function checkOrientation() {
+  const rotateNotice = document.getElementById('rotateNotice');
+  const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  const isLandscape = window.innerWidth > window.innerHeight;
+
+  if (isTouchDevice && isLandscape) {
+    rotateNotice.classList.add('show');
+  } else {
+    rotateNotice.classList.remove('show');
+  }
+}
+
+
+const rotateNotice = document.getElementById('rotateNotice');
+
+if (rotateOkBtn) {
+  rotateOkBtn.addEventListener('click', () => {
+    rotateNotice.classList.remove('show');  // hide the rotate screen
+    startOverlay.classList.add('show');     // show the title/start screen
+  });
+}
+
+
+
+
+// Run on load and on resize
+window.addEventListener('load', () => {
+  // Handheld devices start on the Portrait screen (rotateNotice)
+  const isHandheld = window.matchMedia("(hover: none) and (pointer: coarse)").matches;
+  const rotateNotice = document.getElementById('rotateNotice');
+  const startOverlay = document.getElementById('start');
+
+  if (isHandheld) {
+    rotateNotice.classList.add('show');   // show Portrait screen FIRST
+    startOverlay.classList.remove('show'); // keep Title hidden
+  } else {
+    // Desktop/laptop: skip Portrait screen and show Title immediately
+    rotateNotice.classList.remove('show');
+    startOverlay.classList.add('show');
+  }
+});
+
+window.addEventListener('resize', checkOrientation);
+
+
 document.getElementById('againBtn').addEventListener('click', startGame);
 document.getElementById('howBtn').addEventListener('click', ()=>{ startOverlay.classList.remove('show'); howOverlay.classList.add('show'); });
 document.getElementById('backBtn').addEventListener('click', ()=>{ howOverlay.classList.remove('show'); startOverlay.classList.add('show'); });
