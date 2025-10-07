@@ -25,10 +25,43 @@ body{
 }
 
 header{
+
   display:flex; gap:12px; align-items:center; justify-content:space-between;
   padding:12px 16px; background:var(--panel); box-shadow:0 2px 10px rgba(0,0,0,.06);
   position:sticky; top:0; z-index:10;
 }
+
+/* === Compact header for small screens === */
+@media (max-width: 420px){
+  header{
+    padding:8px 10px;                 /* smaller padding */
+  }
+  .hud{
+    gap:8px;
+    flex-wrap:nowrap;                  /* keep it on one line */
+  }
+  .pill{
+    padding:4px 8px;                   /* smaller chips */
+    font-size:12px;                    /* smaller text */
+    line-height:1;                     /* tighter */
+    border-radius:999px;
+    white-space:nowrap;                /* prevent wrapping inside the chip */
+  }
+}
+
+/* Extra-tight for very narrow phones (e.g., iPhone mini) */
+@media (max-width: 360px){
+  header{
+    padding:6px 8px;
+  }
+  .hud{ gap:6px; }
+  .pill{
+    padding:3px 6px;
+    font-size:11px;
+  }
+}
+
+
 .hud{display:flex; gap:16px; align-items:center; flex-wrap:wrap}
 .pill{background:var(--muted); padding:6px 10px; border-radius:999px; font-weight:700}
 .screen{ flex:1; position:relative; overflow:hidden; border-top:1px solid #eee;
