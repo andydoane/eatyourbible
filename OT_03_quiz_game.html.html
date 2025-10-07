@@ -17,7 +17,12 @@ body{
   font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
   display:flex; justify-content:center;
 }
-.game{ width:min(1000px,100vw); height:100dvh; display:flex; flex-direction:column; }
+.game{
+  width:min(1000px,100vw);
+  height:100vh;   /* fallback */
+  height:100dvh;  /* dynamic viewport height on modern browsers */
+  display:flex; flex-direction:column;
+}
 
 header{
   display:flex; gap:12px; align-items:center; justify-content:space-between;
@@ -124,8 +129,17 @@ header{
 }
 
 @media (max-height:700px){
-  .grid{ width:min(88vw, 520px); gap:4px; }
+  .answers{ gap:10px; }
+  .ans{ padding:8px 10px; }
+  .ans .emoji{ font-size:1.4em; }
+  .ans .txt{ font-size:clamp(12px,3.4vw,15px); line-height:1.15; }
+
+  .spacer-top{ height:10px; }
+  .spacer-bottom{ height:12px; }
+
+  .grid{ gap:4px; }  /* packs the 6 rows a bit tighter */
 }
+
 
 
 .cell{
@@ -560,7 +574,6 @@ reelEls.forEach((el, i) => {
 document.getElementById('howBtn').addEventListener('click', ()=>{ startOverlay.classList.remove('show'); howOverlay.classList.add('show'); });
 document.getElementById('backBtn').addEventListener('click', ()=>{ howOverlay.classList.remove('show'); startOverlay.classList.add('show'); });
 
-window.addEventListener('resize', updateGridOffset);
 
 ['startBtn','againBtn','howBtn','backBtn'].forEach(id=>{
   const el = document.getElementById(id);
@@ -773,20 +786,22 @@ function updateFinalStats(){
 
 /* ===== Helpers ===== */
 function updateGridOffset(){
-  // 1) Push the grid below the QA area
-  const qaH = qaWrap.offsetHeight || 0;
-  screen.style.setProperty('--qaH', qaH + 'px');
+  // Where is the QA area, and how tall is it?
+  const qaTop = qaWrap.offsetTop || 0;                 // includes the 8–10px "top:" offset
+  const qaH   = qaWrap.offsetHeight || 0;
+  const qaBottom = qaTop + qaH;
 
-  // 2) Fit the grid into the remaining height of the screen
-  // screen is the main play area below the header
+  // 1) Push the grid below the visible bottom of the QA area
+  screen.style.setProperty('--qaH', `${qaBottom + 8}px`); // +8px breathing room
+
+  // 2) Limit grid size to the remaining vertical space so all 6 rows fit
   const screenH = screen.clientHeight || window.innerHeight;
-  // padding/margins inside gridWrap (12 top/bottom already in your CSS)
-  const extra = 24;
-  const available = Math.max(200, screenH - qaH - extra); // pixels we can use for a square
-  // Clamp so it doesn’t get comically huge on big monitors
-  const gridPx = Math.min(available, 560);
-  screen.style.setProperty('--gridH', gridPx + 'px');
+  const available = Math.max(200, screenH - (qaBottom + 20) - 20);
+ // (qa + gap + grid padding)
+  const gridPx = Math.min(available, 440); // clamp so it doesn’t get huge
+  screen.style.setProperty('--gridH', `${gridPx}px`);
 }
+
 
 
 
