@@ -158,7 +158,8 @@ header{
   display:grid;
   grid-template-columns:repeat(6, 1fr);
   gap:6px;
-    width: min(98%, var(--gridH, 900px));
+    width:min(90vw, var(--gridH, 720px));
+
 
 
   aspect-ratio:1 / 1;            /* keeps it square */
@@ -196,6 +197,13 @@ header{
     font-size: clamp(22px, 5vh, 42px);
  line-height:1;
 }
+
+@media (min-width: 900px) and (min-height: 900px){
+  .cell .g{ font-size: clamp(28px, 3.2vw, 56px); }
+  .grid{ gap: 8px; }
+}
+
+
 .cell:active{ transform: scale(.96) }
 .cell.hit{ opacity:.35; cursor:default; filter:saturate(.6) }
 .cell.rightNow{ box-shadow:0 0 0 6px rgba(22,163,74,.22), 0 6px 18px rgba(0,0,0,.10) }
@@ -847,7 +855,10 @@ function updateGridOffset(){
   const screenH = screen.clientHeight || window.innerHeight;
   const available = Math.max(200, screenH - (qaBottom + 20) - 20);
  // (qa + gap + grid padding)
-  const gridPx = Math.min(available, 440); // clamp so it doesn’t get huge
+const bigScreen = (window.innerHeight >= 900 && window.innerWidth >= 900);
+const cap = bigScreen ? 720 : 440;       // tablets/desktops can grow
+const gridPx = Math.min(available, cap);
+
   screen.style.setProperty('--gridH', `${gridPx}px`);
 }
 
