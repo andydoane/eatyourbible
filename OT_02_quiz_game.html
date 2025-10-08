@@ -345,6 +345,39 @@ box-sizing: border-box; /* you already have this — keep it */
 .bonus:active{ transform: scale(.9) }
 .bonus.hide{ opacity:0; transform: scale(.6) }
 
+/* === Bonus Round (balloon burst) === */
+.bonusLayer{
+  position:absolute; inset:0;
+  z-index:3;                 /* below overlays, above background */
+  pointer-events:none;       /* children handle clicks */
+}
+
+.burstBalloon{
+  position:absolute;
+  font-size: clamp(32px, 8vw, 64px);
+  line-height:1;
+  user-select:none;
+  cursor:pointer;
+  will-change: transform, opacity;
+  pointer-events:auto;       /* allow clicking */
+  animation: wander var(--d, 7s) ease-in-out infinite alternate;
+}
+@keyframes wander{
+  from{ transform: translate(0,0) rotate(-4deg); }
+  to  { transform: translate(var(--dx, 90px), var(--dy, -120px)) rotate(4deg); }
+}
+.burstBalloon.pop{
+  animation: none;
+  transform: scale(.5);
+  opacity: 0;
+  transition: transform 180ms ease, opacity 180ms ease;
+}
+
+/* Bomb styling (subtle red glow) */
+.burstBalloon.bomb{
+  filter: drop-shadow(0 0 6px rgba(220,38,38,.35));
+}
+
 
   /* Overlays (start/how/over) — sit above everything in the playfield */
   .overlay{
@@ -372,6 +405,19 @@ box-sizing: border-box; /* you already have this — keep it */
     <main class="screen" id="screen" aria-live="polite">
       <div class="question" id="question">Loading…</div>
       <div class="toast" id="toast" role="status" aria-live="assertive"></div>
+
+<!-- Bonus Round: intro popup -->
+<section class="overlay" id="bonusIntro">
+  <div class="stack">
+    <div style="font-size:34px">🎈 Bonus Round</div>
+    <div class="small">Click as many balloons as you can!</div>
+    <button class="btn" id="bonusOkBtn">OK</button>
+  </div>
+</section>
+
+<!-- Bonus Round: balloons live here -->
+<div id="bonusLayer" class="bonusLayer" aria-hidden="true"></div>
+
 
       <!-- Start -->
       <section class="overlay show" id="start">
@@ -427,12 +473,12 @@ const QUESTIONS = [
     emoji: "🌬️"
   },
   {
-    q: "Where did God put the man? What job did He give him?",
+    q: "Where did God put the man?",
     choices: [
-      "Garden of Eden; take care of it",
-      "City of Enoch; build it",
-      "Wilderness; hunt for food",
-      "Ark; feed the animals"
+      "Garden of Eden",
+      "City of Enoch",
+      "Wilderness",
+      "Ark"
     ],
     correct: 0,
     emoji: "🌿"
@@ -517,7 +563,7 @@ const QUESTIONS = [
   {
     q: "What did God tell the man and woman to do?",
     choices: [
-      "Be fruitful, fill the earth, and rule over it",
+      "Be fruitful, fill the earth, rule over it",
       "Build a tower",
       "Stay in the garden forever",
       "Wander the earth"
@@ -541,6 +587,33 @@ const PER_QUESTION_TIME = Math.ceil((BALLOON_TRAVEL_MS + 800 + 600) / 1000) + 1;
 const COLUMNS = 4;
 const BONUS_POINTS = 10; // ← set your bonus amount here
 
+// === Bonus Round config ===
+const BONUS_BOMB_CHANCE   = 0.18;  // 18% of spawns are bombs (tweak to taste)
+const BONUS_BOMB_PENALTY  = 10;    // points to subtract when a bomb is tapped
+
+const BONUS_ROUND_SECONDS  = 12;   // length of the bonus round timer
+const BONUS_BALLOON_POINTS = 5;    // points per balloon pop
+const BONUS_BALLOONS       = 24;   // how many balloons to spawn
+// Bonus Round: a weighted mix of celebratory emoji
+// Higher weight = shows up more often
+const BONUS_EMOJI = [
+  { char: '🎈', weight: 6 },  // classic balloon (most common)
+  { char: '⭐️', weight: 3 },  // stars
+  { char: '🎊', weight: 2 },  // confetti ball
+  { char: '✨', weight: 2 },  // sparkles
+  { char: '🎁', weight: 1 }   // presents (rare treat)
+];
+
+// Pick one emoji based on weights
+function pickBonusEmoji(){
+  const total = BONUS_EMOJI.reduce((s, e) => s + e.weight, 0);
+  let r = Math.random() * total;
+  for (const e of BONUS_EMOJI){
+    if ((r -= e.weight) <= 0) return e.char;
+  }
+  return '🎈';
+}
+
 
 /* ===== 3) STATE & ELEMENTS ===== */
 let idx = 0, score = 0, correctCount = 0, lives = START_LIVES, timer = null, timeLeft = 0, lock = false;
@@ -559,10 +632,19 @@ const overOverlay  = document.getElementById('over');
 const howOverlay   = document.getElementById('how');
 const finalEl      = document.getElementById('final');
 
+// Bonus round elements
+const bonusIntro   = document.getElementById('bonusIntro');
+const bonusOkBtn   = document.getElementById('bonusOkBtn');
+const bonusLayerEl = document.getElementById('bonusLayer');
+
+
 document.getElementById('startBtn').addEventListener('click', startGame);
 document.getElementById('againBtn').addEventListener('click', startGame);
 document.getElementById('howBtn').addEventListener('click', ()=>{
   startOverlay.classList.remove('show');   // hide Start
+  bonusIntro.classList.remove('show');
+clearBurstBalloons && clearBurstBalloons();
+
   howOverlay.classList.add('show');        // show How-to
 });
 
@@ -571,8 +653,13 @@ document.getElementById('backBtn').addEventListener('click', ()=>{
   startOverlay.classList.add('show');      // show Start again
 });
 
+// Start the bonus round when the player taps OK
+bonusOkBtn.addEventListener('click', startBonusRound);
+
+
 // Prime audio as early as possible on actual touch/press
-['startBtn','againBtn','howBtn','backBtn'].forEach(id=>{
+['startBtn','againBtn','howBtn','backBtn','bonusOkBtn'].forEach(id=>{
+
   const el = document.getElementById(id);
   if (!el) return;
   // pointerdown fires on touch immediately (better than click on iOS)
@@ -582,18 +669,55 @@ document.getElementById('backBtn').addEventListener('click', ()=>{
 
 
 window.addEventListener('keydown', (e)=>{
-  if(lock) return;
+  const k = (e.key && e.key.toLowerCase) ? e.key.toLowerCase() : e.key;
+
+  // ---- SECRET CHEAT: press "G" to jump to Bonus Round ----
+  if (k === 'g') {
+    e.preventDefault();
+
+    // Stop whatever the main game is doing
+    try { clearInterval(timer); } catch(_) {}
+    try { clearBalloons(); } catch(_) {}
+    try { clearBonus(); } catch(_) {}
+    bonusPending = 0;
+
+    // Hide any overlays and the question bar
+    try { startOverlay.classList.remove('show'); } catch(_) {}
+    try { howOverlay.classList.remove('show'); } catch(_) {}
+    try { overOverlay.classList.remove('show'); } catch(_) {}
+    try { questionEl.style.display = 'none'; } catch(_) {}
+
+    // Make sure audio is unlocked if you’re using sounds
+    try { ensureAudioReady && ensureAudioReady(); } catch(_) {}
+
+    // Prefer to show the bonus intro if it exists, otherwise start directly
+    const intro = document.getElementById('bonusIntro');
+    const okBtn = document.getElementById('bonusOkBtn');
+    if (intro) {
+      intro.classList.add('show');
+      okBtn && okBtn.focus();
+    } else if (typeof startBonusRound === 'function') {
+      startBonusRound(); // starts the timer + balloons immediately
+    }
+    return; // don’t process number keys on this press
+  }
+  // ---- END SECRET CHEAT ----
+
+  // (Normal 1–4 hotkeys for popping answers)
+  if (lock) return;
   const map = {'1':0,'2':1,'3':2,'4':3};
-  if(e.key in map){
-    const i = map[e.key];
+  if (map[k] !== undefined){
+    const i = map[k];
     const b = activeBalloons.find(b=> +b.dataset.choiceIndex === i);
-    if(b) b.click();
+    if (b) b.click();
   }
 });
+
 
 function startGame(){
   // Reset state
   idx = 0; score = 0; correctCount = 0; lives = START_LIVES; updateHearts();
+  clearBurstBalloons && clearBurstBalloons();
 ensureAudioReady();
 
   scoreEl.textContent = score;
@@ -625,7 +749,8 @@ function nextQuestion(){
   clearBalloons();
   clearBonus();
 
-  if(idx >= QUESTIONS.length){ endGame(); return; }
+if(idx >= QUESTIONS.length){ startBonusIntro(); return; }
+
 
   lock = false;
   const item = QUESTIONS[idx];
@@ -784,13 +909,136 @@ clearBonus();
 
         setTimeout(()=>{
 idx++;
-if (idx >= QUESTIONS.length) endGame(); else nextQuestion(); // only end after last question
+if (idx >= QUESTIONS.length) startBonusIntro(); else nextQuestion();
+
 
         }, 500);
       }
     }
   }, 1000);
 }
+
+// ---------- Bonus Round ----------
+function startBonusIntro(){
+  // Hide question bar during the bonus instructions
+  questionEl.style.display = 'none';
+  bonusIntro.classList.add('show');
+  // Set the header timer to show 15s so players know what's coming
+  timeEl.textContent = BONUS_ROUND_SECONDS;
+}
+
+function startBonusRound(){
+  bonusIntro.classList.remove('show');
+  bonusLayerEl.setAttribute('aria-hidden','false');
+
+  // Clear any stray question balloons/stars just in case
+  clearBalloons();
+  clearBonus();
+
+  // Spawn balloons
+  spawnBurstBalloons(BONUS_BALLOONS);
+
+  // Start countdown
+  lock = false;
+  timeLeft = BONUS_ROUND_SECONDS;
+  startBonusTimer();
+}
+
+function endBonusRound(){
+  clearInterval(timer);
+  bonusLayerEl.setAttribute('aria-hidden','true');
+  clearBurstBalloons();
+  endGame();
+}
+
+function startBonusTimer(){
+  clearInterval(timer);
+  timeEl.textContent = timeLeft;
+  timer = setInterval(()=>{
+    timeLeft--;
+    timeEl.textContent = Math.max(0, timeLeft);
+    if(timeLeft <= 0){
+      clearInterval(timer);
+      endBonusRound();
+    }
+  }, 1000);
+}
+
+function spawnBurstBalloons(n){
+  clearBurstBalloons();
+  const r = screen.getBoundingClientRect();
+  const pad = 24;
+
+  for (let i=0;i<n;i++){
+    const b = document.createElement('div');
+    b.className = 'burstBalloon';
+    b.setAttribute('aria-label','Bonus balloon');
+// Decide if this one is a bomb
+const isBomb = Math.random() < BONUS_BOMB_CHANCE;
+
+if (isBomb) {
+  b.textContent = '💣';
+  b.classList.add('bomb');
+  b.setAttribute('aria-label','Bomb');
+} else {
+  b.textContent = pickBonusEmoji();
+  b.setAttribute('aria-label','Bonus ' + b.textContent);
+}
+
+
+
+    // random starting position
+    const x = rand(pad, r.width  - pad - 48);
+    const y = rand(pad + 20, r.height - pad - 48);
+    b.style.left = x + 'px';
+    b.style.top  = y + 'px';
+
+    // random movement + speed
+    b.style.setProperty('--dx',  rand(-120,120) + 'px');
+    b.style.setProperty('--dy',  rand(-160,160) + 'px');
+    b.style.setProperty('--d',   rand(3800, 9000) + 'ms');
+    b.style.animationDelay = rand(0, 1200) + 'ms';
+
+// pop to score (or bomb penalty)
+b.addEventListener('click', (e)=>{
+  if (lock) return;
+
+  if (b.classList.contains('bomb')) {
+    // Bomb: subtract points
+    score -= BONUS_BOMB_PENALTY;
+    scoreEl.textContent = score;
+    ping('💣 Boom! -' + BONUS_BOMB_PENALTY, 'error');
+    playTone && playTone('bad');
+  } else {
+    // Regular bonus balloon
+    score += BONUS_BALLOON_POINTS;
+    scoreEl.textContent = score;
+    playTone && playTone('bonus');
+    confettiBurst && confettiBurst(b);
+  }
+
+  b.classList.add('pop');
+  setTimeout(()=> b.remove(), 200);
+});
+
+
+// Instant touch response
+b.addEventListener('pointerdown', (e)=>{
+  e.preventDefault(); // avoid the delayed synthetic click
+  b.click();          // reuse the same logic
+});
+
+
+    bonusLayerEl.appendChild(b);
+  }
+}
+
+function clearBurstBalloons(){
+  if(!bonusLayerEl) return;
+  bonusLayerEl.querySelectorAll('.burstBalloon').forEach(el => el.remove());
+}
+
+
 
 function endGame(){
   clearInterval(timer);
