@@ -18,11 +18,14 @@ body{
   display:flex; justify-content:center;
 }
 .game{
-  width:min(1000px,100vw);
-  height:100vh;   /* fallback */
-  height:100dvh;  /* dynamic viewport height on modern browsers */
-  display:flex; flex-direction:column;
+  width:100%;
+  max-width:1000px;          /* optional upper limit */
+  height:100vh;              /* fallback */
+  height:100dvh;             /* dynamic viewport height */
+  display:flex;
+  flex-direction:column;
 }
+
 
 header{
 
@@ -80,7 +83,7 @@ header{
   padding:14px 18px;
   border-radius:12px;
   box-shadow:0 2px 10px rgba(0,0,0,.3);
-  font-size:clamp(16px,2.2vw,22px);
+  font-size:clamp(16px,2.4vh,22px);
   text-align:center;
   line-height:1.25;
 }
@@ -188,7 +191,8 @@ header{
 .cell .g{
   /* the emoji glyph itself */
   position:absolute; inset:0; display:grid; place-items:center;
-  font-size: clamp(20px, 4.5vw, 38px); line-height:1;
+    font-size: clamp(22px, 5vh, 42px);
+ line-height:1;
 }
 .cell:active{ transform: scale(.96) }
 .cell.hit{ opacity:.35; cursor:default; filter:saturate(.6) }
@@ -289,6 +293,16 @@ header{
   25%{ opacity:1; transform: translate(-50%,-90%) scale(1) }
   100%{ opacity:0; transform: translate(-50%,-140%) scale(1.1) }
 }
+
+
+/* === Tablet scaling === */
+@media (min-width: 600px) and (max-width: 1024px) {
+  html { font-size: 18px; }        /* slightly larger base font */
+  .question { font-size: clamp(18px, 2.6vh, 24px); }
+  .cell .g  { font-size: clamp(24px, 5.5vh, 46px); }
+}
+
+
 </style>
 </head>
 <body>
@@ -1001,3 +1015,4 @@ window.addEventListener('keydown', (e)=>{
 </script>
 </body>
 </html>
+
