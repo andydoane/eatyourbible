@@ -144,8 +144,8 @@ header{
   position:absolute;
   inset:0;
   display:flex;
-  justify-content:center;
-  align-items:flex-start;
+  justify-content:center;   /* keeps it centered vertically if needed */
+  align-items:center;       /* <-- center the grid horizontally */
   padding:12px 16px;
   padding-top: calc(var(--qaH, 0px) + 12px); /* pushes grid below QA */
   box-sizing:border-box;
@@ -153,11 +153,13 @@ header{
 }
 
 
+
 .grid{
   display:grid;
   grid-template-columns:repeat(6, 1fr);
   gap:6px;
-  width:min(90vw, var(--gridH, 600px));
+    width: min(98%, var(--gridH, 900px));
+
 
   aspect-ratio:1 / 1;            /* keeps it square */
   margin:auto;
