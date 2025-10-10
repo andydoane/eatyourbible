@@ -425,10 +425,12 @@ tiltBtn.addEventListener('click', async ()=>{
 
 // === Bonus config ===
 const BONUS_PX_PER_POINT = 120; // pixels climbed per 1 bonus point (adjust as you like)
+
 // Tilt control config
-const TILT_SENSITIVITY = 0.020;  // higher = more movement per degree
-const TILT_DEADZONE   = 2.0;     // ignore tiny wobbles (in degrees)
-const TILT_SMOOTH     = 0.15;    // 0..1 lerp for smoothing (higher = snappier)
+const TILT_SENSITIVITY = 0.050;  // ↑ more movement per degree
+const TILT_DEADZONE   = 1.0;     // ↓ respond to smaller tilts
+const TILT_SMOOTH     = 0.10;    // ↓ a bit snappier response
+
 
 // Rare bonus platforms
 const GREEN_PLATFORM_PROB  = 0.33; // ~33% chance -> +1 bonus
@@ -630,12 +632,14 @@ if (bonusFlash > 0) bonusFlash -= dt;
     // deadzone
     let t = Math.abs(tiltRaw) < TILT_DEADZONE ? 0 : tiltRaw;
 
-    // map degrees to a small acceleration, clamp to +/- 1 PLAYER.speed
-    const target = Math.max(-1, Math.min(1, t / 30)) * (PLAYER.speed / 1); // 30° ~= full speed
-    // smooth for stability
-    tiltAX += (target - tiltAX) * TILT_SMOOTH;
+// map degrees to acceleration using sensitivity, clamp, then scale to PLAYER.speed
+const target = clamp(t * TILT_SENSITIVITY, -1, 1) * PLAYER.speed;
+// smooth for stability
+tiltAX += (target - tiltAX) * TILT_SMOOTH;
 
-    ax += tiltAX * (1 / (PLAYER.speed ? 1 : 1)); // already scaled; keep ax in same units
+// add tilt to horizontal accel
+ax += tiltAX;
+
   }
 
 
