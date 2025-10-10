@@ -99,6 +99,11 @@
   .okay{display:flex;gap:10px;justify-content:flex-end}
   .tiny{font-size:12px;color:var(--muted)}
   .endbig{font-size:clamp(24px,4.6vw,36px);font-weight:900;margin:6px 0 2px}
+
+.countLead{margin:6px 0;color:var(--muted)}
+.countNum{font-weight:900;font-size:clamp(36px,10vw,72px);line-height:1;margin-top:6px}
+
+
 </style>
 </head>
 <body>
@@ -235,23 +240,53 @@
     { q:"What is the 'good news' called?", a:["The Law","The Prophets","The Gospel","The Epistles"], correct:2, ref:"Mark 1:1; Romans 1:16" }
   ];
 
-  const modal = {
-    el: document.getElementById('modal'),
-    title: document.getElementById('modalTitle'),
-    msg: document.getElementById('modalMsg'),
-    ok: document.getElementById('modalOk'),
-    open(title, msg, onok){
-      this.title.textContent = title;
-      this.msg.textContent = msg;
-      this.el.classList.add('show');
-      const handler = ()=>{
+const modal = {
+  el: document.getElementById('modal'),
+  title: document.getElementById('modalTitle'),
+  msg: document.getElementById('modalMsg'),
+  ok: document.getElementById('modalOk'),
+  open(title, msg, onok){
+    this.title.textContent = title;
+    this.msg.textContent = msg;
+    this.el.classList.add('show');
+    const handler = ()=>{
+      this.el.classList.remove('show');
+      this.ok.removeEventListener('click', handler);
+      onok && onok();
+    };
+    this.ok.addEventListener('click', handler);
+  },
+  // NEW: countdown modal (no OK button)
+  countdown(title, leadText, seconds, ondone){
+    this.title.textContent = title;
+    this.el.classList.add('show');
+
+    // hide the OK row while counting down
+    const okRow = this.ok.parentElement;
+    const prevDisplay = okRow.style.display;
+    okRow.style.display = 'none';
+
+    let remaining = Math.max(0, Math.floor(seconds)|0);
+    const render = ()=>{
+      this.msg.innerHTML = `<div class="countLead">${leadText}</div><div class="countNum">${remaining}</div>`;
+    };
+    render();
+
+    const tick = ()=>{
+      remaining -= 1;
+      if(remaining <= 0){
+        clearInterval(timer);
+        // restore and close
+        okRow.style.display = prevDisplay || '';
         this.el.classList.remove('show');
-        this.ok.removeEventListener('click', handler);
-        onok && onok();
-      };
-      this.ok.addEventListener('click', handler);
-    }
-  };
+        ondone && ondone();
+      }else{
+        render();
+      }
+    };
+    const timer = setInterval(tick, 1000);
+  }
+};
 
   // --- Global quiz state ---
 const state = {
@@ -398,9 +433,8 @@ tiltBtn.addEventListener('click', async ()=>{
       ? `Nice! ${niceEncouragement()} (${item.ref})`
       : `The correct answer is "${item.a[item.correct]}". (${item.ref})`;
 
-    modal.open(title, msg, ()=>{
-      startJumpRound();
-    });
+modal.countdown(title, "Emoji jumping begins in...", 7, startJumpRound);
+
   }
 
   skipBtn.addEventListener('click', ()=>{
