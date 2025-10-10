@@ -492,15 +492,24 @@ let running=false, last=0, elapsed=0, roundLen=ROUND_LEN;
 
   let world, keys={left:false,right:false}, touchLeft=false, touchRight=false;
 
-  function resizeCanvas(){
-    dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const rect = wrap.getBoundingClientRect();
-    W = Math.max(180, Math.floor(rect.width * dpr));
-    H = Math.max(180, Math.floor(rect.height * dpr));
-    canvas.width = W; canvas.height = H;
-    ctx = canvas.getContext('2d');
-    ctx.imageSmoothingEnabled = true;
-  }
+function resizeCanvas(){
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const rect = wrap.getBoundingClientRect();
+
+  // Use CSS pixels for game physics (fixes iPad DPR jump issue)
+  W = Math.max(180, Math.floor(rect.width));
+  H = Math.max(180, Math.floor(rect.height));
+
+  // Render at device resolution for crispness
+  canvas.width  = Math.floor(W * dpr);
+  canvas.height = Math.floor(H * dpr);
+  ctx = canvas.getContext('2d');
+
+  // Scale all drawing so we keep coding in CSS px
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.imageSmoothingEnabled = true;
+}
+
   window.addEventListener('resize', resizeCanvas);
 
   function startJumpRound(){
@@ -793,7 +802,8 @@ if (typeof world.safetyTTL === 'number') {
     }
 
     // Player
-    drawEmoji(PLAYER.emoji, p.px, p.py, Math.max(18, Math.min(36, W*0.06)));
+drawEmoji(PLAYER.emoji, p.px, p.py, Math.max(22, Math.min(48, W*0.065)));
+
 // bonus flash text near the player
 if (bonusFlash > 0) {
   ctx.save();
