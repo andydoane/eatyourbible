@@ -134,6 +134,8 @@
           <button class="btn btn-primary grow" id="startBtn">Start</button>
           <button class="btn grow" id="howBtn">How to Play</button>
         </div>
+<button class="btn grow" id="tiltBtn">📱 Enable Tilt Control</button>
+
         <div class="notice">Short, kid-friendly questions • No ads • Works offline</div>
       </div>
     </section>
@@ -313,6 +315,46 @@ const state = {
     show('question');
   });
 
+
+// --- Tilt control setup ---
+const tiltBtn = document.getElementById('tiltBtn');
+
+// iOS requires an explicit permission request (user gesture)
+async function requestTiltPermissionIfNeeded(){
+  const AnyOrientationEvent = window.DeviceOrientationEvent || window.OrientationEvent;
+  if (!AnyOrientationEvent) throw new Error('DeviceOrientation not supported');
+
+  // iOS 13+ style permission gate
+  if (typeof DeviceOrientationEvent !== 'undefined' &&
+      typeof DeviceOrientationEvent.requestPermission === 'function') {
+    const res = await DeviceOrientationEvent.requestPermission();
+    if (res !== 'granted') throw new Error('Permission denied');
+  }
+  return true;
+}
+
+// Start listening to deviceorientation
+function enableTilt(){
+  function onOrient(e){
+    // Use gamma (left/right tilt) in portrait; fall back to beta if gamma is null
+    const g = (typeof e.gamma === 'number') ? e.gamma : 0; // -90..+90
+    tiltRaw = g;
+  }
+  window.addEventListener('deviceorientation', onOrient, { passive: true });
+  tiltEnabled = true;
+  tiltBtn.textContent = '✅ Tilt Enabled';
+}
+
+tiltBtn.addEventListener('click', async ()=>{
+  try{
+    await requestTiltPermissionIfNeeded();
+    enableTilt();
+  }catch(err){
+    modal.open("Tilt Not Available", "Your browser didn’t allow motion sensors, or this device doesn’t support them. You can still play with buttons/keys.", ()=>{});
+  }
+});
+
+
   // --- Question Screen ---
   const qText = document.getElementById('qText');
   const answersBox = document.getElementById('answers');
@@ -383,6 +425,11 @@ const state = {
 
 // === Bonus config ===
 const BONUS_PX_PER_POINT = 120; // pixels climbed per 1 bonus point (adjust as you like)
+// Tilt control config
+const TILT_SENSITIVITY = 0.020;  // higher = more movement per degree
+const TILT_DEADZONE   = 2.0;     // ignore tiny wobbles (in degrees)
+const TILT_SMOOTH     = 0.15;    // 0..1 lerp for smoothing (higher = snappier)
+
 // Rare bonus platforms
 const GREEN_PLATFORM_PROB  = 0.33; // ~33% chance -> +1 bonus
 const YELLOW_PLATFORM_PROB = 0.10; // ~10% chance  -> +2 bonus
@@ -393,6 +440,11 @@ const ROUND_LEN = 12000; // ms — adjust here
 let bonusFlash = 0;           // ms remaining
 let bonusFlashText = "";      // "+1" or "+2"
 let roundColorBonus = 0;      // color-platform points earned this round
+
+let tiltEnabled = false;
+let tiltRaw = 0;     // most recent raw degrees from sensor
+let tiltAX  = 0;     // smoothed tilt used for movement
+
 
 let ctx, W, H, dpr=1;
 let running=false, last=0, elapsed=0, roundLen=ROUND_LEN;
@@ -572,6 +624,21 @@ if (bonusFlash > 0) bonusFlash -= dt;
     let ax = 0;
     if(left) ax -= PLAYER.speed;
     if(right) ax += PLAYER.speed;
+
+  // Add tilt contribution (portrait: gamma left/right)
+  if (tiltEnabled){
+    // deadzone
+    let t = Math.abs(tiltRaw) < TILT_DEADZONE ? 0 : tiltRaw;
+
+    // map degrees to a small acceleration, clamp to +/- 1 PLAYER.speed
+    const target = Math.max(-1, Math.min(1, t / 30)) * (PLAYER.speed / 1); // 30° ~= full speed
+    // smooth for stability
+    tiltAX += (target - tiltAX) * TILT_SMOOTH;
+
+    ax += tiltAX * (1 / (PLAYER.speed ? 1 : 1)); // already scaled; keep ax in same units
+  }
+
+
     p.vx = ax;
     p.px += p.vx * dt;
 
