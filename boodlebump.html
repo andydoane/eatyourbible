@@ -309,6 +309,14 @@ const modal = {
     };
     const timer = setInterval(tick, 1000);
   }
+
+  ,
+  // Is the modal currently open?
+  isOpen(){
+    return this.el.classList.contains('show');
+  }
+
+
 };
 
 
@@ -505,6 +513,7 @@ let tiltAX  = 0;     // smoothed tilt used for movement
 
 let ctx, W, H, dpr=1;
 let running=false, last=0, elapsed=0, roundLen=ROUND_LEN;
+let wasRunningBeforeHide = false;
 
   let world, keys={left:false,right:false}, touchLeft=false, touchRight=false;
 
@@ -527,6 +536,21 @@ function resizeCanvas(){
 }
 
   window.addEventListener('resize', resizeCanvas);
+
+document.addEventListener('visibilitychange', ()=>{
+  if (document.hidden) {
+    wasRunningBeforeHide = running;
+    running = false;
+  } else {
+    if (wasRunningBeforeHide) {
+      // resume smoothly
+      last = performance.now();
+      running = true;
+      requestAnimationFrame(loop);
+    }
+  }
+});
+
 
   function startJumpRound(){
     show('game');
@@ -576,7 +600,8 @@ if (totalRoundBonus > 0) {
   if (roundColorBonus > 0)   lines.push(`Color platforms: +${roundColorBonus}`);
   lines.push(`Total this round: +${totalRoundBonus}`);
 
-  modal.open("Bonus Earned!", lines.join('\n'), advance);
+modal.html("Bonus Earned!", lines.join('<br>'), advance);
+
 } else {
   advance();
 }
@@ -690,31 +715,32 @@ function randPlatformAt(y){
 const prevY = p.py; // remember previous Y for crossing check
 if (bonusFlash > 0) bonusFlash -= dt;
 
+  // Freeze horizontal input while any popup is visible
+  const modalOpen = modal.isOpen && modal.isOpen();
+
+
     // Horizontal
-    const left = keys.left || touchLeft;
-    const right = keys.right || touchRight;
-    let ax = 0;
-    if(left) ax -= PLAYER.speed;
-    if(right) ax += PLAYER.speed;
+let ax = 0;
+
+if (!modalOpen) {
+  const left = keys.left || touchLeft;
+  const right = keys.right || touchRight;
+  if (left)  ax -= PLAYER.speed;
+  if (right) ax += PLAYER.speed;
 
   // Add tilt contribution (portrait: gamma left/right)
   if (tiltEnabled){
-    // deadzone
     let t = Math.abs(tiltRaw) < TILT_DEADZONE ? 0 : tiltRaw;
-
-// map degrees to acceleration using sensitivity, clamp, then scale to PLAYER.speed
-const target = clamp(t * TILT_SENSITIVITY, -1.3, 1.3) * PLAYER.speed;
-// smooth for stability
-tiltAX += (target - tiltAX) * TILT_SMOOTH;
-
-// add tilt to horizontal accel
-ax += tiltAX;
-
+    const target = clamp(t * TILT_SENSITIVITY, -1.3, 1.3) * PLAYER.speed;
+    tiltAX += (target - tiltAX) * TILT_SMOOTH;
+    ax += tiltAX;
   }
+}
 
+// apply move (even if a popup is open, ax=0 so the player won’t drift)
+p.vx = ax;
+p.px += p.vx * dt;
 
-    p.vx = ax;
-    p.px += p.vx * dt;
 
     // Wrap edges
     if(p.px < -16) p.px = W + 16;
