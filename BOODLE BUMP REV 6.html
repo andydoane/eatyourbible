@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>Doodle Jump Bible Quiz</title>
+<style>
+  :root{
+    --bg:#0f172a;         /* slate-900 */
+    --panel:#111827;      /* gray-900 */
+    --panel-2:#1f2937;    /* gray-800 */
+    --text:#f8fafc;       /* slate-50 */
+    --muted:#cbd5e1;      /* slate-300 */
+    --accent:#22c55e;     /* green-500 */
+    --accent-2:#38bdf8;   /* sky-400 */
+    --warn:#fbbf24;       /* amber-400 */
+    --danger:#ef4444;     /* red-500 */
+    --btn:#334155;        /* slate-700 */
+    --btn-hover:#475569;  /* slate-600 */
+    --radius:18px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial}
+  .wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:2vh 2vw}
+  .card{width:min(920px,100%);background:linear-gradient(180deg,var(--panel),var(--panel-2));border-radius:var(--radius);box-shadow:0 10px 40px rgba(0,0,0,.35);overflow:hidden}
+  header{padding:20px 24px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:12px}
+  header h1{margin:0;font-size:clamp(18px,3.2vw,24px);font-weight:800;letter-spacing:.2px}
+  header .tag{margin-left:auto;font-size:12px;opacity:.7}
+  .screen{padding:20px 18px}
+  .center{display:grid;place-items:center;text-align:center}
+  .title h2{font-size:clamp(26px,4.8vw,42px);margin:8px 0 6px}
+  .subtitle{color:var(--muted);opacity:.85;margin:0 0 12px;font-size:clamp(14px,2.6vw,16px)}
+  .btn{appearance:none;border:0;background:var(--btn);color:var(--text);padding:14px 18px;border-radius:14px;font-weight:700;cursor:pointer;transition:.15s transform,.2s background}
+  .btn:hover{background:var(--btn-hover)}
+  .btn:active{transform:translateY(1px)}
+  .btn-primary{background:var(--accent-2)}
+  .btn-primary:hover{filter:brightness(.95)}
+  .stack{display:flex;flex-direction:column;gap:10px}
+  .row{display:flex;flex-wrap:wrap;gap:10px}
+  .grow{flex:1 1 180px}
+  .notice{background:#0b1220;border:1px solid rgba(255,255,255,.08);padding:12px 14px;border-radius:12px;color:var(--muted)}
+  .question{font-size:clamp(18px,3.6vw,24px);font-weight:800;margin:0 0 12px}
+  .answers{display:grid;grid-template-columns:1fr;gap:10px}
+  @media (min-width:600px){ .answers{grid-template-columns:1fr 1fr} }
+.answer{
+  padding:12px 14px;
+  background:#0c1426;                 /* dark button */
+  color:var(--text);                   /* <-- force light text */
+  border:1px solid rgba(255,255,255,.16);
+  border-radius:12px;
+  cursor:pointer;
+  text-align:left;
+  font-weight:800;
+  font-size:clamp(14px,2.6vw,18px);    /* slightly larger on small screens */
+}
+
+.answer:hover{
+  background:#12203c;                  /* a bit brighter when hovered */
+  border-color:rgba(255,255,255,.22);
+}
+
+.answer.correct{
+  background:#062814;                  /* green-tinted background */
+  border-color:var(--accent);          /* green border */
+  color:var(--text);
+}
+.answer.incorrect{
+  background:#2a0e12;                  /* red-tinted background */
+  border-color:var(--danger);          /* red border */
+  color:var(--text);
+}
+
+.answer:focus-visible{
+  outline:3px solid var(--accent-2);
+  outline-offset:2px;
+}
+.answer:disabled{
+  opacity:1;                           /* keep text readable when disabled */
+  color:var(--text);
+}
+
+
+  .footerbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
+  .pill{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.06);font-size:12px;color:var(--muted)}
+  /* Canvas/Game area */
+  .game-wrap{position:relative;aspect-ratio:9/16;width:min(600px,90vw);margin-inline:auto;background:#06101f;border:1px solid rgba(255,255,255,.06);border-radius:16px;overflow:hidden}
+  canvas{display:block;width:100%;height:100%}
+  .hud{position:absolute;inset:0;pointer-events:none;display:flex;justify-content:space-between;align-items:flex-start;padding:8px}
+  .hud .chip{pointer-events:auto;background:rgba(0,0,0,.45);padding:6px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.08);font-size:12px}
+  .controls{position:absolute;left:0;right:0;bottom:10px;display:flex;justify-content:space-between;padding:0 10px;gap:10px}
+  .ctl{pointer-events:auto;min-width:92px;padding:10px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.35);backdrop-filter:blur(6px);font-weight:800}
+  @media (min-width:900px){ .controls{display:none} }
+  /* Modal */
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:20px;z-index:50}
+  .modal.show{display:flex}
+  .modal .box{width:min(520px,96vw);background:linear-gradient(180deg,var(--panel),var(--panel-2));border-radius:18px;border:1px solid rgba(255,255,255,.1);padding:20px}
+  .box h3{margin:0 0 6px;font-size:clamp(18px,3.4vw,22px)}
+  .box p{margin:0 0 14px;color:var(--muted)}
+  .okay{display:flex;gap:10px;justify-content:flex-end}
+  .tiny{font-size:12px;color:var(--muted)}
+  .endbig{font-size:clamp(24px,4.6vw,36px);font-weight:900;margin:6px 0 2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <header>
+      <h1>📚 Doodle Jump Bible Quiz</h1>
+      <span class="tag" id="progressTag">—</span>
+    </header>
+
+    <!-- SPLASH (MANDATORY FULLSCREEN) -->
+    <section class="screen center" id="splashScreen">
+      <div class="title">
+        <h2>Best in Vertical Mode</h2>
+        <p class="subtitle">Press the button below to continue in fullscreen. This improves controls and scaling.</p>
+      </div>
+      <div class="stack" style="width:min(520px,92%);margin-top:6px">
+        <!-- ✅ EDIT #1: Button changed to Enter Fullscreen -->
+        <button class="btn btn-primary" id="fullscreenBtn">🖥️ Enter Fullscreen</button>
+        <div class="notice">Tip: On phones, use the ◀️ ▶️ controls. On keyboards, use ⬅️ ➡️.</div>
+        <div id="fsHelp" class="tiny" style="display:none">If fullscreen didn’t start, your browser may have blocked it. Please allow fullscreen and press the button again, or press Start on the next screen to continue without fullscreen.</div>
+      </div>
+    </section>
+
+    <!-- TITLE -->
+    <section class="screen center" id="titleScreen" style="display:none">
+      <div class="title">
+        <h2>Jump Into the Word</h2>
+        <p class="subtitle">Answer each question, then bounce through a quick mini-level!</p>
+      </div>
+      <div class="stack" style="width:min(520px,92%)">
+        <div class="row">
+          <button class="btn btn-primary grow" id="startBtn">Start</button>
+          <button class="btn grow" id="howBtn">How to Play</button>
+        </div>
+        <div class="notice">Short, kid-friendly questions • No ads • Works offline</div>
+      </div>
+    </section>
+
+    <!-- QUESTION -->
+    <section class="screen" id="questionScreen" style="display:none">
+      <div class="pill" id="qCounter">Question</div>
+      <p class="question" id="qText">Question text</p>
+      <div class="answers" id="answers"></div>
+      <div class="footerbar">
+        <span class="pill" id="scorePill">Score: 0 correct</span>
+        <button class="btn" id="skipBtn" title="Try the jump round now">Skip ➡️</button>
+      </div>
+    </section>
+
+    <!-- GAME -->
+    <section class="screen" id="gameScreen" style="display:none">
+      <div class="pill" id="roundPill">Jump Round</div>
+      <div class="game-wrap" id="gameWrap">
+        <canvas id="game"></canvas>
+        <div class="hud">
+          <div class="chip" id="timerChip">⏱️ 0.0s</div>
+          <div class="chip" id="heightChip">⬆️ 0</div>
+        </div>
+        <div class="controls">
+          <button class="ctl" id="leftBtn">◀️</button>
+          <button class="ctl" id="rightBtn">▶️</button>
+        </div>
+      </div>
+      <div class="footerbar">
+        <span class="pill tiny">Tip: Wrap-around edges</span>
+        <button class="btn" id="endEarlyBtn">End Round</button>
+      </div>
+    </section>
+
+    <!-- END -->
+    <section class="screen center" id="endScreen" style="display:none">
+      <div class="title">
+        <h2>Great Job!</h2>
+        <p class="subtitle">You finished the quiz.</p>
+      </div>
+      <div class="stack" style="width:min(520px,92%)">
+        <div class="notice">
+          <div class="endbig" id="finalScore">0 / 0 correct</div>
+          <div id="timePlayed" class="tiny">Time played: —</div>
+        </div>
+        <div class="row">
+          <button class="btn btn-primary grow" id="playAgain">Play Again</button>
+          <button class="btn grow" id="reviewBtn">Review Answers</button>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal" id="modal">
+  <div class="box">
+    <h3 id="modalTitle">Title</h3>
+    <p id="modalMsg">Message</p>
+    <div class="okay">
+      <button class="btn btn-primary" id="modalOk">OK</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // --- Simple state machine ---
+  const screens = {
+    splash: document.getElementById('splashScreen'),
+    title: document.getElementById('titleScreen'),
+    question: document.getElementById('questionScreen'),
+    game: document.getElementById('gameScreen'),
+    end: document.getElementById('endScreen'),
+  };
+  const progressTag = document.getElementById('progressTag');
+
+  function show(name){
+    for(const k in screens){ screens[k].style.display = (k===name)?'block':'none'; }
+    progressTag.textContent = (
+      name==='splash' ? 'Welcome' :
+      name==='title' ? 'Title' :
+      name==='question' ? `Question ${state.i+1}/${questions.length}` :
+      name==='game' ? 'Jump Round' :
+      'Finished'
+    );
+  }
+
+  // --- Questions ---
+  const questions = [
+    { q:"Who built a big boat to survive a flood?", a:["Moses","Noah","David","Paul"], correct:1, ref:"Genesis 6–9" },
+    { q:"Where was Jesus born?", a:["Nazareth","Bethlehem","Jerusalem","Rome"], correct:1, ref:"Luke 2:1–7" },
+    { q:"What did David use to defeat Goliath?", a:["A sword","A spear","A sling and stone","A chariot"], correct:2, ref:"1 Samuel 17" },
+    { q:"Who was swallowed by a great fish?", a:["Jonah","Peter","Elijah","Samuel"], correct:0, ref:"Jonah 1–2" },
+    { q:"What did God create on the first day?", a:["Animals","Light","Plants","Birds"], correct:1, ref:"Genesis 1:3–5" },
+    { q:"What is the 'good news' called?", a:["The Law","The Prophets","The Gospel","The Epistles"], correct:2, ref:"Mark 1:1; Romans 1:16" }
+  ];
+
+  const modal = {
+    el: document.getElementById('modal'),
+    title: document.getElementById('modalTitle'),
+    msg: document.getElementById('modalMsg'),
+    ok: document.getElementById('modalOk'),
+    open(title, msg, onok){
+      this.title.textContent = title;
+      this.msg.textContent = msg;
+      this.el.classList.add('show');
+      const handler = ()=>{
+        this.el.classList.remove('show');
+        this.ok.removeEventListener('click', handler);
+        onok && onok();
+      };
+      this.ok.addEventListener('click', handler);
+    }
+  };
+
+  // --- Global quiz state ---
+const state = {
+  i: 0, correct: 0, bonus: 0, startTime: 0, totalJumpTime: 0,
+  selectedWasCorrect: false,
+  review: []
+};
+
+
+  // ========= FULLSCREEN GATE =========
+  // ✅ EDIT #2: Mandatory fullscreen before proceeding
+  const fullscreenBtn = document.getElementById('fullscreenBtn');
+  const fsHelp = document.getElementById('fsHelp');
+
+  function isFullscreen(){
+    return !!(document.fullscreenElement || document.webkitFullscreenElement);
+  }
+  function requestAppFullscreen(){
+    const elem = document.documentElement;
+    const req = elem.requestFullscreen || elem.webkitRequestFullscreen;
+    return req ? req.call(elem) : Promise.reject(new Error('Fullscreen API not available'));
+  }
+  // When user clicks "Enter Fullscreen", request and THEN go to title.
+  fullscreenBtn.addEventListener('click', async ()=>{
+    try{
+      await requestAppFullscreen();     // must be inside the click handler
+      show('title');
+    }catch(err){
+      // If blocked, show help and still allow progression
+      fsHelp.style.display = 'block';
+      modal.open("Fullscreen Blocked","Your browser did not allow fullscreen. You can allow it and press the button again, or continue without fullscreen on the next screen.", ()=>{
+        show('title');
+      });
+    }
+  });
+  // If the user somehow triggers fullscreen via browser UI, auto-continue
+  document.addEventListener('fullscreenchange', ()=>{
+    if (isFullscreen() && screens.splash.style.display==='block'){
+      show('title');
+    }
+  });
+  document.addEventListener('webkitfullscreenchange', ()=>{
+    if (isFullscreen() && screens.splash.style.display==='block'){
+      show('title');
+    }
+  });
+  // ===================================
+
+  // --- Title screen ---
+  document.getElementById('howBtn').addEventListener('click', ()=>{
+    modal.open("How to Play","Press Start. For each question, choose an answer. A popup will say if you’re correct or not. Then play a short jump round before the next question. Use ◀️ ▶️ (on-screen or arrow keys).", null);
+  });
+  document.getElementById('startBtn').addEventListener('click', ()=>{
+    // Optional: try to ensure fullscreen again if not already (harmless if already fullscreen)
+    if(!isFullscreen()){
+      requestAppFullscreen().catch(()=>{ /* ignore */ });
+    }
+    resetAll();
+    state.startTime = performance.now();
+    loadQuestion();
+    show('question');
+  });
+
+  // --- Question Screen ---
+  const qText = document.getElementById('qText');
+  const answersBox = document.getElementById('answers');
+  const qCounter = document.getElementById('qCounter');
+  const scorePill = document.getElementById('scorePill');
+  const skipBtn = document.getElementById('skipBtn');
+
+  function loadQuestion(){
+    const item = questions[state.i];
+    qCounter.textContent = `Question ${state.i+1} of ${questions.length}`;
+    qText.textContent = item.q;
+    answersBox.innerHTML = "";
+    item.a.forEach((label, idx)=>{
+      const btn = document.createElement('button');
+      btn.className = 'answer';
+      btn.textContent = label;
+      btn.addEventListener('click', ()=>handleAnswer(idx));
+      answersBox.appendChild(btn);
+    });
+    scorePill.textContent = `Score: ${state.correct} correct · Bonus: ${state.bonus}`;
+  }
+
+  function handleAnswer(idx){
+    const item = questions[state.i];
+    const buttons = [...answersBox.children];
+    buttons.forEach((b, i)=>{
+      b.classList.remove('correct','incorrect');
+      if(i===item.correct) b.classList.add('correct');
+      if(i===idx && i!==item.correct) b.classList.add('incorrect');
+      b.disabled = true;
+    });
+
+    const wasRight = idx===item.correct;
+    state.selectedWasCorrect = wasRight;
+    state.review.push({ q: item.q, your: idx, correct: item.correct, choices: item.a, ref: item.ref });
+
+    if(wasRight) state.correct++;
+
+    const title = wasRight ? "✅ Correct!" : "❌ Incorrect";
+    const msg = wasRight
+      ? `Nice! ${niceEncouragement()} (${item.ref})`
+      : `The correct answer is "${item.a[item.correct]}". (${item.ref})`;
+
+    modal.open(title, msg, ()=>{
+      startJumpRound();
+    });
+  }
+
+  skipBtn.addEventListener('click', ()=>{
+    state.selectedWasCorrect = false;
+    startJumpRound();
+  });
+
+  function niceEncouragement(){
+    const lines = ["Great memory!","Way to go!","You’re on a roll!","Nailed it!","Solid!"];
+    return lines[Math.floor(Math.random()*lines.length)];
+  }
+
+  // --- Game (mini doodle jump) ---
+  const canvas = document.getElementById('game');
+  const wrap = document.getElementById('gameWrap');
+  const timerChip = document.getElementById('timerChip');
+  const heightChip = document.getElementById('heightChip');
+  const endEarlyBtn = document.getElementById('endEarlyBtn');
+  const leftBtn = document.getElementById('leftBtn');
+  const rightBtn = document.getElementById('rightBtn');
+
+
+// === Bonus config ===
+const BONUS_PX_PER_POINT = 120; // pixels climbed per 1 bonus point (adjust as you like)
+// Rare bonus platforms
+const GREEN_PLATFORM_PROB  = 0.33; // ~33% chance -> +1 bonus
+const YELLOW_PLATFORM_PROB = 0.10; // ~10% chance  -> +2 bonus
+const ALLOW_BONUS_PER_PLATFORM_ONCE = true; // award once per platform
+
+const ROUND_LEN = 12000; // ms — adjust here
+// small UI flash when bonus is earned
+let bonusFlash = 0;           // ms remaining
+let bonusFlashText = "";      // "+1" or "+2"
+let roundColorBonus = 0;      // color-platform points earned this round
+
+let ctx, W, H, dpr=1;
+let running=false, last=0, elapsed=0, roundLen=ROUND_LEN;
+
+  let world, keys={left:false,right:false}, touchLeft=false, touchRight=false;
+
+  function resizeCanvas(){
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const rect = wrap.getBoundingClientRect();
+    W = Math.max(180, Math.floor(rect.width * dpr));
+    H = Math.max(180, Math.floor(rect.height * dpr));
+    canvas.width = W; canvas.height = H;
+    ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+  }
+  window.addEventListener('resize', resizeCanvas);
+
+  function startJumpRound(){
+    show('game');
+    resizeCanvas();
+    setupWorld();
+roundColorBonus = 0; // reset per-round color bonus
+
+    elapsed = 0;
+    running = true;
+    last = performance.now();
+    requestAnimationFrame(loop);
+  }
+
+  function endJumpRound(){
+running = false;
+
+// --- Compute height-based bonus for this round ---
+const roundClimbedPx = Math.max(0, ((H - world.bestY) | 0));
+const heightBonus = Math.floor(roundClimbedPx / BONUS_PX_PER_POINT);
+state.bonus += heightBonus;
+
+// Combined summary for this round
+const totalRoundBonus = heightBonus + roundColorBonus;
+
+// Helper to advance after popup (or immediately if no bonus)
+const advance = () => {
+  state.totalJumpTime += elapsed;
+  state.i++;
+  if (state.i >= questions.length) {
+    const ms = Math.max(1, performance.now() - state.startTime);
+    const totalPoints = state.correct + state.bonus;
+    document.getElementById('finalScore').textContent =
+      `Correct: ${state.correct}/${questions.length} · Bonus: ${state.bonus} · Total: ${totalPoints}`;
+    document.getElementById('timePlayed').textContent =
+      `Time played: ${(ms/1000).toFixed(1)}s (jump time ${(state.totalJumpTime/1000).toFixed(1)}s)`;
+    show('end');
+  } else {
+    loadQuestion();
+    show('question');
+  }
+};
+
+// Show a combined popup if we earned any bonus this round
+if (totalRoundBonus > 0) {
+  const lines = [];
+  if (heightBonus > 0)       lines.push(`Height: ${roundClimbedPx}px → +${heightBonus}`);
+  if (roundColorBonus > 0)   lines.push(`Color platforms: +${roundColorBonus}`);
+  lines.push(`Total this round: +${totalRoundBonus}`);
+
+  modal.open("Bonus Earned!", lines.join('\n'), advance);
+} else {
+  advance();
+}
+
+      }
+
+  endEarlyBtn.addEventListener('click', endJumpRound);
+
+// World config (more forgiving)
+const PLAYER = { w:26, h:26, emoji:"🙂", speed:0.30, jump:-0.75, grav:0.0010, maxVy:0.70 };
+const PLATFORM = { w:80, h:12, count:12, spacing:0.12 }; // closer platforms, a bit wider/taller
+
+
+  function setupWorld(){
+    world = {
+      px: W/2, py: H*0.72, vx:0, vy:-0.02,
+      bestY: H*0.72,
+      platforms: [],
+      scroll: 0,
+      seed: Math.random()*1e6|0
+    };
+// Safety floor (kept for ~2.5s before removal)
+world.safetyTTL = 2500; // ms the red floor stays active
+world.platforms.push({x:0, y:H-8, w:W, h:12, type:'safety'});
+
+// Helpful starter platform a bit above the floor
+world.platforms.push({ 
+  x: Math.max(10, W*0.5 - 60), 
+  y: H*0.82, 
+  w: 120, 
+  h: 12, 
+  type: 'normal' 
+});
+
+// Generate initial platforms upward
+let y = H*0.80;
+
+    for(let i=0;i<PLATFORM.count;i++){
+      y -= H*PLATFORM.spacing;
+      world.platforms.push(randPlatformAt(y));
+    }
+  }
+
+  function rand(min,max){ return min + Math.random()*(max-min); }
+
+function randPlatformAt(y){
+  const w = clamp(PLATFORM.w * (W/320), 58, W*0.42);
+
+  // decide platform type (mildly rare green, very rare yellow)
+  let type = "normal";
+  const r = Math.random();
+  if (r < YELLOW_PLATFORM_PROB) {
+    type = "yellow"; // +2 bonus
+  } else if (r < YELLOW_PLATFORM_PROB + GREEN_PLATFORM_PROB) {
+    type = "green";  // +1 bonus
+  }
+
+  return {
+    x: rand(8, Math.max(9, W - w - 9)),
+    y, w, h: PLATFORM.h,
+    type
+  };
+}
+ 
+
+  function clamp(v,min,max){ return Math.max(min, Math.min(max,v)); }
+
+  // Input
+  window.addEventListener('keydown',(e)=>{
+    if(e.key==='ArrowLeft'){ keys.left=true; }
+    if(e.key==='ArrowRight'){ keys.right=true; }
+  });
+  window.addEventListener('keyup',(e)=>{
+    if(e.key==='ArrowLeft'){ keys.left=false; }
+    if(e.key==='ArrowRight'){ keys.right=false; }
+  });
+  leftBtn.addEventListener('pointerdown', ()=>{ touchLeft=true; });
+  rightBtn.addEventListener('pointerdown', ()=>{ touchRight=true; });
+  const endTouch = ()=>{ touchLeft=false; touchRight=false; };
+  leftBtn.addEventListener('pointerup', endTouch);
+  rightBtn.addEventListener('pointerup', endTouch);
+  leftBtn.addEventListener('pointercancel', endTouch);
+  rightBtn.addEventListener('pointercancel', endTouch);
+  leftBtn.addEventListener('pointerleave', endTouch);
+  rightBtn.addEventListener('pointerleave', endTouch);
+
+  function loop(t){
+    if(!running) return;
+    const dt = Math.min(32, t-last);
+    last = t;
+    elapsed += dt;
+
+    update(dt);
+    render();
+
+    if(elapsed >= roundLen){
+      endJumpRound();
+      return;
+    }
+    requestAnimationFrame(loop);
+  }
+
+  function update(dt){
+    const p = world;
+const prevY = p.py; // remember previous Y for crossing check
+if (bonusFlash > 0) bonusFlash -= dt;
+
+    // Horizontal
+    const left = keys.left || touchLeft;
+    const right = keys.right || touchRight;
+    let ax = 0;
+    if(left) ax -= PLAYER.speed;
+    if(right) ax += PLAYER.speed;
+    p.vx = ax;
+    p.px += p.vx * dt;
+
+    // Wrap edges
+    if(p.px < -16) p.px = W + 16;
+    if(p.px > W + 16) p.px = -16;
+
+    // Gravity / Vertical
+    p.vy += PLAYER.grav * dt;
+    p.vy = clamp(p.vy, -999, PLAYER.maxVy);
+    p.py += p.vy * dt;
+
+    // Scroll up when player climbs
+    if(p.py < H*0.5){
+      const dy = (H*0.5 - p.py);
+      p.py += dy;
+      p.scroll += dy;
+      for(const pl of p.platforms) pl.y += dy;
+    }
+if (p.py < p.bestY) p.bestY = p.py;
+
+
+// Collisions (only when moving downward), tolerant top-edge check
+if (p.vy > 0) {
+  const footNow  = p.py + PLAYER.h * 0.5;
+  const footPrev = prevY + PLAYER.h * 0.5;
+  for (const pl of p.platforms) {
+    // crossed the top of the platform this frame?
+    const crossedTop = (footPrev <= pl.y) && (footNow >= pl.y - 2);
+    const withinX = (p.px >= pl.x - PLAYER.w*0.5) && (p.px <= pl.x + pl.w + PLAYER.w*0.5);
+    if (crossedTop && withinX) {
+      p.py = pl.y - PLAYER.h * 0.5; // snap to top to avoid sinking
+      p.vy = PLAYER.jump;           // bounce
+
+      // award one-time bonus for special platforms
+      let award = 0;
+      if (pl.type === 'green')  award = 1;
+      if (pl.type === 'yellow') award = 2;
+
+      if (award > 0) {
+        state.bonus += award;
+roundColorBonus += award; // track per-round color points
+
+        bonusFlash = 800;                 // show flash ~0.8s
+        bonusFlashText = `+${award}`;
+        if (ALLOW_BONUS_PER_PLATFORM_ONCE) {
+          pl.type = 'normal';             // prevent repeated awards on re-bounce
+        }
+      }
+    }
+  }
+} // <-- this closes the "if (p.vy > 0)" block
+
+
+
+    // Recycle platforms
+for (const pl of world.platforms) { pl.y += 0.02 * dt; } // slower drift
+// Safety platform lifetime countdown
+if (typeof world.safetyTTL === 'number') {
+  world.safetyTTL -= dt;
+  if (world.safetyTTL <= 0) {
+    world.platforms = world.platforms.filter(pl => pl.type !== 'safety');
+    delete world.safetyTTL;
+  }
+}
+
+    world.platforms = world.platforms.filter(pl => pl.y < H + 20);
+    while(world.platforms.length < PLATFORM.count+1){
+      const topY = Math.min(...world.platforms.map(pl=>pl.y));
+      const newY = topY - H*PLATFORM.spacing;
+      world.platforms.push(randPlatformAt(newY));
+    }
+
+    // HUD
+    timerChip.textContent = `⏱️ ${(elapsed/1000).toFixed(1)}s`;
+    const climbed = Math.max(0, ((H - p.bestY)|0));
+    heightChip.textContent = `⬆️ ${climbed}`;
+  }
+
+  function render(){
+    const p = world;
+    ctx.clearRect(0,0,W,H);
+
+    // Background gradient
+    const g = ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,'#07162c');
+    g.addColorStop(1,'#030b16');
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,W,H);
+
+    // Platforms
+    for(const pl of p.platforms){
+      if(pl.type==='safety'){
+        ctx.fillStyle = '#991b1b';
+        ctx.fillRect(pl.x, pl.y, pl.w, pl.h);
+}else{
+  // rounded bar with color by type
+  let color = '#1d4ed8'; // normal blue
+  if (pl.type === 'green')  color = '#16a34a'; // green-600
+  if (pl.type === 'yellow') color = '#f59e0b'; // amber-500
+
+  ctx.fillStyle = color;
+  roundRect(pl.x, pl.y, pl.w, pl.h, 4);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.08)';
+  ctx.stroke();
+}
+
+    }
+
+    // Player
+    drawEmoji(PLAYER.emoji, p.px, p.py, Math.max(18, Math.min(36, W*0.06)));
+// bonus flash text near the player
+if (bonusFlash > 0) {
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, Math.min(1, bonusFlash / 800));
+  ctx.font = `bold ${Math.max(16, Math.min(28, W*0.05))}px system-ui, Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#ffffff';
+  ctx.fillText(bonusFlashText, p.px, p.py - 24);
+  ctx.restore();
+}
+
+  }
+
+  function drawEmoji(ch, x, y, size){
+    ctx.font = `bold ${size}px system-ui, Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(ch, x, y);
+    if(state.selectedWasCorrect){
+      ctx.font = `bold ${Math.floor(size*0.7)}px system-ui, Apple Color Emoji, Segoe UI Emoji`;
+      ctx.fillText('🥾', x, y + size*0.7);
+    }
+  }
+  function roundRect(x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+  }
+
+  // --- End Screen + Review ---
+  document.getElementById('playAgain').addEventListener('click', ()=>{
+    resetAll();
+    loadQuestion();
+    show('question');
+  });
+  document.getElementById('reviewBtn').addEventListener('click', ()=>{
+    const parts = state.review.map((r,i)=>{
+      const your = r.your!=null ? `You: ${r.choices[r.your]}` : 'You: (skipped)';
+      const cor = `Answer: ${r.choices[r.correct]}`;
+      return `Q${i+1}. ${r.q}\n${your}\n${cor} — ${r.ref}`;
+    }).join('\n\n');
+    modal.open("Review Answers", parts || "No answers to review.", null);
+  });
+
+  function resetAll(){
+    state.i = 0;
+    state.correct = 0;
+    state.review = [];
+    state.totalJumpTime = 0;
+    state.selectedWasCorrect = false;
+state.bonus = 0;
+
+  }
+
+  // --- Initial screen ---
+  show('splash');
+
+})();
+</script>
+</body>
+</html>
