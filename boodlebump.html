@@ -103,6 +103,7 @@
 .countLead{margin:6px 0;color:var(--muted);text-align:center}
 .countNum{font-weight:900;font-size:clamp(36px,10vw,72px);line-height:1;margin-top:6px;text-align:center}
 
+.countHelp{margin:6px 0 0;color:var(--muted);font-size:12px;text-align:center}
 
 
 #modalTitle, #modalMsg { text-align:center; }
@@ -154,10 +155,10 @@
       <div class="pill" id="qCounter">Question</div>
       <p class="question" id="qText">Question text</p>
       <div class="answers" id="answers"></div>
-      <div class="footerbar">
-        <span class="pill" id="scorePill">Score: 0 correct</span>
-        <button class="btn" id="skipBtn" title="Try the jump round now">Skip ➡️</button>
-      </div>
+<div class="footerbar">
+  <span class="pill" id="scorePill">Score: 0 correct</span>
+</div>
+
     </section>
 
     <!-- GAME -->
@@ -249,6 +250,8 @@ const modal = {
   title: document.getElementById('modalTitle'),
   msg: document.getElementById('modalMsg'),
   ok: document.getElementById('modalOk'),
+
+  // Standard text modal with OK button
   open(title, msg, onok){
     this.title.textContent = title;
     this.msg.textContent = msg;
@@ -260,7 +263,21 @@ const modal = {
     };
     this.ok.addEventListener('click', handler);
   },
-  // NEW: countdown modal (no OK button)
+
+  // HTML-capable modal (used for the 💀 fall popup)
+  html(title, html, onok){
+    this.title.textContent = title;
+    this.msg.innerHTML = html;
+    this.el.classList.add('show');
+    const handler = ()=>{
+      this.el.classList.remove('show');
+      this.ok.removeEventListener('click', handler);
+      onok && onok();
+    };
+    this.ok.addEventListener('click', handler);
+  },
+
+  // Countdown modal (no OK button; auto-closes)
   countdown(title, leadText, seconds, ondone){
     this.title.textContent = title;
     this.el.classList.add('show');
@@ -270,9 +287,12 @@ const modal = {
     const prevDisplay = okRow.style.display;
     okRow.style.display = 'none';
 
-    let remaining = Math.max(0, Math.floor(seconds)|0);
+    let remaining = Math.max(0, Math.floor(seconds) | 0);
     const render = ()=>{
-      this.msg.innerHTML = `<div class="countLead">${leadText}</div><div class="countNum">${remaining}</div>`;
+      this.msg.innerHTML =
+        `<div class="countLead">${leadText}</div>
+         <div class="countNum">${remaining}</div>
+         <div class="countHelp">Use arrows or tilt to move.</div>`;
     };
     render();
 
@@ -280,7 +300,6 @@ const modal = {
       remaining -= 1;
       if(remaining <= 0){
         clearInterval(timer);
-        // restore and close
         okRow.style.display = prevDisplay || '';
         this.el.classList.remove('show');
         ondone && ondone();
@@ -291,6 +310,8 @@ const modal = {
     const timer = setInterval(tick, 1000);
   }
 };
+
+
 
   // --- Global quiz state ---
 const state = {
@@ -399,7 +420,6 @@ tiltBtn.addEventListener('click', async ()=>{
   const answersBox = document.getElementById('answers');
   const qCounter = document.getElementById('qCounter');
   const scorePill = document.getElementById('scorePill');
-  const skipBtn = document.getElementById('skipBtn');
 
   function loadQuestion(){
     const item = questions[state.i];
@@ -437,14 +457,10 @@ tiltBtn.addEventListener('click', async ()=>{
       ? `Nice! ${niceEncouragement()} (${item.ref})`
       : `The correct answer is "${item.a[item.correct]}". (${item.ref})`;
 
-modal.countdown(title, "Emoji jumping begins in...", 7, startJumpRound);
+modal.countdown(title, "Emoji jumping begins in...", 5, startJumpRound);
 
   }
 
-  skipBtn.addEventListener('click', ()=>{
-    state.selectedWasCorrect = false;
-    startJumpRound();
-  });
 
   function niceEncouragement(){
     const lines = ["Great memory!","Way to go!","You’re on a roll!","Nailed it!","Solid!"];
@@ -582,18 +598,24 @@ const PLATFORM = { w:80, h:12, count:12, spacing:0.12 }; // closer platforms, a 
       scroll: 0,
       seed: Math.random()*1e6|0
     };
-// Safety floor (kept for ~2.5s before removal)
-world.safetyTTL = 2500; // ms the red floor stays active
-world.platforms.push({x:0, y:H-8, w:W, h:12, type:'safety'});
+
+// Safety floor (kept for ~3.5s before removal)
+world.safetyTTL = 3500; // ms the red floor stays active
+
+// Raise and scale the floor so it's clearly visible on all screens
+const floorH = Math.max(14, Math.floor(H * 0.024)); // ~2.4% of canvas height
+const floorY = H - floorH - 10;                      // lift ~10px above bottom
+world.platforms.push({ x: 0, y: floorY, w: W, h: floorH, type: 'safety' });
 
 // Helpful starter platform a bit above the floor
-world.platforms.push({ 
-  x: Math.max(10, W*0.5 - 60), 
-  y: H*0.82, 
-  w: 120, 
-  h: 12, 
-  type: 'normal' 
+world.platforms.push({
+  x: Math.max(10, W * 0.5 - 60),
+  y: floorY - Math.max(60, Math.floor(H * 0.08)),    // ~8% of height above floor
+  w: 120,
+  h: 12,
+  type: 'normal'
 });
+
 
 // Generate initial platforms upward
 let y = H*0.80;
@@ -745,9 +767,33 @@ roundColorBonus += award; // track per-round color points
 } // <-- this closes the "if (p.vy > 0)" block
 
 
+// Fell off the bottom AFTER safety expired: end with skull popup
+if (typeof world.safetyTTL === 'undefined' && p.py > H + 24) {
+  running = false;
+
+  // Temporarily rename the OK button to "Next question"
+  const prevLabel = modal.ok.textContent;
+  modal.ok.textContent = 'Next question';
+
+  modal.html(
+    'Oh no!',
+    `<div style="font-size:72px;line-height:1;margin:6px 0;">💀</div>
+     <div style="opacity:.85">You fell off!</div>`,
+    ()=>{
+      // restore label and proceed to next question (keeps bonus flow)
+      modal.ok.textContent = prevLabel;
+      endJumpRound();
+    }
+  );
+  return; // stop updating this frame
+}
+
 
     // Recycle platforms
-for (const pl of world.platforms) { pl.y += 0.02 * dt; } // slower drift
+for (const pl of world.platforms) {
+  if (pl.type !== 'safety') pl.y += 0.02 * dt; // keep safety floor pinned
+}
+
 // Safety platform lifetime countdown
 if (typeof world.safetyTTL === 'number') {
   world.safetyTTL -= dt;
@@ -757,7 +803,8 @@ if (typeof world.safetyTTL === 'number') {
   }
 }
 
-    world.platforms = world.platforms.filter(pl => pl.y < H + 20);
+world.platforms = world.platforms.filter(pl => pl.type === 'safety' || pl.y < H + 20);
+
     while(world.platforms.length < PLATFORM.count+1){
       const topY = Math.min(...world.platforms.map(pl=>pl.y));
       const newY = topY - H*PLATFORM.spacing;
@@ -804,17 +851,23 @@ if (typeof world.safetyTTL === 'number') {
     // Player
 drawEmoji(PLAYER.emoji, p.px, p.py, Math.max(22, Math.min(48, W*0.065)));
 
-// bonus flash text near the player
+// bonus flash text near the player (raised higher, responsive offset)
 if (bonusFlash > 0) {
   ctx.save();
   ctx.globalAlpha = Math.max(0, Math.min(1, bonusFlash / 800));
-  ctx.font = `bold ${Math.max(16, Math.min(28, W*0.05))}px system-ui, Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji`;
+  const flashSize = Math.max(16, Math.min(28, W*0.05));
+  ctx.font = `bold ${flashSize}px system-ui, Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = '#ffffff';
-  ctx.fillText(bonusFlashText, p.px, p.py - 24);
+
+  // Raise higher than before; scale with width so it’s clear on tablets too
+  const raise = Math.max(36, Math.min(72, W * 0.10)); // was fixed 24
+  ctx.fillText(bonusFlashText, p.px, p.py - raise);
+
   ctx.restore();
 }
+
 
   }
 
