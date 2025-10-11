@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Emoji Catch</title>
+<style>
+:root{
+  --bg: #0c0f1e;        /* darker backdrop */
+  --card: #0f1633;      /* darker cards for contrast */
+  --ink: #ffffff;       /* brighter text */
+  --muted: #c9d3ff;     /* lighter secondary text */
+  --accent: #79e0ff;
+  --good: #2ddf8b;
+  --bad: #ff5d5d;
+  --gold: #ffd166;
+}
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body{
+    margin:0;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Apple Color Emoji","Segoe UI Emoji";
+    background: radial-gradient(1200px 900px at 50% -10%, #1a2040 0%, var(--bg) 60%, #0a0c14 100%);
+    color: var(--ink);
+    display: grid;
+    place-items: center;
+  }
+  #app{
+    width: min(100vw, 920px);
+    height: min(100vh, 1600px);
+    padding: clamp(10px, 2vmin, 24px);
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    gap: clamp(10px, 2vmin, 20px);
+  }
+  header, footer{
+    display:flex; align-items:center; justify-content:space-between;
+    gap:12px; min-height: 32px;
+  }
+header .title{
+  font-weight:700; letter-spacing:.5px;
+  color:#ffffff; text-shadow:0 1px 4px #00000080;
+}
+
+  header .score{
+    font-variant-numeric: tabular-nums;
+    background: #111525A0;
+    border: 1px solid #FFFFFF12;
+    border-radius: 12px;
+    padding: 6px 10px;
+  }
+  main{
+    background: linear-gradient(180deg,#12172a 0%, #0f1426 60%, #0c1122 100%);
+    border: 1px solid #ffffff14;
+    border-radius: 20px;
+    box-shadow:
+       0 30px 60px #00000065 inset,
+       0 8px 40px #00000050,
+       0 0 0 1px #ffffff10 inset;
+    position: relative;
+    overflow: hidden;
+  }
+  .center {
+    width: 100%; height: 100%;
+    display: grid; place-items: center;
+    padding: clamp(12px, 4vmin, 28px);
+    text-align: center;
+  }
+.card{
+  background: linear-gradient(180deg, #111943, #0f1633 70%);
+  border: 1px solid #3a4a85;          /* stronger border */
+  border-radius: 20px;
+  padding: clamp(16px, 4.5vmin, 32px);
+  width: min(760px, 94%);
+  margin: 0 auto;
+  box-shadow: 0 24px 70px #0000009a, 0 0 0 1px #5466b533 inset;
+}
+
+  h1{ margin: 0 0 .2em; font-size: clamp(26px, 5.2vmin, 40px); }
+h2{
+  margin: 0 0 .6em;
+  font-size: clamp(20px, 5vmin, 34px);  /* bigger */
+  color: var(--ink);                     /* full white for the question */
+  font-weight: 700;
+  text-shadow: 0 2px 8px #0000007a;      /* subtle glow to lift off bg */
+}
+
+  p { margin:.5em 0; color: var(--muted) }
+  .btn{
+    appearance:none; border:0; cursor:pointer;
+    padding: 12px 18px;
+    border-radius: 14px;
+    background: linear-gradient(180deg,#2a335a,#1b2342);
+    color: var(--ink); font-weight:700;
+    border: 1px solid #ffffff22;
+    box-shadow: 0 8px 18px #0000006a, 0 1px 0 0 #ffffff10 inset;
+    transition: transform .05s ease, box-shadow .2s ease, background .2s ease;
+  }
+  .btn:hover{ transform: translateY(-1px); box-shadow: 0 10px 24px #0000007a, 0 1px 0 0 #ffffff12 inset; }
+  .btn:active{ transform: translateY(0); }
+  .btn.primary{ background: linear-gradient(180deg,#3b82f6,#1e40af); }
+  .btn.good{ background: linear-gradient(180deg,#34d399,#0f9b6b); }
+  .btn.bad { background: linear-gradient(180deg,#ef4444,#991b1b); }
+  .row { display:flex; gap:12px; flex-wrap: wrap; justify-content:center; }
+  .answers{ display:grid; grid-template-columns: 1fr; gap:10px; margin-top: 14px;}
+  @media (min-width:560px){ .answers{ grid-template-columns: 1fr 1fr; } }
+
+  .answer{
+  display:flex; align-items:center; gap:12px; text-align:left; width:100%;
+  padding: 14px 16px;
+  background: #222c5b;                 /* brighter tile */
+  border: 1px solid #4155a6;           /* clearer edge */
+  border-radius: 14px; cursor: pointer;
+  color: #ffffff;                      /* bright text on buttons */
+  transition: transform .04s ease, background .15s ease, border-color .15s ease, box-shadow .15s ease;
+  box-shadow: 0 6px 16px #00000055;
+}
+
+.answer:hover,
+.answer:focus{
+  transform: translateY(-1px);
+  border-color:#6fa0ff;
+  background:#2a3680;
+  box-shadow: 0 10px 22px #00000080, 0 0 0 2px #6fa0ff33 inset;
+  outline: none;
+}
+
+
+.answer .emo{ font-size: clamp(22px, 6vmin, 34px); filter: drop-shadow(0 2px 3px #00000066); }
+.answer div > div{ font-size: clamp(14px, 2.8vmin, 18px); line-height: 1.15; }
+
+
+.meta{
+  display:flex; gap:8px; flex-wrap:wrap; justify-content:center;
+  margin-top: 14px;
+  color: #d7e0ff;                 /* brighter hint */
+  font-size: clamp(13px, 2.6vmin, 16px);
+  text-shadow: 0 1px 2px #0000008a;
+}
+
+
+.hud {
+    position:absolute; left:0; right:0; top:0; display:flex; gap:10px; justify-content:space-between; padding:10px;
+    font-variant-numeric: tabular-nums;
+  }
+
+/* Target box overlay (center top, below HUD) */
+.target-wrap{
+  position: absolute;
+  left: 0; right: 0;
+  top: 44px;               /* a bit tighter under the HUD */
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.target-box{
+  background: #ffffff;
+  color: #111;
+  border: 1px solid #00000022;
+  border-radius: 12px;
+  padding: 6px 10px;
+  min-width: 68px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.25);
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+}
+
+
+.target-box .t-emoji{
+  font-size: clamp(22px, 5.5vmin, 40px);
+  line-height: 1;
+}
+
+
+.target-box .t-label{
+  font-size: 12px;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+  opacity: .75;
+  line-height: 1.1;
+}
+
+
+
+
+  .hud .pill{
+    background:#00000050; border:1px solid #ffffff18; border-radius: 999px; padding: 6px 10px;
+  }
+  canvas { display:block; width:100%; height:100%; }
+  /* Modal */
+  .modal {
+    position: absolute; inset:0; display:none; place-items:center; background: #00000080; backdrop-filter: blur(2px);
+    padding: 20px;
+  }
+  .modal.show{ display:grid; }
+  .modal .card { width: min(560px, 95%); }
+  .pop-title{ font-size: clamp(20px, 4.6vmin, 30px); margin-bottom:.4em; }
+  .mono { font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .tiny { font-size:.9rem; opacity:.9 }
+  footer .help { color: var(--muted); font-size:.9rem }
+  .brand { color: var(--accent); font-weight: 700; }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="title">🧺 <span class="brand">Emoji</span> Catch</div>
+    <div class="score">Score: <span id="scoreEl">0</span></div>
+  </header>
+
+  <main id="stage">
+    <!-- dynamic content goes here -->
+    <div class="center" id="splashScreen">
+      <div class="card">
+        <h2>Game is best in <b>vertical</b> mode 📱</h2>
+        <p>TIP: Rotate your device for a taller view.</p>
+        <div class="row" style="margin-top:10px">
+          <button class="btn primary" id="splashOk">Okay</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="help">Use ◄ ► keys • drag/touch to move the basket</div>
+    <div>© <span class="brand">eatyourbible.com</span></div>
+  </footer>
+</div>
+
+<!-- Modal -->
+<div class="modal" id="modal">
+  <div class="card">
+    <div id="modalTitle" class="pop-title">Title</div>
+    <div id="modalBody" style="margin:.35em 0 1em; color:var(--muted)"></div>
+    <div class="row">
+      <button class="btn primary" id="modalBtn">Continue</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const stage = document.getElementById('stage');
+  const scoreEl = document.getElementById('scoreEl');
+  const modal = document.getElementById('modal');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalBody  = document.getElementById('modalBody');
+  const modalBtn   = document.getElementById('modalBtn');
+
+  const GAME = {
+    state: 'splash', // 'title','question','pregame','play','bonus','end'
+    qIndex: 0,
+    score: 0,
+    roundTime: 25, // seconds per catch round
+    bonusTime: 30, // seconds for bonus
+basket: { x: 0, y: 0, w: 80, h: 36, speed: 800 },
+    kbd: {left:false,right:false},
+    mouseX: null,
+    touchX: null,
+    canvas: null,
+    canvasWrap: null,
+
+    ctx: null,
+    dpr: Math.max(1, window.devicePixelRatio || 1),
+    objects: [],
+    particles: [],           // visual effects (e.g., starbursts)
+    lastSpawn: 0,
+    spawnEvery: 600, // ms
+    lastTime: 0,
+    timeLeft: 0,
+    lanes: 4,
+    freeSpawn: true,            // NEW: spawn anywhere across the width (no lanes)
+minSpawnSpacing: 0.20,      // NEW: 0.20 = keep ~20% canvas width between items at spawn
+
+minXGapFrac: 0.14,          // NEW: avoid reusing X bands this wide (fraction of canvas width)
+xLockTTLms: 2200,           // NEW: how long (ms) a band stays reserved
+recentX: [],                // NEW: [{xCenter, expiresAt}]
+
+
+    currentRoundSpec: null,
+    // emojis used
+    bombEmoji: '💣',
+    starEmoji: '⭐',
+    diamondEmoji: '💎',
+    jewelEmoji: '🔷',
+    basketEmoji: '🧺',
+  };
+
+
+/* ===========================================================================
+   ASCII QUESTIONS BLOCK MARKER
+   Use Find to jump here quickly:  ASCII QUESTIONS  or  QUESTIONS START
+
+       ____    _    _   ______    _____   _______   _____    ____    _   _
+      / __ \  | |  | | |  ____|  / ____| |__   __| |_   _|  / __ \  | \ | |
+     | |  | | | |  | | | |__    | (___      | |      | |   | |  | | |  \| |
+     | |  | | | |  | | |  __|    \___ \     | |      | |   | |  | | | . ` |
+     | |__| | | |__| | | |____   ____) |    | |     _| |_  | |__| | | |\  |
+      \___\_\  \____/  |______| |_____/     |_|    |_____|  \____/  |_| \_|
+
+   QUESTIONS START
+   ------------------------------------------------------------------------- */
+
+
+
+  // 10 Sample Bible questions (edit freely). Each answer has text & emoji; "correct" is index 0..3
+const QUESTIONS = [
+  {
+    q: "What were the people like in the days of Noah?",
+    answers: [
+      { t: "All they thought about was doing evil", e: "😈" },
+      { t: "They were mostly kind and helpful", e: "🤝" },
+      { t: "They didn’t know right from wrong", e: "🤷" },
+      { t: "They never argued with each other", e: "😊" }
+    ],
+    correct: 0
+  },
+  {
+    q: "How did God feel about their sin? What did he plan to do?",
+    answers: [
+      { t: "Sad, He planned to destroy the earth", e: "😢" },
+      { t: "Amused, He planned to ignore it", e: "😅" },
+      { t: "Surprised, He asked angels what to do", e: "😮" },
+      { t: "Confused, He waited to see more", e: "🤔" }
+    ],
+    correct: 0
+  },
+  {
+    q: "What does the book of Genesis say about Noah?",
+    answers: [
+      { t: "He was a godly man who was faithful to God", e: "🙏" },
+      { t: "He was the strongest man on earth", e: "💪" },
+      { t: "He was a famous king", e: "👑" },
+      { t: "He was a sea captain", e: "🧭" }
+    ],
+    correct: 0
+  },
+  {
+    q: "What did God tell Noah to do? Why?",
+    answers: [
+      { t: "Build an ark because He would flood the earth", e: "🛶" },
+      { t: "Climb a mountain to hide", e: "⛰️" },
+      { t: "Move to another country", e: "🧳" },
+      { t: "Plant trees to stop the rain", e: "🌳" }
+    ],
+    correct: 0
+  },
+  {
+    q: "Who was going to be in the ark with Noah?",
+    answers: [
+      { t: "His family, male and female of every animal", e: "🐾" },
+      { t: "Only Noah by himself", e: "🧍" },
+      { t: "Only birds", e: "🕊️" },
+      { t: "Only land animals", e: "🐻" }
+    ],
+    correct: 0
+  },
+  {
+    q: "What promise/covenant did God give to Noah?",
+    answers: [
+      { t: "To keep his family and the animals safe in the ark", e: "🌈" },
+      { t: "To stop all rain forever", e: "🚫" },
+      { t: "To make Noah a king", e: "👑" },
+      { t: "To build Noah a city", e: "🏙️" }
+    ],
+    correct: 0
+  },
+  {
+    q: "How did Noah get two of every animal in the ark?",
+    answers: [
+      { t: "God brought the animals to him", e: "🦒" },
+      { t: "Noah chased them for years", e: "🏃" },
+      { t: "He traded with other cities", e: "💰" },
+      { t: "He made statues instead", e: "🗿" }
+    ],
+    correct: 0
+  },
+  {
+    q: "How did God flood the earth?",
+    answers: [
+      { t: "Rain for 40 days and great springs opened in the deep", e: "🌧️" },
+      { t: "A giant wave from the ocean only", e: "🌊" },
+      { t: "Snowstorms covered everything", e: "❄️" },
+      { t: "Clouds disappeared and water rose by magic", e: "☁️" }
+    ],
+    correct: 0
+  },
+  {
+    q: "How high did the waters of the flood rise?",
+    answers: [
+      { t: "Above the mountains of the earth", e: "⛰️" },
+      { t: "Only to people’s knees", e: "🦵" },
+      { t: "Just over the rivers", e: "🏞️" },
+      { t: "Only in one small valley", e: "🏔️" }
+    ],
+    correct: 0
+  },
+  {
+    q: "What happened to the animals and people not in the ark?",
+    answers: [
+      { t: "They died", e: "⚰️" },
+      { t: "They flew to space", e: "🚀" },
+      { t: "They hid underground and were fine", e: "🕳️" },
+      { t: "They climbed trees and waited it out", e: "🌳" }
+    ],
+    correct: 0
+  }
+];
+
+
+
+  /* ===========================================================================
+   ASCII BONUS ROUND BLOCK MARKER
+   Use Find to jump here quickly:  ASCII BONUS  or  BONUS START
+
+    ______   _   _   _____    _
+   |  ____| | \ | | |  __ \  | |
+   | |__    |  \| | | |  | | | |
+   |  __|   | . ` | | |  | | | |
+   | |____  | |\  | | |__| | |_|
+   |______| |_| \_| |_____/  (_)
+
+   BONUS START
+   ------------------------------------------------------------------------- */
+
+
+  // --- Utility DOM ---
+  function showModal(title, html, btnLabel = "Continue", onClose = null){
+    modalTitle.textContent = title;
+    modalBody.innerHTML = html;
+    modalBtn.textContent = btnLabel;
+    modal.classList.add('show');
+    const handler = ()=>{
+      modal.classList.remove('show');
+      modalBtn.removeEventListener('click', handler);
+      if (onClose) onClose();
+    };
+    modalBtn.addEventListener('click', handler);
+  }
+
+  function setView(el){
+    stage.innerHTML = '';
+    stage.appendChild(el);
+  }
+
+  function fmtSec(n){ return `${Math.ceil(n)}s`; }
+
+// Compute X positions across the width with a minimum spacing so items don't overlap at spawn
+function computeSpawnXs(count, sizeEstimate, W, spacingFrac){
+  const now = performance.now();
+  purgeExpiredXLocks(now);
+
+  const xs = [];
+  const minGapCurrentBatch = Math.max(sizeEstimate * 1.1, W * spacingFrac);
+  const minGapExisting     = Math.max(sizeEstimate, W * GAME.minXGapFrac);
+  const maxTries = 80;
+
+  for (let i = 0; i < count; i++){
+    let tries = 0, x = 0, ok = false;
+    while (tries < maxTries && !ok){
+      x = Math.random() * (W - sizeEstimate);
+      const cx = x + sizeEstimate/2;
+
+      // 1) keep space vs others in this same batch
+      const batchOK = xs.every(px => Math.abs((px + sizeEstimate/2) - cx) >= minGapCurrentBatch);
+
+      // 2) keep space vs recent locks from previous ticks
+      const recentOK = GAME.recentX.every(lock => Math.abs(lock.xCenter - cx) >= minGapExisting);
+
+      ok = batchOK && recentOK;
+      tries++;
+    }
+    xs.push(x);
+  }
+  // lock these centers
+  for (const x of xs){
+    const cx = x + sizeEstimate/2;
+    lockXBand(cx, now);
+  }
+  return xs;
+}
+
+function purgeExpiredXLocks(now){
+  GAME.recentX = GAME.recentX.filter(l => l.expiresAt > now);
+}
+function lockXBand(xCenter, now){
+  GAME.recentX.push({ xCenter, expiresAt: now + GAME.xLockTTLms });
+}
+
+
+
+  function updateScore(delta){
+    GAME.score = Math.max(0, GAME.score + delta);
+    scoreEl.textContent = GAME.score;
+  }
+
+  // --- Screens ---
+  function showTitle(){
+    GAME.state = 'title';
+    const wrap = document.createElement('div');
+    wrap.className = 'center';
+    wrap.innerHTML = `
+      <div class="card">
+        <h1>🧺 EMOJI CATCH 🧺</h1>
+        <h2>Answer the Question</h2>
+        <h2>Catch the right emoji</h2>
+        <p>Earn points by answering correctly and catching the correct emoji in the basket.<br>
+           Avoid <b style="color:var(--bad)">bombs</b> and wrong emojis. Grab <b style="color:var(--gold)">stars/diamonds</b> for bonus!</p>
+        <div class="row" style="margin-top:12px">
+          <button class="btn primary" id="startBtn">Start Game</button>
+        </div>
+        <div class="meta">
+          <span>10 questions • Short catch round each • Bonus round at the end</span>
+        </div>
+      </div>`;
+    setView(wrap);
+    wrap.querySelector('#startBtn').onclick = ()=>{
+      GAME.qIndex = 0;
+      GAME.score = 0;
+      updateScore(0);
+      showQuestion();
+    };
+  }
+
+  function showQuestion(){
+    GAME.state = 'question';
+    const q = QUESTIONS[GAME.qIndex];
+    const wrap = document.createElement('div');
+    wrap.className = 'center';
+    const answersHtml = q.answers.map((a, i)=>`
+      <button class="answer" data-idx="${i}">
+        <div class="emo">${a.e}</div>
+        <div><div style="font-weight:700">${a.t}</div></div>
+      </button>
+    `).join('');
+    wrap.innerHTML = `
+      <div class="card">
+        <h1>Q${GAME.qIndex+1} of ${QUESTIONS.length}</h1>
+        <h2>${q.q}</h2>
+        <div class="answers">${answersHtml}</div>
+        <div class="meta"><span>Pick one answer</span></div>
+      </div>`;
+    setView(wrap);
+    wrap.querySelectorAll('.answer').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const idx = Number(btn.dataset.idx);
+        const isCorrect = idx === q.correct;
+        if(isCorrect){
+          updateScore(100);
+          showModal('Correct!', `Nice work! <span class="mono">+100</span> points.`, 'Next', ()=> {
+            prepCatchRound();
+          });
+        } else {
+          const right = q.answers[q.correct];
+          showModal('Incorrect', `The correct answer is <b>${right.t}</b> ${right.e}.`, 'Continue', ()=> {
+            prepCatchRound();
+          });
+        }
+      });
+    });
+  }
+
+  function prepCatchRound(){
+    GAME.state = 'pregame';
+    const q = QUESTIONS[GAME.qIndex];
+    // Build round spec: four falling emojis (answers), mark one correct index
+    GAME.currentRoundSpec = {
+      lanes: q.answers.map(a => a.e),
+      correctIndex: q.correct
+    };
+const correctEmoji = q.answers[q.correct].e;
+
+showModal(
+  `Catch this emoji ${correctEmoji}`,
+  `Move your basket to catch the correct emoji and ignore the wrong ones.<br>
+   Bombs <span class="mono">💣</span> cost points.<br>
+   Stars <span class="mono">⭐</span> and diamonds <span class="mono">💎</span> are bonus!`,
+  'Start Round',
+  ()=> startCatchRound(false)
+);
+
+  }
+
+  function showEnd(){
+    GAME.state = 'end';
+    const wrap = document.createElement('div');
+    wrap.className = 'center';
+    wrap.innerHTML = `
+      <div class="card">
+        <h1>All done!</h1>
+        <h2>Your final score: <span class="mono" style="color:var(--gold)">${GAME.score}</span></h2>
+        <div class="row" style="margin-top:14px">
+          <button class="btn good" id="againBtn">Play Again</button>
+        </div>
+        <div class="meta"><span>Great job learning!</span></div>
+      </div>
+    `;
+    setView(wrap);
+    wrap.querySelector('#againBtn').onclick = showTitle;
+  }
+
+  // --- Canvas Catch Round ---
+
+function ensureCanvas(){
+  // If we already made the canvas container, just show it again and resize
+  if (GAME.canvasWrap){
+    setView(GAME.canvasWrap);
+    resizeCanvas();
+    return;
+  }
+
+  // First-time setup: create the container + canvas and remember it
+  const container = document.createElement('div');
+  container.style.width = '100%';
+  container.style.height = '100%';
+container.innerHTML = `
+  <div class="hud">
+    <div class="pill">Round: <span id="hudRound">1/10</span></div>
+    <div class="pill">Time: <span id="hudTime">${fmtSec(GAME.roundTime)}</span></div>
+    <div class="pill">Score: <span id="hudScore">${GAME.score}</span></div>
+  </div>
+
+  <!-- NEW: Target box centered under HUD -->
+  <div id="targetWrap" class="target-wrap">
+    <div class="target-box">
+      <div class="t-label">Target</div>
+      <div id="targetEmoji" class="t-emoji">❓</div>
+    </div>
+  </div>
+
+  <canvas id="gameCanvas"></canvas>
+`;
+
+  GAME.canvasWrap = container;             // <-- remember the wrapper
+  setView(container);
+
+  GAME.canvas = container.querySelector('#gameCanvas');
+  GAME.ctx = GAME.canvas.getContext('2d');
+
+  window.addEventListener('resize', resizeCanvas, {passive:true});
+  resizeCanvas();
+
+  // Inputs
+  window.addEventListener('keydown', e=>{
+    if(e.key === 'ArrowLeft')  GAME.kbd.left = true;
+    if(e.key === 'ArrowRight') GAME.kbd.right = true;
+  });
+  window.addEventListener('keyup', e=>{
+    if(e.key === 'ArrowLeft')  GAME.kbd.left = false;
+    if(e.key === 'ArrowRight') GAME.kbd.right = false;
+  });
+
+  // Mouse / touch to move
+  GAME.canvas.addEventListener('mousemove', e=>{
+    const rect = GAME.canvas.getBoundingClientRect();
+    const x = (e.clientX - rect.left) * (GAME.canvas.width/rect.width);
+    GAME.mouseX = x;
+  });
+  GAME.canvas.addEventListener('mouseleave', ()=>{ GAME.mouseX = null; });
+
+  GAME.canvas.addEventListener('touchmove', e=>{
+    const t = e.touches[0];
+    if(!t) return;
+    const rect = GAME.canvas.getBoundingClientRect();
+    const x = (t.clientX - rect.left) * (GAME.canvas.width/rect.width);
+    GAME.touchX = x;
+    e.preventDefault();
+  }, {passive:false});
+  GAME.canvas.addEventListener('touchend', ()=>{ GAME.touchX = null; });
+}
+
+
+  function resizeCanvas(){
+    if(!GAME.canvas) return;
+    const cssW = GAME.canvas.clientWidth;
+    const cssH = GAME.canvas.clientHeight;
+    const dpr = GAME.dpr;
+    GAME.canvas.width  = Math.floor(cssW * dpr);
+    GAME.canvas.height = Math.floor(cssH * dpr);
+  }
+
+  function startCatchRound(isBonus){
+    ensureCanvas();
+    GAME.state = isBonus ? 'bonus' : 'play';
+
+    document.getElementById('hudRound').textContent =
+      isBonus ? 'BONUS' : `${GAME.qIndex+1}/${QUESTIONS.length}`;
+    GAME.timeLeft = isBonus ? GAME.bonusTime : GAME.roundTime;
+    document.getElementById('hudTime').textContent = fmtSec(GAME.timeLeft);
+    document.getElementById('hudScore').textContent = GAME.score;
+
+// NEW: update the Target box
+const targetWrap  = GAME.canvasWrap.querySelector('#targetWrap');
+const targetEmoji = GAME.canvasWrap.querySelector('#targetEmoji');
+
+if (isBonus){
+  // Hide in bonus round (lots of different bonus items)
+  targetWrap.style.display = 'none';
+} else {
+  targetWrap.style.display = 'flex';
+  // Use the actual correct emoji for the current question
+  const ems = GAME.currentRoundSpec?.lanes;
+  const idx = GAME.currentRoundSpec?.correctIndex ?? 0;
+  const correctE = ems ? ems[idx] : (QUESTIONS[GAME.qIndex].answers[QUESTIONS[GAME.qIndex].correct].e);
+  targetEmoji.textContent = correctE;
+}
+
+
+    // basket size relative to width
+    const W = GAME.canvas.width;
+    const H = GAME.canvas.height;
+    GAME.basket.w = Math.max(56*GAME.dpr, Math.floor(W * 0.12));
+    GAME.basket.h = Math.max(28*GAME.dpr, Math.floor(H * 0.04));
+    GAME.basket.x = W/2 - GAME.basket.w/2;
+    GAME.basket.y = H - GAME.basket.h - 16*GAME.dpr;
+
+    // objects
+    GAME.objects = [];
+    GAME.particles = []; // reset starburst particles each round
+    GAME.recentX = []; // reset X locks at the start of a round
+
+    GAME.lastSpawn = 0;
+    GAME.lastTime = performance.now();
+
+    requestAnimationFrame(loop);
+  }
+
+  
+  function spawnObjects(deltaMS){
+  GAME.lastSpawn += deltaMS;
+  const need = GAME.lastSpawn >= GAME.spawnEvery;
+  if(!need) return;
+  GAME.lastSpawn = 0;
+
+  const W = GAME.canvas.width;
+  const H = GAME.canvas.height;
+  const laneW = W / Math.max(1, GAME.lanes);
+  const baseY = -20*GAME.dpr;
+
+  if (GAME.freeSpawn){
+    // --- FREE MODE (no lanes): spread items across width with spacing ---
+    if (GAME.state === 'play'){
+      // Estimate size to compute spacing
+      const sizeEstimate = Math.max(28*GAME.dpr, laneW * 0.22);
+      // 4 answers per tick
+      const xs = computeSpawnXs(4, sizeEstimate, W, GAME.minSpawnSpacing);
+      // answers (one isCorrect)
+      const ems = GAME.currentRoundSpec.lanes;
+      for (let i=0;i<ems.length;i++){
+        GAME.objects.push(
+          makeFaller(ems[i], i, laneW, baseY, /*isCorrect*/ i===GAME.currentRoundSpec.correctIndex, /*isBonus*/ false, xs[i])
+        );
+      }
+      // occasional bomb
+      if (Math.random() < 0.35){
+        const bx = computeSpawnXs(1, sizeEstimate, W, GAME.minSpawnSpacing)[0];
+        GAME.objects.push(makeSpecial(GAME.bombEmoji, laneW, baseY, 'bomb', bx));
+      }
+      // occasional bonus
+if (Math.random() < 0.45){
+  const pick = Math.random() < 0.5 ? GAME.starEmoji : GAME.diamondEmoji;
+  const px = computeSpawnXs(1, sizeEstimate, W, GAME.minSpawnSpacing)[0];
+  GAME.objects.push(makeSpecial(pick, laneW, baseY, 'bonus', px));
+}
+
+
+      
+    } else if (GAME.state === 'bonus'){
+      // Mostly bonuses, few bombs
+      const count = 5; // how many bonus items per spawn tick
+      const sizeEstimate = Math.max(28*GAME.dpr, laneW * 0.22);
+      const xs = computeSpawnXs(count, sizeEstimate, W, GAME.minSpawnSpacing * 0.8);
+      for(let i=0;i<count;i++){
+        const pick = (Math.random()<0.5) ? GAME.starEmoji : (Math.random()<0.5 ? GAME.diamondEmoji : GAME.jewelEmoji);
+        GAME.objects.push(makeFaller(pick, 0, laneW, baseY, false, true, xs[i]));
+      }
+      if (Math.random() < 0.20){
+        const bx = computeSpawnXs(1, sizeEstimate, W, GAME.minSpawnSpacing)[0];
+        GAME.objects.push(makeSpecial(GAME.bombEmoji, laneW, baseY, 'bomb', bx));
+      }
+    }
+  } else {
+    // --- ORIGINAL LANE MODE (unchanged) ---
+    if (GAME.state === 'play'){
+      const ems = GAME.currentRoundSpec.lanes;
+      for(let i=0;i<ems.length;i++){
+        GAME.objects.push(makeFaller(ems[i], i, laneW, baseY, /*isCorrect*/ i===GAME.currentRoundSpec.correctIndex, /*isBonus*/ false));
+      }
+      if (Math.random() < 0.35) GAME.objects.push(makeSpecial(GAME.bombEmoji, laneW, baseY, 'bomb'));
+      if (Math.random() < 0.45){
+        const pick = Math.random()<0.5 ? GAME.starEmoji : GAME.diamondEmoji;
+        GAME.objects.push(makeSpecial(pick, laneW, baseY, 'bonus'));
+      }
+    } else if (GAME.state === 'bonus'){
+      for(let i=0;i<GAME.lanes;i++){
+        const pick = (Math.random()<0.5) ? GAME.starEmoji : (Math.random()<0.5 ? GAME.diamondEmoji : GAME.jewelEmoji);
+        GAME.objects.push(makeFaller(pick, i, laneW, baseY, false, true));
+      }
+      if (Math.random() < 0.20) GAME.objects.push(makeSpecial(GAME.bombEmoji, laneW, baseY, 'bomb'));
+    }
+  }
+}
+
+
+  function makeFaller(emoji, laneIndex, laneW, baseY, isCorrect=false, isBonus=false, xOverride=null){
+  const size = Math.max(28*GAME.dpr, laneW * 0.22);
+  const speed = (isBonus ? 180 : 160) * GAME.dpr + Math.random()*80*GAME.dpr; // faster defaults
+  let x;
+  if (xOverride != null){
+    x = xOverride;
+  } else {
+    // fallback to lane behavior if not using freeSpawn
+    const pad = laneW * 0.15;
+    x = laneIndex * laneW + pad + Math.random()*(laneW-2*pad);
+  }
+  return { type:'faller', emoji, x, y: baseY, size, speed, isCorrect, isBonus };
+}
+
+
+function makeSpecial(emoji, laneW, baseY, kind, xOverride=null){
+  const size = Math.max(28*GAME.dpr, laneW * 0.23);
+  const speed = 170*GAME.dpr + Math.random()*90*GAME.dpr;
+  let x;
+  if (xOverride != null){
+    x = xOverride;
+  } else {
+    const laneIndex = Math.floor(Math.random()*GAME.lanes);
+    const pad = laneW * 0.15;
+    x = laneIndex * laneW + pad + Math.random()*(laneW-2*pad);
+  }
+  return { type: kind, emoji, x, y: baseY, size, speed };
+}
+
+
+
+  function loop(ts){
+    if (GAME.state!=='play' && GAME.state!=='bonus') return; // stop
+    const dt = Math.min(50, ts - GAME.lastTime); // ms
+    GAME.lastTime = ts;
+
+    // Update timeLeft
+    GAME.timeLeft -= dt/1000;
+    if (GAME.timeLeft <= 0){
+      endRound();
+      return;
+    }
+    document.getElementById('hudTime').textContent = fmtSec(GAME.timeLeft);
+    document.getElementById('hudScore').textContent = GAME.score;
+
+    // Spawn
+    spawnObjects(dt);
+
+    // Update basket
+    const W = GAME.canvas.width, H = GAME.canvas.height;
+    const maxX = W - GAME.basket.w;
+    const move = GAME.basket.speed * GAME.dpr * (dt/1000);
+    if (GAME.kbd.left)  GAME.basket.x -= move;
+    if (GAME.kbd.right) GAME.basket.x += move;
+
+    // Mouse/touch aim overrides
+    const aimX = GAME.touchX ?? GAME.mouseX;
+    if (aimX!=null){
+      GAME.basket.x = aimX - GAME.basket.w/2;
+    }
+
+    if (GAME.basket.x < 0) GAME.basket.x = 0;
+    if (GAME.basket.x > maxX) GAME.basket.x = maxX;
+
+    // Update objects
+    const caught = [];
+    for (const o of GAME.objects){
+      o.y += o.speed * (dt/1000);
+      // collision
+      if (o.y + o.size >= GAME.basket.y){
+        if (o.x + o.size >= GAME.basket.x && o.x <= GAME.basket.x + GAME.basket.w){
+          caught.push(o);
+        }
+      }
+    }
+    // Handle catches
+    if (caught.length){
+      for (const o of caught){
+        // scoring rules
+        if (o.type === 'bomb'){
+          updateScore(-100);
+          flash('#2b0d14');
+        } else if (o.type === 'bonus' || o.isBonus){
+          updateScore(75);
+          flash('#2a2310');
+                } else {
+          // answer emojis
+          if (GAME.state === 'play' && o.isCorrect){
+            updateScore(50);
+            flash('#0e2a1c');
+            // starburst at catch point (use the emoji center on the rim of the basket)
+            const cx = o.x + o.size/2;
+            const cy = GAME.basket.y;
+            spawnStarburst(cx, cy, 18);
+          } else {
+            updateScore(-25);
+            flash('#2b1b0d');
+          }
+        }
+
+      }
+      // remove caught
+      GAME.objects = GAME.objects.filter(o=> !caught.includes(o));
+    }
+    // remove off-screen
+    GAME.objects = GAME.objects.filter(o=> o.y < H + 50*GAME.dpr);
+
+    // update particles
+    updateParticles(dt/1000);
+
+    // Draw
+    draw();
+
+    requestAnimationFrame(loop);
+
+  }
+
+  function draw(){
+    const ctx = GAME.ctx;
+    const W = GAME.canvas.width, H = GAME.canvas.height;
+    ctx.clearRect(0,0,W,H);
+
+    // backdrop subtle grid
+    ctx.save();
+    ctx.globalAlpha = 0.06;
+    const grid = 40*GAME.dpr;
+    ctx.strokeStyle = '#9fb0ff';
+    ctx.lineWidth = 1;
+    for(let x=0;x<W;x+=grid){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+    for(let y=0;y<H;y+=grid){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+    ctx.restore();
+
+    // draw objects
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    for(const o of GAME.objects){
+      ctx.font = `${Math.floor(o.size)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",system-ui`;
+      ctx.fillText(o.emoji, o.x + o.size/2, o.y + o.size/2);
+    }
+
+    // basket
+    const bx = GAME.basket.x, by = GAME.basket.y, bw = GAME.basket.w, bh = GAME.basket.h;
+    // basket body
+    ctx.fillStyle = '#0b1022aa';
+    ctx.strokeStyle = '#83a1ff55';
+    ctx.lineWidth = 2*GAME.dpr;
+    roundRect(ctx, bx, by, bw, bh, 8*GAME.dpr, true, true);
+    // basket emoji centered
+    ctx.font = `${Math.floor(bh*0.9)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",system-ui`;
+    ctx.fillText(GAME.basketEmoji, bx + bw/2, by + bh/2 + 1*GAME.dpr);
+        // particles on top
+    drawParticles(ctx);
+
+  }
+
+  function roundRect(ctx, x,y,w,h,r, fill, stroke){
+    ctx.beginPath();
+    ctx.moveTo(x+r, y);
+    ctx.arcTo(x+w, y, x+w, y+h, r);
+    ctx.arcTo(x+w, y+h, x, y+h, r);
+    ctx.arcTo(x, y+h, x, y, r);
+    ctx.arcTo(x, y, x+w, y, r);
+    ctx.closePath();
+    if (fill) ctx.fill();
+    if (stroke) ctx.stroke();
+  }
+
+// --- Starburst particles ---
+function spawnStarburst(x, y, count = 16){
+  // create golden sparks that shoot out and fade
+  for (let i = 0; i < count; i++){
+    const ang = (Math.PI * 2) * (i / count) + (Math.random()*0.6 - 0.3);
+    const spd = 220 + Math.random()*180; // px/s at dpr=1
+    GAME.particles.push({
+      x, y,
+      vx: Math.cos(ang) * spd * GAME.dpr,
+      vy: Math.sin(ang) * spd * GAME.dpr,
+      life: 0.55 + Math.random()*0.35,   // seconds
+      age: 0,
+      size: (2 + Math.random()*2) * GAME.dpr,
+      color: Math.random()<0.5 ? '#ffd166' : (Math.random()<0.5 ? '#fff2a8' : '#ffe48a')
+    });
+  }
+}
+
+function updateParticles(dt){ // dt in seconds
+  const drag = 0.92;  // friction
+  const g = 40 * GAME.dpr; // tiny gravity so they arc a bit
+  for (const p of GAME.particles){
+    p.age += dt;
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.vx *= drag;
+    p.vy = p.vy * drag + g * dt;
+  }
+  // remove dead
+  GAME.particles = GAME.particles.filter(p => p.age < p.life);
+}
+
+function drawParticles(ctx){
+  if (!GAME.particles.length) return;
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  for (const p of GAME.particles){
+    const t = Math.max(0, 1 - (p.age / p.life)); // 1 -> 0
+    ctx.globalAlpha = 0.9 * (t*t);
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.restore();
+  ctx.globalAlpha = 1;
+}
+
+
+  
+  let flashTimer = 0;
+  
+  function flash(color){
+    // quick border flash around canvas container
+    const parent = stage.firstElementChild;
+    if (!parent) return;
+    parent.style.boxShadow = `0 0 0 3px ${color} inset, 0 10px 40px #000`;
+    clearTimeout(flashTimer);
+    flashTimer = setTimeout(()=>{ parent.style.boxShadow=''; }, 120);
+  }
+
+  function endRound(){
+    // go to next question or bonus or end
+    if (GAME.state === 'bonus'){
+      showEnd();
+      return;
+    }
+    // move to next question or bonus gate
+    GAME.qIndex++;
+    if (GAME.qIndex < QUESTIONS.length){
+      showQuestion();
+    } else {
+// bonus round modal then start
+showModal('Bonus Round!',
+  `Catch everything but <span class="mono">💣</span>!`,
+  'Start Bonus',
+  ()=> startCatchRound(true)
+);
+
+    }
+  }
+
+// --- Dev: secret jump-to-bonus (Ctrl/⌘ + Shift + B) ---
+function devJumpToBonus(){
+  // Ensure canvas exists, then start bonus round immediately
+  ensureCanvas();
+  GAME.state = 'bonus';
+  startCatchRound(true);
+  // Tiny toast so you know it worked
+  showModal('Dev Jump','Starting BONUS round now.','OK', ()=>{});
+}
+
+// Global listener: press "g" to jump to bonus
+window.addEventListener('keydown', (e)=>{
+  if (e.key === 'g' || e.key === 'G'){
+    e.preventDefault();
+    devJumpToBonus();
+  }
+});
+
+
+
+
+  // --- Splash boot ---
+  document.getElementById('splashOk').addEventListener('click', showTitle);
+
+  // Initialize
+  // (If you want to auto-skip splash on desktop, you could call showTitle() here.)
+
+})();
+</script>
+</body>
+</html>
