@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Cut-the-Rope Bible Quiz</title>
+<style>
+  :root{
+    --bg:#0f172a;        /* slate-900 */
+    --panel:#111827;     /* gray-900 */
+    --muted:#94a3b8;     /* slate-400 */
+    --text:#e5e7eb;      /* gray-200 */
+    --accent:#22c55e;    /* green-500 */
+    --accent-2:#3b82f6;  /* blue-500 */
+    --warn:#f59e0b;      /* amber-500 */
+    --danger:#ef4444;    /* red-500 */
+  }
+
+  *{box-sizing:border-box;}
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  button{cursor:pointer;border:none;border-radius:12px;padding:14px 18px;font-weight:700}
+  .btn{background:var(--accent);color:#012;box-shadow:0 6px 20px rgba(0,0,0,.35)}
+  .btn.secondary{background:var(--accent-2)}
+  .btn.warn{background:var(--warn)}
+  .btn.ghost{background:transparent;border:2px solid var(--muted);color:var(--text)}
+  .wrap{min-height:100%;display:grid;place-items:center;padding:12px}
+  .card{width:min(900px,96vw);background:linear-gradient(180deg,#0b1227 0%, #0a0f21 100%);border:1px solid #1f2937;border-radius:24px;box-shadow:0 20px 60px rgba(0,0,0,.55);padding:22px}
+  .center{text-align:center}
+  h1,h2,h3{margin:8px 0 14px}
+  h1{font-size:clamp(26px,5vw,40px)}
+  h2{font-size:clamp(22px,4vw,32px);color:#cbd5e1}
+  p{color:var(--muted);font-size:clamp(14px,2.8vw,18px);margin:10px 0}
+  .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+  .hidden{display:none !important}
+  .spacer{height:10px}
+  .answers{display:grid;gap:12px;grid-template-columns:1fr;margin-top:14px}
+
+@media (min-width: 560px){
+  .answers{
+    grid-template-columns: repeat(2, minmax(240px,1fr));
+  }
+}
+
+  .answer-btn{display:flex;gap:10px;align-items:center;justify-content:center;background:#0f1a37;border:2px solid #1f2b52;border-radius:16px;padding:14px 12px;color:#e2e8f0}
+  .answer-btn:hover{border-color:#3156b3}
+  .emoji{font-size:1.4em;line-height:1}
+  .hud{display:flex;justify-content:space-between;align-items:center;margin:6px 0 12px;color:#cbd5e1;font-weight:700}
+  .pill{background:#0d142b;border:1px solid #1c284e;border-radius:999px;padding:8px 12px;display:inline-flex;gap:10px;align-items:center}
+  .pop{position:fixed;inset:0;display:grid;place-items:center;background:rgba(5,8,20,.65);backdrop-filter:blur(3px);z-index:50}
+  .pop .modal{width:min(700px,94vw);background:#0b1227;border:1px solid #1f2b52;border-radius:20px;padding:20px;text-align:center}
+  /* Game area */
+  .game-shell{width:100%;aspect-ratio:9/16;max-height:70vh;margin-inline:auto;background:#061128;border:1px solid #1a2750;border-radius:16px;position:relative;overflow:hidden}
+/* collision FX */
+.fx{
+  position:absolute;
+  pointer-events:none;
+  font-size:2.2rem;
+  line-height:1;
+  transform:translate(-50%,-50%) scale(.6);
+  animation:popFade 700ms ease-out forwards;
+}
+@keyframes popFade{
+  0%{opacity:0; transform:translate(-50%,-50%) scale(.6);}
+  20%{opacity:1; transform:translate(-50%,-58%) scale(1);}
+  100%{opacity:0; transform:translate(-50%,-90%) scale(.8);}
+}
+
+  .game-canvas{width:100%;height:100%;display:block}
+  .legend{position:absolute;left:0;right:0;bottom:8px;display:flex;gap:8px;justify-content:space-between;padding:0 16px;pointer-events:none}
+  .target-box{background:#0d1a39;border:2px solid #273d7a;border-radius:14px;padding:6px 10px;display:flex;gap:8px;align-items:center;pointer-events:auto}
+  .target-emoji{font-size:2rem}
+/* explode animation when you hit the correct target */
+.target-box.boom{
+  animation:boom 600ms ease-out both;
+  box-shadow:0 0 0 rgba(255,255,255,0);
+}
+@keyframes boom{
+  0%   { transform:scale(1);   filter:drop-shadow(0 0 0 rgba(255,255,255,0)); }
+  40%  { transform:scale(1.15);filter:drop-shadow(0 0 10px rgba(255,255,255,.25)); }
+  100% { transform:scale(0.6); opacity:0; filter:drop-shadow(0 0 0 rgba(255,255,255,0)); }
+}
+
+/* top-right target indicator inside the game */
+.aim{
+  position:absolute;
+  top:8px;
+  right:8px;
+  pointer-events:none; /* don’t steal taps from the canvas */
+  padding:6px 10px;    /* ensure same padding as target-box */
+}
+
+/* Toasts: top-center, non-blocking */
+.toast-stack{
+  position:absolute;
+  top:46px;           /* just under the HUD */
+  left:50%;
+  transform:translateX(-50%);
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  pointer-events:none;
+  z-index:5;
+}
+.toast{
+  background:#0d142b;
+  border:1px solid #1c284e;
+  color:#e5e7eb;
+  border-radius:999px;
+  padding:8px 12px;
+  font-weight:700;
+  font-size:14px;
+  opacity:0;
+  transform:translateY(-6px);
+  animation:toastIn 150ms ease-out forwards, toastOut 200ms ease-in forwards 1200ms; /* default 1.2s life */
+  box-shadow:0 6px 20px rgba(0,0,0,.35);
+}
+.toast.good{ border-color:#22c55e; }
+.toast.warn{ border-color:#f59e0b; }
+.toast.bad { border-color:#ef4444; }
+
+@keyframes toastIn{
+  to{opacity:1; transform:translateY(0);}
+}
+@keyframes toastOut{
+  to{opacity:0; transform:translateY(-6px);}
+}
+
+
+/* top-left instructional tip inside the game */
+.game-tip{
+  position:absolute;
+  top:8px;
+  left:8px;
+  pointer-events:none;     /* don’t block canvas clicks */
+  font-weight:700;
+  opacity:.9;
+}
+
+
+  .subtle{opacity:.8}
+  .foot{margin-top:10px;color:#7c8aa0;font-size:12px}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+</style>
+</head>
+<body>
+<div id="app" class="wrap">
+
+  <!-- Splash (orientation tip) -->
+  <section id="splash" class="card center">
+    <h1>Heads-up!</h1>
+    <p>This game is best in <strong>vertical (portrait) mode</strong> on phones and tablets.</p>
+    <div class="spacer"></div>
+    <button class="btn" id="splashOk">Okay, let’s play</button>
+  </section>
+
+  <!-- Title -->
+  <section id="title" class="card center hidden">
+    <h1>Cut-the-Rope Bible Quiz</h1>
+    <p>Answer each question, then drop the ball on the correct emoji. Earn more points for earlier hits!</p>
+    <div class="row" style="margin-top:14px">
+      <button class="btn secondary" id="startBtn">Start</button>
+    </div>
+    <div class="spacer"></div>
+    <div class="row">
+      <span class="pill">Questions: <span class="mono" id="qCount">10</span></span>
+      <span class="pill">Tries per drop: <span class="mono">3</span></span>
+      <span class="pill">Physics: <span class="mono">Bouncey fun™</span></span>
+    </div>
+  </section>
+
+  <!-- Question Screen -->
+  <section id="quiz" class="card hidden">
+    <div class="hud">
+      <div class="pill">Q <span id="hudQ">1</span> / <span id="hudQTotal">10</span></div>
+      <div class="pill">Score: <span id="hudScore">0</span></div>
+    </div>
+    <h2 id="qText">Question goes here…</h2>
+    <div id="answers" class="answers"></div>
+  </section>
+
+  <!-- Game Screen -->
+  <section id="game" class="card hidden">
+    <div class="hud">
+      <div class="pill">Round: <span id="roundNum">1</span> / <span id="roundTotal">10</span></div>
+      <div class="pill">Score: <span id="gameScore">0</span></div>
+      <div class="pill">Tries Left: <span id="triesLeft">3</span></div>
+    </div>
+    <div class="game-shell">
+      <canvas id="canvas" class="game-canvas"></canvas>
+
+      <!-- Target you’re aiming for -->
+<div id="aim" class="target-box aim"><span class="target-emoji" id="aimEmoji">⭐</span></div>
+
+<div id="cutTip" class="game-tip pill">Click or tap anywhere to cut the rope.</div>
+
+      <div id="legend" class="legend"><!-- target boxes injected here --></div>
+      <div id="toastStack" class="toast-stack"></div>
+
+    </div>
+    <div class="foot">Tip: Tap/click anywhere in the game to cut the rope.</div>
+  </section>
+
+  <!-- End Screen -->
+  <section id="end" class="card center hidden">
+    <h1>Nice work!</h1>
+    <h2>Your Final Score:</h2>
+    <div style="font-size:46px;font-weight:900;margin:8px 0 16px" id="finalScore">0</div>
+    <p id="bestMsg" class="subtle"></p>
+    <div class="row" style="margin-top:14px">
+      <button class="btn" id="playAgain">Play Again</button>
+      <button class="btn ghost" id="backTitle">Back to Title</button>
+    </div>
+  </section>
+
+  <!-- Popups -->
+  <div id="popup" class="pop hidden" role="dialog" aria-modal="true">
+    <div class="modal">
+      <h2 id="popTitle">Popup</h2>
+      <p id="popBody">Message</p>
+      <div class="spacer"></div>
+      <button class="btn" id="popOk">OK</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ===========================================================
+   CUT-THE-ROPE BIBLE QUIZ — Single-file, responsive build.
+   Flow: Splash → Title → 10×(Question → Rope Game) → End.
+   =========================================================== */
+
+(() => {
+  const el = id => document.getElementById(id);
+  const show = node => node.classList.remove('hidden');
+  const hide = node => node.classList.add('hidden');
+
+  // Screens
+  const scr = {
+    splash: el('splash'),
+    title: el('title'),
+    quiz: el('quiz'),
+    game: el('game'),
+    end: el('end'),
+    popup: el('popup')
+  };
+
+  // UI bits
+  const qText = el('qText');
+  const answersBox = el('answers');
+  const hudQ = el('hudQ');
+  const hudQTotal = el('hudQTotal');
+  const hudScore = el('hudScore');
+  const gameScore = el('gameScore');
+  const roundNum = el('roundNum');
+  const roundTotal = el('roundTotal');
+  const triesLeft = el('triesLeft');
+  const finalScore = el('finalScore');
+  const bestMsg = el('bestMsg');
+  const legend = el('legend');
+  const gameShell = document.querySelector('.game-shell');
+  const cutTip = el('cutTip');
+
+const toastStack = el('toastStack'); // (not used directly, helper grabs by id)
+
+
+  // Popup
+  const popTitle = el('popTitle');
+  const popBody = el('popBody');
+  const popOk = el('popOk');
+
+  // Buttons
+  el('splashOk').addEventListener('click', () => { hide(scr.splash); show(scr.title); });
+  el('startBtn').addEventListener('click', startGame);
+  el('playAgain').addEventListener('click', startGame);
+  el('backTitle').addEventListener('click', () => { hide(scr.end); show(scr.title); });
+
+
+
+
+  // Game state
+  const TOTAL_QUESTIONS = 10;
+  hudQTotal.textContent = TOTAL_QUESTIONS;
+  roundTotal.textContent = TOTAL_QUESTIONS;
+
+  let state = {
+    index: 0,
+    score: 0,
+    best: 0,
+    answeredCorrect: false,
+    correctEmojiForRound: "⭐",
+    // attempts: reset to 3 each rope mini-game
+    tries: 3
+  };
+
+
+/* 
+   ____    _    _   ______    _____   _______   _____    ____    _   _    _____ 
+  / __ \  | |  | | |  ____|  / ____| |__   __| |_   _|  / __ \  | \ | |  / ____|
+ | |  | | | |  | | | |__    | (___      | |      | |   | |  | | |  \| | | (___  
+ | |  | | | |  | | |  __|    \___ \     | |      | |   | |  | | | . ` |  \___ \ 
+ | |__| | | |__| | | |____   ____) |    | |     _| |_  | |__| | | |\  |  ____) |
+  \___\_\  \____/  |______| |_____/     |_|    |_____|  \____/  |_| \_| |_____/ 
+*/
+
+
+
+  // Question bank (Bible-themed)
+  // Each answer: { text, emoji, correct }
+  const QUESTIONS = [
+  {
+    q: "What were the names of Eve’s two sons?",
+    answers: [
+      { text: "Cain and Abel", emoji: "👬", correct: true },
+      { text: "Jacob and Esau", emoji: "👬🏻", correct: false },
+      { text: "Seth and Enosh", emoji: "👨‍👦", correct: false },
+      { text: "Peter and Andrew", emoji: "👫", correct: false }
+    ]
+  },
+  {
+    q: "What job did Cain do?",
+    answers: [
+      { text: "He was a farmer", emoji: "🚜", correct: true },
+      { text: "He was a shepherd", emoji: "🐑", correct: false },
+      { text: "He was a fisherman", emoji: "🎣", correct: false },
+      { text: "He was a carpenter", emoji: "🪵", correct: false }
+    ]
+  },
+  {
+    q: "What job did Abel do?",
+    answers: [
+      { text: "He was a shepherd", emoji: "🐑", correct: true },
+      { text: "He was a farmer", emoji: "🚜", correct: false },
+      { text: "He was a hunter", emoji: "🏹", correct: false },
+      { text: "He was a tentmaker", emoji: "🧵", correct: false }
+    ]
+  },
+  {
+    q: "What did Cain and Abel offer to God?",
+    answers: [
+      { text: "Cain: crops; Abel: firstborn sheep", emoji: "🧺", correct: true },
+      { text: "Both offered crops", emoji: "🌾", correct: false },
+      { text: "Both offered animals", emoji: "🐑", correct: false },
+      { text: "Cain: fruit; Abel: vegetables", emoji: "🍎", correct: false }
+    ]
+  },
+  {
+    q: "What did God do when they brought the offerings?",
+    answers: [
+      { text: "Pleased with Abel’s, not with Cain’s", emoji: "✅", correct: true },
+      { text: "Pleased with Cain’s, not with Abel’s", emoji: "❌", correct: false },
+      { text: "Rejected both offerings", emoji: "🚫", correct: false },
+      { text: "Accepted both equally", emoji: "🤝", correct: false }
+    ]
+  },
+  {
+    q: "How did Cain feel about God accepting Abel’s offering, but not his?",
+    answers: [
+      { text: "Angry and sad", emoji: "😢", correct: true },
+      { text: "Happy", emoji: "😊", correct: false },
+      { text: "Jealous but fine", emoji: "😒", correct: false },
+      { text: "Indifferent", emoji: "😐", correct: false }
+    ]
+  },
+  {
+    q: "What did God say to Cain?",
+    answers: [
+      { text: "“Sin is crouching at your door… rule over it.”", emoji: "🚪", correct: true },
+      { text: "“Build an altar right now.”", emoji: "⛺️", correct: false },
+      { text: "“Leave your family.”", emoji: "🧳", correct: false },
+      { text: "“Offer twice as much.”", emoji: "✖️2", correct: false }
+    ]
+  },
+  {
+    q: "Because he was angry, what did Cain do?",
+    answers: [
+      { text: "Took Abel to a field, attacked him", emoji: "⚔️", correct: true },
+      { text: "Apologized to Abel", emoji: "🙏", correct: false },
+      { text: "Brought a better offering", emoji: "🎁", correct: false },
+      { text: "Moved far away at once", emoji: "🧳", correct: false }
+    ]
+  },
+  {
+    q: "What curses did God give to Cain?",
+    answers: [
+      { text: "Crops wouldn’t grow; wander the earth", emoji: "🌱", correct: true },
+      { text: "A flood would come upon him", emoji: "🌊", correct: false },
+      { text: "Turned him into a pillar of salt", emoji: "🧂", correct: false },
+      { text: "He would lose his speech", emoji: "🤐", correct: false }
+    ]
+  },
+  {
+    q: "Why was God pleased with Abel’s sacrifice, but not Cain’s?",
+    answers: [
+      { text: "Because Abel had faith", emoji: "🙏", correct: true },
+      { text: "Because Abel’s was bigger", emoji: "📦", correct: false },
+      { text: "Because it was the Sabbath", emoji: "🕊️", correct: false },
+      { text: "Because Cain was younger", emoji: "👶", correct: false }
+    ]
+  }
+];
+
+
+/*  
+  ______   _   _   _____  
+ |  ____| | \ | | |  __ \ 
+ | |__    |  \| | | |  | |
+ |  __|   | . ` | | |  | |
+ | |____  | |\  | | |__| |
+ |______| |_| \_| |_____/ 
+*/
+
+
+
+
+  /* ---------- Popup helper ---------- */
+  function askPopup(title, body){
+    popTitle.textContent = title;
+    popBody.innerHTML = body;
+    show(scr.popup);
+    return new Promise(res=>{
+      const handler = () => { popOk.removeEventListener('click', handler); hide(scr.popup); res(); };
+      popOk.addEventListener('click', handler);
+    });
+  }
+
+  /* ---------- Screens flow ---------- */
+  async function startGame(){
+    state.index = 0;
+    state.score = 0;
+    updateHUD();
+    hide(scr.title); hide(scr.end);
+    nextQuestion();
+
+  }
+
+  function updateHUD(){
+    hudQ.textContent = Math.min(state.index+1, TOTAL_QUESTIONS);
+    hudScore.textContent = state.score;
+    gameScore.textContent = state.score;
+    roundNum.textContent = Math.min(state.index+1, TOTAL_QUESTIONS);
+  }
+
+  function nextQuestion(){
+    if(state.index >= TOTAL_QUESTIONS){
+      endGame(); return;
+    }
+    const data = QUESTIONS[state.index];
+    qText.textContent = data.q;
+    answersBox.innerHTML = "";
+    data.answers.forEach((a,i)=>{
+      const btn = document.createElement('button');
+      btn.className = "answer-btn";
+      btn.innerHTML = `<span class="emoji">${a.emoji}</span><span>${a.text}</span>`;
+btn.addEventListener('click', async () => {
+  const correct = a.correct === true;
+  state.answeredCorrect = correct;
+
+  // Always determine the correct answer once (for popup + target)
+  const correctAns = data.answers.find(x => x.correct) || data.answers[0];
+  const correctLabel = `${correctAns.text}`;
+  const correctEmoji = correctAns.emoji ? `<span class="emoji">${correctAns.emoji}</span>` : '';
+
+  if (correct){
+    state.score += 100;
+    updateHUD();
+    toast('Correct! +100', 'good', 900);
+    await askPopup(
+      "Correct ✅",
+      "Nice! +100 points.<br><br><span class='subtle'>Now get ready to drop the ball on the matching emoji.</span>"
+    );
+  } else {
+    toast('Not quite', 'bad', 900);
+    await askPopup(
+      "Not quite ❌",
+      `That wasn’t the correct answer.<br><br><strong>Correct:</strong> ${correctLabel} ${correctEmoji}<br><br><span class='subtle'>You won’t get the +100 this time, but you can still earn points in the drop!</span>`
+    );
+  }
+
+  // Use the correct answer’s emoji as the target for the rope game
+  state.correctEmojiForRound = correctAns.emoji;
+  prepMiniGame();
+});
+      answersBox.appendChild(btn);
+    });
+
+    hide(scr.game); show(scr.quiz);
+    updateHUD();
+  }
+
+  async function prepMiniGame(){
+    // build the three bottom emojis, ensuring one is correct
+    const choices = buildTargetChoices(state.correctEmojiForRound, state.index);
+    legend.innerHTML = "";
+    choices.forEach(c=>{
+      const box = document.createElement('div');
+      box.className = "target-box";
+      box.dataset.correct = c.correct ? "1" : "0";
+      box.innerHTML = `<span class="target-emoji">${c.emoji}</span>`;
+      legend.appendChild(box);
+    });
+el('aimEmoji').textContent = state.correctEmojiForRound;
+
+
+    // tries reset
+    state.tries = 3;
+    triesLeft.textContent = state.tries;
+    hide(scr.quiz); show(scr.game);
+cutTip.classList.remove('hidden'); // show tip at round start
+startCanvasRound(choices);
+
+  }
+
+  function endGame(){
+    finalScore.textContent = state.score;
+    if(state.score > state.best){
+      state.best = state.score;
+      bestMsg.textContent = "New high score! 🥳";
+    } else {
+      bestMsg.textContent = `Best so far: ${state.best}`;
+    }
+    hide(scr.quiz); hide(scr.game); show(scr.end);
+  }
+
+  /* ---------- Target choices helper ---------- */
+  function randomEmojiPool(){
+    // Colorful round-ish & friendly symbols for variety as distractors
+    return ["⭐","🍎","🍊","🍋","🍉","🍇","🍓","🍒","🍪","🥨","🍩","🧁","🛶","🐟","🌟","📜","🐳","🪈","🏔️","🌾","🪵","🧥","🕊️","🧺","🍞"];
+  }
+  function buildTargetChoices(correctEmoji, roundIndex){
+    const pool = randomEmojiPool().filter(e => e !== correctEmoji);
+    // pick 2 distinct distractors
+    shuffle(pool);
+    const picks = pool.slice(0,2);
+    const arr = [
+      {emoji:correctEmoji, correct:true},
+      {emoji:picks[0], correct:false},
+      {emoji:picks[1], correct:false},
+    ];
+    // Shuffle positions
+    shuffle(arr);
+    return arr;
+  }
+  function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } }
+
+// Spawn a quick emoji FX at (x,y) where the ball hit
+function spawnHitFX(x, y, kind){
+  const fx = document.createElement('div');
+  fx.className = 'fx';
+  fx.textContent = (kind === 'good') ? '✨' : '❌';
+
+  // Convert canvas coords to game-shell positioning
+  const canvasRect = canvas.getBoundingClientRect();
+  const hostRect   = gameShell.getBoundingClientRect();
+  const left = (x + canvasRect.left - hostRect.left);
+  const top  = (y + canvasRect.top  - hostRect.top);
+
+  fx.style.left = left + 'px';
+  fx.style.top  = top  + 'px';
+  gameShell.appendChild(fx);
+
+  setTimeout(()=> fx.remove(), 700);
+}
+
+// Triangle (ping-pong) wave in range [-1, 1]
+// Using asin(sin()) gives a perfectly linear back-and-forth sweep.
+function triWave(rad){
+  return (2 / Math.PI) * Math.asin(Math.sin(rad));
+}
+
+// Explode the correct bottom target box
+function explodeCorrectTarget(){
+  const boxes = Array.from(legend.children);
+  const node = boxes.find(n => n.dataset.correct === "1");
+  if(!node) return;
+  node.classList.add('boom');
+  setTimeout(() => node.classList.remove('boom'), 600);
+}
+
+// Extra sparkles burst near the impact point
+function sparkleBurstAt(x, y, count=8){
+  for(let i=0;i<count;i++){
+    const dx = (Math.random()*40 - 20);
+    const dy = (Math.random()*20 - 10);
+    spawnHitFX(x+dx, y+dy, 'good'); // uses your existing FX helper
+  }
+}
+
+// Quick non-blocking toast in the game area
+function toast(msg, type='info', ms=1200){
+  const host = document.getElementById('toastStack');
+  if(!host) return;
+  const div = document.createElement('div');
+  div.className = 'toast' + (type==='good' ? ' good' : type==='bad' ? ' bad' : type==='warn' ? ' warn' : '');
+  div.textContent = msg;
+
+  // Adjust lifetime by shifting the second animation's delay
+  div.style.animation = `toastIn 150ms ease-out forwards, toastOut 200ms ease-in forwards ${ms}ms`;
+
+  host.appendChild(div);
+  // Remove after animation finishes (ms + 200ms out + a little buffer)
+  setTimeout(()=>{ div.remove(); }, ms + 300);
+}
+
+
+
+  /* ---------- Canvas rope mini-game ---------- */
+  const canvas = el('canvas');
+  const ctx = canvas.getContext('2d', { alpha: false });
+
+  let raf = null;
+  let world = null;
+
+  // Scale canvas to element size (HiDPI-safe)
+  function resizeCanvas(){
+    const r = canvas.getBoundingClientRect();
+    const dpr = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+    canvas.width = Math.floor(r.width * dpr);
+    canvas.height = Math.floor(r.height * dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  window.addEventListener('resize', () => { resizeCanvas(); if(world) world.needsLayout = true; });
+
+function startCanvasRound(choices){
+  // Safety: clear any previous failsafe
+  if (world && world.platformTimer) { clearTimeout(world.platformTimer); world.platformTimer = null; }
+  cancelAnimationFrame(raf);
+  resizeCanvas();
+
+  // Build world
+  world = createWorld(choices);
+    world.last = performance.now();
+    canvas.onclick = onCut;
+    canvas.ontouchstart = onCut;
+
+    loop();
+  }
+
+  function onCut(ev){
+    if(!world || world.cut) return;
+    world.cut = true;
+    cutTip.classList.add('hidden');
+
+// ---- 10s failsafe: remove platforms so ball can fall freely
+  if (world.platformTimer) clearTimeout(world.platformTimer);
+world.platformTimer = setTimeout(() => {
+  world.obstacles = [];   // remove platforms
+  toast('Platforms cleared', 'warn', 1000);
+}, 10000);
+
+
+    // Set initial velocity at cut from pendulum angular velocity
+    const {angle, angVel, ropeLen} = world;
+    // Tangential velocity components at the bob:
+    world.vx =  angVel * ropeLen * Math.cos(angle);
+    world.vy = -angVel * ropeLen * Math.sin(angle);
+
+  }
+
+  function createWorld(choices){
+    const W = canvas.clientWidth;
+    const H = canvas.clientHeight;
+    const centerX = W*0.5;
+    const topY = 20;
+    const ropeLen = Math.min(W,H) * 0.35;
+
+    // Pendulum starting params
+    const angle0 = Math.PI/4; // 45°
+    return {
+      W,H, choices,
+      anchorX:centerX, anchorY:topY,
+      ropeLen,
+      ballR: Math.max(14, Math.min(W,H)*0.035),
+      // pendulum state
+      angle: angle0,
+      angVel: 0,
+      angAcc: 0,
+      // freefall state
+      cut:false,
+      x: centerX + ropeLen * Math.sin(angle0),
+      y: topY + ropeLen * Math.cos(angle0),
+      g: 1200,      // px/s^2 (works with t in seconds)
+      damping: 0.0,  // no swing damping before cut
+
+      needsLayout: true,
+
+
+      // tries & scoring live in state
+      obstacles: buildObstaclesForRound(state.index, W, H),
+hit:false, fail:false,
+resolving:false,      // ← prevent double-firing after a correct hit
+finishTimer:null,     // ← holds the animation delay timer
+mult: 1,              // score multiplier for this drop (stacks when platforms are hit)
+time: 0,
+platformTimer: null   // 10s failsafe: remove platforms if ball gets stuck
+
+
+
+
+    };
+  }
+
+function buildObstaclesForRound(roundIndex, W, H){
+  // Slower motion, guaranteed to stay on-screen horizontally.
+  // Bottom platform also moves up/down with a gentle sine.
+  const obs = [];
+  const margin = 8;
+
+  if (roundIndex >= 3) {
+    // Platform 1 — triangle (ping-pong) L↔R at ~60% height
+    const w1 = Math.max(50, W * 0.18), h1 = 10;
+    const amp1 = (W - w1 - 2*margin) / 2;               // fits exactly within margins
+    const center1 = margin + w1/2 + amp1;               // centered travel range
+obs.push({
+  x: center1 - w1/2, y: H * 0.62, w: w1, h: h1,
+  color: '#203a73',      // default color
+  hitColor: '#22c55e',   // color after first hit
+  mult: 1.25,            // ← top platform multiplier
+  hit: false,            // has the ball already hit this platform this drop?
+  motion: {
+    type: 'triangle',
+    center: center1,
+    amp: amp1,
+    speed: 0.20,   // platform 1 speed (cycles/sec)
+    phase: 0
+  }
+});
+
+  }
+
+  if (roundIndex >= 6) {
+    // Platform 2 — sine L↔R + sine up/down at ~78% height
+    const w2 = Math.max(50, W * 0.22), h2 = 10;
+    const amp2 = (W - w2 - 2*margin) / 2;
+    const center2 = margin + w2/2 + amp2;
+    const baseY = H * 0.78;
+obs.push({
+  x: center2 - w2/2, y: baseY, w: w2, h: h2,
+  color: '#203a73',
+  hitColor: '#f59e0b',   // amber after hit (so it’s different from top)
+  mult: 1.50,            // ← bottom platform multiplier
+  hit: false,
+  motion: {
+    // X motion
+    type: 'sine',
+    center: center2,
+    amp: amp2,
+    speed: 0.25,       // platform 2 LR speed
+    phase: Math.PI/4,
+    // Y motion (gentle bob)
+    yType: 'sine',
+    yCenter: baseY,
+    yAmp: Math.max(8, H * 0.05),
+    ySpeed: 0.25, // platform 2 UD speed
+    yPhase: 0
+  }
+});
+
+  }
+
+  return obs;
+}
+
+
+  function layoutTargets(world){
+    // Position the three target boxes evenly at bottom
+    const gap = 10;
+    const pad = 10;
+    const W = world.W, H = world.H;
+    const legendEl = legend;
+    const boxes = Array.from(legendEl.children);
+    const total = boxes.length;
+    const boxW = Math.min(160, Math.max(90, (W - pad*2 - gap*(total-1))/total));
+    const left = (W - (boxW*total + gap*(total-1)))/2;
+    boxes.forEach((node, i)=>{
+      node.style.width = boxW + "px";
+    });
+    // We don't absolutely position the DOM boxes; they live in a flex row.
+    // For collision, compute DOM rects each frame.
+  }
+
+  function loop(now){
+    raf = requestAnimationFrame(loop);
+    if(!world) return;
+    if(!now) now = performance.now();
+    const dt = Math.min(32, now - world.last); // clamp
+    world.last = now;
+
+    if(world.needsLayout){ layoutTargets(world); world.needsLayout = false; }
+
+    step(world, dt);
+    draw(world);
+  }
+
+  function step(w, dt){
+const t = dt / 1000; // seconds (this immediately slows the swing to a realistic speed)
+
+// advance per-round time (seconds)
+w.time += t;
+
+// Update moving platforms (if any)
+if (w.obstacles && w.obstacles.length) {
+  for (const ob of w.obstacles) {
+    if (!ob.motion) continue;
+    const m = ob.motion;
+    const margin = 8;
+
+    // X motion (compute LEFT edge from a centered wave)
+    const omegaX = 2 * Math.PI * (m.speed ?? 0.8);
+    const phaseX = m.phase ?? 0;
+    const AX = m.amp ?? 100;
+    const CX = m.center ?? (w.W * 0.5);
+
+    const waveX = (m.type === 'triangle')
+      ? AX * triWave(omegaX * w.time + phaseX)
+      : AX * Math.sin(omegaX * w.time + phaseX);
+
+    // Convert center to left edge and clamp to margins
+    const leftEdge = CX - ob.w / 2 + waveX;
+    ob.x = Math.max(margin, Math.min(leftEdge, w.W - margin - ob.w));
+
+    // Y motion (optional)
+    if (m.yType === 'sine') {
+      const AY = m.yAmp ?? 0;
+      const CY = m.yCenter ?? ob.y;
+      const phaseY = m.yPhase ?? 0;
+      const omegaY = 2 * Math.PI * (m.ySpeed ?? m.speed ?? 0.8);
+      ob.y = CY + AY * Math.sin(omegaY * w.time + phaseY);
+    }
+  }
+}
+
+
+
+    if(!w.cut){
+      // Simple pendulum integration (small damping)
+const k = 8.0; // quicker swing; try 7.0–9.0 to taste
+
+
+
+      w.angAcc = -k * Math.sin(w.angle); // no damping before cut → constant swing speed
+      w.angVel += w.angAcc * t;
+      w.angle += w.angVel * t;
+
+      // Update bob position
+      w.x = w.anchorX + w.ropeLen * Math.sin(w.angle);
+      w.y = w.anchorY + w.ropeLen * Math.cos(w.angle);
+}else{
+  // Free fall with simple collisions
+  if (w.resolving) return; // stop processing once we scored
+  w.vy += w.g * t;
+  w.x += w.vx * t;
+  w.y += w.vy * t;
+
+
+        // Bounce off left/right walls
+{
+  const restitutionX = 0.85; // 1.0 = perfectly bouncy, lower = more damping
+  // Left wall
+  if (w.x - w.ballR < 0) {
+    w.x = w.ballR;
+    w.vx = Math.abs(w.vx) * restitutionX; // push right
+  }
+  // Right wall
+  if (w.x + w.ballR > w.W) {
+    w.x = w.W - w.ballR;
+    w.vx = -Math.abs(w.vx) * restitutionX; // push left
+  }
+}
+
+
+
+      // Collide with obstacles (rects)
+for (const ob of w.obstacles){
+  if (circleRectIntersect(w.x, w.y, w.ballR, ob.x, ob.y, ob.w, ob.h) && w.vy > 0){
+    // land on top and bounce
+    w.y  = ob.y - w.ballR;
+    w.vy = -Math.abs(w.vy) * 0.55;
+    w.vx *= 0.96;
+
+    // first time this platform is hit on this drop → mark hit and stack multiplier
+if (!ob.hit){
+  ob.hit = true;
+  if (typeof ob.mult === 'number' && isFinite(ob.mult)){
+    w.mult *= ob.mult;
+    toast(`×${ob.mult.toFixed(2)} multiplier`, 'good', 900);
+  }
+}
+
+  }
+}
+
+
+      // Check target hits (DOM boxes)
+      const hit = checkTargetHit(w);
+      if(hit !== 0){
+        // + points based on try
+const early = Math.max(1, state.tries); // clamp so 3rd-try hits still register
+const base  = early===3?150:early===2?100:50;
+const mult  = (w && w.mult) ? w.mult : 1;
+const add   = Math.round(base * mult);
+
+if (hit > 0) { // correct
+  if (w.resolving) return;     // already handled this hit
+  w.resolving = true;
+
+  state.score += add;
+  w.hit = true;
+  updateHUD();
+
+  // freeze the ball so no further collisions can affect this frame
+  w.vx = 0; w.vy = 0;
+
+  // remove targets so no further hit checks can fire
+  legend.innerHTML = '';
+
+
+  // explode the correct target & sparkle at impact
+  explodeCorrectTarget();
+  sparkleBurstAt(w.x, w.y, 10);
+
+  // celebratory toast with multiplier
+  toast(`Bullseye! +${add}${(w.mult && w.mult!==1)?` (×${w.mult.toFixed(2)})`:''}`, 'good', 1200);
+
+  // small delay so the animation can play — store timer so we can clear if needed
+  if (w.finishTimer) clearTimeout(w.finishTimer);
+  w.finishTimer = setTimeout(() => finishRound(true, add), 600);
+
+}else{ // wrong target
+  w.fail = true;
+  spawnHitFX(w.x, w.y, 'bad');
+  toast(`Miss — ${state.tries-1} tries left`, (state.tries-1>0?'warn':'bad'), 1000);
+  useTryOrReset(false);
+}
+
+
+        return;
+      }
+
+// Off bottom = miss try (but not if we already resolved a win)
+if (!w.resolving && (w.y - w.ballR > w.H)){
+  w.fail = true;
+  useTryOrReset(false);
+}
+
+    }
+  }
+
+  function draw(w){
+    const {W,H} = w;
+    // Clear
+    ctx.fillStyle = '#061128';
+    ctx.fillRect(0,0,W,H);
+
+    // Optional grid/gradient background
+    const grad = ctx.createLinearGradient(0,0,0,H);
+    grad.addColorStop(0,'#071734');
+    grad.addColorStop(1,'#09152c');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0,W,H);
+
+// Obstacles (color changes after first hit)
+w.obstacles.forEach(ob=>{
+  ctx.fillStyle = ob.hit ? (ob.hitColor || '#22c55e') : (ob.color || '#203a73');
+  ctx.fillRect(ob.x, ob.y, ob.w, ob.h);
+});
+
+
+    // Rope & anchor
+    ctx.strokeStyle = '#93c5fd';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(w.anchorX, w.anchorY, 5, 0, Math.PI*2);
+    ctx.stroke();
+
+    if(!w.cut){
+      ctx.beginPath();
+      ctx.moveTo(w.anchorX, w.anchorY);
+      ctx.lineTo(w.x, w.y);
+      ctx.stroke();
+    }
+
+    // Ball
+    ctx.fillStyle = '#22c55e';
+    ctx.beginPath();
+    ctx.arc(w.x, w.y, w.ballR, 0, Math.PI*2);
+    ctx.fill();
+
+    // Ghost line showing bottom targets area
+    ctx.strokeStyle = 'rgba(255,255,255,.06)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, H*0.86);
+    ctx.lineTo(W, H*0.86);
+    ctx.stroke();
+  }
+
+  function circleRectIntersect(cx, cy, cr, rx, ry, rw, rh){
+    // Clamp point to rect
+    const closestX = Math.max(rx, Math.min(cx, rx+rw));
+    const closestY = Math.max(ry, Math.min(cy, ry+rh));
+    const dx = cx - closestX;
+    const dy = cy - closestY;
+    return (dx*dx + dy*dy) <= cr*cr;
+  }
+
+function checkTargetHit(w){
+  // If we already resolved a correct hit, ignore further collisions
+  if (w && w.resolving) return 0;
+
+    // Return +1 if correct, -1 if wrong, 0 if no hit
+    const boxes = Array.from(legend.children);
+    for(const node of boxes){
+      const rect = node.getBoundingClientRect();
+      const cRect = canvas.getBoundingClientRect();
+      // Convert to canvas local coordinates
+      const x = rect.left - cRect.left;
+      const y = rect.top - cRect.top;
+      const r = { x, y, w: rect.width, h: rect.height };
+      if(circleRectIntersect(w.x, w.y, w.ballR, r.x, r.y, r.w, r.h)){
+        const correct = node.dataset.correct === "1";
+        return correct ? +1 : -1;
+      }
+    }
+    return 0;
+  }
+
+  function useTryOrReset(wasCorrect){
+    state.tries--;
+    triesLeft.textContent = state.tries;
+    if(wasCorrect){
+      // never happens here
+    }else{
+      if(state.tries > 0){
+        // Reset round (new rope drop), keep targets the same
+        restartRopeSameTargets();
+      }else{
+        // Out of tries → lose & continue to next question
+        finishRound(false, 0);
+      }
+    }
+  }
+
+async function finishRound(success, add){
+  if (world) {
+    if (world.platformTimer) { clearTimeout(world.platformTimer); world.platformTimer = null; }
+    if (world.finishTimer)   { clearTimeout(world.finishTimer);   world.finishTimer   = null; }
+  }
+  cancelAnimationFrame(raf);
+  canvas.onclick = null; canvas.ontouchstart = null;
+
+
+
+    if(success){
+      await askPopup("Bullseye 🎯", `Great drop! +${add} points.<br><span class="subtle">Get ready for the next question.</span>`);
+    }else{
+      await askPopup("Out of tries 😬", `That was a tough one.<br><span class="subtle">Let’s keep going.</span>`);
+    }
+    state.index++;
+    updateHUD();
+    nextQuestion();
+  }
+
+function restartRopeSameTargets(){
+  // Clear any pending failsafe timer
+  if (world && world.platformTimer) { clearTimeout(world.platformTimer); world.platformTimer = null; }
+  // Recreate world but keep same legend choices
+  const choices = world.choices;
+  startCanvasRound(choices);
+}
+
+
+})();
+</script>
+</body>
+</html>
