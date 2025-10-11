@@ -2,1040 +2,912 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Emoji Hunt Quiz</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Bible Emoji Hunt — Educational Game</title>
 <style>
-:root{
-  --qaH: 120px;  /* JS keeps this synced with the height of the QA block */
-  --bg:#fafafa; --ink:#222; --panel:#ffffff;
-  --good:#16a34a; --bad:#dc2626; --muted:#f1f1f1;
-}
-
-html,body{height:100%}
-body{
-  margin:0; background:var(--bg); color:var(--ink);
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
-  display:flex; justify-content:center;
-}
-.game{
-  width:100%;
-  max-width:1000px;          /* optional upper limit */
-  height:100vh;              /* fallback */
-  height:100dvh;             /* dynamic viewport height */
-  display:flex;
-  flex-direction:column;
-}
-
-
-header{
-
-  display:flex; gap:12px; align-items:center; justify-content:space-between;
-  padding:12px 16px; background:var(--panel); box-shadow:0 2px 10px rgba(0,0,0,.06);
-  position:sticky; top:0; z-index:10;
-}
-
-/* === Compact header for small screens === */
-@media (max-width: 420px){
-  header{
-    padding:8px 10px;                 /* smaller padding */
+  :root{
+    --bg:#0f172a;            /* slate-900 */
+    --panel:#111827;         /* gray-900 */
+    --panel-soft:#1f2937;    /* gray-800 */
+    --accent:#22c55e;        /* green-500 */
+    --accent-2:#38bdf8;      /* sky-400 */
+    --warn:#f59e0b;          /* amber-500 */
+    --danger:#ef4444;        /* red-500 */
+    --text:#e5e7eb;          /* gray-200 */
+    --muted:#94a3b8;         /* slate-400 */
+    --btn:#334155;           /* slate-700 */
+    --btn-hover:#3f4b63;     /* slightly lighter */
+    --shadow: 0 12px 24px rgba(0,0,0,.35);
+    --radius: 18px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol", sans-serif;
+    color:var(--text);
+    background: radial-gradient(1200px 800px at 50% -10%, #1e293b, #0b1224 60%, #060b16 100%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    -webkit-tap-highlight-color: transparent;
+    user-select:none;
+    touch-action: manipulation;
+  }
+  .app{
+    width:min(100vw, 900px);
+    height:min(100vh, 1600px);
+    padding: clamp(10px, 2vmin, 18px);
+    display:flex;
+    align-items:stretch;
+    justify-content:center;
+  }
+  .card{
+    background:linear-gradient(180deg, var(--panel), var(--panel-soft));
+    border:1px solid #1f2937;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    width:100%;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+  }
+  header.topbar{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: clamp(10px, 2.5vmin, 18px) clamp(12px, 3vmin, 24px);
+    background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01));
+    border-bottom:1px solid #1f2937;
+    gap:10px;
+  }
+  .brand{
+    font-weight:800; letter-spacing:.3px;
+    font-size: clamp(16px, 2.5vmin, 20px);
+    display:flex; align-items:center; gap:.5ch;
+  }
+  .pill{
+    background:#0b1224; border:1px solid #1f2937; border-radius:999px;
+    padding:.35rem .75rem; font-size: clamp(12px, 2vmin, 14px); color:var(--muted);
+  }
+  .content{
+    flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding: clamp(14px, 4vmin, 28px);
+    gap: clamp(12px, 2.5vmin, 20px);
+  }
+  .screen{display:none; width:100%; height:100%;}
+  .screen.active{display:flex; flex-direction:column;}
+  h1,h2,h3{margin:.2em 0}
+  h1{
+    font-size: clamp(28px, 6.5vmin, 42px);
+    line-height:1.05;
+    text-align:center;
+    background: linear-gradient(90deg, #a5b4fc, #60a5fa, #34d399);
+    -webkit-background-clip:text; background-clip:text; color:transparent;
+  }
+  h2{ font-size:clamp(20px, 4.5vmin, 28px); text-align:center; color:#dbeafe }
+  p.lead{ color:var(--muted); text-align:center; font-size:clamp(14px, 3.5vmin, 18px)}
+  .stack{ display:flex; flex-direction:column; gap: clamp(10px, 2.5vmin, 16px); width:100%; }
+  .row{ display:flex; flex-wrap:wrap; gap: clamp(8px, 2vmin, 12px); justify-content:center; }
+  button{
+    appearance:none; border:none; cursor:pointer; color:var(--text);
+    background:var(--btn); padding: clamp(10px, 2.7vmin, 16px) clamp(14px, 3.5vmin, 22px);
+    border-radius: 12px; font-weight:700; letter-spacing:.2px;
+    box-shadow: 0 4px 0 rgba(0,0,0,.35);
+    transition: transform .05s ease, background .15s ease, box-shadow .15s ease, opacity .15s ease;
+    font-size: clamp(14px, 3.7vmin, 18px);
+  }
+  button:hover{ background:var(--btn-hover) }
+  button:active{ transform: translateY(1px); box-shadow: 0 2px 0 rgba(0,0,0,.35) }
+  .btn-accent{ background: linear-gradient(180deg, #22c55e, #16a34a); }
+  .btn-warn{ background: linear-gradient(180deg, #f59e0b, #d97706); }
+  .btn-danger{ background: linear-gradient(180deg, #ef4444, #dc2626); }
+  .btn-ghost{
+    background: transparent; border:1px dashed #334155; color:#cbd5e1;
+  }
+  .panel-soft{
+    background:rgba(255,255,255,.03); border:1px solid #1f2937; border-radius:12px;
+    padding: clamp(10px, 2.7vmin, 18px);
+  }
+  .center{ text-align:center }
+  .emoji{ font-size: clamp(20px, 7vmin, 48px); line-height:1 }
+  .answers{
+    display:grid; gap: clamp(8px, 2.4vmin, 14px);
+    grid-template-columns: repeat(2, minmax(0,1fr));
+    width:100%;
+  }
+  .answer{
+    display:flex; align-items:center; justify-content:center; gap:.6ch;
+    min-height: clamp(44px, 8vmin, 64px);
+    text-wrap:balance; text-align:center;
   }
   .hud{
-    gap:8px;
-    flex-wrap:nowrap;                  /* keep it on one line */
+    display:flex; gap:8px; align-items:center; justify-content:center; flex-wrap:wrap;
+    color:#cbd5e1; font-weight:700;
   }
-  .pill{
-    padding:4px 8px;                   /* smaller chips */
-    font-size:12px;                    /* smaller text */
-    line-height:1;                     /* tighter */
-    border-radius:999px;
-    white-space:nowrap;                /* prevent wrapping inside the chip */
+  .hud .stat{ background:#0b1224; border:1px solid #1f2937; padding:.4rem .7rem; border-radius:10px; }
+  .grid{
+    width:100%;
+    max-width: min(100%, 800px);
+    aspect-ratio: 1/1;
+    display:grid;
+    grid-template-columns: repeat(6, 1fr);
+    grid-auto-rows: 1fr;
+    gap: clamp(4px, 1.25vmin, 10px);
+    padding: clamp(8px, 2vmin, 14px);
+    background:rgba(255,255,255,.03);
+    border:1px solid #1f2937; border-radius:12px;
   }
-}
-
-/* Extra-tight for very narrow phones (e.g., iPhone mini) */
-@media (max-width: 360px){
-  header{
-    padding:6px 8px;
+  .cell{
+    display:flex; align-items:center; justify-content:center;
+    background: #0b1224;
+    border:1px solid #1f2937; border-radius:10px;
+    font-size: clamp(18px, 6.2vmin, 40px);
+    transition: transform .06s ease, background .15s ease, opacity .15s ease;
+    touch-action: manipulation;
   }
-  .hud{ gap:6px; }
-  .pill{
-    padding:3px 6px;
-    font-size:11px;
+  .cell.correct.popped{ background: rgba(34,197,94,.18); transform: scale(.94); }
+  .cell.wrong.flash{ background: rgba(239,68,68,.25); }
+  .footer-cta{ margin-top:auto; display:flex; justify-content:center }
+  /* Modal */
+  .modal-backdrop{
+    position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+    background:rgba(3,6,17,.6); backdrop-filter: blur(2px);
+    z-index:50; padding: 20px;
   }
-}
-
-
-.hud{display:flex; gap:16px; align-items:center; flex-wrap:wrap}
-.pill{background:var(--muted); padding:6px 10px; border-radius:999px; font-weight:700}
-.screen{ flex:1; position:relative; overflow:hidden; border-top:1px solid #eee;
-         background: linear-gradient(#ffffff, #f6f8ff); }
-
-/* Question & answers row */
-.qa{
-  position:absolute; left:50%; transform:translateX(-50%);
-  top:6px; z-index:2; width:min(940px, 96%);
-  display:flex; flex-direction:column; gap:10px;
-  align-items:center;
-}
-.question{
-  background:#333;                 /* dark gray background */
-  color:#fff;                      /* white text */
-  padding:14px 18px;
-  border-radius:12px;
-  box-shadow:0 2px 10px rgba(0,0,0,.3);
-  font-size:clamp(16px,2.4vh,22px);
-  text-align:center;
-  line-height:1.25;
-}
-
-.answers{
-  display:grid;
-  grid-template-columns:repeat(2, minmax(0,1fr));  /* 2 columns instead of 4 */
-  gap:12px 14px;                                  /* extra vertical spacing */
-  width:100%;
-  max-width:640px;                                /* keeps it tidy on large screens */
-  margin:auto;
-}
-
-/* Spacers between question, answers, and grid */
-.spacer{
-  width:100%;
-  height:clamp(6px, 1.5vh, 18px);
-}
-.spacer-top{ height:clamp(10px, 2vh, 24px); }
-.spacer-bottom{ height:clamp(14px, 3vh, 32px); }
-
-
-
-/* === Emoji left, text right (single line) === */
-.ans{
-  display:flex;
-  flex-direction:row;         /* horizontal layout */
-  align-items:center;
-  justify-content:flex-start;
-  text-align:left;
-  gap:10px;
-  padding:10px 12px;
-}
-
-.ans .emoji{
-  font-size:1.6em;            /* a bit smaller than the stacked version */
-  line-height:1;
-  flex:0 0 auto;              /* don't stretch */
-}
-
-.ans .txt{
-  font-weight:700;
-  font-size:clamp(14px,1.8vw,18px);
-  line-height:1.2;
-  flex:1 1 auto;              /* allow the text to wrap nicely */
-}
-
-
-
-/* soft colored borders for variety (not gameplay) */
-.c0{ border-color:#ffb3b3; background:#fff8f8; }
-.c1{ border-color:#ffd166; background:#fff9ea; }
-.c2{ border-color:#9be29b; background:#f4fff4; }
-.c3{ border-color:#a7c4ff; background:#f4f7ff; }
-
-/* Grid */
-.gridWrap{
-  width:100%;               /* ensure flex area spans full width */
-
-  position:absolute;
-  inset:0;
-  display:flex;
-  justify-content:center;   /* keeps it centered vertically if needed */
-  align-items:center;       /* <-- center the grid horizontally */
-  padding:12px 16px;
-  padding-top: calc(var(--qaH, 0px) + 12px); /* pushes grid below QA */
-  box-sizing:border-box;
-  flex-direction:column;
-}
-
-
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(6, 1fr);
-  gap:6px;
-    width:min(min(92vw, 1000px), var(--gridH, 720px));  /* widen slightly when possible */
-
-
-
-
-  aspect-ratio:1 / 1;            /* keeps it square */
-  margin:auto;
-  flex-shrink:1;
-}
-
-@media (max-height:700px){
-  .answers{ gap:10px; }
-  .ans{ padding:8px 10px; }
-  .ans .emoji{ font-size:1.4em; }
-  .ans .txt{ font-size:clamp(12px,3.4vw,15px); line-height:1.15; }
-
-  .spacer-top{ height:10px; }
-  .spacer-bottom{ height:12px; }
-
-  .grid{ gap:4px; }  /* packs the 6 rows a bit tighter */
-}
-
-@media (max-height:740px){
-  .spacer-top{ height:8px; }
-  .spacer-bottom{ height:8px; }
-}
-
-
-
-
-.cell{
-  /* square emoji tile */
-  display:grid; place-items:center;
-  border-radius:12px; height:0; padding-bottom:100%;
-  position:relative; cursor:pointer;
-  transition: transform 120ms ease, opacity 120ms ease, box-shadow 120ms ease;
-  touch-action: manipulation; -webkit-tap-highlight-color: transparent;
-  background:#ffffff; box-shadow:0 2px 8px rgba(0,0,0,.06);
-  border:2px solid rgba(0,0,0,.06);
-}
-.cell .g{
-  /* the emoji glyph itself */
-  position:absolute; inset:0; display:grid; place-items:center;
-    font-size: clamp(22px, 5vh, 42px);
- line-height:1;
-}
-
-@media (min-width: 900px) and (min-height: 900px){
-  .cell .g{ font-size: clamp(28px, 3.2vw, 56px); }
-  .grid{ gap: 8px; }
-}
-
-
-.cell:active{ transform: scale(.96) }
-.cell.hit{ opacity:.35; cursor:default; filter:saturate(.6) }
-.cell.rightNow{ box-shadow:0 0 0 6px rgba(22,163,74,.22), 0 6px 18px rgba(0,0,0,.10) }
-.cell.wrongNow{ box-shadow:0 0 0 6px rgba(220,38,38,.22), 0 6px 18px rgba(0,0,0,.10) }
-
-/* Toast (center badge) */
-.toast{
-  position:absolute; left:50%; top:50%;
-  transform: translate(-50%,-50%) scale(.92);
-  background:#111; color:#fff; padding:14px 18px; border-radius:16px;
-  font-weight:900; font-size:clamp(18px, 3.2vw, 32px); line-height:1.1;
-  box-shadow:0 10px 30px rgba(0,0,0,.25); opacity:0; pointer-events:none;
-  transition: opacity .18s ease, transform .18s ease; z-index:5;
-}
-.toast.show{ opacity:1; transform: translate(-50%,-50%) scale(1) }
-.toast.success{ background:var(--good) }
-.toast.error{ background:var(--bad) }
-.toast.info{ background:#111 }
-
-/* Overlays */
-.overlay{
-  position:absolute; inset:0; display:none; place-items:center; text-align:center;
-  padding:24px; z-index:20; background:#fff;
-}
-.overlay.show{display:grid}
-.stack{display:flex; flex-direction:column; gap:14px; align-items:center}
-.btn{ border:none; background:#111; color:#fff; padding:12px 16px; border-radius:12px; font-weight:800; cursor:pointer}
-.btn.secondary{background:#444}
-.small{opacity:.75; font-size:14px}
-
-/* Final stats / badge style */
-.finalStats{ display:flex; flex-direction:column; gap:12px; align-items:center; margin-top:4px; }
-@keyframes popIn{ 0%{ transform: translateY(6px) scale(.96); opacity:0 } 100%{ transform: translateY(0) scale(1); opacity:1 } }
-.statBadge{
-  display:inline-flex; align-items:center; gap:8px;
-  padding:12px 16px; border-radius:16px; font-weight:900; font-size:clamp(18px,3.2vw,28px); line-height:1.1; color:#fff;
-  box-shadow:0 10px 30px rgba(0,0,0,.22); animation: popIn 260ms ease-out both;
-}
-.statBadge.score   { background:#16a34a } /* green */
-.statBadge.correct { background:#2563eb; animation-delay:.08s } /* blue */
-
-/* Purple Bonus button to match the badges */
-#bonusBtn{
-  background:#7e22ce;                 /* rich purple */
-  color:#fff;
-  border:none;
-  border-radius:16px;
-  font-weight:800;
-  padding:12px 20px;
-  font-size:clamp(18px,3vw,24px);
-  box-shadow:0 10px 30px rgba(0,0,0,.22);
-  transition:transform .1s ease;
-}
-#bonusBtn:hover{ transform:scale(1.05); }
-
-
-/* === Bonus slot machine === */
-.bonusWrap{ display:grid; gap:14px; place-items:center; }
-.reels{
-  display:grid; grid-template-columns: repeat(3, 1fr);
-  gap:12px; width:min(420px, 92vw);
-}
-.reel{
-  background:#fff; color:#111; border:2px solid #ddd;
-  border-radius:16px; box-shadow:0 6px 18px rgba(0,0,0,.10);
-  cursor:pointer; padding:16px; height:100px;
-  display:grid; place-items:center;
-  font-size: clamp(28px, 8vw, 48px);
-  user-select:none; -webkit-tap-highlight-color: transparent;
-  transition: transform 120ms ease, box-shadow 120ms ease, border-color 120ms ease;
-}
-.reel:active{ transform: scale(.96) }
-.reel.spinning{ border-color:#a0c4ff; box-shadow:0 0 0 6px rgba(37,99,235,.18), 0 6px 18px rgba(0,0,0,.10) }
-.reel.stopped{ border-color:#9be29b; box-shadow:0 0 0 6px rgba(22,163,74,.18), 0 6px 18px rgba(0,0,0,.10) }
-.bonusMsg{ font-weight:800; font-size:clamp(16px, 2.6vw, 20px); }
-
-
-/* Between-screen answer card */
-.betweenAnswer{
-  font-size: clamp(18px, 2.6vw, 28px);
-  font-weight: 800;
-  background: #fff;
-  color: #111;
-  padding: 12px 16px;
-  border-radius: 14px;
-  box-shadow: 0 6px 18px rgba(0,0,0,.10);
-  max-width: 720px;
-}
-
-/* Tiny confetti */
-.confetti{
-  position:absolute; pointer-events:none; z-index:30; font-size:18px; opacity:0;
-  transform: translate(-50%,-50%) scale(.8); animation: confettiPop 600ms ease-out forwards;
-}
-@keyframes confettiPop{
-  0% { opacity:0; transform: translate(-50%,-50%) scale(.8) }
-  25%{ opacity:1; transform: translate(-50%,-90%) scale(1) }
-  100%{ opacity:0; transform: translate(-50%,-140%) scale(1.1) }
-}
-
-
-/* === Tablet scaling === */
-@media (min-width: 600px) and (max-width: 1024px) {
-  html { font-size: 18px; }        /* slightly larger base font */
-  .question { font-size: clamp(18px, 2.6vh, 24px); }
-  .cell .g  { font-size: clamp(24px, 5.5vh, 46px); }
-}
-
-
+  .modal-backdrop.show{ display:flex }
+  .modal{
+    width:min(560px, 96vw);
+    background: linear-gradient(180deg, #0f172a, #0b1224 70%);
+    border:1px solid #1f2937; border-radius:16px;
+    box-shadow: var(--shadow);
+    padding: clamp(16px, 4vmin, 22px);
+    display:flex; flex-direction:column; gap:12px; text-align:center;
+  }
+  .modal h3{ font-size: clamp(18px, 4.8vmin, 26px) }
+  .modal p{ color:#cbd5e1; font-size: clamp(14px, 3.8vmin, 18px) }
+  /* Responsive hint at top */
+  .hint{
+    font-size: clamp(12px, 2.5vmin, 14px); color:var(--muted); text-align:center;
+  }
+  /* Make buttons comfortably large on touch devices */
+  @media (hover:none){
+    button{ padding: 14px 18px }
+  }
 </style>
 </head>
 <body>
-  <div class="game" id="game">
-    <header>
-      <div class="hud">
-        <span class="pill" id="progress">Q 1 / 1</span>
-        <span class="pill">Score: <span id="score">0</span></span>
-        <span class="pill">Time: <span id="time">0</span>s</span>
-      </div>
-    </header>
+  <div class="app">
+    <div class="card">
+      <header class="topbar">
+        <div class="brand"><span class="emoji" aria-hidden="true">📖</span> Bible Emoji Hunt</div>
+        <div class="hud">
+          <div class="stat" id="hudScore">Score: 0</div>
+          <div class="stat" id="hudTimer" style="display:none">Time: 20</div>
+         <div class="stat" id="hudQ">Q: 0/0</div>
 
-    <main class="screen" id="screen" aria-live="polite">
-      <!-- Question / Answers -->
-<div class="qa" id="qa" style="display:none">
-  <div class="question" id="question">Loading…</div>
-  <div class="spacer spacer-top"></div>
-  <div class="answers" id="answers"></div>
-  <div class="spacer spacer-bottom"></div>
-</div>
+        </div>
+      </header>
 
+      <!-- Screens -->
+      <main class="content">
 
-      <!-- Grid -->
-      <div class="gridWrap">
-        <div class="grid" id="grid" aria-label="emoji grid"></div>
-      </div>
-
-      <!-- Toast -->
-      <div class="toast" id="toast" role="status" aria-live="assertive"></div>
-
-      <!-- Start -->
-<!-- Portrait Info Screen -->
-<section class="overlay show" id="portraitNotice">
-  <div class="stack">
-    <div style="font-size:42px">📱 Best in Vertical Mode</div>
-    <div class="small" style="max-width:600px">
-      This game works best in <b>vertical (portrait)</b> mode.
-    </div>
-    <button class="btn" id="portraitOkBtn">OK</button>
-  </div>
-</section>
-
-<!-- Title / Start Screen -->
-<section class="overlay" id="start">
-
-        <div class="stack">
-          <div style="font-size:42px">😀 Emoji Hunt Quiz</div>
-          <div class="small">Tap the emojis that match the <b>correct answer’s emoji</b> before time runs out.</div>
-          <div class="small">30 seconds per question • Mouse or touch</div>
-          <div style="display:flex; gap:10px">
-            <button class="btn" id="startBtn">Start</button>
-            <button class="btn secondary" id="howBtn">How to Play</button>
+        <!-- Splash (orientation prompt) -->
+        <section id="screen-splash" class="screen active">
+          <div class="stack center">
+            <h1>Best in <span style="color:#60a5fa">Vertical</span> Mode</h1>
+            <p class="lead">You can play in any orientation, but portrait is easiest on phones.</p>
+            <div class="row">
+              <button class="btn-accent" id="btn-splash-ok">Okay, let’s play!</button>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <!-- How-to -->
-      <section class="overlay" id="how">
-        <div class="stack">
-          <div style="font-size:36px">📚 How to Play</div>
-          <div style="max-width:640px">
-            A Bible question appears with four answers. Each answer has its own emoji.<br/>
-            For 30 seconds, tap as many grid squares as you can that match the emoji of the <b>correct</b> answer.<br/>
-            Correct tap: +3 points • Wrong tap: −1 point • Clear early = ⚡ Speed Bonus
+        <!-- Title -->
+        <section id="screen-title" class="screen">
+          <div class="stack center">
+            <h1>Bible Emoji Hunt</h1>
+            <p class="lead">Answer the question, then tap every matching emoji in the grid before time runs out. Finish all questions to unlock the bonus round!</p>
+            <div class="row" style="justify-content:center">
+              <button class="btn-accent" id="btn-start">Start Game</button>
+              <button class="btn-ghost" id="btn-how">How to Play</button>
+            </div>
+            <div class="panel-soft hint">
+              Tip: Each grid has 36 squares with an equal number of the four answer emojis (9 each).
+            </div>
           </div>
-          <button class="btn" id="backBtn">Back</button>
-        </div>
-      </section>
+        </section>
 
-      <!-- Between-rounds -->
-      <section class="overlay" id="between">
-        <div class="stack">
-          <div class="statBadge correct" role="status" aria-live="polite">✅ Correct Answer</div>
-          <div id="betweenText" class="betweenAnswer"></div>
-          <div class="small" id="betweenCountdown">(next question in 5s)</div>
-        </div>
-      </section>
+        <!-- Question -->
+        <section id="screen-question" class="screen">
+          <div class="stack" style="gap: clamp(14px, 3.5vmin, 18px)">
+            <h2 id="qText">Question goes here</h2>
+            <div class="answers" id="answers"></div>
+          </div>
+        </section>
 
-<!-- Bonus Slot Machine -->
-<section class="overlay" id="bonus">
-  <div class="stack">
-    <div style="font-size:34px">🎰 Bonus Round</div>
-    <div class="small">Tap each reel to stop it. Match 3 = <b>x2 score</b>!</div>
+        <!-- Grid mini-game -->
+        <section id="screen-grid" class="screen">
+          <div class="stack">
+            <h2 id="gridTitle">Find all the …</h2>
+            <div class="row" style="justify-content:center; gap:10px; margin-bottom:4px;">
+              <div class="pill">Time left: <span id="gridTime">20</span>s</div>
+              <div class="pill">Remaining: <span id="gridRemaining">9</span></div>
+            </div>
+            <div class="grid" id="grid"></div>
+          </div>
+        </section>
 
-    <div class="bonusWrap">
-      <div class="reels">
-        <button class="reel" id="reel0" aria-label="reel 1">🍎</button>
-        <button class="reel" id="reel1" aria-label="reel 2">⭐️</button>
-        <button class="reel" id="reel2" aria-label="reel 3">🎈</button>
-      </div>
-      <div class="bonusMsg" id="bonusMsg">Tap a reel to stop it…</div>
-    </div>
+        <!-- Bonus round (slot machine) -->
+        <section id="screen-bonus" class="screen">
+          <div class="stack center">
+            <h2>Bonus Round 🎰</h2>
+           <p class="lead">Reels start automatically. Tap each emoji box to stop it—match three to win a bonus!</p>
 
-    <div style="display:flex; gap:10px">
-      <button class="btn secondary" id="bonusSkip">Skip</button>
-      <button class="btn" id="bonusBack" style="display:none">Back to Results</button>
+            <div class="panel-soft" style="display:flex; gap:14px; justify-content:center; align-items:center; flex-wrap:wrap">
+              <div class="reelbox" style="display:flex; gap:12px; align-items:center">
+                <div class="panel-soft" style="width:90px; height:90px; display:flex; align-items:center; justify-content:center; font-size:52px" id="reel0">🍒</div>
+             
+              </div>
+              <div class="reelbox" style="display:flex; gap:12px; align-items:center">
+                <div class="panel-soft" style="width:90px; height:90px; display:flex; align-items:center; justify-content:center; font-size:52px" id="reel1">🍋</div>
+                
+              </div>
+              <div class="reelbox" style="display:flex; gap:12px; align-items:center">
+                <div class="panel-soft" style="width:90px; height:90px; display:flex; align-items:center; justify-content:center; font-size:52px" id="reel2">🍇</div>
+                
+              </div>
+            </div>
+             <div class="panel-soft" style="font-size:14px; color:#cbd5e1">
+              Payouts (all three match): 7️⃣ +500 • 🔔 +300 • 🍇 +250 • 🍒 +200 • 🍋 +150
+            </div>
+          </div>
+        </section>
+
+        <!-- End screen -->
+        <section id="screen-end" class="screen">
+          <div class="stack center">
+            <h1>Great job!</h1>
+            <p class="lead">Your final score:</p>
+            <div class="emoji" id="finalScore" style="font-size: clamp(28px, 9vmin, 72px)">0</div>
+            <div class="row" style="justify-content:center">
+              <button class="btn-accent" id="btn-play-again">Play Again</button>
+              <button class="btn-ghost" id="btn-title">Back to Title</button>
+            </div>
+          </div>
+        </section>
+
+      </main>
     </div>
   </div>
-</section>
 
-
-      <!-- Game over -->
-      <section class="overlay" id="over">
-        <div class="stack">
-          <div style="font-size:34px">🏁 Game Over</div>
-          <div id="final"></div>
-          <button class="btn" id="bonusBtn">Bonus Round 🎰</button>
-
-          <button class="btn" id="againBtn">Play Again</button>
-        </div>
-      </section>
-    </main>
+  <!-- Modal -->
+  <div class="modal-backdrop" id="modal">
+    <div class="modal">
+      <h3 id="modalTitle">Title</h3>
+      <p id="modalMsg">Message</p>
+      <div class="row" style="justify-content:center">
+        <button class="btn-accent" id="modalOk">OK</button>
+      </div>
+    </div>
   </div>
 
 <script>
-/* ===== QUESTIONS (now with emojis per choice) =====
-   Note: We keep isCorrect:true and add an emoji per choice.
-   The grid for each round will be filled with these four emojis.
+(()=> {
+  // -----------------------------
+  // Data (questions with emojis)
+  // -----------------------------
+  // Each option has text and emoji; `correct` is the index of the correct option.
+
+/* 
+   ____    _    _   ______    _____   _______   _____    ____    _   _    _____ 
+  / __ \  | |  | | |  ____|  / ____| |__   __| |_   _|  / __ \  | \ | |  / ____|
+ | |  | | | |  | | | |__    | (___      | |      | |   | |  | | |  \| | | (___  
+ | |  | | | |  | | |  __|    \___ \     | |      | |   | |  | | | . ` |  \___ \ 
+ | |__| | | |__| | | |____   ____) |    | |     _| |_  | |__| | | |\  |  ____) |
+  \___\_\  \____/  |______| |_____/     |_|    |_____|  \____/  |_| \_| |_____/ 
+
+
 */
 
-// ===== START OF QUESTIONS =====
+
 const QUESTIONS = [
   {
-    q: "What would happen if Adam & Eve ate the fruit?",
-    choices: [
-      { text: "They'd die", isCorrect:true, emoji:"💀" },
-      { text: "They'd turn into angels", emoji:"😇" },
-      { text: "They'd live forever", emoji:"♾️" },
-      { text: "They'd sleep for a week", emoji:"😴" }
-    ]
+    prompt: "What did God say would happen if they ate from the Tree of the Knowledge of Good and Evil?",
+    options: [
+      { text: "They’d die", emoji: "💀" },
+      { text: "They’d become angels", emoji: "😇" },
+      { text: "They’d turn into gods", emoji: "🗿" },
+      { text: "They’d be kings", emoji: "👑" }
+    ],
+    correct: 0
   },
   {
-    q: "Who was the serpent that came to Eve?",
-    choices: [
-      { text: "The devil", isCorrect:true, emoji:"🐍" },
-      { text: "Just a snake", emoji:"🪱" },
-      { text: "An angel", emoji:"👼" },
-      { text: "Adam's pet", emoji:"🐶" }
-    ]
+    prompt: "Who was the serpent who came to Eve?",
+    options: [
+      { text: "The devil", emoji: "👿" },
+      { text: "Just a normal snake", emoji: "🐍" },
+      { text: "A talking bird", emoji: "🐦" },
+      { text: "An angel", emoji: "👼" }
+    ],
+    correct: 0
   },
   {
-    q: "What did the serpent tell Eve?",
-    choices: [
-      { text: "You won't die; you'll be like God", isCorrect:true, emoji:"🗣️" },
-      { text: "Don't touch the fruit", emoji:"✋" },
-      { text: "God doesn't love you", emoji:"💔" },
-      { text: "Run from Adam", emoji:"🏃‍♀️" }
-    ]
+    prompt: "What did the serpent say to Eve?",
+    options: [
+      { text: "You won’t die; you’ll know good and evil like God", emoji: "🧠" },
+      { text: "God told me to bring you fruit", emoji: "🍎" },
+      { text: "God isn’t real", emoji: "🙅‍♂️" },
+      { text: "You should build a boat", emoji: "🛶" }
+    ],
+    correct: 0
   },
   {
-    q: "After talking to the serpent, what did Eve do?",
-    choices: [
-      { text: "Ate it and gave some to Adam", isCorrect:true, emoji:"🍎" },
-      { text: "Told God right away", emoji:"🙏" },
-      { text: "Threw the fruit away", emoji:"🗑️" },
-      { text: "Named the serpent", emoji:"🏷️" }
-    ]
+    prompt: "After talking with the serpent, what did Eve do?",
+    options: [
+      { text: "Ate the fruit and gave some to her husband", emoji: "🍎" },
+      { text: "Ran away", emoji: "🏃‍♀️" },
+      { text: "Built an altar", emoji: "🕯️" },
+      { text: "Threw the fruit away", emoji: "🗑️" }
+    ],
+    correct: 0
   },
   {
-    q: "After eating, what did Adam and Eve realize?",
-    choices: [
-      { text: "They were naked, so they hid", isCorrect:true, emoji:"🙈" },
-      { text: "They could fly", emoji:"🪽" },
-      { text: "They were angels", emoji:"😇" },
-      { text: "They forgot their names", emoji:"❓" }
-    ]
+    prompt: "What did Adam and Eve realize after eating? What did they do?",
+    options: [
+      { text: "Realized they were naked; made clothes and hid", emoji: "🫣" },
+      { text: "They learned to read", emoji: "📖" },
+      { text: "They built a house", emoji: "🏠" },
+      { text: "They named the animals", emoji: "🦓" }
+    ],
+    correct: 0
   },
   {
-    q: "What curse did God give the serpent?",
-    choices: [
-      { text: "Crawl; crushed by Eve's Son", isCorrect:true, emoji:"🐍" },
-      { text: "Lose its voice", emoji:"🤐" },
-      { text: "Turn to dust", emoji:"🧱" },
-      { text: "Live in the ocean", emoji:"🌊" }
-    ]
+    prompt: "What curses did God give to the serpent?",
+    options: [
+      { text: "To crawl on his belly, to be crushed by a son of Eve", emoji: "🐍" },
+      { text: "To lose all color", emoji: "🎨" },
+      { text: "To become a fish", emoji: "🐟" },
+      { text: "To turn into a bird", emoji: "🐦" }
+    ],
+    correct: 0
   },
   {
-    q: "What curse did God give the woman?",
-    choices: [
-      { text: "Pain in childbirth; conflict", isCorrect:true, emoji:"👶" },
-      { text: "Grow thorns", emoji:"🌵" },
-      { text: "Lose her voice", emoji:"🤐" },
-      { text: "Never sleep", emoji:"🫠" }
-    ]
+    prompt: "What curses did God give to the woman?",
+    options: [
+      { text: "Great pain during childbirth and battles with her husband", emoji: "👶" },
+      { text: "No more food", emoji: "🍽️" },
+      { text: "Never sleep again", emoji: "😴" },
+      { text: "She couldn’t talk", emoji: "🤐" }
+    ],
+    correct: 0
   },
   {
-    q: "What curse did God give the man?",
-    choices: [
-      { text: "Hard work and death", isCorrect:true, emoji:"🧑‍🌾" },
-      { text: "No more garden food", emoji:"🥦" },
-      { text: "Forget Eve", emoji:"🧠" },
-      { text: "Never rest", emoji:"⏰" }
-    ]
+    prompt: "What curses did God give the man?",
+    options: [
+      { text: "Frustrating and hard work, and death", emoji: "🧑‍🌾" },
+      { text: "Fear of heights", emoji: "🪜" },
+      { text: "Lose his memory", emoji: "🧠" },
+      { text: "Must sail forever", emoji: "⛵" }
+    ],
+    correct: 0
   },
   {
-    q: "After the curses, what did God do?",
-    choices: [
-      { text: "Clothed them; sent them out", isCorrect:true, emoji:"🧥" },
-      { text: "Destroyed the garden", emoji:"🔥" },
-      { text: "Made them build a city", emoji:"🏙️" },
-      { text: "Told them to swim away", emoji:"🏊" }
-    ]
+    prompt: "After giving them curses, what did God do to the man and woman?",
+    options: [
+      { text: "Clothed them with animal skins, drove them out of the garden", emoji: "🧥" },
+      { text: "Let them stay in the garden", emoji: "🏡" },
+      { text: "Gave them a car", emoji: "🚗" },
+      { text: "Sent them back in time", emoji: "⏳" }
+    ],
+    correct: 0
   },
   {
-    q: "Who is the Son of Eve who crushed the serpent?",
-    choices: [
-      { text: "Jesus—died and rose again", isCorrect:true, emoji:"✝️" },
-      { text: "Moses", emoji:"📜" },
-      { text: "Abraham", emoji:"🧔" },
-      { text: "David", emoji:"🪕" }
-    ]
+    prompt: "Who was the mysterious son of Eve who came to crush the serpent? How did he do it?",
+    options: [
+      { text: "Jesus—He defeated sin by dying on the cross and rising from the dead", emoji: "✝️" },
+      { text: "Moses", emoji: "📜" },
+      { text: "David", emoji: "🎯" },
+      { text: "Noah", emoji: "🛶" }
+    ],
+    correct: 0
   }
 ];
-// ===== END OF QUESTIONS =====
 
 
 
-/* ===== CONFIG ===== */
-const GRID_SIZE = 6;          // 6 x 6 
-const ROUND_TIME = 30;         // seconds per question
-const CORRECT_POINTS = 3;
-const WRONG_POINTS   = 1;      // deducted
-const BETWEEN_SECONDS = 5;     // between-round display time
+/*
+  ______   _   _   _____  
+ |  ____| | \ | | |  __ \ 
+ | |__    |  \| | | |  | |
+ |  __|   | . ` | | |  | |
+ | |____  | |\  | | |__| |
+ |______| |_| \_| |_____/ 
 
-const SPEED_BONUS_PER_SECOND = 1;
-const SPEED_BONUS_CAP = Infinity;
-
-/* ===== STATE & ELEMENTS ===== */
-// --- Bonus round state ---
-const bonusOverlay = document.getElementById('bonus');
-const bonusMsg     = document.getElementById('bonusMsg');
-const bonusSkip    = document.getElementById('bonusSkip');
-const bonusBack    = document.getElementById('bonusBack');
-const reelEls      = [document.getElementById('reel0'), document.getElementById('reel1'), document.getElementById('reel2')];
-
-const BONUS_EMOJIS = ['🍎','⭐️','💎','🍀','🔥','🎈'];
-let reelTimers = [null,null,null];
-let reelStopped = [false,false,false];
-let reelValues  = ['','',''];
-let bonusApplied = false;   // prevent applying x2 more than once
+*/
 
 
 
-let idx = 0, score = 0, correctSquares = 0, timeLeft = 0, timer = null;
-let incorrectSquares = 0;
-
-let targetEmoji = ""; // emoji string for the correct answer this round
-let locked = false;
-let currentCorrectText = "";
-let betweenTimer = null;
-
-let roundCorrectTotal = 0;
-let roundCorrectHit   = 0;
-
-const screen    = document.getElementById('screen');
-const qaWrap    = document.getElementById('qa');
-const questionEl= document.getElementById('question');
-const answersEl = document.getElementById('answers');
-const gridEl    = document.getElementById('grid');
-const toast     = document.getElementById('toast');
-
-const betweenOverlay = document.getElementById('between');
-const betweenText    = document.getElementById('betweenText');
-const betweenCountdown = document.getElementById('betweenCountdown');
-
-const startOverlay = document.getElementById('start');
-const overOverlay  = document.getElementById('over');
-const howOverlay   = document.getElementById('how');
-const finalEl      = document.getElementById('final');
-
-const progressEl = document.getElementById('progress');
-const scoreEl    = document.getElementById('score');
-const timeEl     = document.getElementById('time');
-
-document.getElementById('startBtn').addEventListener('click', startGame);
-window.addEventListener('resize', updateGridOffset);
-
-// Portrait notice logic
-const portraitNotice = document.getElementById('portraitNotice');
-// startOverlay is already defined above — don't redeclare it here
-const portraitOkBtn = document.getElementById('portraitOkBtn');
 
 
-if (portraitOkBtn) {
-  portraitOkBtn.addEventListener('click', () => {
-    portraitNotice.classList.remove('show');  // hide first screen
-    startOverlay.classList.add('show');       // reveal title screen
-  });
-}
+  // Slot machine emoji (fixed order, skill timing)
+  const SLOT_ORDER = ["🍒","🍋","🍇","🔔","7️⃣"];
+
+  const REEL_BASE_MS = 240; // increase to slow down; decrease to speed up
+
+const PAYOUTS = { "🍒":200, "🍋":150, "🍇":250, "🔔":300, "7️⃣":500 };
 
 
-document.getElementById('againBtn').addEventListener('click', startGame);
+  // -----------------------------
+  // State
+  // -----------------------------
+  let score = 0;
+  let qIndex = 0;
 
-// Open bonus round from Game Over
-const bonusBtn = document.getElementById('bonusBtn');
-if (bonusBtn){
-  bonusBtn.addEventListener('click', openBonus);
-}
+  // Grid mini-game
+  const GRID_SIZE = 6; // 6x6
+  const TOTAL_CELLS = GRID_SIZE * GRID_SIZE; // 36
+  const PER_EMOJI = TOTAL_CELLS / 4; // 9 of each emoji
+  let targetEmoji = "🍞";
+  let remainingCorrect = PER_EMOJI;
+  let gridTimer = null;
+  let timeLeft = 20;
 
-// Bonus controls
-if (bonusSkip){ bonusSkip.addEventListener('click', () => {
-  bonusOverlay.classList.remove('show');
-  overOverlay.classList.add('show');
-});}
-if (bonusBack){ bonusBack.addEventListener('click', () => {
-  bonusOverlay.classList.remove('show');
-  overOverlay.classList.add('show');
-});}
+  // Bonus round (reels)
+  let reelIntervals = [null, null, null];
+  let reelRunning = [false,false,false];
+  let reelIndex = [0,1,2]; // starting positions in SLOT_ORDER
 
-// Tap to stop each reel
-reelEls.forEach((el, i) => {
+  // -----------------------------
+  // Elements
+  // -----------------------------
+  const screens = {
+    splash:  document.getElementById('screen-splash'),
+    title:   document.getElementById('screen-title'),
+    question:document.getElementById('screen-question'),
+    grid:    document.getElementById('screen-grid'),
+    bonus:   document.getElementById('screen-bonus'),
+    end:     document.getElementById('screen-end'),
+  };
+  const hudScore = document.getElementById('hudScore');
+  const hudTimer = document.getElementById('hudTimer');
+  const hudQ = document.getElementById('hudQ');
+hudQ.textContent = `Q: 0/${QUESTIONS.length}`;
+
+
+  const btnSplashOk = document.getElementById('btn-splash-ok');
+  const btnStart = document.getElementById('btn-start');
+  const btnHow = document.getElementById('btn-how');
+
+  const qText = document.getElementById('qText');
+  const answersBox = document.getElementById('answers');
+
+  const gridEl = document.getElementById('grid');
+  const gridTitle = document.getElementById('gridTitle');
+  const gridTime = document.getElementById('gridTime');
+  const gridRemaining = document.getElementById('gridRemaining');
+
+  const reel0 = document.getElementById('reel0');
+  const reel1 = document.getElementById('reel1');
+  const reel2 = document.getElementById('reel2');
+[reel0, reel1, reel2].forEach((el, i) => {
   el.addEventListener('click', () => stopReel(i));
 });
 
 
-document.getElementById('howBtn').addEventListener('click', ()=>{ startOverlay.classList.remove('show'); howOverlay.classList.add('show'); });
-document.getElementById('backBtn').addEventListener('click', ()=>{ howOverlay.classList.remove('show'); startOverlay.classList.add('show'); });
+  const finalScore = document.getElementById('finalScore');
+  const btnPlayAgain = document.getElementById('btn-play-again');
+  const btnTitle = document.getElementById('btn-title');
 
+  // Modal
+  const modal = document.getElementById('modal');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalMsg = document.getElementById('modalMsg');
+  const modalOk = document.getElementById('modalOk');
+  let modalCallback = null;
 
-['startBtn','againBtn','howBtn','backBtn'].forEach(id=>{
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.addEventListener('pointerdown', ensureAudioReady, { once:true });
-});
-
-function startGame(){
-  idx = 0; score = 0; correctSquares = 0; incorrectSquares = 0;
-  scoreEl.textContent = score;
-  startOverlay.classList.remove('show');
-  overOverlay.classList.remove('show');
-  howOverlay.classList.remove('show');
-  qaWrap.style.display = 'block';
-answersEl.innerHTML = "";
-  updateGridOffset();
-  nextQuestion();
-}
-
-function nextQuestion(){
-  clearInterval(timer);
-  gridEl.innerHTML = "";
-  locked = false;
-
-  if (idx >= QUESTIONS.length){ endGame(); return; }
-
-  const item = QUESTIONS[idx];
-  progressEl.textContent = `Q ${idx+1} / ${QUESTIONS.length}`;
-  questionEl.textContent = item.q;
-
-  // Build shuffled choices and assign soft color classes c0..c3 (for looks only)
-  const choices = item.choices.map(c => ({ ...c })); // copy
-  shuffleInPlace(choices);
-  choices.forEach((c, i) => { c.skin = ['c0','c1','c2','c3'][i]; });
-
-  // Render answers row with emoji + text
-  answersEl.innerHTML = "";
-  choices.forEach((c,i)=>{
-    const div = document.createElement('div');
-    div.className = `ans ${c.skin}`;
-    div.innerHTML = `<div class="emoji">${c.emoji}</div><div class="txt">${c.text}</div>`;
-
-    answersEl.appendChild(div);
-  });
-  updateGridOffset();
-
-  // Determine target emoji from the correct choice
-  const correctChoice = choices.find(c => c.isCorrect);
-  targetEmoji = correctChoice ? (correctChoice.emoji || '') : '';
-  currentCorrectText = (correctChoice ? `${correctChoice.emoji || ''} ${correctChoice.text}` : "");
-
-  // Build an even-ish distribution of the 4 emojis for the grid
-  const palette = choices.map(c => c.emoji || '❓');        // 4 emojis for this round
-  const cells = buildTokenBag(GRID_SIZE*GRID_SIZE, palette);
-  shuffleInPlace(cells);
-
-  // Count how many cells match the target emoji
-  roundCorrectTotal = cells.filter(e => e === targetEmoji).length;
-  roundCorrectHit   = 0;
-
-  // Render grid of emoji buttons
-  cells.forEach(emo=>{
-    const btn = document.createElement('button');
-    btn.className = 'cell';
-    btn.setAttribute('aria-label', `emoji ${emo}`);
-    const glyph = document.createElement('div');
-    glyph.className = 'g';
-    glyph.textContent = emo;
-    btn.appendChild(glyph);
-    btn.addEventListener('click', ()=>handleCellTap(btn, emo));
-    gridEl.appendChild(btn);
-  });
-
-  // Timer
-  timeLeft = ROUND_TIME;
-  timeEl.textContent = timeLeft;
-  timer = setInterval(()=>{
-    timeLeft--;
-    timeEl.textContent = Math.max(0, timeLeft);
-    if (timeLeft <= 0){
-      clearInterval(timer);
-      locked = true;
-      ping('⏳ Time up!', 'info');
-      showBetweenAndAdvance();
-    }
-  }, 1000);
-}
-
-function handleCellTap(el, emo){
-  if (locked || el.classList.contains('hit')) return;
-
-  el.classList.add('hit');
-  const right = (emo === targetEmoji);
-  if (right){
-    score += CORRECT_POINTS;
-    correctSquares++;
-    scoreEl.textContent = score;
-    flashRight(el);
-    confettiBurst(el);
-    playTone('ok');
-    ping(`✅ +${CORRECT_POINTS}`, 'success');
-
-    roundCorrectHit++;
-    if (roundCorrectHit >= roundCorrectTotal) {
-      // 🎉 all correct emojis tapped — grant Speed Bonus and finish early
-      clearInterval(timer);
-      locked = true;
-
-      const rawBonus   = Math.max(0, timeLeft) * SPEED_BONUS_PER_SECOND;
-      const bonus      = Math.min(rawBonus, SPEED_BONUS_CAP);
-      score += bonus;
-      scoreEl.textContent = score;
-
-      ping(`⚡ Speed Bonus! +${bonus}`, 'success');
-      setTimeout(()=>{ showBetweenAndAdvance(); }, 650);
-      return;
-    }
-  } else {
-    score -= WRONG_POINTS;
-    scoreEl.textContent = score;
-    incorrectSquares++;
-    flashWrong(el);
-    playTone('bad');
-    ping(`❌ −${WRONG_POINTS}`, 'error');
+  // -----------------------------
+  // Helpers
+  // -----------------------------
+  function showScreen(key){
+    Object.values(screens).forEach(s => s.classList.remove('active'));
+    screens[key].classList.add('active');
   }
-}
 
-
-// --- Bonus round functions ---
-function openBonus(){
-  overOverlay.classList.remove('show');
-  bonusOverlay.classList.add('show');
-  bonusMsg.textContent = 'Tap each reel to stop it. Match 3 = x2 score!';
-  bonusBack.style.display = 'none';
-  bonusApplied = false;
-
-  // reset state
-  reelStopped = [false,false,false];
-  reelValues  = ['','',''];
-
-  // start spinning
-  startReels();
-}
-
-function startReels(){
-  reelEls.forEach((el, i) => {
-    el.classList.add('spinning');
-    if (reelTimers[i]) clearInterval(reelTimers[i]);
-let idx = 0;  // index to step through emojis in order
-reelTimers[i] = setInterval(() => {
-  el.textContent = BONUS_EMOJIS[idx];
-  idx = (idx + 1) % BONUS_EMOJIS.length;  // loop back to start
-}, 180 + i*30);
-
-
-  });
-}
-
-function stopReel(i){
-  if (reelStopped[i]) return;
-  reelStopped[i] = true;
-  const el = reelEls[i];
-  el.classList.remove('spinning');
-  el.classList.add('stopped');
-
-  clearInterval(reelTimers[i]);
-  reelTimers[i] = null;
-  reelValues[i] = el.textContent;
-
-  if (reelStopped.every(Boolean)){
-    finishBonus();
+  function updateHUD(){
+    hudScore.textContent = `Score: ${score}`;
+    hudQ.textContent = `Q: ${Math.min(qIndex+1, QUESTIONS.length)}/${QUESTIONS.length}`;
   }
-}
 
-function finishBonus(){
-  const [a,b,c] = reelValues;
-  if (a && a === b && b === c){
-    // JACKPOT! x2 total score (once)
-    if (!bonusApplied){
-      bonusApplied = true;
-      const before = score;
-      score = score * 2;
-      scoreEl.textContent = score;
-      bonusMsg.textContent = `🎉 JACKPOT! ${a}${b}${c}  — Score doubled: ${before} → ${score}`;
+  function shuffle(arr){
+    for(let i = arr.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function openModal(title, msg, onOk=null){
+    modalTitle.textContent = title;
+    modalMsg.textContent = msg;
+    modal.classList.add('show');
+    modalCallback = onOk || null;
+  }
+  function closeModal(){
+    modal.classList.remove('show');
+    const cb = modalCallback;
+    modalCallback = null;
+    if(typeof cb === 'function') cb();
+  }
+
+  function startGame(){
+    score = 0;
+    qIndex = 0;
+    updateHUD();
+    showQuestion();
+  }
+
+  // -----------------------------
+  // Question Flow
+  // -----------------------------
+  function showQuestion(){
+    showScreen('question');
+    hudTimer.style.display = 'none';
+    const q = QUESTIONS[qIndex];
+    qText.textContent = q.prompt;
+
+    answersBox.innerHTML = '';
+    q.options.forEach((opt, i)=>{
+      const btn = document.createElement('button');
+      btn.className = 'answer';
+      btn.innerHTML = `<span class="emoji" aria-hidden="true">${opt.emoji}</span> ${opt.text}`;
+      btn.addEventListener('click', ()=>handleAnswer(i));
+      answersBox.appendChild(btn);
+    });
+    updateHUD();
+  }
+
+  function handleAnswer(choiceIndex){
+    const q = QUESTIONS[qIndex];
+    const isCorrect = (choiceIndex === q.correct);
+    if(isCorrect){
+      score += 100;
+      updateHUD();
+      openModal("Correct! ✅", "Great job! Now get ready for the emoji hunt.", () => {
+        // Tell them what to find, then go to grid
+        const target = q.options[q.correct].emoji;
+        openModal("Find them!", `Find all the ${target} emojis!`, ()=>{
+          startGrid(q);
+        });
+      });
     } else {
-      bonusMsg.textContent = `🎉 JACKPOT! ${a}${b}${c}`;
+      score = Math.max(0, score - 50);
+      updateHUD();
+      openModal("Not quite ❌", "Keep going! You’ll nail the grid round.", () => {
+        const target = q.options[q.correct].emoji;
+        openModal("Find them!", `Find all the ${target} emojis!`, ()=>{
+          startGrid(q);
+        });
+      });
     }
-  } else {
-    bonusMsg.textContent = `No match. Final score: ${score}`;
   }
 
-  // allow returning to results
-  bonusBack.style.display = 'inline-block';
-  // refresh the results panel so numbers match
-  updateFinalStats();
-}
+  // -----------------------------
+  // Grid Mini-Game
+  // -----------------------------
 
-// Rebuild the Game Over stats so they reflect any bonus change
-function updateFinalStats(){
-  finalEl.innerHTML = `
-    <div class="finalStats">
-      <div class="statBadge score">🏆 Score: ${score}</div>
-      <div class="statBadge correct">✅ Correct taps: ${correctSquares}</div>
-      <div class="statBadge correct" style="background:#ef4444">❌ Incorrect taps: ${incorrectSquares}</div>
-    </div>
-  `;
-}
-
-
-
-/* ===== Helpers ===== */
-function updateGridOffset(){
-  // Where is the QA area, and how tall is it?
-  const qaTop = qaWrap.offsetTop || 0;                 // includes the 8–10px "top:" offset
-  const qaH   = qaWrap.offsetHeight || 0;
-  const qaBottom = qaTop + qaH;
-
-  // 1) Push the grid below the visible bottom of the QA area
-  screen.style.setProperty('--qaH', `${qaBottom + 8}px`); // +8px breathing room
-
-  // 2) Limit grid size to the remaining vertical space so all 6 rows fit
-  const screenH = screen.clientHeight || window.innerHeight;
-  const available = Math.max(200, screenH - (qaBottom + 20) - 20);
- // (qa + gap + grid padding)
-const bigScreen = (window.innerHeight >= 900 && window.innerWidth >= 900);
-const cap = bigScreen ? 800 : 500;       // allow bigger grid on tablets; a bit larger on phones too
-
-const gridPx = Math.min(available, cap);
-
-  screen.style.setProperty('--gridH', `${gridPx}px`);
-}
-
-
-
-
-
-function showBetweenAndAdvance(){
-  betweenText.textContent = currentCorrectText || "(not available)";
-  betweenOverlay.classList.add('show');
-
-  let left = BETWEEN_SECONDS;
-  betweenCountdown.textContent = `(next question in ${left}s)`;
-  if (betweenTimer) { clearInterval(betweenTimer); betweenTimer = null; }
-  betweenTimer = setInterval(()=>{
-    left--;
-    betweenCountdown.textContent = `(next question in ${Math.max(0,left)}s)`;
-    if (left <= 0){
-      clearInterval(betweenTimer);
-      betweenTimer = null;
-      betweenOverlay.classList.remove('show');
-      idx++;
-      if (idx >= QUESTIONS.length) endGame(); else nextQuestion();
-    }
-  }, 1000);
-}
-
-
-function buildTokenBag(total, palette){
-  // Distribute tokens (emojis) as evenly as possible
-  const base = Math.floor(total / palette.length);
-  let remainder = total % palette.length;
-  const bag = [];
-  palette.forEach(tok=>{
-    const count = base + (remainder > 0 ? 1 : 0);
-    for (let i=0;i<count;i++) bag.push(tok);
-    remainder--;
-  });
-  return bag;
-}
-function shuffleInPlace(arr){
-  for (let i = arr.length - 1; i > 0; i--){
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
+ 
+// -----------------------------
+// SoundFX (WebAudio) — sampler-accurate pops + buzz
+// -----------------------------
+let _audioCtx = null;
+function ensureAudio(){
+  if(!_audioCtx){
+    _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   }
-}
-
-function flashRight(el){
-  el.classList.add('rightNow');
-  setTimeout(()=> el.classList.remove('rightNow'), 220);
-}
-function flashWrong(el){
-  el.classList.add('wrongNow');
-  setTimeout(()=> el.classList.remove('wrongNow'), 220);
-}
-
-function ping(msg, kind='info'){
-  toast.textContent = msg;
-  toast.className = 'toast ' + (kind || 'info');
-  void toast.offsetWidth;
-  toast.classList.add('show');
-  setTimeout(()=> toast.classList.remove('show'), 850);
-}
-
-function endGame(){
-  qaWrap.style.display = 'none';
-  updateFinalStats();             // build stats in one place
-  overOverlay.classList.add('show');
-}
-
-/* Tiny confetti */
-function confettiBurst(el){
-  const rect = el.getBoundingClientRect();
-  const cx = rect.left + rect.width/2;
-  const cy = rect.top + rect.height/2;
-  const pieces = ['🎉','✨','⭐️','🎊'];
-  for (let i=0;i<4;i++){
-    const s = document.createElement('div');
-    s.className = 'confetti';
-    s.textContent = pieces[Math.floor(Math.random()*pieces.length)];
-    s.style.left = (cx + (Math.random()*60 - 30)) + 'px';
-    s.style.top  = (cy + (Math.random()*16 - 8)) + 'px';
-    document.body.appendChild(s);
-    s.addEventListener('animationend', ()=> s.remove(), { once:true });
+  if(_audioCtx.state === 'suspended'){
+    _audioCtx.resume();
   }
+  return _audioCtx;
 }
 
-/* ---- Beeps with Web Audio (no files) ---- */
-function playTone(type='ok'){
-  const AC = window.AudioContext || window.webkitAudioContext;
-  if (!AC) return;
-  playTone.ctx = playTone.ctx || new AC();
-  const ctx = playTone.ctx;
-
-  if (type === 'ok') {
-    const pops = ['short', 'soft', 'plucky'];
-    const choice = pops[Math.floor(Math.random() * pops.length)];
-    if (choice === 'short') return pop({type:'sine', f0:900, f1:650, dur:0.09, gain:0.8});
-    if (choice === 'soft')  return pop({type:'triangle', f0:520, f1:320, dur:0.12, gain:0.7, lowpass:1200});
-    if (choice === 'plucky')return pop({type:'sine', f0:500, f1:950, dur:0.10, gain:0.7});
-  }
-  if (type === 'bad'){ return tone({type:'sawtooth', f:220, dur:0.18, g:0.28}); }
-
-  return tone({type:'sine', f:880, dur:0.14, g:0.28});
-
-  function tone({type='sine', f=880, dur=0.14, g=0.28}){
-    const o = ctx.createOscillator();
-    const V = ctx.createGain();
+// Simple sustained tone (used for buzz)
+function tone({type='sine', f=880, dur=0.14, g=0.28}){
+  return new Promise(res=>{
+    const c = ensureAudio(); if(!c) return res();
+    const o = c.createOscillator(), V = c.createGain();
     o.type = type; o.frequency.value = f;
-    V.gain.setValueAtTime(0.0001, ctx.currentTime);
-    V.gain.exponentialRampToValueAtTime(g, ctx.currentTime+0.01);
-    V.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+dur);
-    o.connect(V); V.connect(ctx.destination);
-    o.start(); o.stop(ctx.currentTime + dur + 0.02);
-  }
-  function pop({type='sine', f0=900, f1=600, dur=0.1, gain=0.8, lowpass=null}={}){
-    const o = ctx.createOscillator();
-    const V = ctx.createGain();
+    V.gain.setValueAtTime(0.0001, c.currentTime);
+    V.gain.exponentialRampToValueAtTime(g, c.currentTime+0.01);
+    V.gain.exponentialRampToValueAtTime(0.0001, c.currentTime+dur);
+    o.connect(V); V.connect(c.destination);
+    o.start(); o.stop(c.currentTime + dur + 0.02);
+    o.onended = res;
+  });
+}
+
+// “Pop” = short tone with quick decay + pitch sweep (+ optional lowpass and micro-click)
+function pop({type='sine', f0=900, f1=600, dur=0.10, gain=0.8, lowpass=null, click=false}={}){
+  return new Promise(res=>{
+    const c = ensureAudio(); if(!c) return res();
+    const o = c.createOscillator();
+    const V = c.createGain();
     let out = V;
+
     o.type = type;
-    o.frequency.setValueAtTime(f0, ctx.currentTime);
-    o.frequency.exponentialRampToValueAtTime(Math.max(40,f1), ctx.currentTime + dur*0.85);
-    V.gain.setValueAtTime(0.0001, ctx.currentTime);
-    V.gain.exponentialRampToValueAtTime(gain, ctx.currentTime + 0.008);
-    V.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
+    o.frequency.setValueAtTime(f0, c.currentTime);
+    o.frequency.exponentialRampToValueAtTime(Math.max(40, f1), c.currentTime + dur*0.85);
+
+    // amplitude: fast attack, fast decay
+    V.gain.setValueAtTime(0.0001, c.currentTime);
+    V.gain.exponentialRampToValueAtTime(gain, c.currentTime + 0.008);
+    V.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + dur);
+
     if (lowpass){
-      const lp = ctx.createBiquadFilter();
+      const lp = c.createBiquadFilter();
       lp.type = 'lowpass';
-      lp.frequency.setValueAtTime(lowpass, ctx.currentTime);
+      lp.frequency.setValueAtTime(lowpass, c.currentTime);
       V.connect(lp); out = lp;
     }
-    o.connect(V); out.connect(ctx.destination);
-    o.start(); o.stop(ctx.currentTime + dur + 0.02);
-  }
+
+    if (click){
+      const C = c.createGain();
+      const t0 = c.currentTime;
+      C.gain.setValueAtTime(0.0001, t0);
+      C.gain.linearRampToValueAtTime(0.25, t0 + 0.003);
+      C.gain.linearRampToValueAtTime(0.0001, t0 + 0.02);
+      const n = c.createOscillator();
+      n.type = 'square'; n.frequency.setValueAtTime(2000, t0);
+      n.connect(C); C.connect(c.destination);
+      n.start(t0); n.stop(t0 + 0.03);
+    }
+
+    o.connect(V); out.connect(c.destination);
+    o.start();
+    o.stop(c.currentTime + dur + 0.02);
+    o.onended = res;
+  });
 }
 
-/* Create/resume + iOS unlock */
-function ensureAudioReady(){
-  const AC = window.AudioContext || window.webkitAudioContext;
-  if (!AC) return;
-  playTone.ctx = playTone.ctx || new AC();
-  const ctx = playTone.ctx;
-  if (ctx.state === 'suspended') ctx.resume();
-  if (!ensureAudioReady.unlocked){
-    try{
-      const buffer = ctx.createBuffer(1, 1, 22050);
-      const src = ctx.createBufferSource();
-      src.buffer = buffer; src.connect(ctx.destination); src.start(0);
-      ensureAudioReady.unlocked = true;
-    }catch(e){}
-  }
+// Named sounds (matching your sampler)
+const Sounds = {
+  "Pop – short sine blip": () => pop({type:'sine',     f0:900,  f1:650, dur:0.09, gain:0.80}),
+  "Pop – bright bubble":   () => pop({type:'sine',     f0:1200, f1:500, dur:0.12, gain:0.75}),
+  "Pop – soft thup":       () => pop({type:'triangle', f0:520,  f1:320, dur:0.12, gain:0.70, lowpass:1200}),
+  "Pop – plucky up":       () => pop({type:'sine',     f0:500,  f1:950, dur:0.10, gain:0.70}),
+  "Bad – low buzz":        () => tone({type:'sawtooth',f:220,            dur:0.18, g:0.28})
+};
+
+// Random picker for correct pops — never repeat back-to-back
+const CORRECT_KEYS = [
+  "Pop – short sine blip",
+  "Pop – bright bubble",
+  "Pop – soft thup",
+  "Pop – plucky up"
+];
+let _lastCorrectKey = null;
+
+function playCorrectRandomNoRepeat(){
+  ensureAudio();
+  const pool = CORRECT_KEYS.filter(k => k !== _lastCorrectKey);
+  const key = pool[Math.floor(Math.random() * pool.length)];
+  _lastCorrectKey = key;
+  return Sounds[key]();
+}
+function playWrongBuzz(){
+  ensureAudio();
+  return Sounds["Bad – low buzz"]();
 }
 
+window.SoundFX = {
+  playCorrect: playCorrectRandomNoRepeat,
+  playWrong: playWrongBuzz
+};
 
-// --- Secret debug key: press "G" to jump straight to Game Over ---
-window.addEventListener('keydown', (e)=>{
-  if(e.key.toLowerCase() === 'g'){
-    clearInterval(timer);
-    qaWrap.style.display = 'none';
-    updateFinalStats();
-    overOverlay.classList.add('show');
-    console.log('💀 Secret shortcut: jumped to Game Over screen.');
+function startGrid(q){
+
+
+    showScreen('grid');
+    const fourEmojis = q.options.map(o => o.emoji);
+    targetEmoji = q.options[q.correct].emoji;
+    gridTitle.textContent = `Find all the ${targetEmoji} emojis`;
+    remainingCorrect = PER_EMOJI;
+    gridRemaining.textContent = remainingCorrect;
+    timeLeft = 20;
+    gridTime.textContent = timeLeft;
+    hudTimer.style.display = 'block';
+    document.getElementById('hudTimer').textContent = `Time: ${timeLeft}`;
+
+    // Build equal distribution (9 of each emoji), then shuffle
+    const pool = [];
+    for(let i=0;i<4;i++){
+      for(let j=0;j<PER_EMOJI;j++){
+        pool.push(fourEmojis[i]);
+      }
+    }
+    shuffle(pool);
+
+    // Render cells
+    gridEl.innerHTML = '';
+    pool.forEach(emo=>{
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.textContent = emo;
+      cell.dataset.emoji = emo;
+      cell.addEventListener('click', ()=> onCellClick(cell));
+      gridEl.appendChild(cell);
+    });
+
+    // Start timer
+    if(gridTimer) clearInterval(gridTimer);
+    gridTimer = setInterval(()=>{
+      timeLeft--;
+      gridTime.textContent = timeLeft;
+      document.getElementById('hudTimer').textContent = `Time: ${timeLeft}`;
+      if(timeLeft<=0){
+        endGrid(false);
+      }
+    }, 1000);
+
+}
+  function onCellClick(cell){
+    const emo = cell.dataset.emoji;
+    if(cell.classList.contains('popped')) return;
+
+    if(emo === targetEmoji){
+      cell.classList.add('correct','popped');
+      remainingCorrect--;
+      gridRemaining.textContent = remainingCorrect;
+      score += 10; // per correct
+      updateHUD();
+      SoundFX.playCorrect();
+      if(remainingCorrect<=0){
+        // Finished early — add time bonus (5 points per second left)
+        const bonus = Math.max(0, timeLeft * 5);
+        score += bonus;
+        updateHUD();
+
+        endGrid(true, bonus);
+      }
+    } else {
+      // penalty and quick flash
+      score = Math.max(0, score - 25);
+      updateHUD();
+      SoundFX.playWrong();
+      cell.classList.add('wrong','flash');
+      setTimeout(()=> cell.classList.remove('flash'), 150);
+    }
+  }
+
+  function endGrid(completedEarly, bonus=0){
+    if(gridTimer) clearInterval(gridTimer);
+    gridTimer = null;
+    hudTimer.style.display = 'none';
+    const msg = completedEarly
+      ? `You found them all! Time bonus: +${bonus} points.`
+      : `Time's up! Keep going — you’ve got this.`;
+    openModal(completedEarly ? "Nice work! 🎉" : "Time Up ⏰", msg, ()=>{
+      qIndex++;
+      if(qIndex < QUESTIONS.length){
+        showQuestion();
+      } else {
+        // Go to bonus
+        showScreen('bonus');
+resetReels();
+startReels();
+
+      }
+    });
+  }
+
+  // Optional Skip button (useful for demos / accessibility)
+
+  // -----------------------------
+  // Bonus Round (Skill Slots)
+  // -----------------------------
+  function resetReels(){
+    [reel0,reel1,reel2].forEach((r,i)=>{
+      reelIndex[i] = i % SLOT_ORDER.length;
+      r.textContent = SLOT_ORDER[reelIndex[i]];
+    });
+    reelRunning = [false,false,false];
+  }
+
+  function startReels(){
+    // Start each with slight offset speeds to make timing matter
+    const speeds = [REEL_BASE_MS, REEL_BASE_MS + 40, REEL_BASE_MS + 80];
+
+    [0,1,2].forEach(i=>{
+      reelRunning[i] = true;
+      reelIntervals[i] = setInterval(()=>{
+        reelIndex[i] = (reelIndex[i] + 1) % SLOT_ORDER.length;
+        const emoji = SLOT_ORDER[reelIndex[i]];
+        [reel0,reel1,reel2][i].textContent = emoji;
+      }, speeds[i]);
+    });
+    
+  }
+
+  function stopReel(i){
+    if(!reelRunning[i]) return;
+    clearInterval(reelIntervals[i]);
+    reelIntervals[i] = null;
+    reelRunning[i] = false;
+
+    // When all stopped, score result
+    if(!reelRunning[0] && !reelRunning[1] && !reelRunning[2]){
+      const vals = [reel0.textContent, reel1.textContent, reel2.textContent];
+      let bonus = 0;
+      if(vals[0] === vals[1] && vals[1] === vals[2]){
+        bonus = PAYOUTS[vals[0]] || 0;
+        score += bonus;
+        updateHUD();
+        openModal("Jackpot! 🎉", `All three ${vals[0]} — bonus +${bonus}!`, ()=> {
+          showEnd();
+        });
+      } else {
+        // Small consolation for playing
+        bonus = 50;
+        score += bonus;
+        updateHUD();
+        openModal("Nice try! ⭐", `No match this time. Consolation +${bonus}.`, ()=> {
+          showEnd();
+        });
+      }
+    }
+  }
+
+  function showEnd(){
+  // stop any reels just in case
+  [0,1,2].forEach(i => {
+    if (reelIntervals[i]) {
+      clearInterval(reelIntervals[i]);
+      reelIntervals[i] = null;
+      reelRunning[i] = false;
+    }
+  });
+
+    showScreen('end');
+    finalScore.textContent = score.toString();
+  }
+
+  // -----------------------------
+  // Event wiring
+  // -----------------------------
+  btnSplashOk.addEventListener('click', ()=> showScreen('title'));
+  btnHow.addEventListener('click', ()=>{
+    openModal("How to Play", "Answer each question. Then tap every matching emoji in the 6×6 grid before time runs out. Finishing early gives a time bonus. At the end, try the skill-based bonus round: time your taps to match three!", null);
+  });
+  btnStart.addEventListener('click', startGame);
+
+  modalOk.addEventListener('click', closeModal);
+
+  // Bonus controls
+
+  btnPlayAgain.addEventListener('click', ()=>{
+    showScreen('title');
+  });
+  btnTitle.addEventListener('click', ()=>{
+    showScreen('title');
+  });
+
+// Secret skip: press "G" to jump straight to the bonus round
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'g' || e.key === 'G') {
+    // clean up any running grid timer and hide HUD timer
+    try { if (gridTimer) { clearInterval(gridTimer); gridTimer = null; } } catch(_) {}
+    hudTimer.style.display = 'none';
+
+    // go straight to the bonus and start reels
+    showScreen('bonus');
+    resetReels();
+    startReels();
   }
 });
 
 
+  // Initialize HUD and reels
+  updateHUD();
+  resetReels();
+})();
 </script>
 </body>
 </html>
-
