@@ -109,6 +109,17 @@
 #modalTitle, #modalMsg { text-align:center; }
 
 
+/* compact buttons for title extras */
+.btn-compact{
+  display:inline-flex;          /* don’t stretch full width */
+  align-items:center;
+  justify-content:center;
+  width:auto;                   /* auto size */
+  padding:10px 16px;            /* normal button padding */
+  min-height:unset;             /* no tall tiles */
+}
+
+
 </style>
 </head>
 <body>
@@ -144,7 +155,10 @@
           <button class="btn btn-primary grow" id="startBtn">Start</button>
           <button class="btn grow" id="howBtn">How to Play</button>
         </div>
-<button class="btn grow" id="tiltBtn">📱 Enable Tilt Control</button>
+<button class="btn btn-compact" id="tiltBtn">📱 Enable Tilt Control</button>
+<button class="btn btn-compact" id="bonusBtn">🎁 Bonus Round (60s)</button>
+
+
 
         <div class="notice">Short, kid-friendly questions • No ads • Works offline</div>
       </div>
@@ -325,8 +339,10 @@ const modal = {
 const state = {
   i: 0, correct: 0, bonus: 0, startTime: 0, totalJumpTime: 0,
   selectedWasCorrect: false,
-  review: []
+  review: [],
+  bonusMode: false   // NEW: are we in the 60s bonus round?
 };
+
 
 
   // ========= FULLSCREEN GATE =========
@@ -377,6 +393,8 @@ const state = {
     if(!isFullscreen()){
       requestAppFullscreen().catch(()=>{ /* ignore */ });
     }
+
+
     resetAll();
     state.startTime = performance.now();
     loadQuestion();
@@ -420,6 +438,14 @@ tiltBtn.addEventListener('click', async ()=>{
   }catch(err){
     modal.open("Tilt Not Available", "Your browser didn’t allow motion sensors, or this device doesn’t support them. You can still play with buttons/keys.", ()=>{});
   }
+});
+
+// Bonus Round button: show a short countdown, then start
+document.getElementById('bonusBtn').addEventListener('click', ()=>{
+  if(!isFullscreen()){
+    requestAppFullscreen().catch(()=>{ /* ignore */ });
+  }
+  modal.countdown("Bonus Round", "Emoji jumping begins in...", 3, startBonusRound);
 });
 
 
@@ -501,6 +527,8 @@ const YELLOW_PLATFORM_PROB = 0.10; // ~10% chance  -> +2 bonus
 const ALLOW_BONUS_PER_PLATFORM_ONCE = true; // award once per platform
 
 const ROUND_LEN = 20000; // ms — 20 seconds
+const BONUS_ROUND_LEN = 60000; // ms — 60 seconds for bonus mode
+
 // small UI flash when bonus is earned
 let bonusFlash = 0;           // ms remaining
 let bonusFlashText = "";      // "+1" or "+2"
@@ -553,6 +581,12 @@ document.addEventListener('visibilitychange', ()=>{
 
 
   function startJumpRound(){
+
+state.bonusMode = false;      // not bonus mode
+roundLen = ROUND_LEN;         // use normal 20s length
+document.getElementById('roundPill').textContent = 'Jump Round';
+
+
     show('game');
     resizeCanvas();
     setupWorld();
@@ -564,6 +598,23 @@ roundColorBonus = 0; // reset per-round color bonus
     requestAnimationFrame(loop);
   }
 
+function startBonusRound(){
+  state.bonusMode = true;        // mark bonus mode
+  roundLen = BONUS_ROUND_LEN;    // 60s
+  document.getElementById('roundPill').textContent = 'Bonus Round (60s)';
+
+  show('game');
+  resizeCanvas();
+  setupWorld();
+  roundColorBonus = 0;
+
+  elapsed = 0;
+  running = true;
+  last = performance.now();
+  requestAnimationFrame(loop);
+}
+
+
   function endJumpRound(){
 running = false;
 
@@ -571,6 +622,10 @@ running = false;
 const roundClimbedPx = Math.max(0, ((H - world.bestY) | 0));
 const heightBonus = Math.floor(roundClimbedPx / BONUS_PX_PER_POINT);
 state.bonus += heightBonus;
+
+
+
+
 
 // Combined summary for this round
 const totalRoundBonus = heightBonus + roundColorBonus;
@@ -608,7 +663,30 @@ modal.html("Bonus Earned!", lines.join('<br>'), advance);
 
       }
 
-  endEarlyBtn.addEventListener('click', endJumpRound);
+
+function endBonusRound(){
+  running = false;
+  state.totalJumpTime += elapsed;
+
+  const secs = (elapsed/1000).toFixed(1);
+  const climbed = Math.max(0, ((H - world.bestY)|0));
+  const gained = roundColorBonus + Math.floor(climbed / BONUS_PX_PER_POINT);
+
+  modal.html(
+    "Bonus Round Complete!",
+    `<div class="endbig">⏱️ ${secs}s survived</div>
+     <div style="margin:6px 0">⬆️ ${climbed}px climbed</div>
+     <div style="margin:6px 0">+${gained} bonus this round</div>`,
+    ()=>{ show('title'); }
+  );
+}
+
+
+endEarlyBtn.addEventListener('click', ()=>{
+  if (state.bonusMode) endBonusRound();
+  else endJumpRound();
+});
+
 
 // World config (more forgiving)
 const PLAYER = { w:26, h:26, emoji:"🙂", speed:0.30, jump:-0.75, grav:0.0010, maxVy:0.70 };
@@ -643,12 +721,15 @@ world.platforms.push({
 
 
 // Generate initial platforms upward
-let y = H*0.80;
+let y = H * 0.80;
+// If bonus mode, start with a slightly reduced count
+const initialCount = state.bonusMode ? 10 : PLATFORM.count;
 
-    for(let i=0;i<PLATFORM.count;i++){
-      y -= H*PLATFORM.spacing;
-      world.platforms.push(randPlatformAt(y));
-    }
+for (let i = 0; i < initialCount; i++) {
+  y -= H * PLATFORM.spacing;
+  world.platforms.push(randPlatformAt(y));
+}
+
   }
 
   function rand(min,max){ return min + Math.random()*(max-min); }
@@ -703,10 +784,14 @@ function randPlatformAt(y){
     update(dt);
     render();
 
-    if(elapsed >= roundLen){
-      endJumpRound();
-      return;
-    }
+if (elapsed >= roundLen) {
+  if (state.bonusMode) endBonusRound();
+  else endJumpRound();
+  return;
+}
+
+
+
     requestAnimationFrame(loop);
   }
 
@@ -808,7 +893,9 @@ if (typeof world.safetyTTL === 'undefined' && p.py > H + 24) {
     ()=>{
       // restore label and proceed to next question (keeps bonus flow)
       modal.ok.textContent = prevLabel;
-      endJumpRound();
+            if (state.bonusMode) endBonusRound();
+      else endJumpRound();
+
     }
   );
   return; // stop updating this frame
@@ -831,11 +918,22 @@ if (typeof world.safetyTTL === 'number') {
 
 world.platforms = world.platforms.filter(pl => pl.type === 'safety' || pl.y < H + 20);
 
-    while(world.platforms.length < PLATFORM.count+1){
-      const topY = Math.min(...world.platforms.map(pl=>pl.y));
-      const newY = topY - H*PLATFORM.spacing;
-      world.platforms.push(randPlatformAt(newY));
-    }
+// In bonus mode, every 10s reduce platform count by 2, floor at 4
+const effectiveCount = state.bonusMode
+  ? clamp(PLATFORM.count - Math.floor(elapsed / 10000) * 2, 4, PLATFORM.count)
+  : PLATFORM.count;
+
+while (world.platforms.length < effectiveCount + 1) {
+  // find top-most platform without allocating arrays
+  let topY = Infinity;
+  for (let i = 0; i < world.platforms.length; i++) {
+    if (world.platforms[i].y < topY) topY = world.platforms[i].y;
+  }
+  const newY = topY - H * PLATFORM.spacing; // use spacingDyn if you added it
+  world.platforms.push(randPlatformAt(newY));
+}
+
+
 
     // HUD
     timerChip.textContent = `⏱️ ${(elapsed/1000).toFixed(1)}s`;
