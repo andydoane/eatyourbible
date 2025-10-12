@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Emoji Blaster</title>
+<style>
+  :root{
+    --bg:#0d0f1a;
+    --panel:#12162a;
+    --panel-2:#1a1f3a;
+    --accent:#7dd3fc;
+    --accent-2:#a78bfa;
+    --ok:#22c55e;
+    --warn:#f59e0b;
+    --bad:#ef4444;
+    --text:#e5e7eb;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:radial-gradient(1200px 800px at 50% -10%, #1c2244 0%, #0d0f1a 60%) fixed;}
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--text);display:flex;align-items:center;justify-content:center}
+
+  /* Layout */
+  .shell{width:min(100vw,900px);height:min(100vh,1600px);display:flex;flex-direction:column;gap:12px;padding:12px}
+  .hud{
+    display:flex;gap:8px;align-items:center;justify-content:space-between;
+    background:linear-gradient(180deg,var(--panel),var(--panel-2));
+    border:1px solid #2a2f55;border-radius:16px;padding:10px 12px;box-shadow:0 8px 30px rgba(0,0,0,.35)
+  }
+  .hud .pill{padding:6px 10px;border-radius:999px;background:#0b1027;border:1px solid #2b356b;min-width:70px;text-align:center}
+  .hud .big{font-weight:700}
+  .hud .help{opacity:.8;font-size:.9rem}
+  .stage{
+    flex:1;min-height:300px;background:radial-gradient(1200px 800px at 50% 0%, #12183a 0%, #0b0f20 60%);
+    border:1px solid #2a2f55;border-radius:20px;overflow:hidden;position:relative;
+    box-shadow:inset 0 0 40px rgba(0,0,0,.35), 0 16px 50px rgba(0,0,0,.4)
+  }
+  canvas{width:100%;height:100%;display:block}
+
+  /* Screens */
+  .screen{
+    position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;padding:20px;text-align:center
+  }
+  .screen.active{display:flex}
+  .card{
+    width:min(680px,92vw);
+    background:linear-gradient(180deg,var(--panel),var(--panel-2));
+    border:1px solid #2a2f55;border-radius:20px;padding:18px 16px;box-shadow:0 16px 40px rgba(0,0,0,.35)
+  }
+  h1,h2{margin:8px 0 12px}
+  h1{font-size:1.9rem}
+  .muted{opacity:.85}
+  .btn-row{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:14px}
+  button{
+    background:linear-gradient(180deg,#23306a,#1b2552);
+    color:var(--text);border:1px solid #33418e;border-radius:14px;padding:12px 14px;
+    font-size:1rem;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.3);transition:transform .05s ease,opacity .2s
+  }
+  button:hover{transform:translateY(-1px)}
+  button:active{transform:translateY(0)}
+  .btn-primary{background:linear-gradient(180deg,#2563eb,#1e40af);border-color:#1b4bd1}
+  .btn-good{background:linear-gradient(180deg,#16a34a,#0f7a39);border-color:#0e6e34}
+  .btn-warn{background:linear-gradient(180deg,#f59e0b,#b45309);border-color:#b45309}
+  .btn-bad{background:linear-gradient(180deg,#ef4444,#b91c1c);border-color:#991b1b}
+  .tiny{font-size:.85rem;opacity:.9}
+
+  /* Answers grid */
+  .answers{display:grid;grid-template-columns:1fr;gap:10px;margin-top:12px}
+  @media(min-width:560px){.answers{grid-template-columns:1fr 1fr}}
+  .answer{
+    display:flex;align-items:center;gap:10px;background:#0b1027;border:1px solid #2b356b;border-radius:14px;padding:10px 12px;text-align:left;cursor:pointer
+  }
+  .answer .emo{font-size:1.4rem}
+  .answer .txt{flex:1}
+
+  /* Popups / Modals */
+  .modal{
+    position:absolute;inset:0;background:rgba(0,0,0,.55);
+    display:none;align-items:center;justify-content:center;padding:16px
+  }
+  .modal.show{display:flex}
+  .pop{
+    width:min(540px,92vw);
+    background:linear-gradient(180deg,#0f1433,#0b0f22);
+    border:1px solid #2a2f55;border-radius:18px;padding:16px;box-shadow:0 16px 40px rgba(0,0,0,.5);text-align:center
+  }
+
+  .healthbar{height:14px;background:#0b1027;border:1px solid #2b356b;border-radius:999px;overflow:hidden}
+  .healthbar > div{height:100%;background:linear-gradient(90deg,#22c55e,#16a34a);width:100%}
+
+  /* Floating tips */
+  .toast{
+    position:absolute;left:50%;top:10px;transform:translateX(-50%);
+    background:#11173a;border:1px solid #2a2f55;color:var(--text);padding:8px 12px;border-radius:999px;font-size:.9rem;opacity:.9
+  }
+
+  /* Hit flash on player */
+  .hitFlash{animation:hit .25s ease}
+  @keyframes hit{from{filter:brightness(2)} to{filter:none}}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="hud">
+    <div class="pill big">Score: <span id="score">0</span></div>
+    <div class="pill">Q: <span id="qno">0</span>/10</div>
+    <div class="pill">Time: <span id="time">--</span>s</div>
+    <div class="help tiny">Move: ←→ or tilt &nbsp;•&nbsp; Shoot: tap / click</div>
+  </div>
+  <div class="stage" id="stage">
+    <canvas id="game"></canvas>
+
+    <!-- Screens -->
+    <div class="screen active" id="splash">
+      <div class="card">
+        <h1>Best in Vertical Mode</h1>
+        <p class="muted">Rotate your device for the best experience. You can still play in any orientation.</p>
+        <div class="btn-row"><button class="btn-primary" id="splashOk">Okay</button></div>
+      </div>
+    </div>
+
+    <div class="screen" id="title">
+      <div class="card">
+        <h1>🚀 Emoji Blaster</h1>
+        <p class="muted">Answer Bible questions, then blast the matching emojis for bonus points. Good luck!</p>
+        <div class="btn-row"><button class="btn-primary" id="startGame">Start</button></div>
+      </div>
+    </div>
+
+    <div class="screen" id="question">
+      <div class="card">
+        <h2 id="qText">Question</h2>
+        <div class="answers" id="answers"></div>
+      </div>
+    </div>
+
+    <div class="screen" id="bossIntro">
+      <div class="card">
+        <h2>Final Round: Boss Battle</h2>
+        <p class="muted">A giant emoji appears! Blast it to drain its health bar. Dodge its shots — getting hit will cost you points.</p>
+        <div class="btn-row"><button class="btn-primary" id="bossStart">Begin Boss Fight</button></div>
+      </div>
+    </div>
+
+    <div class="screen" id="end">
+      <div class="card">
+        <h2>Game Over</h2>
+        <p class="muted">Nice work!</p>
+        <h3>Your Score: <span id="finalScore">0</span></h3>
+        <div class="btn-row">
+          <button id="playAgain" class="btn-primary">Play Again</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal / Popups -->
+    <div class="modal" id="modal">
+      <div class="pop">
+        <h3 id="modalTitle">Title</h3>
+        <p id="modalMsg" class="muted">Message</p>
+        <div class="btn-row">
+          <button id="modalClose" class="btn-good">OK</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="toast" id="toast" style="display:none"></div>
+  </div>
+</div>
+
+<script>
+/* ===============================
+   Data: 10 Bible Questions
+   Each answer has an emoji; one isCorrect
+   =============================== */
+const QUESTIONS = [
+  {
+    q: "Who built an ark because God warned of a flood?",
+    answers: [
+      {emoji:"🧔‍♂️", text:"Noah", isCorrect:true},
+      {emoji:"👑", text:"Solomon", isCorrect:false},
+      {emoji:"🪄", text:"Balaam", isCorrect:false},
+      {emoji:"🧕", text:"Ruth", isCorrect:false},
+    ],
+    shipEmoji:"🚀"
+  },
+  {
+    q: "God spoke to Moses from what unusual thing?",
+    answers: [
+      {emoji:"🌳", text:"A burning bush", isCorrect:true},
+      {emoji:"🌊", text:"The Red Sea", isCorrect:false},
+      {emoji:"🕊️", text:"A dove", isCorrect:false},
+      {emoji:"🌙", text:"The moon", isCorrect:false},
+    ],
+    shipEmoji:"🛸"
+  },
+  {
+    q: "David used what to defeat Goliath?",
+    answers: [
+      {emoji:"🪨", text:"A stone and sling", isCorrect:true},
+      {emoji:"⚔️", text:"A sword", isCorrect:false},
+      {emoji:"🏹", text:"A bow and arrow", isCorrect:false},
+      {emoji:"🪓", text:"An axe", isCorrect:false},
+    ],
+    shipEmoji:"🚀"
+  },
+  {
+    q: "Jonah spent time inside what creature?",
+    answers: [
+      {emoji:"🐳", text:"A great fish", isCorrect:true},
+      {emoji:"🦁", text:"A lion", isCorrect:false},
+      {emoji:"🦅", text:"An eagle", isCorrect:false},
+      {emoji:"🐍", text:"A snake", isCorrect:false},
+    ],
+    shipEmoji:"🛸"
+  },
+  {
+    q: "What did Jesus calm when the disciples were afraid?",
+    answers: [
+      {emoji:"🌊", text:"A stormy sea", isCorrect:true},
+      {emoji:"🌋", text:"A volcano", isCorrect:false},
+      {emoji:"🌪️", text:"A tornado", isCorrect:false},
+      {emoji:"🔥", text:"A wildfire", isCorrect:false},
+    ],
+    shipEmoji:"🚀"
+  },
+  {
+    q: "Where was Jesus born?",
+    answers: [
+      {emoji:"🌟", text:"Bethlehem", isCorrect:true},
+      {emoji:"🏙️", text:"Jerusalem", isCorrect:false},
+      {emoji:"🏜️", text:"Nazareth", isCorrect:false},
+      {emoji:"🏔️", text:"Capernaum", isCorrect:false},
+    ],
+    shipEmoji:"🛸"
+  },
+  {
+    q: "How many disciples did Jesus choose?",
+    answers: [
+      {emoji:"1️⃣2️⃣", text:"Twelve", isCorrect:true},
+      {emoji:"🔟", text:"Ten", isCorrect:false},
+      {emoji:"1️⃣4️⃣", text:"Fourteen", isCorrect:false},
+      {emoji:"7️⃣", text:"Seven", isCorrect:false},
+    ],
+    shipEmoji:"🚀"
+  },
+  {
+    q: "What did God give Moses on Mount Sinai?",
+    answers: [
+      {emoji:"🪨", text:"The Ten Commandments", isCorrect:true},
+      {emoji:"🍞", text:"Manna", isCorrect:false},
+      {emoji:"🐍", text:"A bronze snake", isCorrect:false},
+      {emoji:"🕊️", text:"A dove", isCorrect:false},
+    ],
+    shipEmoji:"🛸"
+  },
+  {
+    q: "Who was thrown into a den of lions?",
+    answers: [
+      {emoji:"🦁", text:"Daniel", isCorrect:true},
+      {emoji:"👶", text:"Samuel", isCorrect:false},
+      {emoji:"👑", text:"Saul", isCorrect:false},
+      {emoji:"🧔‍♂️", text:"Abraham", isCorrect:false},
+    ],
+    shipEmoji:"🚀"
+  },
+  {
+    q: "Jesus fed thousands with what?",
+    answers: [
+      {emoji:"🍞🐟", text:"Bread and fish", isCorrect:true},
+      {emoji:"🍇", text:"Grapes", isCorrect:false},
+      {emoji:"🌽", text:"Corn", isCorrect:false},
+      {emoji:"🍖", text:"Meat", isCorrect:false},
+    ],
+    shipEmoji:"🛸"
+  },
+];
+
+/* ===============================
+   Simple UI helpers
+   =============================== */
+const $ = sel => document.querySelector(sel);
+const stage = $("#stage");
+const canvas = $("#game");
+const ctx = canvas.getContext("2d",{alpha:true});
+
+function showScreen(id){
+  for(const el of stage.querySelectorAll(".screen")) el.classList.remove("active");
+  $("#"+id).classList.add("active");
+}
+
+function showModal(title, msg, cb, btnLabel = "OK"){
+  $("#modalTitle").textContent = title;
+  $("#modalMsg").textContent = msg;
+  const btn = $("#modalClose");
+  btn.textContent = btnLabel;
+  $("#modal").classList.add("show");
+  const close = ()=>{
+    $("#modal").classList.remove("show");
+    btn.removeEventListener("click", close);
+    cb && cb();
+  };
+  btn.addEventListener("click", close);
+}
+
+
+function toast(msg,ms=1400){
+  const t=$("#toast");
+  t.textContent=msg; t.style.display="block";
+  clearTimeout(toast._t);
+  toast._t=setTimeout(()=>t.style.display="none",ms);
+}
+
+/* ===============================
+   Game State
+   =============================== */
+const HUD = {scoreEl:$("#score"), qnoEl:$("#qno"), timeEl:$("#time")};
+let W=300,H=500, raf=0, now=0, last=0, dt=0;
+// Invader formation motion (group control)
+let INVADER_DIR = 1;          // 1 = right, -1 = left
+let INVADER_SPEED = 70;       // px/sec, tweak for difficulty
+
+// --- Player bullet base speed (px/sec) ---
+let PLAYER_BULLET_BASE = 520;   // change this anytime
+
+
+// --- Movement modes ---
+let MOVE_MODE = "classic";   // "classic" | "sine" | "chaos"
+
+// Sine wave controls (used in Q5–Q8)
+let SINE_T = 0;              // time accumulator
+let SINE_SPEED = 2.2;        // how fast the wave animates (radians/sec)
+let SINE_AMP = 20;           // vertical amplitude in px (recomputed in recalcScale)
+
+// Chaos controls (used in Q9–Q10)
+let CHAOS_RADIUS = 32;       // how far from home each invader may wander (recomputed)
+let CHAOS_SPEED = 60;        // wandering speed in px/sec
+
+
+
+// --- Round timing (seconds) ---
+let ROUND_TIME = 20;          // <- change this number anytime
+
+// --- Responsive grid & size controls ---
+let GRID_COLS = 6;       // fixed columns
+let GRID_ROWS = 4;       // fixed rows
+
+// These will be computed from canvas size in recalcScale()
+let ENEMY_SIZE = 28;     // emoji draw size and hitbox (w/h)
+let PLAYER_SIZE = 34;    // player draw size and hitbox (w/h)
+let BULLET_R    = 6;     // player bullet radius
+
+function recalcScale(){
+  // Base on the shorter side so it scales well in portrait or landscape
+  const BASE = Math.min(W, H);
+
+  // Clamp sizes into sensible ranges for phones ↔ desktops
+  ENEMY_SIZE  = Math.round(Math.max(28, Math.min(64, BASE * 0.08))); // ~8% of short edge
+  PLAYER_SIZE = Math.round(Math.max(34, Math.min(72, BASE * 0.10))); // ~10% of short edge
+  BULLET_R    = Math.round(Math.max(5,  PLAYER_SIZE * 0.18));
+
+  // Movement scaling so it feels right on phones and desktops
+  SINE_AMP    = Math.round(Math.max(12, Math.min(48, BASE * 0.04)));
+  CHAOS_RADIUS= Math.round(Math.max(24, Math.min(80, BASE * 0.06)));
+}
+
+
+const STATE = {
+  phase:"splash", // splash,title,question,play,boss,end
+  qIndex:0,
+  score:0,
+  timer:0,
+    advancing:false,    // <<< prevents multi-trigger at end of round
+  roundEarned: 0,          // points earned during this arcade round (kills only)
+  roundBonusKills: 0,      // number of bonus (correct-emoji) enemies destroyed
+  roundNormalKills: 0,     // number of non-bonus enemies destroyed
+  timeBonusAwarded: 0,     // the time-left bonus added at round end
+
+  correctEmoji:"", // for current round bonus type
+  shipEmoji:"🚀",
+  inputs:{left:false,right:false,shoot:false,tiltX:0},
+  Entities:[],
+  Bullets:[],
+  EnemyBullets:[],
+  Particles:[],
+  player:null,
+  boss:null,
+    bossExploding: false,   // explosion animation in progress
+  bossExplodeT: 0,        // elapsed time during explosion
+
+};
+
+/* ===============================
+   Entities
+   =============================== */
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function rand(a,b){return a+Math.random()*(b-a)}
+
+// Current level = current question number (1..QUESTIONS.length)
+function currentLevel(){
+  return Math.max(1, Math.min(QUESTIONS.length, STATE.qIndex + 1));
+}
+
+// Dynamic player bullet speed: base + 100 * level
+function getPlayerBulletSpeed(){
+  return PLAYER_BULLET_BASE + 100 * currentLevel();
+}
+
+function lerp(a,b,t){ return a + (b - a) * t; }
+// Smoothstep-ish ease: nice, quick start & gentle settle
+function ease(t){ return t*t*(3 - 2*t); }
+
+function spawnParticles(x,y,count=10,emoji=null){
+  for(let i=0;i<count;i++){
+    STATE.Particles.push({
+      x,y, vx:rand(-120,120), vy:rand(-180,-40),
+      life:rand(.35,.7), t:0, size:rand(6,12), emoji
+    });
+  }
+}
+
+/* Player */
+function makePlayer(){
+  return {
+    x: W/2,
+    y: Math.max(PLAYER_SIZE * 2.2, H - PLAYER_SIZE * 2.2), // keep off the bottom
+    w: PLAYER_SIZE,
+    h: PLAYER_SIZE,
+    speed: 220,
+    cd: 0, cdMax: .22,
+    emoji: STATE.shipEmoji,
+    invul: 0
+  }
+}
+
+
+/* Enemy */
+function makeEnemy(x,y,typeEmoji,isBonus=false){
+  // Group motion handled globally; keep vx=0 so individuals don't drift
+  return {x, y, w: ENEMY_SIZE, h: ENEMY_SIZE, vx: 0, vy: 0, typeEmoji, isBonus, alive: true}
+}
+
+
+
+/* Boss */
+function makeBoss(){
+  const size = 80; // starting draw size (will triple in stage 2)
+  return {
+    x: W/2 - size/2,
+    y: 60,
+    w: size, h: size,            // keep hitbox == size
+    size: size,                  // draw size (used in render)
+    emoji: "👽",
+    hp: 100, hpMax: 100,
+    dir: 1,
+    fireCd: 0,
+    stage: 1,                    // 1 = normal, 2 = enraged
+    bulletR: 7,                  // projectile radius
+    bulletVy: 220,               // projectile speed (downward)
+
+    // Stage-2 entry animation (A -> B while scaling up)
+    transActive: false,
+    transT: 0,
+    transDur: 0.8,               // seconds for the transition
+    fromX: 0, fromY: 0, fromSize: size,
+    toX: 0,   toY: 0,   toSize: size * 3
+  }
+}
+
+
+
+/* ===============================
+   Rounds
+   =============================== */
+function setupRoundFromQuestion(){
+  // Use the PREVIOUS question's correct emoji for bonus targets.
+  // For Q1 (index 0), fall back to Q1 so the first round still works.
+  const sourceIndex = Math.max(0, STATE.qIndex - 1);
+  const qPrev = QUESTIONS[sourceIndex];
+  const ansPrev = qPrev.answers.find(a => a.isCorrect);
+  STATE.correctEmoji = ansPrev ? ansPrev.emoji : "⭐";
+  // Keep the player's ship emoji from the CURRENT question for variety
+  const qCurrent = QUESTIONS[STATE.qIndex];
+  STATE.shipEmoji = (qCurrent && qCurrent.shipEmoji) ? qCurrent.shipEmoji : "🚀";
+}
+
+   
+
+/* Create invader field */
+function spawnInvaders(){
+    INVADER_DIR = 1; // start each wave moving to the right
+
+  STATE.Entities.length=0; STATE.Bullets.length=0; STATE.EnemyBullets.length=0; STATE.Particles.length=0;
+  STATE.player = makePlayer();
+  // Build a small pool of enemy emojis: include the four from the question; weight the correct one
+// Use the PREVIOUS question's emojis for the invader wave.
+// For Q1 (index 0), fall back to Q1 itself so the first round still works.
+const sourceIndex = Math.max(0, STATE.qIndex - 1);
+const prev = QUESTIONS[sourceIndex].answers.map(a => a.emoji);
+
+  const pool = [];
+  for(const e of prev){ pool.push(e) }
+  // Weight the correct type more
+  for(let i=0;i<6;i++) pool.push(STATE.correctEmoji);
+
+    // Exactly 6 across × 4 down, with responsive spacing
+  const cols = GRID_COLS;
+  const rows = GRID_ROWS;
+
+  // horizontal layout
+  const hMargin = Math.max(20, W * 0.08);
+  const usableW = Math.max(120, W - hMargin * 2);
+  const cellX = usableW / cols;
+  // center align (position at the middle of each cell)
+  const startX = (W - usableW) / 2 + cellX / 2;
+
+  // vertical layout
+  const topY = Math.max(60, H * 0.12); // keep away from HUD
+  const maxBlockH = H * 0.45;          // don't go too far down
+  const cellY = Math.min(ENEMY_SIZE * 1.8, maxBlockH / rows);
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const ex = startX + c * cellX;
+      const ey = topY + r * cellY;
+      const emoji = pool[Math.floor(Math.random() * pool.length)];
+      const ent = makeEnemy(ex, ey, emoji, emoji === STATE.correctEmoji);
+// remember base/home to drive sine & chaos movement
+ent.baseY = ey;       // used by sine
+ent.homeX = ex;       // used by chaos
+ent.homeY = ey;       // used by chaos
+ent.chaosTx = ex;     // next chaos target X
+ent.chaosTy = ey;     // next chaos target Y
+ent.chaosTimer = 0;   // time until we pick a new target
+STATE.Entities.push(ent);
+
+    }
+  }
+
+}
+
+/* ===============================
+   Canvas / Resize
+   =============================== */
+function resize(){
+  const rect = stage.getBoundingClientRect();
+
+
+  
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  W = Math.max(320, Math.floor(rect.width * dpr));
+  H = Math.max(400, Math.floor(rect.height * dpr));
+  canvas.width = W; canvas.height = H;
+    recalcScale();
+
+}
+window.addEventListener("resize",resize,{passive:true});
+
+/* ===============================
+   Input
+   =============================== */
+window.addEventListener("keydown", e => {
+  if (e.key === "ArrowLeft") STATE.inputs.left = true;
+  if (e.key === "ArrowRight") STATE.inputs.right = true;
+
+  // >>> EMOJI BLASTER: secret skips >>>
+  if (e.key === "5") { devSkipToQuestion(5); }
+  if (e.key === "9") { devSkipToQuestion(9); }
+  if ((e.key || "").toLowerCase() === "b") { devSkipToBoss(); }
+  // <<< EMOJI BLASTER: secret skips <<<
+});
+
+
+window.addEventListener("keyup",e=>{
+  if(e.key==="ArrowLeft") STATE.inputs.left=false;
+  if(e.key==="ArrowRight") STATE.inputs.right=false;
+});
+stage.addEventListener("pointerdown", e=>{
+  STATE.inputs.shoot = true;
+  // quick tap shoot in play/boss
+  if(STATE.phase==="play"||STATE.phase==="boss"){
+    playerShoot();
+  }
+  setTimeout(()=>STATE.inputs.shoot=false,60);
+});
+if(window.DeviceOrientationEvent){
+  window.addEventListener("deviceorientation", e=>{
+    // gamma ~ left/right tilt; clamp to [-30,30]
+    let g = clamp(e.gamma||0, -30, 30);
+    STATE.inputs.tiltX = g / 30; // -1..1
+  }, true);
+}
+
+/* ===============================
+   Shooting
+   =============================== */
+function playerShoot(){
+  const p = STATE.player;
+  if(!p || p.cd>0) return;
+  p.cd = p.cdMax;
+STATE.Bullets.push({x: p.x, y: p.y - PLAYER_SIZE * 0.6, vx: 0, vy: -getPlayerBulletSpeed(), r: BULLET_R});
+
+}
+function enemyShoot(from){
+  STATE.EnemyBullets.push({x:from.x, y:from.y+16, vx:0, vy:220, r:7, emoji:"💥"});
+}
+
+/* ===============================
+   Scoring
+   =============================== */
+function addScore(n){ STATE.score = Math.max(0, STATE.score + n); HUD.scoreEl.textContent = STATE.score }
+
+/* ===============================
+   Main Loop
+   =============================== */
+
+   function loop(t){
+  raf = requestAnimationFrame(loop);
+  now = t/1000; dt = (last? now-last : 0); last = now;
+
+  // Only update & render while actually playing or in the boss fight
+  if (STATE.phase === "play" || STATE.phase === "boss") {
+    update(dt);
+    render();
+  }
+}
+
+function update(dt){
+  if(STATE.phase!=="play" && STATE.phase!=="boss") return;
+
+  // Timer
+  if(STATE.phase==="play"){
+    STATE.timer -= dt;
+    HUD.timeEl.textContent = Math.max(0, Math.ceil(STATE.timer));
+if (STATE.timer <= 0) {
+  HUD.timeEl.textContent = "0";
+  finishRound(false); // time ran out, no time bonus
+  return;
+}
+
+  } else {
+    HUD.timeEl.textContent = "--";
+  }
+
+  // Player movement
+  const p = STATE.player;
+  if(p){
+    const tiltV = STATE.inputs.tiltX || 0;
+    let dir = (STATE.inputs.left?-1:0) + (STATE.inputs.right?1:0);
+    if(Math.abs(tiltV)>0.05) dir = clamp(dir + tiltV, -1, 1);
+    p.x += dir * p.speed * dt;
+    p.x = clamp(p.x, PLAYER_SIZE * 0.6, W - PLAYER_SIZE * 0.6);
+    if(p.cd>0) p.cd -= dt;
+    if(p.invul>0) p.invul -= dt;
+  }
+
+  // Invaders movement (space-invaders-ish drift)
+  // Enemy movement per-mode
+  if (STATE.phase === "play") {
+    if (MOVE_MODE === "classic" || MOVE_MODE === "sine") {
+      // Formation move horizontally as one
+      let minX = Infinity, maxX = -Infinity;
+      for (const e of STATE.Entities) {
+        if (!e.alive) continue;
+        e.x += INVADER_DIR * INVADER_SPEED * dt;
+        if (MOVE_MODE === "sine") {
+          // Vertical sine offset around each enemy's baseY
+          // Phase offset per column to make a wave: use x to vary phase
+          const phase = (e.homeX / Math.max(1, W)) * Math.PI * 2;
+          e.y = e.baseY + Math.sin(SINE_T + phase) * SINE_AMP;
+        }
+        if (e.x < minX) minX = e.x;
+        if (e.x > maxX) maxX = e.x;
+      }
+      // bounce formation and step down (for both classic & sine)
+      const margin = 20;
+      if (minX < margin || maxX > (W - margin)) {
+        INVADER_DIR *= -1;
+        for (const e of STATE.Entities) {
+          if (e.alive) {
+            if (MOVE_MODE === "sine") {
+              // step the base down so the waveform tracks with it
+              e.baseY += 12;
+            } else {
+              e.y += 12;
+            }
+          }
+        }
+      }
+      if (MOVE_MODE === "sine") {
+        SINE_T += dt * SINE_SPEED;
+      }
+    } else if (MOVE_MODE === "chaos") {
+      // Each enemy wanders around its home within CHAOS_RADIUS
+      for (const e of STATE.Entities) {
+        if (!e.alive) continue;
+
+        // countdown to retarget
+        e.chaosTimer -= dt;
+        if (e.chaosTimer <= 0) {
+          // pick a new target within radius
+          const ang = Math.random() * Math.PI * 2;
+          const rad = Math.random() * CHAOS_RADIUS;
+          e.chaosTx = e.homeX + Math.cos(ang) * rad;
+          e.chaosTy = e.homeY + Math.sin(ang) * rad;
+          // next retarget in 0.4–1.0s
+          e.chaosTimer = 0.4 + Math.random() * 0.6;
+        }
+
+        // move toward target
+        const dx = e.chaosTx - e.x;
+        const dy = e.chaosTy - e.y;
+        const dist = Math.hypot(dx, dy) || 1;
+        const step = CHAOS_SPEED * dt;
+        if (dist <= step) {
+          e.x = e.chaosTx;
+          e.y = e.chaosTy;
+          e.chaosTimer = 0; // force immediate retarget next frame
+        } else {
+          e.x += (dx / dist) * step;
+          e.y += (dy / dist) * step;
+        }
+      }
+    }
+  }
+
+
+
+  // Random enemy shots (rare)
+  if (STATE.phase === "boss") {
+    const b = STATE.boss;
+    if (b) {
+      if (STATE.bossExploding) {
+        // explosion animation: spawn extra bursts and wait, then end game
+        STATE.bossExplodeT += dt;
+        if (Math.random() < 0.5) {
+          spawnParticles(b.x + rand(-40, 40), b.y + rand(-40, 40), 16);
+        }
+        // slight wobble effect (visual only)
+        b.x += Math.sin(STATE.bossExplodeT * 30) * 2;
+        b.y += Math.cos(STATE.bossExplodeT * 28) * 1.5;
+
+        if (STATE.bossExplodeT > 1.2) {
+          // stop gameplay and go to Game Over
+          STATE.phase = "end";   // ensure we don't render the boss under the end screen
+          endGame();
+          return;
+        }
+            } else {
+        // --- stage transition at 50% HP (animate position + scale) ---
+        if (b.stage === 1 && b.hp <= b.hpMax * 0.5 && !b.transActive) {
+          b.stage = 2;
+          b.transActive = true;
+          b.transT = 0;
+          // from (point A)
+          b.fromX = b.x; b.fromY = b.y; b.fromSize = b.size;
+          // to (point B): same X, mid-screen Y
+          b.toX = b.x;
+          b.toY = Math.min(H * 0.45, Math.max(80, H * 0.40));
+          b.toSize = b.size * 3;
+
+          // Power-up stats will apply *after* the transition completes
+          b.bulletR = 12;          // larger projectiles (used below after trans)
+          b.bulletVy = 300;        // faster shots
+          // fire immediately after transform finishes
+          b.fireCd = 0.25;
+        }
+
+
+              // If we're animating into stage 2, interpolate and skip normal motion/shooting
+        if (b.transActive) {
+          b.transT = Math.min(b.transT + dt / b.transDur, 1);
+          const t = ease(b.transT);
+          b.x    = lerp(b.fromX,    b.toX,    t);
+          b.y    = lerp(b.fromY,    b.toY,    t);
+          b.size = lerp(b.fromSize, b.toSize, t);
+          b.w = b.size; b.h = b.size; // keep hitbox in sync
+
+          // transition complete? resume normal AI (movement + shooting)
+if (b.transT >= 1) {
+  b.transActive = false;
+  // ensure a shot soon after finishing the morph
+  b.fireCd = Math.min(b.fireCd, 0.2);
+}
+
+
+          // no shooting or horizontal glide during the morph
+        } else {
+          // --- movement ---
+          // Horizontal glide with margins based on size so the big boss doesn't clip
+          const marginX = Math.max(60, b.size * 0.6);
+          b.x += 80 * b.dir * dt;
+          if (b.x < marginX) { b.x = marginX; b.dir = 1; }
+          if (b.x > W - marginX) { b.x = W - marginX; b.dir = -1; }
+
+          // --- shooting ---
+          b.fireCd -= dt;
+          if (b.fireCd <= 0) {
+            // stage-based rate of fire
+            b.fireCd = (b.stage === 1)
+              ? 0.6 + Math.random() * 0.6   // 0.6–1.2s
+              : 0.45 + Math.random() * 0.45; // 0.45–0.9s
+
+            // 3-shot spread; in stage 2, widen the angles a bit
+            const spread = (b.stage === 1) ? [-90, 0, 90] : [-110, 0, 110];
+            for (const off of spread) {
+              STATE.EnemyBullets.push({
+                x: b.x,
+                y: b.y + b.size * 0.6,
+                vx: Math.sin(off * Math.PI / 180) * 100,
+                vy: b.bulletVy,
+                r: b.bulletR,
+                emoji: "🟢"
+              });
+            }
+          }
+        }
+
+      }
+
+    }
+  } else {
+
+    if(Math.random()<0.006 && STATE.Entities.length){
+
+      const shooters = STATE.Entities.filter(e=>e.alive);
+      if(shooters.length){
+        enemyShoot(shooters[Math.floor(Math.random()*shooters.length)]);
+      }
+    }
+  }
+
+  // Bullets
+  for(const b of STATE.Bullets){ b.y += b.vy*dt; b.x += b.vx*dt }
+  for(const b of STATE.EnemyBullets){ b.y += b.vy*dt; b.x += b.vx*dt }
+  STATE.Bullets = STATE.Bullets.filter(b=>b.y>-20 && b.y<H+20 && b.x>-20 && b.x<W+20);
+  STATE.EnemyBullets = STATE.EnemyBullets.filter(b=>b.y>-30 && b.y<H+40 && b.x>-40 && b.x<W+40);
+
+  // Collisions (player bullets vs enemies)
+  function hitTest(a,b){ return Math.abs(a.x-b.x) < (a.w/2) && Math.abs(a.y-b.y) < (a.h/2) }
+  for(const bullet of STATE.Bullets){
+    if(STATE.phase==="boss" && STATE.boss){
+      const B = STATE.boss;
+if (Math.abs(bullet.x - B.x) < (B.w / 2) && Math.abs(bullet.y - B.y) < (B.h / 2)) {
+  // if already exploding, ignore further hits
+  if (!STATE.bossExploding) {
+    spawnParticles(bullet.x, bullet.y, 12);
+    bullet.y = -9999;
+    B.hp = Math.max(0, B.hp - 4);
+    addScore(5);
+    if (B.hp <= 0) {
+      triggerBossDefeat();
+    }
+  } else {
+    bullet.y = -9999;
+  }
+}
+
+    } else {
+      for(const e of STATE.Entities){
+        if(!e.alive) continue;
+if (Math.abs(bullet.x - e.x) < (ENEMY_SIZE * 0.5) && Math.abs(bullet.y - e.y) < (ENEMY_SIZE * 0.5)) {
+  e.alive = false; bullet.y = -9999;
+  // particle explosion with enemy emoji flakes
+  spawnParticles(e.x, e.y, 10, e.typeEmoji);
+  // scoring & round stats
+  if (e.isBonus) {
+    STATE.roundBonusKills++;
+    STATE.roundEarned += 10;
+    addScore(10);
+  } else {
+    STATE.roundNormalKills++;
+    STATE.roundEarned += 3;
+    addScore(3);
+  }
+  break;
+}
+
+      }
+    }
+  }
+  STATE.Entities = STATE.Entities.filter(e=>e.alive);
+
+// If all enemies are gone before the timer, end the round with a time bonus
+if (STATE.phase === "play" && STATE.Entities.length === 0) {
+  finishRound(true);  // cleared all → award time bonus
+  return;
+}
+
+
+  // Enemy bullets vs player
+  if(p){
+    for(const eb of STATE.EnemyBullets){
+      if (Math.abs(eb.x - p.x) < (PLAYER_SIZE * 0.5) && Math.abs(eb.y - p.y) < (PLAYER_SIZE * 0.5)) {
+        if(p.invul<=0){
+          p.invul=0.5;
+          addScore(-8);
+          spawnParticles(p.x,p.y,14);
+          // Hit flash
+          canvas.classList.remove("hitFlash"); void canvas.offsetWidth; canvas.classList.add("hitFlash");
+        }
+        eb.y = H+999;
+      }
+    }
+  }
+
+  // Particles
+  for(const pa of STATE.Particles){
+    pa.t += dt;
+    pa.vy += 600*dt*0.6;
+    pa.x += pa.vx*dt; pa.y += pa.vy*dt;
+  }
+  STATE.Particles = STATE.Particles.filter(p=>p.t<p.life);
+}
+
+function render(){
+  ctx.clearRect(0,0,W,H);
+
+  // starry bg
+  ctx.save();
+  for(let i=0;i<40;i++){
+    const x=(i*97 % W), y=(i*177 % H);
+    ctx.globalAlpha = 0.08 + (i%5)/40;
+    ctx.fillStyle = "#93c5fd";
+    ctx.beginPath(); ctx.arc(x, y, 1.5 + (i%3)*.2, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
+
+  if(STATE.phase==="play" || STATE.phase==="boss"){
+    // Player
+    const p = STATE.player;
+    if(p){
+      // Rotate the rocket 45° counterclockwise so it faces up; leave others as-is
+if (p.emoji === "🚀") {
+  drawEmojiRot(p.emoji, p.x, p.y, PLAYER_SIZE, -Math.PI / 4);
+} else {
+  drawEmoji(p.emoji, p.x, p.y, PLAYER_SIZE);
+}
+
+
+    }
+
+    // Enemies
+    if(STATE.phase==="play"){
+      for(const e of STATE.Entities){
+        drawEmoji(e.typeEmoji, e.x, e.y, ENEMY_SIZE);
+
+      }
+    }else if(STATE.phase==="boss" && STATE.boss){
+      const b=STATE.boss;
+        ctx.save();
+  if (STATE.bossExploding) ctx.globalAlpha = 0.8;
+drawEmoji(b.emoji, b.x, b.y, b.size);
+
+  ctx.restore();
+
+      // Health bar
+      ctx.save();
+      const bw = Math.min(360, W*0.7);
+      ctx.translate(W/2 - bw/2, 14);
+      roundedRect(ctx, 0,0, bw, 12, 6, "#0b1027", "#2b356b");
+      // fill
+      const pct = b.hp / b.hpMax;
+      ctx.fillStyle = pct>0.5? "#22c55e" : (pct>0.25? "#f59e0b" : "#ef4444");
+      ctx.fillRect(2,2, (bw-4)*pct, 8);
+      ctx.restore();
+    }
+
+    // Bullets
+    ctx.fillStyle="#a7f3d0";
+    for(const b of STATE.Bullets){
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2); ctx.fill();
+    }
+    // Enemy bullets (scale by radius so stage-2 looks bigger)
+    for (const b of STATE.EnemyBullets){
+      drawEmoji(b.emoji, b.x, b.y, Math.max(16, (b.r || 8) * 2.2));
+    }
+
+
+    // Particles
+    for(const pa of STATE.Particles){
+      const a = 1 - (pa.t/pa.life);
+      ctx.globalAlpha = Math.max(0,a);
+      if(pa.emoji){
+        drawEmoji(pa.emoji, pa.x, pa.y, pa.size);
+      }else{
+        ctx.fillStyle="#93c5fd";
+        ctx.beginPath(); ctx.arc(pa.x, pa.y, pa.size/4, 0, Math.PI*2); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+}
+
+function drawEmoji(ch, x, y, size){
+  ctx.save();
+  // Prefer color-emoji fonts; fall back to system
+  ctx.font = `${size}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",system-ui,sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  // Snap to integer pixels to reduce shimmer
+  const rx = Math.round(x);
+  const ry = Math.round(y);
+  ctx.fillText(ch, rx, ry);
+  ctx.restore();
+}
+
+function drawEmojiRot(ch, x, y, size, angleRad){
+  ctx.save();
+  // center on (x,y), then rotate
+  ctx.translate(Math.round(x), Math.round(y));
+  ctx.rotate(angleRad);
+  ctx.font = `${size}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",system-ui,sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(ch, 0, 0);
+  ctx.restore();
+}
+
+
+
+function roundedRect(ctx,x,y,w,h,r,fill,stroke){
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  if(fill){ctx.fillStyle=fill; ctx.fill();}
+  if(stroke){ctx.strokeStyle=stroke; ctx.stroke();}
+  ctx.restore();
+}
+
+/* ===============================
+   Flow Control
+   =============================== */
+function setPhase(p){
+  STATE.phase=p;
+  if(p==="play"||p==="boss"){
+    // hide all overlay screens (canvas visible)
+    for(const el of stage.querySelectorAll(".screen")) el.classList.remove("active");
+  }
+}
+
+function startGame(){
+  // reset core state
+  STATE.score = 0;
+  STATE.qIndex = 0;
+  STATE.phase = "title";
+  STATE.advancing = false;
+
+  // clear any leftover gameplay/boss state
+  STATE.Entities.length = 0;
+  STATE.Bullets.length = 0;
+  STATE.EnemyBullets.length = 0;
+  STATE.Particles.length = 0;
+  STATE.player = null;
+  STATE.boss = null;
+  STATE.bossExploding = false;
+  STATE.bossExplodeT = 0;
+
+  // UI
+  $("#modal").classList.remove("show");
+  HUD.qnoEl.textContent = "0";
+  HUD.scoreEl.textContent = "0";
+  HUD.timeEl.textContent = "--";
+
+  showScreen("title");
+}
+
+
+function startQuestion(){
+      STATE.phase = "question";
+  HUD.timeEl.textContent = "--";
+
+  const q = QUESTIONS[STATE.qIndex];
+  HUD.qnoEl.textContent = (STATE.qIndex+1);
+  $("#qText").textContent = q.q;
+  const cont = $("#answers");
+  cont.innerHTML="";
+  q.answers.forEach((a, idx)=>{
+    const btn=document.createElement("button");
+    btn.className="answer";
+    btn.innerHTML = `<span class="emo">${a.emoji}</span><span class="txt">${a.text}</span>`;
+    btn.addEventListener("click",()=>{
+      if(a.isCorrect){
+        addScore(20);
+        showModal("Correct!", "Nice job!", ()=>{
+          showModal("Blast the emojis!", "Use the arrow keys or tilt to move, tap or click to shoot.", ()=>{
+            // begin arcade round
+            beginArcadeRound();
+          });
+        });
+      }else{
+        const right = q.answers.find(x=>x.isCorrect);
+        showModal("Incorrect", `Correct answer: ${right.text}`, ()=>{
+          showModal("Blast the emojis!", "Use the arrow keys or tilt to move, tap or click to shoot.", ()=>{
+            beginArcadeRound();
+          });
+        });
+      }
+    });
+    cont.appendChild(btn);
+  });
+  showScreen("question");
+}
+
+function beginArcadeRound(){
+  setupRoundFromQuestion();
+  spawnInvaders();
+  setPhase("play");
+
+  // Pick movement by question number: 1–4 classic, 5–8 sine, 9–10 chaos
+  const roundNo = STATE.qIndex + 1;
+  if (roundNo <= 4) MOVE_MODE = "classic";
+  else if (roundNo <= 8) MOVE_MODE = "sine";
+  else MOVE_MODE = "chaos";
+  // reset wave time
+  SINE_T = 0;
+
+
+  STATE.timer = ROUND_TIME;
+
+
+  // reset per-round stats
+  STATE.roundEarned = 0;
+  STATE.roundBonusKills = 0;
+  STATE.roundNormalKills = 0;
+  STATE.timeBonusAwarded = 0;
+}
+
+
+function advanceAfterPlay(){
+  // One-shot guard to prevent stacked timeouts / rapid skipping
+  if (STATE.advancing) return;
+  STATE.advancing = true;
+    STATE.phase = "question"; // stop gameplay updates before showing next question
+
+
+  cancelAnimationFrame(raf);
+
+  // If there are more questions, advance q index and go to next question
+  STATE.qIndex++;
+  if (STATE.qIndex < QUESTIONS.length) {
+    // brief toast and go to next question
+    toast("Round complete!");
+    setTimeout(()=>{
+      STATE.advancing = false;   // clear before showing next question
+      startQuestion();
+      loop(performance.now());
+    }, 300);
+  } else {
+    // Boss intro
+    STATE.advancing = false;     // clear before boss intro
+    showScreen("bossIntro");
+    loop(performance.now());
+  }
+}
+
+function finishRound(clearedAll){
+  if (STATE.advancing) return;         // prevent double-fire
+  STATE.advancing = true;
+  STATE.phase = "question";             // stop gameplay updates
+  cancelAnimationFrame(raf);
+
+  // Time bonus only if cleared all enemies
+  let timeBonus = 0;
+  if (clearedAll) {
+    // Award 2 points for each whole second remaining (tweak as desired)
+    timeBonus = Math.max(0, Math.ceil(STATE.timer)) * 2;
+    addScore(timeBonus);
+  }
+  STATE.timeBonusAwarded = timeBonus;
+
+  // Build round results message
+  const totalKills = STATE.roundBonusKills + STATE.roundNormalKills;
+  const msg =
+    `Enemies destroyed: ${totalKills}\n` +
+    `• Bonus enemies: ${STATE.roundBonusKills} (10 pts each)\n` +
+    `• Normal enemies: ${STATE.roundNormalKills} (3 pts each)\n` +
+    (clearedAll
+      ? `Time bonus: ${timeBonus} pts\n`
+      : `Time’s up: no time bonus\n`) +
+    `Round points: ${STATE.roundEarned + timeBonus}`;
+
+  showModal("Round Complete", msg, ()=>{
+    STATE.advancing = false;  // clear before moving on
+    advanceAfterPlay();       // go to next question / boss
+  }, "Next Question");
+}
+
+// >>> EMOJI BLASTER: dev skip helper >>>
+function devSkipToQuestion(n){
+  // clamp to valid range
+  n = Math.max(1, Math.min(QUESTIONS.length, n));
+
+  // put the game into a safe UI state
+  STATE.phase = "question";
+  STATE.advancing = false;
+
+  // clear any gameplay entities
+  STATE.Entities.length = 0;
+  STATE.Bullets.length = 0;
+  STATE.EnemyBullets.length = 0;
+  STATE.Particles.length = 0;
+
+  // hide any open modal
+  $("#modal").classList.remove("show");
+
+  // set the question index and show it
+  STATE.qIndex = n - 1;
+  startQuestion();
+
+
+
+
+}
+// <<< EMOJI BLASTER: dev skip helper <<<
+
+
+  // >>> EMOJI BLASTER: dev skip to boss >>>
+function devSkipToBoss(){
+  // stop any UI overlays and gameplay debris
+  $("#modal").classList.remove("show");
+  STATE.advancing = false;
+  STATE.Entities.length = 0;
+  STATE.Bullets.length = 0;
+  STATE.EnemyBullets.length = 0;
+  STATE.Particles.length = 0;
+
+  // jump directly into boss phase
+  startBoss();
+
+  // make sure the loop is actively rendering the boss scene
+  last = 0; 
+  loop(0);
+}
+
+function startBoss(){
+  setPhase("boss");
+  STATE.Entities.length=0; STATE.Bullets.length=0; STATE.EnemyBullets.length=0; STATE.Particles.length=0;
+  STATE.player = makePlayer();
+  STATE.boss = makeBoss();
+}
+
+// >>> EMOJI BLASTER: boss defeat animation >>>
+function triggerBossDefeat(){
+  if (!STATE.boss || STATE.bossExploding) return;
+  STATE.bossExploding = true;
+  STATE.bossExplodeT = 0;
+
+  // Big reward once
+  addScore(200);
+
+  // Clear enemy bullets and stop new fire during the animation
+  STATE.EnemyBullets.length = 0;
+
+  // Initial big burst
+  for (let i = 0; i < 10; i++) {
+    const ox = rand(-40, 40);
+    const oy = rand(-40, 40);
+    spawnParticles(STATE.boss.x + ox, STATE.boss.y + oy, 18);
+  }
+}
+// <<< EMOJI BLASTER: boss defeat animation <<<
+
+
+function endGame(){
+  cancelAnimationFrame(raf);
+  $("#finalScore").textContent = STATE.score;
+  showScreen("end");
+}
+
+$("#splashOk").addEventListener("click", ()=>{ showScreen("title") });
+$("#startGame").addEventListener("click", async ()=>{
+  // iOS Safari tilt permission (no-op elsewhere)
+  try{
+    if (typeof DeviceOrientationEvent !== "undefined" &&
+        typeof DeviceOrientationEvent.requestPermission === "function") {
+      await DeviceOrientationEvent.requestPermission().catch(()=>{});
+    }
+  }catch(e){/* ignore */}
+
+  STATE.score = 0;
+  STATE.qIndex = 0;
+  startQuestion();
+});
+
+$("#bossStart").addEventListener("click", ()=>{
+  startBoss();
+});
+$("#playAgain").addEventListener("click", ()=>{
+  startGame();
+});
+
+/* ===============================
+   Click-to-shoot helpers for desktop
+   =============================== */
+stage.addEventListener("click", ()=>{
+  if(STATE.phase==="play"||STATE.phase==="boss"){ playerShoot(); }
+});
+
+/* ===============================
+   Kickoff
+   =============================== */
+resize();
+startGame();
+last=0; loop(0);
+
+/* Keep the loop running even when overlay screens are shown,
+   but only update/render gameplay during play/boss. */
+
+/* Cleanup: when boss hp reaches 0 → endGame() called in update() */
+
+/* ===============================
+   Notes:
+   - Score: +20 correct answer, +10 bonus enemy (correct emoji), +3 normal enemy,
+            +5 boss hit, +200 boss defeat. Enemy hits: -8 points.
+   - You can tweak values in addScore() calls above.
+   - To change round time, edit STATE.timer in beginArcadeRound().
+   =============================== */
+</script>
+</body>
+</html>
