@@ -2,1287 +2,1122 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>God Creates People Quiz</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>Emoji Jump Bible Quiz</title>
 <style>
-
-/* === Confetti (on correct) === */
-.confetti{
-  position:absolute;
-  pointer-events:none;
-  z-index:6;                  /* above toast (z:5) */
-  font-size:16px;
-  opacity:0;
-  transform: translate(-50%, -50%) scale(.8);
-  animation: confettiPop 600ms ease-out forwards;
-}
-@keyframes confettiPop{
-  0%   { opacity:0; transform: translate(-50%,-50%) scale(.8) }
-  25%  { opacity:1; transform: translate(-50%,-90%) scale(1) }
-  100% { opacity:0; transform: translate(-50%,-140%) scale(1.1) }
-}
-
-
-
   :root{
-    --bg:#fafafa; --ink:#222; --panel:#ffffff; --accent:#4caf50; --wrong:#e53935;
+    --bg:#0f172a;         /* slate-900 */
+    --panel:#111827;      /* gray-900 */
+    --panel-2:#1f2937;    /* gray-800 */
+    --text:#f8fafc;       /* slate-50 */
+    --muted:#cbd5e1;      /* slate-300 */
+    --accent:#22c55e;     /* green-500 */
+    --accent-2:#38bdf8;   /* sky-400 */
+    --warn:#fbbf24;       /* amber-400 */
+    --danger:#ef4444;     /* red-500 */
+    --btn:#334155;        /* slate-700 */
+    --btn-hover:#475569;  /* slate-600 */
+    --radius:18px;
   }
-  html,body{height:100%}
-  body{
-    margin:0; background:var(--bg); color:var(--ink);
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji";
-    display:flex; justify-content:center;
-  }
-  .game{ width:min(900px,100vw); height:100dvh; display:flex; flex-direction:column; }
-  header{
-    display:flex; gap:12px; align-items:center; justify-content:space-between;
-    padding:12px 16px; background:var(--panel); box-shadow:0 2px 10px rgba(0,0,0,.06);
-    position:sticky; top:0; z-index:10;
-  }
-  .hud{display:flex; gap:16px; align-items:center; flex-wrap:wrap}
-  .pill{background:#f1f1f1; padding:6px 10px; border-radius:999px; font-weight:600}
-  .hearts{font-size:20px; letter-spacing:2px}
-  .screen{ flex:1; position:relative; overflow:hidden; border-top:1px solid #eee;
-           background:
-  radial-gradient(180px 180px at 12% -6%, #fff8d1 0%, transparent 70%),
-  linear-gradient(#ffffff, #f3f7ff);
- --lane-step: 20%;}
-  .question{
-    position:absolute; left:50%; transform:translateX(-50%);
-    top:10px; background:var(--panel); padding:10px 14px; border-radius:12px;
-    box-shadow:0 2px 10px rgba(0,0,0,.08); z-index:2; max-width:92%;
-    font-size:clamp(16px,2.4vw,22px); text-align:center; line-height:1.25;
-    display:none; /* hidden until Start */
-  }
-
-  .balloon:focus{outline:3px solid #cde7ff}
-
-/* number-on-top layout */
-
-.balloon .num{
-  font-weight: 800;
-  font-size: clamp(18px, 3.6vw, 28px);
-  line-height: 1;
-  margin-bottom: -2px;   /* tiny lift so it "floats" above the answer */
-}
-.balloon .row{
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-
-/* color variants for the 4 answer options */
-.balloon.c0{ background:#ffe8e8; border-color:#ffb3b3; }
-.balloon.c1{ background:#fff1cc; border-color:#ffd166; }
-.balloon.c2{ background:#e7f7e7; border-color:#9be29b; }
-.balloon.c3{ background:#e6f0ff; border-color:#a7c4ff; }
-
-/* make the big number match the color a bit */
-.balloon.c0 .num{ color:#c62828; }
-.balloon.c1 .num{ color:#b26a00; }
-.balloon.c2 .num{ color:#1b5e20; }
-.balloon.c3 .num{ color:#1a237e; }
-
-/* ensure good contrast for text row */
-.balloon.c0 .txt,
-.balloon.c1 .txt,
-.balloon.c2 .txt,
-.balloon.c3 .txt { color:#111; }
-
-
-
-
-/* Glow ring for instant feedback */
-.balloon.correct{
-  border-color:var(--accent);
-  box-shadow:
-    0 0 0 6px rgba(22,163,74,.22),
-    0 6px 18px rgba(0,0,0,.10);
-}
-.balloon.wrong{
-  border-color:var(--wrong);
-  box-shadow:
-    0 0 0 6px rgba(220,38,38,.22),
-    0 6px 18px rgba(0,0,0,.10);
-}
-@keyframes floatUp{
-  from { transform: translate(-50%, 0); }
-  to   { transform: translate(-50%, -120vh); }
-}
-
-/* === Wrapped balloon layout (Option B) === */
-/* The wrapper is what floats upward */
-.balloonWrap{
-  position:absolute;
-  bottom:-160px;               /* ↓ start further off-screen so any snap is invisible (was -80px) */
-  animation: floatUp linear forwards;
-  animation-fill-mode: both;   /* ← keep the first/last keyframe applied */
-  z-index:1;
-
-  width: var(--lane-step);
-  padding: 0 6px;
-
-  transform: translate(-50%, 0); /* ← baseline centering so there’s no horizontal snap */
-  will-change: transform;        /* (optional) smoother start */
-}
-
-
-
-
-/* The actual button is centered and allowed to size naturally */
-.balloon{
-  position: relative;          /* ← add this */
-  animation: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-  gap: 6px;
-
-  width: 100%;
-max-width: 240px;
-box-sizing: border-box; /* you already have this — keep it */
-
-  white-space: normal;
-
-  padding: 8px 12px;
-  border-radius: 16px;
-  border: 2px solid #ddd;
-  background: #fff;
-  font-weight: 600;
-  cursor: pointer;
-  user-select: none;
-  box-shadow: 0 4px 16px rgba(0,0,0,.08);
-  text-align: center;
-}
-
-/* Gentle bobble so balloons feel alive */
-@keyframes bobble {
-  0%   { transform: translateX(-2px) rotate(-1.4deg); }
-  50%  { transform: translateX( 2px) rotate( 1.4deg); }
-  100% { transform: translateX(-2px) rotate(-1.4deg); }
-}
-
-@keyframes stringSway{
-  0%   { transform: translateX(-50%) rotate(-2deg); }
-  50%  { transform: translateX(-50%) rotate( 2deg); }
-  100% { transform: translateX(-50%) rotate(-2deg); }
-}
-
-
-
-.balloon {
-  /* keep your existing properties… */
-  /* You already have: animation: none; — leave it above */
-  animation: bobble 3.6s ease-in-out infinite; /* ← add this line at the end of .balloon */
-}
-
-/* String/tether under the balloon */
-.balloon::before{
-  content:"";
-  position:absolute;
-  left:50%;
-  bottom:-28px;                 /* was -18px → pushes the string lower */
-  width:2px;
-  height:30px;                  /* was 26px → keep the length */
-  transform: translateX(-50%);  /* keep it centered */
-
-  background: linear-gradient(#e5e5e5,#cfcfcf);
-  border-radius:2px;
-  opacity:.75;
-  pointer-events:none;
-
-  transform-origin: top center;
-  animation: stringSway 3.6s ease-in-out infinite;
-}
-
-.balloon.pop::before{ opacity:0; }
-
-
-
-
-
-
-.balloon .txt{
-  font-size: clamp(14px, 2.4vw, 18px);
-  line-height: 1.2;
-  text-align: center;
-
-  /* NEW: only break long words when necessary, not between letters */
-  overflow-wrap: break-word;
-  word-break: normal;
-  hyphens: auto;
-}
-
-
-
-/* === Pop effect === */
-.balloon.pop{
-  animation: popBurst 280ms ease-out forwards !important; /* override float */
-  border-color: transparent;
-  background: transparent;
-}
-.balloon.pop > *{ opacity:0 } /* hide text while popping */
-.balloon.pop::after{
-  content: attr(data-icon); /* 🎉 or 💥 */
-  position:absolute; left:50%; top:50%;
-  transform: translate(-50%,-50%) scale(1);
-  font-size:28px;
-  pointer-events:none;
-}
-@keyframes popBurst{
-  0%   { transform: scale(1); opacity:1 }
-  40%  { transform: scale(1.18) }
-  100% { transform: scale(0.2); opacity:0 }
-}
-
-
-/* Big center badge */
-.toast{
-  position:absolute;
-  left:50%; top:50%;
-  transform: translate(-50%,-50%) scale(.92);
-  background:#111;
-  color:#fff;
-  padding:14px 18px;
-  border-radius:16px;
-  font-weight:800;
-  font-size: clamp(18px, 3.2vw, 32px);
-  line-height:1.1;
-  box-shadow:0 10px 30px rgba(0,0,0,.25);
-  opacity:0;
-  pointer-events:none;
-  transition: opacity .18s ease, transform .18s ease;
-  z-index: 5;
-}
-.toast.show{
-  opacity:1;
-  transform: translate(-50%,-50%) scale(1);
-}
-
-/* Color variants */
-.toast.success{
-  background: #16a34a;            /* green 600 */
-}
-.toast.error{
-  background: #dc2626;             /* red 600 */
-}
-.toast.info{
-  background: #111;
-}
-
-/* === Game Over badges (PASTE RIGHT UNDER .toast STYLES) === */
-.finalStats{
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-  align-items:center;
-  margin-top:4px;             /* tiny breathing room under the title */
-}
-
-@keyframes popIn {
-  0%   { transform: translateY(6px) scale(.96); opacity:0 }
-  100% { transform: translateY(0)    scale(1);  opacity:1 }
-}
-
-.statBadge{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-
-  padding:12px 16px;
-  border-radius:16px;
-
-  font-weight:800;
-  font-size: clamp(18px, 3.2vw, 28px);
-  line-height:1.1;
-  color:#fff;
-
-  box-shadow:0 10px 30px rgba(0,0,0,.22); /* like the toast */
-  animation: popIn 260ms ease-out both;
-}
-
-/* Two colors (pick any you like) */
-.statBadge.score   { background:#16a34a; }  /* green 600 */
-.statBadge.correct { background:#2563eb; }  /* blue 600 */
-.statBadge.correct { animation-delay:.08s; } /* slight stagger */
-
-
-
-@keyframes heartOuch{
-  0%   { transform: scale(1);   filter:none; }
-  35%  { transform: scale(1.18); filter: drop-shadow(0 0 6px rgba(220,38,38,.45)); }
-  100% { transform: scale(1);   filter:none; }
-}
-.hearts.hurt{ animation: heartOuch 320ms ease; }
-
-
-
-/* === Flying bonus emoji === */
-.bonus{
-  position:absolute;
-  z-index:4;                /* above balloons, below overlays */
-  font-size: clamp(34px, 6vw, 60px);  /* ← bigger & responsive */
-  line-height:1;
-  user-select:none;
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial}
+  .wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:2vh 2vw}
+  .card{width:min(920px,100%);background:linear-gradient(180deg,var(--panel),var(--panel-2));border-radius:var(--radius);box-shadow:0 10px 40px rgba(0,0,0,.35);overflow:hidden}
+  header{padding:20px 24px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:12px}
+  header h1{margin:0;font-size:clamp(18px,3.2vw,24px);font-weight:800;letter-spacing:.2px}
+  header .tag{margin-left:auto;font-size:12px;opacity:.7}
+  .screen{padding:20px 18px}
+  .center{display:grid;place-items:center;text-align:center}
+  .title h2{font-size:clamp(26px,4.8vw,42px);margin:8px 0 6px}
+  .subtitle{color:var(--muted);opacity:.85;margin:0 0 12px;font-size:clamp(14px,2.6vw,16px)}
+  .btn{appearance:none;border:0;background:var(--btn);color:var(--text);padding:14px 18px;border-radius:14px;font-weight:700;cursor:pointer;transition:.15s transform,.2s background}
+  .btn:hover{background:var(--btn-hover)}
+  .btn:active{transform:translateY(1px)}
+  .btn-primary{background:var(--accent-2)}
+  .btn-primary:hover{filter:brightness(.95)}
+  .stack{display:flex;flex-direction:column;gap:10px}
+  .row{display:flex;flex-wrap:wrap;gap:10px}
+  .grow{flex:1 1 180px}
+  .notice{background:#0b1220;border:1px solid rgba(255,255,255,.08);padding:12px 14px;border-radius:12px;color:var(--muted)}
+  .question{font-size:clamp(18px,3.6vw,24px);font-weight:800;margin:0 0 12px}
+  .answers{display:grid;grid-template-columns:1fr;gap:10px}
+  @media (min-width:600px){ .answers{grid-template-columns:1fr 1fr} }
+.answer{
+  padding:12px 14px;
+  background:#0c1426;                 /* dark button */
+  color:var(--text);                   /* <-- force light text */
+  border:1px solid rgba(255,255,255,.16);
+  border-radius:12px;
   cursor:pointer;
-  transition: left 900ms linear, top 900ms linear, transform 200ms ease, opacity 200ms ease;
-  will-change: left, top, transform, opacity;
-  text-shadow: 0 1px 0 #fff, 0 0 6px rgba(0,0,0,.25); /* readability */
-  /* bigger, finger-friendly hit target */
-  display: inline-grid;
-  place-items: center;
-  padding: 12px;              /* invisible clickable cushion */
-  min-width: 56px;            /* Apple/Google tap target guidance */
-  min-height: 56px;
-  border-radius: 999px;       /* round hit area */
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
-
-}
-.bonus:active{ transform: scale(.9) }
-.bonus.hide{ opacity:0; transform: scale(.6) }
-
-/* === Bonus Round (balloon burst) === */
-.bonusLayer{
-  position:absolute; inset:0;
-  z-index:3;                 /* below overlays, above background */
-  pointer-events:none;       /* children handle clicks */
+  text-align:left;
+  font-weight:800;
+  font-size:clamp(14px,2.6vw,18px);    /* slightly larger on small screens */
 }
 
-.burstBalloon{
-  position:absolute;
-  font-size: clamp(32px, 8vw, 64px);
-  line-height:1;
-  user-select:none;
-  cursor:pointer;
-  will-change: transform, opacity;
-  pointer-events:auto;       /* allow clicking */
-  animation: wander var(--d, 7s) ease-in-out infinite alternate;
-}
-@keyframes wander{
-  from{ transform: translate(0,0) rotate(-4deg); }
-  to  { transform: translate(var(--dx, 90px), var(--dy, -120px)) rotate(4deg); }
-}
-.burstBalloon.pop{
-  animation: none;
-  transform: scale(.5);
-  opacity: 0;
-  transition: transform 180ms ease, opacity 180ms ease;
+.answer:hover{
+  background:#12203c;                  /* a bit brighter when hovered */
+  border-color:rgba(255,255,255,.22);
 }
 
-/* Bomb styling (subtle red glow) */
-.burstBalloon.bomb{
-  filter: drop-shadow(0 0 6px rgba(220,38,38,.35));
+.answer.correct{
+  background:#062814;                  /* green-tinted background */
+  border-color:var(--accent);          /* green border */
+  color:var(--text);
+}
+.answer.incorrect{
+  background:#2a0e12;                  /* red-tinted background */
+  border-color:var(--danger);          /* red border */
+  color:var(--text);
+}
+
+.answer:focus-visible{
+  outline:3px solid var(--accent-2);
+  outline-offset:2px;
+}
+.answer:disabled{
+  opacity:1;                           /* keep text readable when disabled */
+  color:var(--text);
 }
 
 
-  /* Overlays (start/how/over) — sit above everything in the playfield */
-  .overlay{
-    position:absolute; inset:0; display:none; place-items:center; text-align:center;
-    padding:24px; z-index:20;   background:#fff; /* or rgba(255,255,255,.98) */;
-  }
-  .overlay.show{display:grid}
-  .stack{display:flex; flex-direction:column; gap:14px; align-items:center}
-  .btn{ border:none; background:#111; color:#fff; padding:12px 16px; border-radius:12px; font-weight:700; cursor:pointer}
-  .btn.secondary{background:#444}
-  .small{opacity:.75; font-size:14px}
+  .footerbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px}
+  .pill{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.06);font-size:12px;color:var(--muted)}
+  /* Canvas/Game area */
+  .game-wrap{position:relative;aspect-ratio:9/16;width:min(600px,90vw);margin-inline:auto;background:#06101f;border:1px solid rgba(255,255,255,.06);border-radius:16px;overflow:hidden}
+  canvas{display:block;width:100%;height:100%}
+  .hud{position:absolute;inset:0;pointer-events:none;display:flex;justify-content:space-between;align-items:flex-start;padding:8px}
+  .hud .chip{pointer-events:auto;background:rgba(0,0,0,.45);padding:6px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.08);font-size:12px}
+  .controls{position:absolute;left:0;right:0;bottom:10px;display:flex;justify-content:space-between;padding:0 10px;gap:10px}
+  .ctl{pointer-events:auto;min-width:92px;padding:10px 12px;border-radius:14px;border:1px solid rgba(255,255,255,.08);background:rgba(0,0,0,.35);backdrop-filter:blur(6px);font-weight:800}
+  @media (min-width:900px){ .controls{display:none} }
+  /* Modal */
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:20px;z-index:50}
+  .modal.show{display:flex}
+  .modal .box{width:min(520px,96vw);background:linear-gradient(180deg,var(--panel),var(--panel-2));border-radius:18px;border:1px solid rgba(255,255,255,.1);padding:20px}
+  .box h3{margin:0 0 6px;font-size:clamp(18px,3.4vw,22px)}
+  .box p{margin:0 0 14px;color:var(--muted)}
+  .okay{display:flex;gap:10px;justify-content:flex-end}
+  .tiny{font-size:12px;color:var(--muted)}
+  .endbig{font-size:clamp(24px,4.6vw,36px);font-weight:900;margin:6px 0 2px}
+
+.countLead{margin:6px 0;color:var(--muted);text-align:center}
+.countNum{font-weight:900;font-size:clamp(36px,10vw,72px);line-height:1;margin-top:6px;text-align:center}
+
+.countHelp{margin:6px 0 0;color:var(--muted);font-size:12px;text-align:center}
+
+
+#modalTitle, #modalMsg { text-align:center; }
+
+
+/* compact buttons for title extras */
+.btn-compact{
+  display:inline-flex;          /* don’t stretch full width */
+  align-items:center;
+  justify-content:center;
+  width:auto;                   /* auto size */
+  padding:10px 16px;            /* normal button padding */
+  min-height:unset;             /* no tall tiles */
+}
+
+
 </style>
 </head>
 <body>
-  <div class="game" id="game">
+<div class="wrap">
+  <div class="card">
     <header>
-      <div class="hud">
-        <span class="pill" id="progress">Q 1 / 1</span>
-        <span class="pill">Score: <span id="score">0</span></span>
-        <span class="pill">Time: <span id="time">0</span>s</span>
-      </div>
-      <div class="hearts" id="hearts" aria-label="lives">❤️❤️❤️</div>
+      <h1>📚 Emoji Jump Bible Quiz</h1>
+      <span class="tag" id="progressTag">—</span>
     </header>
 
-    <main class="screen" id="screen" aria-live="polite">
-      <div class="question" id="question">Loading…</div>
-      <div class="toast" id="toast" role="status" aria-live="assertive"></div>
+    <!-- SPLASH (MANDATORY FULLSCREEN) -->
+    <section class="screen center" id="splashScreen">
+      <div class="title">
+        <h2>Best in Vertical Mode</h2>
+        <p class="subtitle">Press the button below to continue in fullscreen. This improves controls and scaling.</p>
+      </div>
+      <div class="stack" style="width:min(520px,92%);margin-top:6px">
+        <!-- ✅ EDIT #1: Button changed to Enter Fullscreen -->
+        <button class="btn btn-primary" id="fullscreenBtn">🖥️ Enter Fullscreen</button>
+        <div class="notice">Tip: On phones, use the ◀️ ▶️ controls. On keyboards, use ⬅️ ➡️.</div>
+        <div id="fsHelp" class="tiny" style="display:none">If fullscreen didn’t start, your browser may have blocked it. Please allow fullscreen and press the button again, or press Start on the next screen to continue without fullscreen.</div>
+      </div>
+    </section>
 
-<!-- Bonus Round: intro popup -->
-<section class="overlay" id="bonusIntro">
-  <div class="stack">
-    <div style="font-size:34px">🎈 Bonus Round</div>
-    <div class="small">Click as many balloons as you can!</div>
-    <button class="btn" id="bonusOkBtn">OK</button>
+    <!-- TITLE -->
+    <section class="screen center" id="titleScreen" style="display:none">
+      <div class="title">
+        <h2>Jump Into the Word</h2>
+        <p class="subtitle">Answer each question, then bounce through a quick mini-level!</p>
+      </div>
+      <div class="stack" style="width:min(520px,92%)">
+        <div class="row">
+          <button class="btn btn-primary grow" id="startBtn">Start</button>
+          <button class="btn grow" id="howBtn">How to Play</button>
+        </div>
+<button class="btn btn-compact" id="tiltBtn">📱 Enable Tilt Control</button>
+<button class="btn btn-compact" id="bonusBtn">🎁 Bonus Round (60s)</button>
+
+
+
+        <div class="notice">Brought to you by eatyourbible.com</div>
+      </div>
+    </section>
+
+    <!-- QUESTION -->
+    <section class="screen" id="questionScreen" style="display:none">
+      <div class="pill" id="qCounter">Question</div>
+      <p class="question" id="qText">Question text</p>
+      <div class="answers" id="answers"></div>
+<div class="footerbar">
+  <span class="pill" id="scorePill">Score: 0 correct</span>
+</div>
+
+    </section>
+
+    <!-- GAME -->
+    <section class="screen" id="gameScreen" style="display:none">
+      <div class="pill" id="roundPill">Jump Round</div>
+      <div class="game-wrap" id="gameWrap">
+        <canvas id="game"></canvas>
+        <div class="hud">
+          <div class="chip" id="timerChip">⏱️ 0.0s</div>
+          <div class="chip" id="heightChip">⬆️ 0</div>
+        </div>
+        <div class="controls">
+          <button class="ctl" id="leftBtn">◀️</button>
+          <button class="ctl" id="rightBtn">▶️</button>
+        </div>
+      </div>
+      <div class="footerbar">
+        <span class="pill tiny">Tip: Wrap-around edges</span>
+        <button class="btn" id="endEarlyBtn">End Round</button>
+      </div>
+    </section>
+
+    <!-- END -->
+    <section class="screen center" id="endScreen" style="display:none">
+      <div class="title">
+        <h2>Great Job!</h2>
+        <p class="subtitle">You finished the quiz.</p>
+      </div>
+      <div class="stack" style="width:min(520px,92%)">
+        <div class="notice">
+          <div class="endbig" id="finalScore">0 / 0 correct</div>
+          <div id="timePlayed" class="tiny">Time played: —</div>
+        </div>
+        <div class="row">
+          <button class="btn btn-primary grow" id="playAgain">Play Again</button>
+          <button class="btn grow" id="reviewBtn">Review Answers</button>
+        </div>
+      </div>
+    </section>
   </div>
-</section>
+</div>
 
-<!-- Bonus Round: balloons live here -->
-<div id="bonusLayer" class="bonusLayer" aria-hidden="true"></div>
-
-
-      <!-- Start -->
-      <section class="overlay show" id="start">
-        <div class="stack">
-          <div style="font-size:42px">🎈 Balloon Pop Quiz</div>
-          <div class="small">Pop the correct answer balloon before it floats away!</div>
-          <div class="small">Keyboard: 1–4 • Mobile: tap</div>
-          <div style="display:flex; gap:10px">
-            <button class="btn" id="startBtn">Start</button>
-            <button class="btn secondary" id="howBtn">How to Play</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- How-to -->
-      <section class="overlay" id="how">
-        <div class="stack">
-          <div style="font-size:36px">📚 How to Play</div>
-          <div style="max-width:600px">
-            Balloons float up with answer choices.<br/>
-            Tap or click the correct one to score. Wrong pops cost a heart.
-          </div>
-          <button class="btn" id="backBtn">Back</button>
-        </div>
-      </section>
-
-      <!-- Game over -->
-      <section class="overlay" id="over">
-        <div class="stack">
-          <div style="font-size:34px">🏁 Game Over</div>
-          <div id="final"></div>
-          <button class="btn" id="againBtn">Play Again</button>
-        </div>
-      </section>
-    </main>
+<!-- MODALS -->
+<div class="modal" id="modal">
+  <div class="box">
+    <h3 id="modalTitle">Title</h3>
+    <p id="modalMsg">Message</p>
+    <div class="okay">
+      <button class="btn btn-primary" id="modalOk">OK</button>
+    </div>
   </div>
+</div>
 
 <script>
+(function(){
+  // --- Simple state machine ---
+  const screens = {
+    splash: document.getElementById('splashScreen'),
+    title: document.getElementById('titleScreen'),
+    question: document.getElementById('questionScreen'),
+    game: document.getElementById('gameScreen'),
+    end: document.getElementById('endScreen'),
+  };
+  const progressTag = document.getElementById('progressTag');
+
+  function show(name){
+    for(const k in screens){ screens[k].style.display = (k===name)?'block':'none'; }
+    progressTag.textContent = (
+      name==='splash' ? 'Welcome' :
+      name==='title' ? 'Title' :
+      name==='question' ? `Question ${state.i+1}/${questions.length}` :
+      name==='game' ? 'Jump Round' :
+      'Finished'
+    );
+  }
+
+
+/*
+        ____    _    _   ______    _____   _______   _____    ____    _   _    _____
+       / __ \  | |  | | |  ____|  / ____| |__   __| |_   _|  / __ \  | \ | |  / ____|
+      | |  | | | |  | | | |__    | (___      | |      | |   | |  | | |  \| | | (___
+      | |  | | | |  | | |  __|    \___ \     | |      | |   | |  | | | . ` |  \___ \
+      | |__| | | |__| | | |____   ____) |    | |     _| |_  | |__| | | |\  |  ____) |
+       \___\_\  \____/  |______| |_____/     |_|    |_____|  \____/  |_| \_| |_____/
+*/
 
 
 
-/* ===== QUESTIONS START HERE ===== */
-const QUESTIONS = [
-  {
-    q: "How did God create the first man?",
-    choices: [
-      "Formed from dust; God breathed life",
-      "From water and clay",
-      "Spoken into being only",
-      "Formed from stars"
-    ],
-    correct: 0,
-    emoji: "🌬️"
+  // --- Questions START HERE ---
+
+  
+const questions = [
+  { 
+    q:"How did God create the first man?", 
+    a:["Formed him out of dust and breathed life into him","Spoke him into being on day one","Carved him from stone","Sent him down as an angel"], 
+    correct:0, 
+    ref:"Genesis 2:7" 
   },
-  {
-    q: "Where did God put the man?",
-    choices: [
-      "Garden of Eden",
-      "City of Enoch",
-      "Wilderness",
-      "Ark"
-    ],
-    correct: 0,
-    emoji: "🌿"
+  { 
+    q:"Where did God put the man He made, and what job did He give him?", 
+    a:["The Garden of Eden, to take care of it","A desert, to learn patience","A mountain, to build a city","A ship, to explore the seas"], 
+    correct:0, 
+    ref:"Genesis 2:8,15" 
   },
-  {
-    q: "What did God say was “not good”?",
-    choices: [
-      "For the man to be alone",
-      "Working on the Sabbath",
-      "Eating any fruit",
-      "Naming the animals"
-    ],
-    correct: 0,
-    emoji: "🙅"
+  { 
+    q:"What did God say was “not good”?", 
+    a:["That the man was alone","That the garden had too many trees","That the river was too wide","That the animals were noisy"], 
+    correct:0, 
+    ref:"Genesis 2:18" 
   },
-  {
-    q: "What did God say He would make for the man?",
-    choices: [
-      "A helper suitable for him",
-      "A great city",
-      "A sword to protect the garden",
-      "A temple to worship in"
-    ],
-    correct: 0,
-    emoji: "🤝"
+  { 
+    q:"What did God say He would make for the man?", 
+    a:["A helper fit for him","A golden crown","A tall tower","A flock of birds"], 
+    correct:0, 
+    ref:"Genesis 2:18" 
   },
-  {
-    q: "When God brought the animals to the man, what did he do?",
-    choices: [
-      "Named them",
-      "Built an altar",
-      "Counted them",
-      "Set them free"
-    ],
-    correct: 0,
-    emoji: "🐾"
+  { 
+    q:"When God brought the animals to the man, what did the man do?", 
+    a:["Named them","Built pens for them","Counted them","Chased them"], 
+    correct:0, 
+    ref:"Genesis 2:19–20" 
   },
-  {
-    q: "After naming all the animals, what did the man not find?",
-    choices: [
-      "A helper suitable for him",
-      "Enough food",
-      "A place to sleep",
-      "A pet dog"
-    ],
-    correct: 0,
-    emoji: "🕵️"
+  { 
+    q:"After naming all the animals, what did the man not find?", 
+    a:["A helper fit for him","Food to eat","Water to drink","A place to sleep"], 
+    correct:0, 
+    ref:"Genesis 2:20" 
   },
-  {
-    q: "How did God make a helper for the man?",
-    choices: [
-      "Put him to sleep, took a rib, formed a woman",
-      "Shaped another from dust",
-      "Spoke her into being only",
-      "Made her from the animals"
-    ],
-    correct: 0,
-    emoji: "🦴"
+  { 
+    q:"How did God make a helper for the man?", 
+    a:["Put him to sleep, took a rib from his side, and formed a woman","Asked an angel to teach him","Shaped her from leaves","Called her down from the sky"], 
+    correct:0, 
+    ref:"Genesis 2:21–22" 
   },
-  {
-    q: "When God brought the woman to the man, what did he say?",
-    choices: [
-      "Bone of my bones and flesh of my flesh",
-      "At last, a friend for me",
-      "You shall be called Eve",
-      "Welcome, my sister"
-    ],
-    correct: 0,
-    emoji: "💬"
+  { 
+    q:"When God brought the woman to the man, what did the man say?", 
+    a:["“This is bone of my bones and flesh of my flesh; she shall be called Woman.”","“Welcome, traveler.”","“Teach me your ways.”","“Let us build a tower.”"], 
+    correct:0, 
+    ref:"Genesis 2:23" 
   },
-  {
-    q: "Both the man and the woman were made in God’s… what?",
-    choices: [
-      "Image and likeness",
-      "Temple",
-      "Garden",
-      "Spirit only"
-    ],
-    correct: 0,
-    emoji: "🪞"
+  { 
+    q:"Both the man and the woman were made in God’s… what?", 
+    a:["Image and likeness","Temple and city","Shadow and song","Law and covenant"], 
+    correct:0, 
+    ref:"Genesis 1:26–27" 
   },
-  {
-    q: "What did God tell the man and woman to do?",
-    choices: [
-      "Be fruitful, fill the earth, rule over it",
-      "Build a tower",
-      "Stay in the garden forever",
-      "Wander the earth"
-    ],
-    correct: 0,
-    emoji: "🌍"
+  { 
+    q:"What did God tell the man and woman to do?", 
+    a:["Fill the earth and rule over it","Stay hidden and silent","Travel only at night","Build walls around the garden"], 
+    correct:0, 
+    ref:"Genesis 1:28" 
   }
 ];
 
 
-
-/* ===== QUESTIONS END HERE ===== */
-
-
-
-/* ===== 2) CONFIG ===== */
-const START_LIVES = 3;
-const BALLOON_TRAVEL_MS = 20000;
-// timer = travel time + max random duration (+800ms) + max start delay (+600ms) + 1s grace
-const PER_QUESTION_TIME = Math.ceil((BALLOON_TRAVEL_MS + 800 + 600) / 1000) + 1;
-const COLUMNS = 4;
-const BONUS_POINTS = 10; // ← set your bonus amount here
-
-// === Bonus Round config ===
-const BONUS_BOMB_CHANCE   = 0.18;  // 18% of spawns are bombs (tweak to taste)
-const BONUS_BOMB_PENALTY  = 10;    // points to subtract when a bomb is tapped
-
-const BONUS_ROUND_SECONDS  = 12;   // length of the bonus round timer
-const BONUS_BALLOON_POINTS = 5;    // points per balloon pop
-const BONUS_BALLOONS       = 24;   // how many balloons to spawn
-// Bonus Round: a weighted mix of celebratory emoji
-// Higher weight = shows up more often
-const BONUS_EMOJI = [
-  { char: '🎈', weight: 6 },  // classic balloon (most common)
-  { char: '⭐️', weight: 3 },  // stars
-  { char: '🎊', weight: 2 },  // confetti ball
-  { char: '✨', weight: 2 },  // sparkles
-  { char: '🎁', weight: 1 }   // presents (rare treat)
-];
-
-// Pick one emoji based on weights
-function pickBonusEmoji(){
-  const total = BONUS_EMOJI.reduce((s, e) => s + e.weight, 0);
-  let r = Math.random() * total;
-  for (const e of BONUS_EMOJI){
-    if ((r -= e.weight) <= 0) return e.char;
-  }
-  return '🎈';
-}
-
-
-/* ===== 3) STATE & ELEMENTS ===== */
-let idx = 0, score = 0, correctCount = 0, lives = START_LIVES, timer = null, timeLeft = 0, lock = false;
-let bonusEl = null, bonusTimer = null, bonusPending = 0;
-let activeBalloons = [];
-const screen = document.getElementById('screen');
-const questionEl = document.getElementById('question');
-const progressEl = document.getElementById('progress');
-const scoreEl = document.getElementById('score');
-const timeEl = document.getElementById('time');
-const heartsEl = document.getElementById('hearts');
-const toast = document.getElementById('toast');
-
-const startOverlay = document.getElementById('start');
-const overOverlay  = document.getElementById('over');
-const howOverlay   = document.getElementById('how');
-const finalEl      = document.getElementById('final');
-
-// Bonus round elements
-const bonusIntro   = document.getElementById('bonusIntro');
-const bonusOkBtn   = document.getElementById('bonusOkBtn');
-const bonusLayerEl = document.getElementById('bonusLayer');
-
-
-document.getElementById('startBtn').addEventListener('click', startGame);
-document.getElementById('againBtn').addEventListener('click', startGame);
-document.getElementById('howBtn').addEventListener('click', ()=>{
-  startOverlay.classList.remove('show');   // hide Start
-  bonusIntro.classList.remove('show');
-clearBurstBalloons && clearBurstBalloons();
-
-  howOverlay.classList.add('show');        // show How-to
-});
-
-document.getElementById('backBtn').addEventListener('click', ()=>{
-  howOverlay.classList.remove('show');     // hide How-to
-  startOverlay.classList.add('show');      // show Start again
-});
-
-// Start the bonus round when the player taps OK
-bonusOkBtn.addEventListener('click', startBonusRound);
-
-
-// Prime audio as early as possible on actual touch/press
-['startBtn','againBtn','howBtn','backBtn','bonusOkBtn'].forEach(id=>{
-
-  const el = document.getElementById(id);
-  if (!el) return;
-  // pointerdown fires on touch immediately (better than click on iOS)
-  el.addEventListener('pointerdown', ensureAudioReady, { once:true });
-});
-
-
-
-window.addEventListener('keydown', (e)=>{
-  const k = (e.key && e.key.toLowerCase) ? e.key.toLowerCase() : e.key;
-
-  // ---- SECRET CHEAT: press "G" to jump to Bonus Round ----
-  if (k === 'g') {
-    e.preventDefault();
-
-    // Stop whatever the main game is doing
-    try { clearInterval(timer); } catch(_) {}
-    try { clearBalloons(); } catch(_) {}
-    try { clearBonus(); } catch(_) {}
-    bonusPending = 0;
-
-    // Hide any overlays and the question bar
-    try { startOverlay.classList.remove('show'); } catch(_) {}
-    try { howOverlay.classList.remove('show'); } catch(_) {}
-    try { overOverlay.classList.remove('show'); } catch(_) {}
-    try { questionEl.style.display = 'none'; } catch(_) {}
-
-    // Make sure audio is unlocked if you’re using sounds
-    try { ensureAudioReady && ensureAudioReady(); } catch(_) {}
-
-    // Prefer to show the bonus intro if it exists, otherwise start directly
-    const intro = document.getElementById('bonusIntro');
-    const okBtn = document.getElementById('bonusOkBtn');
-    if (intro) {
-      intro.classList.add('show');
-      okBtn && okBtn.focus();
-    } else if (typeof startBonusRound === 'function') {
-      startBonusRound(); // starts the timer + balloons immediately
-    }
-    return; // don’t process number keys on this press
-  }
-  // ---- END SECRET CHEAT ----
-
-  // (Normal 1–4 hotkeys for popping answers)
-  if (lock) return;
-  const map = {'1':0,'2':1,'3':2,'4':3};
-  if (map[k] !== undefined){
-    const i = map[k];
-    const b = activeBalloons.find(b=> +b.dataset.choiceIndex === i);
-    if (b) b.click();
-  }
-});
-
-
-function startGame(){
-  // Reset state
-  idx = 0; score = 0; correctCount = 0; lives = START_LIVES; updateHearts();
-  clearBurstBalloons && clearBurstBalloons();
-ensureAudioReady();
-
-  scoreEl.textContent = score;
-  overOverlay.classList.remove('show');
-  howOverlay.classList.remove('show');
-  startOverlay.classList.remove('show');
-  // show question box now that game is active
-  questionEl.style.display = 'block';
-  nextQuestion();
-}
-
-function updateHearts(){
-  const safeLives = Math.max(0, Math.min(START_LIVES, lives));
-  heartsEl.textContent = '❤️'.repeat(safeLives) + '🖤'.repeat(START_LIVES - safeLives);
-}
-
-
-function shuffleIndices(n){
-  const arr = Array.from({length: n}, (_, i) => i);
-  for (let i = n - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
-
-
-function nextQuestion(){
-  clearBalloons();
-  clearBonus();
-
-if(idx >= QUESTIONS.length){ startBonusIntro(); return; }
-
-
-  lock = false;
-  const item = QUESTIONS[idx];
-  timeLeft = item.seconds ?? PER_QUESTION_TIME;
-
-  const order = shuffleIndices(item.choices.length);
-
-
-  progressEl.textContent = `Q ${idx+1} / ${QUESTIONS.length}`;
-  questionEl.textContent = (item.emoji? item.emoji+' ':'') + item.q;
-
-  const cols = Math.min(COLUMNS, item.choices.length);
-  const laneXs = layoutLanes(cols);
-  screen.style.setProperty('--lane-step', (100 / (cols + 1)) + '%');
-
-activeBalloons = order.map((choiceIdx, i) => {
-  const text = item.choices[choiceIdx];
-  const isCorrect = (choiceIdx === item.correct);
-
-  // wrapper that animates up
-  const wrap = document.createElement('div');
-  wrap.className = 'balloonWrap';
-
-  const x = laneXs[i % laneXs.length];
-  wrap.style.left = `${x}%`;
-wrap.style.transform = 'translate(-50%, 0)'; // baseline before animation
-
-  const duration = BALLOON_TRAVEL_MS + rand(-800, 600);
-  const delay = rand(0, 600);
-  wrap.style.animationDuration = duration + 'ms';
-  wrap.style.animationDelay = delay + 'ms';
-
-  // the actual button (centered inside wrap)
-  const b = document.createElement('button');
-  b.className = 'balloon';
-  b.classList.add(`c${i % 4}`);            // color by displayed slot 0–3
-  b.setAttribute('aria-label', `Choice ${i+1}: ${text}`);
-  b.dataset.choiceIndex = i;               // keyboard mapping uses this
-b.style.animationDelay = rand(0, 1200) + 'ms';
-
-  // Top: big number
-  const num = document.createElement('span');
-  num.className = 'num';
-  num.textContent = (i + 1);
-
-  // Bottom: answer text
-  const row = document.createElement('span');
-  row.className = 'row';
-
-  const txt = document.createElement('span');
-  txt.className = 'txt';
-  txt.textContent = text;
-
-  row.appendChild(txt);
-  b.appendChild(num);
-  b.appendChild(row);
-  wrap.appendChild(b);
-
-// Let clicks on the wrapper (the whole lane) count as clicking the button
-wrap.addEventListener('click', (e) => {
-  if (lock) return;
-  // If the click wasn't directly on the button (or one of its children),
-  // forward it to the button so we don't double-trigger.
-  if (e.target !== b && !b.contains(e.target)) {
-    b.click();
-  }
-});
-
-
-  // CLICK -> pop & score
-  b.addEventListener('click', () => {
-    if (lock) return;
-    lock = true;
-    clearInterval(timer);
-
-    // pause the floating wrapper, not the button
-    wrap.style.animationPlayState = 'paused';
-
-    b.classList.add(isCorrect ? 'correct' : 'wrong');
-    b.dataset.icon = isCorrect ? '🎉' : '💥';
-    b.classList.add('pop');
-
-if (isCorrect){
-  confettiBurst(b);
-playTone('ok');
-
-
-
-  const base = Math.max(10, 5 + timeLeft);
-  const pts  = base + bonusPending;
-  score += pts;
-  correctCount++;
-  scoreEl.textContent = score;
-
-  let msg = `✅ Correct! +${base}`;
-  if (bonusPending) msg += ` (+${bonusPending} bonus)`;
-  ping(msg, 'success');
-
-  bonusPending = 0;
-  clearBonus();           // remove bonus if still on screen
-} else {
-  if (lives > 0) lives--;
-  updateHearts();
-heartsEl.classList.add('hurt');
-  heartsEl.addEventListener('animationend', () => heartsEl.classList.remove('hurt'), { once:true });
-  bonusPending = 0;       // lose any stored bonus on wrong
-  clearBonus();
-  ping('❌ Oops!', 'error');
-playTone('bad');
-
-}
-
-
-    // after pop finishes, move to next question
-    b.addEventListener('animationend', (e) => {
-      if (e.animationName !== 'popBurst') return;
-      idx++;
-      nextQuestion(); // keep going even if lives dropped to 0
-    }, { once:true });
-  });
-
-  // When the FLOAT animation ends, remove the whole wrapper
-  wrap.addEventListener('animationend', (e) => {
-    if (e.animationName !== 'floatUp') return;
-    wrap.remove();
-  });
-
-  screen.appendChild(wrap);
-  return b; // keep the buttons in activeBalloons (keyboard still works)
-});
-spawnBonus();
-startTimer();
- 
-
-}
-
-function startTimer(){
-  clearInterval(timer);
-  timeEl.textContent = timeLeft;
-  timer = setInterval(()=>{
-    timeLeft--;
-    timeEl.textContent = Math.max(0, timeLeft);
-    if(timeLeft <= 0){
-      clearInterval(timer);
-      if(!lock){
-        lock = true;
-if (lives > 0) lives--;
-updateHearts();
-heartsEl.classList.add('hurt');
-heartsEl.addEventListener('animationend', () => heartsEl.classList.remove('hurt'), { once:true });
-ping('⏳ Time up!', 'error');
-playTone('time');
-bonusPending = 0;
-clearBonus();
-
-
-        setTimeout(()=>{
-idx++;
-if (idx >= QUESTIONS.length) startBonusIntro(); else nextQuestion();
-
-
-        }, 500);
+  // --- Questions END HERE ---
+
+
+
+
+const modal = {
+  el: document.getElementById('modal'),
+  title: document.getElementById('modalTitle'),
+  msg: document.getElementById('modalMsg'),
+  ok: document.getElementById('modalOk'),
+
+  // Standard text modal with OK button
+  open(title, msg, onok){
+    this.title.textContent = title;
+    this.msg.textContent = msg;
+    this.el.classList.add('show');
+    const handler = ()=>{
+      this.el.classList.remove('show');
+      this.ok.removeEventListener('click', handler);
+      onok && onok();
+    };
+    this.ok.addEventListener('click', handler);
+  },
+
+  // HTML-capable modal (used for the 💀 fall popup)
+  html(title, html, onok){
+    this.title.textContent = title;
+    this.msg.innerHTML = html;
+    this.el.classList.add('show');
+    const handler = ()=>{
+      this.el.classList.remove('show');
+      this.ok.removeEventListener('click', handler);
+      onok && onok();
+    };
+    this.ok.addEventListener('click', handler);
+  },
+
+  // Countdown modal (no OK button; auto-closes)
+  countdown(title, leadText, seconds, ondone){
+    this.title.textContent = title;
+    this.el.classList.add('show');
+
+    // hide the OK row while counting down
+    const okRow = this.ok.parentElement;
+    const prevDisplay = okRow.style.display;
+    okRow.style.display = 'none';
+
+    let remaining = Math.max(0, Math.floor(seconds) | 0);
+    const render = ()=>{
+      this.msg.innerHTML =
+        `<div class="countLead">${leadText}</div>
+         <div class="countNum">${remaining}</div>
+         <div class="countHelp">Use arrows or tilt to move.</div>`;
+    };
+    render();
+
+    const tick = ()=>{
+      remaining -= 1;
+      if(remaining <= 0){
+        clearInterval(timer);
+        okRow.style.display = prevDisplay || '';
+        this.el.classList.remove('show');
+        ondone && ondone();
+      }else{
+        render();
       }
+    };
+    const timer = setInterval(tick, 1000);
+  }
+
+  ,
+  // Is the modal currently open?
+  isOpen(){
+    return this.el.classList.contains('show');
+  }
+
+
+};
+
+
+
+  // --- Global quiz state ---
+const state = {
+  i: 0, correct: 0, bonus: 0, startTime: 0, totalJumpTime: 0,
+  selectedWasCorrect: false,
+  review: [],
+  bonusMode: false   // NEW: are we in the 60s bonus round?
+};
+
+
+
+  // ========= FULLSCREEN GATE =========
+  // ✅ EDIT #2: Mandatory fullscreen before proceeding
+  const fullscreenBtn = document.getElementById('fullscreenBtn');
+  const fsHelp = document.getElementById('fsHelp');
+
+  function isFullscreen(){
+    return !!(document.fullscreenElement || document.webkitFullscreenElement);
+  }
+  function requestAppFullscreen(){
+    const elem = document.documentElement;
+    const req = elem.requestFullscreen || elem.webkitRequestFullscreen;
+    return req ? req.call(elem) : Promise.reject(new Error('Fullscreen API not available'));
+  }
+  // When user clicks "Enter Fullscreen", request and THEN go to title.
+  fullscreenBtn.addEventListener('click', async ()=>{
+    try{
+      await requestAppFullscreen();     // must be inside the click handler
+      show('title');
+    }catch(err){
+      // If blocked, show help and still allow progression
+      fsHelp.style.display = 'block';
+      modal.open("Fullscreen Blocked","Your browser did not allow fullscreen. You can allow it and press the button again, or continue without fullscreen on the next screen.", ()=>{
+        show('title');
+      });
     }
-  }, 1000);
+  });
+  // If the user somehow triggers fullscreen via browser UI, auto-continue
+  document.addEventListener('fullscreenchange', ()=>{
+    if (isFullscreen() && screens.splash.style.display==='block'){
+      show('title');
+    }
+  });
+  document.addEventListener('webkitfullscreenchange', ()=>{
+    if (isFullscreen() && screens.splash.style.display==='block'){
+      show('title');
+    }
+  });
+  // ===================================
+
+  // --- Title screen ---
+  document.getElementById('howBtn').addEventListener('click', ()=>{
+    modal.open("How to Play","Press Start. For each question, choose an answer. A popup will say if you’re correct or not. Then play a short jump round before the next question. Use ◀️ ▶️ (on-screen or arrow keys).", null);
+  });
+  document.getElementById('startBtn').addEventListener('click', ()=>{
+    // Optional: try to ensure fullscreen again if not already (harmless if already fullscreen)
+    if(!isFullscreen()){
+      requestAppFullscreen().catch(()=>{ /* ignore */ });
+    }
+
+
+    resetAll();
+    state.startTime = performance.now();
+    loadQuestion();
+    show('question');
+  });
+
+
+// --- Tilt control setup ---
+const tiltBtn = document.getElementById('tiltBtn');
+
+// iOS requires an explicit permission request (user gesture)
+async function requestTiltPermissionIfNeeded(){
+  const AnyOrientationEvent = window.DeviceOrientationEvent || window.OrientationEvent;
+  if (!AnyOrientationEvent) throw new Error('DeviceOrientation not supported');
+
+  // iOS 13+ style permission gate
+  if (typeof DeviceOrientationEvent !== 'undefined' &&
+      typeof DeviceOrientationEvent.requestPermission === 'function') {
+    const res = await DeviceOrientationEvent.requestPermission();
+    if (res !== 'granted') throw new Error('Permission denied');
+  }
+  return true;
 }
 
-// ---------- Bonus Round ----------
-function startBonusIntro(){
-  // Hide question bar during the bonus instructions
-  questionEl.style.display = 'none';
-  bonusIntro.classList.add('show');
-  // Set the header timer to show 15s so players know what's coming
-  timeEl.textContent = BONUS_ROUND_SECONDS;
+// Start listening to deviceorientation
+function enableTilt(){
+  function onOrient(e){
+    // Use gamma (left/right tilt) in portrait; fall back to beta if gamma is null
+    const g = (typeof e.gamma === 'number') ? e.gamma : 0; // -90..+90
+    tiltRaw = g;
+  }
+  window.addEventListener('deviceorientation', onOrient, { passive: true });
+  tiltEnabled = true;
+  tiltBtn.textContent = '✅ Tilt Enabled';
 }
+
+tiltBtn.addEventListener('click', async ()=>{
+  try{
+    await requestTiltPermissionIfNeeded();
+    enableTilt();
+  }catch(err){
+    modal.open("Tilt Not Available", "Your browser didn’t allow motion sensors, or this device doesn’t support them. You can still play with buttons/keys.", ()=>{});
+  }
+});
+
+// Bonus Round button: show a short countdown, then start
+document.getElementById('bonusBtn').addEventListener('click', ()=>{
+  if(!isFullscreen()){
+    requestAppFullscreen().catch(()=>{ /* ignore */ });
+  }
+  modal.countdown("Bonus Round", "Emoji jumping begins in...", 3, startBonusRound);
+});
+
+
+  // --- Question Screen ---
+  const qText = document.getElementById('qText');
+  const answersBox = document.getElementById('answers');
+  const qCounter = document.getElementById('qCounter');
+  const scorePill = document.getElementById('scorePill');
+
+  function loadQuestion(){
+    const item = questions[state.i];
+    qCounter.textContent = `Question ${state.i+1} of ${questions.length}`;
+    qText.textContent = item.q;
+    answersBox.innerHTML = "";
+    item.a.forEach((label, idx)=>{
+      const btn = document.createElement('button');
+      btn.className = 'answer';
+      btn.textContent = label;
+      btn.addEventListener('click', ()=>handleAnswer(idx));
+      answersBox.appendChild(btn);
+    });
+    scorePill.textContent = `Score: ${state.correct} correct · Bonus: ${state.bonus}`;
+  }
+
+  function handleAnswer(idx){
+    const item = questions[state.i];
+    const buttons = [...answersBox.children];
+    buttons.forEach((b, i)=>{
+      b.classList.remove('correct','incorrect');
+      if(i===item.correct) b.classList.add('correct');
+      if(i===idx && i!==item.correct) b.classList.add('incorrect');
+      b.disabled = true;
+    });
+
+    const wasRight = idx===item.correct;
+    state.selectedWasCorrect = wasRight;
+    state.review.push({ q: item.q, your: idx, correct: item.correct, choices: item.a, ref: item.ref });
+
+    if(wasRight) state.correct++;
+
+    const title = wasRight ? "✅ Correct!" : "❌ Incorrect";
+    const msg = wasRight
+      ? `Nice! ${niceEncouragement()} (${item.ref})`
+      : `The correct answer is "${item.a[item.correct]}". (${item.ref})`;
+
+modal.countdown(title, "Emoji jumping begins in...", 5, startJumpRound);
+
+  }
+
+
+  function niceEncouragement(){
+    const lines = ["Great memory!","Way to go!","You’re on a roll!","Nailed it!","Solid!"];
+    return lines[Math.floor(Math.random()*lines.length)];
+  }
+
+  // --- Game (mini doodle jump) ---
+  const canvas = document.getElementById('game');
+  const wrap = document.getElementById('gameWrap');
+  const timerChip = document.getElementById('timerChip');
+  const heightChip = document.getElementById('heightChip');
+  const endEarlyBtn = document.getElementById('endEarlyBtn');
+  const leftBtn = document.getElementById('leftBtn');
+  const rightBtn = document.getElementById('rightBtn');
+
+
+// === Bonus config ===
+const BONUS_PX_PER_POINT = 120; // pixels climbed per 1 bonus point (adjust as you like)
+
+// Tilt control config
+const TILT_SENSITIVITY = 0.090;  // even more movement per degree
+const TILT_DEADZONE   = 0.5;     // react to smaller tilts
+const TILT_SMOOTH     = 0.08;    // slightly snappier
+
+
+
+// Rare bonus platforms
+const GREEN_PLATFORM_PROB  = 0.33; // ~33% chance -> +1 bonus
+const YELLOW_PLATFORM_PROB = 0.10; // ~10% chance  -> +2 bonus
+const ALLOW_BONUS_PER_PLATFORM_ONCE = true; // award once per platform
+
+const ROUND_LEN = 20000; // ms — 20 seconds
+const BONUS_ROUND_LEN = 60000; // ms — 60 seconds for bonus mode
+
+// small UI flash when bonus is earned
+let bonusFlash = 0;           // ms remaining
+let bonusFlashText = "";      // "+1" or "+2"
+let roundColorBonus = 0;      // color-platform points earned this round
+
+let tiltEnabled = false;
+let tiltRaw = 0;     // most recent raw degrees from sensor
+let tiltAX  = 0;     // smoothed tilt used for movement
+
+
+let ctx, W, H, dpr=1;
+let running=false, last=0, elapsed=0, roundLen=ROUND_LEN;
+let wasRunningBeforeHide = false;
+
+  let world, keys={left:false,right:false}, touchLeft=false, touchRight=false;
+
+function resizeCanvas(){
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const rect = wrap.getBoundingClientRect();
+
+  // Use CSS pixels for game physics (fixes iPad DPR jump issue)
+  W = Math.max(180, Math.floor(rect.width));
+  H = Math.max(180, Math.floor(rect.height));
+
+  // Render at device resolution for crispness
+  canvas.width  = Math.floor(W * dpr);
+  canvas.height = Math.floor(H * dpr);
+  ctx = canvas.getContext('2d');
+
+  // Scale all drawing so we keep coding in CSS px
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.imageSmoothingEnabled = true;
+}
+
+  window.addEventListener('resize', resizeCanvas);
+
+document.addEventListener('visibilitychange', ()=>{
+  if (document.hidden) {
+    wasRunningBeforeHide = running;
+    running = false;
+  } else {
+    if (wasRunningBeforeHide) {
+      // resume smoothly
+      last = performance.now();
+      running = true;
+      requestAnimationFrame(loop);
+    }
+  }
+});
+
+
+  function startJumpRound(){
+
+state.bonusMode = false;      // not bonus mode
+roundLen = ROUND_LEN;         // use normal 20s length
+document.getElementById('roundPill').textContent = 'Jump Round';
+
+
+    show('game');
+    resizeCanvas();
+    setupWorld();
+roundColorBonus = 0; // reset per-round color bonus
+
+    elapsed = 0;
+    running = true;
+    last = performance.now();
+    requestAnimationFrame(loop);
+  }
 
 function startBonusRound(){
-  bonusIntro.classList.remove('show');
-  bonusLayerEl.setAttribute('aria-hidden','false');
+  state.bonusMode = true;        // mark bonus mode
+  roundLen = BONUS_ROUND_LEN;    // 60s
+  document.getElementById('roundPill').textContent = 'Bonus Round (60s)';
 
-  // Clear any stray question balloons/stars just in case
-  clearBalloons();
-  clearBonus();
+  show('game');
+  resizeCanvas();
+  setupWorld();
+  roundColorBonus = 0;
 
-  // Spawn balloons
-  spawnBurstBalloons(BONUS_BALLOONS);
-
-  // Start countdown
-  lock = false;
-  timeLeft = BONUS_ROUND_SECONDS;
-  startBonusTimer();
+  elapsed = 0;
+  running = true;
+  last = performance.now();
+  requestAnimationFrame(loop);
 }
+
+
+  function endJumpRound(){
+running = false;
+
+// --- Compute height-based bonus for this round ---
+const roundClimbedPx = Math.max(0, ((H - world.bestY) | 0));
+const heightBonus = Math.floor(roundClimbedPx / BONUS_PX_PER_POINT);
+state.bonus += heightBonus;
+
+
+
+
+
+// Combined summary for this round
+const totalRoundBonus = heightBonus + roundColorBonus;
+
+// Helper to advance after popup (or immediately if no bonus)
+const advance = () => {
+  state.totalJumpTime += elapsed;
+  state.i++;
+  if (state.i >= questions.length) {
+    const ms = Math.max(1, performance.now() - state.startTime);
+    const totalPoints = state.correct + state.bonus;
+    document.getElementById('finalScore').textContent =
+      `Correct: ${state.correct}/${questions.length} · Bonus: ${state.bonus} · Total: ${totalPoints}`;
+    document.getElementById('timePlayed').textContent =
+      `Time played: ${(ms/1000).toFixed(1)}s (jump time ${(state.totalJumpTime/1000).toFixed(1)}s)`;
+    show('end');
+  } else {
+    loadQuestion();
+    show('question');
+  }
+};
+
+// Show a combined popup if we earned any bonus this round
+if (totalRoundBonus > 0) {
+  const lines = [];
+  if (heightBonus > 0)       lines.push(`Height: ${roundClimbedPx}px: +${heightBonus}`);
+  if (roundColorBonus > 0)   lines.push(`Color platforms: +${roundColorBonus}`);
+  lines.push(`Total this round: +${totalRoundBonus}`);
+
+modal.html("Bonus Earned!", lines.join('<br>'), advance);
+
+} else {
+  advance();
+}
+
+      }
+
 
 function endBonusRound(){
-  clearInterval(timer);
-  bonusLayerEl.setAttribute('aria-hidden','true');
-  clearBurstBalloons();
-  endGame();
+  running = false;
+  state.totalJumpTime += elapsed;
+
+  const secs = (elapsed/1000).toFixed(1);
+  const climbed = Math.max(0, ((H - world.bestY)|0));
+  const gained = roundColorBonus + Math.floor(climbed / BONUS_PX_PER_POINT);
+
+  modal.html(
+    "Bonus Round Complete!",
+    `<div class="endbig">⏱️ ${secs}s survived</div>
+     <div style="margin:6px 0">⬆️ ${climbed}px climbed</div>
+     <div style="margin:6px 0">+${gained} bonus this round</div>`,
+    ()=>{ show('title'); }
+  );
 }
 
-function startBonusTimer(){
-  clearInterval(timer);
-  timeEl.textContent = timeLeft;
-  timer = setInterval(()=>{
-    timeLeft--;
-    timeEl.textContent = Math.max(0, timeLeft);
-    if(timeLeft <= 0){
-      clearInterval(timer);
-      endBonusRound();
+
+endEarlyBtn.addEventListener('click', ()=>{
+  if (state.bonusMode) endBonusRound();
+  else endJumpRound();
+});
+
+
+// World config (more forgiving)
+const PLAYER = { w:26, h:26, emoji:"🙂", speed:0.30, jump:-0.75, grav:0.0010, maxVy:0.70 };
+const PLATFORM = { w:80, h:12, count:12, spacing:0.12 }; // closer platforms, a bit wider/taller
+
+
+  function setupWorld(){
+    world = {
+      px: W/2, py: H*0.72, vx:0, vy:-0.02,
+      bestY: H*0.72,
+      platforms: [],
+      scroll: 0,
+      seed: Math.random()*1e6|0
+    };
+
+// Safety floor (kept for ~3.5s before removal)
+world.safetyTTL = 3500; // ms the red floor stays active
+
+// Raise and scale the floor so it's clearly visible on all screens
+const floorH = Math.max(14, Math.floor(H * 0.024)); // ~2.4% of canvas height
+const floorY = H - floorH - 10;                      // lift ~10px above bottom
+world.platforms.push({ x: 0, y: floorY, w: W, h: floorH, type: 'safety' });
+
+// Helpful starter platform a bit above the floor
+world.platforms.push({
+  x: Math.max(10, W * 0.5 - 60),
+  y: floorY - Math.max(60, Math.floor(H * 0.08)),    // ~8% of height above floor
+  w: 120,
+  h: 12,
+  type: 'normal'
+});
+
+
+// Generate initial platforms upward
+let y = H * 0.80;
+// If bonus mode, start with a slightly reduced count
+const initialCount = state.bonusMode ? 10 : PLATFORM.count;
+
+for (let i = 0; i < initialCount; i++) {
+  y -= H * PLATFORM.spacing;
+  world.platforms.push(randPlatformAt(y));
+}
+
+  }
+
+  function rand(min,max){ return min + Math.random()*(max-min); }
+
+function randPlatformAt(y){
+  const w = clamp(PLATFORM.w * (W/320), 58, W*0.42);
+
+  // decide platform type (mildly rare green, very rare yellow)
+  let type = "normal";
+  const r = Math.random();
+  if (r < YELLOW_PLATFORM_PROB) {
+    type = "yellow"; // +2 bonus
+  } else if (r < YELLOW_PLATFORM_PROB + GREEN_PLATFORM_PROB) {
+    type = "green";  // +1 bonus
+  }
+
+  return {
+    x: rand(8, Math.max(9, W - w - 9)),
+    y, w, h: PLATFORM.h,
+    type
+  };
+}
+ 
+
+  function clamp(v,min,max){ return Math.max(min, Math.min(max,v)); }
+
+  // Input
+  window.addEventListener('keydown',(e)=>{
+    if(e.key==='ArrowLeft'){ keys.left=true; }
+    if(e.key==='ArrowRight'){ keys.right=true; }
+  });
+  window.addEventListener('keyup',(e)=>{
+    if(e.key==='ArrowLeft'){ keys.left=false; }
+    if(e.key==='ArrowRight'){ keys.right=false; }
+  });
+  leftBtn.addEventListener('pointerdown', ()=>{ touchLeft=true; });
+  rightBtn.addEventListener('pointerdown', ()=>{ touchRight=true; });
+  const endTouch = ()=>{ touchLeft=false; touchRight=false; };
+  leftBtn.addEventListener('pointerup', endTouch);
+  rightBtn.addEventListener('pointerup', endTouch);
+  leftBtn.addEventListener('pointercancel', endTouch);
+  rightBtn.addEventListener('pointercancel', endTouch);
+  leftBtn.addEventListener('pointerleave', endTouch);
+  rightBtn.addEventListener('pointerleave', endTouch);
+
+  function loop(t){
+    if(!running) return;
+    const dt = Math.min(32, t-last);
+    last = t;
+    elapsed += dt;
+
+    update(dt);
+    render();
+
+if (elapsed >= roundLen) {
+  if (state.bonusMode) endBonusRound();
+  else endJumpRound();
+  return;
+}
+
+
+
+    requestAnimationFrame(loop);
+  }
+
+  function update(dt){
+    const p = world;
+const prevY = p.py; // remember previous Y for crossing check
+if (bonusFlash > 0) bonusFlash -= dt;
+
+  // Freeze horizontal input while any popup is visible
+  const modalOpen = modal.isOpen && modal.isOpen();
+
+
+    // Horizontal
+let ax = 0;
+
+if (!modalOpen) {
+  const left = keys.left || touchLeft;
+  const right = keys.right || touchRight;
+  if (left)  ax -= PLAYER.speed;
+  if (right) ax += PLAYER.speed;
+
+  // Add tilt contribution (portrait: gamma left/right)
+  if (tiltEnabled){
+    let t = Math.abs(tiltRaw) < TILT_DEADZONE ? 0 : tiltRaw;
+    const target = clamp(t * TILT_SENSITIVITY, -1.3, 1.3) * PLAYER.speed;
+    tiltAX += (target - tiltAX) * TILT_SMOOTH;
+    ax += tiltAX;
+  }
+}
+
+// apply move (even if a popup is open, ax=0 so the player won’t drift)
+p.vx = ax;
+p.px += p.vx * dt;
+
+
+    // Wrap edges
+    if(p.px < -16) p.px = W + 16;
+    if(p.px > W + 16) p.px = -16;
+
+    // Gravity / Vertical
+    p.vy += PLAYER.grav * dt;
+    p.vy = clamp(p.vy, -999, PLAYER.maxVy);
+    p.py += p.vy * dt;
+
+    // Scroll up when player climbs
+    if(p.py < H*0.5){
+      const dy = (H*0.5 - p.py);
+      p.py += dy;
+      p.scroll += dy;
+      for(const pl of p.platforms) pl.y += dy;
     }
-  }, 1000);
+if (p.py < p.bestY) p.bestY = p.py;
+
+
+// Collisions (only when moving downward), tolerant top-edge check
+if (p.vy > 0) {
+  const footNow  = p.py + PLAYER.h * 0.5;
+  const footPrev = prevY + PLAYER.h * 0.5;
+  for (const pl of p.platforms) {
+    // crossed the top of the platform this frame?
+    const crossedTop = (footPrev <= pl.y) && (footNow >= pl.y - 2);
+    const withinX = (p.px >= pl.x - PLAYER.w*0.5) && (p.px <= pl.x + pl.w + PLAYER.w*0.5);
+    if (crossedTop && withinX) {
+      p.py = pl.y - PLAYER.h * 0.5; // snap to top to avoid sinking
+      p.vy = PLAYER.jump;           // bounce
+
+      // award one-time bonus for special platforms
+      let award = 0;
+      if (pl.type === 'green')  award = 1;
+      if (pl.type === 'yellow') award = 2;
+
+      if (award > 0) {
+        state.bonus += award;
+roundColorBonus += award; // track per-round color points
+
+        bonusFlash = 800;                 // show flash ~0.8s
+        bonusFlashText = `+${award}`;
+        if (ALLOW_BONUS_PER_PLATFORM_ONCE) {
+          pl.type = 'normal';             // prevent repeated awards on re-bounce
+        }
+      }
+    }
+  }
+} // <-- this closes the "if (p.vy > 0)" block
+
+
+// Fell off the bottom AFTER safety expired: end with skull popup
+if (typeof world.safetyTTL === 'undefined' && p.py > H + 24) {
+  running = false;
+
+  // Temporarily rename the OK button to "Next question"
+  const prevLabel = modal.ok.textContent;
+  modal.ok.textContent = 'Next question';
+
+  modal.html(
+    'Oh no!',
+    `<div style="font-size:72px;line-height:1;margin:6px 0;">💀</div>
+     <div style="opacity:.85">You fell off!</div>`,
+    ()=>{
+      // restore label and proceed to next question (keeps bonus flow)
+      modal.ok.textContent = prevLabel;
+            if (state.bonusMode) endBonusRound();
+      else endJumpRound();
+
+    }
+  );
+  return; // stop updating this frame
 }
 
-function spawnBurstBalloons(n){
-  clearBurstBalloons();
-  const r = screen.getBoundingClientRect();
-  const pad = 24;
 
-  for (let i=0;i<n;i++){
-    const b = document.createElement('div');
-    b.className = 'burstBalloon';
-    b.setAttribute('aria-label','Bonus balloon');
-// Decide if this one is a bomb
-const isBomb = Math.random() < BONUS_BOMB_CHANCE;
+    // Recycle platforms
+for (const pl of world.platforms) {
+  if (pl.type !== 'safety') pl.y += 0.02 * dt; // keep safety floor pinned
+}
 
-if (isBomb) {
-  b.textContent = '💣';
-  b.classList.add('bomb');
-  b.setAttribute('aria-label','Bomb');
-} else {
-  b.textContent = pickBonusEmoji();
-  b.setAttribute('aria-label','Bonus ' + b.textContent);
+// Safety platform lifetime countdown
+if (typeof world.safetyTTL === 'number') {
+  world.safetyTTL -= dt;
+  if (world.safetyTTL <= 0) {
+    world.platforms = world.platforms.filter(pl => pl.type !== 'safety');
+    delete world.safetyTTL;
+  }
+}
+
+world.platforms = world.platforms.filter(pl => pl.type === 'safety' || pl.y < H + 20);
+
+// In bonus mode, every 10s reduce platform count by 2, floor at 4
+const effectiveCount = state.bonusMode
+  ? clamp(PLATFORM.count - Math.floor(elapsed / 10000) * 2, 4, PLATFORM.count)
+  : PLATFORM.count;
+
+while (world.platforms.length < effectiveCount + 1) {
+  // find top-most platform without allocating arrays
+  let topY = Infinity;
+  for (let i = 0; i < world.platforms.length; i++) {
+    if (world.platforms[i].y < topY) topY = world.platforms[i].y;
+  }
+  const newY = topY - H * PLATFORM.spacing; // use spacingDyn if you added it
+  world.platforms.push(randPlatformAt(newY));
 }
 
 
 
-    // random starting position
-    const x = rand(pad, r.width  - pad - 48);
-    const y = rand(pad + 20, r.height - pad - 48);
-    b.style.left = x + 'px';
-    b.style.top  = y + 'px';
-
-    // random movement + speed
-    b.style.setProperty('--dx',  rand(-120,120) + 'px');
-    b.style.setProperty('--dy',  rand(-160,160) + 'px');
-    b.style.setProperty('--d',   rand(3800, 9000) + 'ms');
-    b.style.animationDelay = rand(0, 1200) + 'ms';
-
-// pop to score (or bomb penalty)
-b.addEventListener('click', (e)=>{
-  if (lock) return;
-
-  if (b.classList.contains('bomb')) {
-    // Bomb: subtract points
-    score -= BONUS_BOMB_PENALTY;
-    scoreEl.textContent = score;
-    ping('💣 Boom! -' + BONUS_BOMB_PENALTY, 'error');
-    playTone && playTone('bad');
-  } else {
-    // Regular bonus balloon
-    score += BONUS_BALLOON_POINTS;
-    scoreEl.textContent = score;
-    playTone && playTone('bonus');
-    confettiBurst && confettiBurst(b);
+    // HUD
+    timerChip.textContent = `⏱️ ${(elapsed/1000).toFixed(1)}s`;
+    const climbed = Math.max(0, ((H - p.bestY)|0));
+    heightChip.textContent = `⬆️ ${climbed}`;
   }
 
-  b.classList.add('pop');
-  setTimeout(()=> b.remove(), 200);
-});
+  function render(){
+    const p = world;
+    ctx.clearRect(0,0,W,H);
+
+    // Background gradient
+    const g = ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,'#07162c');
+    g.addColorStop(1,'#030b16');
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,W,H);
+
+    // Platforms
+    for(const pl of p.platforms){
+      if(pl.type==='safety'){
+        ctx.fillStyle = '#991b1b';
+        ctx.fillRect(pl.x, pl.y, pl.w, pl.h);
+}else{
+  // rounded bar with color by type
+  let color = '#1d4ed8'; // normal blue
+  if (pl.type === 'green')  color = '#16a34a'; // green-600
+  if (pl.type === 'yellow') color = '#f59e0b'; // amber-500
+
+  ctx.fillStyle = color;
+  roundRect(pl.x, pl.y, pl.w, pl.h, 4);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,.08)';
+  ctx.stroke();
+}
+
+    }
+
+    // Player
+drawEmoji(PLAYER.emoji, p.px, p.py, Math.max(22, Math.min(48, W*0.065)));
+
+// bonus flash text near the player (raised higher, responsive offset)
+if (bonusFlash > 0) {
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, Math.min(1, bonusFlash / 800));
+  const flashSize = Math.max(16, Math.min(28, W*0.05));
+  ctx.font = `bold ${flashSize}px system-ui, Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#ffffff';
+
+  // Raise higher than before; scale with width so it’s clear on tablets too
+  const raise = Math.max(36, Math.min(72, W * 0.10)); // was fixed 24
+  ctx.fillText(bonusFlashText, p.px, p.py - raise);
+
+  ctx.restore();
+}
 
 
-// Instant touch response
-b.addEventListener('pointerdown', (e)=>{
-  e.preventDefault(); // avoid the delayed synthetic click
-  b.click();          // reuse the same logic
-});
-
-
-    bonusLayerEl.appendChild(b);
   }
-}
 
-function clearBurstBalloons(){
-  if(!bonusLayerEl) return;
-  bonusLayerEl.querySelectorAll('.burstBalloon').forEach(el => el.remove());
-}
+  function drawEmoji(ch, x, y, size){
+    ctx.font = `bold ${size}px system-ui, Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(ch, x, y);
+    if(state.selectedWasCorrect){
+      ctx.font = `bold ${Math.floor(size*0.7)}px system-ui, Apple Color Emoji, Segoe UI Emoji`;
+      ctx.fillText('🥾', x, y + size*0.7);
+    }
+  }
+  function roundRect(x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+  }
 
-
-
-function endGame(){
-  clearInterval(timer);
-  clearBalloons();
-clearBonus();
-bonusPending = 0;
-
-  finalEl.innerHTML = `
-  <div class="finalStats">
-    <div class="statBadge score"   role="status">🏆 Score: ${score}</div>
-    <div class="statBadge correct" role="status">✅ Correct: ${correctCount} / ${QUESTIONS.length}</div>
-  </div>
-`;
-
-  overOverlay.classList.add('show');
-  // hide question again so it doesn't cover overlays in a replay
-  questionEl.style.display = 'none';
-}
-
-function clearBalloons(){
-  document.querySelectorAll('.balloonWrap').forEach(w => w.remove());
-  activeBalloons = [];
-}
-
-
-
-function spawnBonus(){
-  clearBonus();
-  bonusPending = 0; // reset each question
-
-  const el = document.createElement('div');
-  el.className = 'bonus';
-  el.setAttribute('role','button');
-  el.setAttribute('aria-label','Bonus');
-  el.setAttribute('tabindex','0');
-  el.textContent = '⭐️';
-  screen.appendChild(el);
-  bonusEl = el;
-
-  // Freeze the star exactly where it is (prevents jump on mobile)
-  const freezeBonusPosition = () => {
-    if (!bonusEl) return;
-    const pr = screen.getBoundingClientRect();
-    const rr = bonusEl.getBoundingClientRect();
-    const x = rr.left - pr.left;
-    const y = rr.top  - pr.top;
-
-    // Write exact pixels back, THEN kill transitions next frame
-    bonusEl.style.left = x + 'px';
-    bonusEl.style.top  = y + 'px';
-    requestAnimationFrame(() => {
-      if (!bonusEl) return;
-      bonusEl.style.transition = 'none';
-    });
-  };
-
-  const pauseStar = () => {
-    if (lock || !bonusEl) return;
-    if (bonusTimer) { clearInterval(bonusTimer); bonusTimer = null; }
-    freezeBonusPosition(); // <- critical: no snap to end position
-  };
-
-  const resumeStar = () => {
-    if (lock || !bonusEl) return;
-    bonusEl.style.transition = 'left 900ms linear, top 900ms linear, transform 200ms ease, opacity 200ms ease';
-    move();
-    bonusTimer = setInterval(move, 1600 + rand(0, 900));
-  };
-
-  // initial placement
-  const p0 = randomInsideScreen();
-  setBonusPosition(p0.x, p0.y);
-
-  // gentle wandering
-  const move = () => {
-    const p = randomInsideScreen();
-    setBonusPosition(p.x, p.y);
-  };
-  move();
-  bonusTimer = setInterval(move, 1600 + rand(0, 900));
-
-  // claim logic (idempotent)
-  const claimBonus = (e) => {
-    if (e) { e.stopPropagation(); e.preventDefault && e.preventDefault(); }
-    if (lock || bonusPending > 0 || !bonusEl) return;
-    bonusPending = BONUS_POINTS;
-    ping('⭐️ Bonus +' + BONUS_POINTS + '!', 'success');
-    playTone('bonus');
-    el.classList.add('hide');
-    setTimeout(clearBonus, 220);
-  };
-
-  // MOBILE-RELIABLE: claim on pointerdown and capture the pointer
-  el.addEventListener('pointerdown', (e) => {
-    try { e.target.setPointerCapture && e.target.setPointerCapture(e.pointerId); } catch(_) {}
-    pauseStar();    // freeze exactly where it is
-    claimBonus(e);  // award instantly on touch
+  // --- End Screen + Review ---
+  document.getElementById('playAgain').addEventListener('click', ()=>{
+    resetAll();
+    loadQuestion();
+    show('question');
+  });
+  document.getElementById('reviewBtn').addEventListener('click', ()=>{
+    const parts = state.review.map((r,i)=>{
+      const your = r.your!=null ? `You: ${r.choices[r.your]}` : 'You: (skipped)';
+      const cor = `Answer: ${r.choices[r.correct]}`;
+      return `Q${i+1}. ${r.q}\n${your}\n${cor} — ${r.ref}`;
+    }).join('\n\n');
+    modal.open("Review Answers", parts || "No answers to review.", null);
   });
 
-  // keep keyboard accessibility
-  el.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') claimBonus(e);
-  });
+  function resetAll(){
+    state.i = 0;
+    state.correct = 0;
+    state.review = [];
+    state.totalJumpTime = 0;
+    state.selectedWasCorrect = false;
+state.bonus = 0;
 
-  // optional: let it wander again after the press ends
-  el.addEventListener('pointerup',     resumeStar);
-  el.addEventListener('pointercancel', resumeStar);
-}
-
-
-function setBonusPosition(x, y){
-  if(!bonusEl) return;
-  bonusEl.style.left = x + 'px';
-  bonusEl.style.top  = y + 'px';
-}
-
-function randomInsideScreen(){
-  const r = screen.getBoundingClientRect();
-  const pad = 24;                                // edge padding
-  const qh = (questionEl.offsetHeight || 0) + 20; // keep away from question bar
-
-  // measure current star size (fallbacks if not yet laid out)
-  const w = bonusEl ? bonusEl.offsetWidth  : 40;
-  const h = bonusEl ? bonusEl.offsetHeight : 40;
-
-  // coordinates in *screen local* space (since .bonus is appended to .screen)
-  const x = rand(pad, r.width  - pad - w);
-  const y = rand(Math.max(80, qh), r.height - pad - h);
-
-  return { x, y };
-}
-
-
-function clearBonus(){
-  if (bonusTimer){ clearInterval(bonusTimer); bonusTimer = null; }
-  if (bonusEl){ bonusEl.remove(); bonusEl = null; }
-}
-
-
-
-function ping(msg, kind = 'info'){
-  toast.textContent = msg;
-  toast.className = 'toast ' + (kind || 'info'); // reset + apply kind
-  // small reflow so the next classList.add triggers transition fresh
-  void toast.offsetWidth;
-  toast.classList.add('show');
-  setTimeout(()=> toast.classList.remove('show'), 900);
-}
-
-
-function confettiBurst(el){
-  const {left, top, width, height} = el.getBoundingClientRect();
-  const cx = left + width / 2;
-  const cy = top  + height / 2;
-
-  const pieces = ['🎉','✨','💥','🎊','⭐️'];
-  for (let i = 0; i < 6; i++){
-    const s = document.createElement('div');
-    s.className = 'confetti';
-    s.textContent = pieces[Math.floor(Math.random() * pieces.length)];
-    s.style.left = (cx + (Math.random()*80 - 40)) + 'px';
-    s.style.top  = (cy + (Math.random()*20 - 10)) + 'px';
-    document.body.appendChild(s);
-    s.addEventListener('animationend', () => s.remove(), { once:true });
-  }
-}
-
-// ---- Beeps with Web Audio (no files) ----
-function playTone(type='ok'){
-  const AC = window.AudioContext || window.webkitAudioContext;
-  if (!AC) return;
-
-  // Reuse one AudioContext
-  playTone.ctx = playTone.ctx || new AC();
-  const ctx = playTone.ctx;
-
-  const o = ctx.createOscillator();
-  const g = ctx.createGain();
-  o.connect(g); g.connect(ctx.destination);
-
-  const now = ctx.currentTime;
-
-  // Defaults: correct
-  let f = 880, dur = 0.14, wave = 'sine';
-  if (type === 'bad'){ f = 200; dur = 0.18; wave = 'sawtooth'; }
-  if (type === 'time'){ f = 240; dur = 0.20; wave = 'square'; }
-
-  // New: coin-y bonus chirp (quick upward sweep)
-  if (type === 'bonus'){
-    wave = 'triangle';
-    dur = 0.22;
-    o.type = wave;
-    o.frequency.setValueAtTime(600, now);
-    o.frequency.exponentialRampToValueAtTime(1300, now + 0.16);
-    g.gain.setValueAtTime(0.0001, now);
-g.gain.exponentialRampToValueAtTime(0.32, now + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
-    o.start(now);
-    o.stop(now + dur + 0.02);
-    return;
   }
 
-  // Other tones
-  o.type = wave;
-  o.frequency.setValueAtTime(f, now);
-  g.gain.setValueAtTime(0.0001, now);
-g.gain.exponentialRampToValueAtTime(0.28, now + 0.01);
-  g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
-  o.start(now);
-  o.stop(now + dur + 0.02);
-}
+  // --- Initial screen ---
+  show('splash');
 
-// Create/resume + iOS unlock (must be called from a user gesture)
-function ensureAudioReady(){
-  const AC = window.AudioContext || window.webkitAudioContext;
-  if (!AC) return;
-
-  playTone.ctx = playTone.ctx || new AC();
-  const ctx = playTone.ctx;
-
-  // Resume if suspended
-  if (ctx.state === 'suspended') ctx.resume();
-
-  // iOS unlock: play a 1-sample silent buffer once
-  if (!ensureAudioReady.unlocked) {
-    try {
-      const buffer = ctx.createBuffer(1, 1, 22050);
-      const src = ctx.createBufferSource();
-      src.buffer = buffer;
-      src.connect(ctx.destination);
-      src.start(0);
-      ensureAudioReady.unlocked = true;
-    } catch (e) { /* ignore */ }
-  }
-}
-
-
-
-
-function layoutLanes(cols){
-  const step = 100/(cols+1);
-  return Array.from({length: cols}, (_,i)=> step*(i+1));
-}
-function rand(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+})();
 </script>
 </body>
 </html>
