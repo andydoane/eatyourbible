@@ -74,6 +74,8 @@
   .answer .txt{flex:1}
 
   /* Popups / Modals */
+#modalMsg { white-space: pre-line; }
+
   .modal{
     position:absolute;inset:0;background:rgba(0,0,0,.55);
     display:none;align-items:center;justify-content:center;padding:16px
@@ -105,6 +107,8 @@
     <div class="pill big">Score: <span id="score">0</span></div>
     <div class="pill">Q: <span id="qno">0</span>/10</div>
     <div class="pill">Time: <span id="time">--</span>s</div>
+      <div class="pill" id="autoPill" title="Toggle Autofire">Auto: <span id="auto">OFF</span></div>
+
     <div class="help tiny">Move: ←→ or tilt &nbsp;•&nbsp; Shoot: tap / click</div>
   </div>
   <div class="stage" id="stage">
@@ -343,7 +347,19 @@ function toast(msg,ms=1400){
 /* ===============================
    Game State
    =============================== */
-const HUD = {scoreEl:$("#score"), qnoEl:$("#qno"), timeEl:$("#time")};
+const HUD = {
+  scoreEl: $("#score"),
+  qnoEl: $("#qno"),
+  timeEl: $("#time"),
+  autoEl: $("#auto"),
+  autoPill: $("#autoPill"),
+};
+
+function refreshAutoLabel(){
+  if (HUD.autoEl) HUD.autoEl.textContent = STATE.autoFire ? "ON" : "OFF";
+}
+
+
 let W=300,H=500, raf=0, now=0, last=0, dt=0;
 // Invader formation motion (group control)
 let INVADER_DIR = 1;          // 1 = right, -1 = left
@@ -399,6 +415,9 @@ const STATE = {
   qIndex:0,
   score:0,
   timer:0,
+    autoFire: false,     // autofire toggle
+  shownAutoTip: false, // show the autofire tip once before the first round
+
     advancing:false,    // <<< prevents multi-trigger at end of round
   roundEarned: 0,          // points earned during this arcade round (kills only)
   roundBonusKills: 0,      // number of bonus (correct-emoji) enemies destroyed
@@ -605,13 +624,37 @@ window.addEventListener("keyup",e=>{
   if(e.key==="ArrowRight") STATE.inputs.right=false;
 });
 stage.addEventListener("pointerdown", e=>{
+  // If in gameplay, check if the click/tap is on the player ship → toggle autofire (and don't shoot)
+  if ((STATE.phase === "play" || STATE.phase === "boss") && STATE.player) {
+    const rect = stage.getBoundingClientRect();
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    const cx = (e.clientX - rect.left) * dpr;
+    const cy = (e.clientY - rect.top) * dpr;
+    const dx = cx - STATE.player.x;
+    const dy = cy - STATE.player.y;
+    const dist = Math.hypot(dx, dy);
+
+    if (dist <= Math.max(PLAYER_SIZE * 0.65, 30)) {
+      // Toggle autofire
+      STATE.autoFire = !STATE.autoFire;
+      refreshAutoLabel();
+      toast(STATE.autoFire ? "Autofire: ON" : "Autofire: OFF", 1200);
+      return; // don't also fire a shot when toggling
+    }
+  }
+
+
+
+
+
+  // Otherwise normal quick tap-to-shoot
   STATE.inputs.shoot = true;
-  // quick tap shoot in play/boss
-  if(STATE.phase==="play"||STATE.phase==="boss"){
+  if (STATE.phase === "play" || STATE.phase === "boss") {
     playerShoot();
   }
   setTimeout(()=>STATE.inputs.shoot=false,60);
 });
+
 if(window.DeviceOrientationEvent){
   window.addEventListener("deviceorientation", e=>{
     // gamma ~ left/right tilt; clamp to [-30,30]
@@ -682,6 +725,13 @@ if (STATE.timer <= 0) {
     if(p.cd>0) p.cd -= dt;
     if(p.invul>0) p.invul -= dt;
   }
+
+  // Autofire: if enabled and we're in play/boss, try to fire every frame (respects cooldown)
+if ((STATE.phase === "play" || STATE.phase === "boss") && STATE.autoFire && STATE.player) {
+  playerShoot();
+}
+
+
 
   // Invaders movement (space-invaders-ish drift)
   // Enemy movement per-mode
@@ -1121,14 +1171,17 @@ function startQuestion(){
             beginArcadeRound();
           });
         });
-      }else{
-        const right = q.answers.find(x=>x.isCorrect);
-        showModal("Incorrect", `Correct answer: ${right.text}`, ()=>{
-          showModal("Blast the emojis!", "Use the arrow keys or tilt to move, tap or click to shoot.", ()=>{
-            beginArcadeRound();
-          });
-        });
-      }
+}else{
+  const right = q.answers.find(x=>x.isCorrect);
+  const rightMsg = right ? `${right.emoji} ${right.text}` : "Unavailable";
+  showModal("❌ Incorrect!", `Correct answer:\n${rightMsg}`, ()=>{
+    showModal("Blast the emojis!", "Use the arrow keys or tilt to move, tap or click to shoot.", ()=>{
+      beginArcadeRound();
+    });
+  });
+}
+
+
     });
     cont.appendChild(btn);
   });
@@ -1136,28 +1189,30 @@ function startQuestion(){
 }
 
 function beginArcadeRound(){
+  // Show the autofire tip once before the very first arcade round
+  if (STATE.qIndex === 0 && !STATE.shownAutoTip) {
+    STATE.shownAutoTip = true;
+    showModal("Tip", "Click or tap the 🚀 to turn autofire on/off.", ()=>{
+      beginArcadeRound(); // re-enter to actually start the round
+    }, "OK");
+    return;
+  }
+
   setupRoundFromQuestion();
   spawnInvaders();
   setPhase("play");
-
-  // Pick movement by question number: 1–4 classic, 5–8 sine, 9–10 chaos
-  const roundNo = STATE.qIndex + 1;
-  if (roundNo <= 4) MOVE_MODE = "classic";
-  else if (roundNo <= 8) MOVE_MODE = "sine";
-  else MOVE_MODE = "chaos";
-  // reset wave time
-  SINE_T = 0;
-
-
   STATE.timer = ROUND_TIME;
-
 
   // reset per-round stats
   STATE.roundEarned = 0;
   STATE.roundBonusKills = 0;
   STATE.roundNormalKills = 0;
   STATE.timeBonusAwarded = 0;
+
+  // Make sure HUD reflects current autofire state when a round starts
+  refreshAutoLabel();
 }
+
 
 
 function advanceAfterPlay(){
@@ -1173,7 +1228,7 @@ function advanceAfterPlay(){
   STATE.qIndex++;
   if (STATE.qIndex < QUESTIONS.length) {
     // brief toast and go to next question
-    toast("Round complete!");
+    toast("✅ Round complete!");
     setTimeout(()=>{
       STATE.advancing = false;   // clear before showing next question
       startQuestion();
@@ -1213,7 +1268,7 @@ function finishRound(clearedAll){
       : `Time’s up: no time bonus\n`) +
     `Round points: ${STATE.roundEarned + timeBonus}`;
 
-  showModal("Round Complete", msg, ()=>{
+  showModal("✅ Round Complete", msg, ()=>{
     STATE.advancing = false;  // clear before moving on
     advanceAfterPlay();       // go to next question / boss
   }, "Next Question");
@@ -1303,18 +1358,25 @@ function endGame(){
 
 $("#splashOk").addEventListener("click", ()=>{ showScreen("title") });
 $("#startGame").addEventListener("click", async ()=>{
-  // iOS Safari tilt permission (no-op elsewhere)
+  let granted = true;
   try{
     if (typeof DeviceOrientationEvent !== "undefined" &&
         typeof DeviceOrientationEvent.requestPermission === "function") {
-      await DeviceOrientationEvent.requestPermission().catch(()=>{});
+      const res = await DeviceOrientationEvent.requestPermission();
+      granted = (res === "granted");
     }
-  }catch(e){/* ignore */}
+  }catch(e){ /* keep granted=true for non-iOS */ }
+
+  if (!granted) {
+    toast("Tilt disabled on iOS — use ← → to move");
+  }
 
   STATE.score = 0;
   STATE.qIndex = 0;
   startQuestion();
 });
+
+
 
 $("#bossStart").addEventListener("click", ()=>{
   startBoss();
@@ -1326,6 +1388,19 @@ $("#playAgain").addEventListener("click", ()=>{
 /* ===============================
    Click-to-shoot helpers for desktop
    =============================== */
+
+// HUD pill: toggle autofire (register once, not inside other listeners)
+if (HUD.autoPill) {
+  HUD.autoPill.addEventListener("click", ()=>{
+    STATE.autoFire = !STATE.autoFire;
+    refreshAutoLabel();
+    toast(STATE.autoFire ? "Autofire: ON" : "Autofire: OFF", 1200);
+  });
+}
+
+
+
+
 stage.addEventListener("click", ()=>{
   if(STATE.phase==="play"||STATE.phase==="boss"){ playerShoot(); }
 });
@@ -1334,6 +1409,7 @@ stage.addEventListener("click", ()=>{
    Kickoff
    =============================== */
 resize();
+refreshAutoLabel();
 startGame();
 last=0; loop(0);
 
