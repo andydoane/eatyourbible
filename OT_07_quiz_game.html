@@ -2,914 +2,1267 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Emoji Hunt — Educational Game</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Emoji Breaker — Bible Edition</title>
 <style>
   :root{
-    --bg:#0f172a;            /* slate-900 */
-    --panel:#111827;         /* gray-900 */
-    --panel-soft:#1f2937;    /* gray-800 */
-    --accent:#22c55e;        /* green-500 */
-    --accent-2:#38bdf8;      /* sky-400 */
-    --warn:#f59e0b;          /* amber-500 */
-    --danger:#ef4444;        /* red-500 */
-    --text:#e5e7eb;          /* gray-200 */
-    --muted:#94a3b8;         /* slate-400 */
-    --btn:#334155;           /* slate-700 */
-    --btn-hover:#3f4b63;     /* slightly lighter */
-    --shadow: 0 12px 24px rgba(0,0,0,.35);
-    --radius: 18px;
+    --bg:#0f1226;
+    --card:#171b3a;
+    --ink:#eef2ff;
+    --muted:#aab3ff;
+    --accent:#7c4dff;
+    --good:#37d67a;
+    --bad:#ff5a5f;
+    --gold:#ffd54a;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
   body{
-    margin:0;
-    font-family: system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol", sans-serif;
-    color:var(--text);
-    background: radial-gradient(1200px 800px at 50% -10%, #1e293b, #0b1224 60%, #060b16 100%);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    -webkit-tap-highlight-color: transparent;
-    user-select:none;
-    touch-action: manipulation;
+    margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial,sans-serif;
+    background: radial-gradient(1200px 800px at 50% -200px,#1a1f4a 0%,#0f1226 50%,#0b0e1b 100%) fixed;
+    color:var(--ink); display:flex; align-items:center; justify-content:center;
   }
-  .app{
-    width:min(100vw, 900px);
-    height:min(100vh, 1600px);
-    padding: clamp(10px, 2vmin, 18px);
-    display:flex;
-    align-items:stretch;
-    justify-content:center;
-  }
+  .wrap{width:100%; max-width:900px; padding:16px}
   .card{
-    background:linear-gradient(180deg, var(--panel), var(--panel-soft));
-    border:1px solid #1f2937;
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    width:100%;
+    background:linear-gradient(180deg,rgba(255,255,255,0.05),rgba(0,0,0,0.15));
+    border:1px solid rgba(255,255,255,0.08);
+    border-radius:16px; box-shadow:0 30px 60px rgba(0,0,0,.35);
     overflow:hidden;
-    display:flex;
-    flex-direction:column;
   }
-  header.topbar{
-    display:flex; align-items:center; justify-content:space-between;
-    padding: clamp(10px, 2.5vmin, 18px) clamp(12px, 3vmin, 24px);
-    background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.01));
-    border-bottom:1px solid #1f2937;
-    gap:10px;
+  header{padding:20px 20px 12px; display:flex; align-items:center; justify-content:space-between; gap:12px}
+  /* Hide the header to give the canvas more height */
+header{display:none}
+
+  header h1{font-size:clamp(18px,3vw,22px); margin:0; letter-spacing:.3px}
+  header .score{font-weight:700; color:var(--gold)}
+  .view{display:none}
+  .view.active{display:block}
+  .section{padding:16px 20px 20px}
+  .center{display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; gap:16px}
+  .title{font-size:clamp(26px,5vw,42px); font-weight:800; line-height:1.05; letter-spacing:.2px}
+  .subtitle{color:var(--muted)}
+  .btn{
+    appearance:none; border:0; border-radius:12px; padding:14px 18px; font-weight:800; letter-spacing:.3px;
+    background:linear-gradient(180deg,#7f5aff,#6a4cff); color:white; cursor:pointer; box-shadow:0 10px 20px rgba(124,77,255,.35);
+    transition:transform .06s ease, box-shadow .2s ease, filter .2s ease;
   }
-  .brand{
-    font-weight:800; letter-spacing:.3px;
-    font-size: clamp(16px, 2.5vmin, 20px);
-    display:flex; align-items:center; gap:.5ch;
-  }
-  .pill{
-    background:#0b1224; border:1px solid #1f2937; border-radius:999px;
-    padding:.35rem .75rem; font-size: clamp(12px, 2vmin, 14px); color:var(--muted);
-  }
-  .content{
-    flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
-    padding: clamp(14px, 4vmin, 28px);
-    gap: clamp(12px, 2.5vmin, 20px);
-  }
-  .screen{display:none; width:100%; height:100%;}
-  .screen.active{display:flex; flex-direction:column;}
-  h1,h2,h3{margin:.2em 0}
-  h1{
-    font-size: clamp(28px, 6.5vmin, 42px);
-    line-height:1.05;
-    text-align:center;
-    background: linear-gradient(90deg, #a5b4fc, #60a5fa, #34d399);
-    -webkit-background-clip:text; background-clip:text; color:transparent;
-  }
-  h2{ font-size:clamp(20px, 4.5vmin, 28px); text-align:center; color:#dbeafe }
-  p.lead{ color:var(--muted); text-align:center; font-size:clamp(14px, 3.5vmin, 18px)}
-  .stack{ display:flex; flex-direction:column; gap: clamp(10px, 2.5vmin, 16px); width:100%; }
-  .row{ display:flex; flex-wrap:wrap; gap: clamp(8px, 2vmin, 12px); justify-content:center; }
-  button{
-    appearance:none; border:none; cursor:pointer; color:var(--text);
-    background:var(--btn); padding: clamp(10px, 2.7vmin, 16px) clamp(14px, 3.5vmin, 22px);
-    border-radius: 12px; font-weight:700; letter-spacing:.2px;
-    box-shadow: 0 4px 0 rgba(0,0,0,.35);
-    transition: transform .05s ease, background .15s ease, box-shadow .15s ease, opacity .15s ease;
-    font-size: clamp(14px, 3.7vmin, 18px);
-  }
-  button:hover{ background:var(--btn-hover) }
-  button:active{ transform: translateY(1px); box-shadow: 0 2px 0 rgba(0,0,0,.35) }
-  .btn-accent{ background: linear-gradient(180deg, #22c55e, #16a34a); }
-  .btn-warn{ background: linear-gradient(180deg, #f59e0b, #d97706); }
-  .btn-danger{ background: linear-gradient(180deg, #ef4444, #dc2626); }
-  .btn-ghost{
-    background: transparent; border:1px dashed #334155; color:#cbd5e1;
-  }
-  .panel-soft{
-    background:rgba(255,255,255,.03); border:1px solid #1f2937; border-radius:12px;
-    padding: clamp(10px, 2.7vmin, 18px);
-  }
-  .center{ text-align:center }
-  .emoji{ font-size: clamp(20px, 7vmin, 48px); line-height:1 }
-  .answers{
-    display:grid; gap: clamp(8px, 2.4vmin, 14px);
-    grid-template-columns: repeat(2, minmax(0,1fr));
-    width:100%;
-  }
-  .answer{
-    display:flex; align-items:center; justify-content:center; gap:.6ch;
-    min-height: clamp(44px, 8vmin, 64px);
-    text-wrap:balance; text-align:center;
-  }
-  .hud{
-    display:flex; gap:8px; align-items:center; justify-content:center; flex-wrap:wrap;
-    color:#cbd5e1; font-weight:700;
-  }
-  .hud .stat{ background:#0b1224; border:1px solid #1f2937; padding:.4rem .7rem; border-radius:10px; }
+  .btn:hover{filter:brightness(1.05)}
+  .btn:active{transform:translateY(1px)}
+  .btn.secondary{background:#2a2f64}
   .grid{
-    width:100%;
-    max-width: min(100%, 800px);
-    aspect-ratio: 1/1;
-    display:grid;
-    grid-template-columns: repeat(6, 1fr);
-    grid-auto-rows: 1fr;
-    gap: clamp(4px, 1.25vmin, 10px);
-    padding: clamp(8px, 2vmin, 14px);
-    background:rgba(255,255,255,.03);
-    border:1px solid #1f2937; border-radius:12px;
+    display:grid; gap:12px; width:100%;
+    grid-template-columns:repeat(2, minmax(0,1fr));
   }
-  .cell{
-    display:flex; align-items:center; justify-content:center;
-    background: #0b1224;
-    border:1px solid #1f2937; border-radius:10px;
-    font-size: clamp(18px, 6.2vmin, 40px);
-    transition: transform .06s ease, background .15s ease, opacity .15s ease;
-    touch-action: manipulation;
-  }
-  .cell.correct.popped{ background: rgba(34,197,94,.18); transform: scale(.94); }
-  .cell.wrong.flash{ background: rgba(239,68,68,.25); }
-  .footer-cta{ margin-top:auto; display:flex; justify-content:center }
+
+.answer .lbl{flex:1; color:#f3f6ff; font-weight:700; letter-spacing:.2px}
+
+
+.answer{
+  background:#25306b; /* higher contrast */
+  border:1px solid rgba(255,255,255,.18);
+  padding:14px 16px;
+  border-radius:12px;
+  display:flex; align-items:center; gap:12px; cursor:pointer; text-align:left;
+  font-size:18px; line-height:1.25; color:#f3f6ff; /* larger, brighter text */
+  font-weight:700;
+}
+
+  .answer .emo{font-size:22px; width:28px; text-align:center}
+  .answer:hover{filter:brightness(1.06)}
+  .muted{color:var(--muted); font-size:.95rem}
+  .hint{font-size:.9rem; color:#c9cdfa}
+  .tag{display:inline-block; background:#23285c; padding:4px 10px; border-radius:999px; font-weight:700; letter-spacing:.2px; color:#cfd5ff}
+  .spacer{height:8px}
+  /* Canvas area */
+  .gameWrap{position:relative; width:100%; background:#0a0d21; border-top:1px solid rgba(255,255,255,.06)}
+
+/* small non-blocking toasts inside the game area */
+.toast{
+  position:absolute; left:50%; top:10px; transform:translateX(-50%);
+  background:rgba(20,24,56,.92); color:#fff; padding:8px 12px; border-radius:999px;
+  border:1px solid rgba(255,255,255,.15); box-shadow:0 8px 18px rgba(0,0,0,.35);
+  font-weight:800; letter-spacing:.2px; pointer-events:none; opacity:1; transition:opacity .35s, transform .35s;
+}
+.toast.hide{ opacity:0; transform:translate(-50%,-6px); }
+
+
+  canvas{display:block; width:100%; height:auto; background:linear-gradient(180deg,#0e1331 0,#0a0d21 100%)}
+.bar{display:flex; gap:10px; align-items:center; justify-content:space-between; padding:12px 16px; background:#12163a; border-top:1px solid rgba(255,255,255,.06)}
+  .bar .pill{background:#1c2252; padding:6px 10px; border-radius:999px}
   /* Modal */
-  .modal-backdrop{
-    position:fixed; inset:0; display:none; align-items:center; justify-content:center;
-    background:rgba(3,6,17,.6); backdrop-filter: blur(2px);
-    z-index:50; padding: 20px;
+  .modal{position:fixed; inset:0; display:none; align-items:center; justify-content:center; backdrop-filter:blur(6px); background:rgba(5,8,20,.55); z-index:50}
+  .modal.show{display:flex}
+  .modal .box{
+    width:min(560px,92vw); background:#161a3a; border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:18px;
+    text-align:center; box-shadow:0 30px 60px rgba(0,0,0,.5);
   }
-  .modal-backdrop.show{ display:flex }
-  .modal{
-    width:min(560px, 96vw);
-    background: linear-gradient(180deg, #0f172a, #0b1224 70%);
-    border:1px solid #1f2937; border-radius:16px;
-    box-shadow: var(--shadow);
-    padding: clamp(16px, 4vmin, 22px);
-    display:flex; flex-direction:column; gap:12px; text-align:center;
-  }
-  .modal h3{ font-size: clamp(18px, 4.8vmin, 26px) }
-  .modal p{ color:#cbd5e1; font-size: clamp(14px, 3.8vmin, 18px) }
-  /* Responsive hint at top */
-  .hint{
-    font-size: clamp(12px, 2.5vmin, 14px); color:var(--muted); text-align:center;
-  }
-  /* Make buttons comfortably large on touch devices */
-  @media (hover:none){
-    button{ padding: 14px 18px }
+  .modal .box h3{margin:.2rem 0 .6rem; font-size:1.4rem}
+  .modal .box p{margin:.2rem 0 .8rem; color:#cbd1ff}
+  .flex{display:flex; gap:12px; flex-wrap:wrap; align-items:center; justify-content:center}
+  .bar small{color:#cbd1ff}
+  /* Boss health */
+  .hpBar{height:10px; background:#232a66; border:1px solid rgba(255,255,255,.1); border-radius:999px; overflow:hidden}
+  .hpFill{height:100%; background:linear-gradient(90deg,#ff6a6a,#ff9b4a)}
+  /* Responsive tweaks */
+  @media (max-width:520px){
+.grid{gap:10px}
+.answer{padding:12px 14px; font-size:17px}
+.answer .emo{font-size:22px}
+
   }
 </style>
 </head>
 <body>
-  <div class="app">
+  <div class="wrap">
     <div class="card">
-      <header class="topbar">
-        <div class="brand"><span class="emoji" aria-hidden="true">📖</span>Emoji Hunt</div>
-        <div class="hud">
-          <div class="stat" id="hudScore">Score: 0</div>
-          <div class="stat" id="hudTimer" style="display:none">Time: 20</div>
-         <div class="stat" id="hudQ">Q: 0/0</div>
-
-        </div>
+      <header>
+        <h1>🎮 Emoji Breaker — Bible Edition</h1>
+        <div class="score">Score: <span id="score">0</span></div>
       </header>
 
-      <!-- Screens -->
-      <main class="content">
+      <!-- VIEWS -->
+      <div id="view-splash" class="view active">
+        <div class="section center" style="min-height:38vh">
+          <div class="title">Best in Vertical Mode 📱</div>
+          <div class="subtitle">For the smoothest play, rotate your device to portrait.</div>
+          <button class="btn" id="btnSplashOk">Okay, let’s go</button>
+        </div>
+      </div>
 
-        <!-- Splash (orientation prompt) -->
-        <section id="screen-splash" class="screen active">
-          <div class="stack center">
-            <h1>Best in <span style="color:#60a5fa">Vertical</span> Mode</h1>
-            <p class="lead">You can play in any orientation, but portrait is easiest on phones.</p>
-            <div class="row">
-              <button class="btn-accent" id="btn-splash-ok">Okay, let’s play!</button>
-            </div>
+      <div id="view-title" class="view">
+        <div class="section center" style="min-height:38vh">
+          <div class="title">Emoji Breaker</div>
+          <div class="subtitle">Answer Bible questions, then break the emoji!<br/><span class="tag">10 rounds + Boss</span></div>
+          <div class="spacer"></div>
+          <button class="btn" id="btnStart">Start</button>
+        </div>
+      </div>
+
+      <div id="view-question" class="view">
+        <div class="section">
+          <div class="muted">Question <span id="qNum">1</span> / 10</div>
+          <h2 id="qText" style="margin:.3rem 0 1rem; line-height:1.25"></h2>
+          <div class="grid" id="answers"></div>
+          <div class="spacer"></div>
+          <div class="hint">Choose the best answer. +100 points if correct.</div>
+        </div>
+      </div>
+
+      <div id="view-game" class="view">
+<!-- (removed round strip to increase game area) -->
+
+        <div class="gameWrap">
+          <canvas id="game"></canvas>
+        </div>
+        <div class="bar">
+          <div class="pill">⏱️ Time: <span id="time">30</span>s</div>
+          <div class="pill">🧱 Broken: <span id="broken">0</span></div>
+<div class="pill">🏆 Score: <span id="scoreBar">0</span></div>
+        </div>
+      </div>
+
+      <div id="view-boss" class="view">
+<div class="section">
+  <div class="hpBar"><div id="hpFill" class="hpFill" style="width:100%"></div></div>
+</div>
+
+        <div class="gameWrap">
+          <canvas id="boss"></canvas>
+        </div>
+        <div class="bar">
+          <div class="pill">❤️ Boss Hits: <span id="bossHits">0</span> / 5</div>
+          <div class="pill">🧱 Shield Left: <span id="shieldLeft">—</span></div>
+          <div class="pill">⏱️ Miss ends round</div>
+        </div>
+      </div>
+
+      <div id="view-end" class="view">
+        <div class="section center" style="min-height:40vh">
+          <div class="title">Great Job! 🎉</div>
+          <p class="subtitle">
+            Final Score: <b id="finalScore">0</b><br/>
+            Emojis Broken: <b id="finalBroken">0</b><br/>
+            Boss Hits: <b id="finalBoss">0</b> / 5
+          </p>
+          <div class="flex">
+            <button class="btn" id="btnReplay">Play Again</button>
+            <button class="btn secondary" id="btnTitle">Back to Title</button>
           </div>
-        </section>
-
-        <!-- Title -->
-        <section id="screen-title" class="screen">
-          <div class="stack center">
-            <h1>Emoji Hunt</h1>
-            <p class="lead">Answer the question, then tap every matching emoji in the grid before time runs out. Finish all questions to unlock the bonus round!</p>
-            <div class="row" style="justify-content:center">
-              <button class="btn-accent" id="btn-start">Start Game</button>
-              <button class="btn-ghost" id="btn-how">How to Play</button>
-            </div>
-            <div class="panel-soft hint">
-              Tip: Each grid has 36 squares with an equal number of the four answer emojis (9 each).
-            </div>
-          </div>
-        </section>
-
-        <!-- Question -->
-        <section id="screen-question" class="screen">
-          <div class="stack" style="gap: clamp(14px, 3.5vmin, 18px)">
-            <h2 id="qText">Question goes here</h2>
-            <div class="answers" id="answers"></div>
-          </div>
-        </section>
-
-        <!-- Grid mini-game -->
-        <section id="screen-grid" class="screen">
-          <div class="stack">
-            <h2 id="gridTitle">Find all the …</h2>
-            <div class="row" style="justify-content:center; gap:10px; margin-bottom:4px;">
-              <div class="pill">Time left: <span id="gridTime">20</span>s</div>
-              <div class="pill">Remaining: <span id="gridRemaining">9</span></div>
-            </div>
-            <div class="grid" id="grid"></div>
-          </div>
-        </section>
-
-        <!-- Bonus round (slot machine) -->
-        <section id="screen-bonus" class="screen">
-          <div class="stack center">
-            <h2>Bonus Round 🎰</h2>
-           <p class="lead">Reels start automatically. Tap each emoji box to stop it—match three to win a bonus!</p>
-
-            <div class="panel-soft" style="display:flex; gap:14px; justify-content:center; align-items:center; flex-wrap:wrap">
-              <div class="reelbox" style="display:flex; gap:12px; align-items:center">
-                <div class="panel-soft" style="width:90px; height:90px; display:flex; align-items:center; justify-content:center; font-size:52px" id="reel0">🍒</div>
-             
-              </div>
-              <div class="reelbox" style="display:flex; gap:12px; align-items:center">
-                <div class="panel-soft" style="width:90px; height:90px; display:flex; align-items:center; justify-content:center; font-size:52px" id="reel1">🍋</div>
-                
-              </div>
-              <div class="reelbox" style="display:flex; gap:12px; align-items:center">
-                <div class="panel-soft" style="width:90px; height:90px; display:flex; align-items:center; justify-content:center; font-size:52px" id="reel2">🍇</div>
-                
-              </div>
-            </div>
-             <div class="panel-soft" style="font-size:14px; color:#cbd5e1">
-              Payouts (all three match): 7️⃣ +500 • 🔔 +300 • 🍇 +250 • 🍒 +200 • 🍋 +150
-            </div>
-          </div>
-        </section>
-
-        <!-- End screen -->
-        <section id="screen-end" class="screen">
-          <div class="stack center">
-            <h1>Great job!</h1>
-            <p class="lead">Your final score:</p>
-            <div class="emoji" id="finalScore" style="font-size: clamp(28px, 9vmin, 72px)">0</div>
-            <div class="row" style="justify-content:center">
-              <button class="btn-accent" id="btn-play-again">Play Again</button>
-              <button class="btn-ghost" id="btn-title">Back to Title</button>
-            </div>
-          </div>
-        </section>
-
-      </main>
+        </div>
+      </div>
     </div>
   </div>
 
   <!-- Modal -->
-  <div class="modal-backdrop" id="modal">
-    <div class="modal">
-      <h3 id="modalTitle">Title</h3>
-      <p id="modalMsg">Message</p>
-      <div class="row" style="justify-content:center">
-        <button class="btn-accent" id="modalOk">OK</button>
+  <div id="modal" class="modal">
+    <div class="box">
+      <h3 id="mTitle">Title</h3>
+      <p id="mBody">Body</p>
+      <div class="flex">
+        <button class="btn" id="mOk">OK</button>
       </div>
     </div>
   </div>
 
 <script>
-(()=> {
+(()=>{
   // -----------------------------
-  // Data (questions with emojis)
+  // Simple view / modal helpers
   // -----------------------------
-  // Each option has text and emoji; `correct` is the index of the correct option.
+  const $ = s => document.querySelector(s);
+  const show = id => document.querySelectorAll('.view').forEach(v=>v.id===id?v.classList.add('active'):v.classList.remove('active'));
+  const scoreEl = $('#score');
+  let score = 0, totalBroken = 0;
+  // --- Secret boss jump ---
+const SECRET_KEY = 'b';
+let SECRET_JUMP = false;
 
-/* 
-   ____    _    _   ______    _____   _______   _____    ____    _   _    _____ 
-  / __ \  | |  | | |  ____|  / ____| |__   __| |_   _|  / __ \  | \ | |  / ____|
- | |  | | | |  | | | |__    | (___      | |      | |   | |  | | |  \| | | (___  
- | |  | | | |  | | |  __|    \___ \     | |      | |   | |  | | | . ` |  \___ \ 
- | |__| | | |__| | | |____   ____) |    | |     _| |_  | |__| | | |\  |  ____) |
-  \___\_\  \____/  |______| |_____/     |_|    |_____|  \____/  |_| \_| |_____/ 
+// --- Tuning: ball speed behavior ---
+const BALL_ACCEL_PER_SEC = 0.018;   // continuous acceleration while the round runs
+const PADDLE_HIT_SPEED_BOOST = 0.10; // extra kick every time the ball hits the paddle
+const BALL_SPEED_MAX = 5.35;        // hard cap so it never gets too fast
+// --- Power-up settings ---
+const CLOCK_EMOJI = "⏰";
+const DISCO_EMOJI = "🪩";
+const TIME_BONUS_SECONDS = 10;
+const MAX_BALLS = 2; // cap multiball
+// --- Boss round scoring ---
+const SHIELD_POINTS = 10;     // points per shield brick
+const BOSS_HIT_POINTS = 100;  // points per boss hit
 
-
-*/
-
-
-const QUESTIONS = [
-  {
-    prompt: "What did God say would happen if they ate from the Tree of the Knowledge of Good and Evil?",
-    options: [
-      { text: "They’d die", emoji: "💀" },
-      { text: "They’d become angels", emoji: "😇" },
-      { text: "They’d turn into gods", emoji: "🗿" },
-      { text: "They’d be kings", emoji: "👑" }
-    ],
-    correct: 0
-  },
-  {
-    prompt: "Who was the serpent who came to Eve?",
-    options: [
-      { text: "The devil", emoji: "👿" },
-      { text: "Just a normal snake", emoji: "🐍" },
-      { text: "A talking bird", emoji: "🐦" },
-      { text: "An angel", emoji: "👼" }
-    ],
-    correct: 0
-  },
-  {
-    prompt: "What did the serpent say to Eve?",
-    options: [
-      { text: "You won’t die; you’ll know good and evil like God", emoji: "🧠" },
-      { text: "God told me to bring you fruit", emoji: "🍎" },
-      { text: "God isn’t real", emoji: "🙅‍♂️" },
-      { text: "You should build a boat", emoji: "🛶" }
-    ],
-    correct: 0
-  },
-  {
-    prompt: "After talking with the serpent, what did Eve do?",
-    options: [
-      { text: "Ate the fruit and gave some to her husband", emoji: "🍎" },
-      { text: "Ran away", emoji: "🏃‍♀️" },
-      { text: "Built an altar", emoji: "🕯️" },
-      { text: "Threw the fruit away", emoji: "🗑️" }
-    ],
-    correct: 0
-  },
-  {
-    prompt: "What did Adam and Eve realize after eating? What did they do?",
-    options: [
-      { text: "Realized they were naked; made clothes and hid", emoji: "🫣" },
-      { text: "They learned to read", emoji: "📖" },
-      { text: "They built a house", emoji: "🏠" },
-      { text: "They named the animals", emoji: "🦓" }
-    ],
-    correct: 0
-  },
-  {
-    prompt: "What curses did God give to the serpent?",
-    options: [
-      { text: "To crawl on his belly, to be crushed by a son of Eve", emoji: "🐍" },
-      { text: "To lose all color", emoji: "🎨" },
-      { text: "To become a fish", emoji: "🐟" },
-      { text: "To turn into a bird", emoji: "🐦" }
-    ],
-    correct: 0
-  },
-  {
-    prompt: "What curses did God give to the woman?",
-    options: [
-      { text: "Great pain during childbirth and battles with her husband", emoji: "👶" },
-      { text: "No more food", emoji: "🍽️" },
-      { text: "Never sleep again", emoji: "😴" },
-      { text: "She couldn’t talk", emoji: "🤐" }
-    ],
-    correct: 0
-  },
-  {
-    prompt: "What curses did God give the man?",
-    options: [
-      { text: "Frustrating and hard work, and death", emoji: "🧑‍🌾" },
-      { text: "Fear of heights", emoji: "🪜" },
-      { text: "Lose his memory", emoji: "🧠" },
-      { text: "Must sail forever", emoji: "⛵" }
-    ],
-    correct: 0
-  },
-  {
-    prompt: "After giving them curses, what did God do to the man and woman?",
-    options: [
-      { text: "Clothed them with animal skins, drove them out of the garden", emoji: "🧥" },
-      { text: "Let them stay in the garden", emoji: "🏡" },
-      { text: "Gave them a car", emoji: "🚗" },
-      { text: "Sent them back in time", emoji: "⏳" }
-    ],
-    correct: 0
-  },
-  {
-    prompt: "Who was the mysterious son of Eve who came to crush the serpent? How did he do it?",
-    options: [
-      { text: "Jesus—He defeated sin by dying on the cross and rising from the dead", emoji: "✝️" },
-      { text: "Moses", emoji: "📜" },
-      { text: "David", emoji: "🎯" },
-      { text: "Noah", emoji: "🛶" }
-    ],
-    correct: 0
+  const modalEl = $('#modal'), mTitle = $('#mTitle'), mBody = $('#mBody'), mOk = $('#mOk');
+  let modalResolve = null;
+  function modal(title, body){
+    mTitle.textContent = title;
+    mBody.innerHTML = body;
+    modalEl.classList.add('show');
+    return new Promise(res=>{ modalResolve=res; });
   }
-];
-
-
-
-/*
-  ______   _   _   _____  
- |  ____| | \ | | |  __ \ 
- | |__    |  \| | | |  | |
- |  __|   | . ` | | |  | |
- | |____  | |\  | | |__| |
- |______| |_| \_| |_____/ 
-
-*/
-
-
-
-
-
-  // Slot machine emoji (fixed order, skill timing)
-  const SLOT_ORDER = ["🍒","🍋","🍇","🔔","7️⃣"];
-
-  const REEL_BASE_MS = 240; // increase to slow down; decrease to speed up
-
-const PAYOUTS = { "🍒":200, "🍋":150, "🍇":250, "🔔":300, "7️⃣":500 };
-
-
-  // -----------------------------
-  // State
-  // -----------------------------
-  let score = 0;
-  let qIndex = 0;
-
-  // Grid mini-game
-  const GRID_SIZE = 6; // 6x6
-  const TOTAL_CELLS = GRID_SIZE * GRID_SIZE; // 36
-  const PER_EMOJI = TOTAL_CELLS / 4; // 9 of each emoji
-  let targetEmoji = "🍞";
-  let remainingCorrect = PER_EMOJI;
-  let gridTimer = null;
-  let timeLeft = 20;
-
-  // Bonus round (reels)
-  let reelIntervals = [null, null, null];
-  let reelRunning = [false,false,false];
-  let reelIndex = [0,1,2]; // starting positions in SLOT_ORDER
-
-  // -----------------------------
-  // Elements
-  // -----------------------------
-  const screens = {
-    splash:  document.getElementById('screen-splash'),
-    title:   document.getElementById('screen-title'),
-    question:document.getElementById('screen-question'),
-    grid:    document.getElementById('screen-grid'),
-    bonus:   document.getElementById('screen-bonus'),
-    end:     document.getElementById('screen-end'),
-  };
-  const hudScore = document.getElementById('hudScore');
-  const hudTimer = document.getElementById('hudTimer');
-  const hudQ = document.getElementById('hudQ');
-hudQ.textContent = `Q: 0/${QUESTIONS.length}`;
-
-
-  const btnSplashOk = document.getElementById('btn-splash-ok');
-  const btnStart = document.getElementById('btn-start');
-  const btnHow = document.getElementById('btn-how');
-
-  const qText = document.getElementById('qText');
-  const answersBox = document.getElementById('answers');
-
-  const gridEl = document.getElementById('grid');
-  const gridTitle = document.getElementById('gridTitle');
-  const gridTime = document.getElementById('gridTime');
-  const gridRemaining = document.getElementById('gridRemaining');
-
-  const reel0 = document.getElementById('reel0');
-  const reel1 = document.getElementById('reel1');
-  const reel2 = document.getElementById('reel2');
-[reel0, reel1, reel2].forEach((el, i) => {
-  el.addEventListener('click', () => stopReel(i));
+  mOk.addEventListener('click', ()=>{
+    modalEl.classList.remove('show');
+    if(modalResolve){ modalResolve(); modalResolve=null; }
+  });
+  // Secret key: press "b" to jump to boss
+document.addEventListener('keydown', (e)=>{
+  if (!e.key) return;
+  if (e.key.toLowerCase() === SECRET_KEY){
+    SECRET_JUMP = true;
+    // If a modal is open, close AND resolve it so any awaiting code can continue
+    if (modalEl.classList.contains('show')) {
+      modalEl.classList.remove('show');
+      if (modalResolve) { modalResolve(); modalResolve = null; }
+    }
+  }
 });
 
 
-  const finalScore = document.getElementById('finalScore');
-  const btnPlayAgain = document.getElementById('btn-play-again');
-  const btnTitle = document.getElementById('btn-title');
+// Non-blocking toast inside the current game view
+function toast(msg){
+  const host = document.querySelector('.view.active .gameWrap');
+  if(!host) return;
+  // remove any existing toast first
+  const old = host.querySelector('.toast');
+  if (old) old.remove();
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  host.appendChild(t);
+  setTimeout(()=> t.classList.add('hide'), 1200);
+  setTimeout(()=> t.remove(), 1700);
+}
 
-  // Modal
-  const modal = document.getElementById('modal');
-  const modalTitle = document.getElementById('modalTitle');
-  const modalMsg = document.getElementById('modalMsg');
-  const modalOk = document.getElementById('modalOk');
-  let modalCallback = null;
+/*
+
+ #####     #     #    #######     #####     #######    ###    #######    #     #     #####  
+#     #    #     #    #          #     #       #        #     #     #    ##    #    #     # 
+#     #    #     #    #          #             #        #     #     #    # #   #    #       
+#     #    #     #    #####       #####        #        #     #     #    #  #  #     #####  
+#   # #    #     #    #                #       #        #     #     #    #   # #          # 
+#    #     #     #    #          #     #       #        #     #     #    #    ##    #     # 
+ #### #     #####     #######     #####        #       ###    #######    #     #     #####  
+
+*/
+
+  const QUESTIONS = [
+
+{
+  q: "After the flood, what command did God give human beings?",
+  ans: [
+    ["👶", "Have children, fill the earth"],
+    ["🗼", "Build a great tower"],
+    ["🏙️", "Stay in one city"],
+    ["🏆", "Make a name for yourselves"]
+  ],
+  correctIndex: 0
+},
+{
+  q: "After the flood, what did everyone on earth have in common?",
+  ans: [
+    ["🗣️", "They spoke the same language"],
+    ["💼", "They had the same jobs"],
+    ["🏙️", "They lived in the same city"],
+    ["👗", "They wore the same clothes"]
+  ],
+  correctIndex: 0
+},
+{
+  q: "What did the people decide to build?",
+  ans: [
+    ["🏙️", "A tower that reached to the sky"],
+    ["🚢", "A huge ark"],
+    ["⛪", "A temple for sacrifices"],
+    ["🐮", "A golden calf"]
+  ],
+  correctIndex: 0
+},
+{
+  q: "Why did they want to build a tower?",
+  ans: [
+    ["🏆", "To make a name for themselves, not be scattered"],
+    ["🙏", "To worship God better"],
+    ["🌊", "To protect from another flood"],
+    ["✨", "To study the stars"]
+  ],
+  correctIndex: 0
+},
+{
+  q: "Why was God not pleased with their building project?",
+  ans: [
+    ["🚫", "They were disobeying His command"],
+    ["📏", "It was too tall"],
+    ["🧱", "It used bricks"],
+    ["☀️", "It blocked the sun"]
+  ],
+  correctIndex: 0
+},
+{
+  q: "If the people worked together, what did God say they would be able to do?",
+  ans: [
+    ["💪", "Anything they wanted"],
+    ["🐾", "Rule all the animals"],
+    ["⏳", "Stop aging"],
+    ["🌴", "Find the Garden of Eden"]
+  ],
+  correctIndex: 0
+},
+{
+  q: "What did God say He was going to do?",
+  ans: [
+    ["🔀", "Mix up their languages"],
+    ["🌧️", "Send another flood"],
+    ["🔥", "Send fire from heaven"],
+    ["🌪️", "Destroy the city with a storm"]
+  ],
+  correctIndex: 0
+},
+{
+  q: "When God mixed up their languages, what did they stop doing?",
+  ans: [
+    ["🏗️", "Building the tower"],
+    ["🤐", "Speaking at all"],
+    ["🌾", "Working the fields"],
+    ["💍", "Getting married"]
+  ],
+  correctIndex: 0
+},
+{
+  q: "What did the people do after they stopped building the tower?",
+  ans: [
+    ["🌍", "Scattered over the earth"],
+    ["🏙️", "Stayed in Babel together"],
+    ["🚢", "Built ships to stay united"],
+    ["👑", "Chose one king to rule all"]
+  ],
+  correctIndex: 0
+},
+{
+  q: "According to Revelation, what will happen in Jesus’ forever kingdom?",
+  ans: [
+    ["🙌", "People from all languages will praise God"],
+    ["🗣️", "Only one language will remain"],
+    ["😇", "Only angels will praise God"],
+    ["🗺️", "No nations will remain"]
+  ],
+  correctIndex: 0
+}
+]
+
+
+  /*
+
+#######    #     #    ######     
+#          ##    #    #     #    
+#          # #   #    #     #    
+#####      #  #  #    #     #    
+#          #   # #    #     #    
+#          #    ##    #     #    
+#######    #     #    ######     
+
+
+*/
+
 
   // -----------------------------
-  // Helpers
+  // Navigation state
   // -----------------------------
-  function showScreen(key){
-    Object.values(screens).forEach(s => s.classList.remove('active'));
-    screens[key].classList.add('active');
+  let roundIndex = 0; // 0..9
+  $('#btnStart').addEventListener('click', startGameFlow);
+  $('#btnReplay').addEventListener('click', ()=>{ resetAll(); startGameFlow(); });
+  $('#btnTitle').addEventListener('click', ()=>{ resetAll(); show('view-title'); });
+
+  function resetAll(){
+    score = 0; totalBroken = 0; roundIndex = 0; updateScore();
+    bossState.reset();
+    $('#finalScore').textContent = '0';
+    $('#finalBroken').textContent = '0';
+    $('#finalBoss').textContent = '0';
+  }
+function updateScore(){
+  scoreEl && (scoreEl.textContent = score); // header is hidden now
+  if (scoreBarEl) scoreBarEl.textContent = score; // show score in bottom-right pill
+}
+
+async function startGameFlow(){
+  SECRET_JUMP = false; // reset secret flag each new run
+  // Pick 10 unique themes for this run (random order)
+  roundThemes = shuffle(THEMES).slice(0, 10);
+
+
+  // Title → questions flow
+  show('view-question');
+  await questionRoundLoop();
+  // Boss
+
+    await modal("Final Round", "Hit the boss 5 times to win! (Shield optional.)");
+    await startBossBattle();
+    // End
+    showEnd();
   }
 
-  function updateHUD(){
-    hudScore.textContent = `Score: ${score}`;
-    hudQ.textContent = `Q: ${Math.min(qIndex+1, QUESTIONS.length)}/${QUESTIONS.length}`;
+  async function questionRoundLoop(){
+for(roundIndex=0; roundIndex<QUESTIONS.length; roundIndex++){
+  if (SECRET_JUMP) break;
+
+  // Set the theme for this round (unique per game)
+  currentThemeEmojis = roundThemes[roundIndex] || EMOJIS;
+
+  await showQuestion(QUESTIONS[roundIndex], roundIndex);
+  if (SECRET_JUMP) break;
+
+if (roundIndex === 0) {
+  await modal("Break the Emojis!", `Use your mouse or your finger to move the paddle and bounce the ball!`);
+  if (SECRET_JUMP) break;
+}
+
+
+  await playBreakerRound(roundIndex);
+  if (SECRET_JUMP) break;
+}
+
+
   }
 
-  function shuffle(arr){
-    for(let i = arr.length - 1; i > 0; i--){
-      const j = Math.floor(Math.random()*(i+1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
+  // -----------------------------
+  // Question UI
+  // -----------------------------
+  const qNumEl = $('#qNum'), qTextEl = $('#qText'), answersEl = $('#answers'), rNumEl = $('#rNum');
+function showQuestion(qo, idx){
+  return new Promise(resolve=>{
+    show('view-question');
+    qNumEl.textContent = (idx+1);
+    qTextEl.textContent = qo.q;
+    answersEl.innerHTML = '';
+
+    // Clean up helper so we don't leak listeners
+    function cleanup(){
+      document.removeEventListener('keydown', onSecret);
     }
-    return arr;
-  }
+    function onSecret(e){
+      if (SECRET_JUMP){
+        cleanup();
+        resolve(); // bail out of the question immediately
+      }
+    }
+    document.addEventListener('keydown', onSecret);
 
-  function openModal(title, msg, onOk=null){
-    modalTitle.textContent = title;
-    modalMsg.textContent = msg;
-    modal.classList.add('show');
-    modalCallback = onOk || null;
-  }
-  function closeModal(){
-    modal.classList.remove('show');
-    const cb = modalCallback;
-    modalCallback = null;
-    if(typeof cb === 'function') cb();
-  }
+// Shuffle answer order but keep correctness tied to the original indices
+const order = shuffle([0,1,2,3]);            // uses the shuffle() already in this file
+const correctOriginal = qo.correctIndex;     // keep reference to the original correct index
 
-  function startGame(){
-    score = 0;
-    qIndex = 0;
-    updateHUD();
-    showQuestion();
-  }
+order.forEach((ansIndex)=>{
+  const [emo, label] = qo.ans[ansIndex];
+  const isCorrect = (ansIndex === correctOriginal);
 
-  // -----------------------------
-  // Question Flow
-  // -----------------------------
-  function showQuestion(){
-    showScreen('question');
-    hudTimer.style.display = 'none';
-    const q = QUESTIONS[qIndex];
-    qText.textContent = q.prompt;
+  const btn = document.createElement('button');
+  btn.className = 'answer';
+  btn.innerHTML = `<span class="emo">${emo}</span><span class="lbl">${label}</span>`;
 
-    answersBox.innerHTML = '';
-    q.options.forEach((opt, i)=>{
-      const btn = document.createElement('button');
-      btn.className = 'answer';
-      btn.innerHTML = `<span class="emoji" aria-hidden="true">${opt.emoji}</span> ${opt.text}`;
-      btn.addEventListener('click', ()=>handleAnswer(i));
-      answersBox.appendChild(btn);
-    });
-    updateHUD();
-  }
-
-  function handleAnswer(choiceIndex){
-    const q = QUESTIONS[qIndex];
-    const isCorrect = (choiceIndex === q.correct);
-    if(isCorrect){
-      score += 100;
-      updateHUD();
-      openModal("Correct! ✅", "Great job! Now get ready for the emoji hunt.", () => {
-        // Tell them what to find, then go to grid
-        const target = q.options[q.correct].emoji;
-        openModal("Find them!", `Find all the ${target} emojis!`, ()=>{
-          startGrid(q);
-        });
-      });
+  btn.addEventListener('click', async ()=>{
+    if (isCorrect){
+      score += 100; updateScore();
+      await modal("✅ Correct!", `Nice work!`);
     } else {
-      score = Math.max(0, score - 50);
-      updateHUD();
-      openModal("Not quite ❌", "Keep going! You’ll nail the grid round.", () => {
-        const target = q.options[q.correct].emoji;
-        openModal("Find them!", `Find all the ${target} emojis!`, ()=>{
-          startGrid(q);
-        });
-      });
+      const right = qo.ans[correctOriginal][1];
+      await modal("❌ Incorrect", `Correct answer:<br><b>${right}</b>`);
+    }
+    cleanup();
+    resolve();
+  });
+
+  answersEl.appendChild(btn);
+});
+  });
+}
+
+
+  // -----------------------------
+  // Breaker Round (per question)
+  // -----------------------------
+  const canvas = $('#game'), ctx = canvas.getContext('2d');
+const timeEl = $('#time'), brokenEl = $('#broken'), scoreBarEl = $('#scoreBar');
+
+  // Resize canvas to a portrait-friendly rectangle
+  function sizeGameCanvas(){
+    const maxW = document.querySelector('.gameWrap').clientWidth;
+const maxH = Math.min(window.innerHeight*0.75, 780);
+    const aspect = 9/14; // tall-ish
+let w = maxW;
+    let h = Math.min(maxH, Math.round(w/aspect));
+    canvas.width = Math.floor(w*2); canvas.height = Math.floor(h*2); // hi-dpi buffer
+    canvas.style.height = `${h}px`; canvas.style.width = `${w}px`;
+  }
+  window.addEventListener('resize', ()=>{ if($('#view-game').classList.contains('active')) sizeGameCanvas(); });
+  // Game objects
+  const EMOJIS = ["😀","⭐","🧱","🍇","🍞","🐟","🕊️","📖","🌈","🌟","🪨","🧺","🛶","🕯️","🥖","🎯"];
+  // --- Ten round themes (no repeats per game) ---
+
+  const THEMES = [
+  // 1) Space & stars
+  ["🌌","🪐","🚀","🌠","🛰️","🌟","👽"],
+
+  // 2) Ocean life
+  ["🌊","🐠","🐟","🐬","🐙","🦀","🪼"],
+
+// 3) Food mix
+["🌮","🍔","🍕","🍣","🥗","🍜","🍦"],
+
+
+  // 4) Forest & camping
+  ["🌲","🏕️","🔥","🧭","🪵","🪺","🌿"],
+
+  // 5) Sports mix
+  ["⚽","🏀","🎾","🏈","⚾","🥏","🏓"],
+
+  // 6) Weather & seasons
+  ["☀️","⛅","🌧️","⛈️","❄️","🍂","🌈"],
+
+  // 7) Music & stage
+  ["🎵","🎶","🎧","🎤","🎹","🥁","🎸"],
+
+  // 8) City & travel
+  ["🚌","🚇","🚕","🗽","🌆","🏙️","🗺️"],
+
+  // 9) Cute animals
+  ["🐱","🐶","🐰","🦊","🐼","🐨","🦁"],
+
+  // 10) Fantasy & magic
+  ["🧙‍♂️","🪄","🐉","🧝‍♀️","🧪","🔮","✨"]
+];
+
+
+// Shuffle helper
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+// Current round theme (fallback to EMOJIS)
+let currentThemeEmojis = EMOJIS;
+// Preselected themes for this game (10 unique, randomized order)
+let roundThemes = [];
+
+function makeGrid(){
+  const cols = 9, rows = 4;
+  const list = currentThemeEmojis && currentThemeEmojis.length ? currentThemeEmojis : EMOJIS;
+  const grid = [];
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      const emo = list[Math.floor(Math.random()*list.length)];
+      grid.push({ c, r, alive:true, popT:0, emo, type:"normal" });
+    }
+  }
+  // choose distinct special cells
+  const total = grid.length;
+  const iClock = Math.floor(Math.random()*total);
+  let iDisco = Math.floor(Math.random()*total);
+  if(iDisco === iClock) iDisco = (iDisco+1) % total;
+
+  grid[iClock].emo = CLOCK_EMOJI; grid[iClock].type = "clock";
+  grid[iDisco].emo = DISCO_EMOJI; grid[iDisco].type = "disco";
+
+  return {cols, rows, bricks:grid};
+}
+
+
+// Limit bricks to the top ~40% of the canvas, with padding between bricks
+// Keep brick size the same as a 10-column grid, but render only 9 columns.
+// Center them so there's a 1/2-brick margin on each side, and move the grid
+// down by one brick height to leave a full-brick space above.
+
+function brickRect(grid, b, W, H){
+  const pad = 10;         // gap between bricks
+  const top = 20;         // top offset inside the canvas
+  const bricksAreaH = Math.max(120, H * 0.40);
+
+  // ---- Horizontal layout with HALF-BRICK outer margins ----
+  // We want a half brick of empty space on the left and right.
+  // That means: (cols+1)*bw + (cols-1)*pad = W
+  //  -> bw = (W - (cols-1)*pad) / (cols + 1)
+  const bw = (W - (grid.cols - 1) * pad) / (grid.cols + 1);
+  const outer = bw * 0.5;                       // half-brick margin on each side
+
+  // ---- Vertical sizing (same as before, with one-brick drop) ----
+  const totalGapsY = (grid.rows - 1) * pad;
+  const availableH = bricksAreaH - top;
+  const bh = (availableH - totalGapsY) / grid.rows;
+
+  const offsetY = bh + pad; // one full brick down (Arkanoid channel)
+
+  // Brick position
+  const x = outer + b.c * (bw + pad);
+  const y = top + offsetY + b.r * (bh + pad);
+
+  return {
+    x, y, w: bw, h: bh,
+    cx: x + bw/2,
+    cy: y + bh*0.62,
+    font: Math.min(bw, bh) * 0.65
+  };
+}
+
+
+
+
+
+
+
+  function playBreakerRound(idx){
+    return new Promise(resolve=>{
+show('view-game'); if (rNumEl) rNumEl.textContent = (idx+1); sizeGameCanvas();
+      let W = canvas.width, H = canvas.height;
+      const grid = makeGrid();
+      let broken = 0, running = true, tLeft = 30;
+      let last = performance.now();
+
+      // Paddle & ball
+      const paddle = { w:W*0.18, h: H*0.02, x: W*0.41, y: H*0.90 };
+const balls = [
+  { x:W*0.5, y:H*0.7, r:Math.max(8, Math.min(W,H)*0.012), vx: W*0.22, vy: -H*0.28, speed:1, color:'#ffd54a', isSecondary:false }
+];
+let haveSecondary = false;
+let rainbowHue = 0;
+
+
+// Input (named handlers so we can remove them)
+function setPaddle(clientX){
+  const rect = canvas.getBoundingClientRect();
+  const x = (clientX - rect.left) * (canvas.width / rect.width);
+  paddle.x = Math.max(0, Math.min(W - paddle.w, x - paddle.w/2));
+}
+function onMouseMove(e){ setPaddle(e.clientX); }
+function onTouchStart(e){ if(e.touches[0]) setPaddle(e.touches[0].clientX); }
+function onTouchMove(e){ if(e.touches[0]) setPaddle(e.touches[0].clientX); }
+
+canvas.addEventListener('mousemove', onMouseMove);
+canvas.addEventListener('touchstart', onTouchStart, {passive:true});
+canvas.addEventListener('touchmove', onTouchMove, {passive:true});
+
+
+
+      // Timer
+      timeEl.textContent = tLeft;
+      const tickTimer = setInterval(()=>{
+        tLeft--; if(tLeft<=0){ endRound("Time"); }
+        timeEl.textContent = tLeft;
+      }, 1000);
+
+      function endRound(reason){
+        if(!running) return;
+        running = false;
+        clearInterval(tickTimer);
+        totalBroken += broken;
+        brokenEl.textContent = broken;
+
+canvas.removeEventListener('mousemove', onMouseMove);
+canvas.removeEventListener('touchstart', onTouchStart);
+canvas.removeEventListener('touchmove', onTouchMove);
+
+
+
+
+        // small pause then resolve
+        setTimeout(()=> resolve(), 450);
+      }
+
+      // Collision helpers
+      function circleRectColl(cx,cy,r, rx,ry,rw,rh){
+        const nx = Math.max(rx, Math.min(cx, rx+rw));
+        const ny = Math.max(ry, Math.min(cy, ry+rh));
+        const dx = cx - nx, dy = cy - ny;
+        return dx*dx + dy*dy <= r*r;
+      }
+
+      function draw(){
+        ctx.clearRect(0,0,W,H);
+        // bg stars
+        ctx.globalAlpha = 0.25; ctx.fillStyle = '#0f1440'; ctx.fillRect(0,0,W,H);
+        ctx.globalAlpha = 1;
+
+        // bricks
+        for(const b of grid.bricks){
+          if(!b.alive && b.popT<=0) continue;
+          const r = brickRect(grid,b,W,H);
+          if(b.alive){
+            // brick frame
+            ctx.fillStyle = '#1e2353';
+            ctx.fillRect(r.x, r.y, r.w, r.h);
+            ctx.strokeStyle = 'rgba(255,255,255,.08)';
+            ctx.strokeRect(r.x, r.y, r.w, r.h);
+          }
+          // emoji
+          const scale = b.popT>0 ? 1 + 0.6*(b.popT/1) : 1;
+          ctx.font = `bold ${r.font*scale}px system-ui,Segoe UI Emoji,Apple Color Emoji`;
+          ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+          ctx.fillText(b.emo, r.cx, r.cy);
+          if(b.popT>0){ b.popT -= 0.06; }
+        }
+
+        // paddle
+        ctx.fillStyle = '#6b62ff';
+        ctx.fillRect(paddle.x, paddle.y, paddle.w, paddle.h);
+  // balls
+for(const b of balls){
+  ctx.beginPath();
+  if(b.isSecondary){
+    rainbowHue = (rainbowHue + 3) % 360;
+    ctx.fillStyle = `hsl(${rainbowHue}, 85%, 60%)`;
+  }else{
+    ctx.fillStyle = b.color;
+  }
+  ctx.arc(b.x, b.y, b.r, 0, Math.PI*2); ctx.fill();
+}
+
+      }
+
+      function step(dt){
+  // move balls + accelerate
+  for(const b of balls){
+    b.x += b.vx*dt*b.speed;
+    b.y += b.vy*dt*b.speed;
+    b.speed = Math.min(BALL_SPEED_MAX, b.speed + BALL_ACCEL_PER_SEC * dt);
+  }
+
+  // walls & miss
+  for(const b of balls){
+    if(b.x<b.r){ b.x=b.r; b.vx=Math.abs(b.vx); }
+    if(b.x>W-b.r){ b.x=W-b.r; b.vx=-Math.abs(b.vx); }
+    if(b.y<b.r){ b.y=b.r; b.vy=Math.abs(b.vy); }
+  }
+  // remove any balls that fell; if none left, end round
+  for(let i=balls.length-1;i>=0;i--){
+    if(balls[i].y>H+balls[i].r*2) balls.splice(i,1);
+  }
+  if(balls.length===0){ endRound("Miss"); return; }
+
+  // paddle bounces
+  for(const b of balls){
+    if(circleRectColl(b.x,b.y,b.r, paddle.x,paddle.y,paddle.w,paddle.h)){
+      b.y = paddle.y - b.r;
+      b.vy = -Math.abs(b.vy);
+      const hit = (b.x - (paddle.x + paddle.w/2)) / (paddle.w/2);
+      b.vx = (W*0.22)*hit;
+      b.speed = Math.min(BALL_SPEED_MAX, b.speed + PADDLE_HIT_SPEED_BOOST);
     }
   }
 
+  // brick collisions (first hit per frame)
+  for(const b of balls){
+    for(const brick of grid.bricks){
+      if(!brick.alive) continue;
+      const r = brickRect(grid,brick,W,H);
+      if(circleRectColl(b.x,b.y,b.r, r.x,r.y,r.w,r.h)){
+        brick.alive = false; brick.popT = 1.0; broken++; brokenEl.textContent = broken;
+
+        // reflect
+        const dx = (b.x - (r.x + r.w/2)) / (r.w/2);
+        const dy = (b.y - (r.y + r.h/2)) / (r.h/2);
+        if(Math.abs(dx) > Math.abs(dy)) b.vx *= -1; else b.vy *= -1;
+
+        // POWER-UPS
+        if(brick.type === "clock"){
+          // +10 seconds toast
+          timeEl.textContent = (parseInt(timeEl.textContent,10) + TIME_BONUS_SECONDS);
+          // also bump the actual counter
+          // (we track tLeft in closure; adjust it)
+          tLeft += TIME_BONUS_SECONDS;
+          toast(`+${TIME_BONUS_SECONDS}s ⏰`);
+        } else if(brick.type === "disco"){
+          if(!haveSecondary && balls.length < MAX_BALLS){
+            // spawn a second ball from current position/velocity
+            const nb = {
+              x: b.x, y: b.y, r: b.r,
+              vx: -b.vx, vy: b.vy, // send it a different way
+              speed: b.speed, color: '#ffffff', isSecondary:true
+            };
+            balls.push(nb);
+            haveSecondary = true;
+            toast("Multiball! 🪩");
+          }
+        }
+        break; // break only the inner bricks loop; next ball can still hit
+
+      }
+    }
+  }
+}
+
+
+function loop(now){
+  if(!running) return;
+  if (SECRET_JUMP){ endRound("Secret"); return; }
+  const dt = Math.min(0.035, (now-last)/1000); last = now;
+  step(dt); draw();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(t=>{ last=t; loop(t); });
+
+    });
+  }
+
   // -----------------------------
-  // Grid Mini-Game
+  // Boss Battle
   // -----------------------------
+  const bossCanvas = $('#boss'), bctx = bossCanvas.getContext('2d');
+  
+function sizeBossCanvas(){
+  const wrap = document.querySelector('#view-boss .gameWrap');
+  const maxW = wrap.clientWidth;
+  const maxH = Math.min(window.innerHeight*0.75, 780);
+  const aspect = 9/14; // match regular
+let w = maxW;
+  let h = Math.min(maxH, Math.round(w/aspect));
+  bossCanvas.width = Math.floor(w*2); bossCanvas.height = Math.floor(h*2); // hi-dpi
+  bossCanvas.style.width = `${w}px`; bossCanvas.style.height = `${h}px`;
+}
+
+  window.addEventListener('resize', ()=>{ if($('#view-boss').classList.contains('active')) sizeBossCanvas(); });
+
+  const bossHudHits = $('#bossHits'), shieldLeftEl = $('#shieldLeft'), hpFill = $('#hpFill');
+  const bossState = {
+    hits:0, hp:5,
+    reset(){ this.hits=0; this.hp=5; bossHudHits.textContent='0'; hpFill.style.width='100%'; }
+  };
+
+  function startBossBattle(){
+    return new Promise(resolve=>{
+      show('view-boss'); sizeBossCanvas();
+      let W=bossCanvas.width, H=bossCanvas.height;
+// Shield line = lowest row (r=3) of the regular 9×4 brick grid.
+const shield = [];
+const g = { cols:9, rows:4 };
+for(let c=0;c<g.cols;c++){
+  const r = brickRect(g, { c, r:3 }, W, H); // lowest row
+  shield.push({
+    x:r.x, y:r.y, w:r.w, h:r.h,
+    alive:true, hp:2, // 2-hit shield
+    emo: EMOJIS[c%EMOJIS.length],
+    popT:0
+  });
+}
+
+
+      // Boss
+const boss = {
+  x: W*0.5,
+  // hover a bit above the lowest (shield) row; clamp so it doesn't go off-canvas
+  y: Math.max(Math.min(H*0.28, shield[0].y - Math.min(W,H)*0.10), Math.min(W,H)*0.08),
+  r: Math.min(W,H)*0.08,
+  emo:"😈",
+  vx: W*0.09
+};
+
+      // Paddle/ball
+      const paddle = { w: W*0.20, h: H*0.02, x: W*0.4, y: H*0.90 };
+const ball = { x: W*0.5, y: H*0.7, r: Math.max(10, Math.min(W,H)*0.013), vx: W*0.22, vy: -H*0.28, speed:1, prevx: W*0.5, prevy: H*0.7 };
+
+      function setPaddle(clientX){
+        const rect = bossCanvas.getBoundingClientRect();
+        const x = (clientX - rect.left) * (bossCanvas.width / rect.width);
+        paddle.x = Math.max(0, Math.min(W - paddle.w, x - paddle.w/2));
+      }
+      function onBossMouseMove(e){ setPaddle(e.clientX); }
+function onBossTouchStart(e){ if(e.touches[0]) setPaddle(e.touches[0].clientX); }
+function onBossTouchMove(e){ if(e.touches[0]) setPaddle(e.touches[0].clientX); }
+
+bossCanvas.addEventListener('mousemove', onBossMouseMove);
+bossCanvas.addEventListener('touchstart', onBossTouchStart, {passive:true});
+bossCanvas.addEventListener('touchmove', onBossTouchMove, {passive:true});
+
+
+      let running=true, last=performance.now();
+      let usedSecondChance = false; // allow exactly one respawn if the ball is lost
+
+
+let bossDying = false;
+let burst = [];
+let burstT = 0; // seconds
+let bossHitCooldown = 0;  // already present? keep just one copy
+
+     function endBoss(){
+  running=false;
+  bossCanvas.removeEventListener('mousemove', onBossMouseMove);
+  bossCanvas.removeEventListener('touchstart', onBossTouchStart);
+  bossCanvas.removeEventListener('touchmove', onBossTouchMove);
+  setTimeout(resolve, 500);
+}
+
+      function shieldAliveCount(){ return shield.reduce((n,s)=>n+(s.alive?1:0),0); }
+
+      function circleRectColl(cx,cy,r, rx,ry,rw,rh){
+        const nx = Math.max(rx, Math.min(cx, rx+rw));
+        const ny = Math.max(ry, Math.min(cy, ry+rh));
+        const dx = cx - nx, dy = cy - ny;
+        return dx*dx + dy*dy <= r*r;
+      }
+
+      // Check if a moving point from (x1,y1)→(x2,y2) crosses a circle at (cx,cy) with radius r
+function segmentCircleHit(x1,y1,x2,y2, cx,cy, r){
+  const dx = x2 - x1, dy = y2 - y1;
+  const fx = x1 - cx, fy = y1 - cy;
+  const a = dx*dx + dy*dy;
+  if (a === 0) return (fx*fx + fy*fy) <= r*r; // no movement, treat as point
+  const b = 2*(fx*dx + fy*dy);
+  const c = (fx*fx + fy*fy) - r*r;
+  // Solve quadratic a*t^2 + b*t + c = 0 for t in [0,1]
+  const disc = b*b - 4*a*c;
+  if (disc < 0) return false;
+  const s = Math.sqrt(disc);
+  const t1 = (-b - s)/(2*a), t2 = (-b + s)/(2*a);
+  return (t1 >= 0 && t1 <= 1) || (t2 >= 0 && t2 <= 1);
+}
+
+
+
+
+// Segment–circle time of impact. Returns earliest t in [0,1], or null if no hit.
+function segmentCircleTOI(x1,y1,x2,y2, cx,cy, r){
+  const dx = x2 - x1, dy = y2 - y1;
+  const fx = x1 - cx, fy = y1 - cy;
+  const a = dx*dx + dy*dy;
+  const b = 2*(fx*dx + fy*dy);
+  const c = fx*fx + fy*fy - r*r;
+  const disc = b*b - 4*a*c;
+  if (a === 0) return (c <= 0) ? 0 : null;      // no movement; treat as at-contact if inside
+  if (disc < 0) return null;
+  const s = Math.sqrt(disc);
+  const t1 = (-b - s) / (2*a);
+  const t2 = (-b + s) / (2*a);
+  // earliest hit in range
+  let t = null;
+  if (t1 >= 0 && t1 <= 1) t = t1;
+  else if (t2 >= 0 && t2 <= 1) t = t2;
+  return t;
+}
+
+
+function easeOutQuad(t){ return 1 - (1 - t)*(1 - t); }
+
+// Create N evenly spaced starburst rays
+function createBurst(N=16){
+  burst = Array.from({length:N}, (_,i)=>({ ang: (i/N)*Math.PI*2 }));
+  burstT = 0;
+}
+
+
+      function draw(){
+        bctx.clearRect(0,0,W,H);
+          // boss instructions inside the canvas top
+  bctx.save();
+  bctx.fillStyle = 'rgba(255,255,255,0.9)';
+  bctx.textAlign = 'center';
+  bctx.textBaseline = 'top';
+  bctx.font = `${Math.max(12, Math.floor(H*0.035))}px system-ui, Segoe UI, Arial, sans-serif`;
+  bctx.fillText('Hit the Boss 5 times to win (shield optional)!', W/2, 8);
+  bctx.restore();
+
+        // bg
+        bctx.globalAlpha=.25; bctx.fillStyle='#0f1440'; bctx.fillRect(0,0,W,H); bctx.globalAlpha=1;
+
+        // shield
+        for(const s of shield){
+          if(!s.alive && s.popT<=0) continue;
+  if(s.alive){
+    const baseBlue = '#1e2353';
+    const hitYellow = '#f5c84c';
+    bctx.fillStyle = (s.hp === 1) ? hitYellow : baseBlue; bctx.fillRect(s.x, s.y, s.w, s.h);
+    bctx.strokeStyle='rgba(255,255,255,.08)'; bctx.strokeRect(s.x, s.y, s.w, s.h);
+  }
+
+          const cx = s.x + s.w/2, cy = s.y + s.h*0.62, font = Math.min(s.w,s.h)*0.7*(s.popT>0?1+s.popT*0.6:1);
+          bctx.font = `bold ${font}px system-ui,Segoe UI Emoji,Apple Color Emoji`;
+          bctx.textAlign='center'; bctx.textBaseline='middle';
+          bctx.fillText(s.emo, cx, cy);
+          if(s.popT>0) s.popT -= 0.06;
+        }
+
+        // boss
+// boss (pop + fade when dying)
+let popScale = 1, bossAlpha = 1;
+if (bossDying){
+  // quick pop for ~0.12s, then fade
+  popScale = 1 + Math.min(0.25, burstT * 2.0); // up to +25%
+  bossAlpha = Math.max(0, 1 - Math.max(0, burstT - 0.15) / 0.6); // fade after 0.15s
+}
+
+// draw boss
+bctx.save();
+bctx.globalAlpha = bossAlpha;
+bctx.font = `bold ${boss.r*1.8*popScale}px system-ui,Segoe UI Emoji,Apple Color Emoji`;
+bctx.textAlign='center'; bctx.textBaseline='middle';
+bctx.fillText(boss.emo, boss.x, boss.y);
+bctx.restore();
+
+// starburst during KO
+if (bossDying){
+  const prog = easeOutQuad(Math.min(1, burstT / 0.6));     // 0 → 1 over ~0.6s
+  const L = (Math.min(bossCanvas.width, bossCanvas.height)) * 0.18 * prog; // ray length
+  const alpha = 0.9 * (1 - prog);
+  bctx.save();
+  bctx.globalAlpha = alpha;
+  bctx.lineWidth = Math.max(2, 6 * (1 - prog));
+  bctx.strokeStyle = '#ffd54a';
+  for(const r of burst){
+    const x2 = boss.x + Math.cos(r.ang) * L;
+    const y2 = boss.y + Math.sin(r.ang) * L;
+    bctx.beginPath();
+    bctx.moveTo(boss.x, boss.y);
+    bctx.lineTo(x2, y2);
+    bctx.stroke();
+  }
+  bctx.restore();
+}
+
+
+        // paddle & ball
+       // paddle & (ball hidden during KO)
+bctx.fillStyle='#6b62ff'; bctx.fillRect(paddle.x,paddle.y,paddle.w,paddle.h);
+if (!bossDying){
+  bctx.beginPath(); bctx.fillStyle='#ffd54a';
+  bctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2); bctx.fill();
+}
+
+      }
+
+      function step(dt){
+      bossHitCooldown = Math.max(0, bossHitCooldown - dt);
+      let bossCollidedThisFrame = false;
+
+      // If boss is dying, run the animation and exit early
+if (bossDying){
+  burstT += dt;
+  // when animation finishes, end the boss round
+  if (burstT >= 0.8){ endBoss(); return; }
+  return;
+}
+
+
+
+      // move ball
+ball.prevx = ball.x;            // ← add these two lines
+ball.prevy = ball.y;            // ← to keep a correct swept segment
+ball.x += ball.vx*dt*ball.speed;
+ball.y += ball.vy*dt*ball.speed;
+
+// boss horizontal motion: bounce within canvas (small margin)
+const margin = Math.max(10, boss.r + 10);
+boss.x += boss.vx * dt;
+if (boss.x < margin){ boss.x = margin; boss.vx = Math.abs(boss.vx); }
+if (boss.x > W - margin){ boss.x = W - margin; boss.vx = -Math.abs(boss.vx); }
+
+
+      // continuous acceleration (capped)
+      ball.speed = Math.min(BALL_SPEED_MAX, ball.speed + BALL_ACCEL_PER_SEC * dt);
+
+
+        // walls
+        if(ball.x<ball.r){ ball.x=ball.r; ball.vx=Math.abs(ball.vx); }
+        if(ball.x>W-ball.r){ ball.x=W-ball.r; ball.vx=-Math.abs(ball.vx); }
+        if(ball.y<ball.r){ ball.y=ball.r; ball.vy=Math.abs(ball.vy); }
+        if(ball.y>H+ball.r*2){
+  if(!usedSecondChance){
+    usedSecondChance = true;
+    // respawn a fresh ball just above the paddle
+    ball.x = paddle.x + paddle.w/2;
+    ball.y = paddle.y - ball.r - 6;
+    ball.vx = 0;
+    ball.vy = -Math.abs(H * 0.28); // launch upward at your usual speed scale
+    ball.speed = 1;                 // reset speed scaling so it ramps again
+    bossHitCooldown = 0;            // avoid immediate re-hit weirdness
+    toast("Second chance! ✝️");
+    return; // keep the round going
+  } else {
+    endBoss(); return; // already used the extra ball → round ends
+  }
+}
+
+
+        // paddle
+        if(circleRectColl(ball.x,ball.y,ball.r, paddle.x,paddle.y,paddle.w,paddle.h)){
+          ball.y = paddle.y - ball.r;
+          ball.vy = -Math.abs(ball.vy);
+          const hit = (ball.x - (paddle.x + paddle.w/2)) / (paddle.w/2);
+          ball.vx = (W*0.22)*hit;
+        ball.speed = Math.min(BALL_SPEED_MAX, ball.speed + PADDLE_HIT_SPEED_BOOST);
+        }
 
  
-// -----------------------------
-// SoundFX (WebAudio) — sampler-accurate pops + buzz
-// -----------------------------
-let _audioCtx = null;
-function ensureAudio(){
-  if(!_audioCtx){
-    _audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-  if(_audioCtx.state === 'suspended'){
-    _audioCtx.resume();
-  }
-  return _audioCtx;
-}
+        // --- Boss collision FIRST (robust TOI), then shield ---
 
-// Simple sustained tone (used for buzz)
-function tone({type='sine', f=880, dur=0.14, g=0.28}){
-  return new Promise(res=>{
-    const c = ensureAudio(); if(!c) return res();
-    const o = c.createOscillator(), V = c.createGain();
-    o.type = type; o.frequency.value = f;
-    V.gain.setValueAtTime(0.0001, c.currentTime);
-    V.gain.exponentialRampToValueAtTime(g, c.currentTime+0.01);
-    V.gain.exponentialRampToValueAtTime(0.0001, c.currentTime+dur);
-    o.connect(V); V.connect(c.destination);
-    o.start(); o.stop(c.currentTime + dur + 0.02);
-    o.onended = res;
-  });
-}
+// Boss hits count even if the shield is still up — robust TOI collision
+const Rsum = boss.r + ball.r;
+const toi = segmentCircleTOI(ball.prevx, ball.prevy, ball.x, ball.y, boss.x, boss.y, Rsum);
 
-// “Pop” = short tone with quick decay + pitch sweep (+ optional lowpass and micro-click)
-function pop({type='sine', f0=900, f1=600, dur=0.10, gain=0.8, lowpass=null, click=false}={}){
-  return new Promise(res=>{
-    const c = ensureAudio(); if(!c) return res();
-    const o = c.createOscillator();
-    const V = c.createGain();
-    let out = V;
+if (toi !== null && bossHitCooldown <= 0){
+  bossHitCooldown = 0.15; // one contact = one hit
+  bossCollidedThisFrame = true;
 
-    o.type = type;
-    o.frequency.setValueAtTime(f0, c.currentTime);
-    o.frequency.exponentialRampToValueAtTime(Math.max(40, f1), c.currentTime + dur*0.85);
+  // Contact point along the segment
+  const cx = ball.prevx + (ball.x - ball.prevx) * toi;
+  const cy = ball.prevy + (ball.y - ball.prevy) * toi;
 
-    // amplitude: fast attack, fast decay
-    V.gain.setValueAtTime(0.0001, c.currentTime);
-    V.gain.exponentialRampToValueAtTime(gain, c.currentTime + 0.008);
-    V.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + dur);
+  // Outward normal from boss center to contact
+  let nx = cx - boss.x, ny = cy - boss.y;
+  let nlen = Math.hypot(nx, ny) || 1;
+  nx /= nlen; ny /= nlen;
 
-    if (lowpass){
-      const lp = c.createBiquadFilter();
-      lp.type = 'lowpass';
-      lp.frequency.setValueAtTime(lowpass, c.currentTime);
-      V.connect(lp); out = lp;
-    }
+  // Reflect velocity across the normal, preserving speed
+  const speedMag = Math.hypot(ball.vx, ball.vy) || 0;
+  const dot = ball.vx*nx + ball.vy*ny;
+  ball.vx = ball.vx - 2*dot*nx;
+  ball.vy = ball.vy - 2*dot*ny;
 
-    if (click){
-      const C = c.createGain();
-      const t0 = c.currentTime;
-      C.gain.setValueAtTime(0.0001, t0);
-      C.gain.linearRampToValueAtTime(0.25, t0 + 0.003);
-      C.gain.linearRampToValueAtTime(0.0001, t0 + 0.02);
-      const n = c.createOscillator();
-      n.type = 'square'; n.frequency.setValueAtTime(2000, t0);
-      n.connect(C); C.connect(c.destination);
-      n.start(t0); n.stop(t0 + 0.03);
-    }
+  // Re-normalize to original speed
+  const newMag = Math.hypot(ball.vx, ball.vy) || 1;
+  ball.vx = ball.vx / newMag * speedMag;
+  ball.vy = ball.vy / newMag * speedMag;
 
-    o.connect(V); out.connect(c.destination);
-    o.start();
-    o.stop(c.currentTime + dur + 0.02);
-    o.onended = res;
-  });
-}
+  // Place ball just outside at impact and nudge outward (a bit stronger for HiDPI)
+  const EPS = 6;
+  ball.x = boss.x + nx * (Rsum + EPS);
+  ball.y = boss.y + ny * (Rsum + EPS);
 
-// Named sounds (matching your sampler)
-const Sounds = {
-  "Pop – short sine blip": () => pop({type:'sine',     f0:900,  f1:650, dur:0.09, gain:0.80}),
-  "Pop – bright bubble":   () => pop({type:'sine',     f0:1200, f1:500, dur:0.12, gain:0.75}),
-  "Pop – soft thup":       () => pop({type:'triangle', f0:520,  f1:320, dur:0.12, gain:0.70, lowpass:1200}),
-  "Pop – plucky up":       () => pop({type:'sine',     f0:500,  f1:950, dur:0.10, gain:0.70}),
-  "Bad – low buzz":        () => tone({type:'sawtooth',f:220,            dur:0.18, g:0.28})
-};
-
-// Random picker for correct pops — never repeat back-to-back
-const CORRECT_KEYS = [
-  "Pop – short sine blip",
-  "Pop – bright bubble",
-  "Pop – soft thup",
-  "Pop – plucky up"
-];
-let _lastCorrectKey = null;
-
-function playCorrectRandomNoRepeat(){
-  ensureAudio();
-  const pool = CORRECT_KEYS.filter(k => k !== _lastCorrectKey);
-  const key = pool[Math.floor(Math.random() * pool.length)];
-  _lastCorrectKey = key;
-  return Sounds[key]();
-}
-function playWrongBuzz(){
-  ensureAudio();
-  return Sounds["Bad – low buzz"]();
-}
-
-window.SoundFX = {
-  playCorrect: playCorrectRandomNoRepeat,
-  playWrong: playWrongBuzz
-};
-
-function startGrid(q){
-
-
-    showScreen('grid');
-    const fourEmojis = q.options.map(o => o.emoji);
-    targetEmoji = q.options[q.correct].emoji;
-    gridTitle.textContent = `Find all the ${targetEmoji} emojis`;
-    remainingCorrect = PER_EMOJI;
-    gridRemaining.textContent = remainingCorrect;
-    timeLeft = 20;
-    gridTime.textContent = timeLeft;
-    hudTimer.style.display = 'block';
-    document.getElementById('hudTimer').textContent = `Time: ${timeLeft}`;
-
-    // Build equal distribution (9 of each emoji), then shuffle
-    const pool = [];
-    for(let i=0;i<4;i++){
-      for(let j=0;j<PER_EMOJI;j++){
-        pool.push(fourEmojis[i]);
-      }
-    }
-    shuffle(pool);
-
-    // Render cells
-    gridEl.innerHTML = '';
-    pool.forEach(emo=>{
-      const cell = document.createElement('div');
-      cell.className = 'cell';
-      cell.textContent = emo;
-      cell.dataset.emoji = emo;
-      cell.addEventListener('click', ()=> onCellClick(cell));
-      gridEl.appendChild(cell);
-    });
-
-    // Start timer
-    if(gridTimer) clearInterval(gridTimer);
-    gridTimer = setInterval(()=>{
-      timeLeft--;
-      gridTime.textContent = timeLeft;
-      document.getElementById('hudTimer').textContent = `Time: ${timeLeft}`;
-      if(timeLeft<=0){
-        endGrid(false);
-      }
-    }, 1000);
-
-}
-  function onCellClick(cell){
-    const emo = cell.dataset.emoji;
-    if(cell.classList.contains('popped')) return;
-
-    if(emo === targetEmoji){
-      cell.classList.add('correct','popped');
-      remainingCorrect--;
-      gridRemaining.textContent = remainingCorrect;
-      score += 10; // per correct
-      updateHUD();
-      SoundFX.playCorrect();
-      if(remainingCorrect<=0){
-        // Finished early — add time bonus (5 points per second left)
-        const bonus = Math.max(0, timeLeft * 5);
-        score += bonus;
-        updateHUD();
-
-        endGrid(true, bonus);
-      }
-    } else {
-      // penalty and quick flash
-      score = Math.max(0, score - 25);
-      updateHUD();
-      SoundFX.playWrong();
-      cell.classList.add('wrong','flash');
-      setTimeout(()=> cell.classList.remove('flash'), 150);
-    }
+  // Advance the remainder of this frame along the new velocity (prevents "sticky" looks)
+  const rem = (1 - toi);
+  if (rem > 0){
+    ball.x += ball.vx * dt * ball.speed * rem;
+    ball.y += ball.vy * dt * ball.speed * rem;
   }
 
-  function endGrid(completedEarly, bonus=0){
-    if(gridTimer) clearInterval(gridTimer);
-    gridTimer = null;
-    hudTimer.style.display = 'none';
-    const msg = completedEarly
-      ? `You found them all! Time bonus: +${bonus} points.`
-      : `Time's up! Keep going — you’ve got this.`;
-    openModal(completedEarly ? "Nice work! 🎉" : "Time Up ⏰", msg, ()=>{
-      qIndex++;
-      if(qIndex < QUESTIONS.length){
-        showQuestion();
+  // Reset prev to the new post-collision position
+  ball.prevx = ball.x;
+  ball.prevy = ball.y;
+
+  // Count the hit and update UI
+  score += BOSS_HIT_POINTS; updateScore();
+  toast(`+${BOSS_HIT_POINTS} pts 😈`);
+
+  bossState.hits = Math.min(5, bossState.hits+1);
+  bossHudHits.textContent = bossState.hits;
+  const pct = (1 - bossState.hits/5)*100;
+  hpFill.style.width = `${pct}%`;
+
+  if (bossState.hits >= 5){
+    bossDying = true;
+    createBurst(16);
+    return; // step() will animate & call endBoss()
+  }
+}
+
+// Only try shield bricks if we DIDN'T already collide with the boss this frame
+if (!bossCollidedThisFrame){
+  // shield collisions (2-hit: blue -> yellow -> break)
+  for(const s of shield){
+    if(!s.alive) continue;
+    if(circleRectColl(ball.x,ball.y,ball.r, s.x,s.y,s.w,s.h)){
+      // reflect as before
+      const dx = (ball.x - (s.x + s.w/2)) / (s.w/2);
+      const dy = (ball.y - (s.y + s.h/2)) / (s.h/2);
+      if(Math.abs(dx)>Math.abs(dy)) ball.vx*=-1; else ball.vy*=-1;
+
+      if (s.hp > 1){
+        // first hit: turn yellow, keep alive
+        s.hp = 1;
+        s.popT = 0.6; // tiny pop flash if you like
       } else {
-        // Go to bonus
-        showScreen('bonus');
-resetReels();
-startReels();
-
+        // second hit: break + points
+        s.alive = false;
+        s.popT = 1.0;
+        score += SHIELD_POINTS; updateScore();
+        toast(`+${SHIELD_POINTS} pts 🛡️`);
       }
-    });
-  }
-
-  // Optional Skip button (useful for demos / accessibility)
-
-  // -----------------------------
-  // Bonus Round (Skill Slots)
-  // -----------------------------
-  function resetReels(){
-    [reel0,reel1,reel2].forEach((r,i)=>{
-      reelIndex[i] = i % SLOT_ORDER.length;
-      r.textContent = SLOT_ORDER[reelIndex[i]];
-    });
-    reelRunning = [false,false,false];
-  }
-
-  function startReels(){
-    // Start each with slight offset speeds to make timing matter
-    const speeds = [REEL_BASE_MS, REEL_BASE_MS + 40, REEL_BASE_MS + 80];
-
-    [0,1,2].forEach(i=>{
-      reelRunning[i] = true;
-      reelIntervals[i] = setInterval(()=>{
-        reelIndex[i] = (reelIndex[i] + 1) % SLOT_ORDER.length;
-        const emoji = SLOT_ORDER[reelIndex[i]];
-        [reel0,reel1,reel2][i].textContent = emoji;
-      }, speeds[i]);
-    });
-    
-  }
-
-  function stopReel(i){
-    if(!reelRunning[i]) return;
-    clearInterval(reelIntervals[i]);
-    reelIntervals[i] = null;
-    reelRunning[i] = false;
-
-    // When all stopped, score result
-    if(!reelRunning[0] && !reelRunning[1] && !reelRunning[2]){
-      const vals = [reel0.textContent, reel1.textContent, reel2.textContent];
-      let bonus = 0;
-      if(vals[0] === vals[1] && vals[1] === vals[2]){
-        bonus = PAYOUTS[vals[0]] || 0;
-        score += bonus;
-        updateHUD();
-        openModal("Jackpot! 🎉", `All three ${vals[0]} — bonus +${bonus}!`, ()=> {
-          showEnd();
-        });
-      } else {
-        // Small consolation for playing
-        bonus = 50;
-        score += bonus;
-        updateHUD();
-        openModal("Nice try! ⭐", `No match this time. Consolation +${bonus}.`, ()=> {
-          showEnd();
-        });
-      }
+      break; // one shield brick per frame
     }
+  }
+}
+
+
+// update HUD after shield/boss handling
+const left = shieldAliveCount();
+shieldLeftEl.textContent = left;
+
+
+
+
+      }
+
+      function loop(now){
+        if(!running) return;
+        const dt = Math.min(0.035,(now-last)/1000); last=now;
+        step(dt); draw();
+        requestAnimationFrame(loop);
+      }
+      requestAnimationFrame(t=>{ last=t; loop(t); });
+    });
   }
 
   function showEnd(){
-  // stop any reels just in case
-  [0,1,2].forEach(i => {
-    if (reelIntervals[i]) {
-      clearInterval(reelIntervals[i]);
-      reelIntervals[i] = null;
-      reelRunning[i] = false;
-    }
-  });
-
-    showScreen('end');
-    finalScore.textContent = score.toString();
+    $('#finalScore').textContent = score;
+    $('#finalBroken').textContent = totalBroken;
+    $('#finalBoss').textContent = bossState.hits;
+    show('view-end');
   }
 
   // -----------------------------
-  // Event wiring
+  // Initial title after splash modal confirming controls
   // -----------------------------
-  btnSplashOk.addEventListener('click', ()=> showScreen('title'));
-  btnHow.addEventListener('click', ()=>{
-    openModal("How to Play", "Answer each question. Then tap every matching emoji in the 6×6 grid before time runs out. Finishing early gives a time bonus. At the end, try the skill-based bonus round: time your taps to match three!", null);
-  });
-  btnStart.addEventListener('click', startGame);
+  (async function boot(){
+    await new Promise(r=> setTimeout(r, 50)); // allow DOM paint
+    // After splash OK, we show title (handled by btn)
+    // Show a quick tip when entering title
+document.getElementById('btnSplashOk').addEventListener('click', async ()=>{
+  // move to Title immediately so it feels like we "started"
+  show('view-title');
+  // then show the quick welcome tip on top
+  await modal("Welcome!", "Answer each question. Then use the paddle to bounce the ball and break the emoji.<br><br><b>Tip:</b> Touch or move your mouse to control the paddle.");
+}, {once:true});
 
-  modalOk.addEventListener('click', closeModal);
+  })();
 
-  // Bonus controls
-
-  btnPlayAgain.addEventListener('click', ()=>{
-    showScreen('title');
-  });
-  btnTitle.addEventListener('click', ()=>{
-    showScreen('title');
-  });
-
-// Secret skip: press "G" to jump straight to the bonus round
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'g' || e.key === 'G') {
-    // clean up any running grid timer and hide HUD timer
-    try { if (gridTimer) { clearInterval(gridTimer); gridTimer = null; } } catch(_) {}
-    hudTimer.style.display = 'none';
-
-    // go straight to the bonus and start reels
-    showScreen('bonus');
-    resetReels();
-    startReels();
-  }
-});
-
-
-  // Initialize HUD and reels
-  updateHUD();
-  resetReels();
 })();
 </script>
 </body>
 </html>
-
-
