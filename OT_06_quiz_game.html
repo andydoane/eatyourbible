@@ -169,112 +169,141 @@
 </div>
 
 <script>
-/* ===============================
-   Data: 10 Bible Questions
-   Each answer has an emoji; one isCorrect
-   =============================== */
+
+
+
+/*
+
+ #####     #     #    #######     #####     #######    ###    #######    #     #     #####  
+#     #    #     #    #          #     #       #        #     #     #    ##    #    #     # 
+#     #    #     #    #          #             #        #     #     #    # #   #    #       
+#     #    #     #    #####       #####        #        #     #     #    #  #  #     #####  
+#   # #    #     #    #                #       #        #     #     #    #   # #          # 
+#    #     #     #    #          #     #       #        #     #     #    #    ##    #     # 
+ #### #     #####     #######     #####        #       ###    #######    #     #     #####  
+
+*/
+
+
 const QUESTIONS = [
   {
-    q: "Who built an ark because God warned of a flood?",
+    q: "What happened when God sent a great wind?",
     answers: [
-      {emoji:"🧔‍♂️", text:"Noah", isCorrect:true},
-      {emoji:"👑", text:"Solomon", isCorrect:false},
-      {emoji:"🪄", text:"Balaam", isCorrect:false},
-      {emoji:"🧕", text:"Ruth", isCorrect:false},
+      { emoji: "🌊", text: "The water went down", isCorrect: true },
+      { emoji: "🌧️", text: "It rained more", isCorrect: false },
+      { emoji: "❄️", text: "The water froze", isCorrect: false },
+      { emoji: "☀️", text: "Everything dried instantly", isCorrect: false },
     ],
-    shipEmoji:"🚀"
+    shipEmoji: "🚀"
   },
   {
-    q: "God spoke to Moses from what unusual thing?",
+    q: "Where did the ark come to rest?",
     answers: [
-      {emoji:"🌳", text:"A burning bush", isCorrect:true},
-      {emoji:"🌊", text:"The Red Sea", isCorrect:false},
-      {emoji:"🕊️", text:"A dove", isCorrect:false},
-      {emoji:"🌙", text:"The moon", isCorrect:false},
+      { emoji: "🗻", text: "On a mountain", isCorrect: true },
+      { emoji: "🏝️", text: "On an island", isCorrect: false },
+      { emoji: "🏜️", text: "In a desert", isCorrect: false },
+      { emoji: "🌊", text: "On the sea", isCorrect: false },
     ],
-    shipEmoji:"🛸"
+    shipEmoji: "🛸"
   },
   {
-    q: "David used what to defeat Goliath?",
+    q: "Why did Noah send a raven and a dove?",
     answers: [
-      {emoji:"🪨", text:"A stone and sling", isCorrect:true},
-      {emoji:"⚔️", text:"A sword", isCorrect:false},
-      {emoji:"🏹", text:"A bow and arrow", isCorrect:false},
-      {emoji:"🪓", text:"An axe", isCorrect:false},
+      { emoji: "🧭", text: "To find dry land", isCorrect: true },
+      { emoji: "🍖", text: "To fetch food", isCorrect: false },
+      { emoji: "📨", text: "To send a message", isCorrect: false },
+      { emoji: "🎯", text: "To test their aim", isCorrect: false },
     ],
-    shipEmoji:"🚀"
+    shipEmoji: "🚀"
   },
   {
-    q: "Jonah spent time inside what creature?",
+    q: "What happened the first time Noah sent out the dove?",
     answers: [
-      {emoji:"🐳", text:"A great fish", isCorrect:true},
-      {emoji:"🦁", text:"A lion", isCorrect:false},
-      {emoji:"🦅", text:"An eagle", isCorrect:false},
-      {emoji:"🐍", text:"A snake", isCorrect:false},
+      { emoji: "🔁", text: "It came back later", isCorrect: true },
+      { emoji: "🪶", text: "It lost a feather", isCorrect: false },
+      { emoji: "🥚", text: "It laid an egg", isCorrect: false },
+      { emoji: "💤", text: "It fell asleep", isCorrect: false },
     ],
-    shipEmoji:"🛸"
+    shipEmoji: "🛸"
   },
   {
-    q: "What did Jesus calm when the disciples were afraid?",
+    q: "What happened the second time Noah sent out the dove?",
     answers: [
-      {emoji:"🌊", text:"A stormy sea", isCorrect:true},
-      {emoji:"🌋", text:"A volcano", isCorrect:false},
-      {emoji:"🌪️", text:"A tornado", isCorrect:false},
-      {emoji:"🔥", text:"A wildfire", isCorrect:false},
+      { emoji: "🌿", text: "It returned with a branch", isCorrect: true },
+      { emoji: "🐟", text: "It brought a fish", isCorrect: false },
+      { emoji: "🪵", text: "It carried wood", isCorrect: false },
+      { emoji: "🌧️", text: "It came back wet", isCorrect: false },
     ],
-    shipEmoji:"🚀"
+    shipEmoji: "🚀"
   },
   {
-    q: "Where was Jesus born?",
+    q: "What happened the third time Noah sent out the dove?",
     answers: [
-      {emoji:"🌟", text:"Bethlehem", isCorrect:true},
-      {emoji:"🏙️", text:"Jerusalem", isCorrect:false},
-      {emoji:"🏜️", text:"Nazareth", isCorrect:false},
-      {emoji:"🏔️", text:"Capernaum", isCorrect:false},
+      { emoji: "🏞️", text: "It didn’t return (land!)", isCorrect: true },
+      { emoji: "🔁", text: "It came back again", isCorrect: false },
+      { emoji: "🪨", text: "It brought a stone", isCorrect: false },
+      { emoji: "🐍", text: "It chased a snake", isCorrect: false },
     ],
-    shipEmoji:"🛸"
+    shipEmoji: "🛸"
   },
   {
-    q: "How many disciples did Jesus choose?",
+    q: "What did Noah build after the ark?",
     answers: [
-      {emoji:"1️⃣2️⃣", text:"Twelve", isCorrect:true},
-      {emoji:"🔟", text:"Ten", isCorrect:false},
-      {emoji:"1️⃣4️⃣", text:"Fourteen", isCorrect:false},
-      {emoji:"7️⃣", text:"Seven", isCorrect:false},
+      { emoji: "🛐", text: "An altar for sacrifice", isCorrect: true },
+      { emoji: "🏰", text: "A fortress", isCorrect: false },
+      { emoji: "🚢", text: "Another ark", isCorrect: false },
+      { emoji: "🌳", text: "A garden", isCorrect: false },
     ],
-    shipEmoji:"🚀"
+    shipEmoji: "🚀"
   },
   {
-    q: "What did God give Moses on Mount Sinai?",
+    q: "What command did God give to Noah’s family?",
     answers: [
-      {emoji:"🪨", text:"The Ten Commandments", isCorrect:true},
-      {emoji:"🍞", text:"Manna", isCorrect:false},
-      {emoji:"🐍", text:"A bronze snake", isCorrect:false},
-      {emoji:"🕊️", text:"A dove", isCorrect:false},
+      { emoji: "👶", text: "Have children; fill the earth", isCorrect: true },
+      { emoji: "🏗️", text: "Build a big city", isCorrect: false },
+      { emoji: "⚔️", text: "Conquer nations", isCorrect: false },
+      { emoji: "🚫", text: "Stop traveling", isCorrect: false },
     ],
-    shipEmoji:"🛸"
+    shipEmoji: "🛸"
   },
   {
-    q: "Who was thrown into a den of lions?",
+    q: "What covenant did God make?",
     answers: [
-      {emoji:"🦁", text:"Daniel", isCorrect:true},
-      {emoji:"👶", text:"Samuel", isCorrect:false},
-      {emoji:"👑", text:"Saul", isCorrect:false},
-      {emoji:"🧔‍♂️", text:"Abraham", isCorrect:false},
+      { emoji: "🌍", text: "Never flood the whole earth", isCorrect: true },
+      { emoji: "👑", text: "Make Noah king", isCorrect: false },
+      { emoji: "🌾", text: "Endless food", isCorrect: false },
+      { emoji: "🔥", text: "Never send fire", isCorrect: false },
     ],
-    shipEmoji:"🚀"
+    shipEmoji: "🚀"
   },
   {
-    q: "Jesus fed thousands with what?",
+    q: "What sign did God give for His covenant?",
     answers: [
-      {emoji:"🍞🐟", text:"Bread and fish", isCorrect:true},
-      {emoji:"🍇", text:"Grapes", isCorrect:false},
-      {emoji:"🌽", text:"Corn", isCorrect:false},
-      {emoji:"🍖", text:"Meat", isCorrect:false},
+      { emoji: "🌈", text: "A rainbow", isCorrect: true },
+      { emoji: "⭐", text: "A star", isCorrect: false },
+      { emoji: "🕊️", text: "A dove", isCorrect: false },
+      { emoji: "🔔", text: "A bell", isCorrect: false },
     ],
-    shipEmoji:"🛸"
+    shipEmoji: "🛸"
   },
 ];
+
+
+/*
+
+#######    #     #    ######     
+#          ##    #    #     #    
+#          # #   #    #     #    
+#####      #  #  #    #     #    
+#          #   # #    #     #    
+#          #    ##    #     #    
+#######    #     #    ######     
+
+
+*/
+
+
+
 
 /* ===============================
    Simple UI helpers
