@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+<title>Bible Runner — Endless Quiz</title>
+<style>
+  :root{
+    --bg:#0b1020;
+    --ink:#f5f7ff;
+    --accent:#4BE3AC;
+    --accent2:#7AA2FF;
+    --warn:#ff6b6b;
+    --good:#3ad29f;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:#0b0f1a;color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
+  /* Layout */
+  #app{height:100%;display:flex;align-items:center;justify-content:center;padding:1.5vmin}
+  .frame{width:100%;max-width:1100px;aspect-ratio:16/9;border-radius:18px;background:linear-gradient(180deg,#0e1430,#0b0f1a);
+    box-shadow:0 10px 30px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.06);
+    overflow:hidden;display:flex;flex-direction:column}
+  header{padding:.8rem 1rem;border-bottom:1px solid rgba(255,255,255,.08);display:flex;gap:.75rem;align-items:center;justify-content:space-between}
+  header .title{font-weight:700;letter-spacing:.3px}
+  header .score{display:flex;gap:1rem;font-variant-numeric:tabular-nums}
+  header .score span{opacity:.9}
+  main{flex:1;display:grid;place-items:center;position:relative;background:#0b0f1a}
+  footer{padding:.6rem .9rem;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;font-size:.9rem;opacity:.8}
+  .btn{cursor:pointer;border:0;background:var(--accent);color:#031016;padding:.8rem 1.1rem;border-radius:12px;font-weight:700;transition:.2s transform,.2s opacity}
+  .btn:hover{transform:translateY(-1px)}
+  .btn.secondary{background:transparent;color:var(--ink);border:1px solid rgba(255,255,255,.18)}
+  .btn.warn{background:var(--warn);color:#1a0b10}
+  .stack{display:flex;flex-direction:column;gap:1rem}
+  .center{display:grid;place-items:center;text-align:center;padding:2vmin}
+  .muted{opacity:.8}
+  /* Screens */
+  .screen{position:absolute;inset:0;display:none}
+  .screen.active{display:flex;align-items:center;justify-content:center}
+  .panel{width:min(92%,780px);background:rgba(255,255,255,.05);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:clamp(16px,3vmin,28px)}
+  .panel h1{margin:.2rem 0 1rem;font-size:clamp(20px,3.6vmin,32px)}
+  .panel p{margin:.4rem 0 1rem}
+  .list{display:grid;gap:.7rem;margin-top:.8rem}
+  .answers{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}
+  .answers button{font-size:clamp(14px,2.3vmin,18px);padding:1rem;border-radius:12px;border:1px solid rgba(255,255,255,.15);background:#0f162f;color:var(--ink);text-align:left;display:flex;align-items:center;gap:.7rem}
+  .answers button .emo{font-size:1.6em;line-height:0}
+  .answers button.correct{outline:2px solid var(--good)}
+  .answers button.wrong{outline:2px solid var(--warn)}
+  /* Modals / Toasts */
+  .modal{position:absolute;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;padding:2vmin}
+  .modal.show{display:flex}
+  .card{background:#0f162f;border:1px solid rgba(255,255,255,.18);border-radius:14px;max-width:560px;width:min(92%,560px);padding:1rem 1.2rem}
+  .card h2{margin:.2rem 0 .6rem}
+  .row{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
+  /* Canvas game area */
+  #gameWrap{position:relative;width:100%;height:100%;background:#06101a}
+  canvas{width:100%;height:100%;display:block}
+  .hint{position:absolute;left:12px;bottom:8px;font-size:.9rem;opacity:.8}
+  /* Landscape nudge */
+  @media (orientation:portrait) {
+    .frame{aspect-ratio:9/16}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="frame">
+    <header>
+      <div class="title">🦖 Bible Runner</div>
+      <div class="score">
+        <span>Level: <b id="uiLevel">1</b>/10</span>
+        <span>Score: <b id="uiScore">0</b></span>
+        <span>Lives: <b id="uiLives">∞</b></span>
+      </div>
+    </header>
+    <main id="stage">
+
+      <!-- Splash -->
+      <section id="splash" class="screen active">
+        <div class="panel center stack">
+          <h1>Best in horizontal / landscape</h1>
+          <p class="muted">Rotate your device for the best experience.</p>
+          <div><button class="btn" id="splashOK">Okay</button></div>
+        </div>
+      </section>
+
+      <!-- Title -->
+      <section id="title" class="screen">
+        <div class="panel center stack">
+          <h1>🦖 Bible Runner</h1>
+          <p class="muted">Answer questions, then jump the emojis to reach the goal for bonus points. Collect ⭐ for extra points!</p>
+          <div class="row" style="justify-content:center">
+            <button class="btn" id="startBtn">Go Fullscreen and Start</button>
+            <button class="btn secondary" id="howBtn">How to Play</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Question -->
+      <section id="quiz" class="screen">
+        <div class="panel">
+          <div class="stack">
+            <h1 id="qText">Question...</h1>
+            <div id="answers" class="answers"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Pre-run popup -->
+      <div id="preRunModal" class="modal">
+        <div class="card stack center">
+          <h2>Jump the emojis and reach the end for bonus points!</h2>
+          <p class="muted">Press Space, tap, or click to jump. Collect ⭐ for extra points.</p>
+          <div><button class="btn" id="beginRun">Go!</button></div>
+        </div>
+      </div>
+
+      <!-- Game (runner) -->
+      <section id="game" class="screen">
+        <div id="gameWrap">
+          <canvas id="canvas"></canvas>
+          <div class="hint">Controls: Space / Click / Tap to jump • Press P to pause</div>
+        </div>
+      </section>
+
+      <!-- Endurance intro -->
+      <section id="enduranceIntro" class="screen">
+        <div class="panel center stack">
+          <h1>Final Bonus Round</h1>
+          <p class="muted">An endurance run through all 10 themes — 10 seconds each, seamless transitions. One hit ends the round!</p>
+          <div><button class="btn" id="startEndurance">Start Endurance</button></div>
+        </div>
+      </section>
+
+      <!-- End Screen -->
+      <section id="end" class="screen">
+        <div class="panel center stack">
+          <h1>Game Over</h1>
+          <p id="finalStats" class="muted"></p>
+          <div class="row" style="justify-content:center">
+            <button class="btn" id="againBtn">Play Again</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Toast / Modal for correctness -->
+      <div id="toast" class="modal">
+        <div class="card stack center">
+          <h2 id="toastTitle">Correct!</h2>
+          <p id="toastMsg" class="muted"></p>
+          <div><button class="btn" id="toastOK">OK</button></div>
+        </div>
+      </div>
+
+    </main>
+    <footer>
+      <span>Tip: Use a wide window for best results.</span>
+      <span>© 2025</span>
+    </footer>
+  </div>
+</div>
+
+<script>
+(() => {
+  /* -----------------------------
+     Data: Questions & Themes
+  ------------------------------*/
+  const QUESTIONS = [
+    { q:"Who built a big boat to survive a flood?", options:[
+        {t:"Noah", emo:"🛶"}, {t:"David", emo:"🪨"}, {t:"Paul", emo:"📜"}, {t:"Moses", emo:"🪄"}
+      ], correctIdx:0, ref:"Genesis 6–9"},
+    { q:"Where was Jesus born?", options:[
+        {t:"Bethlehem", emo:"🌟"}, {t:"Nazareth", emo:"🏠"}, {t:"Jerusalem", emo:"🏛️"}, {t:"Rome", emo:"🇮🇹"}
+      ], correctIdx:0, ref:"Luke 2:1–7"},
+    { q:"What did David use to defeat Goliath?", options:[
+        {t:"A sling and stone", emo:"🪨"}, {t:"A sword", emo:"🗡️"}, {t:"A spear", emo:"🛡️"}, {t:"A chariot", emo:"🛞"}
+      ], correctIdx:0, ref:"1 Samuel 17"},
+    { q:"Who was swallowed by a great fish?", options:[
+        {t:"Jonah", emo:"🐟"}, {t:"Peter", emo:"🐓"}, {t:"Elijah", emo:"🔥"}, {t:"Samuel", emo:"📯"}
+      ], correctIdx:0, ref:"Jonah 1–2"},
+    { q:"What did God create on the first day?", options:[
+        {t:"Light", emo:"💡"}, {t:"Animals", emo:"🐘"}, {t:"Plants", emo:"🌿"}, {t:"Birds", emo:"🕊️"}
+      ], correctIdx:0, ref:"Genesis 1:3–5"},
+    { q:"Who led Israel out of Egypt?", options:[
+        {t:"Moses", emo:"🪄"}, {t:"Joshua", emo:"🏹"}, {t:"Samuel", emo:"📯"}, {t:"Saul", emo:"👑"}
+      ], correctIdx:0, ref:"Exodus 3–14"},
+    { q:"Jesus fed 5,000 with bread and ...", options:[
+        {t:"Fish", emo:"🐟"}, {t:"Grapes", emo:"🍇"}, {t:"Milk", emo:"🥛"}, {t:"Honey", emo:"🍯"}
+      ], correctIdx:0, ref:"John 6:1–14"},
+    { q:"Who walked on water to Jesus?", options:[
+        {t:"Peter", emo:"🧍‍♂️"}, {t:"John", emo:"🧔"}, {t:"James", emo:"🧔‍♂️"}, {t:"Andrew", emo:"🧑‍🦱"}
+      ], correctIdx:0, ref:"Matthew 14:22–33"},
+    { q:"Where did Elijah face the prophets of Baal?", options:[
+        {t:"Mount Carmel", emo:"⛰️"}, {t:"Mount Sinai", emo:"🗻"}, {t:"Jericho", emo:"🏚️"}, {t:"Bethany", emo:"🏡"}
+      ], correctIdx:0, ref:"1 Kings 18"},
+    { q:"What is the 'good news' called?", options:[
+        {t:"The Gospel", emo:"📖"}, {t:"The Law", emo:"📜"}, {t:"The Psalms", emo:"🎶"}, {t:"The Prophets", emo:"🗣️"}
+      ], correctIdx:0, ref:"Romans 1:16"}
+  ];
+
+  // 10 level themes (color, ground tint, obstacle emojis)
+  const THEMES = [
+    {name:"Grasslands", bg:"#0b1e1a", ground:"#143a2f", obstacles:["🌵","🌳","🪵"], sky:["☁️","☁️"], star:"⭐"},
+    {name:"Desert", bg:"#2a1a0e", ground:"#6e4f1d", obstacles:["🌵","🦂","🪨"], sky:["☀️"], star:"⭐"},
+    {name:"Snow", bg:"#102235", ground:"#2d4f73", obstacles:["⛄","❄️","🧊"], sky:["🌨️"], star:"⭐"},
+    {name:"Forest", bg:"#0e1f11", ground:"#264b28", obstacles:["🌲","🍄","🪵"], sky:["🌫️"], star:"⭐"},
+    {name:"City", bg:"#12131a", ground:"#2b2d3a", obstacles:["🚧","🧱","🗂️"], sky:["🌙","⭐️"], star:"⭐"},
+    {name:"Beach", bg:"#0c1d28", ground:"#2e6247", obstacles:["🦀","🐚","🌴"], sky:["🌤️"], star:"⭐"},
+    {name:"Volcano", bg:"#220b0b", ground:"#4b1d1d", obstacles:["🔥","🪨","🌋"], sky:["🌫️"], star:"⭐"},
+    {name:"Space", bg:"#05070e", ground:"#0f1426", obstacles:["🪐","☄️","🛰️"], sky:["✨","🌟"], star:"⭐"},
+    {name:"Farm", bg:"#14200e", ground:"#344b26", obstacles:["🌾","🐄","🚜"], sky:["☁️"], star:"⭐"},
+    {name:"Castle", bg:"#101018", ground:"#2b2b3f", obstacles:["🛡️","🏰","⚔️"], sky:["🌙"], star:"⭐"}
+  ];
+
+  /* -----------------------------
+     Global UI State
+  ------------------------------*/
+  const $ = sel => document.querySelector(sel);
+  const $$ = sel => Array.from(document.querySelectorAll(sel));
+  const screens = {
+    splash: $("#splash"),
+    title: $("#title"),
+    quiz: $("#quiz"),
+    game: $("#game"),
+    enduranceIntro: $("#enduranceIntro"),
+    end: $("#end")
+  };
+  const toast = $("#toast");
+  const toastTitle = $("#toastTitle");
+  const toastMsg = $("#toastMsg");
+  const ui = {
+    level: $("#uiLevel"),
+    score: $("#uiScore"),
+    lives: $("#uiLives")
+  };
+
+  let state = {
+    levelIndex: 0,
+    score: 0,
+    questionsOrder: [...Array(QUESTIONS.length).keys()], // 0..9
+    currentQ: 0,
+    inEndurance: false
+  };
+
+  function showScreen(name){
+    Object.values(screens).forEach(s=>s.classList.remove("active"));
+    screens[name].classList.add("active");
+  }
+  function showToast(title,msg,next){
+    toastTitle.textContent = title;
+    toastMsg.textContent = msg || "";
+    toast.classList.add("show");
+    const ok = $("#toastOK");
+    const handler = () => { toast.classList.remove("show"); ok.removeEventListener("click", handler); if(next) next(); };
+    ok.addEventListener("click", handler);
+  }
+
+  /* -----------------------------
+     Splash / Title
+  ------------------------------*/
+
+// Try to enter fullscreen (quietly ignore if not allowed/supported)
+async function enterFullscreen(){
+  const el = document.documentElement;
+  // Standard
+  if (!document.fullscreenElement && el.requestFullscreen) {
+    try { await el.requestFullscreen(); } catch(e) {}
+  }
+  // WebKit fallback (iOS/macOS Safari)
+  // Some Safari versions only allow fullscreen for certain elements; this will just no-op if blocked.
+  if (!document.fullscreenElement && (el.webkitRequestFullscreen || el.webkitRequestFullScreen)) {
+    try { (el.webkitRequestFullscreen || el.webkitRequestFullScreen).call(el); } catch(e) {}
+  }
+}
+
+// Kick off a fresh run AFTER attempting fullscreen
+async function startGameFlow(){
+  await enterFullscreen();
+
+  // Initialize state (fresh run)
+  state.levelIndex = 0;
+  state.score = 0;
+  state.questionsOrder = shuffle([...Array(QUESTIONS.length).keys()]);
+  state.currentQ = 0;
+  state.inEndurance = false;
+  updateHUD();
+  startQuestion();
+}
+
+
+  $("#splashOK").addEventListener("click", ()=>{
+    showScreen("title");
+  });
+  $("#howBtn").addEventListener("click", ()=>{
+    showToast("How to Play",
+      "Each level starts with a Bible question. Answer it for points. Then run! Jump over obstacles with Space / tap / click. Reach the end for a time bonus and collect ⭐ for extra points.");
+  });
+
+$("#startBtn").addEventListener("click", ()=>{
+  // Run the fullscreen attempt and then start the game
+  startGameFlow();
+});
+
+
+  $("#againBtn").addEventListener("click", ()=>{
+    showScreen("title");
+  });
+
+  /* -----------------------------
+     Quiz Flow
+  ------------------------------*/
+  function startQuestion(){
+    showScreen("quiz");
+    const qIdx = state.questionsOrder[state.currentQ];
+    const q = QUESTIONS[qIdx];
+    $("#qText").textContent = q.q + (q.ref ? ` (${q.ref})` : "");
+
+    const answersWrap = $("#answers");
+    answersWrap.innerHTML = "";
+    const order = shuffle(q.options.map((o,i)=>({i, ...o})));
+    order.forEach((opt,displayIdx)=>{
+      const btn = document.createElement("button");
+      btn.innerHTML = `<span class="emo">${opt.emo}</span><span>${opt.t}</span>`;
+      btn.addEventListener("click", ()=>{
+        const isCorrect = (opt.i === q.correctIdx);
+        if(isCorrect){
+          btn.classList.add("correct");
+          const add = 100;
+          state.score += add;
+          updateHUD();
+          showToast("✅ Correct!","+ "+add+" pts", ()=>{
+            // pre-run popup
+            $("#preRunModal").classList.add("show");
+          });
+        } else {
+          btn.classList.add("wrong");
+          // show correct
+          const c = q.options[q.correctIdx];
+          showToast("❌ Incorrect", `Right answer: ${c.emo} ${c.t}`, ()=>{
+            $("#preRunModal").classList.add("show");
+          });
+        }
+      });
+      answersWrap.appendChild(btn);
+    });
+  }
+
+  $("#beginRun").addEventListener("click", ()=>{
+    $("#preRunModal").classList.remove("show");
+    startRunnerLevel();
+  });
+
+  /* -----------------------------
+     Canvas Runner Engine
+  ------------------------------*/
+  const canvas = $("#canvas");
+  const ctx = canvas.getContext("2d");
+
+  let CW = 1280, CH = 720, DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  function resize(){
+    const rect = canvas.getBoundingClientRect();
+    CW = Math.floor(rect.width * DPR);
+    CH = Math.floor(rect.height * DPR);
+    canvas.width = CW;
+    canvas.height = CH;
+  }
+  window.addEventListener("resize", resize);
+
+  // Physics & player
+  const PLAYER = {
+    x: 0, y: 0, w: 64, h: 64,
+    vy: 0, onGround: false
+  };
+  const GROUND = { y: 0, h: 0 };
+    // Base physics (we'll scale these per device in resetLevelRuntime)
+    const BASE_GRAVITY = 2200;       // px/s^2
+    const BASE_JUMP_VELOCITY = 900;  // px/s
+
+    // Effective physics (computed each level/run)
+    let GRAVITY = BASE_GRAVITY;
+    let JUMP_VELOCITY = BASE_JUMP_VELOCITY;
+
+    // Optional global tuning knob (bump to 1.1–1.3 if you still want higher jumps everywhere)
+    const PHYS_TUNE = 1.0;
+
+
+  // --- Hitbox tuning (smaller values = tighter collisions) ---
+  const HB_PLAYER = 0.70;  // 70% of the player's drawn box
+  const HB_OBS    = 0.75;  // 75% of each obstacle's drawn box
+  const HB_STAR   = 0.60;  // 60% for stars (slightly generous pickup)
+    // Star hitbox offsets (adjust if your star box looks too low/high or left/right)
+    const STAR_HB_DX = 0;    // move star hitbox horizontally (+right / -left)
+    const STAR_HB_DY = -6;   // with textBaseline="top", we need less upward nudge
+
+    const STAR_SIZE_F   = 0.80; // star size relative to PLAYER.h (was mismatched before)
+    const STAR_DRAW_DY  = 0;    // start at 0 now that baseline is "top"; tweak ±1–2 if needed
+
+
+  // --- Hitbox Debug Overlay ---
+let DEBUG_HITBOX = false;      // press H to toggle in-game
+const DEBUG_SHOW_UNSCALED = false; // also outline the raw, unscaled boxes
+const DEBUG_ALPHA = 0.75;      // overlay opacity
+const DEBUG_COLORS = {
+  player:  "#3ad29f", // green
+  obstacle:"#ff6b6b", // red
+  star:    "#7AA2FF", // blue
+  pole:    "#ffd166"  // amber
+};
+
+
+    // ---- Run animation knobs ----
+    const RUN_BOB_PX       = 6;     // vertical bob amplitude in pixels
+    const RUN_BOB_MS       = 300;   // one bob cycle duration (step rhythm)
+    const RUN_TILT_DEG     = 3;     // small tilt wobble (+/- degrees)
+    const SHADOW_MIN_SCALE = 0.85;  // how thin the shadow gets at peak jump
+    const SHADOW_MAX_SCALE = 1.15;  // how wide the shadow is when fully planted
+    const SHADOW_WIDTH_BASE = 0.78; // base width multiplier for the shadow (was ~0.90)
+    const SHADOW_Y_OFFSET = 4;  // pixels to push the shadow DOWN toward/into the ground band
+    const SHADOW_BLUR_PX = 3;   // edge softness for the shadow (px). 0 = sharp, 2–4 = nice soft edge
+    // ---- Collision Explosion (pre-popup) ----
+    const EXPLODE_ENABLED     = true;
+    const EXPLODE_MS          = 450;   // how long the explosion plays before the popup
+    const EXPLODE_COUNT       = 36;    // number of particles
+    const EXPLODE_SIZE_MIN    = 6;     // px
+    const EXPLODE_SIZE_MAX    = 14;    // px
+    const EXPLODE_SPEED_MIN   = 260;   // px/s initial particle speed
+    const EXPLODE_SPEED_MAX   = 720;   // px/s
+    const EXPLODE_GRAVITY     = 1800;  // px/s^2 (pull particles downward)
+
+    // ---- Finish flag pole knobs ----
+    const FLAG_EMO         = "🚩";      // flag emoji
+    const FLAG_POLE_W      = 10;        // pole width in px (canvas pixels, before DPR in draw we use directly)
+    const FLAG_POLE_H_F    = 0.62;      // fraction of canvas height for pole height (e.g., 0.62 * CH)
+    const FLAG_OFFSET_X    = 60;        // how far beyond the right edge it spawns
+    const FLAG_SCROLL_F    = 1.0;       // scroll speed factor vs world (usually 1.0)
+    const FLAG_HIT_SLACK   = 0.35;      // how far into player width counts as touching (0..1)
+
+    // ---- Checkered flag (drawn, not emoji) ----
+    const FLAG_W          = 48;   // flag width in px
+    const FLAG_H          = 32;   // flag height in px
+    const FLAG_CELL       = 6;    // checker square size in px
+    const FLAG_BORDER_PX  = 1.5;  // outline thickness; 0 = no border
+    const FLAG_MARGIN_X   = 8;    // space from pole to flag
+    const FLAG_MARGIN_Y   = 8;    // down from the top of the pole
+
+
+    const DUST_ENABLED     = true;  // turn dust puffs on/off
+    const DUST_SIZE_MIN    = 6;     // dust puff pixel size range
+    const DUST_SIZE_MAX    = 12;
+    const DUST_LIFE_MS     = 280;   // how fast dust fades
+    const RUN_STEP_MS      = 300;   // footstep timing (usually keep = RUN_BOB_MS)
+
+    // ---- Ambient ground rocks (inside the ground band) ----
+    const ROCKS_ENABLED    = true;  // turn ground pebbles on/off
+    const ROCKS_SPAWN_MIN  = 450;   // ms between pebble spawns (min)
+    const ROCKS_SPAWN_MAX  = 950;   // ms between pebble spawns (max)
+    const ROCKS_SPEED_F    = 0.96;  // scroll speed factor vs gameSpeed (slightly slower feels nice)
+    const ROCK_SIZE_MIN    = 6;     // px
+    const ROCK_SIZE_MAX    = 18;
+    const ROCK_ALPHA       = 0.28;  // 0..1 (subtle)
+
+
+  // Level runtime state
+  let runActive = false, paused = false;
+  let themeIdx = 0;
+    let BASE_GAME_SPEED = 460;    // base world scroll in px/s (desktop reference)
+    let gameSpeed = BASE_GAME_SPEED;
+    let WORLD_SCALE = 1;          // set per level from canvas/DPR
+
+  let spawnMin = 700, spawnMax = 1400; // ms between obstacles
+
+  // ---- Difficulty tuning (you can tweak these) ----
+  // Obstacles will start farther apart and ease toward the base range above (spawnMin..spawnMax).
+  // They will NEVER get closer than spawnMin/spawnMax as defined by the level.
+  const DIFF_MIN_START_MULT = 1.8;   // how much farther apart min delay is at level start (e.g., 1.8x)
+  const DIFF_MAX_START_MULT = 1.8;   // how much farther apart max delay is at level start
+  const DIFF_CURVE_POWER    = 1.0;   // 1.0 = linear; >1 = slow start, faster ramp; <1 = faster start, slow finish
+  const DIFF_ENABLED        = true;  // set to false to disable this per-level ramp
+
+  // Helper: linear interpolation
+  function lerp(a, b, t){ return a + (b - a) * t; }
+
+  // Compute a dynamic spawn delay based on level progress (0..1)
+  function getDynamicSpawnDelay(progress){
+    if(!DIFF_ENABLED){
+      return rand(spawnMin, spawnMax);
+    }
+    // Ease progress (keeps end target exactly at spawnMin/Max)
+    const t = Math.max(0, Math.min(1, Math.pow(progress, DIFF_CURVE_POWER)));
+    const startMin = spawnMin * DIFF_MIN_START_MULT;
+    const startMax = spawnMax * DIFF_MAX_START_MULT;
+    const currMin  = Math.max(spawnMin, Math.floor( lerp(startMin, spawnMin, t) ));
+    const currMax  = Math.max(currMin+1, Math.floor( lerp(startMax, spawnMax, t) ));
+    return rand(currMin, currMax);
+  }
+
+
+
+  let starSpawnMin = 1200, starSpawnMax = 2200;
+  let distanceGoal = 0;         // set per level for ~30s
+  let distanceTraveled = 0;
+  let lastTime = 0, acc = 0;
+  let nextSpawn = 0, nextStarSpawn = 0;
+  let obstacles = []; // {x,y,w,h,emo}
+  let stars = [];     // {x,y,w,h,emo,collected:false}
+  // Explosion state
+    let hitAnim = null;       // 'explode' while effect is running
+    let hitTimerMs = 0;
+    let boom = [];            // explosion particles: {x,y,vx,vy,size,age,life,rot,rotv}
+
+    // Finish flag pole (spawns when distance goal is reached)
+    let goalSpawned = false;
+    let flag = null;           // {x,y,pw,ph,fx,fy,fs}
+
+    // Footstep dust particles and phase timer
+    let dust = [];              // {x,y,size,life,age,vx,vy}
+    let nextStepMs = 0;         // countdown to next footstep puff
+
+    // Ambient ground rocks
+    let rocks = [];             // {x,y,w,h,vx}
+    let nextRockSpawn = 0;      // ms until next pebble
+
+  const DINO = "🦖";
+
+  function resetLevelRuntime(levelSeconds=30){
+    resize();
+    themeIdx = state.levelIndex % THEMES.length;
+    const theme = THEMES[themeIdx];
+    distanceGoal = gameSpeed * levelSeconds; // reach in ~levelSeconds
+    distanceTraveled = 0;
+    obstacles = [];
+    stars = [];
+    hitAnim = null;
+    hitTimerMs = 0;
+    boom = [];
+
+    goalSpawned = false;
+    flag = null;
+
+    dust = [];
+    nextStepMs = 0;
+
+    rocks = [];
+    nextRockSpawn = rand(ROCKS_SPAWN_MIN, ROCKS_SPAWN_MAX);
+
+    nextSpawn = getDynamicSpawnDelay(0); // start of level = progress 0
+    nextStarSpawn = rand(starSpawnMin, starSpawnMax);
+    lastTime = performance.now();
+    acc = 0;
+    // Ground & player placement
+    GROUND.h = Math.round(CH * 0.18);
+    GROUND.y = CH - GROUND.h;
+    const scale = Math.min(CW/1280, CH/720);
+    WORLD_SCALE = Math.max(1, scale) * (DPR || 1);
+    // Normalize physics so jump height feels the same across devices
+    const worldScale = Math.max(1, scale) * (DPR || 1) * PHYS_TUNE;
+    GRAVITY = BASE_GRAVITY * worldScale;
+    JUMP_VELOCITY = BASE_JUMP_VELOCITY * worldScale;
+
+    const px = Math.round(80 * DPR * Math.max(1,scale));
+    const ph = Math.round(64 * DPR * Math.max(1,scale));
+    PLAYER.w = ph; PLAYER.h = ph;
+    PLAYER.x = px;
+    PLAYER.y = GROUND.y - PLAYER.h;
+    PLAYER.vy = 0;
+    PLAYER.onGround = true;
+    // Background color
+    $("#gameWrap").style.background = theme.bg;
+  }
+
+  function startRunnerLevel(){
+    showScreen("game");
+    paused = false;
+    runActive = true;
+
+    // Slight theme-based difficulty scaling (compute WORLD_SCALE first)
+    spawnMin = Math.max(520, 700 - state.levelIndex*15);
+    spawnMax = Math.max(900, 1400 - state.levelIndex*20);
+    starSpawnMin = 1100;
+    starSpawnMax = 2100;
+
+    // set WORLD_SCALE and physics, then compute speed using it
+    resetLevelRuntime(30);
+    gameSpeed = (BASE_GAME_SPEED + state.levelIndex * 12) * WORLD_SCALE;
+
+    requestAnimationFrame(loop);
+
+  }
+
+  function loop(t){
+    if(!runActive) return;
+    const dt = Math.min(48, t - lastTime); // clamp
+    lastTime = t;
+    if(paused){ requestAnimationFrame(loop); return; }
+
+    update(dt/1000);
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  function update(dt){
+  
+    // If we're in the middle of the hit explosion, update particles and end with the popup
+    if (hitAnim === 'explode') {
+    const ms = dt * 1000;
+    hitTimerMs -= ms;
+
+    for (const p of boom) {
+        p.vy += EXPLODE_GRAVITY * dt;
+        p.x  += p.vx * dt;
+        p.y  += p.vy * dt;
+        p.age += ms;
+        p.rot += p.rotv * dt;
+    }
+    // keep only visible/young particles
+    boom = boom.filter(p => p.age < p.life && p.y < CH + 100);
+
+    if (hitTimerMs <= 0) {
+        hitAnim = null;
+        runActive = false;
+        showToast("💥 Ouch! 🤕","You hit an obstacle.", ()=>{
+        advanceAfterRun(false, 0);
+        });
+    }
+    // While exploding, skip normal collision handling this frame
+    return;
+    }
+
+    distanceTraveled += gameSpeed * dt;
+
+
+    // Footstep timing (emit dust when on the ground and the step timer hits)
+    if (DUST_ENABLED) {
+    nextStepMs -= dt * 1000;
+    if (nextStepMs <= 0 && PLAYER.onGround) {
+        emitDust();
+        nextStepMs = RUN_STEP_MS;
+    }
+    }
+
+    // Ambient ground rocks spawn
+    if (ROCKS_ENABLED) {
+    nextRockSpawn -= dt * 1000;
+    if (nextRockSpawn <= 0) {
+        spawnGroundRock();
+        nextRockSpawn = rand(ROCKS_SPAWN_MIN, ROCKS_SPAWN_MAX);
+    }
+    }
+
+    // Spawn obstacles
+    nextSpawn -= dt*1000;
+    if(nextSpawn <= 0){
+      spawnObstacle();
+      // Progress through this level, 0..1
+      const progress = Math.max(0, Math.min(1, distanceTraveled / distanceGoal));
+      nextSpawn = getDynamicSpawnDelay(progress);
+    }
+
+    // Spawn stars
+    nextStarSpawn -= dt*1000;
+    if(nextStarSpawn <= 0){
+      spawnStar();
+      nextStarSpawn = rand(starSpawnMin, starSpawnMax);
+    }
+
+    // Update obstacles
+    for(const o of obstacles){
+      o.x -= gameSpeed * dt;
+    }
+    // Update stars
+    for(const s of stars){
+      s.x -= gameSpeed * dt * 0.95;
+    }
+
+    // Update dust particles (drift + fade)
+    for (const p of dust) {
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.age += dt * 1000;
+    }
+    // Remove dead dust
+    dust = dust.filter(p => p.age < p.life && p.x > -40);
+
+    // Update ambient ground rocks
+    for (const r of rocks) {
+    r.x -= gameSpeed * dt * ROCKS_SPEED_F;
+    }
+
+        // Move finish flag with the world and check for "touch"
+    if (flag) {
+      flag.x -= gameSpeed * dt * FLAG_SCROLL_F;
+    // Keep the checkered flag glued to the pole top
+    flag.fx = flag.x + flag.pw + FLAG_MARGIN_X;
+    flag.fy = flag.y + FLAG_MARGIN_Y;
+
+      // Simple pole rect
+      const poleRect = { x: flag.x, y: flag.y, w: flag.pw, h: flag.ph };
+
+      // Consider player touching when their front crosses into the pole area
+      const playerFrontX = PLAYER.x + PLAYER.w * (1 - FLAG_HIT_SLACK);
+      const horizontallyTouching = (playerFrontX >= poleRect.x && PLAYER.x <= poleRect.x + poleRect.w);
+      const verticallyOverlap = (PLAYER.y + PLAYER.h >= poleRect.y && PLAYER.y <= poleRect.y + poleRect.h);
+
+      if (horizontallyTouching && verticallyOverlap) {
+        runActive = false;
+        const bonus = 150; // keep your existing base bonus
+        state.score += bonus;
+        updateHUD();
+        showToast("🏁 Goal!", "+ " + bonus + " time bonus", ()=>{
+          advanceAfterRun(true, bonus);
+        });
+        return;
+      }
+
+      // Safety: if the flag somehow scrolls past without touch, end the level anyway
+      if (flag.x + flag.pw < -40) {
+        runActive = false;
+        showToast("🏁 Goal!", "+ 0 pts", ()=>{
+          advanceAfterRun(true, 0);
+        });
+        return;
+      }
+    }
+
+
+
+    // Remove offscreen rocks
+    rocks = rocks.filter(r => r.x + r.w > -40);
+
+
+    // Remove offscreen
+    obstacles = obstacles.filter(o => o.x + o.w > -100);
+    stars = stars.filter(s => s.x + s.w > -100 && !s.collected);
+
+    // Player physics
+    PLAYER.vy += GRAVITY * dt;
+    PLAYER.y += PLAYER.vy * dt;
+    if(PLAYER.y + PLAYER.h >= GROUND.y){
+      PLAYER.y = GROUND.y - PLAYER.h;
+      PLAYER.vy = 0;
+      PLAYER.onGround = true;
+    } else {
+      PLAYER.onGround = false;
+    }
+
+    // Collisions
+        for(const o of obstacles){
+        if(aabbScaled(PLAYER, o, HB_PLAYER, HB_OBS)){
+            triggerExplosion();
+            return;
+        }
+        }
+
+
+        for(const s of stars){
+        if(!s.collected && aabbScaled(PLAYER, starRect(s), HB_PLAYER, HB_STAR)){
+            s.collected = true;
+            state.score += 25;
+            updateHUD();
+        }
+        }
+
+
+
+    // When distance target is reached, spawn the finish flag (once)
+    if (!goalSpawned && distanceTraveled >= distanceGoal) {
+      goalSpawned = true;
+      spawnFinishFlag();
+      // Stop further spawns so the run to the flag is clean
+      nextSpawn = 999999;
+      nextStarSpawn = 999999;
+    }
+
+  }
+
+  function draw(){
+    const theme = THEMES[themeIdx];
+    // Clear
+    ctx.clearRect(0,0,CW,CH);
+
+    // Sky accents (simple parallax)
+    ctx.save();
+    ctx.font = Math.round(CH*0.06) + "px Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, emoji";
+    ctx.textBaseline = "top";
+    ctx.globalAlpha = 0.65;
+    const t = lastTime/1000;
+    const sky = theme.sky||[];
+    for(let i=0;i<sky.length;i++){
+      const x = (CW - (t*30*(i+1))%CW);
+      ctx.fillText(sky[i], x, CH*0.08 + i*CH*0.06);
+      ctx.fillText(sky[i], (x - CW), CH*0.08 + i*CH*0.06);
+    }
+    ctx.restore();
+
+    // Ground
+    ctx.fillStyle = theme.ground;
+    ctx.fillRect(0,GROUND.y,CW,GROUND.h);
+
+    // Ambient rocks pebbles inside the ground (subtle shapes)
+    if (ROCKS_ENABLED) {
+    ctx.save();
+    ctx.globalAlpha = ROCK_ALPHA;
+    ctx.fillStyle = "black";
+    for (const r of rocks) {
+        roundRect(ctx, r.x, r.y, r.w, r.h, Math.min(r.w, r.h) * 0.4);
+        ctx.fill();
+    }
+    ctx.restore();
+    }
+
+
+    // Obstacles
+    ctx.save();
+    ctx.font = Math.round(PLAYER.h*0.95)+"px Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, emoji";
+    ctx.textBaseline="top";
+    for(const o of obstacles){
+      ctx.fillText(o.emo, o.x, o.y);
+    }
+    ctx.restore();
+
+    // Finish flag pole & flag
+    if (flag) {
+      // Draw pole
+      ctx.save();
+      ctx.fillStyle = "rgba(255,255,255,0.9)";
+      roundRect(ctx, flag.x, flag.y, flag.pw, flag.ph, Math.min(flag.pw, flag.ph) * 0.15);
+      ctx.fill();
+      ctx.restore();
+
+      // Draw a checkered flag (no emoji) to the right of the pole
+      ctx.save();
+      // Checker squares
+      const cols = Math.max(1, Math.floor(flag.fw / FLAG_CELL));
+      const rows = Math.max(1, Math.floor(flag.fh / FLAG_CELL));
+      for(let r=0; r<rows; r++){
+        for(let c=0; c<cols; c++){
+          const x = flag.fx + c * FLAG_CELL;
+          const y = flag.fy + r * FLAG_CELL;
+          const isBlack = ((r + c) % 2) === 0;
+          ctx.fillStyle = isBlack ? "#000000" : "#FFFFFF";
+          ctx.fillRect(x, y, FLAG_CELL, FLAG_CELL);
+        }
+      }
+
+        // --- Hitbox overlay for finish pole ---
+        if (DEBUG_HITBOX && flag){
+        const poleRect = { x: flag.x, y: flag.y, w: flag.pw, h: flag.ph };
+        strokeRectOutline(poleRect.x, poleRect.y, poleRect.w, poleRect.h, DEBUG_COLORS.pole);
+        }
+
+
+      // Border (optional)
+      if (FLAG_BORDER_PX > 0){
+        ctx.lineWidth = FLAG_BORDER_PX;
+        ctx.strokeStyle = "rgba(255,255,255,0.9)";
+        ctx.strokeRect(flag.fx, flag.fy, cols * FLAG_CELL, rows * FLAG_CELL);
+      }
+      ctx.restore();
+
+    }
+
+
+    // Stars
+    ctx.save();
+    ctx.font = Math.round(PLAYER.h * STAR_SIZE_F) + "px Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, emoji";
+    ctx.textBaseline = "top"; // draw stars from top-left so they match their stored x/y box
+    for(const s of stars){
+        if(!s.collected) ctx.fillText(s.emo, s.x, s.y + STAR_DRAW_DY);
+    }
+    ctx.restore();
+
+
+
+    // --- Hitbox overlay for obstacles & stars ---
+    if (DEBUG_HITBOX){
+    for (const o of obstacles){
+        drawScaledHitbox(o, HB_OBS, DEBUG_COLORS.obstacle);
+    }
+    for (const s of stars){
+    if(!s.collected) drawScaledHitbox(starRect(s), HB_STAR, DEBUG_COLORS.star);
+    }
+
+    }
+
+
+    // Footstep dust puffs
+    if (DUST_ENABLED) {
+    ctx.save();
+    for (const p of dust) {
+        const k = 1 - (p.age / p.life); // fade 1..0
+        ctx.globalAlpha = Math.max(0, k) * 0.6;
+        ctx.fillStyle = "#000000";
+        roundRect(ctx, p.x, p.y, p.size, p.size * 0.6, p.size * 0.3);
+        ctx.fill();
+    }
+    ctx.restore();
+    }
+
+    if (runActive && hitAnim !== 'explode') {
+
+
+
+    // Player (flip horizontally so 🦖 faces right), with bob, tilt, and dynamic shadow
+    const now = lastTime; // ms timestamp already tracked
+    const bobPhase = (now % RUN_BOB_MS) / RUN_BOB_MS;          // 0..1
+    // Only bob on the ground; no bobbing in the air
+    const bobOffset = PLAYER.onGround ? Math.sin(bobPhase * Math.PI * 2) * RUN_BOB_PX : 0;
+
+
+    // Shadow under player (squash/stretch based on height above ground)
+    const groundGap = (GROUND.y - (PLAYER.y + PLAYER.h));      // 0 when on ground, positive when above
+    const air01 = Math.max(0, Math.min(1, groundGap / (PLAYER.h * 0.9)));
+    const shadowScale = SHADOW_MAX_SCALE - (SHADOW_MAX_SCALE - SHADOW_MIN_SCALE) * air01;
+
+    ctx.save();
+    ctx.globalAlpha = 0.30;
+    ctx.filter = `blur(${SHADOW_BLUR_PX}px)`;
+
+    ctx.fillStyle = "black";
+    const shW = PLAYER.w * SHADOW_WIDTH_BASE * shadowScale;
+    const shH = Math.max(6, PLAYER.h * 0.24 * (1 / (1 + air01)));
+    const shX = PLAYER.x + PLAYER.w * 0.5 - shW * 0.5;
+    const shY = GROUND.y - Math.max(6, shH * 0.6) + SHADOW_Y_OFFSET;
+    roundRect(ctx, shX, shY, shW, shH, shH * 0.5);
+    ctx.fill();
+    ctx.filter = 'none';
+    ctx.restore();
+
+
+
+    // Only tilt on the ground; keep steady in the air
+    const tiltRad = (PLAYER.onGround ? RUN_TILT_DEG * (Math.cos(bobPhase * Math.PI * 2) >= 0 ? 1 : -1) : 0) * Math.PI / 180;
+
+    ctx.save();
+    const fontSize = Math.round(PLAYER.h*0.95);
+    ctx.font = fontSize + "px Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, emoji";
+    ctx.textBaseline="top";
+
+    // Apply transform: position + bob + tilt + horizontal mirror
+    ctx.translate(PLAYER.x + PLAYER.w/2, PLAYER.y + bobOffset);
+    ctx.rotate(tiltRad);
+    ctx.scale(-1,1);
+    ctx.fillText("🦖", -PLAYER.w/2, 0);
+    ctx.restore();
+    }
+
+// Explosion particles
+if (boom.length){
+  for (const p of boom){
+    const k = Math.max(0, 1 - (p.age / p.life)); // fade 1..0
+    ctx.save();
+    ctx.globalAlpha = 0.85 * k;
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot);
+    // warm color mix: flicker between gold and orange-red
+    ctx.fillStyle = (p.age % 120 < 60) ? "#ffd54a" : "#ff6b6b";
+    ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
+    ctx.restore();
+  }
+}
+
+
+    // --- Hitbox overlay for player ---
+    if (DEBUG_HITBOX){
+    drawScaledHitbox(PLAYER, HB_PLAYER, DEBUG_COLORS.player);
+    // Optional: faint label
+    ctx.save();
+    ctx.globalAlpha = 0.8;
+    ctx.font = Math.max(12, Math.round(14 * (DPR||1))) + "px sans-serif";
+    ctx.fillStyle = "rgba(255,255,255,0.85)";
+    ctx.fillText("HITBOX DEBUG (press H)", 12 * (DPR||1), 36 * (DPR||1));
+    ctx.restore();
+    }
+
+
+
+    // Distance bar (top-left)
+    const pct = Math.min(1, distanceTraveled / distanceGoal);
+    const barW = Math.min(240*DPR, CW*0.25);
+    const barH = 10*DPR;
+    const x=12*DPR, y=12*DPR;
+    ctx.fillStyle = "rgba(255,255,255,.18)";
+    roundRect(ctx,x,y,barW,barH,barH/2); ctx.fill();
+    ctx.fillStyle = "#4BE3AC";
+    roundRect(ctx,x,y,barW*pct,barH,barH/2); ctx.fill();
+  }
+
+  function spawnObstacle(){
+    const theme = THEMES[themeIdx];
+    const emo = pick(theme.obstacles);
+    const size = Math.round(PLAYER.h * randf(0.8,1.15));
+    const y = GROUND.y - size;
+    // Approx text bounds
+    obstacles.push({emo, x:CW+40, y, w:size, h:size});
+  }
+  function spawnStar(){
+    const theme = THEMES[themeIdx];
+    const emo = theme.star || "⭐";
+    const size = Math.round(PLAYER.h * STAR_SIZE_F);
+
+    const y = GROUND.y - PLAYER.h - rand(40, Math.round(CH*0.35));
+    stars.push({emo, x:CW+40, y, w:size, h:size, collected:false});
+  }
+
+function spawnFinishFlag(){
+  // Pole height as a fraction of canvas height; sits on ground
+  const ph = Math.floor(CH * FLAG_POLE_H_F);
+  const pw = Math.max(4, Math.floor(FLAG_POLE_W * (DPR || 1)));
+  const px = CW + FLAG_OFFSET_X;
+  const py = GROUND.y - ph;
+
+  // Checkered flag rectangle placed to the right of the pole, near the top
+  const fw = FLAG_W;
+  const fh = FLAG_H;
+  const fx = px + pw + FLAG_MARGIN_X;
+  const fy = py + FLAG_MARGIN_Y;
+
+  flag = { x: px, y: py, pw, ph, fx, fy, fw, fh };
+}
+
+function triggerExplosion(){
+  if(!EXPLODE_ENABLED || hitAnim === 'explode') return;
+
+  hitAnim = 'explode';
+  hitTimerMs = EXPLODE_MS;
+  boom = [];
+
+  // center of the player
+  const cx = PLAYER.x + PLAYER.w/2;
+  const cy = PLAYER.y + PLAYER.h/2;
+
+  for(let i=0;i<EXPLODE_COUNT;i++){
+    const ang = Math.random() * Math.PI * 2;
+    const spd = rand(EXPLODE_SPEED_MIN, EXPLODE_SPEED_MAX);
+    boom.push({
+      x: cx,
+      y: cy,
+      vx: Math.cos(ang) * spd,
+      vy: Math.sin(ang) * spd,
+      size: rand(EXPLODE_SIZE_MIN, EXPLODE_SIZE_MAX),
+      age: 0,
+      life: EXPLODE_MS + 250,     // let them linger slightly longer than the timer
+      rot: Math.random() * Math.PI,
+      rotv: (Math.random()*6 - 3) // -3..+3 rad/s spin
+    });
+  }
+
+  // Stop new spawns while the effect plays
+  nextSpawn = 999999;
+  nextStarSpawn = 999999;
+}
+
+
+function emitDust(){
+  // Spawn 1–2 small puffs near the player's feet
+  const count = 1 + Math.floor(Math.random() * 2);
+  for (let i = 0; i < count; i++) {
+    const size = rand(DUST_SIZE_MIN, DUST_SIZE_MAX);
+    const px = PLAYER.x + PLAYER.w * 0.35 + rand(-6, 6);
+    const py = GROUND.y - Math.max(6, size * 0.5) + rand(-4, 2);
+    dust.push({
+      x: px,
+      y: py,
+      size,
+      life: DUST_LIFE_MS,
+      age: 0,
+      vx: -gameSpeed * (0.25 + Math.random() * 0.25), // drift back slightly
+      vy: -20 + Math.random() * 30                      // tiny upward/downward drift
+    });
+  }
+}
+
+function spawnGroundRock(){
+  // Small rounded rectangles inside ground band
+  const w = rand(ROCK_SIZE_MIN, ROCK_SIZE_MAX);
+  const h = Math.max(4, Math.round(w * randf(0.4, 0.8)));
+  // Place rock somewhere within the ground rectangle, not too close to the top line
+  const minY = GROUND.y + Math.round(GROUND.h * 0.15);
+  const maxY = GROUND.y + Math.round(GROUND.h * 0.85) - h;
+  const ry = rand(minY, Math.max(minY, maxY));
+  rocks.push({ x: CW + 30, y: ry, w, h });
+}
+
+
+// Shrink a rectangle around its center by a scale factor (0..1)
+function shrinkRect(r, scale){
+  const dw = r.w * (1 - scale);
+  const dh = r.h * (1 - scale);
+  return { x: r.x + dw/2, y: r.y + dh/2, w: r.w * scale, h: r.h * scale };
+}
+
+// Scaled AABB test using per-rect scales
+function aabbScaled(a, b, scaleA, scaleB){
+  const aa = shrinkRect(a, scaleA);
+  const bb = shrinkRect(b, scaleB);
+  return (aa.x < bb.x + bb.w && aa.x + aa.w > bb.x && aa.y < bb.y + bb.h && aa.y + aa.h > bb.y);
+}
+
+// (Keep a plain AABB in case you want it elsewhere)
+function aabb(a,b){
+  return aabbScaled(a,b,1,1);
+}
+
+// Build an adjusted rectangle for a star so its hitbox matches the drawn emoji better
+function starRect(s){
+  // Include the same visual draw offset so the hitbox follows the rendered star
+  return { x: s.x + STAR_HB_DX, y: s.y + STAR_DRAW_DY + STAR_HB_DY, w: s.w, h: s.h };
+}
+
+
+
+// Outline a rectangle (debug only)
+function strokeRectOutline(x,y,w,h,color,alpha=DEBUG_ALPHA){
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = Math.max(1, 2 * (DPR || 1));
+  ctx.strokeRect(x, y, w, h);
+  ctx.restore();
+}
+
+// Draw the scaled hitbox for a rect using a scale factor
+function drawScaledHitbox(rect, scale, color){
+  const r = shrinkRect(rect, scale);
+  strokeRectOutline(r.x, r.y, r.w, r.h, color);
+  if (DEBUG_SHOW_UNSCALED){
+    // raw bounds in a faint gray
+    strokeRectOutline(rect.x, rect.y, rect.w, rect.h, "rgba(255,255,255,0.4)", 0.35);
+  }
+}
+
+
+  function roundRect(ctx,x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+  }
+
+  // Controls
+function jump(){
+  if (hitAnim === 'explode') return;
+  if(PLAYER.onGround){
+    PLAYER.vy = -JUMP_VELOCITY;
+    PLAYER.onGround = false;
+  }
+}
+
+  window.addEventListener("keydown", (e)=>{
+    if(!screens.game.classList.contains("active")) return;
+    if(e.code === "Space"){ e.preventDefault(); jump(); }
+    if(e.key === "p" || e.key === "P"){ paused = !paused; }
+    if(e.key === "h" || e.key === "H"){ DEBUG_HITBOX = !DEBUG_HITBOX; }
+  });
+  $("#gameWrap").addEventListener("pointerdown", ()=>{ if(screens.game.classList.contains("active")) jump(); });
+
+  /* -----------------------------
+     Level Progression / Endurance
+  ------------------------------*/
+  function advanceAfterRun(reachedGoal, bonus){
+    // After each run, proceed to next question or endurance
+    state.levelIndex++;
+    state.currentQ++;
+    updateHUD();
+
+    if(state.currentQ >= QUESTIONS.length){
+      // All 10 question+run levels done -> endurance intro
+      showScreen("enduranceIntro");
+      return;
+    }
+    // Next level question
+    startQuestion();
+  }
+
+  $("#startEndurance").addEventListener("click", ()=>{
+    state.inEndurance = true;
+    startEndurance();
+  });
+
+  function startEndurance(){
+    // Endurance: 10 themes in sequence, 10s each, seamless transitions, one hit ends
+    showScreen("game");
+    paused=false; runActive=true;
+    themeIdx = 0;
+    let themeTimeLeft = 10; // seconds per theme
+    gameSpeed = 520 * WORLD_SCALE; // steady, scaled for device/DPR
+    resetLevelRuntime(themeTimeLeft); // we use distanceGoal as a per-theme chunk
+    lastTime = performance.now();
+
+    function loopEndurance(t){
+      if(!runActive) return;
+      const dt = Math.min(48, t - lastTime); lastTime = t;
+      if(!paused){
+        // Manually manage per-theme timer & distance
+        update(dt/1000);
+        themeTimeLeft -= dt/1000;
+        if(themeTimeLeft <= 0){
+          // Next theme
+          themeIdx++;
+          if(themeIdx >= THEMES.length){
+            // Completed endurance
+            runActive=false;
+            const bonus = 800;
+            state.score += bonus;
+            updateHUD();
+            showToast("🏆 Endurance Cleared!", "+ "+bonus+" pts", showEnd);
+            return;
+          }
+          // reset runtime but keep stars/obstacles cleared
+          resetLevelRuntime(10);
+        }
+      }
+      draw();
+      requestAnimationFrame(loopEndurance);
+    }
+    requestAnimationFrame(loopEndurance);
+
+    // Override collisions to end immediately (already happens via update -> hit -> showToast -> showEnd)
+    const originalAdvance = advanceAfterRun;
+  }
+
+  function showEnd(){
+    showScreen("end");
+    $("#finalStats").textContent = `Final Score: ${state.score}`;
+  }
+
+  function updateHUD(){
+    ui.level.textContent = Math.min(10, state.levelIndex+1);
+    ui.score.textContent = state.score;
+    ui.lives.textContent = "∞";
+  }
+
+  /* -----------------------------
+     Utilities
+  ------------------------------*/
+  function shuffle(arr){
+    for(let i=arr.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+  function rand(min,max){ return Math.floor(min + Math.random()*(max-min+1)); }
+  function randf(min,max){ return min + Math.random()*(max-min); }
+  function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+
+  // Init
+  resize();
+})();
+</script>
+</body>
+</html>
