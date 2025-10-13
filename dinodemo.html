@@ -241,6 +241,9 @@
     inEndurance: false
   };
 
+let preRunHintShown = false; // show the pre-run popup only once (after Q1)
+
+
   function showScreen(name){
     Object.values(screens).forEach(s=>s.classList.remove("active"));
     screens[name].classList.add("active");
@@ -282,6 +285,7 @@ async function startGameFlow(){
   state.questionsOrder = shuffle([...Array(QUESTIONS.length).keys()]);
   state.currentQ = 0;
   state.inEndurance = false;
+  preRunHintShown = false; // allow the pre-run hint again on a new game
   updateHUD();
   startQuestion();
 }
@@ -327,17 +331,28 @@ $("#startBtn").addEventListener("click", ()=>{
           const add = 100;
           state.score += add;
           updateHUD();
-          showToast("✅ Correct!","+ "+add+" pts", ()=>{
-            // pre-run popup
-            $("#preRunModal").classList.add("show");
-          });
+            showToast("✅ Correct!","+ "+add+" pts", ()=>{
+            if (!preRunHintShown) {
+                $("#preRunModal").classList.add("show");
+                preRunHintShown = true;
+            } else {
+                startRunnerLevel();
+            }
+            });
+
         } else {
           btn.classList.add("wrong");
           // show correct
           const c = q.options[q.correctIdx];
-          showToast("❌ Incorrect", `Right answer: ${c.emo} ${c.t}`, ()=>{
-            $("#preRunModal").classList.add("show");
-          });
+            showToast("❌ Incorrect", `Right answer: ${c.emo} ${c.t}`, ()=>{
+            if (!preRunHintShown) {
+                $("#preRunModal").classList.add("show");
+                preRunHintShown = true;
+            } else {
+                startRunnerLevel();
+            }
+            });
+
         }
       });
       answersWrap.appendChild(btn);
@@ -357,6 +372,7 @@ $("#startBtn").addEventListener("click", ()=>{
 
   let CW = 1280, CH = 720, DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
   function resize(){
+    DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
     const rect = canvas.getBoundingClientRect();
     CW = Math.floor(rect.width * DPR);
     CH = Math.floor(rect.height * DPR);
@@ -453,10 +469,60 @@ const DEBUG_COLORS = {
     const ROCKS_ENABLED    = true;  // turn ground pebbles on/off
     const ROCKS_SPAWN_MIN  = 450;   // ms between pebble spawns (min)
     const ROCKS_SPAWN_MAX  = 950;   // ms between pebble spawns (max)
-    const ROCKS_SPEED_F    = 0.96;  // scroll speed factor vs gameSpeed (slightly slower feels nice)
+    const ROCKS_SPEED_F    = 1.0;  // scroll speed factor vs gameSpeed
     const ROCK_SIZE_MIN    = 6;     // px
     const ROCK_SIZE_MAX    = 18;
     const ROCK_ALPHA       = 0.28;  // 0..1 (subtle)
+
+    // ---- Powerups ----
+    const HB_POWERUP        = 0.80;      // powerup pickup hitbox scale (a bit generous)
+    const PU_SIZE_F         = 0.85;      // powerup draw size relative to PLAYER.h
+    const PU_SCROLL_F       = 0.95;      // scroll slightly slower than obstacles
+    const PU_MUSHROOM_EMO   = "🍄";
+    const PU_WING_EMO       = "🪽";
+    const PU_MAGNET_EMO     = "🧲";
+    const PU_DURATION_MS    = 5000;      // 5 seconds (mushroom & wing)
+    const HOVER_CLEAR       = 1.2;       // wing: player's bottom sits at 1.2 * PLAYER.h above ground
+    const MAGNET_RADIUS     = 260;       // px radius to start attracting stars
+    const MAGNET_PULL       = 12;        // how strongly stars move toward player per frame (px per 16ms approx.)
+
+    // Spawn scheduling points as % of level distance (0..1)
+    const PU_MUSH_AT        = 0.25;
+    const PU_WING_AT        = 0.55;
+    const PU_MAGNET_AT      = 0.75;
+
+    // ---- Powerup HUD (drawn inside the ground band) ----
+    const PU_HUD_GAP   = 8;          // gap between badges (px)
+    const PU_HUD_PADX  = 8;          // pill horizontal padding
+    const PU_HUD_PADY  = 4;          // pill vertical padding
+    const PU_HUD_FONT  = 14;         // base font size in px (will scale by DPR)
+    const PU_HUD_ALPHA = 0.85;       // badge opacity
+
+
+    // Visual-only tweak: raise/lower the drawn ground top edge (does NOT change GROUND.y / collisions)
+    // Base (desktop-reference) visual ground offset, in px
+    const GROUND_DRAW_DY_BASE = -10;
+    // Effective, scale-aware offset (set per level/run)
+    let GROUND_DRAW_DY = GROUND_DRAW_DY_BASE;
+
+
+
+      // ---- Background Parallax (far & mid hills) ----
+    const PARA_ENABLED      = true;
+    const PARA1_SPEED_F     = 0.20;    // far layer: 20% of gameSpeed (slowest)
+    const PARA2_SPEED_F     = 0.45;    // mid layer: 45% of gameSpeed
+    const PARA1_ALPHA       = 0.18;    // softer
+    const PARA2_ALPHA       = 0.26;    // slightly stronger
+    const PARA_SPAWN_MIN    = 800;     // ms between new hills (min)
+    const PARA_SPAWN_MAX    = 1600;    // ms between new hills (max)
+    const PARA1_SIZE_MIN    = 120;     // px hill width/height ranges
+    const PARA1_SIZE_MAX    = 280;
+    const PARA2_SIZE_MIN    = 80;
+    const PARA2_SIZE_MAX    = 180;
+
+    // Obstacle rendering tweak (use 0 unless you need a slight visual nudge)
+    const OBST_DRAW_DY = 0;  // +down / -up in pixels; try 1 or -1 if a few look floaty
+
 
 
   // Level runtime state
@@ -502,6 +568,14 @@ const DEBUG_COLORS = {
   let nextSpawn = 0, nextStarSpawn = 0;
   let obstacles = []; // {x,y,w,h,emo}
   let stars = [];     // {x,y,w,h,emo,collected:false}
+
+  // Powerup state
+let powerups = [];         // {type, x,y,w,h,emo, taken:false}
+let mushUntil = 0;         // timestamp ms when mushroom ends (0 = off)
+let wingUntil = 0;         // timestamp ms when wing ends (0 = off)
+let magnetOn  = false;     // magnet lasts until end of level once taken
+let mushSpawned=false, wingSpawned=false, magnetSpawned=false;
+
   // Explosion state
     let hitAnim = null;       // 'explode' while effect is running
     let hitTimerMs = 0;
@@ -519,16 +593,28 @@ const DEBUG_COLORS = {
     let rocks = [];             // {x,y,w,h,vx}
     let nextRockSpawn = 0;      // ms until next pebble
 
+    // Parallax background hills
+    let para1 = [];             // far: {x,y,w,h}
+    let para2 = [];             // mid: {x,y,w,h}
+    let nextPara1Spawn = 0;
+    let nextPara2Spawn = 0;
+
+
   const DINO = "🦖";
 
   function resetLevelRuntime(levelSeconds=30){
     resize();
-    themeIdx = state.levelIndex % THEMES.length;
     const theme = THEMES[themeIdx];
     distanceGoal = gameSpeed * levelSeconds; // reach in ~levelSeconds
     distanceTraveled = 0;
     obstacles = [];
     stars = [];
+    powerups = [];
+    mushUntil = 0;
+    wingUntil = 0;
+    magnetOn  = false;
+    mushSpawned = wingSpawned = magnetSpawned = false;
+
     hitAnim = null;
     hitTimerMs = 0;
     boom = [];
@@ -542,6 +628,24 @@ const DEBUG_COLORS = {
     rocks = [];
     nextRockSpawn = rand(ROCKS_SPAWN_MIN, ROCKS_SPAWN_MAX);
 
+    para1 = [];
+    para2 = [];
+    nextPara1Spawn = rand(PARA_SPAWN_MIN, PARA_SPAWN_MAX);
+    nextPara2Spawn = rand(PARA_SPAWN_MIN, PARA_SPAWN_MAX);
+
+    // Prefill: place a few hills across the width so it isn't empty at start
+    if (PARA_ENABLED) {
+      const n1 = Math.max(2, Math.round(CW / 480));
+      for (let i=0;i<n1;i++){
+        para1.push(makeHill(1, (i/n1)*CW + rand(-60,60)));
+      }
+      const n2 = Math.max(2, Math.round(CW / 360));
+      for (let i=0;i<n2;i++){
+        para2.push(makeHill(2, (i/n2)*CW + rand(-40,40)));
+      }
+    }
+
+
     nextSpawn = getDynamicSpawnDelay(0); // start of level = progress 0
     nextStarSpawn = rand(starSpawnMin, starSpawnMax);
     lastTime = performance.now();
@@ -551,6 +655,7 @@ const DEBUG_COLORS = {
     GROUND.y = CH - GROUND.h;
     const scale = Math.min(CW/1280, CH/720);
     WORLD_SCALE = Math.max(1, scale) * (DPR || 1);
+    GROUND_DRAW_DY = Math.round(GROUND_DRAW_DY_BASE * WORLD_SCALE);
     // Normalize physics so jump height feels the same across devices
     const worldScale = Math.max(1, scale) * (DPR || 1) * PHYS_TUNE;
     GRAVITY = BASE_GRAVITY * worldScale;
@@ -571,6 +676,7 @@ const DEBUG_COLORS = {
     showScreen("game");
     paused = false;
     runActive = true;
+    themeIdx = state.levelIndex % THEMES.length; // pick theme for this level
 
     // Slight theme-based difficulty scaling (compute WORLD_SCALE first)
     spawnMin = Math.max(520, 700 - state.levelIndex*15);
@@ -581,6 +687,8 @@ const DEBUG_COLORS = {
     // set WORLD_SCALE and physics, then compute speed using it
     resetLevelRuntime(30);
     gameSpeed = (BASE_GAME_SPEED + state.levelIndex * 12) * WORLD_SCALE;
+    distanceGoal = gameSpeed * 30; // recompute using this level’s speed
+
 
     requestAnimationFrame(loop);
 
@@ -617,7 +725,7 @@ const DEBUG_COLORS = {
     if (hitTimerMs <= 0) {
         hitAnim = null;
         runActive = false;
-        showToast("💥 Ouch! 🤕","You hit an obstacle.", ()=>{
+        showToast("💥 Ouch! 🤕","You crashed", ()=>{
         advanceAfterRun(false, 0);
         });
     }
@@ -627,6 +735,20 @@ const DEBUG_COLORS = {
 
     distanceTraveled += gameSpeed * dt;
 
+    // Spawn powerups at specific progress points
+    const progress = Math.max(0, Math.min(1, distanceTraveled / distanceGoal));
+    if (!mushSpawned && progress >= PU_MUSH_AT) {
+    spawnPowerup("mushroom");
+    mushSpawned = true;
+    }
+    if (!wingSpawned && progress >= PU_WING_AT) {
+    spawnPowerup("wing");
+    wingSpawned = true;
+    }
+    if (!magnetSpawned && progress >= PU_MAGNET_AT) {
+    spawnPowerup("magnet");
+    magnetSpawned = true;
+    }
 
     // Footstep timing (emit dust when on the ground and the step timer hits)
     if (DUST_ENABLED) {
@@ -671,6 +793,51 @@ const DEBUG_COLORS = {
       s.x -= gameSpeed * dt * 0.95;
     }
 
+// Magnet: gently pull nearby stars toward player
+if (magnetOn) {
+  const cx = PLAYER.x + PLAYER.w/2, cy = PLAYER.y + PLAYER.h/2;
+  for (const s of stars) {
+    if (s.collected) continue;
+    const sx = s.x + s.w/2, sy = s.y + s.h/2;
+    const dx = cx - sx, dy = cy - sy;
+    const dist = Math.hypot(dx, dy);
+    if (dist < MAGNET_RADIUS && dist > 1) {
+      // move star toward player a bit; keep it smooth
+      const ux = dx / dist, uy = dy / dist;
+      s.x += ux * MAGNET_PULL * dt * 60; // scaled for ~60fps feel
+      s.y += uy * MAGNET_PULL * dt * 60;
+    }
+  }
+}
+
+
+// Scroll powerups and handle pickup
+for (const p of powerups) {
+  p.x -= gameSpeed * dt * PU_SCROLL_F;
+}
+
+// Remove offscreen
+powerups = powerups.filter(p => p.x + p.w > -60 && !p.taken);
+
+// Pickup test
+for (const p of powerups) {
+  if (p.taken) continue;
+  if (aabbScaled(PLAYER, p, HB_PLAYER, HB_POWERUP)) {
+    p.taken = true;
+    if (p.type === "mushroom") {
+      // double size + invincible to obstacles
+      mushUntil = performance.now() + PU_DURATION_MS;
+    } else if (p.type === "wing") {
+      // hover above obstacle height + invincible to obstacles
+      wingUntil = performance.now() + PU_DURATION_MS;
+    } else if (p.type === "magnet") {
+      // lasts until end of level
+      magnetOn = true;
+    }
+  }
+}
+
+
     // Update dust particles (drift + fade)
     for (const p of dust) {
     p.x += p.vx * dt;
@@ -684,6 +851,21 @@ const DEBUG_COLORS = {
     for (const r of rocks) {
     r.x -= gameSpeed * dt * ROCKS_SPEED_F;
     }
+
+    // Parallax spawn & scroll
+    if (PARA_ENABLED) {
+      nextPara1Spawn -= dt*1000;
+      nextPara2Spawn -= dt*1000;
+      if (nextPara1Spawn <= 0) { para1.push(makeHill(1)); nextPara1Spawn = rand(PARA_SPAWN_MIN, PARA_SPAWN_MAX); }
+      if (nextPara2Spawn <= 0) { para2.push(makeHill(2)); nextPara2Spawn = rand(PARA_SPAWN_MIN, PARA_SPAWN_MAX); }
+
+      for (const h of para1) h.x -= gameSpeed * dt * PARA1_SPEED_F;
+      for (const h of para2) h.x -= gameSpeed * dt * PARA2_SPEED_F;
+
+      para1 = para1.filter(h => h.x + h.w > -60);
+      para2 = para2.filter(h => h.x + h.w > -60);
+    }
+
 
         // Move finish flag with the world and check for "touch"
     if (flag) {
@@ -732,23 +914,49 @@ const DEBUG_COLORS = {
     stars = stars.filter(s => s.x + s.w > -100 && !s.collected);
 
     // Player physics
+    // Wing hover active?
+    const wingActive = (wingUntil > performance.now());
+    // Mushroom active?
+    const mushActive = (mushUntil > performance.now());
+
+    // Physics update (skip gravity if wingActive; we pin Y below)
+    if (!wingActive) {
     PLAYER.vy += GRAVITY * dt;
     PLAYER.y += PLAYER.vy * dt;
-    if(PLAYER.y + PLAYER.h >= GROUND.y){
-      PLAYER.y = GROUND.y - PLAYER.h;
-      PLAYER.vy = 0;
-      PLAYER.onGround = true;
-    } else {
-      PLAYER.onGround = false;
     }
+
+    // Ground resolve
+    if(PLAYER.y + PLAYER.h >= GROUND.y){
+    PLAYER.y = GROUND.y - PLAYER.h;
+    PLAYER.vy = 0;
+    PLAYER.onGround = true;
+    } else {
+    PLAYER.onGround = false;
+    }
+
+    // If wing: pin player to a safe hover height
+    if (wingActive) {
+    const hoverGap = Math.round(PLAYER.h * HOVER_CLEAR);
+    const targetY = Math.max(0, GROUND.y - hoverGap - PLAYER.h);
+    PLAYER.y = targetY;
+    PLAYER.vy = 0;
+    PLAYER.onGround = false;
+    }
+
 
     // Collisions
         for(const o of obstacles){
         if(aabbScaled(PLAYER, o, HB_PLAYER, HB_OBS)){
+            // If invincible (mushroom or wing), ignore obstacle collisions
+            if (mushUntil > performance.now() || wingUntil > performance.now()) {
+            // Optional: small sparkle or pass-through puff here if you want
+            continue;
+            }
             triggerExplosion();
             return;
         }
         }
+
 
 
         for(const s of stars){
@@ -791,9 +999,100 @@ const DEBUG_COLORS = {
     }
     ctx.restore();
 
+// Parallax hills (behind ground)
+if (PARA_ENABLED) {
+  // Far layer
+  ctx.save();
+  ctx.globalAlpha = PARA1_ALPHA;
+  ctx.fillStyle = "black";
+  for (const h of para1) {
+    drawHill(ctx, h.x, h.y, h.w, h.h);
+  }
+  ctx.restore();
+
+  // Mid layer
+  ctx.save();
+  ctx.globalAlpha = PARA2_ALPHA;
+  ctx.fillStyle = "black";
+  for (const h of para2) {
+    drawHill(ctx, h.x, h.y, h.w, h.h);
+  }
+  ctx.restore();
+}
+
+
     // Ground
     ctx.fillStyle = theme.ground;
-    ctx.fillRect(0,GROUND.y,CW,GROUND.h);
+    // Visual ground paint only: raise/lower the top edge while keeping the bottom anchored to the canvas bottom
+    const vGroundY = GROUND.y + GROUND_DRAW_DY;
+    const vGroundH = CH - vGroundY; // keep bottom at CH
+    ctx.fillRect(0, vGroundY, CW, vGroundH);
+
+    // --- Powerup HUD (emoji + countdown) drawn inside the ground ---
+        {
+        const now = performance.now();
+        const mushActive = (mushUntil > now);
+        const wingActive = (wingUntil > now);
+        const showMagnet = magnetOn;
+
+        // Layout: left margin and vertical placement a bit below the ground top
+        const baseX = 12 * (DPR || 1);
+        let x = baseX;
+        const y = vGroundY + Math.max(4, 6 * (DPR || 1));
+
+        // Helper to draw one pill badge: "emoji  3.2s"
+        function drawBadge(emoji, label){
+            ctx.save();
+            ctx.globalAlpha = PU_HUD_ALPHA;
+            ctx.font = `bold ${Math.round(PU_HUD_FONT * (DPR || 1))}px system-ui, -apple-system, Segoe UI, Roboto, Arial`;
+            ctx.textBaseline = "top";
+
+            const emoW = ctx.measureText(emoji).width;
+            const gap = 6 * (DPR || 1);
+            const textW = label ? ctx.measureText(label).width : 0;
+
+            const padX = PU_HUD_PADX * (DPR || 1);
+            const padY = PU_HUD_PADY * (DPR || 1);
+            const pillH = Math.round((PU_HUD_FONT + PU_HUD_PADY * 2) * (DPR || 1));
+            const pillW = Math.round(padX + emoW + (label ? gap + textW : 0) + padX);
+
+            // Soft dark pill
+            ctx.fillStyle = "rgba(0,0,0,0.35)";
+            roundRect(ctx, x, y, pillW, pillH, pillH * 0.45);
+            ctx.fill();
+
+            // Text/emoji
+            ctx.fillStyle = "rgba(255,255,255,0.95)";
+            let tx = x + padX;
+            ctx.fillText(emoji, tx, y + padY);
+            if (label){
+            tx += emoW + gap;
+            ctx.fillText(label, tx, y + padY);
+            }
+            ctx.restore();
+
+            x += pillW + PU_HUD_GAP * (DPR || 1);
+        }
+
+        // Format seconds to one decimal, floor at 0.0
+        function fmtSec(ms){
+            const s = Math.max(0, ms / 1000);
+            return (Math.ceil(s * 10) / 10).toFixed(1) + "s";
+        }
+
+        if (mushActive){
+            drawBadge("🍄", fmtSec(mushUntil - now));
+        }
+        if (wingActive){
+            drawBadge("🪽", fmtSec(wingUntil - now));
+        }
+        if (showMagnet){
+            // Magnet has no timer (level-long)
+            drawBadge("🧲", "");
+        }
+        }
+
+
 
     // Ambient rocks pebbles inside the ground (subtle shapes)
     if (ROCKS_ENABLED) {
@@ -808,14 +1107,27 @@ const DEBUG_COLORS = {
     }
 
 
-    // Obstacles
+    // Obstacles (draw at each obstacle's stored size so bottoms align with ground)
     ctx.save();
-    ctx.font = Math.round(PLAYER.h*0.95)+"px Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, emoji";
-    ctx.textBaseline="top";
-    for(const o of obstacles){
-      ctx.fillText(o.emo, o.x, o.y);
+    ctx.textBaseline = "top";
+    for (const o of obstacles){
+      ctx.font = o.h + "px Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, emoji";
+      ctx.fillText(o.emo, o.x, o.y + OBST_DRAW_DY);
     }
     ctx.restore();
+
+    // Powerups
+    if (powerups.length){
+      ctx.save();
+      ctx.textBaseline = "top";
+      for (const p of powerups){
+        if (p.taken) continue;
+        ctx.font = Math.round(PLAYER.h * PU_SIZE_F) + "px Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, emoji";
+        ctx.fillText(p.emo, p.x, p.y);
+      }
+      ctx.restore();
+    }
+
 
     // Finish flag pole & flag
     if (flag) {
@@ -900,6 +1212,9 @@ const DEBUG_COLORS = {
 
 
     // Player (flip horizontally so 🦖 faces right), with bob, tilt, and dynamic shadow
+    const mushActive = (mushUntil > performance.now());
+    const wingActive = (wingUntil > performance.now());
+
     const now = lastTime; // ms timestamp already tracked
     const bobPhase = (now % RUN_BOB_MS) / RUN_BOB_MS;          // 0..1
     // Only bob on the ground; no bobbing in the air
@@ -916,8 +1231,9 @@ const DEBUG_COLORS = {
     ctx.filter = `blur(${SHADOW_BLUR_PX}px)`;
 
     ctx.fillStyle = "black";
-    const shW = PLAYER.w * SHADOW_WIDTH_BASE * shadowScale;
-    const shH = Math.max(6, PLAYER.h * 0.24 * (1 / (1 + air01)));
+    const shW = PLAYER.w * 0.9 * shadowScale * (mushActive ? 2 : 1);
+    const shH = Math.max(6, PLAYER.h * 0.24 * (1 / (1 + air01))) * (mushActive ? 2 : 1);
+
     const shX = PLAYER.x + PLAYER.w * 0.5 - shW * 0.5;
     const shY = GROUND.y - Math.max(6, shH * 0.6) + SHADOW_Y_OFFSET;
     roundRect(ctx, shX, shY, shW, shH, shH * 0.5);
@@ -936,9 +1252,9 @@ const DEBUG_COLORS = {
     ctx.textBaseline="top";
 
     // Apply transform: position + bob + tilt + horizontal mirror
-    ctx.translate(PLAYER.x + PLAYER.w/2, PLAYER.y + bobOffset);
+    ctx.translate(PLAYER.x + PLAYER.w/2, PLAYER.y + bobOffset - (mushActive ? PLAYER.h * 0.5 : 0));
     ctx.rotate(tiltRad);
-    ctx.scale(-1,1);
+    ctx.scale(-(mushActive ? 2 : 1), (mushActive ? 2 : 1));
     ctx.fillText("🦖", -PLAYER.w/2, 0);
     ctx.restore();
     }
@@ -1000,6 +1316,21 @@ if (boom.length){
     const y = GROUND.y - PLAYER.h - rand(40, Math.round(CH*0.35));
     stars.push({emo, x:CW+40, y, w:size, h:size, collected:false});
   }
+
+function spawnPowerup(type){
+  // position it at mid-air, comfortably collectible
+  const size = Math.round(PLAYER.h * PU_SIZE_F);
+  const yTop = Math.max(0, GROUND.y - PLAYER.h*2.5); // not too high
+  const y = rand(yTop, GROUND.y - PLAYER.h*1.2 - size);
+  const x = CW + 40;
+
+  let emo = PU_MUSHROOM_EMO;
+  if (type === "wing")   emo = PU_WING_EMO;
+  if (type === "magnet") emo = PU_MAGNET_EMO;
+
+  powerups.push({ type, emo, x, y, w:size, h:size, taken:false });
+}
+
 
 function spawnFinishFlag(){
   // Pole height as a fraction of canvas height; sits on ground
@@ -1138,6 +1469,26 @@ function drawScaledHitbox(rect, scale, color){
     ctx.arcTo(x,y,x+w,y,r);
     ctx.closePath();
   }
+
+// Create a hill for a given layer (1 = far, 2 = mid)
+function makeHill(layer, startX){
+  const far = (layer === 1);
+  const w = far ? rand(PARA1_SIZE_MIN, PARA1_SIZE_MAX) : rand(PARA2_SIZE_MIN, PARA2_SIZE_MAX);
+  const h = Math.round(w * (far ? randf(0.35,0.55) : randf(0.45,0.65)));
+  const x = (typeof startX === "number") ? startX : CW + rand(40, 140);
+  // Place hills somewhere above the ground, but below mid sky
+  const baseY = GROUND.y - Math.round(GROUND.h * (far ? randf(0.65,0.85) : randf(0.45,0.7)));
+  return { x, y: baseY, w, h };
+}
+
+// Draw a soft “blob hill”
+function drawHill(ctx, x, y, w, h){
+  // A tall rounded cap sitting on y; extend down by h
+  const r = Math.min(w, h) * 0.45;
+  roundRect(ctx, x, y, w, h, r);
+  ctx.fill();
+}
+
 
   // Controls
 function jump(){
