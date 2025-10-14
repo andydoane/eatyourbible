@@ -1,0 +1,2400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+<title>Emoji Runner — Endless Quiz</title>
+<style>
+
+    #toastMsg { white-space: pre-line; }
+
+  :root{
+    --bg:#0b1020;
+    --ink:#f5f7ff;
+    --accent:#4BE3AC;
+    --accent2:#7AA2FF;
+    --warn:#ff6b6b;
+    --good:#3ad29f;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:#0b0f1a;color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
+  /* Layout */
+  #app{height:100%;display:flex;align-items:center;justify-content:center;padding:1.5vmin}
+  .frame{width:100%;max-width:1100px;aspect-ratio:16/9;border-radius:18px;background:linear-gradient(180deg,#0e1430,#0b0f1a);
+    box-shadow:0 10px 30px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.06);
+    overflow:hidden;display:flex;flex-direction:column}
+  header{padding:.8rem 1rem;border-bottom:1px solid rgba(255,255,255,.08);display:flex;gap:.75rem;align-items:center;justify-content:space-between}
+  header .title{font-weight:700;letter-spacing:.3px}
+  header .score{display:flex;gap:1rem;font-variant-numeric:tabular-nums}
+  header .score span{opacity:.9}
+  main{flex:1;display:grid;place-items:center;position:relative;background:#0b0f1a}
+  footer{padding:.6rem .9rem;border-top:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;font-size:.9rem;opacity:.8}
+  .btn{cursor:pointer;border:0;background:var(--accent);color:#031016;padding:.8rem 1.1rem;border-radius:12px;font-weight:700;transition:.2s transform,.2s opacity}
+  .btn:hover{transform:translateY(-1px)}
+  .btn.secondary{background:transparent;color:var(--ink);border:1px solid rgba(255,255,255,.18)}
+  .btn.warn{background:var(--warn);color:#1a0b10}
+  .stack{display:flex;flex-direction:column;gap:1rem}
+  .center{display:grid;place-items:center;text-align:center;padding:2vmin}
+  .muted{opacity:.8}
+  /* Screens */
+  .screen{position:absolute;inset:0;display:none}
+  .screen.active{display:flex;align-items:center;justify-content:center}
+  .panel{width:min(92%,780px);background:rgba(255,255,255,.05);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:clamp(16px,3vmin,28px)}
+  .panel h1{margin:.2rem 0 1rem;font-size:clamp(20px,3.6vmin,32px)}
+  .panel p{margin:.4rem 0 1rem}
+  .list{display:grid;gap:.7rem;margin-top:.8rem}
+  .answers{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}
+  .answers button{font-size:clamp(14px,2.3vmin,18px);padding:1rem;border-radius:12px;border:1px solid rgba(255,255,255,.15);background:#0f162f;color:var(--ink);text-align:left;display:flex;align-items:center;gap:.7rem}
+  .answers button .emo{font-size:1.6em;line-height:0}
+  .answers button.correct{outline:2px solid var(--good)}
+  .answers button.wrong{outline:2px solid var(--warn)}
+  /* Modals / Toasts */
+  .modal{position:absolute;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;padding:2vmin}
+  .modal.show{display:flex}
+  .card{background:#0f162f;border:1px solid rgba(255,255,255,.18);border-radius:14px;max-width:560px;width:min(92%,560px);padding:1rem 1.2rem}
+ 
+    /* Highlight style for "new power-up" intros */
+    .card.powerup{
+    background: linear-gradient(180deg,#ffd86b,#ffb84d);
+    color:#2a1b00;
+    border:2px solid #c97a00;
+    box-shadow:0 8px 24px rgba(201,122,0,0.45);
+    }
+    .card.powerup h2{
+    color:#2a1b00;
+    font-weight:800;
+    }
+    .card.powerup .muted{
+    color:#3e2a00;
+    opacity:.95;
+    }
+
+ 
+  .card h2{margin:.2rem 0 .6rem}
+  .row{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center}
+  /* Canvas game area */
+  #gameWrap{position:relative;width:100%;height:100%;background:#06101a}
+  canvas{width:100%;height:100%;display:block}
+  .hint{position:absolute;left:12px;bottom:8px;font-size:.9rem;opacity:.8}
+  /* Landscape nudge */
+  @media (orientation:portrait) {
+    .frame{aspect-ratio:9/16}
+  }
+
+  /* Win medal + simple confetti */
+  .hidden{display:none}
+  .medal{display:grid;place-items:center;gap:.3rem;margin:.5rem 0 1rem}
+  .medal #medalEmoji{font-size:3rem; line-height:1}
+  .confetti-layer{
+    pointer-events:none; position:fixed; inset:0; overflow:hidden; z-index:9999;
+  }
+  .confetti-piece{
+    position:absolute; top:-10vh; font-size:20px; animation: fall 1600ms linear forwards;
+  }
+  @keyframes fall{
+    to{ transform: translateY(120vh) rotate(540deg); opacity:.9; }
+  }
+
+
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="frame">
+    <header>
+      <div class="title">🦖 Emoji Runner</div>
+      <div class="score">
+        <span>Level: <b id="uiLevel">1</b>/10</span>
+        <span>Score: <b id="uiScore">0</b></span>
+        <span>Lives: <b id="uiLives">∞</b></span>
+      </div>
+    </header>
+    <main id="stage">
+
+      <!-- Splash -->
+      <section id="splash" class="screen active">
+        <div class="panel center stack">
+          <h1>Best in horizontal / landscape</h1>
+          <p class="muted">Rotate your device for the best experience.</p>
+          <div><button class="btn" id="splashOK">Okay</button></div>
+        </div>
+      </section>
+
+      <!-- Title -->
+      <section id="title" class="screen">
+        <div class="panel center stack">
+          <h1>🦖 Emoji Runner</h1>
+          <p class="muted">Answer questions, then jump the emojis to reach the goal. <br>Collect ⭐ 🍄 🪽 🧲 for points and powers!</p>
+          <div class="row" style="justify-content:center">
+            <button class="btn" id="startBtn">Go Fullscreen and Start</button>
+            <button class="btn secondary" id="howBtn">How to Play</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Question -->
+      <section id="quiz" class="screen">
+        <div class="panel">
+          <div class="stack">
+            <h1 id="qText">Question...</h1>
+            <div id="answers" class="answers"></div>
+          </div>
+        </div>
+      </section>
+
+        <!-- Pre-run popup -->
+        <div id="preRunModal" class="modal">
+        <div class="card stack center">
+            <h2>
+            Jump the emojis with tap, click or space!<br>
+            Reach the end for bonus points!
+            </h2>
+            <p class="muted">
+            Press Space, tap, or click to jump.<br>
+            Collect ⭐🍄🪽🧲 for points and powers.
+            </p>
+            <div><button class="btn" id="beginRun">Go!</button></div>
+        </div>
+        </div>
+
+
+      <!-- Game (runner) -->
+      <section id="game" class="screen">
+        <div id="gameWrap">
+          <canvas id="canvas"></canvas>
+          <div class="hint">Controls: Space / Click / Tap to jump • Press P to pause</div>
+        </div>
+      </section>
+
+      <!-- Endurance intro -->
+      <section id="enduranceIntro" class="screen">
+        <div class="panel center stack">
+          <h1>Final Bonus Round</h1>
+          <p class="muted">An endurance run through all 10 themes — 10 seconds each, seamless transitions. One hit ends the round!</p>
+          <div><button class="btn" id="startEndurance">Start Endurance</button></div>
+        </div>
+      </section>
+
+      <!-- End Screen -->
+      <section id="end" class="screen">
+        <div class="panel center stack">
+          <h1 id="endTitle">Game Over</h1>
+          <p id="finalStats" class="muted"></p>
+
+          <div id="medalWrap" class="medal hidden">
+            <div id="medalEmoji">🥉</div>
+            <div id="medalText" class="muted">Bronze Survivor</div>
+          </div>
+
+          <div class="row" style="justify-content:center">
+            <button class="btn" id="againBtn">Play Again</button>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- Toast / Modal for correctness -->
+      <div id="toast" class="modal">
+        <div class="card stack center">
+          <h2 id="toastTitle">Correct!</h2>
+          <p id="toastMsg" class="muted"></p>
+          <div><button class="btn" id="toastOK">OK</button></div>
+        </div>
+      </div>
+
+    </main>
+    <footer>
+      <span>Tip: Use a wide window for best results.</span>
+      <span>Brought to you by eatyourbible.com</span>
+    </footer>
+  </div>
+</div>
+
+<script>
+(() => {
+
+/*
+
+ #####     #     #    #######     #####     #######    ###    #######    #     #     #####  
+#     #    #     #    #          #     #       #        #     #     #    ##    #    #     # 
+#     #    #     #    #          #             #        #     #     #    # #   #    #       
+#     #    #     #    #####       #####        #        #     #     #    #  #  #     #####  
+#   # #    #     #    #                #       #        #     #     #    #   # #          # 
+#    #     #     #    #          #     #       #        #     #     #    #    ##    #     # 
+ #### #     #####     #######     #####        #       ###    #######    #     #     #####  
+
+*/    
+
+
+
+const QUESTIONS = [
+
+  { q:"What did God bless Abram and Lot with?", options:[
+      {t:"Riches, lots of animals", emo:"🐪"},
+      {t:"A huge city", emo:"🏙️"},
+      {t:"A big ship", emo:"⛵"},
+      {t:"A tall tower", emo:"🗼"}
+    ], correctIdx:0 },
+
+  { q:"What problem did Abram and Lot have?", options:[
+      {t:"Their herdsmen were fighting over space for their animals.", emo:"🐑"},
+      {t:"They ran out of water.", emo:"💧"},
+      {t:"They lost their map.", emo:"🗺️"},
+      {t:"Enemies attacked them.", emo:"⚔️"}
+    ], correctIdx:0 },
+
+  { q:"What was Abram’s idea to solve their problem?", options:[
+      {t:"Lot goes one way, Abram goes the other.", emo:"↔️"},
+      {t:"Build a bigger fence.", emo:"🧱"},
+      {t:"Sell all the animals.", emo:"💰"},
+      {t:"Wait for rain to fix it.", emo:"🌧️"}
+    ], correctIdx:0 },
+
+  { q:"Where did Abram and Lot go?", options:[
+      {t:"Lot went to the Jordan River valley, Abram went to Canaan.", emo:"🗺️"},
+      {t:"Both went to Egypt.", emo:"🇪🇬"},
+      {t:"Lot went to Nineveh, Abram to Ur.", emo:"🏙️"},
+      {t:"Both stayed together near Bethel.", emo:"⛺"}
+    ], correctIdx:0 },
+
+  { q:"Why did God compare Abram’s family to dust and stars?", options:[
+      {t:"His family would be just as uncountable.", emo:"✨"},
+      {t:"They would be small and light.", emo:"🪶"},
+      {t:"They would live in the sky.", emo:"☁️"},
+      {t:"They would be shiny.", emo:"💠"}
+    ], correctIdx:0 },
+
+  { q:"What new name did God give Abram and what did it mean?", options:[
+      {t:"Abraham, father of many.", emo:"👨‍👩‍👧‍👦"},
+      {t:"Abimelech, king of peace.", emo:"👑"},
+      {t:"Adonijah, beloved of the Lord.", emo:"💖"},
+      {t:"Azriel, help of God.", emo:"🕊️"}
+    ], correctIdx:0 },
+
+  { q:"What new name did God give Sarai and what did it mean?", options:[
+      {t:"Sarah, princess.", emo:"👑"},
+      {t:"Miriam, singer.", emo:"🎵"},
+      {t:"Deborah, bee.", emo:"🐝"},
+      {t:"Naomi, pleasant.", emo:"😊"}
+    ], correctIdx:0 },
+
+  { q:"What did God promise to do for Sarah?", options:[
+      {t:"Give her a son.", emo:"👶"},
+      {t:"Give her a new house.", emo:"🏠"},
+      {t:"Make her queen of Egypt.", emo:"👑"},
+      {t:"Give her a vineyard.", emo:"🍇"}
+    ], correctIdx:0 },
+
+  { q:"What did Abraham do when God said Sarah would have a son?", options:[
+      {t:"He laughed.", emo:"😂"},
+      {t:"He argued.", emo:"🗣️"},
+      {t:"He ran away.", emo:"🏃"},
+      {t:"He stayed silent.", emo:"🤐"}
+    ], correctIdx:0 },
+
+  { q:"What did God tell Abraham to name his son and what did it mean?", options:[
+      {t:"Isaac, laughter.", emo:"😄"},
+      {t:"Ishmael, God hears.", emo:"👂"},
+      {t:"Jacob, heel-grabber.", emo:"🦶"},
+      {t:"Samuel, asked of God.", emo:"🙏"}
+    ], correctIdx:0 },
+
+];
+
+  /*
+
+#######    #     #    ######     
+#          ##    #    #     #    
+#          # #   #    #     #    
+#####      #  #  #    #     #    
+#          #   # #    #     #    
+#          #    ##    #     #    
+#######    #     #    ######     
+
+
+*/
+
+
+  // 10 level themes (color, ground tint, obstacle emojis)
+  const THEMES = [
+    {name:"Grasslands", bg:"#0b1e1a", ground:"#143a2f", obstacles:["🌵","🌳","🪵"], sky:["☁️","☁️"], star:"⭐"},
+    {name:"Desert", bg:"#2a1a0e", ground:"#6e4f1d", obstacles:["🌵","🦂","🪨"], sky:["☀️"], star:"⭐"},
+    {name:"Snow", bg:"#102235", ground:"#2d4f73", obstacles:["⛄","❄️","🧊"], sky:["🌨️"], star:"⭐"},
+    {name:"Forest", bg:"#0e1f11", ground:"#264b28", obstacles:["🌲","🍄","🪵"], sky:["🌫️"], star:"⭐"},
+    {name:"City", bg:"#12131a", ground:"#2b2d3a", obstacles:["🚧","🧱","🗂️"], sky:["🌙","⭐️"], star:"⭐"},
+    {name:"Beach", bg:"#0c1d28", ground:"#2e6247", obstacles:["🦀","🐚","🌴"], sky:["🌤️"], star:"⭐"},
+    {name:"Volcano", bg:"#220b0b", ground:"#4b1d1d", obstacles:["🔥","🪨","🌋"], sky:["🌫️"], star:"⭐"},
+    {name:"Space", bg:"#05070e", ground:"#0f1426", obstacles:["🪐","☄️","🛰️"], sky:["✨","🌟"], star:"⭐"},
+    {name:"Farm", bg:"#14200e", ground:"#344b26", obstacles:["🌾","🐄","🚜"], sky:["☁️"], star:"⭐"},
+    {name:"Castle", bg:"#101018", ground:"#2b2b3f", obstacles:["🛡️","🏰","⚔️"], sky:["🌙"], star:"⭐"}
+  ];
+
+  /* -----------------------------
+     Global UI State
+  ------------------------------*/
+  const $ = sel => document.querySelector(sel);
+  const $$ = sel => Array.from(document.querySelectorAll(sel));
+  const screens = {
+    splash: $("#splash"),
+    title: $("#title"),
+    quiz: $("#quiz"),
+    game: $("#game"),
+    enduranceIntro: $("#enduranceIntro"),
+    end: $("#end")
+  };
+  const toast = $("#toast");
+  const toastTitle = $("#toastTitle");
+  const toastMsg = $("#toastMsg");
+  const ui = {
+    level: $("#uiLevel"),
+    score: $("#uiScore"),
+    lives: $("#uiLives")
+  };
+
+  let state = {
+    levelIndex: 0,
+    score: 0,
+    questionsOrder: [...Array(QUESTIONS.length).keys()], // 0..9
+    currentQ: 0,
+    inEndurance: false
+  };
+
+let preRunHintShown = false; // show the pre-run popup only once (after Q1)
+
+
+  function showScreen(name){
+    Object.values(screens).forEach(s=>s.classList.remove("active"));
+    screens[name].classList.add("active");
+  }
+  function showToast(title,msg,next,variant="normal"){
+
+    toastTitle.textContent = title;
+    toastMsg.textContent = msg || "";
+    const toastCard = toast.querySelector('.card');
+    toastCard.classList.toggle('powerup', variant === 'powerup');
+
+    toast.classList.add("show");
+    const ok = $("#toastOK");
+  const handler = () => {
+    toast.classList.remove("show");
+    const toastCard = toast.querySelector('.card');
+    if (toastCard) toastCard.classList.remove('powerup');
+    ok.removeEventListener("click", handler);
+    if(next) next();
+  };
+    ok.addEventListener("click", handler);
+  }
+
+  /* -----------------------------
+     Splash / Title
+  ------------------------------*/
+
+// Try to enter fullscreen (quietly ignore if not allowed/supported)
+async function enterFullscreen(){
+  const el = document.documentElement;
+  // Standard
+  if (!document.fullscreenElement && el.requestFullscreen) {
+    try { await el.requestFullscreen(); } catch(e) {}
+  }
+  // WebKit fallback (iOS/macOS Safari)
+  // Some Safari versions only allow fullscreen for certain elements; this will just no-op if blocked.
+  if (!document.fullscreenElement && (el.webkitRequestFullscreen || el.webkitRequestFullScreen)) {
+    try { (el.webkitRequestFullscreen || el.webkitRequestFullScreen).call(el); } catch(e) {}
+  }
+}
+
+// Kick off a fresh run AFTER attempting fullscreen
+async function startGameFlow(){
+  await enterFullscreen();
+
+  // Initialize state (fresh run)
+  state.levelIndex = 0;
+  introMagnetShown = false;
+  introWingShown   = false;
+  introMushShown   = false;
+
+  state.score = 0;
+  state.questionsOrder = [...Array(QUESTIONS.length).keys()];
+  state.currentQ = 0;
+  state.inEndurance = false;
+  preRunHintShown = false; // allow the pre-run hint again on a new game
+  updateHUD();
+  startQuestion();
+}
+
+
+  $("#splashOK").addEventListener("click", ()=>{
+    showScreen("title");
+  });
+$("#howBtn").addEventListener("click", ()=>{
+  showToast("How to Play",
+    "Answer Bible questions… then run!\nJump over obstacles with Space / tap / click.\nReach the end for a bonus.\nCollect ⭐ 🍄 🪽 🧲 for points and powers!");
+});
+
+
+$("#startBtn").addEventListener("click", ()=>{
+  // Run the fullscreen attempt and then start the game
+  startGameFlow();
+});
+
+
+  $("#againBtn").addEventListener("click", ()=>{
+    showScreen("title");
+  });
+
+  /* -----------------------------
+     Quiz Flow
+  ------------------------------*/
+  function startQuestion(){
+    showScreen("quiz");
+    const qIdx = state.questionsOrder[state.currentQ];
+    const q = QUESTIONS[qIdx];
+        $("#qText").textContent = q.q;
+
+    const answersWrap = $("#answers");
+    answersWrap.innerHTML = "";
+    const order = shuffle(q.options.map((o,i)=>({i, ...o})));
+    order.forEach((opt,displayIdx)=>{
+      const btn = document.createElement("button");
+      btn.innerHTML = `<span class="emo">${opt.emo}</span><span>${opt.t}</span>`;
+      btn.addEventListener("click", ()=>{
+        const isCorrect = (opt.i === q.correctIdx);
+        if(isCorrect){
+          btn.classList.add("correct");
+          const add = 100;
+          state.score += add;
+          updateHUD();
+            showToast("✅ Correct!","+ "+add+" pts", ()=>{
+            if (!preRunHintShown) {
+                $("#preRunModal").classList.add("show");
+                preRunHintShown = true;
+            } else {
+                startRunnerLevelOrIntro();
+
+            }
+            });
+
+        } else {
+          btn.classList.add("wrong");
+          // show correct
+          const c = q.options[q.correctIdx];
+            showToast("❌ Incorrect", `Right answer: ${c.emo} ${c.t}`, ()=>{
+            if (!preRunHintShown) {
+                $("#preRunModal").classList.add("show");
+                preRunHintShown = true;
+            } else {
+                startRunnerLevelOrIntro();
+
+            }
+            });
+
+        }
+      });
+      answersWrap.appendChild(btn);
+    });
+  }
+
+  $("#beginRun").addEventListener("click", ()=>{
+    $("#preRunModal").classList.remove("show");
+    startRunnerLevelOrIntro();
+
+  });
+
+// Start the endurance bonus: one long run, no popups, 10s theme segments
+
+
+
+  /* -----------------------------
+     Canvas Runner Engine
+  ------------------------------*/
+  const canvas = $("#canvas");
+  const ctx = canvas.getContext("2d");
+
+  let CW = 1280, CH = 720, DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+function resize(){
+  DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  const rect = canvas.getBoundingClientRect();
+  CW = Math.floor(rect.width * DPR);
+  CH = Math.floor(rect.height * DPR);
+  canvas.width = CW;
+  canvas.height = CH;
+
+  // After any size/DPR change, re-anchor hills to the ground line
+  if (typeof reanchorParallax === "function") reanchorParallax();
+}
+
+  window.addEventListener("resize", resize);
+
+  // Physics & player
+  const PLAYER = {
+    x: 0, y: 0, w: 64, h: 64,
+    vy: 0, onGround: false
+  };
+  const GROUND = { y: 0, h: 0 };
+    // Base physics (we'll scale these per device in resetLevelRuntime)
+    const BASE_GRAVITY = 2200;       // px/s^2
+    const BASE_JUMP_VELOCITY = 900;  // px/s
+
+    // Effective physics (computed each level/run)
+    let GRAVITY = BASE_GRAVITY;
+    let JUMP_VELOCITY = BASE_JUMP_VELOCITY;
+
+    // Optional global tuning knob (bump to 1.1–1.3 if you still want higher jumps everywhere)
+    const PHYS_TUNE = 1.0;
+
+
+  // --- Hitbox tuning (smaller values = tighter collisions) ---
+  const HB_PLAYER = 0.70;  // 70% of the player's drawn box
+  const HB_OBS    = 0.75;  // 75% of each obstacle's drawn box
+  const HB_STAR   = 0.60;  // 60% for stars (slightly generous pickup)
+    // Star hitbox offsets (adjust if your star box looks too low/high or left/right)
+    const STAR_HB_DX = 0;    // move star hitbox horizontally (+right / -left)
+    const STAR_HB_DY = -6;   // with textBaseline="top", we need less upward nudge
+
+    const STAR_SIZE_F   = 0.80; // star size relative to PLAYER.h (was mismatched before)
+    const STAR_DRAW_DY  = 0;    // start at 0 now that baseline is "top"; tweak ±1–2 if needed
+
+
+  // --- Hitbox Debug Overlay ---
+let DEBUG_HITBOX = false;      // press H to toggle in-game
+const DEBUG_SHOW_UNSCALED = false; // also outline the raw, unscaled boxes
+const DEBUG_ALPHA = 0.75;      // overlay opacity
+const DEBUG_COLORS = {
+  player:  "#3ad29f", // green
+  obstacle:"#ff6b6b", // red
+  star:    "#7AA2FF", // blue
+  pole:    "#ffd166"  // amber
+};
+
+
+    // ---- Run animation knobs ----
+    const RUN_BOB_PX       = 6;     // vertical bob amplitude in pixels
+    const RUN_BOB_MS       = 300;   // one bob cycle duration (step rhythm)
+    // ---- Fun flip-on-jump ----
+    const FLIP_ODDS        = 0.20;   // 20% chance per jump (≈ 1 out of 5)
+    const FLIP_ROT_SPEED   = Math.PI * 4.0; // rad/s; 2π = one full flip; 4π/s ≈ 0.5s per flip
+
+    const RUN_TILT_DEG     = 3;     // small tilt wobble (+/- degrees)
+    const SHADOW_MIN_SCALE = 0.85;  // how thin the shadow gets at peak jump
+    const SHADOW_MAX_SCALE = 1.15;  // how wide the shadow is when fully planted
+    const SHADOW_WIDTH_BASE = 0.78; // base width multiplier for the shadow (was ~0.90)
+    const SHADOW_Y_OFFSET = 4;  // pixels to push the shadow DOWN toward/into the ground band
+    const SHADOW_BLUR_PX = 3;   // edge softness for the shadow (px). 0 = sharp, 2–4 = nice soft edge
+    // ---- Collision Explosion (pre-popup) ----
+    const EXPLODE_ENABLED     = true;
+    const EXPLODE_MS          = 450;   // how long the explosion plays before the popup
+    const EXPLODE_COUNT       = 36;    // number of particles
+    const EXPLODE_SIZE_MIN    = 6;     // px
+    const EXPLODE_SIZE_MAX    = 14;    // px
+    const EXPLODE_SPEED_MIN   = 260;   // px/s initial particle speed
+    const EXPLODE_SPEED_MAX   = 720;   // px/s
+    const EXPLODE_GRAVITY     = 1800;  // px/s^2 (pull particles downward)
+
+    // ---- Finish flag pole knobs ----
+    const FLAG_EMO         = "🚩";      // flag emoji
+    const FLAG_POLE_W      = 10;        // pole width in px (canvas pixels, before DPR in draw we use directly)
+    const FLAG_POLE_H_F    = 0.62;      // fraction of canvas height for pole height (e.g., 0.62 * CH)
+    const FLAG_OFFSET_X    = 60;        // how far beyond the right edge it spawns
+    const FLAG_SCROLL_F    = 1.0;       // scroll speed factor vs world (usually 1.0)
+    const FLAG_HIT_SLACK   = 0.35;      // how far into player width counts as touching (0..1)
+
+    // ---- Checkered flag (drawn, not emoji) ----
+    const FLAG_W          = 48;   // flag width in px
+    const FLAG_H          = 32;   // flag height in px
+    const FLAG_CELL       = 6;    // checker square size in px
+    const FLAG_BORDER_PX  = 1.5;  // outline thickness; 0 = no border
+    const FLAG_MARGIN_X   = 8;    // space from pole to flag
+    const FLAG_MARGIN_Y   = 8;    // down from the top of the pole
+
+
+    const DUST_ENABLED     = true;  // turn dust puffs on/off
+    const DUST_SIZE_MIN    = 6;     // dust puff pixel size range
+    const DUST_SIZE_MAX    = 12;
+    const DUST_LIFE_MS     = 280;   // how fast dust fades
+    const RUN_STEP_MS      = 300;   // footstep timing (usually keep = RUN_BOB_MS)
+
+    // ---- Ambient ground rocks (inside the ground band) ----
+    const ROCKS_ENABLED    = true;  // turn ground pebbles on/off
+    const ROCKS_SPAWN_MIN  = 450;   // ms between pebble spawns (min)
+    const ROCKS_SPAWN_MAX  = 950;   // ms between pebble spawns (max)
+    const ROCKS_SPEED_F    = 1.0;  // scroll speed factor vs gameSpeed
+    const ROCK_SIZE_MIN    = 6;     // px
+    const ROCK_SIZE_MAX    = 18;
+    const ROCK_ALPHA       = 0.28;  // 0..1 (subtle)
+
+    // ---- Powerups ----
+    const HB_POWERUP        = 0.80;      // powerup pickup hitbox scale (a bit generous)
+    const PU_SIZE_F         = 0.85;      // powerup draw size relative to PLAYER.h
+    const PU_SCROLL_F       = 0.95;      // scroll slightly slower than obstacles
+    const PU_MUSHROOM_EMO   = "🍄";
+    const PU_WING_EMO       = "🪽";
+    const PU_MAGNET_EMO     = "🧲";
+
+    // ---- Powerup unlock & shuffling ----
+    // Human-readable levels: Level 1,2,3...  (state.levelIndex is 0-based)
+    const LVL_UNLOCK_MAGNET   = 2;  // magnet introduced at Level 2
+    const LVL_UNLOCK_WING     = 4;  // wing   introduced at Level 4
+    const LVL_UNLOCK_MUSHROOM = 6;  // mushroom introduced at Level 6
+
+    // Only schedule at these progress markers (0..1 of distance)
+    const PU_THRESHOLDS = [0.25, 0.55, 0.75];
+
+    // One-time intro popups so we don't repeat later
+    let introMagnetShown   = false;
+    let introWingShown     = false;
+    let introMushShown     = false;
+
+    // Scheduled powerups for THIS level (built at level start)
+    let scheduledPowerups = [];   // [{type, threshold, spawned:false}]
+
+    // Which powerups are enabled for a given level number (1-based)
+    function enabledPowerupsForLevel(levelNum){
+    const enabled = [];
+    if (levelNum >= LVL_UNLOCK_MAGNET)   enabled.push("magnet");
+    if (levelNum >= LVL_UNLOCK_WING)     enabled.push("wing");
+    if (levelNum >= LVL_UNLOCK_MUSHROOM) enabled.push("mushroom");
+    return enabled;
+    }
+
+    // Fisher–Yates shuffle (in-place)
+    function shuffleInPlace(arr){
+    for (let i = arr.length - 1; i > 0; i--){
+        const j = (Math.random() * (i + 1)) | 0;
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+    }
+
+    // Build the per-level plan: choose enabled types, shuffle, map to thresholds
+    function buildPowerupPlanForLevel(levelNum){
+    const enabled = enabledPowerupsForLevel(levelNum).slice();
+    scheduledPowerups = [];
+    if (!enabled.length) return; // Level 1 (no powerups)
+    shuffleInPlace(enabled);
+    const count = Math.min(enabled.length, PU_THRESHOLDS.length);
+    for (let i = 0; i < count; i++){
+        scheduledPowerups.push({ type: enabled[i], threshold: PU_THRESHOLDS[i], spawned: false });
+    }
+    }
+
+
+    const PU_DURATION_MS    = 5000;      // 5 seconds (mushroom & wing)
+    const HOVER_CLEAR       = 1.2;       // wing: player's bottom sits at 1.2 * PLAYER.h above ground
+    const MAGNET_RADIUS     = 260;       // px radius to start attracting stars
+    const MAGNET_PULL       = 12;        // how strongly stars move toward player per frame (px per 16ms approx.)
+    // Wing expiry: gentle glide-down (and brief obstacle immunity)
+    const WING_DESCENT_MS   = 600;       // ms to ease down from hover to ground
+
+    // Wing hover wobble (subtle flying motion)
+    const WING_WOBBLE_F     = 0.08;      // amplitude as a fraction of PLAYER.h (0.08 ≈ 8% of dino height)
+    const WING_WOBBLE_HZ    = 1.2;       // cycles per second (1.2Hz ≈ gentle)
+
+    const WING_IMMUNE_AFTER_MS = 500;    // extra obstacle immunity after wing/glide ends
+
+    // ---- Endurance (bonus round) ----
+    const END_SEGMENT_MS   = 10000; // 10s per theme
+    const THEME_SLIDE_MS   = 900;   // slide-in duration for next theme
+    let segEndsAt          = 0;     // timestamp when current 10s segment ends
+    let slideUntil         = 0;     // timestamp when theme slide-in finishes
+    let prevThemeIdx       = 0;     // for drawing the outgoing theme during slide
+
+    // --- Endurance progress bar timing (we show time progress instead of distance)
+    let enduranceStartMs = 0;                                  // when Endurance began
+    let enduranceTotalMs = 0;                                  // total planned ms for Endurance
+
+
+    // Spawn scheduling points as % of level distance (0..1)
+    const PU_MUSH_AT        = 0.25;
+    const PU_WING_AT        = 0.55;
+    const PU_MAGNET_AT      = 0.75;
+
+    // ---- Powerup HUD (drawn inside the ground band) ----
+    const PU_HUD_GAP   = 8;          // gap between badges (px)
+    const PU_HUD_PADX  = 8;          // pill horizontal padding
+    const PU_HUD_PADY  = 4;          // pill vertical padding
+    const PU_HUD_FONT  = 14;         // base font size in px (will scale by DPR)
+    const PU_HUD_ALPHA = 0.85;       // badge opacity
+
+
+    // Visual-only tweak: raise/lower the drawn ground top edge (does NOT change GROUND.y / collisions)
+    // Base (desktop-reference) visual ground offset, in px
+    const GROUND_DRAW_DY_BASE = -10;
+    // Effective, scale-aware offset (set per level/run)
+    let GROUND_DRAW_DY = GROUND_DRAW_DY_BASE;
+
+
+
+      // ---- Background Parallax (far & mid hills) ----
+    const PARA_ENABLED      = true;
+    const PARA1_SPEED_F     = 0.20;    // far layer: 20% of gameSpeed (slowest)
+    const PARA2_SPEED_F     = 0.45;    // mid layer: 45% of gameSpeed
+    const PARA1_ALPHA       = 0.18;    // softer
+    const PARA2_ALPHA       = 0.26;    // slightly stronger
+    const PARA_SPAWN_MIN    = 800;     // ms between new hills (min)
+    const PARA_SPAWN_MAX    = 1600;    // ms between new hills (max)
+    const PARA1_SIZE_MIN    = 120;     // px hill width/height ranges
+    const PARA1_SIZE_MAX    = 280;
+    const PARA2_SIZE_MIN    = 80;
+    const PARA2_SIZE_MAX    = 180;
+
+    // ---- Sky Parallax Clouds (ellipses) ----
+    const SKY_ENABLED        = true;     // master on/off
+    const SKY_SPEED_F        = 0.12;     // scroll vs gameSpeed (slow)
+    const SKY_SPAWN_MIN      = 900;      // ms between spawns (min)
+    const SKY_SPAWN_MAX      = 1800;     // ms between spawns (max)
+
+    // Opacity range per cloud (semi-transparent white)
+    const SKY_ALPHA_MIN      = 0.14;
+    const SKY_ALPHA_MAX      = 0.28;
+
+    // Size as a fraction of canvas height so it scales on all screens
+    const SKY_W_MIN_F        = 0.08;     // min width ≈ 8% of CH
+    const SKY_W_MAX_F        = 0.18;     // max width ≈ 18% of CH
+    const SKY_H_ASPECT_MIN   = 0.35;     // height ≈ width * aspect
+    const SKY_H_ASPECT_MAX   = 0.55;
+
+    // Vertical placement (fractions of sky height, above ground)
+    const SKY_TOP_MARGIN_F   = 0.06;     // keep a margin from very top
+    const SKY_Y_MAX_F        = 0.70;     // spawn within upper ~70% of the sky band
+
+
+    // Obstacle rendering tweak (use 0 unless you need a slight visual nudge)
+    const OBST_DRAW_DY = 0;  // +down / -up in pixels; try 1 or -1 if a few look floaty
+
+
+
+  // Level runtime state
+  let runActive = false, paused = false;
+  // Flip state
+    let flipActive = false;
+    let flipAngle  = 0;     // radians accumulated this jump
+
+  let themeIdx = 0;
+    let BASE_GAME_SPEED = 460;    // base world scroll in px/s (desktop reference)
+    let gameSpeed = BASE_GAME_SPEED;
+    let WORLD_SCALE = 1;          // set per level from canvas/DPR
+
+  let spawnMin = 700, spawnMax = 1400; // ms between obstacles
+
+  // ---- Difficulty tuning (you can tweak these) ----
+  // Obstacles will start farther apart and ease toward the base range above (spawnMin..spawnMax).
+  // They will NEVER get closer than spawnMin/spawnMax as defined by the level.
+  const DIFF_MIN_START_MULT = 1.8;   // how much farther apart min delay is at level start (e.g., 1.8x)
+  const DIFF_MAX_START_MULT = 1.8;   // how much farther apart max delay is at level start
+  const DIFF_CURVE_POWER    = 1.0;   // 1.0 = linear; >1 = slow start, faster ramp; <1 = faster start, slow finish
+  const DIFF_ENABLED        = true;  // set to false to disable this per-level ramp
+
+  // Helper: linear interpolation
+  function lerp(a, b, t){ return a + (b - a) * t; }
+
+// --- Endurance (Bonus Round) tuning knobs ---
+// Start speed (relative to normal). Bigger = faster = harder.
+// Was 0.88 (12% slower); we’ll go a bit FASTER than normal.
+const ENDUR_SPEED_FACTOR = 1.05;   // +5% right from the start
+
+// Spawn gap multiplier. Smaller = tighter gaps = harder.
+// Was 1.35 (much easier); bring it down so spawns are closer together.
+const ENDUR_GAP_MULT     = 0.90;   // 5% tighter than normal gaps
+
+// Cap on the per-segment difficulty ramp (0..1). Higher = allows harder.
+// Was 0.60 (stopped ramp early); let it reach almost full difficulty.
+const ENDUR_DIFF_CAP_T   = 0.98;   // ramp can reach 95% of max
+
+// Per-theme speed ramp (Endurance only)
+// Was 1.06 (+6%/theme). Make it jumpier so it gets nasty faster.
+const ENDUR_SPEED_STEP      = 1.12;  // +12% speed each theme switch
+// Optional: let maximum speed get a tad higher than before (was 1.8).
+const ENDUR_SPEED_MAX_MULT  = 2.0;   // up to 200% of base endurance speed
+
+// Endurance ramp helpers (every theme)
+// Gaps shrink each new theme. Was 0.94 (≈ -6%). Go tighter.
+const ENDUR_GAP_STEP        = 0.85;  // each theme: gaps ×= 0.88 (≈ -12%)
+// Cap rises each theme. Was +0.08. Raise faster so difficulty unlocks sooner.
+const ENDUR_DIFF_CAP_STEP   = 0.15;  // each theme: cap +0.15 (toward 1.0)
+
+// Runtime state (keep as-is)
+let endurGapMult = ENDUR_GAP_MULT;
+let endurCapT    = ENDUR_DIFF_CAP_T;
+
+let endurSpeedMult = 1, ENDUR_BASE_SPEED = 0;
+
+
+
+
+
+  // Compute a dynamic spawn delay based on level progress (0..1)
+  function getDynamicSpawnDelay(progress){
+    if(!DIFF_ENABLED){
+      return rand(spawnMin, spawnMax);
+    }
+    // Ease progress (keeps end target exactly at spawnMin/Max)
+    let t = Math.max(0, Math.min(1, Math.pow(progress, DIFF_CURVE_POWER)));
+
+    // If we are in the Bonus Round, cap how hard it can ramp (keeps spacing friendlier).
+    if (state.inEndurance) {
+            t = Math.min(t, endurCapT);
+    }
+
+    const startMin = spawnMin * DIFF_MIN_START_MULT;
+    const startMax = spawnMax * DIFF_MAX_START_MULT;
+
+    
+    let currMin  = Math.max(spawnMin, Math.floor( lerp(startMin, spawnMin, t) ));
+    let currMax  = Math.max(currMin+1, Math.floor( lerp(startMax, spawnMax, t) ));
+
+    // In Bonus Round, widen the chosen window so obstacles are farther apart (in time).
+    if (state.inEndurance) {
+        currMin = Math.floor(currMin * endurGapMult);
+        currMax = Math.floor(currMax * endurGapMult);
+
+    }
+
+    return rand(currMin, currMax);
+
+    
+  }
+
+
+
+  let starSpawnMin = 1200, starSpawnMax = 2200;
+  let distanceGoal = 0;         // set per level for ~30s
+  let distanceTraveled = 0;
+  let lastTime = 0, acc = 0;
+  let nextSpawn = 0, nextStarSpawn = 0;
+  let obstacles = []; // {x,y,w,h,emo}
+  let stars = [];     // {x,y,w,h,emo,collected:false}
+
+  // Powerup state
+    let powerups = [];         // {type, x,y,w,h,emo, taken:false}
+    let mushUntil = 0;         // timestamp ms when mushroom ends (0 = off)
+    let wingUntil = 0;         // timestamp ms when wing ends (0 = off)
+    let magnetOn  = false;     // magnet lasts until end of level once taken
+    let mushSpawned=false, wingSpawned=false, magnetSpawned=false;
+
+    // Wing descent transition state (after wing timer ends)
+    let wingDescending = false;    // true while we’re easing down
+    let wingWasActive  = false;    // used to detect wing -> no wing transition
+    let wingDropFromY  = 0;        // start Y for the easing
+    let wingDescentEnd = 0;        // timestamp when easing should finish
+
+    let wingGraceUntil = 0;        // timestamp ms for post-wing immunity window
+
+
+  // Explosion state
+    let hitAnim = null;       // 'explode' while effect is running
+    let hitTimerMs = 0;
+    let boom = [];            // explosion particles: {x,y,vx,vy,size,age,life,rot,rotv}
+
+    // Finish flag pole (spawns when distance goal is reached)
+    let goalSpawned = false;
+    let flag = null;           // {x,y,pw,ph,fx,fy,fs}
+
+    // Footstep dust particles and phase timer
+    let dust = [];              // {x,y,size,life,age,vx,vy}
+    let nextStepMs = 0;         // countdown to next footstep puff
+
+    // Ambient ground rocks
+    let rocks = [];             // {x,y,w,h,vx}
+    let nextRockSpawn = 0;      // ms until next pebble
+
+    // Parallax background hills
+    let para1 = [];             // far: {x,y,w,h}
+    let para2 = [];             // mid: {x,y,w,h}
+    let nextPara1Spawn = 0;
+    let nextPara2Spawn = 0;
+
+    // Sky parallax clouds
+    let clouds = [];           // {x,y,w,h,a}
+    let nextCloudSpawn = 0;    // ms countdown
+
+
+  const DINO = "🦖";
+
+  function resetLevelRuntime(levelSeconds=30){
+    resize();
+    const theme = THEMES[themeIdx];
+    distanceGoal = gameSpeed * levelSeconds; // reach in ~levelSeconds
+    distanceTraveled = 0;
+    obstacles = [];
+    stars = [];
+    powerups = [];
+    mushUntil = 0;
+    wingUntil = 0;
+    magnetOn  = false;
+    mushSpawned = wingSpawned = magnetSpawned = false;
+    wingDescending = false;
+    wingWasActive  = false;
+    wingDropFromY  = 0;
+    wingDescentEnd = 0;
+    wingGraceUntil = 0;
+    buildPowerupPlanForLevel(state.levelIndex + 1); // make the shuffled plan for this level
+
+
+    hitAnim = null;
+    hitTimerMs = 0;
+    boom = [];
+
+    goalSpawned = false;
+    flag = null;
+
+    dust = [];
+    nextStepMs = 0;
+
+    rocks = [];
+    nextRockSpawn = rand(ROCKS_SPAWN_MIN, ROCKS_SPAWN_MAX);
+
+    para1 = [];
+    para2 = [];
+    nextPara1Spawn = rand(PARA_SPAWN_MIN, PARA_SPAWN_MAX);
+    nextPara2Spawn = rand(PARA_SPAWN_MIN, PARA_SPAWN_MAX);
+    clouds = [];
+    nextCloudSpawn = Math.round(rand(SKY_SPAWN_MIN, SKY_SPAWN_MAX));
+
+
+
+
+
+    nextSpawn = getDynamicSpawnDelay(0); // start of level = progress 0
+    nextStarSpawn = rand(starSpawnMin, starSpawnMax);
+    lastTime = performance.now();
+    acc = 0;
+    // Ground & player placement
+    GROUND.h = Math.round(CH * 0.18);
+    GROUND.y = CH - GROUND.h;
+    const scale = Math.min(CW/1280, CH/720);
+    WORLD_SCALE = Math.max(1, scale) * (DPR || 1);
+    GROUND_DRAW_DY = Math.round(GROUND_DRAW_DY_BASE * WORLD_SCALE);
+        // Prefill: place a few hills across the width so it isn't empty at start
+    if (PARA_ENABLED) {
+      const n1 = Math.max(2, Math.round(CW / 480));
+      for (let i=0;i<n1;i++){
+        para1.push(makeHill(1, (i/n1)*CW + rand(-60,60)));
+      }
+      const n2 = Math.max(2, Math.round(CW / 360));
+      for (let i=0;i<n2;i++){
+        para2.push(makeHill(2, (i/n2)*CW + rand(-40,40)));
+      }
+    }
+    // Normalize physics so jump height feels the same across devices
+    const worldScale = Math.max(1, scale) * (DPR || 1) * PHYS_TUNE;
+    GRAVITY = BASE_GRAVITY * worldScale;
+    JUMP_VELOCITY = BASE_JUMP_VELOCITY * worldScale;
+
+    const px = Math.round(80 * DPR * Math.max(1,scale));
+    const ph = Math.round(64 * DPR * Math.max(1,scale));
+    PLAYER.w = ph; PLAYER.h = ph;
+    PLAYER.x = px;
+    PLAYER.y = GROUND.y - PLAYER.h;
+    PLAYER.vy = 0;
+    PLAYER.onGround = true;
+    // Background color
+    $("#gameWrap").style.background = theme.bg;
+  }
+
+  function startRunnerLevel(){
+    showScreen("game");
+    paused = false;
+    runActive = true;
+    themeIdx = state.levelIndex % THEMES.length; // pick theme for this level
+
+    // Slight theme-based difficulty scaling (compute WORLD_SCALE first)
+    spawnMin = Math.max(520, 700 - state.levelIndex*15);
+    spawnMax = Math.max(900, 1400 - state.levelIndex*20);
+    starSpawnMin = 1100;
+    starSpawnMax = 2100;
+
+    // set WORLD_SCALE and physics, then compute speed using it
+    resetLevelRuntime(30);
+    gameSpeed = (BASE_GAME_SPEED + state.levelIndex * 12) * WORLD_SCALE;
+    distanceGoal = gameSpeed * 30; // recompute using this level’s speed
+
+
+    requestAnimationFrame(loop);
+
+  }
+
+ // --- Secret: jump to a specific question (1-9) ---
+function __secretGoToQuestion(num){
+// clamp to 1..9 (your game has 10 Qs; adjust if you want 0=10 later)
+  if (num < 1 || num > 9) return;
+
+  // Stop any active run/explosion/modal
+  runActive = false;
+  paused = false;
+  hitAnim = null;
+
+  // Make the next question be the one we want
+  state.currentQ = num - 1;           // 0-based index
+  state.levelIndex = state.currentQ;   // keep level/theme in sync with the question
+
+  // If the pre-run hint was shown already, leave it alone.
+  // We want to show the question screen for that number:
+  startQuestion();
+}
+ 
+
+
+    function startRunnerLevelOrIntro(){
+    const lvl = state.levelIndex + 1;
+
+    // Level 2: introduce Magnet
+    if (lvl === LVL_UNLOCK_MAGNET && !introMagnetShown){
+        introMagnetShown = true;
+        showToast("🧲 New Power-Up!", "Magnet pulls nearby ⭐ for the rest of the level.", ()=>{
+        startRunnerLevel();
+        }, "powerup");
+
+        return;
+    }
+
+    // Level 4: introduce Wing
+    if (lvl === LVL_UNLOCK_WING && !introWingShown){
+        introWingShown = true;
+        showToast("🪽 New Power-Up!", "Wing lifts you safely above obstacles for 5s.", ()=>{
+        startRunnerLevel();
+        }, "powerup");
+
+        return;
+    }
+
+    // Level 6: introduce Mushroom
+    if (lvl === LVL_UNLOCK_MUSHROOM && !introMushShown){
+        introMushShown = true;
+        showToast("🍄 New Power-Up!", "Mushroom doubles your size & ignores obstacles for 5s.", ()=>{
+        startRunnerLevel();
+        }, "powerup");
+
+        return;
+    }
+
+    // Otherwise start immediately
+    startRunnerLevel();
+    }
+
+
+  function loop(t){
+    if(!runActive) return;
+    const dt = Math.min(48, t - lastTime); // clamp
+    lastTime = t;
+    if(paused){ requestAnimationFrame(loop); return; }
+
+    update(dt/1000);
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  function update(dt){
+  
+    // If we're in the middle of the hit explosion, update particles and end with the popup
+    if (hitAnim === 'explode') {
+    const ms = dt * 1000;
+    hitTimerMs -= ms;
+
+    for (const p of boom) {
+        p.vy += EXPLODE_GRAVITY * dt;
+        p.x  += p.vx * dt;
+        p.y  += p.vy * dt;
+        p.age += ms;
+        p.rot += p.rotv * dt;
+    }
+    // keep only visible/young particles
+    boom = boom.filter(p => p.age < p.life && p.y < CH + 100);
+
+    if (hitTimerMs <= 0) {
+    hitAnim = null;
+    runActive = false;
+    if (state.inEndurance) {
+        // Crash during Endurance = fail (no confetti)
+        failEndurance();
+    } else {
+        showToast("💥 You crashed! 💥", "", ()=>{
+        advanceAfterRun(false, 0);
+        });
+
+    }
+
+    
+
+    }
+    // While exploding, skip normal collision handling this frame
+    return;
+    }
+
+    distanceTraveled += gameSpeed * dt;
+
+    // Endurance: handle timed theme changes with slide-in
+    if (state.inEndurance) {
+    const nowMs = performance.now();
+
+    // hop to next theme every 10s
+    if (nowMs >= segEndsAt) {
+    prevThemeIdx = themeIdx;
+    themeIdx = themeIdx + 1; // do NOT wrap; we want to reach the end
+
+    // Make later segments tougher: tighter gaps + higher difficulty cap
+    endurGapMult = Math.max(0.90, endurGapMult * ENDUR_GAP_STEP);     // clamp so it never gets absurd
+    endurCapT    = Math.min(1.00, endurCapT + ENDUR_DIFF_CAP_STEP);   // allow ramp to reach full difficulty
+
+        endurSpeedMult = Math.min(ENDUR_SPEED_MAX_MULT, endurSpeedMult * ENDUR_SPEED_STEP);
+        gameSpeed      = Math.round(ENDUR_BASE_SPEED * endurSpeedMult);
+
+
+if (themeIdx >= THEMES.length) {
+  // Brief slow-mo to savor the win, then finish
+  gameSpeed *= 0.35;
+  setTimeout(()=> finalizeEndurance(), 1200);
+  return;
+}
+
+
+        // Give kids a breather at the top of each 10s segment
+        const segT = Math.max(0, Math.min(1, themeIdx / (THEMES.length - 1))); // 0..1 over the 10 themes
+        nextSpawn = getDynamicSpawnDelay(segT);
+
+
+        segEndsAt = nowMs + END_SEGMENT_MS;
+        slideUntil = nowMs + THEME_SLIDE_MS;
+
+        // Optional: refresh sky/parallax queues so the new theme feels immediate
+        para1 = []; para2 = [];
+        nextPara1Spawn = rand(PARA_SPAWN_MIN, PARA_SPAWN_MAX);
+        nextPara2Spawn = rand(PARA_SPAWN_MIN, PARA_SPAWN_MAX);
+    }
+    }
+
+
+    // Spawn powerups based on the shuffled plan
+    const progress = Math.max(0, Math.min(1, distanceTraveled / distanceGoal));
+    for (const s of scheduledPowerups){
+    if (!s.spawned && progress >= s.threshold){
+        spawnPowerup(s.type);
+        s.spawned = true;
+    }
+    }
+
+
+    // Footstep timing (emit dust when on the ground and the step timer hits)
+    if (DUST_ENABLED) {
+    nextStepMs -= dt * 1000;
+    if (nextStepMs <= 0 && PLAYER.onGround) {
+        emitDust();
+        nextStepMs = RUN_STEP_MS;
+    }
+    }
+
+    // Ambient ground rocks spawn
+    if (ROCKS_ENABLED) {
+    nextRockSpawn -= dt * 1000;
+    if (nextRockSpawn <= 0) {
+        spawnGroundRock();
+        nextRockSpawn = rand(ROCKS_SPAWN_MIN, ROCKS_SPAWN_MAX);
+    }
+    }
+
+    // Spawn obstacles
+    nextSpawn -= dt*1000;
+    if(nextSpawn <= 0){
+      spawnObstacle();
+      // Progress through this level, 0..1
+      const progress = Math.max(0, Math.min(1, distanceTraveled / distanceGoal));
+      nextSpawn = getDynamicSpawnDelay(progress);
+    }
+
+    // Spawn stars
+    nextStarSpawn -= dt*1000;
+    if(nextStarSpawn <= 0){
+      spawnStar();
+      nextStarSpawn = rand(starSpawnMin, starSpawnMax);
+    }
+
+    // Update obstacles
+    for(const o of obstacles){
+      o.x -= gameSpeed * dt;
+    }
+    // Update stars
+    for(const s of stars){
+      s.x -= gameSpeed * dt * 0.95;
+    }
+
+// Magnet: gently pull nearby stars toward player
+if (magnetOn) {
+  const cx = PLAYER.x + PLAYER.w/2, cy = PLAYER.y + PLAYER.h/2;
+  for (const s of stars) {
+    if (s.collected) continue;
+    const sx = s.x + s.w/2, sy = s.y + s.h/2;
+    const dx = cx - sx, dy = cy - sy;
+    const dist = Math.hypot(dx, dy);
+    if (dist < MAGNET_RADIUS && dist > 1) {
+      // move star toward player a bit; keep it smooth
+      const ux = dx / dist, uy = dy / dist;
+      s.x += ux * MAGNET_PULL * dt * 60; // scaled for ~60fps feel
+      s.y += uy * MAGNET_PULL * dt * 60;
+    }
+  }
+}
+
+
+// Scroll powerups and handle pickup
+for (const p of powerups) {
+  p.x -= gameSpeed * dt * PU_SCROLL_F;
+}
+
+// Remove offscreen
+powerups = powerups.filter(p => p.x + p.w > -60 && !p.taken);
+
+// Pickup test
+for (const p of powerups) {
+  if (p.taken) continue;
+  if (aabbScaled(PLAYER, p, HB_PLAYER, HB_POWERUP)) {
+    p.taken = true;
+    if (p.type === "mushroom") {
+      // double size + invincible to obstacles
+      mushUntil = performance.now() + PU_DURATION_MS;
+    } else if (p.type === "wing") {
+      // hover above obstacle height + invincible to obstacles
+      wingUntil = performance.now() + PU_DURATION_MS;
+    } else if (p.type === "magnet") {
+      // lasts until end of level
+      magnetOn = true;
+    }
+  }
+}
+
+
+    // Update dust particles (drift + fade)
+    for (const p of dust) {
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.age += dt * 1000;
+    }
+    // Remove dead dust
+    dust = dust.filter(p => p.age < p.life && p.x > -40);
+
+    // Update ambient ground rocks
+    for (const r of rocks) {
+    r.x -= gameSpeed * dt * ROCKS_SPEED_F;
+    }
+
+    // Parallax spawn & scroll
+    if (PARA_ENABLED) {
+      nextPara1Spawn -= dt*1000;
+      nextPara2Spawn -= dt*1000;
+      if (nextPara1Spawn <= 0) { para1.push(makeHill(1)); nextPara1Spawn = rand(PARA_SPAWN_MIN, PARA_SPAWN_MAX); }
+      if (nextPara2Spawn <= 0) { para2.push(makeHill(2)); nextPara2Spawn = rand(PARA_SPAWN_MIN, PARA_SPAWN_MAX); }
+
+      for (const h of para1) h.x -= gameSpeed * dt * PARA1_SPEED_F;
+      for (const h of para2) h.x -= gameSpeed * dt * PARA2_SPEED_F;
+
+      para1 = para1.filter(h => h.x + h.w > -60);
+      para2 = para2.filter(h => h.x + h.w > -60);
+    }
+
+        // Sky parallax clouds (independent of PARA_ENABLED)
+        if (SKY_ENABLED) {
+        nextCloudSpawn -= dt * 1000;
+        if (nextCloudSpawn <= 0) {
+            clouds.push(makeCloud());
+            nextCloudSpawn = Math.round(rand(SKY_SPAWN_MIN, SKY_SPAWN_MAX));
+        }
+
+        // Scroll clouds (slow)
+        for (const c of clouds) c.x -= gameSpeed * dt * SKY_SPEED_F;
+
+        // Keep only onscreen clouds
+        clouds = clouds.filter(c => c.x + c.w > -40);
+        }
+
+
+        // Move finish flag with the world and check for "touch"
+    if (flag) {
+      flag.x -= gameSpeed * dt * FLAG_SCROLL_F;
+    // Keep the checkered flag glued to the pole top
+    flag.fx = flag.x + flag.pw + FLAG_MARGIN_X;
+    flag.fy = flag.y + FLAG_MARGIN_Y;
+
+      // Simple pole rect
+      const poleRect = { x: flag.x, y: flag.y, w: flag.pw, h: flag.ph };
+
+      // Consider player touching when their front crosses into the pole area
+      const playerFrontX = PLAYER.x + PLAYER.w * (1 - FLAG_HIT_SLACK);
+      const horizontallyTouching = (playerFrontX >= poleRect.x && PLAYER.x <= poleRect.x + poleRect.w);
+      const verticallyOverlap = (PLAYER.y + PLAYER.h >= poleRect.y && PLAYER.y <= poleRect.y + poleRect.h);
+
+      if (horizontallyTouching && verticallyOverlap) {
+        runActive = false;
+        const bonus = 150; // keep your existing base bonus
+        state.score += bonus;
+        updateHUD();
+        showToast("🏁 You Made It!", "+ " + bonus + " time bonus", ()=>{
+          advanceAfterRun(true, bonus);
+        });
+        return;
+      }
+
+      // Safety: if the flag somehow scrolls past without touch, end the level anyway
+    if (!state.inEndurance && !goalSpawned && distanceTraveled >= distanceGoal) {
+        runActive = false;
+        showToast("🏁 You Made It!", "+ 0 pts", ()=>{
+          advanceAfterRun(true, 0);
+        });
+        return;
+      }
+    }
+
+
+
+    // Remove offscreen rocks
+    rocks = rocks.filter(r => r.x + r.w > -40);
+
+
+    // Remove offscreen
+    obstacles = obstacles.filter(o => o.x + o.w > -100);
+    stars = stars.filter(s => s.x + s.w > -100 && !s.collected);
+
+    // Player physics
+    // Wing / Mushroom active?
+    const now = performance.now();
+    const wingActive = (wingUntil > now);
+    const mushActive = (mushUntil > now);
+
+    // Detect transition: wing just ended -> start gentle glide-down
+    if (!wingActive && wingWasActive && !wingDescending) {
+    wingDescending = true;
+    wingDropFromY = PLAYER.y;                 // start from current hover Y
+    wingDescentEnd = now + WING_DESCENT_MS;   // ends after this time
+    }
+
+// Physics update
+    if (wingActive) {
+    // Pin to a safe hover height while wing is active, with a gentle wobble
+    const TAU = Math.PI * 2;
+    const amplPx = Math.round(PLAYER.h * WING_WOBBLE_F);            // wobble amplitude in px
+    const baseGap = Math.round(PLAYER.h * HOVER_CLEAR);
+
+    // Raise the baseline by 'amplPx' so the lowest point of the wobble equals the old baseline
+    const targetY = Math.max(0, GROUND.y - (baseGap + amplPx) - PLAYER.h);
+
+    // Smooth wobble (centered on targetY). Positive y is downward, so this moves up/down visually.
+    const phase = now * 0.001 * TAU * WING_WOBBLE_HZ;               // now in ms → seconds → radians
+    // Optional: ramp amplitude in over the first 250 ms of wing duration
+    const wingTimeLeft = wingUntil - now;
+    const wingTimeElapsed = Math.max(0, PU_DURATION_MS - wingTimeLeft); // 0..PU_DURATION_MS
+    const ramp = Math.min(1, wingTimeElapsed / 250); // 0→1 over 250ms
+    const wobble = Math.round(Math.sin(phase) * amplPx * ramp);
+
+
+    PLAYER.y = targetY + wobble;
+    PLAYER.vy = 0;
+    PLAYER.onGround = false;
+    wingWasActive = true;
+    } else if (wingDescending) {
+
+    // Ease down from wingDropFromY to ground over WING_DESCENT_MS; ignore gravity
+    const t = Math.max(0, Math.min(1, 1 - ((wingDescentEnd - now) / WING_DESCENT_MS)));
+    // ease-out cubic (nice & soft): e(t) = 1 - (1-t)^3
+    const e = 1 - Math.pow(1 - t, 3);
+    const groundY = GROUND.y - PLAYER.h;
+    PLAYER.y = wingDropFromY + (groundY - wingDropFromY) * e;
+    PLAYER.vy = 0;
+    PLAYER.onGround = false;
+
+    if (now >= wingDescentEnd) {
+    wingDescending = false;
+    wingWasActive = false;
+    // start post-wing grace immunity
+    wingGraceUntil = now + WING_IMMUNE_AFTER_MS;
+    // snap to ground if we’re within a pixel
+    if (PLAYER.y + PLAYER.h >= GROUND.y - 1) {
+        PLAYER.y = groundY;
+        PLAYER.onGround = true;
+        PLAYER.vy = 0;
+    }
+    }
+
+
+    } else {
+    // Normal gravity/ground resolve
+    PLAYER.vy += GRAVITY * dt;
+    PLAYER.y += PLAYER.vy * dt;
+
+    if (PLAYER.y + PLAYER.h >= GROUND.y) {
+        PLAYER.y = GROUND.y - PLAYER.h;
+        PLAYER.vy = 0;
+        PLAYER.onGround = true;
+    } else {
+        PLAYER.onGround = false;
+    }
+    }
+
+// Update flip rotation: only while airborne
+if (flipActive) {
+  if (!PLAYER.onGround) {
+    flipAngle += FLIP_ROT_SPEED * dt;
+    if (flipAngle >= Math.PI * 2) {
+      // Finished a full forward flip; stop accumulating (leave a tiny overshoot tolerance)
+      flipActive = false;
+      flipAngle = 0;
+    }
+  } else {
+    // Landed: stop any ongoing flip
+    flipActive = false;
+    flipAngle = 0;
+  }
+}
+
+
+    // Collisions
+    for(const o of obstacles){
+    if(aabbScaled(PLAYER, o, HB_PLAYER, HB_OBS)){
+        const now = performance.now();
+        // Invincible while:
+        //  - mushroom active
+        //  - wing active
+        //  - wing glide-down
+        //  - post-wing grace window
+        if (mushUntil > now || wingUntil > now || wingDescending || wingGraceUntil > now) {
+        // Optional: small sparkle or pass-through puff here if you want
+        continue;
+        }
+        triggerExplosion();
+        return;
+    }
+    }
+
+
+
+
+
+        for(const s of stars){
+        if(!s.collected && aabbScaled(PLAYER, starRect(s), HB_PLAYER, HB_STAR)){
+            s.collected = true;
+            state.score += 25;
+            updateHUD();
+        }
+        }
+
+
+
+    // When distance target is reached, spawn the finish flag (once)
+    if (!state.inEndurance && !goalSpawned && distanceTraveled >= distanceGoal) {
+      goalSpawned = true;
+      spawnFinishFlag();
+      // Stop further spawns so the run to the flag is clean
+      nextSpawn = 999999;
+      nextStarSpawn = 999999;
+    }
+
+  }
+
+  function draw(){
+    const theme = THEMES[themeIdx];
+    // Clear
+    ctx.clearRect(0,0,CW,CH);
+
+        // Background color (slide)
+        if (state.inEndurance && slideUntil > performance.now()) {
+        const k = 1 - Math.max(0, Math.min(1, (slideUntil - performance.now()) / THEME_SLIDE_MS));
+        const newW = Math.round(CW * k);
+        const oldW = CW - newW;
+        const newTheme = THEMES[themeIdx];
+        const oldTheme = THEMES[prevThemeIdx];
+
+        if (oldW > 0) {
+            ctx.fillStyle = oldTheme.bg;
+            ctx.fillRect(0, 0, oldW, CH);
+        }
+        if (newW > 0) {
+            ctx.fillStyle = newTheme.bg;
+            ctx.fillRect(CW - newW, 0, newW, CH);
+        }
+        } else {
+        ctx.fillStyle = theme.bg;
+        ctx.fillRect(0, 0, CW, CH);
+        }
+
+
+// Sky parallax — white transparent ellipses, clipped above ground
+if (SKY_ENABLED) {
+  const vGroundY = GROUND.y + GROUND_DRAW_DY;
+
+  ctx.save();
+  // only draw above the ground line
+  ctx.beginPath();
+  ctx.rect(0, 0, CW, Math.max(0, vGroundY - 1));
+  ctx.clip();
+
+  ctx.fillStyle = "#ffffff";
+  for (const c of clouds) {
+    ctx.save();
+    ctx.globalAlpha = c.a; // per-cloud alpha
+    drawCloudEllipse(ctx, c.x + c.w/2, c.y + c.h/2, c.w/2, c.h/2);
+    ctx.restore();
+  }
+
+  ctx.restore();
+}
+
+
+// Parallax hills (behind ground)
+if (PARA_ENABLED) {
+  // Far layer
+  ctx.save();
+  ctx.globalAlpha = PARA1_ALPHA;
+  ctx.fillStyle = "black";
+  for (const h of para1) {
+    drawHill(ctx, h.x, h.y, h.w, h.h);
+  }
+  ctx.restore();
+
+  // Mid layer
+  ctx.save();
+  ctx.globalAlpha = PARA2_ALPHA;
+  ctx.fillStyle = "black";
+  for (const h of para2) {
+    drawHill(ctx, h.x, h.y, h.w, h.h);
+  }
+  ctx.restore();
+}
+
+
+    // Ground (with endurance slide-over)
+    const vGroundY = GROUND.y + GROUND_DRAW_DY;
+    const vGroundH = CH - vGroundY;
+
+    // If we are sliding to a new theme, split the ground paint
+    if (state.inEndurance && slideUntil > performance.now()) {
+      const k = 1 - Math.max(0, Math.min(1, (slideUntil - performance.now()) / THEME_SLIDE_MS));
+      // new theme panel width grows from 0 → CW
+      const newW = Math.round(CW * k);
+      const oldW = CW - newW;
+      const newTheme = THEMES[themeIdx];
+      const oldTheme = THEMES[prevThemeIdx];
+
+      // left: old ground
+      if (oldW > 0) {
+        ctx.fillStyle = oldTheme.ground;
+        ctx.fillRect(0, vGroundY, oldW, vGroundH);
+      }
+      // right: new ground sliding in from the right
+      if (newW > 0) {
+        ctx.fillStyle = newTheme.ground;
+        ctx.fillRect(CW - newW, vGroundY, newW, vGroundH);
+      }
+    } else {
+      // normal (single theme) ground
+      ctx.fillStyle = theme.ground;
+      ctx.fillRect(0, vGroundY, CW, vGroundH);
+    }
+// Sky accents (simple parallax) — draw AFTER ground, but clipped ABOVE it
+{
+  const vGroundY = GROUND.y + GROUND_DRAW_DY;
+
+  ctx.save();
+  // Only draw in the region above the ground
+  ctx.beginPath();
+  ctx.rect(0, 0, CW, Math.max(0, vGroundY - 1));
+  ctx.clip();
+
+  // Emoji font (device-independent)
+  ctx.font = Math.round(CH * 0.06) + "px Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, emoji";
+  ctx.textBaseline = "top";
+  ctx.globalAlpha = 0.65;
+
+  const t = lastTime / 1000;
+  const sky = theme.sky || [];
+
+  // Lay rows between a small top margin and just above the ground
+  const topMargin = Math.round(CH * 0.03);
+  const bottomMargin = Math.round(CH * 0.02);
+  const usableH = Math.max(1, (vGroundY - bottomMargin) - topMargin);
+  const rows = Math.max(1, sky.length);
+
+  for (let i = 0; i < rows; i++) {
+    const y = Math.round(topMargin + (usableH * (i + 1) / (rows + 1)));
+    const speed = 30 * (i + 1);
+    const x = (CW - (t * speed) % CW);
+    ctx.fillText(sky[i], x, y);
+    ctx.fillText(sky[i], x - CW, y); // wrap-around
+  }
+
+  ctx.restore();
+}
+
+
+    // --- Powerup HUD (emoji + countdown) drawn inside the ground ---
+        {
+        const now = performance.now();
+        const mushActive = (mushUntil > now);
+        const wingActive = (wingUntil > now);
+        const showMagnet = magnetOn;
+
+        // Layout: left margin and vertical placement a bit below the ground top
+        const baseX = 12 * (DPR || 1);
+        let x = baseX;
+        const y = vGroundY + Math.max(4, 6 * (DPR || 1));
+
+        // Helper to draw one pill badge: "emoji  3.2s"
+        function drawBadge(emoji, label){
+            ctx.save();
+            ctx.globalAlpha = PU_HUD_ALPHA;
+            ctx.font = `bold ${Math.round(PU_HUD_FONT * (DPR || 1))}px system-ui, -apple-system, Segoe UI, Roboto, Arial`;
+            ctx.textBaseline = "top";
+
+            const emoW = ctx.measureText(emoji).width;
+            const gap = 6 * (DPR || 1);
+            const textW = label ? ctx.measureText(label).width : 0;
+
+            const padX = PU_HUD_PADX * (DPR || 1);
+            const padY = PU_HUD_PADY * (DPR || 1);
+            const pillH = Math.round((PU_HUD_FONT + PU_HUD_PADY * 2) * (DPR || 1));
+            const pillW = Math.round(padX + emoW + (label ? gap + textW : 0) + padX);
+
+            // Soft dark pill
+            ctx.fillStyle = "rgba(0,0,0,0.35)";
+            roundRect(ctx, x, y, pillW, pillH, pillH * 0.45);
+            ctx.fill();
+
+            // Text/emoji
+            ctx.fillStyle = "rgba(255,255,255,0.95)";
+            let tx = x + padX;
+            ctx.fillText(emoji, tx, y + padY);
+            if (label){
+            tx += emoW + gap;
+            ctx.fillText(label, tx, y + padY);
+            }
+            ctx.restore();
+
+            x += pillW + PU_HUD_GAP * (DPR || 1);
+        }
+
+        // Format seconds to one decimal, floor at 0.0
+        function fmtSec(ms){
+            const s = Math.max(0, ms / 1000);
+            return (Math.ceil(s * 10) / 10).toFixed(1) + "s";
+        }
+
+        if (mushActive){
+            drawBadge("🍄", fmtSec(mushUntil - now));
+        }
+        if (wingActive){
+            drawBadge("🪽", fmtSec(wingUntil - now));
+        }
+        if (showMagnet){
+            // Magnet has no timer (level-long)
+            drawBadge("🧲", "");
+        }
+        }
+
+
+
+    // Ambient rocks pebbles inside the ground (subtle shapes)
+    if (ROCKS_ENABLED) {
+    ctx.save();
+    ctx.globalAlpha = ROCK_ALPHA;
+    ctx.fillStyle = "black";
+    for (const r of rocks) {
+        roundRect(ctx, r.x, r.y, r.w, r.h, Math.min(r.w, r.h) * 0.4);
+        ctx.fill();
+    }
+    ctx.restore();
+    }
+
+
+    // Obstacles (draw at each obstacle's stored size so bottoms align with ground)
+    ctx.save();
+    ctx.textBaseline = "top";
+    for (const o of obstacles){
+      ctx.font = o.h + "px Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, emoji";
+      ctx.fillText(o.emo, o.x, o.y + OBST_DRAW_DY);
+    }
+    ctx.restore();
+
+    // Powerups
+    if (powerups.length){
+      ctx.save();
+      ctx.textBaseline = "top";
+      for (const p of powerups){
+        if (p.taken) continue;
+        ctx.font = Math.round(PLAYER.h * PU_SIZE_F) + "px Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, emoji";
+        ctx.fillText(p.emo, p.x, p.y);
+      }
+      ctx.restore();
+    }
+
+
+    // Finish flag pole & flag
+    if (flag) {
+      // Draw pole
+      ctx.save();
+      ctx.fillStyle = "rgba(255,255,255,0.9)";
+      roundRect(ctx, flag.x, flag.y, flag.pw, flag.ph, Math.min(flag.pw, flag.ph) * 0.15);
+      ctx.fill();
+      ctx.restore();
+
+      // Draw a checkered flag (no emoji) to the right of the pole
+      ctx.save();
+      // Checker squares
+      const cols = Math.max(1, Math.floor(flag.fw / FLAG_CELL));
+      const rows = Math.max(1, Math.floor(flag.fh / FLAG_CELL));
+      for(let r=0; r<rows; r++){
+        for(let c=0; c<cols; c++){
+          const x = flag.fx + c * FLAG_CELL;
+          const y = flag.fy + r * FLAG_CELL;
+          const isBlack = ((r + c) % 2) === 0;
+          ctx.fillStyle = isBlack ? "#000000" : "#FFFFFF";
+          ctx.fillRect(x, y, FLAG_CELL, FLAG_CELL);
+        }
+      }
+
+        // --- Hitbox overlay for finish pole ---
+        if (DEBUG_HITBOX && flag){
+        const poleRect = { x: flag.x, y: flag.y, w: flag.pw, h: flag.ph };
+        strokeRectOutline(poleRect.x, poleRect.y, poleRect.w, poleRect.h, DEBUG_COLORS.pole);
+        }
+
+
+      // Border (optional)
+      if (FLAG_BORDER_PX > 0){
+        ctx.lineWidth = FLAG_BORDER_PX;
+        ctx.strokeStyle = "rgba(255,255,255,0.9)";
+        ctx.strokeRect(flag.fx, flag.fy, cols * FLAG_CELL, rows * FLAG_CELL);
+      }
+      ctx.restore();
+
+    }
+
+
+    // Stars
+    ctx.save();
+    ctx.font = Math.round(PLAYER.h * STAR_SIZE_F) + "px Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, emoji";
+    ctx.textBaseline = "top"; // draw stars from top-left so they match their stored x/y box
+    for(const s of stars){
+        if(!s.collected) ctx.fillText(s.emo, s.x, s.y + STAR_DRAW_DY);
+    }
+    ctx.restore();
+
+
+
+    // --- Hitbox overlay for obstacles & stars ---
+    if (DEBUG_HITBOX){
+    for (const o of obstacles){
+        drawScaledHitbox(o, HB_OBS, DEBUG_COLORS.obstacle);
+    }
+    for (const s of stars){
+    if(!s.collected) drawScaledHitbox(starRect(s), HB_STAR, DEBUG_COLORS.star);
+    }
+
+    }
+
+
+    // Footstep dust puffs
+    if (DUST_ENABLED) {
+    ctx.save();
+    for (const p of dust) {
+        const k = 1 - (p.age / p.life); // fade 1..0
+        ctx.globalAlpha = Math.max(0, k) * 0.6;
+        ctx.fillStyle = "#000000";
+        roundRect(ctx, p.x, p.y, p.size, p.size * 0.6, p.size * 0.3);
+        ctx.fill();
+    }
+    ctx.restore();
+    }
+
+    if (runActive && hitAnim !== 'explode') {
+
+
+
+    // Player (flip horizontally so 🦖 faces right), with bob, tilt, and dynamic shadow
+    const mushActive = (mushUntil > performance.now());
+    const wingActive = (wingUntil > performance.now());
+
+    const now = lastTime; // ms timestamp already tracked
+    const bobPhase = (now % RUN_BOB_MS) / RUN_BOB_MS;          // 0..1
+    // Only bob on the ground; no bobbing in the air
+    const bobOffset = PLAYER.onGround ? Math.sin(bobPhase * Math.PI * 2) * RUN_BOB_PX : 0;
+
+
+    // Shadow under player (squash/stretch based on height above ground)
+    const groundGap = (GROUND.y - (PLAYER.y + PLAYER.h));      // 0 when on ground, positive when above
+    const air01 = Math.max(0, Math.min(1, groundGap / (PLAYER.h * 0.9)));
+    const shadowScale = SHADOW_MAX_SCALE - (SHADOW_MAX_SCALE - SHADOW_MIN_SCALE) * air01;
+
+    ctx.save();
+    ctx.globalAlpha = 0.30;
+    ctx.filter = `blur(${SHADOW_BLUR_PX}px)`;
+
+    ctx.fillStyle = "black";
+    const shW = PLAYER.w * 0.9 * shadowScale * (mushActive ? 2 : 1);
+    const shH = Math.max(6, PLAYER.h * 0.24 * (1 / (1 + air01))) * (mushActive ? 2 : 1);
+
+    const shX = PLAYER.x + PLAYER.w * 0.5 - shW * 0.5;
+    const shY = GROUND.y - Math.max(6, shH * 0.6) + SHADOW_Y_OFFSET;
+    roundRect(ctx, shX, shY, shW, shH, shH * 0.5);
+    ctx.fill();
+    ctx.filter = 'none';
+    ctx.restore();
+
+
+
+    // Only tilt on the ground; keep steady in the air
+    const tiltRad = (PLAYER.onGround ? RUN_TILT_DEG * (Math.cos(bobPhase * Math.PI * 2) >= 0 ? 1 : -1) : 0) * Math.PI / 180;
+    const flipRad = (!PLAYER.onGround && flipActive) ? flipAngle : 0;
+
+    ctx.save();
+    const fontSize = Math.round(PLAYER.h*0.95);
+    ctx.font = fontSize + "px Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, emoji";
+    ctx.textBaseline="top";
+
+    // Apply transform: position + bob + tilt + horizontal mirror
+    const scaleF = (mushActive ? 2 : 1);
+    const pivotX = PLAYER.x + PLAYER.w/2;
+    // place pivot at the sprite's visual center
+    const centerY = PLAYER.y + bobOffset + PLAYER.h/2;
+    // if scaled up, nudge the pivot UP so the feet stay on the ground
+    const pivotY  = centerY - (scaleF - 1) * (PLAYER.h/2);
+    ctx.translate(pivotX, pivotY);
+    ctx.rotate(tiltRad + flipRad);
+
+    ctx.scale(-(mushActive ? 2 : 1), (mushActive ? 2 : 1));
+    ctx.fillText("🦖", -PLAYER.w/2, -PLAYER.h/2);
+    ctx.restore();
+    }
+
+// Explosion particles
+if (boom.length){
+  for (const p of boom){
+    const k = Math.max(0, 1 - (p.age / p.life)); // fade 1..0
+    ctx.save();
+    ctx.globalAlpha = 0.85 * k;
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot);
+    // warm color mix: flicker between gold and orange-red
+    ctx.fillStyle = (p.age % 120 < 60) ? "#ffd54a" : "#ff6b6b";
+    ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
+    ctx.restore();
+  }
+}
+
+
+    // --- Hitbox overlay for player ---
+    if (DEBUG_HITBOX){
+    drawScaledHitbox(PLAYER, HB_PLAYER, DEBUG_COLORS.player);
+    // Optional: faint label
+    ctx.save();
+    ctx.globalAlpha = 0.8;
+    ctx.font = Math.max(12, Math.round(14 * (DPR||1))) + "px sans-serif";
+    ctx.fillStyle = "rgba(255,255,255,0.85)";
+    ctx.fillText("HITBOX DEBUG (press H)", 12 * (DPR||1), 36 * (DPR||1));
+    ctx.restore();
+    }
+
+
+
+    // Distance bar (top-left)
+    // Use time-based progress during Endurance; distance for normal levels
+    const pct = state.inEndurance
+      ? Math.max(0, Math.min(1, (performance.now() - enduranceStartMs) / enduranceTotalMs))
+      : Math.max(0, Math.min(1, distanceTraveled / distanceGoal));
+    const barW = Math.min(240*DPR, CW*0.25);
+    const barH = 10*DPR;
+    const x=12*DPR, y=12*DPR;
+    ctx.fillStyle = "rgba(255,255,255,.18)";
+    roundRect(ctx,x,y,barW,barH,barH/2); ctx.fill();
+    ctx.fillStyle = "#4BE3AC";
+    roundRect(ctx,x,y,barW*pct,barH,barH/2); ctx.fill();
+  }
+
+  function spawnObstacle(){
+    const theme = THEMES[themeIdx];
+    const emo = pick(theme.obstacles);
+    const size = Math.round(PLAYER.h * randf(0.8,1.15));
+    const y = GROUND.y - size;
+    // Approx text bounds
+    obstacles.push({emo, x:CW+40, y, w:size, h:size});
+  }
+  function spawnStar(){
+    const theme = THEMES[themeIdx];
+    const emo = theme.star || "⭐";
+    const size = Math.round(PLAYER.h * STAR_SIZE_F);
+
+    const y = GROUND.y - PLAYER.h - rand(40, Math.round(CH*0.35));
+    stars.push({emo, x:CW+40, y, w:size, h:size, collected:false});
+  }
+
+function spawnPowerup(type){
+  // position it at mid-air, comfortably collectible
+  const size = Math.round(PLAYER.h * PU_SIZE_F);
+  const yTop = Math.max(0, GROUND.y - PLAYER.h*2.5); // not too high
+  const y = rand(yTop, GROUND.y - PLAYER.h*1.2 - size);
+  const x = CW + 40;
+
+  let emo = PU_MUSHROOM_EMO;
+  if (type === "wing")   emo = PU_WING_EMO;
+  if (type === "magnet") emo = PU_MAGNET_EMO;
+
+  powerups.push({ type, emo, x, y, w:size, h:size, taken:false });
+}
+
+
+function spawnFinishFlag(){
+  // Pole height as a fraction of canvas height; sits on ground
+  const ph = Math.floor(CH * FLAG_POLE_H_F);
+  const pw = Math.max(4, Math.floor(FLAG_POLE_W * (DPR || 1)));
+  const px = CW + FLAG_OFFSET_X;
+  const py = GROUND.y - ph;
+
+  // Checkered flag rectangle placed to the right of the pole, near the top
+  const fw = FLAG_W;
+  const fh = FLAG_H;
+  const fx = px + pw + FLAG_MARGIN_X;
+  const fy = py + FLAG_MARGIN_Y;
+
+  flag = { x: px, y: py, pw, ph, fx, fy, fw, fh };
+}
+
+function triggerExplosion(){
+  if(!EXPLODE_ENABLED || hitAnim === 'explode') return;
+
+  hitAnim = 'explode';
+  hitTimerMs = EXPLODE_MS;
+  boom = [];
+
+  // center of the player
+  const cx = PLAYER.x + PLAYER.w/2;
+  const cy = PLAYER.y + PLAYER.h/2;
+
+  for(let i=0;i<EXPLODE_COUNT;i++){
+    const ang = Math.random() * Math.PI * 2;
+    const spd = rand(EXPLODE_SPEED_MIN, EXPLODE_SPEED_MAX);
+    boom.push({
+      x: cx,
+      y: cy,
+      vx: Math.cos(ang) * spd,
+      vy: Math.sin(ang) * spd,
+      size: rand(EXPLODE_SIZE_MIN, EXPLODE_SIZE_MAX),
+      age: 0,
+      life: EXPLODE_MS + 250,     // let them linger slightly longer than the timer
+      rot: Math.random() * Math.PI,
+      rotv: (Math.random()*6 - 3) // -3..+3 rad/s spin
+    });
+  }
+
+  // Stop new spawns while the effect plays
+  nextSpawn = 999999;
+  nextStarSpawn = 999999;
+}
+
+
+function emitDust(){
+  // Spawn 1–2 small puffs near the player's feet
+  const count = 1 + Math.floor(Math.random() * 2);
+  for (let i = 0; i < count; i++) {
+    const size = rand(DUST_SIZE_MIN, DUST_SIZE_MAX);
+    const px = PLAYER.x + PLAYER.w * 0.35 + rand(-6, 6);
+    const py = GROUND.y - Math.max(6, size * 0.5) + rand(-4, 2);
+    dust.push({
+      x: px,
+      y: py,
+      size,
+      life: DUST_LIFE_MS,
+      age: 0,
+      vx: -gameSpeed * (0.25 + Math.random() * 0.25), // drift back slightly
+      vy: -20 + Math.random() * 30                      // tiny upward/downward drift
+    });
+  }
+}
+
+function spawnGroundRock(){
+  // Small rounded rectangles inside ground band
+  const w = rand(ROCK_SIZE_MIN, ROCK_SIZE_MAX);
+  const h = Math.max(4, Math.round(w * randf(0.4, 0.8)));
+  // Place rock somewhere within the ground rectangle, not too close to the top line
+  const minY = GROUND.y + Math.round(GROUND.h * 0.15);
+  const maxY = GROUND.y + Math.round(GROUND.h * 0.85) - h;
+  const ry = rand(minY, Math.max(minY, maxY));
+  rocks.push({ x: CW + 30, y: ry, w, h });
+}
+
+
+// Shrink a rectangle around its center by a scale factor (0..1)
+function shrinkRect(r, scale){
+  const dw = r.w * (1 - scale);
+  const dh = r.h * (1 - scale);
+  return { x: r.x + dw/2, y: r.y + dh/2, w: r.w * scale, h: r.h * scale };
+}
+
+// Scaled AABB test using per-rect scales
+function aabbScaled(a, b, scaleA, scaleB){
+  const aa = shrinkRect(a, scaleA);
+  const bb = shrinkRect(b, scaleB);
+  return (aa.x < bb.x + bb.w && aa.x + aa.w > bb.x && aa.y < bb.y + bb.h && aa.y + aa.h > bb.y);
+}
+
+// (Keep a plain AABB in case you want it elsewhere)
+function aabb(a,b){
+  return aabbScaled(a,b,1,1);
+}
+
+// Build an adjusted rectangle for a star so its hitbox matches the drawn emoji better
+function starRect(s){
+  // Include the same visual draw offset so the hitbox follows the rendered star
+  return { x: s.x + STAR_HB_DX, y: s.y + STAR_DRAW_DY + STAR_HB_DY, w: s.w, h: s.h };
+}
+
+
+
+// Outline a rectangle (debug only)
+function strokeRectOutline(x,y,w,h,color,alpha=DEBUG_ALPHA){
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = Math.max(1, 2 * (DPR || 1));
+  ctx.strokeRect(x, y, w, h);
+  ctx.restore();
+}
+
+// Draw the scaled hitbox for a rect using a scale factor
+function drawScaledHitbox(rect, scale, color){
+  const r = shrinkRect(rect, scale);
+  strokeRectOutline(r.x, r.y, r.w, r.h, color);
+  if (DEBUG_SHOW_UNSCALED){
+    // raw bounds in a faint gray
+    strokeRectOutline(rect.x, rect.y, rect.w, rect.h, "rgba(255,255,255,0.4)", 0.35);
+  }
+}
+
+
+  function roundRect(ctx,x,y,w,h,r){
+    ctx.beginPath();
+    ctx.moveTo(x+r,y);
+    ctx.arcTo(x+w,y,x+w,y+h,r);
+    ctx.arcTo(x+w,y+h,x,y+h,r);
+    ctx.arcTo(x,y+h,x,y,r);
+    ctx.arcTo(x,y,x+w,y,r);
+    ctx.closePath();
+  }
+
+// Create a hill for a given layer (1 = far, 2 = mid), anchored to the DRAWN ground
+function makeHill(layer, startX){
+  const far = (layer === 1);
+  const w = far ? rand(PARA1_SIZE_MIN, PARA1_SIZE_MAX) : rand(PARA2_SIZE_MIN, PARA2_SIZE_MAX);
+  const h = Math.round(w * (far ? randf(0.35, 0.55) : randf(0.45, 0.65)));
+  const x = (typeof startX === "number") ? startX : CW + rand(40, 140);
+
+  // how much of the hill should be visible above the ground (fraction of its height)
+  const visibleFrac = far ? randf(0.28, 0.45) : randf(0.35, 0.55);
+
+  // Anchor to the visually drawn ground top (GROUND.y + GROUND_DRAW_DY)
+  const groundTop = (GROUND.y + GROUND_DRAW_DY);
+  const y = Math.round(groundTop - h * visibleFrac);
+
+  // store visible fraction so we can re-anchor on resize/orientation changes
+  return { x, y, w, h, vf: visibleFrac };
+}
+
+
+// Re-anchor existing hills to the current drawn ground line
+function reanchorParallax(){
+  const groundTop = (GROUND.y + GROUND_DRAW_DY);
+  if (Array.isArray(para1)){
+    for (const h of para1){
+      if (h && h.h && h.vf !== undefined){
+        h.y = Math.round(groundTop - h.h * h.vf);
+      }
+    }
+  }
+  if (Array.isArray(para2)){
+    for (const h of para2){
+      if (h && h.h && h.vf !== undefined){
+        h.y = Math.round(groundTop - h.h * h.vf);
+      }
+    }
+  }
+}
+
+
+// Draw a soft “blob hill”
+function drawHill(ctx, x, y, w, h){
+  // A tall rounded cap sitting on y; extend down by h
+  const r = Math.min(w, h) * 0.45;
+  roundRect(ctx, x, y, w, h, r);
+  ctx.fill();
+}
+
+function makeCloud() {
+  const vGroundY = GROUND.y + GROUND_DRAW_DY;
+  const skyH = Math.max(1, vGroundY);
+
+  // scale widths from CH so they look consistent on all devices
+  const w = Math.round(CH * randf(SKY_W_MIN_F, SKY_W_MAX_F));
+  const h = Math.round(w * randf(SKY_H_ASPECT_MIN, SKY_H_ASPECT_MAX));
+
+  // vertical spawn range within the upper band of the sky
+  const topMargin = Math.round(skyH * SKY_TOP_MARGIN_F);
+  const maxY = Math.round(skyH * SKY_Y_MAX_F);
+  const y = rand(topMargin, Math.max(topMargin, maxY - h));
+
+  // start slightly off the right edge
+  const x = CW + rand(30, 140);
+
+  // per-cloud alpha
+  const a = randf(SKY_ALPHA_MIN, SKY_ALPHA_MAX);
+
+  return { x, y, w, h, a };
+}
+
+function drawCloudEllipse(ctx, cx, cy, rx, ry) {
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+
+  // Controls
+    function jump(){
+    // Allow a jump from the glide-down state too
+// Allow a jump from the glide-down state too
+    if (wingDescending) {
+    wingDescending = false;
+    wingWasActive = false;
+    PLAYER.vy = -JUMP_VELOCITY;
+    PLAYER.onGround = false;
+
+    // Decide flip randomly on jump
+    flipActive = (Math.random() < FLIP_ODDS);
+    flipAngle  = 0;
+    return;
+    }
+    if (PLAYER.onGround) {
+    PLAYER.vy = -JUMP_VELOCITY;
+    PLAYER.onGround = false;
+
+    // Decide flip randomly on jump
+    flipActive = (Math.random() < FLIP_ODDS);
+    flipAngle  = 0;
+    }
+    }
+
+    // Secret level select: press 1–9 to jump to that question (works on any screen)
+window.addEventListener("keydown", (e)=>{
+  if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.isContentEditable)) return;
+  const k = e.key;
+  if (k >= "1" && k <= "9") {
+    e.preventDefault();
+    __secretGoToQuestion(parseInt(k, 10));
+  }
+
+    // Secret: press B to jump straight into Endurance (from anywhere)
+    if (k === "b" || k === "B") {
+        e.preventDefault();
+
+        // Cleanly cancel any normal run / popup that might be mid-flight
+        runActive = false;
+        paused = false;
+        hitAnim = null;
+        const prm = document.querySelector("#preRunModal");
+        if (prm) prm.classList.remove("show");
+        if (toast) toast.classList.remove("show");
+
+        // Flip the flag and go!
+        state.inEndurance = true;
+        startEndurance();  // uses the existing Endurance flow
+    }
+
+
+
+});
+
+
+  window.addEventListener("keydown", (e)=>{
+    if(!screens.game.classList.contains("active")) return;
+    if(e.code === "Space"){ e.preventDefault(); jump(); }
+    // Secret level select: press 1-9 to jump to that question
+    if(e.key === "p" || e.key === "P"){ paused = !paused; }
+    if(e.key === "h" || e.key === "H"){ DEBUG_HITBOX = !DEBUG_HITBOX; }
+  });
+  $("#gameWrap").addEventListener("pointerdown", ()=>{ if(screens.game.classList.contains("active")) jump(); });
+
+  /* -----------------------------
+     Level Progression / Endurance
+  ------------------------------*/
+function finalizeEndurance(){
+  // Stop gameplay
+  state.inEndurance = false;
+  runActive = false;
+
+  // --- Quick celebration (confetti) ---
+  celebrateConfetti(60); // 60 little pieces, 1.6s fall animation
+
+  // Compute simple Endurance stats
+  const themesCleared = THEMES.length;    // finished all 10 segments
+  const seconds = Math.round((END_SEGMENT_MS * THEMES.length) / 1000);
+  const speedMult = (endurSpeedMult || 1);
+  const medal = getMedalForScore(state.score);
+
+  // Fill end screen UI
+  showScreen("end");
+  const titleEl = document.getElementById("endTitle");
+  const statsEl = document.getElementById("finalStats");
+  const medalWrap = document.getElementById("medalWrap");
+  const medalEmoji = document.getElementById("medalEmoji");
+  const medalText  = document.getElementById("medalText");
+
+  if (titleEl) titleEl.textContent = "🏆 YOU SURVIVED!";
+  if (statsEl)  statsEl.textContent =
+    `Endurance cleared: ${themesCleared}/` + THEMES.length +
+    ` • Time: ${seconds}s • Top speed ×${speedMult.toFixed(2)} • Score: ${state.score}`;
+
+  if (medalWrap && medalEmoji && medalText){
+    medalWrap.classList.remove("hidden");
+    medalEmoji.textContent = medal.emoji;
+    medalText.textContent  = medal.label;
+  }
+}
+
+function failEndurance(){
+  // Stop gameplay (we crashed during the bonus round)
+  state.inEndurance = false;
+  runActive = false;
+
+  // Show standard Game Over (no confetti, hide medal)
+  showScreen("end");
+  const titleEl = document.getElementById("endTitle");
+  const statsEl = document.getElementById("finalStats");
+  const medalWrap = document.getElementById("medalWrap");
+
+  if (titleEl) titleEl.textContent = "Game Over";
+if (statsEl) {
+  statsEl.style.whiteSpace = 'pre-line'; // <-- add this
+  statsEl.textContent =
+    `Bonus round failed on level ${Math.min(themeIdx+1, THEMES.length)}/${THEMES.length}\nScore: ${state.score}`;
+}
+
+  if (medalWrap) medalWrap.classList.add("hidden");
+}
+
+
+
+function getMedalForScore(score){
+  // Tweak thresholds to taste
+  if (score >= 2500) return { emoji:"🥇", label:"Gold Survivor" };
+  if (score >= 1500) return { emoji:"🥈", label:"Silver Survivor" };
+  return { emoji:"🥉", label:"Bronze Survivor" };
+}
+
+function celebrateConfetti(n=60){
+  const layer = document.createElement("div");
+  layer.className = "confetti-layer";
+  document.body.appendChild(layer);
+
+  const symbols = ["🟦","🟨","🟥","🟪","🟩","⭐","✨","🎉"];
+  for(let i=0;i<n;i++){
+    const span = document.createElement("span");
+    span.className = "confetti-piece";
+    span.textContent = symbols[Math.floor(Math.random()*symbols.length)];
+    span.style.left = Math.round(Math.random()*100) + "vw";
+    span.style.animationDelay = (Math.random()*300) + "ms";
+    layer.appendChild(span);
+  }
+
+  // Clean up after the fall
+  setTimeout(()=> layer.remove(), 1800);
+}
+
+
+
+  function advanceAfterRun(reachedGoal, bonus){
+    // After each run, proceed to next question or endurance
+    state.levelIndex++;
+    state.currentQ++;
+    updateHUD();
+
+    if(state.currentQ >= QUESTIONS.length){
+      // All 10 question+run levels done -> endurance intro
+      showScreen("enduranceIntro");
+      return;
+    }
+    // Next level question
+    startQuestion();
+  }
+
+  $("#startEndurance").addEventListener("click", ()=>{
+    state.inEndurance = true;
+    startEndurance();
+  });
+
+  function startEndurance(){
+    // Endurance: 10 themes in sequence, 10s each, seamless transitions, one hit ends
+    showScreen("game");
+    paused=false; runActive=true;
+    themeIdx = 0;
+    prevThemeIdx = 0;
+    segEndsAt = performance.now() + END_SEGMENT_MS; // first 10s segment ends at…
+
+    // Start the overall Endurance progress timer (10 themes × 10s each)
+    enduranceStartMs = performance.now();
+    enduranceTotalMs = END_SEGMENT_MS * THEMES.length;
+
+
+    slideUntil = 0; // no slide yet
+
+    resetLevelRuntime(10);                     // set WORLD_SCALE from canvas/DPR
+    ENDUR_BASE_SPEED = Math.round((520 * WORLD_SCALE) * ENDUR_SPEED_FACTOR);
+    endurSpeedMult   = 1;
+    gameSpeed        = ENDUR_BASE_SPEED;
+
+
+    resetLevelRuntime(10);          // one-time seed; update() handles 10s theme switches
+    distanceGoal = Number.POSITIVE_INFINITY; // no finish flag in endurance
+    lastTime = performance.now();
+
+
+    function loopEndurance(t){
+    if(!runActive) return;
+    const dt = Math.min(48, t - lastTime); 
+    lastTime = t;
+    if(!paused){
+        update(dt/1000);
+    }
+    draw();
+    requestAnimationFrame(loopEndurance);
+    }
+
+    
+    requestAnimationFrame(loopEndurance);
+
+    // Override collisions to end immediately (already happens via update -> hit -> showToast -> showEnd)
+    const originalAdvance = advanceAfterRun;
+  }
+
+  function showEnd(){
+    showScreen("end");
+    $("#finalStats").textContent = `Final Score: ${state.score}`;
+  }
+
+  function updateHUD(){
+    ui.level.textContent = Math.min(10, state.levelIndex+1);
+    ui.score.textContent = state.score;
+    ui.lives.textContent = "∞";
+  }
+
+  /* -----------------------------
+     Utilities
+  ------------------------------*/
+  function shuffle(arr){
+    for(let i=arr.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+  function rand(min,max){ return Math.floor(min + Math.random()*(max-min+1)); }
+  function randf(min,max){ return min + Math.random()*(max-min); }
+  function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+
+  // Init
+  resize();
+})();
+</script>
+</body>
+</html>
