@@ -351,6 +351,56 @@ font-size: calc(var(--holePx, 40px) * 0.8);
   background: linear-gradient(180deg,#ff8a8a,#e44d4d);
 }
 
+/* Bonus / info-styled modal */
+.modal.info{
+  border: 3px solid #2a7bd1;
+  box-shadow: 0 12px 30px rgba(42,123,209,.35);
+}
+.modal.info #modal-title{ color:#135da8; }
+
+/* Building blocks for nicer content */
+.modal .kicker{
+  display:inline-block;
+  font-weight:800;
+  font-size:.9rem;
+  letter-spacing:.02em;
+  color:#135da8;
+  background:#eaf3ff;
+  border:1px solid #d6e7ff;
+  border-radius:999px;
+  padding:4px 10px;
+  margin-bottom:8px;
+}
+.modal .big-emoji{
+  display:block;
+  font-size:64px;
+  line-height:1;
+  margin: 2px auto 8px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.25));
+  animation: pop-in .35s cubic-bezier(.2,.8,.2,1);
+}
+.modal .sub{
+  font-size:1.05rem;
+  margin:6px 0 10px;
+}
+.modal .rules{
+  text-align:left;
+  margin:10px auto 4px;
+  padding-left:0;
+  list-style:none;
+}
+.modal .rules li{
+  display:flex; gap:8px; align-items:flex-start;
+  margin:6px 0;
+}
+.modal .rules .dot{
+  font-size:1.1rem; line-height:1.2rem;
+}
+.modal.info .ok{
+  background: linear-gradient(180deg,#4aa3ff,#2a7bd1);
+}
+
+
 /* --- Level Intro overlay --- */
 #screen-play{ position: relative; } /* ensure overlay can center inside */
 .level-intro{
@@ -713,6 +763,8 @@ let holes=[];
 let popTimer=null;
 let roundTimeLeft=20;
 let roundTicker=null;
+let cycleTicker = null;  // interval that drives mole spawns
+
 
 let activeMoles = new Map(); // key: moleId -> { holeEl, kind: 'target'|'decoy', clicked:false, lifeTimer, wasUp:boolean }
 let moleIdSeq = 0;
@@ -1439,6 +1491,7 @@ function burst(moleEl){
 function stopRoundTimers(){
   if(roundTicker){ clearInterval(roundTicker); roundTicker=null; }
   if(popTimer){ clearInterval(popTimer); popTimer=null; }
+    if(cycleTicker){ clearInterval(cycleTicker); cycleTicker=null; }  // ← add this
   // clear stray moles
   activeMoles.forEach((rec,id)=>{
     if(rec.lifeTimer) clearTimeout(rec.lifeTimer);
@@ -1490,30 +1543,74 @@ function startBonusRound(){
   uiMissCount.textContent = "0";
   uiMissPill.classList.remove('hidden');
 
-  modal.open({
-    title:"Bonus Round ⭐",
-    html:`<p>Endurance mode! Keep whacking the <strong>target emoji</strong>.</p>
-          <p>Missing 10 targets ends the round.</p>
-          <p>Good luck!</p>`,
-    okText:"Start",
-    onOk: ()=>{
-      // Use a rotating target set to keep it lively
-      setupGrid();
-      showOnly('screen-play');
-      uiRound.textContent = "Bonus";
-      uiTimer.textContent = "∞";
-      // pick a fun target for the display (cycle)
-      const level = LEVELS[(LEVELS.length-1)]; // last used, just show lion
-      uiTarget.textContent = level.target;
+playPowerupChime && playPowerupChime();
 
-      stopRoundTimers();
-      // Faster spawn for endurance
-      popTimer = setInterval(()=>{
-        spawnMolesCycle(true);
-      }, 420);
-    }
-  });
+
+modal.open({
+  title: "Bonus Round ⭐",
+  html: `
+    <span class="big-emoji">⭐</span>
+    <div class="kicker">Endurance Mode</div>
+    <div class="sub">Keep whacking the <span class="pill">target emoji</span>.</div>
+    <ul class="rules">
+      <li><span class="dot">🎯</span><div>Targets keep appearing—hit as many as you can!</div></li>
+      <li><span class="dot">❌</span><div><strong>Missing 10 targets</strong> ends the round.</div></li>
+      <li><span class="dot">⏱️</span><div>How long can you last?</div></li>
+    </ul>
+  `,
+  okText: "Start!",
+  variant: "info",
+  onOk: ()=>{
+    // keep whatever you already do here to start endurance
+    // e.g., set inBonus=true; timers; UI labels, etc.
+    startEndurance && startEndurance();  // if you use a helper
+    // or call your existing bonus-start logic directly
+  }
+});
+
 }
+
+function startEndurance(){
+  // Ensure any prior timers are stopped
+  stopRoundTimers();
+
+  inBonus = true;
+  enduranceMisses = 0;
+  uiMissCount.textContent = "0";
+  uiMissPill.classList.remove('hidden');
+
+  // Show play screen & set UI labels
+  showOnly('screen-play');
+
+  // Use the last round's target for endurance (your spawn code already does this too)
+  const lastLevel = LEVELS[(roundIdx - 1 + LEVELS.length) % LEVELS.length];
+  uiTarget.textContent = lastLevel.target;
+
+  // Label the round and timer display for endurance
+  uiRound.textContent = "★";
+  uiTimer.textContent = "—";
+
+  // Grid + theme setup
+  setupGrid();
+  applyThemeForRound();
+  sizeGridToFit();
+  requestAnimationFrame(sizeGridToFit);
+
+  // Difficulty for endurance: reuse your hardest round settings
+  configureDifficultyForRound(QUESTIONS.length - 1);
+
+  // No scheduled power-ups in endurance (keep it pure)
+  onlyTargetsThisRound = false;
+  upTimeBoostFactor = 1;
+  powerUpOnBoard = false;
+  powerUpSchedule = [];
+
+  // Start the spawn loop (endurance mode flag = true)
+  cycleTicker = setInterval(()=>{
+    spawnMolesCycle(true);
+  }, cycleIntervalMs);
+}
+
 
 function endBonus(){
   stopRoundTimers();
@@ -1529,6 +1626,18 @@ function endBonus(){
 function boot(){
   showOnly('screen-splash');
 }
+// Secret key: press "b" to jump to Bonus Round (opens the Bonus modal)
+document.addEventListener('keydown', (e)=>{
+  if (e.repeat) return;                   // ignore held-down key repeats
+  if (e.key === 'b' || e.key === 'B'){
+    e.preventDefault();
+    if (!inBonus){
+      stopRoundTimers();                  // stop whatever is running
+      startBonusRound();                  // open the Bonus Round dialog
+    }
+  }
+});
+
 boot();
 </script>
 </body>
