@@ -1022,7 +1022,7 @@ function startQuestion(){
   container.innerHTML = '';
 
   answers.forEach(ans=>{
-    const isCorrect = ans.text === q.correct;
+    const isCorrect = (ans.correct === true) || (ans.text === q.correct);
     const btn = document.createElement('button');
     btn.className='ans';
     btn.innerHTML = `<span class="e">${ans.emoji}</span> <span>${ans.text}</span>`;
@@ -1052,7 +1052,7 @@ function startQuestion(){
 
       } else {
         btn.classList.add('wrong');
-        const correctAns = q.answers.find(a=>a.text===q.correct);
+        const correctAns = q.answers.find(a=>a.correct === true) || q.answers.find(a=>a.text === q.correct);
             modal.open({
             title:"❌ Incorrect",
             html:`
