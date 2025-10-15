@@ -20,7 +20,12 @@
     --grid-max:600px;      /* max portrait width (phones) */
   }
   *{box-sizing:border-box}
-  html,body{height:100%}
+html, body {
+  height: 100%;
+  overflow: hidden;   /* ← prevent the page scrollbar entirely */
+}
+
+
   body{
     margin:0;
     font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
@@ -35,10 +40,9 @@
 
   /* App container (portrait-first responsive) */
 .app{
-    width:min(100vw, 95vh, var(--grid-max));
+    width: min(100%, 95dvh, var(--grid-max));  /* use dvh for stable desktop sizing */
+    height: 100dvh;                             /* one consistent viewport unit */
 
-    height:100vh;
-    max-height:100dvh;
     display:flex;
     flex-direction:column;
     padding:12px;
@@ -127,6 +131,9 @@
   /* Grid */
 .grid-wrap{
   /* Make the grid + footer stack vertically and share space */
+  contain: paint;
+    overflow-anchor: none;
+
   display:flex;
   flex-direction:column;
   gap:12px;
@@ -135,9 +142,11 @@
 
 
   .grid{
+    position: relative;
     width: 100%;
     flex: 1 1 auto;   /* take remaining vertical space */
-    overflow: auto;   /* if the squares run tall, scroll INSIDE here, not the whole page */
+    overflow-y: clip;    /* keep vertical scroll when needed */
+    overflow-x: clip;    /* never show a horizontal scrollbar from glow/shadows */
 
     background:
       radial-gradient(circle at 20% 20%, rgba(255,255,255,.08), transparent 40%),
@@ -151,20 +160,32 @@
     gap:10px;
     box-shadow:inset 0 0 0 2px rgba(0,0,0,.06), var(--shadow);
   }
-  .hole{
-    position:relative;
-    aspect-ratio: 1 / 1;
+.hole{
+    overflow: hidden;   /* new: keep particles/X/toasts inside the hole */
+    contain: paint; 
+  position:relative;
+  aspect-ratio: 1 / 1;
 
-    /* Squircle vibe: not a perfect circle, not a pill */
-    border-radius: 28% / 38%;
-    background:
-      radial-gradient(65% 85% at 50% 55%, var(--hole) 0%, #083e0e 50%, #062f0b 72%, #041f07 100%);
-    box-shadow:
-      inset 0 6px 0 0 var(--hole-rim),
-      inset 0 -8px 14px rgba(0,0,0,.6),
-      0 2px 2px rgba(255,255,255,.05);
-    overflow:hidden;
-  }
+  /* Squircle vibe: not a perfect circle, not a pill */
+  border-radius: 28% / 38%;
+
+  /* Lighter transparent black well */
+  background:
+    radial-gradient(65% 85% at 50% 55%,
+      rgba(0,0,0,.48) 0%,
+      rgba(0,0,0,.60) 55%,
+      rgba(0,0,0,.74) 72%,
+      rgba(0,0,0,.82) 100%
+    );
+
+  /* Softer shadows so the well feels brighter */
+  box-shadow:
+    inset 0 6px 0 0 rgba(0,0,0,.45),
+    inset 0 -10px 18px rgba(0,0,0,.55),
+    0 2px 2px rgba(255,255,255,.08);
+
+}
+
 
   .mole{
   position:absolute; left:50%; top:110%;
@@ -219,14 +240,8 @@ font-size: calc(var(--holePx, 40px) * 0.8);
   font-size: calc(var(--holePx, 40px) * 0.8);
   z-index:5;
 }
-.mole.power::after{
-  content:"";
-  position:absolute; inset:-8%;
-  border-radius:50%;
-  box-shadow:0 0 0 3px rgba(255,255,255,.6), 0 0 20px rgba(255,255,255,.5);
-  animation:pulse 1.2s ease-in-out infinite;
-  pointer-events:none;
-}
+
+
 @keyframes pulse{
   0%{ box-shadow:0 0 0 2px rgba(255,255,255,.55), 0 0 12px rgba(255,255,255,.35) }
   50%{ box-shadow:0 0 0 5px rgba(255,255,255,.35), 0 0 22px rgba(255,255,255,.6) }
@@ -335,6 +350,52 @@ font-size: calc(var(--holePx, 40px) * 0.8);
 .modal.error .ok{
   background: linear-gradient(180deg,#ff8a8a,#e44d4d);
 }
+
+/* --- Level Intro overlay --- */
+#screen-play{ position: relative; } /* ensure overlay can center inside */
+.level-intro{
+  position:absolute; inset:0;
+  display:grid; place-items:center;
+  background:rgba(0,0,0,.25);
+  animation: introFade .9s ease forwards;
+  z-index: 20;
+}
+.level-intro .card{
+  background:rgba(255,255,255,.92);
+  border:2px solid rgba(0,0,0,.06);
+  border-radius:16px;
+  box-shadow:0 12px 38px rgba(0,0,0,.18);
+  padding:18px 20px;
+  text-align:center;
+  animation: pop-in .35s cubic-bezier(.2,.8,.2,1);
+}
+.level-intro .big{
+  font-size: clamp(72px, 16vw, 140px);
+  line-height: 1;
+  display:block;
+  margin-bottom:8px;
+  filter:drop-shadow(0 3px 8px rgba(0,0,0,.25));
+}
+.level-intro .msg{
+  font-weight:800; letter-spacing:.3px;
+  font-size: clamp(18px, 4.2vw, 28px);
+}
+@keyframes introFade{
+  0%{ opacity:0 }
+  100%{ opacity:1 }
+}
+
+/* --- Round theme background (uses CSS vars set by JS) --- */
+:root{
+  --theme1:#2d9658;   /* default greens */
+  --theme2:#146b3a;
+}
+body{
+  background:
+    radial-gradient(130% 120% at 50% -20%, rgba(255,255,255,.12), transparent 40%),
+    linear-gradient(180deg, var(--theme1), var(--theme2));
+}
+
 
 /* subtle scale-in */
 @keyframes pop-in{
@@ -661,6 +722,10 @@ let roundCorrectHits = 0;
 let roundWrongHits   = 0;
 let roundMissed      = 0;
 
+// Freeze clicks during level intro overlay
+let roundFrozen = false;
+
+
 // --- Difficulty knobs (set per round in configureDifficultyForRound) ---
 let cycleIntervalMs = 500;  // how often we attempt spawns
 let minPopCount     = 2;    // min holes that pop each cycle
@@ -687,6 +752,20 @@ let onlyTargetsThisRound = false;  // ♻️
 let upTimeBoostFactor = 1;         // ⏰ multiplies showMs for NEW spawns
 let powerUpOnBoard = false;        // only one visible at once
 let powerUpSchedule = [];          // [seconds, ...] to spawn during round
+
+// Soft round themes (10). Cycles if you have more.
+const THEMES = [
+  ['#2d9658','#146b3a'], // fresh green
+  ['#2a86c5','#0e4f83'], // blue
+  ['#db8a2a','#b65d14'], // orange
+  ['#a35cc9','#6b2b98'], // purple
+  ['#e05a6b','#9e3140'], // rose
+  ['#35a29f','#1f6b68'], // teal
+  ['#d6b23a','#a07d12'], // gold
+  ['#7ab44c','#3e7f1d'], // leaf
+  ['#4c9ad1','#215f8d'], // sky
+  ['#de7f3a','#a54b14'], // sunset
+];
 
 
 /* ===============================
@@ -796,6 +875,41 @@ function sizeGridToFit(){
   gridEl.style.setProperty('--holePx', cell + 'px');
 }
 
+// Apply the theme for this round
+function applyThemeForRound(){
+  const t = THEMES[ roundIdx % THEMES.length ];
+  document.documentElement.style.setProperty('--theme1', t[0]);
+  document.documentElement.style.setProperty('--theme2', t[1]);
+}
+
+// Show a short intro overlay centered on the grid with a BIG target emoji
+function showLevelIntro(bigEmoji, ms=1700, onDone){
+  const grid = document.getElementById('grid');
+  if(!grid) return;
+
+  roundFrozen = true; // ignore taps briefly
+
+  const wrap = document.createElement('div');
+  wrap.className = 'level-intro';
+  wrap.innerHTML = `
+    <div class="card">
+      <span class="big">${bigEmoji || '⭐'}</span>
+      <div class="msg">Ready… Go!</div>
+    </div>
+  `;
+  grid.appendChild(wrap);
+
+  // Remove after a moment and THEN unfreeze + call back
+  setTimeout(()=>{
+    wrap.remove();
+    roundFrozen = false;
+    if (typeof onDone === 'function') onDone();
+  }, ms);
+}
+
+
+
+
 // NEW: pick 1–2 spawn moments inside the middle of the round (avoid first/last few secs)
 function makePowerUpSchedule(totalSec){
   const count = randInt(1,2);
@@ -843,6 +957,8 @@ function spawnPowerUp(){
 // click handler (no scoring)
 m.addEventListener('pointerdown', (ev)=>{
   ev.stopPropagation();
+    if(roundFrozen) return;  // <- ignore taps during the intro overlay
+
   playPowerupChime();        // ← play Chime Sweep on power-up hit
   applyPowerUp(pu, holeEl);
   removeMe();
@@ -1145,15 +1261,25 @@ function startLevelPlay(){
 
 
   showOnly('screen-play');
+applyThemeForRound();                      // set round background
+
 
     sizeGridToFit();                 // NEW: fit immediately
   requestAnimationFrame(sizeGridToFit); // NEW: fit again after layout paints
 
 
   // Start timers
+const introMs = 1700; // match your overlay duration
+showLevelIntro(LEVELS[roundIdx].target, introMs, ()=>{
+
+  // Start timers AFTER the intro overlay ends
   stopRoundTimers();
+
+  // (Re)fit the grid now that layout is settled
+  sizeGridToFit && sizeGridToFit();
+
+  // Power-up schedule tick + round countdown
   roundTicker = setInterval(()=>{
-    // NEW: power-up schedule check (based on elapsed seconds)
     const elapsed = 20 - roundTimeLeft;
     if(powerUpSchedule.length && elapsed >= powerUpSchedule[0] && !powerUpOnBoard){
       powerUpSchedule.shift();
@@ -1162,19 +1288,23 @@ function startLevelPlay(){
 
     roundTimeLeft--;
     uiTimer.textContent = roundTimeLeft;
-    if(roundTimeLeft<=0){
+    if(roundTimeLeft <= 0){
       endLevel();
     }
   }, 1000);
 
-
-  // Mole popper: favor target ~75% of spawns
-  popTimer = setInterval(()=>{
+  // Mole spawn cycle
+  cycleTicker = setInterval(()=>{
     spawnMolesCycle(false);
   }, cycleIntervalMs);
-}
+
+});   // end of showLevelIntro callback
+}     // ← close startLevelPlay here
 
 function spawnMolesCycle(isEndurance){
+
+    if (roundFrozen) return;
+
   // Soft cap: if too many are already up, limit how many we can add
   const upNow = gridEl.querySelectorAll('.mole.up').length;
   let allowed = Math.max(0, maxUpMoles - upNow);
