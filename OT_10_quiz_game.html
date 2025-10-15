@@ -1,0 +1,1405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+<title>Emoji Whack-a-Mole — Bible Edition</title>
+<style>
+  :root{
+    --bg:#0a6d1a;          /* grass backdrop */
+    --ui:#ffffff;
+    --ui2:#eef7ff;
+    --accent:#2162ff;
+    --danger:#e23d3d;
+    --ok:#16a34a;
+    --hole:#0b5f16;
+    --hole-rim:#094c12;
+    --shadow:0 8px 24px rgba(0,0,0,.15);
+    --radius:18px;
+    --speed-pop:1600ms;
+    --grid-max:600px;      /* max portrait width (phones) */
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+    color:#122;
+    background:
+      radial-gradient(1200px 1200px at 50% 0%, #3dbd4f 0%, #2ea447 40%, #197a2f 70%, #125e24 100%) fixed,
+      var(--bg);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  /* App container (portrait-first responsive) */
+.app{
+    width:min(100vw, 95vh, var(--grid-max));
+
+    height:100vh;
+    max-height:100dvh;
+    display:flex;
+    flex-direction:column;
+    padding:12px;
+    gap:12px;
+  }
+
+  /* Card panels */
+  .panel{
+    background:rgba(255,255,255,.9);
+    backdrop-filter:saturate(1.2) blur(2px);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:16px;
+  }
+
+  /* Center the Question screen vertically inside the app */
+  #screen-question{
+    margin-block: auto;   /* top & bottom auto = vertical centering in column flex */
+    align-self: center;   /* keep it centered horizontally within the app */
+    width: 100%;
+  }
+
+/* Center the Title screen vertically inside the app */
+#screen-title{
+  margin-block: auto;   /* top & bottom auto = vertical centering in column flex */
+  align-self: center;   /* keep it centered horizontally within the app */
+  width: 100%;
+}
+
+
+  /* Center the Splash screen vertically inside the app */
+#screen-splash{
+  margin-block: auto;   /* top & bottom auto = vertical centering in column flex */
+  align-self: center;   /* keep it centered horizontally */
+  width: 100%;
+}
+
+
+  .center{ display:flex; flex-direction:column; align-items:center; text-align:center; }
+
+  h1,h2,h3{margin:.2em 0}
+  h1{font-size:clamp(22px, 5vw, 36px)}
+  h2{font-size:clamp(18px, 3.2vw, 36px)}
+  p{margin:.25em 0 .75em}
+
+  .btn{
+    appearance:none; border:0; cursor:pointer;
+    padding:12px 16px; border-radius:12px;
+    background:linear-gradient(180deg, var(--ui2), #fff);
+    box-shadow:var(--shadow);
+    font-weight:700;
+    transition:.15s transform ease, .2s box-shadow ease;
+  }
+  .btn:active{ transform:translateY(2px); box-shadow:0 2px 10px rgba(0,0,0,.2) }
+  .btn.primary{ background:linear-gradient(180deg, #7fb3ff, #3f86ff); color:#fff }
+  .btn.ok{ background:linear-gradient(180deg, #6fd38a, #16a34a); color:#fff }
+  .btn.warn{ background:linear-gradient(180deg, #ff9b9b, #e23d3d); color:#fff }
+
+  .row{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center }
+
+  /* Top bar for play screens */
+  .topbar{
+    display:grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items:center;
+    gap:8px;
+    color:#fff;
+    text-shadow:0 1px 2px rgba(0,0,0,.25);
+    font-weight:700;
+  }
+  .pill{
+    justify-self:start;
+    background:rgba(0,0,0,.25);
+    padding:8px 12px;
+    border-radius:999px;
+  }
+  .target{
+    justify-self:center;
+    display:inline-flex; align-items:center; gap:10px;
+    background:rgba(0,0,0,.3);
+    padding:8px 14px; border-radius:999px;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.25);
+  }
+  .misspill{ justify-self:end; }
+
+  /* Grid */
+.grid-wrap{
+  /* Make the grid + footer stack vertically and share space */
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  min-height:0;         /* IMPORTANT: allow children to shrink instead of forcing page scroll */
+}
+
+
+  .grid{
+    width: 100%;
+    flex: 1 1 auto;   /* take remaining vertical space */
+    overflow: auto;   /* if the squares run tall, scroll INSIDE here, not the whole page */
+
+    background:
+      radial-gradient(circle at 20% 20%, rgba(255,255,255,.08), transparent 40%),
+      radial-gradient(circle at 80% 0%, rgba(255,255,255,.08), transparent 40%),
+      linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0));
+    border-radius:16px;
+    padding:10px;
+    display:grid;
+    grid-template-columns:repeat(5, 1fr);
+    grid-auto-rows:auto;
+    gap:10px;
+    box-shadow:inset 0 0 0 2px rgba(0,0,0,.06), var(--shadow);
+  }
+  .hole{
+    position:relative;
+    aspect-ratio: 1 / 1;
+
+    /* Squircle vibe: not a perfect circle, not a pill */
+    border-radius: 28% / 38%;
+    background:
+      radial-gradient(65% 85% at 50% 55%, var(--hole) 0%, #083e0e 50%, #062f0b 72%, #041f07 100%);
+    box-shadow:
+      inset 0 6px 0 0 var(--hole-rim),
+      inset 0 -8px 14px rgba(0,0,0,.6),
+      0 2px 2px rgba(255,255,255,.05);
+    overflow:hidden;
+  }
+
+  .mole{
+  position:absolute; left:50%; top:110%;
+  transform:translate(-50%, -50%) scale(.4);
+    transition: transform .18s ease, top .18s ease, opacity .18s ease;
+  opacity:0;
+  transform-origin:50% 60%;
+  /* Slightly larger so the hole feels only a bit bigger than the emoji */
+font-size: calc(var(--holePx, 40px) * 0.8);
+  filter:drop-shadow(0 6px 8px rgba(0,0,0,.35));
+  pointer-events:auto;
+  user-select:none;
+}
+
+  /* Centered when "up" */
+.mole.up{
+  top:50%;
+  transform:translate(-50%, -50%) scale(1);
+  opacity:1;
+  animation: moleAppear .22s ease-out;
+}
+
+  
+.mole.hit{ transform:translate(-50%, -50%) scale(.85) rotate(-10deg) }
+
+@keyframes moleAppear{
+  0%   { transform:translate(-50%, -65%) scale(0.55); opacity:0 }
+  60%  { transform:translate(-50%, -50%) scale(1.05); opacity:1 }
+  100% { transform:translate(-50%, -50%) scale(1) }
+}
+
+/* Wrong-hit X stamp */
+.xstamp{
+  position:absolute; left:50%; top:50%;
+  transform:translate(-50%,-50%) scale(.7) rotate(-8deg);
+  font-size: calc(var(--holePx, 40px) * 0.9);
+  line-height:1; pointer-events:none; z-index:6;
+  color:#ff3b3b; text-shadow:0 2px 6px rgba(0,0,0,.35);
+  opacity:0; animation:xBurst .35s ease-out forwards;
+}
+@keyframes xBurst{
+  0%   { opacity:0; transform:translate(-50%,-50%) scale(.4) rotate(-8deg) }
+  60%  { opacity:1; transform:translate(-50%,-50%) scale(1.05) rotate(-8deg) }
+  100% { opacity:0; transform:translate(-50%,-50%) scale(1.0) rotate(-8deg) }
+}
+
+/* --- Power-ups visual --- */
+.mole.power{
+  position:absolute; left:50%; top:50%;
+  transform:translate(-50%,-50%) scale(1);
+  opacity:1;
+  font-size: calc(var(--holePx, 40px) * 0.8);
+  z-index:5;
+}
+.mole.power::after{
+  content:"";
+  position:absolute; inset:-8%;
+  border-radius:50%;
+  box-shadow:0 0 0 3px rgba(255,255,255,.6), 0 0 20px rgba(255,255,255,.5);
+  animation:pulse 1.2s ease-in-out infinite;
+  pointer-events:none;
+}
+@keyframes pulse{
+  0%{ box-shadow:0 0 0 2px rgba(255,255,255,.55), 0 0 12px rgba(255,255,255,.35) }
+  50%{ box-shadow:0 0 0 5px rgba(255,255,255,.35), 0 0 22px rgba(255,255,255,.6) }
+  100%{ box-shadow:0 0 0 2px rgba(255,255,255,.55), 0 0 12px rgba(255,255,255,.35) }
+}
+
+/* Tiny toast above a hole */
+.toast{
+  position:absolute; left:50%; top:10%;
+  transform:translateX(-50%);
+  padding:.2em .5em; border-radius:10px;
+  font-weight:700; font-size:clamp(12px, 2.6vw, 16px);
+  color:#073; background:rgba(255,255,255,.95);
+  box-shadow:var(--shadow);
+  animation:toastUp .7s ease forwards;
+  z-index:9; pointer-events:none;
+}
+.toast.bad{ color:#721; }
+@keyframes toastUp{
+  0%{ opacity:0; transform:translate(-50%, 4px) }
+  20%{ opacity:1; transform:translate(-50%, 0) }
+  100%{ opacity:0; transform:translate(-50%, -16px) }
+}
+
+
+  /* Particles */
+  .pop{
+    position:absolute; left:50%; top:50%;
+    width:6px; height:6px; border-radius:50%;
+    background:#fff; box-shadow:0 0 6px rgba(255,255,255,.8);
+    animation: burst .5s ease-out forwards;
+  }
+  @keyframes burst{
+    0%{ transform:translate(-50%,-50%) scale(1); opacity:1 }
+    100%{ transform:translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(.4); opacity:0 }
+  }
+
+  /* Modals */
+  .modal-backdrop{
+    position:fixed; inset:0; background:rgba(0,0,0,.35);
+    display:flex; align-items:center; justify-content:center;
+    z-index:50;
+  }
+
+/* Center content in Correct/Incorrect popups */
+.modal{ text-align:center; }              /* center title & body text */
+#modal-title{ text-align:center; width:100%; }
+
+.modal .big-emoji{
+  display:block;                          /* ensure it can center */
+  margin: 6px auto 2px;
+}
+
+.modal .msg{ margin-top:6px; }            /* tidy spacing */
+.modal .pill{ margin:10px auto 0; }       /* center the answer chip */
+
+.modal .actions{
+  display:flex;                           /* center the buttons row */
+  justify-content:center;
+  gap:10px;
+}
+
+
+  .modal{ background:#fff; border-radius:16px; padding:18px; width:min(92vw, 520px); box-shadow:var(--shadow) }
+  .modal h3{ margin-top:0 }
+  .modal .emoji{ font-size:34px }
+  .modal .actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:12px }
+/* Fancy variants for answer feedback */
+.modal.success{
+  border: 3px solid #1fa971;
+  box-shadow: 0 12px 30px rgba(31,169,113,.35);
+}
+.modal.error{
+  border: 3px solid #e34b4b;
+  box-shadow: 0 12px 30px rgba(227,75,75,.35);
+}
+.modal.success #modal-title{
+  color:#0a6a49;
+}
+.modal.error #modal-title{
+  color:#8f1d1d;
+}
+.modal .big-emoji{
+  font-size: 56px;
+  line-height: 1;
+  display: inline-block;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,.2));
+  animation: pop-in .35s cubic-bezier(.2,.8,.2,1);
+}
+.modal .msg{
+  font-size: 1.05rem;
+  margin-top: 8px;
+}
+.modal .pill{
+  display:inline-block;
+  margin-top:10px;
+  padding:6px 10px;
+  border-radius:999px;
+  background: #f2f6ff;
+  border:1px solid #dbe6ff;
+  font-weight:600;
+}
+.modal.success .ok{
+  background: linear-gradient(180deg,#2fd699,#16a56e);
+}
+.modal.error .ok{
+  background: linear-gradient(180deg,#ff8a8a,#e44d4d);
+}
+
+/* subtle scale-in */
+@keyframes pop-in{
+  0%{ transform: scale(.7); opacity: 0; }
+  100%{ transform: scale(1); opacity: 1; }
+}
+
+  /* Answer buttons */
+  .answers{ display:grid; grid-template-columns:1fr; gap:10px; }
+    .ans{
+    padding:16px 18px; border-radius:12px; text-align:left; background:#fff;
+    border:2px solid #e8eef7; box-shadow:var(--shadow);
+    display:flex; align-items:center; gap:12px; font-weight:700;
+    font-size:clamp(14px, 1.6vw, 20px);   /* text scales on larger screens */
+    }
+    .ans .e{ font-size:clamp(22px, 2vw, 28px) } /* emoji scales too */
+
+  .ans.correct{ border-color:#16a34a }
+  .ans.wrong{ border-color:#e23d3d }
+
+  /* Footer tips */
+  .tips{ color:#0b2; font-weight:700; text-shadow:0 1px 1px rgba(0,0,0,.25) }
+
+  /* Hide utility */
+  .hidden{ display:none !important }
+
+/* Grow the game width on larger screens (phones unchanged) */
+@media (min-width: 768px){
+  :root{ --grid-max: 840px; }    /* iPad / small tablet */
+}
+@media (min-width: 1024px) and (min-height: 700px){
+  :root{ --grid-max: 1000px; }   /* laptops */
+}
+@media (min-width: 1366px) and (min-height: 800px){
+  :root{ --grid-max: 1200px; }   /* big desktops */
+}
+
+
+
+  /* Ensure the play screen can grow to fill height */
+  #screen-play { flex: 1; }
+
+</style>
+</head>
+<body>
+  <div class="app" id="app">
+
+    <!-- Splash -->
+    <div id="screen-splash" class="panel center">
+      <h1>📱 Best in Vertical</h1>
+      <p>Game is best in vertical mode.</p>
+      <button class="btn primary" id="btn-splash-ok">Okay</button>
+    </div>
+
+    <!-- Title -->
+    <div id="screen-title" class="panel center hidden">
+      <h1>🔨 Emoji Whack-a-Mole </h1>
+      <p>Answer questions, then whack the correct emoji! Earn points for right answers and hits.</p>
+      <div class="row">
+        <button class="btn primary" id="btn-start">Start</button>
+      </div>
+    </div>
+
+    <!-- Question Screen -->
+    <div id="screen-question" class="panel hidden">
+      <h2 id="q-title">Question</h2>
+      <div id="q-ref" style="opacity:.7;margin-bottom:8px;"></div>
+      <div id="answers" class="answers"></div>
+    </div>
+
+    <!-- Play Screen (whack-a-mole) -->
+    <div id="screen-play" class="hidden" style="display:flex; flex-direction:column; gap:12px; flex:1;">
+      <div class="topbar">
+        <div class="pill">Score: <span id="ui-score">0</span></div>
+        <div class="target">Target&nbsp;<span id="ui-target" style="font-size:28px">🐶</span></div>
+        <div class="pill misspill hidden" id="ui-misses">Misses: <span id="ui-misscount">0</span>/10</div>
+      </div>
+      <div class="grid-wrap">
+        <div id="grid" class="grid"></div>
+        <div class="panel" style="display:flex;justify-content:space-between;align-items:center;">
+          <div>Round: <strong><span id="ui-round">1</span>/10</strong></div>
+          <div>Time: <strong><span id="ui-timer">20</span>s</strong></div>
+          <div class="tips">Whack wisely!</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- End Screen -->
+    <div id="screen-end" class="panel center hidden">
+      <h1>Game Over 🎉</h1>
+      <p>Your score: <strong id="final-score">0</strong></p>
+      <div class="row">
+        <button class="btn primary" id="btn-restart">Play Again</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Modal (shared) -->
+  <div id="modal" class="modal-backdrop hidden" role="dialog" aria-modal="true">
+    <div class="modal">
+      <h3 id="modal-title">Title</h3>
+      <div id="modal-body"></div>
+      <div class="actions">
+        <button class="btn" id="modal-cancel" style="display:none">Cancel</button>
+        <button class="btn ok" id="modal-ok">OK</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+
+/*
+
+ #####     #     #    #######     #####     #######    ###    #######    #     #     #####  
+#     #    #     #    #          #     #       #        #     #     #    ##    #    #     # 
+#     #    #     #    #          #             #        #     #     #    # #   #    #       
+#     #    #     #    #####       #####        #        #     #     #    #  #  #     #####  
+#   # #    #     #    #                #       #        #     #     #    #   # #          # 
+#    #     #     #    #          #     #       #        #     #     #    #    ##    #     # 
+ #### #     #####     #######     #####        #       ###    #######    #     #     #####  
+
+*/
+
+
+
+// Questions: Abraham & Sarah (Genesis 18–21)
+const QUESTIONS = [
+  {
+    q: "What did Abraham see when God appeared to him?",
+    answers: [
+      { emoji:"👨‍👨‍👦", text:"Three men", correct:true },
+      { emoji:"🌩️",     text:"A storm cloud", correct:false },
+      { emoji:"🕊️",     text:"A dove", correct:false },
+      { emoji:"🔥",      text:"A pillar of fire", correct:false }
+    ]
+  },
+  {
+    q: "Who were these three men?",
+    answers: [
+      { emoji:"✨",      text:"God and probably two angels", correct:true },
+      { emoji:"👑",      text:"Three kings", correct:false },
+      { emoji:"🐪",      text:"Travelers with camels", correct:false },
+      { emoji:"🧙‍♂️",   text:"Wise men", correct:false }
+    ]
+  },
+  {
+    q: "What did Abraham do for the men?",
+    answers: [
+      { emoji:"🍞🍖",   text:"Made them a meal to eat", correct:true },
+      { emoji:"⛺",      text:"Gave them a tent", correct:false },
+      { emoji:"💧",      text:"Drew water from the well", correct:false },
+      { emoji:"🛏️",     text:"Prepared beds for the night", correct:false }
+    ]
+  },
+  {
+    q: "What did the three men say to Abraham?",
+    answers: [
+      { emoji:"🗓️👶",  text:"In one year, Sarah would have a son", correct:true },
+      { emoji:"🌧️",     text:"A great famine was coming", correct:false },
+      { emoji:"🏞️",     text:"They must move to a new land", correct:false },
+      { emoji:"🏗️",     text:"Build an altar on the mountain", correct:false }
+    ]
+  },
+  {
+    q: "When Sarah heard what the three men said, what did she do?",
+    answers: [
+      { emoji:"😂",      text:"She laughed", correct:true },
+      { emoji:"😢",      text:"She cried", correct:false },
+      { emoji:"😡",      text:"She became angry", correct:false },
+      { emoji:"🙏",      text:"She celebrated", correct:false }
+    ]
+  },
+  {
+    q: "When the three men asked why Sarah laughed, what did she do?",
+    answers: [
+      { emoji:"🤥",      text:"She lied", correct:true },
+      { emoji:"🤫",      text:"She stayed silent", correct:false },
+      { emoji:"🙇‍♀️",   text:"She bowed to them", correct:false },
+      { emoji:"🏃‍♀️",   text:"She ran away", correct:false }
+    ]
+  },
+  {
+    q: "What happened a year later?",
+    answers: [
+      { emoji:"👶",      text:"Sarah gave birth to a baby", correct:true },
+      { emoji:"🌪️",     text:"A great wind came", correct:false },
+      { emoji:"🔥",      text:"The tent burned down", correct:false },
+      { emoji:"🌈",      text:"A rainbow appeared", correct:false }
+    ]
+  },
+  {
+    q: "What did they name the baby, and what did it mean?",
+    answers: [
+      { emoji:"😀",      text:"Isaac, laughter", correct:true },
+      { emoji:"🕊️",      text:"Noah, rest", correct:false },
+      { emoji:"⭐",       text:"Abraham Jr., star", correct:false },
+      { emoji:"🌿",      text:"Moses, drawn out", correct:false }
+    ]
+  },
+  {
+    q: "How old were Abraham and Sarah when Isaac was born?",
+    answers: [
+      { emoji:"1️⃣0️⃣0️⃣ / 9️⃣0️⃣", text:"100 and 90", correct:true },
+      { emoji:"8️⃣0️⃣ / 7️⃣0️⃣", text:"80 and 70", correct:false },
+      { emoji:"6️⃣0️⃣ / 5️⃣0️⃣", text:"60 and 50", correct:false },
+      { emoji:"1️⃣2️⃣0️⃣ / 1️⃣0️⃣0️⃣", text:"120 and 100", correct:false }
+    ]
+  },
+  {
+    q: "What did Sarah say after Isaac was born?",
+    answers: [
+      { emoji:"😂🙏",    text:"God has given laughter to me", correct:true },
+      { emoji:"🎉",      text:"We will have another next year", correct:false },
+      { emoji:"🧭",      text:"We must travel far away", correct:false },
+      { emoji:"🥖",      text:"Invite the men back for bread", correct:false }
+    ]
+  }
+];
+
+
+  /*
+
+#######    #     #    ######     
+#          ##    #    #     #    
+#          # #   #    #     #    
+#####      #  #  #    #     #    
+#          #   # #    #     #    
+#          #    ##    #     #    
+#######    #     #    ######     
+
+
+*/
+
+
+// Ten animal target emoji for the ten levels (per question)
+const LEVELS = [
+  { target:"🐶", decoy:"🐸" },
+  { target:"🐱", decoy:"🦆" },
+  { target:"🐭", decoy:"🦂" },
+  { target:"🐹", decoy:"🦅" },
+  { target:"🐰", decoy:"🦉" },
+  { target:"🦊", decoy:"🐢" },
+  { target:"🐻", decoy:"🕷️" },
+  { target:"🐼", decoy:"🦀" },
+  { target:"🐨", decoy:"🦈" },
+  { target:"🦁", decoy:"🐍" },
+];
+
+/* ===============================
+   STATE
+==================================*/
+const el = (id)=>document.getElementById(id);
+const screenSplash = el('screen-splash');
+const screenTitle  = el('screen-title');
+const screenQ      = el('screen-question');
+const screenPlay   = el('screen-play');
+const screenEnd    = el('screen-end');
+
+const gridEl = el('grid');
+// Keep emoji size and grid fit correct on resize/orientation changes
+window.addEventListener('resize', ()=>{
+  if(holes[0]){
+    gridEl.style.setProperty('--holePx', holes[0].clientWidth + 'px');
+  }
+  sizeGridToFit();
+});
+
+
+
+const uiScore = el('ui-score');
+const uiRound = el('ui-round');
+const uiTimer = el('ui-timer');
+const uiTarget = el('ui-target');
+const uiMissPill = el('ui-misses');
+const uiMissCount = el('ui-misscount');
+
+const modal = {
+  root: el('modal'),
+  title: el('modal-title'),
+  body: el('modal-body'),
+  ok: el('modal-ok'),
+  cancel: el('modal-cancel'),
+open({title, html, okText="OK", cancelText=null, onOk=null, onCancel=null, variant=null}){
+  this.title.textContent = title || "";
+  this.body.innerHTML = html || "";
+  this.ok.textContent = okText;
+  this.ok.onclick = ()=>{ this.close(); onOk && onOk(); };
+
+  if(cancelText){
+    this.cancel.style.display='';
+    this.cancel.textContent = cancelText;
+    this.cancel.onclick = ()=>{ this.close(); onCancel && onCancel(); };
+  } else {
+    this.cancel.style.display='none';
+    this.cancel.onclick = null;
+  }
+
+  // apply visual variant to inner panel
+  const panel = this.root.querySelector('.modal');
+  panel.classList.remove('success','error');
+  if(variant){ panel.classList.add(variant); }
+
+  this.root.classList.remove('hidden');
+},
+
+  close(){ this.root.classList.add('hidden'); }
+};
+
+let score=0;
+let roundIdx=0;           // 0..9 for the ten Q/levels
+let quizShownInstruction=false;
+let inBonus=false;
+let holes=[];
+let popTimer=null;
+let roundTimeLeft=20;
+let roundTicker=null;
+
+let activeMoles = new Map(); // key: moleId -> { holeEl, kind: 'target'|'decoy', clicked:false, lifeTimer, wasUp:boolean }
+let moleIdSeq = 0;
+let enduranceMisses = 0;
+
+let roundCorrectHits = 0;
+let roundWrongHits   = 0;
+let roundMissed      = 0;
+
+// --- Difficulty knobs (set per round in configureDifficultyForRound) ---
+let cycleIntervalMs = 500;  // how often we attempt spawns
+let minPopCount     = 2;    // min holes that pop each cycle
+let maxPopCount     = 4;    // max holes that pop each cycle
+let showMinMs       = 900;  // min time a mole stays up
+let showMaxMs       = 1600; // max time a mole stays up
+let maxUpMoles      = 6;    // soft cap: maximum "up" moles at once (adjusted per round)
+
+// --- Scoring constant so gifts always match hit value ---
+const HIT_POINTS = 10;
+
+// --- Power-ups catalog ---
+const POWERUPS = [
+  { id:'recycle', label:'Targets only', emoji:'♻️' },
+  { id:'star',    label:'Board flood',  emoji:'⭐' },
+  { id:'clock',   label:'+8s & longer', emoji:'⏰' },
+  { id:'bomb',    label:'Boom!',        emoji:'💣' },
+  { id:'present', label:'+5 hits',      emoji:'🎁' },
+  { id:'money',   label:'+10 hits',     emoji:'💰' },
+];
+
+// --- Round power-up state ---
+let onlyTargetsThisRound = false;  // ♻️
+let upTimeBoostFactor = 1;         // ⏰ multiplies showMs for NEW spawns
+let powerUpOnBoard = false;        // only one visible at once
+let powerUpSchedule = [];          // [seconds, ...] to spawn during round
+
+
+/* ===============================
+   HELPERS
+==================================*/
+
+// Fit the 5×5 square grid so the footer stays on-screen (desktop/tablet).
+// Fit the 5×5 grid for ALL devices via one rule:
+// - Phones: width is just container width (no height clamp)
+// - Tablets/PC: width is min(container width, height-limited width so footer stays visible)
+// --- AUDIO (correct_soft) ---
+let AC, AUD_MASTER;
+function aud(){ if(!AC){ AC = new (window.AudioContext||window.webkitAudioContext)(); AUD_MASTER = AC.createGain(); AUD_MASTER.gain.value = 0.45; AUD_MASTER.connect(AC.destination);} return AC; }
+function ding(freq=880, type='sine'){
+  const ac = aud(), o = ac.createOscillator(), g = ac.createGain();
+  o.type = type; o.frequency.value = freq; o.connect(g); g.connect(AUD_MASTER);
+  const t = ac.currentTime;
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(1, t+0.015);
+  g.gain.exponentialRampToValueAtTime(0.0008, t+0.32);
+  o.start(t); o.stop(t+0.36);
+}
+// Soft pop (item-pickup vibe) using your existing aud()/AUD_MASTER
+function playCorrectSoft(){
+  const ac = aud(), o = ac.createOscillator(), g = ac.createGain();
+  o.type = 'sine';
+  o.connect(g); g.connect(AUD_MASTER);
+
+  const t = ac.currentTime;
+
+  // Envelope: quick attack, short tail (gentle pop)
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(1, t + 0.005);
+  g.gain.exponentialRampToValueAtTime(0.0007, t + 0.20);
+
+  // Slight upward glide for the rounded “pop” feel
+  o.frequency.setValueAtTime(520, t);
+  o.frequency.exponentialRampToValueAtTime(720, t + 0.06);
+
+  o.start(t); o.stop(t + 0.22);
+}
+
+// --- AUDIO: power-up "Chime Sweep" ---
+function playPowerupChime(){
+  const ac = aud();
+  // three gentle triangle chimes stepping up
+  const t0 = ac.currentTime;
+  const tones = [
+    { f: 880,  d: 0.30, v: 0.80, dt: 0.00 },
+    { f: 1320, d: 0.30, v: 0.60, dt: 0.05 },
+    { f: 1760, d: 0.30, v: 0.45, dt: 0.10 }
+  ];
+  tones.forEach(({f,d,v,dt})=>{
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type='triangle'; o.frequency.value=f; o.connect(g); g.connect(AUD_MASTER);
+    const t = t0 + dt;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(v, t+0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    o.start(t); o.stop(t + d + 0.02);
+  });
+}
+
+
+
+function sizeGridToFit(){
+  if (screenPlay.classList.contains('hidden')) return;
+
+  const rows = 5, cols = 5;
+
+  // CSS values used in your styles (keep in sync with CSS):
+  const GRID_PAD = 10;   // .grid { padding:10px }
+  const GRID_GAP = 10;   // .grid { gap:10px }
+  const WRAP_GAP = 12;   // .grid-wrap { gap:12px }
+  const TOP_GAP  = 12;   // gap between .topbar and .grid-wrap (inline style)
+
+  // Measure container width we can use
+  const gridWrap = gridEl.parentElement; // .grid-wrap
+  const containerW = gridWrap.clientWidth; // max possible width without overflow
+
+  // On phones: we don't clamp by height (let it be full width)
+  const isPhone = window.innerWidth < 768;
+
+  // Compute height-limited width so footer stays on-screen
+  const topbar = screenPlay.querySelector('.topbar');
+  const footer = screenPlay.querySelector('.grid-wrap > .panel');
+  const playH  = screenPlay.clientHeight;
+  const availH = playH - topbar.offsetHeight - TOP_GAP - footer.offsetHeight - WRAP_GAP;
+
+  // Cell size that fits vertically (square cells, rows tall)
+  const cellByHeight = Math.max(12, Math.floor((availH - 2*GRID_PAD - (rows-1)*GRID_GAP) / rows));
+  const widthByHeight = 2*GRID_PAD + cols*cellByHeight + (cols-1)*GRID_GAP;
+
+  // Final grid width:
+  //  - phones: container width only (no height clamp)
+  //  - tablets/PC: min(container width, widthByHeight)
+  const finalW = isPhone ? containerW : Math.min(containerW, widthByHeight);
+
+  // Apply width clamp via CSS var and compute the actual cell size we're using now
+  document.documentElement.style.setProperty('--gridMaxPx', finalW + 'px');
+
+  const cell = Math.max(12,
+    Math.floor((finalW - 2*GRID_PAD - (cols-1)*GRID_GAP) / cols)
+  );
+
+  // Set emoji sizing var (80% of hole size)
+  gridEl.style.setProperty('--holePx', cell + 'px');
+}
+
+// NEW: pick 1–2 spawn moments inside the middle of the round (avoid first/last few secs)
+function makePowerUpSchedule(totalSec){
+  const count = randInt(1,2);
+  const times = new Set();
+  const start = Math.max(3, Math.floor(totalSec * 0.15));  // start after ~15%
+  const end   = Math.max(start+1, Math.floor(totalSec * 0.85)-2); // stop before last ~15%
+  while(times.size < count){
+    times.add(randInt(start, end));
+  }
+  return [...times].sort((a,b)=>a-b);
+}
+
+// NEW: toast message above a hole
+function showToast(holeEl, text, bad=false){
+  const t = document.createElement('div');
+  t.className = 'toast' + (bad ? ' bad' : '');
+  t.textContent = text;
+  holeEl.appendChild(t);
+  setTimeout(()=> t.remove(), 750);
+}
+
+// NEW: spawn exactly one power-up in a random empty hole for ~2.2s
+function spawnPowerUp(){
+  if(powerUpOnBoard) return;
+  // pick random power-up
+  const pu = POWERUPS[randInt(0, POWERUPS.length-1)];
+
+  // find empty hole
+  const empty = holes.filter(h => !h.querySelector('.mole.up'));
+  if(empty.length===0) return;
+  const holeEl = empty[randInt(0, empty.length-1)];
+
+  // build element (reuse mole positioning/centering)
+  const m = document.createElement('div');
+  m.className = 'mole power up';
+  m.textContent = pu.emoji;
+  holeEl.appendChild(m);
+  powerUpOnBoard = true;
+
+  const removeMe = ()=>{
+    if(m && m.parentNode===holeEl){ m.classList.remove('up'); setTimeout(()=>m.remove(), 220); }
+    powerUpOnBoard = false;
+  };
+
+// click handler (no scoring)
+m.addEventListener('pointerdown', (ev)=>{
+  ev.stopPropagation();
+  playPowerupChime();        // ← play Chime Sweep on power-up hit
+  applyPowerUp(pu, holeEl);
+  removeMe();
+});
+
+
+  // auto-remove if ignored
+  setTimeout(removeMe, 2200);
+}
+
+// NEW: apply effects
+function applyPowerUp(pu, holeEl){
+  switch(pu.id){
+    case 'recycle': // only targets spawn for rest of round
+      onlyTargetsThisRound = true;
+      showToast(holeEl, 'Targets only!');
+      break;
+
+    case 'star': // fill board with targets once
+      floodBoardWithTargets();
+      showToast(holeEl, 'Flood!');
+      break;
+
+    case 'clock': // +8s and longer up-time (for NEW spawns)
+      roundTimeLeft += 8;
+      uiTimer.textContent = roundTimeLeft;
+      upTimeBoostFactor = Math.min(upTimeBoostFactor * 1.3, 1.8);
+      showToast(holeEl, '+8s');
+      break;
+
+    case 'bomb': // clear all moles, neutral
+      explodeAllMoles();
+      showToast(holeEl, 'Boom!');
+      break;
+
+    case 'present': // +5 hits worth
+      score += 5 * HIT_POINTS;
+      uiScore.textContent = score;
+      showToast(holeEl, '+50');
+      break;
+
+    case 'money': // +10 hits worth
+      score += 10 * HIT_POINTS;
+      uiScore.textContent = score;
+      showToast(holeEl, '+100');
+      break;
+  }
+}
+
+// NEW: fill every empty hole with a target (respect normal lifetimes)
+function floodBoardWithTargets(){
+  const level = LEVELS[roundIdx];
+  holes.forEach(h=>{
+    if(!h.querySelector('.mole.up')){
+      const showMs = randInt(showMinMs, showMaxMs) * upTimeBoostFactor | 0;
+      createMole(h, 'target', level, showMs, false);
+    }
+  });
+}
+
+// NEW: immediately hide all current moles (no score change)
+function explodeAllMoles(){
+  activeMoles.forEach((rec, id)=>{
+    if(!rec.holeEl) return;
+    const m = rec.holeEl.querySelector('.mole.up');
+    if(m){
+      // a quick neutral poof
+      burst(m);
+      lowerAndCleanup(id, m, rec.holeEl);
+    }
+  });
+}
+
+
+
+function showOnly(id){
+  [screenSplash,screenTitle,screenQ,screenPlay,screenEnd].forEach(s=>s.classList.add('hidden'));
+  el(id).classList.remove('hidden');
+}
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = (Math.random()* (i+1))|0;
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+function resetGame(){
+  score=0;
+  roundIdx=0;
+  inBonus=false;
+  quizShownInstruction=false;
+  enduranceMisses=0;
+  uiScore.textContent = score;
+  uiMissPill.classList.add('hidden');
+  uiMissCount.textContent = "0";
+}
+
+// Return a random integer between min and max (inclusive)
+function randInt(min, max){
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+// Refined difficulty curve: smoother ramp, easier R4
+function configureDifficultyForRound(idx){
+  const last = QUESTIONS.length - 1;     
+  const t = last > 0 ? idx / last : 0;   // 0 → 1 across rounds
+
+  // --- SPEED RAMP (same gentle max as before) ---
+  const L0_CYCLE   = 900;
+  const L10_CYCLE  = 778;     // same top speed (≈ old Round 3)
+  const L0_SHOWMIN = 1400;
+  const L10_SHOWMIN = 1244;
+  const L0_SHOWMAX = 2000;
+  const L10_SHOWMAX = 1778;
+
+  cycleIntervalMs = Math.round(L0_CYCLE   - (L0_CYCLE   - L10_CYCLE)   * t);
+  showMinMs       = Math.round(L0_SHOWMIN - (L0_SHOWMIN - L10_SHOWMIN) * t);
+  showMaxMs       = Math.round(L0_SHOWMAX - (L0_SHOWMAX - L10_SHOWMAX) * t);
+
+  // --- POP COUNT + CAP (gentler early curve) ---
+  if (idx <= 2){             // R1–3: very chill
+    minPopCount = 1;
+    maxPopCount = 1;
+    maxUpMoles  = 2;
+  } else if (idx <= 4){      // R4–5: mild
+    minPopCount = 1;
+    maxPopCount = 2;
+    maxUpMoles  = 3;
+  } else if (idx <= 6){      // R6–7: moderate
+    minPopCount = 2;
+    maxPopCount = 3;
+    maxUpMoles  = 4;
+  } else if (idx <= 8){      // R8–9: challenging
+    minPopCount = 2;
+    maxPopCount = 4;
+    maxUpMoles  = 5;
+  } else {                   // R10: hardest, still fair
+    minPopCount = 3;
+    maxPopCount = 4;
+    maxUpMoles  = 5;
+  }
+}
+
+
+
+
+/* ===============================
+   SCREENS FLOW
+==================================*/
+
+el('btn-splash-ok').addEventListener('click', ()=>{
+  showOnly('screen-title');
+});
+el('btn-start').addEventListener('click', ()=>{
+  resetGame();
+  startQuestion();
+});
+el('btn-restart').addEventListener('click', ()=>{
+  resetGame();
+  startQuestion();
+});
+
+/* ===============================
+   QUESTIONS
+==================================*/
+
+function startQuestion(){
+  showOnly('screen-question');
+
+  const q = QUESTIONS[roundIdx];
+  el('q-title').textContent = q.q;
+  el('q-ref').textContent = q.ref ? `Ref: ${q.ref}` : '';
+
+  const answers = shuffle(q.answers.map(a=>({...a}))); // shuffle display order
+  const container = el('answers');
+  container.innerHTML = '';
+
+  answers.forEach(ans=>{
+    const isCorrect = ans.text === q.correct;
+    const btn = document.createElement('button');
+    btn.className='ans';
+    btn.innerHTML = `<span class="e">${ans.emoji}</span> <span>${ans.text}</span>`;
+    btn.addEventListener('click', ()=>{
+      const wasRight = isCorrect;
+      if(wasRight){
+        btn.classList.add('correct');
+        score += 100; // quiz points
+        uiScore.textContent = score;
+        modal.open({
+        title:"✅ Correct!",
+        html:`
+            <div class="big-emoji">🎉</div>
+            <div class="msg">Great job!</div>
+        `,
+        okText:"Continue",
+        variant: "success",
+        onOk: ()=>{
+            if(!quizShownInstruction){
+            quizShownInstruction=true;
+            showInstructionThenPlay();
+            } else {
+            startLevelPlay();
+            }
+        }
+        });
+
+      } else {
+        btn.classList.add('wrong');
+        const correctAns = q.answers.find(a=>a.text===q.correct);
+            modal.open({
+            title:"❌ Incorrect",
+            html:`
+                <div class="big-emoji">💡</div>
+                <div class="msg">The right answer is:</div>
+                <div class="pill">${correctAns.emoji} ${correctAns.text}</div>
+            `,
+            okText:"Continue",
+            variant: "error",
+            onOk: ()=>{
+                if(!quizShownInstruction){
+                quizShownInstruction=true;
+                showInstructionThenPlay();
+                } else {
+                startLevelPlay();
+                }
+            }
+            });
+
+      }
+    });
+    container.appendChild(btn);
+  });
+}
+
+function showInstructionThenPlay(){
+  const { target } = LEVELS[roundIdx];
+  modal.open({
+    title:"How to Play",
+    html:`<p>Whack the correct emojis! <strong>You’ll lose points</strong> for hitting the wrong ones.</p>
+          <p>Target for this round:</p>
+          <div class="emoji" style="font-size:48px">${target}</div>`,
+    okText:"Let's Go!",
+    onOk: startLevelPlay
+  });
+}
+
+/* ===============================
+   WHACK-A-MOLE ROUND
+==================================*/
+
+function setupGrid(){
+  gridEl.innerHTML='';
+  holes = [];
+  for(let i=0;i<25;i++){
+    const cell = document.createElement('div');
+    cell.className='hole';
+    gridEl.appendChild(cell);
+    holes.push(cell);
+        // NEW: allow tapping the hole to whack an "up" mole
+    cell.addEventListener('pointerdown', ()=>{
+      const m = cell.querySelector('.mole.up');
+      if(m){
+        // forward the tap to the mole's existing handler
+        m.dispatchEvent(new PointerEvent('pointerdown', {bubbles:true}));
+      }
+    });
+  }
+    // After holes are laid out, capture the pixel width of a hole for sizing emoji
+  requestAnimationFrame(()=>{
+    if(holes[0]){
+      gridEl.style.setProperty('--holePx', holes[0].clientWidth + 'px');
+    }
+  });
+
+}
+
+function startLevelPlay(){
+  // Prepare
+  setupGrid();
+    configureDifficultyForRound(roundIdx);
+
+  inBonus=false;
+  uiMissPill.classList.add('hidden');
+  const { target } = LEVELS[roundIdx];
+  uiTarget.textContent = target;
+  uiRound.textContent = (roundIdx+1);
+  roundTimeLeft = 20;
+  uiTimer.textContent = roundTimeLeft;
+  roundCorrectHits = 0;
+  roundWrongHits   = 0;
+  roundMissed      = 0;
+
+
+    // NEW: reset round power-up flags and schedule 1–2 spawns
+  onlyTargetsThisRound = false;
+  upTimeBoostFactor = 1;
+  powerUpOnBoard = false;
+  powerUpSchedule = makePowerUpSchedule(roundTimeLeft);
+
+
+  showOnly('screen-play');
+
+    sizeGridToFit();                 // NEW: fit immediately
+  requestAnimationFrame(sizeGridToFit); // NEW: fit again after layout paints
+
+
+  // Start timers
+  stopRoundTimers();
+  roundTicker = setInterval(()=>{
+    // NEW: power-up schedule check (based on elapsed seconds)
+    const elapsed = 20 - roundTimeLeft;
+    if(powerUpSchedule.length && elapsed >= powerUpSchedule[0] && !powerUpOnBoard){
+      powerUpSchedule.shift();
+      spawnPowerUp();
+    }
+
+    roundTimeLeft--;
+    uiTimer.textContent = roundTimeLeft;
+    if(roundTimeLeft<=0){
+      endLevel();
+    }
+  }, 1000);
+
+
+  // Mole popper: favor target ~75% of spawns
+  popTimer = setInterval(()=>{
+    spawnMolesCycle(false);
+  }, cycleIntervalMs);
+}
+
+function spawnMolesCycle(isEndurance){
+  // Soft cap: if too many are already up, limit how many we can add
+  const upNow = gridEl.querySelectorAll('.mole.up').length;
+  let allowed = Math.max(0, maxUpMoles - upNow);
+  if (allowed <= 0) return;
+
+  // pick a round-scaled number of holes to potentially pop, but respect the cap
+  const requested = randInt(minPopCount, maxPopCount);
+  const count = Math.min(requested, allowed);
+  const holeIdxs = shuffle([...holes.keys()]).slice(0, count);
+
+
+  holeIdxs.forEach(i=>{
+    const holeEl = holes[i];
+    // avoid if already has an up mole
+    if(holeEl.querySelector('.mole.up')) return;
+
+    const level = inBonus ? LEVELS[(roundIdx-1+LEVELS.length)%LEVELS.length] : LEVELS[roundIdx];
+
+    // NEW: if recycle power-up active, force targets
+    const chooseTarget = onlyTargetsThisRound ? true : (Math.random() < (inBonus ? 0.75 : 0.75));
+    const kind = chooseTarget ? 'target' : 'decoy';
+
+    // NEW: clock power-up makes NEW spawns stay up longer
+    const baseMs = randInt(showMinMs, showMaxMs);
+    const showMs = Math.min(4000, (baseMs * upTimeBoostFactor) | 0); // clamp for sanity
+
+
+    createMole(holeEl, kind, level, showMs, isEndurance);
+  });
+}
+
+function createMole(holeEl, kind, level, showMs, isEndurance){
+  const m = document.createElement('div');
+  m.className='mole';
+  const emoji = (kind==='target') ? level.target : level.decoy;
+  m.textContent = emoji;
+  const id = ++moleIdSeq;
+
+  const rec = { holeEl, kind, clicked:false, lifeTimer:null, wasUp:false };
+  activeMoles.set(id, rec);
+
+  // pop up
+  holeEl.appendChild(m);
+  queueMicrotask(()=> m.classList.add('up'), 0);
+  rec.wasUp = true;
+
+  // click handler
+  m.addEventListener('pointerdown', (ev)=>{
+    ev.stopPropagation();
+    if(rec.clicked) return;
+    rec.clicked = true;
+    m.classList.add('hit');
+    // particles
+    burst(m);
+
+  // X-stamp overlay for wrong hits
+  if(kind !== 'target'){
+    const x = document.createElement('div');
+    x.className = 'xstamp';
+    x.textContent = '❌';
+    holeEl.appendChild(x);
+    setTimeout(()=> x.remove(), 420);
+  }
+
+    // NEW: if this is a power-up (we only create those via spawnPowerUp), skip scoring
+    if(m.classList.contains('power')){
+      // safety: nothing to do; power-up effects are handled in spawnPowerUp()
+      return;
+    }
+
+
+        if(kind==='target'){
+            score += 10;
+            roundCorrectHits++;
+            playCorrectSoft();
+            } else {
+            score = Math.max(0, score - 5);
+            roundWrongHits++;
+            }
+            uiScore.textContent = score;
+
+
+
+    // quick hide
+    setTimeout(()=>{ lowerAndCleanup(id, m, holeEl); }, 120);
+  });
+
+  // life timer
+    rec.lifeTimer = setTimeout(()=>{
+    // Count a miss for targets that were up and not clicked
+    if (rec.wasUp && !rec.clicked && kind === 'target'){
+        if (inBonus){
+        enduranceMisses++;
+        uiMissCount.textContent = enduranceMisses;
+        if (enduranceMisses >= 10){
+            endBonus();
+        }
+        } else {
+        roundMissed++;
+        }
+    }
+    lowerAndCleanup(id, m, holeEl);
+    }, showMs);
+
+}
+
+function lowerAndCleanup(id, m, holeEl){
+  m.classList.remove('up');
+  setTimeout(()=>{
+    if(m.parentNode===holeEl) holeEl.removeChild(m);
+    const rec = activeMoles.get(id);
+    if(rec && rec.lifeTimer){ clearTimeout(rec.lifeTimer); }
+    activeMoles.delete(id);
+  }, 220);
+
+}
+
+function burst(moleEl){
+  const N = 8 + (Math.random()*6|0);
+  for(let i=0;i<N;i++){
+    const s = document.createElement('div');
+    s.className='pop';
+    const angle = Math.random()*Math.PI*2;
+    const dist = 40 + Math.random()*40;
+    s.style.setProperty('--dx', `${Math.cos(angle)*dist}px`);
+    s.style.setProperty('--dy', `${Math.sin(angle)*dist}px`);
+    moleEl.parentNode.appendChild(s);
+    setTimeout(()=> s.remove(), 520);
+  }
+}
+
+function stopRoundTimers(){
+  if(roundTicker){ clearInterval(roundTicker); roundTicker=null; }
+  if(popTimer){ clearInterval(popTimer); popTimer=null; }
+  // clear stray moles
+  activeMoles.forEach((rec,id)=>{
+    if(rec.lifeTimer) clearTimeout(rec.lifeTimer);
+    const mole = rec.holeEl.querySelector('.mole');
+    if(mole) mole.remove();
+  });
+  activeMoles.clear();
+}
+
+function endLevel(){
+  stopRoundTimers();
+
+  // Build results UI
+  const roundNum = roundIdx + 1; // current round is 1..10
+const resultsHtml = `
+  <div style="display:grid;gap:8px;line-height:1.2">
+    <div><strong>Correct:</strong> ${roundCorrectHits}</div>
+    <div><strong>Incorrect:</strong> ${roundWrongHits}</div>
+    <div><strong>Missed:</strong> ${roundMissed}</div>
+    <div><strong>Total Score:</strong> ${score}</div>
+  </div>
+`;
+
+
+  modal.open({
+    title: `Round ${roundNum} Results`,
+    html: resultsHtml,
+    okText: (roundNum < QUESTIONS.length) ? "Continue" : "Bonus Round →",
+    onOk: ()=>{
+      // advance after the player acknowledges
+      roundIdx++;
+      if(roundIdx < QUESTIONS.length){
+        startQuestion();
+      } else {
+        startBonusRound();
+      }
+    }
+  });
+}
+
+
+/* ===============================
+   BONUS — ENDURANCE (miss 10 targets)
+==================================*/
+
+function startBonusRound(){
+  inBonus = true;
+  enduranceMisses = 0;
+  uiMissCount.textContent = "0";
+  uiMissPill.classList.remove('hidden');
+
+  modal.open({
+    title:"Bonus Round ⭐",
+    html:`<p>Endurance mode! Keep whacking the <strong>target emoji</strong>.</p>
+          <p>Missing 10 targets ends the round.</p>
+          <p>Good luck!</p>`,
+    okText:"Start",
+    onOk: ()=>{
+      // Use a rotating target set to keep it lively
+      setupGrid();
+      showOnly('screen-play');
+      uiRound.textContent = "Bonus";
+      uiTimer.textContent = "∞";
+      // pick a fun target for the display (cycle)
+      const level = LEVELS[(LEVELS.length-1)]; // last used, just show lion
+      uiTarget.textContent = level.target;
+
+      stopRoundTimers();
+      // Faster spawn for endurance
+      popTimer = setInterval(()=>{
+        spawnMolesCycle(true);
+      }, 420);
+    }
+  });
+}
+
+function endBonus(){
+  stopRoundTimers();
+  // Final End Screen
+  el('final-score').textContent = score;
+  showOnly('screen-end');
+}
+
+/* ===============================
+   INIT
+==================================*/
+
+function boot(){
+  showOnly('screen-splash');
+}
+boot();
+</script>
+</body>
+</html>
