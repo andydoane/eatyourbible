@@ -698,6 +698,9 @@ const LEVELS = [
 /* ===============================
    STATE
 ==================================*/
+// How long Bonus should take to ramp from easy → hard
+const ENDURANCE_RAMP_SECONDS = 60;   // ← change to 45, 90, etc. if you like
+
 const el = (id)=>document.getElementById(id);
 const screenSplash = el('screen-splash');
 const screenTitle  = el('screen-title');
@@ -764,6 +767,8 @@ let popTimer=null;
 let roundTimeLeft=20;
 let roundTicker=null;
 let cycleTicker = null;  // interval that drives mole spawns
+let rampTimer = null;       // bonus difficulty ramp timer
+let enduranceStartTs = 0;   // timestamp to compute ramp progress
 
 
 let activeMoles = new Map(); // key: moleId -> { holeEl, kind: 'target'|'decoy', clicked:false, lifeTimer, wasUp:boolean }
@@ -1491,7 +1496,12 @@ function burst(moleEl){
 function stopRoundTimers(){
   if(roundTicker){ clearInterval(roundTicker); roundTicker=null; }
   if(popTimer){ clearInterval(popTimer); popTimer=null; }
-    if(cycleTicker){ clearInterval(cycleTicker); cycleTicker=null; }  // ← add this
+
+  // cycleTicker may be setInterval (normal rounds) or setTimeout (endurance loop).
+  if(cycleTicker){ clearInterval(cycleTicker); clearTimeout(cycleTicker); cycleTicker=null; }
+
+  if(rampTimer){ clearInterval(rampTimer); rampTimer=null; }  // ← NEW
+
   // clear stray moles
   activeMoles.forEach((rec,id)=>{
     if(rec.lifeTimer) clearTimeout(rec.lifeTimer);
@@ -1500,6 +1510,7 @@ function stopRoundTimers(){
   });
   activeMoles.clear();
 }
+
 
 function endLevel(){
   stopRoundTimers();
@@ -1582,7 +1593,7 @@ function startEndurance(){
   // Show play screen & set UI labels
   showOnly('screen-play');
 
-  // Use the last round's target for endurance (your spawn code already does this too)
+  // Use the last round's target for endurance
   const lastLevel = LEVELS[(roundIdx - 1 + LEVELS.length) % LEVELS.length];
   uiTarget.textContent = lastLevel.target;
 
@@ -1596,20 +1607,68 @@ function startEndurance(){
   sizeGridToFit();
   requestAnimationFrame(sizeGridToFit);
 
-  // Difficulty for endurance: reuse your hardest round settings
-  configureDifficultyForRound(QUESTIONS.length - 1);
+  // --- INITIAL (EASY) SETTINGS ---
+  // Start slower/easier than your hardest round:
+  cycleIntervalMs = 1000;   // slow attempt rate
+  showMinMs       = 1600;   // moles stay up longer
+  showMaxMs       = 2200;
+  minPopCount     = 1;      // few at a time
+  maxPopCount     = 2;
+  maxUpMoles      = 3;      // low on-screen cap
 
-  // No scheduled power-ups in endurance (keep it pure)
-  onlyTargetsThisRound = false;
-  upTimeBoostFactor = 1;
-  powerUpOnBoard = false;
-  powerUpSchedule = [];
+  // --- TARGET (HARD) SETTINGS to reach by 30s ---
+  const TARGET = {
+    cycleIntervalMs:  780,  // matches your “top speed” feel
+    showMinMs:       1240,
+    showMaxMs:       1780,
+    minPopCount:        3,
+    maxPopCount:        4,
+    maxUpMoles:         5,
+  };
 
-  // Start the spawn loop (endurance mode flag = true)
-  cycleTicker = setInterval(()=>{
+  // --- RAMP SETUP (0 → 1 over 30 seconds) ---
+  enduranceStartTs = performance.now();
+
+  function updateEnduranceDifficulty(){
+    const elapsed = (performance.now() - enduranceStartTs) / 1000;
+    const t = Math.max(0, Math.min(1, elapsed / ENDURANCE_RAMP_SECONDS)); // 0..1 over custom seconds
+
+    // ease slightly (feel smoother at start)
+    const te = t*t*(3 - 2*t); // smoothstep
+
+    // interpolate numeric knobs
+    cycleIntervalMs = Math.round(1000 + (TARGET.cycleIntervalMs - 1000) * te);
+    showMinMs       = Math.round(1600 + (TARGET.showMinMs       - 1600) * te);
+    showMaxMs       = Math.round(2200 + (TARGET.showMaxMs       - 2200) * te);
+
+    // stepwise ramp for counts/caps (based on thresholds)
+    if (te < 0.33){
+      minPopCount = 1; maxPopCount = 2; maxUpMoles = 3;
+    } else if (te < 0.66){
+      minPopCount = 2; maxPopCount = 3; maxUpMoles = 4;
+    } else {
+      minPopCount = TARGET.minPopCount;
+      maxPopCount = TARGET.maxPopCount;
+      maxUpMoles  = TARGET.maxUpMoles;
+    }
+  }
+
+  // run once immediately to apply easy settings
+  updateEnduranceDifficulty();
+  // then refresh every 0.5s as we ramp toward the target
+  rampTimer = setInterval(updateEnduranceDifficulty, 300);
+
+
+  // --- SELF-ADJUSTING SPAWN LOOP ---
+  // Use setTimeout so each tick reads the *current* cycleIntervalMs.
+  function runEnduranceSpawnLoop(){
+    if(!inBonus) return;           // safety if we exit endurance
     spawnMolesCycle(true);
-  }, cycleIntervalMs);
+    cycleTicker = setTimeout(runEnduranceSpawnLoop, cycleIntervalMs);
+  }
+  runEnduranceSpawnLoop();
 }
+
 
 
 function endBonus(){
