@@ -1,0 +1,1496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>Emoji Whack-a-Creation</title>
+<style>
+  :root{
+    --bg:#0d1220;
+    --ink:#f5f7ff;
+    --accent:#83e377;
+    --accent-2:#40c9ff;
+    --accent-3:#ffd166;
+    --warn:#ff6b6b;
+    --muted:#98a2b3;
+    --panel:#131a33;
+    --panel-2:#101628;
+    --good:#7ae582;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:linear-gradient(180deg,#0b1020 0%,#0a0f1e 100%);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
+  button{cursor:pointer;border:none;border-radius:14px;padding:12px 18px;font-size:clamp(14px,2.2vw,18px);font-weight:700;color:#08111f;background:var(--accent);box-shadow:0 6px 20px rgba(0,0,0,.25)}
+  button.secondary{background:#e2e8f0;color:#0b1220}
+  button.ghost{background:transparent;color:var(--ink);border:2px solid rgba(255,255,255,.2)}
+   /* Selected state for difficulty buttons */
+  button.ghost.selected{
+    background: rgba(64,201,255,.18);           /* subtle fill */
+    border-color: var(--accent-2);               /* bright border */
+    color: #e6f7ff;                              /* brighter text */
+    box-shadow: 0 0 0 3px rgba(64,201,255,.15);  /* soft glow */
+  }
+  button.ghost.selected:focus-visible{
+    outline: 3px solid var(--accent-2);
+    outline-offset: 2px;
+  }
+
+ 
+  .screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:24px}
+  .card{width:min(920px,92vw);background:linear-gradient(180deg,var(--panel) 0%,var(--panel-2) 100%);border:1px solid rgba(255,255,255,.08);box-shadow:0 20px 60px rgba(0,0,0,.45);border-radius:24px;padding:28px;display:flex;flex-direction:column;gap:18px;align-items:center;text-align:center}
+  .title{font-size:clamp(26px,4.6vw,40px);font-weight:900;letter-spacing:.3px}
+  .subtitle{font-size:clamp(14px,2.6vw,18px);color:var(--muted)}
+  .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+  .hidden{display:none !important}
+
+  /* Game stage wrapper ensures landscape feel via letterboxing */
+  .stage-wrap{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:10px}
+  .stage-frame{
+    width: min(100vw, 160vh); /* prefer landscape */
+    height: calc(min(100vw,160vh) * 0.6); /* 16:9-ish, slightly shorter for UI space */
+    max-height: 90vh;
+    aspect-ratio: 16 / 9;
+    background:linear-gradient(180deg,#0a1730 0%, #081225 100%);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:18px;
+    position:relative;
+    overflow:hidden;
+    box-shadow:0 10px 40px rgba(0,0,0,.45);
+  }
+
+  /* HUD elements */
+  .hud{position:absolute;left:0;right:0;top:0;padding:8px 12px;display:flex;gap:10px;justify-content:space-between;align-items:center;font-weight:700}
+  .badges{display:flex;gap:8px;align-items:center}
+  .badge{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);font-size:clamp(12px,2vw,14px)}
+  .stars{display:flex;gap:6px}
+  .star{filter:drop-shadow(0 2px 8px rgba(0,0,0,.4));font-size:clamp(16px,3.2vw,20px)}
+  .controls{display:flex;gap:8px}
+
+  canvas{position:absolute;inset:0}
+
+  /* Bottom bins (1–7) */
+  .bins{position:absolute;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(7,1fr);gap:6px;padding:8px}
+  .bin{
+    background:rgba(255,255,255,.05);
+    border:2px dashed rgba(255,255,255,.2);
+    border-radius:12px;
+    aspect-ratio: 1.2 / 1; /* wide-ish */
+    display:flex;align-items:center;justify-content:center;
+    font-weight:900;color:#e2e8f0;
+    position:relative;
+    overflow:hidden;
+  }
+  .bin.correct{border-style:solid;border-color:rgba(131,227,119,.9);background:linear-gradient(180deg,rgba(131,227,119,.12),rgba(131,227,119,.06))}
+  .bin .emoji-housed{
+    position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    display:block;
+    width:auto;max-width:90%;
+    font-size:clamp(18px,3.6vw,28px);
+    opacity:.95;
+    white-space:nowrap;  /* never wrap */
+    text-align:center;
+    line-height:1;
+  }
+
+  .bin-label{
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    line-height:1.05; gap:2px; pointer-events:none; /* don't block clicks */
+  }
+  .bin-label .word{font-size:clamp(10px,1.8vw,12px); color:#cbd5e1; letter-spacing:.5px}
+  .bin-label .num{font-size:clamp(16px,3vw,20px); color:#e2e8f0; font-weight:900}
+
+
+  /* Floating label under mover emoji */
+  .float-label{
+    position:absolute;top:0;left:0;transform:translate(-9999px,-9999px);
+    padding:6px 10px;border-radius:10px;
+    background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.12);
+    font-size:clamp(12px,2.4vw,14px);color:#fff;white-space:nowrap;pointer-events:none
+  }
+
+    /* Story overlay */
+  .story-overlay{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(1200px 600px at 50% 50%, rgba(255,255,255,.04), rgba(0,0,0,.55));
+    backdrop-filter: blur(2px);
+  }
+  .story-wrap{
+    text-align:center; max-width:min(70vw, 1000px);
+    padding:20px 24px; border-radius:18px;
+  }
+  .story-line1{ font-size:clamp(18px,2.8vw,28px); color:#cbd5e1; margin-bottom:12px; letter-spacing:.2px }
+  .story-emoji{ font-size:clamp(40px,10.5vw,120px); line-height:1; margin:10px 0 clamp(16px,2.5vh,32px); filter:drop-shadow(0 6px 20px rgba(0,0,0,.35)) }
+  .story-line2{ font-size:clamp(18px,3.2vw,34px); font-weight:900 }
+
+
+  /* Popups */
+  .popup{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45);backdrop-filter: blur(3px);
+  }
+  .popup .card{width:min(640px,92vw)}
+  .ok-row{display:flex;gap:10px;justify-content:center}
+
+  /* Landscape hint (splash) */
+  .land-hint{font-size:clamp(14px,2.4vw,18px)}
+
+  /* End screen stars big */
+  .big-stars{font-size:clamp(28px,6vw,44px);letter-spacing:2px}
+  .legend{display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:left}
+  .legend b{color:#e5f9e7}
+  .footer-note{color:var(--muted);font-size:12px}
+
+  @media (orientation:portrait){
+    .title .emoji{display:block}
+  }
+</style>
+</head>
+<body>
+
+<!-- Splash Screen -->
+<section id="splash" class="screen">
+  <div class="card">
+    <div class="title">Best in <span style="color:var(--accent-2)">Landscape</span> Mode 📱↪️</div>
+    <div class="subtitle land-hint">Rotate your device for the best experience. You can still play in any orientation.</div>
+    <div class="row">
+      <button id="splashOk">Okay</button>
+    </div>
+  </div>
+</section>
+
+<!-- Title Screen -->
+<section id="title" class="screen hidden">
+  <div class="card">
+    <div class="title">Emoji Whack-a-Creation</div>
+    <div class="subtitle">Drop the correct Day of Creation into bins 1–7</div>
+    <div class="row" role="group" aria-label="Difficulty">
+      <button class="ghost" data-diff="easy">Easy</button>
+      <button class="ghost" data-diff="hard">Hard</button>
+    </div>
+    <div class="row">
+      <button id="startBtn">Go Fullscreen and Start</button>
+    </div>
+    <div class="subtitle" style="max-width:680px">
+      Tap or click to release the moving emoji set.<br/> Land it in the correct numbered day’s bin.
+    </div>
+  </div>
+</section>
+
+<!-- Game Stage -->
+<section id="game" class="stage-wrap hidden">
+  <div class="stage-frame" id="frame">
+    <div class="hud">
+      <div class="badges">
+        <span class="badge" id="roundBadge">Round 1</span>
+        <span class="badge" id="diffBadge">Hard</span>
+      </div>
+      <div class="stars" id="starTrack"></div>
+      <div class="controls">
+        <button class="ghost" id="pauseBtn">Pause</button>
+        <button class="ghost" id="muteBtn">Sound On</button>
+      </div>
+    </div>
+
+    <canvas id="layer"></canvas>
+        <!-- Story Review Overlay -->
+    <div id="story" class="story-overlay hidden">
+      <div class="story-wrap">
+        <div id="storyL1" class="story-line1">On day 1, God created…</div>
+        <div id="storyEmoji" class="story-emoji">💡 🌑</div>
+        <div id="storyL2" class="story-line2">Day and Night</div>
+      </div>
+    </div>
+
+    <div class="float-label" id="floatLabel">Label</div>
+
+    <!-- Bins -->
+    <div class="bins" id="bins"></div>
+
+    <!-- Pause Popup -->
+    <div class="popup hidden" id="pausePop">
+      <div class="card">
+        <div class="title">Paused ⏸️</div>
+        <div class="row">
+          <button id="resumeBtn">Resume</button>
+          <button class="secondary" id="quitBtn">Quit</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Round Intro -->
+    <div class="popup hidden" id="roundIntro">
+      <div class="card">
+        <div class="title" id="roundIntroTitle">Round 1</div>
+        <div class="subtitle" id="roundIntroSub">Tap to drop the emoji into the correct bin.</div>
+        <div class="ok-row"><button id="roundIntroOk">Start</button></div>
+      </div>
+    </div>
+
+    <!-- Feedback Popup (Correct/Incorrect) -->
+    <div class="popup hidden" id="feedback">
+      <div class="card">
+        <div class="title" id="fbTitle">Nice!</div>
+        <div class="subtitle" id="fbSub">You placed it correctly.</div>
+        <div class="ok-row"><button id="fbOk">Continue</button></div>
+      </div>
+    </div>
+
+    <!-- Bonus Intro -->
+    <div class="popup hidden" id="bonusIntro">
+      <div class="card">
+        <div class="title">Bonus Round 💣🎯</div>
+        <div class="subtitle">Bins become targets. Drop bombs to destroy all 7! Each drop makes the bombs move faster…</div>
+        <div class="ok-row"><button id="bonusOk">Let’s Go</button></div>
+      </div>
+    </div>
+
+    <!-- End Screen -->
+    <div class="popup hidden" id="endPop">
+      <div class="card">
+        <div class="title">Great Job! 🌟</div>
+        <div class="subtitle">Here’s how you did:</div>
+        <div id="endStars" class="big-stars">★ ★ ★</div>
+        <div class="legend" id="legend"></div>
+        <div class="row">
+          <button id="playAgain">Play Again</button>
+          <button class="secondary" id="exitToTitle">Title</button>
+        </div>
+        <div class="footer-note">“In the beginning, God created the heavens and the earth.” — Genesis 1:1</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<script>
+/* =========================
+   DATA: Days of Creation
+   ========================= */
+const DAYS = [
+  { day:1, label:"Light and Dark", emojis:["💡","🌑"] },
+  { day:2, label:"Sky and Sea",    emojis:["☁️","🌊"] },
+  { day:3, label:"Land and Plants",emojis:["🏔️","🌿"] },
+  { day:4, label:"Sun Moon and Stars", emojis:["☀️","🌙"] },
+  { day:5, label:"Birds and Fish", emojis:["🐦","🐟"] },
+  { day:6, label:"Animals and People", emojis:["🐘","🧑"] },
+  { day:7, label:"God Rested",     emojis:["🛌","💤"] },
+];
+
+const ROUNDS = [
+  { id:1, name:"Round 1", desc:"Simple drop. Time your release.", kind:"basic" },
+  { id:2, name:"Round 2", desc:"A horizontal platform moves left–right.", kind:"platform" },
+  { id:3, name:"Round 3", desc:"Platform moves in a sine wave.", kind:"sine" },
+  { id:4, name:"Round 4", desc:"Rubber rainbow platform (sine wave, super bouncy).", kind:"rainbow" },
+];
+
+// Bonus configuration
+const BONUS = {
+  bombs: 10,   // total bombs in the bonus round
+  baseSpeed: 2.5, // starting horizontal speed of moving bombs
+  speedInc: 0.6,  // added after each drop
+};
+
+/* =========================
+   STATE
+   ========================= */
+let difficulty = "hard"; // "easy" | "hard"
+let roundIndex = 0; // 0..3 for the four rounds
+let playing = false;
+let paused = false;
+let audioOn = true;
+
+let canvas, ctx, frameEl, binsEl, floatLabel;
+let W=1280, H=720; // logical canvas size (scaled to frame)
+let dpr = 1;
+
+let mover = null; // the moving/ falling emoji set entity
+let queue = [];   // shuffled order of DAYS indices to place
+let placed = new Set(); // days successfully placed this round
+let perRoundStats = []; // {roundId, correct, wrong, stars}
+
+let platform = null; // obstacle for rounds 2–3
+
+// Bonus round state
+let inBonus = false;
+let bonusBombSpeed = BONUS.baseSpeed;
+let bonusBombsLeft = BONUS.bombs;
+let targetsRemaining = 7;
+
+/* =========================
+   UTILS
+   ========================= */
+const $ = sel => document.querySelector(sel);
+const $$ = sel => Array.from(document.querySelectorAll(sel));
+
+function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+function lerp(a,b,t){ return a+(b-a)*t; }
+function rand(a,b){ return a + Math.random()*(b-a); }
+function shuffle(arr){ for(let i=arr.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; [arr[i],arr[j]]=[arr[j],arr[i]] } return arr; }
+function fmtStars(n){ return "★".repeat(n) + "☆".repeat(3-n); }
+
+const NARROW = "\u202F"; // narrow no-break space (prevents wrapping on desktop)
+
+// Story labels for the review (7 days, in order)
+const STORY_LABELS = [
+  "Day and Night",
+  "Sky and Sea",
+  "Land and Plants",
+  "Sun, Moon, and Stars",
+  "Birds and Fish",
+  "Animals and People",
+  "God Rested"
+];
+
+// Story state
+let storyTimer = null;
+let storyIndex = 0;
+
+
+// Ensure the moving emoji text fits roughly within one bin width
+function fitMoverFontSize(emojis){
+  const maxW = binWidthCSS() * 0.9;        // target width ~ one bin
+  let size = 36;                           // starting guess
+
+  ctx.save();
+  const text = emojis.join(NARROW);
+
+  // measure at starting size
+  ctx.font = `600 ${size}px system-ui, Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji`;
+  let w = ctx.measureText(text).width;
+
+  // compute scale factor in either direction
+  const scale = maxW / Math.max(1, w);
+  // set bounds: not smaller than 18px, not larger than ~0.75 * bin width
+  const maxSize = Math.max(28, binWidthCSS() * 0.75);
+  size = clamp(size * scale, 18, maxSize);
+
+  ctx.restore();
+  return size;
+}
+
+function fitHousedFontSize(emojis){
+  const maxW = binWidthCSS() * 0.9;        // target width inside the bin
+  let size = 36;
+
+  ctx.save();
+  const text = emojis.join(NARROW);
+  ctx.font = `600 ${size}px system-ui, Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji`;
+  let w = ctx.measureText(text).width;
+
+  const scale = maxW / Math.max(1, w);
+  const maxSize = Math.max(28, binWidthCSS() * 0.70); // a hair smaller than mover so it "fits" comfortably
+  size = clamp(size * scale, 18, maxSize);
+
+  ctx.restore();
+  return size;
+}
+
+
+/* =========================
+   AUDIO (simple beeps)
+   ========================= */
+function beep(freq=600, dur=0.06, type='sine'){
+  if(!audioOn) return;
+  try{
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = type; o.frequency.value = freq;
+    o.connect(g); g.connect(ctx.destination);
+    g.gain.setValueAtTime(0.0001, ctx.currentTime);
+    g.gain.linearRampToValueAtTime(0.04, ctx.currentTime+0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime+dur);
+    o.start(); o.stop(ctx.currentTime+dur);
+  }catch(e){}
+}
+
+/* =========================
+   DOM SETUP
+   ========================= */
+const splash = $("#splash");
+const title  = $("#title");
+const game   = $("#game");
+
+const roundIntro = $("#roundIntro");
+const roundIntroTitle = $("#roundIntroTitle");
+const roundIntroSub = $("#roundIntroSub");
+const feedback = $("#feedback");
+const fbTitle = $("#fbTitle");
+const fbSub = $("#fbSub");
+const fbOk = $("#fbOk");
+
+const pausePop = $("#pausePop");
+const endPop = $("#endPop");
+const endStars = $("#endStars");
+const legend = $("#legend");
+
+const bonusIntro = $("#bonusIntro");
+
+const roundBadge = $("#roundBadge");
+const diffBadge = $("#diffBadge");
+const starTrack = $("#starTrack");
+
+$("#splashOk").addEventListener("click", ()=> {
+  splash.classList.add("hidden");
+  title.classList.remove("hidden");
+});
+
+/* Show the default selection on the title (difficulty starts as "hard") */
+const initial = document.querySelector(`#title [data-diff="${difficulty}"]`);
+if(initial){
+  initial.classList.add('selected');
+  initial.setAttribute('aria-pressed','true');
+}
+
+
+$$('#title [data-diff]').forEach(btn=>{
+  btn.setAttribute('aria-pressed','false');
+  btn.addEventListener('click', ()=>{
+    difficulty = btn.dataset.diff;
+    $$('#title [data-diff]').forEach(b=>{
+      b.classList.remove('selected');
+      b.setAttribute('aria-pressed','false');
+    });
+    btn.classList.add('selected');
+    btn.setAttribute('aria-pressed','true');
+  });
+});
+
+
+$("#startBtn").addEventListener("click", async ()=>{
+  await goFullscreen(document.documentElement);
+  title.classList.add("hidden");
+  game.classList.remove("hidden");
+  initStage();
+  startStory();
+});
+
+
+$("#pauseBtn").addEventListener("click", ()=>{
+  paused = true;
+  pausePop.classList.remove("hidden");
+});
+$("#resumeBtn").addEventListener("click", ()=>{
+  paused = false;
+  pausePop.classList.add("hidden");
+});
+$("#quitBtn").addEventListener("click", ()=>{
+  // back to title
+  location.reload();
+});
+
+$("#muteBtn").addEventListener("click", (e)=>{
+  audioOn = !audioOn;
+  e.currentTarget.textContent = audioOn ? "Sound On" : "Sound Off";
+});
+
+$("#roundIntroOk").addEventListener("click", ()=>{
+  roundIntro.classList.add("hidden");
+  playing = true;
+});
+
+fbOk.addEventListener("click", ()=>{
+  feedback.classList.add("hidden");
+  // Continue if queue not empty, else end round
+  if(queue.length === 0){
+    // next round trigger handled after animation loop recognizes roundDone flag
+  } else {
+    spawnMover();
+  }
+});
+
+$("#playAgain").addEventListener("click", ()=> location.reload());
+$("#exitToTitle").addEventListener("click", ()=> location.reload());
+$("#bonusOk").addEventListener("click", ()=>{
+  bonusIntro.classList.add("hidden");
+  inBonus = true;
+  // swap bins to "targets" mode (visuals handled in draw + placing logic)
+  startBonus();
+});
+
+/* =========================
+   FULLSCREEN
+   ========================= */
+async function goFullscreen(el){
+  try{
+    if(el.requestFullscreen) await el.requestFullscreen();
+    else if(el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
+    else if(el.msRequestFullscreen) await el.msRequestFullscreen();
+  }catch(e){}
+}
+
+/* =========================
+   STAGE / CANVAS SETUP
+   ========================= */
+function initStage(){
+  frameEl = $("#frame");
+  canvas = $("#layer");
+  floatLabel = $("#floatLabel");
+  binsEl = $("#bins");
+
+  onResize();
+  window.addEventListener("resize", onResize);
+
+  // bins initial draw
+  binsEl.innerHTML = "";
+  for(let i=1;i<=7;i++){
+    const bin = document.createElement("div");
+    bin.className = "bin";
+    bin.dataset.day = String(i);
+    bin.innerHTML = `<div class="bin-label"><div class="word">Day</div><div class="num">${i}</div></div>`;
+
+    binsEl.appendChild(bin);
+  }
+
+  // input: click/tap to drop
+  frameEl.addEventListener("pointerdown", onDrop);
+}
+
+function onResize(){
+  const rect = frameEl.getBoundingClientRect();
+  // set canvas DPR-scaled size
+  dpr = Math.min(2, window.devicePixelRatio || 1);
+  W = Math.floor(rect.width * dpr);
+  H = Math.floor(rect.height * dpr);
+  canvas.width = W; canvas.height = H;
+  canvas.style.width = rect.width + "px";
+  canvas.style.height = rect.height + "px";
+  ctx = canvas.getContext("2d");
+
+  // keep platform & conveyor widths synced to a single bin width on resize
+  if (platform) platform.w = binWidthCSS();
+}
+
+
+function binWidthCSS(){
+  const rect = binsEl.getBoundingClientRect();
+  return rect.width / 7;
+}
+
+
+/* =========================
+   GAME FLOW
+   ========================= */
+function startStory(){
+  // Ensure the game frame is visible & stage is initialized (already done in Start button)
+  // Hide HUD/bins so the stage looks empty behind the story
+  $(".hud").classList.add("hidden");
+  $(".bins").classList.add("hidden");
+
+  // Prepare first slide
+  storyIndex = 0;
+  updateStorySlide();
+
+  // Show overlay
+  $("#story").classList.remove("hidden");
+
+  // Auto-advance through all 7 days, ~2.4s per slide
+  const perSlideMs = 2400;
+
+  storyTimer = setInterval(()=>{
+    storyIndex++;
+    if(storyIndex >= 7){
+      finishStory();
+    } else {
+      updateStorySlide();
+    }
+  }, perSlideMs);
+}
+
+function updateStorySlide(){
+  const day = storyIndex + 1;
+  const l1 = $("#storyL1");
+  const l2 = $("#storyL2");
+  const em = $("#storyEmoji");
+
+  // Pull emojis directly from DAYS in canonical order (1..7)
+  const dayData = DAYS[storyIndex];
+  const emojiText = dayData.emojis.join(NARROW);
+
+  l1.textContent = `On day ${day}, God created…`;
+  em.textContent = emojiText;
+  l2.textContent = STORY_LABELS[storyIndex];
+    sizeStoryEmoji();
+
+}
+
+function finishStory(){
+  if(storyTimer){ clearInterval(storyTimer); storyTimer = null; }
+  $("#story").classList.add("hidden");
+
+  // Restore HUD/bins now that gameplay will start
+  $(".hud").classList.remove("hidden");
+  $(".bins").classList.remove("hidden");
+
+  // Start the actual game loop
+  startGame();
+}
+
+
+function startGame(){
+  perRoundStats = [];
+  roundIndex = 0;
+  diffBadge.textContent = difficulty === "easy" ? "Easy" : "Hard";
+  setupRound();
+  requestAnimationFrame(tick);
+}
+
+function setupRound(){
+  inBonus = false;
+  bonusBombSpeed = BONUS.baseSpeed;
+  bonusBombsLeft = BONUS.bombs;
+  targetsRemaining = 7;
+  placed.clear();
+
+  // bins reset visuals
+  $$(".bin").forEach(b=>{
+    b.classList.remove("correct");
+    b.removeAttribute("data-destroyed");
+    let housed = b.querySelector(".emoji-housed");
+    if(housed) housed.remove();
+    b.innerHTML = `<div class="bin-label"><div class="word">Day</div><div class="num">${b.dataset.day}</div></div>`;
+  });
+
+
+  // build & shuffle queue of day indices
+  queue = shuffle(DAYS.map((_,i)=>i));
+  spawnMover(true);
+  buildObstacleForRound();
+
+  updateHUD();
+  showRoundIntro();
+}
+
+function showRoundIntro(){
+  const r = ROUNDS[roundIndex];
+  roundBadge.textContent = r.name;
+  roundIntroTitle.textContent = r.name;
+  roundIntroSub.textContent = r.desc;
+  roundIntro.classList.remove("hidden");
+  playing = false;
+}
+
+function updateHUD(){
+  // Stars display shows current round’s star projection (live) — we fill on end
+  starTrack.innerHTML = "";
+  for(let i=0;i<3;i++){
+    const s = document.createElement("span");
+    s.className = "star";
+    s.textContent = "☆";
+    starTrack.appendChild(s);
+  }
+}
+
+function spawnMover(first=false){
+  // Choose content based on mode
+  const useBonus = inBonus === true;
+  const idx = useBonus ? -1 : queue[0];           // only peek queue in normal rounds
+  const item = useBonus ? null : DAYS[idx];
+
+  // Mover starts at top, moves left-right
+  mover = {
+    kind: useBonus ? "bomb" : "emoji",
+    dayIdx: useBonus ? -1 : idx,
+    label: useBonus ? "Bomb" : item.label,
+    emojis: useBonus ? ["💣"] : item.emojis.slice(),
+    x: (Math.random()<0.5 ? 0.1 : 0.9) * (W/dpr),
+    y: 30, // UI padding top
+    vx: (Math.random()<0.5?-1:1) * (useBonus ? (lateralSpeed() + bonusBombSpeed*30) : lateralSpeed()),
+    vy: 0,
+    size: 48, // will adjust for emoji mode
+    falling:false,
+    alive:true,
+    landed:false,
+    rotation:0,
+    assistUsed:false
+
+  };
+  // Tighten spacing and fit to bin width (emoji mode only)
+  if (mover.kind === "emoji") mover.size = fitMoverFontSize(mover.emojis);
+    // Keep the emoji fully visible at the top: spawn height scales with font size
+  mover.y = Math.max(30, Math.ceil(mover.size * 0.75));
+
+
+  updateFloatLabel(mover.label);
+  floatLabel.classList.remove('hidden');
+
+
+}
+
+function updateFloatLabel(text){
+  floatLabel.textContent = text;
+  // place label centered above mover in CSS coords (not DPR)
+  const rect = frameEl.getBoundingClientRect();
+  // schedule update in draw()
+}
+
+function buildObstacleForRound(){
+  platform = null;
+  conveyor = null;
+
+  const r = ROUNDS[roundIndex];
+  if(r.kind === "platform" || r.kind === "sine" || r.kind === "rainbow"){
+    // A rectangle that items can bounce on
+    const y = H/dpr * 0.58;
+    platform = {
+      w: binWidthCSS(),
+      h: 16,
+      x: (W/dpr)*0.3,
+      y,
+      vx: (difficulty==="easy"? 100: 150) * (Math.random()<0.5? -1: 1),
+      phase: 0,
+      rainbow: (r.kind === "rainbow")
+    };
+  }
+  // no conveyor in the new Round 4
+  conveyor = null;
+
+}
+
+function finishRound(){
+  // compute stars
+  const r = ROUNDS[roundIndex];
+  const stats = currentStats;
+  const stars = scoreStars(stats.correct, stats.wrong);
+  perRoundStats.push({ roundId:r.id, correct:stats.correct, wrong:stats.wrong, stars });
+  indicateRoundStars(stars);
+
+  roundIndex++;
+  if(roundIndex < ROUNDS.length){
+    // next round
+    setupRound();
+  } else {
+    // Bonus intro then bonus round
+    bonusIntro.classList.remove("hidden");
+  }
+}
+
+function startBonus(){
+  // no platform in bonus
+  platform = null;
+
+  // bins become targets visually
+  $$(".bin").forEach(b=>{
+    b.classList.remove("correct");
+    const t = document.createElement("div");
+    t.className = "emoji-housed";
+    t.textContent = "🎯";
+    t.style.fontSize = `${Math.floor(fitHousedFontSize(["🎯"]))}px`;
+    b.innerHTML = "";
+    b.appendChild(t);
+
+  });
+
+  queue = []; // use custom bombing flow (7 targets total)
+  placed.clear();
+  targetsRemaining = 7;
+  bonusBombsLeft = BONUS.bombs;
+
+  // start updating/drawing immediately in bonus
+  playing = true;
+
+  // spawn a bomb mover (spawnMover handles bonus mode now)
+  spawnMover(true);
+
+}
+
+/* Scoring: stars based on accuracy */
+function scoreStars(correct, wrong){
+  const total = correct + wrong;
+  const acc = total ? correct/total : 1;
+  if(acc >= 0.9) return 3;
+  if(acc >= 0.75) return 2;
+  return 1;
+}
+function indicateRoundStars(stars){
+  starTrack.innerHTML = "";
+  for(let i=0;i<3;i++){
+    const s = document.createElement("span");
+    s.className = "star";
+    s.textContent = i < stars ? "★" : "☆";
+    starTrack.appendChild(s);
+  }
+}
+
+/* Track per-round correctness */
+let currentStats = { correct:0, wrong:0 };
+
+/* =========================
+   INPUT: Drop
+   ========================= */
+function onDrop(){
+  if(!playing || !mover || !mover.alive) return;
+
+  // First tap: start falling (both Easy/Hard)
+  if(!mover.falling){
+    mover.falling = true;
+    floatLabel.classList.add('hidden');
+    beep(520,0.05,'triangle');
+    return;
+  }
+
+  // Second tap (only on Hard): "butt stomp" — kill horizontal motion and accelerate downward
+  if(difficulty === "hard" && mover.falling && !mover.assistUsed){
+    mover.vx = 0;                           // halt lateral momentum
+    mover.vy = Math.max(mover.vy, gravityVal() * 0.9); // give it a strong downward push
+    mover.assistUsed = true;
+    beep(160,0.06,'square');                // distinct thunk
+  }
+}
+
+
+/* =========================
+   PHYSICS & COLLISIONS
+   ========================= */
+function gravityVal(){
+  return (difficulty==="easy" ? 720 : 1000); // px/s^2
+}
+function lateralSpeed(){
+  const worldW = W/dpr;
+  const span = Math.max(100, worldW - 40); // mover uses ~20px margins on both sides
+  const desired = 4.0; // seconds to traverse the screen (same on Easy & Hard)
+  return span / desired; // px/s
+}
+
+
+function update(dt){
+  if(!playing) return;
+
+  // update obstacles
+  const worldW = W/dpr, worldH = H/dpr;
+
+  // Move top mover left-right (if not falling)
+  if(mover && mover.alive){
+    if(!mover.falling){
+      mover.x += mover.vx * dt;
+      if(mover.x < 20){ mover.x = 20; mover.vx = Math.abs(mover.vx); beep(700,0.03,'sawtooth'); }
+      if(mover.x > worldW-20){ mover.x = worldW-20; mover.vx = -Math.abs(mover.vx); beep(700,0.03,'sawtooth'); }
+    }else{
+      // falling physics (retain horizontal momentum)
+      mover.vy += gravityVal() * dt;
+      mover.y += mover.vy * dt;
+      mover.x += mover.vx * dt;
+
+      // bounce off left/right walls while falling
+      const margin = 20;
+      if (mover.x < margin){ mover.x = margin; mover.vx = Math.abs(mover.vx); beep(700,0.03,'sawtooth'); }
+      if (mover.x > worldW - margin){ mover.x = worldW - margin; mover.vx = -Math.abs(mover.vx); beep(700,0.03,'sawtooth'); }
+    }
+
+  }
+
+  // Obstacles logic
+  const binsTopY = worldH * 0.82; // approx top of bins area
+  if(platform){
+    platform.x += platform.vx * dt;
+    // bounce off sides
+    if(platform.x < 10){ platform.x = 10; platform.vx = Math.abs(platform.vx); }
+    if(platform.x + platform.w > worldW-10){ platform.x = worldW-10 - platform.w; platform.vx = -Math.abs(platform.vx); }
+
+    {
+      const round = ROUNDS[roundIndex];
+      const kind = round ? round.kind : null;
+      if(kind === "sine" || kind === "rainbow"){
+        platform.phase += dt * 2.2;
+        const amp = (kind === "rainbow") ? 30 : 20;  // rainbow bobs a bit more
+        platform.y = worldH * 0.58 + Math.sin(platform.phase) * amp;
+      }
+    }
+
+
+
+    // collide with mover (simple top collision)
+    if(mover && mover.falling && mover.alive){
+      if(mover.y+8 >= platform.y && mover.y-8 <= platform.y + platform.h && mover.x >= platform.x && mover.x <= platform.x + platform.w){
+        // bounce (rainbow = super bouncy)
+        mover.y = platform.y - 9;
+        const round = ROUNDS[roundIndex];
+        const kind = round ? round.kind : null;
+        const coeff = (kind === "rainbow") ? 1.65 : 0.55; // ~3x the bounce height
+
+        const extra  = (kind === "rainbow")
+          ? (difficulty==="easy" ? 160 : 240)
+          : (difficulty==="easy" ? 80  : 120);
+        mover.vy = -Math.abs(mover.vy) * coeff - extra;
+        beep((kind==="rainbow") ? 520 : 300, 0.04, (kind==="rainbow") ? 'triangle' : 'square');
+      }
+
+    }
+  }
+
+
+  // Bin check
+  if(mover && mover.falling && mover.alive){
+    if(mover.y >= binsTopY){
+      // Which bin did we land in?
+      const which = pickBinIndexAtX(mover.x);
+      if(which != null){
+        if(inBonus){
+          // bonus: "targets" — any bin is a target; destroy if not already destroyed
+          handleBonusHit(which);
+        }else{
+          validatePlacement(which);
+        }
+      }else{
+        // missed entirely
+        failAndVanish(mover.x, mover.y);
+      }
+    }
+  }
+}
+
+function pickBinIndexAtX(x){
+  const rect = binsEl.getBoundingClientRect();
+  const frame = frameEl.getBoundingClientRect();
+  const binsLeft = (rect.left - frame.left);
+  const binsRight = binsLeft + rect.width;
+  const binsTop = (rect.top - frame.top);
+
+  // map canvas-space x to bins grid columns
+  const worldX = x; // already in CSS px roughly (we've used dpr)
+  if(worldX < 0 || worldX > (W/dpr)) return null;
+
+  // compute which column
+  const colWidth = rect.width / 7;
+  // convert worldX (inside frame) to relative X inside bins rect
+  // Need the canvas->css ratio: canvas style width equals frame width, so worldX already maps to frame pixels.
+  const relX = clamp(worldX - (frame.width * (binsLeft/ frame.width)), binsLeft, binsRight);
+  const within = worldX - (binsLeft);
+  if(within < 0 || within > rect.width) return null;
+  let col = Math.floor(within / colWidth);
+  col = clamp(col, 0, 6);
+  return col; // 0..6 corresponds to day 1..7
+}
+
+function validatePlacement(col){
+  const targetDay = col + 1;
+  const expectedDay = DAYS[mover.dayIdx].day;
+
+  if(targetDay === expectedDay && !placed.has(expectedDay)){
+    // success
+    successPlace(col);
+  }else{
+    // fail
+    failAndVanish(mover.x, mover.y);
+  }
+}
+
+function successPlace(col){
+  currentStats.correct++;
+  const bin = $$(".bin")[col];
+  bin.classList.add("correct");
+  // show housed emoji inside bin
+  const div = document.createElement("div");
+  div.className = "emoji-housed";
+  const placedEmojis = (inBonus? ["💥"] : DAYS[mover.dayIdx].emojis);
+  div.textContent = placedEmojis.join(NARROW);
+  // size the housed emoji relative to bin width
+  div.style.fontSize = `${Math.floor(fitHousedFontSize(placedEmojis))}px`;
+
+  bin.innerHTML = "";
+  bin.appendChild(div);
+
+
+  particles(mover.x, mover.y, 18, "#7ae582");
+  beep(880,0.07,'triangle');
+  mover.alive = false;
+
+  // remove from queue and mark placed
+  const removed = queue.shift();
+  placed.add(DAYS[removed].day);
+
+  // Completed all?
+  if(queue.length === 0){
+    playing = false;
+    setTimeout(()=>finishRound(), 450);
+  } else {
+    // immediately continue without popup
+    spawnMover();
+  }
+
+}
+
+function handleBonusHit(col){
+  // In bonus, any bin can be destroyed once
+  const bin = $$(".bin")[col];
+  if(bin.dataset.destroyed === "1"){
+    // already destroyed — treat as miss
+    currentStats.wrong++;
+    particles(mover.x, mover.y, 18, "#ffb3b3");
+    beep(180,0.06,'sine');
+  }else{
+    // destroy it
+    bin.dataset.destroyed = "1";
+    bin.classList.add("correct");
+    const boom = document.createElement("div");
+    boom.className = "emoji-housed";
+    boom.textContent = "💥";
+    boom.style.fontSize = `${Math.floor(fitHousedFontSize(["💥"]))}px`;
+    bin.innerHTML = "";
+    bin.appendChild(boom);
+
+    particles(mover.x, mover.y, 26, "#ffd166");
+    beep(900,0.08,'square');
+    targetsRemaining--;
+  }
+
+  mover.alive = false;
+
+  if(targetsRemaining <= 0 || --bonusBombsLeft <= 0){
+    // End of bonus
+    playing = false;
+    // Score stars for bonus as well
+    const stars = scoreStars(7 - targetsRemaining, (BONUS.bombs - bonusBombsLeft) - (7 - targetsRemaining));
+    perRoundStats.push({ roundId:"Bonus", correct:7-targetsRemaining, wrong: (BONUS.bombs - bonusBombsLeft) - (7-targetsRemaining), stars });
+    showEnd();
+    return;
+  }
+
+  // Increase bomb LR speed
+  bonusBombSpeed += BONUS.speedInc;
+  spawnMover();
+  // Override mover properties for bomb motion
+  mover.kind = "bomb";
+  mover.vx = (Math.random()<0.5?-1:1) * (lateralSpeed() + bonusBombSpeed*30);
+}
+
+function failAndVanish(x,y){
+  currentStats.wrong++;
+  mover.alive = false;
+  particles(x,y,16,"#ff6b6b");
+  beep(220,0.08,'sine');
+  // re-enqueue near middle for fairness
+  if(queue.length>0){
+    const idx = queue.shift();
+    const pos = Math.min(queue.length, 1 + ((queue.length/2)|0));
+    queue.splice(pos,0,idx);
+  }
+
+  // show a quick "No" emoji animation at the miss point
+  showNo(x, y);
+
+  // immediately continue without popup
+  if(queue.length > 0) spawnMover();
+
+}
+
+function briefFeedback(ok, label){
+  // Tiny optional popup (kept short)
+  fbTitle.textContent = ok ? "Correct! ✅" : "Incorrect ❌";
+  fbSub.textContent = ok ? `“${label}” placed.` : `That wasn’t “${label}.” Try again.`;
+  feedback.classList.remove("hidden");
+}
+
+/* =========================
+   RENDER
+   ========================= */
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  const worldW=W/dpr, worldH=H/dpr;
+
+  // Background subtle grid
+  ctx.save();
+  ctx.scale(dpr,dpr);
+  ctx.globalAlpha = 0.06;
+  ctx.strokeStyle = "#cbd5e1";
+  const step = 32;
+  ctx.beginPath();
+  for(let x=0;x<worldW;x+=step){ ctx.moveTo(x,0); ctx.lineTo(x,worldH); }
+  for(let y=0;y<worldH;y+=step){ ctx.moveTo(0,y); ctx.lineTo(worldW,y); }
+  ctx.stroke();
+  ctx.restore();
+
+  // Large faint current-emoji backdrop
+  if(mover && mover.alive){ drawBackdropEmoji(); }
+
+
+  // Obstacles
+  if(platform){
+    ctx.save(); ctx.scale(dpr,dpr);
+
+    // Rubber rainbow platform: cycle hues over time
+    if (platform.rainbow){
+      const t = performance.now() * 0.002; // speed of color cycle
+      const grad = ctx.createLinearGradient(platform.x, platform.y, platform.x + platform.w, platform.y);
+      // 6-color rainbow sweep
+      grad.addColorStop(0.00, `hsl(${(t*120 +   0)%360}, 100%, 60%)`);
+      grad.addColorStop(0.20, `hsl(${(t*120 +  60)%360}, 100%, 60%)`);
+      grad.addColorStop(0.40, `hsl(${(t*120 + 120)%360}, 100%, 60%)`);
+      grad.addColorStop(0.60, `hsl(${(t*120 + 180)%360}, 100%, 60%)`);
+      grad.addColorStop(0.80, `hsl(${(t*120 + 240)%360}, 100%, 60%)`);
+      grad.addColorStop(1.00, `hsl(${(t*120 + 300)%360}, 100%, 60%)`);
+      ctx.fillStyle = grad;
+    } else {
+      ctx.fillStyle = "#2dd4bf";
+    }
+
+    roundRect(ctx, platform.x, platform.y, platform.w, platform.h, 8);
+    ctx.fill();
+    ctx.restore();
+  }
+
+
+
+  // Ghost trajectory preview on Easy (only before the drop)
+  if(difficulty === "easy" && mover && mover.alive && !mover.falling){
+    drawGhost();
+  }
+
+
+  // Mover
+  if(mover && mover.alive){
+    ctx.save(); ctx.scale(dpr,dpr);
+    ctx.font = `600 ${mover.size}px system-ui, Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    const text = mover.emojis.join(NARROW);
+    ctx.save();
+    ctx.translate(mover.x, mover.y);
+    ctx.rotate(mover.rotation);
+    ctx.shadowColor = "rgba(0,0,0,.35)";
+    ctx.shadowBlur = 10;
+    ctx.fillText(text, 0, 0);
+    ctx.restore();
+    ctx.restore();
+
+    // Float label position (CSS) — update here
+    const frameRect = frameEl.getBoundingClientRect();
+    const cssX = mover.x; const cssY = mover.y;
+    const labelOffset = mover.size * 0.9; // buffer below the emoji (tweak 0.9 to taste)
+    floatLabel.style.transform = `translate(${cssX}px, ${cssY + labelOffset}px) translate(-50%,0%)`;
+  } else {
+    // hide label
+    floatLabel.style.transform = `translate(-9999px,-9999px)`;
+  }
+
+  // Particles draw
+  drawParticles();
+
+    // "No" animations for misses
+  drawNoFx();
+
+}
+
+function roundRect(ctx,x,y,w,h,r){
+  const rr = Math.min(r, w/2, h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+rr,y);
+  ctx.arcTo(x+w,y,x+w,y+h,rr);
+  ctx.arcTo(x+w,y+h,x,y+h,rr);
+  ctx.arcTo(x,y+h,x,y,rr);
+  ctx.arcTo(x,y,x+w,y,rr);
+  ctx.closePath();
+}
+
+/* ===== Large, faint backdrop of current emoji ===== */
+function drawBackdropEmoji(){
+  if(!mover || !mover.alive) return;
+
+  const worldW = W/dpr, worldH = H/dpr;
+  const centerX = worldW * 0.5;
+  const centerY = worldH * 0.48;          // a hair above true center looks nicer
+  const targetH = worldH * 0.35;          // ~35% of game area height
+
+  // Build the text using the same narrow spacing as the mover
+  const text = mover.emojis.join(NARROW);
+
+  // Start with a font size equal to targetH, then shrink to fit width if needed
+  let size = targetH;
+
+  ctx.save(); ctx.scale(dpr,dpr);
+  ctx.globalAlpha = 0.5;                  // ~50% opacity
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  ctx.font = `800 ${size}px system-ui, Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji`;
+  let w = ctx.measureText(text).width;
+
+  const maxW = worldW * 0.85;             // keep some side margin
+  if(w > maxW){
+    const scale = maxW / Math.max(1, w);
+    size = size * scale;
+    ctx.font = `800 ${size}px system-ui, Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji`;
+  }
+
+  ctx.fillText(text, centerX, centerY);
+  ctx.restore();
+}
+
+// Size the story emoji to ~33% of the stage height and fit to width if needed
+function sizeStoryEmoji(){
+  const em = $("#storyEmoji");
+  if(!em || !canvas) return;
+
+  const worldW = W/dpr, worldH = H/dpr;
+  const isWide = (worldW / worldH) >= 1.5; // desktop / wide aspect
+  const targetH = worldH * (isWide ? 0.22 : 0.33); // ~22% on wide, ~33% on phones
+
+  const maxW = worldW * 0.75;         // narrower cap on wide screens
+
+  // start big, then shrink to fit width if needed
+  let size = targetH;
+
+  // measure the actual emoji text currently set
+  ctx.save();
+  ctx.font = `800 ${size}px system-ui, Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji`;
+  const text = em.textContent;
+  let w = ctx.measureText(text).width;
+  if(w > maxW){
+    const scale = maxW / Math.max(1, w);
+    size = size * scale;
+  }
+  ctx.restore();
+
+  em.style.fontSize = `${Math.floor(size)}px`;
+}
+
+
+/* ===== Ghost trajectory (Easy, before drop) ===== */
+function drawGhost(){
+  const totalTime = 1.2;           // seconds to preview (was 0.6)
+  const steps = 48;                // more points for a smoother, longer line
+  const simDt = totalTime / steps;
+
+  const g = gravityVal();
+  const worldW = W/dpr, margin = 20;
+
+  let x = mover.x, y = mover.y;
+  let vx = mover.vx, vy = 0;
+
+  ctx.save(); ctx.scale(dpr,dpr);
+  ctx.setLineDash([6,6]);
+  ctx.lineWidth = 2;
+  ctx.globalAlpha = 0.4;
+  ctx.strokeStyle = "#40c9ff";
+  ctx.beginPath();
+  ctx.moveTo(x,y);
+
+  for(let i=0;i<steps;i++){
+    vy += g * simDt;
+    x += vx * simDt;
+    y += vy * simDt;
+
+    // bounce preview off left/right edges
+    if (x < margin){ x = margin; vx = Math.abs(vx); }
+    if (x > worldW - margin){ x = worldW - margin; vx = -Math.abs(vx); }
+
+    ctx.lineTo(x,y);
+
+    // stop drawing near bins to avoid clutter
+        if (y > (H/dpr)*0.9) break;    // allow drawing closer to the bins
+
+  }
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+}
+
+
+/* =========================
+   PARTICLES
+   ========================= */
+let puff = [];
+function particles(x,y,count,color){
+  for(let i=0;i<count;i++){
+    puff.push({
+      x, y,
+      vx: rand(-160,160),
+      vy: rand(-240, -60),
+      life: rand(0.35,0.8),
+      age: 0,
+      r: rand(2,5),
+      color
+    });
+  }
+}
+function drawParticles(){
+  const dt = _dt;
+  ctx.save(); ctx.scale(dpr,dpr);
+  for(let i=puff.length-1;i>=0;i--){
+    const p = puff[i];
+    p.age += dt;
+    if(p.age >= p.life){ puff.splice(i,1); continue; }
+    const t = p.age/p.life;
+    p.vy += 900*dt;
+    p.x += p.vx*dt;
+    p.y += p.vy*dt;
+    const alpha = 1 - t;
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+/* ===== NO (🚫) MISS ANIMATION ===== */
+let noFx = [];
+function showNo(x, y){
+  noFx.push({ x, y, age:0, life:0.7, vy:-80, start:0.6, end:1.4 });
+}
+function drawNoFx(){
+  const dt = _dt;
+  ctx.save(); ctx.scale(dpr,dpr);
+  for(let i=noFx.length-1;i>=0;i--){
+    const n = noFx[i];
+    n.age += dt;
+    if(n.age >= n.life){ noFx.splice(i,1); continue; }
+    const t = n.age / n.life;            // 0 → 1
+    const alpha = 1 - t;                  // fade out
+    const scale = n.start + (n.end - n.start) * t; // grow
+    n.y += n.vy * dt;                     // float upward
+
+    ctx.globalAlpha = alpha;
+    ctx.font = `900 ${48*scale}px system-ui, Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("🚫", n.x, n.y);
+  }
+  ctx.restore();
+}
+
+
+/* =========================
+   TICK LOOP
+   ========================= */
+let last=0, _dt=0;
+function tick(t){
+  _dt = (t-last)/1000; last=t;
+  if(!paused){
+    update(_dt);
+    draw();
+  }
+  requestAnimationFrame(tick);
+}
+
+/* =========================
+   ROUND/END FLOW HELPERS
+   ========================= */
+function showEnd(){
+  // Aggregate stars
+  const totalStars = perRoundStats.reduce((s,r)=> s+(r.stars||0), 0);
+  endStars.textContent = "★ ".repeat(totalStars).trim() || "☆";
+
+  // Legend per round
+  legend.innerHTML = "";
+  perRoundStats.forEach(stat=>{
+    const div = document.createElement("div");
+    div.innerHTML = `<b>${stat.roundId === "Bonus" ? "Bonus" : ("Round " + stat.roundId)}</b><br>
+      Correct: ${stat.correct} — Wrong: ${stat.wrong}<br>
+      Stars: ${fmtStars(stat.stars||0)}`;
+    legend.appendChild(div);
+  });
+
+  endPop.classList.remove("hidden");
+}
+
+/* =========================
+   STATS TRACKING RESET
+   ========================= */
+function resetStats(){
+  currentStats = { correct:0, wrong:0 };
+}
+
+/* =========================
+   ROUND START WRAPPER
+   ========================= */
+function startRoundPlay(){
+  resetStats();
+  playing = true;
+}
+
+/* Override round start: we use popup then play is true */
+function finishIfAllPlaced(){
+  if(queue.length===0){
+    playing=false;
+    setTimeout(()=>finishRound(),450);
+  }
+}
+
+/* =========================
+   END OF GAME UTILS
+   ========================= */
+
+/* =========================
+   INIT FIRST ROUND AFTER POPUP
+   ========================= */
+function showRoundFeedbackIfNeeded(){ /* optional extensibility */ }
+
+/* =========================
+   After finishing all rounds,
+   bonus intro appears; handled
+   by bonusIntro popup.
+   ========================= */
+
+/* =========================
+   FINAL END EVENTS handled in showEnd()
+   ========================= */
+
+/* =========================
+   MISC: Keyboard shortcut (optional)
+   ========================= */
+document.addEventListener("keydown",(e)=>{
+  if(e.key.toLowerCase()==='p'){ $("#pauseBtn").click(); }
+});
+
+// Secret: press "B" to jump to the Bonus intro
+document.addEventListener("keydown",(e)=>{
+  if(e.key.toLowerCase()==='b'){
+    goToBonusShortcut();
+  }
+});
+
+function goToBonusShortcut(){
+  // Make sure the game UI is visible
+  if (game.classList.contains('hidden')) {
+    // hide splash/title, show game stage
+    splash.classList.add('hidden');
+    title.classList.add('hidden');
+    game.classList.remove('hidden');
+    // initialize stage (safe if called once)
+    if (!canvas || !ctx) initStage();
+  }
+
+  // Close any popups that might be open
+  paused = false;
+  pausePop.classList.add('hidden');
+  feedback.classList.add('hidden');
+  roundIntro.classList.add('hidden');
+
+  // Prepare for Bonus: treat as "after last round"
+  inBonus = false;
+  platform = null;                 // no platform in bonus
+  roundIndex = ROUNDS.length;      // so ROUNDS[roundIndex] is undefined (guarded)
+  queue = [];
+  placed.clear();
+
+  // Show the Bonus intro (clicking "Let’s Go" will set inBonus=true and startBonus())
+  bonusIntro.classList.remove('hidden');
+}
+
+
+/* =========================
+   DEBUG (toggle in console)
+   ========================= */
+window.__state = ()=>({roundIndex,queue,placed:[...placed],perRoundStats,currentStats,inBonus,bonusBombsLeft,targetsRemaining});
+
+/* =========================
+   ROUND STAR PROJECTION
+   (optional: live preview — using accuracy so far)
+   ========================= */
+setInterval(()=>{
+  if(!playing || inBonus) return;
+  const stars = scoreStars(currentStats.correct, currentStats.wrong);
+  indicateRoundStars(stars);
+}, 500);
+
+/* =========================
+   NOTE:
+   This game uses approximate canvas->CSS mapping for bins hit test.
+   If your device has unusual DPR scaling, placement still feels fair
+   because bins are wide and the check is column-based.
+   ========================= */
+</script>
+
+</body>
+</html>
