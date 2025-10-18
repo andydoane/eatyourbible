@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>Emoji Snake • Bible Quiz</title>
+<style>
+  :root{
+    --bg:#0f1222;
+    --fg:#ffffff;
+    --accent:#66e3ff;
+    --ok:#19c37d;
+    --bad:#ff4d4f;
+    --shadow:0 10px 30px rgba(0,0,0,.35);
+  }
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,sans-serif;}
+  #app{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .screen{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:16px;}
+  .screen.active{display:flex;}
+  .card{width:min(780px,92vw);max-width:780px;background:#161a2e;border:1px solid #2b3158;border-radius:20px;box-shadow:var(--shadow);padding:20px;}
+  .title{font-size:clamp(24px,5vw,44px);font-weight:800;letter-spacing:.5px;margin:6px 0 8px;text-align:center}
+  .subtitle{font-size:clamp(14px,3.6vw,18px);opacity:.9;text-align:center;margin:0 0 12px}
+  .btn{
+    display:inline-flex;gap:10px;align-items:center;justify-content:center;
+    padding:14px 18px;border-radius:14px;border:1px solid #3a4170;background:#1d2342;color:#fff;
+    font-weight:700;cursor:pointer;user-select:none;transition:.15s transform,.15s background;
+  }
+  .btn:active{transform:translateY(1px) scale(.995)}
+  .btn.primary{background:linear-gradient(180deg,#2a6fff,#204ad8)}
+  .btn.good{background:linear-gradient(180deg,#1dbd87,#139a6f)}
+  .btn.bad{background:linear-gradient(180deg,#ff5c64,#e73d46)}
+  .btn.row{width:100%;margin:8px 0;font-size:clamp(16px,4.2vw,20px)}
+  .grid{display:grid;gap:10px}
+  .notice{padding:10px 12px;border-radius:12px;background:#11162a;border:1px solid #283056}
+  .small{font-size:.92em;opacity:.9}
+  .footerRow{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:10px}
+  .kicker{opacity:.85;font-size:.95em;margin-top:4px;text-align:center}
+  /* Game area */
+  #gameWrap{position:relative;width:min(640px,92vw);aspect-ratio:9/16;border-radius:24px;overflow:hidden;border:1px solid #2b3158;box-shadow:var(--shadow)}
+  #hud{
+    position:absolute;left:0;right:0;top:0;padding:10px 12px;display:flex;justify-content:space-between;gap:8px;
+    background:linear-gradient(180deg,rgba(10,14,28,.95),rgba(10,14,28,.25) 70%,transparent)
+  }
+  #hud .pill{background:#11162a;border:1px solid #2b3156;border-radius:999px;padding:8px 12px;font-weight:700}
+  #canvas{position:absolute;inset:0;background:#0b0f1f}
+
+  /* Popups */
+  .modalWrap{position:fixed;inset:0;background:rgba(3,5,12,.65);display:none;align-items:center;justify-content:center;padding:16px;z-index:20}
+  .modalWrap.show{display:flex}
+  .modal{width:min(700px,92vw);background:#121735;border:1px solid #2b3158;border-radius:20px;box-shadow:var(--shadow);padding:18px}
+  .modal h3{font-size:clamp(22px,5vw,30px);margin:8px 0 6px;text-align:center}
+  .modal p{font-size:clamp(14px,3.6vw,18px);text-align:center;margin:0 0 8px}
+  /* Orientation helper */
+  #rotateHelper{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:#0a0e1c;color:#fff;z-index:50}
+  #rotateHelper.active{display:flex}
+  .rainbowSnake{
+    background: conic-gradient(from 0deg, #ff004c, #ff9a00, #d0ff00, #00ff85, #00dbff, #6a00ff, #ff00e0, #ff004c);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    animation: hue 2s linear infinite;
+  }
+  @keyframes hue{to{filter:hue-rotate(360deg)}}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- Splash -->
+  <section id="splash" class="screen active">
+    <div class="card">
+      <div class="title">Emoji Snake • Bible Quiz</div>
+      <p class="subtitle">Game is best in vertical mode</p>
+      <div class="footerRow">
+        <button class="btn primary" id="splashOk">Okay</button>
+      </div>
+      <p class="kicker small">Tip Turn your phone upright for the best experience</p>
+    </div>
+  </section>
+
+  <!-- Title -->
+  <section id="title" class="screen">
+    <div class="card">
+      <div class="title">Emoji Snake • Bible Quiz</div>
+      <p class="subtitle">Answer Bible questions Then guide your snake to chow down on themed emoji Earn points for correct answers and for fruit eaten</p>
+      <div class="grid" style="grid-template-columns:1fr; margin-top:10px">
+        <button class="btn primary row" id="startBtn">Go fullscreen and start</button>
+        <div class="notice small" style="text-align:center">
+          <label style="display:inline-flex;gap:10px;align-items:center;cursor:pointer;">
+            <input type="checkbox" id="soundToggle" checked /> Sound on
+          </label>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Question -->
+  <section id="question" class="screen">
+    <div class="card">
+      <div class="title" id="qTitle">Question</div>
+      <div id="qText" class="subtitle"></div>
+      <div id="answers" class="grid" style="grid-template-columns:1fr; margin-top:10px"></div>
+      <p class="kicker small" id="qProgress"></p>
+    </div>
+  </section>
+
+  <!-- Game -->
+  <section id="game" class="screen" aria-label="Snake game">
+    <div id="gameWrap" role="region" aria-live="polite">
+      <div id="hud">
+        <div class="pill" id="hudRound">Round 1/10</div>
+        <div class="pill" id="hudScore">Score 0</div>
+      </div>
+      <canvas id="canvas"></canvas>
+
+      
+    </div>
+  </section>
+
+  <!-- End Game -->
+  <section id="theEnd" class="screen">
+    <div class="card">
+      <div class="title">Game Over</div>
+      <div class="subtitle" id="endSummary"></div>
+      <div class="footerRow">
+        <button class="btn good" id="playAgain">Play again</button>
+        <button class="btn" id="backToTitle">Back to title</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Modals -->
+  <div id="modal" class="modalWrap" role="dialog" aria-modal="true">
+    <div class="modal" id="modalInner">
+      <!-- dynamic -->
+    </div>
+  </div>
+
+  <!-- Rotate helper -->
+  <div id="rotateHelper">
+    <div class="card">
+      <div class="title">Please rotate your device</div>
+      <p class="subtitle">This game is designed for vertical portrait play</p>
+      <div class="footerRow">
+        <button class="btn primary" id="rotateOk">Okay</button>
+      </div>
+    </div>
+  </div>
+
+
+<script>
+/* ============================================================
+   CONFIG • Tweak-friendly constants
+============================================================ */
+const SCORE_CORRECT = 100;
+const SCORE_FRUIT   = 25;
+
+const GRID_W = 18;          // grid columns (portrait friendly)
+const GRID_H = 30;          // grid rows
+const STEP_MS_BASE = 145;   // base snake step (ms) for a short snake
+const STEP_MS_MIN  = 70;    // fastest allowed
+const SPEED_GROWTH = 2;     // every N segments, reduce step a bit
+
+const SHOW_MOBILE_PAD = false;   // on-screen buttons
+const ONE_TIME_TIP_AFTER_Q1 = true;
+
+/* Themes per round: background + fruit emoji + snake color */
+const THEMES = [
+  { name:"Animals",   bg:"#0b1022 radial-gradient(1200px 800px at 50% 10%, #1b2250 0%, transparent 60%)", fruit:["🐭","🐱","🐶","🐰","🐻"], snake:"#8bd3dd" },
+  { name:"Fruit",     bg:"#0b1022 radial-gradient(1100px 900px at 50% 10%, #2a3a24 0%, transparent 60%)", fruit:["🍎","🍌","🍇","🍉","🍓"], snake:"#e6b800" },
+  { name:"Ocean",     bg:"#071326 radial-gradient(1000px 900px at 50% 12%, #123a67 0%, transparent 60%)", fruit:["🐟","🐠","🐙","🐬","🐳"], snake:"#4fd1f7" },
+  { name:"Jungle",    bg:"#0b1220 radial-gradient(1100px 900px at 50% 12%, #214d2a 0%, transparent 60%)", fruit:["🌴","🐯","🐵","🦜","🦥"], snake:"#00cf83" },
+  { name:"Space",     bg:"#040816 radial-gradient(900px 700px at 50% 8%, #241744 0%, transparent 60%)",  fruit:["🌟","🛰️","🪐","👽","🚀"], snake:"#b48cff" },
+  { name:"Weather",   bg:"#0a0f21 radial-gradient(1200px 900px at 50% 15%, #213a64 0%, transparent 60%)", fruit:["☀️","🌧️","🌈","🌪️","❄️"], snake:"#ffd24d" },
+  { name:"Farm",      bg:"#0a1120 radial-gradient(1100px 900px at 50% 12%, #2f2a1f 0%, transparent 60%)", fruit:["🐔","🐄","🌽","🥕","🚜"], snake:"#ff8f6b" },
+  { name:"Desserts",  bg:"#0b1122 radial-gradient(1200px 900px at 50% 12%, #3a1d2a 0%, transparent 60%)", fruit:["🧁","🍪","🍰","🍩","🍫"], snake:"#ff6bb3" },
+  { name:"Sports",    bg:"#0a1020 radial-gradient(1100px 900px at 50% 12%, #26324f 0%, transparent 60%)", fruit:["⚽","🏀","🏈","🎾","🏓"], snake:"#7cffa8" },
+  { name:"Rainbow",   bg:"#070b18 radial-gradient(1100px 900px at 50% 12%, #2b2b5a 0%, transparent 60%)", fruit:["🍒","🍋","🍇","🍏","🫐"], snake:"rainbow" },
+];
+
+/* 10 Bible questions (fixed order). Each has four answers; we shuffle their display order per question. */
+const QUESTIONS = [
+  { q:"Who built a big boat to survive a flood", answers:[
+    {text:"Moses", emoji:"🧔🏻‍♂️", correct:false},
+    {text:"Noah", emoji:"🛶", correct:true},
+    {text:"David", emoji:"🎯", correct:false},
+    {text:"Paul", emoji:"📜", correct:false},
+  ]},
+  { q:"Where was Jesus born", answers:[
+    {text:"Nazareth", emoji:"🏠", correct:false},
+    {text:"Bethlehem", emoji:"⭐", correct:true},
+    {text:"Jerusalem", emoji:"🏛️", correct:false},
+    {text:"Rome", emoji:"🏟️", correct:false},
+  ]},
+  { q:"What did David use to defeat Goliath", answers:[
+    {text:"A sword", emoji:"🗡️", correct:false},
+    {text:"A spear", emoji:"🗡️", correct:false},
+    {text:"A sling and stone", emoji:"🪨", correct:true},
+    {text:"A chariot", emoji:"🛞", correct:false},
+  ]},
+  { q:"Who was swallowed by a great fish", answers:[
+    {text:"Jonah", emoji:"🐟", correct:true},
+    {text:"Peter", emoji:"⛵", correct:false},
+    {text:"Elijah", emoji:"🔥", correct:false},
+    {text:"Samuel", emoji:"📜", correct:false},
+  ]},
+  { q:"What did God create on the first day", answers:[
+    {text:"Animals", emoji:"🐘", correct:false},
+    {text:"Light", emoji:"💡", correct:true},
+    {text:"Plants", emoji:"🌿", correct:false},
+    {text:"Birds", emoji:"🕊️", correct:false},
+  ]},
+  { q:"Who led Israel out of Egypt", answers:[
+    {text:"Moses", emoji:"🧑‍🦯", correct:true},
+    {text:"Joshua", emoji:"🏹", correct:false},
+    {text:"Saul", emoji:"👑", correct:false},
+    {text:"Solomon", emoji:"🏗️", correct:false},
+  ]},
+  { q:"Which king wrote many Psalms", answers:[
+    {text:"David", emoji:"🎵", correct:true},
+    {text:"Nebuchadnezzar", emoji:"🦁", correct:false},
+    {text:"Herod", emoji:"🏰", correct:false},
+    {text:"Caesar", emoji:"🗡️", correct:false},
+  ]},
+  { q:"Who betrayed Jesus for silver", answers:[
+    {text:"Peter", emoji:"🐓", correct:false},
+    {text:"Judas", emoji:"💰", correct:true},
+    {text:"John", emoji:"❤️", correct:false},
+    {text:"Thomas", emoji:"❓", correct:false},
+  ]},
+  { q:"What is the ‘good news’ called", answers:[
+    {text:"Gospel", emoji:"📖", correct:true},
+    {text:"Epistle", emoji:"✉️", correct:false},
+    {text:"Parable", emoji:"🗣️", correct:false},
+    {text:"Prophecy", emoji:"🌟", correct:false},
+  ]},
+  { q:"Who is called the father of many nations", answers:[
+    {text:"Abraham", emoji:"⭐", correct:true},
+    {text:"Isaac", emoji:"🪵", correct:false},
+    {text:"Jacob", emoji:"🪜", correct:false},
+    {text:"Joseph", emoji:"🌈", correct:false},
+  ]},
+];
+
+/* ============================================================
+   APP STATE
+============================================================ */
+const $ = sel => document.querySelector(sel);
+const $$ = sel => [...document.querySelectorAll(sel)];
+
+const S = {
+  screen:"splash",
+  roundIndex:0,           // 0..9
+  score:0,
+  correctCount:0,
+  answeredThisQ:false,
+  showedTip:false,
+  // snake
+  snake:[],
+  dir:{x:1,y:0},
+  nextDir:{x:1,y:0},
+  fruit:{x:5,y:5, emoji:"🍎"},
+  stepMs:STEP_MS_BASE,
+  stepAcc:0,
+  lastTs:0,
+  grew:0,
+  running:false,
+  crashed:false,
+  rainbowPhase:0
+};
+
+/* ============================================================
+   UTIL
+============================================================ */
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+function clamp(v,lo,hi){return Math.max(lo,Math.min(hi,v));}
+function inBounds(x,y){return x>=0 && y>=0 && x<GRID_W && y<GRID_H;}
+function cellKey(x,y){return x+"|"+y;}
+function randInt(n){return Math.floor(Math.random()*n);}
+
+/* ============================================================
+   SOUND (simple WebAudio beeps you can replace later)
+============================================================ */
+let audioCtx = null;
+function ensureAudio(){
+  if(!$('#soundToggle').checked) return null;
+  if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+  return audioCtx;
+}
+function beep(freq=440,ms=120, type="sine", vol=.15){
+  const ctx = ensureAudio(); if(!ctx) return;
+  const o = ctx.createOscillator();
+  const g = ctx.createGain();
+  o.type=type; o.frequency.value=freq;
+  g.gain.value=vol;
+  o.connect(g); g.connect(ctx.destination);
+  o.start();
+  o.stop(ctx.currentTime + ms/1000);
+}
+const sfx = {
+  correct(){beep(880,120,"triangle",.2); setTimeout(()=>beep(1320,90,"triangle",.16),100);},
+  wrong(){beep(180,180,"sawtooth",.18);},
+  eat(){beep(520,70,"square",.14);},
+  crash(){beep(120,220,"sawtooth",.25);}
+};
+
+/* ============================================================
+   SCREENS & MODALS
+============================================================ */
+function showScreen(id){
+  $$('.screen').forEach(el=>el.classList.remove('active'));
+  $('#'+id).classList.add('active');
+  S.screen = id;
+}
+function showModal(html){
+  const inner = $('#modalInner');
+  inner.innerHTML = html;
+  $('#modal').classList.add('show');
+}
+function closeModal(){ $('#modal').classList.remove('show'); }
+
+
+
+
+/* ============================================================
+   SPLASH & TITLE
+============================================================ */
+$('#splashOk').addEventListener('click', ()=>{
+  showScreen('title');
+});
+$('#startBtn').addEventListener('click', async ()=>{
+  // Attempt fullscreen (gracefully ignore if blocked)
+  try{
+    const el = document.documentElement;
+    if(el.requestFullscreen) await el.requestFullscreen();
+    else if(el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
+  }catch(e){}
+  startGameFlow();
+});
+$('#soundToggle').addEventListener('change', ()=>{ /* no-op, just a toggle */ });
+
+/* ============================================================
+   QUESTION FLOW
+============================================================ */
+function startGameFlow(){
+  S.roundIndex = 0;
+  S.score = 0;
+  S.correctCount = 0;
+  S.showedTip = false;
+  showQuestion();
+}
+
+function showQuestion(){
+  showScreen('question');
+  const q = QUESTIONS[S.roundIndex];
+  $('#qTitle').textContent = `Round ${S.roundIndex+1} • ${THEMES[S.roundIndex].name}`;
+  $('#qText').textContent = q.q + "?";
+  $('#qProgress').textContent = `Question ${S.roundIndex+1} of 10`;
+  const answersWrap = $('#answers');
+  answersWrap.innerHTML = "";
+
+  const shuffled = shuffle(q.answers);
+  shuffled.forEach(ans=>{
+    const btn = document.createElement('button');
+    btn.className = 'btn row';
+    btn.innerHTML = `<span style="font-size:1.2em">${ans.emoji}</span> <span>${ans.text}</span>`;
+    btn.addEventListener('click', ()=>{
+      if(ans.correct){
+        S.score += SCORE_CORRECT;
+        S.correctCount++;
+        sfx.correct();
+        showModal(`
+          <h3>✅ Correct</h3>
+          <p>You earned ${SCORE_CORRECT} points</p>
+          <div class="footerRow"><button class="btn good" id="goPlay">Play round</button></div>
+        `);
+      }else{
+        sfx.wrong();
+        const right = q.answers.find(a=>a.correct);
+        showModal(`
+          <h3>❌ Incorrect</h3>
+          <p>Right answer ${right.emoji} ${right.text}</p>
+          <div class="footerRow"><button class="btn" id="goPlay">Play round</button></div>
+        `);
+      }
+      $('#goPlay').addEventListener('click', ()=>{
+        closeModal();
+        if(ONE_TIME_TIP_AFTER_Q1 && !S.showedTip && S.roundIndex===0){
+          S.showedTip = true;
+          showModal(`
+            <h3>How to play</h3>
+            <p>Use arrow keys or tap the on-screen arrows to move your snake Eat fruit to grow</p>
+            <div class="footerRow"><button class="btn primary" id="tipOk">Got it</button></div>
+          `);
+          $('#tipOk').addEventListener('click', ()=>{ closeModal(); startSnakeRound(); });
+        }else{
+          startSnakeRound();
+        }
+      }, {once:true});
+    });
+    answersWrap.appendChild(btn);
+  });
+}
+
+/* ============================================================
+   SNAKE GAME
+============================================================ */
+const canvas = $('#canvas');
+const ctx = canvas.getContext('2d', { alpha:false });
+
+let cellSize=16, padH=0;
+
+function sizeCanvas(){
+  const wrap = $('#gameWrap');
+  const w = wrap.clientWidth, h = wrap.clientHeight;
+  canvas.width = w; canvas.height = h;
+  cellSize = Math.floor(Math.min(w/GRID_W, h/GRID_H));
+  // center the grid
+  padH = { x: Math.floor((w - cellSize*GRID_W)/2), y: Math.floor((h - cellSize*GRID_H)/2) };
+}
+
+function themeBgCss(theme){
+  const bg = theme.bg.includes('radial-gradient') ? `#000, ${theme.bg.split(' ')[0]} ${theme.bg.split(' ').slice(1).join(' ')}` : theme.bg;
+  $('#gameWrap').style.background = theme.bg;
+}
+
+function startSnakeRound(){
+  // Setup HUD and theme
+  showScreen('game');
+  $('#hudRound').textContent = `Round ${S.roundIndex+1}/10`;
+  $('#hudScore').textContent = `Score ${S.score}`;
+  themeBgCss(THEMES[S.roundIndex]);
+  sizeCanvas();
+
+  // Init snake in center
+  const startX = Math.floor(GRID_W/2);
+  const startY = Math.floor(GRID_H/2)+3;
+  S.snake = [{x:startX-2,y:startY},{x:startX-1,y:startY},{x:startX,y:startY}];
+  S.dir = {x:1,y:0};
+  S.nextDir = {x:1,y:0};
+  S.stepMs = STEP_MS_BASE;
+  S.stepAcc = 0;
+  S.lastTs = 0;
+  S.grew = 0;
+  S.running = true;
+  S.crashed = false;
+  S.rainbowPhase = 0;
+
+  spawnFruit();
+  requestAnimationFrame(loop);
+}
+
+/* Input */
+window.addEventListener('keydown', (e)=>{
+  if(S.screen!=='game' || !S.running) return;
+  const k = e.key.toLowerCase();
+  if(['arrowup','w'].includes(k)) queueDir(0,-1);
+  else if(['arrowdown','s'].includes(k)) queueDir(0,1);
+  else if(['arrowleft','a'].includes(k)) queueDir(-1,0);
+  else if(['arrowright','d'].includes(k)) queueDir(1,0);
+});
+
+
+
+/* Swipe support */
+let touchStart=null;
+canvas.addEventListener('touchstart', e=>{ touchStart = [...e.changedTouches][0]; }, {passive:true});
+canvas.addEventListener('touchend', e=>{
+  if(!touchStart) return;
+  const tEnd = [...e.changedTouches][0];
+  const dx = tEnd.clientX - touchStart.clientX;
+  const dy = tEnd.clientY - touchStart.clientY;
+  if(Math.abs(dx)>Math.abs(dy)){
+    if(dx>8) queueDir(1,0); else if(dx<-8) queueDir(-1,0);
+  }else{
+    if(dy>8) queueDir(0,1); else if(dy<-8) queueDir(0,-1);
+  }
+  touchStart=null;
+}, {passive:true});
+
+function queueDir(x,y){
+  // Prevent direct reverse
+  if(S.dir.x===-x && S.dir.y===-y) return;
+  S.nextDir = {x,y};
+}
+
+/* Fruit spawn */
+function spawnFruit(){
+  const theme = THEMES[S.roundIndex];
+  const opts = theme.fruit;
+  let x,y,key;
+  const occupied = new Set(S.snake.map(p=>cellKey(p.x,p.y)));
+  do{
+    x = randInt(GRID_W);
+    y = randInt(GRID_H);
+    key = cellKey(x,y);
+  }while(occupied.has(key));
+  S.fruit = { x, y, emoji: opts[randInt(opts.length)] };
+}
+
+/* Game loop with grid steps + smooth head interpolation */
+function loop(ts){
+  if(!S.running) return; // stop frame loop when not running
+  if(!S.lastTs) S.lastTs = ts;
+  const dt = ts - S.lastTs;
+  S.lastTs = ts;
+
+  S.stepAcc += dt;
+
+  // speed scales with length
+  const len = S.snake.length;
+  const speedSteps = Math.floor(len / SPEED_GROWTH);
+  S.stepMs = clamp(STEP_MS_BASE - speedSteps*5, STEP_MS_MIN, STEP_MS_BASE);
+
+  // Perform grid step(s) if needed
+  while(S.stepAcc >= S.stepMs){
+    S.stepAcc -= S.stepMs;
+    stepOnce();
+    if(!S.running) break; // crashed
+  }
+
+  draw(S.stepAcc / S.stepMs);
+  if(S.running) requestAnimationFrame(loop);
+}
+
+function stepOnce(){
+  // Apply nextDir
+  S.dir = { ...S.nextDir };
+
+  const head = S.snake[S.snake.length-1];
+  const nx = head.x + S.dir.x;
+  const ny = head.y + S.dir.y;
+
+  // Collisions
+  if(!inBounds(nx,ny) || hitsSelf(nx,ny)){
+    sfx.crash();
+    S.running = false;
+    roundOver();
+    return;
+  }
+
+  // Move
+  S.snake.push({x:nx,y:ny});
+  if(nx===S.fruit.x && ny===S.fruit.y){
+    S.grew += 1;
+    S.score += SCORE_FRUIT;
+    $('#hudScore').textContent = `Score ${S.score}`;
+    sfx.eat();
+    spawnFruit();
+  }else{
+    // trim tail unless we grew
+    if(S.grew>0) S.grew--;
+    else S.snake.shift();
+  }
+
+  // Rainbow snake animation phase (round 10)
+  if(S.roundIndex===9) S.rainbowPhase = (S.rainbowPhase+1)%360;
+}
+
+function hitsSelf(x,y){
+  for(let i=0;i<S.snake.length-1;i++){
+    const p=S.snake[i];
+    if(p.x===x && p.y===y) return true;
+  }
+  return false;
+}
+
+/* Drawing */
+function draw(t){
+  const w = canvas.width, h = canvas.height;
+  // Clear
+  ctx.fillStyle = '#070b18';
+  ctx.fillRect(0,0,w,h);
+
+  // Grid origin
+  const ox = padH.x, oy = padH.y;
+
+  // Fruit (emoji)
+  drawEmoji(S.fruit.emoji, ox + S.fruit.x*cellSize + cellSize/2, oy + S.fruit.y*cellSize + cellSize/2, Math.floor(cellSize*0.8));
+
+  // Snake body
+  const theme = THEMES[S.roundIndex];
+  const color = theme.snake;
+
+  // Interpolated head position
+  const n = S.snake.length;
+  const head = S.snake[n-1];
+  const prev = S.snake[n-2] || head;
+  const hx = head.x*cellSize, hy = head.y*cellSize;
+  const px = prev.x*cellSize, py = prev.y*cellSize;
+
+  // draw tail to before head
+  ctx.fillStyle = (color==='rainbow') ? '#ffffff' : color;
+  for(let i=0;i<n-1;i++){
+    const p = S.snake[i];
+    const cx = ox + p.x*cellSize;
+    const cy = oy + p.y*cellSize;
+    roundedRect(cx+2, cy+2, cellSize-4, cellSize-4, 6);
+    ctx.fill();
+  }
+
+  // Head with interpolation
+  const ihx = ox + px + (hx - px)*t;
+  const ihy = oy + py + (hy - py)*t;
+  const r = (cellSize-4);
+  if(color==='rainbow'){
+    // animated gradient head
+    const g = ctx.createLinearGradient(ihx, ihy, ihx+r, ihy+r);
+    const phase = S.rainbowPhase;
+    g.addColorStop(0, `hsl(${phase},100%,60%)`);
+    g.addColorStop(1, `hsl(${(phase+120)%360},100%,60%)`);
+    ctx.fillStyle = g;
+  }else{
+    ctx.fillStyle = color;
+  }
+  roundedRect(ihx+2, ihy+2, r, r, 8);
+  ctx.fill();
+
+  // Eyes
+  ctx.fillStyle = "#0a0a14";
+  const eye = Math.max(2, Math.round(cellSize*0.12));
+  const ex = ihx + r*0.7, ey1 = ihy + r*0.35, ey2 = ihy + r*0.65;
+  ctx.fillRect(ex, ey1, eye, eye);
+  ctx.fillRect(ex, ey2, eye, eye);
+
+  // Optional grid (hidden)
+  // drawGrid(ox,oy);
+
+  // HUD already shows score/round
+}
+
+function roundedRect(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r, y);
+  ctx.arcTo(x+w, y, x+w, y+h, r);
+  ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r);
+  ctx.arcTo(x, y, x+w, y, r);
+  ctx.closePath();
+}
+
+/* Draw emoji centered at x,y with px size */
+function drawEmoji(char, x, y, size){
+  ctx.font = `${size}px Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, emoji`;
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.fillText(char, x, y+Math.floor(size*0.06)); // small vertical nudge
+}
+
+function roundOver(){
+  // Show end-of-round summary
+  showModal(`
+    <h3>Round complete</h3>
+    <p>You ate ${S.grew===0 ? "some" : ""} fruit this round</p>
+    <p>Round score so far <b>${S.score}</b></p>
+    <div class="footerRow">
+      <button class="btn primary" id="nextRoundBtn">${S.roundIndex<9 ? "Next question" : "See results"}</button>
+    </div>
+  `);
+  $('#nextRoundBtn').addEventListener('click', ()=>{
+    closeModal();
+    S.roundIndex++;
+    if(S.roundIndex<QUESTIONS.length){
+      showQuestion();
+    }else{
+      endGame();
+    }
+  }, {once:true});
+}
+
+/* End game */
+function endGame(){
+  showScreen('theEnd');
+  const incorrect = 10 - S.correctCount;
+  $('#endSummary').innerHTML = `
+    <div style="margin:6px 0">Total points <b>${S.score}</b></div>
+    <div>Questions correct <b>${S.correctCount}</b> / 10 • Incorrect <b>${incorrect}</b></div>
+  `;
+}
+$('#playAgain').addEventListener('click', ()=> startGameFlow());
+$('#backToTitle').addEventListener('click', ()=> showScreen('title'));
+
+/* ============================================================
+   RESIZE & ORIENTATION
+============================================================ */
+window.addEventListener('resize', ()=>{
+  if(S.screen==='game') sizeCanvas();
+});
+
+
+/* ============================================================
+   BOOTSTRAP
+============================================================ */
+showScreen('splash');
+// Rotate screen dismiss (only matters if you ever show it manually)
+$('#rotateOk')?.addEventListener('click', ()=> $('#rotateHelper').classList.remove('active'));
+
+/* ============================================================
+   ACCESSIBILITY & SAFETY GUARDS
+============================================================ */
+// Prevent scroll while playing (mobile)
+['touchmove','wheel'].forEach(type=>{
+  document.addEventListener(type, (e)=>{
+    if(S.screen==='game') e.preventDefault();
+  }, {passive:false});
+});
+
+/* ============================================================
+   OPTIONAL DEBUG HELPERS (toggle if needed)
+============================================================ */
+// function drawGrid(ox,oy){
+//   ctx.strokeStyle = 'rgba(255,255,255,.04)';
+//   for(let x=0;x<=GRID_W;x++){
+//     ctx.beginPath(); ctx.moveTo(ox + x*cellSize + .5, oy + .5);
+//     ctx.lineTo(ox + x*cellSize + .5, oy + GRID_H*cellSize + .5); ctx.stroke();
+//   }
+//   for(let y=0;y<=GRID_H;y++){
+//     ctx.beginPath(); ctx.moveTo(ox + .5, oy + y*cellSize + .5);
+//     ctx.lineTo(ox + GRID_W*cellSize + .5, oy + y*cellSize + .5); ctx.stroke();
+//   }
+// }
+</script>
+</body>
+</html>
