@@ -150,7 +150,9 @@
     <section id="title" class="screen center-col">
       <h1 class="title">🚀 Emoji Missile Defense</h1>
       <div class="panel">
-        <p>Answer Bible questions, then defend your neighborhood! Tap to launch rockets 🚀. Don’t let the falling emoji hit your buildings.</p>
+        <p>Answer Bible questions, then defend your neighborhood!</p>
+          <p>Tap to launch rockets 🚀.</p>
+          <p>Don’t let the falling emoji hit your buildings.</p>
         <div class="row" style="margin-top:10px">
           <span class="pill">10 questions</span>
           <span class="pill">Bonus round at the end</span>
@@ -1099,10 +1101,10 @@ function showQuestion(){
         if(!didShowHowTo){
           didShowHowTo = true;
           showModal(`
-            <h3>How to Play</h3>
-            <p>"Shoot down the emoji before they hit your neighborhood."</p>
-            <p>Target this emoji: <span class="big-emoji">${nextRoundTargetEmoji}</span></p>
-                        <p class="small">Tap anywhere to launch a rocket. You can have up to <strong>3</strong> rockets on screen.</p>
+            <h3>HOW TO PLAY</h3>
+            <p><strong>Shoot down the emoji before they hit your neighborhood.</strong></p>
+            <p>Tap anywhere to launch a 🚀. You can have up to <strong>3</strong> rockets on screen.</p>
+                        
 
           `, [{label:'Start Round', id:'go'}], ()=>{
             hideModal();
