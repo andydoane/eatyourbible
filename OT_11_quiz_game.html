@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+<title>🚀 Emoji Missile Defense</title>
+<style>
+  :root{
+    --bg:#0d1321;
+    --panel:#111827;
+    --ink:#e5e7eb;
+    --accent:#38bdf8;
+    --good:#34d399;
+    --bad:#f87171;
+    --gold:#fbbf24;
+  }
+  *{box-sizing:border-box}
+  html,body{
+    margin:0;
+    padding:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans", "Helvetica Neue", Arial, "Apple Color Emoji","Segoe UI Emoji";
+    height:100%;
+    overflow:hidden;
+  }
+  .app{
+    /* Portrait-first stage with a 9:16 canvas area */
+    position:relative;
+    width:100vw;
+    height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .stage{
+    width:min(94vw, 560px);
+    aspect-ratio:9/16;
+    background:#0b1020;
+    border:2px solid #223;
+    border-radius:18px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.5);
+    position:relative;
+    overflow:hidden;
+  }
+  .screen{
+    position:absolute; inset:0;
+    display:none;
+  }
+  .screen.active{display:flex}
+  .center-col{
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    gap:16px; text-align:center; padding:20px;
+  }
+  h1,h2,h3{margin:0}
+  h1{font-size:clamp(22px,3.8vw,34px)}
+  p{opacity:.9}
+  button{
+    border:0; background:var(--accent); color:#001018;
+    padding:12px 16px; border-radius:10px; font-weight:700;
+    font-size:16px; cursor:pointer;
+    box-shadow:0 4px 0 #0d8bb4;
+    transition:transform .05s ease;
+  }
+  button:active{ transform:translateY(2px); box-shadow:0 2px 0 #0d8bb4; }
+  .ghost{
+    background:transparent; color:var(--ink); box-shadow:none; border:1px solid #334155;
+  }
+  .small{font-size:13px; opacity:.8}
+  .title{font-size:clamp(28px,5vw,42px)}
+  .panel{
+    background:var(--panel);
+    border:1px solid #2a3141;
+    border-radius:14px;
+    padding:14px;
+    width:100%;
+  }
+  .q-emoji{
+    font-size:22px; margin-right:6px;
+  }
+  .answers{
+    display:grid; gap:10px; margin-top:10px;
+    grid-template-columns:1fr;
+  }
+  .answers button{
+    width:100%;
+    display:flex; align-items:center; justify-content:center;
+    gap:10px;
+  }
+  .row{
+    width:100%; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
+  }
+  .pill{
+    background:#0d152b; border:1px solid #1f2a44; border-radius:999px;
+    padding:6px 10px; font-size:12px; opacity:.9;
+  }
+
+  /* Popup overlay */
+  .overlay{
+    position:absolute; inset:0; background:rgba(0,0,0,.5);
+    display:none; align-items:center; justify-content:center; padding:20px;
+  }
+  .overlay.show{display:flex}
+  .modal{
+    background:var(--panel); border:1px solid #2a3141; border-radius:16px;
+    max-width:92%; width:560px; padding:16px; text-align:center;
+  }
+  .modal h3{font-size:20px; margin-bottom:6px}
+  .big-emoji{font-size:40px; line-height:1.1}
+  .okbar{margin-top:12px; display:flex; gap:10px; justify-content:center}
+  .okbar button{min-width:120px}
+
+  /* Game canvas + HUD */
+  #gameCanvas{ position:absolute; inset:0; width:100%; height:100%; background:linear-gradient(#0a1530,#0a1130 60%, #091026); }
+  .hud{
+    position:absolute; left:10px; right:10px; top:10px;
+    display:flex; align-items:center; justify-content:space-between;
+    gap:8px; font-size:14px;
+  }
+  .hud .pill{background:rgba(0,0,0,.35)}
+  .bottom-tip{
+    position:absolute; left:0; right:0; bottom:8px; text-align:center; font-size:12px; opacity:.75;
+  }
+
+  .hidden{display:none !important;}
+
+    /* Safety: only the active screen is ever visible */
+  .stage > .screen:not(.active){ display:none !important; }
+  .stage > .screen.active{ display:flex !important; }
+  /* Make sure overlay floats above everything */
+  .overlay{ z-index: 100; }
+  .stage > .screen{ z-index: 1; }
+
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="stage">
+
+    <!-- SPLASH -->
+    <section id="splash" class="screen center-col active">
+      <h1 class="title">📱 Best in Vertical Mode</h1>
+      <p>Game is best in <strong>vertical</strong> (portrait) mode 📱</p>
+      <button id="btnSplashOk">Okay</button>
+      <p class="small">Tip: Rotate your device upright for the best view.</p>
+    </section>
+
+    <!-- TITLE -->
+    <section id="title" class="screen center-col">
+      <h1 class="title">🚀 Emoji Missile Defense</h1>
+      <div class="panel">
+        <p>Answer Bible questions, then defend your neighborhood! Tap to launch rockets 🚀. Don’t let the falling emoji hit your buildings.</p>
+        <div class="row" style="margin-top:10px">
+          <span class="pill">10 questions</span>
+          <span class="pill">Bonus round at the end</span>
+          <span class="pill">From eatyourbible.com</span>
+        </div>
+      </div>
+      <button id="btnStart">Start</button>
+    </section>
+
+    <!-- QUESTION -->
+    <section id="question" class="screen center-col">
+      <h2>Question <span id="qNum">1</span> / 10</h2>
+      <div class="panel" id="qText" style="font-size:16px; text-align:center"></div>
+      <div class="answers" id="answers"></div>
+      <div class="row" style="margin-top:8px">
+        <span class="pill">Score: <span id="scoreQ">0</span></span>
+        <span class="pill">Correct: <span id="correctQ">0</span></span>
+        <span class="pill">Incorrect: <span id="wrongQ">0</span></span>
+      </div>
+    </section>
+
+    <!-- GAME (per round) -->
+    <section id="game" class="screen">
+      <canvas id="gameCanvas"></canvas>
+      <div class="hud">
+        <span class="pill">Round <span id="roundLabel">1</span></span>
+        <span class="pill">Score <span id="scoreG">0</span></span>
+        <span class="pill">Buildings <span id="buildsLeft">4</span></span>
+        <span class="pill">Left <span id="leftToSpawn">0</span></span>
+      </div>
+      <div class="bottom-tip">Tap anywhere to fire a rocket (max 3) 🚀</div>
+    </section>
+
+    <!-- END -->
+    <section id="end" class="screen center-col">
+      <h1>All Done!</h1>
+      <div class="panel">
+        <p style="font-size:18px; margin:6px 0">Final Score: <strong id="finalScore">0</strong></p>
+        <p style="margin:6px 0">Correct answers: <strong id="finalCorrect">0</strong></p>
+        <p style="margin:6px 0">Incorrect answers: <strong id="finalWrong">0</strong></p>
+      </div>
+      <button id="btnRestart">Play Again</button>
+    </section>
+
+    <!-- POPUPS -->
+    <div id="overlay" class="overlay">
+      <div class="modal" id="modal">
+        <!-- Content injected by JS -->
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* =========================
+   SIMPLE STATE MANAGER
+========================= */
+const $ = sel => document.querySelector(sel);
+const screens = {
+  splash: $('#splash'),
+  title: $('#title'),
+  question: $('#question'),
+  game: $('#game'),
+  end: $('#end')
+};
+
+// One-time startup sweep: ensure only splash is active
+document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+screens.splash.classList.add('active');
+
+
+function show(id){
+  const target = screens[id];
+  if(!target) return; // guard against typos
+  for (const key in screens){
+    screens[key].classList.remove('active');
+  }
+  target.classList.add('active');
+}
+
+const overlay = $('#overlay');
+const modal = $('#modal');
+function showModal(html, buttons=[{label:'OK', id:'ok', cls:''}], onClick=()=>{}){
+  modal.innerHTML = html + `<div class="okbar">` + buttons.map(b=>`<button class="${b.cls||''}" data-btn="${b.id}">${b.label}</button>`).join('') + `</div>`;
+  overlay.classList.add('show');
+  modal.onclick = (e)=>{
+    const b = e.target.closest('button[data-btn]');
+    if(!b) return;
+    onClick(b.getAttribute('data-btn'));
+  };
+}
+function hideModal(){ overlay.classList.remove('show'); modal.innerHTML=''; }
+
+
+/*
+
+ #####     #     #    #######     #####     #######    ###    #######    #     #     #####  
+#     #    #     #    #          #     #       #        #     #     #    ##    #    #     # 
+#     #    #     #    #          #             #        #     #     #    # #   #    #       
+#     #    #     #    #####       #####        #        #     #     #    #  #  #     #####  
+#   # #    #     #    #                #       #        #     #     #    #   # #          # 
+#    #     #     #    #          #     #       #        #     #     #    #    ##    #     # 
+ #### #     #####     #######     #####        #       ###    #######    #     #     #####  
+
+*/
+
+
+const QUESTIONS = [
+  {
+    q: "What did God tell Abraham he was going to do?",
+    answers: [
+      { text: "Destroy sinful Sodom and Gomorrah", emoji: "💥" },
+      { text: "Bless every nation that very day", emoji: "🌍" },
+      { text: "Give Abraham a brand-new name", emoji: "🆕" },
+      { text: "Flood the whole earth again", emoji: "🌊" }
+    ],
+    correctIndex: 0
+  },
+  {
+    q: "What was the first thing Abraham asked?",
+    answers: [
+      { text: "Will you destroy it if 50 godly people live there?", emoji: "❓" },
+      { text: "Will you spare it for 5?", emoji: "5️⃣" },
+      { text: "Will you send angels right now?", emoji: "👼" },
+      { text: "Will you move Lot to Egypt?", emoji: "🧳" }
+    ],
+    correctIndex: 0
+  },
+  {
+    q: "Why was Abraham worried about the city of Sodom?",
+    answers: [
+      { text: "His nephew Lot lived there", emoji: "🧑‍🤝‍🧑" },
+      { text: "He owned fields there", emoji: "🧭" },
+      { text: "His tents were nearby", emoji: "⛺" },
+      { text: "He feared the local king", emoji: "👑" }
+    ],
+    correctIndex: 0
+  },
+  {
+    q: "What was the final number of godly people that God agreed to?",
+    answers: [
+      { text: "50 people", emoji: "🔴" },
+      { text: "40 people", emoji: "🟠" },
+      { text: "10 people", emoji: "🟡" },
+      { text: "5 people", emoji: "🟢" }
+    ],
+    correctIndex: 2
+  },
+  {
+    q: "When the men of Sodom tried to hurt them, what did the angels do?",
+    answers: [
+      { text: "Made them blind", emoji: "🙈" },
+      { text: "Put them to sleep", emoji: "😴" },
+      { text: "Flew away from danger", emoji: "🕊️" },
+      { text: "Turned them into salt", emoji: "🧂" }
+    ],
+    correctIndex: 0
+  },
+  {
+    q: "What happened when Lot told his sons-in-law Sodom would be destroyed?",
+    answers: [
+      { text: "They believed him and packed to leave", emoji: "📦" },
+      { text: "They thought he was joking", emoji: "😂" },
+      { text: "They ran to the mountains immediately", emoji: "⛰️" },
+      { text: "They fought the angels", emoji: "⚔️" }
+    ],
+    correctIndex: 1
+  },
+  {
+    q: "Because Lot's family would not hurry, what did the angels do?",
+    answers: [
+      { text: "Dragged them out of the city", emoji: "🫴" },
+      { text: "Gave them more time", emoji: "⏳" },
+      { text: "Sent chariots to carry them", emoji: "🚗" },
+      { text: "Closed the city gates", emoji: "🚪" }
+    ],
+    correctIndex: 0
+  },
+  {
+    q: "What warning did the angels give to Lot's family?",
+    answers: [
+      { text: "Run to the mountains. Do not stop or look back", emoji: "⛰️" },
+      { text: "Hide inside the city until morning", emoji: "🏙️" },
+      { text: "Build a boat and wait", emoji: "⛵" },
+      { text: "Wait until the sun rises", emoji: "🌅" }
+    ],
+    correctIndex: 0
+  },
+  {
+    q: "How did God destroy Sodom and Gomorrah?",
+    answers: [
+      { text: "He sent fiery sulfur down from the sky", emoji: "🔥" },
+      { text: "A great earthquake swallowed the cities", emoji: "🌏" },
+      { text: "A flood washed them away", emoji: "🌊" },
+      { text: "An enemy army conquered them", emoji: "⚔️" }
+    ],
+    correctIndex: 0
+  },
+  {
+    q: "What happened to Lot’s wife? Why?",
+    answers: [
+      { text: "She turned into a pillar of salt because she looked back", emoji: "🧂" },
+      { text: "She was rescued by angels for obeying", emoji: "👼" },
+      { text: "She became queen of a nearby city", emoji: "👑" },
+      { text: "She disappeared and was never seen again", emoji: "🫥" }
+    ],
+    correctIndex: 0
+  }
+];
+
+
+
+  /*
+
+#######    #     #    ######     
+#          ##    #    #     #    
+#          # #   #    #     #    
+#####      #  #  #    #     #    
+#          #   # #    #     #    
+#          #    ##    #     #    
+#######    #     #    ######     
+
+
+*/
+
+
+// Target emoji per round = emoji of the CORRECT answer chosen for that question.
+// We’ll pick the first emoji if the correct answer has multiple (e.g., "🍞🐟" → "🍞").
+
+function firstEmoji(str){
+  // Return first visible emoji (simple approach)
+  return [...str][0] || "⭐";
+}
+
+/* =========================
+   GLOBAL GAME/QUIZ STATE
+========================= */
+let questionIndex = 0;           // 0..9
+let score = 0;
+let correctCount = 0;
+let wrongCount = 0;
+let nextRoundTargetEmoji = "⭐";  // set after answering Q1..Q10
+let didShowHowTo = false;        // instruction popup only once (after Q1)
+const SCORE_CORRECT = 100;
+const SCORE_HIT = 20;
+const SCORE_BUILDING_BONUS = 50;
+
+/* =========================
+   UI ELEMENTS (Quiz)
+========================= */
+const qNum = $('#qNum');
+const qText = $('#qText');
+const answersEl = $('#answers');
+const scoreQ = $('#scoreQ');
+const correctQ = $('#correctQ');
+const wrongQ = $('#wrongQ');
+
+/* =========================
+   GAME ENGINE (Canvas)
+========================= */
+const canvas = $('#gameCanvas');
+const ctx = canvas.getContext('2d');
+let stars = [];
+let starT = 0; // time for twinkle
+
+function fitCanvas(){
+  const r = canvas.getBoundingClientRect();
+  canvas.width = Math.floor(r.width * devicePixelRatio);
+  canvas.height = Math.floor(r.height * devicePixelRatio);
+  ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+    buildStars();
+
+}
+
+function buildStars(){
+  const w = canvas.width / devicePixelRatio;
+  const h = canvas.height / devicePixelRatio;
+
+  // Density: one star per ~120,000 px² (tweak to taste)
+  const count = Math.max(40, Math.floor((w * h) / 120000));
+
+  stars = Array.from({length: count}, () => ({
+    x: Math.random() * w,
+    y: Math.random() * h,
+    r: 0.8 + Math.random() * 1.6,          // radius 0.8..2.4
+    a: 0.20 + Math.random() * 0.35,        // base alpha 0.20..0.55
+    s: 1.6 + Math.random() * 2.2,          // twinkle speed
+    p: Math.random() * Math.PI * 2         // twinkle phase
+  }));
+}
+
+window.addEventListener('resize', fitCanvas);
+
+/* Buildings at bottom */
+const BUILDING_EMOJI = ["🏠","🏢","🏫","🏥"];
+const BONUS_EMOJIS = ["🔴","🟠","🟡","🟢","🔵","🟣"];
+
+let buildings = [];
+let enemies = [];
+let missiles = [];
+let particles = [];
+let gameRunning = false;
+let roundLevel = 1;  // 1..10 for normal rounds; endurance uses ongoing
+let enemiesToSpawn = 0;
+let spawnCooldown = 0;
+let spawnInterval = 1200; // ms, will scale by level
+let enemySpeed = 60;      // px/s downward component, scales by level
+let lastTime = 0;
+let buildingY = 0;
+let tapsEnabled = false;
+let isEndurance = false;
+let enduranceTimer = 0;   // seconds
+const ENDURANCE_STEP = 15;// every 15s increase difficulty
+let enduranceLevel = 1;   // start similar to level 1
+let targetEmoji = "⭐";    // current round's enemy emoji
+
+// 🛸 bonus target
+const BONUS_UFO_POINTS = 500;
+let ufo = null;           // {x,y,vx,baseY,amp,omega,phase,alive}
+let ufoTime = 0;          // elapsed time since spawn (for sine)
+let ufoScheduled = false; // will we spawn one this round?
+let ufoSpawnAt = 0;       // absolute time in ms
+
+// Floating “+500” popups
+let scorePops = [];       // {x,y,t,life}
+
+
+/* UI HUD */
+const roundLabel = $('#roundLabel');
+const scoreG = $('#scoreG');
+const buildsLeft = $('#buildsLeft');
+const leftToSpawn = $('#leftToSpawn');
+
+/* Helpers */
+function randRange(a,b){ return a + Math.random()*(b-a); }
+function dist(a,b,x,y){ const dx=a-x, dy=b-y; return Math.hypot(dx,dy); }
+
+function resetBuildings(){
+  buildings = [];
+  const w = canvas.width / devicePixelRatio;
+  const h = canvas.height / devicePixelRatio;
+  buildingY = h - 40;
+  const slot = w / (BUILDING_EMOJI.length+1);
+  for(let i=0;i<BUILDING_EMOJI.length;i++){
+    buildings.push({
+      x:(i+1)*slot, y:buildingY, alive:true, emoji:BUILDING_EMOJI[i]
+    });
+  }
+  updateHUD();
+}
+
+function updateHUD(){
+  scoreG.textContent = score;
+  buildsLeft.textContent = buildings.filter(b=>b.alive).length;
+  leftToSpawn.textContent = isEndurance ? '∞' : enemiesToSpawn;
+}
+
+
+function levelSettings(level){
+  // Level tuning: slower level 1, reach old L1 speed by ~level 8
+  const baseSpawn = 1100;                         // keep spawn cadence the same for now
+  const spawn = Math.max(350, baseSpawn - (level-1)*70);
+
+  const baseSpeed = 32;                           // was 80
+  const speedPerLevel = 7;                        // was 12
+  const speed = baseSpeed + (level-1)*speedPerLevel; // L1 ≈ 32 px/s, L8 ≈ 81 px/s
+
+  return {spawnInterval:spawn, enemySpeed:speed};
+}
+
+// Missile speed scales by level so players can keep up with faster enemies
+function missileSpeed(level){
+  const BASE = 260;      // starting missile speed (px/s) – faster than level 1 enemies
+  const PER_LEVEL = 12;  // how much faster per level
+  return BASE + (level - 1) * PER_LEVEL;
+}
+
+
+function prepareRound(level, emoji, endurance=false){
+  isEndurance = endurance;
+  roundLevel = level;
+  targetEmoji = emoji || "⭐";
+  const w = canvas.width / devicePixelRatio;
+  const h = canvas.height / devicePixelRatio;
+
+  // Make the game screen visible before sizing, then size canvas
+  show('game');
+  fitCanvas();
+  // One more sizing pass on the next frame after layout
+  requestAnimationFrame(fitCanvas);
+
+
+  enemies = [];
+  missiles = [];
+  particles = [];
+  resetBuildings();
+
+  if(!isEndurance){
+    enemiesToSpawn = 10 + 2*level;
+  }else{
+    enemiesToSpawn = Infinity; // until buildings gone
+    enduranceTimer = 0;
+    enduranceLevel = 1; // ramp from easy
+  }
+  const s = levelSettings(isEndurance ? enduranceLevel : level);
+  spawnInterval = s.spawnInterval;
+  enemySpeed = s.enemySpeed;
+    // Schedule a single UFO appearance roughly halfway through the round
+  ufo = null;
+  ufoTime = 0;
+  ufoScheduled = true;
+  const nowMs = performance.now();
+  if (!isEndurance){
+    const estTotal = (10 + 2*level) * spawnInterval;       // rough duration in ms
+    const delay = estTotal * randRange(0.45, 0.65);         // halfway ± a bit
+    ufoSpawnAt = nowMs + delay;
+  } else {
+    // Endurance: show once at ~15s ± a few seconds
+    ufoSpawnAt = nowMs + randRange(11000, 19000);
+  }
+
+
+  spawnCooldown = 400; // small delay before first spawn
+  lastTime = performance.now();
+  gameRunning = true;
+  tapsEnabled = true;
+  updateHUD();
+
+}
+
+function spawnEnemy(){
+  const w = canvas.width / devicePixelRatio;
+  const h = canvas.height / devicePixelRatio;
+  // Pick a living building as a target; if none, target last slot
+  const alive = buildings.filter(b=>b.alive);
+  const target = alive.length ? alive[Math.floor(Math.random()*alive.length)]
+                              : {x:(BUILDING_EMOJI.length)*w/(BUILDING_EMOJI.length+1), y:buildingY, alive:false};
+  const startX = randRange(20, w-20);
+  const startY = -24;
+  // Compute velocity towards target with overall speed ~ enemySpeed
+  const dx = target.x - startX;
+  const dy = target.y - startY;
+  const len = Math.hypot(dx,dy) || 1;
+  const vx = (dx/len) * enemySpeed;
+  const vy = (dy/len) * enemySpeed;
+
+  enemies.push({
+    x:startX, y:startY, vx, vy,
+    targetX: target.x, targetY: target.y,
+    r:16,
+    // Use mixed bonus emojis during endurance; otherwise use the round's targetEmoji
+    emoji: isEndurance
+      ? BONUS_EMOJIS[Math.floor(Math.random() * BONUS_EMOJIS.length)]
+      : targetEmoji
+  });
+
+}
+
+function spawnUfo(){
+  const w = canvas.width / devicePixelRatio;
+  const h = canvas.height / devicePixelRatio;
+
+  const fromLeft = Math.random() < 0.5;
+ const startX = fromLeft ? -45 : (w + 45); // was ±30, give bigger margin for larger size
+const vx = fromLeft ? 60 : -60;
+
+  const baseY = h * 0.22;                   // fly near the top third
+  const amp = randRange(16, 34);            // sine amplitude
+  const omega = randRange(1.6, 2.6);        // sine speed (rad/s)
+  const phase = Math.random() * Math.PI * 2;
+
+  ufo = {
+    x: startX, y: baseY,
+    vx, baseY, amp, omega, phase,
+    alive: true
+  };
+  ufoTime = 0;
+}
+
+
+function addParticles(x,y,color,count=16){
+  for(let i=0;i<count;i++){
+    const ang = Math.random()*Math.PI*2;
+    const sp = randRange(40,140);
+    particles.push({
+      x,y, vx:Math.cos(ang)*sp, vy:Math.sin(ang)*sp,
+      life: randRange(.4,.9), t:0, color
+    });
+  }
+}
+
+// Small single puff of smoke for rocket trails
+function addSmoke(x,y){
+  // Gentle drift downward and a touch sideways
+  const vx = randRange(-25, 25);
+  const vy = randRange(10, 40);
+  particles.push({
+    x, y,
+    vx, vy,
+    life: randRange(0.45, 0.8),
+    t: 0,
+    color: '#cbd5e1', // slate-200-ish light gray
+    r: randRange(1.4, 2.2)
+  });
+}
+
+
+function addMissile(tx,ty){
+  if(missiles.length>=3) return; // limit
+  const w = canvas.width / devicePixelRatio;
+  const h = canvas.height / devicePixelRatio;
+  const startX = w*0.5;
+  const startY = h - 10; // bottom center
+  const dx = tx - startX;
+  const dy = ty - startY;
+  const len = Math.hypot(dx,dy) || 1;
+  const speed = isEndurance ? missileSpeed(enduranceLevel) : missileSpeed(roundLevel);
+  const vx = (dx/len)*speed;
+  const vy = (dy/len)*speed;
+  const angle = Math.atan2(vy, vx); // for rotation
+  missiles.push({
+    x:startX, y:startY, vx, vy, angle, r:12,
+    smokeT:0,
+    tx:tx, ty:ty,
+    retT:0,               // how long the reticle has been visible
+    retLife:2.0,          // total lifetime in seconds (shows ~1.5s, fades ~0.5s)
+    retVisible:true
+  });
+}
+
+canvas.addEventListener('pointerdown', (e)=>{
+  if(!tapsEnabled) return;
+  const rect = canvas.getBoundingClientRect();
+  const tx = (e.clientX - rect.left);
+  const ty = (e.clientY - rect.top);
+  addMissile(tx, ty);
+});
+
+/* =========================
+   GAME LOOP
+========================= */
+function tick(now){
+  if(!gameRunning){ requestAnimationFrame(tick); return; }
+  const dt = Math.min(0.033, (now - lastTime)/1000); // clamp 33ms
+  lastTime = now;
+    starT += dt;
+  // Spawn UFO at scheduled time
+  if (ufoScheduled && now >= ufoSpawnAt){
+    ufoScheduled = false;
+    spawnUfo();
+  }
+
+  // Update UFO motion (if present)
+  if (ufo && ufo.alive){
+    ufoTime += dt;
+    ufo.x += ufo.vx * dt;
+    ufo.y = ufo.baseY + Math.sin(ufo.phase + ufoTime * ufo.omega) * ufo.amp;
+
+    // Despawn if it exits the opposite edge
+    const w = canvas.width / devicePixelRatio;
+    if ((ufo.vx > 0 && ufo.x > w + 40) || (ufo.vx < 0 && ufo.x < -40)){
+      ufo = null;
+    }
+  }
+
+
+  // Endurance difficulty ramp
+  if(isEndurance){
+    enduranceTimer += dt;
+    // Every 15s, increase difficulty
+    if(enduranceTimer >= ENDURANCE_STEP * (enduranceLevel)){
+      enduranceLevel++;
+      const s = levelSettings(enduranceLevel);
+      spawnInterval = s.spawnInterval;
+      enemySpeed = s.enemySpeed;
+    }
+  }
+
+  // Spawning
+  if(!isEndurance && enemiesToSpawn<=0 && enemies.length===0){
+    // Round complete → award building bonus, stop
+    endRound(true);
+  }else{
+    spawnCooldown -= dt*1000;
+    if(spawnCooldown<=0){
+      if(isEndurance || enemiesToSpawn>0){
+        spawnEnemy();
+        if(!isEndurance) enemiesToSpawn--;
+        spawnCooldown = spawnInterval;
+        updateHUD();
+      }
+    }
+  }
+
+  // Update enemies
+  for(let i=enemies.length-1;i>=0;i--){
+    const e = enemies[i];
+    e.x += e.vx*dt;
+    e.y += e.vy*dt;
+    // Recompute to keep straight line speed stable
+    const dx = e.targetX - e.x;
+    const dy = e.targetY - e.y;
+    if(Math.hypot(dx,dy)<16){
+      // Impact at target (building area)
+      // Find closest building and destroy if alive
+      let closestIdx = -1; let bestD=1e9;
+      for(let bi=0;bi<buildings.length;bi++){
+        const b = buildings[bi];
+        const d = Math.hypot(b.x - e.x, b.y - e.y);
+        if(d<bestD){ bestD=d; closestIdx=bi; }
+      }
+      if(closestIdx>=0 && buildings[closestIdx].alive){
+        buildings[closestIdx].alive = false;
+        addParticles(e.x, e.y, '#f87171', 26);
+      }else{
+        addParticles(e.x, e.y, '#94a3b8', 18);
+      }
+      enemies.splice(i,1);
+      updateHUD();
+
+      // End conditions
+      if(isEndurance){
+        const rem = buildings.filter(b=>b.alive).length;
+        if(rem===0){
+          // Endurance done → go to End Screen
+          endRound(true, true);
+        }
+      }
+    }
+  }
+
+  // Update missiles
+  for(let i=missiles.length-1;i>=0;i--){
+    const m = missiles[i];
+    m.x += m.vx*dt;
+    m.y += m.vy*dt;
+    m.retT += dt; // timer for reticle (optional pulse)
+        if (m.retT >= (m.retLife || 2.0)) m.retVisible = false;
+
+
+    // Drip a small smoke puff every ~0.05s
+    m.smokeT += dt;
+    if(m.smokeT >= 0.05){
+      addSmoke(m.x, m.y);
+      m.smokeT = 0;
+    }
+
+    
+    // Offscreen?
+    const w = canvas.width / devicePixelRatio;
+    const h = canvas.height / devicePixelRatio;
+    if(m.x<-30 || m.x>w+30 || m.y<-30 || m.y>h+30){
+      missiles.splice(i,1);
+      continue;
+    }
+    // Collide vs enemies
+    let hit = -1;
+    for(let j=enemies.length-1;j>=0;j--){
+      const e = enemies[j];
+      if(dist(m.x,m.y,e.x,e.y) < 20){
+        hit = j; break;
+      }
+    }
+  if(hit>=0){
+  const e = enemies[hit];
+  addParticles(e.x, e.y, '#fbbf24', 24);
+  enemies.splice(hit,1);
+  missiles.splice(i,1);
+  score += SCORE_HIT;
+  updateHUD();
+  continue; // stop checking UFO with a missile we just removed
+}
+
+        // Check hit vs UFO (bonus)
+if (ufo && ufo.alive && dist(m.x, m.y, ufo.x, ufo.y) < 36){
+      addParticles(ufo.x, ufo.y, '#facc15', 28); // golden burst
+      score += BONUS_UFO_POINTS;
+      updateHUD();
+      // Floating +500 popup
+      scorePops.push({ x: ufo.x, y: ufo.y - 6, t: 0, life: 0.9 });
+      // Despawn UFO and this missile
+      ufo.alive = false;
+      ufo = null;
+      missiles.splice(i,1);
+      continue;
+    }
+
+  }
+
+  // Update particles
+  for(let i=particles.length-1;i>=0;i--){
+    const p = particles[i];
+    p.t += dt;
+    p.x += p.vx*dt;
+    p.y += p.vy*dt;
+    if(p.t>=p.life) particles.splice(i,1);
+  }
+
+  // Update score popups
+  for (let i = scorePops.length - 1; i >= 0; i--){
+    const sp = scorePops[i];
+    sp.t += dt;
+    sp.y -= 20 * dt;              // drift upward
+    if (sp.t >= sp.life) scorePops.splice(i,1);
+  }
+
+
+  // DRAW
+  draw();
+
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+
+function draw(){
+  const w = canvas.width / devicePixelRatio;
+  const h = canvas.height / devicePixelRatio;
+  ctx.clearRect(0,0,w,h);
+
+  // Sky stars (randomized + gentle twinkle)
+  for (const st of stars){
+    const tw = 0.7 + 0.3 * Math.sin(st.p + starT * st.s); // 0.7..1.0
+    ctx.globalAlpha = st.a * tw;
+    ctx.fillStyle = '#fff';
+    ctx.beginPath();
+    ctx.arc(st.x, st.y, st.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+
+
+  // Buildings
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.font = '28px system-ui, Apple Color Emoji';
+  for(const b of buildings){
+    if(!b.alive){ ctx.globalAlpha=0.25; }
+    ctx.fillText(b.emoji, b.x, b.y);
+    ctx.globalAlpha=1;
+  }
+
+  // Enemies (each enemy carries its own emoji)
+  ctx.font = '30px system-ui, Apple Color Emoji';
+  for (const e of enemies){
+    ctx.fillText(e.emoji || targetEmoji, e.x, e.y);
+  }
+
+
+   // Targeting reticles – Option #1 (Bullseye + crosshair) with timed fade-out
+  ctx.save();
+  for (const m of missiles) {
+    if (!m.retVisible) continue;
+
+    const t = (m.retT || 0);
+    const pulse = 1 + Math.sin(t * 3) * 0.06; // gentle 6% pulse
+
+    // Lifetime curve: show full for 1.5s, then fade out over 0.5s
+    const SHOW = 1.5, FADE = 0.5;
+    let alpha = 0.5; // base alpha you set earlier (~50%)
+    if (t > SHOW) {
+      const k = Math.min(1, Math.max(0, (t - SHOW) / FADE)); // 0→1 during fade
+      alpha *= (1 - k); // fade to 0
+      if (k >= 1) continue; // fully faded, skip drawing
+    }
+
+    // Sizes (tweak if you want bigger/smaller)
+    const R1 = 22 * pulse;   // outer ring
+    const R2 = 12 * pulse;   // inner ring
+    const GAP = 8;           // gap near center for crosshair
+    const ARM = 26;          // length of each crosshair arm
+
+    // Outer ring
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = '#8ecaff';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(m.tx, m.ty, R1, 0, Math.PI * 2); ctx.stroke();
+
+    // Inner ring
+    ctx.strokeStyle = '#dbeafe';
+    ctx.beginPath(); ctx.arc(m.tx, m.ty, R2, 0, Math.PI * 2); ctx.stroke();
+
+    // Crosshair with center gap
+    ctx.strokeStyle = '#cde9ff';
+    // left arm
+    ctx.beginPath(); ctx.moveTo(m.tx - (GAP + ARM), m.ty); ctx.lineTo(m.tx - GAP, m.ty); ctx.stroke();
+    // right arm
+    ctx.beginPath(); ctx.moveTo(m.tx + GAP, m.ty); ctx.lineTo(m.tx + (GAP + ARM), m.ty); ctx.stroke();
+    // top arm
+    ctx.beginPath(); ctx.moveTo(m.tx, m.ty - (GAP + ARM)); ctx.lineTo(m.tx, m.ty - GAP); ctx.stroke();
+    // bottom arm
+    ctx.beginPath(); ctx.moveTo(m.tx, m.ty + GAP); ctx.lineTo(m.tx, m.ty + (GAP + ARM)); ctx.stroke();
+
+    // Center dot
+    ctx.fillStyle = '#9dd6ff';
+    ctx.beginPath(); ctx.arc(m.tx, m.ty, 2.5, 0, Math.PI * 2); 
+    ctx.globalAlpha = alpha;
+    ctx.fill();
+
+    ctx.globalAlpha = 1;
+  }
+  ctx.restore();
+
+
+// 🛸 UFO (if present) — doubled size
+if (ufo && ufo.alive){
+  ctx.font = '60px system-ui, Apple Color Emoji'; // was 30px
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('🛸', ufo.x, ufo.y);
+}
+
+
+// Floating +500 popups
+for (const sp of scorePops){
+  const a = Math.max(0, 1 - sp.t / sp.life); // fade out
+  ctx.globalAlpha = a;
+  ctx.fillStyle = '#facc15'; // gold
+  ctx.font = 'bold 20px system-ui, Apple Color Emoji';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('+500', sp.x, sp.y);
+  ctx.globalAlpha = 1;
+}
+
+
+
+
+  // Missiles (🚀 rotated toward angle, compensating the emoji’s natural 45° tilt)
+  for(const m of missiles){
+    ctx.save();
+    ctx.translate(m.x, m.y);
+      ctx.rotate(m.angle + Math.PI/4); // compensate default rocket tilt (leaning up-right)
+    ctx.font = '28px system-ui, Apple Color Emoji';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('🚀', 0, 0);
+    ctx.restore();
+  }
+
+  // Particles
+  for(const p of particles){
+    const lifeRatio = 1 - (p.t/p.life);
+    ctx.globalAlpha = Math.max(0, lifeRatio);
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, (p.r || 2.5), 0, Math.PI*2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+}
+
+/* =========================
+   ROUND / FLOW CONTROL
+========================= */
+function endRound(grantBonus, wasEndurance=false){
+  gameRunning = false;
+  tapsEnabled = false;
+
+  // Award building bonus (not for endurance)
+  let bonus = 0;
+  if(grantBonus && !wasEndurance){
+    const alive = buildings.filter(b=>b.alive).length;
+    bonus = alive * SCORE_BUILDING_BONUS;
+    score += bonus;
+  }
+  updateHUD();
+
+  if(wasEndurance){
+    // Go to end screen
+    $('#finalScore').textContent = score;
+    $('#finalCorrect').textContent = correctCount;
+    $('#finalWrong').textContent = wrongCount;
+    show('end');
+    return;
+  }
+
+  // Decide next step: if we finished last quiz round, go endurance
+  if(questionIndex >= QUESTIONS.length){
+    // Start Endurance bonus round
+    showModal(`
+      <h3>Bonus Round ⭐</h3>
+      <p>Endurance Mode! Emoji keep falling until all buildings are destroyed.</p>
+      <p>Difficulty increases every <strong>15 seconds</strong>.</p>
+    `, [{label:'Start', id:'start'}], (id)=>{
+      hideModal();
+      prepareRound(1, targetEmoji, true);
+    });
+  }else{
+    // Continue to next question
+    showQuestion();
+  }
+}
+
+/* =========================
+   QUIZ RENDERING & ANSWERS
+========================= */
+function shuffle(arr){ // in-place Fisher–Yates
+  for(let i=arr.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+  return arr;
+}
+
+function showQuestion(){
+  show('question');
+  const qi = questionIndex; // 0..(N or exactly N if done)
+  if(qi>=QUESTIONS.length){
+    // safety
+    show('end');
+    return;
+  }
+  const item = QUESTIONS[qi];
+  qNum.textContent = (qi+1);
+  qText.textContent = item.q;
+
+  // Build shuffled answers but remember which is correct
+  const answersWithIndex = item.answers.map((a,idx)=>({a, idx}));
+  shuffle(answersWithIndex);
+
+  answersEl.innerHTML = '';
+  answersWithIndex.forEach(({a, idx})=>{
+    const btn = document.createElement('button');
+    btn.innerHTML = `<span class="q-emoji">${a.emoji}</span><span>${a.text}</span>`;
+    btn.addEventListener('click', ()=>{
+      const isCorrect = (idx === item.correctIndex);
+      if(isCorrect){
+        score += SCORE_CORRECT;
+        correctCount++;
+      }else{
+        wrongCount++;
+      }
+      scoreQ.textContent = score;
+      correctQ.textContent = correctCount;
+      wrongQ.textContent = wrongCount;
+
+      const right = item.answers[item.correctIndex];
+      const msg = isCorrect
+        ? `<h3 style="color:var(--good)">✅ Correct!</h3><p>Nice work.</p>`
+        : `<h3 style="color:var(--bad)">❌ Incorrect</h3><p>The right answer was: <strong>${right.text}</strong> <span class="big-emoji">${firstEmoji(right.emoji)}</span></p>`;
+
+      showModal(msg, [{label:'Continue', id:'ok'}], ()=>{
+        hideModal();
+        // Prepare next round’s target emoji from this question’s correct answer
+        nextRoundTargetEmoji = firstEmoji(right.emoji);
+
+        // After Q1 only: show “how to play” + show target emoji for this round
+        if(!didShowHowTo){
+          didShowHowTo = true;
+          showModal(`
+            <h3>How to Play</h3>
+            <p>"Shoot down the emoji before they hit your neighborhood."</p>
+            <p>Target this emoji: <span class="big-emoji">${nextRoundTargetEmoji}</span></p>
+                        <p class="small">Tap anywhere to launch a rocket. You can have up to <strong>3</strong> rockets on screen.</p>
+
+          `, [{label:'Start Round', id:'go'}], ()=>{
+            hideModal();
+            startRound();
+          });
+        }else{
+          startRound();
+        }
+      });
+    });
+    answersEl.appendChild(btn);
+  });
+}
+
+function startRound(){
+  // Play a Missile Command-like round for this question (questionIndex currently pointing to this Q)
+  const level = (questionIndex+1); // 1..10
+  roundLabel.textContent = level;
+  prepareRound(level, nextRoundTargetEmoji, false);
+  // After the round, we’ll move to the next question (in endRound → showQuestion)
+  questionIndex++;
+}
+
+/* =========================
+   ENTRY / RESTART
+========================= */
+$('#btnSplashOk').addEventListener('click', ()=>{
+  show('title');
+});
+$('#btnStart').addEventListener('click', ()=>{
+  // Reset full session
+  questionIndex = 0;
+  score = 0; correctCount = 0; wrongCount = 0;
+  didShowHowTo = false;
+  scoreQ.textContent = '0';
+  correctQ.textContent = '0';
+  wrongQ.textContent = '0';
+  showQuestion();
+});
+$('#btnRestart').addEventListener('click', ()=>{
+  show('title');
+});
+
+// Secret key: press 'B' to jump to the Bonus (Endurance) Round
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'b' || e.key === 'B') {
+    // Close any open modal (just in case)
+    try { hideModal(); } catch {}
+
+    // Label the HUD and start endurance at Level 1.
+    // (Endurance round uses BONUS_EMOJIS automatically when isEndurance=true)
+    roundLabel.textContent = 'Bonus';
+    prepareRound(1, '⭐', true);
+  }
+});
+
+
+/* Start canvas fit */
+fitCanvas();
+
+/* Kick loop */
+lastTime = performance.now();
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
