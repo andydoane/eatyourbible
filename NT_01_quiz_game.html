@@ -142,6 +142,7 @@
     text-shadow: 0 2px 3px rgba(0,0,0,0.5);
     pointer-events:none;
     font-size: clamp(14px, 2vh, 18px);
+    will-change: transform; transform: translateZ(0);
     z-index: 9;  /* keep HUD above pipes & clouds */
 
   }
@@ -221,6 +222,13 @@ z-index: 16;           /* above globalRain (15) */  /* subtle celebratory backgr
   animation: emojiFall var(--dur, 3200ms) linear var(--delay, 0ms) forwards;
   transform: translateY(0) rotate(0deg);
 }
+
+/* Performance hints for moving elements */
+.pipe, .coin, .cloud, .emojiDrop, #birdSprite {
+  will-change: transform;
+  transform: translateZ(0);
+}
+
 
 @keyframes emojiFall {
   0%   { transform: translateY(-12vh) rotate(0deg);   opacity: 1; }
@@ -1170,6 +1178,16 @@ showScreen('game');
     const groundH = groundEl.getBoundingClientRect().height;
     floorY = gh - groundH;
 
+// Cache CSS constants for this round (avoid getComputedStyle each frame)
+const rootCS = getComputedStyle(document.documentElement);
+cached = {
+  gravity: parseFloat(rootCS.getPropertyValue('--gravity')) || 0.35,
+  maxFall: parseFloat(rootCS.getPropertyValue('--maxFallSpeed')) || 18,
+  baseSpeed: parseFloat(rootCS.getPropertyValue('--pipeSpeed')) || 2.5,
+  baseInterval: parseFloat(rootCS.getPropertyValue('--pipeIntervalMS')) || 1600
+};
+
+
     // Randomize the starting phase so rounds feel different
 gapStartPhase = Math.random() * Math.PI * 2;
 
@@ -1393,7 +1411,9 @@ const bottomPipeExtendedHeight = bottomPipeHeight + EXTEND;
 
     const top = document.createElement('div');
     top.className = 'pipe top';
-    top.style.left = `${x}px`;
+top.dataset.x = String(x);
+top.dataset.w = String(pipeW);
+top.style.transform = `translateX(${x}px)`;
 top.style.top = `${topPipeTop}px`;               // start above the sky
 top.style.height = `${topPipeExtendedHeight}px`; // extend upward
 
@@ -1404,7 +1424,9 @@ top.style.height = `${topPipeExtendedHeight}px`; // extend upward
 
     const bottom = document.createElement('div');
     bottom.className = 'pipe bottom';
-    bottom.style.left = `${x}px`;
+bottom.dataset.x = String(x);
+bottom.dataset.w = String(pipeW);
+bottom.style.transform = `translateX(${x}px)`;
     bottom.style.top = `${bottomPipeY}px`;
 bottom.style.height = `${bottomPipeExtendedHeight}px`; // extend below ground (hidden by z-indexed ground)
     bottom.style.width = `calc(${pipeWvh} * 1vh)`;
@@ -1456,8 +1478,10 @@ spacingPx = Math.max(spacingPx, coinSizePx * 1.02); // tiny safety margin (> 1.0
     c.className = 'coin';
     c.textContent = '🪙';
     const x = startX + i * spacingPx;
-    c.style.left = `${x}px`;
-    c.style.top  = `${y}px`;
+c.dataset.x = String(x);
+c.style.top  = `${y}px`;
+c.style.transform = `translateX(${x}px)`;
+
     game.appendChild(c);
   }
 }
@@ -1469,14 +1493,22 @@ spacingPx = Math.max(spacingPx, coinSizePx * 1.02); // tiny safety margin (> 1.0
   }
 
 function getBirdRect(){
-  // Start with the outer #bird rect (not affected by rotation now)
-  const r = birdEl.getBoundingClientRect();
-  const cx = (r.left + r.right) / 2;
-  const cy = (r.top  + r.bottom) / 2;
-  const hw = (r.width  * BIRD_HITBOX_SCALE) / 2;
-  const hh = (r.height * BIRD_HITBOX_SCALE) / 2;
-  return { left: cx - hw, right: cx + hw, top: cy - hh, bottom: cy + hh };
+  const w = birdEl.offsetWidth;
+  const h = birdEl.offsetHeight;
+  const cx = birdX;
+  const cy = birdY;
+  const hw = (w * BIRD_HITBOX_SCALE) / 2;
+  const hh = (h * BIRD_HITBOX_SCALE) / 2;
+  // Convert to viewport coords once per loop when needed
+  const gameRect = game.getBoundingClientRect();
+  return {
+    left:   gameRect.left + (cx - hw),
+    right:  gameRect.left + (cx + hw),
+    top:    gameRect.top  + (cy - hh),
+    bottom: gameRect.top  + (cy + hh)
+  };
 }
+
 
 
   function gameLoop(now){
@@ -1484,11 +1516,14 @@ function getBirdRect(){
 
     const dt = Math.min(40, now - lastTime); // clamp dt for stability
     lastTime = now;
+const frameGameRect = game.getBoundingClientRect();
+
+
 
 // Physics (time-based so small/high-hz devices feel the same)
 const dtFactor = dt / 16.6667; // normalize to ~60fps
-const gBase = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gravity')) || 0.35;
-const maxFallBase = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--maxFallSpeed')) || 18;
+const gBase = cached.gravity;
+const maxFallBase = cached.maxFall;
 
 // Scale by viewport height so small screens don't feel heavier
 const g = gBase * physicsScale;
@@ -1514,12 +1549,13 @@ const spawnMult = 1 + (RAMP_MAX_SPAWN_MULT - 1) * rampT;
 // Gap shrinks from big (baseGapVh * GAP_START_MULT) → baseGapVh along the same curve
 const effectiveGapVh = baseGapVh * (GAP_START_MULT - (GAP_START_MULT - 1) * rampT);
 // Convert to pixels for this frame; new pipes will use this gap
-const ghNow = game.getBoundingClientRect().height;
+const ghNow = frameGameRect.height;
+
 gapPx = Math.max(ghNow * (effectiveGapVh / 100), GAP_MIN_PX);
 
 
 // Spawn interval shortens as rampT grows
-const baseInterval = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--pipeIntervalMS')) || 1600;
+const baseInterval = cached.baseInterval;
 const effectiveInterval = Math.max(MIN_PIPE_INTERVAL_MS, baseInterval / spawnMult);
 
 pipeTimer += dt;
@@ -1529,26 +1565,24 @@ if (pipeTimer >= effectiveInterval) {
 }
 
 // Pipe horizontal speed increases as rampT grows
-const baseSpeed = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--pipeSpeed')) || 2.5;
+const baseSpeed = cached.baseSpeed;
 // Normalize motion to ~60fps so high-refresh phones aren't faster
 const step = (baseSpeed * speedMult) * (dt / 16.6667);
 
 
 const pipes = Array.from(pipeContainer.querySelectorAll('.pipe'));
 pipes.forEach(p=>{
-  const x = (parseFloat(p.style.left) || 0) - step;
+  let x = parseFloat(p.dataset.x || '0') - step;
+  p.dataset.x = String(x);
+  p.style.transform = `translateX(${x}px)`;
+  const w = parseFloat(p.dataset.w || '60');
+  if (x + w < -50) p.remove();
+});
 
-      p.style.left = `${x}px`;
-      // cleanup
-      if(x + p.getBoundingClientRect().width < -50){
-        p.remove();
-      }
-    });
 
 // Count pipe pairs passed: when the bottom pipe's right edge is left of bird's nose
 {
-  const gameRect = game.getBoundingClientRect();
-  const birdFrontViewportX = gameRect.left + birdX; // bird's front X in viewport coords
+const birdFrontViewportX = frameGameRect.left + birdX;
 
   for (const p of pipeContainer.querySelectorAll('.pipe.bottom')) {
     const id = p.dataset.pair;
@@ -1567,10 +1601,13 @@ pipes.forEach(p=>{
 // Move coins with the same step, remove when offscreen
 const coins = Array.from(game.querySelectorAll('.coin'));
 coins.forEach(c=>{
-  const x = (parseFloat(c.style.left) || 0) - step;
-  c.style.left = `${x}px`;
-  if (x + c.getBoundingClientRect().width < -50) c.remove();
+  let x = parseFloat(c.dataset.x || '0') - step;
+  c.dataset.x = String(x);
+  c.style.transform = `translateX(${x}px)`;
+  const w = c.getBoundingClientRect().width; // one read (ok)
+  if (x + w < -50) c.remove();
 });
+
 
 // Coin collection (guard so we count each coin once)
 const birdR_coin = getBirdRect();
@@ -1604,8 +1641,8 @@ stepClouds(step);
       if (rectsOverlap(birdR, r)) { explodeAndEndRound(); return; }
     }
     // With ground / ceiling
-    const gameRect = game.getBoundingClientRect();
-if (birdR.bottom >= (gameRect.top + floorY) || birdR.top <= gameRect.top + 0){
+
+if (birdR.bottom >= (frameGameRect.top + floorY) || birdR.top <= frameGameRect.top){
   explodeAndEndRound(); return;
 }
 
@@ -1722,6 +1759,9 @@ function explodeAndEndRound() {
   }
 
 function stepClouds(stepPx){
+// Throttle clouds to ~30fps equivalent to save battery on phones
+let _cloudTick = (stepClouds._tick = (stepClouds._tick||0) + 1);
+if (_cloudTick % 2) return;
 
     const rect = game.getBoundingClientRect();
     const gw = rect.width;
