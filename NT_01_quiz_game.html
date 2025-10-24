@@ -1,0 +1,1748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>Emoji Bird Bible Quiz</title>
+<style>
+  :root{
+    /* ====== TUNE ME: Global look & feel ====== */
+    --bg: #cbe8ff;            /* default background */
+    --ui: rgba(0,0,0,0.75);   /* UI panels */
+    --uiText: #ffffff;
+    --accent: #ffc400;        /* buttons */
+    --accentText: #1a1a1a;
+    --good: #25a36f;
+    --bad: #e74c3c;
+    --ground: #5fa34a;
+    --birdSizeVh: 8.2;   /* TUNE ME: default bird size for tablets/desktop */
+    --coinToBird: 1.0;                                  /* TUNE ME: coins = 1.0 × bird */
+    --coinSizeVh: calc(var(--birdSizeVh) * var(--coinToBird));
+
+    
+    /* Themeable colors */
+--groundTop:   #6cbf53;
+--groundBottom:#4b8a3a;
+--groundRim:   rgba(0,0,0,0.2);
+
+--pipeA:       #2fdd73;  /* pipe gradient top */
+--pipeB:       #1fb563;  /* pipe gradient bottom */
+--pipeBorder:  #157f45;
+
+--capA:        #34e67c;  /* cap gradient top */
+--capB:        #1db764;  /* cap gradient bottom */
+
+
+
+
+
+    /* ====== TUNE ME: Gameplay physics ====== */
+    --maxFallSpeed: 18;   /* px per 60fps frame; limits how fast the bird can fall */
+
+    --gravity: 0.35;          /* pull downward per frame */
+    --flap: -8.5;             /* upward impulse on flap */
+    --pipeSpeed: 6.0;         /* pipe speed in px/frame */
+    --pipeGap: 30;            /* pipe gap in vh (will convert) */
+    --pipeIntervalMS: 2200;   /* milliseconds between pipe pairs */
+    --pipeWidthVh: 7;  /* TUNE ME: pipe width in vh units */
+
+
+    /* ====== Layout ====== */
+    --ui-pad: 16px;
+    --ui-radius: 14px;
+    --btn-radius: 12px;
+  }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: #000;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+  }
+
+  /* Root container scales content and keeps landscape feel */
+  #app {
+    position: relative;
+    width: 100%;
+    height: 100dvh;
+    overflow: hidden;
+    background: var(--bg);
+  }
+
+  /* Shared panels (screens) */
+  .screen {
+    position:absolute; inset:0;
+    display:none;
+    align-items:center; justify-content:center;
+    padding: 20px;
+  }
+  .screen.active { display:flex; }
+
+  .panel {
+    background: var(--ui);
+    color: var(--uiText);
+    border-radius: var(--ui-radius);
+    padding: calc(var(--ui-pad) * 1.25);
+    max-width: 900px;
+    width: min(90vw, 900px);
+    text-align:center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  }
+  h1,h2,h3 { margin: 0 0 12px; }
+  p { margin: 0 0 10px; line-height: 1.35; }
+
+  .btn {
+    display:inline-block;
+    margin-top:12px;
+    padding: 14px 18px;
+    border: none;
+    border-radius: var(--btn-radius);
+    background: var(--accent);
+    color: var(--accentText);
+    font-weight: 700;
+    cursor: pointer;
+    font-size: clamp(16px, 2.2vh, 22px);
+  }
+  .btn:active { transform: translateY(1px); }
+
+  /* Game world */
+  #game {
+    position:absolute; inset:0;
+    overflow:hidden;
+    display:none;
+  }
+  #game.active { display:block; }
+
+  /* Parallax cloud layers */
+  .clouds {
+    position:absolute; left:0; right:0;
+    height: 30%;
+    pointer-events:none;
+    opacity: 0.9;
+  }
+  .clouds.layer1 { top: 8%; }
+  .clouds.layer2 { top: 22%; opacity: 0.7; }
+  .clouds.layer3 { top: 38%; opacity: 0.55; }
+
+  .cloud {
+    position:absolute;
+    top: 0;
+    font-size: min(7vh, 7vw);
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,0.12));
+    opacity: 0.95;
+  }
+
+  /* HUD */
+  #hud {
+    position:absolute; left:0; right:0; top:0;
+    display:flex; justify-content:space-between; gap:8px;
+    padding: 10px 12px;
+    font-weight:700;
+    color: #fff;
+    text-shadow: 0 2px 3px rgba(0,0,0,0.5);
+    pointer-events:none;
+    font-size: clamp(14px, 2vh, 18px);
+    z-index: 9;  /* keep HUD above pipes & clouds */
+
+  }
+
+/* Final screen emoji rain + fancy stats */
+#final {
+  position: relative;
+  overflow: hidden;
+  /* ensure vertical centering when .screen becomes flex on .active */
+  align-items: center;
+  justify-content: center;
+}
+
+/* Force perfect centering on the Final screen */
+#final.active {
+  display: grid;         /* overrides .screen.active flex */
+  place-items: center;   /* centers both horizontally & vertically */
+}
+
+
+/* Global bird-emoji rain that covers the whole viewport */
+#globalRain{
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 17; /* above screens; panel will be 16 */
+}
+
+
+#finalRain {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  z-index: 1;            /* behind the panel */
+}
+
+#final .panel {
+  position: relative;
+z-index: 16;           /* above globalRain (15) */  /* subtle celebratory background */
+  background:
+    radial-gradient(120% 120% at 50% 10%, #fff6 0%, #0000 60%),
+    linear-gradient(160deg, #1b1b1b 0%, #2a2a2a 100%);
+  border: 2px solid rgba(255,255,255,0.12);
+}
+
+#final h2 {
+  font-size: clamp(24px, 5.2vh, 40px);
+  margin-bottom: 10px;
+  background: linear-gradient(90deg, #ffd86b, #ff9b6b, #ff6ec7);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: none;
+}
+
+#finalStats {
+  display: grid;
+  gap: 8px;
+  margin: 10px 0 4px;
+  text-align: left;
+}
+
+#finalStats .statLine {
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+/* Falling bird-emoji confetti */
+.emojiDrop {
+  position: absolute;
+  top: -10%;
+  font-size: min(6vh, 6vw);
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.35));
+  animation: emojiFall var(--dur, 3200ms) linear var(--delay, 0ms) forwards;
+  transform: translateY(0) rotate(0deg);
+}
+
+@keyframes emojiFall {
+  0%   { transform: translateY(-12vh) rotate(0deg);   opacity: 1; }
+  100% { transform: translateY(120vh) rotate(var(--rot, 360deg)); opacity: 0.95; }
+}
+
+  
+  /* Ground */
+#ground {
+  position:absolute; left:0; right:0;
+  height: 10vh;
+  bottom:0;
+  background: linear-gradient(var(--groundTop), var(--groundBottom));
+  border-top: 6px solid var(--groundRim);
+  z-index: 5; /* sits above pipes to hide their bottoms */
+}
+
+
+
+/* Bird (emoji flipped to face right) */
+#bird {
+  position:absolute;
+  width:  calc(var(--birdSizeVh) * 1vh);
+  height: calc(var(--birdSizeVh) * 1vh);
+  font-size: calc((var(--birdSizeVh) - 0.5) * 1vh);
+  line-height: calc(var(--birdSizeVh) * 1vh);
+  text-align:center;
+  user-select:none;
+  will-change: transform, top, left;
+}
+
+/* The emoji itself (all rotate/scale effects go here) */
+#birdSprite{
+  position:absolute; inset:0;
+  display:flex; align-items:center; justify-content:center;
+  transform: scaleX(-1);      /* face right by default */
+  will-change: transform;
+}
+
+/* Visible 75% hitbox (only shows in debug mode) */
+#birdHitbox{
+  position:absolute; left:50%; top:50%;
+  width: 75%; height: 75%;
+  transform: translate(-50%, -50%);
+  pointer-events:none; display:none;
+}
+
+
+
+/* ===== Round Start Overlay ===== */
+#roundStartOverlay{
+  position:absolute; inset:0;
+  display:none;                 /* hidden by default; show with .show */
+  align-items:center; justify-content:center;
+  z-index: 6;                   /* above pipes & bird, below HUD text if you want */
+  pointer-events: none;         /* enable only inner box to capture the tap */
+}
+
+#roundStartOverlay.show{ display:flex; }
+
+#roundStartOverlay .rso-inner{
+  pointer-events: auto;
+  width: min(70vw, 60vh);
+height: auto;
+min-height: 14vh;   /* tweak: 12–16vh if you want */
+
+  display:flex; align-items:center; justify-content:center;
+  text-align:center;
+  border-radius: 24px;
+  padding: 14px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  font-size: clamp(24px, 6.5vh, 48px);
+
+  /* Colorful, playful card */
+  background: radial-gradient(120% 120% at 50% 30%, #ffd76a 0%, #ff9d6c 50%, #ff6ec7 100%);
+  color: #2b1c00;
+  box-shadow:
+    0 12px 28px rgba(0,0,0,0.35),
+    inset 0 0 0 6px rgba(255,255,255,0.25);
+  border: 6px solid rgba(0,0,0,0.2);
+  transform: scale(1);
+  transition: transform 120ms ease;
+}
+#roundStartOverlay .rso-inner:active{
+  transform: scale(0.98);
+}
+
+
+/* ===== Confetti explosion ===== */
+.confetti {
+  position: absolute;
+  width: 1.2vh;
+  height: 1.8vh;
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 7; /* above pipes & bird, below popups */
+  opacity: 0;
+  animation: confettiBurst 900ms ease-out forwards;
+  will-change: transform, opacity;
+}
+@keyframes confettiBurst {
+  0%   { opacity: 1; transform: translate(0,0) rotate(0deg) scale(1); }
+  60%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(0.9); }
+}
+
+/* ===== Coins (emoji) ===== */
+.coin {
+  position: absolute;
+  width:  calc(var(--coinSizeVh) * 1vh);
+  height: calc(var(--coinSizeVh) * 1vh);
+  font-size: calc(var(--coinSizeVh) * 1vh);
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 4; /* above pipes, below overlay/HUD */
+  transform: translate(-50%, -50%); /* position from center point */
+  text-shadow: 0 2px 4px rgba(0,0,0,0.25);
+}
+
+.coin.pop {
+  animation: coinPop 220ms ease-out forwards;
+}
+@keyframes coinPop {
+  0%   { transform: translate(-50%, -50%) scale(1); }
+  80%  { transform: translate(-50%, -50%) scale(1.35); }
+  100% { transform: translate(-50%, -50%) scale(0.7); opacity: 0; }
+}
+
+
+/* ===== Hitbox Debug (toggle with H) ===== */
+#game.debugHit #birdHitbox {
+  display:block;
+  border: 2px solid rgba(80,200,255,0.95);   /* bird = cyan */
+  box-sizing: border-box;
+}
+
+#game.debugHit .pipe {
+  outline: 2px dashed rgba(255,80,80,0.9);    /* pipes = red */
+  outline-offset: -1px;
+}
+/* don't double-outline the caps */
+#game.debugHit .pipe-head { outline: none; }
+
+#hitboxBadge {
+  position: absolute;
+  top: 8px; right: 8px;
+  z-index: 10;
+  background: #c62828;
+  color: #fff;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 2px solid rgba(255,255,255,0.25);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.35);
+  display: none;
+  pointer-events: none;
+  font-size: clamp(12px, 1.6vh, 14px);
+}
+#game.debugHit #hitboxBadge { display: block; }
+
+/* HUD chips */
+#hud > div {
+  background: #2563eb;              /* cheerful royal blue chip */
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 2px solid rgba(255,255,255,0.25);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+
+
+
+  /* Flap "puffs" behind the bird */
+.puff {
+  position: absolute;
+  width: 1.8vh;
+  height: 1.8vh;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.85);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  pointer-events: none;
+  z-index: 1; /* bird stays above (default stacking puts #bird above .puff) */
+  animation: puffRise 260ms ease-out forwards;
+  filter: blur(0.2px);
+}
+
+@keyframes puffRise {
+  0%   { opacity: 0.9; transform: translate(0, 0) scale(0.9); }
+  60%  { opacity: 0.55; transform: translate(-1vh, -1.2vh) scale(1.1); }
+  100% { opacity: 0.0; transform: translate(-1.8vh, -2.2vh) scale(1.2); }
+}
+
+
+  /* Pipes */
+/* Pipes (classic look with caps/lips and body shine) */
+.pipe {
+  position:absolute;
+  width: calc(var(--pipeWidthVh) * 1vh);
+background: linear-gradient(var(--pipeA), var(--pipeB));
+border: 6px solid var(--pipeBorder);
+
+  border-radius: 0px;
+  box-sizing: border-box;
+  /* subtle inner highlight and shading */
+  box-shadow:
+    inset 0 0 0 4px rgba(255,255,255,0.08),
+    inset 6px 0 12px rgba(255,255,255,0.12);
+}
+
+/* a vertical “shine” strip on the pipe body */
+.pipe::after {
+  content: "";
+  position: absolute;
+  top: 6px; bottom: 6px;
+  left: 28%;
+  width: 10%;
+  background: rgba(255,255,255,0.15);
+  border-radius: 999px;
+  pointer-events: none;
+  filter: blur(0.2px);
+}
+
+/* CAP / LIP — rectangular caps */
+.pipe-head {
+  position:absolute;
+  z-index: 1;
+  left:-10px; right:-10px;      /* overhang for the lip */
+  height: 22px;                 /* cap thickness */
+background: linear-gradient(var(--capA), var(--capB));
+border: 6px solid var(--pipeBorder);
+
+  box-sizing: border-box;
+  border-radius: 0;             /* ⬅ no curved corners */
+}
+
+/* TOP pipe: cap sits on its BOTTOM edge (lip points down toward gap) */
+.pipe.top .pipe-head {
+  top: auto;
+  bottom: -22px;
+  border-top: none;             /* open toward pipe body */
+  box-shadow: 0 -4px 0 rgba(0,0,0,0.18);
+}
+.pipe.top .pipe-head::after{
+  /* straight inner rim at the meeting edge */
+  content:"";
+  position:absolute;
+  left:6px; right:6px;
+  height: 4px;
+  top: 0;
+  background: rgba(0,0,0,0.18);
+}
+
+/* BOTTOM pipe: cap sits on its TOP edge (lip points up toward gap) */
+.pipe.bottom .pipe-head {
+  bottom: auto;
+  top: -22px;
+  border-bottom: none;          /* open toward pipe body */
+  box-shadow: 0 4px 0 rgba(0,0,0,0.18);
+}
+.pipe.bottom .pipe-head::after{
+  /* straight inner rim at the meeting edge */
+  content:"";
+  position:absolute;
+  left:6px; right:6px;
+  height: 4px;
+  bottom: 0;
+  background: rgba(0,0,0,0.18);
+}
+
+
+
+
+
+  /* Question UI */
+  #questionPanel .choiceGrid {
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top:12px;
+  }
+  .choiceBtn {
+    background: #ffffff;
+    color: #222;
+    border-radius: 12px;
+    border: 3px solid #222;
+    padding: 12px;
+    text-align:left;
+    font-weight:700;
+    cursor: pointer;
+    font-size: clamp(14px, 2.2vh, 20px);
+  }
+  .choiceEmoji { margin-right: 10px; font-size: 1.25em; }
+
+  /* Popups (correct/incorrect, tutorial, end-of-round) */
+  #popupOverlay {
+    position:absolute; inset:0; display:none;
+    align-items:center; justify-content:center;
+    background: rgba(0,0,0,0.5);
+  }
+
+
+  #popupOverlay.active { display:flex; }
+  .popupCard {
+    background: #111c;
+    color: #fff;
+    border-radius: 14px;
+    padding: 16px;
+    width: min(90vw, 560px);
+    text-align:center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  }
+  .popupCard.good { border: 3px solid var(--good); }
+  .popupCard.bad { border: 3px solid var(--bad); }
+
+  /* Footer tip */
+  .smallNote { opacity:0.8; font-size: 0.9em; }
+
+/* Friendlier tuning for small landscape phones */
+@media (max-height: 480px) and (orientation: landscape) {
+  :root{
+    --pipeWidthVh: 8.5;   /* thicker pipes */
+    --pipeGap: 40;        /* bigger opening */
+    --pipeSpeed: 2.6;     /* slower */
+    --flap: -8.5;         /* same as desktop so mobile isn't jumpier */
+    --gravity: 0.36;      /* tiny boost to match the flap feel */
+    --birdSizeVh: 8.5;    /* bigger bird on small landscape screens */
+  }
+
+}
+
+/* Extra-small (e.g., iPhone SE landscape ~320px tall) */
+@media (max-height: 360px) and (orientation: landscape) {
+  :root{
+    --pipeWidthVh: 9.2;
+    --pipeGap: 44;
+    --pipeSpeed: 2.4;
+    --flap: -8.0;         /* a hair softer for tiniest screens */
+    --gravity: 0.36;
+    --birdSizeVh: 9.8;    /* even bigger bird on very short screens */
+  }
+
+}
+
+
+  /* Make it strongly landscape-friendly */
+  @media (orientation: portrait) {
+    #splash .panel h1::after{
+      content:" • Rotate your device 🙂";
+      font-size: .8em; opacity: .9;
+    }
+  }
+
+
+@media (max-height: 360px) and (orientation: landscape) {
+  #bird { width: 7vh; height: 7vh; font-size: 6.4vh; line-height: 7vh; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ SPLASH ============ -->
+  <section id="splash" class="screen active">
+    <div class="panel">
+      <h1>📱 Best in Landscape Mode 🔃</h1>
+      <p>This game plays best when your device is sideways (landscape).</p>
+      <button class="btn" id="splashOkBtn">Okay</button>
+    </div>
+  </section>
+
+  <!-- ============ TITLE ============ -->
+  <section id="title" class="screen">
+    <div class="panel">
+      <h1>🐦 Emoji Bird Bible Quiz 🦆</h1>
+      <p>Answer Bible questions, then flap your bird to dodge the pipes!</p>
+      <button class="btn" id="startBtn">Go fullscreen and start</button>
+      <p class="smallNote" style="margin-top:10px">Tip: Tap/Click/Space/↑ to flap</p>
+    </div>
+  </section>
+
+  <!-- ============ QUESTION ============ -->
+  <section id="question" class="screen">
+    <div class="panel" id="questionPanel">
+      <h2 id="qText">Question goes here…</h2>
+      <div class="choiceGrid" id="choices"></div>
+      <div style="margin-top:8px; font-size:.95em; opacity:.9" id="qProgress">1 / 10</div>
+    </div>
+  </section>
+
+  <!-- ============ GAMEPLAY ============ -->
+  <section id="game">
+    <!-- Parallax sky layers (clouds) -->
+    <div class="clouds layer1" id="cloudLayer1"></div>
+    <div class="clouds layer2" id="cloudLayer2"></div>
+    <div class="clouds layer3" id="cloudLayer3"></div>
+
+    <!-- HUD -->
+<div id="hud">
+  <div id="hudRound">Round 1 / 10</div>
+<div id="hudDistance">Pipes: 0</div>
+  <div id="hudScore">Correct: 0</div>
+  <div id="hudCoins">Coins: 0</div>
+</div>
+
+<!-- Hitbox debug badge -->
+<div id="hitboxBadge">HITBOX DEBUG: ON (H)</div>
+
+
+
+    <!-- Round Start Overlay -->
+    <div id="roundStartOverlay"><div class="rso-inner">CLICK/TAP TO START</div></div>
+
+
+<!-- Bird -->
+<div id="bird">
+  <span id="birdSprite">🐦</span>
+  <div id="birdHitbox"></div>
+</div>
+
+
+    <!-- Pipes container -->
+    <div id="pipeContainer"></div>
+
+    <!-- Ground -->
+    <div id="ground"></div>
+  </section>
+
+<!-- ============ END OF ROUND ============ -->
+<section id="roundEnd" class="screen">
+  <div class="panel">
+    <h2>Round Over!</h2>
+    <p id="roundDistanceText">You traveled 0.</p>
+    <button class="btn" id="roundNextBtn">Continue</button>
+  </div>
+</section>
+
+<!-- ============ FINAL (Great Job) ============ -->
+<section id="final" class="screen">
+  <!-- emoji rain layer (behind the panel) -->
+  <div id="finalRain"></div>
+
+  <div class="panel">
+    <h2>Great Job!</h2>
+    <div id="finalStats"></div>
+    <button class="btn" id="finalRestartBtn">Play Again</button>
+  </div>
+</section>
+
+<!-- ===== Shared popup overlay (GLOBAL, not inside a hidden screen) ===== -->
+<div id="popupOverlay">
+  <div class="popupCard" id="popupCard">
+    <h3 id="popupTitle">Title</h3>
+    <p id="popupMsg">Message</p>
+    <button class="btn" id="popupBtn">Continue</button>
+  </div>
+</div>
+
+<!-- Global, full-viewport emoji rain layer (sits above screens, under panels) -->
+<div id="globalRain"></div>
+
+  
+
+</div>
+
+<script>
+/* ============================================================
+   Emoji Flappy Bible Quiz — Single-file build
+   You can tweak things marked "TUNE ME" in the CSS :root or lists below.
+   ============================================================ */
+
+(function(){
+  // ---------- Content you can easily change later ----------
+  const BIRD_EMOJIS = ["🐦","🐤","🐧","🦅","🦉","🦆","🦢","🐥","🦜","🐓"]; // one per round
+// Day/Night palettes (sky, ground, pipes, cap, clouds)
+const PALETTES = [
+  { // 0 Day
+    bg:"#cbe8ff",
+    groundTop:"#86d26a", groundBottom:"#4b8a3a", groundRim:"rgba(0,0,0,0.2)",
+    pipeA:"#3ee68a", pipeB:"#23be6e", pipeBorder:"#157f45",
+    capA:"#49ee93", capB:"#25c577",
+    clouds:"☁️"
+  },
+  { // 1 Sunset
+    bg:"#ffd6a3",
+    groundTop:"#e0a85e", groundBottom:"#a06a35", groundRim:"rgba(0,0,0,0.25)",
+    pipeA:"#ffb86b", pipeB:"#ff8a54", pipeBorder:"#b15b34",
+    capA:"#ffc47a", capB:"#ff9a60",
+    clouds:"☁️"
+  },
+  { // 2 Night
+    bg:"#0b1b33",
+    groundTop:"#325e4a", groundBottom:"#1f3a2e", groundRim:"rgba(255,255,255,0.12)",
+    pipeA:"#58b3ff", pipeB:"#2d89e6", pipeBorder:"#1f63a8",
+    capA:"#66bcff", capB:"#3393ea",
+    clouds:"⭐" // stars sparkle instead of clouds
+  },
+  { // 3 Dawn
+    bg:"#f4e3ff",
+    groundTop:"#9bd282", groundBottom:"#5b9d55", groundRim:"rgba(0,0,0,0.18)",
+    pipeA:"#86e2a5", pipeB:"#57c086", pipeBorder:"#2f8b5a",
+    capA:"#93e8af", capB:"#60c892",
+    clouds:"☁️"
+  }
+];
+
+  // ===== TUNE ME: speed ramp settings =====
+// Delay before any ramp starts (ms)
+const RAMP_DELAY_MS = 15000;  // 10s at base speed
+// How long it takes to reach max ramp (ms)
+const RAMP_DURATION_MS = 40000; // ~20s to full ramp
+const MIN_PIPE_INTERVAL_MS = 900; // ⬅ won't spawn faster than every 0.9s
+
+
+// Max speed multipliers at the end of the ramp
+const RAMP_MAX_SPEED_MULT = 3.0;  // pipes move up to 70% faster
+const RAMP_MAX_SPAWN_MULT = 2.0;  // new pipes spawn up to 50% more often
+
+// ===== TUNE ME: coin trails =====
+const COIN_START_MS = 20000;     // coins start appearing ~20s into the round
+const COIN_SPAWN_CHANCE = 0.6;   // chance to spawn a trail on each new pipe pair after start time
+const COINS_PER_TRAIL = 6;       // how many coins per trail
+const COIN_VERTICAL_SPREAD = 0.45; // fraction of gap height used by the trail positioning
+const COIN_HORIZONTAL_OFFSET_VW = 8; // place the trail this many vw to the right of the pipe pair
+
+const COIN_SPACING_TO_COIN = 1.15;   // coins are spaced 1.15 × coin size
+const COIN_LINE_OFFSET = 0.0;    // 0 = center of gap; positive = a bit below center; negative = above
+
+
+// ===== TUNE ME: crash confetti settings =====
+const CONFETTI_COUNT = 90;       // number of pieces
+const CONFETTI_DURATION_MS = 900; // keep in sync with @keyframes duration
+const BIRD_HITBOX_SCALE = 0.75;  // generous hitbox (75% of visible bird)
+
+
+
+// ===== TUNE ME: gap ramp settings (uses the same ramp curve as speed) =====
+const GAP_START_MULT = 1.5;   // starting gap = --pipeGap * this (e.g., 30 * 2 = 60)
+const GAP_MIN_PX = 140;       // never let the gap be smaller than this in pixels
+
+// ===== TUNE ME: gap variety (smooth drift) =====
+// How far the center of the gap can swing, in vh (clamped to stay safe)
+const GAP_DRIFT_AMPL_VH = 25;       // try 20–30
+// How long it takes to complete one up-down cycle, in seconds
+const GAP_DRIFT_PERIOD_S = 10;      // try 8–14
+// A little random wiggle (in px) so it doesn’t look robotic
+const GAP_JITTER_PX = 24;           // try 18–30
+
+/*
+
+ #####     #     #    #######     #####     #######    ###    #######    #     #     #####  
+#     #    #     #    #          #     #       #        #     #     #    ##    #    #     # 
+#     #    #     #    #          #             #        #     #     #    # #   #    #       
+#     #    #     #    #####       #####        #        #     #     #    #  #  #     #####  
+#   # #    #     #    #                #       #        #     #     #    #   # #          # 
+#    #     #     #    #          #     #       #        #     #     #    #    ##    #     # 
+ #### #     #####     #######     #####        #       ###    #######    #     #     #####  
+
+*/
+
+  const QUESTIONS = [
+  {
+    q: "What was the name of the old priest and his wife?",
+    choices: ["Zechariah and Elizabeth","Abraham and Sarah","Joseph and Mary","Aquila and Priscilla"],
+    correctIndex: 0,
+    emojis: ["👴👵","🧔‍♂️👵","🧑‍🔧👩","👨‍🌾👩‍🌾"]
+  },
+  {
+    q: "What was Zechariah chosen to do in the temple?",
+    choices: ["Burn incense","Offer sacrifices","Sing psalms","Guard the gate"],
+    correctIndex: 0,
+    emojis: ["🕯️","🐑","🎶","🚪"]
+  },
+  {
+    q: "What surprising thing did Zechariah see in the temple?",
+    choices: ["An angel","A burning bush","A golden calf","A great fish"],
+    correctIndex: 0,
+    emojis: ["😇","🔥🌿","🐄","🐟"]
+  },
+  {
+    q: "What did Gabriel say would happen to Elizabeth?",
+    choices: ["She'd have a baby","She'd move to Egypt","She'd become queen","She'd build the temple"],
+    correctIndex: 0,
+    emojis: ["👶","🏜️","👑","🏛️"]
+  },
+  {
+    q: "What were some things Gabriel said about this baby?",
+    choices: [
+      "Filled with God's Spirit before birth; prepare the way for the Lord",
+      "Be a mighty soldier and king",
+      "Be a fisherman",
+      "Be a temple singer"
+    ],
+    correctIndex: 0,
+    emojis: ["🕊️🛤️","🗡️👑","🎣","🎵"]
+  },
+  {
+    q: "Because he didn't believe the angel, what happened to Zechariah?",
+    choices: ["He couldn't speak until the baby was born","He lost his sight","He was sent away","He became very tall"],
+    correctIndex: 0,
+    emojis: ["🤐","🕶️","🚶‍♂️","📏"]
+  },
+  {
+    q: "What happened when pregnant Mary visited pregnant Elizabeth?",
+    choices: [
+      "John leapt for joy in Elizabeth's belly",
+      "A star appeared at noon",
+      "They both sang a duet",
+      "They traveled to Bethlehem"
+    ],
+    correctIndex: 0,
+    emojis: ["🤰🤸","⭐🌞","🎤🎶","🧳🐴"]
+  },
+  {
+    q: "What did Elizabeth's neighbors do after she had her baby?",
+    choices: ["They rejoiced with her","They were angry","They ignored her","They moved away"],
+    correctIndex: 0,
+    emojis: ["🎉","😠","😐","🚚"]
+  },
+  {
+    q: "How did Zechariah tell them to give the baby the name John?",
+    choices: ["He wrote it down","He shouted it","He sent a messenger","He drew a picture"],
+    correctIndex: 0,
+    emojis: ["✍️","📣","📜","🖼️"]
+  },
+  {
+    q: "When Zechariah could speak again, what was the first thing he did?",
+    choices: ["He praised God","He scolded the crowd","He left the temple","He went to sleep"],
+    correctIndex: 0,
+    emojis: ["🙌","☝️","🚪","😴"]
+  }
+];
+
+
+
+  /*
+
+#######    #     #    ######     
+#          ##    #    #     #    
+#          # #   #    #     #    
+#####      #  #  #    #     #    
+#          #   # #    #     #    
+#          #    ##    #     #    
+#######    #     #    ######     
+
+
+*/
+
+  // ---------- DOM helpers ----------
+  const $ = sel => document.querySelector(sel);
+  const $$ = sel => Array.from(document.querySelectorAll(sel));
+
+function applyPalette(p){
+  const root = document.documentElement.style;
+  root.setProperty('--bg', p.bg);
+  root.setProperty('--groundTop', p.groundTop);
+  root.setProperty('--groundBottom', p.groundBottom);
+  root.setProperty('--groundRim', p.groundRim);
+  root.setProperty('--pipeA', p.pipeA);
+  root.setProperty('--pipeB', p.pipeB);
+  root.setProperty('--pipeBorder', p.pipeBorder);
+  root.setProperty('--capA', p.capA);
+  root.setProperty('--capB', p.capB);
+
+  // swap cloud emoji per palette
+  cloudLayers[0].emoji = p.clouds;
+  cloudLayers[1].emoji = p.clouds;
+  cloudLayers[2].emoji = p.clouds;
+}
+
+
+  // ---------- Screens ----------
+  const screens = {
+    splash: $('#splash'),
+    title: $('#title'),
+    question: $('#question'),
+    game: $('#game'),
+    roundEnd: $('#roundEnd'),
+    final: $('#final')
+  };
+
+  function showScreen(name){
+    Object.values(screens).forEach(el => el.classList.remove('active'));
+    if(name === 'game') screens.game.classList.add('active');
+    else {
+      screens[name].classList.add('active');
+      $('#game').classList.remove('active');
+    }
+    hidePopup();
+  }
+
+  // ---------- Popup ----------
+  const popupOverlay = $('#popupOverlay');
+  const popupCard = $('#popupCard');
+  const popupTitle = $('#popupTitle');
+  const popupMsg = $('#popupMsg');
+  const popupBtn = $('#popupBtn');
+  let popupResolve = null;
+
+  function showPopup({title, msg, good=false, bad=false, btnText="Continue"}){
+    popupCard.classList.remove('good','bad');
+    if(good) popupCard.classList.add('good');
+    if(bad) popupCard.classList.add('bad');
+    popupTitle.textContent = title;
+    popupMsg.textContent = msg;
+    popupBtn.textContent = btnText;
+    popupOverlay.classList.add('active');
+    return new Promise(res => {
+      popupResolve = res;
+    });
+  }
+  function hidePopup(){
+    popupOverlay.classList.remove('active');
+    popupResolve = null;
+  }
+  popupBtn.addEventListener('click', ()=> { if(popupResolve) popupResolve(); });
+
+  // ---------- State ----------
+  let roundIndex = 0;               // 0..9
+  let correctCount = 0;
+  let incorrectCount = 0;
+let bestPipes = 0;
+let totalPipes = 0;
+let totalCoins = 0;
+
+let pipesThisRound = 0;
+let pipePairId = 0;
+const countedPairs = new Set(); // which pair IDs already counted
+
+  // ---------- Splash / Title ----------
+  $('#splashOkBtn').addEventListener('click', ()=>{
+    showScreen('title');
+  });
+
+  $('#startBtn').addEventListener('click', async ()=>{
+    // Try fullscreen
+    const el = document.documentElement;
+    if (el.requestFullscreen) {
+      try { await el.requestFullscreen(); } catch(e){}
+    }
+    startFreshGame();
+  });
+
+  // ---------- Game setup ----------
+  function startFreshGame(){
+    roundIndex = 0;
+    correctCount = 0;
+    incorrectCount = 0;
+bestPipes = 0;
+totalPipes = 0;
+totalCoins = 0;
+
+    nextQuestion();
+  }
+
+  // ---------- Questions ----------
+  const qText = $('#qText');
+  const choicesWrap = $('#choices');
+  const qProgress = $('#qProgress');
+
+  function shuffle(array){
+    for(let i=array.length-1;i>0;i--){
+      const j = (Math.random()* (i+1))|0;
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  }
+
+  function nextQuestion(){
+    if(roundIndex >= QUESTIONS.length){
+      showFinal();
+      return;
+    }
+    const q = QUESTIONS[roundIndex];
+    qText.textContent = q.q;
+    qProgress.textContent = `${roundIndex+1} / ${QUESTIONS.length}`;
+    choicesWrap.innerHTML = '';
+
+    // Build shuffled display order (keeps the question order fixed, shuffles answer positions)
+    const idxs = shuffle([0,1,2,3]);
+
+    idxs.forEach((choiceIdx, displayPos)=>{
+      const btn = document.createElement('button');
+      btn.className = 'choiceBtn';
+      btn.innerHTML = `<span class="choiceEmoji">${q.emojis[choiceIdx] ?? "❓"}</span>${q.choices[choiceIdx]}`;
+      btn.addEventListener('click', ()=>{
+        const isCorrect = (choiceIdx === q.correctIndex);
+        if(isCorrect) correctCount++; else incorrectCount++;
+        const title = isCorrect ? "Correct!" : "Incorrect";
+        const msg = isCorrect ? "Nice work!" : `Right answer: ${q.choices[q.correctIndex]}`;
+        showPopup({title, msg, good:isCorrect, bad:!isCorrect}).then(()=>{
+  startRound(); // round will wait on the big overlay instead of auto-start
+});
+
+      });
+      choicesWrap.appendChild(btn);
+    });
+
+    showScreen('question');
+  }
+
+  // ---------- Gameplay (Flappy) ----------
+  const game = $('#game');
+  const birdEl = $('#bird');
+  const birdSprite = $('#birdSprite');
+
+  const pipeContainer = $('#pipeContainer');
+  const groundEl = $('#ground');
+  const hudRound = $('#hudRound');
+  const hudDistance = $('#hudDistance');
+  const hudScore = $('#hudScore');
+
+  // Final screen restart (clear bird-emoji rain, then go to title)
+const finalRestartBtn = $('#finalRestartBtn');
+if (finalRestartBtn) {
+  finalRestartBtn.addEventListener('click', ()=>{
+    const g = document.getElementById('globalRain');
+    if (g) g.innerHTML = '';
+    showScreen('title');
+  });
+}
+
+
+  const hudCoins = $('#hudCoins');
+
+const rso = $('#roundStartOverlay');
+
+  let rafId = 0;
+  let lastTime = 0;
+  let birdY = 0;
+  let birdX = 0;
+  let birdVY = 0;
+  let running = false;
+  let pipeTimer = 0;
+  let distanceThisRound = 0;
+  let coinCount = 0;
+
+  let roundStartTime = 0;
+
+  let gapPx = 200; // will compute from vh
+  let baseGapVh = 30; // final/normal gap in vh (read from --pipeGap at round start)
+
+  let floorY = 0;
+  let physicsScale = 1; // scales gravity/flap to viewport height so mobile feels the same
+  let gapStartPhase = 0; // random phase per round for the drift
+
+let birdAngle = 0;     // degrees, we ease toward a target based on vertical speed
+let flapAnim = 0;      // 0..1 squash&stretch pulse on flap (decays over time)
+
+
+  // Cloud logic
+  const cloudLayers = [
+    { el: $('#cloudLayer1'), speed: 0.6, density: 6, emoji: "☁️" },
+    { el: $('#cloudLayer2'), speed: 0.9, density: 6, emoji: "☁️" },
+    { el: $('#cloudLayer3'), speed: 1.2, density: 6, emoji: "☁️" }
+  ];
+  let clouds = []; // {layer,i,x}
+
+  // Controls
+function flap(){
+  if(!running) return;
+  const flapBase = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--flap')) || -6.5;
+  birdVY = flapBase * physicsScale; // scale to screen height
+
+  // Kick the squash & stretch pulse
+  flapAnim = 1;
+
+  // Sparkly puffs behind the bird
+  createFlapPuffs();
+}
+
+
+window.addEventListener('keydown', (e)=>{
+  // Secret skip to Question 10 (press 0)
+  if (e.code === 'Digit0') {
+    e.preventDefault();
+    // Stop gameplay if it’s running
+    running = false;
+    cancelAnimationFrame(rafId);
+    // Jump to the last question (index 9 for 10 questions)
+    roundIndex = QUESTIONS.length - 1;
+    // Show the question screen for that last question
+    showScreen('question');
+    nextQuestion();
+    return;
+  }
+
+  // Toggle hitbox debug
+  if (e.code === 'KeyH') {
+    $('#game').classList.toggle('debugHit');
+    return;
+  }
+
+  // Flap controls
+  if (e.code === 'Space' || e.code === 'ArrowUp') {
+    e.preventDefault();
+    flap();
+  }
+});
+
+
+// Pointer/touch flaps during gameplay
+game.addEventListener('pointerdown', (e) => {
+  if (!running) return;   // the overlay handles the first tap
+  e.preventDefault();
+  flap();
+});
+
+
+
+  function startRound(){
+    // Set round background & bird emoji
+    applyPalette(PALETTES[roundIndex % PALETTES.length]);
+birdSprite.textContent = BIRD_EMOJIS[roundIndex % BIRD_EMOJIS.length];
+birdEl.style.opacity = '1'; // ensure bird is visible at the start of each round
+
+    // Reset HUD
+    hudRound.textContent = `Round ${roundIndex+1} / ${QUESTIONS.length}`;
+hudScore.textContent = `Correct: ${correctCount}`;
+hudDistance.textContent = `Pipes: 0`;
+coinCount = 0;
+hudCoins.textContent = `Coins: 0`;
+pipesThisRound = 0;
+pipePairId = 0;
+countedPairs.clear();
+
+
+// Reset world
+pipeContainer.innerHTML = '';
+distanceThisRound = 0;
+pipeTimer = 0;
+running = false;                 // ⬅ do NOT run yet
+lastTime = performance.now();
+roundStartTime = 0;              // will be set when we actually start
+
+showScreen('game');
+
+
+    // Geometry
+    const rect = game.getBoundingClientRect();
+    const gh = rect.height;
+    const gw = rect.width;
+    const groundH = groundEl.getBoundingClientRect().height;
+    floorY = gh - groundH;
+
+    // Randomize the starting phase so rounds feel different
+gapStartPhase = Math.random() * Math.PI * 2;
+
+
+// Read the base (final) gap in vh from CSS and start at a larger gap
+baseGapVh = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--pipeGap')) || 30;
+// Start the round at a friendlier (bigger) gap; ramp will shrink it later
+gapPx = Math.max(gh * ((baseGapVh * GAP_START_MULT) / 100), GAP_MIN_PX);
+
+
+// Normalize physics to screen height (~720px baseline, clamped to avoid extremes)
+physicsScale = Math.max(0.9, Math.min(1.2, gh / 720));
+
+
+
+    // Bird start
+    birdX = gw * 0.25;
+    birdY = gh * 0.40;
+    birdVY = 0;
+    positionBird();
+
+    // Clouds
+    setupClouds();
+
+    // Show screen & run
+
+waitForTapToStart();             // ⬅ show overlay and start on tap
+
+  }
+
+  function endRound(){
+    running = false;
+    cancelAnimationFrame(rafId);
+totalPipes += pipesThisRound;
+bestPipes = Math.max(bestPipes, pipesThisRound);
+$('#roundDistanceText').textContent = `You passed ${pipesThisRound} pipes.`;
+totalCoins += coinCount;
+
+
+    showScreen('roundEnd');
+  }
+
+  $('#roundNextBtn').addEventListener('click', ()=>{
+    roundIndex++;
+    nextQuestion();
+  });
+
+function spawnBirdEmojiRain() {
+  const rain = document.getElementById('globalRain') || document.getElementById('finalRain');
+
+  if (!rain) return;
+  rain.innerHTML = ''; // clear previous
+
+  // Use the bird emojis you actually used (10 rounds)
+  const usedBirds = BIRD_EMOJIS.slice(0, QUESTIONS.length);
+
+  const rect = document.getElementById('app').getBoundingClientRect();
+  const W = rect.width;
+
+  const COUNT = 60; // how many falling emoji
+  for (let i = 0; i < COUNT; i++) {
+    const span = document.createElement('span');
+    span.className = 'emojiDrop';
+    span.textContent = usedBirds[i % usedBirds.length];
+
+    // randomize horizontal, delay, duration, rotation
+    const left = Math.random() * W;
+    const delay = Math.random() * 1200;             // 0–1.2s
+    const dur   = 2600 + Math.random() * 1800;      // 2.6–4.4s
+    const rot   = (Math.random() * 1080 - 540) + 'deg'; // -540..+540deg
+
+    span.style.left = `${left}px`;
+    span.style.setProperty('--delay', `${delay}ms`);
+    span.style.setProperty('--dur', `${dur}ms`);
+    span.style.setProperty('--rot', rot);
+
+    // clean up after animation
+    span.addEventListener('animationend', () => span.remove());
+    rain.appendChild(span);
+  }
+}
+
+
+function showFinal(){
+  // Build lines (each becomes its own boxed row)
+const lines = [
+  `Correct: ${correctCount}`,
+  `Incorrect: ${incorrectCount}`,
+  `Best Round Pipes: ${bestPipes}`,
+  `Total Pipes: ${totalPipes}`,
+  `Total Coins: ${totalCoins}`
+];
+
+  const statsDiv = document.getElementById('finalStats');
+  statsDiv.innerHTML = lines.map(s => `<div class="statLine">${s}</div>`).join('');
+
+  // Show final, then start the emoji rain
+  showScreen('final');
+  spawnBirdEmojiRain();
+}
+
+
+  function positionBird(){
+    birdEl.style.left = `${birdX - birdEl.offsetWidth/2}px`;
+    birdEl.style.top = `${birdY - birdEl.offsetHeight/2}px`;
+  }
+
+  function startPhysicsNow(){
+  running = true;
+  lastTime = performance.now();
+  roundStartTime = lastTime;            // ramp timer starts when round truly begins
+  cancelAnimationFrame(rafId);
+  rafId = requestAnimationFrame(gameLoop);
+}
+
+// Show overlay and wait for the first tap/keypress to begin (tap also flaps)
+function waitForTapToStart(){
+  if (!rso) return;
+  rso.classList.add('show');
+
+  const begin = (doFlap=true)=>{
+    cleanup();
+    startPhysicsNow();
+    if (doFlap) flap();                 // first tap = first flap (feels great)
+  };
+
+const onPointer = (e)=>{ e.preventDefault(); e.stopPropagation(); begin(true); };
+  const onKey = (e)=>{
+    if(e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'Enter'){
+      e.preventDefault(); begin(true);
+    }
+  };
+  function cleanup(){
+    rso.classList.remove('show');
+    rso.removeEventListener('pointerdown', onPointer);
+    window.removeEventListener('keydown', onKey);
+  }
+
+  rso.addEventListener('pointerdown', onPointer, { once:true });
+  window.addEventListener('keydown', onKey);
+}
+
+
+// Visuals: tilt + squash & stretch
+function updateBirdVisual(dt){
+  // Map vertical velocity to a target angle
+  // Upward (negative vy) tilts up ~-22°, strong fall tilts down up to +40°
+  const vy = birdVY;
+  let target = 0;
+  if (vy < 0) {
+    target = -22 + (vy * 3); // small extra lift tilt for strong flaps
+  } else {
+    target = Math.min(40, vy * 4.5);
+  }
+  // Ease birdAngle toward target (use dt so it feels the same on fast/slow devices)
+  const ease = Math.min(1, (dt / 1000) * 12); // ~12 Hz smoothing
+  birdAngle = birdAngle + (target - birdAngle) * ease;
+
+  // Squash & Stretch pulse:
+  // flapAnim is set to 1 on flap, then decays quickly to 0
+  flapAnim *= Math.pow(0.5, dt / 60); // halve roughly every 60ms
+  const squash = 1 + (0.10 * flapAnim);  // wider on flap
+  const stretch = 1 - (0.10 * flapAnim); // shorter on flap
+
+  // Compose transforms:
+  //   flip to face right (scaleX(-1)), then rotate, then squash/stretch
+  // Keep the order so flip doesn't invert the angle direction visually.
+birdSprite.style.transform =
+  `scaleX(-1) rotate(${birdAngle}deg) scale(${squash}, ${stretch})`;
+
+}
+
+
+  function createPipePair(){
+    const rect = game.getBoundingClientRect();
+    const gh = rect.height;
+    const gw = rect.width;
+    const groundH = groundEl.getBoundingClientRect().height;
+// Safe vertical band for the *center* of the gap
+const margin = 10;                          // a little breathing room
+const minCenter = (gapPx / 2) + margin;
+const maxCenter = (gh - groundH) - (gapPx / 2) - margin;
+const mid = (minCenter + maxCenter) / 2;
+const maxAmplitudePx = Math.max(0, (maxCenter - minCenter) / 2);
+
+// Convert our vh amplitude to px and clamp so we never leave the safe band
+const amplPx = Math.min(maxAmplitudePx, gh * (GAP_DRIFT_AMPL_VH / 100));
+
+// Time-based drift (meanders smoothly up & down)
+const now = performance.now();
+const t = (roundStartTime ? (now - roundStartTime) : 0) / 1000;   // seconds
+const omega = (2 * Math.PI) / GAP_DRIFT_PERIOD_S;                 // rad/s
+let driftCenter = mid + Math.sin(gapStartPhase + omega * t) * amplPx;
+
+// Small random jitter per pipe so it isn’t too perfect
+driftCenter += (Math.random() * 2 - 1) * GAP_JITTER_PX;
+
+// Final clamp for safety
+const gapYCenter = Math.max(minCenter, Math.min(maxCenter, driftCenter));
+
+
+   const pipeWvh = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--pipeWidthVh')) || 7;
+const pipeW = Math.round(Math.max(gh*(pipeWvh/100), 38)); // px width derived from --pipeWidthVh
+
+
+    const topPipeHeight = Math.floor(gapYCenter - gapPx/2);
+    const bottomPipeY = Math.floor(gapYCenter + gapPx/2);
+    const bottomPipeHeight = Math.floor((gh - groundH) - bottomPipeY);
+
+// Extend pipes offscreen so tops/bottoms disappear beyond edges
+const EXTEND = Math.max(100, Math.round(gh * 0.12)); // ~12% of screen height
+
+const topPipeTop = -EXTEND;
+const topPipeExtendedHeight = topPipeHeight + EXTEND;
+
+const bottomPipeExtendedHeight = bottomPipeHeight + EXTEND;
+// bottomPipeY stays the same; the extra height goes below ground
+
+
+    const x = gw + pipeW + 10;
+
+    const top = document.createElement('div');
+    top.className = 'pipe top';
+    top.style.left = `${x}px`;
+top.style.top = `${topPipeTop}px`;               // start above the sky
+top.style.height = `${topPipeExtendedHeight}px`; // extend upward
+
+    top.style.width = `calc(${pipeWvh} * 1vh)`;
+    const th = document.createElement('div');
+    th.className = 'pipe-head';
+    top.appendChild(th);
+
+    const bottom = document.createElement('div');
+    bottom.className = 'pipe bottom';
+    bottom.style.left = `${x}px`;
+    bottom.style.top = `${bottomPipeY}px`;
+bottom.style.height = `${bottomPipeExtendedHeight}px`; // extend below ground (hidden by z-indexed ground)
+    bottom.style.width = `calc(${pipeWvh} * 1vh)`;
+    const bh = document.createElement('div');
+    bh.className = 'pipe-head';
+    bottom.appendChild(bh);
+// Assign a shared ID to this pipe pair so we can count it once
+const pairId = ++pipePairId;
+top.dataset.pair = String(pairId);
+bottom.dataset.pair = String(pairId);
+// mark bottom as the "leader" we’ll test for passing
+bottom.dataset.leader = '1';
+    
+    pipeContainer.appendChild(top);
+    pipeContainer.appendChild(bottom);
+    // --- COIN TRAIL (after ~20s into the round) ---
+const now2 = performance.now();
+if (roundStartTime && (now2 - roundStartTime) >= COIN_START_MS) {
+
+  if (Math.random() < COIN_SPAWN_CHANCE) {
+    spawnCoinTrail(x, gapYCenter, gapPx);
+  }
+}
+  }
+
+function spawnCoinTrail(pipeX, gapCenterY, currentGapPx){
+  const rect = game.getBoundingClientRect();
+  const gw = rect.width;
+
+  // Horizontal start a bit to the right of the pipe pair
+  const startX = pipeX + (window.innerWidth * (COIN_HORIZONTAL_OFFSET_VW / 100));
+
+// Coin size in px = bird height × --coinToBird (robust; avoids calc() NaN)
+const rootStyle = getComputedStyle(document.documentElement);
+const coinToBird = parseFloat(rootStyle.getPropertyValue('--coinToBird')) || 1;
+const coinSizePx = birdEl.getBoundingClientRect().height * coinToBird;
+
+// Space coins based on the actual emoji size (with a safe minimum so no overlap)
+let spacingPx = coinSizePx * COIN_SPACING_TO_COIN;
+if (!Number.isFinite(spacingPx) || spacingPx <= 0) spacingPx = Math.max(coinSizePx, 24);
+spacingPx = Math.max(spacingPx, coinSizePx * 1.02); // tiny safety margin (> 1.0× coin)
+
+
+  // Vertical line position: center of gap plus optional offset
+  const y = gapCenterY + (COIN_LINE_OFFSET * currentGapPx);
+
+  for (let i = 0; i < COINS_PER_TRAIL; i++) {
+    const c = document.createElement('div');
+    c.className = 'coin';
+    c.textContent = '🪙';
+    const x = startX + i * spacingPx;
+    c.style.left = `${x}px`;
+    c.style.top  = `${y}px`;
+    game.appendChild(c);
+  }
+}
+
+
+
+  function rectsOverlap(a, b){
+    return !(a.right < b.left || a.left > b.right || a.bottom < b.top || a.top > b.bottom);
+  }
+
+function getBirdRect(){
+  // Start with the outer #bird rect (not affected by rotation now)
+  const r = birdEl.getBoundingClientRect();
+  const cx = (r.left + r.right) / 2;
+  const cy = (r.top  + r.bottom) / 2;
+  const hw = (r.width  * BIRD_HITBOX_SCALE) / 2;
+  const hh = (r.height * BIRD_HITBOX_SCALE) / 2;
+  return { left: cx - hw, right: cx + hw, top: cy - hh, bottom: cy + hh };
+}
+
+
+  function gameLoop(now){
+    if(!running){ return; }
+
+    const dt = Math.min(40, now - lastTime); // clamp dt for stability
+    lastTime = now;
+
+// Physics (time-based so small/high-hz devices feel the same)
+const dtFactor = dt / 16.6667; // normalize to ~60fps
+const gBase = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gravity')) || 0.35;
+const maxFallBase = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--maxFallSpeed')) || 18;
+
+// Scale by viewport height so small screens don't feel heavier
+const g = gBase * physicsScale;
+const maxFall = maxFallBase * physicsScale;
+
+birdVY += g * dtFactor;
+if (birdVY > maxFall) birdVY = maxFall;
+if (birdVY < -maxFall) birdVY = -maxFall;
+
+birdY += birdVY * dtFactor;
+positionBird();
+
+updateBirdVisual(dt);
+
+
+// Move pipes & create new ones (with ramp)
+const elapsed = now - roundStartTime;
+// 0..1 after delay; linear ramp up to max
+const rampT = Math.max(0, Math.min(1, (elapsed - RAMP_DELAY_MS) / RAMP_DURATION_MS));
+const speedMult = 1 + (RAMP_MAX_SPEED_MULT - 1) * rampT;
+const spawnMult = 1 + (RAMP_MAX_SPAWN_MULT - 1) * rampT;
+
+// Gap shrinks from big (baseGapVh * GAP_START_MULT) → baseGapVh along the same curve
+const effectiveGapVh = baseGapVh * (GAP_START_MULT - (GAP_START_MULT - 1) * rampT);
+// Convert to pixels for this frame; new pipes will use this gap
+const ghNow = game.getBoundingClientRect().height;
+gapPx = Math.max(ghNow * (effectiveGapVh / 100), GAP_MIN_PX);
+
+
+// Spawn interval shortens as rampT grows
+const baseInterval = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--pipeIntervalMS')) || 1600;
+const effectiveInterval = Math.max(MIN_PIPE_INTERVAL_MS, baseInterval / spawnMult);
+
+pipeTimer += dt;
+if (pipeTimer >= effectiveInterval) {
+  pipeTimer = 0;
+  createPipePair();
+}
+
+// Pipe horizontal speed increases as rampT grows
+const baseSpeed = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--pipeSpeed')) || 2.5;
+// Normalize motion to ~60fps so high-refresh phones aren't faster
+const step = (baseSpeed * speedMult) * (dt / 16.6667);
+
+
+const pipes = Array.from(pipeContainer.querySelectorAll('.pipe'));
+pipes.forEach(p=>{
+  const x = (parseFloat(p.style.left) || 0) - step;
+
+      p.style.left = `${x}px`;
+      // cleanup
+      if(x + p.getBoundingClientRect().width < -50){
+        p.remove();
+      }
+    });
+
+// Count pipe pairs passed: when the bottom pipe's right edge is left of bird's nose
+{
+  const gameRect = game.getBoundingClientRect();
+  const birdFrontViewportX = gameRect.left + birdX; // bird's front X in viewport coords
+
+  for (const p of pipeContainer.querySelectorAll('.pipe.bottom')) {
+    const id = p.dataset.pair;
+    if (!id || countedPairs.has(id)) continue;
+
+    const r = p.getBoundingClientRect();
+    if (r.right < birdFrontViewportX) {
+      countedPairs.add(id);
+      pipesThisRound++;
+      hudDistance.textContent = `Pipes: ${pipesThisRound}`;
+    }
+  }
+}
+
+
+// Move coins with the same step, remove when offscreen
+const coins = Array.from(game.querySelectorAll('.coin'));
+coins.forEach(c=>{
+  const x = (parseFloat(c.style.left) || 0) - step;
+  c.style.left = `${x}px`;
+  if (x + c.getBoundingClientRect().width < -50) c.remove();
+});
+
+// Coin collection (guard so we count each coin once)
+const birdR_coin = getBirdRect();
+for (const c of Array.from(game.querySelectorAll('.coin'))) {
+  if (c.dataset.collected === '1') continue;       // already counted
+  const r = c.getBoundingClientRect();
+  const overlap = !(r.right < birdR_coin.left || r.left > birdR_coin.right || r.bottom < birdR_coin.top || r.top > birdR_coin.bottom);
+  if (overlap) {
+    c.dataset.collected = '1';                     // mark immediately
+    c.classList.add('pop');
+    coinCount++;
+    hudCoins.textContent = `Coins: ${coinCount}`;
+    setTimeout(()=> c.remove(), 220);              // remove after pop anim
+  }
+}
+
+
+
+stepClouds(step);
+
+
+
+    // Collisions
+    const birdR = getBirdRect();
+    const pipesR = [];
+    for(const p of pipes){
+      pipesR.push(p.getBoundingClientRect());
+    }
+    // With pipes
+    for(const r of pipesR){
+      if (rectsOverlap(birdR, r)) { explodeAndEndRound(); return; }
+    }
+    // With ground / ceiling
+    const gameRect = game.getBoundingClientRect();
+if (birdR.bottom >= (gameRect.top + floorY) || birdR.top <= gameRect.top + 0){
+  explodeAndEndRound(); return;
+}
+
+
+    rafId = requestAnimationFrame(gameLoop);
+  }
+
+// Spawn 2–3 tiny puffs behind the bird on flap
+function createFlapPuffs(){
+  const gameRect = game.getBoundingClientRect();
+  const birdRect = birdEl.getBoundingClientRect();
+
+  // Create 2–3 puffs with small random offsets
+  const count = 2 + ((Math.random() * 1) | 0);
+  for(let i=0;i<count;i++){
+    const p = document.createElement('div');
+    p.className = 'puff';
+
+    // Position near the bird's tail (a bit to the left of bird center)
+    const offsetX = -birdRect.width * (0.20 + Math.random()*0.2); // 20–40% left of center
+    const offsetY = (Math.random()*birdRect.height*0.4) - (birdRect.height*0.2); // tiny vertical jitter
+
+    // Convert to game container coordinates
+    const x = (birdRect.left - gameRect.left) + (birdRect.width/2) + offsetX;
+    const y = (birdRect.top - gameRect.top)  + (birdRect.height/2) + offsetY;
+
+    p.style.left = `${x}px`;
+    p.style.top  = `${y}px`;
+    game.appendChild(p);
+
+    // Auto-remove after animation finishes (safe timeout)
+    setTimeout(()=> p.remove(), 320);
+  }
+}
+
+// Spawn a big confetti burst at (cx, cy) relative to the #game container
+function spawnConfetti(cx, cy, count = CONFETTI_COUNT) {
+  const colors = ["#ff4757","#ffa502","#2ed573","#1e90ff","#eccc68","#7bed9f","#70a1ff","#ff6b81"];
+  for (let i = 0; i < count; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti';
+    piece.style.background = colors[i % colors.length];
+
+    // Random scatter: farther on wide screens
+    const spread = Math.min(game.getBoundingClientRect().width, 900) * 0.45;
+    const angle = Math.random() * Math.PI * 2;
+    const radius = (0.35 + Math.random() * 0.65) * spread;
+    const dx = Math.cos(angle) * radius;
+    const dy = Math.sin(angle) * radius * 0.65 - 40; // bias upward a touch
+    const rot = (Math.random() * 720 - 360) + "deg";
+
+    piece.style.setProperty('--dx', `${dx}px`);
+    piece.style.setProperty('--dy', `${dy}px`);
+    piece.style.setProperty('--rot', rot);
+    piece.style.left = `${cx}px`;
+    piece.style.top  = `${cy}px`;
+
+    game.appendChild(piece);
+    setTimeout(()=> piece.remove(), CONFETTI_DURATION_MS + 120);
+  }
+}
+
+// Run explosion once, then proceed to Round Over
+let exploding = false;
+function explodeAndEndRound() {
+  if (exploding) return;
+  exploding = true;
+
+  // Stop the loop
+  running = false;
+  cancelAnimationFrame(rafId);
+
+  // Where to explode: the bird's center in game coords
+  const gameRect = game.getBoundingClientRect();
+  const br = birdEl.getBoundingClientRect();
+  const cx = (br.left - gameRect.left) + br.width / 2;
+  const cy = (br.top  - gameRect.top ) + br.height / 2;
+
+  // Hide bird during explosion
+  birdEl.style.opacity = '0';
+
+  // Big confetti burst
+  spawnConfetti(cx, cy);
+
+  // After the confetti finishes, show the round end screen
+  setTimeout(() => {
+    exploding = false;
+    endRound(); // call your existing Round Over logic
+  }, CONFETTI_DURATION_MS);
+}
+
+
+
+  // ---------- Clouds ----------
+  function setupClouds(){
+    clouds = [];
+    cloudLayers.forEach((layer, li)=>{
+      layer.el.innerHTML = '';
+      const rect = game.getBoundingClientRect();
+      const gh = rect.height;
+      const gw = rect.width;
+      const n = layer.density;
+      for(let i=0;i<n;i++){
+        const span = document.createElement('div');
+        span.className = 'cloud';
+        span.textContent = layer.emoji;
+        const x = Math.random()*gw;
+        const jitterY = (Math.random()*0.6 - 0.3) * gh*0.08;
+        span.style.transform = `translate(${x}px, ${jitterY}px)`;
+        layer.el.appendChild(span);
+        clouds.push({ li, node: span, x, y: jitterY });
+      }
+    });
+  }
+
+function stepClouds(stepPx){
+
+    const rect = game.getBoundingClientRect();
+    const gw = rect.width;
+    clouds.forEach(c=>{
+      const layer = cloudLayers[c.li];
+      c.x -= layer.speed * (stepPx*0.25); // slower than pipes
+
+      if(c.x < -100){
+        c.x = gw + 50;
+        c.y = (Math.random()*0.6 - 0.3) * rect.height*0.08;
+      }
+      c.node.style.transform = `translate(${c.x}px, ${c.y}px)`;
+    });
+  }
+
+  // ---------- Utility: prevent text selection on drag ----------
+  document.addEventListener('mousedown', e=>{
+    if(e.target.closest('#game')) { e.preventDefault(); }
+  });
+
+})();
+</script>
+</body>
+</html>
