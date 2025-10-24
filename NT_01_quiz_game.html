@@ -348,7 +348,7 @@ min-height: 14vh;   /* tweak: 12–16vh if you want */
   justify-content: center;
   pointer-events: none;
   z-index: 4; /* above pipes, below overlay/HUD */
-  transform: translate(-50%, -50%); /* position from center point */
+transform: translate(calc(var(--tx, 0px) - 50%), -50%);
   text-shadow: 0 2px 4px rgba(0,0,0,0.25);
 }
 
@@ -356,10 +356,11 @@ min-height: 14vh;   /* tweak: 12–16vh if you want */
   animation: coinPop 220ms ease-out forwards;
 }
 @keyframes coinPop {
-  0%   { transform: translate(-50%, -50%) scale(1); }
-  80%  { transform: translate(-50%, -50%) scale(1.35); }
-  100% { transform: translate(-50%, -50%) scale(0.7); opacity: 0; }
+  0%   { transform: translate(calc(var(--tx, 0px) - 50%), -50%) scale(1); }
+  80%  { transform: translate(calc(var(--tx, 0px) - 50%), -50%) scale(1.35); }
+  100% { transform: translate(calc(var(--tx, 0px) - 50%), -50%) scale(0.7); opacity: 0; }
 }
+
 
 
 /* ===== Hitbox Debug (toggle with H) ===== */
@@ -1480,7 +1481,8 @@ spacingPx = Math.max(spacingPx, coinSizePx * 1.02); // tiny safety margin (> 1.0
     const x = startX + i * spacingPx;
 c.dataset.x = String(x);
 c.style.top  = `${y}px`;
-c.style.transform = `translateX(${x}px)`;
+c.style.setProperty('--tx', `${x}px`);
+
 
     game.appendChild(c);
   }
@@ -1603,7 +1605,8 @@ const coins = Array.from(game.querySelectorAll('.coin'));
 coins.forEach(c=>{
   let x = parseFloat(c.dataset.x || '0') - step;
   c.dataset.x = String(x);
-  c.style.transform = `translateX(${x}px)`;
+  c.style.setProperty('--tx', `${x}px`);
+
   const w = c.getBoundingClientRect().width; // one read (ok)
   if (x + w < -50) c.remove();
 });
