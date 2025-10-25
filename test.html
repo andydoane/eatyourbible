@@ -2,1318 +2,1133 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-<title>🐍 Emoji Snake</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+<title>Emoji Fruit Ninja — Portrait Bible Game</title>
 <style>
-
-/* Bigger question text in the Question screen (smaller than big .title) */
-.qText{
-  font-size: clamp(20px, 4.2vw, 30px);
-  line-height: 1.25;
-  font-weight: 800;
-  text-align: center;
-  margin: 8px 0 14px;
-}
-
-
-    /* UI sparkles used on Correct answer */
-@keyframes sparklePop {
-  from { transform: translate(var(--x,0), var(--y,0)) scale(.7); opacity: 1; }
-  to   { transform: translate(calc(var(--x,0)*2), calc(var(--y,0)*2)) scale(1.1); opacity: 0; }
-}
-.ui-sparkle {
-  position: fixed;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%,-50%);
-  pointer-events: none;
-  font-size: 22px;
-  animation: sparklePop .8s ease-out forwards;
-  will-change: transform, opacity;
-  z-index: 1000;
-}
-
   :root{
-    --bg:#0f1222;
-    --fg:#ffffff;
-    --accent:#66e3ff;
-    --ok:#19c37d;
-    --bad:#ff4d4f;
-    --shadow:0 10px 30px rgba(0,0,0,.35);
+    --bg:#0f1220;
+    --panel:#171a2b;
+    --accent:#58d68d;
+    --accent-2:#5dade2;
+    --danger:#ff5c5c;
+    --text:#f5f7ff;
+    --muted:#b8c2ff;
+    --shadow:0 12px 30px rgba(0,0,0,.35);
   }
-  html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,sans-serif;}
-  #app{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden;}
-  .screen{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:16px;}
-  .screen.active{display:flex;}
-  .card{width:min(780px,92vw);max-width:780px;background:#161a2e;border:1px solid #2b3158;border-radius:20px;box-shadow:var(--shadow);padding:20px;}
-  .title{font-size:clamp(24px,5vw,44px);font-weight:800;letter-spacing:.5px;margin:6px 0 8px;text-align:center}
-  .subtitle{font-size:clamp(14px,3.6vw,18px);opacity:.9;text-align:center;margin:0 0 12px}
-  .btn{
-    display:inline-flex;gap:10px;align-items:center;justify-content:center;
-    padding:14px 18px;border-radius:14px;border:1px solid #3a4170;background:#1d2342;color:#fff;
-    font-weight:700;cursor:pointer;user-select:none;transition:.15s transform,.15s background;
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  /* App shell */
+  #app{
+    width:100vw;
+    height:100dvh; /* fill mobile viewport reliably */
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
   }
-  .btn:active{transform:translateY(1px) scale(.995)}
-  .btn.primary{background:linear-gradient(180deg,#2a6fff,#204ad8)}
-  .btn.good{background:linear-gradient(180deg,#1dbd87,#139a6f)}
-  .btn.bad{background:linear-gradient(180deg,#ff5c64,#e73d46)}
-  .btn.row{width:100%;margin:8px 0;font-size:clamp(16px,4.2vw,20px)}
-  .grid{display:grid;gap:10px}
-  .notice{padding:10px 12px;border-radius:12px;background:#11162a;border:1px solid #283056}
-  .small{font-size:.92em;opacity:.9}
-  .footerRow{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:10px}
-  .kicker{opacity:.85;font-size:.95em;margin-top:4px;text-align:center}
-  /* Game area */
-  #gameWrap{position:relative;width:min(640px,92vw);aspect-ratio:9/16;border-radius:24px;overflow:hidden;border:1px solid #2b3158;box-shadow:var(--shadow)}
-#hud{
-  position:absolute;left:0;right:0;top:0;padding:10px 12px;display:flex;justify-content:space-between;gap:8px;
-  background:linear-gradient(180deg,rgba(10,14,28,.95),rgba(10,14,28,.25) 70%,transparent);
-  z-index: 3;            /* <-- keep the HUD above the canvas */
-  pointer-events: none;  /* <-- swipes go to the canvas (HUD has no buttons) */
-}
+  .screen{
+    position:relative;
+    width:min(720px,100vw);
+    height:100%;
+    padding:clamp(12px,2.2vmin,20px);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:16px;
+  }
+  .card{
+    width:min(680px,100%);
+    background:linear-gradient(180deg,#1a1e35 0%, #12152a 100%);
+    border:1px solid #262b52;
+    border-radius:18px;
+    padding:22px;
+    box-shadow:var(--shadow);
+  }
+  .title{font-weight:800;letter-spacing:.5px;text-align:center}
+  .title.xl{font-size:clamp(28px,4.6vw,44px)}
+  .title.lg{font-size:clamp(22px,4.2vw,34px)}
+  .subtitle{color:var(--muted);text-align:center;margin-top:6px}
+  button{
+    appearance:none;border:0;border-radius:14px;padding:14px 18px;
+    background:linear-gradient(180deg,#2f8fff,#2a6fe8);
+    color:#fff;font-weight:700;letter-spacing:.3px;
+    box-shadow:0 10px 24px rgba(44,114,255,.35);
+    cursor:pointer;font-size:clamp(16px,3.8vw,18px)
+  }
+  button.secondary{background:linear-gradient(180deg,#2fba7f,#27a06c);box-shadow:0 10px 24px rgba(46,204,113,.32)}
+  button.ghost{background:#222845;border:1px solid #2d3563;color:var(--muted);box-shadow:none}
+  .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+  .wide{width:100%}
+  .center{text-align:center}
+  .hint{color:#a8b3ff;font-size:.95rem}
+  .pill{display:inline-flex;gap:8px;align-items:center;background:#21254a;border:1px solid #2b3166;padding:8px 12px;border-radius:999px}
+  .emoji{font-size:clamp(32px,9vw,56px);line-height:1}
 
-  #hud .pill{background:#11162a;border:1px solid #2b3156;border-radius:999px;padding:8px 12px;font-weight:700}
-/* Canvas is sized exactly to GRID_W × GRID_H cells and centered */
-#canvas{
+  /* Fullscreen game field */
+  #gameField{
+    position:relative;
+    width:min(720px,100%);
+    height:calc(100% - 12px);
+    border-radius:18px;
+    background:
+      radial-gradient(1200px 600px at 50% 110%, #0c0f25 10%, #0a0d20 60%, #090b1a 100%),
+      linear-gradient(180deg,#0e1123,#0a0c1a);
+    border:1px solid #1e2346;
+    overflow:hidden;
+    touch-action:none; /* so taps don't scroll */
+  }
+  .hud{
+    position:absolute;inset:12px 12px auto 12px;display:flex;gap:8px;flex-wrap:wrap;z-index:5
+  }
+  .hud .chip{background:#1c224e;border:1px solid #2b3374;padding:8px 12px;border-radius:999px;color:#e9edff;font-weight:700}
+  .bottom-hud{
+    position:absolute;left:0;right:0;bottom:8px;display:flex;justify-content:center;gap:8px;z-index:5
+  }
+
+  /* Entities */
+  .entity{
+    position:absolute;user-select:none;pointer-events:auto;transform:translate(-50%,-50%);
+    transition:filter .12s ease;
+  }
+  .entity:hover{filter:drop-shadow(0 4px 16px rgba(255,255,255,.12))}
+  .fruit{font-size:clamp(36px,9vmin,64px)}
+  .bomb{font-size:clamp(36px,9vmin,64px)}
+  .clock{font-size:clamp(34px,8.5vmin,58px)}
+  .half{
+    position:absolute;left:0;top:0;transform:translate(-50%,-50%);
+    font-size:inherit; /* match parent */
+  }
+  .half.left{clip-path:polygon(0 0,50% 0,50% 100%,0 100%)}
+  .half.right{clip-path:polygon(50% 0,100% 0,100% 100%,50% 100%)}
+
+  /* Popup modal */
+  .modal{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:20;
+    background:rgba(8,10,22,.55);backdrop-filter:blur(4px)
+  }
+  .modal .panel{
+    width:min(560px,90%);background:linear-gradient(180deg,#1a1f3c,#12162d);
+    border:1px solid #2a3267;border-radius:18px;padding:18px 18px 14px;text-align:center;box-shadow:var(--shadow)
+  }
+  .modal .panel .big{font-size:clamp(20px,4.6vw,28px);font-weight:800;margin-bottom:8px}
+  .modal .panel .small{color:#c9d2ff}
+
+  /* Toast for correct / incorrect */
+  .toast{
+    position:absolute;left:50%;top:14%;transform:translate(-50%,-50%);
+    background:#1f2448;border:1px solid #343d7a;border-radius:999px;padding:10px 14px;z-index:30;
+    font-weight:800;box-shadow:var(--shadow)
+  }
+  .toast.ok{background:#1e3b2e;border-color:#2c6b49}
+  .toast.bad{background:#3b1e1e;border-color:#6b2c2c}
+
+  /* End screens */
+  .end-card .stat{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px dashed #2a315f}
+  .end-card .stat:last-child{border-bottom:0}
+
+  /* Confetti */
+  .confetti{
+    position:absolute;width:6px;height:10px;border-radius:2px;background:hsl(var(--h) 80% 60%);pointer-events:none
+  }
+
+  /* Screens visibility */
+  [hidden]{display:none !important}
+
+/* === Debug hitboxes (toggle with body.debug) === */
+body.debug .entity{
+  outline: 2px dashed rgba(255,255,140,.9);
+  outline-offset: 0;
+}
+body.debug .fruit{ outline-color: #88ff88; } /* green-ish */
+body.debug .bomb{ outline-color: #ff6b6b; }  /* red */
+body.debug .clock{ outline-color: #64d2ff; } /* cyan */
+
+/* small center marker so you can see the anchor point */
+body.debug .entity::before{
+  content:"";
   position:absolute;
-  left:50%;
-  top:50%;
+  left:50%; top:50%;
+  width:6px; height:6px;
   transform:translate(-50%,-50%);
-  background:#0b0f1f;
-  z-index: 1;  /* <-- sits under the HUD */
+  border-radius:50%;
+  background:#fff;
+  box-shadow:0 0 0 2px rgba(0,0,0,.6);
+  pointer-events:none;
 }
 
+/* === Debug hitbox circle that matches HITBOX_SCALE === */
+body.debug .hitbox-ring{
+  position:absolute;
+  pointer-events:none;
+  border:2px dashed rgba(255,255,140,.9);
+  border-radius:50%;
+  transform:translate(-50%,-50%);
+  mix-blend-mode:screen;
+  z-index: 3;
+}
+body.debug .hitbox-ring.fruit{ border-color:#88ff88; }
+body.debug .hitbox-ring.bomb{  border-color:#ff6b6b; }
+body.debug .hitbox-ring.clock{ border-color:#64d2ff; }
+body.debug .hitbox-ring.half{  border-color:#d6b3ff; }
 
-  /* Popups */
-  .modalWrap{position:fixed;inset:0;background:rgba(3,5,12,.65);display:none;align-items:center;justify-content:center;padding:16px;z-index:20}
-  .modalWrap.show{display:flex}
-  .modal{width:min(700px,92vw);background:#121735;border:1px solid #2b3158;border-radius:20px;box-shadow:var(--shadow);padding:18px}
-  .modal h3{font-size:clamp(22px,5vw,30px);margin:8px 0 6px;text-align:center}
-  .modal p{font-size:clamp(14px,3.6vw,18px);text-align:center;margin:0 0 8px}
-  /* Orientation helper */
-  #rotateHelper{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:#0a0e1c;color:#fff;z-index:50}
-  #rotateHelper.active{display:flex}
-  .rainbowSnake{
-    background: conic-gradient(from 0deg, #ff004c, #ff9a00, #d0ff00, #00ff85, #00dbff, #6a00ff, #ff00e0, #ff004c);
-    -webkit-background-clip:text;background-clip:text;color:transparent;
-    animation: hue 2s linear infinite;
-  }
-  @keyframes hue{to{filter:hue-rotate(360deg)}}
+
 </style>
 </head>
 <body>
 <div id="app">
   <!-- Splash -->
-  <section id="splash" class="screen active">
+  <div id="splash" class="screen">
     <div class="card">
-      <div class="title">🐍 Emoji Snake</div>
+      <div class="title xl">📱 Portrait Mode</div>
       <p class="subtitle">Game is best in vertical mode</p>
-      <div class="footerRow">
-        <button class="btn primary" id="splashOk">Okay</button>
-      </div>
-      <p class="kicker small">Turn your phone to vertical for the best experience</p>
+      <div class="center"><button id="splashOk" class="secondary">Okay</button></div>
     </div>
-  </section>
+  </div>
 
   <!-- Title -->
-  <section id="title" class="screen">
+  <div id="title" class="screen" hidden>
     <div class="card">
-      <div class="title">Emoji Snake • Bible Quiz</div>
-      <p class="subtitle">Answer Bible questions, then guide your snake to chow down on emoji. </p>
-      <p class="subtitle">The more you eat, the bigger your 🐍 snake grows!</p>
-      <div class="grid" style="grid-template-columns:1fr; margin-top:10px">
-        <button class="btn primary row" id="startBtn">Go fullscreen and start</button>
-        <div class="notice small" style="text-align:center">
-          <label style="display:inline-flex;gap:10px;align-items:center;cursor:pointer;">
-            <input type="checkbox" id="soundToggle" checked /> Sound on
-          </label>
-        </div>
+      <div class="title xl">Emoji Fruit Ninja</div>
+      <p class="subtitle">Answer Bible questions then slice fruit for points</p>
+      <div class="row center" style="margin-top:8px">
+        <span class="pill"><span class="emoji">🍎🍌🍇</span><span>Tap or click to slice</span></span>
+      </div>
+      <div class="center" style="margin-top:12px">
+        <button id="startBtn">Go fullscreen and start</button>
       </div>
     </div>
-  </section>
+  </div>
 
   <!-- Question -->
-<section id="question" class="screen">
-  <div class="card">
-    <div id="qText" class="qText"></div>
-    <div id="answers" class="grid" style="grid-template-columns:1fr; margin-top:10px"></div>
-    <p class="kicker small" id="qProgress"></p>
-  </div>
-</section>
-
-
-  <!-- Game -->
-  <section id="game" class="screen" aria-label="Snake game">
-    <div id="gameWrap" role="region" aria-live="polite">
-      <div id="hud">
-        <div class="pill" id="hudRound">Round 1/10</div>
-        <div class="pill" id="hudScore">Score 0</div>
-      </div>
-      <canvas id="canvas"></canvas>
-
-      
-    </div>
-  </section>
-
-  <!-- End Game -->
-  <section id="theEnd" class="screen">
+  <div id="question" class="screen" hidden>
     <div class="card">
-      <div class="title">🏁 Game Over 🏁</div>
-      <div class="subtitle" id="endSummary"></div>
-      <div class="footerRow">
-        <button class="btn good" id="playAgain">Play again</button>
-        <button class="btn" id="backToTitle">Back to title</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- Modals -->
-  <div id="modal" class="modalWrap" role="dialog" aria-modal="true">
-    <div class="modal" id="modalInner">
-      <!-- dynamic -->
+      <div class="title lg" id="qText">Question goes here</div>
+      <p class="subtitle" id="qInfo">Choose the correct answer</p>
+      <div id="answers" class="row wide" style="margin-top:12px"></div>
     </div>
   </div>
 
-  <!-- Rotate helper -->
-  <div id="rotateHelper">
-    <div class="card">
-      <div class="title">Please rotate your device</div>
-      <p class="subtitle">This game is designed for vertical portrait play</p>
-      <div class="footerRow">
-        <button class="btn primary" id="rotateOk">Okay</button>
+  <!-- One-time tip modal after Q1 -->
+  <div id="tipModal" class="modal" hidden>
+    <div class="panel">
+      <div class="big">Tap or click to slice the emojis!</div>
+      <div class="small">Slice whole fruit for points then slice halves for bonus points</div>
+      <div style="margin-top:12px"><button id="tipOk" class="secondary">Got it</button></div>
+    </div>
+  </div>
+
+  <!-- Game Field -->
+  <div id="play" class="screen" hidden>
+    <div id="gameField">
+      <div class="hud">
+        <div class="chip">Round <span id="roundNum">1</span>/10</div>
+        <div class="chip">⏱ <span id="timeLeft">20.0</span>s</div>
+        <div class="chip">🍒 Sliced <span id="slicedCount">0</span></div>
+        <div class="chip">⭐ Points <span id="score">0</span></div>
+        <div class="chip" id="slowTag" hidden>🐢 Slow Time</div>
+      </div>
+      <div class="bottom-hud">
+        <div class="pill">💣 hurts score</div>
+        <div class="pill">⏰ slows time 5s</div>
       </div>
     </div>
   </div>
 
+  <!-- End of round -->
+  <div id="roundEnd" class="screen" hidden>
+    <div class="card end-card">
+      <div class="title lg">Round Complete</div>
+      <div class="stat"><span>Fruit sliced this round</span><strong id="rFruit">0</strong></div>
+      <div class="stat"><span>Points this round</span><strong id="rPoints">0</strong></div>
+      <div class="stat"><span>Total fruit sliced</span><strong id="tFruit">0</strong></div>
+      <div class="stat"><span>Total points</span><strong id="tPoints">0</strong></div>
+      <div class="center" style="margin-top:12px"><button id="nextBtn" class="secondary">Next Question</button></div>
+    </div>
+  </div>
+
+  <!-- Bonus Mode Screen container reuses #play -->
+
+  <!-- Final End -->
+  <div id="final" class="screen" hidden>
+    <div class="card end-card">
+      <div class="title lg">All Done!</div>
+      <div class="stat"><span>Questions correct</span><strong id="fCorrect">0</strong></div>
+      <div class="stat"><span>Questions incorrect</span><strong id="fWrong">0</strong></div>
+      <div class="stat"><span>Total fruit sliced</span><strong id="fFruit">0</strong></div>
+      <div class="stat"><span>Total points</span><strong id="fPoints">0</strong></div>
+      <div class="center" style="margin-top:12px"><button onclick="location.reload()" class="ghost">Play again</button></div>
+    </div>
+  </div>
+
+  <!-- Floating toast -->
+  <div id="toast" class="toast" hidden>Great job!</div>
+</div>
 
 <script>
-/* ============================================================
-   CONFIG • Tweak-friendly constants
-============================================================ */
-const SCORE_CORRECT = 100;
-const SCORE_FRUIT   = 25;
-
-const GRID_W = 18;          // grid columns (portrait friendly)
-const GRID_H = 30;          // grid rows
-const STEP_MS_BASE = 145;   // base snake step (ms) for a short snake
-const STEP_MS_MIN  = 70;    // fastest allowed
-const SPEED_GROWTH = 2;     // every N segments, reduce step a bit
-const FRUIT_SIZE_CELLS = 2;   // fruit occupies a 2x2 area
-const OBSTACLE_EMOJI = "🪨";  // universal hazard (1x1 cell)
-const STAR_EMOJI = "⭐";        // bonus item
-const STAR_GROW = 2;           // equals two fruit
-const STAR_SPAWN_START_ROUND = 6; // index 6 = Round 7
-
-
-const SHOW_MOBILE_PAD = false;   // on-screen buttons
-const ONE_TIME_TIP_AFTER_Q1 = true;
-
-/* Themes per round: background + fruit emoji + snake color */
-const THEMES = [
-  { name:"Animals",   bg:"#0b1022 radial-gradient(1200px 800px at 50% 10%, #1b2250 0%, transparent 60%)", fruit:["🐭","🐱","🐶","🐰","🐻"], snake:"#8bd3dd" },
-  { name:"Fruit",     bg:"#0b1022 radial-gradient(1100px 900px at 50% 10%, #2a3a24 0%, transparent 60%)", fruit:["🍎","🍌","🍇","🍉","🍓"], snake:"#e6b800" },
-  { name:"Ocean",     bg:"#071326 radial-gradient(1000px 900px at 50% 12%, #123a67 0%, transparent 60%)", fruit:["🐟","🐠","🐙","🐬","🐳"], snake:"#4fd1f7" },
-  { name:"Jungle",    bg:"#0b1220 radial-gradient(1100px 900px at 50% 12%, #214d2a 0%, transparent 60%)", fruit:["🌴","🐯","🐵","🦜","🦥"], snake:"#00cf83" },
-  { name:"Space",     bg:"#040816 radial-gradient(900px 700px at 50% 8%, #241744 0%, transparent 60%)",  fruit:["🌟","🛰️","🪐","👽","🚀"], snake:"#b48cff" },
-  { name:"Weather",   bg:"#0a0f21 radial-gradient(1200px 900px at 50% 15%, #213a64 0%, transparent 60%)", fruit:["☀️","🌧️","🌈","🌪️","❄️"], snake:"#ffd24d" },
-  { name:"Farm",      bg:"#0a1120 radial-gradient(1100px 900px at 50% 12%, #2f2a1f 0%, transparent 60%)", fruit:["🐔","🐄","🌽","🥕","🚜"], snake:"#ff8f6b" },
-  { name:"Desserts",  bg:"#0b1122 radial-gradient(1200px 900px at 50% 12%, #3a1d2a 0%, transparent 60%)", fruit:["🧁","🍪","🍰","🍩","🍫"], snake:"#ff6bb3" },
-  { name:"Sports",    bg:"#0a1020 radial-gradient(1100px 900px at 50% 12%, #26324f 0%, transparent 60%)", fruit:["⚽","🏀","🏈","🎾","🏓"], snake:"#7cffa8" },
-  { name:"Rainbow",   bg:"#070b18 radial-gradient(1100px 900px at 50% 12%, #2b2b5a 0%, transparent 60%)", fruit:["🍒","🍋","🍇","🍏","🫐"], snake:"rainbow" },
-];
-
-/*
-
- #####     #     #    #######     #####     #######    ###    #######    #     #     #####  
-#     #    #     #    #          #     #       #        #     #     #    ##    #    #     # 
-#     #    #     #    #          #             #        #     #     #    # #   #    #       
-#     #    #     #    #####       #####        #        #     #     #    #  #  #     #####  
-#   # #    #     #    #                #       #        #     #     #    #   # #          # 
-#    #     #     #    #          #     #       #        #     #     #    #    ##    #     # 
- #### #     #####     #######     #####        #       ###    #######    #     #     #####  
-
-*/
-
-/* 10 Bible questions about Job. Each answer has ONE emoji. */
-const QUESTIONS = [
-  { q:"What was Job like?", answers:[
-    {text:"A godly man who did what God said was right", emoji:"🙏", correct:true},
-    {text:"A powerful king", emoji:"👑", correct:false},
-    {text:"A famous prophet", emoji:"🧙‍♂️", correct:false},
-    {text:"A rich man who hated God", emoji:"😠", correct:false},
-  ]},
-
-  { q:"What is the first thing Satan said to God?", answers:[
-    {text:"\"If you take away your blessing from Job, he’ll curse you!\"", emoji:"😈", correct:true},
-    {text:"\"Give Job even more blessings.\"", emoji:"🎁", correct:false},
-    {text:"\"Let me tempt Noah instead.\"", emoji:"🧭", correct:false},
-    {text:"\"If Job keeps his wealth, he’ll worship you more.\"", emoji:"💰", correct:false},
-  ]},
-
-  { q:"What happened to Job’s children, animals, and servants?", answers:[
-    {text:"All of them were killed", emoji:"💥", correct:true},
-    {text:"They ran away", emoji:"🏃‍♂️", correct:false},
-    {text:"They all moved to Egypt", emoji:"🐪", correct:false},
-    {text:"They became even stronger", emoji:"💪", correct:false},
-  ]},
-
-  { q:"After losing his children, animals, and servants, did Job curse God?", answers:[
-    {text:"No", emoji:"🙅‍♂️", correct:true},
-    {text:"Yes", emoji:"👍", correct:false},
-    {text:"Maybe later", emoji:"🤷", correct:false},
-    {text:"He blamed his friends instead", emoji:"👥", correct:false},
-  ]},
-
-  { q:"What is the second thing Satan said to God?", answers:[
-    {text:"\"Take away Job’s health and he’ll curse you.\"", emoji:"🤒", correct:true},
-    {text:"\"Give Job a new job and he’ll forget you.\"", emoji:"🧰", correct:false},
-    {text:"\"Let Job move and he’ll praise you.\"", emoji:"🚚", correct:false},
-    {text:"\"Test Job’s friends instead.\"", emoji:"🧪", correct:false},
-  ]},
-
-  { q:"What did Satan do to Job’s body? Did Job curse God?", answers:[
-    {text:"Covered him with sores; he did not curse God", emoji:"🤕", correct:true},
-    {text:"Broke his bones; he cursed God", emoji:"🦴", correct:false},
-    {text:"Blinded him; he cursed God", emoji:"🕶️", correct:false},
-    {text:"Gave him fever; he cursed God", emoji:"🤒", correct:false},
-  ]},
-
-  { q:"What did Job’s wife tell him to do?", answers:[
-    {text:"Curse God and die", emoji:"💔", correct:true},
-    {text:"Trust God and pray", emoji:"🙏", correct:false},
-    {text:"Leave the city for a time", emoji:"🧳", correct:false},
-    {text:"Ask his friends for help", emoji:"📣", correct:false},
-  ]},
-
-  { q:"What did Job’s friends say to him?", answers:[
-    {text:"You are suffering because of sin", emoji:"⚖️", correct:true},
-    {text:"God is unfair to you", emoji:"😡", correct:false},
-    {text:"Angels caused this trouble", emoji:"😇", correct:false},
-    {text:"You are innocent—keep quiet", emoji:"🤫", correct:false},
-  ]},
-
-  { q:"Why did God come and ask Job and his friends so many questions?", answers:[
-    {text:"To show them he was God and they were not", emoji:"🌩️", correct:true},
-    {text:"To learn new information", emoji:"📝", correct:false},
-    {text:"To punish Job with words", emoji:"🔨", correct:false},
-    {text:"To confuse them", emoji:"🌀", correct:false},
-  ]},
-
-  { q:"What happened at the end of Job’s life?", answers:[
-    {text:"God blessed him with twice as many servants and animals and ten children", emoji:"🎁", correct:true},
-    {text:"He stayed poor and sick", emoji:"😷", correct:false},
-    {text:"He moved to another land and was forgotten", emoji:"🧳", correct:false},
-    {text:"He became a king over many nations", emoji:"👑", correct:false},
-  ]},
-];
-
-
-
-
-  /*
-
-#######    #     #    ######     
-#          ##    #    #     #    
-#          # #   #    #     #    
-#####      #  #  #    #     #    
-#          #   # #    #     #    
-#          #    ##    #     #    
-#######    #     #    ######     
-
-
-*/
-
-
-/* ============================================================
-   APP STATE
-============================================================ */
-const $ = sel => document.querySelector(sel);
-const $$ = sel => [...document.querySelectorAll(sel)];
-
-const S = {
-  screen:"splash",
-  roundIndex:0,           // 0..9
-  score:0,
-  correctCount:0,
-    particles: [],        // confetti particles for fruit
-  fruitEatenRound: 0,   // number of FRUITS eaten this round (caps at 10 for FX)
-
-  answeredThisQ:false,
-  showedTip:false,
-    debug: false,         // press H to toggle debug overlay
-  debugNote: "",        // optional message to show while debugging
-
-  // snake
-  snake:[],
-    stars: [],          // array of {x,y,dx,dy,emoji:"⭐"}
-  starTimers: [],     // setTimeout handles so we can clear per round
-
-  dir:{x:1,y:0},
-  nextDir:{x:1,y:0},
-  fruit:{x:5,y:5, emoji:"🍎"},
-  stepMs:STEP_MS_BASE,
-  stepAcc:0,
-  lastTs:0,
-  grew:0,
-    pulseUntil: 0,       // time until which tail glows (ms, performance.now)
-  pulseSegments: 3,    // how many last segments glow
-
-  running:false,
-  crashed:false,
-  obstacles: [],       // array of {x,y,emoji:"🪨"}
-  eatenRound: 0,    // how many emoji collected this round (fruit + stars)
-
-  rainbowPhase:0
-};
-
-function launchUiSparkles(emojis = ["✨","⭐","🌟"]) {
-  const count = 10 + Math.floor(Math.random()*6); // 10..15
-  for (let i=0; i<count; i++){
-    const span = document.createElement('span');
-    span.className = 'ui-sparkle';
-    span.textContent = emojis[Math.floor(Math.random()*emojis.length)];
-    // Random direction burst
-    const angle = Math.random() * Math.PI * 2;
-    const dist = 30 + Math.random()*60; // px
-    span.style.setProperty('--x', `${Math.cos(angle)*dist}px`);
-    span.style.setProperty('--y', `${Math.sin(angle)*dist}px`);
-    document.body.appendChild(span);
-    setTimeout(()=> span.remove(), 900);
-  }
-}
-
-
-function obstacleCountForRound(roundIndex){
-  // roundIndex is 0..9  (Round 1 is index 0)
-  if (roundIndex >= 7) return 4; // rounds 8-10
-  if (roundIndex >= 4) return 3; // rounds 5-7
-  if (roundIndex >= 1) return 2; // rounds 2-4
-  return 0;                      // round 1
-}
-
-
-/* ============================================================
-   UTIL
-============================================================ */
-function shuffle(arr){
-  const a = arr.slice();
-  for(let i=a.length-1;i>0;i--){
-    const j = Math.floor(Math.random()*(i+1));
-    [a[i],a[j]]=[a[j],a[i]];
-  }
-  return a;
-}
-function clamp(v,lo,hi){return Math.max(lo,Math.min(hi,v));}
-function inBounds(x,y){return x>=0 && y>=0 && x<GRID_W && y<GRID_H;}
-function cellKey(x,y){return x+"|"+y;}
-function randInt(n){return Math.floor(Math.random()*n);}
-
-// ================= CONFETTI =================
-function spawnConfettiAt(gridX, gridY){
-  // Scale with fruit count: 1..10
-  const level = Math.max(1, S.fruitEatenRound || 1); // 1 to 10
-  const count = 8 + level * 2;                        // 10..28 particles
-  const sizeBase = Math.max(1.5, (cellSize - 4) * (0.10 + level * 0.01)); // grows slowly
-  const speed = 1.2 + level * 0.12;                  // slight boost with level
-
-  const px = gridX * cellSize;  // grid center already passed in
-  const py = gridY * cellSize;
-
-  for (let i = 0; i < count; i++){
-    // random angle and speed
-    const ang = Math.random() * Math.PI * 2;
-    const spd = (Math.random() * 0.6 + 0.7) * speed; // vary per particle
-    const vx = Math.cos(ang) * spd;
-    const vy = Math.sin(ang) * spd - 0.5; // slight upward bias
-
-    // colorful confetti
-    const hue = Math.floor(Math.random() * 360);
-    const sat = 85 + Math.floor(Math.random() * 15); // 85-100
-    const light = 55 + Math.floor(Math.random() * 15);
-
-    S.particles.push({
-      x: px, y: py, vx, vy,
-      life: 600 + Math.random() * 500,   // ms lifetime
-      age: 0,
-      size: sizeBase * (0.7 + Math.random() * 0.6),
-      color: `hsl(${hue} ${sat}% ${light}%)`,
-      rot: Math.random() * Math.PI,
-      vr: (Math.random() - 0.5) * 0.25  // spin
-    });
-  }
-}
-
-function updateParticles(dtMs){
-  if (!S.particles.length) return;
-  const dt = dtMs / 16.6667; // normalize to “frames”
-  const g = 0.08;            // gravity-ish
-  const drag = 0.985;        // little air drag
-
-  for (const p of S.particles){
-    p.age += dtMs;
-    if (p.age >= p.life) continue;
-
-    // physics
-    p.vy += g * dt;
-    p.vx *= drag; p.vy *= drag;
-
-    p.x += p.vx * cellSize * 0.06; // scale to pixels
-    p.y += p.vy * cellSize * 0.06;
-
-    p.rot += p.vr * dt;
-  }
-
-  // prune dead
-  S.particles = S.particles.filter(p => p.age < p.life);
-}
-
-function drawParticles(){
-  if (!S.particles.length) return;
-  ctx.save();
-  for (const p of S.particles){
-    const t = p.age / p.life;
-    const alpha = Math.max(0, 1 - t);       // fade out
-    const s = Math.max(1, p.size * (1 - t*0.2)); // slight shrink
-
-    ctx.translate(p.x, p.y);
-    ctx.rotate(p.rot);
-    ctx.globalAlpha = alpha;
-    ctx.fillStyle = p.color;
-    // small rotated rectangle “confetti chip”
-    ctx.fillRect(-s*0.6, -s*0.2, s*1.2, s*0.4);
-    ctx.setTransform(1,0,0,1,0,0); // reset transform
-  }
-  ctx.globalAlpha = 1;
-  ctx.restore();
-}
-
-
-function cellOverlapsFruit(x,y){
-  for(let dx=0; dx<FRUIT_SIZE_CELLS; dx++){
-    for(let dy=0; dy<FRUIT_SIZE_CELLS; dy++){
-      if (x === S.fruit.x + dx && y === S.fruit.y + dy) return true;
-    }
-  }
-  return false;
-}
-
-function headNextCell(){
-  const head = S.snake[S.snake.length-1];
-  return { x: head.x + S.dir.x, y: head.y + S.dir.y };
-}
-
-/* ============================================================
-   SOUND (simple WebAudio beeps you can replace later)
-============================================================ */
-let audioCtx = null;
-function ensureAudio(){
-  if(!$('#soundToggle').checked) return null;
-  if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
-  return audioCtx;
-}
-function beep(freq=440,ms=120, type="sine", vol=.15){
-  const ctx = ensureAudio(); if(!ctx) return;
-  const o = ctx.createOscillator();
-  const g = ctx.createGain();
-  o.type=type; o.frequency.value=freq;
-  g.gain.value=vol;
-  o.connect(g); g.connect(ctx.destination);
-  o.start();
-  o.stop(ctx.currentTime + ms/1000);
-}
-const sfx = {
-  correct(){beep(880,120,"triangle",.2); setTimeout(()=>beep(1320,90,"triangle",.16),100);},
-  wrong(){beep(180,180,"sawtooth",.18);},
-  eat(){beep(520,70,"square",.14);},
-  crash(){beep(120,220,"sawtooth",.25);}
-};
-
-/* ============================================================
-   SCREENS & MODALS
-============================================================ */
-function showScreen(id){
-  $$('.screen').forEach(el=>el.classList.remove('active'));
-  $('#'+id).classList.add('active');
-  S.screen = id;
-}
-function showModal(html){
-  const inner = $('#modalInner');
-  inner.innerHTML = html;
-  $('#modal').classList.add('show');
-}
-function closeModal(){ $('#modal').classList.remove('show'); }
-
-
-
-
-/* ============================================================
-   SPLASH & TITLE
-============================================================ */
-$('#splashOk').addEventListener('click', ()=>{
-  showScreen('title');
-});
-$('#startBtn').addEventListener('click', async ()=>{
-  // Attempt fullscreen (gracefully ignore if blocked)
-  try{
-    const el = document.documentElement;
-    if(el.requestFullscreen) await el.requestFullscreen();
-    else if(el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
-  }catch(e){}
-  startGameFlow();
-});
-$('#soundToggle').addEventListener('change', ()=>{ /* no-op, just a toggle */ });
-
-/* ============================================================
-   QUESTION FLOW
-============================================================ */
-function startGameFlow(){
-  S.roundIndex = 0;
-  S.score = 0;
-  S.correctCount = 0;
-  S.showedTip = false;
-  showQuestion();
-}
-
-function showQuestion(){
-  showScreen('question');
-  const q = QUESTIONS[S.roundIndex];
-$('#qText').textContent = q.q + "?";
-
-  $('#qProgress').textContent = `Question ${S.roundIndex+1} of 10`;
-  const answersWrap = $('#answers');
-  answersWrap.innerHTML = "";
-
-  const shuffled = shuffle(q.answers);
-  shuffled.forEach(ans=>{
-    const btn = document.createElement('button');
-    btn.className = 'btn row';
-    btn.innerHTML = `<span style="font-size:1.2em">${ans.emoji}</span> <span>${ans.text}</span>`;
-    btn.addEventListener('click', ()=>{
-      if(ans.correct){
-        S.score += SCORE_CORRECT;
-        S.correctCount++;
-        sfx.correct();
-        showModal(`
-          <h3>✅ Correct!</h3>
-          <p>You earned ${SCORE_CORRECT} points</p>
-          <div class="footerRow"><button class="btn good" id="goPlay">Play round</button></div>
-        `);
-        launchUiSparkles(THEMES[S.roundIndex].fruit);
-
-      }else{
-        sfx.wrong();
-        const right = q.answers.find(a=>a.correct);
-        showModal(`
-          <h3>❌ Incorrect!</h3>
-          <p>Right answer:</p>
-            <p>${right.emoji} ${right.text}</p>
-          <div class="footerRow"><button class="btn" id="goPlay">Play round</button></div>
-        `);
-      }
-      $('#goPlay').addEventListener('click', ()=>{
-        closeModal();
-        if(ONE_TIME_TIP_AFTER_Q1 && !S.showedTip && S.roundIndex===0){
-          S.showedTip = true;
-          showModal(`
-            <h3>🎮How to play📱</h3>
-            <p>Swipe 👆 or use arrow keys ↔️ to turn your snake and eat the emoji.</p>
-            <p>Don't crash into walls or your own tail!</p>
-            <div class="footerRow"><button class="btn primary" id="tipOk">Got it</button></div>
-          `);
-          $('#tipOk').addEventListener('click', ()=>{ closeModal(); startSnakeRound(); });
-        }else{
-          startSnakeRound();
-        }
-      }, {once:true});
-    });
-    answersWrap.appendChild(btn);
-  });
-}
-
-/* ============================================================
-   SNAKE GAME
-============================================================ */
-const canvas = $('#canvas');
-const ctx = canvas.getContext('2d', { alpha:false });
-
-let cellSize=16, padH=0;
-
-function sizeCanvas(){
-  const wrap = $('#gameWrap');
-  const w = wrap.clientWidth, h = wrap.clientHeight;
-
-  // Pick a whole-pixel cell size that fits in both directions
-  const cell = Math.floor(Math.min(w / GRID_W, h / GRID_H));
-
-  // Exact pixel size of the logical grid
-  const cw = cell * GRID_W;
-  const ch = cell * GRID_H;
-
-  // Set canvas to EXACT grid size (no extra rows/cols possible)
-  canvas.width = cw;
-  canvas.height = ch;
-
-  // Centering is handled by CSS (left:50%/top:50%/transform)
-  // So there is no “pad” in drawing; everything is (0,0) based.
-  cellSize = cell;
-  padH = { x: 0, y: 0 };
-}
-
-function themeBgCss(theme){
-  const bg = theme.bg.includes('radial-gradient') ? `#000, ${theme.bg.split(' ')[0]} ${theme.bg.split(' ').slice(1).join(' ')}` : theme.bg;
-  $('#gameWrap').style.background = theme.bg;
-}
-
-function startSnakeRound(){
-  // Setup HUD and theme
-  showScreen('game');
-  $('#hudRound').textContent = `Round ${S.roundIndex+1}/10`;
-  $('#hudScore').textContent = `Score ${S.score}`;
-  themeBgCss(THEMES[S.roundIndex]);
-  sizeCanvas();
-
-  // Init snake in center
-  const startX = Math.floor(GRID_W/2);
-  const startY = Math.floor(GRID_H/2)+3;
-  S.snake = [{x:startX-2,y:startY},{x:startX-1,y:startY},{x:startX,y:startY}];
-  S.dir = {x:1,y:0};
-  S.nextDir = {x:1,y:0};
-  S.stepMs = STEP_MS_BASE;
-  S.stepAcc = 0;
-  S.lastTs = 0;
-  S.grew = 0;
-    S.particles = [];
-  S.fruitEatenRound = 0;
-
-    S.eatenRound = 0;
-
-  S.running = true;
-  S.crashed = false;
-  S.rainbowPhase = 0;
-
-  spawnFruit();
-  spawnObstacles();
-  scheduleStars();
-
-  requestAnimationFrame(loop);
-}
-
-/* Input */
-/* Input */
-window.addEventListener('keydown', (e)=>{
-  const k = e.key.toLowerCase();
-
-  // SECRET: press "b" to jump straight to Question 10
-  if (k === 'b') {
-    // If we're still on Splash or Title, start the flow first
-    if (S.screen === 'splash' || S.screen === 'title') {
-      startGameFlow();           // resets score, counters, etc.
-    }
-    // Go to question 10 (index 9)
-    S.roundIndex = 9;
-    closeModal();                // just in case a modal is open
-    showQuestion();
-    e.preventDefault();
-    return;
-  }
-
-  // Toggle debug overlay (H key)
-  if (k === 'h') {
-    S.debug = !S.debug;
-    e.preventDefault();
-    return;
-  }
-
-  // Movement keys only while the game is running
-  if (S.screen!=='game' || !S.running) return;
-
-  if (['arrowup','w'].includes(k)) queueDir(0,-1);
-  else if (['arrowdown','s'].includes(k)) queueDir(0,1);
-  else if (['arrowleft','a'].includes(k)) queueDir(-1,0);
-  else if (['arrowright','d'].includes(k)) queueDir(1,0);
-});
-
-
-
-
-/* Swipe support */
-let touchStart=null;
-canvas.addEventListener('touchstart', e=>{ touchStart = [...e.changedTouches][0]; }, {passive:true});
-canvas.addEventListener('touchend', e=>{
-  if(!touchStart) return;
-  const tEnd = [...e.changedTouches][0];
-  const dx = tEnd.clientX - touchStart.clientX;
-  const dy = tEnd.clientY - touchStart.clientY;
-  if(Math.abs(dx)>Math.abs(dy)){
-    if(dx>8) queueDir(1,0); else if(dx<-8) queueDir(-1,0);
-  }else{
-    if(dy>8) queueDir(0,1); else if(dy<-8) queueDir(0,-1);
-  }
-  touchStart=null;
-}, {passive:true});
-
-function queueDir(x,y){
-  // Prevent direct reverse
-  if(S.dir.x===-x && S.dir.y===-y) return;
-  S.nextDir = {x,y};
-}
-
-/* Fruit spawn: choose a 2x2 area that doesn't overlap the snake or obstacles */
-function spawnFruit(){
-  const theme = THEMES[S.roundIndex];
-  const opts = theme.fruit;
-  const occupied = new Set(S.snake.map(p=>cellKey(p.x,p.y)));
-
-  let x,y,keyCellsOK=false;
-  const maxX = GRID_W - FRUIT_SIZE_CELLS;
-  const maxY = GRID_H - FRUIT_SIZE_CELLS;
-
-  function fruitAreaOverlapsObstacle(xx,yy){
-    // any of the 2x2 fruit cells matching any obstacle cell?
-    for(let dx=0; dx<FRUIT_SIZE_CELLS; dx++){
-      for(let dy=0; dy<FRUIT_SIZE_CELLS; dy++){
-        const cx = xx+dx, cy = yy+dy;
-        if (S.obstacles && S.obstacles.some(o => o.x===cx && o.y===cy)) return true;
-      }
-    }
-    return false;
-  }
-
-  do{
-    x = randInt(maxX + 1);
-    y = randInt(maxY + 1);
-    // ensure none of the 2x2 cells are on the snake or obstacles
-    keyCellsOK = true;
-    for(let dx=0; dx<FRUIT_SIZE_CELLS; dx++){
-      for(let dy=0; dy<FRUIT_SIZE_CELLS; dy++){
-        if(occupied.has(cellKey(x+dx, y+dy))){ keyCellsOK=false; break; }
-      }
-      if(!keyCellsOK) break;
-    }
-    if (keyCellsOK && fruitAreaOverlapsObstacle(x,y)) keyCellsOK = false;
-  }while(!keyCellsOK);
-
-  S.fruit = { x, y, emoji: opts[randInt(opts.length)] };
-}
-
-
-/* Spawn rock obstacles (1x1), avoiding snake and the fruit area */
-/* Spawn rock obstacles (1x1), avoiding snake, fruit area, and an early safe zone */
-function spawnObstacles(){
-  const need = obstacleCountForRound(S.roundIndex);
-  S.obstacles = [];
-  if (need === 0) return;
-
-  // --- Safe zone config (tweak if you like)
-  const SAFE_RADIUS = 2;       // Manhattan distance around start row
-  const FORWARD_SAFE_STEPS = 4; // cells ahead of the starting head (moving right)
-
-  // Starting snake layout (see startSnakeRound)
-  const startX = Math.floor(GRID_W/2);
-  const startY = Math.floor(GRID_H/2) + 3;
-  const startSegments = [
-    {x:startX-2,y:startY},
-    {x:startX-1,y:startY},
-    {x:startX  ,y:startY}, // head at start
+(() => {
+  /* -------------------------- Utility helpers -------------------------- */
+// ---- Tunables you can tweak ----
+// Smaller GRAVITY = floatier, higher arcs. Bigger = heavier.
+const GRAVITY = 0.0000010;   // was 0.0000016 — lighter for floaty feel
+// ARC_POWER scales the initial upward launch speed.
+const ARC_POWER = 1.7;       // was 1.6 — a touch higher helps reach mid-screen
+// Sideways wiggle of the launch (keeps fruit near center on portrait)
+const SIDE_SWAY = 0.10;      // keep as-is (0.08–0.14 is good)
+// How far from the edges fruit can spawn (as a fraction of width)
+const SPAWN_PADDING_X = 0.08;
+
+// Global physics slow-mo factor (does NOT affect timers or spawn timing)
+const PHYSICS_SLOWMO = 0.50; // 0.6 = very floaty, 1.0 = normal
+
+// --- Spawn timing (milliseconds). Larger = fewer spawns. ---
+// Level 1 uses SPAWN_BASE_MS. Each level makes it faster by SPAWN_LEVEL_FACTOR,
+// but never faster than SPAWN_MIN_MS.
+const SPAWN_BASE_MS = 1300;    // Level 1 delay (e.g., 1300ms ≈ 0.77 fruit/sec)
+const SPAWN_LEVEL_FACTOR = 80; // How much to reduce delay per level
+const SPAWN_MIN_MS = 450;      // Hard floor so late levels aren't ridiculous
+
+// How much halves separate/explode after slicing
+const HALF_SPLIT_OFFSET_PX = 3;  // horizontal start offset (was 6)
+const HALF_KICK_VX = 50;         // sideways kick speed (px/s; was 120)
+const HALF_KICK_VY = -15;        // small upward pop (px/s; was -40)
+
+// Vertical speed for halves (px/second). 
+// Use a small negative for a tiny upward pop, or 0 to fall immediately.
+const HALF_VY_PXS = -8;   // try -8, or 0 for no pop
+
+// Half-piece rotation (degrees/second). Randomized between these and direction ±.
+const HALF_SPIN_MIN_DPS = 60;   // slower end (e.g., 60°/s)
+const HALF_SPIN_MAX_DPS = 180;  // faster end (e.g., 180°/s)
+
+
+// --- Hitbox tuning ---
+// 1.0 = normal, 1.2 = easier (bigger), 0.75 = harder (smaller)
+const HITBOX_SCALE = 1.50;
+
+// Optional: halves are narrower than full fruit; keep their base a bit smaller
+const HALF_HITBOX_FACTOR = 0.85; // change to 1.0 if you want halves to be as easy as whole fruit
+
+
+
+  const $ = sel => document.querySelector(sel);
+  const $$ = sel => Array.from(document.querySelectorAll(sel));
+  const rand = (min,max)=>Math.random()*(max-min)+min;
+  const choice = arr => arr[(Math.random()*arr.length)|0];
+  const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
+
+  const FRUIT = ['🍎','🍐','🍊','🍋','🍌','🍉','🍇','🍓','🫐','🍒','🍑','🍍','🥝','🥭','🍈','🍏'];
+  const BOMB = '💣';
+  const CLOCK = '⏰';
+
+  /* ---------------------------- Game state ----------------------------- */
+  const state = {
+    round: 1, maxRounds: 10,
+    inBonus: false,
+    correct: 0, wrong: 0,
+    totalFruit: 0,
+    score: 0,
+    // per-round
+    roundFruit: 0,
+    roundScore: 0,
+    showedTip: false
+  };
+
+  /* --------------------------- Questions list -------------------------- */
+  // You can edit these later — answers will be shuffled when rendered.
+  // correctIndex points to the correct one before shuffling.
+  const questions = [
+    {
+      text: "Who made the heavens and the earth?",
+      answers: [
+        {label:"God", emoji:"✨"},
+        {label:"Noah", emoji:"🛶"},
+        {label:"Moses", emoji:"🪄"},
+        {label:"David", emoji:"🎵"},
+      ],
+      correctIndex: 0
+    },
+    {
+      text: "What did God send to guide Israel by night?",
+      answers: [
+        {label:"A pillar of fire", emoji:"🔥"},
+        {label:"A rainbow", emoji:"🌈"},
+        {label:"A dove", emoji:"🕊️"},
+        {label:"A comet", emoji:"☄️"},
+      ],
+      correctIndex: 0
+    },
+    {
+      text: "Where was Jesus born?",
+      answers: [
+        {label:"Bethlehem", emoji:"⭐"},
+        {label:"Nazareth", emoji:"🏘️"},
+        {label:"Jerusalem", emoji:"🏛️"},
+        {label:"Rome", emoji:"🏟️"},
+      ],
+      correctIndex: 0
+    },
+    {
+      text: "What did Jesus use to feed thousands?",
+      answers: [
+        {label:"Bread and fish", emoji:"🍞🐟"},
+        {label:"Figs and dates", emoji:"🧺"},
+        {label:"Milk and honey", emoji:"🍯"},
+        {label:"Grapes and cheese", emoji:"🧀"},
+      ],
+      correctIndex: 0
+    },
+    {
+      text: "Who spent the night with lions and lived?",
+      answers: [
+        {label:"Daniel", emoji:"🦁"},
+        {label:"Jonah", emoji:"🐳"},
+        {label:"Elijah", emoji:"🔥"},
+        {label:"Samson", emoji:"💪"},
+      ],
+      correctIndex: 0
+    },
+    {
+      text: "What carried Noah on the flood?",
+      answers: [
+        {label:"An ark", emoji:"⛵"},
+        {label:"A raft", emoji:"🛶"},
+        {label:"A ship", emoji:"🚢"},
+        {label:"A cloud", emoji:"☁️"},
+      ],
+      correctIndex: 0
+    },
+    {
+      text: "Who is the Good Shepherd?",
+      answers: [
+        {label:"Jesus", emoji:"🐑"},
+        {label:"Peter", emoji:"🎣"},
+        {label:"Abraham", emoji:"⭐"},
+        {label:"Solomon", emoji:"👑"},
+      ],
+      correctIndex: 0
+    },
+    {
+      text: "What did David use against Goliath?",
+      answers: [
+        {label:"A sling", emoji:"🪃"},
+        {label:"A sword", emoji:"🗡️"},
+        {label:"A spear", emoji:"🛡️"},
+        {label:"A net", emoji:"🕸️"},
+      ],
+      correctIndex: 0
+    },
+    {
+      text: "Where did Jonah spend three days?",
+      answers: [
+        {label:"Inside a great fish", emoji:"🐋"},
+        {label:"In a cave", emoji:"🕳️"},
+        {label:"In a prison", emoji:"🧱"},
+        {label:"On a mountain", emoji:"⛰️"},
+      ],
+      correctIndex: 0
+    },
+    {
+      text: "What is the first book of the Bible?",
+      answers: [
+        {label:"Genesis", emoji:"📜"},
+        {label:"Exodus", emoji:"🚶"},
+        {label:"Psalms", emoji:"🎶"},
+        {label:"Matthew", emoji:"📖"},
+      ],
+      correctIndex: 0
+    },
   ];
 
-  // helper: Manhattan distance
-  const manhattan = (x1,y1,x2,y2) => Math.abs(x1-x2) + Math.abs(y1-y2);
+  /* ----------------------------- DOM nodes ----------------------------- */
+  const screens = {
+    splash: $('#splash'),
+    title: $('#title'),
+    question: $('#question'),
+    play: $('#play'),
+    roundEnd: $('#roundEnd'),
+    final: $('#final'),
+  };
+  const qText = $('#qText');
+  const answersBox = $('#answers');
+  const qInfo = $('#qInfo');
+  const tipModal = $('#tipModal');
+  const toast = $('#toast');
 
-  // Cells that are "too close" at round start
-  function inSafeZone(x,y){
-    // near any of the initial segments
-    for (const s of startSegments){
-      if (manhattan(x,y,s.x,s.y) <= SAFE_RADIUS) return true;
-    }
-    // the initial forward lane (snake begins moving right)
-    if (y === startY && x > startX && x <= startX + FORWARD_SAFE_STEPS) return true;
-    return false;
+  const gameField = $('#gameField');
+  const roundNum = $('#roundNum');
+  const timeLeft = $('#timeLeft');
+  const slicedCountEl = $('#slicedCount');
+  const scoreEl = $('#score');
+  const slowTag = $('#slowTag');
+
+  const rFruit = $('#rFruit');
+  const rPoints = $('#rPoints');
+  const tFruit = $('#tFruit');
+  const tPoints = $('#tPoints');
+
+  const fCorrect = $('#fCorrect');
+  const fWrong = $('#fWrong');
+  const fFruit = $('#fFruit');
+  const fPoints = $('#fPoints');
+
+  /* ---------------------------- Screen logic --------------------------- */
+  const show = name => {
+    for(const k in screens){ screens[k].hidden = k !== name; }
+  };
+
+  $('#splashOk').addEventListener('click', ()=>show('title'));
+
+  // Fullscreen
+  async function enterFullscreen(el){
+    try{
+      if(el.requestFullscreen) await el.requestFullscreen();
+      else if(el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
+    }catch{}
   }
 
-  // does (x,y) overlap the current 2x2 fruit area?
-  function overlapsFruit(x,y){
-    for(let dx=0; dx<FRUIT_SIZE_CELLS; dx++){
-      for(let dy=0; dy<FRUIT_SIZE_CELLS; dy++){
-        if (x === S.fruit.x + dx && y === S.fruit.y + dy) return true;
+  $('#startBtn').addEventListener('click', async ()=>{
+    await enterFullscreen(document.documentElement);
+    startGame();
+  });
+
+  function startGame(){
+    state.round = 1;
+    state.correct = 0;
+    state.wrong = 0;
+    state.totalFruit = 0;
+    state.score = 0;
+    state.inBonus = false;
+    showQuestion();
+  }
+
+  /* --------------------------- Question render ------------------------- */
+  function showQuestion(){
+    show('question');
+    const q = questions[state.round-1];
+    qText.textContent = `Q${state.round}. ${q.text}`;
+    qInfo.textContent = 'Choose the correct answer';
+
+    // Make a shuffled view model with isCorrect preserved
+    const items = q.answers.map((a,i)=>({ ...a, isCorrect: i===q.correctIndex }));
+    shuffleInPlace(items);
+
+    answersBox.innerHTML = '';
+    for(const item of items){
+      const btn = document.createElement('button');
+      btn.className = 'wide';
+      btn.style.display = 'flex';
+      btn.style.alignItems = 'center';
+      btn.style.justifyContent = 'space-between';
+      btn.style.gap = '10px';
+
+      const left = document.createElement('span');
+      left.textContent = `${item.emoji}  ${item.label}`;
+      const right = document.createElement('span');
+      right.textContent = '➜';
+      right.style.opacity = '.5';
+
+      btn.append(left,right);
+
+      btn.addEventListener('click', ()=>{
+        if(item.isCorrect){
+          state.correct++;
+          state.score += 50;
+          showToast('✅ Correct +50', true);
+          afterAnswer(true, q.answers[q.correctIndex]);
+        }else{
+          state.wrong++;
+          showToast(`❌ Incorrect — Correct: ${q.answers[q.correctIndex].label}`, false);
+          afterAnswer(false, q.answers[q.correctIndex]);
+        }
+      });
+
+      answersBox.appendChild(btn);
+    }
+  }
+
+  function afterAnswer(wasCorrect, correctAnswer){
+    // brief popup handled by toast
+    // After Q1 only, show slicing tip before the round
+    if(state.round === 1 && !state.showedTip){
+      state.showedTip = true;
+      tipModal.hidden = false;
+      $('#tipOk').onclick = ()=>{ tipModal.hidden = true; startRound(); };
+    }else{
+      startRound();
+    }
+  }
+
+  function showToast(msg, ok){
+    toast.textContent = msg;
+    toast.className = 'toast ' + (ok?'ok':'bad');
+    toast.hidden = false;
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(()=> toast.hidden = true, 1400);
+  }
+
+  function shuffleInPlace(arr){
+    for(let i=arr.length-1;i>0;i--){
+      const j = (Math.random()*(i+1))|0;
+      [arr[i],arr[j]]=[arr[j],arr[i]];
+    }
+  }
+
+  /* ---------------------------- Round engine --------------------------- */
+  let entities = [];
+  let raf = null;
+  let running = false;
+  let slowUntil = 0;
+  let spawnTimer = 0;
+  let spawnEvery = 650; // ms — tuned for portrait
+  let roundEndAt = 0;
+  let last = 0;
+
+  function resetField(){
+    entities.forEach(e=>e.node.remove());
+    entities = [];
+    spawnTimer = 0;
+    slowUntil = 0;
+    $('#slowTag').hidden = true;
+    slicedCountEl.textContent = '0';
+  }
+
+  function startRound(){
+    show('play');
+    roundNum.textContent = state.round;
+    resetField();
+    state.roundFruit = 0;
+    state.roundScore = 0;
+// --- Per-level spawn pacing ---
+{
+  const level = state.round;
+  // Larger delay = fewer spawns. Delay shrinks each level, clamped to a minimum.
+  spawnEvery = Math.max(SPAWN_MIN_MS, SPAWN_BASE_MS - SPAWN_LEVEL_FACTOR * (level - 1));
+}
+
+    // 20 seconds round
+    const now = performance.now();
+    roundEndAt = now + 20000;
+    last = now;
+    running = true;
+    loop(now);
+  }
+
+  function loop(now){
+    if(!running) return;
+    const dtMs = now - last;
+    last = now;
+
+    // Slow time active?
+    const slowActive = now < slowUntil;
+    $('#slowTag').hidden = !slowActive;
+    const speedFactor = slowActive ? 0.5 : 1;
+
+    // update timer
+    const tLeft = Math.max(0, (roundEndAt - now)/1000);
+    timeLeft.textContent = tLeft.toFixed(1);
+
+    // spawn
+    spawnTimer += dtMs;
+    const currentSpawn = spawnEvery / speedFactor; // a tiny compensation so slow time still feels busy
+    if(spawnTimer >= currentSpawn){
+      spawnTimer = 0;
+      spawnEntityWeighted();
+    }
+
+    // physics
+   stepEntities(dtMs * speedFactor * PHYSICS_SLOWMO);
+
+    // round end
+    if(now >= roundEndAt){
+      running = false;
+      cancelAnimationFrame(raf);
+      endRound();
+      return;
+    }
+    raf = requestAnimationFrame(loop);
+  }
+
+  function spawnEntityWeighted(){
+    // 75% fruit, 15% bomb, 10% clock
+    const p = Math.random();
+    if(p < 0.75) spawnFruit();
+    else if(p < 0.90) spawnBomb();
+    else spawnClock();
+  }
+
+  function spawnFruit(){
+    const emoji = choice(FRUIT);
+    const n = makeEntity('fruit', emoji);
+    entities.push(n);
+  }
+
+  function spawnBomb(){
+    const n = makeEntity('bomb', BOMB);
+    entities.push(n);
+  }
+
+  function spawnClock(){
+    const n = makeEntity('clock', CLOCK);
+    entities.push(n);
+  }
+
+  function makeEntity(kind, emoji){
+    const rect = gameField.getBoundingClientRect();
+    const node = document.createElement('div');
+    node.className = `entity ${kind}`;
+    node.textContent = emoji;
+
+    // start near bottom with slight horizontal variance
+const padding = rect.width * SPAWN_PADDING_X;
+const x = rand(padding, rect.width - padding);
+const y = rect.height + 40; // off bottom
+
+// initial velocities (px/ms after we divide by 1000 below)
+const vy0 = -ARC_POWER * rand(rect.height * 0.80, rect.height * 1.00); // up (slightly softer)
+const vx0 = rand(-rect.width * SIDE_SWAY, rect.width * SIDE_SWAY);     // sideways
+
+
+    const e = {
+      kind, emoji, node,
+      x, y, vx: vx0/1000, vy: vy0/1000, // px per ms
+      r: 0, spin: 0, dead:false, halves:false
+    };
+
+    node.style.left = x+'px';
+    node.style.top = y+'px';
+    node.style.zIndex = 2;
+    gameField.appendChild(node);
+
+    node.addEventListener('pointerdown', (ev)=>{
+      ev.preventDefault();
+      ev.stopPropagation();
+      if(e.dead) return;
+      if(e.kind === 'fruit') sliceFruit(e);
+      else if(e.kind === 'bomb') detonateBomb(e);
+      else if(e.kind === 'clock') slowTime(e);
+    });
+
+    return e;
+  }
+
+  function stepEntities(dt){
+    const rect = gameField.getBoundingClientRect();
+const g = rect.height * GRAVITY; // gravity px/ms^2 scaled to screen height
+
+    for(const e of entities){
+      if(e.dead) continue;
+
+      e.vy += g*dt;
+      e.x += e.vx*dt*1000/60; // tuned feel
+      e.y += e.vy*dt;
+
+      // keep slightly inside horizontal bounds so they don't leave early
+      if(e.x < 20){ e.x = 20; e.vx = Math.abs(e.vx)*0.6; }
+      if(e.x > rect.width-20){ e.x = rect.width-20; e.vx = -Math.abs(e.vx)*0.6; }
+
+e.node.style.left = e.x + 'px';
+e.node.style.top  = e.y + 'px';
+
+if (DEBUG) ensureDebugRing(e);
+else if (e._ring) e._ring.hidden = true;
+
+
+// Apply rotation if present (deg/ms * ms = deg)
+// Use 0 if spin is undefined (non-half entities).
+e.r = (e.r || 0) + (e.spin || 0) * dt;
+e.node.style.transform = `translate(-50%, -50%) rotate(${e.r}deg)`;
+
+
+      // off-screen bottom cleanup
+      if(e.y > rect.height + 80){
+        removeEntity(e);
       }
     }
-    return false;
   }
 
-  const occupied = new Set(S.snake.map(p=>`${p.x}|${p.y}`));
-
-  let attempts = 0, placed = 0;
-  while (placed < need && attempts < 1000){
-    attempts++;
-    const x = Math.floor(Math.random()*GRID_W);
-    const y = Math.floor(Math.random()*GRID_H);
-    const key = `${x}|${y}`;
-
-    // avoid: snake, fruit area, other rocks, safe zone
-    if (occupied.has(key)) continue;
-    if (overlapsFruit(x,y)) continue;
-    if (S.obstacles.some(o => o.x===x && o.y===y)) continue;
-    if (inSafeZone(x,y)) continue;
-
-    S.obstacles.push({ x, y, emoji: OBSTACLE_EMOJI });
-    placed++;
-  }
-}
-
-
-/* ---------- STARS (Round 7+) ---------- */
-function clearStarTimers(){
-  if (!S.starTimers) return;
-  for (const id of S.starTimers) clearTimeout(id);
-  S.starTimers = [];
-}
-
-function scheduleStars(){
-  S.stars = [];
-  clearStarTimers();
-  // Only from round 7 onward
-  if (S.roundIndex < STAR_SPAWN_START_ROUND) return;
-
-  // Two per round: at 10s and 20s (10000ms / 20000ms)
-  S.starTimers.push(setTimeout(()=>{ addStar(); }, 10000));
-  S.starTimers.push(setTimeout(()=>{ addStar(); }, 20000));
-}
-
-function addStar(){
-  // pick a free cell not on snake, not on fruit area, not on obstacle, not on existing star
-  const occupiedSnake = new Set(S.snake.map(p=>cellKey(p.x,p.y)));
-  let tries = 0;
-  while (tries++ < 300){
-    const x = randInt(GRID_W);
-    const y = randInt(GRID_H);
-    const key = cellKey(x,y);
-    if (occupiedSnake.has(key)) continue;
-    if (cellOverlapsFruit(x,y)) continue;
-    if (S.obstacles && S.obstacles.some(o => o.x===x && o.y===y)) continue;
-    if (S.stars.some(s => s.x===x && s.y===y)) continue;
-
-    // Choose a diagonal direction so it "pongs" around
-    const dirs = [[1,1],[1,-1],[-1,1],[-1,-1]];
-    const [dx,dy] = dirs[randInt(dirs.length)];
-    S.stars.push({ x, y, dx, dy, emoji: STAR_EMOJI });
-    break;
-  }
-}
-
-function moveStars(){
-  if (!S.stars || S.stars.length===0) return;
-  for (const s of S.stars){
-    let nx = s.x + s.dx;
-    let ny = s.y + s.dy;
-    // Bounce on walls
-    if (nx < 0 || nx >= GRID_W){ s.dx = -s.dx; nx = s.x + s.dx; }
-    if (ny < 0 || ny >= GRID_H){ s.dy = -s.dy; ny = s.y + s.dy; }
-    s.x = nx; s.y = ny;
-    // Optional: we let stars pass through obstacles/snake; only head collects
-  }
-}
-
-
-/* Game loop with grid steps + smooth head interpolation */
-function loop(ts){
-  if(!S.running) return; // stop frame loop when not running
-  if(!S.lastTs) S.lastTs = ts;
-  const dt = ts - S.lastTs;
-  S.lastTs = ts;
-
-  S.stepAcc += dt;
-    updateParticles(dt); // NEW: animate confetti
-
-
-  // speed scales with length
-  const len = S.snake.length;
-  const speedSteps = Math.floor(len / SPEED_GROWTH);
-  S.stepMs = clamp(STEP_MS_BASE - speedSteps*5, STEP_MS_MIN, STEP_MS_BASE);
-
-  // Perform grid step(s) if needed
-  while(S.stepAcc >= S.stepMs){
-    S.stepAcc -= S.stepMs;
-    stepOnce();
-    if(!S.running) break; // crashed
-  }
-
-  draw(S.stepAcc / S.stepMs);
-  if(S.running) requestAnimationFrame(loop);
-}
-
-function stepOnce(){
- 
-    // Apply nextDir
-  S.dir = { ...S.nextDir };
-
- // Update star positions each tick (they bounce off walls)
-  moveStars();
-
-  const head = S.snake[S.snake.length-1];
-  const nx = head.x + S.dir.x;
-  const ny = head.y + S.dir.y;
-
-// Collisions (walls, self, obstacles)
-if(!inBounds(nx,ny) || hitsSelf(nx,ny) || hitsObstacle(nx,ny)){
-  sfx.crash();
-  S.running = false;
-  S.debugNote = !inBounds(nx,ny) ? 'crash: wall' : (hitsSelf(nx,ny) ? 'crash: self' : (hitsObstacle(nx,ny) ? 'crash: rock' : 'crash'));
-
-  roundOver();
-  return;
-}
-
-
-  // Move
-  S.snake.push({x:nx,y:ny});
-if (
-  nx >= S.fruit.x &&
-  nx <  S.fruit.x + FRUIT_SIZE_CELLS &&
-  ny >= S.fruit.y &&
-  ny <  S.fruit.y + FRUIT_SIZE_CELLS
-){
-       S.grew += 1;
-    S.score += SCORE_FRUIT;
-    S.eatenRound += 1;  // count this emoji
-    S.fruitEatenRound = Math.min(S.fruitEatenRound + 1, 10);     // scale FX, cap at 10
-    
-    spawnConfettiAt(S.fruit.x + 1, S.fruit.y + 1);               // center of 2x2 fruit
-    S.pulseUntil = performance.now() + 600;  // glow for ~0.6s
-    S.pulseSegments = 3;                     // glow last 3 segments
-
-    $('#hudScore').textContent = `Score ${S.score}`;
-    sfx.eat();
-    spawnFruit();
-
-  }else{
-    // trim tail unless we grew
-    if(S.grew>0) S.grew--;
-    else S.snake.shift();
-  }
-
-    // Collect star ONLY with the head (not the body)
-  if (S.stars && S.stars.length){
-    const h = S.snake[S.snake.length-1];
-    const hitIndex = S.stars.findIndex(st => st.x===h.x && st.y===h.y);
-if (hitIndex !== -1){
-  // Grow by 2 fruit, give double fruit points
-  S.grew += STAR_GROW;
-  S.score += SCORE_FRUIT * STAR_GROW;
-  S.eatenRound += 1;  // star counts as one collected emoji
-
-
-  $('#hudScore').textContent = `Score ${S.score}`;
-  sfx.eat();
-  // Remove the collected star
-  S.stars.splice(hitIndex, 1);
-}
+  function removeEntity(e){
+    e.dead = true;
+    e.node.remove();
+    if (e._ring) { e._ring.remove(); e._ring = null; }
 
   }
 
+// ------- Hit testing that respects HITBOX_SCALE (works for halves too) -------
+function isPointerInsideEntity(px, py, ent){
+  // Base radius from onscreen size: ~half the font size looks/feels right.
+  const fs = parseFloat(getComputedStyle(ent.node).fontSize) || 48;
+  let baseR = fs * 0.5;
 
+  // Halves are literally half the fruit; trim their base a touch unless you prefer 1.0
+  if (ent.kind === 'half') baseR *= HALF_HITBOX_FACTOR;
+
+  const dx = px - ent.x;
+  const dy = py - ent.y;
+  const dist = Math.hypot(dx, dy);
+  return dist <= baseR * HITBOX_SCALE;
 }
 
-function hitsSelf(x,y){
-  for(let i=0;i<S.snake.length-1;i++){
-    const p=S.snake[i];
-    if(p.x===x && p.y===y) return true;
-  }
-  return false;
-}
+// Global pointer handler so clicks slightly outside the emoji can still register
+gameField.addEventListener('pointerdown', (ev) => {
+  const rect = gameField.getBoundingClientRect();
+  const px = ev.clientX - rect.left;
+  const py = ev.clientY - rect.top;
 
-function hitsObstacle(x,y){
-  if (!S.obstacles || S.obstacles.length===0) return false;
-  return S.obstacles.some(o => o.x===x && o.y===y);
-}
-
-
-/* Drawing */
-function draw(t){
-    // Smooth rainbow pulse on round 10 (updates every frame)
-if (S.roundIndex === 9) {
-  S.rainbowPhase = (S.rainbowPhase + 2) % 360; // faster or slower? tweak 2
-}
-
-  const w = canvas.width, h = canvas.height;
-  // Clear
-  ctx.fillStyle = '#070b18';
-  ctx.fillRect(0,0,w,h);
-
-  // Grid origin
-  const ox = padH.x, oy = padH.y;
-
-  if (S.debug) drawDebugOverlay(ox, oy);
-
-
-  // Fruit (emoji)
-// center of the 2x2 fruit area (one full cell to the right and down from top-left)
-const fx = ox + S.fruit.x*cellSize + cellSize;
-const fy = oy + S.fruit.y*cellSize + cellSize;
-// make the emoji visually bigger than a single cell (about 1.6x)
-drawEmoji(S.fruit.emoji, fx, fy, Math.floor(cellSize*1.6));
-
-// Obstacles (1x1)
-if (S.obstacles && S.obstacles.length){
-  for (const o of S.obstacles){
-    const cx = ox + o.x*cellSize + cellSize/2;
-    const cy = oy + o.y*cellSize + cellSize/2;
-    drawEmoji(o.emoji, cx, cy, Math.floor(cellSize*0.9));
-  }
-}
-
-  drawParticles(); // NEW: render confetti below the snake
-
-
-// Stars (1x1, moving)
-if (S.stars && S.stars.length){
-  for (const st of S.stars){
-    const cx = padH.x + st.x*cellSize + cellSize/2;
-    const cy = padH.y + st.y*cellSize + cellSize/2;
-    drawEmoji(st.emoji, cx, cy, Math.floor(cellSize*0.95));
-  }
-}
-
-
-  // Snake body
-  const theme = THEMES[S.roundIndex];
-  const color = theme.snake;
-
-  // Interpolated head position
-  const n = S.snake.length;
-  const head = S.snake[n-1];
-  const prev = S.snake[n-2] || head;
-  const hx = head.x*cellSize, hy = head.y*cellSize;
-  const px = prev.x*cellSize, py = prev.y*cellSize;
-
-// draw tail to before head (rainbow on round 10)
-for(let i=0;i<n-1;i++){
-  const p = S.snake[i];
-  const cx = ox + p.x*cellSize;
-  const cy = oy + p.y*cellSize;
-  if (color === 'rainbow') {
-    const hue = (S.rainbowPhase + i*18) % 360; // 18° apart down the body
-    ctx.fillStyle = `hsl(${hue},100%,60%)`;
-  } else {
-    ctx.fillStyle = color;
-  }
-// makes the corners scale correctly on all devices
-const bodyRadius = Math.max(2, Math.floor((cellSize - 4) * 0.22));
-roundedRect(cx + 2, cy + 2, cellSize - 4, cellSize - 4, bodyRadius);
-// Glow effect on last N segments after fruit
-let restoreShadow = false;
-if (performance.now() < S.pulseUntil && i >= n - 1 - (S.pulseSegments - 1)) {
-  ctx.save();
-  ctx.shadowColor = 'rgba(255,255,255,0.65)';
-  ctx.shadowBlur = Math.max(6, Math.floor(cellSize * 0.6));
-  restoreShadow = true;
-}
- 
-ctx.fill();
-if (restoreShadow) ctx.restore();
-
-
-
-}
-
-
-// Draw a neat border around the exact playfield (optional)
-ctx.save();
-ctx.strokeStyle = 'rgba(255,255,255,0.08)';
-ctx.lineWidth = 2;
-ctx.strokeRect(1, 1, canvas.width-2, canvas.height-2);
-ctx.restore();
-
-
-// Head with interpolation
-const ihx = ox + px + (hx - px)*t;
-const ihy = oy + py + (hy - py)*t;
-const r = (cellSize-4);
-if (color === 'rainbow') {
-  const hue = (S.rainbowPhase + n*18) % 360; // continue sequence onto head
-  ctx.fillStyle = `hsl(${hue},100%,60%)`;
-} else {
-  ctx.fillStyle = color;
-}
-// slightly rounder head but still square on small screens
-const headRadius = Math.max(3, Math.floor((cellSize - 4) * 0.26));
-roundedRect(ihx + 2, ihy + 2, r, r, headRadius);
-ctx.fill();
-
-
-  // Eyes
-  ctx.fillStyle = "#0a0a14";
-  const eye = Math.max(2, Math.round(cellSize*0.12));
-  const ex = ihx + r*0.7, ey1 = ihy + r*0.35, ey2 = ihy + r*0.65;
-  ctx.fillRect(ex, ey1, eye, eye);
-  ctx.fillRect(ex, ey2, eye, eye);
-
-  // Optional grid (hidden)
-  // drawGrid(ox,oy);
-
-  // HUD already shows score/round
-}
-
-function roundedRect(x,y,w,h,r){
-  ctx.beginPath();
-  ctx.moveTo(x+r, y);
-  ctx.arcTo(x+w, y, x+w, y+h, r);
-  ctx.arcTo(x+w, y+h, x, y+h, r);
-  ctx.arcTo(x, y+h, x, y, r);
-  ctx.arcTo(x, y, x+w, y, r);
-  ctx.closePath();
-}
-
-/* Draw emoji centered at x,y with px size */
-function drawEmoji(char, x, y, size){
-  ctx.font = `${size}px Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, emoji`;
-  ctx.textAlign='center';
-  ctx.textBaseline='middle';
-  ctx.fillText(char, x, y+Math.floor(size*0.06)); // small vertical nudge
-}
-
-// ========= DEBUG OVERLAY (H to toggle) =========
-function drawDebugOverlay(ox, oy){
-  const w = canvas.width, h = canvas.height;
-
-  ctx.save();
-
-  // 4a) faint grid
-  ctx.strokeStyle = 'rgba(255,255,255,.06)';
-  ctx.lineWidth = 1;
-  // verticals
-  for (let x = 0; x <= GRID_W; x++){
-    const gx = ox + x*cellSize + .5;
-    ctx.beginPath(); ctx.moveTo(gx, oy + .5); ctx.lineTo(gx, oy + GRID_H*cellSize + .5); ctx.stroke();
-  }
-  // horizontals
-  for (let y = 0; y <= GRID_H; y++){
-    const gy = oy + y*cellSize + .5;
-    ctx.beginPath(); ctx.moveTo(ox + .5, gy); ctx.lineTo(ox + GRID_W*cellSize + .5, gy); ctx.stroke();
-  }
-
-  // 4b) highlight true top (y=0) and bottom (y=GRID_H-1) rows
-  ctx.strokeStyle = 'rgba(255,0,0,.55)';
-  ctx.lineWidth = 2;
-  // top row box
-  ctx.strokeRect(ox+1, oy+1, GRID_W*cellSize-2, cellSize-2);
-  // bottom row box
-  const by = oy + (GRID_H-1)*cellSize + 1;
-  ctx.strokeRect(ox+1, by, GRID_W*cellSize-2, cellSize-2);
-
-  // 4c) label rows
-  ctx.fillStyle = 'rgba(255,255,255,.7)';
-  ctx.font = `${Math.max(10, Math.floor(cellSize*0.3))}px system-ui, sans-serif`;
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'top';
-  ctx.fillText('y = 0 (top row)', ox + 6, oy + 4);
-  ctx.textBaseline = 'bottom';
-  ctx.fillText(`y = ${GRID_H-1} (bottom row)`, ox + 6, oy + GRID_H*cellSize - 6);
-
-  // 4d) next-cell “ghost” (red box shows where logic will step next)
-  const nxt = headNextCell();
-  const nx = ox + nxt.x*cellSize;
-  const ny = oy + nxt.y*cellSize;
-  ctx.strokeStyle = 'rgba(255,60,60,.85)';
-  ctx.lineWidth = 2;
-  ctx.strokeRect(nx+2, ny+2, cellSize-4, cellSize-4);
-
-  // 4e) small info panel
-  const head = S.snake[S.snake.length-1];
-  ctx.fillStyle = 'rgba(10,12,28,.8)';
-  ctx.fillRect(ox+8, oy+8 + cellSize*0.9, 210, 58);
-  ctx.strokeStyle = 'rgba(180,190,255,.4)';
-  ctx.strokeRect(ox+8, oy+8 + cellSize*0.9, 210, 58);
-  ctx.fillStyle = 'rgba(220,230,255,.95)';
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'alphabetic';
-  ctx.font = '12px system-ui, sans-serif';
-  ctx.fillText(`head: (${head.x}, ${head.y})  dir: (${S.dir.x}, ${S.dir.y})`, ox+14, oy+26 + cellSize*0.9);
-  ctx.fillText(`next: (${nxt.x}, ${nxt.y})  inBounds: ${inBounds(nxt.x, nxt.y)}`, ox+14, oy+44 + cellSize*0.9);
-  if (S.debugNote) ctx.fillText(S.debugNote, ox+14, oy+62 + cellSize*0.9);
-
-  ctx.restore();
-}
-
-
-function roundOver(){
-      S.particles = []; // clear confetti so it doesn’t linger into next round
-
-    clearStarTimers();
-
-    // Show end-of-round summary
-  showModal(`
-    <h3>🐍 Round complete</h3>
-  <p>You ate <b>${S.eatenRound}</b> emoji this round</p>
-  <p>Current Score: <b>${S.score}</b></p>
-
-
-    <div class="footerRow">
-      <button class="btn primary" id="nextRoundBtn">${S.roundIndex<9 ? "Next question" : "See results"}</button>
-    </div>
-  `);
-  $('#nextRoundBtn').addEventListener('click', ()=>{
-    closeModal();
-    S.roundIndex++;
-    if(S.roundIndex<QUESTIONS.length){
-      showQuestion();
-    }else{
-      endGame();
+  // Iterate topmost first (last in array is typically most recently added / top)
+  for (let i = entities.length - 1; i >= 0; i--) {
+    const e = entities[i];
+    if (e.dead) continue;
+    if (isPointerInsideEntity(px, py, e)) {
+      // Trigger the same actions as direct clicks
+      if (e.kind === 'fruit')      sliceFruit(e);
+      else if (e.kind === 'bomb')  detonateBomb(e);
+      else if (e.kind === 'clock') slowTime(e);
+      // Stop after we hit the first eligible entity
+      break;
     }
-  }, {once:true});
+  }
+}, { passive: true });
+
+// Compute the same radius used by the hit test, so the ring matches clicks
+function hitRadius(ent){
+  const fs = parseFloat(getComputedStyle(ent.node).fontSize) || 48;
+  let baseR = fs * 0.5;
+  if (ent.kind === 'half') baseR *= HALF_HITBOX_FACTOR;
+  return baseR * HITBOX_SCALE;
 }
 
-/* End game */
-function endGame(){
-  showScreen('theEnd');
-  const incorrect = 10 - S.correctCount;
-  $('#endSummary').innerHTML = `
-    <div style="margin:6px 0">Total points <b>${S.score}</b></div>
-    <div>Questions correct <b>${S.correctCount}</b> / 10 • Incorrect <b>${incorrect}</b></div>
-  `;
+// Create/update a visual ring for an entity when DEBUG is on
+function ensureDebugRing(ent){
+  if (!ent._ring){
+    const d = document.createElement('div');
+    d.className = `hitbox-ring ${ent.kind}`;
+    ent._ring = d;
+    gameField.appendChild(d);
+  }
+  const r = hitRadius(ent);
+  ent._ring.style.width  = (r*2) + 'px';
+  ent._ring.style.height = (r*2) + 'px';
+  ent._ring.style.left   = ent.x + 'px';
+  ent._ring.style.top    = ent.y + 'px';
+  ent._ring.hidden = !DEBUG;
 }
-$('#playAgain').addEventListener('click', ()=> startGameFlow());
-$('#backToTitle').addEventListener('click', ()=> showScreen('title'));
 
-/* ============================================================
-   RESIZE & ORIENTATION
-============================================================ */
-window.addEventListener('resize', ()=>{
-  if(S.screen==='game') sizeCanvas();
+
+  /* --------------------------- Interactions ---------------------------- */
+  function sliceFruit(e){
+    if(e.halves){ // already halves (defensive)
+      return;
+    }
+    e.halves = true;
+    // scoring for whole fruit
+    state.score += 10;
+    state.roundScore += 10;
+    state.totalFruit++;
+    state.roundFruit++;
+    slicedCountEl.textContent = String(state.roundFruit);
+    scoreEl.textContent = String(state.score);
+
+    emitConfetti(e.x, e.y, 16);
+
+    // Replace the node with two halves that fall
+    const left = document.createElement('div');
+    left.className = 'entity half left';
+    left.textContent = e.emoji;
+
+    const right = document.createElement('div');
+    right.className = 'entity half right';
+    right.textContent = e.emoji;
+
+    // Starting from the fruit position
+    left.style.fontSize = getComputedStyle(e.node).fontSize;
+    right.style.fontSize = left.style.fontSize;
+
+    // Remove original
+    e.node.remove();
+
+// Create half entities (no inherited vertical speed, now with spin)
+const hl = {
+  kind:'half', emoji:e.emoji, node:left,
+  x:e.x-6, y:e.y,
+  vx:(e.vx*1000 - 120)/1000,       // your existing sideways kick
+  vy:(HALF_VY_PXS)/1000,           // your tiny, tunable vertical push
+  r: 0,                            // start rotation in degrees
+  spin: ( // deg/ms, randomized speed & direction
+    (Math.random() * (HALF_SPIN_MAX_DPS - HALF_SPIN_MIN_DPS) + HALF_SPIN_MIN_DPS)
+    * (Math.random() < 0.5 ? -1 : 1) / 1000
+  ),
+  dead:false
+};
+const hr = {
+  kind:'half', emoji:e.emoji, node:right,
+  x:e.x+6, y:e.y,
+  vx:(e.vx*1000 + 120)/1000,
+  vy:(HALF_VY_PXS)/1000,
+  r: 0,
+  spin: (
+    (Math.random() * (HALF_SPIN_MAX_DPS - HALF_SPIN_MIN_DPS) + HALF_SPIN_MIN_DPS)
+    * (Math.random() < 0.5 ? -1 : 1) / 1000
+  ),
+  dead:false
+};
+
+
+
+
+    for(const h of [hl,hr]){
+      h.node.style.left = h.x+'px';
+      h.node.style.top = h.y+'px';
+      h.node.style.zIndex = 2;
+      h.node.addEventListener('pointerdown', ev=>{
+        ev.preventDefault();
+        ev.stopPropagation();
+        if(h.dead) return;
+        // bonus for halves
+        state.score += 5;
+        state.roundScore += 5;
+        scoreEl.textContent = String(state.score);
+        emitConfetti(h.x, h.y, 12);
+        removeEntity(h);
+      });
+      gameField.appendChild(h.node);
+      entities.push(h);
+    }
+
+    // Mark original entity as removed
+    e.dead = true;
+  }
+
+  function detonateBomb(e){
+    // penalty and clear all fruit/halves on screen
+    state.score -= 30;
+    state.score = Math.max(0, state.score);
+    state.roundScore = Math.max(0, state.roundScore-30);
+    scoreEl.textContent = String(state.score);
+    emitConfetti(e.x, e.y, 28);
+
+    for(const other of entities){
+      if(other.dead) continue;
+      if(other === e) continue;
+      // visually pop
+      emitConfetti(other.x, other.y, 10);
+      removeEntity(other);
+    }
+    removeEntity(e);
+    showToast('💥 Bomb! -30', false);
+  }
+
+  function slowTime(e){
+    emitConfetti(e.x, e.y, 16);
+    slowUntil = Math.max(slowUntil, performance.now()+5000);
+    removeEntity(e);
+    showToast('⏰ Slow time 5s', true);
+  }
+
+  function emitConfetti(x,y,count){
+    const rect = gameField.getBoundingClientRect();
+    for(let i=0;i<count;i++){
+      const c = document.createElement('div');
+      c.className = 'confetti';
+      c.style.left = x+'px';
+      c.style.top = y+'px';
+      c.style.setProperty('--h', (Math.random()*360).toFixed(0));
+      gameField.appendChild(c);
+
+      const vx = rand(-rect.width*0.004, rect.width*0.004);
+      const vy = rand(-rect.height*0.006, -rect.height*0.002);
+      const rot = rand(-360,360);
+
+      // animate with JS for consistent gravity
+      const start = performance.now();
+      const g = rect.height*0.0035;
+      const life = rand(500,900);
+      const spin = rot;
+
+      function stepConfetti(t){
+        const dt = t - start;
+        if(dt > life){ c.remove(); return; }
+        const dx = vx*dt;
+        const dy = vy*dt + 0.5*g*(dt*dt)/1000;
+        c.style.transform = `translate(${dx}px, ${dy}px) rotate(${spin*dt/1000}deg)`;
+        requestAnimationFrame(stepConfetti);
+      }
+      requestAnimationFrame(stepConfetti);
+    }
+  }
+
+  /* --------------------------- End of round ---------------------------- */
+  function endRound(){
+    // Clean any remaining nodes
+    for(const e of entities){ if(!e.dead) e.node.remove(); }
+    entities = [];
+
+    // Show summary
+    rFruit.textContent = String(state.roundFruit);
+    rPoints.textContent = String(state.roundScore);
+    tFruit.textContent = String(state.totalFruit);
+    tPoints.textContent = String(state.score);
+
+    show('roundEnd');
+
+    $('#nextBtn').onclick = ()=>{
+      if(state.round < state.maxRounds){
+        state.round++;
+        showQuestion();
+      }else{
+        // bonus mode
+        startBonus();
+      }
+    };
+  }
+
+  /* ---------------------------- Bonus round ---------------------------- */
+  let bonus = null;
+  function startBonus(){
+    state.inBonus = true;
+    show('play');
+    resetField();
+
+    // HUD tweaks
+    roundNum.textContent = 'Bonus';
+    timeLeft.textContent = '∞';
+
+    const rect = gameField.getBoundingClientRect();
+    let misses = 0;
+    let spawnBase = 650; // start calm
+    const startT = performance.now();
+    last = startT;
+    running = true;
+
+    function loopBonus(now){
+      if(!running) return;
+      const dtMs = now - last;
+      last = now;
+
+      // ramp difficulty over 30s to ~250ms spawn
+      const t = (now - startT)/1000;
+      const target = 250;
+      const pct = clamp(t/30, 0, 1);
+      spawnEvery = spawnBase - (spawnBase - target)*pct;
+
+      // spawn
+      spawnTimer += dtMs;
+      if(spawnTimer >= spawnEvery){
+        spawnTimer = 0;
+        // In bonus, only fruit
+        spawnFruit();
+        if(Math.random()<0.1) spawnFruit(); // occasional double
+      }
+
+      // physics
+      stepEntities(dtMs);
+
+      // count misses (fruit that drop off bottom)
+      // We detect by hooking removeEntity in bonus scope
+      raf = requestAnimationFrame(loopBonus);
+    }
+
+    // Wrap removeEntity to count fruit misses (but not halves/bombs/clocks)
+    const _remove = removeEntity;
+    removeEntity = function(e){
+      const rect = gameField.getBoundingClientRect();
+      const wasOffBottom = e.y > rect.height + 80;
+      if(state.inBonus && wasOffBottom && (e.kind === 'fruit' || e.kind === 'half')){
+        misses++;
+        showToast(`🍂 Missed: ${misses}/5`, false);
+        if(misses >= 5){
+          // restore, end bonus
+          removeEntity = _remove;
+          running = false;
+          cancelAnimationFrame(raf);
+          return finishGame();
+        }
+      }
+      _remove(e);
+    };
+
+    loopBonus(startT);
+  }
+
+  /* ------------------------------ Final ------------------------------- */
+  function fruitRain(){
+    const rect = gameField.getBoundingClientRect();
+    const N = 60;
+    for(let i=0;i<N;i++){
+      const node = document.createElement('div');
+      node.className = 'entity fruit';
+      node.textContent = choice(FRUIT);
+      node.style.left = rand(20, rect.width-20) + 'px';
+      node.style.top = (-rand(20, rect.height)) + 'px';
+      node.style.opacity = .9;
+      node.style.zIndex = 1;
+      gameField.appendChild(node);
+
+      const vy = rand(rect.height*0.35, rect.height*0.6);
+      const start = performance.now();
+      function fall(t){
+        const dt = (t - start)/1000;
+        const y = vy*dt;
+        node.style.transform = `translate(-50%, calc(-50% + ${y}px))`;
+        if(parseFloat(node.style.top)+y < rect.height+80) requestAnimationFrame(fall);
+        else node.remove();
+      }
+      requestAnimationFrame(fall);
+    }
+  }
+
+  function finishGame(){
+    // lock bonus
+    state.inBonus = false;
+
+    // Show final stats
+    fCorrect.textContent = String(state.correct);
+    fWrong.textContent = String(state.wrong);
+    fFruit.textContent = String(state.totalFruit);
+    fPoints.textContent = String(state.score);
+
+    // Use play screen as stage for rain behind final card
+    show('play');
+    fruitRain();
+
+    // small delay then reveal final card
+    setTimeout(()=>{
+      show('final');
+    }, 600);
+  }
+
+  /* --------------------------- Input niceties -------------------------- */
+  // Prevent context menu on long press
+  window.addEventListener('contextmenu', e=> e.preventDefault());
+
+/* ---------- Debug mode: press 'h' to toggle hitboxes ---------- */
+let DEBUG = false;
+window.addEventListener('keydown', (e) => {
+  if (e.key && e.key.toLowerCase() === 'h') {
+    DEBUG = !DEBUG;
+    document.body.classList.toggle('debug', DEBUG);
+    // Show/hide all current rings on toggle
+for (const e of entities){
+  if (DEBUG) ensureDebugRing(e);
+  else if (e._ring) e._ring.hidden = true;
+}
+
+    // (Optional) quick toast so you know it's on/off if you have a toast util:
+    try {
+      if (typeof showToast === 'function') {
+        showToast(DEBUG ? '🛠 Debug ON' : '🛠 Debug OFF', true);
+      }
+    } catch {}
+  }
 });
 
+  
+  // Resize reflow safeguard (keeps entities inside after big rotation)
+  window.addEventListener('resize', ()=>{
+    // No-op on purpose—layout uses relative units
+  });
 
-/* ============================================================
-   BOOTSTRAP
-============================================================ */
-showScreen('splash');
-// Rotate screen dismiss (only matters if you ever show it manually)
-$('#rotateOk')?.addEventListener('click', ()=> $('#rotateHelper').classList.remove('active'));
-
-/* ============================================================
-   ACCESSIBILITY & SAFETY GUARDS
-============================================================ */
-// Prevent scroll while playing (mobile)
-['touchmove','wheel'].forEach(type=>{
-  document.addEventListener(type, (e)=>{
-    if(S.screen==='game') e.preventDefault();
-  }, {passive:false});
-});
-
-/* ============================================================
-   OPTIONAL DEBUG HELPERS (toggle if needed)
-============================================================ */
-// function drawGrid(ox,oy){
-//   ctx.strokeStyle = 'rgba(255,255,255,.04)';
-//   for(let x=0;x<=GRID_W;x++){
-//     ctx.beginPath(); ctx.moveTo(ox + x*cellSize + .5, oy + .5);
-//     ctx.lineTo(ox + x*cellSize + .5, oy + GRID_H*cellSize + .5); ctx.stroke();
-//   }
-//   for(let y=0;y<=GRID_H;y++){
-//     ctx.beginPath(); ctx.moveTo(ox + .5, oy + y*cellSize + .5);
-//     ctx.lineTo(ox + GRID_W*cellSize + .5, oy + y*cellSize + .5); ctx.stroke();
-//   }
-// }
+})();
 </script>
 </body>
 </html>
