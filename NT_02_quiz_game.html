@@ -1,0 +1,1373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+<title>Emoji Fruit Slicer — Portrait Bible Game</title>
+<style>
+  :root{
+    --bg:#0f1220;
+    --panel:#171a2b;
+    --accent:#58d68d;
+    --accent-2:#5dade2;
+    --danger:#ff5c5c;
+    --text:#f5f7ff;
+    --muted:#b8c2ff;
+    --shadow:0 12px 30px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  /* App shell */
+  #app{
+    width:100vw;
+    height:100dvh; /* fill mobile viewport reliably */
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+  }
+  .screen{
+    position:relative;
+    width:min(720px,100vw);
+    height:100%;
+    padding:clamp(12px,2.2vmin,20px);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:16px;
+  }
+  .card{
+    width:min(680px,100%);
+    background:linear-gradient(180deg,#1a1e35 0%, #12152a 100%);
+    border:1px solid #262b52;
+    border-radius:18px;
+    padding:22px;
+    box-shadow:var(--shadow);
+  }
+  .title{font-weight:800;letter-spacing:.5px;text-align:center}
+  .title.xl{font-size:clamp(28px,4.6vw,44px)}
+  .title.lg{font-size:clamp(22px,4.2vw,34px)}
+  .subtitle{color:var(--muted);text-align:center;margin-top:6px}
+  button{
+    appearance:none;border:0;border-radius:14px;padding:14px 18px;
+    background:linear-gradient(180deg,#2f8fff,#2a6fe8);
+    color:#fff;font-weight:700;letter-spacing:.3px;
+    box-shadow:0 10px 24px rgba(44,114,255,.35);
+    cursor:pointer;font-size:clamp(16px,3.8vw,18px)
+  }
+  button.secondary{background:linear-gradient(180deg,#2fba7f,#27a06c);box-shadow:0 10px 24px rgba(46,204,113,.32)}
+  button.ghost{background:#222845;border:1px solid #2d3563;color:var(--muted);box-shadow:none}
+  .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+  .wide{width:100%}
+  .center{text-align:center}
+  .hint{color:#a8b3ff;font-size:.95rem}
+  .pill{display:inline-flex;gap:8px;align-items:center;background:#21254a;border:1px solid #2b3166;padding:8px 12px;border-radius:999px}
+  .emoji{font-size:clamp(32px,9vw,56px);line-height:1}
+
+  /* Fullscreen game field */
+  #gameField{
+    position:relative;
+    width:min(720px,100%);
+    height:calc(100% - 12px);
+    border-radius:18px;
+    background:
+      radial-gradient(1200px 600px at 50% 110%, #0c0f25 10%, #0a0d20 60%, #090b1a 100%),
+      linear-gradient(180deg,#0e1123,#0a0c1a);
+    border:1px solid #1e2346;
+    overflow:hidden;
+    touch-action:none; /* so taps don't scroll */
+  }
+  .hud{
+    position:absolute;inset:12px 12px auto 12px;display:flex;gap:8px;flex-wrap:wrap;z-index:5
+  }
+  .hud .chip{background:#1c224e;border:1px solid #2b3374;padding:8px 12px;border-radius:999px;color:#e9edff;font-weight:700}
+  .bottom-hud{
+    position:absolute;left:0;right:0;bottom:8px;display:flex;justify-content:center;gap:8px;z-index:5
+  }
+
+/* Big round-end countdown layered behind fruit */
+#roundCountdown.countdown{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  font-weight:900;
+  font-size:clamp(72px, 20vmin, 260px);
+  line-height:1;
+  color:rgba(255,255,255,0.5); /* ~50% opacity white */
+  letter-spacing:2px;
+  z-index:1;           /* entities use zIndex 2, so this sits behind fruit */
+  pointer-events:none; /* ignore taps */
+  text-shadow:0 6px 24px rgba(0,0,0,0.35);
+}
+
+
+  /* Entities */
+  .entity{
+    position:absolute;user-select:none;pointer-events:auto;transform:translate(-50%,-50%);
+    transition:filter .12s ease;
+  }
+  .entity:hover{filter:drop-shadow(0 4px 16px rgba(255,255,255,.12))}
+  .fruit{font-size:clamp(36px,9vmin,64px)}
+  .bomb{font-size:clamp(36px,9vmin,64px)}
+  .clock{font-size:clamp(34px,8.5vmin,58px)}
+  /* These sizes are set by JS based on #gameField width */
+.fruit{ font-size: var(--fruitSizePx, 64px); }
+.bomb{  font-size: var(--bombSizePx,  64px); }
+.clock{ font-size: var(--clockSizePx, 58px); }
+
+  .half{
+    position:absolute;left:0;top:0;transform:translate(-50%,-50%);
+    font-size:inherit; /* match parent */
+  }
+  .half.left{clip-path:polygon(0 0,50% 0,50% 100%,0 100%)}
+  .half.right{clip-path:polygon(50% 0,100% 0,100% 100%,50% 100%)}
+
+  /* Popup modal */
+  .modal{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:20;
+    background:rgba(8,10,22,.55);backdrop-filter:blur(4px)
+  }
+  .modal .panel{
+    width:min(560px,90%);background:linear-gradient(180deg,#1a1f3c,#12162d);
+    border:1px solid #2a3267;border-radius:18px;padding:18px 18px 14px;text-align:center;box-shadow:var(--shadow)
+  }
+  .modal .panel .big{font-size:clamp(20px,4.6vw,28px);font-weight:800;margin-bottom:8px}
+  .modal .panel .small{color:#c9d2ff}
+
+  /* Toast for correct / incorrect */
+  .toast{
+    position:absolute;left:50%;top:14%;transform:translate(-50%,-50%);
+    background:#1f2448;border:1px solid #343d7a;border-radius:999px;padding:10px 14px;z-index:30;
+    font-weight:800;box-shadow:var(--shadow)
+  }
+  .toast.ok{background:#1e3b2e;border-color:#2c6b49}
+  .toast.bad{background:#3b1e1e;border-color:#6b2c2c}
+
+  /* End screens */
+  .end-card .stat{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px dashed #2a315f}
+  .end-card .stat:last-child{border-bottom:0}
+
+  /* Confetti */
+  .confetti{
+    position:absolute;width:6px;height:10px;border-radius:2px;background:hsl(var(--h) 80% 60%);pointer-events:none
+  }
+
+  /* Screens visibility */
+  [hidden]{display:none !important}
+
+/* === Debug hitboxes (toggle with body.debug) === */
+body.debug .entity{
+  outline: 2px dashed rgba(255,255,140,.9);
+  outline-offset: 0;
+}
+body.debug .fruit{ outline-color: #88ff88; } /* green-ish */
+body.debug .bomb{ outline-color: #ff6b6b; }  /* red */
+body.debug .clock{ outline-color: #64d2ff; } /* cyan */
+
+/* small center marker so you can see the anchor point */
+body.debug .entity::before{
+  content:"";
+  position:absolute;
+  left:50%; top:50%;
+  width:6px; height:6px;
+  transform:translate(-50%,-50%);
+  border-radius:50%;
+  background:#fff;
+  box-shadow:0 0 0 2px rgba(0,0,0,.6);
+  pointer-events:none;
+}
+
+/* === Debug hitbox circle that matches HITBOX_SCALE === */
+body.debug .hitbox-ring{
+  position:absolute;
+  pointer-events:none;
+  border:2px dashed rgba(255,255,140,.9);
+  border-radius:50%;
+  transform:translate(-50%,-50%);
+  mix-blend-mode:screen;
+  z-index: 3;
+}
+body.debug .hitbox-ring.fruit{ border-color:#88ff88; }
+body.debug .hitbox-ring.bomb{  border-color:#ff6b6b; }
+body.debug .hitbox-ring.clock{ border-color:#64d2ff; }
+body.debug .hitbox-ring.half{  border-color:#d6b3ff; }
+
+/* Overlay for end-of-game fruit rain */
+#rainOverlay{
+  position:absolute;
+  inset:0;           /* fill the app area */
+  pointer-events:none;
+  z-index:1000;      /* above final card and toasts */
+  overflow:hidden;   /* keep fruit within the app bounds */
+}
+
+
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- Splash -->
+  <div id="splash" class="screen">
+    <div class="card">
+      <div class="title xl">📱 Portrait Mode</div>
+      <p class="subtitle">Game is best in vertical mode</p>
+      <div class="center"><button id="splashOk" class="secondary">Okay</button></div>
+    </div>
+  </div>
+
+  <!-- Title -->
+  <div id="title" class="screen" hidden>
+    <div class="card">
+      <div class="title xl">Emoji Fruit Slice</div>
+      <p class="subtitle">Answer Bible questions then slice fruit for points</p>
+      <div class="row center" style="margin-top:8px">
+        <span class="pill"><span class="emoji">🍎🍌🍇</span><span>Tap or click to slice</span></span>
+      </div>
+      <div class="center" style="margin-top:12px">
+        <button id="startBtn">Go fullscreen and start</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Question -->
+  <div id="question" class="screen" hidden>
+    <div class="card">
+      <div class="title lg" id="qText">Question goes here</div>
+      <p class="subtitle" id="qInfo">Choose the correct answer</p>
+      <div id="answers" class="row wide" style="margin-top:12px"></div>
+    </div>
+    <!-- Correct/Incorrect modal (on question screen) -->
+<div id="answerModal" class="modal" hidden>
+  <div class="panel">
+    <div class="big" id="answerTitle">Correct!</div>
+    <div class="small" id="answerDetail">Nice job.</div>
+    <div style="margin-top:12px">
+      <button id="answerOk" class="secondary">OK</button>
+    </div>
+  </div>
+</div>
+  </div>
+
+  <!-- One-time tip modal after Q1 -->
+  <div id="tipModal" class="modal" hidden>
+    <div class="panel">
+      <div class="big">Tap or click to slice the emojis!</div>
+      <div class="small">Slice whole fruit for points then slice halves for bonus points</div>
+      <div style="margin-top:12px"><button id="tipOk" class="secondary">Got it</button></div>
+    </div>
+  </div>
+
+  <!-- Game Field -->
+  <div id="play" class="screen" hidden>
+    <div id="gameField">
+      <div class="hud">
+        <div class="chip">Round <span id="roundNum">1</span>/10</div>
+        <div class="chip">⏱ <span id="timeLeft">20.0</span>s</div>
+        <div class="chip">🍒 Sliced <span id="slicedCount">0</span></div>
+        <div class="chip">⭐ Points <span id="score">0</span></div>
+        <div class="chip" id="slowTag" hidden>🐢 Slow Time</div>
+      </div>
+      <!-- Large countdown behind fruit -->
+<div id="roundCountdown" class="countdown" hidden>5</div>
+
+      <div class="bottom-hud">
+        <div class="pill">💣 hurts score</div>
+        <div class="pill">⏰ slows time 5s</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- End of round -->
+  <div id="roundEnd" class="screen" hidden>
+    <div class="card end-card">
+      <div class="title lg">🏁 Round Complete</div>
+      <div class="stat"><span>Fruit sliced this round</span><strong id="rFruit">0</strong></div>
+      <div class="stat"><span>Points this round</span><strong id="rPoints">0</strong></div>
+      <div class="stat"><span>Total fruit sliced</span><strong id="tFruit">0</strong></div>
+      <div class="stat"><span>Total points</span><strong id="tPoints">0</strong></div>
+      <div class="center" style="margin-top:12px"><button id="nextBtn" class="secondary">Next Question</button></div>
+    </div>
+  </div>
+
+  <!-- Bonus Mode Screen container reuses #play -->
+
+  <!-- Final End -->
+  <div id="final" class="screen" hidden>
+    <div class="card end-card">
+      <div class="title lg">🍓 All Done! 🍌</div>
+      <div class="stat"><span>Questions correct</span><strong id="fCorrect">0</strong></div>
+      <div class="stat"><span>Questions incorrect</span><strong id="fWrong">0</strong></div>
+      <div class="stat"><span>Total fruit sliced</span><strong id="fFruit">0</strong></div>
+      <div class="stat"><span>Total points</span><strong id="fPoints">0</strong></div>
+      <div class="center" style="margin-top:12px"><button onclick="location.reload()" class="ghost">Play again</button></div>
+    </div>
+  </div>
+
+  <!-- Floating toast -->
+  <div id="toast" class="toast" hidden>Great job!</div>
+  <!-- Rain overlay above all screens -->
+<div id="rainOverlay" aria-hidden="true"></div>
+
+</div>
+
+<script>
+(() => {
+  /* -------------------------- Utility helpers -------------------------- */
+// ---- Tunables you can tweak ----
+// Smaller GRAVITY = floatier, higher arcs. Bigger = heavier.
+const GRAVITY = 0.0000010;   // was 0.0000016 — lighter for floaty feel
+// ARC_POWER scales the initial upward launch speed.
+const ARC_POWER = 1.7;       // was 1.6 — a touch higher helps reach mid-screen
+// Sideways wiggle of the launch (keeps fruit near center on portrait)
+const SIDE_SWAY = 0.10;      // keep as-is (0.08–0.14 is good)
+// How far from the edges fruit can spawn (as a fraction of width)
+const SPAWN_PADDING_X = 0.08;
+
+// Bonus-only launch power (keeps normal rounds unchanged)
+const ARC_POWER_BONUS = 1.25; // try 1.15–1.35; lower = lower apex
+
+
+// How hard sliced halves blast sideways (px/sec)
+// Higher = halves fly farther left/right; lower = gentler split
+const HALF_BURST_VX = 40;   // try 80–220 to taste
+// Optional: small upward kick for halves (px/sec)
+const HALF_BURST_VY = 0;    // set 0 for no upward nudge
+
+// ---- Confetti tuning (units assume dt is in ms, like the current code) ----
+// Horizontal speed range as a fraction of game width per millisecond.
+// Example: 0.001 => at 400px wide, vx ≈ 0.4 px/ms (≈ 200px over 500ms)
+const CONFETTI_VX_FRAC_MIN = 0.0004;
+const CONFETTI_VX_FRAC_MAX = 0.0010;
+
+// Bonus round: how many missed fruit ends it
+const BONUS_MISS_LIMIT = 25; // change this number to whatever you want
+
+
+// Upward initial speed range as a fraction of game height per millisecond (negative = up).
+// Smaller magnitudes = less explosive lift.
+const CONFETTI_VY_FRAC_MIN = -0.0007;
+const CONFETTI_VY_FRAC_MAX = -0.0003;
+
+// Gravity for confetti as a fraction of game height (px/ms^2).
+// Keep small because the formula uses dt in ms.
+const CONFETTI_G_FRAC = 0.0012;
+
+// Lifetime in ms (shorter = less travel time).
+const CONFETTI_LIFE_MIN = 400;
+const CONFETTI_LIFE_MAX = 650;
+
+
+
+// Size of emojis as a fraction of the game field width (portrait-friendly).
+// Example: 0.10 = 10% of the game field width.
+const FRUIT_WIDTH_FRAC = 0.15;
+const BOMB_WIDTH_FRAC  = 0.15;
+const CLOCK_WIDTH_FRAC = 0.15;
+
+
+// Global physics slow-mo factor (does NOT affect timers or spawn timing)
+const PHYSICS_SLOWMO = 0.50; // 0.6 = very floaty, 1.0 = normal
+
+// --- Spawn timing (milliseconds). Larger = fewer spawns. ---
+// Level 1 uses SPAWN_BASE_MS. Each level makes it faster by SPAWN_LEVEL_FACTOR,
+// but never faster than SPAWN_MIN_MS.
+const SPAWN_BASE_MS = 1300;    // Level 1 delay (e.g., 1300ms ≈ 0.77 fruit/sec)
+const SPAWN_LEVEL_FACTOR = 80; // How much to reduce delay per level
+const SPAWN_MIN_MS = 450;      // Hard floor so late levels aren't ridiculous
+
+// How much halves separate/explode after slicing
+const HALF_SPLIT_OFFSET_PX = 3;  // horizontal start offset (was 6)
+const HALF_KICK_VX = 50;         // sideways kick speed (px/s; was 120)
+const HALF_KICK_VY = -15;        // small upward pop (px/s; was -40)
+
+// Vertical speed for halves (px/second). 
+// Use a small negative for a tiny upward pop, or 0 to fall immediately.
+const HALF_VY_PXS = -500;   // try -8, or 0 for no pop
+
+// Half-piece rotation (degrees/second). Randomized between these and direction ±.
+const HALF_SPIN_MIN_DPS = 60;   // slower end (e.g., 60°/s)
+const HALF_SPIN_MAX_DPS = 180;  // faster end (e.g., 180°/s)
+
+
+// --- Hitbox tuning ---
+// 1.0 = normal, 1.2 = easier (bigger), 0.75 = harder (smaller)
+const HITBOX_SCALE = 1.50;
+
+// Optional: halves are narrower than full fruit; keep their base a bit smaller
+const HALF_HITBOX_FACTOR = 0.85; // change to 1.0 if you want halves to be as easy as whole fruit
+
+
+
+  const $ = sel => document.querySelector(sel);
+  const $$ = sel => Array.from(document.querySelectorAll(sel));
+  const rand = (min,max)=>Math.random()*(max-min)+min;
+  const choice = arr => arr[(Math.random()*arr.length)|0];
+  const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
+
+  const FRUIT = ['🍎','🍐','🍊','🍋','🍌','🍉','🍇','🍓','🫐','🍒','🍑','🍍','🥝','🥭','🍈','🍏'];
+  const BOMB = '💣';
+  const CLOCK = '⏰';
+
+  /* ---------------------------- Game state ----------------------------- */
+  const state = {
+    round: 1, maxRounds: 10,
+    inBonus: false,
+    correct: 0, wrong: 0,
+    totalFruit: 0,
+    score: 0,
+    // per-round
+    roundFruit: 0,
+    roundScore: 0,
+    showedTip: false
+  };
+
+  /*
+
+ #####     #     #    #######     #####     #######    ###    #######    #     #     #####  
+#     #    #     #    #          #     #       #        #     #     #    ##    #    #     # 
+#     #    #     #    #          #             #        #     #     #    # #   #    #       
+#     #    #     #    #####       #####        #        #     #     #    #  #  #     #####  
+#   # #    #     #    #                #       #        #     #     #    #   # #          # 
+#    #     #     #    #          #     #       #        #     #     #    #    ##    #     # 
+ #### #     #####     #######     #####        #       ###    #######    #     #     #####  
+
+*/
+  
+const questions = [
+  {
+    text: "Who did God send to visit a young woman named Mary?",
+    answers: [
+      { label: "The angel Gabriel", emoji: "👼" },
+      { label: "The angel Michael", emoji: "🗡️" },
+      { label: "A shepherd", emoji: "🐑" },
+      { label: "A king", emoji: "👑" }
+    ],
+    correctIndex: 0
+  },
+  {
+    text: "What did Gabriel say would happen to Mary?",
+    answers: [
+      { label: "She’d have a baby", emoji: "👶" },
+      { label: "She’d be queen", emoji: "👑" },
+      { label: "She’d find treasure", emoji: "💎" },
+      { label: "She’d travel far", emoji: "🧭" }
+    ],
+    correctIndex: 0
+  },
+  {
+    text: "What did Gabriel say about Mary’s baby?",
+    answers: [
+      { label: "Son of the Most High, a forever King like David", emoji: "👑" },
+      { label: "A famous carpenter", emoji: "🪚" },
+      { label: "A mighty soldier", emoji: "🛡️" },
+      { label: "A great fisherman", emoji: "🎣" }
+    ],
+    correctIndex: 0
+  },
+  {
+    text: "Why did Mary ask, “How can this happen?”",
+    answers: [
+      { label: "She was a virgin", emoji: "🔒" },
+      { label: "She was too old", emoji: "👵" },
+      { label: "She was traveling", emoji: "🧳" },
+      { label: "She was sick", emoji: "🤒" }
+    ],
+    correctIndex: 0
+  },
+  {
+    text: "What did Gabriel say would happen to give Mary a child?",
+    answers: [
+      { label: "The Holy Spirit would visit her", emoji: "🕊️" },
+      { label: "A doctor would help", emoji: "🩺" },
+      { label: "A star would touch her", emoji: "⭐" },
+      { label: "Joseph’s plan would work", emoji: "🛠️" }
+    ],
+    correctIndex: 0
+  },
+  {
+    text: "What did Mary say about Gabriel’s message?",
+    answers: [
+      { label: "May it happen like you said it would", emoji: "🙏" },
+      { label: "No way!", emoji: "🙅‍♀️" },
+      { label: "Maybe later", emoji: "⏳" },
+      { label: "Tell Joseph first", emoji: "📣" }
+    ],
+    correctIndex: 0
+  },
+  {
+    text: "When he saw Mary was pregnant, what did Joseph plan to do?",
+    answers: [
+      { label: "Divorce her quietly", emoji: "🤫" },
+      { label: "Throw a party", emoji: "🎉" },
+      { label: "Move to another town", emoji: "🏘️" },
+      { label: "Tell the king", emoji: "🏰" }
+    ],
+    correctIndex: 0
+  },
+  {
+    text: "What happened to Joseph?",
+    answers: [
+      { label: "An angel visited him in a dream", emoji: "😴" },
+      { label: "A soldier warned him", emoji: "🪖" },
+      { label: "A friend wrote a letter", emoji: "✉️" },
+      { label: "A star led him", emoji: "🌟" }
+    ],
+    correctIndex: 0
+  },
+  {
+    text: "What did the angel say to Joseph?",
+    answers: [
+      { label: "Marry Mary; her baby is from the Holy Spirit", emoji: "💍" },
+      { label: "Name the baby John", emoji: "📝" },
+      { label: "Do not marry Mary", emoji: "❌" },
+      { label: "Travel to Egypt now", emoji: "🐪" }
+    ],
+    correctIndex: 0
+  },
+  {
+    text: "What does “messiah” mean? Who was the Messiah?",
+    answers: [
+      { label: "The long-promised Savior from God — Jesus", emoji: "✝️" },
+      { label: "A powerful Roman leader", emoji: "🦅" },
+      { label: "King David", emoji: "👑" },
+      { label: "The prophet Elijah", emoji: "🔥" }
+    ],
+    correctIndex: 0
+  }
+];
+
+/*
+
+#######    #     #    ######     
+#          ##    #    #     #    
+#          # #   #    #     #    
+#####      #  #  #    #     #    
+#          #   # #    #     #    
+#          #    ##    #     #    
+#######    #     #    ######     
+
+
+*/
+
+  /* ----------------------------- DOM nodes ----------------------------- */
+  const screens = {
+    splash: $('#splash'),
+    title: $('#title'),
+    question: $('#question'),
+    play: $('#play'),
+    roundEnd: $('#roundEnd'),
+    final: $('#final'),
+  };
+  const qText = $('#qText');
+  const answersBox = $('#answers');
+  const qInfo = $('#qInfo');
+  const tipModal = $('#tipModal');
+  const toast = $('#toast');
+const answerModal = $('#answerModal');
+const answerTitle = $('#answerTitle');
+const answerDetail = $('#answerDetail');
+
+  const gameField = $('#gameField');
+  // Set CSS variables so .fruit/.bomb/.clock font-size tracks the field width
+function updateEntitySizes(){
+  const rect = gameField.getBoundingClientRect();
+  const gw = rect.width;
+
+  // Convert width fractions to pixel font-sizes
+  // Emoji glyphs are square-ish; font-size ~ width target works well.
+  const fruitPx = Math.max(28, gw * FRUIT_WIDTH_FRAC);
+  const bombPx  = Math.max(28, gw * BOMB_WIDTH_FRAC);
+  const clockPx = Math.max(24, gw * CLOCK_WIDTH_FRAC);
+
+  gameField.style.setProperty('--fruitSizePx', `${fruitPx}px`);
+  gameField.style.setProperty('--bombSizePx',  `${bombPx}px`);
+  gameField.style.setProperty('--clockSizePx', `${clockPx}px`);
+}
+
+  const roundNum = $('#roundNum');
+  const timeLeft = $('#timeLeft');
+  const slicedCountEl = $('#slicedCount');
+  const scoreEl = $('#score');
+  const slowTag = $('#slowTag');
+  const countdownEl = $('#roundCountdown');
+
+
+  const rFruit = $('#rFruit');
+  const rPoints = $('#rPoints');
+  const tFruit = $('#tFruit');
+  const tPoints = $('#tPoints');
+
+  const fCorrect = $('#fCorrect');
+  const fWrong = $('#fWrong');
+  const fFruit = $('#fFruit');
+  const fPoints = $('#fPoints');
+
+  /* ---------------------------- Screen logic --------------------------- */
+  const show = name => {
+    for(const k in screens){ screens[k].hidden = k !== name; }
+  };
+
+  $('#splashOk').addEventListener('click', ()=>show('title'));
+
+  // Fullscreen
+  async function enterFullscreen(el){
+    try{
+      if(el.requestFullscreen) await el.requestFullscreen();
+      else if(el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
+    }catch{}
+  }
+
+  $('#startBtn').addEventListener('click', async ()=>{
+    await enterFullscreen(document.documentElement);
+    startGame();
+  });
+
+  function startGame(){
+    state.round = 1;
+    state.correct = 0;
+    state.wrong = 0;
+    state.totalFruit = 0;
+    state.score = 0;
+    state.inBonus = false;
+    updateEntitySizes();
+    showQuestion();
+  }
+
+  /* --------------------------- Question render ------------------------- */
+  function showQuestion(){
+    show('question');
+    const q = questions[state.round-1];
+    qText.textContent = `Q${state.round}. ${q.text}`;
+    qInfo.textContent = 'Choose the correct answer';
+
+    // Make a shuffled view model with isCorrect preserved
+    const items = q.answers.map((a,i)=>({ ...a, isCorrect: i===q.correctIndex }));
+    shuffleInPlace(items);
+
+    answersBox.innerHTML = '';
+    for(const item of items){
+      const btn = document.createElement('button');
+      btn.className = 'wide';
+      btn.style.display = 'flex';
+      btn.style.alignItems = 'center';
+      btn.style.justifyContent = 'space-between';
+      btn.style.gap = '10px';
+
+      const left = document.createElement('span');
+      left.textContent = `${item.emoji}  ${item.label}`;
+      const right = document.createElement('span');
+      right.textContent = '➜';
+      right.style.opacity = '.5';
+
+      btn.append(left,right);
+
+      btn.addEventListener('click', ()=>{
+if (item.isCorrect) {
+  state.correct++;
+  state.score += 50;
+  showAnswerModal(true, q.answers[q.correctIndex]);
+} else {
+  state.wrong++;
+  showAnswerModal(false, q.answers[q.correctIndex]);
+}
+
+      });
+
+      answersBox.appendChild(btn);
+    }
+  }
+
+// Show a blocking modal on the Question screen, then start the round
+function showAnswerModal(wasCorrect, correctAnswer){
+  if (wasCorrect) {
+    answerTitle.textContent = '✅ Correct! +50';
+    answerDetail.textContent = 'Nice job — get ready to slice!';
+  } else {
+    answerTitle.textContent = '❌ Incorrect';
+    answerDetail.textContent = `The right answer is: ${correctAnswer.label}`;
+  }
+  answerModal.hidden = false;
+
+  // OK advances: tip after Q1 (once), otherwise start the round
+  $('#answerOk').onclick = () => {
+    answerModal.hidden = true;
+    if (state.round === 1 && !state.showedTip) {
+      state.showedTip = true;
+      tipModal.hidden = false;
+      $('#tipOk').onclick = () => { tipModal.hidden = true; startRound(); };
+    } else {
+      startRound();
+    }
+  };
+}
+
+
+  function showToast(msg, ok){
+    toast.textContent = msg;
+    toast.className = 'toast ' + (ok?'ok':'bad');
+    toast.hidden = false;
+    clearTimeout(showToast._t);
+    showToast._t = setTimeout(()=> toast.hidden = true, 1400);
+  }
+
+  function shuffleInPlace(arr){
+    for(let i=arr.length-1;i>0;i--){
+      const j = (Math.random()*(i+1))|0;
+      [arr[i],arr[j]]=[arr[j],arr[i]];
+    }
+  }
+
+  /* ---------------------------- Round engine --------------------------- */
+  let entities = [];
+  let raf = null;
+  let running = false;
+  let slowUntil = 0;
+  let spawnTimer = 0;
+  let spawnEvery = 650; // ms — tuned for portrait
+  let roundEndAt = 0;
+  let last = 0;
+
+  function resetField(){
+    entities.forEach(e=>e.node.remove());
+    entities = [];
+    spawnTimer = 0;
+    slowUntil = 0;
+    $('#slowTag').hidden = true;
+    slicedCountEl.textContent = '0';
+  }
+
+  function startRound(){
+    show('play');
+    roundNum.textContent = state.round;
+    ARC_POWER_ACTIVE = ARC_POWER; // normal rounds
+
+    resetField();
+    countdownEl.hidden = true;
+countdownEl.textContent = '';
+
+    updateEntitySizes();
+
+    state.roundFruit = 0;
+    state.roundScore = 0;
+// --- Per-level spawn pacing ---
+{
+  const level = state.round;
+  // Larger delay = fewer spawns. Delay shrinks each level, clamped to a minimum.
+  spawnEvery = Math.max(SPAWN_MIN_MS, SPAWN_BASE_MS - SPAWN_LEVEL_FACTOR * (level - 1));
+}
+
+    // 20 seconds round
+    const now = performance.now();
+    roundEndAt = now + 20000;
+    last = now;
+    running = true;
+    loop(now);
+  }
+
+  function loop(now){
+    if(!running) return;
+    const dtMs = now - last;
+    last = now;
+
+    // Slow time active?
+    const slowActive = now < slowUntil;
+    $('#slowTag').hidden = !slowActive;
+    const speedFactor = slowActive ? 0.5 : 1;
+
+    // update timer
+    const tLeft = Math.max(0, (roundEndAt - now)/1000);
+    // Show a large 5→1 countdown in the last 5 seconds of NORMAL rounds
+if (!state.inBonus) {
+  const n = Math.ceil(tLeft);
+  if (tLeft > 0 && n >= 1 && n <= 5) {
+    countdownEl.textContent = String(n);
+    countdownEl.hidden = false;
+  } else {
+    countdownEl.hidden = true;
+  }
+}
+
+    timeLeft.textContent = tLeft.toFixed(1);
+
+    // spawn
+    spawnTimer += dtMs;
+    const currentSpawn = spawnEvery / speedFactor; // a tiny compensation so slow time still feels busy
+    if(spawnTimer >= currentSpawn){
+      spawnTimer = 0;
+      spawnEntityWeighted();
+    }
+
+    // physics
+   stepEntities(dtMs * speedFactor * PHYSICS_SLOWMO);
+
+    // round end
+    if(now >= roundEndAt){
+      running = false;
+      cancelAnimationFrame(raf);
+      endRound();
+      return;
+    }
+    raf = requestAnimationFrame(loop);
+  }
+
+  function spawnEntityWeighted(){
+    // 75% fruit, 15% bomb, 10% clock
+    const p = Math.random();
+    if(p < 0.75) spawnFruit();
+    else if(p < 0.90) spawnBomb();
+    else spawnClock();
+  }
+
+  function spawnFruit(){
+    const emoji = choice(FRUIT);
+    const n = makeEntity('fruit', emoji);
+    entities.push(n);
+  }
+
+  function spawnBomb(){
+    const n = makeEntity('bomb', BOMB);
+    entities.push(n);
+  }
+
+  function spawnClock(){
+    const n = makeEntity('clock', CLOCK);
+    entities.push(n);
+  }
+
+// The launch power currently in use by spawns
+let ARC_POWER_ACTIVE = 1.0;
+
+
+  function makeEntity(kind, emoji){
+    const rect = gameField.getBoundingClientRect();
+    const node = document.createElement('div');
+    node.className = `entity ${kind}`;
+    node.textContent = emoji;
+
+    // start near bottom with slight horizontal variance
+const padding = rect.width * SPAWN_PADDING_X;
+const x = rand(padding, rect.width - padding);
+const y = rect.height + 40; // off bottom
+
+// initial velocities (px/ms after we divide by 1000 below)
+const vy0 = -ARC_POWER_ACTIVE * rand(rect.height * 0.80, rect.height * 1.00); // up
+const vx0 = rand(-rect.width * SIDE_SWAY, rect.width * SIDE_SWAY);     // sideways
+
+
+    const e = {
+      kind, emoji, node,
+      x, y, vx: vx0/1000, vy: vy0/1000, // px per ms
+      r: 0, spin: 0, dead:false, halves:false
+    };
+
+    node.style.left = x+'px';
+    node.style.top = y+'px';
+    node.style.zIndex = 2;
+    gameField.appendChild(node);
+
+    node.addEventListener('pointerdown', (ev)=>{
+      ev.preventDefault();
+      ev.stopPropagation();
+      if(e.dead) return;
+      if(e.kind === 'fruit') sliceFruit(e);
+      else if(e.kind === 'bomb') detonateBomb(e);
+      else if(e.kind === 'clock') slowTime(e);
+    });
+
+    return e;
+  }
+
+  function stepEntities(dt){
+    const rect = gameField.getBoundingClientRect();
+const g = rect.height * GRAVITY; // gravity px/ms^2 scaled to screen height
+
+    for(const e of entities){
+      if(e.dead) continue;
+
+      e.vy += g*dt;
+      e.x += e.vx*dt*1000/60; // tuned feel
+      e.y += e.vy*dt;
+
+      // keep slightly inside horizontal bounds so they don't leave early
+      if(e.x < 20){ e.x = 20; e.vx = Math.abs(e.vx)*0.6; }
+      if(e.x > rect.width-20){ e.x = rect.width-20; e.vx = -Math.abs(e.vx)*0.6; }
+
+e.node.style.left = e.x + 'px';
+e.node.style.top  = e.y + 'px';
+
+if (DEBUG) ensureDebugRing(e);
+else if (e._ring) e._ring.hidden = true;
+
+
+// Apply rotation if present (deg/ms * ms = deg)
+// Use 0 if spin is undefined (non-half entities).
+e.r = (e.r || 0) + (e.spin || 0) * dt;
+e.node.style.transform = `translate(-50%, -50%) rotate(${e.r}deg)`;
+
+
+      // off-screen bottom cleanup
+      if(e.y > rect.height + 80){
+        removeEntity(e);
+      }
+    }
+  }
+
+  function removeEntity(e){
+    e.dead = true;
+    e.node.remove();
+    if (e._ring) { e._ring.remove(); e._ring = null; }
+
+  }
+
+// ------- Hit testing that respects HITBOX_SCALE (works for halves too) -------
+function isPointerInsideEntity(px, py, ent){
+  // Base radius from onscreen size: ~half the font size looks/feels right.
+  const fs = parseFloat(getComputedStyle(ent.node).fontSize) || 48;
+  let baseR = fs * 0.5;
+
+  // Halves are literally half the fruit; trim their base a touch unless you prefer 1.0
+  if (ent.kind === 'half') baseR *= HALF_HITBOX_FACTOR;
+
+  const dx = px - ent.x;
+  const dy = py - ent.y;
+  const dist = Math.hypot(dx, dy);
+  return dist <= baseR * HITBOX_SCALE;
+}
+
+// Global pointer handler so clicks slightly outside the emoji can still register
+gameField.addEventListener('pointerdown', (ev) => {
+  const rect = gameField.getBoundingClientRect();
+  const px = ev.clientX - rect.left;
+  const py = ev.clientY - rect.top;
+
+  // Iterate topmost first (last in array is typically most recently added / top)
+  for (let i = entities.length - 1; i >= 0; i--) {
+    const e = entities[i];
+    if (e.dead) continue;
+    if (isPointerInsideEntity(px, py, e)) {
+      // Trigger the same actions as direct clicks
+      if (e.kind === 'fruit')      sliceFruit(e);
+      else if (e.kind === 'bomb')  detonateBomb(e);
+      else if (e.kind === 'clock') slowTime(e);
+      // Stop after we hit the first eligible entity
+      break;
+    }
+  }
+}, { passive: true });
+
+// Compute the same radius used by the hit test, so the ring matches clicks
+function hitRadius(ent){
+  const fs = parseFloat(getComputedStyle(ent.node).fontSize) || 48;
+  let baseR = fs * 0.5;
+  if (ent.kind === 'half') baseR *= HALF_HITBOX_FACTOR;
+  return baseR * HITBOX_SCALE;
+}
+
+// Create/update a visual ring for an entity when DEBUG is on
+function ensureDebugRing(ent){
+  if (!ent._ring){
+    const d = document.createElement('div');
+    d.className = `hitbox-ring ${ent.kind}`;
+    ent._ring = d;
+    gameField.appendChild(d);
+  }
+  const r = hitRadius(ent);
+  ent._ring.style.width  = (r*2) + 'px';
+  ent._ring.style.height = (r*2) + 'px';
+  ent._ring.style.left   = ent.x + 'px';
+  ent._ring.style.top    = ent.y + 'px';
+  ent._ring.hidden = !DEBUG;
+}
+
+
+  /* --------------------------- Interactions ---------------------------- */
+  function sliceFruit(e){
+    if(e.halves){ // already halves (defensive)
+      return;
+    }
+    e.halves = true;
+    // scoring for whole fruit
+    state.score += 10;
+    state.roundScore += 10;
+    state.totalFruit++;
+    state.roundFruit++;
+    slicedCountEl.textContent = String(state.roundFruit);
+    scoreEl.textContent = String(state.score);
+
+    emitConfetti(e.x, e.y, 16);
+
+    // Replace the node with two halves that fall
+    const left = document.createElement('div');
+    left.className = 'entity half left';
+    left.textContent = e.emoji;
+
+    const right = document.createElement('div');
+    right.className = 'entity half right';
+    right.textContent = e.emoji;
+
+    // Starting from the fruit position
+    left.style.fontSize = getComputedStyle(e.node).fontSize;
+    right.style.fontSize = left.style.fontSize;
+
+    // Remove original
+    e.node.remove();
+
+// Create half entities that DO NOT inherit parent vertical speed.
+// They use HALF_VY_PXS instead, so you control the initial up/down motion.
+// Also give each half an initial spin in degrees per millisecond (dps / 1000).
+
+const hl = {
+  kind:'half', emoji:e.emoji, node:left,
+  x:e.x - HALF_SPLIT_OFFSET_PX, y:e.y,
+  vx:(e.vx*1000 - HALF_BURST_VX)/1000,  // sideways blast (tunable)
+  vy:(HALF_VY_PXS)/1000,                 // no inheritance; controlled by HALF_VY_PXS
+  r: 0,                                  // start rotation angle
+  spin: (
+    (Math.random() * (HALF_SPIN_MAX_DPS - HALF_SPIN_MIN_DPS) + HALF_SPIN_MIN_DPS)
+    * (Math.random() < 0.5 ? -1 : 1) / 1000
+  ),
+  dead:false
+};
+
+const hr = {
+  kind:'half', emoji:e.emoji, node:right,
+  x:e.x + HALF_SPLIT_OFFSET_PX, y:e.y,
+  vx:(e.vx*1000 + HALF_BURST_VX)/1000,  // sideways blast (tunable)
+  vy:(HALF_VY_PXS)/1000,                 // no inheritance; controlled by HALF_VY_PXS
+  r: 0,                                  // start rotation angle
+  spin: (
+    (Math.random() * (HALF_SPIN_MAX_DPS - HALF_SPIN_MIN_DPS) + HALF_SPIN_MIN_DPS)
+    * (Math.random() < 0.5 ? -1 : 1) / 1000
+  ),
+  dead:false
+};
+
+
+
+
+
+
+
+    for(const h of [hl,hr]){
+      h.node.style.left = h.x+'px';
+      h.node.style.top = h.y+'px';
+      h.node.style.zIndex = 2;
+      h.node.addEventListener('pointerdown', ev=>{
+        ev.preventDefault();
+        ev.stopPropagation();
+        if(h.dead) return;
+        // bonus for halves
+        state.score += 5;
+        state.roundScore += 5;
+        scoreEl.textContent = String(state.score);
+        emitConfetti(h.x, h.y, 12);
+        removeEntity(h);
+      });
+      gameField.appendChild(h.node);
+      entities.push(h);
+    }
+
+    // Mark original entity as removed
+    e.dead = true;
+  }
+
+  function detonateBomb(e){
+    // penalty and clear all fruit/halves on screen
+    state.score -= 30;
+    state.score = Math.max(0, state.score);
+    state.roundScore = Math.max(0, state.roundScore-30);
+    scoreEl.textContent = String(state.score);
+    emitConfetti(e.x, e.y, 28);
+
+    for(const other of entities){
+      if(other.dead) continue;
+      if(other === e) continue;
+      // visually pop
+      emitConfetti(other.x, other.y, 10);
+      removeEntity(other);
+    }
+    removeEntity(e);
+    showToast('💥 Bomb! -30', false);
+  }
+
+  function slowTime(e){
+    emitConfetti(e.x, e.y, 16);
+    slowUntil = Math.max(slowUntil, performance.now()+5000);
+    removeEntity(e);
+    showToast('⏰ Slow time 5s', true);
+  }
+
+ function emitConfetti(x,y,count){
+  const rect = gameField.getBoundingClientRect();
+  for(let i=0;i<count;i++){
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.left = x+'px';
+    c.style.top = y+'px';
+    c.style.setProperty('--h', (Math.random()*360).toFixed(0));
+    gameField.appendChild(c);
+
+    // Speeds are px/ms: we derive them from field size * small fractions.
+    const vx = rand(-rect.width  * CONFETTI_VX_FRAC_MAX,  rect.width  * CONFETTI_VX_FRAC_MAX);
+    const vy = rand(rect.height * CONFETTI_VY_FRAC_MIN,  rect.height * CONFETTI_VY_FRAC_MAX);
+    const rot = rand(-360,360);
+
+    // animate with JS for consistent gravity
+    const start = performance.now();
+    const g = rect.height * CONFETTI_G_FRAC; // px/ms^2
+    const life = rand(CONFETTI_LIFE_MIN, CONFETTI_LIFE_MAX);
+    const spin = rot;
+
+    function stepConfetti(t){
+      const dt = t - start; // ms since start
+      if(dt > life){ c.remove(); return; }
+      const dx = vx * dt;                       // px
+      const dy = vy * dt + 0.5 * g * (dt*dt) / 1000; // px; keep /1000 to match existing units
+      c.style.transform = `translate(${dx}px, ${dy}px) rotate(${spin*dt/1000}deg)`;
+      requestAnimationFrame(stepConfetti);
+    }
+    requestAnimationFrame(stepConfetti);
+  }
+}
+
+
+  /* --------------------------- End of round ---------------------------- */
+  function endRound(){
+    countdownEl.hidden = true;
+
+    // Clean any remaining nodes
+    for(const e of entities){ if(!e.dead) e.node.remove(); }
+    entities = [];
+
+    // Show summary
+    rFruit.textContent = String(state.roundFruit);
+    rPoints.textContent = String(state.roundScore);
+    tFruit.textContent = String(state.totalFruit);
+    tPoints.textContent = String(state.score);
+
+    show('roundEnd');
+
+    $('#nextBtn').onclick = ()=>{
+      if(state.round < state.maxRounds){
+        state.round++;
+        showQuestion();
+      }else{
+        // bonus mode
+        startBonus();
+      }
+    };
+  }
+
+  /* ---------------------------- Bonus round ---------------------------- */
+  let bonus = null;
+  function startBonus(){
+    state.inBonus = true;
+    show('play');
+    resetField();
+    updateEntitySizes(); // ensure sizes use the visible gameField width
+    countdownEl.hidden = true;
+countdownEl.textContent = '';
+
+ARC_POWER_ACTIVE = ARC_POWER_BONUS; // gentler launches in Bonus
+
+
+    // HUD tweaks
+    roundNum.textContent = 'Bonus';
+    timeLeft.textContent = '∞';
+
+    const rect = gameField.getBoundingClientRect();
+    let misses = 0;
+let spawnBase = SPAWN_BASE_MS; // start exactly as fast as Level 1
+    const startT = performance.now();
+    last = startT;
+    running = true;
+
+    function loopBonus(now){
+      if(!running) return;
+      const dtMs = now - last;
+      last = now;
+
+// Ramp after 10s; hit max speed at 30s (i.e., over a 20s ramp window)
+const t = (now - startT) / 1000;          // elapsed seconds
+const target = SPAWN_MIN_MS;              // fastest allowed spawn
+const pct = clamp((t - 10) / 20, 0, 1);   // 0 until 10s, then 0→1 over 20s
+spawnEvery = Math.max(target, spawnBase - (spawnBase - target) * pct);
+
+
+      // spawn
+      spawnTimer += dtMs;
+      if(spawnTimer >= spawnEvery){
+        spawnTimer = 0;
+        // In bonus, only fruit
+        spawnFruit();
+        if(Math.random()<0.1) spawnFruit(); // occasional double
+      }
+
+      // physics
+      stepEntities(dtMs);
+
+      // count misses (fruit that drop off bottom)
+      // We detect by hooking removeEntity in bonus scope
+      raf = requestAnimationFrame(loopBonus);
+    }
+
+    // Wrap removeEntity to count fruit misses (but not halves/bombs/clocks)
+    const _remove = removeEntity;
+    removeEntity = function(e){
+      const rect = gameField.getBoundingClientRect();
+      const wasOffBottom = e.y > rect.height + 80;
+if (state.inBonus && wasOffBottom && e.kind === 'fruit') {
+        misses++;
+showToast(`🍂 Missed: ${misses}/${BONUS_MISS_LIMIT}`, false);
+if(misses >= BONUS_MISS_LIMIT){
+
+          // restore, end bonus
+          removeEntity = _remove;
+          running = false;
+          cancelAnimationFrame(raf);
+          return finishGame();
+        }
+      }
+      _remove(e);
+    };
+
+    loopBonus(startT);
+  }
+
+  /* ------------------------------ Final ------------------------------- */
+function fruitRain(){
+  const overlay = document.getElementById('rainOverlay');
+  // Clear any previous rain (safety)
+  overlay.innerHTML = '';
+
+  const rect = overlay.getBoundingClientRect();
+  const N = 60;
+  for(let i=0;i<N;i++){
+    const node = document.createElement('div');
+    node.className = 'entity fruit';
+    node.textContent = choice(FRUIT);
+    node.style.position = 'absolute';
+    node.style.left = rand(20, rect.width - 20) + 'px';
+    node.style.top  = (-rand(20, rect.height)) + 'px';
+    node.style.opacity = .9;
+    node.style.zIndex = 1;
+    overlay.appendChild(node);
+
+    const vy = rand(rect.height*0.35, rect.height*0.6); // px/s
+    const start = performance.now();
+    function fall(t){
+      const dt = (t - start)/1000; // seconds
+      const y = vy * dt;
+      node.style.transform = `translate(-50%, calc(-50% + ${y}px))`;
+      if(parseFloat(node.style.top) + y < rect.height + 80){
+        requestAnimationFrame(fall);
+      }else{
+        node.remove();
+      }
+    }
+    requestAnimationFrame(fall);
+  }
+}
+
+
+  function finishGame(){
+    // lock bonus
+    state.inBonus = false;
+
+    // Show final stats
+    fCorrect.textContent = String(state.correct);
+    fWrong.textContent = String(state.wrong);
+    fFruit.textContent = String(state.totalFruit);
+    fPoints.textContent = String(state.score);
+
+// Show the final screen, then rain falls on the overlay above it
+show('final');
+fruitRain();
+
+  }
+
+  /* --------------------------- Input niceties -------------------------- */
+function skipToQuestion(q){
+  // Clamp 1..state.maxRounds
+  q = Math.max(1, Math.min(state.maxRounds, q));
+  // Stop any running loop
+  running = false;
+  try { cancelAnimationFrame(raf); } catch {}
+  resetField();
+
+  // Ensure we are in normal flow, not bonus
+  state.inBonus = false;
+
+  // Jump to that question
+  state.round = q;
+  showQuestion();
+  try { showToast(`⏭️ Jumped to Q${q}`, true); } catch {}
+}
+
+
+  // Dev shortcut: end anything that's running and jump to Bonus
+function skipToBonus(){
+  if (state.inBonus) return;           // already there
+  // stop any live round loop
+  running = false;
+  try { cancelAnimationFrame(raf); } catch {}
+  // clear current field and mark rounds as finished
+  resetField();
+  state.round = state.maxRounds;
+  // go!
+  startBonus();
+  try { showToast('⏭️ Skipped to Bonus', true); } catch {}
+}
+
+  // Prevent context menu on long press
+  window.addEventListener('contextmenu', e=> e.preventDefault());
+
+/* ---------- Debug mode: press 'h' to toggle hitboxes ---------- */
+let DEBUG = false;
+/* ---------- Debug + dev shortcuts ---------- */
+window.addEventListener('keydown', (e) => {
+  const k = e.key ? e.key.toLowerCase() : '';
+
+  // toggle hitbox debug (existing behavior)
+  if (k === 'h') {
+    DEBUG = !DEBUG;
+    document.body.classList.toggle('debug', DEBUG);
+    for (const ent of entities){
+      if (DEBUG) ensureDebugRing(ent);
+      else if (ent._ring) ent._ring.hidden = true;
+    }
+    try { showToast(DEBUG ? '🛠 Debug ON' : '🛠 Debug OFF', true); } catch {}
+  }
+
+  // digit shortcuts: 1-9 → that question, 0 → question 10
+  if (k >= '1' && k <= '9') {
+    e.preventDefault();
+    skipToQuestion(parseInt(k, 10));
+  }
+  if (k === '0') {
+    e.preventDefault();
+    skipToQuestion(10);
+  }
+
+
+  // skip straight to bonus
+  if (k === 'b') {
+    e.preventDefault();
+    skipToBonus();
+  }
+});
+
+
+  
+  // Resize reflow safeguard (keeps entities inside after big rotation)
+window.addEventListener('resize', ()=>{
+  updateEntitySizes();
+});
+
+
+})();
+</script>
+</body>
+</html>
