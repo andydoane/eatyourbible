@@ -1,0 +1,1512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Emoji Pacman — Bible Quiz</title>
+<style>
+
+/* Blink effect for scared ghosts */
+.sprite.blink {
+  animation: ghostBlink .2s steps(1, end) infinite;
+}
+@keyframes ghostBlink {
+  50% { opacity: .35; }
+}
+
+
+  :root{
+    --ui-bg:#0b0f14;
+    --ui-fg:#eaf4ff;
+    --accent:#52a8ff;
+    --good:#19c37d;
+    --bad:#ff6464;
+    --maze-wall:#1c2740;
+    --maze-bg:#0f1320;
+    --dot:#ffe9a9;
+    --power:#ffd14d;
+    --fruit:#ff8a3d;
+    --ghost:#ff3d6e;
+    --tile:28; /* base tile size in px; scaled via transform */
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:#000;color:var(--ui-fg);font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  button{cursor:pointer;border:0;border-radius:14px;padding:12px 16px;font-weight:700}
+  .btn{background:var(--accent);color:#001628;box-shadow:0 6px 20px rgba(82,168,255,.35)}
+  .btn:active{transform:translateY(1px)}
+  .btn-ghost{background:#202a36;color:#cfe8ff}
+  .btn-good{background:var(--good);color:#00291a}
+  .btn-bad{background:var(--bad);color:#2b0000}
+
+  /* App root */
+  #app{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;overflow:hidden}
+
+  /* Portrait, mobile-first stage */
+  .stage{
+    position:relative;
+    width:100vw; height:100vh;
+    background:linear-gradient(180deg,#07101d,#05070c 70%);
+    display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+  }
+
+  /* Screen shells */
+  .screen{position:absolute; inset:0; display:none; align-items:center; justify-content:center; padding:16px}
+  .screen.active{display:flex}
+  .card{
+    width:min(560px, 94vw);
+    background:linear-gradient(180deg,#0e1a2b,#0a1222);
+    border:1px solid #20304a; border-radius:20px;
+    box-shadow:0 20px 60px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.04);
+    padding:20px;
+  }
+  .title{font-size:28px; font-weight:900; letter-spacing:.3px; text-align:center; margin:6px 0 12px}
+  .subtitle{opacity:.9; font-size:16px; text-align:center; margin:0 0 14px}
+  .row{display:flex; gap:10px; justify-content:center; flex-wrap:wrap}
+
+  /* Popup overlay */
+  .overlay{position:absolute; inset:0; display:none; align-items:center; justify-content:center; background:rgba(5,9,15,.5); backdrop-filter:blur(4px); z-index:50}
+  .overlay.show{display:flex}
+
+  /* HUD */
+  .hud{
+    position:absolute; top:8px; left:8px; right:8px; display:flex; align-items:center; justify-content:space-between; z-index:10;
+    font-weight:700; font-size:14px; gap:6px;
+  }
+  .hud .pill{
+    background:rgba(12,22,38,.8); border:1px solid #1e2c44; border-radius:99px; padding:8px 12px;
+    display:flex; align-items:center; gap:8px;
+  }
+
+  /* Maze container (portrait board) */
+  .board-wrap{
+    position:absolute; top:60px; bottom:80px; left:0; right:0;
+    display:flex; align-items:center; justify-content:center; padding:8px;
+  }
+  .board{
+    position:relative;
+    /* Portrait aspect: 13 cols x 21 rows grid scaled to viewport */
+    background:var(--maze-bg);
+    border-radius:18px; border:2px solid #223255;
+    box-shadow:inset 0 0 0 2px rgba(255,255,255,.02), 0 10px 40px rgba(0,0,0,.6);
+    touch-action:none; /* we'll handle swipes */
+    overflow:hidden;
+  }
+  .grid{
+    position:absolute; inset:0;
+    image-rendering:pixelated;
+  }
+  .cell{
+    position:absolute; width:var(--tile-px); height:var(--tile-px);
+  }
+  .wall{background:var(--maze-wall); border-radius:0px}
+  .dot::after{
+    content:''; position:absolute; inset:0; margin:auto; width:6px; height:6px; background:var(--dot); border-radius:50%;
+    box-shadow:0 0 10px rgba(255,233,169,.7)
+  }
+  .power::after{
+    content:''; position:absolute; inset:0; margin:auto; width:12px; height:12px; background:var(--power); border-radius:50%;
+    box-shadow:0 0 16px rgba(255,209,77,.9)
+  }
+
+.entity{
+    position:absolute; width:var(--tile-px); height:var(--tile-px); display:flex; align-items:center; justify-content:center;
+    font-size:calc(var(--tile-px) * .8);
+    /* no CSS transition — movement is frame-driven in JS for constant speed */
+    will-change:transform;
+    user-select:none; -webkit-user-select:none;
+}
+
+  
+  .player{ z-index:3; }
+  .ghost{ z-index:2; filter:drop-shadow(0 2px 0 rgba(0,0,0,.35))}
+  .fruit{ z-index:1; font-size:calc(var(--tile-px) * .75)}
+
+  .footer-bar{
+    position:absolute; bottom:10px; left:8px; right:8px;
+    display:flex; justify-content:center; gap:10px; z-index:9;
+  }
+
+/* Ghost explode confetti */
+.confetti{
+  position:absolute;
+  width:4px; height:4px;
+  background:#fff;
+  pointer-events:none;
+  border-radius:1px;
+  opacity:1;
+  transform:translate(-50%,-50%);
+  animation:confettiBurst 650ms ease-out forwards;
+  box-shadow:0 0 6px rgba(255,255,255,.35);
+}
+
+/* Ghost gentle bob on the inner sprite only */
+.sprite.ghostSprite{
+  display:inline-block;
+  animation:ghostBob 1.2s ease-in-out infinite;
+}
+@keyframes ghostBob{
+  0%,100% { transform: translateY(0); }
+  50%     { transform: translateY(-2px); }
+}
+
+
+@keyframes confettiBurst{
+  to{
+    transform:translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) rotate(360deg) scale(.9);
+    opacity:0;
+  }
+}
+
+/* Player chomp uses JS to swap emoji; no transform animations needed */
+
+
+/* Jackpot dots: bigger, pulsing, rainbow-ish */
+.dot.jackpot::after{
+  width:10px; height:10px;
+  box-shadow:0 0 12px rgba(255,255,255,.9), 0 0 22px rgba(255,255,255,.6);
+  animation:jackpotPulse 800ms ease-in-out infinite, jackpotHue 2.2s linear infinite;
+}
+@keyframes jackpotPulse{
+  0%,100%{ transform:scale(1); opacity:1 }
+  50%    { transform:scale(1.25); opacity:.85 }
+}
+@keyframes jackpotHue{
+  0%  { filter:hue-rotate(0deg) }
+  100%{ filter:hue-rotate(360deg) }
+}
+
+/* Floating score when eating a ghost */
+.score-float{
+  position:absolute;
+  font-weight:900;
+  font-size:14px;
+  color:#fff;
+  text-shadow:0 2px 0 rgba(0,0,0,.35), 0 0 8px rgba(255,255,255,.5);
+  pointer-events:none;
+  animation:scoreFloat 700ms ease-out forwards;
+}
+@keyframes scoreFloat{
+  0%   { transform:translate(-50%,-50%) translateY(0); opacity:1 }
+  100% { transform:translate(-50%,-50%) translateY(-22px); opacity:0 }
+}
+
+
+  /* End rain */
+  .rain-emoji{
+    position:absolute; top:-10vh; font-size:28px; animation:fall linear forwards;
+    text-shadow:0 4px 0 rgba(0,0,0,.25);
+  }
+  @keyframes fall{ to{ transform:translateY(120vh)} }
+
+  /* Utility hide */
+  .hide{display:none !important}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="stage" id="stage">
+
+    <!-- HUD -->
+   <div class="hud hide" id="hud">
+      <div class="pill">⭐ Score: <span id="score">0</span></div>
+      <div class="pill">⏱️ <span id="timer">30</span>s</div>
+      <div class="pill">❓ Q <span id="qnum">1</span>/10</div>
+      <div class="pill">✅ <span id="correct">0</span> / ❌ <span id="incorrect">0</span></div>
+    </div>
+
+    <!-- Board -->
+<div class="board-wrap hide" id="boardWrap">
+      <div class="board" id="board">
+        <div class="grid" id="grid"></div>
+        <div class="entity player" id="player">😀</div>
+        <!-- ghosts and fruit are appended here -->
+      </div>
+    </div>
+
+    <!-- Bottom buttons (contextual) -->
+    <div class="footer-bar" id="footer"></div>
+
+    <!-- Screens -->
+    <section class="screen active" id="splash">
+      <div class="card">
+        <div class="title">📱 Turn Device Vertical</div>
+        <p class="subtitle">If playing on a mobile device, game is best in <b>vertical</b> mode.</p>
+        <div class="row"><button class="btn" id="splashOk">Okay</button></div>
+      </div>
+    </section>
+
+    <section class="screen" id="title">
+      <div class="card">
+        <div class="title">😃 Emoji-Man — Bible Quiz</div>
+        <p class="subtitle">Answer a question, then help Emoji-Man eat as many dots as possible! After 10 rounds, take on a bonus “eat them all” maze.</p>
+        <div class="row">
+          <button class="btn" id="btnStart">Go Fullscreen and Start</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="question">
+      <div class="card">
+        <div class="title" id="qtext">Question</div>
+        <div id="answers" class="row" style="margin-top:6px"></div>
+      </div>
+    </section>
+
+    <section class="screen" id="end">
+      <div class="card">
+        <div class="title">🏁 All Done!</div>
+        <p class="subtitle" id="finalStats"></p>
+        <div class="row"><button class="btn" id="btnReplay">Play again</button></div>
+      </div>
+    </section>
+
+    <!-- Popup overlay -->
+    <div class="overlay" id="overlay">
+      <div class="card" id="popup">
+        <div class="title" id="popupTitle">Title</div>
+        <p class="subtitle" id="popupMsg">Message</p>
+        <div class="row" id="popupBtns">
+          <button class="btn" id="popupOk">OK</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ===============================
+   Utility helpers
+=============================== */
+const $ = sel => document.querySelector(sel);
+const $$ = sel => Array.from(document.querySelectorAll(sel));
+
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+let chompOpen = false;
+let lastChomp = 0;
+const CHOMP_INTERVAL = 140; // ms; increase = slower chomp
+
+function updatePlayerChomp(now){
+  const moving = (player.dir.x !== 0 || player.dir.y !== 0);
+  const sprite = document.getElementById('playerSprite');
+  if (!sprite) return;
+
+  if (!moving){
+    // settle to closed mouth
+    if (sprite.textContent !== "😀") sprite.textContent = "😀";
+    lastChomp = now;
+    return;
+  }
+  if (now - lastChomp >= CHOMP_INTERVAL){
+    chompOpen = !chompOpen;
+    sprite.textContent = chompOpen ? "😮" : "😀";
+    lastChomp = now;
+  }
+}
+
+
+function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+
+function fullscreen(el){
+  const e = el || document.documentElement;
+  if (document.fullscreenElement) return Promise.resolve();
+  if (e.requestFullscreen) return e.requestFullscreen();
+  if (e.webkitRequestFullscreen) return e.webkitRequestFullscreen();
+  return Promise.resolve();
+}
+
+function ghostRatioForLevel(level){
+  // 0.60 at level 1 -> 1.00 at level 10 (linear)
+  const start = 0.60, end = 1.00;
+  return start + (level - 1) * ((end - start) / 9);
+}
+
+
+/* ===============================
+   Game data
+=============================== */
+
+  /*
+
+ #####     #     #    #######     #####     #######    ###    #######    #     #     #####  
+#     #    #     #    #          #     #       #        #     #     #    ##    #    #     # 
+#     #    #     #    #          #             #        #     #     #    # #   #    #       
+#     #    #     #    #####       #####        #        #     #     #    #  #  #     #####  
+#   # #    #     #    #                #       #        #     #     #    #   # #          # 
+#    #     #     #    #          #     #       #        #     #     #    #    ##    #     # 
+ #### #     #####     #######     #####        #       ###    #######    #     #     #####  
+
+*/
+
+
+const questions = [
+  {
+    text: "What law did Caesar make?",
+    answers: [
+      {label:"Everyone must return home to sign his list", emoji:"📝"},
+      {label:"Everyone must pay extra taxes", emoji:"💰"},
+      {label:"Everyone must worship Caesar only", emoji:"🛐"},
+      {label:"Everyone must move to Rome", emoji:"🏛️"},
+    ],
+    correctIndex: 0
+  },
+  {
+    text: "What town did Mary and Joseph have to travel to?",
+    answers: [
+      {label:"Bethlehem", emoji:"📍"},
+      {label:"Nazareth", emoji:"🏘️"},
+      {label:"Jerusalem", emoji:"🕍"},
+      {label:"Jericho", emoji:"🏜️"},
+    ],
+    correctIndex: 0
+  },
+  {
+    text: "What happened to Mary in Bethlehem?",
+    answers: [
+      {label:"She gave birth to a baby boy", emoji:"👶"},
+      {label:"She found a room at the inn", emoji:"🛏️"},
+      {label:"She met the wise men", emoji:"🧙"},
+      {label:"She returned home", emoji:"🏠"},
+    ],
+    correctIndex: 0
+  },
+  {
+    text: "Where did Mary lay baby Jesus? Why?",
+    answers: [
+      {label:"In a manger, there was no room", emoji:"🐄"},
+      {label:"In a crib at the inn", emoji:"🛌"},
+      {label:"In a tent outside town", emoji:"⛺"},
+      {label:"In a palace nursery", emoji:"🏰"},
+    ],
+    correctIndex: 0
+  },
+  {
+    text: "What happened to the shepherds nearby?",
+    answers: [
+      {label:"An angel appeared to them", emoji:"👼"},
+      {label:"A star fell from the sky", emoji:"⭐"},
+      {label:"A sudden storm hit", emoji:"⛈️"},
+      {label:"A lion attacked the flock", emoji:"🦁"},
+    ],
+    correctIndex: 0
+  },
+  {
+    text: "What good news did the angel tell the shepherds?",
+    answers: [
+      {label:"The Christ was born in Bethlehem", emoji:"🌟"},
+      {label:"The king declared peace", emoji:"🕊️"},
+      {label:"Taxes would be lowered", emoji:"💸"},
+      {label:"The famine had ended", emoji:"🌾"},
+    ],
+    correctIndex: 0
+  },
+  {
+    text: "How could the shepherds know if the angel was telling the truth?",
+    answers: [
+      {label:"They'd find a baby wrapped in cloths in a manger", emoji:"👶"},
+      {label:"They'd see a sign written in the sky", emoji:"☁️"},
+      {label:"They'd receive a scroll from the king", emoji:"📜"},
+      {label:"They'd hear a trumpet sound", emoji:"🎺"},
+    ],
+    correctIndex: 0
+  },
+  {
+    text: "Why would it be unusual to find a baby in a manger?",
+    answers: [
+      {label:"A manger is a food box for animals", emoji:"🐄"},
+      {label:"It would be too cold there", emoji:"🧊"},
+      {label:"It was against the law", emoji:"⚖️"},
+      {label:"It would be too noisy", emoji:"🔊"},
+    ],
+    correctIndex: 0
+  },
+  {
+    text: "When the angel left, what did the shepherds do? What did they find?",
+    answers: [
+      {label:"They found Mary, Joseph, and the baby in Bethlehem", emoji:"👪"},
+      {label:"They stayed in the fields", emoji:"🌾"},
+      {label:"They went to the palace", emoji:"🏰"},
+      {label:"They followed the star to the east", emoji:"🌟"},
+    ],
+    correctIndex: 0
+  },
+  {
+    text: "What do we celebrate on Christmas?",
+    answers: [
+      {label:"The birthday of Jesus the Christ", emoji:"🎄"},
+      {label:"The start of winter", emoji:"❄️"},
+      {label:"Santa’s birthday", emoji:"🎅"},
+      {label:"The new year", emoji:"🗓️"},
+    ],
+    correctIndex: 0
+  },
+];
+
+
+/*
+
+#######    #     #    ######     
+#          ##    #    #     #    
+#          # #   #    #     #    
+#####      #  #  #    #     #    
+#          #   # #    #     #    
+#          #    ##    #     #    
+#######    #     #    ######     
+
+
+*/
+
+
+const playerFaces = ["😀","😃","😄","😁","🙂","😆","😺","🤠","😎","🤗","🥳"];
+const fruitChoices = ["🍒","🍓","🍊","🍋","🍏","🍇","🍉","🍍","🥭","🍌","🥝"];
+const palettes = [
+  { wall:"#1c2740", bg:"#0f1320"},
+  { wall:"#243a2a", bg:"#0c150f"},
+  { wall:"#402233", bg:"#1c0f17"},
+  { wall:"#3a2c1f", bg:"#16100b"},
+  { wall:"#1e3044", bg:"#0b1420"},
+  { wall:"#2c2440", bg:"#0e0a1a"},
+  { wall:"#2a3a24", bg:"#0d140c"},
+  { wall:"#402a2a", bg:"#1b0f0f"},
+  { wall:"#1f3a40", bg:"#0b1518"},
+  { wall:"#3a1f40", bg:"#140b18"},
+];
+
+let state = {
+  level: 1, // 1..10; bonus after
+  score: 0,
+  correct: 0,
+  incorrect: 0,
+  answered: 0,
+  timeLeft: 30,
+  poweredUntil: 0, // timestamp
+  showHowTo: true,
+  fruitId: 0,
+  rngSeed: Date.now() & 0xffff
+};
+
+function rng(){ // simple LCG for deterministic fun per session
+  state.rngSeed = (1103515245 * state.rngSeed + 12345) & 0x7fffffff;
+  return state.rngSeed / 0x7fffffff;
+}
+
+/* ===============================
+   Maze definition (portrait)
+   Legend: # wall, . dot, o power, ' ' empty, S spawn, G ghost house
+   Size: 13 cols x 21 rows (portrait friendly)
+=============================== */
+const COLS = 13, ROWS = 21;
+const baseMaze = [
+"#############",
+"#o....#....o#",
+"#.#.#.#.#.#.#",
+"#.#.......#.#",
+"#.###.#.###.#",
+"#G..#.#.#..G#",
+"###...#...###",
+"#...#.#.#...#",
+"#.#.#...#.#.#",
+"#.#.#####.#.#",
+"#.#.......#.#",
+"#.#.#####.#.#",
+"#.#...S...#.#",
+"#...##.##...#",
+"###.#...#.###",
+"#G..#.#.#..G#",
+"#.#.#.#.#.#.#",
+"#.#.......#.#",
+"#.###.#.###.#",
+"#o.........o#",
+"#############",
+];
+
+// Second board (13 x 21)
+const baseMaze2 = [
+"#############",
+"#o.........o#",
+"#.###.#.###.#",
+"#.#.......#.#",
+"#.#.##.##.#.#",
+"#G.........G#",
+"#.##.###.##.#",
+"#.#...#...#.#",
+"#...#.#.#...#",
+"#.###.#.###.#",
+"#...........#",
+"#.#.##.##.#.#",
+"#.#...S...#.#",
+"#...##.##...#",
+"###.#...#.###",
+"#G.........G#",
+"#.#.#.#.#.#.#",
+"#.#...#...#.#",
+"#.#.#####.#.#",
+"#o.........o#",
+"#############",
+];
+
+let currentMaze = baseMaze;
+function selectMazeForLevel(lvl){
+  // Odd levels -> baseMaze, Even levels -> baseMaze2
+  return (lvl % 2 === 1) ? baseMaze : baseMaze2;
+}
+
+
+
+// We'll clone and convert '.' to dots, 'o' to power pellets.
+
+/* ===============================
+   DOM refs
+=============================== */
+const stage = $("#stage");
+const screens = {
+  splash: $("#splash"),
+  title: $("#title"),
+  question: $("#question"),
+  end: $("#end")
+};
+const overlay = $("#overlay");
+const popupTitle = $("#popupTitle");
+const popupMsg = $("#popupMsg");
+const popupBtns = $("#popupBtns");
+const scoreEl = $("#score");
+const timerEl = $("#timer");
+const qnumEl = $("#qnum");
+const corEl = $("#correct");
+const incorEl = $("#incorrect");
+
+const board = $("#board");
+const gridEl = $("#grid");
+const playerEl = $("#player");
+const footer = $("#footer");
+const hud = $("#hud");
+const boardWrap = $("#boardWrap");
+
+/* ===============================
+   Layout & scaling
+=============================== */
+let tilePx = 28; // will be recalculated
+function layoutBoard(){
+  // If the board is hidden, its parent (boardWrap) reports near-0 size.
+  // So we fall back to the stage’s viewport and recreate the same top/bottom/padding math.
+  const wrapEl = board.parentElement; // boardWrap
+  let rect = wrapEl.getBoundingClientRect();
+
+  // When hidden, width/height will be ~0. Use stage as the measuring stick.
+  if (rect.width < 10 || rect.height < 10){
+    const stageRect = stage.getBoundingClientRect();
+    // board-wrap CSS: top:60px; bottom:80px; left/right:0; padding:8px
+    const availW = stageRect.width - 16;           // left+right padding
+    const availH = stageRect.height - (60 + 80) - 16; // top+bottom gap + padding
+    rect = { width: Math.max(0, availW), height: Math.max(0, availH) };
+  }
+
+  const pw = rect.width;
+  const ph = rect.height;
+
+  // Grid size in tiles
+  const tw = COLS;
+  const th = ROWS;
+
+  // Choose the biggest whole-pixel tile that fits
+  const scale = Math.floor(Math.min(pw / tw, ph / th));
+  tilePx = Math.max(18, scale); // keep a sensible minimum
+
+  const w = tilePx * COLS;
+  const h = tilePx * ROWS;
+
+  board.style.width = w + "px";
+  board.style.height = h + "px";
+  gridEl.style.setProperty("--tile-px", tilePx + "px");
+  document.documentElement.style.setProperty("--tile-px", tilePx + "px");
+}
+
+
+window.addEventListener("resize", layoutBoard);
+
+/* ===============================
+   Maze rendering & state
+=============================== */
+let cells = []; // per tile info
+let dotsLeft = 0;
+
+function idx(x,y){ return y*COLS + x; }
+
+function buildMaze(){
+  gridEl.innerHTML = "";
+  cells = [];
+  dotsLeft = 0;
+
+  const palette = palettes[(state.level-1) % palettes.length];
+  document.documentElement.style.setProperty("--maze-wall", palette.wall);
+  document.documentElement.style.setProperty("--maze-bg", palette.bg);
+
+  for(let y=0;y<ROWS;y++){
+    for(let x=0;x<COLS;x++){
+const ch = currentMaze[y][x];
+      const cell = {x,y, wall:false, dot:false, power:false, fruit:false};
+      const div = document.createElement("div");
+      div.className = "cell";
+      div.style.left = (x*tilePx) + "px";
+      div.style.top = (y*tilePx) + "px";
+
+if (ch === "#"){
+  cell.wall = true; div.classList.add("wall");
+}
+else if (ch === "."){
+  cell.dot = true; dotsLeft++; div.classList.add("dot");
+}
+else if (ch === "o"){
+  cell.power = true; dotsLeft++; div.classList.add("power");
+}
+else if (ch === "G"){
+  // Ghost-house tile ALSO has a dot under it so the row isn’t broken
+  cell.dot = true; dotsLeft++; div.classList.add("dot");
+  // (still treated as floor for movement and ghost spawning)
+}
+else {
+  // empty floor (including S)
+}
+
+      
+
+      cells[idx(x,y)] = {cell, div};
+      gridEl.appendChild(div);
+    }
+  }
+}
+
+/* ===============================
+   Entities (player, ghosts, fruit)
+=============================== */
+let player = { x: 6, y: 10, dir:{x:0,y:0}, next:{x:0,y:0}, alive:true, speed: 6/60 }; // tiles per frame tick (~60fps)
+let ghosts = []; // {x,y,dir,speed,el,scaredUntil,dead}
+let fruit = null; // {x,y,el,emoji}
+let startGraceUntil = 0; // timestamp when collisions start being counted
+
+function placeEntities(){
+  // Player spawn at S (center)
+  for(let y=0;y<ROWS;y++){
+    for(let x=0;x<COLS;x++){
+      if (currentMaze[y][x]==="S"){ player.x=x; player.y=y; }
+    }
+  }
+  player.dir = {x:0,y:0};
+  player.next = {x:0,y:0};
+  player.alive = true;
+playerEl.innerHTML = `<span class="sprite" id="playerSprite">${playerFaces[(state.level-1) % playerFaces.length]}</span>`;
+  placeInstant(playerEl, player.x, player.y);
+
+// Ghosts: number based on level, spawned FAR from player
+const ghostCount = state.level <= 4 ? 1 : (state.level <= 8 ? 2 : 3);
+ghosts.forEach(g=>g.el.remove());
+ghosts = [];
+
+// collect all ghost-house tiles
+const allG = [];
+for (let y=0; y<ROWS; y++){
+  for (let x=0; x<COLS; x++){
+    if (currentMaze[y][x] === "G") allG.push({x,y});
+  }
+}
+
+// sort by distance from player spawn (farthest first)
+const pxS = player.x, pyS = player.y;
+allG.sort((a,b)=>{
+  const da = Math.abs(a.x - pxS) + Math.abs(a.y - pyS);
+  const db = Math.abs(b.x - pxS) + Math.abs(b.y - pyS);
+  return db - da; // far to near
+});
+
+// prefer tiles with distance >= 4 first
+const far = allG.filter(p => Math.abs(p.x - pxS) + Math.abs(p.y - pyS) >= 4);
+const pool = far.length >= ghostCount ? far : allG; // fallback if needed
+
+for (let i=0; i<ghostCount; i++){
+  const gpos = pool[i % pool.length];
+const el = document.createElement("div");
+el.className = "entity ghost";
+el.innerHTML = `<span class="sprite ghostSprite">👻</span>`;
+board.appendChild(el);
+
+  ghosts.push({
+    x:gpos.x, y:gpos.y,
+    dir:{x:0,y:0},
+    speed: player.speed * ghostRatioForLevel(state.level),
+    el, scaredUntil:0, dead:false
+  });
+placeInstant(el, gpos.x, gpos.y);
+}
+
+
+
+  // Fruit spawns later per round
+  if (fruit?.el) fruit.el.remove();
+  fruit = null;
+}
+
+function spawnFruit(){
+  // find a random empty, non-wall, non-center
+  const f = document.createElement("div");
+  f.className = "entity fruit";
+  const emoji = fruitChoices[(state.level-1) % fruitChoices.length];
+  f.textContent = emoji;
+  // pick spot
+  for(let tries=0; tries<200; tries++){
+    const x = 1 + Math.floor(rng()*(COLS-2));
+    const y = 1 + Math.floor(rng()*(ROWS-2));
+    if (!cells[idx(x,y)].cell.wall){
+      // not overlapping player
+      if (!(x===player.x && y===player.y)){
+        fruit = {x,y,el:f,emoji};
+        board.appendChild(f);
+        setPosEl(f, x, y);
+        return;
+      }
+    }
+  }
+}
+
+/* ===============================
+   Movement & collisions
+=============================== */
+function passable(x,y){
+  if (x<0||y<0||x>=COLS||y>=ROWS) return false;
+  return !cells[idx(x,y)].cell.wall;
+}
+
+function setPosEl(el, x, y){
+  el.style.transform = `translate(${x*tilePx}px, ${y*tilePx}px)`;
+}
+
+function placeInstant(el, x, y){
+  const prev = el.style.transition;
+  el.style.transition = 'none';
+  setPosEl(el, x, y);
+  // force reflow so the browser locks in the non-animated transform
+  void el.offsetHeight;
+  el.style.transition = prev || '';
+}
+
+// --- Jackpot dots (appear during power time) ---
+let jackpotSet = new Set();   // holds linear indices of jackpot tiles
+let jackpotUntil = 0;         // timestamp when jackpot expires
+
+function clearJackpot(){
+  if (!jackpotSet.size) return;
+  for (const i of jackpotSet){
+    const {div} = cells[i];
+    if (div) div.classList.remove('jackpot');
+  }
+  jackpotSet.clear();
+  jackpotUntil = 0;
+}
+
+function markJackpotDots(count){
+  clearJackpot();
+  // find all remaining normal dots (not walls, not power pellets)
+  const candidates = [];
+  for (let y=0;y<ROWS;y++){
+    for (let x=0;x<COLS;x++){
+      const i = idx(x,y);
+      const {cell,div} = cells[i];
+      if (!cell) continue;
+      if (cell.dot && !cell.power && div.classList.contains('dot')){
+        candidates.push(i);
+      }
+    }
+  }
+  if (!candidates.length) return;
+  const shuffled = shuffle(candidates);
+  const take = Math.min(count, shuffled.length);
+  for (let k=0;k<take;k++){
+    const i = shuffled[k];
+    const {div} = cells[i];
+    if (div){ div.classList.add('jackpot'); jackpotSet.add(i); }
+  }
+}
+
+
+function ghostExplodeConfetti(tileX, tileY){
+  const count = 26 + Math.floor(Math.random()*10);
+  const originX = tileX * tilePx + tilePx/2;
+  const originY = tileY * tilePx + tilePx/2;
+  const whites = ["#ffffff","#f8f8f8","#f2f2f2","#ececec","#e6e6e6","#dddddd"];
+
+  for (let i=0;i<count;i++){
+    const p = document.createElement("div");
+    p.className = "confetti";
+    p.style.left = originX + "px";
+    p.style.top  = originY + "px";
+    p.style.backgroundColor = whites[i % whites.length];
+
+    // random direction & distance (in pixels)
+    const ang = Math.random()*Math.PI*2;
+    const dist = (tilePx * .6) + Math.random() * (tilePx * 1.2);
+    p.style.setProperty("--dx", Math.cos(ang)*dist + "px");
+    p.style.setProperty("--dy", Math.sin(ang)*dist + "px");
+
+    // varied sizes and durations
+    const s = 2 + Math.random()*4;
+    p.style.width = s+"px"; p.style.height = s+"px";
+    p.style.animationDuration = (480 + Math.random()*320) + "ms";
+
+    // some square, some rounded to look like “shreds”
+    if (Math.random()<0.35) p.style.borderRadius = "50%";
+
+    board.appendChild(p);
+    p.addEventListener("animationend", ()=> p.remove());
+  }
+}
+
+function spawnScoreFloat(points, tileX, tileY){
+  const el = document.createElement('div');
+  el.className = 'score-float';
+  el.textContent = `+${points}`;
+  el.style.left = (tileX * tilePx + tilePx/2) + 'px';
+  el.style.top  = (tileY * tilePx + tilePx/2) + 'px';
+  board.appendChild(el);
+  el.addEventListener('animationend', ()=> el.remove());
+}
+
+
+function tryTurn(entity, dx, dy){
+  // if we’re close to center, snap so turning checks hit the exact neighbor tile
+  if (atTile(entity)){
+    entity.x = Math.round(entity.x);
+    entity.y = Math.round(entity.y);
+  }
+  const nx = entity.x + dx;
+  const ny = entity.y + dy;
+  if (passable(Math.round(nx), Math.round(ny))){
+    entity.dir = {x:dx, y:dy};
+    return true;
+  }
+  return false;
+}
+
+
+function moveEntity(ent, dt){
+  // dt is milliseconds; convert speed (tiles/sec) to tiles this frame
+  const step = ent.speed * (dt / 1000);
+
+  // If not moving, stay snapped to grid
+  if (ent.dir.x === 0 && ent.dir.y === 0){
+    ent.x = Math.round(ent.x);
+    ent.y = Math.round(ent.y);
+    return;
+  }
+
+  // Horizontal movement
+  if (ent.dir.x !== 0){
+    const cy = Math.round(ent.y);
+    ent.y = cy; // stay centered vertically
+
+    // Direction-aware centers:
+    // moving right -> current center = floor(x), next = current+1
+    // moving left  -> current center = ceil(x),  next = current-1
+    const current = ent.dir.x > 0 ? Math.floor(ent.x + 1e-6) : Math.ceil(ent.x - 1e-6);
+    const next    = current + ent.dir.x;
+
+    // Wall ahead? stop at current center (never enter the next tile)
+    if (!passable(next, cy)){
+      ent.x = current;
+      ent.dir = {x:0,y:0};
+      return;
+    }
+
+    // Move toward the next center without overshooting
+    const remaining = Math.abs(next - ent.x);
+    const move = Math.min(step, remaining);
+    ent.x += ent.dir.x * move;
+    return;
+  }
+
+  // Vertical movement
+  if (ent.dir.y !== 0){
+    const cx = Math.round(ent.x);
+    ent.x = cx; // stay centered horizontally
+
+    // Direction-aware centers for Y
+    const current = ent.dir.y > 0 ? Math.floor(ent.y + 1e-6) : Math.ceil(ent.y - 1e-6);
+    const next    = current + ent.dir.y;
+
+    if (!passable(cx, next)){
+      ent.y = current;
+      ent.dir = {x:0,y:0};
+      return;
+    }
+
+    const remaining = Math.abs(next - ent.y);
+    const move = Math.min(step, remaining);
+    ent.y += ent.dir.y * move;
+    return;
+  }
+}
+
+
+
+
+
+
+
+function atTile(ent){
+  // slightly larger epsilon so we can snap more reliably
+  return Math.abs(ent.x - Math.round(ent.x)) < 0.1 && Math.abs(ent.y - Math.round(ent.y)) < 0.1;
+}
+
+
+function eatAtPlayerTile(){
+  const x = Math.round(player.x), y = Math.round(player.y);
+  const c = cells[idx(x,y)].cell;
+if (c.dot){
+  // base dot value
+  let points = 10;
+  const i = idx(x,y);
+  // jackpot dot? 5x
+  if (jackpotSet.has(i)){
+    points *= 5;
+    jackpotSet.delete(i);
+    cells[i].div.classList.remove('jackpot');
+  }
+  c.dot = false;
+  cells[i].div.classList.remove("dot");
+  state.score += points;
+  dotsLeft--;
+}
+else if (c.power){
+  c.power = false;
+  cells[idx(x,y)].div.classList.remove("power");
+  state.score += 50;
+  dotsLeft--;
+
+  // 8s power window
+  state.poweredUntil = performance.now() + 8000;
+  ghosts.forEach(g => g.scaredUntil = state.poweredUntil);
+
+  // mark jackpot dots for this power window
+  markJackpotDots(10);
+  jackpotUntil = state.poweredUntil;
+}
+
+
+  if (fruit && x===fruit.x && y===fruit.y){
+    state.score += 100; fruit.el.remove(); fruit = null;
+  }
+}
+
+function ghostEmoji(g){
+  if (g.dead) return "👻"; // traveling back
+  if (performance.now() < g.scaredUntil) return "😨";
+  return "👻";
+}
+
+function resetGhost(g){
+  // send to nearest ghost house tile
+  let best = {x:6,y:10}, bestD = 1e9;
+  for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){
+    if (currentMaze[y][x]==="G"){
+      const d = Math.abs(x - Math.round(g.x)) + Math.abs(y - Math.round(g.y));
+      if (d < bestD){ bestD=d; best={x,y}; }
+    }
+  }
+  g.x = best.x; g.y = best.y; g.dir = {x:0,y:0};
+  g.dead = false; g.scaredUntil = 0;
+  setPosEl(g.el, g.x, g.y);
+}
+
+function chaseDir(g){
+  // At intersections, pick a direction biased toward player tile
+  const gx = Math.round(g.x), gy = Math.round(g.y);
+  const px = Math.round(player.x), py = Math.round(player.y);
+
+  const dirs = shuffle([
+    {x: 1, y: 0},
+    {x:-1, y: 0},
+    {x: 0, y: 1},
+    {x: 0, y:-1}
+  ]);
+
+  // Rank by Manhattan distance after moving, avoid reversing when possible
+  const reverse = (g.dir.x ===  1 && {x:-1,y:0}) ||
+                  (g.dir.x === -1 && {x: 1,y:0}) ||
+                  (g.dir.y ===  1 && {x:0,y:-1}) ||
+                  (g.dir.y === -1 && {x:0,y: 1}) || {x:999,y:999};
+
+  // If scared: prefer away from player
+  const scared = performance.now() < g.scaredUntil;
+
+  let best = null;
+  let bestScore = scared ? -1e9 : 1e9;
+
+  for(const d of dirs){
+    if (reverse && d.x===reverse.x && d.y===reverse.y) continue; // don't U-turn unless stuck
+    const nx = gx + d.x, ny = gy + d.y;
+    if (!passable(nx, ny)) continue;
+    const dist = Math.abs(nx - px) + Math.abs(ny - py);
+    const score = scared ? dist : dist;
+    if (!scared){
+      if (dist < bestScore){ bestScore=dist; best=d; }
+    }else{
+      if (dist > bestScore){ bestScore=dist; best=d; }
+    }
+  }
+
+  if (!best){
+    // allow reverse if stuck
+    const nx = gx - g.dir.x, ny = gy - g.dir.y;
+    if (passable(nx, ny)) best = {x:-g.dir.x, y:-g.dir.y};
+  }
+  return best || g.dir;
+}
+
+/* ===============================
+   Round management
+=============================== */
+let roundRunning = false;
+let roundTimerId = null;
+let nextFruitTimeout = null;
+let rafId = 0;
+
+function setScreen(id){
+  Object.values(screens).forEach(s=>s.classList.remove("active"));
+  screens[id].classList.add("active");
+}
+
+function showPopup(title, msg, buttons=[{label:"OK", cls:"btn", cb:()=>hidePopup()}]){
+  popupTitle.textContent = title;
+  popupMsg.textContent = msg;
+  popupBtns.innerHTML = "";
+  buttons.forEach(b=>{
+    const btn = document.createElement("button");
+    btn.className = b.cls || "btn";
+    btn.textContent = b.label;
+    btn.addEventListener("click", b.cb);
+    popupBtns.appendChild(btn);
+  });
+  overlay.classList.add("show");
+}
+function hidePopup(){ overlay.classList.remove("show"); }
+
+function enterGame(){
+  // Clear any visible overlay screen so only the board/HUD are shown
+  Object.values(screens).forEach(s=>s.classList.remove("active"));
+}
+
+function setGameVisible(v){
+  // show (true) or hide (false) the maze + HUD
+  hud.classList.toggle('hide', !v);
+  boardWrap.classList.toggle('hide', !v);
+}
+
+// --- Secret skip helpers ---
+function stopRoundSilently(){
+  roundRunning = false;
+  if (roundTimerId){ clearInterval(roundTimerId); roundTimerId = null; }
+  if (nextFruitTimeout){ clearTimeout(nextFruitTimeout); nextFruitTimeout = null; }
+  cancelAnimationFrame(rafId);
+}
+
+function secretSkip(toQ){
+  // clamp 1..10, map 0 -> 10 just in case
+  if (toQ === 0) toQ = 10;
+  toQ = Math.max(1, Math.min(10, toQ));
+
+  // stop any active round without score popups
+  stopRoundSilently();
+  hidePopup();
+
+  // jump state to that question/level
+  state.level = toQ;
+  state.answered = toQ - 1;
+
+  // hide game UI and show the requested question
+  setGameVisible(false);
+  setScreen("question");
+  updateHud();
+  showQuestion();
+}
+
+
+function updateHud(){
+  scoreEl.textContent = state.score;
+  qnumEl.textContent = clamp(state.answered+1, 1, 10);
+  corEl.textContent = state.correct;
+  incorEl.textContent = state.incorrect;
+  timerEl.textContent = Math.max(0, Math.ceil(state.timeLeft));
+}
+
+/* Question flow */
+let currentQ = 0;
+function showQuestion(){
+  if (state.answered >= 10){
+    // go to bonus round intro
+    startBonusIntro();
+    return;
+  }
+  setGameVisible(false);
+  setScreen("question");
+  const q = questions[state.answered];
+  $("#qtext").textContent = q.text;
+
+  const answerOrder = shuffle([0,1,2,3]); // shuffled each time
+  const answersEl = $("#answers");
+  answersEl.innerHTML = "";
+  answerOrder.forEach(i=>{
+    const a = q.answers[i];
+    const btn = document.createElement("button");
+    btn.className = "btn-ghost";
+    btn.style.minWidth="min(320px, 90%)";
+    btn.innerHTML = `<span style="font-size:20px;margin-right:6px">${a.emoji}</span> ${a.label}`;
+    btn.addEventListener("click", ()=>{
+      const correct = (i === q.correctIndex);
+      if (correct){ state.correct++; state.score += 100; }
+      else { state.incorrect++; }
+      state.answered++;
+      showPopup(correct?"✅ Correct!":"❌ Incorrect",
+        correct ? "Nice work!" : `Right answer: ${q.answers[q.correctIndex].label}`,
+        [{label:"OK", cls: correct?"btn-good":"btn-bad", cb:()=>{
+          hidePopup();
+          if (state.answered === 1 && state.showHowTo){
+            state.showHowTo = false;
+            showPopup("How to Play",
+              "Swipe (mobile) or use arrow keys (PC) to move. Eat dots for points. Power pellets let you eat ghosts for a short time. Avoid ghosts!",
+              [{label:"Got it", cls:"btn", cb:()=>{ hidePopup(); startRound(); }}]);
+          } else {
+            startRound();
+          }
+        }}]
+      );
+    });
+    answersEl.appendChild(btn);
+  });
+}
+
+/* Round setup/start */
+function startRound(){
+ enterGame();
+
+// Fixed speed all game (tiles per second)
+player.speed = 4.0;   // try 4.0 tps; bump to 4.2 if you want slightly faster
+
+
+
+// Pick maze for this level, then build while hidden
+currentMaze = selectMazeForLevel(state.level);
+layoutBoard();
+buildMaze();
+clearJackpot();
+placeEntities();
+
+
+// Now reveal the game already positioned
+setGameVisible(true);
+
+    // 1.8s “no-hit” grace so player isn’t insta-tagged
+  startGraceUntil = performance.now() + 1800;
+
+  // timer
+  state.timeLeft = 30;
+  updateHud();
+
+  // Fruit: appear once between 8..18s
+  if (nextFruitTimeout){ clearTimeout(nextFruitTimeout); nextFruitTimeout=null; }
+  const fruitDelay = 8000 + Math.floor(rng()*10000);
+  nextFruitTimeout = setTimeout(()=>spawnFruit(), fruitDelay);
+
+  roundRunning = true;
+  // Start loop
+  lastTick = performance.now();
+  loop();
+  if (roundTimerId) clearInterval(roundTimerId);
+  roundTimerId = setInterval(()=>{
+    if (!roundRunning) return;
+    state.timeLeft -= 1;
+    updateHud();
+    if (state.timeLeft <= 0){
+      endRound("⏱️ Time's up!");
+    }
+  },1000);
+}
+
+/* End of round */
+function endRound(reason){
+  roundRunning = false;
+  if (roundTimerId){ clearInterval(roundTimerId); roundTimerId=null; }
+  if (nextFruitTimeout){ clearTimeout(nextFruitTimeout); nextFruitTimeout=null; }
+  cancelAnimationFrame(rafId);
+
+  showPopup("🏁 Round Over", `${reason}\nYou scored ${state.score} total so far.`, [
+    {label:"Next", cls:"btn", cb:()=>{
+      hidePopup();
+      // advance level if not bonus
+      if (state.level < 10){
+        state.level++;
+        showQuestion();
+      }else{
+        startBonusIntro();
+      }
+    }}
+  ]);
+}
+
+/* Bonus round */
+function startBonusIntro(){
+  showPopup("⭐ Bonus Round", "Eat all the dots, but watch out for ghosts!", [
+    {label:"Start Bonus", cls:"btn", cb:()=>{ hidePopup(); startBonusRound(); }}
+  ]);
+}
+
+function startBonusRound(){
+  enterGame();
+
+
+  // set up with 4 ghosts, no timer
+currentMaze = selectMazeForLevel(10);
+
+  layoutBoard(); buildMaze();
+  clearJackpot();
+
+  placeEntities();
+  setGameVisible(true);
+    startGraceUntil = performance.now() + 1800;
+
+  // Add extra ghosts up to 4
+  const ghostSpawns = [];
+  for(let y=0;y<ROWS;y++)for(let x=0;x<COLS;x++){ if (currentMaze[y][x]==="G") ghostSpawns.push({x,y}); }
+
+while (ghosts.length < 4) {
+  const gpos = ghostSpawns[ghosts.length % ghostSpawns.length];
+  const el = document.createElement("div");
+  el.className = "entity ghost";
+  el.innerHTML = `<span class="sprite ghostSprite">👻</span>`;
+  board.appendChild(el);
+  ghosts.push({
+    x: gpos.x, y: gpos.y,
+    dir: {x:0, y:0},
+    speed: player.speed * ghostRatioForLevel(10), // equal to player on bonus
+    el, scaredUntil: 0, dead: false
+  });
+  placeInstant(el, gpos.x, gpos.y);
+}
+
+
+  state.timeLeft = Infinity;
+  roundRunning = true;
+  lastTick = performance.now();
+  loop(true);
+}
+
+/* ===============================
+   Input (keyboard + swipe)
+=============================== */
+const keys = {ArrowUp:false, ArrowDown:false, ArrowLeft:false, ArrowRight:false};
+addEventListener("keydown", (e)=>{
+  // Secret level skip: 1-9 = that question, 0 = question 10
+  if (/^[0-9]$/.test(e.key)){
+    const n = (e.key === "0") ? 10 : Number(e.key);
+    secretSkip(n);
+    e.preventDefault();
+    return;
+  }
+
+  // Normal movement keys
+  if (e.key in keys){ keys[e.key]=true; e.preventDefault(); }
+});
+
+addEventListener("keyup", (e)=>{
+  if (e.key in keys){ keys[e.key]=false; e.preventDefault(); }
+});
+
+let touchStart=null;
+board.addEventListener("touchstart", (e)=>{
+  if (!e.touches?.length) return;
+  const t = e.touches[0];
+  touchStart = {x:t.clientX, y:t.clientY};
+},{passive:true});
+board.addEventListener("touchmove", (e)=>{
+  if (!touchStart || !e.touches?.length) return;
+  const t = e.touches[0];
+  const dx = t.clientX - touchStart.x;
+  const dy = t.clientY - touchStart.y;
+  if (Math.hypot(dx,dy) < 18) return;
+  if (Math.abs(dx) > Math.abs(dy)){
+    if (dx>0) player.next = {x:1,y:0}; else player.next = {x:-1,y:0};
+  }else{
+    if (dy>0) player.next = {x:0,y:1}; else player.next = {x:0,y:-1};
+  }
+  touchStart = null;
+},{passive:true});
+
+
+
+
+/* ===============================
+   Main loop
+=============================== */
+let lastTick = 0;
+function loop(isBonus=false){
+  rafId = requestAnimationFrame(loop.bind(null, isBonus));
+  const now = performance.now();
+  const dt = Math.min(50, now - lastTick);
+  lastTick = now;
+
+  if (!roundRunning) return;
+
+  // Keyboard to next-turn
+  if (keys.ArrowUp)    player.next = {x:0,y:-1};
+  if (keys.ArrowDown)  player.next = {x:0,y:1};
+  if (keys.ArrowLeft)  player.next = {x:-1,y:0};
+  if (keys.ArrowRight) player.next = {x:1,y:0};
+
+  // At tile centers, attempt to take the next direction
+  if (atTile(player) && (player.next.x!==player.dir.x || player.next.y!==player.dir.y)){
+    tryTurn(player, player.next.x, player.next.y);
+  }
+  // If stopped, try keep moving
+  if (player.dir.x===0 && player.dir.y===0 && (player.next.x||player.next.y)){
+    tryTurn(player, player.next.x, player.next.y);
+  }
+
+  moveEntity(player, dt);
+  setPosEl(playerEl, player.x, player.y);
+  updatePlayerChomp(now);
+
+  eatAtPlayerTile();
+  updateHud();
+// expire jackpot when power ends
+if (jackpotUntil && performance.now() > jackpotUntil){
+  clearJackpot();
+}
+
+  // Ghost logic
+  for (const g of ghosts){
+
+const spriteEl = g.el.querySelector('.ghostSprite');
+if (spriteEl) {
+  spriteEl.textContent = ghostEmoji(g);
+  if (performance.now() < g.scaredUntil) spriteEl.classList.add('blink');
+  else spriteEl.classList.remove('blink');
+}
+
+
+
+    if (atTile(g)){
+      const turn = chaseDir(g);
+      if (turn){ g.dir = turn; }
+    }
+// ghost speed is a percentage of the player's current speed
+g.speed = player.speed * ghostRatioForLevel(state.level);
+
+    moveEntity(g, dt);
+    setPosEl(g.el, g.x, g.y);
+  }
+
+  // Collisions player vs ghosts
+  for (const g of ghosts){
+    if (performance.now() < startGraceUntil) continue; // ignore hits during grace
+
+    if (Math.hypot(g.x - player.x, g.y - player.y) < 0.45){
+      if (performance.now() < g.scaredUntil && !g.dead){
+    // eat ghost — explode into white confetti and remove permanently
+    state.score += 200;
+    spawnScoreFloat(200, Math.round(g.x), Math.round(g.y));
+
+    g.dead = true;
+    g.scaredUntil = 0;
+    ghostExplodeConfetti(Math.round(g.x), Math.round(g.y));
+    g.el.remove();
+    g.removed = true;
+
+      }else{
+        // player dies
+        if (isFinite(state.timeLeft)) endRound("👻 A ghost got you!");
+        else { // bonus fail
+          roundRunning = false; cancelAnimationFrame(rafId);
+          showFinal();
+        }
+        return;
+      }
+    }
+  }
+// remove any ghosts that were eaten this frame
+if (ghosts.length) ghosts = ghosts.filter(g => !g.removed);
+
+
+  // Bonus win condition
+  if (isBonus && dotsLeft<=0){
+    state.score += 500; // bonus clear
+    roundRunning = false; cancelAnimationFrame(rafId);
+    showFinal();
+    return;
+  }
+}
+
+/* ===============================
+   Final screen + emoji rain
+=============================== */
+function showFinal(){
+  setGameVisible(false);
+
+    setScreen("end");
+  $("#finalStats").textContent =
+    `Correct: ${state.correct} • Incorrect: ${state.incorrect} • Total Score: ${state.score}`;
+  // Ghost rain
+  const rainCount = 32;
+  for(let i=0;i<rainCount;i++){
+    const span = document.createElement("div");
+    span.className = "rain-emoji";
+    span.textContent = "👻";
+    const x = Math.random()*100;
+    const dur = 2 + Math.random()*2.5;
+    span.style.left = x + "vw";
+    span.style.animationDuration = dur + "s";
+    span.style.animationDelay = (Math.random()*1.2) + "s";
+    stage.appendChild(span);
+    setTimeout(()=>span.remove(), (dur+2.5)*1000);
+  }
+}
+
+/* ===============================
+   Screen flow bindings
+=============================== */
+$("#splashOk").addEventListener("click", ()=>{
+  screens.splash.classList.remove("active");
+  setScreen("title");
+});
+$("#btnStart").addEventListener("click", async ()=>{
+  await fullscreen(document.documentElement).catch(()=>{});
+  // Reset state
+  state = {...state, level:1, score:0, correct:0, incorrect:0, answered:0, timeLeft:30, poweredUntil:0, showHowTo:true};
+  layoutBoard();
+  setScreen("question");
+  showQuestion();
+});
+$("#btnReplay").addEventListener("click", ()=>{
+  // clean ghosts
+  ghosts.forEach(g=>g.el.remove());
+  ghosts=[];
+  // reset rain
+  $$(".rain-emoji").forEach(e=>e.remove());
+  // restart
+  screens.end.classList.remove("active");
+  setScreen("title");
+});
+
+/* Kick off initial layout */
+layoutBoard();
+
+/* ===============================
+   After Q1 popup continues into round
+=============================== */
+</script>
+</body>
+</html>
