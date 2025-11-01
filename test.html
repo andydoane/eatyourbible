@@ -1,1134 +1,1144 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-<title>Emoji Fruit Ninja — Portrait Bible Game</title>
-<style>
-  :root{
-    --bg:#0f1220;
-    --panel:#171a2b;
-    --accent:#58d68d;
-    --accent-2:#5dade2;
-    --danger:#ff5c5c;
-    --text:#f5f7ff;
-    --muted:#b8c2ff;
-    --shadow:0 12px 30px rgba(0,0,0,.35);
-  }
-  *{box-sizing:border-box}
-  html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
-  /* App shell */
-  #app{
-    width:100vw;
-    height:100dvh; /* fill mobile viewport reliably */
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    overflow:hidden;
-  }
-  .screen{
-    position:relative;
-    width:min(720px,100vw);
-    height:100%;
-    padding:clamp(12px,2.2vmin,20px);
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    gap:16px;
-  }
-  .card{
-    width:min(680px,100%);
-    background:linear-gradient(180deg,#1a1e35 0%, #12152a 100%);
-    border:1px solid #262b52;
-    border-radius:18px;
-    padding:22px;
-    box-shadow:var(--shadow);
-  }
-  .title{font-weight:800;letter-spacing:.5px;text-align:center}
-  .title.xl{font-size:clamp(28px,4.6vw,44px)}
-  .title.lg{font-size:clamp(22px,4.2vw,34px)}
-  .subtitle{color:var(--muted);text-align:center;margin-top:6px}
-  button{
-    appearance:none;border:0;border-radius:14px;padding:14px 18px;
-    background:linear-gradient(180deg,#2f8fff,#2a6fe8);
-    color:#fff;font-weight:700;letter-spacing:.3px;
-    box-shadow:0 10px 24px rgba(44,114,255,.35);
-    cursor:pointer;font-size:clamp(16px,3.8vw,18px)
-  }
-  button.secondary{background:linear-gradient(180deg,#2fba7f,#27a06c);box-shadow:0 10px 24px rgba(46,204,113,.32)}
-  button.ghost{background:#222845;border:1px solid #2d3563;color:var(--muted);box-shadow:none}
-  .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
-  .wide{width:100%}
-  .center{text-align:center}
-  .hint{color:#a8b3ff;font-size:.95rem}
-  .pill{display:inline-flex;gap:8px;align-items:center;background:#21254a;border:1px solid #2b3166;padding:8px 12px;border-radius:999px}
-  .emoji{font-size:clamp(32px,9vw,56px);line-height:1}
+  <meta charset="UTF-8" />
+  <title>Emoji Bible Plinko</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: rgba(15, 23, 42, 0.95);
+      --accent: #f97316;
+      --correct: #22c55e;
+      --incorrect: #ef4444;
+      --text: #e2e8f0;
+      --well1: #0ea5e9;
+      --well2: #fbbf24;
+      --well3: #f43f5e;
+      --ui-z: 100;
+      --game-z: 50;
+    }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      margin: 0;
+      background: var(--bg);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      height: 100vh;
+      overflow: hidden;
+    }
+    #app {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      max-width: 650px; /* PC just scales up, centered */
+      margin: 0 auto;
+      background: radial-gradient(circle at top, #1f2937 0%, #020617 50%, #000 100%);
+    }
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 1.2rem;
+      gap: 1rem;
+    }
+    .screen.active {
+      display: flex;
+    }
+    .card {
+      background: var(--panel);
+      border: 2px solid rgba(248, 250, 252, 0.05);
+      border-radius: 1.25rem;
+      padding: 1.25rem 1.5rem;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+      text-align: center;
+      width: min(92vw, 500px);
+    }
+    h1, h2, h3 {
+      margin: 0.2rem 0;
+    }
+    button {
+      background: var(--accent);
+      border: none;
+      color: white;
+      padding: 0.8rem 1.2rem;
+      border-radius: 0.85rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.1s;
+      width: 100%;
+      max-width: 420px;
+    }
+    button:active {
+      transform: scale(0.97);
+    }
+    .question-options {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      width: 100%;
+    }
+    .answer-btn {
+      background: rgba(15, 118, 110, 0.2);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      justify-content: flex-start;
+    }
+    .answer-emoji {
+      font-size: 1.4rem;
+    }
 
-  /* Fullscreen game field */
-  #gameField{
-    position:relative;
-    width:min(720px,100%);
-    height:calc(100% - 12px);
-    border-radius:18px;
-    background:
-      radial-gradient(1200px 600px at 50% 110%, #0c0f25 10%, #0a0d20 60%, #090b1a 100%),
-      linear-gradient(180deg,#0e1123,#0a0c1a);
-    border:1px solid #1e2346;
-    overflow:hidden;
-    touch-action:none; /* so taps don't scroll */
-  }
-  .hud{
-    position:absolute;inset:12px 12px auto 12px;display:flex;gap:8px;flex-wrap:wrap;z-index:5
-  }
-  .hud .chip{background:#1c224e;border:1px solid #2b3374;padding:8px 12px;border-radius:999px;color:#e9edff;font-weight:700}
-  .bottom-hud{
-    position:absolute;left:0;right:0;bottom:8px;display:flex;justify-content:center;gap:8px;z-index:5
-  }
+    /* Game screen */
+    #gameScreen {
+      background: transparent;
+      align-items: stretch;
+      justify-content: flex-start;
+      padding: 0;
+    }
+    #gameHUD {
+      position: absolute;
+      top: 0.35rem;
+      left: 0.35rem;
+      right: 0.35rem;
+      display: flex;
+      justify-content: space-between;
+      gap: 0.35rem;
+      z-index: var(--ui-z);
+      font-size: 0.7rem;
+    }
+    .hud-box {
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid rgba(248, 250, 252, 0.05);
+      border-radius: 0.75rem;
+      padding: 0.4rem 0.55rem;
+      min-width: 4.5rem;
+      text-align: center;
+    }
+    #gameField {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      overflow: hidden;
+    }
 
-  /* Entities */
-  .entity{
-    position:absolute;user-select:none;pointer-events:auto;transform:translate(-50%,-50%);
-    transition:filter .12s ease;
-  }
-  .entity:hover{filter:drop-shadow(0 4px 16px rgba(255,255,255,.12))}
-  .fruit{font-size:clamp(36px,9vmin,64px)}
-  .bomb{font-size:clamp(36px,9vmin,64px)}
-  .clock{font-size:clamp(34px,8.5vmin,58px)}
-  .half{
-    position:absolute;left:0;top:0;transform:translate(-50%,-50%);
-    font-size:inherit; /* match parent */
-  }
-  .half.left{clip-path:polygon(0 0,50% 0,50% 100%,0 100%)}
-  .half.right{clip-path:polygon(50% 0,100% 0,100% 100%,50% 100%)}
+    .peg {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    transition: transform 0.25s, opacity 0.25s;
+    }
 
-  /* Popup modal */
-  .modal{
-    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:20;
-    background:rgba(8,10,22,.55);backdrop-filter:blur(4px)
-  }
-  .modal .panel{
-    width:min(560px,90%);background:linear-gradient(180deg,#1a1f3c,#12162d);
-    border:1px solid #2a3267;border-radius:18px;padding:18px 18px 14px;text-align:center;box-shadow:var(--shadow)
-  }
-  .modal .panel .big{font-size:clamp(20px,4.6vw,28px);font-weight:800;margin-bottom:8px}
-  .modal .panel .small{color:#c9d2ff}
 
-  /* Toast for correct / incorrect */
-  .toast{
-    position:absolute;left:50%;top:14%;transform:translate(-50%,-50%);
-    background:#1f2448;border:1px solid #343d7a;border-radius:999px;padding:10px 14px;z-index:30;
-    font-weight:800;box-shadow:var(--shadow)
-  }
-  .toast.ok{background:#1e3b2e;border-color:#2c6b49}
-  .toast.bad{background:#3b1e1e;border-color:#6b2c2c}
+    .peg.hit {
+      transform: scale(0.1) rotate(35deg);
+      opacity: 0;
+    }
 
-  /* End screens */
-  .end-card .stat{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px dashed #2a315f}
-  .end-card .stat:last-child{border-bottom:0}
+    .debug-peg-hitbox {
+    outline: 2px dashed rgba(255, 0, 0, 0.6);
+    border-radius: 999px;
+    }
 
-  /* Confetti */
-  .confetti{
-    position:absolute;width:6px;height:10px;border-radius:2px;background:hsl(var(--h) 80% 60%);pointer-events:none
-  }
+    .debug-ball-hitbox {
+    outline: 2px solid rgba(0, 255, 0, 0.7);
+    border-radius: 999px;
+    }
 
-  /* Screens visibility */
-  [hidden]{display:none !important}
 
-/* === Debug hitboxes (toggle with body.debug) === */
-body.debug .entity{
-  outline: 2px dashed rgba(255,255,140,.9);
-  outline-offset: 0;
+
+    .ball {
+      position: absolute;
+      width: 1.8rem;
+      height: 1.8rem;
+      border-radius: 999px;
+      background: radial-gradient(circle, #f8fafc 0%, #94a3b8 65%, #020617 90%);
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.6);
+      z-index: calc(var(--game-z) + 5);
+    }
+    #arrow {
+      position: absolute;
+      top: 3.2rem;
+      width: 1.25rem;
+      height: 1.25rem;
+      z-index: calc(var(--game-z) + 6);
+      font-size: 1.4rem;
+      text-shadow: 0 2px 5px rgba(0,0,0,.5);
+    }
+
+    #bottomWells {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2.6rem;           /* shorter bar */
+    min-height: 0;            /* we control it now */
+    display: flex;
+    z-index: calc(var(--game-z) + 2);
+    }
+
+    .well {
+    border-top: 3px solid rgba(248, 250, 252, 0.4);
+    display: flex;
+    align-items: center;              /* center vertically */
+    justify-content: center;
+    color: #0f172a;
+    font-size: 0.75rem;
+    font-weight: 700;
+    position: relative;
+    overflow: hidden;
+    line-height: 1;                   /* tighter text */
+    }
+
+
+/* special / bomb pegs glow */
+.peg-special,
+.peg-bomb {
 }
-body.debug .fruit{ outline-color: #88ff88; } /* green-ish */
-body.debug .bomb{ outline-color: #ff6b6b; }  /* red */
-body.debug .clock{ outline-color: #64d2ff; } /* cyan */
-
-/* small center marker so you can see the anchor point */
-body.debug .entity::before{
-  content:"";
-  position:absolute;
-  left:50%; top:50%;
-  width:6px; height:6px;
-  transform:translate(-50%,-50%);
-  border-radius:50%;
-  background:#fff;
-  box-shadow:0 0 0 2px rgba(0,0,0,.6);
-  pointer-events:none;
+.peg-special::before,
+.peg-bomb::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 70%);
+  animation: pegPulse 1.1s ease-in-out infinite;
+  z-index: -1;
+}
+@keyframes pegPulse {
+  0% { transform: scale(0.85); opacity: 0.6; }
+  50% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(0.85); opacity: 0.6; }
 }
 
-/* === Debug hitbox circle that matches HITBOX_SCALE === */
-body.debug .hitbox-ring{
-  position:absolute;
-  pointer-events:none;
-  border:2px dashed rgba(255,255,140,.9);
-  border-radius:50%;
-  transform:translate(-50%,-50%);
-  mix-blend-mode:screen;
-  z-index: 3;
+/* moving platform */
+.moving-platform {
+  position: absolute;
+  background: rgba(248, 250, 252, 0.9);
+  border: 1px solid rgba(15, 23, 42, 0.35);
+  border-radius: 0.5rem;
+  z-index: calc(var(--game-z) + 4);
+  pointer-events: none;
 }
-body.debug .hitbox-ring.fruit{ border-color:#88ff88; }
-body.debug .hitbox-ring.bomb{  border-color:#ff6b6b; }
-body.debug .hitbox-ring.clock{ border-color:#64d2ff; }
-body.debug .hitbox-ring.half{  border-color:#d6b3ff; }
+
+/* big confetti */
+.confetti-piece {
+  position: absolute;
+  width: 10px;
+  height: 14px;
+  opacity: 0;
+  animation: confettiPop 0.7s ease-out forwards;
+}
+@keyframes confettiPop {
+  0% { transform: translate(0,0) rotate(0deg); opacity: 1; }
+  100% { transform: translate(var(--tx), var(--ty)) rotate(var(--rot)); opacity: 0; }
+}
 
 
-</style>
+    .well-score-burst {
+      position: absolute;
+      bottom: 0.35rem;
+      font-weight: 700;
+      color: #fff;
+      text-shadow: 0 3px 10px rgba(0,0,0,0.6);
+      animation: popUp 0.7s ease-out forwards;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    @keyframes popUp {
+      0% {transform: translate(-50%, 40%); opacity: 0;}
+      50% {opacity: 1;}
+      100% {transform: translate(-50%, -120%); opacity: 0;}
+    }
+
+    .popup {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 1rem;
+    }
+    .popup.active {
+      display: flex;
+    }
+    .popup-content {
+      background: #1f2937;
+      border: 2px solid rgba(226, 232, 240, 0.1);
+      border-radius: 1.2rem;
+      padding: 1.1rem 1.2rem 1rem;
+      text-align: center;
+      width: min(90vw, 350px);
+    }
+
+    #emojiRainContainer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 9999;
+    }
+    .rain-emoji {
+      position: absolute;
+      top: -5rem;
+      font-size: 2rem;
+      animation: fall 2.2s linear forwards;
+    }
+    @keyframes fall {
+      to { transform: translateY(110vh); opacity: 0; }
+    }
+
+    /* orientation helper (just visual hint) */
+    @media (orientation: landscape) {
+      .landscape-hint {
+        display: block;
+      }
+    }
+    .landscape-hint {
+      display: none;
+      position: absolute;
+      top: .5rem;
+      right: .5rem;
+      background: rgba(248,113,113,.18);
+      border: 1px solid rgba(248, 113, 113, .6);
+      padding: .25rem .5rem;
+      border-radius: .5rem;
+      font-size: .65rem;
+    }
+  </style>
 </head>
 <body>
-<div id="app">
-  <!-- Splash -->
-  <div id="splash" class="screen">
-    <div class="card">
-      <div class="title xl">📱 Portrait Mode</div>
-      <p class="subtitle">Game is best in vertical mode</p>
-      <div class="center"><button id="splashOk" class="secondary">Okay</button></div>
-    </div>
-  </div>
-
-  <!-- Title -->
-  <div id="title" class="screen" hidden>
-    <div class="card">
-      <div class="title xl">Emoji Fruit Ninja</div>
-      <p class="subtitle">Answer Bible questions then slice fruit for points</p>
-      <div class="row center" style="margin-top:8px">
-        <span class="pill"><span class="emoji">🍎🍌🍇</span><span>Tap or click to slice</span></span>
+  <div id="app">
+    <!-- Splash -->
+    <div id="splashScreen" class="screen active">
+      <div class="card">
+        <h1>📱 Vertical Mode</h1>
+        <p>This game is best in vertical (portrait) mode.</p>
+        <button id="splashOkayBtn">Okay!</button>
       </div>
-      <div class="center" style="margin-top:12px">
+    </div>
+
+    <!-- Title -->
+    <div id="titleScreen" class="screen">
+      <div class="card">
+        <h1>Emoji Bible Plinko</h1>
+        <p>Answer Bible questions ➜ drop balls ➜ smash emoji ➜ score big.</p>
         <button id="startBtn">Go fullscreen and start</button>
       </div>
     </div>
-  </div>
 
-  <!-- Question -->
-  <div id="question" class="screen" hidden>
-    <div class="card">
-      <div class="title lg" id="qText">Question goes here</div>
-      <p class="subtitle" id="qInfo">Choose the correct answer</p>
-      <div id="answers" class="row wide" style="margin-top:12px"></div>
-    </div>
-  </div>
-
-  <!-- One-time tip modal after Q1 -->
-  <div id="tipModal" class="modal" hidden>
-    <div class="panel">
-      <div class="big">Tap or click to slice the emojis!</div>
-      <div class="small">Slice whole fruit for points then slice halves for bonus points</div>
-      <div style="margin-top:12px"><button id="tipOk" class="secondary">Got it</button></div>
-    </div>
-  </div>
-
-  <!-- Game Field -->
-  <div id="play" class="screen" hidden>
-    <div id="gameField">
-      <div class="hud">
-        <div class="chip">Round <span id="roundNum">1</span>/10</div>
-        <div class="chip">⏱ <span id="timeLeft">20.0</span>s</div>
-        <div class="chip">🍒 Sliced <span id="slicedCount">0</span></div>
-        <div class="chip">⭐ Points <span id="score">0</span></div>
-        <div class="chip" id="slowTag" hidden>🐢 Slow Time</div>
-      </div>
-      <div class="bottom-hud">
-        <div class="pill">💣 hurts score</div>
-        <div class="pill">⏰ slows time 5s</div>
+    <!-- Question -->
+    <div id="questionScreen" class="screen">
+      <div class="card" id="questionCard">
+        <h2 id="questionText">Question goes here</h2>
+        <div id="questionNumber" style="margin-bottom:.5rem;font-size:.75rem;opacity:.7;">Question 1 of 10</div>
+        <div class="question-options" id="answerOptions"></div>
       </div>
     </div>
-  </div>
 
-  <!-- End of round -->
-  <div id="roundEnd" class="screen" hidden>
-    <div class="card end-card">
-      <div class="title lg">Round Complete</div>
-      <div class="stat"><span>Fruit sliced this round</span><strong id="rFruit">0</strong></div>
-      <div class="stat"><span>Points this round</span><strong id="rPoints">0</strong></div>
-      <div class="stat"><span>Total fruit sliced</span><strong id="tFruit">0</strong></div>
-      <div class="stat"><span>Total points</span><strong id="tPoints">0</strong></div>
-      <div class="center" style="margin-top:12px"><button id="nextBtn" class="secondary">Next Question</button></div>
+    <!-- Game -->
+    <div id="gameScreen" class="screen">
+      <div id="gameHUD">
+        <div class="hud-box" id="hudRound">Round 1 / 10</div>
+        <div class="hud-box" id="hudBalls">Balls: 5</div>
+        <div class="hud-box" id="hudScore">Score: 0</div>
+      </div>
+      <div id="gameField"></div>
+
+        <div id="bottomWells">
+        <div class="well" data-score="1000" style="flex: 1; background: rgba(14,165,233,0.85);">1K</div>
+        <div class="well" data-score="5000" style="flex: 1; background: rgba(251,191,36,0.85);">5K</div>
+        <div class="well" data-score="10000" data-extraball="1" style="flex: .5; background: rgba(244,63,94,0.85);">10K</div>
+        <div class="well" data-score="5000" style="flex: 1; background: rgba(251,191,36,0.85);">5K</div>
+        <div class="well" data-score="1000" style="flex: 1; background: rgba(14,165,233,0.85);">1K</div>
+        </div>
+
+      
+
+      <div class="landscape-hint">portrait game</div>
     </div>
-  </div>
 
-  <!-- Bonus Mode Screen container reuses #play -->
-
-  <!-- Final End -->
-  <div id="final" class="screen" hidden>
-    <div class="card end-card">
-      <div class="title lg">All Done!</div>
-      <div class="stat"><span>Questions correct</span><strong id="fCorrect">0</strong></div>
-      <div class="stat"><span>Questions incorrect</span><strong id="fWrong">0</strong></div>
-      <div class="stat"><span>Total fruit sliced</span><strong id="fFruit">0</strong></div>
-      <div class="stat"><span>Total points</span><strong id="fPoints">0</strong></div>
-      <div class="center" style="margin-top:12px"><button onclick="location.reload()" class="ghost">Play again</button></div>
+    <!-- End Screen -->
+    <div id="endScreen" class="screen">
+      <div class="card">
+        <h1>Game Over</h1>
+        <p id="finalScoreText">You scored 0 points.</p>
+        <p id="finalQA">Correct: 0 · Incorrect: 0</p>
+        <button onclick="location.reload()">Play again</button>
+      </div>
     </div>
+
+    <!-- Popup -->
+    <div id="popup" class="popup">
+      <div class="popup-content">
+        <h3 id="popupTitle">Popup</h3>
+        <p id="popupMessage">Popup text</p>
+        <button id="popupBtn">OK</button>
+      </div>
+    </div>
+
+    <!-- Emoji rain -->
+    <div id="emojiRainContainer"></div>
   </div>
 
-  <!-- Floating toast -->
-  <div id="toast" class="toast" hidden>Great job!</div>
-</div>
-
-<script>
-(() => {
-  /* -------------------------- Utility helpers -------------------------- */
-// ---- Tunables you can tweak ----
-// Smaller GRAVITY = floatier, higher arcs. Bigger = heavier.
-const GRAVITY = 0.0000010;   // was 0.0000016 — lighter for floaty feel
-// ARC_POWER scales the initial upward launch speed.
-const ARC_POWER = 1.7;       // was 1.6 — a touch higher helps reach mid-screen
-// Sideways wiggle of the launch (keeps fruit near center on portrait)
-const SIDE_SWAY = 0.10;      // keep as-is (0.08–0.14 is good)
-// How far from the edges fruit can spawn (as a fraction of width)
-const SPAWN_PADDING_X = 0.08;
-
-// Global physics slow-mo factor (does NOT affect timers or spawn timing)
-const PHYSICS_SLOWMO = 0.50; // 0.6 = very floaty, 1.0 = normal
-
-// --- Spawn timing (milliseconds). Larger = fewer spawns. ---
-// Level 1 uses SPAWN_BASE_MS. Each level makes it faster by SPAWN_LEVEL_FACTOR,
-// but never faster than SPAWN_MIN_MS.
-const SPAWN_BASE_MS = 1300;    // Level 1 delay (e.g., 1300ms ≈ 0.77 fruit/sec)
-const SPAWN_LEVEL_FACTOR = 80; // How much to reduce delay per level
-const SPAWN_MIN_MS = 450;      // Hard floor so late levels aren't ridiculous
-
-// How much halves separate/explode after slicing
-const HALF_SPLIT_OFFSET_PX = 3;  // horizontal start offset (was 6)
-const HALF_KICK_VX = 50;         // sideways kick speed (px/s; was 120)
-const HALF_KICK_VY = -15;        // small upward pop (px/s; was -40)
-
-// Vertical speed for halves (px/second). 
-// Use a small negative for a tiny upward pop, or 0 to fall immediately.
-const HALF_VY_PXS = -8;   // try -8, or 0 for no pop
-
-// Half-piece rotation (degrees/second). Randomized between these and direction ±.
-const HALF_SPIN_MIN_DPS = 60;   // slower end (e.g., 60°/s)
-const HALF_SPIN_MAX_DPS = 180;  // faster end (e.g., 180°/s)
+  <script>
+    /**********************
+     * TWEAKABLE SETTINGS *
+     **********************/
+    const SETTINGS = {
+      arrowSpeed: 1.6,           // how fast the arrow sweeps left-right
+      gravity: 1200,             // px / s^2
+      bounceStrength: 420,       // how hard balls bounce off pegs
+      pegRadius: 20,             // match .peg size
+      ballRadius: 15,
+      rows: 8,                   // number of emoji rows
+      rowSpacing: 70,            // vertical spacing
+      topOffset: 110,            // where pegs start
+      ballCountPerRound: 5,
+      scorePerHit: 300,          // per emoji hit
+      emojiHitFX: ["✨","💥","🎉","⚡","🌈"],
+        emojiRainCount: 30,
+        launchSpeed: 520,
+        launchStartY: 50,
+        specialEmoji: "💎",
+        bombEmoji: "💣",
+        bombRadius: 120,
+        platformSpeed: 90
+};
 
 
-// --- Hitbox tuning ---
-// 1.0 = normal, 1.2 = easier (bigger), 0.75 = harder (smaller)
-const HITBOX_SCALE = 1.50;
+    /**********************
+     * GAME DATA
+     **********************/
+    const QUESTIONS = [
+      {
+        text: "Who created the heavens and the earth?",
+        answers: [
+          { label: "God", emoji: "✨", correct: true },
+          { label: "Moses", emoji: "🪄", correct: false },
+          { label: "Noah", emoji: "🛶", correct: false },
+          { label: "David", emoji: "🎵", correct: false }
+        ]
+      },
+      {
+        text: "Where was Jesus born?",
+        answers: [
+          { label: "Bethlehem", emoji: "⭐", correct: true },
+          { label: "Nazareth", emoji: "🏘️", correct: false },
+          { label: "Jerusalem", emoji: "🏛️", correct: false },
+          { label: "Rome", emoji: "🏟️", correct: false }
+        ]
+      },
+      {
+        text: "Which prophet was swallowed by a big fish?",
+        answers: [
+          { label: "Jonah", emoji: "🐟", correct: true },
+          { label: "Elijah", emoji: "🔥", correct: false },
+          { label: "Isaiah", emoji: "📜", correct: false },
+          { label: "Daniel", emoji: "🦁", correct: false }
+        ]
+      },
+      {
+        text: "Who led Israel out of Egypt?",
+        answers: [
+          { label: "Moses", emoji: "🪄", correct: true },
+          { label: "Aaron", emoji: "📯", correct: false },
+          { label: "Joshua", emoji: "⚔️", correct: false },
+          { label: "Solomon", emoji: "👑", correct: false }
+        ]
+      },
+      {
+        text: "What is the first book of the Bible?",
+        answers: [
+          { label: "Genesis", emoji: "📖", correct: true },
+          { label: "Exodus", emoji: "🌊", correct: false },
+          { label: "Psalms", emoji: "🎶", correct: false },
+          { label: "Matthew", emoji: "📜", correct: false }
+        ]
+      },
+      {
+        text: "Who is God's Son?",
+        answers: [
+          { label: "Jesus", emoji: "✝️", correct: true },
+          { label: "Peter", emoji: "🐟", correct: false },
+          { label: "Paul", emoji: "📝", correct: false },
+          { label: "John", emoji: "🕊️", correct: false }
+        ]
+      },
+      {
+        text: "God saved Noah and his family with a...",
+        answers: [
+          { label: "Boat/Ark", emoji: "🛶", correct: true },
+          { label: "Chariot", emoji: "🏇", correct: false },
+          { label: "Castle", emoji: "🏰", correct: false },
+          { label: "Dragon", emoji: "🐉", correct: false }
+        ]
+      },
+      {
+        text: "Who fought Goliath with a sling?",
+        answers: [
+          { label: "David", emoji: "🪨", correct: true },
+          { label: "Saul", emoji: "🗡️", correct: false },
+          { label: "Samuel", emoji: "📯", correct: false },
+          { label: "Joseph", emoji: "🎨", correct: false }
+        ]
+      },
+      {
+        text: "What did God make on day 1?",
+        answers: [
+          { label: "Light", emoji: "💡", correct: true },
+          { label: "Animals", emoji: "🐘", correct: false },
+          { label: "People", emoji: "🧍", correct: false },
+          { label: "Birds", emoji: "🕊️", correct: false }
+        ]
+      },
+      {
+        text: "What did Jesus die on?",
+        answers: [
+          { label: "A cross", emoji: "✝️", correct: true },
+          { label: "A ship", emoji: "⛵", correct: false },
+          { label: "A tower", emoji: "🗼", correct: false },
+          { label: "A mountain", emoji: "⛰️", correct: false }
+        ]
+      }
+    ];
 
-// Optional: halves are narrower than full fruit; keep their base a bit smaller
-const HALF_HITBOX_FACTOR = 0.85; // change to 1.0 if you want halves to be as easy as whole fruit
+    const ROUND_EMOJI_SETS = [
+      ["🍎","🍊","🍇","🍉","🍓","🥝","🍒","🍍"],
+      ["🐶","🐱","🐭","🦊","🐻","🐼","🐨","🐸"],
+      ["🚗","🚕","🚌","🚓","🚑","🚒","🚜","🏎️"],
+      ["⚽","🏀","🏈","🎾","🏐","🥎","🏉","🥏"],
+      ["🌈","⭐","☁️","🌙","⚡","☀️","🌤️","🌧️"],
+      ["🎈","🎉","🎊","🎁","🪅","🎯","🎮","🎵"],
+      ["🍔","🍟","🍕","🌭","🍗","🥐","🥨","🍪"],
+      ["🌸","🌼","🌻","🌷","🌹","🍀","🌵","🎍"],
+      ["🇺🇸","🇬🇧","🇨🇦","🇮🇹","🇯🇵","🇫🇷","🇩🇪","🇧🇷"],
+      ["🧱","🪙","🔔","🎁","💎","🧊","🧃","🧠"]
+    ];
+
+    /**********************
+     * STATE
+     **********************/
+    let currentQuestionIndex = 0;
+    let totalScore = 0;
+    let correctCount = 0;
+    let incorrectCount = 0;
+
+    let lastTimestamp = 0; 
+
+    let ballsLeft = SETTINGS.ballCountPerRound;
+    let activeBalls = []; 
+    let pegs = [];
+    let gameWidth = 0;
+    let gameHeight = 0;
+    let gameFieldEl = null;
+    let wells = [];
+    let gameRunning = false;
+    let awaitingDrop = false;
+    let debugHitboxes = false;
+    let currentPegSize = 32; // will be updated each round
+    let roundEnding = false; // <-- prevents multiple finishRound calls
 
 
 
-  const $ = sel => document.querySelector(sel);
-  const $$ = sel => Array.from(document.querySelectorAll(sel));
-  const rand = (min,max)=>Math.random()*(max-min)+min;
-  const choice = arr => arr[(Math.random()*arr.length)|0];
-  const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
 
-  const FRUIT = ['🍎','🍐','🍊','🍋','🍌','🍉','🍇','🍓','🫐','🍒','🍑','🍍','🥝','🥭','🍈','🍏'];
-  const BOMB = '💣';
-  const CLOCK = '⏰';
+    /**********************
+     * ELEMENTS
+     **********************/
+    const splashScreen = document.getElementById("splashScreen");
+    const titleScreen = document.getElementById("titleScreen");
+    const questionScreen = document.getElementById("questionScreen");
+    const gameScreen = document.getElementById("gameScreen");
+    const endScreen = document.getElementById("endScreen");
+    const questionTextEl = document.getElementById("questionText");
+    const questionNumberEl = document.getElementById("questionNumber");
+    const answerOptionsEl = document.getElementById("answerOptions");
+    const popup = document.getElementById("popup");
+    const popupTitle = document.getElementById("popupTitle");
+    const popupMessage = document.getElementById("popupMessage");
+    const popupBtn = document.getElementById("popupBtn");
+    const hudRound = document.getElementById("hudRound");
+    const hudBalls = document.getElementById("hudBalls");
+    const hudScore = document.getElementById("hudScore");
+    const emojiRainContainer = document.getElementById("emojiRainContainer");
 
-  /* ---------------------------- Game state ----------------------------- */
-  const state = {
-    round: 1, maxRounds: 10,
-    inBonus: false,
-    correct: 0, wrong: 0,
-    totalFruit: 0,
-    score: 0,
-    // per-round
-    roundFruit: 0,
-    roundScore: 0,
-    showedTip: false
-  };
-
-  /* --------------------------- Questions list -------------------------- */
-  // You can edit these later — answers will be shuffled when rendered.
-  // correctIndex points to the correct one before shuffling.
-  const questions = [
-    {
-      text: "Who made the heavens and the earth?",
-      answers: [
-        {label:"God", emoji:"✨"},
-        {label:"Noah", emoji:"🛶"},
-        {label:"Moses", emoji:"🪄"},
-        {label:"David", emoji:"🎵"},
-      ],
-      correctIndex: 0
-    },
-    {
-      text: "What did God send to guide Israel by night?",
-      answers: [
-        {label:"A pillar of fire", emoji:"🔥"},
-        {label:"A rainbow", emoji:"🌈"},
-        {label:"A dove", emoji:"🕊️"},
-        {label:"A comet", emoji:"☄️"},
-      ],
-      correctIndex: 0
-    },
-    {
-      text: "Where was Jesus born?",
-      answers: [
-        {label:"Bethlehem", emoji:"⭐"},
-        {label:"Nazareth", emoji:"🏘️"},
-        {label:"Jerusalem", emoji:"🏛️"},
-        {label:"Rome", emoji:"🏟️"},
-      ],
-      correctIndex: 0
-    },
-    {
-      text: "What did Jesus use to feed thousands?",
-      answers: [
-        {label:"Bread and fish", emoji:"🍞🐟"},
-        {label:"Figs and dates", emoji:"🧺"},
-        {label:"Milk and honey", emoji:"🍯"},
-        {label:"Grapes and cheese", emoji:"🧀"},
-      ],
-      correctIndex: 0
-    },
-    {
-      text: "Who spent the night with lions and lived?",
-      answers: [
-        {label:"Daniel", emoji:"🦁"},
-        {label:"Jonah", emoji:"🐳"},
-        {label:"Elijah", emoji:"🔥"},
-        {label:"Samson", emoji:"💪"},
-      ],
-      correctIndex: 0
-    },
-    {
-      text: "What carried Noah on the flood?",
-      answers: [
-        {label:"An ark", emoji:"⛵"},
-        {label:"A raft", emoji:"🛶"},
-        {label:"A ship", emoji:"🚢"},
-        {label:"A cloud", emoji:"☁️"},
-      ],
-      correctIndex: 0
-    },
-    {
-      text: "Who is the Good Shepherd?",
-      answers: [
-        {label:"Jesus", emoji:"🐑"},
-        {label:"Peter", emoji:"🎣"},
-        {label:"Abraham", emoji:"⭐"},
-        {label:"Solomon", emoji:"👑"},
-      ],
-      correctIndex: 0
-    },
-    {
-      text: "What did David use against Goliath?",
-      answers: [
-        {label:"A sling", emoji:"🪃"},
-        {label:"A sword", emoji:"🗡️"},
-        {label:"A spear", emoji:"🛡️"},
-        {label:"A net", emoji:"🕸️"},
-      ],
-      correctIndex: 0
-    },
-    {
-      text: "Where did Jonah spend three days?",
-      answers: [
-        {label:"Inside a great fish", emoji:"🐋"},
-        {label:"In a cave", emoji:"🕳️"},
-        {label:"In a prison", emoji:"🧱"},
-        {label:"On a mountain", emoji:"⛰️"},
-      ],
-      correctIndex: 0
-    },
-    {
-      text: "What is the first book of the Bible?",
-      answers: [
-        {label:"Genesis", emoji:"📜"},
-        {label:"Exodus", emoji:"🚶"},
-        {label:"Psalms", emoji:"🎶"},
-        {label:"Matthew", emoji:"📖"},
-      ],
-      correctIndex: 0
-    },
-  ];
-
-  /* ----------------------------- DOM nodes ----------------------------- */
-  const screens = {
-    splash: $('#splash'),
-    title: $('#title'),
-    question: $('#question'),
-    play: $('#play'),
-    roundEnd: $('#roundEnd'),
-    final: $('#final'),
-  };
-  const qText = $('#qText');
-  const answersBox = $('#answers');
-  const qInfo = $('#qInfo');
-  const tipModal = $('#tipModal');
-  const toast = $('#toast');
-
-  const gameField = $('#gameField');
-  const roundNum = $('#roundNum');
-  const timeLeft = $('#timeLeft');
-  const slicedCountEl = $('#slicedCount');
-  const scoreEl = $('#score');
-  const slowTag = $('#slowTag');
-
-  const rFruit = $('#rFruit');
-  const rPoints = $('#rPoints');
-  const tFruit = $('#tFruit');
-  const tPoints = $('#tPoints');
-
-  const fCorrect = $('#fCorrect');
-  const fWrong = $('#fWrong');
-  const fFruit = $('#fFruit');
-  const fPoints = $('#fPoints');
-
-  /* ---------------------------- Screen logic --------------------------- */
-  const show = name => {
-    for(const k in screens){ screens[k].hidden = k !== name; }
-  };
-
-  $('#splashOk').addEventListener('click', ()=>show('title'));
-
-  // Fullscreen
-  async function enterFullscreen(el){
-    try{
-      if(el.requestFullscreen) await el.requestFullscreen();
-      else if(el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
-    }catch{}
-  }
-
-  $('#startBtn').addEventListener('click', async ()=>{
-    await enterFullscreen(document.documentElement);
-    startGame();
-  });
-
-  function startGame(){
-    state.round = 1;
-    state.correct = 0;
-    state.wrong = 0;
-    state.totalFruit = 0;
-    state.score = 0;
-    state.inBonus = false;
-    showQuestion();
-  }
-
-  /* --------------------------- Question render ------------------------- */
-  function showQuestion(){
-    show('question');
-    const q = questions[state.round-1];
-    qText.textContent = `Q${state.round}. ${q.text}`;
-    qInfo.textContent = 'Choose the correct answer';
-
-    // Make a shuffled view model with isCorrect preserved
-    const items = q.answers.map((a,i)=>({ ...a, isCorrect: i===q.correctIndex }));
-    shuffleInPlace(items);
-
-    answersBox.innerHTML = '';
-    for(const item of items){
-      const btn = document.createElement('button');
-      btn.className = 'wide';
-      btn.style.display = 'flex';
-      btn.style.alignItems = 'center';
-      btn.style.justifyContent = 'space-between';
-      btn.style.gap = '10px';
-
-      const left = document.createElement('span');
-      left.textContent = `${item.emoji}  ${item.label}`;
-      const right = document.createElement('span');
-      right.textContent = '➜';
-      right.style.opacity = '.5';
-
-      btn.append(left,right);
-
-      btn.addEventListener('click', ()=>{
-        if(item.isCorrect){
-          state.correct++;
-          state.score += 50;
-          showToast('✅ Correct +50', true);
-          afterAnswer(true, q.answers[q.correctIndex]);
-        }else{
-          state.wrong++;
-          showToast(`❌ Incorrect — Correct: ${q.answers[q.correctIndex].label}`, false);
-          afterAnswer(false, q.answers[q.correctIndex]);
-        }
-      });
-
-      answersBox.appendChild(btn);
-    }
-  }
-
-  function afterAnswer(wasCorrect, correctAnswer){
-    // brief popup handled by toast
-    // After Q1 only, show slicing tip before the round
-    if(state.round === 1 && !state.showedTip){
-      state.showedTip = true;
-      tipModal.hidden = false;
-      $('#tipOk').onclick = ()=>{ tipModal.hidden = true; startRound(); };
-    }else{
-      startRound();
-    }
-  }
-
-  function showToast(msg, ok){
-    toast.textContent = msg;
-    toast.className = 'toast ' + (ok?'ok':'bad');
-    toast.hidden = false;
-    clearTimeout(showToast._t);
-    showToast._t = setTimeout(()=> toast.hidden = true, 1400);
-  }
-
-  function shuffleInPlace(arr){
-    for(let i=arr.length-1;i>0;i--){
-      const j = (Math.random()*(i+1))|0;
-      [arr[i],arr[j]]=[arr[j],arr[i]];
-    }
-  }
-
-  /* ---------------------------- Round engine --------------------------- */
-  let entities = [];
-  let raf = null;
-  let running = false;
-  let slowUntil = 0;
-  let spawnTimer = 0;
-  let spawnEvery = 650; // ms — tuned for portrait
-  let roundEndAt = 0;
-  let last = 0;
-
-  function resetField(){
-    entities.forEach(e=>e.node.remove());
-    entities = [];
-    spawnTimer = 0;
-    slowUntil = 0;
-    $('#slowTag').hidden = true;
-    slicedCountEl.textContent = '0';
-  }
-
-  function startRound(){
-    show('play');
-    roundNum.textContent = state.round;
-    resetField();
-    state.roundFruit = 0;
-    state.roundScore = 0;
-// --- Per-level spawn pacing ---
-{
-  const level = state.round;
-  // Larger delay = fewer spawns. Delay shrinks each level, clamped to a minimum.
-  spawnEvery = Math.max(SPAWN_MIN_MS, SPAWN_BASE_MS - SPAWN_LEVEL_FACTOR * (level - 1));
-}
-
-    // 20 seconds round
-    const now = performance.now();
-    roundEndAt = now + 20000;
-    last = now;
-    running = true;
-    loop(now);
-  }
-
-  function loop(now){
-    if(!running) return;
-    const dtMs = now - last;
-    last = now;
-
-    // Slow time active?
-    const slowActive = now < slowUntil;
-    $('#slowTag').hidden = !slowActive;
-    const speedFactor = slowActive ? 0.5 : 1;
-
-    // update timer
-    const tLeft = Math.max(0, (roundEndAt - now)/1000);
-    timeLeft.textContent = tLeft.toFixed(1);
-
-    // spawn
-    spawnTimer += dtMs;
-    const currentSpawn = spawnEvery / speedFactor; // a tiny compensation so slow time still feels busy
-    if(spawnTimer >= currentSpawn){
-      spawnTimer = 0;
-      spawnEntityWeighted();
+    /**********************
+     * SCREEN CONTROLS
+     **********************/
+    function showScreen(screenEl) {
+      [splashScreen, titleScreen, questionScreen, gameScreen, endScreen].forEach(s => s.classList.remove("active"));
+      screenEl.classList.add("active");
     }
 
-    // physics
-   stepEntities(dtMs * speedFactor * PHYSICS_SLOWMO);
-
-    // round end
-    if(now >= roundEndAt){
-      running = false;
-      cancelAnimationFrame(raf);
-      endRound();
-      return;
-    }
-    raf = requestAnimationFrame(loop);
-  }
-
-  function spawnEntityWeighted(){
-    // 75% fruit, 15% bomb, 10% clock
-    const p = Math.random();
-    if(p < 0.75) spawnFruit();
-    else if(p < 0.90) spawnBomb();
-    else spawnClock();
-  }
-
-  function spawnFruit(){
-    const emoji = choice(FRUIT);
-    const n = makeEntity('fruit', emoji);
-    entities.push(n);
-  }
-
-  function spawnBomb(){
-    const n = makeEntity('bomb', BOMB);
-    entities.push(n);
-  }
-
-  function spawnClock(){
-    const n = makeEntity('clock', CLOCK);
-    entities.push(n);
-  }
-
-  function makeEntity(kind, emoji){
-    const rect = gameField.getBoundingClientRect();
-    const node = document.createElement('div');
-    node.className = `entity ${kind}`;
-    node.textContent = emoji;
-
-    // start near bottom with slight horizontal variance
-const padding = rect.width * SPAWN_PADDING_X;
-const x = rand(padding, rect.width - padding);
-const y = rect.height + 40; // off bottom
-
-// initial velocities (px/ms after we divide by 1000 below)
-const vy0 = -ARC_POWER * rand(rect.height * 0.80, rect.height * 1.00); // up (slightly softer)
-const vx0 = rand(-rect.width * SIDE_SWAY, rect.width * SIDE_SWAY);     // sideways
-
-
-    const e = {
-      kind, emoji, node,
-      x, y, vx: vx0/1000, vy: vy0/1000, // px per ms
-      r: 0, spin: 0, dead:false, halves:false
-    };
-
-    node.style.left = x+'px';
-    node.style.top = y+'px';
-    node.style.zIndex = 2;
-    gameField.appendChild(node);
-
-    node.addEventListener('pointerdown', (ev)=>{
-      ev.preventDefault();
-      ev.stopPropagation();
-      if(e.dead) return;
-      if(e.kind === 'fruit') sliceFruit(e);
-      else if(e.kind === 'bomb') detonateBomb(e);
-      else if(e.kind === 'clock') slowTime(e);
+    document.getElementById("splashOkayBtn").addEventListener("click", () => {
+      showScreen(titleScreen);
     });
 
-    return e;
-  }
-
-  function stepEntities(dt){
-    const rect = gameField.getBoundingClientRect();
-const g = rect.height * GRAVITY; // gravity px/ms^2 scaled to screen height
-
-    for(const e of entities){
-      if(e.dead) continue;
-
-      e.vy += g*dt;
-      e.x += e.vx*dt*1000/60; // tuned feel
-      e.y += e.vy*dt;
-
-      // keep slightly inside horizontal bounds so they don't leave early
-      if(e.x < 20){ e.x = 20; e.vx = Math.abs(e.vx)*0.6; }
-      if(e.x > rect.width-20){ e.x = rect.width-20; e.vx = -Math.abs(e.vx)*0.6; }
-
-e.node.style.left = e.x + 'px';
-e.node.style.top  = e.y + 'px';
-
-if (DEBUG) ensureDebugRing(e);
-else if (e._ring) e._ring.hidden = true;
-
-
-// Apply rotation if present (deg/ms * ms = deg)
-// Use 0 if spin is undefined (non-half entities).
-e.r = (e.r || 0) + (e.spin || 0) * dt;
-e.node.style.transform = `translate(-50%, -50%) rotate(${e.r}deg)`;
-
-
-      // off-screen bottom cleanup
-      if(e.y > rect.height + 80){
-        removeEntity(e);
+    document.getElementById("startBtn").addEventListener("click", async () => {
+      // try fullscreen (may fail quietly)
+      const el = document.documentElement;
+      if (el.requestFullscreen) {
+        try { await el.requestFullscreen(); } catch (e) {}
       }
+      startQuestions();
+    });
+
+    popupBtn.addEventListener("click", () => {
+      popup.classList.remove("active");
+      if (popup.dataset.next === "startGame") {
+        beginGameRound();
+      }
+    });
+
+    function showPopup(title, msg, next = "") {
+      popupTitle.textContent = title;
+      popupMessage.textContent = msg;
+      popup.dataset.next = next;
+      popup.classList.add("active");
     }
-  }
 
-  function removeEntity(e){
-    e.dead = true;
-    e.node.remove();
-    if (e._ring) { e._ring.remove(); e._ring = null; }
-
-  }
-
-// ------- Hit testing that respects HITBOX_SCALE (works for halves too) -------
-function isPointerInsideEntity(px, py, ent){
-  // Base radius from onscreen size: ~half the font size looks/feels right.
-  const fs = parseFloat(getComputedStyle(ent.node).fontSize) || 48;
-  let baseR = fs * 0.5;
-
-  // Halves are literally half the fruit; trim their base a touch unless you prefer 1.0
-  if (ent.kind === 'half') baseR *= HALF_HITBOX_FACTOR;
-
-  const dx = px - ent.x;
-  const dy = py - ent.y;
-  const dist = Math.hypot(dx, dy);
-  return dist <= baseR * HITBOX_SCALE;
-}
-
-// Global pointer handler so clicks slightly outside the emoji can still register
-gameField.addEventListener('pointerdown', (ev) => {
-  const rect = gameField.getBoundingClientRect();
-  const px = ev.clientX - rect.left;
-  const py = ev.clientY - rect.top;
-
-  // Iterate topmost first (last in array is typically most recently added / top)
-  for (let i = entities.length - 1; i >= 0; i--) {
-    const e = entities[i];
-    if (e.dead) continue;
-    if (isPointerInsideEntity(px, py, e)) {
-      // Trigger the same actions as direct clicks
-      if (e.kind === 'fruit')      sliceFruit(e);
-      else if (e.kind === 'bomb')  detonateBomb(e);
-      else if (e.kind === 'clock') slowTime(e);
-      // Stop after we hit the first eligible entity
-      break;
+    /**********************
+     * QUESTIONS
+     **********************/
+    function startQuestions() {
+      currentQuestionIndex = 0;
+      showNextQuestion();
     }
-  }
-}, { passive: true });
 
-// Compute the same radius used by the hit test, so the ring matches clicks
-function hitRadius(ent){
-  const fs = parseFloat(getComputedStyle(ent.node).fontSize) || 48;
-  let baseR = fs * 0.5;
-  if (ent.kind === 'half') baseR *= HALF_HITBOX_FACTOR;
-  return baseR * HITBOX_SCALE;
-}
-
-// Create/update a visual ring for an entity when DEBUG is on
-function ensureDebugRing(ent){
-  if (!ent._ring){
-    const d = document.createElement('div');
-    d.className = `hitbox-ring ${ent.kind}`;
-    ent._ring = d;
-    gameField.appendChild(d);
-  }
-  const r = hitRadius(ent);
-  ent._ring.style.width  = (r*2) + 'px';
-  ent._ring.style.height = (r*2) + 'px';
-  ent._ring.style.left   = ent.x + 'px';
-  ent._ring.style.top    = ent.y + 'px';
-  ent._ring.hidden = !DEBUG;
-}
-
-
-  /* --------------------------- Interactions ---------------------------- */
-  function sliceFruit(e){
-    if(e.halves){ // already halves (defensive)
-      return;
-    }
-    e.halves = true;
-    // scoring for whole fruit
-    state.score += 10;
-    state.roundScore += 10;
-    state.totalFruit++;
-    state.roundFruit++;
-    slicedCountEl.textContent = String(state.roundFruit);
-    scoreEl.textContent = String(state.score);
-
-    emitConfetti(e.x, e.y, 16);
-
-    // Replace the node with two halves that fall
-    const left = document.createElement('div');
-    left.className = 'entity half left';
-    left.textContent = e.emoji;
-
-    const right = document.createElement('div');
-    right.className = 'entity half right';
-    right.textContent = e.emoji;
-
-    // Starting from the fruit position
-    left.style.fontSize = getComputedStyle(e.node).fontSize;
-    right.style.fontSize = left.style.fontSize;
-
-    // Remove original
-    e.node.remove();
-
-// Create half entities (no inherited vertical speed, now with spin)
-const hl = {
-  kind:'half', emoji:e.emoji, node:left,
-  x:e.x-6, y:e.y,
-  vx:(e.vx*1000 - 120)/1000,       // your existing sideways kick
-  vy:(HALF_VY_PXS)/1000,           // your tiny, tunable vertical push
-  r: 0,                            // start rotation in degrees
-  spin: ( // deg/ms, randomized speed & direction
-    (Math.random() * (HALF_SPIN_MAX_DPS - HALF_SPIN_MIN_DPS) + HALF_SPIN_MIN_DPS)
-    * (Math.random() < 0.5 ? -1 : 1) / 1000
-  ),
-  dead:false
-};
-const hr = {
-  kind:'half', emoji:e.emoji, node:right,
-  x:e.x+6, y:e.y,
-  vx:(e.vx*1000 + 120)/1000,
-  vy:(HALF_VY_PXS)/1000,
-  r: 0,
-  spin: (
-    (Math.random() * (HALF_SPIN_MAX_DPS - HALF_SPIN_MIN_DPS) + HALF_SPIN_MIN_DPS)
-    * (Math.random() < 0.5 ? -1 : 1) / 1000
-  ),
-  dead:false
-};
-
-
-
-
-    for(const h of [hl,hr]){
-      h.node.style.left = h.x+'px';
-      h.node.style.top = h.y+'px';
-      h.node.style.zIndex = 2;
-      h.node.addEventListener('pointerdown', ev=>{
-        ev.preventDefault();
-        ev.stopPropagation();
-        if(h.dead) return;
-        // bonus for halves
-        state.score += 5;
-        state.roundScore += 5;
-        scoreEl.textContent = String(state.score);
-        emitConfetti(h.x, h.y, 12);
-        removeEntity(h);
+    function showNextQuestion() {
+      if (currentQuestionIndex >= QUESTIONS.length) {
+        endGame();
+        return;
+      }
+      const q = QUESTIONS[currentQuestionIndex];
+      questionTextEl.textContent = q.text;
+      questionNumberEl.textContent = `Question ${currentQuestionIndex + 1} of ${QUESTIONS.length}`;
+      answerOptionsEl.innerHTML = "";
+      // create a shuffled copy
+      const shuffled = q.answers.slice().sort(() => Math.random() - 0.5);
+      shuffled.forEach(ans => {
+        const btn = document.createElement("button");
+        btn.className = "answer-btn";
+        btn.innerHTML = `<span class="answer-emoji">${ans.emoji}</span> ${ans.label}`;
+        btn.addEventListener("click", () => handleAnswer(ans.correct, q.answers.find(a => a.correct).label));
+        answerOptionsEl.appendChild(btn);
       });
-      gameField.appendChild(h.node);
-      entities.push(h);
+      showScreen(questionScreen);
     }
 
-    // Mark original entity as removed
-    e.dead = true;
-  }
-
-  function detonateBomb(e){
-    // penalty and clear all fruit/halves on screen
-    state.score -= 30;
-    state.score = Math.max(0, state.score);
-    state.roundScore = Math.max(0, state.roundScore-30);
-    scoreEl.textContent = String(state.score);
-    emitConfetti(e.x, e.y, 28);
-
-    for(const other of entities){
-      if(other.dead) continue;
-      if(other === e) continue;
-      // visually pop
-      emitConfetti(other.x, other.y, 10);
-      removeEntity(other);
-    }
-    removeEntity(e);
-    showToast('💥 Bomb! -30', false);
-  }
-
-  function slowTime(e){
-    emitConfetti(e.x, e.y, 16);
-    slowUntil = Math.max(slowUntil, performance.now()+5000);
-    removeEntity(e);
-    showToast('⏰ Slow time 5s', true);
-  }
-
-  function emitConfetti(x,y,count){
-    const rect = gameField.getBoundingClientRect();
-    for(let i=0;i<count;i++){
-      const c = document.createElement('div');
-      c.className = 'confetti';
-      c.style.left = x+'px';
-      c.style.top = y+'px';
-      c.style.setProperty('--h', (Math.random()*360).toFixed(0));
-      gameField.appendChild(c);
-
-      const vx = rand(-rect.width*0.004, rect.width*0.004);
-      const vy = rand(-rect.height*0.006, -rect.height*0.002);
-      const rot = rand(-360,360);
-
-      // animate with JS for consistent gravity
-      const start = performance.now();
-      const g = rect.height*0.0035;
-      const life = rand(500,900);
-      const spin = rot;
-
-      function stepConfetti(t){
-        const dt = t - start;
-        if(dt > life){ c.remove(); return; }
-        const dx = vx*dt;
-        const dy = vy*dt + 0.5*g*(dt*dt)/1000;
-        c.style.transform = `translate(${dx}px, ${dy}px) rotate(${spin*dt/1000}deg)`;
-        requestAnimationFrame(stepConfetti);
+    function handleAnswer(isCorrect, rightAnswerLabel) {
+      if (isCorrect) {
+        correctCount++;
+        totalScore += 500; // bonus for correct question
+        showPopup("Correct ✅", "Nice job! Now smash some emoji!", "startGame");
+      } else {
+        incorrectCount++;
+        showPopup("Not quite ❌", "The right answer was: " + rightAnswerLabel, "startGame");
       }
-      requestAnimationFrame(stepConfetti);
-    }
-  }
-
-  /* --------------------------- End of round ---------------------------- */
-  function endRound(){
-    // Clean any remaining nodes
-    for(const e of entities){ if(!e.dead) e.node.remove(); }
-    entities = [];
-
-    // Show summary
-    rFruit.textContent = String(state.roundFruit);
-    rPoints.textContent = String(state.roundScore);
-    tFruit.textContent = String(state.totalFruit);
-    tPoints.textContent = String(state.score);
-
-    show('roundEnd');
-
-    $('#nextBtn').onclick = ()=>{
-      if(state.round < state.maxRounds){
-        state.round++;
-        showQuestion();
-      }else{
-        // bonus mode
-        startBonus();
-      }
-    };
-  }
-
-  /* ---------------------------- Bonus round ---------------------------- */
-  let bonus = null;
-  function startBonus(){
-    state.inBonus = true;
-    show('play');
-    resetField();
-
-    // HUD tweaks
-    roundNum.textContent = 'Bonus';
-    timeLeft.textContent = '∞';
-
-    const rect = gameField.getBoundingClientRect();
-    let misses = 0;
-    let spawnBase = 650; // start calm
-    const startT = performance.now();
-    last = startT;
-    running = true;
-
-    function loopBonus(now){
-      if(!running) return;
-      const dtMs = now - last;
-      last = now;
-
-      // ramp difficulty over 30s to ~250ms spawn
-      const t = (now - startT)/1000;
-      const target = 250;
-      const pct = clamp(t/30, 0, 1);
-      spawnEvery = spawnBase - (spawnBase - target)*pct;
-
-      // spawn
-      spawnTimer += dtMs;
-      if(spawnTimer >= spawnEvery){
-        spawnTimer = 0;
-        // In bonus, only fruit
-        spawnFruit();
-        if(Math.random()<0.1) spawnFruit(); // occasional double
-      }
-
-      // physics
-      stepEntities(dtMs);
-
-      // count misses (fruit that drop off bottom)
-      // We detect by hooking removeEntity in bonus scope
-      raf = requestAnimationFrame(loopBonus);
     }
 
-    // Wrap removeEntity to count fruit misses (but not halves/bombs/clocks)
-    const _remove = removeEntity;
-    removeEntity = function(e){
-      const rect = gameField.getBoundingClientRect();
-      const wasOffBottom = e.y > rect.height + 80;
-      if(state.inBonus && wasOffBottom && (e.kind === 'fruit' || e.kind === 'half')){
-        misses++;
-        showToast(`🍂 Missed: ${misses}/5`, false);
-        if(misses >= 5){
-          // restore, end bonus
-          removeEntity = _remove;
-          running = false;
-          cancelAnimationFrame(raf);
-          return finishGame();
+    /**********************
+     * GAME ROUND
+     **********************/
+    function beginGameRound() {
+    showScreen(gameScreen);
+    setupGameForRound(currentQuestionIndex);
+    ballsLeft = SETTINGS.ballCountPerRound;
+    activeBalls = [];             // <— instead of activeBall = null
+    updateHUD();
+    gameRunning = true;
+    awaitingDrop = true;
+    roundEnding = false;
+    showPopup("Drop time!", "Tap or click to release the ball. Break as many emoji as you can with five balls.", "");
+    }
+
+
+     
+
+
+    function setupGameForRound(roundIndex) {
+      gameFieldEl = document.getElementById("gameField");
+      gameWidth = gameFieldEl.clientWidth;
+      gameHeight = gameFieldEl.clientHeight;
+      gameFieldEl.innerHTML = ""; // clear any old pegs / balls
+      pegs = [];
+
+        const pegSize = gameWidth / 13;
+        currentPegSize = pegSize;
+        SETTINGS.pegRadius = pegSize / 2;
+
+
+      // make pegs
+      const emojiSet = ROUND_EMOJI_SETS[roundIndex % ROUND_EMOJI_SETS.length];
+      for (let r = 0; r < SETTINGS.rows; r++) {
+        const isEven = r % 2 === 0;
+        const cols = isEven ? 6 : 5;
+        const y = SETTINGS.topOffset + r * SETTINGS.rowSpacing;
+        for (let c = 0; c < cols; c++) {
+          const xGap = gameWidth / (cols + 1);
+          const x = xGap * (c + 1);
+          const pegEl = document.createElement("div");
+          pegEl.className = "peg";
+          pegEl.style.width = pegSize + "px";
+          pegEl.style.height = pegSize + "px";
+          pegEl.style.fontSize = (pegSize * 0.8) + "px";
+          pegEl.style.left = (x - pegSize / 2) + "px";
+          pegEl.style.top = (y - pegSize / 2) + "px";
+          pegEl.textContent = emojiSet[(r * 7 + c) % emojiSet.length];
+          gameFieldEl.appendChild(pegEl);
+          pegs.push({ x, y, el: pegEl, hit: false });
         }
       }
-      _remove(e);
-    };
 
-    loopBonus(startT);
-  }
-
-  /* ------------------------------ Final ------------------------------- */
-  function fruitRain(){
-    const rect = gameField.getBoundingClientRect();
-    const N = 60;
-    for(let i=0;i<N;i++){
-      const node = document.createElement('div');
-      node.className = 'entity fruit';
-      node.textContent = choice(FRUIT);
-      node.style.left = rand(20, rect.width-20) + 'px';
-      node.style.top = (-rand(20, rect.height)) + 'px';
-      node.style.opacity = .9;
-      node.style.zIndex = 1;
-      gameField.appendChild(node);
-
-      const vy = rand(rect.height*0.35, rect.height*0.6);
-      const start = performance.now();
-      function fall(t){
-        const dt = (t - start)/1000;
-        const y = vy*dt;
-        node.style.transform = `translate(-50%, calc(-50% + ${y}px))`;
-        if(parseFloat(node.style.top)+y < rect.height+80) requestAnimationFrame(fall);
-        else node.remove();
-      }
-      requestAnimationFrame(fall);
+  // after we have all pegs, mark 1 special and 1 bomb
+  if (pegs.length > 1) {
+    const specialIndex = Math.floor(Math.random() * pegs.length);
+    let bombIndex = Math.floor(Math.random() * pegs.length);
+    while (bombIndex === specialIndex) {
+      bombIndex = Math.floor(Math.random() * pegs.length);
     }
+
+    // special
+    const sp = pegs[specialIndex];
+    sp.type = "special";
+    sp.el.textContent = SETTINGS.specialEmoji;
+    sp.el.classList.add("peg-special");
+
+    // bomb
+    const bp = pegs[bombIndex];
+    bp.type = "bomb";
+    bp.el.textContent = SETTINGS.bombEmoji;
+    bp.el.classList.add("peg-bomb");
   }
 
-  function finishGame(){
-    // lock bonus
-    state.inBonus = false;
+  // get wells
+  wells = Array.from(document.querySelectorAll("#bottomWells .well"));
 
-    // Show final stats
-    fCorrect.textContent = String(state.correct);
-    fWrong.textContent = String(state.wrong);
-    fFruit.textContent = String(state.totalFruit);
-    fPoints.textContent = String(state.score);
+  // build moving platform above wells
+  const wellsBar = document.getElementById("bottomWells");
+  const wellsBarRect = wellsBar.getBoundingClientRect();
+  const wellsBarHeight = wellsBarRect.height;
+  const totalFlex = wells.reduce((acc, w) => acc + parseFloat(w.style.flex), 0);
+  const wideWellWidth = gameWidth * (1 / totalFlex); // width of a flex:1 well
+  const platformHeight = wellsBarHeight / 2;
 
-    // Use play screen as stage for rain behind final card
-    show('play');
-    fruitRain();
+  const platformEl = document.createElement("div");
+  platformEl.className = "moving-platform";
+  platformEl.style.width = wideWellWidth + "px";
+  platformEl.style.height = platformHeight + "px";
+  platformEl.style.left = (gameWidth / 2 - wideWellWidth / 2) + "px";
+  platformEl.style.bottom = (wellsBarHeight + wellsBarHeight / 2 - platformHeight / 2) + "px";
+  gameFieldEl.appendChild(platformEl);
 
-    // small delay then reveal final card
-    setTimeout(()=>{
-      show('final');
-    }, 600);
-  }
-
-  /* --------------------------- Input niceties -------------------------- */
-  // Prevent context menu on long press
-  window.addEventListener('contextmenu', e=> e.preventDefault());
-
-/* ---------- Debug mode: press 'h' to toggle hitboxes ---------- */
-let DEBUG = false;
-window.addEventListener('keydown', (e) => {
-  if (e.key && e.key.toLowerCase() === 'h') {
-    DEBUG = !DEBUG;
-    document.body.classList.toggle('debug', DEBUG);
-    // Show/hide all current rings on toggle
-for (const e of entities){
-  if (DEBUG) ensureDebugRing(e);
-  else if (e._ring) e._ring.hidden = true;
+  movingPlatform = {
+    x: gameWidth / 2 - wideWellWidth / 2,
+    y: gameHeight - wellsBarHeight - (wellsBarHeight / 2),
+    width: wideWellWidth,
+    height: platformHeight,
+    el: platformEl,
+    dir: 1
+  };
 }
 
-    // (Optional) quick toast so you know it's on/off if you have a toast util:
-    try {
-      if (typeof showToast === 'function') {
-        showToast(DEBUG ? '🛠 Debug ON' : '🛠 Debug OFF', true);
+
+
+
+
+    function updateHUD() {
+      hudRound.textContent = `Round ${currentQuestionIndex + 1} / ${QUESTIONS.length}`;
+      hudBalls.textContent = `Balls: ${ballsLeft}`;
+      hudScore.textContent = `Score: ${totalScore}`;
+    }
+
+    // drop ball when player taps
+    gameScreen.addEventListener("pointerdown", (e) => {
+      if (!gameRunning) return;
+      if (!awaitingDrop) return;
+      if (ballsLeft <= 0) return;
+
+      const rect = gameFieldEl.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+
+      spawnBallToward(clickX, clickY);
+    });
+
+
+    function spawnBallToward(targetX, targetY) {
+    const startX = gameWidth / 2;
+    const startY = SETTINGS.launchStartY;
+
+    const ballEl = document.createElement("div");
+    ballEl.className = "ball";
+    gameFieldEl.appendChild(ballEl);
+
+    const dx = targetX - startX;
+    const dy = targetY - startY;
+    const len = Math.sqrt(dx * dx + dy * dy) || 1;
+    const speed = SETTINGS.launchSpeed;
+
+    const vx = (dx / len) * speed;
+    const vy = (dy / len) * speed;
+
+    const ball = {
+        x: startX,
+        y: startY,
+        vx: vx,
+        vy: vy,
+        el: ballEl
+    };
+
+    activeBalls.push(ball);
+
+    ballsLeft -= 1;
+    awaitingDrop = false;
+    updateHUD();
+    if (debugHitboxes) updateDebugVisuals();
+    }
+
+
+function spawnBonusBallAtTop() {
+  if (!gameFieldEl) return;
+  const randX = Math.random() * (gameWidth - SETTINGS.ballRadius * 2) + SETTINGS.ballRadius;
+  const ballEl = document.createElement("div");
+  ballEl.className = "ball";
+  gameFieldEl.appendChild(ballEl);
+
+  const ball = {
+    x: randX,
+    y: SETTINGS.launchStartY,
+    vx: (Math.random() - 0.5) * 90,
+    vy: 140,
+    el: ballEl
+  };
+
+  activeBalls.push(ball);
+  if (debugHitboxes) updateDebugVisuals();
+}
+
+
+    /**********************
+     * MAIN LOOP
+     **********************/
+    function loop(timestamp) {
+      if (!lastTimestamp) lastTimestamp = timestamp;
+      const dt = Math.min((timestamp - lastTimestamp) / 1000, 0.035);
+      lastTimestamp = timestamp;
+
+    if (gameRunning) {
+    // move platform
+    if (movingPlatform) {
+        movingPlatform.x += movingPlatform.dir * SETTINGS.platformSpeed * dt;
+        if (movingPlatform.x < 0) {
+        movingPlatform.x = 0;
+        movingPlatform.dir = 1;
+        } else if (movingPlatform.x + movingPlatform.width > gameWidth) {
+        movingPlatform.x = gameWidth - movingPlatform.width;
+        movingPlatform.dir = -1;
+        }
+        movingPlatform.el.style.left = movingPlatform.x + "px";
+    }
+
+    // update all balls
+    for (let i = activeBalls.length - 1; i >= 0; i--) {
+        const b = activeBalls[i];
+        updateBall(b, dt);
+    }
+
+    // if we have no balls flying AND no balls left to drop, end the round (once)
+    if (activeBalls.length === 0 && ballsLeft <= 0 && !roundEnding) {
+        roundEnding = true;
+        setTimeout(() => {
+        finishRound();
+        }, 350);
+    }
+    }
+
+
+
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+
+    function updateBall(ball, dt) {
+      // physics
+      ball.vy += SETTINGS.gravity * dt;
+
+      ball.x += ball.vx * dt;
+      ball.y += ball.vy * dt;
+
+      // walls
+      if (ball.x < SETTINGS.ballRadius) {
+        ball.x = SETTINGS.ballRadius;
+        ball.vx *= -0.7;
+      } else if (ball.x > gameWidth - SETTINGS.ballRadius) {
+        ball.x = gameWidth - SETTINGS.ballRadius;
+        ball.vx *= -0.7;
       }
-    } catch {}
+
+      // moving platform collision
+if (movingPlatform) {
+  const topY = movingPlatform.y;
+  const bottomY = movingPlatform.y + movingPlatform.height;
+  if (ball.vy > 0) {
+    const nextBottom = ball.y + SETTINGS.ballRadius;
+    if (nextBottom >= topY && nextBottom <= bottomY) {
+      if (ball.x >= movingPlatform.x - SETTINGS.ballRadius &&
+          ball.x <= movingPlatform.x + movingPlatform.width + SETTINGS.ballRadius) {
+        ball.y = topY - SETTINGS.ballRadius;
+        ball.vy = -SETTINGS.bounceStrength * 0.85;
+      }
+    }
   }
-});
+}
 
-  
-  // Resize reflow safeguard (keeps entities inside after big rotation)
-  window.addEventListener('resize', ()=>{
-    // No-op on purpose—layout uses relative units
-  });
 
-})();
-</script>
+
+
+
+
+
+
+    // collisions with pegs
+    for (let i = 0; i < pegs.length; i++) {
+    const peg = pegs[i];
+    if (peg.hit) continue;
+    const dx = ball.x - peg.x;
+    const dy = ball.y - peg.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < SETTINGS.ballRadius + SETTINGS.pegRadius * 0.6) {
+        // bounce like before
+        ball.vy = -SETTINGS.bounceStrength;
+        ball.vx += dx * 2;
+
+        peg.hit = true;
+        peg.el.classList.add("hit");
+
+        // score for any peg
+        totalScore += SETTINGS.scorePerHit;
+        updateHUD();
+
+        // special behaviors
+        if (peg.type === "special") {
+        makeBigConfetti(peg.x, peg.y);
+        spawnBonusBallAtTop();
+        } else if (peg.type === "bomb") {
+        makeBigConfetti(peg.x, peg.y);
+        explodeBombAt(peg.x, peg.y);
+        } else {
+        makeSpark(peg.x, peg.y);
+        }
+
+        setTimeout(() => {
+        if (peg.el && peg.el.parentNode) peg.el.parentNode.removeChild(peg.el);
+        }, 300);
+    }
+    }
+
+      // update DOM
+      if (ball.el) {
+        ball.el.style.left = (ball.x - SETTINGS.ballRadius) + "px";
+        ball.el.style.top = (ball.y - SETTINGS.ballRadius) + "px";
+      }
+
+      if (debugHitboxes) updateDebugVisuals();
+
+
+      // bottom / wells
+      if (ball.y > gameHeight - 10) {
+        landInWell(ball);
+      }
+    }
+
+   function landInWell(ball) {
+  if (!ball.el) return;
+  ball.el.remove();
+
+  // remove from activeBalls
+  const idx = activeBalls.indexOf(ball);
+  if (idx !== -1) {
+    activeBalls.splice(idx, 1);
+  }
+
+  // figure out which well we landed in
+  const x = ball.x;
+  const totalFlex = wells.reduce((acc, w) => acc + parseFloat(w.style.flex), 0);
+  const width = gameWidth;
+  let cumulative = 0;
+  let chosen = wells[0];
+  for (let w of wells) {
+    const f = parseFloat(w.style.flex);
+    const segmentWidth = width * (f / totalFlex);
+    if (x >= cumulative && x <= cumulative + segmentWidth) {
+      chosen = w;
+      break;
+    }
+    cumulative += segmentWidth;
+  }
+  const score = parseInt(chosen.dataset.score || "0", 10);
+  totalScore += score;
+
+  // score popup
+  const burst = document.createElement("div");
+  burst.className = "well-score-burst";
+  burst.textContent = "+" + score;
+  chosen.appendChild(burst);
+  setTimeout(() => {
+    burst.remove();
+  }, 800);
+
+  // extra ball from middle
+  if (chosen.dataset.extraball === "1") {
+    ballsLeft += 1;
+  }
+
+  updateHUD();
+
+  // if we still have balls to drop AND there are no balls flying, let player drop again
+  if (ballsLeft > 0 && activeBalls.length === 0) {
+    awaitingDrop = true;
+  }
+}
+
+    
+
+    function finishRound() {
+      // move to next question
+      currentQuestionIndex++;
+      gameRunning = false;
+      showNextQuestion();
+    }
+
+    /**********************
+     * FX
+     **********************/
+    function makeSpark(x, y) {
+      const fx = document.createElement("div");
+      fx.style.position = "absolute";
+      fx.style.left = (x - 14) + "px";
+      fx.style.top = (y - 14) + "px";
+      fx.style.zIndex = 9999;
+      fx.textContent = SETTINGS.emojiHitFX[Math.floor(Math.random() * SETTINGS.emojiHitFX.length)];
+      fx.style.transition = "transform .4s, opacity .4s";
+      gameFieldEl.appendChild(fx);
+      requestAnimationFrame(() => {
+        fx.style.transform = "translateY(-18px) scale(1.5)";
+        fx.style.opacity = "0";
+      });
+      setTimeout(() => fx.remove(), 450);
+    }
+
+function makeBigConfetti(x, y) {
+  for (let i = 0; i < 18; i++) {
+    const piece = document.createElement("div");
+    piece.className = "confetti-piece";
+    piece.style.left = (x - 6) + "px";
+    piece.style.top = (y - 6) + "px";
+    const dx = (Math.random() - 0.5) * 160;
+    const dy = (Math.random() - 0.5) * 160;
+    const rot = (Math.random() * 360) + "deg";
+    piece.style.setProperty("--tx", dx + "px");
+    piece.style.setProperty("--ty", dy + "px");
+    piece.style.setProperty("--rot", rot);
+    piece.style.background = ["#f97316","#f43f5e","#3b82f6","#22c55e","#eab308"][i % 5];
+    gameFieldEl.appendChild(piece);
+    setTimeout(() => piece.remove(), 750);
+  }
+}
+
+function explodeBombAt(x, y) {
+  for (let i = 0; i < pegs.length; i++) {
+    const p = pegs[i];
+    if (p.hit) continue;
+    const dx = p.x - x;
+    const dy = p.y - y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist <= SETTINGS.bombRadius) {
+      p.hit = true;
+      p.el.classList.add("hit");
+      totalScore += SETTINGS.scorePerHit;
+      makeSpark(p.x, p.y);
+      setTimeout(() => {
+        if (p.el && p.el.parentNode) p.el.parentNode.removeChild(p.el);
+      }, 300);
+    }
+  }
+  updateHUD();
+}
+
+
+    function endGame() {
+      showScreen(endScreen);
+      document.getElementById("finalScoreText").textContent = "You scored " + totalScore.toLocaleString() + " points.";
+      document.getElementById("finalQA").textContent = "Correct: " + correctCount + " · Incorrect: " + incorrectCount;
+
+      // emoji rain
+      for (let i = 0; i < SETTINGS.emojiRainCount; i++) {
+        const re = document.createElement("div");
+        re.className = "rain-emoji";
+        re.textContent = ROUND_EMOJI_SETS[Math.floor(Math.random() * ROUND_EMOJI_SETS.length)][0];
+        re.style.left = Math.random() * 100 + "vw";
+        re.style.animationDelay = (Math.random() * 1.2) + "s";
+        emojiRainContainer.appendChild(re);
+        setTimeout(() => re.remove(), 2500);
+      }
+    }
+
+    /**********************
+     * RESIZE
+     **********************/
+    document.addEventListener("keydown", (e) => {
+    if (e.key === "h" || e.key === "H") {
+        debugHitboxes = !debugHitboxes;
+        updateDebugVisuals();
+    }
+    });
+
+    function updateDebugVisuals() {
+    // pegs
+    pegs.forEach(p => {
+        if (!p.el) return;
+        if (debugHitboxes) {
+        p.el.classList.add("debug-peg-hitbox");
+        } else {
+        p.el.classList.remove("debug-peg-hitbox");
+        }
+    });
+
+    // balls
+    activeBalls.forEach(b => {
+    if (debugHitboxes) {
+        b.el.classList.add("debug-ball-hitbox");
+    } else {
+        b.el.classList.remove("debug-ball-hitbox");
+    }
+    });
+
+    }
+
+
+
+
+    window.addEventListener("resize", () => {
+      // if we are currently in a game, rebuild pegs to match new size
+      if (gameScreen.classList.contains("active")) {
+        setupGameForRound(currentQuestionIndex);
+      }
+    });
+  </script>
 </body>
 </html>
