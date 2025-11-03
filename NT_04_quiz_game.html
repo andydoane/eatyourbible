@@ -452,13 +452,14 @@
     </div>
 
     <!-- Title -->
-    <div id="titleScreen" class="screen">
-      <div class="card">
-        <h1>🔴 Emoji Drop ⬇️</h1>
-        <p>Answer Bible questions ➜ drop balls ➜ smash emoji ➜ score big.</p>
-        <button id="startBtn">Go fullscreen and start</button>
-      </div>
-    </div>
+<div id="titleScreen" class="screen">
+  <h1>🔵🟢 Emoji Drop 🟡🔴</h1>
+  <label for="playerNameInput" style="display:block;margin-bottom:0.5rem;">Enter your name to play:</label>
+  <input id="playerNameInput" type="text" maxlength="18" placeholder="Your name" style="padding:0.4rem 0.5rem;font-size:1rem;width: min(260px, 80vw);margin-bottom:0.9rem;">
+  <div id="nameError" style="color:#f43f5e;font-size:0.85rem;min-height:1.1rem;"></div>
+  <button id="startBtn">Go fullscreen and start</button>
+</div>
+
 
     <!-- Question -->
     <div id="questionScreen" class="screen">
@@ -556,6 +557,9 @@
         bombRadius: 120,
         platformSpeed: 90
 };
+
+const SCORE_ENDPOINT = "https://script.google.com/macros/s/AKfycbz7q0MxcUagnmDH1w_j_oP4N4ZV3epCeGg0QV02SdNyMlO_VZKmvo0JLdJUkvhMMv4L/exec";
+
 
 const BALL_EMOJI = ["🔴","🥎","🎱","🍩","🏀","🧿","🏐","🌍","🍪","⚽"];
 let currentBallEmoji = "🔴";
@@ -781,14 +785,30 @@ const QUESTIONS = [
       showScreen(titleScreen);
     });
 
-    document.getElementById("startBtn").addEventListener("click", async () => {
-      // try fullscreen (may fail quietly)
-      const el = document.documentElement;
-      if (el.requestFullscreen) {
-        try { await el.requestFullscreen(); } catch (e) {}
-      }
-      startQuestions();
+    document.getElementById("startBtn").addEventListener("click", () => {
+    const nameInput = document.getElementById("playerNameInput");
+    const err = document.getElementById("nameError");
+    const val = nameInput.value.trim();
+
+    if (!val) {
+        err.textContent = "Please enter your name.";
+        return;
+    }
+    err.textContent = "";
+
+    window.playerName = val; // store globally
+
+    // now continue to your existing start logic
+    startGameFromTitle();
     });
+
+function startGameFromTitle() {
+  // if you want fullscreen here, you can add it above showScreen later
+  showScreen(questionScreen);
+  startQuestions();
+}
+
+
 
     popupBtn.addEventListener("click", () => {
       popup.classList.remove("active");
@@ -1621,22 +1641,31 @@ function explodeBombAt(x, y) {
 
 
 
-    function endGame() {
-      showScreen(endScreen);
-      document.getElementById("finalScoreText").textContent = "You scored " + totalScore.toLocaleString() + " points.";
-      document.getElementById("finalQA").textContent = "Correct: " + correctCount + " · Incorrect: " + incorrectCount;
+        function endGame() {
+        showScreen(endScreen);
+        document.getElementById("finalScoreText").textContent = "You scored " + totalScore.toLocaleString() + " points.";
+        document.getElementById("finalQA").textContent = "Correct: " + correctCount + " · Incorrect: " + incorrectCount;
 
-      // emoji rain
-      for (let i = 0; i < SETTINGS.emojiRainCount; i++) {
-        const re = document.createElement("div");
-        re.className = "rain-emoji";
-        re.textContent = ROUND_EMOJI_SETS[Math.floor(Math.random() * ROUND_EMOJI_SETS.length)][0];
-        re.style.left = Math.random() * 100 + "vw";
-        re.style.animationDelay = (Math.random() * 1.2) + "s";
-        emojiRainContainer.appendChild(re);
-        setTimeout(() => re.remove(), 2500);
-      }
-    }
+        // ⬇️ Add this block
+        sendScoreToSheet({
+            name: window.playerName || "Player",
+            score: totalScore,
+            correct: correctCount,
+            totalQuestions: QUESTIONS.length
+        });
+
+        // emoji rain
+        for (let i = 0; i < SETTINGS.emojiRainCount; i++) {
+            const re = document.createElement("div");
+            re.className = "rain-emoji";
+            re.textContent = ROUND_EMOJI_SETS[Math.floor(Math.random() * ROUND_EMOJI_SETS.length)][0];
+            re.style.left = Math.random() * 100 + "vw";
+            re.style.animationDelay = (Math.random() * 1.2) + "s";
+            emojiRainContainer.appendChild(re);
+            setTimeout(() => re.remove(), 2500);
+        }
+        }
+
 
 
     function showClearBonus() {
@@ -1664,6 +1693,24 @@ function explodeBombAt(x, y) {
     }, 2200);
     }
     
+function sendScoreToSheet(payload) {
+  if (!SCORE_ENDPOINT) return;
+  // fire and forget
+  fetch(SCORE_ENDPOINT, {
+    method: "POST",
+    mode: "no-cors",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      ...payload,
+      userAgent: navigator.userAgent
+    })
+  }).catch((err) => {
+    // you can log if you want, but don't break the game
+    console.warn("score submit failed", err);
+  });
+}
 
 
     
