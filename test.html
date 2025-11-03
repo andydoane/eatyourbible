@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Emoji Bible Plinko</title>
+  <title>🔴 Emoji Drop ⬇️</title>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
   <style>
     :root {
@@ -17,6 +17,7 @@
       --well3: #f43f5e;
       --ui-z: 100;
       --game-z: 50;
+      --app-h: 100vh;
     }
     * {
       box-sizing: border-box;
@@ -27,13 +28,13 @@
       background: var(--bg);
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       color: var(--text);
-      height: 100vh;
+      height: var(--app-h);
       overflow: hidden;
     }
     #app {
       position: relative;
       width: 100vw;
-      height: 100vh;
+      height: var(--app-h);
       max-width: 650px; /* PC just scales up, centered */
       margin: 0 auto;
       background: radial-gradient(circle at top, #1f2937 0%, #020617 50%, #000 100%);
@@ -103,6 +104,7 @@
       align-items: stretch;
       justify-content: flex-start;
       padding: 0;
+      height: var(--app-h);
     }
     #gameHUD {
       position: absolute;
@@ -132,6 +134,47 @@
       overflow: hidden;
     }
 
+    #clearBonus {
+    position: absolute;
+    inset: 0;
+    z-index: 1200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    }
+    #clearBonus.active {
+    display: flex;
+    }
+    .clear-bonus-bg {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, #f43f5e, #f97316, #fbbf24, #22c55e, #3b82f6, #8b5cf6);
+    background-size: 400% 400%;
+    animation: bonus-rainbow 2s linear infinite;
+    opacity: 0.5;
+    }
+    @keyframes bonus-rainbow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+    }
+    .clear-bonus-text {
+    position: relative;
+    font-size: clamp(3rem, 8vw, 5.5rem);
+    font-weight: 900;
+    color: #fff;
+    text-shadow: 0 0 28px rgba(0,0,0,0.7);
+    transform: scale(1);
+    animation: bonus-pop 0.6s ease-out;
+    }
+    @keyframes bonus-pop {
+    0% { transform: scale(0.2); opacity: 0; }
+    50% { transform: scale(1.05); opacity: 1; }
+    100% { transform: scale(1); }
+    }
+
+
     .peg {
     position: absolute;
     display: flex;
@@ -160,14 +203,16 @@
 
 
     .ball {
-      position: absolute;
-      width: 1.8rem;
-      height: 1.8rem;
-      border-radius: 999px;
-      background: radial-gradient(circle, #f8fafc 0%, #94a3b8 65%, #020617 90%);
-      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.6);
-      z-index: calc(var(--game-z) + 5);
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;       /* no white marble */
+    border-radius: 999px;
+    z-index: calc(var(--game-z) + 5);
     }
+
+    
     #arrow {
       position: absolute;
       top: 3.2rem;
@@ -188,6 +233,14 @@
     display: flex;
     z-index: calc(var(--game-z) + 2);
     }
+
+    @supports (padding: max(0px)) {
+  #bottomWells {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+
 
     .well {
     border-top: 3px solid rgba(248, 250, 252, 0.4);
@@ -233,6 +286,24 @@
   pointer-events: none;
 }
 
+/* side bumpers */
+.side-bumper {
+  position: absolute;
+  background: linear-gradient(90deg, #f43f5e, #f97316, #fbbf24, #22c55e, #3b82f6, #8b5cf6);
+  background-size: 300% 300%;
+  animation: bumperPulse 1.6s linear infinite;
+  border-radius: 999px;
+  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.45));
+  z-index: calc(var(--game-z) + 3);
+  pointer-events: none;
+}
+@keyframes bumperPulse {
+  0%   { background-position: 0% 50%; opacity: 1; }
+  50%  { background-position: 100% 50%; opacity: 0.9; }
+  100% { background-position: 0% 50%; opacity: 1; }
+}
+
+
 /* big confetti */
 .confetti-piece {
   position: absolute;
@@ -262,6 +333,54 @@
       50% {opacity: 1;}
       100% {transform: translate(-50%, -120%); opacity: 0;}
     }
+
+    /* combo popups */
+    #comboPopup {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      pointer-events: none;
+    }
+    #comboPopup.active {
+      display: flex;
+    }
+
+    .combo-box {
+      background: rgba(15, 23, 42, 0.9);
+      border: 2px solid rgba(248, 250, 252, 0.2);
+      border-radius: 1rem;
+      padding: 1rem 1.25rem;
+      text-align: center;
+      animation: comboPop 0.4s ease-out;
+      width: 75vw;              /* 👈 75% of screen */
+      max-width: 500px;         /* 👈 don’t get too huge on desktop */
+      box-sizing: border-box;
+    }
+
+        .combo-title {
+        /* big on phones, capped on desktop */
+        font-size: min(9vw, 3.3rem);
+        font-weight: 800;
+        margin-bottom: 0.35rem;
+        line-height: 1;
+        }
+        .combo-points {
+        /* even bigger number */
+        font-size: min(12vw, 4.6rem);
+        font-weight: 900;
+        letter-spacing: 0.04em;
+        line-height: 0.95;
+        }
+
+    @keyframes comboPop {
+      0% { transform: scale(.3); opacity: 0; }
+      60% { transform: scale(1.05); opacity: 1; }
+      100% { transform: scale(1); }
+    }
+
 
     .popup {
       position: absolute;
@@ -335,7 +454,7 @@
     <!-- Title -->
     <div id="titleScreen" class="screen">
       <div class="card">
-        <h1>Emoji Bible Plinko</h1>
+        <h1>🔴 Emoji Drop ⬇️</h1>
         <p>Answer Bible questions ➜ drop balls ➜ smash emoji ➜ score big.</p>
         <button id="startBtn">Go fullscreen and start</button>
       </div>
@@ -393,6 +512,24 @@
 
     <!-- Emoji rain -->
     <div id="emojiRainContainer"></div>
+
+    <!-- Clear-all bonus overlay -->
+    <div id="clearBonus">
+      <div class="clear-bonus-bg"></div>
+      <div class="clear-bonus-text">100,000!</div>
+    </div>
+
+    <!-- Combo popup (moved OUT of clearBonus) -->
+    <div id="comboPopup">
+      <div class="combo-box">
+        <div class="combo-title" id="comboTitle">COMBO BONUS</div>
+        <div class="combo-points" id="comboPoints">10,000</div>
+      </div>
+    </div>
+
+
+        
+
   </div>
 
   <script>
@@ -420,115 +557,159 @@
         platformSpeed: 90
 };
 
+const BALL_EMOJI = ["🔴","🥎","🎱","🍩","🏀","🧿","🏐","🌍","🍪","⚽"];
+let currentBallEmoji = "🔴";
 
-    /**********************
-     * GAME DATA
-     **********************/
-    const QUESTIONS = [
-      {
-        text: "Who created the heavens and the earth?",
-        answers: [
-          { label: "God", emoji: "✨", correct: true },
-          { label: "Moses", emoji: "🪄", correct: false },
-          { label: "Noah", emoji: "🛶", correct: false },
-          { label: "David", emoji: "🎵", correct: false }
-        ]
-      },
-      {
-        text: "Where was Jesus born?",
-        answers: [
-          { label: "Bethlehem", emoji: "⭐", correct: true },
-          { label: "Nazareth", emoji: "🏘️", correct: false },
-          { label: "Jerusalem", emoji: "🏛️", correct: false },
-          { label: "Rome", emoji: "🏟️", correct: false }
-        ]
-      },
-      {
-        text: "Which prophet was swallowed by a big fish?",
-        answers: [
-          { label: "Jonah", emoji: "🐟", correct: true },
-          { label: "Elijah", emoji: "🔥", correct: false },
-          { label: "Isaiah", emoji: "📜", correct: false },
-          { label: "Daniel", emoji: "🦁", correct: false }
-        ]
-      },
-      {
-        text: "Who led Israel out of Egypt?",
-        answers: [
-          { label: "Moses", emoji: "🪄", correct: true },
-          { label: "Aaron", emoji: "📯", correct: false },
-          { label: "Joshua", emoji: "⚔️", correct: false },
-          { label: "Solomon", emoji: "👑", correct: false }
-        ]
-      },
-      {
-        text: "What is the first book of the Bible?",
-        answers: [
-          { label: "Genesis", emoji: "📖", correct: true },
-          { label: "Exodus", emoji: "🌊", correct: false },
-          { label: "Psalms", emoji: "🎶", correct: false },
-          { label: "Matthew", emoji: "📜", correct: false }
-        ]
-      },
-      {
-        text: "Who is God's Son?",
-        answers: [
-          { label: "Jesus", emoji: "✝️", correct: true },
-          { label: "Peter", emoji: "🐟", correct: false },
-          { label: "Paul", emoji: "📝", correct: false },
-          { label: "John", emoji: "🕊️", correct: false }
-        ]
-      },
-      {
-        text: "God saved Noah and his family with a...",
-        answers: [
-          { label: "Boat/Ark", emoji: "🛶", correct: true },
-          { label: "Chariot", emoji: "🏇", correct: false },
-          { label: "Castle", emoji: "🏰", correct: false },
-          { label: "Dragon", emoji: "🐉", correct: false }
-        ]
-      },
-      {
-        text: "Who fought Goliath with a sling?",
-        answers: [
-          { label: "David", emoji: "🪨", correct: true },
-          { label: "Saul", emoji: "🗡️", correct: false },
-          { label: "Samuel", emoji: "📯", correct: false },
-          { label: "Joseph", emoji: "🎨", correct: false }
-        ]
-      },
-      {
-        text: "What did God make on day 1?",
-        answers: [
-          { label: "Light", emoji: "💡", correct: true },
-          { label: "Animals", emoji: "🐘", correct: false },
-          { label: "People", emoji: "🧍", correct: false },
-          { label: "Birds", emoji: "🕊️", correct: false }
-        ]
-      },
-      {
-        text: "What did Jesus die on?",
-        answers: [
-          { label: "A cross", emoji: "✝️", correct: true },
-          { label: "A ship", emoji: "⛵", correct: false },
-          { label: "A tower", emoji: "🗼", correct: false },
-          { label: "A mountain", emoji: "⛰️", correct: false }
-        ]
-      }
-    ];
+function isIOS() {
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+    (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+}
 
-    const ROUND_EMOJI_SETS = [
-      ["🍎","🍊","🍇","🍉","🍓","🥝","🍒","🍍"],
-      ["🐶","🐱","🐭","🦊","🐻","🐼","🐨","🐸"],
-      ["🚗","🚕","🚌","🚓","🚑","🚒","🚜","🏎️"],
-      ["⚽","🏀","🏈","🎾","🏐","🥎","🏉","🥏"],
-      ["🌈","⭐","☁️","🌙","⚡","☀️","🌤️","🌧️"],
-      ["🎈","🎉","🎊","🎁","🪅","🎯","🎮","🎵"],
-      ["🍔","🍟","🍕","🌭","🍗","🥐","🥨","🍪"],
-      ["🌸","🌼","🌻","🌷","🌹","🍀","🌵","🎍"],
-      ["🇺🇸","🇬🇧","🇨🇦","🇮🇹","🇯🇵","🇫🇷","🇩🇪","🇧🇷"],
-      ["🧱","🪙","🔔","🎁","💎","🧊","🧃","🧠"]
-    ];
+function updateAppHeightForIOS() {
+  if (!isIOS()) return;
+  const h = window.innerHeight;
+  document.documentElement.style.setProperty("--app-h", h + "px");
+}
+
+window.addEventListener("resize", updateAppHeightForIOS);
+window.addEventListener("orientationchange", updateAppHeightForIOS);
+document.addEventListener("DOMContentLoaded", updateAppHeightForIOS);
+
+
+
+  /*
+
+ #####     #     #    #######     #####     #######    ###    #######    #     #     #####  
+#     #    #     #    #          #     #       #        #     #     #    ##    #    #     # 
+#     #    #     #    #          #             #        #     #     #    # #   #    #       
+#     #    #     #    #####       #####        #        #     #     #    #  #  #     #####  
+#   # #    #     #    #                #       #        #     #     #    #   # #          # 
+#    #     #     #    #          #     #       #        #     #     #    #    ##    #     # 
+ #### #     #####     #######     #####        #       ###    #######    #     #     #####  
+
+*/
+
+const QUESTIONS = [
+  {
+    text: "Where did the wise men come from?",
+    answers: [
+      { label: "From the east", emoji: "🌅", correct: true },
+      { label: "From Egypt", emoji: "🏜️", correct: false },
+      { label: "From Rome", emoji: "🏛️", correct: false },
+      { label: "From Nazareth", emoji: "🏘️", correct: false }
+    ]
+  },
+  {
+    text: "Why did the wise men follow the star to Jerusalem?",
+    answers: [
+      { label: "A king of the Jews was born", emoji: "⭐", correct: true },
+      { label: "They wanted treasure", emoji: "💰", correct: false },
+      { label: "They were chasing soldiers", emoji: "🗡️", correct: false },
+      { label: "They were lost", emoji: "🧭", correct: false }
+    ]
+  },
+  {
+    text: "Who was Herod?",
+    answers: [
+      { label: "The king over the Jewish people", emoji: "👑", correct: true },
+      { label: "A traveling wise man", emoji: "🧳", correct: false },
+      { label: "A Roman soldier", emoji: "🗡️", correct: false },
+      { label: "A prophet", emoji: "📜", correct: false }
+    ]
+  },
+  {
+    text: "Where did Scripture say the Messiah would be born?",
+    answers: [
+      { label: "In Bethlehem", emoji: "🏠", correct: true },
+      { label: "In Nazareth", emoji: "🏘️", correct: false },
+      { label: "In Jerusalem", emoji: "🏛️", correct: false },
+      { label: "In Egypt", emoji: "🏜️", correct: false }
+    ]
+  },
+  {
+    text: "What did Herod tell the wise men to do?",
+    answers: [
+      { label: "Find the child and tell me", emoji: "📜", correct: true },
+      { label: "Go home right away", emoji: "🏡", correct: false },
+      { label: "Destroy the star", emoji: "💥", correct: false },
+      { label: "Bring the child to the palace", emoji: "🏰", correct: false }
+    ]
+  },
+  {
+    text: "How did the wise men find Jesus’ house?",
+    answers: [
+      { label: "The star stopped over it", emoji: "🌟", correct: true },
+      { label: "People showed them", emoji: "🗣️", correct: false },
+      { label: "They followed camels", emoji: "🐪", correct: false },
+      { label: "They guessed", emoji: "🤔", correct: false }
+    ]
+  },
+  {
+    text: "What did the wise men do when they found Jesus?",
+    answers: [
+      { label: "Worshiped and gave gifts", emoji: "🎁", correct: true },
+      { label: "Built a house for him", emoji: "🧱", correct: false },
+      { label: "Crowned him king", emoji: "👑", correct: false },
+      { label: "Took him to Herod", emoji: "🏰", correct: false }
+    ]
+  },
+  {
+    text: "What warning did God give the wise men?",
+    answers: [
+      { label: "Don’t go back to Herod", emoji: "⚠️", correct: true },
+      { label: "Don’t take your gifts", emoji: "🎁", correct: false },
+      { label: "Don’t follow the star", emoji: "🌟", correct: false },
+      { label: "Don’t leave Bethlehem", emoji: "🚫", correct: false }
+    ]
+  },
+  {
+    text: "What did the angel tell Joseph to do?",
+    answers: [
+      { label: "Escape to Egypt", emoji: "🏜️", correct: true },
+      { label: "Stay in Bethlehem", emoji: "🏠", correct: false },
+      { label: "Go to Herod", emoji: "🏰", correct: false },
+      { label: "Sail to Rome", emoji: "⛵", correct: false }
+    ]
+  },
+  {
+    text: "After Herod died, what did Joseph’s family do?",
+    answers: [
+      { label: "Returned to Nazareth", emoji: "🏡", correct: true },
+      { label: "Stayed in Egypt", emoji: "🏜️", correct: false },
+      { label: "Moved to Jerusalem", emoji: "🏛️", correct: false },
+      { label: "Went back to Bethlehem", emoji: "🌟", correct: false }
+    ]
+  }
+];
+
+
+
+/*
+
+#######    #     #    ######     
+#          ##    #    #     #    
+#          # #   #    #     #    
+#####      #  #  #    #     #    
+#          #   # #    #     #    
+#          #    ##    #     #    
+#######    #     #    ######     
+
+
+*/
+
+
+        const ROUND_EMOJI_SETS = [
+        ["🍎","🍊","🍇","🍉","🍓","🥝","🍒","🍍"],
+        ["🐶","🐱","🐭","🦊","🐻","🐼","🐨","🐸"],
+        ["🚗","🚕","🚌","🚓","🚑","🚒","🚜","🏎️"],
+        ["⚽","🏀","🏈","🎾","🏐","🥎","🏉","🥏"],
+        ["🌈","⭐","☁️","🌙","⚡","☀️","🌤️","🌧️"],
+        ["🎈","🎉","🎊","🎁","🪅","🎯","🎮","🎵"],
+        ["🍔","🍟","🍕","🌭","🍗","🥐","🥨","🍪"],
+        ["🌸","🌼","🌻","🌷","🌹","🍀","🌵","🎍"],
+        ["😀","😁","😂","🥳","😎","🤩","😜","😇"], 
+        ["🧱","🪙","🔔","🎁","💎","🧊","🧃","🧠"]
+        ];
 
     /**********************
      * STATE
@@ -541,6 +722,18 @@
     let lastTimestamp = 0; 
 
     let ballsLeft = SETTINGS.ballCountPerRound;
+    let hasShownDropPopup = false;   // show "Drop time!" only once
+    let clearedAllThisRound = false; // we'll use this in step 2
+    let bonusBallNextRound = 0;      // +1 if last question was correct
+    let clearBonusShown = false;     // prevents double celebration
+    let bumpers = []; // left/right little paddles
+    // combo for the CURRENT shot (main ball + any bonus balls it spawns)
+    let currentComboHits = 0;
+    let currentComboMult = 1;
+
+
+
+
     let activeBalls = []; 
     let pegs = [];
     let gameWidth = 0;
@@ -641,14 +834,17 @@
     }
 
     function handleAnswer(isCorrect, rightAnswerLabel) {
-      if (isCorrect) {
+        if (isCorrect) {
         correctCount++;
         totalScore += 500; // bonus for correct question
-        showPopup("Correct ✅", "Nice job! Now smash some emoji!", "startGame");
-      } else {
+        bonusBallNextRound = 1;        // <-- give 1 extra ball for the NEXT round
+        showPopup("🟡🟢Bonus Ball! 🔴🔵", "Correct answer – you've earned a bonus ball!", "startGame");
+        } else {
+        bonusBallNextRound = 0;        // <-- no extra ball next round
         incorrectCount++;
         showPopup("Not quite ❌", "The right answer was: " + rightAnswerLabel, "startGame");
-      }
+        }
+
     }
 
     /**********************
@@ -657,13 +853,27 @@
     function beginGameRound() {
     showScreen(gameScreen);
     setupGameForRound(currentQuestionIndex);
-    ballsLeft = SETTINGS.ballCountPerRound;
-    activeBalls = [];             // <— instead of activeBall = null
+    currentBallEmoji = BALL_EMOJI[currentQuestionIndex % BALL_EMOJI.length];
+
+    ballsLeft = SETTINGS.ballCountPerRound + bonusBallNextRound;
+    bonusBallNextRound = 0; // we used it, so clear it
+    activeBalls = [];
     updateHUD();
+
     gameRunning = true;
     awaitingDrop = true;
     roundEnding = false;
-    showPopup("Drop time!", "Tap or click to release the ball. Break as many emoji as you can with five balls.", "");
+    clearedAllThisRound = false;
+    clearBonusShown = false;
+
+    
+
+    if (!hasShownDropPopup) {
+    showPopup("Drop time!", "Tap or click anywhere to aim your shot. Break as many emoji as you can.", "");
+    hasShownDropPopup = true;
+    }
+
+    
     }
 
 
@@ -680,6 +890,8 @@
         const pegSize = gameWidth / 13;
         currentPegSize = pegSize;
         SETTINGS.pegRadius = pegSize / 2;
+        SETTINGS.ballRadius = pegSize / 2;
+
 
 
       // make pegs
@@ -752,7 +964,87 @@
     el: platformEl,
     dir: 1
   };
+
+    // build side bumpers (aligned with row 3 and row 6)
+    bumpers = [];
+    const bumperRows = [2, 5]; // 0-based: 3rd and 6th row
+    const bumperLen = currentPegSize*1.3;        // 👈 Bumper length
+    const bumperThick = currentPegSize * 0.45;
+
+
+  bumperRows.forEach((rowIdx) => {
+    const rowY = SETTINGS.topOffset + rowIdx * SETTINGS.rowSpacing;
+
+    // LEFT bumper
+    const leftEl = document.createElement("div");
+    leftEl.className = "side-bumper";
+    leftEl.style.width = bumperLen + "px";
+    leftEl.style.height = bumperThick + "px";
+    leftEl.style.left = (-currentPegSize * 0.4) + "px";
+    leftEl.style.top = (rowY - bumperThick / 2) + "px";
+    leftEl.style.transform = "rotate(12deg)";
+    gameFieldEl.appendChild(leftEl);
+
+    bumpers.push({
+      x: -currentPegSize * 0.4,
+      y: rowY - bumperThick / 2,
+      width: bumperLen,
+      height: bumperThick,
+      side: "left",
+      el: leftEl
+    });
+
+    // geometry for left bumper (angled +12deg)
+    (() => {
+    const b = bumpers[bumpers.length - 1];
+    const angleDeg = 12;
+    const ang = angleDeg * Math.PI / 180;
+    const cx = b.x + b.width / 2;
+    const cy = b.y + b.height / 2;
+    const dirX = Math.cos(ang), dirY = Math.sin(ang);
+    b.p1 = { x: cx - dirX * (b.width / 2), y: cy - dirY * (b.width / 2) };
+    b.p2 = { x: cx + dirX * (b.width / 2), y: cy + dirY * (b.width / 2) };
+    b.radius = b.height / 2; // capsule radius = half thickness
+    })();
+
+
+    // RIGHT bumper
+    const rightX = gameWidth - bumperLen + (currentPegSize * 0.4);
+    const rightEl = document.createElement("div");
+    rightEl.className = "side-bumper";
+    rightEl.style.width = bumperLen + "px";
+    rightEl.style.height = bumperThick + "px";
+    rightEl.style.left = rightX + "px";
+    rightEl.style.top = (rowY - bumperThick / 2) + "px";
+    rightEl.style.transform = "rotate(-12deg)";
+    gameFieldEl.appendChild(rightEl);
+
+    bumpers.push({
+      x: rightX,
+      y: rowY - bumperThick / 2,
+      width: bumperLen,
+      height: bumperThick,
+      side: "right",
+      el: rightEl
+    });
+
+    // geometry for right bumper (angled -12deg)
+    (() => {
+    const b = bumpers[bumpers.length - 1];
+    const angleDeg = -12;
+    const ang = angleDeg * Math.PI / 180;
+    const cx = b.x + b.width / 2;
+    const cy = b.y + b.height / 2;
+    const dirX = Math.cos(ang), dirY = Math.sin(ang);
+    b.p1 = { x: cx - dirX * (b.width / 2), y: cy - dirY * (b.width / 2) };
+    b.p2 = { x: cx + dirX * (b.width / 2), y: cy + dirY * (b.width / 2) };
+    b.radius = b.height / 2;
+    })();
+
+
+  });
 }
+
 
 
 
@@ -779,12 +1071,24 @@
 
 
     function spawnBallToward(targetX, targetY) {
-    const startX = gameWidth / 2;
-    const startY = SETTINGS.launchStartY;
+      const startX = gameWidth / 2;
+      const startY = SETTINGS.launchStartY;
+
+      // if this is a brand-new shot (no balls flying), start a fresh combo
+      if (activeBalls.length === 0) {
+        currentComboHits = 0;
+        currentComboMult = 1;
+      }
 
     const ballEl = document.createElement("div");
     ballEl.className = "ball";
     gameFieldEl.appendChild(ballEl);
+    ballEl.textContent = currentBallEmoji;
+    ballEl.style.width = currentPegSize + "px";
+    ballEl.style.height = currentPegSize + "px";
+    ballEl.style.fontSize = (currentPegSize * 0.8) + "px";
+
+    
 
     const dx = targetX - startX;
     const dy = targetY - startY;
@@ -814,9 +1118,18 @@
 function spawnBonusBallAtTop() {
   if (!gameFieldEl) return;
   const randX = Math.random() * (gameWidth - SETTINGS.ballRadius * 2) + SETTINGS.ballRadius;
-  const ballEl = document.createElement("div");
-  ballEl.className = "ball";
-  gameFieldEl.appendChild(ballEl);
+
+    const ballEl = document.createElement("div");
+    ballEl.className = "ball";
+    gameFieldEl.appendChild(ballEl);
+    ballEl.textContent = currentBallEmoji;
+    ballEl.style.width = currentPegSize + "px";
+    ballEl.style.height = currentPegSize + "px";
+    ballEl.style.fontSize = (currentPegSize * 0.8) + "px";
+
+
+  
+
 
   const ball = {
     x: randX,
@@ -874,12 +1187,17 @@ function spawnBonusBallAtTop() {
     }
     requestAnimationFrame(loop);
 
-    function updateBall(ball, dt) {
-      // physics
-      ball.vy += SETTINGS.gravity * dt;
+        function updateBall(ball, dt) {
+        // remember where we were
+        const prevX = ball.x;
+        const prevY = ball.y;
 
-      ball.x += ball.vx * dt;
-      ball.y += ball.vy * dt;
+        // physics
+        ball.vy += SETTINGS.gravity * dt;
+
+        ball.x += ball.vx * dt;
+        ball.y += ball.vy * dt;
+
 
       // walls
       if (ball.x < SETTINGS.ballRadius) {
@@ -890,21 +1208,98 @@ function spawnBonusBallAtTop() {
         ball.vx *= -0.7;
       }
 
-      // moving platform collision
-if (movingPlatform) {
-  const topY = movingPlatform.y;
-  const bottomY = movingPlatform.y + movingPlatform.height;
-  if (ball.vy > 0) {
-    const nextBottom = ball.y + SETTINGS.ballRadius;
-    if (nextBottom >= topY && nextBottom <= bottomY) {
-      if (ball.x >= movingPlatform.x - SETTINGS.ballRadius &&
-          ball.x <= movingPlatform.x + movingPlatform.width + SETTINGS.ballRadius) {
-        ball.y = topY - SETTINGS.ballRadius;
-        ball.vy = -SETTINGS.bounceStrength * 0.85;
-      }
-    }
-  }
-}
+        // side bumper collisions (capsule vs circle, matches visual angle)
+        for (let i = 0; i < bumpers.length; i++) {
+        const b = bumpers[i];
+        const rBall = SETTINGS.ballRadius;
+        const rCap  = b.radius; // bumper thickness/2
+
+        // segment A->B (centerline)
+        const ax = b.p1.x, ay = b.p1.y;
+        const bx = b.p2.x, by = b.p2.y;
+        const abx = bx - ax, aby = by - ay;
+        const abLen2 = abx * abx + aby * aby;
+
+        // closest point on segment to ball center
+        let t = 0.5;
+        if (abLen2 > 0) {
+            t = ((ball.x - ax) * abx + (ball.y - ay) * aby) / abLen2;
+        }
+        t = clamp(t, 0, 1);
+        const px = ax + abx * t;
+        const py = ay + aby * t;
+
+        // vector from closest point to ball center
+        let dx = ball.x - px;
+        let dy = ball.y - py;
+        const dist = Math.hypot(dx, dy);
+        const minDist = rBall + rCap;
+
+        if (dist < minDist) {
+            // collision normal points from bumper to ball
+            let nx, ny;
+            if (dist > 1e-6) {
+            nx = dx / dist; ny = dy / dist;
+            } else {
+            // fallback normal: push toward center of field
+            nx = (b.side === "left") ? 1 : -1;
+            ny = 0;
+            }
+
+            // positional correction (separate by penetration along normal)
+            const pen = (minDist - dist);
+            ball.x += nx * pen;
+            ball.y += ny * pen;
+
+            // reflect velocity about the normal (with a friendly bounce)
+            const restitution = 0.85;
+            const [nvx, nvy] = reflect(ball.vx, ball.vy, nx, ny, restitution);
+            ball.vx = nvx;
+            ball.vy = nvy;
+
+            // tiny extra lift so it doesn't feel dead-flat
+            ball.vy -= 20;
+
+            // gentle bias toward the center (purely for feel)
+            if (b.side === "left") {
+            ball.vx = Math.max(ball.vx, ball.vx + 30);
+            } else {
+            ball.vx = Math.min(ball.vx, ball.vx - 30);
+            }
+        }
+        }
+
+
+
+
+
+        // moving platform collision (swept so fast balls don't fall through)
+        if (movingPlatform) {
+        const topY = movingPlatform.y;
+        const platLeft = movingPlatform.x;
+        const platRight = movingPlatform.x + movingPlatform.width;
+
+        const prevBottom = prevY + SETTINGS.ballRadius;
+        const currBottom = ball.y + SETTINGS.ballRadius;
+
+        // only if we're moving downward
+        if (ball.vy > 0) {
+            // did we cross the platform top between last frame and now?
+            const crossedDownThroughTop = (prevBottom <= topY) && (currBottom >= topY);
+
+            // are we horizontally over the platform (with a little forgiveness)?
+            const overPlatform =
+            ball.x >= platLeft - SETTINGS.ballRadius &&
+            ball.x <= platRight + SETTINGS.ballRadius;
+
+            if (crossedDownThroughTop && overPlatform) {
+            // snap to the top and bounce
+            ball.y = topY - SETTINGS.ballRadius;
+            ball.vy = -SETTINGS.bounceStrength * 0.85;
+            }
+        }
+        }
+
 
 
 
@@ -928,9 +1323,58 @@ if (movingPlatform) {
         peg.hit = true;
         peg.el.classList.add("hit");
 
-        // score for any peg
-        totalScore += SETTINGS.scorePerHit;
+            // --- COMBO LOGIC for this shot (main + bonus balls) ---
+          // every peg we hit during this shot increments the shared counter
+          currentComboHits += 1;
+
+          // check thresholds
+          if (currentComboHits === 10) {
+            // COMBO BONUS
+            showCombo("COMBO BONUS", "10,000");
+            totalScore += 10000;
+            currentComboMult = 2;  // from now on, pegs = 2x
+            } else if (currentComboHits === 20) {
+            // MEGA COMBO
+            showCombo("MEGA COMBO", "50,000");
+            totalScore += 50000;
+            currentComboMult = 5;  // from now on, pegs = 5x
+            // 👇 NEW: drop an extra ball for the mega
+            spawnBonusBallAtTop();
+            }
+
+
+          // score THIS peg with current combo multiplier
+          const pegPoints = SETTINGS.scorePerHit * currentComboMult;
+          totalScore += pegPoints;
+          updateHUD();
+
+        
+
+        // after hitting this peg, check if we cleared the board
+        if (pegs.every(p => p.hit)) {
+        clearedAllThisRound = true;
+
+        // show the big bonus once
+        if (!clearBonusShown) {
+            totalScore += 100000;
+            updateHUD();
+            showClearBonus();
+            clearBonusShown = true;
+        }
+
+        // ⬇️ force the round to be "done shooting"
+        ballsLeft = 0;          // no more shots this round
+        awaitingDrop = false;   // don't wait for tap
         updateHUD();
+
+        // when this ball finishes and lands in a well, the loop condition
+        // (activeBalls.length === 0 && ballsLeft <= 0) will be true
+        // and the round will end automatically
+        }
+
+
+        
+
 
         // special behaviors
         if (peg.type === "special") {
@@ -1017,11 +1461,22 @@ if (movingPlatform) {
     
 
     function finishRound() {
-      // move to next question
-      currentQuestionIndex++;
-      gameRunning = false;
-      showNextQuestion();
+    // if player cleared every peg in this round, big bonus!
+    if (clearedAllThisRound && !clearBonusShown) {
+    totalScore += 100000;
+    updateHUD();
+    showClearBonus();
+    clearBonusShown = true;
     }
+
+
+    // move to next question
+    currentQuestionIndex++;
+    gameRunning = false;
+    showNextQuestion();
+    }
+
+
 
     /**********************
      * FX
@@ -1042,43 +1497,128 @@ if (movingPlatform) {
       setTimeout(() => fx.remove(), 450);
     }
 
-function makeBigConfetti(x, y) {
-  for (let i = 0; i < 18; i++) {
-    const piece = document.createElement("div");
-    piece.className = "confetti-piece";
-    piece.style.left = (x - 6) + "px";
-    piece.style.top = (y - 6) + "px";
-    const dx = (Math.random() - 0.5) * 160;
-    const dy = (Math.random() - 0.5) * 160;
-    const rot = (Math.random() * 360) + "deg";
-    piece.style.setProperty("--tx", dx + "px");
-    piece.style.setProperty("--ty", dy + "px");
-    piece.style.setProperty("--rot", rot);
-    piece.style.background = ["#f97316","#f43f5e","#3b82f6","#22c55e","#eab308"][i % 5];
-    gameFieldEl.appendChild(piece);
-    setTimeout(() => piece.remove(), 750);
-  }
-}
+    // --- geometry helpers for capsule collisions ---
+    function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+    function reflect(vx, vy, nx, ny, restitution) {
+      // reflect velocity about normal n, with bounce factor
+      const vn = vx * nx + vy * ny;
+      if (vn >= 0) return [vx, vy]; // already moving away
+      const k = (1 + restitution) * vn;
+      return [vx - k * nx, vy - k * ny];
+    }
+
+
+    function makeBigConfetti(x, y) {
+      for (let i = 0; i < 18; i++) {
+        const piece = document.createElement("div");
+        piece.className = "confetti-piece";
+        piece.style.left = (x - 6) + "px";
+        piece.style.top = (y - 6) + "px";
+        const dx = (Math.random() - 0.5) * 160;
+        const dy = (Math.random() - 0.5) * 160;
+        const rot = (Math.random() * 360) + "deg";
+        piece.style.setProperty("--tx", dx + "px");
+        piece.style.setProperty("--ty", dy + "px");
+        piece.style.setProperty("--rot", rot);
+        piece.style.background = ["#f97316","#f43f5e","#3b82f6","#22c55e","#eab308"][i % 5];
+        gameFieldEl.appendChild(piece);
+        setTimeout(() => piece.remove(), 750);
+      }
+    }
 
 function explodeBombAt(x, y) {
   for (let i = 0; i < pegs.length; i++) {
     const p = pegs[i];
     if (p.hit) continue;
+
     const dx = p.x - x;
     const dy = p.y - y;
     const dist = Math.sqrt(dx * dx + dy * dy);
+
     if (dist <= SETTINGS.bombRadius) {
+      // mark peg hit
       p.hit = true;
       p.el.classList.add("hit");
-      totalScore += SETTINGS.scorePerHit;
+
+      // bomb hits ALSO count toward this shot's combo
+      currentComboHits += 1;
+
+      // 10-hit combo from bomb
+      if (currentComboHits === 10) {
+        showCombo("COMBO BONUS", "10,000");
+        totalScore += 10000;
+        currentComboMult = 2;
+      }
+      // 20-hit mega combo from bomb
+      else if (currentComboHits === 20) {
+        showCombo("MEGA COMBO", "50,000");
+        totalScore += 50000;
+        currentComboMult = 5;
+        // extra ball for MEGA
+        spawnBonusBallAtTop();
+      }
+
+      // score this peg using CURRENT combo multiplier
+      const pegPoints = SETTINGS.scorePerHit * currentComboMult;
+      totalScore += pegPoints;
+
       makeSpark(p.x, p.y);
+
+      // remove DOM peg after animation
       setTimeout(() => {
-        if (p.el && p.el.parentNode) p.el.parentNode.removeChild(p.el);
+        if (p.el && p.el.parentNode) {
+          p.el.parentNode.removeChild(p.el);
+        }
       }, 300);
     }
   }
+
   updateHUD();
+
+  // big boom at center
+  makeBigConfetti(x, y);
 }
+
+
+
+    function showCombo(title, pointsText) {
+      const popup = document.getElementById("comboPopup");
+      const tEl = document.getElementById("comboTitle");
+      const pEl = document.getElementById("comboPoints");
+      if (!popup || !tEl || !pEl) return;
+
+      tEl.textContent = title;
+      pEl.textContent = pointsText;
+      popup.classList.add("active");
+
+      // if this is the big one, make it rain 🎉
+      if (title === "MEGA COMBO") {
+        const rainBox = document.getElementById("emojiRainContainer");
+        if (rainBox) {
+          for (let i = 0; i < 20; i++) {
+            const drop = document.createElement("div");
+            drop.className = "rain-emoji";
+            // reuse a round emoji if you have ROUND_EMOJI_SETS, else just use 💥
+            let em = "💥";
+            if (typeof ROUND_EMOJI_SETS !== "undefined" && ROUND_EMOJI_SETS.length > 0) {
+              const set = ROUND_EMOJI_SETS[Math.floor(Math.random() * ROUND_EMOJI_SETS.length)];
+              em = set[0] || em;
+            }
+            drop.textContent = em;
+            drop.style.left = Math.random() * 100 + "vw";
+            drop.style.animationDelay = (Math.random() * 0.6) + "s";
+            rainBox.appendChild(drop);
+            setTimeout(() => drop.remove(), 2500);
+          }
+        }
+      }
+
+      setTimeout(() => {
+        popup.classList.remove("active");
+      }, 1100);
+    }
+
+
 
 
     function endGame() {
@@ -1097,6 +1637,36 @@ function explodeBombAt(x, y) {
         setTimeout(() => re.remove(), 2500);
       }
     }
+
+
+    function showClearBonus() {
+    const overlay = document.getElementById("clearBonus");
+    if (!overlay) return;
+
+    overlay.classList.add("active");
+    overlay.style.display = "flex";
+
+    // extra emoji rain on bonus
+    for (let i = 0; i < 25; i++) {
+        const re = document.createElement("div");
+        re.className = "rain-emoji";
+        re.textContent = ROUND_EMOJI_SETS[Math.floor(Math.random() * ROUND_EMOJI_SETS.length)][0];
+        re.style.left = Math.random() * 100 + "vw";
+        re.style.animationDelay = (Math.random() * 0.6) + "s";
+        emojiRainContainer.appendChild(re);
+        setTimeout(() => re.remove(), 2500);
+    }
+
+    // hide after a bit
+    setTimeout(() => {
+        overlay.classList.remove("active");
+        overlay.style.display = "none";
+    }, 2200);
+    }
+    
+
+
+    
 
     /**********************
      * RESIZE
