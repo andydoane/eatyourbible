@@ -129,14 +129,17 @@ header{display:none}
         </div>
       </div>
 
-      <div id="view-title" class="view">
-        <div class="section center" style="min-height:38vh">
-          <div class="title">Emoji Breaker</div>
-          <div class="subtitle">Answer Bible questions, then break the emoji!<br/><span class="tag">10 rounds + Boss</span></div>
-          <div class="spacer"></div>
-          <button class="btn" id="btnStart">Start</button>
-        </div>
-      </div>
+<div id="view-title" class="view">
+  <div class="section center" style="min-height:38vh">
+    <div class="title">Emoji Breaker</div>
+    <div class="subtitle">Answer Bible questions, then break the emoji!<br/><span class="tag">10 rounds + Boss</span></div>
+    <label for="playerNameInput" style="display:block;margin-top:.4rem; margin-bottom:.3rem;">Enter your name to play:</label>
+    <input id="playerNameInput" type="text" maxlength="18" placeholder="Your name" style="padding:0.5rem 0.6rem;font-size:1rem;width:min(260px,80vw);border-radius:10px;border:1px solid rgba(255,255,255,.22);background:#12163a;color:#fff;">
+    <div id="nameError" style="color:#ff5a5f;font-size:.9rem; min-height:1.1rem;"></div>
+    <button class="btn" id="btnStart">Start</button>
+  </div>
+</div>
+
 
       <div id="view-question" class="view">
         <div class="section">
@@ -211,8 +214,9 @@ header{display:none}
   // -----------------------------
   const $ = s => document.querySelector(s);
   const show = id => document.querySelectorAll('.view').forEach(v=>v.id===id?v.classList.add('active'):v.classList.remove('active'));
-  const scoreEl = $('#score');
-  let score = 0, totalBroken = 0;
+    const scoreEl = $('#score');
+    let score = 0, totalBroken = 0, correctCount = 0;
+
   // --- Secret boss jump ---
 const SECRET_KEY = 'b';
 let SECRET_JUMP = false;
@@ -270,6 +274,27 @@ function toast(msg){
   setTimeout(()=> t.classList.add('hide'), 1200);
   setTimeout(()=> t.remove(), 1700);
 }
+
+// === GOOGLE SHEETS ENDPOINT ===
+// Paste your deployed Apps Script URL between the quotes:
+const SCORE_ENDPOINT = "https://script.google.com/macros/s/AKfycbwNiFpTAa-OquPU-fM4gyJAIUR5NoyLIOdaXgQaq0FrAV9aE582V4xRLivzVr7DXGiE/exec";
+
+function sendScoreToSheet(payload) {
+  if (!SCORE_ENDPOINT) return;
+  // Fire and forget (no-cors avoids CORS errors on static hosting)
+  fetch(SCORE_ENDPOINT, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      ...payload,
+      userAgent: navigator.userAgent
+    })
+  }).catch(err => {
+    console.warn("Score submit failed:", err);
+  });
+}
+
 
 /*
 
@@ -406,17 +431,35 @@ function toast(msg){
   // Navigation state
   // -----------------------------
   let roundIndex = 0; // 0..9
-  $('#btnStart').addEventListener('click', startGameFlow);
+
+    $('#btnStart').addEventListener('click', () => {
+    const nameInput = document.getElementById('playerNameInput');
+    const err = document.getElementById('nameError');
+    const val = (nameInput?.value || '').trim();
+
+    if (!val) {
+        if (err) err.textContent = "Please enter your name.";
+        return;
+    }
+    if (err) err.textContent = "";
+    window.playerName = val; // store globally for end-of-game save
+
+    startGameFlow();
+    });
+
+
   $('#btnReplay').addEventListener('click', ()=>{ resetAll(); startGameFlow(); });
   $('#btnTitle').addEventListener('click', ()=>{ resetAll(); show('view-title'); });
 
-  function resetAll(){
-    score = 0; totalBroken = 0; roundIndex = 0; updateScore();
-    bossState.reset();
-    $('#finalScore').textContent = '0';
-    $('#finalBroken').textContent = '0';
-    $('#finalBoss').textContent = '0';
-  }
+function resetAll(){
+  score = 0; totalBroken = 0; correctCount = 0; roundIndex = 0; updateScore();
+  bossState.reset();
+  $('#finalScore').textContent = '0';
+  $('#finalBroken').textContent = '0';
+  $('#finalBoss').textContent = '0';
+}
+
+
 function updateScore(){
   scoreEl && (scoreEl.textContent = score); // header is hidden now
   if (scoreBarEl) scoreBarEl.textContent = score; // show score in bottom-right pill
@@ -498,13 +541,17 @@ order.forEach((ansIndex)=>{
   btn.innerHTML = `<span class="emo">${emo}</span><span class="lbl">${label}</span>`;
 
   btn.addEventListener('click', async ()=>{
-    if (isCorrect){
-      score += 100; updateScore();
-      await modal("✅ Correct!", `Nice work!`);
-    } else {
-      const right = qo.ans[correctOriginal][1];
-      await modal("❌ Incorrect", `Correct answer:<br><b>${right}</b>`);
-    }
+
+        if (isCorrect){
+        correctCount++;
+        score += 100; updateScore();
+        await modal("✅ Correct!", `Nice work!`);
+        } else {
+        const right = qo.ans[correctOriginal][1];
+        await modal("❌ Incorrect", `Correct answer:<br><b>${right}</b>`);
+        }
+
+
     cleanup();
     resolve();
   });
@@ -1239,12 +1286,27 @@ shieldLeftEl.textContent = left;
     });
   }
 
-  function showEnd(){
+    function showEnd(){
     $('#finalScore').textContent = score;
     $('#finalBroken').textContent = totalBroken;
     $('#finalBoss').textContent = bossState.hits;
+
+    // --- Send to Google Sheet ---
+    try {
+        sendScoreToSheet({
+        name: window.playerName || "Player",
+        score: score,
+        correct: correctCount,
+        totalQuestions: QUESTIONS.length
+        // timestamp is added by Apps Script
+        });
+    } catch (e) {
+        console.warn("Could not send score:", e);
+    }
+
     show('view-end');
-  }
+    }
+
 
   // -----------------------------
   // Initial title after splash modal confirming controls
