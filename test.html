@@ -177,7 +177,7 @@
   <!-- SPLASH: says best in horizontal (as requested), but game is vertical -->
   <section id="splash" class="screen active">
     <div class="card" style="text-align:center">
-      <h1 class="title">Emoji Cube Runner v9</h1>
+      <h1 class="title">Emoji Cube Runner v10</h1>
       <p class="subtitle">Game is best in <b>horizontal mode</b> — but don’t worry, this one runs great vertically too.</p>
       <button id="btnStart" class="btn">Go fullscreen and start</button>
     </div>
@@ -889,7 +889,9 @@ function update(dt){
     // player (rocket emoji only)
     const fontSize = Math.round(40*dpr);
     ctx.save();
-    ctx.font = `${fontSize}px system-ui, -apple-system, sans-serif`;
+    ctx.font = `${fontSize}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",system-ui,-apple-system,sans-serif`;
+ctx.fillStyle = '#ffffff';
+
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
@@ -912,7 +914,9 @@ function update(dt){
     for (const o of objects) {
       const font = Math.round(Math.max(16, o.sizePx));
       ctx.save();
-      ctx.font = `${font}px system-ui, -apple-system, sans-serif`;
+     ctx.font = `${font}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",system-ui,-apple-system,sans-serif`;
+ctx.fillStyle = '#ffffff';
+
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.translate(o.x, o.y);
@@ -934,9 +938,10 @@ function update(dt){
       ctx.save();
       if(p.emoji){
         ctx.globalAlpha = a;
-        ctx.font = `${Math.round(p.size)}px system-ui, -apple-system, sans-serif`;
+        ctx.font = `${Math.round(p.size)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",system-ui,-apple-system,sans-serif`;
         ctx.textAlign='center'; ctx.textBaseline='middle';
         ctx.fillText(p.emoji, p.x, p.y);
+
       }else{
         ctx.fillStyle = `rgba(255,255,255,${a.toFixed(3)})`;
         ctx.beginPath();
