@@ -177,7 +177,7 @@
   <!-- SPLASH: says best in horizontal (as requested), but game is vertical -->
   <section id="splash" class="screen active">
     <div class="card" style="text-align:center">
-      <h1 class="title">Emoji Cube Runner v8</h1>
+      <h1 class="title">Emoji Cube Runner v9</h1>
       <p class="subtitle">Game is best in <b>horizontal mode</b> — but don’t worry, this one runs great vertically too.</p>
       <button id="btnStart" class="btn">Go fullscreen and start</button>
     </div>
@@ -413,6 +413,12 @@ $('#btnStart').addEventListener('click', async ()=>{
   show('#title');
 });
 $('#btnTitleStart').addEventListener('click', ()=>{
+  // Ask for tilt permission on iOS Safari (motion & orientation access)
+  if (typeof DeviceOrientationEvent !== 'undefined' &&
+      typeof DeviceOrientationEvent.requestPermission === 'function') {
+    DeviceOrientationEvent.requestPermission().catch(()=>{});
+  }
+
   state.round = 0;
   state.score = 0;
   state.correct = 0;
@@ -420,6 +426,7 @@ $('#btnTitleStart').addEventListener('click', ()=>{
   state.answered = 0;
   loadQuestion();
 });
+
 
 /* ==============================
    QUESTIONS
@@ -879,7 +886,7 @@ function update(dt){
     drawStarfield(ctx, w, h);
 
 
-    // player
+    // player (rocket emoji only)
     const fontSize = Math.round(40*dpr);
     ctx.save();
     ctx.font = `${fontSize}px system-ui, -apple-system, sans-serif`;
@@ -895,21 +902,13 @@ function update(dt){
     if(visible){
       ctx.translate(player.x, player.y);
       ctx.rotate((-45 * Math.PI/180) + player.tilt*0.25); // point "up", lean to turn
-
-      // fallback circle so the rocket is always visible
-      ctx.beginPath();
-      ctx.arc(0, 0, 22*dpr, 0, Math.PI*2);
-      ctx.fillStyle = '#ffffff';
-      ctx.fill();
-
-      // rocket emoji (if the device supports it)
-      ctx.fillStyle = '#000000'; // text color for non-emoji fallback
       ctx.fillText(EMOJI.rocket, 0, 0);
     }
     ctx.restore();
 
 
-    // objects (fixed size)
+
+    // objects (fixed size, emoji only)
     for (const o of objects) {
       const font = Math.round(Math.max(16, o.sizePx));
       ctx.save();
@@ -920,24 +919,11 @@ function update(dt){
       ctx.rotate(o.rot);
 
       const ch = o.kind === 'asteroid' ? EMOJI.asteroid : o.type.emoji;
-
-      // fallback colored circle so the object is always visible
-      const radius = (o.sizePx || 24) * 0.5 * dpr;
-      if (o.kind === 'asteroid') {
-        ctx.fillStyle = '#8b5a2b'; // brown-ish rock color
-      } else {
-        ctx.fillStyle = '#ffd54f'; // gold-ish pickup color
-      }
-      ctx.beginPath();
-      ctx.arc(0, 0, radius, 0, Math.PI * 2);
-      ctx.fill();
-
-      // emoji on top (if supported)
-      ctx.fillStyle = '#000000';
       ctx.fillText(ch, 0, 0);
 
       ctx.restore();
     }
+
 
 
 
