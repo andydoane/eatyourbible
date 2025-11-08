@@ -1,1714 +1,1167 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>🔴 Emoji Drop ⬇️</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <style>
-    :root {
-      --bg: #0f172a;
-      --panel: rgba(15, 23, 42, 0.95);
-      --accent: #f97316;
-      --correct: #22c55e;
-      --incorrect: #ef4444;
-      --text: #e2e8f0;
-      --well1: #0ea5e9;
-      --well2: #fbbf24;
-      --well3: #f43f5e;
-      --ui-z: 100;
-      --game-z: 50;
-      --app-h: 100vh;
-    }
-    * {
-      box-sizing: border-box;
-      -webkit-tap-highlight-color: transparent;
-    }
-    body {
-      margin: 0;
-      background: var(--bg);
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: var(--text);
-      height: var(--app-h);
-      overflow: hidden;
-    }
-    #app {
-      position: relative;
-      width: 100vw;
-      height: var(--app-h);
-      max-width: 650px; /* PC just scales up, centered */
-      margin: 0 auto;
-      background: radial-gradient(circle at top, #1f2937 0%, #020617 50%, #000 100%);
-    }
-    .screen {
-      position: absolute;
-      inset: 0;
-      display: none;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      padding: 1.2rem;
-      gap: 1rem;
-    }
-    .screen.active {
-      display: flex;
-    }
-    .card {
-      background: var(--panel);
-      border: 2px solid rgba(248, 250, 252, 0.05);
-      border-radius: 1.25rem;
-      padding: 1.25rem 1.5rem;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
-      text-align: center;
-      width: min(92vw, 500px);
-    }
-    h1, h2, h3 {
-      margin: 0.2rem 0;
-    }
-    button {
-      background: var(--accent);
-      border: none;
-      color: white;
-      padding: 0.8rem 1.2rem;
-      border-radius: 0.85rem;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform 0.1s;
-      width: 100%;
-      max-width: 420px;
-    }
-    button:active {
-      transform: scale(0.97);
-    }
-    .question-options {
-      display: flex;
-      flex-direction: column;
-      gap: 0.6rem;
-      width: 100%;
-    }
-    .answer-btn {
-      background: rgba(15, 118, 110, 0.2);
-      border: 1px solid rgba(148, 163, 184, 0.3);
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      justify-content: flex-start;
-    }
-    .answer-emoji {
-      font-size: 1.4rem;
-    }
-
-    /* Game screen */
-    #gameScreen {
-      background: transparent;
-      align-items: stretch;
-      justify-content: flex-start;
-      padding: 0;
-      height: var(--app-h);
-    }
-    #gameHUD {
-      position: absolute;
-      top: 0.35rem;
-      left: 0.35rem;
-      right: 0.35rem;
-      display: flex;
-      justify-content: space-between;
-      gap: 0.35rem;
-      z-index: var(--ui-z);
-      font-size: 0.7rem;
-    }
-    .hud-box {
-      background: rgba(15, 23, 42, 0.4);
-      border: 1px solid rgba(248, 250, 252, 0.05);
-      border-radius: 0.75rem;
-      padding: 0.4rem 0.55rem;
-      min-width: 4.5rem;
-      text-align: center;
-    }
-    #gameField {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      overflow: hidden;
-    }
-
-    #clearBonus {
-    position: absolute;
-    inset: 0;
-    z-index: 1200;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-    }
-    #clearBonus.active {
-    display: flex;
-    }
-    .clear-bonus-bg {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(120deg, #f43f5e, #f97316, #fbbf24, #22c55e, #3b82f6, #8b5cf6);
-    background-size: 400% 400%;
-    animation: bonus-rainbow 2s linear infinite;
-    opacity: 0.5;
-    }
-    @keyframes bonus-rainbow {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-    }
-    .clear-bonus-text {
-    position: relative;
-    font-size: clamp(3rem, 8vw, 5.5rem);
-    font-weight: 900;
-    color: #fff;
-    text-shadow: 0 0 28px rgba(0,0,0,0.7);
-    transform: scale(1);
-    animation: bonus-pop 0.6s ease-out;
-    }
-    @keyframes bonus-pop {
-    0% { transform: scale(0.2); opacity: 0; }
-    50% { transform: scale(1.05); opacity: 1; }
-    100% { transform: scale(1); }
-    }
-
-
-    .peg {
-    position: absolute;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-    transition: transform 0.25s, opacity 0.25s;
-    }
-
-
-    .peg.hit {
-      transform: scale(0.1) rotate(35deg);
-      opacity: 0;
-    }
-
-    .debug-peg-hitbox {
-    outline: 2px dashed rgba(255, 0, 0, 0.6);
-    border-radius: 999px;
-    }
-
-    .debug-ball-hitbox {
-    outline: 2px solid rgba(0, 255, 0, 0.7);
-    border-radius: 999px;
-    }
-
-
-
-    .ball {
-    position: absolute;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: transparent;       /* no white marble */
-    border-radius: 999px;
-    z-index: calc(var(--game-z) + 5);
-    }
-
-    
-    #arrow {
-      position: absolute;
-      top: 3.2rem;
-      width: 1.25rem;
-      height: 1.25rem;
-      z-index: calc(var(--game-z) + 6);
-      font-size: 1.4rem;
-      text-shadow: 0 2px 5px rgba(0,0,0,.5);
-    }
-
-    #bottomWells {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 2.6rem;           /* shorter bar */
-    min-height: 0;            /* we control it now */
-    display: flex;
-    z-index: calc(var(--game-z) + 2);
-    }
-
-    @supports (padding: max(0px)) {
-  #bottomWells {
-    padding-bottom: env(safe-area-inset-bottom);
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>Emoji Cube Runner</title>
+<style>
+  :root{
+    --bg:#05060a;
+    --panel:#0b0f1a;
+    --accent:#58d3ff;
+    --good:#38d39f;
+    --bad:#ff6b6b;
+    --text:#e8f1ff;
+    --muted:#9fb3cc;
   }
-}
 
+  /* RESET + LAYOUT */
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    overflow:hidden; /* keep it app-like */
+    touch-action:none;
+  }
+  #app{
+    position:relative;
+    width:100vw;
+    height:100vh; /* vertical first */
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .screen{
+    position:absolute; inset:0;
+    display:none;
+    align-items:center; justify-content:center;
+    padding:16px;
+    background:linear-gradient(180deg,#060913 0%, #0b1020 100%);
+  }
+  .screen.active{ display:flex; }
 
+  /* CARDS / BUTTONS */
+  .card{
+    width:min(680px,92vw);
+    background:linear-gradient(180deg,#0c1224 0%, #0a0f1c 100%);
+    border:1px solid #1a2747;
+    box-shadow: 0 10px 30px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.02);
+    border-radius:16px;
+    padding:20px;
+  }
+  .title{
+    font-size:clamp(20px,4vw,28px);
+    margin:0 0 8px 0;
+    letter-spacing:.3px;
+  }
+  .subtitle{
+    font-size:clamp(14px,3.3vw,18px);
+    color:var(--muted);
+    margin:0 0 16px 0;
+  }
+  .btn{
+    display:inline-block;
+    border:0;
+    padding:14px 18px;
+    font-weight:700;
+    font-size:16px;
+    border-radius:12px;
+    background:linear-gradient(180deg,#62e6ff,#3bbdff);
+    color:#002233;
+    cursor:pointer;
+    box-shadow:0 8px 20px rgba(59,189,255,.35);
+    transition:.15s transform ease,.15s filter ease;
+  }
+  .btn:hover{ transform: translateY(-1px); filter:brightness(1.02); }
+  .btn:active{ transform: translateY(1px) scale(.98); }
+  .btn.secondary{
+    background:linear-gradient(180deg,#2b3858,#1b2642);
+    color:#d8e7ff;
+    box-shadow:none;
+    border:1px solid #2e426e;
+  }
 
-    .well {
-    border-top: 3px solid rgba(248, 250, 252, 0.4);
-    display: flex;
-    align-items: center;              /* center vertically */
-    justify-content: center;
-    color: #0f172a;
-    font-size: 0.75rem;
-    font-weight: 700;
-    position: relative;
-    overflow: hidden;
-    line-height: 1;                   /* tighter text */
-    }
+  /* QUESTION UI */
+  .q-title{
+    font-size:clamp(18px,4.4vw,24px);
+    margin:0 0 16px 0;
+  }
+  .answers{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:12px;
+    margin-top:10px;
+  }
+  .answer{
+    width:100%;
+    text-align:left;
+    padding:14px 16px;
+    border-radius:12px;
+    background:#0f1730;
+    border:1px solid #223460;
+    color:#e9f2ff;
+    font-size:16px;
+    cursor:pointer;
+  }
+  .answer .em{margin-right:8px}
 
+  .hud{
+    display:flex; gap:10px; align-items:center; justify-content:space-between;
+    margin-top:8px; color:var(--muted); font-size:14px;
+  }
 
-/* special / bomb pegs glow */
-.peg-special,
-.peg-bomb {
-}
-.peg-special::before,
-.peg-bomb::before {
-  content: "";
-  position: absolute;
-  inset: -6px;
-  border-radius: 999px;
-  background: radial-gradient(circle, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 70%);
-  animation: pegPulse 1.1s ease-in-out infinite;
-  z-index: -1;
-}
-@keyframes pegPulse {
-  0% { transform: scale(0.85); opacity: 0.6; }
-  50% { transform: scale(1.15); opacity: 1; }
-  100% { transform: scale(0.85); opacity: 0.6; }
-}
+  /* POPUPS */
+  .popup{
+    position:absolute; inset:0; display:none; align-items:center; justify-content:center;
+    background:rgba(1,5,12,.5); backdrop-filter: blur(4px);
+    padding:16px;
+  }
+  .popup.active{display:flex;}
+  .popup .card{ text-align:center; }
+  .pop-emoji{ font-size:42px; margin-bottom:2px; }
 
-/* moving platform */
-.moving-platform {
-  position: absolute;
-  background: rgba(248, 250, 252, 0.9);
-  border: 1px solid rgba(15, 23, 42, 0.35);
-  border-radius: 0.5rem;
-  z-index: calc(var(--game-z) + 4);
-  pointer-events: none;
-}
+  /* GAME CANVAS */
+  #gameWrap{
+    position:absolute; inset:0; display:none; align-items:center; justify-content:center;
+    background:radial-gradient(100% 100% at 50% 0%, #0b1020, #05060a 60%);
+  }
+  #gameWrap.active{ display:flex; }
+  #game{
+    width:min(720px,100vw);
+    height:100vh; /* vertical lane full height */
+    display:block;
+    background:transparent;
+    touch-action:none;
+  }
 
-/* side bumpers */
-.side-bumper {
-  position: absolute;
-  background: linear-gradient(90deg, #f43f5e, #f97316, #fbbf24, #22c55e, #3b82f6, #8b5cf6);
-  background-size: 300% 300%;
-  animation: bumperPulse 1.6s linear infinite;
-  border-radius: 999px;
-  filter: drop-shadow(0 4px 10px rgba(0,0,0,0.45));
-  z-index: calc(var(--game-z) + 3);
-  pointer-events: none;
-}
-@keyframes bumperPulse {
-  0%   { background-position: 0% 50%; opacity: 1; }
-  50%  { background-position: 100% 50%; opacity: 0.9; }
-  100% { background-position: 0% 50%; opacity: 1; }
-}
+  /* ON-CANVAS HUD */
+  .gameHud{
+    position:absolute; left:0; right:0; top:8px;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:0 12px; pointer-events:none; font-weight:700; font-size:14px; color:#cfe5ff;
+    text-shadow: 0 1px 2px rgba(0,0,0,.65);
+  }
+  .centerNote{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    font-size:40px; font-weight:900; letter-spacing:.5px; pointer-events:none; opacity:0;
+    text-shadow: 0 6px 20px rgba(0,0,0,.55);
+    transition: opacity .2s ease;
+  }
+  .toast{
+    position:absolute; left:50%; top:24%;
+    transform:translateX(-50%);
+    background:#0d1530; border:1px solid #2a3c6e; color:#e7f0ff; padding:10px 14px; border-radius:999px;
+    font-weight:700; font-size:14px; box-shadow:0 8px 20px rgba(0,0,0,.45);
+    opacity:0; pointer-events:none; transition: opacity .2s ease;
+  }
 
+  /* END SCREEN RAIN */
+  .rain{
+    pointer-events:none; position:absolute; inset:0; overflow:hidden;
+  }
+  .drop{
+    position:absolute; top:-10%; font-size:28px; animation: fall linear forwards;
+  }
+  @keyframes fall{
+    to { transform: translateY(120vh) rotate(360deg); }
+  }
 
-/* big confetti */
-.confetti-piece {
-  position: absolute;
-  width: 10px;
-  height: 14px;
-  opacity: 0;
-  animation: confettiPop 0.7s ease-out forwards;
-}
-@keyframes confettiPop {
-  0% { transform: translate(0,0) rotate(0deg); opacity: 1; }
-  100% { transform: translate(var(--tx), var(--ty)) rotate(var(--rot)); opacity: 0; }
-}
-
-
-    .well-score-burst {
-      position: absolute;
-      bottom: 0.35rem;
-      font-weight: 700;
-      color: #fff;
-      text-shadow: 0 3px 10px rgba(0,0,0,0.6);
-      animation: popUp 0.7s ease-out forwards;
-      left: 50%;
-      transform: translateX(-50%);
-    }
-    @keyframes popUp {
-      0% {transform: translate(-50%, 40%); opacity: 0;}
-      50% {opacity: 1;}
-      100% {transform: translate(-50%, -120%); opacity: 0;}
-    }
-
-    /* combo popups */
-    #comboPopup {
-      position: absolute;
-      inset: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 2000;
-      pointer-events: none;
-    }
-    #comboPopup.active {
-      display: flex;
-    }
-
-    .combo-box {
-      background: rgba(15, 23, 42, 0.9);
-      border: 2px solid rgba(248, 250, 252, 0.2);
-      border-radius: 1rem;
-      padding: 1rem 1.25rem;
-      text-align: center;
-      animation: comboPop 0.4s ease-out;
-      width: 75vw;              /* 👈 75% of screen */
-      max-width: 500px;         /* 👈 don’t get too huge on desktop */
-      box-sizing: border-box;
-    }
-
-        .combo-title {
-        /* big on phones, capped on desktop */
-        font-size: min(9vw, 3.3rem);
-        font-weight: 800;
-        margin-bottom: 0.35rem;
-        line-height: 1;
-        }
-        .combo-points {
-        /* even bigger number */
-        font-size: min(12vw, 4.6rem);
-        font-weight: 900;
-        letter-spacing: 0.04em;
-        line-height: 0.95;
-        }
-
-    @keyframes comboPop {
-      0% { transform: scale(.3); opacity: 0; }
-      60% { transform: scale(1.05); opacity: 1; }
-      100% { transform: scale(1); }
-    }
-
-
-    .popup {
-      position: absolute;
-      inset: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 999;
-      background: rgba(0, 0, 0, 0.5);
-      padding: 1rem;
-    }
-    .popup.active {
-      display: flex;
-    }
-    .popup-content {
-      background: #1f2937;
-      border: 2px solid rgba(226, 232, 240, 0.1);
-      border-radius: 1.2rem;
-      padding: 1.1rem 1.2rem 1rem;
-      text-align: center;
-      width: min(90vw, 350px);
-    }
-
-    #emojiRainContainer {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      overflow: hidden;
-      z-index: 9999;
-    }
-    .rain-emoji {
-      position: absolute;
-      top: -5rem;
-      font-size: 2rem;
-      animation: fall 2.2s linear forwards;
-    }
-    @keyframes fall {
-      to { transform: translateY(110vh); opacity: 0; }
-    }
-
-    /* orientation helper (just visual hint) */
-    @media (orientation: landscape) {
-      .landscape-hint {
-        display: block;
-      }
-    }
-    .landscape-hint {
-      display: none;
-      position: absolute;
-      top: .5rem;
-      right: .5rem;
-      background: rgba(248,113,113,.18);
-      border: 1px solid rgba(248, 113, 113, .6);
-      padding: .25rem .5rem;
-      border-radius: .5rem;
-      font-size: .65rem;
-    }
-  </style>
+  /* SMALL HELPER BADGES */
+  .badge{ padding:6px 8px; background:#0d1430; border:1px solid #2a3c6e; border-radius:8px }
+</style>
 </head>
 <body>
-  <div id="app">
-    <!-- Splash -->
-    <div id="splashScreen" class="screen active">
+<div id="app">
+  <!-- SPLASH: says best in horizontal (as requested), but game is vertical -->
+  <section id="splash" class="screen active">
+    <div class="card" style="text-align:center">
+      <h1 class="title">Emoji Cube Runner</h1>
+      <p class="subtitle">Game is best in <b>horizontal mode</b> — but don’t worry, this one runs great vertically too.</p>
+      <button id="btnStart" class="btn">Go fullscreen and start</button>
+    </div>
+  </section>
+
+  <!-- TITLE -->
+  <section id="title" class="screen">
+    <div class="card" style="text-align:center">
+      <h2 class="title">🚀 Emoji Cube Runner</h2>
+      <p class="subtitle">Answer Bible questions, then fly your rocket! Avoid asteroids, collect treasure, and rack up points.</p>
+      <div class="hud" style="justify-content:center">
+        <span class="badge">Vertical • Mobile First</span>
+        <span class="badge">Tilt or Arrow Keys</span>
+        <span class="badge">10 Rounds + Bonus</span>
+      </div>
+      <br/>
+      <button id="btnTitleStart" class="btn">Start Game</button>
+    </div>
+  </section>
+
+  <!-- QUESTION -->
+  <section id="question" class="screen">
+    <div class="card">
+      <div class="hud">
+        <div>Round <span id="qRound">1</span>/10</div>
+        <div>Score: <b id="qScore">0</b></div>
+      </div>
+      <h3 id="qText" class="q-title">Question text…</h3>
+      <div id="answers" class="answers"></div>
+    </div>
+
+    <!-- Right/Wrong popup -->
+    <div id="answerPopup" class="popup">
       <div class="card">
-        <h1>📱 Vertical Mode</h1>
-        <p>This game is best in vertical (portrait) mode.</p>
-        <button id="splashOkayBtn">Okay!</button>
+        <div id="answerFace" class="pop-emoji">✅</div>
+        <h4 id="answerMsg" class="title" style="margin-bottom:12px">Correct!</h4>
+        <p id="answerExplain" class="subtitle" style="margin-bottom:16px">Nice job.</p>
+        <button id="btnToHow" class="btn">Continue</button>
       </div>
     </div>
+  </section>
 
-    <!-- Title -->
-    <div id="titleScreen" class="screen">
-      <div class="card">
-        <h1>🔴 Emoji Drop ⬇️</h1>
-        <p>Answer Bible questions ➜ drop balls ➜ smash emoji ➜ score big.</p>
-        <button id="startBtn">Go fullscreen and start</button>
-      </div>
+  <!-- HOW TO PLAY -->
+  <section id="howto" class="screen">
+    <div class="card" style="text-align:center">
+      <div style="font-size:46px;margin-bottom:4px">📱⬅️➡️</div>
+      <h3 class="title">Tilt your device or use the arrows to steer your ship.</h3>
+      <p class="subtitle">Collect the gems and stars for points, but watch out for asteroids! You’ll speed up as you survive.</p>
+      <button id="btnPlay" class="btn">Start Round</button>
     </div>
+  </section>
 
-    <!-- Question -->
-    <div id="questionScreen" class="screen">
-      <div class="card" id="questionCard">
-        <h2 id="questionText">Question goes here</h2>
-        <div id="questionNumber" style="margin-bottom:.5rem;font-size:.75rem;opacity:.7;">Question 1 of 10</div>
-        <div class="question-options" id="answerOptions"></div>
-      </div>
+  <!-- GAME -->
+  <section id="gameWrap">
+    <canvas id="game"></canvas>
+    <div class="gameHud">
+      <div>⏱️ <span id="timeLeft">30</span>s</div>
+      <div>Score: <span id="gScore">0</span></div>
+      <div>Speed: <span id="spd">1.0x</span></div>
     </div>
+    <div id="countdown" class="centerNote">3</div>
+    <div id="centerNote" class="centerNote">Time’s up!</div>
+    <div id="toast" class="toast">+100 ⭐</div>
+  </section>
 
-    <!-- Game -->
-    <div id="gameScreen" class="screen">
-      <div id="gameHUD">
-        <div class="hud-box" id="hudRound">Round 1 / 10</div>
-        <div class="hud-box" id="hudBalls">Balls: 5</div>
-        <div class="hud-box" id="hudScore">Score: 0</div>
-      </div>
-      <div id="gameField"></div>
-
-        <div id="bottomWells">
-        <div class="well" data-score="1000" style="flex: 1; background: rgba(14,165,233,0.85);">1K</div>
-        <div class="well" data-score="5000" style="flex: 1; background: rgba(251,191,36,0.85);">5K</div>
-        <div class="well" data-score="10000" data-extraball="1" style="flex: .5; background: rgba(244,63,94,0.85);">10K</div>
-        <div class="well" data-score="5000" style="flex: 1; background: rgba(251,191,36,0.85);">5K</div>
-        <div class="well" data-score="1000" style="flex: 1; background: rgba(14,165,233,0.85);">1K</div>
-        </div>
-
-      
-
-      <div class="landscape-hint">portrait game</div>
+  <!-- ROUND SUMMARY POPUP -->
+  <div id="roundPopup" class="popup">
+    <div class="card" style="text-align:center">
+      <div class="pop-emoji">📊</div>
+      <h4 class="title">Round Results</h4>
+      <p class="subtitle">Round points: <b id="roundPts">0</b><br/>Total score: <b id="totalPts">0</b></p>
+      <button id="btnNext" class="btn">Next Question</button>
     </div>
-
-    <!-- End Screen -->
-    <div id="endScreen" class="screen">
-      <div class="card">
-        <h1>Game Over</h1>
-        <p id="finalScoreText">You scored 0 points.</p>
-        <p id="finalQA">Correct: 0 · Incorrect: 0</p>
-        <button onclick="location.reload()">Play again</button>
-      </div>
-    </div>
-
-    <!-- Popup -->
-    <div id="popup" class="popup">
-      <div class="popup-content">
-        <h3 id="popupTitle">Popup</h3>
-        <p id="popupMessage">Popup text</p>
-        <button id="popupBtn">OK</button>
-      </div>
-    </div>
-
-    <!-- Emoji rain -->
-    <div id="emojiRainContainer"></div>
-
-    <!-- Clear-all bonus overlay -->
-    <div id="clearBonus">
-      <div class="clear-bonus-bg"></div>
-      <div class="clear-bonus-text">100,000!</div>
-    </div>
-
-    <!-- Combo popup (moved OUT of clearBonus) -->
-    <div id="comboPopup">
-      <div class="combo-box">
-        <div class="combo-title" id="comboTitle">COMBO BONUS</div>
-        <div class="combo-points" id="comboPoints">10,000</div>
-      </div>
-    </div>
-
-
-        
-
   </div>
 
-  <script>
-    /**********************
-     * TWEAKABLE SETTINGS *
-     **********************/
-    const SETTINGS = {
-      arrowSpeed: 1.6,           // how fast the arrow sweeps left-right
-      gravity: 1200,             // px / s^2
-      bounceStrength: 420,       // how hard balls bounce off pegs
-      pegRadius: 20,             // match .peg size
-      ballRadius: 15,
-      rows: 8,                   // number of emoji rows
-      rowSpacing: 70,            // vertical spacing
-      topOffset: 110,            // where pegs start
-      ballCountPerRound: 5,
-      scorePerHit: 300,          // per emoji hit
-      emojiHitFX: ["✨","💥","🎉","⚡","🌈"],
-        emojiRainCount: 30,
-        launchSpeed: 520,
-        launchStartY: 50,
-        specialEmoji: "💎",
-        bombEmoji: "💣",
-        bombRadius: 120,
-        platformSpeed: 90
-};
+  <!-- FINAL -->
+  <section id="final" class="screen">
+    <div class="card" style="text-align:center">
+      <div style="font-size:42px">🏁</div>
+      <h3 class="title">All Rounds Complete!</h3>
+      <p class="subtitle">Correct: <b id="finCorrect">0</b> • Incorrect: <b id="finWrong">0</b><br/>Total Points: <b id="finScore">0</b></p>
+      <button id="btnPlayBonus" class="btn">Bonus Survival Round</button>
+      <button id="btnRestart" class="btn secondary" style="margin-left:8px">Play Again</button>
+    </div>
+    <div id="rain" class="rain" aria-hidden="true"></div>
+  </section>
 
-const BALL_EMOJI = ["🔴","🥎","🎱","🍩","🏀","🧿","🏐","🌍","🍪","⚽"];
-let currentBallEmoji = "🔴";
+  <!-- BONUS SUMMARY -->
+  <div id="bonusPopup" class="popup">
+    <div class="card" style="text-align:center">
+      <div class="pop-emoji">🔥</div>
+      <h4 class="title">Bonus Round Over!</h4>
+      <p class="subtitle">You survived until top speed and finished with <b id="bonusPts">0</b> extra points.</p>
+      <button id="btnBonusDone" class="btn">Finish</button>
+    </div>
+  </div>
+</div>
 
-function isIOS() {
-  return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-    (navigator.userAgent.includes("Mac") && "ontouchend" in document);
-}
-
-function updateAppHeightForIOS() {
-  if (!isIOS()) return;
-  const h = window.innerHeight;
-  document.documentElement.style.setProperty("--app-h", h + "px");
-}
-
-window.addEventListener("resize", updateAppHeightForIOS);
-window.addEventListener("orientationchange", updateAppHeightForIOS);
-document.addEventListener("DOMContentLoaded", updateAppHeightForIOS);
-
-
-
-  /*
-
- #####     #     #    #######     #####     #######    ###    #######    #     #     #####  
-#     #    #     #    #          #     #       #        #     #     #    ##    #    #     # 
-#     #    #     #    #          #             #        #     #     #    # #   #    #       
-#     #    #     #    #####       #####        #        #     #     #    #  #  #     #####  
-#   # #    #     #    #                #       #        #     #     #    #   # #          # 
-#    #     #     #    #          #     #       #        #     #     #    #    ##    #     # 
- #### #     #####     #######     #####        #       ###    #######    #     #     #####  
-
-*/
-
+<script>
+/* ==============================
+   SIMPLE STATE + QUESTIONS
+   ============================== */
 const QUESTIONS = [
-  {
-    text: "Where did the wise men come from?",
+  { text: "Who made the heavens and the earth?",
     answers: [
-      { label: "From the east", emoji: "🌅", correct: true },
-      { label: "From Egypt", emoji: "🏜️", correct: false },
-      { label: "From Rome", emoji: "🏛️", correct: false },
-      { label: "From Nazareth", emoji: "🏘️", correct: false }
-    ]
+      {label:"God", emoji:"✨", correct:true},
+      {label:"Noah", emoji:"🛶"},
+      {label:"Moses", emoji:"🪄"},
+      {label:"David", emoji:"🎵"},
+    ],
+    explain:"See Genesis 1:1 — God created everything."
   },
-  {
-    text: "Why did the wise men follow the star to Jerusalem?",
+  { text: "Where was Jesus born?",
     answers: [
-      { label: "A king of the Jews was born", emoji: "⭐", correct: true },
-      { label: "They wanted treasure", emoji: "💰", correct: false },
-      { label: "They were chasing soldiers", emoji: "🗡️", correct: false },
-      { label: "They were lost", emoji: "🧭", correct: false }
-    ]
+      {label:"Bethlehem", emoji:"⭐", correct:true},
+      {label:"Nazareth", emoji:"🏘️"},
+      {label:"Jerusalem", emoji:"🏛️"},
+      {label:"Rome", emoji:"🏟️"},
+    ],
+    explain:"Luke 2:1–7 — Jesus was born in Bethlehem."
   },
-  {
-    text: "Who was Herod?",
+  { text: "God led Israel by night with a…",
     answers: [
-      { label: "The king over the Jewish people", emoji: "👑", correct: true },
-      { label: "A traveling wise man", emoji: "🧳", correct: false },
-      { label: "A Roman soldier", emoji: "🗡️", correct: false },
-      { label: "A prophet", emoji: "📜", correct: false }
-    ]
+      {label:"Pillar of fire", emoji:"🔥", correct:true},
+      {label:"Rainbow", emoji:"🌈"},
+      {label:"Dove", emoji:"🕊️"},
+      {label:"Comet", emoji:"☄️"},
+    ],
+    explain:"Exodus 13:21 — A pillar of fire by night."
   },
-  {
-    text: "Where did Scripture say the Messiah would be born?",
+  { text: "Who built a big boat (ark)?",
     answers: [
-      { label: "In Bethlehem", emoji: "🏠", correct: true },
-      { label: "In Nazareth", emoji: "🏘️", correct: false },
-      { label: "In Jerusalem", emoji: "🏛️", correct: false },
-      { label: "In Egypt", emoji: "🏜️", correct: false }
-    ]
+      {label:"Noah", emoji:"🛶", correct:true},
+      {label:"Peter", emoji:"🎣"},
+      {label:"Solomon", emoji:"👑"},
+      {label:"Paul", emoji:"📜"},
+    ],
+    explain:"Genesis 6 — Noah built the ark."
   },
-  {
-    text: "What did Herod tell the wise men to do?",
+  { text: "What did David use to defeat Goliath?",
     answers: [
-      { label: "Find the child and tell me", emoji: "📜", correct: true },
-      { label: "Go home right away", emoji: "🏡", correct: false },
-      { label: "Destroy the star", emoji: "💥", correct: false },
-      { label: "Bring the child to the palace", emoji: "🏰", correct: false }
-    ]
+      {label:"A sling and a stone", emoji:"🪨", correct:true},
+      {label:"A spear", emoji:"🗡️"},
+      {label:"A sword", emoji:"⚔️"},
+      {label:"A bow", emoji:"🏹"},
+    ],
+    explain:"1 Samuel 17 — David used a sling."
   },
-  {
-    text: "How did the wise men find Jesus’ house?",
+  { text: "On day 7 of creation, God…",
     answers: [
-      { label: "The star stopped over it", emoji: "🌟", correct: true },
-      { label: "People showed them", emoji: "🗣️", correct: false },
-      { label: "They followed camels", emoji: "🐪", correct: false },
-      { label: "They guessed", emoji: "🤔", correct: false }
-    ]
+      {label:"Rested", emoji:"😴", correct:true},
+      {label:"Made birds", emoji:"🐦"},
+      {label:"Made land animals", emoji:"🐘"},
+      {label:"Separated light", emoji:"💡"},
+    ],
+    explain:"Genesis 2:2 — God rested."
   },
-  {
-    text: "What did the wise men do when they found Jesus?",
+  { text: "Who was swallowed by a huge fish?",
     answers: [
-      { label: "Worshiped and gave gifts", emoji: "🎁", correct: true },
-      { label: "Built a house for him", emoji: "🧱", correct: false },
-      { label: "Crowned him king", emoji: "👑", correct: false },
-      { label: "Took him to Herod", emoji: "🏰", correct: false }
-    ]
+      {label:"Jonah", emoji:"🐟", correct:true},
+      {label:"Elijah", emoji:"🔥"},
+      {label:"Joshua", emoji:"🗺️"},
+      {label:"Nehemiah", emoji:"🏰"},
+    ],
+    explain:"Jonah 1–2 — Jonah and the fish."
   },
-  {
-    text: "What warning did God give the wise men?",
+  { text: "What did God give Moses on Sinai?",
     answers: [
-      { label: "Don’t go back to Herod", emoji: "⚠️", correct: true },
-      { label: "Don’t take your gifts", emoji: "🎁", correct: false },
-      { label: "Don’t follow the star", emoji: "🌟", correct: false },
-      { label: "Don’t leave Bethlehem", emoji: "🚫", correct: false }
-    ]
+      {label:"Ten Commandments", emoji:"📜", correct:true},
+      {label:"Golden calf", emoji:"🐄"},
+      {label:"Ark blueprint", emoji:"📐"},
+      {label:"Crown", emoji:"👑"},
+    ],
+    explain:"Exodus 20 — The Ten Commandments."
   },
-  {
-    text: "What did the angel tell Joseph to do?",
+  { text: "Jesus calmed the storm by…",
     answers: [
-      { label: "Escape to Egypt", emoji: "🏜️", correct: true },
-      { label: "Stay in Bethlehem", emoji: "🏠", correct: false },
-      { label: "Go to Herod", emoji: "🏰", correct: false },
-      { label: "Sail to Rome", emoji: "⛵", correct: false }
-    ]
+      {label:"Speaking to it", emoji:"🗣️", correct:true},
+      {label:"Waving a wand", emoji:"🪄"},
+      {label:"Building a wall", emoji:"🧱"},
+      {label:"Lighting a fire", emoji:"🔥"},
+    ],
+    explain:"Mark 4:39 — He said, “Quiet! Be still!”"
   },
-  {
-    text: "After Herod died, what did Joseph’s family do?",
+  { text: "What is the first book of the Bible?",
     answers: [
-      { label: "Returned to Nazareth", emoji: "🏡", correct: true },
-      { label: "Stayed in Egypt", emoji: "🏜️", correct: false },
-      { label: "Moved to Jerusalem", emoji: "🏛️", correct: false },
-      { label: "Went back to Bethlehem", emoji: "🌟", correct: false }
-    ]
-  }
+      {label:"Genesis", emoji:"📖", correct:true},
+      {label:"Exodus", emoji:"🧺"},
+      {label:"Psalms", emoji:"🎶"},
+      {label:"Matthew", emoji:"📝"},
+    ],
+    explain:"Genesis is the first book."
+  },
 ];
 
+const state = {
+  round: 0, // 0..9 (ten rounds)
+  score: 0,
+  correct: 0,
+  wrong: 0,
+  answered: 0,
+  totalRounds: 10,
+  inBonus: false,
+};
 
+/* ==============================
+   SCREEN HELPERS
+   ============================== */
+const $ = sel => document.querySelector(sel);
+const show = id => {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  if(id) $(id).classList.add('active');
+};
+const showPopup = el => el.classList.add('active');
+const hidePopup = el => el.classList.remove('active');
 
-/*
+/* ==============================
+   START / TITLE
+   ============================== */
+const elSplash = $('#splash');
+const elTitle = $('#title');
+const elQuestion = $('#question');
+const elHow = $('#howto');
+const elGameWrap = $('#gameWrap');
+const elRoundPopup = $('#roundPopup');
+const elFinal = $('#final');
+const elBonusPopup = $('#bonusPopup');
 
-#######    #     #    ######     
-#          ##    #    #     #    
-#          # #   #    #     #    
-#####      #  #  #    #     #    
-#          #   # #    #     #    
-#          #    ##    #     #    
-#######    #     #    ######     
+$('#btnStart').addEventListener('click', async ()=>{
+  // Try to enter fullscreen if user allows
+  const root = document.documentElement;
+  if (root.requestFullscreen) { try{ await root.requestFullscreen(); }catch{} }
+  show('#title');
+});
+$('#btnTitleStart').addEventListener('click', ()=>{
+  state.round = 0;
+  state.score = 0;
+  state.correct = 0;
+  state.wrong = 0;
+  state.answered = 0;
+  loadQuestion();
+});
 
+/* ==============================
+   QUESTIONS
+   ============================== */
+const qRound = $('#qRound');
+const qScore = $('#qScore');
+const qText = $('#qText');
+const answersBox = $('#answers');
+const answerPopup = $('#answerPopup');
+const answerFace = $('#answerFace');
+const answerMsg = $('#answerMsg');
+const answerExplain = $('#answerExplain');
+$('#btnToHow').addEventListener('click', ()=>{
+  hidePopup(answerPopup);
+  show('#howto');
+});
 
-*/
+function loadQuestion(){
+  show('#question');
+  qRound.textContent = String(state.round+1);
+  qScore.textContent = String(state.score);
 
+  const q = QUESTIONS[state.round];
+  qText.textContent = q.text;
 
-        const ROUND_EMOJI_SETS = [
-        ["🍎","🍊","🍇","🍉","🍓","🥝","🍒","🍍"],
-        ["🐶","🐱","🐭","🦊","🐻","🐼","🐨","🐸"],
-        ["🚗","🚕","🚌","🚓","🚑","🚒","🚜","🏎️"],
-        ["⚽","🏀","🏈","🎾","🏐","🥎","🏉","🥏"],
-        ["🌈","⭐","☁️","🌙","⚡","☀️","🌤️","🌧️"],
-        ["🎈","🎉","🎊","🎁","🪅","🎯","🎮","🎵"],
-        ["🍔","🍟","🍕","🌭","🍗","🥐","🥨","🍪"],
-        ["🌸","🌼","🌻","🌷","🌹","🍀","🌵","🎍"],
-        ["😀","😁","😂","🥳","😎","🤩","😜","😇"], 
-        ["🧱","🪙","🔔","🎁","💎","🧊","🧃","🧠"]
-        ];
+  // Create a shuffled copy of answers
+  const opts = q.answers.map((a,i)=>({ ...a, idx:i }));
+  shuffle(opts);
 
-    /**********************
-     * STATE
-     **********************/
-    let currentQuestionIndex = 0;
-    let totalScore = 0;
-    let correctCount = 0;
-    let incorrectCount = 0;
+  answersBox.innerHTML = '';
+  opts.forEach(opt=>{
+    const btn = document.createElement('button');
+    btn.className = 'answer';
+    btn.innerHTML = `<span class="em">${opt.emoji}</span> ${opt.label}`;
+    btn.addEventListener('click', ()=>{
+      const correct = !!opt.correct;
+      if(correct){ state.score += 200; state.correct++; }
+      else { state.wrong++; }
+      state.answered++;
 
-    let lastTimestamp = 0; 
-
-    let ballsLeft = SETTINGS.ballCountPerRound;
-    let hasShownDropPopup = false;   // show "Drop time!" only once
-    let clearedAllThisRound = false; // we'll use this in step 2
-    let bonusBallNextRound = 0;      // +1 if last question was correct
-    let clearBonusShown = false;     // prevents double celebration
-    let bumpers = []; // left/right little paddles
-    // combo for the CURRENT shot (main ball + any bonus balls it spawns)
-    let currentComboHits = 0;
-    let currentComboMult = 1;
-
-
-
-
-    let activeBalls = []; 
-    let pegs = [];
-    let gameWidth = 0;
-    let gameHeight = 0;
-    let gameFieldEl = null;
-    let wells = [];
-    let gameRunning = false;
-    let awaitingDrop = false;
-    let debugHitboxes = false;
-    let currentPegSize = 32; // will be updated each round
-    let roundEnding = false; // <-- prevents multiple finishRound calls
-
-
-
-
-    /**********************
-     * ELEMENTS
-     **********************/
-    const splashScreen = document.getElementById("splashScreen");
-    const titleScreen = document.getElementById("titleScreen");
-    const questionScreen = document.getElementById("questionScreen");
-    const gameScreen = document.getElementById("gameScreen");
-    const endScreen = document.getElementById("endScreen");
-    const questionTextEl = document.getElementById("questionText");
-    const questionNumberEl = document.getElementById("questionNumber");
-    const answerOptionsEl = document.getElementById("answerOptions");
-    const popup = document.getElementById("popup");
-    const popupTitle = document.getElementById("popupTitle");
-    const popupMessage = document.getElementById("popupMessage");
-    const popupBtn = document.getElementById("popupBtn");
-    const hudRound = document.getElementById("hudRound");
-    const hudBalls = document.getElementById("hudBalls");
-    const hudScore = document.getElementById("hudScore");
-    const emojiRainContainer = document.getElementById("emojiRainContainer");
-
-    /**********************
-     * SCREEN CONTROLS
-     **********************/
-    function showScreen(screenEl) {
-      [splashScreen, titleScreen, questionScreen, gameScreen, endScreen].forEach(s => s.classList.remove("active"));
-      screenEl.classList.add("active");
-    }
-
-    document.getElementById("splashOkayBtn").addEventListener("click", () => {
-      showScreen(titleScreen);
+      // Popup: correct/incorrect
+      answerFace.textContent = correct ? '✅' : '❌';
+      answerMsg.textContent = correct ? 'Correct!' : 'Incorrect';
+      answerExplain.textContent = correct ? 'Nice job.' : 'Right answer: ' + (q.answers.find(a=>a.correct)?.label || '') + '. ' + (q.explain||'');
+      showPopup(answerPopup);
     });
-
-    document.getElementById("startBtn").addEventListener("click", async () => {
-      // try fullscreen (may fail quietly)
-      const el = document.documentElement;
-      if (el.requestFullscreen) {
-        try { await el.requestFullscreen(); } catch (e) {}
-      }
-      startQuestions();
-    });
-
-    popupBtn.addEventListener("click", () => {
-      popup.classList.remove("active");
-      if (popup.dataset.next === "startGame") {
-        beginGameRound();
-      }
-    });
-
-    function showPopup(title, msg, next = "") {
-      popupTitle.textContent = title;
-      popupMessage.textContent = msg;
-      popup.dataset.next = next;
-      popup.classList.add("active");
-    }
-
-    /**********************
-     * QUESTIONS
-     **********************/
-    function startQuestions() {
-      currentQuestionIndex = 0;
-      showNextQuestion();
-    }
-
-    function showNextQuestion() {
-      if (currentQuestionIndex >= QUESTIONS.length) {
-        endGame();
-        return;
-      }
-      const q = QUESTIONS[currentQuestionIndex];
-      questionTextEl.textContent = q.text;
-      questionNumberEl.textContent = `Question ${currentQuestionIndex + 1} of ${QUESTIONS.length}`;
-      answerOptionsEl.innerHTML = "";
-      // create a shuffled copy
-      const shuffled = q.answers.slice().sort(() => Math.random() - 0.5);
-      shuffled.forEach(ans => {
-        const btn = document.createElement("button");
-        btn.className = "answer-btn";
-        btn.innerHTML = `<span class="answer-emoji">${ans.emoji}</span> ${ans.label}`;
-        btn.addEventListener("click", () => handleAnswer(ans.correct, q.answers.find(a => a.correct).label));
-        answerOptionsEl.appendChild(btn);
-      });
-      showScreen(questionScreen);
-    }
-
-    function handleAnswer(isCorrect, rightAnswerLabel) {
-        if (isCorrect) {
-        correctCount++;
-        totalScore += 500; // bonus for correct question
-        bonusBallNextRound = 1;        // <-- give 1 extra ball for the NEXT round
-        showPopup("🟡🟢Bonus Ball! 🔴🔵", "Correct answer – you've earned a bonus ball!", "startGame");
-        } else {
-        bonusBallNextRound = 0;        // <-- no extra ball next round
-        incorrectCount++;
-        showPopup("Not quite ❌", "The right answer was: " + rightAnswerLabel, "startGame");
-        }
-
-    }
-
-    /**********************
-     * GAME ROUND
-     **********************/
-    function beginGameRound() {
-    showScreen(gameScreen);
-    setupGameForRound(currentQuestionIndex);
-    currentBallEmoji = BALL_EMOJI[currentQuestionIndex % BALL_EMOJI.length];
-
-    ballsLeft = SETTINGS.ballCountPerRound + bonusBallNextRound;
-    bonusBallNextRound = 0; // we used it, so clear it
-    activeBalls = [];
-    updateHUD();
-
-    gameRunning = true;
-    awaitingDrop = true;
-    roundEnding = false;
-    clearedAllThisRound = false;
-    clearBonusShown = false;
-
-    
-
-    if (!hasShownDropPopup) {
-    showPopup("Drop time!", "Tap or click anywhere to aim your shot. Break as many emoji as you can.", "");
-    hasShownDropPopup = true;
-    }
-
-    
-    }
-
-
-     
-
-
-    function setupGameForRound(roundIndex) {
-      gameFieldEl = document.getElementById("gameField");
-      gameWidth = gameFieldEl.clientWidth;
-      gameHeight = gameFieldEl.clientHeight;
-      gameFieldEl.innerHTML = ""; // clear any old pegs / balls
-      pegs = [];
-
-        const pegSize = gameWidth / 13;
-        currentPegSize = pegSize;
-        SETTINGS.pegRadius = pegSize / 2;
-        SETTINGS.ballRadius = pegSize / 2;
-
-
-
-      // make pegs
-      const emojiSet = ROUND_EMOJI_SETS[roundIndex % ROUND_EMOJI_SETS.length];
-      for (let r = 0; r < SETTINGS.rows; r++) {
-        const isEven = r % 2 === 0;
-        const cols = isEven ? 6 : 5;
-        const y = SETTINGS.topOffset + r * SETTINGS.rowSpacing;
-        for (let c = 0; c < cols; c++) {
-          const xGap = gameWidth / (cols + 1);
-          const x = xGap * (c + 1);
-          const pegEl = document.createElement("div");
-          pegEl.className = "peg";
-          pegEl.style.width = pegSize + "px";
-          pegEl.style.height = pegSize + "px";
-          pegEl.style.fontSize = (pegSize * 0.8) + "px";
-          pegEl.style.left = (x - pegSize / 2) + "px";
-          pegEl.style.top = (y - pegSize / 2) + "px";
-          pegEl.textContent = emojiSet[(r * 7 + c) % emojiSet.length];
-          gameFieldEl.appendChild(pegEl);
-          pegs.push({ x, y, el: pegEl, hit: false });
-        }
-      }
-
-  // after we have all pegs, mark 1 special and 1 bomb
-  if (pegs.length > 1) {
-    const specialIndex = Math.floor(Math.random() * pegs.length);
-    let bombIndex = Math.floor(Math.random() * pegs.length);
-    while (bombIndex === specialIndex) {
-      bombIndex = Math.floor(Math.random() * pegs.length);
-    }
-
-    // special
-    const sp = pegs[specialIndex];
-    sp.type = "special";
-    sp.el.textContent = SETTINGS.specialEmoji;
-    sp.el.classList.add("peg-special");
-
-    // bomb
-    const bp = pegs[bombIndex];
-    bp.type = "bomb";
-    bp.el.textContent = SETTINGS.bombEmoji;
-    bp.el.classList.add("peg-bomb");
-  }
-
-  // get wells
-  wells = Array.from(document.querySelectorAll("#bottomWells .well"));
-
-  // build moving platform above wells
-  const wellsBar = document.getElementById("bottomWells");
-  const wellsBarRect = wellsBar.getBoundingClientRect();
-  const wellsBarHeight = wellsBarRect.height;
-  const totalFlex = wells.reduce((acc, w) => acc + parseFloat(w.style.flex), 0);
-  const wideWellWidth = gameWidth * (1 / totalFlex); // width of a flex:1 well
-  const platformHeight = wellsBarHeight / 2;
-
-  const platformEl = document.createElement("div");
-  platformEl.className = "moving-platform";
-  platformEl.style.width = wideWellWidth + "px";
-  platformEl.style.height = platformHeight + "px";
-  platformEl.style.left = (gameWidth / 2 - wideWellWidth / 2) + "px";
-  platformEl.style.bottom = (wellsBarHeight + wellsBarHeight / 2 - platformHeight / 2) + "px";
-  gameFieldEl.appendChild(platformEl);
-
-  movingPlatform = {
-    x: gameWidth / 2 - wideWellWidth / 2,
-    y: gameHeight - wellsBarHeight - (wellsBarHeight / 2),
-    width: wideWellWidth,
-    height: platformHeight,
-    el: platformEl,
-    dir: 1
-  };
-
-    // build side bumpers (aligned with row 3 and row 6)
-    bumpers = [];
-    const bumperRows = [2, 5]; // 0-based: 3rd and 6th row
-    const bumperLen = currentPegSize*1.3;        // 👈 Bumper length
-    const bumperThick = currentPegSize * 0.45;
-
-
-  bumperRows.forEach((rowIdx) => {
-    const rowY = SETTINGS.topOffset + rowIdx * SETTINGS.rowSpacing;
-
-    // LEFT bumper
-    const leftEl = document.createElement("div");
-    leftEl.className = "side-bumper";
-    leftEl.style.width = bumperLen + "px";
-    leftEl.style.height = bumperThick + "px";
-    leftEl.style.left = (-currentPegSize * 0.4) + "px";
-    leftEl.style.top = (rowY - bumperThick / 2) + "px";
-    leftEl.style.transform = "rotate(12deg)";
-    gameFieldEl.appendChild(leftEl);
-
-    bumpers.push({
-      x: -currentPegSize * 0.4,
-      y: rowY - bumperThick / 2,
-      width: bumperLen,
-      height: bumperThick,
-      side: "left",
-      el: leftEl
-    });
-
-    // geometry for left bumper (angled +12deg)
-    (() => {
-    const b = bumpers[bumpers.length - 1];
-    const angleDeg = 12;
-    const ang = angleDeg * Math.PI / 180;
-    const cx = b.x + b.width / 2;
-    const cy = b.y + b.height / 2;
-    const dirX = Math.cos(ang), dirY = Math.sin(ang);
-    b.p1 = { x: cx - dirX * (b.width / 2), y: cy - dirY * (b.width / 2) };
-    b.p2 = { x: cx + dirX * (b.width / 2), y: cy + dirY * (b.width / 2) };
-    b.radius = b.height / 2; // capsule radius = half thickness
-    })();
-
-
-    // RIGHT bumper
-    const rightX = gameWidth - bumperLen + (currentPegSize * 0.4);
-    const rightEl = document.createElement("div");
-    rightEl.className = "side-bumper";
-    rightEl.style.width = bumperLen + "px";
-    rightEl.style.height = bumperThick + "px";
-    rightEl.style.left = rightX + "px";
-    rightEl.style.top = (rowY - bumperThick / 2) + "px";
-    rightEl.style.transform = "rotate(-12deg)";
-    gameFieldEl.appendChild(rightEl);
-
-    bumpers.push({
-      x: rightX,
-      y: rowY - bumperThick / 2,
-      width: bumperLen,
-      height: bumperThick,
-      side: "right",
-      el: rightEl
-    });
-
-    // geometry for right bumper (angled -12deg)
-    (() => {
-    const b = bumpers[bumpers.length - 1];
-    const angleDeg = -12;
-    const ang = angleDeg * Math.PI / 180;
-    const cx = b.x + b.width / 2;
-    const cy = b.y + b.height / 2;
-    const dirX = Math.cos(ang), dirY = Math.sin(ang);
-    b.p1 = { x: cx - dirX * (b.width / 2), y: cy - dirY * (b.width / 2) };
-    b.p2 = { x: cx + dirX * (b.width / 2), y: cy + dirY * (b.width / 2) };
-    b.radius = b.height / 2;
-    })();
-
-
+    answersBox.appendChild(btn);
   });
 }
 
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j = (Math.random()* (i+1))|0;
+    [arr[i],arr[j]] = [arr[j],arr[i]];
+  }
+}
+
+/* ==============================
+   GAMEPLAY (Canvas)
+   ============================== */
+const canvas = $('#game');
+const ctx = canvas.getContext('2d');
+
+const hudTime = $('#timeLeft');
+const hudScore = $('#gScore');
+const hudSpd = $('#spd');
+const centerNote = $('#centerNote');
+const bigCount = $('#countdown');
+const toast = $('#toast');
+
+let dpr = 1; // force low-DPI render for performance
+
+const EMOJI = {
+  rocket: '🚀',
+  asteroid: '🪨',     // fallback rock-like emoji
+  star: '⭐',
+  gem: '💎',
+  coin: '🪙'
+};
+
+const PICKUPS = [
+  {type:'star', emoji:EMOJI.star, value:100},
+  {type:'gem',  emoji:EMOJI.gem,  value:200},
+  {type:'coin', emoji:EMOJI.coin, value:150},
+];
+
+// Fixed pixel sizes (no depth scaling)
+const ROCKET_PX = 40;                 // matches the rocket font size used in draw()
+const ASTEROID_SIZES = [26, 34, 44];  // small, medium, large asteroid sizes
+const BIG_ASTEROID_PX = 72;           // extra-large asteroid size
 
 
 
+let game = null;
+
+$('#btnPlay').addEventListener('click', ()=>{
+  showGame();
+});
+
+function showGame(){
+  show('#gameWrap');
+  startRound();
+}
+
+function startRound(){
+  // round speeds scale upwards
+  const roundIndex = state.round; // 0..9
+  const baseSpeed = 60 + roundIndex*15;       // px/sec start fall speed
+  const maxSpeed  = 520 + roundIndex*30;       // top fall speed
+  const accelPerSec = 10 + roundIndex*5;       // increase per second while not hit
+  const roundTimeSec = 30;
+
+  game = createGame({ baseSpeed, maxSpeed, accelPerSec, roundTimeSec, bonus:false });
+  game.start();
+}
+
+/* BONUS SURVIVAL (after 10) */
+function startBonus(){
+  show('#gameWrap');
+  game = createGame({
+    baseSpeed: 140,
+    maxSpeed: 1200,
+    accelPerSec: 80,
+    roundTimeSec: Infinity, // survives until crash
+    bonus:true
+  });
+  game.start();
+}
+
+/* Game Factory */
+function createGame(cfg){
+  const gw = $('#gameWrap');
+
+  let running = false;
+  let w=0, h=0, vw=0;
+  let last = 0;
+  let objects = [];      // asteroids + pickups
+  let particles = [];    // explosion/confetti
+  const MAX_OBJECTS = 18; // hard limit so the screen doesn't overflow
+    let timeLeft = isFinite(cfg.roundTimeSec) ? cfg.roundTimeSec : Infinity;
+
+  // HUD throttle (reduce DOM updates)
+  let hudAccum = 0;
+  let lastHudTime = null;
+  let lastHudScore = null;
+  let lastHudSpd = null;
 
 
-    function updateHUD() {
-      hudRound.textContent = `Round ${currentQuestionIndex + 1} / ${QUESTIONS.length}`;
-      hudBalls.textContent = `Balls: ${ballsLeft}`;
-      hudScore.textContent = `Score: ${totalScore}`;
-    }
+  // speeds
+  let fallSpeed = cfg.baseSpeed;      // px / sec
+  const baseSpeed = cfg.baseSpeed;
+  const maxSpeed = cfg.maxSpeed;
+  const accel = cfg.accelPerSec;
 
-    // drop ball when player taps
-    gameScreen.addEventListener("pointerdown", (e) => {
-      if (!gameRunning) return;
-      if (!awaitingDrop) return;
-      if (ballsLeft <= 0) return;
-
-      const rect = gameFieldEl.getBoundingClientRect();
-      const clickX = e.clientX - rect.left;
-      const clickY = e.clientY - rect.top;
-
-      spawnBallToward(clickX, clickY);
-    });
-
-
-    function spawnBallToward(targetX, targetY) {
-      const startX = gameWidth / 2;
-      const startY = SETTINGS.launchStartY;
-
-      // if this is a brand-new shot (no balls flying), start a fresh combo
-      if (activeBalls.length === 0) {
-        currentComboHits = 0;
-        currentComboMult = 1;
-      }
-
-    const ballEl = document.createElement("div");
-    ballEl.className = "ball";
-    gameFieldEl.appendChild(ballEl);
-    ballEl.textContent = currentBallEmoji;
-    ballEl.style.width = currentPegSize + "px";
-    ballEl.style.height = currentPegSize + "px";
-    ballEl.style.fontSize = (currentPegSize * 0.8) + "px";
-
-    
-
-    const dx = targetX - startX;
-    const dy = targetY - startY;
-    const len = Math.sqrt(dx * dx + dy * dy) || 1;
-    const speed = SETTINGS.launchSpeed;
-
-    const vx = (dx / len) * speed;
-    const vy = (dy / len) * speed;
-
-    const ball = {
-        x: startX,
-        y: startY,
-        vx: vx,
-        vy: vy,
-        el: ballEl
-    };
-
-    activeBalls.push(ball);
-
-    ballsLeft -= 1;
-    awaitingDrop = false;
-    updateHUD();
-    if (debugHitboxes) updateDebugVisuals();
-    }
-
-
-function spawnBonusBallAtTop() {
-  if (!gameFieldEl) return;
-  const randX = Math.random() * (gameWidth - SETTINGS.ballRadius * 2) + SETTINGS.ballRadius;
-
-    const ballEl = document.createElement("div");
-    ballEl.className = "ball";
-    gameFieldEl.appendChild(ballEl);
-    ballEl.textContent = currentBallEmoji;
-    ballEl.style.width = currentPegSize + "px";
-    ballEl.style.height = currentPegSize + "px";
-    ballEl.style.fontSize = (currentPegSize * 0.8) + "px";
-
-
-  
-
-
-  const ball = {
-    x: randX,
-    y: SETTINGS.launchStartY,
-    vx: (Math.random() - 0.5) * 90,
-    vy: 140,
-    el: ballEl
+  // player
+  const player = {
+    x: 0, y: 0, r: 28, // radius for collisions (emoji area)
+    vx: 0, ax: 0,
+    tilt: 0, // -1 .. 1 for visual rotation
+    invincible: false,
+    invEnd: 0,
+    alive: true
   };
 
-  activeBalls.push(ball);
-  if (debugHitboxes) updateDebugVisuals();
+  // Controls: tilt + keys
+  let keyLeft=false, keyRight=false;
+  let tiltGamma = 0; // deviceorientation gamma (-90..90)
+  let useTilt = false;
+
+  function onKey(e){
+    if(e.type==='keydown'){
+      if(e.key==='ArrowLeft') keyLeft=true;
+      if(e.key==='ArrowRight') keyRight=true;
+    }else{
+      if(e.key==='ArrowLeft') keyLeft=false;
+      if(e.key==='ArrowRight') keyRight=false;
+    }
+  }
+  window.addEventListener('keydown', onKey);
+  window.addEventListener('keyup', onKey);
+
+  function onOrient(ev){
+    // gamma is left/right tilt
+    if(typeof ev.gamma === 'number'){
+      useTilt = true;
+      tiltGamma = ev.gamma; // -90..90
+    }
+  }
+  window.addEventListener('deviceorientation', onOrient);
+
+  function resize(){
+    // mobile-first vertical lane; max width to keep it readable on desktop
+    const cssW = Math.min(window.innerWidth, 720);
+    const cssH = window.innerHeight;
+    canvas.style.width = cssW+'px';
+    canvas.style.height= cssH+'px';
+
+    w = canvas.width  = Math.round(cssW * dpr);
+    h = canvas.height = Math.round(cssH * dpr);
+
+    vw = w/dpr; // in CSS pixels, handy for emoji sizing
+
+    // position player
+    player.x = w*0.5;
+    player.y = h*0.78;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // spawn helpers
+    let spawnTimer = 0;
+    let spawnEvery = 1.4; // slower base spawn: fewer things overall
+
+
+  function spawn(){
+    if (objects.length >= MAX_OBJECTS) return;
+
+    // 65% asteroid, 35% pickup
+const isAst = Math.random()<0.55; // fewer asteroids
+const speedScale = (fallSpeed/maxSpeed);
+const lanePadding = Math.max(12, w*0.06);
+const x = rand(lanePadding, w-lanePadding);
+
+// about 15% of asteroids are big + slow
+const isBigAst = isAst && Math.random() < 0.15;
+
+const s = {
+  kind: isAst ? 'asteroid' : 'pickup',
+  type: null,
+  x, y: -40*dpr,
+  vy: fallSpeed,
+  // fixed, pre-chosen size (no per-frame scaling)
+  sizePx: isAst
+      ? (isBigAst ? BIG_ASTEROID_PX
+                  : ASTEROID_SIZES[(Math.random()*ASTEROID_SIZES.length)|0])
+      : ROCKET_PX,
+  // big asteroids move at half speed
+  slowFactor: isBigAst ? 0.5 : 1,
+  rot: (Math.random()*Math.PI*2),
+  rotSpd: (Math.random()*.015 - .0075),
+};
+if (!isAst) {
+  s.type = PICKUPS[(Math.random()*PICKUPS.length)|0];
 }
+objects.push(s);
 
 
-    /**********************
-     * MAIN LOOP
-     **********************/
-    function loop(timestamp) {
-      if (!lastTimestamp) lastTimestamp = timestamp;
-      const dt = Math.min((timestamp - lastTimestamp) / 1000, 0.035);
-      lastTimestamp = timestamp;
 
-    if (gameRunning) {
-    // move platform
-    if (movingPlatform) {
-        movingPlatform.x += movingPlatform.dir * SETTINGS.platformSpeed * dt;
-        if (movingPlatform.x < 0) {
-        movingPlatform.x = 0;
-        movingPlatform.dir = 1;
-        } else if (movingPlatform.x + movingPlatform.width > gameWidth) {
-        movingPlatform.x = gameWidth - movingPlatform.width;
-        movingPlatform.dir = -1;
-        }
-        movingPlatform.el.style.left = movingPlatform.x + "px";
+    // slightly increase spawn rate with speed
+        spawnEvery = 0.50 - 0.20*speedScale; // ~0.50..0.30s as speed rises
+        spawnEvery = Math.max(0.28, spawnEvery); // never faster than ~3.5 spawns/sec
+
+
+  }
+
+  // particles
+   function burst(x,y,emoji,color,count=6,spread=0.9){
+    for(let i=0;i<count;i++){
+      particles.push({
+        x,y,
+        vx: (Math.random()*2-1)*220*spread,
+        vy: (Math.random()*-1)*200*spread - 40,
+        life: 0.6 + Math.random()*0.5,
+        age:0,
+        emoji: emoji || null,
+        color: color || '#fff',
+        size: 14 + Math.random()*6
+      });
     }
+  }
 
-    // update all balls
-    for (let i = activeBalls.length - 1; i >= 0; i--) {
-        const b = activeBalls[i];
-        updateBall(b, dt);
-    }
+  // main loop
+  function start(){
+    running = true;
+    last = performance.now();
+    hudTime.textContent = isFinite(cfg.roundTimeSec) ? cfg.roundTimeSec : '∞';
+    hudScore.textContent = state.score;
+    hudSpd.textContent = (fallSpeed/baseSpeed).toFixed(1)+'x';
 
-    // if we have no balls flying AND no balls left to drop, end the round (once)
-    if (activeBalls.length === 0 && ballsLeft <= 0 && !roundEnding) {
-        roundEnding = true;
-        setTimeout(() => {
-        finishRound();
-        }, 350);
-    }
-    }
+    // initialize cached HUD values
+    lastHudScore = state.score;
+    lastHudSpd = (fallSpeed/baseSpeed).toFixed(1)+'x';
+
+    big3to1(()=>{ requestAnimationFrame(loop); });
+  }
 
 
+  function loop(t){
+    if(!running) return;
+    const dt = Math.min(0.05, (t-last)/1000); // s
+    last = t;
 
+    update(dt);
+    draw();
+
+    if(cfg.bonus){
+      // survival ends on crash (handled in update)
+      if(!player.alive){ endBonus(); return; }
+      requestAnimationFrame(loop);
+    }else{
+      // timed round
+      if(timeLeft<=0){
+        // finish with 3-2-1 Time’s up animation then popup
+        endRound();
+        return;
+      }
       requestAnimationFrame(loop);
     }
-    requestAnimationFrame(loop);
-
-        function updateBall(ball, dt) {
-        // remember where we were
-        const prevX = ball.x;
-        const prevY = ball.y;
-
-        // physics
-        ball.vy += SETTINGS.gravity * dt;
-
-        ball.x += ball.vx * dt;
-        ball.y += ball.vy * dt;
-
-
-      // walls
-      if (ball.x < SETTINGS.ballRadius) {
-        ball.x = SETTINGS.ballRadius;
-        ball.vx *= -0.7;
-      } else if (ball.x > gameWidth - SETTINGS.ballRadius) {
-        ball.x = gameWidth - SETTINGS.ballRadius;
-        ball.vx *= -0.7;
-      }
-
-        // side bumper collisions (capsule vs circle, matches visual angle)
-        for (let i = 0; i < bumpers.length; i++) {
-        const b = bumpers[i];
-        const rBall = SETTINGS.ballRadius;
-        const rCap  = b.radius; // bumper thickness/2
-
-        // segment A->B (centerline)
-        const ax = b.p1.x, ay = b.p1.y;
-        const bx = b.p2.x, by = b.p2.y;
-        const abx = bx - ax, aby = by - ay;
-        const abLen2 = abx * abx + aby * aby;
-
-        // closest point on segment to ball center
-        let t = 0.5;
-        if (abLen2 > 0) {
-            t = ((ball.x - ax) * abx + (ball.y - ay) * aby) / abLen2;
-        }
-        t = clamp(t, 0, 1);
-        const px = ax + abx * t;
-        const py = ay + aby * t;
-
-        // vector from closest point to ball center
-        let dx = ball.x - px;
-        let dy = ball.y - py;
-        const dist = Math.hypot(dx, dy);
-        const minDist = rBall + rCap;
-
-        if (dist < minDist) {
-            // collision normal points from bumper to ball
-            let nx, ny;
-            if (dist > 1e-6) {
-            nx = dx / dist; ny = dy / dist;
-            } else {
-            // fallback normal: push toward center of field
-            nx = (b.side === "left") ? 1 : -1;
-            ny = 0;
-            }
-
-            // positional correction (separate by penetration along normal)
-            const pen = (minDist - dist);
-            ball.x += nx * pen;
-            ball.y += ny * pen;
-
-            // reflect velocity about the normal (with a friendly bounce)
-            const restitution = 0.85;
-            const [nvx, nvy] = reflect(ball.vx, ball.vy, nx, ny, restitution);
-            ball.vx = nvx;
-            ball.vy = nvy;
-
-            // tiny extra lift so it doesn't feel dead-flat
-            ball.vy -= 20;
-
-            // gentle bias toward the center (purely for feel)
-            if (b.side === "left") {
-            ball.vx = Math.max(ball.vx, ball.vx + 30);
-            } else {
-            ball.vx = Math.min(ball.vx, ball.vx - 30);
-            }
-        }
-        }
-
-
-
-
-
-        // moving platform collision (swept so fast balls don't fall through)
-        if (movingPlatform) {
-        const topY = movingPlatform.y;
-        const platLeft = movingPlatform.x;
-        const platRight = movingPlatform.x + movingPlatform.width;
-
-        const prevBottom = prevY + SETTINGS.ballRadius;
-        const currBottom = ball.y + SETTINGS.ballRadius;
-
-        // only if we're moving downward
-        if (ball.vy > 0) {
-            // did we cross the platform top between last frame and now?
-            const crossedDownThroughTop = (prevBottom <= topY) && (currBottom >= topY);
-
-            // are we horizontally over the platform (with a little forgiveness)?
-            const overPlatform =
-            ball.x >= platLeft - SETTINGS.ballRadius &&
-            ball.x <= platRight + SETTINGS.ballRadius;
-
-            if (crossedDownThroughTop && overPlatform) {
-            // snap to the top and bounce
-            ball.y = topY - SETTINGS.ballRadius;
-            ball.vy = -SETTINGS.bounceStrength * 0.85;
-            }
-        }
-        }
-
-
-
-
-
-
-
-
-
-    // collisions with pegs
-    for (let i = 0; i < pegs.length; i++) {
-    const peg = pegs[i];
-    if (peg.hit) continue;
-    const dx = ball.x - peg.x;
-    const dy = ball.y - peg.y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
-    if (dist < SETTINGS.ballRadius + SETTINGS.pegRadius * 0.6) {
-        // bounce like before
-        ball.vy = -SETTINGS.bounceStrength;
-        ball.vx += dx * 2;
-
-        peg.hit = true;
-        peg.el.classList.add("hit");
-
-            // --- COMBO LOGIC for this shot (main + bonus balls) ---
-          // every peg we hit during this shot increments the shared counter
-          currentComboHits += 1;
-
-          // check thresholds
-          if (currentComboHits === 10) {
-            // COMBO BONUS
-            showCombo("COMBO BONUS", "10,000");
-            totalScore += 10000;
-            currentComboMult = 2;  // from now on, pegs = 2x
-            } else if (currentComboHits === 20) {
-            // MEGA COMBO
-            showCombo("MEGA COMBO", "50,000");
-            totalScore += 50000;
-            currentComboMult = 5;  // from now on, pegs = 5x
-            // 👇 NEW: drop an extra ball for the mega
-            spawnBonusBallAtTop();
-            }
-
-
-          // score THIS peg with current combo multiplier
-          const pegPoints = SETTINGS.scorePerHit * currentComboMult;
-          totalScore += pegPoints;
-          updateHUD();
-
-        
-
-        // after hitting this peg, check if we cleared the board
-        if (pegs.every(p => p.hit)) {
-        clearedAllThisRound = true;
-
-        // show the big bonus once
-        if (!clearBonusShown) {
-            totalScore += 100000;
-            updateHUD();
-            showClearBonus();
-            clearBonusShown = true;
-        }
-
-        // ⬇️ force the round to be "done shooting"
-        ballsLeft = 0;          // no more shots this round
-        awaitingDrop = false;   // don't wait for tap
-        updateHUD();
-
-        // when this ball finishes and lands in a well, the loop condition
-        // (activeBalls.length === 0 && ballsLeft <= 0) will be true
-        // and the round will end automatically
-        }
-
-
-        
-
-
-        // special behaviors
-        if (peg.type === "special") {
-        makeBigConfetti(peg.x, peg.y);
-        spawnBonusBallAtTop();
-        } else if (peg.type === "bomb") {
-        makeBigConfetti(peg.x, peg.y);
-        explodeBombAt(peg.x, peg.y);
-        } else {
-        makeSpark(peg.x, peg.y);
-        }
-
-        setTimeout(() => {
-        if (peg.el && peg.el.parentNode) peg.el.parentNode.removeChild(peg.el);
-        }, 300);
-    }
-    }
-
-      // update DOM
-      if (ball.el) {
-        ball.el.style.left = (ball.x - SETTINGS.ballRadius) + "px";
-        ball.el.style.top = (ball.y - SETTINGS.ballRadius) + "px";
-      }
-
-      if (debugHitboxes) updateDebugVisuals();
-
-
-      // bottom / wells
-      if (ball.y > gameHeight - 10) {
-        landInWell(ball);
-      }
-    }
-
-   function landInWell(ball) {
-  if (!ball.el) return;
-  ball.el.remove();
-
-  // remove from activeBalls
-  const idx = activeBalls.indexOf(ball);
-  if (idx !== -1) {
-    activeBalls.splice(idx, 1);
   }
 
-  // figure out which well we landed in
-  const x = ball.x;
-  const totalFlex = wells.reduce((acc, w) => acc + parseFloat(w.style.flex), 0);
-  const width = gameWidth;
-  let cumulative = 0;
-  let chosen = wells[0];
-  for (let w of wells) {
-    const f = parseFloat(w.style.flex);
-    const segmentWidth = width * (f / totalFlex);
-    if (x >= cumulative && x <= cumulative + segmentWidth) {
-      chosen = w;
-      break;
-    }
-    cumulative += segmentWidth;
-  }
-  const score = parseInt(chosen.dataset.score || "0", 10);
-  totalScore += score;
+function update(dt){
+    // accelerate unless recently hit (we still accelerate after hit, just from base)
+    fallSpeed = Math.min(maxSpeed, fallSpeed + accel*dt);
 
-  // score popup
-  const burst = document.createElement("div");
-  burst.className = "well-score-burst";
-  burst.textContent = "+" + score;
-  chosen.appendChild(burst);
-  setTimeout(() => {
-    burst.remove();
-  }, 800);
+    // distance points (we'll update HUD on a timer)
+    state.score += Math.floor(fallSpeed * 0.06 * dt); // tuned small increment
 
-  // extra ball from middle
-  if (chosen.dataset.extraball === "1") {
-    ballsLeft += 1;
-  }
 
-  updateHUD();
+    // controls
+    const targetAxFromKeys = (keyLeft? -1 : 0) + (keyRight? 1 : 0);
+    let targetAx = targetAxFromKeys;
 
-  // if we still have balls to drop AND there are no balls flying, let player drop again
-  if (ballsLeft > 0 && activeBalls.length === 0) {
-    awaitingDrop = true;
-  }
-}
-
-    
-
-    function finishRound() {
-    // if player cleared every peg in this round, big bonus!
-    if (clearedAllThisRound && !clearBonusShown) {
-    totalScore += 100000;
-    updateHUD();
-    showClearBonus();
-    clearBonusShown = true;
+    if(useTilt){
+      // normalize gamma (-45..45) to -1..1
+      const g = Math.max(-45, Math.min(45, tiltGamma));
+      const tiltNorm = g/45;
+      // blend keys & tilt (keys override if pressed)
+      if(targetAx===0) targetAx = tiltNorm;
     }
 
+    // smooth steering
+    player.ax = lerp(player.ax, targetAx, 0.15);
+    player.vx = player.ax * (420 + Math.min(280, (fallSpeed-baseSpeed)));
+    player.x += player.vx * dt * dpr;
 
-    // move to next question
-    currentQuestionIndex++;
-    gameRunning = false;
-    showNextQuestion();
-    }
+    // bounds
+    const px = (32*dpr);
+    player.x = Math.max(px, Math.min(w-px, player.x));
 
+    // visual tilt (subtle)
+    player.tilt = lerp(player.tilt, player.ax, 0.15);
 
+    // spawn
+    spawnTimer -= dt;
+    if(spawnTimer<=0){ spawn(); spawnTimer = spawnEvery; }
 
-    /**********************
-     * FX
-     **********************/
-    function makeSpark(x, y) {
-      const fx = document.createElement("div");
-      fx.style.position = "absolute";
-      fx.style.left = (x - 14) + "px";
-      fx.style.top = (y - 14) + "px";
-      fx.style.zIndex = 9999;
-      fx.textContent = SETTINGS.emojiHitFX[Math.floor(Math.random() * SETTINGS.emojiHitFX.length)];
-      fx.style.transition = "transform .4s, opacity .4s";
-      gameFieldEl.appendChild(fx);
-      requestAnimationFrame(() => {
-        fx.style.transform = "translateY(-18px) scale(1.5)";
-        fx.style.opacity = "0";
-      });
-      setTimeout(() => fx.remove(), 450);
-    }
-
-    // --- geometry helpers for capsule collisions ---
-    function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
-    function reflect(vx, vy, nx, ny, restitution) {
-      // reflect velocity about normal n, with bounce factor
-      const vn = vx * nx + vy * ny;
-      if (vn >= 0) return [vx, vy]; // already moving away
-      const k = (1 + restitution) * vn;
-      return [vx - k * nx, vy - k * ny];
-    }
+    // update objects
+    for(let i=objects.length-1;i>=0;i--){
+      const o = objects[i];
+      const targetVy = fallSpeed * (o.slowFactor || 1);
+      o.vy = lerp(o.vy, targetVy, 0.08); // follow adjusted fallSpeed
+      o.y += o.vy * dt * dpr;
+      o.rot += o.rotSpd;
 
 
-    function makeBigConfetti(x, y) {
-      for (let i = 0; i < 18; i++) {
-        const piece = document.createElement("div");
-        piece.className = "confetti-piece";
-        piece.style.left = (x - 6) + "px";
-        piece.style.top = (y - 6) + "px";
-        const dx = (Math.random() - 0.5) * 160;
-        const dy = (Math.random() - 0.5) * 160;
-        const rot = (Math.random() * 360) + "deg";
-        piece.style.setProperty("--tx", dx + "px");
-        piece.style.setProperty("--ty", dy + "px");
-        piece.style.setProperty("--rot", rot);
-        piece.style.background = ["#f97316","#f43f5e","#3b82f6","#22c55e","#eab308"][i % 5];
-        gameFieldEl.appendChild(piece);
-        setTimeout(() => piece.remove(), 750);
-      }
-    }
+      
 
-function explodeBombAt(x, y) {
-  for (let i = 0; i < pegs.length; i++) {
-    const p = pegs[i];
-    if (p.hit) continue;
+      // collide when near player
+      if(Math.abs(o.y - player.y) < 60*dpr){
+        const dx = (o.x - player.x);
+        const hit = Math.abs(dx) < (player.r + (o.sizePx*0.35));
 
-    const dx = p.x - x;
-    const dy = p.y - y;
-    const dist = Math.sqrt(dx * dx + dy * dy);
+        if(hit){
+          if(o.kind==='asteroid'){
+            if(cfg.bonus){
+              // In bonus: first hit ends run
+              // big burst and mark dead
+              burst(player.x, player.y, '💥', null, 12, 1.0);
 
-    if (dist <= SETTINGS.bombRadius) {
-      // mark peg hit
-      p.hit = true;
-      p.el.classList.add("hit");
+              player.alive = false;
+            }else{
+              // Normal round: knock back to baseSpeed + invincible 3s
+              if(!player.invincible){
+                fallSpeed = baseSpeed;
+                player.invincible = true;
+                player.invEnd = performance.now() + 3000;
+                burst(player.x, player.y, '💥', null, 10, 0.9);
 
-      // bomb hits ALSO count toward this shot's combo
-      currentComboHits += 1;
-
-      // 10-hit combo from bomb
-      if (currentComboHits === 10) {
-        showCombo("COMBO BONUS", "10,000");
-        totalScore += 10000;
-        currentComboMult = 2;
-      }
-      // 20-hit mega combo from bomb
-      else if (currentComboHits === 20) {
-        showCombo("MEGA COMBO", "50,000");
-        totalScore += 50000;
-        currentComboMult = 5;
-        // extra ball for MEGA
-        spawnBonusBallAtTop();
-      }
-
-      // score this peg using CURRENT combo multiplier
-      const pegPoints = SETTINGS.scorePerHit * currentComboMult;
-      totalScore += pegPoints;
-
-      makeSpark(p.x, p.y);
-
-      // remove DOM peg after animation
-      setTimeout(() => {
-        if (p.el && p.el.parentNode) {
-          p.el.parentNode.removeChild(p.el);
-        }
-      }, 300);
-    }
-  }
-
-  updateHUD();
-
-  // big boom at center
-  makeBigConfetti(x, y);
-}
-
-
-
-    function showCombo(title, pointsText) {
-      const popup = document.getElementById("comboPopup");
-      const tEl = document.getElementById("comboTitle");
-      const pEl = document.getElementById("comboPoints");
-      if (!popup || !tEl || !pEl) return;
-
-      tEl.textContent = title;
-      pEl.textContent = pointsText;
-      popup.classList.add("active");
-
-      // if this is the big one, make it rain 🎉
-      if (title === "MEGA COMBO") {
-        const rainBox = document.getElementById("emojiRainContainer");
-        if (rainBox) {
-          for (let i = 0; i < 20; i++) {
-            const drop = document.createElement("div");
-            drop.className = "rain-emoji";
-            // reuse a round emoji if you have ROUND_EMOJI_SETS, else just use 💥
-            let em = "💥";
-            if (typeof ROUND_EMOJI_SETS !== "undefined" && ROUND_EMOJI_SETS.length > 0) {
-              const set = ROUND_EMOJI_SETS[Math.floor(Math.random() * ROUND_EMOJI_SETS.length)];
-              em = set[0] || em;
+                showBlink();
+              }
             }
-            drop.textContent = em;
-            drop.style.left = Math.random() * 100 + "vw";
-            drop.style.animationDelay = (Math.random() * 0.6) + "s";
-            rainBox.appendChild(drop);
-            setTimeout(() => drop.remove(), 2500);
+          }else{
+            // pickup
+             const val = o.type.value;
+            state.score += val;
+            quickToast('+'+val+' '+o.type.emoji);
+
           }
+          // remove object either way
+          objects.splice(i,1);
+          continue;
         }
       }
 
-      setTimeout(() => {
-        popup.classList.remove("active");
-      }, 1100);
-    }
-
-
-
-
-    function endGame() {
-      showScreen(endScreen);
-      document.getElementById("finalScoreText").textContent = "You scored " + totalScore.toLocaleString() + " points.";
-      document.getElementById("finalQA").textContent = "Correct: " + correctCount + " · Incorrect: " + incorrectCount;
-
-      // emoji rain
-      for (let i = 0; i < SETTINGS.emojiRainCount; i++) {
-        const re = document.createElement("div");
-        re.className = "rain-emoji";
-        re.textContent = ROUND_EMOJI_SETS[Math.floor(Math.random() * ROUND_EMOJI_SETS.length)][0];
-        re.style.left = Math.random() * 100 + "vw";
-        re.style.animationDelay = (Math.random() * 1.2) + "s";
-        emojiRainContainer.appendChild(re);
-        setTimeout(() => re.remove(), 2500);
+      // off screen clean
+      if(o.y > h + 80*dpr){
+        objects.splice(i,1);
       }
     }
 
-
-    function showClearBonus() {
-    const overlay = document.getElementById("clearBonus");
-    if (!overlay) return;
-
-    overlay.classList.add("active");
-    overlay.style.display = "flex";
-
-    // extra emoji rain on bonus
-    for (let i = 0; i < 25; i++) {
-        const re = document.createElement("div");
-        re.className = "rain-emoji";
-        re.textContent = ROUND_EMOJI_SETS[Math.floor(Math.random() * ROUND_EMOJI_SETS.length)][0];
-        re.style.left = Math.random() * 100 + "vw";
-        re.style.animationDelay = (Math.random() * 0.6) + "s";
-        emojiRainContainer.appendChild(re);
-        setTimeout(() => re.remove(), 2500);
+    // invincibility timeout
+    if(player.invincible && performance.now() >= player.invEnd){
+      player.invincible = false;
+      hideBlink();
     }
 
-    // hide after a bit
-    setTimeout(() => {
-        overlay.classList.remove("active");
-        overlay.style.display = "none";
-    }, 2200);
+    // particles
+    for(let i=particles.length-1;i>=0;i--){
+      const p = particles[i];
+      p.age += dt;
+      if(p.age >= p.life){ particles.splice(i,1); continue; }
+      p.vy += 600*dt;
+      p.x += p.vx*dt;
+      p.y += p.vy*dt;
     }
-    
 
-
-    
-
-    /**********************
-     * RESIZE
-     **********************/
-    document.addEventListener("keydown", (e) => {
-    if (e.key === "h" || e.key === "H") {
-        debugHitboxes = !debugHitboxes;
-        updateDebugVisuals();
+    // timer
+    if(!cfg.bonus && isFinite(cfg.roundTimeSec)){
+      timeLeft -= dt;
+      if(timeLeft<0) timeLeft = 0;
     }
-    });
 
-    function updateDebugVisuals() {
-    // pegs
-    pegs.forEach(p => {
-        if (!p.el) return;
-        if (debugHitboxes) {
-        p.el.classList.add("debug-peg-hitbox");
-        } else {
-        p.el.classList.remove("debug-peg-hitbox");
+    // throttled HUD updates (score, time, speed)
+    hudAccum += dt;
+    if (hudAccum >= 0.1) { // about 10 times per second
+      hudAccum = 0;
+
+      // time left (only for normal rounds)
+      if (!cfg.bonus && isFinite(cfg.roundTimeSec)) {
+        const tDisp = Math.ceil(timeLeft);
+        if (tDisp !== lastHudTime) {
+          hudTime.textContent = tDisp;
+          lastHudTime = tDisp;
         }
-    });
-
-    // balls
-    activeBalls.forEach(b => {
-    if (debugHitboxes) {
-        b.el.classList.add("debug-ball-hitbox");
-    } else {
-        b.el.classList.remove("debug-ball-hitbox");
-    }
-    });
-
-    }
-
-
-
-
-    window.addEventListener("resize", () => {
-      // if we are currently in a game, rebuild pegs to match new size
-      if (gameScreen.classList.contains("active")) {
-        setupGameForRound(currentQuestionIndex);
       }
+
+      // score
+      const sDisp = state.score;
+      if (sDisp !== lastHudScore) {
+        hudScore.textContent = sDisp;
+        lastHudScore = sDisp;
+      }
+
+      // speed multiplier text
+      const spdDisp = (fallSpeed / baseSpeed).toFixed(1) + 'x';
+      if (spdDisp !== lastHudSpd) {
+        hudSpd.textContent = spdDisp;
+        lastHudSpd = spdDisp;
+      }
+    }
+  }
+
+
+  function draw(){
+    // background (starfield)
+    ctx.clearRect(0,0,w,h);
+    drawStarfield(ctx, w, h);
+
+
+    // player
+    const fontSize = Math.round(40*dpr);
+    ctx.save();
+    ctx.font = `${fontSize}px AppleColorEmoji, Segoe UI Emoji, Noto Color Emoji, system-ui`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // blink if invincible
+    let visible = true;
+    if(!cfg.bonus && player.invincible){
+      const t = performance.now()*0.01;
+      visible = ((t|0)%2)===0;
+    }
+    if(visible){
+      ctx.translate(player.x, player.y);
+      ctx.rotate((-45 * Math.PI/180) + player.tilt*0.25); // point "up", lean to turn
+      ctx.fillText(EMOJI.rocket, 0, 0);
+    }
+    ctx.restore();
+
+    // objects (fixed size)
+    for (const o of objects) {
+    const font = Math.round(Math.max(16, o.sizePx));
+    ctx.save();
+    ctx.font = `${font}px AppleColorEmoji, Segoe UI Emoji, Noto Color Emoji, system-ui`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.translate(o.x, o.y);
+    ctx.rotate(o.rot);
+    const ch = o.kind === 'asteroid' ? EMOJI.asteroid : o.type.emoji;
+    ctx.fillText(ch, 0, 0);
+    ctx.restore();
+    }
+
+
+    // particles
+    for(const p of particles){
+      const t = p.age/p.life;
+      const a = 1 - t;
+      ctx.save();
+      if(p.emoji){
+        ctx.globalAlpha = a;
+        ctx.font = `${Math.round(p.size)}px AppleColorEmoji, Segoe UI Emoji, Noto Color Emoji, system-ui`;
+        ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText(p.emoji, p.x, p.y);
+      }else{
+        ctx.fillStyle = `rgba(255,255,255,${a.toFixed(3)})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, Math.max(2,p.size*0.15), 0, Math.PI*2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+  }
+
+  function endRound(){
+    running = false;
+    // quick 3-2-1 -> "Time's up!"
+    showTimeUp(()=>{
+      hide('#gameWrap');
+      showPopup(elRoundPopup);
+      $('#roundPts').textContent = lastRoundPts();
+      $('#totalPts').textContent = state.score;
     });
-  </script>
+  }
+
+  function endBonus(){
+    running = false;
+    // small burst already shown on crash
+    setTimeout(()=>{
+      hide('#gameWrap');
+      $('#bonusPts').textContent = lastRoundPts();
+      showPopup(elBonusPopup);
+    }, 400);
+  }
+
+  function hide(sel){ document.querySelector(sel).classList.remove('active'); }
+
+  function lastRoundPts(){
+    // This is not tracked per-round separately; for the popup we just snapshot
+    // To make it meaningful, we can show the points earned *during* this round:
+    // For simplicity, we captured before-start score in closure:
+    return Math.max(0, state.score - startScoreSnapshot);
+  }
+
+  // snapshot at start
+  const startScoreSnapshot = state.score;
+
+  return { start };
+}
+
+/* === Starfield cache & settings (constant-speed scroll) === */
+let starData = null, starGrad = null, starLastW = 0, starLastH = 0, starYOffset = 0, starLastTS = 0;
+
+const STAR_SCROLL_PX_PER_SEC = 40; // constant background drift
+const STAR_LAYERS = [
+  { count: 28, parallax: 0.4, size: 1 },   // far
+  { count: 40, parallax: 0.7, size: 1.5 }, // mid
+  { count: 55, parallax: 1.0, size: 2 }    // near
+];
+
+
+/* Drawing helpers */
+
+function drawStarfield(ctx, w, h){
+  // (1) Rebuild only when size changes
+  if (!starData || w !== starLastW || h !== starLastH) {
+    starLastW = w; starLastH = h;
+    starData = [];
+
+    // cache the vertical gradient once per size
+    starGrad = ctx.createLinearGradient(0, 0, 0, h);
+    starGrad.addColorStop(0, '#070b16');
+    starGrad.addColorStop(1, '#05070e');
+
+    // generate random star positions once
+    for (const layer of STAR_LAYERS) {
+      for (let i = 0; i < layer.count; i++) {
+        starData.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          size: layer.size,
+          parallax: layer.parallax
+        });
+      }
+    }
+    // reset scroll so it starts clean after a resize
+    starYOffset = 0;
+    starLastTS = 0;
+  }
+
+  // (2) Advance scroll at a constant rate (decoupled from game speed)
+  const now = performance.now();
+  if (!starLastTS) starLastTS = now;
+  const dt = Math.min(0.05, (now - starLastTS) / 1000);
+  starLastTS = now;
+  starYOffset += STAR_SCROLL_PX_PER_SEC * dt;
+
+  // (3) Draw background + stars
+  ctx.fillStyle = starGrad;
+  ctx.fillRect(0, 0, w, h);
+
+  ctx.save();
+  ctx.fillStyle = 'rgba(210,230,255,0.8)';
+  for (const s of starData) {
+    // parallax scroll: nearer layers move slightly faster
+    let y = s.y + starYOffset * s.parallax;
+    // wrap vertically
+    if (y >= h) y = y % h;
+    ctx.fillRect(s.x, y, s.size, s.size);
+  }
+  ctx.restore();
+}
+
+
+/* Blink effect */
+function showBlink(){ centerNote.style.opacity = .0; centerNote.textContent=''; canvas.classList.add('blink'); }
+function hideBlink(){ canvas.classList.remove('blink'); }
+
+/* Quick toast (+points text) */
+let toastTimer=0;
+function quickToast(txt){
+  toast.textContent = txt;
+  toast.style.opacity = 1;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{ toast.style.opacity = 0; }, 700);
+}
+
+/* 3..2..1 before each round */
+function big3to1(done){
+  bigCount.style.opacity = 1;
+  let n=3;
+  bigCount.textContent = n;
+  const tick = ()=>{
+    setTimeout(()=>{
+      n--;
+      if(n>0){ bigCount.textContent = n; tick(); }
+      else{
+        bigCount.textContent = 'GO!';
+        setTimeout(()=>{
+          bigCount.style.opacity = 0;
+          done && done();
+        }, 350);
+      }
+    }, 650);
+  };
+  tick();
+}
+
+/* Show "Time's up!" burst */
+function showTimeUp(done){
+  centerNote.textContent = "Time’s up!";
+  centerNote.style.opacity = 1;
+  setTimeout(()=>{
+    centerNote.style.opacity = 0;
+    done && done();
+  }, 850);
+}
+
+/* CLAMP / LERP / RAND */
+function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+function lerp(a,b,t){ return a + (b-a)*t; }
+function rand(a,b){ return a + Math.random()*(b-a); }
+
+/* ==============================
+   ROUND FLOW CONTROL
+   ============================== */
+$('#btnNext').addEventListener('click', ()=>{
+  hidePopup(elRoundPopup);
+  // Next question or final
+  if(state.round < state.totalRounds-1){
+    state.round++;
+    loadQuestion();
+  }else{
+    // Done
+    showFinal();
+  }
+});
+
+function showFinal(){
+  show('#final');
+  $('#finCorrect').textContent = state.correct;
+  $('#finWrong').textContent = state.wrong;
+  $('#finScore').textContent = state.score;
+  startEmojiRain();
+}
+
+$('#btnRestart').addEventListener('click', ()=>{
+  stopEmojiRain();
+  state.round=0; state.score=0; state.correct=0; state.wrong=0; state.answered=0;
+  show('#title');
+});
+
+$('#btnPlayBonus').addEventListener('click', ()=>{
+  stopEmojiRain();
+  state.inBonus = true;
+  startBonus();
+});
+
+$('#btnBonusDone').addEventListener('click', ()=>{
+  hidePopup(elBonusPopup);
+  // Back to final with updated score already included
+  show('#final');
+  startEmojiRain();
+});
+
+/* ==============================
+   EMOJI RAIN ON FINAL
+   ============================== */
+const rain = $('#rain');
+let rainTimer = null;
+function startEmojiRain(){
+  stopEmojiRain();
+  rain.innerHTML='';
+  const bag = ['⭐','💎','🪙','✨','🌟'];
+  rainTimer = setInterval(()=>{
+    const e = document.createElement('div');
+    e.className = 'drop';
+    e.textContent = bag[(Math.random()*bag.length)|0];
+    const left = Math.random()*100;
+    const dur = 3 + Math.random()*2;
+    const delay = 0;
+    e.style.left = left+'vw';
+    e.style.animationDuration = dur+'s';
+    e.style.animationDelay = delay+'s';
+    rain.appendChild(e);
+    // cleanup
+    setTimeout(()=>e.remove(), (dur+1)*1000);
+  }, 120);
+}
+function stopEmojiRain(){
+  if(rainTimer){ clearInterval(rainTimer); rainTimer=null; }
+  rain.innerHTML='';
+}
+
+/* ==============================
+   SMALL UTILS
+   ============================== */
+function hideAllPopups(){ [elRoundPopup, elBonusPopup, answerPopup].forEach(hidePopup); }
+
+/* Keep default orientation behavior but prevent scroll bounce on iOS */
+document.addEventListener('touchmove', (e)=>{ if(e.touches.length>1) e.preventDefault(); }, {passive:false});
+
+</script>
 </body>
 </html>
