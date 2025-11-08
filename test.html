@@ -882,7 +882,7 @@ function update(dt){
     // player
     const fontSize = Math.round(40*dpr);
     ctx.save();
-    ctx.font = `${fontSize}px AppleColorEmoji, Segoe UI Emoji, Noto Color Emoji, system-ui`;
+    ctx.font = `${fontSize}px system-ui, -apple-system, sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
@@ -895,23 +895,50 @@ function update(dt){
     if(visible){
       ctx.translate(player.x, player.y);
       ctx.rotate((-45 * Math.PI/180) + player.tilt*0.25); // point "up", lean to turn
+
+      // fallback circle so the rocket is always visible
+      ctx.beginPath();
+      ctx.arc(0, 0, 22*dpr, 0, Math.PI*2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fill();
+
+      // rocket emoji (if the device supports it)
+      ctx.fillStyle = '#000000'; // text color for non-emoji fallback
       ctx.fillText(EMOJI.rocket, 0, 0);
     }
     ctx.restore();
 
+
     // objects (fixed size)
     for (const o of objects) {
-    const font = Math.round(Math.max(16, o.sizePx));
-    ctx.save();
-    ctx.font = `${font}px AppleColorEmoji, Segoe UI Emoji, Noto Color Emoji, system-ui`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.translate(o.x, o.y);
-    ctx.rotate(o.rot);
-    const ch = o.kind === 'asteroid' ? EMOJI.asteroid : o.type.emoji;
-    ctx.fillText(ch, 0, 0);
-    ctx.restore();
+      const font = Math.round(Math.max(16, o.sizePx));
+      ctx.save();
+      ctx.font = `${font}px system-ui, -apple-system, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.translate(o.x, o.y);
+      ctx.rotate(o.rot);
+
+      const ch = o.kind === 'asteroid' ? EMOJI.asteroid : o.type.emoji;
+
+      // fallback colored circle so the object is always visible
+      const radius = (o.sizePx || 24) * 0.5 * dpr;
+      if (o.kind === 'asteroid') {
+        ctx.fillStyle = '#8b5a2b'; // brown-ish rock color
+      } else {
+        ctx.fillStyle = '#ffd54f'; // gold-ish pickup color
+      }
+      ctx.beginPath();
+      ctx.arc(0, 0, radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      // emoji on top (if supported)
+      ctx.fillStyle = '#000000';
+      ctx.fillText(ch, 0, 0);
+
+      ctx.restore();
     }
+
 
 
     // particles
@@ -921,7 +948,7 @@ function update(dt){
       ctx.save();
       if(p.emoji){
         ctx.globalAlpha = a;
-        ctx.font = `${Math.round(p.size)}px AppleColorEmoji, Segoe UI Emoji, Noto Color Emoji, system-ui`;
+        ctx.font = `${Math.round(p.size)}px system-ui, -apple-system, sans-serif`;
         ctx.textAlign='center'; ctx.textBaseline='middle';
         ctx.fillText(p.emoji, p.x, p.y);
       }else{
