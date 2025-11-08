@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
-<title>Emoji Cube Runner</title>
+<title>Emoji Space Runner</title>
 <style>
   :root{
     --bg:#05060a;
@@ -177,8 +177,8 @@
   <!-- SPLASH: says best in horizontal (as requested), but game is vertical -->
   <section id="splash" class="screen active">
     <div class="card" style="text-align:center">
-      <h1 class="title">Emoji Cube Runner v10</h1>
-      <p class="subtitle">Game is best in <b>horizontal mode</b> — but don’t worry, this one runs great vertically too.</p>
+      <h1 class="title">📲 Best in Vertical</h1>
+      <p class="subtitle">If playing on mobile, game is best in <b>Vertical mode</b></p>
       <button id="btnStart" class="btn">Go fullscreen and start</button>
     </div>
   </section>
@@ -186,11 +186,11 @@
   <!-- TITLE -->
   <section id="title" class="screen">
     <div class="card" style="text-align:center">
-      <h2 class="title">🚀 Emoji Cube Runner</h2>
-      <p class="subtitle">Answer Bible questions, then fly your rocket! Avoid asteroids, collect treasure, and rack up points.</p>
+      <h2 class="title">🚀 Emoji Space Runner 🪨</h2>
+      <p class="subtitle">Avoid asteroids, collect treasure, and rack up points.</p>
       <div class="hud" style="justify-content:center">
-        <span class="badge">Vertical • Mobile First</span>
-        <span class="badge">Tilt or Arrow Keys</span>
+        <span class="badge">Vertical Mode</span>
+        <span class="badge">Tilt 📱 or Arrow Keys ⬅️➡️</span>
         <span class="badge">10 Rounds + Bonus</span>
       </div>
       <br/>
@@ -277,9 +277,20 @@
 </div>
 
 <script>
-/* ==============================
-   SIMPLE STATE + QUESTIONS
-   ============================== */
+
+/*
+
+ #####     #     #    #######     #####     #######    ###    #######    #     #     #####  
+#     #    #     #    #          #     #       #        #     #     #    ##    #    #     # 
+#     #    #     #    #          #             #        #     #     #    # #   #    #       
+#     #    #     #    #####       #####        #        #     #     #    #  #  #     #####  
+#   # #    #     #    #                #       #        #     #     #    #   # #          # 
+#    #     #     #    #          #     #       #        #     #     #    #    ##    #     # 
+ #### #     #####     #######     #####        #       ###    #######    #     #     #####  
+
+*/
+
+
 const QUESTIONS = [
   { text: "Who made the heavens and the earth?",
     answers: [
@@ -372,6 +383,19 @@ const QUESTIONS = [
     explain:"Genesis is the first book."
   },
 ];
+
+  /*
+
+#######    #     #    ######     
+#          ##    #    #     #    
+#          # #   #    #     #    
+#####      #  #  #    #     #    
+#          #   # #    #     #    
+#          #    ##    #     #    
+#######    #     #    ######     
+
+
+*/
 
 const state = {
   round: 0, // 0..9 (ten rounds)
@@ -513,6 +537,21 @@ const PICKUPS = [
   {type:'coin', emoji:EMOJI.coin, value:150},
 ];
 
+// Big atmospheric background emoji for each of the 10 rounds
+const BG_EMOJI_ROUNDS = [
+  '🌕', // Round 1
+  '🪐', // Round 2
+  '🌌', // Round 3
+  '🌠', // Round 4
+  '☄️', // Round 5
+  '🌙', // Round 6
+  '🛰️', // Round 7
+  '🛸', // Round 8
+  '👨‍🚀', // Round 9
+  '✨'   // Round 10
+];
+
+
 // Fixed pixel sizes (no depth scaling)
 const ROCKET_PX = 40;                 // matches the rocket font size used in draw()
 const ASTEROID_SIZES = [26, 34, 44];  // small, medium, large asteroid sizes
@@ -539,9 +578,12 @@ function startRound(){
   const accelPerSec = 10 + roundIndex*5;       // increase per second while not hit
   const roundTimeSec = 30;
 
-  game = createGame({ baseSpeed, maxSpeed, accelPerSec, roundTimeSec, bonus:false });
+  const bgEmoji = BG_EMOJI_ROUNDS[roundIndex % BG_EMOJI_ROUNDS.length];
+
+  game = createGame({ baseSpeed, maxSpeed, accelPerSec, roundTimeSec, bonus:false, bgEmoji });
   game.start();
 }
+
 
 /* BONUS SURVIVAL (after 10) */
 function startBonus(){
@@ -551,10 +593,12 @@ function startBonus(){
     maxSpeed: 1200,
     accelPerSec: 80,
     roundTimeSec: Infinity, // survives until crash
-    bonus:true
+    bonus:true,
+    bgEmoji: '🌌'
   });
   game.start();
 }
+
 
 /* Game Factory */
 function createGame(cfg){
@@ -573,6 +617,12 @@ function createGame(cfg){
   let lastHudTime = null;
   let lastHudScore = null;
   let lastHudSpd = null;
+
+    // Big background emoji state
+  const bgEmoji = cfg.bgEmoji || null;
+  let bgY = 0;
+  const bgSpeed = 20; // px per second, slow drift
+
 
 
   // speeds
@@ -632,7 +682,11 @@ function createGame(cfg){
     // position player
     player.x = w*0.5;
     player.y = h*0.78;
+
+    // start big emoji slightly above the top
+    bgY = -h * 0.25;
   }
+
   resize();
   window.addEventListener('resize', resize);
 
@@ -744,6 +798,13 @@ function update(dt){
     // distance points (we'll update HUD on a timer)
     state.score += Math.floor(fallSpeed * 0.06 * dt); // tuned small increment
 
+    // move big background emoji slowly downward
+    if (bgEmoji) {
+      bgY += bgSpeed * dt * dpr;
+      if (bgY > h * 1.2) {
+        bgY = -h * 0.3; // loop it back above the top
+      }
+    }
 
     // controls
     const targetAxFromKeys = (keyLeft? -1 : 0) + (keyRight? 1 : 0);
@@ -885,9 +946,22 @@ function update(dt){
     ctx.clearRect(0,0,w,h);
     drawStarfield(ctx, w, h);
 
+    // big atmospheric background emoji (behind player & objects)
+    if (bgEmoji) {
+      ctx.save();
+      const size = Math.round(Math.min(w, h) * 0.6);
+      ctx.font = `${size}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",system-ui,-apple-system,sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.globalAlpha = 0.18; // mostly transparent
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(bgEmoji, w / 2, bgY);
+      ctx.restore();
+    }
 
     // player (rocket emoji only)
     const fontSize = Math.round(40*dpr);
+
     ctx.save();
     ctx.font = `${fontSize}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",system-ui,-apple-system,sans-serif`;
 ctx.fillStyle = '#ffffff';
@@ -991,12 +1065,9 @@ ctx.fillStyle = '#ffffff';
 /* === Starfield cache & settings (constant-speed scroll) === */
 let starData = null, starGrad = null, starLastW = 0, starLastH = 0, starYOffset = 0, starLastTS = 0;
 
-const STAR_SCROLL_PX_PER_SEC = 40; // constant background drift
-const STAR_LAYERS = [
-  { count: 12, parallax: 0.4, size: 1 },   // far
-  { count: 18, parallax: 0.7, size: 1.5 }, // mid
-  { count: 24, parallax: 1.0, size: 2 }    // near
-];
+const STAR_SCROLL_PX_PER_SEC = 40; // no stars now, but keep for compatibility
+const STAR_LAYERS = []; // no star layers (we'll draw only a gradient)
+
 
 
 
@@ -1013,44 +1084,24 @@ function drawStarfield(ctx, w, h){
     starGrad.addColorStop(0, '#070b16');
     starGrad.addColorStop(1, '#05070e');
 
-    // generate random star positions once
-    for (const layer of STAR_LAYERS) {
-      for (let i = 0; i < layer.count; i++) {
-        starData.push({
-          x: Math.random() * w,
-          y: Math.random() * h,
-          size: layer.size,
-          parallax: layer.parallax
-        });
-      }
-    }
-    // reset scroll so it starts clean after a resize
+    // we no longer create individual stars
     starYOffset = 0;
     starLastTS = 0;
   }
 
-  // (2) Advance scroll at a constant rate (decoupled from game speed)
+  // (2) We could still animate if we want, but it doesn't matter now
   const now = performance.now();
   if (!starLastTS) starLastTS = now;
   const dt = Math.min(0.05, (now - starLastTS) / 1000);
   starLastTS = now;
   starYOffset += STAR_SCROLL_PX_PER_SEC * dt;
 
-  // (3) Draw background + stars
+  // (3) Draw only the gradient background
   ctx.fillStyle = starGrad;
   ctx.fillRect(0, 0, w, h);
-
-  ctx.save();
-  ctx.fillStyle = 'rgba(210,230,255,0.8)';
-  for (const s of starData) {
-    // parallax scroll: nearer layers move slightly faster
-    let y = s.y + starYOffset * s.parallax;
-    // wrap vertically
-    if (y >= h) y = y % h;
-    ctx.fillRect(s.x, y, s.size, s.size);
-  }
-  ctx.restore();
 }
+
+
 
 
 /* Blink effect */
@@ -1180,6 +1231,37 @@ function hideAllPopups(){ [elRoundPopup, elBonusPopup, answerPopup].forEach(hide
 
 /* Keep default orientation behavior but prevent scroll bounce on iOS */
 document.addEventListener('touchmove', (e)=>{ if(e.touches.length>1) e.preventDefault(); }, {passive:false});
+
+/* ==============================
+   SMALL UTILS
+   ============================== */
+function hideAllPopups(){ [elRoundPopup, elBonusPopup, answerPopup].forEach(hidePopup); }
+
+// Secret dev keys: 1–9 jump to questions 1–9, 0 jumps to question 10
+window.addEventListener('keydown', (e)=>{
+  // Ignore if user is typing in some field (just in case you add inputs later)
+  const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+  if (tag === 'input' || tag === 'textarea' || tag === 'select' || e.isComposing) return;
+
+  let qNum = null;
+
+  // Number keys 1–9 → questions 1–9
+  if (e.key >= '1' && e.key <= '9') {
+    qNum = parseInt(e.key, 10);
+  }
+  // 0 key → question 10
+  else if (e.key === '0') {
+    qNum = 10;
+  }
+
+  // If we got a valid question number, jump there
+  if (qNum !== null && qNum >= 1 && qNum <= state.totalRounds) {
+    state.round = qNum - 1;  // rounds are 0-based
+    hideAllPopups();
+    loadQuestion();
+  }
+});
+
 
 </script>
 </body>
