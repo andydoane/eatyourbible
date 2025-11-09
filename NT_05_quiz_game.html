@@ -158,12 +158,20 @@
     padding:0 12px; pointer-events:none; font-weight:700; font-size:14px; color:#cfe5ff;
     text-shadow: 0 1px 2px rgba(0,0,0,.65);
   }
-  .centerNote{
-    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-    font-size:clamp(40px, 12vw, 96px); font-weight:900; letter-spacing:.5px; pointer-events:none; opacity:0;
-    text-shadow: 0 6px 20px rgba(0,0,0,.55);
-    transition: opacity .2s ease;
-  }
+.centerNote{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  font-size:clamp(40px, 12vw, 96px);
+  font-weight:900;
+  letter-spacing:.5px;
+  pointer-events:none;
+  opacity:0;
+  text-align:center;      /* ⬅ center the text */
+  max-width:90vw;         /* optional: wrap nicely on smaller screens */
+}
+
 
   .toast{
     position:absolute; left:50%; top:24%;
@@ -186,6 +194,27 @@
 
   /* SMALL HELPER BADGES */
   .badge{ padding:6px 8px; background:#0d1430; border:1px solid #2a3c6e; border-radius:8px }
+
+/* Bonus crash explosion shake */
+@keyframes gameShake {
+  0%   { transform: translate(0, 0); }
+  20%  { transform: translate(-8px, 4px); }
+  40%  { transform: translate(6px, -6px); }
+  60%  { transform: translate(-4px, 3px); }
+  80%  { transform: translate(4px, -3px); }
+  100% { transform: translate(0, 0); }
+}
+
+#gameWrap.shake {
+  animation: gameShake 0.45s ease-out;
+}
+
+body.noCursor,
+body.noCursor * {
+  cursor: none !important;
+}
+
+
 </style>
 </head>
 <body>
@@ -662,9 +691,11 @@ $('#btnPlay').addEventListener('click', ()=>{
 });
 
 function showGame(){
+  document.body.classList.add('noCursor');  // hide mouse during gameplay
   show('#gameWrap');
   startRound();
 }
+
 
 function startRound(){
   // round speeds scale upwards
@@ -695,7 +726,7 @@ function startBonus(){
     accelPerSec: 80,
     roundTimeSec: Infinity, // survives until crash
     bonus:true,
-    bgEmoji: '🌌',
+    bgEmoji: '🌝',
     bombs: 1 // no bombs in bonus round
   });
   game.start();
@@ -871,6 +902,27 @@ objects.push(s);
     }
   }
 
+  function bonusExplosion(x, y){
+    // extra-big particle burst
+    burst(x, y, '💥', null, 24, 1.2);
+    burst(x, y, null, '#ffdd55', 20, 1.4);
+    burst(x, y, null, '#ffffff', 14, 1.6);
+
+    // big explosion emoji flash in the center
+    centerNote.textContent = '💥';
+    centerNote.style.opacity = 1;
+    setTimeout(()=>{
+      centerNote.style.opacity = 0;
+    }, 450);
+
+    // screen shake on the game wrapper
+    gw.classList.add('shake');
+    setTimeout(()=>{
+      gw.classList.remove('shake');
+    }, 450);
+  }
+
+
   // Use bomb: blow up all asteroids currently on screen (once per round)
   function useBomb(){
     if (!running) return;
@@ -999,27 +1051,26 @@ function update(dt){
         const dx = (o.x - player.x);
         const hit = Math.abs(dx) < (player.r + (o.sizePx*0.35));
 
-        if(hit){
-          if(o.kind==='asteroid'){
-            if(cfg.bonus){
-              // In bonus: first hit ends run
-              // big burst and mark dead
-              burst(player.x, player.y, '💥', null, 12, 1.0);
+if(hit){
+  if(o.kind==='asteroid'){
+    if(cfg.bonus){
+      // In bonus: first hit ends run with a big explosion
+      bonusExplosion(player.x, player.y);
+      player.alive = false;
+    }else{
+      // Normal round: knock back to baseSpeed + invincible 3s
+      if(!player.invincible){
+        fallSpeed = baseSpeed;
+        player.invincible = true;
+        player.invEnd = performance.now() + 3000;
+        burst(player.x, player.y, '💥', null, 10, 0.9);
 
-              player.alive = false;
-            }else{
-              // Normal round: knock back to baseSpeed + invincible 3s
-              if(!player.invincible){
-                fallSpeed = baseSpeed;
-                player.invincible = true;
-                player.invEnd = performance.now() + 3000;
-                burst(player.x, player.y, '💥', null, 10, 0.9);
+        showBlink();
+      }
+    }
+  }else{
+    // pickup ...
 
-                showBlink();
-              }
-            }
-          }else{
-            // pickup
              const val = o.type.value;
             state.score += val;
             quickToast('+'+val+' '+o.type.emoji);
@@ -1188,26 +1239,32 @@ function update(dt){
     }
 
   }
-  function endRound(){
-    running = false;
-    // quick 3-2-1 -> "Time's up!"
-    showTimeUp(()=>{
-      hide('#gameWrap');
-      showPopup(elRoundPopup);
-      $('#roundPts').textContent = lastRoundPts();
-      $('#totalPts').textContent = state.score;
-    });
-  }
+
+function endRound(){
+  running = false;
+  // quick 3-2-1 -> "Time's up!"
+  showTimeUp(()=>{
+    document.body.classList.remove('noCursor'); // show mouse again
+    hide('#gameWrap');
+    showPopup(elRoundPopup);
+    $('#roundPts').textContent = lastRoundPts();
+    $('#totalPts').textContent = state.score;
+  });
+}
+
+  
 
 function endBonus(){
   running = false;
   // small burst already shown on crash
   setTimeout(()=>{
+    document.body.classList.remove('noCursor'); // show mouse again
     hide('#gameWrap');
     // After the bonus, go straight to the final summary
     showFinal();
   }, 400);
 }
+
 
 
   function hide(sel){ document.querySelector(sel).classList.remove('active'); }
@@ -1319,36 +1376,49 @@ function quickToast(txt){
 
 /* 3..2..1 before each round */
 function big3to1(done, label){
-  if (label) {
-    centerNote.textContent = label;
-    centerNote.style.opacity = 1;
-  } else {
-    centerNote.style.opacity = 0;
-  }
+  // Helper: do the 3–2–1–GO countdown
+  const startCountdown = ()=>{
+    bigCount.style.opacity = 1;
+    let n = 3;
+    bigCount.textContent = n;
 
-  bigCount.style.opacity = 1;
-  let n = 3;
-  bigCount.textContent = n;
+    const tick = ()=>{
+      setTimeout(()=>{
+        n--;
+        if (n > 0) {
+          bigCount.textContent = n;
+          tick();
+        } else {
+          bigCount.textContent = 'GO!';
+          setTimeout(()=>{
+            bigCount.style.opacity = 0;
+            // centerNote is already hidden by this point
+            done && done();
+          }, 350);
+        }
+      }, 650);
+    };
 
-  const tick = ()=>{
-    setTimeout(()=>{
-      n--;
-      if (n > 0) {
-        bigCount.textContent = n;
-        tick();
-      } else {
-        bigCount.textContent = 'GO!';
-        setTimeout(()=>{
-          bigCount.style.opacity = 0;
-          centerNote.style.opacity = 0;
-          done && done();
-        }, 350);
-      }
-    }, 650);
+    tick();
   };
 
-  tick();
+  if (label) {
+    // Show the message first (3s), then the countdown
+    centerNote.textContent = label;
+    centerNote.style.opacity = 1;
+    bigCount.style.opacity = 0;
+
+    setTimeout(()=>{
+      centerNote.style.opacity = 0;
+      startCountdown();
+    }, 3000); // 3 seconds for the message
+  } else {
+    // Normal rounds: no message, just countdown
+    centerNote.style.opacity = 0;
+    startCountdown();
+  }
 }
+
 
 
 /* Show "Time's up!" burst */
@@ -1403,6 +1473,7 @@ function showFinal(){
 
 $('#btnRestart').addEventListener('click', ()=>{
   stopEmojiRain();
+  document.body.classList.remove('noCursor'); // just in case
   state.round = 0;
   state.score = 0;
   state.correct = 0;
@@ -1413,6 +1484,7 @@ $('#btnRestart').addEventListener('click', ()=>{
   state.inBonus = false;
   show('#title');
 });
+
 
 
 
