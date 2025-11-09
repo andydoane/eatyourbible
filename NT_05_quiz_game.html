@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>Emoji Space Runner</title>
+<style>
+  :root{
+    --bg:#05060a;
+    --panel:#0b0f1a;
+    --accent:#58d3ff;
+    --good:#38d39f;
+    --bad:#ff6b6b;
+    --text:#e8f1ff;
+    --muted:#9fb3cc;
+  }
+
+  /* RESET + LAYOUT */
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    overflow:hidden; /* keep it app-like */
+    touch-action:none;
+  }
+  #app{
+    position:relative;
+    width:100vw;
+    height:100vh; /* vertical first */
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .screen{
+    position:absolute; inset:0;
+    display:none;
+    align-items:center; justify-content:center;
+    padding:16px;
+    background:linear-gradient(180deg,#060913 0%, #0b1020 100%);
+  }
+  .screen.active{ display:flex; }
+
+  /* CARDS / BUTTONS */
+  .card{
+    width:min(680px,92vw);
+    background:linear-gradient(180deg,#0c1224 0%, #0a0f1c 100%);
+    border:1px solid #1a2747;
+    box-shadow: 0 10px 30px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.02);
+    border-radius:16px;
+    padding:20px;
+  }
+  .title{
+    font-size:clamp(20px,4vw,28px);
+    margin:0 0 8px 0;
+    letter-spacing:.3px;
+  }
+  .subtitle{
+    font-size:clamp(14px,3.3vw,18px);
+    color:var(--muted);
+    margin:0 0 16px 0;
+  }
+  .btn{
+    display:inline-block;
+    border:0;
+    padding:14px 18px;
+    font-weight:700;
+    font-size:16px;
+    border-radius:12px;
+    background:linear-gradient(180deg,#62e6ff,#3bbdff);
+    color:#002233;
+    cursor:pointer;
+    box-shadow:0 8px 20px rgba(59,189,255,.35);
+    transition:.15s transform ease,.15s filter ease;
+  }
+  .btn:hover{ transform: translateY(-1px); filter:brightness(1.02); }
+  .btn:active{ transform: translateY(1px) scale(.98); }
+  .btn.secondary{
+    background:linear-gradient(180deg,#2b3858,#1b2642);
+    color:#d8e7ff;
+    box-shadow:none;
+    border:1px solid #2e426e;
+  }
+
+  /* QUESTION UI */
+  .q-title{
+    font-size:clamp(18px,4.4vw,24px);
+    margin:0 0 16px 0;
+  }
+  .answers{
+    display:grid;
+    grid-template-columns:1fr;
+    gap:12px;
+    margin-top:10px;
+  }
+  .answer{
+    width:100%;
+    text-align:left;
+    padding:14px 16px;
+    border-radius:12px;
+    background:#0f1730;
+    border:1px solid #223460;
+    color:#e9f2ff;
+    font-size:16px;
+    cursor:pointer;
+  }
+  .answer .em{margin-right:8px}
+
+  .hud{
+    display:flex; gap:10px; align-items:center; justify-content:space-between;
+    margin-top:8px; color:var(--muted); font-size:14px;
+  }
+
+    .textInput{
+    width:100%;
+    padding:10px 12px;
+    border-radius:10px;
+    border:1px solid #2a3c6e;
+    background:#050814;
+    color:var(--text);
+    font-size:15px;
+    margin:10px 0 14px;
+  }
+  .textInput::placeholder{
+    color:var(--muted);
+  }
+
+
+  /* POPUPS */
+  .popup{
+    position:absolute; inset:0; display:none; align-items:center; justify-content:center;
+    background:rgba(1,5,12,.5); backdrop-filter: blur(4px);
+    padding:16px;
+  }
+  .popup.active{display:flex;}
+  .popup .card{ text-align:center; }
+  .pop-emoji{ font-size:42px; margin-bottom:2px; }
+
+  /* GAME CANVAS */
+  #gameWrap{
+    position:absolute; inset:0; display:none; align-items:center; justify-content:center;
+    background:radial-gradient(100% 100% at 50% 0%, #0b1020, #05060a 60%);
+  }
+  #gameWrap.active{ display:flex; }
+  #game{
+    width:min(720px,100vw);
+    height:100vh; /* vertical lane full height */
+    display:block;
+    background:transparent;
+    touch-action:none;
+  }
+
+  /* ON-CANVAS HUD */
+  .gameHud{
+    position:absolute; left:0; right:0; top:8px;
+    display:flex; justify-content:space-between; align-items:center;
+    padding:0 12px; pointer-events:none; font-weight:700; font-size:14px; color:#cfe5ff;
+    text-shadow: 0 1px 2px rgba(0,0,0,.65);
+  }
+  .centerNote{
+    position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    font-size:clamp(40px, 12vw, 96px); font-weight:900; letter-spacing:.5px; pointer-events:none; opacity:0;
+    text-shadow: 0 6px 20px rgba(0,0,0,.55);
+    transition: opacity .2s ease;
+  }
+
+  .toast{
+    position:absolute; left:50%; top:24%;
+    transform:translateX(-50%);
+    background:#0d1530; border:1px solid #2a3c6e; color:#e7f0ff; padding:10px 14px; border-radius:999px;
+    font-weight:700; font-size:14px; box-shadow:0 8px 20px rgba(0,0,0,.45);
+    opacity:0; pointer-events:none; transition: opacity .2s ease;
+  }
+
+  /* END SCREEN RAIN */
+  .rain{
+    pointer-events:none; position:absolute; inset:0; overflow:hidden;
+  }
+  .drop{
+    position:absolute; top:-10%; font-size:28px; animation: fall linear forwards;
+  }
+  @keyframes fall{
+    to { transform: translateY(120vh) rotate(360deg); }
+  }
+
+  /* SMALL HELPER BADGES */
+  .badge{ padding:6px 8px; background:#0d1430; border:1px solid #2a3c6e; border-radius:8px }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- SPLASH: says best in horizontal (as requested), but game is vertical -->
+  <section id="splash" class="screen active">
+    <div class="card" style="text-align:center">
+      <h1 class="title">📲 Best in Vertical</h1>
+      <p class="subtitle">If playing on mobile, game is best in <b>Vertical mode</b></p>
+      <button id="btnStart" class="btn">Go fullscreen and start</button>
+    </div>
+  </section>
+
+  <!-- TITLE -->
+  <section id="title" class="screen">
+    <div class="card" style="text-align:center">
+      <h2 class="title">🚀 Emoji Space Runner 🪨</h2>
+      <p class="subtitle">Avoid asteroids, collect treasure, and rack up points.</p>
+
+      <div style="margin:12px 0 6px; text-align:left;">
+        <label for="playerName" class="subtitle" style="display:block;margin-bottom:6px;">
+          Your name (required)
+        </label>
+        <input id="playerName" type="text" class="textInput" maxlength="20"
+               placeholder="Enter your name" />
+      </div>
+
+      <div class="hud" style="justify-content:center">
+        <span class="badge">Vertical Mode</span>
+        <span class="badge">Tilt 📱 or Arrow Keys ⬅️➡️</span>
+        <span class="badge">10 Rounds + Bonus</span>
+      </div>
+      <br/>
+      <button id="btnTitleStart" class="btn">Start Game</button>
+    </div>
+  </section>
+
+
+  <!-- QUESTION -->
+  <section id="question" class="screen">
+    <div class="card">
+      <div class="hud">
+        <div>Round <span id="qRound">1</span>/10</div>
+        <div>Score: <b id="qScore">0</b></div>
+      </div>
+      <h3 id="qText" class="q-title">Question text…</h3>
+      <div id="answers" class="answers"></div>
+    </div>
+
+    <!-- Right/Wrong popup -->
+    <div id="answerPopup" class="popup">
+      <div class="card">
+        <div id="answerFace" class="pop-emoji">✅</div>
+        <h4 id="answerMsg" class="title" style="margin-bottom:12px">Correct!</h4>
+        <p id="answerExplain" class="subtitle" style="margin-bottom:16px">Nice job.</p>
+        <button id="btnToHow" class="btn">Continue</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW TO PLAY -->
+  <section id="howto" class="screen">
+    <div class="card" style="text-align:center">
+      <div style="font-size:46px;margin-bottom:4px">📱⬅️➡️</div>
+      <h3 class="title">Tilt your device or use the arrows to steer your ship.</h3>
+      <p class="subtitle">Collect the gems and stars for points, but watch out for asteroids! You’ll speed up as you survive.</p>
+      <button id="btnPlay" class="btn">Start Round</button>
+    </div>
+  </section>
+
+  <!-- GAME -->
+  <section id="gameWrap">
+    <canvas id="game"></canvas>
+    <div class="gameHud">
+      <div>⏱️ <span id="timeLeft">30</span>s</div>
+      <div>Score: <span id="gScore">0</span></div>
+      <div>Speed: <span id="spd">1.0x</span></div>
+    </div>
+    <div id="countdown" class="centerNote">3</div>
+    <div id="centerNote" class="centerNote">Time’s up!</div>
+    <div id="toast" class="toast">+100 ⭐</div>
+  </section>
+
+  <!-- ROUND SUMMARY POPUP -->
+  <div id="roundPopup" class="popup">
+    <div class="card" style="text-align:center">
+      <div class="pop-emoji">📊</div>
+      <h4 class="title">Round Results</h4>
+      <p class="subtitle">Round points: <b id="roundPts">0</b><br/>Total score: <b id="totalPts">0</b></p>
+      <button id="btnNext" class="btn">Next Question</button>
+    </div>
+  </div>
+
+  <!-- FINAL -->
+<section id="final" class="screen">
+  <div class="card" style="text-align:center">
+    <div style="font-size:42px">🏁</div>
+    <h3 class="title">All Rounds Complete!</h3>
+    <p class="subtitle">
+      Correct: <b id="finCorrect">0</b> • Incorrect: <b id="finWrong">0</b><br/>
+      Total Points: <b id="finScore">0</b>
+    </p>
+    <button id="btnRestart" class="btn">Play Again</button>
+  </div>
+  <div id="rain" class="rain" aria-hidden="true"></div>
+</section>
+
+
+  <!-- BONUS SUMMARY -->
+  <div id="bonusPopup" class="popup">
+    <div class="card" style="text-align:center">
+      <div class="pop-emoji">🔥</div>
+      <h4 class="title">Bonus Round Over!</h4>
+      <p class="subtitle">You survived until top speed and finished with <b id="bonusPts">0</b> extra points.</p>
+      <button id="btnBonusDone" class="btn">Finish</button>
+    </div>
+  </div>
+</div>
+
+<script>
+
+/*
+
+ #####     #     #    #######     #####     #######    ###    #######    #     #     #####  
+#     #    #     #    #          #     #       #        #     #     #    ##    #    #     # 
+#     #    #     #    #          #             #        #     #     #    # #   #    #       
+#     #    #     #    #####       #####        #        #     #     #    #  #  #     #####  
+#   # #    #     #    #                #       #        #     #     #    #   # #          # 
+#    #     #     #    #          #     #       #        #     #     #    #    ##    #     # 
+ #### #     #####     #######     #####        #       ###    #######    #     #     #####  
+
+*/
+
+
+const QUESTIONS = [
+    { text: "What did God promise old Simeon?",
+    answers: [
+      {label:"He’d see the Christ before he died", emoji:"👶", correct:true},
+      {label:"He’d never die", emoji:"💀"},
+      {label:"He’d become a king", emoji:"👑"},
+      {label:"He’d see angels", emoji:"👼"},
+    ],
+    explain:"Luke 2:25–26 — God promised Simeon he would see the Christ before he died."
+  },
+  { text: "What did Simeon say about Jesus’ future?",
+    answers: [
+      {label:"Mary's heart would feel pierced like from a sword", emoji:"⚔️", correct:true},
+      {label:"He’d build a big temple", emoji:"🏛️"},
+      {label:"He’d rule only in Nazareth", emoji:"🏘️"},
+      {label:"He’d never suffer", emoji:"😌"},
+    ],
+    explain:"Luke 2:34–35 — Simeon said Jesus would cause many to rise and fall and that a sword would pierce Mary’s heart."
+  },
+  { text: "Why did Jesus’ family go to Jerusalem?",
+    answers: [
+      {label:"To celebrate Passover", emoji:"🐑", correct:true},
+      {label:"To visit relatives", emoji:"👨‍👩‍👧‍👦"},
+      {label:"To go shopping", emoji:"🛍️"},
+      {label:"To see the king", emoji:"👑"},
+    ],
+    explain:"Luke 2:41 — They went to Jerusalem every year for the Passover festival."
+  },
+  { text: "How old was Jesus in this story?",
+    answers: [
+      {label:"Twelve years old", emoji:"1️⃣2️⃣", correct:true},
+      {label:"Five years old", emoji:"5️⃣"},
+      {label:"Thirty years old", emoji:"3️⃣0️⃣"},
+      {label:"Twenty years old", emoji:"2️⃣0️⃣"},
+    ],
+    explain:"Luke 2:42 — Jesus was twelve years old."
+  },
+  { text: "When his family left Jerusalem, what did Jesus do?",
+    answers: [
+      {label:"Stayed behind in Jerusalem", emoji:"🏙️", correct:true},
+      {label:"Went home first", emoji:"🏠"},
+      {label:"Got lost in the desert", emoji:"🏜️"},
+      {label:"Sailed on a boat", emoji:"⛵"},
+    ],
+    explain:"Luke 2:43 — Jesus stayed behind in Jerusalem when his family started home."
+  },
+  { text: "Where did his parents find Jesus?",
+    answers: [
+      {label:"In the temple listening to teachers", emoji:"⛪", correct:true},
+      {label:"At the marketplace", emoji:"🛒"},
+      {label:"On a hillside", emoji:"⛰️"},
+      {label:"In a fishing boat", emoji:"🎣"},
+    ],
+    explain:"Luke 2:46 — After three days they found Him in the temple, listening and asking questions."
+  },
+  { text: "What did the temple teachers think of Jesus?",
+    answers: [
+      {label:"They were amazed", emoji:"😮", correct:true},
+      {label:"They were bored", emoji:"🥱"},
+      {label:"They were angry", emoji:"😡"},
+      {label:"They ignored Him", emoji:"🙈"},
+    ],
+    explain:"Luke 2:47 — Everyone who heard Him was amazed at His understanding and answers."
+  },
+  { text: "What did Jesus say to His upset mother?",
+    answers: [
+      {label:"I must be in my Father’s house", emoji:"🏠", correct:true},
+      {label:"I was just playing", emoji:"⚽"},
+      {label:"I got lost on accident", emoji:"🧭"},
+      {label:"I don’t know what happened", emoji:"🤷"},
+    ],
+    explain:"Luke 2:49 — “Didn’t you know I had to be in my Father’s house?”"
+  },
+  { text: "What does Luke say about Jesus at home?",
+    answers: [
+      {label:"He grew in wisdom and stature", emoji:"🌱", correct:true},
+      {label:"He never grew older", emoji:"⛔"},
+      {label:"He stopped learning", emoji:"📕"},
+      {label:"He moved far away", emoji:"🧳"},
+    ],
+    explain:"Luke 2:52 — Jesus grew in wisdom, stature, and favor with God and people."
+  },
+
+  
+];
+
+  /*
+
+#######    #     #    ######     
+#          ##    #    #     #    
+#          # #   #    #     #    
+#####      #  #  #    #     #    
+#          #   # #    #     #    
+#          #    ##    #     #    
+#######    #     #    ######     
+
+
+*/
+
+const state = {
+  round: 0, // 0..9 (ten rounds)
+  score: 0,
+  correct: 0,
+  wrong: 0,
+  answered: 0,
+  totalRounds: 10,
+  inBonus: false,
+  bombForNextRound: false, // earn a 💣 for the upcoming game round
+  seenHowTo: false,        // have we already shown the tilt/controls screen?
+  playerName: '',          // filled from title screen
+};
+
+
+
+
+/* ==============================
+   SCREEN HELPERS
+   ============================== */
+const $ = sel => document.querySelector(sel);
+const show = id => {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  if(id) $(id).classList.add('active');
+};
+const showPopup = el => el.classList.add('active');
+const hidePopup = el => el.classList.remove('active');
+
+/* ==============================
+   START / TITLE
+   ============================== */
+const elSplash = $('#splash');
+const elTitle = $('#title');
+const elQuestion = $('#question');
+const elHow = $('#howto');
+const elGameWrap = $('#gameWrap');
+const elRoundPopup = $('#roundPopup');
+const elFinal = $('#final');
+const elBonusPopup = $('#bonusPopup');
+const nameInput = $('#playerName');
+
+
+$('#btnStart').addEventListener('click', async ()=>{
+  // Try to enter fullscreen if user allows
+  const root = document.documentElement;
+  if (root.requestFullscreen) { try{ await root.requestFullscreen(); }catch{} }
+  show('#title');
+});
+$('#btnTitleStart').addEventListener('click', ()=>{
+  // Ask for tilt permission on iOS Safari (motion & orientation access)
+  if (typeof DeviceOrientationEvent !== 'undefined' &&
+      typeof DeviceOrientationEvent.requestPermission === 'function') {
+    DeviceOrientationEvent.requestPermission().catch(()=>{});
+  }
+
+  const name = (nameInput.value || '').trim();
+  if (!name){
+    alert('Please enter your name to start.');
+    nameInput.focus();
+    return;
+  }
+
+  state.playerName = name;
+
+  state.round = 0;
+  state.score = 0;
+  state.correct = 0;
+  state.wrong = 0;
+  state.answered = 0;
+  loadQuestion();
+});
+
+
+
+/* ==============================
+   QUESTIONS
+   ============================== */
+const qRound = $('#qRound');
+const qScore = $('#qScore');
+const qText = $('#qText');
+const answersBox = $('#answers');
+const answerPopup = $('#answerPopup');
+const answerFace = $('#answerFace');
+const answerMsg = $('#answerMsg');
+const answerExplain = $('#answerExplain');
+$('#btnToHow').addEventListener('click', ()=>{
+  hidePopup(answerPopup);
+
+  // First time: show the tilt/controls screen.
+  // After that: go straight into the game round.
+  if (!state.seenHowTo) {
+    state.seenHowTo = true;
+    show('#howto');
+  } else {
+    showGame();
+  }
+});
+
+
+function loadQuestion(){
+  show('#question');
+  qRound.textContent = String(state.round+1);
+  qScore.textContent = String(state.score);
+
+  const q = QUESTIONS[state.round];
+  qText.textContent = q.text;
+
+  // Create a shuffled copy of answers
+  const opts = q.answers.map((a,i)=>({ ...a, idx:i }));
+  shuffle(opts);
+
+  answersBox.innerHTML = '';
+  opts.forEach(opt=>{
+    const btn = document.createElement('button');
+    btn.className = 'answer';
+    btn.innerHTML = `<span class="em">${opt.emoji}</span> ${opt.label}`;
+    btn.addEventListener('click', ()=>{
+      const correct = !!opt.correct;
+      if (correct){
+        state.score += 200;
+        state.correct++;
+        state.bombForNextRound = true;  // earn a 💣 for the upcoming run
+      } else {
+        state.wrong++;
+        state.bombForNextRound = false; // no bomb if wrong
+      }
+      state.answered++;
+
+      // Popup: correct/incorrect
+      answerFace.textContent = correct ? '✅' : '❌';
+
+      if (correct){
+        answerMsg.textContent = "Correct! You've earned a 💣!";
+        answerExplain.textContent = "Tap or press space to blow up asteroids (once per round).";
+      } else {
+        answerMsg.textContent = 'Incorrect';
+        answerExplain.textContent =
+          'Right answer: ' +
+          (q.answers.find(a=>a.correct)?.label || '') +
+          '. ' + (q.explain || '');
+      }
+
+      showPopup(answerPopup);
+    });
+
+    answersBox.appendChild(btn);
+  });
+}
+
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j = (Math.random()* (i+1))|0;
+    [arr[i],arr[j]] = [arr[j],arr[i]];
+  }
+}
+
+/* ==============================
+   GAMEPLAY (Canvas)
+   ============================== */
+const canvas = $('#game');
+const ctx = canvas.getContext('2d');
+
+const hudTime = $('#timeLeft');
+const hudScore = $('#gScore');
+const hudSpd = $('#spd');
+const centerNote = $('#centerNote');
+const bigCount = $('#countdown');
+const toast = $('#toast');
+
+let dpr = 1; // force low-DPI render for performance
+
+const EMOJI = {
+  rocket: '🚀',
+  asteroid: '🪨',     // fallback rock-like emoji
+  star: '⭐',
+  gem: '💎',
+  coin: '🔋'
+};
+
+// Simple emoji image cache so we don't call fillText every frame
+function makeEmojiCache(){
+  const map = new Map(); // key: emoji@size  value: offscreen canvas
+
+  function get(emoji, px){
+    const key = emoji + '@' + px;
+    if (map.has(key)) return map.get(key);
+
+    const c = document.createElement('canvas');
+    const pad = Math.ceil(px * 0.25);
+    c.width = px + pad * 2;
+    c.height = px + pad * 2;
+
+    const g = c.getContext('2d');
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.font = `${px}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",system-ui,-apple-system,sans-serif`;
+    g.fillStyle = '#ffffff';
+    g.fillText(emoji, c.width / 2, c.height / 2);
+
+    map.set(key, c);
+    return c;
+  }
+
+  return { get };
+}
+
+const emojiCache = makeEmojiCache();
+
+
+const PICKUPS = [
+  {type:'star', emoji:EMOJI.star, value:100},
+  {type:'gem',  emoji:EMOJI.gem,  value:200},
+  {type:'coin', emoji:EMOJI.coin, value:150},
+];
+
+// Big atmospheric background emoji for each of the 10 rounds
+const BG_EMOJI_ROUNDS = [
+  '🌍', // Round 1
+  '🌕', // Round 2
+  '🪨', // Round 3
+  '👾', // Round 4
+  '☄️', // Round 5
+  '🌙', // Round 6
+  '🛰️', // Round 7
+  '🛸', // Round 8
+  '👨‍🚀', // Round 9
+  '🪐'   // Round 10
+];
+
+
+// Fixed pixel sizes (no depth scaling)
+const ROCKET_PX = 40;                 // matches the rocket font size used in draw()
+const ASTEROID_SIZES = [26, 34, 44];  // small, medium, large asteroid sizes
+const BIG_ASTEROID_PX = 72;           // extra-large asteroid size
+
+
+
+let game = null;
+
+$('#btnPlay').addEventListener('click', ()=>{
+  showGame();
+});
+
+function showGame(){
+  show('#gameWrap');
+  startRound();
+}
+
+function startRound(){
+  // round speeds scale upwards
+  const roundIndex = state.round; // 0..9
+  const baseSpeed = 60 + roundIndex*15;       // px/sec start fall speed
+  const maxSpeed  = 520 + roundIndex*30;       // top fall speed
+  const accelPerSec = 10 + roundIndex*5;       // increase per second while not hit
+  const roundTimeSec = 30;
+
+  const bgEmoji = BG_EMOJI_ROUNDS[roundIndex % BG_EMOJI_ROUNDS.length];
+
+  // If the question was answered correctly, give 1 bomb for this round
+  const bombs = state.bombForNextRound ? 1 : 0;
+  state.bombForNextRound = false; // reset after consuming
+
+  game = createGame({ baseSpeed, maxSpeed, accelPerSec, roundTimeSec, bonus:false, bgEmoji, bombs });
+  game.start();
+}
+
+
+
+/* BONUS SURVIVAL (after 10) */
+function startBonus(){
+  show('#gameWrap');
+  game = createGame({
+    baseSpeed: 140,
+    maxSpeed: 1200,
+    accelPerSec: 80,
+    roundTimeSec: Infinity, // survives until crash
+    bonus:true,
+    bgEmoji: '🌌',
+    bombs: 1 // no bombs in bonus round
+  });
+  game.start();
+}
+
+
+
+/* Game Factory */
+function createGame(cfg){
+  const gw = $('#gameWrap');
+
+  let running = false;
+  let w=0, h=0, vw=0;
+  let last = 0;
+  let objects = [];      // asteroids + pickups
+  let particles = [];    // explosion/confetti
+  const MAX_OBJECTS = 18; // hard limit so the screen doesn't overflow
+    let timeLeft = isFinite(cfg.roundTimeSec) ? cfg.roundTimeSec : Infinity;
+
+  // HUD throttle (reduce DOM updates)
+  let hudAccum = 0;
+  let lastHudTime = null;
+  let lastHudScore = null;
+  let lastHudSpd = null;
+
+  // End-of-round big countdown (3–2–1)
+  let endCountdownValue = null;
+
+  // Big background emoji state
+  const bgEmoji = cfg.bgEmoji || null;
+  let bgY = 0;
+  const bgSpeed = 20; // px per second, slow drift
+
+
+  // Bomb (asteroid clear) per round
+  let bombsLeft = cfg.bombs || 0;
+
+  // speeds
+  let fallSpeed = cfg.baseSpeed;      // px / sec
+
+  const baseSpeed = cfg.baseSpeed;
+  const maxSpeed = cfg.maxSpeed;
+  const accel = cfg.accelPerSec;
+
+  // player
+  const player = {
+    x: 0, y: 0, r: 28, // radius for collisions (emoji area)
+    vx: 0, ax: 0,
+    tilt: 0, // -1 .. 1 for visual rotation
+    invincible: false,
+    invEnd: 0,
+    alive: true
+  };
+
+  // Controls: tilt + keys
+  let keyLeft=false, keyRight=false;
+  let tiltGamma = 0; // deviceorientation gamma (-90..90)
+  let useTilt = false;
+
+  function onKey(e){
+    if (e.type === 'keydown'){
+      if (e.key === 'ArrowLeft')  keyLeft = true;
+      if (e.key === 'ArrowRight') keyRight = true;
+      if (e.key === ' ' || e.code === 'Space') {
+        useBomb(); // Space triggers bomb
+      }
+    } else {
+      if (e.key === 'ArrowLeft')  keyLeft = false;
+      if (e.key === 'ArrowRight') keyRight = false;
+    }
+  }
+
+  window.addEventListener('keydown', onKey);
+  window.addEventListener('keyup', onKey);
+
+  function onOrient(ev){
+    // gamma is left/right tilt
+    if(typeof ev.gamma === 'number'){
+      useTilt = true;
+      tiltGamma = ev.gamma; // -90..90
+    }
+  }
+  window.addEventListener('deviceorientation', onOrient);
+
+  function resize(){
+    // mobile-first vertical lane; max width to keep it readable on desktop
+    const cssW = Math.min(window.innerWidth, 720);
+    const cssH = window.innerHeight;
+    canvas.style.width = cssW+'px';
+    canvas.style.height= cssH+'px';
+
+    w = canvas.width  = Math.round(cssW * dpr);
+    h = canvas.height = Math.round(cssH * dpr);
+
+    vw = w/dpr; // in CSS pixels, handy for emoji sizing
+
+    // position player
+    player.x = w*0.5;
+    player.y = h*0.78;
+
+    // start big emoji slightly above the top
+    bgY = -h * 0.25;
+  }
+
+  resize();
+  window.addEventListener('resize', resize);
+
+  // Tap / click anywhere on the game canvas to use bomb
+  function onTap(){
+    useBomb();
+  }
+  canvas.addEventListener('pointerdown', onTap);
+
+  // spawn helpers
+  let spawnTimer = 0;
+
+
+
+  function spawn(){
+    if (objects.length >= MAX_OBJECTS) return;
+
+    // 65% asteroid, 35% pickup
+const isAst = Math.random()<0.55; // fewer asteroids
+const speedScale = (fallSpeed/maxSpeed);
+const lanePadding = Math.max(12, w*0.06);
+const x = rand(lanePadding, w-lanePadding);
+
+// about 15% of asteroids are big + slow
+const isBigAst = isAst && Math.random() < 0.15;
+
+const s = {
+  kind: isAst ? 'asteroid' : 'pickup',
+  type: null,
+  x, y: -40*dpr,
+  vy: fallSpeed,
+  // fixed, pre-chosen size (no per-frame scaling)
+  sizePx: isAst
+      ? (isBigAst ? BIG_ASTEROID_PX
+                  : ASTEROID_SIZES[(Math.random()*ASTEROID_SIZES.length)|0])
+      : ROCKET_PX,
+  // big asteroids move at half speed
+  slowFactor: isBigAst ? 0.5 : 1,
+  rot: (Math.random()*Math.PI*2),
+  rotSpd: (Math.random()*.015 - .0075),
+};
+if (!isAst) {
+  s.type = PICKUPS[(Math.random()*PICKUPS.length)|0];
+}
+objects.push(s);
+
+
+
+    // slightly increase spawn rate with speed
+        spawnEvery = 0.50 - 0.20*speedScale; // ~0.50..0.30s as speed rises
+        spawnEvery = Math.max(0.28, spawnEvery); // never faster than ~3.5 spawns/sec
+
+
+  }
+
+  // particles
+   function burst(x,y,emoji,color,count=6,spread=0.9){
+    for(let i=0;i<count;i++){
+      particles.push({
+        x,y,
+        vx: (Math.random()*2-1)*220*spread,
+        vy: (Math.random()*-1)*200*spread - 40,
+        life: 0.6 + Math.random()*0.5,
+        age:0,
+        emoji: emoji || null,
+        color: color || '#fff',
+        size: 14 + Math.random()*6
+      });
+    }
+  }
+
+  // Use bomb: blow up all asteroids currently on screen (once per round)
+  function useBomb(){
+    if (!running) return;
+    if (bombsLeft <= 0) return;
+    bombsLeft--;
+
+    let any = false;
+    for (let i = objects.length - 1; i >= 0; i--){
+      const o = objects[i];
+      if (o.kind === 'asteroid'){
+        burst(o.x, o.y, '💥', null, 10, 1.0);
+        objects.splice(i, 1);
+        any = true;
+      }
+    }
+
+    if (any){
+      quickToast('BOOM! 💣');
+    }
+  }
+  
+
+
+  // main loop
+function start(){
+  running = true;
+  last = performance.now();
+  hudTime.textContent = isFinite(cfg.roundTimeSec) ? cfg.roundTimeSec : '∞';
+  hudScore.textContent = state.score;
+  hudSpd.textContent = (fallSpeed/baseSpeed).toFixed(1)+'x';
+
+  // initialize cached HUD values
+  lastHudScore = state.score;
+  lastHudSpd = (fallSpeed/baseSpeed).toFixed(1)+'x';
+
+  // reset end-of-round countdown
+  endCountdownValue = null;
+  bigCount.style.opacity = 0;
+
+  const label = cfg.bonus ? 'Bonus Round - survive as long as you can!' : '';
+  big3to1(()=>{ requestAnimationFrame(loop); }, label);
+}
+
+
+
+
+  function loop(t){
+    if(!running) return;
+    const dt = Math.min(0.05, (t-last)/1000); // s
+    last = t;
+
+    update(dt);
+    draw();
+
+    if(cfg.bonus){
+      // survival ends on crash (handled in update)
+      if(!player.alive){ endBonus(); return; }
+      requestAnimationFrame(loop);
+    }else{
+      // timed round
+      if(timeLeft<=0){
+        // finish with 3-2-1 Time’s up animation then popup
+        endRound();
+        return;
+      }
+      requestAnimationFrame(loop);
+    }
+  }
+
+function update(dt){
+    // accelerate unless recently hit (we still accelerate after hit, just from base)
+    fallSpeed = Math.min(maxSpeed, fallSpeed + accel*dt);
+
+    // distance points (we'll update HUD on a timer)
+    state.score += Math.floor(fallSpeed * 0.06 * dt); // tuned small increment
+
+    // move big background emoji slowly downward
+    if (bgEmoji) {
+      bgY += bgSpeed * dt * dpr;
+      if (bgY > h * 1.2) {
+        bgY = -h * 0.3; // loop it back above the top
+      }
+    }
+
+    // controls
+    const targetAxFromKeys = (keyLeft? -1 : 0) + (keyRight? 1 : 0);
+    let targetAx = targetAxFromKeys;
+
+    if(useTilt){
+      // normalize gamma (-45..45) to -1..1
+      const g = Math.max(-45, Math.min(45, tiltGamma));
+      const tiltNorm = g/45;
+      // blend keys & tilt (keys override if pressed)
+      if(targetAx===0) targetAx = tiltNorm;
+    }
+
+    // smooth steering
+    player.ax = lerp(player.ax, targetAx, 0.15);
+    player.vx = player.ax * (420 + Math.min(280, (fallSpeed-baseSpeed)));
+    player.x += player.vx * dt * dpr;
+
+    // bounds
+    const px = (32*dpr);
+    player.x = Math.max(px, Math.min(w-px, player.x));
+
+    // visual tilt (subtle)
+    player.tilt = lerp(player.tilt, player.ax, 0.15);
+
+    // spawn
+    spawnTimer -= dt;
+    if(spawnTimer<=0){ spawn(); spawnTimer = spawnEvery; }
+
+    // update objects
+    for(let i=objects.length-1;i>=0;i--){
+      const o = objects[i];
+      const targetVy = fallSpeed * (o.slowFactor || 1);
+      o.vy = lerp(o.vy, targetVy, 0.08); // follow adjusted fallSpeed
+      o.y += o.vy * dt * dpr;
+      o.rot += o.rotSpd;
+
+
+      
+
+      // collide when near player
+      if(Math.abs(o.y - player.y) < 60*dpr){
+        const dx = (o.x - player.x);
+        const hit = Math.abs(dx) < (player.r + (o.sizePx*0.35));
+
+        if(hit){
+          if(o.kind==='asteroid'){
+            if(cfg.bonus){
+              // In bonus: first hit ends run
+              // big burst and mark dead
+              burst(player.x, player.y, '💥', null, 12, 1.0);
+
+              player.alive = false;
+            }else{
+              // Normal round: knock back to baseSpeed + invincible 3s
+              if(!player.invincible){
+                fallSpeed = baseSpeed;
+                player.invincible = true;
+                player.invEnd = performance.now() + 3000;
+                burst(player.x, player.y, '💥', null, 10, 0.9);
+
+                showBlink();
+              }
+            }
+          }else{
+            // pickup
+             const val = o.type.value;
+            state.score += val;
+            quickToast('+'+val+' '+o.type.emoji);
+
+          }
+          // remove object either way
+          objects.splice(i,1);
+          continue;
+        }
+      }
+
+      // off screen clean
+      if(o.y > h + 80*dpr){
+        objects.splice(i,1);
+      }
+    }
+
+    // invincibility timeout
+    if(player.invincible && performance.now() >= player.invEnd){
+      player.invincible = false;
+      hideBlink();
+    }
+
+    // particles
+    for(let i=particles.length-1;i>=0;i--){
+      const p = particles[i];
+      p.age += dt;
+      if(p.age >= p.life){ particles.splice(i,1); continue; }
+      p.vy += 600*dt;
+      p.x += p.vx*dt;
+      p.y += p.vy*dt;
+    }
+
+    // timer
+    if(!cfg.bonus && isFinite(cfg.roundTimeSec)){
+      timeLeft -= dt;
+      if(timeLeft<0) timeLeft = 0;
+
+      // Big 3–2–1 countdown in center for last 3 seconds
+      const remaining = Math.ceil(timeLeft);
+      if (remaining > 0 && remaining <= 3) {
+        if (remaining !== endCountdownValue) {
+          endCountdownValue = remaining;
+          bigCount.textContent = remaining;
+          bigCount.style.opacity = 1;
+        }
+      } else if (remaining > 3 && endCountdownValue !== null) {
+        // if we ever reset or start a new round
+        endCountdownValue = null;
+        bigCount.style.opacity = 0;
+      }
+    }
+
+    // throttled HUD updates (score, time, speed)
+
+    hudAccum += dt;
+    if (hudAccum >= 0.1) { // about 10 times per second
+      hudAccum = 0;
+
+      // time left (only for normal rounds)
+      if (!cfg.bonus && isFinite(cfg.roundTimeSec)) {
+        const tDisp = Math.ceil(timeLeft);
+        if (tDisp !== lastHudTime) {
+          hudTime.textContent = tDisp;
+          lastHudTime = tDisp;
+        }
+      }
+
+      // score
+      const sDisp = state.score;
+      if (sDisp !== lastHudScore) {
+        hudScore.textContent = sDisp;
+        lastHudScore = sDisp;
+      }
+
+      // speed multiplier text
+      const spdDisp = (fallSpeed / baseSpeed).toFixed(1) + 'x';
+      if (spdDisp !== lastHudSpd) {
+        hudSpd.textContent = spdDisp;
+        lastHudSpd = spdDisp;
+      }
+    }
+  }
+
+
+  function draw(){
+    // background (starfield)
+    ctx.clearRect(0,0,w,h);
+    drawStarfield(ctx, w, h);
+
+    // big atmospheric background emoji (behind player & objects)
+    if (bgEmoji) {
+      ctx.save();
+      const size = Math.round(Math.min(w, h) * 0.6);
+      ctx.font = `${size}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",system-ui,-apple-system,sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.globalAlpha = 0.18; // mostly transparent
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(bgEmoji, w / 2, bgY);
+      ctx.restore();
+    }
+
+    // player (rocket emoji only, from cache)
+    const fontSize = Math.round(ROCKET_PX * dpr);
+    ctx.save();
+
+    // blink if invincible
+    let visible = true;
+    if (!cfg.bonus && player.invincible){
+      const t = performance.now() * 0.01;
+      visible = ((t | 0) % 2) === 0;
+    }
+
+    if (visible){
+      ctx.translate(player.x, player.y);
+      ctx.rotate((-45 * Math.PI/180) + player.tilt*0.25); // point "up", lean to turn
+
+      const img = emojiCache.get(EMOJI.rocket, fontSize);
+      ctx.drawImage(img, -img.width / 2, -img.height / 2);
+    }
+
+    ctx.restore();
+
+
+
+
+    // objects (fixed size, emoji from cache)
+    for (const o of objects) {
+      const px = Math.round(Math.max(16, o.sizePx));
+      ctx.save();
+      ctx.translate(o.x, o.y);
+      ctx.rotate(o.rot);
+
+      const ch = o.kind === 'asteroid' ? EMOJI.asteroid : o.type.emoji;
+      const img = emojiCache.get(ch, px);
+
+      ctx.drawImage(img, -img.width / 2, -img.height / 2);
+
+      ctx.restore();
+    }
+
+
+
+
+
+    // particles
+    for (const p of particles){
+      const t = p.age / p.life;
+      const a = 1 - t;
+      ctx.save();
+
+      if (p.emoji){
+        ctx.globalAlpha = a;
+        const px = Math.round(p.size);
+        const img = emojiCache.get(p.emoji, px);
+        ctx.drawImage(img, p.x - img.width / 2, p.y - img.height / 2);
+      } else {
+        ctx.fillStyle = `rgba(255,255,255,${a.toFixed(3)})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, Math.max(2, p.size * 0.15), 0, Math.PI*2);
+        ctx.fill();
+      }
+
+      ctx.restore();
+    }
+
+  }
+  function endRound(){
+    running = false;
+    // quick 3-2-1 -> "Time's up!"
+    showTimeUp(()=>{
+      hide('#gameWrap');
+      showPopup(elRoundPopup);
+      $('#roundPts').textContent = lastRoundPts();
+      $('#totalPts').textContent = state.score;
+    });
+  }
+
+function endBonus(){
+  running = false;
+  // small burst already shown on crash
+  setTimeout(()=>{
+    hide('#gameWrap');
+    // After the bonus, go straight to the final summary
+    showFinal();
+  }, 400);
+}
+
+
+  function hide(sel){ document.querySelector(sel).classList.remove('active'); }
+
+  function lastRoundPts(){
+    // This is not tracked per-round separately; for the popup we just snapshot
+    // To make it meaningful, we can show the points earned *during* this round:
+    // For simplicity, we captured before-start score in closure:
+    return Math.max(0, state.score - startScoreSnapshot);
+  }
+
+  // snapshot at start
+  const startScoreSnapshot = state.score;
+
+  return { start };
+}
+
+/* === Starfield cache & settings (constant-speed scroll) === */
+let starData = null, starGrad = null, starLastW = 0, starLastH = 0, starYOffset = 0, starLastTS = 0;
+
+const STAR_SCROLL_PX_PER_SEC = 40; // constant background drift
+const STAR_LAYERS = [
+  { count: 12, parallax: 0.4, size: 1 },   // far
+  { count: 18, parallax: 0.7, size: 1.5 }, // mid
+  { count: 24, parallax: 1.0, size: 2 }    // near
+];
+
+
+
+/* Drawing helpers */
+
+function drawStarfield(ctx, w, h){
+  // (1) Rebuild only when size changes
+  if (!starData || w !== starLastW || h !== starLastH) {
+    starLastW = w; starLastH = h;
+    starData = [];
+
+    // cache the vertical gradient once per size
+    starGrad = ctx.createLinearGradient(0, 0, 0, h);
+    starGrad.addColorStop(0, '#070b16');
+    starGrad.addColorStop(1, '#05070e');
+
+    // generate random star positions once
+    for (const layer of STAR_LAYERS) {
+      for (let i = 0; i < layer.count; i++) {
+        starData.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          size: layer.size,
+          parallax: layer.parallax
+        });
+      }
+    }
+    // reset scroll so it starts clean after a resize
+    starYOffset = 0;
+    starLastTS = 0;
+  }
+
+  // (2) Advance scroll at a constant rate (decoupled from game speed)
+  const now = performance.now();
+  if (!starLastTS) starLastTS = now;
+  const dt = Math.min(0.05, (now - starLastTS) / 1000);
+  starLastTS = now;
+  starYOffset += STAR_SCROLL_PX_PER_SEC * dt;
+
+  // (3) Draw background + stars
+  ctx.fillStyle = starGrad;
+  ctx.fillRect(0, 0, w, h);
+
+  ctx.save();
+  ctx.fillStyle = 'rgba(210,230,255,0.8)';
+  for (const s of starData) {
+    // parallax scroll: nearer layers move slightly faster
+    let y = s.y + starYOffset * s.parallax;
+    // wrap vertically
+    if (y >= h) y = y % h;
+    ctx.fillRect(s.x, y, s.size, s.size);
+  }
+  ctx.restore();
+}
+
+
+/* Blink effect */
+function showBlink(){ centerNote.style.opacity = .0; centerNote.textContent=''; canvas.classList.add('blink'); }
+function hideBlink(){ canvas.classList.remove('blink'); }
+
+/* Quick toast (+points text) */
+let toastTimer = 0;
+function quickToast(txt){
+  toast.textContent = txt;
+
+  // Make the toast 35% of the game canvas width
+  const rect = canvas.getBoundingClientRect();
+  const targetWidth = rect.width * 0.35; // 35% of canvas width
+  toast.style.width = targetWidth + 'px';
+  toast.style.textAlign = 'center';
+
+  // Scale font size with canvas width so it fills the bubble nicely
+  // Clamp between 18px and 32px so it doesn't get crazy huge
+  const fontPx = Math.max(18, Math.min(32, rect.width * 0.08));
+  toast.style.fontSize = fontPx + 'px';
+
+  toast.style.opacity = 1;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{ toast.style.opacity = 0; }, 700);
+}
+
+
+
+/* 3..2..1 before each round */
+function big3to1(done, label){
+  if (label) {
+    centerNote.textContent = label;
+    centerNote.style.opacity = 1;
+  } else {
+    centerNote.style.opacity = 0;
+  }
+
+  bigCount.style.opacity = 1;
+  let n = 3;
+  bigCount.textContent = n;
+
+  const tick = ()=>{
+    setTimeout(()=>{
+      n--;
+      if (n > 0) {
+        bigCount.textContent = n;
+        tick();
+      } else {
+        bigCount.textContent = 'GO!';
+        setTimeout(()=>{
+          bigCount.style.opacity = 0;
+          centerNote.style.opacity = 0;
+          done && done();
+        }, 350);
+      }
+    }, 650);
+  };
+
+  tick();
+}
+
+
+/* Show "Time's up!" burst */
+function showTimeUp(done){
+  // Hide any leftover 3–2–1 countdown
+  bigCount.style.opacity = 0;
+
+  centerNote.textContent = "Time’s up!";
+  centerNote.style.opacity = 1;
+  setTimeout(()=>{
+    centerNote.style.opacity = 0;
+    done && done();
+  }, 850);
+}
+
+
+/* CLAMP / LERP / RAND */
+function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+function lerp(a,b,t){ return a + (b-a)*t; }
+function rand(a,b){ return a + Math.random()*(b-a); }
+
+/* ==============================
+   ROUND FLOW CONTROL
+   ============================== */
+$('#btnNext').addEventListener('click', ()=>{
+  hidePopup(elRoundPopup);
+
+  if (state.round < state.totalRounds - 1) {
+    // Go to the next question (rounds 1–9)
+    state.round++;
+    loadQuestion();
+  } else {
+    // After question 10: go straight into the bonus round
+    state.inBonus = true;
+    startBonus();
+  }
+});
+
+
+function showFinal(){
+  show('#final');
+  $('#finCorrect').textContent = state.correct;
+  $('#finWrong').textContent = state.wrong;
+  $('#finScore').textContent = state.score;
+
+  // Send main-game high score snapshot
+  sendHighScore();
+
+  startEmojiRain();
+}
+
+
+$('#btnRestart').addEventListener('click', ()=>{
+  stopEmojiRain();
+  state.round = 0;
+  state.score = 0;
+  state.correct = 0;
+  state.wrong = 0;
+  state.answered = 0;
+  state.bombForNextRound = false;
+  state.seenHowTo = false;
+  state.inBonus = false;
+  show('#title');
+});
+
+
+
+
+
+
+
+/* ==============================
+   EMOJI RAIN ON FINAL
+   ============================== */
+const rain = $('#rain');
+let rainTimer = null;
+function startEmojiRain(){
+  stopEmojiRain();
+  rain.innerHTML='';
+  const bag = ['⭐','💎','🪙','✨','🌟'];
+  rainTimer = setInterval(()=>{
+    const e = document.createElement('div');
+    e.className = 'drop';
+    e.textContent = bag[(Math.random()*bag.length)|0];
+    const left = Math.random()*100;
+    const dur = 3 + Math.random()*2;
+    const delay = 0;
+    e.style.left = left+'vw';
+    e.style.animationDuration = dur+'s';
+    e.style.animationDelay = delay+'s';
+    rain.appendChild(e);
+    // cleanup
+    setTimeout(()=>e.remove(), (dur+1)*1000);
+  }, 120);
+}
+function stopEmojiRain(){
+  if(rainTimer){ clearInterval(rainTimer); rainTimer=null; }
+  rain.innerHTML='';
+}
+
+/* ==============================
+   HIGH SCORE SUBMIT (Google Sheets)
+   ============================== */
+
+// TODO: replace this with your real Apps Script web app URL
+const HIGHSCORE_URL = 'https://script.google.com/macros/s/AKfycbwYRgYhl_AzO64xxiYz5oHvZVlb59JDzxqKMQhCpdxVJO3v_Mg2W_aL5Gr-r3cv_Fy0/exec';
+
+function sendHighScore(){
+  if (!HIGHSCORE_URL || !state.playerName) return;
+
+  const payload = {
+    name: state.playerName,
+    score: Number(state.score) || 0,
+    correct: Number(state.correct) || 0,
+    totalQuestions: Number(state.totalRounds) || QUESTIONS.length,
+    userAgent: navigator.userAgent || ''
+  };
+
+  // Fire-and-forget; no-cors avoids CORS errors in console
+  fetch(HIGHSCORE_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).catch(()=>{/* ignore errors */});
+}
+
+
+/* ==============================
+   SMALL UTILS
+   ============================== */
+function hideAllPopups(){ [elRoundPopup, elBonusPopup, answerPopup].forEach(hidePopup); }
+
+/* Keep default orientation behavior but prevent scroll bounce on iOS */
+document.addEventListener('touchmove', (e)=>{ if(e.touches.length>1) e.preventDefault(); }, {passive:false});
+
+/* ==============================
+   SMALL UTILS
+   ============================== */
+function hideAllPopups(){ [elRoundPopup, elBonusPopup, answerPopup].forEach(hidePopup); }
+
+// Secret dev keys: 1–9 jump to questions 1–9, 0 jumps to question 10
+window.addEventListener('keydown', (e)=>{
+  // Ignore if user is typing in some field (just in case you add inputs later)
+  const tag = (e.target && e.target.tagName) ? e.target.tagName.toLowerCase() : '';
+  if (tag === 'input' || tag === 'textarea' || tag === 'select' || e.isComposing) return;
+
+  let qNum = null;
+
+  // Number keys 1–9 → questions 1–9
+  if (e.key >= '1' && e.key <= '9') {
+    qNum = parseInt(e.key, 10);
+  }
+  // 0 key → question 10
+  else if (e.key === '0') {
+    qNum = 10;
+  }
+
+  // If we got a valid question number, jump there
+  if (qNum !== null && qNum >= 1 && qNum <= state.totalRounds) {
+    state.round = qNum - 1;  // rounds are 0-based
+    hideAllPopups();
+    loadQuestion();
+  }
+});
+
+
+</script>
+</body>
+</html>
