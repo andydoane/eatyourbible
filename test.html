@@ -112,6 +112,21 @@
     margin-top:8px; color:var(--muted); font-size:14px;
   }
 
+    .textInput{
+    width:100%;
+    padding:10px 12px;
+    border-radius:10px;
+    border:1px solid #2a3c6e;
+    background:#050814;
+    color:var(--text);
+    font-size:15px;
+    margin:10px 0 14px;
+  }
+  .textInput::placeholder{
+    color:var(--muted);
+  }
+
+
   /* POPUPS */
   .popup{
     position:absolute; inset:0; display:none; align-items:center; justify-content:center;
@@ -145,10 +160,11 @@
   }
   .centerNote{
     position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
-    font-size:40px; font-weight:900; letter-spacing:.5px; pointer-events:none; opacity:0;
+    font-size:clamp(40px, 12vw, 96px); font-weight:900; letter-spacing:.5px; pointer-events:none; opacity:0;
     text-shadow: 0 6px 20px rgba(0,0,0,.55);
     transition: opacity .2s ease;
   }
+
   .toast{
     position:absolute; left:50%; top:24%;
     transform:translateX(-50%);
@@ -188,6 +204,15 @@
     <div class="card" style="text-align:center">
       <h2 class="title">🚀 Emoji Space Runner 🪨</h2>
       <p class="subtitle">Avoid asteroids, collect treasure, and rack up points.</p>
+
+      <div style="margin:12px 0 6px; text-align:left;">
+        <label for="playerName" class="subtitle" style="display:block;margin-bottom:6px;">
+          Your name (required)
+        </label>
+        <input id="playerName" type="text" class="textInput" maxlength="20"
+               placeholder="Enter your name" />
+      </div>
+
       <div class="hud" style="justify-content:center">
         <span class="badge">Vertical Mode</span>
         <span class="badge">Tilt 📱 or Arrow Keys ⬅️➡️</span>
@@ -197,6 +222,7 @@
       <button id="btnTitleStart" class="btn">Start Game</button>
     </div>
   </section>
+
 
   <!-- QUESTION -->
   <section id="question" class="screen">
@@ -292,96 +318,89 @@
 
 
 const QUESTIONS = [
-  { text: "Who made the heavens and the earth?",
+    { text: "What did God promise old Simeon?",
     answers: [
-      {label:"God", emoji:"✨", correct:true},
-      {label:"Noah", emoji:"🛶"},
-      {label:"Moses", emoji:"🪄"},
-      {label:"David", emoji:"🎵"},
+      {label:"He’d see the Christ before he died", emoji:"👶", correct:true},
+      {label:"He’d never die", emoji:"💀"},
+      {label:"He’d become a king", emoji:"👑"},
+      {label:"He’d see angels", emoji:"👼"},
     ],
-    explain:"See Genesis 1:1 — God created everything."
+    explain:"Luke 2:25–26 — God promised Simeon he would see the Christ before he died."
   },
-  { text: "Where was Jesus born?",
+  { text: "What did Simeon say about Jesus’ future?",
     answers: [
-      {label:"Bethlehem", emoji:"⭐", correct:true},
-      {label:"Nazareth", emoji:"🏘️"},
-      {label:"Jerusalem", emoji:"🏛️"},
-      {label:"Rome", emoji:"🏟️"},
+      {label:"Mary's heart would feel pierced like from a sword", emoji:"⚔️", correct:true},
+      {label:"He’d build a big temple", emoji:"🏛️"},
+      {label:"He’d rule only in Nazareth", emoji:"🏘️"},
+      {label:"He’d never suffer", emoji:"😌"},
     ],
-    explain:"Luke 2:1–7 — Jesus was born in Bethlehem."
+    explain:"Luke 2:34–35 — Simeon said Jesus would cause many to rise and fall and that a sword would pierce Mary’s heart."
   },
-  { text: "God led Israel by night with a…",
+  { text: "Why did Jesus’ family go to Jerusalem?",
     answers: [
-      {label:"Pillar of fire", emoji:"🔥", correct:true},
-      {label:"Rainbow", emoji:"🌈"},
-      {label:"Dove", emoji:"🕊️"},
-      {label:"Comet", emoji:"☄️"},
+      {label:"To celebrate Passover", emoji:"🐑", correct:true},
+      {label:"To visit relatives", emoji:"👨‍👩‍👧‍👦"},
+      {label:"To go shopping", emoji:"🛍️"},
+      {label:"To see the king", emoji:"👑"},
     ],
-    explain:"Exodus 13:21 — A pillar of fire by night."
+    explain:"Luke 2:41 — They went to Jerusalem every year for the Passover festival."
   },
-  { text: "Who built a big boat (ark)?",
+  { text: "How old was Jesus in this story?",
     answers: [
-      {label:"Noah", emoji:"🛶", correct:true},
-      {label:"Peter", emoji:"🎣"},
-      {label:"Solomon", emoji:"👑"},
-      {label:"Paul", emoji:"📜"},
+      {label:"Twelve years old", emoji:"1️⃣2️⃣", correct:true},
+      {label:"Five years old", emoji:"5️⃣"},
+      {label:"Thirty years old", emoji:"3️⃣0️⃣"},
+      {label:"Twenty years old", emoji:"2️⃣0️⃣"},
     ],
-    explain:"Genesis 6 — Noah built the ark."
+    explain:"Luke 2:42 — Jesus was twelve years old."
   },
-  { text: "What did David use to defeat Goliath?",
+  { text: "When his family left Jerusalem, what did Jesus do?",
     answers: [
-      {label:"A sling and a stone", emoji:"🪨", correct:true},
-      {label:"A spear", emoji:"🗡️"},
-      {label:"A sword", emoji:"⚔️"},
-      {label:"A bow", emoji:"🏹"},
+      {label:"Stayed behind in Jerusalem", emoji:"🏙️", correct:true},
+      {label:"Went home first", emoji:"🏠"},
+      {label:"Got lost in the desert", emoji:"🏜️"},
+      {label:"Sailed on a boat", emoji:"⛵"},
     ],
-    explain:"1 Samuel 17 — David used a sling."
+    explain:"Luke 2:43 — Jesus stayed behind in Jerusalem when his family started home."
   },
-  { text: "On day 7 of creation, God…",
+  { text: "Where did his parents find Jesus?",
     answers: [
-      {label:"Rested", emoji:"😴", correct:true},
-      {label:"Made birds", emoji:"🐦"},
-      {label:"Made land animals", emoji:"🐘"},
-      {label:"Separated light", emoji:"💡"},
+      {label:"In the temple listening to teachers", emoji:"⛪", correct:true},
+      {label:"At the marketplace", emoji:"🛒"},
+      {label:"On a hillside", emoji:"⛰️"},
+      {label:"In a fishing boat", emoji:"🎣"},
     ],
-    explain:"Genesis 2:2 — God rested."
+    explain:"Luke 2:46 — After three days they found Him in the temple, listening and asking questions."
   },
-  { text: "Who was swallowed by a huge fish?",
+  { text: "What did the temple teachers think of Jesus?",
     answers: [
-      {label:"Jonah", emoji:"🐟", correct:true},
-      {label:"Elijah", emoji:"🔥"},
-      {label:"Joshua", emoji:"🗺️"},
-      {label:"Nehemiah", emoji:"🏰"},
+      {label:"They were amazed", emoji:"😮", correct:true},
+      {label:"They were bored", emoji:"🥱"},
+      {label:"They were angry", emoji:"😡"},
+      {label:"They ignored Him", emoji:"🙈"},
     ],
-    explain:"Jonah 1–2 — Jonah and the fish."
+    explain:"Luke 2:47 — Everyone who heard Him was amazed at His understanding and answers."
   },
-  { text: "What did God give Moses on Sinai?",
+  { text: "What did Jesus say to His upset mother?",
     answers: [
-      {label:"Ten Commandments", emoji:"📜", correct:true},
-      {label:"Golden calf", emoji:"🐄"},
-      {label:"Ark blueprint", emoji:"📐"},
-      {label:"Crown", emoji:"👑"},
+      {label:"I must be in my Father’s house", emoji:"🏠", correct:true},
+      {label:"I was just playing", emoji:"⚽"},
+      {label:"I got lost on accident", emoji:"🧭"},
+      {label:"I don’t know what happened", emoji:"🤷"},
     ],
-    explain:"Exodus 20 — The Ten Commandments."
+    explain:"Luke 2:49 — “Didn’t you know I had to be in my Father’s house?”"
   },
-  { text: "Jesus calmed the storm by…",
+  { text: "What does Luke say about Jesus at home?",
     answers: [
-      {label:"Speaking to it", emoji:"🗣️", correct:true},
-      {label:"Waving a wand", emoji:"🪄"},
-      {label:"Building a wall", emoji:"🧱"},
-      {label:"Lighting a fire", emoji:"🔥"},
+      {label:"He grew in wisdom and stature", emoji:"🌱", correct:true},
+      {label:"He never grew older", emoji:"⛔"},
+      {label:"He stopped learning", emoji:"📕"},
+      {label:"He moved far away", emoji:"🧳"},
     ],
-    explain:"Mark 4:39 — He said, “Quiet! Be still!”"
+    explain:"Luke 2:52 — Jesus grew in wisdom, stature, and favor with God and people."
   },
-  { text: "What is the first book of the Bible?",
-    answers: [
-      {label:"Genesis", emoji:"📖", correct:true},
-      {label:"Exodus", emoji:"🧺"},
-      {label:"Psalms", emoji:"🎶"},
-      {label:"Matthew", emoji:"📝"},
-    ],
-    explain:"Genesis is the first book."
-  },
+
+  
 ];
 
   /*
@@ -405,7 +424,13 @@ const state = {
   answered: 0,
   totalRounds: 10,
   inBonus: false,
+  bombForNextRound: false, // earn a 💣 for the upcoming game round
+  seenHowTo: false,        // have we already shown the tilt/controls screen?
+  playerName: '',          // filled from title screen
 };
+
+
+
 
 /* ==============================
    SCREEN HELPERS
@@ -429,6 +454,8 @@ const elGameWrap = $('#gameWrap');
 const elRoundPopup = $('#roundPopup');
 const elFinal = $('#final');
 const elBonusPopup = $('#bonusPopup');
+const nameInput = $('#playerName');
+
 
 $('#btnStart').addEventListener('click', async ()=>{
   // Try to enter fullscreen if user allows
@@ -443,6 +470,15 @@ $('#btnTitleStart').addEventListener('click', ()=>{
     DeviceOrientationEvent.requestPermission().catch(()=>{});
   }
 
+  const name = (nameInput.value || '').trim();
+  if (!name){
+    alert('Please enter your name to start.');
+    nameInput.focus();
+    return;
+  }
+
+  state.playerName = name;
+
   state.round = 0;
   state.score = 0;
   state.correct = 0;
@@ -450,6 +486,7 @@ $('#btnTitleStart').addEventListener('click', ()=>{
   state.answered = 0;
   loadQuestion();
 });
+
 
 
 /* ==============================
@@ -465,8 +502,17 @@ const answerMsg = $('#answerMsg');
 const answerExplain = $('#answerExplain');
 $('#btnToHow').addEventListener('click', ()=>{
   hidePopup(answerPopup);
-  show('#howto');
+
+  // First time: show the tilt/controls screen.
+  // After that: go straight into the game round.
+  if (!state.seenHowTo) {
+    state.seenHowTo = true;
+    show('#howto');
+  } else {
+    showGame();
+  }
 });
+
 
 function loadQuestion(){
   show('#question');
@@ -487,16 +533,33 @@ function loadQuestion(){
     btn.innerHTML = `<span class="em">${opt.emoji}</span> ${opt.label}`;
     btn.addEventListener('click', ()=>{
       const correct = !!opt.correct;
-      if(correct){ state.score += 200; state.correct++; }
-      else { state.wrong++; }
+      if (correct){
+        state.score += 200;
+        state.correct++;
+        state.bombForNextRound = true;  // earn a 💣 for the upcoming run
+      } else {
+        state.wrong++;
+        state.bombForNextRound = false; // no bomb if wrong
+      }
       state.answered++;
 
       // Popup: correct/incorrect
       answerFace.textContent = correct ? '✅' : '❌';
-      answerMsg.textContent = correct ? 'Correct!' : 'Incorrect';
-      answerExplain.textContent = correct ? 'Nice job.' : 'Right answer: ' + (q.answers.find(a=>a.correct)?.label || '') + '. ' + (q.explain||'');
+
+      if (correct){
+        answerMsg.textContent = "Correct! You've earned a 💣!";
+        answerExplain.textContent = "Tap or press space to blow up asteroids (once per round).";
+      } else {
+        answerMsg.textContent = 'Incorrect';
+        answerExplain.textContent =
+          'Right answer: ' +
+          (q.answers.find(a=>a.correct)?.label || '') +
+          '. ' + (q.explain || '');
+      }
+
       showPopup(answerPopup);
     });
+
     answersBox.appendChild(btn);
   });
 }
@@ -531,6 +594,36 @@ const EMOJI = {
   coin: '🔋'
 };
 
+// Simple emoji image cache so we don't call fillText every frame
+function makeEmojiCache(){
+  const map = new Map(); // key: emoji@size  value: offscreen canvas
+
+  function get(emoji, px){
+    const key = emoji + '@' + px;
+    if (map.has(key)) return map.get(key);
+
+    const c = document.createElement('canvas');
+    const pad = Math.ceil(px * 0.25);
+    c.width = px + pad * 2;
+    c.height = px + pad * 2;
+
+    const g = c.getContext('2d');
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.font = `${px}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",system-ui,-apple-system,sans-serif`;
+    g.fillStyle = '#ffffff';
+    g.fillText(emoji, c.width / 2, c.height / 2);
+
+    map.set(key, c);
+    return c;
+  }
+
+  return { get };
+}
+
+const emojiCache = makeEmojiCache();
+
+
 const PICKUPS = [
   {type:'star', emoji:EMOJI.star, value:100},
   {type:'gem',  emoji:EMOJI.gem,  value:200},
@@ -539,16 +632,16 @@ const PICKUPS = [
 
 // Big atmospheric background emoji for each of the 10 rounds
 const BG_EMOJI_ROUNDS = [
-  '🌕', // Round 1
-  '🪐', // Round 2
-  '🌌', // Round 3
-  '🌠', // Round 4
+  '🌍', // Round 1
+  '🌕', // Round 2
+  '🪨', // Round 3
+  '👾', // Round 4
   '☄️', // Round 5
   '🌙', // Round 6
   '🛰️', // Round 7
   '🛸', // Round 8
   '👨‍🚀', // Round 9
-  '✨'   // Round 10
+  '🪐'   // Round 10
 ];
 
 
@@ -580,9 +673,14 @@ function startRound(){
 
   const bgEmoji = BG_EMOJI_ROUNDS[roundIndex % BG_EMOJI_ROUNDS.length];
 
-  game = createGame({ baseSpeed, maxSpeed, accelPerSec, roundTimeSec, bonus:false, bgEmoji });
+  // If the question was answered correctly, give 1 bomb for this round
+  const bombs = state.bombForNextRound ? 1 : 0;
+  state.bombForNextRound = false; // reset after consuming
+
+  game = createGame({ baseSpeed, maxSpeed, accelPerSec, roundTimeSec, bonus:false, bgEmoji, bombs });
   game.start();
 }
+
 
 
 /* BONUS SURVIVAL (after 10) */
@@ -594,10 +692,12 @@ function startBonus(){
     accelPerSec: 80,
     roundTimeSec: Infinity, // survives until crash
     bonus:true,
-    bgEmoji: '🌌'
+    bgEmoji: '🌌',
+    bombs: 1 // no bombs in bonus round
   });
   game.start();
 }
+
 
 
 /* Game Factory */
@@ -618,15 +718,21 @@ function createGame(cfg){
   let lastHudScore = null;
   let lastHudSpd = null;
 
-    // Big background emoji state
+  // End-of-round big countdown (3–2–1)
+  let endCountdownValue = null;
+
+  // Big background emoji state
   const bgEmoji = cfg.bgEmoji || null;
   let bgY = 0;
   const bgSpeed = 20; // px per second, slow drift
 
 
+  // Bomb (asteroid clear) per round
+  let bombsLeft = cfg.bombs || 0;
 
   // speeds
   let fallSpeed = cfg.baseSpeed;      // px / sec
+
   const baseSpeed = cfg.baseSpeed;
   const maxSpeed = cfg.maxSpeed;
   const accel = cfg.accelPerSec;
@@ -647,14 +753,18 @@ function createGame(cfg){
   let useTilt = false;
 
   function onKey(e){
-    if(e.type==='keydown'){
-      if(e.key==='ArrowLeft') keyLeft=true;
-      if(e.key==='ArrowRight') keyRight=true;
-    }else{
-      if(e.key==='ArrowLeft') keyLeft=false;
-      if(e.key==='ArrowRight') keyRight=false;
+    if (e.type === 'keydown'){
+      if (e.key === 'ArrowLeft')  keyLeft = true;
+      if (e.key === 'ArrowRight') keyRight = true;
+      if (e.key === ' ' || e.code === 'Space') {
+        useBomb(); // Space triggers bomb
+      }
+    } else {
+      if (e.key === 'ArrowLeft')  keyLeft = false;
+      if (e.key === 'ArrowRight') keyRight = false;
     }
   }
+
   window.addEventListener('keydown', onKey);
   window.addEventListener('keyup', onKey);
 
@@ -690,9 +800,15 @@ function createGame(cfg){
   resize();
   window.addEventListener('resize', resize);
 
+  // Tap / click anywhere on the game canvas to use bomb
+  function onTap(){
+    useBomb();
+  }
+  canvas.addEventListener('pointerdown', onTap);
+
   // spawn helpers
-    let spawnTimer = 0;
-    let spawnEvery = 1.4; // slower base spawn: fewer things overall
+  let spawnTimer = 0;
+
 
 
   function spawn(){
@@ -752,6 +868,29 @@ objects.push(s);
     }
   }
 
+  // Use bomb: blow up all asteroids currently on screen (once per round)
+  function useBomb(){
+    if (!running) return;
+    if (bombsLeft <= 0) return;
+    bombsLeft--;
+
+    let any = false;
+    for (let i = objects.length - 1; i >= 0; i--){
+      const o = objects[i];
+      if (o.kind === 'asteroid'){
+        burst(o.x, o.y, '💥', null, 10, 1.0);
+        objects.splice(i, 1);
+        any = true;
+      }
+    }
+
+    if (any){
+      quickToast('BOOM! 💣');
+    }
+  }
+  
+
+
   // main loop
   function start(){
     running = true;
@@ -764,8 +903,13 @@ objects.push(s);
     lastHudScore = state.score;
     lastHudSpd = (fallSpeed/baseSpeed).toFixed(1)+'x';
 
+    // reset end-of-round countdown
+    endCountdownValue = null;
+    bigCount.style.opacity = 0;
+
     big3to1(()=>{ requestAnimationFrame(loop); });
   }
+
 
 
   function loop(t){
@@ -908,9 +1052,24 @@ function update(dt){
     if(!cfg.bonus && isFinite(cfg.roundTimeSec)){
       timeLeft -= dt;
       if(timeLeft<0) timeLeft = 0;
+
+      // Big 3–2–1 countdown in center for last 3 seconds
+      const remaining = Math.ceil(timeLeft);
+      if (remaining > 0 && remaining <= 3) {
+        if (remaining !== endCountdownValue) {
+          endCountdownValue = remaining;
+          bigCount.textContent = remaining;
+          bigCount.style.opacity = 1;
+        }
+      } else if (remaining > 3 && endCountdownValue !== null) {
+        // if we ever reset or start a new round
+        endCountdownValue = null;
+        bigCount.style.opacity = 0;
+      }
     }
 
     // throttled HUD updates (score, time, speed)
+
     hudAccum += dt;
     if (hudAccum >= 0.1) { // about 10 times per second
       hudAccum = 0;
@@ -959,73 +1118,71 @@ function update(dt){
       ctx.restore();
     }
 
-    // player (rocket emoji only)
-    const fontSize = Math.round(40*dpr);
-
+    // player (rocket emoji only, from cache)
+    const fontSize = Math.round(ROCKET_PX * dpr);
     ctx.save();
-    ctx.font = `${fontSize}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",system-ui,-apple-system,sans-serif`;
-ctx.fillStyle = '#ffffff';
-
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
 
     // blink if invincible
     let visible = true;
-    if(!cfg.bonus && player.invincible){
-      const t = performance.now()*0.01;
-      visible = ((t|0)%2)===0;
+    if (!cfg.bonus && player.invincible){
+      const t = performance.now() * 0.01;
+      visible = ((t | 0) % 2) === 0;
     }
-    if(visible){
+
+    if (visible){
       ctx.translate(player.x, player.y);
       ctx.rotate((-45 * Math.PI/180) + player.tilt*0.25); // point "up", lean to turn
-      ctx.fillText(EMOJI.rocket, 0, 0);
+
+      const img = emojiCache.get(EMOJI.rocket, fontSize);
+      ctx.drawImage(img, -img.width / 2, -img.height / 2);
     }
+
     ctx.restore();
 
 
 
-    // objects (fixed size, emoji only)
-    for (const o of objects) {
-      const font = Math.round(Math.max(16, o.sizePx));
-      ctx.save();
-     ctx.font = `${font}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",system-ui,-apple-system,sans-serif`;
-ctx.fillStyle = '#ffffff';
 
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
+    // objects (fixed size, emoji from cache)
+    for (const o of objects) {
+      const px = Math.round(Math.max(16, o.sizePx));
+      ctx.save();
       ctx.translate(o.x, o.y);
       ctx.rotate(o.rot);
 
       const ch = o.kind === 'asteroid' ? EMOJI.asteroid : o.type.emoji;
-      ctx.fillText(ch, 0, 0);
+      const img = emojiCache.get(ch, px);
+
+      ctx.drawImage(img, -img.width / 2, -img.height / 2);
 
       ctx.restore();
     }
+
 
 
 
 
     // particles
-    for(const p of particles){
-      const t = p.age/p.life;
+    for (const p of particles){
+      const t = p.age / p.life;
       const a = 1 - t;
       ctx.save();
-      if(p.emoji){
-        ctx.globalAlpha = a;
-        ctx.font = `${Math.round(p.size)}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",system-ui,-apple-system,sans-serif`;
-        ctx.textAlign='center'; ctx.textBaseline='middle';
-        ctx.fillText(p.emoji, p.x, p.y);
 
-      }else{
+      if (p.emoji){
+        ctx.globalAlpha = a;
+        const px = Math.round(p.size);
+        const img = emojiCache.get(p.emoji, px);
+        ctx.drawImage(img, p.x - img.width / 2, p.y - img.height / 2);
+      } else {
         ctx.fillStyle = `rgba(255,255,255,${a.toFixed(3)})`;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, Math.max(2,p.size*0.15), 0, Math.PI*2);
+        ctx.arc(p.x, p.y, Math.max(2, p.size * 0.15), 0, Math.PI*2);
         ctx.fill();
       }
+
       ctx.restore();
     }
-  }
 
+  }
   function endRound(){
     running = false;
     // quick 3-2-1 -> "Time's up!"
@@ -1065,9 +1222,12 @@ ctx.fillStyle = '#ffffff';
 /* === Starfield cache & settings (constant-speed scroll) === */
 let starData = null, starGrad = null, starLastW = 0, starLastH = 0, starYOffset = 0, starLastTS = 0;
 
-const STAR_SCROLL_PX_PER_SEC = 40; // no stars now, but keep for compatibility
-const STAR_LAYERS = []; // no star layers (we'll draw only a gradient)
-
+const STAR_SCROLL_PX_PER_SEC = 40; // constant background drift
+const STAR_LAYERS = [
+  { count: 12, parallax: 0.4, size: 1 },   // far
+  { count: 18, parallax: 0.7, size: 1.5 }, // mid
+  { count: 24, parallax: 1.0, size: 2 }    // near
+];
 
 
 
@@ -1084,24 +1244,44 @@ function drawStarfield(ctx, w, h){
     starGrad.addColorStop(0, '#070b16');
     starGrad.addColorStop(1, '#05070e');
 
-    // we no longer create individual stars
+    // generate random star positions once
+    for (const layer of STAR_LAYERS) {
+      for (let i = 0; i < layer.count; i++) {
+        starData.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          size: layer.size,
+          parallax: layer.parallax
+        });
+      }
+    }
+    // reset scroll so it starts clean after a resize
     starYOffset = 0;
     starLastTS = 0;
   }
 
-  // (2) We could still animate if we want, but it doesn't matter now
+  // (2) Advance scroll at a constant rate (decoupled from game speed)
   const now = performance.now();
   if (!starLastTS) starLastTS = now;
   const dt = Math.min(0.05, (now - starLastTS) / 1000);
   starLastTS = now;
   starYOffset += STAR_SCROLL_PX_PER_SEC * dt;
 
-  // (3) Draw only the gradient background
+  // (3) Draw background + stars
   ctx.fillStyle = starGrad;
   ctx.fillRect(0, 0, w, h);
+
+  ctx.save();
+  ctx.fillStyle = 'rgba(210,230,255,0.8)';
+  for (const s of starData) {
+    // parallax scroll: nearer layers move slightly faster
+    let y = s.y + starYOffset * s.parallax;
+    // wrap vertically
+    if (y >= h) y = y % h;
+    ctx.fillRect(s.x, y, s.size, s.size);
+  }
+  ctx.restore();
 }
-
-
 
 
 /* Blink effect */
@@ -1109,13 +1289,27 @@ function showBlink(){ centerNote.style.opacity = .0; centerNote.textContent=''; 
 function hideBlink(){ canvas.classList.remove('blink'); }
 
 /* Quick toast (+points text) */
-let toastTimer=0;
+let toastTimer = 0;
 function quickToast(txt){
   toast.textContent = txt;
+
+  // Make the toast 35% of the game canvas width
+  const rect = canvas.getBoundingClientRect();
+  const targetWidth = rect.width * 0.35; // 35% of canvas width
+  toast.style.width = targetWidth + 'px';
+  toast.style.textAlign = 'center';
+
+  // Scale font size with canvas width so it fills the bubble nicely
+  // Clamp between 18px and 32px so it doesn't get crazy huge
+  const fontPx = Math.max(18, Math.min(32, rect.width * 0.08));
+  toast.style.fontSize = fontPx + 'px';
+
   toast.style.opacity = 1;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(()=>{ toast.style.opacity = 0; }, 700);
 }
+
+
 
 /* 3..2..1 before each round */
 function big3to1(done){
@@ -1140,6 +1334,9 @@ function big3to1(done){
 
 /* Show "Time's up!" burst */
 function showTimeUp(done){
+  // Hide any leftover 3–2–1 countdown
+  bigCount.style.opacity = 0;
+
   centerNote.textContent = "Time’s up!";
   centerNote.style.opacity = 1;
   setTimeout(()=>{
@@ -1147,6 +1344,7 @@ function showTimeUp(done){
     done && done();
   }, 850);
 }
+
 
 /* CLAMP / LERP / RAND */
 function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
@@ -1173,14 +1371,26 @@ function showFinal(){
   $('#finCorrect').textContent = state.correct;
   $('#finWrong').textContent = state.wrong;
   $('#finScore').textContent = state.score;
+
+  // Send main-game high score snapshot
+  sendHighScore();
+
   startEmojiRain();
 }
 
+
 $('#btnRestart').addEventListener('click', ()=>{
   stopEmojiRain();
-  state.round=0; state.score=0; state.correct=0; state.wrong=0; state.answered=0;
+  state.round = 0;
+  state.score = 0;
+  state.correct = 0;
+  state.wrong = 0;
+  state.answered = 0;
+  state.bombForNextRound = false;
+  state.seenHowTo = false;
   show('#title');
 });
+
 
 $('#btnPlayBonus').addEventListener('click', ()=>{
   stopEmojiRain();
@@ -1190,10 +1400,19 @@ $('#btnPlayBonus').addEventListener('click', ()=>{
 
 $('#btnBonusDone').addEventListener('click', ()=>{
   hidePopup(elBonusPopup);
-  // Back to final with updated score already included
+
+  // Update final screen labels with latest score (including bonus)
+  $('#finCorrect').textContent = state.correct;
+  $('#finWrong').textContent = state.wrong;
+  $('#finScore').textContent = state.score;
+
+  // Send final high score including bonus
+  sendHighScore();
+
   show('#final');
   startEmojiRain();
 });
+
 
 /* ==============================
    EMOJI RAIN ON FINAL
@@ -1223,6 +1442,34 @@ function stopEmojiRain(){
   if(rainTimer){ clearInterval(rainTimer); rainTimer=null; }
   rain.innerHTML='';
 }
+
+/* ==============================
+   HIGH SCORE SUBMIT (Google Sheets)
+   ============================== */
+
+// TODO: replace this with your real Apps Script web app URL
+const HIGHSCORE_URL = 'https://script.google.com/macros/s/AKfycbwYRgYhl_AzO64xxiYz5oHvZVlb59JDzxqKMQhCpdxVJO3v_Mg2W_aL5Gr-r3cv_Fy0/exec';
+
+function sendHighScore(){
+  if (!HIGHSCORE_URL || !state.playerName) return;
+
+  const payload = {
+    name: state.playerName,
+    score: Number(state.score) || 0,
+    correct: Number(state.correct) || 0,
+    totalQuestions: Number(state.totalRounds) || QUESTIONS.length,
+    userAgent: navigator.userAgent || ''
+  };
+
+  // Fire-and-forget; no-cors avoids CORS errors in console
+  fetch(HIGHSCORE_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).catch(()=>{/* ignore errors */});
+}
+
 
 /* ==============================
    SMALL UTILS
