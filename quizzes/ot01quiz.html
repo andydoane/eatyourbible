@@ -1,1 +1,923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Devotional Quiz</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg-gradient-top: #eef3ff;
+      --bg-gradient-bottom: #d8e8ff;
+      --card-bg: #ffffff;
+      --accent: #3f6df6;
+      --accent-dark: #2743a5;
+      --text-main: #1f2933;
+      --text-muted: #6b7280;
+      --correct: #16a34a;
+      --incorrect: #dc2626;
+      --button-radius: 0.9rem;
+      --shadow-soft: 0 18px 40px rgba(15, 23, 42, 0.16);
+    }
 
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(160deg, var(--bg-gradient-top), var(--bg-gradient-bottom));
+      color: var(--text-main);
+    }
+
+    #app {
+      width: 100%;
+      max-width: 700px;
+      padding: 16px;
+    }
+
+    .screen-card {
+      background: var(--card-bg);
+      border-radius: 1.5rem;
+      box-shadow: var(--shadow-soft);
+      padding: 20px 18px 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      min-height: min(80vh, 560px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    @media (min-width: 768px) {
+      .screen-card {
+        padding: 28px 32px 32px;
+      }
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .card-header {
+      text-align: center;
+      margin-bottom: 18px;
+    }
+
+    .lesson-image-wrapper {
+      width: 160px;
+      height: 160px;
+      margin: 0 auto 12px;
+      border-radius: 1.25rem;
+      overflow: hidden;
+      background: #f3f4ff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.2);
+    }
+
+    .lesson-image {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      transform-origin: top center;
+    }
+
+    /* Bounce-in animation for title image */
+    .bounce-drop {
+      animation: dropBounce 0.9s ease-out;
+    }
+
+    @keyframes dropBounce {
+      0% {
+        transform: translateY(-150%) scale(0.8);
+      }
+      60% {
+        transform: translateY(10%) scale(1.05);
+      }
+      80% {
+        transform: translateY(-4%) scale(0.98);
+      }
+      100% {
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .card-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    @media (min-width: 768px) {
+      .card-title {
+        font-size: 1.8rem;
+      }
+    }
+
+    .card-subtitle {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .primary-button,
+    .secondary-button {
+      border: none;
+      cursor: pointer;
+      padding: 12px 16px;
+      border-radius: 999px;
+      font-size: 1rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.1s ease;
+    }
+
+    .primary-button {
+      background: var(--accent);
+      color: #ffffff;
+      box-shadow: 0 10px 25px rgba(63, 109, 246, 0.5);
+    }
+
+    .primary-button:hover {
+      background: var(--accent-dark);
+      transform: translateY(-1px);
+      box-shadow: 0 15px 30px rgba(63, 109, 246, 0.6);
+    }
+
+    .primary-button:active {
+      transform: translateY(0);
+      box-shadow: 0 8px 18px rgba(63, 109, 246, 0.45);
+    }
+
+    .secondary-button {
+      background: #e5e7eb;
+      color: #111827;
+      box-shadow: none;
+    }
+
+    .secondary-button:hover {
+      background: #d1d5db;
+    }
+
+    .secondary-button:active {
+      background: #e5e7eb;
+    }
+
+    .center-row {
+      display: flex;
+      justify-content: center;
+      margin-top: 10px;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .top-bar span strong {
+      color: var(--text-main);
+    }
+
+    .sound-toggle {
+      border-radius: 999px;
+      border: none;
+      width: 40px;
+      height: 40px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.1rem;
+      background: #f3f4f6;
+      box-shadow: 0 3px 8px rgba(15, 23, 42, 0.18);
+      transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.1s ease;
+    }
+
+    .sound-toggle:hover {
+      background: #e5e7eb;
+      transform: translateY(-1px);
+      box-shadow: 0 5px 12px rgba(15, 23, 42, 0.24);
+    }
+
+    .sound-toggle:active {
+      transform: translateY(0);
+      box-shadow: 0 3px 8px rgba(15, 23, 42, 0.18);
+    }
+
+    .quiz-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 6px;
+    }
+
+    .question-text {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    @media (min-width: 768px) {
+      .question-text {
+        font-size: 1.25rem;
+      }
+    }
+
+    .answers-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    @media (min-width: 640px) {
+      .answers-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .answer-button {
+      width: 100%;
+      padding: 12px 13px;
+      border-radius: var(--button-radius);
+      border: none;
+      cursor: pointer;
+      background: #f3f4ff;
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 7px 15px rgba(15, 23, 42, 0.18);
+      transition: transform 0.08s ease, box-shadow 0.08s ease, background-color 0.08s ease;
+    }
+
+    .answer-button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px rgba(15, 23, 42, 0.22);
+      background: #e5e7ff;
+    }
+
+    .answer-button:active {
+      transform: translateY(0);
+      box-shadow: 0 6px 12px rgba(15, 23, 42, 0.16);
+      background: #eef1ff;
+    }
+
+    .answer-emoji {
+      font-size: 1.35rem;
+      flex-shrink: 0;
+    }
+
+    .answer-text {
+      flex: 1;
+      line-height: 1.35;
+    }
+
+    .answer-button.disabled {
+      pointer-events: none;
+      opacity: 0.75;
+    }
+
+    .score-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: auto;
+      font-size: 0.95rem;
+      padding-top: 8px;
+      border-top: 1px solid #e5e7eb;
+      color: var(--text-muted);
+    }
+
+    .score-row strong {
+      color: var(--text-main);
+    }
+
+    /* Progress bar */
+    .progress-track {
+      width: 100%;
+      height: 7px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #3f6df6, #22c55e);
+      transition: width 0.25s ease;
+    }
+
+    /* Feedback overlay */
+    #feedback-overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 50;
+      pointer-events: none;
+    }
+
+    #feedback-overlay.visible {
+      display: flex;
+    }
+
+    .feedback-inner {
+      background: rgba(15, 23, 42, 0.68);
+      border-radius: 999px;
+      padding: 16px 22px;
+      text-align: center;
+      color: #ffffff;
+      max-width: 90%;
+      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.7);
+    }
+
+    .feedback-title {
+      font-size: 1.8rem;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .feedback-title.correct-text {
+      color: #bbf7d0;
+    }
+
+    .feedback-title.incorrect-text {
+      color: #fecaca;
+    }
+
+    .feedback-detail {
+      font-size: 0.95rem;
+      margin-top: 4px;
+    }
+
+    /* Star rain */
+    .star {
+      position: fixed;
+      top: -40px;
+      font-size: 1.3rem;
+      animation: fall 1.2s linear forwards;
+      z-index: 60;
+      pointer-events: none;
+    }
+
+    @keyframes fall {
+      0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+      }
+      100% {
+        transform: translateY(110vh) rotate(360deg);
+        opacity: 0;
+      }
+    }
+
+    /* End screen */
+    .end-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      text-align: center;
+    }
+
+    .end-score {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: var(--accent-dark);
+    }
+
+    .end-detail {
+      font-size: 1rem;
+      color: var(--text-muted);
+    }
+
+    .end-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- TITLE SCREEN -->
+    <div id="title-screen" class="screen-card">
+      <div class="card-header">
+        <div class="lesson-image-wrapper">
+          <img id="lesson-image" class="lesson-image" src="quizimages/ot01image.png" alt="Lesson image" />
+        </div>
+        <h1 id="lesson-title" class="card-title">Sample Devotional Quiz</h1>
+        <p id="lesson-subtitle" class="card-subtitle">
+          10 questions to review today&apos;s Bible story
+        </p>
+      </div>
+      <div class="center-row" style="margin-top: auto;">
+        <button id="start-quiz-btn" class="primary-button">
+          <span>Start Quiz</span> <span>▶</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- QUIZ SCREEN -->
+    <div id="quiz-screen" class="screen-card hidden">
+      <div class="top-bar">
+        <span>Question <strong id="question-number">1</strong> of <strong id="total-questions">10</strong></span>
+        <button id="sound-toggle" class="sound-toggle" aria-label="Toggle sound">
+          🔊
+        </button>
+      </div>
+      <div class="progress-track">
+        <div id="progress-fill" class="progress-fill"></div>
+      </div>
+
+      <div class="quiz-main">
+        <div class="question-text" id="question-text">
+          Question text will go here
+        </div>
+
+        <div class="answers-grid">
+          <button class="answer-button" data-button-index="0">
+            <span class="answer-emoji">🔴</span>
+            <span class="answer-text"></span>
+          </button>
+          <button class="answer-button" data-button-index="1">
+            <span class="answer-emoji">🟡</span>
+            <span class="answer-text"></span>
+          </button>
+          <button class="answer-button" data-button-index="2">
+            <span class="answer-emoji">🔵</span>
+            <span class="answer-text"></span>
+          </button>
+          <button class="answer-button" data-button-index="3">
+            <span class="answer-emoji">🟢</span>
+            <span class="answer-text"></span>
+          </button>
+        </div>
+
+        <div class="score-row">
+          <span>Score: <strong id="score-display">0</strong></span>
+          <span>Streak: <strong id="streak-display">x0</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- END SCREEN -->
+    <div id="end-screen" class="screen-card hidden">
+      <div class="card-header">
+        <h2 class="card-title">Quiz Complete!</h2>
+        <p class="card-subtitle">Here&apos;s how you did</p>
+      </div>
+      <div class="end-main">
+        <div class="end-score" id="final-score">
+          0 points
+        </div>
+        <div class="end-detail" id="final-correct">
+          You got 0 out of 10 correct
+        </div>
+        <div class="end-buttons">
+          <button id="play-again-btn" class="primary-button">Play Again</button>
+          <button id="back-to-title-btn" class="secondary-button">Back to Title</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEEDBACK OVERLAY -->
+  <div id="feedback-overlay">
+    <div class="feedback-inner">
+      <div id="feedback-title" class="feedback-title">CORRECT</div>
+      <div id="feedback-detail" class="feedback-detail"></div>
+    </div>
+  </div>
+
+  <script>
+    /*******************
+     * CONFIG SECTION  *
+     *******************/
+
+    // Change this lesson ID when you copy the file for a new devotional
+    const LESSON_ID = "ot01";
+
+    // Title text on the opening screen
+    const LESSON_TITLE_TEXT = "Sample Devotional Quiz";
+
+    // Subtitle text under the title on opening screen
+    const LESSON_SUBTITLE_TEXT = "10 questions to review today's Bible story";
+
+    // Path to the lesson image (square PNG with transparent background)
+    // Typically: quizimages/ot01image.png, quizimages/ot02image.png, etc.
+    const LESSON_IMAGE_PATH = `quizimages/${LESSON_ID}image.png`;
+
+    // Sound effect paths
+    // Put these files in an "audio" folder next to this HTML file
+    const CORRECT_SOUND_PATH = "audio/correct.mp3";
+    const INCORRECT_SOUND_PATH = "audio/incorrect.mp3";
+
+    // Question data
+    // For each new devotional, edit ONLY this QUESTIONS array
+    // correctIndex is the index of the correct answer in the "answers" array (0–3)
+    const QUESTIONS = [
+      {
+        text: "Sample Question 1: Who created the world?",
+        answers: [
+          "God",
+          "Moses",
+          "David",
+          "Paul"
+        ],
+        correctIndex: 0
+      },
+      {
+        text: "Sample Question 2: What book tells us about the creation?",
+        answers: [
+          "Genesis",
+          "Exodus",
+          "Psalms",
+          "Revelation"
+        ],
+        correctIndex: 0
+      },
+      {
+        text: "Sample Question 3: On which day did God rest?",
+        answers: [
+          "Seventh day",
+          "First day",
+          "Third day",
+          "Fifth day"
+        ],
+        correctIndex: 0
+      },
+      {
+        text: "Sample Question 4: What did God make on day one?",
+        answers: [
+          "Light",
+          "Animals",
+          "Plants",
+          "People"
+        ],
+        correctIndex: 0
+      },
+      {
+        text: "Sample Question 5: Who were the first people God made?",
+        answers: [
+          "Adam and Eve",
+          "Noah and his wife",
+          "Abraham and Sarah",
+          "Mary and Joseph"
+        ],
+        correctIndex: 0
+      },
+      {
+        text: "Sample Question 6: What did God say about His creation?",
+        answers: [
+          "It was very good",
+          "It was confusing",
+          "It was a mistake",
+          "It was almost done"
+        ],
+        correctIndex: 0
+      },
+      {
+        text: "Sample Question 7: What did God make people from?",
+        answers: [
+          "Dust of the ground",
+          "Wood",
+          "Stone",
+          "Clouds"
+        ],
+        correctIndex: 0
+      },
+      {
+        text: "Sample Question 8: Where did God place Adam and Eve?",
+        answers: [
+          "In the Garden of Eden",
+          "In a big boat",
+          "In a tall tower",
+          "In the desert"
+        ],
+        correctIndex: 0
+      },
+      {
+        text: "Sample Question 9: What did God give people to care for?",
+        answers: [
+          "The animals and the garden",
+          "Only themselves",
+          "Only the sky",
+          "Only the sea"
+        ],
+        correctIndex: 0
+      },
+      {
+        text: "Sample Question 10: Why did God make us?",
+        answers: [
+          "To know Him and praise Him",
+          "So we could hide from Him",
+          "So we could be in charge of Him",
+          "By accident"
+        ],
+        correctIndex: 0
+      }
+    ];
+
+    /***********************
+     * GAME IMPLEMENTATION *
+     ***********************/
+
+    // Screen elements
+    const titleScreen = document.getElementById("title-screen");
+    const quizScreen = document.getElementById("quiz-screen");
+    const endScreen = document.getElementById("end-screen");
+
+    // Title elements
+    const lessonImageEl = document.getElementById("lesson-image");
+    const lessonTitleEl = document.getElementById("lesson-title");
+    const lessonSubtitleEl = document.getElementById("lesson-subtitle");
+    const startQuizBtn = document.getElementById("start-quiz-btn");
+
+    // Quiz elements
+    const questionNumberEl = document.getElementById("question-number");
+    const totalQuestionsEl = document.getElementById("total-questions");
+    const progressFillEl = document.getElementById("progress-fill");
+    const soundToggleBtn = document.getElementById("sound-toggle");
+    const questionTextEl = document.getElementById("question-text");
+    const answerButtons = Array.from(
+      document.querySelectorAll(".answer-button")
+    );
+    const scoreDisplayEl = document.getElementById("score-display");
+    const streakDisplayEl = document.getElementById("streak-display");
+
+    // End elements
+    const finalScoreEl = document.getElementById("final-score");
+    const finalCorrectEl = document.getElementById("final-correct");
+    const playAgainBtn = document.getElementById("play-again-btn");
+    const backToTitleBtn = document.getElementById("back-to-title-btn");
+
+    // Feedback overlay
+    const feedbackOverlay = document.getElementById("feedback-overlay");
+    const feedbackTitleEl = document.getElementById("feedback-title");
+    const feedbackDetailEl = document.getElementById("feedback-detail");
+
+    // Sounds
+    const correctSound = new Audio(CORRECT_SOUND_PATH);
+    const incorrectSound = new Audio(INCORRECT_SOUND_PATH);
+    let soundMuted = false;
+
+    // Game state
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let streak = 0;
+    let correctCount = 0;
+    const totalQuestions = QUESTIONS.length;
+
+    // Initialize static texts
+    lessonImageEl.src = LESSON_IMAGE_PATH;
+    lessonTitleEl.textContent = LESSON_TITLE_TEXT;
+    lessonSubtitleEl.textContent = LESSON_SUBTITLE_TEXT;
+    totalQuestionsEl.textContent = totalQuestions.toString();
+
+    // Helper: show/hide screens
+    function showScreen(screenName) {
+      titleScreen.classList.add("hidden");
+      quizScreen.classList.add("hidden");
+      endScreen.classList.add("hidden");
+
+      if (screenName === "title") {
+        titleScreen.classList.remove("hidden");
+        // retrigger bounce animation
+        lessonImageEl.classList.remove("bounce-drop");
+        void lessonImageEl.offsetWidth; // force reflow
+        lessonImageEl.classList.add("bounce-drop");
+      } else if (screenName === "quiz") {
+        quizScreen.classList.remove("hidden");
+      } else if (screenName === "end") {
+        endScreen.classList.remove("hidden");
+      }
+    }
+
+    // Helper: shuffle an array, returning new array
+    function shuffledIndices(n) {
+      const arr = Array.from({ length: n }, (_, i) => i);
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    // Helper: play sound if not muted
+    function playSound(sound) {
+      if (soundMuted) return;
+      try {
+        sound.currentTime = 0;
+        sound.play();
+      } catch (e) {
+        // ignore sound errors
+      }
+    }
+
+    // Helper: update score & streak display
+    function updateScoreAndStreakDisplay() {
+      scoreDisplayEl.textContent = score.toString();
+      streakDisplayEl.textContent = "x" + streak.toString();
+    }
+
+    // Helper: update progress bar
+    function updateProgress() {
+      const currentNum = currentQuestionIndex + 1;
+      questionNumberEl.textContent = currentNum.toString();
+      const pct = (currentNum / totalQuestions) * 100;
+      progressFillEl.style.width = pct + "%";
+    }
+
+    // Helper: star rain effect
+    function triggerStarRain() {
+      const starCount = 18; // tweak to taste
+      for (let i = 0; i < starCount; i++) {
+        const star = document.createElement("span");
+        star.classList.add("star");
+        star.textContent = "⭐";
+        const randomLeft = Math.random() * 100; // vw
+        const randomDelay = Math.random() * 0.5; // seconds
+        star.style.left = randomLeft + "vw";
+        star.style.animationDelay = randomDelay + "s";
+        document.body.appendChild(star);
+
+        star.addEventListener("animationend", () => {
+          star.remove();
+        });
+      }
+    }
+
+    // Show feedback overlay
+    function showFeedback(isCorrect, correctAnswerText, pointsAwarded) {
+      feedbackOverlay.classList.add("visible");
+      feedbackOverlay.style.pointerEvents = "none";
+
+      if (isCorrect) {
+        feedbackTitleEl.textContent = "CORRECT";
+        feedbackTitleEl.classList.remove("incorrect-text");
+        feedbackTitleEl.classList.add("correct-text");
+        feedbackDetailEl.textContent =
+          pointsAwarded > 0
+            ? `+${pointsAwarded} points`
+            : "";
+      } else {
+        feedbackTitleEl.textContent = "INCORRECT";
+        feedbackTitleEl.classList.remove("correct-text");
+        feedbackTitleEl.classList.add("incorrect-text");
+        feedbackDetailEl.textContent = "Correct answer: " + correctAnswerText;
+      }
+    }
+
+    function hideFeedback() {
+      feedbackOverlay.classList.remove("visible");
+      feedbackDetailEl.textContent = "";
+    }
+
+    // Load current question into UI
+    function loadCurrentQuestion() {
+      const q = QUESTIONS[currentQuestionIndex];
+      questionTextEl.textContent = q.text;
+
+      // Enable buttons
+      answerButtons.forEach(btn => {
+        btn.classList.remove("disabled");
+        btn.disabled = false;
+      });
+
+      // Shuffle answer indices
+      const order = shuffledIndices(q.answers.length);
+
+      // Assign text and data-answer-index
+      answerButtons.forEach((btn, position) => {
+        const answerIndex = order[position];
+        btn.dataset.answerIndex = answerIndex.toString();
+        const textSpan = btn.querySelector(".answer-text");
+        textSpan.textContent = q.answers[answerIndex];
+      });
+
+      updateProgress();
+      updateScoreAndStreakDisplay();
+    }
+
+    // Handle answer click
+    function handleAnswerClick(event) {
+      const btn = event.currentTarget;
+      const q = QUESTIONS[currentQuestionIndex];
+
+      // Prevent double-clicks
+      answerButtons.forEach(b => {
+        b.classList.add("disabled");
+        b.disabled = true;
+      });
+
+      const chosenIndex = parseInt(btn.dataset.answerIndex || "-1", 10);
+      const isCorrect = chosenIndex === q.correctIndex;
+
+      let pointsAwarded = 0;
+
+      if (isCorrect) {
+        streak += 1;
+        pointsAwarded = 100 * streak;
+        score += pointsAwarded;
+        correctCount += 1;
+        updateScoreAndStreakDisplay();
+        playSound(correctSound);
+        triggerStarRain();
+      } else {
+        streak = 0;
+        updateScoreAndStreakDisplay();
+        playSound(incorrectSound);
+      }
+
+      // Show feedback
+      const correctAnswerText = q.answers[q.correctIndex];
+      showFeedback(isCorrect, correctAnswerText, pointsAwarded);
+
+      // Move to next question after a short delay
+      const delayMs = isCorrect ? 1400 : 1800;
+      setTimeout(() => {
+        hideFeedback();
+        currentQuestionIndex += 1;
+
+        if (currentQuestionIndex >= totalQuestions) {
+          endQuiz();
+        } else {
+          loadCurrentQuestion();
+        }
+      }, delayMs);
+    }
+
+    // Start quiz
+    function startQuiz() {
+      // Reset game state
+      currentQuestionIndex = 0;
+      score = 0;
+      streak = 0;
+      correctCount = 0;
+
+      showScreen("quiz");
+      loadCurrentQuestion();
+    }
+
+    // End quiz
+    function endQuiz() {
+      showScreen("end");
+      finalScoreEl.textContent = `${score} points`;
+      finalCorrectEl.textContent = `You got ${correctCount} out of ${totalQuestions} correct`;
+    }
+
+    // Event listeners
+    startQuizBtn.addEventListener("click", () => {
+      startQuiz();
+    });
+
+    answerButtons.forEach(btn => {
+      btn.addEventListener("click", handleAnswerClick);
+    });
+
+    playAgainBtn.addEventListener("click", () => {
+      startQuiz();
+    });
+
+    backToTitleBtn.addEventListener("click", () => {
+      showScreen("title");
+    });
+
+    soundToggleBtn.addEventListener("click", () => {
+      soundMuted = !soundMuted;
+      soundToggleBtn.textContent = soundMuted ? "🔇" : "🔊";
+    });
+
+    // Initial state: show title screen with bounce
+    showScreen("title");
+  </script>
+</body>
+</html>
