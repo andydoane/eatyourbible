@@ -26,6 +26,11 @@
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
+    html,
+    body {
+      height: 100%;
+    }
+
     body {
       min-height: 100vh;
       display: flex;
@@ -33,12 +38,17 @@
       align-items: center;
       background: linear-gradient(160deg, var(--bg-gradient-top), var(--bg-gradient-bottom));
       color: var(--text-main);
+      overflow: hidden; /* prevent scrolling on TVs */
     }
 
     #app {
       width: 100%;
-      max-width: 700px;
+      max-width: 1100px; /* wider for TVs */
       padding: 16px;
+      min-height: 100vh; /* stretch to full height */
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .screen-card {
@@ -50,6 +60,8 @@
       flex-direction: column;
       align-items: stretch;
       min-height: min(80vh, 560px);
+      width: 100%;
+      max-width: 100%;
       position: relative;
       overflow: hidden;
     }
@@ -57,6 +69,13 @@
     @media (min-width: 768px) {
       .screen-card {
         padding: 28px 32px 32px;
+        min-height: 80vh;
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .screen-card {
+        border-radius: 1.75rem;
       }
     }
 
@@ -80,6 +99,13 @@
       align-items: center;
       justify-content: center;
       box-shadow: 0 10px 30px rgba(15, 23, 42, 0.2);
+    }
+
+    @media (min-width: 1024px) {
+      .lesson-image-wrapper {
+        width: 200px;
+        height: 200px;
+      }
     }
 
     .lesson-image {
@@ -110,19 +136,13 @@
     }
 
     .card-title {
-      font-size: 1.4rem;
+      font-size: clamp(1.4rem, 2.6vw, 2.2rem);
       font-weight: 700;
       margin-bottom: 4px;
     }
 
-    @media (min-width: 768px) {
-      .card-title {
-        font-size: 1.8rem;
-      }
-    }
-
     .card-subtitle {
-      font-size: 0.9rem;
+      font-size: clamp(0.9rem, 1.4vw, 1.1rem);
       color: var(--text-muted);
       margin-bottom: 12px;
     }
@@ -131,9 +151,9 @@
     .secondary-button {
       border: none;
       cursor: pointer;
-      padding: 12px 16px;
+      padding: 12px 18px;
       border-radius: 999px;
-      font-size: 1rem;
+      font-size: clamp(1rem, 1.4vw, 1.1rem);
       font-weight: 600;
       display: inline-flex;
       align-items: center;
@@ -177,6 +197,8 @@
       display: flex;
       justify-content: center;
       margin-top: 10px;
+      gap: 12px;
+      flex-wrap: wrap;
     }
 
     .top-bar {
@@ -184,7 +206,7 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 10px;
-      font-size: 0.9rem;
+      font-size: clamp(0.8rem, 1.1vw, 0.95rem);
       color: var(--text-muted);
     }
 
@@ -195,8 +217,8 @@
     .sound-toggle {
       border-radius: 999px;
       border: none;
-      width: 40px;
-      height: 40px;
+      width: 42px;
+      height: 42px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -227,15 +249,9 @@
     }
 
     .question-text {
-      font-size: 1.1rem;
+      font-size: clamp(1.1rem, 2.2vw, 2rem);
       font-weight: 600;
       margin-bottom: 6px;
-    }
-
-    @media (min-width: 768px) {
-      .question-text {
-        font-size: 1.25rem;
-      }
     }
 
     .answers-grid {
@@ -253,12 +269,12 @@
 
     .answer-button {
       width: 100%;
-      padding: 12px 13px;
+      padding: 14px 16px;
       border-radius: var(--button-radius);
       border: none;
       cursor: pointer;
       background: #f3f4ff;
-      font-size: 0.95rem;
+      font-size: clamp(0.95rem, 1.8vw, 1.3rem);
       font-weight: 600;
       text-align: left;
       display: flex;
@@ -281,7 +297,7 @@
     }
 
     .answer-emoji {
-      font-size: 1.35rem;
+      font-size: clamp(1.35rem, 2.4vw, 2rem);
       flex-shrink: 0;
     }
 
@@ -299,7 +315,7 @@
       display: flex;
       justify-content: space-between;
       margin-top: auto;
-      font-size: 0.95rem;
+      font-size: clamp(0.9rem, 1.4vw, 1.1rem);
       padding-top: 8px;
       border-top: 1px solid #e5e7eb;
       color: var(--text-muted);
@@ -353,7 +369,7 @@
     }
 
     .feedback-title {
-      font-size: 1.8rem;
+      font-size: clamp(1.8rem, 3vw, 2.6rem);
       font-weight: 800;
       letter-spacing: 0.12em;
       text-transform: uppercase;
@@ -369,7 +385,7 @@
     }
 
     .feedback-detail {
-      font-size: 0.95rem;
+      font-size: clamp(0.95rem, 1.6vw, 1.1rem);
       margin-top: 4px;
     }
 
@@ -377,7 +393,7 @@
     .star {
       position: fixed;
       top: -40px;
-      font-size: 1.3rem;
+      font-size: clamp(1.3rem, 2.2vw, 1.8rem);
       animation: fall 1.2s linear forwards;
       z-index: 60;
       pointer-events: none;
@@ -406,13 +422,13 @@
     }
 
     .end-score {
-      font-size: 2.2rem;
+      font-size: clamp(2rem, 3vw, 2.6rem);
       font-weight: 800;
       color: var(--accent-dark);
     }
 
     .end-detail {
-      font-size: 1rem;
+      font-size: clamp(1rem, 1.6vw, 1.2rem);
       color: var(--text-muted);
     }
 
@@ -440,7 +456,7 @@
       </div>
       <div class="center-row" style="margin-top: auto;">
         <button id="start-quiz-btn" class="primary-button">
-          <span>Start Quiz</span> <span>▶</span>
+          <span>Go fullscreen &amp; start</span> <span>▶</span>
         </button>
       </div>
     </div>
@@ -534,11 +550,6 @@
     // Path to the lesson image (square PNG with transparent background)
     // Typically: quizimages/ot01image.png, quizimages/ot02image.png, etc.
     const LESSON_IMAGE_PATH = `quizimages/${LESSON_ID}image.png`;
-
-    // Sound effect paths
-    // Put these files in an "audio" folder next to this HTML file
-    const CORRECT_SOUND_PATH = "audio/correct.mp3";
-    const INCORRECT_SOUND_PATH = "audio/incorrect.mp3";
 
     // Question data
     // For each new devotional, edit ONLY this QUESTIONS array
@@ -684,10 +695,76 @@
     const feedbackTitleEl = document.getElementById("feedback-title");
     const feedbackDetailEl = document.getElementById("feedback-detail");
 
-    // Sounds
-    const correctSound = new Audio(CORRECT_SOUND_PATH);
-    const incorrectSound = new Audio(INCORRECT_SOUND_PATH);
+    // Sound (Web Audio API)
+    let audioCtx = null;
     let soundMuted = false;
+
+    function ensureAudioContext() {
+      if (!audioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) {
+          audioCtx = new AC();
+        }
+      }
+    }
+
+    function playTone(freq, duration, type = "sine") {
+      if (soundMuted) return;
+      ensureAudioContext();
+      if (!audioCtx) return;
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = type;
+      const now = audioCtx.currentTime;
+      osc.frequency.setValueAtTime(freq, now);
+
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.18, now + 0.01);
+      gain.gain.linearRampToValueAtTime(0.0, now + duration);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start(now);
+      osc.stop(now + duration + 0.02);
+    }
+
+    function playCorrectSound() {
+      if (soundMuted) return;
+      ensureAudioContext();
+      if (!audioCtx) return;
+
+      // small bright two-note "ding-ding"
+      playTone(1046.5, 0.14, "sine"); // C6
+      setTimeout(() => {
+        playTone(1318.5, 0.16, "sine"); // E6
+      }, 90);
+    }
+
+    function playIncorrectSound() {
+      if (soundMuted) return;
+      ensureAudioContext();
+      if (!audioCtx) return;
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = "square";
+      const now = audioCtx.currentTime;
+      osc.frequency.setValueAtTime(300, now);
+      osc.frequency.linearRampToValueAtTime(140, now + 0.25);
+
+      gain.gain.setValueAtTime(0.16, now);
+      gain.gain.linearRampToValueAtTime(0.0, now + 0.25);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.27);
+    }
 
     // Game state
     let currentQuestionIndex = 0;
@@ -721,7 +798,17 @@
       }
     }
 
-    // Helper: shuffle an array, returning new array
+    // Helper: safe fullscreen request
+    function requestFullscreenSafe() {
+      const elem = document.documentElement;
+      if (elem.requestFullscreen) {
+        elem.requestFullscreen().catch(() => {});
+      } else if (elem.webkitRequestFullscreen) {
+        elem.webkitRequestFullscreen();
+      }
+    }
+
+    // Helper: shuffle an array, returning new array of indices
     function shuffledIndices(n) {
       const arr = Array.from({ length: n }, (_, i) => i);
       for (let i = arr.length - 1; i > 0; i--) {
@@ -729,17 +816,6 @@
         [arr[i], arr[j]] = [arr[j], arr[i]];
       }
       return arr;
-    }
-
-    // Helper: play sound if not muted
-    function playSound(sound) {
-      if (soundMuted) return;
-      try {
-        sound.currentTime = 0;
-        sound.play();
-      } catch (e) {
-        // ignore sound errors
-      }
     }
 
     // Helper: update score & streak display
@@ -849,12 +925,12 @@
         score += pointsAwarded;
         correctCount += 1;
         updateScoreAndStreakDisplay();
-        playSound(correctSound);
+        playCorrectSound();
         triggerStarRain();
       } else {
         streak = 0;
         updateScoreAndStreakDisplay();
-        playSound(incorrectSound);
+        playIncorrectSound();
       }
 
       // Show feedback
@@ -896,6 +972,9 @@
 
     // Event listeners
     startQuizBtn.addEventListener("click", () => {
+      // On classroom PC / TV this will enter fullscreen.
+      // On some mobile browsers it might be ignored, which is fine.
+      requestFullscreenSafe();
       startQuiz();
     });
 
