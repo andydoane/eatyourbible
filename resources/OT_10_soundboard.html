@@ -277,36 +277,45 @@
     ></audio>
   </main>
 
-  <script>
-    // Attach click handlers to all sound buttons
-    document.querySelectorAll(".sound-btn").forEach((button) => {
-      const soundId = button.getAttribute("data-sound-id");
-      const audio = document.getElementById(soundId);
+<script>
+  // Grab all audio elements so we can stop them
+  const allSounds = Array.from(document.querySelectorAll("audio"));
 
-      if (!audio) return;
+  // Attach click handlers to all sound buttons
+  document.querySelectorAll(".sound-btn").forEach((button) => {
+    const soundId = button.getAttribute("data-sound-id");
+    const audio = document.getElementById(soundId);
 
-      const playSound = () => {
-        try {
-          // Restart audio if it's already playing
-          audio.pause();
-          audio.currentTime = 0;
-          audio.play();
+    if (!audio) return;
 
-          // Visual feedback
-          button.classList.add("pressed");
-          setTimeout(() => button.classList.remove("pressed"), 180);
-        } catch (err) {
-          console.error("Error playing sound:", err);
-        }
-      };
+    const playSound = () => {
+      try {
+        // Stop any currently playing sound
+        allSounds.forEach((snd) => {
+          snd.pause();
+          snd.currentTime = 0;
+        });
 
-      button.addEventListener("click", playSound);
-      // Tap-friendly: some mobile browsers like touchstart
-      button.addEventListener("touchstart", (e) => {
-        e.preventDefault();
-        playSound();
-      });
+        // Play selected sound
+        audio.play();
+
+        // Visual feedback
+        button.classList.add("pressed");
+        setTimeout(() => button.classList.remove("pressed"), 180);
+      } catch (err) {
+        console.error("Error playing sound:", err);
+      }
+    };
+
+    button.addEventListener("click", playSound);
+
+    // Mobile-friendly: trigger on touchstart
+    button.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      playSound();
     });
-  </script>
+  });
+</script>
+
 </body>
 </html>
