@@ -1,1 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Bible Lesson Soundboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #111827;
+      --accent: #facc15;
+      --accent-soft: #fbbf24;
+      --text: #f9fafb;
+      --text-muted: #9ca3af;
+      --button-bg: #1f2937;
+      --button-bg-hover: #374151;
+      --button-border: #4b5563;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+        sans-serif;
+      background: radial-gradient(circle at top, #1e293b, var(--bg));
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 700px;
+      background: var(--card-bg);
+      border-radius: 1.5rem;
+      box-shadow:
+        0 20px 25px -5px rgba(0, 0, 0, 0.4),
+        0 10px 10px -5px rgba(0, 0, 0, 0.3);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    @media (min-width: 640px) {
+      .app {
+        padding: 2rem;
+      }
+    }
+
+    .header {
+      text-align: center;
+    }
+
+    .title {
+      font-size: clamp(1.3rem, 2.5vw, 1.7rem);
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .title-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      background: rgba(250, 204, 21, 0.12);
+      padding: 0.25rem 0.7rem;
+      border-radius: 999px;
+      font-size: 0.85rem;
+      color: var(--accent-soft);
+      margin-bottom: 0.25rem;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-top: 0.35rem;
+    }
+
+    .grid {
+      margin-top: 0.75rem;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.9rem;
+    }
+
+    @media (min-width: 768px) {
+      .grid {
+        gap: 1.1rem;
+      }
+    }
+
+    .sound-btn {
+      position: relative;
+      width: 100%;
+      border-radius: 1rem;
+      border: 2px solid var(--button-border);
+      background: var(--button-bg);
+      color: var(--text);
+      padding: 0.8rem 0.5rem;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+      text-align: center;
+      transition:
+        transform 120ms ease-out,
+        box-shadow 120ms ease-out,
+        border-color 120ms ease-out,
+        background 120ms ease-out;
+      box-shadow: 0 10px 15px -8px rgba(0, 0, 0, 0.7);
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .sound-btn:focus-visible {
+      outline: 3px solid var(--accent);
+      outline-offset: 3px;
+    }
+
+    .sound-btn:hover {
+      background: var(--button-bg-hover);
+      border-color: var(--accent-soft);
+      transform: translateY(-2px);
+      box-shadow:
+        0 14px 18px -10px rgba(0, 0, 0, 0.85),
+        0 0 0 1px rgba(148, 163, 184, 0.3);
+    }
+
+    .sound-btn:active {
+      transform: translateY(1px) scale(0.98);
+      box-shadow: 0 6px 10px -6px rgba(0, 0, 0, 0.8);
+      background: linear-gradient(
+        145deg,
+        var(--button-bg-hover),
+        var(--button-bg)
+      );
+      border-color: var(--accent);
+    }
+
+    .sound-btn.pressed {
+      animation: btn-bounce 160ms ease-out;
+      border-color: var(--accent);
+      box-shadow:
+        0 16px 22px -10px rgba(0, 0, 0, 0.9),
+        0 0 0 1px rgba(234, 179, 8, 0.4);
+    }
+
+    @keyframes btn-bounce {
+      0% {
+        transform: translateY(0) scale(1);
+      }
+      50% {
+        transform: translateY(-3px) scale(1.03);
+      }
+      100% {
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .emoji {
+      font-size: clamp(2.4rem, 8vw, 3.5rem);
+      line-height: 1;
+    }
+
+    .label {
+      font-size: clamp(0.8rem, 1.4vw, 0.95rem);
+      text-transform: uppercase;
+      letter-spacing: 0.09em;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .footer {
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.4rem;
+    }
+  </style>
+</head>
+<body>
+  <main class="app" aria-label="Bible lesson soundboard">
+    <header class="header">
+      <div class="title-badge">
+        <span>🎧</span>
+        <span>Sound Board</span>
+      </div>
+      <h1 class="title">
+        Bible Lesson Sound Effects
+      </h1>
+      <p class="subtitle">
+        Tap a button to play a sound
+      </p>
+    </header>
+
+    <section class="grid" aria-label="Sound effect buttons">
+      <button
+        class="sound-btn"
+        data-sound-id="sound-rimshot"
+        aria-label="Play rimshot sound"
+        type="button"
+      >
+        <span class="emoji">🥁</span>
+        <span class="label">Rimshot</span>
+      </button>
+
+      <button
+        class="sound-btn"
+        data-sound-id="sound-laugh"
+        aria-label="Play laugh sound"
+        type="button"
+      >
+        <span class="emoji">😂</span>
+        <span class="label">Laugh</span>
+      </button>
+
+      <button
+        class="sound-btn"
+        data-sound-id="sound-trombone"
+        aria-label="Play trombone sound"
+        type="button"
+      >
+        <span class="emoji">🎺</span>
+        <span class="label">Trombone</span>
+      </button>
+
+      <button
+        class="sound-btn"
+        data-sound-id="sound-boo"
+        aria-label="Play boo sound"
+        type="button"
+      >
+        <span class="emoji">👎</span>
+        <span class="label">Boo</span>
+      </button>
+    </section>
+
+    <footer class="footer">
+      Adjust device volume for louder or quieter sounds
+    </footer>
+
+    <!-- Preloaded audio elements (must match paths on GitHub) -->
+    <audio
+      id="sound-rimshot"
+      src="audio/OT_10_rimshot.mp3"
+      preload="auto"
+    ></audio>
+    <audio
+      id="sound-laugh"
+      src="audio/OT_10_laugh.mp3"
+      preload="auto"
+    ></audio>
+    <audio
+      id="sound-trombone"
+      src="audio/OT_10_trombone.mp3"
+      preload="auto"
+    ></audio>
+    <audio
+      id="sound-boo"
+      src="audio/OT_10_boo.mp3"
+      preload="auto"
+    ></audio>
+  </main>
+
+  <script>
+    // Attach click handlers to all sound buttons
+    document.querySelectorAll(".sound-btn").forEach((button) => {
+      const soundId = button.getAttribute("data-sound-id");
+      const audio = document.getElementById(soundId);
+
+      if (!audio) return;
+
+      const playSound = () => {
+        try {
+          // Restart audio if it's already playing
+          audio.pause();
+          audio.currentTime = 0;
+          audio.play();
+
+          // Visual feedback
+          button.classList.add("pressed");
+          setTimeout(() => button.classList.remove("pressed"), 180);
+        } catch (err) {
+          console.error("Error playing sound:", err);
+        }
+      };
+
+      button.addEventListener("click", playSound);
+      // Tap-friendly: some mobile browsers like touchstart
+      button.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        playSound();
+      });
+    });
+  </script>
+</body>
+</html>
