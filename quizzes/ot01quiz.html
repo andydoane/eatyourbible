@@ -13,8 +13,14 @@
       --accent-dark: #2743a5;
       --text-main: #1f2933;
       --text-muted: #6b7280;
-      --question-bg: #111827; /* dark question background */
+      --question-bg: #111827;
       --button-radius: 0.9rem;
+
+      /* color buttons */
+      --red: #ff5a51;
+      --yellow: #ffc751;
+      --blue: #40b9c5;
+      --green: #a7cb6f;
     }
 
     * {
@@ -34,9 +40,20 @@
       display: flex;
       justify-content: center;
       align-items: stretch;
-      background: linear-gradient(160deg, var(--bg-gradient-top), var(--bg-gradient-bottom));
+      background: radial-gradient(circle at top, var(--bg-gradient-top), var(--bg-gradient-bottom));
+      background-size: 150% 150%;
+      animation: bgDrift 22s ease-in-out infinite alternate;
       color: var(--text-main);
-      overflow: hidden; /* prevent scrolling on TVs */
+      overflow: hidden; /* good for TVs */
+    }
+
+    @keyframes bgDrift {
+      0% {
+        background-position: 0% 0%;
+      }
+      100% {
+        background-position: 100% 100%;
+      }
     }
 
     #app {
@@ -52,7 +69,7 @@
     .screen-card {
       background: var(--card-bg);
       border-radius: 0;
-      box-shadow: none;
+      box-shadow: 0 0 40px rgba(15, 23, 42, 0.18);
       padding: 18px 14px 22px;
       display: flex;
       flex-direction: column;
@@ -74,23 +91,64 @@
       display: none;
     }
 
-    .card-header {
+.card-header {
       text-align: center;
       margin-bottom: 18px;
     }
 
-    .lesson-image-wrapper {
-      width: 140px;
-      height: 140px;
-      margin: 0 auto 12px;
-      border-radius: 1.25rem;
-      overflow: hidden;
-      background: #f3f4ff;
+/* Vertically center the whole title block on the title screen */
+#title-screen .title-content {
+      flex: 1;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.2);
+}
+
+/* Keep the header itself centered horizontally */
+#title-screen .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 0;   /* no manual push-down anymore */
+}
+
+
+#end-screen {
+      justify-content: center;  /* vertically center header + score block */
+}
+
+
+
+.title-layout {
+      display: flex;
+      flex-direction: column;   /* stack image above text */
+      align-items: center;
+      gap: 12px;
+      text-align: center;
     }
+
+
+.title-text {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+
+
+.lesson-image-wrapper {
+      width: 140px;
+      height: 140px;
+      margin: 0;
+      border-radius: 0;
+      overflow: visible;
+      background: transparent;   /* no grey rectangle */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: none;          /* no shadow box */
+    }
+
 
     @media (min-width: 1024px) {
       .lesson-image-wrapper {
@@ -104,6 +162,7 @@
       height: 100%;
       object-fit: contain;
       transform-origin: top center;
+      animation: float 4.5s ease-in-out infinite;
     }
 
     .bounce-drop {
@@ -115,124 +174,219 @@
         transform: translateY(-150%) scale(0.8);
       }
       60% {
-        transform: translateY(10%) scale(1.05);
-      }
-      80% {
-        transform: translateY(-4%) scale(0.98);
+        transform: translateY(8%) scale(1.06);
       }
       100% {
         transform: translateY(0) scale(1);
       }
     }
 
+    @keyframes float {
+      0% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(6px);
+      }
+      100% {
+        transform: translateY(0);
+      }
+    }
+
     .card-title {
-      font-size: clamp(1.5rem, 3vw, 2.6rem);
-      font-weight: 700;
-      margin-bottom: 4px;
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      margin-bottom: 6px;
     }
 
     .card-subtitle {
-      font-size: clamp(0.95rem, 1.6vw, 1.2rem);
+      font-size: clamp(1rem, 2vw, 1.25rem);
       color: var(--text-muted);
-      margin-bottom: 12px;
+    }
+
+    .center-row {
+      margin-top: auto;
+      display: flex;
+      justify-content: center;
     }
 
     .primary-button,
     .secondary-button {
-      border: none;
-      cursor: pointer;
-      padding: 12px 20px;
       border-radius: 999px;
-      font-size: clamp(1rem, 1.5vw, 1.2rem);
+      border: none;
+      padding: 12px 22px;
+      font-size: clamp(1rem, 1.8vw, 1.25rem);
       font-weight: 600;
+      cursor: pointer;
       display: inline-flex;
       align-items: center;
-      justify-content: center;
       gap: 8px;
-      transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.1s ease;
+      box-shadow: 0 10px 25px rgba(37, 99, 235, 0.35);
+      transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.1s ease;
     }
 
     .primary-button {
-      background: var(--accent);
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
       color: #ffffff;
-      box-shadow: 0 10px 25px rgba(63, 109, 246, 0.5);
-    }
-
-    .primary-button:hover {
-      background: var(--accent-dark);
-      transform: translateY(-1px);
-      box-shadow: 0 15px 30px rgba(63, 109, 246, 0.6);
+      animation: pulse 2.4s ease-in-out infinite;
     }
 
     .secondary-button {
-      background: #e5e7eb;
-      color: #111827;
+      background: #f3f4ff;
+      color: var(--accent-dark);
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.15);
     }
 
-    .center-row {
-      display: flex;
-      justify-content: center;
-      margin-top: 10px;
-      gap: 12px;
-      flex-wrap: wrap;
+    .primary-button:hover,
+    .secondary-button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.05);
+      box-shadow: 0 14px 30px rgba(15, 23, 42, 0.35);
     }
 
+    .primary-button:active,
+    .secondary-button:active {
+      transform: translateY(0);
+      box-shadow: 0 6px 14px rgba(15, 23, 42, 0.25);
+      filter: brightness(0.96);
+    }
+
+    @keyframes pulse {
+      0%,
+      100% {
+        transform: scale(1);
+        box-shadow: 0 10px 25px rgba(37, 99, 235, 0.35);
+      }
+      50% {
+        transform: scale(1.03);
+        box-shadow: 0 18px 40px rgba(37, 99, 235, 0.5);
+      }
+    }
+
+    /* Top bar & progress */
     .top-bar {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 10px;
-      font-size: clamp(0.85rem, 1.2vw, 1.05rem);
+      font-size: clamp(0.95rem, 1.8vw, 1.15rem);
+      margin-bottom: 4px;
       color: var(--text-muted);
-    }
-
-    .top-bar span strong {
-      color: var(--text-main);
     }
 
     .sound-toggle {
       border-radius: 999px;
       border: none;
-      width: 44px;
-      height: 44px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
+      background: #edf2ff;
+      padding: 6px 9px;
+      font-size: 1.1rem;
       cursor: pointer;
-      font-size: 1.3rem;
-      background: #f3f4f6;
-      box-shadow: 0 3px 8px rgba(15, 23, 42, 0.18);
+      box-shadow: 0 3px 9px rgba(15, 23, 42, 0.2);
+      transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
     }
 
-    /* LAYOUT: split space 50/50 between question and answers */
+    .sound-toggle:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(15, 23, 42, 0.25);
+      filter: brightness(1.06);
+    }
+
+    .sound-toggle:active {
+      transform: translateY(0);
+      box-shadow: 0 3px 8px rgba(15, 23, 42, 0.2);
+      filter: brightness(0.96);
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      background: #e5e7eb;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: inherit;
+      background-image: linear-gradient(
+        120deg,
+        #3f6df6,
+        #22c55e,
+        #3f6df6
+      );
+      background-size: 200% 100%;
+      animation: progressFlow 2.5s linear infinite;
+      transition: width 0.25s ease;
+    }
+
+    @keyframes progressFlow {
+      0% {
+        background-position: 0% 0%;
+      }
+      100% {
+        background-position: 100% 0%;
+      }
+    }
+
+    /* QUIZ LAYOUT */
     .quiz-main {
       flex: 1;
-      min-height: 0;          /* allow children to share space */
       display: flex;
       flex-direction: column;
-      gap: 0;
+      gap: 10px;
+      margin-top: 10px;
     }
 
-    /* TOP HALF – question */
+    /* top 50%: question */
     .question-panel {
-      flex: 1 0 0;            /* takes about half of remaining height */
+      flex: 1 0 0;
       display: flex;
-      align-items: stretch;
+      align-items: center;
+      justify-content: center;
       min-height: 0;
     }
 
     .question-card {
       width: 100%;
-      height: 100%;           /* fill whole question area */
-      border-radius: 1.25rem;
+      height: 100%;
       background: var(--question-bg);
       color: #ffffff;
+      border-radius: 1.35rem;
       padding: 16px 18px;
       display: flex;
       align-items: center;
       justify-content: center;
       text-align: center;
-      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.35);
+      box-shadow: 0 12px 38px rgba(15, 23, 42, 0.55);
+    }
+
+    .question-card.question-in {
+      animation: questionSlideIn 0.35s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+    }
+
+    @keyframes questionSlideIn {
+      0% {
+        transform: translateY(-18px);
+        opacity: 0;
+      }
+      100% {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .question-card.shake {
+      animation: shake 0.35s ease;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-8px); }
+      40% { transform: translateX(8px); }
+      60% { transform: translateX(-6px); }
+      80% { transform: translateX(6px); }
     }
 
     .question-text {
@@ -241,9 +395,9 @@
       line-height: 1.3;
     }
 
-    /* BOTTOM HALF – answers */
+    /* bottom 50%: answers */
     .answers-panel {
-      flex: 1 0 0;            /* other half of the space */
+      flex: 1 0 0;
       display: flex;
       flex-direction: column;
       padding-top: 10px;
@@ -254,23 +408,38 @@
       flex: 1 1 0;
       display: grid;
       grid-template-columns: 1fr;
-      grid-auto-rows: 1fr;    /* rows grow to fill space */
+      grid-auto-rows: 1fr;
       gap: 12px;
       align-content: stretch;
     }
 
+    .answers-grid.answers-in {
+      animation: answersPopIn 0.3s ease-out;
+    }
+
+    @keyframes answersPopIn {
+      0% {
+        transform: translateY(18px);
+        opacity: 0;
+      }
+      100% {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
     @media (min-width: 640px) {
       .answers-grid {
-        grid-template-columns: 1fr 1fr; /* 2x2 on wider screens */
+        grid-template-columns: 1fr 1fr;
       }
     }
 
     .answer-button {
       width: 100%;
-      height: 100%;           /* fill grid cell vertically */
+      height: 100%;
       padding: 16px 18px;
       border-radius: var(--button-radius);
-      border: none;
+      border: 3px solid rgba(255, 255, 255, 0.8);
       cursor: pointer;
       font-size: clamp(1.4rem, 3vw, 3rem);
       font-weight: 600;
@@ -279,19 +448,24 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      box-shadow: 0 7px 15px rgba(15, 23, 42, 0.18);
-      transition: transform 0.08s ease, box-shadow 0.08s ease, background-color 0.08s ease;
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.3);
+      transition:
+        transform 0.08s ease,
+        box-shadow 0.08s ease,
+        filter 0.08s ease,
+        border-color 0.08s ease;
     }
 
     .answer-button:hover {
       transform: translateY(-1px);
-      box-shadow: 0 10px 20px rgba(15, 23, 42, 0.22);
+      box-shadow: 0 16px 36px rgba(15, 23, 42, 0.4);
       filter: brightness(1.05);
+      border-color: rgba(255, 255, 255, 1);
     }
 
     .answer-button:active {
       transform: translateY(0);
-      box-shadow: 0 6px 12px rgba(15, 23, 42, 0.16);
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.3);
       filter: brightness(0.97);
     }
 
@@ -302,28 +476,28 @@
 
     .answer-button.disabled {
       pointer-events: none;
-      opacity: 0.8;
+      opacity: 0.85;
       filter: none;
     }
 
-    /* COLOR BUTTON BACKGROUNDS */
+    /* color backgrounds */
     .color-red {
-      background: #e55934;
+      background: var(--red);
       color: #ffffff;
     }
 
     .color-yellow {
-      background: #ffd42a;
+      background: var(--yellow);
       color: #333333;
     }
 
     .color-blue {
-      background: #3d85c6;
+      background: var(--blue);
       color: #ffffff;
     }
 
     .color-green {
-      background: #62bb47;
+      background: var(--green);
       color: #ffffff;
     }
 
@@ -341,24 +515,7 @@
       color: var(--text-main);
     }
 
-    .progress-track {
-      width: 100%;
-      height: 8px;
-      border-radius: 999px;
-      background: #e5e7eb;
-      overflow: hidden;
-      margin-top: 6px;
-    }
-
-    .progress-fill {
-      height: 100%;
-      width: 0%;
-      border-radius: inherit;
-      background: linear-gradient(90deg, #3f6df6, #22c55e);
-      transition: width 0.25s ease;
-    }
-
-    /* Feedback overlay */
+    /* feedback overlay */
     #feedback-overlay {
       position: fixed;
       inset: 0;
@@ -374,17 +531,17 @@
     }
 
     .feedback-inner {
-      background: rgba(15, 23, 42, 0.68);
+      background: rgba(15, 23, 42, 0.8);
       border-radius: 999px;
       padding: 18px 24px;
       text-align: center;
       color: #ffffff;
       max-width: 90%;
-      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.7);
+      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.8);
     }
 
     .feedback-title {
-      font-size: clamp(2rem, 3.5vw, 3rem);
+      font-size: clamp(2rem, 3.5vw, 3.2rem);
       font-weight: 800;
       letter-spacing: 0.12em;
       text-transform: uppercase;
@@ -424,7 +581,26 @@
       }
     }
 
-    /* End screen */
+    /* quick flash on correct */
+    .screen-flash {
+      position: fixed;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.7);
+      animation: flash 0.25s ease-out forwards;
+      pointer-events: none;
+      z-index: 40;
+    }
+
+    @keyframes flash {
+      0% {
+        opacity: 0.8;
+      }
+      100% {
+        opacity: 0;
+      }
+    }
+
+    /* end screen */
     .end-main {
       flex: 1;
       display: flex;
@@ -446,6 +622,10 @@
       color: var(--text-muted);
     }
 
+    .end-trophy {
+      font-size: clamp(3rem, 6vw, 4rem);
+    }
+
     .end-buttons {
       display: flex;
       flex-wrap: wrap;
@@ -453,21 +633,62 @@
       justify-content: center;
       margin-top: 12px;
     }
+
+    #end-screen.end-great {
+      background: radial-gradient(circle at top, #fef9c3, #bbf7d0);
+    }
+
+    #end-screen.end-good {
+      background: radial-gradient(circle at top, #dbeafe, #cffafe);
+    }
+
+    #end-screen.end-try {
+      background: radial-gradient(circle at top, #fee2e2, #fef3c7);
+    }
+
+    /* fullscreen scaling */
+    :fullscreen .question-text,
+    :-webkit-full-screen .question-text {
+      font-size: clamp(2.4rem, 4vw, 5rem);
+    }
+
+    :fullscreen .answer-button,
+    :-webkit-full-screen .answer-button {
+      font-size: clamp(2rem, 3.5vw, 4rem);
+    }
+
+    :fullscreen .card-title,
+    :-webkit-full-screen .card-title {
+      font-size: clamp(2.4rem, 4.2vw, 3.2rem);
+    }
   </style>
 </head>
 <body>
   <div id="app">
     <!-- TITLE SCREEN -->
-    <div id="title-screen" class="screen-card">
-      <div class="card-header">
-        <div class="lesson-image-wrapper">
-          <img id="lesson-image" class="lesson-image" src="quizimages/ot01image.png" alt="Lesson image" />
+<div id="title-screen" class="screen-card">
+      <!-- New wrapper that we will vertically center -->
+      <div class="title-content">
+        <div class="card-header">
+          <div class="title-layout">
+            <div class="lesson-image-wrapper">
+              <img
+                id="lesson-image"
+                class="lesson-image bounce-drop"
+                src="quizimages/ot01image.png"
+                alt="Lesson image"
+              />
+            </div>
+            <div class="title-text">
+              <h1 id="lesson-title" class="card-title">Sample Devotional Quiz</h1>
+              <p id="lesson-subtitle" class="card-subtitle">
+                10 questions to review today&rsquo;s Bible story
+              </p>
+            </div>
+          </div>
         </div>
-        <h1 id="lesson-title" class="card-title">Sample Devotional Quiz</h1>
-        <p id="lesson-subtitle" class="card-subtitle">
-          10 questions to review today&apos;s Bible story
-        </p>
       </div>
+
       <div class="center-row" style="margin-top: auto;">
         <button id="start-quiz-btn" class="primary-button">
           <span>Go fullscreen &amp; start</span> <span>▶</span>
@@ -475,13 +696,12 @@
       </div>
     </div>
 
+
     <!-- QUIZ SCREEN -->
     <div id="quiz-screen" class="screen-card hidden">
       <div class="top-bar">
         <span>Question <strong id="question-number">1</strong> of <strong id="total-questions">10</strong></span>
-        <button id="sound-toggle" class="sound-toggle" aria-label="Toggle sound">
-          🔊
-        </button>
+        <button id="sound-toggle" class="sound-toggle" aria-label="Toggle sound">🔊</button>
       </div>
       <div class="progress-track">
         <div id="progress-fill" class="progress-fill"></div>
@@ -490,7 +710,7 @@
       <div class="quiz-main">
         <!-- top 50%: question card -->
         <div class="question-panel">
-          <div class="question-card">
+          <div class="question-card" id="question-card">
             <div class="question-text" id="question-text">
               Question text will go here
             </div>
@@ -499,7 +719,7 @@
 
         <!-- bottom 50%: answers + score -->
         <div class="answers-panel">
-          <div class="answers-grid">
+          <div class="answers-grid" id="answers-grid">
             <button class="answer-button color-red" data-button-index="0">
               <span class="answer-text"></span>
             </button>
@@ -525,13 +745,12 @@
     <!-- END SCREEN -->
     <div id="end-screen" class="screen-card hidden">
       <div class="card-header">
-        <h2 class="card-title">Quiz Complete!</h2>
-        <p class="card-subtitle">Here&apos;s how you did</p>
+        <div class="end-trophy" id="end-trophy">🏆</div>
+        <h2 class="card-title" id="end-title">Quiz Complete!</h2>
+        <p class="card-subtitle" id="end-subtitle">Here&rsquo;s how you did</p>
       </div>
       <div class="end-main">
-        <div class="end-score" id="final-score">
-          0 points
-        </div>
+        <div class="end-score" id="final-score">0 points</div>
         <div class="end-detail" id="final-correct">
           You got 0 out of 10 correct
         </div>
@@ -552,269 +771,217 @@
   </div>
 
   <script>
-    /*******************
-     * CONFIG SECTION  *
-     *******************/
-
-    // Change this lesson ID when you copy the file for a new devotional
-    const LESSON_ID = "ot01";
-
-    // Title text on the opening screen
-    const LESSON_TITLE_TEXT = "Sample Devotional Quiz";
-
-    // Subtitle text under the title on opening screen
-    const LESSON_SUBTITLE_TEXT = "10 questions to review today's Bible story";
-
-    // Path to the lesson image
-    const LESSON_IMAGE_PATH = `quizimages/${LESSON_ID}image.png`;
-
-    // Question data
-    // For each new devotional, edit ONLY this QUESTIONS array
+    // =======================
+    // QUESTION DATA
+    // =======================
     const QUESTIONS = [
-  {
-    text: "What did God create on day one?",
-    answers: [
-      "The heavens and the earth and light",
-      "The sky and the sea",
-      "Dry land and plants",
-      "Sun, moon, and stars"
-    ],
-    correctIndex: 0
-  },
-  {
-    text: "What did God create on day two?",
-    answers: [
-      "He separated the sky and the sea",
-      "Dry land and plants",
-      "Birds and fish",
-      "Land animals and human beings"
-    ],
-    correctIndex: 0
-  },
-  {
-    text: "What did God create on day three?",
-    answers: [
-      "Dry land and plants",
-      "The sky and the sea",
-      "Sun, moon, and stars",
-      "Birds and fish"
-    ],
-    correctIndex: 0
-  },
-  {
-    text: "What did God create on day four?",
-    answers: [
-      "Sun, moon, and stars",
-      "Dry land and plants",
-      "Land animals and people",
-      "Birds and fish"
-    ],
-    correctIndex: 0
-  },
-  {
-    text: "What did God create on day five?",
-    answers: [
-      "Birds and fish",
-      "The sky and the sea",
-      "Land animals and people",
-      "Sun, moon, and stars"
-    ],
-    correctIndex: 0
-  },
-  {
-    text: "What did God create on day six?",
-    answers: [
-      "Land animals and human beings",
-      "Birds and fish",
-      "Dry land and plants",
-      "Nothing, He rested"
-    ],
-    correctIndex: 0
-  },
-  {
-    text: "How are human beings different than everything else God made?",
-    answers: [
-      "We’re made in His likeness and given the job to rule over His creation",
-      "We can swim and fly better than all animals",
-      "We were created before light and water",
-      "We live under the sea like fish"
-    ],
-    correctIndex: 0
-  },
-  {
-    text: "What did God create on day seven?",
-    answers: [
-      "Nothing, He rested",
-      "Birds and fish",
-      "The sky and the sea",
-      "Sun, moon, and stars"
-    ],
-    correctIndex: 0
-  },
-  {
-    text: "How did God create everything?",
-    answers: [
-      "Out of nothing, just by speaking",
-      "By using tools and machines",
-      "By asking the angels to build it",
-      "By finding pieces that were already there"
-    ],
-    correctIndex: 0
-  },
-  {
-    text: "What did God say after seeing everything He made?",
-    answers: [
-      "It was very good",
-      "It was almost good enough",
-      "It needed to be fixed later",
-      "He wasn’t sure He liked it"
-    ],
-    correctIndex: 0
-  }
-];
+      {
+        text: "What did God create on day one?",
+        answers: [
+          "The heavens and the earth and light",
+          "The sky and the sea",
+          "Dry land and plants",
+          "Sun, moon, and stars"
+        ],
+        correctIndex: 0
+      },
+      {
+        text: "What did God create on day two?",
+        answers: [
+          "He separated the sky and the sea",
+          "Dry land and plants",
+          "Birds and fish",
+          "Land animals and human beings"
+        ],
+        correctIndex: 0
+      },
+      {
+        text: "What did God create on day three?",
+        answers: [
+          "Dry land and plants",
+          "The sky and the sea",
+          "Sun, moon, and stars",
+          "Birds and fish"
+        ],
+        correctIndex: 0
+      },
+      {
+        text: "What did God create on day four?",
+        answers: [
+          "Sun, moon, and stars",
+          "Dry land and plants",
+          "Land animals and people",
+          "Birds and fish"
+        ],
+        correctIndex: 0
+      },
+      {
+        text: "What did God create on day five?",
+        answers: [
+          "Birds and fish",
+          "The sky and the sea",
+          "Land animals and people",
+          "Sun, moon, and stars"
+        ],
+        correctIndex: 0
+      },
+      {
+        text: "What did God create on day six?",
+        answers: [
+          "Land animals and human beings",
+          "Birds and fish",
+          "Dry land and plants",
+          "Nothing, He rested"
+        ],
+        correctIndex: 0
+      },
+      {
+        text: "How are human beings different than everything else God made?",
+        answers: [
+          "We\u2019re made in His likeness and given the job to rule over His creation",
+          "We can swim and fly better than all animals",
+          "We were created before light and water",
+          "We live under the sea like fish"
+        ],
+        correctIndex: 0
+      },
+      {
+        text: "What did God create on day seven?",
+        answers: [
+          "Nothing, He rested",
+          "Birds and fish",
+          "The sky and the sea",
+          "Sun, moon, and stars"
+        ],
+        correctIndex: 0
+      },
+      {
+        text: "How did God create everything?",
+        answers: [
+          "Out of nothing, just by speaking",
+          "By using tools and machines",
+          "By asking the angels to build it",
+          "By finding pieces that were already there"
+        ],
+        correctIndex: 0
+      },
+      {
+        text: "What did God say after seeing everything He made?",
+        answers: [
+          "It was very good",
+          "It was almost good enough",
+          "It needed to be fixed later",
+          "He wasn\u2019t sure He liked it"
+        ],
+        correctIndex: 0
+      }
+    ];
 
-
-    /***********************
-     * GAME IMPLEMENTATION *
-     ***********************/
-
-    // Screens
+    // =======================
+    // DOM REFERENCES
+    // =======================
     const titleScreen = document.getElementById("title-screen");
     const quizScreen = document.getElementById("quiz-screen");
     const endScreen = document.getElementById("end-screen");
 
-    // Title elements
-    const lessonImageEl = document.getElementById("lesson-image");
-    const lessonTitleEl = document.getElementById("lesson-title");
-    const lessonSubtitleEl = document.getElementById("lesson-subtitle");
-    const startQuizBtn = document.getElementById("start-quiz-btn");
-
-    // Quiz elements
-    const questionNumberEl = document.getElementById("question-number");
-    const totalQuestionsEl = document.getElementById("total-questions");
-    const progressFillEl = document.getElementById("progress-fill");
-    const soundToggleBtn = document.getElementById("sound-toggle");
-    const questionTextEl = document.getElementById("question-text");
-    const answerButtons = Array.from(document.querySelectorAll(".answer-button"));
-    const scoreDisplayEl = document.getElementById("score-display");
-    const streakDisplayEl = document.getElementById("streak-display");
-
-    // End elements
-    const finalScoreEl = document.getElementById("final-score");
-    const finalCorrectEl = document.getElementById("final-correct");
+    const startBtn = document.getElementById("start-quiz-btn");
     const playAgainBtn = document.getElementById("play-again-btn");
     const backToTitleBtn = document.getElementById("back-to-title-btn");
 
-    // Feedback overlay
+    const questionNumberEl = document.getElementById("question-number");
+    const totalQuestionsEl = document.getElementById("total-questions");
+    const progressFillEl = document.getElementById("progress-fill");
+
+    const questionCardEl = document.getElementById("question-card");
+    const questionTextEl = document.getElementById("question-text");
+    const answersGridEl = document.getElementById("answers-grid");
+    const answerButtons = Array.from(
+      document.querySelectorAll(".answer-button")
+    );
+
+    const scoreDisplayEl = document.getElementById("score-display");
+    const streakDisplayEl = document.getElementById("streak-display");
+
     const feedbackOverlay = document.getElementById("feedback-overlay");
     const feedbackTitleEl = document.getElementById("feedback-title");
     const feedbackDetailEl = document.getElementById("feedback-detail");
 
-    // Web Audio
-    let audioCtx = null;
-    let soundMuted = false;
+    const soundToggleBtn = document.getElementById("sound-toggle");
 
-    function ensureAudioContext() {
-      if (!audioCtx) {
-        const AC = window.AudioContext || window.webkitAudioContext;
-        if (AC) audioCtx = new AC();
-      }
-    }
+    const finalScoreEl = document.getElementById("final-score");
+    const finalCorrectEl = document.getElementById("final-correct");
+    const endTitleEl = document.getElementById("end-title");
+    const endSubtitleEl = document.getElementById("end-subtitle");
+    const endTrophyEl = document.getElementById("end-trophy");
 
-    function playTone(freq, duration, type = "sine") {
-      if (soundMuted) return;
-      ensureAudioContext();
-      if (!audioCtx) return;
+    totalQuestionsEl.textContent = QUESTIONS.length.toString();
 
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      const now = audioCtx.currentTime;
-
-      osc.type = type;
-      osc.frequency.setValueAtTime(freq, now);
-
-      gain.gain.setValueAtTime(0.001, now);
-      gain.gain.linearRampToValueAtTime(0.18, now + 0.01);
-      gain.gain.linearRampToValueAtTime(0.0, now + duration);
-
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-
-      osc.start(now);
-      osc.stop(now + duration + 0.02);
-    }
-
-    function playCorrectSound() {
-      if (soundMuted) return;
-      ensureAudioContext();
-      if (!audioCtx) return;
-      playTone(1046.5, 0.14, "sine");              // C6
-      setTimeout(() => playTone(1318.5, 0.16, "sine"), 90); // E6
-    }
-
-    function playIncorrectSound() {
-      if (soundMuted) return;
-      ensureAudioContext();
-      if (!audioCtx) return;
-
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      const now = audioCtx.currentTime;
-
-      osc.type = "square";
-      osc.frequency.setValueAtTime(300, now);
-      osc.frequency.linearRampToValueAtTime(140, now + 0.25);
-
-      gain.gain.setValueAtTime(0.16, now);
-      gain.gain.linearRampToValueAtTime(0.0, now + 0.25);
-
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-
-      osc.start(now);
-      osc.stop(now + 0.27);
-    }
-
+    // =======================
+    // STATE
+    // =======================
     let currentQuestionIndex = 0;
     let score = 0;
     let streak = 0;
     let correctCount = 0;
-    const totalQuestions = QUESTIONS.length;
+    let soundEnabled = true;
+    let currentAnswerOrder = [];
+    let isLocked = false;
 
-    // Initialize static UI
-    lessonImageEl.src = LESSON_IMAGE_PATH;
-    lessonTitleEl.textContent = LESSON_TITLE_TEXT;
-    lessonSubtitleEl.textContent = LESSON_SUBTITLE_TEXT;
-    totalQuestionsEl.textContent = totalQuestions.toString();
+    // Web Audio setup
+    let audioCtx = null;
 
-    function showScreen(name) {
-      titleScreen.classList.add("hidden");
-      quizScreen.classList.add("hidden");
-      endScreen.classList.add("hidden");
-
-      if (name === "title") {
-        titleScreen.classList.remove("hidden");
-        lessonImageEl.classList.remove("bounce-drop");
-        void lessonImageEl.offsetWidth;
-        lessonImageEl.classList.add("bounce-drop");
-      } else if (name === "quiz") {
-        quizScreen.classList.remove("hidden");
-      } else {
-        endScreen.classList.remove("hidden");
+    function getAudioContext() {
+      if (!audioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) {
+          audioCtx = new AC();
+        }
       }
+      return audioCtx;
     }
 
-    function requestFullscreenSafe() {
-      const elem = document.documentElement;
-      if (elem.requestFullscreen) {
-        elem.requestFullscreen().catch(() => {});
-      } else if (elem.webkitRequestFullscreen) {
-        elem.webkitRequestFullscreen();
-      }
+    function playBeepSequence(notes) {
+      if (!soundEnabled) return;
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      notes.forEach((note, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = "triangle";
+        osc.frequency.value = note.freq;
+        const t0 = now + i * note.duration;
+        const t1 = t0 + note.duration;
+        gain.gain.setValueAtTime(0, t0);
+        gain.gain.linearRampToValueAtTime(0.45, t0 + 0.02);
+        gain.gain.linearRampToValueAtTime(0.0, t1);
+        osc.start(t0);
+        osc.stop(t1 + 0.02);
+      });
     }
 
-    function shuffledIndices(n) {
-      const arr = Array.from({ length: n }, (_, i) => i);
+    function playCorrectSound() {
+      playBeepSequence([
+        { freq: 660, duration: 0.12 },
+        { freq: 880, duration: 0.12 },
+        { freq: 1040, duration: 0.14 }
+      ]);
+    }
+
+    function playIncorrectSound() {
+      playBeepSequence([
+        { freq: 260, duration: 0.16 },
+        { freq: 200, duration: 0.18 }
+      ]);
+    }
+
+    // =======================
+    // HELPERS
+    // =======================
+    function shuffleArray(array) {
+      const arr = array.slice();
       for (let i = arr.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [arr[i], arr[j]] = [arr[j], arr[i]];
@@ -822,144 +989,209 @@
       return arr;
     }
 
-    function updateScoreAndStreakDisplay() {
+    function showScreen(screen) {
+      titleScreen.classList.add("hidden");
+      quizScreen.classList.add("hidden");
+      endScreen.classList.add("hidden");
+      screen.classList.remove("hidden");
+    }
+
+    function spawnStarRain(count) {
+      for (let i = 0; i < count; i++) {
+        const star = document.createElement("div");
+        star.className = "star";
+        star.textContent = "⭐";
+        const left = Math.random() * 100;
+        const delay = Math.random() * 0.6;
+        star.style.left = left + "vw";
+        star.style.animationDelay = delay + "s";
+        document.body.appendChild(star);
+        star.addEventListener("animationend", () => {
+          star.remove();
+        });
+      }
+    }
+
+    function flashScreen() {
+      const flash = document.createElement("div");
+      flash.className = "screen-flash";
+      document.body.appendChild(flash);
+      flash.addEventListener("animationend", () => flash.remove());
+    }
+
+    function showFeedback(isCorrect, detailText) {
+      feedbackTitleEl.textContent = isCorrect ? "CORRECT" : "INCORRECT";
+      feedbackTitleEl.classList.toggle("correct-text", isCorrect);
+      feedbackTitleEl.classList.toggle("incorrect-text", !isCorrect);
+      feedbackDetailEl.textContent = detailText || "";
+      feedbackOverlay.classList.add("visible");
+      setTimeout(() => feedbackOverlay.classList.remove("visible"), 800);
+    }
+
+    function updateScoreDisplays() {
       scoreDisplayEl.textContent = score.toString();
       streakDisplayEl.textContent = "x" + streak.toString();
     }
 
-    function updateProgress() {
-      const num = currentQuestionIndex + 1;
-      questionNumberEl.textContent = num.toString();
-      progressFillEl.style.width = (num / totalQuestions) * 100 + "%";
+    function animateQuestionIn() {
+      questionCardEl.classList.remove("question-in", "shake");
+      answersGridEl.classList.remove("answers-in");
+      // force reflow so animation can replay
+      void questionCardEl.offsetWidth;
+      questionCardEl.classList.add("question-in");
+      answersGridEl.classList.add("answers-in");
     }
 
-    function triggerStarRain() {
-      const starCount = 18;
-      for (let i = 0; i < starCount; i++) {
-        const star = document.createElement("span");
-        star.classList.add("star");
-        star.textContent = "⭐";
-        star.style.left = Math.random() * 100 + "vw";
-        star.style.animationDelay = Math.random() * 0.5 + "s";
-        document.body.appendChild(star);
-        star.addEventListener("animationend", () => star.remove());
-      }
-    }
-
-    function showFeedback(isCorrect, correctAnswerText, pointsAwarded) {
-      feedbackOverlay.classList.add("visible");
-      if (isCorrect) {
-        feedbackTitleEl.textContent = "CORRECT";
-        feedbackTitleEl.classList.add("correct-text");
-        feedbackTitleEl.classList.remove("incorrect-text");
-        feedbackDetailEl.textContent = pointsAwarded ? `+${pointsAwarded} points` : "";
-      } else {
-        feedbackTitleEl.textContent = "INCORRECT";
-        feedbackTitleEl.classList.add("incorrect-text");
-        feedbackTitleEl.classList.remove("correct-text");
-        feedbackDetailEl.textContent = "Correct answer: " + correctAnswerText;
-      }
-    }
-
-    function hideFeedback() {
-      feedbackOverlay.classList.remove("visible");
-      feedbackDetailEl.textContent = "";
-    }
-
-    function loadCurrentQuestion() {
-      const q = QUESTIONS[currentQuestionIndex];
-      questionTextEl.textContent = q.text;
-
-      answerButtons.forEach(btn => {
-        btn.classList.remove("disabled");
-        btn.disabled = false;
-      });
-
-      const order = shuffledIndices(q.answers.length);
-      answerButtons.forEach((btn, pos) => {
-        const idx = order[pos];
-        btn.dataset.answerIndex = idx.toString();
-        btn.querySelector(".answer-text").textContent = q.answers[idx];
-      });
-
-      updateProgress();
-      updateScoreAndStreakDisplay();
-    }
-
-    function handleAnswerClick(e) {
-      const btn = e.currentTarget;
-      const q = QUESTIONS[currentQuestionIndex];
-
-      answerButtons.forEach(b => {
-        b.classList.add("disabled");
-        b.disabled = true;
-      });
-
-      const chosenIndex = parseInt(btn.dataset.answerIndex || "-1", 10);
-      const isCorrect = chosenIndex === q.correctIndex;
-      let pointsAwarded = 0;
-
-      if (isCorrect) {
-        streak += 1;
-        pointsAwarded = 100 * streak;
-        score += pointsAwarded;
-        correctCount += 1;
-        updateScoreAndStreakDisplay();
-        playCorrectSound();
-        triggerStarRain();
-      } else {
-        streak = 0;
-        updateScoreAndStreakDisplay();
-        playIncorrectSound();
-      }
-
-      showFeedback(isCorrect, q.answers[q.correctIndex], pointsAwarded);
-
-      setTimeout(() => {
-        hideFeedback();
-        currentQuestionIndex += 1;
-        if (currentQuestionIndex >= totalQuestions) {
-          endQuiz();
-        } else {
-          loadCurrentQuestion();
-        }
-      }, isCorrect ? 1400 : 1800);
-    }
-
-    function startQuiz() {
+    // =======================
+    // GAME LOGIC
+    // =======================
+    function startGame() {
       currentQuestionIndex = 0;
       score = 0;
       streak = 0;
       correctCount = 0;
-      showScreen("quiz");
-      loadCurrentQuestion();
+      updateScoreDisplays();
+      showScreen(quizScreen);
+      loadQuestion();
     }
 
-    function endQuiz() {
-      showScreen("end");
+    function loadQuestion() {
+      if (currentQuestionIndex >= QUESTIONS.length) {
+        endGame();
+        return;
+      }
+
+      const q = QUESTIONS[currentQuestionIndex];
+      questionNumberEl.textContent = (currentQuestionIndex + 1).toString();
+      questionTextEl.textContent = q.text;
+
+      const progress =
+        ((currentQuestionIndex) / QUESTIONS.length) * 100;
+      progressFillEl.style.width = progress + "%";
+
+      // enable buttons
+      isLocked = false;
+      answerButtons.forEach((btn) => {
+        btn.classList.remove("disabled");
+      });
+
+      // shuffle answer mapping
+      const indices = [0, 1, 2, 3];
+      currentAnswerOrder = shuffleArray(indices);
+
+      answerButtons.forEach((btn, i) => {
+        const answerIndex = currentAnswerOrder[i];
+        const span = btn.querySelector(".answer-text");
+        span.textContent = q.answers[answerIndex];
+        btn.dataset.answerIndex = String(answerIndex);
+      });
+
+      animateQuestionIn();
+    }
+
+    function handleAnswerClick(event) {
+      if (isLocked) return;
+      const btn = event.currentTarget;
+      const answerIndex = Number(btn.dataset.answerIndex);
+      const q = QUESTIONS[currentQuestionIndex];
+
+      isLocked = true;
+      answerButtons.forEach((b) => b.classList.add("disabled"));
+
+      const isCorrect = answerIndex === q.correctIndex;
+
+      if (isCorrect) {
+        streak += 1;
+        const earned = 100 * streak;
+        score += earned;
+        correctCount += 1;
+        updateScoreDisplays();
+        playCorrectSound();
+        flashScreen();
+        spawnStarRain(24);
+        showFeedback(
+          true,
+          `Streak bonus: ${streak} in a row! +${earned} points`
+        );
+      } else {
+        playIncorrectSound();
+        const correctText = q.answers[q.correctIndex];
+        showFeedback(false, `Correct answer: ${correctText}`);
+        questionCardEl.classList.add("shake");
+        streak = 0;
+        updateScoreDisplays();
+      }
+
+      // progress to next question after short delay
+      setTimeout(() => {
+        currentQuestionIndex += 1;
+        loadQuestion();
+      }, 1100);
+    }
+
+    function endGame() {
+      showScreen(endScreen);
+
+      // fill progress bar to full
+      progressFillEl.style.width = "100%";
+
       finalScoreEl.textContent = `${score} points`;
-      finalCorrectEl.textContent = `You got ${correctCount} out of ${totalQuestions} correct`;
+      finalCorrectEl.textContent = `You got ${correctCount} out of ${QUESTIONS.length} correct`;
+
+      const ratio = correctCount / QUESTIONS.length;
+      endScreen.classList.remove("end-great", "end-good", "end-try");
+
+      if (ratio >= 0.8) {
+        endScreen.classList.add("end-great");
+        endTitleEl.textContent = "Amazing Job!";
+        endSubtitleEl.textContent = "You really know this story.";
+        endTrophyEl.textContent = "🏆";
+        spawnStarRain(30);
+      } else if (ratio >= 0.5) {
+        endScreen.classList.add("end-good");
+        endTitleEl.textContent = "Nice Work!";
+        endSubtitleEl.textContent = "You did well. Keep learning!";
+        endTrophyEl.textContent = "🎉";
+      } else {
+        endScreen.classList.add("end-try");
+        endTitleEl.textContent = "Keep Practicing!";
+        endSubtitleEl.textContent = "Try again and watch your score grow.";
+        endTrophyEl.textContent = "⭐";
+      }
     }
 
-    // Event listeners
-    startQuizBtn.addEventListener("click", () => {
-      requestFullscreenSafe();
-      startQuiz();
+    // =======================
+    // EVENT LISTENERS
+    // =======================
+    startBtn.addEventListener("click", () => {
+      // try to go fullscreen for TV mode
+      const docEl = document.documentElement;
+      if (docEl.requestFullscreen) {
+        docEl.requestFullscreen().catch(() => startGame());
+      } else {
+        startGame();
+      }
+      // If fullscreen request succeeds, we'll still just start immediately.
+      startGame();
     });
 
-    answerButtons.forEach(btn => btn.addEventListener("click", handleAnswerClick));
+    playAgainBtn.addEventListener("click", () => {
+      showScreen(quizScreen);
+      startGame();
+    });
 
-    playAgainBtn.addEventListener("click", startQuiz);
+    backToTitleBtn.addEventListener("click", () => {
+      showScreen(titleScreen);
+    });
 
-    backToTitleBtn.addEventListener("click", () => showScreen("title"));
+    answerButtons.forEach((btn) => {
+      btn.addEventListener("click", handleAnswerClick);
+    });
 
     soundToggleBtn.addEventListener("click", () => {
-      soundMuted = !soundMuted;
-      soundToggleBtn.textContent = soundMuted ? "🔇" : "🔊";
+      soundEnabled = !soundEnabled;
+      soundToggleBtn.textContent = soundEnabled ? "🔊" : "🔈";
     });
-
-    // Start on title
-    showScreen("title");
   </script>
 </body>
 </html>
