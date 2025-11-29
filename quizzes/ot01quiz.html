@@ -35,7 +35,7 @@
       min-height: 100vh;
       display: flex;
       justify-content: center;
-      align-items: center;
+      align-items: stretch;
       background: linear-gradient(160deg, var(--bg-gradient-top), var(--bg-gradient-bottom));
       color: var(--text-main);
       overflow: hidden; /* prevent scrolling on TVs */
@@ -43,23 +43,23 @@
 
     #app {
       width: 100%;
-      max-width: 1100px; /* wider for TVs */
-      padding: 16px;
-      min-height: 100vh; /* stretch to full height */
+      height: 100vh;
+      max-width: none;       /* full width */
+      padding: 0;           /* no outer padding */
       display: flex;
-      align-items: center;
-      justify-content: center;
+      align-items: stretch;
+      justify-content: stretch;
     }
 
     .screen-card {
       background: var(--card-bg);
-      border-radius: 1.5rem;
-      box-shadow: var(--shadow-soft);
-      padding: 20px 18px 24px;
+      border-radius: 0;     /* no rounded card – full screen */
+      box-shadow: none;     /* remove card shadow */
+      padding: 18px 14px 22px;
       display: flex;
       flex-direction: column;
       align-items: stretch;
-      min-height: min(80vh, 560px);
+      min-height: 100vh;    /* full height */
       width: 100%;
       max-width: 100%;
       position: relative;
@@ -68,14 +68,7 @@
 
     @media (min-width: 768px) {
       .screen-card {
-        padding: 28px 32px 32px;
-        min-height: 80vh;
-      }
-    }
-
-    @media (min-width: 1024px) {
-      .screen-card {
-        border-radius: 1.75rem;
+        padding: 26px 32px 30px;
       }
     }
 
@@ -89,8 +82,8 @@
     }
 
     .lesson-image-wrapper {
-      width: 160px;
-      height: 160px;
+      width: 140px;
+      height: 140px;
       margin: 0 auto 12px;
       border-radius: 1.25rem;
       overflow: hidden;
@@ -136,13 +129,13 @@
     }
 
     .card-title {
-      font-size: clamp(1.4rem, 2.6vw, 2.2rem);
+      font-size: clamp(1.5rem, 3vw, 2.6rem);
       font-weight: 700;
       margin-bottom: 4px;
     }
 
     .card-subtitle {
-      font-size: clamp(0.9rem, 1.4vw, 1.1rem);
+      font-size: clamp(0.95rem, 1.6vw, 1.2rem);
       color: var(--text-muted);
       margin-bottom: 12px;
     }
@@ -151,9 +144,9 @@
     .secondary-button {
       border: none;
       cursor: pointer;
-      padding: 12px 18px;
+      padding: 12px 20px;
       border-radius: 999px;
-      font-size: clamp(1rem, 1.4vw, 1.1rem);
+      font-size: clamp(1rem, 1.5vw, 1.2rem);
       font-weight: 600;
       display: inline-flex;
       align-items: center;
@@ -206,7 +199,7 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 10px;
-      font-size: clamp(0.8rem, 1.1vw, 0.95rem);
+      font-size: clamp(0.85rem, 1.2vw, 1.05rem);
       color: var(--text-muted);
     }
 
@@ -217,13 +210,13 @@
     .sound-toggle {
       border-radius: 999px;
       border: none;
-      width: 42px;
-      height: 42px;
+      width: 44px;
+      height: 44px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      font-size: 1.1rem;
+      font-size: 1.3rem;
       background: #f3f4f6;
       box-shadow: 0 3px 8px rgba(15, 23, 42, 0.18);
       transition: transform 0.1s ease, box-shadow 0.1s ease, background-color 0.1s ease;
@@ -244,12 +237,12 @@
       flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      margin-top: 6px;
+      gap: 14px;
+      margin-top: 8px;
     }
 
     .question-text {
-      font-size: clamp(1.1rem, 2.2vw, 2rem);
+      font-size: clamp(1.2rem, 3vw, 2.7rem); /* bigger for TVs */
       font-weight: 600;
       margin-bottom: 6px;
     }
@@ -257,7 +250,7 @@
     .answers-grid {
       display: grid;
       grid-template-columns: 1fr;
-      gap: 10px;
+      gap: 12px;
       margin-top: 8px;
     }
 
@@ -269,17 +262,17 @@
 
     .answer-button {
       width: 100%;
-      padding: 14px 16px;
+      padding: 16px 18px;
       border-radius: var(--button-radius);
       border: none;
       cursor: pointer;
       background: #f3f4ff;
-      font-size: clamp(0.95rem, 1.8vw, 1.3rem);
+      font-size: clamp(1.05rem, 2.4vw, 1.9rem); /* bigger answers */
       font-weight: 600;
       text-align: left;
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       box-shadow: 0 7px 15px rgba(15, 23, 42, 0.18);
       transition: transform 0.08s ease, box-shadow 0.08s ease, background-color 0.08s ease;
     }
@@ -297,7 +290,7 @@
     }
 
     .answer-emoji {
-      font-size: clamp(1.35rem, 2.4vw, 2rem);
+      font-size: clamp(1.6rem, 3vw, 2.4rem); /* bigger emoji dots */
       flex-shrink: 0;
     }
 
@@ -315,8 +308,8 @@
       display: flex;
       justify-content: space-between;
       margin-top: auto;
-      font-size: clamp(0.9rem, 1.4vw, 1.1rem);
-      padding-top: 8px;
+      font-size: clamp(0.95rem, 1.6vw, 1.2rem);
+      padding-top: 10px;
       border-top: 1px solid #e5e7eb;
       color: var(--text-muted);
     }
@@ -328,7 +321,7 @@
     /* Progress bar */
     .progress-track {
       width: 100%;
-      height: 7px;
+      height: 8px;
       border-radius: 999px;
       background: #e5e7eb;
       overflow: hidden;
@@ -361,7 +354,7 @@
     .feedback-inner {
       background: rgba(15, 23, 42, 0.68);
       border-radius: 999px;
-      padding: 16px 22px;
+      padding: 18px 24px;
       text-align: center;
       color: #ffffff;
       max-width: 90%;
@@ -369,7 +362,7 @@
     }
 
     .feedback-title {
-      font-size: clamp(1.8rem, 3vw, 2.6rem);
+      font-size: clamp(2rem, 3.5vw, 3rem);
       font-weight: 800;
       letter-spacing: 0.12em;
       text-transform: uppercase;
@@ -385,7 +378,7 @@
     }
 
     .feedback-detail {
-      font-size: clamp(0.95rem, 1.6vw, 1.1rem);
+      font-size: clamp(1rem, 1.8vw, 1.3rem);
       margin-top: 4px;
     }
 
@@ -393,7 +386,7 @@
     .star {
       position: fixed;
       top: -40px;
-      font-size: clamp(1.3rem, 2.2vw, 1.8rem);
+      font-size: clamp(1.6rem, 2.6vw, 2.2rem);
       animation: fall 1.2s linear forwards;
       z-index: 60;
       pointer-events: none;
@@ -422,13 +415,13 @@
     }
 
     .end-score {
-      font-size: clamp(2rem, 3vw, 2.6rem);
+      font-size: clamp(2.2rem, 3.3vw, 3rem);
       font-weight: 800;
       color: var(--accent-dark);
     }
 
     .end-detail {
-      font-size: clamp(1rem, 1.6vw, 1.2rem);
+      font-size: clamp(1.05rem, 1.8vw, 1.3rem);
       color: var(--text-muted);
     }
 
