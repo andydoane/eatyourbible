@@ -1244,10 +1244,25 @@ body.show-real-cursor * {
       }
     ];
 
+    // Detect iPads & Android tablets — but NOT Windows touch laptops
+    const ua = navigator.userAgent.toLowerCase();
+
+    const isIpad = ua.includes("ipad") || 
+                (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+    const isAndroidTablet = ua.includes("android") && !ua.includes("mobile");
+
+    // Final tablet detection
+    const isRealTablet = isIpad || isAndroidTablet;
+
+
     /***********************
      * STATE
      ***********************/
     let currentMode = "phone"; // "big" or "phone"
+    // Detect tablets / touch screens
+    const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
+
     let currentQuestionIndex = 0;
     let score = 0;
     let streak = 0;
@@ -1648,10 +1663,18 @@ body.show-real-cursor * {
       currentMode = mode;
       body.classList.remove("mode-title", "mode-big", "mode-phone");
         if (mode === "big") {
-        bigPointer.classList.remove("hidden");
+            if (isRealTablet) {
+                // Hide pointer on iPads & Android tablets
+                bigPointer.classList.add("hidden");
+            } else {
+                // Show pointer on desktops + Windows touchscreens
+                bigPointer.classList.remove("hidden");
+            }
         } else {
-        bigPointer.classList.add("hidden");
+            bigPointer.classList.add("hidden");
         }
+
+
 
 
       if (mode === "big") {
@@ -1897,22 +1920,25 @@ body.show-real-cursor * {
     }, 5000);
 
 
-document.addEventListener("mousemove", (e) => {
-  if (!body.classList.contains("mode-big")) return;
+    document.addEventListener("mousemove", (e) => {
+        if (!body.classList.contains("mode-big")) return;
+        if (isRealTablet) return;
 
-  bigPointer.style.left = e.clientX + "px";
-  bigPointer.style.top = e.clientY + "px";
-});
 
-const homeButton = document.getElementById("home-button");
+        bigPointer.style.left = e.clientX + "px";
+        bigPointer.style.top = e.clientY + "px";
+    });
 
-homeButton.addEventListener("click", () => {
-    stopTimer(); // stop timer if running
-    bigPointer.classList.add("hidden"); // hide big pointer when leaving quiz
-    body.classList.remove("mode-big", "mode-phone");
-    body.classList.add("mode-title");
-    showScreen("title");
-});
+
+    const homeButton = document.getElementById("home-button");
+
+    homeButton.addEventListener("click", () => {
+        stopTimer(); // stop timer if running
+        bigPointer.classList.add("hidden"); // hide big pointer when leaving quiz
+        body.classList.remove("mode-big", "mode-phone");
+        body.classList.add("mode-title");
+        showScreen("title");
+    });
 
 
 
