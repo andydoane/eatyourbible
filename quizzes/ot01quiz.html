@@ -701,8 +701,12 @@
     padding: 10px 12px;
   }
 
-  .question-text {
-    font-size: 1.1rem;  /* override the big clamp() on phones */
+ .question-text {
+    font-size: clamp(1rem, 2.8vh, 1.6rem);
+    line-height: 1.25;
+  }
+
+  .answer-text {
     line-height: 1.25;
   }
 
@@ -712,7 +716,7 @@
   }
 
   .answer-button {
-    font-size: 1rem;    /* smaller than the desktop clamp() */
+    font-size: clamp(0.8rem, 2.4vh, 1.2rem);
     padding: 10px 12px;
   }
 }
@@ -896,7 +900,7 @@
       {
         text: "How are human beings different than everything else God made?",
         answers: [
-          "We\u2019re made in His likeness and given the job to rule over His creation",
+          "We are made in His likeness",
           "We can swim and fly better than all animals",
           "We were created before light and water",
           "We live under the sea like fish"
