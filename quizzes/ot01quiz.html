@@ -333,70 +333,125 @@ body.mode-big #app {
 
     /* Timer ring (big-screen only visually) */
     .timer-ring-wrapper {
-    position: relative;
-    width: 120px;
-    height: 120px;
-    display: none; /* hidden by default (phone mode) */
+      position: relative;
+      width: 180px;    /* bigger ring */
+      height: 180px;
+      display: none;   /* phone mode hides it */
+      border-radius: 50%;
+      box-shadow: 0 14px 30px rgba(15, 23, 42, 0.28);
+      background: #ffffff;
     }
 
     body.mode-big .timer-ring-wrapper {
-    display: block;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
+
+    /* When time runs out, make the timer ring "explode" */
+    .timer-ring-wrapper.timer-explode {
+    animation: timerExplode 0.7s ease-out forwards;
+    }
+
+    @keyframes timerExplode {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+        box-shadow: 0 14px 30px rgba(15, 23, 42, 0.28);
+    }
+    40% {
+        transform: scale(1.3);
+        opacity: 1;
+        box-shadow: 0 0 40px rgba(248, 113, 113, 0.9); /* bright red flash */
+    }
+    100% {
+        transform: scale(0.6);
+        opacity: 0;
+        box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+    }
+    }
+
+    /* BIGGER, HOTTER, MORE IMPRESSIVE PARTICLES */
+    .timer-particle {
+    position: fixed;
+    width: 22px;       /* was 10px */
+    height: 22px;      /* was 10px */
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 200;      /* above everything */
+    background: radial-gradient(circle, #fff4e6 0%, #ffb55a 40%, #ff6b3d 70%, #7f1d1d 100%);
+    animation: timerParticle 1.2s ease-out forwards; /* longer, dramatic */
+    --tx: 0px;
+    --ty: 0px;
+    }
+
+    @keyframes timerParticle {
+    0% {
+        opacity: 1;
+        transform: translate(0, 0) scale(1.3);
+        filter: blur(0px);
+    }
+    40% {
+        opacity: 1;
+        transform: translate(var(--tx), var(--ty)) scale(1.0);
+        filter: blur(1px);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(calc(var(--tx) * 1.8), calc(var(--ty) * 1.8)) scale(0.3);
+        filter: blur(4px);
+    }
+    }
+
 
     .timer-svg {
-    width: 100%;
-    height: 100%;
-    transform: rotate(-90deg); /* start at top */
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg); /* start at top */
     }
 
-    /* Timer ring colors — visible on white background */
+    /* Ring base */
     .timer-ring-bg {
-    fill: none;
-    stroke: rgba(15, 23, 42, 0.15);  /* subtle dark outline */
-    stroke-width: 10;
+      fill: none;
+      stroke: rgba(15, 23, 42, 0.12);  /* subtle dark outline */
+      stroke-width: 10;
     }
 
+    /* Foreground color is overridden by JS for green->yellow->red */
     .timer-ring-fg {
-    fill: none;
-    stroke: #3f6df6;                 /* bright blue ring */
-    stroke-width: 10;
-    stroke-linecap: round;
-    stroke-dasharray: 339.292;
-    stroke-dashoffset: 0;
-    transition: stroke-dashoffset 0.2s linear;
+      fill: none;
+      stroke: #3f6df6;
+      stroke-width: 10;
+      stroke-linecap: round;
+      stroke-dasharray: 339.292;
+      stroke-dashoffset: 0;
+      transition: stroke-dashoffset 0.2s linear;
     }
 
     .timer-text {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.8rem;
-    color: #111827;                  /* dark text for visibility */
-    font-weight: 700;
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;  /* larger number */
+      color: #111827;
+      font-weight: 800;
     }
 
-    .timer-ring-wrapper {
-    position: relative;
-    width: 120px;
-    height: 120px;
-    display: none; /* stays big-mode only via body.mode-big */
-    border-radius: 50%;
-    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.25);
-    background: #ffffff;
-    }
 
 
 
 
         /* Emoji host (right side) */
     .emoji-face {
-    font-size: clamp(2.5rem, 5vw, 4rem);
-    filter: drop-shadow(0 6px 12px rgba(15, 23, 42, 0.35));
-    opacity: 1;
-    transition: transform 0.25s ease, opacity 0.25s ease;
+      font-size: clamp(5rem, 9vw, 8rem); /* MUCH larger */
+      filter: drop-shadow(0 14px 28px rgba(15, 23, 42, 0.35));
+      opacity: 1;
+      transition: transform 0.25s ease, opacity 0.25s ease;
     }
+
+
 
     .emoji-face.emoji-pop {
     transform: scale(1.1);
@@ -443,6 +498,18 @@ body.mode-big #app {
       font-weight: 800;
       line-height: 1.3;
     }
+
+    /* ----- Question Reveal Animation ----- */
+    .question-text.question-reveal {
+    animation: questionReveal 0.55s ease-out;
+    }
+
+    @keyframes questionReveal {
+    0%   { opacity: 0; transform: translateY(12px) scale(0.98); }
+    60%  { opacity: 1; transform: translateY(0) scale(1.02); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
 
     .answers-grid {
       display: grid;
@@ -566,26 +633,28 @@ body.mode-big #app {
 
     /* Big-screen layout: timer | question | emoji */
     body.mode-big .question-panel {
-    justify-content: center;
+      justify-content: center;
     }
 
     body.mode-big .question-layout {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    gap: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      gap: 24px;
     }
 
+    /* Side areas expand to fill leftover space, contents centered */
     body.mode-big .question-side {
-    flex: 0 0 140px; /* fixed side columns */
-    display: flex;
-    align-items: center;
-    justify-content: center;
+      flex: 1 0 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
+    /* Center block takes ~60% width, leaving ~20% on each side */
     body.mode-big .question-card {
-    flex: 0 0 60%; /* center block takes ~60% width */
+      flex: 0 0 60%;
     }
 
 
@@ -627,6 +696,45 @@ body.mode-big #app {
       padding: 10px 12px;
     }
 
+    /* Hide emoji entirely in phone mode */
+    body.mode-phone .question-emoji,
+    body.mode-phone #emoji-face {
+    display: none !important;
+    }
+
+    /* ----- Streak Animations ----- */
+
+    body.streak-tier-1 #emoji-face {
+    animation: streakGlow 0.6s ease-out;
+    }
+
+    body.streak-tier-2 #emoji-face {
+    animation: streakAura 0.9s ease-out;
+    }
+
+    body.streak-tier-3 #emoji-face {
+    animation: streakFinal 1.2s ease-out;
+    }
+
+    @keyframes streakGlow {
+    0%   { filter: drop-shadow(0 0 0 rgba(255,255,0,0)); }
+    100% { filter: drop-shadow(0 0 18px rgba(255, 255, 135, 0.9)); }
+    }
+
+    @keyframes streakAura {
+    0%   { filter: drop-shadow(0 0 0 rgba(255,215,0,0)); transform: scale(1); }
+    50%  { filter: drop-shadow(0 0 25px rgba(255,215,0,0.9)); transform: scale(1.06); }
+    100% { filter: drop-shadow(0 0 12px rgba(255,215,0,0.6)); transform: scale(1.02); }
+    }
+
+    @keyframes streakFinal {
+    0%   { transform: scale(1) rotate(0);   filter: drop-shadow(0 0 0 rgba(255,180,0,0)); }
+    40%  { transform: scale(1.15) rotate(3deg); filter: drop-shadow(0 0 45px rgba(255,200,0,1)); }
+    70%  { transform: scale(1.1) rotate(-3deg); filter: drop-shadow(0 0 30px rgba(255,185,0,1)); }
+    100% { transform: scale(1.05) rotate(0); filter: drop-shadow(0 0 18px rgba(255,180,0,0.7)); }
+    }
+
+
     /* ---------- FULLSCREEN TWEAKS ---------- */
 
     :fullscreen .question-text,
@@ -651,19 +759,30 @@ body.mode-big #app {
       pointer-events: none;
     }
 
+    #feedback-overlay .primary-button {
+    font-size: 1.2rem;
+    padding: 10px 20px;
+    }
+
+
     #feedback-overlay.visible {
       display: flex;
     }
 
     .feedback-inner {
-      background: rgba(15,23,42,0.8);
-      border-radius: 999px;
-      padding: 18px 24px;
-      text-align: center;
-      color: #ffffff;
-      max-width: 90%;
-      box-shadow: 0 20px 45px rgba(15,23,42,0.8);
+    background: rgba(0, 0, 0, 0.85);
+    padding: 24px 32px;
+    border-radius: 16px;
+    text-align: center;
+    max-width: 90%;
+
+    /* NEW → wider popup */
+    min-width: 300px;     
+
+    /* small visual lift for big screens */
+    transform: translateY(-12px);
     }
+
 
     .feedback-title {
       font-size: clamp(2rem, 3.5vw, 3.2rem);
@@ -748,6 +867,29 @@ body.mode-big #app {
     #end-screen.end-try {
       background: radial-gradient(circle at top, #fee2e2, #fef3c7);
     }
+
+  /* ----- Dynamic Background Reactions (on quiz card) ----- */
+
+    #quiz-screen.bg-correct {
+    animation: bgCorrectPulse 0.6s ease-out;
+    }
+
+    #quiz-screen.bg-incorrect {
+    animation: bgIncorrectPulse 0.6s ease-out;
+    }
+
+    @keyframes bgCorrectPulse {
+    0%   { background: rgba(167, 203, 111, 0.25); }
+    100% { background: var(--card-bg); }
+    }
+
+    @keyframes bgIncorrectPulse {
+    0%   { background: rgba(255, 90, 81, 0.25); }
+    100% { background: var(--card-bg); }
+    }
+
+
+
   </style>
 </head>
 <body class="mode-title">
@@ -890,12 +1032,18 @@ body.mode-big #app {
   </div>
 
   <!-- FEEDBACK OVERLAY -->
-  <div id="feedback-overlay">
+    <div id="feedback-overlay">
     <div class="feedback-inner">
-      <div id="feedback-title" class="feedback-title">CORRECT</div>
-      <div id="feedback-detail" class="feedback-detail"></div>
+        <div id="feedback-title" class="feedback-title">CORRECT</div>
+        <div id="feedback-detail" class="feedback-detail"></div>
+
+        <!-- NEW BUTTON (big-screen only) -->
+        <button id="next-question-btn" class="primary-button hidden" style="margin-top:14px; pointer-events:auto;">
+        Next Question
+        </button>
     </div>
-  </div>
+    </div>
+
 
   <script>
     /***********************
@@ -1029,10 +1177,18 @@ body.mode-big #app {
     let timeLeft = TIMER_DURATION;
     let timerIntervalId = null;
 
-    const NEUTRAL_EMOJIS = ["😀","😄","😊","😁","🤗","🙂","🤩","😎"];
-    const CORRECT_EMOJIS = ["🤩","😄","🙌","🎉","✨"];
-    const INCORRECT_EMOJIS = ["😢","😮","😔"];
-
+    const NEUTRAL_EMOJIS = ["😀","😄","😊","😁","🤗","🙂","🤩","🤪","🥸","🤓","😧","😵‍💫","🙃","😺","😸","😻",
+  "😎","🤗","🤩","☺️","🙃","😇","😮‍💨","😌","😃","😎"];
+   
+  const CORRECT_EMOJIS = [
+  "🤩","😄","🎉","🥳","🙌","😎","😃","😁","😺","🎊","⭐",
+  "👏","🔥","💥","🌟","✨","🫶","😇","💫","🏆","🥇",
+  "🤗","😆","😻","💯","🎈"
+];
+ const INCORRECT_EMOJIS = [
+  "😢","😮","😯","😕","😟","🙁","😞","😔","🥺",
+  "😿","😣","😫","🤢","😥","🫤","😐","🙄"
+];
     let emojiIntervalId = null;
     let emojiLockedUntil = 0;
 
@@ -1065,6 +1221,8 @@ body.mode-big #app {
     const timerTextEl = document.getElementById("timer-text");
     const timerRingFgEl = document.getElementById("timer-ring-fg");
     const emojiFaceEl = document.getElementById("emoji-face");
+
+    const timerRingWrapper = document.querySelector(".timer-ring-wrapper");
 
 
     const scoreDisplayEl = document.getElementById("score-display");
@@ -1196,13 +1354,71 @@ body.mode-big #app {
 
     function updateTimerVisual() {
       if (!timerRingFgEl || !timerTextEl) return;
+
       const ratio = Math.max(0, Math.min(1, timeLeft / TIMER_DURATION));
       const offset = TIMER_CIRCUMFERENCE * (1 - ratio);
 
+      // Update ring length
       timerRingFgEl.style.strokeDasharray = String(TIMER_CIRCUMFERENCE);
       timerRingFgEl.style.strokeDashoffset = String(offset);
+
+      // Smooth color transition: green (full) -> yellow -> red (empty)
+      const hue = ratio * 120; // 120 = green, 0 = red
+      const color = `hsl(${hue}, 85%, 55%)`;
+      timerRingFgEl.style.stroke = color;
+
+      // Update number in middle
       timerTextEl.textContent = String(timeLeft);
     }
+
+    function triggerTimerExplosion() {
+    if (!timerRingWrapper) return;
+
+    // Add the explode class to start the CSS animation
+    timerRingWrapper.classList.add("timer-explode");
+
+    // Remove the class after the animation so it's ready for the next question
+    setTimeout(() => {
+        timerRingWrapper.classList.remove("timer-explode");
+    }, 700); // match animation duration
+    }
+
+    function spawnTimerExplosionParticles(count = 30) {
+    if (!timerRingWrapper) return;
+
+    const rect = timerRingWrapper.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+
+    const colors = ["#ffedd5", "#fed7aa", "#fdba74", "#fb923c", "#f97316", "#ea580c", "#b91c1c"];
+
+    for (let i = 0; i < count; i++) {
+        const p = document.createElement("div");
+        p.className = "timer-particle";
+
+        // random angle + distance
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 40 + Math.random() * 60; // how far it flies
+        const dx = Math.cos(angle) * distance;
+        const dy = Math.sin(angle) * distance;
+
+        // position at center of ring
+        p.style.left = cx + "px";
+        p.style.top = cy + "px";
+
+        // set custom properties for animation end position
+        p.style.setProperty("--tx", dx + "px");
+        p.style.setProperty("--ty", dy + "px");
+
+        // fiery color
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        p.style.background = `radial-gradient(circle, #fff7ed 0%, ${color} 55%, #7f1d1d 100%)`;
+
+        document.body.appendChild(p);
+        p.addEventListener("animationend", () => p.remove());
+    }
+    }
+
 
     function stopTimer() {
       if (timerIntervalId !== null) {
@@ -1212,23 +1428,29 @@ body.mode-big #app {
     }
 
     function startTimer() {
-      stopTimer();
-      timeLeft = TIMER_DURATION;
-      updateTimerVisual();
+    stopTimer();
+    timeLeft = TIMER_DURATION;
+    updateTimerVisual();
 
-      // Only actually run timer in big-screen mode
-      if (currentMode !== "big") return;
+    // Only actually run timer in big-screen mode
+    if (currentMode !== "big") return;
 
-      timerIntervalId = setInterval(() => {
+    timerIntervalId = setInterval(() => {
         if (timeLeft > 0) {
-          timeLeft -= 1;
-          updateTimerVisual();
+        timeLeft -= 1;
+        updateTimerVisual();
         } else {
-          // Time's up: stop counting, but don't auto-answer.
-          stopTimer();
+        // Time's up: show 0, explode the ring + spawn fiery particles, then stop
+        timeLeft = 0;
+        updateTimerVisual();
+        triggerTimerExplosion();
+        spawnTimerExplosionParticles(30);
+        stopTimer();
         }
-      }, 1000);
+    }, 1000);
     }
+
+
 
     function setEmojiFromSet(list) {
       if (!emojiFaceEl || !list.length) return;
@@ -1264,22 +1486,42 @@ body.mode-big #app {
 
 
     function showFeedback(isCorrect, detailText) {
-      feedbackTitleEl.textContent = isCorrect ? "CORRECT" : "INCORRECT";
-      feedbackTitleEl.classList.toggle("correct-text", isCorrect);
-      feedbackTitleEl.classList.toggle("incorrect-text", !isCorrect);
-        if (detailText) {
+    feedbackTitleEl.textContent = isCorrect ? "CORRECT" : "INCORRECT";
+    feedbackTitleEl.classList.toggle("correct-text", isCorrect);
+
+    // Dynamic background reaction (big mode only)
+    if (currentMode === "big") {
+    quizScreen.classList.remove("bg-correct", "bg-incorrect");
+    void quizScreen.offsetWidth; // restart CSS animation hack
+    quizScreen.classList.add(isCorrect ? "bg-correct" : "bg-incorrect");
+    }
+
+
+
+    feedbackTitleEl.classList.toggle("incorrect-text", !isCorrect);
+
+    if (detailText) {
         feedbackDetailEl.textContent = detailText;
         feedbackDetailEl.style.display = "block";
-        } else {
+    } else {
         feedbackDetailEl.textContent = "";
         feedbackDetailEl.style.display = "none";
-        }
-
-      feedbackOverlay.classList.add("visible");
-      setTimeout(() => {
-        feedbackOverlay.classList.remove("visible");
-      }, 2000);
     }
+
+    // Show overlay
+    feedbackOverlay.classList.add("visible");
+
+    if (currentMode === "big") {
+        // Show the Next Question button in big mode
+        document.getElementById("next-question-btn").classList.remove("hidden");
+    } else {
+        // Phone mode: auto-hide and auto-advance
+        setTimeout(() => {
+        feedbackOverlay.classList.remove("visible");
+        }, 2000);
+    }
+    }
+
 
     function requestFullscreenIfAvailable() {
       const docEl = document.documentElement;
@@ -1331,6 +1573,13 @@ body.mode-big #app {
 
       const q = QUESTIONS[currentQuestionIndex];
       questionTextEl.textContent = q.text;
+
+        // Animated question reveal
+        questionTextEl.classList.remove("question-reveal");
+        void questionTextEl.offsetWidth; // restart animation
+        questionTextEl.classList.add("question-reveal");
+
+
       updateProgress();
 
       // Reset timer for each new question
@@ -1387,6 +1636,21 @@ body.mode-big #app {
 
         streak += 1;
         const base = 100 * streak;
+
+        // Apply streak tier animations (big mode only)
+        if (currentMode === "big") {
+        body.classList.remove("streak-tier-1", "streak-tier-2", "streak-tier-3");
+
+        if (streak >= 8) {
+            body.classList.add("streak-tier-3");
+        } else if (streak >= 5) {
+            body.classList.add("streak-tier-2");
+        } else if (streak >= 2) {
+            body.classList.add("streak-tier-1");
+        }
+        }
+
+
         const earned = base + timeBonus;
         score += earned;
         correctCount += 1;
@@ -1426,11 +1690,17 @@ body.mode-big #app {
       }
 
 
-      // Move to the next question after a short pause
-      setTimeout(() => {
+    if (currentMode === "phone") {
+    // Phone mode auto-advances
+    setTimeout(() => {
+        feedbackOverlay.classList.remove("visible");
         currentQuestionIndex += 1;
         loadQuestion();
-      }, 2500);
+    }, 2500);
+    }
+
+    // Big mode: do NOT auto-advance
+
     }
 
 
@@ -1478,6 +1748,19 @@ body.mode-big #app {
       soundEnabled = !soundEnabled;
       soundToggleBtn.textContent = soundEnabled ? "🔊" : "🔈";
     });
+
+    const nextQuestionBtn = document.getElementById("next-question-btn");
+
+    nextQuestionBtn.addEventListener("click", () => {
+    // Reset overlay
+    feedbackOverlay.classList.remove("visible");
+    nextQuestionBtn.classList.add("hidden");
+
+    // Move on
+    currentQuestionIndex += 1;
+    loadQuestion();
+    });
+
 
     playAgainBtn.addEventListener("click", () => startGame(currentMode));
     backToTitleBtn.addEventListener("click", () => {
