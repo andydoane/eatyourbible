@@ -331,6 +331,79 @@ body.mode-big #app {
       100% { background-position: 100% 0%; }
     }
 
+    /* Timer ring (big-screen only visually) */
+    .timer-ring-wrapper {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    display: none; /* hidden by default (phone mode) */
+    }
+
+    body.mode-big .timer-ring-wrapper {
+    display: block;
+    }
+
+    .timer-svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg); /* start at top */
+    }
+
+    /* Timer ring colors — visible on white background */
+    .timer-ring-bg {
+    fill: none;
+    stroke: rgba(15, 23, 42, 0.15);  /* subtle dark outline */
+    stroke-width: 10;
+    }
+
+    .timer-ring-fg {
+    fill: none;
+    stroke: #3f6df6;                 /* bright blue ring */
+    stroke-width: 10;
+    stroke-linecap: round;
+    stroke-dasharray: 339.292;
+    stroke-dashoffset: 0;
+    transition: stroke-dashoffset 0.2s linear;
+    }
+
+    .timer-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    color: #111827;                  /* dark text for visibility */
+    font-weight: 700;
+    }
+
+    .timer-ring-wrapper {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    display: none; /* stays big-mode only via body.mode-big */
+    border-radius: 50%;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.25);
+    background: #ffffff;
+    }
+
+
+
+
+        /* Emoji host (right side) */
+    .emoji-face {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    filter: drop-shadow(0 6px 12px rgba(15, 23, 42, 0.35));
+    opacity: 1;
+    transition: transform 0.25s ease, opacity 0.25s ease;
+    }
+
+    .emoji-face.emoji-pop {
+    transform: scale(1.1);
+    opacity: 1;
+    }
+
+
     /* ---------- QUIZ LAYOUT (shared) ---------- */
 
     .quiz-main {
@@ -491,6 +564,29 @@ body.mode-big #app {
       height: 100%;
     }
 
+    /* Big-screen layout: timer | question | emoji */
+    body.mode-big .question-panel {
+    justify-content: center;
+    }
+
+    body.mode-big .question-layout {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    gap: 24px;
+    }
+
+    body.mode-big .question-side {
+    flex: 0 0 140px; /* fixed side columns */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    }
+
+    body.mode-big .question-card {
+    flex: 0 0 60%; /* center block takes ~60% width */
+    }
 
 
 
@@ -711,12 +807,43 @@ body.mode-big #app {
 
       <div class="quiz-main">
         <div class="question-panel">
-          <div class="question-card">
-            <div id="question-text" class="question-text">
-              Question text here
+        <div class="question-layout">
+            <!-- LEFT: Timer ring (big-screen only) -->
+            <div class="question-side question-timer">
+            <div class="timer-ring-wrapper">
+                <svg class="timer-svg" viewBox="0 0 120 120">
+                <circle
+                    class="timer-ring-bg"
+                    cx="60"
+                    cy="60"
+                    r="54"
+                ></circle>
+                <circle
+                    id="timer-ring-fg"
+                    class="timer-ring-fg"
+                    cx="60"
+                    cy="60"
+                    r="54"
+                ></circle>
+                </svg>
+                <div id="timer-text" class="timer-text">30</div>
             </div>
-          </div>
+            </div>
+
+            <!-- CENTER: Question -->
+            <div class="question-card">
+            <div id="question-text" class="question-text">
+                Question text here
+            </div>
+            </div>
+
+            <!-- RIGHT: Emoji host -->
+            <div class="question-side question-emoji">
+            <div id="emoji-face" class="emoji-face">😀</div>
+            </div>
         </div>
+        </div>
+
 
         <div class="answers-panel">
           <div class="answers-grid" id="answers-grid">
@@ -895,6 +1022,21 @@ body.mode-big #app {
 
     let audioCtx = null;
 
+    const TIMER_DURATION = 30;
+    const TIMER_RADIUS = 54;
+    const TIMER_CIRCUMFERENCE = 2 * Math.PI * TIMER_RADIUS;
+
+    let timeLeft = TIMER_DURATION;
+    let timerIntervalId = null;
+
+    const NEUTRAL_EMOJIS = ["😀","😄","😊","😁","🤗","🙂","🤩","😎"];
+    const CORRECT_EMOJIS = ["🤩","😄","🙌","🎉","✨"];
+    const INCORRECT_EMOJIS = ["😢","😮","😔"];
+
+    let emojiIntervalId = null;
+    let emojiLockedUntil = 0;
+
+
     /***********************
      * DOM
      ***********************/
@@ -919,6 +1061,11 @@ body.mode-big #app {
 
     const questionTextEl = document.getElementById("question-text");
     const answerButtons = Array.from(document.querySelectorAll(".answer-button"));
+
+    const timerTextEl = document.getElementById("timer-text");
+    const timerRingFgEl = document.getElementById("timer-ring-fg");
+    const emojiFaceEl = document.getElementById("emoji-face");
+
 
     const scoreDisplayEl = document.getElementById("score-display");
     const streakDisplayEl = document.getElementById("streak-display");
@@ -1047,6 +1194,75 @@ body.mode-big #app {
       }
     }
 
+    function updateTimerVisual() {
+      if (!timerRingFgEl || !timerTextEl) return;
+      const ratio = Math.max(0, Math.min(1, timeLeft / TIMER_DURATION));
+      const offset = TIMER_CIRCUMFERENCE * (1 - ratio);
+
+      timerRingFgEl.style.strokeDasharray = String(TIMER_CIRCUMFERENCE);
+      timerRingFgEl.style.strokeDashoffset = String(offset);
+      timerTextEl.textContent = String(timeLeft);
+    }
+
+    function stopTimer() {
+      if (timerIntervalId !== null) {
+        clearInterval(timerIntervalId);
+        timerIntervalId = null;
+      }
+    }
+
+    function startTimer() {
+      stopTimer();
+      timeLeft = TIMER_DURATION;
+      updateTimerVisual();
+
+      // Only actually run timer in big-screen mode
+      if (currentMode !== "big") return;
+
+      timerIntervalId = setInterval(() => {
+        if (timeLeft > 0) {
+          timeLeft -= 1;
+          updateTimerVisual();
+        } else {
+          // Time's up: stop counting, but don't auto-answer.
+          stopTimer();
+        }
+      }, 1000);
+    }
+
+    function setEmojiFromSet(list) {
+      if (!emojiFaceEl || !list.length) return;
+      const next = list[Math.floor(Math.random() * list.length)];
+      emojiFaceEl.textContent = next;
+
+      // small pop animation
+      emojiFaceEl.classList.add("emoji-pop");
+      setTimeout(() => {
+        emojiFaceEl && emojiFaceEl.classList.remove("emoji-pop");
+      }, 200);
+    }
+
+    function startEmojiLoop() {
+      if (!emojiFaceEl) return;
+      if (emojiIntervalId !== null) clearInterval(emojiIntervalId);
+
+      // Start with a random neutral face
+      setEmojiFromSet(NEUTRAL_EMOJIS);
+
+      emojiIntervalId = setInterval(() => {
+        const now = Date.now();
+        if (now < emojiLockedUntil) return; // temporarily locked for answer reaction
+        setEmojiFromSet(NEUTRAL_EMOJIS);
+      }, 3000);
+    }
+
+    function showEmojiReaction(isCorrect) {
+      const set = isCorrect ? CORRECT_EMOJIS : INCORRECT_EMOJIS;
+      emojiLockedUntil = Date.now() + 2000; // lock for ~2 seconds
+      setEmojiFromSet(set);
+    }
+
+
     function showFeedback(isCorrect, detailText) {
       feedbackTitleEl.textContent = isCorrect ? "CORRECT" : "INCORRECT";
       feedbackTitleEl.classList.toggle("correct-text", isCorrect);
@@ -1095,6 +1311,8 @@ body.mode-big #app {
         requestFullscreenIfAvailable();
       }
 
+      startEmojiLoop();
+
       currentQuestionIndex = 0;
       score = 0;
       streak = 0;
@@ -1114,6 +1332,14 @@ body.mode-big #app {
       const q = QUESTIONS[currentQuestionIndex];
       questionTextEl.textContent = q.text;
       updateProgress();
+
+      // Reset timer for each new question
+      if (currentMode === "big") {
+        startTimer();
+      } else {
+        stopTimer();
+      }
+    
 
       isLocked = false;
       answerButtons.forEach(btn => {
@@ -1136,6 +1362,9 @@ body.mode-big #app {
       if (isLocked) return;
       isLocked = true;
 
+      // Stop timer as soon as an answer is chosen
+      stopTimer();
+
       const btn = e.currentTarget;
       const answerIndex = Number(btn.dataset.answerIndex);
       const q = QUESTIONS[currentQuestionIndex];
@@ -1145,18 +1374,32 @@ body.mode-big #app {
 
       const isCorrect = answerIndex === q.correctIndex;
 
+
       if (isCorrect) {
         // Visually mark the chosen answer as correct
         btn.classList.add("answer-correct");
 
+        // Time-based bonus (big-screen mode only)
+        let timeBonus = 0;
+        if (currentMode === "big") {
+          timeBonus = timeLeft * 5; // 5 points per remaining second
+        }
+
         streak += 1;
-        const earned = 100 * streak;
+        const base = 100 * streak;
+        const earned = base + timeBonus;
         score += earned;
         correctCount += 1;
         updateScoreDisplays();
         playCorrectSound();
         spawnStarRain(20);
-        showFeedback(true, `Streak: ${streak} in a row! +${earned} points`);
+        showEmojiReaction(true);
+
+        const msg = currentMode === "big"
+          ? `Streak: ${streak} in a row! +${earned} points (time bonus: +${timeBonus})`
+          : `Streak: ${streak} in a row! +${earned} points`;
+
+        showFeedback(true, msg);
       } else {
         // Incorrect answer:
         //  - Grey out all 3 wrong answers
@@ -1178,8 +1421,10 @@ body.mode-big #app {
         streak = 0;
         updateScoreDisplays();
         playIncorrectSound();
+        showEmojiReaction(false);
         showFeedback(false, "");
       }
+
 
       // Move to the next question after a short pause
       setTimeout(() => {
