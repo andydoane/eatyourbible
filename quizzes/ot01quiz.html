@@ -97,12 +97,21 @@
     }
 
 /* Vertically center the whole title block on the title screen */
-#title-screen .title-content {
-      flex: 1;
+#title-screen {
       display: flex;
+      flex-direction: column;
+      justify-content: center; /* centers everything vertically */
+      align-items: center;     /* centers horizontally */
+}
+
+#title-screen .title-content {
+      display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
+      margin-bottom: 40px; /* space above the start button */
 }
+
 
 /* Keep the header itself centered horizontally */
 #title-screen .card-header {
@@ -121,11 +130,12 @@
 
 .title-layout {
       display: flex;
-      flex-direction: column;   /* stack image above text */
+      flex-direction: column;
       align-items: center;
-      gap: 12px;
       text-align: center;
-    }
+      gap: 18px;
+}
+
 
 
 .title-text {
@@ -206,10 +216,11 @@
     }
 
     .center-row {
-      margin-top: auto;
-      display: flex;
-      justify-content: center;
-    }
+   margin-top: 24px;  /* small gap under the title */
+   display: flex;
+   justify-content: center;
+  }
+
 
     .primary-button,
     .secondary-button {
@@ -689,7 +700,8 @@
         </div>
       </div>
 
-      <div class="center-row" style="margin-top: auto;">
+      <div class="center-row">
+
         <button id="start-quiz-btn" class="primary-button">
           <span>Go fullscreen &amp; start</span> <span>▶</span>
         </button>
