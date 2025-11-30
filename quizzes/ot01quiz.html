@@ -308,6 +308,47 @@ body.mode-big #app {
       filter: brightness(0.96);
     }
 
+    /* HOME BUTTON (center top) */
+    .top-icon-button {
+    border-radius: 999px;
+    border: none;
+    background: #edf2ff;
+    padding: 6px 9px;
+    font-size: 1.3rem;
+    cursor: pointer;
+    box-shadow: 0 3px 9px rgba(15,23,42,0.20);
+    transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
+    margin: 0 12px; /* spacing so it doesn't collide with text/sound button */
+    }
+
+    .top-icon-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(15,23,42,0.25);
+    filter: brightness(1.06);
+    }
+
+    .top-icon-button:active {
+    transform: translateY(0);
+    box-shadow: 0 3px 8px rgba(15,23,42,0.20);
+    filter: brightness(0.96);
+    }
+
+    /* Make top-bar distribute 3 items left, center, right */
+    .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    }
+
+    /* Force HOME button to center */
+    #home-button {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    }
+
+
     .progress-track {
       width: 100%;
       height: 10px;
@@ -975,10 +1016,15 @@ body.show-real-cursor * {
 
     <!-- QUIZ SCREEN -->
     <div id="quiz-screen" class="screen-card hidden">
-      <div class="top-bar">
-        <span>Question <strong id="question-number">1</strong> of <strong id="total-questions">10</strong></span>
-        <button id="sound-toggle" class="sound-toggle" aria-label="Toggle sound">🔊</button>
-      </div>
+        <div class="top-bar">
+            <span>Question <strong id="question-number">1</strong> of <strong id="total-questions">10</strong></span>
+
+            <!-- CENTER HOME BUTTON -->
+            <button id="home-button" class="top-icon-button" aria-label="Back to title">🏠</button>
+
+            <button id="sound-toggle" class="sound-toggle" aria-label="Toggle sound">🔊</button>
+        </div>
+
       <div class="progress-track">
         <div id="progress-fill" class="progress-fill"></div>
       </div>
@@ -1856,6 +1902,16 @@ document.addEventListener("mousemove", (e) => {
 
   bigPointer.style.left = e.clientX + "px";
   bigPointer.style.top = e.clientY + "px";
+});
+
+const homeButton = document.getElementById("home-button");
+
+homeButton.addEventListener("click", () => {
+    stopTimer(); // stop timer if running
+    bigPointer.classList.add("hidden"); // hide big pointer when leaving quiz
+    body.classList.remove("mode-big", "mode-phone");
+    body.classList.add("mode-title");
+    showScreen("title");
 });
 
 
