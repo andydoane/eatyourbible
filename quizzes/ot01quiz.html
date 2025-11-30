@@ -14,13 +14,13 @@
       --text-main: #1f2933;
       --text-muted: #6b7280;
       --question-bg: #111827;
-      --button-radius: 0.9rem;
 
-      /* color buttons */
       --red: #ff5a51;
       --yellow: #ffc751;
       --blue: #40b9c5;
       --green: #a7cb6f;
+
+      --button-radius: 0.9rem;
     }
 
     * {
@@ -30,55 +30,53 @@
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
-    html,
-    body {
+    html, body {
       height: 100%;
     }
 
     body {
       min-height: 100vh;
+      min-height: 100svh; /* better fullscreen-ish on mobile browsers */
       display: flex;
       justify-content: center;
       align-items: stretch;
       background: radial-gradient(circle at top, var(--bg-gradient-top), var(--bg-gradient-bottom));
       background-size: 150% 150%;
-      animation: bgDrift 22s ease-in-out infinite alternate;
+      animation: bgDrift 20s ease-in-out infinite alternate;
       color: var(--text-main);
-      overflow: hidden; /* good for TVs */
+      overflow-y: auto; /* allow scrolling on small devices if needed */
     }
 
     @keyframes bgDrift {
-      0% {
-        background-position: 0% 0%;
-      }
-      100% {
-        background-position: 100% 100%;
-      }
+      0% { background-position: 0% 0%; }
+      100% { background-position: 100% 100%; }
     }
 
     #app {
       width: 100%;
-      height: 100vh;
-      max-width: none;
-      padding: 0;
+      max-width: 1200px;
+      height: 100%;
       display: flex;
       align-items: stretch;
-      justify-content: stretch;
+      justify-content: center;
     }
+
+body.mode-big #app {
+  max-width: none;
+}
+
 
     .screen-card {
       background: var(--card-bg);
-      border-radius: 0;
-      box-shadow: 0 0 40px rgba(15, 23, 42, 0.18);
-      padding: 18px 14px 22px;
+      width: 100%;
+      min-height: 100vh;
+      min-height: 100svh;
       display: flex;
       flex-direction: column;
-      align-items: stretch;
-      min-height: 100vh;
-      width: 100%;
-      max-width: 100%;
+      padding: 18px 14px 22px;
       position: relative;
       overflow: hidden;
+      box-shadow: 0 0 30px rgba(15,23,42,0.20);
     }
 
     @media (min-width: 768px) {
@@ -87,81 +85,31 @@
       }
     }
 
-.hidden {
+    .hidden {
       display: none !important;
     }
 
+    /* ---------- TITLE SCREEN ---------- */
 
-.card-header {
-      text-align: center;
-      margin-bottom: 18px;
-    }
-
-/* Vertically center the whole title block on the title screen */
-#title-screen {
-      display: flex;
-      flex-direction: column;
-      justify-content: center; /* centers everything vertically */
-      align-items: center;     /* centers horizontally */
-}
-
-#title-screen .title-content {
+    #title-screen-content {
+      flex: 1;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      margin-bottom: 40px; /* space above the start button */
-}
-
-
-/* Keep the header itself centered horizontally */
-#title-screen .card-header {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-top: 0;   /* no manual push-down anymore */
-}
-
-
-#end-screen {
-      justify-content: center;  /* vertically center header + score block */
-}
-
-
-
-.title-layout {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      gap: 24px;
       text-align: center;
-      gap: 18px;
-}
-
-
-
-.title-text {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
     }
 
-
-
-.lesson-image-wrapper {
+    .lesson-image-wrapper {
       width: 140px;
       height: 140px;
-      margin: 0;
-      border-radius: 0;
-      overflow: visible;
-      background: transparent;   /* no grey rectangle */
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: none;          /* no shadow box */
     }
 
-
-    @media (min-width: 1024px) {
+    @media (min-width: 900px) {
       .lesson-image-wrapper {
         width: 200px;
         height: 200px;
@@ -172,82 +120,65 @@
       width: 100%;
       height: 100%;
       object-fit: contain;
-      transform-origin: top center;
       animation: float 4.5s ease-in-out infinite;
     }
 
-    .bounce-drop {
-      animation: dropBounce 0.9s ease-out;
-    }
-
-    @keyframes dropBounce {
-      0% {
-        transform: translateY(-150%) scale(0.8);
-      }
-      60% {
-        transform: translateY(8%) scale(1.06);
-      }
-      100% {
-        transform: translateY(0) scale(1);
-      }
-    }
-
     @keyframes float {
-      0% {
-        transform: translateY(0);
-      }
-      50% {
-        transform: translateY(6px);
-      }
-      100% {
-        transform: translateY(0);
-      }
+      0% { transform: translateY(0); }
+      50% { transform: translateY(6px); }
+      100% { transform: translateY(0); }
     }
 
     .card-title {
       font-size: clamp(1.8rem, 4vw, 2.6rem);
       font-weight: 800;
       letter-spacing: 0.02em;
-      margin-bottom: 6px;
     }
 
     .card-subtitle {
-      font-size: clamp(1rem, 2vw, 1.25rem);
+      font-size: clamp(1rem, 2vw, 1.2rem);
       color: var(--text-muted);
     }
 
-    .center-row {
-   margin-top: 24px;  /* small gap under the title */
-   display: flex;
-   justify-content: center;
-  }
+    .mode-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+      max-width: 420px;
+    }
 
+    @media (min-width: 600px) {
+      .mode-buttons {
+        flex-direction: row;
+      }
+    }
 
     .primary-button,
     .secondary-button {
       border-radius: 999px;
       border: none;
-      padding: 12px 22px;
-      font-size: clamp(1rem, 1.8vw, 1.25rem);
+      padding: 12px 20px;
+      font-size: clamp(1rem, 1.8vw, 1.2rem);
       font-weight: 600;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 8px;
-      box-shadow: 0 10px 25px rgba(37, 99, 235, 0.35);
       transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.1s ease;
     }
 
     .primary-button {
       background: linear-gradient(135deg, var(--accent), var(--accent-dark));
       color: #ffffff;
-      animation: pulse 2.4s ease-in-out infinite;
+      box-shadow: 0 10px 25px rgba(37, 99, 235, 0.4);
     }
 
     .secondary-button {
       background: #f3f4ff;
       color: var(--accent-dark);
-      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.15);
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
     }
 
     .primary-button:hover,
@@ -260,23 +191,21 @@
     .primary-button:active,
     .secondary-button:active {
       transform: translateY(0);
-      box-shadow: 0 6px 14px rgba(15, 23, 42, 0.25);
-      filter: brightness(0.96);
+      filter: brightness(0.95);
+      box-shadow: 0 6px 12px rgba(15, 23, 42, 0.25);
     }
 
-    @keyframes pulse {
-      0%,
-      100% {
-        transform: scale(1);
-        box-shadow: 0 10px 25px rgba(37, 99, 235, 0.35);
-      }
-      50% {
-        transform: scale(1.03);
-        box-shadow: 0 18px 40px rgba(37, 99, 235, 0.5);
-      }
+    .mode-note {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+      max-width: 420px;
+      margin-left: auto;
+      margin-right: auto;
     }
 
-    /* Top bar & progress */
+    /* ---------- TOP BAR + PROGRESS ---------- */
+
     .top-bar {
       display: flex;
       justify-content: space-between;
@@ -293,19 +222,19 @@
       padding: 6px 9px;
       font-size: 1.1rem;
       cursor: pointer;
-      box-shadow: 0 3px 9px rgba(15, 23, 42, 0.2);
+      box-shadow: 0 3px 9px rgba(15,23,42,0.2);
       transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
     }
 
     .sound-toggle:hover {
       transform: translateY(-1px);
-      box-shadow: 0 6px 14px rgba(15, 23, 42, 0.25);
+      box-shadow: 0 6px 14px rgba(15,23,42,0.25);
       filter: brightness(1.06);
     }
 
     .sound-toggle:active {
       transform: translateY(0);
-      box-shadow: 0 3px 8px rgba(15, 23, 42, 0.2);
+      box-shadow: 0 3px 8px rgba(15,23,42,0.2);
       filter: brightness(0.96);
     }
 
@@ -322,47 +251,41 @@
       height: 100%;
       width: 0%;
       border-radius: inherit;
-      background-image: linear-gradient(
-        120deg,
-        #3f6df6,
-        #22c55e,
-        #3f6df6
-      );
+      background: linear-gradient(120deg, #3f6df6, #22c55e, #3f6df6);
       background-size: 200% 100%;
       animation: progressFlow 2.5s linear infinite;
       transition: width 0.25s ease;
     }
 
     @keyframes progressFlow {
-      0% {
-        background-position: 0% 0%;
-      }
-      100% {
-        background-position: 100% 0%;
-      }
+      0% { background-position: 0% 0%; }
+      100% { background-position: 100% 0%; }
     }
 
-    /* QUIZ LAYOUT */
+    /* ---------- QUIZ LAYOUT (shared) ---------- */
+
     .quiz-main {
       flex: 1;
       display: flex;
       flex-direction: column;
       gap: 10px;
       margin-top: 10px;
+      min-height: 0;
     }
 
-    /* top 50%: question */
     .question-panel {
-      flex: 1 0 0;
       display: flex;
-      align-items: center;
-      justify-content: center;
+      min-height: 0;
+    }
+
+    .answers-panel {
+      display: flex;
+      flex-direction: column;
       min-height: 0;
     }
 
     .question-card {
       width: 100%;
-      height: 100%;
       background: var(--question-bg);
       color: #ffffff;
       border-radius: 1.35rem;
@@ -371,73 +294,19 @@
       align-items: center;
       justify-content: center;
       text-align: center;
-      box-shadow: 0 12px 38px rgba(15, 23, 42, 0.55);
-    }
-
-    .question-card.question-in {
-      animation: questionSlideIn 0.35s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-    }
-
-    @keyframes questionSlideIn {
-      0% {
-        transform: translateY(-18px);
-        opacity: 0;
-      }
-      100% {
-        transform: translateY(0);
-        opacity: 1;
-      }
-    }
-
-    .question-card.shake {
-      animation: shake 0.35s ease;
-    }
-
-    @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      20% { transform: translateX(-8px); }
-      40% { transform: translateX(8px); }
-      60% { transform: translateX(-6px); }
-      80% { transform: translateX(6px); }
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.55);
     }
 
     .question-text {
-      font-size: clamp(1.4rem, 3.2vw, 3rem);
       font-weight: 600;
       line-height: 1.3;
     }
 
-    /* bottom 50%: answers */
-    .answers-panel {
-      flex: 1 0 0;
-      display: flex;
-      flex-direction: column;
-      padding-top: 10px;
-      min-height: 0;
-    }
-
     .answers-grid {
-      flex: 1 1 0;
       display: grid;
-      grid-template-columns: 1fr;
-      grid-auto-rows: 1fr;
       gap: 12px;
-      align-content: stretch;
-    }
-
-    .answers-grid.answers-in {
-      animation: answersPopIn 0.3s ease-out;
-    }
-
-    @keyframes answersPopIn {
-      0% {
-        transform: translateY(18px);
-        opacity: 0;
-      }
-      100% {
-        transform: translateY(0);
-        opacity: 1;
-      }
+      flex: 1;
+      min-height: 0;
     }
 
     @media (min-width: 640px) {
@@ -448,42 +317,33 @@
 
     .answer-button {
       width: 100%;
-      height: 100%;
-      padding: 16px 18px;
       border-radius: var(--button-radius);
-      border: 3px solid rgba(255, 255, 255, 0.8);
+      border: 3px solid rgba(255, 255, 255, 0.9);
       cursor: pointer;
-      font-size: clamp(1.4rem, 3vw, 3rem);
       font-weight: 600;
       text-align: center;
-      justify-content: center;
       display: flex;
       align-items: center;
-      gap: 12px;
-      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.3);
-      transition:
-        transform 0.08s ease,
-        box-shadow 0.08s ease,
-        filter 0.08s ease,
-        border-color 0.08s ease;
+      justify-content: center;
+      box-shadow: 0 10px 24px rgba(15,23,42,0.3);
+      transition: transform 0.08s ease,
+                  box-shadow 0.08s ease,
+                  filter 0.08s ease,
+                  border-color 0.08s ease;
+      padding: 14px 16px;
     }
 
     .answer-button:hover {
       transform: translateY(-1px);
-      box-shadow: 0 16px 36px rgba(15, 23, 42, 0.4);
+      box-shadow: 0 16px 36px rgba(15,23,42,0.4);
       filter: brightness(1.05);
-      border-color: rgba(255, 255, 255, 1);
+      border-color: rgba(255,255,255,1);
     }
 
     .answer-button:active {
       transform: translateY(0);
-      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.3);
+      box-shadow: 0 8px 18px rgba(15,23,42,0.3);
       filter: brightness(0.97);
-    }
-
-    .answer-text {
-      flex: 1;
-      line-height: 1.35;
     }
 
     .answer-button.disabled {
@@ -492,26 +352,14 @@
       filter: none;
     }
 
-    /* color backgrounds */
-    .color-red {
-      background: var(--red);
-      color: #ffffff;
+    .answer-text {
+      line-height: 1.3;
     }
 
-    .color-yellow {
-      background: var(--yellow);
-      color: #333333;
-    }
-
-    .color-blue {
-      background: var(--blue);
-      color: #ffffff;
-    }
-
-    .color-green {
-      background: var(--green);
-      color: #ffffff;
-    }
+    .color-red { background: var(--red); color: #ffffff; }
+    .color-yellow { background: var(--yellow); color: #222222; }
+    .color-blue { background: var(--blue); color: #ffffff; }
+    .color-green { background: var(--green); color: #ffffff; }
 
     .score-row {
       display: flex;
@@ -527,7 +375,79 @@
       color: var(--text-main);
     }
 
-    /* feedback overlay */
+    /* ---------- BIG-SCREEN MODE ---------- */
+
+    body.mode-big .question-panel {
+      flex: 1 0 0;
+    }
+
+    body.mode-big .answers-panel {
+      flex: 1 0 0;
+    }
+
+    body.mode-big .question-text {
+      font-size: clamp(1.6rem, 3.2vw, 3.4rem);
+    }
+
+    body.mode-big .answer-button {
+      font-size: clamp(1.2rem, 2.4vw, 2.6rem);
+      height: 100%;
+    }
+
+
+
+
+    body.mode-big .answers-grid {
+      grid-auto-rows: 1fr;
+    }
+
+    /* ---------- PHONE MODE ---------- */
+
+    body.mode-phone .quiz-main {
+      gap: 6px;
+    }
+
+    body.mode-phone .question-panel {
+      flex: 0 0 auto;
+    }
+
+    body.mode-phone .answers-panel {
+      flex: 1 0 auto;
+    }
+
+    body.mode-phone .question-card {
+      padding: 10px 12px;
+    }
+
+    body.mode-phone .question-text {
+      font-size: clamp(1rem, 2.5vh, 1.5rem);
+    }
+
+    body.mode-phone .answers-grid {
+      grid-template-columns: 1fr;
+      grid-auto-rows: auto;
+      gap: 8px;
+    }
+
+    body.mode-phone .answer-button {
+      font-size: clamp(0.9rem, 2.2vh, 1.1rem);
+      padding: 10px 12px;
+    }
+
+    /* ---------- FULLSCREEN TWEAKS ---------- */
+
+    :fullscreen .question-text,
+    :-webkit-full-screen .question-text {
+      font-size: clamp(2.2rem, 4vw, 5rem);
+    }
+
+    :fullscreen body.mode-big .answer-button,
+    :-webkit-full-screen body.mode-big .answer-button {
+       font-size: clamp(1.2rem, 2.4vw, 2.6rem);
+    }
+
+    /* ---------- FEEDBACK OVERLAY + STARS ---------- */
+
     #feedback-overlay {
       position: fixed;
       inset: 0;
@@ -543,13 +463,13 @@
     }
 
     .feedback-inner {
-      background: rgba(15, 23, 42, 0.8);
+      background: rgba(15,23,42,0.8);
       border-radius: 999px;
       padding: 18px 24px;
       text-align: center;
       color: #ffffff;
       max-width: 90%;
-      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.8);
+      box-shadow: 0 20px 45px rgba(15,23,42,0.8);
     }
 
     .feedback-title {
@@ -560,13 +480,8 @@
       margin-bottom: 4px;
     }
 
-    .feedback-title.correct-text {
-      color: #bbf7d0;
-    }
-
-    .feedback-title.incorrect-text {
-      color: #fecaca;
-    }
+    .feedback-title.correct-text { color: #bbf7d0; }
+    .feedback-title.incorrect-text { color: #fecaca; }
 
     .feedback-detail {
       font-size: clamp(1rem, 1.8vw, 1.3rem);
@@ -583,36 +498,12 @@
     }
 
     @keyframes fall {
-      0% {
-        transform: translateY(0) rotate(0deg);
-        opacity: 1;
-      }
-      100% {
-        transform: translateY(110vh) rotate(360deg);
-        opacity: 0;
-      }
+      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
     }
 
-    /* quick flash on correct */
-    .screen-flash {
-      position: fixed;
-      inset: 0;
-      background: rgba(255, 255, 255, 0.7);
-      animation: flash 0.25s ease-out forwards;
-      pointer-events: none;
-      z-index: 40;
-    }
+    /* ---------- END SCREEN ---------- */
 
-    @keyframes flash {
-      0% {
-        opacity: 0.8;
-      }
-      100% {
-        opacity: 0;
-      }
-    }
-
-    /* end screen */
     .end-main {
       flex: 1;
       display: flex;
@@ -621,6 +512,10 @@
       justify-content: center;
       gap: 14px;
       text-align: center;
+    }
+
+    .end-trophy {
+      font-size: clamp(3rem, 6vw, 4rem);
     }
 
     .end-score {
@@ -632,10 +527,6 @@
     .end-detail {
       font-size: clamp(1.05rem, 1.8vw, 1.3rem);
       color: var(--text-muted);
-    }
-
-    .end-trophy {
-      font-size: clamp(3rem, 6vw, 4rem);
     }
 
     .end-buttons {
@@ -657,107 +548,41 @@
     #end-screen.end-try {
       background: radial-gradient(circle at top, #fee2e2, #fef3c7);
     }
-
-    /* fullscreen scaling */
-    :fullscreen .question-text,
-    :-webkit-full-screen .question-text {
-      font-size: clamp(2.4rem, 4vw, 5rem);
-    }
-
-    :fullscreen .answer-button,
-    :-webkit-full-screen .answer-button {
-      font-size: clamp(2rem, 3.5vw, 4rem);
-    }
-
-    :fullscreen .card-title,
-    :-webkit-full-screen .card-title {
-      font-size: clamp(2.4rem, 4.2vw, 3.2rem);
-    }
-
-/* ---- Mobile tweaks: make sure all four answer buttons fit ---- */
-@media (max-width: 600px) {
-  /* allow vertical scrolling on phones if needed */
-  body {
-    overflow-y: auto;
-  }
-
-  /* tighten spacing a bit */
-  .quiz-main {
-    margin-top: 4px;
-    gap: 6px;
-  }
-
-  /* give LESS space to the question, MORE to the answers */
-  .question-panel {
-    flex: 0.7 0 auto;   /* was 1 */
-  }
-
-  .answers-panel {
-    flex: 1.3 0 auto;   /* was 1 */
-  }
-
-  /* make the question card a little more compact */
-  .question-card {
-    padding: 10px 12px;
-  }
-
- .question-text {
-    font-size: clamp(1rem, 2.8vh, 1.6rem);
-    line-height: 1.25;
-  }
-
-  .answer-text {
-    line-height: 1.25;
-  }
-
-  /* make the answer buttons slightly smaller and tighter */
-  .answers-grid {
-    gap: 8px;
-  }
-
-  .answer-button {
-    font-size: clamp(0.8rem, 2.4vh, 1.2rem);
-    padding: 10px 12px;
-  }
-}
-
-
   </style>
 </head>
-<body>
+<body class="mode-title">
   <div id="app">
     <!-- TITLE SCREEN -->
-<div id="title-screen" class="screen-card">
-      <!-- New wrapper that we will vertically center -->
-      <div class="title-content">
-        <div class="card-header">
-          <div class="title-layout">
-            <div class="lesson-image-wrapper">
-              <img
-                id="lesson-image"
-                class="lesson-image bounce-drop"
-                src="quizimages/ot01image.png"
-                alt="Lesson image"
-              />
-            </div>
-            <div class="title-text">
-              <h1 id="lesson-title" class="card-title">Sample Devotional Quiz</h1>
-              <p id="lesson-subtitle" class="card-subtitle">
-                10 questions to review today&rsquo;s Bible story
-              </p>
-            </div>
-          </div>
+    <div id="title-screen" class="screen-card">
+      <div id="title-screen-content">
+        <div class="lesson-image-wrapper">
+          <img
+            id="lesson-image"
+            class="lesson-image"
+            src="quizimages/ot01image.png"
+            alt="Lesson image"
+          />
         </div>
-      </div>
-
-      <div class="center-row">
-
-        <button id="start-quiz-btn" class="primary-button">
-          <span>Go fullscreen &amp; start</span> <span>▶</span>
-        </button>
+        <div>
+          <h1 id="lesson-title" class="card-title">Sample Devotional Quiz</h1>
+          <p id="lesson-subtitle" class="card-subtitle">
+            10 questions to review today&rsquo;s Bible story
+          </p>
+        </div>
+        <div class="mode-buttons">
+          <button id="big-screen-btn" class="primary-button">
+            <span>Big-Screen Mode</span> <span>📺</span>
+          </button>
+          <button id="phone-mode-btn" class="secondary-button">
+            <span>Phone Mode</span> <span>📱</span>
+          </button>
+        </div>
+        <p class="mode-note">
+          Big-Screen Mode is best for TVs and projectors.&nbsp;
+          Phone Mode is sized to fit smaller screens.
+        </p>
       </div>
     </div>
-
 
     <!-- QUIZ SCREEN -->
     <div id="quiz-screen" class="screen-card hidden">
@@ -770,16 +595,14 @@
       </div>
 
       <div class="quiz-main">
-        <!-- top 50%: question card -->
         <div class="question-panel">
-          <div class="question-card" id="question-card">
-            <div class="question-text" id="question-text">
-              Question text will go here
+          <div class="question-card">
+            <div id="question-text" class="question-text">
+              Question text here
             </div>
           </div>
         </div>
 
-        <!-- bottom 50%: answers + score -->
         <div class="answers-panel">
           <div class="answers-grid" id="answers-grid">
             <button class="answer-button color-red" data-button-index="0">
@@ -807,18 +630,18 @@
     <!-- END SCREEN -->
     <div id="end-screen" class="screen-card hidden">
       <div class="card-header">
-        <div class="end-trophy" id="end-trophy">🏆</div>
-        <h2 class="card-title" id="end-title">Quiz Complete!</h2>
-        <p class="card-subtitle" id="end-subtitle">Here&rsquo;s how you did</p>
-      </div>
-      <div class="end-main">
-        <div class="end-score" id="final-score">0 points</div>
-        <div class="end-detail" id="final-correct">
-          You got 0 out of 10 correct
-        </div>
-        <div class="end-buttons">
-          <button id="play-again-btn" class="primary-button">Play Again</button>
-          <button id="back-to-title-btn" class="secondary-button">Back to Title</button>
+        <div class="end-main">
+          <div class="end-trophy" id="end-trophy">🏆</div>
+          <h2 class="card-title" id="end-title">Quiz Complete!</h2>
+          <p class="card-subtitle" id="end-subtitle">Here&rsquo;s how you did</p>
+          <div class="end-score" id="final-score">0 points</div>
+          <div class="end-detail" id="final-correct">
+            You got 0 out of 10 correct
+          </div>
+          <div class="end-buttons">
+            <button id="play-again-btn" class="primary-button">Play Again</button>
+            <button id="back-to-title-btn" class="secondary-button">Back to Title</button>
+          </div>
         </div>
       </div>
     </div>
@@ -833,9 +656,14 @@
   </div>
 
   <script>
-    // =======================
-    // QUESTION DATA
-    // =======================
+    /***********************
+     * CONFIG
+     ***********************/
+    const LESSON_ID = "ot01";
+    const LESSON_TITLE_TEXT = "Sample Devotional Quiz";
+    const LESSON_SUBTITLE_TEXT = "10 questions to review today's Bible story";
+    const LESSON_IMAGE_PATH = `quizimages/${LESSON_ID}image.png`;
+
     const QUESTIONS = [
       {
         text: "What did God create on day one?",
@@ -900,7 +728,7 @@
       {
         text: "How are human beings different than everything else God made?",
         answers: [
-          "We are made in His likeness",
+          "We’re made in His likeness and given the job to rule over His creation",
           "We can swim and fly better than all animals",
           "We were created before light and water",
           "We live under the sea like fish"
@@ -933,33 +761,47 @@
           "It was very good",
           "It was almost good enough",
           "It needed to be fixed later",
-          "He wasn\u2019t sure He liked it"
+          "He wasn’t sure He liked it"
         ],
         correctIndex: 0
       }
     ];
 
-    // =======================
-    // DOM REFERENCES
-    // =======================
+    /***********************
+     * STATE
+     ***********************/
+    let currentMode = "phone"; // "big" or "phone"
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let streak = 0;
+    let correctCount = 0;
+    let soundEnabled = true;
+    let isLocked = false;
+
+    let audioCtx = null;
+
+    /***********************
+     * DOM
+     ***********************/
+    const body = document.body;
+
     const titleScreen = document.getElementById("title-screen");
     const quizScreen = document.getElementById("quiz-screen");
     const endScreen = document.getElementById("end-screen");
 
-    const startBtn = document.getElementById("start-quiz-btn");
-    const playAgainBtn = document.getElementById("play-again-btn");
-    const backToTitleBtn = document.getElementById("back-to-title-btn");
+    const bigScreenBtn = document.getElementById("big-screen-btn");
+    const phoneModeBtn = document.getElementById("phone-mode-btn");
+
+    const lessonImageEl = document.getElementById("lesson-image");
+    const lessonTitleEl = document.getElementById("lesson-title");
+    const lessonSubtitleEl = document.getElementById("lesson-subtitle");
 
     const questionNumberEl = document.getElementById("question-number");
     const totalQuestionsEl = document.getElementById("total-questions");
     const progressFillEl = document.getElementById("progress-fill");
 
-    const questionCardEl = document.getElementById("question-card");
     const questionTextEl = document.getElementById("question-text");
-    const answersGridEl = document.getElementById("answers-grid");
-    const answerButtons = Array.from(
-      document.querySelectorAll(".answer-button")
-    );
+    const answerButtons = Array.from(document.querySelectorAll(".answer-button"));
 
     const scoreDisplayEl = document.getElementById("score-display");
     const streakDisplayEl = document.getElementById("streak-display");
@@ -975,23 +817,17 @@
     const endTitleEl = document.getElementById("end-title");
     const endSubtitleEl = document.getElementById("end-subtitle");
     const endTrophyEl = document.getElementById("end-trophy");
+    const playAgainBtn = document.getElementById("play-again-btn");
+    const backToTitleBtn = document.getElementById("back-to-title-btn");
 
     totalQuestionsEl.textContent = QUESTIONS.length.toString();
+    lessonImageEl.src = LESSON_IMAGE_PATH;
+    lessonTitleEl.textContent = LESSON_TITLE_TEXT;
+    lessonSubtitleEl.textContent = LESSON_SUBTITLE_TEXT;
 
-    // =======================
-    // STATE
-    // =======================
-    let currentQuestionIndex = 0;
-    let score = 0;
-    let streak = 0;
-    let correctCount = 0;
-    let soundEnabled = true;
-    let currentAnswerOrder = [];
-    let isLocked = false;
-
-    // Web Audio setup
-    let audioCtx = null;
-
+    /***********************
+     * AUDIO
+     ***********************/
     function getAudioContext() {
       if (!audioCtx) {
         const AC = window.AudioContext || window.webkitAudioContext;
@@ -1026,24 +862,24 @@
 
     function playCorrectSound() {
       playBeepSequence([
-        { freq: 660, duration: 0.12 },
-        { freq: 880, duration: 0.12 },
-        { freq: 1040, duration: 0.14 }
+        { freq: 660, duration: 0.14 },
+        { freq: 880, duration: 0.14 },
+        { freq: 1040, duration: 0.16 }
       ]);
     }
 
     function playIncorrectSound() {
       playBeepSequence([
-        { freq: 260, duration: 0.16 },
-        { freq: 200, duration: 0.18 }
+        { freq: 260, duration: 0.18 },
+        { freq: 200, duration: 0.20 }
       ]);
     }
 
-    // =======================
-    // HELPERS
-    // =======================
-    function shuffleArray(array) {
-      const arr = array.slice();
+    /***********************
+     * HELPERS
+     ***********************/
+    function shuffledIndices(n) {
+      const arr = Array.from({ length: n }, (_, i) => i);
       for (let i = arr.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
         [arr[i], arr[j]] = [arr[j], arr[i]];
@@ -1051,11 +887,29 @@
       return arr;
     }
 
-    function showScreen(screen) {
+    function showScreen(screenName) {
       titleScreen.classList.add("hidden");
       quizScreen.classList.add("hidden");
       endScreen.classList.add("hidden");
-      screen.classList.remove("hidden");
+      if (screenName === "title") {
+        titleScreen.classList.remove("hidden");
+      } else if (screenName === "quiz") {
+        quizScreen.classList.remove("hidden");
+      } else if (screenName === "end") {
+        endScreen.classList.remove("hidden");
+      }
+    }
+
+    function updateScoreDisplays() {
+      scoreDisplayEl.textContent = score.toString();
+      streakDisplayEl.textContent = "x" + streak.toString();
+    }
+
+    function updateProgress() {
+      const n = currentQuestionIndex;
+      const pct = (n / QUESTIONS.length) * 100;
+      progressFillEl.style.width = pct + "%";
+      questionNumberEl.textContent = (n + 1).toString();
     }
 
     function spawnStarRain(count) {
@@ -1063,22 +917,11 @@
         const star = document.createElement("div");
         star.className = "star";
         star.textContent = "⭐";
-        const left = Math.random() * 100;
-        const delay = Math.random() * 0.6;
-        star.style.left = left + "vw";
-        star.style.animationDelay = delay + "s";
+        star.style.left = Math.random() * 100 + "vw";
+        star.style.animationDelay = Math.random() * 0.5 + "s";
         document.body.appendChild(star);
-        star.addEventListener("animationend", () => {
-          star.remove();
-        });
+        star.addEventListener("animationend", () => star.remove());
       }
-    }
-
-    function flashScreen() {
-      const flash = document.createElement("div");
-      flash.className = "screen-flash";
-      document.body.appendChild(flash);
-      flash.addEventListener("animationend", () => flash.remove());
     }
 
     function showFeedback(isCorrect, detailText) {
@@ -1087,33 +930,48 @@
       feedbackTitleEl.classList.toggle("incorrect-text", !isCorrect);
       feedbackDetailEl.textContent = detailText || "";
       feedbackOverlay.classList.add("visible");
-      setTimeout(() => feedbackOverlay.classList.remove("visible"), 800);
+      setTimeout(() => {
+        feedbackOverlay.classList.remove("visible");
+      }, 900);
     }
 
-    function updateScoreDisplays() {
-      scoreDisplayEl.textContent = score.toString();
-      streakDisplayEl.textContent = "x" + streak.toString();
+    function requestFullscreenIfAvailable() {
+      const docEl = document.documentElement;
+      const request =
+        docEl.requestFullscreen ||
+        docEl.webkitRequestFullscreen ||
+        docEl.msRequestFullscreen;
+      if (request) {
+        try {
+          request.call(docEl);
+        } catch (e) {
+          // ignore; some browsers (esp. iOS) just won't do it
+        }
+      }
     }
 
-    function animateQuestionIn() {
-      questionCardEl.classList.remove("question-in", "shake");
-      answersGridEl.classList.remove("answers-in");
-      // force reflow so animation can replay
-      void questionCardEl.offsetWidth;
-      questionCardEl.classList.add("question-in");
-      answersGridEl.classList.add("answers-in");
-    }
+    /***********************
+     * GAME FLOW
+     ***********************/
+    function startGame(mode) {
+      currentMode = mode;
+      body.classList.remove("mode-title", "mode-big", "mode-phone");
+      if (mode === "big") {
+        body.classList.add("mode-big");
+        requestFullscreenIfAvailable();
+      } else {
+        body.classList.add("mode-phone");
+        // We still try fullscreen; on iOS this may be ignored.
+        requestFullscreenIfAvailable();
+      }
 
-    // =======================
-    // GAME LOGIC
-    // =======================
-    function startGame() {
       currentQuestionIndex = 0;
       score = 0;
       streak = 0;
       correctCount = 0;
       updateScoreDisplays();
-      showScreen(quizScreen);
+      updateProgress();
+      showScreen("quiz");
       loadQuestion();
     }
 
@@ -1122,43 +980,33 @@
         endGame();
         return;
       }
-
       const q = QUESTIONS[currentQuestionIndex];
-      questionNumberEl.textContent = (currentQuestionIndex + 1).toString();
       questionTextEl.textContent = q.text;
+      updateProgress();
 
-      const progress =
-        ((currentQuestionIndex) / QUESTIONS.length) * 100;
-      progressFillEl.style.width = progress + "%";
-
-      // enable buttons
       isLocked = false;
-      answerButtons.forEach((btn) => {
+      answerButtons.forEach(btn => {
         btn.classList.remove("disabled");
       });
 
-      // shuffle answer mapping
-      const indices = [0, 1, 2, 3];
-      currentAnswerOrder = shuffleArray(indices);
-
-      answerButtons.forEach((btn, i) => {
-        const answerIndex = currentAnswerOrder[i];
-        const span = btn.querySelector(".answer-text");
-        span.textContent = q.answers[answerIndex];
-        btn.dataset.answerIndex = String(answerIndex);
+      const order = shuffledIndices(q.answers.length);
+      answerButtons.forEach((btn, pos) => {
+        const idx = order[pos];
+        btn.dataset.answerIndex = String(idx);
+        const textSpan = btn.querySelector(".answer-text");
+        textSpan.textContent = q.answers[idx];
       });
-
-      animateQuestionIn();
     }
 
-    function handleAnswerClick(event) {
+    function handleAnswerClick(e) {
       if (isLocked) return;
-      const btn = event.currentTarget;
+      isLocked = true;
+
+      const btn = e.currentTarget;
       const answerIndex = Number(btn.dataset.answerIndex);
       const q = QUESTIONS[currentQuestionIndex];
 
-      isLocked = true;
-      answerButtons.forEach((b) => b.classList.add("disabled"));
+      answerButtons.forEach(b => b.classList.add("disabled"));
 
       const isCorrect = answerIndex === q.correctIndex;
 
@@ -1169,22 +1017,16 @@
         correctCount += 1;
         updateScoreDisplays();
         playCorrectSound();
-        flashScreen();
-        spawnStarRain(24);
-        showFeedback(
-          true,
-          `Streak bonus: ${streak} in a row! +${earned} points`
-        );
+        spawnStarRain(20);
+        showFeedback(true, `Streak: ${streak} in a row! +${earned} points`);
       } else {
+        streak = 0;
+        updateScoreDisplays();
         playIncorrectSound();
         const correctText = q.answers[q.correctIndex];
         showFeedback(false, `Correct answer: ${correctText}`);
-        questionCardEl.classList.add("shake");
-        streak = 0;
-        updateScoreDisplays();
       }
 
-      // progress to next question after short delay
       setTimeout(() => {
         currentQuestionIndex += 1;
         loadQuestion();
@@ -1192,11 +1034,7 @@
     }
 
     function endGame() {
-      showScreen(endScreen);
-
-      // fill progress bar to full
-      progressFillEl.style.width = "100%";
-
+      updateProgress();
       finalScoreEl.textContent = `${score} points`;
       finalCorrectEl.textContent = `You got ${correctCount} out of ${QUESTIONS.length} correct`;
 
@@ -1220,33 +1058,17 @@
         endSubtitleEl.textContent = "Try again and watch your score grow.";
         endTrophyEl.textContent = "⭐";
       }
+
+      showScreen("end");
     }
 
-    // =======================
-    // EVENT LISTENERS
-    // =======================
-    startBtn.addEventListener("click", () => {
-      // try to go fullscreen for TV mode
-      const docEl = document.documentElement;
-      if (docEl.requestFullscreen) {
-        docEl.requestFullscreen().catch(() => startGame());
-      } else {
-        startGame();
-      }
-      // If fullscreen request succeeds, we'll still just start immediately.
-      startGame();
-    });
+    /***********************
+     * EVENT LISTENERS
+     ***********************/
+    bigScreenBtn.addEventListener("click", () => startGame("big"));
+    phoneModeBtn.addEventListener("click", () => startGame("phone"));
 
-    playAgainBtn.addEventListener("click", () => {
-      showScreen(quizScreen);
-      startGame();
-    });
-
-    backToTitleBtn.addEventListener("click", () => {
-      showScreen(titleScreen);
-    });
-
-    answerButtons.forEach((btn) => {
+    answerButtons.forEach(btn => {
       btn.addEventListener("click", handleAnswerClick);
     });
 
@@ -1254,6 +1076,17 @@
       soundEnabled = !soundEnabled;
       soundToggleBtn.textContent = soundEnabled ? "🔊" : "🔈";
     });
+
+    playAgainBtn.addEventListener("click", () => startGame(currentMode));
+    backToTitleBtn.addEventListener("click", () => {
+      body.classList.remove("mode-big", "mode-phone");
+      body.classList.add("mode-title");
+      showScreen("title");
+    });
+
+    // Start on title screen
+    body.classList.add("mode-title");
+    showScreen("title");
   </script>
 </body>
 </html>
