@@ -673,6 +673,51 @@
     :-webkit-full-screen .card-title {
       font-size: clamp(2.4rem, 4.2vw, 3.2rem);
     }
+
+/* ---- Mobile tweaks: make sure all four answer buttons fit ---- */
+@media (max-width: 600px) {
+  /* allow vertical scrolling on phones if needed */
+  body {
+    overflow-y: auto;
+  }
+
+  /* tighten spacing a bit */
+  .quiz-main {
+    margin-top: 4px;
+    gap: 6px;
+  }
+
+  /* give LESS space to the question, MORE to the answers */
+  .question-panel {
+    flex: 0.7 0 auto;   /* was 1 */
+  }
+
+  .answers-panel {
+    flex: 1.3 0 auto;   /* was 1 */
+  }
+
+  /* make the question card a little more compact */
+  .question-card {
+    padding: 10px 12px;
+  }
+
+  .question-text {
+    font-size: 1.1rem;  /* override the big clamp() on phones */
+    line-height: 1.25;
+  }
+
+  /* make the answer buttons slightly smaller and tighter */
+  .answers-grid {
+    gap: 8px;
+  }
+
+  .answer-button {
+    font-size: 1rem;    /* smaller than the desktop clamp() */
+    padding: 10px 12px;
+  }
+}
+
+
   </style>
 </head>
 <body>
