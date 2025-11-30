@@ -671,8 +671,14 @@ body.mode-big #app {
     }
 
     body.mode-phone .question-panel {
-      flex: 0 0 auto;
+    flex: 0 0 auto;
+    display: block;       /* NEW: stop using flex here on phone */
     }
+
+    body.mode-phone .question-layout {
+    width: 100%;          /* NEW: make the layout span full width */
+    }
+
 
     body.mode-phone .answers-panel {
       flex: 1 0 auto;
