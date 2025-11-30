@@ -63,7 +63,11 @@
 
 body.mode-big #app {
   max-width: none;
+  
 }
+
+
+
 
 
     .screen-card {
@@ -298,7 +302,7 @@ body.mode-big #app {
     }
 
     .question-text {
-      font-weight: 600;
+      font-weight: 800;
       line-height: 1.3;
     }
 
@@ -351,6 +355,34 @@ body.mode-big #app {
       opacity: 0.85;
       filter: none;
     }
+
+    /* New: visual states for correct / wrong answers */
+    .answer-button.answer-correct {
+    box-shadow:
+        0 0 0 3px rgba(255, 255, 255, 1);  /* clean white outline */
+    transform: translateY(-2px) scale(1.02);
+    border-color: rgba(255, 255, 255, 1); /* white border */
+    }
+
+    .answer-button.answer-wrong {
+      animation: shake 0.24s ease-in-out;
+      opacity: 0.9;
+    }
+
+    .answer-button.answer-faded {
+      filter: grayscale(1) brightness(0.8);
+      opacity: 0.5;
+    }
+
+
+    @keyframes shake {
+      0%   { transform: translateX(0); }
+      25%  { transform: translateX(-4px); }
+      50%  { transform: translateX(4px); }
+      75%  { transform: translateX(-4px); }
+      100% { transform: translateX(0); }
+    }
+
 
     .answer-text {
       line-height: 1.3;
@@ -480,8 +512,8 @@ body.mode-big #app {
       margin-bottom: 4px;
     }
 
-    .feedback-title.correct-text { color: #bbf7d0; }
-    .feedback-title.incorrect-text { color: #fecaca; }
+    .feedback-title.correct-text { color: #a7cb6f; }
+    .feedback-title.incorrect-text { color: #ff5a51; }
 
     .feedback-detail {
       font-size: clamp(1rem, 1.8vw, 1.3rem);
@@ -929,11 +961,18 @@ body.mode-big #app {
       feedbackTitleEl.textContent = isCorrect ? "CORRECT" : "INCORRECT";
       feedbackTitleEl.classList.toggle("correct-text", isCorrect);
       feedbackTitleEl.classList.toggle("incorrect-text", !isCorrect);
-      feedbackDetailEl.textContent = detailText || "";
+        if (detailText) {
+        feedbackDetailEl.textContent = detailText;
+        feedbackDetailEl.style.display = "block";
+        } else {
+        feedbackDetailEl.textContent = "";
+        feedbackDetailEl.style.display = "none";
+        }
+
       feedbackOverlay.classList.add("visible");
       setTimeout(() => {
         feedbackOverlay.classList.remove("visible");
-      }, 900);
+      }, 2000);
     }
 
     function requestFullscreenIfAvailable() {
@@ -981,13 +1020,15 @@ body.mode-big #app {
         endGame();
         return;
       }
+
       const q = QUESTIONS[currentQuestionIndex];
       questionTextEl.textContent = q.text;
       updateProgress();
 
       isLocked = false;
       answerButtons.forEach(btn => {
-        btn.classList.remove("disabled");
+        // Remove any state from the previous question
+        btn.classList.remove("disabled", "answer-correct", "answer-wrong", "answer-faded");
       });
 
       const order = shuffledIndices(q.answers.length);
@@ -999,6 +1040,8 @@ body.mode-big #app {
       });
     }
 
+
+
     function handleAnswerClick(e) {
       if (isLocked) return;
       isLocked = true;
@@ -1007,11 +1050,15 @@ body.mode-big #app {
       const answerIndex = Number(btn.dataset.answerIndex);
       const q = QUESTIONS[currentQuestionIndex];
 
+      // Stop any more clicks on the answers
       answerButtons.forEach(b => b.classList.add("disabled"));
 
       const isCorrect = answerIndex === q.correctIndex;
 
       if (isCorrect) {
+        // Visually mark the chosen answer as correct
+        btn.classList.add("answer-correct");
+
         streak += 1;
         const earned = 100 * streak;
         score += earned;
@@ -1021,18 +1068,37 @@ body.mode-big #app {
         spawnStarRain(20);
         showFeedback(true, `Streak: ${streak} in a row! +${earned} points`);
       } else {
+        // Incorrect answer:
+        //  - Grey out all 3 wrong answers
+        //  - Keep only the correct one in full color
+
+        answerButtons.forEach(b => {
+          const bIndex = Number(b.dataset.answerIndex);
+          if (bIndex === q.correctIndex) {
+            // This is the correct answer: highlight it
+            b.classList.add("answer-correct");
+            b.classList.remove("answer-faded");
+          } else {
+            // These are wrong answers: fade them out
+            b.classList.add("answer-faded");
+            b.classList.remove("answer-correct");
+          }
+        });
+
         streak = 0;
         updateScoreDisplays();
         playIncorrectSound();
-        const correctText = q.answers[q.correctIndex];
-        showFeedback(false, `Correct answer: ${correctText}`);
+        showFeedback(false, "");
       }
 
+      // Move to the next question after a short pause
       setTimeout(() => {
         currentQuestionIndex += 1;
         loadQuestion();
-      }, 1100);
+      }, 2500);
     }
+
+
 
     function endGame() {
       updateProgress();
