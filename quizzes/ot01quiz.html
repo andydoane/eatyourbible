@@ -70,6 +70,7 @@ body.mode-big #app {
 
 
 
+
     .screen-card {
       background: var(--card-bg);
       width: 100%;
@@ -747,6 +748,7 @@ body.mode-big #app {
        font-size: clamp(1.2rem, 2.4vw, 2.6rem);
     }
 
+    
     /* ---------- FEEDBACK OVERLAY + STARS ---------- */
 
     #feedback-overlay {
@@ -887,6 +889,34 @@ body.mode-big #app {
     0%   { background: rgba(255, 90, 81, 0.25); }
     100% { background: var(--card-bg); }
     }
+
+    /* HIDE CURSOR IN BIG MODE (for all elements) */
+    body.mode-big,
+    body.mode-big * {
+    cursor: none !important;
+    }
+
+
+
+    
+
+    /* CUSTOM BIG POINTER */
+    #big-pointer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 9999;
+    font-size: 3.5rem;
+    pointer-events: none;
+    transform: translate(-38%, -15%);
+    transition: transform 0.04s linear;
+    }
+
+/* DEBUG: temporarily show the real mouse cursor */
+body.show-real-cursor,
+body.show-real-cursor * {
+  cursor: auto !important;
+}
 
 
 
@@ -1030,6 +1060,11 @@ body.mode-big #app {
       </div>
     </div>
   </div>
+
+<div id="big-pointer" class="hidden">👆</div>
+
+<!-- FEEDBACK OVERLAY -->
+
 
   <!-- FEEDBACK OVERLAY -->
     <div id="feedback-overlay">
@@ -1224,6 +1259,19 @@ body.mode-big #app {
 
     const timerRingWrapper = document.querySelector(".timer-ring-wrapper");
 
+    // DEBUG: Hold SHIFT to temporarily show the real cursor
+    document.addEventListener("keydown", (e) => {
+    if (e.key === "Shift") {
+        document.body.classList.add("show-real-cursor");
+    }
+    });
+
+    document.addEventListener("keyup", (e) => {
+    if (e.key === "Shift") {
+        document.body.classList.remove("show-real-cursor");
+    }
+    });
+
 
     const scoreDisplayEl = document.getElementById("score-display");
     const streakDisplayEl = document.getElementById("streak-display");
@@ -1246,6 +1294,9 @@ body.mode-big #app {
     lessonImageEl.src = LESSON_IMAGE_PATH;
     lessonTitleEl.textContent = LESSON_TITLE_TEXT;
     lessonSubtitleEl.textContent = LESSON_SUBTITLE_TEXT;
+
+    const bigPointer = document.getElementById("big-pointer");
+
 
     /***********************
      * AUDIO
@@ -1486,7 +1537,7 @@ body.mode-big #app {
 
 
     function showFeedback(isCorrect, detailText) {
-    feedbackTitleEl.textContent = isCorrect ? "CORRECT" : "INCORRECT";
+    feedbackTitleEl.textContent = isCorrect ? "Correct!" : "Incorrect!";
     feedbackTitleEl.classList.toggle("correct-text", isCorrect);
 
     // Dynamic background reaction (big mode only)
@@ -1544,6 +1595,13 @@ body.mode-big #app {
     function startGame(mode) {
       currentMode = mode;
       body.classList.remove("mode-title", "mode-big", "mode-phone");
+        if (mode === "big") {
+        bigPointer.classList.remove("hidden");
+        } else {
+        bigPointer.classList.add("hidden");
+        }
+
+
       if (mode === "big") {
         body.classList.add("mode-big");
         requestFullscreenIfAvailable();
@@ -1785,6 +1843,16 @@ body.mode-big #app {
       showScreen("title");
       introScreen.classList.remove("intro-fade-out");
     }, 5000);
+
+
+document.addEventListener("mousemove", (e) => {
+  if (!body.classList.contains("mode-big")) return;
+
+  bigPointer.style.left = e.clientX + "px";
+  bigPointer.style.top = e.clientY + "px";
+});
+
+
 
 
   </script>
