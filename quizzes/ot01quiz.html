@@ -93,6 +93,63 @@ body.mode-big #app {
       display: none !important;
     }
 
+    /* ---------- INTRO SCREEN ---------- */
+
+    #intro-screen {
+      background: #000000;
+      color: #ffffff;
+      box-shadow: none;
+    }
+
+    /* Make the whole background black during intro */
+    body.intro-mode {
+    background: #000000 !important;
+    animation: none !important; /* stop the gradient drifting */
+    }
+
+
+    .intro-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 8px;
+    }
+
+    .intro-line {
+      opacity: 0;
+      color: #ffffff;
+    }
+
+    .intro-line-1 {
+      font-size: clamp(1rem, 2.5vw, 1.5rem);
+      font-weight: 400;
+      animation: introFadeIn 0.9s ease-out forwards;
+      animation-delay: 0.2s;
+    }
+
+    .intro-line-2 {
+      font-size: clamp(1.6rem, 4vw, 2.6rem);
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      animation: introFadeIn 0.9s ease-out forwards;
+      animation-delay: 1.0s;
+    }
+
+    @keyframes introFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+
     /* ---------- TITLE SCREEN ---------- */
 
     #title-screen-content {
@@ -584,6 +641,16 @@ body.mode-big #app {
 </head>
 <body class="mode-title">
   <div id="app">
+
+    <!-- INTRO SCREEN -->
+    <div id="intro-screen" class="screen-card">
+      <div class="intro-content">
+        <div class="intro-line intro-line-1">Brought to you by</div>
+        <div class="intro-line intro-line-2">eatyourbible.com</div>
+      </div>
+    </div>
+
+    
     <!-- TITLE SCREEN -->
     <div id="title-screen" class="screen-card">
       <div id="title-screen-content">
@@ -818,9 +885,11 @@ body.mode-big #app {
      ***********************/
     const body = document.body;
 
+    const introScreen = document.getElementById("intro-screen");
     const titleScreen = document.getElementById("title-screen");
     const quizScreen = document.getElementById("quiz-screen");
     const endScreen = document.getElementById("end-screen");
+
 
     const bigScreenBtn = document.getElementById("big-screen-btn");
     const phoneModeBtn = document.getElementById("phone-mode-btn");
@@ -921,10 +990,15 @@ body.mode-big #app {
     }
 
     function showScreen(screenName) {
+      // Hide all screens first
+      introScreen.classList.add("hidden");
       titleScreen.classList.add("hidden");
       quizScreen.classList.add("hidden");
       endScreen.classList.add("hidden");
-      if (screenName === "title") {
+
+      if (screenName === "intro") {
+        introScreen.classList.remove("hidden");
+      } else if (screenName === "title") {
         titleScreen.classList.remove("hidden");
       } else if (screenName === "quiz") {
         quizScreen.classList.remove("hidden");
@@ -932,6 +1006,7 @@ body.mode-big #app {
         endScreen.classList.remove("hidden");
       }
     }
+
 
     function updateScoreDisplays() {
       scoreDisplayEl.textContent = score.toString();
@@ -1151,9 +1226,17 @@ body.mode-big #app {
       showScreen("title");
     });
 
-    // Start on title screen
+    // Start on intro screen, then go to title after 5 seconds
     body.classList.add("mode-title");
+    body.classList.add("intro-mode");   // <<< NEW
+    showScreen("intro");
+
+    setTimeout(() => {
+    body.classList.remove("intro-mode");  // remove black background
     showScreen("title");
+    }, 5000);
+
+
   </script>
 </body>
 </html>
