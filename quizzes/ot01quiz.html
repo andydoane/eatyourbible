@@ -99,12 +99,20 @@ body.mode-big #app {
       background: #000000;
       color: #ffffff;
       box-shadow: none;
+      opacity: 1;
+      transition: opacity 0.9s ease-out;
     }
 
-    /* Make the whole background black during intro */
+    /* When this class is added, the intro screen fades away */
+    #intro-screen.intro-fade-out {
+      opacity: 0;
+    }
+
+
+     /* Make the whole background black during intro */
     body.intro-mode {
-    background: #000000 !important;
-    animation: none !important; /* stop the gradient drifting */
+      background: #000000 !important;
+      animation: none !important; /* stop the gradient drifting */
     }
 
 
@@ -645,7 +653,7 @@ body.mode-big #app {
     <!-- INTRO SCREEN -->
     <div id="intro-screen" class="screen-card">
       <div class="intro-content">
-        <div class="intro-line intro-line-1">Brought to you by</div>
+        <div class="intro-line intro-line-1">Presented by</div>
         <div class="intro-line intro-line-2">eatyourbible.com</div>
       </div>
     </div>
@@ -1226,14 +1234,21 @@ body.mode-big #app {
       showScreen("title");
     });
 
-    // Start on intro screen, then go to title after 5 seconds
+    // Start on intro screen with full black background
     body.classList.add("mode-title");
-    body.classList.add("intro-mode");   // <<< NEW
+    body.classList.add("intro-mode");
     showScreen("intro");
 
+    // After 4 seconds, start fading out the intro
     setTimeout(() => {
-    body.classList.remove("intro-mode");  // remove black background
-    showScreen("title");
+      introScreen.classList.add("intro-fade-out");
+    }, 4000);
+
+    // After 5 seconds total, remove intro and show the title screen
+    setTimeout(() => {
+      body.classList.remove("intro-mode");
+      showScreen("title");
+      introScreen.classList.remove("intro-fade-out");
     }, 5000);
 
 
