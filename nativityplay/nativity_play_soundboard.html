@@ -579,11 +579,13 @@
         const file = button.dataset.audioFile;
         const fadeButton = fadeButtons[index];
 
-        const sound = new Howl({
-          src: ["sounds/" + file],
-          preload: true,
-          volume: 1
-        });
+            const sound = new Howl({
+            src: ["sounds/" + file],
+            preload: true,
+            html5: true,
+            volume: 1
+            });
+
 
         const track = {
           button,
