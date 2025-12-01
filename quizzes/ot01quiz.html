@@ -1081,9 +1081,14 @@ body.show-real-cursor * {
         <div class="intro-line intro-line-2">eatyourbible.com</div>
 
         <!-- Load Quiz button -->
-        <button id="load-quiz-btn" class="primary-button" style="margin-top: 20px;">
+        <button
+        id="load-quiz-btn"
+        class="primary-button"
+        style="margin-top: 20px; opacity: 0.5; pointer-events: none;"
+        >
         Load Quiz
         </button>
+
     </div>
     </div>
 
@@ -1381,8 +1386,11 @@ body.show-real-cursor * {
     let isLocked = false;
 
     let audioCtx = null;
+    let chompAudio = null;      // NEW: shared audio object for the chomp
+    let isChompReady = false;   // NEW: tracks whether it's fully loaded
 
     const TIMER_DURATION = 30;
+
     const TIMER_RADIUS = 54;
     const TIMER_CIRCUMFERENCE = 2 * Math.PI * TIMER_RADIUS;
 
@@ -1479,6 +1487,28 @@ const NEUTRAL_EMOJIS = [
     lessonSubtitleEl.textContent = LESSON_SUBTITLE_TEXT;
 
     const bigPointer = document.getElementById("big-pointer");
+    // PRELOAD CHOMP SOUND
+    chompAudio = new Audio("quizsounds/sound_chomp.mp3");
+    chompAudio.preload = "auto";
+
+    // Start in "not ready" state – keep button dim/unclickable
+    if (loadQuizBtn) {
+    loadQuizBtn.style.opacity = "0.5";
+    loadQuizBtn.style.pointerEvents = "none";
+    }
+
+    // When the sound is fully buffered and can play through smoothly:
+    chompAudio.addEventListener("canplaythrough", () => {
+    isChompReady = true;
+    if (loadQuizBtn) {
+        loadQuizBtn.style.opacity = "1";
+        loadQuizBtn.style.pointerEvents = "auto";
+    }
+    });
+
+    // Kick off loading
+    chompAudio.load();
+
 
 
     /***********************
@@ -1532,17 +1562,17 @@ const NEUTRAL_EMOJIS = [
     }
 
     function playChompSound() {
-    // Only play if sounds are enabled
-    if (!soundEnabled) return;
+    // Only play if sounds are enabled and the audio is ready
+    if (!soundEnabled || !chompAudio || !isChompReady) return;
 
     try {
-        const chomp = new Audio("quizsounds/sound_chomp.mp3");
-        chomp.currentTime = 0; // start from the beginning
-        chomp.play();
+        chompAudio.currentTime = 0; // always start at beginning
+        chompAudio.play();
     } catch (e) {
         console.warn("Could not play chomp sound", e);
     }
     }
+
 
 
 
