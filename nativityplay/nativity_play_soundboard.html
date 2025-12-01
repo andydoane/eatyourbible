@@ -35,7 +35,6 @@
       padding: 0;               /* let the card use more of the screen */
     }
 
-
     .soundboard {
       width: 85vw;   /* 85% of viewport width */
       height: 85vh;  /* 85% of viewport height */
@@ -51,7 +50,6 @@
       border: 1px solid rgba(148, 163, 184, 0.25);
       backdrop-filter: blur(22px);
     }
-
 
     @media (min-width: 640px) {
       .soundboard {
@@ -76,7 +74,6 @@
       color: var(--muted);
     }
 
-
     .subtitle strong {
       color: var(--accent);
       font-weight: 600;
@@ -85,15 +82,8 @@
     .tracks {
       margin-top: 2rem;
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); /* larger cards */
+      grid-template-columns: repeat(3, minmax(0, 1fr)); /* fixed 3-column grid */
       gap: 1.5rem;
-    }
-
-
-    @media (min-width: 900px) {
-      .tracks {
-        grid-template-columns: repeat(3, minmax(0, 1fr));
-      }
     }
 
     .track {
@@ -108,7 +98,6 @@
       position: relative;
       overflow: hidden;
     }
-
 
     .track::before {
       content: "";
@@ -134,7 +123,6 @@
       color: var(--muted);
       opacity: 0.9;
     }
-
 
     .track-header span:nth-child(2) {
       font-weight: 600;
@@ -172,11 +160,9 @@
       font-size: 1.4rem;       /* bigger text/emoji */
       background: radial-gradient(circle at top, rgba(255, 255, 255, 0.9), transparent 60%),
                   linear-gradient(135deg, #ffffff, #e5e7eb);
-
       color: #0f172a;
       box-shadow: 0 10px 18px rgba(15, 23, 42, 0.65);
     }
-
 
     .play-button span {
       display: inline-flex;
@@ -193,19 +179,17 @@
       font-size: 1.6em;
     }
 
-
     .fade-button {
       padding: 0.85rem 0.9rem; /* bigger target */
-      font-size: 0.9rem;
+      font-size: 1.1rem;
       text-transform: uppercase;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.12em;
       background: rgba(15, 23, 42, 0.95);
       color: var(--muted);
       border-radius: 999px;
       border: 1px solid rgba(148, 163, 184, 0.7);
       min-width: 88px;
     }
-
 
     .play-button:active,
     .fade-button:active {
@@ -232,13 +216,25 @@
       opacity: 0.7;
     }
 
+    /* Global fade card: spans 2 columns on the last row */
+    .fade-card {
+      grid-column: span 2;
+    }
+
+    .fade-card .buttons {
+      justify-content: flex-end;
+    }
+
+    .fade-card .fade-button {
+      flex: 1; /* fill the whole width of the card (two columns) */
+    }
+
     .hint {
       margin-top: 1.5rem;
       font-size: 0.95rem;
       color: var(--muted);
       text-align: center;
     }
-
 
     .hint strong {
       color: var(--accent);
@@ -251,8 +247,8 @@
     <header>
       <h1>Nativity Play Soundboard</h1>
       <p class="subtitle">
-        Tap a track to play. 
-        Press <strong>Fade</strong> to gently fade out the current track.
+        Tap a track to play. Only one track plays at a time.
+        Use the large <strong>Fade</strong> button to gently fade out the current track.
       </p>
     </header>
 
@@ -262,6 +258,7 @@
         The filenames must match the ones in your /sounds folder.
       -->
 
+      <!-- Row 1: 1–3 -->
       <article class="track">
         <div class="track-header">
           <span>Track</span>
@@ -279,7 +276,6 @@
               <span class="emoji">🪽</span>
             </span>
           </button>
-          <button type="button" class="fade-button">Fade</button>
         </div>
       </article>
 
@@ -300,7 +296,6 @@
               <span class="emoji">🎺</span>
             </span>
           </button>
-          <button type="button" class="fade-button">Fade</button>
         </div>
       </article>
 
@@ -321,10 +316,10 @@
               <span class="emoji">🌙</span>
             </span>
           </button>
-          <button type="button" class="fade-button">Fade</button>
         </div>
       </article>
 
+      <!-- Row 2: 4–6 -->
       <article class="track">
         <div class="track-header">
           <span>Track</span>
@@ -342,7 +337,6 @@
               <span class="emoji">🔔</span>
             </span>
           </button>
-          <button type="button" class="fade-button">Fade</button>
         </div>
       </article>
 
@@ -363,7 +357,6 @@
               <span class="emoji">🐮</span>
             </span>
           </button>
-          <button type="button" class="fade-button">Fade</button>
         </div>
       </article>
 
@@ -384,10 +377,10 @@
               <span class="emoji">🐑</span>
             </span>
           </button>
-          <button type="button" class="fade-button">Fade</button>
         </div>
       </article>
 
+      <!-- Row 3: 7–9 -->
       <article class="track">
         <div class="track-header">
           <span>Track</span>
@@ -405,7 +398,6 @@
               <span class="emoji">😇</span>
             </span>
           </button>
-          <button type="button" class="fade-button">Fade</button>
         </div>
       </article>
 
@@ -426,7 +418,6 @@
               <span class="emoji">🏃‍♂️</span>
             </span>
           </button>
-          <button type="button" class="fade-button">Fade</button>
         </div>
       </article>
 
@@ -447,10 +438,10 @@
               <span class="emoji">👑</span>
             </span>
           </button>
-          <button type="button" class="fade-button">Fade</button>
         </div>
       </article>
 
+      <!-- Row 4: 10–12 -->
       <article class="track">
         <div class="track-header">
           <span>Track</span>
@@ -468,7 +459,6 @@
               <span class="emoji">👶</span>
             </span>
           </button>
-          <button type="button" class="fade-button">Fade</button>
         </div>
       </article>
 
@@ -489,7 +479,6 @@
               <span class="emoji">🌛</span>
             </span>
           </button>
-          <button type="button" class="fade-button">Fade</button>
         </div>
       </article>
 
@@ -510,11 +499,47 @@
               <span class="emoji">❌</span>
             </span>
           </button>
-          <button type="button" class="fade-button">Fade</button>
+        </div>
+      </article>
+
+      <!-- Row 5: Track 13 + big Fade card spanning 2 columns -->
+      <article class="track">
+        <div class="track-header">
+          <span>Track</span>
+          <span>#13</span>
+        </div>
+        <div class="buttons">
+          <button
+            type="button"
+            class="play-button"
+            data-audio-file="NP_1_4_Track_13.mp3"
+            aria-label="Play track 13"
+          >
+            <span>
+              <span class="track-id">#13</span>
+              <span class="emoji">👶😭</span>
+            </span>
+          </button>
+        </div>
+      </article>
+
+      <article class="track fade-card">
+        <div class="track-header">
+          <span>Fade</span>
+          <span>&nbsp;</span>
+        </div>
+        <div class="buttons">
+          <button
+            type="button"
+            id="global-fade-button"
+            class="fade-button"
+            aria-label="Fade out current track"
+          >
+            Fade
+          </button>
         </div>
       </article>
     </section>
-
   </main>
 
   <!-- Howler.js for cross-platform audio handling -->
@@ -524,10 +549,10 @@
     // Soundboard using Howler.js
     // - One Howl per track
     // - Only one track plays at a time
-    // - Fade button smoothly fades out the currently playing track
-    //   WITHOUT popping back to full volume at the end.
+    // - One global Fade button that fades out the currently playing track
 
     const tracks = [];
+    let globalFadeButton = null;
 
     function getCurrentTrack() {
       for (const track of tracks) {
@@ -545,11 +570,13 @@
           track.playingId = null;
           track.isFading = false;
           track.button.classList.remove("is-playing");
-          track.fadeButton.classList.remove("is-fading");
-          // Volume reset is safe here because the sound is stopped
           track.sound.volume(1);
         }
       });
+
+      if (globalFadeButton) {
+        globalFadeButton.classList.remove("is-fading");
+      }
     }
 
     function fadeOutCurrentTrack() {
@@ -557,12 +584,14 @@
       if (!track) return;
       if (track.isFading || track.playingId === null) return;
 
-      const { sound, playingId, fadeButton, button } = track;
+      const { sound, playingId, button } = track;
 
       if (!sound.playing(playingId)) return;
 
       track.isFading = true;
-      fadeButton.classList.add("is-fading");
+      if (globalFadeButton) {
+        globalFadeButton.classList.add("is-fading");
+      }
 
       const currentVolume = sound.volume(playingId);
       const durationMs = 2500;
@@ -571,8 +600,6 @@
       sound.fade(currentVolume, 0, durationMs, playingId);
 
       // After the fade duration, stop the sound and clear state.
-      // IMPORTANT: we do NOT bump the volume back to 1 here,
-      // to avoid any last-split-second blip.
       setTimeout(() => {
         // If this track has been restarted or changed, don't touch it.
         if (track.playingId !== playingId) return;
@@ -580,19 +607,20 @@
         sound.stop(playingId);
         track.playingId = null;
         track.isFading = false;
-        fadeButton.classList.remove("is-fading");
+        if (globalFadeButton) {
+          globalFadeButton.classList.remove("is-fading");
+        }
         button.classList.remove("is-playing");
-        // We leave volume at 0. It will be reset to 1 next time the user presses Play.
+        // Volume will be reset to 1 next time before play
       }, durationMs + 100);
     }
 
     document.addEventListener("DOMContentLoaded", () => {
       const playButtons = document.querySelectorAll(".play-button");
-      const fadeButtons = document.querySelectorAll(".fade-button");
+      globalFadeButton = document.getElementById("global-fade-button");
 
-      playButtons.forEach((button, index) => {
+      playButtons.forEach((button) => {
         const file = button.dataset.audioFile;
-        const fadeButton = fadeButtons[index];
 
         const sound = new Howl({
           src: ["sounds/" + file],
@@ -602,7 +630,6 @@
 
         const track = {
           button,
-          fadeButton,
           sound,
           playingId: null,
           isFading: false
@@ -612,15 +639,15 @@
 
         // PLAY BUTTON
         button.addEventListener("click", () => {
-          const { sound } = track;
-
           // If this track is already playing, stop it
           if (track.playingId !== null && sound.playing(track.playingId)) {
             sound.stop(track.playingId);
             track.playingId = null;
             track.isFading = false;
             button.classList.remove("is-playing");
-            fadeButton.classList.remove("is-fading");
+            if (globalFadeButton) {
+              globalFadeButton.classList.remove("is-fading");
+            }
             sound.volume(1); // safe after stop
             return;
           }
@@ -629,7 +656,9 @@
           stopAllExcept(track);
 
           track.isFading = false;
-          fadeButton.classList.remove("is-fading");
+          if (globalFadeButton) {
+            globalFadeButton.classList.remove("is-fading");
+          }
 
           // Make sure volume is back to 1 before playing (it might be 0 after a fade)
           sound.volume(1);
@@ -645,16 +674,19 @@
             track.playingId = null;
             track.isFading = false;
             button.classList.remove("is-playing");
-            fadeButton.classList.remove("is-fading");
+            if (globalFadeButton) {
+              globalFadeButton.classList.remove("is-fading");
+            }
             sound.volume(1);
           });
         });
+      });
 
-        // FADE BUTTON
-        fadeButton.addEventListener("click", () => {
+      if (globalFadeButton) {
+        globalFadeButton.addEventListener("click", () => {
           fadeOutCurrentTrack();
         });
-      });
+      }
     });
   </script>
 </body>
