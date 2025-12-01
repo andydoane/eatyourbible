@@ -656,7 +656,7 @@ body.mode-big #app {
       filter: none;
     }
 
-    /* New: visual states for correct / wrong answers */
+    /* Visual states for correct / wrong answers */
     .answer-button.answer-correct {
     box-shadow:
         0 0 0 3px rgba(255, 255, 255, 1);  /* clean white outline */
@@ -724,7 +724,7 @@ body.mode-big #app {
     body.mode-big .answer-button {
     font-size: clamp(1.2rem, 2.4vw, 2.6rem);
 
-    /* NEW: make the button 94% of its grid cell (≈47% of the whole area) */
+    /* Make the button 94% of its grid cell (≈47% of the whole area) */
     width: 94%;
     height: 94%;
     }
@@ -760,7 +760,7 @@ body.mode-big #app {
     body.mode-big .answers-grid {
     grid-auto-rows: 1fr;
 
-    /* NEW: center the smaller buttons in their cells */
+    /* Center the smaller buttons in their cells */
     justify-items: center;
     align-items: center;
     }
@@ -774,11 +774,11 @@ body.mode-big #app {
 
     body.mode-phone .question-panel {
     flex: 0 0 auto;
-    display: block;       /* NEW: stop using flex here on phone */
+    display: block;       /* Stop using flex here on phone */
     }
 
     body.mode-phone .question-layout {
-    width: 100%;          /* NEW: make the layout span full width */
+    width: 100%;          /* Make the layout span full width */
     }
 
 
@@ -886,7 +886,7 @@ body.mode-big #app {
     text-align: center;
     max-width: 90%;
 
-    /* NEW → wider popup */
+    /* Wider popup */
     min-width: 300px;     
 
     /* small visual lift for big screens */
@@ -1080,7 +1080,7 @@ body.show-real-cursor * {
         <div class="intro-line intro-line-1">Presented by</div>
         <div class="intro-line intro-line-2">eatyourbible.com</div>
 
-        <!-- NEW: Load Quiz button -->
+        <!-- Load Quiz button -->
         <button id="load-quiz-btn" class="primary-button" style="margin-top: 20px;">
         Load Quiz
         </button>
@@ -1236,7 +1236,7 @@ body.show-real-cursor * {
         <div id="feedback-title" class="feedback-title">CORRECT</div>
         <div id="feedback-detail" class="feedback-detail"></div>
 
-        <!-- NEW BUTTON (big-screen only) -->
+        <!-- BUTTON (big-screen only) -->
         <button id="next-question-btn" class="primary-button hidden" style="margin-top:14px; pointer-events:auto;">
         Next Question
         </button>
@@ -2084,7 +2084,7 @@ const NEUTRAL_EMOJIS = [
     body.classList.add("intro-mode");
     showScreen("intro");
 
-    // NEW: handle Load Quiz button click
+    // Handle Load Quiz button click
     if (loadQuizBtn) {
     loadQuizBtn.addEventListener("click", () => {
         // Prevent double-clicks
@@ -2098,17 +2098,21 @@ const NEUTRAL_EMOJIS = [
         // Play chomp sound – this is allowed because it happens on a click
         playChompSound();
 
+        // Wait 0.5 seconds before starting the fade
+        setTimeout(() => {
         // Start fading out the intro screen
         introScreen.classList.add("intro-fade-out");
+        }, 500);
 
-        // After the fade (0.9s in CSS), show the title screen
+        // After 0.5s delay + 1.0s fade = 1.5s total, show the title screen
         setTimeout(() => {
         body.classList.remove("intro-mode");
         showScreen("title");
         introScreen.classList.remove("intro-fade-out");
-        }, 1000);
+        }, 1500);
     });
     }
+
 
 
 
