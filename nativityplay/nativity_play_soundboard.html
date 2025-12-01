@@ -162,8 +162,9 @@
       flex: 1;
       padding: 0.7rem 0.9rem;
       font-size: 1rem;
-      background: #ffffff;
-      color: #111827;
+      background: radial-gradient(circle at top, rgba(251, 191, 36, 0.25), transparent 60%),
+                  linear-gradient(135deg, #facc15, #fb923c);
+      color: #0f172a;
       box-shadow: 0 10px 18px rgba(15, 23, 42, 0.65);
     }
 
@@ -237,7 +238,7 @@
     <header>
       <h1>Nativity Play Soundboard</h1>
       <p class="subtitle">
-        Tap a track to play.
+        Tap a track to play. Only one track plays at a time.
         Press <strong>Fade</strong> to gently fade out the current track.
       </p>
     </header>
@@ -262,7 +263,7 @@
           >
             <span>
               <span class="track-id">#01</span>
-              <span class="emoji">🪽</span>
+              <span class="emoji">✨</span>
             </span>
           </button>
           <button type="button" class="fade-button">Fade</button>
@@ -304,7 +305,7 @@
           >
             <span>
               <span class="track-id">#03</span>
-              <span class="emoji">🌛</span>
+              <span class="emoji">💫</span>
             </span>
           </button>
           <button type="button" class="fade-button">Fade</button>
@@ -346,7 +347,7 @@
           >
             <span>
               <span class="track-id">#05</span>
-              <span class="emoji">🐮</span>
+              <span class="emoji">🐄</span>
             </span>
           </button>
           <button type="button" class="fade-button">Fade</button>
@@ -367,7 +368,7 @@
           >
             <span>
               <span class="track-id">#06</span>
-              <span class="emoji">🐑</span>
+              <span class="emoji">🚶‍♂️</span>
             </span>
           </button>
           <button type="button" class="fade-button">Fade</button>
@@ -493,13 +494,18 @@
           >
             <span>
               <span class="track-id">#12</span>
-              <span class="emoji">💬</span>
+              <span class="emoji">⚡</span>
             </span>
           </button>
           <button type="button" class="fade-button">Fade</button>
         </div>
       </article>
     </section>
+
+    <p class="hint">
+      You can edit the emoji for each track directly in this HTML file.
+      Just change the <strong>emoji</strong> span text.
+    </p>
   </main>
 
   <!-- Howler.js for cross-platform audio handling -->
@@ -579,13 +585,11 @@
         const file = button.dataset.audioFile;
         const fadeButton = fadeButtons[index];
 
-            const sound = new Howl({
-            src: ["sounds/" + file],
-            preload: true,
-            html5: true,
-            volume: 1
-            });
-
+        const sound = new Howl({
+          src: ["sounds/" + file],
+          preload: true,
+          volume: 1
+        });
 
         const track = {
           button,
