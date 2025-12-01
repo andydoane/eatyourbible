@@ -508,110 +508,72 @@
     </p>
   </main>
 
+  <!-- 1) Howler.js library (handles audio + fades across browsers, including iPad) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
+
+  <!-- 2) Your soundboard logic, built on top of Howler -->
   <script>
-    // Web Audio–based soundboard:
-    // - One HTMLAudioElement per track
-    // - Single AudioContext + GainNode (volume knob) per track
-    // - Any "Fade" button fades the currently playing track
-    //   in a way that works properly on iPad/iPhone
+    // Each track will use a Howler.js sound.
+    // - Only one track plays at a time.
+    // - Any "Fade" button fades out the currently playing track smoothly.
 
     const tracks = [];
-    let audioContext = null;
-
-    function ensureAudioContext() {
-      if (!audioContext) {
-        const Ctx = window.AudioContext || window.webkitAudioContext;
-        if (!Ctx) {
-          console.warn("Web Audio API not supported; fades may not work.");
-          return null;
-        }
-        audioContext = new Ctx();
-      }
-      if (audioContext.state === "suspended") {
-        audioContext.resume();
-      }
-      return audioContext;
-    }
-
-    function stopAllExcept(exceptTrack) {
-      const ctx = audioContext;
-      tracks.forEach(track => {
-        if (track !== exceptTrack) {
-          const a = track.audio;
-
-          if (!a.paused || a.currentTime > 0) {
-            a.pause();
-            a.currentTime = 0;
-          }
-
-          if (track.fadeTimeoutId !== null) {
-            clearTimeout(track.fadeTimeoutId);
-            track.fadeTimeoutId = null;
-          }
-
-          if (ctx && track.gainNode) {
-            const now = ctx.currentTime;
-            track.gainNode.gain.cancelScheduledValues(now);
-            track.gainNode.gain.setValueAtTime(1, now);
-          }
-
-          track.isFading = false;
-          track.button.classList.remove("is-playing");
-          track.fadeButton.classList.remove("is-fading");
-        }
-      });
-    }
 
     function getCurrentTrack() {
-      for (let i = 0; i < tracks.length; i++) {
-        const track = tracks[i];
-        const a = track.audio;
-        if (!a.paused && !a.ended && a.currentTime > 0) {
+      for (const track of tracks) {
+        if (track.playingId !== null && track.sound.playing(track.playingId)) {
           return track;
         }
       }
       return null;
     }
 
+    function stopAllExcept(trackToKeep) {
+      tracks.forEach(track => {
+        if (track !== trackToKeep && track.playingId !== null) {
+          track.sound.stop(track.playingId);
+          track.playingId = null;
+          track.isFading = false;
+          track.button.classList.remove("is-playing");
+          track.fadeButton.classList.remove("is-fading");
+          // Reset volume for next time
+          track.sound.volume(1);
+        }
+      });
+    }
+
     function fadeOutCurrentTrack() {
       const track = getCurrentTrack();
       if (!track) return;
+      if (track.isFading || track.playingId === null) return;
 
-      const ctx = ensureAudioContext();
-      if (!ctx || !track.gainNode) return;
+      const { sound, playingId, fadeButton, button } = track;
 
-      if (track.isFading) return; // already fading
+      if (!sound.playing(playingId)) return;
 
       track.isFading = true;
-      track.fadeButton.classList.add("is-fading");
+      fadeButton.classList.add("is-fading");
 
-      const gainNode = track.gainNode;
-      const now = ctx.currentTime;
-      const fadeDuration = 2.5; // seconds
+      const currentVolume = sound.volume(playingId);
+      const durationMs = 2500;
 
-      // Cancel any existing automation and start from current value
-      gainNode.gain.cancelScheduledValues(now);
-      const currentGain = gainNode.gain.value;
-      gainNode.gain.setValueAtTime(currentGain, now);
-      gainNode.gain.linearRampToValueAtTime(0, now + fadeDuration);
+      // Set up a one-time handler for when fade completes
+      const onFade = (id) => {
+        if (id !== playingId) return;
+        sound.off("fade", onFade);
 
-      if (track.fadeTimeoutId !== null) {
-        clearTimeout(track.fadeTimeoutId);
-      }
-
-      track.fadeTimeoutId = window.setTimeout(() => {
-        track.audio.pause();
-        track.audio.currentTime = 0;
-        track.button.classList.remove("is-playing");
-        track.fadeButton.classList.remove("is-fading");
+        sound.stop(id);
+        track.playingId = null;
         track.isFading = false;
+        fadeButton.classList.remove("is-fading");
+        button.classList.remove("is-playing");
 
-        const resetTime = ctx.currentTime + 0.05;
-        gainNode.gain.cancelScheduledValues(resetTime);
-        gainNode.gain.setValueAtTime(1, resetTime);
+        // Reset volume for the next play
+        sound.volume(1);
+      };
 
-        track.fadeTimeoutId = null;
-      }, fadeDuration * 1000 + 120);
+      sound.on("fade", onFade);
+      sound.fade(currentVolume, 0, durationMs, playingId);
     }
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -620,121 +582,64 @@
 
       playButtons.forEach((button, index) => {
         const file = button.dataset.audioFile;
-        const audio = new Audio("sounds/" + file);
-        audio.preload = "auto";
+        const fadeButton = fadeButtons[index];
+
+        // Create a Howler sound for this track
+        const sound = new Howl({
+          src: ["sounds/" + file],
+          preload: true,
+          volume: 1
+          // We let Howler choose Web Audio vs HTML5 internally.
+          // It handles iOS/iPad quirks for us.
+        });
 
         const track = {
           button,
-          audio,
-          fadeButton: fadeButtons[index],
-          gainNode: null,
-          isFading: false,
-          fadeTimeoutId: null
+          fadeButton,
+          sound,
+          playingId: null,
+          isFading: false
         };
 
         tracks.push(track);
 
+        // PLAY BUTTON
         button.addEventListener("click", () => {
-          const ctx = ensureAudioContext();
-          if (!ctx) {
-            // If Web Audio isn't available, just do normal play/stop without fades.
-            console.warn("No AudioContext available.");
-          }
-
-          // Lazily create Web Audio nodes the first time we play this track
-          if (ctx && !track.gainNode) {
-            try {
-              const source = ctx.createMediaElementSource(audio);
-              const gainNode = ctx.createGain();
-              gainNode.gain.setValueAtTime(1, ctx.currentTime);
-              source.connect(gainNode).connect(ctx.destination);
-              track.gainNode = gainNode;
-            } catch (e) {
-              console.warn("Error creating Web Audio nodes:", e);
-            }
-          }
-
-          const a = track.audio;
-
           // If this track is already playing, stop it
-          if (!a.paused && !a.ended && a.currentTime > 0) {
-            a.pause();
-            a.currentTime = 0;
-            track.button.classList.remove("is-playing");
-            track.fadeButton.classList.remove("is-fading");
+          if (track.playingId !== null && sound.playing(track.playingId)) {
+            sound.stop(track.playingId);
+            track.playingId = null;
             track.isFading = false;
-
-            if (track.fadeTimeoutId !== null) {
-              clearTimeout(track.fadeTimeoutId);
-              track.fadeTimeoutId = null;
-            }
-
-            if (ctx && track.gainNode) {
-              const now = ctx.currentTime;
-              track.gainNode.gain.cancelScheduledValues(now);
-              track.gainNode.gain.setValueAtTime(1, now);
-            }
-
+            button.classList.remove("is-playing");
+            fadeButton.classList.remove("is-fading");
+            sound.volume(1);
             return;
           }
 
-          // Otherwise, stop all other tracks and start this one fresh
+          // Start this track: stop all others first
           stopAllExcept(track);
 
-          if (ctx && track.gainNode) {
-            const now = ctx.currentTime;
-            track.gainNode.gain.cancelScheduledValues(now);
-            track.gainNode.gain.setValueAtTime(1, now);
-          }
-
           track.isFading = false;
-          if (track.fadeTimeoutId !== null) {
-            clearTimeout(track.fadeTimeoutId);
-            track.fadeTimeoutId = null;
-          }
-          track.fadeButton.classList.remove("is-fading");
+          fadeButton.classList.remove("is-fading");
 
-          a.currentTime = 0;
+          const id = sound.play();
+          track.playingId = id;
+          button.classList.add("is-playing");
 
-          const playPromise = a.play();
-          if (playPromise && typeof playPromise.then === "function") {
-            playPromise
-              .then(() => {
-                track.button.classList.add("is-playing");
-              })
-              .catch(err => {
-                console.error("Playback failed:", err);
-              });
-          } else {
-            track.button.classList.add("is-playing");
-          }
+          // When this sound ends naturally
+          sound.off("end");
+          sound.on("end", (endedId) => {
+            if (endedId !== track.playingId) return;
+            track.playingId = null;
+            track.isFading = false;
+            button.classList.remove("is-playing");
+            fadeButton.classList.remove("is-fading");
+            sound.volume(1);
+          });
         });
 
-        // When a track ends naturally
-        audio.addEventListener("ended", () => {
-          track.button.classList.remove("is-playing");
-          track.fadeButton.classList.remove("is-fading");
-          track.isFading = false;
-
-          if (track.fadeTimeoutId !== null) {
-            clearTimeout(track.fadeTimeoutId);
-            track.fadeTimeoutId = null;
-          }
-
-          if (audioContext && track.gainNode) {
-            const now = audioContext.currentTime;
-            track.gainNode.gain.cancelScheduledValues(now);
-            track.gainNode.gain.setValueAtTime(1, now);
-          }
-
-          audio.currentTime = 0;
-        });
-      });
-
-      // Every Fade button acts on whichever track is currently playing
-      fadeButtons.forEach(btn => {
-        btn.addEventListener("click", () => {
-          ensureAudioContext();
+        // FADE BUTTON
+        fadeButton.addEventListener("click", () => {
           fadeOutCurrentTrack();
         });
       });
