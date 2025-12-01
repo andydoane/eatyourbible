@@ -598,22 +598,37 @@ body.mode-big #app {
     }
 
     .answer-button {
-      width: 100%;
-      border-radius: var(--button-radius);
-      border: 3px solid rgba(255, 255, 255, 0.9);
-      cursor: pointer;
-      font-weight: 600;
-      text-align: center;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 10px 24px rgba(15,23,42,0.3);
-      transition: transform 0.08s ease,
-                  box-shadow 0.08s ease,
-                  filter 0.08s ease,
-                  border-color 0.08s ease;
-      padding: 14px 16px;
+    position: relative;          /* ← add this line */
+    width: 100%;
+    border-radius: var(--button-radius);
+    border: 3px solid rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+    font-weight: 600;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 24px rgba(15,23,42,0.3);
+    transition: transform 0.08s ease,
+                box-shadow 0.08s ease,
+                filter 0.08s ease,
+                border-color 0.08s ease;
+    padding: 14px 16px;
     }
+
+    .answer-key-hint {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.85);
+    color: #111827;
+    padding: 2px 6px;
+    border-radius: 999px;
+    pointer-events: none; /* so clicks go to the button, not the badge */
+    }
+
 
     .answer-button:hover {
       transform: translateY(-1px);
@@ -1142,20 +1157,25 @@ body.show-real-cursor * {
 
 
         <div class="answers-panel">
-          <div class="answers-grid" id="answers-grid">
+            <div class="answers-grid" id="answers-grid">
             <button class="answer-button color-red" data-button-index="0">
-              <span class="answer-text"></span>
+                <span class="answer-key-hint">1</span>
+                <span class="answer-text"></span>
             </button>
             <button class="answer-button color-yellow" data-button-index="1">
-              <span class="answer-text"></span>
+                <span class="answer-key-hint">2</span>
+                <span class="answer-text"></span>
             </button>
             <button class="answer-button color-blue" data-button-index="2">
-              <span class="answer-text"></span>
+                <span class="answer-key-hint">3</span>
+                <span class="answer-text"></span>
             </button>
             <button class="answer-button color-green" data-button-index="3">
-              <span class="answer-text"></span>
+                <span class="answer-key-hint">4</span>
+                <span class="answer-text"></span>
             </button>
-          </div>
+            </div>
+
 
           <div class="score-row">
             <span>Score: <strong id="score-display">0</strong></span>
@@ -1966,6 +1986,36 @@ const NEUTRAL_EMOJIS = [
     answerButtons.forEach(btn => {
       btn.addEventListener("click", handleAnswerClick);
     });
+
+    // Keyboard controls: 1, 2, 3, 4 to choose the answers
+    document.addEventListener("keydown", (e) => {
+    // Only react when the quiz screen is visible
+    if (quizScreen.classList.contains("hidden")) return;
+
+    // If feedback overlay is up (Correct/Incorrect popup), ignore number keys
+    if (feedbackOverlay.classList.contains("visible")) return;
+
+    // If the question is already locked, ignore further input
+    if (isLocked) return;
+
+    const key = e.key; // this will be "1", "2", "3", "4", etc.
+
+    // Map keys "1"–"4" to button indices 0–3
+    let index = null;
+    if (key === "1") index = 0;
+    else if (key === "2") index = 1;
+    else if (key === "3") index = 2;
+    else if (key === "4") index = 3;
+
+    if (index === null) return; // some other key pressed
+
+    const btn = answerButtons[index];
+    if (!btn) return;
+
+    // Simulate a click on that button
+    btn.click();
+    });
+
 
     soundToggleBtn.addEventListener("click", () => {
       soundEnabled = !soundEnabled;
