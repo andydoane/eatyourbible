@@ -1,1 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Nativity Play Soundboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
+  <style>
+    :root {
+      --bg: #050814;
+      --bg-card: rgba(15, 25, 50, 0.98);
+      --accent: #fbbf24;
+      --accent-soft: rgba(251, 191, 36, 0.12);
+      --text: #f9fafb;
+      --muted: #9ca3af;
+      --danger: #f97373;
+      --radius-lg: 16px;
+      --radius-xl: 22px;
+      --shadow-soft: 0 18px 35px rgba(0, 0, 0, 0.40);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #1e293b 0, #020617 45%, #000 100%);
+      color: var(--text);
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      padding: 1.75rem 1.25rem;
+    }
+
+    .soundboard {
+      width: 100%;
+      max-width: 980px;
+      margin: auto;
+      background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 50%),
+                  radial-gradient(circle at bottom right, rgba(251, 191, 36, 0.15), transparent 55%),
+                  var(--bg-card);
+      border-radius: 24px;
+      padding: 1.75rem 1.25rem 1.5rem;
+      box-shadow: var(--shadow-soft);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      backdrop-filter: blur(22px);
+    }
+
+    @media (min-width: 640px) {
+      .soundboard {
+        padding: 2.25rem 2.25rem 2rem;
+      }
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 1.75rem;
+    }
+
+    header h1 {
+      margin: 0 0 0.4rem;
+      font-size: clamp(1.6rem, 3.2vw, 2.2rem);
+      letter-spacing: 0.03em;
+    }
+
+    .subtitle {
+      margin: 0;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .subtitle strong {
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    .tracks {
+      margin-top: 1.75rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 1rem;
+    }
+
+    @media (min-width: 900px) {
+      .tracks {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    .track {
+      background: radial-gradient(circle at top, var(--accent-soft), transparent 70%),
+                  rgba(15, 23, 42, 0.96);
+      border-radius: var(--radius-lg);
+      padding: 0.85rem 0.9rem 0.85rem;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .track::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at top left, rgba(248, 250, 252, 0.06), transparent 60%);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease-out;
+    }
+
+    .track:hover::before {
+      opacity: 1;
+    }
+
+    .track-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      opacity: 0.9;
+    }
+
+    .track-header span:nth-child(2) {
+      font-weight: 600;
+      color: rgba(248, 250, 252, 0.9);
+    }
+
+    .buttons {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .play-button,
+    .fade-button {
+      border: none;
+      border-radius: 999px;
+      font-family: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      transition:
+        transform 90ms ease-out,
+        box-shadow 90ms ease-out,
+        background 120ms ease-out,
+        opacity 120ms ease-out;
+      outline: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+    }
+
+    .play-button {
+      flex: 1;
+      padding: 0.7rem 0.9rem;
+      font-size: 1rem;
+      background: radial-gradient(circle at top, rgba(251, 191, 36, 0.25), transparent 60%),
+                  linear-gradient(135deg, #facc15, #fb923c);
+      color: #0f172a;
+      box-shadow: 0 10px 18px rgba(15, 23, 42, 0.65);
+    }
+
+    .play-button span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .play-button .track-id {
+      font-feature-settings: "tnum" 1, "lnum" 1;
+      font-variant-numeric: tabular-nums lining-nums;
+    }
+
+    .play-button .emoji {
+      font-size: 1.15em;
+    }
+
+    .fade-button {
+      padding: 0.65rem 0.75rem;
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: rgba(15, 23, 42, 0.95);
+      color: var(--muted);
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.7);
+      min-width: 72px;
+    }
+
+    .play-button:active,
+    .fade-button:active {
+      transform: translateY(1px) scale(0.99);
+      box-shadow: none;
+    }
+
+    .play-button:focus-visible,
+    .fade-button:focus-visible {
+      box-shadow:
+        0 0 0 1px #020617,
+        0 0 0 3px rgba(251, 191, 36, 0.7);
+    }
+
+    .play-button.is-playing {
+      box-shadow:
+        0 0 0 1px rgba(15, 23, 42, 0.85),
+        0 0 0 3px rgba(251, 191, 36, 0.9),
+        0 14px 30px rgba(251, 191, 36, 0.45);
+      transform: translateY(-1px);
+    }
+
+    .fade-button.is-fading {
+      opacity: 0.7;
+    }
+
+    .hint {
+      margin-top: 1.25rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .hint strong {
+      color: var(--accent);
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <main class="soundboard">
+    <header>
+      <h1>Nativity Play Soundboard</h1>
+      <p class="subtitle">
+        Tap a track to play. Only one track plays at a time.
+        Press <strong>Fade</strong> to gently fade out the current track.
+      </p>
+    </header>
+
+    <section class="tracks" aria-label="Soundboard tracks">
+      <!--
+        To change the emoji, just edit the span with class="emoji".
+        The filenames must match the ones in your /sounds folder.
+      -->
+
+      <article class="track">
+        <div class="track-header">
+          <span>Track</span>
+          <span>#01</span>
+        </div>
+        <div class="buttons">
+          <button
+            type="button"
+            class="play-button"
+            data-audio-file="NP_1_4_Track_01.mp3"
+            aria-label="Play track 1"
+          >
+            <span>
+              <span class="track-id">#01</span>
+              <span class="emoji">✨</span>
+            </span>
+          </button>
+          <button type="button" class="fade-button">Fade</button>
+        </div>
+      </article>
+
+      <article class="track">
+        <div class="track-header">
+          <span>Track</span>
+          <span>#02</span>
+        </div>
+        <div class="buttons">
+          <button
+            type="button"
+            class="play-button"
+            data-audio-file="NP_1_4_Track_02.mp3"
+            aria-label="Play track 2"
+          >
+            <span>
+              <span class="track-id">#02</span>
+              <span class="emoji">🎺</span>
+            </span>
+          </button>
+          <button type="button" class="fade-button">Fade</button>
+        </div>
+      </article>
+
+      <article class="track">
+        <div class="track-header">
+          <span>Track</span>
+          <span>#03</span>
+        </div>
+        <div class="buttons">
+          <button
+            type="button"
+            class="play-button"
+            data-audio-file="NP_1_4_Track_03.mp3"
+            aria-label="Play track 3"
+          >
+            <span>
+              <span class="track-id">#03</span>
+              <span class="emoji">💫</span>
+            </span>
+          </button>
+          <button type="button" class="fade-button">Fade</button>
+        </div>
+      </article>
+
+      <article class="track">
+        <div class="track-header">
+          <span>Track</span>
+          <span>#04</span>
+        </div>
+        <div class="buttons">
+          <button
+            type="button"
+            class="play-button"
+            data-audio-file="NP_1_4_Track_04.mp3"
+            aria-label="Play track 4"
+          >
+            <span>
+              <span class="track-id">#04</span>
+              <span class="emoji">🔔</span>
+            </span>
+          </button>
+          <button type="button" class="fade-button">Fade</button>
+        </div>
+      </article>
+
+      <article class="track">
+        <div class="track-header">
+          <span>Track</span>
+          <span>#05</span>
+        </div>
+        <div class="buttons">
+          <button
+            type="button"
+            class="play-button"
+            data-audio-file="NP_1_4_Track_05.mp3"
+            aria-label="Play track 5"
+          >
+            <span>
+              <span class="track-id">#05</span>
+              <span class="emoji">🐄</span>
+            </span>
+          </button>
+          <button type="button" class="fade-button">Fade</button>
+        </div>
+      </article>
+
+      <article class="track">
+        <div class="track-header">
+          <span>Track</span>
+          <span>#06</span>
+        </div>
+        <div class="buttons">
+          <button
+            type="button"
+            class="play-button"
+            data-audio-file="NP_1_4_Track_06.mp3"
+            aria-label="Play track 6"
+          >
+            <span>
+              <span class="track-id">#06</span>
+              <span class="emoji">🚶‍♂️</span>
+            </span>
+          </button>
+          <button type="button" class="fade-button">Fade</button>
+        </div>
+      </article>
+
+      <article class="track">
+        <div class="track-header">
+          <span>Track</span>
+          <span>#07</span>
+        </div>
+        <div class="buttons">
+          <button
+            type="button"
+            class="play-button"
+            data-audio-file="NP_1_4_Track_07.mp3"
+            aria-label="Play track 7"
+          >
+            <span>
+              <span class="track-id">#07</span>
+              <span class="emoji">✨</span>
+            </span>
+          </button>
+          <button type="button" class="fade-button">Fade</button>
+        </div>
+      </article>
+
+      <article class="track">
+        <div class="track-header">
+          <span>Track</span>
+          <span>#08</span>
+        </div>
+        <div class="buttons">
+          <button
+            type="button"
+            class="play-button"
+            data-audio-file="NP_1_4_Track_08.mp3"
+            aria-label="Play track 8"
+          >
+            <span>
+              <span class="track-id">#08</span>
+              <span class="emoji">🏃‍♂️</span>
+            </span>
+          </button>
+          <button type="button" class="fade-button">Fade</button>
+        </div>
+      </article>
+
+      <article class="track">
+        <div class="track-header">
+          <span>Track</span>
+          <span>#09</span>
+        </div>
+        <div class="buttons">
+          <button
+            type="button"
+            class="play-button"
+            data-audio-file="NP_1_4_Track_09.mp3"
+            aria-label="Play track 9"
+          >
+            <span>
+              <span class="track-id">#09</span>
+              <span class="emoji">👑</span>
+            </span>
+          </button>
+          <button type="button" class="fade-button">Fade</button>
+        </div>
+      </article>
+
+      <article class="track">
+        <div class="track-header">
+          <span>Track</span>
+          <span>#10</span>
+        </div>
+        <div class="buttons">
+          <button
+            type="button"
+            class="play-button"
+            data-audio-file="NP_1_4_Track_10.mp3"
+            aria-label="Play track 10"
+          >
+            <span>
+              <span class="track-id">#10</span>
+              <span class="emoji">👶</span>
+            </span>
+          </button>
+          <button type="button" class="fade-button">Fade</button>
+        </div>
+      </article>
+
+      <article class="track">
+        <div class="track-header">
+          <span>Track</span>
+          <span>#11</span>
+        </div>
+        <div class="buttons">
+          <button
+            type="button"
+            class="play-button"
+            data-audio-file="NP_1_4_Track_11.mp3"
+            aria-label="Play track 11"
+          >
+            <span>
+              <span class="track-id">#11</span>
+              <span class="emoji">⭐</span>
+            </span>
+          </button>
+          <button type="button" class="fade-button">Fade</button>
+        </div>
+      </article>
+
+      <article class="track">
+        <div class="track-header">
+          <span>Track</span>
+          <span>#12</span>
+        </div>
+        <div class="buttons">
+          <button
+            type="button"
+            class="play-button"
+            data-audio-file="NP_1_4_Track_12.mp3"
+            aria-label="Play track 12"
+          >
+            <span>
+              <span class="track-id">#12</span>
+              <span class="emoji">⚡</span>
+            </span>
+          </button>
+          <button type="button" class="fade-button">Fade</button>
+        </div>
+      </article>
+    </section>
+
+    <p class="hint">
+      You can edit the emoji for each track directly in this HTML file.
+      Just change the <strong>emoji</strong> span text.
+    </p>
+  </main>
+
+  <script>
+    // Simple soundboard logic:
+    // - One Audio object per track
+    // - Only one track playing at a time
+    // - Any "Fade" button fades out whichever track is currently playing
+
+    const tracks = [];
+
+    function stopAllExcept(exceptAudio) {
+      tracks.forEach(track => {
+        if (track.audio !== exceptAudio) {
+          if (!track.audio.paused || track.audio.currentTime > 0) {
+            track.audio.pause();
+            track.audio.currentTime = 0;
+          }
+          if (track.fadeIntervalId !== null) {
+            clearInterval(track.fadeIntervalId);
+            track.fadeIntervalId = null;
+          }
+          track.audio.volume = 1;
+          track.button.classList.remove("is-playing");
+        }
+      });
+    }
+
+    function getCurrentTrack() {
+      return tracks.find(t =>
+        !t.audio.paused &&
+        !t.audio.ended &&
+        t.audio.currentTime > 0
+      ) || null;
+    }
+
+    function fadeOutCurrentTrack() {
+      const track = getCurrentTrack();
+      if (!track) return;
+
+      // Already fading?
+      if (track.fadeIntervalId !== null) return;
+
+      const fadeButton = track.fadeButton;
+      fadeButton.classList.add("is-fading");
+
+      const step = 0.05;     // volume step
+      const interval = 120;  // ms between steps
+
+      track.fadeIntervalId = window.setInterval(() => {
+        const a = track.audio;
+
+        if (a.volume > step) {
+          a.volume = Math.max(0, a.volume - step);
+        } else {
+          a.volume = 0;
+          a.pause();
+          a.currentTime = 0;
+
+          track.button.classList.remove("is-playing");
+          fadeButton.classList.remove("is-fading");
+
+          clearInterval(track.fadeIntervalId);
+          track.fadeIntervalId = null;
+
+          // Reset for the next play
+          a.volume = 1;
+        }
+      }, interval);
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const playButtons = document.querySelectorAll(".play-button");
+      const fadeButtons = document.querySelectorAll(".fade-button");
+
+      playButtons.forEach((button, index) => {
+        const file = button.dataset.audioFile;
+        const audio = new Audio("sounds/" + file);
+        audio.preload = "auto";
+
+        const track = {
+          button,
+          audio,
+          fadeButton: fadeButtons[index],
+          fadeIntervalId: null
+        };
+
+        tracks.push(track);
+
+        // Play / stop logic
+        button.addEventListener("click", () => {
+          const a = track.audio;
+
+          if (!a.paused && !a.ended && a.currentTime > 0) {
+            // Already playing -> stop it
+            a.pause();
+            a.currentTime = 0;
+            button.classList.remove("is-playing");
+
+            if (track.fadeIntervalId !== null) {
+              clearInterval(track.fadeIntervalId);
+              track.fadeIntervalId = null;
+              a.volume = 1;
+            }
+            return;
+          }
+
+          // Start this track. Stop all others.
+          stopAllExcept(a);
+
+          if (track.fadeIntervalId !== null) {
+            clearInterval(track.fadeIntervalId);
+            track.fadeIntervalId = null;
+            a.volume = 1;
+          }
+
+          a.currentTime = 0;
+          a.volume = 1;
+
+          const playPromise = a.play();
+          if (playPromise && typeof playPromise.then === "function") {
+            playPromise
+              .then(() => {
+                button.classList.add("is-playing");
+              })
+              .catch(err => {
+                console.error("Playback failed:", err);
+              });
+          } else {
+            button.classList.add("is-playing");
+          }
+        });
+
+        // When a track ends naturally
+        audio.addEventListener("ended", () => {
+          button.classList.remove("is-playing");
+          if (track.fadeIntervalId !== null) {
+            clearInterval(track.fadeIntervalId);
+            track.fadeIntervalId = null;
+          }
+          audio.volume = 1;
+          audio.currentTime = 0;
+        });
+      });
+
+      // Every Fade button acts on whichever track is currently playing
+      fadeButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+          fadeOutCurrentTrack();
+        });
+      });
+    });
+  </script>
+</body>
+</html>
