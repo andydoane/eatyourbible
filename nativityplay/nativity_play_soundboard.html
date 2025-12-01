@@ -508,14 +508,15 @@
     </p>
   </main>
 
-  <!-- 1) Howler.js library (handles audio + fades across browsers, including iPad) -->
+  <!-- Howler.js for cross-platform audio handling -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
 
-  <!-- 2) Your soundboard logic, built on top of Howler -->
   <script>
-    // Each track will use a Howler.js sound.
-    // - Only one track plays at a time.
-    // - Any "Fade" button fades out the currently playing track smoothly.
+    // Soundboard using Howler.js
+    // - One Howl per track
+    // - Only one track plays at a time
+    // - Fade button smoothly fades out the currently playing track
+    //   WITHOUT popping back to full volume at the end.
 
     const tracks = [];
 
@@ -536,7 +537,7 @@
           track.isFading = false;
           track.button.classList.remove("is-playing");
           track.fadeButton.classList.remove("is-fading");
-          // Reset volume for next time
+          // Volume reset is safe here because the sound is stopped
           track.sound.volume(1);
         }
       });
@@ -557,23 +558,23 @@
       const currentVolume = sound.volume(playingId);
       const durationMs = 2500;
 
-      // Set up a one-time handler for when fade completes
-      const onFade = (id) => {
-        if (id !== playingId) return;
-        sound.off("fade", onFade);
+      // Start the fade to 0
+      sound.fade(currentVolume, 0, durationMs, playingId);
 
-        sound.stop(id);
+      // After the fade duration, stop the sound and clear state.
+      // IMPORTANT: we do NOT bump the volume back to 1 here,
+      // to avoid any last-split-second blip.
+      setTimeout(() => {
+        // If this track has been restarted or changed, don't touch it.
+        if (track.playingId !== playingId) return;
+
+        sound.stop(playingId);
         track.playingId = null;
         track.isFading = false;
         fadeButton.classList.remove("is-fading");
         button.classList.remove("is-playing");
-
-        // Reset volume for the next play
-        sound.volume(1);
-      };
-
-      sound.on("fade", onFade);
-      sound.fade(currentVolume, 0, durationMs, playingId);
+        // We leave volume at 0. It will be reset to 1 next time the user presses Play.
+      }, durationMs + 100);
     }
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -584,13 +585,10 @@
         const file = button.dataset.audioFile;
         const fadeButton = fadeButtons[index];
 
-        // Create a Howler sound for this track
         const sound = new Howl({
           src: ["sounds/" + file],
           preload: true,
           volume: 1
-          // We let Howler choose Web Audio vs HTML5 internally.
-          // It handles iOS/iPad quirks for us.
         });
 
         const track = {
@@ -605,6 +603,8 @@
 
         // PLAY BUTTON
         button.addEventListener("click", () => {
+          const { sound } = track;
+
           // If this track is already playing, stop it
           if (track.playingId !== null && sound.playing(track.playingId)) {
             sound.stop(track.playingId);
@@ -612,7 +612,7 @@
             track.isFading = false;
             button.classList.remove("is-playing");
             fadeButton.classList.remove("is-fading");
-            sound.volume(1);
+            sound.volume(1); // safe after stop
             return;
           }
 
@@ -621,6 +621,9 @@
 
           track.isFading = false;
           fadeButton.classList.remove("is-fading");
+
+          // Make sure volume is back to 1 before playing (it might be 0 after a fade)
+          sound.volume(1);
 
           const id = sound.play();
           track.playingId = id;
