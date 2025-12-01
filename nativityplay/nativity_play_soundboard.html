@@ -24,32 +24,33 @@
     }
 
     body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: radial-gradient(circle at top, #1e293b 0, #020617 45%, #000 100%);
-      color: var(--text);
-      display: flex;
-      align-items: center;      /* center vertically */
-      justify-content: center;  /* center horizontally */
-      padding: 0;               /* let the card use more of the screen */
+    margin: 0;
+    min-height: 100vh;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+    /* 👉 This is the background that used to be on .soundboard */
+    background:
+        radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 50%),
+        radial-gradient(circle at bottom right, rgba(251, 191, 36, 0.15), transparent 55%),
+        var(--bg-card);
+
+    color: var(--text);
+
+    /* Some breathing room so the buttons don’t touch the edges */
+    padding: 2rem 1.5rem;
     }
 
+
     .soundboard {
-      width: 85vw;   /* 85% of viewport width */
-      height: 85vh;  /* 85% of viewport height */
-      max-width: none;
-      max-height: none;
-      margin: auto;
-      background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.12), transparent 50%),
-                  radial-gradient(circle at bottom right, rgba(251, 191, 36, 0.15), transparent 55%),
-                  var(--bg-card);
-      border-radius: 24px;
-      padding: 2.5rem 2.5rem 2rem;  /* more breathing room inside */
-      box-shadow: var(--shadow-soft);
-      border: 1px solid rgba(148, 163, 184, 0.25);
-      backdrop-filter: blur(22px);
+    /* Let it use full width, but keep it nicely centered */
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+
+    /* Keep some padding so the header and buttons aren’t glued to the edges */
+    padding: 2.5rem 2.5rem 2rem;
     }
+
 
     @media (min-width: 640px) {
       .soundboard {
@@ -184,8 +185,11 @@
       font-size: 1.1rem;
       text-transform: uppercase;
       letter-spacing: 0.12em;
-      background: rgba(15, 23, 42, 0.95);
-      color: var(--muted);
+      background: linear-gradient(135deg, #00ffbf, #00e6ac);
+      color: #0f172a; /* optional: improves contrast */
+      border: none;   /* optional: cleaner with gradients */
+
+      color: #161b2a;
       border-radius: 999px;
       border: 1px solid rgba(148, 163, 184, 0.7);
       min-width: 88px;
@@ -517,7 +521,7 @@
           >
             <span>
               <span class="track-id">#13</span>
-              <span class="emoji">👶😭</span>
+              <span class="emoji">😭</span>
             </span>
           </button>
         </div>
