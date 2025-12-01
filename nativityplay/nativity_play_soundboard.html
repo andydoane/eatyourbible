@@ -509,71 +509,109 @@
   </main>
 
   <script>
-    // Simple soundboard logic:
-    // - One Audio object per track
-    // - Only one track playing at a time
-    // - Any "Fade" button fades out whichever track is currently playing
+    // Web Audio–based soundboard:
+    // - One HTMLAudioElement per track
+    // - Single AudioContext + GainNode (volume knob) per track
+    // - Any "Fade" button fades the currently playing track
+    //   in a way that works properly on iPad/iPhone
 
     const tracks = [];
+    let audioContext = null;
 
-    function stopAllExcept(exceptAudio) {
+    function ensureAudioContext() {
+      if (!audioContext) {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        if (!Ctx) {
+          console.warn("Web Audio API not supported; fades may not work.");
+          return null;
+        }
+        audioContext = new Ctx();
+      }
+      if (audioContext.state === "suspended") {
+        audioContext.resume();
+      }
+      return audioContext;
+    }
+
+    function stopAllExcept(exceptTrack) {
+      const ctx = audioContext;
       tracks.forEach(track => {
-        if (track.audio !== exceptAudio) {
-          if (!track.audio.paused || track.audio.currentTime > 0) {
-            track.audio.pause();
-            track.audio.currentTime = 0;
+        if (track !== exceptTrack) {
+          const a = track.audio;
+
+          if (!a.paused || a.currentTime > 0) {
+            a.pause();
+            a.currentTime = 0;
           }
-          if (track.fadeIntervalId !== null) {
-            clearInterval(track.fadeIntervalId);
-            track.fadeIntervalId = null;
+
+          if (track.fadeTimeoutId !== null) {
+            clearTimeout(track.fadeTimeoutId);
+            track.fadeTimeoutId = null;
           }
-          track.audio.volume = 1;
+
+          if (ctx && track.gainNode) {
+            const now = ctx.currentTime;
+            track.gainNode.gain.cancelScheduledValues(now);
+            track.gainNode.gain.setValueAtTime(1, now);
+          }
+
+          track.isFading = false;
           track.button.classList.remove("is-playing");
+          track.fadeButton.classList.remove("is-fading");
         }
       });
     }
 
     function getCurrentTrack() {
-      return tracks.find(t =>
-        !t.audio.paused &&
-        !t.audio.ended &&
-        t.audio.currentTime > 0
-      ) || null;
+      for (let i = 0; i < tracks.length; i++) {
+        const track = tracks[i];
+        const a = track.audio;
+        if (!a.paused && !a.ended && a.currentTime > 0) {
+          return track;
+        }
+      }
+      return null;
     }
 
     function fadeOutCurrentTrack() {
       const track = getCurrentTrack();
       if (!track) return;
 
-      // Already fading?
-      if (track.fadeIntervalId !== null) return;
+      const ctx = ensureAudioContext();
+      if (!ctx || !track.gainNode) return;
 
-      const fadeButton = track.fadeButton;
-      fadeButton.classList.add("is-fading");
+      if (track.isFading) return; // already fading
 
-      const step = 0.05;     // volume step
-      const interval = 120;  // ms between steps
+      track.isFading = true;
+      track.fadeButton.classList.add("is-fading");
 
-      track.fadeIntervalId = window.setInterval(() => {
-        const a = track.audio;
+      const gainNode = track.gainNode;
+      const now = ctx.currentTime;
+      const fadeDuration = 2.5; // seconds
 
-        if (a.volume > step) {
-          a.volume = Math.max(0, a.volume - step);
-        } else {
-          a.volume = 0;
-          a.pause();
-          a.currentTime = 0;
+      // Cancel any existing automation and start from current value
+      gainNode.gain.cancelScheduledValues(now);
+      const currentGain = gainNode.gain.value;
+      gainNode.gain.setValueAtTime(currentGain, now);
+      gainNode.gain.linearRampToValueAtTime(0, now + fadeDuration);
 
-          track.button.classList.remove("is-playing");
-          fadeButton.classList.remove("is-fading");
+      if (track.fadeTimeoutId !== null) {
+        clearTimeout(track.fadeTimeoutId);
+      }
 
-          clearInterval(track.fadeIntervalId);
-          track.fadeIntervalId = null;
+      track.fadeTimeoutId = window.setTimeout(() => {
+        track.audio.pause();
+        track.audio.currentTime = 0;
+        track.button.classList.remove("is-playing");
+        track.fadeButton.classList.remove("is-fading");
+        track.isFading = false;
 
-          // Reset for the next play
-          a.volume = 1;
-        }
-      }, interval);
+        const resetTime = ctx.currentTime + 0.05;
+        gainNode.gain.cancelScheduledValues(resetTime);
+        gainNode.gain.setValueAtTime(1, resetTime);
+
+        track.fadeTimeoutId = null;
+      }, fadeDuration * 1000 + 120);
     }
 
     document.addEventListener("DOMContentLoaded", () => {
@@ -589,63 +627,106 @@
           button,
           audio,
           fadeButton: fadeButtons[index],
-          fadeIntervalId: null
+          gainNode: null,
+          isFading: false,
+          fadeTimeoutId: null
         };
 
         tracks.push(track);
 
-        // Play / stop logic
         button.addEventListener("click", () => {
+          const ctx = ensureAudioContext();
+          if (!ctx) {
+            // If Web Audio isn't available, just do normal play/stop without fades.
+            console.warn("No AudioContext available.");
+          }
+
+          // Lazily create Web Audio nodes the first time we play this track
+          if (ctx && !track.gainNode) {
+            try {
+              const source = ctx.createMediaElementSource(audio);
+              const gainNode = ctx.createGain();
+              gainNode.gain.setValueAtTime(1, ctx.currentTime);
+              source.connect(gainNode).connect(ctx.destination);
+              track.gainNode = gainNode;
+            } catch (e) {
+              console.warn("Error creating Web Audio nodes:", e);
+            }
+          }
+
           const a = track.audio;
 
+          // If this track is already playing, stop it
           if (!a.paused && !a.ended && a.currentTime > 0) {
-            // Already playing -> stop it
             a.pause();
             a.currentTime = 0;
-            button.classList.remove("is-playing");
+            track.button.classList.remove("is-playing");
+            track.fadeButton.classList.remove("is-fading");
+            track.isFading = false;
 
-            if (track.fadeIntervalId !== null) {
-              clearInterval(track.fadeIntervalId);
-              track.fadeIntervalId = null;
-              a.volume = 1;
+            if (track.fadeTimeoutId !== null) {
+              clearTimeout(track.fadeTimeoutId);
+              track.fadeTimeoutId = null;
             }
+
+            if (ctx && track.gainNode) {
+              const now = ctx.currentTime;
+              track.gainNode.gain.cancelScheduledValues(now);
+              track.gainNode.gain.setValueAtTime(1, now);
+            }
+
             return;
           }
 
-          // Start this track. Stop all others.
-          stopAllExcept(a);
+          // Otherwise, stop all other tracks and start this one fresh
+          stopAllExcept(track);
 
-          if (track.fadeIntervalId !== null) {
-            clearInterval(track.fadeIntervalId);
-            track.fadeIntervalId = null;
-            a.volume = 1;
+          if (ctx && track.gainNode) {
+            const now = ctx.currentTime;
+            track.gainNode.gain.cancelScheduledValues(now);
+            track.gainNode.gain.setValueAtTime(1, now);
           }
 
+          track.isFading = false;
+          if (track.fadeTimeoutId !== null) {
+            clearTimeout(track.fadeTimeoutId);
+            track.fadeTimeoutId = null;
+          }
+          track.fadeButton.classList.remove("is-fading");
+
           a.currentTime = 0;
-          a.volume = 1;
 
           const playPromise = a.play();
           if (playPromise && typeof playPromise.then === "function") {
             playPromise
               .then(() => {
-                button.classList.add("is-playing");
+                track.button.classList.add("is-playing");
               })
               .catch(err => {
                 console.error("Playback failed:", err);
               });
           } else {
-            button.classList.add("is-playing");
+            track.button.classList.add("is-playing");
           }
         });
 
         // When a track ends naturally
         audio.addEventListener("ended", () => {
-          button.classList.remove("is-playing");
-          if (track.fadeIntervalId !== null) {
-            clearInterval(track.fadeIntervalId);
-            track.fadeIntervalId = null;
+          track.button.classList.remove("is-playing");
+          track.fadeButton.classList.remove("is-fading");
+          track.isFading = false;
+
+          if (track.fadeTimeoutId !== null) {
+            clearTimeout(track.fadeTimeoutId);
+            track.fadeTimeoutId = null;
           }
-          audio.volume = 1;
+
+          if (audioContext && track.gainNode) {
+            const now = audioContext.currentTime;
+            track.gainNode.gain.cancelScheduledValues(now);
+            track.gainNode.gain.setValueAtTime(1, now);
+          }
+
           audio.currentTime = 0;
         });
       });
@@ -653,6 +734,7 @@
       // Every Fade button acts on whichever track is currently playing
       fadeButtons.forEach(btn => {
         btn.addEventListener("click", () => {
+          ensureAudioContext();
           fadeOutCurrentTrack();
         });
       });
