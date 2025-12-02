@@ -555,17 +555,20 @@ body.mode-big #app {
     }
 
     .question-card {
-      width: 100%;
-      background: var(--question-bg);
-      color: #ffffff;
-      border-radius: 1.35rem;
-      padding: 16px 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.55);
+    position: relative;            /* so we can attach an arrow to it */
+    width: 100%;
+    background: var(--question-bg);
+    color: #ffffff;
+    border-radius: 1.35rem;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;        /* stack question + feedback + button */
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.55);
     }
+
 
     .question-text {
       font-weight: 800;
@@ -765,6 +768,55 @@ body.mode-big #app {
     align-items: center;
     }
 
+    /* ---------- QUESTION SLIDE TRANSITION ---------- */
+
+    .quiz-main {
+      position: relative; /* so the transform animations look smooth */
+    }
+
+    .quiz-main.question-slide-out {
+      animation: questionSlideOut 0.55s ease-in forwards;
+    }
+
+    .quiz-main.question-slide-in {
+      animation: questionSlideIn 0.55s cubic-bezier(0.22, 0.75, 0.25, 1.05) forwards;
+    }
+
+    @keyframes questionSlideOut {
+      0% {
+        transform: translateX(0) scale(1);
+        opacity: 1;
+      }
+      15% {
+        /* little "rev" to the right */
+        transform: translateX(14px) scale(1.03);
+      }
+      100% {
+        /* zoom off to the left */
+        transform: translateX(-115%) scale(0.95);
+        opacity: 0;
+      }
+    }
+
+    @keyframes questionSlideIn {
+      0% {
+        transform: translateX(115%) scale(0.95);
+        opacity: 0;
+      }
+      60% {
+        /* snap into place */
+        transform: translateX(0) scale(1.03);
+        opacity: 1;
+      }
+      80% {
+        /* tiny wiggle past center */
+        transform: translateX(-8px) scale(0.99);
+      }
+      100% {
+        transform: translateX(0) scale(1);
+      }
+    }
+
 
     /* ---------- PHONE MODE ---------- */
 
@@ -856,73 +908,85 @@ body.mode-big #app {
        font-size: clamp(1.2rem, 2.4vw, 2.6rem);
     }
 
-    
-    /* ---------- FEEDBACK OVERLAY + STARS ---------- */
 
-    #feedback-overlay {
-      position: fixed;
-      inset: 0;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 50;
-      pointer-events: none;
+
+/* ---------- FEEDBACK + STARS ---------- */
+
+    /* Hidden by default, only shown when the card is in feedback mode */
+    .feedback-bubble {
+    display: none;
+    width: 100%;
     }
 
-    #feedback-overlay .primary-button {
-    font-size: 1.2rem;
-    padding: 10px 20px;
+    /* Question card becomes a “speech bubble” after answering */
+    .question-card.feedback-mode {
+    padding: 18px 22px 20px;
     }
 
-
-    #feedback-overlay.visible {
-      display: flex;
+    /* In feedback mode, hide the normal question text */
+    .question-card.feedback-mode .question-text {
+    display: none;
     }
 
-    .feedback-inner {
-    background: rgba(0, 0, 0, 0.85);
-    padding: 24px 32px;
-    border-radius: 16px;
-    text-align: center;
-    max-width: 90%;
-
-    /* Wider popup */
-    min-width: 300px;     
-
-    /* small visual lift for big screens */
-    transform: translateY(-12px);
+    /* In feedback mode, show the feedback text area */
+    .question-card.feedback-mode .feedback-bubble {
+    display: block;
     }
 
+    /* Arrow pointing from the right edge toward the emoji */
+    .question-card.feedback-mode::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: -18px;
+    transform: translateY(-50%);
+    border-width: 12px 0 12px 18px;
+    border-style: solid;
+    border-color: transparent transparent transparent var(--question-bg);
+    }
 
+    /* Hide the arrow on phone since the emoji isn’t shown there */
+    body.mode-phone .question-card.feedback-mode::after {
+    display: none;
+    }
+
+    /* Title + detail inside the “bubble” */
     .feedback-title {
-      font-size: clamp(2rem, 3.5vw, 3.2rem);
-      font-weight: 800;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      margin-bottom: 4px;
+    font-size: clamp(1.4rem, 2.4vw, 1.8rem);
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
     }
 
     .feedback-title.correct-text { color: #a7cb6f; }
     .feedback-title.incorrect-text { color: #ff5a51; }
 
     .feedback-detail {
-      font-size: clamp(1rem, 1.8vw, 1.3rem);
-      margin-top: 4px;
+    font-size: clamp(1rem, 1.8vw, 1.3rem);
+    margin-top: 4px;
     }
 
+    /* Next Question button inside the card */
+    .question-next-btn {
+    margin-top: 10px;
+    }
+
+    /* Falling stars for correct answers (unchanged) */
     .star {
-      position: fixed;
-      top: -40px;
-      font-size: clamp(1.6rem, 2.6vw, 2.2rem);
-      animation: fall 1.2s linear forwards;
-      z-index: 60;
-      pointer-events: none;
+    position: fixed;
+    top: -40px;
+    font-size: clamp(1.6rem, 2.6vw, 2.2rem);
+    animation: fall 1.2s linear forwards;
+    z-index: 60;
+    pointer-events: none;
     }
 
     @keyframes fall {
-      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-      100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
     }
+
 
     /* ---------- END SCREEN ---------- */
 
@@ -1167,12 +1231,28 @@ body.show-real-cursor * {
             </div>
             </div>
 
-            <!-- CENTER: Question -->
-            <div class="question-card">
-            <div id="question-text" class="question-text">
-                Question text here
-            </div>
-            </div>
+                <!-- CENTER: Question -->
+                <div class="question-card">
+                <!-- Normal question text -->
+                <div id="question-text" class="question-text">
+                    Question text here
+                </div>
+
+                <!-- Feedback bubble content (hidden until after answer) -->
+                <div id="feedback-bubble" class="feedback-bubble">
+                    <div id="feedback-title" class="feedback-title">CORRECT</div>
+                    <div id="feedback-detail" class="feedback-detail"></div>
+                </div>
+
+                <!-- Next Question button (big-screen only) -->
+                <button
+                    id="next-question-btn"
+                    class="primary-button question-next-btn hidden"
+                >
+                    Next Question
+                </button>
+                </div>
+
 
             <!-- RIGHT: Emoji host -->
             <div class="question-side question-emoji">
@@ -1233,20 +1313,6 @@ body.show-real-cursor * {
 
 <div id="big-pointer" class="hidden">👆</div>
 
-
-
-  <!-- FEEDBACK OVERLAY -->
-    <div id="feedback-overlay">
-    <div class="feedback-inner">
-        <div id="feedback-title" class="feedback-title">CORRECT</div>
-        <div id="feedback-detail" class="feedback-detail"></div>
-
-        <!-- BUTTON (big-screen only) -->
-        <button id="next-question-btn" class="primary-button hidden" style="margin-top:14px; pointer-events:auto;">
-        Next Question
-        </button>
-    </div>
-    </div>
 
 
   <script>
@@ -1397,23 +1463,72 @@ body.show-real-cursor * {
     let timeLeft = TIMER_DURATION;
     let timerIntervalId = null;
 
-const NEUTRAL_EMOJIS = [
-  "😀","😄","😊","😁","🤗","🙂","🤩","🤪","🥸","🤓","😧","😵‍💫","🙃","😺","😸","😻",
-  "😎","😇","😮‍💨","😌","😃"
-];
+    const NEUTRAL_EMOJIS = [
+    "😀","😄","😊","😁","🤗","🙂","🤩","🤪","🥸","🤓","😧","😵‍💫","🙃","😺","😸","😻",
+    "😎","😇","😮‍💨","😌","😃"
+    ];
 
-   
-  const CORRECT_EMOJIS = [
-  "🤩","😄","🎉","🥳","🙌","😎","😃","😁","😺","🎊","⭐",
-  "👏","🔥","💥","🌟","✨","🫶","😇","💫","🏆","🥇",
-  "🤗","😆","😻","💯","🎈"
-];
- const INCORRECT_EMOJIS = [
-  "😢","😮","😯","😕","😟","🙁","😞","😔","🥺",
-  "😿","😣","😫","🤢","😥","🫤","😐","🙄"
-];
+    
+    const CORRECT_EMOJIS = [
+    "🤩","😄","🎉","🥳","🙌","😎","😃","😁","😺","🎊","⭐",
+    "👏","🔥","💥","🌟","✨","🫶","😇","💫","🏆","🥇",
+    "🤗","😆","😻","💯","🎈"
+    ];
+    const INCORRECT_EMOJIS = [
+    "😢","😮","😯","😕","😟","🙁","😞","😔","🥺",
+    "😿","😣","😫","🤢","😥","🫤","😐","🙄"
+    ];
+
+
+    // Feedback phrases for the speech bubble
+    const CORRECT_TITLES = [
+      "Correct!",
+      "Great work!",
+      "You got it!",
+      "Nice job!",
+      "Well done!",
+      "Awesome!"
+    ];
+
+    const INCORRECT_TITLES = [
+      "Not quite!",
+      "Incorrect!",
+      "Nice try!",
+      "Almost!",
+      "Good effort!"
+    ];
+
+    // Streak-based encouragements (for correct answers)
+    const STREAK_PHRASES_START = [
+      "Keep going – you got this!",
+      "I knew you could do it!",
+      "Let’s see if you can get the next one too."
+    ];
+
+    const STREAK_PHRASES_BUILDING = [
+      "That's {{streak}} in a row!",
+      "You're on a {{streak}}-question streak!",
+      "Wow, {{streak}} correct answers back-to-back!"
+    ];
+
+    const STREAK_PHRASES_HOT = [
+      "You're on fire with {{streak}} in a row!",
+      "Unstoppable! {{streak}} straight correct answers!",
+      "You're really mastering this story!"
+    ];
+
+    // Encouragements for incorrect answers
+    const ENCOURAGE_PHRASES = [
+      "Don’t give up — try the next one!",
+      "Everybody misses one sometimes. You’ve got this!",
+      "Take a breath and get the next one.",
+      "You’re learning. Let’s see what happens on the next question.",
+      "Keep going – you'll get the next one!"
+    ];
+
     let emojiIntervalId = null;
     let emojiLockedUntil = 0;
+    let isTransitioningQuestion = false;
 
 
     /***********************
@@ -1449,7 +1564,10 @@ const NEUTRAL_EMOJIS = [
     const emojiFaceEl = document.getElementById("emoji-face");
 
     const timerRingWrapper = document.querySelector(".timer-ring-wrapper");
+    const quizMain = document.querySelector(".quiz-main");  // <-- add this
 
+
+    
     // DEBUG: Hold SHIFT to temporarily show the real cursor
     document.addEventListener("keydown", (e) => {
     if (e.key === "Shift") {
@@ -1467,9 +1585,12 @@ const NEUTRAL_EMOJIS = [
     const scoreDisplayEl = document.getElementById("score-display");
     const streakDisplayEl = document.getElementById("streak-display");
 
-    const feedbackOverlay = document.getElementById("feedback-overlay");
     const feedbackTitleEl = document.getElementById("feedback-title");
     const feedbackDetailEl = document.getElementById("feedback-detail");
+    const feedbackBubble = document.getElementById("feedback-bubble");
+    const questionCard = document.querySelector(".question-card");
+
+    const feedbackInner = document.querySelector(".feedback-inner");
 
     const soundToggleBtn = document.getElementById("sound-toggle");
 
@@ -1587,6 +1708,25 @@ const NEUTRAL_EMOJIS = [
       }
       return arr;
     }
+
+    function chooseRandom(list) {
+      if (!list || !list.length) return "";
+      const idx = Math.floor(Math.random() * list.length);
+      return list[idx];
+    }
+
+    function getStreakPhrase(streak) {
+      if (streak <= 1) {
+        return chooseRandom(STREAK_PHRASES_START);
+      } else if (streak <= 4) {
+        const tmpl = chooseRandom(STREAK_PHRASES_BUILDING);
+        return tmpl.replace("{{streak}}", streak.toString());
+      } else {
+        const tmpl = chooseRandom(STREAK_PHRASES_HOT);
+        return tmpl.replace("{{streak}}", streak.toString());
+      }
+    }
+
 
     function showScreen(screenName) {
       // Hide all screens first
@@ -1780,42 +1920,57 @@ const NEUTRAL_EMOJIS = [
     }
 
 
-    function showFeedback(isCorrect, detailText) {
-    feedbackTitleEl.textContent = isCorrect ? "Correct" : "Incorrect";
+    function showFeedback(isCorrect) {
+    // 1) Pick a fun heading
+    const title = isCorrect
+        ? chooseRandom(CORRECT_TITLES)
+        : chooseRandom(INCORRECT_TITLES);
+
+    feedbackTitleEl.textContent = title;
     feedbackTitleEl.classList.toggle("correct-text", isCorrect);
-
-    // Dynamic background reaction (big mode only)
-    if (currentMode === "big") {
-    quizScreen.classList.remove("bg-correct", "bg-incorrect");
-    void quizScreen.offsetWidth; // restart CSS animation hack
-    quizScreen.classList.add(isCorrect ? "bg-correct" : "bg-incorrect");
-    }
-
-
-
     feedbackTitleEl.classList.toggle("incorrect-text", !isCorrect);
 
-    if (detailText) {
-        feedbackDetailEl.textContent = detailText;
-        feedbackDetailEl.style.display = "block";
+    // 2) Pick the detail line
+    let detailText = "";
+    if (isCorrect) {
+        detailText = getStreakPhrase(streak);
     } else {
-        feedbackDetailEl.textContent = "";
-        feedbackDetailEl.style.display = "none";
+        detailText = chooseRandom(ENCOURAGE_PHRASES);
     }
 
-    // Show overlay
-    feedbackOverlay.classList.add("visible");
+    feedbackDetailEl.textContent = detailText || "";
 
+    // 3) Background reaction pulse on the quiz card (big mode only)
     if (currentMode === "big") {
-        // Show the Next Question button in big mode
-        document.getElementById("next-question-btn").classList.remove("hidden");
+        quizScreen.classList.remove("bg-correct", "bg-incorrect");
+        void quizScreen.offsetWidth; // restart CSS animation hack
+        quizScreen.classList.add(isCorrect ? "bg-correct" : "bg-incorrect");
+    }
+
+    // 4) Switch the question bar into "feedback bubble" mode
+    if (questionCard && feedbackBubble && questionTextEl) {
+        questionCard.classList.add("feedback-mode");
+        feedbackBubble.style.display = "block";
+        questionTextEl.style.display = "none";
+    }
+
+    // 5) Big-screen vs phone behavior
+    if (currentMode === "big") {
+        // Show the Next Question button
+        nextQuestionBtn.classList.remove("hidden");
     } else {
-        // Phone mode: auto-hide and auto-advance
+        // Phone mode: auto-advance after a short delay
+        nextQuestionBtn.classList.add("hidden");
         setTimeout(() => {
-        feedbackOverlay.classList.remove("visible");
+        // Only advance if we're still looking at feedback
+        if (questionCard && questionCard.classList.contains("feedback-mode")) {
+            goToNextQuestionAnimated();
+        }
         }, 2000);
     }
     }
+
+
 
 
     function requestFullscreenIfAvailable() {
@@ -1884,6 +2039,15 @@ const NEUTRAL_EMOJIS = [
       const q = QUESTIONS[currentQuestionIndex];
       questionTextEl.textContent = q.text;
 
+      // Reset question card back to normal (question) mode
+        if (questionCard && feedbackBubble) {
+        questionCard.classList.remove("feedback-mode");
+        feedbackBubble.style.display = "none";
+        questionTextEl.style.display = "block";
+        }
+        nextQuestionBtn.classList.add("hidden");
+
+
         // Animated question reveal
         questionTextEl.classList.remove("question-reveal");
         void questionTextEl.offsetWidth; // restart animation
@@ -1913,6 +2077,49 @@ const NEUTRAL_EMOJIS = [
         const textSpan = btn.querySelector(".answer-text");
         textSpan.textContent = q.answers[idx];
       });
+    }
+
+    function goToNextQuestionAnimated() {
+      // If we don't have the quiz container for some reason, just jump
+      if (!quizMain) {
+        currentQuestionIndex += 1;
+        loadQuestion();
+        return;
+      }
+
+      // Prevent double-triggers while animation is running
+      if (isTransitioningQuestion) return;
+      isTransitioningQuestion = true;
+
+      // Start slide-out animation on the current question
+      quizMain.classList.add("question-slide-out");
+
+      const handleOutEnd = (event) => {
+        // Make sure this is our slide-out animation
+        if (event.animationName !== "questionSlideOut") return;
+
+        quizMain.removeEventListener("animationend", handleOutEnd);
+        quizMain.classList.remove("question-slide-out");
+
+        // Move to the next question
+        currentQuestionIndex += 1;
+        loadQuestion();
+
+        // Animate the new question sliding in
+        quizMain.classList.add("question-slide-in");
+
+        const handleInEnd = (evt) => {
+          if (evt.animationName !== "questionSlideIn") return;
+
+          quizMain.removeEventListener("animationend", handleInEnd);
+          quizMain.classList.remove("question-slide-in");
+          isTransitioningQuestion = false;
+        };
+
+        quizMain.addEventListener("animationend", handleInEnd);
+      };
+
+      quizMain.addEventListener("animationend", handleOutEnd);
     }
 
 
@@ -1973,7 +2180,7 @@ const NEUTRAL_EMOJIS = [
           ? `Streak: ${streak} in a row! +${earned} points (time bonus: +${timeBonus})`
           : `Streak: ${streak} in a row! +${earned} points`;
 
-        showFeedback(true, msg);
+        showFeedback(true);
       } else {
         // Incorrect answer:
         //  - Grey out all 3 wrong answers
@@ -1996,18 +2203,11 @@ const NEUTRAL_EMOJIS = [
         updateScoreDisplays();
         playIncorrectSound();
         showEmojiReaction(false);
-        showFeedback(false, "");
+        showFeedback(false);
       }
 
 
-    if (currentMode === "phone") {
-    // Phone mode auto-advances
-    setTimeout(() => {
-        feedbackOverlay.classList.remove("visible");
-        currentQuestionIndex += 1;
-        loadQuestion();
-    }, 2500);
-    }
+
 
     // Big mode: do NOT auto-advance
 
@@ -2059,8 +2259,9 @@ const NEUTRAL_EMOJIS = [
     // Only react when the quiz screen is visible
     if (quizScreen.classList.contains("hidden")) return;
 
-    // If feedback overlay is up (Correct/Incorrect popup), ignore number keys
-    if (feedbackOverlay.classList.contains("visible")) return;
+    // If we're showing feedback in the question bar, ignore number keys
+    if (questionCard && questionCard.classList.contains("feedback-mode")) return;
+
 
     // If the question is already locked, ignore further input
     if (isLocked) return;
@@ -2092,14 +2293,12 @@ const NEUTRAL_EMOJIS = [
     const nextQuestionBtn = document.getElementById("next-question-btn");
 
     nextQuestionBtn.addEventListener("click", () => {
-    // Reset overlay
-    feedbackOverlay.classList.remove("visible");
+    // Hide the button itself; the card will reset when the next question loads
     nextQuestionBtn.classList.add("hidden");
-
-    // Move on
-    currentQuestionIndex += 1;
-    loadQuestion();
+    goToNextQuestionAnimated();
     });
+
+
 
 
     playAgainBtn.addEventListener("click", () => startGame(currentMode));
