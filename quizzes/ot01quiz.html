@@ -90,6 +90,12 @@ body.mode-big #app {
       }
     }
 
+    #quiz-screen {
+    position: relative;
+    overflow: hidden;
+    }
+
+
     .hidden {
       display: none !important;
     }
@@ -552,7 +558,9 @@ body.mode-big #app {
       display: flex;
       flex-direction: column;
       min-height: 0;
+      position: relative;  /* NEW: so the suspense layer can anchor to this area */
     }
+
 
     .question-card {
     position: relative;            /* so we can attach an arrow to it */
@@ -618,6 +626,12 @@ body.mode-big #app {
                 border-color 0.08s ease;
     padding: 14px 16px;
     }
+
+    .answer-button.spotlight-chosen {
+    position: relative;
+    z-index: 60;
+    }
+
 
     /* Hide keyboard hint numbers in phone mode */
     body.mode-phone .answer-key-hint {
@@ -691,10 +705,28 @@ body.mode-big #app {
       line-height: 1.3;
     }
 
-    .color-red { background: var(--red); color: #ffffff; }
-    .color-yellow { background: var(--yellow); color: #222222; }
-    .color-blue { background: var(--blue); color: #ffffff; }
-    .color-green { background: var(--green); color: #ffffff; }
+    /* Slight glossy gradient on answer buttons */
+    .color-red {
+    background: linear-gradient(to bottom, rgba(255,255,255,0.18), rgba(0,0,0,0.18)), var(--red);
+    color: #ffffff;
+    }
+
+    .color-yellow {
+    background: linear-gradient(to bottom, rgba(255,255,255,0.18), rgba(0,0,0,0.18)), var(--yellow);
+    color: #222222;
+    }
+
+    .color-blue {
+    background: linear-gradient(to bottom, rgba(255,255,255,0.18), rgba(0,0,0,0.18)), var(--blue);
+    color: #ffffff;
+    }
+
+    .color-green {
+    background: linear-gradient(to bottom, rgba(255,255,255,0.18), rgba(0,0,0,0.18)), var(--green);
+    color: #ffffff;
+    }
+
+
 
     .score-row {
       display: flex;
@@ -713,12 +745,15 @@ body.mode-big #app {
     /* ---------- BIG-SCREEN MODE ---------- */
 
     body.mode-big .question-panel {
-      flex: 1 0 0;
+    /* Let the question area be only as tall as it needs */
+    flex: 0 0 auto;
     }
 
     body.mode-big .answers-panel {
-      flex: 1 0 0;
+    /* Let the answers panel take the remaining height */
+    flex: 1 1 auto;
     }
+
 
     body.mode-big .question-text {
       font-size: clamp(1.6rem, 3.2vw, 3.4rem);
@@ -910,7 +945,7 @@ body.mode-big #app {
 
 
 
-/* ---------- FEEDBACK + STARS ---------- */
+    /* ---------- FEEDBACK + STARS ---------- */
 
     /* Hidden by default, only shown when the card is in feedback mode */
     .feedback-bubble {
@@ -950,27 +985,46 @@ body.mode-big #app {
     display: none;
     }
 
-    /* Title + detail inside the “bubble” */
+    /* Title inside the “bubble” */
     .feedback-title {
-    font-size: clamp(1.4rem, 2.4vw, 1.8rem);
-    font-weight: 800;
-    letter-spacing: 0.12em;
+    font-size: clamp(3rem, 5vw, 4.2rem);
+    font-weight: 900;
+    letter-spacing: 0.16em;
     text-transform: uppercase;
-    margin-bottom: 4px;
+    margin-bottom: 6px;
+    text-align: center;
     }
+
 
     .feedback-title.correct-text { color: #a7cb6f; }
     .feedback-title.incorrect-text { color: #ff5a51; }
 
-    .feedback-detail {
-    font-size: clamp(1rem, 1.8vw, 1.3rem);
-    margin-top: 4px;
+    /* Subtitle + Next row (in the white strip above the answers) */
+    .feedback-subrow {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        margin: 18px 0 28px;  /* top, left/right, bottom */
+        text-align: center;
     }
 
-    /* Next Question button inside the card */
-    .question-next-btn {
-    margin-top: 10px;
+
+
+    .feedback-detail {
+        font-size: clamp(1.6rem, 2.6vw, 2.1rem);
+        line-height: 1.35;
+        min-height: 1.8em; /* keep space even if empty */
     }
+
+
+
+    .feedback-next-btn {
+        align-self: center;
+        font-size: clamp(1.1rem, 2.1vw, 1.5rem);
+        padding: 14px 30px;
+    }
+
 
     /* Falling stars for correct answers (unchanged) */
     .star {
@@ -986,6 +1040,58 @@ body.mode-big #app {
     0% { transform: translateY(0) rotate(0deg); opacity: 1; }
     100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
     }
+
+
+    /* ---------- SPOTLIGHT + SUSPENSE ---------- */
+
+    .spotlight-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 40;
+    pointer-events: none;
+    }
+
+    .suspense-layer {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 80;
+    pointer-events: none;
+    }
+
+    .suspense-thumb {
+    /* EVEN bigger thumbs */
+    font-size: clamp(7rem, 14vw, 11rem);
+
+    /* Strong, soft shadow so it stands out on the dark overlay */
+    filter: drop-shadow(0 22px 40px rgba(0, 0, 0, 0.9));
+    }
+
+
+
+    /* Particle explosion from the chosen button */
+    .burst-star {
+    position: fixed;
+    font-size: 1.5rem;
+    pointer-events: none;
+    z-index: 70;
+    animation: buttonBurst 0.7s ease-out forwards;
+    }
+
+    @keyframes buttonBurst {
+    0% {
+        transform: translate(0,0) scale(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--dx), var(--dy)) scale(1);
+        opacity: 0;
+    }
+    }
+
 
 
     /* ---------- END SCREEN ---------- */
@@ -1231,27 +1337,20 @@ body.show-real-cursor * {
             </div>
             </div>
 
-                <!-- CENTER: Question -->
-                <div class="question-card">
-                <!-- Normal question text -->
-                <div id="question-text" class="question-text">
-                    Question text here
-                </div>
+            <!-- CENTER: Question -->
+            <div class="question-card">
+            <!-- Normal question text -->
+            <div id="question-text" class="question-text">
+                Question text here
+            </div>
 
-                <!-- Feedback bubble content (hidden until after answer) -->
-                <div id="feedback-bubble" class="feedback-bubble">
-                    <div id="feedback-title" class="feedback-title">CORRECT</div>
-                    <div id="feedback-detail" class="feedback-detail"></div>
-                </div>
+            <!-- Feedback bubble content (hidden until after answer) -->
+            <div id="feedback-bubble" class="feedback-bubble">
+                <div id="feedback-title" class="feedback-title">CORRECT</div>
+                <!-- no subtitle here anymore -->
+            </div>
+            </div>
 
-                <!-- Next Question button (big-screen only) -->
-                <button
-                    id="next-question-btn"
-                    class="primary-button question-next-btn hidden"
-                >
-                    Next Question
-                </button>
-                </div>
 
 
             <!-- RIGHT: Emoji host -->
@@ -1262,34 +1361,62 @@ body.show-real-cursor * {
         </div>
 
 
-        <div class="answers-panel">
-            <div class="answers-grid" id="answers-grid">
-            <button class="answer-button color-red" data-button-index="0">
-                <span class="answer-key-hint">1</span>
-                <span class="answer-text"></span>
-            </button>
-            <button class="answer-button color-yellow" data-button-index="1">
-                <span class="answer-key-hint">2</span>
-                <span class="answer-text"></span>
-            </button>
-            <button class="answer-button color-blue" data-button-index="2">
-                <span class="answer-key-hint">3</span>
-                <span class="answer-text"></span>
-            </button>
-            <button class="answer-button color-green" data-button-index="3">
-                <span class="answer-key-hint">4</span>
-                <span class="answer-text"></span>
-            </button>
+                <div class="answers-panel">
+
+            <!-- NEW: subtitle + Next Question strip -->
+            <div id="feedback-subrow" class="feedback-subrow">
+                <!-- Subtitle text will go here from JS -->
+                <div id="feedback-detail" class="feedback-detail"></div>
+
+                <!-- Next Question button (hidden until after reveal) -->
+                <button
+                id="next-question-btn"
+                class="primary-button feedback-next-btn hidden"
+                >
+                Next Question
+                </button>
             </div>
 
+            <!-- Answer buttons -->
+            <div class="answers-grid" id="answers-grid">
+                <button class="answer-button color-red" data-button-index="0">
+                <span class="answer-key-hint">1</span>
+                <span class="answer-text"></span>
+                </button>
+                <button class="answer-button color-yellow" data-button-index="1">
+                <span class="answer-key-hint">2</span>
+                <span class="answer-text"></span>
+                </button>
+                <button class="answer-button color-blue" data-button-index="2">
+                <span class="answer-key-hint">3</span>
+                <span class="answer-text"></span>
+                </button>
+                <button class="answer-button color-green" data-button-index="3">
+                <span class="answer-key-hint">4</span>
+                <span class="answer-text"></span>
+                </button>
+            </div>
 
-          <div class="score-row">
-            <span>Score: <strong id="score-display">0</strong></span>
-            <span>Streak: <strong id="streak-display">x0</strong></span>
-          </div>
-        </div>
+      <div class="score-row">
+        <span>Score: <strong id="score-display">0</strong></span>
+        <span>Streak: <strong id="streak-display">x0</strong></span>
       </div>
+
+        <!-- Suspense thumbs / tick-tock layer -->
+  <div id="suspense-layer" class="suspense-layer hidden">
+    <div id="suspense-thumb" class="suspense-thumb">👍</div>
+  </div>
+
     </div>
+  </div>
+
+  <!-- Dark overlay for spotlight suspense -->
+  <div id="spotlight-overlay" class="spotlight-overlay hidden"></div>
+
+
+</div> <!-- end #quiz-screen -->
+
+
 
     <!-- END SCREEN -->
     <div id="end-screen" class="screen-card hidden">
@@ -1530,6 +1657,12 @@ body.show-real-cursor * {
     let emojiLockedUntil = 0;
     let isTransitioningQuestion = false;
 
+    let suspenseIntervalId = null;
+    let lastSelectedButton = null;
+    let lastAnswerWasCorrect = false;
+    let lastSelectedAnswerIndex = null;
+    let buttonBurstTimeoutId = null;
+
 
     /***********************
      * DOM
@@ -1590,7 +1723,10 @@ body.show-real-cursor * {
     const feedbackBubble = document.getElementById("feedback-bubble");
     const questionCard = document.querySelector(".question-card");
 
-    const feedbackInner = document.querySelector(".feedback-inner");
+    const spotlightOverlay = document.getElementById("spotlight-overlay");
+    const suspenseLayer = document.getElementById("suspense-layer");
+    const suspenseThumb = document.getElementById("suspense-thumb");
+
 
     const soundToggleBtn = document.getElementById("sound-toggle");
 
@@ -1694,6 +1830,16 @@ body.show-real-cursor * {
     }
     }
 
+    function playTickTock(isThumbUp) {
+    if (!soundEnabled) return;
+
+    // Simple subtle tick/tock beeps
+    const seq = isThumbUp
+        ? [{ freq: 700, duration: 0.08 }]
+        : [{ freq: 450, duration: 0.08 }];
+
+    playBeepSequence(seq);
+    }
 
 
 
@@ -1725,6 +1871,179 @@ body.show-real-cursor * {
         const tmpl = chooseRandom(STREAK_PHRASES_HOT);
         return tmpl.replace("{{streak}}", streak.toString());
       }
+    }
+
+    function startSpotlight(selectedBtn) {
+    if (spotlightOverlay) {
+        spotlightOverlay.classList.remove("hidden");
+    }
+    if (selectedBtn) {
+        selectedBtn.classList.add("spotlight-chosen");
+    }
+    }
+
+    function stopSpotlight() {
+    if (spotlightOverlay) {
+        spotlightOverlay.classList.add("hidden");
+    }
+    answerButtons.forEach(btn => btn.classList.remove("spotlight-chosen"));
+    }
+
+    function startSuspenseSequence() {
+    if (!suspenseLayer || !suspenseThumb || !spotlightOverlay) {
+        // If something is missing, just skip suspense and reveal immediately
+        revealAnswerAndFeedback();
+        return;
+    }
+
+    suspenseLayer.classList.remove("hidden");
+    let isThumbUp = true;
+    let cycles = 0;
+    const maxCycles = 8; // about ~4 seconds of suspense
+
+    suspenseThumb.textContent = "👍";
+
+    suspenseIntervalId = setInterval(() => {
+        isThumbUp = !isThumbUp;
+        suspenseThumb.textContent = isThumbUp ? "👍" : "👎";
+        playTickTock(isThumbUp);
+        cycles += 1;
+
+        if (cycles >= maxCycles) {
+        clearInterval(suspenseIntervalId);
+        suspenseIntervalId = null;
+
+        setTimeout(() => {
+            suspenseLayer.classList.add("hidden");
+            stopSpotlight();
+            revealAnswerAndFeedback();
+        }, 200);
+        }
+    }, 450);
+    }
+
+    function stopSuspense() {
+    if (suspenseIntervalId) {
+        clearInterval(suspenseIntervalId);
+        suspenseIntervalId = null;
+    }
+    if (suspenseLayer) suspenseLayer.classList.add("hidden");
+    stopSpotlight();
+    }
+
+    // Highlight the correct answer and fade the others
+    function highlightCorrectAnswer() {
+    const q = QUESTIONS[currentQuestionIndex];
+
+    answerButtons.forEach(b => {
+        const bIndex = Number(b.dataset.answerIndex);
+        if (bIndex === q.correctIndex) {
+        b.classList.add("answer-correct");
+        b.classList.remove("answer-faded");
+        } else {
+        b.classList.add("answer-faded");
+        b.classList.remove("answer-correct");
+        }
+    });
+    }
+
+    // Particle explosion from the chosen button
+    function spawnButtonBurst(buttonEl) {
+    if (!buttonEl) return;
+    const rect = buttonEl.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const count = 14;
+
+    for (let i = 0; i < count; i++) {
+        const star = document.createElement("span");
+        star.className = "burst-star";
+        star.textContent = "⭐";
+
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 50 + Math.random() * 50;
+        const dx = Math.cos(angle) * dist;
+        const dy = Math.sin(angle) * dist;
+
+        star.style.left = `${centerX}px`;
+        star.style.top = `${centerY}px`;
+        star.style.setProperty("--dx", `${dx}px`);
+        star.style.setProperty("--dy", `${dy}px`);
+
+        document.body.appendChild(star);
+
+        star.addEventListener("animationend", () => {
+        star.remove();
+        });
+    }
+    }
+
+    function startButtonBurstLoop() {
+    stopButtonBurstLoop(); // clear any previous loop
+    if (!lastSelectedButton || !lastAnswerWasCorrect) return;
+
+    const burstOnce = () => {
+        if (!lastSelectedButton || !lastAnswerWasCorrect) return;
+        spawnButtonBurst(lastSelectedButton);
+        buttonBurstTimeoutId = setTimeout(burstOnce, 900); // wait for previous particles to finish
+    };
+
+    burstOnce();
+    }
+
+    function stopButtonBurstLoop() {
+    if (buttonBurstTimeoutId) {
+        clearTimeout(buttonBurstTimeoutId);
+        buttonBurstTimeoutId = null;
+    }
+    }
+
+    // Reveal after suspense: highlight, scoring, feedback bubble, bursts
+    function revealAnswerAndFeedback() {
+    const q = QUESTIONS[currentQuestionIndex];
+
+    // 1) Always highlight the correct answer and fade the rest
+    highlightCorrectAnswer();
+
+    // 2) Scoring + sounds + emoji + streak
+    if (lastAnswerWasCorrect) {
+        let timeBonus = 0;
+        if (currentMode === "big") {
+        timeBonus = timeLeft * 5; // 5 points per remaining second
+        }
+
+        streak += 1;
+        const base = 100 * streak;
+
+        if (currentMode === "big") {
+        body.classList.remove("streak-tier-1", "streak-tier-2", "streak-tier-3");
+
+        if (streak >= 8) {
+            body.classList.add("streak-tier-3");
+        } else if (streak >= 5) {
+            body.classList.add("streak-tier-2");
+        } else if (streak >= 2) {
+            body.classList.add("streak-tier-1");
+        }
+        }
+
+        const earned = base + timeBonus;
+        score += earned;
+        correctCount += 1;
+        updateScoreDisplays();
+        playCorrectSound();
+        spawnStarRain(20);
+        showEmojiReaction(true);
+
+        showFeedback(true);
+        startButtonBurstLoop();
+    } else {
+        streak = 0;
+        updateScoreDisplays();
+        playIncorrectSound();
+        showEmojiReaction(false);
+        showFeedback(false);
+    }
     }
 
 
@@ -1921,7 +2240,7 @@ body.show-real-cursor * {
 
 
     function showFeedback(isCorrect) {
-    // 1) Pick a fun heading
+    // 1) Pick a fun heading for the bubble
     const title = isCorrect
         ? chooseRandom(CORRECT_TITLES)
         : chooseRandom(INCORRECT_TITLES);
@@ -1930,7 +2249,7 @@ body.show-real-cursor * {
     feedbackTitleEl.classList.toggle("correct-text", isCorrect);
     feedbackTitleEl.classList.toggle("incorrect-text", !isCorrect);
 
-    // 2) Pick the detail line
+    // 2) Pick the detail line (subtitle under the bubble)
     let detailText = "";
     if (isCorrect) {
         detailText = getStreakPhrase(streak);
@@ -1956,7 +2275,7 @@ body.show-real-cursor * {
 
     // 5) Big-screen vs phone behavior
     if (currentMode === "big") {
-        // Show the Next Question button
+        // Show the Next Question button in the white strip
         nextQuestionBtn.classList.remove("hidden");
     } else {
         // Phone mode: auto-advance after a short delay
@@ -1969,6 +2288,7 @@ body.show-real-cursor * {
         }, 2000);
     }
     }
+
 
 
 
@@ -2031,53 +2351,67 @@ body.show-real-cursor * {
     }
 
     function loadQuestion() {
-      if (currentQuestionIndex >= QUESTIONS.length) {
+    if (currentQuestionIndex >= QUESTIONS.length) {
         endGame();
         return;
-      }
+    }
 
-      const q = QUESTIONS[currentQuestionIndex];
-      questionTextEl.textContent = q.text;
+    // Stop any suspense / bursts from previous question
+    stopSuspense();
+    stopButtonBurstLoop();
+    stopSpotlight();
+    lastSelectedButton = null;
+    lastAnswerWasCorrect = false;
+    lastSelectedAnswerIndex = null;
 
-      // Reset question card back to normal (question) mode
-        if (questionCard && feedbackBubble) {
+    const q = QUESTIONS[currentQuestionIndex];
+    questionTextEl.textContent = q.text;
+
+    // Reset question card back to normal (question) mode
+    if (questionCard && feedbackBubble) {
         questionCard.classList.remove("feedback-mode");
         feedbackBubble.style.display = "none";
         questionTextEl.style.display = "block";
-        }
-        nextQuestionBtn.classList.add("hidden");
+    }
+    nextQuestionBtn.classList.add("hidden");
+    feedbackDetailEl.textContent = "";
 
+    // Animated question reveal
+    questionTextEl.classList.remove("question-reveal");
+    void questionTextEl.offsetWidth;
+    questionTextEl.classList.add("question-reveal");
 
-        // Animated question reveal
-        questionTextEl.classList.remove("question-reveal");
-        void questionTextEl.offsetWidth; // restart animation
-        questionTextEl.classList.add("question-reveal");
+    updateProgress();
 
-
-      updateProgress();
-
-      // Reset timer for each new question
-      if (currentMode === "big") {
+    // Reset timer for each new question
+    if (currentMode === "big") {
         startTimer();
-      } else {
+    } else {
         stopTimer();
-      }
-    
+    }
 
-      isLocked = false;
-      answerButtons.forEach(btn => {
+    isLocked = false;
+    answerButtons.forEach(btn => {
         // Remove any state from the previous question
-        btn.classList.remove("disabled", "answer-correct", "answer-wrong", "answer-faded");
-      });
+        btn.classList.remove(
+        "disabled",
+        "answer-correct",
+        "answer-wrong",
+        "answer-faded",
+        "spotlight-chosen"
+        );
+    });
 
-      const order = shuffledIndices(q.answers.length);
-      answerButtons.forEach((btn, pos) => {
+    const order = shuffledIndices(q.answers.length);
+    answerButtons.forEach((btn, pos) => {
         const idx = order[pos];
         btn.dataset.answerIndex = String(idx);
         const textSpan = btn.querySelector(".answer-text");
         textSpan.textContent = q.answers[idx];
-      });
+    });
     }
+
+    
 
     function goToNextQuestionAnimated() {
       // If we don't have the quiz container for some reason, just jump
@@ -2124,94 +2458,31 @@ body.show-real-cursor * {
 
 
 
-    function handleAnswerClick(e) {
-      if (isLocked) return;
-      isLocked = true;
+function handleAnswerClick(e) {
+  if (isLocked) return;
+  isLocked = true;
 
-      // Stop timer as soon as an answer is chosen
-      stopTimer();
+  // Stop timer as soon as an answer is chosen
+  stopTimer();
 
-      const btn = e.currentTarget;
-      const answerIndex = Number(btn.dataset.answerIndex);
-      const q = QUESTIONS[currentQuestionIndex];
+  const btn = e.currentTarget;
+  const answerIndex = Number(btn.dataset.answerIndex);
+  const q = QUESTIONS[currentQuestionIndex];
 
-      // Stop any more clicks on the answers
-      answerButtons.forEach(b => b.classList.add("disabled"));
+  lastSelectedButton = btn;
+  lastSelectedAnswerIndex = answerIndex;
+  lastAnswerWasCorrect = answerIndex === q.correctIndex;
 
-      const isCorrect = answerIndex === q.correctIndex;
+  // Stop any more clicks on the answers
+  answerButtons.forEach(b => b.classList.add("disabled"));
 
+  // Start spotlight + suspense thumbs
+  startSpotlight(btn);
+  startSuspenseSequence();
 
-      if (isCorrect) {
-        // Visually mark the chosen answer as correct
-        btn.classList.add("answer-correct");
+  // Big mode: we will reveal after suspense, no auto-advance here
+}
 
-        // Time-based bonus (big-screen mode only)
-        let timeBonus = 0;
-        if (currentMode === "big") {
-          timeBonus = timeLeft * 5; // 5 points per remaining second
-        }
-
-        streak += 1;
-        const base = 100 * streak;
-
-        // Apply streak tier animations (big mode only)
-        if (currentMode === "big") {
-        body.classList.remove("streak-tier-1", "streak-tier-2", "streak-tier-3");
-
-        if (streak >= 8) {
-            body.classList.add("streak-tier-3");
-        } else if (streak >= 5) {
-            body.classList.add("streak-tier-2");
-        } else if (streak >= 2) {
-            body.classList.add("streak-tier-1");
-        }
-        }
-
-
-        const earned = base + timeBonus;
-        score += earned;
-        correctCount += 1;
-        updateScoreDisplays();
-        playCorrectSound();
-        spawnStarRain(20);
-        showEmojiReaction(true);
-
-        const msg = currentMode === "big"
-          ? `Streak: ${streak} in a row! +${earned} points (time bonus: +${timeBonus})`
-          : `Streak: ${streak} in a row! +${earned} points`;
-
-        showFeedback(true);
-      } else {
-        // Incorrect answer:
-        //  - Grey out all 3 wrong answers
-        //  - Keep only the correct one in full color
-
-        answerButtons.forEach(b => {
-          const bIndex = Number(b.dataset.answerIndex);
-          if (bIndex === q.correctIndex) {
-            // This is the correct answer: highlight it
-            b.classList.add("answer-correct");
-            b.classList.remove("answer-faded");
-          } else {
-            // These are wrong answers: fade them out
-            b.classList.add("answer-faded");
-            b.classList.remove("answer-correct");
-          }
-        });
-
-        streak = 0;
-        updateScoreDisplays();
-        playIncorrectSound();
-        showEmojiReaction(false);
-        showFeedback(false);
-      }
-
-
-
-
-    // Big mode: do NOT auto-advance
-
-    }
 
 
 
