@@ -220,18 +220,24 @@
       opacity: 0.7;
     }
 
-    /* Global fade card: spans 2 columns on the last row */
+    /* Global fade card: make the Fade button same size as other buttons */
     .fade-card {
-      grid-column: span 2;
+      /* Still a normal grid card – no special span needed */
     }
 
     .fade-card .buttons {
-      justify-content: flex-end;
+      /* Center the Fade button in the row */
+      justify-content: center;
     }
 
     .fade-card .fade-button {
-      flex: 1; /* fill the whole width of the card (two columns) */
+      /* Make it fill the width like the play buttons */
+      flex: 1;
+      padding: 1rem 1.2rem;  /* same padding as .play-button */
+      font-size: 1.4rem;     /* same font size as .play-button */
     }
+
+
 
     .hint {
       margin-top: 1.5rem;
@@ -506,7 +512,7 @@
         </div>
       </article>
 
-      <!-- Row 5: Track 13 + big Fade card spanning 2 columns -->
+           <!-- Row 5: 13–14 + Fade -->
       <article class="track">
         <div class="track-header">
           <span>Crying</span>
@@ -522,6 +528,26 @@
             <span>
               <span class="track-id">#13</span>
               <span class="emoji">😭</span>
+            </span>
+          </button>
+        </div>
+      </article>
+
+      <article class="track">
+        <div class="track-header">
+          <span>Dream Sound</span>
+          <span>#14</span>
+        </div>
+        <div class="buttons">
+          <button
+            type="button"
+            class="play-button"
+            data-audio-file="NP_1_4_Track_14.mp3"
+            aria-label="Play track 14"
+          >
+            <span>
+              <span class="track-id">#14</span>
+              <span class="emoji">💤</span>
             </span>
           </button>
         </div>
@@ -543,6 +569,7 @@
           </button>
         </div>
       </article>
+
     </section>
   </main>
 
