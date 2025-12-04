@@ -457,7 +457,7 @@ body.mode-big #app {
     height: 22px;      /* was 10px */
     border-radius: 50%;
     pointer-events: none;
-    z-index: 200;      /* above everything */
+    z-index: 10002;      /* above everything */
     background: radial-gradient(circle, #fff4e6 0%, #ffb55a 40%, #ff6b3d 70%, #7f1d1d 100%);
     animation: timerParticle 1.2s ease-out forwards; /* longer, dramatic */
     --tx: 0px;
@@ -1052,6 +1052,78 @@ body.mode-big #app {
     pointer-events: none;
     }
 
+    /* ---------- END REWARD SPOTLIGHT ---------- */
+
+    .reward-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 10000; /* above everything else */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .reward-center {
+      text-align: center;
+      color: #ffffff;
+    }
+
+    .reward-present-big {
+      font-size: clamp(5rem, 10vw, 8rem);
+    }
+
+    .reward-final-emoji {
+        font-size: clamp(20rem, 44vw, 36rem); /* 4× bigger */
+        margin-top: 8px;
+        cursor: pointer;
+        user-select: none;
+        pointer-events: auto;
+        position: relative;
+        z-index: 10001;
+    }
+
+
+
+    /* Big present wiggle while we're in the spotlight */
+    .reward-present-animate {
+      animation: rewardPresentBigWiggle 1.2s ease-in-out infinite;
+    }
+
+    @keyframes rewardPresentBigWiggle {
+      0%, 40%, 100% { transform: translateY(0) rotate(0deg); }
+      10% { transform: translateY(-8px) rotate(-4deg); }
+      20% { transform: translateY(4px) rotate(4deg); }
+      30% { transform: translateY(-4px) rotate(-2deg); }
+    }
+
+    /* Giant emoji entrance (simple pop, for scores < 5) */
+    .reward-emoji-pop {
+      animation: rewardEmojiPop 0.7s ease-out forwards;
+    }
+
+    @keyframes rewardEmojiPop {
+      0%   { transform: scale(0.6); opacity: 0; }
+      60%  { transform: scale(1.1); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Giant emoji dance (for scores >= 5) */
+    .reward-emoji-dance {
+      animation: rewardEmojiDance 2s ease-in-out forwards;
+    }
+
+    @keyframes rewardEmojiDance {
+      0%   { transform: translateY(0) scale(1); }
+      15%  { transform: translateY(-12px) scale(1.05); }
+      30%  { transform: translateY(0) scale(1); }
+      45%  { transform: rotate(-4deg) scale(1.05); }
+      60%  { transform: rotate(4deg) scale(1.05); }
+      75%  { transform: rotate(0deg) translateY(-8px) scale(1.05); }
+      100% { transform: translateY(0) scale(1); }
+    }
+
+
     .suspense-layer {
     position: absolute;
     inset: 0;
@@ -1115,7 +1187,21 @@ body.mode-big #app {
 
     .end-trophy {
       font-size: clamp(3rem, 6vw, 4rem);
+      cursor: pointer; /* make it look clickable */
     }
+
+    /* Small present wiggle on the end screen */
+    .end-present-wiggle {
+      animation: endPresentWiggle 2s ease-in-out infinite;
+    }
+
+    @keyframes endPresentWiggle {
+      0%, 20%, 100% { transform: rotate(0deg); }
+      5%  { transform: rotate(-6deg); }
+      10% { transform: rotate(6deg); }
+      15% { transform: rotate(-3deg); }
+    }
+
 
     .end-score {
       font-size: clamp(2.2rem, 3.3vw, 3rem);
@@ -1183,12 +1269,35 @@ body.mode-big #app {
     position: fixed;
     top: 0;
     left: 0;
-    z-index: 9999;
+    z-index: 10001;
     font-size: 3.5rem;
     pointer-events: none;
     transform: translate(-38%, -15%);
     transition: transform 0.04s linear;
     }
+
+    /* Little emoji "ghosts" that follow the big pointer */
+    .pointer-trail-emoji {
+    position: fixed;
+    z-index: 9998; /* just under the main pointer */
+    font-size: 2.5rem;
+    pointer-events: none;
+    transform: translate(-38%, -15%);
+    opacity: 1;
+    animation: pointerTrailFade 0.6s ease-out forwards;
+    }
+
+    @keyframes pointerTrailFade {
+    0% {
+        opacity: 1;
+        transform: translate(-38%, -15%) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-38%, -5%) scale(0.7);
+    }
+    }
+
 
     /* CLICK RIPPLE EFFECT (big-screen pointer) */
     .click-ripple {
@@ -1438,6 +1547,21 @@ body.show-real-cursor * {
     </div>
   </div>
 
+    <!-- Reward spotlight overlay for end screen -->
+    <div id="reward-overlay" class="reward-overlay hidden">
+        <div class="reward-center">
+        <!-- Big present that wiggles before exploding -->
+        <div id="reward-present-big" class="reward-present-big">🎁</div>
+        <!-- Giant final emoji revealed after the present "explodes" -->
+<div
+  id="reward-emoji"
+  class="reward-final-emoji hidden"
+  onclick="handleRewardEmojiClick()"
+></div>
+        </div>
+    </div>
+
+
 <div id="big-pointer" class="hidden">👆</div>
 
 
@@ -1606,6 +1730,40 @@ body.show-real-cursor * {
     "😿","😣","😫","🤢","😥","🫤","😐","🙄"
     ];
 
+    // Big reward emoji pools based on number of correct answers (0–10)
+    // The more you get right, the "cooler" the emoji.
+const FUNNY_EMOJIS = [
+  "🤪","🥸","🤡","🤠","💩","🦆","😹","🍕","🤤","👽","🌮","🍩","🥨","🍔","🐸","😏",
+  "🙊","🤯","🤮","🐯","🦁","🐶","🐼","🐰","🐳","🍟","🍪","🍿","🧀","🍎","🍍","🍰"
+];
+
+const REWARD_EMOJI_POOLS = {
+  0: FUNNY_EMOJIS,
+  1: FUNNY_EMOJIS,
+  2: FUNNY_EMOJIS,
+  3: FUNNY_EMOJIS,
+  4: FUNNY_EMOJIS,
+  5: FUNNY_EMOJIS,
+  6: FUNNY_EMOJIS,
+  7: FUNNY_EMOJIS,
+  8: FUNNY_EMOJIS,
+  9: FUNNY_EMOJIS,
+  10: FUNNY_EMOJIS
+};
+
+    function pickRewardEmoji() {
+      const total = QUESTIONS.length || 10;
+      let score = correctCount;
+
+      if (score < 0) score = 0;
+      if (score > total) score = total;
+      if (score > 10) score = 10; // clamp to 10 for our table
+
+      const pool = REWARD_EMOJI_POOLS[score] || REWARD_EMOJI_POOLS[0];
+      const index = Math.floor(Math.random() * pool.length);
+      return pool[index];
+    }
+
 
     // Feedback phrases for the speech bubble
     const CORRECT_TITLES = [
@@ -1662,6 +1820,10 @@ body.show-real-cursor * {
     let lastAnswerWasCorrect = false;
     let lastSelectedAnswerIndex = null;
     let buttonBurstTimeoutId = null;
+
+    let pointerTrailPending = false; // NEW: should we give a comet trail on the next question?
+    let hasRevealedReward = false;   // NEW: has the end present already been opened?
+    let rewardFinished = false;      // NEW: has the big reward emoji already exploded?
 
 
     /***********************
@@ -1732,11 +1894,16 @@ body.show-real-cursor * {
 
     const finalScoreEl = document.getElementById("final-score");
     const finalCorrectEl = document.getElementById("final-correct");
+
     const endTitleEl = document.getElementById("end-title");
     const endSubtitleEl = document.getElementById("end-subtitle");
     const endTrophyEl = document.getElementById("end-trophy");
+    const rewardOverlay = document.getElementById("reward-overlay");
+    const rewardPresentBig = document.getElementById("reward-present-big");
+    const rewardEmojiEl = document.getElementById("reward-emoji");
     const playAgainBtn = document.getElementById("play-again-btn");
     const backToTitleBtn = document.getElementById("back-to-title-btn");
+
 
     totalQuestionsEl.textContent = QUESTIONS.length.toString();
     lessonImageEl.src = LESSON_IMAGE_PATH;
@@ -1744,6 +1911,164 @@ body.show-real-cursor * {
     lessonSubtitleEl.textContent = LESSON_SUBTITLE_TEXT;
 
     const bigPointer = document.getElementById("big-pointer");
+
+    /***********************************
+     * POINTER COMET TRAILS (NEW)
+     ***********************************/
+    const POINTER_HEAD = "👆";
+
+    const POINTER_TRAILS = [
+    {
+        id: "star_comet",
+        emojis: ["⭐", "✨", "·"],
+        glowColor: "#f6c453", // warm golden yellow
+    },
+    {
+        id: "ocean_comet",
+        emojis: ["🌊", "💧", "·"],
+        glowColor: "#34c3ff", // aqua / turquoise
+    },
+    {
+        id: "garden_comet",
+        emojis: ["🌿", "🌱", "🍃", "·"],
+        glowColor: "#4caf50", // fresh leaf green
+    },
+    {
+        id: "fire_comet",
+        emojis: ["🔥", "✨", "·"],
+        glowColor: "#ff6a2f", // intense orange-red
+    },
+    {
+        id: "galaxy_comet",
+        emojis: ["🌙", "⭐", "✨", "·"],
+        glowColor: "#7e57c2", // deep purple / indigo
+    },
+    {
+        id: "animal_comet",
+        emojis: ["🐾", "🐾", "·"],
+        glowColor: "#a67c52", // warm brown
+    },
+    {
+        id: "joy_comet",
+        emojis: ["😄", "😊", "🙂", "·"],
+        glowColor: "#ffd54f", // bright cheerful yellow
+    },
+    {
+        id: "heart_comet",
+        emojis: ["❤️", "💕", "💖", "·"],
+        glowColor: "#ff4081", // pink-red
+    },
+    {
+        id: "rainbow_comet",
+        emojis: ["🌈", "✨", "·"],
+        glowColor: "#ffffff", // soft white
+    },
+    {
+        id: "bible_light_comet",
+        emojis: ["📖", "✨", "·"],
+        glowColor: "#fff3cd", // gentle pale gold
+    },
+    ];
+
+    let pointerTrailDeck = [];
+    let currentPointerTrail = null;
+
+    // NEW: for mouse trail behaviour
+    let lastPointerTrailTime = 0;       // when we last created a ghost
+    let pointerTrailEmojiIndex = 0;     // which emoji to use next in the comet's list
+
+    function refillPointerTrailDeck() {
+    // Fill the deck with all trail indexes and shuffle them
+    pointerTrailDeck = POINTER_TRAILS.map((_, index) => index);
+
+    for (let i = pointerTrailDeck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pointerTrailDeck[i], pointerTrailDeck[j]] = [pointerTrailDeck[j], pointerTrailDeck[i]];
+    }
+    }
+
+    function getNextPointerTrail() {
+    if (pointerTrailDeck.length === 0) {
+        refillPointerTrailDeck();
+    }
+    const nextIndex = pointerTrailDeck.pop(); // no repeats until deck is empty
+    return POINTER_TRAILS[nextIndex];
+    }
+
+    function applyPointerTrail(trail) {
+    currentPointerTrail = trail;
+
+    // The pointer itself stays just "👆".
+    // We only add a glow so it feels special.
+    bigPointer.style.textShadow = `
+        0 0 8px ${trail.glowColor},
+        0 0 16px ${trail.glowColor}
+    `;
+    }
+
+    function clearPointerTrail() {
+    currentPointerTrail = null;
+    bigPointer.textContent = POINTER_HEAD;
+    bigPointer.style.textShadow = "none";
+    }
+
+    function schedulePointerTrailForNextQuestion() {
+    // Called when a question is answered correctly
+    pointerTrailPending = true;
+    }
+
+    // NEW: create one fading emoji "ghost" at (x, y)
+    function spawnPointerTrailEmoji(x, y) {
+    // If no comet is active, do nothing
+    if (!currentPointerTrail) return;
+
+    const now = performance.now ? performance.now() : Date.now();
+
+    // Throttle: don't spawn on EVERY tiny movement (40ms gap)
+    if (now - lastPointerTrailTime < 40) return;
+    lastPointerTrailTime = now;
+
+    const emojis = currentPointerTrail.emojis || [];
+    if (!emojis.length) return;
+
+    // Cycle through the comet's emoji list: ⭐ → ✨ → · → ⭐ → ...
+    const emoji = emojis[pointerTrailEmojiIndex % emojis.length];
+    pointerTrailEmojiIndex++;
+
+    const span = document.createElement("span");
+    span.className = "pointer-trail-emoji";
+    span.textContent = emoji;
+    span.style.left = x + "px";
+    span.style.top = y + "px";
+
+    // Give the ghost a soft glow too
+    if (currentPointerTrail.glowColor) {
+        span.style.textShadow = `
+        0 0 6px ${currentPointerTrail.glowColor}
+        `;
+    }
+
+    document.body.appendChild(span);
+
+    // Remove the element after its fade-out animation finishes
+    span.addEventListener("animationend", () => {
+        span.remove();
+    });
+    }
+
+    // Start with a simple pointer (no trail)
+    if (bigPointer) {
+    clearPointerTrail();
+    }
+
+
+
+
+    // PRELOAD CHOMP SOUND (existing code continues)
+    chompAudio = new Audio("quizsounds/sound_chomp.mp3");
+
+
+
     // PRELOAD CHOMP SOUND
     chompAudio = new Audio("quizsounds/sound_chomp.mp3");
     chompAudio.preload = "auto";
@@ -2007,6 +2332,7 @@ body.show-real-cursor * {
 
     // 2) Scoring + sounds + emoji + streak
     if (lastAnswerWasCorrect) {
+        schedulePointerTrailForNextQuestion();
         let timeBonus = 0;
         if (currentMode === "big") {
         timeBonus = timeLeft * 5; // 5 points per remaining second
@@ -2090,6 +2416,114 @@ body.show-real-cursor * {
       }
     }
 
+   
+       // Reset and hide the reward overlay
+    function hideRewardOverlay() {
+      if (!rewardOverlay) return;
+
+      rewardOverlay.classList.add("hidden");
+
+      if (rewardPresentBig) {
+        rewardPresentBig.classList.add("hidden");
+        rewardPresentBig.classList.remove("reward-present-animate");
+      }
+
+      if (rewardEmojiEl) {
+        rewardEmojiEl.classList.add("hidden");
+        rewardEmojiEl.classList.remove("reward-emoji-dance", "reward-emoji-pop");
+      }
+    }
+
+    // Start the reward spotlight sequence after clicking the present
+    function startRewardSequence() {
+      if (!rewardOverlay || !rewardPresentBig) return;
+
+      // reset final-state flag every time we start fresh
+      rewardFinished = false;
+
+      // Show the dark overlay and big present
+      rewardOverlay.classList.remove("hidden");
+      rewardPresentBig.textContent = "🎁";
+      rewardPresentBig.classList.remove("hidden");
+      rewardPresentBig.classList.add("reward-present-animate");
+
+      // Make sure the emoji is hidden at the start
+      if (rewardEmojiEl) {
+        rewardEmojiEl.classList.add("hidden");
+        rewardEmojiEl.classList.remove("reward-emoji-dance", "reward-emoji-pop");
+      }
+
+      // After a short wiggle time, "explode" the present
+      setTimeout(() => {
+        explodeRewardPresent();
+      }, 2000); // 2 seconds of wiggle feels nice
+    }
+
+    // Present explosion: hide box, show giant emoji, add particles + dance
+    function explodeRewardPresent() {
+      if (!rewardPresentBig || !rewardEmojiEl) return;
+
+      // Stop showing the big present
+      rewardPresentBig.classList.add("hidden");
+      rewardPresentBig.classList.remove("reward-present-animate");
+
+      // Pick an emoji based on how many questions were correct
+      const emoji = pickRewardEmoji();
+      rewardEmojiEl.textContent = emoji;
+
+      // Scores 5 or higher get a little dance; below 5 just pop in
+      if (correctCount >= 5) {
+        rewardEmojiEl.classList.add("reward-emoji-dance");
+      } else {
+        rewardEmojiEl.classList.add("reward-emoji-pop");
+      }
+
+      rewardEmojiEl.classList.remove("hidden");
+
+      // Particle "explosion" – reuse the star rain for a big celebration
+      spawnStarRain(40);
+
+      // NEW: after 5 seconds, automatically explode the emoji and remove the dark overlay
+      setTimeout(() => {
+        // If the player already clicked and finished, do nothing
+        if (rewardFinished) return;
+
+        // Otherwise, run the same logic as a click
+        handleRewardEmojiClick();
+      }, 5000);
+    }
+
+    // NEW: When the big reward emoji is clicked, explode it and close the overlay
+    function handleRewardEmojiClick() {
+      if (!rewardEmojiEl) return;
+
+      // If we've already exploded / finished, do nothing
+      if (rewardFinished) return;
+      rewardFinished = true;
+
+      // Big particle blast from the emoji itself
+      spawnRewardExplosionParticles(70);
+
+      // Quick "pop out" effect on the emoji
+      rewardEmojiEl.style.transition = "transform 0.25s ease-out, opacity 0.25s ease-out";
+      rewardEmojiEl.style.transform = "scale(1.3)";
+      rewardEmojiEl.style.opacity = "0";
+
+      // After the pop, hide the dark overlay and reset styles for next game
+      setTimeout(() => {
+        hideRewardOverlay();
+
+        // Reset inline styles so the emoji looks normal next time
+        rewardEmojiEl.style.transition = "";
+        rewardEmojiEl.style.transform = "";
+        rewardEmojiEl.style.opacity = "";
+      }, 250);
+    }
+
+
+
+
+
     function updateTimerVisual() {
       if (!timerRingFgEl || !timerTextEl) return;
 
@@ -2155,6 +2589,49 @@ body.show-real-cursor * {
         document.body.appendChild(p);
         p.addEventListener("animationend", () => p.remove());
     }
+
+
+
+    }
+
+
+    // Big explosion when clicking the final reward emoji
+    function spawnRewardExplosionParticles(count = 60) {
+      if (!rewardEmojiEl) return;
+
+      // Get the emoji's position on the screen
+      const rect = rewardEmojiEl.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+
+      // Same fiery color palette as the timer explosion
+      const colors = ["#ffedd5", "#fed7aa", "#fdba74", "#fb923c", "#f97316", "#ea580c", "#b91c1c"];
+
+      for (let i = 0; i < count; i++) {
+        const p = document.createElement("div");
+        p.className = "timer-particle"; // reuse existing CSS + animation
+
+        // random angle + distance (bigger blast than the timer)
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 60 + Math.random() * 120;
+        const dx = Math.cos(angle) * distance;
+        const dy = Math.sin(angle) * distance;
+
+        // start at center of the big emoji
+        p.style.left = cx + "px";
+        p.style.top = cy + "px";
+
+        // custom properties for the end position (used by CSS animation)
+        p.style.setProperty("--tx", dx + "px");
+        p.style.setProperty("--ty", dy + "px");
+
+        // fiery gradient color
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        p.style.background = `radial-gradient(circle, #fff7ed 0%, ${color} 55%, #7f1d1d 100%)`;
+
+        document.body.appendChild(p);
+        p.addEventListener("animationend", () => p.remove());
+      }
     }
 
         function spawnClickRipple(x, y) {
@@ -2350,10 +2827,25 @@ body.show-real-cursor * {
       loadQuestion();
     }
 
-    function loadQuestion() {
+function loadQuestion() {
     if (currentQuestionIndex >= QUESTIONS.length) {
         endGame();
         return;
+    }
+
+    // NEW: handle pointer comet trail for this question
+    if (currentMode === "big") {
+        if (pointerTrailPending) {
+            const trail = getNextPointerTrail();
+            applyPointerTrail(trail);
+            pointerTrailPending = false; // we used it
+        } else {
+            // No special trail scheduled -> plain pointer
+            clearPointerTrail();
+        }
+    } else {
+        // Phone mode (no big pointer on screen)
+        clearPointerTrail();
     }
 
     // Stop any suspense / bursts from previous question
@@ -2498,22 +2990,43 @@ function handleAnswerClick(e) {
         endScreen.classList.add("end-great");
         endTitleEl.textContent = "Amazing Job!";
         endSubtitleEl.textContent = "You really know this story.";
-        endTrophyEl.textContent = "🏆";
-        spawnStarRain(30);
       } else if (ratio >= 0.5) {
         endScreen.classList.add("end-good");
         endTitleEl.textContent = "Nice Work!";
         endSubtitleEl.textContent = "You did well. Keep learning!";
-        endTrophyEl.textContent = "🎉";
       } else {
         endScreen.classList.add("end-try");
         endTitleEl.textContent = "Keep Practicing!";
         endSubtitleEl.textContent = "Try again and watch your score grow.";
-        endTrophyEl.textContent = "⭐";
       }
+
+      // Always show the present on the end screen, with a gentle wiggle
+      endTrophyEl.textContent = "🎁";
+      endTrophyEl.classList.add("end-present-wiggle");
+
+      // Reset reward state and hide overlay in case this is a replay
+      hasRevealedReward = false;
+      hideRewardOverlay();
 
       showScreen("end");
     }
+
+
+    function handleEndPresentClick() {
+      if (hasRevealedReward) {
+        // Don't run the animation twice
+        return;
+      }
+
+      hasRevealedReward = true;
+
+      // Stop the small idle wiggle on the end screen icon
+      endTrophyEl.classList.remove("end-present-wiggle");
+
+      // Start the full-screen reward sequence
+      startRewardSequence();
+    }
+
 
     /***********************
      * EVENT LISTENERS
@@ -2524,6 +3037,27 @@ function handleAnswerClick(e) {
     answerButtons.forEach(btn => {
       btn.addEventListener("click", handleAnswerClick);
     });
+
+    // Clicking the end-screen present triggers the reward spotlight
+    endTrophyEl.addEventListener("click", handleEndPresentClick);
+
+    // NEW: Clicking the giant reward emoji closes the spotlight with a big explosion
+    if (rewardEmojiEl) {
+      rewardEmojiEl.addEventListener("click", handleRewardEmojiClick);
+    }
+
+    // EXTRA SAFETY: also listen on the whole reward overlay,
+    // but only react when the click is actually on the big emoji.
+    if (rewardOverlay && rewardEmojiEl) {
+    rewardOverlay.addEventListener("click", (event) => {
+        // If the click wasn't on the emoji (or its children), do nothing.
+        if (!rewardEmojiEl.contains(event.target)) return;
+
+        // Run the same explosion + undarken logic
+        handleRewardEmojiClick();
+    });
+    }
+
 
     // Keyboard controls: 1, 2, 3, 4 to choose the answers
     document.addEventListener("keydown", (e) => {
@@ -2553,6 +3087,30 @@ function handleAnswerClick(e) {
 
     // Simulate a click on that button
     btn.click();
+    });
+
+    // DEBUG: quick skip to the end screen with a chosen score
+    // Press 0 or 5–9 on the keyboard to jump to the end.
+    // (1–4 are left alone so they still answer questions.)
+    document.addEventListener("keydown", (e) => {
+      const key = e.key;
+
+      // Only care about digit keys 0–9
+      if (key < "0" || key > "9") return;
+
+      const n = parseInt(key, 10);
+
+      // Keep 1–4 for normal answering
+      if (n >= 1 && n <= 4) return;
+
+      // Pretend you finished the quiz with "n" correct answers
+      correctCount = n;
+
+      // Move us to "after" the last question
+      currentQuestionIndex = QUESTIONS.length;
+
+      // Jump straight to the end screen (present, spotlight, etc.)
+      endGame();
     });
 
 
@@ -2619,13 +3177,23 @@ function handleAnswerClick(e) {
 
 
     document.addEventListener("mousemove", (e) => {
-        if (!body.classList.contains("mode-big")) return;
-        if (isRealTablet) return;
+    // Only show the big pointer in Big Screen mode
+    if (!body.classList.contains("mode-big")) return;
+    if (isRealTablet) return;
 
+    const x = e.clientX;
+    const y = e.clientY;
 
-        bigPointer.style.left = e.clientX + "px";
-        bigPointer.style.top = e.clientY + "px";
+    // Move the main pointer to follow the mouse
+    bigPointer.style.left = x + "px";
+    bigPointer.style.top = y + "px";
+
+    // If a comet trail is active, spawn emoji ghosts
+    if (currentPointerTrail) {
+        spawnPointerTrailEmoji(x, y);
+    }
     });
+
 
     document.addEventListener("mousedown", (e) => {
     spawnClickRipple(e.clientX, e.clientY);
