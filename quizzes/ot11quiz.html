@@ -1118,100 +1118,108 @@
 
 :root.theme-sodom {
   /* 1) Background of the whole page (dark stormy night) */
-  --bg-gradient-top: #2b2b2b;
-  --bg-gradient-bottom: #1a1a1a;
-  --card-bg: #2c2c2c;
+  --bg-gradient-top: #2b2b2b;      /* charcoal gray */
+  --bg-gradient-bottom: #141414;   /* near-black ash */
+  --card-bg: #2c2c2c;              /* dark stone-like card */
 
   /* 2) Presented-by (intro) screen */
-  --intro-bg: #1a1a1a;
-  --intro-text: #ffdd8a;
+  --intro-bg: #1a1a1a;             /* ash-dark */
+  --intro-text: #ffdd8a;           /* warm golden glow */
 
   /* 3) Main text colors */
-  --text-main: #f0e9d2;
-  --text-muted: #b6a98f;
+  --text-main: #f0e9d2;            /* warm parchment */
+  --text-muted: #b6a98f;           /* dusty sandstone */
 
   /* 3a) Title screen text colors */
-  --title-main-text: #ffd773;
-  --title-subtitle-text: #ffb347;
+  --title-main-text: #ffd773;      /* bright fire-gold title */
+  --title-subtitle-text: #ffb347;  /* softer glowing orange subtitle */
 
   /* 4) Question area */
-  --question-bg: #3a3a3a;
-  --question-text: #fff5d7;
+  --question-bg: #3a3a3a;          /* dark stone slab */
+  --question-text: #fff5d7;        /* light warm ivory */
 
-  /* 5) "Next Question" / main buttons */
-  --accent: #ff7a00;
-  --accent-dark: #b44700;
-  --primary-text: #ffffff;
-  --secondary-bg: #4a4a4a;
-  --secondary-text: #ffd773;
+  /* 5) “Next Question” / main buttons */
+  --accent: #ff7a00;               /* fiery orange */
+  --accent-dark: #b44700;          /* scorched ember */
+  --primary-text: #1b1208;         /* very dark brown text on accent */
+  --secondary-bg: #4a4a4a;         /* dark gray secondary buttons */
+  --secondary-text: #ffd773;       /* glowing gold text */
 
-  /* 6) Answer buttons */
-  --red: #c81e1e;      /* judgment red */
+  /* 6) Answer buttons – fire palette */
+  --red: #c81e1e;                  /* judgment red */
   --red-text: #ffffff;
 
-  --yellow: #ffbf23;   /* flame yellow */
+  --yellow: #ffbf23;               /* flame yellow */
   --yellow-text: #222222;
 
-  --blue: #c9a97b;     /* ← updated tan button */
+  --blue: #c9a97b;                 /* scorched sand / tan */
   --blue-text: #222222;
 
-  --green: #ff7a00;    /* orange instead of green */
+  --green: #ff7a00;                /* orange instead of green */
   --green-text: #ffffff;
 
-  /* 7) Correct / incorrect feedback */
-  --feedback-correct-text: #ffbf23;
-  --feedback-incorrect-text: #ff4a3d;
+  /* 7) Correct / incorrect feedback text */
+  --feedback-correct-text: #ffbf23;   /* bright golden flame */
+  --feedback-incorrect-text: #ff4a3d; /* hot red */
 
   /* 8) Question page background */
-  --quiz-screen-bg: linear-gradient(180deg, #2b2b2b, #1a1a1a);
+  --quiz-screen-bg: linear-gradient(180deg, #2b2b2b, #141414);
 
-  /* 9) End screen background */
-  --end-great-bg-top: #ffedb3;
-  --end-great-bg-bottom: #ffd773;
+  /* 9) End screen backgrounds */
+  /* All three are darker so light text stays readable everywhere. */
+  --end-great-bg-top: #3a1a1a;     /* dark red-brown glow */
+  --end-great-bg-bottom: #c05600;  /* bright orange ember */
 
-  --end-good-bg-top: #ffb347;
-  --end-good-bg-bottom: #ff7a00;
+  --end-good-bg-top: #1f2933;      /* smoky night blue */
+  --end-good-bg-bottom: #7c2d12;   /* dim ember orange */
 
-  --end-try-bg-top: #b85151;
-  --end-try-bg-bottom: #cb7e7e;
+  --end-try-bg-top: #000000;       /* deepest shadow */
+  --end-try-bg-bottom: #3a1a1a;    /* soot red */
 
-  --end-score-text: #333333;
-  --end-detail-text: #333333;
+  /* Light text so it’s visible on all three backgrounds above */
+  --end-score-text: #ffe9bc;       /* main big text on end screen */
+  --end-detail-text: #f5f0dd;      /* smaller descriptive text */
 
-  /* 9a) End screen title & subtitle */
-  --end-title-text: #333333;
-  --end-subtitle-text: #333333;
+  /* 9a) End screen title & subtitle text colors */
+  --end-title-text: var(--end-score-text);      /* “Quiz Complete!” etc. */
+  --end-subtitle-text: var(--end-detail-text);  /* “Here’s how you did” */
 
-  /* 10) Progress bar & timer */
-  --progress-track-bg: #4a4a4a;
+  /* 10) Progress bar & timer colors */
+  --progress-track-bg: rgba(255, 255, 255, 0.14);
   --progress-fill-gradient: linear-gradient(120deg, #ffbf23, #ff7a00, #c81e1e);
 
   --timer-bg: #2c2c2c;
-  --timer-ring-bg: rgba(255, 255, 255, 0.1);
-  --timer-ring-fg: #ff7a00;
-  --timer-text: #ffd773;
+  --timer-ring-bg: rgba(255, 255, 255, 0.12);
+  --timer-ring-fg: #ff7a00;        /* burning orange ring */
+  --timer-text: #ffd773;           /* glowing gold text */
 
-  /* 11) Answer key pill */
-  --answer-key-pill-bg: rgba(255, 255, 255, 0.25);
-  --answer-key-pill-text: #ffffff;
+  /* 11) Little number pill on answer buttons */
+  --answer-key-pill-bg: rgba(0, 0, 0, 0.6);
+  --answer-key-pill-text: #fff5d7;
 
   /* 12) Misc */
   --button-radius: 1rem;
 
-  /* 13) Icon buttons */
-  --icon-chip-bg: rgba(255, 157, 48, 0.25);
+  /* 13) Small round icon buttons */
+  --icon-chip-bg: rgba(255, 157, 48, 0.25);  /* faint ember halo */
   --icon-chip-text: #ffd773;
 
-  /* 14) Overlays */
+  /* 14) Overlays and reward spotlight */
   --spotlight-overlay-bg: rgba(0, 0, 0, 0.85);
   --reward-overlay-bg: rgba(0, 0, 0, 0.9);
   --reward-text: #ffe9bc;
 
-  /* 15) Outlines */
-  --answer-border: rgba(255, 230, 180, 0.7);
-  --answer-border-strong: rgba(255, 230, 180, 1);
+  /* 15) Answer button outlines */
+  --answer-border: rgba(255, 230, 180, 0.35);
+  --answer-border-strong: rgba(255, 230, 180, 0.9);
 
-  /* 16) Explosion effects */
+  /* Per-color borders (slightly darker than button colors) */
+  --red-border:   #a51818;
+  --yellow-border:#d6a11f;
+  --blue-border:  #b08f66;
+  --green-border: #d26900;
+
+  /* 16) Timer explosion effects */
   --timer-particle-gradient: radial-gradient(
     circle,
     #fff2cc 0%,
@@ -1219,8 +1227,34 @@
     #ff7a00 60%,
     #7f1d1d 100%
   );
+
+  /* 17) Dynamic reaction flash colors */
+  --flash-correct-bg: rgba(255, 191, 35, 0.18);  /* warm golden flash */
+  --flash-incorrect-bg: rgba(200, 30, 30, 0.3);  /* red flash */
+  --flash-return-bg: var(--quiz-screen-bg);      /* fade back to dark */
+
+  /* 18) Screen card shadow */
+  --screen-card-shadow: rgba(0, 0, 0, 0.6);
+
+  /* 19) Pointer comet glow colors (all fire/smoke themed) */
+  --pointer-glow-star:   #ffbf23;  /* bright star-yellow */
+  --pointer-glow-ocean:  #c9a97b;  /* sandy/tan glow */
+  --pointer-glow-garden: #ff7a00;  /* orange flame */
+  --pointer-glow-fire:   #c81e1e;  /* deep red fire */
+  --pointer-glow-galaxy: #7f1d1d;  /* dark red */
+  --pointer-glow-animal: #4a4a4a;  /* charcoal gray */
+  --pointer-glow-joy:    #ffd773;  /* soft golden joy */
+  --pointer-glow-heart:  #ff4a3d;  /* hot red/orange */
+  --pointer-glow-rainbow:#fff5d7;  /* pale firelight */
+  --pointer-glow-bible:  #ffdd8a;  /* glowing scripture gold */
+
+  /* 20) Answer feedback subtitle text */
+  --feedback-subtitle-text: #f5f0dd;
+
+  /* Extra: explosion glow color */
   --timer-explosion-glow: rgba(255, 120, 0, 0.9);
 }
+
 
 
 
