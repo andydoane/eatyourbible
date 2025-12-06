@@ -19,32 +19,31 @@
 */
 
 
-
 :root {
-  /* 1) Background of the whole page (Kahoot-style purple) */
+  /* 1) Background of the whole page (purple Kahoot-y) */
   --bg-gradient-top: #5c2bbf;      /* lighter purple near top */
   --bg-gradient-bottom: #3a0f91;   /* deeper purple near bottom */
-  --card-bg: #ffffff;              /* white card behind title/question/end */
+  --card-bg: #ffffff;              /* white “card” behind title/question/end */
 
   /* 2) Presented-by (intro) screen */
-  --intro-bg: #46178f;             /* solid Kahoot-y purple */
-  --intro-text: #ffffff;           /* white text on intro */
+  --intro-bg: #46178f;             /* solid purple intro screen */
+  --intro-text: #ffffff;           /* white text on that screen */
 
-  /* 3) Main text colors (used on white cards, etc.) */
+  /* 3) Main text colors */
   --text-main: #0b1020;            /* dark text on light backgrounds */
   --text-muted: #9ca3af;           /* softer gray text */
 
   /* 3a) Title screen text colors */
-  --title-main-text: #ffffff;      /* big title on the title screen */
-  --title-subtitle-text: #e5def9;  /* subtitle on the title screen (soft light purple) */
+  --title-main-text: #ffffff;      /* big title text on title screen */
+  --title-subtitle-text: #e5def9;  /* soft light purple subtitle */
 
   /* 4) Question area */
   --question-bg: #ffffff;          /* white box behind the question (Kahoot-like) */
   --question-text: #111827;        /* dark question text */
 
   /* 5) “Next Question” / main buttons */
-  --accent: #46178f;               /* main button purple start */
-  --accent-dark: #2b0b61;          /* deeper purple for hover/end */
+  --accent: #46178f;               /* main button purple */
+  --accent-dark: #2b0b61;          /* deeper purple for hover/pressed */
   --primary-text: #ffffff;         /* text on main buttons */
   --secondary-bg: #f3f0ff;         /* pale purple secondary buttons */
   --secondary-text: #2b0b61;       /* purple text on secondary buttons */
@@ -80,7 +79,7 @@
   --end-try-bg-bottom: #facc15;
 
   --end-score-text: #1d104a;          /* deep purple for main score */
-  --end-detail-text: #181818;         /* light purple detail text */
+  --end-detail-text: #181818;         /* dark gray detail text */
 
   /* 9a) End screen title & subtitle text colors */
   --end-title-text: var(--end-score-text);     /* big "Quiz Complete!" text */
@@ -107,13 +106,19 @@
   --icon-chip-text: #ffffff;
 
   /* 14) Overlays and reward spotlight */
-  --spotlight-overlay-bg: rgba(0, 0, 0, 0.85);
-  --reward-overlay-bg: rgba(0, 0, 0, 0.9);
-  --reward-text: #ffffff;
+  --spotlight-overlay-bg: rgba(0, 0, 0, 0.85);  /* dim background during spotlight */
+  --reward-overlay-bg: rgba(0, 0, 0, 0.9);      /* end reward full-screen overlay */
+  --reward-text: #ffffff;                       /* text color in reward overlay */
 
   /* 15) Answer button outlines */
-  --answer-border: rgba(255, 255, 255, 0.95);
-  --answer-border-strong: rgba(255, 255, 255, 1);
+  --answer-border: rgba(255, 255, 255, 0.95);      /* default border around answers */
+  --answer-border-strong: rgba(255, 255, 255, 1);  /* strong white outline when correct */
+
+  /* darker versions of the button colors for borders */
+  --red-border:   #b41530;
+  --yellow-border:#ad7e00;
+  --blue-border:  #0f53a4;
+  --green-border: #1e6d09;
 
   /* 16) Timer explosion effects */
   --timer-particle-gradient: radial-gradient(
@@ -123,8 +128,33 @@
     #f97316 70%,
     #7c2d12 100%
   );
-  --timer-explosion-glow: rgba(250, 204, 21, 0.9);
+
+  /* 17) Dynamic reaction flash colors */
+  --flash-correct-bg: rgba(34, 197, 94, 0.22);   /* green flash tint */
+  --flash-incorrect-bg: rgba(248, 113, 113, 0.24); /* red flash tint */
+  --flash-return-bg: var(--quiz-screen-bg);      /* fade back to purple bg */
+
+  /* 18) Screen card shadow color */
+  --screen-card-shadow: rgba(15, 23, 42, 0.35);
+
+  /* 19) Pointer comet glow colors */
+  --pointer-glow-star:   #f6c453; /* warm golden yellow */
+  --pointer-glow-ocean:  #34c3ff; /* aqua / turquoise */
+  --pointer-glow-garden: #4caf50; /* fresh leaf green */
+  --pointer-glow-fire:   #ff6a2f; /* intense orange-red */
+  --pointer-glow-galaxy: #7e57c2; /* deep purple / indigo */
+  --pointer-glow-animal: #a67c52; /* warm brown */
+  --pointer-glow-joy:    #ffd54f; /* bright cheerful yellow */
+  --pointer-glow-heart:  #ff4081; /* pink-red */
+  --pointer-glow-rainbow:#ffffff; /* soft white */
+  --pointer-glow-bible:  #fff3cd; /* gentle pale gold */
+
+  /* 20) Answer feedback subtitle text */
+  --feedback-subtitle-text: #e7d9ff;
+
+  --timer-explosion-glow: rgba(250, 204, 21, 0.9); /* bright golden flash when time is up */
 }
+
 
 
 
@@ -200,7 +230,7 @@ body.mode-big #app {
       padding: 18px 14px 22px;
       position: relative;
       overflow: hidden;
-      box-shadow: 0 0 30px rgba(15,23,42,0.20);
+      box-shadow: 0 0 30px var(--screen-card-shadow);
     }
 
     #title-screen.screen-card {
@@ -753,10 +783,10 @@ body.mode-big #app {
     }
 
     .answer-button {
-    position: relative;          /* ← add this line */
+    position: relative; 
     width: 100%;
     border-radius: var(--button-radius);
-    border: 3px solid var(--answer-border);
+    border: 9px solid transparent; 
     cursor: pointer;
     font-weight: 600;
     text-align: center;
@@ -855,21 +885,25 @@ body.mode-big #app {
     .color-red {
       background: linear-gradient(to bottom, rgba(255,255,255,0.18), rgba(0,0,0,0.18)), var(--red);
       color: var(--red-text);
+      border-color: var(--red-border);
     }
 
     .color-yellow {
       background: linear-gradient(to bottom, rgba(255,255,255,0.18), rgba(0,0,0,0.18)), var(--yellow);
       color: var(--yellow-text);
+      border-color: var(--yellow-border);
     }
 
     .color-blue {
       background: linear-gradient(to bottom, rgba(255,255,255,0.18), rgba(0,0,0,0.18)), var(--blue);
       color: var(--blue-text);
+      border-color: var(--blue-border);
     }
 
     .color-green {
       background: linear-gradient(to bottom, rgba(255,255,255,0.18), rgba(0,0,0,0.18)), var(--green);
       color: var(--green-text);
+      border-color: var(--green-border);
     }
 
 
@@ -1164,11 +1198,13 @@ body.mode-big #app {
 
 
 
-    .feedback-detail {
-        font-size: clamp(1.6rem, 2.6vw, 2.1rem);
-        line-height: 1.35;
-        min-height: 1.8em; /* keep space even if empty */
-    }
+ .feedback-detail {
+    color: var(--feedback-subtitle-text);
+    font-size: clamp(1.6rem, 2.6vw, 2.1rem);
+    line-height: 1.35;
+    min-height: 1.8em;
+}
+
 
 
 
@@ -1405,15 +1441,17 @@ body.mode-big #app {
     animation: bgIncorrectPulse 0.6s ease-out;
     }
 
-    @keyframes bgCorrectPulse {
-    0%   { background: rgba(167, 203, 111, 0.25); }
-    100% { background: var(--card-bg); }
-    }
+  @keyframes bgCorrectPulse {
+    0%   { background: var(--flash-correct-bg); }
+    100% { background: var(--flash-return-bg); }
+  }
 
-    @keyframes bgIncorrectPulse {
-    0%   { background: rgba(255, 90, 81, 0.25); }
-    100% { background: var(--card-bg); }
-    }
+
+  @keyframes bgIncorrectPulse {
+    0%   { background: var(--flash-incorrect-bg); }
+    100% { background: var(--flash-return-bg); }
+  }
+
 
     /* HIDE CURSOR IN BIG MODE (for all elements) */
     body.mode-big,
@@ -2163,64 +2201,72 @@ const REWARD_EMOJI_POOLS = {
     lessonSubtitleEl.textContent = LESSON_SUBTITLE_TEXT;
 
     const bigPointer = document.getElementById("big-pointer");
+    
+    // Helper to read CSS color variables from :root
+    const rootStyles = getComputedStyle(document.documentElement);
+    function getCssColor(varName) {
+      return rootStyles.getPropertyValue(varName).trim();
+    }
+
 
     /***********************************
      * POINTER COMET TRAILS (NEW)
      ***********************************/
     const POINTER_HEAD = "👆";
 
-    const POINTER_TRAILS = [
+        const POINTER_TRAILS = [
     {
         id: "star_comet",
         emojis: ["⭐", "✨", "·"],
-        glowColor: "#f6c453", // warm golden yellow
+        glowColor: getCssColor("--pointer-glow-star"),
     },
     {
         id: "ocean_comet",
         emojis: ["🌊", "💧", "·"],
-        glowColor: "#34c3ff", // aqua / turquoise
+        glowColor: getCssColor("--pointer-glow-ocean"),
     },
     {
         id: "garden_comet",
         emojis: ["🌿", "🌱", "🍃", "·"],
-        glowColor: "#4caf50", // fresh leaf green
+        glowColor: getCssColor("--pointer-glow-garden"),
     },
     {
         id: "fire_comet",
         emojis: ["🔥", "✨", "·"],
-        glowColor: "#ff6a2f", // intense orange-red
+        glowColor: getCssColor("--pointer-glow-fire"),
     },
     {
         id: "galaxy_comet",
         emojis: ["🌙", "⭐", "✨", "·"],
-        glowColor: "#7e57c2", // deep purple / indigo
+        glowColor: getCssColor("--pointer-glow-galaxy"),
     },
     {
         id: "animal_comet",
         emojis: ["🐾", "🐾", "·"],
-        glowColor: "#a67c52", // warm brown
+        glowColor: getCssColor("--pointer-glow-animal"),
     },
     {
         id: "joy_comet",
         emojis: ["😄", "😊", "🙂", "·"],
-        glowColor: "#ffd54f", // bright cheerful yellow
+        glowColor: getCssColor("--pointer-glow-joy"),
     },
     {
         id: "heart_comet",
         emojis: ["❤️", "💕", "💖", "·"],
-        glowColor: "#ff4081", // pink-red
+        glowColor: getCssColor("--pointer-glow-heart"),
     },
     {
         id: "rainbow_comet",
         emojis: ["🌈", "✨", "·"],
-        glowColor: "#ffffff", // soft white
+        glowColor: getCssColor("--pointer-glow-rainbow"),
     },
     {
         id: "bible_light_comet",
         emojis: ["📖", "✨", "·"],
-        glowColor: "#fff3cd", // gentle pale gold
+        glowColor: getCssColor("--pointer-glow-bible"),
     },
     ];
+
 
     let pointerTrailDeck = [];
     let currentPointerTrail = null;
