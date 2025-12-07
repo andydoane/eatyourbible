@@ -1850,9 +1850,9 @@ body.show-real-cursor * {
         correctIndex: 0
       },
       {
-        text: "How are human beings different than everything else God made?",
+        text: "How are human beings different<br>than everything else God made?",
         answers: [
-          "We’re made in His likeness and given the job to rule over His creation",
+          "We’re made in His likeness and given<br>the job to rule over His creation",
           "We can swim and fly better than all animals",
           "We were created before light and water",
           "We live under the sea like fish"
@@ -1880,7 +1880,7 @@ body.show-real-cursor * {
         correctIndex: 0
       },
       {
-        text: "What did God say after seeing everything He made?",
+        text: "What did God say after<br>seeing everything He made?",
         answers: [
           "It was very good",
           "It was almost good enough",
@@ -3762,7 +3762,7 @@ function loadQuestion() {
     lastSelectedAnswerIndex = null;
 
     const q = QUESTIONS[currentQuestionIndex];
-    questionTextEl.textContent = q.text;
+    questionTextEl.innerHTML = q.text;
 
     // Reset question card back to normal (question) mode
     if (questionCard && feedbackBubble) {
@@ -3804,7 +3804,7 @@ function loadQuestion() {
         const idx = order[pos];
         btn.dataset.answerIndex = String(idx);
         const textSpan = btn.querySelector(".answer-text");
-        textSpan.textContent = q.answers[idx];
+        textSpan.innerHTML = q.answers[idx];
     });
     }
 
