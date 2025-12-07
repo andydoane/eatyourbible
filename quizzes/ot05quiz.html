@@ -4751,7 +4751,7 @@ function loadQuestion() {
     lastSelectedAnswerIndex = null;
 
     const q = QUESTIONS[currentQuestionIndex];
-    questionTextEl.textContent = q.text;
+    questionTextEl.innerHTML = q.text;
 
     // Reset question card back to normal (question) mode
     if (questionCard && feedbackBubble) {
@@ -4793,7 +4793,7 @@ function loadQuestion() {
         const idx = order[pos];
         btn.dataset.answerIndex = String(idx);
         const textSpan = btn.querySelector(".answer-text");
-        textSpan.textContent = q.answers[idx];
+        textSpan.innerHTML = q.answers[idx];
     });
     }
 
