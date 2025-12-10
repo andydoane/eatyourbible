@@ -1,0 +1,5116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>OT 22 Quiz</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+
+
+/* 
+   _____    ____    _         ____    _____        _____    _____   _    _   ______   __  __   ______ 
+  / ____|  / __ \  | |       / __ \  |  __ \      / ____|  / ____| | |  | | |  ____| |  \/  | |  ____|
+ | |      | |  | | | |      | |  | | | |__) |    | (___   | |      | |__| | | |__    | \  / | | |__   
+ | |      | |  | | | |      | |  | | |  _  /      \___ \  | |      |  __  | |  __|   | |\/| | |  __|  
+ | |____  | |__| | | |____  | |__| | | | \ \      ____) | | |____  | |  | | | |____  | |  | | | |____ 
+  \_____|  \____/  |______|  \____/  |_|  \_\    |_____/   \_____| |_|  |_| |______| |_|  |_| |______|
+                                                                                                      
+                                                                                                      
+*/
+
+
+/*********************************************
+ * KAHOOT-STYLE RED THEME
+ *********************************************/
+:root.theme-red-kahoot {
+  /* 1) Background of the whole page (red Kahoot-y) */
+  --bg-gradient-top: #ff3a55;    /* bright red top */
+  --bg-gradient-bottom: #c2182b; /* deeper red bottom */
+  --card-bg: #ffffff;            /* white card behind content */
+
+  /* 2) Presented-by (intro) screen */
+  --intro-bg: #d81b3a;           /* solid red intro background */
+  --intro-text: #ffffff;         /* white intro text */
+
+  /* 3) Main text colors */
+  --text-main: #1a1a1a;          /* dark text on light backgrounds */
+  --text-muted: #f7b2bb;         /* soft pinkish muted text */
+
+  /* 3a) Title screen text colors */
+  --title-main-text: #ffffff;    /* big title on intro/title screens */
+  --title-subtitle-text: #ffe4e8;/* lighter red/pink subtitle text */
+
+  /* 4) Question area */
+  --question-bg: #ffffff;        /* white box behind the question */
+  --question-text: #1a1a1a;      /* dark question text */
+
+  /* 5) “Next Question” / main buttons */
+  --accent: #d81b3a;             /* main red button color */
+  --accent-dark: #9b142a;        /* darker red on hover/active */
+  --primary-text: #ffffff;       /* text on main buttons */
+  --secondary-bg: #ffe6e9;       /* light red/pink secondary buttons */
+  --secondary-text: #9b142a;     /* red text on secondary buttons */
+
+  /* 6) Answer buttons – background + text color (Kahoot style) */
+  --red: #ff3a55;
+  --red-text: #ffffff;
+
+  --yellow: #ffd84f;
+  --yellow-text: #1a1a1a;
+
+  --blue: #3fa9f5;
+  --blue-text: #ffffff;
+
+  --green: #45c26b;
+  --green-text: #ffffff;
+
+  /* 7) Correct / incorrect feedback text */
+  --feedback-correct-text: #45c26b; /* bright green for correct */
+  --feedback-incorrect-text: #ff3a55; /* red for incorrect */
+
+  /* 8) Question page background (behind question/answers card) */
+  --quiz-screen-bg: linear-gradient(180deg, #ff3a55, #c2182b);
+
+  /* 9) End screen background + text */
+  --end-great-bg-top: #ffd84f;   /* celebratory yellow */
+  --end-great-bg-bottom: #45c26b;/* bright green */
+
+  --end-good-bg-top: #3fa9f5;    /* blue for good */
+  --end-good-bg-bottom: #7f66c6; /* purple for good-ish */
+
+  --end-try-bg-top: #ff3a55;     /* red “try again” */
+  --end-try-bg-bottom: #ffd84f;  /* warm yellow */
+
+  --end-score-text: #1a1a1a;     /* main score text */
+  --end-detail-text: #333333;    /* detail text */
+
+  /* 9a) End screen title & subtitle text colors */
+  --end-title-text: var(--end-score-text);     /* "Quiz Complete!" text */
+  --end-subtitle-text: var(--end-detail-text); /* "Here’s how you did" text */
+
+  /* 10) Progress bar & timer colors */
+  --progress-track-bg: rgba(0, 0, 0, 0.25); /* muted track */
+  --progress-fill-gradient: linear-gradient(120deg, #45c26b, #ffd84f, #ff3a55);
+
+  --timer-bg: #ffffff;
+  --timer-ring-bg: rgba(0, 0, 0, 0.15);
+  --timer-ring-fg: #ffd84f;      /* yellow ring */
+  --timer-text: #1a1a1a;
+
+  /* 11) Little number pill on answer buttons */
+  --answer-key-pill-bg: rgba(0, 0, 0, 0.25);
+  --answer-key-pill-text: #ffffff;
+
+  /* 12) Misc */
+  --button-radius: 0.9rem;
+
+  /* 13) Small round icon buttons (sound + home) */
+  --icon-chip-bg: rgba(0, 0, 0, 0.25);
+  --icon-chip-text: #ffffff;
+
+  /* 14) Overlays and reward spotlight */
+  --spotlight-overlay-bg: rgba(0, 0, 0, 0.85);  /* dim background during spotlight */
+  --reward-overlay-bg: rgba(0, 0, 0, 0.9);      /* end reward full-screen overlay */
+  --reward-text: #ffffff;                       /* text color in reward overlay */
+
+  /* 15) Answer button outlines */
+  --answer-border: rgba(255, 255, 255, 0.9);       /* default border around answers */
+  --answer-border-strong: rgba(255, 255, 255, 1);  /* strong white outline when correct */
+
+  /* darker versions of the button colors for borders */
+  --red-border:   #b51a30;
+  --yellow-border:#caa13b;
+  --blue-border:  #2b88c2;
+  --green-border: #318b4d;
+
+  /* 16) Timer explosion effects */
+  --timer-particle-gradient: radial-gradient(
+    circle,
+    #fff2f2 0%,
+    #ffd84f 40%,
+    #ff3a55 70%,
+    #8b1021 100%
+  );
+  --timer-explosion-glow: rgba(255, 58, 85, 0.9); /* bright red flash when time is up */
+
+  /* 17) Dynamic reaction flash colors */
+  --flash-correct-bg: rgba(69, 194, 107, 0.25);   /* green flash tint */
+  --flash-incorrect-bg: rgba(255, 58, 85, 0.25);  /* red flash tint */
+  --flash-return-bg: var(--quiz-screen-bg);       /* fades back to red bg */
+
+  /* 18) Screen card shadow color */
+  --screen-card-shadow: rgba(0, 0, 0, 0.35);
+
+  /* 19) Pointer comet glow colors (same across themes if you like) */
+  --pointer-glow-star:   #f6c453; /* warm golden yellow */
+  --pointer-glow-ocean:  #34c3ff; /* aqua / turquoise */
+  --pointer-glow-garden: #4caf50; /* fresh leaf green */
+  --pointer-glow-fire:   #ff6a2f; /* intense orange-red */
+  --pointer-glow-galaxy: #7e57c2; /* deep purple / indigo */
+  --pointer-glow-animal: #a67c52; /* warm brown */
+  --pointer-glow-joy:    #ffd54f; /* bright cheerful yellow */
+  --pointer-glow-heart:  #ff4081; /* pink-red */
+  --pointer-glow-rainbow:#ffffff; /* soft white */
+  --pointer-glow-bible:  #fff3cd; /* gentle pale gold */
+
+  /* 20) Answer feedback subtitle text */
+  --feedback-subtitle-text: #ffe4e8;
+}
+
+/*********************************************
+ * KAHOOT-STYLE ORANGE THEME
+ *********************************************/
+:root.theme-orange-kahoot {
+  /* 1) Background of the whole page (orange Kahoot-y) */
+  --bg-gradient-top: #ffb347;    /* bright orange top */
+  --bg-gradient-bottom: #ff8a2b; /* deeper orange bottom */
+  --card-bg: #ffffff;
+
+  /* 2) Presented-by (intro) screen */
+  --intro-bg: #ff8a2b;
+  --intro-text: #ffffff;
+
+  /* 3) Main text colors */
+  --text-main: #1a1a1a;
+  --text-muted: #ffd7b0;
+
+  /* 3a) Title screen text colors */
+  --title-main-text: #ffffff;
+  --title-subtitle-text: #fff0db;
+
+  /* 4) Question area */
+  --question-bg: #ffffff;
+  --question-text: #1a1a1a;
+
+  /* 5) “Next Question” / main buttons */
+  --accent: #ff8a2b;
+  --accent-dark: #cc6e22;
+  --primary-text: #ffffff;
+  --secondary-bg: #ffe0bd;
+  --secondary-text: #cc6e22;
+
+  /* 6) Answer buttons – background + text color (Kahoot style) */
+  --red: #ff3a55;
+  --red-text: #ffffff;
+
+  --yellow: #ffd84f;
+  --yellow-text: #1a1a1a;
+
+  --blue: #3fa9f5;
+  --blue-text: #ffffff;
+
+  --green: #45c26b;
+  --green-text: #ffffff;
+
+  /* 7) Correct / incorrect feedback text */
+  --feedback-correct-text: #45c26b;
+  --feedback-incorrect-text: #ff3a55;
+
+  /* 8) Question page background (behind question/answers card) */
+  --quiz-screen-bg: linear-gradient(180deg, #ffb347, #ff8a2b);
+
+  /* 9) End screen background + text */
+  --end-great-bg-top: #ffd84f;
+  --end-great-bg-bottom: #45c26b;
+
+  --end-good-bg-top: #3fa9f5;
+  --end-good-bg-bottom: #7f66c6;
+
+  --end-try-bg-top: #ff3a55;
+  --end-try-bg-bottom: #ffb347;
+
+  --end-score-text: #1a1a1a;
+  --end-detail-text: #333333;
+
+  /* 9a) End screen title & subtitle text colors */
+  --end-title-text: var(--end-score-text);
+  --end-subtitle-text: var(--end-detail-text);
+
+  /* 10) Progress bar & timer colors */
+  --progress-track-bg: rgba(0, 0, 0, 0.25);
+  --progress-fill-gradient: linear-gradient(120deg, #45c26b, #ffd84f, #ff8a2b);
+
+  --timer-bg: #ffffff;
+  --timer-ring-bg: rgba(0, 0, 0, 0.15);
+  --timer-ring-fg: #ffd84f;
+  --timer-text: #1a1a1a;
+
+  /* 11) Little number pill on answer buttons */
+  --answer-key-pill-bg: rgba(0, 0, 0, 0.25);
+  --answer-key-pill-text: #ffffff;
+
+  /* 12) Misc */
+  --button-radius: 0.9rem;
+
+  /* 13) Small round icon buttons (sound + home) */
+  --icon-chip-bg: rgba(0, 0, 0, 0.25);
+  --icon-chip-text: #ffffff;
+
+  /* 14) Overlays and reward spotlight */
+  --spotlight-overlay-bg: rgba(0, 0, 0, 0.85);
+  --reward-overlay-bg: rgba(0, 0, 0, 0.9);
+  --reward-text: #ffffff;
+
+  /* 15) Answer button outlines */
+  --answer-border: rgba(255, 255, 255, 0.9);
+  --answer-border-strong: rgba(255, 255, 255, 1);
+
+  --red-border:   #b51a30;
+  --yellow-border:#caa13b;
+  --blue-border:  #2b88c2;
+  --green-border: #318b4d;
+
+  /* 16) Timer explosion effects */
+  --timer-particle-gradient: radial-gradient(
+    circle,
+    #fff7ee 0%,
+    #ffd084 40%,
+    #ff8a2b 70%,
+    #a65413 100%
+  );
+  --timer-explosion-glow: rgba(255, 138, 43, 0.9);
+
+  /* 17) Dynamic reaction flash colors */
+  --flash-correct-bg: rgba(69, 194, 107, 0.25);
+  --flash-incorrect-bg: rgba(255, 138, 43, 0.25);
+  --flash-return-bg: var(--quiz-screen-bg);
+
+  /* 18) Screen card shadow color */
+  --screen-card-shadow: rgba(0, 0, 0, 0.35);
+
+  /* 19) Pointer comet glow colors */
+  --pointer-glow-star:   #f6c453;
+  --pointer-glow-ocean:  #34c3ff;
+  --pointer-glow-garden: #4caf50;
+  --pointer-glow-fire:   #ff6a2f;
+  --pointer-glow-galaxy: #7e57c2;
+  --pointer-glow-animal: #a67c52;
+  --pointer-glow-joy:    #ffd54f;
+  --pointer-glow-heart:  #ff4081;
+  --pointer-glow-rainbow:#ffffff;
+  --pointer-glow-bible:  #fff3cd;
+
+  /* 20) Answer feedback subtitle text */
+  --feedback-subtitle-text: #fff0db;
+}
+
+/*********************************************
+ * KAHOOT-STYLE YELLOW THEME
+ *********************************************/
+:root.theme-yellow-kahoot {
+  /* 1) Background of the whole page (yellow Kahoot-y) */
+  --bg-gradient-top: #ffe88a;
+  --bg-gradient-bottom: #ffd347;
+  --card-bg: #ffffff;
+
+  /* 2) Presented-by (intro) screen */
+  --intro-bg: #ffd347;
+  --intro-text: #333333;
+
+  /* 3) Main text colors */
+  --text-main: #1a1a1a;
+  --text-muted: #ffefb8;
+
+  /* 3a) Title screen text colors */
+  --title-main-text: #333333;
+  --title-subtitle-text: #ff5a51;
+
+  /* 4) Question area */
+  --question-bg: #ffffff;
+  --question-text: #1a1a1a;
+
+  /* 5) “Next Question” / main buttons */
+  --accent: #ffd347;
+  --accent-dark: #d4aa32;
+  --primary-text: #333333;
+  --secondary-bg: #fff4cf;
+  --secondary-text: #8c6c18;
+
+  /* 6) Answer buttons – background + text color */
+  --red: #ff3a55;
+  --red-text: #ffffff;
+
+  --yellow: #ffd347;
+  --yellow-text: #333333;
+
+  --blue: #3fa9f5;
+  --blue-text: #ffffff;
+
+  --green: #45c26b;
+  --green-text: #ffffff;
+
+  /* 7) Correct / incorrect feedback text */
+  --feedback-correct-text: #45c26b;
+  --feedback-incorrect-text: #ff3a55;
+
+  /* 8) Question page background */
+  --quiz-screen-bg: linear-gradient(180deg, #ffe88a, #ffd347);
+
+  /* 9) End screen background + text */
+  --end-great-bg-top: #ffd347;
+  --end-great-bg-bottom: #45c26b;
+
+  --end-good-bg-top: #3fa9f5;
+  --end-good-bg-bottom: #7f66c6;
+
+  --end-try-bg-top: #ff3a55;
+  --end-try-bg-bottom: #ffd347;
+
+  --end-score-text: #1a1a1a;
+  --end-detail-text: #333333;
+
+  /* 9a) End screen title & subtitle text */
+  --end-title-text: var(--end-score-text);
+  --end-subtitle-text: var(--end-detail-text);
+
+  /* 10) Progress bar & timer colors */
+  --progress-track-bg: rgba(0, 0, 0, 0.25);
+  --progress-fill-gradient: linear-gradient(120deg, #45c26b, #3fa9f5, #ffd347);
+
+  --timer-bg: #ffffff;
+  --timer-ring-bg: rgba(0, 0, 0, 0.15);
+  --timer-ring-fg: #ff8a00;
+  --timer-text: #1a1a1a;
+
+  /* 11) Little number pill on answer buttons */
+  --answer-key-pill-bg: rgba(0, 0, 0, 0.25);
+  --answer-key-pill-text: #ffffff;
+
+  /* 12) Misc */
+  --button-radius: 0.9rem;
+
+  /* 13) Small round icon buttons */
+  --icon-chip-bg: rgba(0, 0, 0, 0.25);
+  --icon-chip-text: #ffffff;
+
+  /* 14) Overlays and reward spotlight */
+  --spotlight-overlay-bg: rgba(0, 0, 0, 0.85);
+  --reward-overlay-bg: rgba(0, 0, 0, 0.9);
+  --reward-text: #ffffff;
+
+  /* 15) Answer button outlines */
+  --answer-border: rgba(255, 255, 255, 0.9);
+  --answer-border-strong: rgba(255, 255, 255, 1);
+
+  --red-border:   #b51a30;
+  --yellow-border:#caa13b;
+  --blue-border:  #2b88c2;
+  --green-border: #318b4d;
+
+  /* 16) Timer explosion effects */
+  --timer-particle-gradient: radial-gradient(
+    circle,
+    #fff8d7 0%,
+    #ffd347 40%,
+    #ffb347 70%,
+    #b8871a 100%
+  );
+  --timer-explosion-glow: rgba(255, 211, 71, 0.9);
+
+  /* 17) Dynamic reaction flash colors */
+  --flash-correct-bg: rgba(69, 194, 107, 0.25);
+  --flash-incorrect-bg: rgba(255, 90, 81, 0.25);
+  --flash-return-bg: var(--quiz-screen-bg);
+
+  /* 18) Screen card shadow color */
+  --screen-card-shadow: rgba(0, 0, 0, 0.35);
+
+  /* 19) Pointer comet glow colors */
+  --pointer-glow-star:   #f6c453;
+  --pointer-glow-ocean:  #34c3ff;
+  --pointer-glow-garden: #4caf50;
+  --pointer-glow-fire:   #ff6a2f;
+  --pointer-glow-galaxy: #7e57c2;
+  --pointer-glow-animal: #a67c52;
+  --pointer-glow-joy:    #ffd54f;
+  --pointer-glow-heart:  #ff4081;
+  --pointer-glow-rainbow:#ffffff;
+  --pointer-glow-bible:  #fff3cd;
+
+  /* 20) Answer feedback subtitle text */
+  --feedback-subtitle-text: #fff4cf;
+}
+
+/*********************************************
+ * KAHOOT-STYLE GREEN THEME
+ *********************************************/
+:root.theme-green-kahoot {
+  /* 1) Background of the whole page (green Kahoot-y) */
+  --bg-gradient-top: #7ee087;
+  --bg-gradient-bottom: #39b54a;
+  --card-bg: #ffffff;
+
+  /* 2) Presented-by (intro) screen */
+  --intro-bg: #39b54a;
+  --intro-text: #ffffff;
+
+  /* 3) Main text colors */
+  --text-main: #1a1a1a;
+  --text-muted: #d2f2d5;
+
+  /* 3a) Title screen text colors */
+  --title-main-text: #ffffff;
+  --title-subtitle-text: #eaffea;
+
+  /* 4) Question area */
+  --question-bg: #ffffff;
+  --question-text: #1a1a1a;
+
+  /* 5) “Next Question” / main buttons */
+  --accent: #39b54a;
+  --accent-dark: #2b8c38;
+  --primary-text: #ffffff;
+  --secondary-bg: #d6f8da;
+  --secondary-text: #2b8c38;
+
+  /* 6) Answer buttons */
+  --red: #ff3a55;
+  --red-text: #ffffff;
+
+  --yellow: #ffd347;
+  --yellow-text: #333333;
+
+  --blue: #3fa9f5;
+  --blue-text: #ffffff;
+
+  --green: #39b54a;
+  --green-text: #ffffff;
+
+  /* 7) Correct / incorrect feedback text */
+  --feedback-correct-text: #39b54a;
+  --feedback-incorrect-text: #ff3a55;
+
+  /* 8) Question page background */
+  --quiz-screen-bg: linear-gradient(180deg, #7ee087, #39b54a);
+
+  /* 9) End screen background + text */
+  --end-great-bg-top: #ffd347;
+  --end-great-bg-bottom: #39b54a;
+
+  --end-good-bg-top: #3fa9f5;
+  --end-good-bg-bottom: #7f66c6;
+
+  --end-try-bg-top: #ff3a55;
+  --end-try-bg-bottom: #ffd347;
+
+  --end-score-text: #1a1a1a;
+  --end-detail-text: #333333;
+
+  /* 9a) End screen title & subtitle text colors */
+  --end-title-text: var(--end-score-text);
+  --end-subtitle-text: var(--end-detail-text);
+
+  /* 10) Progress bar & timer colors */
+  --progress-track-bg: rgba(0, 0, 0, 0.25);
+  --progress-fill-gradient: linear-gradient(120deg, #39b54a, #ffd347, #3fa9f5);
+
+  --timer-bg: #ffffff;
+  --timer-ring-bg: rgba(0, 0, 0, 0.15);
+  --timer-ring-fg: #ffd347;
+  --timer-text: #1a1a1a;
+
+  /* 11) Little number pill on answer buttons */
+  --answer-key-pill-bg: rgba(0, 0, 0, 0.25);
+  --answer-key-pill-text: #ffffff;
+
+  /* 12) Misc */
+  --button-radius: 0.9rem;
+
+  /* 13) Small round icon buttons */
+  --icon-chip-bg: rgba(0, 0, 0, 0.25);
+  --icon-chip-text: #ffffff;
+
+  /* 14) Overlays and reward spotlight */
+  --spotlight-overlay-bg: rgba(0, 0, 0, 0.85);
+  --reward-overlay-bg: rgba(0, 0, 0, 0.9);
+  --reward-text: #ffffff;
+
+  /* 15) Answer button outlines */
+  --answer-border: rgba(255, 255, 255, 0.9);
+  --answer-border-strong: rgba(255, 255, 255, 1);
+
+  --red-border:   #b51a30;
+  --yellow-border:#caa13b;
+  --blue-border:  #2b88c2;
+  --green-border: #276534;
+
+  /* 16) Timer explosion effects */
+  --timer-particle-gradient: radial-gradient(
+    circle,
+    #eaffea 0%,
+    #7ee087 40%,
+    #39b54a 70%,
+    #1c6a27 100%
+  );
+  --timer-explosion-glow: rgba(57, 181, 74, 0.9);
+
+  /* 17) Dynamic reaction flash colors */
+  --flash-correct-bg: rgba(57, 181, 74, 0.25);
+  --flash-incorrect-bg: rgba(255, 90, 81, 0.25);
+  --flash-return-bg: var(--quiz-screen-bg);
+
+  /* 18) Screen card shadow color */
+  --screen-card-shadow: rgba(0, 0, 0, 0.35);
+
+  /* 19) Pointer comet glow colors */
+  --pointer-glow-star:   #f6c453;
+  --pointer-glow-ocean:  #34c3ff;
+  --pointer-glow-garden: #4caf50;
+  --pointer-glow-fire:   #ff6a2f;
+  --pointer-glow-galaxy: #7e57c2;
+  --pointer-glow-animal: #a67c52;
+  --pointer-glow-joy:    #ffd54f;
+  --pointer-glow-heart:  #ff4081;
+  --pointer-glow-rainbow:#ffffff;
+  --pointer-glow-bible:  #fff3cd;
+
+  /* 20) Answer feedback subtitle text */
+  --feedback-subtitle-text: #eaffea;
+}
+
+/*********************************************
+ * KAHOOT-STYLE BLUE THEME
+ *********************************************/
+:root.theme-blue-kahoot {
+  /* 1) Background of the whole page (blue Kahoot-y) */
+  --bg-gradient-top: #6fd0ff;
+  --bg-gradient-bottom: #2196f3;
+  --card-bg: #ffffff;
+
+  /* 2) Presented-by (intro) screen */
+  --intro-bg: #2196f3;
+  --intro-text: #ffffff;
+
+  /* 3) Main text colors */
+  --text-main: #1a1a1a;
+  --text-muted: #bfe8ff;
+
+  /* 3a) Title screen text colors */
+  --title-main-text: #ffffff;
+  --title-subtitle-text: #e5f6ff;
+
+  /* 4) Question area */
+  --question-bg: #ffffff;
+  --question-text: #1a1a1a;
+
+  /* 5) “Next Question” / main buttons */
+  --accent: #2196f3;
+  --accent-dark: #0d6dc4;
+  --primary-text: #ffffff;
+  --secondary-bg: #dff3ff;
+  --secondary-text: #0d6dc4;
+
+  /* 6) Answer buttons */
+  --red: #ff3a55;
+  --red-text: #ffffff;
+
+  --yellow: #ffd347;
+  --yellow-text: #333333;
+
+  --blue: #2196f3;
+  --blue-text: #ffffff;
+
+  --green: #39b54a;
+  --green-text: #ffffff;
+
+  /* 7) Correct / incorrect feedback text */
+  --feedback-correct-text: #39b54a;
+  --feedback-incorrect-text: #ff3a55;
+
+  /* 8) Question page background */
+  --quiz-screen-bg: linear-gradient(180deg, #6fd0ff, #2196f3);
+
+  /* 9) End screen background + text */
+  --end-great-bg-top: #ffd347;
+  --end-great-bg-bottom: #2196f3;
+
+  --end-good-bg-top: #39b54a;
+  --end-good-bg-bottom: #7f66c6;
+
+  --end-try-bg-top: #ff3a55;
+  --end-try-bg-bottom: #ffd347;
+
+  --end-score-text: #1a1a1a;
+  --end-detail-text: #333333;
+
+  /* 9a) End screen title & subtitle */
+  --end-title-text: var(--end-score-text);
+  --end-subtitle-text: var(--end-detail-text);
+
+  /* 10) Progress bar & timer colors */
+  --progress-track-bg: rgba(0,0,0,0.25);
+  --progress-fill-gradient: linear-gradient(120deg, #39b54a, #ffd347, #2196f3);
+
+  --timer-bg: #ffffff;
+  --timer-ring-bg: rgba(0,0,0,0.15);
+  --timer-ring-fg: #ffd347;
+  --timer-text: #1a1a1a;
+
+  /* 11) Little number pill on answer buttons */
+  --answer-key-pill-bg: rgba(0,0,0,0.25);
+  --answer-key-pill-text: #ffffff;
+
+  /* 12) Misc */
+  --button-radius: 0.9rem;
+
+  /* 13) Small round icon buttons */
+  --icon-chip-bg: rgba(0,0,0,0.25);
+  --icon-chip-text: #ffffff;
+
+  /* 14) Overlays and reward spotlight */
+  --spotlight-overlay-bg: rgba(0,0,0,0.85);
+  --reward-overlay-bg: rgba(0,0,0,0.9);
+  --reward-text: #ffffff;
+
+  /* 15) Answer button outlines */
+  --answer-border: rgba(255,255,255,0.9);
+  --answer-border-strong: rgba(255,255,255,1);
+
+  --red-border:   #b51a30;
+  --yellow-border:#caa13b;
+  --blue-border:  #0d6dc4;
+  --green-border: #276534;
+
+  /* 16) Timer explosion effects */
+  --timer-particle-gradient: radial-gradient(
+    circle,
+    #e5f6ff 0%,
+    #6fd0ff 40%,
+    #2196f3 70%,
+    #0b4c7b 100%
+  );
+  --timer-explosion-glow: rgba(33,150,243,0.9);
+
+  /* 17) Dynamic reaction flash colors */
+  --flash-correct-bg: rgba(57, 181, 74, 0.25);
+  --flash-incorrect-bg: rgba(255, 90, 81, 0.25);
+  --flash-return-bg: var(--quiz-screen-bg);
+
+  /* 18) Screen card shadow color */
+  --screen-card-shadow: rgba(0,0,0,0.35);
+
+  /* 19) Pointer comet glow colors */
+  --pointer-glow-star:   #f6c453;
+  --pointer-glow-ocean:  #34c3ff;
+  --pointer-glow-garden: #4caf50;
+  --pointer-glow-fire:   #ff6a2f;
+  --pointer-glow-galaxy: #7e57c2;
+  --pointer-glow-animal: #a67c52;
+  --pointer-glow-joy:    #ffd54f;
+  --pointer-glow-heart:  #ff4081;
+  --pointer-glow-rainbow:#ffffff;
+  --pointer-glow-bible:  #fff3cd;
+
+  /* 20) Answer feedback subtitle text */
+  --feedback-subtitle-text: #e5f6ff;
+}
+
+/*********************************************
+ * KAHOOT-STYLE PURPLE THEME
+ *********************************************/
+:root.theme-purple-kahoot {
+  /* 1) Background of the whole page (purple Kahoot-y) */
+  --bg-gradient-top: #c7a4ff;
+  --bg-gradient-bottom: #7c4dff;
+  --card-bg: #ffffff;
+
+  /* 2) Presented-by (intro) screen */
+  --intro-bg: #7c4dff;
+  --intro-text: #ffffff;
+
+  /* 3) Main text colors */
+  --text-main: #1a1a1a;
+  --text-muted: #e4d7ff;
+
+  /* 3a) Title screen text colors */
+  --title-main-text: #ffffff;
+  --title-subtitle-text: #efe7ff;
+
+  /* 4) Question area */
+  --question-bg: #ffffff;
+  --question-text: #1a1a1a;
+
+  /* 5) “Next Question” / main buttons */
+  --accent: #7c4dff;
+  --accent-dark: #522fbe;
+  --primary-text: #ffffff;
+  --secondary-bg: #efe7ff;
+  --secondary-text: #522fbe;
+
+  /* 6) Answer buttons */
+  --red: #ff3a55;
+  --red-text: #ffffff;
+
+  --yellow: #ffd347;
+  --yellow-text: #333333;
+
+  --blue: #3fa9f5;
+  --blue-text: #ffffff;
+
+  --green: #39b54a;
+  --green-text: #ffffff;
+
+  /* 7) Correct / incorrect feedback text */
+  --feedback-correct-text: #39b54a;
+  --feedback-incorrect-text: #ff3a55;
+
+  /* 8) Question page background */
+  --quiz-screen-bg: linear-gradient(180deg, #c7a4ff, #7c4dff);
+
+  /* 9) End screen background + text */
+  --end-great-bg-top: #ffd347;
+  --end-great-bg-bottom: #7c4dff;
+
+  --end-good-bg-top: #3fa9f5;
+  --end-good-bg-bottom: #39b54a;
+
+  --end-try-bg-top: #ff3a55;
+  --end-try-bg-bottom: #7c4dff;
+
+  --end-score-text: #1a1a1a;
+  --end-detail-text: #333333;
+
+  /* 9a) End screen titles */
+  --end-title-text: var(--end-score-text);
+  --end-subtitle-text: var(--end-detail-text);
+
+  /* 10) Progress bar & timer */
+  --progress-track-bg: rgba(0,0,0,0.25);
+  --progress-fill-gradient: linear-gradient(120deg, #39b54a, #ffd347, #7c4dff);
+
+  --timer-bg: #ffffff;
+  --timer-ring-bg: rgba(0,0,0,0.15);
+  --timer-ring-fg: #ffd347;
+  --timer-text: #1a1a1a;
+
+  /* 11) Answer key pill */
+  --answer-key-pill-bg: rgba(0,0,0,0.25);
+  --answer-key-pill-text: #ffffff;
+
+  /* 12) Misc */
+  --button-radius: 0.9rem;
+
+  /* 13) Icon buttons */
+  --icon-chip-bg: rgba(0,0,0,0.25);
+  --icon-chip-text: #ffffff;
+
+  /* 14) Overlays */
+  --spotlight-overlay-bg: rgba(0,0,0,0.85);
+  --reward-overlay-bg: rgba(0,0,0,0.9);
+  --reward-text: #ffffff;
+
+  /* 15) Answer outlines */
+  --answer-border: rgba(255,255,255,0.9);
+  --answer-border-strong: rgba(255,255,255,1);
+
+  --red-border:   #b51a30;
+  --yellow-border:#caa13b;
+  --blue-border:  #2b88c2;
+  --green-border: #276534;
+
+  /* 16) Timer explosion */
+  --timer-particle-gradient: radial-gradient(
+    circle,
+    #efe7ff 0%,
+    #c7a4ff 40%,
+    #7c4dff 70%,
+    #452299 100%
+  );
+  --timer-explosion-glow: rgba(124, 77, 255, 0.9);
+
+  /* 17) Flash colors */
+  --flash-correct-bg: rgba(57, 181, 74, 0.25);
+  --flash-incorrect-bg: rgba(255, 90, 81, 0.25);
+  --flash-return-bg: var(--quiz-screen-bg);
+
+  /* 18) Card shadow */
+  --screen-card-shadow: rgba(0,0,0,0.35);
+
+  /* 19) Pointer glow */
+  --pointer-glow-star:   #f6c453;
+  --pointer-glow-ocean:  #34c3ff;
+  --pointer-glow-garden: #4caf50;
+  --pointer-glow-fire:   #ff6a2f;
+  --pointer-glow-galaxy: #7e57c2;
+  --pointer-glow-animal: #a67c52;
+  --pointer-glow-joy:    #ffd54f;
+  --pointer-glow-heart:  #ff4081;
+  --pointer-glow-rainbow:#ffffff;
+  --pointer-glow-bible:  #fff3cd;
+
+  /* 20) Feedback subtitle */
+  --feedback-subtitle-text: #efe7ff;
+}
+
+/*********************************************
+ * KAHOOT-STYLE WHITE THEME
+ *********************************************/
+:root.theme-white-kahoot {
+  /* 1) Background of the whole page (light / white) */
+  --bg-gradient-top: #ffffff;
+  --bg-gradient-bottom: #e6e6e6;
+  --card-bg: #ffffff;
+
+  /* 2) Presented-by (intro) screen */
+  --intro-bg: #ffffff;
+  --intro-text: #333333;
+
+  /* 3) Main text colors */
+  --text-main: #1a1a1a;
+  --text-muted: #888888;
+
+  /* 3a) Title text */
+  --title-main-text: #333333;
+  --title-subtitle-text: #3fa9f5;
+
+  /* 4) Question area */
+  --question-bg: #ffffff;
+  --question-text: #1a1a1a;
+
+  /* 5) Main buttons */
+  --accent: #3fa9f5;
+  --accent-dark: #2b88c2;
+  --primary-text: #ffffff;
+  --secondary-bg: #d9f0ff;
+  --secondary-text: #2b88c2;
+
+  /* 6) Answer buttons */
+  --red: #ff3a55;
+  --red-text: #ffffff;
+
+  --yellow: #ffd347;
+  --yellow-text: #333333;
+
+  --blue: #3fa9f5;
+  --blue-text: #ffffff;
+
+  --green: #39b54a;
+  --green-text: #ffffff;
+
+  /* 7) Feedback text */
+  --feedback-correct-text: #39b54a;
+  --feedback-incorrect-text: #ff3a55;
+
+  /* 8) Question page bg */
+  --quiz-screen-bg: linear-gradient(180deg, #ffffff, #e6e6e6);
+
+  /* 9) End screen background + text */
+  --end-great-bg-top: #ffd347;
+  --end-great-bg-bottom: #39b54a;
+
+  --end-good-bg-top: #3fa9f5;
+  --end-good-bg-bottom: #7f66c6;
+
+  --end-try-bg-top: #ff3a55;
+  --end-try-bg-bottom: #e6e6e6;
+
+  --end-score-text: #1a1a1a;
+  --end-detail-text: #333333;
+
+  /* 9a) End text */
+  --end-title-text: var(--end-score-text);
+  --end-subtitle-text: var(--end-detail-text);
+
+  /* 10) Progress & timer */
+  --progress-track-bg: #e5e7eb;
+  --progress-fill-gradient: linear-gradient(120deg, #3f6df6, #22c55e, #3f6df6);
+
+  --timer-bg: #ffffff;
+  --timer-ring-bg: rgba(15, 23, 42, 0.12);
+  --timer-ring-fg: #3f6df6;
+  --timer-text: #111827;
+
+  /* 11) Answer key pill */
+  --answer-key-pill-bg: rgba(255, 255, 255, 0.85);
+  --answer-key-pill-text: #111827;
+
+  /* 12) Misc */
+  --button-radius: 0.9rem;
+
+  /* 13) Icon buttons */
+  --icon-chip-bg: #edf2ff;
+  --icon-chip-text: #111827;
+
+  /* 14) Overlays */
+  --spotlight-overlay-bg: rgba(0, 0, 0, 0.85);
+  --reward-overlay-bg: rgba(0, 0, 0, 0.9);
+  --reward-text: #ffffff;
+
+  /* 15) Answer outlines */
+  --answer-border: rgba(0, 0, 0, 0.08);
+  --answer-border-strong: rgba(0, 0, 0, 0.16);
+
+  --red-border:   #b51a30;
+  --yellow-border:#caa13b;
+  --blue-border:  #2b88c2;
+  --green-border: #276534;
+
+  /* 16) Timer explosion */
+  --timer-particle-gradient: radial-gradient(
+    circle,
+    #f2faff 0%,
+    #cfe9ff 40%,
+    #3f6df6 70%,
+    #1f2933 100%
+  );
+  --timer-explosion-glow: rgba(63, 169, 245, 0.9);
+
+  /* 17) Flash colors */
+  --flash-correct-bg: rgba(34, 197, 94, 0.22);
+  --flash-incorrect-bg: rgba(248, 113, 113, 0.24);
+  --flash-return-bg: var(--quiz-screen-bg);
+
+  /* 18) Card shadow */
+  --screen-card-shadow: rgba(15, 23, 42, 0.20);
+
+  /* 19) Pointer glow */
+  --pointer-glow-star:   #f6c453;
+  --pointer-glow-ocean:  #34c3ff;
+  --pointer-glow-garden: #4caf50;
+  --pointer-glow-fire:   #ff6a2f;
+  --pointer-glow-galaxy: #7e57c2;
+  --pointer-glow-animal: #a67c52;
+  --pointer-glow-joy:    #ffd54f;
+  --pointer-glow-heart:  #ff4081;
+  --pointer-glow-rainbow:#ffffff;
+  --pointer-glow-bible:  #fff3cd;
+
+  /* 20) Feedback subtitle */
+  --feedback-subtitle-text: var(--text-main);
+}
+
+/*********************************************
+ * KAHOOT-STYLE DARK GRAY THEME
+ *********************************************/
+:root.theme-gray-kahoot {
+  /* 1) Background of the whole page (dark gray Kahoot-y) */
+  --bg-gradient-top: #555555;
+  --bg-gradient-bottom: #333333;
+  --card-bg: #3d3d3d;
+
+  /* 2) Presented-by (intro) screen */
+  --intro-bg: #333333;
+  --intro-text: #ffffff;
+
+  /* 3) Main text colors */
+  --text-main: #ffffff;
+  --text-muted: #cccccc;
+
+  /* 3a) Title screen text colors */
+  --title-main-text: #ffffff;
+  --title-subtitle-text: #b0b0b0;
+
+  /* 4) Question area */
+  --question-bg: #3d3d3d;
+  --question-text: #ffffff;
+
+  /* 5) “Next Question” / main buttons */
+  --accent: #3fa9f5;
+  --accent-dark: #1d7bbf;
+  --primary-text: #ffffff;
+  --secondary-bg: #555555;
+  --secondary-text: #ffffff;
+
+  /* 6) Answer buttons */
+  --red: #ff3a55;
+  --red-text: #ffffff;
+
+  --yellow: #ffd347;
+  --yellow-text: #333333;
+
+  --blue: #3fa9f5;
+  --blue-text: #ffffff;
+
+  --green: #39b54a;
+  --green-text: #ffffff;
+
+  /* 7) Correct / incorrect feedback text */
+  --feedback-correct-text: #39b54a;
+  --feedback-incorrect-text: #ff3a55;
+
+  /* 8) Question page background */
+  --quiz-screen-bg: linear-gradient(180deg, #555555, #333333);
+
+  /* 9) End screen background + text */
+  --end-great-bg-top: #ffd347;
+  --end-great-bg-bottom: #3fa9f5;
+
+  --end-good-bg-top: #39b54a;
+  --end-good-bg-bottom: #7f66c6;
+
+  --end-try-bg-top: #ff3a55;
+  --end-try-bg-bottom: #333333;
+
+  --end-score-text: #ffffff;
+  --end-detail-text: #e5e5e5;
+
+  /* 9a) End titles */
+  --end-title-text: var(--end-score-text);
+  --end-subtitle-text: var(--end-detail-text);
+
+  /* 10) Progress & timer */
+  --progress-track-bg: rgba(0,0,0,0.4);
+  --progress-fill-gradient: linear-gradient(120deg, #3fa9f5, #ffd347, #ff3a55);
+
+  --timer-bg: #333333;
+  --timer-ring-bg: rgba(0,0,0,0.5);
+  --timer-ring-fg: #ffd347;
+  --timer-text: #ffffff;
+
+  /* 11) Answer key pill */
+  --answer-key-pill-bg: rgba(0,0,0,0.7);
+  --answer-key-pill-text: #ffffff;
+
+  /* 12) Misc */
+  --button-radius: 0.9rem;
+
+  /* 13) Icon buttons */
+  --icon-chip-bg: rgba(0,0,0,0.7);
+  --icon-chip-text: #ffffff;
+
+  /* 14) Overlays */
+  --spotlight-overlay-bg: rgba(0,0,0,0.85);
+  --reward-overlay-bg: rgba(0,0,0,0.9);
+  --reward-text: #ffffff;
+
+  /* 15) Answer outlines */
+  --answer-border: rgba(255,255,255,0.5);
+  --answer-border-strong: rgba(255,255,255,0.9);
+
+  --red-border:   #b51a30;
+  --yellow-border:#caa13b;
+  --blue-border:  #2b88c2;
+  --green-border: #276534;
+
+  /* 16) Timer explosion */
+  --timer-particle-gradient: radial-gradient(
+    circle,
+    #555555 0%,
+    #ffd347 40%,
+    #ff3a55 70%,
+    #7f66c6 100%
+  );
+  --timer-explosion-glow: rgba(255, 211, 71, 0.9);
+
+  /* 17) Flash colors */
+  --flash-correct-bg: rgba(57, 181, 74, 0.25);
+  --flash-incorrect-bg: rgba(255, 90, 81, 0.3);
+  --flash-return-bg: var(--quiz-screen-bg);
+
+  /* 18) Card shadow */
+  --screen-card-shadow: rgba(0,0,0,0.6);
+
+  /* 19) Pointer glow */
+  --pointer-glow-star:   #f6c453;
+  --pointer-glow-ocean:  #34c3ff;
+  --pointer-glow-garden: #4caf50;
+  --pointer-glow-fire:   #ff6a2f;
+  --pointer-glow-galaxy: #7e57c2;
+  --pointer-glow-animal: #a67c52;
+  --pointer-glow-joy:    #ffd54f;
+  --pointer-glow-heart:  #ff4081;
+  --pointer-glow-rainbow:#ffffff;
+  --pointer-glow-bible:  #fff3cd;
+
+  /* 20) Feedback subtitle */
+  --feedback-subtitle-text: #e5e5e5;
+}
+
+
+
+
+/* 
+   ______   _   _   _____  
+  |  ____| | \ | | |  __ \ 
+  | |__    |  \| | | |  | |
+  |  __|   | . ` | | |  | |
+  | |____  | |\  | | |__| |
+  |______| |_| \_| |_____/ 
+                           
+                           
+*/
+
+
+
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: 100svh; /* better fullscreen-ish on mobile browsers */
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      background: radial-gradient(circle at top, var(--bg-gradient-top), var(--bg-gradient-bottom));
+      background-size: 150% 150%;
+      animation: bgDrift 20s ease-in-out infinite alternate;
+      color: var(--text-main);
+      overflow-y: auto; /* allow scrolling on small devices if needed */
+    }
+
+    @keyframes bgDrift {
+      0% { background-position: 0% 0%; }
+      100% { background-position: 100% 100%; }
+    }
+
+    #app {
+      width: 100%;
+      max-width: 1200px;
+      height: 100%;
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+    }
+
+body.mode-big #app {
+  max-width: none;
+  
+}
+
+
+
+
+
+
+    .screen-card {
+      background: var(--card-bg);
+      width: 100%;
+      min-height: 100vh;
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+      padding: 18px 14px 22px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 30px var(--screen-card-shadow);
+    }
+
+    #title-screen.screen-card {
+        background: transparent !important;
+        box-shadow: none !important;
+        border: none !important;
+    }
+
+
+    @media (min-width: 768px) {
+      .screen-card {
+        padding: 26px 32px 30px;
+      }
+    }
+
+    #quiz-screen {
+      position: relative;
+      overflow: hidden;
+      background: var(--quiz-screen-bg);
+    }
+
+
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* ---------- INTRO SCREEN ---------- */
+
+    #intro-screen {
+      background: var(--intro-bg);
+      color: var(--intro-text);
+      box-shadow: none;
+      opacity: 1;
+      transition: opacity 0.9s ease-out;
+    }
+
+
+
+
+    #intro-screen.intro-fade-out {
+      opacity: 0;
+    }
+
+
+  body.intro-mode {
+    background: var(--intro-bg) !important;
+    animation: none !important;
+  }
+
+
+
+
+    .intro-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 8px;
+    }
+
+    .intro-line {
+      opacity: 0;
+      color: var(--intro-text);
+    }
+
+
+
+    .intro-line-1 {
+      font-size: clamp(1rem, 2.5vw, 1.5rem);
+      font-weight: 400;
+      animation: introFadeIn 0.9s ease-out forwards;
+      animation-delay: 0.2s;
+    }
+
+    .intro-line-2 {
+      font-size: clamp(1.6rem, 4vw, 2.6rem);
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      animation: introFadeIn 0.9s ease-out forwards;
+      animation-delay: 1.0s;
+    }
+
+    .intro-logo {
+    margin-bottom: 1px;
+    width: 160px;
+    max-width: 60vw;
+    opacity: 0;  /* start invisible */
+
+    /* Fade in, then shake – in one combined animation declaration */
+    animation:
+        introFadeIn 0.9s ease-out 0.1s forwards,
+        introLogoShake 0.4s ease-in-out 2s 1;
+
+    }
+
+
+
+    /* Logo shake effect (used before swapping to bitten version) */
+    .intro-logo-shake {
+    animation: introLogoShake 0.4s ease-in-out 2;
+    }
+
+    /* Logo shake keyframes */
+    @keyframes introLogoShake {
+    0%   { transform: rotate(0deg); }
+    25%  { transform: rotate(-4deg); }
+    50%  { transform: rotate(4deg); }
+    75%  { transform: rotate(-3deg); }
+    100% { transform: rotate(0deg); }
+    }
+
+
+
+
+
+    @keyframes introFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+
+    /* ---------- TITLE SCREEN ---------- */
+
+    #title-screen-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      text-align: center;
+    }
+
+    .lesson-image-wrapper {
+      width: 140px;
+      height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    @media (min-width: 900px) {
+      .lesson-image-wrapper {
+        width: 200px;
+        height: 200px;
+      }
+    }
+
+    .lesson-image {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      animation: float 4.5s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0% { transform: translateY(0); }
+      50% { transform: translateY(6px); }
+      100% { transform: translateY(0); }
+    }
+
+    .card-title {
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .card-subtitle {
+      font-size: clamp(1rem, 2vw, 1.2rem);
+      color: var(--text-muted);
+    }
+
+    /* Title screen text colors */
+    #title-screen .card-title {
+    color: var(--title-main-text);
+    }
+
+    #title-screen .card-subtitle {
+    color: var(--title-subtitle-text);
+    }
+
+
+    .mode-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    @media (min-width: 600px) {
+      .mode-buttons {
+        flex-direction: row;
+      }
+    }
+
+    .primary-button,
+    .secondary-button {
+      border-radius: 999px;
+      border: none;
+      padding: 12px 20px;
+      font-size: clamp(1rem, 1.8vw, 1.2rem);
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: transform 0.1s ease, box-shadow 0.1s ease, filter 0.1s ease;
+    }
+
+    .primary-button {
+      background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+      color: var(--primary-text);
+      box-shadow: 0 10px 25px rgba(37, 99, 235, 0.4);
+    }
+
+    .secondary-button {
+      background: var(--secondary-bg);
+      color: var(--secondary-text);
+      box-shadow: 0 8px 18px rgba(15, 23, 42, 0.18);
+    }
+
+
+    .primary-button:hover,
+    .secondary-button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.05);
+      box-shadow: 0 14px 30px rgba(15, 23, 42, 0.35);
+    }
+
+    .primary-button:active,
+    .secondary-button:active {
+      transform: translateY(0);
+      filter: brightness(0.95);
+      box-shadow: 0 6px 12px rgba(15, 23, 42, 0.25);
+    }
+
+    .mode-note {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+      max-width: 420px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* ---------- TOP BAR + PROGRESS ---------- */
+
+    .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+    font-size: clamp(0.95rem, 1.8vw, 1.15rem);
+    margin-bottom: 4px;
+    color: var(--text-muted);
+    }
+
+
+    .sound-toggle {
+    border-radius: 999px;
+    border: none;
+    background: var(--icon-chip-bg);
+    color: var(--icon-chip-text);
+    padding: 6px 9px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    box-shadow: 0 3px 9px rgba(15,23,42,0.2);
+    transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
+    }
+
+
+    .sound-toggle:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(15,23,42,0.25);
+      filter: brightness(1.06);
+    }
+
+    .sound-toggle:active {
+      transform: translateY(0);
+      box-shadow: 0 3px 8px rgba(15,23,42,0.2);
+      filter: brightness(0.96);
+    }
+
+    .top-icon-button {
+    border-radius: 999px;
+    border: none;
+    background: var(--icon-chip-bg);
+    color: var(--icon-chip-text);
+    padding: 6px 9px;
+    font-size: 1.3rem;
+    cursor: pointer;
+    box-shadow: 0 3px 9px rgba(15,23,42,0.20);
+    transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
+    margin: 0 12px; /* spacing so it doesn't collide with text/sound button */
+    }
+
+
+    .top-icon-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(15,23,42,0.25);
+    filter: brightness(1.06);
+    }
+
+    .top-icon-button:active {
+    transform: translateY(0);
+    box-shadow: 0 3px 8px rgba(15,23,42,0.20);
+    filter: brightness(0.96);
+    }
+
+
+    /* Force HOME button to center */
+    #home-button {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    }
+
+
+    .progress-track {
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--progress-track-bg);
+      overflow: hidden;
+      margin-top: 6px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: inherit;
+      background: var(--progress-fill-gradient);
+      background-size: 200% 100%;
+      animation: progressFlow 2.5s linear infinite;
+      transition: width 0.25s ease;
+    }
+
+    @keyframes progressFlow {
+      0% { background-position: 0% 0%; }
+      100% { background-position: 100% 0%; }
+    }
+
+    /* Timer ring (big-screen only visually) */
+    .timer-ring-wrapper {
+      position: relative;
+      width: 180px;    /* bigger ring */
+      height: 180px;
+      display: none;   /* phone mode hides it */
+      border-radius: 50%;
+      box-shadow: 0 14px 30px rgba(15, 23, 42, 0.28);
+      background: var(--timer-bg);
+    }
+
+    body.mode-big .timer-ring-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* When time runs out, make the timer ring "explode" */
+    .timer-ring-wrapper.timer-explode {
+    animation: timerExplode 0.7s ease-out forwards;
+    }
+
+    @keyframes timerExplode {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+        box-shadow: 0 14px 30px rgba(15, 23, 42, 0.28);
+    }
+    40% {
+        transform: scale(1.3);
+        opacity: 1;
+              box-shadow: 0 0 40px var(--timer-explosion-glow); /* bright flash */
+    }
+    100% {
+        transform: scale(0.6);
+        opacity: 0;
+        box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+    }
+    }
+
+    /* BIGGER, HOTTER, MORE IMPRESSIVE PARTICLES */
+    .timer-particle {
+    position: fixed;
+    width: 22px;       /* was 10px */
+    height: 22px;      /* was 10px */
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 10002;      /* above everything */
+      background: var(--timer-particle-gradient);
+    animation: timerParticle 1.2s ease-out forwards; /* longer, dramatic */
+    --tx: 0px;
+    --ty: 0px;
+    }
+
+    @keyframes timerParticle {
+    0% {
+        opacity: 1;
+        transform: translate(0, 0) scale(1.3);
+        filter: blur(0px);
+    }
+    40% {
+        opacity: 1;
+        transform: translate(var(--tx), var(--ty)) scale(1.0);
+        filter: blur(1px);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(calc(var(--tx) * 1.8), calc(var(--ty) * 1.8)) scale(0.3);
+        filter: blur(4px);
+    }
+    }
+
+
+    .timer-svg {
+      width: 100%;
+      height: 100%;
+      transform: rotate(-90deg); /* start at top */
+    }
+
+    /* Ring base */
+    .timer-ring-bg {
+      fill: none;
+      stroke: var(--timer-ring-bg);
+      stroke-width: 10;
+    }
+
+    /* Foreground color is overridden by JS for green->yellow->red */
+    .timer-ring-fg {
+      fill: none;
+      stroke: var(--timer-ring-fg);
+      stroke-width: 10;
+      stroke-linecap: round;
+      stroke-dasharray: 339.292;
+      stroke-dashoffset: 0;
+      transition: stroke-dashoffset 0.2s linear;
+    }
+
+    .timer-text {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+      color: var(--timer-text);
+      font-weight: 800;
+    }
+
+
+
+
+
+        /* Emoji host (right side) */
+    .emoji-face {
+      font-size: clamp(5rem, 9vw, 8rem); /* MUCH larger */
+      filter: drop-shadow(0 14px 28px rgba(15, 23, 42, 0.35));
+      opacity: 1;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+    }
+
+
+
+    .emoji-face.emoji-pop {
+    transform: scale(1.1);
+    opacity: 1;
+    }
+
+
+    /* ---------- QUIZ LAYOUT (shared) ---------- */
+
+    .quiz-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 10px;
+      min-height: 0;
+    }
+
+    .question-panel {
+      display: flex;
+      min-height: 0;
+    }
+
+    .answers-panel {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+      position: relative;  /* NEW: so the suspense layer can anchor to this area */
+    }
+
+
+    .question-card {
+    position: relative;            /* so we can attach an arrow to it */
+    width: 100%;
+    background: var(--question-bg);
+    color: var(--question-text);
+    border-radius: 1.35rem;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;        /* stack question + feedback + button */
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.55);
+    }
+
+
+    .question-text {
+      font-weight: 800;
+      line-height: 1.3;
+    }
+
+    /* ----- Question Reveal Animation ----- */
+    .question-text.question-reveal {
+    animation: questionReveal 0.55s ease-out;
+    }
+
+    @keyframes questionReveal {
+    0%   { opacity: 0; transform: translateY(12px) scale(0.98); }
+    60%  { opacity: 1; transform: translateY(0) scale(1.02); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+
+    .answers-grid {
+      display: grid;
+      gap: 12px;
+      flex: 1;
+      min-height: 0;
+    }
+
+    @media (min-width: 640px) {
+      .answers-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .answer-button {
+    position: relative; 
+    width: 100%;
+    border-radius: var(--button-radius);
+    border: 9px solid transparent; 
+    cursor: pointer;
+    font-weight: 600;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 24px rgba(15,23,42,0.3);
+    transition: transform 0.08s ease,
+                box-shadow 0.08s ease,
+                filter 0.08s ease,
+                border-color 0.08s ease;
+    padding: 14px 16px;
+    }
+
+    .answer-button.spotlight-chosen {
+    position: relative;
+    z-index: 60;
+    }
+
+
+    /* Hide keyboard hint numbers in phone mode */
+    body.mode-phone .answer-key-hint {
+    display: none !important;
+    }
+
+
+    .answer-key-hint {
+      position: absolute;
+      top: 6px;
+      left: 8px;
+      font-size: 1rem;
+      font-weight: 700;
+      background: var(--answer-key-pill-bg);
+      color: var(--answer-key-pill-text);
+      padding: 4px 8px;
+      border-radius: 999px;
+      pointer-events: none;
+    }
+
+
+
+
+    .answer-button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 16px 36px rgba(15,23,42,0.4);
+      filter: brightness(1.05);
+      border-color: var(--answer-border-strong);
+    }
+
+    .answer-button:active {
+      transform: translateY(0);
+      box-shadow: 0 8px 18px rgba(15,23,42,0.3);
+      filter: brightness(0.97);
+    }
+
+    .answer-button.disabled {
+      pointer-events: none;
+      opacity: 0.85;
+      filter: none;
+    }
+
+    /* Visual states for correct / wrong answers */
+    .answer-button.answer-correct {
+    box-shadow:
+        0 0 0 3px var(--answer-border-strong);  /* clean strong outline */
+    transform: translateY(-2px) scale(1.02);
+    border-color: var(--answer-border-strong);
+    }
+
+
+    .answer-button.answer-wrong {
+      animation: shake 0.24s ease-in-out;
+      opacity: 0.9;
+    }
+
+    .answer-button.answer-faded {
+      filter: grayscale(1) brightness(0.8);
+      opacity: 0.5;
+    }
+
+
+    @keyframes shake {
+      0%   { transform: translateX(0); }
+      25%  { transform: translateX(-4px); }
+      50%  { transform: translateX(4px); }
+      75%  { transform: translateX(-4px); }
+      100% { transform: translateX(0); }
+    }
+
+
+    .answer-text {
+      line-height: 1.3;
+    }
+
+    /* Slight glossy gradient on answer buttons */
+    .color-red {
+      background: linear-gradient(to bottom, rgba(255,255,255,0.18), rgba(0,0,0,0.18)), var(--red);
+      color: var(--red-text);
+      border-color: var(--red-border);
+    }
+
+    .color-yellow {
+      background: linear-gradient(to bottom, rgba(255,255,255,0.18), rgba(0,0,0,0.18)), var(--yellow);
+      color: var(--yellow-text);
+      border-color: var(--yellow-border);
+    }
+
+    .color-blue {
+      background: linear-gradient(to bottom, rgba(255,255,255,0.18), rgba(0,0,0,0.18)), var(--blue);
+      color: var(--blue-text);
+      border-color: var(--blue-border);
+    }
+
+    .color-green {
+      background: linear-gradient(to bottom, rgba(255,255,255,0.18), rgba(0,0,0,0.18)), var(--green);
+      color: var(--green-text);
+      border-color: var(--green-border);
+    }
+
+
+
+
+    .score-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: clamp(0.95rem, 1.6vw, 1.2rem);
+    padding-top: 10px;
+    margin-top: 4px;
+    border-top: 1px solid var(--progress-track-bg);
+    color: var(--text-muted);
+    }
+
+
+    .score-row strong {
+      color: var(--text-main);
+    }
+
+    /* ---------- BIG-SCREEN MODE ---------- */
+
+    body.mode-big .question-panel {
+    /* Let the question area be only as tall as it needs */
+    flex: 0 0 auto;
+    }
+
+    body.mode-big .answers-panel {
+    /* Let the answers panel take the remaining height */
+    flex: 1 1 auto;
+    }
+
+
+    body.mode-big .question-text {
+      font-size: clamp(1.6rem, 3.2vw, 3.4rem);
+    }
+
+    body.mode-big .answer-button {
+    font-size: clamp(1.2rem, 2.4vw, 2.6rem);
+
+    /* Make the button 94% of its grid cell (≈47% of the whole area) */
+    width: 94%;
+    height: 94%;
+    }
+
+
+    /* Big-screen layout: timer | question | emoji */
+    body.mode-big .question-panel {
+      justify-content: center;
+    }
+
+    body.mode-big .question-layout {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      gap: 24px;
+    }
+
+    /* Side areas expand to fill leftover space, contents centered */
+    body.mode-big .question-side {
+      flex: 1 0 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Center block takes ~60% width, leaving ~20% on each side */
+    body.mode-big .question-card {
+      flex: 0 0 60%;
+    }
+
+
+    body.mode-big .answers-grid {
+    grid-auto-rows: 1fr;
+
+    /* Center the smaller buttons in their cells */
+    justify-items: center;
+    align-items: center;
+    }
+
+    /* ---------- QUESTION SLIDE TRANSITION ---------- */
+
+    .quiz-main {
+      position: relative; /* so the transform animations look smooth */
+    }
+
+    .quiz-main.question-slide-out {
+      animation: questionSlideOut 0.55s ease-in forwards;
+    }
+
+    .quiz-main.question-slide-in {
+      animation: questionSlideIn 0.55s cubic-bezier(0.22, 0.75, 0.25, 1.05) forwards;
+    }
+
+    @keyframes questionSlideOut {
+      0% {
+        transform: translateX(0) scale(1);
+        opacity: 1;
+      }
+      15% {
+        /* little "rev" to the right */
+        transform: translateX(14px) scale(1.03);
+      }
+      100% {
+        /* zoom off to the left */
+        transform: translateX(-115%) scale(0.95);
+        opacity: 0;
+      }
+    }
+
+    @keyframes questionSlideIn {
+      0% {
+        transform: translateX(115%) scale(0.95);
+        opacity: 0;
+      }
+      60% {
+        /* snap into place */
+        transform: translateX(0) scale(1.03);
+        opacity: 1;
+      }
+      80% {
+        /* tiny wiggle past center */
+        transform: translateX(-8px) scale(0.99);
+      }
+      100% {
+        transform: translateX(0) scale(1);
+      }
+    }
+
+
+    /* ---------- PHONE MODE ---------- */
+
+    body.mode-phone .quiz-main {
+      gap: 6px;
+    }
+
+    body.mode-phone .question-panel {
+    flex: 0 0 auto;
+    display: block;       /* Stop using flex here on phone */
+    }
+
+    body.mode-phone .question-layout {
+    width: 100%;          /* Make the layout span full width */
+    }
+
+
+    body.mode-phone .answers-panel {
+      flex: 1 0 auto;
+    }
+
+    body.mode-phone .question-card {
+      padding: 10px 12px;
+    }
+
+    body.mode-phone .question-text {
+      font-size: clamp(1rem, 2.5vh, 1.5rem);
+    }
+
+    body.mode-phone .answers-grid {
+      grid-template-columns: 1fr;
+      grid-auto-rows: auto;
+      gap: 8px;
+    }
+
+    body.mode-phone .answer-button {
+      font-size: clamp(0.9rem, 2.2vh, 1.1rem);
+      padding: 10px 12px;
+    }
+
+    /* Hide emoji entirely in phone mode */
+    body.mode-phone .question-emoji,
+    body.mode-phone #emoji-face {
+    display: none !important;
+    }
+
+    /* ----- Streak Animations ----- */
+
+    body.streak-tier-1 #emoji-face {
+    animation: streakGlow 0.6s ease-out;
+    }
+
+    body.streak-tier-2 #emoji-face {
+    animation: streakAura 0.9s ease-out;
+    }
+
+    body.streak-tier-3 #emoji-face {
+    animation: streakFinal 1.2s ease-out;
+    }
+
+    @keyframes streakGlow {
+    0%   { filter: drop-shadow(0 0 0 rgba(255,255,0,0)); }
+    100% { filter: drop-shadow(0 0 18px rgba(255, 255, 135, 0.9)); }
+    }
+
+    @keyframes streakAura {
+    0%   { filter: drop-shadow(0 0 0 rgba(255,215,0,0)); transform: scale(1); }
+    50%  { filter: drop-shadow(0 0 25px rgba(255,215,0,0.9)); transform: scale(1.06); }
+    100% { filter: drop-shadow(0 0 12px rgba(255,215,0,0.6)); transform: scale(1.02); }
+    }
+
+    @keyframes streakFinal {
+    0%   { transform: scale(1) rotate(0);   filter: drop-shadow(0 0 0 rgba(255,180,0,0)); }
+    40%  { transform: scale(1.15) rotate(3deg); filter: drop-shadow(0 0 45px rgba(255,200,0,1)); }
+    70%  { transform: scale(1.1) rotate(-3deg); filter: drop-shadow(0 0 30px rgba(255,185,0,1)); }
+    100% { transform: scale(1.05) rotate(0); filter: drop-shadow(0 0 18px rgba(255,180,0,0.7)); }
+    }
+
+
+    /* ---------- FULLSCREEN TWEAKS ---------- */
+
+    :fullscreen .question-text,
+    :-webkit-full-screen .question-text {
+      font-size: clamp(2.2rem, 4vw, 5rem);
+    }
+
+    :fullscreen body.mode-big .answer-button,
+    :-webkit-full-screen body.mode-big .answer-button {
+       font-size: clamp(1.2rem, 2.4vw, 2.6rem);
+    }
+
+
+
+    /* ---------- FEEDBACK + STARS ---------- */
+
+    /* Hidden by default, only shown when the card is in feedback mode */
+    .feedback-bubble {
+    display: none;
+    width: 100%;
+    }
+
+    /* Question card becomes a “speech bubble” after answering */
+    .question-card.feedback-mode {
+    padding: 18px 22px 20px;
+    }
+
+    /* In feedback mode, hide the normal question text */
+    .question-card.feedback-mode .question-text {
+    display: none;
+    }
+
+    /* In feedback mode, show the feedback text area */
+    .question-card.feedback-mode .feedback-bubble {
+    display: block;
+    }
+
+    /* Arrow pointing from the right edge toward the emoji */
+    .question-card.feedback-mode::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    right: -18px;
+    transform: translateY(-50%);
+    border-width: 12px 0 12px 18px;
+    border-style: solid;
+    border-color: transparent transparent transparent var(--question-bg);
+    }
+
+    /* Hide the arrow on phone since the emoji isn’t shown there */
+    body.mode-phone .question-card.feedback-mode::after {
+    display: none;
+    }
+
+    /* Title inside the “bubble” */
+    .feedback-title {
+    font-size: clamp(3rem, 5vw, 4.2rem);
+    font-weight: 900;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    text-align: center;
+    }
+
+    .feedback-title.correct-text {
+      color: var(--feedback-correct-text);
+    }
+
+    .feedback-title.incorrect-text {
+      color: var(--feedback-incorrect-text);
+    }
+
+
+    /* Subtitle + Next row (in the white strip above the answers) */
+    .feedback-subrow {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        margin: 18px 0 28px;  /* top, left/right, bottom */
+        text-align: center;
+    }
+
+
+
+ .feedback-detail {
+    color: var(--feedback-subtitle-text);
+    font-size: clamp(1.6rem, 2.6vw, 2.1rem);
+    line-height: 1.35;
+    min-height: 1.8em;
+}
+
+
+
+
+    .feedback-next-btn {
+        align-self: center;
+        font-size: clamp(1.1rem, 2.1vw, 1.5rem);
+        padding: 14px 30px;
+    }
+
+
+    /* Falling stars for correct answers (unchanged) */
+    .star {
+    position: fixed;
+    top: -40px;
+    font-size: clamp(1.6rem, 2.6vw, 2.2rem);
+    animation: fall 1.2s linear forwards;
+    z-index: 60;
+    pointer-events: none;
+    }
+
+    @keyframes fall {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+    }
+
+
+    /* ---------- SPOTLIGHT + SUSPENSE ---------- */
+
+    .spotlight-overlay {
+    position: absolute;
+    inset: 0;
+    background: var(--spotlight-overlay-bg);
+    z-index: 40;
+    pointer-events: none;
+    }
+
+    /* ---------- END REWARD SPOTLIGHT ---------- */
+
+    .reward-overlay {
+      position: fixed;
+      inset: 0;
+        background: var(--reward-overlay-bg);
+      z-index: 10000; /* above everything else */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .reward-center {
+      text-align: center;
+        color: var(--reward-text);
+    }
+
+  .reward-present-big {
+    font-size: clamp(5rem, 10vw, 8rem);
+    display: inline-block;       /* makes transform-origin behave nicely */
+    transform-origin: center;    /* rotate from the center, not a corner */
+  }
+
+
+
+    .reward-final-emoji {
+        font-size: clamp(20rem, 44vw, 36rem); /* 4× bigger */
+        margin-top: 8px;
+        cursor: pointer;
+        user-select: none;
+        pointer-events: auto;
+        position: relative;
+        z-index: 10001;
+    }
+
+
+
+    /* Big present wiggle while we're in the spotlight */
+    .reward-present-animate {
+      animation: rewardPresentBigWiggle 1.2s ease-in-out infinite;
+    }
+
+    @keyframes rewardPresentBigWiggle {
+      0%, 40%, 100% { transform: rotate(0deg); }
+      10% { transform: rotate(-6deg); }
+      20% { transform: rotate(6deg); }
+      30% { transform: rotate(-3deg); }
+    }
+
+
+    /* Giant emoji entrance (simple pop, for scores < 5) */
+    .reward-emoji-pop {
+      animation: rewardEmojiPop 0.7s ease-out forwards;
+    }
+
+    @keyframes rewardEmojiPop {
+      0%   { transform: scale(0.6); opacity: 0; }
+      60%  { transform: scale(1.1); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Giant emoji dance (for scores >= 5) */
+    .reward-emoji-dance {
+      animation: rewardEmojiDance 2s ease-in-out forwards;
+    }
+
+    @keyframes rewardEmojiDance {
+      0%   { transform: translateY(0) scale(1); }
+      15%  { transform: translateY(-12px) scale(1.05); }
+      30%  { transform: translateY(0) scale(1); }
+      45%  { transform: rotate(-4deg) scale(1.05); }
+      60%  { transform: rotate(4deg) scale(1.05); }
+      75%  { transform: rotate(0deg) translateY(-8px) scale(1.05); }
+      100% { transform: translateY(0) scale(1); }
+    }
+
+
+    .suspense-layer {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 80;
+    pointer-events: none;
+    }
+
+    .suspense-thumb {
+    /* EVEN bigger thumbs */
+    font-size: clamp(7rem, 14vw, 11rem);
+
+    /* Strong, soft shadow so it stands out on the dark overlay */
+    filter: drop-shadow(0 22px 40px rgba(0, 0, 0, 0.9));
+    }
+
+
+
+    /* Particle explosion from the chosen button */
+    .burst-star {
+    position: fixed;
+    font-size: 1.5rem;
+    pointer-events: none;
+    z-index: 70;
+    animation: buttonBurst 0.7s ease-out forwards;
+    }
+
+    @keyframes buttonBurst {
+    0% {
+        transform: translate(0,0) scale(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--dx), var(--dy)) scale(1);
+        opacity: 0;
+    }
+    }
+
+
+
+    /* ---------- END SCREEN ---------- */
+
+    /* Make the end screen center vertically */
+    .card-header {
+    flex: 1;
+    display: flex;
+    }
+
+
+    .end-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      text-align: center;
+    }
+
+    .end-trophy {
+      font-size: clamp(3rem, 6vw, 4rem);
+      cursor: pointer; /* make it look clickable */
+    }
+
+    /* Small present wiggle on the end screen */
+    .end-present-wiggle {
+      animation: endPresentWiggle 2s ease-in-out infinite;
+    }
+
+    @keyframes endPresentWiggle {
+      0%, 20%, 100% { transform: rotate(0deg); }
+      5%  { transform: rotate(-6deg); }
+      10% { transform: rotate(6deg); }
+      15% { transform: rotate(-3deg); }
+    }
+
+
+    .end-score {
+      font-size: clamp(2.2rem, 3.3vw, 3rem);
+      font-weight: 800;
+      color: var(--end-score-text);
+    }
+
+    .end-detail {
+      font-size: clamp(1.05rem, 1.8vw, 1.3rem);
+      color: var(--end-detail-text);
+    }
+
+    /* End screen title & subtitle text colors */
+    #end-screen .card-title {
+      color: var(--end-title-text);
+    }
+
+    #end-screen .card-subtitle {
+      color: var(--end-subtitle-text);
+    }
+
+
+    #end-screen.end-great {
+      background: radial-gradient(circle at top, var(--end-great-bg-top), var(--end-great-bg-bottom));
+    }
+
+    #end-screen.end-good {
+      background: radial-gradient(circle at top, var(--end-good-bg-top), var(--end-good-bg-bottom));
+    }
+
+    #end-screen.end-try {
+      background: radial-gradient(circle at top, var(--end-try-bg-top), var(--end-try-bg-bottom));
+    }
+
+
+  /* ----- Dynamic Background Reactions (on quiz card) ----- */
+
+    #quiz-screen.bg-correct {
+    animation: bgCorrectPulse 0.6s ease-out;
+    }
+
+    #quiz-screen.bg-incorrect {
+    animation: bgIncorrectPulse 0.6s ease-out;
+    }
+
+  @keyframes bgCorrectPulse {
+    0%   { background: var(--flash-correct-bg); }
+    100% { background: var(--flash-return-bg); }
+  }
+
+
+  @keyframes bgIncorrectPulse {
+    0%   { background: var(--flash-incorrect-bg); }
+    100% { background: var(--flash-return-bg); }
+  }
+
+
+    /* HIDE CURSOR IN BIG MODE (for all elements) */
+    body.mode-big,
+    body.mode-big * {
+    cursor: none !important;
+    }
+
+
+
+    
+
+    /* CUSTOM BIG POINTER */
+    #big-pointer {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 10001;
+    font-size: 3.5rem;
+    pointer-events: none;
+    transform: translate(-38%, -15%);
+    transition: transform 0.04s linear;
+    }
+
+    /* Little emoji "ghosts" that follow the big pointer */
+    .pointer-trail-emoji {
+    position: fixed;
+    z-index: 9998; /* just under the main pointer */
+    font-size: 2.5rem;
+    pointer-events: none;
+    transform: translate(-38%, -15%);
+    opacity: 1;
+    animation: pointerTrailFade 0.6s ease-out forwards;
+    }
+
+    @keyframes pointerTrailFade {
+    0% {
+        opacity: 1;
+        transform: translate(-38%, -15%) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-38%, -5%) scale(0.7);
+    }
+    }
+
+
+    /* CLICK RIPPLE EFFECT (big-screen pointer) */
+    .click-ripple {
+    position: fixed;
+    width: 80px;
+    height: 80px;
+    border-radius: 999px;
+    border: 3px solid rgba(255, 255, 255, 0.85);
+    pointer-events: none;
+    z-index: 9998;
+    transform: translate(-50%, -50%) scale(0.1);
+    opacity: 0.9;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.6);
+    animation: clickRipple 0.45s ease-out forwards;
+    }
+
+    @keyframes clickRipple {
+    0% {
+        transform: translate(-50%, -50%) scale(0.1);
+        opacity: 0.9;
+    }
+    70% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.5;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1.3);
+        opacity: 0;
+        box-shadow: 0 0 0 rgba(255, 255, 255, 0);
+    }
+    }
+
+    
+/* DEBUG: temporarily show the real mouse cursor */
+body.show-real-cursor,
+body.show-real-cursor * {
+  cursor: auto !important;
+}
+
+
+
+  </style>
+</head>
+<body class="mode-title">
+  <div id="app">
+
+    <!-- INTRO SCREEN -->
+    <div id="intro-screen" class="screen-card">
+    <div class="intro-content">
+        <!-- Logo FIRST -->
+        <img
+        id="intro-logo"
+        class="intro-logo"
+        src="quizimages/eyb_logo_1.png"
+        alt="Eat Your Bible logo"
+        />
+
+        <!-- Then the text lines -->
+        <div class="intro-line intro-line-1">Presented by</div>
+        <div class="intro-line intro-line-2">eatyourbible.com</div>
+
+        <!-- Load Quiz button -->
+        <button
+        id="load-quiz-btn"
+        class="primary-button"
+        style="margin-top: 20px; opacity: 0.5; pointer-events: none;"
+        >
+        Load Quiz
+        </button>
+
+    </div>
+    </div>
+
+
+
+    
+    <!-- TITLE SCREEN -->
+    <div id="title-screen" class="screen-card">
+      <div id="title-screen-content">
+        <div class="lesson-image-wrapper">
+          <img
+            id="lesson-image"
+            class="lesson-image"
+            alt="Lesson image"
+          />
+        </div>
+        <div>
+          <h1 id="lesson-title" class="card-title">Sample Devotional Quiz</h1>
+          <p id="lesson-subtitle" class="card-subtitle">
+            10 questions to see how well you know the story!
+          </p>
+        </div>
+        <div class="mode-buttons">
+          <button id="big-screen-btn" class="primary-button">
+            <span>Big-Screen Mode</span> <span>📺</span>
+          </button>
+          <button id="phone-mode-btn" class="secondary-button">
+            <span>Phone Mode</span> <span>📱</span>
+          </button>
+        </div>
+       <p class="mode-note">
+  Big-Screen Mode is best for TVs and computers.<br>
+  Phone Mode is sized to fit smaller screens.
+</p>
+
+      </div>
+    </div>
+
+    <!-- QUIZ SCREEN -->
+    <div id="quiz-screen" class="screen-card hidden">
+        <div class="top-bar">
+            <span>Question <strong id="question-number">1</strong> of <strong id="total-questions">10</strong></span>
+
+            <!-- CENTER HOME BUTTON -->
+            <button id="home-button" class="top-icon-button" aria-label="Back to title">🏠</button>
+
+            <button id="sound-toggle" class="sound-toggle" aria-label="Toggle sound">🔊</button>
+        </div>
+
+      <div class="progress-track">
+        <div id="progress-fill" class="progress-fill"></div>
+      </div>
+
+      <div class="quiz-main">
+        <div class="question-panel">
+        <div class="question-layout">
+            <!-- LEFT: Timer ring (big-screen only) -->
+            <div class="question-side question-timer">
+            <div class="timer-ring-wrapper">
+                <svg class="timer-svg" viewBox="0 0 120 120">
+                <circle
+                    class="timer-ring-bg"
+                    cx="60"
+                    cy="60"
+                    r="54"
+                ></circle>
+                <circle
+                    id="timer-ring-fg"
+                    class="timer-ring-fg"
+                    cx="60"
+                    cy="60"
+                    r="54"
+                ></circle>
+                </svg>
+                <div id="timer-text" class="timer-text">30</div>
+            </div>
+            </div>
+
+            <!-- CENTER: Question -->
+            <div class="question-card">
+            <!-- Normal question text -->
+            <div id="question-text" class="question-text">
+                Question text here
+            </div>
+
+            <!-- Feedback bubble content (hidden until after answer) -->
+            <div id="feedback-bubble" class="feedback-bubble">
+                <div id="feedback-title" class="feedback-title">CORRECT</div>
+                <!-- no subtitle here anymore -->
+            </div>
+            </div>
+
+
+
+            <!-- RIGHT: Emoji host -->
+            <div class="question-side question-emoji">
+            <div id="emoji-face" class="emoji-face">😀</div>
+            </div>
+        </div>
+        </div>
+
+
+                <div class="answers-panel">
+
+            <!-- NEW: subtitle + Next Question strip -->
+            <div id="feedback-subrow" class="feedback-subrow">
+                <!-- Subtitle text will go here from JS -->
+                <div id="feedback-detail" class="feedback-detail"></div>
+
+                <!-- Next Question button (hidden until after reveal) -->
+                <button
+                id="next-question-btn"
+                class="primary-button feedback-next-btn hidden"
+                >
+                Next Question
+                </button>
+            </div>
+
+            <!-- Answer buttons -->
+            <div class="answers-grid" id="answers-grid">
+                <button class="answer-button color-red" data-button-index="0">
+                <span class="answer-key-hint">1</span>
+                <span class="answer-text"></span>
+                </button>
+                <button class="answer-button color-yellow" data-button-index="1">
+                <span class="answer-key-hint">2</span>
+                <span class="answer-text"></span>
+                </button>
+                <button class="answer-button color-blue" data-button-index="2">
+                <span class="answer-key-hint">3</span>
+                <span class="answer-text"></span>
+                </button>
+                <button class="answer-button color-green" data-button-index="3">
+                <span class="answer-key-hint">4</span>
+                <span class="answer-text"></span>
+                </button>
+            </div>
+
+      <div class="score-row">
+        <span>Score: <strong id="score-display">0</strong></span>
+        <span>Streak: <strong id="streak-display">x0</strong></span>
+      </div>
+
+        <!-- Suspense thumbs / tick-tock layer -->
+  <div id="suspense-layer" class="suspense-layer hidden">
+    <div id="suspense-thumb" class="suspense-thumb">👍</div>
+  </div>
+
+    </div>
+  </div>
+
+  <!-- Dark overlay for spotlight suspense -->
+  <div id="spotlight-overlay" class="spotlight-overlay hidden"></div>
+
+
+</div> <!-- end #quiz-screen -->
+
+
+
+    <!-- END SCREEN -->
+    <div id="end-screen" class="screen-card hidden">
+      <div class="card-header">
+        <div class="end-main">
+          <div class="end-trophy" id="end-trophy">🏆</div>
+          <h2 class="card-title" id="end-title">Quiz Complete!</h2>
+          <p class="card-subtitle" id="end-subtitle">Here&rsquo;s how you did</p>
+          <div class="end-score" id="final-score">0 points</div>
+          <div class="end-detail" id="final-correct">
+            You got 0 out of 10 correct
+          </div>
+          <div class="end-buttons">
+            <button id="play-again-btn" class="primary-button">Play Again</button>
+            <button id="back-to-title-btn" class="secondary-button">Back to Title</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+    <!-- Reward spotlight overlay for end screen -->
+    <div id="reward-overlay" class="reward-overlay hidden">
+        <div class="reward-center">
+        <!-- Big present that wiggles before exploding -->
+        <div id="reward-present-big" class="reward-present-big">🎁</div>
+        <!-- Giant final emoji revealed after the present "explodes" -->
+<div
+  id="reward-emoji"
+  class="reward-final-emoji hidden"
+  onclick="handleRewardEmojiClick()"
+></div>
+        </div>
+    </div>
+
+
+<div id="big-pointer" class="hidden">👆</div>
+
+
+
+  <script>
+    /***********************
+     * CONFIG
+     ***********************/
+    const LESSON_ID = "ot22";
+    const LESSON_TITLE_TEXT = "Joseph in Prison";
+    const LESSON_SUBTITLE_TEXT = "Test how well you know this story";
+    const LESSON_IMAGE_PATH = `quizimages/${LESSON_ID}image.png`;
+    const THEME_CLASS = "theme-green-kahoot"; // change this to theme-red, theme-blue, etc
+
+    // Apply the theme class to the <html> element
+    document.documentElement.classList.add(THEME_CLASS);
+
+
+
+/* 
+   ____    _    _   ______    _____   _______   _____    ____    _   _    _____ 
+  / __ \  | |  | | |  ____|  / ____| |__   __| |_   _|  / __ \  | \ | |  / ____|
+ | |  | | | |  | | | |__    | (___      | |      | |   | |  | | |  \| | | (___  
+ | |  | | | |  | | |  __|    \___ \     | |      | |   | |  | | | . ` |  \___ \ 
+ | |__| | | |__| | | |____   ____) |    | |     _| |_  | |__| | | |\  |  ____) |
+  \___\_\  \____/  |______| |_____/     |_|    |_____|  \____/  |_| \_| |_____/ 
+                                                                                
+                                                                                
+*/
+
+
+
+const QUESTIONS = [
+{
+    text: "What two men were thrown<br>into prison with Joseph?", // BR
+    answers: [
+        "Pharaoh's baker and wine taster", // BR
+        "Two shepherds from Canaan",
+        "Two soldiers from Pharaoh's army",
+        "Two men who tried to steal grain"
+    ],
+    correctIndex: 0
+},
+{
+    text: "What happened to both men<br>while they were in prison?", // BR
+    answers: [
+        "They had special dreams from God", // BR
+        "They both escaped",
+        "They got into a big fight",
+        "They became very sick"
+    ],
+    correctIndex: 0
+},
+{
+    text: "What did Joseph say about dreams?", 
+    answers: [
+        "Only God knows what dreams mean",
+        "Dreams are random and don't matter",
+        "Anyone can figure out dreams",
+        "Dreams always mean you're in danger"
+    ],
+    correctIndex: 0
+},
+{
+    text: "What did the wine taster dream?", // BR
+    answers: [
+        "He saw a grapevine with three branches;<br>he squeezed the grapes<br>into Pharaoh's special cup", // BR*2
+        "He saw himself becoming Pharaoh",
+        "He saw a giant river of milk",
+        "He saw Joseph handing him fruit"
+    ],
+    correctIndex: 0
+},
+{
+    text: "What did Joseph say the<br>wine taster's dream meant?", // BR
+    answers: [
+        "In three days, he would<br>get his old job back", // BR
+        "He would become a powerful ruler",
+        "He would be sent home to Canaan",
+        "He would stay in prison forever"
+    ],
+    correctIndex: 0
+},
+{
+    text: "What favor did Joseph ask<br>of the wine taster?", // BR
+    answers: [
+        "Tell Pharaoh that he didn't deserve<br>to be a slave or in prison", // BR
+        "Bring him better food",
+        "Help him escape at night",
+        "Give him a new coat"
+    ],
+    correctIndex: 0
+},
+{
+    text: "What did the baker dream?", 
+    answers: [
+        "He carried three baskets<br>of bread on his head;<br>birds pecked at the baskets", // BR
+        "He baked bread for Pharaoh",
+        "He was flying over Egypt",
+        "He burned all the bread in the palace"
+    ],
+    correctIndex: 0
+},
+{
+    text: "What did Joseph say<br>the baker's dream meant?", // BR
+    answers: [
+        "In three days, Pharaoh would kill<br>him; birds would peck at his body", // BR
+        "He would become Pharaoh's favorite servant",
+        "He would leave prison unharmed",
+        "He would bake bread for the rest of his life"
+    ],
+    correctIndex: 0
+},
+{
+    text: "What happened three days later?", 
+    answers: [
+        "The baker was killed; the wine<br>taster got his job back", // BR
+        "Both men were set free",
+        "Both men stayed in prison",
+        "Both men became Pharaoh's helpers"
+    ],
+    correctIndex: 0
+},
+{
+    text: "What did the wine taster do<br>after he got his job back?", // BR
+    answers: [
+        "He completely forgot about Joseph", 
+        "He visited Joseph every week",
+        "He immediately told Pharaoh about Joseph", // BR
+        "He quit his job to move away"
+    ],
+    correctIndex: 0
+}
+];
+
+
+
+
+/* 
+   ______   _   _   _____  
+  |  ____| | \ | | |  __ \ 
+  | |__    |  \| | | |  | |
+  |  __|   | . ` | | |  | |
+  | |____  | |\  | | |__| |
+  |______| |_| \_| |_____/ 
+                           
+                           
+*/
+
+    // Detect iPads & Android tablets — but NOT Windows touch laptops
+    const ua = navigator.userAgent.toLowerCase();
+
+    const isIpad = ua.includes("ipad") || 
+                (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+    const isAndroidTablet = ua.includes("android") && !ua.includes("mobile");
+
+    // Final tablet detection
+    const isRealTablet = isIpad || isAndroidTablet;
+
+
+    /***********************
+     * STATE
+     ***********************/
+    let currentMode = "phone"; // "big" or "phone"
+
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let streak = 0;
+    let correctCount = 0;
+    let soundEnabled = true;
+    let isLocked = false;
+
+    let audioCtx = null;
+    let chompAudio = null;      // NEW: shared audio object for the chomp
+    let isChompReady = false;   // NEW: tracks whether it's fully loaded
+
+    const TIMER_DURATION = 30;
+
+    const TIMER_RADIUS = 54;
+    const TIMER_CIRCUMFERENCE = 2 * Math.PI * TIMER_RADIUS;
+
+    let timeLeft = TIMER_DURATION;
+    let timerIntervalId = null;
+
+    const NEUTRAL_EMOJIS = [
+    "😀","😄","😊","😁","🤗","🙂","🤩","🤪","🥸","🤓","😧","😵‍💫","🙃","😺","😸","😻",
+    "😎","😇","😮‍💨","😌","😃"
+    ];
+
+    
+    const CORRECT_EMOJIS = [
+    "🤩","😄","🎉","🥳","🙌","😎","😃","😁","😺","🎊","⭐",
+    "👏","🔥","💥","🌟","✨","🫶","😇","💫","🏆","🥇",
+    "🤗","😆","😻","💯","🎈"
+    ];
+    const INCORRECT_EMOJIS = [
+    "😢","😮","😯","😕","😟","🙁","😞","😔","🥺",
+    "😿","😣","😫","🤢","😥","🫤","😐","🙄"
+    ];
+
+    // Big reward emoji pools based on number of correct answers (0–10)
+    // The more you get right, the "cooler" the emoji.
+const FUNNY_EMOJIS = [
+  "🤪","🥸","🤡","🤠","💩","🦆","😹","🍕","🤤","👽","🌮","🍩","🥨","🍔","🐸","😏",
+  "🙊","🤯","🤮","🐯","🦁","🐶","🐼","🐰","🐳","🍟","🍪","🍿","🧀","🍎","🍍","🍰"
+];
+
+const REWARD_EMOJI_POOLS = {
+  0: FUNNY_EMOJIS,
+  1: FUNNY_EMOJIS,
+  2: FUNNY_EMOJIS,
+  3: FUNNY_EMOJIS,
+  4: FUNNY_EMOJIS,
+  5: FUNNY_EMOJIS,
+  6: FUNNY_EMOJIS,
+  7: FUNNY_EMOJIS,
+  8: FUNNY_EMOJIS,
+  9: FUNNY_EMOJIS,
+  10: FUNNY_EMOJIS
+};
+
+    function pickRewardEmoji() {
+      const total = QUESTIONS.length || 10;
+      let score = correctCount;
+
+      if (score < 0) score = 0;
+      if (score > total) score = total;
+      if (score > 10) score = 10; // clamp to 10 for our table
+
+      const pool = REWARD_EMOJI_POOLS[score] || REWARD_EMOJI_POOLS[0];
+      const index = Math.floor(Math.random() * pool.length);
+      return pool[index];
+    }
+
+
+    // Feedback phrases for the speech bubble
+    const CORRECT_TITLES = [
+      "Correct!",
+      "Great work!",
+      "You got it!",
+      "Nice job!",
+      "Well done!",
+      "Awesome!"
+    ];
+
+    const INCORRECT_TITLES = [
+      "Not quite!",
+      "Incorrect!",
+      "Nice try!",
+      "Almost!",
+      "Good effort!"
+    ];
+
+    // Streak-based encouragements (for correct answers)
+    const STREAK_PHRASES_START = [
+      "Keep going – you got this!",
+      "I knew you could do it!",
+      "Let’s see if you can get the next one too."
+    ];
+
+    const STREAK_PHRASES_BUILDING = [
+      "That's {{streak}} in a row!",
+      "You're on a {{streak}}-question streak!",
+      "Wow, {{streak}} correct answers back-to-back!"
+    ];
+
+    const STREAK_PHRASES_HOT = [
+      "You're on fire with {{streak}} in a row!",
+      "Unstoppable! {{streak}} straight correct answers!",
+      "You're really mastering this story!"
+    ];
+
+    // Encouragements for incorrect answers
+    const ENCOURAGE_PHRASES = [
+      "Don’t give up — try the next one!",
+      "Everybody misses one sometimes. You’ve got this!",
+      "Take a breath and get the next one.",
+      "You’re learning. Let’s see what happens on the next question.",
+      "Keep going – you'll get the next one!"
+    ];
+
+    let emojiIntervalId = null;
+    let emojiLockedUntil = 0;
+    let isTransitioningQuestion = false;
+
+    let suspenseIntervalId = null;
+    let suspenseTimeoutId = null;
+
+    // All the different suspense animations we can use.
+    // We keep your original thumbs-up/thumbs-down as one option
+    // and add the new fun ones you listed.
+    const SUSPENSE_VARIANTS = [
+    "thumbsClassic",  // 1
+    "faces",          // 2
+    "thumbWheel",     // 3
+    "bomb",           // 4
+    "coin",           // 5
+    "hands",          // 6
+    "meter",          // 7
+    "pointerSweep",   // 8
+    "magnifier",      // 9
+    "yesnoFlip"       // 10 (NEW)
+    ];
+
+
+
+
+    // Emoji sets used by some of the variants
+    const SUSPENSE_FACE_EMOJIS = [
+    "🤔",
+    "😮",
+    "😬",
+    "😐",
+    "😯",
+    "😵‍💫"
+    ];
+
+    const SUSPENSE_HAND_EMOJIS = [
+    "👆",
+    "☝️",
+    "👉",
+    "👈",
+    "👇",
+    "🤞",
+    "🖖"
+    ];
+
+    const SUSPENSE_WHEEL_EMOJIS = [
+    "👍",
+    "👎",
+    "👍",
+    "👎",
+    "👍",
+    "👎",
+    "👍",
+    "👎"
+    ];
+
+    // Frames for the “volume meter” between happy and angry
+    const SUSPENSE_METER_FRAMES = [
+    "🙂🔈😡",
+    "🙂🔉😡",
+    "🙂🔊😡",
+    "🙂🔉😡"
+    ];
+
+    // Deck to guarantee we use each variant once before repeating
+    let suspenseVariantDeck = [];
+    let lastSuspenseVariantIndex = null;
+
+
+    let lastSelectedButton = null;
+    let lastAnswerWasCorrect = false;
+    let lastSelectedAnswerIndex = null;
+    let buttonBurstTimeoutId = null;
+
+    let pointerTrailPending = false; // NEW: should we give a comet trail on the next question?
+    let hasRevealedReward = false;   // NEW: has the end present already been opened?
+    let rewardFinished = false;      // NEW: has the big reward emoji already exploded?
+
+
+    /***********************
+     * DOM
+     ***********************/
+    const body = document.body;
+
+    const introScreen = document.getElementById("intro-screen");
+    const titleScreen = document.getElementById("title-screen");
+    const quizScreen = document.getElementById("quiz-screen");
+    const endScreen = document.getElementById("end-screen");
+    
+    const introLogo = document.getElementById("intro-logo");
+    const loadQuizBtn = document.getElementById("load-quiz-btn");
+
+
+    const bigScreenBtn = document.getElementById("big-screen-btn");
+    const phoneModeBtn = document.getElementById("phone-mode-btn");
+
+    const lessonImageEl = document.getElementById("lesson-image");
+    const lessonTitleEl = document.getElementById("lesson-title");
+    const lessonSubtitleEl = document.getElementById("lesson-subtitle");
+
+    const questionNumberEl = document.getElementById("question-number");
+    const totalQuestionsEl = document.getElementById("total-questions");
+    const progressFillEl = document.getElementById("progress-fill");
+
+    const questionTextEl = document.getElementById("question-text");
+    const answerButtons = Array.from(document.querySelectorAll(".answer-button"));
+
+    const timerTextEl = document.getElementById("timer-text");
+    const timerRingFgEl = document.getElementById("timer-ring-fg");
+    const emojiFaceEl = document.getElementById("emoji-face");
+
+    const timerRingWrapper = document.querySelector(".timer-ring-wrapper");
+    const quizMain = document.querySelector(".quiz-main");  // <-- add this
+
+
+    
+    // DEBUG: Hold SHIFT to temporarily show the real cursor
+    document.addEventListener("keydown", (e) => {
+    if (e.key === "Shift") {
+        document.body.classList.add("show-real-cursor");
+    }
+    });
+
+    document.addEventListener("keyup", (e) => {
+    if (e.key === "Shift") {
+        document.body.classList.remove("show-real-cursor");
+    }
+    });
+
+
+    const scoreDisplayEl = document.getElementById("score-display");
+    const streakDisplayEl = document.getElementById("streak-display");
+
+    const feedbackTitleEl = document.getElementById("feedback-title");
+    const feedbackDetailEl = document.getElementById("feedback-detail");
+    const feedbackBubble = document.getElementById("feedback-bubble");
+    const questionCard = document.querySelector(".question-card");
+
+    const spotlightOverlay = document.getElementById("spotlight-overlay");
+    const suspenseLayer = document.getElementById("suspense-layer");
+    const suspenseThumb = document.getElementById("suspense-thumb");
+
+
+    const soundToggleBtn = document.getElementById("sound-toggle");
+
+    const finalScoreEl = document.getElementById("final-score");
+    const finalCorrectEl = document.getElementById("final-correct");
+
+    const endTitleEl = document.getElementById("end-title");
+    const endSubtitleEl = document.getElementById("end-subtitle");
+    const endTrophyEl = document.getElementById("end-trophy");
+    const rewardOverlay = document.getElementById("reward-overlay");
+    const rewardPresentBig = document.getElementById("reward-present-big");
+    const rewardEmojiEl = document.getElementById("reward-emoji");
+    const playAgainBtn = document.getElementById("play-again-btn");
+    const backToTitleBtn = document.getElementById("back-to-title-btn");
+
+
+    totalQuestionsEl.textContent = QUESTIONS.length.toString();
+    lessonImageEl.src = LESSON_IMAGE_PATH;
+    lessonTitleEl.textContent = LESSON_TITLE_TEXT;
+    lessonSubtitleEl.textContent = LESSON_SUBTITLE_TEXT;
+
+    const bigPointer = document.getElementById("big-pointer");
+    
+    // Helper to read CSS color variables from :root
+    const rootStyles = getComputedStyle(document.documentElement);
+    function getCssColor(varName) {
+      return rootStyles.getPropertyValue(varName).trim();
+    }
+
+
+    /***********************************
+     * POINTER COMET TRAILS (NEW)
+     ***********************************/
+    const POINTER_HEAD = "👆";
+
+        const POINTER_TRAILS = [
+    {
+        id: "star_comet",
+        emojis: ["⭐", "✨", "·"],
+        glowColor: getCssColor("--pointer-glow-star"),
+    },
+    {
+        id: "ocean_comet",
+        emojis: ["🌊", "💧", "·"],
+        glowColor: getCssColor("--pointer-glow-ocean"),
+    },
+    {
+        id: "garden_comet",
+        emojis: ["🌿", "🌱", "🍃", "·"],
+        glowColor: getCssColor("--pointer-glow-garden"),
+    },
+    {
+        id: "fire_comet",
+        emojis: ["🔥", "✨", "·"],
+        glowColor: getCssColor("--pointer-glow-fire"),
+    },
+    {
+        id: "galaxy_comet",
+        emojis: ["🌙", "⭐", "✨", "·"],
+        glowColor: getCssColor("--pointer-glow-galaxy"),
+    },
+    {
+        id: "animal_comet",
+        emojis: ["🐾", "🐾", "·"],
+        glowColor: getCssColor("--pointer-glow-animal"),
+    },
+    {
+        id: "joy_comet",
+        emojis: ["😄", "😊", "🙂", "·"],
+        glowColor: getCssColor("--pointer-glow-joy"),
+    },
+    {
+        id: "heart_comet",
+        emojis: ["❤️", "💕", "💖", "·"],
+        glowColor: getCssColor("--pointer-glow-heart"),
+    },
+    {
+        id: "rainbow_comet",
+        emojis: ["🌈", "✨", "·"],
+        glowColor: getCssColor("--pointer-glow-rainbow"),
+    },
+    {
+        id: "bible_light_comet",
+        emojis: ["📖", "✨", "·"],
+        glowColor: getCssColor("--pointer-glow-bible"),
+    },
+    ];
+
+
+    let pointerTrailDeck = [];
+    let currentPointerTrail = null;
+
+    // NEW: for mouse trail behaviour
+    let lastPointerTrailTime = 0;       // when we last created a ghost
+    let pointerTrailEmojiIndex = 0;     // which emoji to use next in the comet's list
+
+    // NEW: limit how many ghost emojis exist at once
+    let activePointerGhosts = 0;
+    const MAX_POINTER_GHOSTS = 60;      // you can tweak this number if you like
+
+
+    function refillPointerTrailDeck() {
+    // Fill the deck with all trail indexes and shuffle them
+    pointerTrailDeck = POINTER_TRAILS.map((_, index) => index);
+
+    for (let i = pointerTrailDeck.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pointerTrailDeck[i], pointerTrailDeck[j]] = [pointerTrailDeck[j], pointerTrailDeck[i]];
+    }
+    }
+
+    function getNextPointerTrail() {
+    if (pointerTrailDeck.length === 0) {
+        refillPointerTrailDeck();
+    }
+    const nextIndex = pointerTrailDeck.pop(); // no repeats until deck is empty
+    return POINTER_TRAILS[nextIndex];
+    }
+
+    function applyPointerTrail(trail) {
+    currentPointerTrail = trail;
+
+    // The pointer itself stays just "👆".
+    // We only add a glow so it feels special.
+    bigPointer.style.textShadow = `
+        0 0 8px ${trail.glowColor},
+        0 0 16px ${trail.glowColor}
+    `;
+    }
+
+    function clearPointerTrail() {
+    currentPointerTrail = null;
+    bigPointer.textContent = POINTER_HEAD;
+    bigPointer.style.textShadow = "none";
+    }
+
+    function schedulePointerTrailForNextQuestion() {
+    // Called when a question is answered correctly
+    pointerTrailPending = true;
+    }
+
+    // NEW: create one fading emoji "ghost" at (x, y)
+    function spawnPointerTrailEmoji(x, y) {
+        // Prevent trails when pointer is hidden (phone/tablet/disabled)
+    if (currentMode !== "big" || isRealTablet) return;    
+
+        // If no comet is active, do nothing
+    if (!currentPointerTrail) return;
+
+     const now = performance.now ? performance.now() : Date.now();
+
+    // Throttle: don't spawn on EVERY tiny movement (100ms gap)
+    if (now - lastPointerTrailTime < 100) return;
+    lastPointerTrailTime = now;
+
+    // NEW: if we already have too many ghosts, skip making more
+    if (activePointerGhosts >= MAX_POINTER_GHOSTS) {
+        return;
+    }
+
+    const emojis = currentPointerTrail.emojis || [];
+    if (!emojis.length) return;
+
+    // Cycle through the comet's emoji list: ⭐ → ✨ → · → ⭐ → ...
+    const emoji = emojis[pointerTrailEmojiIndex % emojis.length];
+    pointerTrailEmojiIndex++;
+
+    const span = document.createElement("span");
+    span.className = "pointer-trail-emoji";
+    span.textContent = emoji;
+    span.style.left = x + "px";
+    span.style.top = y + "px";
+
+    // Give the ghost a soft glow too
+    if (currentPointerTrail.glowColor) {
+        span.style.textShadow = `
+        0 0 6px ${currentPointerTrail.glowColor}
+        `;
+    }
+
+    document.body.appendChild(span);
+
+    // NEW: track how many are alive
+    activePointerGhosts++;
+
+    // Remove the element after its fade-out animation finishes
+    span.addEventListener("animationend", () => {
+        span.remove();
+        activePointerGhosts--;
+    });
+
+    }
+
+    // Start with a simple pointer (no trail)
+    if (bigPointer) {
+    clearPointerTrail();
+    }
+
+
+    // PRELOAD CHOMP SOUND
+    chompAudio = new Audio("quizsounds/sound_chomp.mp3");
+    chompAudio.preload = "auto";
+
+    // Start in "not ready" state – keep button dim/unclickable
+    if (loadQuizBtn) {
+    loadQuizBtn.style.opacity = "0.5";
+    loadQuizBtn.style.pointerEvents = "none";
+    }
+
+    // When the sound is fully buffered and can play through smoothly:
+    chompAudio.addEventListener("canplaythrough", () => {
+    isChompReady = true;
+    if (loadQuizBtn) {
+        loadQuizBtn.style.opacity = "1";
+        loadQuizBtn.style.pointerEvents = "auto";
+    }
+    });
+
+    // Kick off loading
+    chompAudio.load();
+
+
+
+    /***********************
+     * AUDIO
+     ***********************/
+    function getAudioContext() {
+      if (!audioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) {
+          audioCtx = new AC();
+        }
+      }
+      return audioCtx;
+    }
+
+    function playBeepSequence(notes) {
+      if (!soundEnabled) return;
+      const ctx = getAudioContext();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      notes.forEach((note, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = "triangle";
+        osc.frequency.value = note.freq;
+        const t0 = now + i * note.duration;
+        const t1 = t0 + note.duration;
+        gain.gain.setValueAtTime(0, t0);
+        gain.gain.linearRampToValueAtTime(0.45, t0 + 0.02);
+        gain.gain.linearRampToValueAtTime(0.0, t1);
+        osc.start(t0);
+        osc.stop(t1 + 0.02);
+      });
+    }
+
+
+
+    function playCorrectSound() {
+      playBeepSequence([
+        { freq: 660, duration: 0.14 },
+        { freq: 880, duration: 0.14 },
+        { freq: 1040, duration: 0.16 }
+      ]);
+    }
+
+    function playIncorrectSound() {
+      playBeepSequence([
+        { freq: 260, duration: 0.18 },
+        { freq: 200, duration: 0.20 }
+      ]);
+    }
+
+    function playChompSound() {
+    // Only play if sounds are enabled and the audio is ready
+    if (!soundEnabled || !chompAudio || !isChompReady) return;
+
+    try {
+        chompAudio.currentTime = 0; // always start at beginning
+        chompAudio.play();
+    } catch (e) {
+        console.warn("Could not play chomp sound", e);
+    }
+    }
+
+function playTickTock(isThumbUp) {
+    if (!soundEnabled) return;
+
+    // Root + fifth pair for suspense beeps
+    // We'll use a warm-ish root and its perfect fifth:
+    //   root = 500 Hz, fifth = 750 Hz
+    const rootHz = 250;
+    const fifthHz = rootHz * 1.5; // 750 Hz
+
+    // When isThumbUp is true, use the higher fifth.
+    // When false, use the lower root.
+    const seq = isThumbUp
+        ? [{ freq: fifthHz, duration: 0.08 }]
+        : [{ freq: rootHz,  duration: 0.08 }];
+
+    playBeepSequence(seq);
+}
+
+
+
+
+    /***********************
+     * HELPERS
+     ***********************/
+    function shuffledIndices(n) {
+      const arr = Array.from({ length: n }, (_, i) => i);
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function chooseRandom(list) {
+      if (!list || !list.length) return "";
+      const idx = Math.floor(Math.random() * list.length);
+      return list[idx];
+    }
+
+    function getStreakPhrase(streak) {
+      if (streak <= 1) {
+        return chooseRandom(STREAK_PHRASES_START);
+      } else if (streak <= 4) {
+        const tmpl = chooseRandom(STREAK_PHRASES_BUILDING);
+        return tmpl.replace("{{streak}}", streak.toString());
+      } else {
+        const tmpl = chooseRandom(STREAK_PHRASES_HOT);
+        return tmpl.replace("{{streak}}", streak.toString());
+      }
+    }
+
+    function startSpotlight(selectedBtn) {
+    if (spotlightOverlay) {
+        spotlightOverlay.classList.remove("hidden");
+    }
+    if (selectedBtn) {
+        selectedBtn.classList.add("spotlight-chosen");
+    }
+    }
+
+    function stopSpotlight() {
+    if (spotlightOverlay) {
+        spotlightOverlay.classList.add("hidden");
+    }
+    answerButtons.forEach(btn => btn.classList.remove("spotlight-chosen"));
+    }
+
+// Start suspense: pick a random variant from the deck and play it
+function startSuspenseSequence() {
+  if (!suspenseLayer || !suspenseThumb || !spotlightOverlay) {
+    // If something is missing, just skip suspense and reveal immediately
+    revealAnswerAndFeedback();
+    return;
+  }
+
+  // Show the dark overlay area where the emoji animation will run
+  suspenseLayer.classList.remove("hidden");
+
+  const variantKey = getNextSuspenseVariantKey();
+  runSuspenseVariant(variantKey);
+}
+
+// --- Deck helpers: guarantee all variants are used before repeating ---
+
+function refillSuspenseVariantDeck() {
+  // Use the existing helper to make a shuffled list of indices
+  suspenseVariantDeck = shuffledIndices(SUSPENSE_VARIANTS.length);
+
+  // Make sure the *first* variant we’ll pop from a fresh deck
+  // is not the same as the one we just used last question
+  if (lastSuspenseVariantIndex !== null && suspenseVariantDeck.length > 1) {
+    const lastIndexInDeck = suspenseVariantDeck.length - 1;
+    if (suspenseVariantDeck[lastIndexInDeck] === lastSuspenseVariantIndex) {
+      const swapIndex = Math.floor(Math.random() * lastIndexInDeck);
+      const temp = suspenseVariantDeck[swapIndex];
+      suspenseVariantDeck[swapIndex] = suspenseVariantDeck[lastIndexInDeck];
+      suspenseVariantDeck[lastIndexInDeck] = temp;
+    }
+  }
+}
+
+function getNextSuspenseVariantKey() {
+  if (!suspenseVariantDeck.length) {
+    refillSuspenseVariantDeck();
+  }
+  const variantIndex = suspenseVariantDeck.pop();
+  lastSuspenseVariantIndex = variantIndex;
+  return SUSPENSE_VARIANTS[variantIndex];
+}
+
+// --- Pick which animation to run ---
+
+function runSuspenseVariant(variantKey) {
+  // Clear anything left from a previous question
+  clearSuspenseTimers();
+
+    switch (variantKey) {
+    case "faces":
+        runFacesSuspense();
+        break;
+    case "thumbWheel":
+        runThumbWheelSuspense();
+        break;
+    case "bomb":
+        runBombSuspense();
+        break;
+    case "coin":
+        runCoinSuspense();
+        break;
+    case "hands":
+        runHandsSuspense();
+        break;
+    case "meter":
+        runMeterSuspense();
+        break;
+    case "pointerSweep":
+        runPointerSweepSuspense();
+        break;
+    case "magnifier":
+        runMagnifierSuspense();
+        break;
+    case "yesnoFlip":            // ← NEW
+        runYesNoFlipSuspense();
+        break;
+    case "thumbsClassic":
+    default:
+        runThumbsClassicSuspense();
+        break;
+    }
+
+}
+
+
+
+    // --- Individual suspense animations ---
+
+    // 1) Original thumbs up / thumbs down (your existing one)
+    function runThumbsClassicSuspense() {
+    let isThumbUp = true;
+    let cycles = 0;
+    const maxCycles = 8; // about ~4 seconds, like before
+
+    suspenseThumb.textContent = "👍";
+
+    suspenseIntervalId = setInterval(() => {
+        isThumbUp = !isThumbUp;
+        suspenseThumb.textContent = isThumbUp ? "👍" : "👎";
+        playTickTock(isThumbUp);
+        cycles += 1;
+
+        if (cycles >= maxCycles) {
+        finishSuspense();
+        }
+    }, 450);
+    }
+
+    // 2) Cycling faces: 🤔 😮 😬 😐 😯 😵‍💫
+    function runFacesSuspense() {
+    const faces = SUSPENSE_FACE_EMOJIS;
+    let index = 0;
+    let steps = 0;
+    const maxSteps = 12; // 12 * 250ms ≈ 3 seconds
+
+    suspenseThumb.textContent = faces[index];
+
+    suspenseIntervalId = setInterval(() => {
+        index = (index + 1) % faces.length;
+        suspenseThumb.textContent = faces[index];
+
+        // Alternate tick/tock beeps
+        playTickTock(index % 2 === 0);
+
+        steps += 1;
+        if (steps >= maxSteps) {
+        finishSuspense();
+        }
+    }, 250);
+    }
+
+    // 3) Spinning thumb: single 👍 spinning in place
+    function runThumbWheelSuspense() {
+    // Always start as a single thumbs-up in the middle
+    suspenseThumb.textContent = "👍";
+
+    // Make sure it can rotate nicely
+    suspenseThumb.style.display = "inline-block";
+    suspenseThumb.style.transform = "rotate(0deg)";
+    suspenseThumb.style.transition = "transform 0.12s linear";
+
+    let angle = 0;
+    let steps = 0;
+    const maxSteps = 24; // 24 * 120ms ≈ 3 seconds of spinning
+
+    suspenseIntervalId = setInterval(() => {
+        // Increase the rotation angle each step
+        angle += 45; // 45° each tick
+        suspenseThumb.style.transform = `rotate(${angle}deg)`;
+
+        // Tick / tock sound while it spins
+        playTickTock(steps % 2 === 0);
+
+        steps += 1;
+        if (steps >= maxSteps) {
+        // Clean up inline styles so other variants start fresh
+        suspenseThumb.style.transform = "";
+        suspenseThumb.style.transition = "";
+        suspenseThumb.style.display = "";
+
+        finishSuspense();
+        }
+    }, 120);
+    }
+
+
+    // 4) Bomb suspense: pulsing bomb → giant shockwave ring
+    function runBombSuspense() {
+        // Just in case any previous suspense left timers around
+        clearInterval(suspenseIntervalId);
+        clearTimeout(suspenseTimeoutId);
+        suspenseIntervalId = null;
+        suspenseTimeoutId = null;
+
+        // Start from a clean thumb; let .suspense-layer’s CSS keep it centered
+        suspenseThumb.innerHTML = "💣";
+        suspenseThumb.removeAttribute("style");
+
+        // Center the bomb within the suspense-layer and make it big
+        suspenseThumb.style.display = "flex";
+        suspenseThumb.style.alignItems = "center";
+        suspenseThumb.style.justifyContent = "center";
+        suspenseThumb.style.fontSize = "11rem"; // tweak bigger/smaller if you want
+
+        let pulse = 0;
+        const maxPulses = 6; // how many pulses before the explosion
+
+        // Pulse every ~0.32s
+        suspenseIntervalId = setInterval(() => {
+            pulse++;
+
+            // IMPORTANT: only scale, no translate() here
+            suspenseThumb.animate(
+                [
+                    { transform: "scale(1)" },
+                    { transform: "scale(1.35)" },
+                    { transform: "scale(1)" }
+                ],
+                {
+                    duration: 260,
+                    easing: "ease-out"
+                }
+            );
+
+            // Tick / tock on each pulse
+            playTickTock(pulse % 2 === 0);
+
+            if (pulse >= maxPulses) {
+                clearInterval(suspenseIntervalId);
+                suspenseIntervalId = null;
+                runShockwaveExplosion(); // hand off to the explosion
+            }
+        }, 320);
+    }
+
+    // --- SHOCKWAVE RING EXPLOSION (used by bomb) ---
+    function runShockwaveExplosion() {
+        // Clean slate, but keep the thumb where .suspense-layer centers it
+        suspenseThumb.innerHTML = "";
+        suspenseThumb.removeAttribute("style");
+
+        // We just want to draw a ring centered where the bomb was
+        suspenseThumb.style.position = "relative";
+        suspenseThumb.style.display = "block";
+
+        const ring = document.createElement("div");
+        ring.style.position = "absolute";
+        ring.style.left = "50%";
+        ring.style.top = "50%";
+        ring.style.width = "40px";
+        ring.style.height = "40px";
+        ring.style.transform = "translate(-50%, -50%) scale(1)";
+        ring.style.borderRadius = "50%";
+        ring.style.border = "8px solid #ffea00"; // bright yellow
+        ring.style.boxShadow = "0 0 20px rgba(255, 234, 0, 0.9)";
+        ring.style.opacity = "1";
+
+        suspenseThumb.appendChild(ring);
+
+        const anim = ring.animate(
+            [
+                { transform: "translate(-50%, -50%) scale(1)",  opacity: 1 },
+                { transform: "translate(-50%, -50%) scale(25)", opacity: 0 }
+            ],
+            {
+                duration: 900,
+                easing: "cubic-bezier(.3, .7, .4, 1)"
+            }
+        );
+
+        anim.onfinish = () => {
+            // Clear everything so the next suspense animation starts fresh
+            suspenseThumb.innerHTML = "";
+            suspenseThumb.removeAttribute("style");
+            finishSuspense();
+        };
+    }
+
+
+
+ 
+
+
+
+
+
+
+    // 5) Coin flip – faster squash/flip with sound only at the *end* of each squash
+    function runCoinSuspense() {
+        // Start with a single coin emoji
+        suspenseThumb.textContent = "🪙";
+
+        // Prepare it so transforms look nice
+        suspenseThumb.style.display = "inline-block";
+        suspenseThumb.style.transformOrigin = "50% 50%";
+        suspenseThumb.style.transition = "transform 0.06s linear";
+
+        // Scale values from full size → flat → full size again
+        const squashSteps = [1, 0.7, 0.4, 0.1, 0, 0.1, 0.4, 0.7, 1];
+
+        let axis = "y";       // start by "flipping" vertically
+        let stepIndex = 0;
+        let cycles = 0;
+        const maxCycles = 3;  // each cycle = vertical flip + horizontal flip
+
+        suspenseIntervalId = setInterval(() => {
+            const s = squashSteps[stepIndex];
+
+            // Apply the squash along one axis at a time:
+            // - vertical flip: scaleY changes, scaleX stays 1
+            // - horizontal flip: scaleX changes, scaleY stays 1
+            const scaleX = axis === "x" ? s : 1;
+            const scaleY = axis === "y" ? s : 1;
+
+            suspenseThumb.style.transform = `scale(${scaleX}, ${scaleY})`;
+
+            // 🔊 Only beep when the coin is back to full size
+            // and NOT on the very first frame (stepIndex 0),
+            // so we get exactly one beep per squash/unsquash.
+            if (s === 1 && stepIndex !== 0) {
+                playTickTock(axis === "y");
+            }
+
+            stepIndex += 1;
+
+            // Finished one squash/unsquash sequence on this axis
+            if (stepIndex >= squashSteps.length) {
+                stepIndex = 0;
+
+                if (axis === "y") {
+                    // After vertical, switch to horizontal
+                    axis = "x";
+                } else {
+                    // After horizontal, switch back to vertical and count a full cycle
+                    axis = "y";
+                    cycles += 1;
+
+                    if (cycles >= maxCycles) {
+                        // Clean up styles so other variants start fresh
+                        suspenseThumb.style.transform = "";
+                        suspenseThumb.style.transition = "";
+                        suspenseThumb.style.display = "";
+
+                        finishSuspense();
+                        return;
+                    }
+                }
+            }
+        }, 50); // faster flipping (smaller interval)
+    }
+
+
+
+    // 6) Cycling hand gestures 👆 ☝️ 👉 👈 👇 🤞 🖖
+    function runHandsSuspense() {
+    const hands = SUSPENSE_HAND_EMOJIS;
+    let index = 0;
+    let steps = 0;
+    const maxSteps = 12;
+
+    suspenseThumb.textContent = hands[index];
+
+    suspenseIntervalId = setInterval(() => {
+        index = (index + 1) % hands.length;
+        suspenseThumb.textContent = hands[index];
+
+        playTickTock(index % 2 === 0);
+
+        steps += 1;
+        if (steps >= maxSteps) {
+        finishSuspense();
+        }
+    }, 220);
+    }
+
+    // 7) “Volume meter” between 🙂 and 😡
+    // The middle icon switches back and forth between 👈 and 👉
+    function runMeterSuspense() {
+        // Frames showing which “side” the meter is leaning toward
+        const frames = [
+            "🙂 👈 😡", // leaning toward the happy side
+            "🙂 👉 😡"  // leaning toward the angry side
+        ];
+
+        let index = 0;
+        let steps = 0;
+        const maxSteps = 16; // how many swaps before revealing
+
+        suspenseThumb.textContent = frames[index];
+
+        suspenseIntervalId = setInterval(() => {
+            // Flip between left and right pointing hands
+            index = (index + 1) % frames.length;
+            suspenseThumb.textContent = frames[index];
+
+            // Alternate tick/tock sound as it swings
+            playTickTock(index === 0);
+
+            steps += 1;
+            if (steps >= maxSteps) {
+                finishSuspense();
+            }
+        }, 200); // speed of the “needle” swing
+    }
+
+        // 8) Yes/No flip ✅ / ❌
+        // Like the coin flip squash, but at the “flat” moment we swap between ✅ and ❌.
+        function runYesNoFlipSuspense() {
+        // Start on YES
+        let isYes = true; // true = ✅, false = ❌
+        suspenseThumb.textContent = "✅";
+
+        // Make sure we can scale the emoji around its center
+        suspenseThumb.style.display = "inline-block";
+        suspenseThumb.style.transformOrigin = "50% 50%";
+        suspenseThumb.style.transition = "transform 0.06s linear";
+
+        // A simple squish curve: full -> smaller -> flat -> back to full
+        const squashSteps = [1, 0.7, 0.4, 0.1, 0, 0.1, 0.4, 0.7, 1];
+
+        let axis = "y";       // first do vertical flip
+        let stepIndex = 0;
+        let cycles = 0;
+        const maxCycles = 3;  // how many full “flip pairs” we do
+
+        suspenseIntervalId = setInterval(() => {
+            const s = squashSteps[stepIndex];
+
+            // Depending on axis, we squish height or width
+            const scaleX = axis === "x" ? s : 1;
+            const scaleY = axis === "y" ? s : 1;
+            suspenseThumb.style.transform = `scale(${scaleX}, ${scaleY})`;
+
+            // When the emoji is totally flat, swap ✅ <-> ❌
+            if (s === 0) {
+            isYes = !isYes;
+            suspenseThumb.textContent = isYes ? "✅" : "❌";
+            }
+
+            // Only beep when we’re back at full size (but not on the very first frame)
+            if (s === 1 && stepIndex !== 0) {
+            // Use the yes/no state to alternate high/low beeps
+            playTickTock(isYes);
+            }
+
+            stepIndex++;
+
+            // Reached the end of the squashSteps for this axis
+            if (stepIndex >= squashSteps.length) {
+            stepIndex = 0;
+
+            if (axis === "y") {
+                // After a vertical flip, switch to horizontal
+                axis = "x";
+            } else {
+                // After a horizontal flip, go back to vertical and count one full cycle
+                axis = "y";
+                cycles++;
+
+                if (cycles >= maxCycles) {
+                // Clean up styles so the next animation starts fresh
+                suspenseThumb.style.transform = "";
+                suspenseThumb.style.transition = "";
+                suspenseThumb.style.display = "";
+
+                clearInterval(suspenseIntervalId);
+                suspenseIntervalId = null;
+
+                finishSuspense();
+                return;
+                }
+            }
+            }
+        }, 50);
+        }
+
+    // 9) Pointer sweep 👆 – rotates to point at each answer
+    function runPointerSweepSuspense() {
+      // Make sure the emoji is visible and can be rotated
+      suspenseThumb.textContent = "👆";
+      suspenseThumb.style.display = "inline-block";
+      suspenseThumb.style.transformOrigin = "50% 50%";
+      suspenseThumb.style.transition = "transform 0.18s ease-out";
+
+      // Start already tilted 45 degrees
+      let currentAngle = 45;
+      suspenseThumb.style.transform = `rotate(${currentAngle}deg)`;
+
+      let step = 0;
+      const maxSteps = 8; // eight “points” for four answers
+
+      suspenseIntervalId = setInterval(() => {
+        // Rotate another 90 degrees
+        currentAngle += 90;
+        suspenseThumb.style.transform = `rotate(${currentAngle}deg)`;
+
+        // Alternate tick / tock each time it lands
+        playTickTock(step % 2 === 0);
+
+        step += 1;
+
+        if (step >= maxSteps) {
+          // Stop the interval first
+          clearInterval(suspenseIntervalId);
+          suspenseIntervalId = null;
+
+          // Small pause so kids can see the final pointing direction
+          suspenseTimeoutId = setTimeout(() => {
+            // Clean up the extra styles so other animations look normal
+            suspenseThumb.style.transform = "";
+            suspenseThumb.style.transition = "";
+            suspenseThumb.style.display = "";
+
+            finishSuspense();
+          }, 350);
+        }
+      }, 400); // time between “pointing” at each answer
+    }
+
+        
+        // 10) Magnifier 🔍 – moves over each answer button in turn
+        function runMagnifierSuspense() {
+        if (!answerButtons || !answerButtons.length) {
+            // Fallback: just show a static magnifier and bail out quickly
+            suspenseThumb.textContent = "🔍";
+            suspenseTimeoutId = setTimeout(() => {
+            finishSuspense();
+            }, 800);
+            return;
+        }
+
+        // Find up to the first 4 answer buttons and their screen positions
+        const targets = answerButtons.slice(0, 4).map(btn => {
+            const rect = btn.getBoundingClientRect();
+            return {
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height / 2
+            };
+        });
+
+        if (!targets.length) {
+            finishSuspense();
+            return;
+        }
+
+        suspenseThumb.textContent = "🔍";
+
+        // Make the emoji movable over the screen
+        suspenseThumb.style.position = "fixed";
+        // Translate(-50%, -50%) so left/top position is the center of the emoji
+        suspenseThumb.style.transform = "translate(-50%, -50%)";
+        suspenseThumb.style.transition =
+            "left 0.25s ease-out, top 0.25s ease-out, transform 0.25s ease-out";
+
+        let index = 0;
+
+        function moveToTarget(i) {
+            const t = targets[i];
+            suspenseThumb.style.left = `${t.x}px`;
+            suspenseThumb.style.top = `${t.y}px`;
+        }
+
+        // Start at the first answer
+        moveToTarget(0);
+        playTickTock(true);
+
+        suspenseIntervalId = setInterval(() => {
+            index += 1;
+
+            // When we’ve visited all answers, stop and reveal
+            if (index >= targets.length) {
+            clearInterval(suspenseIntervalId);
+            suspenseIntervalId = null;
+
+            // Short pause on the last answer before revealing
+            suspenseTimeoutId = setTimeout(() => {
+                // Clean up styles so other animations aren’t affected
+                suspenseThumb.style.position = "";
+                suspenseThumb.style.left = "";
+                suspenseThumb.style.top = "";
+                suspenseThumb.style.transform = "";
+                suspenseThumb.style.transition = "";
+
+                finishSuspense();
+            }, 450);
+
+            return;
+            }
+
+            // Move to the next answer and beep
+            moveToTarget(index);
+            playTickTock(index % 2 === 0);
+        }, 650); // time between inspecting each answer
+        }
+
+
+    // --- Shared helpers for all suspense variants ---
+
+    function clearSuspenseTimers() {
+    if (suspenseIntervalId) {
+        clearInterval(suspenseIntervalId);
+        suspenseIntervalId = null;
+    }
+    if (suspenseTimeoutId) {
+        clearTimeout(suspenseTimeoutId);
+        suspenseTimeoutId = null;
+    }
+    }
+
+    // Called when the suspense animation is done and we should reveal the answer
+    function finishSuspense() {
+    clearSuspenseTimers();
+
+    if (suspenseLayer) {
+        suspenseLayer.classList.add("hidden");
+    }
+
+    // Remove the dark overlay from the selected button
+    stopSpotlight();
+
+    // Now highlight the correct answer, score, show feedback bubble, etc.
+    revealAnswerAndFeedback();
+    }
+
+   
+
+    function stopSuspense() {
+    clearSuspenseTimers();
+
+    if (suspenseLayer) {
+        suspenseLayer.classList.add("hidden");
+    }
+
+    // Just cleanup between questions, do NOT reveal answers here.
+    stopSpotlight();
+    }
+
+
+    // Highlight the correct answer and fade the others
+    function highlightCorrectAnswer() {
+    const q = QUESTIONS[currentQuestionIndex];
+
+    answerButtons.forEach(b => {
+        const bIndex = Number(b.dataset.answerIndex);
+        if (bIndex === q.correctIndex) {
+        b.classList.add("answer-correct");
+        b.classList.remove("answer-faded");
+        } else {
+        b.classList.add("answer-faded");
+        b.classList.remove("answer-correct");
+        }
+    });
+    }
+
+    // Particle explosion from the chosen button
+    function spawnButtonBurst(buttonEl) {
+    if (!buttonEl) return;
+    const rect = buttonEl.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const count = 14;
+
+    for (let i = 0; i < count; i++) {
+        const star = document.createElement("span");
+        star.className = "burst-star";
+        star.textContent = "⭐";
+
+        const angle = Math.random() * Math.PI * 2;
+        const dist = 50 + Math.random() * 50;
+        const dx = Math.cos(angle) * dist;
+        const dy = Math.sin(angle) * dist;
+
+        star.style.left = `${centerX}px`;
+        star.style.top = `${centerY}px`;
+        star.style.setProperty("--dx", `${dx}px`);
+        star.style.setProperty("--dy", `${dy}px`);
+
+        document.body.appendChild(star);
+
+        star.addEventListener("animationend", () => {
+        star.remove();
+        });
+    }
+    }
+
+    function startButtonBurstLoop() {
+    stopButtonBurstLoop(); // clear any previous loop
+    if (!lastSelectedButton || !lastAnswerWasCorrect) return;
+
+    const burstOnce = () => {
+        if (!lastSelectedButton || !lastAnswerWasCorrect) return;
+        spawnButtonBurst(lastSelectedButton);
+        buttonBurstTimeoutId = setTimeout(burstOnce, 900); // wait for previous particles to finish
+    };
+
+    burstOnce();
+    }
+
+    function stopButtonBurstLoop() {
+    if (buttonBurstTimeoutId) {
+        clearTimeout(buttonBurstTimeoutId);
+        buttonBurstTimeoutId = null;
+    }
+    }
+
+    // Reveal after suspense: highlight, scoring, feedback bubble, bursts
+    function revealAnswerAndFeedback() {
+    const q = QUESTIONS[currentQuestionIndex];
+
+    // 1) Always highlight the correct answer and fade the rest
+    highlightCorrectAnswer();
+
+    // 2) Scoring + sounds + emoji + streak
+    if (lastAnswerWasCorrect) {
+        schedulePointerTrailForNextQuestion();
+        let timeBonus = 0;
+        if (currentMode === "big") {
+        timeBonus = timeLeft * 5; // 5 points per remaining second
+        }
+
+        streak += 1;
+        const base = 100 * streak;
+
+        if (currentMode === "big") {
+        body.classList.remove("streak-tier-1", "streak-tier-2", "streak-tier-3");
+
+        if (streak >= 8) {
+            body.classList.add("streak-tier-3");
+        } else if (streak >= 5) {
+            body.classList.add("streak-tier-2");
+        } else if (streak >= 2) {
+            body.classList.add("streak-tier-1");
+        }
+        }
+
+        const earned = base + timeBonus;
+        score += earned;
+        correctCount += 1;
+        updateScoreDisplays();
+        playCorrectSound();
+        spawnStarRain(20);
+        showEmojiReaction(true);
+
+        showFeedback(true);
+        startButtonBurstLoop();
+    } else {
+        streak = 0;
+        updateScoreDisplays();
+        playIncorrectSound();
+        showEmojiReaction(false);
+        showFeedback(false);
+    }
+    }
+
+
+    function showScreen(screenName) {
+      // Hide all screens first
+      introScreen.classList.add("hidden");
+      titleScreen.classList.add("hidden");
+      quizScreen.classList.add("hidden");
+      endScreen.classList.add("hidden");
+
+      if (screenName === "intro") {
+        introScreen.classList.remove("hidden");
+      } else if (screenName === "title") {
+        titleScreen.classList.remove("hidden");
+      } else if (screenName === "quiz") {
+        quizScreen.classList.remove("hidden");
+      } else if (screenName === "end") {
+        endScreen.classList.remove("hidden");
+      }
+    }
+
+
+    function updateScoreDisplays() {
+      scoreDisplayEl.textContent = score.toString();
+      streakDisplayEl.textContent = "x" + streak.toString();
+    }
+
+    function updateProgress() {
+      const n = currentQuestionIndex;
+      const pct = (n / QUESTIONS.length) * 100;
+      progressFillEl.style.width = pct + "%";
+      questionNumberEl.textContent = (n + 1).toString();
+    }
+
+    function spawnStarRain(count) {
+      for (let i = 0; i < count; i++) {
+        const star = document.createElement("div");
+        star.className = "star";
+        star.textContent = "⭐";
+        star.style.left = Math.random() * 100 + "vw";
+        star.style.animationDelay = Math.random() * 0.5 + "s";
+        document.body.appendChild(star);
+        star.addEventListener("animationend", () => star.remove());
+      }
+    }
+
+   
+       // Reset and hide the reward overlay
+    function hideRewardOverlay() {
+      if (!rewardOverlay) return;
+
+      rewardOverlay.classList.add("hidden");
+
+      if (rewardPresentBig) {
+        rewardPresentBig.classList.add("hidden");
+        rewardPresentBig.classList.remove("reward-present-animate");
+      }
+
+      if (rewardEmojiEl) {
+        rewardEmojiEl.classList.add("hidden");
+        rewardEmojiEl.classList.remove("reward-emoji-dance", "reward-emoji-pop");
+      }
+    }
+
+    // Start the reward spotlight sequence after clicking the present
+    function startRewardSequence() {
+      if (!rewardOverlay || !rewardPresentBig) return;
+
+      // reset final-state flag every time we start fresh
+      rewardFinished = false;
+
+      // Show the dark overlay and big present
+      rewardOverlay.classList.remove("hidden");
+      rewardPresentBig.textContent = "🎁";
+      rewardPresentBig.classList.remove("hidden");
+      rewardPresentBig.classList.add("reward-present-animate");
+
+      // Make sure the emoji is hidden at the start
+      if (rewardEmojiEl) {
+        rewardEmojiEl.classList.add("hidden");
+        rewardEmojiEl.classList.remove("reward-emoji-dance", "reward-emoji-pop");
+      }
+
+      // After a short wiggle time, "explode" the present
+      setTimeout(() => {
+        explodeRewardPresent();
+      }, 2000); // 2 seconds of wiggle feels nice
+    }
+
+    // Present explosion: hide box, show giant emoji, add particles + dance
+    function explodeRewardPresent() {
+      if (!rewardPresentBig || !rewardEmojiEl) return;
+
+      // Stop showing the big present
+      rewardPresentBig.classList.add("hidden");
+      rewardPresentBig.classList.remove("reward-present-animate");
+
+      // Pick an emoji based on how many questions were correct
+      const emoji = pickRewardEmoji();
+      rewardEmojiEl.textContent = emoji;
+
+      // Scores 5 or higher get a little dance; below 5 just pop in
+      if (correctCount >= 5) {
+        rewardEmojiEl.classList.add("reward-emoji-dance");
+      } else {
+        rewardEmojiEl.classList.add("reward-emoji-pop");
+      }
+
+      rewardEmojiEl.classList.remove("hidden");
+
+      // Particle "explosion" – reuse the star rain for a big celebration
+      spawnStarRain(40);
+
+      // NEW: after 5 seconds, automatically explode the emoji and remove the dark overlay
+      setTimeout(() => {
+        // If the player already clicked and finished, do nothing
+        if (rewardFinished) return;
+
+        // Otherwise, run the same logic as a click
+        handleRewardEmojiClick();
+      }, 5000);
+    }
+
+    // NEW: When the big reward emoji is clicked, explode it and close the overlay
+    function handleRewardEmojiClick() {
+      if (!rewardEmojiEl) return;
+
+      // If we've already exploded / finished, do nothing
+      if (rewardFinished) return;
+      rewardFinished = true;
+
+      // Big particle blast from the emoji itself
+      spawnRewardExplosionParticles(70);
+
+      // Quick "pop out" effect on the emoji
+      rewardEmojiEl.style.transition = "transform 0.25s ease-out, opacity 0.25s ease-out";
+      rewardEmojiEl.style.transform = "scale(1.3)";
+      rewardEmojiEl.style.opacity = "0";
+
+      // After the pop, hide the dark overlay and reset styles for next game
+      setTimeout(() => {
+        hideRewardOverlay();
+
+        // Reset inline styles so the emoji looks normal next time
+        rewardEmojiEl.style.transition = "";
+        rewardEmojiEl.style.transform = "";
+        rewardEmojiEl.style.opacity = "";
+      }, 250);
+    }
+
+
+
+
+
+    function updateTimerVisual() {
+      if (!timerRingFgEl || !timerTextEl) return;
+
+      const ratio = Math.max(0, Math.min(1, timeLeft / TIMER_DURATION));
+      const offset = TIMER_CIRCUMFERENCE * (1 - ratio);
+
+      // Update ring length
+      timerRingFgEl.style.strokeDasharray = String(TIMER_CIRCUMFERENCE);
+      timerRingFgEl.style.strokeDashoffset = String(offset);
+
+      // Smooth color transition: green (full) -> yellow -> red (empty)
+      const hue = ratio * 120; // 120 = green, 0 = red
+      const color = `hsl(${hue}, 85%, 55%)`;
+      timerRingFgEl.style.stroke = color;
+
+      // Update number in middle
+      timerTextEl.textContent = String(timeLeft);
+    }
+
+    function triggerTimerExplosion() {
+    if (!timerRingWrapper) return;
+
+    // Add the explode class to start the CSS animation
+    timerRingWrapper.classList.add("timer-explode");
+
+    // Remove the class after the animation so it's ready for the next question
+    setTimeout(() => {
+        timerRingWrapper.classList.remove("timer-explode");
+    }, 700); // match animation duration
+    }
+
+    function spawnTimerExplosionParticles(count = 30) {
+    if (!timerRingWrapper) return;
+
+    const rect = timerRingWrapper.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+
+    const colors = ["#ffedd5", "#fed7aa", "#fdba74", "#fb923c", "#f97316", "#ea580c", "#b91c1c"];
+
+    for (let i = 0; i < count; i++) {
+        const p = document.createElement("div");
+        p.className = "timer-particle";
+
+        // random angle + distance
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 40 + Math.random() * 60; // how far it flies
+        const dx = Math.cos(angle) * distance;
+        const dy = Math.sin(angle) * distance;
+
+        // position at center of ring
+        p.style.left = cx + "px";
+        p.style.top = cy + "px";
+
+        // set custom properties for animation end position
+        p.style.setProperty("--tx", dx + "px");
+        p.style.setProperty("--ty", dy + "px");
+
+        // fiery color
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        p.style.background = `radial-gradient(circle, #fff7ed 0%, ${color} 55%, #7f1d1d 100%)`;
+
+        document.body.appendChild(p);
+        p.addEventListener("animationend", () => p.remove());
+    }
+
+
+
+    }
+
+
+    // Big explosion when clicking the final reward emoji
+    function spawnRewardExplosionParticles(count = 60) {
+      if (!rewardEmojiEl) return;
+
+      // Get the emoji's position on the screen
+      const rect = rewardEmojiEl.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+
+      // Same fiery color palette as the timer explosion
+      const colors = ["#ffedd5", "#fed7aa", "#fdba74", "#fb923c", "#f97316", "#ea580c", "#b91c1c"];
+
+      for (let i = 0; i < count; i++) {
+        const p = document.createElement("div");
+        p.className = "timer-particle"; // reuse existing CSS + animation
+
+        // random angle + distance (bigger blast than the timer)
+        const angle = Math.random() * Math.PI * 2;
+        const distance = 60 + Math.random() * 120;
+        const dx = Math.cos(angle) * distance;
+        const dy = Math.sin(angle) * distance;
+
+        // start at center of the big emoji
+        p.style.left = cx + "px";
+        p.style.top = cy + "px";
+
+        // custom properties for the end position (used by CSS animation)
+        p.style.setProperty("--tx", dx + "px");
+        p.style.setProperty("--ty", dy + "px");
+
+        // fiery gradient color
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        p.style.background = `radial-gradient(circle, #fff7ed 0%, ${color} 55%, #7f1d1d 100%)`;
+
+        document.body.appendChild(p);
+        p.addEventListener("animationend", () => p.remove());
+      }
+    }
+
+        function spawnClickRipple(x, y) {
+        // Only show in big-screen mode, not on iPad/Android tablets
+        if (!body.classList.contains("mode-big")) return;
+        if (isRealTablet) return;
+
+        const ripple = document.createElement("div");
+        ripple.className = "click-ripple";
+        ripple.style.left = x + "px";
+        ripple.style.top = y + "px";
+        document.body.appendChild(ripple);
+
+        ripple.addEventListener("animationend", () => {
+            ripple.remove();
+        });
+        }
+
+
+    function stopTimer() {
+      if (timerIntervalId !== null) {
+        clearInterval(timerIntervalId);
+        timerIntervalId = null;
+      }
+    }
+
+    function startTimer() {
+    stopTimer(); // ensure no previous timer is running
+
+    timeLeft = TIMER_DURATION;
+    updateTimerVisual();
+
+    timerIntervalId = setInterval(() => {
+        // Decrease time
+        timeLeft -= 1;
+
+        // Clamp to zero and handle timeout
+        if (timeLeft <= 0) {
+            timeLeft = 0;
+            updateTimerVisual();
+            
+            // Trigger the explosion only once
+            triggerTimerExplosion();
+            spawnTimerExplosionParticles(30);
+
+            stopTimer();
+            return;
+        }
+
+        // Normal visual update
+        updateTimerVisual();
+    }, 1000);
+}
+
+
+
+
+    function setEmojiFromSet(list) {
+      if (!emojiFaceEl || !list.length) return;
+      const next = list[Math.floor(Math.random() * list.length)];
+      emojiFaceEl.textContent = next;
+
+      // small pop animation
+      emojiFaceEl.classList.add("emoji-pop");
+      setTimeout(() => {
+        emojiFaceEl && emojiFaceEl.classList.remove("emoji-pop");
+      }, 200);
+    }
+
+    function startEmojiLoop() {
+      if (!emojiFaceEl) return;
+      if (emojiIntervalId !== null) clearInterval(emojiIntervalId);
+
+      // Start with a random neutral face
+      setEmojiFromSet(NEUTRAL_EMOJIS);
+
+      emojiIntervalId = setInterval(() => {
+        const now = Date.now();
+        if (now < emojiLockedUntil) return; // temporarily locked for answer reaction
+        setEmojiFromSet(NEUTRAL_EMOJIS);
+      }, 3000);
+    }
+
+    function showEmojiReaction(isCorrect) {
+      const set = isCorrect ? CORRECT_EMOJIS : INCORRECT_EMOJIS;
+      emojiLockedUntil = Date.now() + 2000; // lock for ~2 seconds
+      setEmojiFromSet(set);
+    }
+
+
+    function showFeedback(isCorrect) {
+    // 1) Pick a fun heading for the bubble
+    const title = isCorrect
+        ? chooseRandom(CORRECT_TITLES)
+        : chooseRandom(INCORRECT_TITLES);
+
+    feedbackTitleEl.textContent = title;
+    feedbackTitleEl.classList.toggle("correct-text", isCorrect);
+    feedbackTitleEl.classList.toggle("incorrect-text", !isCorrect);
+
+    // 2) Pick the detail line (subtitle under the bubble)
+    let detailText = "";
+    if (isCorrect) {
+        detailText = getStreakPhrase(streak);
+    } else {
+        detailText = chooseRandom(ENCOURAGE_PHRASES);
+    }
+
+    feedbackDetailEl.textContent = detailText || "";
+
+    // 3) Background reaction pulse on the quiz card (big mode only)
+    if (currentMode === "big") {
+        quizScreen.classList.remove("bg-correct", "bg-incorrect");
+        void quizScreen.offsetWidth; // restart CSS animation hack
+        quizScreen.classList.add(isCorrect ? "bg-correct" : "bg-incorrect");
+    }
+
+    // 4) Switch the question bar into "feedback bubble" mode
+    if (questionCard && feedbackBubble && questionTextEl) {
+        questionCard.classList.add("feedback-mode");
+        feedbackBubble.style.display = "block";
+        questionTextEl.style.display = "none";
+    }
+
+    // 5) Big-screen vs phone behavior
+    if (currentMode === "big") {
+        // Show the Next Question button in the white strip
+        nextQuestionBtn.classList.remove("hidden");
+    } else {
+        // Phone mode: auto-advance after a short delay
+        nextQuestionBtn.classList.add("hidden");
+        setTimeout(() => {
+        // Only advance if we're still looking at feedback
+        if (questionCard && questionCard.classList.contains("feedback-mode")) {
+            goToNextQuestionAnimated();
+        }
+        }, 2000);
+    }
+    }
+
+
+
+
+
+    function requestFullscreenIfAvailable() {
+      const docEl = document.documentElement;
+      const request =
+        docEl.requestFullscreen ||
+        docEl.webkitRequestFullscreen ||
+        docEl.msRequestFullscreen;
+      if (request) {
+        try {
+          request.call(docEl);
+        } catch (e) {
+          // ignore; some browsers (esp. iOS) just won't do it
+        }
+      }
+    }
+
+    /***********************
+     * GAME FLOW
+     ***********************/
+    function startGame(mode) {
+      currentMode = mode;
+      body.classList.remove("mode-title", "mode-big", "mode-phone");
+        if (mode === "big") {
+            if (isRealTablet) {
+                // Hide pointer on iPads & Android tablets
+                bigPointer.classList.add("hidden");
+            } else {
+                // Show pointer on desktops + Windows touchscreens
+                bigPointer.classList.remove("hidden");
+            }
+        } else {
+            bigPointer.classList.add("hidden");
+        }
+
+
+
+
+      if (mode === "big") {
+        body.classList.add("mode-big");
+        requestFullscreenIfAvailable();
+      } else {
+        body.classList.add("mode-phone");
+        // We still try fullscreen; on iOS this may be ignored.
+        requestFullscreenIfAvailable();
+      }
+
+      startEmojiLoop();
+      cleanupFloatingElements();
+      currentQuestionIndex = 0;
+      score = 0;
+      streak = 0;
+      correctCount = 0;
+      updateScoreDisplays();
+      updateProgress();
+      showScreen("quiz");
+      loadQuestion();
+    }
+
+function loadQuestion() {
+    if (currentQuestionIndex >= QUESTIONS.length) {
+        endGame();
+        return;
+    }
+
+    cleanupFloatingElements();
+
+
+    // NEW: handle pointer comet trail for this question
+    if (currentMode === "big") {
+        if (pointerTrailPending) {
+            const trail = getNextPointerTrail();
+            applyPointerTrail(trail);
+            pointerTrailPending = false; // we used it
+        } else {
+            // No special trail scheduled -> plain pointer
+            clearPointerTrail();
+        }
+    } else {
+        // Phone mode (no big pointer on screen)
+        clearPointerTrail();
+    }
+
+    // Stop any suspense / bursts from previous question
+    stopSuspense();
+    stopButtonBurstLoop();
+    stopSpotlight();
+    lastSelectedButton = null;
+    lastAnswerWasCorrect = false;
+    lastSelectedAnswerIndex = null;
+
+    const q = QUESTIONS[currentQuestionIndex];
+    questionTextEl.innerHTML = q.text;
+
+    // Reset question card back to normal (question) mode
+    if (questionCard && feedbackBubble) {
+        questionCard.classList.remove("feedback-mode");
+        feedbackBubble.style.display = "none";
+        questionTextEl.style.display = "block";
+    }
+    nextQuestionBtn.classList.add("hidden");
+    feedbackDetailEl.textContent = "";
+
+    // Animated question reveal
+    questionTextEl.classList.remove("question-reveal");
+    void questionTextEl.offsetWidth;
+    questionTextEl.classList.add("question-reveal");
+
+    updateProgress();
+
+    // Reset timer for each new question
+    if (currentMode === "big") {
+        startTimer();
+    } else {
+        stopTimer();
+    }
+
+    isLocked = false;
+    answerButtons.forEach(btn => {
+        // Remove any state from the previous question
+        btn.classList.remove(
+        "disabled",
+        "answer-correct",
+        "answer-wrong",
+        "answer-faded",
+        "spotlight-chosen"
+        );
+    });
+
+    const order = shuffledIndices(q.answers.length);
+    answerButtons.forEach((btn, pos) => {
+        const idx = order[pos];
+        btn.dataset.answerIndex = String(idx);
+        const textSpan = btn.querySelector(".answer-text");
+        textSpan.innerHTML = q.answers[idx];
+    });
+    }
+
+    
+
+    function goToNextQuestionAnimated() {
+      // If we don't have the quiz container for some reason, just jump
+      if (!quizMain) {
+        currentQuestionIndex += 1;
+        loadQuestion();
+        return;
+      }
+
+      // Prevent double-triggers while animation is running
+      if (isTransitioningQuestion) return;
+      isTransitioningQuestion = true;
+
+      // Start slide-out animation on the current question
+      quizMain.classList.add("question-slide-out");
+
+      const handleOutEnd = (event) => {
+        // Make sure this is our slide-out animation
+        if (event.animationName !== "questionSlideOut") return;
+
+        quizMain.removeEventListener("animationend", handleOutEnd);
+        quizMain.classList.remove("question-slide-out");
+
+        // Move to the next question
+        currentQuestionIndex += 1;
+        loadQuestion();
+
+        // Animate the new question sliding in
+        quizMain.classList.add("question-slide-in");
+
+        const handleInEnd = (evt) => {
+          if (evt.animationName !== "questionSlideIn") return;
+
+          quizMain.removeEventListener("animationend", handleInEnd);
+          quizMain.classList.remove("question-slide-in");
+          isTransitioningQuestion = false;
+        };
+
+        quizMain.addEventListener("animationend", handleInEnd);
+      };
+
+      quizMain.addEventListener("animationend", handleOutEnd);
+    }
+
+
+
+function handleAnswerClick(e) {
+  if (isLocked) return;
+  isLocked = true;
+
+  // Stop timer as soon as an answer is chosen
+  stopTimer();
+
+  const btn = e.currentTarget;
+  const answerIndex = Number(btn.dataset.answerIndex);
+  const q = QUESTIONS[currentQuestionIndex];
+
+  lastSelectedButton = btn;
+  lastSelectedAnswerIndex = answerIndex;
+  lastAnswerWasCorrect = answerIndex === q.correctIndex;
+
+  // Stop any more clicks on the answers
+  answerButtons.forEach(b => b.classList.add("disabled"));
+
+  // Start spotlight + suspense thumbs
+  startSpotlight(btn);
+  startSuspenseSequence();
+
+  // Big mode: we will reveal after suspense, no auto-advance here
+}
+
+
+
+
+    function endGame() {
+      updateProgress();
+      finalScoreEl.textContent = `${score} points`;
+      finalCorrectEl.textContent = `You got ${correctCount} out of ${QUESTIONS.length} correct`;
+
+      const ratio = correctCount / QUESTIONS.length;
+      endScreen.classList.remove("end-great", "end-good", "end-try");
+
+      if (ratio >= 0.8) {
+        endScreen.classList.add("end-great");
+        endTitleEl.textContent = "Amazing Job!";
+        endSubtitleEl.textContent = "You really know this story.";
+      } else if (ratio >= 0.5) {
+        endScreen.classList.add("end-good");
+        endTitleEl.textContent = "Nice Work!";
+        endSubtitleEl.textContent = "You did well. Keep learning!";
+      } else {
+        endScreen.classList.add("end-try");
+        endTitleEl.textContent = "Keep Practicing!";
+        endSubtitleEl.textContent = "Try again and watch your score grow.";
+      }
+
+      // Always show the present on the end screen, with a gentle wiggle
+      endTrophyEl.textContent = "🎁";
+      endTrophyEl.classList.add("end-present-wiggle");
+
+      // Reset reward state and hide overlay in case this is a replay
+      hasRevealedReward = false;
+      hideRewardOverlay();
+    cleanupFloatingElements();
+
+      showScreen("end");
+    }
+
+
+    function handleEndPresentClick() {
+      if (hasRevealedReward) {
+        // Don't run the animation twice
+        return;
+      }
+
+      hasRevealedReward = true;
+
+      // Stop the small idle wiggle on the end screen icon
+      endTrophyEl.classList.remove("end-present-wiggle");
+
+      // Start the full-screen reward sequence
+      startRewardSequence();
+    }
+
+
+    /***********************
+     * EVENT LISTENERS
+     ***********************/
+    bigScreenBtn.addEventListener("click", () => startGame("big"));
+    phoneModeBtn.addEventListener("click", () => startGame("phone"));
+
+    answerButtons.forEach(btn => {
+      btn.addEventListener("click", handleAnswerClick);
+    });
+
+    // Clicking the end-screen present triggers the reward spotlight
+    endTrophyEl.addEventListener("click", handleEndPresentClick);
+
+    // NEW: Clicking the giant reward emoji closes the spotlight with a big explosion
+    if (rewardEmojiEl) {
+      rewardEmojiEl.addEventListener("click", handleRewardEmojiClick);
+    }
+
+    // EXTRA SAFETY: also listen on the whole reward overlay,
+    // but only react when the click is actually on the big emoji.
+    if (rewardOverlay && rewardEmojiEl) {
+    rewardOverlay.addEventListener("click", (event) => {
+        // If the click wasn't on the emoji (or its children), do nothing.
+        if (!rewardEmojiEl.contains(event.target)) return;
+
+        // Run the same explosion + undarken logic
+        handleRewardEmojiClick();
+    });
+    }
+
+
+    // Keyboard controls: 1, 2, 3, 4 to choose the answers
+    document.addEventListener("keydown", (e) => {
+    // Only react when the quiz screen is visible
+    if (quizScreen.classList.contains("hidden")) return;
+
+    // If we're showing feedback in the question bar, ignore number keys
+    if (questionCard && questionCard.classList.contains("feedback-mode")) return;
+
+
+    // If the question is already locked, ignore further input
+    if (isLocked) return;
+
+    const key = e.key; // this will be "1", "2", "3", "4", etc.
+
+    // Map keys "1"–"4" to button indices 0–3
+    let index = null;
+    if (key === "1") index = 0;
+    else if (key === "2") index = 1;
+    else if (key === "3") index = 2;
+    else if (key === "4") index = 3;
+
+    if (index === null) return; // some other key pressed
+
+    const btn = answerButtons[index];
+    if (!btn) return;
+
+    // Simulate a click on that button
+    btn.click();
+    });
+
+    // DEBUG: quick skip to the end screen with a chosen score
+    // Now uses Shift+5–0 (% ^ & * ( )) so it's harder to hit by accident.
+    //
+    // Mappings:
+    //   Shift+5  -> %  -> 5 correct
+    //   Shift+6  -> ^  -> 6 correct
+    //   Shift+7  -> &  -> 7 correct
+    //   Shift+8  -> *  -> 8 correct
+    //   Shift+9  -> (  -> 9 correct
+    //   Shift+0  -> )  -> 0 correct
+    document.addEventListener("keydown", (e) => {
+      const key = e.key;
+      let n = null;
+
+      if (key === "%") {
+        n = 5;
+      } else if (key === "^") {
+        n = 6;
+      } else if (key === "&") {
+        n = 7;
+      } else if (key === "*") {
+        n = 8;
+      } else if (key === "(") {
+        n = 9;
+      } else if (key === ")") {
+        n = 0;
+      }
+
+      // If it wasn't one of those special keys, do nothing
+      if (n === null) return;
+
+      // Pretend you finished the quiz with "n" correct answers
+      correctCount = n;
+
+      // Move us to "after" the last question
+      currentQuestionIndex = QUESTIONS.length;
+
+      // Jump straight to the end screen (present, spotlight, etc.)
+      endGame();
+    });
+
+
+
+    soundToggleBtn.addEventListener("click", () => {
+      soundEnabled = !soundEnabled;
+      soundToggleBtn.textContent = soundEnabled ? "🔊" : "🔈";
+    });
+
+    const nextQuestionBtn = document.getElementById("next-question-btn");
+
+    nextQuestionBtn.addEventListener("click", () => {
+    // Hide the button itself; the card will reset when the next question loads
+    nextQuestionBtn.classList.add("hidden");
+    goToNextQuestionAnimated();
+    });
+
+
+
+
+    playAgainBtn.addEventListener("click", () => startGame(currentMode));
+    backToTitleBtn.addEventListener("click", () => {
+      body.classList.remove("mode-big", "mode-phone");
+      body.classList.add("mode-title");
+      showScreen("title");
+    });
+
+    // Start on intro screen with full background
+    body.classList.add("mode-title");
+    body.classList.add("intro-mode");
+    showScreen("intro");
+
+    // Handle Load Quiz button click
+    if (loadQuizBtn) {
+    loadQuizBtn.addEventListener("click", () => {
+        // Prevent double-clicks
+        loadQuizBtn.disabled = true;
+
+        // Swap to the bitten-bible logo
+        if (introLogo) {
+        introLogo.src = "quizimages/eyb_logo_2.png";
+        }
+
+        // Play chomp sound – this is allowed because it happens on a click
+        playChompSound();
+
+        // Wait 0.5 seconds before starting the fade
+        setTimeout(() => {
+        // Start fading out the intro screen
+        introScreen.classList.add("intro-fade-out");
+        }, 500);
+
+        // After 0.5s delay + 1.0s fade = 1.5s total, show the title screen
+        setTimeout(() => {
+        body.classList.remove("intro-mode");
+        showScreen("title");
+        introScreen.classList.remove("intro-fade-out");
+        }, 1500);
+    });
+    }
+
+
+
+
+
+
+    document.addEventListener("mousemove", (e) => {
+    // Only show the big pointer in Big Screen mode
+    if (!body.classList.contains("mode-big")) return;
+    if (isRealTablet) return;
+
+    const x = e.clientX;
+    const y = e.clientY;
+
+    // Move the main pointer to follow the mouse
+    bigPointer.style.left = x + "px";
+    bigPointer.style.top = y + "px";
+
+    // If a comet trail is active, spawn emoji ghosts
+    if (currentPointerTrail) {
+        spawnPointerTrailEmoji(x, y);
+    }
+    });
+
+
+    document.addEventListener("mousedown", (e) => {
+    spawnClickRipple(e.clientX, e.clientY);
+    });
+
+
+
+    const homeButton = document.getElementById("home-button");
+
+    homeButton.addEventListener("click", () => {
+        stopTimer(); // stop timer if running
+        bigPointer.classList.add("hidden"); // hide big pointer when leaving quiz
+        body.classList.remove("mode-big", "mode-phone");
+        body.classList.add("mode-title");
+        showScreen("title");
+    });
+
+function cleanupFloatingElements() {
+    document.querySelectorAll(
+        ".pointer-trail-emoji, .star, .burst-star, .timer-particle"
+    ).forEach(el => el.remove());
+}
+
+
+
+  </script>
+</body>
+</html>
