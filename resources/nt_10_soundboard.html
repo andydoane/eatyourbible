@@ -7,40 +7,26 @@
 
   <style>
     :root{
-      --bg: #0b1220;
-      --card: rgba(255,255,255,0.06);
-      --card-border: rgba(255,255,255,0.10);
+      --bg: #070b14;
+      --panel: rgba(255,255,255,0.06);
+      --panel-border: rgba(255,255,255,0.10);
       --text: rgba(255,255,255,0.92);
       --muted: rgba(255,255,255,0.70);
-      --accent: #62BB47;   /* idle */
-      --danger: #E55934;   /* playing */
-      --stop: rgba(255,255,255,0.14);
-      --stop-border: rgba(255,255,255,0.18);
-      --ring: rgba(99, 179, 237, 0.65);
-      --shadow: 0 18px 50px rgba(0,0,0,0.45);
+      --danger: #E55934;   /* playing highlight */
+      --ring: rgba(99, 179, 237, 0.70);
+      --shadow: 0 18px 50px rgba(0,0,0,0.55);
       --radius: 18px;
     }
 
-    @media (prefers-color-scheme: light){
-      :root{
-        --bg: #f5f7fb;
-        --card: rgba(0,0,0,0.04);
-        --card-border: rgba(0,0,0,0.08);
-        --text: rgba(0,0,0,0.88);
-        --muted: rgba(0,0,0,0.60);
-        --stop: rgba(0,0,0,0.06);
-        --stop-border: rgba(0,0,0,0.10);
-        --shadow: 0 18px 50px rgba(0,0,0,0.12);
-      }
-    }
-
     * { box-sizing: border-box; }
+    html, body { height: 100%; }
+
     body{
       margin:0;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
       background:
-        radial-gradient(1200px 600px at 20% 0%, rgba(98,187,71,0.20), transparent 60%),
-        radial-gradient(900px 500px at 90% 20%, rgba(229,89,52,0.18), transparent 55%),
+        radial-gradient(1200px 600px at 20% 0%, rgba(98,187,71,0.15), transparent 60%),
+        radial-gradient(900px 500px at 90% 20%, rgba(229,89,52,0.14), transparent 55%),
         var(--bg);
       color: var(--text);
       min-height: 100svh;
@@ -51,9 +37,9 @@
     }
 
     .app{
-      width: min(980px, 100%);
-      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.03));
-      border: 1px solid var(--card-border);
+      width: min(820px, 100%);
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      border: 1px solid var(--panel-border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
       overflow: hidden;
@@ -61,23 +47,14 @@
 
     header{
       padding: 18px 18px 10px;
-      display:flex;
-      gap: 12px;
-      align-items:flex-start;
-      justify-content: space-between;
-      flex-wrap: wrap;
     }
 
-    .title{
-      display:flex;
-      flex-direction:column;
-      gap: 6px;
-    }
     h1{
-      margin: 0;
+      margin: 0 0 6px 0;
       font-size: clamp(20px, 2.4vw, 28px);
       letter-spacing: 0.2px;
     }
+
     .subtitle{
       margin: 0;
       color: var(--muted);
@@ -86,118 +63,78 @@
       max-width: 70ch;
     }
 
-    .top-actions{
-      display:flex;
-      gap: 10px;
-      align-items:center;
-      margin-left:auto;
-    }
-
-    .btn{
-      border: 1px solid rgba(255,255,255,0.10);
-      background: var(--card);
-      color: var(--text);
-      border-radius: 14px;
-      padding: 12px 14px;
-      font-weight: 650;
-      font-size: 14px;
-      cursor: pointer;
-      transition: transform 120ms ease, background 120ms ease, border-color 120ms ease, box-shadow 120ms ease, filter 120ms ease;
-      user-select: none;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .btn:active{ transform: translateY(1px) scale(0.99); }
-    .btn:focus-visible{
-      outline: none;
-      box-shadow: 0 0 0 4px var(--ring);
-    }
-
-    .btn-stop{
-      background: var(--stop);
-      border-color: var(--stop-border);
-      font-weight: 800;
-    }
-
     main{
       padding: 14px 18px 18px;
     }
 
+    /* 2x4 grid */
     .grid{
       display:grid;
-      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      grid-template-columns: repeat(2, minmax(0, 1fr));
       gap: 12px;
     }
 
-    .sound{
-      position: relative;
+    .tile{
       border-radius: 16px;
-      border: 1px solid var(--card-border);
+      border: 1px solid var(--panel-border);
       background: rgba(255,255,255,0.04);
       overflow:hidden;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
     }
 
-    .sound button{
+    .tile button{
       width: 100%;
       border: none;
       background: transparent;
       color: var(--text);
-      text-align: left;
-      padding: 14px 14px 14px 14px;
+      padding: 16px 14px;
       cursor: pointer;
       display:flex;
-      align-items:center;
-      justify-content: space-between;
-      gap: 10px;
-      font-weight: 750;
-      font-size: 15px;
-      letter-spacing: 0.2px;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-weight: 800;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 108px; /* keeps the grid even */
+      transition: transform 120ms ease;
     }
 
-    .sound button:focus-visible{
+    .tile button:active{ transform: translateY(1px) scale(0.99); }
+    .tile button:focus-visible{
       outline: none;
       box-shadow: 0 0 0 4px var(--ring);
+      border-radius: 16px;
     }
 
-    .pill{
-      font-size: 12px;
-      font-weight: 800;
-      padding: 6px 9px;
-      border-radius: 999px;
-      border: 1px solid rgba(255,255,255,0.14);
-      background: rgba(255,255,255,0.08);
-      color: var(--muted);
-      flex: 0 0 auto;
+    .emoji{
+      font-size: 30px;
+      line-height: 1;
     }
-
-    /* Idle vs Playing state */
-    .sound[data-state="idle"]{
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
-    }
-    .sound[data-state="playing"]{
-      border-color: rgba(229,89,52,0.55);
-      background: linear-gradient(180deg, rgba(229,89,52,0.18), rgba(255,255,255,0.03));
-    }
-    .sound[data-state="playing"] .pill{
-      border-color: rgba(229,89,52,0.50);
-      color: rgba(255,255,255,0.88);
-      background: rgba(229,89,52,0.22);
-    }
-
-    .sound button .label{
-      display:flex;
-      flex-direction:column;
-      gap: 2px;
-      min-width: 0;
-    }
-    .sound button .label .name{
+    .name{
+      font-size: 14px;
+      letter-spacing: 0.2px;
+      text-align: center;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+      width: 100%;
+      padding: 0 6px;
     }
-    .sound button .label .hint{
-      font-size: 12px;
-      color: var(--muted);
-      font-weight: 650;
+
+    /* Playing state */
+    .tile[data-state="playing"]{
+      border-color: rgba(229,89,52,0.55);
+      background: linear-gradient(180deg, rgba(229,89,52,0.18), rgba(255,255,255,0.03));
+    }
+
+    /* Stop All styling */
+    .tile.stop{
+      border-color: rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.06);
+    }
+    .tile.stop button{
+      font-weight: 900;
     }
 
     footer{
@@ -207,51 +144,30 @@
       line-height: 1.35;
     }
 
-    @media (max-width: 420px){
-      .top-actions{ width: 100%; }
-      .btn-stop{ width: 100%; }
-      .subtitle{ font-size: 13px; }
+    @media (max-width: 380px){
+      .tile button{ min-height: 96px; }
+      .emoji{ font-size: 28px; }
+      .name{ font-size: 13px; }
     }
   </style>
 </head>
 
 <body>
-  <!-- Audio elements (directory updated to NT_09_sounds) -->
-  <audio id="audio-1" preload="auto">
-    <source src="NT_09_sounds/sound_1.mp3" type="audio/mpeg" />
-  </audio>
-  <audio id="audio-2" preload="auto">
-    <source src="NT_09_sounds/sound_2.mp3" type="audio/mpeg" />
-  </audio>
-  <audio id="audio-3" preload="auto">
-    <source src="NT_09_sounds/sound_3.mp3" type="audio/mpeg" />
-  </audio>
-  <audio id="audio-4" preload="auto">
-    <source src="NT_09_sounds/sound_4.mp3" type="audio/mpeg" />
-  </audio>
-  <audio id="audio-5" preload="auto">
-    <source src="NT_09_sounds/sound_5.mp3" type="audio/mpeg" />
-  </audio>
-  <audio id="audio-6" preload="auto">
-    <source src="NT_09_sounds/sound_6.mp3" type="audio/mpeg" />
-  </audio>
-  <audio id="audio-7" preload="auto">
-    <source src="NT_09_sounds/sound_7.mp3" type="audio/mpeg" />
-  </audio>
+  <!-- Audio elements (directory = NT_10_sounds) -->
+  <audio id="audio-1" preload="auto"><source src="NT_10_sounds/sound_1.mp3" type="audio/mpeg" /></audio>
+  <audio id="audio-2" preload="auto"><source src="NT_10_sounds/sound_2.mp3" type="audio/mpeg" /></audio>
+  <audio id="audio-3" preload="auto"><source src="NT_10_sounds/sound_3.mp3" type="audio/mpeg" /></audio>
+  <audio id="audio-4" preload="auto"><source src="NT_10_sounds/sound_4.mp3" type="audio/mpeg" /></audio>
+  <audio id="audio-5" preload="auto"><source src="NT_10_sounds/sound_5.mp3" type="audio/mpeg" /></audio>
+  <audio id="audio-6" preload="auto"><source src="NT_10_sounds/sound_6.mp3" type="audio/mpeg" /></audio>
+  <audio id="audio-7" preload="auto"><source src="NT_10_sounds/sound_7.mp3" type="audio/mpeg" /></audio>
 
   <div class="app" role="application" aria-label="Soundboard">
     <header>
-      <div class="title">
-        <h1>Calming of the Sea Soundboard</h1>
-        <p class="subtitle">
-          Tap a sound to play. Ambient sounds toggle on/off. Thunder buttons replay on every tap.
-          Use <strong>Stop All</strong> to immediately silence everything.
-        </p>
-      </div>
-
-      <div class="top-actions">
-        <button class="btn btn-stop" type="button" id="stopAll">⛔ Stop All</button>
-      </div>
+      <h1>Calming of the Sea Soundboard</h1>
+      <p class="subtitle">
+        Sounds 1–5 toggle play/pause. Sounds 6–7 replay on every tap. Stop All silences everything.
+      </p>
     </header>
 
     <main>
@@ -259,77 +175,74 @@
     </main>
 
     <footer>
-      Tip: On iOS/Android, sound won’t play until you tap a button once (browser autoplay rules).
+      Mobile note: browsers require a tap before audio can play (autoplay rules).
     </footer>
   </div>
 
   <script>
-    // Configure your buttons here (text + emoji)
     // type:
     //  - "toggle" = play/pause (for sounds 1–5)
     //  - "oneshot" = restart + play every tap (for sounds 6–7)
-    const SOUND_DIR = "NT_09_sounds";
-
     const sounds = [
-      { id: 1, file: "sound_1.mp3", label: "🍃 Gentle Wind",   hint: "toggle",  type: "toggle" },
-      { id: 2, file: "sound_2.mp3", label: "🌊 Gentle Waves",  hint: "toggle",  type: "toggle" },
-      { id: 3, file: "sound_3.mp3", label: "🪵 Boat Creaking",  hint: "toggle",  type: "toggle" },
-      { id: 4, file: "sound_4.mp3", label: "💨 Big Wind",      hint: "toggle",  type: "toggle" },
-      { id: 5, file: "sound_5.mp3", label: "🌊 Big Waves",     hint: "toggle",  type: "toggle" },
-      { id: 6, file: "sound_6.mp3", label: "⚡ Thunder 1",     hint: "replay",  type: "oneshot" },
-      { id: 7, file: "sound_7.mp3", label: "⚡ Thunder 2",     hint: "replay",  type: "oneshot" },
+      { id: 1, emoji: "🍃", name: "Gentle Wind",   type: "toggle" },
+      { id: 2, emoji: "🌊", name: "Gentle Waves",  type: "toggle" },
+      { id: 3, emoji: "🪵", name: "Boat Creaking",  type: "toggle" },
+      { id: 4, emoji: "💨", name: "Big Wind",      type: "toggle" },
+      { id: 5, emoji: "🌊", name: "Big Waves",     type: "toggle" },
+      { id: 6, emoji: "⚡", name: "Thunder 1",     type: "oneshot" },
+      { id: 7, emoji: "⚡", name: "Thunder 2",     type: "oneshot" },
     ];
 
-    // Build the UI
     const grid = document.getElementById("grid");
 
-    function soundCardHTML(s) {
+    function tileHTML(s){
       return `
-        <div class="sound" id="card-${s.id}" data-state="idle">
+        <div class="tile" id="tile-${s.id}" data-state="idle">
           <button type="button" id="btn-${s.id}" aria-pressed="false">
-            <span class="label">
-              <span class="name">${s.label}</span>
-              <span class="hint">${s.type === "toggle" ? "Tap to play/pause" : "Tap to replay"}</span>
-            </span>
-            <span class="pill">${s.hint}</span>
+            <div class="emoji" aria-hidden="true">${s.emoji}</div>
+            <div class="name">${s.name}</div>
           </button>
         </div>
       `;
     }
 
-    grid.innerHTML = sounds.map(soundCardHTML).join("");
+    // Build 7 sound tiles + 1 Stop All tile = 2x4 grid
+    grid.innerHTML =
+      sounds.map(tileHTML).join("") +
+      `
+        <div class="tile stop" id="tile-stop" data-state="idle">
+          <button type="button" id="stopAll">
+            <div class="emoji" aria-hidden="true">⛔</div>
+            <div class="name">Stop All</div>
+          </button>
+        </div>
+      `;
 
-    // Helpers
-    function getAudio(id) {
-      return document.getElementById(`audio-${id}`);
-    }
-    function getCard(id) {
-      return document.getElementById(`card-${id}`);
-    }
-    function getBtn(id) {
-      return document.getElementById(`btn-${id}`);
-    }
+    function getAudio(id){ return document.getElementById(`audio-${id}`); }
+    function getTile(id){ return document.getElementById(`tile-${id}`); }
+    function getBtn(id){ return document.getElementById(`btn-${id}`); }
 
-    function setPlayingUI(id, isPlaying) {
-      const card = getCard(id);
+    function setPlayingUI(id, isPlaying){
+      const tile = getTile(id);
       const btn = getBtn(id);
-      card.dataset.state = isPlaying ? "playing" : "idle";
+      if (!tile || !btn) return;
+      tile.dataset.state = isPlaying ? "playing" : "idle";
       btn.setAttribute("aria-pressed", isPlaying ? "true" : "false");
     }
 
-    function stopAndReset(id) {
+    function stopAndReset(id){
       const a = getAudio(id);
+      if (!a) return;
       a.pause();
       a.currentTime = 0;
       setPlayingUI(id, false);
     }
 
-    // Wire up button behavior to match your original logic
+    // Wire sound buttons
     sounds.forEach((s) => {
       const btn = getBtn(s.id);
       const audio = getAudio(s.id);
 
-      // If a toggle sound naturally ends, reflect that in the UI.
       audio.addEventListener("ended", () => {
         if (s.type === "toggle") setPlayingUI(s.id, false);
       });
@@ -347,18 +260,17 @@
           } else {
             audio.currentTime = 0;
             await audio.play();
-            // oneshot doesn't stay "playing" in UI; give a quick flash:
+            // quick flash for oneshot
             setPlayingUI(s.id, true);
-            window.setTimeout(() => setPlayingUI(s.id, false), 250);
+            window.setTimeout(() => setPlayingUI(s.id, false), 220);
           }
         } catch (err) {
-          // Most common cause: autoplay restrictions or missing file path
           console.warn("Audio play failed:", err);
         }
       });
     });
 
-    // Stop all button
+    // Stop All as 8th button
     document.getElementById("stopAll").addEventListener("click", () => {
       sounds.forEach((s) => stopAndReset(s.id));
     });
