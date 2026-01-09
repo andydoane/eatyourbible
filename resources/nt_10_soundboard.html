@@ -320,14 +320,17 @@ function unlockAudio(){
     const a = getAudio(s.id);
     if (!a) continue;
 
-    // Fire-and-forget — no await
+    const prevVol = a.volume;
+    a.volume = 0;
+
     a.play()
       .then(() => {
         a.pause();
         a.currentTime = 0;
       })
-      .catch(() => {
-        // ignored on purpose
+      .catch(() => {})
+      .finally(() => {
+        a.volume = prevVol;
       });
   }
 }
