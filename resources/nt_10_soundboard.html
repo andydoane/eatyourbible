@@ -47,6 +47,7 @@
 
     header{
       padding: 18px 18px 10px;
+      text-align: center;
     }
 
     h1{
@@ -61,6 +62,7 @@
       font-size: 14px;
       line-height: 1.35;
       max-width: 70ch;
+      text-align: center;
     }
 
     main{
@@ -255,12 +257,12 @@
     //  - "oneshot" = restart + play every tap (for sounds 6–7)
     const sounds = [
       { id: 1, emoji: "🍃", name: "Gentle Wind",   type: "toggle" },
-      { id: 2, emoji: "🌊", name: "Gentle Waves",  type: "toggle" },
-      { id: 3, emoji: "🪵", name: "Boat Creaking", type: "toggle" },
+      { id: 2, emoji: "💦", name: "Gentle Waves",  type: "toggle" },
+      { id: 3, emoji: "⛵", name: "Boat Creaking", type: "toggle" },
       { id: 4, emoji: "💨", name: "Big Wind",      type: "toggle" },
       { id: 5, emoji: "🌊", name: "Big Waves",     type: "toggle" },
       { id: 6, emoji: "⚡", name: "Thunder 1",     type: "oneshot" },
-      { id: 7, emoji: "⚡", name: "Thunder 2",     type: "oneshot" },
+      { id: 7, emoji: "⚡⚡", name: "Thunder 2",     type: "oneshot" },
     ];
 
     const grid = document.getElementById("grid");
@@ -283,7 +285,7 @@
         <div class="tile stop" id="tile-stop" data-state="idle">
           <button type="button" id="stopAll">
             <div class="emoji" aria-hidden="true">⛔</div>
-            <div class="name">Stop All</div>
+            <div class="name">Stop All Sounds</div>
           </button>
         </div>
       `;
