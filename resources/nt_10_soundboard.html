@@ -316,30 +316,35 @@
     const app = document.getElementById("app");
     const startBtn = document.getElementById("startBtn");
 
-    async function unlockAudio(){
-      // iOS Safari is happiest if we "touch" each audio element once in a user gesture.
-      // We try play->pause->rewind. Some browsers may throw; that's fine.
-      for (const s of sounds) {
-        const a = getAudio(s.id);
-        if (!a) continue;
-        try {
-          await a.play();
-          a.pause();
-          a.currentTime = 0;
-        } catch (_) {}
-      }
-    }
+function unlockAudio(){
+  for (const s of sounds) {
+    const a = getAudio(s.id);
+    if (!a) continue;
 
-    startBtn.addEventListener("click", async () => {
-      await unlockAudio();
+    // Fire-and-forget — no await
+    a.play()
+      .then(() => {
+        a.pause();
+        a.currentTime = 0;
+      })
+      .catch(() => {
+        // ignored on purpose
+      });
+  }
+}
 
-      // Optional fade-out for vibe
-      splash.classList.add("fade-out");
-      window.setTimeout(() => {
-        splash.remove();
-        app.hidden = false;
-      }, 260);
-    });
+
+startBtn.addEventListener("click", () => {
+  unlockAudio();
+
+  // Show app immediately (don't wait on audio promises)
+  splash.classList.add("fade-out");
+  window.setTimeout(() => {
+    splash.remove();
+    app.hidden = false;
+  }, 260);
+});
+
 
     // ===== Wire sound buttons =====
     sounds.forEach((s) => {
