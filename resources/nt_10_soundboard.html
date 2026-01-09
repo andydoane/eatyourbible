@@ -291,9 +291,10 @@
         </div>
       `;
 
-    function getAudio(id){ return document.getElementById(\`audio-\${id}\`); }
-    function getTile(id){ return document.getElementById(\`tile-\${id}\`); }
-    function getBtn(id){ return document.getElementById(\`btn-\${id}\`); }
+  function getAudio(id){ return document.getElementById(`audio-${id}`); }
+  function getTile(id){ return document.getElementById(`tile-${id}`); }
+  function getBtn(id){ return document.getElementById(`btn-${id}`); }
+
 
     function setPlayingUI(id, isPlaying){
       const tile = getTile(id);
