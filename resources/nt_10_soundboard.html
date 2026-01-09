@@ -149,10 +149,83 @@
       .emoji{ font-size: 28px; }
       .name{ font-size: 13px; }
     }
+
+    /* ===== Splash Screen ===== */
+    .splash{
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(1200px 600px at 20% 0%, rgba(98,187,71,0.18), transparent 60%),
+        radial-gradient(900px 500px at 90% 20%, rgba(229,89,52,0.18), transparent 55%),
+        var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      padding: 18px;
+    }
+
+    .start-btn{
+      background: linear-gradient(180deg, rgba(255,255,255,0.18), rgba(255,255,255,0.08));
+      border: 1px solid var(--panel-border);
+      border-radius: 20px;
+      padding: 22px 28px;
+      color: var(--text);
+      font-size: 18px;
+      font-weight: 900;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: var(--shadow);
+      min-width: min(420px, 92vw);
+      text-align: center;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform 120ms ease;
+    }
+
+    .start-btn:active{ transform: translateY(1px) scale(0.99); }
+
+    .start-btn:focus-visible{
+      outline: none;
+      box-shadow: 0 0 0 4px var(--ring);
+    }
+
+    .start-btn .emoji{
+      font-size: 40px;
+      line-height: 1;
+    }
+
+    .start-sub{
+      margin: 0;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    /* Optional fade-out */
+    .splash.fade-out{
+      animation: splashFade 260ms ease forwards;
+    }
+    @keyframes splashFade{
+      to { opacity: 0; transform: translateY(6px); }
+    }
   </style>
 </head>
 
 <body>
+  <!-- Splash Screen -->
+  <div id="splash" class="splash" aria-label="Start screen">
+    <button id="startBtn" class="start-btn" type="button">
+      <div class="emoji" aria-hidden="true">🌊</div>
+      <div>Start Soundboard</div>
+      <p class="start-sub">
+        Mobile browsers require a tap before audio can play.
+      </p>
+    </button>
+  </div>
+
   <!-- Audio elements (directory = NT_10_sounds) -->
   <audio id="audio-1" preload="auto"><source src="NT_10_sounds/sound_1.mp3" type="audio/mpeg" /></audio>
   <audio id="audio-2" preload="auto"><source src="NT_10_sounds/sound_2.mp3" type="audio/mpeg" /></audio>
@@ -162,7 +235,7 @@
   <audio id="audio-6" preload="auto"><source src="NT_10_sounds/sound_6.mp3" type="audio/mpeg" /></audio>
   <audio id="audio-7" preload="auto"><source src="NT_10_sounds/sound_7.mp3" type="audio/mpeg" /></audio>
 
-  <div class="app" role="application" aria-label="Soundboard">
+  <div class="app" id="app" hidden role="application" aria-label="Soundboard">
     <header>
       <h1>Calming of the Sea Soundboard</h1>
       <p class="subtitle">
@@ -186,7 +259,7 @@
     const sounds = [
       { id: 1, emoji: "🍃", name: "Gentle Wind",   type: "toggle" },
       { id: 2, emoji: "🌊", name: "Gentle Waves",  type: "toggle" },
-      { id: 3, emoji: "🪵", name: "Boat Creaking",  type: "toggle" },
+      { id: 3, emoji: "🪵", name: "Boat Creaking", type: "toggle" },
       { id: 4, emoji: "💨", name: "Big Wind",      type: "toggle" },
       { id: 5, emoji: "🌊", name: "Big Waves",     type: "toggle" },
       { id: 6, emoji: "⚡", name: "Thunder 1",     type: "oneshot" },
@@ -218,9 +291,9 @@
         </div>
       `;
 
-    function getAudio(id){ return document.getElementById(`audio-${id}`); }
-    function getTile(id){ return document.getElementById(`tile-${id}`); }
-    function getBtn(id){ return document.getElementById(`btn-${id}`); }
+    function getAudio(id){ return document.getElementById(\`audio-\${id}\`); }
+    function getTile(id){ return document.getElementById(\`tile-\${id}\`); }
+    function getBtn(id){ return document.getElementById(\`btn-\${id}\`); }
 
     function setPlayingUI(id, isPlaying){
       const tile = getTile(id);
@@ -238,7 +311,37 @@
       setPlayingUI(id, false);
     }
 
-    // Wire sound buttons
+    // ===== Splash / audio unlock =====
+    const splash = document.getElementById("splash");
+    const app = document.getElementById("app");
+    const startBtn = document.getElementById("startBtn");
+
+    async function unlockAudio(){
+      // iOS Safari is happiest if we "touch" each audio element once in a user gesture.
+      // We try play->pause->rewind. Some browsers may throw; that's fine.
+      for (const s of sounds) {
+        const a = getAudio(s.id);
+        if (!a) continue;
+        try {
+          await a.play();
+          a.pause();
+          a.currentTime = 0;
+        } catch (_) {}
+      }
+    }
+
+    startBtn.addEventListener("click", async () => {
+      await unlockAudio();
+
+      // Optional fade-out for vibe
+      splash.classList.add("fade-out");
+      window.setTimeout(() => {
+        splash.remove();
+        app.hidden = false;
+      }, 260);
+    });
+
+    // ===== Wire sound buttons =====
     sounds.forEach((s) => {
       const btn = getBtn(s.id);
       const audio = getAudio(s.id);
