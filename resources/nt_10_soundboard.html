@@ -316,24 +316,28 @@
     const startBtn = document.getElementById("startBtn");
 
 function unlockAudio(){
-  for (const s of sounds) {
-    const a = getAudio(s.id);
-    if (!a) continue;
+  const a = getAudio(1);
+  if (!a) return;
 
-    const prevVol = a.volume;
-    a.volume = 0;
+  const prevMuted = a.muted;
+  const prevVol = a.volume;
 
-    a.play()
-      .then(() => {
-        a.pause();
-        a.currentTime = 0;
-      })
-      .catch(() => {})
-      .finally(() => {
-        a.volume = prevVol;
-      });
-  }
+  a.muted = true;
+  a.volume = 0;
+
+  const p = a.play();
+  Promise.resolve(p)
+    .then(() => {
+      a.pause();
+      a.currentTime = 0;
+    })
+    .catch(() => {})
+    .finally(() => {
+      a.muted = prevMuted;
+      a.volume = prevVol;
+    });
 }
+
 
 
 startBtn.addEventListener("click", () => {
