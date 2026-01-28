@@ -196,12 +196,16 @@
 
     /* Card flip */
     .cardWrap{
-      width: 100%;
-      max-width: 440px;
+      width: min(440px, 100%);
       aspect-ratio: 3 / 4; /* portrait card */
       perspective: 1200px;
       user-select: none;
+    
+      /* ensure it's truly centered */
+      margin-left: auto;
+      margin-right: auto;
     }
+
 
     .card{
       width: 100%;
