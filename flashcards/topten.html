@@ -1,1 +1,601 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Ten Commandments Flashcards</title>
+  <style>
+    :root{
+      --bg: #0b1220;
+      --card: rgba(255,255,255,0.08);
+      --card2: rgba(255,255,255,0.10);
+      --text: #f5f7ff;
+      --muted: rgba(245,247,255,0.75);
+      --border: rgba(255,255,255,0.14);
+      --shadow: 0 20px 50px rgba(0,0,0,0.35);
+      --yes: #1f9d55;
+      --no: #d64545;
+      --accent: #7aa7ff;
+      --radius: 22px;
+      --maxW: 540px;
+    }
 
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body{
+      margin: 0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:
+        radial-gradient(1000px 600px at 30% 10%, rgba(122,167,255,0.22), transparent 60%),
+        radial-gradient(800px 600px at 70% 90%, rgba(122,255,214,0.10), transparent 55%),
+        var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    }
+
+    /* Portrait-first app container */
+    .app{
+      width: min(100%, var(--maxW));
+      height: 100%;
+      max-height: 980px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .frame{
+      width: 100%;
+      height: 100%;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,0.06);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+    }
+
+    header{
+      padding: 18px 18px 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .title{
+      font-weight: 750;
+      letter-spacing: 0.06em;
+      font-size: 14px;
+      color: var(--muted);
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .pill{
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: rgba(0,0,0,0.12);
+      color: rgba(245,247,255,0.85);
+      white-space: nowrap;
+    }
+
+    main{
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    footer{
+      padding: 16px 18px 18px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .hint{
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .big{
+      font-size: clamp(22px, 3.4vw, 30px);
+      font-weight: 800;
+      letter-spacing: 0.02em;
+    }
+
+    .sub{
+      font-size: 15px;
+      color: var(--muted);
+      line-height: 1.45;
+      max-width: 40ch;
+    }
+
+    .btnrow{
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    button{
+      appearance: none;
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.10);
+      color: var(--text);
+      font-weight: 700;
+      border-radius: 14px;
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: transform 0.05s ease, background 0.2s ease, border-color 0.2s ease;
+      min-width: 140px;
+      font-size: 15px;
+    }
+    button:active{ transform: translateY(1px) scale(0.99); }
+    button:hover{ background: rgba(255,255,255,0.14); }
+
+    .primary{
+      border-color: rgba(122,167,255,0.45);
+      background: rgba(122,167,255,0.18);
+    }
+    .primary:hover{ background: rgba(122,167,255,0.25); }
+
+    .yes{
+      border-color: rgba(31,157,85,0.55);
+      background: rgba(31,157,85,0.22);
+      min-width: 120px;
+    }
+    .yes:hover{ background: rgba(31,157,85,0.30); }
+
+    .no{
+      border-color: rgba(214,69,69,0.55);
+      background: rgba(214,69,69,0.22);
+      min-width: 120px;
+    }
+    .no:hover{ background: rgba(214,69,69,0.30); }
+
+    .smallbtn{
+      min-width: 0;
+      padding: 10px 12px;
+      font-size: 14px;
+      border-radius: 12px;
+    }
+
+    /* Card flip */
+    .cardWrap{
+      width: 100%;
+      max-width: 440px;
+      aspect-ratio: 3 / 4; /* portrait card */
+      perspective: 1200px;
+      user-select: none;
+    }
+
+    .card{
+      width: 100%;
+      height: 100%;
+      border-radius: 18px;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 650ms cubic-bezier(.2,.8,.2,1);
+      border: 1px solid rgba(255,255,255,0.16);
+      background: rgba(255,255,255,0.08);
+      box-shadow: 0 14px 40px rgba(0,0,0,0.32);
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .card.flipped{
+      transform: rotateY(180deg);
+    }
+
+    .face{
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px;
+    }
+
+    .front{
+      background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(0,0,0,0.10));
+    }
+
+    .front img{
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      border-radius: 14px;
+      filter: drop-shadow(0 10px 20px rgba(0,0,0,0.35));
+    }
+
+    .back{
+      transform: rotateY(180deg);
+      background: linear-gradient(180deg, rgba(122,167,255,0.16), rgba(0,0,0,0.12));
+      padding: 22px;
+    }
+
+    .cmdText{
+      font-size: clamp(18px, 2.8vw, 22px);
+      font-weight: 800;
+      line-height: 1.35;
+      letter-spacing: 0.01em;
+    }
+    .cmdText span{
+      display: inline-block;
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(0,0,0,0.18);
+      border: 1px solid rgba(255,255,255,0.14);
+    }
+
+    .revealArea{
+      width: 100%;
+      max-width: 540px;
+      display: none;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+      margin-top: 4px;
+    }
+    .revealArea.show{ display: flex; }
+
+    .question{
+      font-size: 15px;
+      color: rgba(245,247,255,0.90);
+      font-weight: 750;
+      margin-top: 4px;
+    }
+
+    .scoreBox{
+      width: 100%;
+      max-width: 520px;
+      border-radius: 18px;
+      background: rgba(0,0,0,0.18);
+      border: 1px solid rgba(255,255,255,0.14);
+      padding: 18px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+      box-shadow: 0 14px 40px rgba(0,0,0,0.25);
+    }
+
+    .scoreNum{
+      font-size: clamp(44px, 7vw, 64px);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+    }
+
+    .scoreMsg{
+      font-size: 16px;
+      color: rgba(245,247,255,0.88);
+      line-height: 1.45;
+      max-width: 46ch;
+    }
+
+    .rotateNote{
+      display: none;
+      font-size: 12px;
+      color: rgba(245,247,255,0.70);
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px dashed rgba(255,255,255,0.20);
+      background: rgba(0,0,0,0.15);
+      margin-top: 10px;
+    }
+
+    /* Show note in landscape */
+    @media (orientation: landscape){
+      .rotateNote{ display: inline-block; }
+      .cardWrap{ max-width: 360px; }
+    }
+
+    /* Gentle motion reduction */
+    @media (prefers-reduced-motion: reduce){
+      .card{ transition: none; }
+      button{ transition: none; }
+    }
+
+    /* Utility */
+    .hidden{ display:none !important; }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <div class="frame" role="application" aria-label="Ten Commandments Flashcards">
+      <header>
+        <div class="title">
+          <span id="headerTitle">Ten Commandments</span>
+          <span class="pill" id="progressPill">Ready</span>
+        </div>
+        <div class="pill" id="scorePill">Score: 0</div>
+      </header>
+
+      <main>
+        <!-- SPLASH -->
+        <section id="screenSplash">
+          <div class="big">Best in portrait mode</div>
+          <div class="sub">
+            This game is designed for phones held upright.
+            <div class="rotateNote">Tip: Rotate back to portrait for the best experience.</div>
+          </div>
+          <div class="btnrow" style="margin-top:14px;">
+            <button class="primary" id="btnStart">Go fullscreen and start</button>
+          </div>
+          <div class="hint" style="margin-top:10px;">
+            You’ll see an image. Tap it to flip and reveal the commandment, then mark whether you guessed correctly.
+          </div>
+        </section>
+
+        <!-- GAME -->
+        <section id="screenGame" class="hidden" style="width:100%;">
+          <div class="big" id="cmdTitle">COMMANDMENT 1</div>
+
+          <div class="cardWrap" aria-label="Flashcard">
+            <div class="card" id="flashcard" tabindex="0" role="button" aria-pressed="false" aria-label="Tap to reveal answer">
+              <div class="face front">
+                <img id="cmdImage" src="/topten_images/top_ten_1.png" alt="Commandment image" />
+              </div>
+              <div class="face back">
+                <div class="cmdText"><span id="cmdText">You shall have no other gods before Me.</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="hint" id="tapHint">Tap the image to reveal answer.</div>
+
+          <div class="revealArea" id="revealArea">
+            <div class="question">Did you guess correctly?</div>
+            <div class="btnrow">
+              <button class="yes" id="btnYes">Yes</button>
+              <button class="no" id="btnNo">No</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- SCORE -->
+        <section id="screenScore" class="hidden">
+          <div class="big">Your Score</div>
+          <div class="scoreBox">
+            <div class="scoreNum" id="finalScore">0/10</div>
+            <div class="scoreMsg" id="finalMsg">Message here</div>
+          </div>
+          <div class="btnrow" style="margin-top:14px;">
+            <button class="primary" id="btnRestart">Start over</button>
+          </div>
+        </section>
+      </main>
+
+      <footer>
+        <div class="hint" id="footerHint">
+          Tip: If fullscreen doesn’t work on your device, just tap start — the game still works normally.
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    /***********************
+     * DATA (Ten Commandments)
+     ***********************/
+    const commandments = [
+      { num: 1, text: "You shall have no other gods before Me." },
+      { num: 2, text: "You shall not make for yourself an idol." },
+      { num: 3, text: "You shall not take the name of the Lord your God in vain." },
+      { num: 4, text: "Remember the Sabbath day, to keep it holy." },
+      { num: 5, text: "Honor your father and your mother." },
+      { num: 6, text: "You shall not murder." },
+      { num: 7, text: "You shall not commit adultery." },
+      { num: 8, text: "You shall not steal." },
+      { num: 9, text: "You shall not bear false witness against your neighbor." },
+      { num: 10, text: "You shall not covet." }
+    ];
+
+    const encouragementByScore = [
+      "0/10 — That’s okay! Every journey starts somewhere. Try again and watch your score grow!",
+      "1/10 — Nice start! You learned at least one today—keep going!",
+      "2/10 — Good progress! A couple down—practice makes it stick.",
+      "3/10 — Solid effort! You’re building a strong foundation.",
+      "4/10 — Nice! You’re nearly halfway—keep sharpening those memories.",
+      "5/10 — Halfway there! That’s a great midpoint score.",
+      "6/10 — Great work! You know more than half—keep it up!",
+      "7/10 — Impressive! You’re doing really well.",
+      "8/10 — Excellent! You’re very close to a perfect score.",
+      "9/10 — Amazing! Just one more for perfection—so close!",
+      "10/10 — Perfect! Outstanding work—you really know the Ten Commandments!"
+    ];
+
+    /***********************
+     * STATE
+     ***********************/
+    let idx = 0;
+    let correct = 0;
+    let incorrect = 0;
+    let revealed = false;
+
+    /***********************
+     * ELEMENTS
+     ***********************/
+    const screenSplash = document.getElementById("screenSplash");
+    const screenGame = document.getElementById("screenGame");
+    const screenScore = document.getElementById("screenScore");
+
+    const headerTitle = document.getElementById("headerTitle");
+    const progressPill = document.getElementById("progressPill");
+    const scorePill = document.getElementById("scorePill");
+
+    const cmdTitle = document.getElementById("cmdTitle");
+    const cmdImage = document.getElementById("cmdImage");
+    const cmdText = document.getElementById("cmdText");
+    const tapHint = document.getElementById("tapHint");
+
+    const flashcard = document.getElementById("flashcard");
+    const revealArea = document.getElementById("revealArea");
+
+    const btnStart = document.getElementById("btnStart");
+    const btnYes = document.getElementById("btnYes");
+    const btnNo = document.getElementById("btnNo");
+    const btnRestart = document.getElementById("btnRestart");
+
+    const finalScore = document.getElementById("finalScore");
+    const finalMsg = document.getElementById("finalMsg");
+
+    /***********************
+     * HELPERS (simple, no complicated stuff needed to edit later)
+     ***********************/
+    function updateScorePill(){
+      scorePill.textContent = "Score: " + correct;
+    }
+
+    function showScreen(which){
+      // which: "splash" | "game" | "score"
+      screenSplash.classList.add("hidden");
+      screenGame.classList.add("hidden");
+      screenScore.classList.add("hidden");
+
+      if(which === "splash") screenSplash.classList.remove("hidden");
+      if(which === "game") screenGame.classList.remove("hidden");
+      if(which === "score") screenScore.classList.remove("hidden");
+    }
+
+    function resetCardToFront(){
+      flashcard.classList.remove("flipped");
+      flashcard.setAttribute("aria-pressed", "false");
+      revealed = false;
+      revealArea.classList.remove("show");
+      tapHint.classList.remove("hidden");
+    }
+
+    function loadCommandment(i){
+      const item = commandments[i];
+      cmdTitle.textContent = "COMMANDMENT " + item.num;
+      cmdText.textContent = item.text;
+
+      // image path pattern:
+      cmdImage.src = "/topten_images/top_ten_" + item.num + ".png";
+      cmdImage.alt = "Commandment " + item.num + " image";
+
+      progressPill.textContent = (i + 1) + " / " + commandments.length;
+      headerTitle.textContent = "Ten Commandments";
+
+      resetCardToFront();
+    }
+
+    function reveal(){
+      if(revealed) return;
+      revealed = true;
+      flashcard.classList.add("flipped");
+      flashcard.setAttribute("aria-pressed", "true");
+
+      // Show answer UI after the flip begins
+      setTimeout(() => {
+        revealArea.classList.add("show");
+        tapHint.classList.add("hidden");
+      }, 420);
+    }
+
+    function advance(){
+      idx += 1;
+      if(idx >= commandments.length){
+        showFinalScore();
+      }else{
+        loadCommandment(idx);
+      }
+    }
+
+    function showFinalScore(){
+      showScreen("score");
+      progressPill.textContent = "Finished";
+      headerTitle.textContent = "Results";
+      finalScore.textContent = correct + "/10";
+      finalMsg.textContent = encouragementByScore[correct] || "Great job!";
+    }
+
+    async function goFullscreen(){
+      // Try fullscreen (may fail on iOS Safari unless user gesture + video, etc.)
+      const el = document.documentElement;
+      try{
+        if(el.requestFullscreen) await el.requestFullscreen();
+        else if(el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
+      }catch(e){
+        // It's okay if it fails; the game still works.
+      }
+    }
+
+    function startGame(){
+      idx = 0;
+      correct = 0;
+      incorrect = 0;
+      updateScorePill();
+      showScreen("game");
+      loadCommandment(idx);
+    }
+
+    /***********************
+     * EVENTS
+     ***********************/
+    btnStart.addEventListener("click", async () => {
+      await goFullscreen();
+      startGame();
+    });
+
+    flashcard.addEventListener("click", () => {
+      reveal();
+    });
+
+    // Allow keyboard "Enter/Space" if someone uses a keyboard
+    flashcard.addEventListener("keydown", (e) => {
+      if(e.key === "Enter" || e.key === " "){
+        e.preventDefault();
+        reveal();
+      }
+    });
+
+    btnYes.addEventListener("click", () => {
+      if(!revealed) return;
+      correct += 1;
+      updateScorePill();
+      advance();
+    });
+
+    btnNo.addEventListener("click", () => {
+      if(!revealed) return;
+      incorrect += 1;
+      updateScorePill();
+      advance();
+    });
+
+    btnRestart.addEventListener("click", () => {
+      // exit fullscreen is optional; we just restart
+      idx = 0;
+      correct = 0;
+      incorrect = 0;
+      updateScorePill();
+      progressPill.textContent = "Ready";
+      headerTitle.textContent = "Ten Commandments";
+      showScreen("splash");
+    });
+
+    // Initial view
+    showScreen("splash");
+    updateScorePill();
+  </script>
+</body>
+</html>
