@@ -347,6 +347,66 @@
 
     /* Utility */
     .hidden{ display:none !important; }
+
+    /* Confetti overlay canvas */
+    .confettiCanvas{
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 20;
+    }
+    
+    /* Make main a positioning context for the confetti canvas */
+    main{
+      position: relative;
+    }
+    
+    /* Answer box (text revealed under the card) */
+    .answerBox{
+      width: 100%;
+      max-width: 520px;
+      margin-top: 8px;
+      padding: 14px 14px;
+      border-radius: 16px;
+      background: rgba(0,0,0,0.18);
+      border: 1px solid rgba(255,255,255,0.14);
+      box-shadow: 0 14px 40px rgba(0,0,0,0.18);
+    }
+    
+    .cmdTextAnswer{
+      font-size: clamp(18px, 2.8vw, 22px);
+      font-weight: 850;
+      line-height: 1.35;
+      color: rgba(245,247,255,0.95);
+    }
+    
+    /* Back label (since we removed the commandment text from the card back) */
+    .backLabel{
+      font-size: 18px;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+      color: rgba(245,247,255,0.90);
+      padding: 12px 14px;
+      border-radius: 16px;
+      background: rgba(0,0,0,0.18);
+      border: 1px solid rgba(255,255,255,0.14);
+    }
+    
+    /* Explode + disappear effect */
+    .card.vanish{
+      animation: vanishPop 520ms ease-out forwards;
+    }
+    
+    @keyframes vanishPop{
+      0%   { transform: rotateY(180deg) scale(1); opacity: 1; }
+      55%  { transform: rotateY(180deg) scale(1.08); opacity: 1; }
+      100% { transform: rotateY(180deg) scale(0.10); opacity: 0; }
+    }
+
+
+    
   </style>
 </head>
 
@@ -362,6 +422,9 @@
       </header>
 
       <main>
+        <canvas id="confettiCanvas" class="confettiCanvas hidden"></canvas>
+
+        
         <!-- SPLASH -->
         <section id="screenSplash">
           <img
@@ -393,12 +456,18 @@
                 <img id="cmdImage" src="topten_images/top_ten_1.png" alt="Commandment image" />
 
               </div>
-              <div class="face back">
-                <div class="cmdText"><span id="cmdText">You shall have no other gods before Me.</span></div>
-              </div>
+                <div class="face back">
+                  <div class="backLabel">Revealed!</div>
+                </div>
+
             </div>
           </div>
 
+                <div id="answerBox" class="answerBox hidden">
+        <div class="cmdTextAnswer" id="cmdTextAnswer">Commandment text goes here</div>
+      </div>
+
+          
           <div class="hint" id="tapHint">Tap the image to reveal answer.</div>
 
           <div class="revealArea" id="revealArea">
@@ -484,6 +553,10 @@
     const cmdTitle = document.getElementById("cmdTitle");
     const cmdImage = document.getElementById("cmdImage");
     const cmdText = document.getElementById("cmdText");
+    const cmdTextAnswer = document.getElementById("cmdTextAnswer");
+    const answerBox = document.getElementById("answerBox");
+    const confettiCanvas = document.getElementById("confettiCanvas");
+
     const tapHint = document.getElementById("tapHint");
 
     const flashcard = document.getElementById("flashcard");
@@ -517,16 +590,25 @@
 
     function resetCardToFront(){
       flashcard.classList.remove("flipped");
+      flashcard.classList.remove("vanish");
+      flashcard.style.pointerEvents = "auto";
+      flashcard.style.visibility = "visible";
+      flashcard.style.opacity = "1";
+    
       flashcard.setAttribute("aria-pressed", "false");
       revealed = false;
+    
+      answerBox.classList.add("hidden");
       revealArea.classList.remove("show");
       tapHint.classList.remove("hidden");
     }
+
 
     function loadCommandment(i){
       const item = commandments[i];
       cmdTitle.textContent = "COMMANDMENT " + item.num;
       cmdText.textContent = item.text;
+      cmdTextAnswer.textContent = item.text;
 
       // image path pattern:
       cmdImage.src = "topten_images/top_ten_" + item.num + ".png";
@@ -538,18 +620,119 @@
       resetCardToFront();
     }
 
+    function resizeConfettiCanvas(){
+      const rect = confettiCanvas.getBoundingClientRect();
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      confettiCanvas.width = Math.floor(rect.width * dpr);
+      confettiCanvas.height = Math.floor(rect.height * dpr);
+    }
+    
+    function runConfettiBurst(durationMs = 650){
+      confettiCanvas.classList.remove("hidden");
+      resizeConfettiCanvas();
+    
+      const ctx = confettiCanvas.getContext("2d");
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    
+      const w = confettiCanvas.getBoundingClientRect().width;
+      const h = confettiCanvas.getBoundingClientRect().height;
+    
+      // Burst near the flashcard center
+      const cardRect = flashcard.getBoundingClientRect();
+      const canvasRect = confettiCanvas.getBoundingClientRect();
+      const originX = (cardRect.left + cardRect.width / 2) - canvasRect.left;
+      const originY = (cardRect.top + cardRect.height / 2) - canvasRect.top;
+    
+      const pieces = [];
+      const count = 120;
+    
+      for(let i=0;i<count;i++){
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 3 + Math.random() * 6;
+        pieces.push({
+          x: originX,
+          y: originY,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - (2 + Math.random() * 3),
+          r: 2 + Math.random() * 3,
+          rot: Math.random() * Math.PI,
+          vr: (Math.random() - 0.5) * 0.25,
+          life: 0,
+          ttl: 50 + Math.random() * 40
+        });
+      }
+    
+      let frame = 0;
+      const gravity = 0.18;
+    
+      function tick(){
+        frame++;
+        ctx.clearRect(0,0,w,h);
+    
+        for(const p of pieces){
+          p.life++;
+          p.vy += gravity;
+          p.x += p.vx;
+          p.y += p.vy;
+          p.rot += p.vr;
+    
+          // Simple alpha fade
+          const alpha = Math.max(0, 1 - (p.life / p.ttl));
+          ctx.globalAlpha = alpha;
+    
+          // Random bright-ish colors using HSL (looks like confetti)
+          const hue = (p.life * 7 + (p.x + p.y)) % 360;
+          ctx.fillStyle = `hsl(${hue} 85% 60%)`;
+    
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.rot);
+          ctx.fillRect(-p.r, -p.r, p.r*2.2, p.r*1.4);
+          ctx.restore();
+        }
+    
+        ctx.globalAlpha = 1;
+    
+        // Stop after duration or when all pieces are basically done
+        const done = pieces.every(p => p.life >= p.ttl);
+        if(done){
+          confettiCanvas.classList.add("hidden");
+          ctx.clearRect(0,0,w,h);
+          return;
+        }
+        requestAnimationFrame(tick);
+      }
+    
+      requestAnimationFrame(tick);
+    }
+
+    
     function reveal(){
       if(revealed) return;
       revealed = true;
+    
+      // Flip first
       flashcard.classList.add("flipped");
       flashcard.setAttribute("aria-pressed", "true");
-
-      // Show answer UI after the flip begins
+      tapHint.classList.add("hidden");
+    
+      // After the flip, confetti + vanish + show answer
       setTimeout(() => {
+        runConfettiBurst(650);
+    
+        // vanish animation
+        flashcard.classList.add("vanish");
+        flashcard.style.pointerEvents = "none";
+    
+        // reveal the commandment text underneath
+        answerBox.classList.remove("hidden");
+    
+        // show the yes/no buttons too
         revealArea.classList.add("show");
-        tapHint.classList.add("hidden");
-      }, 420);
+      }, 520);
     }
+
 
     function advance(){
       idx += 1;
