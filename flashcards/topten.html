@@ -351,7 +351,8 @@
           <div class="cardWrap" aria-label="Flashcard">
             <div class="card" id="flashcard" tabindex="0" role="button" aria-pressed="false" aria-label="Tap to reveal answer">
               <div class="face front">
-                <img id="cmdImage" src="/topten_images/top_ten_1.png" alt="Commandment image" />
+                <img id="cmdImage" src="topten_images/top_ten_1.png" alt="Commandment image" />
+
               </div>
               <div class="face back">
                 <div class="cmdText"><span id="cmdText">You shall have no other gods before Me.</span></div>
@@ -489,7 +490,7 @@
       cmdText.textContent = item.text;
 
       // image path pattern:
-      cmdImage.src = "/topten_images/top_ten_" + item.num + ".png";
+      cmdImage.src = "topten_images/top_ten_" + item.num + ".png";
       cmdImage.alt = "Commandment " + item.num + " image";
 
       progressPill.textContent = (i + 1) + " / " + commandments.length;
