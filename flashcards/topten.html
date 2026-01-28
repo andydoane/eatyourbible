@@ -552,7 +552,7 @@
 
     const cmdTitle = document.getElementById("cmdTitle");
     const cmdImage = document.getElementById("cmdImage");
-    const cmdText = document.getElementById("cmdText");
+
     const cmdTextAnswer = document.getElementById("cmdTextAnswer");
     const answerBox = document.getElementById("answerBox");
     const confettiCanvas = document.getElementById("confettiCanvas");
@@ -607,7 +607,6 @@
     function loadCommandment(i){
       const item = commandments[i];
       cmdTitle.textContent = "COMMANDMENT " + item.num;
-      cmdText.textContent = item.text;
       cmdTextAnswer.textContent = item.text;
 
       // image path pattern:
