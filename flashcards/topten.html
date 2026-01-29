@@ -407,45 +407,67 @@
     }
 
     /* The answer that appears in the SAME card space (behind the vanishing card) */
-.answerCard{
-  position: absolute;
-  inset: 0;
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,0.16);
-  background: linear-gradient(180deg, rgba(122,167,255,0.16), rgba(0,0,0,0.12));
-  box-shadow: 0 14px 40px rgba(0,0,0,0.32);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 22px;
-  text-align: center;
-  z-index: 0; /* behind the .card */
-}
+    .answerCard{
+    position: absolute;
+    inset: 0;
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,0.16);
+    background: linear-gradient(180deg, rgba(122,167,255,0.16), rgba(0,0,0,0.12));
+    box-shadow: 0 14px 40px rgba(0,0,0,0.32);
+    display: flex;
+    flex-direction: column;
 
-.answerText{
-  font-size: clamp(22px, 3.4vw, 30px);
-  font-weight: 900;
-  line-height: 1.2;
-  letter-spacing: 0.01em;
+    align-items: center;
+    justify-content: center;
+    padding: 22px;
+    text-align: center;
+    z-index: 0; /* behind the .card */
+    }
 
-  /* “Smart wrap” / balanced line breaks */
-  text-wrap: balance;
+    .answerText{
+    font-size: clamp(22px, 3.4vw, 30px);
+    font-weight: 900;
+    line-height: 1.2;
+    letter-spacing: 0.01em;
 
-  /* Helps the wrap feel nicely sized on mobile */
-  max-width: 18ch;
+    /* “Smart wrap” / balanced line breaks */
+    text-wrap: balance;
 
-  padding: 14px 16px;
-  border-radius: 16px;
-  background: rgba(0,0,0,0.18);
-  border: 1px solid rgba(255,255,255,0.14);
-}
+    /* Helps the wrap feel nicely sized on mobile */
+    max-width: 18ch;
 
-/* Make sure the flipping card sits above the answer */
-.card{
-  position: relative;
-  z-index: 1;
-}
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: rgba(0,0,0,0.18);
+    border: 1px solid rgba(255,255,255,0.14);
+    }
 
+    /* Make sure the flipping card sits above the answer */
+    .card{
+    position: relative;
+    z-index: 1;
+    }
+
+    /* Read-it-to-me button inside the answer card */
+    .readBtn{
+    margin-top: 14px;
+    padding: 10px 16px;
+    border-radius: 14px;
+    font-size: 16px;
+    font-weight: 800;
+    border: 1px solid rgba(255,255,255,0.25);
+    background: rgba(122,167,255,0.22);
+    color: var(--text);
+    cursor: pointer;
+    }
+
+    .readBtn:hover{
+    background: rgba(122,167,255,0.32);
+    }
+
+    .readBtn:active{
+    transform: scale(0.97);
+    }
 
     
   </style>
@@ -483,7 +505,7 @@
             <button class="primary" id="btnStart">Tap to start</button>
           </div>
           <div class="hint" style="margin-top:10px;">
-            You’ll see an image. Tap it to flip and reveal the commandment, then mark whether you guessed correctly.
+            You’ll see a picture of a commandment. Try to say the commandment, then tap the picture to reveal the answer. Mark your guess as right or wrong to keep track of your progress.
           </div>
         </section>
 
@@ -493,8 +515,13 @@
 
             <div class="cardWrap" aria-label="Flashcard">
             <div class="answerCard hidden" id="answerCard" aria-hidden="true">
-                <div class="answerText" id="answerText">Commandment text goes here</div>
+            <div class="answerText" id="answerText">Commandment text goes here</div>
+
+            <button class="readBtn" id="readBtn">
+                🔊 Read it to me
+            </button>
             </div>
+
 
             <div class="card" id="flashcard" tabindex="0" role="button" aria-pressed="false" aria-label="Tap to reveal answer">
                 <div class="face front">
@@ -575,6 +602,8 @@
      * STATE
      ***********************/
     let idx = 0;
+    let audioPlayer = null;
+
     let correct = 0;
     let incorrect = 0;
     let revealed = false;
@@ -595,6 +624,7 @@
 
     const answerCard = document.getElementById("answerCard");
     const answerText = document.getElementById("answerText");
+    const readBtn = document.getElementById("readBtn");
 
     const confettiCanvas = document.getElementById("confettiCanvas");
 
@@ -827,6 +857,22 @@
     flashcard.addEventListener("click", () => {
       reveal();
     });
+
+    readBtn.addEventListener("click", () => {
+  // Stop any audio already playing
+  if(audioPlayer){
+    audioPlayer.pause();
+    audioPlayer.currentTime = 0;
+  }
+
+  // Commandments are 1–10, idx is 0–9
+  const audioNumber = idx + 1;
+  const audioPath = "topten_sounds/topten_" + audioNumber + ".mp3";
+
+  audioPlayer = new Audio(audioPath);
+  audioPlayer.play();
+});
+
 
     // Allow keyboard "Enter/Space" if someone uses a keyboard
     flashcard.addEventListener("keydown", (e) => {
