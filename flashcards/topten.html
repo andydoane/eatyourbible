@@ -124,9 +124,6 @@
       letter-spacing: 0.02em;
     }
 
-    #cmdTitle{
-      margin-bottom: 14px;
-    }
 
 
     .titleImage{
@@ -546,8 +543,6 @@
 
         <!-- GAME -->
         <section id="screenGame" class="hidden" style="width:100%;">
-          <div class="big" id="cmdTitle">COMMANDMENT 1</div>
-
             <div class="cardWrap" aria-label="Flashcard">
             <div class="answerCard hidden" id="answerCard" aria-hidden="true">
             <div class="answerText" id="answerText">Commandment text goes here</div>
@@ -653,7 +648,6 @@
     const progressPill = document.getElementById("progressPill");
     const scorePill = document.getElementById("scorePill");
 
-    const cmdTitle = document.getElementById("cmdTitle");
     const cmdImage = document.getElementById("cmdImage");
 
     const answerCard = document.getElementById("answerCard");
@@ -720,7 +714,6 @@
     // Reset the UI first (so we’re back to the “front” state)
     resetCardToFront();
 
-    cmdTitle.textContent = "COMMANDMENT " + item.num;
     answerText.textContent = item.text;
 
     progressPill.textContent = (i + 1) + " / " + commandments.length;
