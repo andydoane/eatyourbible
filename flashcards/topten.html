@@ -98,12 +98,9 @@
       justify-content: center;
       align-items: center;
       text-align: center;
+      position: relative;
     }
 
-    footer{
-      padding: 16px 18px 18px;
-      border-top: 1px solid rgba(255,255,255,0.08);
-    }
 
       .hint{
         font-size: 14px;
@@ -266,19 +263,6 @@
       padding: 22px;
     }
 
-    .cmdText{
-      font-size: clamp(18px, 2.8vw, 22px);
-      font-weight: 800;
-      line-height: 1.35;
-      letter-spacing: 0.01em;
-    }
-    .cmdText span{
-      display: inline-block;
-      padding: 12px 14px;
-      border-radius: 16px;
-      background: rgba(0,0,0,0.18);
-      border: 1px solid rgba(255,255,255,0.14);
-    }
 
     .revealArea{
       width: 100%;
@@ -310,6 +294,8 @@
       gap: 10px;
       align-items: center;
       box-shadow: 0 14px 40px rgba(0,0,0,0.25);
+      margin-top: 14px;
+      margin-bottom: 28px;
     }
 
     .scoreNum{
@@ -326,22 +312,9 @@
       text-wrap: balance;
     }
 
-    .rotateNote{
-      display: none;
-      font-size: 12px;
-      color: rgba(245,247,255,0.70);
-      padding: 10px 12px;
-      border-radius: 14px;
-      border: 1px dashed rgba(255,255,255,0.20);
-      background: rgba(0,0,0,0.15);
-      margin: 10px auto 0 auto;
-      text-align: center;
-    }
-
 
     /* Show note in landscape */
     @media (orientation: landscape){
-      .rotateNote{ display: inline-block; }
       .cardWrap{ max-width: 360px; }
     }
 
@@ -363,30 +336,7 @@
       pointer-events: none;
       z-index: 20;
     }
-    
-    /* Make main a positioning context for the confetti canvas */
-    main{
-      position: relative;
-    }
-    
-    /* Answer box (text revealed under the card) */
-    .answerBox{
-      width: 100%;
-      max-width: 520px;
-      margin-top: 8px;
-      padding: 14px 14px;
-      border-radius: 16px;
-      background: rgba(0,0,0,0.18);
-      border: 1px solid rgba(255,255,255,0.14);
-      box-shadow: 0 14px 40px rgba(0,0,0,0.18);
-    }
-    
-    .cmdTextAnswer{
-      font-size: clamp(18px, 2.8vw, 22px);
-      font-weight: 850;
-      line-height: 1.35;
-      color: rgba(245,247,255,0.95);
-    }
+       
     
     /* Back label (since we removed the commandment text from the card back) */
     .backLabel{
@@ -700,7 +650,6 @@
     let audioPlayer = null;
 
     let correct = 0;
-    let incorrect = 0;
     let revealed = false;
 
     /***********************
@@ -958,7 +907,6 @@
     function startGame(){
       idx = 0;
       correct = 0;
-      incorrect = 0;
       updateScorePill();
       showScreen("game");
       loadCommandment(idx);
@@ -1017,7 +965,6 @@
     btnNo.addEventListener("click", () => {
       if(!revealed) return;
       playNo1();
-      incorrect += 1;
       updateScorePill();
       advance();
     });
@@ -1027,7 +974,6 @@
       // exit fullscreen is optional; we just restart
       idx = 0;
       correct = 0;
-      incorrect = 0;
       updateScorePill();
       progressPill.textContent = "Ready";
       headerTitle.textContent = "Ten Commandments";
