@@ -323,6 +323,7 @@
       color: rgba(245,247,255,0.88);
       line-height: 1.45;
       max-width: 46ch;
+      text-wrap: balance;
     }
 
     .rotateNote{
@@ -495,7 +496,7 @@
     <div class="frame" role="application" aria-label="Ten Commandments Flashcards">
       <header>
         <div class="title">
-          <span id="headerTitle">Ten Commandments</span>
+          <span id="headerTitle">Commandment Quiz</span>
           <span class="pill" id="progressPill">Ready</span>
         </div>
         <div class="pill" id="scorePill">Score: 0</div>
@@ -611,17 +612,17 @@
     ];
 
     const encouragementByScore = [
-      "0/10 — That’s okay! Every journey starts somewhere. Try again and watch your score grow!",
-      "1/10 — Nice start! You learned at least one today—keep going!",
-      "2/10 — Good progress! A couple down—practice makes it stick.",
-      "3/10 — Solid effort! You’re building a strong foundation.",
-      "4/10 — Nice! You’re nearly halfway—keep sharpening those memories.",
-      "5/10 — Halfway there! That’s a great midpoint score.",
-      "6/10 — Great work! You know more than half—keep it up!",
-      "7/10 — Impressive! You’re doing really well.",
-      "8/10 — Excellent! You’re very close to a perfect score.",
-      "9/10 — Amazing! Just one more for perfection—so close!",
-      "10/10 — Perfect! Outstanding work—you really know the Ten Commandments!"
+      "That’s okay! Every journey starts somewhere. Try again and watch your score grow!",
+      "Nice start! You learned at least one today — keep going!",
+      "Good progress! Two commands down, eight to go!",
+      "Solid effort! You're starting to get it!",
+      "Nice! You’re nearly halfway — keep practicing!",
+      "Halfway there! Just five more to learn.",
+      "Great work! You know more than half — keep it up!",
+      "Impressive! You’re doing really well.",
+      "Excellent! You’re so close to a perfect score!",
+      "Amazing! Just one more for perfection — so close!",
+      "Perfect! Outstanding work — you really know the Ten Commandments!"
     ];
 
     /***********************
@@ -717,7 +718,7 @@
     answerText.textContent = item.text;
 
     progressPill.textContent = (i + 1) + " / " + commandments.length;
-    headerTitle.textContent = "Ten Commandments";
+    headerTitle.textContent = "Progress";
 
     // Hide the image until the new one is fully loaded
     cmdImage.classList.add("imgLoading");
