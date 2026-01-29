@@ -626,6 +626,73 @@
     ];
 
     /***********************
+     * SIMPLE PROCEDURAL AUDIO (Yes / No)
+     ***********************/
+    let audioCtx = null;
+    let masterGain = null;
+
+    function initAudio(){
+      if(audioCtx) return;
+
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      masterGain = audioCtx.createGain();
+      masterGain.gain.value = 0.6;
+      masterGain.connect(audioCtx.destination);
+    }
+
+    function playYes3(){
+      initAudio();
+
+      const t = audioCtx.currentTime;
+      const base = 660;
+      const notes = [base, base * 1.25, base * 1.5];
+
+      notes.forEach((freq, i) => {
+        const osc = audioCtx.createOscillator();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, t + i * 0.09);
+
+        const gain = audioCtx.createGain();
+        gain.gain.setValueAtTime(0.0001, t + i * 0.09);
+        gain.gain.exponentialRampToValueAtTime(0.4, t + i * 0.09 + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.09 + 0.12);
+
+        osc.connect(gain);
+        gain.connect(masterGain);
+
+        osc.start(t + i * 0.09);
+        osc.stop(t + i * 0.09 + 0.14);
+      });
+    }
+
+    function playNo1(){
+      initAudio();
+
+      const t = audioCtx.currentTime;
+
+      const osc = audioCtx.createOscillator();
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(120, t);
+
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = "lowpass";
+      filter.frequency.value = 700;
+
+      const gain = audioCtx.createGain();
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.exponentialRampToValueAtTime(0.55, t + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(masterGain);
+
+      osc.start(t);
+      osc.stop(t + 0.48);
+    }
+
+
+    /***********************
      * STATE
      ***********************/
     let idx = 0;
@@ -939,17 +1006,21 @@
 
     btnYes.addEventListener("click", () => {
       if(!revealed) return;
+      playYes3();
       correct += 1;
       updateScorePill();
       advance();
     });
 
+
     btnNo.addEventListener("click", () => {
       if(!revealed) return;
+      playNo1();
       incorrect += 1;
       updateScorePill();
       advance();
     });
+
 
     btnRestart.addEventListener("click", () => {
       // exit fullscreen is optional; we just restart
