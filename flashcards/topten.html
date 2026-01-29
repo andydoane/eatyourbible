@@ -200,7 +200,8 @@
       aspect-ratio: 3 / 4; /* portrait card */
       perspective: 1200px;
       user-select: none;
-    
+      position: relative;
+
       /* ensure it's truly centered */
       margin-left: auto;
       margin-right: auto;
@@ -405,6 +406,46 @@
       100% { transform: rotateY(180deg) scale(0.10); opacity: 0; }
     }
 
+    /* The answer that appears in the SAME card space (behind the vanishing card) */
+.answerCard{
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.16);
+  background: linear-gradient(180deg, rgba(122,167,255,0.16), rgba(0,0,0,0.12));
+  box-shadow: 0 14px 40px rgba(0,0,0,0.32);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px;
+  text-align: center;
+  z-index: 0; /* behind the .card */
+}
+
+.answerText{
+  font-size: clamp(22px, 3.4vw, 30px);
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+
+  /* “Smart wrap” / balanced line breaks */
+  text-wrap: balance;
+
+  /* Helps the wrap feel nicely sized on mobile */
+  max-width: 18ch;
+
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(0,0,0,0.18);
+  border: 1px solid rgba(255,255,255,0.14);
+}
+
+/* Make sure the flipping card sits above the answer */
+.card{
+  position: relative;
+  z-index: 1;
+}
+
 
     
   </style>
@@ -450,22 +491,21 @@
         <section id="screenGame" class="hidden" style="width:100%;">
           <div class="big" id="cmdTitle">COMMANDMENT 1</div>
 
-          <div class="cardWrap" aria-label="Flashcard">
-            <div class="card" id="flashcard" tabindex="0" role="button" aria-pressed="false" aria-label="Tap to reveal answer">
-              <div class="face front">
-                <img id="cmdImage" src="topten_images/top_ten_1.png" alt="Commandment image" />
-
-              </div>
-                <div class="face back">
-                  <div class="backLabel">Revealed!</div>
-                </div>
-
+            <div class="cardWrap" aria-label="Flashcard">
+            <div class="answerCard hidden" id="answerCard" aria-hidden="true">
+                <div class="answerText" id="answerText">Commandment text goes here</div>
             </div>
-          </div>
 
-                <div id="answerBox" class="answerBox hidden">
-        <div class="cmdTextAnswer" id="cmdTextAnswer">Commandment text goes here</div>
-      </div>
+            <div class="card" id="flashcard" tabindex="0" role="button" aria-pressed="false" aria-label="Tap to reveal answer">
+                <div class="face front">
+                <img id="cmdImage" src="topten_images/top_ten_1.png" alt="Commandment image" />
+                </div>
+                <div class="face back">
+                <div class="backLabel">Revealed!</div>
+                </div>
+            </div>
+            </div>
+
 
           
           <div class="hint" id="tapHint">Tap the image to reveal answer.</div>
@@ -505,16 +545,16 @@
      * DATA (Ten Commandments)
      ***********************/
     const commandments = [
-      { num: 1, text: "You shall have no other gods before Me." },
-      { num: 2, text: "You shall not make for yourself an idol." },
-      { num: 3, text: "You shall not take the name of the Lord your God in vain." },
-      { num: 4, text: "Remember the Sabbath day, to keep it holy." },
+      { num: 1, text: "You shall have no other gods before me." },
+      { num: 2, text: "You shall not make for yourself an image in the form of anything in heaven above or on the earth beneath or in the waters below." },
+      { num: 3, text: "You shall not misuse the name of the Lord your God." },
+      { num: 4, text: "Remember the Sabbath day by keeping it holy. Six days you shall labor and do all your work, but the seventh day is a sabbath to the Lord your God." },
       { num: 5, text: "Honor your father and your mother." },
       { num: 6, text: "You shall not murder." },
       { num: 7, text: "You shall not commit adultery." },
       { num: 8, text: "You shall not steal." },
-      { num: 9, text: "You shall not bear false witness against your neighbor." },
-      { num: 10, text: "You shall not covet." }
+      { num: 9, text: "You shall not give false testimony against your neighbor (Do not lie)." },
+      { num: 10, text: "You shall not covet... anything that belongs to your neighbor" }
     ];
 
     const encouragementByScore = [
@@ -553,8 +593,9 @@
     const cmdTitle = document.getElementById("cmdTitle");
     const cmdImage = document.getElementById("cmdImage");
 
-    const cmdTextAnswer = document.getElementById("cmdTextAnswer");
-    const answerBox = document.getElementById("answerBox");
+    const answerCard = document.getElementById("answerCard");
+    const answerText = document.getElementById("answerText");
+
     const confettiCanvas = document.getElementById("confettiCanvas");
 
     const tapHint = document.getElementById("tapHint");
@@ -598,7 +639,9 @@
       flashcard.setAttribute("aria-pressed", "false");
       revealed = false;
     
-      answerBox.classList.add("hidden");
+      answerCard.classList.add("hidden");
+      answerCard.setAttribute("aria-hidden", "true");
+
       revealArea.classList.remove("show");
       tapHint.classList.remove("hidden");
     }
@@ -607,7 +650,8 @@
     function loadCommandment(i){
       const item = commandments[i];
       cmdTitle.textContent = "COMMANDMENT " + item.num;
-      cmdTextAnswer.textContent = item.text;
+      answerText.textContent = item.text;
+
 
       // image path pattern:
       cmdImage.src = "topten_images/top_ten_" + item.num + ".png";
@@ -725,7 +769,9 @@
         flashcard.style.pointerEvents = "none";
     
         // reveal the commandment text underneath
-        answerBox.classList.remove("hidden");
+        answerCard.classList.remove("hidden");
+        answerCard.setAttribute("aria-hidden", "false");
+
     
         // show the yes/no buttons too
         revealArea.classList.add("show");
