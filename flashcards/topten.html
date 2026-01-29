@@ -469,6 +469,10 @@
     transform: scale(0.97);
     }
 
+    .imgLoading{
+  visibility: hidden;
+    }
+
     
   </style>
 </head>
@@ -678,20 +682,39 @@
 
 
     function loadCommandment(i){
-      const item = commandments[i];
-      cmdTitle.textContent = "COMMANDMENT " + item.num;
-      answerText.textContent = item.text;
+    const item = commandments[i];
 
+    // Reset the UI first (so we’re back to the “front” state)
+    resetCardToFront();
 
-      // image path pattern:
-      cmdImage.src = "topten_images/top_ten_" + item.num + ".png";
-      cmdImage.alt = "Commandment " + item.num + " image";
+    cmdTitle.textContent = "COMMANDMENT " + item.num;
+    answerText.textContent = item.text;
 
-      progressPill.textContent = (i + 1) + " / " + commandments.length;
-      headerTitle.textContent = "Ten Commandments";
+    progressPill.textContent = (i + 1) + " / " + commandments.length;
+    headerTitle.textContent = "Ten Commandments";
 
-      resetCardToFront();
+    // Hide the image until the new one is fully loaded
+    cmdImage.classList.add("imgLoading");
+
+    const newSrc = "topten_images/top_ten_" + item.num + ".png";
+    const preloader = new Image();
+
+    preloader.onload = () => {
+        cmdImage.src = newSrc;
+        cmdImage.alt = "Commandment " + item.num + " image";
+        cmdImage.classList.remove("imgLoading");
+    };
+
+    preloader.onerror = () => {
+        // If it fails, still try to show something rather than staying hidden
+        cmdImage.src = newSrc;
+        cmdImage.alt = "Commandment " + item.num + " image";
+        cmdImage.classList.remove("imgLoading");
+    };
+
+    preloader.src = newSrc;
     }
+
 
     function resizeConfettiCanvas(){
       const rect = confettiCanvas.getBoundingClientRect();
