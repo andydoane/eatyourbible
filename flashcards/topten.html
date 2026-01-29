@@ -124,6 +124,11 @@
       letter-spacing: 0.02em;
     }
 
+    #cmdTitle{
+      margin-bottom: 14px;
+    }
+
+
     .titleImage{
       width: 100%;
       max-width: 320px;
@@ -140,6 +145,8 @@
       text-align: center;
       margin-left: auto;
       margin-right: auto;
+      text-wrap: balance;
+
     }
 
 
@@ -477,6 +484,10 @@
     font-size: 16px;
     }
 
+    .rulesText{
+    font-size: 17px;
+    line-height: 1.55;
+    }
 
     
   </style>
@@ -505,18 +516,33 @@
             class="titleImage"
           />
 
-          <div class="big">Best in portrait mode</div>
+          <div class="big">Best in vertical mode</div>
           <div class="sub">
-            This game is designed for phones held upright.
-            <div class="rotateNote">Tip: Rotate back to portrait for the best experience.</div>
+            Turn your device to portrait mode before beginning.
           </div>
           <div class="btnrow" style="margin-top:14px;">
             <button class="primary" id="btnStart">Tap to start</button>
           </div>
-          <div class="hint" style="margin-top:10px;">
-            You’ll see a picture of a commandment. Try to say the commandment, then tap the picture to reveal the answer. Mark your guess as right or wrong to keep track of your progress.
-          </div>
         </section>
+
+        <!-- RULES SCREEN -->
+        <section id="screenRules" class="hidden">
+        <img
+            src="topten_images/top_ten_title.png"
+            alt="Ten Commandments"
+            class="titleImage"
+        />
+
+        <div class="sub rulesText" style="margin-top:6px;">
+            You’ll see a picture of a commandment. Try to say the commandment, then tap the picture to reveal the answer. Mark your guess as right or wrong to keep track of your progress.
+        </div>
+
+
+        <div class="btnrow" style="margin-top:14px;">
+            <button class="primary" id="btnGotIt">Got It!</button>
+        </div>
+        </section>
+
 
         <!-- GAME -->
         <section id="screenGame" class="hidden" style="width:100%;">
@@ -617,6 +643,9 @@
      * ELEMENTS
      ***********************/
     const screenSplash = document.getElementById("screenSplash");
+    const screenRules = document.getElementById("screenRules");
+    const btnGotIt = document.getElementById("btnGotIt");
+
     const screenGame = document.getElementById("screenGame");
     const screenScore = document.getElementById("screenScore");
 
@@ -654,15 +683,18 @@
     }
 
     function showScreen(which){
-      // which: "splash" | "game" | "score"
-      screenSplash.classList.add("hidden");
-      screenGame.classList.add("hidden");
-      screenScore.classList.add("hidden");
+    // which: "splash" | "rules" | "game" | "score"
+    screenSplash.classList.add("hidden");
+    screenRules.classList.add("hidden");
+    screenGame.classList.add("hidden");
+    screenScore.classList.add("hidden");
 
-      if(which === "splash") screenSplash.classList.remove("hidden");
-      if(which === "game") screenGame.classList.remove("hidden");
-      if(which === "score") screenScore.classList.remove("hidden");
+    if(which === "splash") screenSplash.classList.remove("hidden");
+    if(which === "rules") screenRules.classList.remove("hidden");
+    if(which === "game") screenGame.classList.remove("hidden");
+    if(which === "score") screenScore.classList.remove("hidden");
     }
+
 
     function resetCardToFront(){
       flashcard.classList.remove("flipped");
@@ -874,9 +906,14 @@
      * EVENTS
      ***********************/
     btnStart.addEventListener("click", async () => {
-      await goFullscreen();
-      startGame();
+    await goFullscreen();
+    showScreen("rules");
     });
+
+    btnGotIt.addEventListener("click", () => {
+        startGame();
+    });
+
 
     flashcard.addEventListener("click", () => {
       reveal();
