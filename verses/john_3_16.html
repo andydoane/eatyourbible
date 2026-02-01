@@ -366,10 +366,9 @@
     <div class="shell">
       <header>
         <div class="brand">
-          <div class="logo">✝︎</div>
+          <div class="logo">📘</div>
           <div class="title">
             <b>Verse Memory</b>
-            <span>Practice with emojis + blanks</span>
           </div>
         </div>
         <div class="top-actions">
@@ -412,6 +411,7 @@
    OPTION A CONFIG (edit these only)
    ========================================================= */
 const VERSE_REF  = "John 3:16 (NIV)";
+const APP_TITLE = `Let's memorize ${VERSE_REF.replace("! (NIV)", "")}`;
 const VERSE_ID   = "john_3_16";          // used for the default mp3 filename
 const AUDIO_FILE = `verse_audio/${VERSE_ID}.mp3`;
 
@@ -791,7 +791,7 @@ function render(){
 
 function renderTitle(){
   screenRoot.appendChild(el("div", { class:"kicker", text:"Welcome" }));
-  screenRoot.appendChild(el("h1", { text:"Memorize John 3:16" }));
+  screenRoot.appendChild(el("h1", { text: APP_TITLE }));
   screenRoot.appendChild(el("p", { text:"You’ll read the verse out loud, then practice again as some words turn into emojis and blanks." }));
 
   const c = el("div", { class:"controls" }, [
@@ -809,8 +809,6 @@ function renderTitle(){
   ]);
 
   screenRoot.appendChild(c);
-
-  screenRoot.appendChild(el("div", { class:"tip", text:"Tip: Put your mp3 file in the same folder as this HTML and name it “john_3_16.mp3” (or change AUDIO_FILE in the config)." }));
 }
 
 
