@@ -740,7 +740,7 @@ function renderVerse({mode, activeCount=0, onHint=null}){
           if (onHint) onHint(idx, tok.text);
             showModal({
             title: "",
-            body: buildRevealBody(disguised, tok.text),
+            body: buildRevealBody(target.emoji || "❓", tok.text),
             actions: [btn("Close", { primary:false, onClick: () => closeModal() })]
             });
 
