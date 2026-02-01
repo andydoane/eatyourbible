@@ -375,17 +375,17 @@
    ========================================================= */
 const VERSE_REF  = "John 3:16 (NIV)";
 const VERSE_ID   = "john_3_16";          // used for the default mp3 filename
-const AUDIO_FILE = `${VERSE_ID}.mp3`;    // change if needed
+const AUDIO_FILE = `verse_audio/${VERSE_ID}.mp3`;
 
 const VERSE_TEXT = "For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life.";
 
 const HIDE_PLAN = [
   // Emoji phase (each step adds one more)
-  { type: "emoji", word: "God",    occurrence: 1, emoji: "✨" },
   { type: "emoji", word: "loved",  occurrence: 1, emoji: "❤️" },
-  { type: "emoji", word: "world",  occurrence: 1, emoji: "🌍" },
-  { type: "emoji", word: "gave",   occurrence: 1, emoji: "🎁" },
+  { type: "emoji", word: "God",    occurrence: 1, emoji: "👑" },
   { type: "emoji", word: "Son",    occurrence: 1, emoji: "👦" },
+  { type: "emoji", word: "gave",   occurrence: 1, emoji: "🎁" },
+  { type: "emoji", word: "world",  occurrence: 1, emoji: "🌍" },
 
   // Underscore phase (after emojis, each step adds one more)
   { type: "underscore", word: "whoever",  occurrence: 1 },
