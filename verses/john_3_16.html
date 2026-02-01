@@ -356,6 +356,26 @@
       .verse-box{ padding: 18px 18px; }
     }
 
+    /* Page transition layer (we’ll animate #screenRoot) */
+    #screenRoot{
+    position: relative;
+    will-change: transform, opacity;
+    }
+
+    /* Slide + fade classes */
+    .page-out-left   { transform: translateX(-18px); opacity: 0; transition: transform 220ms ease, opacity 220ms ease; }
+    .page-out-right  { transform: translateX(18px);  opacity: 0; transition: transform 220ms ease, opacity 220ms ease; }
+
+    .page-in-left    { transform: translateX(-18px); opacity: 0; }
+    .page-in-right   { transform: translateX(18px);  opacity: 0; }
+    .page-in-active  { transform: translateX(0);     opacity: 1; transition: transform 220ms ease, opacity 220ms ease; }
+
+    /* Reduced motion: no slide, gentle fade only */
+    @media (prefers-reduced-motion: reduce){
+    .page-out-left, .page-out-right { transform: none; opacity: 0; transition: opacity 200ms ease; }
+    .page-in-left, .page-in-right  { transform: none; opacity: 0; }
+    .page-in-active                { transform: none; opacity: 1; transition: opacity 200ms ease; }
+    }
 
 
 
@@ -412,7 +432,8 @@
    OPTION A CONFIG (edit these only)
    ========================================================= */
 const VERSE_REF  = "John 3:16 (NIV)";
-const APP_TITLE = `Let's memorize ${VERSE_REF.replace("! (NIV)", "")}`;
+const APP_TITLE = `Let's memorize ${VERSE_REF.replace(" (NIV)", "")}`;
+
 const VERSE_ID   = "john_3_16";          // used for the default mp3 filename
 const AUDIO_FILE = `verse_audio/${VERSE_ID}.mp3`;
 
@@ -598,6 +619,32 @@ overlay.addEventListener("click", (e) => {
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && overlay.classList.contains("show")) closeModal();
 });
+
+function navigateWithTransition(direction, applyStateChange){
+  // direction: "forward" | "back"
+  const outClass = direction === "back" ? "page-out-right" : "page-out-left";
+  const inClass  = direction === "back" ? "page-in-left"  : "page-in-right";
+
+  // 1) Animate current content out
+  screenRoot.classList.remove("page-in-left","page-in-right","page-in-active","page-out-left","page-out-right");
+  screenRoot.classList.add(outClass);
+
+  // 2) After it fades/slides out, swap content, then animate in
+  window.setTimeout(() => {
+    applyStateChange();   // change AppState, stepIndex, etc.
+    render();             // render new page into #screenRoot
+
+    // Prepare the "in" position (offscreen + transparent)
+    screenRoot.classList.remove("page-out-left","page-out-right","page-in-left","page-in-right","page-in-active");
+    screenRoot.classList.add(inClass);
+
+    // Next frame: animate into place
+    requestAnimationFrame(() => {
+      screenRoot.classList.add("page-in-active");
+    });
+  }, 220);
+}
+
 
 /* ---------- Audio ---------- */
 function resetAudioForNewPage(){
@@ -879,11 +926,13 @@ function renderFullVerse(){
     [
         btn("Start Practice", {
         onClick: () => {
-            resetAudioForNewPage();
+        resetAudioForNewPage();
+        navigateWithTransition("forward", () => {
             AppState.screen = "step";
             AppState.stepIndex = 1;
-            render();
+        });
         }
+
         })
 
     ]
@@ -912,40 +961,41 @@ function renderStep(){
 
   const isLast = (step >= totalSteps);
 
-  setSticky(true,
-    [
-      btn(audioEl.paused ? "Read it to Me" : "Pause Audio", { primary:false, onClick: () => toggleAudio() }),
-        btn("Back", {
-        primary:false,
-        onClick: () => {
-            resetAudioForNewPage();
-            if (step <= 1){
-            AppState.screen = "full";
-            } else {
-            AppState.stepIndex = step - 1;
-            }
-            render();
-        }
-        })
+setSticky(true,
+  [
+    btn(audioEl.paused ? "Read it to Me" : "Pause Audio", { primary:false, onClick: () => toggleAudio() }),
 
-    ],
-    [
-        btn(isLast ? "Final Test" : "Next", {
-        onClick: () => {
-            resetAudioForNewPage();
-            if (isLast){
+    btn("Back", {
+      primary:false,
+      onClick: () => {
+        resetAudioForNewPage();
+        navigateWithTransition("back", () => {
+          if (step <= 1){
+            AppState.screen = "full";
+          } else {
+            AppState.stepIndex = step - 1;
+          }
+        });
+      }
+    })
+  ],
+  [
+    btn(isLast ? "Next" : "Next", {
+      onClick: () => {
+        resetAudioForNewPage();
+        navigateWithTransition("forward", () => {
+          if (isLast){
             AppState.screen = "final";
             AppState.hintCountFinal = 0;
             AppState.revealedOnFinal.clear();
-            } else {
+          } else {
             AppState.stepIndex = step + 1;
-            }
-            render();
-        }
-        })
-
-    ]
-  );
+          }
+        });
+      }
+    })
+  ]
+);
 }
 
 function renderFinal(){
@@ -976,12 +1026,14 @@ function renderFinal(){
       btn(audioEl.paused ? "Read it to Me" : "Pause Audio", { primary:false, onClick: () => toggleAudio() }),
         btn("Back", {
         primary:false,
-        onClick: () => {
+            onClick: () => {
             resetAudioForNewPage();
-            AppState.screen = "step";
-            AppState.stepIndex = HIDE_PLAN.length;
-            render();
-        }
+            navigateWithTransition("back", () => {
+                AppState.screen = "step";
+                AppState.stepIndex = HIDE_PLAN.length;
+            });
+            }
+
         })
 
     ],
@@ -1075,6 +1127,11 @@ function restart(){
 
 /* Boot */
 render();
+requestAnimationFrame(() => {
+  screenRoot.classList.add("page-in-active");
+});
+
+
 </script>
 </body>
 </html>
