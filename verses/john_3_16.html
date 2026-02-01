@@ -541,6 +541,16 @@ document.addEventListener("keydown", (e) => {
 });
 
 /* ---------- Audio ---------- */
+function resetAudioForNewPage(){
+  try {
+    audioEl.pause();
+    audioEl.currentTime = 0;
+    // Optional but helpful: forces the browser to treat the next play as a fresh start
+    audioEl.load();
+  } catch (e) {}
+}
+
+
 function toggleAudio(){
   if (!audioEl.src){
     showModal({
@@ -710,19 +720,22 @@ function renderTitle(){
   const c = el("div", { class:"controls" }, [
     btn("Get Started", {
       onClick: () => {
+        resetAudioForNewPage();
         AppState.screen = "instructions";
         render();
       }
     }),
     btn("Play Audio", {
       primary:false,
-      onClick: () => toggleAudio()
+      onClick: () => toggleAudio()   // DON'T reset here
     })
   ]);
+
   screenRoot.appendChild(c);
 
   screenRoot.appendChild(el("div", { class:"tip", text:"Tip: Put your mp3 file in the same folder as this HTML and name it “john_3_16.mp3” (or change AUDIO_FILE in the config)." }));
 }
+
 
 function renderInstructions(){
   screenRoot.appendChild(el("div", { class:"kicker", text:"How it works" }));
@@ -733,6 +746,7 @@ function renderInstructions(){
   const c = el("div", { class:"controls" }, [
     btn("Continue", {
       onClick: () => {
+        resetAudioForNewPage();
         AppState.screen = "full";
         render();
       }
@@ -740,13 +754,16 @@ function renderInstructions(){
     btn("Back", {
       primary:false,
       onClick: () => {
+        resetAudioForNewPage();
         AppState.screen = "title";
         render();
       }
     })
   ]);
+
   screenRoot.appendChild(c);
 }
+
 
 function renderVerseCardHeader({stepLabel=null, stepProgress=null} = {}){
   const row = el("div", { class:"verse-ref" });
@@ -787,13 +804,15 @@ function renderFullVerse(){
       btn(audioEl.paused ? "Read it to Me" : "Pause Audio", { primary:false, onClick: () => toggleAudio() })
     ],
     [
-      btn("Start Practice", {
+        btn("Start Practice", {
         onClick: () => {
-          AppState.screen = "step";
-          AppState.stepIndex = 1;
-          render();
+            resetAudioForNewPage();
+            AppState.screen = "step";
+            AppState.stepIndex = 1;
+            render();
         }
-      })
+        })
+
     ]
   );
 }
@@ -823,31 +842,35 @@ function renderStep(){
   setSticky(true,
     [
       btn(audioEl.paused ? "Read it to Me" : "Pause Audio", { primary:false, onClick: () => toggleAudio() }),
-      btn("Back", {
+        btn("Back", {
         primary:false,
         onClick: () => {
-          if (step <= 1){
+            resetAudioForNewPage();
+            if (step <= 1){
             AppState.screen = "full";
-          } else {
+            } else {
             AppState.stepIndex = step - 1;
-          }
-          render();
+            }
+            render();
         }
-      })
+        })
+
     ],
     [
-      btn(isLast ? "Final Test" : "Next", {
+        btn(isLast ? "Final Test" : "Next", {
         onClick: () => {
-          if (isLast){
+            resetAudioForNewPage();
+            if (isLast){
             AppState.screen = "final";
             AppState.hintCountFinal = 0;
             AppState.revealedOnFinal.clear();
-          } else {
+            } else {
             AppState.stepIndex = step + 1;
-          }
-          render();
+            }
+            render();
         }
-      })
+        })
+
     ]
   );
 }
@@ -883,14 +906,16 @@ function renderFinal(){
   setSticky(true,
     [
       btn(audioEl.paused ? "Read it to Me" : "Pause Audio", { primary:false, onClick: () => toggleAudio() }),
-      btn("Back", {
+        btn("Back", {
         primary:false,
         onClick: () => {
-          AppState.screen = "step";
-          AppState.stepIndex = HIDE_PLAN.length;
-          render();
+            resetAudioForNewPage();
+            AppState.screen = "step";
+            AppState.stepIndex = HIDE_PLAN.length;
+            render();
         }
-      })
+        })
+
     ],
     [
       btn("Test Me", {
@@ -971,13 +996,14 @@ function renderDone(){
 /* ---------- Restart ---------- */
 function restart(){
   closeModal();
-  try { audioEl.pause(); audioEl.currentTime = 0; } catch(e) {}
+  resetAudioForNewPage();
   AppState.screen = "title";
   AppState.stepIndex = 0;
   AppState.hintCountFinal = 0;
   AppState.revealedOnFinal.clear();
   render();
 }
+
 
 /* Boot */
 render();
