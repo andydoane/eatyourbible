@@ -109,7 +109,7 @@
     p{
       margin: 0 0 12px;
       color: var(--muted);
-      font-size: 16px;
+      font-size: clamp(15px, 1.2vw, 18px);
       line-height:1.55;
     }
 
@@ -150,7 +150,8 @@
     }
 
     .verse{
-    font-size: clamp(19px, 2.2vw, 26px);
+    font-size: clamp(20px, 2.8vw, 34px);
+
     line-height: 1.55;
     color: var(--text);
 
@@ -328,11 +329,19 @@
       line-height: 1.45;
     }
 
+    @media (max-width: 375px){
+    .verse{ line-height: 1.45; }
+    }
+
     /* Desktop “big screen” breathing room */
     @media (min-width: 900px){
       .card-inner{ padding: 26px 26px 20px; }
       .verse-box{ padding: 18px 18px; }
     }
+
+
+
+
   </style>
 </head>
 
