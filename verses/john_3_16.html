@@ -317,6 +317,26 @@
       padding: 0 16px 16px;
     }
 
+    /* Big centered reveal inside the modal */
+    .reveal-big{
+    min-height: 180px;              /* gives it a “centered” stage */
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    font-weight: 900;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    font-size: clamp(26px, 6vw, 44px);
+    line-height: 1.15;
+    }
+
+    .reveal-big .reveal-emoji{
+  font-size: 1.15em;
+}
+
+
+
     /* Small helper text */
     .tip{
       margin-top: 12px;
@@ -382,7 +402,8 @@
     <div class="modal">
       <div class="m-inner">
         <h2 id="modalTitle">Modal</h2>
-        <p id="modalBody">Body</p>
+        <div id="modalBody">Body</div>
+
       </div>
       <div class="m-actions" id="modalActions"></div>
     </div>
@@ -538,16 +559,36 @@ function btn(label, opts = {}) {
 }
 
 
-function showModal({title, body, actions=[]}){
-  modalTitle.textContent = title;
-  modalBody.textContent = body;
+function showModal({ title, body, actions = [] }) {
+
+  /* ----- TITLE ----- */
+  if (title) {
+    modalTitle.style.display = "";
+    modalTitle.textContent = title;
+  } else {
+    modalTitle.style.display = "none";
+  }
+
+  /* ----- BODY ----- */
+  modalBody.innerHTML = "";
+
+  if (typeof body === "string") {
+    modalBody.textContent = body;
+  } else if (body instanceof Node) {
+    modalBody.appendChild(body);
+  }
+
+  /* ----- ACTIONS ----- */
   clearNode(modalActions);
   actions.forEach(a => modalActions.appendChild(a));
+
   overlay.classList.add("show");
-  // Basic focus management: focus first button if present
+
+  /* ----- ACCESSIBILITY ----- */
   const firstBtn = modalActions.querySelector("button");
   if (firstBtn) firstBtn.focus();
 }
+
 
 function closeModal(){
   overlay.classList.remove("show");
@@ -598,6 +639,23 @@ function toggleAudio(){
 audioEl.addEventListener("ended", () => render()); // refresh button label if you want
 
 /* ---------- Verse rendering ---------- */
+
+function buildRevealBody(leftText, wordText){
+  const wrap = el("div", { class: "reveal-big" });
+
+  // If you added the optional .reveal-emoji CSS, this class will apply
+  const left = el("span", { class: "reveal-emoji", text: leftText });
+  const mid  = el("span", { text: " = " });
+  const right= el("span", { text: String(wordText).toUpperCase() });
+
+  wrap.appendChild(left);
+  wrap.appendChild(mid);
+  wrap.appendChild(right);
+
+  return wrap;
+}
+
+
 function underscoresForWord(word){
   if (!word) return "";
   // Keep first character, underscore the rest (letters/digits)
@@ -649,11 +707,12 @@ function renderVerse({mode, activeCount=0, onHint=null}){
         text: disguised,
         onclick: () => {
           if (onHint) onHint(idx, tok.text);
-          showModal({
-            title: "Reveal",
-            body: tok.text,
+            showModal({
+            title: "",
+            body: buildRevealBody(disguised, tok.text),
             actions: [btn("Close", { primary:false, onClick: () => closeModal() })]
-          });
+            });
+
         }
       });
       node.addEventListener("keydown", (e) => {
@@ -679,11 +738,12 @@ function renderVerse({mode, activeCount=0, onHint=null}){
         text: target.emoji || "❓",
         onclick: () => {
           if (onHint) onHint(idx, tok.text);
-          showModal({
-            title: "Reveal",
-            body: tok.text,
+            showModal({
+            title: "",
+            body: buildRevealBody(disguised, tok.text),
             actions: [btn("Close", { primary:false, onClick: () => closeModal() })]
-          });
+            });
+
         }
       });
       node.addEventListener("keydown", (e) => {
@@ -704,10 +764,11 @@ function renderVerse({mode, activeCount=0, onHint=null}){
       onclick: () => {
         if (onHint) onHint(idx, tok.text);
         showModal({
-          title: "Reveal",
-          body: tok.text,
-          actions: [btn("Close", { primary:false, onClick: () => closeModal() })]
+        title: "",
+        body: buildRevealBody(disguised, tok.text),
+        actions: [btn("Close", { primary:false, onClick: () => closeModal() })]
         });
+
       }
     });
     node.addEventListener("keydown", (e) => {
