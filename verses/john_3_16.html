@@ -150,44 +150,56 @@
     }
 
     .verse{
-      font-size: clamp(19px, 2.2vw, 26px);
-      line-height: 1.55;
-      color: var(--text);
-      word-wrap:break-word;
+    font-size: clamp(19px, 2.2vw, 26px);
+    line-height: 1.55;
+    color: var(--text);
+
+    /* ✅ Don't break inside words */
+    overflow-wrap: normal;
+    word-break: normal;
+    hyphens: none;
     }
-    .token-space{ white-space:pre; }
+
+    .token-space{ white-space: normal; }
+
 
     .hintable{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      min-height: var(--tap);
-      padding: 2px 10px;
-      margin: 2px 1px;
-      border-radius: 14px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(124,58,237,.12);
-      color: var(--text);
-      cursor:pointer;
-      user-select:none;
-      -webkit-tap-highlight-color: transparent;
-      transition: transform .06s ease, background .12s ease, border-color .12s ease;
-      vertical-align:baseline;
+    /* ✅ behave like text */
+    display:inline;
+    padding: 0 .18em;
+    margin: 0 .03em;
+    border-radius: .45em;
+
+    border: 1px solid rgba(255,255,255,.12);
+    background: rgba(124,58,237,.12);
+    color: var(--text);
+
+    cursor:pointer;
+    user-select:none;
+    -webkit-tap-highlight-color: transparent;
+
+    /* keep it aligned with surrounding words */
+    vertical-align: baseline;
+    line-height: inherit;
+    white-space: nowrap; /* keep the emoji/blank together */
     }
+
     .hintable:hover{ background: rgba(124,58,237,.18); border-color: rgba(255,255,255,.18); }
     .hintable:active{ transform: scale(.98); }
 
     .hintable.emoji{
-      font-size: 1.25em;
-      padding: 4px 10px;
-      background: rgba(34,197,94,.14);
+    font-size: 1.05em;
+    padding: 0 .2em;
+    background: rgba(34,197,94,.14);
     }
+
     .hintable.emoji:hover{ background: rgba(34,197,94,.19); }
 
     .hintable.underscore{
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      background: rgba(245,158,11,.12);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    background: rgba(245,158,11,.12);
     }
+
     .hintable.underscore:hover{ background: rgba(245,158,11,.16); }
 
     .controls{
@@ -602,9 +614,10 @@ function renderVerse({mode, activeCount=0, onHint=null}){
 
   tokens.forEach((tok, idx) => {
     if (tok.type === TokenType.SPACE){
-      container.appendChild(el("span", { class:"token-space", text: tok.text }));
-      return;
+    container.appendChild(document.createTextNode(tok.text));
+    return;
     }
+
 
     if (tok.type !== TokenType.WORD){
       container.appendChild(el("span", { text: tok.text }));
