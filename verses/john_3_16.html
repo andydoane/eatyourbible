@@ -920,11 +920,6 @@ function renderFinal(){
 
   screenRoot.appendChild(box);
 
-  screenRoot.appendChild(el("div", {
-    class:"tip",
-    text:"When you’re ready, tap “Test Me”. If you used any reveals, we’ll reset this page so you can try again."
-  }));
-
   setSticky(true,
     [
       btn(audioEl.paused ? "Read it to Me" : "Pause Audio", { primary:false, onClick: () => toggleAudio() }),
@@ -940,7 +935,7 @@ function renderFinal(){
 
     ],
     [
-      btn("Test Me", {
+      btn("Next", {
         onClick: () => {
           if (AppState.hintCountFinal > 0){
             showModal({
