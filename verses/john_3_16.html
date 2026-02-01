@@ -802,10 +802,6 @@ function renderTitle(){
         render();
       }
     }),
-    btn("Play Audio", {
-      primary:false,
-      onClick: () => toggleAudio()   // DON'T reset here
-    })
   ]);
 
   screenRoot.appendChild(c);
@@ -813,10 +809,11 @@ function renderTitle(){
 
 
 function renderInstructions(){
-  screenRoot.appendChild(el("div", { class:"kicker", text:"How it works" }));
-  screenRoot.appendChild(el("h1", { text:"Say it out loud" }));
-  screenRoot.appendChild(el("p", { text:"First you’ll read the verse. Then you’ll practice again as some words turn into emojis. After that, words become first letters with underscores." }));
-  screenRoot.appendChild(el("p", { text:"You can tap an emoji or blank to reveal the word if you forget it." }));
+  screenRoot.appendChild(el("div", { class:"kicker", text:"Instructions" }));
+  screenRoot.appendChild(el("h1", { text:"How It Works" }));
+  screenRoot.appendChild(el("h3", { text:"🔴 On each page, read the verse out loud. " }));
+  screenRoot.appendChild(el("h3", { text:"🔴 Each time you click 'Next,' a different from the verse will be replaced with emojis or blanks." }));
+  screenRoot.appendChild(el("h3", { text:"🔴 Try your best to say the verse again, even with these missing words." }));
 
   const c = el("div", { class:"controls" }, [
     btn("Continue", {
