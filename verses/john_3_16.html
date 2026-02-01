@@ -1,0 +1,986 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bible Verse Memory • John 3:16 (NIV)</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#0f1b33;
+      --card2:#0c162b;
+      --text:#eef2ff;
+      --muted:#b9c2dd;
+      --line:#223255;
+      --primary:#7c3aed;
+      --primary2:#6d28d9;
+      --good:#22c55e;
+      --warn:#f59e0b;
+      --shadow: 0 14px 40px rgba(0,0,0,.35);
+      --radius: 22px;
+      --tap: 44px;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: radial-gradient(1200px 700px at 20% 10%, rgba(124,58,237,.25), transparent 60%),
+                  radial-gradient(900px 600px at 80% 30%, rgba(34,197,94,.16), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+      overflow-x:hidden;
+    }
+
+    .app{
+      min-height:100%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      padding: 18px 14px 110px;
+    }
+
+    .shell{
+      width:min(980px, 100%);
+      margin: 0 auto;
+    }
+
+    header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 8px 2px 14px;
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      user-select:none;
+    }
+    .logo{
+      width:40px;height:40px;
+      border-radius:14px;
+      background: linear-gradient(145deg, rgba(124,58,237,.9), rgba(34,197,94,.65));
+      box-shadow: 0 10px 22px rgba(0,0,0,.25);
+      display:grid;
+      place-items:center;
+      font-weight:800;
+      letter-spacing:.5px;
+    }
+    .brand .title{
+      display:flex;
+      flex-direction:column;
+      line-height:1.05;
+    }
+    .brand .title b{ font-size:14px; }
+    .brand .title span{ font-size:12px; color:var(--muted); }
+
+    .top-actions{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card-inner{
+      padding: 18px 18px 16px;
+    }
+
+    .kicker{
+      font-size:12px;
+      letter-spacing:.18em;
+      text-transform:uppercase;
+      color: var(--muted);
+      margin: 0 0 10px;
+    }
+    h1{
+      margin:0 0 10px;
+      font-size: clamp(24px, 4.2vw, 38px);
+      letter-spacing:-.02em;
+    }
+    p{
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height:1.55;
+    }
+
+    .verse-box{
+      background: rgba(0,0,0,.20);
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 18px;
+      padding: 16px 14px;
+      margin: 10px 0 6px;
+    }
+    .verse-ref{
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .progress{
+      font-size: 12px;
+      color: var(--muted);
+      white-space:nowrap;
+    }
+    .progress-bar{
+      height: 10px;
+      background: rgba(255,255,255,.07);
+      border-radius: 999px;
+      overflow:hidden;
+      margin-top: 8px;
+    }
+    .progress-bar > div{
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, rgba(124,58,237,.9), rgba(34,197,94,.75));
+      border-radius:999px;
+      transition: width .25s ease;
+    }
+
+    .verse{
+      font-size: clamp(19px, 2.2vw, 26px);
+      line-height: 1.55;
+      color: var(--text);
+      word-wrap:break-word;
+    }
+    .token-space{ white-space:pre; }
+
+    .hintable{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-height: var(--tap);
+      padding: 2px 10px;
+      margin: 2px 1px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(124,58,237,.12);
+      color: var(--text);
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      transition: transform .06s ease, background .12s ease, border-color .12s ease;
+      vertical-align:baseline;
+    }
+    .hintable:hover{ background: rgba(124,58,237,.18); border-color: rgba(255,255,255,.18); }
+    .hintable:active{ transform: scale(.98); }
+
+    .hintable.emoji{
+      font-size: 1.25em;
+      padding: 4px 10px;
+      background: rgba(34,197,94,.14);
+    }
+    .hintable.emoji:hover{ background: rgba(34,197,94,.19); }
+
+    .hintable.underscore{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      background: rgba(245,158,11,.12);
+    }
+    .hintable.underscore:hover{ background: rgba(245,158,11,.16); }
+
+    .controls{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top: 14px;
+    }
+
+    button, .btn{
+      appearance:none;
+      border: none;
+      border-radius: 16px;
+      padding: 12px 14px;
+      font-weight: 700;
+      color: white;
+      background: linear-gradient(180deg, var(--primary), var(--primary2));
+      cursor:pointer;
+      min-height: var(--tap);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      -webkit-tap-highlight-color: transparent;
+      box-shadow: 0 12px 22px rgba(124,58,237,.25);
+      transition: transform .06s ease, filter .12s ease, opacity .12s ease;
+    }
+    button:hover, .btn:hover{ filter: brightness(1.06); }
+    button:active, .btn:active{ transform: scale(.99); }
+    button:disabled{ opacity:.5; cursor:not-allowed; }
+
+    .btn.secondary{
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow:none;
+      color: var(--text);
+    }
+    .btn.ghost{
+      background: transparent;
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow:none;
+    }
+    .btn.small{
+      padding: 9px 12px;
+      border-radius: 14px;
+      font-weight: 700;
+      font-size: 13px;
+      min-height: 38px;
+    }
+
+    .sticky-bar{
+      position: fixed;
+      left:0; right:0; bottom:0;
+      padding: 12px 14px 14px;
+      background: linear-gradient(180deg, rgba(11,18,32,0), rgba(11,18,32,.85) 20%, rgba(11,18,32,.95));
+      backdrop-filter: blur(10px);
+    }
+    .sticky-inner{
+      width: min(980px, 100%);
+      margin:0 auto;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .sticky-left{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .sticky-right{
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+
+    /* Modal */
+    .overlay{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 16px;
+      z-index: 1000;
+    }
+    .overlay.show{ display:flex; }
+    .modal{
+      width: min(560px, 100%);
+      background: rgba(15,27,51,.98);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 22px;
+      box-shadow: 0 20px 70px rgba(0,0,0,.55);
+      overflow:hidden;
+    }
+    .modal .m-inner{
+      padding: 16px 16px 14px;
+    }
+    .modal h2{
+      margin: 0 0 8px;
+      font-size: 18px;
+      letter-spacing:-.01em;
+    }
+    .modal p{
+      margin: 0 0 12px;
+      color: var(--muted);
+    }
+    .modal .m-actions{
+      display:flex;
+      gap:10px;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+      padding: 0 16px 16px;
+    }
+
+    /* Small helper text */
+    .tip{
+      margin-top: 12px;
+      padding: 12px 12px;
+      border-radius: 16px;
+      border: 1px dashed rgba(255,255,255,.16);
+      background: rgba(255,255,255,.03);
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    /* Desktop “big screen” breathing room */
+    @media (min-width: 900px){
+      .card-inner{ padding: 26px 26px 20px; }
+      .verse-box{ padding: 18px 18px; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <div class="shell">
+      <header>
+        <div class="brand">
+          <div class="logo">✝︎</div>
+          <div class="title">
+            <b>Verse Memory</b>
+            <span>Practice with emojis + blanks</span>
+          </div>
+        </div>
+        <div class="top-actions">
+          <button id="btnRestartTop" class="btn ghost small" type="button" title="Restart">Restart</button>
+        </div>
+      </header>
+
+      <main class="card" role="main" aria-live="polite">
+        <div class="card-inner" id="screenRoot">
+          <!-- Rendered by JS -->
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Sticky controls -->
+  <div class="sticky-bar" id="stickyBar" style="display:none;">
+    <div class="sticky-inner">
+      <div class="sticky-left" id="stickyLeft"></div>
+      <div class="sticky-right" id="stickyRight"></div>
+    </div>
+  </div>
+
+  <!-- Modal overlay -->
+  <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <div class="m-inner">
+        <h2 id="modalTitle">Modal</h2>
+        <p id="modalBody">Body</p>
+      </div>
+      <div class="m-actions" id="modalActions"></div>
+    </div>
+  </div>
+
+  <audio id="audio" preload="none"></audio>
+
+<script>
+/* =========================================================
+   OPTION A CONFIG (edit these only)
+   ========================================================= */
+const VERSE_REF  = "John 3:16 (NIV)";
+const VERSE_ID   = "john_3_16";          // used for the default mp3 filename
+const AUDIO_FILE = `${VERSE_ID}.mp3`;    // change if needed
+
+const VERSE_TEXT = "For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life.";
+
+const HIDE_PLAN = [
+  // Emoji phase (each step adds one more)
+  { type: "emoji", word: "God",    occurrence: 1, emoji: "✨" },
+  { type: "emoji", word: "loved",  occurrence: 1, emoji: "❤️" },
+  { type: "emoji", word: "world",  occurrence: 1, emoji: "🌍" },
+  { type: "emoji", word: "gave",   occurrence: 1, emoji: "🎁" },
+  { type: "emoji", word: "Son",    occurrence: 1, emoji: "👦" },
+
+  // Underscore phase (after emojis, each step adds one more)
+  { type: "underscore", word: "whoever",  occurrence: 1 },
+  { type: "underscore", word: "believes", occurrence: 1 },
+  { type: "underscore", word: "perish",   occurrence: 1 },
+  { type: "underscore", word: "eternal",  occurrence: 1 },
+  { type: "underscore", word: "life",     occurrence: 1 },
+];
+
+/* =========================================================
+   APP LOGIC
+   ========================================================= */
+const screenRoot = document.getElementById("screenRoot");
+const stickyBar  = document.getElementById("stickyBar");
+const stickyLeft = document.getElementById("stickyLeft");
+const stickyRight= document.getElementById("stickyRight");
+
+const overlay     = document.getElementById("overlay");
+const modalTitle  = document.getElementById("modalTitle");
+const modalBody   = document.getElementById("modalBody");
+const modalActions= document.getElementById("modalActions");
+
+const audioEl = document.getElementById("audio");
+audioEl.src = AUDIO_FILE;
+
+document.getElementById("btnRestartTop").addEventListener("click", () => restart());
+
+const AppState = {
+  screen: "title", // title | instructions | full | step | final | done
+  stepIndex: 0,    // 0..HIDE_PLAN.length (step pages are 1..HIDE_PLAN.length)
+  hintCountFinal: 0,
+  revealedOnFinal: new Set(), // token indices revealed on final page
+};
+
+const TokenType = {
+  SPACE: "space",
+  WORD: "word",
+  PUNCT: "punct",
+  OTHER: "other",
+};
+
+function tokenize(text){
+  // Captures spaces, words (with optional apostrophes), numbers, and punctuation
+  const re = /(\s+|[A-Za-z]+(?:'[A-Za-z]+)?|[0-9]+|[^\sA-Za-z0-9]+)/g;
+  const raw = text.match(re) || [];
+  return raw.map(t => {
+    if (/^\s+$/.test(t)) return { type: TokenType.SPACE, text: t };
+    if (/^[A-Za-z]+(?:'[A-Za-z]+)?$/.test(t)) return { type: TokenType.WORD, text: t };
+    if (/^[0-9]+$/.test(t)) return { type: TokenType.WORD, text: t }; // treat numbers as "word-like"
+    if (/^[^\sA-Za-z0-9]+$/.test(t)) return { type: TokenType.PUNCT, text: t };
+    return { type: TokenType.OTHER, text: t };
+  });
+}
+
+const tokens = tokenize(VERSE_TEXT);
+
+/**
+ * Precompute which token index each HIDE_PLAN entry targets (by word + occurrence).
+ * This avoids any guesswork at render time.
+ */
+const planResolved = resolveHidePlanToTokenIndices(tokens, HIDE_PLAN);
+
+function resolveHidePlanToTokenIndices(tokens, plan){
+  const wordPositionsByLower = new Map();
+
+  tokens.forEach((tok, idx) => {
+    if (tok.type !== TokenType.WORD) return;
+    const key = tok.text.toLowerCase();
+    if (!wordPositionsByLower.has(key)) wordPositionsByLower.set(key, []);
+    wordPositionsByLower.get(key).push(idx);
+  });
+
+  return plan.map((item, i) => {
+    const key = String(item.word).toLowerCase();
+    const list = wordPositionsByLower.get(key) || [];
+    const occ = item.occurrence ?? 1;
+    const tokenIndex = list[occ - 1];
+
+    if (tokenIndex === undefined){
+      console.warn(`HIDE_PLAN item #${i} could not find word="${item.word}" occurrence=${occ}.`);
+    }
+
+    return { ...item, tokenIndex };
+  });
+}
+
+/* ---------- Rendering helpers ---------- */
+function clearNode(node){
+  while(node.firstChild) node.removeChild(node.firstChild);
+}
+
+function el(tag, attrs = {}, children = []) {
+  const node = document.createElement(tag);
+
+  for (const [k, v] of Object.entries(attrs)) {
+    // ✅ skip null / undefined / false attributes
+    if (v === null || v === undefined || v === false) continue;
+
+    if (k === "class") node.className = v;
+    else if (k === "text") node.textContent = v;
+    else if (k.startsWith("on") && typeof v === "function") node.addEventListener(k.slice(2), v);
+    else node.setAttribute(k, v === true ? "" : v); // allow boolean attrs
+  }
+
+  for (const c of children) node.appendChild(c);
+  return node;
+}
+
+
+function setSticky(show, leftButtons=[], rightButtons=[]){
+  stickyBar.style.display = show ? "block" : "none";
+  clearNode(stickyLeft);
+  clearNode(stickyRight);
+  leftButtons.forEach(b => stickyLeft.appendChild(b));
+  rightButtons.forEach(b => stickyRight.appendChild(b));
+}
+
+function btn(label, opts = {}) {
+  const { primary=true, small=false, ghost=false, onClick, disabled=false, title="" } = opts;
+  let cls = "btn";
+  if (!primary) cls += " secondary";
+  if (ghost) cls += " ghost";
+  if (small) cls += " small";
+
+  const attrs = { class: cls, type:"button", title, onclick: onClick, text: label };
+  if (disabled) attrs.disabled = true; // only add when true
+
+  return el("button", attrs);
+}
+
+
+function showModal({title, body, actions=[]}){
+  modalTitle.textContent = title;
+  modalBody.textContent = body;
+  clearNode(modalActions);
+  actions.forEach(a => modalActions.appendChild(a));
+  overlay.classList.add("show");
+  // Basic focus management: focus first button if present
+  const firstBtn = modalActions.querySelector("button");
+  if (firstBtn) firstBtn.focus();
+}
+
+function closeModal(){
+  overlay.classList.remove("show");
+}
+
+overlay.addEventListener("click", (e) => {
+  if (e.target === overlay) closeModal();
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && overlay.classList.contains("show")) closeModal();
+});
+
+/* ---------- Audio ---------- */
+function toggleAudio(){
+  if (!audioEl.src){
+    showModal({
+      title: "Audio not set",
+      body: "No mp3 file is configured yet.",
+      actions: [btn("OK", { onClick: () => closeModal() })]
+    });
+    return;
+  }
+
+  if (audioEl.paused){
+    audioEl.play().catch(() => {
+      showModal({
+        title: "Audio can’t play yet",
+        body: "Your browser blocked playback. Tap the button again, or make sure the mp3 file is available.",
+        actions: [btn("OK", { onClick: () => closeModal() })]
+      });
+    });
+  } else {
+    audioEl.pause();
+  }
+}
+
+audioEl.addEventListener("ended", () => render()); // refresh button label if you want
+
+/* ---------- Verse rendering ---------- */
+function underscoresForWord(word){
+  if (!word) return "";
+  // Keep first character, underscore the rest (letters/digits)
+  const first = word[0];
+  const restLen = Math.max(0, word.length - 1);
+  return first + "_".repeat(restLen);
+}
+
+function buildTargetMap(activePlanItems){
+  // tokenIndex -> plan item
+  const map = new Map();
+  activePlanItems.forEach(item => {
+    if (typeof item.tokenIndex === "number") map.set(item.tokenIndex, item);
+  });
+  return map;
+}
+
+function renderVerse({mode, activeCount=0, onHint=null}){
+  // mode: "full" | "steps" | "final"
+  const container = el("div", { class: "verse" });
+  const activeItems = planResolved.slice(0, activeCount);
+  const targets = buildTargetMap(activeItems);
+
+  tokens.forEach((tok, idx) => {
+    if (tok.type === TokenType.SPACE){
+      container.appendChild(el("span", { class:"token-space", text: tok.text }));
+      return;
+    }
+
+    if (tok.type !== TokenType.WORD){
+      container.appendChild(el("span", { text: tok.text }));
+      return;
+    }
+
+    if (mode === "full"){
+      container.appendChild(el("span", { text: tok.text }));
+      return;
+    }
+
+    if (mode === "final"){
+      // Everything becomes first-letter + underscores and is hintable
+      const disguised = underscoresForWord(tok.text);
+      const node = el("span", {
+        class: "hintable underscore",
+        role: "button",
+        tabindex: "0",
+        "aria-label": "Tap to reveal word",
+        text: disguised,
+        onclick: () => {
+          if (onHint) onHint(idx, tok.text);
+          showModal({
+            title: "Reveal",
+            body: tok.text,
+            actions: [btn("Close", { primary:false, onClick: () => closeModal() })]
+          });
+        }
+      });
+      node.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") node.click();
+      });
+      container.appendChild(node);
+      return;
+    }
+
+    // mode === "steps"
+    const target = targets.get(idx);
+    if (!target){
+      container.appendChild(el("span", { text: tok.text }));
+      return;
+    }
+
+    if (target.type === "emoji"){
+      const node = el("span", {
+        class: "hintable emoji",
+        role: "button",
+        tabindex: "0",
+        "aria-label": "Tap to reveal word",
+        text: target.emoji || "❓",
+        onclick: () => {
+          if (onHint) onHint(idx, tok.text);
+          showModal({
+            title: "Reveal",
+            body: tok.text,
+            actions: [btn("Close", { primary:false, onClick: () => closeModal() })]
+          });
+        }
+      });
+      node.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") node.click();
+      });
+      container.appendChild(node);
+      return;
+    }
+
+    // underscore target
+    const disguised = underscoresForWord(tok.text);
+    const node = el("span", {
+      class: "hintable underscore",
+      role: "button",
+      tabindex: "0",
+      "aria-label": "Tap to reveal word",
+      text: disguised,
+      onclick: () => {
+        if (onHint) onHint(idx, tok.text);
+        showModal({
+          title: "Reveal",
+          body: tok.text,
+          actions: [btn("Close", { primary:false, onClick: () => closeModal() })]
+        });
+      }
+    });
+    node.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") node.click();
+    });
+    container.appendChild(node);
+  });
+
+  return container;
+}
+
+/* ---------- Screens ---------- */
+function render(){
+  clearNode(screenRoot);
+
+  // Default sticky controls off; each screen configures it.
+  setSticky(false);
+
+  if (AppState.screen === "title") return renderTitle();
+  if (AppState.screen === "instructions") return renderInstructions();
+  if (AppState.screen === "full") return renderFullVerse();
+  if (AppState.screen === "step") return renderStep();
+  if (AppState.screen === "final") return renderFinal();
+  if (AppState.screen === "done") return renderDone();
+}
+
+function renderTitle(){
+  screenRoot.appendChild(el("div", { class:"kicker", text:"Welcome" }));
+  screenRoot.appendChild(el("h1", { text:"Memorize John 3:16" }));
+  screenRoot.appendChild(el("p", { text:"You’ll read the verse out loud, then practice again as some words turn into emojis and blanks." }));
+
+  const c = el("div", { class:"controls" }, [
+    btn("Get Started", {
+      onClick: () => {
+        AppState.screen = "instructions";
+        render();
+      }
+    }),
+    btn("Play Audio", {
+      primary:false,
+      onClick: () => toggleAudio()
+    })
+  ]);
+  screenRoot.appendChild(c);
+
+  screenRoot.appendChild(el("div", { class:"tip", text:"Tip: Put your mp3 file in the same folder as this HTML and name it “john_3_16.mp3” (or change AUDIO_FILE in the config)." }));
+}
+
+function renderInstructions(){
+  screenRoot.appendChild(el("div", { class:"kicker", text:"How it works" }));
+  screenRoot.appendChild(el("h1", { text:"Say it out loud" }));
+  screenRoot.appendChild(el("p", { text:"First you’ll read the verse. Then you’ll practice again as some words turn into emojis. After that, words become first letters with underscores." }));
+  screenRoot.appendChild(el("p", { text:"You can tap an emoji or blank to reveal the word if you forget it." }));
+
+  const c = el("div", { class:"controls" }, [
+    btn("Continue", {
+      onClick: () => {
+        AppState.screen = "full";
+        render();
+      }
+    }),
+    btn("Back", {
+      primary:false,
+      onClick: () => {
+        AppState.screen = "title";
+        render();
+      }
+    })
+  ]);
+  screenRoot.appendChild(c);
+}
+
+function renderVerseCardHeader({stepLabel=null, stepProgress=null} = {}){
+  const row = el("div", { class:"verse-ref" });
+  row.appendChild(el("div", { text: VERSE_REF }));
+
+  if (stepLabel){
+    row.appendChild(el("div", { class:"progress", text: stepLabel }));
+  } else {
+    row.appendChild(el("div", { class:"progress", text: "" }));
+  }
+
+  const box = el("div", { class:"verse-box" });
+  box.appendChild(row);
+
+  if (typeof stepProgress === "number"){
+    const bar = el("div", { class:"progress-bar" }, [
+      el("div", { })
+    ]);
+    bar.firstChild.style.width = `${Math.max(0, Math.min(100, stepProgress))}%`;
+    box.appendChild(bar);
+  }
+
+  return box;
+}
+
+function renderFullVerse(){
+  screenRoot.appendChild(el("div", { class:"kicker", text:"Step 1" }));
+  screenRoot.appendChild(el("h1", { text:"Read the verse" }));
+  screenRoot.appendChild(el("p", { text:"Read it slowly. You can tap “Read it to Me” to listen." }));
+
+  const box = renderVerseCardHeader({ stepLabel:"Full verse", stepProgress: 0 });
+  box.appendChild(renderVerse({mode:"full"}));
+  screenRoot.appendChild(box);
+
+  // Sticky bar: audio + next
+  setSticky(true,
+    [
+      btn(audioEl.paused ? "Read it to Me" : "Pause Audio", { primary:false, onClick: () => toggleAudio() })
+    ],
+    [
+      btn("Start Practice", {
+        onClick: () => {
+          AppState.screen = "step";
+          AppState.stepIndex = 1;
+          render();
+        }
+      })
+    ]
+  );
+}
+
+function renderStep(){
+  const totalSteps = HIDE_PLAN.length;
+  const step = AppState.stepIndex; // 1..totalSteps
+
+  screenRoot.appendChild(el("div", { class:"kicker", text:`Practice` }));
+  screenRoot.appendChild(el("h1", { text:"Say it again" }));
+  screenRoot.appendChild(el("p", { text:"Some words are hidden. Tap an emoji or blank if you forget the word." }));
+
+  const label = `Page ${step} of ${totalSteps}`;
+  const progressPct = (step / (totalSteps + 1)) * 100;
+
+  const box = renderVerseCardHeader({ stepLabel: label, stepProgress: progressPct });
+
+  box.appendChild(renderVerse({
+    mode: "steps",
+    activeCount: step,
+    onHint: () => { /* optional: track hints per-step later */ }
+  }));
+  screenRoot.appendChild(box);
+
+  const isLast = (step >= totalSteps);
+
+  setSticky(true,
+    [
+      btn(audioEl.paused ? "Read it to Me" : "Pause Audio", { primary:false, onClick: () => toggleAudio() }),
+      btn("Back", {
+        primary:false,
+        onClick: () => {
+          if (step <= 1){
+            AppState.screen = "full";
+          } else {
+            AppState.stepIndex = step - 1;
+          }
+          render();
+        }
+      })
+    ],
+    [
+      btn(isLast ? "Final Test" : "Next", {
+        onClick: () => {
+          if (isLast){
+            AppState.screen = "final";
+            AppState.hintCountFinal = 0;
+            AppState.revealedOnFinal.clear();
+          } else {
+            AppState.stepIndex = step + 1;
+          }
+          render();
+        }
+      })
+    ]
+  );
+}
+
+function renderFinal(){
+  screenRoot.appendChild(el("div", { class:"kicker", text:"Final" }));
+  screenRoot.appendChild(el("h1", { text:"No hints… if you can!" }));
+  screenRoot.appendChild(el("p", { text:"Try to say the whole verse out loud. If you get stuck, tap a word to reveal it—then try again." }));
+
+  const totalSteps = HIDE_PLAN.length;
+  const progressPct = ((totalSteps + 1) / (totalSteps + 1)) * 100;
+
+  const box = renderVerseCardHeader({ stepLabel: "All blanks", stepProgress: progressPct });
+
+  box.appendChild(renderVerse({
+    mode: "final",
+    onHint: (tokenIndex) => {
+      // Count each token reveal once (so repeated taps don’t inflate)
+      if (!AppState.revealedOnFinal.has(tokenIndex)){
+        AppState.revealedOnFinal.add(tokenIndex);
+        AppState.hintCountFinal += 1;
+      }
+    }
+  }));
+
+  screenRoot.appendChild(box);
+
+  screenRoot.appendChild(el("div", {
+    class:"tip",
+    text:"When you’re ready, tap “Test Me”. If you used any reveals, we’ll reset this page so you can try again."
+  }));
+
+  setSticky(true,
+    [
+      btn(audioEl.paused ? "Read it to Me" : "Pause Audio", { primary:false, onClick: () => toggleAudio() }),
+      btn("Back", {
+        primary:false,
+        onClick: () => {
+          AppState.screen = "step";
+          AppState.stepIndex = HIDE_PLAN.length;
+          render();
+        }
+      })
+    ],
+    [
+      btn("Test Me", {
+        onClick: () => {
+          if (AppState.hintCountFinal > 0){
+            showModal({
+              title: "Let’s try that again!",
+              body: `Looks like you needed ${AppState.hintCountFinal} hint${AppState.hintCountFinal === 1 ? "" : "s"}. Try saying the verse again without tapping any words.`,
+              actions: [
+                btn("Try Again", {
+                  onClick: () => {
+                    closeModal();
+                    AppState.hintCountFinal = 0;
+                    AppState.revealedOnFinal.clear();
+                    render();
+                  }
+                })
+              ]
+            });
+            return;
+          }
+
+          showModal({
+            title: "Quick check",
+            body: "Did you say the verse without any hints?",
+            actions: [
+              btn("Yes!", {
+                onClick: () => {
+                  closeModal();
+                  AppState.screen = "done";
+                  render();
+                }
+              }),
+              btn("Let Me Try Again", {
+                primary:false,
+                onClick: () => {
+                  closeModal();
+                  AppState.hintCountFinal = 0;
+                  AppState.revealedOnFinal.clear();
+                  render();
+                }
+              })
+            ]
+          });
+        }
+      })
+    ]
+  );
+}
+
+function renderDone(){
+  screenRoot.appendChild(el("div", { class:"kicker", text:"Nice work!" }));
+  screenRoot.appendChild(el("h1", { text:"You did it 🎉" }));
+  screenRoot.appendChild(el("p", { text:"Want to practice again or try a new verse later? (You’ll be able to swap verses by editing the config block.)" }));
+
+  const c = el("div", { class:"controls" }, [
+    btn("Practice Again", {
+      onClick: () => {
+        AppState.screen = "full";
+        AppState.stepIndex = 0;
+        AppState.hintCountFinal = 0;
+        AppState.revealedOnFinal.clear();
+        render();
+      }
+    }),
+    btn("Back to Title", {
+      primary:false,
+      onClick: () => {
+        restart();
+      }
+    })
+  ]);
+  screenRoot.appendChild(c);
+
+  setSticky(false);
+}
+
+/* ---------- Restart ---------- */
+function restart(){
+  closeModal();
+  try { audioEl.pause(); audioEl.currentTime = 0; } catch(e) {}
+  AppState.screen = "title";
+  AppState.stepIndex = 0;
+  AppState.hintCountFinal = 0;
+  AppState.revealedOnFinal.clear();
+  render();
+}
+
+/* Boot */
+render();
+</script>
+</body>
+</html>
