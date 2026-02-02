@@ -400,6 +400,41 @@
     transition: transform 1000ms cubic-bezier(.2,.8,.2,1);
     }
 
+/* --- Rotate / screen too small overlay --- */
+.rotate-overlay{
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0,0,0,.85);
+  display: none;
+  place-items: center;
+  text-align: center;
+}
+
+.rotate-overlay .rotate-card{
+  background: rgba(0,0,0,.6);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 18px;
+  padding: 24px 20px;
+  max-width: 320px;
+}
+
+.rotate-overlay h2{
+  margin: 0 0 10px;
+  font-size: 22px;
+}
+
+.rotate-overlay p{
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+/* Show overlay when screen can't fit content */
+body.too-small .rotate-overlay{
+  display: grid;
+}
 
 
 
@@ -724,6 +759,22 @@ function navigateWithTransition(direction, applyStateChange){
   }, 360);
 }
 
+function checkFit(){
+  const card = document.querySelector(".card");
+  const sticky = document.getElementById("stickyBar");
+
+  if (!card) return;
+
+  const cardRect = card.getBoundingClientRect();
+  const stickyHeight = (sticky && !sticky.hidden) ? sticky.getBoundingClientRect().height : 0;
+
+  const requiredHeight = cardRect.height + stickyHeight + 16; // safety padding
+  const availableHeight = window.innerHeight;
+
+  const tooSmall = requiredHeight > availableHeight;
+
+  document.body.classList.toggle("too-small", tooSmall);
+}
 
 
 /* ---------- Audio ---------- */
@@ -915,6 +966,8 @@ function render(){
   if (AppState.screen === "step") return renderStep();
   if (AppState.screen === "final") return renderFinal();
   if (AppState.screen === "done") return renderDone();
+  checkFit();
+
 }
 
 function renderTitle(){
@@ -1212,10 +1265,24 @@ function restart(){
 }
 
 
+
+
 /* Boot */
 render();
 
+window.addEventListener("resize", checkFit);
+window.addEventListener("orientationchange", checkFit);
 
 </script>
+
+<!-- Screen too small / rotate overlay -->
+<div id="rotateOverlay" class="rotate-overlay" aria-hidden="true">
+  <div class="rotate-card">
+    <h2>Oops!</h2>
+    <p>We can't fit everything on your screen.<br>Please rotate your device.</p>
+  </div>
+</div>
+
+
 </body>
 </html>
