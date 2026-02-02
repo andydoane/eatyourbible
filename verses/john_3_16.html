@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Bible Verse Memory • John 3:16 (NIV)</title>
+  <title>Bible Verse Memory</title>
   <style>
     :root{
       --bg:#0b1220;
@@ -140,6 +140,7 @@
       border-radius: 999px;
       overflow:hidden;
       margin-top: 8px;
+      margin-bottom: 18px;
     }
     .progress-bar > div{
       height:100%;
@@ -335,6 +336,17 @@
 
 
     /* Small helper text */
+    /* Scripture copyright notice */
+        .scripture-credit{
+        margin-top: 10px;
+        font-size: 11px;
+        line-height: 1.4;
+        color: var(--muted);
+        text-align: center;
+        opacity: 0.85;
+        }
+
+
     .tip{
       margin-top: 12px;
       padding: 12px 12px;
@@ -434,10 +446,13 @@
 const VERSE_REF  = "John 3:16 (NIV)";
 const APP_TITLE = `Let's memorize ${VERSE_REF.replace(" (NIV)", "")}`;
 
+
 const VERSE_ID   = "john_3_16";          // used for the default mp3 filename
 const AUDIO_FILE = `verse_audio/${VERSE_ID}.mp3`;
+document.title = `Bible Verse Memory • ${VERSE_REF}`;
 
 const VERSE_TEXT = "For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life.";
+
 
 const HIDE_PLAN = [
   // Emoji phase (each step adds one more)
@@ -916,7 +931,14 @@ function renderFullVerse(){
 
   const box = renderVerseCardHeader({ stepLabel:"Full verse", stepProgress: 0 });
   box.appendChild(renderVerse({mode:"full"}));
-  screenRoot.appendChild(box);
+  box.appendChild(
+  el("div", {
+    class: "scripture-credit",
+    text: "Scripture taken from the Holy Bible, New International Version® (NIV®). © 1973, 1978, 1984, 2011 by Biblica, Inc. Used by permission."
+  })
+);
+screenRoot.appendChild(box);
+
 
   // Sticky bar: audio + next
   setSticky(true,
@@ -963,7 +985,7 @@ function renderStep(){
 
 setSticky(true,
   [
-    btn(audioEl.paused ? "Read it to Me" : "Pause Audio", { primary:false, onClick: () => toggleAudio() }),
+    btn(audioEl.paused ? "🔊 Read it to Me" : "Pause Audio", { primary:false, onClick: () => toggleAudio() }),
 
     btn("Back", {
       primary:false,
@@ -1023,7 +1045,7 @@ function renderFinal(){
 
   setSticky(true,
     [
-      btn(audioEl.paused ? "Read it to Me" : "Pause Audio", { primary:false, onClick: () => toggleAudio() }),
+      btn(audioEl.paused ? "🔊 Read it to Me" : "Pause Audio", { primary:false, onClick: () => toggleAudio() }),
         btn("Back", {
         primary:false,
             onClick: () => {
@@ -1059,8 +1081,8 @@ function renderFinal(){
           }
 
           showModal({
-            title: "Quick check",
-            body: "Did you say the verse without any hints?",
+            title: "How Did You Do?",
+            body: "Could you say the verse without any hints?",
             actions: [
               btn("Yes!", {
                 onClick: () => {
