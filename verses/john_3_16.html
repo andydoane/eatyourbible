@@ -474,12 +474,13 @@ document.documentElement.style.setProperty(
 );
 
 
-
-const VERSE_REF  = "John 3:16 (NIV)";
+const VERSE_ID   = "john_3_16";
+const VERSE_REF = verseIdToRef(VERSE_ID);
 const APP_TITLE = `Let's memorize ${VERSE_REF.replace(" (NIV)", "")}`;
 
 
-const VERSE_ID   = "john_3_16";          // used for the default mp3 filename
+
+
 const AUDIO_FILE = `verse_audio/${VERSE_ID}.mp3`;
 document.title = `Bible Verse Memory • ${VERSE_REF}`;
 
@@ -501,6 +502,26 @@ const HIDE_PLAN = [
   { type: "underscore", word: "eternal",  occurrence: 1 },
   { type: "underscore", word: "life",     occurrence: 1 },
 ];
+
+
+function verseIdToRef(verseId){
+  const parts = verseId.split("_");
+
+  const book = parts[0][0].toUpperCase() + parts[0].slice(1);
+  const chapter = parts[1];
+
+  const verses = parts.slice(2);
+  let versePart;
+
+  if (verses.length === 1){
+    versePart = verses[0];
+  } else {
+    versePart = `${verses[0]}–${verses[1]}`;
+  }
+
+  return `${book} ${chapter}:${versePart} (NIV)`;
+}
+
 
 /* =========================================================
    APP LOGIC
