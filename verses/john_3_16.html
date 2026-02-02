@@ -19,6 +19,7 @@
       --shadow: 0 14px 40px rgba(0,0,0,.35);
       --radius: 22px;
       --tap: 44px;
+      --slide-ms: 1000ms;
     }
 
     *{ box-sizing:border-box; }
@@ -397,8 +398,11 @@
     .slide-to-right  { transform: translateX(110%); }
 
     .slide-anim{
-    transition: transform 1000ms cubic-bezier(.2,.8,.2,1);
+    /* duration must match SLIDE_MS in JS */
+    transition: transform var(--slide-ms) cubic-bezier(.2,.8,.2,1);
+
     }
+
 
 /* --- Rotate / screen too small overlay --- */
 .rotate-overlay{
@@ -497,6 +501,14 @@ body.too-small .rotate-overlay{
 /* =========================================================
    OPTION A CONFIG (edit these only)
    ========================================================= */
+const SLIDE_MS = 1000; // animation duration in milliseconds
+document.documentElement.style.setProperty(
+  "--slide-ms",
+  `${SLIDE_MS}ms`
+);
+
+
+
 const VERSE_REF  = "John 3:16 (NIV)";
 const APP_TITLE = `Let's memorize ${VERSE_REF.replace(" (NIV)", "")}`;
 
@@ -543,10 +555,13 @@ audioEl.src = AUDIO_FILE;
 document.getElementById("btnRestartTop").addEventListener("click", () => restart());
 
 const AppState = {
+    
   screen: "title", // title | instructions | full | step | final | done
   stepIndex: 0,    // 0..HIDE_PLAN.length (step pages are 1..HIDE_PLAN.length)
   hintCountFinal: 0,
   revealedOnFinal: new Set(), // token indices revealed on final page
+    isAnimating: false,
+
 };
 
 const TokenType = {
@@ -632,6 +647,16 @@ function setSticky(show, leftButtons=[], rightButtons=[]){
   rightButtons.forEach(b => stickyRight.appendChild(b));
 }
 
+function setNavDisabled(disabled){
+  // Disable all sticky bar buttons
+  document.querySelectorAll("#stickyBar button").forEach(b => b.disabled = disabled);
+
+  // Also disable the top Restart button so it can’t interrupt transitions
+  const restartBtn = document.getElementById("btnRestartTop");
+  if (restartBtn) restartBtn.disabled = disabled;
+}
+
+
 function btn(label, opts = {}) {
   const { primary=true, small=false, ghost=false, onClick, disabled=false, title="" } = opts;
   let cls = "btn";
@@ -690,6 +715,11 @@ document.addEventListener("keydown", (e) => {
 });
 
 function navigateWithTransition(direction, applyStateChange){
+      // Prevent double-taps during animation
+  if (AppState.isAnimating) return;
+  AppState.isAnimating = true;
+  setNavDisabled(true);
+
   // direction: "forward" | "back"
   const stage = document.getElementById("cardStage");
 
@@ -734,7 +764,11 @@ function navigateWithTransition(direction, applyStateChange){
       // cleanup inline styles
       screenRoot.style.transition = "";
       screenRoot.style.opacity = "";
-    }, 260);
+        AppState.isAnimating = false;
+  setNavDisabled(false);
+
+    }, Math.max(240, SLIDE_MS * 0.25));
+
 
     return;
   }
@@ -756,7 +790,10 @@ function navigateWithTransition(direction, applyStateChange){
   window.setTimeout(() => {
     clone.remove();
     screenRoot.classList.remove("slide-anim","slide-to-left","slide-to-right");
-  }, 360);
+      AppState.isAnimating = false;
+  setNavDisabled(false);    
+  }, SLIDE_MS + 50);
+
 }
 
 function checkFit(){
