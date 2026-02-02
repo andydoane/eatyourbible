@@ -377,7 +377,7 @@
 
     /* a temporary clone of the old page, sits on top */
     .page-clone{
-    position: absolute;
+    position: absolute !important;
     inset: 0;
     z-index: 2;
     pointer-events: none; /* don’t allow clicks mid-animation */
@@ -665,6 +665,7 @@ function navigateWithTransition(direction, applyStateChange){
   const clone = screenRoot.cloneNode(true);
   clone.removeAttribute("id");
   clone.classList.add("page-clone");
+  clone.classList.remove("page-live");
   stage.appendChild(clone);
 
   // 2) Update state + render the new page into the REAL screenRoot
