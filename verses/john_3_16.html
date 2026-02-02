@@ -368,26 +368,42 @@
       .verse-box{ padding: 18px 18px; }
     }
 
-    /* Page transition layer (we’ll animate #screenRoot) */
-    #screenRoot{
+
+    /* --- Card cross-slide transition (two-layer) --- */
+    .card-stage{
     position: relative;
+    overflow: hidden;
+    }
+
+    /* a temporary clone of the old page, sits on top */
+    .page-clone{
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none; /* don’t allow clicks mid-animation */
+    }
+
+    /* the real screenRoot slides underneath/into place */
+    .page-live{
+    position: relative;
+    z-index: 1;
     will-change: transform, opacity;
     }
 
-    /* Slide + fade classes */
-    .page-out-left   { transform: translateX(-18px); opacity: 0; transition: transform 220ms ease, opacity 220ms ease; }
-    .page-out-right  { transform: translateX(18px);  opacity: 0; transition: transform 220ms ease, opacity 220ms ease; }
+    /* movement classes */
+    .slide-from-right{ transform: translateX(110%); }
+    .slide-from-left { transform: translateX(-110%); }
+    .slide-to-left   { transform: translateX(-110%); }
+    .slide-to-right  { transform: translateX(110%); }
 
-    .page-in-left    { transform: translateX(-18px); opacity: 0; }
-    .page-in-right   { transform: translateX(18px);  opacity: 0; }
-    .page-in-active  { transform: translateX(0);     opacity: 1; transition: transform 220ms ease, opacity 220ms ease; }
-
-    /* Reduced motion: no slide, gentle fade only */
-    @media (prefers-reduced-motion: reduce){
-    .page-out-left, .page-out-right { transform: none; opacity: 0; transition: opacity 200ms ease; }
-    .page-in-left, .page-in-right  { transform: none; opacity: 0; }
-    .page-in-active                { transform: none; opacity: 1; transition: opacity 200ms ease; }
+    .slide-anim{
+    transition: transform 340ms cubic-bezier(.2,.8,.2,1);
     }
+
+
+
+
+
 
 
 
@@ -409,11 +425,14 @@
         </div>
       </header>
 
-      <main class="card" role="main" aria-live="polite">
-        <div class="card-inner" id="screenRoot">
-          <!-- Rendered by JS -->
+        <main class="card" role="main" aria-live="polite">
+        <div class="card-stage" id="cardStage">
+            <div class="card-inner" id="screenRoot">
+            <!-- Rendered by JS -->
+            </div>
         </div>
-      </main>
+        </main>
+
     </div>
   </div>
 
@@ -637,28 +656,73 @@ document.addEventListener("keydown", (e) => {
 
 function navigateWithTransition(direction, applyStateChange){
   // direction: "forward" | "back"
-  const outClass = direction === "back" ? "page-out-right" : "page-out-left";
-  const inClass  = direction === "back" ? "page-in-left"  : "page-in-right";
+  const stage = document.getElementById("cardStage");
 
-  // 1) Animate current content out
-  screenRoot.classList.remove("page-in-left","page-in-right","page-in-active","page-out-left","page-out-right");
-  screenRoot.classList.add(outClass);
+  // Respect reduced motion
+  const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  // 2) After it fades/slides out, swap content, then animate in
-  window.setTimeout(() => {
-    applyStateChange();   // change AppState, stepIndex, etc.
-    render();             // render new page into #screenRoot
+  // 1) Make a visual clone of what’s currently on screen
+  const clone = screenRoot.cloneNode(true);
+  clone.removeAttribute("id");
+  clone.classList.add("page-clone");
+  stage.appendChild(clone);
 
-    // Prepare the "in" position (offscreen + transparent)
-    screenRoot.classList.remove("page-out-left","page-out-right","page-in-left","page-in-right","page-in-active");
-    screenRoot.classList.add(inClass);
+  // 2) Update state + render the new page into the REAL screenRoot
+  applyStateChange();
+  render();
 
-    // Next frame: animate into place
+  // 3) Set up starting positions
+  // Clone slides OUT; screenRoot starts OFFSCREEN then slides IN
+  const inFrom  = (direction === "back") ? "slide-from-left" : "slide-from-right";
+  const outTo   = (direction === "back") ? "slide-to-right"  : "slide-to-left";
+
+  // Ensure base classes
+  screenRoot.classList.add("page-live");
+
+  // Reduced motion = crossfade (no sliding)
+  if (prefersReduced){
+    clone.style.transition = "opacity 240ms ease";
+    screenRoot.style.transition = "opacity 240ms ease";
+
+    clone.style.opacity = "1";
+    screenRoot.style.opacity = "0";
+
+    // next frame: fade
     requestAnimationFrame(() => {
-      screenRoot.classList.add("page-in-active");
+      clone.style.opacity = "0";
+      screenRoot.style.opacity = "1";
     });
-  }, 220);
+
+    window.setTimeout(() => {
+      clone.remove();
+      // cleanup inline styles
+      screenRoot.style.transition = "";
+      screenRoot.style.opacity = "";
+    }, 260);
+
+    return;
+  }
+
+  // Normal motion = cross-slide
+  // Put incoming page offscreen (no transition yet)
+  screenRoot.classList.remove("slide-from-left","slide-from-right","slide-to-left","slide-to-right","slide-anim");
+  screenRoot.classList.add(inFrom);
+
+  // Force the browser to "notice" the starting position
+  screenRoot.offsetWidth; // <-- forces reflow (normal trick)
+
+  // Now animate both at the same time
+  clone.classList.add("slide-anim", outTo);
+  screenRoot.classList.add("slide-anim");
+  screenRoot.classList.remove(inFrom); // returns to transform: none (0 position)
+
+  // 4) Cleanup after animation finishes
+  window.setTimeout(() => {
+    clone.remove();
+    screenRoot.classList.remove("slide-anim","slide-to-left","slide-to-right");
+  }, 360);
 }
+
 
 
 /* ---------- Audio ---------- */
@@ -1149,9 +1213,6 @@ function restart(){
 
 /* Boot */
 render();
-requestAnimationFrame(() => {
-  screenRoot.classList.add("page-in-active");
-});
 
 
 </script>
