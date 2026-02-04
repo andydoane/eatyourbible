@@ -404,7 +404,97 @@
     }
 
 
+    /* --- Extra Practice: Scrambled Phrases --- */
+    .phrase-stage{
+    position: relative;
+    margin-top: 14px;
+    height: 360px;
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,.10);
+    background: rgba(0,0,0,.18);
+    overflow: hidden;
+    }
 
+    .phrase-chip{
+    position: absolute;
+    max-width: calc(100% - 28px);
+    padding: 12px 14px;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(124,58,237,.16);
+    color: var(--text);
+    font-weight: 800;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    box-shadow: 0 10px 18px rgba(0,0,0,.22);
+    transition: transform .08s ease, filter .12s ease, opacity .12s ease;
+    }
+
+    .phrase-chip:hover{ filter: brightness(1.06); }
+    .phrase-chip:active{ transform: scale(.99); }
+
+    .phrase-chip.correct{
+    background: rgba(34,197,94,.18);
+    border-color: rgba(34,197,94,.35);
+    }
+
+    .phrase-chip.wrong{
+    background: rgba(245,158,11,.18);
+    border-color: rgba(245,158,11,.35);
+    }
+
+    .phrase-progress{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 10px;
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 13px;
+    }
+
+/* reserved “built verse” area */
+.phrase-built{
+  margin-top: 12px;
+  padding: 12px 12px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.18);
+}
+
+.phrase-built-label{
+  font-size: 12px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+.phrase-slots{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+
+.phrase-slot{
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px dashed rgba(255,255,255,.16);
+  background: rgba(255,255,255,.03);
+  color: rgba(185,194,221,.9);
+  font-weight: 800;
+  min-height: 44px;
+  display:flex;
+  align-items:center;
+}
+
+.phrase-slot.filled{
+  border-style: solid;
+  background: rgba(34,197,94,.10);
+  border-color: rgba(34,197,94,.22);
+  color: var(--text);
+}
 
 
 
@@ -477,12 +567,9 @@ document.documentElement.style.setProperty(
 const VERSE_ID   = "john_3_16";
 const VERSE_REF = verseIdToRef(VERSE_ID);
 const APP_TITLE = `Let's memorize ${VERSE_REF.replace(" (NIV)", "")}`;
-
-
-
-
 const AUDIO_FILE = `verse_audio/${VERSE_ID}.mp3`;
 document.title = `Bible Verse Memory • ${VERSE_REF}`;
+
 
 const VERSE_TEXT = "For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life.";
 
@@ -502,6 +589,28 @@ const HIDE_PLAN = [
   { type: "underscore", word: "eternal",  occurrence: 1 },
   { type: "underscore", word: "life",     occurrence: 1 },
 ];
+
+/* =========================================================
+   EXTRA PRACTICE GAMES (add more later)
+   ========================================================= */
+const EXTRA_GAMES = [
+  {
+    id: "scrambled_phrases",
+    title: "Put the Verse in Order",
+    description: "Tap the phrases in the correct order.",
+  },
+  {
+    id: "falling_words",
+    title: "Falling Words",
+    description: "Say each word as it falls from the sky.",
+  },
+  {
+    id: "missing_words",
+    title: "Missing Words",
+    description: "Type the missing words from memory.",
+  }
+];
+
 
 
 function verseIdToRef(verseId){
@@ -543,8 +652,10 @@ document.getElementById("btnRestartTop").addEventListener("click", () => restart
 
 const AppState = {
     
-  screen: "title", // title | instructions | full | step | final | done
+  screen: "title", // title | instructions | full | step | final | done | extraGate | extraMenu | extraGame
   stepIndex: 0,    // 0..HIDE_PLAN.length (step pages are 1..HIDE_PLAN.length)
+  extraGameId: null, // which extra practice game is selected
+  extraGameState: null, // holds state for extra practice games
   hintCountFinal: 0,
   revealedOnFinal: new Set(), // token indices revealed on final page
     isAnimating: false,
@@ -808,19 +919,25 @@ function toggleAudio(){
   }
 
   if (audioEl.paused){
-    audioEl.play().catch(() => {
-      showModal({
-        title: "Audio can’t play yet",
-        body: "Your browser blocked playback. Tap the button again, or make sure the mp3 file is available.",
-        actions: [btn("OK", { onClick: () => closeModal() })]
+    audioEl.play()
+      .then(() => render())   // ✅ update button text after playback starts
+      .catch(() => {
+        showModal({
+          title: "Audio can’t play yet",
+          body: "Your browser blocked playback. Tap the button again, or make sure the mp3 file is available.",
+          actions: [btn("OK", { onClick: () => closeModal() })]
+        });
       });
-    });
   } else {
     audioEl.pause();
+    render();                 // ✅ update button text after pausing
   }
 }
 
+
 audioEl.addEventListener("ended", () => render()); // refresh button label if you want
+audioEl.addEventListener("play",  () => render());
+audioEl.addEventListener("pause", () => render());
 
 /* ---------- Verse rendering ---------- */
 
@@ -962,6 +1079,323 @@ function renderVerse({mode, activeCount=0, onHint=null}){
   return container;
 }
 
+/* =========================================================
+   EXTRA PRACTICE: SCRAMBLED PHRASES GAME
+   ========================================================= */
+
+function shuffleArray(arr){
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function randInt(min, max){
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+// Build phrases of 2–4 words from your existing `tokens` array.
+function buildPhrasesFromTokens(){
+  const wordsOnly = tokens.filter(t => t.type === TokenType.WORD).map(t => t.text);
+
+  const phrases = [];
+  let i = 0;
+
+  while (i < wordsOnly.length){
+    const remaining = wordsOnly.length - i;
+
+    // Choose 2–4 word phrase length, but don’t exceed remaining words
+    const len = Math.min(randInt(2, 4), remaining);
+
+    const phrase = wordsOnly.slice(i, i + len).join(" ");
+    phrases.push(phrase);
+    i += len;
+  }
+
+  return phrases;
+}
+
+// Place phrase chips randomly inside the stage WITHOUT overlap,
+// and optionally reuse saved positions so chips stay put across renders.
+function placeChipsRandomly(stageEl, chipEls, opts = {}){
+  const { positions = null, padding = 12, maxAttemptsPerChip = 250 } = opts;
+
+  // Put all chips at 0,0 so the browser can measure them
+  chipEls.forEach(chip => {
+    chip.style.left = "0px";
+    chip.style.top = "0px";
+  });
+
+  // We need one layout frame so sizes exist
+  requestAnimationFrame(() => {
+    const stageRect = stageEl.getBoundingClientRect();
+    const stageW = stageRect.width;
+    const stageH = stageRect.height;
+
+    // Helper: rectangle overlap test
+    function overlaps(a, b){
+      return !(a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y);
+    }
+
+    // Already-placed rectangles
+    const placedRects = [];
+
+    chipEls.forEach((chip) => {
+      const key = chip.dataset.key; // we will set this on each chip (phrase index)
+      const chipRect = chip.getBoundingClientRect();
+      const w = chipRect.width;
+      const h = chipRect.height;
+
+      const maxX = Math.max(padding, stageW - w - padding);
+      const maxY = Math.max(padding, stageH - h - padding);
+
+      // 1) If we have a saved position for this chip, try it first
+      if (positions && key && positions[key]){
+        const saved = positions[key];
+        const proposed = { x: saved.x, y: saved.y, w, h };
+
+        // Clamp to stage bounds (in case stage size changed)
+        proposed.x = Math.max(padding, Math.min(proposed.x, maxX));
+        proposed.y = Math.max(padding, Math.min(proposed.y, maxY));
+
+        const hits = placedRects.some(r => overlaps(proposed, r));
+        if (!hits){
+          chip.style.left = `${proposed.x}px`;
+          chip.style.top  = `${proposed.y}px`;
+          placedRects.push(proposed);
+
+          // Keep the clamped value saved
+          positions[key] = { x: proposed.x, y: proposed.y };
+          return;
+        }
+        // If saved position overlaps, fall through to find a new one
+      }
+
+      // 2) Find a non-overlapping random position
+      let found = false;
+      let x = padding, y = padding;
+
+      for (let attempt = 0; attempt < maxAttemptsPerChip; attempt++){
+        x = randInt(padding, Math.floor(maxX));
+        y = randInt(padding, Math.floor(maxY));
+
+        const proposed = { x, y, w, h };
+        const hits = placedRects.some(r => overlaps(proposed, r));
+        if (!hits){
+          placedRects.push(proposed);
+          found = true;
+          break;
+        }
+      }
+
+      // If we can’t find a perfect non-overlap, we still place it (rare on small screens)
+      chip.style.left = `${x}px`;
+      chip.style.top  = `${y}px`;
+
+      if (positions && key){
+        positions[key] = { x, y };
+      }
+    });
+  });
+}
+
+
+function startScrambledPhrasesGame(){
+  const phrases = buildPhrasesFromTokens();
+
+  AppState.extraGameState = {
+    gameId: "scrambled_phrases",
+    phrases,
+    order: phrases.map((_, i) => i),  // correct order is 0..n-1
+    shuffledOrder: shuffleArray(phrases.map((_, i) => i)),
+    expectedIndex: 0,
+    placed: [],
+    positions: {}, // phraseIdx -> {x,y} locked positions
+    roundsTotal: 4,   // change to 3–5 if you want
+    roundNum: 1,
+    message: "",
+  };
+}
+
+
+function renderScrambledPhrasesGame(){
+  // Initialize if needed
+  if (!AppState.extraGameState || AppState.extraGameState.gameId !== "scrambled_phrases"){
+    startScrambledPhrasesGame();
+  }
+
+  const st = AppState.extraGameState;
+
+  // Make sure we have a "placed" array (what has been placed into slots)
+  if (!Array.isArray(st.placed)){
+    st.placed = []; // will store phrase indices in correct order as user taps them
+  }
+
+  screenRoot.appendChild(el("div", { class:"kicker", text:"Extra Practice" }));
+  screenRoot.appendChild(el("h1", { text:"Put the verse in order" }));
+  screenRoot.appendChild(el("p", { text:"Tap the phrases in the correct order. Each correct phrase moves into the top area." }));
+
+  // Progress
+  const progressRow = el("div", { class:"phrase-progress" }, [
+    el("div", { text: `Round ${st.roundNum} of ${st.roundsTotal}` }),
+    el("div", { text: `Placed: ${st.placed.length} / ${st.phrases.length}` }),
+  ]);
+  screenRoot.appendChild(progressRow);
+
+  // ---- Built (reserved) area ----
+  const built = el("div", { class:"phrase-built" }, [
+    el("div", { class:"phrase-built-label", text:"Your verse" })
+  ]);
+
+  const slots = el("div", { class:"phrase-slots" });
+
+  // Create one slot per phrase. Filled slots show the phrase text.
+  for (let i = 0; i < st.phrases.length; i++){
+    const filledPhraseIdx = st.placed[i];
+    const isFilled = typeof filledPhraseIdx === "number";
+
+    slots.appendChild(
+      el("div", {
+        class: "phrase-slot" + (isFilled ? " filled" : ""),
+        text: isFilled ? st.phrases[filledPhraseIdx] : "…"
+      })
+    );
+  }
+
+  built.appendChild(slots);
+  screenRoot.appendChild(built);
+
+  // Optional message
+  if (st.message){
+    screenRoot.appendChild(el("div", { class:"tip", text: st.message }));
+  }
+
+  // ---- Scrambled area ----
+  const stage = el("div", { class:"phrase-stage", id:"phraseStage" });
+  screenRoot.appendChild(stage);
+
+  // Build chips ONLY for phrases not yet placed
+  const remainingPhraseIdxs = st.shuffledOrder.filter(idx => !st.placed.includes(idx));
+
+  const chips = [];
+  remainingPhraseIdxs.forEach((phraseIdx) => {
+    const phraseText = st.phrases[phraseIdx];
+
+    const chip = el("div", {
+      class: "phrase-chip",
+      role: "button",
+      tabindex: "0",
+      text: phraseText,
+      onclick: () => onTapPhrase(phraseIdx, chip),
+    });
+    chip.dataset.key = String(phraseIdx);
+
+
+    chip.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") chip.click();
+    });
+
+    stage.appendChild(chip);
+    chips.push(chip);
+  });
+
+  // Random positions (chips stay in place unless rerendered)
+  placeChipsRandomly(stage, chips, { positions: st.positions });
+
+
+  // Bottom controls
+  const c = el("div", { class:"controls" }, [
+    btn("Restart Round", {
+      primary:false,
+      onClick: () => {
+        st.expectedIndex = 0;
+        st.placed = [];
+        st.message = "";
+        st.positions = {};
+        st.shuffledOrder = shuffleArray(st.phrases.map((_, i) => i));
+        render();
+      }
+    }),
+    btn("Back to Title", {
+      primary:false,
+      onClick: () => {
+        AppState.extraGameId = null;
+        AppState.extraGameState = null;
+        AppState.screen = "title";
+        render();
+      }
+    }),
+  ]);
+
+  screenRoot.appendChild(c);
+  setSticky(false);
+
+  // ---------- click handler ----------
+  function onTapPhrase(phraseIdx, chipEl){
+    const correctPhraseIdx = st.order[st.expectedIndex];
+
+    // Correct phrase
+    if (phraseIdx === correctPhraseIdx){
+      // Add to placed
+      st.placed.push(phraseIdx);
+      st.expectedIndex += 1;
+      st.message = "";
+
+      // Remove the chip from the scrambled area without moving the others
+      // (We remove from DOM now, and we also rerender to update top slots.)
+      try { chipEl.remove(); } catch (e) {}
+
+      // Completed all phrases
+      if (st.expectedIndex >= st.phrases.length){
+  // First, re-render so the last slot visibly fills
+  render();
+
+  // Then, show the modal on the next frame (after paint)
+  requestAnimationFrame(() => {
+    showModal({
+      title: "Good job! 🎉",
+      body: "You put the whole verse in order.",
+      actions: [
+        btn("Play again", {
+          onClick: () => {
+            closeModal();
+            startScrambledPhrasesGame();
+            render();
+          }
+        }),
+        btn("Back to Title", {
+          primary:false,
+          onClick: () => {
+            closeModal();
+            AppState.extraGameId = null;
+            AppState.extraGameState = null;
+            AppState.screen = "title";
+            render();
+          }
+        })
+      ]
+    });
+  });
+
+  return;
+}
+
+
+      // Re-render so the reserved area updates
+      render();
+      return;
+    }
+
+    // Wrong phrase: feedback flash
+    chipEl.classList.add("wrong");
+    window.setTimeout(() => chipEl.classList.remove("wrong"), 220);
+  }
+}
+
+
+
 /* ---------- Screens ---------- */
 function render(){
   clearNode(screenRoot);
@@ -975,6 +1409,10 @@ function render(){
   if (AppState.screen === "step") return renderStep();
   if (AppState.screen === "final") return renderFinal();
   if (AppState.screen === "done") return renderDone();
+  if (AppState.screen === "extraGate") return renderExtraGate();
+  if (AppState.screen === "extraMenu") return renderExtraMenu();
+  if (AppState.screen === "extraGame") return renderExtraGame();
+
 
 }
 
@@ -991,8 +1429,20 @@ function renderTitle(){
         render();
       }
     }),
+
+    btn("Extra Practice", {
+      primary:false,
+      onClick: () => {
+        resetAudioForNewPage();
+        AppState.screen = "extraGate";
+        render();
+      }
+    }),
   ]);
 
+
+
+  
   screenRoot.appendChild(c);
 }
 
@@ -1001,7 +1451,7 @@ function renderInstructions(){
   screenRoot.appendChild(el("div", { class:"kicker", text:"Instructions" }));
   screenRoot.appendChild(el("h1", { text:"How It Works" }));
   screenRoot.appendChild(el("h3", { text:"🔴 On each page, read the verse out loud. " }));
-  screenRoot.appendChild(el("h3", { text:"🔴 Each time you click 'Next,' a different from the verse will be replaced with emojis or blanks." }));
+  screenRoot.appendChild(el("h3", { text:"🔴 Each time you click 'Next,' a different word from the verse will be replaced with emojis or blanks." }));
   screenRoot.appendChild(el("h3", { text:"🔴 Try your best to say the verse again, even with these missing words." }));
 
   const c = el("div", { class:"controls" }, [
@@ -1069,7 +1519,7 @@ screenRoot.appendChild(box);
   // Sticky bar: audio + next
   setSticky(true,
     [
-      btn(audioEl.paused ? "🔊 Read it to Me" : "Pause Audio", { primary:false, onClick: () => toggleAudio() })
+      btn(audioEl.paused ? "🔊 Read it to Me" : "Pause Reading", { primary:false, onClick: () => toggleAudio() })
     ],
     [
         btn("Start Practice", {
@@ -1111,7 +1561,7 @@ function renderStep(){
 
 setSticky(true,
   [
-    btn(audioEl.paused ? "🔊 Read it to Me" : "Pause Audio", { primary:false, onClick: () => toggleAudio() }),
+    btn(audioEl.paused ? "🔊 Read it to Me" : "Pause Reading", { primary:false, onClick: () => toggleAudio() }),
 
     btn("Back", {
       primary:false,
@@ -1171,7 +1621,7 @@ function renderFinal(){
 
   setSticky(true,
     [
-      btn(audioEl.paused ? "🔊 Read it to Me" : "Pause Audio", { primary:false, onClick: () => toggleAudio() }),
+      btn(audioEl.paused ? "🔊 Read it to Me" : "Pause Reading", { primary:false, onClick: () => toggleAudio() }),
         btn("Back", {
         primary:false,
             onClick: () => {
@@ -1260,6 +1710,130 @@ function renderDone(){
 
   setSticky(false);
 }
+
+/* =========================================================
+   EXTRA PRACTICE SCREENS
+   ========================================================= */
+
+function renderExtraGate(){
+  screenRoot.appendChild(el("div", { class:"kicker", text:"Extra Practice" }));
+  screenRoot.appendChild(el("h1", { text:"Stop ✋" }));
+  screenRoot.appendChild(el("p", { text:"This section is for people who have already learned the verse." }));
+
+  const c = el("div", { class:"controls" }, [
+    btn("I've learned the verse", {
+      onClick: () => {
+        AppState.screen = "extraMenu";
+        render();
+      }
+    }),
+    btn("I haven't learned the verse", {
+      primary:false,
+      onClick: () => {
+        AppState.screen = "title";
+        render();
+      }
+    })
+  ]);
+
+  screenRoot.appendChild(c);
+  setSticky(false);
+}
+
+
+function renderExtraMenu(){
+  screenRoot.appendChild(el("div", { class:"kicker", text:"Extra Practice" }));
+  screenRoot.appendChild(el("h1", { text:"Choose an activity" }));
+  screenRoot.appendChild(el("p", { text:"Pick a game below. You can add more games later." }));
+
+  const list = el("div", { class:"controls" });
+
+  EXTRA_GAMES.forEach(game => {
+    const card = el("div", { class:"card", style:"box-shadow:none; margin-top:12px;" }, [
+      el("div", { class:"card-inner" }, [
+        el("h2", { text: game.title }),
+        el("p", { text: game.description }),
+        btn("Start", {
+          onClick: () => {
+            resetAudioForNewPage();
+            AppState.extraGameId = game.id;
+            AppState.screen = "extraGame";
+            render();
+          }
+        }),
+      ])
+    ]);
+
+    list.appendChild(card);
+  });
+
+  screenRoot.appendChild(list);
+
+  const backRow = el("div", { class:"controls" }, [
+    btn("Back to Title", {
+      primary:false,
+      onClick: () => {
+        AppState.screen = "title";
+        render();
+      }
+    })
+  ]);
+
+  screenRoot.appendChild(backRow);
+  setSticky(false);
+}
+
+
+function renderExtraGame(){
+  const game = EXTRA_GAMES.find(g => g.id === AppState.extraGameId);
+
+  screenRoot.appendChild(el("div", { class:"kicker", text:"Extra Practice" }));
+
+  if (!game){
+    screenRoot.appendChild(el("h1", { text:"Game not found" }));
+    screenRoot.appendChild(el("p", { text:"Returning to the menu." }));
+    AppState.screen = "extraMenu";
+    render();
+    return;
+  }
+
+  if (AppState.extraGameId === "scrambled_phrases"){
+    return renderScrambledPhrasesGame();
+  }
+
+  if (AppState.extraGameId === "falling_words"){
+    screenRoot.appendChild(el("h1", { text: game.title }));
+    screenRoot.appendChild(el("p", { text: game.description }));
+    screenRoot.appendChild(el("div", { class:"tip", text:"Coming next: Falling Words." }));
+  } 
+  else if (AppState.extraGameId === "missing_words"){
+    screenRoot.appendChild(el("h1", { text: game.title }));
+    screenRoot.appendChild(el("p", { text: game.description }));
+    screenRoot.appendChild(el("div", { class:"tip", text:"Coming next: Missing Words." }));
+  } 
+  else {
+    screenRoot.appendChild(el("h1", { text: game.title }));
+    screenRoot.appendChild(el("p", { text: game.description }));
+    screenRoot.appendChild(el("div", { class:"tip", text:"This game isn’t implemented yet." }));
+  }
+
+  const c = el("div", { class:"controls" }, [
+    btn("Back to Menu", {
+      primary:false,
+      onClick: () => {
+        AppState.extraGameId = null;
+        AppState.extraGameState = null;
+        AppState.screen = "extraMenu";
+        render();
+      }
+    })
+  ]);
+
+  screenRoot.appendChild(c);
+  setSticky(false);
+}
+
+
 
 /* ---------- Restart ---------- */
 function restart(){
