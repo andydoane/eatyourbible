@@ -563,7 +563,7 @@ document.documentElement.style.setProperty(
   `${SLIDE_MS}ms`
 );
 
-
+const SCRAMBLE_WRONG_PENALTY_SEC = 5;
 const VERSE_ID   = "john_3_16";
 const VERSE_REF = verseIdToRef(VERSE_ID);
 const APP_TITLE = `Let's memorize ${VERSE_REF.replace(" (NIV)", "")}`;
@@ -1096,6 +1096,17 @@ function randInt(min, max){
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
+function clamp0(n){ return Math.max(0, n); }
+
+function formatTimeMs(ms){
+  ms = clamp0(ms);
+  const totalSec = Math.round(ms / 1000);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return m > 0 ? `${m}:${String(s).padStart(2,"0")}` : `${s}s`;
+}
+
+
 // Build phrases of 2–4 words from your existing `tokens` array.
 function buildPhrasesFromTokens(){
   const wordsOnly = tokens.filter(t => t.type === TokenType.WORD).map(t => t.text);
@@ -1216,6 +1227,11 @@ function startScrambledPhrasesGame(){
     roundsTotal: 4,   // change to 3–5 if you want
     roundNum: 1,
     message: "",
+
+    startedAtMs: Date.now(), // when the round started
+    wrongTaps: 0,            // number of wrong taps
+    penaltySec: 0,           // wrongTaps * SCRAMBLE_WRONG_PENALTY_SEC
+
   };
 }
 
@@ -1238,11 +1254,16 @@ function renderScrambledPhrasesGame(){
   screenRoot.appendChild(el("p", { text:"Tap the phrases in the correct order. Each correct phrase moves into the top area." }));
 
   // Progress
-  const progressRow = el("div", { class:"phrase-progress" }, [
-    el("div", { text: `Round ${st.roundNum} of ${st.roundsTotal}` }),
-    el("div", { text: `Placed: ${st.placed.length} / ${st.phrases.length}` }),
-  ]);
-  screenRoot.appendChild(progressRow);
+const elapsedMs = Date.now() - (st.startedAtMs || Date.now());
+const penaltyMs = (st.wrongTaps || 0) * SCRAMBLE_WRONG_PENALTY_SEC * 1000;
+
+const progressRow = el("div", { class:"phrase-progress" }, [
+  el("div", { text: `Round ${st.roundNum} of ${st.roundsTotal}` }),
+  el("div", { text: `Placed: ${st.placed.length} / ${st.phrases.length}` }),
+  el("div", { text: `Time: ${formatTimeMs(elapsedMs + penaltyMs)}` }),
+]);
+screenRoot.appendChild(progressRow);
+
 
   // ---- Built (reserved) area ----
   const built = el("div", { class:"phrase-built" }, [
@@ -1315,6 +1336,11 @@ function renderScrambledPhrasesGame(){
         st.message = "";
         st.positions = {};
         st.shuffledOrder = shuffleArray(st.phrases.map((_, i) => i));
+
+        st.startedAtMs = Date.now();
+        st.wrongTaps = 0;
+        st.penaltySec = 0;
+
         render();
       }
     }),
@@ -1354,29 +1380,44 @@ function renderScrambledPhrasesGame(){
 
   // Then, show the modal on the next frame (after paint)
   requestAnimationFrame(() => {
-    showModal({
-      title: "Good job! 🎉",
-      body: "You put the whole verse in order.",
-      actions: [
-        btn("Play again", {
-          onClick: () => {
-            closeModal();
-            startScrambledPhrasesGame();
-            render();
-          }
-        }),
-        btn("Back to Title", {
-          primary:false,
-          onClick: () => {
-            closeModal();
-            AppState.extraGameId = null;
-            AppState.extraGameState = null;
-            AppState.screen = "title";
-            render();
-          }
-        })
-      ]
-    });
+    const finishedAtMs = Date.now();
+const elapsedMs = finishedAtMs - (st.startedAtMs || finishedAtMs);
+const wrong = st.wrongTaps || 0;
+const penaltyMs = wrong * SCRAMBLE_WRONG_PENALTY_SEC * 1000;
+const totalMs = elapsedMs + penaltyMs;
+
+const bodyNode = el("div", {}, [
+  el("p", { text: "You put the whole verse in order." }),
+  el("p", { text: `Time: ${formatTimeMs(elapsedMs)}` }),
+  el("p", { text: `Wrong taps: ${wrong} (Penalty: +${wrong * SCRAMBLE_WRONG_PENALTY_SEC}s)` }),
+  el("p", { text: `Final time: ${formatTimeMs(totalMs)}` }),
+]);
+
+showModal({
+  title: "Good job! 🎉",
+  body: bodyNode,
+  actions: [
+    btn("Play again", {
+      onClick: () => {
+        closeModal();
+        startScrambledPhrasesGame();
+        render();
+      }
+    }),
+    btn("Back to Title", {
+      primary:false,
+      onClick: () => {
+        closeModal();
+        AppState.extraGameId = null;
+        AppState.extraGameState = null;
+        AppState.screen = "title";
+        render();
+      }
+    })
+  ]
+});
+
+    
   });
 
   return;
@@ -1389,8 +1430,15 @@ function renderScrambledPhrasesGame(){
     }
 
     // Wrong phrase: feedback flash
+    st.wrongTaps = (st.wrongTaps || 0) + 1;
+    st.penaltySec = (st.wrongTaps || 0) * SCRAMBLE_WRONG_PENALTY_SEC;
+
     chipEl.classList.add("wrong");
     window.setTimeout(() => chipEl.classList.remove("wrong"), 220);
+
+    // Update the on-screen timer / stats
+    render();
+
   }
 }
 
