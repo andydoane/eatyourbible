@@ -536,9 +536,29 @@
             <div class="scoreMsg" id="finalMsg">Message here</div>
           </div>
           <div class="btnrow" style="margin-top:14px;">
-            <button class="primary" id="btnRestart">Start over</button>
+            <button class="primary" id="btnRestart">Continue</button>
           </div>
         </section>
+
+        <!-- BEST NEWS EVER -->
+        <section id="screenBestNews" class="hidden">
+        <img
+            src="topten_images/best_news_ever_title.jpg"
+            alt="Best News Ever"
+            class="titleImage"
+        />
+
+        <div class="sub" style="margin-top:6px;">
+            Learn more about God and his commands.
+        </div>
+
+        <div class="btnrow" style="margin-top:14px;">
+            <button class="primary" id="btnBestNews">Best News Ever</button>
+            <button id="btnBackToTitle">Back to Title</button>
+        </div>
+        </section>
+
+
       </main>
 
 
@@ -661,6 +681,8 @@
 
     const screenGame = document.getElementById("screenGame");
     const screenScore = document.getElementById("screenScore");
+    const screenBestNews = document.getElementById("screenBestNews");
+
 
     const headerTitle = document.getElementById("headerTitle");
     const progressPill = document.getElementById("progressPill");
@@ -683,6 +705,9 @@
     const btnYes = document.getElementById("btnYes");
     const btnNo = document.getElementById("btnNo");
     const btnRestart = document.getElementById("btnRestart");
+    const btnBestNews = document.getElementById("btnBestNews");
+    const btnBackToTitle = document.getElementById("btnBackToTitle");
+
 
     const finalScore = document.getElementById("finalScore");
     const finalMsg = document.getElementById("finalMsg");
@@ -695,17 +720,20 @@
     }
 
     function showScreen(which){
-    // which: "splash" | "rules" | "game" | "score"
-    screenSplash.classList.add("hidden");
-    screenRules.classList.add("hidden");
-    screenGame.classList.add("hidden");
-    screenScore.classList.add("hidden");
+        // which: "splash" | "rules" | "game" | "score" | "bestnews"
+        screenSplash.classList.add("hidden");
+        screenRules.classList.add("hidden");
+        screenGame.classList.add("hidden");
+        screenScore.classList.add("hidden");
+        screenBestNews.classList.add("hidden");
 
-    if(which === "splash") screenSplash.classList.remove("hidden");
-    if(which === "rules") screenRules.classList.remove("hidden");
-    if(which === "game") screenGame.classList.remove("hidden");
-    if(which === "score") screenScore.classList.remove("hidden");
+        if(which === "splash") screenSplash.classList.remove("hidden");
+        if(which === "rules") screenRules.classList.remove("hidden");
+        if(which === "game") screenGame.classList.remove("hidden");
+        if(which === "score") screenScore.classList.remove("hidden");
+        if(which === "bestnews") screenBestNews.classList.remove("hidden");
     }
+
 
 
     function resetCardToFront(){
@@ -971,14 +999,27 @@
 
 
     btnRestart.addEventListener("click", () => {
-      // exit fullscreen is optional; we just restart
-      idx = 0;
-      correct = 0;
-      updateScorePill();
-      progressPill.textContent = "Ready";
-      headerTitle.textContent = "Ten Commandments";
-      showScreen("splash");
+    // After the score screen, go to the "Best News Ever" page
+    headerTitle.textContent = "Next";
+    progressPill.textContent = "";
+    showScreen("bestnews");
     });
+
+    btnBestNews.addEventListener("click", () => {
+    // Open the gospel page
+    window.location.href = "https://www.eatyourbible.com/gospel";
+    });
+
+    btnBackToTitle.addEventListener("click", () => {
+    // Go back to the very beginning
+    idx = 0;
+    correct = 0;
+    updateScorePill();
+    progressPill.textContent = "Ready";
+    headerTitle.textContent = "Ten Commandments";
+    showScreen("splash");
+    });
+
 
     // Initial view
     showScreen("splash");
