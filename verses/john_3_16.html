@@ -95,6 +95,19 @@
       padding: 18px 18px 16px;
     }
 
+    /* When a screen wants to “break out” of the card */
+    .card.no-card{
+    background: none;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+    }
+
+    .card.no-card .card-inner{
+    padding: 0;
+    }
+
+
     .kicker{
       font-size:12px;
       letter-spacing:.18em;
@@ -459,9 +472,13 @@
   margin-top: 12px;
   padding: 12px 12px;
   border-radius: 18px;
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(0,0,0,.18);
+
+  /* ✅ greener + more distinct */
+  border: 1px solid rgba(34,197,94,.28);
+  background: linear-gradient(180deg, rgba(34,197,94,.18), rgba(0,0,0,.18));
+  box-shadow: 0 10px 24px rgba(0,0,0,.20), inset 0 0 0 1px rgba(34,197,94,.10);
 }
+
 
 .phrase-built-label{
   font-size: 12px;
@@ -470,6 +487,15 @@
   color: var(--muted);
   margin-bottom: 10px;
 }
+
+/* Plain sentence text for placed phrases (compact) */
+.phrase-built-text{
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--text);
+  opacity: .95;
+}
+
 
 .phrase-slots{
   display:flex;
@@ -491,12 +517,46 @@
 
 .phrase-slot.filled{
   border-style: solid;
-  background: rgba(34,197,94,.10);
-  border-color: rgba(34,197,94,.22);
+  background: rgba(34,197,94,.14);
+  border-color: rgba(34,197,94,.30);
   color: var(--text);
+  font-size: 11px;
+}
+
+/* Small phones (e.g., iPhone SE): give the stage more vertical room */
+@media (max-width: 420px){
+  .phrase-stage{
+    height: clamp(320px, 58svh, 520px);
+  }
+
+  .phrase-chip{
+    padding: 10px 12px;   /* slightly smaller chips */
+    font-size: 14px;
+  }
 }
 
 
+/* ================================
+   Scrambled Game: full-height mode
+   ================================ */
+body.mode-scramble .app{
+  /* Sticky bar is hidden in this mode, so don’t reserve space for it */
+  padding-bottom: 18px; /* was 110px globally */
+}
+
+/* Make the screenRoot a vertical layout so the stage can expand */
+body.mode-scramble #screenRoot{
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh; /* use the full viewport height on mobile */
+}
+
+/* Let the stage take remaining space */
+body.mode-scramble .phrase-stage{
+  flex: 1;
+  height: auto;        /* override fixed/clamped height */
+  min-height: 320px;   /* still keep it playable */
+}
 
 
 
@@ -508,7 +568,8 @@
 <body>
   <div class="app">
     <div class="shell">
-      <header>
+      <header id="appHeader">
+
         <div class="brand">
           <div class="logo">📘</div>
           <div class="title">
@@ -744,6 +805,24 @@ function setSticky(show, leftButtons=[], rightButtons=[]){
   leftButtons.forEach(b => stickyLeft.appendChild(b));
   rightButtons.forEach(b => stickyRight.appendChild(b));
 }
+
+function setHeaderVisible(show){
+  const header = document.getElementById("appHeader");
+  if (!header) return;
+  header.style.display = show ? "" : "none";
+}
+
+function setCardMode(mode){
+  // mode: "card" | "no-card"
+  const main = document.querySelector("main.card");
+  if (!main) return;
+  main.classList.toggle("no-card", mode === "no-card");
+}
+
+function setScrambleMode(on){
+  document.body.classList.toggle("mode-scramble", !!on);
+}
+
 
 function setNavDisabled(disabled){
   // Disable all sticky bar buttons
@@ -1118,7 +1197,7 @@ function buildPhrasesFromTokens(){
     const remaining = wordsOnly.length - i;
 
     // Choose 2–4 word phrase length, but don’t exceed remaining words
-    const len = Math.min(randInt(2, 4), remaining);
+    const len = Math.min(randInt(2, 3), remaining);
 
     const phrase = wordsOnly.slice(i, i + len).join(" ");
     phrases.push(phrase);
@@ -1129,9 +1208,20 @@ function buildPhrasesFromTokens(){
 }
 
 // Place phrase chips randomly inside the stage WITHOUT overlap,
-// and optionally reuse saved positions so chips stay put across renders.
+// reuse saved positions so chips stay put across renders,
+// and bias new placements toward the middle first (expanding outward).
 function placeChipsRandomly(stageEl, chipEls, opts = {}){
-  const { positions = null, padding = 12, maxAttemptsPerChip = 250 } = opts;
+  const {
+    positions = null,
+    padding = 12,
+    maxAttemptsPerChip = 260,
+
+    // ✅ vertical-center bias: try middle HEIGHT band first, then expand
+    yZoneScales = [0.70, 0.85, 1.00], // 70% height band -> 85% -> full height
+      yBias = 0.5, // 0 = top, 0.5 = middle, 1 = bottom
+
+
+  } = opts;
 
   // Put all chips at 0,0 so the browser can measure them
   chipEls.forEach(chip => {
@@ -1139,22 +1229,25 @@ function placeChipsRandomly(stageEl, chipEls, opts = {}){
     chip.style.top = "0px";
   });
 
-  // We need one layout frame so sizes exist
   requestAnimationFrame(() => {
     const stageRect = stageEl.getBoundingClientRect();
     const stageW = stageRect.width;
     const stageH = stageRect.height;
 
-    // Helper: rectangle overlap test
     function overlaps(a, b){
       return !(a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y);
     }
 
-    // Already-placed rectangles
     const placedRects = [];
 
+    // Helper: generate a random int inside [min,max], safely
+    function randBetween(min, max){
+      if (max < min) return min;
+      return randInt(min, max);
+    }
+
     chipEls.forEach((chip) => {
-      const key = chip.dataset.key; // we will set this on each chip (phrase index)
+      const key = chip.dataset.key;
       const chipRect = chip.getBoundingClientRect();
       const w = chipRect.width;
       const h = chipRect.height;
@@ -1165,52 +1258,99 @@ function placeChipsRandomly(stageEl, chipEls, opts = {}){
       // 1) If we have a saved position for this chip, try it first
       if (positions && key && positions[key]){
         const saved = positions[key];
-        const proposed = { x: saved.x, y: saved.y, w, h };
-
-        // Clamp to stage bounds (in case stage size changed)
-        proposed.x = Math.max(padding, Math.min(proposed.x, maxX));
-        proposed.y = Math.max(padding, Math.min(proposed.y, maxY));
+        const proposed = {
+          x: Math.max(padding, Math.min(saved.x, maxX)),
+          y: Math.max(padding, Math.min(saved.y, maxY)),
+          w, h
+        };
 
         const hits = placedRects.some(r => overlaps(proposed, r));
         if (!hits){
           chip.style.left = `${proposed.x}px`;
           chip.style.top  = `${proposed.y}px`;
           placedRects.push(proposed);
-
-          // Keep the clamped value saved
           positions[key] = { x: proposed.x, y: proposed.y };
           return;
         }
-        // If saved position overlaps, fall through to find a new one
+        // If saved spot now conflicts, fall through to find a new one
       }
 
-      // 2) Find a non-overlapping random position
+      // 2) New placement: try center zone first, then expand outward
+      let finalX = padding;
+      let finalY = padding;
       let found = false;
-      let x = padding, y = padding;
 
-      for (let attempt = 0; attempt < maxAttemptsPerChip; attempt++){
-        x = randInt(padding, Math.floor(maxX));
-        y = randInt(padding, Math.floor(maxY));
+      // Split attempts across zones (roughly evenly)
+// Split attempts across vertical bands (roughly evenly)
+const attemptsPerZone = Math.max(40, Math.floor(maxAttemptsPerChip / yZoneScales.length));
 
-        const proposed = { x, y, w, h };
-        const hits = placedRects.some(r => overlaps(proposed, r));
-        if (!hits){
-          placedRects.push(proposed);
-          found = true;
-          break;
+for (const scale of yZoneScales){
+  // ✅ Vertical “preferred band” (full width, limited height)
+const bandH = stageH * scale;
+
+// ✅ biased vertical band: slide the band up/down instead of centering it
+const freeH = Math.max(0, stageH - bandH);
+const bandTop = freeH * Math.max(0, Math.min(1, yBias));
+const bandBottom = bandTop + bandH;
+
+
+  // X uses the FULL legal width always
+  const minX = padding;
+  const maxXz = Math.floor(maxX);
+
+  // Y uses the band’s range (clamped to legal Y)
+  const minY = Math.max(padding, Math.ceil(bandTop + padding));
+  const maxYz = Math.min(maxY, Math.floor(bandBottom - h - padding));
+
+  for (let attempt = 0; attempt < attemptsPerZone; attempt++){
+    const x = randBetween(minX, maxXz);
+    const y = randBetween(minY, maxYz);
+
+    const proposed = { x, y, w, h };
+    const hits = placedRects.some(r => overlaps(proposed, r));
+    if (!hits){
+      placedRects.push(proposed);
+      finalX = x;
+      finalY = y;
+      found = true;
+      break;
+    }
+  }
+
+  if (found) break;
+}
+
+
+      // 3) If nothing worked, last resort: anywhere in full stage bounds
+      if (!found){
+        for (let attempt = 0; attempt < maxAttemptsPerChip; attempt++){
+          const x = randBetween(padding, Math.floor(maxX));
+          const y = randBetween(padding, Math.floor(maxY));
+
+          const proposed = { x, y, w, h };
+          const hits = placedRects.some(r => overlaps(proposed, r));
+          if (!hits){
+            placedRects.push(proposed);
+            finalX = x;
+            finalY = y;
+            found = true;
+            break;
+          }
         }
       }
 
-      // If we can’t find a perfect non-overlap, we still place it (rare on small screens)
-      chip.style.left = `${x}px`;
-      chip.style.top  = `${y}px`;
+      // If we still can’t find a perfect non-overlap (very cramped), we place it anyway.
+      chip.style.left = `${finalX}px`;
+      chip.style.top  = `${finalY}px`;
 
       if (positions && key){
-        positions[key] = { x, y };
+        positions[key] = { x: finalX, y: finalY };
       }
     });
   });
 }
+
+
 
 
 function startScrambledPhrasesGame(){
@@ -1237,6 +1377,10 @@ function startScrambledPhrasesGame(){
 
 
 function renderScrambledPhrasesGame(){
+  setHeaderVisible(false);
+  setCardMode("no-card");
+  setScrambleMode(true);
+
   // Initialize if needed
   if (!AppState.extraGameState || AppState.extraGameState.gameId !== "scrambled_phrases"){
     startScrambledPhrasesGame();
@@ -1249,44 +1393,32 @@ function renderScrambledPhrasesGame(){
     st.placed = []; // will store phrase indices in correct order as user taps them
   }
 
-  screenRoot.appendChild(el("div", { class:"kicker", text:"Extra Practice" }));
-  screenRoot.appendChild(el("h1", { text:"Put the verse in order" }));
-  screenRoot.appendChild(el("p", { text:"Tap the phrases in the correct order. Each correct phrase moves into the top area." }));
-
-  // Progress
-const elapsedMs = Date.now() - (st.startedAtMs || Date.now());
-const penaltyMs = (st.wrongTaps || 0) * SCRAMBLE_WRONG_PENALTY_SEC * 1000;
-
-const progressRow = el("div", { class:"phrase-progress" }, [
-  el("div", { text: `Round ${st.roundNum} of ${st.roundsTotal}` }),
-  el("div", { text: `Placed: ${st.placed.length} / ${st.phrases.length}` }),
-  el("div", { text: `Time: ${formatTimeMs(elapsedMs + penaltyMs)}` }),
-]);
-screenRoot.appendChild(progressRow);
-
-
-  // ---- Built (reserved) area ----
+  
+    // ---- Built (reserved) area ----
   const built = el("div", { class:"phrase-built" }, [
     el("div", { class:"phrase-built-label", text:"Your verse" })
   ]);
 
-  const slots = el("div", { class:"phrase-slots" });
+  // Compact until first correct tap
+  if (st.placed.length === 0){
+    built.appendChild(el("div", { class:"tip", text:"Tap the first correct phrase to begin." }));
+    screenRoot.appendChild(built);
+  } else {
+  // Build a plain sentence from the placed phrases (most compact)
+  const placedText = st.placed
+    .map(idx => st.phrases[idx])
+    .join(" ");
 
-  // Create one slot per phrase. Filled slots show the phrase text.
-  for (let i = 0; i < st.phrases.length; i++){
-    const filledPhraseIdx = st.placed[i];
-    const isFilled = typeof filledPhraseIdx === "number";
+  built.appendChild(
+    el("div", { class:"phrase-built-text", text: placedText })
+  );
 
-    slots.appendChild(
-      el("div", {
-        class: "phrase-slot" + (isFilled ? " filled" : ""),
-        text: isFilled ? st.phrases[filledPhraseIdx] : "…"
-      })
-    );
-  }
-
-  built.appendChild(slots);
   screenRoot.appendChild(built);
+}
+
+
+
+  
 
   // Optional message
   if (st.message){
@@ -1323,39 +1455,13 @@ screenRoot.appendChild(progressRow);
   });
 
   // Random positions (chips stay in place unless rerendered)
-  placeChipsRandomly(stage, chips, { positions: st.positions });
+placeChipsRandomly(stage, chips, { positions: st.positions, yZoneScales: [0.78, 0.92, 1.00], yBias: 0.15 });
 
 
-  // Bottom controls
-  const c = el("div", { class:"controls" }, [
-    btn("Restart Round", {
-      primary:false,
-      onClick: () => {
-        st.expectedIndex = 0;
-        st.placed = [];
-        st.message = "";
-        st.positions = {};
-        st.shuffledOrder = shuffleArray(st.phrases.map((_, i) => i));
 
-        st.startedAtMs = Date.now();
-        st.wrongTaps = 0;
-        st.penaltySec = 0;
 
-        render();
-      }
-    }),
-    btn("Back to Title", {
-      primary:false,
-      onClick: () => {
-        AppState.extraGameId = null;
-        AppState.extraGameState = null;
-        AppState.screen = "title";
-        render();
-      }
-    }),
-  ]);
-
-  screenRoot.appendChild(c);
+  
+  
   setSticky(false);
 
   // ---------- click handler ----------
@@ -1443,10 +1549,14 @@ showModal({
 }
 
 
-
 /* ---------- Screens ---------- */
 function render(){
   clearNode(screenRoot);
+  
+  // Default: normal card for all screens unless a screen overrides it
+  setCardMode("card");
+    setScrambleMode(false);
+
 
   // Default sticky controls off; each screen configures it.
   setSticky(false);
@@ -1460,11 +1570,14 @@ function render(){
   if (AppState.screen === "extraGate") return renderExtraGate();
   if (AppState.screen === "extraMenu") return renderExtraMenu();
   if (AppState.screen === "extraGame") return renderExtraGame();
+  if (AppState.screen === "extraGameIntro") return renderExtraGameIntro();
+
 
 
 }
 
 function renderTitle(){
+  setHeaderVisible(true);
   screenRoot.appendChild(el("div", { class:"kicker", text:"Welcome" }));
   screenRoot.appendChild(el("h1", { text: APP_TITLE }));
   screenRoot.appendChild(el("p", { text:"You’ll read the verse out loud, then practice again as some words turn into emojis and blanks." }));
@@ -1496,6 +1609,7 @@ function renderTitle(){
 
 
 function renderInstructions(){
+  setHeaderVisible(true);
   screenRoot.appendChild(el("div", { class:"kicker", text:"Instructions" }));
   screenRoot.appendChild(el("h1", { text:"How It Works" }));
   screenRoot.appendChild(el("h3", { text:"🔴 On each page, read the verse out loud. " }));
@@ -1549,6 +1663,7 @@ function renderVerseCardHeader({stepLabel=null, stepProgress=null} = {}){
 }
 
 function renderFullVerse(){
+  setHeaderVisible(true);
   screenRoot.appendChild(el("div", { class:"kicker", text:"Step 1" }));
   screenRoot.appendChild(el("h1", { text:"Read the verse" }));
   screenRoot.appendChild(el("p", { text:"Read it slowly. You can tap “Read it to Me” to listen." }));
@@ -1586,6 +1701,7 @@ screenRoot.appendChild(box);
 }
 
 function renderStep(){
+  setHeaderVisible(true);
   const totalSteps = HIDE_PLAN.length;
   const step = AppState.stepIndex; // 1..totalSteps
 
@@ -1645,6 +1761,7 @@ setSticky(true,
 }
 
 function renderFinal(){
+  setHeaderVisible(true);
   screenRoot.appendChild(el("div", { class:"kicker", text:"Final" }));
   screenRoot.appendChild(el("h1", { text:"No hints… if you can!" }));
   screenRoot.appendChild(el("p", { text:"Try to say the whole verse out loud. If you get stuck, tap a word to reveal it—then try again." }));
@@ -1733,6 +1850,7 @@ function renderFinal(){
 }
 
 function renderDone(){
+  setHeaderVisible(true);
   screenRoot.appendChild(el("div", { class:"kicker", text:"Nice work!" }));
   screenRoot.appendChild(el("h1", { text:"You did it 🎉" }));
   screenRoot.appendChild(el("p", { text:"Want to practice again or try a new verse later? (You’ll be able to swap verses by editing the config block.)" }));
@@ -1805,8 +1923,16 @@ function renderExtraMenu(){
           onClick: () => {
             resetAudioForNewPage();
             AppState.extraGameId = game.id;
+
+            // Only scrambled phrases gets an intro screen (for now)
+            if (game.id === "scrambled_phrases"){
+            AppState.screen = "extraGameIntro";
+            } else {
             AppState.screen = "extraGame";
+            }
+
             render();
+
           }
         }),
       ])
@@ -1835,6 +1961,10 @@ function renderExtraMenu(){
 function renderExtraGame(){
   const game = EXTRA_GAMES.find(g => g.id === AppState.extraGameId);
 
+  if (AppState.extraGameId === "scrambled_phrases"){
+    return renderScrambledPhrasesGame();
+  }
+
   screenRoot.appendChild(el("div", { class:"kicker", text:"Extra Practice" }));
 
   if (!game){
@@ -1845,9 +1975,6 @@ function renderExtraGame(){
     return;
   }
 
-  if (AppState.extraGameId === "scrambled_phrases"){
-    return renderScrambledPhrasesGame();
-  }
 
   if (AppState.extraGameId === "falling_words"){
     screenRoot.appendChild(el("h1", { text: game.title }));
@@ -1881,6 +2008,42 @@ function renderExtraGame(){
   setSticky(false);
 }
 
+function renderExtraGameIntro(){
+  setHeaderVisible(false);
+
+  const game = EXTRA_GAMES.find(g => g.id === AppState.extraGameId);
+
+  screenRoot.appendChild(el("div", { class:"kicker", text:"Extra Practice" }));
+  screenRoot.appendChild(el("h1", { text: game ? game.title : "Extra Practice" }));
+
+  // Custom instructions for scrambled phrases
+  if (AppState.extraGameId === "scrambled_phrases"){
+    screenRoot.appendChild(el("p", { text:"Tap the phrase bubbles in the correct order." }));
+    screenRoot.appendChild(el("p", { text:"Each correct phrase moves into the top area." }));
+    screenRoot.appendChild(el("p", { text:"Wrong taps add a time penalty — so be careful." }));
+  } else {
+    screenRoot.appendChild(el("p", { text: game ? game.description : "Instructions" }));
+  }
+
+  const c = el("div", { class:"controls" }, [
+    btn("Start", {
+      onClick: () => {
+        AppState.screen = "extraGame";
+        render();
+      }
+    }),
+    btn("Back", {
+      primary:false,
+      onClick: () => {
+        AppState.screen = "extraMenu";
+        render();
+      }
+    })
+  ]);
+
+  screenRoot.appendChild(c);
+  setSticky(false);
+}
 
 
 /* ---------- Restart ---------- */
