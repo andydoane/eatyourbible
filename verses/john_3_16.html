@@ -734,6 +734,20 @@ audioEl.src = AUDIO_FILE;
 
 document.getElementById("btnRestartTop").addEventListener("click", () => restart());
 
+// Remember if the user said they've learned the verse (persists across refreshes)
+const HAS_LEARNED_KEY = `hasLearned_${VERSE_ID}`;
+
+function getHasLearned(){
+  try { return localStorage.getItem(HAS_LEARNED_KEY) === "1"; }
+  catch (e) { return false; }
+}
+
+function setHasLearned(val){
+  try { localStorage.setItem(HAS_LEARNED_KEY, val ? "1" : "0"); }
+  catch (e) {}
+}
+
+
 const AppState = {
     
   screen: "title", // title | instructions | full | step | final | done | extraGate | extraMenu | extraGame
@@ -742,7 +756,9 @@ const AppState = {
   extraGameState: null, // holds state for extra practice games
   hintCountFinal: 0,
   revealedOnFinal: new Set(), // token indices revealed on final page
-    isAnimating: false,
+  isAnimating: false,
+  hasLearnedVerse: getHasLearned(),
+
 
 };
 
@@ -2122,15 +2138,18 @@ const c = el("div", { class:"controls" }, [
     }
   }),
 
-  btn(`Practice ${verseLabel}`, {
+    btn(`Practice ${verseLabel}`, {
     primary:false,
     onClick: () => {
-      playHappyBeep();
-      resetAudioForNewPage();
-      AppState.screen = "extraGate";
-      render();
+        playHappyBeep();
+        resetAudioForNewPage();
+
+        // ✅ If they've confirmed before, skip the gate
+        AppState.screen = AppState.hasLearnedVerse ? "extraMenu" : "extraGate";
+        render();
     }
-  }),
+    }),
+
 ]);
 
 
@@ -2435,11 +2454,16 @@ function renderExtraGate(){
 
   const c = el("div", { class:"controls" }, [
     btn("I've learned the verse", {
-      onClick: () => {
+    onClick: () => {
+        // ✅ Save + remember it
+        AppState.hasLearnedVerse = true;
+        setHasLearned(true);
+
         AppState.screen = "extraMenu";
         render();
-      }
+    }
     }),
+
     btn("I haven't learned the verse", {
       primary:false,
       onClick: () => {
