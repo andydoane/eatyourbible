@@ -1591,13 +1591,28 @@ const built = el("div", { class:"phrase-built" }, [
   el("div", { class:"phrase-built-label", text:`Your verse — ${verseLabel}` })
 ]);
 
-// ✅ We'll update these live
-let builtTipEl = null;
-let builtTextEl = el("div", { class:"phrase-built-text", text:"" });
+// Tip + text nodes
+const builtTipEl = el("div", { class:"tip", text:"Tap the phrases in the correct order." });
+const builtTextEl = el("div", { class:"phrase-built-text", text:"" });
 
-
-refreshBuiltText();
+// Start compact: show tip, hide text until first correct
+built.appendChild(builtTipEl);
+built.appendChild(builtTextEl);
 screenRoot.appendChild(built);
+
+function refreshBuiltText(){
+  const placedText = st.placed.map(i => st.phrases[i]).join(" ");
+  builtTextEl.textContent = placedText;
+
+  if (st.placed.length > 0){
+    if (builtTipEl.parentNode) builtTipEl.remove();
+  }
+}
+
+// Run once on load
+refreshBuiltText();
+
+  
 
 
   // Optional message
