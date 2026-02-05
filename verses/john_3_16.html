@@ -267,6 +267,13 @@
       min-height: 38px;
     }
 
+    /* Full-width menu buttons (Choose an Activity page) */
+    .btn.full{
+    width: 100%;
+    justify-content: center;
+    }
+
+    
     .sticky-bar{
       position: fixed;
       left:0; right:0; bottom:0;
@@ -680,7 +687,7 @@ const HIDE_PLAN = [
 const EXTRA_GAMES = [
   {
     id: "scrambled_phrases",
-    title: "Put the Verse in Order",
+    title: "Verse Scramble",
     description: "Tap the phrases in the correct order.",
   },
   {
@@ -690,7 +697,7 @@ const EXTRA_GAMES = [
   },
   {
     id: "missing_words",
-    title: "Missing Words",
+    title: "Type It",
     description: "Type the missing words from memory.",
   }
 ];
@@ -2477,56 +2484,74 @@ function renderExtraGate(){
   setSticky(false);
 }
 
-
 function renderExtraMenu(){
-  screenRoot.appendChild(el("div", { class:"kicker", text:"Extra Practice" }));
-  screenRoot.appendChild(el("h1", { text:"Choose an activity" }));
+  setHeaderVisible(true);
+  setCardMode("card");
+  setScrambleMode(false);
+
+    screenRoot.appendChild(
+    el("h1", {
+        text: "Choose an Activity",
+        style: "text-align:center;"
+    })
+    );
+
+
 
   const list = el("div", { class:"controls" });
 
-  EXTRA_GAMES.forEach(game => {
-    const card = el("div", { class:"card", style:"box-shadow:none; margin-top:12px;" }, [
-      el("div", { class:"card-inner" }, [
-        el("h2", { text: game.title }),
-        el("p", { text: game.description }),
-        btn("Start", {
-          onClick: () => {
-            resetAudioForNewPage();
-            AppState.extraGameId = game.id;
+  function goToGame(gameId){
+    resetAudioForNewPage();
+    AppState.extraGameId = gameId;
 
-            // Scrambled + Bouncing both get an intro screen
-            if (game.id === "scrambled_phrases" || game.id === "bouncing_words"){
-            AppState.screen = "extraGameIntro";
-            } else {
-            AppState.screen = "extraGame";
-            }
+    // Scramble + Bouncing both use the intro screen
+    if (gameId === "scrambled_phrases" || gameId === "bouncing_words"){
+      AppState.screen = "extraGameIntro";
+    } else {
+      AppState.screen = "extraGame";
+    }
 
+    render();
+  }
 
-            render();
+  // ✅ 3 simple buttons, same width, stacked
+  list.appendChild(el("button", {
+    class: "btn full",
+    type: "button",
+    text: "Verse Scramble",
+    onclick: () => goToGame("scrambled_phrases"),
+  }));
 
-          }
-        }),
-      ])
-    ]);
+  list.appendChild(el("button", {
+    class: "btn full",
+    type: "button",
+    text: "Bouncing Words",
+    onclick: () => goToGame("bouncing_words"),
+  }));
 
-    list.appendChild(card);
-  });
+  list.appendChild(el("button", {
+    class: "btn full",
+    type: "button",
+    text: "Type It",
+    onclick: () => goToGame("missing_words"),
+  }));
+
+  // Back button (also full width)
+  list.appendChild(el("button", {
+    class: "btn full ghost",
+    type: "button",
+    text: "Back to Title",
+    onclick: () => {
+      AppState.screen = "title";
+      render();
+    }
+  }));
 
   screenRoot.appendChild(list);
-
-  const backRow = el("div", { class:"controls" }, [
-    btn("Back to Title", {
-      primary:false,
-      onClick: () => {
-        AppState.screen = "title";
-        render();
-      }
-    })
-  ]);
-
-  screenRoot.appendChild(backRow);
   setSticky(false);
 }
+
+
 
 
 function renderExtraGame(){
