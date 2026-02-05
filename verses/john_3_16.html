@@ -379,6 +379,28 @@
       line-height: 1.45;
     }
 
+  /* Stack It: tip + Check It button in one row */
+  .stack-tipbar{
+    margin-top: 12px;
+    padding: 12px 12px;
+    border-radius: 16px;
+    border: 1px dashed rgba(255,255,255,.16);
+    background: rgba(255,255,255,.03);
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.45;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .stack-tiptext{
+    flex: 1;
+  }
+
+
     @media (max-width: 375px){
     .verse{ line-height: 1.45; }
     }
@@ -441,6 +463,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    border: 2px solid transparent; /* reserve space */
 
     padding: 12px 14px;
     border-radius: 16px;
@@ -608,22 +631,33 @@ body.mode-scramble .phrase-stage{
   flex: 1;
   overflow: auto;
   -webkit-overflow-scrolling: touch;
+
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding-bottom: 6px;
+  gap: 12px;
+
+  /* center the whole stack when it fits */
+  justify-content: center;
+  align-items: center;
+
+  padding: 12px 0;
 }
 
+
+/* Stack It: invisible row wrapper (no rectangle) */
 .stack-slot{
-  height: 56px;
-  border-radius: 14px;
-  border: 1px dashed rgba(255,255,255,.18);
-  background: rgba(0,0,0,.10);
   display: flex;
-  align-items: center;
   justify-content: center;
-  padding: 8px;
+  align-items: center;
+
+  /* remove the box look */
+  border: none;
+  background: transparent;
+  height: auto;
+  padding: 0;
+  width: auto;
 }
+
 
 .stack-slot.hover{
   border-style: solid;
@@ -631,9 +665,38 @@ body.mode-scramble .phrase-stage{
   background: rgba(168,85,247,.10);
 }
 
+
+
+
+
+/* Selected chip highlight (solid green, button-like) */
+.phrase-chip.selected{
+  background: var(--good);                 /* uses your --good = #22c55e */
+  border-color: rgba(255,255,255,.22);
+  color: white;
+  font-weight: 900;
+  box-shadow: 0 12px 22px rgba(34,197,94,.22);
+}
+
+/* Swap targets: transparent with dotted outline */
+.phrase-chip.swap-target{
+  background: transparent;
+  border: 2px dashed rgba(255,255,255,.45);
+  opacity: .7;
+  box-sizing: border-box;
+}
+
+/* Used only during swap animation */
+.phrase-chip.swap-hidden{
+  visibility: hidden;
+}
+
+
+
 .stack-slot .phrase-chip{
   position: static;      /* important: chips inside slots are normal flow */
   max-width: 100%;
+  box-sizing: border-box;
 }
 
 .stack-floating{
@@ -1679,8 +1742,9 @@ function startStackItGame(){
     // slots[i] holds a phrase index (0..n-1) or null temporarily during a drag
     slots: shuffled.slice(),
 
-    // transient drag state
-    drag: null, // { chipEl, idx, fromSlot, offsetX, offsetY }
+    // tap-to-swap selection state
+    selectedSlot: null, // number (0..n-1) or null
+
   };
 }
 
@@ -2202,9 +2266,14 @@ function renderStackItGame(){
   const st = AppState.extraGameState;
 
   // ✅ Simple instruction only (no “Your Verse” box)
-  screenRoot.appendChild(
-    el("div", { class:"tip", text:"Drag the verse bits around until they are in order from top to bottom." })
-  );
+  // Top instruction + Check It button together
+  const topBar = el("div", { class:"stack-tipbar" }, [
+    el("div", { class:"stack-tiptext", text:"Tap a phrase to select it. Then tap a different phrase to swap them." }),
+
+    btn("Check It", { onClick: onCheck, small:true })
+  ]);
+  screenRoot.appendChild(topBar);
+
 
   // Stage
   const stage = el("div", { class:"phrase-stage stack-stage", id:"stackStage" });
@@ -2220,160 +2289,212 @@ function renderStackItGame(){
 
     const idx = st.slots[i];
     if (typeof idx === "number"){
-      const chip = makeStackChip(st.phrases[idx], idx, i);
+      const chip = makeStackChip(st.phrases[idx], i); // <-- note: pass slot index
       slot.appendChild(chip);
     }
+
+
+  
 
     slotsWrap.appendChild(slot);
   }
 
+
   // Bottom controls
   const controls = el("div", { class:"controls" }, [
-    btn("Check It", { onClick: onCheck }),
-    btn("Play again", {
-      primary:false,
-      onClick: () => { startStackItGame(); render(); }
-    }),
-    btn("Back to Extra Practice", {
-      primary:false,
-      onClick: () => {
-        AppState.extraGameId = null;
-        AppState.extraGameState = null;
-        AppState.screen = "extraMenu";
-        render();
-      }
-    })
-  ]);
+  btn("Play again", {
+    primary:false,
+    onClick: () => { startStackItGame(); render(); }
+  }),
+  btn("Back to Extra Practice", {
+    primary:false,
+    onClick: () => {
+      AppState.extraGameId = null;
+      AppState.extraGameState = null;
+      AppState.screen = "extraMenu";
+      render();
+    }
+  })
+]);
+
   screenRoot.appendChild(controls);
 
+
   // ---------- helpers ----------
-  function makeStackChip(text, idx, fromSlot){
+  function makeStackChip(text, slotIndex){
+    const hasSelection = (typeof st.selectedSlot === "number");
+    const selected = (st.selectedSlot === slotIndex);
+
+    const chipClass =
+      "phrase-chip" +
+      (selected ? " selected" : "") +
+      (hasSelection && !selected ? " swap-target" : "");
+
     const chip = el("div", {
-      class:"phrase-chip",
-      role:"button",
-      tabindex:"0",
-      text
+      class: chipClass,
+      role: "button",
+      tabindex: "0",
+      text,
+      onclick: () => onChipClick(slotIndex),
     });
 
-    // Pointer drag
-    chip.addEventListener("pointerdown", (e) => onDragStart(e, chip, idx, fromSlot));
+    chip.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") chip.click();
+    });
+
     return chip;
   }
 
-  function onDragStart(e, chipEl, idx, fromSlot){
-    e.preventDefault();
-    chipEl.setPointerCapture(e.pointerId);
-    chipEl.style.touchAction = "none";
 
-
-    const stageRect = stage.getBoundingClientRect();
-    const r = chipEl.getBoundingClientRect();
-
-    // Remove it from its slot while dragging (temporary)
-    if (typeof fromSlot === "number"){
-      st.slots[fromSlot] = null;
-    }
-
-    // Make it floating inside stage
-    chipEl.classList.add("dragging");
-    chipEl.style.position = "absolute";
-    chipEl.style.left = `${r.left - stageRect.left}px`;
-    chipEl.style.top  = `${r.top - stageRect.top}px`;
-    chipEl.style.zIndex = "10";
-    stage.appendChild(chipEl);
-
-    st.drag = {
-      chipEl,
-      idx,
-      fromSlot,
-      offsetX: e.clientX - r.left,
-      offsetY: e.clientY - r.top,
-    };
-
-    stage.addEventListener("pointermove", onDragMove);
-    stage.addEventListener("pointerup", onDragEnd, { once:true });
-
-
-  }
-
-  function onDragMove(e){
-    if (!st.drag) return;
-
-    const stageRect = stage.getBoundingClientRect();
-    const x = e.clientX - stageRect.left - st.drag.offsetX;
-    const y = e.clientY - stageRect.top  - st.drag.offsetY;
-
-    st.drag.chipEl.style.left = `${x}px`;
-    st.drag.chipEl.style.top  = `${y}px`;
-
-    highlightSlotUnderPointer(e.clientX, e.clientY);
-  }
-
-  function clearSlotHighlights(){
-    document.querySelectorAll(".stack-slot.hover").forEach(el => el.classList.remove("hover"));
-  }
-
-  function highlightSlotUnderPointer(clientX, clientY){
-    clearSlotHighlights();
-    const elUnder = document.elementFromPoint(clientX, clientY);
-    const slotEl = elUnder ? elUnder.closest(".stack-slot") : null;
-    if (slotEl) slotEl.classList.add("hover");
-  }
-
-  function onDragEnd(e){
-    stage.removeEventListener("pointermove", onDragMove);
-    clearSlotHighlights();
-
-    if (!st.drag) return;
-
-    const { chipEl, idx, fromSlot } = st.drag;
-    st.drag = null;
-
-    // ✅ ignore the dragged chip while hit-testing
-    chipEl.style.pointerEvents = "none";
-    const elUnder = document.elementFromPoint(e.clientX, e.clientY);
-    chipEl.style.pointerEvents = "";
-
-    const slotEl = elUnder ? elUnder.closest(".stack-slot") : null;
-
-    if (!slotEl){
-      // Dropped nowhere → return to original slot
-      if (typeof fromSlot === "number"){
-        st.slots[fromSlot] = idx;
-      }
+  function onChipClick(slotIndex){
+    // nothing selected yet -> select this
+    if (st.selectedSlot == null){
+      st.selectedSlot = slotIndex;
       render();
       return;
     }
 
-    const toSlot = parseInt(slotEl.dataset.slot, 10);
-    const occupying = st.slots[toSlot];
-
-    // Empty target slot → move
-    if (occupying == null){
-      st.slots[toSlot] = idx;
+    // clicking the same selected chip -> unselect
+    if (st.selectedSlot === slotIndex){
+      st.selectedSlot = null;
       render();
       return;
     }
 
-    // Occupied target slot → swap
-    st.slots[toSlot] = idx;
-    if (typeof fromSlot === "number"){
-      st.slots[fromSlot] = occupying;
-    }
-    render();
+    // clicking a different chip -> swap (animated)
+    doSwapAnimated(st.selectedSlot, slotIndex);
+
   }
+
+
+  function doSwapAnimated(a, b){
+  // prevent double-swaps mid-animation
+  if (st._swapAnimating) return;
+  st._swapAnimating = true;
+
+  const stageEl = document.getElementById("stackStage");
+
+  // Find the two *current* chip DOM nodes (before swap)
+  const chipA = document.querySelector(`.stack-slot[data-slot="${a}"] .phrase-chip`);
+  const chipB = document.querySelector(`.stack-slot[data-slot="${b}"] .phrase-chip`);
+  if (!chipA || !chipB){
+    // fallback: do normal swap
+    doSwapImmediate(a, b);
+    st._swapAnimating = false;
+    return;
+  }
+
+  const rectA = chipA.getBoundingClientRect();
+  const rectB = chipB.getBoundingClientRect();
+
+  // Make floating clones
+  const cloneA = chipA.cloneNode(true);
+  const cloneB = chipB.cloneNode(true);
+
+  function setupClone(clone, rect){
+    clone.classList.remove("selected","swap-target","swap-hidden");
+    clone.style.position = "fixed";
+    clone.style.left = `${rect.left}px`;
+    clone.style.top  = `${rect.top}px`;
+    clone.style.width = `${rect.width}px`;
+    clone.style.height = `${rect.height}px`;
+    clone.style.margin = "0";
+    clone.style.zIndex = "9999";
+    clone.style.pointerEvents = "none";
+    clone.style.transform = "translate(0px, 0px)";
+  }
+
+  setupClone(cloneA, rectA);
+  setupClone(cloneB, rectB);
+  document.body.appendChild(cloneA);
+  document.body.appendChild(cloneB);
+
+  // 1) Swap the underlying data + clear selection
+  const tmp = st.slots[a];
+  st.slots[a] = st.slots[b];
+  st.slots[b] = tmp;
+  st.selectedSlot = null;
+
+  // 2) Re-render so the REAL chips jump to their new positions,
+  //    then hide those new real chips while clones animate.
+  render();
+
+  requestAnimationFrame(() => {
+    const newChipA = document.querySelector(`.stack-slot[data-slot="${a}"] .phrase-chip`);
+    const newChipB = document.querySelector(`.stack-slot[data-slot="${b}"] .phrase-chip`);
+    if (newChipA) newChipA.classList.add("swap-hidden");
+    if (newChipB) newChipB.classList.add("swap-hidden");
+
+    // Measure destination rects after render
+    const destA = newChipA ? newChipA.getBoundingClientRect() : rectB;
+    const destB = newChipB ? newChipB.getBoundingClientRect() : rectA;
+
+    const dxA = destB.left - rectA.left;
+    const dyA = destB.top  - rectA.top;
+
+    const dxB = destA.left - rectB.left;
+    const dyB = destA.top  - rectB.top;
+
+    // Arc amount: scales a bit with distance but has a minimum
+    const dist = Math.hypot(dxA, dyA);
+    const arc = Math.max(28, Math.min(70, dist * 0.18)); // tweak if you want
+
+    // A arcs to the RIGHT, B arcs to the LEFT (circle-ish swap)
+    const animA = cloneA.animate([
+      { transform: "translate(0px, 0px)" },
+      { transform: `translate(${dxA/2 + arc}px, ${dyA/2}px)` },
+      { transform: `translate(${dxA}px, ${dyA}px)` },
+    ], {
+      duration: 360,
+      easing: "cubic-bezier(.2,.8,.2,1)",
+      fill: "forwards",
+    });
+
+    const animB = cloneB.animate([
+      { transform: "translate(0px, 0px)" },
+      { transform: `translate(${dxB/2 - arc}px, ${dyB/2}px)` },
+      { transform: `translate(${dxB}px, ${dyB}px)` },
+    ], {
+      duration: 360,
+      easing: "cubic-bezier(.2,.8,.2,1)",
+      fill: "forwards",
+    });
+
+    // When both finish: cleanup
+    Promise.all([animA.finished, animB.finished]).then(() => {
+      try { cloneA.remove(); } catch(e){}
+      try { cloneB.remove(); } catch(e){}
+
+      if (newChipA) newChipA.classList.remove("swap-hidden");
+      if (newChipB) newChipB.classList.remove("swap-hidden");
+
+      st._swapAnimating = false;
+    }).catch(() => {
+      // safety cleanup if animation is interrupted
+      try { cloneA.remove(); } catch(e){}
+      try { cloneB.remove(); } catch(e){}
+      if (newChipA) newChipA.classList.remove("swap-hidden");
+      if (newChipB) newChipB.classList.remove("swap-hidden");
+      st._swapAnimating = false;
+    });
+  });
+}
+
+function doSwapImmediate(a, b){
+  const tmp = st.slots[a];
+  st.slots[a] = st.slots[b];
+  st.slots[b] = tmp;
+  st.selectedSlot = null;
+  render();
+}
+
+
+
+
 
   function onCheck(){
-    // If any slot is empty (only possible mid-drag), don’t evaluate
-    const filled = st.slots.every(v => typeof v === "number");
-    if (!filled){
-      showModal({
-        title: "Almost 🙂",
-        body: "Finish your drag first (a slot is temporarily empty).",
-        actions: [btn("OK", { onClick: () => closeModal() })]
-      });
-      return;
-    }
+
+    
 
     // Correct order is phrase indices 0..n-1 from top to bottom
     const correct = st.slots.every((idx, i) => idx === i);
