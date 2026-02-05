@@ -1513,8 +1513,8 @@ function burstParticlesOnChip(stageEl, chipEl){
 
 
 
-// Build phrases of 2–4 words from your existing `tokens` array.
-function buildPhrasesFromTokens(){
+// Build phrases of N–M words from your existing `tokens` array.
+function buildPhrasesFromTokens(minWords = 2, maxWords = 3){
   const wordsOnly = tokens.filter(t => t.type === TokenType.WORD).map(t => t.text);
 
   const phrases = [];
@@ -1523,8 +1523,8 @@ function buildPhrasesFromTokens(){
   while (i < wordsOnly.length){
     const remaining = wordsOnly.length - i;
 
-    // Choose 2–4 word phrase length, but don’t exceed remaining words
-    const len = Math.min(randInt(2, 3), remaining);
+    // Choose minWords–maxWords, but don’t exceed remaining words
+    const len = Math.min(randInt(minWords, maxWords), remaining);
 
     const phrase = wordsOnly.slice(i, i + len).join(" ");
     phrases.push(phrase);
@@ -1533,6 +1533,7 @@ function buildPhrasesFromTokens(){
 
   return phrases;
 }
+
 
 // Place phrase chips randomly inside the stage WITHOUT overlap,
 // reuse saved positions so chips stay put across renders,
@@ -1728,7 +1729,8 @@ function startBouncingWordsGame(){
 }
 
 function startStackItGame(){
-  const phrases = buildPhrasesFromTokens(); // 2–3 word chunks (no reference)
+  const phrases = buildPhrasesFromTokens(2, 4); // 3–5 word chunks (no reference)
+
   const n = phrases.length;
 
   // Randomly assign ALL phrases into the slots right away
