@@ -2494,12 +2494,13 @@ function renderExtraMenu(){
             resetAudioForNewPage();
             AppState.extraGameId = game.id;
 
-            // Only scrambled phrases gets an intro screen (for now)
-            if (game.id === "scrambled_phrases"){
+            // Scrambled + Bouncing both get an intro screen
+            if (game.id === "scrambled_phrases" || game.id === "bouncing_words"){
             AppState.screen = "extraGameIntro";
             } else {
             AppState.screen = "extraGame";
             }
+
 
             render();
 
@@ -2593,13 +2594,13 @@ function renderExtraGameIntro(){
 
   // Custom instructions for scrambled phrases and bouncing words
 if (AppState.extraGameId === "scrambled_phrases"){
-  screenRoot.appendChild(el("p", { text:"Tap the phrase bubbles in the correct order." }));
-  screenRoot.appendChild(el("p", { text:"Each correct phrase moves into the top area." }));
+  screenRoot.appendChild(el("p", { text:"Tap the verse bubbles in the correct order." }));
+  screenRoot.appendChild(el("p", { text:"Finish the verse as fast as you can." }));
   screenRoot.appendChild(el("p", { text:"Wrong taps add a time penalty — so be careful." }));
 }
 else if (AppState.extraGameId === "bouncing_words"){
-  screenRoot.appendChild(el("p", { text:"Three phrases bounce around the screen." }));
-  screenRoot.appendChild(el("p", { text:"Tap the next phrase in the verse to place it above." }));
+  screenRoot.appendChild(el("p", { text:"Parts of the verse bounce around the screen." }));
+  screenRoot.appendChild(el("p", { text:"Tap the next part of the verse to place it above." }));
   screenRoot.appendChild(el("p", { text:"Each correct tap makes the words move faster." }));
 }
 else {
