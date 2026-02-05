@@ -579,6 +579,77 @@ body.mode-scramble .phrase-stage{
   min-height: 320px;   /* still keep it playable */
 }
 
+/* Stack It layout */
+.stack-stage{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+}
+
+.stack-topdock{
+  position: relative;
+  height: 84px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.16);
+  overflow: hidden;
+}
+
+.stack-topdock-hint{
+  position: absolute;
+  left: 12px;
+  top: 10px;
+  opacity: .7;
+  font-size: 13px;
+}
+
+.stack-slots{
+  flex: 1;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 6px;
+}
+
+.stack-slot{
+  height: 56px;
+  border-radius: 14px;
+  border: 1px dashed rgba(255,255,255,.18);
+  background: rgba(0,0,0,.10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+
+.stack-slot.hover{
+  border-style: solid;
+  border-color: rgba(168,85,247,.65); /* your purple */
+  background: rgba(168,85,247,.10);
+}
+
+.stack-slot .phrase-chip{
+  position: static;      /* important: chips inside slots are normal flow */
+  max-width: 100%;
+}
+
+.stack-floating{
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%,-50%);
+}
+
+/* Make dragging feel responsive */
+.phrase-chip.dragging{
+  opacity: .96;
+  transform: scale(1.02);
+  touch-action: none;
+  user-select: none;
+}
 
 
 
@@ -696,9 +767,9 @@ const EXTRA_GAMES = [
     description: "Tap the moving words in the correct order.",
   },
   {
-    id: "missing_words",
-    title: "Type It",
-    description: "Type the missing words from memory.",
+    id: "stack_it",
+    title: "Stack It",
+    description: "Drag the phrases into the correct top-to-bottom order.",
   }
 ];
 
@@ -1593,6 +1664,28 @@ function startBouncingWordsGame(){
   };
 }
 
+function startStackItGame(){
+  const phrases = buildPhrasesFromTokens(); // 2–3 word chunks (no reference)
+  const n = phrases.length;
+
+  // Randomly assign ALL phrases into the slots right away
+  const shuffled = shuffleArray(Array.from({length:n}, (_,i)=>i));
+
+  AppState.extraGameState = {
+    gameId: "stack_it",
+    phrases,
+    n,
+
+    // slots[i] holds a phrase index (0..n-1) or null temporarily during a drag
+    slots: shuffled.slice(),
+
+    // transient drag state
+    drag: null, // { chipEl, idx, fromSlot, offsetX, offsetY }
+  };
+}
+
+
+
 
 function renderScrambledPhrasesGame(){
   setHeaderVisible(false);
@@ -2096,6 +2189,223 @@ document.addEventListener("visibilitychange", () => {
 }
 
 
+function renderStackItGame(){
+  setHeaderVisible(false);
+  setCardMode("no-card");
+  setScrambleMode(true);
+  setSticky(false);
+
+  if (!AppState.extraGameState || AppState.extraGameState.gameId !== "stack_it"){
+    startStackItGame();
+  }
+
+  const st = AppState.extraGameState;
+
+  // ✅ Simple instruction only (no “Your Verse” box)
+  screenRoot.appendChild(
+    el("div", { class:"tip", text:"Drag the verse bits around until they are in order from top to bottom." })
+  );
+
+  // Stage
+  const stage = el("div", { class:"phrase-stage stack-stage", id:"stackStage" });
+  screenRoot.appendChild(stage);
+
+  // Only the slots (no top dock)
+  const slotsWrap = el("div", { class:"stack-slots", id:"stackSlots" });
+  stage.appendChild(slotsWrap);
+
+  // Build slots UI
+  for (let i = 0; i < st.n; i++){
+    const slot = el("div", { class:"stack-slot", "data-slot": String(i) });
+
+    const idx = st.slots[i];
+    if (typeof idx === "number"){
+      const chip = makeStackChip(st.phrases[idx], idx, i);
+      slot.appendChild(chip);
+    }
+
+    slotsWrap.appendChild(slot);
+  }
+
+  // Bottom controls
+  const controls = el("div", { class:"controls" }, [
+    btn("Check It", { onClick: onCheck }),
+    btn("Play again", {
+      primary:false,
+      onClick: () => { startStackItGame(); render(); }
+    }),
+    btn("Back to Extra Practice", {
+      primary:false,
+      onClick: () => {
+        AppState.extraGameId = null;
+        AppState.extraGameState = null;
+        AppState.screen = "extraMenu";
+        render();
+      }
+    })
+  ]);
+  screenRoot.appendChild(controls);
+
+  // ---------- helpers ----------
+  function makeStackChip(text, idx, fromSlot){
+    const chip = el("div", {
+      class:"phrase-chip",
+      role:"button",
+      tabindex:"0",
+      text
+    });
+
+    // Pointer drag
+    chip.addEventListener("pointerdown", (e) => onDragStart(e, chip, idx, fromSlot));
+    return chip;
+  }
+
+  function onDragStart(e, chipEl, idx, fromSlot){
+    e.preventDefault();
+    chipEl.setPointerCapture(e.pointerId);
+    chipEl.style.touchAction = "none";
+
+
+    const stageRect = stage.getBoundingClientRect();
+    const r = chipEl.getBoundingClientRect();
+
+    // Remove it from its slot while dragging (temporary)
+    if (typeof fromSlot === "number"){
+      st.slots[fromSlot] = null;
+    }
+
+    // Make it floating inside stage
+    chipEl.classList.add("dragging");
+    chipEl.style.position = "absolute";
+    chipEl.style.left = `${r.left - stageRect.left}px`;
+    chipEl.style.top  = `${r.top - stageRect.top}px`;
+    chipEl.style.zIndex = "10";
+    stage.appendChild(chipEl);
+
+    st.drag = {
+      chipEl,
+      idx,
+      fromSlot,
+      offsetX: e.clientX - r.left,
+      offsetY: e.clientY - r.top,
+    };
+
+    stage.addEventListener("pointermove", onDragMove);
+    stage.addEventListener("pointerup", onDragEnd, { once:true });
+
+
+  }
+
+  function onDragMove(e){
+    if (!st.drag) return;
+
+    const stageRect = stage.getBoundingClientRect();
+    const x = e.clientX - stageRect.left - st.drag.offsetX;
+    const y = e.clientY - stageRect.top  - st.drag.offsetY;
+
+    st.drag.chipEl.style.left = `${x}px`;
+    st.drag.chipEl.style.top  = `${y}px`;
+
+    highlightSlotUnderPointer(e.clientX, e.clientY);
+  }
+
+  function clearSlotHighlights(){
+    document.querySelectorAll(".stack-slot.hover").forEach(el => el.classList.remove("hover"));
+  }
+
+  function highlightSlotUnderPointer(clientX, clientY){
+    clearSlotHighlights();
+    const elUnder = document.elementFromPoint(clientX, clientY);
+    const slotEl = elUnder ? elUnder.closest(".stack-slot") : null;
+    if (slotEl) slotEl.classList.add("hover");
+  }
+
+  function onDragEnd(e){
+    stage.removeEventListener("pointermove", onDragMove);
+    clearSlotHighlights();
+
+    if (!st.drag) return;
+
+    const { chipEl, idx, fromSlot } = st.drag;
+    st.drag = null;
+
+    // ✅ ignore the dragged chip while hit-testing
+    chipEl.style.pointerEvents = "none";
+    const elUnder = document.elementFromPoint(e.clientX, e.clientY);
+    chipEl.style.pointerEvents = "";
+
+    const slotEl = elUnder ? elUnder.closest(".stack-slot") : null;
+
+    if (!slotEl){
+      // Dropped nowhere → return to original slot
+      if (typeof fromSlot === "number"){
+        st.slots[fromSlot] = idx;
+      }
+      render();
+      return;
+    }
+
+    const toSlot = parseInt(slotEl.dataset.slot, 10);
+    const occupying = st.slots[toSlot];
+
+    // Empty target slot → move
+    if (occupying == null){
+      st.slots[toSlot] = idx;
+      render();
+      return;
+    }
+
+    // Occupied target slot → swap
+    st.slots[toSlot] = idx;
+    if (typeof fromSlot === "number"){
+      st.slots[fromSlot] = occupying;
+    }
+    render();
+  }
+
+  function onCheck(){
+    // If any slot is empty (only possible mid-drag), don’t evaluate
+    const filled = st.slots.every(v => typeof v === "number");
+    if (!filled){
+      showModal({
+        title: "Almost 🙂",
+        body: "Finish your drag first (a slot is temporarily empty).",
+        actions: [btn("OK", { onClick: () => closeModal() })]
+      });
+      return;
+    }
+
+    // Correct order is phrase indices 0..n-1 from top to bottom
+    const correct = st.slots.every((idx, i) => idx === i);
+
+    if (correct){
+      showModal({
+        title: "Nice! 🎉",
+        body: "You put the verse in the correct order.",
+        actions: [
+          btn("Play again", { onClick: () => { closeModal(); startStackItGame(); render(); } }),
+          btn("Back to Extra Practice", {
+            primary:false,
+            onClick: () => {
+              closeModal();
+              AppState.extraGameId = null;
+              AppState.extraGameState = null;
+              AppState.screen = "extraMenu";
+              render();
+            }
+          })
+        ]
+      });
+    } else {
+      showModal({
+        title: "Not yet 🙂",
+        body: "A few phrases are still out of order. Keep shuffling!",
+        actions: [btn("Keep going", { onClick: () => closeModal() })]
+      });
+    }
+  }
+}
+
 
 
 
@@ -2505,11 +2815,12 @@ function renderExtraMenu(){
     AppState.extraGameId = gameId;
 
     // Scramble + Bouncing both use the intro screen
-    if (gameId === "scrambled_phrases" || gameId === "bouncing_words"){
-      AppState.screen = "extraGameIntro";
+    if (gameId === "scrambled_phrases" || gameId === "bouncing_words" || gameId === "stack_it"){
+    AppState.screen = "extraGameIntro";
     } else {
-      AppState.screen = "extraGame";
+    AppState.screen = "extraGame";
     }
+
 
     render();
   }
@@ -2532,8 +2843,8 @@ function renderExtraMenu(){
   list.appendChild(el("button", {
     class: "btn full",
     type: "button",
-    text: "Type It",
-    onclick: () => goToGame("missing_words"),
+    text: "Stack It",
+    onclick: () => goToGame("stack_it"),
   }));
 
   // Back button (also full width)
@@ -2564,6 +2875,11 @@ function renderExtraGame(){
 if (AppState.extraGameId === "bouncing_words"){
   return renderBouncingWordsGame();
 }
+
+if (AppState.extraGameId === "stack_it"){
+  return renderStackItGame();
+}
+
 
 
   screenRoot.appendChild(el("div", { class:"kicker", text:"Extra Practice" }));
@@ -2627,6 +2943,11 @@ else if (AppState.extraGameId === "bouncing_words"){
   screenRoot.appendChild(el("p", { text:"Parts of the verse bounce around the screen." }));
   screenRoot.appendChild(el("p", { text:"Tap the next part of the verse to place it above." }));
   screenRoot.appendChild(el("p", { text:"Each correct tap makes the words move faster." }));
+}
+else if (AppState.extraGameId === "stack_it"){
+  screenRoot.appendChild(el("p", { text:"Drag parts of the verse into the stack." }));
+  screenRoot.appendChild(el("p", { text:"Put the verse in order from top to bottom." }));
+  screenRoot.appendChild(el("p", { text:"Swap the verse around until everything is in the correct spot." }));
 }
 else {
   screenRoot.appendChild(el("p", { text: game ? game.description : "Instructions" }));
