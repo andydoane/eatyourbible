@@ -431,6 +431,10 @@
     .phrase-chip{
     position: absolute;
     max-width: calc(100% - 28px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
     padding: 12px 14px;
     border-radius: 16px;
     border: 1px solid rgba(255,255,255,.14);
@@ -452,10 +456,20 @@
     border-color: rgba(34,197,94,.35);
     }
 
-    .phrase-chip.wrong{
-    background: rgba(245,158,11,.18);
-    border-color: rgba(245,158,11,.35);
+    @keyframes wrongBlink {
+    0%   { filter: none; background: rgba(239,68,68,.08); border-color: rgba(239,68,68,.25); }
+    35%  { filter: brightness(1.35); background: rgba(239,68,68,.35); border-color: rgba(239,68,68,.55); }
+    70%  { filter: none; background: rgba(239,68,68,.10); border-color: rgba(239,68,68,.28); }
+    100% { filter: none; background: rgba(239,68,68,.18); border-color: rgba(239,68,68,.35); }
     }
+
+    /* When wrong, blink red */
+    .phrase-chip.wrong{
+     background: rgba(245,158,11,.18);
+    border-color: rgba(245,158,11,.35);
+    animation: wrongBlink 260ms ease-in-out 0s 2;
+    }
+
 
     .phrase-progress{
     display:flex;
@@ -625,9 +639,18 @@ document.documentElement.style.setProperty(
 );
 
 const SCRAMBLE_WRONG_PENALTY_SEC = 5;
+
+// Bouncing Words tuning
+const BOUNCE_INITIAL_SPEED = 115;     // px/sec (start speed)
+const BOUNCE_SPEED_INCREMENT = 18;    // px/sec added per correct tap
+const BOUNCE_MAX_SPEED = 260;         // optional safety cap
+const BOUNCE_SPAWN_MIN_DIST = 84;     // px (try to spawn chips apart)
+
+
+
 const VERSE_ID   = "john_3_16";
 const VERSE_REF = verseIdToRef(VERSE_ID);
-const APP_TITLE = `Let's memorize ${VERSE_REF.replace(" (NIV)", "")}`;
+const APP_TITLE = `🧠 Let's memorize ${VERSE_REF.replace(" (NIV)", "")}`;
 const AUDIO_FILE = `verse_audio/${VERSE_ID}.mp3`;
 document.title = `Bible Verse Memory • ${VERSE_REF}`;
 
@@ -661,9 +684,9 @@ const EXTRA_GAMES = [
     description: "Tap the phrases in the correct order.",
   },
   {
-    id: "falling_words",
-    title: "Falling Words",
-    description: "Say each word as it falls from the sky.",
+    id: "bouncing_words",
+    title: "Bouncing Words",
+    description: "Tap the moving words in the correct order.",
   },
   {
     id: "missing_words",
@@ -1185,6 +1208,153 @@ function formatTimeMs(ms){
   return m > 0 ? `${m}:${String(s).padStart(2,"0")}` : `${s}s`;
 }
 
+let _beepCtx = null;
+
+function playWrongBeep(){
+  try{
+    if (!_beepCtx) _beepCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    // Some browsers start the AudioContext suspended until first user gesture
+    if (_beepCtx.state === "suspended") _beepCtx.resume();
+
+    const ctx = _beepCtx;
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+
+    // “Wrong” style: short low-ish square beep
+    o.type = "square";
+    o.frequency.value = 180;
+
+    // Quick attack/decay envelope to avoid clicking
+    const t = ctx.currentTime;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.15, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+
+    o.connect(g);
+    g.connect(ctx.destination);
+
+    o.start(t);
+    o.stop(t + 0.14);
+  } catch (e) {
+    // If audio is blocked, fail silently.
+  }
+}
+
+function playHappyBeep(){
+  try{
+    if (!_beepCtx) _beepCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (_beepCtx.state === "suspended") _beepCtx.resume();
+
+    const ctx = _beepCtx;
+
+    // Two quick “happy” tones
+    const t = ctx.currentTime;
+
+    function tone(freq, start, dur){
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = "sine";
+      o.frequency.value = freq;
+
+      g.gain.setValueAtTime(0.0001, start);
+      g.gain.exponentialRampToValueAtTime(0.10, start + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+
+      o.connect(g);
+      g.connect(ctx.destination);
+
+      o.start(start);
+      o.stop(start + dur + 0.01);
+    }
+
+    tone(660, t, 0.08);
+    tone(880, t + 0.09, 0.10);
+  } catch (e) {
+    // fail silently
+  }
+}
+
+
+
+function burstParticlesInStage(stageEl, x, y){
+  // Create a temporary canvas overlay the size of the stage
+  const rect = stageEl.getBoundingClientRect();
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.floor(rect.width));
+  canvas.height = Math.max(1, Math.floor(rect.height));
+  canvas.style.position = "absolute";
+  canvas.style.left = "0";
+  canvas.style.top = "0";
+  canvas.style.pointerEvents = "none";
+  canvas.style.zIndex = "5"; // above chips
+
+  stageEl.appendChild(canvas);
+  const ctx = canvas.getContext("2d");
+
+  const particles = [];
+  const N = 18;
+
+  for (let i = 0; i < N; i++){
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 1.6 + Math.random() * 2.6;
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 0.8, // slight upward bias
+      life: 1.0,
+      r: 2 + Math.random() * 2
+    });
+  }
+
+  const gravity = 0.08;
+  const start = performance.now();
+
+  function tick(now){
+    const dt = Math.min(32, now - start) / 16.67;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    particles.forEach(p => {
+      p.vy += gravity * dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.life -= 0.04 * dt;
+
+      if (p.life > 0){
+        ctx.globalAlpha = Math.max(0, p.life);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(34,197,94,1)"; // green burst
+        ctx.fill();
+      }
+    });
+
+    ctx.globalAlpha = 1;
+
+    // Keep animating while any particle is alive and within ~500ms
+    const alive = particles.some(p => p.life > 0);
+    if (alive && now - start < 520){
+      requestAnimationFrame(tick);
+    } else {
+      canvas.remove();
+    }
+  }
+
+  requestAnimationFrame(tick);
+}
+
+function burstParticlesOnChip(stageEl, chipEl){
+  // Convert chip center to stage-local coordinates
+  const stageRect = stageEl.getBoundingClientRect();
+  const chipRect = chipEl.getBoundingClientRect();
+  const x = (chipRect.left - stageRect.left) + chipRect.width / 2;
+  const y = (chipRect.top - stageRect.top) + chipRect.height / 2;
+  burstParticlesInStage(stageEl, x, y);
+}
+
+
+
 
 // Build phrases of 2–4 words from your existing `tokens` array.
 function buildPhrasesFromTokens(){
@@ -1375,6 +1545,31 @@ function startScrambledPhrasesGame(){
   };
 }
 
+function startBouncingWordsGame(){
+  const phrases = buildPhrasesFromTokens();
+
+  // Last chip should be the verse reference
+  const verseLabel = VERSE_REF.replace(" (NIV)", "");
+  phrases.push(verseLabel);
+
+  AppState.extraGameState = {
+    gameId: "bouncing_words",
+    phrases,
+
+    placed: [],        // phrase indices placed so far
+    nextToPlace: 0,    // the index the player must tap next
+    nextToSpawn: 0,    // which phrase index to spawn next
+
+    // active entities: { idx, el, x, y, vx, vy, w, h }
+    entities: [],
+
+    speed: BOUNCE_INITIAL_SPEED,
+    wrongTaps: 0,
+    totalTaps: 0,
+
+  };
+}
+
 
 function renderScrambledPhrasesGame(){
   setHeaderVisible(false);
@@ -1388,44 +1583,29 @@ function renderScrambledPhrasesGame(){
 
   const st = AppState.extraGameState;
 
-  // Make sure we have a "placed" array (what has been placed into slots)
-  if (!Array.isArray(st.placed)){
-    st.placed = []; // will store phrase indices in correct order as user taps them
-  }
+  if (!Array.isArray(st.placed)) st.placed = [];
 
-  
-    // ---- Built (reserved) area ----
-  const built = el("div", { class:"phrase-built" }, [
-    el("div", { class:"phrase-built-label", text:"Your verse" })
-  ]);
+  // ---- Built (top) area ----
+  const verseLabel = VERSE_REF.replace(" (NIV)", "");
+const built = el("div", { class:"phrase-built" }, [
+  el("div", { class:"phrase-built-label", text:`Your verse — ${verseLabel}` })
+]);
 
-  // Compact until first correct tap
-  if (st.placed.length === 0){
-    built.appendChild(el("div", { class:"tip", text:"Tap the first correct phrase to begin." }));
-    screenRoot.appendChild(built);
-  } else {
-  // Build a plain sentence from the placed phrases (most compact)
-  const placedText = st.placed
-    .map(idx => st.phrases[idx])
-    .join(" ");
-
-  built.appendChild(
-    el("div", { class:"phrase-built-text", text: placedText })
-  );
-
-  screenRoot.appendChild(built);
-}
+// ✅ We'll update these live
+let builtTipEl = null;
+let builtTextEl = el("div", { class:"phrase-built-text", text:"" });
 
 
+refreshBuiltText();
+screenRoot.appendChild(built);
 
-  
 
   // Optional message
   if (st.message){
     screenRoot.appendChild(el("div", { class:"tip", text: st.message }));
   }
 
-  // ---- Scrambled area ----
+  // ---- Scrambled stage ----
   const stage = el("div", { class:"phrase-stage", id:"phraseStage" });
   screenRoot.appendChild(stage);
 
@@ -1445,7 +1625,6 @@ function renderScrambledPhrasesGame(){
     });
     chip.dataset.key = String(phraseIdx);
 
-
     chip.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") chip.click();
     });
@@ -1455,98 +1634,431 @@ function renderScrambledPhrasesGame(){
   });
 
   // Random positions (chips stay in place unless rerendered)
-placeChipsRandomly(stage, chips, { positions: st.positions, yZoneScales: [0.78, 0.92, 1.00], yBias: 0.15 });
+  placeChipsRandomly(stage, chips, {
+    positions: st.positions,
+    yZoneScales: [0.78, 0.92, 1.00],
+    yBias: 0.15
+  });
 
-
-
-
-  
-  
   setSticky(false);
 
-  // ---------- click handler ----------
   function onTapPhrase(phraseIdx, chipEl){
     const correctPhraseIdx = st.order[st.expectedIndex];
 
-    // Correct phrase
+    // ✅ Correct
     if (phraseIdx === correctPhraseIdx){
-      // Add to placed
+      // Particle burst where the chip was
+      if (typeof burstParticlesOnChip === "function"){
+        burstParticlesOnChip(stage, chipEl);
+      }
+
       st.placed.push(phraseIdx);
       st.expectedIndex += 1;
       st.message = "";
 
-      // Remove the chip from the scrambled area without moving the others
-      // (We remove from DOM now, and we also rerender to update top slots.)
       try { chipEl.remove(); } catch (e) {}
 
-      // Completed all phrases
+      // Done?
       if (st.expectedIndex >= st.phrases.length){
-  // First, re-render so the last slot visibly fills
-  render();
+        render(); // ensure last placed shows
 
-  // Then, show the modal on the next frame (after paint)
-  requestAnimationFrame(() => {
-    const finishedAtMs = Date.now();
-const elapsedMs = finishedAtMs - (st.startedAtMs || finishedAtMs);
-const wrong = st.wrongTaps || 0;
-const penaltyMs = wrong * SCRAMBLE_WRONG_PENALTY_SEC * 1000;
-const totalMs = elapsedMs + penaltyMs;
+        requestAnimationFrame(() => {
+          const finishedAtMs = Date.now();
+          const elapsedMs = finishedAtMs - (st.startedAtMs || finishedAtMs);
+          const wrong = st.wrongTaps || 0;
+          const penaltyMs = wrong * SCRAMBLE_WRONG_PENALTY_SEC * 1000;
+          const totalMs = elapsedMs + penaltyMs;
 
-const bodyNode = el("div", {}, [
-  el("p", { text: "You put the whole verse in order." }),
-  el("p", { text: `Time: ${formatTimeMs(elapsedMs)}` }),
-  el("p", { text: `Wrong taps: ${wrong} (Penalty: +${wrong * SCRAMBLE_WRONG_PENALTY_SEC}s)` }),
-  el("p", { text: `Final time: ${formatTimeMs(totalMs)}` }),
-]);
+          const bodyNode = el("div", {}, [
+            el("p", { text: "You put the whole verse in order." }),
+            el("p", { text: `Time: ${formatTimeMs(elapsedMs)}` }),
+            el("p", { text: `Wrong taps: ${wrong} (Penalty: +${wrong * SCRAMBLE_WRONG_PENALTY_SEC}s)` }),
+            el("p", { text: `Final time: ${formatTimeMs(totalMs)}` }),
+          ]);
 
-showModal({
-  title: "Good job! 🎉",
-  body: bodyNode,
-  actions: [
-    btn("Play again", {
-      onClick: () => {
-        closeModal();
-        startScrambledPhrasesGame();
-        render();
+          showModal({
+            title: "Good job! 🎉",
+            body: bodyNode,
+            actions: [
+              btn("Play again", {
+                onClick: () => {
+                  closeModal();
+                  startScrambledPhrasesGame();
+                  render();
+                }
+              }),
+              btn("Back to Title", {
+                primary:false,
+                onClick: () => {
+                  closeModal();
+                  AppState.extraGameId = null;
+                  AppState.extraGameState = null;
+                  AppState.screen = "title";
+                  render();
+                }
+              })
+            ]
+          });
+        });
+
+        return;
       }
-    }),
-    btn("Back to Title", {
-      primary:false,
-      onClick: () => {
-        closeModal();
-        AppState.extraGameId = null;
-        AppState.extraGameState = null;
-        AppState.screen = "title";
-        render();
-      }
-    })
-  ]
-});
 
-    
-  });
-
-  return;
-}
-
-
-      // Re-render so the reserved area updates
-      render();
+      // Let particles play briefly before rerender destroys the stage
+      window.setTimeout(() => render(), 220);
       return;
     }
 
-    // Wrong phrase: feedback flash
+    // ❌ Wrong
     st.wrongTaps = (st.wrongTaps || 0) + 1;
     st.penaltySec = (st.wrongTaps || 0) * SCRAMBLE_WRONG_PENALTY_SEC;
+
+    if (typeof playWrongBeep === "function"){
+      playWrongBeep();
+    }
 
     chipEl.classList.add("wrong");
     window.setTimeout(() => chipEl.classList.remove("wrong"), 220);
 
-    // Update the on-screen timer / stats
-    render();
-
+    // Let blink show before rerender
+    window.setTimeout(() => render(), 520);
   }
 }
+
+
+function renderBouncingWordsGame(){
+  setHeaderVisible(false);
+  setCardMode("no-card");
+  setScrambleMode(true);
+
+  // Initialize if needed
+  if (!AppState.extraGameState || AppState.extraGameState.gameId !== "bouncing_words"){
+    startBouncingWordsGame();
+  }
+
+  const st = AppState.extraGameState;
+
+  // ---- Built (top) area ----
+  const verseLabel = VERSE_REF.replace(" (NIV)", "");
+  const built = el("div", { class:"phrase-built" }, [
+    el("div", { class:"phrase-built-label", text:`Your verse — ${verseLabel}` })
+  ]);
+
+// Always create the text node so refreshBuiltText() always has something to update
+const builtTipEl = el("div", { class:"tip", text:"Tap the correct bouncing phrase to begin." });
+const builtTextEl = el("div", { class:"phrase-built-text", text:"" });
+
+// Start with the tip visible, and empty text
+built.appendChild(builtTipEl);
+built.appendChild(builtTextEl);
+
+screenRoot.appendChild(built);
+
+
+function refreshBuiltText(){
+  const placedText = st.placed.map(i => st.phrases[i]).join(" ");
+  builtTextEl.textContent = placedText;
+
+  // If they’ve placed anything, hide/remove the tip
+  if (st.placed.length > 0){
+    if (builtTipEl.parentNode) builtTipEl.remove();
+  }
+}
+
+// ✅ Run once on load in case we ever re-enter mid-game
+refreshBuiltText();
+
+
+
+  
+  // ---- Bouncing stage ----
+  const stage = el("div", { class:"phrase-stage", id:"bounceStage" });
+  screenRoot.appendChild(stage);
+
+  setSticky(false);
+
+  // ---------- helpers ----------
+  function currentCorrectIdx(){
+    return st.nextToPlace;
+  }
+
+  function setCorrectOnTop(){
+    const correct = currentCorrectIdx();
+    st.entities.forEach(ent => {
+      ent.el.style.zIndex = (ent.idx === correct) ? "6" : "2";
+    });
+  }
+
+  function measureEnt(ent){
+    const r = ent.el.getBoundingClientRect();
+    ent.w = r.width;
+    ent.h = r.height;
+  }
+
+  function randUnitDir(){
+    // Avoid near-zero vectors
+    let x = (Math.random() * 2 - 1);
+    let y = (Math.random() * 2 - 1);
+    const len = Math.hypot(x,y) || 1;
+    x /= len; y /= len;
+    return {x,y};
+  }
+
+  function pickSpawnPos(w, h){
+    const pad = 10;
+    const rect = stage.getBoundingClientRect();
+    const W = rect.width;
+    const H = rect.height;
+
+    const maxX = Math.max(pad, W - w - pad);
+    const maxY = Math.max(pad, H - h - pad);
+
+    // Try a bunch of times to spawn away from other chips
+    for (let attempt = 0; attempt < 140; attempt++){
+      const x = randInt(pad, Math.floor(maxX));
+      const y = randInt(pad, Math.floor(maxY));
+
+      let ok = true;
+      for (const other of st.entities){
+        const cx = x + w/2, cy = y + h/2;
+        const ox = other.x + other.w/2, oy = other.y + other.h/2;
+        const d = Math.hypot(cx-ox, cy-oy);
+        if (d < BOUNCE_SPAWN_MIN_DIST){
+          ok = false; break;
+        }
+      }
+      if (ok) return {x,y};
+    }
+
+    // Fallback if crowded
+    return { x: pad, y: pad };
+  }
+
+  function spawnNextIfAvailable(){
+    if (st.nextToSpawn >= st.phrases.length) return;
+    if (st.entities.length >= 3) return;
+
+    const idx = st.nextToSpawn;
+    st.nextToSpawn += 1;
+
+    const chip = el("div", {
+      class: "phrase-chip",
+      role: "button",
+      tabindex: "0",
+      text: st.phrases[idx],
+    });
+
+    chip.addEventListener("click", () => onTap(idx, chip));
+    chip.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") chip.click();
+    });
+
+    stage.appendChild(chip);
+
+    const ent = { idx, el: chip, x: 0, y: 0, vx: 0, vy: 0, w: 0, h: 0 };
+
+    // ✅ Push immediately so ensureThreeSpawned() sees it right away
+    st.entities.push(ent);
+
+    // Measure size after it’s in DOM, then place + move
+    requestAnimationFrame(() => {
+    measureEnt(ent);
+
+    const pos = pickSpawnPos(ent.w, ent.h);
+    ent.x = pos.x;
+    ent.y = pos.y;
+
+    const dir = randUnitDir();
+    const sp = Math.min(st.speed, BOUNCE_MAX_SPEED);
+    ent.vx = dir.x * sp;
+    ent.vy = dir.y * sp;
+
+    ent.el.style.left = `${ent.x}px`;
+    ent.el.style.top  = `${ent.y}px`;
+
+    setCorrectOnTop();
+    });
+
+  }
+
+  function ensureThreeSpawned(){
+    while (st.entities.length < 3 && st.nextToSpawn < st.phrases.length){
+      spawnNextIfAvailable();
+    }
+  }
+
+  function bumpSpeed(){
+    st.speed = Math.min(BOUNCE_MAX_SPEED, st.speed + BOUNCE_SPEED_INCREMENT);
+
+    // Apply new speed to all entities, preserving direction
+    st.entities.forEach(ent => {
+      const len = Math.hypot(ent.vx, ent.vy) || 1;
+      const dx = ent.vx / len;
+      const dy = ent.vy / len;
+      const sp = Math.min(st.speed, BOUNCE_MAX_SPEED);
+      ent.vx = dx * sp;
+      ent.vy = dy * sp;
+    });
+  }
+
+  function finishBouncingGame(){
+    
+    const perfectGoal = st.phrases.length;      // phrases + the reference at the end
+    const totalTaps = st.totalTaps || 0;
+    
+    showModal({
+      title: "You did it 🎉",
+      
+        body: el("div", {}, [
+        el("p", { text: "Nice! You finished Bouncing Words." }),
+        el("p", { text: `Total taps: ${totalTaps}` }),
+        el("p", { text: `Perfect Score Goal: Only ${perfectGoal} taps!` }),
+        ]),
+      actions: [
+        btn("Play again", {
+          onClick: () => {
+            closeModal();
+            startBouncingWordsGame();
+            render();
+          }
+        }),
+        btn("Back to Title", {
+          primary:false,
+          onClick: () => {
+            closeModal();
+            AppState.extraGameId = null;
+            AppState.extraGameState = null;
+            AppState.screen = "title";
+            render();
+          }
+        })
+      ]
+    });
+  }
+
+  // ---------- click handler ----------
+  function onTap(idx, chipEl){
+    st.totalTaps = (st.totalTaps || 0) + 1;
+    const correct = currentCorrectIdx();
+
+    // ✅ Correct
+    if (idx === correct){
+      if (typeof burstParticlesOnChip === "function"){
+        burstParticlesOnChip(stage, chipEl);
+      }
+
+      st.placed.push(idx);
+      st.nextToPlace += 1;
+      refreshBuiltText();
+
+      // Remove from entities + DOM
+      st.entities = st.entities.filter(e => e.idx !== idx);
+      try { chipEl.remove(); } catch (e) {}
+
+      bumpSpeed();
+      ensureThreeSpawned();
+
+      // Finished?
+      if (st.nextToPlace >= st.phrases.length){
+        // Render once to show final placed sentence, then modal
+            refreshBuiltText();
+            requestAnimationFrame(() => finishBouncingGame());
+            return;
+
+      }
+
+      // Rerender so top “Your verse” text updates
+    }
+
+    // ❌ Wrong
+    st.wrongTaps = (st.wrongTaps || 0) + 1;
+
+    if (typeof playWrongBeep === "function"){
+      playWrongBeep();
+    }
+
+    chipEl.classList.add("wrong");
+    window.setTimeout(() => chipEl.classList.remove("wrong"), 260);
+
+    // Keep correct one on top after any tap (overlap rule)
+    setCorrectOnTop();
+  }
+
+  // ---------- animation loop ----------
+  let rafId = null;
+  let lastT = performance.now();
+
+  function tick(t){
+    const dt = Math.min(0.032, (t - lastT) / 1000);
+    lastT = t;
+
+    const rect = stage.getBoundingClientRect();
+    const W = rect.width;
+    const H = rect.height;
+
+    for (const ent of st.entities){
+      ent.x += ent.vx * dt;
+      ent.y += ent.vy * dt;
+
+      // Bounce off walls only (NOT other chips)
+      if (ent.x <= 0){
+        ent.x = 0;
+        ent.vx *= -1;
+      } else if (ent.x + ent.w >= W){
+        ent.x = Math.max(0, W - ent.w);
+        ent.vx *= -1;
+      }
+
+      if (ent.y <= 0){
+        ent.y = 0;
+        ent.vy *= -1;
+      } else if (ent.y + ent.h >= H){
+        ent.y = Math.max(0, H - ent.h);
+        ent.vy *= -1;
+      }
+
+      ent.el.style.left = `${ent.x}px`;
+      ent.el.style.top  = `${ent.y}px`;
+    }
+
+    // ✅ Next correct chip always topmost (overlap gives credit)
+    setCorrectOnTop();
+
+    rafId = requestAnimationFrame(tick);
+  }
+
+  // Spawn initial 3 and start animation
+  ensureThreeSpawned();
+  rafId = requestAnimationFrame(tick);
+
+  // Stop animating if we leave the screen
+function stopAnim(){
+  if (rafId) cancelAnimationFrame(rafId);
+  rafId = null;
+}
+
+function startAnim(){
+  if (rafId) return; // already running
+  lastT = performance.now();
+  rafId = requestAnimationFrame(tick);
+}
+
+window.addEventListener("blur", stopAnim);
+window.addEventListener("focus", startAnim);
+
+// Extra safety for mobile/tab switching
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) stopAnim();
+  else startAnim();
+});
+
+
+  
+
+}
+
+
+
 
 
 /* ---------- Screens ---------- */
@@ -1580,26 +2092,32 @@ function renderTitle(){
   setHeaderVisible(true);
   screenRoot.appendChild(el("div", { class:"kicker", text:"Welcome" }));
   screenRoot.appendChild(el("h1", { text: APP_TITLE }));
-  screenRoot.appendChild(el("p", { text:"You’ll read the verse out loud, then practice again as some words turn into emojis and blanks." }));
+  screenRoot.appendChild(el("p", { text:"•  If you're new to this verse, choose Learn." }));
+  screenRoot.appendChild(el("p", { text:"•  If you've already learned it, choose Practice." }));
 
-  const c = el("div", { class:"controls" }, [
-    btn("Get Started", {
-      onClick: () => {
-        resetAudioForNewPage();
-        AppState.screen = "instructions";
-        render();
-      }
-    }),
+const verseLabel = VERSE_REF.replace(" (NIV)", "");
 
-    btn("Extra Practice", {
-      primary:false,
-      onClick: () => {
-        resetAudioForNewPage();
-        AppState.screen = "extraGate";
-        render();
-      }
-    }),
-  ]);
+const c = el("div", { class:"controls" }, [
+  btn(`Learn ${verseLabel}`, {
+    onClick: () => {
+      playHappyBeep();
+      resetAudioForNewPage();
+      AppState.screen = "instructions";
+      render();
+    }
+  }),
+
+  btn(`Practice ${verseLabel}`, {
+    primary:false,
+    onClick: () => {
+      playHappyBeep();
+      resetAudioForNewPage();
+      AppState.screen = "extraGate";
+      render();
+    }
+  }),
+]);
+
 
 
 
@@ -1763,7 +2281,7 @@ setSticky(true,
 function renderFinal(){
   setHeaderVisible(true);
   screenRoot.appendChild(el("div", { class:"kicker", text:"Final" }));
-  screenRoot.appendChild(el("h1", { text:"No hints… if you can!" }));
+  screenRoot.appendChild(el("h1", { text:"📝 Final Test!" }));
   screenRoot.appendChild(el("p", { text:"Try to say the whole verse out loud. If you get stuck, tap a word to reveal it—then try again." }));
 
   const totalSteps = HIDE_PLAN.length;
@@ -1853,25 +2371,39 @@ function renderDone(){
   setHeaderVisible(true);
   screenRoot.appendChild(el("div", { class:"kicker", text:"Nice work!" }));
   screenRoot.appendChild(el("h1", { text:"You did it 🎉" }));
-  screenRoot.appendChild(el("p", { text:"Want to practice again or try a new verse later? (You’ll be able to swap verses by editing the config block.)" }));
+  screenRoot.appendChild(el("p", { text:"Want to practice again or try a new verse later?" }));
 
-  const c = el("div", { class:"controls" }, [
-    btn("Practice Again", {
-      onClick: () => {
-        AppState.screen = "full";
-        AppState.stepIndex = 0;
-        AppState.hintCountFinal = 0;
-        AppState.revealedOnFinal.clear();
-        render();
-      }
-    }),
-    btn("Back to Title", {
-      primary:false,
-      onClick: () => {
-        restart();
-      }
-    })
-  ]);
+    const c = el("div", { class:"controls" }, [
+        btn("Keep Learning the Verse", {
+        onClick: () => {
+            AppState.screen = "full";
+            AppState.stepIndex = 0;
+            AppState.hintCountFinal = 0;
+            AppState.revealedOnFinal.clear();
+            render();
+        }
+        }),
+
+        btn("Extra Practice", {
+        primary:false,
+        onClick: () => {
+            // Skip the “Did you learn the verse?” gate since they finished
+            resetAudioForNewPage();
+            AppState.extraGameId = null;
+            AppState.extraGameState = null;
+            AppState.screen = "extraMenu";
+            render();
+        }
+        }),
+
+        btn("Back to Title", {
+        primary:false,
+        onClick: () => {
+            restart();
+        }
+        })
+    ]);
+
   screenRoot.appendChild(c);
 
   setSticky(false);
@@ -1883,8 +2415,8 @@ function renderDone(){
 
 function renderExtraGate(){
   screenRoot.appendChild(el("div", { class:"kicker", text:"Extra Practice" }));
-  screenRoot.appendChild(el("h1", { text:"Stop ✋" }));
-  screenRoot.appendChild(el("p", { text:"This section is for people who have already learned the verse." }));
+  screenRoot.appendChild(el("h1", { text:"✋ Stop" }));
+  screenRoot.appendChild(el("p", { text:"Don't continue unless you have already learned the verse." }));
 
   const c = el("div", { class:"controls" }, [
     btn("I've learned the verse", {
@@ -1910,7 +2442,6 @@ function renderExtraGate(){
 function renderExtraMenu(){
   screenRoot.appendChild(el("div", { class:"kicker", text:"Extra Practice" }));
   screenRoot.appendChild(el("h1", { text:"Choose an activity" }));
-  screenRoot.appendChild(el("p", { text:"Pick a game below. You can add more games later." }));
 
   const list = el("div", { class:"controls" });
 
@@ -1965,6 +2496,11 @@ function renderExtraGame(){
     return renderScrambledPhrasesGame();
   }
 
+if (AppState.extraGameId === "bouncing_words"){
+  return renderBouncingWordsGame();
+}
+
+
   screenRoot.appendChild(el("div", { class:"kicker", text:"Extra Practice" }));
 
   if (!game){
@@ -2016,14 +2552,21 @@ function renderExtraGameIntro(){
   screenRoot.appendChild(el("div", { class:"kicker", text:"Extra Practice" }));
   screenRoot.appendChild(el("h1", { text: game ? game.title : "Extra Practice" }));
 
-  // Custom instructions for scrambled phrases
-  if (AppState.extraGameId === "scrambled_phrases"){
-    screenRoot.appendChild(el("p", { text:"Tap the phrase bubbles in the correct order." }));
-    screenRoot.appendChild(el("p", { text:"Each correct phrase moves into the top area." }));
-    screenRoot.appendChild(el("p", { text:"Wrong taps add a time penalty — so be careful." }));
-  } else {
-    screenRoot.appendChild(el("p", { text: game ? game.description : "Instructions" }));
-  }
+  // Custom instructions for scrambled phrases and bouncing words
+if (AppState.extraGameId === "scrambled_phrases"){
+  screenRoot.appendChild(el("p", { text:"Tap the phrase bubbles in the correct order." }));
+  screenRoot.appendChild(el("p", { text:"Each correct phrase moves into the top area." }));
+  screenRoot.appendChild(el("p", { text:"Wrong taps add a time penalty — so be careful." }));
+}
+else if (AppState.extraGameId === "bouncing_words"){
+  screenRoot.appendChild(el("p", { text:"Three phrases bounce around the screen." }));
+  screenRoot.appendChild(el("p", { text:"Tap the next phrase in the verse to place it above." }));
+  screenRoot.appendChild(el("p", { text:"Each correct tap makes the words move faster." }));
+}
+else {
+  screenRoot.appendChild(el("p", { text: game ? game.description : "Instructions" }));
+}
+
 
   const c = el("div", { class:"controls" }, [
     btn("Start", {
