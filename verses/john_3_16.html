@@ -108,6 +108,74 @@
     }
 
 
+/* --- Next-gate (circular progress that turns into Next) --- */
+.next-gate{
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  cursor: default;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.next-pie{
+  --p: 0; /* 0..1 */
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  position: relative;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 10px 22px rgba(0,0,0,.22);
+  /* Remove border here (borders make seams more obvious) */
+  border: none;
+  /* Helps some GPUs render gradients cleaner */
+  transform: translateZ(0);
+}
+
+/* Draw the donut ring on a pseudo-element + mask out the center */
+.next-pie::before{
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+
+  background: conic-gradient(
+    rgba(255,255,255,.95) calc(var(--p) * 1turn),
+    rgba(255,255,255,.18) 0
+  );
+
+  /* Cut out the center to make a clean ring (donut) */
+  -webkit-mask: radial-gradient(farthest-side,
+    transparent 68%,
+    #000 69%
+  );
+          mask: radial-gradient(farthest-side,
+    transparent 68%,
+    #000 69%
+  );
+}
+
+
+.next-pie::after{
+  content: "";
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: rgba(0,0,0,.20);
+  border: 1px solid rgba(255,255,255,.16);
+  backdrop-filter: blur(4px);
+}
+
+.next-pie .next-pie-label{
+  position: absolute;
+  font-size: 12px;
+  opacity: .9;
+}
+
+
     .kicker{
       font-size:12px;
       letter-spacing:.18em;
@@ -767,7 +835,7 @@ body.mode-scramble .phrase-stage{
     </div>
   </div>
 
-  <audio id="audio" preload="none"></audio>
+  <audio id="audio" preload="metadata"></audio>
 
 <script>
 /* =========================================================
@@ -1153,11 +1221,99 @@ function navigateWithTransition(direction, applyStateChange){
 
 }
 
+/* ---------- Next button gate (wait for mp3 duration) ---------- */
+let nextGateCancel = null;
+
+function stopNextGate(){
+  if (typeof nextGateCancel === "function") nextGateCancel();
+  nextGateCancel = null;
+}
+
+// Promise that resolves to a usable duration in seconds
+function getAudioDurationSeconds(){
+  return new Promise((resolve) => {
+    // If we already have it, use it
+    if (Number.isFinite(audioEl.duration) && audioEl.duration > 0){
+      resolve(audioEl.duration);
+      return;
+    }
+
+    // Ensure metadata loads
+    try { audioEl.preload = "metadata"; audioEl.load(); } catch(e){}
+
+    const onMeta = () => {
+      audioEl.removeEventListener("loadedmetadata", onMeta);
+      const d = (Number.isFinite(audioEl.duration) && audioEl.duration > 0) ? audioEl.duration : NaN;
+      resolve(d);
+    };
+
+    audioEl.addEventListener("loadedmetadata", onMeta, { once: true });
+
+    // Fallback in case metadata never arrives
+    window.setTimeout(() => {
+      audioEl.removeEventListener("loadedmetadata", onMeta);
+      const d = (Number.isFinite(audioEl.duration) && audioEl.duration > 0) ? audioEl.duration : NaN;
+      resolve(d);
+    }, 1200);
+  });
+}
+
+// Creates the circular timer node and swaps it to the real button when done
+async function makeGatedNextNode(makeRealButtonFn){
+  stopNextGate();
+
+  const gateWrap = document.createElement("div");
+  gateWrap.className = "next-gate";
+
+  const pie = document.createElement("div");
+  pie.className = "next-pie";
+  pie.style.setProperty("--p", 0);
+
+  gateWrap.appendChild(pie);
+
+  // Get duration (fallback if missing)
+  let secs = await getAudioDurationSeconds();
+  if (!Number.isFinite(secs) || secs <= 0) secs = 8; // fallback “reading time”
+
+  const totalMs = secs * 1000;
+  const start = performance.now();
+
+  let rafId = 0;
+  let cancelled = false;
+
+  function tick(now){
+    if (cancelled) return;
+    const t = Math.min(1, (now - start) / totalMs);
+    pie.style.setProperty("--p", t);
+
+    if (t >= 1){
+      // Swap the gate UI into the real Next button
+      const realBtn = makeRealButtonFn();
+      gateWrap.replaceWith(realBtn);
+      stopNextGate();
+      return;
+    }
+
+    rafId = requestAnimationFrame(tick);
+  }
+
+  rafId = requestAnimationFrame(tick);
+
+  nextGateCancel = () => {
+    cancelled = true;
+    if (rafId) cancelAnimationFrame(rafId);
+  };
+
+  return gateWrap;
+}
+
+
 
 
 
 /* ---------- Audio ---------- */
 function resetAudioForNewPage(){
+stopNextGate();   // ✅ add this line
   try {
     audioEl.pause();
     audioEl.currentTime = 0;
@@ -1165,6 +1321,13 @@ function resetAudioForNewPage(){
     audioEl.load();
   } catch (e) {}
 }
+
+function updateReadButtonLabel(){
+  const b = document.getElementById("btnRead");
+  if (!b) return;
+  b.textContent = audioEl.paused ? "🔊 Read it to Me" : "Pause Reading";
+}
+
 
 
 function toggleAudio(){
@@ -1179,7 +1342,7 @@ function toggleAudio(){
 
   if (audioEl.paused){
     audioEl.play()
-      .then(() => render())   // ✅ update button text after playback starts
+      .then(() => updateReadButtonLabel())
       .catch(() => {
         showModal({
           title: "Audio can’t play yet",
@@ -1189,14 +1352,17 @@ function toggleAudio(){
       });
   } else {
     audioEl.pause();
-    render();                 // ✅ update button text after pausing
+    updateReadButtonLabel();
   }
 }
 
 
-audioEl.addEventListener("ended", () => render()); // refresh button label if you want
-audioEl.addEventListener("play",  () => render());
-audioEl.addEventListener("pause", () => render());
+
+
+audioEl.addEventListener("ended", () => updateReadButtonLabel());
+audioEl.addEventListener("play",  () => updateReadButtonLabel());
+audioEl.addEventListener("pause", () => updateReadButtonLabel());
+
 
 /* ---------- Verse rendering ---------- */
 
@@ -2654,7 +2820,8 @@ function renderVerseCardHeader({stepLabel=null, stepProgress=null} = {}){
   return box;
 }
 
-function renderFullVerse(){
+async function renderFullVerse(){
+
   setHeaderVisible(true);
   screenRoot.appendChild(el("div", { class:"kicker", text:"Step 1" }));
   screenRoot.appendChild(el("h1", { text:"Read the verse" }));
@@ -2674,25 +2841,34 @@ screenRoot.appendChild(box);
   // Sticky bar: audio + next
   setSticky(true,
     [
-      btn(audioEl.paused ? "🔊 Read it to Me" : "Pause Reading", { primary:false, onClick: () => toggleAudio() })
+      el("button", {
+  id: "btnRead",
+  class: "btn secondary",
+  type: "button",
+  text: audioEl.paused ? "🔊 Read it to Me" : "Pause Reading",
+  onclick: () => toggleAudio()
+})
+
     ],
-    [
-        btn("Start Practice", {
-        onClick: () => {
+   [
+  await makeGatedNextNode(() =>
+    btn("Start Practice", {
+      onClick: () => {
         resetAudioForNewPage();
         navigateWithTransition("forward", () => {
-            AppState.screen = "step";
-            AppState.stepIndex = 1;
+          AppState.screen = "step";
+          AppState.stepIndex = 1;
         });
-        }
+      }
+    })
+  )
+]
 
-        })
-
-    ]
   );
 }
 
-function renderStep(){
+async function renderStep(){
+
   setHeaderVisible(true);
   const totalSteps = HIDE_PLAN.length;
   const step = AppState.stepIndex; // 1..totalSteps
@@ -2717,7 +2893,14 @@ function renderStep(){
 
 setSticky(true,
   [
-    btn(audioEl.paused ? "🔊 Read it to Me" : "Pause Reading", { primary:false, onClick: () => toggleAudio() }),
+    el("button", {
+  id: "btnRead",
+  class: "btn secondary",
+  type: "button",
+  text: audioEl.paused ? "🔊 Read it to Me" : "Pause Reading",
+  onclick: () => toggleAudio()
+}),
+
 
     btn("Back", {
       primary:false,
@@ -2734,6 +2917,7 @@ setSticky(true,
     })
   ],
   [
+  await makeGatedNextNode(() =>
     btn(isLast ? "Next" : "Next", {
       onClick: () => {
         resetAudioForNewPage();
@@ -2748,7 +2932,9 @@ setSticky(true,
         });
       }
     })
-  ]
+  )
+]
+
 );
 }
 
