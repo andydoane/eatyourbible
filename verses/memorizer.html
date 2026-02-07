@@ -3386,8 +3386,8 @@ function renderDone(){
     const c = el("div", { class:"controls" }, [
         btn("Keep Learning the Verse", {
         onClick: () => {
-            AppState.screen = "full";
-            AppState.stepIndex = 0;
+            AppState.screen = "step";
+            AppState.stepIndex = 1;
             AppState.hintCountFinal = 0;
             AppState.revealedOnFinal.clear();
             render();
