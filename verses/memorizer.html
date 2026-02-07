@@ -611,6 +611,35 @@
     flex: 1;
   }
 
+/* Stack It: a simple row that ONLY holds the Check It button */
+.stack-checkbar{
+  margin-top: 12px;
+  display: flex;
+  justify-content: center;
+}
+
+/* Make Check It wider: ~1/3 of the screen area, with caps */
+.stack-checkbtn{
+  width: 33%;
+  min-width: 150px;
+  max-width: 260px;
+}
+
+/* Stack It: instruction overlay inside the stage (doesn’t push chips down) */
+.stack-instructions-overlay{
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 10px;
+
+  text-align: center;
+  font-size: 13px;
+  opacity: 0.75;
+
+  /* IMPORTANT: don’t block taps on chips */
+  pointer-events: none;
+}
+
 
     @media (max-width: 375px){
     .verse{ line-height: 1.45; }
@@ -2903,18 +2932,27 @@ function renderStackItGame(){
   const st = AppState.extraGameState;
 
   // ✅ Simple instruction only (no “Your Verse” box)
-  // Top instruction + Check It button together
-  const topBar = el("div", { class:"stack-tipbar" }, [
-    el("div", { class:"stack-tiptext", text:"Tap a phrase to select it. Then tap a different phrase to swap them." }),
+// Check It button row (bigger, centered)
+const checkBar = el("div", { class:"stack-checkbar" }, [
+  btn("Check It", { onClick: onCheck })
+]);
+checkBar.querySelector("button").classList.add("stack-checkbtn");
+screenRoot.appendChild(checkBar);
 
-    btn("Check It", { onClick: onCheck, small:true })
-  ]);
-  screenRoot.appendChild(topBar);
 
 
   // Stage
   const stage = el("div", { class:"phrase-stage stack-stage", id:"stackStage" });
   screenRoot.appendChild(stage);
+
+// Overlay instructions (does not affect layout)
+stage.appendChild(
+  el("div", {
+    class: "stack-instructions-overlay",
+    text: "Tap a phrase to select it. Then tap a different phrase to swap them."
+  })
+);
+
 
   // Only the slots (no top dock)
   const slotsWrap = el("div", { class:"stack-slots", id:"stackSlots" });
