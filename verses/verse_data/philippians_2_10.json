@@ -1,0 +1,20 @@
+{
+  "verseId": "philippians_2_10",
+  "translation": "ESV",
+
+  "echoPartCount": "4",
+
+  "verseText": "So that at the name of Jesus every knee should bow, in heaven and on earth and under the earth...",
+  "attribution": "Scripture quotations are from The ESV® Bible (The Holy Bible, English Standard Version®), © 2001 by Crossway, a publishing ministry of Good News Publishers. Used by permission. All rights reserved.",
+  "hidePlan": [
+    { "type": "emoji", "word": "earth", "occurrence": 2, "emoji": "🌍" },
+    { "type": "emoji", "word": "knee", "occurrence": 1, "emoji": "🦵" },
+    { "type": "emoji", "word": "Jesus", "occurrence": 1, "emoji": "✝️" },
+    { "type": "emoji", "word": "heaven", "occurrence": 1, "emoji": "🌤️" },
+    { "type": "emoji", "word": "bow", "occurrence": 1, "emoji": "🙇" },
+    { "type": "emoji", "word": "name", "occurrence": 1, "emoji": "📝" },
+    { "type": "emoji", "word": "earth", "occurrence": 2, "emoji": "🌎" },
+    { "type": "emoji", "word": "under", "occurrence": 1, "emoji": "⬇️" },
+    { "type": "underscore", "word": "should", "occurrence": 1 }
+  ]
+}
