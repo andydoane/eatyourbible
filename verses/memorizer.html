@@ -2571,6 +2571,10 @@ built.appendChild(builtTextEl);
 
 screenRoot.appendChild(built);
 
+// Reserve the built area's max height so it never pushes/overlaps the bouncing stage
+const fullBuiltText = st.phrases.join(" ");
+scrambleEnsureReservedBuiltHeight(built, verseLabel, fullBuiltText, st);
+
 
 function refreshBuiltText(){
   const placedText = st.placed.map(i => st.phrases[i]).join(" ");
