@@ -643,6 +643,26 @@
   pointer-events: none;
 }
 
+/* Stack It chips: allow wrapping + balanced wrap */
+.stack-slot .phrase-chip.stack-chip{
+  /* Override the “scramble chip” rules */
+  position: static;            /* already true in your file, safe to repeat */
+  max-width: min(100%, 520px); /* keeps chips from getting absurdly wide on desktop */
+
+  white-space: normal;         /* ✅ allow wrapping */
+  overflow: visible;           /* ✅ no ellipsis clipping */
+  text-overflow: clip;         /* ✅ ensure ellipsis is NOT used */
+
+  text-align: center;
+  text-wrap: balance;          /* ✅ balanced wrap (supported in modern browsers) */
+  word-break: normal;
+  overflow-wrap: anywhere;     /* prevents a single long token from blowing layout */
+
+  /* These are controlled by JS via CSS variables (Step 4) */
+  font-size: var(--stack-chip-font, 18px);
+  line-height: var(--stack-chip-line, 1.15);
+  padding: var(--stack-chip-pad, 10px 14px);
+}
 
     @media (max-width: 375px){
     .verse{ line-height: 1.45; }
@@ -888,8 +908,8 @@ body.mode-scramble .phrase-stage{
 
 .stack-slots{
   flex: 1;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
+overflow: hidden;
+
 
   display: flex;
   flex-direction: column;
@@ -2977,6 +2997,12 @@ stage.appendChild(
     slotsWrap.appendChild(slot);
   }
 
+  // After chips exist in the DOM, auto-fit them so there's no scrolling
+  requestAnimationFrame(() => {
+    fitStackChipsToStage(stage, slotsWrap);
+  });
+
+
 
   // Bottom controls
   const controls = el("div", { class:"controls" }, [
@@ -3001,6 +3027,64 @@ stage.appendChild(
 
   // ---------- helpers ----------
 
+function fitStackChipsToStage(stageEl, slotsWrapEl){
+  // Try larger sizes first, then shrink until everything fits.
+  // You can tweak these numbers later if you want bigger/smaller chips.
+  const tries = [
+    { font: 20, padY: 12, padX: 16, line: 1.15, gap: 12 },
+    { font: 18, padY: 11, padX: 15, line: 1.15, gap: 11 },
+    { font: 17, padY: 10, padX: 14, line: 1.15, gap: 10 },
+    { font: 16, padY:  9, padX: 13, line: 1.12, gap: 10 },
+    { font: 15, padY:  8, padX: 12, line: 1.12, gap:  9 },
+    { font: 14, padY:  7, padX: 11, line: 1.10, gap:  8 },
+    { font: 13, padY:  6, padX: 10, line: 1.08, gap:  7 },
+    { font: 12, padY:  5, padX:  9, line: 1.06, gap:  6 },
+  ];
+
+  const chips = Array.from(slotsWrapEl.querySelectorAll(".phrase-chip.stack-chip"));
+
+  // Guard: if we somehow have no chips yet, bail.
+  if (!chips.length) return;
+
+  // Apply a candidate size, then check if it fits.
+  function applySize(t){
+    stageEl.style.setProperty("--stack-chip-font", `${t.font}px`);
+    stageEl.style.setProperty("--stack-chip-line", String(t.line));
+    stageEl.style.setProperty("--stack-chip-pad", `${t.padY}px ${t.padX}px`);
+    slotsWrapEl.style.gap = `${t.gap}px`;
+  }
+
+  function fits(){
+    // 1) Vertical fit: content height must fit inside the slots area
+    // scrollHeight is “how tall the content wants to be”
+    // clientHeight is “how tall the box actually is”
+    if (slotsWrapEl.scrollHeight > slotsWrapEl.clientHeight + 1) return false;
+
+    // 2) Horizontal fit: no chip should overflow sideways
+    // If a chip has a super-long word, it could overflow.
+    // We set overflow-wrap:anywhere, but this check is a safety net.
+    for (const chip of chips){
+      if (chip.scrollWidth > chip.clientWidth + 1) return false;
+    }
+
+    return true;
+  }
+
+  // Try each size until one fits.
+  for (const t of tries){
+    applySize(t);
+
+    // Force the browser to recalc layout before measuring
+    // (this line is a common trick; it "touches" layout)
+    void slotsWrapEl.offsetHeight;
+
+    if (fits()) return;
+  }
+
+  // If NOTHING fits, keep the smallest and accept it.
+  // (At least it won't scroll.)
+  applySize(tries[tries.length - 1]);
+}
 
 
 
@@ -3009,9 +3093,10 @@ stage.appendChild(
     const selected = (st.selectedSlot === slotIndex);
 
     const chipClass =
-      "phrase-chip" +
+      "phrase-chip stack-chip" +
       (selected ? " selected" : "") +
       (hasSelection && !selected ? " swap-target" : "");
+
 
     const chip = el("div", {
       class: chipClass,
