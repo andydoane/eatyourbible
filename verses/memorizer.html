@@ -1069,6 +1069,13 @@ const EXTRA_GAMES = [
     description: "Tap the phrases in the correct order.",
   },
   {
+  id: "verse_chain",
+  title: "Verse Chain",
+  emoji: "🔗",
+  description: "Pick the next word to build the verse."
+},
+
+  {
     id: "bouncing_words",
     title: "Bouncing Words",
     emoji: "🏀",
@@ -1080,6 +1087,7 @@ const EXTRA_GAMES = [
     emoji: "🧱",
     description: "Drag the phrases into the correct top-to-bottom order.",
   }
+
 ];
 
 
@@ -2842,6 +2850,7 @@ function renderStackItGame(){
   })
 ]);
 
+
   screenRoot.appendChild(controls);
 
 
@@ -3057,6 +3066,229 @@ function doSwapImmediate(a, b){
 }
 
 
+/* =========================================================
+   VERSE CHAIN (Extra Game)
+   ========================================================= */
+
+// Big list of kid-friendly decoy words (edit/expand anytime)
+const VERSE_CHAIN_DECOY_WORDS = [
+  "apple","banana","rocket","castle","dragon","puppy","kitten","turtle","panda","eagle",
+  "river","ocean","mountain","forest","garden","rainbow","thunder","snowflake","sunshine","comet",
+  "teacher","student","friend","family","hero","helper","leader","builder","artist","explorer",
+  "jump","run","walk","laugh","smile","share","listen","learn","play","build",
+  "brave","kind","strong","gentle","happy","thankful","careful","honest","curious","patient",
+  "bright","quiet","loud","soft","quick","slow","wild","safe","fresh","new",
+  "circle","square","triangle","ladder","bridge","pencil","paper","backpack","window","door",
+  "soccer","baseball","puzzle","cookie","popcorn","pizza","sandwich","cereal","honey","water",
+  "planet","star","moon","cloud","storm","breeze","shadow","flame","spark","stone",
+  "music","drum","guitar","violin","dance","story","comic","movie","camera","ticket",
+  "train","bus","bicycle","helmet","scooter","airplane","ticket","map","compass","lantern",
+  "gold","silver","crystal","treasure","coin","badge","trophy","medal","ribbon","crown"
+];
+
+// Small helpers
+function vcShuffle(arr){
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function vcPickDecoys(needCount, bannedSetLower){
+  const pool = vcShuffle(VERSE_CHAIN_DECOY_WORDS);
+  const out = [];
+  for (const w of pool){
+    const lw = w.toLowerCase();
+    if (bannedSetLower.has(lw)) continue;
+    out.push(w);
+    bannedSetLower.add(lw);
+    if (out.length >= needCount) break;
+  }
+  return out;
+}
+
+// Uses your existing tokenizer so we follow the verse exactly,
+// but we only take WORD tokens (not punctuation).
+function vcGetVerseWords(){
+  const toks = tokenize(VERSE_TEXT);
+  return toks
+    .filter(t => t.type === TokenType.WORD)
+    .map(t => t.text);
+}
+
+function vcInitState(){
+  const words = vcGetVerseWords();
+  const startCount = Math.min(words.length, 2 + Math.floor(Math.random() * 2)); // 2 or 3
+  const built = words.slice(0, startCount);
+  const nextIndex = startCount;
+
+  const state = {
+    game: "verse_chain",
+    words,
+    built,
+    nextIndex,
+    options: [],
+    optionIndex: 0,
+    done: false,
+    lastPickCorrect: null
+  };
+
+  vcMakeNewOptions(state);
+  return state;
+}
+
+function vcMakeNewOptions(state){
+  // Finished?
+  if (state.nextIndex >= state.words.length){
+    state.done = true;
+    state.options = [];
+    state.optionIndex = 0;
+    return;
+  }
+
+  const correct = state.words[state.nextIndex];
+  const banned = new Set([correct.toLowerCase()]);
+
+  const decoys = vcPickDecoys(4, banned);
+  state.options = vcShuffle([correct, ...decoys]);
+
+  // Start the carousel on a random option to feel less predictable
+  state.optionIndex = Math.floor(Math.random() * state.options.length);
+}
+
+function vcChooseCurrentOption(){
+  const st = AppState.extraGameState;
+  if (!st || st.game !== "verse_chain") return;
+  if (st.done) return;
+
+  const chosen = st.options[st.optionIndex];
+  const correct = st.words[st.nextIndex];
+
+  if (chosen === correct){
+    st.lastPickCorrect = true;
+    st.built.push(correct);
+    st.nextIndex++;
+    vcMakeNewOptions(st);
+  } else {
+    st.lastPickCorrect = false;
+  }
+
+  render();
+}
+
+function vcPrevOption(){
+  const st = AppState.extraGameState;
+  if (!st || st.game !== "verse_chain") return;
+  if (st.done) return;
+
+  st.optionIndex = (st.optionIndex - 1 + st.options.length) % st.options.length;
+  render();
+}
+
+function vcNextOption(){
+  const st = AppState.extraGameState;
+  if (!st || st.game !== "verse_chain") return;
+  if (st.done) return;
+
+  st.optionIndex = (st.optionIndex + 1) % st.options.length;
+  render();
+}
+
+function vcRestartGame(){
+  AppState.extraGameState = vcInitState();
+  render();
+}
+
+function renderVerseChainGame(){
+  setHeaderVisible(true);
+  setCardMode("card");
+  setScrambleMode(false);
+
+  // Create state the first time we enter Verse Chain
+  if (!AppState.extraGameState || AppState.extraGameState.game !== "verse_chain"){
+    AppState.extraGameState = vcInitState();
+  }
+
+  const st = AppState.extraGameState;
+
+  screenRoot.appendChild(el("div", { class:"kicker", text:"Extra Practice" }));
+  screenRoot.appendChild(el("h1", { text:"Verse Chain" }));
+
+  // Top verse area (use the same verse-size styling you already use elsewhere)
+  const builtText = st.built.join(" ");
+  screenRoot.appendChild(
+    el("div", { class:"verse", style:"text-align:center; margin-top: 8px; margin-bottom: 10px;" }, [
+      el("div", { text: builtText + (st.done ? "" : " …") })
+    ])
+  );
+
+  if (st.done){
+    screenRoot.appendChild(el("p", { style:"text-align:center; margin-top:10px;", text:"✅ You finished the verse!" }));
+    screenRoot.appendChild(el("p", { style:"text-align:center; opacity:.85; margin-top:6px;", text: VERSE_REF }));
+
+    const c = el("div", { class:"controls" }, [
+      btn("Play Again", { onClick: vcRestartGame }),
+      btn("Back to Menu", {
+        primary:false,
+        onClick: () => {
+          AppState.extraGameId = null;
+          AppState.extraGameState = null;
+          AppState.screen = "extraMenu";
+          render();
+        }
+      })
+    ]);
+    screenRoot.appendChild(c);
+    setSticky(false);
+    return;
+  }
+
+  // Prompt
+  screenRoot.appendChild(el("p", { style:"text-align:center; margin: 10px 0 8px;", text:"What’s the next word?" }));
+
+  // Feedback (tiny + simple)
+  if (st.lastPickCorrect === false){
+    screenRoot.appendChild(el("div", { class:"tip", text:"Try again!" }));
+  }
+
+  // Word carousel (re-uses your activity carousel look)
+  const current = st.options[st.optionIndex] || "";
+  const wordCarousel = el("div", { class:"activity-carousel", style:"margin-top:10px;" }, [
+    el("button", { class:"activity-arrow", type:"button", text:"‹", onclick: vcPrevOption }),
+    el("div", {
+      class:"activity-card",
+      onclick: vcChooseCurrentOption,
+      title:"Tap to choose"
+    }, [
+      el("div", { class:"activity-emoji", text:"🧩" }),
+      el("div", { class:"activity-title", text: current }),
+      el("div", { class:"activity-desc", text:"Tap to pick" }),
+      el("div", { class:"activity-meta", text:`${st.nextIndex + 1} / ${st.words.length}` })
+    ]),
+    el("button", { class:"activity-arrow", type:"button", text:"›", onclick: vcNextOption })
+  ]);
+
+  screenRoot.appendChild(wordCarousel);
+
+  // Bottom controls
+  const c = el("div", { class:"controls", style:"margin-top:14px;" }, [
+    btn("Restart", { primary:false, onClick: vcRestartGame }),
+    btn("Back to Menu", {
+      primary:false,
+      onClick: () => {
+        AppState.extraGameId = null;
+        AppState.extraGameState = null;
+        AppState.screen = "extraMenu";
+        render();
+      }
+    })
+  ]);
+
+  screenRoot.appendChild(c);
+  setSticky(false);
+}
 
 
 /* ---------- Screens ---------- */
@@ -3576,11 +3808,17 @@ function renderExtraMenu(){
     AppState.extraGameId = gameId;
 
     // All three use the intro screen in your current build
-    if (gameId === "scrambled_phrases" || gameId === "bouncing_words" || gameId === "stack_it"){
-      AppState.screen = "extraGameIntro";
-    } else {
-      AppState.screen = "extraGame";
-    }
+  if (
+    gameId === "scrambled_phrases" ||
+    gameId === "bouncing_words" ||
+    gameId === "stack_it" ||
+    gameId === "verse_chain"
+  ){
+    AppState.screen = "extraGameIntro";
+  } else {
+    AppState.screen = "extraGame";
+  }
+
 
     render();
   }
@@ -3671,6 +3909,11 @@ if (AppState.extraGameId === "stack_it"){
   return renderStackItGame();
 }
 
+if (AppState.extraGameId === "verse_chain"){
+  return renderVerseChainGame();
+}
+
+
 
 
   screenRoot.appendChild(el("div", { class:"kicker", text:"Extra Practice" }));
@@ -3739,6 +3982,11 @@ else if (AppState.extraGameId === "stack_it"){
   screenRoot.appendChild(el("p", { text:"Drag parts of the verse into the stack." }));
   screenRoot.appendChild(el("p", { text:"Put the verse in order from top to bottom." }));
   screenRoot.appendChild(el("p", { text:"Swap the verse around until everything is in the correct spot." }));
+}
+else if (AppState.extraGameId === "verse_chain"){
+  screenRoot.appendChild(el("p", { text:"Build the verse one word at a time." }));
+  screenRoot.appendChild(el("p", { text:"Use the arrows to browse choices, then tap the middle card to choose." }));
+  screenRoot.appendChild(el("p", { text:"Each correct pick adds the next word to the verse." }));
 }
 else {
   screenRoot.appendChild(el("p", { text: game ? game.description : "Instructions" }));
