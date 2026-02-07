@@ -1,0 +1,3680 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bible Verse Memory</title>
+  <style>
+    :root{
+      --bg:#0b1220;
+      --card:#0f1b33;
+      --card2:#0c162b;
+      --text:#eef2ff;
+      --muted:#b9c2dd;
+      --line:#223255;
+      --primary:#7c3aed;
+      --primary2:#6d28d9;
+      --good:#22c55e;
+      --warn:#f59e0b;
+      --shadow: 0 14px 40px rgba(0,0,0,.35);
+      --radius: 22px;
+      --tap: 44px;
+      --slide-ms: 1000ms;
+    }
+
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background: radial-gradient(1200px 700px at 20% 10%, rgba(124,58,237,.25), transparent 60%),
+                  radial-gradient(900px 600px at 80% 30%, rgba(34,197,94,.16), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+      overflow-x:hidden;
+    }
+
+    .app{
+      min-height:100%;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      padding: 18px 14px 110px;
+    }
+
+    .shell{
+      width:min(980px, 100%);
+      margin: 0 auto;
+    }
+
+    header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      padding: 8px 2px 14px;
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      user-select:none;
+    }
+    .logo{
+      width:40px;height:40px;
+      border-radius:14px;
+      background: linear-gradient(145deg, rgba(124,58,237,.9), rgba(34,197,94,.65));
+      box-shadow: 0 10px 22px rgba(0,0,0,.25);
+      display:grid;
+      place-items:center;
+      font-weight:800;
+      letter-spacing:.5px;
+    }
+    .brand .title{
+      display:flex;
+      flex-direction:column;
+      line-height:1.05;
+    }
+    .brand .title b{ font-size:14px; }
+    .brand .title span{ font-size:12px; color:var(--muted); }
+
+    .top-actions{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card-inner{
+      padding: 18px 18px 16px;
+    }
+
+    /* When a screen wants to “break out” of the card */
+    .card.no-card{
+    background: none;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+    }
+
+    .card.no-card .card-inner{
+    padding: 0;
+    }
+
+
+/* --- Next-gate (circular progress that turns into Next) --- */
+.next-gate{
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  display: inline-grid;
+  place-items: center;
+  cursor: default;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.next-pie{
+  --p: 0; /* 0..1 */
+  width: 44px;
+  height: 44px;
+  border-radius: 999px;
+  position: relative;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 10px 22px rgba(0,0,0,.22);
+  /* Remove border here (borders make seams more obvious) */
+  border: none;
+  /* Helps some GPUs render gradients cleaner */
+  transform: translateZ(0);
+}
+
+/* Draw the donut ring on a pseudo-element + mask out the center */
+.next-pie::before{
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+
+  background: conic-gradient(
+    rgba(255,255,255,.95) calc(var(--p) * 1turn),
+    rgba(255,255,255,.18) 0
+  );
+
+  /* Cut out the center to make a clean ring (donut) */
+  -webkit-mask: radial-gradient(farthest-side,
+    transparent 68%,
+    #000 69%
+  );
+          mask: radial-gradient(farthest-side,
+    transparent 68%,
+    #000 69%
+  );
+}
+
+
+.next-pie::after{
+  content: "";
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: rgba(0,0,0,.20);
+  border: 1px solid rgba(255,255,255,.16);
+  backdrop-filter: blur(4px);
+}
+
+.next-pie .next-pie-label{
+  position: absolute;
+  font-size: 12px;
+  opacity: .9;
+}
+
+
+    .kicker{
+      font-size:12px;
+      letter-spacing:.18em;
+      text-transform:uppercase;
+      color: var(--muted);
+      margin: 0 0 10px;
+    }
+    h1{
+      margin:0 0 10px;
+      font-size: clamp(24px, 4.2vw, 38px);
+      letter-spacing:-.02em;
+    }
+    p{
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: clamp(15px, 1.2vw, 18px);
+      line-height:1.55;
+    }
+
+    .verse-box{
+      background: rgba(0,0,0,.20);
+      border: 1px solid rgba(255,255,255,.07);
+      border-radius: 18px;
+      padding: 16px 14px;
+      margin: 10px 0 6px;
+    }
+    .verse-ref{
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+
+    /* Listen screen: letter-by-letter green fill */
+    .verse-fill span{
+      transition: color .18s linear;
+    }
+    .verse-fill span.filled{
+      color: var(--good); /* your green */
+    }
+
+
+    .progress{
+      font-size: 12px;
+      color: var(--muted);
+      white-space:nowrap;
+    }
+    .progress-bar{
+      height: 10px;
+      background: rgba(255,255,255,.07);
+      border-radius: 999px;
+      overflow:hidden;
+      margin-top: 8px;
+      margin-bottom: 18px;
+    }
+    .progress-bar > div{
+      height:100%;
+      width:0%;
+      background: linear-gradient(90deg, rgba(124,58,237,.9), rgba(34,197,94,.75));
+      border-radius:999px;
+      transition: width .25s ease;
+    }
+
+    .verse{
+    font-size: clamp(25px, 2.8vw, 50px);
+
+    line-height: 1.55;
+    color: var(--text);
+    text-align: center; 
+    text-wrap: balance;
+    /* ✅ Don't break inside words */
+    overflow-wrap: normal;
+    word-break: normal;
+    hyphens: none;
+    }
+
+    .token-space{ white-space: normal; }
+
+
+    .hintable{
+    /* ✅ behave like text */
+    display:inline;
+    padding: 0 .18em;
+    margin: 0 .03em;
+    border-radius: .45em;
+
+    border: 1px solid rgba(255,255,255,.12);
+    background: rgba(124,58,237,.12);
+    color: var(--text);
+
+    cursor:pointer;
+    user-select:none;
+    -webkit-tap-highlight-color: transparent;
+
+    /* keep it aligned with surrounding words */
+    vertical-align: baseline;
+    line-height: inherit;
+    white-space: nowrap; /* keep the emoji/blank together */
+    }
+
+    .hintable:hover{ background: rgba(124,58,237,.18); border-color: rgba(255,255,255,.18); }
+    .hintable:active{ transform: scale(.98); }
+
+    .hintable.emoji{
+    font-size: 1.05em;
+    padding: 0 .2em;
+    background: rgba(34,197,94,.14);
+    }
+
+    .hintable.emoji:hover{ background: rgba(34,197,94,.19); }
+
+    .hintable.underscore{
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    background: rgba(245,158,11,.12);
+    }
+
+    .hintable.underscore:hover{ background: rgba(245,158,11,.16); }
+
+    .controls{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top: 14px;
+    }
+
+    button, .btn{
+      appearance:none;
+      border: none;
+      border-radius: 16px;
+      padding: 12px 14px;
+      font-weight: 700;
+      color: white;
+      background: linear-gradient(180deg, var(--primary), var(--primary2));
+      cursor:pointer;
+      min-height: var(--tap);
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      -webkit-tap-highlight-color: transparent;
+      box-shadow: 0 12px 22px rgba(124,58,237,.25);
+      transition: transform .06s ease, filter .12s ease, opacity .12s ease;
+    }
+    button:hover, .btn:hover{ filter: brightness(1.06); }
+    button:active, .btn:active{ transform: scale(.99); }
+    button:disabled{ opacity:.5; cursor:not-allowed; }
+
+    .btn.secondary{
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow:none;
+      color: var(--text);
+    }
+    .btn.ghost{
+      background: transparent;
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow:none;
+    }
+    .btn.small{
+      padding: 9px 12px;
+      border-radius: 14px;
+      font-weight: 700;
+      font-size: 13px;
+      min-height: 38px;
+    }
+
+    /* Full-width menu buttons (Choose an Activity page) */
+    .btn.full{
+    width: 100%;
+    justify-content: center;
+    }
+
+    
+    .sticky-bar{
+      position: fixed;
+      left:0; right:0; bottom:0;
+      padding: 12px 14px 14px;
+      background: linear-gradient(180deg, rgba(11,18,32,0), rgba(11,18,32,.85) 20%, rgba(11,18,32,.95));
+      backdrop-filter: blur(10px);
+    }
+    .sticky-inner{
+      width: min(980px, 100%);
+      margin:0 auto;
+      display:flex;
+      gap:10px;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .sticky-left{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .sticky-right{
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+
+    /* Modal */
+    .overlay{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 16px;
+      z-index: 1000;
+    }
+    .overlay.show{ display:flex; }
+    .modal{
+      width: min(560px, 100%);
+      background: rgba(15,27,51,.98);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 22px;
+      box-shadow: 0 20px 70px rgba(0,0,0,.55);
+      overflow:hidden;
+    }
+    .modal .m-inner{
+      padding: 16px 16px 14px;
+    }
+    .modal h2{
+      margin: 0 0 8px;
+      font-size: 18px;
+      letter-spacing:-.01em;
+    }
+    .modal p{
+      margin: 0 0 12px;
+      color: var(--muted);
+    }
+    .modal .m-actions{
+      display:flex;
+      gap:10px;
+      justify-content:flex-end;
+      flex-wrap:wrap;
+      padding: 0 16px 16px;
+    }
+
+    /* Big centered reveal inside the modal */
+    .reveal-big{
+    min-height: 180px;              /* gives it a “centered” stage */
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    font-weight: 900;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    font-size: clamp(26px, 6vw, 44px);
+    line-height: 1.15;
+    }
+
+/* ===== Hero modal (big green overlay message) ===== */
+.modal.hero{
+  background: var(--good);
+  border: none;
+  box-shadow: 0 24px 90px rgba(0,0,0,.55);
+}
+
+.modal.hero .m-inner{
+  padding: 34px 22px;
+}
+
+.modal.hero #modalTitle{
+  display: none !important;
+}
+
+.modal.hero #modalBody{
+  color: white;
+  font-weight: 900;
+  text-align: center;
+  letter-spacing: .05em;
+  font-size: clamp(28px, 6.5vw, 56px);
+  line-height: 1.05;
+}
+
+/* No buttons on the hero modal */
+.modal.hero .m-actions{
+  display: none !important;
+}
+
+
+    /* Small helper text */
+    /* Scripture copyright notice */
+        .scripture-credit{
+        margin-top: 10px;
+        font-size: 11px;
+        line-height: 1.4;
+        color: var(--muted);
+        text-align: center;
+        opacity: 0.85;
+        }
+
+
+    .tip{
+      margin-top: 12px;
+      padding: 12px 12px;
+      border-radius: 16px;
+      border: 1px dashed rgba(255,255,255,.16);
+      background: rgba(255,255,255,.03);
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+  /* Stack It: tip + Check It button in one row */
+  .stack-tipbar{
+    margin-top: 12px;
+    padding: 12px 12px;
+    border-radius: 16px;
+    border: 1px dashed rgba(255,255,255,.16);
+    background: rgba(255,255,255,.03);
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.45;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .stack-tiptext{
+    flex: 1;
+  }
+
+
+    @media (max-width: 375px){
+    .verse{ line-height: 1.45; }
+    }
+
+    /* Desktop “big screen” breathing room */
+    @media (min-width: 900px){
+      .card-inner{ padding: 26px 26px 20px; }
+      .verse-box{ padding: 18px 18px; }
+    }
+
+
+    /* --- Card cross-slide transition (two-layer) --- */
+    .card-stage{
+    position: relative;
+    overflow: hidden;
+    }
+
+    /* a temporary clone of the old page, sits on top */
+    .page-clone{
+    position: absolute !important;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none; /* don’t allow clicks mid-animation */
+    }
+
+    /* the real screenRoot slides underneath/into place */
+    .page-live{
+    position: relative;
+    z-index: 1;
+    will-change: transform, opacity;
+    }
+
+    /* movement classes */
+    .slide-from-right{ transform: translateX(110%); }
+    .slide-from-left { transform: translateX(-110%); }
+    .slide-to-left   { transform: translateX(-110%); }
+    .slide-to-right  { transform: translateX(110%); }
+
+    .slide-anim{
+    /* duration must match SLIDE_MS in JS */
+    transition: transform var(--slide-ms) cubic-bezier(.2,.8,.2,1);
+
+    }
+
+
+    /* --- Extra Practice: Scrambled Phrases --- */
+    .phrase-stage{
+    position: relative;
+    margin-top: 14px;
+    height: 360px;
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,.10);
+    background: rgba(0,0,0,.18);
+    overflow: hidden;
+    }
+
+    .phrase-chip{
+    position: absolute;
+    max-width: calc(100% - 28px);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border: 2px solid transparent; /* reserve space */
+
+    padding: 12px 14px;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(124,58,237,.16);
+    color: var(--text);
+    font-weight: 800;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    box-shadow: 0 10px 18px rgba(0,0,0,.22);
+    transition: transform .08s ease, filter .12s ease, opacity .12s ease;
+    }
+
+    .phrase-chip:hover{ filter: brightness(1.06); }
+    .phrase-chip:active{ transform: scale(.99); }
+
+    .phrase-chip.correct{
+    background: rgba(34,197,94,.18);
+    border-color: rgba(34,197,94,.35);
+    }
+
+    @keyframes wrongBlink {
+    0%   { filter: none; background: rgba(239,68,68,.08); border-color: rgba(239,68,68,.25); }
+    35%  { filter: brightness(1.35); background: rgba(239,68,68,.35); border-color: rgba(239,68,68,.55); }
+    70%  { filter: none; background: rgba(239,68,68,.10); border-color: rgba(239,68,68,.28); }
+    100% { filter: none; background: rgba(239,68,68,.18); border-color: rgba(239,68,68,.35); }
+    }
+
+    /* When wrong, blink red */
+    .phrase-chip.wrong{
+     background: rgba(245,158,11,.18);
+    border-color: rgba(245,158,11,.35);
+    animation: wrongBlink 260ms ease-in-out 0s 2;
+    }
+
+
+    .phrase-progress{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 10px;
+    margin-top: 10px;
+    color: var(--muted);
+    font-size: 13px;
+    }
+
+/* reserved “built verse” area */
+.phrase-built{
+  margin-top: 12px;
+  padding: 12px 12px;
+  border-radius: 18px;
+
+  /* ✅ greener + more distinct */
+  border: 1px solid rgba(34,197,94,.28);
+  background: linear-gradient(180deg, rgba(34,197,94,.18), rgba(0,0,0,.18));
+  box-shadow: 0 10px 24px rgba(0,0,0,.20), inset 0 0 0 1px rgba(34,197,94,.10);
+}
+
+
+.phrase-built-label{
+  font-size: 12px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+
+/* Plain sentence text for placed phrases (compact) */
+.phrase-built-text{
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--text);
+  opacity: .95;
+}
+
+
+.phrase-slots{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+}
+
+.phrase-slot{
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px dashed rgba(255,255,255,.16);
+  background: rgba(255,255,255,.03);
+  color: rgba(185,194,221,.9);
+  font-weight: 800;
+  min-height: 44px;
+  display:flex;
+  align-items:center;
+}
+
+.phrase-slot.filled{
+  border-style: solid;
+  background: rgba(34,197,94,.14);
+  border-color: rgba(34,197,94,.30);
+  color: var(--text);
+  font-size: 11px;
+}
+
+/* Small phones (e.g., iPhone SE): give the stage more vertical room */
+@media (max-width: 420px){
+  .phrase-stage{
+    height: clamp(320px, 58svh, 520px);
+  }
+
+  .phrase-chip{
+    padding: 10px 12px;   /* slightly smaller chips */
+    font-size: 14px;
+  }
+}
+
+
+/* ================================
+   Scrambled Game: full-height mode
+   ================================ */
+body.mode-scramble .app{
+  /* Sticky bar is hidden in this mode, so don’t reserve space for it */
+  padding-bottom: 18px; /* was 110px globally */
+}
+
+/* Make the screenRoot a vertical layout so the stage can expand */
+body.mode-scramble #screenRoot{
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh; /* use the full viewport height on mobile */
+}
+
+/* Let the stage take remaining space */
+body.mode-scramble .phrase-stage{
+  flex: 1;
+  height: auto;        /* override fixed/clamped height */
+  min-height: 320px;   /* still keep it playable */
+}
+
+/* Stack It layout */
+.stack-stage{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+}
+
+.stack-topdock{
+  position: relative;
+  height: 84px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.16);
+  overflow: hidden;
+}
+
+.stack-topdock-hint{
+  position: absolute;
+  left: 12px;
+  top: 10px;
+  opacity: .7;
+  font-size: 13px;
+}
+
+.stack-slots{
+  flex: 1;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+
+  /* center the whole stack when it fits */
+  justify-content: center;
+  align-items: center;
+
+  padding: 12px 0;
+}
+
+
+/* Stack It: invisible row wrapper (no rectangle) */
+.stack-slot{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  /* remove the box look */
+  border: none;
+  background: transparent;
+  height: auto;
+  padding: 0;
+  width: auto;
+}
+
+
+.stack-slot.hover{
+  border-style: solid;
+  border-color: rgba(168,85,247,.65); /* your purple */
+  background: rgba(168,85,247,.10);
+}
+
+
+
+
+
+/* Selected chip highlight (solid green, button-like) */
+.phrase-chip.selected{
+  background: var(--good);                 /* uses your --good = #22c55e */
+  border-color: rgba(255,255,255,.22);
+  color: white;
+  font-weight: 900;
+  box-shadow: 0 12px 22px rgba(34,197,94,.22);
+}
+
+/* Swap targets: transparent with dotted outline */
+.phrase-chip.swap-target{
+  background: transparent;
+  border: 2px dashed rgba(255,255,255,.45);
+  opacity: .7;
+  box-sizing: border-box;
+}
+
+/* Used only during swap animation */
+.phrase-chip.swap-hidden{
+  visibility: hidden;
+}
+
+
+
+.stack-slot .phrase-chip{
+  position: static;      /* important: chips inside slots are normal flow */
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.stack-floating{
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%,-50%);
+}
+
+/* Make dragging feel responsive */
+.phrase-chip.dragging{
+  opacity: .96;
+  transform: scale(1.02);
+  touch-action: none;
+  user-select: none;
+}
+
+
+
+
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <div class="shell">
+      <header id="appHeader">
+
+        <div class="brand">
+          <div class="logo">📘</div>
+          <div class="title">
+            <b>Verse Memory</b>
+          </div>
+        </div>
+        <div class="top-actions">
+          <button id="btnRestartTop" class="btn ghost small" type="button" title="Restart">Restart</button>
+        </div>
+      </header>
+
+        <main class="card" role="main" aria-live="polite">
+        <div class="card-stage" id="cardStage">
+            <div class="card-inner" id="screenRoot">
+            <!-- Rendered by JS -->
+            </div>
+        </div>
+        </main>
+
+    </div>
+  </div>
+
+  <!-- Sticky controls -->
+  <div class="sticky-bar" id="stickyBar" style="display:none;">
+    <div class="sticky-inner">
+      <div class="sticky-left" id="stickyLeft"></div>
+      <div class="sticky-right" id="stickyRight"></div>
+    </div>
+  </div>
+
+<!-- Modal overlay -->
+<div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal" id="modalBox">
+    <div class="m-inner">
+      <h2 id="modalTitle">Modal</h2>
+      <div id="modalBody">Body</div>
+    </div>
+    <div class="m-actions" id="modalActions"></div>
+  </div>
+</div>
+
+
+  <audio id="audio" preload="metadata"></audio>
+
+<script>
+/* =========================================================
+   OPTION A CONFIG (edit these only)
+   ========================================================= */
+const SLIDE_MS = 1000; // animation duration in milliseconds
+document.documentElement.style.setProperty(
+  "--slide-ms",
+  `${SLIDE_MS}ms`
+);
+
+const SCRAMBLE_WRONG_PENALTY_SEC = 5;
+
+// Bouncing Words tuning
+const BOUNCE_INITIAL_SPEED = 115;     // px/sec (start speed)
+const BOUNCE_SPEED_INCREMENT = 18;    // px/sec added per correct tap
+const BOUNCE_MAX_SPEED = 260;         // optional safety cap
+const BOUNCE_SPAWN_MIN_DIST = 84;     // px (try to spawn chips apart)
+
+
+// ==========================
+// VERSE CONFIG (loaded from JSON)
+// ==========================
+let VERSE_ID = null;
+let TRANSLATION = null;
+let ATTRIBUTION = "";
+let ECHO_PART_COUNT = 0;
+let ECHO_PART_SUFFIXES = [];
+let VERSE_TEXT = "";
+let HIDE_PLAN = [];
+let VERSE_REF = "";
+let APP_TITLE = "";
+const AUDIO_DIR = "verse_audio/";
+let AUDIO_FILE = "";
+
+// How long to pause AFTER each part (relative to that part’s duration)
+const ECHO_PAUSE_MULT = 1.15; // 10% extra breathing room
+
+function makeEchoSuffixes(count){
+  const letters = "abcdefghijklmnopqrstuvwxyz";
+  const out = [];
+  const n = Math.max(0, Math.min(count, letters.length)); // cap at 26
+  for (let i = 0; i < n; i++) out.push(letters[i]);
+  return out;
+}
+
+function echoPartFile(suffix){
+  return `${AUDIO_DIR}${VERSE_ID}${suffix}.mp3`;
+}
+
+function getVerseIdFromUrl(){
+  const params = new URLSearchParams(window.location.search);
+  return params.get("v"); // example: john_3_16
+}
+
+async function loadVerseJson(verseId){
+  const res = await fetch(`verse_data/${verseId}.json`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`Could not load verse_data/${verseId}.json (HTTP ${res.status})`);
+  return await res.json();
+}
+
+function applyVerseConfig(cfg){
+  VERSE_ID = cfg.verseId;
+  TRANSLATION = cfg.translation || "";
+  ATTRIBUTION = cfg.attribution || "";
+  ECHO_PART_COUNT = Number(cfg.echoPartCount || 0);
+  ECHO_PART_SUFFIXES = makeEchoSuffixes(ECHO_PART_COUNT);
+
+  VERSE_TEXT = cfg.verseText || "";
+  HIDE_PLAN = Array.isArray(cfg.hidePlan) ? cfg.hidePlan : [];
+
+  VERSE_REF = verseIdToRef(VERSE_ID, TRANSLATION);
+
+  APP_TITLE = `🧠 Let's memorize ${VERSE_REF}`;
+  document.title = `Bible Verse Memory • ${VERSE_REF}`;
+
+  AUDIO_FILE = `${AUDIO_DIR}${VERSE_ID}.mp3`;
+  audioEl.src = AUDIO_FILE;
+
+  // Recompute token-based stuff now that we have VERSE_TEXT/HIDE_PLAN
+  tokens = tokenize(VERSE_TEXT);
+  planResolved = resolveHidePlanToTokenIndices(tokens, HIDE_PLAN);
+
+  // Now that VERSE_ID exists, refresh the learned state
+  AppState.hasLearnedVerse = getHasLearned();
+}
+
+
+function makeEchoSuffixes(count){
+  const letters = "abcdefghijklmnopqrstuvwxyz";
+  const out = [];
+  const n = Math.max(0, Math.min(count, letters.length)); // cap at 26
+  for (let i = 0; i < n; i++) out.push(letters[i]);
+  return out;
+}
+
+
+function echoPartFile(suffix){
+  return `${AUDIO_DIR}${VERSE_ID}${suffix}.mp3`;
+}
+
+
+
+
+
+
+/* =========================================================
+   EXTRA PRACTICE GAMES (add more later)
+   ========================================================= */
+const EXTRA_GAMES = [
+  {
+    id: "scrambled_phrases",
+    title: "Verse Scramble",
+    description: "Tap the phrases in the correct order.",
+  },
+  {
+    id: "bouncing_words",
+    title: "Bouncing Words",
+    description: "Tap the moving words in the correct order.",
+  },
+  {
+    id: "stack_it",
+    title: "Stack It",
+    description: "Drag the phrases into the correct top-to-bottom order.",
+  }
+];
+
+
+
+function verseIdToRef(verseId, translation){
+  const parts = verseId.split("_");
+
+  const book = parts[0][0].toUpperCase() + parts[0].slice(1);
+  const chapter = parts[1];
+
+  const verses = parts.slice(2);
+  let versePart;
+
+  if (verses.length === 1){
+    versePart = verses[0];
+  } else {
+    versePart = `${verses[0]}–${verses[1]}`;
+  }
+
+  const t = translation ? ` (${translation})` : "";
+  return `${book} ${chapter}:${versePart}${t}`;
+}
+
+
+
+/* =========================================================
+   APP LOGIC
+   ========================================================= */
+const screenRoot = document.getElementById("screenRoot");
+const stickyBar  = document.getElementById("stickyBar");
+const stickyLeft = document.getElementById("stickyLeft");
+const stickyRight= document.getElementById("stickyRight");
+
+const overlay     = document.getElementById("overlay");
+const modalTitle  = document.getElementById("modalTitle");
+const modalBody   = document.getElementById("modalBody");
+const modalActions= document.getElementById("modalActions");
+
+const audioEl = document.getElementById("audio");
+
+document.getElementById("btnRestartTop").addEventListener("click", () => restart());
+
+// Remember if the user said they've learned the verse (persists across refreshes)
+function getHasLearnedKey(){
+  return `hasLearned_${VERSE_ID || "unknown"}`;
+}
+
+
+function getHasLearned(){
+  try { return localStorage.getItem(getHasLearnedKey()) === "1"; }
+  catch (e) { return false; }
+}
+
+function setHasLearned(val){
+  try { localStorage.setItem(getHasLearnedKey(), val ? "1" : "0"); }
+  catch (e) {}
+}
+
+
+const AppState = {
+  screen: "title", // title | instructions | listen | echo | step | final | done | extraGate | extraMenu | extraGame
+  stepIndex: 0,
+  extraGameId: null,
+  extraGameState: null,
+  hintCountFinal: 0,
+  revealedOnFinal: new Set(),
+  isAnimating: false,
+  hasLearnedVerse: getHasLearned(),
+
+  // Learn flow flags
+  listenDone: false,
+  echoDone: false,
+};
+
+
+const TokenType = {
+  SPACE: "space",
+  WORD: "word",
+  PUNCT: "punct",
+  OTHER: "other",
+};
+
+function tokenize(text){
+  // Captures spaces, words (with optional apostrophes), numbers, and punctuation
+  const re = /(\s+|[A-Za-z]+(?:'[A-Za-z]+)?|[0-9]+|[^\sA-Za-z0-9]+)/g;
+  const raw = text.match(re) || [];
+  return raw.map(t => {
+    if (/^\s+$/.test(t)) return { type: TokenType.SPACE, text: t };
+    if (/^[A-Za-z]+(?:'[A-Za-z]+)?$/.test(t)) return { type: TokenType.WORD, text: t };
+    if (/^[0-9]+$/.test(t)) return { type: TokenType.WORD, text: t }; // treat numbers as "word-like"
+    if (/^[^\sA-Za-z0-9]+$/.test(t)) return { type: TokenType.PUNCT, text: t };
+    return { type: TokenType.OTHER, text: t };
+  });
+}
+
+let tokens = [];
+let planResolved = [];
+
+
+function resolveHidePlanToTokenIndices(tokens, plan){
+  const wordPositionsByLower = new Map();
+
+  tokens.forEach((tok, idx) => {
+    if (tok.type !== TokenType.WORD) return;
+    const key = tok.text.toLowerCase();
+    if (!wordPositionsByLower.has(key)) wordPositionsByLower.set(key, []);
+    wordPositionsByLower.get(key).push(idx);
+  });
+
+  return plan.map((item, i) => {
+    const key = String(item.word).toLowerCase();
+    const list = wordPositionsByLower.get(key) || [];
+    const occ = item.occurrence ?? 1;
+    const tokenIndex = list[occ - 1];
+
+    if (tokenIndex === undefined){
+      console.warn(`HIDE_PLAN item #${i} could not find word="${item.word}" occurrence=${occ}.`);
+    }
+
+    return { ...item, tokenIndex };
+  });
+}
+
+/* ---------- Rendering helpers ---------- */
+function clearNode(node){
+  while(node.firstChild) node.removeChild(node.firstChild);
+}
+
+function el(tag, attrs = {}, children = []) {
+  const node = document.createElement(tag);
+
+  for (const [k, v] of Object.entries(attrs)) {
+    // ✅ skip null / undefined / false attributes
+    if (v === null || v === undefined || v === false) continue;
+
+    if (k === "class") node.className = v;
+    else if (k === "text") node.textContent = v;
+    else if (k.startsWith("on") && typeof v === "function") node.addEventListener(k.slice(2), v);
+    else node.setAttribute(k, v === true ? "" : v); // allow boolean attrs
+  }
+
+  for (const c of children) node.appendChild(c);
+  return node;
+}
+
+
+function setSticky(show, leftButtons=[], rightButtons=[]){
+  stickyBar.style.display = show ? "block" : "none";
+  clearNode(stickyLeft);
+  clearNode(stickyRight);
+  leftButtons.forEach(b => stickyLeft.appendChild(b));
+  rightButtons.forEach(b => stickyRight.appendChild(b));
+}
+
+function setHeaderVisible(show){
+  const header = document.getElementById("appHeader");
+  if (!header) return;
+  header.style.display = show ? "" : "none";
+}
+
+function setCardMode(mode){
+  // mode: "card" | "no-card"
+  const main = document.querySelector("main.card");
+  if (!main) return;
+  main.classList.toggle("no-card", mode === "no-card");
+}
+
+function setScrambleMode(on){
+  document.body.classList.toggle("mode-scramble", !!on);
+}
+
+
+function setNavDisabled(disabled){
+  // Disable all sticky bar buttons
+  document.querySelectorAll("#stickyBar button").forEach(b => b.disabled = disabled);
+
+  // Also disable the top Restart button so it can’t interrupt transitions
+  const restartBtn = document.getElementById("btnRestartTop");
+  if (restartBtn) restartBtn.disabled = disabled;
+}
+
+
+function btn(label, opts = {}) {
+  const { primary=true, small=false, ghost=false, onClick, disabled=false, title="" } = opts;
+  let cls = "btn";
+  if (!primary) cls += " secondary";
+  if (ghost) cls += " ghost";
+  if (small) cls += " small";
+
+  const attrs = { class: cls, type:"button", title, onclick: onClick, text: label };
+  if (disabled) attrs.disabled = true; // only add when true
+
+  return el("button", attrs);
+}
+
+
+function showModal({ title, body, actions = [] }) {
+
+  /* ----- TITLE ----- */
+  if (title) {
+    modalTitle.style.display = "";
+    modalTitle.textContent = title;
+  } else {
+    modalTitle.style.display = "none";
+  }
+
+  /* ----- BODY ----- */
+  modalBody.innerHTML = "";
+
+  if (typeof body === "string") {
+    modalBody.textContent = body;
+  } else if (body instanceof Node) {
+    modalBody.appendChild(body);
+  }
+
+  /* ----- ACTIONS ----- */
+  clearNode(modalActions);
+  actions.forEach(a => modalActions.appendChild(a));
+
+  overlay.classList.add("show");
+
+  /* ----- ACCESSIBILITY ----- */
+  const firstBtn = modalActions.querySelector("button");
+  if (firstBtn) firstBtn.focus();
+}
+
+
+function closeModal(){
+  overlay.classList.remove("show");
+}
+
+// Show a big green “hero” modal for a short time, then auto-close.
+function showHeroModal(message, ms = 1800){
+  const modalBox = document.getElementById("modalBox");
+  if (modalBox) modalBox.classList.add("hero");
+
+  // Use your existing modal system, but with no title/actions.
+  showModal({ title: "", body: message, actions: [] });
+
+  return new Promise((resolve) => {
+    window.setTimeout(() => {
+      closeModal();
+      if (modalBox) modalBox.classList.remove("hero");
+      resolve();
+    }, ms);
+  });
+}
+
+
+overlay.addEventListener("click", (e) => {
+  if (e.target === overlay) closeModal();
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && overlay.classList.contains("show")) closeModal();
+});
+
+function navigateWithTransition(direction, applyStateChange){
+      // Prevent double-taps during animation
+  if (AppState.isAnimating) return;
+  AppState.isAnimating = true;
+  setNavDisabled(true);
+
+  // direction: "forward" | "back"
+  const stage = document.getElementById("cardStage");
+
+  // Respect reduced motion
+  const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // 1) Make a visual clone of what’s currently on screen
+  const clone = screenRoot.cloneNode(true);
+  clone.removeAttribute("id");
+  clone.classList.add("page-clone");
+  clone.classList.remove("page-live");
+  stage.appendChild(clone);
+
+  // 2) Update state + render the new page into the REAL screenRoot
+  applyStateChange();
+  render();
+
+  // 3) Set up starting positions
+  // Clone slides OUT; screenRoot starts OFFSCREEN then slides IN
+  const inFrom  = (direction === "back") ? "slide-from-left" : "slide-from-right";
+  const outTo   = (direction === "back") ? "slide-to-right"  : "slide-to-left";
+
+  // Ensure base classes
+  screenRoot.classList.add("page-live");
+
+  // Reduced motion = crossfade (no sliding)
+  if (prefersReduced){
+    clone.style.transition = "opacity 240ms ease";
+    screenRoot.style.transition = "opacity 240ms ease";
+
+    clone.style.opacity = "1";
+    screenRoot.style.opacity = "0";
+
+    // next frame: fade
+    requestAnimationFrame(() => {
+      clone.style.opacity = "0";
+      screenRoot.style.opacity = "1";
+    });
+
+    window.setTimeout(() => {
+      clone.remove();
+      // cleanup inline styles
+      screenRoot.style.transition = "";
+      screenRoot.style.opacity = "";
+        AppState.isAnimating = false;
+  setNavDisabled(false);
+
+    }, Math.max(240, SLIDE_MS * 0.25));
+
+
+    return;
+  }
+
+  // Normal motion = cross-slide
+  // Put incoming page offscreen (no transition yet)
+  screenRoot.classList.remove("slide-from-left","slide-from-right","slide-to-left","slide-to-right","slide-anim");
+  screenRoot.classList.add(inFrom);
+
+  // Force the browser to "notice" the starting position
+  screenRoot.offsetWidth; // <-- forces reflow (normal trick)
+
+  // Now animate both at the same time
+  clone.classList.add("slide-anim", outTo);
+  screenRoot.classList.add("slide-anim");
+  screenRoot.classList.remove(inFrom); // returns to transform: none (0 position)
+
+  // 4) Cleanup after animation finishes
+  window.setTimeout(() => {
+    clone.remove();
+    screenRoot.classList.remove("slide-anim","slide-to-left","slide-to-right");
+      AppState.isAnimating = false;
+  setNavDisabled(false);    
+  }, SLIDE_MS + 50);
+
+}
+
+/* ---------- Next button gate (wait for mp3 duration) ---------- */
+let nextGateCancel = null;
+
+function stopNextGate(){
+  if (typeof nextGateCancel === "function") nextGateCancel();
+  nextGateCancel = null;
+}
+
+// Promise that resolves to a usable duration in seconds
+function getAudioDurationSeconds(){
+  return new Promise((resolve) => {
+    // If we already have it, use it
+    if (Number.isFinite(audioEl.duration) && audioEl.duration > 0){
+      resolve(audioEl.duration);
+      return;
+    }
+
+    // Ensure metadata loads
+    try { audioEl.preload = "metadata"; audioEl.load(); } catch(e){}
+
+    const onMeta = () => {
+      audioEl.removeEventListener("loadedmetadata", onMeta);
+      const d = (Number.isFinite(audioEl.duration) && audioEl.duration > 0) ? audioEl.duration : NaN;
+      resolve(d);
+    };
+
+    audioEl.addEventListener("loadedmetadata", onMeta, { once: true });
+
+    // Fallback in case metadata never arrives
+    window.setTimeout(() => {
+      audioEl.removeEventListener("loadedmetadata", onMeta);
+      const d = (Number.isFinite(audioEl.duration) && audioEl.duration > 0) ? audioEl.duration : NaN;
+      resolve(d);
+    }, 1200);
+  });
+}
+
+// Creates the circular timer node and swaps it to the real button when done
+async function makeGatedNextNode(makeRealButtonFn){
+  stopNextGate();
+
+  const gateWrap = document.createElement("div");
+  gateWrap.className = "next-gate";
+
+  const pie = document.createElement("div");
+  pie.className = "next-pie";
+  pie.style.setProperty("--p", 0);
+
+  gateWrap.appendChild(pie);
+
+  // Get duration (fallback if missing)
+  let secs = await getAudioDurationSeconds();
+  if (!Number.isFinite(secs) || secs <= 0) secs = 8; // fallback “reading time”
+
+  const totalMs = secs * 1000 * 0.8;
+
+  const start = performance.now();
+
+  let rafId = 0;
+  let cancelled = false;
+
+  function tick(now){
+    if (cancelled) return;
+    const t = Math.min(1, (now - start) / totalMs);
+    pie.style.setProperty("--p", t);
+
+    if (t >= 1){
+      // Swap the gate UI into the real Next button
+      const realBtn = makeRealButtonFn();
+      gateWrap.replaceWith(realBtn);
+      stopNextGate();
+      return;
+    }
+
+    rafId = requestAnimationFrame(tick);
+  }
+
+  rafId = requestAnimationFrame(tick);
+
+  nextGateCancel = () => {
+    cancelled = true;
+    if (rafId) cancelAnimationFrame(rafId);
+  };
+
+  return gateWrap;
+}
+
+
+
+
+
+/* ---------- Audio ---------- */
+function resetAudioForNewPage(){
+stopNextGate();   // ✅ add this line
+  try {
+    audioEl.pause();
+    audioEl.currentTime = 0;
+    // Optional but helpful: forces the browser to treat the next play as a fresh start
+    audioEl.load();
+  } catch (e) {}
+}
+
+function renderVerseFillNode(text){
+  const node = el("div", { class:"verse verse-fill", "aria-label": text });
+
+  // Create spans per character (keeps spaces & punctuation)
+  for (let i = 0; i < text.length; i++){
+    const ch = text[i];
+    const sp = document.createElement("span");
+    sp.textContent = ch;
+    node.appendChild(sp);
+  }
+  return node;
+}
+
+function fillVerseToProgress(verseNode, progress01){
+  const spans = verseNode.querySelectorAll("span");
+  const n = spans.length;
+  const filledCount = Math.max(0, Math.min(n, Math.floor(progress01 * n)));
+
+  for (let i = 0; i < n; i++){
+    spans[i].classList.toggle("filled", i < filledCount);
+  }
+}
+
+// Plays an audio file fully, no pausing allowed.
+// Returns: { ok: true, duration: seconds } OR { ok: false, error: "..." }
+async function playForcedAudio(file, { onProgress } = {}){
+  return new Promise((resolve) => {
+    // Stop anything currently playing
+    try { audioEl.pause(); } catch(e) {}
+    audioEl.currentTime = 0;
+
+    // Set file + force the browser to load it (important for iOS/Safari)
+    audioEl.src = file;
+    try { audioEl.load(); } catch(e) {}
+
+    let finished = false;
+
+    const fail = (msg) => {
+      cleanup();
+      resolve({ ok:false, error: msg });
+    };
+
+    const tryPlay = async () => {
+      try {
+        await audioEl.play();
+      } catch (e) {
+        // Don't silently succeed — report failure
+        fail(`Could not play: ${file}`);
+      }
+    };
+
+    const onTime = () => {
+      if (!audioEl.duration || !isFinite(audioEl.duration)) return;
+      const p = audioEl.currentTime / audioEl.duration;
+      if (onProgress) onProgress(Math.max(0, Math.min(1, p)));
+    };
+
+    const onPause = () => {
+      // Force resume unless we’re truly done
+      if (!finished && audioEl.currentTime < (audioEl.duration || Infinity)){
+        tryPlay();
+      }
+    };
+
+    const onEnd = () => {
+      finished = true;
+      if (onProgress) onProgress(1);
+      const d = (Number.isFinite(audioEl.duration) ? audioEl.duration : NaN);
+      cleanup();
+      resolve({ ok:true, duration: d });
+    };
+
+    const onErr = () => {
+      fail(`Audio file not found or failed to load: ${file}`);
+    };
+
+    const cleanup = () => {
+      audioEl.removeEventListener("timeupdate", onTime);
+      audioEl.removeEventListener("pause", onPause);
+      audioEl.removeEventListener("ended", onEnd);
+      audioEl.removeEventListener("error", onErr);
+    };
+
+    audioEl.addEventListener("timeupdate", onTime);
+    audioEl.addEventListener("pause", onPause);
+    audioEl.addEventListener("ended", onEnd);
+    audioEl.addEventListener("error", onErr);
+
+    // Start playback (user gesture comes from the button click)
+    tryPlay();
+  });
+}
+
+
+
+async function playEchoSequence({ onStatus } = {}){
+  // Ensure we start clean
+  try { audioEl.pause(); } catch(e) {}
+  audioEl.currentTime = 0;
+
+  const total = ECHO_PART_SUFFIXES.length;
+
+  for (let idx = 0; idx < total; idx++){
+    const partNum = idx + 1;
+    if (onStatus) onStatus(partNum, total);
+
+    const file = echoPartFile(ECHO_PART_SUFFIXES[idx]);
+
+    // Play forced
+    const result = await playForcedAudio(file);
+
+    // If it failed, stop the whole sequence and report failure
+    if (!result.ok){
+      showModal({
+        title: "Echo audio problem",
+        body: result.error || "The audio could not play.",
+        actions: [btn("OK", { onClick: () => closeModal() })]
+      });
+      return false;
+    }
+
+    // Pause equal to duration * multiplier (+10%)
+    const dur = result.duration;
+    const pauseMs = (isFinite(dur) ? dur : 0) * 1000 * ECHO_PAUSE_MULT;
+    if (pauseMs > 0){
+      await new Promise(r => setTimeout(r, pauseMs));
+    }
+  }
+
+  // Restore main verse audio file for later Read-it-to-me screens
+  audioEl.src = AUDIO_FILE;
+  audioEl.currentTime = 0;
+  try { audioEl.load(); } catch(e) {}
+
+  return true;
+}
+
+
+
+function updateReadButtonLabel(){
+  const b = document.getElementById("btnRead");
+  if (!b) return;
+  b.textContent = audioEl.paused ? "🔊 Read it to Me" : "Pause Reading";
+}
+
+
+
+function toggleAudio(){
+  if (!audioEl.src){
+    showModal({
+      title: "Audio not set",
+      body: "No mp3 file is configured yet.",
+      actions: [btn("OK", { onClick: () => closeModal() })]
+    });
+    return;
+  }
+
+  if (audioEl.paused){
+    audioEl.play()
+      .then(() => updateReadButtonLabel())
+      .catch(() => {
+        showModal({
+          title: "Audio can’t play yet",
+          body: "Your browser blocked playback. Tap the button again, or make sure the mp3 file is available.",
+          actions: [btn("OK", { onClick: () => closeModal() })]
+        });
+      });
+  } else {
+    audioEl.pause();
+    updateReadButtonLabel();
+  }
+}
+
+
+
+
+audioEl.addEventListener("ended", () => updateReadButtonLabel());
+audioEl.addEventListener("play",  () => updateReadButtonLabel());
+audioEl.addEventListener("pause", () => updateReadButtonLabel());
+
+
+/* ---------- Verse rendering ---------- */
+
+function buildRevealBody(leftText, wordText){
+  const wrap = el("div", { class: "reveal-big" });
+
+  const word = el("span", {
+    text: String(wordText).toUpperCase()
+  });
+
+  wrap.appendChild(word);
+  return wrap;
+}
+
+
+
+function underscoresForWord(word){
+  if (!word) return "";
+  // Keep first character, underscore the rest (letters/digits)
+  const first = word[0];
+  const restLen = Math.max(0, word.length - 1);
+  return first + "_".repeat(restLen);
+}
+
+function buildTargetMap(activePlanItems){
+  // tokenIndex -> plan item
+  const map = new Map();
+  activePlanItems.forEach(item => {
+    if (typeof item.tokenIndex === "number") map.set(item.tokenIndex, item);
+  });
+  return map;
+}
+
+function renderVerse({mode, activeCount=0, onHint=null}){
+  // mode: "full" | "steps" | "final"
+  const container = el("div", { class: "verse" });
+  const activeItems = planResolved.slice(0, activeCount);
+  const targets = buildTargetMap(activeItems);
+
+  tokens.forEach((tok, idx) => {
+    if (tok.type === TokenType.SPACE){
+    container.appendChild(document.createTextNode(tok.text));
+    return;
+    }
+
+
+    if (tok.type !== TokenType.WORD){
+      container.appendChild(el("span", { text: tok.text }));
+      return;
+    }
+
+    if (mode === "full"){
+      container.appendChild(el("span", { text: tok.text }));
+      return;
+    }
+
+    if (mode === "final"){
+      // Everything becomes first-letter + underscores and is hintable
+      const disguised = underscoresForWord(tok.text);
+      const node = el("span", {
+        class: "hintable underscore",
+        role: "button",
+        tabindex: "0",
+        "aria-label": "Tap to reveal word",
+        text: disguised,
+        onclick: () => {
+          if (onHint) onHint(idx, tok.text);
+            showModal({
+            title: "",
+            body: buildRevealBody(disguised, tok.text),
+            actions: [btn("Close", { primary:false, onClick: () => closeModal() })]
+            });
+
+        }
+      });
+      node.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") node.click();
+      });
+      container.appendChild(node);
+      return;
+    }
+
+    // mode === "steps"
+    const target = targets.get(idx);
+    if (!target){
+      container.appendChild(el("span", { text: tok.text }));
+      return;
+    }
+
+    if (target.type === "emoji"){
+      const node = el("span", {
+        class: "hintable emoji",
+        role: "button",
+        tabindex: "0",
+        "aria-label": "Tap to reveal word",
+        text: target.emoji || "❓",
+        onclick: () => {
+          if (onHint) onHint(idx, tok.text);
+            showModal({
+            title: "",
+            body: buildRevealBody(target.emoji || "❓", tok.text),
+
+            actions: [btn("Close", { primary:false, onClick: () => closeModal() })]
+            });
+
+        }
+      });
+      node.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") node.click();
+      });
+      container.appendChild(node);
+      return;
+    }
+
+    // underscore target
+    const disguised = underscoresForWord(tok.text);
+    const node = el("span", {
+      class: "hintable underscore",
+      role: "button",
+      tabindex: "0",
+      "aria-label": "Tap to reveal word",
+      text: disguised,
+      onclick: () => {
+        if (onHint) onHint(idx, tok.text);
+        showModal({
+        title: "",
+        body: buildRevealBody(disguised, tok.text),
+        actions: [btn("Close", { primary:false, onClick: () => closeModal() })]
+        });
+
+      }
+    });
+    node.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") node.click();
+    });
+    container.appendChild(node);
+  });
+
+  return container;
+}
+
+/* =========================================================
+   EXTRA PRACTICE: SCRAMBLED PHRASES GAME
+   ========================================================= */
+
+function shuffleArray(arr){
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function randInt(min, max){
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function clamp0(n){ return Math.max(0, n); }
+
+function formatTimeMs(ms){
+  ms = clamp0(ms);
+  const totalSec = Math.round(ms / 1000);
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return m > 0 ? `${m}:${String(s).padStart(2,"0")}` : `${s}s`;
+}
+
+let _beepCtx = null;
+
+function playWrongBeep(){
+  try{
+    if (!_beepCtx) _beepCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    // Some browsers start the AudioContext suspended until first user gesture
+    if (_beepCtx.state === "suspended") _beepCtx.resume();
+
+    const ctx = _beepCtx;
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+
+    // “Wrong” style: short low-ish square beep
+    o.type = "square";
+    o.frequency.value = 180;
+
+    // Quick attack/decay envelope to avoid clicking
+    const t = ctx.currentTime;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.15, t + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+
+    o.connect(g);
+    g.connect(ctx.destination);
+
+    o.start(t);
+    o.stop(t + 0.14);
+  } catch (e) {
+    // If audio is blocked, fail silently.
+  }
+}
+
+function playHappyBeep(){
+  try{
+    if (!_beepCtx) _beepCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (_beepCtx.state === "suspended") _beepCtx.resume();
+
+    const ctx = _beepCtx;
+
+    // Two quick “happy” tones
+    const t = ctx.currentTime;
+
+    function tone(freq, start, dur){
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = "sine";
+      o.frequency.value = freq;
+
+      g.gain.setValueAtTime(0.0001, start);
+      g.gain.exponentialRampToValueAtTime(0.10, start + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+
+      o.connect(g);
+      g.connect(ctx.destination);
+
+      o.start(start);
+      o.stop(start + dur + 0.01);
+    }
+
+    tone(660, t, 0.08);
+    tone(880, t + 0.09, 0.10);
+  } catch (e) {
+    // fail silently
+  }
+}
+
+
+
+function burstParticlesInStage(stageEl, x, y){
+  // Create a temporary canvas overlay the size of the stage
+  const rect = stageEl.getBoundingClientRect();
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.floor(rect.width));
+  canvas.height = Math.max(1, Math.floor(rect.height));
+  canvas.style.position = "absolute";
+  canvas.style.left = "0";
+  canvas.style.top = "0";
+  canvas.style.pointerEvents = "none";
+  canvas.style.zIndex = "5"; // above chips
+
+  stageEl.appendChild(canvas);
+  const ctx = canvas.getContext("2d");
+
+  const particles = [];
+  const N = 18;
+
+  for (let i = 0; i < N; i++){
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 1.6 + Math.random() * 2.6;
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 0.8, // slight upward bias
+      life: 1.0,
+      r: 2 + Math.random() * 2
+    });
+  }
+
+  const gravity = 0.08;
+  const start = performance.now();
+
+  function tick(now){
+    const dt = Math.min(32, now - start) / 16.67;
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    particles.forEach(p => {
+      p.vy += gravity * dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.life -= 0.04 * dt;
+
+      if (p.life > 0){
+        ctx.globalAlpha = Math.max(0, p.life);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = "rgba(34,197,94,1)"; // green burst
+        ctx.fill();
+      }
+    });
+
+    ctx.globalAlpha = 1;
+
+    // Keep animating while any particle is alive and within ~500ms
+    const alive = particles.some(p => p.life > 0);
+    if (alive && now - start < 520){
+      requestAnimationFrame(tick);
+    } else {
+      canvas.remove();
+    }
+  }
+
+  requestAnimationFrame(tick);
+}
+
+function burstParticlesOnChip(stageEl, chipEl){
+  // Convert chip center to stage-local coordinates
+  const stageRect = stageEl.getBoundingClientRect();
+  const chipRect = chipEl.getBoundingClientRect();
+  const x = (chipRect.left - stageRect.left) + chipRect.width / 2;
+  const y = (chipRect.top - stageRect.top) + chipRect.height / 2;
+  burstParticlesInStage(stageEl, x, y);
+}
+
+
+
+
+// Build phrases of N–M words from your existing `tokens` array.
+function buildPhrasesFromTokens(minWords = 2, maxWords = 3){
+  const wordsOnly = tokens.filter(t => t.type === TokenType.WORD).map(t => t.text);
+
+  const phrases = [];
+  let i = 0;
+
+  while (i < wordsOnly.length){
+    const remaining = wordsOnly.length - i;
+
+    // Choose minWords–maxWords, but don’t exceed remaining words
+    const len = Math.min(randInt(minWords, maxWords), remaining);
+
+    const phrase = wordsOnly.slice(i, i + len).join(" ");
+    phrases.push(phrase);
+    i += len;
+  }
+
+  return phrases;
+}
+
+
+// Place phrase chips randomly inside the stage WITHOUT overlap,
+// reuse saved positions so chips stay put across renders,
+// and bias new placements toward the middle first (expanding outward).
+function placeChipsRandomly(stageEl, chipEls, opts = {}){
+  const {
+    positions = null,
+    padding = 12,
+    maxAttemptsPerChip = 260,
+
+    // ✅ vertical-center bias: try middle HEIGHT band first, then expand
+    yZoneScales = [0.70, 0.85, 1.00], // 70% height band -> 85% -> full height
+      yBias = 0.5, // 0 = top, 0.5 = middle, 1 = bottom
+
+
+  } = opts;
+
+  // Put all chips at 0,0 so the browser can measure them
+  chipEls.forEach(chip => {
+    chip.style.left = "0px";
+    chip.style.top = "0px";
+  });
+
+  requestAnimationFrame(() => {
+    const stageRect = stageEl.getBoundingClientRect();
+    const stageW = stageRect.width;
+    const stageH = stageRect.height;
+
+    function overlaps(a, b){
+      return !(a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y);
+    }
+
+    const placedRects = [];
+
+    // Helper: generate a random int inside [min,max], safely
+    function randBetween(min, max){
+      if (max < min) return min;
+      return randInt(min, max);
+    }
+
+    chipEls.forEach((chip) => {
+      const key = chip.dataset.key;
+      const chipRect = chip.getBoundingClientRect();
+      const w = chipRect.width;
+      const h = chipRect.height;
+
+      const maxX = Math.max(padding, stageW - w - padding);
+      const maxY = Math.max(padding, stageH - h - padding);
+
+      // 1) If we have a saved position for this chip, try it first
+      if (positions && key && positions[key]){
+        const saved = positions[key];
+        const proposed = {
+          x: Math.max(padding, Math.min(saved.x, maxX)),
+          y: Math.max(padding, Math.min(saved.y, maxY)),
+          w, h
+        };
+
+        const hits = placedRects.some(r => overlaps(proposed, r));
+        if (!hits){
+          chip.style.left = `${proposed.x}px`;
+          chip.style.top  = `${proposed.y}px`;
+          placedRects.push(proposed);
+          positions[key] = { x: proposed.x, y: proposed.y };
+          return;
+        }
+        // If saved spot now conflicts, fall through to find a new one
+      }
+
+      // 2) New placement: try center zone first, then expand outward
+      let finalX = padding;
+      let finalY = padding;
+      let found = false;
+
+      // Split attempts across zones (roughly evenly)
+// Split attempts across vertical bands (roughly evenly)
+const attemptsPerZone = Math.max(40, Math.floor(maxAttemptsPerChip / yZoneScales.length));
+
+for (const scale of yZoneScales){
+  // ✅ Vertical “preferred band” (full width, limited height)
+const bandH = stageH * scale;
+
+// ✅ biased vertical band: slide the band up/down instead of centering it
+const freeH = Math.max(0, stageH - bandH);
+const bandTop = freeH * Math.max(0, Math.min(1, yBias));
+const bandBottom = bandTop + bandH;
+
+
+  // X uses the FULL legal width always
+  const minX = padding;
+  const maxXz = Math.floor(maxX);
+
+  // Y uses the band’s range (clamped to legal Y)
+  const minY = Math.max(padding, Math.ceil(bandTop + padding));
+  const maxYz = Math.min(maxY, Math.floor(bandBottom - h - padding));
+
+  for (let attempt = 0; attempt < attemptsPerZone; attempt++){
+    const x = randBetween(minX, maxXz);
+    const y = randBetween(minY, maxYz);
+
+    const proposed = { x, y, w, h };
+    const hits = placedRects.some(r => overlaps(proposed, r));
+    if (!hits){
+      placedRects.push(proposed);
+      finalX = x;
+      finalY = y;
+      found = true;
+      break;
+    }
+  }
+
+  if (found) break;
+}
+
+
+      // 3) If nothing worked, last resort: anywhere in full stage bounds
+      if (!found){
+        for (let attempt = 0; attempt < maxAttemptsPerChip; attempt++){
+          const x = randBetween(padding, Math.floor(maxX));
+          const y = randBetween(padding, Math.floor(maxY));
+
+          const proposed = { x, y, w, h };
+          const hits = placedRects.some(r => overlaps(proposed, r));
+          if (!hits){
+            placedRects.push(proposed);
+            finalX = x;
+            finalY = y;
+            found = true;
+            break;
+          }
+        }
+      }
+
+      // If we still can’t find a perfect non-overlap (very cramped), we place it anyway.
+      chip.style.left = `${finalX}px`;
+      chip.style.top  = `${finalY}px`;
+
+      if (positions && key){
+        positions[key] = { x: finalX, y: finalY };
+      }
+    });
+  });
+}
+
+
+
+
+function startScrambledPhrasesGame(){
+  const phrases = buildPhrasesFromTokens();
+
+  AppState.extraGameState = {
+    gameId: "scrambled_phrases",
+    phrases,
+    order: phrases.map((_, i) => i),  // correct order is 0..n-1
+    shuffledOrder: shuffleArray(phrases.map((_, i) => i)),
+    expectedIndex: 0,
+    placed: [],
+    positions: {}, // phraseIdx -> {x,y} locked positions
+    roundsTotal: 4,   // change to 3–5 if you want
+    roundNum: 1,
+    message: "",
+
+    startedAtMs: Date.now(), // when the round started
+    wrongTaps: 0,            // number of wrong taps
+    penaltySec: 0,           // wrongTaps * SCRAMBLE_WRONG_PENALTY_SEC
+
+  };
+}
+
+function startBouncingWordsGame(){
+  const phrases = buildPhrasesFromTokens();
+
+  // Last chip should be the verse reference
+  const verseLabel = VERSE_REF.replace(" (NIV)", "");
+  phrases.push(verseLabel);
+
+  AppState.extraGameState = {
+    gameId: "bouncing_words",
+    phrases,
+
+    placed: [],        // phrase indices placed so far
+    nextToPlace: 0,    // the index the player must tap next
+    nextToSpawn: 0,    // which phrase index to spawn next
+
+    // active entities: { idx, el, x, y, vx, vy, w, h }
+    entities: [],
+
+    speed: BOUNCE_INITIAL_SPEED,
+    wrongTaps: 0,
+    totalTaps: 0,
+
+  };
+}
+
+function startStackItGame(){
+  const phrases = buildPhrasesFromTokens(2, 4); // 3–5 word chunks (no reference)
+
+  const n = phrases.length;
+
+  // Randomly assign ALL phrases into the slots right away
+  const shuffled = shuffleArray(Array.from({length:n}, (_,i)=>i));
+
+  AppState.extraGameState = {
+    gameId: "stack_it",
+    phrases,
+    n,
+
+    // slots[i] holds a phrase index (0..n-1) or null temporarily during a drag
+    slots: shuffled.slice(),
+
+    // tap-to-swap selection state
+    selectedSlot: null, // number (0..n-1) or null
+
+  };
+}
+
+
+
+
+function renderScrambledPhrasesGame(){
+  setHeaderVisible(false);
+  setCardMode("no-card");
+  setScrambleMode(true);
+
+  // Initialize if needed
+  if (!AppState.extraGameState || AppState.extraGameState.gameId !== "scrambled_phrases"){
+    startScrambledPhrasesGame();
+  }
+
+  const st = AppState.extraGameState;
+
+  if (!Array.isArray(st.placed)) st.placed = [];
+
+  // ---- Built (top) area ----
+  const verseLabel = VERSE_REF.replace(" (NIV)", "");
+const built = el("div", { class:"phrase-built" }, [
+  el("div", { class:"phrase-built-label", text:`Your verse — ${verseLabel}` })
+]);
+
+// Tip + text nodes
+const builtTipEl = el("div", { class:"tip", text:"Tap the phrases in the correct order." });
+const builtTextEl = el("div", { class:"phrase-built-text", text:"" });
+
+// Start compact: show tip, hide text until first correct
+built.appendChild(builtTipEl);
+built.appendChild(builtTextEl);
+screenRoot.appendChild(built);
+
+function refreshBuiltText(){
+  const placedText = st.placed.map(i => st.phrases[i]).join(" ");
+  builtTextEl.textContent = placedText;
+
+  if (st.placed.length > 0){
+    if (builtTipEl.parentNode) builtTipEl.remove();
+  }
+}
+
+// Run once on load
+refreshBuiltText();
+
+  
+
+
+  // Optional message
+  if (st.message){
+    screenRoot.appendChild(el("div", { class:"tip", text: st.message }));
+  }
+
+  // ---- Scrambled stage ----
+  const stage = el("div", { class:"phrase-stage", id:"phraseStage" });
+  screenRoot.appendChild(stage);
+
+  // Build chips ONLY for phrases not yet placed
+  const remainingPhraseIdxs = st.shuffledOrder.filter(idx => !st.placed.includes(idx));
+
+  const chips = [];
+  remainingPhraseIdxs.forEach((phraseIdx) => {
+    const phraseText = st.phrases[phraseIdx];
+
+    const chip = el("div", {
+      class: "phrase-chip",
+      role: "button",
+      tabindex: "0",
+      text: phraseText,
+      onclick: () => onTapPhrase(phraseIdx, chip),
+    });
+    chip.dataset.key = String(phraseIdx);
+
+    chip.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") chip.click();
+    });
+
+    stage.appendChild(chip);
+    chips.push(chip);
+  });
+
+  // Random positions (chips stay in place unless rerendered)
+  placeChipsRandomly(stage, chips, {
+    positions: st.positions,
+    yZoneScales: [0.78, 0.92, 1.00],
+    yBias: 0.15
+  });
+
+  setSticky(false);
+
+  function onTapPhrase(phraseIdx, chipEl){
+    const correctPhraseIdx = st.order[st.expectedIndex];
+
+    // ✅ Correct
+    if (phraseIdx === correctPhraseIdx){
+      // Particle burst where the chip was
+      if (typeof burstParticlesOnChip === "function"){
+        burstParticlesOnChip(stage, chipEl);
+      }
+
+      st.placed.push(phraseIdx);
+      st.expectedIndex += 1;
+      st.message = "";
+
+      try { chipEl.remove(); } catch (e) {}
+
+      // Done?
+      if (st.expectedIndex >= st.phrases.length){
+        render(); // ensure last placed shows
+
+        requestAnimationFrame(() => {
+          const finishedAtMs = Date.now();
+          const elapsedMs = finishedAtMs - (st.startedAtMs || finishedAtMs);
+          const wrong = st.wrongTaps || 0;
+          const penaltyMs = wrong * SCRAMBLE_WRONG_PENALTY_SEC * 1000;
+          const totalMs = elapsedMs + penaltyMs;
+
+          const bodyNode = el("div", {}, [
+            el("p", { text: "You put the whole verse in order." }),
+            el("p", { text: `Time: ${formatTimeMs(elapsedMs)}` }),
+            el("p", { text: `Wrong taps: ${wrong} (Penalty: +${wrong * SCRAMBLE_WRONG_PENALTY_SEC}s)` }),
+            el("p", { text: `Final time: ${formatTimeMs(totalMs)}` }),
+          ]);
+
+          showModal({
+            title: "Good job! 🎉",
+            body: bodyNode,
+            actions: [
+              btn("Play again", {
+                onClick: () => {
+                  closeModal();
+                  startScrambledPhrasesGame();
+                  render();
+                }
+              }),
+              btn("Back to Title", {
+                primary:false,
+                onClick: () => {
+                  closeModal();
+                  AppState.extraGameId = null;
+                  AppState.extraGameState = null;
+                  AppState.screen = "title";
+                  render();
+                }
+              })
+            ]
+          });
+        });
+
+        return;
+      }
+
+      // Let particles play briefly before rerender destroys the stage
+      window.setTimeout(() => render(), 220);
+      return;
+    }
+
+    // ❌ Wrong
+    st.wrongTaps = (st.wrongTaps || 0) + 1;
+    st.penaltySec = (st.wrongTaps || 0) * SCRAMBLE_WRONG_PENALTY_SEC;
+
+    if (typeof playWrongBeep === "function"){
+      playWrongBeep();
+    }
+
+    chipEl.classList.add("wrong");
+    window.setTimeout(() => chipEl.classList.remove("wrong"), 220);
+
+    // Let blink show before rerender
+    window.setTimeout(() => render(), 520);
+  }
+}
+
+
+function renderBouncingWordsGame(){
+  setHeaderVisible(false);
+  setCardMode("no-card");
+  setScrambleMode(true);
+
+  // Initialize if needed
+  if (!AppState.extraGameState || AppState.extraGameState.gameId !== "bouncing_words"){
+    startBouncingWordsGame();
+  }
+
+  const st = AppState.extraGameState;
+
+  // ---- Built (top) area ----
+  const verseLabel = VERSE_REF.replace(" (NIV)", "");
+  const built = el("div", { class:"phrase-built" }, [
+    el("div", { class:"phrase-built-label", text:`Your verse — ${verseLabel}` })
+  ]);
+
+// Always create the text node so refreshBuiltText() always has something to update
+const builtTipEl = el("div", { class:"tip", text:"Tap the correct bouncing phrase to begin." });
+const builtTextEl = el("div", { class:"phrase-built-text", text:"" });
+
+// Start with the tip visible, and empty text
+built.appendChild(builtTipEl);
+built.appendChild(builtTextEl);
+
+screenRoot.appendChild(built);
+
+
+function refreshBuiltText(){
+  const placedText = st.placed.map(i => st.phrases[i]).join(" ");
+  builtTextEl.textContent = placedText;
+
+  // If they’ve placed anything, hide/remove the tip
+  if (st.placed.length > 0){
+    if (builtTipEl.parentNode) builtTipEl.remove();
+  }
+}
+
+// ✅ Run once on load in case we ever re-enter mid-game
+refreshBuiltText();
+
+
+
+  
+  // ---- Bouncing stage ----
+  const stage = el("div", { class:"phrase-stage", id:"bounceStage" });
+  screenRoot.appendChild(stage);
+
+  setSticky(false);
+
+  // ---------- helpers ----------
+  function currentCorrectIdx(){
+    return st.nextToPlace;
+  }
+
+  function setCorrectOnTop(){
+    const correct = currentCorrectIdx();
+    st.entities.forEach(ent => {
+      ent.el.style.zIndex = (ent.idx === correct) ? "6" : "2";
+    });
+  }
+
+  function measureEnt(ent){
+    const r = ent.el.getBoundingClientRect();
+    ent.w = r.width;
+    ent.h = r.height;
+  }
+
+  function randUnitDir(){
+    // Avoid near-zero vectors
+    let x = (Math.random() * 2 - 1);
+    let y = (Math.random() * 2 - 1);
+    const len = Math.hypot(x,y) || 1;
+    x /= len; y /= len;
+    return {x,y};
+  }
+
+  function pickSpawnPos(w, h){
+    const pad = 10;
+    const rect = stage.getBoundingClientRect();
+    const W = rect.width;
+    const H = rect.height;
+
+    const maxX = Math.max(pad, W - w - pad);
+    const maxY = Math.max(pad, H - h - pad);
+
+    // Try a bunch of times to spawn away from other chips
+    for (let attempt = 0; attempt < 140; attempt++){
+      const x = randInt(pad, Math.floor(maxX));
+      const y = randInt(pad, Math.floor(maxY));
+
+      let ok = true;
+      for (const other of st.entities){
+        const cx = x + w/2, cy = y + h/2;
+        const ox = other.x + other.w/2, oy = other.y + other.h/2;
+        const d = Math.hypot(cx-ox, cy-oy);
+        if (d < BOUNCE_SPAWN_MIN_DIST){
+          ok = false; break;
+        }
+      }
+      if (ok) return {x,y};
+    }
+
+    // Fallback if crowded
+    return { x: pad, y: pad };
+  }
+
+  function spawnNextIfAvailable(){
+    if (st.nextToSpawn >= st.phrases.length) return;
+    if (st.entities.length >= 3) return;
+
+    const idx = st.nextToSpawn;
+    st.nextToSpawn += 1;
+
+    const chip = el("div", {
+      class: "phrase-chip",
+      role: "button",
+      tabindex: "0",
+      text: st.phrases[idx],
+    });
+
+    chip.addEventListener("click", () => onTap(idx, chip));
+    chip.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") chip.click();
+    });
+
+    stage.appendChild(chip);
+
+    const ent = { idx, el: chip, x: 0, y: 0, vx: 0, vy: 0, w: 0, h: 0 };
+
+    // ✅ Push immediately so ensureThreeSpawned() sees it right away
+    st.entities.push(ent);
+
+    // Measure size after it’s in DOM, then place + move
+    requestAnimationFrame(() => {
+    measureEnt(ent);
+
+    const pos = pickSpawnPos(ent.w, ent.h);
+    ent.x = pos.x;
+    ent.y = pos.y;
+
+    const dir = randUnitDir();
+    const sp = Math.min(st.speed, BOUNCE_MAX_SPEED);
+    ent.vx = dir.x * sp;
+    ent.vy = dir.y * sp;
+
+    ent.el.style.left = `${ent.x}px`;
+    ent.el.style.top  = `${ent.y}px`;
+
+    setCorrectOnTop();
+    });
+
+  }
+
+  function ensureThreeSpawned(){
+    while (st.entities.length < 3 && st.nextToSpawn < st.phrases.length){
+      spawnNextIfAvailable();
+    }
+  }
+
+  function bumpSpeed(){
+    st.speed = Math.min(BOUNCE_MAX_SPEED, st.speed + BOUNCE_SPEED_INCREMENT);
+
+    // Apply new speed to all entities, preserving direction
+    st.entities.forEach(ent => {
+      const len = Math.hypot(ent.vx, ent.vy) || 1;
+      const dx = ent.vx / len;
+      const dy = ent.vy / len;
+      const sp = Math.min(st.speed, BOUNCE_MAX_SPEED);
+      ent.vx = dx * sp;
+      ent.vy = dy * sp;
+    });
+  }
+
+  function finishBouncingGame(){
+    
+    const perfectGoal = st.phrases.length;      // phrases + the reference at the end
+    const totalTaps = st.totalTaps || 0;
+    
+    showModal({
+      title: "You did it 🎉",
+      
+        body: el("div", {}, [
+        el("p", { text: "Nice! You finished Bouncing Words." }),
+        el("p", { text: `Total taps: ${totalTaps}` }),
+        el("p", { text: `Perfect Score Goal: Only ${perfectGoal} taps!` }),
+        ]),
+      actions: [
+        btn("Play again", {
+          onClick: () => {
+            closeModal();
+            startBouncingWordsGame();
+            render();
+          }
+        }),
+        btn("Back to Title", {
+          primary:false,
+          onClick: () => {
+            closeModal();
+            AppState.extraGameId = null;
+            AppState.extraGameState = null;
+            AppState.screen = "title";
+            render();
+          }
+        })
+      ]
+    });
+  }
+
+  // ---------- click handler ----------
+  function onTap(idx, chipEl){
+    st.totalTaps = (st.totalTaps || 0) + 1;
+    const correct = currentCorrectIdx();
+
+    // ✅ Correct
+    if (idx === correct){
+      if (typeof burstParticlesOnChip === "function"){
+        burstParticlesOnChip(stage, chipEl);
+      }
+
+      st.placed.push(idx);
+      st.nextToPlace += 1;
+      refreshBuiltText();
+
+      // Remove from entities + DOM
+      st.entities = st.entities.filter(e => e.idx !== idx);
+      try { chipEl.remove(); } catch (e) {}
+
+      bumpSpeed();
+      ensureThreeSpawned();
+
+      // Finished?
+      if (st.nextToPlace >= st.phrases.length){
+        // Render once to show final placed sentence, then modal
+            refreshBuiltText();
+            requestAnimationFrame(() => finishBouncingGame());
+            return;
+
+      }
+
+      // Rerender so top “Your verse” text updates
+    }
+
+    // ❌ Wrong
+    st.wrongTaps = (st.wrongTaps || 0) + 1;
+
+    if (typeof playWrongBeep === "function"){
+      playWrongBeep();
+    }
+
+    chipEl.classList.add("wrong");
+    window.setTimeout(() => chipEl.classList.remove("wrong"), 260);
+
+    // Keep correct one on top after any tap (overlap rule)
+    setCorrectOnTop();
+  }
+
+  // ---------- animation loop ----------
+  let rafId = null;
+  let lastT = performance.now();
+
+  function tick(t){
+    const dt = Math.min(0.032, (t - lastT) / 1000);
+    lastT = t;
+
+    const rect = stage.getBoundingClientRect();
+    const W = rect.width;
+    const H = rect.height;
+
+    for (const ent of st.entities){
+      ent.x += ent.vx * dt;
+      ent.y += ent.vy * dt;
+
+      // Bounce off walls only (NOT other chips)
+      if (ent.x <= 0){
+        ent.x = 0;
+        ent.vx *= -1;
+      } else if (ent.x + ent.w >= W){
+        ent.x = Math.max(0, W - ent.w);
+        ent.vx *= -1;
+      }
+
+      if (ent.y <= 0){
+        ent.y = 0;
+        ent.vy *= -1;
+      } else if (ent.y + ent.h >= H){
+        ent.y = Math.max(0, H - ent.h);
+        ent.vy *= -1;
+      }
+
+      ent.el.style.left = `${ent.x}px`;
+      ent.el.style.top  = `${ent.y}px`;
+    }
+
+    // ✅ Next correct chip always topmost (overlap gives credit)
+    setCorrectOnTop();
+
+    rafId = requestAnimationFrame(tick);
+  }
+
+  // Spawn initial 3 and start animation
+  ensureThreeSpawned();
+  rafId = requestAnimationFrame(tick);
+
+  // Stop animating if we leave the screen
+function stopAnim(){
+  if (rafId) cancelAnimationFrame(rafId);
+  rafId = null;
+}
+
+function startAnim(){
+  if (rafId) return; // already running
+  lastT = performance.now();
+  rafId = requestAnimationFrame(tick);
+}
+
+window.addEventListener("blur", stopAnim);
+window.addEventListener("focus", startAnim);
+
+// Extra safety for mobile/tab switching
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) stopAnim();
+  else startAnim();
+});
+
+
+  
+
+}
+
+
+function renderStackItGame(){
+  setHeaderVisible(false);
+  setCardMode("no-card");
+  setScrambleMode(true);
+  setSticky(false);
+
+  if (!AppState.extraGameState || AppState.extraGameState.gameId !== "stack_it"){
+    startStackItGame();
+  }
+
+  const st = AppState.extraGameState;
+
+  // ✅ Simple instruction only (no “Your Verse” box)
+  // Top instruction + Check It button together
+  const topBar = el("div", { class:"stack-tipbar" }, [
+    el("div", { class:"stack-tiptext", text:"Tap a phrase to select it. Then tap a different phrase to swap them." }),
+
+    btn("Check It", { onClick: onCheck, small:true })
+  ]);
+  screenRoot.appendChild(topBar);
+
+
+  // Stage
+  const stage = el("div", { class:"phrase-stage stack-stage", id:"stackStage" });
+  screenRoot.appendChild(stage);
+
+  // Only the slots (no top dock)
+  const slotsWrap = el("div", { class:"stack-slots", id:"stackSlots" });
+  stage.appendChild(slotsWrap);
+
+  // Build slots UI
+  for (let i = 0; i < st.n; i++){
+    const slot = el("div", { class:"stack-slot", "data-slot": String(i) });
+
+    const idx = st.slots[i];
+    if (typeof idx === "number"){
+      const chip = makeStackChip(st.phrases[idx], i); // <-- note: pass slot index
+      slot.appendChild(chip);
+    }
+
+
+  
+
+    slotsWrap.appendChild(slot);
+  }
+
+
+  // Bottom controls
+  const controls = el("div", { class:"controls" }, [
+  btn("Play again", {
+    primary:false,
+    onClick: () => { startStackItGame(); render(); }
+  }),
+  btn("Back to Extra Practice", {
+    primary:false,
+    onClick: () => {
+      AppState.extraGameId = null;
+      AppState.extraGameState = null;
+      AppState.screen = "extraMenu";
+      render();
+    }
+  })
+]);
+
+  screenRoot.appendChild(controls);
+
+
+  // ---------- helpers ----------
+
+
+
+
+  function makeStackChip(text, slotIndex){
+    const hasSelection = (typeof st.selectedSlot === "number");
+    const selected = (st.selectedSlot === slotIndex);
+
+    const chipClass =
+      "phrase-chip" +
+      (selected ? " selected" : "") +
+      (hasSelection && !selected ? " swap-target" : "");
+
+    const chip = el("div", {
+      class: chipClass,
+      role: "button",
+      tabindex: "0",
+      text,
+      onclick: () => onChipClick(slotIndex),
+    });
+
+    chip.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") chip.click();
+    });
+
+    return chip;
+  }
+
+
+  function onChipClick(slotIndex){
+    // nothing selected yet -> select this
+    if (st.selectedSlot == null){
+      st.selectedSlot = slotIndex;
+      render();
+      return;
+    }
+
+    // clicking the same selected chip -> unselect
+    if (st.selectedSlot === slotIndex){
+      st.selectedSlot = null;
+      render();
+      return;
+    }
+
+    // clicking a different chip -> swap (animated)
+    doSwapAnimated(st.selectedSlot, slotIndex);
+
+  }
+
+
+  function doSwapAnimated(a, b){
+  // prevent double-swaps mid-animation
+  if (st._swapAnimating) return;
+  st._swapAnimating = true;
+
+  const stageEl = document.getElementById("stackStage");
+
+  // Find the two *current* chip DOM nodes (before swap)
+  const chipA = document.querySelector(`.stack-slot[data-slot="${a}"] .phrase-chip`);
+  const chipB = document.querySelector(`.stack-slot[data-slot="${b}"] .phrase-chip`);
+  if (!chipA || !chipB){
+    // fallback: do normal swap
+    doSwapImmediate(a, b);
+    st._swapAnimating = false;
+    return;
+  }
+
+  const rectA = chipA.getBoundingClientRect();
+  const rectB = chipB.getBoundingClientRect();
+
+  // Make floating clones
+  const cloneA = chipA.cloneNode(true);
+  const cloneB = chipB.cloneNode(true);
+
+  function setupClone(clone, rect){
+    clone.classList.remove("selected","swap-target","swap-hidden");
+    clone.style.position = "fixed";
+    clone.style.left = `${rect.left}px`;
+    clone.style.top  = `${rect.top}px`;
+    clone.style.width = `${rect.width}px`;
+    clone.style.height = `${rect.height}px`;
+    clone.style.margin = "0";
+    clone.style.zIndex = "9999";
+    clone.style.pointerEvents = "none";
+    clone.style.transform = "translate(0px, 0px)";
+  }
+
+  setupClone(cloneA, rectA);
+  setupClone(cloneB, rectB);
+  document.body.appendChild(cloneA);
+  document.body.appendChild(cloneB);
+
+  // 1) Swap the underlying data + clear selection
+  const tmp = st.slots[a];
+  st.slots[a] = st.slots[b];
+  st.slots[b] = tmp;
+  st.selectedSlot = null;
+
+  // 2) Re-render so the REAL chips jump to their new positions,
+  //    then hide those new real chips while clones animate.
+  render();
+
+  requestAnimationFrame(() => {
+    const newChipA = document.querySelector(`.stack-slot[data-slot="${a}"] .phrase-chip`);
+    const newChipB = document.querySelector(`.stack-slot[data-slot="${b}"] .phrase-chip`);
+    if (newChipA) newChipA.classList.add("swap-hidden");
+    if (newChipB) newChipB.classList.add("swap-hidden");
+
+    // Measure destination rects after render
+    const destA = newChipA ? newChipA.getBoundingClientRect() : rectB;
+    const destB = newChipB ? newChipB.getBoundingClientRect() : rectA;
+
+    const dxA = destB.left - rectA.left;
+    const dyA = destB.top  - rectA.top;
+
+    const dxB = destA.left - rectB.left;
+    const dyB = destA.top  - rectB.top;
+
+    // Arc amount: scales a bit with distance but has a minimum
+    const dist = Math.hypot(dxA, dyA);
+    const arc = Math.max(28, Math.min(70, dist * 0.18)); // tweak if you want
+
+    // A arcs to the RIGHT, B arcs to the LEFT (circle-ish swap)
+    const animA = cloneA.animate([
+      { transform: "translate(0px, 0px)" },
+      { transform: `translate(${dxA/2 + arc}px, ${dyA/2}px)` },
+      { transform: `translate(${dxA}px, ${dyA}px)` },
+    ], {
+      duration: 360,
+      easing: "cubic-bezier(.2,.8,.2,1)",
+      fill: "forwards",
+    });
+
+    const animB = cloneB.animate([
+      { transform: "translate(0px, 0px)" },
+      { transform: `translate(${dxB/2 - arc}px, ${dyB/2}px)` },
+      { transform: `translate(${dxB}px, ${dyB}px)` },
+    ], {
+      duration: 360,
+      easing: "cubic-bezier(.2,.8,.2,1)",
+      fill: "forwards",
+    });
+
+    // When both finish: cleanup
+    Promise.all([animA.finished, animB.finished]).then(() => {
+      try { cloneA.remove(); } catch(e){}
+      try { cloneB.remove(); } catch(e){}
+
+      if (newChipA) newChipA.classList.remove("swap-hidden");
+      if (newChipB) newChipB.classList.remove("swap-hidden");
+
+      st._swapAnimating = false;
+    }).catch(() => {
+      // safety cleanup if animation is interrupted
+      try { cloneA.remove(); } catch(e){}
+      try { cloneB.remove(); } catch(e){}
+      if (newChipA) newChipA.classList.remove("swap-hidden");
+      if (newChipB) newChipB.classList.remove("swap-hidden");
+      st._swapAnimating = false;
+    });
+  });
+}
+
+function doSwapImmediate(a, b){
+  const tmp = st.slots[a];
+  st.slots[a] = st.slots[b];
+  st.slots[b] = tmp;
+  st.selectedSlot = null;
+  render();
+}
+
+
+
+
+
+  function onCheck(){
+
+    
+
+    // Correct order is phrase indices 0..n-1 from top to bottom
+    const correct = st.slots.every((idx, i) => idx === i);
+
+    if (correct){
+      showModal({
+        title: "Nice! 🎉",
+        body: "You put the verse in the correct order.",
+        actions: [
+          btn("Play again", { onClick: () => { closeModal(); startStackItGame(); render(); } }),
+          btn("Back to Extra Practice", {
+            primary:false,
+            onClick: () => {
+              closeModal();
+              AppState.extraGameId = null;
+              AppState.extraGameState = null;
+              AppState.screen = "extraMenu";
+              render();
+            }
+          })
+        ]
+      });
+    } else {
+      showModal({
+        title: "Not yet 🙂",
+        body: "A few phrases are still out of order. Keep shuffling!",
+        actions: [btn("Keep going", { onClick: () => closeModal() })]
+      });
+    }
+  }
+}
+
+
+
+
+/* ---------- Screens ---------- */
+function render(){
+  clearNode(screenRoot);
+  
+  // Default: normal card for all screens unless a screen overrides it
+  setCardMode("card");
+    setScrambleMode(false);
+
+
+  // Default sticky controls off; each screen configures it.
+  setSticky(false);
+
+  if (AppState.screen === "title") return renderTitle();
+  if (AppState.screen === "instructions") return renderInstructions();
+  if (AppState.screen === "listen") return renderListen();
+  if (AppState.screen === "echo") return renderEcho();
+
+  if (AppState.screen === "step") return renderStep();
+  if (AppState.screen === "final") return renderFinal();
+  if (AppState.screen === "done") return renderDone();
+  if (AppState.screen === "extraGate") return renderExtraGate();
+  if (AppState.screen === "extraMenu") return renderExtraMenu();
+  if (AppState.screen === "extraGame") return renderExtraGame();
+  if (AppState.screen === "extraGameIntro") return renderExtraGameIntro();
+
+
+
+}
+
+function renderTitle(){
+  setHeaderVisible(true);
+  screenRoot.appendChild(el("div", { class:"kicker", text:"Welcome" }));
+  screenRoot.appendChild(el("h1", { text: APP_TITLE }));
+  screenRoot.appendChild(el("p", { text:"•  If you're new to this verse, choose Learn." }));
+  screenRoot.appendChild(el("p", { text:"•  If you've already learned it, choose Practice." }));
+
+const verseLabel = VERSE_REF.replace(" (NIV)", "");
+
+const c = el("div", { class:"controls" }, [
+  btn(`Learn ${verseLabel}`, {
+    onClick: () => {
+      playHappyBeep();
+      resetAudioForNewPage();
+      AppState.screen = "instructions";
+      render();
+    }
+  }),
+
+    btn(`Practice ${verseLabel}`, {
+    primary:false,
+    onClick: () => {
+        playHappyBeep();
+        resetAudioForNewPage();
+
+        // ✅ If they've confirmed before, skip the gate
+        AppState.screen = AppState.hasLearnedVerse ? "extraMenu" : "extraGate";
+        render();
+    }
+    }),
+
+]);
+
+
+
+
+  
+  screenRoot.appendChild(c);
+}
+
+
+function renderInstructions(){
+  setHeaderVisible(true);
+  screenRoot.appendChild(el("div", { class:"kicker", text:"Instructions" }));
+  screenRoot.appendChild(el("h1", { text:"How It Works" }));
+  screenRoot.appendChild(el("h3", { text:"🔴 On each page, read the verse out loud. " }));
+  screenRoot.appendChild(el("h3", { text:"🔴 Each time you click 'Next,' a different word from the verse will be replaced with emojis or blanks." }));
+  screenRoot.appendChild(el("h3", { text:"🔴 Try your best to say the verse again, even with these missing words." }));
+
+  const c = el("div", { class:"controls" }, [
+    btn("Continue", {
+      onClick: () => {
+        resetAudioForNewPage();
+        AppState.screen = "listen";
+        AppState.listenDone = false;
+        AppState.echoDone = false;
+
+        render();
+      }
+    }),
+    btn("Back", {
+      primary:false,
+      onClick: () => {
+        resetAudioForNewPage();
+        AppState.screen = "title";
+        render();
+      }
+    })
+  ]);
+
+  screenRoot.appendChild(c);
+}
+
+
+function renderVerseCardHeader({stepLabel=null, stepProgress=null} = {}){
+  const row = el("div", { class:"verse-ref" });
+  row.appendChild(el("div", { text: VERSE_REF }));
+
+  if (stepLabel){
+    row.appendChild(el("div", { class:"progress", text: stepLabel }));
+  } else {
+    row.appendChild(el("div", { class:"progress", text: "" }));
+  }
+
+  const box = el("div", { class:"verse-box" });
+  box.appendChild(row);
+
+  if (typeof stepProgress === "number"){
+    const bar = el("div", { class:"progress-bar" }, [
+      el("div", { })
+    ]);
+    bar.firstChild.style.width = `${Math.max(0, Math.min(100, stepProgress))}%`;
+    box.appendChild(bar);
+  }
+
+  return box;
+}
+
+async function renderListen(){
+  setHeaderVisible(true);
+
+  screenRoot.appendChild(el("div", { class:"kicker", text:"Step 1" }));
+  screenRoot.appendChild(el("h1", { text:"Read the verse" }));
+  screenRoot.appendChild(el("p", { text:"Listen to the verse all the way through." }));
+
+  const box = renderVerseCardHeader({ stepLabel:"Listen", stepProgress: 0 });
+
+  // Verse area with per-letter spans we can “fill”
+  const verseNode = renderVerseFillNode(VERSE_TEXT);
+  box.appendChild(verseNode);
+
+  box.appendChild(
+    el("div", {
+      class: "scripture-credit",
+      text: ATTRIBUTION || ""
+
+    })
+  );
+
+  screenRoot.appendChild(box);
+
+  // Sticky: NO progress circle here. NO “Read it to Me”.
+  const listenBtn = btn(AppState.listenDone ? "Next" : "Listen to the verse.", {
+    onClick: async () => {
+      if (AppState.listenDone){
+        resetAudioForNewPage();
+        navigateWithTransition("forward", () => {
+          AppState.screen = "echo";
+        });
+        return;
+      }
+
+      // Start forced full-verse play
+      listenBtn.disabled = true;
+      await playForcedAudio(AUDIO_FILE, {
+        onProgress: (p) => fillVerseToProgress(verseNode, p)
+      });
+
+      AppState.listenDone = true;
+      listenBtn.disabled = false;
+      listenBtn.textContent = "Next";
+    }
+  });
+
+  setSticky(true,
+    [
+      btn("Back", {
+        primary:false,
+        onClick: () => {
+          resetAudioForNewPage();
+          navigateWithTransition("back", () => {
+            AppState.screen = "instructions";
+          });
+        }
+      })
+    ],
+    [ listenBtn ]
+  );
+}
+
+async function renderEcho(){
+  setHeaderVisible(true);
+
+  screenRoot.appendChild(el("div", { class:"kicker", text:"Step 2" }));
+  screenRoot.appendChild(el("h1", { text:"Echo the verse" }));
+  screenRoot.appendChild(el("p", { text:"Echo the verse after me." }));
+
+  const box = renderVerseCardHeader({ stepLabel:"Echo", stepProgress: 0 });
+  box.appendChild(renderVerse({ mode:"full" }));
+  box.appendChild(
+    el("div", {
+      class: "scripture-credit",
+      text: ATTRIBUTION || ""
+
+    })
+  );
+  screenRoot.appendChild(box);
+
+  const repeatBtn = btn(AppState.echoDone ? "Next" : "Repeat the verse.", {
+    onClick: async () => {
+      if (AppState.echoDone){
+        resetAudioForNewPage();
+        navigateWithTransition("forward", () => {
+          AppState.screen = "step";
+          AppState.stepIndex = 1;
+        });
+        return;
+      }
+
+      repeatBtn.disabled = true;
+
+      // ✅ show “Repeat after me!” overlay, then start audio
+await showHeroModal("Repeat after me", 2000);
+
+    // Play all parts: a, b, c, d (or however many you set)
+    const ok = await playEchoSequence({
+      onStatus: (i, total) => {
+        repeatBtn.textContent = `Playing ${i}/${total}…`;
+      }
+    });
+
+    repeatBtn.disabled = false;
+
+    if (!ok){
+      // Stay on this screen and keep the button as Repeat
+      repeatBtn.textContent = "Repeat the verse.";
+      return;
+    }
+
+    AppState.echoDone = true;
+    repeatBtn.textContent = "Next";
+
+    }
+  });
+
+  setSticky(true,
+    [
+      btn("Back", {
+        primary:false,
+        onClick: () => {
+          resetAudioForNewPage();
+          navigateWithTransition("back", () => {
+            AppState.screen = "listen";
+          });
+        }
+      })
+    ],
+    [ repeatBtn ]
+  );
+}
+
+
+async function renderStep(){
+
+  setHeaderVisible(true);
+  const totalSteps = HIDE_PLAN.length;
+  const step = AppState.stepIndex; // 1..totalSteps
+
+  screenRoot.appendChild(el("div", { class:"kicker", text:`Practice` }));
+  screenRoot.appendChild(el("h1", { text:"Say it again" }));
+  screenRoot.appendChild(el("p", { text:"If you forget a hidden word, tap it to reveal the answer." }));
+
+  const label = `Page ${step} of ${totalSteps}`;
+  const progressPct = (step / (totalSteps + 1)) * 100;
+
+  const box = renderVerseCardHeader({ stepLabel: label, stepProgress: progressPct });
+
+  box.appendChild(renderVerse({
+    mode: "steps",
+    activeCount: step,
+    onHint: () => { /* optional: track hints per-step later */ }
+  }));
+  screenRoot.appendChild(box);
+
+  const isLast = (step >= totalSteps);
+
+setSticky(true,
+  [
+    el("button", {
+  id: "btnRead",
+  class: "btn secondary",
+  type: "button",
+  text: audioEl.paused ? "🔊 Read it to Me" : "Pause Reading",
+  onclick: () => toggleAudio()
+}),
+
+
+    btn("Back", {
+      primary:false,
+      onClick: () => {
+        resetAudioForNewPage();
+        navigateWithTransition("back", () => {
+          if (step <= 1){
+            AppState.screen = "echo";
+          } else {
+            AppState.stepIndex = step - 1;
+          }
+        });
+      }
+    })
+  ],
+  [
+  await makeGatedNextNode(() =>
+    btn(isLast ? "Next" : "Next", {
+      onClick: () => {
+        resetAudioForNewPage();
+        navigateWithTransition("forward", () => {
+          if (isLast){
+            AppState.screen = "final";
+            AppState.hintCountFinal = 0;
+            AppState.revealedOnFinal.clear();
+          } else {
+            AppState.stepIndex = step + 1;
+          }
+        });
+      }
+    })
+  )
+]
+
+);
+}
+
+function renderFinal(){
+  setHeaderVisible(true);
+  screenRoot.appendChild(el("div", { class:"kicker", text:"Final" }));
+  screenRoot.appendChild(el("h1", { text:"📝 Final Test!" }));
+  screenRoot.appendChild(el("p", { text:"Try to say the whole verse out loud. If you get stuck, tap a word to reveal it—then try again." }));
+
+  const totalSteps = HIDE_PLAN.length;
+  const progressPct = ((totalSteps + 1) / (totalSteps + 1)) * 100;
+
+  const box = renderVerseCardHeader({ stepLabel: "All blanks", stepProgress: progressPct });
+
+  box.appendChild(renderVerse({
+    mode: "final",
+    onHint: (tokenIndex) => {
+      // Count each token reveal once (so repeated taps don’t inflate)
+      if (!AppState.revealedOnFinal.has(tokenIndex)){
+        AppState.revealedOnFinal.add(tokenIndex);
+        AppState.hintCountFinal += 1;
+      }
+    }
+  }));
+
+  screenRoot.appendChild(box);
+
+  setSticky(true,
+    [
+      btn(audioEl.paused ? "🔊 Read it to Me" : "Pause Reading", { primary:false, onClick: () => toggleAudio() }),
+        btn("Back", {
+        primary:false,
+            onClick: () => {
+            resetAudioForNewPage();
+            navigateWithTransition("back", () => {
+                AppState.screen = "step";
+                AppState.stepIndex = HIDE_PLAN.length;
+            });
+            }
+
+        })
+
+    ],
+    [
+      btn("Next", {
+        onClick: () => {
+          if (AppState.hintCountFinal > 0){
+            showModal({
+              title: "Let’s try that again!",
+              body: `Looks like you needed ${AppState.hintCountFinal} hint${AppState.hintCountFinal === 1 ? "" : "s"}. Try saying the verse again without tapping any words.`,
+              actions: [
+                btn("Try Again", {
+                  onClick: () => {
+                    closeModal();
+                    AppState.hintCountFinal = 0;
+                    AppState.revealedOnFinal.clear();
+                    render();
+                  }
+                })
+              ]
+            });
+            return;
+          }
+
+          showModal({
+            title: "How Did You Do?",
+            body: "Could you say the verse without any hints?",
+            actions: [
+              btn("Yes!", {
+                onClick: () => {
+                  closeModal();
+                  AppState.screen = "done";
+                  render();
+                }
+              }),
+              btn("Let Me Try Again", {
+                primary:false,
+                onClick: () => {
+                  closeModal();
+                  AppState.hintCountFinal = 0;
+                  AppState.revealedOnFinal.clear();
+                  render();
+                }
+              })
+            ]
+          });
+        }
+      })
+    ]
+  );
+}
+
+function renderDone(){
+  setHeaderVisible(true);
+  screenRoot.appendChild(el("div", { class:"kicker", text:"Nice work!" }));
+  screenRoot.appendChild(el("h1", { text:"You did it 🎉" }));
+  screenRoot.appendChild(el("p", { text:"Want to practice again or try a new verse later?" }));
+
+    const c = el("div", { class:"controls" }, [
+        btn("Keep Learning the Verse", {
+        onClick: () => {
+            AppState.screen = "full";
+            AppState.stepIndex = 0;
+            AppState.hintCountFinal = 0;
+            AppState.revealedOnFinal.clear();
+            render();
+        }
+        }),
+
+        btn("Extra Practice", {
+        primary:false,
+        onClick: () => {
+            // Skip the “Did you learn the verse?” gate since they finished
+            resetAudioForNewPage();
+            AppState.extraGameId = null;
+            AppState.extraGameState = null;
+            AppState.screen = "extraMenu";
+            render();
+        }
+        }),
+
+        btn("Back to Title", {
+        primary:false,
+        onClick: () => {
+            restart();
+        }
+        })
+    ]);
+
+  screenRoot.appendChild(c);
+
+  setSticky(false);
+}
+
+/* =========================================================
+   EXTRA PRACTICE SCREENS
+   ========================================================= */
+
+function renderExtraGate(){
+  screenRoot.appendChild(el("div", { class:"kicker", text:"Extra Practice" }));
+  screenRoot.appendChild(el("h1", { text:"✋ Stop" }));
+  screenRoot.appendChild(el("p", { text:"Don't continue unless you have already learned the verse." }));
+
+  const c = el("div", { class:"controls" }, [
+    btn("I've learned the verse", {
+    onClick: () => {
+        // ✅ Save + remember it
+        AppState.hasLearnedVerse = true;
+        setHasLearned(true);
+
+        AppState.screen = "extraMenu";
+        render();
+    }
+    }),
+
+    btn("I haven't learned the verse", {
+      primary:false,
+      onClick: () => {
+        AppState.screen = "title";
+        render();
+      }
+    })
+  ]);
+
+  screenRoot.appendChild(c);
+  setSticky(false);
+}
+
+function renderExtraMenu(){
+  setHeaderVisible(true);
+  setCardMode("card");
+  setScrambleMode(false);
+
+    screenRoot.appendChild(
+    el("h1", {
+        text: "Choose an Activity",
+        style: "text-align:center;"
+    })
+    );
+
+
+
+  const list = el("div", { class:"controls" });
+
+  function goToGame(gameId){
+    resetAudioForNewPage();
+    AppState.extraGameId = gameId;
+
+    // Scramble + Bouncing both use the intro screen
+    if (gameId === "scrambled_phrases" || gameId === "bouncing_words" || gameId === "stack_it"){
+    AppState.screen = "extraGameIntro";
+    } else {
+    AppState.screen = "extraGame";
+    }
+
+
+    render();
+  }
+
+  // ✅ 3 simple buttons, same width, stacked
+  list.appendChild(el("button", {
+    class: "btn full",
+    type: "button",
+    text: "Verse Scramble",
+    onclick: () => goToGame("scrambled_phrases"),
+  }));
+
+  list.appendChild(el("button", {
+    class: "btn full",
+    type: "button",
+    text: "Bouncing Words",
+    onclick: () => goToGame("bouncing_words"),
+  }));
+
+  list.appendChild(el("button", {
+    class: "btn full",
+    type: "button",
+    text: "Stack It",
+    onclick: () => goToGame("stack_it"),
+  }));
+
+  // Back button (also full width)
+  list.appendChild(el("button", {
+    class: "btn full ghost",
+    type: "button",
+    text: "Back to Title",
+    onclick: () => {
+      AppState.screen = "title";
+      render();
+    }
+  }));
+
+  screenRoot.appendChild(list);
+  setSticky(false);
+}
+
+
+
+
+function renderExtraGame(){
+  const game = EXTRA_GAMES.find(g => g.id === AppState.extraGameId);
+
+  if (AppState.extraGameId === "scrambled_phrases"){
+    return renderScrambledPhrasesGame();
+  }
+
+if (AppState.extraGameId === "bouncing_words"){
+  return renderBouncingWordsGame();
+}
+
+if (AppState.extraGameId === "stack_it"){
+  return renderStackItGame();
+}
+
+
+
+  screenRoot.appendChild(el("div", { class:"kicker", text:"Extra Practice" }));
+
+  if (!game){
+    screenRoot.appendChild(el("h1", { text:"Game not found" }));
+    screenRoot.appendChild(el("p", { text:"Returning to the menu." }));
+    AppState.screen = "extraMenu";
+    render();
+    return;
+  }
+
+
+  if (AppState.extraGameId === "falling_words"){
+    screenRoot.appendChild(el("h1", { text: game.title }));
+    screenRoot.appendChild(el("p", { text: game.description }));
+    screenRoot.appendChild(el("div", { class:"tip", text:"Coming next: Falling Words." }));
+  } 
+  else if (AppState.extraGameId === "missing_words"){
+    screenRoot.appendChild(el("h1", { text: game.title }));
+    screenRoot.appendChild(el("p", { text: game.description }));
+    screenRoot.appendChild(el("div", { class:"tip", text:"Coming next: Missing Words." }));
+  } 
+  else {
+    screenRoot.appendChild(el("h1", { text: game.title }));
+    screenRoot.appendChild(el("p", { text: game.description }));
+    screenRoot.appendChild(el("div", { class:"tip", text:"This game isn’t implemented yet." }));
+  }
+
+  const c = el("div", { class:"controls" }, [
+    btn("Back to Menu", {
+      primary:false,
+      onClick: () => {
+        AppState.extraGameId = null;
+        AppState.extraGameState = null;
+        AppState.screen = "extraMenu";
+        render();
+      }
+    })
+  ]);
+
+  screenRoot.appendChild(c);
+  setSticky(false);
+}
+
+function renderExtraGameIntro(){
+  setHeaderVisible(false);
+
+  const game = EXTRA_GAMES.find(g => g.id === AppState.extraGameId);
+
+  screenRoot.appendChild(el("div", { class:"kicker", text:"Extra Practice" }));
+  screenRoot.appendChild(el("h1", { text: game ? game.title : "Extra Practice" }));
+
+  // Custom instructions for scrambled phrases and bouncing words
+if (AppState.extraGameId === "scrambled_phrases"){
+  screenRoot.appendChild(el("p", { text:"Tap the verse bubbles in the correct order." }));
+  screenRoot.appendChild(el("p", { text:"Finish the verse as fast as you can." }));
+  screenRoot.appendChild(el("p", { text:"Wrong taps add a time penalty — so be careful." }));
+}
+else if (AppState.extraGameId === "bouncing_words"){
+  screenRoot.appendChild(el("p", { text:"Parts of the verse bounce around the screen." }));
+  screenRoot.appendChild(el("p", { text:"Tap the next part of the verse to place it above." }));
+  screenRoot.appendChild(el("p", { text:"Each correct tap makes the words move faster." }));
+}
+else if (AppState.extraGameId === "stack_it"){
+  screenRoot.appendChild(el("p", { text:"Drag parts of the verse into the stack." }));
+  screenRoot.appendChild(el("p", { text:"Put the verse in order from top to bottom." }));
+  screenRoot.appendChild(el("p", { text:"Swap the verse around until everything is in the correct spot." }));
+}
+else {
+  screenRoot.appendChild(el("p", { text: game ? game.description : "Instructions" }));
+}
+
+
+  const c = el("div", { class:"controls" }, [
+    btn("Start", {
+      onClick: () => {
+        AppState.screen = "extraGame";
+        render();
+      }
+    }),
+    btn("Back", {
+      primary:false,
+      onClick: () => {
+        AppState.screen = "extraMenu";
+        render();
+      }
+    })
+  ]);
+
+  screenRoot.appendChild(c);
+  setSticky(false);
+}
+
+
+/* ---------- Restart ---------- */
+function restart(){
+  closeModal();
+  resetAudioForNewPage();
+  AppState.screen = "title";
+  AppState.stepIndex = 0;
+  AppState.hintCountFinal = 0;
+  AppState.revealedOnFinal.clear();
+  render();
+}
+
+async function boot(){
+  try{
+    const verseId = getVerseIdFromUrl() || "john_3_16"; // default if no ?v=
+    const cfg = await loadVerseJson(verseId);
+    applyVerseConfig(cfg);
+    render();
+  } catch (err){
+    // Simple failure screen if verse file missing/bad
+    clearNode(screenRoot);
+    setSticky(false);
+    setHeaderVisible(true);
+
+    screenRoot.appendChild(el("h1", { text: "Verse not found" }));
+    screenRoot.appendChild(el("p", { text: String(err && err.message ? err.message : err) }));
+    screenRoot.appendChild(el("p", { text: "Check the URL (?v=...) and make sure the JSON file exists in /verse_data/." }));
+  }
+}
+
+boot();
+
+
+
+
+</script>
+
+
+
+
+</body>
+</html>
