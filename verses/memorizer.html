@@ -751,6 +751,22 @@
   opacity: .95;
 }
 
+/* Verse Scramble: reserve built-area height so the stage below doesn't shift */
+.scramble-built-stage{
+  position: relative;
+}
+
+/* Hidden full-text measurer */
+.scramble-built-measure{
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  visibility: hidden;
+  pointer-events: none;
+  white-space: normal; /* allow wrapping exactly like the real text */
+}
+
 
 .phrase-slots{
   display:flex;
@@ -2306,6 +2322,27 @@ function startStackItGame(){
   };
 }
 
+function scrambleEnsureReservedBuiltHeight(builtEl, fullText, st){
+  // Only re-measure if we haven't yet, or if the width changed (rotation)
+  const w = builtEl.clientWidth || 0;
+  if (st._scrBuiltWidth === w && st._scrBuiltHeight) {
+    builtEl.style.height = st._scrBuiltHeight + "px";
+    return;
+  }
+
+  const measureEl = document.createElement("div");
+  measureEl.className = "scramble-built-measure";
+  measureEl.textContent = fullText;
+
+  builtEl.appendChild(measureEl);
+  const h = measureEl.scrollHeight;
+  builtEl.removeChild(measureEl);
+
+  st._scrBuiltWidth = w;
+  st._scrBuiltHeight = h;
+
+  builtEl.style.height = h + "px";
+}
 
 
 
@@ -2325,9 +2362,10 @@ function renderScrambledPhrasesGame(){
 
   // ---- Built (top) area ----
   const verseLabel = VERSE_REF.replace(" (NIV)", "");
-const built = el("div", { class:"phrase-built" }, [
+const built = el("div", { class:"phrase-built scramble-built-stage" }, [
   el("div", { class:"phrase-built-label", text:`Your verse — ${verseLabel}` })
 ]);
+
 
 // Tip + text nodes
 const builtTipEl = el("div", { class:"tip", text:"Tap the phrases in the correct order." });
@@ -2337,6 +2375,11 @@ const builtTextEl = el("div", { class:"phrase-built-text", text:"" });
 built.appendChild(builtTipEl);
 built.appendChild(builtTextEl);
 screenRoot.appendChild(built);
+
+// Reserve the built area's final height (prevents stage shifting downward)
+const fullBuiltText = st.phrases.join(" ");
+scrambleEnsureReservedBuiltHeight(built, fullBuiltText, st);
+
 
 function refreshBuiltText(){
   const placedText = st.placed.map(i => st.phrases[i]).join(" ");
