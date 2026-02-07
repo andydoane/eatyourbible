@@ -2294,6 +2294,8 @@ function startBouncingWordsGame(){
     entities: [],
 
     speed: BOUNCE_INITIAL_SPEED,
+    startedAtMs: Date.now(), // ✅ add
+    penaltySec: 0,           // ✅ add
     wrongTaps: 0,
     totalTaps: 0,
 
@@ -2723,39 +2725,45 @@ refreshBuiltText();
   }
 
   function finishBouncingGame(){
-    
-    const perfectGoal = st.phrases.length;      // phrases + the reference at the end
-    const totalTaps = st.totalTaps || 0;
-    
-    showModal({
-      title: "You did it 🎉",
-      
-        body: el("div", {}, [
-        el("p", { text: "Nice! You finished Bouncing Words." }),
-        el("p", { text: `Total taps: ${totalTaps}` }),
-        el("p", { text: `Perfect Score Goal: Only ${perfectGoal} taps!` }),
-        ]),
-      actions: [
-        btn("Play again", {
-          onClick: () => {
-            closeModal();
-            startBouncingWordsGame();
-            render();
-          }
-        }),
-        btn("Back to Title", {
-          primary:false,
-          onClick: () => {
-            closeModal();
-            AppState.extraGameId = null;
-            AppState.extraGameState = null;
-            AppState.screen = "title";
-            render();
-          }
-        })
-      ]
-    });
-  }
+
+  const finishedAtMs = Date.now();
+  const elapsedMs = finishedAtMs - (st.startedAtMs || finishedAtMs);
+
+  const wrong = st.wrongTaps || 0;
+  const penaltyMs = wrong * SCRAMBLE_WRONG_PENALTY_SEC * 1000;
+  const totalMs = elapsedMs + penaltyMs;
+
+  showModal({
+    title: "You did it 🎉",
+    body: el("div", {}, [
+      el("p", { text: "Nice! You finished Bouncing Words." }),
+      el("p", { text: `Time: ${formatTimeMs(elapsedMs)}` }),
+      el("p", { text: `Wrong taps: ${wrong} (Penalty: +${wrong * SCRAMBLE_WRONG_PENALTY_SEC}s)` }),
+      el("p", { text: `Final time: ${formatTimeMs(totalMs)}` }),
+      el("p", { text: "Try again and see if you can beat your time!" }),
+    ]),
+    actions: [
+      btn("Play again", {
+        onClick: () => {
+          closeModal();
+          startBouncingWordsGame();
+          render();
+        }
+      }),
+      btn("Back to Title", {
+        primary:false,
+        onClick: () => {
+          closeModal();
+          AppState.extraGameId = null;
+          AppState.extraGameState = null;
+          AppState.screen = "title";
+          render();
+        }
+      })
+    ]
+  });
+}
+
 
   // ---------- click handler ----------
   function onTap(idx, chipEl){
@@ -2793,6 +2801,7 @@ refreshBuiltText();
 
     // ❌ Wrong
     st.wrongTaps = (st.wrongTaps || 0) + 1;
+    st.penaltySec = (st.wrongTaps || 0) * SCRAMBLE_WRONG_PENALTY_SEC;
 
     if (typeof playWrongBeep === "function"){
       playWrongBeep();
