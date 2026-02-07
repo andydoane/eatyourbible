@@ -1,0 +1,20 @@
+{
+  "verseId": "john_3_16",
+  "translation": "NIV",
+  "echoPartCount": 4,
+  "verseText": "For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life.",
+  "attribution": "Scripture taken from the Holy Bible, New International Version® (NIV®). © 1973, 1978, 1984, 2011 by Biblica, Inc. Used by permission.",
+  "hidePlan": [
+    { "type": "emoji", "word": "loved",  "occurrence": 1, "emoji": "❤️" },
+    { "type": "emoji", "word": "God",    "occurrence": 1, "emoji": "👑" },
+    { "type": "emoji", "word": "Son",    "occurrence": 1, "emoji": "👦" },
+    { "type": "emoji", "word": "gave",   "occurrence": 1, "emoji": "🎁" },
+    { "type": "emoji", "word": "world",  "occurrence": 1, "emoji": "🌍" },
+
+    { "type": "underscore", "word": "whoever",  "occurrence": 1 },
+    { "type": "underscore", "word": "believes", "occurrence": 1 },
+    { "type": "underscore", "word": "perish",   "occurrence": 1 },
+    { "type": "underscore", "word": "eternal",  "occurrence": 1 },
+    { "type": "underscore", "word": "life",     "occurrence": 1 }
+  ]
+}
