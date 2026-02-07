@@ -1082,7 +1082,7 @@ const EXTRA_GAMES = [
   id: "verse_chain",
   title: "Verse Chain",
   emoji: "🔗",
-  description: "Pick the next word to build the verse."
+  description: "Pick the next word to build the verse.",
 },
 
   {
@@ -3096,6 +3096,20 @@ const VERSE_CHAIN_DECOY_WORDS = [
   "gold","silver","crystal","treasure","coin","badge","trophy","medal","ribbon","crown"
 ];
 
+const BIBLE_BOOKS = [
+  "Genesis","Exodus","Leviticus","Numbers","Deuteronomy",
+  "Joshua","Judges","Ruth","1 Samuel","2 Samuel","1 Kings","2 Kings",
+  "1 Chronicles","2 Chronicles","Ezra","Nehemiah","Esther","Job","Psalms",
+  "Proverbs","Ecclesiastes","Song of Solomon","Isaiah","Jeremiah","Lamentations",
+  "Ezekiel","Daniel","Hosea","Joel","Amos","Obadiah","Jonah","Micah","Nahum",
+  "Habakkuk","Zephaniah","Haggai","Zechariah","Malachi",
+  "Matthew","Mark","Luke","John","Acts","Romans","1 Corinthians","2 Corinthians",
+  "Galatians","Ephesians","Philippians","Colossians","1 Thessalonians","2 Thessalonians",
+  "1 Timothy","2 Timothy","Titus","Philemon","Hebrews","James","1 Peter","2 Peter",
+  "1 John","2 John","3 John","Jude","Revelation"
+];
+
+
 // Small helpers
 function vcShuffle(arr){
   const a = arr.slice();
@@ -3119,6 +3133,41 @@ function vcPickDecoys(needCount, bannedSetLower){
   return out;
 }
 
+function vcParseVerseRefParts(){
+  // Works with formats like:
+  // "Luke 2:11" or "Luke 2:11 (ESV)" or "Luke 2:11–12 (NIV)"
+  const m = String(VERSE_REF || "").match(/^(.+?)\s+(\d+:\d+(?:[–-]\d+)?)\b/);
+  if (!m) return { book: "", cv: "" };
+  return { book: m[1].trim(), cv: m[2].trim() };
+}
+
+function vcPickBibleBookDecoys(correctBook, count){
+  const pool = BIBLE_BOOKS.filter(b => b.toLowerCase() !== correctBook.toLowerCase());
+  const shuffled = vcShuffle(pool);
+  return shuffled.slice(0, count);
+}
+
+function vcRandomChapterVerse(){
+  // Random-but-reasonable range
+  const chapter = 1 + Math.floor(Math.random() * 50); // 1..50
+  const verse   = 1 + Math.floor(Math.random() * 60); // 1..60
+  return `${chapter}:${verse}`;
+}
+
+function vcPickRefDecoys(correctCv, count){
+  const out = [];
+  const used = new Set([String(correctCv).toLowerCase()]);
+  while (out.length < count){
+    const candidate = vcRandomChapterVerse();
+    const lc = candidate.toLowerCase();
+    if (used.has(lc)) continue;
+    used.add(lc);
+    out.push(candidate);
+  }
+  return out;
+}
+
+
 // Uses your existing tokenizer so we follow the verse exactly,
 // but we only take WORD tokens (not punctuation).
 function vcGetVerseWords(){
@@ -3134,13 +3183,26 @@ function vcInitState(){
   const built = words.slice(0, startCount);
   const nextIndex = startCount;
 
+  const parts = vcParseVerseRefParts();
+
   const state = {
     game: "verse_chain",
+
+    // main verse build
     words,
     built,
     nextIndex,
+
+    // end questions
+    phase: "words",           // "words" -> "book" -> "ref" -> done
+    correctBook: parts.book,  // e.g. "Luke"
+    correctCv: parts.cv,      // e.g. "2:11"
+
+    // carousel
     options: [],
     optionIndex: 0,
+
+    // feedback
     done: false,
     lastPickCorrect: null
   };
@@ -3149,24 +3211,47 @@ function vcInitState(){
   return state;
 }
 
+
 function vcMakeNewOptions(state){
-  // Finished?
-  if (state.nextIndex >= state.words.length){
+  state.lastPickCorrect = null;
+
+  // If we finished the words, move to the next phase (NOT done yet)
+  if (state.phase === "words" && state.nextIndex >= state.words.length){
+    state.phase = "book";
+  }
+
+  // If we finished ref phase, we are done
+  if (state.phase === "done"){
     state.done = true;
     state.options = [];
     state.optionIndex = 0;
     return;
   }
 
-  const correct = state.words[state.nextIndex];
-  const banned = new Set([correct.toLowerCase()]);
+  // Build options depending on phase
+  let correct = "";
 
-  const decoys = vcPickDecoys(4, banned);
-  state.options = vcShuffle([correct, ...decoys]);
+  if (state.phase === "words"){
+    correct = state.words[state.nextIndex];
+    const banned = new Set([correct.toLowerCase()]);
+    const decoys = vcPickDecoys(4, banned);
+    state.options = vcShuffle([correct, ...decoys]);
+  }
+  else if (state.phase === "book"){
+    correct = state.correctBook || "";
+    const decoys = vcPickBibleBookDecoys(correct, 4);
+    state.options = vcShuffle([correct, ...decoys]);
+  }
+  else if (state.phase === "ref"){
+    correct = state.correctCv || "";
+    const decoys = vcPickRefDecoys(correct, 4);
+    state.options = vcShuffle([correct, ...decoys]);
+  }
 
-  // Start the carousel on a random option to feel less predictable
+  // Put the selector on a random option
   state.optionIndex = Math.floor(Math.random() * state.options.length);
 }
+
 
 function vcChooseCurrentOption(){
   const st = AppState.extraGameState;
@@ -3174,19 +3259,39 @@ function vcChooseCurrentOption(){
   if (st.done) return;
 
   const chosen = st.options[st.optionIndex];
-  const correct = st.words[st.nextIndex];
+
+  // Decide the correct answer for the current phase
+  let correct = "";
+  if (st.phase === "words") correct = st.words[st.nextIndex];
+  else if (st.phase === "book") correct = st.correctBook;
+  else if (st.phase === "ref") correct = st.correctCv;
 
   if (chosen === correct){
     st.lastPickCorrect = true;
-    st.built.push(correct);
-    st.nextIndex++;
-    vcMakeNewOptions(st);
+
+    if (st.phase === "words"){
+      st.built.push(correct);
+      st.nextIndex++;
+      vcMakeNewOptions(st); // may auto-switch to "book" when finished
+    }
+    else if (st.phase === "book"){
+      st.phase = "ref";
+      vcMakeNewOptions(st);
+    }
+    else if (st.phase === "ref"){
+      st.phase = "done";
+      st.done = true;
+      st.options = [];
+      st.optionIndex = 0;
+    }
   } else {
     st.lastPickCorrect = false;
   }
 
   render();
 }
+
+
 
 function vcPrevOption(){
   const st = AppState.extraGameState;
@@ -3256,7 +3361,14 @@ function renderVerseChainGame(){
   }
 
   // Prompt
-  screenRoot.appendChild(el("p", { style:"text-align:center; margin: 10px 0 8px;", text:"What’s the next word?" }));
+let prompt = "What’s the next word?";
+if (st.phase === "book") prompt = "What Bible book is it from?";
+if (st.phase === "ref")  prompt = "What chapter and verse?";
+
+screenRoot.appendChild(
+  el("p", { style:"text-align:center; margin: 10px 0 8px;", text: prompt })
+);
+
 
   // Feedback (tiny + simple)
   if (st.lastPickCorrect === false){
