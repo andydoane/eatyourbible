@@ -626,22 +626,7 @@
   font-size: clamp(16px, 2.8vw, 22px);
 }
 
-/* Stack It: instruction overlay inside the stage (doesn’t push chips down) */
-.stack-instructions-overlay{
-  position: absolute;
-  left: 12px;
-  right: 12px;
-  top: 10px;
 
-  text-align: center;
-  text-wrap: balance;
-
-  font-size: 13px;
-  opacity: 0.75;
-
-  /* IMPORTANT: don’t block taps on chips */
-  pointer-events: none;
-}
 
 /* Stack It chips: allow wrapping + balanced wrap */
 .stack-slot .phrase-chip.stack-chip{
@@ -2354,8 +2339,76 @@ function startBouncingWordsGame(){
   };
 }
 
+// --- Stack It: build phrases with caps (max chips + max chars-ish) ---
+function buildStackItPhrases(maxChips = 9, maxChars = 25){
+  // Start from your existing phrase builder (keeps style consistent)
+  let phrases = buildPhrasesFromTokens(2, 4);
+
+  // 1) Split any phrase that is too long into smaller phrases
+  phrases = splitLongStackPhrases(phrases, maxChars);
+
+  // 2) If we now have too many chips, merge neighbors until we’re back under maxChips
+  if (phrases.length > maxChips){
+    phrases = mergeDownToMaxChips(phrases, maxChips);
+  }
+
+  return phrases;
+}
+
+function splitLongStackPhrases(phrases, maxChars){
+  const out = [];
+  for (const p of phrases){
+    if (p.length <= maxChars){
+      out.push(p);
+      continue;
+    }
+
+    // Split by words, keeping chunks <= maxChars where possible
+    const words = p.split(/\s+/).filter(Boolean);
+    let cur = "";
+    for (const w of words){
+      const candidate = cur ? (cur + " " + w) : w;
+      if (candidate.length <= maxChars || !cur){
+        cur = candidate;
+      } else {
+        out.push(cur);
+        cur = w;
+      }
+    }
+    if (cur) out.push(cur);
+  }
+  return out;
+}
+
+function mergeDownToMaxChips(phrases, maxChips){
+  // Keep merging the “smallest” neighboring pair until we fit.
+  let arr = phrases.slice();
+
+  while (arr.length > maxChips){
+    let bestIdx = 0;
+    let bestScore = Infinity;
+
+    // Find the neighbor-merge that creates the smallest combined string
+    for (let i = 0; i < arr.length - 1; i++){
+      const combinedLen = (arr[i].length + 1 + arr[i+1].length);
+      if (combinedLen < bestScore){
+        bestScore = combinedLen;
+        bestIdx = i;
+      }
+    }
+
+    // Merge that pair
+    arr.splice(bestIdx, 2, `${arr[bestIdx]} ${arr[bestIdx + 1]}`);
+  }
+
+  return arr;
+}
+
+
+
 function startStackItGame(){
-  const phrases = buildPhrasesFromTokens(2, 4); // 3–5 word chunks (no reference)
+  const phrases = buildStackItPhrases(9, 25);
+
 
   const n = phrases.length;
 
@@ -2968,13 +3021,7 @@ screenRoot.appendChild(checkBar);
   const stage = el("div", { class:"phrase-stage stack-stage", id:"stackStage" });
   screenRoot.appendChild(stage);
 
-// Overlay instructions (does not affect layout)
-stage.appendChild(
-  el("div", {
-    class: "stack-instructions-overlay",
-    text: "Tap a phrase to select it. Then tap a different phrase to swap them."
-  })
-);
+
 
 
   // Only the slots (no top dock)
@@ -4424,7 +4471,7 @@ async function boot(){
 }
 
 boot();
- 
+
 
 
 
