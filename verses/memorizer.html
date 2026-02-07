@@ -315,6 +315,14 @@
   margin-top: 14px;
 }
 
+/* Match Back button width to activity card */
+.activity-back-wrap{
+  max-width: 420px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+
 .activity-arrow{
   width: 48px;
   height: 48px;
@@ -3607,16 +3615,19 @@ function renderExtraMenu(){
   screenRoot.appendChild(carousel);
 
   // --- Back button (keep your existing behavior) ---
-  const controls = el("div", { class: "controls", style: "justify-content:center; margin-top: 14px;" }, [
+const backWrap = el("div", { class: "activity-back-wrap" }, [
+  el("div", { class: "controls", style: "justify-content:center; margin-top: 14px;" }, [
     el("button", {
       class: "btn full",
       type: "button",
       text: "Back to Title",
       onclick: () => restart()
     })
-  ]);
+  ])
+]);
 
-  screenRoot.appendChild(controls);
+screenRoot.appendChild(backWrap);
+
 
   setSticky(false);
 }
