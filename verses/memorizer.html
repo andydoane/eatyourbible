@@ -2322,7 +2322,7 @@ function startStackItGame(){
   };
 }
 
-function scrambleEnsureReservedBuiltHeight(builtEl, fullText, st){
+function scrambleEnsureReservedBuiltHeight(builtEl, verseLabelText, fullText, st){
   // Only re-measure if we haven't yet, or if the width changed (rotation)
   const w = builtEl.clientWidth || 0;
   if (st._scrBuiltWidth === w && st._scrBuiltHeight) {
@@ -2330,9 +2330,26 @@ function scrambleEnsureReservedBuiltHeight(builtEl, fullText, st){
     return;
   }
 
+  // Build an invisible measurer that matches the REAL built box structure:
+  // label + tip + full final text.
   const measureEl = document.createElement("div");
   measureEl.className = "scramble-built-measure";
-  measureEl.textContent = fullText;
+
+  const labelEl = document.createElement("div");
+  labelEl.className = "phrase-built-label";
+  labelEl.textContent = `Your verse — ${verseLabelText}`;
+
+  const tipEl = document.createElement("div");
+  tipEl.className = "tip";
+  tipEl.textContent = "Tap the phrases in the correct order.";
+
+  const textEl = document.createElement("div");
+  textEl.className = "phrase-built-text";
+  textEl.textContent = fullText;
+
+  measureEl.appendChild(labelEl);
+  measureEl.appendChild(tipEl);
+  measureEl.appendChild(textEl);
 
   builtEl.appendChild(measureEl);
   const h = measureEl.scrollHeight;
@@ -2343,6 +2360,7 @@ function scrambleEnsureReservedBuiltHeight(builtEl, fullText, st){
 
   builtEl.style.height = h + "px";
 }
+
 
 
 
@@ -2375,6 +2393,11 @@ const builtTextEl = el("div", { class:"phrase-built-text", text:"" });
 built.appendChild(builtTipEl);
 built.appendChild(builtTextEl);
 screenRoot.appendChild(built);
+
+// Reserve the built area's max height so it never overlaps the stage
+const fullBuiltText = st.phrases.join(" ");
+scrambleEnsureReservedBuiltHeight(built, verseLabel, fullBuiltText, st);
+
 
 // Reserve the built area's final height (prevents stage shifting downward)
 const fullBuiltText = st.phrases.join(" ");
@@ -2536,7 +2559,8 @@ function renderBouncingWordsGame(){
 
   // ---- Built (top) area ----
   const verseLabel = VERSE_REF.replace(" (NIV)", "");
-  const built = el("div", { class:"phrase-built" }, [
+  const built = el("div", { class:"phrase-built scramble-built-stage" }, [
+
     el("div", { class:"phrase-built-label", text:`Your verse — ${verseLabel}` })
   ]);
 
