@@ -3285,7 +3285,8 @@ setSticky(true,
 );
 }
 
-function renderFinal(){
+async function renderFinal(){
+
   setHeaderVisible(true);
   screenRoot.appendChild(el("div", { class:"kicker", text:"Final" }));
   screenRoot.appendChild(el("h1", { text:"📝 Final Test!" }));
@@ -3310,22 +3311,21 @@ function renderFinal(){
   screenRoot.appendChild(box);
 
   setSticky(true,
-    [
-      btn(audioEl.paused ? "🔊 Read it to Me" : "Pause Reading", { primary:false, onClick: () => toggleAudio() }),
-        btn("Back", {
-        primary:false,
-            onClick: () => {
-            resetAudioForNewPage();
-            navigateWithTransition("back", () => {
-                AppState.screen = "step";
-                AppState.stepIndex = HIDE_PLAN.length;
-            });
-            }
-
-        })
-
-    ],
-    [
+  [
+    btn(audioEl.paused ? "🔊 Read it to Me" : "Pause Reading", { primary:false, onClick: () => toggleAudio() }),
+    btn("Back", {
+      primary:false,
+      onClick: () => {
+        resetAudioForNewPage();
+        navigateWithTransition("back", () => {
+          AppState.screen = "step";
+          AppState.stepIndex = HIDE_PLAN.length;
+        });
+      }
+    })
+  ],
+  [
+    await makeGatedNextNode(() =>
       btn("Next", {
         onClick: () => {
           if (AppState.hintCountFinal > 0){
@@ -3370,15 +3370,18 @@ function renderFinal(){
           });
         }
       })
-    ]
-  );
+    )
+  ]
+);
+
+  
 }
 
 function renderDone(){
   setHeaderVisible(true);
   screenRoot.appendChild(el("div", { class:"kicker", text:"Nice work!" }));
   screenRoot.appendChild(el("h1", { text:"You did it 🎉" }));
-  screenRoot.appendChild(el("p", { text:"Want to practice again or try a new verse later?" }));
+  screenRoot.appendChild(el("p", { text:"Want to practice again or test out your memory on some verse games?" }));
 
     const c = el("div", { class:"controls" }, [
         btn("Keep Learning the Verse", {
