@@ -920,9 +920,12 @@ function makeEchoSuffixes(count){
   return out;
 }
 
+
+
 function echoPartFile(suffix){
   return `${AUDIO_DIR}${VERSE_ID}${suffix}.mp3`;
 }
+
 
 function getVerseIdFromUrl(){
   const params = new URLSearchParams(window.location.search);
@@ -962,18 +965,9 @@ function applyVerseConfig(cfg){
 }
 
 
-function makeEchoSuffixes(count){
-  const letters = "abcdefghijklmnopqrstuvwxyz";
-  const out = [];
-  const n = Math.max(0, Math.min(count, letters.length)); // cap at 26
-  for (let i = 0; i < n; i++) out.push(letters[i]);
-  return out;
-}
 
 
-function echoPartFile(suffix){
-  return `${AUDIO_DIR}${VERSE_ID}${suffix}.mp3`;
-}
+
 
 
 
