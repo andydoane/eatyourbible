@@ -1356,7 +1356,8 @@ async function makeGatedNextNode(makeRealButtonFn){
   let secs = await getAudioDurationSeconds();
   if (!Number.isFinite(secs) || secs <= 0) secs = 8; // fallback “reading time”
 
-  const totalMs = secs * 1000;
+  const totalMs = secs * 1000 * 0.8;
+
   const start = performance.now();
 
   let rafId = 0;
