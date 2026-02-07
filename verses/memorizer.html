@@ -2394,14 +2394,11 @@ built.appendChild(builtTipEl);
 built.appendChild(builtTextEl);
 screenRoot.appendChild(built);
 
+
 // Reserve the built area's max height so it never overlaps the stage
 const fullBuiltText = st.phrases.join(" ");
 scrambleEnsureReservedBuiltHeight(built, verseLabel, fullBuiltText, st);
 
-
-// Reserve the built area's final height (prevents stage shifting downward)
-const fullBuiltText = st.phrases.join(" ");
-scrambleEnsureReservedBuiltHeight(built, fullBuiltText, st);
 
 
 function refreshBuiltText(){
