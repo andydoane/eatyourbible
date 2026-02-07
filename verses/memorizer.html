@@ -304,6 +304,70 @@
       margin-top: 14px;
     }
 
+/* =========================
+   Activity Carousel (Extra Menu)
+   ========================= */
+.activity-carousel{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.activity-arrow{
+  width: 48px;
+  height: 48px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.18);
+  background: rgba(255,255,255,.06);
+  color: white;
+  font-size: 20px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.activity-arrow:active{
+  transform: scale(0.98);
+}
+
+.activity-card{
+  flex: 1;
+  max-width: 420px;
+  border-radius: 22px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(255,255,255,.06);
+  padding: 18px 16px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.activity-emoji{
+  font-size: 44px;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.activity-title{
+  font-size: 20px;
+  font-weight: 900;
+  margin: 0;
+}
+
+.activity-desc{
+  margin: 8px 0 0;
+  color: rgba(255,255,255,.82);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.activity-meta{
+  margin-top: 10px;
+  font-size: 12px;
+  color: rgba(255,255,255,.6);
+}
+
+
     button, .btn{
       appearance:none;
       border: none;
@@ -989,19 +1053,23 @@ const EXTRA_GAMES = [
   {
     id: "scrambled_phrases",
     title: "Verse Scramble",
+    emoji: "🧩",
     description: "Tap the phrases in the correct order.",
   },
   {
     id: "bouncing_words",
     title: "Bouncing Words",
+    emoji: "🏀",
     description: "Tap the moving words in the correct order.",
   },
   {
     id: "stack_it",
     title: "Stack It",
+    emoji: "🧱",
     description: "Drag the phrases into the correct top-to-bottom order.",
   }
 ];
+
 
 
 
@@ -1063,6 +1131,8 @@ function setHasLearned(val){
 const AppState = {
   screen: "title", // title | instructions | listen | echo | step | final | done | extraGate | extraMenu | extraGame
   stepIndex: 0,
+    extraMenuIndex: 0,
+
   extraGameId: null,
   extraGameState: null,
   hintCountFinal: 0,
@@ -3466,68 +3536,91 @@ function renderExtraMenu(){
   setCardMode("card");
   setScrambleMode(false);
 
-    screenRoot.appendChild(
+  screenRoot.appendChild(
     el("h1", {
-        text: "Choose an Activity",
-        style: "text-align:center;"
+      text: "Choose an Activity",
+      style: "text-align:center;"
     })
-    );
-
-
-
-  const list = el("div", { class:"controls" });
+  );
 
   function goToGame(gameId){
     resetAudioForNewPage();
     AppState.extraGameId = gameId;
 
-    // Scramble + Bouncing both use the intro screen
+    // All three use the intro screen in your current build
     if (gameId === "scrambled_phrases" || gameId === "bouncing_words" || gameId === "stack_it"){
-    AppState.screen = "extraGameIntro";
+      AppState.screen = "extraGameIntro";
     } else {
-    AppState.screen = "extraGame";
+      AppState.screen = "extraGame";
     }
-
 
     render();
   }
 
-  // ✅ 3 simple buttons, same width, stacked
-  list.appendChild(el("button", {
-    class: "btn full",
-    type: "button",
-    text: "Verse Scramble",
-    onclick: () => goToGame("scrambled_phrases"),
-  }));
+  // Safety: if index is missing or out of range, fix it
+  const total = EXTRA_GAMES.length;
+  if (typeof AppState.extraMenuIndex !== "number") AppState.extraMenuIndex = 0;
+  AppState.extraMenuIndex = ((AppState.extraMenuIndex % total) + total) % total;
 
-  list.appendChild(el("button", {
-    class: "btn full",
-    type: "button",
-    text: "Bouncing Words",
-    onclick: () => goToGame("bouncing_words"),
-  }));
+  function showPrev(){
+    AppState.extraMenuIndex = (AppState.extraMenuIndex - 1 + total) % total;
+    render();
+  }
 
-  list.appendChild(el("button", {
-    class: "btn full",
-    type: "button",
-    text: "Stack It",
-    onclick: () => goToGame("stack_it"),
-  }));
+  function showNext(){
+    AppState.extraMenuIndex = (AppState.extraMenuIndex + 1) % total;
+    render();
+  }
 
-  // Back button (also full width)
-  list.appendChild(el("button", {
-    class: "btn full ghost",
-    type: "button",
-    text: "Back to Title",
-    onclick: () => {
-      AppState.screen = "title";
-      render();
-    }
-  }));
+  const game = EXTRA_GAMES[AppState.extraMenuIndex];
 
-  screenRoot.appendChild(list);
+  // --- Carousel UI ---
+  const carousel = el("div", { class: "activity-carousel" }, [
+    el("button", {
+      class: "activity-arrow",
+      type: "button",
+      text: "‹",
+      onclick: showPrev,
+      title: "Previous activity"
+    }),
+
+    el("div", {
+      class: "activity-card",
+      onclick: () => goToGame(game.id),
+      title: "Tap to start"
+    }, [
+      el("div", { class: "activity-emoji", text: game.emoji || "🎮" }),
+      el("div", { class: "activity-title", text: game.title }),
+      el("div", { class: "activity-desc", text: game.description || "" }),
+      el("div", { class: "activity-meta", text: `${AppState.extraMenuIndex + 1} / ${total}` })
+    ]),
+
+    el("button", {
+      class: "activity-arrow",
+      type: "button",
+      text: "›",
+      onclick: showNext,
+      title: "Next activity"
+    })
+  ]);
+
+  screenRoot.appendChild(carousel);
+
+  // --- Back button (keep your existing behavior) ---
+  const controls = el("div", { class: "controls", style: "justify-content:center; margin-top: 14px;" }, [
+    el("button", {
+      class: "btn full",
+      type: "button",
+      text: "Back to Title",
+      onclick: () => restart()
+    })
+  ]);
+
+  screenRoot.appendChild(controls);
+
   setSticky(false);
 }
+
 
 
 
