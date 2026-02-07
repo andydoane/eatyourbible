@@ -432,6 +432,35 @@
     line-height: 1.15;
     }
 
+/* ===== Hero modal (big green overlay message) ===== */
+.modal.hero{
+  background: var(--good);
+  border: none;
+  box-shadow: 0 24px 90px rgba(0,0,0,.55);
+}
+
+.modal.hero .m-inner{
+  padding: 34px 22px;
+}
+
+.modal.hero #modalTitle{
+  display: none !important;
+}
+
+.modal.hero #modalBody{
+  color: white;
+  font-weight: 900;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  font-size: clamp(28px, 6.5vw, 56px);
+  line-height: 1.05;
+}
+
+/* No buttons on the hero modal */
+.modal.hero .m-actions{
+  display: none !important;
+}
 
 
     /* Small helper text */
@@ -834,7 +863,7 @@ body.mode-scramble .phrase-stage{
   </div>
 
   <!-- Modal overlay -->
-  <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal" id="modalBox" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
     <div class="modal">
       <div class="m-inner">
         <h2 id="modalTitle">Modal</h2>
@@ -1153,6 +1182,24 @@ function showModal({ title, body, actions = [] }) {
 function closeModal(){
   overlay.classList.remove("show");
 }
+
+// Show a big green “hero” modal for a short time, then auto-close.
+function showHeroModal(message, ms = 1800){
+  const modalBox = document.getElementById("modalBox");
+  if (modalBox) modalBox.classList.add("hero");
+
+  // Use your existing modal system, but with no title/actions.
+  showModal({ title: "", body: message, actions: [] });
+
+  return new Promise((resolve) => {
+    window.setTimeout(() => {
+      closeModal();
+      if (modalBox) modalBox.classList.remove("hero");
+      resolve();
+    }, ms);
+  });
+}
+
 
 overlay.addEventListener("click", (e) => {
   if (e.target === overlay) closeModal();
@@ -3077,6 +3124,9 @@ async function renderEcho(){
       }
 
       repeatBtn.disabled = true;
+
+      // ✅ show “Repeat after me!” overlay, then start audio
+await showHeroModal("Repeat after me!", 2000);
 
     // Play all parts: a, b, c, d (or however many you set)
     const ok = await playEchoSequence({
