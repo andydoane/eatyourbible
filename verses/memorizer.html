@@ -3400,32 +3400,38 @@ function vcPickDecoys(needCount, bannedSetLower){
   return out;
 }
 
-function vcEnsureReservedVerseHeight(stageEl, fullText, st){
-  // Only measure if we haven't yet, OR if width changed (phone rotated)
+function vcEnsureReservedVerseHeight(stageEl, fullText, visibleText, st){
+  // If width changed (phone rotated), reset our stored height
   const w = stageEl.clientWidth || 0;
-  if (st._vcStageWidth === w && st._vcStageHeight) {
-    stageEl.style.height = st._vcStageHeight + "px";
-    return;
+  if (st._vcStageWidth !== w){
+    st._vcStageWidth = w;
+    st._vcStageHeight = 0;
   }
 
-  // Create an invisible measurer with the full verse
-  const measureEl = document.createElement("div");
-  measureEl.className = "vc-verse-measure";
-  measureEl.textContent = fullText;
+  // Helper to measure how tall some text would be inside the stage
+  function measure(text){
+    const measureEl = document.createElement("div");
+    measureEl.className = "vc-verse-measure";
+    measureEl.textContent = text || "";
+    stageEl.appendChild(measureEl);
+    const h = measureEl.scrollHeight;
+    stageEl.removeChild(measureEl);
+    return h;
+  }
 
-  stageEl.appendChild(measureEl);
+  // Measure both:
+  // 1) the full verse (the "max" target)
+  // 2) what we're currently showing (can wrap differently as it grows)
+  const hFull = measure(fullText);
+  const hVisible = measure(visibleText);
 
-  // Measure height the browser needs to wrap the full text
-  const h = measureEl.scrollHeight;
+  // Only ever GROW the reserved height (never shrink mid-game)
+  const h = Math.max(st._vcStageHeight || 0, hFull, hVisible);
 
-  // Clean up and lock height
-  stageEl.removeChild(measureEl);
-
-  st._vcStageWidth = w;
   st._vcStageHeight = h;
-
   stageEl.style.height = h + "px";
 }
+
 
 
 function vcParseVerseRefParts(){
@@ -3628,7 +3634,7 @@ function renderVerseChainGame(){
 
 // Top verse area (reserved height so the carousel doesn't shift)
 const builtText = st.built.join(" ");
-const fullText  = st.words.join(" "); // full verse words (no ellipsis)
+const fullText  = st.words.join(" ");
 
 // Stage element (visible)
 const verseStage = el("div", {
@@ -3638,10 +3644,9 @@ const verseStage = el("div", {
   el("div", { text: builtText + (st.done ? "" : " …") })
 ]);
 
-screenRoot.appendChild(verseStage);
+const visibleText = builtText + (st.done ? "" : " …");
 
-// Measure + lock height based on FULL verse
-vcEnsureReservedVerseHeight(verseStage, fullText, st);
+vcEnsureReservedVerseHeight(verseStage, fullText, visibleText, st);
 
 
   if (st.done){
