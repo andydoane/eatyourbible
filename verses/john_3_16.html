@@ -211,6 +211,16 @@
       justify-content:space-between;
       gap:10px;
     }
+
+    /* Listen screen: letter-by-letter green fill */
+    .verse-fill span{
+      transition: color .18s linear;
+    }
+    .verse-fill span.filled{
+      color: var(--good); /* your green */
+    }
+
+
     .progress{
       font-size: 12px;
       color: var(--muted);
@@ -858,9 +868,20 @@ const BOUNCE_SPAWN_MIN_DIST = 84;     // px (try to spawn chips apart)
 
 
 const VERSE_ID   = "john_3_16";
+const ECHO_PART_SUFFIXES = ["a","b","c","d"];
 const VERSE_REF = verseIdToRef(VERSE_ID);
 const APP_TITLE = `🧠 Let's memorize ${VERSE_REF.replace(" (NIV)", "")}`;
-const AUDIO_FILE = `verse_audio/${VERSE_ID}.mp3`;
+const AUDIO_DIR = "verse_audio/";
+const AUDIO_FILE = `${AUDIO_DIR}${VERSE_ID}.mp3`;
+
+// How long to pause AFTER each part (relative to that part’s duration)
+const ECHO_PAUSE_MULT = 1.10; // 10% extra breathing room
+
+function echoPartFile(suffix){
+  return `${AUDIO_DIR}${VERSE_ID}${suffix}.mp3`;
+}
+
+
 document.title = `Bible Verse Memory • ${VERSE_REF}`;
 
 
@@ -958,18 +979,20 @@ function setHasLearned(val){
 
 
 const AppState = {
-    
-  screen: "title", // title | instructions | full | step | final | done | extraGate | extraMenu | extraGame
-  stepIndex: 0,    // 0..HIDE_PLAN.length (step pages are 1..HIDE_PLAN.length)
-  extraGameId: null, // which extra practice game is selected
-  extraGameState: null, // holds state for extra practice games
+  screen: "title", // title | instructions | listen | echo | step | final | done | extraGate | extraMenu | extraGame
+  stepIndex: 0,
+  extraGameId: null,
+  extraGameState: null,
   hintCountFinal: 0,
-  revealedOnFinal: new Set(), // token indices revealed on final page
+  revealedOnFinal: new Set(),
   isAnimating: false,
   hasLearnedVerse: getHasLearned(),
 
-
+  // Learn flow flags
+  listenDone: false,
+  echoDone: false,
 };
+
 
 const TokenType = {
   SPACE: "space",
@@ -1321,6 +1344,145 @@ stopNextGate();   // ✅ add this line
     audioEl.load();
   } catch (e) {}
 }
+
+function renderVerseFillNode(text){
+  const node = el("div", { class:"verse verse-fill", "aria-label": text });
+
+  // Create spans per character (keeps spaces & punctuation)
+  for (let i = 0; i < text.length; i++){
+    const ch = text[i];
+    const sp = document.createElement("span");
+    sp.textContent = ch;
+    node.appendChild(sp);
+  }
+  return node;
+}
+
+function fillVerseToProgress(verseNode, progress01){
+  const spans = verseNode.querySelectorAll("span");
+  const n = spans.length;
+  const filledCount = Math.max(0, Math.min(n, Math.floor(progress01 * n)));
+
+  for (let i = 0; i < n; i++){
+    spans[i].classList.toggle("filled", i < filledCount);
+  }
+}
+
+// Plays an audio file fully, no pausing allowed.
+// Returns: { ok: true, duration: seconds } OR { ok: false, error: "..." }
+async function playForcedAudio(file, { onProgress } = {}){
+  return new Promise((resolve) => {
+    // Stop anything currently playing
+    try { audioEl.pause(); } catch(e) {}
+    audioEl.currentTime = 0;
+
+    // Set file + force the browser to load it (important for iOS/Safari)
+    audioEl.src = file;
+    try { audioEl.load(); } catch(e) {}
+
+    let finished = false;
+
+    const fail = (msg) => {
+      cleanup();
+      resolve({ ok:false, error: msg });
+    };
+
+    const tryPlay = async () => {
+      try {
+        await audioEl.play();
+      } catch (e) {
+        // Don't silently succeed — report failure
+        fail(`Could not play: ${file}`);
+      }
+    };
+
+    const onTime = () => {
+      if (!audioEl.duration || !isFinite(audioEl.duration)) return;
+      const p = audioEl.currentTime / audioEl.duration;
+      if (onProgress) onProgress(Math.max(0, Math.min(1, p)));
+    };
+
+    const onPause = () => {
+      // Force resume unless we’re truly done
+      if (!finished && audioEl.currentTime < (audioEl.duration || Infinity)){
+        tryPlay();
+      }
+    };
+
+    const onEnd = () => {
+      finished = true;
+      if (onProgress) onProgress(1);
+      const d = (Number.isFinite(audioEl.duration) ? audioEl.duration : NaN);
+      cleanup();
+      resolve({ ok:true, duration: d });
+    };
+
+    const onErr = () => {
+      fail(`Audio file not found or failed to load: ${file}`);
+    };
+
+    const cleanup = () => {
+      audioEl.removeEventListener("timeupdate", onTime);
+      audioEl.removeEventListener("pause", onPause);
+      audioEl.removeEventListener("ended", onEnd);
+      audioEl.removeEventListener("error", onErr);
+    };
+
+    audioEl.addEventListener("timeupdate", onTime);
+    audioEl.addEventListener("pause", onPause);
+    audioEl.addEventListener("ended", onEnd);
+    audioEl.addEventListener("error", onErr);
+
+    // Start playback (user gesture comes from the button click)
+    tryPlay();
+  });
+}
+
+
+
+async function playEchoSequence({ onStatus } = {}){
+  // Ensure we start clean
+  try { audioEl.pause(); } catch(e) {}
+  audioEl.currentTime = 0;
+
+  const total = ECHO_PART_SUFFIXES.length;
+
+  for (let idx = 0; idx < total; idx++){
+    const partNum = idx + 1;
+    if (onStatus) onStatus(partNum, total);
+
+    const file = echoPartFile(ECHO_PART_SUFFIXES[idx]);
+
+    // Play forced
+    const result = await playForcedAudio(file);
+
+    // If it failed, stop the whole sequence and report failure
+    if (!result.ok){
+      showModal({
+        title: "Echo audio problem",
+        body: result.error || "The audio could not play.",
+        actions: [btn("OK", { onClick: () => closeModal() })]
+      });
+      return false;
+    }
+
+    // Pause equal to duration * multiplier (+10%)
+    const dur = result.duration;
+    const pauseMs = (isFinite(dur) ? dur : 0) * 1000 * ECHO_PAUSE_MULT;
+    if (pauseMs > 0){
+      await new Promise(r => setTimeout(r, pauseMs));
+    }
+  }
+
+  // Restore main verse audio file for later Read-it-to-me screens
+  audioEl.src = AUDIO_FILE;
+  audioEl.currentTime = 0;
+  try { audioEl.load(); } catch(e) {}
+
+  return true;
+}
+
+
 
 function updateReadButtonLabel(){
   const b = document.getElementById("btnRead");
@@ -2712,7 +2874,9 @@ function render(){
 
   if (AppState.screen === "title") return renderTitle();
   if (AppState.screen === "instructions") return renderInstructions();
-  if (AppState.screen === "full") return renderFullVerse();
+  if (AppState.screen === "listen") return renderListen();
+  if (AppState.screen === "echo") return renderEcho();
+
   if (AppState.screen === "step") return renderStep();
   if (AppState.screen === "final") return renderFinal();
   if (AppState.screen === "done") return renderDone();
@@ -2778,7 +2942,10 @@ function renderInstructions(){
     btn("Continue", {
       onClick: () => {
         resetAudioForNewPage();
-        AppState.screen = "full";
+        AppState.screen = "listen";
+        AppState.listenDone = false;
+        AppState.echoDone = false;
+
         render();
       }
     }),
@@ -2820,52 +2987,134 @@ function renderVerseCardHeader({stepLabel=null, stepProgress=null} = {}){
   return box;
 }
 
-async function renderFullVerse(){
-
+async function renderListen(){
   setHeaderVisible(true);
+
   screenRoot.appendChild(el("div", { class:"kicker", text:"Step 1" }));
   screenRoot.appendChild(el("h1", { text:"Read the verse" }));
-  screenRoot.appendChild(el("p", { text:"Read it slowly. You can tap “Read it to Me” to listen." }));
+  screenRoot.appendChild(el("p", { text:"Listen to the verse all the way through." }));
 
-  const box = renderVerseCardHeader({ stepLabel:"Full verse", stepProgress: 0 });
-  box.appendChild(renderVerse({mode:"full"}));
+  const box = renderVerseCardHeader({ stepLabel:"Listen", stepProgress: 0 });
+
+  // Verse area with per-letter spans we can “fill”
+  const verseNode = renderVerseFillNode(VERSE_TEXT);
+  box.appendChild(verseNode);
+
   box.appendChild(
-  el("div", {
-    class: "scripture-credit",
-    text: "Scripture taken from the Holy Bible, New International Version® (NIV®). © 1973, 1978, 1984, 2011 by Biblica, Inc. Used by permission."
-  })
-);
-screenRoot.appendChild(box);
+    el("div", {
+      class: "scripture-credit",
+      text: "Scripture taken from the Holy Bible, New International Version® (NIV®). © 1973, 1978, 1984, 2011 by Biblica, Inc. Used by permission."
+    })
+  );
 
+  screenRoot.appendChild(box);
 
-  // Sticky bar: audio + next
+  // Sticky: NO progress circle here. NO “Read it to Me”.
+  const listenBtn = btn(AppState.listenDone ? "Next" : "Listen to the verse.", {
+    onClick: async () => {
+      if (AppState.listenDone){
+        resetAudioForNewPage();
+        navigateWithTransition("forward", () => {
+          AppState.screen = "echo";
+        });
+        return;
+      }
+
+      // Start forced full-verse play
+      listenBtn.disabled = true;
+      await playForcedAudio(AUDIO_FILE, {
+        onProgress: (p) => fillVerseToProgress(verseNode, p)
+      });
+
+      AppState.listenDone = true;
+      listenBtn.disabled = false;
+      listenBtn.textContent = "Next";
+    }
+  });
+
   setSticky(true,
     [
-      el("button", {
-  id: "btnRead",
-  class: "btn secondary",
-  type: "button",
-  text: audioEl.paused ? "🔊 Read it to Me" : "Pause Reading",
-  onclick: () => toggleAudio()
-})
-
+      btn("Back", {
+        primary:false,
+        onClick: () => {
+          resetAudioForNewPage();
+          navigateWithTransition("back", () => {
+            AppState.screen = "instructions";
+          });
+        }
+      })
     ],
-   [
-  await makeGatedNextNode(() =>
-    btn("Start Practice", {
-      onClick: () => {
+    [ listenBtn ]
+  );
+}
+
+async function renderEcho(){
+  setHeaderVisible(true);
+
+  screenRoot.appendChild(el("div", { class:"kicker", text:"Step 2" }));
+  screenRoot.appendChild(el("h1", { text:"Echo the verse" }));
+  screenRoot.appendChild(el("p", { text:"Echo the verse after me." }));
+
+  const box = renderVerseCardHeader({ stepLabel:"Echo", stepProgress: 0 });
+  box.appendChild(renderVerse({ mode:"full" }));
+  box.appendChild(
+    el("div", {
+      class: "scripture-credit",
+      text: "Scripture taken from the Holy Bible, New International Version® (NIV®). © 1973, 1978, 1984, 2011 by Biblica, Inc. Used by permission."
+    })
+  );
+  screenRoot.appendChild(box);
+
+  const repeatBtn = btn(AppState.echoDone ? "Next" : "Repeat the verse.", {
+    onClick: async () => {
+      if (AppState.echoDone){
         resetAudioForNewPage();
         navigateWithTransition("forward", () => {
           AppState.screen = "step";
           AppState.stepIndex = 1;
         });
+        return;
       }
-    })
-  )
-]
 
+      repeatBtn.disabled = true;
+
+    // Play all parts: a, b, c, d (or however many you set)
+    const ok = await playEchoSequence({
+      onStatus: (i, total) => {
+        repeatBtn.textContent = `Playing ${i}/${total}…`;
+      }
+    });
+
+    repeatBtn.disabled = false;
+
+    if (!ok){
+      // Stay on this screen and keep the button as Repeat
+      repeatBtn.textContent = "Repeat the verse.";
+      return;
+    }
+
+    AppState.echoDone = true;
+    repeatBtn.textContent = "Next";
+
+    }
+  });
+
+  setSticky(true,
+    [
+      btn("Back", {
+        primary:false,
+        onClick: () => {
+          resetAudioForNewPage();
+          navigateWithTransition("back", () => {
+            AppState.screen = "listen";
+          });
+        }
+      })
+    ],
+    [ repeatBtn ]
   );
 }
+
 
 async function renderStep(){
 
@@ -2908,7 +3157,7 @@ setSticky(true,
         resetAudioForNewPage();
         navigateWithTransition("back", () => {
           if (step <= 1){
-            AppState.screen = "full";
+            AppState.screen = "echo";
           } else {
             AppState.stepIndex = step - 1;
           }
