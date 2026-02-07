@@ -1040,6 +1040,10 @@ function applyVerseConfig(cfg){
   tokens = tokenize(VERSE_TEXT);
   planResolved = resolveHidePlanToTokenIndices(tokens, HIDE_PLAN);
 
+  reshuffleHidePlan();
+
+
+
   // Now that VERSE_ID exists, refresh the learned state
   AppState.hasLearnedVerse = getHasLearned();
 }
@@ -1176,6 +1180,21 @@ function tokenize(text){
 
 let tokens = [];
 let planResolved = [];
+let planResolvedMixed = [];
+
+function shuffleArray(arr){
+  // Fisher–Yates shuffle (in-place)
+  for (let i = arr.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function reshuffleHidePlan(){
+  // Make a shuffled COPY so planResolved stays intact
+  planResolvedMixed = shuffleArray([...planResolved]);
+}
 
 
 function resolveHidePlanToTokenIndices(tokens, plan){
@@ -1736,7 +1755,8 @@ function buildTargetMap(activePlanItems){
 function renderVerse({mode, activeCount=0, onHint=null}){
   // mode: "full" | "steps" | "final"
   const container = el("div", { class: "verse" });
-  const activeItems = planResolved.slice(0, activeCount);
+  const activeItems = planResolvedMixed.slice(0, activeCount);
+
   const targets = buildTargetMap(activeItems);
 
   tokens.forEach((tok, idx) => {
@@ -3754,6 +3774,8 @@ function restart(){
   AppState.stepIndex = 0;
   AppState.hintCountFinal = 0;
   AppState.revealedOnFinal.clear();
+  reshuffleHidePlan();
+
   render();
 }
 
