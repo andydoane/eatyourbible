@@ -384,6 +384,21 @@
   margin: 2px 0 6px;
 }
 
+/* Verse Chain: reserve verse height so the UI below doesn't jump */
+.vc-verse-stage{
+  position: relative;
+}
+
+/* Hidden full-verse measurer (doesn't affect layout) */
+.vc-verse-measure{
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  visibility: hidden;
+  pointer-events: none;
+  white-space: normal; /* ensure wrapping matches */
+}
 
 
     button, .btn{
@@ -3133,6 +3148,34 @@ function vcPickDecoys(needCount, bannedSetLower){
   return out;
 }
 
+function vcEnsureReservedVerseHeight(stageEl, fullText, st){
+  // Only measure if we haven't yet, OR if width changed (phone rotated)
+  const w = stageEl.clientWidth || 0;
+  if (st._vcStageWidth === w && st._vcStageHeight) {
+    stageEl.style.height = st._vcStageHeight + "px";
+    return;
+  }
+
+  // Create an invisible measurer with the full verse
+  const measureEl = document.createElement("div");
+  measureEl.className = "vc-verse-measure";
+  measureEl.textContent = fullText;
+
+  stageEl.appendChild(measureEl);
+
+  // Measure height the browser needs to wrap the full text
+  const h = measureEl.scrollHeight;
+
+  // Clean up and lock height
+  stageEl.removeChild(measureEl);
+
+  st._vcStageWidth = w;
+  st._vcStageHeight = h;
+
+  stageEl.style.height = h + "px";
+}
+
+
 function vcParseVerseRefParts(){
   // Works with formats like:
   // "Luke 2:11" or "Luke 2:11 (ESV)" or "Luke 2:11–12 (NIV)"
@@ -3331,13 +3374,23 @@ function renderVerseChainGame(){
   screenRoot.appendChild(el("div", { class:"kicker", text:"Extra Practice" }));
   screenRoot.appendChild(el("h1", { text:"Verse Chain" }));
 
-  // Top verse area (use the same verse-size styling you already use elsewhere)
-  const builtText = st.built.join(" ");
-  screenRoot.appendChild(
-    el("div", { class:"verse", style:"text-align:center; margin-top: 8px; margin-bottom: 10px;" }, [
-      el("div", { text: builtText + (st.done ? "" : " …") })
-    ])
-  );
+// Top verse area (reserved height so the carousel doesn't shift)
+const builtText = st.built.join(" ");
+const fullText  = st.words.join(" "); // full verse words (no ellipsis)
+
+// Stage element (visible)
+const verseStage = el("div", {
+  class: "verse vc-verse-stage",
+  style: "text-align:center; margin-top: 8px; margin-bottom: 10px;"
+}, [
+  el("div", { text: builtText + (st.done ? "" : " …") })
+]);
+
+screenRoot.appendChild(verseStage);
+
+// Measure + lock height based on FULL verse
+vcEnsureReservedVerseHeight(verseStage, fullText, st);
+
 
   if (st.done){
     screenRoot.appendChild(el("p", { style:"text-align:center; margin-top:10px;", text:"✅ You finished the verse!" }));
