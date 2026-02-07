@@ -375,6 +375,16 @@
   color: rgba(255,255,255,.6);
 }
 
+/* Verse Chain: big word in the choice carousel */
+.vc-choice-word{
+  font-size: clamp(25px, 2.8vw, 50px); /* matches .verse sizing */
+  font-weight: 900;
+  line-height: 1.15;
+  text-align: center;
+  margin: 2px 0 6px;
+}
+
+
 
     button, .btn{
       appearance:none;
@@ -3262,8 +3272,7 @@ function renderVerseChainGame(){
       onclick: vcChooseCurrentOption,
       title:"Tap to choose"
     }, [
-      el("div", { class:"activity-emoji", text:"🧩" }),
-      el("div", { class:"activity-title", text: current }),
+      el("div", { class:"vc-choice-word", text: current }),
       el("div", { class:"activity-desc", text:"Tap to pick" }),
       el("div", { class:"activity-meta", text:`${st.nextIndex + 1} / ${st.words.length}` })
     ]),
