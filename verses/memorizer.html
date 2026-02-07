@@ -3274,7 +3274,6 @@ function renderVerseChainGame(){
     }, [
       el("div", { class:"vc-choice-word", text: current }),
       el("div", { class:"activity-desc", text:"Tap to pick" }),
-      el("div", { class:"activity-meta", text:`${st.nextIndex + 1} / ${st.words.length}` })
     ]),
     el("button", { class:"activity-arrow", type:"button", text:"›", onclick: vcNextOption })
   ]);
