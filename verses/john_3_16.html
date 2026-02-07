@@ -451,7 +451,6 @@
   color: white;
   font-weight: 900;
   text-align: center;
-  text-transform: uppercase;
   letter-spacing: .05em;
   font-size: clamp(28px, 6.5vw, 56px);
   line-height: 1.05;
@@ -862,17 +861,17 @@ body.mode-scramble .phrase-stage{
     </div>
   </div>
 
-  <!-- Modal overlay -->
-  <div class="modal" id="modalBox" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <div class="modal">
-      <div class="m-inner">
-        <h2 id="modalTitle">Modal</h2>
-        <div id="modalBody">Body</div>
-
-      </div>
-      <div class="m-actions" id="modalActions"></div>
+<!-- Modal overlay -->
+<div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal" id="modalBox">
+    <div class="m-inner">
+      <h2 id="modalTitle">Modal</h2>
+      <div id="modalBody">Body</div>
     </div>
+    <div class="m-actions" id="modalActions"></div>
   </div>
+</div>
+
 
   <audio id="audio" preload="metadata"></audio>
 
@@ -897,14 +896,26 @@ const BOUNCE_SPAWN_MIN_DIST = 84;     // px (try to spawn chips apart)
 
 
 const VERSE_ID   = "john_3_16";
-const ECHO_PART_SUFFIXES = ["a","b","c","d"];
+const ECHO_PART_COUNT = 4; // ✅ change this to 5, 6, etc.
+
+function makeEchoSuffixes(count){
+  const letters = "abcdefghijklmnopqrstuvwxyz";
+  const out = [];
+  const n = Math.max(0, Math.min(count, letters.length)); // cap at 26
+  for (let i = 0; i < n; i++) out.push(letters[i]);
+  return out;
+}
+
+const ECHO_PART_SUFFIXES = makeEchoSuffixes(ECHO_PART_COUNT);
+
+
 const VERSE_REF = verseIdToRef(VERSE_ID);
 const APP_TITLE = `🧠 Let's memorize ${VERSE_REF.replace(" (NIV)", "")}`;
 const AUDIO_DIR = "verse_audio/";
 const AUDIO_FILE = `${AUDIO_DIR}${VERSE_ID}.mp3`;
 
 // How long to pause AFTER each part (relative to that part’s duration)
-const ECHO_PAUSE_MULT = 1.10; // 10% extra breathing room
+const ECHO_PAUSE_MULT = 1.15; // 10% extra breathing room
 
 function echoPartFile(suffix){
   return `${AUDIO_DIR}${VERSE_ID}${suffix}.mp3`;
@@ -3126,7 +3137,7 @@ async function renderEcho(){
       repeatBtn.disabled = true;
 
       // ✅ show “Repeat after me!” overlay, then start audio
-await showHeroModal("Repeat after me!", 2000);
+await showHeroModal("Repeat after me", 2000);
 
     // Play all parts: a, b, c, d (or however many you set)
     const ok = await playEchoSequence({
