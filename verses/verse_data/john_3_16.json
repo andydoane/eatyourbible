@@ -1,7 +1,12 @@
 {
   "verseId": "john_3_16",
   "translation": "NIV",
-  "echoPartCount": 4,
+  "echoParts": [
+  "For God so loved the world",
+  "that he gave his one and only Son",
+  "that whoever believes in him",
+  "should not perish, but have eternal life."
+],
   "verseText": "For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life.",
   "attribution": "Scripture taken from the Holy Bible, New International Version® (NIV®). © 1973, 1978, 1984, 2011 by Biblica, Inc. Used by permission.",
   "hidePlan": [
