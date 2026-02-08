@@ -3979,7 +3979,9 @@ const helperLine = el("div", {
 
   // Initial message (no popup)
   verseStage.textContent = "Repeat the verse after me! Click the button to start.";
-  helperLine.textContent = "";
+  helperLine.textContent = "Now you say it!";
+  helperLine.style.opacity = "0.15";
+
   
 
 
@@ -4004,7 +4006,9 @@ const helperLine = el("div", {
       repeatBtn.disabled = true;
 
       // Countdown: 3..2..1 (in the verse area)
-      helperLine.textContent = "";
+      helperLine.textContent = "Now you say it!";
+    helperLine.style.opacity = "0.15";
+
       
 
       for (const n of [3,2,1]){
@@ -4032,7 +4036,11 @@ const helperLine = el("div", {
         const file = echoPartFile(suffix);
 
         verseStage.textContent = phrase;
-        helperLine.textContent = ""; // while audio plays, no prompt
+
+        // Dim while the MP3 is playing
+        helperLine.textContent = "Now you say it!";
+        helperLine.style.opacity = "0.15";
+
 
         const result = await playForcedAudio(file);
 
@@ -4044,7 +4052,9 @@ const helperLine = el("div", {
         }
 
         // Prompt kids to repeat during the pause
+        helperLine.textContent = "Now you say it!";
         helperLine.style.opacity = "1"; // bright when it’s their turn
+
 
         
 
