@@ -1006,6 +1006,40 @@ overflow: hidden;
 }
 
 
+/* =========================
+   INTRO (Tap to start)
+   ========================= */
+.intro-wrap{
+  min-height: calc(100vh - 24px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding: 26px 18px;
+}
+
+.intro-card{
+  width: min(520px, 92vw);
+  text-align:center;
+}
+
+.intro-logo{
+  width: min(280px, 70vw);
+  height: auto;
+  display:block;
+  margin: 0 auto 18px;
+}
+
+.intro-kicker{
+  font-weight: 800;
+  letter-spacing: .4px;
+  margin-bottom: 10px;
+  opacity: .9;
+}
+
+.intro-sub{
+  margin: 0 0 18px;
+  opacity: .85;
+}
 
 
   </style>
@@ -1094,6 +1128,11 @@ let VERSE_REF = "";
 let APP_TITLE = "";
 const AUDIO_DIR = "verse_audio/";
 let AUDIO_FILE = "";
+
+const INTRO_IMG_1 = "verse_images/eyb_logo_1.png";
+const INTRO_IMG_2 = "verse_images/eyb_logo_2.png";
+const INTRO_SFX   = "verse_audio/sound_chomp.mp3";
+
 
 
 // --- Prevent iOS double-tap zoom on carousel arrows/cards ---
@@ -1281,7 +1320,7 @@ function setHasLearned(val){
 
 
 const AppState = {
-  screen: "title", // title | instructions | listen | echo | step | final | done | extraGate | extraMenu | extraGame
+  screen: "intro", // title | instructions | listen | echo | step | final | done | extraGate | extraMenu | extraGame
   stepIndex: 0,
     extraMenuIndex: 0,
 
@@ -3781,6 +3820,7 @@ function render(){
   // Default sticky controls off; each screen configures it.
   setSticky(false);
 
+  if (AppState.screen === "intro") return renderIntro();
   if (AppState.screen === "title") return renderTitle();
   if (AppState.screen === "instructions") return renderInstructions();
   if (AppState.screen === "listen") return renderListen();
@@ -3797,6 +3837,52 @@ function render(){
 
 
 }
+
+function renderIntro(){
+  setHeaderVisible(false);
+
+  // Make intro feel full-screen (no “card” look)
+  setCardMode("no-card");
+  setSticky(false);
+
+  const logo = el("img", { class:"intro-logo" });
+  logo.src = INTRO_IMG_1;
+  logo.alt = "Intro";
+
+  const startBtn = btn("Tap to Start", {
+    onClick: async () => {
+      startBtn.disabled = true;
+
+      // Try to play the chomp (this must happen on tap to avoid autoplay blocking)
+      const sfx = new Audio(INTRO_SFX);
+      try { await sfx.play(); } catch (e) {}
+
+      // Quick “swap image” animation like the Kahoot chomp vibe
+      logo.src = INTRO_IMG_2;
+
+      // Optional: swap back after a short beat
+      setTimeout(() => { logo.src = INTRO_IMG_1; }, 220);
+
+      // Move on to the real app
+      setTimeout(() => {
+        AppState.screen = "title";
+        render();
+      }, 600);
+    }
+  });
+
+  const wrap = el("div", { class:"intro-wrap" }, [
+    el("div", { class:"intro-card" }, [
+      el("div", { class:"intro-kicker", text:"Ready to memorize?" }),
+      logo,
+      el("p", { class:"intro-sub", text:"Tap to start!" }),
+      el("div", { class:"controls" }, [ startBtn ])
+    ])
+  ]);
+
+  screenRoot.appendChild(wrap);
+}
+
 
 function renderTitle(){
   setHeaderVisible(true);
