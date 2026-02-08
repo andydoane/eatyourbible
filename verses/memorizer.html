@@ -3993,7 +3993,7 @@ async function renderListen(){
   screenRoot.appendChild(box);
 
   // Sticky: NO progress circle here. NO “Read it to Me”.
-  const listenBtn = btn(AppState.listenDone ? "Next" : "Listen to the verse.", {
+  const listenBtn = btn(AppState.listenDone ? "Next" : "Listen to the verse", {
     onClick: async () => {
       if (AppState.listenDone){
         resetAudioForNewPage();
