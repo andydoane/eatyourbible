@@ -1070,6 +1070,7 @@ let TRANSLATION = null;
 let ATTRIBUTION = "";
 let ECHO_PART_COUNT = 0;
 let ECHO_PART_SUFFIXES = [];
+let ECHO_PARTS = [];
 let VERSE_TEXT = "";
 let HIDE_PLAN = [];
 let VERSE_REF = "";
@@ -1135,6 +1136,9 @@ function applyVerseConfig(cfg){
   : 0;
 
   ECHO_PART_SUFFIXES = makeEchoSuffixes(ECHO_PART_COUNT);
+
+  ECHO_PARTS = Array.isArray(cfg.echoParts) ? cfg.echoParts : [];
+
 
   VERSE_TEXT = cfg.verseText || "";
   HIDE_PLAN = Array.isArray(cfg.hidePlan) ? cfg.hidePlan : [];
@@ -1448,22 +1452,7 @@ function closeModal(){
   overlay.classList.remove("show");
 }
 
-// Show a big green “hero” modal for a short time, then auto-close.
-function showHeroModal(message, ms = 1800){
-  const modalBox = document.getElementById("modalBox");
-  if (modalBox) modalBox.classList.add("hero");
 
-  // Use your existing modal system, but with no title/actions.
-  showModal({ title: "", body: message, actions: [] });
-
-  return new Promise((resolve) => {
-    window.setTimeout(() => {
-      closeModal();
-      if (modalBox) modalBox.classList.remove("hero");
-      resolve();
-    }, ms);
-  });
-}
 
 
 overlay.addEventListener("click", (e) => {
@@ -3957,20 +3946,35 @@ async function renderEcho(){
 
   screenRoot.appendChild(el("div", { class:"kicker", text:"Step 2" }));
   screenRoot.appendChild(el("h1", { text:"🗣️ Echo the verse" }));
-  screenRoot.appendChild(el("p", { text:"Echo the verse after me." }));
+  screenRoot.appendChild(el("p", { text:"Repeat each part after the audio." }));
 
   const box = renderVerseCardHeader({ stepLabel:"Echo", stepProgress: 0 });
-  box.appendChild(renderVerse({ mode:"full" }));
+
+  // ✅ Verse “stage” area (we control the text now)
+  const verseStage = el("div", { class:"verse" });
+  const helperLine = el("div", {
+    class: "tip",
+    style: "margin-top:10px; text-align:center;",
+    text: ""
+  });
+
+  // Initial message (no popup)
+  verseStage.textContent = "Repeat the verse after me! Click the button to start.";
+  helperLine.textContent = "";
+
+  box.appendChild(verseStage);
+  box.appendChild(helperLine);
+
   box.appendChild(
     el("div", {
       class: "scripture-credit",
       text: ATTRIBUTION || ""
-
     })
   );
+
   screenRoot.appendChild(box);
 
-  const repeatBtn = btn(AppState.echoDone ? "Next" : "Repeat the verse.", {
+  const repeatBtn = btn(AppState.echoDone ? "Next" : "Repeat the Verse", {
     onClick: async () => {
       if (AppState.echoDone){
         resetAudioForNewPage();
@@ -3981,29 +3985,61 @@ async function renderEcho(){
         return;
       }
 
+      // Disable button for the entire echo experience
       repeatBtn.disabled = true;
 
-      // ✅ show “Repeat after me!” overlay, then start audio
-await showHeroModal("Repeat after me", 2000);
-
-    // Play all parts: a, b, c, d (or however many you set)
-    const ok = await playEchoSequence({
-      onStatus: (i, total) => {
-        repeatBtn.textContent = `Playing ${i}/${total}…`;
+      // Countdown: 3..2..1 (in the verse area)
+      helperLine.textContent = "";
+      for (const n of [3,2,1]){
+        verseStage.textContent = String(n);
+        await new Promise(r => setTimeout(r, 1000));
       }
-    });
 
-    repeatBtn.disabled = false;
+      // Safety: if echoParts missing, fail gracefully
+      if (!Array.isArray(ECHO_PARTS) || ECHO_PARTS.length === 0){
+        verseStage.textContent = "No echo parts found in the JSON file.";
+        helperLine.textContent = "";
+        repeatBtn.disabled = false;
+        return;
+      }
 
-    if (!ok){
-      // Stay on this screen and keep the button as Repeat
-      repeatBtn.textContent = "Repeat the verse.";
-      return;
-    }
+      // Play each echo part:
+      // - show phrase while playing
+      // - then show “Now you say it!” during the pause
+      for (let idx = 0; idx < ECHO_PARTS.length; idx++){
+        const phrase = ECHO_PARTS[idx];
+        const suffix = ECHO_PART_SUFFIXES[idx]; // a, b, c...
+        const file = echoPartFile(suffix);
 
-    AppState.echoDone = true;
-    repeatBtn.textContent = "Next";
+        verseStage.textContent = phrase;
+        helperLine.textContent = ""; // while audio plays, no prompt
 
+        const result = await playForcedAudio(file);
+
+        if (!result.ok){
+          verseStage.textContent = "Echo audio problem.";
+          helperLine.textContent = result.error || "The audio could not play.";
+          repeatBtn.disabled = false;
+          return;
+        }
+
+        // Prompt kids to repeat during the pause
+        helperLine.textContent = "Now you say it!";
+
+        const dur = result.duration;
+        const pauseMs = (isFinite(dur) ? dur : 0) * 1000 * ECHO_PAUSE_MULT;
+        if (pauseMs > 0){
+          await new Promise(r => setTimeout(r, pauseMs));
+        }
+      }
+
+      // Done!
+      helperLine.textContent = "";
+      verseStage.textContent = "Great job!";
+
+      AppState.echoDone = true;
+      repeatBtn.textContent = "Next";
+      repeatBtn.disabled = false;
     }
   });
 
@@ -4022,6 +4058,7 @@ await showHeroModal("Repeat after me", 2000);
     [ repeatBtn ]
   );
 }
+
 
 
 async function renderStep(){
