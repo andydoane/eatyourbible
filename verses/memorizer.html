@@ -1130,7 +1130,10 @@ function applyVerseConfig(cfg){
   VERSE_ID = cfg.verseId;
   TRANSLATION = cfg.translation || "";
   ATTRIBUTION = cfg.attribution || "";
-  ECHO_PART_COUNT = Number(cfg.echoPartCount || 0);
+  ECHO_PART_COUNT = Array.isArray(cfg.echoParts)
+  ? cfg.echoParts.length
+  : 0;
+
   ECHO_PART_SUFFIXES = makeEchoSuffixes(ECHO_PART_COUNT);
 
   VERSE_TEXT = cfg.verseText || "";
