@@ -1014,6 +1014,38 @@ overflow: hidden;
   animation: introLogoShake 0.4s ease-in-out 0.6s 1;
 }
 
+/* --- Intro text (Kahoot-style fade-in) --- */
+.intro-line{
+  opacity: 0;
+}
+
+.intro-line-1{
+  font-size: clamp(1rem, 2.5vw, 1.5rem);
+  font-weight: 400;
+  animation: introFadeIn 0.9s ease-out forwards;
+  animation-delay: 0.2s;
+}
+
+.intro-line-2{
+  font-size: clamp(1.6rem, 4vw, 2.6rem);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  animation: introFadeIn 0.9s ease-out forwards;
+  animation-delay: 1.0s;
+}
+
+@keyframes introFadeIn{
+  from{
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to{
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+
 /* Logo shake keyframes (Kahoot-style) */
 @keyframes introLogoShake {
   0%   { transform: rotate(0deg); }
@@ -3847,12 +3879,18 @@ function renderIntro(){
     }
   });
 
-    const wrap = el("div", { class:"intro-wrap" }, [
-      el("div", { class:"intro-card" }, [
-        logo,
-        el("div", { class:"controls" }, [ startBtn ])
-      ])
-    ]);
+      const wrap = el("div", { class:"intro-wrap" }, [
+        el("div", { class:"intro-card" }, [
+          logo,
+
+          // Kahoot-style fade-in lines
+          el("div", { class:"intro-line intro-line-1", text:"Brought to you by" }),
+          el("div", { class:"intro-line intro-line-2", text:"eatyourbible.com" }),
+
+          el("div", { class:"controls" }, [ startBtn ])
+        ])
+      ]);
+
 
 
   screenRoot.appendChild(wrap);
