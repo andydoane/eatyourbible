@@ -3456,13 +3456,15 @@ function vcEnsureReservedVerseHeight(stageEl, fullText, visibleText, st){
   const hVisible = measure(visibleText);
 
 // Only ever GROW the reserved height (never shrink mid-game)
-const h = Math.max(st._vcStageHeight || 0, hFull, hVisible);
+const baseH = Math.max(st._vcStageHeight || 0, hFull, hVisible);
 
-// Add 15% extra breathing room
-const paddedH = Math.ceil(h * 1.15);
+// Store the unpadded base height so it does NOT compound
+st._vcStageHeight = baseH;
 
-st._vcStageHeight = paddedH;
+// Apply 15% padding ONLY when setting the CSS height
+const paddedH = Math.ceil(baseH * 1.15);
 stageEl.style.height = paddedH + "px";
+
 
 }
 
