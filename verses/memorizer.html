@@ -3853,10 +3853,9 @@ const c = el("div", { class:"controls" }, [
 function renderInstructions(){
   setHeaderVisible(true);
   screenRoot.appendChild(el("div", { class:"kicker", text:"Instructions" }));
-  screenRoot.appendChild(el("h1", { text:"How It Works" }));
-  screenRoot.appendChild(el("h3", { text:"🔴 On each page, read the verse out loud. " }));
-  screenRoot.appendChild(el("h3", { text:"🔴 Each time you click 'Next,' a different word from the verse will be replaced with emojis or blanks." }));
-  screenRoot.appendChild(el("h3", { text:"🔴 Try your best to say the verse again, even with these missing words." }));
+  screenRoot.appendChild(el("h1", { text:"Disappearing words" }));
+    screenRoot.appendChild(el("h3", { text:"🔴 Each page, a different word will be replaced with emojis or blanks." }));
+  screenRoot.appendChild(el("h3", { text:"🔴 On each page, read the verse out loud, trying to guess the missing words. " }));
 
   const c = el("div", { class:"controls" }, [
     btn("Continue", {
@@ -4119,7 +4118,7 @@ async function renderStep(){
   const step = AppState.stepIndex; // 1..totalSteps
 
   screenRoot.appendChild(el("div", { class:"kicker", text:`Practice` }));
-  screenRoot.appendChild(el("h1", { text:"💬 Say it again" }));
+  screenRoot.appendChild(el("h1", { text:"💬 Say the Verse" }));
   screenRoot.appendChild(el("p", { text:"If you forget a hidden word, tap it to reveal the answer." }));
 
   const label = `Page ${step} of ${totalSteps}`;
