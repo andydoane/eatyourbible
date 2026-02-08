@@ -612,6 +612,8 @@ user-select: none;
   letter-spacing: .02em;
   font-size: clamp(18px, 3vw, 28px); /* bigger text */
   line-height: 1.15;
+    transition: opacity 200ms ease;
+
 }
 
 
@@ -3969,15 +3971,16 @@ async function renderEcho(){
   const verseStage = el("div", { class:"verse" });
 const helperLine = el("div", {
   class: "echo-prompt",
-  style: "display:none;", // hidden until we need it
-  text: ""
+  style: "opacity:0.15;",   // dim by default
+  text: "Now you say it!"
 });
+
 
 
   // Initial message (no popup)
   verseStage.textContent = "Repeat the verse after me! Click the button to start.";
   helperLine.textContent = "";
-  helperLine.style.display = "none";
+  
 
 
   box.appendChild(verseStage);
@@ -4002,7 +4005,7 @@ const helperLine = el("div", {
 
       // Countdown: 3..2..1 (in the verse area)
       helperLine.textContent = "";
-      helperLine.style.display = "none";
+      
 
       for (const n of [3,2,1]){
         verseStage.textContent = String(n);
@@ -4012,8 +4015,9 @@ const helperLine = el("div", {
       // Safety: if echoParts missing, fail gracefully
       if (!Array.isArray(ECHO_PARTS) || ECHO_PARTS.length === 0){
         verseStage.textContent = "No echo parts found in the JSON file.";
-        helperLine.textContent = "";
-        helperLine.style.display = "none";
+        helperLine.style.opacity = "0.15"; // dim while audio plays
+
+        
 
         repeatBtn.disabled = false;
         return;
@@ -4040,8 +4044,9 @@ const helperLine = el("div", {
         }
 
         // Prompt kids to repeat during the pause
-        helperLine.textContent = "Now you say it!";
-        helperLine.style.display = "";
+        helperLine.style.opacity = "1"; // bright when it’s their turn
+
+        
 
 
         const dur = result.duration;
@@ -4052,8 +4057,9 @@ const helperLine = el("div", {
       }
 
       // Done!
-      helperLine.textContent = "";
-      helperLine.style.display = "none";
+      helperLine.style.opacity = "0.15";
+
+     
 
       verseStage.textContent = "Great job!";
 
