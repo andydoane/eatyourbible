@@ -3674,6 +3674,9 @@ const verseStage = el("div", {
   el("div", { text: builtText + (st.done ? "" : " …") })
 ]);
 
+screenRoot.appendChild(verseStage);
+
+
 const visibleText = builtText + (st.done ? "" : " …");
 
 vcEnsureReservedVerseHeight(verseStage, fullText, visibleText, st);
