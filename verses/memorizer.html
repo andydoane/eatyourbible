@@ -3975,7 +3975,6 @@ function renderVerseCardHeader({stepLabel=null, stepProgress=null} = {}){
 async function renderListen(){
   setHeaderVisible(true);
 
-  screenRoot.appendChild(el("div", { class:"kicker", text:"Step 1" }));
   screenRoot.appendChild(el("h1", { text:"👂 Listen to the verse" }));
   screenRoot.appendChild(el("p", { text:"Listen to the verse all the way through." }));
 
@@ -4038,7 +4037,6 @@ async function renderListen(){
 async function renderEcho(){
   setHeaderVisible(true);
 
-  screenRoot.appendChild(el("div", { class:"kicker", text:"Step 2" }));
   screenRoot.appendChild(el("h1", { text:"🗣️ Echo the verse" }));
   screenRoot.appendChild(el("p", { text:"Repeat each part after the audio." }));
 
@@ -4180,9 +4178,8 @@ async function renderStep(){
   const totalSteps = HIDE_PLAN.length;
   const step = AppState.stepIndex; // 1..totalSteps
 
-  screenRoot.appendChild(el("div", { class:"kicker", text:`Practice` }));
   screenRoot.appendChild(el("h1", { text:"💬 Say the Verse" }));
-  screenRoot.appendChild(el("p", { text:"If you forget a hidden word, tap it to reveal the answer." }));
+  screenRoot.appendChild(el("p", { text:"Tap hidden words if you need a hint." }));
 
   const label = `Page ${step} of ${totalSteps}`;
   const progressPct = (step / (totalSteps + 1)) * 100;
