@@ -600,6 +600,21 @@ user-select: none;
       line-height: 1.45;
     }
 
+/* Echo screen: "Now you say it!" prompt */
+.echo-prompt{
+  margin-top: 12px;
+  padding: 16px 14px;
+  border-radius: 18px;
+  background: var(--good); /* solid green like the old hero modal */
+  color: white;
+  font-weight: 900;
+  text-align: center;
+  letter-spacing: .02em;
+  font-size: clamp(18px, 3vw, 28px); /* bigger text */
+  line-height: 1.15;
+}
+
+
   /* Stack It: tip + Check It button in one row */
   .stack-tipbar{
     margin-top: 12px;
@@ -3952,25 +3967,22 @@ async function renderEcho(){
 
   // ✅ Verse “stage” area (we control the text now)
   const verseStage = el("div", { class:"verse" });
-  const helperLine = el("div", {
-    class: "tip",
-    style: "margin-top:10px; text-align:center;",
-    text: ""
-  });
+const helperLine = el("div", {
+  class: "echo-prompt",
+  style: "display:none;", // hidden until we need it
+  text: ""
+});
+
 
   // Initial message (no popup)
   verseStage.textContent = "Repeat the verse after me! Click the button to start.";
   helperLine.textContent = "";
+  helperLine.style.display = "none";
+
 
   box.appendChild(verseStage);
   box.appendChild(helperLine);
 
-  box.appendChild(
-    el("div", {
-      class: "scripture-credit",
-      text: ATTRIBUTION || ""
-    })
-  );
 
   screenRoot.appendChild(box);
 
@@ -3990,6 +4002,8 @@ async function renderEcho(){
 
       // Countdown: 3..2..1 (in the verse area)
       helperLine.textContent = "";
+      helperLine.style.display = "none";
+
       for (const n of [3,2,1]){
         verseStage.textContent = String(n);
         await new Promise(r => setTimeout(r, 1000));
@@ -3999,6 +4013,8 @@ async function renderEcho(){
       if (!Array.isArray(ECHO_PARTS) || ECHO_PARTS.length === 0){
         verseStage.textContent = "No echo parts found in the JSON file.";
         helperLine.textContent = "";
+        helperLine.style.display = "none";
+
         repeatBtn.disabled = false;
         return;
       }
@@ -4025,6 +4041,8 @@ async function renderEcho(){
 
         // Prompt kids to repeat during the pause
         helperLine.textContent = "Now you say it!";
+        helperLine.style.display = "";
+
 
         const dur = result.duration;
         const pauseMs = (isFinite(dur) ? dur : 0) * 1000 * ECHO_PAUSE_MULT;
@@ -4035,6 +4053,8 @@ async function renderEcho(){
 
       // Done!
       helperLine.textContent = "";
+      helperLine.style.display = "none";
+
       verseStage.textContent = "Great job!";
 
       AppState.echoDone = true;
