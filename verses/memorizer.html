@@ -302,6 +302,9 @@
       gap:10px;
       flex-wrap:wrap;
       margin-top: 14px;
+      justify-content: center;
+      align-items: center;
+
     }
 
 /* =========================
@@ -3871,14 +3874,13 @@ function renderIntro(){
     }
   });
 
-  const wrap = el("div", { class:"intro-wrap" }, [
-    el("div", { class:"intro-card" }, [
-      el("div", { class:"intro-kicker", text:"Ready to memorize?" }),
-      logo,
-      el("p", { class:"intro-sub", text:"Tap to start!" }),
-      el("div", { class:"controls" }, [ startBtn ])
-    ])
-  ]);
+    const wrap = el("div", { class:"intro-wrap" }, [
+      el("div", { class:"intro-card" }, [
+        logo,
+        el("div", { class:"controls" }, [ startBtn ])
+      ])
+    ]);
+
 
   screenRoot.appendChild(wrap);
 }
