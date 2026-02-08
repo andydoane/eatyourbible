@@ -3812,10 +3812,21 @@ const c = el("div", { class:"controls" }, [
     onClick: () => {
       playHappyBeep();
       resetAudioForNewPage();
-      AppState.screen = "instructions";
+
+      // Start Learn flow at Listen
+      AppState.screen = "listen";
+
+      // Reset Learn flow flags
+      AppState.listenDone = false;
+      AppState.echoDone = false;
+
+      // Reset practice progress
+      AppState.stepIndex = 0;
+
       render();
     }
   }),
+
 
     btn(`Practice ${verseLabel}`, {
     primary:false,
@@ -3851,21 +3862,24 @@ function renderInstructions(){
     btn("Continue", {
       onClick: () => {
         resetAudioForNewPage();
-        AppState.screen = "listen";
-        AppState.listenDone = false;
-        AppState.echoDone = false;
+
+        // After Instructions, start the "Say it again" practice
+        AppState.screen = "step";
+        AppState.stepIndex = 1;
 
         render();
       }
     }),
-    btn("Back", {
-      primary:false,
-      onClick: () => {
-        resetAudioForNewPage();
-        AppState.screen = "title";
-        render();
-      }
-    })
+
+      btn("Back", {
+        primary:false,
+        onClick: () => {
+          resetAudioForNewPage();
+          AppState.screen = "echo";
+          render();
+        }
+      })
+
   ]);
 
   screenRoot.appendChild(c);
@@ -3948,9 +3962,10 @@ async function renderListen(){
         primary:false,
         onClick: () => {
           resetAudioForNewPage();
-          navigateWithTransition("back", () => {
-            AppState.screen = "instructions";
-          });
+            navigateWithTransition("back", () => {
+              AppState.screen = "title";
+            });
+
         }
       })
     ],
@@ -3995,10 +4010,10 @@ const helperLine = el("div", {
     onClick: async () => {
       if (AppState.echoDone){
         resetAudioForNewPage();
-        navigateWithTransition("forward", () => {
-          AppState.screen = "step";
-          AppState.stepIndex = 1;
-        });
+          navigateWithTransition("forward", () => {
+            AppState.screen = "instructions";
+          });
+
         return;
       }
 
