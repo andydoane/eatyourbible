@@ -333,6 +333,11 @@
   font-size: 20px;
   font-weight: 900;
   cursor: pointer;
+  touch-action: manipulation;
+-webkit-user-select: none;
+user-select: none;
+-webkit-touch-callout: none;
+
 }
 
 .activity-arrow:active{
@@ -348,6 +353,11 @@
   padding: 18px 16px;
   cursor: pointer;
   text-align: center;
+  touch-action: manipulation;
+-webkit-user-select: none;
+user-select: none;
+-webkit-touch-callout: none;
+
 }
 
 .activity-emoji{
@@ -1066,6 +1076,26 @@ let VERSE_REF = "";
 let APP_TITLE = "";
 const AUDIO_DIR = "verse_audio/";
 let AUDIO_FILE = "";
+
+
+// --- Prevent iOS double-tap zoom on carousel arrows/cards ---
+let lastTouchEndTime = 0;
+
+document.addEventListener("touchend", (e) => {
+  const tappedCarouselControl = e.target.closest(".activity-arrow, .activity-card");
+  if (!tappedCarouselControl) return;
+
+  const now = Date.now();
+  const delta = now - lastTouchEndTime;
+
+  // If two taps happen close together, iOS may treat it as double-tap zoom.
+  if (delta > 0 && delta < 350) {
+    e.preventDefault();
+  }
+
+  lastTouchEndTime = now;
+}, { passive: false });
+
 
 // How long to pause AFTER each part (relative to that part’s duration)
 const ECHO_PAUSE_MULT = 1.15; // 10% extra breathing room
