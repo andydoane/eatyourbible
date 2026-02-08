@@ -2,7 +2,12 @@
   "verseId": "philippians_2_10",
   "translation": "ESV",
 
-  "echoPartCount": "4",
+  "echoParts": [
+  "So that at the name of Jesus",
+  "every knee should bow",
+  "in heaven and on earth",
+  "and under the earth"
+],
 
   "verseText": "So that at the name of Jesus every knee should bow, in heaven and on earth and under the earth...",
   "attribution": "Scripture quotations are from The ESV® Bible (The Holy Bible, English Standard Version®), © 2001 by Crossway, a publishing ministry of Good News Publishers. Used by permission. All rights reserved.",
