@@ -20,6 +20,7 @@
       --radius: 22px;
       --tap: 44px;
       --slide-ms: 1000ms;
+        --rv-launch-ms: 1600ms;
     }
 
     *{ box-sizing:border-box; }
@@ -809,8 +810,12 @@ user-select: none;
   font-weight: 900;
   white-space: nowrap;
   pointer-events: none;
-  transition: transform 900ms cubic-bezier(.2,.8,.2,1), opacity 900ms ease;
+  transition:
+    transform var(--rv-launch-ms) cubic-bezier(.2,.8,.2,1),
+    opacity   var(--rv-launch-ms) ease;
 }
+
+
 
 .rocket-emoji{
   display: inline-block;
@@ -3830,6 +3835,13 @@ function vcRestartGame(){
    ROCKET VERSE (Extra Practice Game)
    ========================================================= */
 
+// Rocket Verse timing constants (single source of truth)
+// NOTE: These must stay in sync with --rv-launch-ms in CSS
+const RV_LAUNCH_DURATION_MS = 1600;
+const RV_LAUNCH_CLEANUP_MS  = RV_LAUNCH_DURATION_MS + 50;
+const RV_LAUNCH_ADVANCE_MS  = RV_LAUNCH_DURATION_MS + 100;
+
+
 function rvInitState(){
   return {
     game: "rocket_verse",
@@ -3974,7 +3986,10 @@ function rvDoLaunch(st){
       clone.style.opacity = "0.0";
     });
 
-    setTimeout(() => clone.remove(), 920);
+    setTimeout(() => clone.remove(), RV_LAUNCH_CLEANUP_MS);
+
+
+
   });
 
   // After the launch animation, add the whole part at once
@@ -3988,15 +4003,25 @@ function rvDoLaunch(st){
 
     st.partIndex += 1;
 
-    if (st.partIndex >= (ECHO_PARTS || []).length){
-      st.phase = "done";
-      render();
-      return;
-    }
+  if (st.partIndex >= (ECHO_PARTS || []).length){
+    st.phase = "done";
+
+    // ✅ Clear the bottom chips so it visibly ends
+    st.words = [];
+    st.armed = [];
+
+    // Optional: stop the part audio once the final launch is done
+    try { audio.pause(); } catch(e){}
+
+    render();
+    return;
+  }
+
 
     rvSpawnCurrentPart(st);
     render();
-  }, 950);
+    }, RV_LAUNCH_ADVANCE_MS);
+
 }
 
 function renderRocketVerseGame(){
