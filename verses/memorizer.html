@@ -1033,6 +1033,10 @@ overflow: hidden;
 }
 
 
+.title-centered{
+  text-align: center;
+}
+
 /* --- Intro text (Kahoot-style fade-in) --- */
 .intro-line{
   opacity: 0;
@@ -3918,67 +3922,62 @@ function renderIntro(){
 
 function renderTitle(){
   setHeaderVisible(true);
+
+  // Welcome stays uncentered
   screenRoot.appendChild(el("div", { class:"kicker", text:"Welcome" }));
-  screenRoot.appendChild(el("img", {
-  class: "title-logo",
-  src: "verse_images/chew_a_verse_logo.png",
-  alt: "Chew a Verse"
-}));
 
-const verseLabel = VERSE_REF.replace(" (NIV)", "");
+  const verseLabel = VERSE_REF.replace(" (NIV)", "");
 
-  screenRoot.appendChild(el("div", { class:"title-line", text:"Let's memorize" }));
-  screenRoot.appendChild(el("div", { class:"title-line", text: verseLabel }));
+  // Wrapper for centered content
+  const centered = el("div", { class:"title-centered" }, [
 
-
-
-
-  screenRoot.appendChild(el("p", { text:"•  If you're new to this verse, choose Learn." }));
-  screenRoot.appendChild(el("p", { text:"•  If you've already learned it, choose Practice." }));
-
-
-
-const c = el("div", { class:"controls" }, [
-  btn(`Learn ${verseLabel}`, {
-    onClick: () => {
-      playHappyBeep();
-      resetAudioForNewPage();
-
-      // Start Learn flow at Listen
-      AppState.screen = "listen";
-
-      // Reset Learn flow flags
-      AppState.listenDone = false;
-      AppState.echoDone = false;
-
-      // Reset practice progress
-      AppState.stepIndex = 0;
-
-      render();
-    }
-  }),
-
-
-    btn(`Practice ${verseLabel}`, {
-    primary:false,
-    onClick: () => {
-        playHappyBeep();
-        resetAudioForNewPage();
-
-        // ✅ If they've confirmed before, skip the gate
-        AppState.screen = AppState.hasLearnedVerse ? "extraMenu" : "extraGate";
-        render();
-    }
+    // Title Image
+    el("img", {
+      class: "title-logo",
+      src: "verse_images/chew_a_verse_logo.png",
+      alt: "Chew a Verse"
     }),
 
-]);
+    // Title lines (identical styling)
+    el("div", { class:"title-line", text:"Let's memorize" }),
+    el("div", { class:"title-line", text: verseLabel }),
 
+    // Instructions
+    el("p", { text:"•  If you're new to this verse, choose Learn." }),
+    el("p", { text:"•  If you've already learned it, choose Practice." }),
 
+    // Buttons
+    el("div", { class:"controls" }, [
+      btn(`Learn ${verseLabel}`, {
+        onClick: () => {
+          playHappyBeep();
+          resetAudioForNewPage();
 
+          AppState.screen = "listen";
+          AppState.listenDone = false;
+          AppState.echoDone = false;
+          AppState.stepIndex = 0;
 
-  
-  screenRoot.appendChild(c);
+          render();
+        }
+      }),
+
+      btn(`Practice ${verseLabel}`, {
+        primary:false,
+        onClick: () => {
+          playHappyBeep();
+          resetAudioForNewPage();
+          AppState.screen = AppState.hasLearnedVerse ? "extraMenu" : "extraGate";
+          render();
+        }
+      }),
+    ])
+  ]);
+
+  screenRoot.appendChild(centered);
 }
+
+
 
 
 function renderInstructions(){
