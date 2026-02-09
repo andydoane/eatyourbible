@@ -738,6 +738,89 @@ user-select: none;
     border-color: rgba(34,197,94,.35);
     }
 
+/* =========================
+   Rocket Verse
+   ========================= */
+.rocket-stage{
+  position: relative;
+  margin-top: 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.18);
+  overflow: hidden;
+  flex: 1;
+  min-height: 320px;
+}
+
+.rocket-bottom{
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 10px;
+  padding: 10px 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.rocket-chip{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(124,58,237,.16);
+  color: var(--text);
+  font-weight: 900;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 10px 18px rgba(0,0,0,.22);
+  transition: transform .08s ease, filter .12s ease, opacity .12s ease;
+}
+
+.rocket-chip:active{ transform: scale(.99); }
+
+.rocket-chip.armed{
+  background: rgba(239,68,68,.95); /* solid red */
+  border-color: rgba(255,255,255,.22);
+  color: white;
+}
+
+.rocket-countdown{
+  position: absolute;
+  left: 50%;
+  top: 18px;
+  transform: translateX(-50%);
+  font-weight: 1000;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  font-size: clamp(46px, 9vw, 84px);
+  text-shadow: 0 14px 30px rgba(0,0,0,.45);
+  pointer-events: none;
+  z-index: 5;
+}
+
+.rocket-fly{
+  position: absolute;
+  z-index: 6;
+  font-weight: 900;
+  white-space: nowrap;
+  pointer-events: none;
+  transition: transform 900ms cubic-bezier(.2,.8,.2,1), opacity 900ms ease;
+}
+
+.rocket-emoji{
+  display: inline-block;
+  margin-right: 8px;
+  transform: rotate(-45deg); /* point upward */
+}
+
+
+
+
     @keyframes wrongBlink {
     0%   { filter: none; background: rgba(239,68,68,.08); border-color: rgba(239,68,68,.25); }
     35%  { filter: brightness(1.35); background: rgba(239,68,68,.35); border-color: rgba(239,68,68,.55); }
@@ -1289,6 +1372,13 @@ const EXTRA_GAMES = [
     emoji: "🏀",
     description: "Tap the moving words in the correct order.",
   },
+  {
+  id: "rocket_verse",
+  title: "Rocket Verse",
+  emoji: "🚀",
+  description: "Tap each word to launch it up into place."
+},
+
   {
     id: "stack_it",
     title: "Stack It",
@@ -3736,6 +3826,270 @@ function vcRestartGame(){
   render();
 }
 
+/* =========================================================
+   ROCKET VERSE (Extra Practice Game)
+   ========================================================= */
+
+function rvInitState(){
+  return {
+    game: "rocket_verse",
+    partIndex: 0,
+    completedParts: [],
+    words: [],
+    armed: [],
+    phase: "tap",        // "tap" | "countdown" | "launch" | "done"
+    countdownValue: 0
+  };
+}
+
+function rvFullEchoText(){
+  return (ECHO_PARTS || []).join(" ");
+}
+
+function rvSpawnCurrentPart(st){
+  const part = (ECHO_PARTS && ECHO_PARTS[st.partIndex]) ? ECHO_PARTS[st.partIndex].trim() : "";
+  // simple word split (keeps punctuation attached, which is fine for now)
+  st.words = part ? part.split(/\s+/) : [];
+  st.armed = st.words.map(() => false);
+  st.phase = st.words.length ? "tap" : "done";
+}
+
+function rvAllArmed(st){
+  return st.armed.length > 0 && st.armed.every(Boolean);
+}
+
+function rvAudioForPartIndex(i){
+  const suffix = ECHO_PART_SUFFIXES[i];
+  return echoPartFile(suffix);
+}
+
+function rvBurst(stage, x, y){
+  // tiny built-in particle burst (so we don’t depend on any other effect function)
+  const N = 14;
+  for (let i = 0; i < N; i++){
+    const p = document.createElement("div");
+    p.style.position = "absolute";
+    p.style.left = `${x}px`;
+    p.style.top  = `${y}px`;
+    p.style.width = "6px";
+    p.style.height = "6px";
+    p.style.borderRadius = "999px";
+    p.style.background = "rgba(255,255,255,.9)";
+    p.style.pointerEvents = "none";
+    p.style.opacity = "1";
+    p.style.transform = "translate(-50%,-50%)";
+    stage.appendChild(p);
+
+    const ang = Math.random() * Math.PI * 2;
+    const dist = 40 + Math.random() * 60;
+    const dx = Math.cos(ang) * dist;
+    const dy = Math.sin(ang) * dist;
+
+    requestAnimationFrame(() => {
+      p.style.transition = "transform 650ms ease, opacity 650ms ease";
+      p.style.transform = `translate(${dx}px, ${dy}px)`;
+      p.style.opacity = "0";
+    });
+
+    setTimeout(() => p.remove(), 700);
+  }
+}
+
+function rvStartCountdownThenLaunch(st){
+  st.phase = "countdown";
+  st.countdownValue = 3;
+
+  render();
+
+  const tick = () => {
+    // user navigated away? stop.
+    if (AppState.screen !== "extraGame" || !AppState.extraGameState || AppState.extraGameState.game !== "rocket_verse"){
+      return;
+    }
+
+    st.countdownValue -= 1;
+
+    if (st.countdownValue <= 0){
+      st.phase = "launch";
+      render();
+      rvDoLaunch(st);
+      return;
+    }
+
+    render();
+    setTimeout(tick, 650);
+  };
+
+  setTimeout(tick, 650);
+}
+
+function rvDoLaunch(st){
+  // guard
+  if (AppState.screen !== "extraGame") return;
+
+  const stage = document.querySelector(".rocket-stage");
+  const builtTextEl = document.querySelector("#rvBuiltText");
+  const bottomEl = document.querySelector(".rocket-bottom");
+  if (!stage || !builtTextEl || !bottomEl) return;
+
+  // Play mp3 for this part
+  const audio = document.getElementById("audio");
+  try{
+    audio.pause();
+    audio.currentTime = 0;
+  }catch(e){}
+
+  audio.src = rvAudioForPartIndex(st.partIndex);
+  audio.play().catch(() => { /* ignore autoplay issues */ });
+
+  // Create flying clones of each chip
+  const chipEls = Array.from(bottomEl.querySelectorAll(".rocket-chip"));
+  const stageRect = stage.getBoundingClientRect();
+  const targetRect = builtTextEl.getBoundingClientRect();
+
+  const partText = st.words.join(" ");
+
+  chipEls.forEach((chipEl) => {
+    const r = chipEl.getBoundingClientRect();
+
+    // burst at chip
+    rvBurst(stage, r.left - stageRect.left + r.width/2, r.top - stageRect.top + r.height/2);
+
+    const clone = document.createElement("div");
+    clone.className = "rocket-fly";
+    clone.innerHTML = `<span class="rocket-emoji">🚀</span>${chipEl.textContent}`;
+    clone.style.left = `${r.left - stageRect.left}px`;
+    clone.style.top  = `${r.top  - stageRect.top }px`;
+    clone.style.width = `${r.width}px`;
+    clone.style.textAlign = "center";
+    clone.style.fontSize = "16px";
+    clone.style.opacity = "1";
+    stage.appendChild(clone);
+
+    const dx = (targetRect.left - stageRect.left) - (r.left - stageRect.left);
+    const dy = (targetRect.top  - stageRect.top ) - (r.top  - stageRect.top ) + 34; // land inside built box
+
+    requestAnimationFrame(() => {
+      clone.style.transform = `translate(${dx}px, ${dy}px) scale(.9)`;
+      clone.style.opacity = "0.0";
+    });
+
+    setTimeout(() => clone.remove(), 920);
+  });
+
+  // After the launch animation, add the whole part at once
+  setTimeout(() => {
+    // user navigated away? stop.
+    if (AppState.screen !== "extraGame" || !AppState.extraGameState || AppState.extraGameState.game !== "rocket_verse"){
+      return;
+    }
+
+    st.completedParts.push(partText);
+
+    st.partIndex += 1;
+
+    if (st.partIndex >= (ECHO_PARTS || []).length){
+      st.phase = "done";
+      render();
+      return;
+    }
+
+    rvSpawnCurrentPart(st);
+    render();
+  }, 950);
+}
+
+function renderRocketVerseGame(){
+  setHeaderVisible(true);
+  setCardMode("card");
+  setScrambleMode(false);
+
+  // init state if needed
+  if (!AppState.extraGameState || AppState.extraGameState.game !== "rocket_verse"){
+    AppState.extraGameState = rvInitState();
+    rvSpawnCurrentPart(AppState.extraGameState);
+  }
+
+  const st = AppState.extraGameState;
+
+  // Top: built verse area (green-ish, like other games)
+  const builtArea = el("div", { class:"phrase-built scramble-built-stage" }, [
+    el("div", { class:"phrase-built-label", text:"Completed" }),
+    el("div", { id:"rvBuiltText", class:"phrase-built-text", text: st.completedParts.join(" ") }),
+
+    // hidden measurer so the built box won’t “jump” when it grows
+    el("div", { class:"scramble-built-measure phrase-built-text", text: rvFullEchoText() })
+  ]);
+
+  // Reserve height based on full text (so layout is stable)
+  requestAnimationFrame(() => {
+    const stageEl = document.querySelector(".scramble-built-stage");
+    const measureEl = document.querySelector(".scramble-built-measure");
+    if (!stageEl || !measureEl) return;
+
+    // only set once
+    if (!stageEl.dataset.rvReserved){
+      const h = Math.ceil(measureEl.offsetHeight * 1.10);
+      stageEl.style.minHeight = `${h + 52}px`;
+      stageEl.dataset.rvReserved = "1";
+    }
+  });
+
+  // Big game stage
+  const countdownText =
+    (st.phase === "countdown" && st.countdownValue > 0) ? String(st.countdownValue) : "";
+
+  const stage = el("div", { class:"rocket-stage" }, [
+    el("div", { class:"rocket-countdown", text: countdownText }),
+    el("div", { class:"rocket-bottom" },
+      st.words.map((w, i) =>
+        el("div", {
+          class: "rocket-chip" + (st.armed[i] ? " armed" : ""),
+          text: w,
+          onclick: () => {
+            if (st.phase !== "tap") return;
+            st.armed[i] = true;
+            render();
+
+            if (rvAllArmed(st)){
+              rvStartCountdownThenLaunch(st);
+            }
+          }
+        })
+      )
+    )
+  ]);
+
+  // Title + UI
+  screenRoot.appendChild(el("div", { class:"kicker", text:"Extra Practice" }));
+  screenRoot.appendChild(el("h1", { text:"Rocket Verse" }));
+  screenRoot.appendChild(el("p", { text:"Tap each word to launch it like a rocket." }));
+
+  screenRoot.appendChild(builtArea);
+  screenRoot.appendChild(stage);
+
+  // Back button
+  const c = el("div", { class:"controls" }, [
+    btn("Back to Menu", {
+      primary:false,
+      onClick: () => {
+        // stop audio if playing
+        const audio = document.getElementById("audio");
+        try{ audio.pause(); }catch(e){}
+        AppState.extraGameId = null;
+        AppState.extraGameState = null;
+        AppState.screen = "extraMenu";
+        render();
+      }
+    })
+  ]);
+
+  screenRoot.appendChild(c);
+  setSticky(false);
+}
+
+
+
 function renderVerseChainGame(){
   setHeaderVisible(true);
   setCardMode("card");
@@ -4591,6 +4945,11 @@ if (AppState.extraGameId === "bouncing_words"){
   return renderBouncingWordsGame();
 }
 
+if (AppState.extraGameId === "rocket_verse"){
+  return renderRocketVerseGame();
+}
+
+
 if (AppState.extraGameId === "stack_it"){
   return renderStackItGame();
 }
@@ -4664,6 +5023,12 @@ else if (AppState.extraGameId === "bouncing_words"){
   screenRoot.appendChild(el("p", { text:"Tap the next part of the verse to place it above." }));
   screenRoot.appendChild(el("p", { text:"Each correct tap makes the words move faster." }));
 }
+else if (AppState.extraGameId === "rocket_verse"){
+  screenRoot.appendChild(el("p", { text:"Part of the verse appears at the bottom as word chips." }));
+  screenRoot.appendChild(el("p", { text:"Tap every word to arm the rockets." }));
+  screenRoot.appendChild(el("p", { text:"When all words are tapped, they launch upward into place!" }));
+}
+
 else if (AppState.extraGameId === "stack_it"){
   screenRoot.appendChild(el("p", { text:"Drag parts of the verse into the stack." }));
   screenRoot.appendChild(el("p", { text:"Put the verse in order from top to bottom." }));
