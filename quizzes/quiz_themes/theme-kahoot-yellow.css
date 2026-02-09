@@ -2,7 +2,7 @@
 /*********************************************
  * KAHOOT-STYLE YELLOW THEME
  *********************************************/
-:root.theme-yellow-kahoot {
+:root.theme-kahoot-yellow {
   /* 1) Background of the whole page (yellow Kahoot-y) */
   --bg-gradient-top: #ffe88a;
   --bg-gradient-bottom: #ffd347;
@@ -134,4 +134,5 @@
 
   /* 20) Answer feedback subtitle text */
   --feedback-subtitle-text: #fff4cf;
+
 }
