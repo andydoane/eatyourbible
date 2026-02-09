@@ -2,7 +2,7 @@
 /*********************************************
  * KAHOOT-STYLE ORANGE THEME
  *********************************************/
-:root.theme-orange-kahoot {
+:root.theme-kahoot-orange {
   /* 1) Background of the whole page (orange Kahoot-y) */
   --bg-gradient-top: #ffb347;    /* bright orange top */
   --bg-gradient-bottom: #ff8a2b; /* deeper orange bottom */
@@ -134,4 +134,5 @@
 
   /* 20) Answer feedback subtitle text */
   --feedback-subtitle-text: #fff0db;
+
 }
