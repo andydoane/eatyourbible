@@ -3,7 +3,7 @@
 /*********************************************
  * KAHOOT-STYLE RED THEME
  *********************************************/
-:root.theme-red-kahoot {
+:root.theme-kahoot-red {
   /* 1) Background of the whole page (red Kahoot-y) */
   --bg-gradient-top: #ff3a55;    /* bright red top */
   --bg-gradient-bottom: #c2182b; /* deeper red bottom */
@@ -136,4 +136,5 @@
 
   /* 20) Answer feedback subtitle text */
   --feedback-subtitle-text: #ffe4e8;
+
 }
