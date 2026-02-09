@@ -9,7 +9,7 @@
 
   "lessonImagePath": "quizimages/ot02image.png",
 
-  "themeClass": "theme-purple-kahoot",
+  "themeClass": "theme-kahoot-purple",
   
   "questions": [
          {
@@ -115,3 +115,4 @@
     
   ]
 }
+
