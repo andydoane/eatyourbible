@@ -1014,6 +1014,15 @@ overflow: hidden;
   animation: introLogoShake 0.4s ease-in-out 0.6s 1;
 }
 
+/* --- Title screen logo --- */
+.title-logo{
+  width: min(260px, 70vw);
+  height: auto;
+  display: block;
+  margin: 0 auto 14px; /* center + space below */
+}
+
+
 /* --- Intro text (Kahoot-style fade-in) --- */
 .intro-line{
   opacity: 0;
@@ -3900,11 +3909,22 @@ function renderIntro(){
 function renderTitle(){
   setHeaderVisible(true);
   screenRoot.appendChild(el("div", { class:"kicker", text:"Welcome" }));
-  screenRoot.appendChild(el("h1", { text: APP_TITLE }));
+  screenRoot.appendChild(el("img", {
+  class: "title-logo",
+  src: "verse_images/chew_a_verse_logo.png",
+  alt: "Chew a Verse"
+}));
+
+const verseLabel = VERSE_REF.replace(" (NIV)", "");
+
+  screenRoot.appendChild(el("h1", { text: "Let's memorize" }));
+  screenRoot.appendChild(el("div", { class:"verse-ref", text: verseLabel }));
+
+
   screenRoot.appendChild(el("p", { text:"•  If you're new to this verse, choose Learn." }));
   screenRoot.appendChild(el("p", { text:"•  If you've already learned it, choose Practice." }));
 
-const verseLabel = VERSE_REF.replace(" (NIV)", "");
+
 
 const c = el("div", { class:"controls" }, [
   btn(`Learn ${verseLabel}`, {
