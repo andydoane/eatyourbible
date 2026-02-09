@@ -20,7 +20,7 @@
       --radius: 22px;
       --tap: 44px;
       --slide-ms: 1000ms;
-        --rv-launch-ms: 1600ms;
+        --rv-launch-ms: 4800ms;
     }
 
     *{ box-sizing:border-box; }
@@ -3837,7 +3837,7 @@ function vcRestartGame(){
 
 // Rocket Verse timing constants (single source of truth)
 // NOTE: These must stay in sync with --rv-launch-ms in CSS
-const RV_LAUNCH_DURATION_MS = 1600;
+const RV_LAUNCH_DURATION_MS = 4800;
 const RV_LAUNCH_CLEANUP_MS  = RV_LAUNCH_DURATION_MS + 50;
 const RV_LAUNCH_ADVANCE_MS  = RV_LAUNCH_DURATION_MS + 100;
 
@@ -3978,8 +3978,14 @@ function rvDoLaunch(st){
     clone.style.opacity = "1";
     stage.appendChild(clone);
 
-    const dx = (targetRect.left - stageRect.left) - (r.left - stageRect.left);
-    const dy = (targetRect.top  - stageRect.top ) - (r.top  - stageRect.top ) + 34; // land inside built box
+    // Go straight up: keep the same X, only change Y.
+    const dx = 0;
+
+    // Still fly up until we reach the Completed area height
+    const targetY = (targetRect.top - stageRect.top) + 34; // same landing height as before
+    const startY  = (r.top - stageRect.top);
+    const dy = targetY - startY;
+
 
     requestAnimationFrame(() => {
       clone.style.transform = `translate(${dx}px, ${dy}px) scale(.9)`;
