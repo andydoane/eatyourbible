@@ -1,7 +1,7 @@
 /*********************************************
  * KAHOOT-STYLE BLUE THEME
  *********************************************/
-:root.theme-blue-kahoot {
+:root.theme-kahoot-blue {
   /* 1) Background of the whole page (blue Kahoot-y) */
   --bg-gradient-top: #6fd0ff;
   --bg-gradient-bottom: #2196f3;
@@ -133,4 +133,5 @@
 
   /* 20) Answer feedback subtitle text */
   --feedback-subtitle-text: #e5f6ff;
+
 }
