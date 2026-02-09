@@ -1683,15 +1683,7 @@ function getQuizJsonPathFromUrl() {
 
 
 
-function applyTheme(themeClass) {
-  // remove any old theme-*-kahoot classes
-  document.documentElement.classList.forEach((cls) => {
-    if (cls.startsWith("theme-") && cls.endsWith("-kahoot")) {
-      document.documentElement.classList.remove(cls);
-    }
-  });
-  if (themeClass) document.documentElement.classList.add(themeClass);
-}
+
 
 function enableLoadQuizButton() {
   const loadQuizBtn = document.getElementById("load-quiz-btn");
@@ -1725,8 +1717,6 @@ async function loadQuizFromJson(jsonPath) {
   LESSON_IMAGE_PATH = quiz.lessonImagePath || "";
   THEME_CLASS = quiz.themeClass || "";
   QUESTIONS = Array.isArray(quiz.questions) ? quiz.questions : [];
-
-  applyTheme(quiz.themeClass);
 
   // Dynamic page title (<title>…</title>)
   document.title = quiz.pageTitle || `${LESSON_ID.toUpperCase()} Quiz`;
