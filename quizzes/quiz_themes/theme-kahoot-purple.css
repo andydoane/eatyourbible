@@ -1,0 +1,136 @@
+/*********************************************
+ * KAHOOT-STYLE PURPLE THEME
+ *********************************************/
+:root.theme-purple-kahoot {
+  /* 1) Background of the whole page (purple Kahoot-y) */
+  --bg-gradient-top: #c7a4ff;
+  --bg-gradient-bottom: #7c4dff;
+  --card-bg: #ffffff;
+
+  /* 2) Presented-by (intro) screen */
+  --intro-bg: #7c4dff;
+  --intro-text: #ffffff;
+
+  /* 3) Main text colors */
+  --text-main: #1a1a1a;
+  --text-muted: #e4d7ff;
+
+  /* 3a) Title screen text colors */
+  --title-main-text: #ffffff;
+  --title-subtitle-text: #efe7ff;
+
+  /* 4) Question area */
+  --question-bg: #ffffff;
+  --question-text: #1a1a1a;
+
+  /* 5) “Next Question” / main buttons */
+  --accent: #7c4dff;
+  --accent-dark: #522fbe;
+  --primary-text: #ffffff;
+  --secondary-bg: #efe7ff;
+  --secondary-text: #522fbe;
+
+  /* 6) Answer buttons */
+  --red: #ff3a55;
+  --red-text: #ffffff;
+
+  --yellow: #ffd347;
+  --yellow-text: #333333;
+
+  --blue: #3fa9f5;
+  --blue-text: #ffffff;
+
+  --green: #39b54a;
+  --green-text: #ffffff;
+
+  /* 7) Correct / incorrect feedback text */
+  --feedback-correct-text: #39b54a;
+  --feedback-incorrect-text: #ff3a55;
+
+  /* 8) Question page background */
+  --quiz-screen-bg: linear-gradient(180deg, #c7a4ff, #7c4dff);
+
+  /* 9) End screen background + text */
+  --end-great-bg-top: #ffd347;
+  --end-great-bg-bottom: #7c4dff;
+
+  --end-good-bg-top: #3fa9f5;
+  --end-good-bg-bottom: #39b54a;
+
+  --end-try-bg-top: #ff3a55;
+  --end-try-bg-bottom: #7c4dff;
+
+  --end-score-text: #1a1a1a;
+  --end-detail-text: #333333;
+
+  /* 9a) End screen titles */
+  --end-title-text: var(--end-score-text);
+  --end-subtitle-text: var(--end-detail-text);
+
+  /* 10) Progress bar & timer */
+  --progress-track-bg: rgba(0,0,0,0.25);
+  --progress-fill-gradient: linear-gradient(120deg, #39b54a, #ffd347, #7c4dff);
+
+  --timer-bg: #ffffff;
+  --timer-ring-bg: rgba(0,0,0,0.15);
+  --timer-ring-fg: #ffd347;
+  --timer-text: #1a1a1a;
+
+  /* 11) Answer key pill */
+  --answer-key-pill-bg: rgba(0,0,0,0.25);
+  --answer-key-pill-text: #ffffff;
+
+  /* 12) Misc */
+  --button-radius: 0.9rem;
+
+  /* 13) Icon buttons */
+  --icon-chip-bg: rgba(0,0,0,0.25);
+  --icon-chip-text: #ffffff;
+
+  /* 14) Overlays */
+  --spotlight-overlay-bg: rgba(0,0,0,0.85);
+  --reward-overlay-bg: rgba(0,0,0,0.9);
+  --reward-text: #ffffff;
+
+  /* 15) Answer outlines */
+  --answer-border: rgba(255,255,255,0.9);
+  --answer-border-strong: rgba(255,255,255,1);
+
+  --red-border:   #b51a30;
+  --yellow-border:#caa13b;
+  --blue-border:  #2b88c2;
+  --green-border: #276534;
+
+  /* 16) Timer explosion */
+  --timer-particle-gradient: radial-gradient(
+    circle,
+    #efe7ff 0%,
+    #c7a4ff 40%,
+    #7c4dff 70%,
+    #452299 100%
+  );
+  --timer-explosion-glow: rgba(124, 77, 255, 0.9);
+
+  /* 17) Flash colors */
+  --flash-correct-bg: rgba(57, 181, 74, 0.25);
+  --flash-incorrect-bg: rgba(255, 90, 81, 0.25);
+  --flash-return-bg: var(--quiz-screen-bg);
+
+  /* 18) Card shadow */
+  --screen-card-shadow: rgba(0,0,0,0.35);
+
+  /* 19) Pointer glow */
+  --pointer-glow-star:   #f6c453;
+  --pointer-glow-ocean:  #34c3ff;
+  --pointer-glow-garden: #4caf50;
+  --pointer-glow-fire:   #ff6a2f;
+  --pointer-glow-galaxy: #7e57c2;
+  --pointer-glow-animal: #a67c52;
+  --pointer-glow-joy:    #ffd54f;
+  --pointer-glow-heart:  #ff4081;
+  --pointer-glow-rainbow:#ffffff;
+  --pointer-glow-bible:  #fff3cd;
+
+  /* 20) Feedback subtitle */
+  --feedback-subtitle-text: #efe7ff;
+}
