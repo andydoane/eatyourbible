@@ -8,6 +8,7 @@
 <link id="theme-css" rel="stylesheet" href="quiz_themes/theme-purple-kahoot.css">
 
 
+
   <style>
 
 
@@ -1632,20 +1633,23 @@ body.show-real-cursor * {
   <script>
 
 function applyTheme(themeClass) {
-  // 1) Swap the CSS file
+  // 1) Swap the theme CSS file
   const themeLink = document.getElementById("theme-css");
-  if (themeLink) {
+  if (themeLink && themeClass) {
     themeLink.href = `quiz_themes/${themeClass}.css`;
   }
 
-  // 2) Remove any existing theme-* class from <html>
+  // 2) Remove old theme-* classes from <html>
   document.documentElement.classList.forEach((cls) => {
-    if (cls.startsWith("theme-")) document.documentElement.classList.remove(cls);
+    if (cls.startsWith("theme-")) {
+      document.documentElement.classList.remove(cls);
+    }
   });
 
-  // 3) Add the chosen theme class to <html>
-  document.documentElement.classList.add(themeClass);
+  // 3) Add the new theme class
+  if (themeClass) document.documentElement.classList.add(themeClass);
 }
+
 
 
 
