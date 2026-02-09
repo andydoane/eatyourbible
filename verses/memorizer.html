@@ -3918,7 +3918,8 @@ function renderTitle(){
 const verseLabel = VERSE_REF.replace(" (NIV)", "");
 
   screenRoot.appendChild(el("h1", { text: "Let's memorize" }));
-  screenRoot.appendChild(el("h1", { class:"verse-ref", text: verseLabel }));
+  screenRoot.appendChild(el("h2", { class:"verse-ref", text: verseLabel }));
+
 
 
   screenRoot.appendChild(el("p", { text:"•  If you're new to this verse, choose Learn." }));
