@@ -810,11 +810,9 @@ user-select: none;
   font-weight: 900;
   white-space: nowrap;
   pointer-events: none;
-  transition:
-    transform var(--rv-launch-ms) cubic-bezier(.4, 0, 1, 1),
-
-    opacity   var(--rv-launch-ms) ease;
+  transition: transform var(--rv-launch-ms) cubic-bezier(.4, 0, 1, 1);
 }
+
 
 
 
@@ -3955,51 +3953,56 @@ function rvDoLaunch(st){
   audio.src = rvAudioForPartIndex(st.partIndex);
   audio.play().catch(() => { /* ignore autoplay issues */ });
 
-  // Create flying clones of each chip
+  // We'll launch rockets from each chip position
   const chipEls = Array.from(bottomEl.querySelectorAll(".rocket-chip"));
   const stageRect = stage.getBoundingClientRect();
   const targetRect = builtTextEl.getBoundingClientRect();
 
   const partText = st.words.join(" ");
 
+  // Create rockets (and remove chips)
+  const rockets = [];
+
   chipEls.forEach((chipEl) => {
     const r = chipEl.getBoundingClientRect();
 
-    // burst at chip
-    rvBurst(stage, r.left - stageRect.left + r.width/2, r.top - stageRect.top + r.height/2);
+    // chip center in stage coordinates
+    const cx = (r.left - stageRect.left) + (r.width / 2);
+    const cy = (r.top  - stageRect.top ) + (r.height / 2);
 
-    const clone = document.createElement("div");
-    clone.className = "rocket-fly";
-    clone.innerHTML = `<span class="rocket-emoji">🚀</span>${chipEl.textContent}`;
-    clone.style.left = `${r.left - stageRect.left}px`;
-    clone.style.top  = `${r.top  - stageRect.top }px`;
-    clone.style.width = `${r.width}px`;
-    clone.style.textAlign = "center";
-    clone.style.fontSize = "16px";
-    clone.style.opacity = "1";
-    stage.appendChild(clone);
+    // particle burst at chip location
+    rvBurst(stage, cx, cy);
 
-    // Go straight up: keep the same X, only change Y.
-    const dx = 0;
+    // remove the chip so it disappears immediately
+    chipEl.remove();
 
-    // Still fly up until we reach the Completed area height
-    const targetY = (targetRect.top - stageRect.top) + 34; // same landing height as before
-    const startY  = (r.top - stageRect.top);
-    const dy = targetY - startY;
+    // create a rocket emoji at the chip position
+    const rocket = document.createElement("div");
+    rocket.className = "rocket-fly";
+    rocket.innerHTML = `<span class="rocket-emoji">🚀</span>`;
+    rocket.style.left = `${cx}px`;
+    rocket.style.top  = `${cy}px`;
+    rocket.style.transform = "translate(-50%,-50%)";
+    rocket.style.fontSize = "28px";
+    stage.appendChild(rocket);
+    rockets.push(rocket);
 
+    // fly straight up to the Completed area height
+    const targetY = (targetRect.top - stageRect.top) + 34;
+    const dy = targetY - cy;
 
     requestAnimationFrame(() => {
-      clone.style.transform = `translate(${dx}px, ${dy}px) scale(.9)`;
-      clone.style.opacity = "0.0";
+      rocket.style.transform = `translate(-50%,-50%) translate(0px, ${dy}px)`;
+      // ✅ no opacity changes (no fade)
     });
-
-    setTimeout(() => clone.remove(), RV_LAUNCH_CLEANUP_MS);
-
-
-
   });
 
-  // After the launch animation, add the whole part at once
+  // Remove rocket emojis after the flight finishes
+  setTimeout(() => {
+    rockets.forEach(r => r.remove());
+  }, RV_LAUNCH_CLEANUP_MS);
+
+  // After the launch animation, add the whole part at once and advance
   setTimeout(() => {
     // user navigated away? stop.
     if (AppState.screen !== "extraGame" || !AppState.extraGameState || AppState.extraGameState.game !== "rocket_verse"){
@@ -4007,29 +4010,25 @@ function rvDoLaunch(st){
     }
 
     st.completedParts.push(partText);
-
     st.partIndex += 1;
 
-  if (st.partIndex >= (ECHO_PARTS || []).length){
-    st.phase = "done";
+    if (st.partIndex >= (ECHO_PARTS || []).length){
+      st.phase = "done";
 
-    // ✅ Clear the bottom chips so it visibly ends
-    st.words = [];
-    st.armed = [];
+      // clear bottom area (nothing left to tap)
+      st.words = [];
+      st.armed = [];
 
-    // Optional: stop the part audio once the final launch is done
-    try { audio.pause(); } catch(e){}
-
-    render();
-    return;
-  }
-
+      render();
+      return;
+    }
 
     rvSpawnCurrentPart(st);
     render();
-    }, RV_LAUNCH_ADVANCE_MS);
-
+  }, RV_LAUNCH_ADVANCE_MS);
 }
+
+
 
 function renderRocketVerseGame(){
   setHeaderVisible(true);
