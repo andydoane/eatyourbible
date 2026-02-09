@@ -1,29 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="theme-kahoot-white theme-loading">
+
 <head>
   <meta charset="UTF-8" />
   <title>OT 02 Quiz</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<link id="theme-css" rel="stylesheet" href="quiz_themes/theme-kahoot-purple.css">
+<link id="theme-css" rel="stylesheet" href="quiz_themes/theme-kahoot-white.css">
 
 
 
   <style>
 
+/* Prevent white flash while theme CSS is applying */
+html.theme-loading body {
+  opacity: 0;
+}
+
+html:not(.theme-loading) body {
+  opacity: 1;
+  transition: opacity 120ms ease-out;
+}
 
 
-
-/* 
-   ______   _   _   _____  
-  |  ____| | \ | | |  __ \ 
-  | |__    |  \| | | |  | |
-  |  __|   | . ` | | |  | |
-  | |____  | |\  | | |__| |
-  |______| |_| \_| |_____/ 
-                           
-                           
-*/
 
 
 
@@ -1633,22 +1632,52 @@ body.show-real-cursor * {
   <script>
 
 function applyTheme(themeClass) {
-  // 1) Swap the theme CSS file
   const themeLink = document.getElementById("theme-css");
-  if (themeLink && themeClass) {
-    themeLink.href = `quiz_themes/${themeClass}.css`;
-  }
+  if (!themeClass) return;
 
-  // 2) Remove old theme-* classes from <html>
-  document.documentElement.classList.forEach((cls) => {
-    if (cls.startsWith("theme-")) {
-      document.documentElement.classList.remove(cls);
+  // Keep page hidden while switching theme
+  document.documentElement.classList.add("theme-loading");
+
+  // Swap CSS file
+  if (themeLink) {
+    const newHref = `quiz_themes/${themeClass}.css`;
+
+    // If it's already set, just apply class + show
+    if (themeLink.href.endsWith(newHref)) {
+      setThemeClass(themeClass);
+      document.documentElement.classList.remove("theme-loading");
+      return;
     }
-  });
 
-  // 3) Add the new theme class
-  if (themeClass) document.documentElement.classList.add(themeClass);
+    // Wait for CSS to finish loading before revealing
+    themeLink.onload = () => {
+      setThemeClass(themeClass);
+      document.documentElement.classList.remove("theme-loading");
+    };
+    themeLink.onerror = () => {
+      console.warn("Theme CSS failed to load:", newHref);
+      // Still apply class so at least something happens
+      setThemeClass(themeClass);
+      document.documentElement.classList.remove("theme-loading");
+    };
+
+    themeLink.href = newHref;
+  } else {
+    // No link tag? Still apply class
+    setThemeClass(themeClass);
+    document.documentElement.classList.remove("theme-loading");
+  }
 }
+
+function setThemeClass(themeClass) {
+  // Remove old theme-* classes from <html>
+  document.documentElement.classList.forEach((cls) => {
+    if (cls.startsWith("theme-")) document.documentElement.classList.remove(cls);
+  });
+  // Add the new theme class
+  document.documentElement.classList.add(themeClass);
+}
+
 
 
 
@@ -3992,4 +4021,3 @@ function cleanupFloatingElements() {
   </script>
 </body>
 </html>
-
