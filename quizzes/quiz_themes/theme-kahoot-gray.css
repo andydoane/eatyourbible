@@ -1,7 +1,7 @@
 /*********************************************
  * KAHOOT-STYLE DARK GRAY THEME
  *********************************************/
-:root.theme-gray-kahoot {
+:root.theme-kahoot-gray {
   /* 1) Background of the whole page (dark gray Kahoot-y) */
   --bg-gradient-top: #555555;
   --bg-gradient-bottom: #333333;
@@ -133,4 +133,5 @@
 
   /* 20) Feedback subtitle */
   --feedback-subtitle-text: #e5e5e5;
+
 }
