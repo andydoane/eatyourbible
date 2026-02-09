@@ -1,7 +1,7 @@
 /*********************************************
  * KAHOOT-STYLE WHITE THEME
  *********************************************/
-:root.theme-white-kahoot {
+:root.theme-kahoot-white {
   /* 1) Background of the whole page (light / white) */
   --bg-gradient-top: #ffffff;
   --bg-gradient-bottom: #e6e6e6;
@@ -133,4 +133,5 @@
 
   /* 20) Feedback subtitle */
   --feedback-subtitle-text: var(--text-main);
+
 }
