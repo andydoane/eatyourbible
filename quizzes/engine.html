@@ -2824,7 +2824,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     // If using URL-based quiz selection, do:
     // const path = getQuizJsonPathFromUrl();
 
-    const path = QUIZ_JSON_PATH;
+    const path = getQuizJsonPathFromUrl();
+
     await loadQuizFromJson(path);
   } catch (err) {
     console.error(err);
@@ -5082,3 +5083,4 @@ function cleanupFloatingElements() {
   </script>
 </body>
 </html>
+
