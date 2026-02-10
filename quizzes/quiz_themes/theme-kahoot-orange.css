@@ -14,7 +14,7 @@
 
   /* 3) Main text colors */
   --text-main: #1a1a1a;
-  --text-muted: #ffd7b0;
+  --text-muted: #777777;
 
   /* 3a) Title screen text colors */
   --title-main-text: #ffffff;
@@ -136,4 +136,5 @@
   --feedback-subtitle-text: #fff0db;
 
 }
+
 
