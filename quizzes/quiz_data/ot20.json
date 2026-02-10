@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot20",
+  "pageTitle": "OT 20 Quiz",
+  "lessonTitleText": "Joseph Is Sold",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot20image.png",
+  "themeClass": "theme-white",
+  "questions": [
+    {
+      "text": "Which son did Jacob love more than the others?",
+      "answers": [
+        "Joseph",
+        "Benjamin",
+        "Reuben",
+        "Judah"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jacob give to Joseph? How did his brothers feel?",
+      "answers": [
+        "A beautiful robe; they hated him",
+        "A new tent; they were jealous",
+        "A sheep; they didn’t care",
+        "A ring; they were proud of him"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Joseph see in his first dream?",
+      "answers": [
+        "His bundle of grain stood up; his brothers’ bundles bowed to his",
+        "A giant tree growing in the sky",
+        "Twelve lions chasing him",
+        "A river turning into gold"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Joseph see in his second dream?",
+      "answers": [
+        "The sun, moon, and 11 stars bowed to him",
+        "A bright chariot of fire",
+        "A giant ladder reaching heaven",
+        "Twelve stars forming a crown"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did his brothers treat him after all this?",
+      "answers": [
+        "They couldn’t say a kind word to him",
+        "They were very kind to him",
+        "They punched him in the nose",
+        "They ignored the dreams completely"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When the brothers saw Joseph coming to check on them, what did they say?",
+      "answers": [
+        "Let’s kill that dreamer!",
+        "Let’s give him a gift",
+        "Let’s play a prank on him",
+        "Let’s run away from him"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Instead of killing Joseph, where did they put him?",
+      "answers": [
+        "In an empty pit",
+        "In a tree",
+        "In jail",
+        "In a barrel"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "In the end, what did the brothers do with Joseph?",
+      "answers": [
+        "They sold him to traders headed to Egypt",
+        "They set him free and went home",
+        "They killed him",
+        "They took him back to Jacob"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the brothers do with Joseph’s coat?",
+      "answers": [
+        "They ripped it up, soaked it in blood",
+        "They cleaned it and hid it",
+        "They burned it completely",
+        "They sold it to travelers"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When Jacob saw the robe, what did he think happened?",
+      "answers": [
+        "An animal ate Joseph",
+        "Joseph ran away from home",
+        "Joseph was kidnapped",
+        "Joseph left to find work"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
