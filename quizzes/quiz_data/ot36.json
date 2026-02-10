@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot36",
+  "pageTitle": "OT 36 Quiz",
+  "lessonTitleText": "The Tabernacle",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot36image.png",
+  "themeClass": "theme-purple",
+  "questions": [
+    {
+      "question": "What was the name of the tent God told Moses to build?",
+      "answers": [
+        "The Tabernacle",
+        "The Temple",
+        "The Meeting Hut",
+        "The Snack Shack"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "What was the first thing God told Moses to build for the Tabernacle?",
+      "answers": [
+        "The Ark of the Covenant",
+        "The Treasure Chest",
+        "The Golden Statue",
+        "The Golden Bookstand"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "How is the Ark of the Covenant described?",
+      "answers": [
+        "A gold-covered chest with cherubim facing each other on the cover",
+        "A wooden box with stone handles",
+        "A golden table with bread on it",
+        "A tall lamp with seven lights"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "How is the Table of Showbread described?",
+      "answers": [
+        "Covered in gold, with twelve loaves placed on it weekly",
+        "Made of stone with incense burned on it",
+        "A wooden table used for making meals",
+        "A shelf for storing scrolls"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "How is the Golden Lampstand described?",
+      "answers": [
+        "It had seven lamps and looked like an almond tree",
+        "It held candles shaped like animals",
+        "It was a single torch on a pole",
+        "It was a bowl of oil"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "How is the Altar of Incense described?",
+      "answers": [
+        "A gold-covered stand where priests burned sweet-smelling incense",
+        "A large stone altar used for animal sacrifices",
+        "A bronze table placed outside the tent",
+        "A box used to store spices"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "Who did God pick to work in the temple?",
+      "answers": [
+        "Priests",
+        "Prophets",
+        "Pastors",
+        "Tabernacle-heads"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "What happened when the Tabernacle was set up and items placed inside?",
+      "answers": [
+        "God’s glory filled it",
+        "Fire fell from the sky",
+        "The tent collapsed",
+        "A great earthquake"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "What were the two rooms of the Tabernacle called?",
+      "answers": [
+        "The Holy Place and the Most Holy Place",
+        "The Inner Room and the Outer Room",
+        "The Priest Room and the People Room",
+        "The Light Room and the Dark Room"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "Why don’t we need a Tabernacle to meet with God today?",
+      "answers": [
+        "Jesus shed his blood on the cross to pay for our sins",
+        "God meets us in a temple now",
+        "God became tired of living in a tent",
+        "The priests retired"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
