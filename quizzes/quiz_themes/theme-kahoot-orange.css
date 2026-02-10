@@ -18,7 +18,7 @@
 
   /* 3a) Title screen text colors */
   --title-main-text: #ffffff;
-  --title-subtitle-text: #fff0db;
+  --title-subtitle-text: #333333;
 
   /* 4) Question area */
   --question-bg: #ffffff;
@@ -136,3 +136,4 @@
   --feedback-subtitle-text: #fff0db;
 
 }
+
