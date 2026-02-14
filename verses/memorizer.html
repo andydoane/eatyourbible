@@ -1481,6 +1481,7 @@ const overlay     = document.getElementById("overlay");
 const modalTitle  = document.getElementById("modalTitle");
 const modalBody   = document.getElementById("modalBody");
 const modalActions= document.getElementById("modalActions");
+let modalDismissable = true;
 
 const audioEl = document.getElementById("audio");
 
@@ -1660,7 +1661,9 @@ function btn(label, opts = {}) {
 }
 
 
-function showModal({ title, body, actions = [] }) {
+function showModal({ title, body, actions = [], dismissable = true }) {
+
+
 
   /* ----- TITLE ----- */
   if (title) {
@@ -1683,6 +1686,7 @@ function showModal({ title, body, actions = [] }) {
   clearNode(modalActions);
   actions.forEach(a => modalActions.appendChild(a));
 
+    modalDismissable = !!dismissable;
   overlay.classList.add("show");
 
   /* ----- ACCESSIBILITY ----- */
@@ -1693,17 +1697,23 @@ function showModal({ title, body, actions = [] }) {
 
 function closeModal(){
   overlay.classList.remove("show");
+  modalDismissable = true; // default back for normal modals
 }
 
 
 
 
+
 overlay.addEventListener("click", (e) => {
+  if (!modalDismissable) return;
   if (e.target === overlay) closeModal();
 });
 
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && overlay.classList.contains("show")) closeModal();
+  if (e.key === "Escape" && overlay.classList.contains("show")){
+    if (!modalDismissable) return;
+    closeModal();
+  }
 });
 
 function navigateWithTransition(direction, applyStateChange){
@@ -3109,6 +3119,7 @@ refreshBuiltText();
 
   showModal({
     title: "You did it 🎉",
+    dismissable: false,
     body: el("div", {}, [
       el("p", { text: "Nice! You finished Bouncing Words." }),
       el("p", { text: `Time: ${formatTimeMs(elapsedMs)}` }),
