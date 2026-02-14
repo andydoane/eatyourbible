@@ -810,7 +810,7 @@ user-select: none;
   font-weight: 900;
   white-space: nowrap;
   pointer-events: none;
-  transition: transform var(--rv-launch-ms) cubic-bezier(.4, 0, 1, 1);
+  transition: transform 0ms linear;
 }
 
 
@@ -3850,10 +3850,12 @@ function vcRestartGame(){
    ========================================================= */
 
 // Rocket Verse timing constants (single source of truth)
-// NOTE: These must stay in sync with --rv-launch-ms in CSS
-const RV_LAUNCH_DURATION_MS = 4800;
-const RV_LAUNCH_CLEANUP_MS  = RV_LAUNCH_DURATION_MS + 50;
-const RV_LAUNCH_ADVANCE_MS  = RV_LAUNCH_DURATION_MS + 100;
+const RV_LAUNCH_SLOW_MS = 1000;  // slow lift for ~1 second
+const RV_LAUNCH_FAST_MS = 420;   // fast boost to the top
+const RV_LAUNCH_DURATION_MS = RV_LAUNCH_SLOW_MS + RV_LAUNCH_FAST_MS;
+
+const RV_LAUNCH_CLEANUP_MS  = RV_LAUNCH_DURATION_MS + 120;
+const RV_LAUNCH_ADVANCE_MS  = RV_LAUNCH_DURATION_MS + 180;
 
 function rvInitState(){
   return {
@@ -4027,9 +4029,32 @@ function rvDoLaunch(st){
     const targetY = (targetRect.top - stageRect.top) + 34;
     const dy = targetY - cy;
 
+    // --- 2-stage flight: slow lift, then BOOST ---
+    const slowFrac = 0.22;              // how far it goes during the slow phase (22%)
+    const dySlow = dy * slowFrac;       // first segment distance
+    const dyFinal = dy;                 // full distance
+
+    // Start position (already set): translate(-50%,-50%)
+    // Phase 1: slow lift
     requestAnimationFrame(() => {
-      rocket.style.transform = `translate(-50%,-50%) translate(0px, ${dy}px)`;
+      rocket.style.transition = `transform ${RV_LAUNCH_SLOW_MS}ms ease-out`;
+      rocket.style.transform = `translate(-50%,-50%) translate(0px, ${dySlow}px)`;
     });
+
+    // Phase 2: mid-flight burst + fast boost
+    setTimeout(() => {
+      // If user navigated away, stop
+      if (AppState.screen !== "extraGame") return;
+
+      // Burst at the rocket's mid position (same x, moved y)
+      const midY = cy + dySlow;
+      rvBurst(stage, cx, midY);
+
+      // Switch to fast transition and go the rest of the way
+      rocket.style.transition = `transform ${RV_LAUNCH_FAST_MS}ms cubic-bezier(.2, .9, .2, 1)`;
+      rocket.style.transform = `translate(-50%,-50%) translate(0px, ${dyFinal}px)`;
+    }, RV_LAUNCH_SLOW_MS);
+    
   });
 
 
