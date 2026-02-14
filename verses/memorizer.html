@@ -3108,39 +3108,7 @@ refreshBuiltText();
     });
   }
 
-function finishRocketVerseGame(){
-  const st = AppState.extraGameState;
-  if (!st || st.game !== "rocket_verse") return;
 
-  showModal({
-    title: "You did it 🚀",
-    dismissable: false,
-    body: el("div", {}, [
-      el("p", { text: "Nice! You finished Rocket Verse." }),
-      el("p", { text: "Want to run it back?" }),
-    ]),
-    actions: [
-      btn("Play again", {
-        onClick: () => {
-          closeModal();
-          AppState.extraGameState = rvInitState();
-          rvSpawnNextBatch(AppState.extraGameState);
-          render();
-        }
-      }),
-      btn("Back to Menu", {
-        primary:false,
-        onClick: () => {
-          closeModal();
-          AppState.extraGameId = null;
-          AppState.extraGameState = null;
-          AppState.screen = "extraMenu";
-          render();
-        }
-      })
-    ]
-  });
-}
 
 
   function finishBouncingGame(){
@@ -4207,6 +4175,40 @@ function rvDoLaunch(st){
 }
 
 
+  
+function finishRocketVerseGame(){
+  const st = AppState.extraGameState;
+  if (!st || st.game !== "rocket_verse") return;
+
+  showModal({
+    title: "You did it 🚀",
+    dismissable: false,
+    body: el("div", {}, [
+      el("p", { text: "Nice! You finished Rocket Verse." }),
+      el("p", { text: "Want to run it back?" }),
+    ]),
+    actions: [
+      btn("Play again", {
+        onClick: () => {
+          closeModal();
+          AppState.extraGameState = rvInitState();
+          rvSpawnNextBatch(AppState.extraGameState);
+          render();
+        }
+      }),
+      btn("Back to Menu", {
+        primary:false,
+        onClick: () => {
+          closeModal();
+          AppState.extraGameId = null;
+          AppState.extraGameState = null;
+          AppState.screen = "extraMenu";
+          render();
+        }
+      })
+    ]
+  });
+}
 
 
 function renderRocketVerseGame(){
