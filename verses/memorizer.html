@@ -884,7 +884,7 @@ user-select: none;
    ========================= */
 @keyframes rvImpactPulse {
   0%   { transform: scale(1);   filter: brightness(1); }
-  40%  { transform: scale(1.03); filter: brightness(1.35); }
+  40%  { transform: scale(1.04); filter: brightness(1.45); }
   100% { transform: scale(1);   filter: brightness(1); }
 }
 
@@ -3855,39 +3855,59 @@ const RV_LAUNCH_DURATION_MS = 4800;
 const RV_LAUNCH_CLEANUP_MS  = RV_LAUNCH_DURATION_MS + 50;
 const RV_LAUNCH_ADVANCE_MS  = RV_LAUNCH_DURATION_MS + 100;
 
-
 function rvInitState(){
   return {
     game: "rocket_verse",
-    partIndex: 0,
-    completedParts: [],
+
+    // NEW: we walk through the full verse word-by-word
+    nextWordIndex: 0,
+    completedWords: [],
+
+    // Current batch on the bottom
     words: [],
     armed: [],
+
     phase: "tap",        // "tap" | "countdown" | "launch" | "done"
     countdownValue: 0
   };
 }
 
-function rvFullEchoText(){
-  return (ECHO_PARTS || []).join(" ");
+// Full verse words (simple split; punctuation stays attached to words, which is fine)
+function rvAllVerseWords(){
+  return (VERSE_TEXT || "").trim().split(/\s+/).filter(Boolean);
 }
 
-function rvSpawnCurrentPart(st){
-  const part = (ECHO_PARTS && ECHO_PARTS[st.partIndex]) ? ECHO_PARTS[st.partIndex].trim() : "";
-  // simple word split (keeps punctuation attached, which is fine for now)
-  st.words = part ? part.split(/\s+/) : [];
+// Spawn the next batch of 3–4 words
+function rvSpawnNextBatch(st){
+  const all = rvAllVerseWords();
+  const remaining = all.length - st.nextWordIndex;
+
+  if (remaining <= 0){
+    st.phase = "done";
+    st.words = [];
+    st.armed = [];
+    return;
+  }
+
+  // Batch size: 3 or 4, but never larger than what's left
+  let batchSize;
+  if (remaining <= 4){
+    // If we're near the end, just show what's left (could be 1–4)
+    batchSize = remaining;
+  } else {
+    batchSize = 3 + Math.floor(Math.random() * 2); // 3 or 4
+  }
+
+  st.words = all.slice(st.nextWordIndex, st.nextWordIndex + batchSize);
   st.armed = st.words.map(() => false);
-  st.phase = st.words.length ? "tap" : "done";
+  st.phase = "tap";
 }
 
 function rvAllArmed(st){
   return st.armed.length > 0 && st.armed.every(Boolean);
 }
 
-function rvAudioForPartIndex(i){
-  const suffix = ECHO_PART_SUFFIXES[i];
-  return echoPartFile(suffix);
-}
+
 
 function rvBurst(stage, x, y){
   // tiny built-in particle burst (so we don’t depend on any other effect function)
@@ -3962,15 +3982,6 @@ function rvDoLaunch(st){
   const builtBoxEl = builtTextEl.closest(".phrase-built");
 
 
-  // Play mp3 for this part
-  const audio = document.getElementById("audio");
-  try{
-    audio.pause();
-    audio.currentTime = 0;
-  }catch(e){}
-
-  audio.src = rvAudioForPartIndex(st.partIndex);
-  audio.play().catch(() => { /* ignore autoplay issues */ });
 
   // We'll launch rockets from each chip position
   const chipEls = Array.from(bottomEl.querySelectorAll(".rocket-chip"));
@@ -4038,30 +4049,31 @@ function rvDoLaunch(st){
   }, RV_LAUNCH_DURATION_MS);
 
 
-  // After the launch animation, add the whole part at once and advance
+  // After the launch animation, add the whole batch at once and advance
   setTimeout(() => {
     // user navigated away? stop.
     if (AppState.screen !== "extraGame" || !AppState.extraGameState || AppState.extraGameState.game !== "rocket_verse"){
       return;
     }
 
-    st.completedParts.push(partText);
-    st.partIndex += 1;
+    // Add this batch’s words into Completed
+    st.completedWords.push(...st.words);
+    st.nextWordIndex += st.words.length;
 
-    if (st.partIndex >= (ECHO_PARTS || []).length){
+    // Done?
+    if (st.nextWordIndex >= rvAllVerseWords().length){
       st.phase = "done";
-
-      // clear bottom area (nothing left to tap)
       st.words = [];
       st.armed = [];
-
       render();
       return;
     }
 
-    rvSpawnCurrentPart(st);
+    // Otherwise spawn the next 3–4
+    rvSpawnNextBatch(st);
     render();
   }, RV_LAUNCH_ADVANCE_MS);
+
 }
 
 
@@ -4075,7 +4087,8 @@ function renderRocketVerseGame(){
   // init state if needed
   if (!AppState.extraGameState || AppState.extraGameState.game !== "rocket_verse"){
     AppState.extraGameState = rvInitState();
-    rvSpawnCurrentPart(AppState.extraGameState);
+    rvSpawnNextBatch(AppState.extraGameState);
+
   }
 
   const st = AppState.extraGameState;
@@ -4083,10 +4096,10 @@ function renderRocketVerseGame(){
   // Top: built verse area (green-ish, like other games)
   const builtArea = el("div", { class:"phrase-built scramble-built-stage" }, [
     el("div", { class:"phrase-built-label", text:"Completed" }),
-    el("div", { id:"rvBuiltText", class:"phrase-built-text", text: st.completedParts.join(" ") }),
+    el("div", { id:"rvBuiltText", class:"phrase-built-text", text: st.completedWords.join(" ")}),
 
     // hidden measurer so the built box won’t “jump” when it grows
-    el("div", { class:"scramble-built-measure phrase-built-text", text: rvFullEchoText() })
+    el("div", { class:"scramble-built-measure phrase-built-text", text: VERSE_TEXT })
   ]);
 
   // Reserve height based on full text (so layout is stable)
