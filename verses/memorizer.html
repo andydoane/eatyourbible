@@ -3108,6 +3108,41 @@ refreshBuiltText();
     });
   }
 
+function finishRocketVerseGame(){
+  const st = AppState.extraGameState;
+  if (!st || st.game !== "rocket_verse") return;
+
+  showModal({
+    title: "You did it 🚀",
+    dismissable: false,
+    body: el("div", {}, [
+      el("p", { text: "Nice! You finished Rocket Verse." }),
+      el("p", { text: "Want to run it back?" }),
+    ]),
+    actions: [
+      btn("Play again", {
+        onClick: () => {
+          closeModal();
+          AppState.extraGameState = rvInitState();
+          rvSpawnNextBatch(AppState.extraGameState);
+          render();
+        }
+      }),
+      btn("Back to Menu", {
+        primary:false,
+        onClick: () => {
+          closeModal();
+          AppState.extraGameId = null;
+          AppState.extraGameState = null;
+          AppState.screen = "extraMenu";
+          render();
+        }
+      })
+    ]
+  });
+}
+
+
   function finishBouncingGame(){
 
   const finishedAtMs = Date.now();
@@ -3930,7 +3965,9 @@ function rvInitState(){
     armed: [],
 
     phase: "tap",        // "tap" | "countdown" | "launch" | "done"
-    countdownValue: 0
+    countdownValue: 0,
+    doneModalShown: false,
+
   };
 }
 
@@ -4151,8 +4188,16 @@ function rvDoLaunch(st){
       st.words = [];
       st.armed = [];
       render();
+
+      // Show the closing modal (once)
+      if (!st.doneModalShown){
+        st.doneModalShown = true;
+        requestAnimationFrame(() => finishRocketVerseGame());
+      }
+
       return;
     }
+
 
     // Otherwise spawn the next 3–4
     rvSpawnNextBatch(st);
@@ -4179,6 +4224,13 @@ function renderRocketVerseGame(){
   }
 
   const st = AppState.extraGameState;
+
+  // If somehow we're already done, show the closing modal (once)
+  if (st.phase === "done" && !st.doneModalShown){
+    st.doneModalShown = true;
+    requestAnimationFrame(() => finishRocketVerseGame());
+  }
+
 
   // Top: built verse area (green-ish, like other games)
   const builtArea = el("div", { class:"phrase-built scramble-built-stage" }, [
