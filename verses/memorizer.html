@@ -295,7 +295,7 @@
 
 /* Match Back button width to activity card */
 .activity-back-wrap{
-  max-width: 700px;
+  max-width: 420px;
   margin-left: auto;
   margin-right: auto;
 }
@@ -3851,7 +3851,7 @@ function vcRestartGame(){
 
 // Rocket Verse timing constants (single source of truth)
 const RV_LAUNCH_SLOW_MS = 1000;  // slow lift for ~1 second
-const RV_LAUNCH_FAST_MS = 420;   // fast boost to the top
+const RV_LAUNCH_FAST_MS = 700;   // fast boost to the top
 const RV_LAUNCH_DURATION_MS = RV_LAUNCH_SLOW_MS + RV_LAUNCH_FAST_MS;
 
 const RV_LAUNCH_CLEANUP_MS  = RV_LAUNCH_DURATION_MS + 120;
@@ -4026,7 +4026,7 @@ function rvDoLaunch(st){
     rockets.push(rocket);
 
     // fly straight up to the Completed area height
-    const targetY = (targetRect.top - stageRect.top) + 34;
+    const targetY = (targetRect.top - stageRect.top) * 0.15;
     const dy = targetY - cy;
 
     // --- 2-stage flight: slow lift, then BOOST ---
