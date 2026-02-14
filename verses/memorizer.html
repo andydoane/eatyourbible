@@ -3977,30 +3977,9 @@ function rvAllArmed(st){
   return st.armed.length > 0 && st.armed.every(Boolean);
 }
 
-// --- Special rocket movement types (no-repeat bag) ---
-const RV_SPECIAL_MOVES = [
-  "sine",
-  "clouds",
-  "loop",
-  "bounceWall",
-  "veerExplode"
-];
 
-function rvShuffle(arr){
-  const a = arr.slice();
-  for (let i = a.length - 1; i > 0; i--){
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
 
-function rvNextSpecialMove(st){
-  if (!st.specialMoveBag || st.specialMoveBag.length === 0){
-    st.specialMoveBag = rvShuffle(RV_SPECIAL_MOVES);
-  }
-  return st.specialMoveBag.pop();
-}
+
 
 // little “cloud puff” for the clouds trail
 function rvCloudPuff(stage, x, y){
@@ -4235,13 +4214,10 @@ function rvDoLaunch(st){
     return { chipEl, cx, cy };
   });
 
-  // Pick ONE rocket to be special this launch
-  const specialIndex = chipInfo.length ? Math.floor(Math.random() * chipInfo.length) : -1;
-  const specialMove = (specialIndex >= 0) ? rvNextSpecialMove(st) : null;
-
 
   // ✅ Second: now remove chips and create rockets using the saved positions
-  chipInfo.forEach(({ chipEl, cx, cy }, idx) => {
+  chipInfo.forEach(({ chipEl, cx, cy }) => {
+
     // particle burst at chip location
     rvBurst(stage, cx, cy);
 
@@ -4270,47 +4246,26 @@ function rvDoLaunch(st){
 
     // Start position (already set): translate(-50%,-50%)
     
-    // Decide: special rocket or normal rocket?
-if (idx === specialIndex && specialMove){
+ // ALL rockets use clouds every time
+rvAnimateSpecialRocket({
+  rocket,
+  stage,
+  cx,
+  cy,
+  dyFinal,
+  stageRect,
+  moveType: "clouds"
+});
 
-  // SPECIAL ROCKET
-  rvAnimateSpecialRocket({
-    rocket,
-    stage,
-    cx,
-    cy,
-    dyFinal,
-    stageRect,
-    moveType: specialMove
-  });
+// Keep the mid-flight burst (matches the “boost” moment)
+setTimeout(() => {
+  if (AppState.screen !== "extraGame") return;
+  const slowFrac = 0.22;
+  const midY = cy + (dyFinal * slowFrac);
+  rvBurst(stage, cx, midY);
+}, RV_LAUNCH_SLOW_MS);
 
-  // Keep a mid-flight burst so timing feels consistent
-  setTimeout(() => {
-    if (AppState.screen !== "extraGame") return;
-    const slowFrac = 0.22;
-    const midY = cy + (dyFinal * slowFrac);
-    rvBurst(stage, cx, midY);
-  }, RV_LAUNCH_SLOW_MS);
-
-} else {
-
-  // NORMAL ROCKET (your existing animation code)
-  requestAnimationFrame(() => {
-    rocket.style.transition = `transform ${RV_LAUNCH_SLOW_MS}ms ease-out`;
-    rocket.style.transform = `translate(-50%,-50%) translate(0px, ${dySlow}px)`;
-  });
-
-  setTimeout(() => {
-    if (AppState.screen !== "extraGame") return;
-
-    const midY = cy + dySlow;
-    rvBurst(stage, cx, midY);
-
-    rocket.style.transition = `transform ${RV_LAUNCH_FAST_MS}ms cubic-bezier(.2, .9, .2, 1)`;
-    rocket.style.transform = `translate(-50%,-50%) translate(0px, ${dyFinal}px)`;
-  }, RV_LAUNCH_SLOW_MS);
-
-}
+    
 
 
 
