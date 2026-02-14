@@ -3963,13 +3963,19 @@ function rvDoLaunch(st){
   // Create rockets (and remove chips)
   const rockets = [];
 
-  chipEls.forEach((chipEl) => {
+  // ✅ First: measure all chip positions BEFORE removing any chips
+  const chipInfo = chipEls.map((chipEl) => {
     const r = chipEl.getBoundingClientRect();
 
     // chip center in stage coordinates
     const cx = (r.left - stageRect.left) + (r.width / 2);
     const cy = (r.top  - stageRect.top ) + (r.height / 2);
 
+    return { chipEl, cx, cy };
+  });
+
+  // ✅ Second: now remove chips and create rockets using the saved positions
+  chipInfo.forEach(({ chipEl, cx, cy }) => {
     // particle burst at chip location
     rvBurst(stage, cx, cy);
 
@@ -3993,9 +3999,9 @@ function rvDoLaunch(st){
 
     requestAnimationFrame(() => {
       rocket.style.transform = `translate(-50%,-50%) translate(0px, ${dy}px)`;
-      // ✅ no opacity changes (no fade)
     });
   });
+
 
   // Remove rocket emojis after the flight finishes
   setTimeout(() => {
