@@ -739,6 +739,44 @@ user-select: none;
     border-color: rgba(34,197,94,.35);
     }
 
+/* ================================
+   Rocket Verse: full-height mode
+   ================================ */
+body.mode-rocket .app{
+  /* Sticky bar is hidden in this mode, so don’t reserve space for it */
+  padding-bottom: 18px; /* was 110px globally */
+}
+
+/* Make the screenRoot a vertical layout so the stage can expand */
+body.mode-rocket #screenRoot{
+  display: flex;
+  flex-direction: column;
+
+  /* Use the full viewport height on mobile */
+  min-height: 100svh;
+}
+
+/* Prefer dynamic viewport height where supported (handles mobile address bar better) */
+@supports (height: 100dvh){
+  body.mode-rocket #screenRoot{
+    min-height: 100dvh;
+  }
+}
+
+/* Let the rocket stage take remaining space */
+body.mode-rocket .rocket-stage{
+  flex: 1;
+  min-height: 260px; /* allow smaller phones to still fit */
+}
+
+/* Footer that sits at the bottom */
+.rv-footer{
+  margin-top: auto; /* pushes footer to the bottom */
+  padding-bottom: env(safe-area-inset-bottom); /* iPhone home indicator safety */
+}
+
+
+
 /* =========================
    Rocket Verse
    ========================= */
@@ -1591,6 +1629,11 @@ function setCardMode(mode){
 function setScrambleMode(on){
   document.body.classList.toggle("mode-scramble", !!on);
 }
+
+function setRocketMode(on){
+  document.body.classList.toggle("mode-rocket", !!on);
+}
+
 
 
 function setNavDisabled(disabled){
@@ -2697,6 +2740,8 @@ function renderScrambledPhrasesGame(){
   setHeaderVisible(false);
   setCardMode("no-card");
   setScrambleMode(true);
+  setRocketMode(false);
+
 
   // Initialize if needed
   if (!AppState.extraGameState || AppState.extraGameState.gameId !== "scrambled_phrases"){
@@ -2875,6 +2920,8 @@ function renderBouncingWordsGame(){
   setHeaderVisible(false);
   setCardMode("no-card");
   setScrambleMode(true);
+  setRocketMode(false);
+
 
   // Initialize if needed
   if (!AppState.extraGameState || AppState.extraGameState.gameId !== "bouncing_words"){
@@ -3221,6 +3268,8 @@ function renderStackItGame(){
   setHeaderVisible(false);
   setCardMode("no-card");
   setScrambleMode(true);
+  setRocketMode(false);
+
   setSticky(false);
 
   if (!AppState.extraGameState || AppState.extraGameState.gameId !== "stack_it"){
@@ -4108,6 +4157,8 @@ function renderRocketVerseGame(){
   setHeaderVisible(true);
   setCardMode("card");
   setScrambleMode(false);
+  setRocketMode(true);
+
 
   // init state if needed
   if (!AppState.extraGameState || AppState.extraGameState.game !== "rocket_verse"){
@@ -4170,23 +4221,26 @@ function renderRocketVerseGame(){
   screenRoot.appendChild(builtArea);
   screenRoot.appendChild(stage);
 
-  // Back button
-  const c = el("div", { class:"controls" }, [
-    btn("Back to Menu", {
-      primary:false,
-      onClick: () => {
-        // stop audio if playing
-        const audio = document.getElementById("audio");
-        try{ audio.pause(); }catch(e){}
-        AppState.extraGameId = null;
-        AppState.extraGameState = null;
-        AppState.screen = "extraMenu";
-        render();
-      }
-    })
+  // Back button (bottom-docked in mode-rocket)
+  const footer = el("div", { class: "rv-footer" }, [
+    el("div", { class:"controls" }, [
+      btn("Back to Menu", {
+        primary:false,
+        onClick: () => {
+          // stop audio if playing
+          const audio = document.getElementById("audio");
+          try{ audio.pause(); }catch(e){}
+          AppState.extraGameId = null;
+          AppState.extraGameState = null;
+          AppState.screen = "extraMenu";
+          render();
+        }
+      })
+    ])
   ]);
 
-  screenRoot.appendChild(c);
+  screenRoot.appendChild(footer);
+
   setSticky(false);
 }
 
@@ -4196,6 +4250,8 @@ function renderVerseChainGame(){
   setHeaderVisible(true);
   setCardMode("card");
   setScrambleMode(false);
+  setRocketMode(false);
+
 
   // Create state the first time we enter Verse Chain
   if (!AppState.extraGameState || AppState.extraGameState.game !== "verse_chain"){
@@ -4304,6 +4360,8 @@ function render(){
   // Default: normal card for all screens unless a screen overrides it
   setCardMode("card");
     setScrambleMode(false);
+    setRocketMode(false);
+
 
 
   // Default sticky controls off; each screen configures it.
@@ -4937,6 +4995,8 @@ function renderExtraMenu(){
   setHeaderVisible(true);
   setCardMode("card");
   setScrambleMode(false);
+  setRocketMode(false);
+
 
   screenRoot.appendChild(
     el("h1", {
