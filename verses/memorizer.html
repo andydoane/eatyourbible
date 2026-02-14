@@ -735,6 +735,13 @@ user-select: none;
     transition: transform .08s ease, filter .12s ease, opacity .12s ease;
     }
 
+    /* Bouncing Words ONLY: allow per-chip colors without affecting other games */
+.phrase-chip.bw-chip{
+  background: var(--bw-bg, rgba(124,58,237,16));
+  border-color: var(--bw-border, rgba(255,255,255,14));
+}
+
+
     .phrase-chip:hover{ filter: brightness(1.06); }
     .phrase-chip:active{ transform: scale(.99); }
 
@@ -3077,7 +3084,7 @@ refreshBuiltText();
     st.nextToSpawn += 1;
 
     const chip = el("div", {
-      class: "phrase-chip",
+      class: "phrase-chip bw-chip",
       role: "button",
       tabindex: "0",
       text: st.phrases[idx],
@@ -3086,8 +3093,8 @@ refreshBuiltText();
     // ✅ NEW: assign per-chip colors (always different among the 3 on screen)
     const colorId = pickUnusedColorId();
     const col = BOUNCE_CHIP_COLORS[colorId];
-    chip.style.setProperty("--chip-bg", col.bg);
-    chip.style.setProperty("--chip-border", col.border);
+    chip.style.setProperty("--bw-bg", col.bg);
+    chip.style.setProperty("--bw-border", col.border);
 
 
     chip.addEventListener("click", () => onTap(idx, chip));
