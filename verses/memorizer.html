@@ -723,8 +723,9 @@ user-select: none;
 
     padding: 12px 14px;
     border-radius: 16px;
-    border: 1px solid rgba(255,255,255,.14);
-    background: rgba(124,58,237,.16);
+    border: 1px solid var(--chip-border, rgba(255,255,255,14));
+    background: var(--chip-bg, rgba(124,58,237,16));
+
     color: var(--text);
     font-weight: 800;
     cursor: pointer;
@@ -1291,6 +1292,18 @@ const BOUNCE_INITIAL_SPEED = 115;     // px/sec (start speed)
 const BOUNCE_SPEED_INCREMENT = 18;    // px/sec added per correct tap
 const BOUNCE_MAX_SPEED = 260;         // optional safety cap
 const BOUNCE_SPAWN_MIN_DIST = 84;     // px (try to spawn chips apart)
+
+// --- Bouncing Words: chip colors (6 total) ---
+const BOUNCE_CHIP_COLORS = [
+  { bg: "rgba(59,130,246,0.20)",  border: "rgba(59,130,246,0.45)" },  // blue
+  { bg: "rgba(34,197,94,0.20)",   border: "rgba(34,197,94,0.45)" },   // green
+  { bg: "rgba(234,179,8,0.22)",   border: "rgba(234,179,8,0.50)" },   // yellow
+  { bg: "rgba(249,115,22,0.22)",  border: "rgba(249,115,22,0.50)" },  // orange
+  { bg: "rgba(236,72,153,0.20)",  border: "rgba(236,72,153,0.45)" },  // pink
+  { bg: "rgba(168,85,247,0.20)",  border: "rgba(168,85,247,0.45)" },  // purple
+];
+
+
 
 
 // ==========================
@@ -3048,6 +3061,18 @@ refreshBuiltText();
     if (st.nextToSpawn >= st.phrases.length) return;
     if (st.entities.length >= 3) return;
 
+  // ✅ NEW: pick a color not currently used by the other on-screen chips
+  function pickUnusedColorId(){
+    const used = new Set(st.entities.map(e => e.colorId).filter(v => v !== undefined));
+    const options = [];
+    for (let i = 0; i < BOUNCE_CHIP_COLORS.length; i++){
+      if (!used.has(i)) options.push(i);
+    }
+    // If for some reason we can't find one (shouldn't happen with 6 colors & only 3 chips), fall back.
+    if (options.length === 0) return Math.floor(Math.random() * BOUNCE_CHIP_COLORS.length);
+    return options[Math.floor(Math.random() * options.length)];
+  }
+
     const idx = st.nextToSpawn;
     st.nextToSpawn += 1;
 
@@ -3058,6 +3083,13 @@ refreshBuiltText();
       text: st.phrases[idx],
     });
 
+    // ✅ NEW: assign per-chip colors (always different among the 3 on screen)
+    const colorId = pickUnusedColorId();
+    const col = BOUNCE_CHIP_COLORS[colorId];
+    chip.style.setProperty("--chip-bg", col.bg);
+    chip.style.setProperty("--chip-border", col.border);
+
+
     chip.addEventListener("click", () => onTap(idx, chip));
     chip.addEventListener("keydown", (e) => {
       if (e.key === "Enter" || e.key === " ") chip.click();
@@ -3065,7 +3097,8 @@ refreshBuiltText();
 
     stage.appendChild(chip);
 
-    const ent = { idx, el: chip, x: 0, y: 0, vx: 0, vy: 0, w: 0, h: 0 };
+    const ent = { idx, el: chip, colorId, x: 0, y: 0, vx: 0, vy: 0, w: 0, h: 0 };
+
 
     // ✅ Push immediately so ensureThreeSpawned() sees it right away
     st.entities.push(ent);
