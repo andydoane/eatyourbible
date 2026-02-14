@@ -4008,33 +4008,7 @@ function rvBurst(stage, x, y){
   }
 }
 
-function rvStartCountdownThenLaunch(st){
-  st.phase = "countdown";
-  st.countdownValue = 3;
 
-  render();
-
-  const tick = () => {
-    // user navigated away? stop.
-    if (AppState.screen !== "extraGame" || !AppState.extraGameState || AppState.extraGameState.game !== "rocket_verse"){
-      return;
-    }
-
-    st.countdownValue -= 1;
-
-    if (st.countdownValue <= 0){
-      st.phase = "launch";
-      render();
-      rvDoLaunch(st);
-      return;
-    }
-
-    render();
-    setTimeout(tick, 650);
-  };
-
-  setTimeout(tick, 650);
-}
 
 function rvDoLaunch(st){
   // guard
@@ -4257,12 +4231,8 @@ function renderRocketVerseGame(){
     }
   });
 
-  // Big game stage
-  const countdownText =
-    (st.phase === "countdown" && st.countdownValue > 0) ? String(st.countdownValue) : "";
 
   const stage = el("div", { class:"rocket-stage" }, [
-    el("div", { class:"rocket-countdown", text: countdownText }),
     el("div", { class:"rocket-bottom" },
       st.words.map((w, i) =>
         el("div", {
@@ -4284,9 +4254,12 @@ function renderRocketVerseGame(){
             st.armed[i] = true;
             render();
 
-            if (rvAllArmed(st)){
-              rvStartCountdownThenLaunch(st);
-            }
+          if (rvAllArmed(st)){
+            st.phase = "launch";
+            render();
+            rvDoLaunch(st);
+          }
+
           }
 
         })
