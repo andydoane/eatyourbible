@@ -879,6 +879,21 @@ user-select: none;
   opacity: .95;
 }
 
+/* =========================
+   Rocket Verse: Impact Pulse
+   ========================= */
+@keyframes rvImpactPulse {
+  0%   { transform: scale(1);   filter: brightness(1); }
+  40%  { transform: scale(1.03); filter: brightness(1.35); }
+  100% { transform: scale(1);   filter: brightness(1); }
+}
+
+/* Apply the pulse */
+.phrase-built.rv-impact {
+  animation: rvImpactPulse 320ms ease-out;
+}
+
+
 /* Verse Scramble: reserve built-area height so the stage below doesn't shift */
 .scramble-built-stage{
   position: relative;
@@ -3943,6 +3958,10 @@ function rvDoLaunch(st){
   const bottomEl = document.querySelector(".rocket-bottom");
   if (!stage || !builtTextEl || !bottomEl) return;
 
+  // The green "Completed" box (we'll pulse this)
+  const builtBoxEl = builtTextEl.closest(".phrase-built");
+
+
   // Play mp3 for this part
   const audio = document.getElementById("audio");
   try{
@@ -4007,6 +4026,17 @@ function rvDoLaunch(st){
   setTimeout(() => {
     rockets.forEach(r => r.remove());
   }, RV_LAUNCH_CLEANUP_MS);
+
+  // Pulse the Completed box right when rockets reach it
+  setTimeout(() => {
+    if (!builtBoxEl) return;
+
+    // restart animation even if it was just used
+    builtBoxEl.classList.remove("rv-impact");
+    void builtBoxEl.offsetWidth; // force reflow (so animation can replay)
+    builtBoxEl.classList.add("rv-impact");
+  }, RV_LAUNCH_DURATION_MS);
+
 
   // After the launch animation, add the whole part at once and advance
   setTimeout(() => {
