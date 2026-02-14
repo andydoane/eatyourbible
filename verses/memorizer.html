@@ -3934,6 +3934,9 @@ function rvInitState(){
 
     phase: "tap",        // "tap" | "countdown" | "launch" | "done"
     countdownValue: 0,
+        // Special rocket movement (no repeats until used)
+    specialMoveBag: [],
+
     doneModalShown: false,
 
   };
@@ -3974,6 +3977,193 @@ function rvAllArmed(st){
   return st.armed.length > 0 && st.armed.every(Boolean);
 }
 
+// --- Special rocket movement types (no-repeat bag) ---
+const RV_SPECIAL_MOVES = [
+  "sine",
+  "clouds",
+  "loop",
+  "bounceWall",
+  "veerExplode"
+];
+
+function rvShuffle(arr){
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function rvNextSpecialMove(st){
+  if (!st.specialMoveBag || st.specialMoveBag.length === 0){
+    st.specialMoveBag = rvShuffle(RV_SPECIAL_MOVES);
+  }
+  return st.specialMoveBag.pop();
+}
+
+// little “cloud puff” for the clouds trail
+function rvCloudPuff(stage, x, y){
+  const c = document.createElement("div");
+  c.style.position = "absolute";
+  c.style.left = `${x}px`;
+  c.style.top  = `${y}px`;
+  c.style.width = "18px";
+  c.style.height = "12px";
+  c.style.borderRadius = "999px";
+  c.style.background = "rgba(255,255,255,0.95)";
+  c.style.filter = "blur(0.5px)";
+  c.style.transform = "translate(-50%,-50%)";
+  c.style.pointerEvents = "none";
+  c.style.opacity = "0.95";
+  stage.appendChild(c);
+
+  // drift + fade
+  const dx = (Math.random() * 16) - 8;
+  const dy = 10 + Math.random() * 10;
+
+  requestAnimationFrame(() => {
+    c.style.transition = "transform 700ms ease, opacity 700ms ease";
+    c.style.transform = `translate(-50%,-50%) translate(${dx}px, ${dy}px) scale(1.15)`;
+    c.style.opacity = "0";
+  });
+
+  setTimeout(() => c.remove(), 750);
+}
+
+// Ease helpers for smoother curves
+function rvEaseOutQuad(t){ return 1 - (1 - t) * (1 - t); }
+function rvEaseInOutQuad(t){
+  return t < 0.5 ? 2*t*t : 1 - Math.pow(-2*t + 2, 2)/2;
+}
+
+/**
+ * Animates ONE rocket with a special motion, but still ends at the same top target.
+ * Everyone else can keep the existing 2-stage CSS transition logic.
+ */
+function rvAnimateSpecialRocket(opts){
+  const {
+    rocket, stage,
+    cx, cy,
+    dyFinal,
+    stageRect,
+    moveType
+  } = opts;
+
+  const startTime = performance.now();
+  const duration = RV_LAUNCH_DURATION_MS;
+
+  // Stage width for wall moves
+  const stageW = stageRect.width;
+
+  // We’ll use transform: translate(-50%,-50%) translate(dx, dy)
+  // Base motion is always “upward” to dyFinal, with extra sideways offsets layered in.
+  let lastCloudAt = 0;
+  let exploded = false;
+
+  // pick a wall direction for wall-based moves (based on starting side)
+  const wallDir = (cx < stageW / 2) ? -1 : 1;
+  const wallDxMax = Math.min(140, (wallDir < 0 ? (cx - 18) : (stageW - cx - 18)));
+
+  function frame(now){
+    // stop if user navigated away
+    if (AppState.screen !== "extraGame") return;
+
+    const tRaw = (now - startTime) / duration;
+    const t = Math.max(0, Math.min(1, tRaw));
+
+    // base vertical position (always ends at dyFinal)
+    const yBase = dyFinal * rvEaseInOutQuad(t);
+
+    let xOff = 0;
+    let yOffExtra = 0;
+
+    if (moveType === "sine"){
+      // nice side-to-side wave while going up
+      const amp = 26;
+      const waves = 2.2;
+      xOff = amp * Math.sin((Math.PI * 2) * waves * t);
+    }
+
+    if (moveType === "clouds"){
+      // mostly straight, but drop puffs behind it
+      const cloudEveryMs = 90;
+      if ((now - lastCloudAt) > cloudEveryMs){
+        lastCloudAt = now;
+        rvCloudPuff(stage, cx + xOff, cy + yBase + 14);
+      }
+    }
+
+    if (moveType === "loop"){
+      // do a loop-de-loop in the middle of the path
+      // (still ends at the same destination)
+      const mid = 0.55;
+      const spread = 0.35; // how wide the “loop window” is
+      const local = (t - (mid - spread/2)) / spread; // ~0..1 inside window
+
+      if (local >= 0 && local <= 1){
+        const loopT = local; // 0..1
+        const R = 34;
+        // one loop
+        xOff += R * Math.sin(2 * Math.PI * loopT);
+        // lift slightly during loop so it feels like a loop, not a flat circle
+        yOffExtra += -R * (1 - Math.cos(2 * Math.PI * loopT)) * 0.35;
+      }
+    }
+
+    if (moveType === "bounceWall"){
+      // go hit a wall, then rebound back toward center while continuing up
+      const hitT = 0.45; // when it reaches wall
+      if (t < hitT){
+        const k = rvEaseOutQuad(t / hitT);
+        xOff = wallDir * wallDxMax * k;
+      } else {
+        const k = rvEaseOutQuad((t - hitT) / (1 - hitT));
+        // rebound back toward center (0)
+        xOff = wallDir * wallDxMax * (1 - k);
+      }
+    }
+
+    if (moveType === "veerExplode"){
+      // veer hard to a wall, burst, then “recover” and still finish at the top
+      const impactT = 0.52;
+      if (t < impactT){
+        const k = rvEaseOutQuad(t / impactT);
+        xOff = wallDir * wallDxMax * k;
+      } else {
+        // impact moment: burst + tiny vanish
+        if (!exploded){
+          exploded = true;
+
+          const impactX = cx + (wallDir * wallDxMax);
+          const impactY = cy + (dyFinal * rvEaseInOutQuad(impactT));
+
+          rvBurst(stage, impactX, impactY);
+
+          rocket.style.transition = "opacity 120ms ease";
+          rocket.style.opacity = "0";
+
+          setTimeout(() => {
+            // reappear
+            rocket.style.opacity = "1";
+          }, 140);
+        }
+
+        // after impact, slide back toward center a bit while finishing upward
+        const k = rvEaseOutQuad((t - impactT) / (1 - impactT));
+        xOff = wallDir * wallDxMax * (1 - k) * 0.25; // don't fully return; looks like a “course correction”
+      }
+    }
+
+    rocket.style.transform = `translate(-50%,-50%) translate(${xOff}px, ${yBase + yOffExtra}px)`;
+
+    if (t < 1){
+      requestAnimationFrame(frame);
+    }
+  }
+
+  requestAnimationFrame(frame);
+}
 
 
 function rvBurst(stage, x, y){
@@ -4045,8 +4235,13 @@ function rvDoLaunch(st){
     return { chipEl, cx, cy };
   });
 
+  // Pick ONE rocket to be special this launch
+  const specialIndex = chipInfo.length ? Math.floor(Math.random() * chipInfo.length) : -1;
+  const specialMove = (specialIndex >= 0) ? rvNextSpecialMove(st) : null;
+
+
   // ✅ Second: now remove chips and create rockets using the saved positions
-  chipInfo.forEach(({ chipEl, cx, cy }) => {
+  chipInfo.forEach(({ chipEl, cx, cy }, idx) => {
     // particle burst at chip location
     rvBurst(stage, cx, cy);
 
@@ -4066,33 +4261,59 @@ function rvDoLaunch(st){
 
     // fly straight up to the Completed area height
     const targetY = (targetRect.top - stageRect.top) * 2;
-    const dy = targetY - cy;
+    const dyFinal = targetY - cy;
 
     // --- 2-stage flight: slow lift, then BOOST ---
     const slowFrac = 0.22;              // how far it goes during the slow phase (22%)
-    const dySlow = dy * slowFrac;       // first segment distance
-    const dyFinal = dy;                 // full distance
+    const dySlow = dyFinal * slowFrac;  // first segment distance
+
 
     // Start position (already set): translate(-50%,-50%)
-    // Phase 1: slow lift
-    requestAnimationFrame(() => {
-      rocket.style.transition = `transform ${RV_LAUNCH_SLOW_MS}ms ease-out`;
-      rocket.style.transform = `translate(-50%,-50%) translate(0px, ${dySlow}px)`;
-    });
+    
+    // Decide: special rocket or normal rocket?
+if (idx === specialIndex && specialMove){
 
-    // Phase 2: mid-flight burst + fast boost
-    setTimeout(() => {
-      // If user navigated away, stop
-      if (AppState.screen !== "extraGame") return;
+  // SPECIAL ROCKET
+  rvAnimateSpecialRocket({
+    rocket,
+    stage,
+    cx,
+    cy,
+    dyFinal,
+    stageRect,
+    moveType: specialMove
+  });
 
-      // Burst at the rocket's mid position (same x, moved y)
-      const midY = cy + dySlow;
-      rvBurst(stage, cx, midY);
+  // Keep a mid-flight burst so timing feels consistent
+  setTimeout(() => {
+    if (AppState.screen !== "extraGame") return;
+    const slowFrac = 0.22;
+    const midY = cy + (dyFinal * slowFrac);
+    rvBurst(stage, cx, midY);
+  }, RV_LAUNCH_SLOW_MS);
 
-      // Switch to fast transition and go the rest of the way
-      rocket.style.transition = `transform ${RV_LAUNCH_FAST_MS}ms cubic-bezier(.2, .9, .2, 1)`;
-      rocket.style.transform = `translate(-50%,-50%) translate(0px, ${dyFinal}px)`;
-    }, RV_LAUNCH_SLOW_MS);
+} else {
+
+  // NORMAL ROCKET (your existing animation code)
+  requestAnimationFrame(() => {
+    rocket.style.transition = `transform ${RV_LAUNCH_SLOW_MS}ms ease-out`;
+    rocket.style.transform = `translate(-50%,-50%) translate(0px, ${dySlow}px)`;
+  });
+
+  setTimeout(() => {
+    if (AppState.screen !== "extraGame") return;
+
+    const midY = cy + dySlow;
+    rvBurst(stage, cx, midY);
+
+    rocket.style.transition = `transform ${RV_LAUNCH_FAST_MS}ms cubic-bezier(.2, .9, .2, 1)`;
+    rocket.style.transform = `translate(-50%,-50%) translate(0px, ${dyFinal}px)`;
+  }, RV_LAUNCH_SLOW_MS);
+
+}
+
+
+
     
   });
 
