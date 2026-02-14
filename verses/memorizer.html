@@ -4075,7 +4075,7 @@ function rvDoLaunch(st){
     rockets.push(rocket);
 
     // fly straight up to the Completed area height
-    const targetY = (targetRect.top - stageRect.top) * 0.25;
+    const targetY = (targetRect.top - stageRect.top) * 2;
     const dy = targetY - cy;
 
     // --- 2-stage flight: slow lift, then BOOST ---
