@@ -4092,7 +4092,7 @@ function vcToggleMute(){
 let bwMuted = false;
 
 function updateBWMuteButtonLabel(){
-  const ids = ["bwMuteBtn", "rvMuteBtn"]; // <-- add Rocket Verse button id here too
+  const ids = ["bwMuteBtn", "rvMuteBtn", "ttMuteBtn"];
   for (const id of ids){
     const b = document.getElementById(id);
     if (!b) continue;
@@ -4612,7 +4612,7 @@ screenRoot.appendChild(tip);
     btn("Restart", { onClick: () => { ttStopAnim(); AppState.extraGameState = ttInitState(); render(); } }),
 
     (() => {
-      const b = btn(vcMuted ? "🔊 Unmute" : "🔇 Mute", {
+      const b = btn(bwMuted ? "🔊 Unmute" : "🔇 Mute", {
         primary: false,
         onClick: bwToggleMute   // ✅ no re-render, so traffic doesn’t “reset”
       });
