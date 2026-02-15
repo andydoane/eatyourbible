@@ -376,6 +376,66 @@ user-select: none;
   margin: 2px 0 6px;
 }
 
+/* Traffic Tap */
+.tt-lane{
+  position: relative;
+  width: 100%;
+  height: 92px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255,255,255,0.04);
+  overflow: hidden;
+  margin-top: 12px;
+}
+
+.tt-chip{
+  position: absolute;
+  top: 10px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  min-width: 88px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(124,58,237,0.18);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.25);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tt-chip:active{
+  transform: scale(0.98);
+}
+
+.tt-emoji{
+  font-size: 22px;
+  line-height: 1;
+}
+
+.tt-word{
+  font-weight: 900;
+  font-size: 18px;
+  line-height: 1.05;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.tt-wrong{
+  animation: ttWrong 260ms ease-in-out;
+}
+
+@keyframes ttWrong{
+  0%{ transform: translateX(0); }
+  25%{ transform: translateX(-6px); }
+  50%{ transform: translateX(6px); }
+  75%{ transform: translateX(-4px); }
+  100%{ transform: translateX(0); }
+}
+
+
 /* Verse Chain: reserve verse height so the UI below doesn't jump */
 .vc-verse-stage{
   position: relative;
@@ -1457,6 +1517,13 @@ const EXTRA_GAMES = [
   emoji: "🔗",
   description: "Pick the next word to build the verse.",
 },
+{
+  id: "traffic_tap",
+  title: "Traffic Tap",
+  emoji: "🚗",
+  description: "Tap the correct moving word chip to build the verse.",
+},
+
 
   {
     id: "bouncing_words",
@@ -4176,6 +4243,292 @@ function vcRestartGame(){
 }
 
 /* =========================================================
+   TRAFFIC TAP (Extra Practice Game)
+   ========================================================= */
+
+const TT_SPEED_PX_PER_SEC = 120;     // constant speed (no ramp)
+const TT_SPAWN_EVERY_MS   = 900;     // time between new chips
+
+// Side-view-ish vehicle emojis (base list + a few common "side" vehicles)
+const TT_VEHICLE_EMOJIS = ["🚗","🛻","🚚","🚐","🚛","🚌","🚕","🚓","🚑","🚒"];
+
+let ttRafId = null;
+
+function ttInitState(){
+  const words = TOKENS.slice(); // Verse Chain uses words (TOKENS are your word tokens)
+  const startCount = Math.min(words.length, 2 + Math.floor(Math.random() * 2)); // 2 or 3
+  const built = words.slice(0, startCount);
+  const nextIndex = startCount;
+
+  const parts = vcParseVerseRefParts();
+
+  const state = {
+    game: "traffic_tap",
+
+    // main verse build
+    words,
+    built,
+    nextIndex,
+
+    // end questions
+    phase: "words",           // "words" -> "book" -> "ref" -> done
+    correctBook: parts.book,  // e.g. "Luke"
+    correctCv: parts.cv,      // e.g. "2:11"
+
+    // options (same structure as Verse Chain so we can re-use helpers)
+    options: [],
+    optionIndex: 0,
+
+    // traffic lane entities
+    entities: [],             // { word, emoji, el, x, w }
+    spawnCursor: 0,           // which option to spawn next
+    spawnAccumMs: 0,          // time accumulator for spawning
+    lastTickMs: null,
+
+    // feedback
+    done: false,
+    lastPickCorrect: null
+  };
+
+  vcMakeNewOptions(state); // re-use Verse Chain option builder
+  return state;
+}
+
+function ttPickEmoji(){
+  return TT_VEHICLE_EMOJIS[Math.floor(Math.random() * TT_VEHICLE_EMOJIS.length)];
+}
+
+function ttClearEntities(st){
+  try{
+    st.entities.forEach(e => { try { e.el.remove(); } catch (e2) {} });
+  } catch(e){}
+  st.entities = [];
+  st.spawnCursor = 0;
+  st.spawnAccumMs = 0;
+  st.lastTickMs = null;
+}
+
+function ttStopAnim(){
+  if (ttRafId) cancelAnimationFrame(ttRafId);
+  ttRafId = null;
+}
+
+function ttStartAnim(tickFn){
+  if (ttRafId) return;
+  ttRafId = requestAnimationFrame(tickFn);
+}
+
+function ttChooseWord(chosen, chipEl){
+  const st = AppState.extraGameState;
+  if (!st || st.game !== "traffic_tap") return;
+  if (st.done) return;
+
+  // Tap-to-play word audio (only during word phase)
+  if (!vcMuted && st.phase === "words"){
+    try { playWordChipAudio(chosen); } catch (e) {}
+  }
+
+  let correct = "";
+  if (st.phase === "words") correct = st.words[st.nextIndex];
+  else if (st.phase === "book") correct = st.correctBook;
+  else if (st.phase === "ref") correct = st.correctCv;
+
+  if (chosen === correct){
+    st.lastPickCorrect = true;
+
+    if (st.phase === "words"){
+      st.built.push(correct);
+      st.nextIndex++;
+      vcMakeNewOptions(st); // may auto-switch to "book"
+    }
+    else if (st.phase === "book"){
+      st.phase = "ref";
+      vcMakeNewOptions(st);
+    }
+    else if (st.phase === "ref"){
+      st.phase = "done";
+      st.done = true;
+      st.options = [];
+      st.optionIndex = 0;
+    }
+
+    // Important: on any correct pick, reset the traffic stream
+    ttClearEntities(st);
+    render();
+  } else {
+    st.lastPickCorrect = false;
+
+    // quick shake on wrong tap
+    if (chipEl){
+      chipEl.classList.remove("tt-wrong");
+      // force reflow so animation re-triggers
+      void chipEl.offsetWidth;
+      chipEl.classList.add("tt-wrong");
+    }
+    render();
+  }
+}
+
+function renderTrafficTapGame(){
+  setHeaderVisible(true);
+  setCardMode("card");
+  setScrambleMode(false);
+  setRocketMode(false);
+
+  // Create state the first time we enter Traffic Tap
+  if (!AppState.extraGameState || AppState.extraGameState.game !== "traffic_tap"){
+    AppState.extraGameState = ttInitState();
+  }
+
+  const st = AppState.extraGameState;
+
+  // Top verse area (reserved height so lane doesn't shift)
+  const builtText = st.built.join(" ");
+  const fullText  = st.words.join(" ");
+
+  const verseStage = el("div", {
+    class: "verse vc-verse-stage",
+    style: "text-align:center; margin-top: 8px; margin-bottom: 10px;"
+  }, [
+    el("div", { text: builtText + (st.done ? "" : " …") })
+  ]);
+
+  screenRoot.appendChild(verseStage);
+
+  const visibleText = builtText + (st.done ? "" : " …");
+  vcEnsureReservedVerseHeight(verseStage, fullText, visibleText, st);
+
+  if (st.done){
+    screenRoot.appendChild(el("p", { style:"text-align:center; margin-top:10px;", text:"✅ You finished the verse!" }));
+    screenRoot.appendChild(el("p", { style:"text-align:center; opacity:.85; margin-top:6px;", text: VERSE_REF }));
+
+    const c = el("div", { class:"controls" }, [
+      btn("Play Again", { onClick: () => { AppState.extraGameState = ttInitState(); render(); } }),
+      btn("Back to Menu", {
+        primary:false,
+        onClick: () => {
+          ttStopAnim();
+          AppState.extraGameId = null;
+          AppState.extraGameState = null;
+          AppState.screen = "extraMenu";
+          render();
+        }
+      })
+    ]);
+    screenRoot.appendChild(c);
+    setSticky(false);
+    return;
+  }
+
+  // Prompt
+  let prompt = "Tap the next word in traffic!";
+  if (st.phase === "book") prompt = "What Bible book is it from?";
+  if (st.phase === "ref")  prompt = "What chapter and verse?";
+
+  screenRoot.appendChild(
+    el("p", { style:"text-align:center; margin: 10px 0 8px;", text: prompt })
+  );
+
+  // Feedback
+  if (st.lastPickCorrect === false){
+    screenRoot.appendChild(el("div", { class:"tip", text:"Try again!" }));
+  }
+
+  // Lane
+  const lane = el("div", { class:"tt-lane", id:"ttLane" });
+  screenRoot.appendChild(lane);
+
+  // Ensure we don't leave old animation running when switching games/screens
+  ttStopAnim();
+
+  // Tick loop for moving + spawning chips
+  function tick(now){
+    // If we navigated away, stop.
+    if (AppState.screen !== "extraGame" || AppState.extraGameId !== "traffic_tap"){
+      ttStopAnim();
+      return;
+    }
+
+    if (!st.lastTickMs) st.lastTickMs = now;
+    const dtMs = now - st.lastTickMs;
+    st.lastTickMs = now;
+
+    const dt = dtMs / 1000;
+
+    const W = lane.clientWidth || 300;
+
+    // Move
+    for (let i = st.entities.length - 1; i >= 0; i--){
+      const ent = st.entities[i];
+      ent.x -= TT_SPEED_PX_PER_SEC * dt;
+      ent.el.style.left = `${ent.x}px`;
+
+      if (ent.x + ent.w < -30){
+        try { ent.el.remove(); } catch(e){}
+        st.entities.splice(i, 1);
+      }
+    }
+
+    // Spawn
+    st.spawnAccumMs += dtMs;
+
+    while (st.spawnAccumMs >= TT_SPAWN_EVERY_MS && st.options.length){
+      st.spawnAccumMs -= TT_SPAWN_EVERY_MS;
+
+      const word = st.options[st.spawnCursor % st.options.length];
+      st.spawnCursor = (st.spawnCursor + 1) % st.options.length;
+
+      const chip = el("div", { class:"tt-chip" }, [
+        el("div", { class:"tt-emoji", text: ttPickEmoji() }),
+        el("div", { class:"tt-word", text: word })
+      ]);
+
+      chip.onclick = () => ttChooseWord(word, chip);
+
+      lane.appendChild(chip);
+
+      // Measure after in DOM, then position
+      requestAnimationFrame(() => {
+        const w = chip.offsetWidth || 120;
+        const x = W + 20;
+        chip.style.left = `${x}px`;
+
+        st.entities.push({ word, emoji:null, el: chip, x, w });
+      });
+    }
+
+    ttRafId = requestAnimationFrame(tick);
+  }
+
+  ttStartAnim(tick);
+
+  // Bottom controls (reuse Verse Chain mute)
+  const c = el("div", { class:"controls" }, [
+    btn("Restart", { onClick: () => { ttStopAnim(); AppState.extraGameState = ttInitState(); render(); } }),
+
+    btn(vcMuted ? "🔊 Unmute" : "🔇 Mute", {
+      primary: false,
+      onClick: vcToggleMute
+    }),
+
+    btn("Back to Menu", {
+      primary:false,
+      onClick: () => {
+        ttStopAnim();
+        AppState.extraGameId = null;
+        AppState.extraGameState = null;
+        AppState.screen = "extraMenu";
+        render();
+      }
+    })
+  ]);
+
+  screenRoot.appendChild(c);
+  setSticky(false);
+}
+
+
+/* =========================================================
    ROCKET VERSE (Extra Practice Game)
    ========================================================= */
 
@@ -5647,6 +6000,11 @@ if (AppState.extraGameId === "stack_it"){
   return renderStackItGame();
 }
 
+if (AppState.extraGameId === "traffic_tap"){
+  return renderTrafficTapGame();
+}
+
+
 if (AppState.extraGameId === "verse_chain"){
   return renderVerseChainGame();
 }
@@ -5731,7 +6089,13 @@ else if (AppState.extraGameId === "verse_chain"){
   screenRoot.appendChild(el("p", { text:"Build the verse one word at a time." }));
   screenRoot.appendChild(el("p", { text:"Use the arrows to browse choices, then tap the middle card to choose." }));
   screenRoot.appendChild(el("p", { text:"Each correct pick adds the next word to the verse." }));
+} 
+else if (AppState.extraGameId === "traffic_tap"){
+  screenRoot.appendChild(el("p", { text:"Word chips drive by like traffic." }));
+  screenRoot.appendChild(el("p", { text:"Tap the correct moving chip to add the next word to the verse." }));
+  screenRoot.appendChild(el("p", { text:"The chips keep looping until you tap the right one." }));
 }
+
 else {
   screenRoot.appendChild(el("p", { text: game ? game.description : "Instructions" }));
 }
