@@ -421,6 +421,15 @@ user-select: none;
       box-shadow:none;
       color: var(--text);
     }
+
+    /* Green "success" button (Start Activity) */
+    .btn.success{
+      background: linear-gradient(180deg, var(--good), #16a34a);
+      box-shadow: 0 12px 22px rgba(34,197,94,.25);
+    }
+    .btn.success:hover{ filter: brightness(1.06); }
+
+
     .btn.ghost{
       background: transparent;
       border: 1px solid rgba(255,255,255,.12);
@@ -5556,19 +5565,32 @@ function renderExtraMenu(){
 
   screenRoot.appendChild(carousel);
 
-  // --- Back button (keep your existing behavior) ---
+// --- Back + Start buttons ---
 const backWrap = el("div", { class: "activity-back-wrap" }, [
-  el("div", { class: "controls", style: "justify-content:center; margin-top: 14px;" }, [
+  // Use column layout so the two full-width buttons stack nicely
+  el("div", { class: "controls", style: "justify-content:center; margin-top: 14px; flex-direction:column;" }, [
+
+    // Start Activity (green) - starts the currently selected carousel item
+    el("button", {
+      class: "btn success full",
+      type: "button",
+      text: "Start Activity",
+      onclick: () => goToGame(EXTRA_GAMES[AppState.extraMenuIndex].id)
+    }),
+
+    // Back to Title (same as before)
     el("button", {
       class: "btn full",
       type: "button",
       text: "Back to Title",
       onclick: () => restart()
     })
+
   ])
 ]);
 
 screenRoot.appendChild(backWrap);
+
 
 
   setSticky(false);
