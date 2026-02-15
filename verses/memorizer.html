@@ -3079,20 +3079,25 @@ function renderBouncingWordsGame(){
 
   // ---- Built (top) area ----
   const verseLabel = VERSE_REF.replace(" (NIV)", "");
-  const built = el("div", { class:"phrase-built scramble-built-stage" }, [
 
+  // Create the mute button FIRST (not inside the array)
+  const muteBtn = btn(bwMuted ? "🔇 Unmute" : "🔊 Mute", {
+    primary: false,
+    onClick: () => bwToggleMute()
+  });
+  muteBtn.id = "bwMuteBtn";
+
+  // Now build the top UI
+  const built = el("div", { class:"phrase-built scramble-built-stage" }, [
     el("div", {
       class:"phrase-built-label",
       style:"display:flex; align-items:center; justify-content:space-between; gap:10px;"
     }, [
       el("div", { text:`Your verse — ${verseLabel}` }),
-      btn(bwMuted ? "🔇 Unmute" : "🔊 Mute", {
-        primary: false,
-        onClick: () => bwToggleMute()
-      })
+      muteBtn
     ])
-
   ]);
+
 
 // Always create the text node so refreshBuiltText() always has something to update
 const builtTipEl = el("div", { class:"tip", text:"Tap the correct bouncing phrase to begin." });
@@ -3963,6 +3968,12 @@ function vcToggleMute(){
 // ===== Bouncing Words: mute toggle for chip word-by-word audio =====
 let bwMuted = false;
 
+function updateBWMuteButtonLabel(){
+  const b = document.getElementById("bwMuteBtn");
+  if (!b) return;
+  b.textContent = bwMuted ? "🔇 Unmute" : "🔊 Mute";
+}
+
 function bwToggleMute(){
   bwMuted = !bwMuted;
 
@@ -3973,8 +3984,10 @@ function bwToggleMute(){
   try { audioEl.pause(); } catch(e) {}
   audioEl.currentTime = 0;
 
-  render();
+  // ✅ IMPORTANT: do NOT render() here (that deletes the bouncing chips)
+  updateBWMuteButtonLabel();
 }
+
 
 
 function vcBackToMenu(){
