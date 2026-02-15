@@ -4319,6 +4319,34 @@ function ttStartAnim(tickFn){
   ttRafId = requestAnimationFrame(tickFn);
 }
 
+function ttUpdateTrafficTapHud(){
+  const st = AppState.extraGameState;
+  if (!st || st.game !== "traffic_tap") return;
+
+  // Update the built verse line
+  const builtEl = document.getElementById("ttBuiltLine");
+  if (builtEl){
+    const builtText = st.built.join(" ");
+    builtEl.textContent = builtText + (st.done ? "" : " …");
+  }
+
+  // Update prompt text
+  const promptEl = document.getElementById("ttPrompt");
+  if (promptEl){
+    let prompt = "Tap the next word in traffic!";
+    if (st.phase === "book") prompt = "What Bible book is it from?";
+    if (st.phase === "ref")  prompt = "What chapter and verse?";
+    promptEl.textContent = prompt;
+  }
+
+  // Show/hide feedback tip
+  const tipEl = document.getElementById("ttTip");
+  if (tipEl){
+    tipEl.style.display = (st.lastPickCorrect === false) ? "block" : "none";
+  }
+}
+
+
 function ttChooseWord(chosen, chipEl){
   const st = AppState.extraGameState;
   if (!st || st.game !== "traffic_tap") return;
@@ -4329,6 +4357,7 @@ function ttChooseWord(chosen, chipEl){
     try { playWordChipAudio(chosen); } catch (e) {}
   }
 
+  // Decide the correct answer for the current phase
   let correct = "";
   if (st.phase === "words") correct = st.words[st.nextIndex];
   else if (st.phase === "book") correct = st.correctBook;
@@ -4337,10 +4366,22 @@ function ttChooseWord(chosen, chipEl){
   if (chosen === correct){
     st.lastPickCorrect = true;
 
+    // 1) Remove ONLY the clicked chip from DOM + entities
+    if (chipEl){
+      try { chipEl.remove(); } catch(e){}
+      for (let i = st.entities.length - 1; i >= 0; i--){
+        if (st.entities[i].el === chipEl){
+          st.entities.splice(i, 1);
+          break;
+        }
+      }
+    }
+
+    // 2) Advance the verse state (same as before)
     if (st.phase === "words"){
       st.built.push(correct);
       st.nextIndex++;
-      vcMakeNewOptions(st); // may auto-switch to "book"
+      vcMakeNewOptions(st); // updates st.options for the NEXT target word
     }
     else if (st.phase === "book"){
       st.phase = "ref";
@@ -4353,22 +4394,45 @@ function ttChooseWord(chosen, chipEl){
       st.optionIndex = 0;
     }
 
-    // Important: on any correct pick, reset the traffic stream
-    ttClearEntities(st);
-    render();
+    // 3) IMPORTANT: Do NOT clear all traffic anymore.
+    //    Instead: make existing chips non-clickable, but they keep moving off-screen.
+    for (const ent of st.entities){
+      if (!ent || !ent.el) continue;
+      ent.active = false;
+      ent.el.onclick = null;
+      ent.el.style.pointerEvents = "none";
+      ent.el.style.opacity = "0.75";
+    }
+
+    // 4) Reset spawn cycle so new chips start coming from the updated st.options
+    st.spawnCursor = 0;
+    st.spawnAccumMs = 0;
+
+    // Update top text/prompt/tip without re-rendering the lane
+    ttUpdateTrafficTapHud();
+
+    // If we finished the whole game, NOW we can render the done screen (and stop anim)
+    if (st.done){
+      ttStopAnim();
+      render();
+    }
+
   } else {
     st.lastPickCorrect = false;
 
     // quick shake on wrong tap
     if (chipEl){
       chipEl.classList.remove("tt-wrong");
-      // force reflow so animation re-triggers
-      void chipEl.offsetWidth;
+      void chipEl.offsetWidth; // reflow to restart animation
       chipEl.classList.add("tt-wrong");
     }
-    render();
+
+    // Just update tip visibility (no full render needed)
+    ttUpdateTrafficTapHud();
   }
 }
+
+
 
 function renderTrafficTapGame(){
   setHeaderVisible(true);
@@ -4391,7 +4455,8 @@ function renderTrafficTapGame(){
     class: "verse vc-verse-stage",
     style: "text-align:center; margin-top: 8px; margin-bottom: 10px;"
   }, [
-    el("div", { text: builtText + (st.done ? "" : " …") })
+    el("div", { id:"ttBuiltLine", text: builtText + (st.done ? "" : " …") })
+
   ]);
 
   screenRoot.appendChild(verseStage);
@@ -4426,14 +4491,16 @@ function renderTrafficTapGame(){
   if (st.phase === "book") prompt = "What Bible book is it from?";
   if (st.phase === "ref")  prompt = "What chapter and verse?";
 
-  screenRoot.appendChild(
-    el("p", { style:"text-align:center; margin: 10px 0 8px;", text: prompt })
-  );
+screenRoot.appendChild(
+  el("p", { id:"ttPrompt", style:"text-align:center; margin: 10px 0 8px;", text: prompt })
+);
 
-  // Feedback
-  if (st.lastPickCorrect === false){
-    screenRoot.appendChild(el("div", { class:"tip", text:"Try again!" }));
-  }
+
+// Feedback (always present so we can toggle it without re-rendering)
+const tip = el("div", { class:"tip", id:"ttTip", text:"Try again!" });
+tip.style.display = (st.lastPickCorrect === false) ? "block" : "none";
+screenRoot.appendChild(tip);
+
 
   // Lane
   const lane = el("div", { class:"tt-lane", id:"ttLane" });
@@ -4484,7 +4551,9 @@ function renderTrafficTapGame(){
         el("div", { class:"tt-word", text: word })
       ]);
 
-      chip.onclick = () => ttChooseWord(word, chip);
+    const onTap = () => ttChooseWord(word, chip);
+    chip.onclick = onTap;
+
 
     // Place it OFFSCREEN RIGHT immediately (prevents the left-side "blink")
     const x = W + 20;
@@ -4495,7 +4564,8 @@ function renderTrafficTapGame(){
     // Measure after in DOM, then register in entities
     requestAnimationFrame(() => {
       const w = chip.offsetWidth || 120;
-      st.entities.push({ word, emoji:null, el: chip, x, w });
+      st.entities.push({ word, emoji:null, el: chip, x, w, active:true, onTap });
+
     });
 
     }
