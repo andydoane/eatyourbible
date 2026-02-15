@@ -4525,6 +4525,13 @@ function renderTrafficTapGame(){
 
   screenRoot.appendChild(c);
   setSticky(false);
+  
+  // Start the traffic animation AFTER the lane is on the page
+  requestAnimationFrame(() => {
+    ttStartAnim(tick);
+  });
+
+
 }
 
 
