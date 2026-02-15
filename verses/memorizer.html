@@ -2101,6 +2101,7 @@ function wordMp3Path(rawWord){
 }
 
 async function playWordChipAudio(chipText){
+   if (bwMuted) return; 
   const token = ++rvWordAudioToken;
   forcedAudioToken++;
 
@@ -3988,10 +3989,14 @@ function vcToggleMute(){
 let bwMuted = false;
 
 function updateBWMuteButtonLabel(){
-  const b = document.getElementById("bwMuteBtn");
-  if (!b) return;
-  b.textContent = bwMuted ? "🔇 Unmute" : "🔊 Mute";
+  const ids = ["bwMuteBtn", "rvMuteBtn"]; // <-- add Rocket Verse button id here too
+  for (const id of ids){
+    const b = document.getElementById(id);
+    if (!b) continue;
+    b.textContent = bwMuted ? "🔇 Unmute" : "🔊 Mute";
+  }
 }
+
 
 function bwToggleMute(){
   bwMuted = !bwMuted;
@@ -4645,15 +4650,29 @@ function renderRocketVerseGame(){
     requestAnimationFrame(() => finishRocketVerseGame());
   }
 
+    // Create Rocket Verse mute button (top-right)
+  const muteBtn = btn(bwMuted ? "🔇 Unmute" : "🔊 Mute", {
+    primary: false,
+    onClick: () => bwToggleMute()
+  });
+  muteBtn.id = "rvMuteBtn";
 
-  // Top: built verse area (green-ish, like other games)
+
   const builtArea = el("div", { class:"phrase-built scramble-built-stage" }, [
-    el("div", { class:"phrase-built-label", text:"Completed" }),
+    el("div", {
+      class:"phrase-built-label",
+      style:"display:flex; align-items:center; justify-content:space-between; gap:10px;"
+    }, [
+      el("div", { text:"Completed" }),
+      muteBtn
+    ]),
+
     el("div", { id:"rvBuiltText", class:"phrase-built-text", text: st.completedWords.join(" ")}),
 
     // hidden measurer so the built box won’t “jump” when it grows
     el("div", { class:"scramble-built-measure phrase-built-text", text: VERSE_TEXT })
   ]);
+
 
   // Reserve height based on full text (so layout is stable)
   requestAnimationFrame(() => {
