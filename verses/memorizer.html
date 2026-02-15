@@ -2018,6 +2018,61 @@ async function playForcedAudio(file, { onProgress } = {}){
   });
 }
 
+// ===== Word-by-word audio for Rocket Verse chips =====
+// Looks for mp3s in: verse_audio/words/<word>.mp3
+const WORDS_AUDIO_DIR = AUDIO_DIR + "words/";
+
+// Used to cancel an older sequence if the player taps again quickly
+let rvWordAudioToken = 0;
+
+function normalizeWordForAudio(raw){
+  return (raw || "")
+    .toLowerCase()
+    // trim punctuation on both ends (commas, quotes, periods, etc.)
+    .replace(/^[^a-z0-9]+|[^a-z0-9]+$/g, "")
+    // remove anything still not filename-friendly
+    .replace(/[^a-z0-9]/g, "");
+}
+
+function wordMp3Path(rawWord){
+  const w = normalizeWordForAudio(rawWord);
+  return w ? `${WORDS_AUDIO_DIR}${w}.mp3` : null;
+}
+
+async function playWordChipAudio(chipText){
+  const token = ++rvWordAudioToken;
+
+  // Stop anything currently playing
+  try { audioEl.pause(); } catch(e) {}
+  audioEl.currentTime = 0;
+
+  // Supports multi-word chips (e.g. "For God So")
+  const words = String(chipText).split(/\s+/).filter(Boolean);
+
+  for (const raw of words){
+    // If a newer tap happened, cancel this sequence
+    if (token !== rvWordAudioToken) return;
+
+    const file = wordMp3Path(raw);
+    if (!file) continue;
+
+    const result = await playForcedAudio(file);
+
+    // If a file is missing, we silently stop (no annoying modal spam)
+    if (!result.ok){
+      console.warn("Missing/failed word audio:", file);
+      return;
+    }
+
+    // tiny gap between words (feel free to tweak)
+    await new Promise(r => setTimeout(r, 80));
+  }
+
+  // Restore the main verse audio file so other screens still work normally
+  audioEl.src = AUDIO_FILE;
+  audioEl.currentTime = 0;
+  try { audioEl.load(); } catch(e) {}
+}
 
 
 async function playEchoSequence({ onStatus } = {}){
@@ -4473,6 +4528,8 @@ function renderRocketVerseGame(){
 
             // Correct next word
             st.armed[i] = true;
+            playWordChipAudio(w);
+
             render();
 
           if (rvAllArmed(st)){
