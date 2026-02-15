@@ -4026,14 +4026,14 @@ function vcChooseCurrentOption(){
   if (!st || st.game !== "verse_chain") return;
   if (st.done) return;
 
-  // Tap-to-play word audio (Verse Chain)
-  // Only play for the word phase, not book/ref questions
-  if (!vcMuted && st.phase === "words"){
-    playWordChipAudio(choice); // don't await; let it play in background
-  }
+const chosen = st.options[st.optionIndex];
 
+// Tap-to-play word audio (Verse Chain)
+// Only play for the word phase, not book/ref questions
+if (!vcMuted && st.phase === "words"){
+  try { playWordChipAudio(chosen); } catch (e) {}
+}
 
-  const chosen = st.options[st.optionIndex];
 
   // Decide the correct answer for the current phase
   let correct = "";
@@ -4744,23 +4744,6 @@ screenRoot.appendChild(
   ]);
 
   screenRoot.appendChild(wordCarousel);
-
-  // Verse Chain controls (always visible)
-screenRoot.appendChild(
-  el("div", { class:"controls" }, [
-    btn("Restart", { onClick: vcRestartGame }),
-
-    btn(vcMuted ? "🔊 Unmute" : "🔇 Mute", {
-      primary: false,
-      onClick: vcToggleMute
-    }),
-
-    btn("Back to Menu", {
-      primary:false,
-      onClick: vcBackToMenu
-    })
-  ])
-);
 
 
   // Bottom controls
