@@ -3918,6 +3918,33 @@ function vcGetVerseWords(){
     .map(t => t.text);
 }
 
+// ===== Verse Chain: mute toggle for word-by-word audio =====
+let vcMuted = false;
+
+function vcToggleMute(){
+  vcMuted = !vcMuted;
+
+  // Cancel any in-progress word sequence immediately
+  rvWordAudioToken++;
+
+  // Stop audio right away
+  try { audioEl.pause(); } catch(e) {}
+  audioEl.currentTime = 0;
+
+  render();
+}
+
+function vcBackToMenu(){
+  // stop audio if playing
+  try { audioEl.pause(); } catch(e) {}
+
+  AppState.extraGameId = null;
+  AppState.extraGameState = null;
+  AppState.screen = "extraMenu";
+  render();
+}
+
+
 function vcInitState(){
   const words = vcGetVerseWords();
   const startCount = Math.min(words.length, 2 + Math.floor(Math.random() * 2)); // 2 or 3
@@ -3998,6 +4025,13 @@ function vcChooseCurrentOption(){
   const st = AppState.extraGameState;
   if (!st || st.game !== "verse_chain") return;
   if (st.done) return;
+
+  // Tap-to-play word audio (Verse Chain)
+  // Only play for the word phase, not book/ref questions
+  if (!vcMuted && st.phase === "words"){
+    playWordChipAudio(choice); // don't await; let it play in background
+  }
+
 
   const chosen = st.options[st.optionIndex];
 
@@ -4712,18 +4746,20 @@ screenRoot.appendChild(
   screenRoot.appendChild(wordCarousel);
 
   // Bottom controls
-  const c = el("div", { class:"controls", style:"margin-top:14px;" }, [
-    btn("Restart", { primary:false, onClick: vcRestartGame }),
-    btn("Back to Menu", {
-      primary:false,
-      onClick: () => {
-        AppState.extraGameId = null;
-        AppState.extraGameState = null;
-        AppState.screen = "extraMenu";
-        render();
-      }
-    })
-  ]);
+const c = el("div", { class:"controls" }, [
+  btn("Restart", { onClick: vcRestartGame }),
+
+  btn(vcMuted ? "🔊 Unmute" : "🔇 Mute", {
+    primary: false,
+    onClick: vcToggleMute
+  }),
+
+  btn("Back to Menu", {
+    primary:false,
+    onClick: vcBackToMenu
+  })
+]);
+
 
   screenRoot.appendChild(c);
   setSticky(false);
