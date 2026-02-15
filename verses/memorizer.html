@@ -1967,14 +1967,58 @@ async function playForcedAudio(file, { onProgress } = {}){
       resolve({ ok:false, error: msg });
     };
 
-    const tryPlay = async () => {
-      try {
-        await audioEl.play();
-      } catch (e) {
-        // Don't silently succeed — report failure
-        fail(`Could not play: ${file}`);
-      }
-    };
+const waitUntilPlayable = (ms = 1200) => new Promise((resolve) => {
+  // If already playable, go immediately
+  if (audioEl.readyState >= 2) return resolve(true); // HAVE_CURRENT_DATA+
+
+  let done = false;
+  const finish = (ok) => {
+    if (done) return;
+    done = true;
+    cleanupWait();
+    resolve(ok);
+  };
+
+  const onCanPlay = () => finish(true);
+  const onErr2 = () => finish(false);
+
+  const cleanupWait = () => {
+    audioEl.removeEventListener("canplay", onCanPlay);
+    audioEl.removeEventListener("canplaythrough", onCanPlay);
+    audioEl.removeEventListener("loadeddata", onCanPlay);
+    audioEl.removeEventListener("error", onErr2);
+    clearTimeout(timer);
+  };
+
+  audioEl.addEventListener("canplay", onCanPlay);
+  audioEl.addEventListener("canplaythrough", onCanPlay);
+  audioEl.addEventListener("loadeddata", onCanPlay);
+  audioEl.addEventListener("error", onErr2);
+
+  const timer = setTimeout(() => finish(true), ms); // timeout: try anyway
+});
+
+const tryPlay = async () => {
+  // Wait a moment for the browser to actually load enough data
+  const okToTry = await waitUntilPlayable(1200);
+  if (!okToTry){
+    fail(`Audio file not found or failed to load: ${file}`);
+    return;
+  }
+
+  // Try once, and if it fails, retry after a short delay (helps mobile)
+  try {
+    await audioEl.play();
+  } catch (e1) {
+    try {
+      await new Promise(r => setTimeout(r, 150));
+      await audioEl.play();
+    } catch (e2) {
+      fail(`Could not play: ${file}`);
+    }
+  }
+};
+
 
     const onTime = () => {
       if (!audioEl.duration || !isFinite(audioEl.duration)) return;
