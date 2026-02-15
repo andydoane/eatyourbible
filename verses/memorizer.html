@@ -4060,6 +4060,16 @@ function vcGetVerseWords(){
 // ===== Verse Chain: mute toggle for word-by-word audio =====
 let vcMuted = false;
 
+function updateVCMuteButtonLabel(){
+  const ids = ["vcMuteBtn", "ttMuteBtn"]; // Verse Chain + Traffic Tap
+  for (const id of ids){
+    const b = document.getElementById(id);
+    if (!b) continue;
+    b.textContent = vcMuted ? "🔊 Unmute" : "🔇 Mute";
+  }
+}
+
+
 function vcToggleMute(){
   vcMuted = !vcMuted;
 
@@ -4073,7 +4083,8 @@ function vcToggleMute(){
   try { audioEl.pause(); } catch(e) {}
   audioEl.currentTime = 0;
 
-  render();
+  updateVCMuteButtonLabel();
+
 }
 
 
@@ -4600,10 +4611,15 @@ screenRoot.appendChild(tip);
   const c = el("div", { class:"controls" }, [
     btn("Restart", { onClick: () => { ttStopAnim(); AppState.extraGameState = ttInitState(); render(); } }),
 
-    btn(vcMuted ? "🔊 Unmute" : "🔇 Mute", {
-      primary: false,
-      onClick: vcToggleMute
-    }),
+    (() => {
+      const b = btn(vcMuted ? "🔊 Unmute" : "🔇 Mute", {
+        primary: false,
+        onClick: bwToggleMute   // ✅ no re-render, so traffic doesn’t “reset”
+      });
+      b.id = "ttMuteBtn";       // ✅ so updateBWMuteButtonLabel() can update the text
+      return b;
+    })(),
+
 
     btn("Back to Menu", {
       primary:false,
