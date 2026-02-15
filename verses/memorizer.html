@@ -4550,10 +4550,14 @@ screenRoot.appendChild(tip);
     }
 
     if (!st.lastTickMs) st.lastTickMs = now;
-    const dtMs = now - st.lastTickMs;
+    let dtMs = now - st.lastTickMs;
     st.lastTickMs = now;
 
+    // Prevent giant time jumps when tab regains focus
+    if (dtMs > 120) dtMs = 120;
+
     const dt = dtMs / 1000;
+
 
     const W = lane.clientWidth || 300;
 
