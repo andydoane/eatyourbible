@@ -2280,6 +2280,8 @@ function renderVerse({mode, activeCount=0, onHint=null}){
         text: disguised,
         onclick: () => {
           if (onHint) onHint(idx, tok.text);
+            playWordChipAudio(tok.text);
+
             showModal({
             title: "",
             body: buildRevealBody(disguised, tok.text),
@@ -2310,6 +2312,7 @@ function renderVerse({mode, activeCount=0, onHint=null}){
         "aria-label": "Tap to reveal word",
         text: target.emoji || "❓",
         onclick: () => {
+          playWordChipAudio(tok.text);
           if (onHint) onHint(idx, tok.text);
             showModal({
             title: "",
@@ -2337,6 +2340,8 @@ function renderVerse({mode, activeCount=0, onHint=null}){
       text: disguised,
       onclick: () => {
         if (onHint) onHint(idx, tok.text);
+        playWordChipAudio(tok.text);
+
         showModal({
         title: "",
         body: buildRevealBody(disguised, tok.text),
