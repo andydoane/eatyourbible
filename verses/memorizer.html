@@ -4486,16 +4486,18 @@ function renderTrafficTapGame(){
 
       chip.onclick = () => ttChooseWord(word, chip);
 
-      lane.appendChild(chip);
+    // Place it OFFSCREEN RIGHT immediately (prevents the left-side "blink")
+    const x = W + 20;
+    chip.style.left = `${x}px`;
 
-      // Measure after in DOM, then position
-      requestAnimationFrame(() => {
-        const w = chip.offsetWidth || 120;
-        const x = W + 20;
-        chip.style.left = `${x}px`;
+    lane.appendChild(chip);
 
-        st.entities.push({ word, emoji:null, el: chip, x, w });
-      });
+    // Measure after in DOM, then register in entities
+    requestAnimationFrame(() => {
+      const w = chip.offsetWidth || 120;
+      st.entities.push({ word, emoji:null, el: chip, x, w });
+    });
+
     }
 
     ttRafId = requestAnimationFrame(tick);
