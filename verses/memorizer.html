@@ -1951,6 +1951,8 @@ function fillVerseToProgress(verseNode, progress01){
 // Plays an audio file fully, no pausing allowed.
 // Returns: { ok: true, duration: seconds } OR { ok: false, error: "..." }
 async function playForcedAudio(file, { onProgress } = {}){
+  const myToken = ++forcedAudioToken;
+
   return new Promise((resolve) => {
     // Stop anything currently playing
     try { audioEl.pause(); } catch(e) {}
@@ -2027,11 +2029,14 @@ const tryPlay = async () => {
     };
 
     const onPause = () => {
-      // Force resume unless we’re truly done
+      // If a newer forced-audio session started, do NOT auto-resume this one
+      if (myToken !== forcedAudioToken) return;
+
       if (!finished && audioEl.currentTime < (audioEl.duration || Infinity)){
         tryPlay();
       }
     };
+
 
     const onEnd = () => {
       finished = true;
@@ -2068,6 +2073,8 @@ const WORDS_AUDIO_DIR = AUDIO_DIR + "words/";
 
 // Used to cancel an older sequence if the player taps again quickly
 let rvWordAudioToken = 0;
+let forcedAudioToken = 0;
+
 
 function normalizeWordForAudio(raw){
   return (raw || "")
@@ -2085,6 +2092,7 @@ function wordMp3Path(rawWord){
 
 async function playWordChipAudio(chipText){
   const token = ++rvWordAudioToken;
+  forcedAudioToken++;
 
   // Stop anything currently playing
   try { audioEl.pause(); } catch(e) {}
