@@ -5568,12 +5568,17 @@ function renderExtraMenu(){
 // --- Back + Start buttons ---
 const backWrap = el("div", { class: "activity-back-wrap" }, [
   // Use column layout so the two full-width buttons stack nicely
-  el("div", { class: "controls", style: "justify-content:space-between; gap:12px; margin-top:14px;" }, [
+  el("div", { class: "controls", style: "justify-content:space-between; gap:12px; margin-top:14px; flex-wrap:nowrap;" }, [
+
+    
+    
 
 
     // Start Activity (green) - starts the currently selected carousel item
     el("button", {
-      class: "btn success full",
+      class: "btn success",
+      style: "flex:1;",
+
       type: "button",
       text: "Start Activity",
       onclick: () => goToGame(EXTRA_GAMES[AppState.extraMenuIndex].id)
@@ -5581,7 +5586,9 @@ const backWrap = el("div", { class: "activity-back-wrap" }, [
 
     // Back to Title (same as before)
     el("button", {
-      class: "btn full",
+      class: "btn",
+      style: "flex:1;",
+
       type: "button",
       text: "Back to Title",
       onclick: () => restart()
