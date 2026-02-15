@@ -60,15 +60,18 @@ function processVerse() {
     .split(/\s+/)
     .filter(word => word.length > 0);
 
-  // Compare against manifest
-  const matchedWords = words.filter(word => manifestWords.includes(word));
+  // Find words NOT in manifest
+  const missingWords = words.filter(word => !manifestWords.includes(word));
+
+  // Remove duplicates (optional but recommended)
+  const uniqueMissing = [...new Set(missingWords)];
 
   // List 1: Period format
-  const list1Output = matchedWords.map(word => word + '.').join(' ');
+  const list1Output = uniqueMissing.map(word => word + '.').join(' ');
   document.getElementById('list1').textContent = list1Output;
 
   // List 2: JSON format
-  const list2Output = matchedWords.map(word => `  "${word}",`).join('\n');
+  const list2Output = uniqueMissing.map(word => `  "${word}",`).join('\n');
   document.getElementById('list2').textContent = list2Output;
 }
 </script>
