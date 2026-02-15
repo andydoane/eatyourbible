@@ -424,7 +424,7 @@ user-select: none;
   border: none;                       /* remove border */
   background: rgba(0,0,0,0.45);       /* asphalt-ish, slightly transparent */
 
-  box-shadow: 0 8px 18px rgba(0,0,0,0.35);
+  
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
@@ -449,6 +449,8 @@ user-select: none;
   line-height: 1.05;
   text-align: center;
   white-space: nowrap;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.85);
+
 }
 
 .tt-wrong{
@@ -458,7 +460,7 @@ user-select: none;
 @keyframes ttWrong{
   0%{
     transform: translateX(0);
-    background: rgba(0,0,0,0.45);
+    background: transparent;
     border-color: rgba(255,255,255,0.22);
     filter: none;
   }
@@ -481,7 +483,7 @@ user-select: none;
   }
   100%{
     transform: translateX(0);
-    background: rgba(0,0,0,0.45);
+    background: transparent;
     border-color: rgba(255,255,255,0.22);
     filter: none;
   }
