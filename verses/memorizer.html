@@ -3958,12 +3958,16 @@ function vcToggleMute(){
   // Cancel any in-progress word sequence immediately
   rvWordAudioToken++;
 
+  // NEW: cancel any "forced audio" auto-resume before pausing
+  forcedAudioToken++;
+
   // Stop audio right away
   try { audioEl.pause(); } catch(e) {}
   audioEl.currentTime = 0;
 
   render();
 }
+
 
 // ===== Bouncing Words: mute toggle for chip word-by-word audio =====
 let bwMuted = false;
@@ -3980,6 +3984,9 @@ function bwToggleMute(){
   // Cancel any in-progress word sequence immediately
   rvWordAudioToken++;
 
+  // NEW: cancel any "forced audio" auto-resume before pausing
+  forcedAudioToken++;
+
   // Stop audio right away
   try { audioEl.pause(); } catch(e) {}
   audioEl.currentTime = 0;
@@ -3987,6 +3994,7 @@ function bwToggleMute(){
   // ✅ IMPORTANT: do NOT render() here (that deletes the bouncing chips)
   updateBWMuteButtonLabel();
 }
+
 
 
 
