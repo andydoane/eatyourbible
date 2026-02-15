@@ -428,12 +428,37 @@ user-select: none;
 }
 
 @keyframes ttWrong{
-  0%{ transform: translateX(0); }
-  25%{ transform: translateX(-6px); }
-  50%{ transform: translateX(6px); }
-  75%{ transform: translateX(-4px); }
-  100%{ transform: translateX(0); }
+  0%{
+    transform: translateX(0);
+    background: rgba(124,58,237,0.18);
+    border-color: rgba(255,255,255,0.22);
+    filter: none;
+  }
+  20%{
+    transform: translateX(-6px);
+  }
+  35%{
+    background: rgba(239,68,68,0.40);   /* red flash */
+    border-color: rgba(239,68,68,0.75);
+    filter: brightness(1.25);
+  }
+  50%{
+    transform: translateX(6px);
+  }
+  70%{
+    transform: translateX(-4px);
+    background: rgba(239,68,68,0.22);
+    border-color: rgba(239,68,68,0.55);
+    filter: none;
+  }
+  100%{
+    transform: translateX(0);
+    background: rgba(124,58,237,0.18);  /* back to normal */
+    border-color: rgba(255,255,255,0.22);
+    filter: none;
+  }
 }
+
 
 
 /* Verse Chain: reserve verse height so the UI below doesn't jump */
@@ -4339,11 +4364,7 @@ function ttUpdateTrafficTapHud(){
     promptEl.textContent = prompt;
   }
 
-  // Show/hide feedback tip
-  const tipEl = document.getElementById("ttTip");
-  if (tipEl){
-    tipEl.style.display = (st.lastPickCorrect === false) ? "block" : "none";
-  }
+
 }
 
 
@@ -5253,11 +5274,6 @@ screenRoot.appendChild(
   el("p", { style:"text-align:center; margin: 10px 0 8px;", text: prompt })
 );
 
-
-  // Feedback (tiny + simple)
-  if (st.lastPickCorrect === false){
-    screenRoot.appendChild(el("div", { class:"tip", text:"Try again!" }));
-  }
 
   // Word carousel (re-uses your activity carousel look)
   const current = st.options[st.optionIndex] || "";
