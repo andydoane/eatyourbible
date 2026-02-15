@@ -358,6 +358,7 @@ user-select: none;
   color: rgba(255,255,255,.82);
   font-size: 14px;
   line-height: 1.35;
+  text-wrap: balance;
 }
 
 .activity-meta{
@@ -4982,7 +4983,7 @@ function renderInstructions(){
   screenRoot.appendChild(el("div", { class:"kicker", text:"Instructions" }));
   screenRoot.appendChild(el("h1", { text:"Disappearing words" }));
     screenRoot.appendChild(el("h3", { text:"🔴 Each page, a different word will be replaced with emojis or blanks." }));
-  screenRoot.appendChild(el("h3", { text:"🔴 On each page, read the verse out loud, trying to guess the missing words. " }));
+  screenRoot.appendChild(el("h3", { text:"🔴 Read the verse out loud each time, trying to guess the missing words. " }));
 
   const c = el("div", { class:"controls" }, [
     btn("Continue", {
