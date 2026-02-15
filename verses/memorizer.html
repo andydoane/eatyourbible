@@ -2923,6 +2923,11 @@ refreshBuiltText();
   setSticky(false);
 
   function onTapPhrase(phraseIdx, chipEl){
+    // NEW: read the words on the chip (plays verse_audio/words/<word>.mp3 in a row)
+    try {
+      playWordChipAudio(chipEl.textContent);
+    } catch (e) {}
+
     const correctPhraseIdx = st.order[st.expectedIndex];
 
     // ✅ Correct
