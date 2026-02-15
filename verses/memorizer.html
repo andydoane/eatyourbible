@@ -4255,7 +4255,8 @@ const TT_VEHICLE_EMOJIS = ["🚗","🛻","🚚","🚐","🚛","🚌","🚕","�
 let ttRafId = null;
 
 function ttInitState(){
-  const words = TOKENS.slice(); // Verse Chain uses words (TOKENS are your word tokens)
+  const words = vcGetVerseWords();
+
   const startCount = Math.min(words.length, 2 + Math.floor(Math.random() * 2)); // 2 or 3
   const built = words.slice(0, startCount);
   const nextIndex = startCount;
@@ -4525,7 +4526,7 @@ function renderTrafficTapGame(){
 
   screenRoot.appendChild(c);
   setSticky(false);
-  
+
   // Start the traffic animation AFTER the lane is on the page
   requestAnimationFrame(() => {
     ttStartAnim(tick);
