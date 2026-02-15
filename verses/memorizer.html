@@ -5574,16 +5574,6 @@ const backWrap = el("div", { class: "activity-back-wrap" }, [
     
 
 
-    // Start Activity (green) - starts the currently selected carousel item
-    el("button", {
-      class: "btn success",
-      style: "flex:1;",
-
-      type: "button",
-      text: "Start Activity",
-      onclick: () => goToGame(EXTRA_GAMES[AppState.extraMenuIndex].id)
-    }),
-
     // Back to Title (same as before)
     el("button", {
       class: "btn",
@@ -5592,6 +5582,16 @@ const backWrap = el("div", { class: "activity-back-wrap" }, [
       type: "button",
       text: "Back to Title",
       onclick: () => restart()
+    }),
+
+        // Start Activity (green) - starts the currently selected carousel item
+    el("button", {
+      class: "btn success",
+      style: "flex:1;",
+
+      type: "button",
+      text: "Start Activity",
+      onclick: () => goToGame(EXTRA_GAMES[AppState.extraMenuIndex].id)
     })
 
   ])
