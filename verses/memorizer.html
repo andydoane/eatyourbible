@@ -3081,7 +3081,17 @@ function renderBouncingWordsGame(){
   const verseLabel = VERSE_REF.replace(" (NIV)", "");
   const built = el("div", { class:"phrase-built scramble-built-stage" }, [
 
-    el("div", { class:"phrase-built-label", text:`Your verse — ${verseLabel}` })
+    el("div", {
+      class:"phrase-built-label",
+      style:"display:flex; align-items:center; justify-content:space-between; gap:10px;"
+    }, [
+      el("div", { text:`Your verse — ${verseLabel}` }),
+      btn(bwMuted ? "🔇 Unmute" : "🔊 Mute", {
+        primary: false,
+        onClick: () => bwToggleMute()
+      })
+    ])
+
   ]);
 
 // Always create the text node so refreshBuiltText() always has something to update
@@ -3314,6 +3324,14 @@ refreshBuiltText();
   function onTap(idx, chipEl){
     st.totalTaps = (st.totalTaps || 0) + 1;
     const correct = currentCorrectIdx();
+
+    // 🔊 Tap-to-play chip audio (like other activities)
+    // Don't play if muted, and don't try to read the final "verse reference" chip
+    const isVerseRefChip = (idx === st.phrases.length - 1);
+    if (!bwMuted && !isVerseRefChip){
+      try { playWordChipAudio(st.phrases[idx]); } catch (e) {}
+    }
+
 
     // ✅ Correct
     if (idx === correct){
@@ -3941,6 +3959,23 @@ function vcToggleMute(){
 
   render();
 }
+
+// ===== Bouncing Words: mute toggle for chip word-by-word audio =====
+let bwMuted = false;
+
+function bwToggleMute(){
+  bwMuted = !bwMuted;
+
+  // Cancel any in-progress word sequence immediately
+  rvWordAudioToken++;
+
+  // Stop audio right away
+  try { audioEl.pause(); } catch(e) {}
+  audioEl.currentTime = 0;
+
+  render();
+}
+
 
 function vcBackToMenu(){
   // stop audio if playing
