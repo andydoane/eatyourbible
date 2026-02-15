@@ -381,11 +381,33 @@ user-select: none;
   position: relative;
   width: 100%;
   height: 92px;
-  border: 1px solid var(--line);
+  border: none;                 /* remove border */
   border-radius: 16px;
-  background: rgba(255,255,255,0.04);
   overflow: hidden;
   margin-top: 12px;
+
+  /* ROAD LOOK:
+     - base asphalt
+     - yellow solid line near top
+     - white dotted line in middle
+     - yellow solid line near bottom
+  */
+  background:
+    /* top yellow line */
+    linear-gradient(#facc15, #facc15) 0 18px / 100% 4px no-repeat,
+
+    /* middle white dotted line */
+    repeating-linear-gradient(
+      90deg,
+      rgba(255,255,255,0.92) 0 14px,
+      rgba(255,255,255,0.00) 14px 26px
+    ) 0 46px / 100% 4px no-repeat,
+
+    /* bottom yellow line */
+    linear-gradient(#facc15, #facc15) 0 74px / 100% 4px no-repeat,
+
+    /* asphalt base */
+    linear-gradient(180deg, rgba(0,0,0,0.62), rgba(0,0,0,0.76));
 }
 
 .tt-chip{
@@ -398,13 +420,19 @@ user-select: none;
   padding: 10px 14px;
   min-width: 88px;
   border-radius: 999px;
-  border: 1px solid rgba(255,255,255,0.22);
-  background: rgba(124,58,237,0.18);
-  box-shadow: 0 8px 18px rgba(0,0,0,0.25);
+
+  border: none;                       /* remove border */
+  background: rgba(0,0,0,0.45);       /* asphalt-ish, slightly transparent */
+
+  box-shadow: 0 8px 18px rgba(0,0,0,0.35);
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
+
+  /* helps it read on dark road */
+  backdrop-filter: blur(2px);
 }
+
 
 .tt-chip:active{
   transform: scale(0.98);
@@ -430,7 +458,7 @@ user-select: none;
 @keyframes ttWrong{
   0%{
     transform: translateX(0);
-    background: rgba(124,58,237,0.18);
+    background: rgba(0,0,0,0.45);
     border-color: rgba(255,255,255,0.22);
     filter: none;
   }
@@ -453,7 +481,7 @@ user-select: none;
   }
   100%{
     transform: translateX(0);
-    background: rgba(124,58,237,0.18);  /* back to normal */
+    background: rgba(0,0,0,0.45);
     border-color: rgba(255,255,255,0.22);
     filter: none;
   }
