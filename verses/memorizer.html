@@ -5568,7 +5568,8 @@ function renderExtraMenu(){
 // --- Back + Start buttons ---
 const backWrap = el("div", { class: "activity-back-wrap" }, [
   // Use column layout so the two full-width buttons stack nicely
-  el("div", { class: "controls", style: "justify-content:center; margin-top: 14px; flex-direction:column;" }, [
+  el("div", { class: "controls", style: "justify-content:space-between; gap:12px; margin-top:14px;" }, [
+
 
     // Start Activity (green) - starts the currently selected carousel item
     el("button", {
