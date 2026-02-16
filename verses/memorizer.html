@@ -3033,6 +3033,13 @@ function renderScrambledPhrasesGame(){
 // ---- Built (top) area ----
 const verseLabel = VERSE_REF.replace(" (NIV)", "");
 
+// Create mute button (same logic as Bouncing Words)
+const muteBtn = btn(bwMuted ? "🔇 Unmute" : "🔊 Mute", {
+  primary: false,
+  onClick: () => bwToggleMute()
+});
+muteBtn.id = "bwMuteBtn";
+
 // Create Back to Menu button
 const backBtn = btn("Back to Menu", {
   primary: false,
@@ -3045,16 +3052,22 @@ const backBtn = btn("Back to Menu", {
   }
 });
 
-// Build top section with label (left) and button (right)
+// Build top section with label (left) and buttons (right)
 const built = el("div", { class:"phrase-built scramble-built-stage" }, [
   el("div", {
     class:"phrase-built-label",
     style:"display:flex; align-items:center; justify-content:space-between; gap:10px;"
   }, [
     el("div", { text:`Your verse — ${verseLabel}` }),
-    backBtn
+
+    // Right side: Mute + Back to Menu
+    el("div", { style:"display:flex; align-items:center; gap:8px;" }, [
+      muteBtn,
+      backBtn
+    ])
   ])
 ]);
+
 
 
 
@@ -3274,7 +3287,7 @@ const built = el("div", { class:"phrase-built scramble-built-stage" }, [
 
 
 // Always create the text node so refreshBuiltText() always has something to update
-const builtTipEl = el("div", { class:"tip", text:"Tap the correct bouncing phrase to begin." });
+const builtTipEl = el("div", { class:"tip", text:"Tap first part of the verse to begin." });
 const builtTextEl = el("div", { class:"phrase-built-text", text:"" });
 
 // Start with the tip visible, and empty text
