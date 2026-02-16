@@ -4243,11 +4243,20 @@ function vcChooseCurrentOption(){
 
 const chosen = st.options[st.optionIndex];
 
-// Tap-to-play word audio (Verse Chain)
-// Only play for the word phase, not book/ref questions
-if (!vcMuted && st.phase === "words"){
-  try { playWordChipAudio(chosen); } catch (e) {}
+// Tap-to-play word audio (only for CURRENT option set, only during word phase)
+if (!bwMuted && st.phase === "words"){
+  let isCurrentSet = true;
+
+  if (chipEl){
+    const ent = st.entities.find(e => e && e.el === chipEl);
+    if (ent && ent.setId !== st.optionSetId) isCurrentSet = false;
+  }
+
+  if (isCurrentSet){
+    try { playWordChipAudio(chosen); } catch (e) {}
+  }
 }
+
 
 
   // Decide the correct answer for the current phase
@@ -4345,6 +4354,7 @@ function ttInitState(){
     optionIndex: 0,
 
     // traffic lane entities
+    optionSetId: 0,  // increments each time the correct answer advances
     entities: [],             // { word, emoji, el, x, w }
     spawnCursor: 0,           // which option to spawn next
     spawnAccumMs: 0,          // time accumulator for spawning
@@ -4442,10 +4452,13 @@ function ttChooseWord(chosen, chipEl){
       st.built.push(correct);
       st.nextIndex++;
       vcMakeNewOptions(st); // updates st.options for the NEXT target word
+      st.optionSetId++;
     }
     else if (st.phase === "book"){
       st.phase = "ref";
       vcMakeNewOptions(st);
+      st.optionSetId++;
+
     }
     else if (st.phase === "ref"){
       st.phase = "done";
@@ -4454,15 +4467,6 @@ function ttChooseWord(chosen, chipEl){
       st.optionIndex = 0;
     }
 
-    // 3) IMPORTANT: Do NOT clear all traffic anymore.
-    //    Instead: make existing chips non-clickable, but they keep moving off-screen.
-    for (const ent of st.entities){
-      if (!ent || !ent.el) continue;
-      ent.active = false;
-      ent.el.onclick = null;
-      ent.el.style.pointerEvents = "none";
-      ent.el.style.opacity = "0.75";
-    }
 
     // 4) Reset spawn cycle so new chips start coming from the updated st.options
     st.spawnCursor = 0;
@@ -4628,7 +4632,8 @@ screenRoot.appendChild(tip);
     // Measure after in DOM, then register in entities
     requestAnimationFrame(() => {
       const w = chip.offsetWidth || 120;
-      st.entities.push({ word, emoji:null, el: chip, x, w, active:true, onTap });
+      st.entities.push({ word, emoji:null, el: chip, x, w, active:true, onTap, setId: st.optionSetId });
+
 
     });
 
