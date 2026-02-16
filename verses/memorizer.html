@@ -4289,19 +4289,11 @@ function vcChooseCurrentOption(){
 
 const chosen = st.options[st.optionIndex];
 
-// Tap-to-play word audio (only for CURRENT option set, only during word phase)
+// Tap-to-play word audio (Verse Chain: just play for the chosen word, during word phase)
 if (!bwMuted && st.phase === "words"){
-  let isCurrentSet = true;
-
-  if (chipEl){
-    const ent = st.entities.find(e => e && e.el === chipEl);
-    if (ent && ent.setId !== st.optionSetId) isCurrentSet = false;
-  }
-
-  if (isCurrentSet){
-    try { playWordChipAudio(chosen); } catch (e) {}
-  }
+  try { playWordChipAudio(chosen); } catch (e) {}
 }
+
 
 
 
@@ -4469,7 +4461,7 @@ function ttChooseWord(chosen, chipEl){
   if (st.done) return;
 
   // Tap-to-play word audio (only during word phase)
-  if (!vcMuted && st.phase === "words"){
+  if (!bwMuted && st.phase === "words"){
     try { playWordChipAudio(chosen); } catch (e) {}
   }
 
@@ -5383,14 +5375,15 @@ screenRoot.appendChild(
 const c = el("div", { class:"controls" }, [
   btn("Restart", { onClick: vcRestartGame }),
 
-  btn(vcMuted ? "🔊 Unmute" : "🔇 Mute", {
+  btn(bwMuted ? "🔇 Unmute" : "🔊 Mute", {
     primary: false,
     onClick: vcToggleMute
   }),
 
+
   btn("Back to Menu", {
     primary:false,
-    onClick: vcBackToMenu
+    onClick: extraBackToMenu
   })
 ]);
 
