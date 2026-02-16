@@ -6026,7 +6026,8 @@ function renderExtraMenu(){
     gameId === "scrambled_phrases" ||
     gameId === "bouncing_words" ||
     gameId === "stack_it" ||
-    gameId === "verse_chain"
+    gameId === "verse_chain" ||
+    gameId === "traffic_tap"
   ){
     AppState.screen = "extraGameIntro";
   } else {
@@ -6250,7 +6251,8 @@ else {
 }
 
 
-  const c = el("div", { class:"controls" }, [
+  const c = el("div", { class:"controls", style:"justify-content:flex-start;" }, [
+
     btn("Start", {
       onClick: () => {
         AppState.screen = "extraGame";
