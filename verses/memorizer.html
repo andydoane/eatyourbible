@@ -1560,19 +1560,19 @@ function applyVerseConfig(cfg){
 const EXTRA_GAMES = [
   {
     id: "scrambled_phrases",
-    title: "Verse Scramble",
+    title: "🧩 Verse Scramble",
     emoji: "🧩",
     description: "Tap the phrases in the correct order.",
   },
   {
   id: "verse_chain",
-  title: "Verse Chain",
+  title: "🔗 Verse Chain",
   emoji: "🔗",
   description: "Pick the next word to build the verse.",
 },
 {
   id: "traffic_tap",
-  title: "Traffic Tap",
+  title: "🚗 Traffic Tap",
   emoji: "🚗",
   description: "Tap the correct moving word chip to build the verse.",
 },
@@ -1580,20 +1580,20 @@ const EXTRA_GAMES = [
 
   {
     id: "bouncing_words",
-    title: "Bouncing Words",
+    title: "🏀 Bouncing Words",
     emoji: "🏀",
     description: "Tap the moving words in the correct order.",
   },
   {
   id: "rocket_verse",
-  title: "Rocket Verse",
+  title: "🚀 Rocket Verse",
   emoji: "🚀",
   description: "Tap each word to launch it up into place."
 },
 
   {
     id: "stack_it",
-    title: "Stack It",
+    title: "🧱 Stack It",
     emoji: "🧱",
     description: "Drag the phrases into the correct top-to-bottom order.",
   }
@@ -6242,8 +6242,7 @@ else if (AppState.extraGameId === "verse_chain"){
 } 
 else if (AppState.extraGameId === "traffic_tap"){
   screenRoot.appendChild(el("p", { text:"Word chips drive by like traffic." }));
-  screenRoot.appendChild(el("p", { text:"Tap the correct moving chip to add the next word to the verse." }));
-  screenRoot.appendChild(el("p", { text:"The chips keep looping until you tap the right one." }));
+  screenRoot.appendChild(el("p", { text:"Tap the correct word to add the next word to the verse." }));
 }
 
 else {
