@@ -5208,22 +5208,45 @@ function renderRocketVerseGame(){
     requestAnimationFrame(() => finishRocketVerseGame());
   }
 
-    // Create Rocket Verse mute button (top-right)
-  const muteBtn = btn(bwMuted ? "🔇 Unmute" : "🔊 Mute", {
-    primary: false,
-    onClick: () => bwToggleMute()
-  });
-  muteBtn.id = "rvMuteBtn";
+// Create Rocket Verse mute button (top-right)
+const muteBtn = btn(bwMuted ? "🔇 Unmute" : "🔊 Mute", {
+  primary: false,
+  onClick: () => bwToggleMute()
+});
+muteBtn.id = "rvMuteBtn";
 
+// Create Back to Menu button (top-right)
+const backBtn = btn("Back to Menu", {
+  primary: false,
+  small: true,
+  onClick: () => {
+    // stop audio if playing
+    const audio = document.getElementById("audio");
+    try{ audio.pause(); }catch(e){}
 
-  const builtArea = el("div", { class:"phrase-built scramble-built-stage" }, [
-    el("div", {
-      class:"phrase-built-label",
-      style:"display:flex; align-items:center; justify-content:space-between; gap:10px;"
-    }, [
-      el("div", { text:"Completed" }),
-      muteBtn
-    ]),
+    AppState.extraGameId = null;
+    AppState.extraGameState = null;
+    AppState.screen = "extraMenu";
+    render();
+  }
+});
+
+const builtArea = el("div", { class:"phrase-built scramble-built-stage" }, [
+  el("div", {
+    class:"phrase-built-label",
+    style:"display:flex; align-items:center; justify-content:space-between; gap:10px;"
+  }, [
+    el("div", { text:"Completed" }),
+
+    // Right side: Mute + Back to Menu
+    el("div", { style:"display:flex; align-items:center; gap:8px;" }, [
+      muteBtn,
+      backBtn
+    ])
+  ]),
+
+  
+
 
     el("div", { id:"rvBuiltText", class:"phrase-built-text", text: st.completedWords.join(" ")}),
 
@@ -5288,26 +5311,7 @@ function renderRocketVerseGame(){
   screenRoot.appendChild(builtArea);
   screenRoot.appendChild(stage);
 
-  // Back button (bottom-docked in mode-rocket)
-  const footer = el("div", { class: "rv-footer" }, [
-    el("div", { class:"controls" }, [
-      btn("Back to Menu", {
-        primary:false,
-        onClick: () => {
-          // stop audio if playing
-          const audio = document.getElementById("audio");
-          try{ audio.pause(); }catch(e){}
-          AppState.extraGameId = null;
-          AppState.extraGameState = null;
-          AppState.screen = "extraMenu";
-          render();
-        }
-      })
-    ])
-  ]);
-
-  screenRoot.appendChild(footer);
-
+  
   setSticky(false);
 }
 
