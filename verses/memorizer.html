@@ -1700,10 +1700,18 @@ let tokens = [];
 let planResolved = [];
 let planResolvedMixed = [];
 
+function shuffleArray(arr){
+  // Fisher–Yates shuffle (in-place)
+  for (let i = arr.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
 
 function reshuffleHidePlan(){
   // Make a shuffled COPY so planResolved stays intact
-  planResolvedMixed = shuffleArray(planResolved);
+  planResolvedMixed = shuffleArray([...planResolved]);
 }
 
 
@@ -2047,27 +2055,21 @@ stopNextGate();   // ✅ add this line
   } catch (e) {}
 }
 
-
 function renderVerseFillNode(text){
   const node = el("div", { class:"verse verse-fill", "aria-label": text });
 
-  const spans = [];
+  // Create spans per character (keeps spaces & punctuation)
   for (let i = 0; i < text.length; i++){
+    const ch = text[i];
     const sp = document.createElement("span");
-    sp.textContent = text[i];
-    spans.push(sp);
+    sp.textContent = ch;
     node.appendChild(sp);
   }
-
-  // ✅ cache spans so we don't querySelectorAll every update
-  node._spans = spans;
-
   return node;
 }
 
-
 function fillVerseToProgress(verseNode, progress01){
-  const spans = verseNode._spans || verseNode.querySelectorAll("span");
+  const spans = verseNode.querySelectorAll("span");
   const n = spans.length;
   const filledCount = Math.max(0, Math.min(n, Math.floor(progress01 * n)));
 
@@ -2075,8 +2077,6 @@ function fillVerseToProgress(verseNode, progress01){
     spans[i].classList.toggle("filled", i < filledCount);
   }
 }
-
-
 
 // Plays an audio file fully, no pausing allowed.
 // Returns: { ok: true, duration: seconds } OR { ok: false, error: "..." }
@@ -2379,30 +2379,89 @@ function buildTargetMap(activePlanItems){
 function renderVerse({mode, activeCount=0, onHint=null}){
   // mode: "full" | "steps" | "final"
   const container = el("div", { class: "verse" });
-  const frag = document.createDocumentFragment();
-
   const activeItems = planResolvedMixed.slice(0, activeCount);
 
   const targets = buildTargetMap(activeItems);
 
   tokens.forEach((tok, idx) => {
-  if (tok.type === TokenType.SPACE){
-    frag.appendChild(document.createTextNode(tok.text));
+    if (tok.type === TokenType.SPACE){
+    container.appendChild(document.createTextNode(tok.text));
     return;
-  }
+    }
 
-  if (tok.type !== TokenType.WORD){
-    frag.appendChild(el("span", { text: tok.text }));
-    return;
-  }
 
-  if (mode === "full"){
-    frag.appendChild(el("span", { text: tok.text }));
-    return;
-  }
+    if (tok.type !== TokenType.WORD){
+      container.appendChild(el("span", { text: tok.text }));
+      return;
+    }
 
-  if (mode === "final"){
-    // Everything becomes first-letter + underscores and is hintable
+    if (mode === "full"){
+      container.appendChild(el("span", { text: tok.text }));
+      return;
+    }
+
+    if (mode === "final"){
+      // Everything becomes first-letter + underscores and is hintable
+      const disguised = underscoresForWord(tok.text);
+      const node = el("span", {
+        class: "hintable underscore",
+        role: "button",
+        tabindex: "0",
+        "aria-label": "Tap to reveal word",
+        text: disguised,
+        onclick: () => {
+          if (onHint) onHint(idx, tok.text);
+            playWordChipAudio(tok.text);
+
+            showModal({
+            title: "",
+            body: buildRevealBody(disguised, tok.text),
+            actions: [btn("Close", { primary:false, onClick: () => closeModal() })]
+            });
+
+        }
+      });
+      node.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") node.click();
+      });
+      container.appendChild(node);
+      return;
+    }
+
+    // mode === "steps"
+    const target = targets.get(idx);
+    if (!target){
+      container.appendChild(el("span", { text: tok.text }));
+      return;
+    }
+
+    if (target.type === "emoji"){
+      const node = el("span", {
+        class: "hintable emoji",
+        role: "button",
+        tabindex: "0",
+        "aria-label": "Tap to reveal word",
+        text: target.emoji || "❓",
+        onclick: () => {
+          playWordChipAudio(tok.text);
+          if (onHint) onHint(idx, tok.text);
+            showModal({
+            title: "",
+            body: buildRevealBody(target.emoji || "❓", tok.text),
+
+            actions: [btn("Close", { primary:false, onClick: () => closeModal() })]
+            });
+
+        }
+      });
+      node.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") node.click();
+      });
+      container.appendChild(node);
+      return;
+    }
+
+    // underscore target
     const disguised = underscoresForWord(tok.text);
     const node = el("span", {
       class: "hintable underscore",
@@ -2415,83 +2474,19 @@ function renderVerse({mode, activeCount=0, onHint=null}){
         playWordChipAudio(tok.text);
 
         showModal({
-          title: "",
-          body: buildRevealBody(disguised, tok.text),
-          actions: [btn("Close", { primary:false, onClick: () => closeModal() })]
-        });
-      }
-    });
-
-    node.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") node.click();
-    });
-
-    frag.appendChild(node);
-    return;
-  }
-
-  // mode === "steps"
-  const target = targets.get(idx);
-  if (!target){
-    frag.appendChild(el("span", { text: tok.text }));
-    return;
-  }
-
-  if (target.type === "emoji"){
-    const node = el("span", {
-      class: "hintable emoji",
-      role: "button",
-      tabindex: "0",
-      "aria-label": "Tap to reveal word",
-      text: target.emoji || "❓",
-      onclick: () => {
-        playWordChipAudio(tok.text);
-        if (onHint) onHint(idx, tok.text);
-
-        showModal({
-          title: "",
-          body: buildRevealBody(target.emoji || "❓", tok.text),
-          actions: [btn("Close", { primary:false, onClick: () => closeModal() })]
-        });
-      }
-    });
-
-    node.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") node.click();
-    });
-
-    frag.appendChild(node);
-    return;
-  }
-
-  // underscore target
-  const disguised = underscoresForWord(tok.text);
-  const node = el("span", {
-    class: "hintable underscore",
-    role: "button",
-    tabindex: "0",
-    "aria-label": "Tap to reveal word",
-    text: disguised,
-    onclick: () => {
-      if (onHint) onHint(idx, tok.text);
-      playWordChipAudio(tok.text);
-
-      showModal({
         title: "",
         body: buildRevealBody(disguised, tok.text),
         actions: [btn("Close", { primary:false, onClick: () => closeModal() })]
-      });
-    }
+        });
+
+      }
+    });
+    node.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") node.click();
+    });
+    container.appendChild(node);
   });
 
-  node.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" || e.key === " ") node.click();
-  });
-
-  frag.appendChild(node);
-});
-
-  container.appendChild(frag);
   return container;
 }
 
@@ -3572,34 +3567,26 @@ refreshBuiltText();
   ensureThreeSpawned();
   rafId = requestAnimationFrame(tick);
 
+  // Stop animating if we leave the screen
+function stopAnim(){
+  if (rafId) cancelAnimationFrame(rafId);
+  rafId = null;
+}
 
-    // Stop animating if we leave the screen
-  function stopAnim(){
-    if (rafId) cancelAnimationFrame(rafId);
-    rafId = null;
-  }
+function startAnim(){
+  if (rafId) return; // already running
+  lastT = performance.now();
+  rafId = requestAnimationFrame(tick);
+}
 
-  function startAnim(){
-    if (rafId) return; // already running
-    lastT = performance.now();
-    rafId = requestAnimationFrame(tick);
-  }
+window.addEventListener("blur", stopAnim);
+window.addEventListener("focus", startAnim);
 
-  // ✅ Prevent duplicate listeners when restarting the game
-  // If we already set listeners for a previous run, remove them.
-  if (st._bwAbortController) st._bwAbortController.abort();
-  st._bwAbortController = new AbortController();
-  const { signal } = st._bwAbortController;
-
-  const onVisChange = () => {
-    if (document.hidden) stopAnim();
-    else startAnim();
-  };
-
-  window.addEventListener("blur", stopAnim, { signal });
-  window.addEventListener("focus", startAnim, { signal });
-  document.addEventListener("visibilitychange", onVisChange, { signal });
-
+// Extra safety for mobile/tab switching
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) stopAnim();
+  else startAnim();
+});
 
 
   
