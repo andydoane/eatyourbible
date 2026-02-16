@@ -3606,6 +3606,10 @@ refreshBuiltText();
 
   }
 
+
+// Make sure we don't stack listeners if you re-enter the game
+bwStopAnim();
+
   // Spawn initial 3 and start animation
   ensureThreeSpawned();
   bwRafId = requestAnimationFrame(tick);
@@ -3625,8 +3629,6 @@ function startAnim(){
 
 }
 
-// Make sure we don't stack listeners if you re-enter the game
-bwStopAnim();
 
 // Attach fresh listeners and keep references so we can remove them later
 bwBlurHandler = () => stopAnim();
