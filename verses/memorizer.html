@@ -2028,9 +2028,13 @@ async function makeGatedNextNode(makeRealButtonFn){
     }
 
     rafId = requestAnimationFrame(tick);
+
+
   }
 
   rafId = requestAnimationFrame(tick);
+
+
 
   nextGateCancel = () => {
     cancelled = true;
@@ -3560,7 +3564,6 @@ refreshBuiltText();
   }
 
   // ---------- animation loop ----------
-  let rafId = null;
   let lastT = performance.now();
 
   function tick(t){
@@ -3599,33 +3602,44 @@ refreshBuiltText();
     // ✅ Next correct chip always topmost (overlap gives credit)
     setCorrectOnTop();
 
-    rafId = requestAnimationFrame(tick);
+    bwRafId = requestAnimationFrame(tick);
+
   }
 
   // Spawn initial 3 and start animation
   ensureThreeSpawned();
-  rafId = requestAnimationFrame(tick);
+  bwRafId = requestAnimationFrame(tick);
+
 
   // Stop animating if we leave the screen
 function stopAnim(){
-  if (rafId) cancelAnimationFrame(rafId);
-  rafId = null;
+    if (bwRafId) cancelAnimationFrame(bwRafId);
+    bwRafId = null;
+
 }
 
 function startAnim(){
-  if (rafId) return; // already running
+  if (bwRafId) return; // already running
   lastT = performance.now();
-  rafId = requestAnimationFrame(tick);
+  bwRafId = requestAnimationFrame(tick);
+
 }
 
-window.addEventListener("blur", stopAnim);
-window.addEventListener("focus", startAnim);
+// Make sure we don't stack listeners if you re-enter the game
+bwStopAnim();
 
-// Extra safety for mobile/tab switching
-document.addEventListener("visibilitychange", () => {
+// Attach fresh listeners and keep references so we can remove them later
+bwBlurHandler = () => stopAnim();
+bwFocusHandler = () => startAnim();
+bwVisHandler = () => {
   if (document.hidden) stopAnim();
   else startAnim();
-});
+};
+
+window.addEventListener("blur", bwBlurHandler);
+window.addEventListener("focus", bwFocusHandler);
+document.addEventListener("visibilitychange", bwVisHandler);
+
 
 
   
@@ -4220,6 +4234,27 @@ function vcToggleMute(){
 
 // ===== Bouncing Words: mute toggle for chip word-by-word audio =====
 let bwMuted = false;
+
+// ===== Bouncing Words: global animation + listener cleanup =====
+let bwRafId = null;
+let bwBlurHandler = null;
+let bwFocusHandler = null;
+let bwVisHandler = null;
+
+function bwStopAnim(){
+  if (bwRafId) cancelAnimationFrame(bwRafId);
+  bwRafId = null;
+
+  // Remove listeners if they were attached
+  if (bwBlurHandler)  window.removeEventListener("blur", bwBlurHandler);
+  if (bwFocusHandler) window.removeEventListener("focus", bwFocusHandler);
+  if (bwVisHandler)   document.removeEventListener("visibilitychange", bwVisHandler);
+
+  bwBlurHandler = null;
+  bwFocusHandler = null;
+  bwVisHandler = null;
+}
+
 
 function updateBWMuteButtonLabel(){
   const ids = ["bwMuteBtn", "rvMuteBtn", "ttMuteBtn", "vcMuteBtn"]; // ✅ added vcMuteBtn
