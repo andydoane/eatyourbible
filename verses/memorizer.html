@@ -3244,16 +3244,33 @@ function renderBouncingWordsGame(){
   });
   muteBtn.id = "bwMuteBtn";
 
-  // Now build the top UI
-  const built = el("div", { class:"phrase-built scramble-built-stage" }, [
-    el("div", {
-      class:"phrase-built-label",
-      style:"display:flex; align-items:center; justify-content:space-between; gap:10px;"
-    }, [
-      el("div", { text:`Your verse — ${verseLabel}` }),
-      muteBtn
+// Back to Menu button (top-right)
+const backBtn = btn("Back to Menu", {
+  primary: false,
+  small: true,
+  onClick: () => {
+    AppState.extraGameId = null;
+    AppState.extraGameState = null;
+    AppState.screen = "extraMenu";
+    render();
+  }
+});
+
+const built = el("div", { class:"phrase-built scramble-built-stage" }, [
+  el("div", {
+    class:"phrase-built-label",
+    style:"display:flex; align-items:center; justify-content:space-between; gap:10px;"
+  }, [
+    el("div", { text:`Your verse — ${verseLabel}` }),
+
+    // Right side: Mute + Back to Menu
+    el("div", { style:"display:flex; align-items:center; gap:8px;" }, [
+      muteBtn,
+      backBtn
     ])
-  ]);
+  ])
+]);
+
 
 
 // Always create the text node so refreshBuiltText() always has something to update
