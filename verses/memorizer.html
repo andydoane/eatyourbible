@@ -1,51 +1,116 @@
-// If Web Animations API isn't available or fails, don't get stuck.
-try {
-  if (typeof cloneA.animate !== "function" || typeof cloneB.animate !== "function") {
-    throw new Error("No Web Animations API");
+function doSwapAnimated(a, b){
+  // prevent double-swaps mid-animation
+  if (st._swapAnimating) return;
+  st._swapAnimating = true;
+
+  const stageEl = document.getElementById("stackStage");
+
+  // Find the two *current* chip DOM nodes (before swap)
+  const chipA = document.querySelector(`.stack-slot[data-slot="${a}"] .phrase-chip`);
+  const chipB = document.querySelector(`.stack-slot[data-slot="${b}"] .phrase-chip`);
+  if (!chipA || !chipB){
+    // fallback: do normal swap
+    doSwapImmediate(a, b);
+    st._swapAnimating = false;
+    return;
   }
 
-  const animA = cloneA.animate([
-    { transform: "translate(0px, 0px)" },
-    { transform: `translate(${dxA/2 + arc}px, ${dyA/2}px)` },
-    { transform: `translate(${dxA}px, ${dyA}px)` },
-  ], {
-    duration: 360,
-    easing: "cubic-bezier(.2,8,2,1)",
-    fill: "forwards",
+  const rectA = chipA.getBoundingClientRect();
+  const rectB = chipB.getBoundingClientRect();
+
+  // Make floating clones
+  const cloneA = chipA.cloneNode(true);
+  const cloneB = chipB.cloneNode(true);
+
+  function setupClone(clone, rect){
+    clone.classList.remove("selected","swap-target","swap-hidden");
+    clone.style.position = "fixed";
+    clone.style.left = `${rect.left}px`;
+    clone.style.top  = `${rect.top}px`;
+    clone.style.width = `${rect.width}px`;
+    clone.style.height = `${rect.height}px`;
+    clone.style.margin = "0";
+    clone.style.zIndex = "9999";
+    clone.style.pointerEvents = "none";
+    clone.style.transform = "translate(0px, 0px)";
+  }
+
+  setupClone(cloneA, rectA);
+  setupClone(cloneB, rectB);
+
+  // ✅ Important: put clones inside the stage so they inherit the same font/sizing
+  stageEl.appendChild(cloneA);
+  stageEl.appendChild(cloneB);
+
+  // 1) Swap the underlying data + clear selection
+  const tmp = st.slots[a];
+  st.slots[a] = st.slots[b];
+  st.slots[b] = tmp;
+  st.selectedSlot = null;
+
+  // 2) Re-render so the REAL chips jump to their new positions,
+  //    then hide those new real chips while clones animate.
+  render();
+
+  requestAnimationFrame(() => {
+    const newChipA = document.querySelector(`.stack-slot[data-slot="${a}"] .phrase-chip`);
+    const newChipB = document.querySelector(`.stack-slot[data-slot="${b}"] .phrase-chip`);
+    if (newChipA) newChipA.classList.add("swap-hidden");
+    if (newChipB) newChipB.classList.add("swap-hidden");
+
+    // Measure destination rects after render
+    const destA = newChipA ? newChipA.getBoundingClientRect() : rectB;
+    const destB = newChipB ? newChipB.getBoundingClientRect() : rectA;
+
+    const dxA = destB.left - rectA.left;
+    const dyA = destB.top  - rectA.top;
+
+    const dxB = destA.left - rectB.left;
+    const dyB = destA.top  - rectB.top;
+
+    // Arc amount: scales a bit with distance but has a minimum
+    const dist = Math.hypot(dxA, dyA);
+    const arc = Math.max(28, Math.min(70, dist * 0.18));
+
+    // Cleanup helper (used in success + failure)
+    const cleanup = () => {
+      try { cloneA.remove(); } catch(e){}
+      try { cloneB.remove(); } catch(e){}
+      if (newChipA) newChipA.classList.remove("swap-hidden");
+      if (newChipB) newChipB.classList.remove("swap-hidden");
+      st._swapAnimating = false;
+    };
+
+    // ✅ If Web Animations API isn't available or fails, don't get stuck.
+    try {
+      if (typeof cloneA.animate !== "function" || typeof cloneB.animate !== "function") {
+        cleanup();
+        return;
+      }
+
+      const animA = cloneA.animate([
+        { transform: "translate(0px, 0px)" },
+        { transform: `translate(${dxA/2 + arc}px, ${dyA/2}px)` },
+        { transform: `translate(${dxA}px, ${dyA}px)` },
+      ], {
+        duration: 360,
+        easing: "cubic-bezier(.2,.8,.2,1)",
+        fill: "forwards",
+      });
+
+      const animB = cloneB.animate([
+        { transform: "translate(0px, 0px)" },
+        { transform: `translate(${dxB/2 - arc}px, ${dyB/2}px)` },
+        { transform: `translate(${dxB}px, ${dyB}px)` },
+      ], {
+        duration: 360,
+        easing: "cubic-bezier(.2,.8,.2,1)",
+        fill: "forwards",
+      });
+
+      Promise.all([animA.finished, animB.finished]).then(cleanup).catch(cleanup);
+    } catch (e) {
+      cleanup();
+    }
   });
-
-  const animB = cloneB.animate([
-    { transform: "translate(0px, 0px)" },
-    { transform: `translate(${dxB/2 - arc}px, ${dyB/2}px)` },
-    { transform: `translate(${dxB}px, ${dyB}px)` },
-  ], {
-    duration: 360,
-    easing: "cubic-bezier(.2,8,2,1)",
-    fill: "forwards",
-  });
-
-  Promise.all([animA.finished, animB.finished]).then(() => {
-    try { cloneA.remove(); } catch(e){}
-    try { cloneB.remove(); } catch(e){}
-
-    if (newChipA) newChipA.classList.remove("swap-hidden");
-    if (newChipB) newChipB.classList.remove("swap-hidden");
-
-    st._swapAnimating = false;
-  }).catch(() => {
-    // safety cleanup if animation is interrupted
-    try { cloneA.remove(); } catch(e){}
-    try { cloneB.remove(); } catch(e){}
-    if (newChipA) newChipA.classList.remove("swap-hidden");
-    if (newChipB) newChipB.classList.remove("swap-hidden");
-    st._swapAnimating = false;
-  });
-
-} catch (e) {
-  // Fallback: no animation, but NEVER leave clones behind or lock swapping
-  try { cloneA.remove(); } catch(err){}
-  try { cloneB.remove(); } catch(err){}
-  if (newChipA) newChipA.classList.remove("swap-hidden");
-  if (newChipB) newChipB.classList.remove("swap-hidden");
-  st._swapAnimating = false;
 }
