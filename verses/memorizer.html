@@ -3886,8 +3886,9 @@ function fitStackChipsToStage(stageEl, slotsWrapEl){
 
   setupClone(cloneA, rectA);
   setupClone(cloneB, rectB);
-  document.body.appendChild(cloneA);
-  document.body.appendChild(cloneB);
+stageEl.appendChild(cloneA);
+stageEl.appendChild(cloneB);
+
 
   // 1) Swap the underlying data + clear selection
   const tmp = st.slots[a];
@@ -3940,23 +3941,28 @@ function fitStackChipsToStage(stageEl, slotsWrapEl){
       fill: "forwards",
     });
 
-    // When both finish: cleanup
-    Promise.all([animA.finished, animB.finished]).then(() => {
-      try { cloneA.remove(); } catch(e){}
-      try { cloneB.remove(); } catch(e){}
+  // When both finish: cleanup (with a failsafe timeout)
+  const cleanup = () => {
+    try { cloneA.remove(); } catch(e){}
+    try { cloneB.remove(); } catch(e){}
 
-      if (newChipA) newChipA.classList.remove("swap-hidden");
-      if (newChipB) newChipB.classList.remove("swap-hidden");
+    if (newChipA) newChipA.classList.remove("swap-hidden");
+    if (newChipB) newChipB.classList.remove("swap-hidden");
 
-      st._swapAnimating = false;
-    }).catch(() => {
-      // safety cleanup if animation is interrupted
-      try { cloneA.remove(); } catch(e){}
-      try { cloneB.remove(); } catch(e){}
-      if (newChipA) newChipA.classList.remove("swap-hidden");
-      if (newChipB) newChipB.classList.remove("swap-hidden");
-      st._swapAnimating = false;
-    });
+    st._swapAnimating = false;
+  };
+
+  // If the animation promises ever fail to resolve (rare browser bug),
+  // this timeout will force cleanup so the game doesn't lock up.
+  const FAILSAFE_MS = 900;
+
+  Promise.race([
+    Promise.all([animA.finished, animB.finished]),
+    new Promise(resolve => setTimeout(resolve, FAILSAFE_MS))
+  ]).then(cleanup).catch(cleanup);
+
+    
+
   });
 }
 
