@@ -3030,11 +3030,32 @@ function renderScrambledPhrasesGame(){
 
   if (!Array.isArray(st.placed)) st.placed = [];
 
-  // ---- Built (top) area ----
-  const verseLabel = VERSE_REF.replace(" (NIV)", "");
+// ---- Built (top) area ----
+const verseLabel = VERSE_REF.replace(" (NIV)", "");
+
+// Create Back to Menu button
+const backBtn = btn("Back to Menu", {
+  primary: false,
+  small: true,
+  onClick: () => {
+    AppState.extraGameId = null;
+    AppState.extraGameState = null;
+    AppState.screen = "extraMenu";
+    render();
+  }
+});
+
+// Build top section with label (left) and button (right)
 const built = el("div", { class:"phrase-built scramble-built-stage" }, [
-  el("div", { class:"phrase-built-label", text:`Your verse — ${verseLabel}` })
+  el("div", {
+    class:"phrase-built-label",
+    style:"display:flex; align-items:center; justify-content:space-between; gap:10px;"
+  }, [
+    el("div", { text:`Your verse — ${verseLabel}` }),
+    backBtn
+  ])
 ]);
+
 
 
 // Tip + text nodes
