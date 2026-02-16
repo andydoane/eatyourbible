@@ -3659,13 +3659,42 @@ function renderStackItGame(){
 
   const st = AppState.extraGameState;
 
+
   // ✅ Simple instruction only (no “Your Verse” box)
-// Check It button row (bigger, centered)
-const checkBar = el("div", { class:"stack-checkbar" }, [
-  btn("Check It", { onClick: onCheck })
+
+// Build a header row: [spacer] [Check It centered] [Back to Menu on right]
+const backBtn = btn("Back to Menu", {
+  primary: false,
+  small: true,
+  onClick: () => {
+    AppState.extraGameId = null;
+    AppState.extraGameState = null;
+    AppState.screen = "extraMenu";
+    render();
+  }
+});
+
+// Check It button (big)
+const checkBtn = btn("Check It", { onClick: onCheck });
+checkBtn.classList.add("stack-checkbtn");
+
+// Header row container (same “header type space” as Check It)
+const headerRow = el("div", {
+  class: "stack-checkbar",
+  style: "display:flex; align-items:center; justify-content:space-between; gap:10px;"
+}, [
+  // left spacer keeps Check It visually centered
+  el("div", { style:"width:120px;" }),
+
+  // center: Check It
+  checkBtn,
+
+  // right: Back to Menu
+  backBtn
 ]);
-checkBar.querySelector("button").classList.add("stack-checkbtn");
-screenRoot.appendChild(checkBar);
+
+screenRoot.appendChild(headerRow);
+
 
 
 
@@ -3702,23 +3731,7 @@ screenRoot.appendChild(checkBar);
   });
 
 
-
-  // Bottom controls
-  const controls = el("div", { class:"controls" }, [
-  btn("Play again", {
-    primary:false,
-    onClick: () => { startStackItGame(); render(); }
-  }),
-  btn("Back to Extra Practice", {
-    primary:false,
-    onClick: () => {
-      AppState.extraGameId = null;
-      AppState.extraGameState = null;
-      AppState.screen = "extraMenu";
-      render();
-    }
-  })
-]);
+  
 
 
   screenRoot.appendChild(controls);
