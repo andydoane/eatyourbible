@@ -3849,10 +3849,35 @@ function fitStackChipsToStage(stageEl, slotsWrapEl){
 
   function doSwapAnimated(a, b){
   // prevent double-swaps mid-animation
-  if (st._swapAnimating) return;
-  st._swapAnimating = true;
+if (st._swapAnimating) return;
+st._swapAnimating = true;
 
-  const stageEl = document.getElementById("stackStage");
+const stageEl = document.getElementById("stackStage");
+
+// ✅ FORCE-UNLOCK SAFETY NET:
+// If anything goes wrong during the animation/cleanup, we must NOT get stuck.
+const mySwapSeq = (st._swapSeq = (st._swapSeq || 0) + 1);
+
+const forceUnlock = () => {
+  // Only unlock if this is still the most recent swap attempt
+  if (st._swapAnimating && st._swapSeq === mySwapSeq) {
+    // Remove any leftover clones
+    stageEl.querySelectorAll(".stack-swap-clone").forEach(n => {
+      try { n.remove(); } catch(e){}
+    });
+
+    // Unhide any chips that accidentally stayed hidden
+    document.querySelectorAll(".phrase-chip.swap-hidden").forEach(n => {
+      n.classList.remove("swap-hidden");
+    });
+
+    st._swapAnimating = false;
+  }
+};
+
+// Runs even if Promises/animation cleanup fails
+const unlockTimer = setTimeout(forceUnlock, 1200);
+
 
   // Find the two *current* chip DOM nodes (before swap)
   const chipA = document.querySelector(`.stack-slot[data-slot="${a}"] .phrase-chip`);
@@ -3870,6 +3895,10 @@ function fitStackChipsToStage(stageEl, slotsWrapEl){
   // Make floating clones
   const cloneA = chipA.cloneNode(true);
   const cloneB = chipB.cloneNode(true);
+
+  cloneA.classList.add("stack-swap-clone");
+cloneB.classList.add("stack-swap-clone");
+
 
   function setupClone(clone, rect){
     clone.classList.remove("selected","swap-target","swap-hidden");
@@ -3943,6 +3972,9 @@ stageEl.appendChild(cloneB);
 
   // When both finish: cleanup (with a failsafe timeout)
   const cleanup = () => {
+
+    clearTimeout(unlockTimer);
+
     try { cloneA.remove(); } catch(e){}
     try { cloneB.remove(); } catch(e){}
 
