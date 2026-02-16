@@ -4210,7 +4210,11 @@ function bwToggleMute(){
 
 
 function extraBackToMenu(){
+  try { closeModal(); } catch(e) {}
+
+  
   // 1) Stop any audio + clear any “pending audio” sequences
+  
   try { audioEl.pause(); } catch(e) {}
   try { audioEl.currentTime = 0; } catch(e) {}
   rvWordAudioToken++;     // cancel word-by-word sequences (your code already uses this)
@@ -4227,7 +4231,10 @@ function extraBackToMenu(){
   if (typeof resetAudioForNewPage === "function") resetAudioForNewPage();
 
   // 4) Leave the game
-    extraBackToMenu();
+     AppState.extraGameId = null;
+  AppState.extraGameState = null;
+  AppState.screen = "extraMenu";
+  render();
 
 }
 
