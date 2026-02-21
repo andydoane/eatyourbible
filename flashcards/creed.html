@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>Apostles Creed</title>
+
+<style>
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    font-family: "Baloo 2", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+#app {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* ---------- Slide System ---------- */
+
+.slide {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.image-area {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.image-area img {
+    max-height: 100%;
+    max-width: min(90vw, 520px);
+    object-fit: contain;
+}
+
+.text-area {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 20px;
+    text-align: center;
+}
+
+.phrase {
+    font-family: 'Baloo 2', cursive;
+    font-size: clamp(24px, 5vw, 42px);
+    text-wrap: balance;
+    color: white;
+    font-weight: 700;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+.small-text {
+    font-size: clamp(16px, 3vw, 20px);
+    opacity: .85;
+}
+
+.large-text {
+    font-size: clamp(28px, 6vw, 48px);
+}
+
+/* ---------- Navigation ---------- */
+
+.nav {
+    height: 70px;
+    background: rgba(0,0,0,0.3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 30px;
+    color: white;
+    font-size: 28px;
+}
+
+.nav button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 28px;
+}
+
+.center-btn {
+    font-size: 18px !important;
+}
+
+/* ---------- Title ---------- */
+
+.title-screen {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    height: 100%;
+    padding: 40px 20px;
+    background: #7f66c6;
+    color: white;
+    text-align: center;
+}
+
+.title-screen img {
+    max-width: 400px;
+    width: 80%;
+}
+
+.title-buttons button {
+    margin: 10px;
+    padding: 14px 28px;
+    font-size: 20px;
+    border-radius: 10px;
+    border: none;
+}
+
+.footer {
+    font-size: 14px;
+}
+
+/* ---------- Intro ---------- */
+
+.intro {
+    background: #7f66c6;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.intro img {
+    width: 60%;
+    max-width: 400px;
+    animation: wiggle 1s infinite alternate;
+}
+
+@keyframes wiggle {
+    0% { transform: rotate(-4deg); }
+    100% { transform: rotate(4deg); }
+}
+
+/* ---------- Mode Screen ---------- */
+
+.mode-screen {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    color: white;
+    text-align: center;
+}
+
+.mode-section {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 20px;
+}
+
+.mode-section h2 {
+    margin: 0;
+    font-size: 32px;
+}
+
+.mode-section p {
+    margin-top: 10px;
+}
+
+.easy { background:#a7cb6f; }
+.medium { background:#ffa351; }
+.hard { background:#ff5a51; }
+
+button {
+    cursor: pointer;
+    font-family: inherit;
+}
+</style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script>
+/* ---------- Data ---------- */
+
+const phrases = [
+["I believe in God", "believe", "God"],
+["The Father Almighty", "Father", "Almighty"],
+["Creator of Heaven and Earth", "Creator", "Earth"],
+["I believe in Jesus Christ", "Jesus", "believe"],
+["His Only Son, our Lord.", "Son", "Lord"],
+["He was conceived by the Holy Spirit", "Spirit", "conceived"],
+["and born of the virgin Mary.", "born", "Mary"],
+["He suffered under Pontius Pilate", "suffered", "Pilate"],
+["was crucified", "crucified"],
+["died, and was buried.", "buried", "died"],
+["He descended to the dead.", "dead", "descended"],
+["On the third day", "third"],
+["He rose from the dead.", "rose", "dead"],
+["He ascended to heaven", "ascended", "heaven"],
+["and is seated at the right hand", "seated", "right"],
+["of God the Father Almighty.", "God", "Almighty"],
+["From there he will come", "come", "there"],
+["to judge", "judge"],
+["the living and the dead.", "living", "dead"],
+["I believe in the Holy Spirit", "Spirit", "believe"],
+["the holy catholic church", "church", "holy"],
+["the communion of saints", "communion", "saints"],
+["the forgiveness of sins", "forgiveness", "sins"],
+["the resurrection of the body", "resurrection", "body"],
+["and the life everlasting.", "life", "everlasting"]
+];
+
+const slideColors = [
+"#7f66c6", // 1 - purple
+"#ffc751", // 2 - yellow
+"#333333", // 3 - gray
+"#ffa351", // 4 - orange
+"#a7cb6f", // 5 - green
+"#ff5a51", // 6 - red
+"#ffc751", // 7 - yellow
+"#40b9c5", // 8 - blue
+"#ff5a51", // 9 - red
+"#f2f2f2", // 10 - white
+"#333333", // 11 - gray
+"#ffa351", // 12 - orange
+"#a7cb6f", // 13 - green
+"#40b9c5", // 14 - blue
+"#ffc751", // 15 - yellow
+"#7f66c6", // 16 - purple
+"#40b9c5", // 17 - blue
+"#ffa351", // 18 - orange
+"#7f66c6", // 19 - purple
+"#ffc751", // 20 - yellow
+"#f2f2f2", // 21 - white
+"#a7cb6f", // 22 - green
+"#ff5a51", // 23 - red
+"#a7cb6f", // 24 - green
+"#7f66c6"  // 25 - purple
+];
+
+let screen="intro";
+let index=0;
+let muted=false;
+let testMode=null;
+let hintState=0;
+
+/* ---------- Utility ---------- */
+
+function getColor(i){
+    return slideColors[i];
+}
+
+function playAudio(i){
+    if(muted) return;
+    const audio = new Audio(`creed_audio/creed_${String(i+1).padStart(2,"0")}.mp3`);
+    audio.play().catch(()=>{});
+}
+
+function maskWord(word, revealLetters=0){
+    return word.split("").map((c,i)=>{
+        if(c===" ") return " ";
+        if(i<revealLetters) return word[i];
+        return "_";
+    }).join("");
+}
+
+function maskPhrase(phrase, removeWords, reveal=0){
+    let result=phrase;
+    removeWords.forEach(w=>{
+        const masked = reveal===2 ? w :
+                       reveal===1 ? maskWord(w,1) :
+                       maskWord(w,0);
+        result = result.replace(new RegExp(w,"i"), masked);
+    });
+    return result;
+}
+
+/* ---------- Slide Engine ---------- */
+
+function showSlide(contentHTML, bgColor){
+    const app=document.getElementById("app");
+    const newSlide=document.createElement("div");
+    newSlide.className="slide";
+    newSlide.style.background=bgColor;
+    newSlide.innerHTML=contentHTML;
+    newSlide.style.transform="translateX(100%)";
+    app.appendChild(newSlide);
+
+    requestAnimationFrame(()=>{
+        newSlide.style.transition="transform .4s ease";
+        newSlide.style.transform="translateX(0)";
+        const oldSlide=document.querySelector(".slide:not(:last-child)");
+        if(oldSlide){
+            oldSlide.style.transition="transform .4s ease";
+            oldSlide.style.transform="translateX(-100%)";
+            setTimeout(()=>oldSlide.remove(),400);
+        }
+    });
+}
+
+/* ---------- Screens ---------- */
+
+function introScreen(){
+    const html=`
+    <div class="intro">
+        <img id="introImg" src="creed_images/intro_bible.png">
+    </div>`;
+    document.getElementById("app").innerHTML=html;
+
+    const img=document.getElementById("introImg");
+    img.onclick=()=>{
+        img.src="creed_images/intro_bible_bite.png";
+        new Audio("creed_audio/chomp.mp3").play();
+        setTimeout(()=>titleScreen(),600);
+    };
+}
+
+function titleScreen(){
+    screen="title";
+    const html=`
+    <div class="title-screen">
+        <div>
+            <img src="creed_images/creed_title.png">
+            <h2>Let's learn the Apostle's Creed.</h2>
+            <div class="title-buttons">
+                <button onclick="startLearn()">Learn the Verse</button>
+                <button onclick="modeSelect()">Test Yourself</button>
+            </div>
+        </div>
+        <div class="footer">
+            More free Bible resources at:<br>
+            <a href="https://www.eatyourbible.com" target="_blank" style="color:white;">
+            www.eatyourbible.com</a>
+        </div>
+    </div>`;
+    document.getElementById("app").innerHTML=html;
+}
+
+function startLearn(){
+    screen="learn";
+    index=0;
+    showLearnIntro();
+}
+
+function showLearnIntro(){
+    showSlide(`
+    <div class="content">
+        <div class="text-area">
+            <div>
+                <div class="large-text">Let's Read the Apostles Creed.</div>
+                <div class="small-text">Use the arrows to go forward and back.</div>
+            </div>
+        </div>
+        <div class="nav"></div>
+    </div>`, "#7f66c6");
+    setTimeout(()=>nextLearn(),1200);
+}
+
+function nextLearn(){
+    if(index>=phrases.length){
+        showLearnEnd();
+        return;
+    }
+    const phrase=phrases[index][0];
+    const color=getColor(index);
+    const html=`
+    <div class="content">
+        <div class="image-area">
+            <img src="creed_images/creed_${String(index+1).padStart(2,"0")}.png">
+        </div>
+        <div class="text-area">
+            <div class="phrase">${phrase}</div>
+        </div>
+    </div>
+    <div class="nav">
+        <button onclick="prevLearn()">⬅️</button>
+        <button class="center-btn" onclick="toggleMute()">${muted?"🔇":"🔊"}</button>
+        <button onclick="forwardLearn()">➡️</button>
+    </div>`;
+    showSlide(html,color);
+    playAudio(index);
+}
+
+function forwardLearn(){
+    index++;
+    nextLearn();
+}
+
+function prevLearn(){
+    if(index>0){ index--; nextLearn(); }
+}
+
+function toggleMute(){
+    muted=!muted;
+    nextLearn();
+}
+
+function showLearnEnd(){
+    const html=`
+    <div class="content">
+        <div class="image-area">
+            <img src="creed_images/end_screen.png">
+        </div>
+        <div class="text-area">
+            <div>
+                <div class="phrase">Great job!</div>
+                <br>
+                <button onclick="titleScreen()">Title Screen</button>
+                <button onclick="modeSelect()">Test Yourself</button>
+            </div>
+        </div>
+    </div>
+    <div class="nav">
+        <button onclick="titleScreen()">⬅️</button>
+        <div></div>
+        <div></div>
+    </div>`;
+    showSlide(html,"#40b9c5");
+}
+
+/* ---------- Test Mode ---------- */
+
+function modeSelect(){
+    screen="mode";
+    const html=`
+    <div class="mode-screen">
+        <div class="mode-section easy" onclick="startTest('easy')">
+            <h2>Easy</h2>
+            <p>Try to guess the missing word</p>
+        </div>
+        <div class="mode-section medium" onclick="startTest('medium')">
+            <h2>Medium</h2>
+            <p>More words go missing.</p>
+        </div>
+        <div class="mode-section hard" onclick="startTest('hard')">
+            <h2>Hard</h2>
+            <p>Try to say it using the images only.</p>
+        </div>
+    </div>`;
+    document.getElementById("app").innerHTML=html;
+}
+
+function startTest(mode){
+    screen="test";
+    testMode=mode;
+    index=0;
+    hintState=0;
+    nextTest();
+}
+
+function nextTest(){
+    if(index>=phrases.length){
+        showTestEnd();
+        return;
+    }
+    hintState=0;
+    renderTest();
+}
+
+function renderTest(){
+    const phraseData=phrases[index];
+    const phrase=phraseData[0];
+    let remove=[];
+    if(testMode==="easy") remove=[phraseData[1]];
+    if(testMode==="medium") remove=phraseData.slice(1);
+    let displayPhrase=phrase;
+
+    if(testMode==="hard" && hintState===0){
+        displayPhrase="";
+    } else if(testMode==="hard" && hintState===1){
+        displayPhrase=maskPhrase(phrase,phraseData.slice(1),0);
+    } else if(testMode==="hard" && hintState===2){
+        displayPhrase=phrase;
+    } else {
+        displayPhrase=maskPhrase(phrase,remove,hintState);
+    }
+
+    const color=getColor(index);
+    const html=`
+    <div class="content">
+        <div class="image-area">
+            <img src="creed_images/creed_${String(index+1).padStart(2,"0")}.png">
+        </div>
+        <div class="text-area">
+            <div class="phrase">${displayPhrase}</div>
+        </div>
+    </div>
+    <div class="nav">
+        <button onclick="prevTest()">⬅️</button>
+        <button class="center-btn" onclick="hint()">
+            ${hintState===0?"Hint":hintState===1?"Reveal":"Reveal"}
+        </button>
+        <button onclick="forwardTest()">➡️</button>
+    </div>`;
+    showSlide(html,color);
+}
+
+function hint(){
+    if(hintState<2) hintState++;
+    renderTest();
+}
+
+function forwardTest(){ index++; nextTest(); }
+function prevTest(){ if(index>0){ index--; nextTest(); } }
+
+function showTestEnd(){
+    const html=`
+    <div class="content">
+        <div class="image-area">
+            <img src="creed_images/end_screen.png">
+        </div>
+        <div class="text-area">
+            <div>
+                <div class="phrase">Great job!</div>
+                <br>
+                <button onclick="modeSelect()">Change Mode</button>
+                <button onclick="titleScreen()">Title Screen</button>
+            </div>
+        </div>
+    </div>
+    <div class="nav">
+        <button onclick="modeSelect()">⬅️</button>
+        <div></div>
+        <div></div>
+    </div>`;
+    showSlide(html,"#7f66c6");
+}
+
+/* ---------- Start ---------- */
+
+introScreen();
+</script>
+</body>
+</html>
