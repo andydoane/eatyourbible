@@ -371,6 +371,15 @@ button {
     cursor: pointer;
     font-family: inherit;
 }
+
+/* Prevent mobile double-tap zoom on specific controls */
+.no-zoom {
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+}
+
 </style>
 </head>
 <body>
@@ -597,6 +606,26 @@ function setupKeyboardNav(){
     });
 }
 
+function preventDoubleTapZoomOnButtons(){
+    let lastTouchEnd = 0;
+
+    document.addEventListener("touchend", (e) => {
+        // Only affect elements marked with .no-zoom
+        const btn = e.target.closest(".no-zoom");
+        if (!btn) return;
+
+        const now = Date.now();
+
+        // If two taps happen quickly, prevent the second one from zooming
+        if (now - lastTouchEnd <= 350) {
+            e.preventDefault();
+        }
+
+        lastTouchEnd = now;
+    }, { passive: false });
+}
+
+
 function playAudio(i){
     if (muted) return;
 
@@ -768,14 +797,14 @@ function titleScreen(){
             <h2>Let's learn the Apostle's Creed</h2>
         <div class="title-buttons">
             <div class="title-carousel">
-                <button class="carousel-arrow" onclick="titlePrevOption()" aria-label="Previous option">◀</button>
+                <button class="carousel-arrow no-zoom" onclick="titlePrevOption()" aria-label="Previous option">◀</button>
 
 
                 <button id="titleMainBtn" class="carousel-main learn-btn" onclick="runTitleOption()">
                     Learn the Verse
                 </button>
 
-                <button class="carousel-arrow" onclick="titleNextOption()" aria-label="Next option">▶</button>
+                <button class="carousel-arrow no-zoom" onclick="titleNextOption()" aria-label="Next option">▶</button>
             </div>
 
             <div class="carousel-dots" id="titleIndicator"></div>
@@ -836,11 +865,11 @@ function nextLearn(direction = "forward"){
         </div>
     </div>
     <div class="nav">
-        <button onclick="prevLearn()" aria-label="Back">${SVG_BACK}</button>
+        <button class="no-zoom" onclick="prevLearn()" aria-label="Back">${SVG_BACK}</button>
         <button class="center-btn" id="muteBtn" onclick="toggleMute()" aria-label="Mute toggle">
             ${muted ? SVG_MUTE : SVG_UNMUTE}
         </button>
-        <button onclick="forwardLearn()" aria-label="Forward">${SVG_FORWARD}</button>
+        <button class="no-zoom" onclick="forwardLearn()" aria-label="Forward">${SVG_FORWARD}</button>
     </div>`;
     showSlide(html, color, direction);
     playAudio(index);
@@ -977,9 +1006,9 @@ function renderTest(direction = "forward"){
         </div>
     </div>
     <div class="nav">
-        <button onclick="prevTest()" aria-label="Back">${SVG_BACK}</button>
+        <button class="no-zoom" onclick="prevTest()" aria-label="Back">${SVG_BACK}</button>
         <button class="center-btn" id="hintBtn" onclick="hint()">${hintState===0?"Hint":"Reveal"}</button>
-        <button onclick="forwardTest()" aria-label="Forward">${SVG_FORWARD}</button>
+        <button class="no-zoom" onclick="forwardTest()" aria-label="Forward">${SVG_FORWARD}</button>
     </div>`;
 showSlide(html, color, direction);
 }
@@ -1037,6 +1066,7 @@ function showTestEnd(){
 
 /* ---------- Start ---------- */
 setupKeyboardNav();
+preventDoubleTapZoomOnButtons();
 preloadCreedImages();
 introScreen();
 </script>
