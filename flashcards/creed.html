@@ -331,6 +331,13 @@ let muted=false;
 let testMode=null;
 let hintState=0;
 
+// Reuse one audio player (important for iPhone autoplay behavior)
+const audioPlayer = new Audio();
+audioPlayer.preload = "auto";
+
+// After we "unlock" once, later plays are more reliable
+let audioUnlocked = false;
+
 /* ---------- Utility ---------- */
 
 function getColor(i){
@@ -338,10 +345,37 @@ function getColor(i){
 }
 
 function playAudio(i){
-    if(muted) return;
-    const audio = new Audio(`creed_audio/creed_${String(i+1).padStart(2,"0")}.mp3`);
-    audio.play().catch(()=>{});
+    if (muted) return;
+
+    audioPlayer.pause();
+    audioPlayer.currentTime = 0;
+    audioPlayer.src = `creed_audio/creed_${String(i+1).padStart(2,"0")}.mp3`;
+    audioPlayer.volume = 1;
+
+    audioPlayer.play().catch(()=>{});
 }
+
+function unlockAudioForIOS() {
+    if (audioUnlocked) return;
+
+    // Use slide 1 as the unlock source (must exist)
+    audioPlayer.src = `creed_audio/creed_01.mp3`;
+    audioPlayer.volume = 0;
+
+    // Try to start playback during the user's tap
+    const p = audioPlayer.play();
+    if (p && typeof p.then === "function") {
+        p.then(() => {
+            audioPlayer.pause();
+            audioPlayer.currentTime = 0;
+            audioPlayer.volume = 1;
+            audioUnlocked = true;
+        }).catch(() => {
+            // If it fails, we'll still be fine on later user-gesture plays
+        });
+    }
+}
+
 
 function maskWord(word, revealLetters=0){
     return word.split("").map((c,i)=>{
@@ -472,10 +506,12 @@ function titleScreen(){
 }
 
 function startLearn(){
+    unlockAudioForIOS();   // <--- add this line
     screen="learn";
     index=0;
     showLearnIntro();
 }
+
 
 function showLearnIntro(){
     showSlide(`
