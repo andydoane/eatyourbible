@@ -210,6 +210,37 @@ html, body {
     color: #333;
 }
 
+/* ---------- Mode Select (title-style buttons) ---------- */
+
+.mode-buttons {
+    display: flex;
+    flex-direction: column;   /* stack buttons */
+    align-items: center;
+    width: 100%;
+    gap: 14px;
+    margin-top: 10px;
+}
+
+.mode-buttons button {
+    width: min(420px, 92%);
+    display: flex;
+    flex-direction: column;   /* title + description */
+    gap: 4px;
+    line-height: 1.1;
+}
+
+.mode-buttons .btn-desc {
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0.85;
+}
+
+/* third color option for Hard */
+.hard-btn {
+    background: #ff5a51;
+    color: white;
+}
+
 .footer {
     position: absolute;           /* dock it */
     left: 0;
@@ -668,22 +699,42 @@ function showLearnEnd(){
 function modeSelect(){
     screen="mode";
     const html=`
-    <div class="mode-screen">
-        <div class="mode-section easy" onclick="startTest('easy')">
-            <h2>Easy</h2>
-            <p>Try to guess the missing word</p>
+    <div class="title-screen">
+        <div class="title-content">
+            <h2>Choose a mode</h2>
+
+            <div class="title-buttons mode-buttons">
+                <button class="learn-btn" onclick="startTest('easy')">
+                    Easy
+                    <span class="btn-desc">Guess 1 missing word</span>
+                </button>
+
+                <button class="test-btn" onclick="startTest('medium')">
+                    Medium
+                    <span class="btn-desc">More words go missing</span>
+                </button>
+
+                <button class="hard-btn" onclick="startTest('hard')">
+                    Hard
+                    <span class="btn-desc">Images only (no text)</span>
+                </button>
+
+                <button class="learn-btn" onclick="titleScreen()">
+                    Back to Title
+                </button>
+            </div>
         </div>
-        <div class="mode-section medium" onclick="startTest('medium')">
-            <h2>Medium</h2>
-            <p>More words go missing.</p>
-        </div>
-        <div class="mode-section hard" onclick="startTest('hard')">
-            <h2>Hard</h2>
-            <p>Try to say it using the images only.</p>
+
+        <div class="footer">
+            More free Bible resources at:<br>
+            <a href="https://www.eatyourbible.com" target="_blank" style="color:white;">
+            www.eatyourbible.com</a>
         </div>
     </div>`;
     document.getElementById("app").innerHTML=html;
 }
+
+
 
 function startTest(mode){
     screen="test";
