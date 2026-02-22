@@ -230,20 +230,42 @@ html, body {
     margin: 10px 0;
     border-radius: 999px;
 
-    /* Dark background so the white SVG arrow is visible */
     background: rgba(0,0,0,0.30);
     color: white;
+
+    display: flex;              /* ✅ center the SVG */
+    align-items: center;
+    justify-content: center;
+    line-height: 0;             /* ✅ remove baseline weirdness */
+    font-size: 28px;
+    font-weight: 700;
 }
 
 .title-buttons button.carousel-main {
     margin: 10px 0;
-    width: min(420px, 72vw);   /* keeps it from being too wide on desktop */
+    flex: 1;                   /* ✅ take remaining space */
+    min-width: 0;              /* ✅ allow shrinking on small screens */
+    max-width: 420px;          /* ✅ still nice on desktop */
 }
 
-.carousel-indicator {
-    font-size: 14px;
-    opacity: 0.85;
-    margin-top: 4px;
+/* Dots under the carousel */
+.carousel-dots {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.carousel-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    border: 2px solid rgba(255,255,255,0.75);
+    opacity: 0.9;
+}
+
+.carousel-dot.active {
+    background: rgba(255,255,255,0.95);
 }
 
 /* ---------- Mode Select (title-style buttons) ---------- */
@@ -462,7 +484,9 @@ function updateTitleCarouselUI(){
         mainBtn.className = `carousel-main ${opt.btnClass}`;
     }
     if (indicator){
-        indicator.textContent = `${titleOptionIndex + 1} / ${TITLE_OPTIONS.length}`;
+        indicator.innerHTML = TITLE_OPTIONS.map((_, i) =>
+            `<span class="carousel-dot ${i === titleOptionIndex ? "active" : ""}"></span>`
+        ).join("");
     }
 }
 
@@ -744,20 +768,17 @@ function titleScreen(){
             <h2>Let's learn the Apostle's Creed</h2>
         <div class="title-buttons">
             <div class="title-carousel">
-                <button class="carousel-arrow" onclick="titlePrevOption()" aria-label="Previous option">
-                    ${SVG_BACK}
-                </button>
+                <button class="carousel-arrow" onclick="titlePrevOption()" aria-label="Previous option">◀</button>
+
 
                 <button id="titleMainBtn" class="carousel-main learn-btn" onclick="runTitleOption()">
                     Learn the Verse
                 </button>
 
-                <button class="carousel-arrow" onclick="titleNextOption()" aria-label="Next option">
-                    ${SVG_FORWARD}
-                </button>
+                <button class="carousel-arrow" onclick="titleNextOption()" aria-label="Next option">▶</button>
             </div>
 
-            <div class="carousel-indicator" id="titleIndicator">1 / 3</div>
+            <div class="carousel-dots" id="titleIndicator"></div>
         </div>
         </div>
         <div class="footer">
