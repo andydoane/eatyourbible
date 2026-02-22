@@ -80,10 +80,13 @@ html, body {
 .small-text {
     font-size: clamp(16px, 3vw, 20px);
     opacity: .85;
+    color: white;
 }
 
 .large-text {
     font-size: clamp(28px, 6vw, 48px);
+    color: white;
+    font-weight: 700;
 }
 
 /* ---------- Navigation ---------- */
@@ -364,6 +367,7 @@ function maskPhrase(phrase, removeWords, reveal=0){
 
 function showSlide(contentHTML, bgColor){
     const app=document.getElementById("app");
+    app.innerHTML = "";
     const newSlide=document.createElement("div");
     newSlide.className="slide";
     newSlide.style.background=bgColor;
@@ -438,7 +442,7 @@ function showLearnIntro(){
         </div>
         <div class="nav"></div>
     </div>`, "#7f66c6");
-    setTimeout(()=>nextLearn(),1200);
+    setTimeout(()=>nextLearn(),3500);
 }
 
 function nextLearn(){
