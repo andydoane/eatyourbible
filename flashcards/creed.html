@@ -29,7 +29,6 @@ html, body {
 }
 
 /* ---------- Slide System ---------- */
-
 .slide {
     position: absolute;
     width: 100%;
@@ -38,12 +37,14 @@ html, body {
     left: 0;
     display: flex;
     flex-direction: column;
+    min-height: 0;   /* iOS Safari flex fix */
 }
 
 .content {
     flex: 1;
     display: flex;
     flex-direction: column;
+    min-height: 0;   /* iOS Safari flex fix */
 }
 
 .image-area {
@@ -52,6 +53,7 @@ html, body {
     justify-content: center;
     align-items: center;
     cursor: pointer;
+    min-height: 0;
 }
 
 .image-area img {
@@ -67,6 +69,7 @@ html, body {
     align-items: center;
     padding: 0 20px;
     text-align: center;
+    min-height: 0;
 }
 
 .phrase {
@@ -208,6 +211,39 @@ html, body {
 .test-btn {
     background: #ffc751;
     color: #333;
+}
+
+/* ---------- Title Button Carousel ---------- */
+
+.title-carousel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.title-buttons button.carousel-arrow {
+    width: 54px;
+    height: 54px;
+    padding: 0;
+    margin: 10px 0;
+    border-radius: 999px;
+
+    /* Dark background so the white SVG arrow is visible */
+    background: rgba(0,0,0,0.30);
+    color: white;
+}
+
+.title-buttons button.carousel-main {
+    margin: 10px 0;
+    width: min(420px, 72vw);   /* keeps it from being too wide on desktop */
+}
+
+.carousel-indicator {
+    font-size: 14px;
+    opacity: 0.85;
+    margin-top: 4px;
 }
 
 /* ---------- Mode Select (title-style buttons) ---------- */
@@ -383,6 +419,52 @@ let index=0;
 let muted=false;
 let testMode=null;
 let hintState=0;
+let learnIntro = false;  // true only on the "Begin" screen
+let isSliding = false;   // prevents overlapping slide animations
+
+// ---------- Title carousel ----------
+let titleOptionIndex = 0;
+
+const TITLE_OPTIONS = [
+    { label: "Learn the Verse", btnClass: "learn-btn", action: "startLearn" },
+    { label: "Test Yourself",   btnClass: "test-btn",  action: "modeSelect" },
+    { label: "Bible Verses",    btnClass: "learn-btn", action: "comingSoonVerses" } // placeholder
+];
+
+function comingSoonVerses(){
+    alert("Coming soon! This will link each part of the Creed to Bible verses.");
+}
+
+function titlePrevOption(){
+    titleOptionIndex = (titleOptionIndex - 1 + TITLE_OPTIONS.length) % TITLE_OPTIONS.length;
+    updateTitleCarouselUI();
+}
+
+function titleNextOption(){
+    titleOptionIndex = (titleOptionIndex + 1) % TITLE_OPTIONS.length;
+    updateTitleCarouselUI();
+}
+
+function runTitleOption(){
+    const opt = TITLE_OPTIONS[titleOptionIndex];
+    // Call the function named in opt.action
+    window[opt.action]();
+}
+
+function updateTitleCarouselUI(){
+    const opt = TITLE_OPTIONS[titleOptionIndex];
+
+    const mainBtn = document.getElementById("titleMainBtn");
+    const indicator = document.getElementById("titleIndicator");
+
+    if (mainBtn){
+        mainBtn.textContent = opt.label;
+        mainBtn.className = `carousel-main ${opt.btnClass}`;
+    }
+    if (indicator){
+        indicator.textContent = `${titleOptionIndex + 1} / ${TITLE_OPTIONS.length}`;
+    }
+}
 
 // --- Inline SVG icons (from your uploaded SVGs) ---
 const SVG_BACK = `
@@ -439,6 +521,56 @@ function getColor(i){
 
 function isLightBg(color){
     return color === "#ffc751" || color === "#f2f2f2";
+}
+
+function preloadCreedImages(){
+    // Preload all slide images so iOS Safari has them ready
+    for (let i = 1; i <= phrases.length; i++){
+        const img = new Image();
+        img.src = `creed_images/creed_${String(i).padStart(2,"0")}.png`;
+    }
+
+    // Also preload commonly used screens
+    ["creed_title.png", "creed_end.png"].forEach(name => {
+        const img = new Image();
+        img.src = `creed_images/${name}`;
+    });
+}
+
+function setupKeyboardNav(){
+    document.addEventListener("keydown", (e) => {
+        // Don’t spam-move if someone holds the key down
+        if (e.repeat) return;
+
+        // Only care about Left/Right arrows
+        if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+
+        // Prevent the browser from scrolling the page
+        e.preventDefault();
+
+        // Right arrow = forward
+        if (e.key === "ArrowRight") {
+            if (screen === "learn") {
+                // On the Begin screen, start the lesson (don’t skip phrase 1)
+                if (learnIntro) nextLearn("forward");
+                else forwardLearn();
+            } else if (screen === "test") {
+                forwardTest();
+            }
+            return;
+        }
+
+        // Left arrow = back
+        if (e.key === "ArrowLeft") {
+            if (screen === "learn") {
+                // On Begin screen, go back to title
+                if (learnIntro) titleScreen();
+                else prevLearn();
+            } else if (screen === "test") {
+                prevTest();
+            }
+        }
+    });
 }
 
 function playAudio(i){
@@ -521,17 +653,28 @@ function updateTestHintUI() {
 function showSlide(contentHTML, bgColor, direction = "forward") {
     const app = document.getElementById("app");
 
-    // Remove any non-slide screens (like title/mode screens), but keep the current slide for animation
+    // Remove any non-slide screens (like title/mode screens)
     [...app.children].forEach(child => {
         if (!child.classList || !child.classList.contains("slide")) child.remove();
     });
 
-    const oldSlide = app.querySelector(".slide");
+    // If we are mid-animation, ignore new slide requests
+    if (direction !== "none" && isSliding) return;
+
+    // Get ALL slides currently in the DOM
+    const slides = app.querySelectorAll(".slide");
+    const oldSlide = slides.length ? slides[slides.length - 1] : null;
+
+    // If any extra slides exist (shouldn't, but can happen), remove them
+    for (let i = 0; i < slides.length - 1; i++) {
+        slides[i].remove();
+    }
 
     const newSlide = document.createElement("div");
     newSlide.className = "slide";
     newSlide.style.background = bgColor;
     newSlide.innerHTML = contentHTML;
+    newSlide.style.transition = "none";
 
     // Starting positions based on direction
     if (direction === "back") {
@@ -543,26 +686,37 @@ function showSlide(contentHTML, bgColor, direction = "forward") {
     }
 
     app.appendChild(newSlide);
+    newSlide.offsetHeight; // force layout so the starting transform is committed
 
     // If no animation requested, just remove old and finish
     if (direction === "none") {
         if (oldSlide) oldSlide.remove();
+        isSliding = false;
         return;
     }
 
-    requestAnimationFrame(() => {
-        newSlide.style.transition = "transform .4s ease";
-        newSlide.style.transform = "translateX(0)";
+    isSliding = true;
 
-        if (oldSlide) {
-            oldSlide.style.transition = "transform .4s ease";
-            oldSlide.style.transform = (direction === "back")
-                ? "translateX(100%)"
-                : "translateX(-100%)";
-            setTimeout(() => oldSlide.remove(), 400);
-        }
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            newSlide.style.transition = "transform .4s ease";
+            newSlide.style.transform = "translateX(0)";
+
+            if (oldSlide) {
+                oldSlide.style.transition = "transform .4s ease";
+                oldSlide.style.transform = (direction === "back")
+                    ? "translateX(100%)"
+                    : "translateX(-100%)";
+            }
+
+            setTimeout(() => {
+                if (oldSlide) oldSlide.remove();
+                isSliding = false;
+            }, 410);
+        });
     });
 }
+
 
 /* ---------- Screens ---------- */
 
@@ -588,10 +742,23 @@ function titleScreen(){
         <div class="title-content" id="titleContent">
             <img src="creed_images/creed_title.png">
             <h2>Let's learn the Apostle's Creed</h2>
-            <div class="title-buttons">
-                <button class="learn-btn" onclick="startLearn()">Learn the Verse</button>
-                <button class="test-btn" onclick="modeSelect()">Test Yourself</button>
+        <div class="title-buttons">
+            <div class="title-carousel">
+                <button class="carousel-arrow" onclick="titlePrevOption()" aria-label="Previous option">
+                    ${SVG_BACK}
+                </button>
+
+                <button id="titleMainBtn" class="carousel-main learn-btn" onclick="runTitleOption()">
+                    Learn the Verse
+                </button>
+
+                <button class="carousel-arrow" onclick="titleNextOption()" aria-label="Next option">
+                    ${SVG_FORWARD}
+                </button>
             </div>
+
+            <div class="carousel-indicator" id="titleIndicator">1 / 3</div>
+        </div>
         </div>
         <div class="footer">
             More free Bible resources at:<br>
@@ -600,6 +767,7 @@ function titleScreen(){
         </div>
     </div>`;
     document.getElementById("app").innerHTML=html;
+    updateTitleCarouselUI();
 }
 
 function startLearn(){
@@ -611,20 +779,25 @@ function startLearn(){
 
 
 function showLearnIntro(){
+    learnIntro = true;
     showSlide(`
     <div class="content">
         <div class="text-area">
             <div>
                 <div class="large-text">Let's read the Apostles Creed.</div>
                 <div class="small-text">Use the arrows to go forward and back.</div>
+
+                <div class="title-buttons">
+                    <button class="learn-btn" onclick="nextLearn('forward')">Begin</button>
+                </div>
             </div>
         </div>
         <div class="nav"></div>
     </div>`, "#7f66c6");
-    setTimeout(()=>nextLearn(),3500);
 }
 
 function nextLearn(direction = "forward"){
+    learnIntro = false;
     if(index>=phrases.length){
         showLearnEnd();
         return;
@@ -842,7 +1015,8 @@ function showTestEnd(){
 
 
 /* ---------- Start ---------- */
-
+setupKeyboardNav();
+preloadCreedImages();
 introScreen();
 </script>
 </body>
