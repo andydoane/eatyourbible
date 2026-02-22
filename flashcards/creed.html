@@ -202,14 +202,13 @@ html, body {
     font-size: 14px;
     line-height: 1.2;
     z-index: 9999;
-outline: 3px solid lime;
 }
 
 /* ---------- Intro ---------- */
 
 .intro {
     background: #7f66c6;
-    display: flex;
+    display: flex;  
     justify-content: center;
     align-items: center;
     height: 100%;
@@ -363,26 +362,73 @@ function maskPhrase(phrase, removeWords, reveal=0){
     return result;
 }
 
+function computeTestDisplayPhrase() {
+    const phraseData = phrases[index];
+    const phrase = phraseData[0];
+
+    let remove = [];
+    if (testMode === "easy") remove = [phraseData[1]];
+    if (testMode === "medium") remove = phraseData.slice(1);
+
+    if (testMode === "hard" && hintState === 0) return "";
+    if (testMode === "hard" && hintState === 1) return maskPhrase(phrase, phraseData.slice(1), 0);
+    if (testMode === "hard" && hintState === 2) return phrase;
+
+    return maskPhrase(phrase, remove, hintState);
+}
+
+function updateTestHintUI() {
+    const phraseEl = document.getElementById("testPhrase");
+    if (phraseEl) phraseEl.textContent = computeTestDisplayPhrase();
+
+    const hintBtn = document.getElementById("hintBtn");
+    if (hintBtn) hintBtn.textContent = (hintState === 0) ? "Hint" : "Reveal";
+}
+
 /* ---------- Slide Engine ---------- */
 
-function showSlide(contentHTML, bgColor){
-    const app=document.getElementById("app");
-    app.innerHTML = "";
-    const newSlide=document.createElement("div");
-    newSlide.className="slide";
-    newSlide.style.background=bgColor;
-    newSlide.innerHTML=contentHTML;
-    newSlide.style.transform="translateX(100%)";
+function showSlide(contentHTML, bgColor, direction = "forward") {
+    const app = document.getElementById("app");
+
+    // Remove any non-slide screens (like title/mode screens), but keep the current slide for animation
+    [...app.children].forEach(child => {
+        if (!child.classList || !child.classList.contains("slide")) child.remove();
+    });
+
+    const oldSlide = app.querySelector(".slide");
+
+    const newSlide = document.createElement("div");
+    newSlide.className = "slide";
+    newSlide.style.background = bgColor;
+    newSlide.innerHTML = contentHTML;
+
+    // Starting positions based on direction
+    if (direction === "back") {
+        newSlide.style.transform = "translateX(-100%)";
+    } else if (direction === "none") {
+        newSlide.style.transform = "translateX(0)";
+    } else {
+        newSlide.style.transform = "translateX(100%)";
+    }
+
     app.appendChild(newSlide);
 
-    requestAnimationFrame(()=>{
-        newSlide.style.transition="transform .4s ease";
-        newSlide.style.transform="translateX(0)";
-        const oldSlide=document.querySelector(".slide:not(:last-child)");
-        if(oldSlide){
-            oldSlide.style.transition="transform .4s ease";
-            oldSlide.style.transform="translateX(-100%)";
-            setTimeout(()=>oldSlide.remove(),400);
+    // If no animation requested, just remove old and finish
+    if (direction === "none") {
+        if (oldSlide) oldSlide.remove();
+        return;
+    }
+
+    requestAnimationFrame(() => {
+        newSlide.style.transition = "transform .4s ease";
+        newSlide.style.transform = "translateX(0)";
+
+        if (oldSlide) {
+            oldSlide.style.transition = "transform .4s ease";
+            oldSlide.style.transform = (direction === "back")
+                ? "translateX(100%)"
+                : "translateX(-100%)";
+            setTimeout(() => oldSlide.remove(), 400);
         }
     });
 }
@@ -445,7 +491,7 @@ function showLearnIntro(){
     setTimeout(()=>nextLearn(),3500);
 }
 
-function nextLearn(){
+function nextLearn(direction = "forward"){
     if(index>=phrases.length){
         showLearnEnd();
         return;
@@ -463,25 +509,31 @@ function nextLearn(){
     </div>
     <div class="nav">
         <button onclick="prevLearn()">⬅️</button>
-        <button class="center-btn" onclick="toggleMute()">${muted?"🔇":"🔊"}</button>
+        <button class="center-btn" id="muteBtn" onclick="toggleMute()">${muted?"🔇":"🔊"}</button>
         <button onclick="forwardLearn()">➡️</button>
     </div>`;
-    showSlide(html,color);
+    showSlide(html, color, direction);
     playAudio(index);
 }
 
 function forwardLearn(){
     index++;
-    nextLearn();
+    nextLearn("forward");
 }
 
 function prevLearn(){
-    if(index>0){ index--; nextLearn(); }
+    if(index>0){
+        index--;
+        nextLearn("back");
+    }
 }
 
+
+
 function toggleMute(){
-    muted=!muted;
-    nextLearn();
+    muted = !muted;
+    const btn = document.getElementById("muteBtn");
+    if (btn) btn.textContent = muted ? "🔇" : "🔊";
 }
 
 function showLearnEnd(){
@@ -546,7 +598,7 @@ function nextTest(){
     renderTest();
 }
 
-function renderTest(){
+function renderTest(direction = "forward"){
     const phraseData=phrases[index];
     const phrase=phraseData[0];
     let remove=[];
@@ -571,26 +623,35 @@ function renderTest(){
             <img src="creed_images/creed_${String(index+1).padStart(2,"0")}.png">
         </div>
         <div class="text-area">
-            <div class="phrase">${displayPhrase}</div>
+            <div class="phrase" id="testPhrase">${displayPhrase}</div>
         </div>
     </div>
     <div class="nav">
         <button onclick="prevTest()">⬅️</button>
-        <button class="center-btn" onclick="hint()">
-            ${hintState===0?"Hint":hintState===1?"Reveal":"Reveal"}
+        <button class="center-btn" id="hintBtn" onclick="hint()">
+            ${hintState===0?"Hint":"Reveal"}
         </button>
         <button onclick="forwardTest()">➡️</button>
     </div>`;
-    showSlide(html,color);
+showSlide(html, color, direction);
 }
 
 function hint(){
-    if(hintState<2) hintState++;
-    renderTest();
+    if (hintState < 2) hintState++;
+    updateTestHintUI(); // no animation
 }
 
-function forwardTest(){ index++; nextTest(); }
-function prevTest(){ if(index>0){ index--; nextTest(); } }
+function forwardTest(){
+    index++;
+    renderTest("forward");
+}
+
+function prevTest(){
+    if(index > 0){
+        index--;
+        renderTest("back");
+    }
+}
 
 function showTestEnd(){
     const html=`
