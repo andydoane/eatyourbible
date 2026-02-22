@@ -51,6 +51,7 @@ html, body {
     display: flex;
     justify-content: center;
     align-items: center;
+    cursor: pointer;
 }
 
 .image-area img {
@@ -70,23 +71,31 @@ html, body {
 
 .phrase {
     font-family: 'Baloo 2', cursive;
-    font-size: clamp(24px, 5vw, 42px);
+    font-size: clamp(24px, 8vw, 100px);
     text-wrap: balance;
     color: white;
     font-weight: 700;
     text-shadow: 0 2px 6px rgba(0,0,0,0.4);
 }
 
+/* Use on light backgrounds (yellow/white) */
+.dark-text {
+    color: #111;
+    text-shadow: none;
+}
+
 .small-text {
     font-size: clamp(16px, 3vw, 20px);
     opacity: .85;
     color: white;
+    text-wrap: balance;
 }
 
 .large-text {
     font-size: clamp(28px, 6vw, 48px);
     color: white;
     font-weight: 700;
+    text-wrap: balance;
 }
 
 /* ---------- Navigation ---------- */
@@ -397,6 +406,10 @@ function getColor(i){
     return slideColors[i];
 }
 
+function isLightBg(color){
+    return color === "#ffc751" || color === "#f2f2f2";
+}
+
 function playAudio(i){
     if (muted) return;
 
@@ -571,7 +584,7 @@ function showLearnIntro(){
     <div class="content">
         <div class="text-area">
             <div>
-                <div class="large-text">Let's Read the Apostles Creed.</div>
+                <div class="large-text">Let's read the Apostles Creed.</div>
                 <div class="small-text">Use the arrows to go forward and back.</div>
             </div>
         </div>
@@ -587,13 +600,14 @@ function nextLearn(direction = "forward"){
     }
     const phrase=phrases[index][0];
     const color=getColor(index);
+    const textClass = isLightBg(color) ? "phrase dark-text" : "phrase";
     const html=`
     <div class="content">
-        <div class="image-area">
+        <div class="image-area" onclick="forwardLearn()">
             <img src="creed_images/creed_${String(index+1).padStart(2,"0")}.png">
         </div>
         <div class="text-area">
-            <div class="phrase">${phrase}</div>
+            <div class="${textClass}">${phrase}</div>
         </div>
     </div>
     <div class="nav">
@@ -707,13 +721,14 @@ function renderTest(direction = "forward"){
     }
 
     const color=getColor(index);
+    const textClass = isLightBg(color) ? "phrase dark-text" : "phrase";
     const html=`
     <div class="content">
-        <div class="image-area">
+        <div class="image-area" onclick="forwardTest()">
             <img src="creed_images/creed_${String(index+1).padStart(2,"0")}.png">
         </div>
         <div class="text-area">
-            <div class="phrase" id="testPhrase">${displayPhrase}</div>
+            <div class="${textClass}" id="testPhrase">${displayPhrase}</div>
         </div>
     </div>
     <div class="nav">
