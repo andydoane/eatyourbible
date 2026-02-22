@@ -627,27 +627,26 @@ function toggleMute(){
     if (btn) btn.innerHTML = muted ? SVG_MUTE : SVG_UNMUTE;
 }
 
+
 function showLearnEnd(){
     const html=`
-    <div class="content">
-        <div class="image-area">
+    <div class="title-screen">
+        <div class="title-content">
             <img src="creed_images/creed_end.png">
-        </div>
-        <div class="text-area">
-            <div>
-                <div class="phrase">Great job!</div>
-                <br>
-                <button onclick="titleScreen()">Title Screen</button>
-                <button onclick="modeSelect()">Test Yourself</button>
+            <h2>Great job!</h2>
+            <div class="title-buttons">
+                <button class="learn-btn" onclick="titleScreen()">Title Screen</button>
+                <button class="test-btn" onclick="modeSelect()">Test Yourself</button>
             </div>
         </div>
-    </div>
-    <div class="nav">
-        <button onclick="titleScreen()">⬅️</button>
-        <div></div>
-        <div></div>
+
+        <div class="footer">
+            More free Bible resources at:<br>
+            <a href="https://www.eatyourbible.com" target="_blank" style="color:white;">
+            www.eatyourbible.com</a>
+        </div>
     </div>`;
-    showSlide(html,"#40b9c5");
+    showSlide(html, "#7f66c6");
 }
 
 /* ---------- Test Mode ---------- */
@@ -732,37 +731,46 @@ function hint(){
 
 function forwardTest(){
     index++;
+    hintState = 0; // reset Hint/Reveal for the new page
+
+    // if we went past the last phrase, go to the end screen
+    if (index >= phrases.length) {
+        showTestEnd();
+        return;
+    }
+
     renderTest("forward");
 }
 
 function prevTest(){
     if(index > 0){
         index--;
+        hintState = 0; // reset Hint/Reveal for the new page
         renderTest("back");
     }
 }
 
+
+
 function showTestEnd(){
     const html=`
-    <div class="content">
-        <div class="image-area">
-            <img src="creed_images/end_screen.png">
-        </div>
-        <div class="text-area">
-            <div>
-                <div class="phrase">Great job!</div>
-                <br>
-                <button onclick="modeSelect()">Change Mode</button>
-                <button onclick="titleScreen()">Title Screen</button>
+    <div class="title-screen">
+        <div class="title-content">
+            <img src="creed_images/creed_end.png">
+            <h2>Great job!</h2>
+            <div class="title-buttons">
+                <button class="learn-btn" onclick="modeSelect()">Change Mode</button>
+                <button class="test-btn" onclick="titleScreen()">Title Screen</button>
             </div>
         </div>
-    </div>
-    <div class="nav">
-        <button onclick="modeSelect()">⬅️</button>
-        <div></div>
-        <div></div>
+
+        <div class="footer">
+            More free Bible resources at:<br>
+            <a href="https://www.eatyourbible.com" target="_blank" style="color:white;">
+            www.eatyourbible.com</a>
+        </div>
     </div>`;
-    showSlide(html,"#7f66c6");
+    showSlide(html, "#7f66c6");
 }
 
 
