@@ -483,31 +483,57 @@ const phrases = [
 // One entry per creed page (25 total). Each page has 1+ verse proofs.
 // Replace the "text" values with full verse text later.
 const verseProofs = [
-  [ { ref: "GENESIS 1:1", text: "In the beginning God created the heavens and the earth." }, { ref: "GENESIS 1:2", text: "Test text." }],
-  [ { ref: "Matthew 6:9", text: "[Paste full verse text here]" } ],
-  [ { ref: "Colossians 1:16", text: "[Paste full verse text here]" } ],
-  [ { ref: "John 1:1", text: "[Paste full verse text here]" } ],
-  [ { ref: "Philippians 2:11", text: "[Paste full verse text here]" } ],
-  [ { ref: "Luke 1:35", text: "[Paste full verse text here]" } ],
-  [ { ref: "Matthew 1:23", text: "[Paste full verse text here]" } ],
-  [ { ref: "1 Peter 2:24", text: "[Paste full verse text here]" } ],
-  [ { ref: "Mark 15:24", text: "[Paste full verse text here]" } ],
-  [ { ref: "1 Corinthians 15:3–4", text: "[Paste full verse text here]" } ],
-  [ { ref: "Ephesians 4:9", text: "[Paste full verse text here]" } ],
-  [ { ref: "Luke 24:21", text: "[Paste full verse text here]" } ],
-  [ { ref: "Luke 24:6", text: "[Paste full verse text here]" } ],
-  [ { ref: "Acts 1:9", text: "[Paste full verse text here]" } ],
-  [ { ref: "Hebrews 1:3", text: "[Paste full verse text here]" } ],
-  [ { ref: "Matthew 28:18", text: "[Paste full verse text here]" } ],
-  [ { ref: "Acts 1:11", text: "[Paste full verse text here]" } ],
-  [ { ref: "2 Corinthians 5:10", text: "[Paste full verse text here]" } ],
-  [ { ref: "2 Timothy 4:1", text: "[Paste full verse text here]" } ],
-  [ { ref: "John 14:26", text: "[Paste full verse text here]" } ],
-  [ { ref: "Ephesians 4:4–6", text: "[Paste full verse text here]" } ],
-  [ { ref: "Hebrews 12:1", text: "[Paste full verse text here]" } ],
-  [ { ref: "1 John 1:9", text: "[Paste full verse text here]" } ],
-  [ { ref: "1 Corinthians 15:52", text: "[Paste full verse text here]" } ],
-  [ { ref: "John 3:16", text: "[Paste full verse text here]" } ]
+
+  [ { ref: "HEBREWS 11:6", text: "And without faith it is impossible to please God, because anyone who comes to him must believe that he exists and that he rewards those who earnestly seek him." }, { ref: "GENESIS 1:1", text: "In the beginning God created the heavens and the earth." } ],
+
+  [ { ref: "MATTHEW 6:9", text: "This, then, is how you should pray: Our Father in heaven, hallowed be your name." }, { ref: "REVELATION 1:8", text: "I am the Alpha and the Omega,” says the Lord God, “who is, and who was, and who is to come, the Almighty." } ],
+
+  [ { ref: "PSALM 146:6", text: "He is the Maker of heaven and earth, the sea, and everything in them — he remains faithful forever." }, { ref: "ACTS 4:24", text: "When they heard this, they raised their voices together in prayer to God. 'Sovereign Lord,' they said, 'you made the heavens and the earth and the sea, and everything in them.'" } ],
+
+  [ { ref: "JOHN 20:31", text: "But these are written that you may believe that Jesus is the Messiah, the Son of God, and that by believing you may have life in his name." }, { ref: "MATTHEW 16:16", text: "Simon Peter answered, 'You are the Messiah, the Son of the living God.'" } ],
+
+  [ { ref: "1 JOHN 4:15", text: "If anyone acknowledges that Jesus is the Son of God, God lives in them and they in God." }, { ref: "ROMANS 10:9", text: "If you declare with your mouth, 'Jesus is Lord,' and believe in your heart that God raised him from the dead, you will be saved." } ],
+
+  [ { ref: "LUKE 1:35", text: "The angel answered, 'The Holy Spirit will come on you, and the power of the Most High will overshadow you. So the holy one to be born will be called the Son of God.'" }, { ref: "MATTHEW 1:20", text: "But after he had considered this, an angel of the Lord appeared to him in a dream and said, 'Joseph son of David, do not be afraid to take Mary home as your wife, because what is conceived in her is from the Holy Spirit.'" } ],
+
+  [ { ref: "ISAIAH 7:14", text: "Therefore the Lord himself will give you a sign: The virgin will conceive and give birth to a son, and will call him Immanuel." }, { ref: "LUKE 2:7", text: "and she gave birth to her firstborn, a son. She wrapped him in cloths and placed him in a manger, because there was no guest room available for them." } ],
+
+  [ { ref: "MATTHEW 27:26", text: "Then he released Barabbas to them. But he had Jesus flogged, and handed him over to be crucified." }, { ref: "1 TIMOTHY 6:13", text: "In the sight of God, who gives life to everything, and of Christ Jesus, who while testifying before Pontius Pilate made the good confession, I charge you..." } ],
+
+  [ { ref: "LUKE 23:33", text: " When they came to the place called the Skull, they crucified him there, along with the criminals—one on his right, the other on his left." }, { ref: "MATTHEW 27:35", text: "When they had crucified him, they divided up his clothes by casting lots." } ],
+
+  [ { ref: "1 CORINTHIANS 15:3-4", text: "For what I received I passed on to you as of first importance: that Christ died for our sins according to the Scriptures, that he was buried..." }, { ref: "MARK 15:46", text: "So Joseph bought some linen cloth, took down the body, wrapped it in the linen, and placed it in a tomb cut out of rock. Then he rolled a stone against the entrance of the tomb." } ],
+
+  [ { ref: "ACTS 2:31", text: "Seeing what was to come, he spoke of the resurrection of the Messiah, that he was not abandoned to the realm of the dead, nor did his body see decay." }, { ref: "1 PETER 3:18-19", text: "For Christ also suffered once for sins, the righteous for the unrighteous, to bring you to God. He was put to death in the body but made alive in the Spirit. After being made alive, he went and made proclamation to the imprisoned spirits..." } ],
+
+  [ { ref: "1 CORINTHIANS 15:4", text: "...he was raised on the third day according to the Scriptures..." }, { ref: "ACTS 10:40", text: "...but God raised him from the dead on the third day and caused him to be seen." } ],
+
+  [ { ref: "MATTHEW 28:6", text: "He is not here; he has risen, just as he said. Come and see the place where he lay." }, { ref: "ACTS 2:24", text: "But God raised him from the dead, freeing him from the agony of death, because it was impossible for death to keep its hold on him." } ],
+
+  [ { ref: "ACTS 1:9", text: "After he said this, he was taken up before their very eyes, and a cloud hid him from their sight." }, { ref: "LUKE 24:51", text: "While he was blessing them, he left them and was taken up into heaven." } ],
+
+  [ { ref: "HEBREWS 1:3", text: "The Son is the radiance of God’s glory and the exact representation of his being, sustaining all things by his powerful word. After he had provided purification for sins, he sat down at the right hand of the Majesty in heaven." }, { ref: "COLOSSIANS 3:1", text: "Since, then, you have been raised with Christ, set your hearts on things above, where Christ is, seated at the right hand of God." } ],
+
+  [ { ref: "PSALM 110:1", text: "The Lord says to my lord: 'Sit at my right hand until I make your enemies a footstool for your feet.'" }, { ref: "ROMANS 8:34", text: "Who then is the one who condemns? No one. Christ Jesus who died—more than that, who was raised to life — is at the right hand of God and is also interceding for us." } ],
+
+  [ { ref: "ACTS 1:11", text: "'Men of Galilee,' they said, 'why do you stand here looking into the sky? This same Jesus, who has been taken from you into heaven, will come back in the same way you have seen him go into heaven.'" }, { ref: "1 THESSALONIANS 4:16", text: "For the Lord himself will come down from heaven, with a loud command, with the voice of the archangel and with the trumpet call of God, and the dead in Christ will rise first." } ],
+
+  [ { ref: "2 TIMOTHY 4:1", text: "In the presence of God and of Christ Jesus, who will judge the living and the dead, and in view of his appearing and his kingdom, I give you this charge:" }, { ref: "JOHN 5:27", text: "And he has given him authority to judge because he is the Son of Man." } ],
+
+  [ { ref: "ACTS 10:42", text: "He commanded us to preach to the people and to testify that he is the one whom God appointed as judge of the living and the dead." }, { ref: "1 PETER 4:5", text: "But they will have to give account to him who is ready to judge the living and the dead." } ],
+
+  [ { ref: "JOHN 14:26", text: "But the Advocate, the Holy Spirit, whom the Father will send in my name, will teach you all things and will remind you of everything I have said to you." }, { ref: "1 CORINTHIANS 3:16", text: "Don’t you know that you yourselves are God’s temple and that God’s Spirit dwells in your midst?" } ],
+
+  [ { ref: "COLOSSIANS 1:18", text: "And he is the head of the body, the church; he is the beginning and the firstborn from among the dead, so that in everything he might have the supremacy." }, { ref: "1 PETER 2:9", text: "But you are a chosen people, a royal priesthood, a holy nation, God’s special possession, that you may declare the praises of him who called you out of darkness into his wonderful light. " } ],
+
+  [ { ref: "1 CORINTHIANS 12:12-13", text: "Just as a body, though one, has many parts, but all its many parts form one body, so it is with Christ. For we were all baptized by one Spirit so as to form one body—whether Jews or Gentiles, slave or free—and we were all given the one Spirit to drink." }, { ref: "HEBREWS 12:1", text: "Therefore, since we are surrounded by such a great cloud of witnesses, let us throw off everything that hinders and the sin that so easily entangles. And let us run with perseverance the race marked out for us," } ],
+
+  [ { ref: "EPHESIANS 1:7", text: "...In him we have redemption through his blood, the forgiveness of sins, in accordance with the riches of God’s grace..." }, { ref: "1 JOHN 1:9", text: "If we confess our sins, he is faithful and just and will forgive us our sins and purify us from all unrighteousness." } ],
+
+  [ { ref: "1 CORINTHIANS 15:42-44", text: "So will it be with the resurrection of the dead. The body that is sown is perishable, it is raised imperishable; it is sown in dishonor, it is raised in glory; it is sown in weakness, it is raised in power; it is sown a natural body, it is raised a spiritual body." }, { ref: "JOHN 5:28-29", text: "Do not be amazed at this, for a time is coming when all who are in their graves will hear his voice and come out—those who have done what is good will rise to live, and those who have done what is evil will rise to be condemned." } ],
+
+  [ { ref: "JOHN 3:16", text: "For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life." }, { ref: "ROMANS 6:23", text: "For the wages of sin is death, but the gift of God is eternal life in Christ Jesus our Lord." } ]
+
 ];
 
 const slideColors = [
