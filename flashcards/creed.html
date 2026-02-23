@@ -72,6 +72,68 @@ html, body {
     min-height: 0;
 }
 
+/* ---------- Verse Proofs Layout Toggle ---------- */
+
+/* Smoothly resize image/text areas when Verse mode is on */
+.image-area,
+.text-area {
+    transition: flex 0.25s ease;
+}
+
+/* When Verse mode is ON: image 25% / text 75% */
+.content.verse-open .image-area { flex: 1; }
+.content.verse-open .text-area  { flex: 3; }
+
+/* Verse proof text layout (arrows + verse text) */
+.verse-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+}
+
+.verse-arrow {
+    width: 48px;
+    height: 48px;
+    border-radius: 999px;
+    border: none;
+    background: rgba(0,0,0,0.25);
+    color: white;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 0;
+}
+
+/* Verse content (reference + text) */
+.verse-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.verse-ref {
+    font-size: clamp(18px, 4vw, 30px);
+    font-weight: 700;
+    opacity: 0.9;
+    margin-bottom: 8px;
+    color: white;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+.verse-text {
+    font-size: clamp(18px, 4vw, 30px);
+    font-weight: 700;
+    text-wrap: balance;
+    color: white;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+
 .phrase {
     font-family: 'Baloo 2', cursive;
     font-size: clamp(24px, 8vw, 100px);
@@ -417,6 +479,37 @@ const phrases = [
 ["and the life everlasting.", "life", "everlasting"]
 ];
 
+// ---------- Verse Proofs (dummy placeholders you can edit) ----------
+// One entry per creed page (25 total). Each page has 1+ verse proofs.
+// Replace the "text" values with full verse text later.
+const verseProofs = [
+  [ { ref: "GENESIS 1:1", text: "In the beginning God created the heavens and the earth." }, { ref: "GENESIS 1:2", text: "Test text." }],
+  [ { ref: "Matthew 6:9", text: "[Paste full verse text here]" } ],
+  [ { ref: "Colossians 1:16", text: "[Paste full verse text here]" } ],
+  [ { ref: "John 1:1", text: "[Paste full verse text here]" } ],
+  [ { ref: "Philippians 2:11", text: "[Paste full verse text here]" } ],
+  [ { ref: "Luke 1:35", text: "[Paste full verse text here]" } ],
+  [ { ref: "Matthew 1:23", text: "[Paste full verse text here]" } ],
+  [ { ref: "1 Peter 2:24", text: "[Paste full verse text here]" } ],
+  [ { ref: "Mark 15:24", text: "[Paste full verse text here]" } ],
+  [ { ref: "1 Corinthians 15:3–4", text: "[Paste full verse text here]" } ],
+  [ { ref: "Ephesians 4:9", text: "[Paste full verse text here]" } ],
+  [ { ref: "Luke 24:21", text: "[Paste full verse text here]" } ],
+  [ { ref: "Luke 24:6", text: "[Paste full verse text here]" } ],
+  [ { ref: "Acts 1:9", text: "[Paste full verse text here]" } ],
+  [ { ref: "Hebrews 1:3", text: "[Paste full verse text here]" } ],
+  [ { ref: "Matthew 28:18", text: "[Paste full verse text here]" } ],
+  [ { ref: "Acts 1:11", text: "[Paste full verse text here]" } ],
+  [ { ref: "2 Corinthians 5:10", text: "[Paste full verse text here]" } ],
+  [ { ref: "2 Timothy 4:1", text: "[Paste full verse text here]" } ],
+  [ { ref: "John 14:26", text: "[Paste full verse text here]" } ],
+  [ { ref: "Ephesians 4:4–6", text: "[Paste full verse text here]" } ],
+  [ { ref: "Hebrews 12:1", text: "[Paste full verse text here]" } ],
+  [ { ref: "1 John 1:9", text: "[Paste full verse text here]" } ],
+  [ { ref: "1 Corinthians 15:52", text: "[Paste full verse text here]" } ],
+  [ { ref: "John 3:16", text: "[Paste full verse text here]" } ]
+];
+
 const slideColors = [
 "#7f66c6", // 1 - purple
 "#ffc751", // 2 - yellow
@@ -453,13 +546,17 @@ let hintState=0;
 let learnIntro = false;  // true only on the "Begin" screen
 let isSliding = false;   // prevents overlapping slide animations
 
+// ---------- Verse Proofs state ----------
+let verseModeOpen = false;   // toggled by Verse button
+let verseProofIndex = 0;     // which verse within the page
+
 // ---------- Title carousel ----------
 let titleOptionIndex = 0;
 
 const TITLE_OPTIONS = [
     { label: "Learn the Verse", btnClass: "learn-btn", action: "startLearn" },
     { label: "Test Yourself",   btnClass: "test-btn",  action: "modeSelect" },
-    { label: "Bible Verses",    btnClass: "learn-btn", action: "comingSoonVerses" } // placeholder
+    { label: "Verse Proofs", btnClass: "learn-btn", action: "startVerseProofs" }
 ];
 
 function comingSoonVerses(){
@@ -589,6 +686,8 @@ function setupKeyboardNav(){
                 else forwardLearn();
             } else if (screen === "test") {
                 forwardTest();
+            } else if (screen === "verses") {
+                forwardVerseProofs();
             }
             return;
         }
@@ -601,6 +700,8 @@ function setupKeyboardNav(){
                 else prevLearn();
             } else if (screen === "test") {
                 prevTest();
+            } else if (screen === "verses") {
+                prevVerseProofs();
             }
         }
     });
@@ -916,6 +1017,136 @@ function showLearnEnd(){
     </div>`;
     showSlide(html, "#7f66c6");
 }
+
+/* ---------- Verse Proofs Mode ---------- */
+
+function startVerseProofs(){
+    unlockAudioForIOS();
+    screen = "verses";
+    index = 0;
+    verseModeOpen = false;
+    verseProofIndex = 0;
+    renderVerseProofs("none"); // no slide animation entering from title
+}
+
+function toggleVerseMode(){
+    verseModeOpen = !verseModeOpen;
+    verseProofIndex = 0; // always start at the first verse proof
+    renderVerseProofs("none"); // re-render without slide animation
+}
+
+function nextVerseProof(){
+    const proofs = verseProofs[index] || [];
+    if (proofs.length <= 1) return;
+    verseProofIndex = (verseProofIndex + 1) % proofs.length;
+    renderVerseProofs("none");
+}
+
+function prevVerseProof(){
+    const proofs = verseProofs[index] || [];
+    if (proofs.length <= 1) return;
+    verseProofIndex = (verseProofIndex - 1 + proofs.length) % proofs.length;
+    renderVerseProofs("none");
+}
+
+function forwardVerseProofs(){
+    index++;
+    verseModeOpen = false;   // reset on page change
+    verseProofIndex = 0;
+
+    if (index >= phrases.length){
+        showVerseProofsEnd();
+        return;
+    }
+    renderVerseProofs("forward");
+}
+
+function prevVerseProofs(){
+    if (index > 0){
+        index--;
+        verseModeOpen = false;   // reset on page change
+        verseProofIndex = 0;
+        renderVerseProofs("back");
+    }
+}
+
+function renderVerseProofs(direction = "forward"){
+    const phrase = phrases[index][0];
+    const color = getColor(index);
+
+    const textClass = isLightBg(color) ? "phrase dark-text" : "phrase";
+    const verseTextClass = isLightBg(color) ? "verse-text dark-text" : "verse-text";
+    const verseRefClass = isLightBg(color) ? "verse-ref dark-text" : "verse-ref";
+
+    const proofs = verseProofs[index] || [];
+    const proof = proofs[verseProofIndex] || { ref: "Verse", text: "[Add verse text]" };
+
+    // If Verse mode is OFF: show creed phrase
+    let mainTextHTML = `<div class="${textClass}">${phrase}</div>`;
+
+    // If Verse mode is ON: show verse proof carousel
+    if (verseModeOpen){
+        const showArrows = proofs.length > 1;
+
+        mainTextHTML = `
+        <div class="verse-wrap">
+            ${showArrows ? `<button class="verse-arrow no-zoom" onclick="prevVerseProof()" aria-label="Previous verse">◀</button>` : `<div style="width:48px;"></div>`}
+
+            <div class="verse-content">
+                <div class="${verseRefClass}">${proof.ref}</div>
+                <div class="${verseTextClass}">${proof.text}</div>
+            </div>
+
+            ${showArrows ? `<button class="verse-arrow no-zoom" onclick="nextVerseProof()" aria-label="Next verse">▶</button>` : `<div style="width:48px;"></div>`}
+        </div>`;
+    }
+
+    const html = `
+    <div class="content ${verseModeOpen ? "verse-open" : ""}">
+        <div class="image-area" onclick="forwardVerseProofs()">
+            <img src="creed_images/creed_${String(index+1).padStart(2,"0")}.png">
+        </div>
+        <div class="text-area">
+            ${mainTextHTML}
+        </div>
+    </div>
+
+    <div class="nav">
+        <button class="no-zoom" onclick="prevVerseProofs()" aria-label="Back">${SVG_BACK}</button>
+
+        <button class="center-btn" id="verseBtn" onclick="toggleVerseMode()" aria-label="Toggle verse mode">
+            ${verseModeOpen ? "Creed" : "Verse"}
+        </button>
+
+        <button class="no-zoom" onclick="forwardVerseProofs()" aria-label="Forward">${SVG_FORWARD}</button>
+    </div>`;
+
+    showSlide(html, color, direction);
+
+    // Optional: play creed audio when not in Verse mode
+    if (!verseModeOpen) playAudio(index);
+}
+
+function showVerseProofsEnd(){
+    const html=`
+    <div class="title-screen">
+        <div class="title-content">
+            <img src="creed_images/creed_end.png">
+            <h2>Great job!</h2>
+            <div class="title-buttons">
+                <button class="learn-btn" onclick="titleScreen()">Title Screen</button>
+            </div>
+        </div>
+
+        <div class="footer">
+            More free Bible resources at:<br>
+            <a href="https://www.eatyourbible.com" target="_blank" style="color:white;">
+            www.eatyourbible.com</a>
+        </div>
+    </div>`;
+    showSlide(html, "#7f66c6");
+}
+
 
 /* ---------- Test Mode ---------- */
 
