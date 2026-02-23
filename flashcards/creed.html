@@ -123,10 +123,15 @@ html, body {
     margin-bottom: 8px;
     color: white;
     text-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    background: rgba(0, 0, 0, 0.5);
+    display: inline-block;
+    padding: 6px 20px;
+    border-radius: 999px;
+    text-align: center;
 }
 
 .verse-text {
-    font-size: clamp(18px, 4vw, 30px);
+    font-size: clamp(18px, 4vw, 40px);
     font-weight: 700;
     text-wrap: balance;
     color: white;
@@ -148,6 +153,13 @@ html, body {
     color: #111;
     text-shadow: none;
 }
+
+/* Verse reference should always be white (even on light pages) */
+.verse-ref.dark-text {
+    color: white !important;
+    text-shadow: none !important; /* optional */
+}
+
 
 .small-text {
     font-size: clamp(16px, 3vw, 20px);
@@ -198,6 +210,27 @@ html, body {
 
 .center-btn {
     font-size: 18px !important;
+}
+
+/* Pressable white pill buttons for Hint/Verse */
+.nav-pill {
+    background: white !important;
+    color: #333333 !important;
+    border: none;
+    border-radius: 999px;
+
+    padding: 10px 18px;
+    font-size: 18px;
+    font-weight: 700;
+
+    box-shadow: 0 4px 0 rgba(0,0,0,0.25);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+/* Pressed-down effect */
+.nav-pill:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 rgba(0,0,0,0.25);
 }
 
 /* ---------- Title ---------- */
@@ -265,6 +298,12 @@ html, body {
     box-shadow: 0 2px 0 rgba(0,0,0,0.25);
 }
 
+.title-buttons button.carousel-arrow:hover,
+.title-buttons button.carousel-arrow:active {
+    box-shadow: none;
+    transform: none;
+}
+
 .learn-btn {
     background: white;
     color: #7f66c6;
@@ -301,6 +340,8 @@ html, body {
     line-height: 0;             /* ✅ remove baseline weirdness */
     font-size: 28px;
     font-weight: 700;
+    box-shadow: none;
+    transform: none;
 }
 
 .title-buttons button.carousel-main {
@@ -570,6 +611,7 @@ let muted=false;
 let testMode=null;
 let hintState=0;
 let learnIntro = false;  // true only on the "Begin" screen
+let verseIntro = false;  // true only on the Verse Proofs "Begin" screen
 let isSliding = false;   // prevents overlapping slide animations
 
 // ---------- Verse Proofs state ----------
@@ -713,7 +755,8 @@ function setupKeyboardNav(){
             } else if (screen === "test") {
                 forwardTest();
             } else if (screen === "verses") {
-                forwardVerseProofs();
+                if (verseIntro) beginVerseProofs();
+            else forwardVerseProofs();
             }
             return;
         }
@@ -727,7 +770,8 @@ function setupKeyboardNav(){
             } else if (screen === "test") {
                 prevTest();
             } else if (screen === "verses") {
-                prevVerseProofs();
+               if (verseIntro) titleScreen();
+                else prevVerseProofs();
             }
         }
     });
@@ -1046,13 +1090,36 @@ function showLearnEnd(){
 
 /* ---------- Verse Proofs Mode ---------- */
 
+function showVerseProofsIntro(){
+    verseIntro = true;
+    showSlide(`
+    <div class="content">
+        <div class="text-area">
+            <div>
+                <div class="large-text">Verse proofs for the Apostle&apos;s Creed</div>
+                <div class="small-text">For each part of the creed, click the VERSE button to read Bible verses that explain it.</div>
+
+                <div class="title-buttons">
+                    <button class="learn-btn" onclick="beginVerseProofs()">Begin</button>
+                </div>
+            </div>
+        </div>
+        <div class="nav"></div>
+    </div>`, "#7f66c6");
+}
+
 function startVerseProofs(){
     unlockAudioForIOS();
     screen = "verses";
     index = 0;
     verseModeOpen = false;
     verseProofIndex = 0;
-    renderVerseProofs("none"); // no slide animation entering from title
+    showVerseProofsIntro();
+}
+
+function beginVerseProofs(){
+    verseIntro = false;
+    renderVerseProofs("forward");
 }
 
 function toggleVerseMode(){
@@ -1140,7 +1207,7 @@ function renderVerseProofs(direction = "forward"){
     <div class="nav">
         <button class="no-zoom" onclick="prevVerseProofs()" aria-label="Back">${SVG_BACK}</button>
 
-        <button class="center-btn" id="verseBtn" onclick="toggleVerseMode()" aria-label="Toggle verse mode">
+        <button class="center-btn nav-pill" id="verseBtn" onclick="toggleVerseMode()" aria-label="Toggle verse mode">
             ${verseModeOpen ? "Creed" : "Verse"}
         </button>
 
@@ -1264,7 +1331,7 @@ function renderTest(direction = "forward"){
     </div>
     <div class="nav">
         <button class="no-zoom" onclick="prevTest()" aria-label="Back">${SVG_BACK}</button>
-        <button class="center-btn" id="hintBtn" onclick="hint()">${hintState===0?"Hint":"Reveal"}</button>
+        <button class="center-btn nav-pill" id="hintBtn" onclick="hint()">${hintState===0?"Hint":"Reveal"}</button>
         <button class="no-zoom" onclick="forwardTest()" aria-label="Forward">${SVG_FORWARD}</button>
     </div>`;
 showSlide(html, color, direction);
