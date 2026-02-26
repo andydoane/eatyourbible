@@ -1,0 +1,110 @@
+{
+  "lessonId": "nt42",
+  "pageTitle": "NT 42 Quiz",
+  "lessonTitleText": "Paul and Silas in Prison",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt42image.png",
+  "themeClass": "theme-orange",
+  "questions": [
+    {
+      "question": "What power did the evil spirit give the slave girl?",
+      "answers": [
+        "To tell people secrets about their lives and the future",
+        "To heal sick people",
+        "To make gold appear",
+        "To control the weather"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "Why did Paul order the spirit to leave in Jesus’ name?",
+      "answers": [
+        "Because it kept bothering them",
+        "Because the girl asked him to",
+        "Because Silas told him to",
+        "Because the crowd demanded it"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "Why were the slave girl’s owners angry?",
+      "answers": [
+        "Without the spirit’s power, the slave girl couldn’t make them money",
+        "The slave girl ran away from home",
+        "The slave girl refused to work",
+        "Paul and Silas didn't ask permission"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "What punishment did the leaders in Philippi give Paul and Silas?",
+      "answers": [
+        "They were beaten and thrown in prison",
+        "They were fined money",
+        "They were sent back to Jerusalem",
+        "They became slaves"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "What did Paul and Silas do while in prison?",
+      "answers": [
+        "They sang hymns and prayed",
+        "They complained loudly",
+        "They tried to escape",
+        "They promised to stop talking about Jesus"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "What happened around midnight?",
+      "answers": [
+        "An earthquake shook the jail, opened the doors, and loosened the chains",
+        "A fire broke out",
+        "The guards fell asleep",
+        "Christians came to rescue them"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "What question did the jailer ask Paul and Silas?",
+      "answers": [
+        "What must I do to be saved?",
+        "Why are you singing?",
+        "How did the doors open?",
+        "What's going on?"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "What was Paul’s answer to the jailer?",
+      "answers": [
+        "Believe in the Lord Jesus, and you will be saved",
+        "Follow God's laws, and you will be saved",
+        "Give money to the poor, and you will be saved",
+        "You can never be saved"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "How did the jailer care for Paul and Silas?",
+      "answers": [
+        "He washed their wounds and fed them at his home",
+        "He gave them a better prison cell",
+        "He sang them a song",
+        "He brought them gifts"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "Who did Paul and Silas baptize?",
+      "answers": [
+        "The jailer and his whole family",
+        "Only the jailer",
+        "All the prisoners",
+        "The city leaders"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
