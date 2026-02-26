@@ -1,0 +1,110 @@
+{
+  "lessonId": "nt41",
+  "pageTitle": "NT 41 Quiz",
+  "lessonTitleText": "Saul and Barnabas",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt41image.png",
+  "themeClass": "theme-green",
+  "questions": [
+    {
+      "question": "What did the Holy Spirit choose Saul and Barnabas to do?",
+      "answers": [
+        "Go on a missionary journey",
+        "Stay in Jerusalem permanently",
+        "Build a new temple",
+        "Sail to America"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "What happened when the evil magician Elymas opposed them?",
+      "answers": [
+        "God made him blind",
+        "He became a believer immediately",
+        "He was thrown into prison",
+        "God made him deaf"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "What other name did Saul go by?",
+      "answers": [
+        "Paul",
+        "Peter",
+        "Silas",
+        "Dave"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "In the city of Antioch, what did the whole city come to hear?",
+      "answers": [
+        "Paul share the good news",
+        "Barnabas sing a song",
+        "Paul tell a spooky story",
+        "News about the war"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "Because the Jews in Antioch were jealous, what did they do?",
+      "answers": [
+        "They threw Paul and Barnabas out",
+        "They joined them",
+        "They gave them money",
+        "They built them a house"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "In Iconium, what did the Jews plan to do to Paul and Barnabas?",
+      "answers": [
+        "Stone them",
+        "Crown them as leaders",
+        "Send them back home",
+        "Make them priests"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "What did the people of Lystra think after Paul healed a man’s legs?",
+      "answers": [
+        "They were gods",
+        "He was a doctor",
+        "It was a trick",
+        "The man was pretending"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "What happened after the Jews in Lystra stoned Paul?",
+      "answers": [
+        "They dragged him outside the city, but he stood up and went back inside",
+        "He escaped before they caught him",
+        "Barnabas was arrested instead",
+        "Paul ran away screaming"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "What did Paul and Barnabas do on their way home?",
+      "answers": [
+        "Stopped in the cities they had visited to encourage the believers",
+        "Avoided all the cities",
+        "Sailed straight home without stopping",
+        "Hid in the mountains"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "When they returned to Antioch, what did Paul and Barnabas do?",
+      "answers": [
+        "They told the church all that God had done",
+        "They immediately left again for a second trip",
+        "They got new jobs",
+        "They wrote a book of the Bible"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
