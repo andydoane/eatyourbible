@@ -12,7 +12,7 @@
         "They didn’t like what he was saying about Jesus",
         "He refused to pay taxes",
         "He broke into the temple",
-        "He argued about food laws"
+        "He healed a man on the Sabbath"
       ],
       "correctIndex": 0
     },
@@ -21,8 +21,8 @@
       "answers": [
         "They had killed Jesus, the promised Messiah",
         "They should make him king",
-        "They needed more rules",
-        "They should leave Jerusalem"
+        "They should leave him alone",
+        "I was wrong about Jesus – he isn't the Messiah"
       ],
       "correctIndex": 0
     },
@@ -52,7 +52,7 @@
         "They were being arrested and thrown into prison",
         "They wanted to travel the world",
         "They were looking for food",
-        "They were building new houses"
+        "They were sad about Stephen"
       ],
       "correctIndex": 0
     },
@@ -69,7 +69,7 @@
     {
       "question": "Who did Philip meet along the road?",
       "answers": [
-        "An important Ethiopian official who served the queen",
+        "An Ethiopian man who served the queen",
         "A Roman soldier",
         "One of the twelve disciples",
         "A fisherman from Galilee"
