@@ -4,7 +4,7 @@
   "lessonTitleText": "Stephen and Philip",
   "lessonSubtitleText": "Test how well you know this story",
   "lessonImagePath": "quizimages/nt38image.png",
-  "themeClass": "theme-red", // <--CHANGE THIS!
+  "themeClass": "theme-red",
   "questions": [
     {
       "question": "Why was Stephen arrested by the Jewish leaders?",
