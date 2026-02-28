@@ -735,7 +735,7 @@ function playAudio(i){
 
 function unlockAudioForIOS(){
   if (audioUnlocked) return;
-  audioPlayer.src = `commandment_audio/commandment_01.mp3`;
+  audioPlayer.src = `commandment_audio/silence.mp3`;
   audioPlayer.volume = 0;
   const p = audioPlayer.play();
   if (p && typeof p.then === "function"){
