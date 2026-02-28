@@ -721,18 +721,44 @@ function isLightBg(color){
     return color === "#ffc751" || color === "#f2f2f2";
 }
 
-function preloadCreedImages(){
-    // Preload all slide images so iOS Safari has them ready
-    for (let i = 1; i <= phrases.length; i++){
+function preloadCreedImages(priorityCount = 3) {
+    // Helper: request an image download without adding it to the DOM
+    function requestImage(src) {
         const img = new Image();
-        img.src = `creed_images/creed_${String(i).padStart(2,"0")}.png`;
+        img.src = src;
+        // Optional: allow browser to decode when it can
+        img.decoding = "async";
     }
 
-    // Also preload commonly used screens
-    ["creed_title.png", "creed_end.png"].forEach(name => {
-        const img = new Image();
-        img.src = `creed_images/${name}`;
-    });
+    // 1) Preload the intro images used immediately
+    requestImage("creed_images/intro_bible.png");
+    requestImage("creed_images/intro_bible_bite.png");
+
+    // 2) Preload commonly used screens
+    requestImage("creed_images/creed_title.png");
+    requestImage("creed_images/creed_end.png");
+
+    // 3) Preload the first N creed slides FIRST (highest priority for UX)
+    const total = phrases.length;
+    const firstBatch = Math.min(priorityCount, total);
+
+    for (let i = 1; i <= firstBatch; i++) {
+        requestImage(`creed_images/creed_${String(i).padStart(2, "0")}.png`);
+    }
+
+    // 4) Preload the remaining slides AFTER the first batch
+    function preloadRemaining() {
+        for (let i = firstBatch + 1; i <= total; i++) {
+            requestImage(`creed_images/creed_${String(i).padStart(2, "0")}.png`);
+        }
+    }
+
+    // Prefer idle time if supported; otherwise wait a tiny bit
+    if ("requestIdleCallback" in window) {
+        requestIdleCallback(preloadRemaining, { timeout: 1500 });
+    } else {
+        setTimeout(preloadRemaining, 300);
+    }
 }
 
 function setupKeyboardNav(){
@@ -1391,7 +1417,7 @@ function showTestEnd(){
 /* ---------- Start ---------- */
 setupKeyboardNav();
 preventDoubleTapZoomOnButtons();
-preloadCreedImages();
+preloadCreedImages(5);
 introScreen();
 </script>
 </body>
