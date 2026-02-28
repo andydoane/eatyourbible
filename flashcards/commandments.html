@@ -364,6 +364,7 @@ button{ cursor:pointer; font-family:inherit; }
 /* Fade hint to show there's more to scroll */
 .dig-modal-scroll{
   position: relative;
+  padding-bottom: 70px;
 }
 
 /* Fade overlay that stays pinned to the bottom of the card */
@@ -1065,8 +1066,27 @@ function openDigDeeper(){
   // Reset scroll to top after render
   setTimeout(()=>{
     const sc = document.getElementById("digScroll");
-    if (sc) sc.scrollTop = 0;
+    const fade = document.querySelector(".dig-fade");
+    if (!sc) return;
+
+    // Always start at the top
+    sc.scrollTop = 0;
+
+    // Make sure fade is visible at first
+    if (fade) fade.classList.remove("hidden");
+
+    // Hide fade once the user scrolls even a little
+    sc.addEventListener("scroll", function onScroll(){
+  const nearBottom = sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 10;
+  if (nearBottom){
+    if (fade) fade.classList.add("hidden");
+    sc.removeEventListener("scroll", onScroll);
+  }
+}, { passive:true });
   }, 0);
+  
+
+
 }
 
 function closeDigDeeper(){
