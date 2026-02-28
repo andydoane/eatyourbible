@@ -1031,12 +1031,16 @@ function nextLearn(direction = "forward"){
         </div>
     </div>
     <div class="nav">
-        <button class="no-zoom" onclick="prevLearn()" aria-label="Back">${SVG_BACK}</button>
-        <button class="center-btn" id="muteBtn" onclick="toggleMute()" aria-label="Mute toggle">
-            ${muted ? SVG_MUTE : SVG_UNMUTE}
-        </button>
-        <button class="no-zoom" onclick="forwardLearn()" aria-label="Forward">${SVG_FORWARD}</button>
-    </div>`;
+    <button class="no-zoom" onclick="prevLearn()" aria-label="Back">${SVG_BACK}</button>
+
+    <button class="center-btn nav-pill no-zoom" onclick="titleScreen()" aria-label="Home">⌂</button>
+
+    <button class="center-btn" id="muteBtn" onclick="toggleMute()" aria-label="Mute toggle">
+        ${muted ? SVG_MUTE : SVG_UNMUTE}
+    </button>
+
+    <button class="no-zoom" onclick="forwardLearn()" aria-label="Forward">${SVG_FORWARD}</button>
+</div>    `;
     showSlide(html, color, direction);
     playAudio(index);
 }
@@ -1199,15 +1203,17 @@ function renderVerseProofs(direction = "forward"){
         </div>
     </div>
 
-    <div class="nav">
-        <button class="no-zoom" onclick="prevVerseProofs()" aria-label="Back">${SVG_BACK}</button>
+<div class="nav">
+    <button class="no-zoom" onclick="prevVerseProofs()" aria-label="Back">${SVG_BACK}</button>
 
-        <button class="center-btn nav-pill" id="verseBtn" onclick="toggleVerseMode()" aria-label="Toggle verse mode">
-            ${verseModeOpen ? "Creed" : "Verse"}
-        </button>
+    <button class="center-btn nav-pill no-zoom" onclick="titleScreen()" aria-label="Home">⌂</button>
 
-        <button class="no-zoom" onclick="forwardVerseProofs()" aria-label="Forward">${SVG_FORWARD}</button>
-    </div>`;
+    <button class="center-btn nav-pill" id="verseBtn" onclick="toggleVerseMode()" aria-label="Toggle verse mode">
+        ${verseModeOpen ? "Creed" : "Verse"}
+    </button>
+
+    <button class="no-zoom" onclick="forwardVerseProofs()" aria-label="Forward">${SVG_FORWARD}</button>
+</div>`;
 
     showSlide(html, color, direction);
 
@@ -1324,11 +1330,15 @@ function renderTest(direction = "forward"){
             <div class="${textClass}" id="testPhrase">${displayPhrase}</div>
         </div>
     </div>
-    <div class="nav">
-        <button class="no-zoom" onclick="prevTest()" aria-label="Back">${SVG_BACK}</button>
-        <button class="center-btn nav-pill" id="hintBtn" onclick="hint()">${hintState===0?"Hint":"Reveal"}</button>
-        <button class="no-zoom" onclick="forwardTest()" aria-label="Forward">${SVG_FORWARD}</button>
-    </div>`;
+        <div class="nav">
+            <button class="no-zoom" onclick="prevTest()" aria-label="Back">${SVG_BACK}</button>
+
+            <button class="center-btn nav-pill no-zoom" onclick="titleScreen()" aria-label="Home">⌂</button>
+
+            <button class="center-btn nav-pill" id="hintBtn" onclick="hint()">${hintState===0?"Hint":"Reveal"}</button>
+
+            <button class="no-zoom" onclick="forwardTest()" aria-label="Forward">${SVG_FORWARD}</button>
+        </div>`;
 showSlide(html, color, direction);
 }
 
