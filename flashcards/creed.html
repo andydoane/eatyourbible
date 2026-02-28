@@ -38,6 +38,7 @@ html, body {
     display: flex;
     flex-direction: column;
     min-height: 0;   /* iOS Safari flex fix */
+    padding-bottom: calc(70px + env(safe-area-inset-bottom));
 }
 
 .content {
@@ -186,6 +187,12 @@ html, body {
     padding: 0 30px;
     color: white;
     font-size: 28px;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    padding-bottom: calc(env(safe-area-inset-bottom));
 }
 
 .nav button {
@@ -459,6 +466,7 @@ button {
 <body>
 
 <div id="app"></div>
+<div id="navBar" class="nav" style="display:none;"></div>
 
 <script>
 /* ---------- Data ---------- */
@@ -693,6 +701,20 @@ function getColor(i){
 
 function isLightBg(color){
     return color === "#ffc751" || color === "#f2f2f2";
+}
+
+function setNav(html){
+    const nav = document.getElementById("navBar");
+    if (!nav) return;
+
+    if (!html){
+        nav.style.display = "none";
+        nav.innerHTML = "";
+        return;
+    }
+
+    nav.style.display = "flex";
+    nav.innerHTML = html;
 }
 
 function preloadCreedImages(priorityCount = 3) {
@@ -950,6 +972,7 @@ function introScreen(){
         <img id="introImg" src="creed_images/intro_bible.png">
     </div>`;
     document.getElementById("app").innerHTML=html;
+    setNav("");
 
     const img=document.getElementById("introImg");
     img.onclick=()=>{
@@ -988,6 +1011,7 @@ function titleScreen(){
         </div>
     </div>`;
     document.getElementById("app").innerHTML=html;
+    setNav("");
     updateTitleCarouselUI();
 }
 
@@ -1001,6 +1025,7 @@ function startLearn(){
 
 function showLearnIntro(){
     learnIntro = true;
+    setNav("");
     showSlide(`
     <div class="content">
         <div class="text-area">
@@ -1035,7 +1060,8 @@ function nextLearn(direction = "forward"){
             <div class="${textClass}">${phrase}</div>
         </div>
     </div>
-    <div class="nav">
+      `;
+      setNav(`
     <button class="no-zoom" onclick="prevLearn()" aria-label="Back">${SVG_BACK}</button>
 
     <button class="no-zoom" onclick="titleScreen()" aria-label="Home">
@@ -1047,7 +1073,7 @@ function nextLearn(direction = "forward"){
     </button>
 
     <button class="no-zoom" onclick="forwardLearn()" aria-label="Forward">${SVG_FORWARD}</button>
-</div>    `;
+`);
     showSlide(html, color, direction);
     playAudio(index);
 }
@@ -1210,19 +1236,21 @@ function renderVerseProofs(direction = "forward"){
         </div>
     </div>
 
-<div class="nav">
+
+    `;
+setNav(`
     <button class="no-zoom" onclick="prevVerseProofs()" aria-label="Back">${SVG_BACK}</button>
 
     <button class="no-zoom" onclick="titleScreen()" aria-label="Home">
         ${SVG_HOME}
     </button>
+
     <button class="center-btn nav-pill" id="verseBtn" onclick="toggleVerseMode()" aria-label="Toggle verse mode">
         ${verseModeOpen ? "Creed" : "Verse"}
     </button>
 
     <button class="no-zoom" onclick="forwardVerseProofs()" aria-label="Forward">${SVG_FORWARD}</button>
-</div>`;
-
+`);
     showSlide(html, color, direction);
 
     // Optional: play creed audio when not in Verse mode
@@ -1288,6 +1316,7 @@ function modeSelect(){
         </div>
     </div>`;
     document.getElementById("app").innerHTML=html;
+    setNav("");
 }
 
 
@@ -1338,17 +1367,23 @@ function renderTest(direction = "forward"){
             <div class="${textClass}" id="testPhrase">${displayPhrase}</div>
         </div>
     </div>
-        <div class="nav">
-            <button class="no-zoom" onclick="prevTest()" aria-label="Back">${SVG_BACK}</button>
+      
+    
+    `;
+setNav(`
+    <button class="no-zoom" onclick="prevTest()" aria-label="Back">${SVG_BACK}</button>
 
-            <button class="no-zoom" onclick="titleScreen()" aria-label="Home">
-               ${SVG_HOME}
-            </button>
+    <button class="no-zoom" onclick="titleScreen()" aria-label="Home">
+       ${SVG_HOME}
+    </button>
 
-            <button class="center-btn nav-pill" id="hintBtn" onclick="hint()">${hintState===0?"Hint":"Reveal"}</button>
+    <button class="center-btn nav-pill" id="hintBtn" onclick="hint()">
+        ${hintState===0 ? "Hint" : "Reveal"}
+    </button>
 
-            <button class="no-zoom" onclick="forwardTest()" aria-label="Forward">${SVG_FORWARD}</button>
-        </div>`;
+    <button class="no-zoom" onclick="forwardTest()" aria-label="Forward">${SVG_FORWARD}</button>
+`);
+
 showSlide(html, color, direction);
 }
 
