@@ -1,13 +1,12 @@
-/* sw.js - minimal PWA service worker for offline caching */
+/* sw.js - PWA service worker for /eatyourbible/pwa/commandments/ */
 
 const CACHE_NAME = "ten-commandments-v1";
 
-// Core shell files (add more if you want)
 const CORE_ASSETS = [
-  "./",
-  "./index.html",
-  "./manifest.webmanifest",
-  "./sw.js"
+  "/eatyourbible/pwa/commandments/",
+  "/eatyourbible/pwa/commandments/index.html",
+  "/eatyourbible/pwa/commandments/manifest.webmanifest",
+  "/eatyourbible/pwa/commandments/sw.js"
 ];
 
 self.addEventListener("install", (event) => {
@@ -20,29 +19,18 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(
-        keys
-          .filter((k) => k !== CACHE_NAME)
-          .map((k) => caches.delete(k))
-      )
+      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
     )
   );
   self.clients.claim();
 });
 
-/*
-  Cache strategy:
-  - For your own files (same-origin): cache-first, then network, then fallback.
-  - This means images/audio will be saved after first use and work offline.
-*/
+// Cache-first for same-origin GET requests (images/audio will be saved after first use)
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   const url = new URL(req.url);
 
-  // Only handle GET requests
   if (req.method !== "GET") return;
-
-  // Only cache same-origin (your GitHub Pages domain/path)
   if (url.origin !== self.location.origin) return;
 
   event.respondWith(
@@ -51,15 +39,9 @@ self.addEventListener("fetch", (event) => {
 
       return fetch(req)
         .then((resp) => {
-          // Save a copy to cache for later offline use
           const copy = resp.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
           return resp;
-        })
-        .catch(() => {
-          // If offline and not cached, you could return a fallback here if you want.
-          // For now: just fail normally.
-          return cached;
         });
     })
   );
