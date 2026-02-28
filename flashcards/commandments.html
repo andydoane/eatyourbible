@@ -366,15 +366,19 @@ button{ cursor:pointer; font-family:inherit; }
   position: relative;
 }
 
-/* The fade overlay */
+/* Fade overlay that stays pinned to the bottom of the card */
+.dig-modal-inner{
+  position: relative; /* IMPORTANT: anchors the fade */
+}
+
 .dig-fade{
   position:absolute;
-  left:0;
-  right:0;
-  bottom:0;
-  height:48px;
+  left:16px;
+  right:16px;
+  bottom:18px;      /* matches .dig-modal-inner padding */
+  height:52px;
   pointer-events:none;
-  border-radius: 0 0 24px 24px;
+  border-radius: 0 0 18px 18px;
   background: linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,0.90));
 }
 
@@ -1113,7 +1117,8 @@ function renderDigDeeper(direction="forward"){
         <div class="dig-modal-title">Commandment ${index+1}</div>
         <div class="dig-modal-scroll" id="digScroll">
           ${paragraphs.map(p => `<p class="dig-p">${escapeHtml(p)}</p>`).join("")}
-          <div class="dig-fade"></div>
+        </div>
+        <div class="dig-fade"></div>
         </div>
       </div>
     </div>
