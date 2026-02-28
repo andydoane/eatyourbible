@@ -1478,12 +1478,12 @@ preventDoubleTapZoomOnButtons();
 preloadCommandmentImages(5);
 introScreen();
 
-/* ---- PWA: reg:contentReference[oaicite:8]{index=8}---- */
+/* ---- PWA: register service worker ---- */
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js").catch(() => {
-      // If it fails, your app still works as a normal website.
-    });
+    navigator.serviceWorker
+      .register("/eatyourbible/pwa/commandments/sw.js")
+      .catch(() => {});
   });
 }
 
