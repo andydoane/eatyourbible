@@ -41,6 +41,11 @@ html, body {
     padding-bottom: calc(70px + env(safe-area-inset-bottom));
 }
 
+/* When nav is hidden, don't reserve space for it */
+.slide.nav-hidden {
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
 .content {
     flex: 1;
     display: flex;
@@ -184,7 +189,6 @@ html, body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 30px;
     color: white;
     font-size: 28px;
     position: fixed;
@@ -192,7 +196,7 @@ html, body {
     right: 0;
     bottom: 0;
     z-index: 9999;
-    padding-bottom: calc(env(safe-area-inset-bottom));
+    padding: 0 30px calc(env(safe-area-inset-bottom)) 30px;
 }
 
 .nav button {
@@ -917,7 +921,12 @@ function showSlide(contentHTML, bgColor, direction = "forward") {
     }
 
     const newSlide = document.createElement("div");
-    newSlide.className = "slide";
+
+    // If the nav bar is currently hidden, don't reserve space for it
+    const nav = document.getElementById("navBar");
+    const navHidden = !nav || nav.style.display === "none";
+
+    newSlide.className = navHidden ? "slide nav-hidden" : "slide";
     newSlide.style.background = bgColor;
     newSlide.innerHTML = contentHTML;
     newSlide.style.transition = "none";
