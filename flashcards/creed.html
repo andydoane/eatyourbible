@@ -1038,7 +1038,6 @@ function showLearnIntro(){
                 </div>
             </div>
         </div>
-        <div class="nav"></div>
     </div>`, "#7f66c6");
 }
 
@@ -1100,6 +1099,7 @@ function toggleMute(){
 
 
 function showLearnEnd(){
+    setNav("");
     const html=`
     <div class="title-screen">
         <div class="title-content">
@@ -1124,6 +1124,7 @@ function showLearnEnd(){
 
 function showVerseProofsIntro(){
     verseIntro = true;
+    setNav("");
     showSlide(`
     <div class="content">
         <div class="text-area">
@@ -1136,7 +1137,6 @@ function showVerseProofsIntro(){
                 </div>
             </div>
         </div>
-        <div class="nav"></div>
     </div>`, "#7f66c6");
 }
 
@@ -1258,6 +1258,7 @@ setNav(`
 }
 
 function showVerseProofsEnd(){
+    setNav("");
     const html=`
     <div class="title-screen">
         <div class="title-content">
@@ -1416,6 +1417,7 @@ function prevTest(){
 
 
 function showTestEnd(){
+    setNav("");
     const html=`
     <div class="title-screen">
         <div class="title-content">
