@@ -672,6 +672,11 @@ const SVG_UNMUTE = `
   </g>
 </svg>`;
 
+const SVG_HOME = `
+<svg class="nav-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+  <path d="M12 3L3 10h2v9h5v-6h4v6h5v-9h2L12 3z" fill="#ffffff"/>
+</svg>`;
+
 
 // Reuse one audio player (important for iPhone autoplay behavior)
 const audioPlayer = new Audio();
@@ -1033,7 +1038,9 @@ function nextLearn(direction = "forward"){
     <div class="nav">
     <button class="no-zoom" onclick="prevLearn()" aria-label="Back">${SVG_BACK}</button>
 
-    <button class="center-btn nav-pill no-zoom" onclick="titleScreen()" aria-label="Home">⌂</button>
+    <button class="no-zoom" onclick="titleScreen()" aria-label="Home">
+        ${SVG_HOME}
+    </button>
 
     <button class="center-btn" id="muteBtn" onclick="toggleMute()" aria-label="Mute toggle">
         ${muted ? SVG_MUTE : SVG_UNMUTE}
@@ -1206,8 +1213,9 @@ function renderVerseProofs(direction = "forward"){
 <div class="nav">
     <button class="no-zoom" onclick="prevVerseProofs()" aria-label="Back">${SVG_BACK}</button>
 
-    <button class="center-btn nav-pill no-zoom" onclick="titleScreen()" aria-label="Home">⌂</button>
-
+    <button class="no-zoom" onclick="titleScreen()" aria-label="Home">
+        ${SVG_HOME}
+    </button>
     <button class="center-btn nav-pill" id="verseBtn" onclick="toggleVerseMode()" aria-label="Toggle verse mode">
         ${verseModeOpen ? "Creed" : "Verse"}
     </button>
@@ -1333,7 +1341,9 @@ function renderTest(direction = "forward"){
         <div class="nav">
             <button class="no-zoom" onclick="prevTest()" aria-label="Back">${SVG_BACK}</button>
 
-            <button class="center-btn nav-pill no-zoom" onclick="titleScreen()" aria-label="Home">⌂</button>
+            <button class="no-zoom" onclick="titleScreen()" aria-label="Home">
+               ${SVG_HOME}
+            </button>
 
             <button class="center-btn nav-pill" id="hintBtn" onclick="hint()">${hintState===0?"Hint":"Reveal"}</button>
 
