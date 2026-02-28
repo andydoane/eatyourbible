@@ -1241,11 +1241,7 @@ function renderDigDeeper(direction="forward"){
       </div>
 
       <div class="text-area">
-        ${
-          digDeeperOpen
-            ? `<div class="${textClass}">${phrase}</div>`
-            : `<button class="nav-pill no-zoom" onclick="openDigDeeper()">${btnLabel}</button>`
-        }
+        <div class="${textClass}">${phrase}</div>
       </div>
 
       ${digOverlay}
