@@ -622,14 +622,12 @@ let verseProofIndex = 0;     // which verse within the page
 let titleOptionIndex = 0;
 
 const TITLE_OPTIONS = [
-    { label: "Learn the Verse", btnClass: "learn-btn", action: "startLearn" },
+    { label: "Learn the Creed", btnClass: "learn-btn", action: "startLearn" },
     { label: "Test Yourself",   btnClass: "test-btn",  action: "modeSelect" },
     { label: "Verse Proofs", btnClass: "learn-btn", action: "startVerseProofs" }
 ];
 
-function comingSoonVerses(){
-    alert("Coming soon! This will link each part of the Creed to Bible verses.");
-}
+
 
 function titlePrevOption(){
     titleOptionIndex = (titleOptionIndex - 1 + TITLE_OPTIONS.length) % TITLE_OPTIONS.length;
