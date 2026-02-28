@@ -387,9 +387,24 @@ button{ cursor:pointer; font-family:inherit; }
   color:white;
   font-size: clamp(16px, 3.6vw, 22px);
   font-weight: 600;
-  line-height: 1.35;
+  line-height: 1.55;
   text-shadow:0 2px 6px rgba(0,0,0,0.35);
   text-wrap: pretty;
+}
+
+.dig-p strong{
+  font-weight: 800;
+}
+
+
+.dig-p strong:first-child{
+  font-size: 1.1em;
+  letter-spacing: 0.5px;
+}
+
+.dig-p em{
+  font-style: italic;
+  opacity: 0.95;
 }
 </style>
 </head>
@@ -424,16 +439,22 @@ const COMMANDMENTS = [
 // Use \\n\\n to create paragraph breaks.
 const DIG_DEEPER_TEXT = [];
 
-DIG_DEEPER_TEXT[0] = `The first commandment is part of the first pack of commandments, a group we call the “First Table of God's Law.” That means it is a command that teaches us how to love God with all of our hearts.
+DIG_DEEPER_TEXT[0] = `**FIRST COMMANDMENT**
 
-	Let's look at what the commandment actually says. In Exodus 20:3, God commands us, “You shall have no other gods before me.” This commandment makes a lot of sense. After all, way back in question four, we learned that there is only one God. All the other “gods” are worthless, made up in the heads of people and crafted into idols of wood, metal, or stone. We should only worship God because he’s the only God that actually exists!
+**What This Commandment Teaches Us:**
+*To worship God only.*
 
-	What exactly is worship? Well, our Bibles use that word to mean lots of things. Sometimes “worship” means to bow down. Other times, it means to obey. In some places, it means to give glory and praise to someone. When it comes to the first commandment, the big idea here is to give God your complete loyalty and allegiance, making him the #1 most important person in your life. God is the only one worthy of our worship – we shouldn’t share a single drop with any “god,” anyone, or anything else!
+The first commandment is part of the first pack of commandments, a group we call the “First Table of God's Law.” That means it is a command that teaches us how to love God with all of our hearts.
 
-	We obey the first commandment when we live like God is our one and only king. We give God our best worship when we treat him as the greatest treasure of all, a million times more valuable and worthy of our attention than anything else. We can demonstrate this by singing him songs of praise and following his commands. When we do the opposite, if we give our worship to anything or anyone else, we break the first commandment. If we treat any created thing (friends, money, stuff) like it’s our greatest treasure, we are giving away worship that belongs only to our great and glorious God!`;
+Let's look at what the commandment actually says. In Exodus 20:3, God commands us, “You shall have no other gods before me.” This commandment makes a lot of sense. After all, there is only one God. All the other “gods” are worthless, made up in the heads of people and crafted into idols of wood, metal, or stone. We should only worship God because he’s the only God that actually exists!
+
+What exactly is worship? Sometimes “worship” means to bow down. Other times, it means to obey. In some places, it means to give glory and praise to someone. The big idea here is to give God your complete loyalty and allegiance, making him the #1 most important person in your life. God is the only one worthy of our worship – we shouldn’t share a single drop with any “god,” anyone, or anything else!
+
+We obey the first commandment when we live like God is our one and only king. If we treat any created thing (friends, money, stuff) like it’s our greatest treasure, we are giving away worship that belongs only to our great and glorious God!`;
 
 
-DIG_DEEPER_TEXT[1] = `	Commandment #2 is part of the “First Table of the Law.” It’s one of the four commands that teach us how to love God with all of our hearts. In Exodus 20:4, God says, “You shall not make for yourself an image in the form of anything in heaven above or on the earth beneath or in the waters below. You shall not bow down to them or worship them…”
+
+DIG_DEEPER_TEXT[1] = `Commandment #2 is part of the “First Table of the Law.” It’s one of the four commands that teach us how to love God with all of our hearts. In Exodus 20:4, God says, “You shall not make for yourself an image in the form of anything in heaven above or on the earth beneath or in the waters below. You shall not bow down to them or worship them…”
 
 	Back in question six, we learned that God is a spirit. He does not have a flesh-and-bone body like you and I do. Since God isn’t made up of “stuff,” the Israelites couldn’t see him with their eyes or touch him with their hands. That was something they didn’t like very much – all the nations around them were able to see their “gods” So God’s people foolishly decided it would be a good idea to make their invisible God visible. They built idols: statues of wood, stone, or metal they could see and touch as they worshiped. This was a dreadful decision, and some of those foolish Israelites paid for it with their lives!
 
@@ -443,7 +464,7 @@ DIG_DEEPER_TEXT[1] = `	Commandment #2 is part of the “First Table of the Law.�
 
 	The only image of God we ever needed was the one God gave us himself. Colossians 1:15 calls Jesus “the image of the invisible God...” By coming to earth to live as a human among us, Jesus was the image of God people could finally see! Unlike the lifeless idols made by the Israelites, Jesus had eyes that could actually see, ears that could actually hear, and hands that could actually hug!`;
 
-DIG_DEEPER_TEXT[2] = `	The third commandment is part of the First Table of God's Law. And remember what that means – it's designed to teach us how to love God with all of our hearts. We can read it in Exodus 20:7. God commands, “You shall not misuse the name of the Lord your God, for the Lord will not hold anyone guiltless who misuses his name.”
+DIG_DEEPER_TEXT[2] = `The third commandment is part of the First Table of God's Law. And remember what that means – it's designed to teach us how to love God with all of our hearts. We can read it in Exodus 20:7. God commands, “You shall not misuse the name of the Lord your God, for the Lord will not hold anyone guiltless who misuses his name.”
 
 	Did you ever think about the fact that everything God created has a name? I mean, how could you talk about something if you didn’t have a name for it? Names are important, especially for people. Your name is a special label that represents  who you are, sort of like how a flag represents a country. Making fun of someone’s name would be like going to another country, throwing their flag on the ground, and spitting on it! When people mistreat our names, it hurts because they’re really mistreating us!
 
@@ -453,7 +474,7 @@ DIG_DEEPER_TEXT[2] = `	The third commandment is part of the First Table of God's
 
 	There are many different ways people break the third commandment. Some people speak God’s name like it’s a swear word when they get angry. Other people will say things like, “I swear to God!” They are using God’s name a bit like a magic word to make you believe them. Even worse, some people will claim to be Christians (believers in Jesus), but live their lives in a way that brings shame to the name of Christ. All of these ways and more bring dishonor to the most special name of our most special God!`;
 
-DIG_DEEPER_TEXT[3] = `	The fourth commandment is the last commandment in the First Table of the Law. That means it’s the last commandment that teaches us how to love God with all of our hearts. Listen to what Exodus 20:8-10 tells us: “Remember the Sabbath day by keeping it holy. Six days you shall labor and do all your work, but the seventh day is a sabbath (rest) to the Lord your God. On it you shall not do any work, neither you, nor your son or daughter, nor your male or female servant, nor your animals, nor any foreigner residing in your towns.”
+DIG_DEEPER_TEXT[3] = `The fourth commandment is the last commandment in the First Table of the Law. That means it’s the last commandment that teaches us how to love God with all of our hearts. Listen to what Exodus 20:8-10 tells us: “Remember the Sabbath day by keeping it holy. Six days you shall labor and do all your work, but the seventh day is a sabbath (rest) to the Lord your God. On it you shall not do any work, neither you, nor your son or daughter, nor your male or female servant, nor your animals, nor any foreigner residing in your towns.”
 
 	When God created our universe, he didn’t make everything all at once. Over the course of six days, he formed and filled his brand-new world, adding wonderful new creations each and every day. On the sixth day, God finished his universe construction project. So what did he do the next day? The Bible tells us God rested from his work. Was he worn out? Did he need a nap? Nope – our all-powerful, omnipotent God doesn’t get tired!
 
@@ -467,7 +488,7 @@ DIG_DEEPER_TEXT[3] = `	The fourth commandment is the last commandment in the Fir
 
 	But as they gather each Lord’s Day, they have something brand new to praise God for. Because Jesus finished his work of saving us from our sins, we have the hope of spending forever with God, where every day will be a sabbath, an endless rest in paradise! (Heb. 4:10-11) By gathering to remember what Jesus did to earn us that forever rest, we can honor God’s command to keep the Sabbath.`;
 
-DIG_DEEPER_TEXT[4] = `	The fifth commandment is the first commandment in the Second Table of the Law. With all those numbers, it’s hard to keep things straight! But if you remember, the Second Table of the Law combines the last six commands. When you put them all together, these laws teach us to love our neighbors as we love ourselves. And God starts off the Second Table of the Law by talking about two special neighbors he wants us to love: our parents! In Exodus 20:12, he commands, “Honor your father and your mother, so that you may live long in the land the Lord your God is giving you.”
+DIG_DEEPER_TEXT[4] = `The fifth commandment is the first commandment in the Second Table of the Law. With all those numbers, it’s hard to keep things straight! But if you remember, the Second Table of the Law combines the last six commands. When you put them all together, these laws teach us to love our neighbors as we love ourselves. And God starts off the Second Table of the Law by talking about two special neighbors he wants us to love: our parents! In Exodus 20:12, he commands, “Honor your father and your mother, so that you may live long in the land the Lord your God is giving you.”
 
 	If he wanted to, God could have designed every human baby to just suddenly pop into our world. From that moment on, he could spend day after day teaching us all about who he is, how his world works, and how we’re supposed to behave. But God didn’t do that. Instead, he designed moms and dads to do that job for him!
 
@@ -475,7 +496,7 @@ DIG_DEEPER_TEXT[4] = `	The fifth commandment is the first commandment in the Sec
 
 	Here’s what makes the fifth commandment so important. A parent’s job is to make sure their kids understand and follow God’s commands. So a good and godly parent will teach their children to obey God’s laws. When children obey and honor their godly mothers and fathers, they are actually obeying their Father in Heaven! The fifth commandment is so important because parents are God’s plan to make sure everyone knows all of his other commands!`;
 
-DIG_DEEPER_TEXT[5] = `	The sixth commandment is part of the Second Table of the Law. That means it’s a command designed to teach us a specific way to obey the Golden Rule: “do unto others what you would have them do unto you!” It’s a simple, short, and serious command. Exodus 20:13 says, “You shall not murder.”
+DIG_DEEPER_TEXT[5] = `The sixth commandment is part of the Second Table of the Law. That means it’s a command designed to teach us a specific way to obey the Golden Rule: “do unto others what you would have them do unto you!” It’s a simple, short, and serious command. Exodus 20:13 says, “You shall not murder.”
 
 	Pretty much everyone in the world agrees that this is a good command. After all, you can’t love your neighbor and murder them at the same time! There’s not a country in the world that says, “Go ahead and murder each other – it isn’t against the law here!” No, if you get caught taking another person’s life, they’ll throw your backside in prison and throw away the key!
 	If you asked most people about the sixth commandment, they probably would say, “Of course I’ve obeyed it perfectly – I’ve never murdered anybody!” However, once you hear what Jesus said about the sixth commandment, you’ll understand that everyone, including you and me, is guilty of murder!
@@ -492,8 +513,7 @@ God’s plan for marriage is pretty simple: one man and one woman come together 
 
 Human beings have come up with a lot of different ways to mess up God’s good design for marriage. Sometimes, a man decides he wants two or three wives instead of just one. Other times, a man will decide he wants to marry another man instead of a woman. But it doesn’t matter how many different versions of “marriage” humans come up with, there’s only one Person’s opinion we should care about: God’s! And he’s made it clear to us in his Word: a marriage must be between one man and one woman. If we think we have a better design for marriage than God, we are headed straight for disaster!
 
-Adultery is when someone breaks this God-given plan for marriage. When a husband or wife shares their special smooches, hugs, and other “mom-and-dad things” with someone they aren’t married to, they commit the sin of adultery. They’ve broken their marriage covenant promise to their partner. But this commandment isn’t just for married people. When anyone does the special things that only married people should do, they have also broken the seventh commandment. 
-	If you asked most people, “Have you committed adultery?” they would probably say, “No.” But just like we learned in the last question, the seventh commandment is one that we can break inside of our hearts. In Matthew 5:27-28, Jesus tells us, “You have heard that it was said, ‘You shall not commit adultery.’ But I tell you that anyone who looks at a woman lustfully has already committed adultery with her in his heart.” 
+Adultery is when someone breaks this God-given plan for marriage. When a husband or wife shares their special smooches, hugs, and other “mom-and-dad things” with someone they aren’t married to, they commit the sin of adultery. They’ve broken their marriage covenant promise to their partner. But this commandment isn’t just for married people. When anyone does the special things that only married people should do, they have also broken the seventh commandment. If you asked most people, “Have you committed adultery?” they would probably say, “No.” But just like we learned in the last question, the seventh commandment is one that we can break inside of our hearts. In Matthew 5:27-28, Jesus tells us, “You have heard that it was said, ‘You shall not commit adultery.’ But I tell you that anyone who looks at a woman lustfully has already committed adultery with her in his heart.” 
 
 To “look at someone lustfully” means to imagine giving them the special smooches and hugs and “mom-and-dad things” that only a husband and wife should share together. When a man or woman looks at someone else and thinks about doing these marriage-type things, they’ve committed adultery and broken the seventh commandment inside their hearts.
 
@@ -1135,7 +1155,7 @@ function renderDigDeeper(direction="forward"){
       <div class="dig-modal-inner">
         <div class="dig-modal-title">Commandment ${index+1}</div>
         <div class="dig-modal-scroll" id="digScroll">
-          ${paragraphs.map(p => `<p class="dig-p">${escapeHtml(p)}</p>`).join("")}
+          ${paragraphs.map(p => `<p class="dig-p">${formatDigText(p)}</p>`).join("")}
         </div>
         <div class="dig-fade"></div>
         </div>
@@ -1358,6 +1378,18 @@ function escapeHtml(str){
     .replaceAll(">","&gt;")
     .replaceAll('"',"&quot;")
     .replaceAll("'","&#039;");
+}
+
+function formatDigText(str){
+  let safe = escapeHtml(str);
+
+  // Bold using **text**
+  safe = safe.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+
+  // Italic using *text*
+  safe = safe.replace(/\*(.*?)\*/g, "<em>$1</em>");
+
+  return safe;
 }
 
 /* ---------- Start ---------- */
