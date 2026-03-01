@@ -403,6 +403,91 @@
     }
     .overlay.show{ display:flex; }
 
+/* =========================================================
+   Suspense overlay (dims EVERYTHING)
+   ========================================================= */
+.suspense-overlay{
+  position:fixed;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background: rgba(0,0,0,0.65);
+  z-index: 20000; /* above nav (nav is 9999) */
+}
+
+.suspense-emoji{
+  font-size: 96px;
+  line-height: 1;
+  user-select: none;
+  filter: drop-shadow(0 18px 36px rgba(0,0,0,0.45));
+  transform-origin: center;
+}
+
+/* Smooth movement for position-based suspense (magnifier/pointer) */
+.suspense-emoji.mover{
+  position: fixed;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%);
+  transition: left 220ms ease, top 220ms ease;
+}
+
+/* =========================================================
+   Reveal verdict in question box
+   ========================================================= */
+.question-box.verdict{
+  background: #f2f2f2;
+}
+
+.question-box.verdict .question{
+  font-size: 44px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.question-box.verdict.correct .question{
+  color: #1b8f3a; /* green */
+}
+
+.question-box.verdict.incorrect .question{
+  color: #c62828; /* red */
+}
+
+/* Keep correct answer normal; dim others more clearly */
+.answer.dimmed{
+  opacity: 0.30 !important;
+  filter: grayscale(0.20);
+}
+
+/* =========================================================
+   Nav overlay CTA (Next question / See score)
+   ========================================================= */
+nav#nav{
+  position:fixed;
+}
+
+.nav-next{
+  position:absolute;
+  left:0;
+  right:0;
+  top:0;
+  bottom:0;
+  width:100%;
+  border:none;
+  border-radius: 0;
+  background: rgba(255,255,255,0.14);
+  color: rgba(255,255,255,0.98);
+  font-family: inherit;
+  font-weight: 900;
+  font-size: 20px;
+  letter-spacing: 0.3px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.nav-next:active{ transform: scale(0.99); }
+
+
     .dialog{
       width:min(420px, 100%);
       border-radius: 22px;
@@ -572,11 +657,14 @@
 <body>
   <div id="app"></div>
 
-  <nav id="nav" aria-label="Quiz navigation" style="display:none;">
-    <button id="homeBtn" class="nav-btn" title="Home" aria-label="Home">⌂</button>
-    <div id="navCenter" class="nav-center">1 / 10</div>
-    <button id="muteBtn" class="nav-btn" title="Mute" aria-label="Mute">🔊</button>
-  </nav>
+<nav id="nav" aria-label="Quiz navigation" style="display:none;">
+  <button id="homeBtn" class="nav-btn" title="Home" aria-label="Home">⌂</button>
+  <div id="navCenter" class="nav-center">1 / 10</div>
+  <button id="muteBtn" class="nav-btn" title="Mute" aria-label="Mute">🔊</button>
+
+  <!-- Reveal-stage CTA that covers the whole nav -->
+  <button id="nextBtn" class="nav-next" type="button" style="display:none;">Next question</button>
+</nav>
 
   <div id="overlay" class="overlay" role="dialog" aria-modal="true">
     <div class="dialog">
@@ -588,6 +676,12 @@
       </div>
     </div>
   </div>
+
+<!-- Suspense overlay: dims the whole screen and shows the suspense animation -->
+<div id="suspenseOverlay" class="suspense-overlay" style="display:none;">
+  <div id="suspenseEmoji" class="suspense-emoji" aria-hidden="true">👍</div>
+</div>
+
 
   <script>
   /*************************************************************
@@ -752,7 +846,9 @@
   const navCenter = document.getElementById("navCenter");
   const homeBtn = document.getElementById("homeBtn");
   const muteBtn = document.getElementById("muteBtn");
-
+  const nextBtn = document.getElementById("nextBtn");
+  const suspenseOverlay = document.getElementById("suspenseOverlay");
+  const suspenseEmoji = document.getElementById("suspenseEmoji");
   function setNavVisible(isVisible) {
     nav.style.display = isVisible ? "flex" : "none";
   }
@@ -908,6 +1004,253 @@
   const REWARD_EMOJI_POOLS = { 0:FUNNY_EMOJIS,1:FUNNY_EMOJIS,2:FUNNY_EMOJIS,3:FUNNY_EMOJIS,4:FUNNY_EMOJIS,5:FUNNY_EMOJIS,6:FUNNY_EMOJIS,7:FUNNY_EMOJIS,8:FUNNY_EMOJIS,9:FUNNY_EMOJIS,10:FUNNY_EMOJIS };
 
   function pick(list){ return list[Math.floor(Math.random()*list.length)]; }
+
+/***********************
+ * Suspense variants (10)
+ ***********************/
+const SUSPENSE_VARIANTS = [
+  "thumbsClassic",
+  "faces",
+  "thumbWheel",
+  "bomb",
+  "coin",
+  "hands",
+  "meter",        // your custom face-flip meter
+  "pointerSweep", // your custom fast pointer mover
+  "magnifier",
+  "yesnoFlip"
+];
+
+let suspenseDeck = [];
+function shuffle(arr){
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+function nextSuspenseVariant(){
+  if (suspenseDeck.length === 0) suspenseDeck = shuffle([...SUSPENSE_VARIANTS]);
+  return suspenseDeck.pop();
+}
+
+function showSuspenseDim(isOn){
+  suspenseOverlay.style.display = isOn ? "flex" : "none";
+}
+
+function setSuspenseEmoji(text){
+  suspenseEmoji.classList.remove("mover");
+  suspenseEmoji.textContent = text;
+  suspenseEmoji.style.transform = "";
+  suspenseEmoji.style.left = "";
+  suspenseEmoji.style.top = "";
+}
+
+function finishSuspense(cleanupFn, done){
+  try { cleanupFn && cleanupFn(); } catch(e) {}
+  showSuspenseDim(false);
+  done && done();
+}
+
+function runSuspenseVariant({ variant, questionBoxEl, answerBtns, done }) {
+  showSuspenseDim(true);
+
+  // default: centered emoji
+  suspenseEmoji.classList.remove("mover");
+  suspenseEmoji.style.position = "";
+  suspenseEmoji.style.left = "";
+  suspenseEmoji.style.top = "";
+  suspenseEmoji.style.transform = "";
+
+  // Helpers
+  const centerOf = (el) => {
+    const r = el.getBoundingClientRect();
+    return { x: r.left + r.width/2, y: r.top + r.height/2 };
+  };
+
+  // tick/tock helper like old engine
+  let tick = false;
+  const tt = () => { tick = !tick; playTickTock(tick); };
+
+  // ---- Variant implementations ----
+  if (variant === "thumbsClassic") {
+    let up = true;
+    setSuspenseEmoji("👍");
+    const iv = setInterval(() => { setSuspenseEmoji(up ? "👍" : "👎"); tt(); up = !up; }, 250);
+    const to = setTimeout(() => finishSuspense(()=>{clearInterval(iv);clearTimeout(to);}, done), 4000);
+    return;
+  }
+
+  if (variant === "faces") {
+    const faces = ["🤔","😮","😬","😐","😯","😵‍💫"];
+    let i = 0;
+    setSuspenseEmoji(faces[0]);
+    const iv = setInterval(() => { i=(i+1)%faces.length; setSuspenseEmoji(faces[i]); tt(); }, 250);
+    const to = setTimeout(() => finishSuspense(()=>{clearInterval(iv);clearTimeout(to);}, done), 3000);
+    return;
+  }
+
+  if (variant === "thumbWheel") {
+    setSuspenseEmoji("👍");
+    let rot = 0;
+    const iv = setInterval(() => {
+      rot = (rot + 45) % 360;
+      suspenseEmoji.style.transform = `rotate(${rot}deg)`;
+      tt();
+    }, 120);
+    const to = setTimeout(() => finishSuspense(()=>{clearInterval(iv);clearTimeout(to);suspenseEmoji.style.transform="";}, done), 3000);
+    return;
+  }
+
+  if (variant === "bomb") {
+    setSuspenseEmoji("💣");
+    let grow = true;
+    const iv = setInterval(() => {
+      suspenseEmoji.style.transform = `scale(${grow ? 1.25 : 0.95})`;
+      grow = !grow;
+      tt();
+    }, 250);
+
+    const to = setTimeout(() => {
+      // quick "explosion"
+      setSuspenseEmoji("💥");
+      suspenseEmoji.style.transform = "scale(1.35)";
+      setTimeout(() => finishSuspense(()=>{clearInterval(iv);clearTimeout(to);}, done), 450);
+    }, 2600);
+    return;
+  }
+
+  if (variant === "coin") {
+    // coin flip (simple)
+    const coins = ["🪙","🪙","🪙"]; // stable coin emoji (some fonts vary)
+    let i = 0;
+    setSuspenseEmoji(coins[0]);
+
+    let flip = 0;
+    const iv = setInterval(() => {
+      flip++;
+      const phase = flip % 2;
+      // "flip": squash to zero then back
+      suspenseEmoji.style.transform = phase === 0 ? "scaleX(0.08) rotateY(90deg)" : "scaleX(1) rotateY(0deg)";
+      if (phase === 0) tt();
+      i = (i + 1) % coins.length;
+      if (phase === 0) setSuspenseEmoji(coins[i]);
+    }, 220);
+
+    const to = setTimeout(() => finishSuspense(()=>{clearInterval(iv);clearTimeout(to);suspenseEmoji.style.transform="";}, done), 2600);
+    return;
+  }
+
+  if (variant === "hands") {
+    const hands = ["👆","☝️","👉","👈","👇","🤞","🖖"];
+    let i = 0;
+    setSuspenseEmoji(hands[0]);
+    const iv = setInterval(() => { i=(i+1)%hands.length; setSuspenseEmoji(hands[i]); tt(); }, 220);
+    const to = setTimeout(() => finishSuspense(()=>{clearInterval(iv);clearTimeout(to);}, done), 2800);
+    return;
+  }
+
+  if (variant === "meter") {
+    // Your custom: coin-flip mechanics swapping between positive/negative faces
+    const faces = ["🙂","😢","😄","😡","🙂","😭"];
+    let i = 0;
+    setSuspenseEmoji(faces[0]);
+
+    let step = 0;
+    const iv = setInterval(() => {
+      step++;
+      const edge = step % 2 === 0; // "edge" moment
+      if (edge) {
+        suspenseEmoji.style.transform = "scaleX(0.08) rotateY(90deg)";
+        tt();
+        i = (i + 1) % faces.length;
+        setSuspenseEmoji(faces[i]);
+      } else {
+        suspenseEmoji.style.transform = "scaleX(1) rotateY(0deg)";
+      }
+    }, 220);
+
+    const to = setTimeout(() => finishSuspense(()=>{clearInterval(iv);clearTimeout(to);suspenseEmoji.style.transform="";}, done), 2800);
+    return;
+  }
+
+  if (variant === "magnifier" || variant === "pointerSweep") {
+    // Position-based mover
+    suspenseEmoji.classList.add("mover");
+    suspenseEmoji.style.position = "fixed";
+    suspenseEmoji.style.transform = "translate(-50%, -50%)";
+
+    const qPos = centerOf(questionBoxEl);
+    const aPos = answerBtns.map(centerOf);
+
+    if (variant === "magnifier") {
+      setSuspenseEmoji("🔍");
+      const path = [aPos[0], aPos[1], aPos[2], aPos[3]];
+      let idx = 0;
+
+      const moveTo = (p) => { suspenseEmoji.style.left = `${p.x}px`; suspenseEmoji.style.top = `${p.y}px`; };
+      moveTo(path[0]);
+
+      const iv = setInterval(() => {
+        tt();
+        idx++;
+        if (idx >= path.length) { clearInterval(iv); setTimeout(() => finishSuspense(()=>{}, done), 450); return; }
+        moveTo(path[idx]);
+      }, 650);
+
+      return;
+    }
+
+    // pointerSweep: fast cycles, goes question -> down buttons -> question -> down ... etc.
+    setSuspenseEmoji("👉");
+    const path = [qPos, ...aPos, qPos, ...aPos, qPos, ...aPos, qPos];
+    let idx = 0;
+
+    const moveTo = (p) => { suspenseEmoji.style.left = `${p.x}px`; suspenseEmoji.style.top = `${p.y}px`; };
+    moveTo(path[0]);
+
+    const iv = setInterval(() => {
+      tt();
+      idx++;
+      if (idx >= path.length) { clearInterval(iv); finishSuspense(()=>{}, done); return; }
+      moveTo(path[idx]);
+    }, 190);
+
+    return;
+  }
+
+  if (variant === "yesnoFlip") {
+    // Jumping ✅ / ❌ swap on landing
+    let isCheck = true;
+    setSuspenseEmoji("✅");
+
+    let jumps = 0;
+    const doJump = () => {
+      // up
+      suspenseEmoji.style.transform = "translateY(-18px)";
+      setTimeout(() => {
+        // land
+        suspenseEmoji.style.transform = "translateY(0px)";
+        tt();
+        isCheck = !isCheck;
+        setSuspenseEmoji(isCheck ? "✅" : "❌");
+        jumps++;
+        if (jumps >= 10) {
+          setTimeout(() => finishSuspense(()=>{ suspenseEmoji.style.transform=""; }, done), 260);
+        } else {
+          setTimeout(doJump, 120);
+        }
+      }, 160);
+    };
+
+    doJump();
+    return;
+  }
+
+  // fallback
+  setSuspenseEmoji("⏳");
+  const to = setTimeout(() => finishSuspense(()=>{clearTimeout(to);}, done), 1200);
+}
 
   /***********************
    * Quiz state
@@ -1099,6 +1442,8 @@
     const timerNumEl = slide.querySelector("#timerNum");
     const answersEl = slide.querySelector("#answers");
     const suspenseEl = slide.querySelector("#suspense");
+    const questionBoxEl = slide.querySelector(".question-box");
+    const questionTextEl = slide.querySelector(".question-box .question");
 
     let answered = false;
     let selectedIndex = null;
@@ -1108,18 +1453,34 @@
       [...answersEl.querySelectorAll(".answer")].forEach(b => b.disabled = true);
     }
 
+    
     function reveal(correctIdx) {
       lockAnswers();
       suspenseEl.style.display = "none";
 
       const btns = [...answersEl.querySelectorAll(".answer")];
+
+      // highlight correct, dim all others
       btns.forEach((b, i) => {
-        if (i === correctIdx) b.classList.add("correct");
-        if (selectedIndex !== null && i === selectedIndex && i !== correctIdx) b.classList.add("wrong");
-        if (selectedIndex !== null && i !== selectedIndex && i !== correctIdx) b.classList.add("wrong");
+        b.classList.remove("wrong"); // we won't use the old wrong styling
+        b.classList.remove("correct");
+        b.classList.remove("dimmed");
+
+        if (i === correctIdx) {
+          b.classList.add("correct");
+        } else {
+          b.classList.add("dimmed");
+        }
       });
 
       const isCorrect = (selectedIndex === correctIdx);
+
+      // verdict in the question box
+      questionBoxEl.classList.add("verdict");
+      questionBoxEl.classList.toggle("correct", isCorrect);
+      questionBoxEl.classList.toggle("incorrect", !isCorrect);
+      questionTextEl.textContent = isCorrect ? "CORRECT" : "INCORRECT";
+
       if (isCorrect) {
         correctCount += 1;
         playCorrectSound();
@@ -1127,30 +1488,47 @@
         playIncorrectSound();
       }
 
-      // move on after a beat
-      setTimeout(() => {
+      // Show the big CTA in the nav
+      const isLast = (qIndex >= QUESTIONS.length - 1);
+      nextBtn.textContent = isLast ? "SEE SCORE" : "NEXT QUESTION";
+      nextBtn.style.display = "block";
+
+      // Hide the normal nav contents while CTA is showing
+      homeBtn.style.visibility = "hidden";
+      navCenter.style.visibility = "hidden";
+      muteBtn.style.visibility = "hidden";
+
+      nextBtn.onclick = () => {
+        // reset nav
+        nextBtn.style.display = "none";
+        homeBtn.style.visibility = "visible";
+        navCenter.style.visibility = "visible";
+        muteBtn.style.visibility = "visible";
+
+        // advance
         qIndex += 1;
         if (qIndex >= QUESTIONS.length) showEnd();
         else showQuestion("forward");
-      }, 1200);
+      };
     }
 
-    function doSuspenseThenReveal() {
-      suspenseEl.style.display = "flex";
-      lockAnswers();
 
-      // small ticktock rhythm while suspense is visible
-      let ticks = 0;
-      const tt = setInterval(() => {
-        ticks++;
-        playTickTock(ticks % 2 === 0);
-        if (ticks >= 6) { clearInterval(tt); }
-      }, 220);
+  function doSuspenseThenReveal() {
+    suspenseEl.style.display = "none"; // we won't use dots now
+    lockAnswers();
 
-      setTimeout(() => {
+    const variant = nextSuspenseVariant();
+
+    const answerBtns = [...answersEl.querySelectorAll(".answer")];
+    runSuspenseVariant({
+      variant,
+      questionBoxEl,
+      answerBtns,
+      done: () => {
         reveal(q.correctIndex ?? 0);
-      }, 1100);
-    }
+      }
+    });
+  }
 
     // answer clicks
     answersEl.addEventListener("click", (e) => {
