@@ -241,22 +241,36 @@
     }
 
     .answer{
-      flex:1; 
-      min-height:0; 
+      flex:1;
+      min-height:0;
       width:100%;
+
       border-radius: 18px;
       border:none;
+
       font-family:inherit;
       font-weight:900;
       font-size:18px;
-      padding: 12px 14px;
-      text-align:left;
+
+      padding: 12px 16px;
+
+      display:flex;                 /* enables vertical centering */
+      align-items:center;           /* vertical center */
+      justify-content:center;       /* horizontal center */
+      text-align:center;
+      line-height: 1.15;
+      text-wrap: balance;
+      overflow-wrap: anywhere;
+
       color: rgba(255,255,255,0.98);
       background: rgba(0,0,0,0.28);
+
       box-shadow: 0 10px 22px rgba(0,0,0,0.20);
       cursor:pointer;
       transform: translateZ(0);
     }
+    
+
     .answer:active{ transform: scale(0.99); }
 
     /* Kahoot-ish colored options (uses theme vars if present; falls back otherwise) */
