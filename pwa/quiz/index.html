@@ -1325,7 +1325,7 @@ body.mode-big #app {
 
     
     <!-- TITLE SCREEN -->
-    <div id="title-screen" class="screen-card">
+    <div id="title-screen" class="screen-card hidden"></div>
       <div id="title-screen-content">
         <div class="lesson-image-wrapper">
           <img
@@ -1675,12 +1675,10 @@ async function loadQuizFromJson(jsonPath) {
 
 // Kick off loading as soon as the page is ready
 document.addEventListener("DOMContentLoaded", async () => {
+  showScreen("intro"); // Always start with ONLY the intro visible
+
   try {
-    // If using URL-based quiz selection, do:
-    // const path = getQuizJsonPathFromUrl();
-
     const path = getQuizJsonPathFromUrl();
-
     await loadQuizFromJson(path);
   } catch (err) {
     console.error(err);
