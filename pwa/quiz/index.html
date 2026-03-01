@@ -835,12 +835,12 @@
   // This matches the Creed behavior: click image -> swap -> chomp -> continue. :contentReference[oaicite:8]{index=8}
   const html = `
     <div class="quiz-intro">
-      <img
-        id="introImg"
-        src="creed_images/intro_bible.png"
-        alt="Intro"
-        onerror="this.style.display='none'"
-      >
+    <img
+      id="introImg"
+      src="quizimages/eyb_logo_1.png"
+      alt="Intro"
+      onerror="this.style.display='none'"
+    >
 
       <div>
         <div class="presented">Presented by</div>
@@ -868,7 +868,7 @@
     if (!img) return;
 
     // swap to the "bite" image
-    img.src = "creed_images/intro_bible_bite.png";
+    img.src = "quizimages/eyb_logo_2.png";
 
     goNext();
   });
