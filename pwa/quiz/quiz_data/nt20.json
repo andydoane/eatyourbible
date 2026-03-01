@@ -7,7 +7,7 @@
   "themeClass": "theme-green",
   "questions": [
     {
-      "question": "What question did the rich young man ask Jesus?",
+      "text": "What question did the rich young man ask Jesus?",
       "answers": [
         "How can I receive eternal life?",
         "How can I become richer?",
@@ -17,7 +17,7 @@
       "correctIndex": 0
     },
     {
-      "question": "When Jesus listed God's commands, what did the rich man say?",
+      "text": "When Jesus listed God's commands, what did the rich man say?",
       "answers": [
         "I've obeyed them since I was a boy",
         "I don't know any of them",
@@ -27,7 +27,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did Jesus tell the rich young man to do?",
+      "text": "What did Jesus tell the rich young man to do?",
       "answers": [
         "Sell everything and give it to the poor",
         "Give ten coins to the temple",
@@ -37,7 +37,7 @@
       "correctIndex": 0
     },
     {
-      "question": "Why was the rich young man sad?",
+      "text": "Why was the rich young man sad?",
       "answers": [
         "He had many possessions and loved them more than God",
         "He lost all his money",
@@ -47,7 +47,7 @@
       "correctIndex": 0
     },
     {
-      "question": "According to Jesus, how hard is it for a rich person to enter heaven?",
+      "text": "According to Jesus, how hard is it for a rich person to enter heaven?",
       "answers": [
         "Harder than a camel going through the eye of a needle",
         "As easy as walking through a door",
@@ -57,7 +57,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did Zacchaeus do to see Jesus?",
+      "text": "What did Zacchaeus do to see Jesus?",
       "answers": [
         "Climbed a sycamore-fig tree",
         "Stood on a rooftop",
@@ -67,7 +67,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did Jesus say to Zacchaeus in the tree?",
+      "text": "What did Jesus say to Zacchaeus in the tree?",
       "answers": [
         "Come down, I'm going to your house today",
         "Stay there and listen",
@@ -77,7 +77,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did the people do when Jesus went to Zacchaeus' house?",
+      "text": "What did the people do when Jesus went to Zacchaeus' house?",
       "answers": [
         "They grumbled because Jesus was spending time with sinners",
         "They celebrated loudly",
@@ -87,7 +87,7 @@
       "correctIndex": 0
     },
     {
-      "question": "After meeting with Jesus, what did Zacchaeus do?",
+      "text": "After meeting with Jesus, what did Zacchaeus do?",
       "answers": [
         "He said he would give half his money to the poor and pay back four times what he stole",
         "He climbed the tree again",
@@ -97,7 +97,7 @@
       "correctIndex": 0
     },
     {
-      "question": "How is it possible for sinners to enter God's kingdom?",
+      "text": "How is it possible for sinners to enter God's kingdom?",
       "answers": [
         "God does the impossible — Jesus paid our price",
         "By earning enough good points",
