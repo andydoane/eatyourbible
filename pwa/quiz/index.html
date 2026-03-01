@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en" class="theme-kahoot-white theme-loading">
+<html lang="en" class="theme-blue theme-loading">
 
 <head>
   <meta charset="UTF-8" />
   <title>OT 02 Quiz</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<link id="theme-css" rel="stylesheet" href="quiz_themes/theme-kahoot-white.css">
+<link id="theme-css" rel="stylesheet" href="theme-blue.css">
 <!-- Google Font: Baloo 2 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -69,17 +69,7 @@ html:not(.theme-loading) body {
       justify-content: center;
     }
 
-body.mode-big #app {
-  max-width: none;
-  
-}
-
-
-
-
-
-
-    .screen-card {
+.screen-card {
       background: var(--card-bg);
       width: 100%;
       min-height: 100vh;
@@ -458,119 +448,7 @@ body.mode-big #app {
       100% { background-position: 100% 0%; }
     }
 
-    /* Timer ring (big-screen only visually) */
-    .timer-ring-wrapper {
-      position: relative;
-      width: 180px;    /* bigger ring */
-      height: 180px;
-      display: none;   /* phone mode hides it */
-      border-radius: 50%;
-      box-shadow: 0 14px 30px rgba(15, 23, 42, 0.28);
-      background: var(--timer-bg);
-    }
-
-    body.mode-big .timer-ring-wrapper {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    /* When time runs out, make the timer ring "explode" */
-    .timer-ring-wrapper.timer-explode {
-    animation: timerExplode 0.7s ease-out forwards;
-    }
-
-    @keyframes timerExplode {
-    0% {
-        transform: scale(1);
-        opacity: 1;
-        box-shadow: 0 14px 30px rgba(15, 23, 42, 0.28);
-    }
-    40% {
-        transform: scale(1.3);
-        opacity: 1;
-              box-shadow: 0 0 40px var(--timer-explosion-glow); /* bright flash */
-    }
-    100% {
-        transform: scale(0.6);
-        opacity: 0;
-        box-shadow: 0 0 0 rgba(0, 0, 0, 0);
-    }
-    }
-
-    /* BIGGER, HOTTER, MORE IMPRESSIVE PARTICLES */
-    .timer-particle {
-    position: fixed;
-    width: 22px;       /* was 10px */
-    height: 22px;      /* was 10px */
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 10002;      /* above everything */
-      background: var(--timer-particle-gradient);
-    animation: timerParticle 1.2s ease-out forwards; /* longer, dramatic */
-    --tx: 0px;
-    --ty: 0px;
-    }
-
-    @keyframes timerParticle {
-    0% {
-        opacity: 1;
-        transform: translate(0, 0) scale(1.3);
-        filter: blur(0px);
-    }
-    40% {
-        opacity: 1;
-        transform: translate(var(--tx), var(--ty)) scale(1.0);
-        filter: blur(1px);
-    }
-    100% {
-        opacity: 0;
-        transform: translate(calc(var(--tx) * 1.8), calc(var(--ty) * 1.8)) scale(0.3);
-        filter: blur(4px);
-    }
-    }
-
-
-    .timer-svg {
-      width: 100%;
-      height: 100%;
-      transform: rotate(-90deg); /* start at top */
-    }
-
-    /* Ring base */
-    .timer-ring-bg {
-      fill: none;
-      stroke: var(--timer-ring-bg);
-      stroke-width: 10;
-    }
-
-    /* Foreground color is overridden by JS for green->yellow->red */
-    .timer-ring-fg {
-      fill: none;
-      stroke: var(--timer-ring-fg);
-      stroke-width: 10;
-      stroke-linecap: round;
-      stroke-dasharray: 339.292;
-      stroke-dashoffset: 0;
-      transition: stroke-dashoffset 0.2s linear;
-    }
-
-    .timer-text {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2.2rem;
-      color: var(--timer-text);
-      font-weight: 800;
-    }
-
-
-
-
-
-        /* Emoji host (right side) */
+    /* Emoji host (right side) */
     .emoji-face {
       font-size: clamp(5rem, 9vw, 8rem); /* MUCH larger */
       filter: drop-shadow(0 14px 28px rgba(15, 23, 42, 0.35));
@@ -805,70 +683,9 @@ body.mode-big #app {
 
     /* ---------- BIG-SCREEN MODE ---------- */
 
-    body.mode-big .question-panel {
-    /* Let the question area be only as tall as it needs */
-    flex: 0 0 auto;
-    }
-
-    body.mode-big .answers-panel {
-    /* Let the answers panel take the remaining height */
-    flex: 1 1 auto;
-    }
-
-    body.mode-big .question-text,
-    body.mode-big .answer-text {
-    text-wrap: balance;
-}
-
-
-    body.mode-big .question-text {
-      font-size: clamp(1.6rem, 3.2vw, 3.4rem);
-    }
-
-    body.mode-big .answer-button {
-    font-size: clamp(1.2rem, 2.4vw, 2.6rem);
-
-    /* Make the button 94% of its grid cell (≈47% of the whole area) */
-    width: 94%;
-    height: 94%;
-    }
-
-
     /* Big-screen layout: timer | question | emoji */
-    body.mode-big .question-panel {
-      justify-content: center;
-    }
-
-    body.mode-big .question-layout {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      gap: 24px;
-    }
-
     /* Side areas expand to fill leftover space, contents centered */
-    body.mode-big .question-side {
-      flex: 1 0 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
     /* Center block takes ~60% width, leaving ~20% on each side */
-    body.mode-big .question-card {
-      flex: 0 0 60%;
-    }
-
-
-    body.mode-big .answers-grid {
-    grid-auto-rows: 1fr;
-
-    /* Center the smaller buttons in their cells */
-    justify-items: center;
-    align-items: center;
-    }
-
     /* ---------- QUESTION SLIDE TRANSITION ---------- */
 
     .quiz-main {
@@ -1004,14 +821,7 @@ body.mode-big #app {
       font-size: clamp(2.2rem, 4vw, 5rem);
     }
 
-    :fullscreen body.mode-big .answer-button,
-    :-webkit-full-screen body.mode-big .answer-button {
-       font-size: clamp(1.2rem, 2.4vw, 2.6rem);
-    }
-
-
-
-    /* ---------- FEEDBACK + STARS ---------- */
+    :fullscreen /* ---------- FEEDBACK + STARS ---------- */
 
     /* Hidden by default, only shown when the card is in feedback mode */
     .feedback-bubble {
@@ -1337,104 +1147,7 @@ body.mode-big #app {
   }
 
 
-    /* HIDE CURSOR IN BIG MODE (for all elements) */
-    body.mode-big,
-    body.mode-big * {
-    cursor: none !important;
-    }
-
-
-
-    
-
-    /* CUSTOM BIG POINTER */
-    #big-pointer {
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 10001;
-    font-size: 3.5rem;
-    pointer-events: none;
-    transform: translate(-38%, -15%);
-    transition: transform 0.04s linear;
-    }
-
-    /* Little emoji "ghosts" that follow the big pointer */
-    .pointer-trail-emoji {
-    position: fixed;
-    z-index: 9998; /* just under the main pointer */
-    font-size: 2.5rem;
-    pointer-events: none;
-    transform: translate(-38%, -15%);
-    opacity: 1;
-    animation: pointerTrailFade 0.6s ease-out forwards;
-    }
-
-    @keyframes pointerTrailFade {
-    0% {
-        opacity: 1;
-        transform: translate(-38%, -15%) scale(1);
-    }
-    100% {
-        opacity: 0;
-        transform: translate(-38%, -5%) scale(0.7);
-    }
-    }
-
-
-    /* CLICK RIPPLE EFFECT (big-screen pointer) */
-    .click-ripple {
-    position: fixed;
-    width: 80px;
-    height: 80px;
-    border-radius: 999px;
-    border: 3px solid rgba(255, 255, 255, 0.85);
-    pointer-events: none;
-    z-index: 9998;
-    transform: translate(-50%, -50%) scale(0.1);
-    opacity: 0.9;
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.6);
-    animation: clickRipple 0.45s ease-out forwards;
-    }
-
-    @keyframes clickRipple {
-    0% {
-        transform: translate(-50%, -50%) scale(0.1);
-        opacity: 0.9;
-    }
-    70% {
-        transform: translate(-50%, -50%) scale(1);
-        opacity: 0.5;
-    }
-    100% {
-        transform: translate(-50%, -50%) scale(1.3);
-        opacity: 0;
-        box-shadow: 0 0 0 rgba(255, 255, 255, 0);
-    }
-    }
-
-
-.question-progress {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.question-progress .nav-icon {
-  width: 20px;
-  height: 20px;
-}
-
-    
-/* DEBUG: temporarily show the real mouse cursor */
-body.show-real-cursor,
-body.show-real-cursor * {
-  cursor: auto !important;
-}
-
-
-
-  </style>
+    </style>
 </head>
 <body class="mode-title">
   <div id="app">
@@ -1486,17 +1199,9 @@ body.show-real-cursor * {
           </p>
         </div>
         <div class="mode-buttons">
-          <button id="big-screen-btn" class="primary-button">
-            <span>Big-Screen Mode</span> <span>📺</span>
-          </button>
-          <button id="phone-mode-btn" class="secondary-button">
-            <span>Phone Mode</span> <span>📱</span>
-          </button>
+<button id="phone-mode-btn" class="primary-button"><span>Start Quiz</span> <span>📱</span></button>
         </div>
-       <p class="mode-note">
-  Big-Screen Mode is best for TVs and computers.<br>
-  Phone Mode is sized to fit smaller screens.
-</p>
+       <p class="mode-note">Designed for mobile screens.</p>
 
       </div>
     </div>
@@ -1515,28 +1220,6 @@ body.show-real-cursor * {
       <div class="quiz-main">
         <div class="question-panel">
         <div class="question-layout">
-            <!-- LEFT: Timer ring (big-screen only) -->
-            <div class="question-side question-timer">
-            <div class="timer-ring-wrapper">
-                <svg class="timer-svg" viewBox="0 0 120 120">
-                <circle
-                    class="timer-ring-bg"
-                    cx="60"
-                    cy="60"
-                    r="54"
-                ></circle>
-                <circle
-                    id="timer-ring-fg"
-                    class="timer-ring-fg"
-                    cx="60"
-                    cy="60"
-                    r="54"
-                ></circle>
-                </svg>
-                <div id="timer-text" class="timer-text">30</div>
-            </div>
-            </div>
-
             <!-- CENTER: Question -->
             <div class="question-card">
             <!-- Normal question text -->
@@ -1659,13 +1342,7 @@ body.show-real-cursor * {
 ></div>
         </div>
     </div>
-
-
-<div id="big-pointer" class="hidden">👆</div>
-
-
-
-  <script>
+<script>
 
 function applyTheme(themeClass) {
   const themeLink = document.getElementById("theme-css");
@@ -1676,7 +1353,9 @@ function applyTheme(themeClass) {
 
   // Swap CSS file
   if (themeLink) {
-    const newHref = `quiz_themes/${themeClass}.css`;
+    const newHref = (themeClass === "theme-blue")
+      ? "theme-blue.css"
+      : (themeClass.endsWith(".css") ? themeClass : `quiz_themes/${themeClass}.css`);
 
     // If it's already set, just apply class + show
     if (themeLink.href.endsWith(newHref)) {
@@ -2074,10 +1753,7 @@ const REWARD_EMOJI_POOLS = {
     
     const introLogo = document.getElementById("intro-logo");
     const loadQuizBtn = document.getElementById("load-quiz-btn");
-
-
-    const bigScreenBtn = document.getElementById("big-screen-btn");
-    const phoneModeBtn = document.getElementById("phone-mode-btn");
+const phoneModeBtn = document.getElementById("phone-mode-btn");
 
     const lessonImageEl = document.getElementById("lesson-image");
     const lessonTitleEl = document.getElementById("lesson-title");
@@ -2093,27 +1769,12 @@ const REWARD_EMOJI_POOLS = {
     const timerTextEl = document.getElementById("timer-text");
     const timerRingFgEl = document.getElementById("timer-ring-fg");
     const emojiFaceEl = document.getElementById("emoji-face");
-
-    const timerRingWrapper = document.querySelector(".timer-ring-wrapper");
-    const quizMain = document.querySelector(".quiz-main");  // <-- add this
+const quizMain = document.querySelector(".quiz-main");  // <-- add this
 
 
     
-    // DEBUG: Hold SHIFT to temporarily show the real cursor
-    document.addEventListener("keydown", (e) => {
-    if (e.key === "Shift") {
-        document.body.classList.add("show-real-cursor");
-    }
-    });
-
-    document.addEventListener("keyup", (e) => {
-    if (e.key === "Shift") {
-        document.body.classList.remove("show-real-cursor");
-    }
-    });
-
-
-    const scoreDisplayEl = document.getElementById("score-display");
+    
+const scoreDisplayEl = document.getElementById("score-display");
     const streakDisplayEl = document.getElementById("streak-display");
 
     const feedbackTitleEl = document.getElementById("feedback-title");
@@ -2162,182 +1823,10 @@ const REWARD_EMOJI_POOLS = {
     lessonImageEl.src = LESSON_IMAGE_PATH;
     lessonTitleEl.textContent = LESSON_TITLE_TEXT;
     lessonSubtitleEl.textContent = LESSON_SUBTITLE_TEXT;
-
-    const bigPointer = document.getElementById("big-pointer");
-    
-    // Helper to read CSS color variables from :root
+// Helper to read CSS color variables from :root
     const rootStyles = getComputedStyle(document.documentElement);
     function getCssColor(varName) {
       return rootStyles.getPropertyValue(varName).trim();
-    }
-
-
-    /***********************************
-     * POINTER COMET TRAILS (NEW)
-     ***********************************/
-    const POINTER_HEAD = "👆";
-
-        const POINTER_TRAILS = [
-    {
-        id: "star_comet",
-        emojis: ["⭐", "✨", "·"],
-        glowColor: getCssColor("--pointer-glow-star"),
-    },
-    {
-        id: "ocean_comet",
-        emojis: ["🌊", "💧", "·"],
-        glowColor: getCssColor("--pointer-glow-ocean"),
-    },
-    {
-        id: "garden_comet",
-        emojis: ["🌿", "🌱", "🍃", "·"],
-        glowColor: getCssColor("--pointer-glow-garden"),
-    },
-    {
-        id: "fire_comet",
-        emojis: ["🔥", "✨", "·"],
-        glowColor: getCssColor("--pointer-glow-fire"),
-    },
-    {
-        id: "galaxy_comet",
-        emojis: ["🌙", "⭐", "✨", "·"],
-        glowColor: getCssColor("--pointer-glow-galaxy"),
-    },
-    {
-        id: "animal_comet",
-        emojis: ["🐾", "🐾", "·"],
-        glowColor: getCssColor("--pointer-glow-animal"),
-    },
-    {
-        id: "joy_comet",
-        emojis: ["😄", "😊", "🙂", "·"],
-        glowColor: getCssColor("--pointer-glow-joy"),
-    },
-    {
-        id: "heart_comet",
-        emojis: ["❤️", "💕", "💖", "·"],
-        glowColor: getCssColor("--pointer-glow-heart"),
-    },
-    {
-        id: "rainbow_comet",
-        emojis: ["🌈", "✨", "·"],
-        glowColor: getCssColor("--pointer-glow-rainbow"),
-    },
-    {
-        id: "bible_light_comet",
-        emojis: ["📖", "✨", "·"],
-        glowColor: getCssColor("--pointer-glow-bible"),
-    },
-    ];
-
-
-    let pointerTrailDeck = [];
-    let currentPointerTrail = null;
-
-    // NEW: for mouse trail behaviour
-    let lastPointerTrailTime = 0;       // when we last created a ghost
-    let pointerTrailEmojiIndex = 0;     // which emoji to use next in the comet's list
-
-    // NEW: limit how many ghost emojis exist at once
-    let activePointerGhosts = 0;
-    const MAX_POINTER_GHOSTS = 60;      // you can tweak this number if you like
-
-
-    function refillPointerTrailDeck() {
-    // Fill the deck with all trail indexes and shuffle them
-    pointerTrailDeck = POINTER_TRAILS.map((_, index) => index);
-
-    for (let i = pointerTrailDeck.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [pointerTrailDeck[i], pointerTrailDeck[j]] = [pointerTrailDeck[j], pointerTrailDeck[i]];
-    }
-    }
-
-    function getNextPointerTrail() {
-    if (pointerTrailDeck.length === 0) {
-        refillPointerTrailDeck();
-    }
-    const nextIndex = pointerTrailDeck.pop(); // no repeats until deck is empty
-    return POINTER_TRAILS[nextIndex];
-    }
-
-    function applyPointerTrail(trail) {
-    currentPointerTrail = trail;
-
-    // The pointer itself stays just "👆".
-    // We only add a glow so it feels special.
-    bigPointer.style.textShadow = `
-        0 0 8px ${trail.glowColor},
-        0 0 16px ${trail.glowColor}
-    `;
-    }
-
-    function clearPointerTrail() {
-    currentPointerTrail = null;
-    bigPointer.textContent = POINTER_HEAD;
-    bigPointer.style.textShadow = "none";
-    }
-
-    function schedulePointerTrailForNextQuestion() {
-    // Called when a question is answered correctly
-    pointerTrailPending = true;
-    }
-
-    // NEW: create one fading emoji "ghost" at (x, y)
-    function spawnPointerTrailEmoji(x, y) {
-        // Prevent trails when pointer is hidden (phone/tablet/disabled)
-    if (currentMode !== "big" || isRealTablet) return;    
-
-        // If no comet is active, do nothing
-    if (!currentPointerTrail) return;
-
-     const now = performance.now ? performance.now() : Date.now();
-
-    // Throttle: don't spawn on EVERY tiny movement (100ms gap)
-    if (now - lastPointerTrailTime < 100) return;
-    lastPointerTrailTime = now;
-
-    // NEW: if we already have too many ghosts, skip making more
-    if (activePointerGhosts >= MAX_POINTER_GHOSTS) {
-        return;
-    }
-
-    const emojis = currentPointerTrail.emojis || [];
-    if (!emojis.length) return;
-
-    // Cycle through the comet's emoji list: ⭐ → ✨ → · → ⭐ → ...
-    const emoji = emojis[pointerTrailEmojiIndex % emojis.length];
-    pointerTrailEmojiIndex++;
-
-    const span = document.createElement("span");
-    span.className = "pointer-trail-emoji";
-    span.textContent = emoji;
-    span.style.left = x + "px";
-    span.style.top = y + "px";
-
-    // Give the ghost a soft glow too
-    if (currentPointerTrail.glowColor) {
-        span.style.textShadow = `
-        0 0 6px ${currentPointerTrail.glowColor}
-        `;
-    }
-
-    document.body.appendChild(span);
-
-    // NEW: track how many are alive
-    activePointerGhosts++;
-
-    // Remove the element after its fade-out animation finishes
-    span.addEventListener("animationend", () => {
-        span.remove();
-        activePointerGhosts--;
-    });
-
-    }
-
-    // Start with a simple pointer (no trail)
-    if (bigPointer) {
-    clearPointerTrail();
     }
 
 
@@ -3493,22 +2982,6 @@ function runSuspenseVariant(variantKey) {
       }
     }
 
-        function spawnClickRipple(x, y) {
-        // Only show in big-screen mode, not on iPad/Android tablets
-        if (!body.classList.contains("mode-big")) return;
-        if (isRealTablet) return;
-
-        const ripple = document.createElement("div");
-        ripple.className = "click-ripple";
-        ripple.style.left = x + "px";
-        ripple.style.top = y + "px";
-        document.body.appendChild(ripple);
-
-        ripple.addEventListener("animationend", () => {
-            ripple.remove();
-        });
-        }
-
 
     function stopTimer() {
       if (timerIntervalId !== null) {
@@ -3600,40 +3073,24 @@ function runSuspenseVariant(variantKey) {
     }
 
     feedbackDetailEl.textContent = detailText || "";
-
-    // 3) Background reaction pulse on the quiz card (big mode only)
-    if (currentMode === "big") {
-        quizScreen.classList.remove("bg-correct", "bg-incorrect");
-        void quizScreen.offsetWidth; // restart CSS animation hack
-        quizScreen.classList.add(isCorrect ? "bg-correct" : "bg-incorrect");
-    }
-
-    // 4) Switch the question bar into "feedback bubble" mode
+    // 3) Background reaction pulse on the quiz card
+    quizScreen.classList.remove("bg-correct", "bg-incorrect");
+    void quizScreen.offsetWidth; // restart CSS animation
+    quizScreen.classList.add(isCorrect ? "bg-correct" : "bg-incorrect");
+// 4) Switch the question bar into "feedback bubble" mode
     if (questionCard && feedbackBubble && questionTextEl) {
         questionCard.classList.add("feedback-mode");
         feedbackBubble.style.display = "block";
         questionTextEl.style.display = "none";
     }
-
-    // 5) Big-screen vs phone behavior
-    if (currentMode === "big") {
-        // Show the Next Question button in the white strip
-        nextQuestionBtn.classList.remove("hidden");
-    } else {
-        // Phone mode: auto-advance after a short delay
-        nextQuestionBtn.classList.add("hidden");
-        setTimeout(() => {
-        // Only advance if we're still looking at feedback
-        if (questionCard && questionCard.classList.contains("feedback-mode")) {
-            goToNextQuestionAnimated();
-        }
-        }, 2000);
-    }
-    }
-
-
-
-
+    // 5) Mobile behavior: auto-advance after a short delay
+    nextQuestionBtn.classList.add("hidden");
+    setTimeout(() => {
+      if (questionCard && questionCard.classList.contains("feedback-mode")) {
+        goToNextQuestionAnimated();
+      }
+    }, 2000);
+  }
 
     function requestFullscreenIfAvailable() {
       const docEl = document.documentElement;
@@ -3653,32 +3110,11 @@ function runSuspenseVariant(variantKey) {
     /***********************
      * GAME FLOW
      ***********************/
-    function startGame(mode) {
-      currentMode = mode;
-      body.classList.remove("mode-title", "mode-big", "mode-phone");
-        if (mode === "big") {
-            if (isRealTablet) {
-                // Hide pointer on iPads & Android tablets
-                bigPointer.classList.add("hidden");
-            } else {
-                // Show pointer on desktops + Windows touchscreens
-                bigPointer.classList.remove("hidden");
-            }
-        } else {
-            bigPointer.classList.add("hidden");
-        }
-
-
-
-
-      if (mode === "big") {
-        body.classList.add("mode-big");
-        requestFullscreenIfAvailable();
-      } else {
-        body.classList.add("mode-phone");
-        // We still try fullscreen; on iOS this may be ignored.
-        requestFullscreenIfAvailable();
-      }
+    function startGame() {
+      currentMode = "phone";
+      body.classList.remove("mode-title", "mode-phone");
+      body.classList.add("mode-phone");
+      requestFullscreenIfAvailable();
 
       startEmojiLoop();
       cleanupFloatingElements();
@@ -3699,23 +3135,6 @@ function loadQuestion() {
     }
 
     cleanupFloatingElements();
-
-
-    // NEW: handle pointer comet trail for this question
-    if (currentMode === "big") {
-        if (pointerTrailPending) {
-            const trail = getNextPointerTrail();
-            applyPointerTrail(trail);
-            pointerTrailPending = false; // we used it
-        } else {
-            // No special trail scheduled -> plain pointer
-            clearPointerTrail();
-        }
-    } else {
-        // Phone mode (no big pointer on screen)
-        clearPointerTrail();
-    }
-
     // Stop any suspense / bursts from previous question
     stopSuspense();
     stopButtonBurstLoop();
@@ -3725,7 +3144,8 @@ function loadQuestion() {
     lastSelectedAnswerIndex = null;
 
     const q = QUESTIONS[currentQuestionIndex];
-    questionTextEl.innerHTML = q.text;
+    const qText = q?.text ?? q?.question ?? q?.prompt ?? q?.title ?? "";
+    questionTextEl.innerHTML = qText;
 
     // Reset question card back to normal (question) mode
     if (questionCard && feedbackBubble) {
@@ -3742,15 +3162,9 @@ function loadQuestion() {
     questionTextEl.classList.add("question-reveal");
 
     updateProgress();
-
-    // Reset timer for each new question
-    if (currentMode === "big") {
-        startTimer();
-    } else {
-        stopTimer();
-    }
-
-    isLocked = false;
+    // No per-question timer in mobile-only build
+    stopTimer();
+isLocked = false;
     answerButtons.forEach(btn => {
         // Remove any state from the previous question
         btn.classList.remove(
@@ -3900,10 +3314,8 @@ function handleAnswerClick(e) {
     /***********************
      * EVENT LISTENERS
      ***********************/
-    bigScreenBtn.addEventListener("click", () => startGame("big"));
-    phoneModeBtn.addEventListener("click", () => startGame("phone"));
-
-    answerButtons.forEach(btn => {
+    phoneModeBtn.addEventListener("click", () => startGame());
+answerButtons.forEach(btn => {
       btn.addEventListener("click", handleAnswerClick);
     });
 
@@ -4017,9 +3429,9 @@ function handleAnswerClick(e) {
 
 
 
-    playAgainBtn.addEventListener("click", () => startGame(currentMode));
+    playAgainBtn.addEventListener("click", () => startGame());
     backToTitleBtn.addEventListener("click", () => {
-      body.classList.remove("mode-big", "mode-phone");
+      body.classList.remove("mode-phone");
       body.classList.add("mode-title");
       showScreen("title");
     });
@@ -4063,41 +3475,15 @@ function handleAnswerClick(e) {
 
 
 
-    document.addEventListener("mousemove", (e) => {
-    // Only show the big pointer in Big Screen mode
-    if (!body.classList.contains("mode-big")) return;
-    if (isRealTablet) return;
-
-    const x = e.clientX;
-    const y = e.clientY;
-
-    // Move the main pointer to follow the mouse
-    bigPointer.style.left = x + "px";
-    bigPointer.style.top = y + "px";
-
-    // If a comet trail is active, spawn emoji ghosts
-    if (currentPointerTrail) {
-        spawnPointerTrailEmoji(x, y);
-    }
-    });
-
-
-    document.addEventListener("mousedown", (e) => {
-    spawnClickRipple(e.clientX, e.clientY);
-    });
-
-
     homeButton.addEventListener("click", () => {
-        stopTimer(); // stop timer if running
-        bigPointer.classList.add("hidden"); // hide big pointer when leaving quiz
-        body.classList.remove("mode-big", "mode-phone");
+        stopTimer(); // stop timer if running        body.classList.remove("mode-phone");
         body.classList.add("mode-title");
         showScreen("title");
     });
 
 function cleanupFloatingElements() {
     document.querySelectorAll(
-        ".pointer-trail-emoji, .star, .burst-star, .timer-particle"
+        ".star, .burst-star, .timer-particle"
     ).forEach(el => el.remove());
 }
 
