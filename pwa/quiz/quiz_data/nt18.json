@@ -7,7 +7,7 @@
   "themeClass": "theme-kahoot-red",
   "questions": [
     {
-      "question": "When Jesus visited her house, what did Mary do?",
+      "text": "When Jesus visited her house, what did Mary do?",
       "answers": [
         "Sat at Jesus’ feet and listened to His teaching",
         "Prepared food in the kitchen",
@@ -17,7 +17,7 @@
       "correctIndex": 0
     },
     {
-      "question": "Why was Martha upset?",
+      "text": "Why was Martha upset?",
       "answers": [
         "She was busy serving, but Mary wasn’t helping",
         "Jesus was making a big mess",
@@ -27,7 +27,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did Martha tell Jesus to do?",
+      "text": "What did Martha tell Jesus to do?",
       "answers": [
         "Make Mary help her",
         "Send Mary home",
@@ -37,7 +37,7 @@
       "correctIndex": 0
     },
     {
-      "question": "Who did Jesus say made the better choice?",
+      "text": "Who did Jesus say made the better choice?",
       "answers": [
         "Mary, because being with Jesus is more important than anything else",
         "Martha, because serving is always best",
@@ -47,7 +47,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What does it mean to worry?",
+      "text": "What does it mean to worry?",
       "answers": [
         "To be concerned about bad things that might happen",
         "To plan a party",
@@ -57,7 +57,7 @@
       "correctIndex": 0
     },
     {
-      "question": "Why did Jesus tell us to think about birds?",
+      "text": "Why did Jesus tell us to think about birds?",
       "answers": [
         "If God feeds birds, we shouldn't worry about Him feeding us",
         "Birds aren't very smart, but God still loves them",
@@ -67,7 +67,7 @@
       "correctIndex": 0
     },
     {
-      "question": "Why did Jesus tell us to think about wildflowers?",
+      "text": "Why did Jesus tell us to think about wildflowers?",
       "answers": [
         "If God clothes flowers, we shouldn't worry about clothes",
         "Flowers grow very quickly",
@@ -77,7 +77,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What does it mean to be part of God's kingdom?",
+      "text": "What does it mean to be part of God's kingdom?",
       "answers": [
         "To believe in Him as your King now and forever",
         "To live in a cloud castle",
@@ -87,7 +87,7 @@
       "correctIndex": 0
     },
     {
-      "question": "When we're worried, what does Philippians tell us to do?",
+      "text": "When we're worried, what does Philippians tell us to do?",
       "answers": [
         "Pray to God",
         "Keep it to ourselves",
@@ -97,7 +97,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What does God do when we tell Him our worries?",
+      "text": "What does God do when we tell Him our worries?",
       "answers": [
         "He guards our hearts with His peace",
         "He makes all problems disappear immediately",
