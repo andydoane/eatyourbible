@@ -1050,12 +1050,21 @@ function showSuspenseDim(isOn){
   suspenseOverlay.style.display = isOn ? "flex" : "none";
 }
 
-function setSuspenseEmoji(text){
-  suspenseEmoji.classList.remove("mover");
+function setSuspenseEmoji(text, opts = {}){
+  const { preserveTransform = false, preservePosition = false } = opts;
+
+  // Only remove mover mode if we're not preserving position-based behavior
+  if (!preservePosition) suspenseEmoji.classList.remove("mover");
+
   suspenseEmoji.textContent = text;
-  suspenseEmoji.style.transform = "";
-  suspenseEmoji.style.left = "";
-  suspenseEmoji.style.top = "";
+
+  // IMPORTANT: coin/meter need transform preserved during flip
+  if (!preserveTransform) suspenseEmoji.style.transform = "";
+
+  if (!preservePosition) {
+    suspenseEmoji.style.left = "";
+    suspenseEmoji.style.top = "";
+  }
 }
 
 function finishSuspense(cleanupFn, done){
@@ -1146,7 +1155,7 @@ function runSuspenseVariant({ variant, questionBoxEl, answerBtns, done }) {
       suspenseEmoji.style.transform = phase === 0 ? "scaleX(0.08) rotateY(90deg)" : "scaleX(1) rotateY(0deg)";
       if (phase === 0) tt();
       i = (i + 1) % coins.length;
-      if (phase === 0) setSuspenseEmoji(coins[i]);
+      if (phase === 0) setSuspenseEmoji(coins[i], { preserveTransform: true });
     }, 220);
 
     const to = setTimeout(() => finishSuspense(()=>{clearInterval(iv);clearTimeout(to);suspenseEmoji.style.transform="";}, done), 2600);
@@ -1176,7 +1185,7 @@ function runSuspenseVariant({ variant, questionBoxEl, answerBtns, done }) {
         suspenseEmoji.style.transform = "scaleX(0.08) rotateY(90deg)";
         tt();
         i = (i + 1) % faces.length;
-        setSuspenseEmoji(faces[i]);
+        setSuspenseEmoji(faces[i], { preserveTransform: true });
       } else {
         suspenseEmoji.style.transform = "scaleX(1) rotateY(0deg)";
       }
