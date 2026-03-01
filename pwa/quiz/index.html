@@ -126,7 +126,8 @@
 
 /* On quiz screen we want full-width stacking, not centered columns */
 .quiz-content{
-  align-items: stretch;   /* overrides global .content align-items:center */
+  align-items: stretch;
+  padding-bottom: 0;   /* important: don't squeeze into nav space */
 }
 
 /* Parent layout for question + answers */
@@ -140,7 +141,7 @@
 
 /* Question "button" container */
 .question-box{
-  flex: 0 0 40%;
+  flex: 4;
   min-height: 0;
   width: 100%;
   background: #f2f2f2;
@@ -167,7 +168,7 @@
 
 /* Answers area = remaining 60% */
 .answers{
-  flex: 0 0 60%;
+  flex: 6;
   min-height: 0;
   display: flex;          /* switch from grid to vertical flex */
   flex-direction: column;
@@ -175,11 +176,7 @@
 }
 
 /* Each answer gets 15% of the available space (since answers area is 60% and has 4 equal children) */
-.answer{
-  flex: 1;
-  min-height: 0;          /* allow flex sizing to control height */
-  width: 100%;
-}
+
 
 
     .big-text{
@@ -234,14 +231,10 @@
       text-shadow: 0 10px 22px rgba(0,0,0,0.25);
     }
 
-    .answers{
-      display:grid;
-      grid-template-columns: 1fr;
-      gap: 12px;
-    }
-
     .answer{
-      min-height:56px;
+      flex:1; 
+      min-height:0; 
+      width:100%;
       border-radius: 18px;
       border:none;
       font-family:inherit;
