@@ -1110,6 +1110,7 @@ function runSuspenseVariant({ variant, questionBoxEl, answerBtns, done }) {
   suspenseEmoji.style.left = "";
   suspenseEmoji.style.top = "";
   suspenseEmoji.style.transform = "";
+  suspenseEmoji.style.fontSize = "";
 
   // Helpers
   const centerOf = (el) => {
@@ -1172,7 +1173,7 @@ function runSuspenseVariant({ variant, questionBoxEl, answerBtns, done }) {
       // Clear emoji and do shockwave ring
       suspenseEmoji.textContent = "";
       suspenseEmoji.style.transform = "";
-      suspenseEmoji.style.fontSize = "96px"; // restore default for next variants
+      suspenseEmoji.style.fontSize = ""; // restore CSS default (clamp)
 
       const ring = document.createElement("div");
       ring.className = "shockwave";
