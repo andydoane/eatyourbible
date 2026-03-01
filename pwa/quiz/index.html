@@ -526,7 +526,24 @@ nav#nav{
 }
 .nav-next:active{ transform: scale(0.99); }
 
+/* Bouncing hint arrow for the NEXT QUESTION button */
+.next-hint{
+  position:absolute;
+  left:50%;
+  bottom: calc(100% + 8px); /* sits slightly above the nav */
+  transform: translateX(-50%);
+  font-size: 42px;
+  line-height: 1;
+  filter: drop-shadow(0 10px 18px rgba(0,0,0,0.45));
+  pointer-events: none; /* never blocks taps */
+  z-index: 10001; /* above the nav-next button */
+  animation: nextHintBounce 780ms cubic-bezier(.2,.9,.2,1) infinite;
+}
 
+@keyframes nextHintBounce{
+  0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.95; }
+  50%      { transform: translateX(-50%) translateY(-18px); opacity: 1; }
+}
     .dialog{
       width:min(420px, 100%);
       border-radius: 22px;
@@ -703,7 +720,9 @@ nav#nav{
 
   <!-- Reveal-stage CTA that covers the whole nav -->
   <button id="nextBtn" class="nav-next" type="button" style="display:none;">Next question</button>
+  <div id="nextHint" class="next-hint" style="display:none;" aria-hidden="true">👇</div>
 </nav>
+
 
   <div id="overlay" class="overlay" role="dialog" aria-modal="true">
     <div class="dialog">
@@ -886,6 +905,8 @@ nav#nav{
   const homeBtn = document.getElementById("homeBtn");
   const muteBtn = document.getElementById("muteBtn");
   const nextBtn = document.getElementById("nextBtn");
+  const nextHint = document.getElementById("nextHint");
+let hasShownNextHint = false; // only show once (first question reveal)
   const suspenseOverlay = document.getElementById("suspenseOverlay");
   const suspenseEmoji = document.getElementById("suspenseEmoji");
   function setNavVisible(isVisible) {
@@ -1629,12 +1650,21 @@ if (variant === "yesnoFlip") {
       nextBtn.textContent = isLast ? "SEE SCORE" : "NEXT QUESTION";
       nextBtn.style.display = "block";
 
+      // Show the bouncing hint only the first time NEXT QUESTION appears (first question)
+      if (!hasShownNextHint && qIndex === 0 && !isLast) {
+        nextHint.style.display = "block";
+        hasShownNextHint = true;
+      } else {
+        nextHint.style.display = "none";
+      }
+
       // Hide the normal nav contents while CTA is showing
       homeBtn.style.visibility = "hidden";
       navCenter.style.visibility = "hidden";
       muteBtn.style.visibility = "hidden";
 
       nextBtn.onclick = () => {
+        nextHint.style.display = "none";
         // reset nav
         nextBtn.style.display = "none";
         homeBtn.style.visibility = "visible";
