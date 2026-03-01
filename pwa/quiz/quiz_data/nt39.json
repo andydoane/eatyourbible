@@ -7,7 +7,7 @@
   "themeClass": "theme-blue", 
   "questions": [
     {
-      "question": "What did Saul do while the men stoned Stephen?",
+      "text": "What did Saul do while the men stoned Stephen?",
       "answers": [
         "He took care of their coats",
         "He threw the first stone",
@@ -17,7 +17,7 @@
       "correctIndex": 0
     },
     {
-      "question": "Why did Saul go from house to house in Jerusalem?",
+      "text": "Why did Saul go from house to house in Jerusalem?",
       "answers": [
         "To throw Christians in jail",
         "To invite people to the temple",
@@ -27,7 +27,7 @@
       "correctIndex": 0
     },
     {
-      "question": "Why was Saul going to Damascus?",
+      "text": "Why was Saul going to Damascus?",
       "answers": [
         "To find more Christians to throw in jail",
         "To visit his family",
@@ -37,7 +37,7 @@
       "correctIndex": 0
     },
     {
-      "question": "Who did Saul meet on the road to Damascus?",
+      "text": "Who did Saul meet on the road to Damascus?",
       "answers": [
         "Jesus",
         "Peter",
@@ -47,7 +47,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did Saul see and hear?",
+      "text": "What did Saul see and hear?",
       "answers": [
         "A bright light, and Jesus saying, 'Why are you opposing Me?'",
         "Thunder and lightning",
@@ -57,7 +57,7 @@
       "correctIndex": 0
     },
     {
-      "question": "After meeting Jesus, Saul was not able to...?",
+      "text": "After meeting Jesus, Saul was not able to...?",
       "answers": [
         "See",
         "Speak",
@@ -67,7 +67,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did God tell Ananias to do?",
+      "text": "What did God tell Ananias to do?",
       "answers": [
         "Go to Saul’s house and put his hands on him",
         "Stay far away from Saul",
@@ -77,7 +77,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What happened when Ananias put his hands on Saul?",
+      "text": "What happened when Ananias put his hands on Saul?",
       "answers": [
         "Saul could see again and was filled with the Holy Spirit",
         "Saul also couldn't hear",
@@ -87,7 +87,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did Saul begin to do after he was filled with the Holy Spirit?",
+      "text": "What did Saul begin to do after he was filled with the Holy Spirit?",
       "answers": [
         "Preach the good news about Jesus",
         "Rescue Christians from prison",
@@ -97,7 +97,7 @@
       "correctIndex": 0
     },
     {
-      "question": "When the Jewish leaders wanted to kill Saul, how did he escape?",
+      "text": "When the Jewish leaders wanted to kill Saul, how did he escape?",
       "answers": [
         "In a basket through a window in the city wall",
         "He ran into the desert",
