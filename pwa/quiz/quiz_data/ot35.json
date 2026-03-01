@@ -7,7 +7,7 @@
   "themeClass": "theme-yellow",
   "questions": [
     {
-      "question": "What did the people ask Aaron to make?",
+      "text": "What did the people ask Aaron to make?",
       "answers": [
         "A god to lead them",
         "A tent to worship in",
@@ -17,7 +17,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did Aaron make, and how did he make it?",
+      "text": "What did Aaron make, and how did he make it?",
       "answers": [
         "A golden calf made from melted gold earrings",
         "A bronze snake made from spare tools",
@@ -27,7 +27,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did the people do after Aaron made the golden calf?",
+      )"tet: "What did the people do after Aaron made the golden calf?",
       "answers": [
         "They celebrated wildly in front of it",
         "They quietly prayed and went home",
@@ -37,7 +37,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did God say to Moses on the mountain?",
+      )"te: "What did God say to Moses on the mountain?",
       "answers": [
         "I will destroy the people and start a new nation with you",
         "The people are having a good time",
@@ -47,7 +47,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did Moses remind God about?",
+      "text": "What did Moses remind God about?",
       "answers": [
         "The promises made to Abraham, Isaac, and Jacob",
         "How long the journey had been",
@@ -57,7 +57,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did Moses do with the two stone tablets of God’s law?",
+      "text": "What did Moses do with the two stone tablets of God’s law?",
       "answers": [
         "He smashed them on the ground",
         "He laid them before the golden calf",
@@ -67,7 +67,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did Moses do with the golden calf?",
+      "text": "What did Moses do with the golden calf?",
       "answers": [
         "Burned it, ground it into powder, and made the people drink it",
         "Covered it with a cloth",
@@ -77,7 +77,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What lie did Aaron tell Moses?",
+      "text": "What lie did Aaron tell Moses?",
       "answers": [
         "I threw the gold into the fire and out popped this golden calf",
         "The people made it without me",
@@ -87,7 +87,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did Moses ask God to do?",
+      "text": "What did Moses ask God to do?",
       "answers": [
         "Forgive the people or punish him in their place",
         "Ignore what happened",
@@ -97,7 +97,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did God send to punish the people for their sin?",
+      "text": "What did God send to punish the people for their sin?",
       "answers": [
         "A plague",
         "A flood",
