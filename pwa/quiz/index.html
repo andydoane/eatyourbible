@@ -58,6 +58,8 @@
       will-change: transform;
     }
 
+*, *::before, *::after { box-sizing: border-box; }
+
     .slide.nav-hidden{
       padding-bottom: 0;
     }
@@ -146,6 +148,7 @@
   flex: 3;
   min-height: 0;
   width: 100%;
+  box-sizing: border-box;
   background: #f2f2f2;
   color: #333333;
   border-radius: 18px;
