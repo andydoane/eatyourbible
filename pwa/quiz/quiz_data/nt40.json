@@ -7,7 +7,7 @@
   "themeClass": "theme-purple",
   "questions": [
     {
-      "question": "What two miracles did Peter do?",
+      "text": "What two miracles did Peter do?",
       "answers": [
         "He healed Aeneas’ legs and raised Tabitha from the dead",
         "He fed 5,000 people and walked on water",
@@ -17,7 +17,7 @@
       "correctIndex": 0
     },
     {
-      "question": "When the people saw the miracles, what did they do?",
+      "text": "When the people saw the miracles, what did they do?",
       "answers": [
         "They believed in the Lord",
         "They ran away in fear",
@@ -27,7 +27,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did Herod do to James and Peter?",
+      "text": "What did Herod do to James and Peter?",
       "answers": [
         "He killed James with a sword and put Peter in prison",
         "He had them both beaten",
@@ -37,7 +37,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did the church do while Peter was in prison?",
+      "text": "What did the church do while Peter was in prison?",
       "answers": [
         "They prayed together for him",
         "They hid in fear",
@@ -47,7 +47,7 @@
       "correctIndex": 0
     },
     {
-      "question": "Who did God send to rescue Peter from prison?",
+      "text": "Who did God send to rescue Peter from prison?",
       "answers": [
         "An angel",
         "A Roman soldier",
@@ -57,7 +57,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What happened when the angel rescued Peter?",
+      "text": "What happened when the angel rescued Peter?",
       "answers": [
         "His chains fell off, the doors opened, and the guards stayed asleep",
         "The prison walls fell down",
@@ -67,7 +67,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did Peter think was happening as he escaped?",
+      "text": "What did Peter think was happening as he escaped?",
       "answers": [
         "He thought he was dreaming",
         "He thought he was crazy",
@@ -77,7 +77,7 @@
       "correctIndex": 0
     },
     {
-      "question": "Why didn’t Rhoda let Peter inside the house?",
+      "text": "Why didn’t Rhoda let Peter inside the house?",
       "answers": [
         "She was so excited that she forgot to open the door",
         "She didn’t recognize his voice",
@@ -87,7 +87,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did the church think when Rhoda told them Peter was there?",
+      "text": "What did the church think when Rhoda told them Peter was there?",
       "answers": [
         "You are out of your mind! It must be Peter’s angel",
         "Let him in right away, silly girl!",
@@ -97,7 +97,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did Peter tell them after he came inside?",
+      "text": "What did Peter tell them after he came inside?",
       "answers": [
         "How the Lord sent an angel to rescue him from prison",
         "How he escaped by his own strength",
