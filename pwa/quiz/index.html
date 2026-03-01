@@ -3144,7 +3144,8 @@ function loadQuestion() {
     lastSelectedAnswerIndex = null;
 
     const q = QUESTIONS[currentQuestionIndex];
-    questionTextEl.innerHTML = q.text;
+    const qText = q?.text ?? q?.question ?? q?.prompt ?? q?.title ?? "";
+    questionTextEl.innerHTML = qText;
 
     // Reset question card back to normal (question) mode
     if (questionCard && feedbackBubble) {
