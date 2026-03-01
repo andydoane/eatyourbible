@@ -446,6 +446,7 @@
 /* ---------- Creed-style Intro (for Quiz) ---------- */
 .quiz-intro {
   background: #7f66c6; /* Creed purple */
+  color: #ffffff;     /* <-- FORCE WHITE TEXT */
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -454,6 +455,12 @@
   text-align: center;
   gap: 16px;
   padding: 24px 18px;
+}
+
+.quiz-intro .presented,
+.quiz-intro .site,
+.quiz-intro .hint {
+  color: #ffffff;
 }
 
 .quiz-intro img {
