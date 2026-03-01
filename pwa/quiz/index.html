@@ -500,38 +500,62 @@
   let currentSlideEl = null;
   let isSliding = false;
 
+  
   function pushSlide(newEl, direction = "forward", navVisible = true) {
-    if (isSliding) return;
-    isSliding = true;
-
+  // Special-case: first/instant slide (no animation)
+  // IMPORTANT: do NOT set isSliding=true here, because there will be no transitionend.
+  if (direction === "none") {
     const oldEl = currentSlideEl;
     currentSlideEl = newEl;
 
     if (!navVisible) newEl.classList.add("nav-hidden");
 
     newEl.style.transition = "none";
-    if (direction === "back") newEl.style.transform = "translateX(-100%)";
-    else if (direction === "none") newEl.style.transform = "translateX(0)";
-    else newEl.style.transform = "translateX(100%)";
-
+    newEl.style.transform = "translateX(0)";
     app.appendChild(newEl);
-    newEl.offsetHeight; // force reflow
 
-    requestAnimationFrame(() => {
-      newEl.style.transition = "transform 320ms ease";
-      if (oldEl) oldEl.style.transition = "transform 320ms ease";
-
-      newEl.style.transform = "translateX(0)";
-      if (oldEl) oldEl.style.transform = (direction === "back") ? "translateX(100%)" : "translateX(-100%)";
-    });
-
-    const cleanup = () => {
-      newEl.removeEventListener("transitionend", cleanup);
-      if (oldEl) oldEl.remove();
-      isSliding = false;
-    };
-    newEl.addEventListener("transitionend", cleanup);
+    if (oldEl) oldEl.remove();
+    isSliding = false;
+    return;
   }
+
+  if (isSliding) return;
+  isSliding = true;
+
+  const oldEl = currentSlideEl;
+  currentSlideEl = newEl;
+
+  if (!navVisible) newEl.classList.add("nav-hidden");
+
+  newEl.style.transition = "none";
+  if (direction === "back") newEl.style.transform = "translateX(-100%)";
+  else newEl.style.transform = "translateX(100%)";
+
+  app.appendChild(newEl);
+  newEl.offsetHeight; // force reflow
+
+  requestAnimationFrame(() => {
+    newEl.style.transition = "transform 320ms ease";
+    if (oldEl) oldEl.style.transition = "transform 320ms ease";
+
+    newEl.style.transform = "translateX(0)";
+    if (oldEl) oldEl.style.transform = (direction === "back") ? "translateX(100%)" : "translateX(-100%)";
+  });
+
+  const cleanup = () => {
+    newEl.removeEventListener("transitionend", cleanup);
+    if (oldEl) oldEl.remove();
+    isSliding = false;
+  };
+
+  // Fallback safety: if transitionend doesn't fire for any reason, unlock anyway.
+  const safety = setTimeout(() => cleanup(), 450);
+
+  newEl.addEventListener("transitionend", () => {
+    clearTimeout(safety);
+    cleanup();
+  }, { once: true });
+}
 
   function makeSlide(innerHTML, bg) {
     const el = document.createElement("section");
