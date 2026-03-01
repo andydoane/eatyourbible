@@ -7,7 +7,7 @@
   "themeClass": "theme-kahoot-white",
   "questions": [
     {
-      "question": "How long had the man been blind?",
+      "text": "How long had the man been blind?",
       "answers": [
         "Since the day he was born",
         "Since he was a teenager",
@@ -17,7 +17,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did Jesus do as He healed the man?",
+      "text": "What did Jesus do as He healed the man?",
       "answers": [
         "He put mud on his eyes and told him to wash",
         "He touched his ears and told him to listen",
@@ -27,7 +27,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did the crowd say about the man who had been blind?",
+      "text": "What did the crowd say about the man who had been blind?",
       "answers": [
         "They weren’t sure he was the same man",
         "They all recognized him immediately",
@@ -37,7 +37,7 @@
       "correctIndex": 0
     },
     {
-      "question": "Who talked with the man about what happened?",
+      "text": "Who talked with the man about what happened?",
       "answers": [
         "The Pharisees",
         "The Roman soldiers",
@@ -47,7 +47,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What rule did the Pharisees think Jesus broke?",
+      "text": "What rule did the Pharisees think Jesus broke?",
       "answers": [
         "Working on the Sabbath",
         "Not paying temple taxes",
@@ -57,7 +57,7 @@
       "correctIndex": 0
     },
     {
-      "question": "Who did the Pharisees talk to after they questioned the man?",
+      "text": "Who did the Pharisees talk to after they questioned the man?",
       "answers": [
         "His parents",
         "His neighbors",
@@ -67,7 +67,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did the Pharisees want the man to say?",
+      "text": "What did the Pharisees want the man to say?",
       "answers": [
         "Jesus is a sinner",
         "Jesus is a king",
@@ -77,7 +77,7 @@
       "correctIndex": 0
     },
     {
-      "question": "Who did Jesus tell the man He was?",
+      "text": "Who did Jesus tell the man He was?",
       "answers": [
         "The Son of Man, the Messiah",
         "The high priest",
@@ -87,7 +87,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What does it mean that Jesus is the Son of Man, the Messiah?",
+      "text": "What does it mean that Jesus is the Son of Man, the Messiah?",
       "answers": [
         "He is the promised Savior sent to save us from sin",
         "He is a soldier who wins battles",
@@ -97,7 +97,7 @@
       "correctIndex": 0
     },
     {
-      "question": "When Jesus told the man who He was, what did the man do?",
+      "text": "When Jesus told the man who He was, what did the man do?",
       "answers": [
         "He worshiped Jesus and believed",
         "He argued with Jesus",
