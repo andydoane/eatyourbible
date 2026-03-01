@@ -424,6 +424,18 @@
   transform-origin: center;
 }
 
+/* Gravity-style jump for yesnoFlip */
+@keyframes yesnoJump {
+  0%   { transform: translateY(0); }
+  45%  { transform: translateY(-95px); }  /* apex height */
+  100% { transform: translateY(0); }
+}
+
+.suspense-emoji.jump{
+  animation: yesnoJump 420ms cubic-bezier(.22,.61,.34,1) both;
+}
+
+
 /* Smooth movement for position-based suspense (magnifier/pointer) */
 .suspense-emoji.mover{
   position: fixed;
@@ -1219,33 +1231,49 @@ function runSuspenseVariant({ variant, questionBoxEl, answerBtns, done }) {
     return;
   }
 
-  if (variant === "yesnoFlip") {
-    // Jumping ✅ / ❌ swap on landing
-    let isCheck = true;
-    setSuspenseEmoji("✅");
+if (variant === "yesnoFlip") {
+  // Jumping ✅ / ❌ swap on landing (gravity feel)
+  let isCheck = true;
+  setSuspenseEmoji("✅");
 
-    let jumps = 0;
-    const doJump = () => {
-      // up
-      suspenseEmoji.style.transform = "translateY(-18px)";
-      setTimeout(() => {
-        // land
-        suspenseEmoji.style.transform = "translateY(0px)";
-        tt();
-        isCheck = !isCheck;
-        setSuspenseEmoji(isCheck ? "✅" : "❌");
-        jumps++;
-        if (jumps >= 10) {
-          setTimeout(() => finishSuspense(()=>{ suspenseEmoji.style.transform=""; }, done), 260);
-        } else {
-          setTimeout(doJump, 120);
-        }
-      }, 160);
+  // Make sure no previous animation class sticks around
+  suspenseEmoji.classList.remove("jump");
+
+  let jumps = 0;
+
+  const doOneJump = () => {
+    // restart the CSS animation cleanly
+    suspenseEmoji.classList.remove("jump");
+    // force reflow so animation re-triggers
+    void suspenseEmoji.offsetWidth;
+    suspenseEmoji.classList.add("jump");
+
+    // swap emoji on landing (end of animation)
+    const onEnd = () => {
+      suspenseEmoji.removeEventListener("animationend", onEnd);
+
+      tt(); // tick/tock on landing
+      isCheck = !isCheck;
+      setSuspenseEmoji(isCheck ? "✅" : "❌");
+
+      jumps++;
+      if (jumps >= 10) {
+        // finish shortly after final landing
+        setTimeout(() => finishSuspense(() => {
+          suspenseEmoji.classList.remove("jump");
+        }, done), 120);
+      } else {
+        // short pause between jumps
+        setTimeout(doOneJump, 90);
+      }
     };
 
-    doJump();
-    return;
-  }
+    suspenseEmoji.addEventListener("animationend", onEnd);
+  };
+
+  doOneJump();
+  return;
+}
 
   // fallback
   setSuspenseEmoji("⏳");
