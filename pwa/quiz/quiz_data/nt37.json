@@ -7,7 +7,7 @@
   "themeClass": "theme-white",
   "questions": [
     {
-      "question": "What problem did the man at the temple have?",
+      "text": "What problem did the man at the temple have?",
       "answers": [
         "He couldn’t walk",
         "He couldn’t see",
@@ -17,7 +17,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did Peter say to the man?",
+      "text": "What did Peter say to the man?",
       "answers": [
         "In Jesus’ name, stand up and walk",
         "Be strong and try harder",
@@ -27,7 +27,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What happened to the man after Peter said these words?",
+      "text": "What happened to the man after Peter said these words?",
       "answers": [
         "His legs were healed, and he ran and jumped",
         "He floated up into the clouds",
@@ -37,7 +37,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did Peter say to the crowd that had gathered?",
+      "text": "What did Peter say to the crowd that had gathered?",
       "answers": [
         "Jesus has risen! He has healed this man",
         "I healed the man by my own power",
@@ -47,7 +47,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did the Jewish leaders do to Peter and John?",
+      "text": "What did the Jewish leaders do to Peter and John?",
       "answers": [
         "Threw them in jail",
         "Praised them",
@@ -57,7 +57,7 @@
       "correctIndex": 0
     },
     {
-      "question": "How many believers were there after Peter spoke to the crowd?",
+      "text": "How many believers were there after Peter spoke to the crowd?",
       "answers": [
         "About 5,000 men",
         "500 people",
@@ -67,7 +67,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did Peter and John tell the Jewish leaders?",
+      "text": "What did Peter and John tell the Jewish leaders?",
       "answers": [
         "Jesus had risen, and His power healed this man",
         "They would stop preaching",
@@ -77,7 +77,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What order did the Jewish leaders give to Peter and John?",
+      "text": "What order did the Jewish leaders give to Peter and John?",
       "answers": [
         "Do not speak about Jesus anymore",
         "Leave our city forever",
@@ -87,7 +87,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did Peter and John say about this order?",
+      "text": "What did Peter and John say about this order?",
       "answers": [
         "Who should we obey: you or God?",
         "We will obey you",
@@ -97,7 +97,7 @@
       "correctIndex": 0
     },
     {
-      "question": "Before, the disciples ran away in fear. Now they spoke bravely. What changed?",
+      "text": "Before, the disciples ran away in fear. Now they spoke bravely. What changed?",
       "answers": [
         "The Holy Spirit was with them",
         "They became stronger",
