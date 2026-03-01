@@ -5,7 +5,7 @@
   "lessonSubtitleText": "Test how well you know this story",
   "lessonImagePath": "quizimages/nt42image.png",
   "themeClass": "theme-orange",
-  "questions": [
+  "text": [
     {
       "question": "What power did the evil spirit give the slave girl?",
       "answers": [
