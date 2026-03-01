@@ -7,7 +7,7 @@
   "themeClass": "theme-kahoot-yellow",
   "questions": [
     {
-      "question": "What group did we talk about in today’s story?",
+      "text": "What group did we talk about in today’s story?",
       "answers": [
         "The Pharisees",
         "The Sadducees",
@@ -17,7 +17,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What is an example of one of the Pharisees’ extra rules?",
+      "text": "What is an example of one of the Pharisees’ extra rules?",
       "answers": [
         "You must wash your hands and dishes in a special way",
         "You must pray only on mountains",
@@ -27,7 +27,7 @@
       "correctIndex": 0
     },
     {
-      "question": "How were the Pharisees like a cup?",
+      "text": "How were the Pharisees like a cup?",
       "answers": [
         "They looked clean on the outside, but were sinful inside",
         "They were fragile and breakable",
@@ -37,7 +37,7 @@
       "correctIndex": 0
     },
     {
-      "question": "How were the Pharisees like a white-painted tomb?",
+      "text": "How were the Pharisees like a white-painted tomb?",
       "answers": [
         "They looked clean on the outside, but were sinful inside",
         "They only wore white clothes",
@@ -47,7 +47,7 @@
       "correctIndex": 0
     },
     {
-      "question": "The Pharisees were mad that Jesus was doing what with sinners?",
+      "text": "The Pharisees were mad that Jesus was doing what with sinners?",
       "answers": [
         "Eating with them",
         "Ignoring them",
@@ -57,7 +57,7 @@
       "correctIndex": 0
     },
     {
-      "question": "How was Jesus like a doctor?",
+      "text": "How was Jesus like a doctor?",
       "answers": [
         "He came to rescue people sick with sin",
         "He carried a medical bag everywhere",
@@ -67,7 +67,7 @@
       "correctIndex": 0
     },
     {
-      "question": "When Jesus healed a man with a demon, what did the Pharisees say?",
+      "text": "When Jesus healed a man with a demon, what did the Pharisees say?",
       "answers": [
         "He drives out demons by the power of the devil",
         "He must be an angel",
@@ -77,7 +77,7 @@
       "correctIndex": 0
     },
     {
-      "question": "Jesus said, 'To enter God's kingdom, you must be more...' what?",
+      "text": "Jesus said, 'To enter God's kingdom, you must be more...' what?",
       "answers": [
         "Righteous than the Pharisees",
         "Wealthy than the Pharisees",
@@ -87,7 +87,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did the Pharisees plan to do to Jesus?",
+      "text": "What did the Pharisees plan to do to Jesus?",
       "answers": [
         "Kill Him",
         "Send him to Egypt",
@@ -97,7 +97,7 @@
       "correctIndex": 0
     },
     {
-      "question": "How many of us are actually righteous and good?",
+      "text": "How many of us are actually righteous and good?",
       "answers": [
         "No, not one",
         "Only the best people",
