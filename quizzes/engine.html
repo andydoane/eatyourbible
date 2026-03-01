@@ -395,9 +395,6 @@ body.mode-big #app {
     box-shadow: 0 3px 9px rgba(15,23,42,0.20);
     transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
     margin: 0 12px; /* spacing so it doesn't collide with text/sound button */
-    display: flex;
-align-items: center;
-justify-content: center;
     }
 
 
@@ -4048,9 +4045,6 @@ function handleAnswerClick(e) {
     spawnClickRipple(e.clientX, e.clientY);
     });
 
-
-
-    const homeButton = document.getElementById("home-button");
 
     homeButton.addEventListener("click", () => {
         stopTimer(); // stop timer if running
