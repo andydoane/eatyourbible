@@ -7,7 +7,7 @@
   "themeClass": "theme-kahoot-blue",
   "questions": [
     {
-      "question": "What did the Israelites need to cross?",
+      "text": "What did the Israelites need to cross?",
       "answers": [
         "The Jordan River",
         "The Red Sea",
@@ -17,7 +17,7 @@
       "correctIndex": 0
     },
     {
-      "question": "Why was it dangerous to cross the Jordan River?",
+      "text": "Why was it dangerous to cross the Jordan River?",
       "answers": [
         "The water was flowing fast that time of year",
         "It was frozen solid",
@@ -27,7 +27,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What were the priests carrying?",
+      "text": "What were the priests carrying?",
       "answers": [
         "The Ark of the Covenant",
         "Twelve baskets of bread",
@@ -37,7 +37,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did Joshua tell the priests to do?",
+      "text": "What did Joshua tell the priests to do?",
       "answers": [
         "Stand in the Jordan River",
         "Build a bridge",
@@ -47,7 +47,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did Joshua say would happen when the priests entered the river?",
+      "text": "What did Joshua say would happen when the priests entered the river?",
       "answers": [
         "The river would stop flowing",
         "The river would get deeper",
@@ -57,7 +57,7 @@
       "correctIndex": 0
     },
     {
-      "question": "When did the water stop flowing?",
+      "text": "When did the water stop flowing?",
       "answers": [
         "Right when the priests stepped into the river",
         "After everyone crossed",
@@ -67,7 +67,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did this miracle show the Israelites?",
+      "text": "What did this miracle show the Israelites?",
       "answers": [
         "God was with them in the Promised Land",
         "God likes parting rivers and sea",
@@ -77,7 +77,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did Joshua tell twelve men to do?",
+      "text": "What did Joshua tell twelve men to do?",
       "answers": [
         "Collect twelve stones from the river",
         "Build twelve tents",
@@ -87,7 +87,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did Joshua do with the stones?",
+      "text": "What did Joshua do with the stones?",
       "answers": [
         "He made a large pile to help the people remember",
         "He threw them back into the river",
@@ -97,7 +97,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What would the Israelites tell their children when they asked about the stones?",
+      "text": "What would the Israelites tell their children when they asked about the stones?",
       "answers": [
         "God stopped the Jordan River so we could cross",
         "We built this so we don't get lost",
