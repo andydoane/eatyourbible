@@ -7,7 +7,7 @@
   "themeClass": "theme-purple",
   "questions": [
     {
-      "question": "What was the name of the tent God told Moses to build?",
+      "text": "What was the name of the tent God told Moses to build?",
       "answers": [
         "The Tabernacle",
         "The Temple",
@@ -17,7 +17,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What was the first thing God told Moses to build for the Tabernacle?",
+      "text": "What was the first thing God told Moses to build for the Tabernacle?",
       "answers": [
         "The Ark of the Covenant",
         "The Treasure Chest",
@@ -27,7 +27,7 @@
       "correctIndex": 0
     },
     {
-      "question": "How is the Ark of the Covenant described?",
+      "text": "How is the Ark of the Covenant described?",
       "answers": [
         "A gold-covered chest with cherubim facing each other on the cover",
         "A wooden box with stone handles",
@@ -37,7 +37,7 @@
       "correctIndex": 0
     },
     {
-      "question": "How is the Table of Showbread described?",
+      "text": "How is the Table of Showbread described?",
       "answers": [
         "Covered in gold, with twelve loaves placed on it weekly",
         "Made of stone with incense burned on it",
@@ -47,7 +47,7 @@
       "correctIndex": 0
     },
     {
-      "question": "How is the Golden Lampstand described?",
+      "text": "How is the Golden Lampstand described?",
       "answers": [
         "It had seven lamps and looked like an almond tree",
         "It held candles shaped like animals",
@@ -57,7 +57,7 @@
       "correctIndex": 0
     },
     {
-      "question": "How is the Altar of Incense described?",
+      "text": "How is the Altar of Incense described?",
       "answers": [
         "A gold-covered stand where priests burned sweet-smelling incense",
         "A large stone altar used for animal sacrifices",
@@ -67,7 +67,7 @@
       "correctIndex": 0
     },
     {
-      "question": "Who did God pick to work in the temple?",
+      "text": "Who did God pick to work in the temple?",
       "answers": [
         "Priests",
         "Prophets",
@@ -77,7 +77,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What happened when the Tabernacle was set up and items placed inside?",
+      "text": "What happened when the Tabernacle was set up and items placed inside?",
       "answers": [
         "God’s glory filled it",
         "Fire fell from the sky",
@@ -87,7 +87,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What were the two rooms of the Tabernacle called?",
+      "text": "What were the two rooms of the Tabernacle called?",
       "answers": [
         "The Holy Place and the Most Holy Place",
         "The Inner Room and the Outer Room",
@@ -97,7 +97,7 @@
       "correctIndex": 0
     },
     {
-      "question": "Why don’t we need a Tabernacle to meet with God today?",
+      "text": "Why don’t we need a Tabernacle to meet with God today?",
       "answers": [
         "Jesus shed his blood on the cross to pay for our sins",
         "God meets us in a temple now",
