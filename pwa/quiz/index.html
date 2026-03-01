@@ -31,7 +31,7 @@
       padding:0;
       font-family:"Baloo 2", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       overflow:hidden;
-      background: var(--bg-solid, #222);
+      background: var(--app-bg, var(--bg-solid, #222));
       color: var(--text-primary, #fff);
     }
 
@@ -42,7 +42,7 @@
       position:fixed;
       inset:0;
       overflow:hidden;
-      background: var(--bg-solid, #222);
+      background: var(--app-bg, var(--bg-solid, #222));
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
     }
@@ -388,6 +388,34 @@
       text-align:center;
     }
 
+/* =========================================================
+   Theme bridge: maps Andy theme variables -> app variables
+   This lets all your existing quiz_themes/*.css work unchanged.
+   ========================================================= */
+
+/* 1) Background + text */
+:root{
+  /* If theme provides a gradient background for quiz screens, we keep it here */
+  --app-bg: var(--quiz-screen-bg, var(--quiz-bg, #222));
+
+  /* If theme provides a solid background too, use it; otherwise fallback */
+  --bg-solid: var(--quiz-screen-bg-solid, #222);
+
+  /* Main text color */
+  --text-primary: var(--primary-text, var(--title-main-text, #fff));
+
+  /* Buttons */
+  --btn-primary-bg: var(--accent, rgba(255,255,255,0.92));
+  --btn-primary-text: var(--accent-text, #111);
+
+  /* Answer colors (Kahoot colors from theme files) */
+  --opt-a: var(--red, #e21b3c);
+  --opt-b: var(--blue, #1368ce);
+  --opt-c: var(--yellow, #d89e00);
+  --opt-d: var(--green, #26890c);
+}
+
+
 /* ---------- Creed-style Intro (for Quiz) ---------- */
 .quiz-intro {
   background: #7f66c6; /* Creed purple */
@@ -600,7 +628,7 @@
   function makeSlide(innerHTML, bg) {
     const el = document.createElement("section");
     el.className = "slide";
-    el.style.background = bg || "var(--bg-solid, #222)";
+    el.style.background = bg || "var(--app-bg, var(--bg-solid, #222))";
     el.innerHTML = innerHTML;
     return el;
   }
