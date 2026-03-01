@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot16",
+  "pageTitle": "OT 16 Quiz",
+  "lessonTitleText": "Jacob’s Dream",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot16image.png",
+  "themeClass": "theme-yellow",
+  "questions": [
+    {
+      "text": "What did Esau plan to do to Jacob? Why?",
+      "answers": [
+        "Kill him for stealing his blessing",
+        "Tell Isaac what Jacob had done",
+        "Throw Jacob into a pit",
+        "Take all of Jacob’s animals"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Where did Jacob’s parents send him? Why?",
+      "answers": [
+        "To his uncle Laban’s to hide from Esau",
+        "To Egypt to find safety there",
+        "To Bethel to make a sacrifice",
+        "To the desert to live alone"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jacob use for his pillow?",
+      "answers": [
+        "A stone",
+        "A blanket",
+        "A pile of leaves",
+        "His robe"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jacob see in his dream?",
+      "answers": [
+        "A ladder or stairway to heaven, angels going up and down",
+        "A lion standing beside him",
+        "A great storm coming toward him",
+        "A river flowing through the desert"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who was standing at the top of the ladder or stairway in Jacob’s dream?",
+      "answers": [
+        "God",
+        "An angel with a sword",
+        "Abraham",
+        "His future wife"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did God say to Jacob in the dream?",
+      "answers": [
+        "He gave Jacob the same promises he made to Abraham",
+        "He told Jacob to return home immediately",
+        "He warned Jacob never to trust Esau",
+        "He said Jacob would become a mighty warrior"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jacob do with the stone after the dream?",
+      "answers": [
+        "Stood it up, poured oil on it",
+        "Threw it into the river",
+        "Buried it under a tree",
+        "Carried it with him on his journey"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What promise did Jacob make to God?",
+      "answers": [
+        "If you’ll be with me, then you will be my God",
+        "I will return home tomorrow",
+        "I will never speak to Esau again",
+        "I will build a city in this place"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Jacob called that place “Bethel.” What did Bethel mean?",
+      "answers": [
+        "House of God",
+        "Place of dreams",
+        "Stairway of heaven",
+        "Land of blessing"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What special name for God do we learn from this story?",
+      "answers": [
+        "The God of Abraham, Isaac, and Jacob",
+        "The Lord of the mountains",
+        "The God who appeared in dreams",
+        "The Creator of the sky and land"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

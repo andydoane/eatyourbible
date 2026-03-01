@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot28",
+  "pageTitle": "OT 28 Quiz",
+  "lessonTitleText": "Moses and Aaron Speak to Pharaoh",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot28image.png",
+  "themeClass": "theme-kahoot-red",
+  "questions": [
+    {
+      "text": "When Moses and Aaron told Pharaoh to let the Israelites go, what did he say?",
+      "answers": [
+        "I won't listen to the Lord; I don't even know who he is!",
+        "I will let them go right away",
+        "I need time to think about it",
+        "They can leave in one week"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did Pharaoh make the Israelite slaves work harder?",
+      "answers": [
+        "They had to gather straw, but make the same number of bricks",
+        "They were forced to work all night long",
+        "They were no longer given any tools",
+        "They had to work blindfolded"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When Moses told the people God would rescue them, how did they respond?",
+      "answers": [
+        "They didn't listen because they had lost hope",
+        "They celebrated and rejoiced",
+        "They immediately left Egypt",
+        "They asked Moses questions"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did God say Pharaoh would do after he saw God's mighty wonders?",
+      "answers": [
+        "He would be stubborn and not let the people go",
+        "He would change his mind and obey God",
+        "He would ask Moses for help",
+        "He would leave Egypt himself"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What was the first miracle Aaron did in front of Pharaoh?",
+      "answers": [
+        "Turn his staff into a snake",
+        "Turn water into blood",
+        "Call down fire from the sky",
+        "Cause an earthquake"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened when Pharaoh called his evil magicians?",
+      "answers": [
+        "They did the same thing with their tricks",
+        "They believed in the Lord",
+        "They ran away in fear",
+        "They turned their staffs into worms"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Pharaoh do after he saw his magicians do the same trick?",
+      "answers": [
+        "He refused to let the Israelites go",
+        "He believed in the Lord",
+        "He asked Moses to pray for him",
+        "He asked to be turned into a snake"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When Aaron held out his staff by the Nile River, what happened?",
+      "answers": [
+        "God turned all of Egypt’s water into blood",
+        "The Nile River dried up completely",
+        "Fish jumped out of the water",
+        "Pharaoh got a bloody nose"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened when Pharaoh called his evil magicians a second time?",
+      "answers": [
+        "They did the same thing with their evil tricks",
+        "They could not copy the miracle",
+        "They turned water into wine",
+        "They turned the blood back into water"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "After his magicians turned water into blood, what did Pharaoh do?",
+      "answers": [
+        "Refused to let God's people go",
+        "Asked Moses for forgiveness",
+        "Let the Israelites leave Egypt",
+        "Asked them to turn the blood back into water"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

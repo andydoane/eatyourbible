@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot21",
+  "pageTitle": "OT 21 Quiz",
+  "lessonTitleText": "Joseph Works for Potiphar",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot21image.png",
+  "themeClass": "theme-gray",
+  "questions": [
+    {
+      "text": "What country was Joseph taken to?",
+      "answers": [
+        "Egypt",
+        "Canaan",
+        "Babylon",
+        "Israel"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who was Joseph sold to?",
+      "answers": [
+        "Potiphar",
+        "Pharaoh",
+        "A shepherd",
+        "A circus"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What job did Potiphar have?",
+      "answers": [
+        "Captain of the palace guard",
+        "Leader of the musicians",
+        "Pharaoh's winetaster",
+        "Zookeeper"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why did Joseph have success at everything he did?",
+      "answers": [
+        "God was with him",
+        "He was lucky",
+        "He was strong and mean",
+        "He had lots of money"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What job did Potiphar give Joseph? How did it work out?",
+      "answers": [
+        "Put him in charge of his house, never had to worry about anything",
+        "Made him cook his food, but Joseph was bad at cooking",
+        "Had him plow the fields with the animals",
+        "Made him clean the palace floors, Joseph was good at it"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who asked Joseph to commit adultery?",
+      "answers": [
+        "Potiphar's wife",
+        "Pharaoh's daughter",
+        "A servant girl",
+        "Potiphar's mom"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When Potiphar's wife grabbed onto Joseph, what did he do?",
+      "answers": [
+        "Ran away, leaving his coat behind",
+        "Shouted for help",
+        "Agreed to stay with her",
+        "Fainted from fear"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Potiphar's wife tell her husband?",
+      "answers": [
+        "Joseph attacked her, she screamed, Joseph ran away",
+        "Joseph stole her jewelry",
+        "Joseph was a bad worker",
+        "Joseph said he loved her"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Potiphar do with Joseph after listening to his wife's story?",
+      "answers": [
+        "Threw him in prison",
+        "Sent him back to Canaan",
+        "Killed him",
+        "Ignored the whole situation"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did things go for Joseph in prison?",
+      "answers": [
+        "God was with him; was placed in charge of other prisoners",
+        "He became very sick and weak",
+        "He escaped and ran away",
+        "He was never heard from again"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

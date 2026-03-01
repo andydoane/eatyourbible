@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot06",
+  "pageTitle": "OT 06 Quiz",
+  "lessonTitleText": "Noah Leaves the Ark",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot06image.png",
+  "themeClass": "theme-rainbow",
+  "questions": [
+    {
+      "text": "What happened when God sent a great wind on the earth?",
+      "answers": [
+        "The water began to go down",
+        "The ark started spinning in circles",
+        "Lightning struck the ark",
+        "All the animals fell asleep for many days"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Where did the ark come to rest?",
+      "answers": [
+        "On a mountain",
+        "In a deep valley",
+        "On the Tower of Babel",
+        "On top of a giant tree"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why did Noah send out a raven and a dove?",
+      "answers": [
+        "To see if there was any dry land",
+        "To find new animals to bring into the ark",
+        "To test how strong the wind was",
+        "To send a message to other people"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When Noah released the dove the first time, what happened?",
+      "answers": [
+        "It flew around and came back",
+        "It stayed on the ark and refused to leave",
+        "It landed on a mountain and never returned",
+        "It brought back a feather from another bird"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When Noah released the dove a second time, what happened?",
+      "answers": [
+        "It returned with a branch in its beak",
+        "It disappeared into the clouds",
+        "It flew back frightened and empty-beaked",
+        "It returned with a stone from a mountain"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When Noah released the dove a third time, what happened? What did that tell Noah?",
+      "answers": [
+        "It didn’t return; Noah knew there was dry land",
+        "It circled the ark three times and landed again",
+        "It returned with a fish in its beak",
+        "It went for a swim"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Noah build after leaving the ark?",
+      "answers": [
+        "An altar to burn a sacrifice to the Lord God",
+        "A giant tower to reach the heavens",
+        "A new house for his family",
+        "A fence to keep the animals together"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did God tell Noah’s family to do?",
+      "answers": [
+        "Have lots of children and fill the earth",
+        "Stay on the mountain forever",
+        "Build cities",
+        "Turn the ark into a house"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What covenant did God make with Noah?",
+      "answers": [
+        "To never flood the entire earth again",
+        "To give Noah riches and long life",
+        "To hide pots of gold at the ends of all rainbows",
+        "To stop all storms forever"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did God give as a sign to Noah that He would always remember his covenant?",
+      "answers": [
+        "A rainbow",
+        "A shining star in the daytime",
+        "A cloud shaped like an ark",
+        "A talking dove"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

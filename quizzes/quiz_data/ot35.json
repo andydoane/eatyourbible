@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot35",
+  "pageTitle": "OT 35 Quiz",
+  "lessonTitleText": "The Golden Calf",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot35image.png",
+  "themeClass": "theme-yellow",
+  "questions": [
+    {
+      "text": "What did the people ask Aaron to make?",
+      "answers": [
+        "A god to lead them",
+        "A tent to worship in",
+        "A new set of stone tablets",
+        "A giant golden sandwich"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Aaron make, and how did he make it?",
+      "answers": [
+        "A golden calf made from melted gold earrings",
+        "A bronze snake made from spare tools",
+        "A stone calf carved from from the mountain",
+        "A gigantic fire built from wood"
+      ],
+      "correctIndex": 0
+    },
+    {
+      )"text: "What did the people do after Aaron made the golden calf?",
+      "answers": [
+        "They celebrated wildly in front of it",
+        "They quietly prayed and went home",
+        "They rode the calf back to Egypt",
+        "They sat on top of the golden calf"
+      ],
+      "correctIndex": 0
+    },
+    {
+      )"text: "What did God say to Moses on the mountain?",
+      "answers": [
+        "I will destroy the people and start a new nation with you",
+        "The people are having a good time",
+        "You may stay on the mountain forever",
+        "I will stop sending manna"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Moses remind God about?",
+      "answers": [
+        "The promises made to Abraham, Isaac, and Jacob",
+        "How long the journey had been",
+        "The size of the golden calf",
+        "How tired Moses felt"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Moses do with the two stone tablets of God’s law?",
+      "answers": [
+        "He smashed them on the ground",
+        "He laid them before the golden calf",
+        "He gave them to Aaron",
+        "He dropped them by accident"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Moses do with the golden calf?",
+      "answers": [
+        "Burned it, ground it into powder, and made the people drink it",
+        "Covered it with a cloth",
+        "Melted it and saved the gold",
+        "Carried it up the mountain"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What lie did Aaron tell Moses?",
+      "answers": [
+        "I threw the gold into the fire and out popped this golden calf",
+        "The people made it without me",
+        "God told me to make it",
+        "God made this golden calf for us"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Moses ask God to do?",
+      "answers": [
+        "Forgive the people or punish him in their place",
+        "Ignore what happened",
+        "Destroy the golden calf",
+        "Give the people more gold"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did God send to punish the people for their sin?",
+      "answers": [
+        "A plague",
+        "A flood",
+        "A swarm of frogs",
+        "An earthquake"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

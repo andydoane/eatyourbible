@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot22",
+  "pageTitle": "OT 22 Quiz",
+  "lessonTitleText": "Joseph in Prison",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot22image.png",
+  "themeClass": "theme-kahoot-green",
+  "questions": [
+    {
+      "text": "What two men were thrown into prison with Joseph?",
+      "answers": [
+        "Pharaoh's baker and wine taster",
+        "Two of his brothers",
+        "Two soldiers from Pharaoh's army",
+        "Two men who tried to steal grain"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened to both men while they were in prison?",
+      "answers": [
+        "They had special dreams from God",
+        "They both escaped",
+        "They got into a big fight",
+        "They became very sick"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Joseph say about dreams?",
+      "answers": [
+        "Only God knows what dreams mean",
+        "Dreams are random and don't matter",
+        "Anyone can figure out dreams",
+        "It's foolish to talk about dreams"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the wine taster dream?",
+      "answers": [
+        "He saw a grapevine with three branches; he squeezed the grapes into Pharaoh's special cup",
+        "He saw himself becoming Pharaoh",
+        "He saw a giant river of milk",
+        "He saw Joseph handing him fruit"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Joseph say the wine taster's dream meant?",
+      "answers": [
+        "In three days, he would get his old job back",
+        "Egypt's water would become wine",
+        "He would get married",
+        "He would stay in prison forever"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What favor did Joseph ask of the wine taster?",
+      "answers": [
+        "Tell Pharaoh that he didn't deserve to be a slave or in prison",
+        "Bring him better food",
+        "Help him escape at night",
+        "Give him a new coat"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the baker dream?",
+      "answers": [
+        "He carried three baskets of bread on his head; birds pecked at the baskets",
+        "He baked bread for Pharaoh",
+        "He was flying over Egypt",
+        "He burned all the bread in the palace"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Joseph say the baker's dream meant?",
+      "answers": [
+        "In three days, Pharaoh would kill him; birds would peck at his body",
+        "He would become Pharaoh's favorite servant",
+        "He would leave prison unharmed",
+        "He would have to go on a diet"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened three days later?",
+      "answers": [
+        "The baker was killed; the wine taster got his job back",
+        "Both men were set free",
+        "Both men stayed in prison",
+        "The two men switched jobs"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the wine taster do after he got his job back?",
+      "answers": [
+        "He completely forgot about Joseph",
+        "He visited Joseph every week",
+        "He immediately told Pharaoh about Joseph",
+        "He quit his job to move away"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

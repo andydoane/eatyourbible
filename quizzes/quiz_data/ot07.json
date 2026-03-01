@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot07",
+  "pageTitle": "OT 07 Quiz",
+  "lessonTitleText": "The Tower of Babel",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot07image.png",
+  "themeClass": "theme-kahoot-yellow",
+  "questions": [
+    {
+      "text": "After the flood, what command did God give human beings?",
+      "answers": [
+        "Have children and fill the earth",
+        "Build cities and stay together",
+        "Build really tall towers",
+        "Gather all animals into the ark"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "After the flood, what did everyone on earth have in common?",
+      "answers": [
+        "They spoke the same language",
+        "They all had the same eye color",
+        "They all had different languages",
+        "They all worshiped idols"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the people decide to build?",
+      "answers": [
+        "A city with a tower that reached to the sky",
+        "A golden version of Noah’s ark",
+        "A temple to God",
+        "A massive wall around the whole earth"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why did they want to build a tower?",
+      "answers": [
+        "To make a name for themselves and not be scattered",
+        "To get closer to the stars and explore them",
+        "To protect themselves from another flood",
+        "To go bungee jumping"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why was God not pleased with their building project?",
+      "answers": [
+        "They were disobeying his command to fill the earth",
+        "The tower was too tall and unsafe",
+        "The tower wasn't tall enough",
+        "They used stones instead of wood"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "If the people worked together, what did God say they would be able to do?",
+      "answers": [
+        "Anything they wanted",
+        "Defeat God himself",
+        "Nothing at all",
+        "Just farming and building small homes"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did God say he was going to do?",
+      "answers": [
+        "Mix up their languages",
+        "Destroy the tower with fire",
+        "Send another flood",
+        "Shake the ground and knock over the tower"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When God mixed up their languages, what did they stop doing?",
+      "answers": [
+        "Building the tower",
+        "Working in the fields",
+        "Worshiping together",
+        "Traveling across the land"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the people do after they stopped building the tower?",
+      "answers": [
+        "Gathered with those who spoke like them, scattered over all the earth",
+        "Stayed in one place and tried to learn each other’s language",
+        "Destroyed the tower themselves",
+        "Started building smaller towers"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What does the book of Revelation say will happen in Jesus’ forever kingdom?",
+      "answers": [
+        "People from all languages will praise God",
+        "Only one language will remain on earth",
+        "We'll build a tower together to heaven",
+        "God will mix up our languages again"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
