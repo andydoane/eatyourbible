@@ -1305,7 +1305,7 @@ function runSuspenseVariant({ variant, questionBoxEl, answerBtns, done }) {
 
     if (variant === "magnifier") {
       setSuspenseEmoji("🔍");
-      const path = [aPos[0], aPos[1], aPos[2], aPos[3]];
+      const path = [qPos, aPos[0], aPos[1], aPos[2], aPos[3]];
       let idx = 0;
 
       const moveTo = (p) => { suspenseEmoji.style.left = `${p.x}px`; suspenseEmoji.style.top = `${p.y}px`; };
