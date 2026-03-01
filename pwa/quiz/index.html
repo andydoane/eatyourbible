@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en" class="theme-kahoot-white theme-loading">
+<html lang="en" class="theme-blue theme-loading">
 
 <head>
   <meta charset="UTF-8" />
   <title>OT 02 Quiz</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<link id="theme-css" rel="stylesheet" href="quiz_themes/theme-kahoot-white.css">
+<link id="theme-css" rel="stylesheet" href="theme-blue.css">
 <!-- Google Font: Baloo 2 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -69,17 +69,7 @@ html:not(.theme-loading) body {
       justify-content: center;
     }
 
-body.mode-big #app {
-  max-width: none;
-  
-}
-
-
-
-
-
-
-    .screen-card {
+.screen-card {
       background: var(--card-bg);
       width: 100%;
       min-height: 100vh;
@@ -458,119 +448,7 @@ body.mode-big #app {
       100% { background-position: 100% 0%; }
     }
 
-    /* Timer ring (big-screen only visually) */
-    .timer-ring-wrapper {
-      position: relative;
-      width: 180px;    /* bigger ring */
-      height: 180px;
-      display: none;   /* phone mode hides it */
-      border-radius: 50%;
-      box-shadow: 0 14px 30px rgba(15, 23, 42, 0.28);
-      background: var(--timer-bg);
-    }
-
-    body.mode-big .timer-ring-wrapper {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    /* When time runs out, make the timer ring "explode" */
-    .timer-ring-wrapper.timer-explode {
-    animation: timerExplode 0.7s ease-out forwards;
-    }
-
-    @keyframes timerExplode {
-    0% {
-        transform: scale(1);
-        opacity: 1;
-        box-shadow: 0 14px 30px rgba(15, 23, 42, 0.28);
-    }
-    40% {
-        transform: scale(1.3);
-        opacity: 1;
-              box-shadow: 0 0 40px var(--timer-explosion-glow); /* bright flash */
-    }
-    100% {
-        transform: scale(0.6);
-        opacity: 0;
-        box-shadow: 0 0 0 rgba(0, 0, 0, 0);
-    }
-    }
-
-    /* BIGGER, HOTTER, MORE IMPRESSIVE PARTICLES */
-    .timer-particle {
-    position: fixed;
-    width: 22px;       /* was 10px */
-    height: 22px;      /* was 10px */
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 10002;      /* above everything */
-      background: var(--timer-particle-gradient);
-    animation: timerParticle 1.2s ease-out forwards; /* longer, dramatic */
-    --tx: 0px;
-    --ty: 0px;
-    }
-
-    @keyframes timerParticle {
-    0% {
-        opacity: 1;
-        transform: translate(0, 0) scale(1.3);
-        filter: blur(0px);
-    }
-    40% {
-        opacity: 1;
-        transform: translate(var(--tx), var(--ty)) scale(1.0);
-        filter: blur(1px);
-    }
-    100% {
-        opacity: 0;
-        transform: translate(calc(var(--tx) * 1.8), calc(var(--ty) * 1.8)) scale(0.3);
-        filter: blur(4px);
-    }
-    }
-
-
-    .timer-svg {
-      width: 100%;
-      height: 100%;
-      transform: rotate(-90deg); /* start at top */
-    }
-
-    /* Ring base */
-    .timer-ring-bg {
-      fill: none;
-      stroke: var(--timer-ring-bg);
-      stroke-width: 10;
-    }
-
-    /* Foreground color is overridden by JS for green->yellow->red */
-    .timer-ring-fg {
-      fill: none;
-      stroke: var(--timer-ring-fg);
-      stroke-width: 10;
-      stroke-linecap: round;
-      stroke-dasharray: 339.292;
-      stroke-dashoffset: 0;
-      transition: stroke-dashoffset 0.2s linear;
-    }
-
-    .timer-text {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2.2rem;
-      color: var(--timer-text);
-      font-weight: 800;
-    }
-
-
-
-
-
-        /* Emoji host (right side) */
+    /* Emoji host (right side) */
     .emoji-face {
       font-size: clamp(5rem, 9vw, 8rem); /* MUCH larger */
       filter: drop-shadow(0 14px 28px rgba(15, 23, 42, 0.35));
@@ -803,6 +681,11 @@ body.mode-big #app {
       color: var(--text-main);
     }
 
+    /* ---------- BIG-SCREEN MODE ---------- */
+
+    /* Big-screen layout: timer | question | emoji */
+    /* Side areas expand to fill leftover space, contents centered */
+    /* Center block takes ~60% width, leaving ~20% on each side */
     /* ---------- QUESTION SLIDE TRANSITION ---------- */
 
     .quiz-main {
@@ -938,14 +821,7 @@ body.mode-big #app {
       font-size: clamp(2.2rem, 4vw, 5rem);
     }
 
-    :fullscreen body.mode-big .answer-button,
-    :-webkit-full-screen body.mode-big .answer-button {
-       font-size: clamp(1.2rem, 2.4vw, 2.6rem);
-    }
-
-
-
-    /* ---------- FEEDBACK + STARS ---------- */
+    :fullscreen /* ---------- FEEDBACK + STARS ---------- */
 
     /* Hidden by default, only shown when the card is in feedback mode */
     .feedback-bubble {
@@ -1271,25 +1147,7 @@ body.mode-big #app {
   }
 
 
-  
-
-
-.question-progress {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.question-progress .nav-icon {
-  width: 20px;
-  height: 20px;
-}
-
-
-
-
-
-  </style>
+    </style>
 </head>
 <body class="mode-title">
   <div id="app">
@@ -1322,33 +1180,31 @@ body.mode-big #app {
     </div>
 
 
-<!-- TITLE SCREEN -->
-<div id="title-screen" class="screen-card hidden">
-  <div id="title-screen-content">
-    <div class="lesson-image-wrapper">
-      <img
-        id="lesson-image"
-        class="lesson-image"
-        alt="Lesson image"
-      />
-    </div>
 
-    <div>
-      <h1 id="lesson-title" class="card-title">Sample Devotional Quiz</h1>
-      <p id="lesson-subtitle" class="card-subtitle">
-        10 questions to see how well you know the story!
-      </p>
-    </div>
+    
+    <!-- TITLE SCREEN -->
+    <div id="title-screen" class="screen-card">
+      <div id="title-screen-content">
+        <div class="lesson-image-wrapper">
+          <img
+            id="lesson-image"
+            class="lesson-image"
+            alt="Lesson image"
+          />
+        </div>
+        <div>
+          <h1 id="lesson-title" class="card-title">Sample Devotional Quiz</h1>
+          <p id="lesson-subtitle" class="card-subtitle">
+            10 questions to see how well you know the story!
+          </p>
+        </div>
+        <div class="mode-buttons">
+<button id="phone-mode-btn" class="primary-button"><span>Start Quiz</span> <span>📱</span></button>
+        </div>
+       <p class="mode-note">Designed for mobile screens.</p>
 
-    <div class="mode-buttons">
-      <button id="phone-mode-btn" class="primary-button">
-        <span>Start Quiz</span> <span>📱</span>
-      </button>
+      </div>
     </div>
-  </div>
-</div>
-    
-    
 
 <!-- QUIZ SCREEN -->
 <div id="quiz-screen" class="screen-card hidden">
@@ -1364,28 +1220,6 @@ body.mode-big #app {
       <div class="quiz-main">
         <div class="question-panel">
         <div class="question-layout">
-            <!-- LEFT: Timer ring (big-screen only) -->
-            <div class="question-side question-timer">
-            <div class="timer-ring-wrapper">
-                <svg class="timer-svg" viewBox="0 0 120 120">
-                <circle
-                    class="timer-ring-bg"
-                    cx="60"
-                    cy="60"
-                    r="54"
-                ></circle>
-                <circle
-                    id="timer-ring-fg"
-                    class="timer-ring-fg"
-                    cx="60"
-                    cy="60"
-                    r="54"
-                ></circle>
-                </svg>
-                <div id="timer-text" class="timer-text">30</div>
-            </div>
-            </div>
-
             <!-- CENTER: Question -->
             <div class="question-card">
             <!-- Normal question text -->
@@ -1508,10 +1342,7 @@ body.mode-big #app {
 ></div>
         </div>
     </div>
-
-
-
-  <script>
+<script>
 
 function applyTheme(themeClass) {
   const themeLink = document.getElementById("theme-css");
@@ -1522,7 +1353,9 @@ function applyTheme(themeClass) {
 
   // Swap CSS file
   if (themeLink) {
-    const newHref = `quiz_themes/${themeClass}.css`;
+    const newHref = (themeClass === "theme-blue")
+      ? "theme-blue.css"
+      : (themeClass.endsWith(".css") ? themeClass : `quiz_themes/${themeClass}.css`);
 
     // If it's already set, just apply class + show
     if (themeLink.href.endsWith(newHref)) {
@@ -1675,10 +1508,12 @@ async function loadQuizFromJson(jsonPath) {
 
 // Kick off loading as soon as the page is ready
 document.addEventListener("DOMContentLoaded", async () => {
-  showScreen("intro"); // Always start with ONLY the intro visible
-
   try {
+    // If using URL-based quiz selection, do:
+    // const path = getQuizJsonPathFromUrl();
+
     const path = getQuizJsonPathFromUrl();
+
     await loadQuizFromJson(path);
   } catch (err) {
     console.error(err);
@@ -1918,17 +1753,7 @@ const REWARD_EMOJI_POOLS = {
     
     const introLogo = document.getElementById("intro-logo");
     const loadQuizBtn = document.getElementById("load-quiz-btn");
-
-
-    const bigScreenBtn = document.getElementById("big-screen-btn");
-    const phoneModeBtn = document.getElementById("phone-mode-btn");
-
-    if (phoneModeBtn) {
-  phoneModeBtn.addEventListener("click", () => {
-    startGame(); // mobile-only start
-  });
-}
-
+const phoneModeBtn = document.getElementById("phone-mode-btn");
 
     const lessonImageEl = document.getElementById("lesson-image");
     const lessonTitleEl = document.getElementById("lesson-title");
@@ -1944,13 +1769,12 @@ const REWARD_EMOJI_POOLS = {
     const timerTextEl = document.getElementById("timer-text");
     const timerRingFgEl = document.getElementById("timer-ring-fg");
     const emojiFaceEl = document.getElementById("emoji-face");
-
-    const timerRingWrapper = document.querySelector(".timer-ring-wrapper");
-    const quizMain = document.querySelector(".quiz-main");  // <-- add this
+const quizMain = document.querySelector(".quiz-main");  // <-- add this
 
 
-
-    const scoreDisplayEl = document.getElementById("score-display");
+    
+    
+const scoreDisplayEl = document.getElementById("score-display");
     const streakDisplayEl = document.getElementById("streak-display");
 
     const feedbackTitleEl = document.getElementById("feedback-title");
@@ -1999,15 +1823,31 @@ const REWARD_EMOJI_POOLS = {
     lessonImageEl.src = LESSON_IMAGE_PATH;
     lessonTitleEl.textContent = LESSON_TITLE_TEXT;
     lessonSubtitleEl.textContent = LESSON_SUBTITLE_TEXT;
-    
-    // Helper to read CSS color variables from :root
+// Helper to read CSS color variables from :root
     const rootStyles = getComputedStyle(document.documentElement);
     function getCssColor(varName) {
       return rootStyles.getPropertyValue(varName).trim();
     }
 
 
-    
+    // PRELOAD CHOMP SOUND
+    chompAudio = new Audio("quizsounds/sound_chomp.mp3");
+    chompAudio.preload = "auto";
+
+    // Start in "not ready" state – keep button dim/unclickable
+    if (loadQuizBtn) {
+    loadQuizBtn.style.opacity = "0.5";
+    loadQuizBtn.style.pointerEvents = "none";
+    }
+
+    // When the sound is fully buffered and can play through smoothly:
+    chompAudio.addEventListener("canplaythrough", () => {
+    isChompReady = true;
+    if (loadQuizBtn) {
+        loadQuizBtn.style.opacity = "1";
+        loadQuizBtn.style.pointerEvents = "auto";
+    }
+    });
 
     // Kick off loading
     chompAudio.load();
@@ -3143,9 +2983,6 @@ function runSuspenseVariant(variantKey) {
     }
 
 
-    
-
-
     function stopTimer() {
       if (timerIntervalId !== null) {
         clearInterval(timerIntervalId);
@@ -3236,34 +3073,24 @@ function runSuspenseVariant(variantKey) {
     }
 
     feedbackDetailEl.textContent = detailText || "";
-
-    // 3) Background reaction pulse on the quiz card (big mode only)
-    if (currentMode === "big") {
-        quizScreen.classList.remove("bg-correct", "bg-incorrect");
-        void quizScreen.offsetWidth; // restart CSS animation hack
-        quizScreen.classList.add(isCorrect ? "bg-correct" : "bg-incorrect");
-    }
-
-    // 4) Switch the question bar into "feedback bubble" mode
+    // 3) Background reaction pulse on the quiz card
+    quizScreen.classList.remove("bg-correct", "bg-incorrect");
+    void quizScreen.offsetWidth; // restart CSS animation
+    quizScreen.classList.add(isCorrect ? "bg-correct" : "bg-incorrect");
+// 4) Switch the question bar into "feedback bubble" mode
     if (questionCard && feedbackBubble && questionTextEl) {
         questionCard.classList.add("feedback-mode");
         feedbackBubble.style.display = "block";
         questionTextEl.style.display = "none";
     }
-
-    // Mobile-only behavior: auto-advance after a short delay
+    // 5) Mobile behavior: auto-advance after a short delay
     nextQuestionBtn.classList.add("hidden");
     setTimeout(() => {
-      // Only advance if we're still looking at feedback
       if (questionCard && questionCard.classList.contains("feedback-mode")) {
         goToNextQuestionAnimated();
       }
     }, 2000);
-    }
-
-
-
-
+  }
 
     function requestFullscreenIfAvailable() {
       const docEl = document.documentElement;
@@ -3283,27 +3110,23 @@ function runSuspenseVariant(variantKey) {
     /***********************
      * GAME FLOW
      ***********************/
-function startGame() {
-  // Mobile-only: force phone mode no matter what
-  currentMode = "phone";
+    function startGame() {
+      currentMode = "phone";
+      body.classList.remove("mode-title", "mode-phone");
+      body.classList.add("mode-phone");
+      requestFullscreenIfAvailable();
 
-  body.classList.remove("mode-title", "mode-big", "mode-phone");
-  body.classList.add("mode-phone");
-
-  // Optional: try fullscreen (iOS may ignore)
-  requestFullscreenIfAvailable();
-
-  startEmojiLoop();
-  cleanupFloatingElements();
-  currentQuestionIndex = 0;
-  score = 0;
-  streak = 0;
-  correctCount = 0;
-  updateScoreDisplays();
-  updateProgress();
-  showScreen("quiz");
-  loadQuestion();
-}
+      startEmojiLoop();
+      cleanupFloatingElements();
+      currentQuestionIndex = 0;
+      score = 0;
+      streak = 0;
+      correctCount = 0;
+      updateScoreDisplays();
+      updateProgress();
+      showScreen("quiz");
+      loadQuestion();
+    }
 
 function loadQuestion() {
     if (currentQuestionIndex >= QUESTIONS.length) {
@@ -3312,23 +3135,6 @@ function loadQuestion() {
     }
 
     cleanupFloatingElements();
-
-
-    // NEW: handle pointer comet trail for this question
-    if (currentMode === "big") {
-        if (pointerTrailPending) {
-            const trail = getNextPointerTrail();
-            applyPointerTrail(trail);
-            pointerTrailPending = false; // we used it
-        } else {
-            // No special trail scheduled -> plain pointer
-            clearPointerTrail();
-        }
-    } else {
-        // Phone mode (no big pointer on screen)
-        clearPointerTrail();
-    }
-
     // Stop any suspense / bursts from previous question
     stopSuspense();
     stopButtonBurstLoop();
@@ -3355,15 +3161,9 @@ function loadQuestion() {
     questionTextEl.classList.add("question-reveal");
 
     updateProgress();
-
-    // Reset timer for each new question
-    if (currentMode === "big") {
-        startTimer();
-    } else {
-        stopTimer();
-    }
-
-    isLocked = false;
+    // No per-question timer in mobile-only build
+    stopTimer();
+isLocked = false;
     answerButtons.forEach(btn => {
         // Remove any state from the previous question
         btn.classList.remove(
@@ -3513,10 +3313,8 @@ function handleAnswerClick(e) {
     /***********************
      * EVENT LISTENERS
      ***********************/
-    // Mobile-only: single start button
     phoneModeBtn.addEventListener("click", () => startGame());
-
-    answerButtons.forEach(btn => {
+answerButtons.forEach(btn => {
       btn.addEventListener("click", handleAnswerClick);
     });
 
@@ -3630,10 +3428,9 @@ function handleAnswerClick(e) {
 
 
 
-
-    playAgainBtn.addEventListener("click", () => startGame(currentMode));
+    playAgainBtn.addEventListener("click", () => startGame());
     backToTitleBtn.addEventListener("click", () => {
-      body.classList.remove("mode-big", "mode-phone");
+      body.classList.remove("mode-phone");
       body.classList.add("mode-title");
       showScreen("title");
     });
@@ -3676,21 +3473,16 @@ function handleAnswerClick(e) {
 
 
 
-    document.addEventListener("mousedown", (e) => {
-    });
-
 
     homeButton.addEventListener("click", () => {
-        stopTimer(); // stop timer if running
-        if (bigPointer) bigPointer.classList.add("hidden");
-        body.classList.remove("mode-big", "mode-phone");
+        stopTimer(); // stop timer if running        body.classList.remove("mode-phone");
         body.classList.add("mode-title");
         showScreen("title");
     });
 
 function cleanupFloatingElements() {
     document.querySelectorAll(
-        ".pointer-trail-emoji, .star, .burst-star, .timer-particle"
+        ".star, .burst-star, .timer-particle"
     ).forEach(el => el.remove());
 }
 
