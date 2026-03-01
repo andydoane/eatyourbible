@@ -120,6 +120,68 @@
       gap:14px;
     }
 
+/* =========================================================
+   Quiz screen layout: 40% question + 4x15% answers (60% total)
+   ========================================================= */
+
+/* On quiz screen we want full-width stacking, not centered columns */
+.quiz-content{
+  align-items: stretch;   /* overrides global .content align-items:center */
+}
+
+/* Parent layout for question + answers */
+.qa-layout{
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;              /* space between question block and answers stack */
+}
+
+/* Question "button" container */
+.question-box{
+  flex: 0 0 40%;
+  min-height: 0;
+  width: 100%;
+  background: #f2f2f2;
+  color: #333333;
+  border-radius: 18px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+  /* nicer multi-line centering */
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+/* Ensure the question text inherits the hard-coded colors */
+.question-box .question{
+  margin: 0;
+  color: #333333;
+  text-shadow: none;
+  text-wrap: balance;
+}
+
+/* Answers area = remaining 60% */
+.answers{
+  flex: 0 0 60%;
+  min-height: 0;
+  display: flex;          /* switch from grid to vertical flex */
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Each answer gets 15% of the available space (since answers area is 60% and has 4 equal children) */
+.answer{
+  flex: 1;
+  min-height: 0;          /* allow flex sizing to control height */
+  width: 100%;
+}
+
+
     .big-text{
       font-size:26px;
       font-weight:800;
@@ -999,16 +1061,19 @@
         </div>
       </div>
 
-      <div class="content" style="justify-content:flex-start; padding-top: 6px;">
-        <div class="question">${escapeHtml(q.text || "")}</div>
-        <div id="emojiLine" class="hint" style="margin-top:-6px;">${pick(NEUTRAL_EMOJIS)}</div>
+      <div class="content quiz-content" style="justify-content:flex-start; padding-top: 6px;">
+        <div class="qa-layout">
+          <div class="question-box" role="group" aria-label="Question">
+            <div class="question">${escapeHtml(q.text || "")}</div>
+          </div>
 
-        <div id="answers" class="answers">
-          ${q.answers.map((a,i)=>`<button class="answer opt${i}" data-i="${i}" type="button">${escapeHtml(a)}</button>`).join("")}
-        </div>
+          <div id="answers" class="answers">
+            ${q.answers.map((a,i)=>`<button class="answer opt${i}" data-i="${i}" type="button">${escapeHtml(a)}</button>`).join("")}
+          </div>
 
-        <div id="suspense" class="suspense" style="display:none; margin-top:10px;">
-          <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          <div id="suspense" class="suspense" style="display:none;">
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          </div>
         </div>
       </div>
     `;
@@ -1018,7 +1083,6 @@
     const timerNumEl = slide.querySelector("#timerNum");
     const answersEl = slide.querySelector("#answers");
     const suspenseEl = slide.querySelector("#suspense");
-    const emojiLine = slide.querySelector("#emojiLine");
 
     let answered = false;
     let selectedIndex = null;
@@ -1042,10 +1106,8 @@
       const isCorrect = (selectedIndex === correctIdx);
       if (isCorrect) {
         correctCount += 1;
-        emojiLine.textContent = pick(CORRECT_EMOJIS);
         playCorrectSound();
       } else {
-        emojiLine.textContent = pick(INCORRECT_EMOJIS);
         playIncorrectSound();
       }
 
