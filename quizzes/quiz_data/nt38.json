@@ -1,0 +1,110 @@
+{
+  "lessonId": "nt38",
+  "pageTitle": "NT 38 Quiz",
+  "lessonTitleText": "Stephen and Philip",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt38image.png",
+  "themeClass": "theme-red",
+  "questions": [
+    {
+      "text": "Why was Stephen arrested by the Jewish leaders?",
+      "answers": [
+        "They didn’t like what he was saying about Jesus",
+        "He refused to pay taxes",
+        "He broke into the temple",
+        "He healed a man on the Sabbath"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Stephen say to the leaders?",
+      "answers": [
+        "They had killed Jesus, the promised Messiah",
+        "They should make him king",
+        "They should leave him alone",
+        "I was wrong about Jesus – he isn't the Messiah"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Stephen see when he looked up to heaven?",
+      "answers": [
+        "God in heaven, with Jesus standing next to Him",
+        "Angels flying with swords",
+        "A rainbow and bright clouds",
+        "The temple shining in the sky"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the Jewish leaders do to Stephen?",
+      "answers": [
+        "Killed him by throwing stones at him",
+        "Sent him to prison for life",
+        "Forced him to leave town",
+        "Made him stop preaching"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why did the believers scatter?",
+      "answers": [
+        "They were being arrested and thrown into prison",
+        "They wanted to travel the world",
+        "They were looking for food",
+        "They were sad about Stephen"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did an angel tell Philip to do?",
+      "answers": [
+        "Walk down the desert road",
+        "Return to Jerusalem",
+        "Climb a mountain",
+        "Wait inside the temple"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who did Philip meet along the road?",
+      "answers": [
+        "An Ethiopian man who served the queen",
+        "A Roman soldier",
+        "One of the twelve disciples",
+        "A fisherman from Galilee"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What was the Ethiopian man reading?",
+      "answers": [
+        "From the prophet Isaiah",
+        "From the book of Genesis",
+        "From the Psalms",
+        "A letter from Paul"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who did Philip say Isaiah was writing about?",
+      "answers": [
+        "Jesus",
+        "Moses",
+        "King David",
+        "Elijah"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened after Philip baptized the man?",
+      "answers": [
+        "The Holy Spirit carried Philip away to another place",
+        "They traveled back to Jerusalem together",
+        "Philip stayed in Ethiopia",
+        "The queen came to meet Philip"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

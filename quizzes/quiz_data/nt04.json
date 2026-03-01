@@ -1,0 +1,110 @@
+{
+  "lessonId": "nt04",
+  "pageTitle": "NT 04 Quiz",
+  "lessonTitleText": "Wise Men Visit Jesus",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt04image.png",
+  "themeClass": "theme-kahoot-gray",
+  "questions": [
+    {
+      "text": "Where did the wise men come from? What things did they believe?",
+      "answers": [
+        "From the east, they believed stars could tell mysteries about the future",
+        "From Rome, they believed in military power",
+        "From Egypt, they studied medicine",
+        "From Jerusalem, they studied God's law"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why did the wise men follow the star to Jerusalem?",
+      "answers": [
+        "They believed a child had been born to be king of the Jews",
+        "They thought it marked a great battle",
+        "They were looking for a lost treasure",
+        "They wanted to meet King Herod"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who was Herod?",
+      "answers": [
+        "Known as Herod the Great, he was the evil king of the people of Judah",
+        "A kind ruler who loved the people",
+        "A priest in the temple",
+        "A Roman soldier"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "King Herod asked, 'Where is the Messiah to be born?' What did his servants say?",
+      "answers": [
+        "The prophet Micah says he'll be born in Bethlehem",
+        "He'll appear in Jerusalem inside God's temple",
+        "He'll be born in Rome in Caesar's palace",
+        "We don't know"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Herod tell the wise men to do?",
+      "answers": [
+        "Find the child, report back to him so he could worship him, too",
+        "Bring the child to the palace",
+        "Ignore the star and go home",
+        "Stay in Jerusalem for one year"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did the wise men find Jesus' house?",
+      "answers": [
+        "God made the star appear above it",
+        "They asked the shepherds",
+        "They searched every house",
+        "They followed Joseph"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the wise men do when they found Jesus?",
+      "answers": [
+        "Worshiped him, gave him gold, frankincense, and myrrh",
+        "Told him bedtime stories",
+        "Took him gifts of food",
+        "Asked him to come to their country"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What warning did God give the wise men? What did they do?",
+      "answers": [
+        "Don't go back to Herod, they went home on a different road",
+        "Go back and tell Herod everything",
+        "Wait in Jerusalem until morning",
+        "Forget that you saw Jesus"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the angel in Joseph's dream tell him to do? Why?",
+      "answers": [
+        "Hide in Egypt because Herod wanted to kill Jesus",
+        "Return to Nazareth immediately",
+        "Send Jesus to live with family far away",
+        "Go back to Bethlehem"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "After Herod died, what did Joseph and his family do?",
+      "answers": [
+        "Return to Israel to live in the tiny town of Nazareth",
+        "Stay in Egypt forever",
+        "Move to Jerusalem",
+        "Travel back to Bethlehem"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

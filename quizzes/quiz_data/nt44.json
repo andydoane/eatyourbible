@@ -1,0 +1,110 @@
+{
+  "lessonId": "nt44",
+  "pageTitle": "NT 44 Quiz",
+  "lessonTitleText": "Jesus Is Coming Back",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt44image.png",
+  "themeClass": "theme-white",
+  "questions": [
+    {
+      "text": "Where will people first see Jesus, the Son of Man, when He returns?",
+      "answers": [
+        "In the clouds",
+        "In the temple",
+        "On a mountain in Jerusalem",
+        "In their minds"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What will Jesus do with those who have died, both evil and good?",
+      "answers": [
+        "Raise them from the dead",
+        "Leave them in the grave",
+        "Turn them into angels",
+        "Send them immediately to heaven or hell"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "After sitting on His throne, what will Jesus do with all the people?",
+      "answers": [
+        "Separate them like a shepherd separates sheep and goats",
+        "Mix them all up together",
+        "Yell at everyone for sinning",
+        "Ask them to choose which side they want to be on"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who are the sheep and who are the goats?",
+      "answers": [
+        "Sheep are believers; goats are unbelievers",
+        "Sheep are unbelievers; goats are believers",
+        "Sheep are rich; goats are poor",
+        "Sheep are angels; goats are demons"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What will happen to the 'sheep'?",
+      "answers": [
+        "They will enter God’s forever kingdom",
+        "They will be tested",
+        "They will return to the grave",
+        "They will be punished"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What will happen to the “goats”?",
+      "answers": [
+        "They will be punished forever for their sins",
+        "They will get a second chance",
+        "They will be send back to the grave",
+        "They will enter God's forever kingdom"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What will our resurrected bodies be like?",
+      "answers": [
+        "Glorious, beautiful, strong, and lasting forever",
+        "Invisible and ghost-like",
+        "Exactly the same as now",
+        "We won't have bodies"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What will happen to heaven and earth when Jesus returns?",
+      "answers": [
+        "God will make a new heaven and a new earth",
+        "They will stay exactly the same",
+        "God will make it grow twice as big",
+        "They will be thrown into the sun"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What will God’s forever kingdom be like?",
+      "answers": [
+        "No sickness, pain, sadness, or death",
+        "Lots of hard work and rules",
+        "Only nice people can",
+        "Clouds and harps everywhere"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How can we be ready for Jesus’ return?",
+      "answers": [
+        "Believe the good news",
+        "Try really hard to obey",
+        "Watch the sky every day",
+        "Build an ark like Noah"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

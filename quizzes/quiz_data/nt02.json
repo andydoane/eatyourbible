@@ -1,0 +1,110 @@
+{
+  "lessonId": "nt02",
+  "pageTitle": "NT 02 Quiz",
+  "lessonTitleText": "An Angel Visits Mary and Joseph",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt02image.png",
+  "themeClass": "theme-teal",
+  "questions": [
+    {
+      "text": "Who did God send to visit a young woman named Mary?",
+      "answers": [
+        "The angel Gabriel",
+        "The angel Michael",
+        "An old prophet",
+        "The angel Steve"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Gabriel say would happen to Mary?",
+      "answers": [
+        "She would have a baby",
+        "She would find lots of money",
+        "She would become a queen",
+        "She would never get married"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Gabriel say about Mary's baby?",
+      "answers": [
+        "Son of the Most High God, a forever king like David",
+        "A great soldier who would defeat Rome",
+        "A powerful teacher who would become famous",
+        "A prophet like Moses"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why did Mary ask, 'How can this happen?'",
+      "answers": [
+        "She was a virgin",
+        "She was too old",
+        "She was afraid of Gabriel",
+        "She was already married"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Gabriel say would happen to Mary to give her a child?",
+      "answers": [
+        "The Holy Spirit would visit her",
+        "An angel would bring a baby from heaven",
+        "She would drink special water",
+        "She would pray for many years"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Mary say about Gabriel's message?",
+      "answers": [
+        "May it happen like you said it would",
+        "I refuse to believe this",
+        "I need time to think about it",
+        "Get someone else instead"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When he saw Mary was pregnant, what did Joseph plan to do?",
+      "answers": [
+        "Divorce her quietly",
+        "Tell everyone what happened",
+        "Marry her immediately",
+        "Send Mary to jail"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened to Joseph?",
+      "answers": [
+        "An angel visited him in a dream",
+        "Mary explained everything to him",
+        "He ran away and was never seen again",
+        "He became very sick"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the angel say to Joseph?",
+      "answers": [
+        "Marry Mary, her baby is from the Holy Spirit",
+        "Leave Mary and go far away",
+        "Go find another girl to Mary",
+        "Mary is crazy"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Jesus was the messiah. What does 'messiah' mean?",
+      "answers": [
+        "The long-promised Savior from God",
+        "A powerful king from Egypt",
+        "A prophet who would speak God's words",
+        "An angel who would rule heaven"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
