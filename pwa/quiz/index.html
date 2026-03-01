@@ -430,6 +430,27 @@
   will-change: transform;
 }
 
+/* Bomb shockwave ring (from old Andy engine) */
+.shockwave{
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 8px solid #ffea00;
+  box-shadow: 0 0 22px rgba(255, 234, 0, 0.75);
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+  pointer-events: none;
+}
+
+@keyframes shockwaveExpand{
+  from { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  to   { transform: translate(-50%, -50%) scale(25); opacity: 0; }
+}
+
+
 /* Gravity-style jump for yesnoFlip */
 @keyframes yesnoJump {
   0%   { transform: translateY(0); }
@@ -1131,22 +1152,46 @@ function runSuspenseVariant({ variant, questionBoxEl, answerBtns, done }) {
   }
 
   if (variant === "bomb") {
-    setSuspenseEmoji("💣");
-    let grow = true;
-    const iv = setInterval(() => {
-      suspenseEmoji.style.transform = `scale(${grow ? 1.25 : 0.95})`;
-      grow = !grow;
-      tt();
-    }, 250);
+  // Old Andy engine style: pulsing bomb, then yellow shockwave ring (no 💥 swap)
+  setSuspenseEmoji("💣");
+  suspenseEmoji.style.fontSize = "11rem";
 
-    const to = setTimeout(() => {
-      // quick "explosion"
-      setSuspenseEmoji("💥");
-      suspenseEmoji.style.transform = "scale(1.35)";
-      setTimeout(() => finishSuspense(()=>{clearInterval(iv);clearTimeout(to);}, done), 450);
-    }, 2600);
-    return;
-  }
+  let pulseCount = 0;
+  let up = false;
+
+  const iv = setInterval(() => {
+    // pulse
+    up = !up;
+    suspenseEmoji.style.transform = up ? "scale(1.35)" : "scale(1)";
+    tt();
+    pulseCount++;
+
+    if (pulseCount >= 6) {
+      clearInterval(iv);
+
+      // Clear emoji and do shockwave ring
+      suspenseEmoji.textContent = "";
+      suspenseEmoji.style.transform = "";
+      suspenseEmoji.style.fontSize = "96px"; // restore default for next variants
+
+      const ring = document.createElement("div");
+      ring.className = "shockwave";
+      suspenseOverlay.appendChild(ring);
+
+      // Trigger animation
+      ring.style.animation = "shockwaveExpand 900ms cubic-bezier(.3,.7,.4,1) forwards";
+
+      // Cleanup and finish suspense
+      setTimeout(() => {
+        try { ring.remove(); } catch(e) {}
+        finishSuspense(() => {}, done);
+      }, 930);
+    }
+  }, 320);
+
+  // Safety cleanup in case something interrupts
+  return;
+}
 
   if (variant === "coin") {
   // Animated coin flip using scaleX with a transition (no blinking)
