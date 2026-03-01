@@ -2186,22 +2186,30 @@ const REWARD_EMOJI_POOLS = {
     return POINTER_TRAILS[nextIndex];
     }
 
-    function applyPointerTrail(trail) {
-    currentPointerTrail = trail;
+function applyPointerTrail(trail) {
+  currentPointerTrail = trail;
 
-    // The pointer itself stays just "👆".
-    // We only add a glow so it feels special.
-    bigPointer.style.textShadow = `
-        0 0 8px ${trail.glowColor},
-        0 0 16px ${trail.glowColor}
-    `;
-    }
+  // Mobile-only safety: if bigPointer element doesn't exist, do nothing
+  if (!bigPointer) return;
 
-    function clearPointerTrail() {
-    currentPointerTrail = null;
-    bigPointer.textContent = POINTER_HEAD;
-    bigPointer.style.textShadow = "none";
-    }
+  // The pointer itself stays just "👆".
+  // We only add a glow so it feels special.
+  bigPointer.style.textShadow = `
+    0 0 8px ${trail.glowColor},
+    0 0 16px ${trail.glowColor}
+  `;
+}
+
+function clearPointerTrail() {
+  currentPointerTrail = null;
+
+  // Mobile-only safety: if bigPointer element doesn't exist, do nothing
+  if (!bigPointer) return;
+
+  bigPointer.textContent = POINTER_HEAD;
+  bigPointer.style.textShadow = "none";
+}
+
 
     function schedulePointerTrailForNextQuestion() {
     // Called when a question is answered correctly
@@ -3971,7 +3979,7 @@ function handleAnswerClick(e) {
 
     homeButton.addEventListener("click", () => {
         stopTimer(); // stop timer if running
-        bigPointer.classList.add("hidden"); // hide big pointer when leaving quiz
+        if (bigPointer) bigPointer.classList.add("hidden");
         body.classList.remove("mode-big", "mode-phone");
         body.classList.add("mode-title");
         showScreen("title");
