@@ -6,6 +6,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
 <title>Apostles Creed</title>
 
+<!-- PWA -->
+<link rel="manifest" href="/eatyourbible/pwa/creed/manifest.webmanifest">
+<meta name="theme-color" content="#7f66c6">
+
+<!-- iOS "Add to Home Screen" -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/eatyourbible/pwa/creed/icons/icon-192.png">
+
 <style>
 
 /* Global box sizing fix */
@@ -1454,6 +1463,16 @@ setupKeyboardNav();
 preventDoubleTapZoomOnButtons();
 preloadCreedImages(5);
 introScreen();
+
+/* ---- PWA: register service worker ---- */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("/eatyourbible/pwa/creed/sw.js")
+      .catch(() => {});
+  });
+}
+
 </script>
 </body>
 </html>
