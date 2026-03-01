@@ -880,27 +880,23 @@
   function showTitle() {
     setNavVisible(false);
 
-    const img = LESSON_IMAGE_PATH ? `<img src="${LESSON_IMAGE_PATH}" alt="" style="width:76px;height:76px;object-fit:cover;border-radius:22px;box-shadow:0 12px 28px rgba(0,0,0,0.3)" onerror="this.style.display='none'">` : "";
+  const img = LESSON_IMAGE_PATH ? `
+    <img
+      src="${LESSON_IMAGE_PATH}"
+      alt=""
+      style="width:min(78vw, 420px); max-height:42vh; object-fit:contain; border-radius:28px; box-shadow:0 14px 34px rgba(0,0,0,0.30)"
+      onerror="this.style.display='none'"
+    >
+  ` : ""; 
 
     const html = `
-      <div class="top">
-        <div class="brand">
-          <img src="quizimages/eyb_logo_1.png" alt="Logo" onerror="this.style.display='none'">
-          <div class="titles">
-            <div class="title">${escapeHtml(LESSON_TITLE_TEXT || "Quiz")}</div>
-            <div class="subtitle">${escapeHtml(LESSON_SUBTITLE_TEXT || "")}</div>
-          </div>
-        </div>
-      </div>
-
       <div class="content" style="justify-content:center; text-align:center; gap:18px;">
         ${img}
-        <div class="big-text">${escapeHtml(PAGE_TITLE || "Quiz")}</div>
+        <div class="big-text">${escapeHtml(LESSON_TITLE_TEXT || PAGE_TITLE || "Quiz")}</div>
         <div class="body-text">Questions: <b>${QUESTIONS.length}</b></div>
 
         <button id="startBtn" class="primary-btn" type="button">Start</button>
         <button id="reloadBtn" class="secondary-btn" type="button">Load different quiz</button>
-        <div class="hint">Tip: use <b>?q=nt01</b> to load another quiz file.</div>
       </div>
     `;
 
