@@ -1923,6 +1923,13 @@ const REWARD_EMOJI_POOLS = {
     const bigScreenBtn = document.getElementById("big-screen-btn");
     const phoneModeBtn = document.getElementById("phone-mode-btn");
 
+    if (phoneModeBtn) {
+  phoneModeBtn.addEventListener("click", () => {
+    startGame(); // mobile-only start
+  });
+}
+
+
     const lessonImageEl = document.getElementById("lesson-image");
     const lessonTitleEl = document.getElementById("lesson-title");
     const lessonSubtitleEl = document.getElementById("lesson-subtitle");
@@ -3619,6 +3626,7 @@ function handleAnswerClick(e) {
     nextQuestionBtn.classList.add("hidden");
     goToNextQuestionAnimated();
     });
+
 
 
 
