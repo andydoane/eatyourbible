@@ -127,7 +127,9 @@
 /* On quiz screen we want full-width stacking, not centered columns */
 .quiz-content{
   align-items: stretch;
-  padding-bottom: 0;   /* important: don't squeeze into nav space */
+
+  /* Add breathing room above the nav bar */
+  padding-bottom: 18px;   /* match your global content bottom padding vibe */
 }
 
 /* Parent layout for question + answers */
