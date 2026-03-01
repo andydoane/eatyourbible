@@ -1271,81 +1271,7 @@ body.mode-big #app {
   }
 
 
-    /* HIDE CURSOR IN BIG MODE (for all elements) */
-    body.mode-big,
-    body.mode-big * {
-    cursor: none !important;
-    }
-
-
-
-    
-
-    /* CUSTOM BIG POINTER */
-    #big-pointer {
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 10001;
-    font-size: 3.5rem;
-    pointer-events: none;
-    transform: translate(-38%, -15%);
-    transition: transform 0.04s linear;
-    }
-
-    /* Little emoji "ghosts" that follow the big pointer */
-    .pointer-trail-emoji {
-    position: fixed;
-    z-index: 9998; /* just under the main pointer */
-    font-size: 2.5rem;
-    pointer-events: none;
-    transform: translate(-38%, -15%);
-    opacity: 1;
-    animation: pointerTrailFade 0.6s ease-out forwards;
-    }
-
-    @keyframes pointerTrailFade {
-    0% {
-        opacity: 1;
-        transform: translate(-38%, -15%) scale(1);
-    }
-    100% {
-        opacity: 0;
-        transform: translate(-38%, -5%) scale(0.7);
-    }
-    }
-
-
-    /* CLICK RIPPLE EFFECT (big-screen pointer) */
-    .click-ripple {
-    position: fixed;
-    width: 80px;
-    height: 80px;
-    border-radius: 999px;
-    border: 3px solid rgba(255, 255, 255, 0.85);
-    pointer-events: none;
-    z-index: 9998;
-    transform: translate(-50%, -50%) scale(0.1);
-    opacity: 0.9;
-    box-shadow: 0 0 20px rgba(255, 255, 255, 0.6);
-    animation: clickRipple 0.45s ease-out forwards;
-    }
-
-    @keyframes clickRipple {
-    0% {
-        transform: translate(-50%, -50%) scale(0.1);
-        opacity: 0.9;
-    }
-    70% {
-        transform: translate(-50%, -50%) scale(1);
-        opacity: 0.5;
-    }
-    100% {
-        transform: translate(-50%, -50%) scale(1.3);
-        opacity: 0;
-        box-shadow: 0 0 0 rgba(255, 255, 255, 0);
-    }
-    }
+  
 
 
 .question-progress {
@@ -1359,12 +1285,7 @@ body.mode-big #app {
   height: 20px;
 }
 
-    
-/* DEBUG: temporarily show the real mouse cursor */
-body.show-real-cursor,
-body.show-real-cursor * {
-  cursor: auto !important;
-}
+
 
 
 
@@ -2023,20 +1944,6 @@ const REWARD_EMOJI_POOLS = {
     const quizMain = document.querySelector(".quiz-main");  // <-- add this
 
 
-    
-    // DEBUG: Hold SHIFT to temporarily show the real cursor
-    document.addEventListener("keydown", (e) => {
-    if (e.key === "Shift") {
-        document.body.classList.add("show-real-cursor");
-    }
-    });
-
-    document.addEventListener("keyup", (e) => {
-    if (e.key === "Shift") {
-        document.body.classList.remove("show-real-cursor");
-    }
-    });
-
 
     const scoreDisplayEl = document.getElementById("score-display");
     const streakDisplayEl = document.getElementById("streak-display");
@@ -2087,8 +1994,6 @@ const REWARD_EMOJI_POOLS = {
     lessonImageEl.src = LESSON_IMAGE_PATH;
     lessonTitleEl.textContent = LESSON_TITLE_TEXT;
     lessonSubtitleEl.textContent = LESSON_SUBTITLE_TEXT;
-
-    const bigPointer = document.getElementById("big-pointer");
     
     // Helper to read CSS color variables from :root
     const rootStyles = getComputedStyle(document.documentElement);
@@ -2097,201 +2002,7 @@ const REWARD_EMOJI_POOLS = {
     }
 
 
-    /***********************************
-     * POINTER COMET TRAILS (NEW)
-     ***********************************/
-    const POINTER_HEAD = "👆";
-
-        const POINTER_TRAILS = [
-    {
-        id: "star_comet",
-        emojis: ["⭐", "✨", "·"],
-        glowColor: getCssColor("--pointer-glow-star"),
-    },
-    {
-        id: "ocean_comet",
-        emojis: ["🌊", "💧", "·"],
-        glowColor: getCssColor("--pointer-glow-ocean"),
-    },
-    {
-        id: "garden_comet",
-        emojis: ["🌿", "🌱", "🍃", "·"],
-        glowColor: getCssColor("--pointer-glow-garden"),
-    },
-    {
-        id: "fire_comet",
-        emojis: ["🔥", "✨", "·"],
-        glowColor: getCssColor("--pointer-glow-fire"),
-    },
-    {
-        id: "galaxy_comet",
-        emojis: ["🌙", "⭐", "✨", "·"],
-        glowColor: getCssColor("--pointer-glow-galaxy"),
-    },
-    {
-        id: "animal_comet",
-        emojis: ["🐾", "🐾", "·"],
-        glowColor: getCssColor("--pointer-glow-animal"),
-    },
-    {
-        id: "joy_comet",
-        emojis: ["😄", "😊", "🙂", "·"],
-        glowColor: getCssColor("--pointer-glow-joy"),
-    },
-    {
-        id: "heart_comet",
-        emojis: ["❤️", "💕", "💖", "·"],
-        glowColor: getCssColor("--pointer-glow-heart"),
-    },
-    {
-        id: "rainbow_comet",
-        emojis: ["🌈", "✨", "·"],
-        glowColor: getCssColor("--pointer-glow-rainbow"),
-    },
-    {
-        id: "bible_light_comet",
-        emojis: ["📖", "✨", "·"],
-        glowColor: getCssColor("--pointer-glow-bible"),
-    },
-    ];
-
-
-    let pointerTrailDeck = [];
-    let currentPointerTrail = null;
-
-    // NEW: for mouse trail behaviour
-    let lastPointerTrailTime = 0;       // when we last created a ghost
-    let pointerTrailEmojiIndex = 0;     // which emoji to use next in the comet's list
-
-    // NEW: limit how many ghost emojis exist at once
-    let activePointerGhosts = 0;
-    const MAX_POINTER_GHOSTS = 60;      // you can tweak this number if you like
-
-
-    function refillPointerTrailDeck() {
-    // Fill the deck with all trail indexes and shuffle them
-    pointerTrailDeck = POINTER_TRAILS.map((_, index) => index);
-
-    for (let i = pointerTrailDeck.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [pointerTrailDeck[i], pointerTrailDeck[j]] = [pointerTrailDeck[j], pointerTrailDeck[i]];
-    }
-    }
-
-    function getNextPointerTrail() {
-    if (pointerTrailDeck.length === 0) {
-        refillPointerTrailDeck();
-    }
-    const nextIndex = pointerTrailDeck.pop(); // no repeats until deck is empty
-    return POINTER_TRAILS[nextIndex];
-    }
-
-function applyPointerTrail(trail) {
-  currentPointerTrail = trail;
-
-  // Mobile-only safety: if bigPointer element doesn't exist, do nothing
-  if (!bigPointer) return;
-
-  // The pointer itself stays just "👆".
-  // We only add a glow so it feels special.
-  bigPointer.style.textShadow = `
-    0 0 8px ${trail.glowColor},
-    0 0 16px ${trail.glowColor}
-  `;
-}
-
-function clearPointerTrail() {
-  currentPointerTrail = null;
-
-  // Mobile-only safety: if bigPointer element doesn't exist, do nothing
-  if (!bigPointer) return;
-
-  bigPointer.textContent = POINTER_HEAD;
-  bigPointer.style.textShadow = "none";
-}
-
-
-    function schedulePointerTrailForNextQuestion() {
-    // Called when a question is answered correctly
-    pointerTrailPending = true;
-    }
-
-    // NEW: create one fading emoji "ghost" at (x, y)
-    function spawnPointerTrailEmoji(x, y) {
-        // Prevent trails when pointer is hidden (phone/tablet/disabled)
-    if (currentMode !== "big" || isRealTablet) return;    
-
-        // If no comet is active, do nothing
-    if (!currentPointerTrail) return;
-
-     const now = performance.now ? performance.now() : Date.now();
-
-    // Throttle: don't spawn on EVERY tiny movement (100ms gap)
-    if (now - lastPointerTrailTime < 100) return;
-    lastPointerTrailTime = now;
-
-    // NEW: if we already have too many ghosts, skip making more
-    if (activePointerGhosts >= MAX_POINTER_GHOSTS) {
-        return;
-    }
-
-    const emojis = currentPointerTrail.emojis || [];
-    if (!emojis.length) return;
-
-    // Cycle through the comet's emoji list: ⭐ → ✨ → · → ⭐ → ...
-    const emoji = emojis[pointerTrailEmojiIndex % emojis.length];
-    pointerTrailEmojiIndex++;
-
-    const span = document.createElement("span");
-    span.className = "pointer-trail-emoji";
-    span.textContent = emoji;
-    span.style.left = x + "px";
-    span.style.top = y + "px";
-
-    // Give the ghost a soft glow too
-    if (currentPointerTrail.glowColor) {
-        span.style.textShadow = `
-        0 0 6px ${currentPointerTrail.glowColor}
-        `;
-    }
-
-    document.body.appendChild(span);
-
-    // NEW: track how many are alive
-    activePointerGhosts++;
-
-    // Remove the element after its fade-out animation finishes
-    span.addEventListener("animationend", () => {
-        span.remove();
-        activePointerGhosts--;
-    });
-
-    }
-
-    // Start with a simple pointer (no trail)
-    if (bigPointer) {
-    clearPointerTrail();
-    }
-
-
-    // PRELOAD CHOMP SOUND
-    chompAudio = new Audio("quizsounds/sound_chomp.mp3");
-    chompAudio.preload = "auto";
-
-    // Start in "not ready" state – keep button dim/unclickable
-    if (loadQuizBtn) {
-    loadQuizBtn.style.opacity = "0.5";
-    loadQuizBtn.style.pointerEvents = "none";
-    }
-
-    // When the sound is fully buffered and can play through smoothly:
-    chompAudio.addEventListener("canplaythrough", () => {
-    isChompReady = true;
-    if (loadQuizBtn) {
-        loadQuizBtn.style.opacity = "1";
-        loadQuizBtn.style.pointerEvents = "auto";
-    }
-    });
+    
 
     // Kick off loading
     chompAudio.load();
@@ -3426,21 +3137,8 @@ function runSuspenseVariant(variantKey) {
       }
     }
 
-        function spawnClickRipple(x, y) {
-        // Only show in big-screen mode, not on iPad/Android tablets
-        if (!body.classList.contains("mode-big")) return;
-        if (isRealTablet) return;
 
-        const ripple = document.createElement("div");
-        ripple.className = "click-ripple";
-        ripple.style.left = x + "px";
-        ripple.style.top = y + "px";
-        document.body.appendChild(ripple);
-
-        ripple.addEventListener("animationend", () => {
-            ripple.remove();
-        });
-        }
+    
 
 
     function stopTimer() {
@@ -3973,7 +3671,6 @@ function handleAnswerClick(e) {
 
 
     document.addEventListener("mousedown", (e) => {
-    spawnClickRipple(e.clientX, e.clientY);
     });
 
 
