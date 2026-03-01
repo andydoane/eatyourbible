@@ -1,0 +1,137 @@
+
+/*********************************************
+ * 2) ICE KINGDOM / FROZEN PEAKS THEME
+ *********************************************/
+:root.theme-ice {
+  /* 1) Background of the whole page (ice kingdom) */
+  --bg-gradient-top: #e0f2ff;    /* frosty pale blue */
+  --bg-gradient-bottom: #60a5fa; /* glacier blue */
+  --card-bg: #f9fbff;            /* bright icy card */
+
+  /* 2) Presented-by (intro) screen */
+  --intro-bg: #1d4ed8;           /* strong cold blue */
+  --intro-text: #e0f2ff;
+
+  /* 3) Main text colors */
+  --text-main: #0f172a;          /* deep navy text */
+  --text-muted: #64748b;         /* slate gray */
+
+  /* 3a) Title screen text colors */
+  --title-main-text: #e0f2ff;
+  --title-subtitle-text: #333333;
+
+  /* 4) Question area */
+  --question-bg: #f9fbff;
+  --question-text: #0f172a;
+
+  /* 5) “Next Question” / main buttons */
+  --accent: #38bdf8;             /* icy bright blue */
+  --accent-dark: #0ea5e9;        /* darker aqua */
+  --primary-text: #0f172a;
+  --secondary-bg: #e0f2fe;
+  --secondary-text: #0f172a;
+
+  /* 6) Answer buttons – icy set (no classic R/Y/G/B combo) */
+  --red: #e11d48;                /* cool pink-red */
+  --red-text: #fdf2f8;
+
+  --yellow: #e5e7eb;             /* frosty white-gray */
+  --yellow-text: #0f172a;
+
+  --blue: #38bdf8;               /* ice blue */
+  --blue-text: #0f172a;
+
+  --green: #a855f7;              /* frozen lavender */
+  --green-text: #f9f5ff;
+
+  /* 7) Correct / incorrect feedback text */
+  --feedback-correct-text: #22c55e;
+  --feedback-incorrect-text: #e11d48;
+
+  /* 8) Question page background */
+  --quiz-screen-bg: linear-gradient(180deg, #e0f2ff, #60a5fa);
+
+  /* 9) End screen background + text */
+  --end-great-bg-top: #e0f2fe;
+  --end-great-bg-bottom: #22c55e;
+
+  --end-good-bg-top: #bfdbfe;
+  --end-good-bg-bottom: #38bdf8;
+
+  --end-try-bg-top: #fee2e2;
+  --end-try-bg-bottom: #e5e7eb;
+
+  --end-score-text: #0f172a;
+  --end-detail-text: #475569;
+
+  /* 9a) End screen title & subtitle text colors */
+  --end-title-text: var(--end-score-text);
+  --end-subtitle-text: var(--end-detail-text);
+
+  /* 10) Progress bar & timer colors */
+  --progress-track-bg: rgba(148, 163, 184, 0.35);
+  --progress-fill-gradient: linear-gradient(120deg, #38bdf8, #a855f7, #22c55e);
+
+  --timer-bg: #f9fbff;
+  --timer-ring-bg: rgba(148, 163, 184, 0.35);
+  --timer-ring-fg: #38bdf8;
+  --timer-text: #0f172a;
+
+  /* 11) Little number pill on answer buttons */
+  --answer-key-pill-bg: rgba(15, 23, 42, 0.15);
+  --answer-key-pill-text: #0f172a;
+
+  /* 12) Misc */
+  --button-radius: 0.9rem;
+
+  /* 13) Small round icon buttons */
+  --icon-chip-bg: #e0f2fe;
+  --icon-chip-text: #0f172a;
+
+  /* 14) Overlays and reward spotlight */
+  --spotlight-overlay-bg: rgba(15, 23, 42, 0.85);
+  --reward-overlay-bg: rgba(15, 23, 42, 0.9);
+  --reward-text: #e0f2ff;
+
+  /* 15) Answer button outlines */
+  --answer-border: rgba(255, 255, 255, 0.95);
+  --answer-border-strong: rgba(255, 255, 255, 1);
+
+  --red-border:   #be123c;
+  --yellow-border:#9ca3af;
+  --blue-border:  #0ea5e9;
+  --green-border: #7c3aed;
+
+  /* 16) Timer explosion effects */
+  --timer-particle-gradient: radial-gradient(
+    circle,
+    #e0f2fe 0%,
+    #bae6fd 35%,
+    #38bdf8 65%,
+    #1d4ed8 100%
+  );
+  --timer-explosion-glow: rgba(56, 189, 248, 0.9);
+
+  /* 17) Dynamic reaction flash colors */
+  --flash-correct-bg: rgba(34, 197, 94, 0.22);
+  --flash-incorrect-bg: rgba(225, 29, 72, 0.24);
+  --flash-return-bg: var(--quiz-screen-bg);
+
+  /* 18) Screen card shadow color */
+  --screen-card-shadow: rgba(15, 23, 42, 0.25);
+
+  /* 19) Pointer comet glow colors */
+  --pointer-glow-star:   #facc15;
+  --pointer-glow-ocean:  #38bdf8;
+  --pointer-glow-garden: #22c55e;
+  --pointer-glow-fire:   #fb7185;
+  --pointer-glow-galaxy: #a855f7;
+  --pointer-glow-animal: #a67c52;
+  --pointer-glow-joy:    #fde68a;
+  --pointer-glow-heart:  #f472b6;
+  --pointer-glow-rainbow:#ffffff;
+  --pointer-glow-bible:  #fff3cd;
+
+  /* 20) Answer feedback subtitle text */
+  --feedback-subtitle-text: #475569;
+}

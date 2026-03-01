@@ -1,0 +1,135 @@
+
+:root.theme-john-the-baptist {
+  /* 1) Background of the whole page (light gray) */
+  --bg-gradient-top: #f2f4f7;      /* light gray */
+  --bg-gradient-bottom: #d7dbe1;   /* slightly deeper gray */
+  --card-bg: #f8fafc;              /* soft off-white card */
+
+  /* 2) Presented-by (intro) screen */
+  --intro-bg: #2b4a63;             /* deep muted blue */
+  --intro-text: #ffffff;
+
+  /* 3) Main text colors */
+  --text-main: #121826;            /* near-black */
+  --text-muted: #5b6472;           /* cool gray */
+
+  /* 3a) Title screen text colors */
+  --title-main-text: #ffffff;
+  --title-subtitle-text: #ffd42a;  /* pulls from your yellow */
+
+  /* 4) Question area */
+  --question-bg: #f8fafc;
+  --question-text: #121826;
+
+  /* 5) “Next Question” / main buttons */
+  --accent: #3d85c6;               /* your blue */
+  --accent-dark: #2b5f95;          /* deeper blue */
+  --primary-text: #ffffff;
+  --secondary-bg: #fff3b0;         /* soft warm yellow tint */
+  --secondary-text: #6a4b00;       /* dark warm text */
+
+  /* 6) Answer buttons (your required colors) */
+  --red: #a96a41;                  /* brown */
+  --red-text: #ffffff;
+
+  --yellow: #ffd42a;               /* yellow */
+  --yellow-text: #121826;
+
+  --blue: #3d85c6;                 /* blue */
+  --blue-text: #ffffff;
+
+  --green: #62bb47;                /* green */
+  --green-text: #ffffff;
+
+  /* 7) Correct / incorrect feedback text */
+  --feedback-correct-text: #62bb47;
+  --feedback-incorrect-text: #a96a41;
+
+  /* 8) Question page background */
+  --quiz-screen-bg: linear-gradient(180deg, #f2f4f7, #d7dbe1);
+
+  /* 9) End screen backgrounds */
+  --end-great-bg-top: #ffd42a;
+  --end-great-bg-bottom: #62bb47;
+
+  --end-good-bg-top: #3d85c6;
+  --end-good-bg-bottom: #ffd42a;
+
+  --end-try-bg-top: #a96a41;
+  --end-try-bg-bottom: #5b6472;
+
+  --end-score-text: #121826;
+  --end-detail-text: #121826;
+
+  /* 9a) End screen title & subtitle text colors */
+  --end-title-text: var(--end-score-text);
+  --end-subtitle-text: var(--end-detail-text);
+
+  /* 10) Progress bar & timer colors */
+  --progress-track-bg: rgba(18, 24, 38, 0.18);
+  --progress-fill-gradient: linear-gradient(120deg, #62bb47, #ffd42a, #3d85c6, #a96a41);
+
+  --timer-bg: #f8fafc;
+  --timer-ring-bg: rgba(18, 24, 38, 0.18);
+  --timer-ring-fg: #ffd42a;
+  --timer-text: #121826;
+
+  /* 11) Little number pill on answer buttons */
+  --answer-key-pill-bg: rgba(18, 24, 38, 0.65);
+  --answer-key-pill-text: #ffffff;
+
+  /* 12) Misc */
+  --button-radius: 1rem;
+
+  /* 13) Small round icon buttons */
+  --icon-chip-bg: rgba(18, 24, 38, 0.22);
+  --icon-chip-text: #121826;
+
+  /* 14) Overlays and reward spotlight */
+  --spotlight-overlay-bg: rgba(0, 0, 0, 0.85);
+  --reward-overlay-bg: rgba(0, 0, 0, 0.9);
+  --reward-text: #ffffff;
+
+  /* 15) Answer button outlines */
+  --answer-border: rgba(248, 250, 252, 0.85);
+  --answer-border-strong: rgba(248, 250, 252, 1);
+
+  --red-border:   #7f4f31;         /* darker brown */
+  --yellow-border:#caa61f;         /* darker yellow */
+  --blue-border:  #2b5f95;         /* darker blue */
+  --green-border: #3d8f32;         /* darker green */
+
+  /* 16) Timer explosion effects */
+  --timer-particle-gradient: radial-gradient(
+    circle,
+    #f8fafc 0%,
+    #ffd42a 40%,
+    #62bb47 70%,
+    #3d85c6 100%
+  );
+  --timer-explosion-glow: rgba(255, 212, 42, 0.9);
+
+  /* 17) Dynamic reaction flash colors */
+  --flash-correct-bg: rgba(98, 187, 71, 0.22);
+  --flash-incorrect-bg: rgba(169, 106, 65, 0.26);
+  --flash-return-bg: var(--quiz-screen-bg);
+
+  /* 18) Screen card shadow */
+  --screen-card-shadow: rgba(18, 24, 38, 0.28);
+
+  /* 19) Pointer comet glow colors */
+  --pointer-glow-star:   #ffd42a;
+  --pointer-glow-ocean:  #3d85c6;
+  --pointer-glow-garden: #62bb47;
+  --pointer-glow-fire:   #a96a41;
+  --pointer-glow-galaxy: #121826;
+  --pointer-glow-animal: #5b6472;
+  --pointer-glow-joy:    #fff3b0;
+  --pointer-glow-heart:  #a96a41;
+  --pointer-glow-rainbow:#f8fafc;
+  --pointer-glow-bible:  #fff7d1;
+
+  /* 20) Answer feedback subtitle text */
+  --feedback-subtitle-text: #121826;
+}
+
