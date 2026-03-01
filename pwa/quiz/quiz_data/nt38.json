@@ -7,7 +7,7 @@
   "themeClass": "theme-red",
   "questions": [
     {
-      "question": "Why was Stephen arrested by the Jewish leaders?",
+      "text": "Why was Stephen arrested by the Jewish leaders?",
       "answers": [
         "They didn’t like what he was saying about Jesus",
         "He refused to pay taxes",
@@ -17,7 +17,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did Stephen say to the leaders?",
+      "text": "What did Stephen say to the leaders?",
       "answers": [
         "They had killed Jesus, the promised Messiah",
         "They should make him king",
@@ -27,7 +27,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did Stephen see when he looked up to heaven?",
+      "text": "What did Stephen see when he looked up to heaven?",
       "answers": [
         "God in heaven, with Jesus standing next to Him",
         "Angels flying with swords",
@@ -37,7 +37,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did the Jewish leaders do to Stephen?",
+      "text": "What did the Jewish leaders do to Stephen?",
       "answers": [
         "Killed him by throwing stones at him",
         "Sent him to prison for life",
@@ -47,7 +47,7 @@
       "correctIndex": 0
     },
     {
-      "question": "Why did the believers scatter?",
+      "text": "Why did the believers scatter?",
       "answers": [
         "They were being arrested and thrown into prison",
         "They wanted to travel the world",
@@ -57,7 +57,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did an angel tell Philip to do?",
+      "text": "What did an angel tell Philip to do?",
       "answers": [
         "Walk down the desert road",
         "Return to Jerusalem",
@@ -67,7 +67,7 @@
       "correctIndex": 0
     },
     {
-      "question": "Who did Philip meet along the road?",
+      "text": "Who did Philip meet along the road?",
       "answers": [
         "An Ethiopian man who served the queen",
         "A Roman soldier",
@@ -77,7 +77,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What was the Ethiopian man reading?",
+      "text": "What was the Ethiopian man reading?",
       "answers": [
         "From the prophet Isaiah",
         "From the book of Genesis",
@@ -87,7 +87,7 @@
       "correctIndex": 0
     },
     {
-      "question": "Who did Philip say Isaiah was writing about?",
+      "text": "Who did Philip say Isaiah was writing about?",
       "answers": [
         "Jesus",
         "Moses",
@@ -97,7 +97,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What happened after Philip baptized the man?",
+      "text": "What happened after Philip baptized the man?",
       "answers": [
         "The Holy Spirit carried Philip away to another place",
         "They traveled back to Jerusalem together",
