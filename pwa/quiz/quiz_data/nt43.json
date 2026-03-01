@@ -5,7 +5,7 @@
   "lessonSubtitleText": "Test how well you know this story",
   "lessonImagePath": "quizimages/nt43image.png",
   "themeClass": "theme-yellow",
-  "questions": [
+  "text": [
     {
       "question": "Why was Paul beaten and jailed in Jerusalem?",
       "answers": [
