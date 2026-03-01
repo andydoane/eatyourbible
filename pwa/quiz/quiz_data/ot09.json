@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot09",
+  "pageTitle": "OT 09 Quiz",
+  "lessonTitleText": "Abram and Lot Separate",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot09image.png",
+  "themeClass": "theme-citylights",
+  "questions": [
+    {
+      "text": "What did God bless Abram and Lot with?",
+      "answers": [
+        "Riches, lots of animals",
+        "Great armies and many weapons",
+        "Huge stone houses and palaces",
+        "Superpowers"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What problem did Abram and Lot have?",
+      "answers": [
+        "Their shepherds were fighting over space for their animals",
+        "They couldn’t find enough food for their families",
+        "They forgot which direction God wanted them to go",
+        "They both wanted to live in the same tent"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What was Abram’s idea to solve their problem?",
+      "answers": [
+        "Lot goes one way, Abram goes the other",
+        "They should build a giant fence to divide the land",
+        "They should take turns using the same fields",
+        "They should sell all their animals and start over"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Where did Abram and Lot go?",
+      "answers": [
+        "Lot went to the Jordan River valley, Abram went to Canaan",
+        "Lot went to Egypt, Abram went to Babylon",
+        "Lot went to the beach, Abram went to the mountains",
+        "They both stayed together and didn’t move"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "God said that Abram's future family would be as uncountable as...?",
+      "answers": [
+        "Dust on the ground and stars in the sky",
+        "Rice and beans",
+        "Leaves on a tree",
+        "Hairs on his head"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What new name did God give Abram and what did it mean?",
+      "answers": [
+        "Abraham, father of many",
+        "Adam, father of all living",
+        "Abimelech, mighty king",
+        "Abracadabra, magic man"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What new name did God give Sarai and what did it mean?",
+      "answers": [
+        "Sarah, princess",
+        "Serah, mother of the earth",
+        "Sariah, queen of the skies",
+        "Sariel, messenger of God"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did God promise to do for Sarah?",
+      "answers": [
+        "Give her a son",
+        "Make her hair grow long",
+        "Give her long life without sickness",
+        "Give her great wealth and fame"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Abraham do when God said Sarah would have a son?",
+      "answers": [
+        "He fell to the ground with laughter",
+        "He cried loudly",
+        "He built a crib",
+        "He gave God a thumb's up"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did God tell Abraham to name his son and what did it mean?",
+      "answers": [
+        "Isaac, laughter",
+        "Ishmael, God hears",
+        "Jacob, heel-grabber",
+        "Samuel, God has spoken"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

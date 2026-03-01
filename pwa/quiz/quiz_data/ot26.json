@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot26",
+  "pageTitle": "OT 26 Quiz",
+  "lessonTitleText": "The Birth of Moses",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot26image.png",
+  "themeClass": "theme-kahoot-yellow",
+  "questions": [
+    {
+      "text": "What happened to Jacob's family by the beginning of Exodus?",
+      "answers": [
+        "They had grown into a great nation",
+        "They had disappeared completely",
+        "They had returned to Canaan",
+        "They all became blind"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Because he was afraid of the Israelites, what did Pharaoh do?",
+      "answers": [
+        "Made them work hard as slaves",
+        "Sent them out of Egypt",
+        "Killed them",
+        "Begged them not to attack him"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened after Pharaoh made the Israelites his slaves?",
+      "answers": [
+        "They grew even more",
+        "They stopped having children",
+        "They went to war with Pharaoh",
+        "They ran away from Egypt"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Pharaoh tell the midwives to do? What happened?",
+      "answers": [
+        "To kill the baby boys; they didn't obey him",
+        "To report every birth; they obeyed",
+        "To help the families escape; they ran away",
+        "To steal the babies; they followed orders"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What final order did Pharaoh give?",
+      "answers": [
+        "Throw the baby boys into the river",
+        "Send the families out of Egypt",
+        "Take the babies from their mothers",
+        "Stop the Israelites from marrying"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the young couple from the tribe of Levi do with their baby boy?",
+      "answers": [
+        "Hid him for three months",
+        "Gave him to the Egyptians",
+        "Left him outside the city",
+        "Drew a mustache on him and pretended he was a grown-up"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When they couldn't hide him anymore, what did they do?",
+      "answers": [
+        "Floated him in a basket in the Nile River",
+        "Sent him down the river alone",
+        "Sent him to live in a pyramid",
+        "Handed him to the soldiers"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who found the baby? How did she feel?",
+      "answers": [
+        "Pharaoh's daughter; she felt sorry for him",
+        "An Egyptian servant; she was angry",
+        "A fisherman; he was afraid",
+        "Moses' sister; she was confused"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the baby's sister Miriam say to Pharaoh's daughter?",
+      "answers": [
+        "Do you want me to find someone to feed him?",
+        "We should leave him here",
+        "Let's hide him again",
+        "He belongs to my family"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "After he no longer needed his mother's milk, what happened to the boy?",
+      "answers": [
+        "He became the son of Pharaoh's daughter; she named him Moses",
+        "He returned to live with his parents",
+        "He was sent away from Egypt",
+        "He became a servant in the palace"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

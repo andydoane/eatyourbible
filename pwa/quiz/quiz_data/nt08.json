@@ -1,0 +1,110 @@
+{
+  "lessonId": "nt08",
+  "pageTitle": "NT 08 Quiz",
+  "lessonTitleText": "The Twelve Disciples",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt08image.png",
+  "themeClass": "theme-kahoot-red",
+  "questions": [
+    {
+      "text": "To make room for the crowd, what did Jesus do?",
+      "answers": [
+        "Teach from a boat in the water",
+        "Move the crowd to another town",
+        "Send the crowd away",
+        "Climb a hill to teach"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jesus tell Simon to do? What happened?",
+      "answers": [
+        "Throw his nets over; they caught two boatfuls of fish",
+        "Sail to the other side of the lake",
+        "Pray for the fish",
+        "Stop fishing for the day"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When Jesus said, 'Follow me,' what did Simon and his friends do?",
+      "answers": [
+        "Left everything and followed Jesus",
+        "Asked for time to think",
+        "Went home to tell their families",
+        "Returned to fishing the next day"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who was Levi? What other name did he go by?",
+      "answers": [
+        "A tax collector, Matthew",
+        "A fisherman, Simon",
+        "A priest, Aaron",
+        "A soldier, Andrew"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When Jesus told Levi, 'Follow me,' what did Levi do?",
+      "answers": [
+        "Left everything to follow Jesus",
+        "Invited Jesus to collect taxes",
+        "Argued with Jesus",
+        "Asked Jesus to pay him money"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "After Jesus told Philip to follow him, what did Philip do?",
+      "answers": [
+        "Told his friend Nathanael that he'd found the Christ",
+        "Ran away from Jesus",
+        "Went fishing with Simon",
+        "Kept the news to himself"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Nathanael say about Jesus?",
+      "answers": [
+        "Nazareth? Can anything good come from there?",
+        "I've never heard of this Jesus guy",
+        "He is surely a prophet",
+        "I hate him"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did Jesus amaze Nathanael?",
+      "answers": [
+        "By showing that he heard and saw Nathanael from far away",
+        "By raising a man from the dead",
+        "By singing a song",
+        "By healing someone nearby"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How many men did Jesus choose to be his disciples?",
+      "answers": [
+        "Twelve",
+        "Ten",
+        "Seven",
+        "Twenty"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How can a person become a disciple of Jesus?",
+      "answers": [
+        "Believe the good news and follow Jesus",
+        "Move to Jerusalem",
+        "Become a fisherman",
+        "Collect taxes"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

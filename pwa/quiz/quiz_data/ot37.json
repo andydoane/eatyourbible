@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot37",
+  "pageTitle": "OT 37 Quiz",
+  "lessonTitleText": "Spies in the Promised Land",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot37image.png",
+  "themeClass": "theme-kahoot-green",
+  "questions": [
+    {
+      "question": "What did God tell Moses to do?",
+      "answers": [
+        "Choose twelve men to spy out the Promised Land",
+        "Build a second tabernacle",
+        "Pick a man to be king",
+        "Lead the people back to Egypt"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "What instructions did Moses give the spies?",
+      "answers": [
+        "See what the land was like — its food, towns, and people",
+        "Count every tree in the Promised Land",
+        "Warn the people that we're coming",
+        "Find a place to build a palace"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "How long were the spies in the Promised Land?",
+      "answers": [
+        "40 days",
+        "40 weeks",
+        "12 days",
+        "1 year"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "What did the spies say to Moses about the land they saw?",
+      "answers": [
+        "It was flowing with milk and honey",
+        "It was empty with no food",
+        "It was covered in snow",
+        "It was all desert sand"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "What did the ten spies say to the people?",
+      "answers": [
+        "We can’t defeat those people — we’re like grasshoppers to them",
+        "We can win easily without God’s help",
+        "The land is too far away to reach",
+        "The people there want to be our friends"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "When the people wanted to go back to Egypt, what did Caleb say?",
+      "answers": [
+        "God will give us this land",
+        "Let’s build a ship and sail away",
+        "We should hide in the mountains",
+        "You're right; let's go back to Egypt!"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "After Caleb spoke up, what did the people talk about doing?",
+      "answers": [
+        "Killing Joshua and Caleb",
+        "Making Caleb the new leader",
+        "Throwing a big celebration",
+        "Building a wall around the camp"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "What happened when the people tried to kill Joshua and Caleb?",
+      "answers": [
+        "God’s glory appeared at the Tabernacle",
+        "A giant storm scattered the camp",
+        "The spies ran away and hid",
+        "God sent a violent earthquake"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "When God said He would destroy the people, what did Moses ask?",
+      "answers": [
+        "Please forgive them",
+        "Please give them more manna",
+        "Please send them to a different land",
+        "Please choose a new leader instead"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "question": "What consequence did God give His people?",
+      "answers": [
+        "They would wander in the desert for 40 years",
+        "They would build a new city in Egypt",
+        "They would never eat bread again",
+        "They would immediately enter the land with no trouble"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

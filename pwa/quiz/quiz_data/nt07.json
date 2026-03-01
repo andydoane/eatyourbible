@@ -1,0 +1,110 @@
+{
+  "lessonId": "nt07",
+  "pageTitle": "NT 07 Quiz",
+  "lessonTitleText": "The Baptism & Temptation of Jesus",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt07image.png",
+  "themeClass": "theme-kahoot-blue",
+  "questions": [
+    {
+      "text": "What did Jesus ask John to do for him?",
+      "answers": [
+        "Baptize him",
+        "Teach him how to preach",
+        "Pray for him",
+        "Go fishing"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jesus say to convince John to baptize him?",
+      "answers": [
+        "This is a part of God's holy plan",
+        "Everyone else is doing it",
+        "It will make people like us",
+        "God will punish you if you don't"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What things happened during Jesus' baptism?",
+      "answers": [
+        "Heavens opened, Spirit descended, God spoke",
+        "Water turned into wine, angels appeared, crowds cheered",
+        "The river dried up, thunder sounded, fire fell",
+        "Jesus started walking on the water"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "After his baptism, where did the Spirit lead Jesus?",
+      "answers": [
+        "Into the desert wilderness to be tempted",
+        "Back to Nazareth",
+        "Into Jerusalem",
+        "To the middle of the Sea of Galilee"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How long was Jesus tempted in the wilderness? What did he eat?",
+      "answers": [
+        "40 days, he ate nothing",
+        "Seven days, he ate bread and water",
+        "One year, he ate only fruit",
+        "Three days, he ate fish"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did the devil tempt Jesus with stones?",
+      "answers": [
+        "Turn them to bread",
+        "Use them to build a throne",
+        "Throw them at the devil",
+        "Roll them down a hill"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the devil offer to Jesus if he worshiped him?",
+      "answers": [
+        "All the world's kingdoms",
+        "Food and water",
+        "Super strength",
+        "Fame and riches"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the devil say would happen if Jesus jumped off the temple?",
+      "answers": [
+        "God's angels will catch him",
+        "The crowd would cheer",
+        "He would go splat",
+        "He would bounce"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jesus say when the devil told him to jump off the temple?",
+      "answers": [
+        "It is written, Do not test God",
+        "I am not afraid",
+        "I will jump later",
+        "You have no power over me"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "After 40 days, what did the devil do?",
+      "answers": [
+        "The devil left",
+        "The devil stayed",
+        "The devil followed Jesus home",
+        "The devil won because Jesus sinned"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
