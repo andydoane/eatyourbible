@@ -7,7 +7,7 @@
   "themeClass": "theme-kahoot-green",
   "questions": [
     {
-      "question": "What did God tell Moses to do?",
+      "text": "What did God tell Moses to do?",
       "answers": [
         "Choose twelve men to spy out the Promised Land",
         "Build a second tabernacle",
@@ -17,7 +17,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What instructions did Moses give the spies?",
+      "text": "What instructions did Moses give the spies?",
       "answers": [
         "See what the land was like — its food, towns, and people",
         "Count every tree in the Promised Land",
@@ -27,7 +27,7 @@
       "correctIndex": 0
     },
     {
-      "question": "How long were the spies in the Promised Land?",
+      "text": "How long were the spies in the Promised Land?",
       "answers": [
         "40 days",
         "40 weeks",
@@ -37,7 +37,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did the spies say to Moses about the land they saw?",
+      "text": "What did the spies say to Moses about the land they saw?",
       "answers": [
         "It was flowing with milk and honey",
         "It was empty with no food",
@@ -47,7 +47,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did the ten spies say to the people?",
+      "text": "What did the ten spies say to the people?",
       "answers": [
         "We can’t defeat those people — we’re like grasshoppers to them",
         "We can win easily without God’s help",
@@ -57,7 +57,7 @@
       "correctIndex": 0
     },
     {
-      "question": "When the people wanted to go back to Egypt, what did Caleb say?",
+      "text": "When the people wanted to go back to Egypt, what did Caleb say?",
       "answers": [
         "God will give us this land",
         "Let’s build a ship and sail away",
@@ -67,7 +67,7 @@
       "correctIndex": 0
     },
     {
-      "question": "After Caleb spoke up, what did the people talk about doing?",
+      "text": "After Caleb spoke up, what did the people talk about doing?",
       "answers": [
         "Killing Joshua and Caleb",
         "Making Caleb the new leader",
@@ -77,7 +77,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What happened when the people tried to kill Joshua and Caleb?",
+      "text": "What happened when the people tried to kill Joshua and Caleb?",
       "answers": [
         "God’s glory appeared at the Tabernacle",
         "A giant storm scattered the camp",
@@ -87,7 +87,7 @@
       "correctIndex": 0
     },
     {
-      "question": "When God said He would destroy the people, what did Moses ask?",
+      "text": "When God said He would destroy the people, what did Moses ask?",
       "answers": [
         "Please forgive them",
         "Please give them more manna",
@@ -97,7 +97,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What consequence did God give His people?",
+      "text": "What consequence did God give His people?",
       "answers": [
         "They would wander in the desert for 40 years",
         "They would build a new city in Egypt",
