@@ -386,6 +386,45 @@
       opacity:0.85;
       text-align:center;
     }
+
+/* ---------- Creed-style Intro (for Quiz) ---------- */
+.quiz-intro {
+  background: #7f66c6; /* Creed purple */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  text-align: center;
+  gap: 16px;
+  padding: 24px 18px;
+}
+
+.quiz-intro img {
+  width: min(70vw, 420px);
+  max-height: 45vh;
+  object-fit: contain;
+  animation: introWiggle 1s infinite alternate;
+  user-select: none;
+}
+
+@keyframes introWiggle {
+  0% { transform: rotate(-4deg); }
+  100% { transform: rotate(4deg); }
+}
+
+.quiz-intro .presented {
+  font-size: 18px;
+  font-weight: 800;
+  opacity: 0.95;
+}
+
+.quiz-intro .site {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0.3px;
+}
+
   </style>
 </head>
 
@@ -787,36 +826,56 @@
   /***********************
    * Screens
    ***********************/
-  function showIntro() {
-    setNavVisible(false);
+  
+   function showIntro() {
+  setNavVisible(false);
 
-    const html = `
-      <div class="top">
-        <div class="brand">
-          <img id="introLogo" src="quizimages/eyb_logo_1.png" alt="Logo" onerror="this.style.display='none'">
-          <div class="titles">
-            <div class="title">Presented by</div>
-            <div class="subtitle">Enjoy your quiz!</div>
-          </div>
-        </div>
+  // NOTE:
+  // Image 1 shows first, image 2 is the "bite" swap.
+  // This matches the Creed behavior: click image -> swap -> chomp -> continue. :contentReference[oaicite:8]{index=8}
+  const html = `
+    <div class="quiz-intro">
+      <img
+        id="introImg"
+        src="creed_images/intro_bible.png"
+        alt="Intro"
+        onerror="this.style.display='none'"
+      >
+
+      <div>
+        <div class="presented">Presented by</div>
+        <div class="site">eatyourbible.com</div>
       </div>
 
-      <div class="content" style="justify-content:center; text-align:center;">
-        <div style="font-size:40px; font-weight:900; letter-spacing:0.4px; text-shadow:0 10px 22px rgba(0,0,0,0.25);">
-          Ready?
-        </div>
-        <div class="hint" style="margin-top:4px;">Tap to continue</div>
-      </div>
-    `;
+      <div class="hint" style="opacity:0.85;">Tap the image to begin</div>
+    </div>
+  `;
 
-    const slide = makeSlide(html, "var(--bg-solid, #222)");
-    slide.addEventListener("click", () => {
-      ensureAudioUnlocked();
-      showTitle();
-    }, { once:true });
+  const slide = makeSlide(html, "#7f66c6");
 
-    pushSlide(slide, "none", false);
-  }
+  // IMPORTANT: attach behavior after the slide exists
+  const goNext = () => {
+    ensureAudioUnlocked();
+    // play the existing chomp sound from your quiz app
+    playChompSound();
+    setTimeout(() => showTitle(), 600);
+  };
+
+  // We want the Creed behavior: click image swaps, then continues
+  // (we do not advance on "tap anywhere", only on tapping the image).
+  slide.addEventListener("click", (e) => {
+    const img = e.target.closest("#introImg");
+    if (!img) return;
+
+    // swap to the "bite" image
+    img.src = "creed_images/intro_bible_bite.png";
+
+    goNext();
+  });
+
+  pushSlide(slide, "none", false);
+}
+
 
   function showTitle() {
     setNavVisible(false);
