@@ -415,6 +415,30 @@
   --opt-d: var(--green, #26890c);
 }
 
+/* =========================================================
+   Title screen (NOT themed)
+   ========================================================= */
+.title-screen{
+  background: #f2f2f2;
+  color: #333333;
+}
+
+.title-screen .big-text,
+.title-screen .body-text,
+.title-screen .hint{
+  color: #333333;
+}
+
+.title-screen .primary-btn{
+  background: #7f66c6;
+  color: #ffffff;
+}
+
+.title-screen .secondary-btn{
+  border: 2px solid #333333;
+  color: #333333;
+}
+
 
 /* ---------- Creed-style Intro (for Quiz) ---------- */
 .quiz-intro {
@@ -919,13 +943,15 @@
   ` : ""; 
 
     const html = `
-      <div class="content" style="justify-content:center; text-align:center; gap:18px;">
-        ${img}
-        <div class="big-text">${escapeHtml(LESSON_TITLE_TEXT || PAGE_TITLE || "Quiz")}</div>
-        <div class="body-text">Questions: <b>${QUESTIONS.length}</b></div>
+      <div class="title-screen">
+        <div class="content" style="justify-content:center; text-align:center; gap:18px;">
+          ${img}
+          <div class="big-text">${escapeHtml(LESSON_TITLE_TEXT || PAGE_TITLE || "Quiz")}</div>
+          <div class="body-text">Questions: <b>${QUESTIONS.length}</b></div>
 
-        <button id="startBtn" class="primary-btn" type="button">Start</button>
-        <button id="reloadBtn" class="secondary-btn" type="button">Load different quiz</button>
+          <button id="startBtn" class="primary-btn" type="button">Start</button>
+          <button id="reloadBtn" class="secondary-btn" type="button">Load different quiz</button>
+        </div>
       </div>
     `;
 
