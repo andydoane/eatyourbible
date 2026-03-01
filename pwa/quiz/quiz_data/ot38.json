@@ -7,7 +7,7 @@
   "themeClass": "theme-kahoot-white",
   "questions": [
     {
-      "question": "What did the Israelites do to make God angry?",
+      "text": "What did the Israelites do to make God angry?",
       "answers": [
         "They complained about manna and wanted the food they had in Egypt",
         "They refused to gather manna at all",
@@ -17,7 +17,7 @@
       "correctIndex": 0
     },
     {
-      "question": "When the people complained about the manna, what did God say?",
+      "text": "When the people complained about the manna, what did God say?",
       "answers": [
         "I will give you meat until you hate it",
         "You will only eat manna forever",
@@ -27,7 +27,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What meat did God send?",
+      "text": "What meat did God send?",
       "answers": [
         "God covered the ground with quail",
         "God filled the rivers with fish",
@@ -37,7 +37,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What happened as they ate the quail?",
+      "text": "What happened as they ate the quail?",
       "answers": [
         "Many people died of a plague",
         "They gained super powers",
@@ -47,7 +47,7 @@
       "correctIndex": 0
     },
     {
-      "question": "When the Israelites complained about water, what did God tell Moses to do?",
+      "text": "When the Israelites complained about water, what did God tell Moses to do?",
       "answers": [
         "Speak to a rock, and water would come out",
         "Strike the rock twice",
@@ -57,7 +57,7 @@
       "correctIndex": 0
     },
     {
-      "question": "How did Moses disobey God?",
+      "text": "How did Moses disobey God?",
       "answers": [
         "He dishonored God, yelled at the people, and struck the rock",
         "He bowed down to the rock",
@@ -67,7 +67,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What consequence did God give to Moses and Aaron for their sin?",
+      "text": "What consequence did God give to Moses and Aaron for their sin?",
       "answers": [
         "They could not enter the Promised Land",
         "They became bald",
@@ -77,7 +77,7 @@
       "correctIndex": 0
     },
     {
-      "question": "When the people complained again, what did God send to punish them?",
+      "text": "When the people complained again, what did God send to punish them?",
       "answers": [
         "Venomous snakes",
         "A swarm of flies",
@@ -87,7 +87,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did God tell Moses to do to save the people who were bitten by snakes?",
+      "text": "What did God tell Moses to do to save the people who were bitten by snakes?",
       "answers": [
         "Put a bronze snake on a pole; those who look at it would live",
         "Give them special medicine made from manna",
@@ -97,7 +97,7 @@
       "correctIndex": 0
     },
     {
-      "question": "How did the bronze snake point to Jesus?",
+      "text": "How did the bronze snake point to Jesus?",
       "answers": [
         "He was lifted up on the cross; those who believe in Him are saved",
         "He turned snakes into bread",
