@@ -1,0 +1,1118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Quiz</title>
+
+  <!-- Theme loader (same convention as Andy Kahoot Engine) -->
+  <link id="theme-css" rel="stylesheet" href="quiz_themes/theme-gray.css">
+
+  <!-- Google Font used by Andy Kahoot Engine -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* =========================================================
+       Phone-only, full-screen, slide-left app shell
+       Inspired by Ten Commandments / Creed apps (solid backgrounds, no cards)
+       ========================================================= */
+    :root{
+      --navH: 70px;
+      --safeB: env(safe-area-inset-bottom);
+      --safeT: env(safe-area-inset-top);
+      --tap: 44px;
+    }
+
+    html, body{
+      height:100%;
+      margin:0;
+      padding:0;
+      font-family:"Baloo 2", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      overflow:hidden;
+      background: var(--bg-solid, #222);
+      color: var(--text-primary, #fff);
+    }
+
+    /* Keep page hidden while theme CSS swaps (same idea as Andy engine) */
+    .theme-loading body{ opacity:0; }
+
+    #app{
+      position:fixed;
+      inset:0;
+      overflow:hidden;
+      background: var(--bg-solid, #222);
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .slide{
+      position:absolute;
+      inset:0;
+      display:flex;
+      flex-direction:column;
+      min-height:0;
+      padding-bottom: calc(var(--navH) + var(--safeB));
+      transition: transform 320ms ease;
+      will-change: transform;
+    }
+
+    .slide.nav-hidden{
+      padding-bottom: 0;
+    }
+
+    /* Top area */
+    .top{
+      padding: calc(14px + var(--safeT)) 18px 10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:0;
+    }
+
+    .brand img{
+      width:48px;
+      height:48px;
+      object-fit:contain;
+      filter: drop-shadow(0 6px 14px rgba(0,0,0,0.35));
+    }
+
+    .titles{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      line-height:1.05;
+    }
+
+    .titles .title{
+      font-size:20px;
+      font-weight:800;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .titles .subtitle{
+      font-size:14px;
+      opacity:0.92;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    /* Center content */
+    .content{
+      flex:1;
+      min-height:0;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      padding: 8px 18px 18px;
+      gap:14px;
+    }
+
+    .big-text{
+      font-size:26px;
+      font-weight:800;
+      line-height:1.1;
+    }
+
+    .body-text{
+      font-size:18px;
+      opacity:0.95;
+      line-height:1.25;
+    }
+
+    /* Primary CTA */
+    .primary-btn{
+      height:56px;
+      border:none;
+      border-radius: 18px;
+      font-family:inherit;
+      font-weight:900;
+      font-size:20px;
+      cursor:pointer;
+      width:100%;
+      background: var(--btn-primary-bg, rgba(255,255,255,0.92));
+      color: var(--btn-primary-text, #111);
+      box-shadow: 0 10px 22px rgba(0,0,0,0.25);
+      transform: translateZ(0);
+    }
+    .primary-btn:active{ transform: scale(0.985); }
+
+    .secondary-btn{
+      height:50px;
+      border:2px solid rgba(255,255,255,0.55);
+      border-radius: 16px;
+      font-family:inherit;
+      font-weight:800;
+      font-size:18px;
+      width:100%;
+      background: transparent;
+      color: rgba(255,255,255,0.95);
+    }
+    .secondary-btn:active{ transform: scale(0.99); }
+
+    /* Question + answers */
+    .question{
+      font-size:26px;
+      font-weight:900;
+      line-height:1.12;
+      letter-spacing: 0.2px;
+      margin-bottom: 6px;
+      text-shadow: 0 10px 22px rgba(0,0,0,0.25);
+    }
+
+    .answers{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .answer{
+      min-height:56px;
+      border-radius: 18px;
+      border:none;
+      font-family:inherit;
+      font-weight:900;
+      font-size:18px;
+      padding: 12px 14px;
+      text-align:left;
+      color: rgba(255,255,255,0.98);
+      background: rgba(0,0,0,0.28);
+      box-shadow: 0 10px 22px rgba(0,0,0,0.20);
+      cursor:pointer;
+      transform: translateZ(0);
+    }
+    .answer:active{ transform: scale(0.99); }
+
+    /* Kahoot-ish colored options (uses theme vars if present; falls back otherwise) */
+    .answer.opt0{ background: var(--opt-a, #e21b3c); }
+    .answer.opt1{ background: var(--opt-b, #1368ce); }
+    .answer.opt2{ background: var(--opt-c, #d89e00); }
+    .answer.opt3{ background: var(--opt-d, #26890c); }
+
+    /* Locked + reveal */
+    .answers.locked .answer{
+      opacity:0.82;
+      pointer-events:none;
+    }
+    .answer.selected{
+      animation: pop 180ms ease-out both;
+      outline: 3px solid rgba(255,255,255,0.65);
+    }
+    .answer.correct{
+      outline: 4px solid rgba(255,255,255,0.95);
+      filter: saturate(1.15) brightness(1.05);
+    }
+    .answer.wrong{
+      opacity:0.55;
+      filter: grayscale(0.15);
+    }
+
+    @keyframes pop{
+      from{ transform: scale(0.98); }
+      to{ transform: scale(1.02); }
+    }
+
+    /* Suspense dots */
+    .suspense{
+      display:flex;
+      gap:6px;
+      align-items:center;
+      justify-content:center;
+      height: 24px;
+      opacity:0.95;
+    }
+    .dot{
+      width:10px; height:10px; border-radius:99px;
+      background: rgba(255,255,255,0.85);
+      animation: bounce 700ms infinite ease-in-out;
+    }
+    .dot:nth-child(2){ animation-delay:120ms; }
+    .dot:nth-child(3){ animation-delay:240ms; }
+    @keyframes bounce{
+      0%,100%{ transform: translateY(0); opacity:0.55; }
+      50%{ transform: translateY(-7px); opacity:1; }
+    }
+
+    /* Bottom nav (solid bar style from Ten/Credo apps) */
+    nav#nav{
+      height: var(--navH);
+      background: rgba(0,0,0,0.30);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      color:white;
+      position:fixed;
+      left:0; right:0; bottom:0;
+      z-index:9999;
+      padding: 0 22px calc(var(--safeB)) 22px;
+      box-sizing:border-box;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .nav-btn{
+      width: var(--tap);
+      height: var(--tap);
+      border:none;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.95);
+      font-size: 18px;
+      font-weight: 900;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .nav-btn:active{ transform: scale(0.98); }
+    .nav-center{
+      font-weight: 900;
+      font-size: 16px;
+      opacity:0.98;
+      letter-spacing:0.3px;
+    }
+
+    /* Timer bar (repurposed "progress bar" into countdown bar) */
+    .timer-wrap{
+      width:100%;
+      height: 12px;
+      border-radius: 99px;
+      background: rgba(255,255,255,0.18);
+      overflow:hidden;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.25);
+    }
+    .timer-bar{
+      height:100%;
+      width:100%;
+      transform-origin: left center;
+      background: #3ddc84; /* will be adjusted by JS */
+      transition: width 120ms linear, background-color 200ms linear;
+    }
+    .timer-row{
+      display:flex;
+      gap:12px;
+      align-items:center;
+    }
+    .timer-num{
+      font-weight:900;
+      font-size:16px;
+      min-width: 32px;
+      text-align:right;
+      opacity:0.95;
+    }
+
+    /* Small toast / overlay */
+    .overlay{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,0.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index: 10000;
+      padding: 20px;
+      box-sizing:border-box;
+    }
+    .overlay.show{ display:flex; }
+
+    .dialog{
+      width:min(420px, 100%);
+      border-radius: 22px;
+      background: rgba(20,20,20,0.88);
+      border: 1px solid rgba(255,255,255,0.16);
+      box-shadow: 0 18px 50px rgba(0,0,0,0.45);
+      padding: 18px;
+    }
+    .dialog h3{
+      margin:0 0 8px;
+      font-size:20px;
+      font-weight:900;
+    }
+    .dialog p{
+      margin:0 0 14px;
+      opacity:0.92;
+      line-height:1.25;
+    }
+    .dialog .row{
+      display:flex;
+      gap:12px;
+    }
+    .dialog button{
+      flex:1;
+    }
+
+    /* End / Present */
+    .present{
+      width: 180px;
+      height: 180px;
+      border-radius: 30px;
+      margin: 0 auto;
+      background: rgba(255,255,255,0.14);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size: 82px;
+      box-shadow: 0 18px 50px rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.18);
+      user-select:none;
+    }
+    .present:active{ transform: scale(0.99); }
+
+    .emoji-reward{
+      font-size: 92px;
+      text-align:center;
+      line-height:1;
+      user-select:none;
+      animation: rewardPop 420ms cubic-bezier(.2,1.4,.35,1) both;
+      filter: drop-shadow(0 14px 28px rgba(0,0,0,0.35));
+    }
+    @keyframes rewardPop{
+      from{ transform: scale(0.6) rotate(-6deg); opacity:0.5; }
+      to{ transform: scale(1) rotate(0deg); opacity:1; }
+    }
+
+    /* Tiny corner hint */
+    .hint{
+      font-size: 13px;
+      opacity:0.85;
+      text-align:center;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="app"></div>
+
+  <nav id="nav" aria-label="Quiz navigation" style="display:none;">
+    <button id="homeBtn" class="nav-btn" title="Home" aria-label="Home">⌂</button>
+    <div id="navCenter" class="nav-center">1 / 10</div>
+    <button id="muteBtn" class="nav-btn" title="Mute" aria-label="Mute">🔊</button>
+  </nav>
+
+  <div id="overlay" class="overlay" role="dialog" aria-modal="true">
+    <div class="dialog">
+      <h3 id="overlayTitle">Quit quiz?</h3>
+      <p id="overlayText">Are you sure you want to go back to the start?</p>
+      <div class="row">
+        <button id="overlayCancel" class="secondary-btn" type="button">Cancel</button>
+        <button id="overlayOk" class="primary-btn" type="button">Quit</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  /*************************************************************
+   * Phone-Only Kahoot-Style Quiz
+   * - Keeps Andy Kahoot Engine JSON + theme conventions
+   * - Full-screen slides + bottom nav style from Ten/Credo apps
+   *************************************************************/
+
+  /***********************
+   * URL -> quiz_data/*.json (same convention)
+   ***********************/
+  function getQuizJsonPathFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const quizId = params.get("q") || "ot02";
+    return `quiz_data/${quizId}.json`;
+  }
+
+  /***********************
+   * Theme loader (same convention as Andy engine)
+   ***********************/
+  function applyTheme(themeClass) {
+    const themeLink = document.getElementById("theme-css");
+    if (!themeClass) return;
+
+    document.documentElement.classList.add("theme-loading");
+
+    if (themeLink) {
+      const newHref = `quiz_themes/${themeClass}.css`;
+      if (themeLink.href.endsWith(newHref)) {
+        setThemeClass(themeClass);
+        document.documentElement.classList.remove("theme-loading");
+        return;
+      }
+
+      themeLink.onload = () => {
+        setThemeClass(themeClass);
+        document.documentElement.classList.remove("theme-loading");
+      };
+      themeLink.onerror = () => {
+        console.warn("Theme CSS failed to load:", newHref);
+        setThemeClass(themeClass);
+        document.documentElement.classList.remove("theme-loading");
+      };
+      themeLink.href = newHref;
+    } else {
+      setThemeClass(themeClass);
+      document.documentElement.classList.remove("theme-loading");
+    }
+  }
+
+  function setThemeClass(themeClass) {
+    const el = document.documentElement;
+    [...el.classList].forEach(c => { if (c.startsWith("theme-")) el.classList.remove(c); });
+    el.classList.add(themeClass);
+  }
+
+  /***********************
+   * Globals filled from JSON
+   ***********************/
+  let LESSON_ID = "";
+  let PAGE_TITLE = "Quiz";
+  let LESSON_TITLE_TEXT = "";
+  let LESSON_SUBTITLE_TEXT = "";
+  let LESSON_IMAGE_PATH = "";
+  let THEME_CLASS = "";
+  let QUESTIONS = [];
+
+  async function loadQuizFromJson(jsonPath) {
+    const res = await fetch(jsonPath);
+    if (!res.ok) throw new Error(`Failed to load quiz JSON: ${jsonPath}`);
+    const quiz = await res.json();
+
+    LESSON_ID = quiz.lessonId || "";
+    PAGE_TITLE = quiz.pageTitle || "Quiz";
+    LESSON_TITLE_TEXT = quiz.lessonTitleText || "";
+    LESSON_SUBTITLE_TEXT = quiz.lessonSubtitleText || "";
+    LESSON_IMAGE_PATH = quiz.lessonImagePath || "";
+    THEME_CLASS = quiz.themeClass || "";
+    QUESTIONS = Array.isArray(quiz.questions) ? quiz.questions : [];
+
+    document.title = PAGE_TITLE;
+
+    applyTheme(THEME_CLASS);
+  }
+
+  /***********************
+   * Slide system (inspired by Ten/Credo apps)
+   ***********************/
+  const app = document.getElementById("app");
+  let currentSlideEl = null;
+  let isSliding = false;
+
+  function pushSlide(newEl, direction = "forward", navVisible = true) {
+    if (isSliding) return;
+    isSliding = true;
+
+    const oldEl = currentSlideEl;
+    currentSlideEl = newEl;
+
+    if (!navVisible) newEl.classList.add("nav-hidden");
+
+    newEl.style.transition = "none";
+    if (direction === "back") newEl.style.transform = "translateX(-100%)";
+    else if (direction === "none") newEl.style.transform = "translateX(0)";
+    else newEl.style.transform = "translateX(100%)";
+
+    app.appendChild(newEl);
+    newEl.offsetHeight; // force reflow
+
+    requestAnimationFrame(() => {
+      newEl.style.transition = "transform 320ms ease";
+      if (oldEl) oldEl.style.transition = "transform 320ms ease";
+
+      newEl.style.transform = "translateX(0)";
+      if (oldEl) oldEl.style.transform = (direction === "back") ? "translateX(100%)" : "translateX(-100%)";
+    });
+
+    const cleanup = () => {
+      newEl.removeEventListener("transitionend", cleanup);
+      if (oldEl) oldEl.remove();
+      isSliding = false;
+    };
+    newEl.addEventListener("transitionend", cleanup);
+  }
+
+  function makeSlide(innerHTML, bg) {
+    const el = document.createElement("section");
+    el.className = "slide";
+    el.style.background = bg || "var(--bg-solid, #222)";
+    el.innerHTML = innerHTML;
+    return el;
+  }
+
+  /***********************
+   * Bottom nav (Home + Counter + Mute)
+   ***********************/
+  const nav = document.getElementById("nav");
+  const navCenter = document.getElementById("navCenter");
+  const homeBtn = document.getElementById("homeBtn");
+  const muteBtn = document.getElementById("muteBtn");
+
+  function setNavVisible(isVisible) {
+    nav.style.display = isVisible ? "flex" : "none";
+  }
+
+  function setNavCounter(idx, total) {
+    navCenter.textContent = `${idx} / ${total}`;
+  }
+
+  /***********************
+   * Quit confirm dialog
+   ***********************/
+  const overlay = document.getElementById("overlay");
+  const overlayCancel = document.getElementById("overlayCancel");
+  const overlayOk = document.getElementById("overlayOk");
+
+  let overlayOkHandler = null;
+
+  function showConfirm({ title="Quit quiz?", text="Are you sure?", okText="Quit", onOk }) {
+    document.getElementById("overlayTitle").textContent = title;
+    document.getElementById("overlayText").textContent = text;
+    overlayOk.textContent = okText;
+
+    overlayOkHandler = () => {
+      hideConfirm();
+      onOk && onOk();
+    };
+
+    overlay.classList.add("show");
+  }
+
+  function hideConfirm() {
+    overlay.classList.remove("show");
+    overlayOkHandler = null;
+  }
+
+  overlayCancel.addEventListener("click", hideConfirm);
+  overlayOk.addEventListener("click", () => overlayOkHandler && overlayOkHandler());
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) hideConfirm(); });
+
+  /***********************
+   * Audio (from Andy engine)
+   ***********************/
+  let audioCtx = null;
+  let soundEnabled = true;
+
+  const chompAudio = new Audio("quizsounds/sound_chomp.mp3");
+  chompAudio.preload = "auto";
+  let isChompReady = false;
+  chompAudio.addEventListener("canplaythrough", () => { isChompReady = true; });
+
+  function ensureAudioUnlocked() {
+    // On iOS/Android, an AudioContext may start suspended until user gesture
+    const ctx = getAudioContext();
+    if (ctx && ctx.state === "suspended") {
+      ctx.resume().catch(()=>{});
+    }
+  }
+
+  function getAudioContext() {
+    if (!audioCtx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) audioCtx = new AC();
+    }
+    return audioCtx;
+  }
+
+  function playBeepSequence(notes) {
+    if (!soundEnabled) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+
+    notes.forEach((note, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.type = "triangle";
+      osc.frequency.value = note.freq;
+
+      const t0 = now + i * note.duration;
+      const t1 = t0 + note.duration;
+
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(0.45, t0 + 0.02);
+      gain.gain.linearRampToValueAtTime(0.0, t1);
+
+      osc.start(t0);
+      osc.stop(t1 + 0.02);
+    });
+  }
+
+  function playCorrectSound() {
+    playBeepSequence([
+      { freq: 660, duration: 0.14 },
+      { freq: 880, duration: 0.14 },
+      { freq: 1040, duration: 0.16 }
+    ]);
+  }
+
+  function playIncorrectSound() {
+    playBeepSequence([
+      { freq: 260, duration: 0.18 },
+      { freq: 200, duration: 0.20 }
+    ]);
+  }
+
+  function playChompSound() {
+    if (!soundEnabled || !isChompReady) return;
+    try { chompAudio.currentTime = 0; chompAudio.play(); } catch(e) {}
+  }
+
+  function playTickTock(isThumbUp) {
+    if (!soundEnabled) return;
+    const rootHz = 250;
+    const fifthHz = rootHz * 1.5;
+    const seq = isThumbUp ? [{ freq: fifthHz, duration: 0.08 }] : [{ freq: rootHz, duration: 0.08 }];
+    playBeepSequence(seq);
+  }
+
+  function setMuteUi() {
+    muteBtn.textContent = soundEnabled ? "🔊" : "🔇";
+    muteBtn.setAttribute("aria-label", soundEnabled ? "Mute" : "Unmute");
+  }
+
+  muteBtn.addEventListener("click", () => {
+    ensureAudioUnlocked();
+    soundEnabled = !soundEnabled;
+    setMuteUi();
+  });
+
+  /***********************
+   * Emoji pools (from Andy engine)
+   ***********************/
+  const NEUTRAL_EMOJIS = [
+    "😀","😄","😊","😁","🤗","🙂","🤩","🤪","🥸","🤓","😧","😵‍💫","🙃","😺","😸","😻",
+    "😎","😇","😮‍💨","😌","😃"
+  ];
+  const CORRECT_EMOJIS = [
+    "🤩","😄","🎉","🥳","🙌","😎","😃","😁","😺","🎊","⭐",
+    "👏","🔥","💥","🌟","✨","🫶","😇","💫","🏆","🥇",
+    "🤗","😆","😻","💯","🎈"
+  ];
+  const INCORRECT_EMOJIS = [
+    "😢","😮","😯","😕","😟","🙁","😞","😔","🥺",
+    "😿","😣","😫","🤢","😥","🫤","😐","🙄"
+  ];
+  const FUNNY_EMOJIS = [
+    "🤪","🥸","🤡","🤠","💩","🦆","😹","🍕","🤤","👽","🌮","🍩","🥨","🍔","🐸","😏",
+    "🙊","🤯","🤮","🐯","🦁","🐶","🐼","🐰","🐳","🍟","🍪","🍿","🧀","🍎","🍍","🍰"
+  ];
+  const REWARD_EMOJI_POOLS = { 0:FUNNY_EMOJIS,1:FUNNY_EMOJIS,2:FUNNY_EMOJIS,3:FUNNY_EMOJIS,4:FUNNY_EMOJIS,5:FUNNY_EMOJIS,6:FUNNY_EMOJIS,7:FUNNY_EMOJIS,8:FUNNY_EMOJIS,9:FUNNY_EMOJIS,10:FUNNY_EMOJIS };
+
+  function pick(list){ return list[Math.floor(Math.random()*list.length)]; }
+
+  /***********************
+   * Quiz state
+   ***********************/
+  const TIMER_DURATION = 30;
+  let qIndex = 0;
+  let correctCount = 0;
+
+  // per-question timer
+  let timeLeft = TIMER_DURATION;
+  let timerIntervalId = null;
+
+  function stopTimer() {
+    if (timerIntervalId !== null) {
+      clearInterval(timerIntervalId);
+      timerIntervalId = null;
+    }
+  }
+
+  function timerColor(ratio) {
+    // ratio: 1 -> 0
+    if (ratio > 0.5) return "#3ddc84";   // green
+    if (ratio > 0.2) return "#f4c542";   // yellow
+    return "#ff4d4d";                    // red
+  }
+
+  function updateTimerVisual(timerBarEl, timerNumEl) {
+    const ratio = Math.max(0, Math.min(1, timeLeft / TIMER_DURATION));
+    timerBarEl.style.width = (ratio * 100).toFixed(2) + "%";
+    timerBarEl.style.backgroundColor = timerColor(ratio);
+    timerNumEl.textContent = String(timeLeft);
+  }
+
+  function startTimer(timerBarEl, timerNumEl, onTimeout) {
+    stopTimer();
+    timeLeft = TIMER_DURATION;
+    updateTimerVisual(timerBarEl, timerNumEl);
+
+    timerIntervalId = setInterval(() => {
+      timeLeft -= 1;
+      if (timeLeft < 0) timeLeft = 0;
+
+      // light tick-tock in the last 7 seconds
+      if (timeLeft <= 7 && timeLeft > 0) {
+        playTickTock(timeLeft % 2 === 0);
+      }
+
+      updateTimerVisual(timerBarEl, timerNumEl);
+
+      if (timeLeft <= 0) {
+        stopTimer();
+        onTimeout && onTimeout();
+      }
+    }, 1000);
+  }
+
+  /***********************
+   * Screens
+   ***********************/
+  function showIntro() {
+    setNavVisible(false);
+
+    const html = `
+      <div class="top">
+        <div class="brand">
+          <img id="introLogo" src="quizimages/eyb_logo_1.png" alt="Logo" onerror="this.style.display='none'">
+          <div class="titles">
+            <div class="title">Presented by</div>
+            <div class="subtitle">Enjoy your quiz!</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content" style="justify-content:center; text-align:center;">
+        <div style="font-size:40px; font-weight:900; letter-spacing:0.4px; text-shadow:0 10px 22px rgba(0,0,0,0.25);">
+          Ready?
+        </div>
+        <div class="hint" style="margin-top:4px;">Tap to continue</div>
+      </div>
+    `;
+
+    const slide = makeSlide(html, "var(--bg-solid, #222)");
+    slide.addEventListener("click", () => {
+      ensureAudioUnlocked();
+      showTitle();
+    }, { once:true });
+
+    pushSlide(slide, "none", false);
+  }
+
+  function showTitle() {
+    setNavVisible(false);
+
+    const img = LESSON_IMAGE_PATH ? `<img src="${LESSON_IMAGE_PATH}" alt="" style="width:76px;height:76px;object-fit:cover;border-radius:22px;box-shadow:0 12px 28px rgba(0,0,0,0.3)" onerror="this.style.display='none'">` : "";
+
+    const html = `
+      <div class="top">
+        <div class="brand">
+          <img src="quizimages/eyb_logo_1.png" alt="Logo" onerror="this.style.display='none'">
+          <div class="titles">
+            <div class="title">${escapeHtml(LESSON_TITLE_TEXT || "Quiz")}</div>
+            <div class="subtitle">${escapeHtml(LESSON_SUBTITLE_TEXT || "")}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content" style="justify-content:center; text-align:center; gap:18px;">
+        ${img}
+        <div class="big-text">${escapeHtml(PAGE_TITLE || "Quiz")}</div>
+        <div class="body-text">Questions: <b>${QUESTIONS.length}</b></div>
+
+        <button id="startBtn" class="primary-btn" type="button">Start</button>
+        <button id="reloadBtn" class="secondary-btn" type="button">Load different quiz</button>
+        <div class="hint">Tip: use <b>?q=nt01</b> to load another quiz file.</div>
+      </div>
+    `;
+
+    const slide = makeSlide(html, "var(--bg-solid, #222)");
+    slide.querySelector("#startBtn").addEventListener("click", () => {
+      ensureAudioUnlocked();
+      playChompSound();
+      qIndex = 0;
+      correctCount = 0;
+      showQuestion();
+    });
+    slide.querySelector("#reloadBtn").addEventListener("click", () => {
+      // simple: reload so user can change URL param
+      location.reload();
+    });
+
+    pushSlide(slide, "forward", false);
+  }
+
+  function showQuestion(direction="forward") {
+    setNavVisible(true);
+    setMuteUi();
+
+    const total = QUESTIONS.length;
+    const idx1 = qIndex + 1;
+    setNavCounter(idx1, total);
+
+    const q = QUESTIONS[qIndex];
+
+    const html = `
+      <div class="top" style="flex-direction:column; align-items:stretch; gap:10px;">
+        <div class="timer-row">
+          <div class="timer-wrap"><div id="timerBar" class="timer-bar"></div></div>
+          <div id="timerNum" class="timer-num">30</div>
+        </div>
+      </div>
+
+      <div class="content" style="justify-content:flex-start; padding-top: 6px;">
+        <div class="question">${escapeHtml(q.text || "")}</div>
+        <div id="emojiLine" class="hint" style="margin-top:-6px;">${pick(NEUTRAL_EMOJIS)}</div>
+
+        <div id="answers" class="answers">
+          ${q.answers.map((a,i)=>`<button class="answer opt${i}" data-i="${i}" type="button">${escapeHtml(a)}</button>`).join("")}
+        </div>
+
+        <div id="suspense" class="suspense" style="display:none; margin-top:10px;">
+          <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+      </div>
+    `;
+
+    const slide = makeSlide(html, "var(--bg-solid, #222)");
+    const timerBarEl = slide.querySelector("#timerBar");
+    const timerNumEl = slide.querySelector("#timerNum");
+    const answersEl = slide.querySelector("#answers");
+    const suspenseEl = slide.querySelector("#suspense");
+    const emojiLine = slide.querySelector("#emojiLine");
+
+    let answered = false;
+    let selectedIndex = null;
+
+    function lockAnswers() {
+      answersEl.classList.add("locked");
+      [...answersEl.querySelectorAll(".answer")].forEach(b => b.disabled = true);
+    }
+
+    function reveal(correctIdx) {
+      lockAnswers();
+      suspenseEl.style.display = "none";
+
+      const btns = [...answersEl.querySelectorAll(".answer")];
+      btns.forEach((b, i) => {
+        if (i === correctIdx) b.classList.add("correct");
+        if (selectedIndex !== null && i === selectedIndex && i !== correctIdx) b.classList.add("wrong");
+        if (selectedIndex !== null && i !== selectedIndex && i !== correctIdx) b.classList.add("wrong");
+      });
+
+      const isCorrect = (selectedIndex === correctIdx);
+      if (isCorrect) {
+        correctCount += 1;
+        emojiLine.textContent = pick(CORRECT_EMOJIS);
+        playCorrectSound();
+      } else {
+        emojiLine.textContent = pick(INCORRECT_EMOJIS);
+        playIncorrectSound();
+      }
+
+      // move on after a beat
+      setTimeout(() => {
+        qIndex += 1;
+        if (qIndex >= QUESTIONS.length) showEnd();
+        else showQuestion("forward");
+      }, 1200);
+    }
+
+    function doSuspenseThenReveal() {
+      suspenseEl.style.display = "flex";
+      lockAnswers();
+
+      // small ticktock rhythm while suspense is visible
+      let ticks = 0;
+      const tt = setInterval(() => {
+        ticks++;
+        playTickTock(ticks % 2 === 0);
+        if (ticks >= 6) { clearInterval(tt); }
+      }, 220);
+
+      setTimeout(() => {
+        reveal(q.correctIndex ?? 0);
+      }, 1100);
+    }
+
+    // answer clicks
+    answersEl.addEventListener("click", (e) => {
+      const btn = e.target.closest(".answer");
+      if (!btn || answered) return;
+
+      ensureAudioUnlocked();
+      answered = true;
+      stopTimer();
+
+      selectedIndex = Number(btn.getAttribute("data-i"));
+      btn.classList.add("selected");
+
+      doSuspenseThenReveal();
+    });
+
+    // timeout -> no selection, just reveal
+    startTimer(timerBarEl, timerNumEl, () => {
+      if (answered) return;
+      answered = true;
+      selectedIndex = null;
+      doSuspenseThenReveal();
+    });
+
+    // home confirm
+    homeBtn.onclick = () => {
+      showConfirm({
+        title: "Quit quiz?",
+        text: "Are you sure you want to go back to the start?",
+        okText: "Quit",
+        onOk: () => {
+          stopTimer();
+          showTitle();
+        }
+      });
+    };
+
+    pushSlide(slide, direction, true);
+  }
+
+  function showEnd() {
+    stopTimer();
+    setNavVisible(false);
+
+    const total = QUESTIONS.length;
+    const score = correctCount;
+
+    const html = `
+      <div class="top">
+        <div class="brand">
+          <img src="quizimages/eyb_logo_1.png" alt="Logo" onerror="this.style.display='none'">
+          <div class="titles">
+            <div class="title">${escapeHtml(LESSON_TITLE_TEXT || "Quiz Complete")}</div>
+            <div class="subtitle">Tap the present!</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content" style="text-align:center; justify-content:center; gap:14px;">
+        <div class="big-text">Finished!</div>
+        <div class="body-text">Score: <b>${score}</b> / <b>${total}</b></div>
+
+        <div id="present" class="present" role="button" aria-label="Open present">🎁</div>
+        <div class="hint">Tap to open</div>
+
+        <button id="playAgain" class="secondary-btn" type="button">Play again</button>
+      </div>
+    `;
+
+    const slide = makeSlide(html, "var(--bg-solid, #222)");
+
+    slide.querySelector("#playAgain").addEventListener("click", () => {
+      ensureAudioUnlocked();
+      playChompSound();
+      qIndex = 0;
+      correctCount = 0;
+      showQuestion("forward");
+    });
+
+    slide.querySelector("#present").addEventListener("click", () => {
+      ensureAudioUnlocked();
+      openPresentReward(score, total);
+    });
+
+    pushSlide(slide, "forward", false);
+  }
+
+  function openPresentReward(score, total) {
+    // Choose pool by score (clamp 0..10 like Andy engine)
+    const bucket = Math.max(0, Math.min(10, score));
+    const pool = REWARD_EMOJI_POOLS[bucket] || FUNNY_EMOJIS;
+    const emoji = pick(pool);
+
+    overlay.classList.add("show");
+    overlay.querySelector(".dialog").style.display = "none";
+
+    overlay.innerHTML = `
+      <div style="width:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;">
+        <div class="emoji-reward" id="rewardEmoji">${emoji}</div>
+        <div class="body-text" style="text-align:center;">You got <b>${score}</b> / <b>${total}</b> correct</div>
+        <div class="hint">Tap anywhere to continue</div>
+      </div>
+    `;
+
+    // close on tap -> restore dialog markup for future confirms
+    overlay.addEventListener("click", restoreOverlay, { once:true });
+    overlay.addEventListener("touchstart", restoreOverlay, { once:true, passive:true });
+
+    function restoreOverlay() {
+      // rebuild overlay to original confirm dialog
+      overlay.className = "overlay";
+      overlay.innerHTML = `
+        <div class="dialog">
+          <h3 id="overlayTitle">Quit quiz?</h3>
+          <p id="overlayText">Are you sure you want to go back to the start?</p>
+          <div class="row">
+            <button id="overlayCancel" class="secondary-btn" type="button">Cancel</button>
+            <button id="overlayOk" class="primary-btn" type="button">Quit</button>
+          </div>
+        </div>
+      `;
+      // rebind elements
+      window.overlayCancel = document.getElementById("overlayCancel");
+      window.overlayOk = document.getElementById("overlayOk");
+      // rebind listeners
+      document.getElementById("overlayCancel").addEventListener("click", hideConfirm);
+      document.getElementById("overlayOk").addEventListener("click", () => overlayOkHandler && overlayOkHandler());
+      overlay.addEventListener("click", (e) => { if (e.target === overlay) hideConfirm(); });
+
+      // go back to end screen
+      showEnd();
+    }
+  }
+
+  /***********************
+   * Utilities
+   ***********************/
+  function escapeHtml(str) {
+    return String(str)
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  /***********************
+   * Boot
+   ***********************/
+  (async function boot(){
+    try {
+      await loadQuizFromJson(getQuizJsonPathFromUrl());
+    } catch (e) {
+      console.error(e);
+      // Fallback screen if JSON fails
+      const s = makeSlide(`
+        <div class="top">
+          <div class="titles">
+            <div class="title">Couldn’t load quiz</div>
+            <div class="subtitle">Check your URL and file location.</div>
+          </div>
+        </div>
+        <div class="content" style="justify-content:center; text-align:center;">
+          <div class="body-text" style="opacity:0.95;">
+            Expected JSON at:<br><b>${escapeHtml(getQuizJsonPathFromUrl())}</b>
+          </div>
+          <button class="primary-btn" type="button" onclick="location.reload()">Retry</button>
+        </div>
+      `, "var(--bg-solid, #222)");
+      pushSlide(s, "none", false);
+      return;
+    }
+
+    // Home button at title also uses confirm (but no harm)
+    homeBtn.onclick = () => showConfirm({
+      title: "Go to start?",
+      text: "Return to the start screen?",
+      okText: "Go",
+      onOk: () => { stopTimer(); showTitle(); }
+    });
+
+    // start at intro like Andy
+    showIntro();
+  })();
+  </script>
+</body>
+</html>
