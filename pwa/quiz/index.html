@@ -929,7 +929,7 @@
       </div>
     `;
 
-    const slide = makeSlide(html, "var(--bg-solid, #222)");
+    const slide = makeSlide(html);
     slide.querySelector("#startBtn").addEventListener("click", () => {
       ensureAudioUnlocked();
       playChompSound();
@@ -977,7 +977,7 @@
       </div>
     `;
 
-    const slide = makeSlide(html, "var(--bg-solid, #222)");
+    const slide = makeSlide(html);
     const timerBarEl = slide.querySelector("#timerBar");
     const timerNumEl = slide.querySelector("#timerNum");
     const answersEl = slide.querySelector("#answers");
