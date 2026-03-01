@@ -7,7 +7,7 @@
   "themeClass": "theme-kahoot-blue",
   "questions": [
     {
-      "question": "Why did Mary and Martha send word to Jesus?",
+      "text": "Why did Mary and Martha send word to Jesus?",
       "answers": [
         "To let Him know that Lazarus was sick",
         "To invite Him to dinner",
@@ -17,7 +17,7 @@
       "correctIndex": 0
     },
     {
-      "question": "Jesus said, 'This sickness will not end in death. Because of it, God will receive...' what?",
+      "text": "Jesus said, 'This sickness will not end in death. Because of it, God will receive...' what?",
       "answers": [
         "Glory",
         "Lots of money",
@@ -27,7 +27,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did Jesus mean when He said, 'Lazarus has fallen asleep, but I will wake him up'?",
+      "text": "What did Jesus mean when He said, 'Lazarus has fallen asleep, but I will wake him up'?",
       "answers": [
         "Lazarus had died, but Jesus would raise him from the dead",
         "Lazarus was taking a nap",
@@ -37,7 +37,7 @@
       "correctIndex": 0
     },
     {
-      "question": "How long did Jesus stay where He was before going to Lazarus' house?",
+      "text": "How long did Jesus stay where He was before going to Lazarus' house?",
       "answers": [
         "Two more days",
         "One hour",
@@ -47,7 +47,7 @@
       "correctIndex": 0
     },
     {
-      "question": "When Martha met Jesus, what did she say to Him?",
+      "text": "When Martha met Jesus, what did she say to Him?",
       "answers": [
         "If You had been here, my brother would not have died",
         "Why did You wait so long?",
@@ -57,7 +57,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did Jesus say would happen to anyone who believes in Him?",
+      "text": "What did Jesus say would happen to anyone who believes in Him?",
       "answers": [
         "They will live, even if they die",
         "They will sleep forever",
@@ -67,7 +67,7 @@
       "correctIndex": 0
     },
     {
-      "question": "After seeing the people crying at Lazarus' tomb, what did Jesus do?",
+      "text": "After seeing the people crying at Lazarus' tomb, what did Jesus do?",
       "answers": [
         "He wept",
         "He taught a lesson",
@@ -77,7 +77,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did Martha say when Jesus told them to open Lazarus' tomb?",
+      "text": "What did Martha say when Jesus told them to open Lazarus' tomb?",
       "answers": [
         "He has been dead for four days; there will be a smell",
         "The stone is too heavy",
@@ -87,7 +87,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did Jesus say to Lazarus, and what happened?",
+      "text": "What did Jesus say to Lazarus, and what happened?",
       "answers": [
         "'Lazarus, come out!' and Lazarus walked out of his tomb",
         "'Can you hear us?' and nothing happened",
@@ -97,7 +97,7 @@
       "correctIndex": 0
     },
     {
-      "question": "When they saw Lazarus come out, what did many of the people do?",
+      "text": "When they saw Lazarus come out, what did many of the people do?",
       "answers": [
         "Believe in Jesus",
         "Run away in fear",
