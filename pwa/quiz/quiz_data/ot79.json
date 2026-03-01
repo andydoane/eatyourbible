@@ -7,7 +7,7 @@
   "themeClass": "theme-yellow",
   "questions": [
     {
-      "question": "What job did Nehemiah have?",
+      "text": "What job did Nehemiah have?",
       "answers": [
         "Cupbearer to the king",
         "High priest in Jerusalem",
@@ -17,7 +17,7 @@
       "correctIndex": 0
     },
     {
-      "question": "Why was Nehemiah sad?",
+      "text": "Why was Nehemiah sad?",
       "answers": [
         "He heard that Jerusalem’s walls were still torn down",
         "He lost his job",
@@ -27,7 +27,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did Nehemiah ask the king to let him do?",
+      "text": "What did Nehemiah ask the king to let him do?",
       "answers": [
         "Rebuild Jerusalem’s walls",
         "Start a busines selling wine",
@@ -37,7 +37,7 @@
       "correctIndex": 0
     },
     {
-      "question": "At what time of day did Nehemiah inspect the walls, and why?",
+      "text": "At what time of day did Nehemiah inspect the walls, and why?",
       "answers": [
         "At night, to keep his plans secret from enemies",
         "At noon, so everyone could see",
@@ -47,7 +47,7 @@
       "correctIndex": 0
     },
     {
-      "question": "How did Tobiah and Sanballat feel about the wall?",
+      "text": "How did Tobiah and Sanballat feel about the wall?",
       "answers": [
         "They hated it and made fun of the workers",
         "They helped build it",
@@ -57,7 +57,7 @@
       "correctIndex": 0
     },
     {
-      "question": "How else did Tobiah and Sanballat try to stop the work?",
+      "text": "How else did Tobiah and Sanballat try to stop the work?",
       "answers": [
         "They threatened to attack the workers by surprise",
         "They offered them money to stop",
@@ -67,7 +67,7 @@
       "correctIndex": 0
     },
     {
-      "question": "How did the people respond after their enemies’ threats?",
+      "text": "How did the people respond after their enemies’ threats?",
       "answers": [
         "They became tired and discouraged",
         "They laughed at their enemies",
@@ -77,7 +77,7 @@
       "correctIndex": 0
     },
     {
-      "question": "How did Nehemiah encourage the people after they were threatened?",
+      "text": "How did Nehemiah encourage the people after they were threatened?",
       "answers": [
         "He told them to remember that the Lord is great and powerful",
         "He promised them more money",
@@ -87,7 +87,7 @@
       "correctIndex": 0
     },
     {
-      "question": "How did Nehemiah keep his workers safe?",
+      "text": "How did Nehemiah keep his workers safe?",
       "answers": [
         "Half worked while half stood guard, and workers carried swords in their belts",
         "He built a second wall",
@@ -97,7 +97,7 @@
       "correctIndex": 0
     },
     {
-      "question": "How long did it take to rebuild the wall of Jerusalem?",
+      "text": "How long did it take to rebuild the wall of Jerusalem?",
       "answers": [
         "52 days",
         "7 days",
