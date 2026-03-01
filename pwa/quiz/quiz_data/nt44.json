@@ -7,7 +7,7 @@
   "themeClass": "theme-white",
   "questions": [
     {
-      "question": "Where will people first see Jesus, the Son of Man, when He returns?",
+      "text": "Where will people first see Jesus, the Son of Man, when He returns?",
       "answers": [
         "In the clouds",
         "In the temple",
@@ -17,7 +17,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What will Jesus do with those who have died, both evil and good?",
+      "text": "What will Jesus do with those who have died, both evil and good?",
       "answers": [
         "Raise them from the dead",
         "Leave them in the grave",
@@ -27,7 +27,7 @@
       "correctIndex": 0
     },
     {
-      "question": "After sitting on His throne, what will Jesus do with all the people?",
+      "text": "After sitting on His throne, what will Jesus do with all the people?",
       "answers": [
         "Separate them like a shepherd separates sheep and goats",
         "Mix them all up together",
@@ -37,7 +37,7 @@
       "correctIndex": 0
     },
     {
-      "question": "Who are the sheep and who are the goats?",
+      "text": "Who are the sheep and who are the goats?",
       "answers": [
         "Sheep are believers; goats are unbelievers",
         "Sheep are unbelievers; goats are believers",
@@ -47,7 +47,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What will happen to the 'sheep'?",
+      "text": "What will happen to the 'sheep'?",
       "answers": [
         "They will enter God’s forever kingdom",
         "They will be tested",
@@ -57,7 +57,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What will happen to the “goats”?",
+      "text": "What will happen to the “goats”?",
       "answers": [
         "They will be punished forever for their sins",
         "They will get a second chance",
@@ -67,7 +67,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What will our resurrected bodies be like?",
+      "text": "What will our resurrected bodies be like?",
       "answers": [
         "Glorious, beautiful, strong, and lasting forever",
         "Invisible and ghost-like",
@@ -77,7 +77,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What will happen to heaven and earth when Jesus returns?",
+      "text": "What will happen to heaven and earth when Jesus returns?",
       "answers": [
         "God will make a new heaven and a new earth",
         "They will stay exactly the same",
@@ -87,7 +87,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What will God’s forever kingdom be like?",
+      "text": "What will God’s forever kingdom be like?",
       "answers": [
         "No sickness, pain, sadness, or death",
         "Lots of hard work and rules",
@@ -97,7 +97,7 @@
       "correctIndex": 0
     },
     {
-      "question": "How can we be ready for Jesus’ return?",
+      "text": "How can we be ready for Jesus’ return?",
       "answers": [
         "Believe the good news",
         "Try really hard to obey",
