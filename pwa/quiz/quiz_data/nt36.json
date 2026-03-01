@@ -7,7 +7,7 @@
   "themeClass": "theme-gray",
   "questions": [
     {
-      "question": "What promise did Jesus make to His disciples before He died?",
+      "text": "What promise did Jesus make to His disciples before He died?",
       "answers": [
         "To send the Holy Spirit",
         "To send an army of angels",
@@ -17,7 +17,7 @@
       "correctIndex": 0
     },
     {
-      "question": "How did Jesus say the Holy Spirit would help them?",
+      "text": "How did Jesus say the Holy Spirit would help them?",
       "answers": [
         "Help them remember what Jesus said and taught",
         "Make them very smart",
@@ -27,7 +27,7 @@
       "correctIndex": 0
     },
     {
-      "question": "Where were the disciples on the morning of Pentecost?",
+      "text": "Where were the disciples on the morning of Pentecost?",
       "answers": [
         "Gathered together in one room",
         "Fishing on the Sea of Galilee",
@@ -37,7 +37,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did the disciples hear and see when the Holy Spirit came?",
+      "text": "What did the disciples hear and see when the Holy Spirit came?",
       "answers": [
         "A great wind and tongues of fire",
         "Thunder and hail",
@@ -47,7 +47,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What miracle happened when the Holy Spirit came?",
+      "text": "What miracle happened when the Holy Spirit came?",
       "answers": [
         "They spoke in languages they didn’t know",
         "They walked on water",
@@ -57,7 +57,7 @@
       "correctIndex": 0
     },
     {
-      "question": "Some people in the crowd thought they were speaking strangely because they were…",
+      "text": "Some people in the crowd thought they were speaking strangely because they were…",
       "answers": [
         "Drunk",
         "Sleepy",
@@ -67,7 +67,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did Joel promise about 800 years before that day?",
+      "text": "What did Joel promise about 800 years before that day?",
       "answers": [
         "God would pour out His Spirit",
         "God would end all storms",
@@ -77,7 +77,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did Peter preach to the crowd about?",
+      "text": "What did Peter preach to the crowd about?",
       "answers": [
         "The good news that Jesus was the Messia",
         "God's law",
@@ -87,7 +87,7 @@
       "correctIndex": 0
     },
     {
-      "question": "When the people asked, 'What should we do?' what did Peter say?",
+      "text": "When the people asked, 'What should we do?' what did Peter say?",
       "answers": [
         "Repent and be baptized",
         "Run away and hide",
@@ -97,7 +97,7 @@
       "correctIndex": 0
     },
     {
-      "question": "How many people believed and were baptized that day?",
+      "text": "How many people believed and were baptized that day?",
       "answers": [
         "3,000",
         "300",
