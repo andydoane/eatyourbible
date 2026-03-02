@@ -1878,9 +1878,6 @@ async function switchQuiz(quizId) {
 const picker = slide.querySelector("#quizPicker");
 
 picker.addEventListener("change", async () => {
-  ensureAudioUnlocked();
-  playChompSound();
-
   const quizId = picker.value;
 
   try {
