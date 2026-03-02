@@ -631,6 +631,15 @@ nav#nav{
   text-align: center;
 }
 
+/* Reward overlay: make text fully bright (not dimmed by .hint opacity) */
+#overlay.show #rewardStage .reward-top,
+#overlay.show #rewardStage .hint,
+#overlay.show #rewardStage .reward-ui{
+  opacity: 1 !important;
+  color: #fff !important;
+  text-shadow: 0 3px 10px rgba(0,0,0,0.55);
+}
+
 /* ---------- Reward overlay layering ---------- */
 
 /* The reward screen container becomes the stacking context */
@@ -2054,7 +2063,7 @@ slide.addEventListener("click", exitEnd);
         <!-- UI text layer (above dark layer, below emoji) -->
         <div class="reward-top reward-ui">You got a...</div>
 
-        ${showLabel ? `<div class="reward-ui" style="font-size:14px; opacity:0.7;">Testing: ${debugDance || "random"}</div>` : ""}
+        ${showLabel ? `<div class="reward-ui" style="font-size:14px;">Testing: ${debugDance || "random"}</div>` : ""}
 
         <!-- Emoji layer (always on top) -->
         <div class="emoji-reward ${danceClass}" id="rewardEmoji">${emoji}</div>
