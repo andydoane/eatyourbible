@@ -632,14 +632,14 @@ nav#nav{
   /* takeoff squash */
   15% { transform: translateY(0) scale(1.08,0.88); }
 
-  /* big apex */
-  45% { transform: translateY(-60px) scale(1.05,0.95); }
+  /* big apex — responsive height */
+  45% { transform: translateY(-18vh) scale(1.05,0.95); }
 
   /* landing squash */
   65% { transform: translateY(0) scale(0.92,1.12); }
 
   /* small rebound */
-  80% { transform: translateY(-18px) scale(1.02,0.98); }
+  80% { transform: translateY(-3vh) scale(1.02,0.98); }
 }
 
 
@@ -663,9 +663,9 @@ nav#nav{
 
 /* --- Dance 3: Moonwalk Slide --- */
 @keyframes danceMoonwalk {
-  0%   { transform: translateX(-65px) rotate(6deg); }
-  50%  { transform: translateX(65px) rotate(-6deg); }
-  100% { transform: translateX(-65px) rotate(6deg); }
+  0%   { transform: translateX(-35vw) rotate(6deg); }
+  50%  { transform: translateX(35vw) rotate(-6deg); }
+  100% { transform: translateX(-35vw) rotate(6deg); }
 }
 
 
@@ -685,6 +685,7 @@ nav#nav{
 /* --- Dance 5: Spin'spolsion (JS-driven spin-up) --- */
 .emoji-reward.dance-spin{
   will-change: transform;
+  animation: none !important;
 }
 
 /* Particle burst for Spin'spolsion */
@@ -2011,18 +2012,21 @@ if (danceClass === "dance-pong") {
 
   let x = rect.width / 2;
   let y = rect.height / 2;
-  let vx = 4;
-  let vy = 3;
+  let vx = 6;
+  let vy = 5;
 
   emojiEl.style.position = "absolute";
+  emojiEl.style.transform = "translate(-50%, -50%)";
 
   const pongInterval = setInterval(() => {
 
     x += vx;
     y += vy;
 
-    if (x <= 60 || x >= rect.width - 60) vx *= -1;
-    if (y <= 80 || y >= rect.height - 80) vy *= -1;
+    const size = 70; // approx emoji footprint
+
+    if (x <= size/2 || x >= rect.width - size/2) vx *= -1;
+    if (y <= size/2 || y >= rect.height - size/2) vy *= -1;
 
     emojiEl.style.left = x + "px";
     emojiEl.style.top = y + "px";
