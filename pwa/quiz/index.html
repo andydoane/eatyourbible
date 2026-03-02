@@ -631,26 +631,29 @@ nav#nav{
   text-align: center;
 }
 
-/* --- Dance 1: Bounce Party --- */
+/* --- Dance 1: Bounce Party (floatier) --- */
 @keyframes danceBounce {
   0%, 100% { transform: translateY(0) scale(1,1); }
 
-  /* takeoff squash */
-  15% { transform: translateY(0) scale(1.08,0.88); }
+  /* softer takeoff */
+  12% { transform: translateY(0) scale(1.06,0.92); }
 
-  /* big apex — responsive height */
-  45% { transform: translateY(-25vh) scale(1.05,0.95); }
+  /* rise */
+  32% { transform: translateY(-24vh) scale(1.04,0.96); }
 
-  /* landing squash */
-  65% { transform: translateY(0) scale(0.92,1.12); }
+  /* hang time near apex (lighter gravity) */
+  46% { transform: translateY(-26vh) scale(1.03,0.97); }
+  58% { transform: translateY(-25vh) scale(1.03,0.97); }
 
-  /* small rebound */
-  80% { transform: translateY(-3vh) scale(1.02,0.98); }
+  /* soft landing */
+  78% { transform: translateY(0) scale(0.96,1.08); }
+
+  /* tiny rebound */
+  88% { transform: translateY(-4vh) scale(1.01,0.99); }
 }
 
-
 .emoji-reward.dance-bounce{
-  animation: danceBounce 720ms cubic-bezier(.2,.9,.2,1) infinite;
+  animation: danceBounce 1050ms cubic-bezier(.15,.85,.25,1) infinite;
 }
 
 /* --- Dance 2: Wiggle Shimmy --- */
@@ -1984,29 +1987,43 @@ presentEl.addEventListener("click", () => {
 
 const emojiEl = document.getElementById("rewardEmoji");
 
-// SPIN PERFORMANCE (long ramp + vanish on burst)
+// SPIN PERFORMANCE (slow 10s ramp, lower cap, pop at peak)
 if (danceClass === "dance-spin") {
 
   let angle = 0;
-  let speed = 0;
-  let accelerating = true;
-  let frameCount = 0;
+
+  const rampMs = 10000;     // ~10 seconds to reach top speed
+  const holdMs = 1200;      // hold at max speed before burst
+  const maxSpeed = 42;      // lower cap (degrees per frame-ish; tuned)
+  const start = performance.now();
+
+  let last = start;
+  let holding = false;
+  let holdStart = 0;
 
   const spinInterval = setInterval(() => {
+    const now = performance.now();
+    const dt = Math.min(32, now - last); // ms since last tick (clamped)
+    last = now;
 
-    frameCount++;
+    // progress 0..1 over rampMs
+    const t = Math.max(0, Math.min(1, (now - start) / rampMs));
 
-    // Longer acceleration phase
-    if (accelerating) {
-      speed += 3;
-      if (speed >= 85) accelerating = false;
-    }
+    // ease-in ramp (starts very slow, accelerates)
+    const eased = t * t;
+
+    // speed in "degrees per 16ms frame"; normalize by dt so it stays consistent
+    const speed = (maxSpeed * eased) * (dt / 16);
 
     angle += speed;
     emojiEl.style.transform = `rotate(${angle}deg)`;
 
-    // Let it spin FAST for a while before burst
-    if (!accelerating && frameCount > 140) {
+    // once ramp finishes, hold briefly then burst
+    if (t >= 1 && !holding) {
+      holding = true;
+      holdStart = now;
+    }
+    if (holding && (now - holdStart) >= holdMs) {
       clearInterval(spinInterval);
 
       // Hide emoji before burst
@@ -2014,7 +2031,6 @@ if (danceClass === "dance-spin") {
 
       createSpinBurst(emojiEl);
     }
-
   }, 16);
 }
 
@@ -2039,14 +2055,22 @@ if (danceClass === "dance-pong") {
 
   const pongInterval = setInterval(() => {
 
-    x += vx;
-    y += vy;
+  x += vx;
+  y += vy;
 
-    if (x <= halfW || x >= rect.width - halfW) vx *= -1;
-    if (y <= halfH || y >= rect.height - halfH) vy *= -1;
+  // clamp + bounce so we never overshoot off-screen
+  const minX = halfW;
+  const maxX = rect.width - halfW;
+  const minY = halfH;
+  const maxY = rect.height - halfH;
 
-    emojiEl.style.left = x + "px";
-    emojiEl.style.top = y + "px";
+  if (x < minX) { x = minX; vx *= -1; }
+  if (x > maxX) { x = maxX; vx *= -1; }
+  if (y < minY) { y = minY; vy *= -1; }
+  if (y > maxY) { y = maxY; vy *= -1; }
+
+  emojiEl.style.left = x + "px";
+  emojiEl.style.top = y + "px";
 
   }, 16);
 }
