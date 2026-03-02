@@ -1825,16 +1825,7 @@ async function switchQuiz(quizId) {
         <div class="content" style="justify-content:center; text-align:center; gap:18px;">
           ${img}
           <div class="big-text">${escapeHtml(LESSON_TITLE_TEXT || "Eat Your Bible Quizzes")}</div>
-          ${hasQuestions
-            ? `<div class="body-text">Questions: <b>${QUESTIONS.length}</b></div>`
-            : `<div class="body-text">Pick a quiz to begin.</div>`
-          }
-
-          <button id="startBtn" class="primary-btn" type="button">
-            ${hasSelectedQuiz ? "Start" : "Choose a quiz"}
-          </button>
-
-          <label class="body-text" for="quizPicker" style="margin-top:10px;">Choose a quiz:</label>
+          <label class="body-text" for="quizPicker" style="margin-top:10px;">Quiz Selection:</label>
           <select id="quizPicker" class="secondary-btn" style="height:46px; border-radius:14px; padding:0 14px;">
             ${QUIZ_LIST.map(q => {
             const match = q.id.match(/^([a-z]+)(\d+)$/i);
