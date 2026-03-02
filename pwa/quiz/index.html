@@ -1954,6 +1954,11 @@ slide.addEventListener("click", (e) => {
   showTitle();
 });
 
+// Mobile Safari sometimes prefers touchstart
+slide.addEventListener("touchstart", (e) => {
+  if (e.target.closest("#present") || e.target.closest("#playAgain")) return;
+  showTitle();
+}, { passive: true });
 
     pushSlide(slide, "forward", false);
   }
