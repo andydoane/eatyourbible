@@ -1081,6 +1081,15 @@ const SUSPENSE_VARIANTS = [
   "yesnoFlip"
 ];
 
+function shuffledAnswerIndices(n=4){
+  const idx = Array.from({length:n}, (_,i)=>i);
+  for (let i = idx.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [idx[i], idx[j]] = [idx[j], idx[i]];
+  }
+  return idx;
+}
+
 let suspenseDeck = [];
 function shuffle(arr){
   for (let i = arr.length - 1; i > 0; i--) {
@@ -1569,6 +1578,14 @@ if (variant === "yesnoFlip") {
 
     const q = QUESTIONS[qIndex];
 
+    // Shuffle answers per question display (slots 0-3 keep their colors)
+    const slotToOrig = shuffledAnswerIndices(4);   // e.g. [2,0,3,1]
+    const origToSlot = Array(4).fill(0);
+    slotToOrig.forEach((origIdx, slotIdx) => { origToSlot[origIdx] = slotIdx; });
+
+    const correctOrig = (q.correctIndex ?? 0);
+    const correctSlot = origToSlot[correctOrig];   // where the correct answer ended up
+
     const html = `
       <div class="top" style="flex-direction:column; align-items:stretch; gap:10px;">
         <div class="timer-row">
@@ -1584,7 +1601,13 @@ if (variant === "yesnoFlip") {
           </div>
 
           <div id="answers" class="answers">
-            ${q.answers.map((a,i)=>`<button class="answer opt${i}" data-i="${i}" type="button">${escapeHtml(a)}</button>`).join("")}
+
+          ${slotToOrig.map((origIdx, slotIdx) => `
+            <button class="answer opt${slotIdx}" data-i="${slotIdx}" type="button">
+              ${escapeHtml(q.answers[origIdx])}
+            </button>
+          `).join("")}
+
           </div>
 
           <div id="suspense" class="suspense" style="display:none;">
@@ -1691,7 +1714,7 @@ if (variant === "yesnoFlip") {
       questionBoxEl,
       answerBtns,
       done: () => {
-        reveal(q.correctIndex ?? 0);
+        reveal(correctSlot);
       }
     });
   }
