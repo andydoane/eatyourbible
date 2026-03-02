@@ -1990,6 +1990,16 @@ function exitToTitle() {
   (async function boot(){
     try {
       await loadQuizFromJson(getQuizJsonPathFromUrl());
+
+    // DEBUG MODE: jump straight to end screen
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("debug") === "1") {
+      qIndex = QUESTIONS.length;   // pretend we finished
+      correctCount = Math.floor(QUESTIONS.length / 2); // fake score
+      showEnd();
+      return;
+    }
+
     } catch (e) {
       console.error(e);
       // Fallback screen if JSON fails
