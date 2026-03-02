@@ -1910,7 +1910,8 @@ if (variant === "yesnoFlip") {
 
     const slide = makeSlide(html, "var(--bg-solid, #222)");
 
-    slide.querySelector("#playAgain").addEventListener("click", () => {
+    slide.querySelector("#playAgain").addEventListener("click", (e) => {
+   e.stopPropagation();
       ensureAudioUnlocked();
       playChompSound();
       qIndex = 0;
@@ -1933,11 +1934,24 @@ setTimeout(() => {
   presentEl.classList.add("wiggle");
 }, 450);
 
-presentEl.addEventListener("click", () => {
+presentEl.addEventListener("click", (e) => {
+  e.stopPropagation();
   ensureAudioUnlocked();
   clearInterval(presentWiggleTimer);
   openPresentReward(score, total);
 });
+
+// Tap anywhere on the end screen (except the present / play again) -> go to title
+slide.addEventListener("click", (e) => {
+  if (e.target.closest("#present") || e.target.closest("#playAgain")) return;
+  showTitle();
+});
+
+// Mobile Safari sometimes prefers touchstart
+slide.addEventListener("touchstart", (e) => {
+  if (e.target.closest("#present") || e.target.closest("#playAgain")) return;
+  showTitle();
+}, { passive: true });
 
     pushSlide(slide, "forward", false);
   }
