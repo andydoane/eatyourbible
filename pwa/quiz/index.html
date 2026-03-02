@@ -1882,6 +1882,13 @@ if (variant === "yesnoFlip") {
   function showEnd() {
     stopTimer();
     setNavVisible(false);
+  // SAFETY: make sure no full-screen overlay is still blocking taps
+  suspenseOverlay.style.display = "none";  // hide suspense dimmer (z-index 20000)
+  overlay.classList.remove("show");        // hide confirm/reward overlay (z-index 10000)
+  overlay.style.display = "none";          // extra hard-hide (in case something set inline display)
+  overlay.onclick = null;
+  overlay.ontouchstart = null;
+
 
     const total = QUESTIONS.length;
     const score = correctCount;
