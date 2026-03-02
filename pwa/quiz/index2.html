@@ -1878,7 +1878,7 @@ async function switchQuiz(quizId) {
     });
     // Preselect current quiz based on the URL (?q=...)
     const params = new URLSearchParams(window.location.search);
-    const currentId = params.get("q") || "ot02";
+    const currentId = params.get("q") || "ot01";
     slide.querySelector("#quizPicker").value = currentId;
 
 // Auto-load when the dropdown selection changes
