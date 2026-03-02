@@ -894,9 +894,21 @@ nav#nav{
    ***********************/
   function getQuizJsonPathFromUrl() {
     const params = new URLSearchParams(window.location.search);
-    const quizId = params.get("q") || "ot02";
+    const quizId = params.get("q");     // <-- no default
+    if (!quizId) return null;           // <-- IMPORTANT
     return `quiz_data/${quizId}.json`;
   }
+
+function setHomeDefaults() {
+  LESSON_ID = "";
+  PAGE_TITLE = "Eat Your Bible Quizzes";
+  LESSON_TITLE_TEXT = "Eat Your Bible Quizzes";
+  LESSON_SUBTITLE_TEXT = "";
+  LESSON_IMAGE_PATH = "quizimages/quiz_icon.png";
+  THEME_CLASS = "";      // title screen is not themed anyway
+  QUESTIONS = [];        // no quiz loaded yet
+  document.title = PAGE_TITLE;
+}
 
   // === List of quizzes the user can pick from on the title screen ===
 // IMPORTANT: "id" must match the JSON filename in /quiz_data/
@@ -1796,24 +1808,31 @@ async function switchQuiz(quizId) {
 
   function showTitle() {
     setNavVisible(false);
-
-  const img = LESSON_IMAGE_PATH ? `
+  const hasSelectedQuiz = !!(new URLSearchParams(window.location.search).get("q"));
+  const hasQuestions = Array.isArray(QUESTIONS) && QUESTIONS.length > 0;
+  const imgPath = LESSON_IMAGE_PATH || "quizimages/quiz_icon.png";
+  const img = `
     <img
-      src="${LESSON_IMAGE_PATH}"
+      src="${imgPath}"
       alt=""
       style="width:min(78vw, 420px); max-height:42vh; object-fit:contain;"
       onerror="this.style.display='none'"
     >
-  ` : ""; 
+  `;
 
     const html = `
       <div class="title-screen">
         <div class="content" style="justify-content:center; text-align:center; gap:18px;">
           ${img}
-          <div class="big-text">${escapeHtml(LESSON_TITLE_TEXT || PAGE_TITLE || "Quiz")}</div>
-          <div class="body-text">Questions: <b>${QUESTIONS.length}</b></div>
+          <div class="big-text">${escapeHtml(LESSON_TITLE_TEXT || "Eat Your Bible Quizzes")}</div>
+          ${hasQuestions
+            ? `<div class="body-text">Questions: <b>${QUESTIONS.length}</b></div>`
+            : `<div class="body-text">Pick a quiz to begin.</div>`
+          }
 
-          <button id="startBtn" class="primary-btn" type="button">Start</button>
+          <button id="startBtn" class="primary-btn" type="button">
+            ${hasSelectedQuiz ? "Start" : "Choose a quiz"}
+          </button>
 
           <label class="body-text" for="quizPicker" style="margin-top:10px;">Choose a quiz:</label>
           <select id="quizPicker" class="secondary-btn" style="height:46px; border-radius:14px; padding:0 14px;">
@@ -1837,6 +1856,15 @@ async function switchQuiz(quizId) {
     slide.querySelector("#startBtn").addEventListener("click", () => {
       ensureAudioUnlocked();
       playChompSound();
+
+      // If no quiz selected yet, just focus the dropdown
+      const params = new URLSearchParams(window.location.search);
+      if (!params.get("q")) {
+        slide.querySelector("#quizPicker").focus();
+        return;
+      }
+
+      // Normal quiz start
       qIndex = 0;
       correctCount = 0;
       showQuestion();
@@ -2376,16 +2404,22 @@ function createSpinBurst(el) {
    ***********************/
   (async function boot(){
     try {
-      await loadQuizFromJson(getQuizJsonPathFromUrl());
+      const jsonPath = getQuizJsonPathFromUrl();
 
-    // DEBUG MODE: jump straight to end screen
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("debug") === "1") {
-      qIndex = QUESTIONS.length;   // pretend we finished
-      correctCount = Math.floor(QUESTIONS.length / 2); // fake score
-      showEnd();
-      return;
-    }
+      if (jsonPath) {
+        await loadQuizFromJson(jsonPath);
+      } else {
+        setHomeDefaults();
+      }
+
+      // DEBUG MODE: only makes sense when a quiz is loaded
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("debug") === "1" && QUESTIONS.length > 0) {
+        qIndex = QUESTIONS.length;   // pretend we finished
+        correctCount = Math.floor(QUESTIONS.length / 2); // fake score
+        showEnd();
+        return;
+      }
 
     } catch (e) {
       console.error(e);
