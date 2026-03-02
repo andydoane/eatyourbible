@@ -571,21 +571,24 @@ nav#nav{
     }
 
     /* End / Present */
-    .present{
-      width: 180px;
-      height: 180px;
-      border-radius: 30px;
-      margin: 0 auto;
-      background: rgba(255,255,255,0.14);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size: 82px;
-      box-shadow: 0 18px 50px rgba(0,0,0,0.35);
-      border: 1px solid rgba(255,255,255,0.18);
-      user-select:none;
-    }
-    .present:active{ transform: scale(0.99); }
+.present{
+  /* No box — just the emoji */
+  width: auto;
+  height: auto;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+
+  display: inline-flex;
+  align-items:center;
+  justify-content:center;
+
+  font-size: 92px;
+  line-height: 1;
+  user-select:none;
+}
+.present:active{ transform: scale(0.98); }
 
     .emoji-reward{
       font-size: 92px;
@@ -595,11 +598,105 @@ nav#nav{
       animation: rewardPop 420ms cubic-bezier(.2,1.4,.35,1) both;
       filter: drop-shadow(0 14px 28px rgba(0,0,0,0.35));
     }
+
+
+
+    
     @keyframes rewardPop{
       from{ transform: scale(0.6) rotate(-6deg); opacity:0.5; }
       to{ transform: scale(1) rotate(0deg); opacity:1; }
     }
 
+    @keyframes presentWiggle {
+  0%   { transform: rotate(0deg); }
+  15%  { transform: rotate(-10deg); }
+  30%  { transform: rotate(10deg); }
+  45%  { transform: rotate(-8deg); }
+  60%  { transform: rotate(8deg); }
+  75%  { transform: rotate(-4deg); }
+  100% { transform: rotate(0deg); }
+}
+
+/* Reward overlay layout text */
+.reward-top{
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0.3px;
+  text-align: center;
+}
+
+/* --- Dance 1: Bounce Party --- */
+@keyframes danceBounce {
+  0%, 100% { transform: translateY(0) scale(1,1); }
+  40%      { transform: translateY(-22px) scale(1.04,0.96); }
+  60%      { transform: translateY(0) scale(0.98,1.05); }
+  75%      { transform: translateY(-10px) scale(1.02,0.98); }
+}
+.emoji-reward.dance-bounce{
+  animation: danceBounce 720ms cubic-bezier(.2,.9,.2,1) infinite;
+}
+
+/* --- Dance 2: Wiggle Shimmy --- */
+@keyframes danceWiggle {
+  0%   { transform: rotate(0deg) translateX(0); }
+  15%  { transform: rotate(-10deg) translateX(-6px); }
+  30%  { transform: rotate(10deg) translateX(6px); }
+  45%  { transform: rotate(-8deg) translateX(-4px); }
+  60%  { transform: rotate(8deg) translateX(4px); }
+  75%  { transform: rotate(-4deg) translateX(-2px); }
+  100% { transform: rotate(0deg) translateX(0); }
+}
+.emoji-reward.dance-wiggle{
+  animation: danceWiggle 640ms ease-in-out infinite;
+}
+
+/* --- Dance 3: Moonwalk Slide --- */
+@keyframes danceMoonwalk {
+  0%   { transform: translateX(-26px) rotate(6deg); }
+  50%  { transform: translateX(26px) rotate(-6deg); }
+  100% { transform: translateX(-26px) rotate(6deg); }
+}
+.emoji-reward.dance-moonwalk{
+  animation: danceMoonwalk 980ms ease-in-out infinite;
+}
+
+/* --- Dance 4: Crazy Pong (JS-driven) --- */
+.emoji-reward.dance-pong{
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%,-50%);
+  will-change: left, top;
+}
+
+/* --- Dance 5: Spin'spolsion (JS-driven spin-up) --- */
+.emoji-reward.dance-spin{
+  will-change: transform;
+}
+
+/* Particle burst for Spin'spolsion */
+.particle{
+  position:absolute;
+  left: 50%;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.95);
+  transform: translate(-50%,-50%);
+  pointer-events:none;
+  filter: drop-shadow(0 8px 14px rgba(0,0,0,0.35));
+}
+@keyframes particleFly{
+  from { transform: translate(-50%,-50%) translate(0,0) scale(1); opacity: 1; }
+  to   { transform: translate(-50%,-50%) translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; }
+}
+
+.present.wiggle {
+  animation: presentWiggle 520ms ease-in-out both;
+}
+
+    
     /* Tiny corner hint */
     .hint{
       font-size: 13px;
@@ -1797,10 +1894,26 @@ if (variant === "yesnoFlip") {
       showQuestion("forward");
     });
 
-    slide.querySelector("#present").addEventListener("click", () => {
-      ensureAudioUnlocked();
-      openPresentReward(score, total);
-    });
+const presentEl = slide.querySelector("#present");
+
+// Wiggle every ~2 seconds until opened
+let presentWiggleTimer = setInterval(() => {
+  presentEl.classList.remove("wiggle");
+  // force reflow so the animation retriggers
+  void presentEl.offsetWidth;
+  presentEl.classList.add("wiggle");
+}, 2000);
+
+// Also do a small wiggle soon after arriving
+setTimeout(() => {
+  presentEl.classList.add("wiggle");
+}, 450);
+
+presentEl.addEventListener("click", () => {
+  ensureAudioUnlocked();
+  clearInterval(presentWiggleTimer);
+  openPresentReward(score, total);
+});
 
     pushSlide(slide, "forward", false);
   }
@@ -1814,42 +1927,49 @@ if (variant === "yesnoFlip") {
     overlay.classList.add("show");
     overlay.querySelector(".dialog").style.display = "none";
 
+    // Pick one of the 5 dances
+    const dances = ["dance-bounce", "dance-wiggle", "dance-moonwalk", "dance-pong", "dance-spin"];
+    const danceClass = dances[Math.floor(Math.random() * dances.length)];
+
     overlay.innerHTML = `
-      <div style="width:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;">
-        <div class="emoji-reward" id="rewardEmoji">${emoji}</div>
-        <div class="body-text" style="text-align:center;">You got <b>${score}</b> / <b>${total}</b> correct</div>
-        <div class="hint">Tap anywhere to continue</div>
+      <div id="rewardStage" style="position:relative; width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;">
+        <div class="reward-top">You got a...</div>
+        <div class="emoji-reward ${danceClass}" id="rewardEmoji">${emoji}</div>
+        <div class="hint">Tap anywhere to exit</div>
       </div>
     `;
 
     // close on tap -> restore dialog markup for future confirms
-    overlay.addEventListener("click", restoreOverlay, { once:true });
-    overlay.addEventListener("touchstart", restoreOverlay, { once:true, passive:true });
+overlay.addEventListener("click", exitToTitle, { once:true });
+overlay.addEventListener("touchstart", exitToTitle, { once:true, passive:true });
 
-    function restoreOverlay() {
-      // rebuild overlay to original confirm dialog
-      overlay.className = "overlay";
-      overlay.innerHTML = `
-        <div class="dialog">
-          <h3 id="overlayTitle">Quit quiz?</h3>
-          <p id="overlayText">Are you sure you want to go back to the start?</p>
-          <div class="row">
-            <button id="overlayCancel" class="secondary-btn" type="button">Cancel</button>
-            <button id="overlayOk" class="primary-btn" type="button">Quit</button>
-          </div>
-        </div>
-      `;
-      // rebind elements
-      window.overlayCancel = document.getElementById("overlayCancel");
-      window.overlayOk = document.getElementById("overlayOk");
-      // rebind listeners
-      document.getElementById("overlayCancel").addEventListener("click", hideConfirm);
-      document.getElementById("overlayOk").addEventListener("click", () => overlayOkHandler && overlayOkHandler());
-      overlay.addEventListener("click", (e) => { if (e.target === overlay) hideConfirm(); });
+function exitToTitle() {
+  stopRewardAnimations();
 
-      // go back to end screen
-      showEnd();
-    }
+  // restore overlay to original confirm dialog markup (for future Home/Quit dialogs)
+  overlay.className = "overlay";
+  overlay.innerHTML = `
+    <div class="dialog">
+      <h3 id="overlayTitle">Quit quiz?</h3>
+      <p id="overlayText">Are you sure you want to go back to the start?</p>
+      <div class="row">
+        <button id="overlayCancel" class="secondary-btn" type="button">Cancel</button>
+        <button id="overlayOk" class="primary-btn" type="button">Quit</button>
+      </div>
+    </div>
+  `;
+  // rebind elements + listeners
+  window.overlayCancel = document.getElementById("overlayCancel");
+  window.overlayOk = document.getElementById("overlayOk");
+  document.getElementById("overlayCancel").addEventListener("click", hideConfirm);
+  document.getElementById("overlayOk").addEventListener("click", () => overlayOkHandler && overlayOkHandler());
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) hideConfirm(); });
+
+  // IMPORTANT: go to title screen (no re-showEnd)
+  showTitle();
+}
+
+
   }
 
   /***********************
