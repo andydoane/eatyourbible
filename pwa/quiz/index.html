@@ -1546,6 +1546,34 @@ if (variant === "yesnoFlip") {
   let qIndex = 0;
   let correctCount = 0;
 
+// =========================================================
+// Reward (present) cleanup so "tap anywhere to exit" works
+// =========================================================
+let rewardSpinInterval = null;
+let rewardPongInterval = null;
+let rewardCleanupTimers = [];
+
+function stopRewardAnimations() {
+  // stop any JS-driven intervals
+  if (rewardSpinInterval !== null) {
+    clearInterval(rewardSpinInterval);
+    rewardSpinInterval = null;
+  }
+  if (rewardPongInterval !== null) {
+    clearInterval(rewardPongInterval);
+    rewardPongInterval = null;
+  }
+
+  // stop any timeouts we created
+  for (const t of rewardCleanupTimers) clearTimeout(t);
+  rewardCleanupTimers = [];
+
+  // remove confetti/particles if present
+  try {
+    overlay.querySelectorAll(".particle").forEach(p => p.remove());
+  } catch (e) {}
+}
+
   // per-question timer
   let timeLeft = TIMER_DURATION;
   let timerIntervalId = null;
@@ -2035,7 +2063,7 @@ if (danceClass === "dance-spin") {
   let holding = false;
   let holdStart = 0;
 
-  const spinInterval = setInterval(() => {
+  rewardSpinInterval = setInterval(() => {
     const now = performance.now();
     const dt = Math.min(32, now - last); // ms since last tick (clamped)
     last = now;
@@ -2058,7 +2086,8 @@ if (danceClass === "dance-spin") {
       holdStart = now;
     }
     if (holding && (now - holdStart) >= holdMs) {
-      clearInterval(spinInterval);
+      clearInterval(rewardSpinInterval);
+rewardSpinInterval = null;
 
       // Hide emoji before burst
       emojiEl.style.visibility = "hidden";
@@ -2087,7 +2116,7 @@ if (danceClass === "dance-pong") {
   const halfW = emojiRect.width / 2;
   const halfH = emojiRect.height / 2;
 
-  const pongInterval = setInterval(() => {
+  rewardPongInterval = setInterval(() => {
 
   x += vx;
   y += vy;
@@ -2110,12 +2139,21 @@ if (danceClass === "dance-pong") {
 }
 
 
-    // close on tap -> restore dialog markup for future confirms
-overlay.onclick = exitToTitle;
-overlay.ontouchstart = exitToTitle;
+// close on tap anywhere (works on mobile + desktop)
+const rewardExitHandler = (e) => {
+  // prevent weird mobile gesture defaults
+  if (e) {
+    e.preventDefault?.();
+    e.stopPropagation?.();
+  }
+  exitToTitle();
+};
+
+overlay.addEventListener("touchstart", rewardExitHandler, { passive: false, once: true });
+overlay.addEventListener("click", rewardExitHandler, { once: true });
 
 function exitToTitle() {
-  stopRewardAnimations();
+  try { stopRewardAnimations(); } catch(e) {}
 
   // restore overlay to original confirm dialog markup (for future Home/Quit dialogs)
   overlay.className = "overlay";
