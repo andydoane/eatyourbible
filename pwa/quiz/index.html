@@ -1883,7 +1883,6 @@ if (variant === "yesnoFlip") {
     stopTimer();
     setNavVisible(false);
   // SAFETY: make sure no full-screen overlay is still blocking taps
-  suspenseOverlay.style.display = "none";  // hide suspense dimmer (z-index 20000)
   overlay.classList.remove("show");        // hide confirm/reward overlay (z-index 10000)
   overlay.style.display = "none";          // extra hard-hide (in case something set inline display)
   overlay.onclick = null;
@@ -1976,6 +1975,7 @@ slide.addEventListener("click", exitEnd);
   }
 
   function openPresentReward(score, total) {
+    overlay.style.display = ""; // IMPORTANT: clear inline display:none so .show can work
     setNavVisible(false);
     // Choose pool by score (clamp 0..10 like Andy engine)
     const bucket = Math.max(0, Math.min(10, score));
