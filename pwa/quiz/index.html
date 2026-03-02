@@ -628,10 +628,21 @@ nav#nav{
 /* --- Dance 1: Bounce Party --- */
 @keyframes danceBounce {
   0%, 100% { transform: translateY(0) scale(1,1); }
-  40%      { transform: translateY(-22px) scale(1.04,0.96); }
-  60%      { transform: translateY(0) scale(0.98,1.05); }
-  75%      { transform: translateY(-10px) scale(1.02,0.98); }
+
+  /* takeoff squash */
+  15% { transform: translateY(0) scale(1.08,0.88); }
+
+  /* big apex */
+  45% { transform: translateY(-60px) scale(1.05,0.95); }
+
+  /* landing squash */
+  65% { transform: translateY(0) scale(0.92,1.12); }
+
+  /* small rebound */
+  80% { transform: translateY(-18px) scale(1.02,0.98); }
 }
+
+
 .emoji-reward.dance-bounce{
   animation: danceBounce 720ms cubic-bezier(.2,.9,.2,1) infinite;
 }
@@ -652,10 +663,12 @@ nav#nav{
 
 /* --- Dance 3: Moonwalk Slide --- */
 @keyframes danceMoonwalk {
-  0%   { transform: translateX(-26px) rotate(6deg); }
-  50%  { transform: translateX(26px) rotate(-6deg); }
-  100% { transform: translateX(-26px) rotate(6deg); }
+  0%   { transform: translateX(-65px) rotate(6deg); }
+  50%  { transform: translateX(65px) rotate(-6deg); }
+  100% { transform: translateX(-65px) rotate(6deg); }
 }
+
+
 .emoji-reward.dance-moonwalk{
   animation: danceMoonwalk 980ms ease-in-out infinite;
 }
@@ -1961,6 +1974,62 @@ presentEl.addEventListener("click", () => {
       </div>
     `;
 
+const emojiEl = document.getElementById("rewardEmoji");
+
+// SPIN PERFORMANCE
+if (danceClass === "dance-spin") {
+
+  let angle = 0;
+  let speed = 0;
+  let accelerating = true;
+
+  const spinInterval = setInterval(() => {
+
+    if (accelerating) {
+      speed += 4;
+      if (speed >= 60) accelerating = false;
+    } else {
+      speed *= 0.96;
+      if (speed < 2) {
+        clearInterval(spinInterval);
+        createSpinBurst(emojiEl);
+        return;
+      }
+    }
+
+    angle += speed;
+    emojiEl.style.transform = `rotate(${angle}deg)`;
+
+  }, 16);
+}
+
+// PONG PERFORMANCE
+if (danceClass === "dance-pong") {
+
+  const stage = document.getElementById("rewardStage");
+  const rect = stage.getBoundingClientRect();
+
+  let x = rect.width / 2;
+  let y = rect.height / 2;
+  let vx = 4;
+  let vy = 3;
+
+  emojiEl.style.position = "absolute";
+
+  const pongInterval = setInterval(() => {
+
+    x += vx;
+    y += vy;
+
+    if (x <= 60 || x >= rect.width - 60) vx *= -1;
+    if (y <= 80 || y >= rect.height - 80) vy *= -1;
+
+    emojiEl.style.left = x + "px";
+    emojiEl.style.top = y + "px";
+
+  }, 16);
+}
+
     // close on tap -> restore dialog markup for future confirms
 overlay.addEventListener("click", exitToTitle, { once:true });
 overlay.addEventListener("touchstart", exitToTitle, { once:true, passive:true });
@@ -2005,6 +2074,29 @@ function exitToTitle() {
       .replaceAll('"',"&quot;")
       .replaceAll("'","&#039;");
   }
+
+function createSpinBurst(el) {
+  const container = el.parentElement;
+
+  for (let i = 0; i < 18; i++) {
+    const p = document.createElement("div");
+    p.className = "particle";
+
+    const angle = (Math.PI * 2 * i) / 18;
+    const distance = 120 + Math.random() * 40;
+
+    const dx = Math.cos(angle) * distance + "px";
+    const dy = Math.sin(angle) * distance + "px";
+
+    p.style.setProperty("--dx", dx);
+    p.style.setProperty("--dy", dy);
+    p.style.animation = "particleFly 700ms ease-out forwards";
+
+    container.appendChild(p);
+
+    setTimeout(() => p.remove(), 750);
+  }
+}
 
   /***********************
    * Boot
