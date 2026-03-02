@@ -390,18 +390,24 @@
     }
 
     /* Small toast / overlay */
-    .overlay{
-      position:fixed;
-      inset:0;
-      background: rgba(0,0,0,0.55);
-      display:none;
-      align-items:center;
-      justify-content:center;
-      z-index: 10000;
-      padding: 20px;
-      box-sizing:border-box;
+.overlay{
+  position:fixed;
+  inset:0;
+  background: rgba(0,0,0,0.95); /* MUCH darker */
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index: 10000;
+    opacity: 0;
+  transition: opacity 250ms ease;
+}
+    
+
+    .overlay.show{ 
+    display:flex;
+    opacity:1;
+
     }
-    .overlay.show{ display:flex; }
 
 /* =========================================================
    Suspense overlay (dims EVERYTHING)
@@ -633,7 +639,7 @@ nav#nav{
   15% { transform: translateY(0) scale(1.08,0.88); }
 
   /* big apex — responsive height */
-  45% { transform: translateY(-18vh) scale(1.05,0.95); }
+  45% { transform: translateY(-38vh) scale(1.05,0.95); }
 
   /* landing squash */
   65% { transform: translateY(0) scale(0.92,1.12); }
@@ -1933,6 +1939,7 @@ presentEl.addEventListener("click", () => {
   }
 
   function openPresentReward(score, total) {
+    setNavVisible(false);
     // Choose pool by score (clamp 0..10 like Andy engine)
     const bucket = Math.max(0, Math.min(10, score));
     const pool = REWARD_EMOJI_POOLS[bucket] || FUNNY_EMOJIS;
@@ -1977,34 +1984,41 @@ presentEl.addEventListener("click", () => {
 
 const emojiEl = document.getElementById("rewardEmoji");
 
-// SPIN PERFORMANCE
+// SPIN PERFORMANCE (long ramp + vanish on burst)
 if (danceClass === "dance-spin") {
 
   let angle = 0;
   let speed = 0;
   let accelerating = true;
+  let frameCount = 0;
 
   const spinInterval = setInterval(() => {
 
+    frameCount++;
+
+    // Longer acceleration phase
     if (accelerating) {
-      speed += 4;
-      if (speed >= 60) accelerating = false;
-    } else {
-      speed *= 0.96;
-      if (speed < 2) {
-        clearInterval(spinInterval);
-        createSpinBurst(emojiEl);
-        return;
-      }
+      speed += 3;
+      if (speed >= 85) accelerating = false;
     }
 
     angle += speed;
     emojiEl.style.transform = `rotate(${angle}deg)`;
 
+    // Let it spin FAST for a while before burst
+    if (!accelerating && frameCount > 140) {
+      clearInterval(spinInterval);
+
+      // Hide emoji before burst
+      emojiEl.style.visibility = "hidden";
+
+      createSpinBurst(emojiEl);
+    }
+
   }, 16);
 }
 
-// PONG PERFORMANCE
+// PONG PERFORMANCE (true edge bounce + faster)
 if (danceClass === "dance-pong") {
 
   const stage = document.getElementById("rewardStage");
@@ -2012,21 +2026,24 @@ if (danceClass === "dance-pong") {
 
   let x = rect.width / 2;
   let y = rect.height / 2;
-  let vx = 6;
-  let vy = 5;
+  let vx = 8;
+  let vy = 7;
 
   emojiEl.style.position = "absolute";
   emojiEl.style.transform = "translate(-50%, -50%)";
+
+  // Use real emoji size
+  const emojiRect = emojiEl.getBoundingClientRect();
+  const halfW = emojiRect.width / 2;
+  const halfH = emojiRect.height / 2;
 
   const pongInterval = setInterval(() => {
 
     x += vx;
     y += vy;
 
-    const size = 70; // approx emoji footprint
-
-    if (x <= size/2 || x >= rect.width - size/2) vx *= -1;
-    if (y <= size/2 || y >= rect.height - size/2) vy *= -1;
+    if (x <= halfW || x >= rect.width - halfW) vx *= -1;
+    if (y <= halfH || y >= rect.height - halfH) vy *= -1;
 
     emojiEl.style.left = x + "px";
     emojiEl.style.top = y + "px";
@@ -2034,9 +2051,10 @@ if (danceClass === "dance-pong") {
   }, 16);
 }
 
+
     // close on tap -> restore dialog markup for future confirms
-overlay.addEventListener("click", exitToTitle, { once:true });
-overlay.addEventListener("touchstart", exitToTitle, { once:true, passive:true });
+overlay.onclick = exitToTitle;
+overlay.ontouchstart = exitToTitle;
 
 function exitToTitle() {
   stopRewardAnimations();
