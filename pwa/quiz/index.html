@@ -1941,24 +1941,36 @@ setTimeout(() => {
   presentEl.classList.add("wiggle");
 }, 450);
 
-presentEl.addEventListener("click", (e) => {
-  e.stopPropagation();
+const openPresent = (e) => {
+  e.preventDefault();      // important for mobile
+  e.stopPropagation();     // prevents slide "tap anywhere" handler
   ensureAudioUnlocked();
   clearInterval(presentWiggleTimer);
   openPresentReward(score, total);
-});
+};
 
-// Tap anywhere on the end screen (except the present / play again) -> go to title
-slide.addEventListener("click", (e) => {
-  if (e.target.closest("#present") || e.target.closest("#playAgain")) return;
-  showTitle();
-});
+// Mobile-first
+presentEl.addEventListener("touchstart", openPresent, { passive: false });
+// Desktop fallback
+presentEl.addEventListener("click", openPresent);
 
-// Mobile Safari sometimes prefers touchstart
-slide.addEventListener("touchstart", (e) => {
-  if (e.target.closest("#present") || e.target.closest("#playAgain")) return;
+function isInside(el, selector, e){
+  // make sure we have an Element to call closest() on
+  let target = e.target;
+  if (!(target instanceof Element)) {
+    const path = e.composedPath ? e.composedPath() : [];
+    target = path.find(n => n instanceof Element) || null;
+  }
+  return target ? !!target.closest(selector) : false;
+}
+
+const exitEnd = (e) => {
+  if (isInside(slide, "#present", e) || isInside(slide, "#playAgain", e)) return;
   showTitle();
-}, { passive: true });
+};
+
+slide.addEventListener("touchstart", exitEnd, { passive: true });
+slide.addEventListener("click", exitEnd);
 
     pushSlide(slide, "forward", false);
   }
