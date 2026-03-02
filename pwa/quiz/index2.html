@@ -911,8 +911,6 @@ function setHomeDefaults() {
 }
 
   // === List of quizzes the user can pick from on the title screen ===
-// IMPORTANT: "id" must match the JSON filename in /quiz_data/
-// Example: id "ot02" => quiz_data/ot02.json
 const QUIZ_LIST = [
   // ===== OLD TESTAMENT =====
   { id: "ot01", title: "God Creates the World" },
@@ -1829,18 +1827,33 @@ async function switchQuiz(quizId) {
           ${hasSelectedQuiz ? "Start" : "Choose a quiz"}
         </button>
           <label class="body-text" for="quizPicker" style="margin-top:10px;">Quiz Selection:</label>
-          <select id="quizPicker" class="secondary-btn" style="height:46px; border-radius:14px; padding:0 14px;">
-            ${QUIZ_LIST.map(q => {
-            const match = q.id.match(/^([a-z]+)(\d+)$/i);
-            let prefix = q.id.toUpperCase();
+        <select id="quizPicker" class="secondary-btn" style="height:46px; border-radius:14px; padding:0 14px;">
 
-            if (match) {
-              prefix = match[1].toUpperCase() + " " + match[2];
-            }
+          <optgroup label="Old Testament">
+            ${QUIZ_LIST
+              .filter(q => q.id.startsWith("ot"))
+              .map(q => {
+                const match = q.id.match(/^([a-z]+)(\d+)$/i);
+                let prefix = q.id.toUpperCase();
+                if (match) prefix = match[1].toUpperCase() + " " + match[2];
+                return `<option value="${q.id}">${prefix} — ${escapeHtml(q.title)}</option>`;
+              })
+              .join("")}
+          </optgroup>
 
-            return `<option value="${q.id}">${prefix} — ${escapeHtml(q.title)}</option>`;
-          }).join("")}
-          </select>
+          <optgroup label="New Testament">
+            ${QUIZ_LIST
+              .filter(q => q.id.startsWith("nt"))
+              .map(q => {
+                const match = q.id.match(/^([a-z]+)(\d+)$/i);
+                let prefix = q.id.toUpperCase();
+                if (match) prefix = match[1].toUpperCase() + " " + match[2];
+                return `<option value="${q.id}">${prefix} — ${escapeHtml(q.title)}</option>`;
+              })
+              .join("")}
+          </optgroup>
+
+        </select>
 
         </div>
       </div>
