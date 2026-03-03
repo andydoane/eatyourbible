@@ -256,11 +256,12 @@
       font-size: 15px;
       font-weight: 900;
       letter-spacing: 0.2px;
-      background: rgba(0,0,0,0.45);
+      background: rgba(255,255,255,0.95);
+      color: #111;
+      text-shadow: none;
       padding: 8px 16px;
       border-radius: 999px;
       display:inline-block;
-      text-shadow: 0 2px 6px rgba(0,0,0,0.35);
     }
     .verse{
       font-size: clamp(24px, 6.2vw, 52px);
@@ -278,6 +279,100 @@
       line-height: 1.35;
       text-wrap: balance;
     }
+
+/* ---------- Learn (3-zone) layout ---------- */
+.learn-layout{
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  /* top padding + side padding */
+  padding: calc(14px + var(--safeT)) 18px 18px;
+
+  /* padding between zones */
+  gap: 12px;
+}
+
+/* Zone 1: reference pill band (target ~10%) */
+.learn-ref{
+  flex: 0 0 10%;
+  min-height: 56px;
+  max-height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Zone 2: verse text band (target ~50%) */
+.learn-verse{
+  flex: 1 1 50%;
+  min-height: 0;               /* important for flex scrolling */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 6px;
+  overflow: auto;              /* only scrolls if verse is too long */
+   text-align: center; 
+   background: rgba(0,0,0,0.40);
+border-radius: 18px;
+}
+
+/* Zone 3: coach panel band (target ~40%) */
+.learn-coach{
+  flex: 0 0 40%;
+  min-height: 180px;           /* keeps room for button + text on small phones */
+  width: 100%;
+   background: transparent; 
+  color: #fff; 
+  border-radius: 18px;
+  border: none; 
+  padding: 16px 16px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; 
+  align-items: center; 
+  gap: 10px;
+  box-shadow: none; 
+}
+
+.coach-title{
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 0.2px;
+  text-align: center;
+text-transform: uppercase;
+letter-spacing: 1px;
+}
+
+.coach-text{
+  font-size: 15px;
+  font-weight: 700;
+  opacity: 0.92;
+  line-height: 1.25;
+  text-align: center;
+text-wrap: balance;
+}
+
+.coach-status{
+  font-size: 14px;
+  font-weight: 800;
+  opacity: 0.90;
+}
+
+.coach-actions{
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: center;
+  width: 100%;
+  max-width: 520px;
+}
+
+.learn-coach .carousel-main{
+  flex: 0 0 auto;     /* 🚫 do NOT grow vertically */
+  width: 100%;
+  max-width: 520px;
+}
 
     /* tappable blanks */
     .hintable{
@@ -393,6 +488,37 @@ const AUDIO_DIR = "verse_audio/";
 const WORDS_AUDIO_DIR = AUDIO_DIR + "words/";
 const DATA_DIR  = "verse_data/";
 const IMG_DIR   = "verse_images/";
+
+// =========================================================
+// DEBUG fallback: lets the app run offline (file://) without fetch()
+// Set DEBUG_MODE = false when you’re ready to remove this.
+// =========================================================
+const DEBUG_MODE = true;
+
+const DEBUG_VERSE_JSON = {
+  "verseId": "john_3_16",
+  "translation": "ESV",
+  "attribution": "Debug mode verse data (remove before publishing).",
+  "verseText": "For God so loved the world, that he gave his only Son, that whoever believes in him should not perish but have eternal life.",
+  "echoParts": [
+    "For God so loved the world",
+    "that he gave his only Son",
+    "that whoever believes in him",
+    "should not perish but have eternal life."
+  ],
+  "hidePlan": [
+    { "type": "emoji", "word": "God", "occurrence": 1, "emoji": "👑" },
+    { "type": "emoji", "word": "world", "occurrence": 1, "emoji": "🌍" },
+    { "type": "emoji", "word": "gave", "occurrence": 1, "emoji": "🎁" },
+    { "type": "emoji", "word": "Son", "occurrence": 1, "emoji": "👦" },
+    { "type": "underscore", "word": "whoever", "occurrence": 1 },
+    { "type": "underscore", "word": "believes", "occurrence": 1 },
+    { "type": "underscore", "word": "perish", "occurrence": 1 },
+    { "type": "underscore", "word": "eternal", "occurrence": 1 },
+    { "type": "underscore", "word": "life", "occurrence": 1 }
+  ]
+};
+
 
 /* Pick your actual filenames in verse_images/ (safe defaults) */
 const INTRO_LOGO = IMG_DIR + "eyb_logo_1.png";
@@ -579,9 +705,20 @@ function verseIdToRef(verseId, translation){
 }
 
 async function loadVerse(verseId){
+let json;
+
+try {
   const res = await fetch(`${DATA_DIR}${verseId}.json`, { cache: "no-store" });
-  if (!res.ok) throw new Error(`Could not load ${DATA_DIR}${verseId}.json (HTTP ${res.status})`);
-  const json = await res.json();
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  json = await res.json();
+} catch (err) {
+  if (DEBUG_MODE) {
+    console.warn("Fetch failed — using DEBUG_VERSE_JSON instead.", err);
+    json = DEBUG_VERSE_JSON;
+  } else {
+    throw new Error(`Could not load ${DATA_DIR}${verseId}.json (and DEBUG_MODE is off).`);
+  }
+}
 
   cfg = json;
   VERSE_ID = json.verseId;
@@ -619,6 +756,7 @@ const State = {
   // Learn progression
   listenDone: false,
   echoDone: false,
+   echoIndex: 0,
   hideCount: 0,
   revealedTokenIdx: new Set(),
 
@@ -675,6 +813,13 @@ function go(nextScreen){
 
   // stop audio when leaving a screen
   try { audioEl.pause(); audioEl.currentTime = 0; } catch(e){}
+
+  // Auto-shuffle when entering the missing-words section (no user button)
+  if (nextScreen === Screen.HIDE && from !== Screen.HIDE) {
+    reshuffleHidePlan();
+    State.hideCount = 0;
+    State.revealedTokenIdx = new Set();
+  }
 
   State.screen = nextScreen;
   render(); // render with both slides
@@ -796,25 +941,7 @@ function verseNode(){
   return p;
 }
 
-/* Listen / echo controls */
-let listenProgressRAF = 0;
-function stopListenProgress(){
-  if (listenProgressRAF) cancelAnimationFrame(listenProgressRAF);
-  listenProgressRAF = 0;
-}
-function startListenProgress(barEl){
-  stopListenProgress();
-  const tick = () => {
-    if (!audioEl.duration || !isFinite(audioEl.duration) || audioEl.duration <= 0){
-      barEl.style.width = "0%";
-    } else {
-      const p = Math.max(0, Math.min(1, audioEl.currentTime / audioEl.duration));
-      barEl.style.width = (p * 100).toFixed(2) + "%";
-    }
-    listenProgressRAF = requestAnimationFrame(tick);
-  };
-  tick();
-}
+
 
 function listenPlay(){
   setAudioSrc(AUDIO_FILE);
@@ -827,7 +954,6 @@ function listenPlay(){
 audioEl.addEventListener("ended", () => {
   if (State.screen === Screen.LISTEN){
     State.listenDone = true;
-    stopListenProgress();
     render();
   }
 });
@@ -838,11 +964,43 @@ function echoPartFileByIndex(i){
   return `${AUDIO_DIR}${VERSE_ID}${suffix}.mp3`;
 }
 
+function waitForDuration(timeoutMs = 2000){
+  return new Promise((resolve) => {
+    // If duration is already known, resolve immediately
+    if (isFinite(audioEl.duration) && audioEl.duration > 0) return resolve(audioEl.duration);
+
+    const t0 = Date.now();
+
+    const done = () => {
+      audioEl.removeEventListener("loadedmetadata", done);
+      audioEl.removeEventListener("durationchange", done);
+      const d = (isFinite(audioEl.duration) && audioEl.duration > 0) ? audioEl.duration : NaN;
+      resolve(d);
+    };
+
+    audioEl.addEventListener("loadedmetadata", done);
+    audioEl.addEventListener("durationchange", done);
+
+    // Fallback: don’t hang forever
+    const timer = setInterval(() => {
+      if (isFinite(audioEl.duration) && audioEl.duration > 0){
+        clearInterval(timer);
+        done();
+      } else if (Date.now() - t0 > timeoutMs){
+        clearInterval(timer);
+        done();
+      }
+    }, 50);
+  });
+}
+
+
 let echoCancelToken = 0;
 async function runEchoSequence(){
   const my = ++echoCancelToken;
   State.echoDone = false;
   render();
+  State.echoIndex = 0;
 
   for (let i = 0; i < ECHO_PARTS.length; i++){
     if (my !== echoCancelToken) return;
@@ -851,9 +1009,8 @@ async function runEchoSequence(){
     setAudioSrc(file);
     audioEl.currentTime = 0;
 
-    // update on-screen status
-    const status = document.getElementById("echoStatus");
-    if (status) status.textContent = `Part ${i+1} of ${ECHO_PARTS.length}`;
+State.echoIndex = i;
+render();
 
     try{
       await safePlay();
@@ -871,8 +1028,10 @@ async function runEchoSequence(){
       audioEl.addEventListener("ended", onEnd);
     });
 
-    // breathing room (same spirit as old app; simpler)
-    await new Promise(r => setTimeout(r, 450));
+    // Give the child time to repeat: duration × 1.25 (fallback 2s if unknown)
+    const d = await waitForDuration();
+    const repeatMs = (isFinite(d) && d > 0) ? (d * 1.25 * 1000) : 2000;
+    await new Promise(r => setTimeout(r, repeatMs));
   }
 
   // restore main verse audio for later
@@ -1016,7 +1175,10 @@ function screenTitle(idx){
   wrap.innerHTML = `
     <div class="title-content">
       <img src="${TITLE_LOGO}" alt="Title graphic" onerror="this.style.display='none'">
-      <h2>${VERSE_REF ? `Let's memorize ${VERSE_REF}` : "Verse Memory"}</h2>
+    <h2>
+      ${VERSE_REF ? `Let's memorize ${VERSE_REF}` : "Verse Memory"}
+      ${DEBUG_MODE ? " (DEBUG)" : ""}
+    </h2>
 
       <div class="title-carousel">
         <button class="carousel-arrow no-zoom" id="titlePrev" aria-label="Previous">${SVG_BACK}</button>
@@ -1052,35 +1214,36 @@ function screenListen(idx){
   inner.style.flexDirection = "column";
   inner.style.height = "100%";
 
-  inner.innerHTML = `
-    <div class="top">
-      <div class="titles">
-        <div class="title">${VERSE_REF}</div>
-        <div class="subtitle">Listen to the full verse</div>
-      </div>
-      <div></div>
-    </div>
-    <div class="content">
+inner.innerHTML = `
+  <div class="learn-layout">
+    <div class="learn-ref">
       <div class="verse-ref-pill">${VERSE_REF}</div>
-      <p class="verse">${VERSE_TEXT}</p>
+    </div>
 
-      <div class="timer-wrap" aria-label="Audio progress">
-        <div class="timer-bar" id="listenBar"></div>
+    <div class="learn-verse">
+      <p class="verse">${VERSE_TEXT}</p>
+    </div>
+
+    <div class="learn-coach">
+      <div>
+        <div class="coach-title">Listen to the Verse</div>
+        <div class="coach-text">Press the button below to listen to the verse.</div>
       </div>
 
-      <button class="carousel-main no-zoom" id="btnListenPlay" style="max-width:520px;">
-        🔊 Read it to me
-      </button>
-      <div class="small">${State.listenDone ? "Done! Tap Next ➜" : "When the audio finishes, Next will unlock."}</div>
+
+        <button class="carousel-main no-zoom" id="btnListenPlay" style="max-width:520px;">
+          🔊 Read it to me
+        </button>
+
+      </div>
     </div>
-  `;
+  </div>
+`;
 
   inner.querySelector("#btnListenPlay").onclick = async () => {
     State.listenDone = false;
     renderNav(); // lock Next
-    const bar = inner.querySelector("#listenBar");
     listenPlay();
-    startListenProgress(bar);
   };
 
   return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner});
@@ -1092,29 +1255,35 @@ function screenEcho(idx){
   inner.style.flexDirection = "column";
   inner.style.height = "100%";
 
-  inner.innerHTML = `
-    <div class="top">
-      <div class="titles">
-        <div class="title">${VERSE_REF}</div>
-        <div class="subtitle">Echo the verse back (parts)</div>
-      </div>
-      <div></div>
-    </div>
-
-    <div class="content">
+inner.innerHTML = `
+  <div class="learn-layout">
+    <div class="learn-ref">
       <div class="verse-ref-pill">${VERSE_REF}</div>
-      <p class="verse">${ECHO_PARTS.length ? ECHO_PARTS.join(" · ") : VERSE_TEXT}</p>
-      <div class="small" id="echoStatus">${State.echoDone ? "Done! Tap Next ➜" : `Ready (${ECHO_PARTS.length} parts)`}</div>
+    </div>
 
-      <button class="carousel-main no-zoom" id="btnEcho" style="max-width:520px;">
-        ${State.echoDone ? "Replay Echo" : "▶ Start Echo"}
-      </button>
+    <div class="learn-verse">
+      <p class="verse">${
+        ECHO_PARTS.length
+          ? (ECHO_PARTS[State.echoIndex] || ECHO_PARTS[0] || VERSE_TEXT)
+          : VERSE_TEXT
+      }</p>
+    </div>
 
-      <div class="small" style="max-width: 60ch;">
-        Tip: say each part out loud during the pause.
+    <div class="learn-coach">
+      <div>
+        <div class="coach-title">Echo the Verse</div>
+        <div class="coach-text">Press the button, then repeat each part out loud during the pause.</div>
+      </div>
+
+      <div class="coach-actions">
+        <button class="carousel-main no-zoom" id="btnEcho" style="max-width:520px;">
+          ${State.echoDone ? "Replay Echo" : "▶ Start Echo"}
+        </button>
+
       </div>
     </div>
-  `;
+  </div>
+`;
 
   inner.querySelector("#btnEcho").onclick = async () => {
     // cancel any prior
@@ -1136,40 +1305,33 @@ function screenHide(idx){
   const done = hiddenNow >= planMixed.length;
 
   inner.innerHTML = `
-    <div class="top">
-      <div class="titles">
-        <div class="title">${VERSE_REF}</div>
-        <div class="subtitle">${done ? "All words hidden!" : "Words are disappearing…"}</div>
-      </div>
-      <div></div>
-    </div>
-
-    <div class="content">
-      <div class="verse-ref-pill">${VERSE_REF}</div>
-      <div id="verseStage"></div>
-
-      <div class="small">
-        ${done
-          ? "Nice! Tap Next ➜ to go to Practice."
-          : `Hidden: ${hiddenNow} / ${planMixed.length} — Tap Next ➜ to hide one more.`}
+    <div class="learn-layout">
+      <div class="learn-ref">
+        <div class="verse-ref-pill">${VERSE_REF}</div>
       </div>
 
-      <button class="carousel-main no-zoom" id="btnShuffle" style="max-width:520px; background: rgba(0,0,0,0.28); color:#fff; box-shadow:none;">
-        🔀 Shuffle hiding order
-      </button>
+      <div class="learn-verse">
+        <div id="verseStage"></div>
+      </div>
 
-      <div class="small" style="max-width: 60ch;">
-        Tap a blank to reveal it.
+      <div class="learn-coach">
+        <div>
+          <div class="coach-title">Guess the Missing Words</div>
+          <div class="coach-text">Tap a missing part of the verse to reveal the word.</div>
+        </div>
+
+        <div class="coach-actions">
+          <div class="coach-status">
+            ${done
+              ? "Nice! Tap Next ➜ to go to Practice."
+              : `Hidden: ${hiddenNow} / ${planMixed.length} — Tap Next ➜ to hide one more.`}
+          </div>
+        </div>
       </div>
     </div>
   `;
 
-  inner.querySelector("#btnShuffle").onclick = () => {
-    reshuffleHidePlan();
-    State.hideCount = 0;
-    State.revealedTokenIdx = new Set();
-    render();
-  };
+
 
   inner.querySelector("#verseStage").appendChild(verseNode());
 
