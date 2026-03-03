@@ -1,1 +1,1268 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Verse Memory</title>
 
+  <!-- Font (same family as your other apps) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --navH: 70px;
+      --safeB: env(safe-area-inset-bottom);
+      --safeT: env(safe-area-inset-top);
+      --tap: 44px;
+
+      --purple: #7f66c6;
+      --dark: rgba(0,0,0,0.30);
+    }
+
+    *, *::before, *::after{ box-sizing: border-box; }
+
+    html, body{
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      font-family: "Baloo 2", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: var(--bg, var(--purple));
+      color: #fff;
+    }
+
+    #app{
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ---------- Slide System (Creed/Commandments style) ---------- */
+    .slide{
+      position:absolute;
+      inset:0;
+      display:flex;
+      flex-direction:column;
+      min-height:0;
+      padding-bottom: calc(var(--navH) + var(--safeB));
+      transition: transform 320ms ease;
+      will-change: transform;
+      background: var(--bg, var(--purple));
+    }
+    .slide.nav-hidden{
+      padding-bottom: 0;
+    }
+
+    .top{
+      padding: calc(14px + var(--safeT)) 18px 10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      min-height: 60px;
+    }
+    .titles{
+      display:flex;
+      flex-direction:column;
+      line-height:1.05;
+      min-width:0;
+    }
+    .titles .title{
+      font-size: 20px;
+      font-weight: 900;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .titles .subtitle{
+      font-size: 14px;
+      opacity: 0.92;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .content{
+      flex:1;
+      min-height:0;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      padding: 8px 18px 18px;
+      gap: 14px;
+      text-align:center;
+    }
+
+    /* ---------- Bottom nav (Creed/Commandments style) ---------- */
+    nav#navBar{
+      height: var(--navH);
+      background: var(--dark);
+      display:none;
+      justify-content:space-between;
+      align-items:center;
+      color:white;
+      position:fixed;
+      left:0; right:0; bottom:0;
+      z-index: 9999;
+      padding: 0 22px calc(var(--safeB)) 22px;
+      box-sizing:border-box;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .nav-btn{
+      width: var(--tap);
+      height: var(--tap);
+      border:none;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.95);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      cursor:pointer;
+    }
+    .nav-btn:active{ transform: scale(0.98); }
+    .nav-center{
+      font-weight: 900;
+      font-size: 16px;
+      opacity: 0.98;
+      letter-spacing: 0.3px;
+    }
+
+    .nav-icon{ width:34px; height:34px; display:block; }
+
+    /* ---------- Quiz-style intro ---------- */
+    .quiz-intro{
+      background: var(--purple);
+      color: #fff;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      height:100%;
+      text-align:center;
+      gap: 16px;
+      padding: 24px 18px;
+    }
+    .quiz-intro img{
+      width: min(70vw, 420px);
+      max-height: 45vh;
+      object-fit: contain;
+      animation: introWiggle 1s infinite alternate;
+      user-select:none;
+    }
+    @keyframes introWiggle { 0%{ transform: rotate(-4deg);} 100%{ transform: rotate(4deg);} }
+    .presented{ font-size: 16px; font-weight: 800; opacity: 0.95; }
+    .site{ font-size: 28px; font-weight: 900; letter-spacing: 0.5px; }
+    .hint{ font-size: 13px; opacity: 0.85; }
+
+    /* ---------- Title screen (Creed/Commandments style) ---------- */
+    .title-screen{
+      position:relative;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      height:100%;
+      padding: 24px 16px;
+      padding-bottom: 110px;
+      background: var(--purple);
+      color: white;
+      text-align:center;
+    }
+    .title-content{
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      width:100%;
+      max-width: 700px;
+    }
+    .title-screen h2{
+      font-size: clamp(22px, 5.2vw, 44px);
+      font-weight: 800;
+      margin: 14px 0 12px;
+      text-wrap: balance;
+    }
+    .title-screen img{
+      width: min(80%, 420px);
+      max-height: 34vh;
+      object-fit: contain;
+    }
+
+    .title-carousel{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 10px;
+      width:100%;
+      margin-top: 8px;
+    }
+    .carousel-arrow{
+      width: 54px;
+      height: 54px;
+      padding: 0;
+      margin: 10px 0;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.30);
+      color: white;
+      border: none;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      line-height: 0;
+      cursor:pointer;
+    }
+    .carousel-main{
+      margin: 10px 0;
+      flex: 1;
+      min-width: 0;
+      max-width: 420px;
+      padding: 14px 18px;
+      font-size: 18px;
+      font-weight: 900;
+      border-radius: 999px;
+      border: none;
+      background: white;
+      color: var(--purple);
+      box-shadow: 0 6px 0 rgba(0,0,0,0.25);
+      cursor:pointer;
+    }
+    .carousel-main:active{
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 rgba(0,0,0,0.25);
+    }
+    .carousel-dots{
+      display:flex;
+      justify-content:center;
+      gap: 10px;
+      margin-top: 6px;
+    }
+    .carousel-dot{
+      width: 10px; height: 10px;
+      border-radius: 999px;
+      border: 2px solid rgba(255,255,255,0.75);
+      opacity: 0.9;
+    }
+    .carousel-dot.active{ background: rgba(255,255,255,0.95); }
+
+    /* ---------- Verse text ---------- */
+    .verse-ref-pill{
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 0.2px;
+      background: rgba(0,0,0,0.45);
+      padding: 8px 16px;
+      border-radius: 999px;
+      display:inline-block;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.35);
+    }
+    .verse{
+      font-size: clamp(24px, 6.2vw, 52px);
+      font-weight: 900;
+      line-height: 1.25;
+      text-wrap: balance;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.35);
+      overflow-wrap: anywhere;
+      margin: 0;
+    }
+
+    .small{
+      font-size: 16px;
+      opacity: 0.92;
+      line-height: 1.35;
+      text-wrap: balance;
+    }
+
+    /* tappable blanks */
+    .hintable{
+      display:inline;
+      padding: 0 .18em;
+      margin: 0 .03em;
+      border-radius: .45em;
+      border: 1px solid rgba(255,255,255,.35);
+      background: rgba(255,255,255,.14);
+      color: #fff;
+      cursor:pointer;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+      white-space: nowrap;
+    }
+    .hintable:active{ transform: scale(.99); }
+    .hintable.emoji{ background: rgba(0,0,0,0.30); }
+    .hintable.underscore{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+
+    /* simple progress bar (quiz-esque) */
+    .timer-wrap{
+      width:100%;
+      max-width: 720px;
+      height: 12px;
+      border-radius: 99px;
+      background: rgba(255,255,255,0.18);
+      overflow:hidden;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.25);
+    }
+    .timer-bar{
+      height:100%;
+      width:0%;
+      transform-origin: left center;
+      background: rgba(255,255,255,0.92);
+      transition: width 120ms linear;
+    }
+
+    /* ---------- Overlay modal ---------- */
+    .overlay{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,0.85);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding: 16px;
+      z-index: 20000;
+      opacity: 0;
+      transition: opacity 220ms ease;
+    }
+    .overlay.show{
+      display:flex;
+      opacity: 1;
+    }
+    .dialog{
+      width: min(520px, 100%);
+      border-radius: 22px;
+      background: rgba(20,20,20,0.92);
+      border: 1px solid rgba(255,255,255,0.16);
+      box-shadow: 0 18px 50px rgba(0,0,0,0.45);
+      padding: 18px;
+      text-align:left;
+    }
+    .dialog h3{ margin:0 0 8px; font-size:20px; font-weight:900; }
+    .dialog p{ margin:0 0 14px; opacity:0.92; line-height:1.35; }
+    .dialog .row{ display:flex; gap: 12px; }
+    .dlg-btn{
+      flex: 1;
+      height: 50px;
+      border:none;
+      border-radius: 16px;
+      font-family:inherit;
+      font-weight: 900;
+      font-size: 18px;
+      cursor:pointer;
+      background: rgba(255,255,255,0.92);
+      color:#111;
+      box-shadow: 0 10px 22px rgba(0,0,0,0.25);
+    }
+    .dlg-btn.secondary{
+      background: transparent;
+      color: rgba(255,255,255,0.95);
+      border:2px solid rgba(255,255,255,0.55);
+      box-shadow:none;
+    }
+
+    /* prevent iOS double-tap zoom on controls */
+    .no-zoom{
+      touch-action: manipulation;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <nav id="navBar"></nav>
+
+  <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="dlgTitle">
+    <div class="dialog">
+      <h3 id="dlgTitle">Notice</h3>
+      <p id="dlgBody">...</p>
+      <div class="row" id="dlgActions"></div>
+    </div>
+  </div>
+
+<script>
+/* =========================================================
+   Assets / folders (your GitHub directory structure)
+   ========================================================= */
+const AUDIO_DIR = "verse_audio/";
+const WORDS_AUDIO_DIR = AUDIO_DIR + "words/";
+const DATA_DIR  = "verse_data/";
+const IMG_DIR   = "verse_images/";
+
+/* Pick your actual filenames in verse_images/ (safe defaults) */
+const INTRO_LOGO = IMG_DIR + "eyb_logo_1.png";
+const TITLE_LOGO = IMG_DIR + "eyb_logo_2.png";
+
+/* =========================================================
+   Inline SVG icons (copied from Ten Commandments / Creed apps)
+   ========================================================= */
+const SVG_BACK = `
+<svg class="nav-icon" viewBox="0 0 1270 889" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+  <path style="fill:#ffffff;stroke-width:74.9031;stroke-linecap:round"
+    d="M 90.101697,426.07323 665.52324,88.164306 a 20.830539,20.830539 29.78848 0 1 31.37872,17.962384 v 676.74658 a 20.830539,20.830539 150.21152 0 1 -31.37872,17.96238 L 90.101697,462.92673 a 21.369052,21.369052 90 0 1 0,-36.8535 z"
+    transform="translate(246.77226)" />
+</svg>`;
+
+const SVG_FORWARD = `
+<svg class="nav-icon" viewBox="0 0 1270 889" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+  <path style="fill:#ffffff;stroke-width:74.9031;stroke-linecap:round"
+    d="M 90.101697,426.07323 665.52324,88.164306 a 20.830539,20.830539 29.78848 0 1 31.37872,17.962384 v 676.74658 a 20.830539,20.830539 150.21152 0 1 -31.37872,17.96238 L 90.101697,462.92673 a 21.369052,21.369052 90 0 1 0,-36.8535 z"
+    transform="matrix(-1,0,0,1,1023.2277,0)" />
+</svg>`;
+
+const SVG_MUTE = `
+<svg class="nav-icon" viewBox="0 0 1270 889" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+  <path style="fill:#ffffff;stroke:none;stroke-width:44.9431;stroke-linecap:round"
+    d="M 660.98465,87.244161 409.97079,241.6972 a 150.47802,150.47802 0 0 1 -78.85883,22.31829 H 225.63234 a 42.587633,42.587633 0 0 0 -42.58762,42.58762 v 275.79372 a 42.587633,42.587633 0 0 0 42.58762,42.58762 h 105.47962 a 150.47802,150.47802 0 0 1 78.85883,22.3183 l 251.01386,154.45304 a 23.799138,23.799138 0 0 0 36.27121,-20.26933 V 107.51349 A 23.799138,23.799138 0 0 0 660.98465,87.244161 Z" />
+  <g transform="translate(-26.458334,-255.59263)">
+    <path style="fill:none;stroke:#ffffff;stroke-width:76.7747;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1"
+      d="M 1241.4124,524.69155 890.61025,875.49365" />
+    <path style="fill:none;stroke:#ffffff;stroke-width:76.7747;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1"
+      d="m 890.61025,524.69155 350.80215,350.8021" />
+  </g>
+</svg>`;
+
+const SVG_UNMUTE = `
+<svg class="nav-icon" viewBox="0 0 1270 889" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+  <g transform="matrix(2.9017243,0,0,2.9017243,-948.59169,1423.6267)">
+    <path style="fill:#ffffff;stroke:none;stroke-width:15.4884;stroke-linecap:round"
+      d="m 554.69651,-460.54773 -86.50507,53.22802 a 51.858137,51.858137 0 0 1 -27.17654,7.69139 h -36.35067 a 14.676664,14.676664 0 0 0 -14.67666,14.67666 v 95.04477 a 14.676664,14.676664 0 0 0 14.67666,14.67666 h 36.35067 a 51.858137,51.858137 0 0 1 27.17654,7.69139 l 86.50507,53.22802 a 8.2017227,8.2017227 0 0 0 12.49988,-6.98527 v -232.26637 a 8.2017227,8.2017227 0 0 0 -12.49988,-6.98527 z" />
+    <path style="fill:none;stroke:#ffffff;stroke-width:26.4583;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1"
+      d="m 596.38634,-270.01659 c 26.00162,-13.81364 42.0863,-39.52797 42.16745,-67.41243 -0.0102,-27.95044 -16.10446,-53.75052 -42.16745,-67.5969" />
+    <path style="fill:none;stroke:#ffffff;stroke-width:26.4583;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1"
+      d="m 626.65943,-233.57231 c 4.34269,-2.51562 16.69789,-10.99898 23.86366,-17.76894 23.32002,-22.03191 37.74343,-52.46821 37.74343,-86.08777 0,-33.61956 -14.42341,-64.05637 -37.74343,-86.08828 -7.16577,-6.76996 -19.52097,-15.25332 -23.86366,-17.76894" />
+  </g>
+</svg>`;
+
+/* =========================================================
+   Minimal Verse Engine (Learn flow)
+   - Loads old JSON unchanged
+   - Uses old audio naming scheme
+   - Implements: Listen -> Echo -> Hide words
+   ========================================================= */
+const app = document.getElementById("app");
+const navBar = document.getElementById("navBar");
+
+// overlay
+const overlay = document.getElementById("overlay");
+const dlgTitle = document.getElementById("dlgTitle");
+const dlgBody = document.getElementById("dlgBody");
+const dlgActions = document.getElementById("dlgActions");
+
+function showDialog({title="Notice", body="", actions=[]}){
+  dlgTitle.textContent = title;
+  dlgBody.textContent = body;
+  dlgActions.innerHTML = "";
+  for (const a of actions) dlgActions.appendChild(a);
+  overlay.classList.add("show");
+}
+function closeDialog(){ overlay.classList.remove("show"); }
+overlay.addEventListener("click", (e)=>{ if (e.target === overlay) closeDialog(); });
+
+function dlgBtn(label, {secondary=false, onClick}={}){
+  const b = document.createElement("button");
+  b.className = "dlg-btn" + (secondary ? " secondary" : "");
+  b.type = "button";
+  b.textContent = label;
+  b.onclick = onClick || (()=>{});
+  return b;
+}
+
+function getVerseIdFromUrl(){
+  const params = new URLSearchParams(window.location.search);
+  return params.get("v") || "john_3_16";
+}
+
+/* Audio */
+const audioEl = new Audio();
+audioEl.preload = "auto";
+
+let muted = false;
+function applyMute(){
+  audioEl.muted = muted;
+}
+function toggleMute(){
+  muted = !muted;
+  applyMute();
+  // stop current audio immediately
+  try { audioEl.pause(); } catch(e){}
+  try { audioEl.currentTime = 0; } catch(e){}
+  renderNav(); // update icon
+}
+
+function safePlay() {
+  applyMute();
+  return audioEl.play().catch((err) => {
+    showDialog({
+      title: "Audio can’t play yet",
+      body: "Your browser blocked playback. Tap play again (or make sure the mp3 exists).",
+      actions: [dlgBtn("OK", {onClick: closeDialog})]
+    });
+    throw err;
+  });
+}
+
+function setAudioSrc(src){
+  audioEl.src = src;
+  try { audioEl.load(); } catch(e){}
+}
+
+/* JSON-configured verse */
+let cfg = null;
+let VERSE_ID = null;
+let VERSE_TEXT = "";
+let ECHO_PARTS = [];
+let HIDE_PLAN = [];
+let TRANSLATION = "";
+let ATTRIBUTION = "";
+let VERSE_REF = "";
+let AUDIO_FILE = "";
+
+// tokenization (copied conceptually from old engine)
+const TokenType = { SPACE:"space", WORD:"word", PUNCT:"punct", OTHER:"other" };
+function tokenize(text){
+  const re = /(\s+|[A-Za-z]+(?:'[A-Za-z]+)?|[0-9]+|[^\sA-Za-z0-9]+)/g;
+  const raw = text.match(re) || [];
+  return raw.map(t => {
+    if (/^\s+$/.test(t)) return { type: TokenType.SPACE, text: t };
+    if (/^[A-Za-z]+(?:'[A-Za-z]+)?$/.test(t)) return { type: TokenType.WORD, text: t };
+    if (/^[0-9]+$/.test(t)) return { type: TokenType.WORD, text: t };
+    if (/^[^\sA-Za-z0-9]+$/.test(t)) return { type: TokenType.PUNCT, text: t };
+    return { type: TokenType.OTHER, text: t };
+  });
+}
+
+let tokens = [];
+let planResolved = [];
+let planMixed = [];
+function shuffleArray(arr){
+  for (let i = arr.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+function resolveHidePlanToTokenIndices(tokens, plan){
+  const wordPositionsByLower = new Map();
+  tokens.forEach((tok, idx) => {
+    if (tok.type !== TokenType.WORD) return;
+    const key = tok.text.toLowerCase();
+    if (!wordPositionsByLower.has(key)) wordPositionsByLower.set(key, []);
+    wordPositionsByLower.get(key).push(idx);
+  });
+
+  return plan.map((item) => {
+    const key = String(item.word).toLowerCase();
+    const list = wordPositionsByLower.get(key) || [];
+    const occ = item.occurrence ?? 1;
+    const tokenIndex = list[occ - 1];
+    return { ...item, tokenIndex };
+  }).filter(x => Number.isFinite(x.tokenIndex));
+}
+function reshuffleHidePlan(){
+  planMixed = shuffleArray([...planResolved]);
+}
+
+function verseIdToRef(verseId, translation){
+  const parts = verseId.split("_");
+  const book = parts[0][0].toUpperCase() + parts[0].slice(1);
+  const chapter = parts[1];
+  const verses = parts.slice(2);
+  const versePart = verses.length === 1 ? verses[0] : `${verses[0]}–${verses[1]}`;
+  const t = translation ? ` (${translation})` : "";
+  return `${book} ${chapter}:${versePart}${t}`;
+}
+
+async function loadVerse(verseId){
+  const res = await fetch(`${DATA_DIR}${verseId}.json`, { cache: "no-store" });
+  if (!res.ok) throw new Error(`Could not load ${DATA_DIR}${verseId}.json (HTTP ${res.status})`);
+  const json = await res.json();
+
+  cfg = json;
+  VERSE_ID = json.verseId;
+  TRANSLATION = json.translation || "";
+  ATTRIBUTION = json.attribution || "";
+  VERSE_TEXT = json.verseText || "";
+  ECHO_PARTS = Array.isArray(json.echoParts) ? json.echoParts : [];
+  HIDE_PLAN = Array.isArray(json.hidePlan) ? json.hidePlan : [];
+
+  VERSE_REF = verseIdToRef(VERSE_ID, TRANSLATION);
+  AUDIO_FILE = `${AUDIO_DIR}${VERSE_ID}.mp3`;
+
+  document.title = `Verse Memory • ${VERSE_REF}`;
+
+  tokens = tokenize(VERSE_TEXT);
+  planResolved = resolveHidePlanToTokenIndices(tokens, HIDE_PLAN);
+  reshuffleHidePlan();
+}
+
+/* App state / screens */
+const Screen = {
+  INTRO: "intro",
+  TITLE: "title",
+  LISTEN: "listen",
+  ECHO: "echo",
+  HIDE: "hide",
+  PRACTICE: "practice",
+};
+
+const State = {
+  screen: Screen.INTRO,
+  slideX: 0,                // numeric index used for transforms
+  isSliding: false,
+
+  // Learn progression
+  listenDone: false,
+  echoDone: false,
+  hideCount: 0,
+  revealedTokenIdx: new Set(),
+
+  // Title carousel
+  titleOptionIndex: 0,
+
+  // Practice carousel
+  practiceIndex: 0,
+};
+
+const TITLE_OPTIONS = [
+  { label: "Learn the Verse", action: () => go(Screen.LISTEN) },
+  { label: "Practice Games", action: () => go(Screen.PRACTICE) },
+  { label: "Restart Learn",  action: () => resetLearn(true) },
+];
+
+const PRACTICE_GAMES = [
+  { title:"🧩 Verse Scramble", desc:"Tap the phrases in the correct order." },
+  { title:"🔗 Verse Chain", desc:"Pick the next word to build the verse." },
+  { title:"🚗 Traffic Tap", desc:"Tap the moving correct word chip." },
+  { title:"🏀 Bouncing Words", desc:"Tap moving words in the correct order." },
+  { title:"🚀 Rocket Verse", desc:"Tap each word to launch it into place." },
+  { title:"🧱 Stack It", desc:"Drag phrases into the correct order." },
+];
+
+function resetLearn(goTitle=false){
+  State.listenDone = false;
+  State.echoDone = false;
+  State.hideCount = 0;
+  State.revealedTokenIdx = new Set();
+  reshuffleHidePlan();
+  try { audioEl.pause(); audioEl.currentTime = 0; } catch(e){}
+  if (goTitle) go(Screen.TITLE);
+  render();
+}
+
+/* Slide navigation */
+function screenToIndex(screen){
+  // order matters for sliding
+  const order = [Screen.INTRO, Screen.TITLE, Screen.LISTEN, Screen.ECHO, Screen.HIDE, Screen.PRACTICE];
+  return order.indexOf(screen);
+}
+
+function go(nextScreen){
+  const from = State.screen;
+  if (from === nextScreen) return;
+
+  const fromIdx = screenToIndex(from);
+  const toIdx = screenToIndex(nextScreen);
+  const dir = toIdx > fromIdx ? 1 : -1;
+
+  if (State.isSliding) return;
+  State.isSliding = true;
+
+  // stop audio when leaving a screen
+  try { audioEl.pause(); audioEl.currentTime = 0; } catch(e){}
+
+  State.screen = nextScreen;
+  render(); // render with both slides
+
+  // kick transition next tick
+  requestAnimationFrame(() => {
+    State.slideX += dir;
+    updateSlideTransforms();
+    setTimeout(() => {
+      State.isSliding = false;
+      render(); // prune to current only for perf
+    }, 340);
+  });
+}
+
+/* If you jump directly (no transition), call this */
+function setScreen(screen){
+  State.screen = screen;
+  State.slideX = screenToIndex(screen);
+  render();
+}
+
+function updateSlideTransforms(){
+  const slides = document.querySelectorAll(".slide");
+  slides.forEach(slide => {
+    const idx = Number(slide.dataset.idx || 0);
+    const dx = (idx - State.slideX) * 100;
+    slide.style.transform = `translateX(${dx}%)`;
+  });
+}
+
+/* Title carousel controls */
+function titlePrev(){
+  State.titleOptionIndex = (State.titleOptionIndex - 1 + TITLE_OPTIONS.length) % TITLE_OPTIONS.length;
+  render();
+}
+function titleNext(){
+  State.titleOptionIndex = (State.titleOptionIndex + 1) % TITLE_OPTIONS.length;
+  render();
+}
+function titleRun(){
+  TITLE_OPTIONS[State.titleOptionIndex].action();
+}
+
+/* Practice carousel controls */
+function practicePrev(){
+  State.practiceIndex = (State.practiceIndex - 1 + PRACTICE_GAMES.length) % PRACTICE_GAMES.length;
+  render();
+}
+function practiceNext(){
+  State.practiceIndex = (State.practiceIndex + 1) % PRACTICE_GAMES.length;
+  render();
+}
+function practiceRun(){
+  const g = PRACTICE_GAMES[State.practiceIndex];
+  showDialog({
+    title: g.title,
+    body: "Coming soon 🙂",
+    actions: [dlgBtn("OK", {onClick: closeDialog})]
+  });
+}
+
+/* Build verse display with hidden items */
+function underscoresForWord(word){
+  if (!word) return "";
+  const first = word[0];
+  const restLen = Math.max(0, word.length - 1);
+  return first + "_".repeat(restLen);
+}
+
+function isTokenHidden(tokenIdx){
+  if (State.revealedTokenIdx.has(tokenIdx)) return false;
+  // hidden if it's in first hideCount items of the mixed plan
+  for (let i = 0; i < Math.min(State.hideCount, planMixed.length); i++){
+    if (planMixed[i].tokenIndex === tokenIdx) return true;
+  }
+  return false;
+}
+function hideInfoForToken(tokenIdx){
+  for (let i = 0; i < Math.min(State.hideCount, planMixed.length); i++){
+    const item = planMixed[i];
+    if (item.tokenIndex === tokenIdx) return item;
+  }
+  return null;
+}
+
+function verseNode(){
+  const p = document.createElement("p");
+  p.className = "verse";
+  for (let i = 0; i < tokens.length; i++){
+    const t = tokens[i];
+    if (t.type === TokenType.SPACE){
+      p.appendChild(document.createTextNode(t.text));
+      continue;
+    }
+    if (!isTokenHidden(i)){
+      p.appendChild(document.createTextNode(t.text));
+      continue;
+    }
+    const info = hideInfoForToken(i);
+    const span = document.createElement("span");
+    span.className = "hintable no-zoom " + (info?.type === "emoji" ? "emoji" : "underscore");
+    span.textContent = info?.type === "emoji"
+      ? (info.emoji || "❓")
+      : underscoresForWord(t.text);
+    span.onclick = () => {
+      // reveal via dialog, and allow "Reveal" that persists
+      showDialog({
+        title: "Reveal",
+        body: t.text,
+        actions: [
+          dlgBtn("Reveal", { onClick: () => { State.revealedTokenIdx.add(i); closeDialog(); render(); } }),
+          dlgBtn("Close", { secondary:true, onClick: closeDialog }),
+        ]
+      });
+    };
+    p.appendChild(span);
+  }
+  return p;
+}
+
+/* Listen / echo controls */
+let listenProgressRAF = 0;
+function stopListenProgress(){
+  if (listenProgressRAF) cancelAnimationFrame(listenProgressRAF);
+  listenProgressRAF = 0;
+}
+function startListenProgress(barEl){
+  stopListenProgress();
+  const tick = () => {
+    if (!audioEl.duration || !isFinite(audioEl.duration) || audioEl.duration <= 0){
+      barEl.style.width = "0%";
+    } else {
+      const p = Math.max(0, Math.min(1, audioEl.currentTime / audioEl.duration));
+      barEl.style.width = (p * 100).toFixed(2) + "%";
+    }
+    listenProgressRAF = requestAnimationFrame(tick);
+  };
+  tick();
+}
+
+function listenPlay(){
+  setAudioSrc(AUDIO_FILE);
+  audioEl.currentTime = 0;
+  safePlay().then(() => {
+    render(); // update UI state
+  });
+}
+
+audioEl.addEventListener("ended", () => {
+  if (State.screen === Screen.LISTEN){
+    State.listenDone = true;
+    stopListenProgress();
+    render();
+  }
+});
+
+function echoPartFileByIndex(i){
+  // a, b, c...
+  const suffix = String.fromCharCode("a".charCodeAt(0) + i);
+  return `${AUDIO_DIR}${VERSE_ID}${suffix}.mp3`;
+}
+
+let echoCancelToken = 0;
+async function runEchoSequence(){
+  const my = ++echoCancelToken;
+  State.echoDone = false;
+  render();
+
+  for (let i = 0; i < ECHO_PARTS.length; i++){
+    if (my !== echoCancelToken) return;
+
+    const file = echoPartFileByIndex(i);
+    setAudioSrc(file);
+    audioEl.currentTime = 0;
+
+    // update on-screen status
+    const status = document.getElementById("echoStatus");
+    if (status) status.textContent = `Part ${i+1} of ${ECHO_PARTS.length}`;
+
+    try{
+      await safePlay();
+    }catch(e){
+      showDialog({
+        title: "Echo audio missing",
+        body: `Couldn't play: ${file}`,
+        actions: [dlgBtn("OK", {onClick: closeDialog})]
+      });
+      return;
+    }
+
+    await new Promise((resolve) => {
+      const onEnd = () => { audioEl.removeEventListener("ended", onEnd); resolve(); };
+      audioEl.addEventListener("ended", onEnd);
+    });
+
+    // breathing room (same spirit as old app; simpler)
+    await new Promise(r => setTimeout(r, 450));
+  }
+
+  // restore main verse audio for later
+  setAudioSrc(AUDIO_FILE);
+  State.echoDone = true;
+  render();
+}
+
+/* Nav rendering */
+function renderNav(){
+  // Always show nav except intro/title? Your other apps hide nav on intro.
+  const show = (State.screen !== Screen.INTRO);
+  navBar.style.display = show ? "flex" : "none";
+  if (!show){
+    navBar.innerHTML = "";
+    return;
+  }
+
+  // Determine left/back and right/next behavior
+  let left = null;
+  let center = "";
+  let right = null;
+
+  const muteBtn = `
+    <button class="nav-btn no-zoom" id="btnMute" title="Mute / unmute">
+      ${muted ? SVG_MUTE : SVG_UNMUTE}
+    </button>
+  `;
+
+  const backBtn = `
+    <button class="nav-btn no-zoom" id="btnBack" title="Back">
+      ${SVG_BACK}
+    </button>
+  `;
+
+  const nextBtn = `
+    <button class="nav-btn no-zoom" id="btnNext" title="Next">
+      ${SVG_FORWARD}
+    </button>
+  `;
+
+  // left/back destinations
+  if (State.screen === Screen.TITLE) left = ""; // no back from title (acts like home)
+  else left = backBtn;
+
+  // center label
+  if (State.screen === Screen.TITLE) center = "HOME";
+  if (State.screen === Screen.LISTEN) center = "LISTEN";
+  if (State.screen === Screen.ECHO) center = "ECHO";
+  if (State.screen === Screen.HIDE) center = "MEMORIZE";
+  if (State.screen === Screen.PRACTICE) center = "PRACTICE";
+
+  // right/next destinations (gated where needed)
+  right = nextBtn;
+
+  navBar.innerHTML = `
+    <div style="display:flex; gap:12px; align-items:center;">
+      ${left || `<div style="width:var(--tap);height:var(--tap)"></div>`}
+    </div>
+    <div class="nav-center">${center}</div>
+    <div style="display:flex; gap:12px; align-items:center;">
+      ${muteBtn}
+      ${right || `<div style="width:var(--tap);height:var(--tap)"></div>`}
+    </div>
+  `;
+
+  // wire events
+  const btnMute = document.getElementById("btnMute");
+  if (btnMute) btnMute.onclick = toggleMute;
+
+  const btnBack = document.getElementById("btnBack");
+  if (btnBack){
+    btnBack.onclick = () => {
+      if (State.isSliding) return;
+      if (State.screen === Screen.LISTEN) go(Screen.TITLE);
+      else if (State.screen === Screen.ECHO) go(Screen.LISTEN);
+      else if (State.screen === Screen.HIDE) go(Screen.ECHO);
+      else if (State.screen === Screen.PRACTICE) go(Screen.TITLE);
+      else go(Screen.TITLE);
+    };
+  }
+
+  const btnNext = document.getElementById("btnNext");
+  if (btnNext){
+    const disabled =
+      (State.screen === Screen.LISTEN && !State.listenDone) ||
+      (State.screen === Screen.ECHO && !State.echoDone);
+
+    btnNext.style.opacity = disabled ? "0.45" : "1";
+    btnNext.style.pointerEvents = disabled ? "none" : "auto";
+
+    btnNext.onclick = () => {
+      if (State.isSliding) return;
+
+      if (State.screen === Screen.TITLE) go(Screen.LISTEN);
+      else if (State.screen === Screen.LISTEN) go(Screen.ECHO);
+      else if (State.screen === Screen.ECHO) go(Screen.HIDE);
+      else if (State.screen === Screen.HIDE){
+        // If we've hidden everything, go to practice; else hide one more (tap-to-reveal still works)
+        if (State.hideCount >= planMixed.length){
+          go(Screen.PRACTICE);
+        } else {
+          State.hideCount = Math.min(planMixed.length, State.hideCount + 1);
+          render();
+        }
+      }
+      else if (State.screen === Screen.PRACTICE) go(Screen.TITLE);
+    };
+  }
+}
+
+/* Screen builders */
+function makeSlide({idx, bg, navHidden=false, inner}){
+  const s = document.createElement("div");
+  s.className = "slide" + (navHidden ? " nav-hidden" : "");
+  s.style.setProperty("--bg", bg);
+  s.dataset.idx = String(idx);
+  s.innerHTML = "";
+  s.appendChild(inner);
+  return s;
+}
+
+function screenIntro(idx){
+  const wrap = document.createElement("div");
+  wrap.className = "quiz-intro";
+  wrap.innerHTML = `
+    <img src="${INTRO_LOGO}" alt="Logo" onerror="this.style.display='none'">
+    <div class="presented">PRESENTED BY</div>
+    <div class="site">EAT YOUR BIBLE</div>
+    <div class="hint">Tap anywhere to start</div>
+  `;
+  wrap.onclick = () => { setScreen(Screen.TITLE); };
+  return makeSlide({idx, bg: "var(--purple)", navHidden:true, inner: wrap});
+}
+
+function screenTitle(idx){
+  const wrap = document.createElement("div");
+  wrap.className = "title-screen";
+  const opt = TITLE_OPTIONS[State.titleOptionIndex];
+
+  wrap.innerHTML = `
+    <div class="title-content">
+      <img src="${TITLE_LOGO}" alt="Title graphic" onerror="this.style.display='none'">
+      <h2>${VERSE_REF ? `Let's memorize ${VERSE_REF}` : "Verse Memory"}</h2>
+
+      <div class="title-carousel">
+        <button class="carousel-arrow no-zoom" id="titlePrev" aria-label="Previous">${SVG_BACK}</button>
+        <button class="carousel-main no-zoom" id="titleMain">${opt.label}</button>
+        <button class="carousel-arrow no-zoom" id="titleNext" aria-label="Next">${SVG_FORWARD}</button>
+      </div>
+
+      <div class="carousel-dots" id="titleDots"></div>
+
+      <div class="small" style="max-width: 60ch; margin-top: 10px;">
+        ${ATTRIBUTION ? ATTRIBUTION : ""}
+      </div>
+    </div>
+  `;
+
+  // wire
+  wrap.querySelector("#titlePrev").onclick = (e)=>{ e.stopPropagation(); titlePrev(); };
+  wrap.querySelector("#titleNext").onclick = (e)=>{ e.stopPropagation(); titleNext(); };
+  wrap.querySelector("#titleMain").onclick = (e)=>{ e.stopPropagation(); titleRun(); };
+
+  // dots
+  const dots = wrap.querySelector("#titleDots");
+  dots.innerHTML = TITLE_OPTIONS.map((_, i) =>
+    `<span class="carousel-dot ${i === State.titleOptionIndex ? "active" : ""}"></span>`
+  ).join("");
+
+  return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner: wrap});
+}
+
+function screenListen(idx){
+  const inner = document.createElement("div");
+  inner.style.display = "flex";
+  inner.style.flexDirection = "column";
+  inner.style.height = "100%";
+
+  inner.innerHTML = `
+    <div class="top">
+      <div class="titles">
+        <div class="title">${VERSE_REF}</div>
+        <div class="subtitle">Listen to the full verse</div>
+      </div>
+      <div></div>
+    </div>
+    <div class="content">
+      <div class="verse-ref-pill">${VERSE_REF}</div>
+      <p class="verse">${VERSE_TEXT}</p>
+
+      <div class="timer-wrap" aria-label="Audio progress">
+        <div class="timer-bar" id="listenBar"></div>
+      </div>
+
+      <button class="carousel-main no-zoom" id="btnListenPlay" style="max-width:520px;">
+        🔊 Read it to me
+      </button>
+      <div class="small">${State.listenDone ? "Done! Tap Next ➜" : "When the audio finishes, Next will unlock."}</div>
+    </div>
+  `;
+
+  inner.querySelector("#btnListenPlay").onclick = async () => {
+    State.listenDone = false;
+    renderNav(); // lock Next
+    const bar = inner.querySelector("#listenBar");
+    listenPlay();
+    startListenProgress(bar);
+  };
+
+  return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner});
+}
+
+function screenEcho(idx){
+  const inner = document.createElement("div");
+  inner.style.display = "flex";
+  inner.style.flexDirection = "column";
+  inner.style.height = "100%";
+
+  inner.innerHTML = `
+    <div class="top">
+      <div class="titles">
+        <div class="title">${VERSE_REF}</div>
+        <div class="subtitle">Echo the verse back (parts)</div>
+      </div>
+      <div></div>
+    </div>
+
+    <div class="content">
+      <div class="verse-ref-pill">${VERSE_REF}</div>
+      <p class="verse">${ECHO_PARTS.length ? ECHO_PARTS.join(" · ") : VERSE_TEXT}</p>
+      <div class="small" id="echoStatus">${State.echoDone ? "Done! Tap Next ➜" : `Ready (${ECHO_PARTS.length} parts)`}</div>
+
+      <button class="carousel-main no-zoom" id="btnEcho" style="max-width:520px;">
+        ${State.echoDone ? "Replay Echo" : "▶ Start Echo"}
+      </button>
+
+      <div class="small" style="max-width: 60ch;">
+        Tip: say each part out loud during the pause.
+      </div>
+    </div>
+  `;
+
+  inner.querySelector("#btnEcho").onclick = async () => {
+    // cancel any prior
+    echoCancelToken++;
+    try { audioEl.pause(); audioEl.currentTime = 0; } catch(e){}
+    await runEchoSequence();
+  };
+
+  return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner});
+}
+
+function screenHide(idx){
+  const inner = document.createElement("div");
+  inner.style.display = "flex";
+  inner.style.flexDirection = "column";
+  inner.style.height = "100%";
+
+  const hiddenNow = Math.min(State.hideCount, planMixed.length);
+  const done = hiddenNow >= planMixed.length;
+
+  inner.innerHTML = `
+    <div class="top">
+      <div class="titles">
+        <div class="title">${VERSE_REF}</div>
+        <div class="subtitle">${done ? "All words hidden!" : "Words are disappearing…"}</div>
+      </div>
+      <div></div>
+    </div>
+
+    <div class="content">
+      <div class="verse-ref-pill">${VERSE_REF}</div>
+      <div id="verseStage"></div>
+
+      <div class="small">
+        ${done
+          ? "Nice! Tap Next ➜ to go to Practice."
+          : `Hidden: ${hiddenNow} / ${planMixed.length} — Tap Next ➜ to hide one more.`}
+      </div>
+
+      <button class="carousel-main no-zoom" id="btnShuffle" style="max-width:520px; background: rgba(0,0,0,0.28); color:#fff; box-shadow:none;">
+        🔀 Shuffle hiding order
+      </button>
+
+      <div class="small" style="max-width: 60ch;">
+        Tap a blank to reveal it.
+      </div>
+    </div>
+  `;
+
+  inner.querySelector("#btnShuffle").onclick = () => {
+    reshuffleHidePlan();
+    State.hideCount = 0;
+    State.revealedTokenIdx = new Set();
+    render();
+  };
+
+  inner.querySelector("#verseStage").appendChild(verseNode());
+
+  return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner});
+}
+
+function screenPractice(idx){
+  const wrap = document.createElement("div");
+  wrap.className = "title-screen";
+  const g = PRACTICE_GAMES[State.practiceIndex];
+
+  wrap.innerHTML = `
+    <div class="title-content">
+      <h2>Practice Games</h2>
+
+      <div class="title-carousel">
+        <button class="carousel-arrow no-zoom" id="pPrev" aria-label="Previous">${SVG_BACK}</button>
+
+        <button class="carousel-main no-zoom" id="pMain" style="display:flex; flex-direction:column; gap:6px; align-items:center; justify-content:center;">
+          <div style="font-size:20px; font-weight:900;">${g.title}</div>
+          <div style="font-size:14px; opacity:0.85; font-weight:700;">${g.desc}</div>
+          <div style="font-size:12px; opacity:0.75; font-weight:800; margin-top:2px;">Tap for details</div>
+        </button>
+
+        <button class="carousel-arrow no-zoom" id="pNext" aria-label="Next">${SVG_FORWARD}</button>
+      </div>
+
+      <div class="carousel-dots" id="pDots"></div>
+
+      <div class="small" style="max-width: 60ch; margin-top: 10px;">
+        We'll add the full games next. For now, this is the practice hub.
+      </div>
+    </div>
+  `;
+
+  wrap.querySelector("#pPrev").onclick = (e)=>{ e.stopPropagation(); practicePrev(); };
+  wrap.querySelector("#pNext").onclick = (e)=>{ e.stopPropagation(); practiceNext(); };
+  wrap.querySelector("#pMain").onclick = (e)=>{ e.stopPropagation(); practiceRun(); };
+
+  const dots = wrap.querySelector("#pDots");
+  dots.innerHTML = PRACTICE_GAMES.map((_, i) =>
+    `<span class="carousel-dot ${i === State.practiceIndex ? "active" : ""}"></span>`
+  ).join("");
+
+  return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner: wrap});
+}
+
+/* Render */
+function render(){
+  app.innerHTML = "";
+
+  const currentIdx = screenToIndex(State.screen);
+  // If animating, render neighbor too for smooth slide
+  const indicesToRender = State.isSliding ? [currentIdx-1, currentIdx, currentIdx+1] : [currentIdx];
+
+  const uniq = Array.from(new Set(indicesToRender.filter(i => i >= 0)));
+  for (const idx of uniq){
+    const screen = ["intro","title","listen","echo","hide","practice"][idx];
+    let slide = null;
+    if (screen === Screen.INTRO) slide = screenIntro(idx);
+    if (screen === Screen.TITLE) slide = screenTitle(idx);
+    if (screen === Screen.LISTEN) slide = screenListen(idx);
+    if (screen === Screen.ECHO) slide = screenEcho(idx);
+    if (screen === Screen.HIDE) slide = screenHide(idx);
+    if (screen === Screen.PRACTICE) slide = screenPractice(idx);
+    if (slide) app.appendChild(slide);
+  }
+
+  // Ensure transform matches current slideX
+  State.slideX = currentIdx;
+  updateSlideTransforms();
+
+  renderNav();
+}
+
+/* Bootstrap */
+(async function init(){
+  try{
+    await loadVerse(getVerseIdFromUrl());
+  }catch(e){
+    // Show a friendly error (still allow app shell)
+    console.error(e);
+    showDialog({
+      title: "Verse JSON not found",
+      body: String(e.message || e),
+      actions: [dlgBtn("OK", {onClick: closeDialog})]
+    });
+  }
+
+  // start on intro
+  setScreen(Screen.INTRO);
+  applyMute();
+})();
+</script>
+</body>
+</html>
