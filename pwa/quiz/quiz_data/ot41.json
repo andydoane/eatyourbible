@@ -1,0 +1,100 @@
+{
+  "lessonId": "ot41",
+  "pageTitle": "OT 41 Quiz",
+  "lessonTitleText": "The Battle of Jericho",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot41image.png",
+  "themeClass": "theme-kahoot-green",
+  "questions": [
+    {
+      "text": "What surrounded the city of Jericho?",
+      "answers": [
+        "Large walls",
+        "A deep river",
+        "Tall mountains",
+        "A ring of fire"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How many times were they to march around the city during the first six days?",
+      "answers": [
+        "Once a day",
+        "Twice a day",
+        "Seven times a day",
+        "Twelve times a day"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the parade of Israelites look like as they marched?",
+      "answers": [
+        "Priests blew trumpets and carried the ark, soldiers marched in front and back",
+        "The soldiers loudly sang songs",
+        "Children led the way with torches",
+        "Everyone rode on horses"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How many times did the people march around the city on the seventh day?",
+      "answers": [
+        "Seven times",
+        "40 times",
+        "Three times",
+        "Twelve times"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the priests and the people do after marching around seven times?",
+      "answers": [
+        "Blew trumpets and shouted",
+        "Hit the walls with hammers",
+        "Built ladders to climb the wall",
+        "Shot arrows over the walls"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Joshua say before telling the soldiers to shout?",
+      "answers": [
+        "The Lord has given you the city; destroy everything, but the treasure belongs to God",
+        "Take whatever treasure you want",
+        "Be careful!",
+        "I hope we win!"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened after the priests blew their trumpets and the people shouted?",
+      "answers": [
+        "God knocked down the walls",
+        "The gates slowly opened",
+        "Nothing happened",
+        "The city caught fire"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who was saved during the battle?",
+      "answers": [
+        "Rahab and her family",
+        "The king of Jericho",
+        "All the soldiers",
+        "The queen of Jericho"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "The Israelites won the battle and Rahab was saved because they had... what?",
+      "answers": [
+        "Faith",
+        "Stronger swords",
+        "More soldiers",
+        "A secret tunnel"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
