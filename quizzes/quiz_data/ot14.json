@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot14",
+  "pageTitle": "OT 14 Quiz",
+  "lessonTitleText": "Jacob, Esau, and the Birthright",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot14image.png",
+  "themeClass": "theme-neon",
+  "questions": [
+    {
+      "text": "What problem did Rebekah have?",
+      "answers": [
+        "She couldn’t have children",
+        "She couldn’t hear",
+        "She couldn't walk",
+        "She couldn't see"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Isaac do about Rebekah’s problem?",
+      "answers": [
+        "He prayed and Rebekah became pregnant",
+        "He searched for doctors to help her",
+        "He sent her back to her family",
+        "He yelled at her"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why did Rebekah pray to God?",
+      "answers": [
+        "Her babies were struggling inside her",
+        "She couldn't sleep",
+        "Isaac was sick",
+        "She was about to eat dinner"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did God say to Rebekah?",
+      "answers": [
+        "Two nations are in you, the older will serve the younger",
+        "Your sons will always live in perfect peace",
+        "You're having triplets",
+        "Two wrestlers live inside you"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What were Rebekah’s two babies like?",
+      "answers": [
+        "Esau was hairy; Jacob was born second, grabbing onto Esau’s heel",
+        "Jacob was born first, with Esau grabbing onto his heel",
+        "The twins were identical, no one could tell them apart",
+        "Esau was tall and thin, Jacob was short and chunky"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What were the boys like as they grew?",
+      "answers": [
+        "Esau hunted, was dad’s favorite; Jacob stayed at home, was mom’s favorite",
+        "Both boys loved hunting and cooking and were always together",
+        "Jacob hunted while Esau stayed home and cooked",
+        "They never stopped wrestling each other"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What is a birthright?",
+      "answers": [
+        "The firstborn son gets double of their father’s things after their father dies",
+        "A special blessing from a mother",
+        "A reward for doing chores around the house",
+        "The right to get to blow out your birthday candles"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Esau sell his birthright for?",
+      "answers": [
+        "Some of Jacob’s stew",
+        "A bag of gold",
+        "A brand new hunting bow",
+        "One million dollars"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who came to speak to Isaac?",
+      "answers": [
+        "The Lord God",
+        "An angel",
+        "A ghost",
+        "Abraham in a dream"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did God say to Isaac?",
+      "answers": [
+        "Stay in the land. God repeated the same promises he made to Abraham",
+        "Leave the land and search for food",
+        "Take your family to Egypt",
+        "Go climb a mountain"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot31",
+  "pageTitle": "OT 31 Quiz",
+  "lessonTitleText": "God Parts the Red Sea",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot31image.png",
+  "themeClass": "theme-blue",
+  "questions": [
+    {
+      "text": "How did God show the Israelites where to go?",
+      "answers": [
+        "A pillar of cloud by day, a pillar of fire by night",
+        "He gave Moses a map",
+        "Angels pointed the way",
+        "He didn't show them where to go"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did God say Pharaoh would do?",
+      "answers": [
+        "Change his mind and chase them",
+        "Forget about them",
+        "Believe in the Lord",
+        "Part the Red Sea"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When the Israelites left, what did Pharaoh do?",
+      "answers": [
+        "Sent his army to chase after them",
+        "Let them leave peacefully",
+        "Built another pyramid",
+        "Begged Moses to return"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Where did God lead the Israelites to?",
+      "answers": [
+        "The Red Sea",
+        "The Jordan River",
+        "Mount Sinai",
+        "The Promised Land"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When they saw the army coming, what did the Israelites say?",
+      "answers": [
+        "Did you bring us here to die in the desert?",
+        "God will save us right away",
+        "Let's fight the Egyptians",
+        "That's not good!"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Moses say to the people when they were afraid?",
+      "answers": [
+        "Be still, God will fight for you",
+        "Run away as fast as you can",
+        "Swim across the Red Sea",
+        "Attack the army"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did God do when Moses held out his staff?",
+      "answers": [
+        "God sent a wind to part the waters in two",
+        "God caused the sea to freeze",
+        "God made a bridge appear",
+        "God floated the people into the air"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What was it like as the Israelites walked across the Red Sea?",
+      "answers": [
+        "Walls of water on each side, the ground was dry",
+        "The water was shallow and muddy",
+        "They swam across together",
+        "The people walked on top of the water"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "As the Egyptians chased the Israelites, how did God slow them?",
+      "answers": [
+        "They panicked and their chariot wheels jammed",
+        "A storm pushed them back",
+        "The sand turned to mud",
+        "Their horses stopped moving"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When Moses held up his staff again, what happened?",
+      "answers": [
+        "The water came down onto the Egyptian army",
+        "The sea stayed open",
+        "The Egyptians turned back",
+        "Nothing happened"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

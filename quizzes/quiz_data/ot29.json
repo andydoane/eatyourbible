@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot29",
+  "pageTitle": "OT 29 Quiz",
+  "lessonTitleText": "The Plagues of Egypt",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot29image.png",
+  "themeClass": "theme-kahoot-white",
+  "questions": [
+    {
+      "text": "What happened in the first plague?",
+      "answers": [
+        "God turned Egypt’s water into blood",
+        "God sent hail to destroy the crops",
+        "God covered the land in darkness",
+        "God sent a great earthquake"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened in the second plague?",
+      "answers": [
+        "God sent frogs to cover Egypt",
+        "God sent gnats to bite the people",
+        "God sent deadly snakes to bite the people",
+        "God caused the river to dry up"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened in the third plague?",
+      "answers": [
+        "God turned dust into gnats that covered people and animals",
+        "God sent a bunch more frogs",
+        "God gave the Egyptians a tummy ache",
+        "God sent donkeys to eat the crops"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened in the fourth plague?",
+      "answers": [
+        "God sent swarms of flies, but not where the Israelites lived",
+        "God sent flies on the Egyptians and the Israelites",
+        "God turned the moon to blood",
+        "God sent fire from the sky"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened in the fifth plague?",
+      "answers": [
+        "God caused a deadly disease that killed the Egyptians' livestock",
+        "God caused the Egyptians to go blind",
+        "God turned the water into frogs",
+        "God made the pyramids fall down"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened in the sixth plague?",
+      "answers": [
+        "God sent painful boils on the Egyptians and their animals",
+        "God caused the Egyptians to become deaf",
+        "God sent painful boils on the Egyptians and the Israelites",
+        "God made the sun stand still in the sky"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened in the seventh plague?",
+      "answers": [
+        "God sent hail that destroyed crops and animals",
+        "God sent ladybugs to crawl over their faces",
+        "God sent frogs raining down from heaven",
+        "God turned the water into flies"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened in the eighth plague?",
+      "answers": [
+        "God sent locusts to eat everything left after the hail",
+        "God sent boils on the frogs",
+        "God sent honeybees into the land",
+        "God made Pharaoh’s hair fall out"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened in the ninth plague?",
+      "answers": [
+        "God caused darkness over Egypt for three days",
+        "God caused Pharaoh to die",
+        "God sent hail and thunder",
+        "God caused the river to flood"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did these nine plagues teach the Egyptians about their gods?",
+      "answers": [
+        "Their gods were powerless against the Lord",
+        "The Lord was a weak God",
+        "Their gods were away on vacation",
+        "Their gods needed more sacrifices"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

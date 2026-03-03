@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot03",
+  "pageTitle": "OT 03 Quiz",
+  "lessonTitleText": "The Fall of Man",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot03image.png",
+  "themeClass": "theme-kahoot-green",
+  "questions": [
+    {
+      "text": "What did God say would happen  if they ate from the Tree of  the Knowledge of Good and Evil?",
+      "answers": [
+        "They would die",
+        "They would live forever and never die",
+        "They would become angels",
+        "Nothing bad would happen"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who was the serpent who came to Eve?",
+      "answers": [
+        "The devil",
+        "Just an ordinary clever snake",
+        "An angel testing her",
+        "Adam in disguise"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the serpent say to Eve?",
+      "answers": [
+        "You won’t die; you’ll know  good and evil like God",
+        "God will be happier with you if you eat it",
+        "The fruit will make the garden grow faster",
+        "If you eat it, all the animals will obey you"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "After talking with the  serpent, what did Eve do?",
+      "answers": [
+        "She ate the fruit and gave some to her husband",
+        "She threw the fruit away and ran to God",
+        "She told Adam but didn’t eat it",
+        "She hid the fruit so no one could find it"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Adam and Eve realize after  eating the fruit, and what did they do?",
+      "answers": [
+        "They realized they were  naked, made clothes, and hid",
+        "They realized they were  hungry and picked more fruit",
+        "They realized they were  strong and ran around the garden",
+        "They realized they were  bored and left the garden"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What curses did God give to the serpent?",
+      "answers": [
+        "To crawl on his belly and one  of Eve’s sons would crush him",
+        "To lose his voice and never speak again",
+        "To live in the sea instead of on land",
+        "To sleep for a thousand years"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What curses did God give to the woman?",
+      "answers": [
+        "Great pain in childbirth  and struggles with her husband",
+        "She would never be able to speak again",
+        "She would have to live outside the garden alone",
+        "She would never be able to see her children"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What curses did God give to the man?",
+      "answers": [
+        "Hard and frustrating work and  that he would return to dust (die)",
+        "He could never eat fruit again",
+        "He had to leave Eve and live by himself",
+        "He had to name all the animals again"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "After giving them curses, what  did God do to the man and woman?",
+      "answers": [
+        "He clothed them with animal skins  and drove them out of the garden",
+        "He told them to hide and never come back",
+        "He left them in the garden  but took away the animals",
+        "He made them build a city far away"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who was the mysterious son  of Eve who came to crush the  serpent, and how did he do it?",
+      "answers": [
+        "Jesus, who defeated sin and  Satan by dying on the cross  and rising from the dead",
+        "Moses, who defeated the serpent  by lifting up a staff",
+        "David, who defeated the serpent  with a sling and a stone",
+        "Noah, who defeated the serpent  by surviving the flood"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
