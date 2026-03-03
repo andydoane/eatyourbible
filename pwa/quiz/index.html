@@ -1839,6 +1839,7 @@ async function switchQuiz(quizId) {
         </button>
           <label class="body-text" for="quizPicker" style="margin-top:10px;">Quiz Selection:</label>
         <select id="quizPicker" class="secondary-btn" style="height:46px; border-radius:14px; padding:0 14px;">
+          <option value="" disabled selected>Choose a quiz…</option>
 
           <optgroup label="Old Testament">
             ${QUIZ_LIST
@@ -1875,21 +1876,23 @@ async function switchQuiz(quizId) {
       ensureAudioUnlocked();
       playChompSound();
 
-      // If no quiz selected yet, just focus the dropdown
-      const params = new URLSearchParams(window.location.search);
-      if (!params.get("q")) {
-        slide.querySelector("#quizPicker").focus();
-        return;
-      }
+    // If no quiz selected yet, just focus the dropdown
+    const picker = slide.querySelector("#quizPicker");
+    if (!picker.value) {
+      picker.focus();
+      return;
+    }
 
       // Normal quiz start
       qIndex = 0;
       correctCount = 0;
       showQuestion();
     });
+
     // Preselect current quiz based on the URL (?q=...)
+    // If there's no ?q=, leave the dropdown on the placeholder.
     const params = new URLSearchParams(window.location.search);
-    const currentId = params.get("q") || "ot01";
+    const currentId = params.get("q") || "";
     slide.querySelector("#quizPicker").value = currentId;
 
 // Auto-load when the dropdown selection changes
