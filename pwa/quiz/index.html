@@ -5,6 +5,15 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>Quiz</title>
 
+  <!-- PWA -->
+  <link rel="manifest" href="/eatyourbible/pwa/quiz/manifest.webmanifest">
+  <meta name="theme-color" content="#7f66c6">
+
+  <!-- iOS "Add to Home Screen" -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="/eatyourbible/pwa/quiz/icons/icon-192.png">
+  
   <!-- Theme loader (same convention as Andy Kahoot Engine) -->
   <link id="theme-css" rel="stylesheet" href="quiz_themes/theme-gray.css">
 
@@ -2459,6 +2468,16 @@ function createSpinBurst(el) {
     // start at intro like Andy
     showIntro();
   })();
+
+  /* ---- PWA: register service worker ---- */
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker
+        .register("/eatyourbible/pwa/quiz/sw.js")
+        .catch(() => {});
+    });
+  }
+
   </script>
 </body>
 </html>
