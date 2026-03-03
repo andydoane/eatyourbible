@@ -1,2486 +1,1478 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Quiz</title>
+<meta charset="UTF-8" />
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>Apostles Creed</title>
 
-  <!-- PWA -->
-  <link rel="manifest" href="/eatyourbible/pwa/quiz/manifest.webmanifest">
-  <meta name="theme-color" content="#7f66c6">
+<!-- PWA -->
+<link rel="manifest" href="/eatyourbible/pwa/creed/manifest.webmanifest">
+<meta name="theme-color" content="#7f66c6">
 
-  <!-- iOS "Add to Home Screen" -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="/eatyourbible/pwa/quiz/icons/icon-192.png">
-  
-  <!-- Theme loader (same convention as Andy Kahoot Engine) -->
-  <link id="theme-css" rel="stylesheet" href="quiz_themes/theme-gray.css">
+<!-- iOS "Add to Home Screen" -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/eatyourbible/pwa/creed/icons/icon-192.png">
 
-  <!-- Google Font used by Andy Kahoot Engine -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
 
-  <style>
-    /* =========================================================
-       Phone-only, full-screen, slide-left app shell
-       Inspired by Ten Commandments / Creed apps (solid backgrounds, no cards)
-       ========================================================= */
-    :root{
-      --navH: 70px;
-      --safeB: env(safe-area-inset-bottom);
-      --safeT: env(safe-area-inset-top);
-      --tap: 44px;
-    }
-
-    html, body{
-      height:100%;
-      margin:0;
-      padding:0;
-      font-family:"Baloo 2", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      overflow:hidden;
-      background: var(--app-bg, var(--bg-solid, #222));
-      color: var(--text-primary, #fff);
-    }
-
-    /* Keep page hidden while theme CSS swaps (same idea as Andy engine) */
-    .theme-loading body{ opacity:0; }
-
-    #app{
-      position:fixed;
-      inset:0;
-      overflow:hidden;
-      background: var(--app-bg, var(--bg-solid, #222));
-      touch-action: manipulation;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .slide{
-      position:absolute;
-      inset:0;
-      display:flex;
-      flex-direction:column;
-      min-height:0;
-      padding-bottom: calc(var(--navH) + var(--safeB));
-      transition: transform 320ms ease;
-      will-change: transform;
-    }
-
-*, *::before, *::after { box-sizing: border-box; }
-
-    .slide.nav-hidden{
-      padding-bottom: 0;
-    }
-
-    /* Top area */
-    .top{
-      padding: calc(14px + var(--safeT)) 18px 10px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-    }
-
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      min-width:0;
-    }
-
-    .brand img{
-      width:48px;
-      height:48px;
-      object-fit:contain;
-      filter: drop-shadow(0 6px 14px rgba(0,0,0,0.35));
-    }
-
-    .titles{
-      min-width:0;
-      display:flex;
-      flex-direction:column;
-      line-height:1.05;
-    }
-
-    .titles .title{
-      font-size:20px;
-      font-weight:800;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-
-    .titles .subtitle{
-      font-size:14px;
-      opacity:0.92;
-      white-space:nowrap;
-      overflow:hidden;
-      text-overflow:ellipsis;
-    }
-
-    /* Center content */
-    .content{
-      flex:1;
-      min-height:0;
-      display:flex;
-      flex-direction:column;
-      justify-content:center;
-      align-items:center;   /* <-- ADD THIS */
-      padding: 8px 18px 18px;
-      gap:14px;
-    }
-
-/* =========================================================
-   Quiz screen layout: 40% question + 4x15% answers (60% total)
-   ========================================================= */
-
-/* On quiz screen we want full-width stacking, not centered columns */
-.quiz-content{
-  align-items: stretch;
-
-  /* Add breathing room above the nav bar */
-  padding-bottom: 18px;   /* match your global content bottom padding vibe */
+/* Global box sizing fix */
+*, *::before, *::after {
+    box-sizing: border-box;
 }
 
-/* Parent layout for question + answers */
-.qa-layout{
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;              /* space between question block and answers stack */
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    font-family: "Baloo 2", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* Question "button" container */
-.question-box{
-  flex: 3;
-  min-height: 0;
-  width: 100%;
-  box-sizing: border-box;
-  background: #f2f2f2;
-  color: #333333;
-  border-radius: 18px;
-  padding: 14px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-
-  /* nicer multi-line centering */
-  text-wrap: balance;
-  overflow-wrap: anywhere;
+#app {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
 }
 
-/* Ensure the question text inherits the hard-coded colors */
-.question-box .question{
-  margin: 0;
-  width: 100%;
-  text-align: center;
-
-  font-size: 26px;
-  font-weight: 900;
-  line-height: 1.15;
-  letter-spacing: 0.2px;
-
-  color: #333333;
-  text-shadow: none;
-
-  text-wrap: balance;
+/* ---------- Slide System ---------- */
+.slide {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;   /* iOS Safari flex fix */
+    padding-bottom: calc(70px + env(safe-area-inset-bottom));
 }
 
-/* Answers area = remaining 60% */
-.answers{
-  flex: 7;
-  min-height: 0;
-  display: flex;          /* switch from grid to vertical flex */
-  flex-direction: column;
-  gap: 12px;
+/* When nav is hidden, don't reserve space for it */
+.slide.nav-hidden {
+    padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* Each answer gets 15% of the available space (since answers area is 60% and has 4 equal children) */
-
-
-
-    .big-text{
-      font-size:26px;
-      font-weight:800;
-      line-height:1.1;
-    }
-
-    .body-text{
-      font-size:18px;
-      opacity:0.95;
-      line-height:1.25;
-    }
-
-    /* Primary CTA */
-    .primary-btn{
-      height:56px;
-      border:none;
-      border-radius: 18px;
-      font-family:inherit;
-      font-weight:900;
-      font-size:20px;
-      cursor:pointer;
-      width:100%;
-      background: var(--btn-primary-bg, rgba(255,255,255,0.92));
-      color: var(--btn-primary-text, #111);
-      box-shadow: 0 10px 22px rgba(0,0,0,0.25);
-      transform: translateZ(0);
-    }
-    .primary-btn:active{ transform: scale(0.985); }
-
-    .secondary-btn{
-      height:50px;
-      border:2px solid rgba(255,255,255,0.55);
-      border-radius: 16px;
-      font-family:inherit;
-      font-weight:800;
-      font-size:18px;
-      width:100%;
-      background: transparent;
-      color: rgba(255,255,255,0.95);
-    }
-    .secondary-btn:active{ transform: scale(0.99); }
-
-    /* Question + answers */
-    .question{
-      margin: 0;
-    }
-
-    .answer{
-      flex:1;
-      min-height:0;
-      width:100%;
-
-      border-radius: 18px;
-      border:none;
-
-      font-family:inherit;
-      font-weight:900;
-      font-size:18px;
-
-      padding: 12px 16px;
-
-      display:flex;                 /* enables vertical centering */
-      align-items:center;           /* vertical center */
-      justify-content:center;       /* horizontal center */
-      text-align:center;
-      line-height: 1.15;
-      text-wrap: balance;
-      overflow-wrap: anywhere;
-
-      color: rgba(255,255,255,0.98);
-      background: rgba(0,0,0,0.28);
-
-      box-shadow: 0 10px 22px rgba(0,0,0,0.20);
-      cursor:pointer;
-      transform: translateZ(0);
-    }
-    
-
-    .answer:active{ transform: scale(0.99); }
-
-    /* Kahoot-ish colored options (uses theme vars if present; falls back otherwise) */
-    .answer.opt0{ background: var(--opt-a, #e21b3c); }
-    .answer.opt1{ background: var(--opt-b, #1368ce); }
-    .answer.opt2{ background: var(--opt-c, #d89e00); }
-    .answer.opt3{ background: var(--opt-d, #26890c); }
-
-    /* Locked + reveal */
-    .answers.locked .answer{
-      opacity:0.82;
-      pointer-events:none;
-    }
-    .answer.selected{
-      animation: pop 180ms ease-out both;
-      outline: 3px solid rgba(255,255,255,0.65);
-    }
-    .answer.correct{
-      outline: 4px solid rgba(255,255,255,0.95);
-      filter: saturate(1.15) brightness(1.05);
-    }
-    .answer.wrong{
-      opacity:0.55;
-      filter: grayscale(0.15);
-    }
-
-    @keyframes pop{
-      from{ transform: scale(0.98); }
-      to{ transform: scale(1.02); }
-    }
-
-    /* Suspense dots */
-    .suspense{
-      display:flex;
-      gap:6px;
-      align-items:center;
-      justify-content:center;
-      height: 24px;
-      opacity:0.95;
-    }
-    .dot{
-      width:10px; height:10px; border-radius:99px;
-      background: rgba(255,255,255,0.85);
-      animation: bounce 700ms infinite ease-in-out;
-    }
-    .dot:nth-child(2){ animation-delay:120ms; }
-    .dot:nth-child(3){ animation-delay:240ms; }
-    @keyframes bounce{
-      0%,100%{ transform: translateY(0); opacity:0.55; }
-      50%{ transform: translateY(-7px); opacity:1; }
-    }
-
-    /* Bottom nav (solid bar style from Ten/Credo apps) */
-    nav#nav{
-      height: var(--navH);
-      background: rgba(0,0,0,0.30);
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      color:white;
-      position:fixed;
-      left:0; right:0; bottom:0;
-      z-index:9999;
-      padding: 0 22px calc(var(--safeB)) 22px;
-      box-sizing:border-box;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-    }
-    .nav-btn{
-      width: var(--tap);
-      height: var(--tap);
-      border:none;
-      border-radius: 14px;
-      background: rgba(255,255,255,0.12);
-      color: rgba(255,255,255,0.95);
-      font-size: 18px;
-      font-weight: 900;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
-    .nav-btn:active{ transform: scale(0.98); }
-    .nav-center{
-      font-weight: 900;
-      font-size: 16px;
-      opacity:0.98;
-      letter-spacing:0.3px;
-    }
-
-    /* Timer bar (repurposed "progress bar" into countdown bar) */
-    .timer-wrap{
-      width:100%;
-      height: 12px;
-      border-radius: 99px;
-      background: rgba(255,255,255,0.18);
-      overflow:hidden;
-      box-shadow: inset 0 2px 6px rgba(0,0,0,0.25);
-    }
-    .timer-bar{
-      height:100%;
-      width:100%;
-      transform-origin: left center;
-      background: #3ddc84; /* will be adjusted by JS */
-      transition: width 120ms linear, background-color 200ms linear;
-    }
-    .timer-row{
-      display:flex;
-      gap:12px;
-      align-items:center;
-    }
-    .timer-num{
-      font-weight:900;
-      font-size:16px;
-      min-width: 32px;
-      text-align:right;
-      opacity:0.95;
-    }
-
-    /* Small toast / overlay */
-.overlay{
-  position:fixed;
-  inset:0;
-  background: rgba(0,0,0,0.95); /* MUCH darker */
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index: 10000;
-    opacity: 0;
-  transition: opacity 250ms ease;
-}
-    
-
-    .overlay.show{ 
-    display:flex;
-    opacity:1;
-
-    }
-
-/* =========================================================
-   Suspense overlay (dims EVERYTHING)
-   ========================================================= */
-.suspense-overlay{
-  position:fixed;
-  inset:0;
-  display:none;
-  align-items:center;
-  justify-content:center;
-  background: rgba(0,0,0,0.65);
-  z-index: 20000; /* above nav (nav is 9999) */
+.content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;   /* iOS Safari flex fix */
 }
 
-.suspense-emoji{
-  font-size: clamp(80px, 50vw, 180px);
-  line-height: 1;
-  user-select: none;
-  filter: drop-shadow(0 18px 36px rgba(0,0,0,0.45));
-  transform-origin: center;
+.image-area {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    min-height: 0;
 }
 
-/* Smooth flip (used by coin + meter) */
-.suspense-emoji.flip{
-  transition: transform 130ms ease-in-out;
-  will-change: transform;
+.image-area img {
+    max-height: 100%;
+    max-width: min(90vw, 520px);
+    object-fit: contain;
 }
 
-/* Bomb shockwave ring (from old Andy engine) */
-.shockwave{
-  position: fixed;
-  left: 50%;
-  top: 50%;
-  width: 40px;
-  height: 40px;
-  border-radius: 999px;
-  border: 8px solid #ffea00;
-  box-shadow: 0 0 22px rgba(255, 234, 0, 0.75);
-  transform: translate(-50%, -50%) scale(1);
-  opacity: 1;
-  pointer-events: none;
+.text-area {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 20px;
+    text-align: center;
+    min-height: 0;
 }
 
-@keyframes shockwaveExpand{
-  from { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-  to   { transform: translate(-50%, -50%) scale(25); opacity: 0; }
+/* ---------- Verse Proofs Layout Toggle ---------- */
+
+/* Smoothly resize image/text areas when Verse mode is on */
+.image-area,
+.text-area {
+    transition: flex 0.25s ease;
+}
+
+/* When Verse mode is ON: image 25% / text 75% */
+.content.verse-open .image-area { flex: 1; }
+.content.verse-open .text-area  { flex: 3; }
+
+/* Verse proof text layout (arrows + verse text) */
+.verse-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    width: 100%;
+}
+
+.verse-arrow {
+    width: 48px;
+    height: 48px;
+    border-radius: 999px;
+    border: none;
+    background: rgba(0,0,0,0.25);
+    color: white;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 0;
+}
+
+/* Verse content (reference + text) */
+.verse-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.verse-ref {
+    font-size: clamp(18px, 4vw, 30px);
+    font-weight: 700;
+    opacity: 0.9;
+    margin-bottom: 8px;
+    color: white;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.4);
+    background: rgba(0, 0, 0, 0.5);
+    display: inline-block;
+    padding: 6px 20px;
+    border-radius: 999px;
+    text-align: center;
+}
+
+.verse-text {
+    font-size: clamp(18px, 4vw, 40px);
+    font-weight: 700;
+    text-wrap: balance;
+    color: white;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.4);
 }
 
 
-/* Gravity-style jump for yesnoFlip */
-@keyframes yesnoJump {
-  0%   { transform: translateY(0); }
-  45%  { transform: translateY(-95px); }  /* apex height */
-  100% { transform: translateY(0); }
+.phrase {
+    font-family: 'Baloo 2', cursive;
+    font-size: clamp(24px, 8vw, 100px);
+    text-wrap: balance;
+    color: white;
+    font-weight: 700;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.4);
 }
 
-.suspense-emoji.jump{
-  animation: yesnoJump 420ms cubic-bezier(.22,.61,.34,1) both;
+/* Use on light backgrounds (yellow/white) */
+.dark-text {
+    color: #111;
+    text-shadow: none;
+}
+
+/* Verse reference should always be white (even on light pages) */
+.verse-ref.dark-text {
+    color: white !important;
+    text-shadow: none !important; /* optional */
 }
 
 
-/* Smooth movement for position-based suspense (magnifier/pointer) */
-.suspense-emoji.mover{
-  position: fixed;
-  left: 0;
-  top: 0;
-  transform: translate(-50%, -50%);
-  transition: left 220ms ease, top 220ms ease;
+.small-text {
+    font-size: clamp(16px, 3vw, 20px);
+    opacity: .85;
+    color: white;
+    text-wrap: balance;
 }
 
-/* =========================================================
-   Reveal verdict in question box
-   ========================================================= */
-.question-box.verdict{
-  background: #f2f2f2;
+.large-text {
+    font-size: clamp(28px, 6vw, 48px);
+    color: white;
+    font-weight: 700;
+    text-wrap: balance;
 }
 
-.question-box.verdict .question{
-  font-size: 44px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
+/* ---------- Navigation ---------- */
+
+.nav {
+    height: 70px;
+    background: rgba(0,0,0,0.3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+    font-size: 28px;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    padding: 0 30px calc(env(safe-area-inset-bottom)) 30px;
 }
 
-.question-box.verdict.correct .question{
-  color: #1b8f3a; /* green */
+.nav button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 28px;
 }
 
-.question-box.verdict.incorrect .question{
-  color: #c62828; /* red */
+/* SVG icon sizing inside nav buttons */
+.nav-icon {
+    width: 34px;
+    height: 34px;
+    display: block;
 }
 
-/* Keep correct answer normal; dim others more clearly */
-.answer.dimmed{
-  opacity: 0.30 !important;
-  filter: grayscale(0.20);
+.nav button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-/* =========================================================
-   Nav overlay CTA (Next question / See score)
-   ========================================================= */
-nav#nav{
-  position:fixed;
+.center-btn {
+    font-size: 18px !important;
 }
 
-.nav-next{
-  position:absolute;
-  left:0;
-  right:0;
-  top:0;
-  bottom:0;
-  width:100%;
-  border:none;
-  border-radius: 0;
-  background: rgba(255,255,255,0.14);
-  color: rgba(255,255,255,0.98);
-  font-family: inherit;
-  font-weight: 900;
-  font-size: 20px;
-  letter-spacing: 0.3px;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-.nav-next:active{ transform: scale(0.99); }
+/* Pressable white pill buttons for Hint/Verse */
+.nav-pill {
+    background: white !important;
+    color: #333333 !important;
+    border: none;
+    border-radius: 999px;
 
-/* Bouncing hint arrow for the NEXT QUESTION button */
-.next-hint{
-  position:absolute;
-  left:50%;
-  bottom: calc(100% + 8px); /* sits slightly above the nav */
-  transform: translateX(-50%);
-  font-size: clamp(48px, 14vw, 120px);
-  line-height: 1;
-  filter: drop-shadow(0 10px 18px rgba(0,0,0,0.45));
-  pointer-events: none; /* never blocks taps */
-  z-index: 10001; /* above the nav-next button */
-  animation: nextHintBounce 780ms cubic-bezier(.2,.9,.2,1) infinite;
+    padding: 10px 18px;
+    font-size: 18px;
+    font-weight: 700;
+
+    box-shadow: 0 4px 0 rgba(0,0,0,0.25);
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 
-@keyframes nextHintBounce{
-  0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.95; }
-  50%      { transform: translateX(-50%) translateY(-18px); opacity: 1; }
-}
-    .dialog{
-      width:min(420px, 100%);
-      border-radius: 22px;
-      background: rgba(20,20,20,0.88);
-      border: 1px solid rgba(255,255,255,0.16);
-      box-shadow: 0 18px 50px rgba(0,0,0,0.45);
-      padding: 18px;
-    }
-    .dialog h3{
-      margin:0 0 8px;
-      font-size:20px;
-      font-weight:900;
-    }
-    .dialog p{
-      margin:0 0 14px;
-      opacity:0.92;
-      line-height:1.25;
-    }
-    .dialog .row{
-      display:flex;
-      gap:12px;
-    }
-    .dialog button{
-      flex:1;
-    }
-
-    /* End / Present */
-.present{
-  /* No box — just the emoji */
-  width: auto;
-  height: auto;
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  border-radius: 0;
-
-  display: inline-flex;
-  align-items:center;
-  justify-content:center;
-
-  font-size: 92px;
-  line-height: 1;
-  user-select:none;
-}
-.present:active{ transform: scale(0.98); }
-
-    .emoji-reward{
-      font-size: 92px;
-      text-align:center;
-      line-height:1;
-      user-select:none;
-      animation: rewardPop 420ms cubic-bezier(.2,1.4,.35,1) both;
-      filter: drop-shadow(0 14px 28px rgba(0,0,0,0.35));
-    }
-
-
-
-    
-    @keyframes rewardPop{
-      from{ transform: scale(0.6) rotate(-6deg); opacity:0.5; }
-      to{ transform: scale(1) rotate(0deg); opacity:1; }
-    }
-
-    @keyframes presentWiggle {
-  0%   { transform: rotate(0deg); }
-  15%  { transform: rotate(-10deg); }
-  30%  { transform: rotate(10deg); }
-  45%  { transform: rotate(-8deg); }
-  60%  { transform: rotate(8deg); }
-  75%  { transform: rotate(-4deg); }
-  100% { transform: rotate(0deg); }
+/* Pressed-down effect */
+.nav-pill:active {
+    transform: translateY(3px);
+    box-shadow: 0 1px 0 rgba(0,0,0,0.25);
 }
 
-/* Reward overlay layout text */
-.reward-top{
-  font-size: 22px;
-  font-weight: 900;
-  letter-spacing: 0.3px;
-  text-align: center;
+/* ---------- Title ---------- */
+
+.title-screen {
+    position: relative;           /* IMPORTANT: allows the footer to dock inside */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    padding: 24px 16px;
+    padding-bottom: 110px;        /* IMPORTANT: reserves space for the docked footer */
+    background: #7f66c6;
+    color: white;
+    text-align: center;
 }
 
-/* Reward overlay: make text fully bright (not dimmed by .hint opacity) */
-#overlay.show #rewardStage .reward-top,
-#overlay.show #rewardStage .hint,
-#overlay.show #rewardStage .reward-ui{
-  opacity: 1 !important;
-  color: #fff !important;
-  text-shadow: 0 3px 10px rgba(0,0,0,0.55);
+.title-content {
+    flex: 1;                      /* takes available space */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;      /* centers vertically */
+    align-items: center;
+    width: 100%;
+    max-width: 700px;             /* nice on desktop */
+    padding-bottom: 0px;         /* breathing room above footer */
 }
 
-/* ---------- Reward overlay layering ---------- */
+.title-screen h2 {
+    font-size: clamp(22px, 5.2vw, 44px);
+    font-weight: 700;
+    margin: 14px 0 12px;
+    text-wrap: balance;
+}
 
-/* The reward screen container becomes the stacking context */
-#rewardStage{
-  position: relative;
+.title-screen img {
+    width: min(80%, 420px);
+    max-height: 34vh;   /* prevents it from eating the whole screen */
+    object-fit: contain;
+}
+
+.title-buttons button {
+    margin: 10px 8px;
+    padding: 14px 28px;
+    font-size: 18px;
+    font-weight: 700;
+
+    border-radius: 999px;              /* pill shape */
+    border: none;
+
+    background: white;
+    color: #7f66c6;
+
+    box-shadow: 0 6px 0 rgba(0,0,0,0.25);
+    transition: all 0.15s ease;
+}
+
+.title-buttons button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 0 rgba(0,0,0,0.25);
+}
+
+.title-buttons button:active {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 rgba(0,0,0,0.25);
+}
+
+.title-buttons button.carousel-arrow:hover,
+.title-buttons button.carousel-arrow:active {
+    box-shadow: none;
+    transform: none;
+}
+
+.learn-btn {
+    background: white;
+    color: #7f66c6;
+}
+
+.test-btn {
+    background: #ffc751;
+    color: #333;
+}
+
+/* ---------- Title Button Carousel ---------- */
+
+.title-carousel {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+}
+
+.title-buttons button.carousel-arrow {
+    width: 54px;
+    height: 54px;
+    padding: 0;
+    margin: 10px 0;
+    border-radius: 999px;
+
+    background: rgba(0,0,0,0.30);
+    color: white;
+
+    display: flex;              /* ✅ center the SVG */
+    align-items: center;
+    justify-content: center;
+    line-height: 0;             /* ✅ remove baseline weirdness */
+    font-size: 28px;
+    font-weight: 700;
+    box-shadow: none;
+    transform: none;
+}
+
+.title-buttons button.carousel-main {
+    margin: 10px 0;
+    flex: 1;                   /* ✅ take remaining space */
+    min-width: 0;              /* ✅ allow shrinking on small screens */
+    max-width: 420px;          /* ✅ still nice on desktop */
+}
+
+/* Dots under the carousel */
+.carousel-dots {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 6px;
+}
+
+.carousel-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 999px;
+    border: 2px solid rgba(255,255,255,0.75);
+    opacity: 0.9;
+}
+
+.carousel-dot.active {
+    background: rgba(255,255,255,0.95);
+}
+
+/* ---------- Mode Select (title-style buttons) ---------- */
+
+.mode-buttons {
+    display: flex;
+    flex-direction: column;   /* stack buttons */
+    align-items: center;
+    width: 100%;
+    gap: 14px;
+    margin-top: 10px;
+}
+
+.mode-buttons button {
+    width: min(420px, 92%);
+    display: flex;
+    flex-direction: column;   /* title + description */
+    gap: 4px;
+    line-height: 1.1;
+}
+
+.mode-buttons .btn-desc {
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0.85;
+}
+
+/* third color option for Hard */
+.hard-btn {
+    background: #ff5a51;
+    color: white;
+}
+
+.footer {
+    position: absolute;           /* dock it */
+    left: 0;
+    right: 0;
+    bottom: 0;
+
+    background: rgba(0,0,0,0.30); /* matches your nav style */
+    color: white;
+    text-align: center;
+
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    font-size: 14px;
+    line-height: 1.2;
+    z-index: 9999;
+}
+
+/* ---------- Intro ---------- */
+
+.intro {
+    background: #7f66c6;
+    display: flex;  
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+.intro img {
+    width: 60%;
+    max-width: 400px;
+    animation: wiggle 1s infinite alternate;
+}
+
+@keyframes wiggle {
+    0% { transform: rotate(-4deg); }
+    100% { transform: rotate(4deg); }
 }
 
 
 
-
-
-/* --- Dance 1: Bounce Party (floatier) --- */
-@keyframes danceBounce {
-  0%, 100% { transform: translateY(0) scale(1,1); }
-
-  /* softer takeoff */
-  12% { transform: translateY(0) scale(1.06,0.92); }
-
-  /* rise */
-  32% { transform: translateY(-24vh) scale(1.04,0.96); }
-
-  /* hang time near apex (lighter gravity) */
-  46% { transform: translateY(-26vh) scale(1.03,0.97); }
-  58% { transform: translateY(-25vh) scale(1.03,0.97); }
-
-  /* soft landing */
-  78% { transform: translateY(0) scale(0.96,1.08); }
-
-  /* tiny rebound */
-  88% { transform: translateY(-4vh) scale(1.01,0.99); }
+button {
+    cursor: pointer;
+    font-family: inherit;
 }
 
-.emoji-reward.dance-bounce{
-  animation: danceBounce 1050ms cubic-bezier(.15,.85,.25,1) infinite;
+/* Prevent mobile double-tap zoom on specific controls */
+.no-zoom {
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
 }
 
-/* --- Dance 2: Wiggle Shimmy --- */
-@keyframes danceWiggle {
-  0%   { transform: rotate(0deg) translateX(0); }
-  15%  { transform: rotate(-10deg) translateX(-6px); }
-  30%  { transform: rotate(10deg) translateX(6px); }
-  45%  { transform: rotate(-8deg) translateX(-4px); }
-  60%  { transform: rotate(8deg) translateX(4px); }
-  75%  { transform: rotate(-4deg) translateX(-2px); }
-  100% { transform: rotate(0deg) translateX(0); }
-}
-.emoji-reward.dance-wiggle{
-  animation: danceWiggle 640ms ease-in-out infinite;
-}
-
-/* --- Dance 3: Moonwalk Slide --- */
-@keyframes danceMoonwalk {
-  0%   { transform: translateX(-35vw) rotate(6deg); }
-  50%  { transform: translateX(35vw) rotate(-6deg); }
-  100% { transform: translateX(-35vw) rotate(6deg); }
-}
-
-
-.emoji-reward.dance-moonwalk{
-  animation: danceMoonwalk 980ms ease-in-out infinite;
-}
-
-/* --- Dance 4: Crazy Pong (JS-driven) --- */
-.emoji-reward.dance-pong{
-  animation: none !important; 
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%,-50%);
-  will-change: left, top;
-}
-
-/* --- Dance 5: Spin'spolsion (JS-driven spin-up) --- */
-.emoji-reward.dance-spin{
-  will-change: transform;
-  animation: none !important;
-}
-
-/* Particle burst for Spin'spolsion */
-.particle{
-  position:absolute;
-  left: 50%;
-  top: 50%;
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.95);
-  transform: translate(-50%,-50%);
-  pointer-events:none;
-  filter: drop-shadow(0 8px 14px rgba(0,0,0,0.35));
-}
-@keyframes particleFly{
-  from { transform: translate(-50%,-50%) translate(0,0) scale(1); opacity: 1; }
-  to   { transform: translate(-50%,-50%) translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; }
-}
-
-.present.wiggle {
-  animation: presentWiggle 520ms ease-in-out both;
-}
-
-    
-    /* Tiny corner hint */
-    .hint{
-      font-size: 13px;
-      opacity:0.85;
-      text-align:center;
-    }
-
-/* =========================================================
-   Theme bridge: maps Andy theme variables -> app variables
-   This lets all your existing quiz_themes/*.css work unchanged.
-   ========================================================= */
-
-/* 1) Background + text */
-:root{
-  /* If theme provides a gradient background for quiz screens, we keep it here */
-  --app-bg: var(--quiz-screen-bg, var(--quiz-bg, #222));
-
-  /* If theme provides a solid background too, use it; otherwise fallback */
-  --bg-solid: var(--quiz-screen-bg-solid, #222);
-
-  /* Main text color */
-  --text-primary: var(--primary-text, var(--title-main-text, #fff));
-
-  /* Buttons */
-  --btn-primary-bg: var(--accent, rgba(255,255,255,0.92));
-  --btn-primary-text: var(--accent-text, #111);
-
-  /* Answer colors (Kahoot colors from theme files) */
-  --opt-a: var(--red, #e21b3c);
-  --opt-b: var(--blue, #1368ce);
-  --opt-c: var(--yellow, #d89e00);
-  --opt-d: var(--green, #26890c);
-}
-
-/* =========================================================
-   Title screen (NOT themed)
-   ========================================================= */
-.title-screen{
-  background: #f2f2f2;
-  color: #333333;
-  min-height: 100%;
-  width: 100%;
-  display: flex;
-}
-
-.title-screen .big-text,
-.title-screen .body-text,
-.title-screen .hint{
-  color: #333333;
-}
-
-.title-screen .primary-btn{
-  background: #7f66c6;
-  color: #ffffff;
-}
-
-.title-screen .secondary-btn{
-  border: 2px solid #333333;
-  color: #333333;
-}
-
-
-/* ---------- Creed-style Intro (for Quiz) ---------- */
-.quiz-intro {
-  background: #7f66c6; /* Creed purple */
-  color: #ffffff;     /* <-- FORCE WHITE TEXT */
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-  text-align: center;
-  gap: 16px;
-  padding: 24px 18px;
-}
-
-.quiz-intro .presented,
-.quiz-intro .site,
-.quiz-intro .hint {
-  color: #ffffff;
-}
-
-.quiz-intro img {
-  width: min(70vw, 420px);
-  max-height: 45vh;
-  object-fit: contain;
-  animation: introWiggle 1s infinite alternate;
-  user-select: none;
-}
-
-@keyframes introWiggle {
-  0% { transform: rotate(-4deg); }
-  100% { transform: rotate(4deg); }
-}
-
-.quiz-intro .presented {
-  font-size: 18px;
-  font-weight: 800;
-  opacity: 0.95;
-}
-
-.quiz-intro .site {
-  font-size: 22px;
-  font-weight: 900;
-  letter-spacing: 0.3px;
-}
-
-  </style>
+</style>
 </head>
-
 <body>
-  <div id="app"></div>
 
-<nav id="nav" aria-label="Quiz navigation" style="display:none;">
-  <button id="homeBtn" class="nav-btn" title="Home" aria-label="Home">⌂</button>
-  <div id="navCenter" class="nav-center">1 / 10</div>
-  <button id="muteBtn" class="nav-btn" title="Mute" aria-label="Mute">🔊</button>
+<div id="app"></div>
+<div id="navBar" class="nav" style="display:none;"></div>
 
-  <!-- Reveal-stage CTA that covers the whole nav -->
-  <button id="nextBtn" class="nav-next" type="button" style="display:none;">Next question</button>
-  <div id="nextHint" class="next-hint" style="display:none;" aria-hidden="true">👇</div>
-</nav>
+<script>
+/* ---------- Data ---------- */
 
-
-  <div id="overlay" class="overlay" role="dialog" aria-modal="true">
-    <div class="dialog">
-      <h3 id="overlayTitle">Quit quiz?</h3>
-      <p id="overlayText">Are you sure you want to go back to the start?</p>
-      <div class="row">
-        <button id="overlayCancel" class="secondary-btn" type="button">Cancel</button>
-        <button id="overlayOk" class="primary-btn" type="button">Quit</button>
-      </div>
-    </div>
-  </div>
-
-<!-- Suspense overlay: dims the whole screen and shows the suspense animation -->
-<div id="suspenseOverlay" class="suspense-overlay" style="display:none;">
-  <div id="suspenseEmoji" class="suspense-emoji" aria-hidden="true">👍</div>
-</div>
-
-
-  <script>
-  /*************************************************************
-   * Phone-Only Kahoot-Style Quiz
-   * - Keeps Andy Kahoot Engine JSON + theme conventions
-   * - Full-screen slides + bottom nav style from Ten/Credo apps
-   *************************************************************/
-
-  /***********************
-   * URL -> quiz_data/*.json (same convention)
-   ***********************/
-  function getQuizJsonPathFromUrl() {
-    const params = new URLSearchParams(window.location.search);
-    const quizId = params.get("q");     // <-- no default
-    if (!quizId) return null;           // <-- IMPORTANT
-    return `quiz_data/${quizId}.json`;
-  }
-
-function setHomeDefaults() {
-  LESSON_ID = "";
-  PAGE_TITLE = "Eat Your Bible Quizzes";
-  LESSON_TITLE_TEXT = "Eat Your Bible Quizzes";
-  LESSON_SUBTITLE_TEXT = "";
-  LESSON_IMAGE_PATH = "quizimages/quiz_icon.png";
-  THEME_CLASS = "";      // title screen is not themed anyway
-  QUESTIONS = [];        // no quiz loaded yet
-  document.title = PAGE_TITLE;
-}
-
-  // === List of quizzes the user can pick from on the title screen ===
-const QUIZ_LIST = [
-  // ===== OLD TESTAMENT =====
-  { id: "ot01", title: "God Creates the World" },
-  { id: "ot02", title: "God Creates People" },
-  { id: "ot03", title: "The Fall of Man" },
-  { id: "ot04", title: "Cain and Abel" },
-  { id: "ot05", title: "The Great Flood" },
-  { id: "ot06", title: "Noah Leaves the Ark" },
-  { id: "ot07", title: "The Tower of Babel" },
-  { id: "ot08", title: "The Call of Abram" },
-  { id: "ot09", title: "Abram and Lot Separate" },
-  { id: "ot10", title: "The Birth of Isaac" },
-  { id: "ot11", title: "Sodom and Gomorrah" },
-  { id: "ot12", title: "The Book of Job" },
-  { id: "ot13", title: "Isaac and Rebekah" },
-  { id: "ot14", title: "Jacob, Esau, and the Birthright" },
-  { id: "ot15", title: "Jacob Steals the Blessing" },
-  { id: "ot16", title: "Jacob's Dream" },
-  { id: "ot17", title: "Jacob, Leah, and Rachel" },
-  { id: "ot18", title: "Jacob's Family" },
-  { id: "ot19", title: "Jacob Wrestles with God" },
-  { id: "ot20", title: "Joseph and his Brothers" },
-  { id: "ot21", title: "Joseph Works for Potiphar" },
-  { id: "ot22", title: "Joseph in Prison" },
-  { id: "ot23", title: "Pharaoh's Dreams" },
-  { id: "ot24", title: "Joseph Tests his Brothers" },
-  { id: "ot25", title: "Joseph Forgives his Brothers" },
-  { id: "ot26", title: "The Birth of Moses" },
-  { id: "ot27", title: "Moses and the Burning Bush" },
-  { id: "ot28", title: "Moses Speaks to Pharaoh" },
-  { id: "ot29", title: "The Plagues of Egypt" },
-  { id: "ot30", title: "The Passover" },
-  { id: "ot31", title: "God Parts the Red Sea" },
-  { id: "ot32", title: "God Provides in the Wilderness" },
-  { id: "ot33", title: "God Gives the Law" },
-  { id: "ot35", title: "The Golden Calf" },
-  { id: "ot36", title: "The Tabernacle" },
-  { id: "ot37", title: "Spies in the Promised Land" },
-  { id: "ot38", title: "Wandering in the Wilderness" },
-  { id: "ot39", title: "Rahab and the Spies" },
-  { id: "ot40", title: "Crossing the Jordan River" },
-  { id: "ot41", title: "The Battle of Jericho" },
-  { id: "ot79", title: "Nehemiah Rebuilds the Wall" },
-
-    // ===== NEW TESTAMENT =====
-  { id: "nt01", title: "Zechariah and Elizabeth" },
-  { id: "nt02", title: "An Angel Visits Mary and Joseph" },
-  { id: "nt03", title: "The Birth of Jesus" },
-  { id: "nt04", title: "Wise Men Visit Jesus" },
-  { id: "nt05", title: "Young Jesus at the Temple" },
-  { id: "nt06", title: "John the Baptist" },
-  { id: "nt07", title: "The Baptism & Temptation of Jesus" },
-  { id: "nt08", title: "The Twelve Disciples" },
-  { id: "nt09", title: "Jesus and Nicodemus" },
-  { id: "nt10", title: "Two Miracles of Jesus" },
-  { id: "nt11", title: "Jesus Heals a Man Who Could Not Walk" },
-  { id: "nt12", title: "Jesus Drives Out Evil Spirits" },
-  { id: "nt13", title: "Jesus Heals Jairus' Daughter" },
-  { id: "nt14", title: "Jesus Feeds the 5000" },
-  { id: "nt15", title: "Jesus Walks on Water" },
-  { id: "nt16", title: "The Pharisees" },
-  { id: "nt17", title: "Jesus Heals a Man Born Blind" },
-  { id: "nt18", title: "Mary, Martha, and Worry" },
-  { id: "nt19", title: "Jesus Raises Lazarus" },
-  { id: "nt20", title: "The Rich Young Man and Zacchaeus" },
-  { id: "nt36", title: "The Holy Spirit Comes" },
-  { id: "nt37", title: "Peter Heals a Man Who Could Not Walk" },
-  { id: "nt38", title: "Stephen and Philip" },
-  { id: "nt39", title: "Saul Meets Jesus" },
-  { id: "nt40", title: "Peter Escapes from Prison" },
-  { id: "nt41", title: "Saul and Barnabas' Missionary Journey" },
-  { id: "nt42", title: "Paul and Silas in Prison" },
-  { id: "nt43", title: "Paul's Journey to Rome" },
-  { id: "nt44", title: "Jesus is Coming Again" }
+const phrases = [
+["I believe in God", "believe", "God"],
+["The Father Almighty", "Father", "Almighty"],
+["Creator of Heaven and Earth", "Creator", "Earth"],
+["I believe in Jesus Christ", "Jesus", "believe"],
+["His Only Son, our Lord.", "Son", "Lord"],
+["He was conceived by the Holy Spirit", "Spirit", "conceived"],
+["and born of the virgin Mary.", "born", "Mary"],
+["He suffered under Pontius Pilate", "suffered", "Pilate"],
+["was crucified", "crucified"],
+["died, and was buried.", "buried", "died"],
+["He descended to the dead.", "dead", "descended"],
+["On the third day", "third"],
+["He rose from the dead.", "rose", "dead"],
+["He ascended to heaven", "ascended", "heaven"],
+["and is seated at the right hand", "seated", "right"],
+["of God the Father Almighty.", "God", "Almighty"],
+["From there he will come", "come", "there"],
+["to judge", "judge"],
+["the living and the dead.", "living", "dead"],
+["I believe in the Holy Spirit", "Spirit", "believe"],
+["the holy catholic church", "church", "holy"],
+["the communion of saints", "communion", "saints"],
+["the forgiveness of sins", "forgiveness", "sins"],
+["the resurrection of the body", "resurrection", "body"],
+["and the life everlasting.", "life", "everlasting"]
 ];
 
-  /***********************
-   * Theme loader (same convention as Andy engine)
-   ***********************/
-  function applyTheme(themeClass) {
-    const themeLink = document.getElementById("theme-css");
-    if (!themeClass) return;
+// ---------- Verse Proofs (dummy placeholders you can edit) ----------
+// One entry per creed page (25 total). Each page has 1+ verse proofs.
+// Replace the "text" values with full verse text later.
+const verseProofs = [
 
-    document.documentElement.classList.add("theme-loading");
+  [ { ref: "HEBREWS 11:6", text: "And without faith it is impossible to please God, because anyone who comes to him must believe that he exists and that he rewards those who earnestly seek him." }, { ref: "GENESIS 1:1", text: "In the beginning God created the heavens and the earth." } ],
 
-    if (themeLink) {
-      const newHref = `quiz_themes/${themeClass}.css`;
-      if (themeLink.href.endsWith(newHref)) {
-        setThemeClass(themeClass);
-        document.documentElement.classList.remove("theme-loading");
+  [ { ref: "MATTHEW 6:9", text: "This, then, is how you should pray: Our Father in heaven, hallowed be your name." }, { ref: "REVELATION 1:8", text: "I am the Alpha and the Omega,” says the Lord God, “who is, and who was, and who is to come, the Almighty." } ],
+
+  [ { ref: "PSALM 146:6", text: "He is the Maker of heaven and earth, the sea, and everything in them — he remains faithful forever." }, { ref: "ACTS 4:24", text: "When they heard this, they raised their voices together in prayer to God. 'Sovereign Lord,' they said, 'you made the heavens and the earth and the sea, and everything in them.'" } ],
+
+  [ { ref: "JOHN 20:31", text: "But these are written that you may believe that Jesus is the Messiah, the Son of God, and that by believing you may have life in his name." }, { ref: "MATTHEW 16:16", text: "Simon Peter answered, 'You are the Messiah, the Son of the living God.'" } ],
+
+  [ { ref: "1 JOHN 4:15", text: "If anyone acknowledges that Jesus is the Son of God, God lives in them and they in God." }, { ref: "ROMANS 10:9", text: "If you declare with your mouth, 'Jesus is Lord,' and believe in your heart that God raised him from the dead, you will be saved." } ],
+
+  [ { ref: "LUKE 1:35", text: "The angel answered, 'The Holy Spirit will come on you, and the power of the Most High will overshadow you. So the holy one to be born will be called the Son of God.'" }, { ref: "MATTHEW 1:20", text: "But after he had considered this, an angel of the Lord appeared to him in a dream and said, 'Joseph son of David, do not be afraid to take Mary home as your wife, because what is conceived in her is from the Holy Spirit.'" } ],
+
+  [ { ref: "ISAIAH 7:14", text: "Therefore the Lord himself will give you a sign: The virgin will conceive and give birth to a son, and will call him Immanuel." }, { ref: "LUKE 2:7", text: "and she gave birth to her firstborn, a son. She wrapped him in cloths and placed him in a manger, because there was no guest room available for them." } ],
+
+  [ { ref: "MATTHEW 27:26", text: "Then he released Barabbas to them. But he had Jesus flogged, and handed him over to be crucified." }, { ref: "1 TIMOTHY 6:13", text: "In the sight of God, who gives life to everything, and of Christ Jesus, who while testifying before Pontius Pilate made the good confession, I charge you..." } ],
+
+  [ { ref: "LUKE 23:33", text: " When they came to the place called the Skull, they crucified him there, along with the criminals—one on his right, the other on his left." }, { ref: "MATTHEW 27:35", text: "When they had crucified him, they divided up his clothes by casting lots." } ],
+
+  [ { ref: "1 CORINTHIANS 15:3-4", text: "For what I received I passed on to you as of first importance: that Christ died for our sins according to the Scriptures, that he was buried..." }, { ref: "MARK 15:46", text: "So Joseph bought some linen cloth, took down the body, wrapped it in the linen, and placed it in a tomb cut out of rock. Then he rolled a stone against the entrance of the tomb." } ],
+
+  [ { ref: "ACTS 2:31", text: "Seeing what was to come, he spoke of the resurrection of the Messiah, that he was not abandoned to the realm of the dead, nor did his body see decay." }, { ref: "1 PETER 3:18-19", text: "For Christ also suffered once for sins, the righteous for the unrighteous, to bring you to God. He was put to death in the body but made alive in the Spirit. After being made alive, he went and made proclamation to the imprisoned spirits..." } ],
+
+  [ { ref: "1 CORINTHIANS 15:4", text: "...he was raised on the third day according to the Scriptures..." }, { ref: "ACTS 10:40", text: "...but God raised him from the dead on the third day and caused him to be seen." } ],
+
+  [ { ref: "MATTHEW 28:6", text: "He is not here; he has risen, just as he said. Come and see the place where he lay." }, { ref: "ACTS 2:24", text: "But God raised him from the dead, freeing him from the agony of death, because it was impossible for death to keep its hold on him." } ],
+
+  [ { ref: "ACTS 1:9", text: "After he said this, he was taken up before their very eyes, and a cloud hid him from their sight." }, { ref: "LUKE 24:51", text: "While he was blessing them, he left them and was taken up into heaven." } ],
+
+  [ { ref: "HEBREWS 1:3", text: "The Son is the radiance of God’s glory and the exact representation of his being, sustaining all things by his powerful word. After he had provided purification for sins, he sat down at the right hand of the Majesty in heaven." }, { ref: "COLOSSIANS 3:1", text: "Since, then, you have been raised with Christ, set your hearts on things above, where Christ is, seated at the right hand of God." } ],
+
+  [ { ref: "PSALM 110:1", text: "The Lord says to my lord: 'Sit at my right hand until I make your enemies a footstool for your feet.'" }, { ref: "ROMANS 8:34", text: "Who then is the one who condemns? No one. Christ Jesus who died—more than that, who was raised to life — is at the right hand of God and is also interceding for us." } ],
+
+  [ { ref: "ACTS 1:11", text: "'Men of Galilee,' they said, 'why do you stand here looking into the sky? This same Jesus, who has been taken from you into heaven, will come back in the same way you have seen him go into heaven.'" }, { ref: "1 THESSALONIANS 4:16", text: "For the Lord himself will come down from heaven, with a loud command, with the voice of the archangel and with the trumpet call of God, and the dead in Christ will rise first." } ],
+
+  [ { ref: "2 TIMOTHY 4:1", text: "In the presence of God and of Christ Jesus, who will judge the living and the dead, and in view of his appearing and his kingdom, I give you this charge:" }, { ref: "JOHN 5:27", text: "And he has given him authority to judge because he is the Son of Man." } ],
+
+  [ { ref: "ACTS 10:42", text: "He commanded us to preach to the people and to testify that he is the one whom God appointed as judge of the living and the dead." }, { ref: "1 PETER 4:5", text: "But they will have to give account to him who is ready to judge the living and the dead." } ],
+
+  [ { ref: "JOHN 14:26", text: "But the Advocate, the Holy Spirit, whom the Father will send in my name, will teach you all things and will remind you of everything I have said to you." }, { ref: "1 CORINTHIANS 3:16", text: "Don’t you know that you yourselves are God’s temple and that God’s Spirit dwells in your midst?" } ],
+
+  [ { ref: "COLOSSIANS 1:18", text: "And he is the head of the body, the church; he is the beginning and the firstborn from among the dead, so that in everything he might have the supremacy." }, { ref: "1 PETER 2:9", text: "But you are a chosen people, a royal priesthood, a holy nation, God’s special possession, that you may declare the praises of him who called you out of darkness into his wonderful light. " } ],
+
+  [ { ref: "1 CORINTHIANS 12:12-13", text: "Just as a body, though one, has many parts, but all its many parts form one body, so it is with Christ. For we were all baptized by one Spirit so as to form one body—whether Jews or Gentiles, slave or free—and we were all given the one Spirit to drink." }, { ref: "HEBREWS 12:1", text: "Therefore, since we are surrounded by such a great cloud of witnesses, let us throw off everything that hinders and the sin that so easily entangles. And let us run with perseverance the race marked out for us," } ],
+
+  [ { ref: "EPHESIANS 1:7", text: "...In him we have redemption through his blood, the forgiveness of sins, in accordance with the riches of God’s grace..." }, { ref: "1 JOHN 1:9", text: "If we confess our sins, he is faithful and just and will forgive us our sins and purify us from all unrighteousness." } ],
+
+  [ { ref: "1 CORINTHIANS 15:42-44", text: "So will it be with the resurrection of the dead. The body that is sown is perishable, it is raised imperishable; it is sown in dishonor, it is raised in glory; it is sown in weakness, it is raised in power; it is sown a natural body, it is raised a spiritual body." }, { ref: "JOHN 5:28-29", text: "Do not be amazed at this, for a time is coming when all who are in their graves will hear his voice and come out—those who have done what is good will rise to live, and those who have done what is evil will rise to be condemned." } ],
+
+  [ { ref: "JOHN 3:16", text: "For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life." }, { ref: "ROMANS 6:23", text: "For the wages of sin is death, but the gift of God is eternal life in Christ Jesus our Lord." } ]
+
+];
+
+const slideColors = [
+"#7f66c6", // 1 - purple
+"#ffc751", // 2 - yellow
+"#333333", // 3 - gray
+"#ffa351", // 4 - orange
+"#a7cb6f", // 5 - green
+"#ff5a51", // 6 - red
+"#ffc751", // 7 - yellow
+"#40b9c5", // 8 - blue
+"#ff5a51", // 9 - red
+"#f2f2f2", // 10 - white
+"#333333", // 11 - gray
+"#ffa351", // 12 - orange
+"#a7cb6f", // 13 - green
+"#40b9c5", // 14 - blue
+"#ffc751", // 15 - yellow
+"#7f66c6", // 16 - purple
+"#40b9c5", // 17 - blue
+"#ffa351", // 18 - orange
+"#7f66c6", // 19 - purple
+"#ffc751", // 20 - yellow
+"#f2f2f2", // 21 - white
+"#a7cb6f", // 22 - green
+"#ff5a51", // 23 - red
+"#a7cb6f", // 24 - green
+"#7f66c6"  // 25 - purple
+];
+
+let screen="intro";
+let index=0;
+let muted=false;
+let testMode=null;
+let hintState=0;
+let learnIntro = false;  // true only on the "Begin" screen
+let verseIntro = false;  // true only on the Verse Proofs "Begin" screen
+let isSliding = false;   // prevents overlapping slide animations
+
+// ---------- Verse Proofs state ----------
+let verseModeOpen = false;   // toggled by Verse button
+let verseProofIndex = 0;     // which verse within the page
+
+// ---------- Title carousel ----------
+let titleOptionIndex = 0;
+
+const TITLE_OPTIONS = [
+    { label: "Learn the Creed", btnClass: "learn-btn", action: "startLearn" },
+    { label: "Test Yourself",   btnClass: "test-btn",  action: "modeSelect" },
+    { label: "Verse Proofs", btnClass: "learn-btn", action: "startVerseProofs" }
+];
+
+
+
+function titlePrevOption(){
+    titleOptionIndex = (titleOptionIndex - 1 + TITLE_OPTIONS.length) % TITLE_OPTIONS.length;
+    updateTitleCarouselUI();
+}
+
+function titleNextOption(){
+    titleOptionIndex = (titleOptionIndex + 1) % TITLE_OPTIONS.length;
+    updateTitleCarouselUI();
+}
+
+function runTitleOption(){
+    const opt = TITLE_OPTIONS[titleOptionIndex];
+    // Call the function named in opt.action
+    window[opt.action]();
+}
+
+function updateTitleCarouselUI(){
+    const opt = TITLE_OPTIONS[titleOptionIndex];
+
+    const mainBtn = document.getElementById("titleMainBtn");
+    const indicator = document.getElementById("titleIndicator");
+
+    if (mainBtn){
+        mainBtn.textContent = opt.label;
+        mainBtn.className = `carousel-main ${opt.btnClass}`;
+    }
+    if (indicator){
+        indicator.innerHTML = TITLE_OPTIONS.map((_, i) =>
+            `<span class="carousel-dot ${i === titleOptionIndex ? "active" : ""}"></span>`
+        ).join("");
+    }
+}
+
+// --- Inline SVG icons (from your uploaded SVGs) ---
+const SVG_BACK = `
+<svg class="nav-icon" viewBox="0 0 1270 889" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+  <path style="fill:#ffffff;stroke-width:74.9031;stroke-linecap:round"
+    d="M 90.101697,426.07323 665.52324,88.164306 a 20.830539,20.830539 29.78848 0 1 31.37872,17.962384 v 676.74658 a 20.830539,20.830539 150.21152 0 1 -31.37872,17.96238 L 90.101697,462.92673 a 21.369052,21.369052 90 0 1 0,-36.8535 z"
+    transform="translate(246.77226)" />
+</svg>`;
+
+const SVG_FORWARD = `
+<svg class="nav-icon" viewBox="0 0 1270 889" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+  <path style="fill:#ffffff;stroke-width:74.9031;stroke-linecap:round"
+    d="M 90.101697,426.07323 665.52324,88.164306 a 20.830539,20.830539 29.78848 0 1 31.37872,17.962384 v 676.74658 a 20.830539,20.830539 150.21152 0 1 -31.37872,17.96238 L 90.101697,462.92673 a 21.369052,21.369052 90 0 1 0,-36.8535 z"
+    transform="matrix(-1,0,0,1,1023.2277,0)" />
+</svg>`;
+
+const SVG_MUTE = `
+<svg class="nav-icon" viewBox="0 0 1270 889" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+  <path style="fill:#ffffff;stroke:none;stroke-width:44.9431;stroke-linecap:round"
+    d="M 660.98465,87.244161 409.97079,241.6972 a 150.47802,150.47802 0 0 1 -78.85883,22.31829 H 225.63234 a 42.587633,42.587633 0 0 0 -42.58762,42.58762 v 275.79372 a 42.587633,42.587633 0 0 0 42.58762,42.58762 h 105.47962 a 150.47802,150.47802 0 0 1 78.85883,22.3183 l 251.01386,154.45304 a 23.799138,23.799138 0 0 0 36.27121,-20.26933 V 107.51349 A 23.799138,23.799138 0 0 0 660.98465,87.244161 Z" />
+  <g transform="translate(-26.458334,-255.59263)">
+    <path style="fill:none;stroke:#ffffff;stroke-width:76.7747;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1"
+      d="M 1241.4124,524.69155 890.61025,875.49365" />
+    <path style="fill:none;stroke:#ffffff;stroke-width:76.7747;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1"
+      d="m 890.61025,524.69155 350.80215,350.8021" />
+  </g>
+</svg>`;
+
+const SVG_UNMUTE = `
+<svg class="nav-icon" viewBox="0 0 1270 889" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+  <g transform="matrix(2.9017243,0,0,2.9017243,-948.59169,1423.6267)">
+    <path style="fill:#ffffff;stroke:none;stroke-width:15.4884;stroke-linecap:round"
+      d="m 554.69651,-460.54773 -86.50507,53.22802 a 51.858137,51.858137 0 0 1 -27.17654,7.69139 h -36.35067 a 14.676664,14.676664 0 0 0 -14.67666,14.67666 v 95.04477 a 14.676664,14.676664 0 0 0 14.67666,14.67666 h 36.35067 a 51.858137,51.858137 0 0 1 27.17654,7.69139 l 86.50507,53.22802 a 8.2017227,8.2017227 0 0 0 12.49988,-6.98527 v -232.26637 a 8.2017227,8.2017227 0 0 0 -12.49988,-6.98527 z" />
+    <path style="fill:none;stroke:#ffffff;stroke-width:26.4583;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1"
+      d="m 596.38634,-270.01659 c 26.00162,-13.81364 42.0863,-39.52797 42.16745,-67.41243 -0.0102,-27.95044 -16.10446,-53.75052 -42.16745,-67.5969" />
+    <path style="fill:none;stroke:#ffffff;stroke-width:26.4583;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1"
+      d="m 626.65943,-233.57231 c 4.34269,-2.51562 16.69789,-10.99898 23.86366,-17.76894 23.32002,-22.03191 37.74343,-52.46821 37.74343,-86.08777 0,-33.61956 -14.42341,-64.05637 -37.74343,-86.08828 -7.16577,-6.76996 -19.52097,-15.25332 -23.86366,-17.76894" />
+  </g>
+</svg>`;
+
+const SVG_HOME = `
+<svg class="nav-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+  <path d="M12 3L3 10h2v9h5v-6h4v6h5v-9h2L12 3z" fill="#ffffff"/>
+</svg>`;
+
+
+// Reuse one audio player (important for iPhone autoplay behavior)
+const audioPlayer = new Audio();
+audioPlayer.preload = "auto";
+
+// After we "unlock" once, later plays are more reliable
+let audioUnlocked = false;
+
+/* ---------- Utility ---------- */
+
+function getColor(i){
+    return slideColors[i];
+}
+
+function isLightBg(color){
+    return color === "#ffc751" || color === "#f2f2f2";
+}
+
+function setNav(html){
+    const nav = document.getElementById("navBar");
+    if (!nav) return;
+
+    if (!html){
+        nav.style.display = "none";
+        nav.innerHTML = "";
         return;
-      }
+    }
 
-      themeLink.onload = () => {
-        setThemeClass(themeClass);
-        document.documentElement.classList.remove("theme-loading");
-      };
-      themeLink.onerror = () => {
-        console.warn("Theme CSS failed to load:", newHref);
-        setThemeClass(themeClass);
-        document.documentElement.classList.remove("theme-loading");
-      };
-      themeLink.href = newHref;
+    nav.style.display = "flex";
+    nav.innerHTML = html;
+}
+
+function preloadCreedImages(priorityCount = 3) {
+    // Helper: request an image download without adding it to the DOM
+    function requestImage(src) {
+        const img = new Image();
+        img.src = src;
+        // Optional: allow browser to decode when it can
+        img.decoding = "async";
+    }
+
+    // 1) Preload the intro images used immediately
+    requestImage("creed_images/intro_bible.png");
+    requestImage("creed_images/intro_bible_bite.png");
+
+    // 2) Preload commonly used screens
+    requestImage("creed_images/creed_title.png");
+    requestImage("creed_images/creed_end.png");
+
+    // 3) Preload the first N creed slides FIRST (highest priority for UX)
+    const total = phrases.length;
+    const firstBatch = Math.min(priorityCount, total);
+
+    for (let i = 1; i <= firstBatch; i++) {
+        requestImage(`creed_images/creed_${String(i).padStart(2, "0")}.png`);
+    }
+
+    // 4) Preload the remaining slides AFTER the first batch
+    function preloadRemaining() {
+        for (let i = firstBatch + 1; i <= total; i++) {
+            requestImage(`creed_images/creed_${String(i).padStart(2, "0")}.png`);
+        }
+    }
+
+    // Prefer idle time if supported; otherwise wait a tiny bit
+    if ("requestIdleCallback" in window) {
+        requestIdleCallback(preloadRemaining, { timeout: 1500 });
     } else {
-      setThemeClass(themeClass);
-      document.documentElement.classList.remove("theme-loading");
+        setTimeout(preloadRemaining, 300);
     }
-  }
-
-  function setThemeClass(themeClass) {
-    const el = document.documentElement;
-    [...el.classList].forEach(c => { if (c.startsWith("theme-")) el.classList.remove(c); });
-    el.classList.add(themeClass);
-  }
-
-  /***********************
-   * Globals filled from JSON
-   ***********************/
-  let LESSON_ID = "";
-  let PAGE_TITLE = "Quiz";
-  let LESSON_TITLE_TEXT = "";
-  let LESSON_SUBTITLE_TEXT = "";
-  let LESSON_IMAGE_PATH = "";
-  let THEME_CLASS = "";
-  let QUESTIONS = [];
-
-  async function loadQuizFromJson(jsonPath) {
-    const res = await fetch(jsonPath);
-    if (!res.ok) throw new Error(`Failed to load quiz JSON: ${jsonPath}`);
-    const quiz = await res.json();
-
-    LESSON_ID = quiz.lessonId || "";
-    PAGE_TITLE = quiz.pageTitle || "Quiz";
-    LESSON_TITLE_TEXT = quiz.lessonTitleText || "";
-    LESSON_SUBTITLE_TEXT = quiz.lessonSubtitleText || "";
-    LESSON_IMAGE_PATH = quiz.lessonImagePath || "";
-    THEME_CLASS = quiz.themeClass || "";
-    QUESTIONS = Array.isArray(quiz.questions) ? quiz.questions : [];
-
-    document.title = PAGE_TITLE;
-
-    applyTheme(THEME_CLASS);
-  }
-
-  /***********************
-   * Slide system (inspired by Ten/Credo apps)
-   ***********************/
-  const app = document.getElementById("app");
-  let currentSlideEl = null;
-  let isSliding = false;
-
-  
-  function pushSlide(newEl, direction = "forward", navVisible = true) {
-  // Special-case: first/instant slide (no animation)
-  // IMPORTANT: do NOT set isSliding=true here, because there will be no transitionend.
-  if (direction === "none") {
-    const oldEl = currentSlideEl;
-    currentSlideEl = newEl;
-
-    if (!navVisible) newEl.classList.add("nav-hidden");
-
-    newEl.style.transition = "none";
-    newEl.style.transform = "translateX(0)";
-    app.appendChild(newEl);
-
-    if (oldEl) oldEl.remove();
-    isSliding = false;
-    return;
-  }
-
-  if (isSliding) return;
-  isSliding = true;
-
-  const oldEl = currentSlideEl;
-  currentSlideEl = newEl;
-
-  if (!navVisible) newEl.classList.add("nav-hidden");
-
-  newEl.style.transition = "none";
-  if (direction === "back") newEl.style.transform = "translateX(-100%)";
-  else newEl.style.transform = "translateX(100%)";
-
-  app.appendChild(newEl);
-  newEl.offsetHeight; // force reflow
-
-  requestAnimationFrame(() => {
-    newEl.style.transition = "transform 320ms ease";
-    if (oldEl) oldEl.style.transition = "transform 320ms ease";
-
-    newEl.style.transform = "translateX(0)";
-    if (oldEl) oldEl.style.transform = (direction === "back") ? "translateX(100%)" : "translateX(-100%)";
-  });
-
-  const cleanup = () => {
-    newEl.removeEventListener("transitionend", cleanup);
-    if (oldEl) oldEl.remove();
-    isSliding = false;
-  };
-
-  // Fallback safety: if transitionend doesn't fire for any reason, unlock anyway.
-  const safety = setTimeout(() => cleanup(), 450);
-
-  newEl.addEventListener("transitionend", () => {
-    clearTimeout(safety);
-    cleanup();
-  }, { once: true });
 }
 
-  function makeSlide(innerHTML, bg) {
-    const el = document.createElement("section");
-    el.className = "slide";
-    el.style.background = bg || "var(--app-bg, var(--bg-solid, #222))";
-    el.innerHTML = innerHTML;
-    return el;
-  }
+function setupKeyboardNav(){
+    document.addEventListener("keydown", (e) => {
+        // Don’t spam-move if someone holds the key down
+        if (e.repeat) return;
 
-  /***********************
-   * Bottom nav (Home + Counter + Mute)
-   ***********************/
-  const nav = document.getElementById("nav");
-  const navCenter = document.getElementById("navCenter");
-  const homeBtn = document.getElementById("homeBtn");
-  const muteBtn = document.getElementById("muteBtn");
-  const nextBtn = document.getElementById("nextBtn");
-  const nextHint = document.getElementById("nextHint");
-let hasShownNextHint = false; // only show once (first question reveal)
-  const suspenseOverlay = document.getElementById("suspenseOverlay");
-  const suspenseEmoji = document.getElementById("suspenseEmoji");
-  function setNavVisible(isVisible) {
-    nav.style.display = isVisible ? "flex" : "none";
-  }
+        // Only care about Left/Right arrows
+        if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
 
-  function setNavCounter(idx, total) {
-    navCenter.textContent = `${idx} / ${total}`;
-  }
+        // Prevent the browser from scrolling the page
+        e.preventDefault();
 
-  /***********************
-   * Quit confirm dialog
-   ***********************/
-  const overlay = document.getElementById("overlay");
-  const overlayCancel = document.getElementById("overlayCancel");
-  const overlayOk = document.getElementById("overlayOk");
+        // Right arrow = forward
+        if (e.key === "ArrowRight") {
+            if (screen === "learn") {
+                // On the Begin screen, start the lesson (don’t skip phrase 1)
+                if (learnIntro) nextLearn("forward");
+                else forwardLearn();
+            } else if (screen === "test") {
+                forwardTest();
+            } else if (screen === "verses") {
+                if (verseIntro) beginVerseProofs();
+            else forwardVerseProofs();
+            }
+            return;
+        }
 
-  let overlayOkHandler = null;
-
-  function showConfirm({ title="Quit quiz?", text="Are you sure?", okText="Quit", onOk }) {
-    document.getElementById("overlayTitle").textContent = title;
-    document.getElementById("overlayText").textContent = text;
-    overlayOk.textContent = okText;
-
-    overlayOkHandler = () => {
-      hideConfirm();
-      onOk && onOk();
-    };
-
-    overlay.classList.add("show");
-  }
-
-  function hideConfirm() {
-    overlay.classList.remove("show");
-    overlayOkHandler = null;
-  }
-
-  overlayCancel.addEventListener("click", hideConfirm);
-  overlayOk.addEventListener("click", () => overlayOkHandler && overlayOkHandler());
-  overlay.addEventListener("click", (e) => { if (e.target === overlay) hideConfirm(); });
-
-  /***********************
-   * Audio (from Andy engine)
-   ***********************/
-  let audioCtx = null;
-  let soundEnabled = true;
-
-  const chompAudio = new Audio("quizsounds/sound_chomp.mp3");
-  chompAudio.preload = "auto";
-  let isChompReady = false;
-  chompAudio.addEventListener("canplaythrough", () => { isChompReady = true; });
-
-  function ensureAudioUnlocked() {
-    // On iOS/Android, an AudioContext may start suspended until user gesture
-    const ctx = getAudioContext();
-    if (ctx && ctx.state === "suspended") {
-      ctx.resume().catch(()=>{});
-    }
-  }
-
-  function getAudioContext() {
-    if (!audioCtx) {
-      const AC = window.AudioContext || window.webkitAudioContext;
-      if (AC) audioCtx = new AC();
-    }
-    return audioCtx;
-  }
-
-  function playBeepSequence(notes) {
-    if (!soundEnabled) return;
-    const ctx = getAudioContext();
-    if (!ctx) return;
-    const now = ctx.currentTime;
-
-    notes.forEach((note, i) => {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc.type = "triangle";
-      osc.frequency.value = note.freq;
-
-      const t0 = now + i * note.duration;
-      const t1 = t0 + note.duration;
-
-      gain.gain.setValueAtTime(0, t0);
-      gain.gain.linearRampToValueAtTime(0.45, t0 + 0.02);
-      gain.gain.linearRampToValueAtTime(0.0, t1);
-
-      osc.start(t0);
-      osc.stop(t1 + 0.02);
+        // Left arrow = back
+        if (e.key === "ArrowLeft") {
+            if (screen === "learn") {
+                // On Begin screen, go back to title
+                if (learnIntro) titleScreen();
+                else prevLearn();
+            } else if (screen === "test") {
+                prevTest();
+            } else if (screen === "verses") {
+               if (verseIntro) titleScreen();
+                else prevVerseProofs();
+            }
+        }
     });
-  }
-
-  function playCorrectSound() {
-    playBeepSequence([
-      { freq: 660, duration: 0.14 },
-      { freq: 880, duration: 0.14 },
-      { freq: 1040, duration: 0.16 }
-    ]);
-  }
-
-  function playIncorrectSound() {
-    playBeepSequence([
-      { freq: 260, duration: 0.18 },
-      { freq: 200, duration: 0.20 }
-    ]);
-  }
-
-  function playChompSound() {
-    if (!soundEnabled || !isChompReady) return;
-    try { chompAudio.currentTime = 0; chompAudio.play(); } catch(e) {}
-  }
-
-  function playTickTock(isThumbUp) {
-    if (!soundEnabled) return;
-    const rootHz = 250;
-    const fifthHz = rootHz * 1.5;
-    const seq = isThumbUp ? [{ freq: fifthHz, duration: 0.08 }] : [{ freq: rootHz, duration: 0.08 }];
-    playBeepSequence(seq);
-  }
-
-  function setMuteUi() {
-    muteBtn.textContent = soundEnabled ? "🔊" : "🔇";
-    muteBtn.setAttribute("aria-label", soundEnabled ? "Mute" : "Unmute");
-  }
-
-  muteBtn.addEventListener("click", () => {
-    ensureAudioUnlocked();
-    soundEnabled = !soundEnabled;
-    setMuteUi();
-  });
-
-  /***********************
-   * Emoji pools (from Andy engine)
-   ***********************/
-  const NEUTRAL_EMOJIS = [
-    "😀","😄","😊","😁","🤗","🙂","🤩","🤪","🥸","🤓","😧","😵‍💫","🙃","😺","😸","😻",
-    "😎","😇","😮‍💨","😌","😃"
-  ];
-  const CORRECT_EMOJIS = [
-    "🤩","😄","🎉","🥳","🙌","😎","😃","😁","😺","🎊","⭐",
-    "👏","🔥","💥","🌟","✨","🫶","😇","💫","🏆","🥇",
-    "🤗","😆","😻","💯","🎈"
-  ];
-  const INCORRECT_EMOJIS = [
-    "😢","😮","😯","😕","😟","🙁","😞","😔","🥺",
-    "😿","😣","😫","🤢","😥","🫤","😐","🙄"
-  ];
-  const FUNNY_EMOJIS = [
-    "🤪","🥸","🤡","🤠","💩","🦆","😹","🍕","🤤","👽","🌮","🍩","🥨","🍔","🐸","😏",
-    "🙊","🤯","🤮","🐯","🦁","🐶","🐼","🐰","🐳","🍟","🍪","🍿","🧀","🍎","🍍","🍰"
-  ];
-  const REWARD_EMOJI_POOLS = { 0:FUNNY_EMOJIS,1:FUNNY_EMOJIS,2:FUNNY_EMOJIS,3:FUNNY_EMOJIS,4:FUNNY_EMOJIS,5:FUNNY_EMOJIS,6:FUNNY_EMOJIS,7:FUNNY_EMOJIS,8:FUNNY_EMOJIS,9:FUNNY_EMOJIS,10:FUNNY_EMOJIS };
-
-  function pick(list){ return list[Math.floor(Math.random()*list.length)]; }
-
-/***********************
- * Suspense variants (10)
- ***********************/
-const SUSPENSE_VARIANTS = [
-  "thumbsClassic",
-  "faces",
-  "thumbWheel",
-  "bomb",
-  "coin",
-  "hands",
-  "meter",        // your custom face-flip meter
-  "pointerSweep", // your custom fast pointer mover
-  "magnifier",
-  "yesnoFlip"
-];
-
-function shuffledAnswerIndices(n=4){
-  const idx = Array.from({length:n}, (_,i)=>i);
-  for (let i = idx.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [idx[i], idx[j]] = [idx[j], idx[i]];
-  }
-  return idx;
 }
 
-let suspenseDeck = [];
-function shuffle(arr){
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
-  }
-  return arr;
-}
-function nextSuspenseVariant(){
-  if (suspenseDeck.length === 0) suspenseDeck = shuffle([...SUSPENSE_VARIANTS]);
-  return suspenseDeck.pop();
-}
+function preventDoubleTapZoomOnButtons(){
+    let lastTouchEnd = 0;
 
-function showSuspenseDim(isOn){
-  suspenseOverlay.style.display = isOn ? "flex" : "none";
-}
+    document.addEventListener("touchend", (e) => {
+        // Only affect elements marked with .no-zoom
+        const btn = e.target.closest(".no-zoom");
+        if (!btn) return;
 
-function setSuspenseEmoji(text, opts = {}){
-  const { preserveTransform = false, preservePosition = false } = opts;
+        const now = Date.now();
 
-  // Only remove mover mode if we're not preserving position-based behavior
-  if (!preservePosition) suspenseEmoji.classList.remove("mover");
+        // If two taps happen quickly, prevent the second one from zooming
+        if (now - lastTouchEnd <= 350) {
+            e.preventDefault();
+        }
 
-  suspenseEmoji.textContent = text;
-
-  // IMPORTANT: coin/meter need transform preserved during flip
-  if (!preserveTransform) suspenseEmoji.style.transform = "";
-
-  if (!preservePosition) {
-    suspenseEmoji.style.left = "";
-    suspenseEmoji.style.top = "";
-  }
+        lastTouchEnd = now;
+    }, { passive: false });
 }
 
-function finishSuspense(cleanupFn, done){
-  try { cleanupFn && cleanupFn(); } catch(e) {}
-  showSuspenseDim(false);
-  done && done();
+
+function playAudio(i){
+    if (muted) return;
+
+    audioPlayer.pause();
+    audioPlayer.currentTime = 0;
+    audioPlayer.src = `creed_audio/creed_${String(i+1).padStart(2,"0")}.mp3`;
+    audioPlayer.volume = 1;
+
+    audioPlayer.play().catch(()=>{});
 }
 
-function runSuspenseVariant({ variant, questionBoxEl, answerBtns, done }) {
-  showSuspenseDim(true);
+function unlockAudioForIOS() {
+    if (audioUnlocked) return;
 
-  // default: centered emoji
-  suspenseEmoji.classList.remove("mover");
-  suspenseEmoji.classList.remove("flip");
-  suspenseEmoji.style.position = "";
-  suspenseEmoji.style.left = "";
-  suspenseEmoji.style.top = "";
-  suspenseEmoji.style.transform = "";
-  suspenseEmoji.style.fontSize = "";
+    // Use slide 1 as the unlock source (must exist)
+    audioPlayer.src = `creed_audio/creed_01.mp3`;
+    audioPlayer.volume = 0;
 
-  // Helpers
-  const centerOf = (el) => {
-    const r = el.getBoundingClientRect();
-    return { x: r.left + r.width/2, y: r.top + r.height/2 };
-  };
-
-  // tick/tock helper like old engine
-  let tick = false;
-  const tt = () => { tick = !tick; playTickTock(tick); };
-
-  // ---- Variant implementations ----
-  if (variant === "thumbsClassic") {
-    let up = true;
-    setSuspenseEmoji("👍");
-    const iv = setInterval(() => { setSuspenseEmoji(up ? "👍" : "👎"); tt(); up = !up; }, 250);
-    const to = setTimeout(() => finishSuspense(()=>{clearInterval(iv);clearTimeout(to);}, done), 4000);
-    return;
-  }
-
-  if (variant === "faces") {
-    const faces = ["🤔","😮","😬","😐","😯","😵‍💫"];
-    let i = 0;
-    setSuspenseEmoji(faces[0]);
-    const iv = setInterval(() => { i=(i+1)%faces.length; setSuspenseEmoji(faces[i]); tt(); }, 250);
-    const to = setTimeout(() => finishSuspense(()=>{clearInterval(iv);clearTimeout(to);}, done), 3000);
-    return;
-  }
-
-  if (variant === "thumbWheel") {
-    setSuspenseEmoji("👍");
-    let rot = 0;
-    const iv = setInterval(() => {
-      rot = (rot + 45) % 360;
-      suspenseEmoji.style.transform = `rotate(${rot}deg)`;
-      tt();
-    }, 120);
-    const to = setTimeout(() => finishSuspense(()=>{clearInterval(iv);clearTimeout(to);suspenseEmoji.style.transform="";}, done), 3000);
-    return;
-  }
-
-  if (variant === "bomb") {
-  // Old Andy engine style: pulsing bomb, then yellow shockwave ring (no 💥 swap)
-  setSuspenseEmoji("💣");
-  suspenseEmoji.style.fontSize = "11rem";
-
-  let pulseCount = 0;
-  let up = false;
-
-  const iv = setInterval(() => {
-    // pulse
-    up = !up;
-    suspenseEmoji.style.transform = up ? "scale(1.35)" : "scale(1)";
-    tt();
-    pulseCount++;
-
-    if (pulseCount >= 6) {
-      clearInterval(iv);
-
-      // Clear emoji and do shockwave ring
-      suspenseEmoji.textContent = "";
-      suspenseEmoji.style.transform = "";
-      suspenseEmoji.style.fontSize = ""; // restore CSS default (clamp)
-
-      const ring = document.createElement("div");
-      ring.className = "shockwave";
-      suspenseOverlay.appendChild(ring);
-
-      // Trigger animation
-      ring.style.animation = "shockwaveExpand 900ms cubic-bezier(.3,.7,.4,1) forwards";
-
-      // Cleanup and finish suspense
-      setTimeout(() => {
-        try { ring.remove(); } catch(e) {}
-        finishSuspense(() => {}, done);
-      }, 930);
+    // Try to start playback during the user's tap
+    const p = audioPlayer.play();
+    if (p && typeof p.then === "function") {
+        p.then(() => {
+            audioPlayer.pause();
+            audioPlayer.currentTime = 0;
+            audioPlayer.volume = 1;
+            audioUnlocked = true;
+        }).catch(() => {
+            // If it fails, we'll still be fine on later user-gesture plays
+        });
     }
-  }, 320);
-
-  // Safety cleanup in case something interrupts
-  return;
 }
 
-  if (variant === "coin") {
-  // Animated coin flip using scaleX with a transition (no blinking)
-  const coins = ["🪙","🪙","🪙"];
-  let i = 0;
 
-  setSuspenseEmoji(coins[0]);
-  suspenseEmoji.classList.add("flip");
-  suspenseEmoji.style.transform = "scaleX(1)";
-
-  let running = true;
-  const endAt = Date.now() + 2600;
-
-  const doFlip = () => {
-    if (!running) return;
-
-    // 1) flip to thin
-    suspenseEmoji.style.transform = "scaleX(0.05)";
-    tt();
-
-    // 2) swap at the thin point
-    setTimeout(() => {
-      if (!running) return;
-      i = (i + 1) % coins.length;
-      setSuspenseEmoji(coins[i], { preserveTransform: true });
-
-      // 3) flip back to full
-      suspenseEmoji.style.transform = "scaleX(1)";
-
-      // schedule next flip
-      if (Date.now() >= endAt) {
-        running = false;
-        setTimeout(() => finishSuspense(() => {
-          suspenseEmoji.classList.remove("flip");
-          suspenseEmoji.style.transform = "";
-        }, done), 140);
-      } else {
-        setTimeout(doFlip, 160);
-      }
-    }, 130);
-  };
-
-  doFlip();
-  return;
-}
-  
-
-  if (variant === "hands") {
-    const hands = ["👆","☝️","👉","👈","👇","🤞","🖖"];
-    let i = 0;
-    setSuspenseEmoji(hands[0]);
-    const iv = setInterval(() => { i=(i+1)%hands.length; setSuspenseEmoji(hands[i]); tt(); }, 220);
-    const to = setTimeout(() => finishSuspense(()=>{clearInterval(iv);clearTimeout(to);}, done), 2800);
-    return;
-  }
-
-  if (variant === "meter") {
-  // Your custom: coin-flip mechanics swapping faces at the thin point
-  const faces = ["🙂","😢","😄","😡","🙂","😭"];
-  let i = 0;
-
-  setSuspenseEmoji(faces[0]);
-  suspenseEmoji.classList.add("flip");
-  suspenseEmoji.style.transform = "scaleX(1)";
-
-  let running = true;
-  const endAt = Date.now() + 2800;
-
-  const doFlip = () => {
-    if (!running) return;
-
-    // 1) flip to thin
-    suspenseEmoji.style.transform = "scaleX(0.05)";
-    tt();
-
-    // 2) swap at thin point
-    setTimeout(() => {
-      if (!running) return;
-      i = (i + 1) % faces.length;
-      setSuspenseEmoji(faces[i], { preserveTransform: true });
-
-      // 3) back to full
-      suspenseEmoji.style.transform = "scaleX(1)";
-
-      // schedule next flip
-      if (Date.now() >= endAt) {
-        running = false;
-        setTimeout(() => finishSuspense(() => {
-          suspenseEmoji.classList.remove("flip");
-          suspenseEmoji.style.transform = "";
-        }, done), 140);
-      } else {
-        setTimeout(doFlip, 160);
-      }
-    }, 130);
-  };
-
-  doFlip();
-  return;
+function maskWord(word, revealLetters=0){
+    return word.split("").map((c,i)=>{
+        if(c===" ") return " ";
+        if(i<revealLetters) return word[i];
+        return "_";
+    }).join("");
 }
 
-  if (variant === "magnifier" || variant === "pointerSweep") {
-    // Position-based mover
-    suspenseEmoji.classList.add("mover");
-    suspenseEmoji.style.position = "fixed";
-    suspenseEmoji.style.transform = "translate(-50%, -50%)";
+function maskPhrase(phrase, removeWords, reveal=0){
+    let result=phrase;
+    removeWords.forEach(w=>{
+        const masked = reveal===2 ? w :
+                       reveal===1 ? maskWord(w,1) :
+                       maskWord(w,0);
+        result = result.replace(new RegExp(w,"i"), masked);
+    });
+    return result;
+}
 
-    const qPos = centerOf(questionBoxEl);
-    const aPos = answerBtns.map(centerOf);
+function computeTestDisplayPhrase() {
+    const phraseData = phrases[index];
+    const phrase = phraseData[0];
 
-    if (variant === "magnifier") {
-      setSuspenseEmoji("🔍");
-      const path = [qPos, aPos[0], aPos[1], aPos[2], aPos[3]];
-      let idx = 0;
+    let remove = [];
+    if (testMode === "easy") remove = [phraseData[1]];
+    if (testMode === "medium") remove = phraseData.slice(1);
 
-      const moveTo = (p) => { suspenseEmoji.style.left = `${p.x}px`; suspenseEmoji.style.top = `${p.y}px`; };
-      moveTo(path[0]);
+    if (testMode === "hard" && hintState === 0) return "";
+    if (testMode === "hard" && hintState === 1) return maskPhrase(phrase, phraseData.slice(1), 0);
+    if (testMode === "hard" && hintState === 2) return phrase;
 
-      const iv = setInterval(() => {
-        tt();
-        idx++;
-        if (idx >= path.length) { clearInterval(iv); setTimeout(() => finishSuspense(()=>{}, done), 450); return; }
-        moveTo(path[idx]);
-      }, 650);
+    return maskPhrase(phrase, remove, hintState);
+}
 
-      return;
+function updateTestHintUI() {
+    const phraseEl = document.getElementById("testPhrase");
+    if (phraseEl) phraseEl.textContent = computeTestDisplayPhrase();
+
+    const hintBtn = document.getElementById("hintBtn");
+    if (hintBtn) hintBtn.textContent = (hintState === 0) ? "Hint" : "Reveal";
+}
+
+/* ---------- Slide Engine ---------- */
+
+function showSlide(contentHTML, bgColor, direction = "forward") {
+    const app = document.getElementById("app");
+
+    // Remove any non-slide screens (like title/mode screens)
+    [...app.children].forEach(child => {
+        if (!child.classList || !child.classList.contains("slide")) child.remove();
+    });
+
+    // If we are mid-animation, ignore new slide requests
+    if (direction !== "none" && isSliding) return;
+
+    // Get ALL slides currently in the DOM
+    const slides = app.querySelectorAll(".slide");
+    const oldSlide = slides.length ? slides[slides.length - 1] : null;
+
+    // If any extra slides exist (shouldn't, but can happen), remove them
+    for (let i = 0; i < slides.length - 1; i++) {
+        slides[i].remove();
     }
 
-    // pointerSweep: fast cycles, goes question -> down buttons -> question -> down ... etc.
-    setSuspenseEmoji("👉");
-    const path = [qPos, ...aPos, qPos, ...aPos, qPos, ...aPos, qPos];
-    let idx = 0;
+    const newSlide = document.createElement("div");
 
-    const moveTo = (p) => { suspenseEmoji.style.left = `${p.x}px`; suspenseEmoji.style.top = `${p.y}px`; };
-    moveTo(path[0]);
+    // If the nav bar is currently hidden, don't reserve space for it
+    const nav = document.getElementById("navBar");
+    const navHidden = !nav || nav.style.display === "none";
 
-    const iv = setInterval(() => {
-      tt();
-      idx++;
-      if (idx >= path.length) { clearInterval(iv); finishSuspense(()=>{}, done); return; }
-      moveTo(path[idx]);
-    }, 190);
+    newSlide.className = navHidden ? "slide nav-hidden" : "slide";
+    newSlide.style.background = bgColor;
+    newSlide.innerHTML = contentHTML;
+    newSlide.style.transition = "none";
 
-    return;
-  }
+    // Starting positions based on direction
+    if (direction === "back") {
+        newSlide.style.transform = "translateX(-100%)";
+    } else if (direction === "none") {
+        newSlide.style.transform = "translateX(0)";
+    } else {
+        newSlide.style.transform = "translateX(100%)";
+    }
 
-if (variant === "yesnoFlip") {
-  // Jumping ✅ / ❌ swap on landing (gravity feel)
-  let isCheck = true;
-  setSuspenseEmoji("✅");
+    app.appendChild(newSlide);
+    newSlide.offsetHeight; // force layout so the starting transform is committed
 
-  // Make sure no previous animation class sticks around
-  suspenseEmoji.classList.remove("jump");
+    // If no animation requested, just remove old and finish
+    if (direction === "none") {
+        if (oldSlide) oldSlide.remove();
+        isSliding = false;
+        return;
+    }
 
-  let jumps = 0;
+    isSliding = true;
 
-  const doOneJump = () => {
-    // restart the CSS animation cleanly
-    suspenseEmoji.classList.remove("jump");
-    // force reflow so animation re-triggers
-    void suspenseEmoji.offsetWidth;
-    suspenseEmoji.classList.add("jump");
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            newSlide.style.transition = "transform .4s ease";
+            newSlide.style.transform = "translateX(0)";
 
-    // swap emoji on landing (end of animation)
-    const onEnd = () => {
-      suspenseEmoji.removeEventListener("animationend", onEnd);
+            if (oldSlide) {
+                oldSlide.style.transition = "transform .4s ease";
+                oldSlide.style.transform = (direction === "back")
+                    ? "translateX(100%)"
+                    : "translateX(-100%)";
+            }
 
-      tt(); // tick/tock on landing
-      isCheck = !isCheck;
-      setSuspenseEmoji(isCheck ? "✅" : "❌");
+            setTimeout(() => {
+                if (oldSlide) oldSlide.remove();
+                isSliding = false;
+            }, 410);
+        });
+    });
+}
 
-      jumps++;
-      if (jumps >= 10) {
-        // finish shortly after final landing
-        setTimeout(() => finishSuspense(() => {
-          suspenseEmoji.classList.remove("jump");
-        }, done), 120);
-      } else {
-        // short pause between jumps
-        setTimeout(doOneJump, 90);
-      }
+
+/* ---------- Screens ---------- */
+
+function introScreen(){
+    const html=`
+    <div class="intro">
+        <img id="introImg" src="creed_images/intro_bible.png">
+    </div>`;
+    document.getElementById("app").innerHTML=html;
+    setNav("");
+
+    const img=document.getElementById("introImg");
+    img.onclick=()=>{
+        img.src="creed_images/intro_bible_bite.png";
+        new Audio("creed_audio/chomp.mp3").play();
+        setTimeout(()=>titleScreen(),600);
     };
-
-    suspenseEmoji.addEventListener("animationend", onEnd);
-  };
-
-  doOneJump();
-  return;
 }
 
-  // fallback
-  setSuspenseEmoji("⏳");
-  const to = setTimeout(() => finishSuspense(()=>{clearTimeout(to);}, done), 1200);
+function titleScreen(){
+    screen="title";
+    const html=`
+    <div class="title-screen">
+        <div class="title-content" id="titleContent">
+            <img src="creed_images/creed_title.png">
+            <h2>Let's learn the Apostle's Creed</h2>
+        <div class="title-buttons">
+            <div class="title-carousel">
+                <button class="carousel-arrow no-zoom" onclick="titlePrevOption()" aria-label="Previous option">◀</button>
+
+
+                <button id="titleMainBtn" class="carousel-main learn-btn" onclick="runTitleOption()">
+                    Learn the Verse
+                </button>
+
+                <button class="carousel-arrow no-zoom" onclick="titleNextOption()" aria-label="Next option">▶</button>
+            </div>
+
+            <div class="carousel-dots" id="titleIndicator"></div>
+        </div>
+        </div>
+        <div class="footer">
+            More free Bible resources at:<br>
+            <a href="https://www.eatyourbible.com" target="_blank" style="color:white;">
+            www.eatyourbible.com</a>
+        </div>
+    </div>`;
+    document.getElementById("app").innerHTML=html;
+    setNav("");
+    updateTitleCarouselUI();
 }
 
-  /***********************
-   * Quiz state
-   ***********************/
-  const TIMER_DURATION = 30;
-  let qIndex = 0;
-  let correctCount = 0;
-
-// =========================================================
-// Reward (present) cleanup so "tap anywhere to exit" works
-// =========================================================
-let rewardSpinInterval = null;
-let rewardPongInterval = null;
-let rewardCleanupTimers = [];
-
-function stopRewardAnimations() {
-  // stop any JS-driven intervals
-  if (rewardSpinInterval !== null) {
-    clearInterval(rewardSpinInterval);
-    rewardSpinInterval = null;
-  }
-  if (rewardPongInterval !== null) {
-    clearInterval(rewardPongInterval);
-    rewardPongInterval = null;
-  }
-
-  // stop any timeouts we created
-  for (const t of rewardCleanupTimers) clearTimeout(t);
-  rewardCleanupTimers = [];
-
-  // remove confetti/particles if present
-  try {
-    overlay.querySelectorAll(".particle").forEach(p => p.remove());
-  } catch (e) {}
+function startLearn(){
+    unlockAudioForIOS();   // <--- add this line
+    screen="learn";
+    index=0;
+    showLearnIntro();
 }
 
-  // per-question timer
-  let timeLeft = TIMER_DURATION;
-  let timerIntervalId = null;
 
-  function stopTimer() {
-    if (timerIntervalId !== null) {
-      clearInterval(timerIntervalId);
-      timerIntervalId = null;
+function showLearnIntro(){
+    learnIntro = true;
+    setNav("");
+    showSlide(`
+    <div class="content">
+        <div class="text-area">
+            <div>
+                <div class="large-text">Let's read the Apostles Creed.</div>
+                <div class="small-text">Use the arrows to go forward and back.</div>
+
+                <div class="title-buttons">
+                    <button class="learn-btn" onclick="nextLearn('forward')">Begin</button>
+                </div>
+            </div>
+        </div>
+    </div>`, "#7f66c6");
+}
+
+function nextLearn(direction = "forward"){
+    learnIntro = false;
+    if(index>=phrases.length){
+        showLearnEnd();
+        return;
     }
-  }
-
-  function timerColor(ratio) {
-    // ratio: 1 -> 0
-    if (ratio > 0.5) return "#3ddc84";   // green
-    if (ratio > 0.2) return "#f4c542";   // yellow
-    return "#ff4d4d";                    // red
-  }
-
-  function updateTimerVisual(timerBarEl, timerNumEl) {
-    const ratio = Math.max(0, Math.min(1, timeLeft / TIMER_DURATION));
-    timerBarEl.style.width = (ratio * 100).toFixed(2) + "%";
-    timerBarEl.style.backgroundColor = timerColor(ratio);
-    timerNumEl.textContent = String(timeLeft);
-  }
-
-  function startTimer(timerBarEl, timerNumEl, onTimeout) {
-    stopTimer();
-    timeLeft = TIMER_DURATION;
-    updateTimerVisual(timerBarEl, timerNumEl);
-
-    timerIntervalId = setInterval(() => {
-      timeLeft -= 1;
-      if (timeLeft < 0) timeLeft = 0;
-
-      // light tick-tock in the last 7 seconds
-      if (timeLeft <= 7 && timeLeft > 0) {
-        playTickTock(timeLeft % 2 === 0);
-      }
-
-      updateTimerVisual(timerBarEl, timerNumEl);
-
-      if (timeLeft <= 0) {
-        stopTimer();
-        onTimeout && onTimeout();
-      }
-    }, 1000);
-  }
-
-  /***********************
-   * Screens
-   ***********************/
-  
-async function switchQuiz(quizId) {
-  // 1) stop anything in progress
-  stopTimer();
-
-  // 2) reset progress variables
-  qIndex = 0;
-  correctCount = 0;
-  hasShownNextHint = false;
-
-  // 3) update the URL so refreshing keeps the chosen quiz
-  const url = new URL(window.location.href);
-  url.searchParams.set("q", quizId);
-  history.replaceState(null, "", url.toString());
-
-  // 4) load the new quiz JSON
-  await loadQuizFromJson(`quiz_data/${quizId}.json`);
-
-  // 5) show the title screen again (now it will display the new quiz title / count)
-  showTitle();
-}
-
-   function showIntro() {
-  setNavVisible(false);
-
-  // NOTE:
-  // Image 1 shows first, image 2 is the "bite" swap.
-  // This matches the Creed behavior: click image -> swap -> chomp -> continue. :contentReference[oaicite:8]{index=8}
-  const html = `
-    <div class="quiz-intro">
-    <img
-      id="introImg"
-      src="quizimages/eyb_logo_1.png"
-      alt="Intro"
-      onerror="this.style.display='none'"
-    >
-
-      <div>
-        <div class="presented">Presented by</div>
-        <div class="site">eatyourbible.com</div>
-      </div>
-
-      <div class="hint" style="opacity:0.85;">Tap the image to begin</div>
+    const phrase=phrases[index][0];
+    const color=getColor(index);
+    const textClass = isLightBg(color) ? "phrase dark-text" : "phrase";
+    const html=`
+    <div class="content">
+        <div class="image-area" onclick="forwardLearn()">
+            <img src="creed_images/creed_${String(index+1).padStart(2,"0")}.png">
+        </div>
+        <div class="text-area">
+            <div class="${textClass}">${phrase}</div>
+        </div>
     </div>
-  `;
+      `;
+      setNav(`
+    <button class="no-zoom" onclick="prevLearn()" aria-label="Back">${SVG_BACK}</button>
 
-  const slide = makeSlide(html, "#7f66c6");
+    <button class="no-zoom" onclick="titleScreen()" aria-label="Home">
+        ${SVG_HOME}
+    </button>
 
-  // IMPORTANT: attach behavior after the slide exists
-  const goNext = () => {
-    ensureAudioUnlocked();
-    // play the existing chomp sound from your quiz app
-    playChompSound();
-    setTimeout(() => showTitle(), 600);
-  };
+    <button class="center-btn" id="muteBtn" onclick="toggleMute()" aria-label="Mute toggle">
+        ${muted ? SVG_MUTE : SVG_UNMUTE}
+    </button>
 
-  // We want the Creed behavior: click image swaps, then continues
-  // (we do not advance on "tap anywhere", only on tapping the image).
-  slide.addEventListener("click", (e) => {
-    const img = e.target.closest("#introImg");
-    if (!img) return;
+    <button class="no-zoom" onclick="forwardLearn()" aria-label="Forward">${SVG_FORWARD}</button>
+`);
+    showSlide(html, color, direction);
+    playAudio(index);
+}
 
-    // swap to the "bite" image
-    img.src = "quizimages/eyb_logo_2.png";
+function forwardLearn(){
+    index++;
+    nextLearn("forward");
+}
 
-    goNext();
-  });
-
-  pushSlide(slide, "none", false);
+function prevLearn(){
+    if(index>0){
+        index--;
+        nextLearn("back");
+    }
 }
 
 
-  function showTitle() {
-    setNavVisible(false);
-  const hasSelectedQuiz = !!(new URLSearchParams(window.location.search).get("q"));
-  const hasQuestions = Array.isArray(QUESTIONS) && QUESTIONS.length > 0;
-  const imgPath = LESSON_IMAGE_PATH || "quizimages/quiz_icon.png";
-  const img = `
-    <img
-      src="${imgPath}"
-      alt=""
-      style="width:min(78vw, 420px); max-height:42vh; object-fit:contain;"
-      onerror="this.style.display='none'"
-    >
-  `;
 
-    const html = `
-      <div class="title-screen">
-        <div class="content" style="justify-content:center; text-align:center; gap:18px;">
-          ${img}
-          <div class="big-text">${escapeHtml(LESSON_TITLE_TEXT || "Eat Your Bible Quizzes")}</div>
-          <button id="startBtn" class="primary-btn" type="button">
-          ${hasSelectedQuiz ? "Start" : "Choose a quiz"}
-        </button>
-          <label class="body-text" for="quizPicker" style="margin-top:10px;">Quiz Selection:</label>
-        <select id="quizPicker" class="secondary-btn" style="height:46px; border-radius:14px; padding:0 14px;">
-          <option value="" disabled selected>Choose a quiz…</option>
+function toggleMute(){
+    muted = !muted;
+    const btn = document.getElementById("muteBtn");
+    if (btn) btn.innerHTML = muted ? SVG_MUTE : SVG_UNMUTE;
+}
 
-          <optgroup label="Old Testament">
-            ${QUIZ_LIST
-              .filter(q => q.id.startsWith("ot"))
-              .map(q => {
-                const match = q.id.match(/^([a-z]+)(\d+)$/i);
-                let prefix = q.id.toUpperCase();
-                if (match) prefix = match[1].toUpperCase() + " " + match[2];
-                return `<option value="${q.id}">${prefix} — ${escapeHtml(q.title)}</option>`;
-              })
-              .join("")}
-          </optgroup>
 
-          <optgroup label="New Testament">
-            ${QUIZ_LIST
-              .filter(q => q.id.startsWith("nt"))
-              .map(q => {
-                const match = q.id.match(/^([a-z]+)(\d+)$/i);
-                let prefix = q.id.toUpperCase();
-                if (match) prefix = match[1].toUpperCase() + " " + match[2];
-                return `<option value="${q.id}">${prefix} — ${escapeHtml(q.title)}</option>`;
-              })
-              .join("")}
-          </optgroup>
-
-        </select>
-
+function showLearnEnd(){
+    setNav("");
+    const html=`
+    <div class="title-screen">
+        <div class="title-content">
+            <img src="creed_images/creed_end.png">
+            <h2>Great job!</h2>
+            <div class="title-buttons">
+                <button class="learn-btn" onclick="titleScreen()">Title Screen</button>
+                <button class="test-btn" onclick="modeSelect()">Test Yourself</button>
+            </div>
         </div>
-      </div>
-    `;
 
-    const slide = makeSlide(html);
-    slide.querySelector("#startBtn").addEventListener("click", () => {
-      ensureAudioUnlocked();
-      playChompSound();
+        <div class="footer">
+            More free Bible resources at:<br>
+            <a href="https://www.eatyourbible.com" target="_blank" style="color:white;">
+            www.eatyourbible.com</a>
+        </div>
+    </div>`;
+    showSlide(html, "#7f66c6");
+}
 
-    // If no quiz selected yet, just focus the dropdown
-    const picker = slide.querySelector("#quizPicker");
-    if (!picker.value) {
-      picker.focus();
-      return;
+/* ---------- Verse Proofs Mode ---------- */
+
+function showVerseProofsIntro(){
+    verseIntro = true;
+    setNav("");
+    showSlide(`
+    <div class="content">
+        <div class="text-area">
+            <div>
+                <div class="large-text">Verse proofs for the Apostle&apos;s Creed</div>
+                <div class="small-text">For each part of the creed, click the VERSE button to read Bible verses that explain it.</div>
+
+                <div class="title-buttons">
+                    <button class="learn-btn" onclick="beginVerseProofs()">Begin</button>
+                </div>
+            </div>
+        </div>
+    </div>`, "#7f66c6");
+}
+
+function startVerseProofs(){
+    unlockAudioForIOS();
+    screen = "verses";
+    index = 0;
+    verseModeOpen = false;
+    verseProofIndex = 0;
+    showVerseProofsIntro();
+}
+
+function beginVerseProofs(){
+    verseIntro = false;
+    renderVerseProofs("forward");
+}
+
+function toggleVerseMode(){
+    verseModeOpen = !verseModeOpen;
+    verseProofIndex = 0; // always start at the first verse proof
+    renderVerseProofs("none"); // re-render without slide animation
+}
+
+function nextVerseProof(){
+    const proofs = verseProofs[index] || [];
+    if (proofs.length <= 1) return;
+    verseProofIndex = (verseProofIndex + 1) % proofs.length;
+    renderVerseProofs("none");
+}
+
+function prevVerseProof(){
+    const proofs = verseProofs[index] || [];
+    if (proofs.length <= 1) return;
+    verseProofIndex = (verseProofIndex - 1 + proofs.length) % proofs.length;
+    renderVerseProofs("none");
+}
+
+function forwardVerseProofs(){
+    index++;
+    verseModeOpen = false;   // reset on page change
+    verseProofIndex = 0;
+
+    if (index >= phrases.length){
+        showVerseProofsEnd();
+        return;
+    }
+    renderVerseProofs("forward");
+}
+
+function prevVerseProofs(){
+    if (index > 0){
+        index--;
+        verseModeOpen = false;   // reset on page change
+        verseProofIndex = 0;
+        renderVerseProofs("back");
+    }
+}
+
+function renderVerseProofs(direction = "forward"){
+    const phrase = phrases[index][0];
+    const color = getColor(index);
+
+    const textClass = isLightBg(color) ? "phrase dark-text" : "phrase";
+    const verseTextClass = isLightBg(color) ? "verse-text dark-text" : "verse-text";
+    const verseRefClass = isLightBg(color) ? "verse-ref dark-text" : "verse-ref";
+
+    const proofs = verseProofs[index] || [];
+    const proof = proofs[verseProofIndex] || { ref: "Verse", text: "[Add verse text]" };
+
+    // If Verse mode is OFF: show creed phrase
+    let mainTextHTML = `<div class="${textClass}">${phrase}</div>`;
+
+    // If Verse mode is ON: show verse proof carousel
+    if (verseModeOpen){
+        const showArrows = proofs.length > 1;
+
+        mainTextHTML = `
+        <div class="verse-wrap">
+            ${showArrows ? `<button class="verse-arrow no-zoom" onclick="prevVerseProof()" aria-label="Previous verse">◀</button>` : `<div style="width:48px;"></div>`}
+
+            <div class="verse-content">
+                <div class="${verseRefClass}">${proof.ref}</div>
+                <div class="${verseTextClass}">${proof.text}</div>
+            </div>
+
+            ${showArrows ? `<button class="verse-arrow no-zoom" onclick="nextVerseProof()" aria-label="Next verse">▶</button>` : `<div style="width:48px;"></div>`}
+        </div>`;
     }
 
-      // Normal quiz start
-      qIndex = 0;
-      correctCount = 0;
-      showQuestion();
-    });
-
-    // Preselect current quiz based on the URL (?q=...)
-    // If there's no ?q=, leave the dropdown on the placeholder.
-    const params = new URLSearchParams(window.location.search);
-    const currentId = params.get("q") || "";
-    slide.querySelector("#quizPicker").value = currentId;
-
-// Auto-load when the dropdown selection changes
-const picker = slide.querySelector("#quizPicker");
-
-picker.addEventListener("change", async () => {
-  const quizId = picker.value;
-
-  try {
-    await switchQuiz(quizId);
-  } catch (e) {
-    console.error(e);
-    alert(`Could not load quiz_data/${quizId}.json`);
-  }
-});
-
-    pushSlide(slide, "forward", false);
-  }
-
-  function showQuestion(direction="forward") {
-    setNavVisible(true);
-    setMuteUi();
-
-    const total = QUESTIONS.length;
-    const idx1 = qIndex + 1;
-    setNavCounter(idx1, total);
-
-    const q = QUESTIONS[qIndex];
-
-    // Shuffle answers per question display (slots 0-3 keep their colors)
-    const slotToOrig = shuffledAnswerIndices(4);   // e.g. [2,0,3,1]
-    const origToSlot = Array(4).fill(0);
-    slotToOrig.forEach((origIdx, slotIdx) => { origToSlot[origIdx] = slotIdx; });
-
-    const correctOrig = (q.correctIndex ?? 0);
-    const correctSlot = origToSlot[correctOrig];   // where the correct answer ended up
-
     const html = `
-      <div class="top" style="flex-direction:column; align-items:stretch; gap:10px;">
-        <div class="timer-row">
-          <div class="timer-wrap"><div id="timerBar" class="timer-bar"></div></div>
-          <div id="timerNum" class="timer-num">30</div>
+    <div class="content ${verseModeOpen ? "verse-open" : ""}">
+        <div class="image-area" onclick="forwardVerseProofs()">
+            <img src="creed_images/creed_${String(index+1).padStart(2,"0")}.png">
         </div>
-      </div>
-
-      <div class="content quiz-content" style="justify-content:flex-start; padding-top: 6px;">
-        <div class="qa-layout">
-          <div class="question-box" role="group" aria-label="Question">
-            <div class="question">${escapeHtml(q.text || "")}</div>
-          </div>
-
-          <div id="answers" class="answers">
-
-          ${slotToOrig.map((origIdx, slotIdx) => `
-            <button class="answer opt${slotIdx}" data-i="${slotIdx}" type="button">
-              ${escapeHtml(q.answers[origIdx])}
-            </button>
-          `).join("")}
-
-          </div>
-
-          <div id="suspense" class="suspense" style="display:none;">
-            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
-          </div>
+        <div class="text-area">
+            ${mainTextHTML}
         </div>
-      </div>
+    </div>
+
+
     `;
+setNav(`
+    <button class="no-zoom" onclick="prevVerseProofs()" aria-label="Back">${SVG_BACK}</button>
 
-    const slide = makeSlide(html);
-    const timerBarEl = slide.querySelector("#timerBar");
-    const timerNumEl = slide.querySelector("#timerNum");
-    const answersEl = slide.querySelector("#answers");
-    const suspenseEl = slide.querySelector("#suspense");
-    const questionBoxEl = slide.querySelector(".question-box");
-    const questionTextEl = slide.querySelector(".question-box .question");
+    <button class="no-zoom" onclick="titleScreen()" aria-label="Home">
+        ${SVG_HOME}
+    </button>
 
-    let answered = false;
-    let selectedIndex = null;
+    <button class="center-btn nav-pill" id="verseBtn" onclick="toggleVerseMode()" aria-label="Toggle verse mode">
+        ${verseModeOpen ? "Creed" : "Verse"}
+    </button>
 
-    function lockAnswers() {
-      answersEl.classList.add("locked");
-      [...answersEl.querySelectorAll(".answer")].forEach(b => b.disabled = true);
+    <button class="no-zoom" onclick="forwardVerseProofs()" aria-label="Forward">${SVG_FORWARD}</button>
+`);
+    showSlide(html, color, direction);
+
+    // Optional: play creed audio when not in Verse mode
+    if (!verseModeOpen) playAudio(index);
+}
+
+function showVerseProofsEnd(){
+    setNav("");
+    const html=`
+    <div class="title-screen">
+        <div class="title-content">
+            <img src="creed_images/creed_end.png">
+            <h2>Great job!</h2>
+            <div class="title-buttons">
+                <button class="learn-btn" onclick="titleScreen()">Title Screen</button>
+            </div>
+        </div>
+
+        <div class="footer">
+            More free Bible resources at:<br>
+            <a href="https://www.eatyourbible.com" target="_blank" style="color:white;">
+            www.eatyourbible.com</a>
+        </div>
+    </div>`;
+    showSlide(html, "#7f66c6");
+}
+
+
+/* ---------- Test Mode ---------- */
+
+function modeSelect(){
+    screen="mode";
+    const html=`
+    <div class="title-screen">
+        <div class="title-content">
+            <h2>Choose a mode</h2>
+
+            <div class="title-buttons mode-buttons">
+                <button class="learn-btn" onclick="startTest('easy')">
+                    Easy
+                    <span class="btn-desc">Guess 1 missing word</span>
+                </button>
+
+                <button class="test-btn" onclick="startTest('medium')">
+                    Medium
+                    <span class="btn-desc">More words go missing</span>
+                </button>
+
+                <button class="hard-btn" onclick="startTest('hard')">
+                    Hard
+                    <span class="btn-desc">Images only (no text)</span>
+                </button>
+
+                <button class="learn-btn" onclick="titleScreen()">
+                    Back to Title
+                </button>
+            </div>
+        </div>
+
+        <div class="footer">
+            More free Bible resources at:<br>
+            <a href="https://www.eatyourbible.com" target="_blank" style="color:white;">
+            www.eatyourbible.com</a>
+        </div>
+    </div>`;
+    document.getElementById("app").innerHTML=html;
+    setNav("");
+}
+
+
+
+function startTest(mode){
+    screen="test";
+    testMode=mode;
+    index=0;
+    hintState=0;
+    nextTest();
+}
+
+function nextTest(){
+    if(index>=phrases.length){
+        showTestEnd();
+        return;
+    }
+    hintState=0;
+    renderTest();
+}
+
+function renderTest(direction = "forward"){
+    const phraseData=phrases[index];
+    const phrase=phraseData[0];
+    let remove=[];
+    if(testMode==="easy") remove=[phraseData[1]];
+    if(testMode==="medium") remove=phraseData.slice(1);
+    let displayPhrase=phrase;
+
+    if(testMode==="hard" && hintState===0){
+        displayPhrase="";
+    } else if(testMode==="hard" && hintState===1){
+        displayPhrase=maskPhrase(phrase,phraseData.slice(1),0);
+    } else if(testMode==="hard" && hintState===2){
+        displayPhrase=phrase;
+    } else {
+        displayPhrase=maskPhrase(phrase,remove,hintState);
     }
 
+    const color=getColor(index);
+    const textClass = isLightBg(color) ? "phrase dark-text" : "phrase";
+    const html=`
+    <div class="content">
+        <div class="image-area" onclick="forwardTest()">
+            <img src="creed_images/creed_${String(index+1).padStart(2,"0")}.png">
+        </div>
+        <div class="text-area">
+            <div class="${textClass}" id="testPhrase">${displayPhrase}</div>
+        </div>
+    </div>
+      
     
-    function reveal(correctIdx) {
-      lockAnswers();
-      suspenseEl.style.display = "none";
-
-      const btns = [...answersEl.querySelectorAll(".answer")];
-
-      // highlight correct, dim all others
-      btns.forEach((b, i) => {
-        b.classList.remove("wrong"); // we won't use the old wrong styling
-        b.classList.remove("correct");
-        b.classList.remove("dimmed");
-
-        if (i === correctIdx) {
-          b.classList.add("correct");
-        } else {
-          b.classList.add("dimmed");
-        }
-      });
-
-      const isCorrect = (selectedIndex === correctIdx);
-
-      // verdict in the question box
-      questionBoxEl.classList.add("verdict");
-      questionBoxEl.classList.toggle("correct", isCorrect);
-      questionBoxEl.classList.toggle("incorrect", !isCorrect);
-      questionTextEl.textContent = isCorrect ? "CORRECT" : "INCORRECT";
-
-      if (isCorrect) {
-        correctCount += 1;
-        playCorrectSound();
-      } else {
-        playIncorrectSound();
-      }
-
-      // Show the big CTA in the nav
-      const isLast = (qIndex >= QUESTIONS.length - 1);
-      nextBtn.textContent = isLast ? "SEE SCORE" : "NEXT QUESTION";
-      nextBtn.style.display = "block";
-
-      // Show the bouncing hint only the first time NEXT QUESTION appears (first question)
-      if (!hasShownNextHint && qIndex === 0 && !isLast) {
-        nextHint.style.display = "block";
-        hasShownNextHint = true;
-      } else {
-        nextHint.style.display = "none";
-      }
-
-      // Hide the normal nav contents while CTA is showing
-      homeBtn.style.visibility = "hidden";
-      navCenter.style.visibility = "hidden";
-      muteBtn.style.visibility = "hidden";
-
-      nextBtn.onclick = () => {
-        nextHint.style.display = "none";
-        // reset nav
-        nextBtn.style.display = "none";
-        homeBtn.style.visibility = "visible";
-        navCenter.style.visibility = "visible";
-        muteBtn.style.visibility = "visible";
-
-        // advance
-        qIndex += 1;
-        if (qIndex >= QUESTIONS.length) showEnd();
-        else showQuestion("forward");
-      };
-    }
-
-
-  function doSuspenseThenReveal() {
-    suspenseEl.style.display = "none"; // we won't use dots now
-    lockAnswers();
-
-    const variant = nextSuspenseVariant();
-
-    const answerBtns = [...answersEl.querySelectorAll(".answer")];
-    runSuspenseVariant({
-      variant,
-      questionBoxEl,
-      answerBtns,
-      done: () => {
-        reveal(correctSlot);
-      }
-    });
-  }
-
-    // answer clicks
-    answersEl.addEventListener("click", (e) => {
-      const btn = e.target.closest(".answer");
-      if (!btn || answered) return;
-
-      ensureAudioUnlocked();
-      answered = true;
-      stopTimer();
-
-      selectedIndex = Number(btn.getAttribute("data-i"));
-      btn.classList.add("selected");
-
-      doSuspenseThenReveal();
-    });
-
-    // timeout -> no selection, just reveal
-    startTimer(timerBarEl, timerNumEl, () => {
-      if (answered) return;
-      answered = true;
-      selectedIndex = null;
-      doSuspenseThenReveal();
-    });
-
-    // home confirm
-    homeBtn.onclick = () => {
-      showConfirm({
-        title: "Quit quiz?",
-        text: "Are you sure you want to go back to the start?",
-        okText: "Quit",
-        onOk: () => {
-          stopTimer();
-          showTitle();
-        }
-      });
-    };
-
-    pushSlide(slide, direction, true);
-  }
-
-  function showEnd() {
-    stopTimer();
-    setNavVisible(false);
-  // SAFETY: make sure no full-screen overlay is still blocking taps
-  overlay.classList.remove("show");        // hide confirm/reward overlay (z-index 10000)
-  overlay.style.display = "none";          // extra hard-hide (in case something set inline display)
-  overlay.onclick = null;
-  overlay.ontouchstart = null;
-
-
-    const total = QUESTIONS.length;
-    const score = correctCount;
-
-    const html = `
-      <div class="top">
-        <div class="brand">
-          <img src="quizimages/eyb_logo_1.png" alt="Logo" onerror="this.style.display='none'">
-          <div class="titles">
-            <div class="title">${escapeHtml(LESSON_TITLE_TEXT || "Quiz Complete")}</div>
-            <div class="subtitle">Tap the present!</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="content" style="text-align:center; justify-content:center; gap:14px;">
-        <div class="big-text">Finished!</div>
-        <div class="body-text">Score: <b>${score}</b> / <b>${total}</b></div>
-
-        <div id="present" class="present" role="button" aria-label="Open present">🎁</div>
-        <div class="hint">Tap to open</div>
-
-        <button id="playAgain" class="secondary-btn" type="button">Play again</button>
-      </div>
     `;
+setNav(`
+    <button class="no-zoom" onclick="prevTest()" aria-label="Back">${SVG_BACK}</button>
 
-    const slide = makeSlide(html, "var(--bg-solid, #222)");
+    <button class="no-zoom" onclick="titleScreen()" aria-label="Home">
+       ${SVG_HOME}
+    </button>
 
-    slide.querySelector("#playAgain").addEventListener("click", (e) => {
-   e.stopPropagation();
-      ensureAudioUnlocked();
-      playChompSound();
-      qIndex = 0;
-      correctCount = 0;
-      showQuestion("forward");
-    });
+    <button class="center-btn nav-pill" id="hintBtn" onclick="hint()">
+        ${hintState===0 ? "Hint" : "Reveal"}
+    </button>
 
-const presentEl = slide.querySelector("#present");
+    <button class="no-zoom" onclick="forwardTest()" aria-label="Forward">${SVG_FORWARD}</button>
+`);
 
-// Wiggle every ~2 seconds until opened
-let presentWiggleTimer = setInterval(() => {
-  presentEl.classList.remove("wiggle");
-  // force reflow so the animation retriggers
-  void presentEl.offsetWidth;
-  presentEl.classList.add("wiggle");
-}, 2000);
-
-// Also do a small wiggle soon after arriving
-setTimeout(() => {
-  presentEl.classList.add("wiggle");
-}, 450);
-
-const openPresent = (e) => {
-  e.preventDefault();      // important for mobile
-  e.stopPropagation();     // prevents slide "tap anywhere" handler
-  ensureAudioUnlocked();
-  clearInterval(presentWiggleTimer);
-  openPresentReward(score, total);
-};
-
-// Mobile-first
-presentEl.addEventListener("touchstart", openPresent, { passive: false });
-// Desktop fallback
-presentEl.addEventListener("click", openPresent);
-
-function isInside(el, selector, e){
-  // make sure we have an Element to call closest() on
-  let target = e.target;
-  if (!(target instanceof Element)) {
-    const path = e.composedPath ? e.composedPath() : [];
-    target = path.find(n => n instanceof Element) || null;
-  }
-  return target ? !!target.closest(selector) : false;
+showSlide(html, color, direction);
 }
 
-const exitEnd = (e) => {
-  if (isInside(slide, "#present", e) || isInside(slide, "#playAgain", e)) return;
-  showTitle();
-};
-
-slide.addEventListener("touchstart", exitEnd, { passive: true });
-slide.addEventListener("click", exitEnd);
-
-    pushSlide(slide, "forward", false);
-  }
-
-  function openPresentReward(score, total) {
-    overlay.style.display = ""; // IMPORTANT: clear inline display:none so .show can work
-    setNavVisible(false);
-    // Choose pool by score (clamp 0..10 like Andy engine)
-    const bucket = Math.max(0, Math.min(10, score));
-    const pool = REWARD_EMOJI_POOLS[bucket] || FUNNY_EMOJIS;
-    const emoji = pick(pool);
-
-    overlay.classList.add("show");
-    overlay.querySelector(".dialog").style.display = "none";
-
-    // Pick one of the 5 dances (with debug override support)
-    const danceMap = {
-      bounce: "dance-bounce",
-      wiggle: "dance-wiggle",
-      moonwalk: "dance-moonwalk",
-      pong: "dance-pong",
-      spin: "dance-spin"
-    };
-
-    const params = new URLSearchParams(window.location.search);
-    const debugDance = params.get("dance");
-
-    let danceClass;
-
-    if (debugDance && danceMap[debugDance]) {
-      danceClass = danceMap[debugDance];
-    } else {
-      const dances = Object.values(danceMap);
-      danceClass = dances[Math.floor(Math.random() * dances.length)];
-    }
-
-    const showLabel = params.get("debug") === "1";
-
-    overlay.innerHTML = `
-      <div id="rewardStage" style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;">
-
-
-        <!-- UI text layer (above dark layer, below emoji) -->
-        <div class="reward-top reward-ui">You got a...</div>
-
-        ${showLabel ? `<div class="reward-ui" style="font-size:14px;">Testing: ${debugDance || "random"}</div>` : ""}
-
-        <!-- Emoji layer (always on top) -->
-        <div class="emoji-reward ${danceClass}" id="rewardEmoji">${emoji}</div>
-
-        <!-- UI text layer -->
-        <div class="hint reward-ui">Tap anywhere to exit</div>
-      </div>
-    `;
-
-const emojiEl = document.getElementById("rewardEmoji");
-
-// SPIN PERFORMANCE (slow 10s ramp, lower cap, pop at peak)
-if (danceClass === "dance-spin") {
-
-  let angle = 0;
-
-  const rampMs = 10000;     // ~10 seconds to reach top speed
-  const holdMs = 1200;      // hold at max speed before burst
-  const maxSpeed = 42;      // lower cap (degrees per frame-ish; tuned)
-  const start = performance.now();
-
-  let last = start;
-  let holding = false;
-  let holdStart = 0;
-
-  rewardSpinInterval = setInterval(() => {
-    const now = performance.now();
-    const dt = Math.min(32, now - last); // ms since last tick (clamped)
-    last = now;
-
-    // progress 0..1 over rampMs
-    const t = Math.max(0, Math.min(1, (now - start) / rampMs));
-
-    // ease-in ramp (starts very slow, accelerates)
-    const eased = t * t;
-
-    // speed in "degrees per 16ms frame"; normalize by dt so it stays consistent
-    const speed = (maxSpeed * eased) * (dt / 16);
-
-    angle += speed;
-    emojiEl.style.transform = `rotate(${angle}deg)`;
-
-    // once ramp finishes, hold briefly then burst
-    if (t >= 1 && !holding) {
-      holding = true;
-      holdStart = now;
-    }
-    if (holding && (now - holdStart) >= holdMs) {
-      clearInterval(rewardSpinInterval);
-rewardSpinInterval = null;
-
-      // Hide emoji before burst
-      emojiEl.style.visibility = "hidden";
-
-      createSpinBurst(emojiEl);
-    }
-  }, 16);
+function hint(){
+    if (hintState < 2) hintState++;
+    updateTestHintUI(); // no animation
 }
 
-// PONG PERFORMANCE (true edge bounce + faster)
-if (danceClass === "dance-pong") {
+function forwardTest(){
+    index++;
+    hintState = 0; // reset Hint/Reveal for the new page
 
-  const stage = document.getElementById("rewardStage");
-  const rect = stage.getBoundingClientRect();
-
-  let x = rect.width / 2;
-  let y = rect.height / 2;
-  let vx = 8;
-  let vy = 7;
-
-  emojiEl.style.position = "absolute";
-  emojiEl.style.transform = "translate(-50%, -50%)";
-
-  // Use real emoji size
-  const emojiRect = emojiEl.getBoundingClientRect();
-  const halfW = emojiRect.width / 2;
-  const halfH = emojiRect.height / 2;
-
-  rewardPongInterval = setInterval(() => {
-
-  x += vx;
-  y += vy;
-
-  // clamp + bounce so we never overshoot off-screen
-  const minX = halfW;
-  const maxX = rect.width - halfW;
-  const minY = halfH;
-  const maxY = rect.height - halfH;
-
-  if (x < minX) { x = minX; vx *= -1; }
-  if (x > maxX) { x = maxX; vx *= -1; }
-  if (y < minY) { y = minY; vy *= -1; }
-  if (y > maxY) { y = maxY; vy *= -1; }
-
-  emojiEl.style.left = x + "px";
-  emojiEl.style.top = y + "px";
-
-  }, 16);
-}
-
-
-// close on tap anywhere (works on mobile + desktop)
-const rewardExitHandler = (e) => {
-  // prevent weird mobile gesture defaults
-  if (e) {
-    e.preventDefault?.();
-    e.stopPropagation?.();
-  }
-  exitToTitle();
-};
-
-overlay.addEventListener("touchstart", rewardExitHandler, { passive: false, once: true });
-overlay.addEventListener("click", rewardExitHandler, { once: true });
-
-function exitToTitle() {
-  try { stopRewardAnimations(); } catch(e) {}
-
-  // restore overlay to original confirm dialog markup (for future Home/Quit dialogs)
-  overlay.className = "overlay";
-  overlay.innerHTML = `
-    <div class="dialog">
-      <h3 id="overlayTitle">Quit quiz?</h3>
-      <p id="overlayText">Are you sure you want to go back to the start?</p>
-      <div class="row">
-        <button id="overlayCancel" class="secondary-btn" type="button">Cancel</button>
-        <button id="overlayOk" class="primary-btn" type="button">Quit</button>
-      </div>
-    </div>
-  `;
-  // rebind elements + listeners
-  window.overlayCancel = document.getElementById("overlayCancel");
-  window.overlayOk = document.getElementById("overlayOk");
-  document.getElementById("overlayCancel").addEventListener("click", hideConfirm);
-  document.getElementById("overlayOk").addEventListener("click", () => overlayOkHandler && overlayOkHandler());
-  overlay.addEventListener("click", (e) => { if (e.target === overlay) hideConfirm(); });
-
-  // IMPORTANT: go to title screen (no re-showEnd)
-  showTitle();
-}
-
-
-  }
-
-  /***********************
-   * Utilities
-   ***********************/
-  function escapeHtml(str) {
-    return String(str)
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
-
-function createSpinBurst(el) {
-  const container = el.parentElement;
-
-  for (let i = 0; i < 18; i++) {
-    const p = document.createElement("div");
-    p.className = "particle";
-
-    const angle = (Math.PI * 2 * i) / 18;
-    const distance = 120 + Math.random() * 40;
-
-    const dx = Math.cos(angle) * distance + "px";
-    const dy = Math.sin(angle) * distance + "px";
-
-    p.style.setProperty("--dx", dx);
-    p.style.setProperty("--dy", dy);
-    p.style.animation = "particleFly 700ms ease-out forwards";
-
-    container.appendChild(p);
-
-    setTimeout(() => p.remove(), 750);
-  }
-}
-
-  /***********************
-   * Boot
-   ***********************/
-  (async function boot(){
-    try {
-      const jsonPath = getQuizJsonPathFromUrl();
-
-      if (jsonPath) {
-        await loadQuizFromJson(jsonPath);
-      } else {
-        setHomeDefaults();
-      }
-
-      // DEBUG MODE: only makes sense when a quiz is loaded
-      const params = new URLSearchParams(window.location.search);
-      if (params.get("debug") === "1" && QUESTIONS.length > 0) {
-        qIndex = QUESTIONS.length;   // pretend we finished
-        correctCount = Math.floor(QUESTIONS.length / 2); // fake score
-        showEnd();
+    // if we went past the last phrase, go to the end screen
+    if (index >= phrases.length) {
+        showTestEnd();
         return;
-      }
-
-    } catch (e) {
-      console.error(e);
-      // Fallback screen if JSON fails
-      const s = makeSlide(`
-        <div class="top">
-          <div class="titles">
-            <div class="title">Couldn’t load quiz</div>
-            <div class="subtitle">Check your URL and file location.</div>
-          </div>
-        </div>
-        <div class="content" style="justify-content:center; text-align:center;">
-          <div class="body-text" style="opacity:0.95;">
-            Expected JSON at:<br><b>${escapeHtml(getQuizJsonPathFromUrl())}</b>
-          </div>
-          <button class="primary-btn" type="button" onclick="location.reload()">Retry</button>
-        </div>
-      `, "var(--bg-solid, #222)");
-      pushSlide(s, "none", false);
-      return;
     }
 
-    // Home button at title also uses confirm (but no harm)
-    homeBtn.onclick = () => showConfirm({
-      title: "Go to start?",
-      text: "Return to the start screen?",
-      okText: "Go",
-      onOk: () => { stopTimer(); showTitle(); }
-    });
+    renderTest("forward");
+}
 
-    // start at intro like Andy
-    showIntro();
-  })();
+function prevTest(){
+    if(index > 0){
+        index--;
+        hintState = 0; // reset Hint/Reveal for the new page
+        renderTest("back");
+    }
+}
 
-  /* ---- PWA: register service worker ---- */
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", () => {
-      navigator.serviceWorker
-        .register("/eatyourbible/pwa/quiz/sw.js")
-        .catch(() => {});
-    });
-  }
 
-  </script>
+
+function showTestEnd(){
+    setNav("");
+    const html=`
+    <div class="title-screen">
+        <div class="title-content">
+            <img src="creed_images/creed_end.png">
+            <h2>Great job!</h2>
+            <div class="title-buttons">
+                <button class="learn-btn" onclick="modeSelect()">Change Mode</button>
+                <button class="test-btn" onclick="titleScreen()">Title Screen</button>
+            </div>
+        </div>
+
+        <div class="footer">
+            More free Bible resources at:<br>
+            <a href="https://www.eatyourbible.com" target="_blank" style="color:white;">
+            www.eatyourbible.com</a>
+        </div>
+    </div>`;
+    showSlide(html, "#7f66c6");
+}
+
+
+
+/* ---------- Start ---------- */
+setupKeyboardNav();
+preventDoubleTapZoomOnButtons();
+preloadCreedImages(5);
+introScreen();
+
+/* ---- PWA: register service worker ---- */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("/eatyourbible/pwa/creed/sw.js")
+      .catch(() => {});
+  });
+}
+
+</script>
 </body>
 </html>
