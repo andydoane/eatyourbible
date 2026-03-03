@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot39",
+  "pageTitle": "OT 39 Quiz",
+  "lessonTitleText": "Rahab and the Spies",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot39image.png",
+  "themeClass": "theme-kahoot-white",
+  "questions": [
+    {
+      "text": "What did Joshua send two men to do?",
+      "answers": [
+        "Spy out the land of Canaan, especially Jericho",
+        "Build a wall around Israel’s camp",
+        "Deliver a message to Egypt",
+        "Count the people in Jericho"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Where did the spies stay when they reached Jericho?",
+      "answers": [
+        "With a woman named Rahab",
+        "In the king’s palace",
+        "At the city gate",
+        "In a tent outside the walls"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the king of Jericho do when he learned about the spies?",
+      "answers": [
+        "Sent messengers to Rahab’s house",
+        "Invited them to dinner",
+        "Tossed them over the walls",
+        "Threw a party"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Where did Rahab hide the spies?",
+      "answers": [
+        "In a pile of grain on her roof",
+        "Under her bed",
+        "In a secret cave",
+        "In a hole in the ground"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Rahab tell the king’s men?",
+      "answers": [
+        "She said the spies had left and sent the men in the wrong direction",
+        "She handed the spies over",
+        "She said she had never seen them",
+        "She invited them to come to dinner"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Rahab say about how the people of Jericho felt?",
+      "answers": [
+        "They were afraid because they heard what the Lord had done for Israel",
+        "They were ready to fight",
+        "They had never heard of the Israelites",
+        "They didn’t care about Israel"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What promise did Rahab ask the spies to make?",
+      "answers": [
+        "To not harm her family",
+        "To give her gold",
+        "To take her to Egypt",
+        "To make her queen"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did Rahab let the spies escape the city?",
+      "answers": [
+        "She lowered them through a rope in the city wall",
+        "She opened the main gate",
+        "She hid them in a cart",
+        "She dressed them as soldiers"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the spies tell Rahab to do to be saved when Israel returned?",
+      "answers": [
+        "Tie a red rope in her window and keep her family inside the house",
+        "Leave the city immediately",
+        "Meet them outside the walls",
+        "Hide in a pile of grain on the roof"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When they returned to Joshua, what did the spies report?",
+      "answers": [
+        "We are sure the Lord will give us this land",
+        "The city is too strong to defeat",
+        "The walls aren't very big",
+        "We need more soldiers"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
