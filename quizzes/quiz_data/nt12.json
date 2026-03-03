@@ -1,0 +1,110 @@
+{
+  "lessonId": "nt12",
+  "pageTitle": "NT 12 Quiz",
+  "lessonTitleText": "Jesus Drives Out Evil Spirits",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt12image.png",
+  "themeClass": "theme-red",
+  "questions": [
+    {
+      "text": "When Jesus got out of the boat, who came to meet him?",
+      "answers": [
+        "A man with an evil spirit",
+        "A group of fishermen",
+        "The town’s mayor",
+        "A sick child"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did the evil spirit make this man's life miserable?",
+      "answers": [
+        "Lived among tombs, cut himself, broke chains, screamed",
+        "Made him sick and weak",
+        "Made him happy and peaceful",
+        "Made him unable to speak"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When Jesus said, 'Come out of this man, spirit!', what did the man shout?",
+      "answers": [
+        "Don't hurt me!",
+        "Please leave me alone",
+        "Help me, Jesus",
+        "I will follow you"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What was the evil spirit's name?",
+      "answers": [
+        "Legion",
+        "Satan",
+        "The Destroyer",
+        "Gabriel"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the evil spirits beg Jesus to let them do?",
+      "answers": [
+        "Go into a herd of pigs",
+        "Stay inside the man",
+        "Leave the area completely",
+        "Enter another person"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened to the pigs when the evil spirits entered them?",
+      "answers": [
+        "Ran into the water and drowned",
+        "They turned into bacon",
+        "They caught on fire",
+        "They started attacking the town"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened to the man when the evil spirits left him?",
+      "answers": [
+        "He could think clearly again",
+        "He died",
+        "He became very sick",
+        "He ran away from everyone"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the townspeople ask Jesus to do?",
+      "answers": [
+        "Leave because they were afraid of him",
+        "Stay and teach them more",
+        "Heal all the sick people",
+        "Bring the pigs back to life"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the man ask Jesus?",
+      "answers": [
+        "He wanted to leave with Jesus",
+        "He wanted money",
+        "He wanted revenge",
+        "He wanted to move away"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jesus tell the man to do?",
+      "answers": [
+        "Go tell the people of his town what God did for him",
+        "Follow Jesus everywhere",
+        "Return to the tombs",
+        "Fetch the pigs from the water"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

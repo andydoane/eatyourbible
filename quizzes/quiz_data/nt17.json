@@ -1,0 +1,110 @@
+{
+  "lessonId": "nt17",
+  "pageTitle": "NT 17 Quiz",
+  "lessonTitleText": "Jesus Heals a Man Born Blind",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt17image.png",
+  "themeClass": "theme-kahoot-white",
+  "questions": [
+    {
+      "text": "How long had the man been blind?",
+      "answers": [
+        "Since the day he was born",
+        "Since he was a teenager",
+        "For 12 years",
+        "For 40 years"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jesus do as He healed the man?",
+      "answers": [
+        "He put mud on his eyes and told him to wash",
+        "He touched his ears and told him to listen",
+        "He poked him in the eye",
+        "He told him to climb a mountain"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the crowd say about the man who had been blind?",
+      "answers": [
+        "They weren’t sure he was the same man",
+        "They all recognized him immediately",
+        "They said he had never been blind",
+        "They said he must have a twin brother"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who talked with the man about what happened?",
+      "answers": [
+        "The Pharisees",
+        "The Roman soldiers",
+        "The fishermen",
+        "The temple guards"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What rule did the Pharisees think Jesus broke?",
+      "answers": [
+        "Working on the Sabbath",
+        "Not paying temple taxes",
+        "Eating unclean food",
+        "Not wearing priestly clothes"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who did the Pharisees talk to after they questioned the man?",
+      "answers": [
+        "His parents",
+        "His neighbors",
+        "His doctor",
+        "His brothers"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the Pharisees want the man to say?",
+      "answers": [
+        "Jesus is a sinner",
+        "Jesus is a king",
+        "Jesus is from Nazareth",
+        "Jesus is a fisherman"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who did Jesus tell the man He was?",
+      "answers": [
+        "The Son of Man, the Messiah",
+        "The high priest",
+        "A prophet like Moses",
+        "An angel from heaven"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What does it mean that Jesus is the Son of Man, the Messiah?",
+      "answers": [
+        "He is the promised Savior sent to save us from sin",
+        "He is a soldier who wins battles",
+        "He is a special prophet",
+        "He is an angel from heaven"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When Jesus told the man who He was, what did the man do?",
+      "answers": [
+        "He worshiped Jesus and believed",
+        "He argued with Jesus",
+        "He ran away afraid",
+        "He became blind again"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

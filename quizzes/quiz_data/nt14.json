@@ -1,0 +1,110 @@
+{
+  "lessonId": "nt14",
+  "pageTitle": "NT 14 Quiz",
+  "lessonTitleText": "Jesus Feeds the 5,000",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt14image.png",
+  "themeClass": "theme-yellow",
+  "questions": [
+    {
+      "text": "As our story began, what did Jesus want the disciples to do?",
+      "answers": [
+        "Go to a quiet place to rest",
+        "Travel to another town",
+        "Do miracles",
+        "Teach the crowds"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When the crowds saw Jesus leaving, what did they do?",
+      "answers": [
+        "Ran and got there ahead of them",
+        "Went back to their homes",
+        "Waited there until the next day",
+        "Asked the disciples questions"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did Jesus feel when he saw the crowd?",
+      "answers": [
+        "He felt concern because they were like lost sheep without a shepherd",
+        "He felt annoyed by them",
+        "He felt afraid",
+        "He felt tired and wanted to leave"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How long did Jesus teach the crowd and heal the sick?",
+      "answers": [
+        "Until evening",
+        "For one hour",
+        "All night and into the morning",
+        "Only a few minutes"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When the disciples told Jesus to send the crowd home, what did Jesus say?",
+      "answers": [
+        "You feed them.",
+        "That’s a good plan",
+        "Don’t tell me what to do!",
+        "Let me take care of that"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When Jesus said, 'You feed them,' what did the disciples say?",
+      "answers": [
+        "It would take half a year's pay to buy that much!",
+        "We already ate",
+        "That’s a terrible plan, Jesus!",
+        "The crowd should help themselves"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Andrew say to Jesus?",
+      "answers": [
+        "This boy has five loaves of bread and two fish",
+        "We should send the crowd away",
+        "Let’s collect money for the food",
+        "There’s no food at all"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "As the disciples passed out the food, what happened?",
+      "answers": [
+        "Jesus multiplied it and fed everyone",
+        "The food ran out quickly",
+        "Only a few people ate",
+        "The disciples ate first"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How many baskets of leftovers were there?",
+      "answers": [
+        "Twelve",
+        "Seven",
+        "Five",
+        "None"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How many men ate?",
+      "answers": [
+        "5,000",
+        "500",
+        "1,000",
+        "12,000"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

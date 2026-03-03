@@ -1,0 +1,110 @@
+{
+  "lessonId": "nt19",
+  "pageTitle": "NT 19 Quiz",
+  "lessonTitleText": "Jesus Raises Lazarus",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt19image.png",
+  "themeClass": "theme-kahoot-blue",
+  "questions": [
+    {
+      "text": "Why did Mary and Martha send word to Jesus?",
+      "answers": [
+        "To let Him know that Lazarus was sick",
+        "To invite Him to dinner",
+        "To ask Him to teach a lesson",
+        "To ask him a tough question"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Jesus said, 'This sickness will not end in death. Because of it, God will receive...' what?",
+      "answers": [
+        "Glory",
+        "Lots of money",
+        "A great feast",
+        "More followers"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jesus mean when He said, 'Lazarus has fallen asleep, but I will wake him up'?",
+      "answers": [
+        "Lazarus had died, but Jesus would raise him from the dead",
+        "Lazarus was taking a nap",
+        "Lazarus was sick and tired",
+        "Lazarus needed medicine"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How long did Jesus stay where He was before going to Lazarus' house?",
+      "answers": [
+        "Two more days",
+        "One hour",
+        "Seven days",
+        "He left immediately"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When Martha met Jesus, what did she say to Him?",
+      "answers": [
+        "If You had been here, my brother would not have died",
+        "Why did You wait so long?",
+        "About time you got here!",
+        "We have already buried him"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jesus say would happen to anyone who believes in Him?",
+      "answers": [
+        "They will live, even if they die",
+        "They will sleep forever",
+        "They will become angels",
+        "They will become rich"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "After seeing the people crying at Lazarus' tomb, what did Jesus do?",
+      "answers": [
+        "He wept",
+        "He taught a lesson",
+        "He yelled at the crowd",
+        "He sang a hymn"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Martha say when Jesus told them to open Lazarus' tomb?",
+      "answers": [
+        "He has been dead for four days; there will be a smell",
+        "The stone is too heavy",
+        "We already said goodbye",
+        "It's too late. He's dead."
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jesus say to Lazarus, and what happened?",
+      "answers": [
+        "'Lazarus, come out!' and Lazarus walked out of his tomb",
+        "'Can you hear us?' and nothing happened",
+        "'Be healed,' and he felt better inside the tomb",
+        "'Go home,' and Lazarus floated to heaven"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When they saw Lazarus come out, what did many of the people do?",
+      "answers": [
+        "Believe in Jesus",
+        "Run away in fear",
+        "Argue with Martha",
+        "Close the tomb again"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

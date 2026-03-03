@@ -1,0 +1,110 @@
+{
+  "lessonId": "nt40",
+  "pageTitle": "NT 40 Quiz",
+  "lessonTitleText": "Peter Escapes from Prison",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt40image.png",
+  "themeClass": "theme-purple",
+  "questions": [
+    {
+      "text": "What two miracles did Peter do?",
+      "answers": [
+        "He healed Aeneas’ legs and raised Tabitha from the dead",
+        "He fed 5,000 people and walked on water",
+        "He parted the Red Sea and called down fire",
+        "He drove out demons and calmed a storm"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When the people saw the miracles, what did they do?",
+      "answers": [
+        "They believed in the Lord",
+        "They ran away in fear",
+        "They arrested Peter",
+        "They made Peter their king"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Herod do to James and Peter?",
+      "answers": [
+        "He killed James with a sword and put Peter in prison",
+        "He had them both beaten",
+        "He gave them awards",
+        "He forced them to leave Jerusalem"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the church do while Peter was in prison?",
+      "answers": [
+        "They prayed together for him",
+        "They hid in fear",
+        "They protested outside the prison",
+        "They tried to break him out of prison"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who did God send to rescue Peter from prison?",
+      "answers": [
+        "An angel",
+        "A Roman soldier",
+        "Mary",
+        "Paul"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened when the angel rescued Peter?",
+      "answers": [
+        "His chains fell off, the doors opened, and the guards stayed asleep",
+        "The prison walls fell down",
+        "The guards helped him escape",
+        "Peter became invisible"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Peter think was happening as he escaped?",
+      "answers": [
+        "He thought he was dreaming",
+        "He thought he was crazy",
+        "He thought it was a trick",
+        "He thought the guards were joking"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why didn’t Rhoda let Peter inside the house?",
+      "answers": [
+        "She was so excited that she forgot to open the door",
+        "She didn’t recognize his voice",
+        "She was afraid of the guards",
+        "She thought it was too late at night"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the church think when Rhoda told them Peter was there?",
+      "answers": [
+        "You are out of your mind! It must be Peter’s angel",
+        "Let him in right away, silly girl!",
+        "Go check again carefully",
+        "Call the guards immediately"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Peter tell them after he came inside?",
+      "answers": [
+        "How the Lord sent an angel to rescue him from prison",
+        "How he escaped by his own strength",
+        "How the guards helped him",
+        "How he planned to leave town forever"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

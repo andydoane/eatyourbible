@@ -1,0 +1,110 @@
+{
+  "lessonId": "nt06",
+  "pageTitle": "NT 06 Quiz",
+  "lessonTitleText": "John the Baptist",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt06image.png",
+  "themeClass": "theme-john-the-baptist",
+  "questions": [
+    {
+      "text": "Before John, how long had it been since God had sent a prophet?",
+      "answers": [
+        "Almost 500 years",
+        "About 100 years",
+        "Only 1 year",
+        "Over 1,000 years"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Where did John go to preach?",
+      "answers": [
+        "In the wilderness near the Jordan River",
+        "In the city of Jerusalem",
+        "Inside the temple",
+        "On a mountaintop"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What message did John preach to the people?",
+      "answers": [
+        "God's kingdom is coming near!",
+        "A flood is coming",
+        "The Roman Empire will fall",
+        "Give me your money!"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What two things did John tell the people to do to prepare for God's coming kingdom?",
+      "answers": [
+        "Repent and be baptized",
+        "Give money to the poor",
+        "Move into the wilderness",
+        "Read your Bible and pray"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What was the name of the prophet who wrote about John 700 years before?",
+      "answers": [
+        "Isaiah",
+        "Jeremiah",
+        "Ezekiel",
+        "Daniel"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did John wear that made him look like an Old Testament prophet?",
+      "answers": [
+        "Camel-hair clothes, leather belt",
+        "Fine robes and jewelry",
+        "Armor and a helmet",
+        "A fake beard and a cape"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did John eat in the wilderness?",
+      "answers": [
+        "Grasshoppers and honey",
+        "Bread and fish",
+        "Fruit and vegetables",
+        "Cactus and sand"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the people do after hearing John's message?",
+      "answers": [
+        "Confessed their sins, were baptized in the Jordan",
+        "Returned home and ignored him",
+        "Threw stones at him",
+        "Gave him their money"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When the people thought John was the Christ, what did he say?",
+      "answers": [
+        "Someone greater is coming, he'll baptize you with the Holy Spirit",
+        "I am the promised Christ",
+        "Give me all your money",
+        "The Christ won't come for a long time"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What is John's nickname?",
+      "answers": [
+        "John the Baptist",
+        "John the Prophet",
+        "John the Dunker",
+        "John the Weirdo"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

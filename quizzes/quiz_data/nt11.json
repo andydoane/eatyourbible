@@ -1,0 +1,110 @@
+{
+  "lessonId": "nt11",
+  "pageTitle": "NT 11 Quiz",
+  "lessonTitleText": "Jesus Heals a Man Who Couldn't Walk",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt11image.png",
+  "themeClass": "theme-teal",
+  "questions": [
+    {
+      "text": "Why was the house Jesus was in so crowded?",
+      "answers": [
+        "People came to hear him preach",
+        "People were hiding from the rain",
+        "They were having a dance party",
+        "Jesus was giving away food"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Four men tried to bring their friend to Jesus. What problem did he have?",
+      "answers": [
+        "He couldn't walk",
+        "He was blind",
+        "He was deaf",
+        "He had an evil spirit"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why couldn't the four men get inside?",
+      "answers": [
+        "The house was full of people already",
+        "The door was locked",
+        "Jesus had already left",
+        "They forgot to buy a ticket to enter"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did the four men get their friend to Jesus?",
+      "answers": [
+        "They dug a hole in the roof and lowered him down",
+        "They waited until the house was empty",
+        "They carried him through a window",
+        "They asked Jesus to come outside"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jesus say when he saw their faith?",
+      "answers": [
+        "Your sins are forgiven",
+        "You will be healed right away",
+        "Leave me alone",
+        "Go home in peace"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why is it easier to say, 'Your sins are forgiven' than 'Pick up your mat and walk'?",
+      "answers": [
+        "You can't see sins being forgiven, so there would be no way to know if you were lying",
+        "Because forgiving sins takes less power",
+        "Because walking is harder than talking",
+        "Because sins are not important"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened when Jesus said, 'Pick up your mat and walk'?",
+      "answers": [
+        "The man was healed and could walk",
+        "Nothing happened, so the crowd laughed at Jesus",
+        "The man died",
+        "The man hopped around on one leg"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "On the Sabbath, why were the Pharisees watching Jesus closely?",
+      "answers": [
+        "To see if he would heal a man with a weak hand",
+        "To learn how to heal people",
+        "To listen to his teaching",
+        "To figure out if he really was the Son of God"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened when Jesus told the man to stretch out his hand?",
+      "answers": [
+        "His weak hand was as good as new",
+        "The man tried, but couldn't do it",
+        "The hand became worse",
+        "The man thought Jesus was making fun of him"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When Jesus healed the man on the Sabbath, what secret plans did the Pharisees make?",
+      "answers": [
+        "They planned to kill Jesus",
+        "They planned to arrest Jesus",
+        "They planned to become his disciples",
+        "They planned to find out the secret of Jesus' power"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

@@ -1,0 +1,110 @@
+{
+  "lessonId": "nt36",
+  "pageTitle": "NT 36 Quiz",
+  "lessonTitleText": "The Holy Spirit Comes",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt36image.png",
+  "themeClass": "theme-gray",
+  "questions": [
+    {
+      "text": "What promise did Jesus make to His disciples before He died?",
+      "answers": [
+        "To send the Holy Spirit",
+        "To send an army of angels",
+        "To build them a new temple",
+        "To give them lots of gold"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did Jesus say the Holy Spirit would help them?",
+      "answers": [
+        "Help them remember what Jesus said and taught",
+        "Make them very smart",
+        "Give them super strength",
+        "Make it so they never sinned again"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Where were the disciples on the morning of Pentecost?",
+      "answers": [
+        "Gathered together in one room",
+        "Fishing on the Sea of Galilee",
+        "In the desert",
+        "At the temple building"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the disciples hear and see when the Holy Spirit came?",
+      "answers": [
+        "A great wind and tongues of fire",
+        "Thunder and hail",
+        "A trumpet and a rainbow",
+        "A boom and a bright light"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What miracle happened when the Holy Spirit came?",
+      "answers": [
+        "They spoke in languages they didn’t know",
+        "They walked on water",
+        "They turned stones into bread",
+        "They floated up into the clouds"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Some people in the crowd thought they were speaking strangely because they were…",
+      "answers": [
+        "Drunk",
+        "Sleepy",
+        "Sick",
+        "Practicing for a play"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Joel promise about 800 years before that day?",
+      "answers": [
+        "God would pour out His Spirit",
+        "God would end all storms",
+        "God would make people speak one language",
+        "God would send manna again"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Peter preach to the crowd about?",
+      "answers": [
+        "The good news that Jesus was the Messia",
+        "God's law",
+        "Why the people were horrible sinners",
+        "The story of David and Goliath"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When the people asked, 'What should we do?' what did Peter say?",
+      "answers": [
+        "Repent and be baptized",
+        "Run away and hide",
+        "Hope God doesn't punish you",
+        "Start learning Spanish"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How many people believed and were baptized that day?",
+      "answers": [
+        "3,000",
+        "300",
+        "30",
+        "12"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

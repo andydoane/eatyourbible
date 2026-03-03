@@ -1,0 +1,110 @@
+{
+  "lessonId": "nt20",
+  "pageTitle": "NT 20 Quiz",
+  "lessonTitleText": "The Rich Young Man and Zacchaeus",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt20image.png",
+  "themeClass": "theme-green",
+  "questions": [
+    {
+      "text": "What question did the rich young man ask Jesus?",
+      "answers": [
+        "How can I receive eternal life?",
+        "How can I become richer?",
+        "How can I be a disciple?",
+        "How can I build a bigger house?"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When Jesus listed God's commands, what did the rich man say?",
+      "answers": [
+        "I've obeyed them since I was a boy",
+        "I don't know any of them",
+        "I only follow some of them",
+        "I will start obeying them tomorrow"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jesus tell the rich young man to do?",
+      "answers": [
+        "Sell everything and give it to the poor",
+        "Give ten coins to the temple",
+        "Leave town immediately",
+        "Climb a sycamore tree"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why was the rich young man sad?",
+      "answers": [
+        "He had many possessions and loved them more than God",
+        "He lost all his money",
+        "He was sick",
+        "He didn't understand Jesus"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "According to Jesus, how hard is it for a rich person to enter heaven?",
+      "answers": [
+        "Harder than a camel going through the eye of a needle",
+        "As easy as walking through a door",
+        "Like finding a coin on the ground",
+        "Harder than climbing a tall mountain"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Zacchaeus do to see Jesus?",
+      "answers": [
+        "Climbed a sycamore-fig tree",
+        "Stood on a rooftop",
+        "Ran ahead and shouted",
+        "Borrowed a ladder"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jesus say to Zacchaeus in the tree?",
+      "answers": [
+        "Come down, I'm going to your house today",
+        "Stay there and listen",
+        "Wait for me to climb up there",
+        "Climb higher"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the people do when Jesus went to Zacchaeus' house?",
+      "answers": [
+        "They grumbled because Jesus was spending time with sinners",
+        "They celebrated loudly",
+        "They followed Him inside",
+        "They clapped their hands"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "After meeting with Jesus, what did Zacchaeus do?",
+      "answers": [
+        "He said he would give half his money to the poor and pay back four times what he stole",
+        "He climbed the tree again",
+        "He kept all his money",
+        "He built a bigger house"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How is it possible for sinners to enter God's kingdom?",
+      "answers": [
+        "God does the impossible — Jesus paid our price",
+        "By earning enough good points",
+        "By becoming very rich",
+        "By following every rule perfectly"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

@@ -1,0 +1,110 @@
+{
+  "lessonId": "nt18",
+  "pageTitle": "NT 18 Quiz",
+  "lessonTitleText": "Jesus, Mary, and Martha",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt18image.png",
+  "themeClass": "theme-kahoot-red",
+  "questions": [
+    {
+      "text": "When Jesus visited her house, what did Mary do?",
+      "answers": [
+        "Sat at Jesus’ feet and listened to His teaching",
+        "Prepared food in the kitchen",
+        "Went to the marketplace",
+        "Invited the neighbors over"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why was Martha upset?",
+      "answers": [
+        "She was busy serving, but Mary wasn’t helping",
+        "Jesus was making a big mess",
+        "She couldn't hear Jesus",
+        "She wanted Jesus to help make dinner"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Martha tell Jesus to do?",
+      "answers": [
+        "Make Mary help her",
+        "Send Mary home",
+        "Prepare the meal Himself",
+        "Wait to speak until she was done with her work"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who did Jesus say made the better choice?",
+      "answers": [
+        "Mary, because being with Jesus is more important than anything else",
+        "Martha, because serving is always best",
+        "Both were wrong",
+        "It didn't matter; both choices were fine"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What does it mean to worry?",
+      "answers": [
+        "To be concerned about bad things that might happen",
+        "To plan a party",
+        "To tell a funny story",
+        "To forget your homework"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why did Jesus tell us to think about birds?",
+      "answers": [
+        "If God feeds birds, we shouldn't worry about Him feeding us",
+        "Birds aren't very smart, but God still loves them",
+        "Birds build beautiful nests",
+        "Birds sing in the morning"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why did Jesus tell us to think about wildflowers?",
+      "answers": [
+        "If God clothes flowers, we shouldn't worry about clothes",
+        "Flowers grow very quickly",
+        "Flowers smell nice",
+        "Flowers are used in weddings"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What does it mean to be part of God's kingdom?",
+      "answers": [
+        "To believe in Him as your King now and forever",
+        "To live in a cloud castle",
+        "To fight in God's army",
+        "To wear a crown every day"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When we're worried, what does Philippians tell us to do?",
+      "answers": [
+        "Pray to God",
+        "Keep it to ourselves",
+        "Take a nap",
+        "Run away"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What does God do when we tell Him our worries?",
+      "answers": [
+        "He guards our hearts with His peace",
+        "He makes all problems disappear immediately",
+        "He sends an angel with a note",
+        "He tells us to fix everything ourselves"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

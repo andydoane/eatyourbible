@@ -1,0 +1,110 @@
+{
+  "lessonId": "nt01",
+  "pageTitle": "NT 01 Quiz",
+  "lessonTitleText": "Zechariah and Elizabeth",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt01image.png",
+  "themeClass": "theme-kahoot-purple",
+  "questions": [
+    {
+      "text": "What was the name of the old priest and his wife?",
+      "answers": [
+        "Zechariah and Elizabeth",
+        "Abraham and Sarah",
+        "Simeon and Anna",
+        "Joseph and Mary"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What was Zechariah chosen to do in the temple?",
+      "answers": [
+        "Burn incense",
+        "Offer sacrifices",
+        "Read the Scriptures aloud",
+        "Sing in the temple choir"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What surprising thing did Zechariah see in the temple?",
+      "answers": [
+        "An angel",
+        "A blazing chariot",
+        "A vision of the whole nation",
+        "A pillar of fire"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Gabriel say would happen to Elizabeth?",
+      "answers": [
+        "She would have a baby",
+        "She would become a prophetess",
+        "She would travel to Jerusalem",
+        "She would become a temple servant"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What were some things Gabriel said about this baby?",
+      "answers": [
+        "He would be filled with God's Spirit before birth and prepare the way for the Lord",
+        "He would become a great king of Israel",
+        "He would write many books of Scripture",
+        "He would rebuild the temple"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Because he didn't believe the angel, what happened to Zechariah?",
+      "answers": [
+        "He couldn't speak until the baby was born",
+        "He fell asleep for many days",
+        "He forgot everything he saw",
+        "He was blinded until the next morning"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened when pregnant Mary visited pregnant Elizabeth?",
+      "answers": [
+        "John leapt for joy inside his mother's belly",
+        "Mary fainted from surprise",
+        "A bright star appeared overhead",
+        "Elizabeth instantly gave birth"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Elizabeth's neighbors do after she had her baby?",
+      "answers": [
+        "They rejoiced with her",
+        "They brought gifts of gold",
+        "They held a feast for seven days",
+        "They sent messages to the priests"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did Zechariah tell them to give the baby the name John?",
+      "answers": [
+        "He wrote it down",
+        "He whispered it quietly",
+        "He signaled it with his hands",
+        "He asked Mary to announce it"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When Zechariah could speak again, what was the first thing he did?",
+      "answers": [
+        "He praised God",
+        "He shouted for water",
+        "He ran outside to tell the neighbors",
+        "He wrote a poem"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

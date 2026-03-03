@@ -1,0 +1,110 @@
+{
+  "lessonId": "nt13",
+  "pageTitle": "NT 13 Quiz",
+  "lessonTitleText": "Jesus Heals Jairus’ Daughter",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt13image.png",
+  "themeClass": "theme-green",
+  "questions": [
+    {
+      "text": "Why did Jairus come to Jesus?",
+      "answers": [
+        "His daughter was dying",
+        "He could not walk",
+        "He wanted Jesus to visit his house",
+        "He wanted to follow Jesus"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What problem did the woman have?",
+      "answers": [
+        "A bleeding disease that lasted 12 years",
+        "She was blind",
+        "She needed money for food",
+        "She had an evil spirit"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened when she touched Jesus' clothes?",
+      "answers": [
+        "She was healed",
+        "Nothing happened",
+        "She felt power come out of her",
+        "She fell down"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When he knew power had gone out from him, what did Jesus say?",
+      "answers": [
+        "Who touched me?",
+        "Don’t touch me!",
+        "What’s going on?",
+        "Ouch! That hurt!"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When the woman explained what happened, what did Jesus say?",
+      "answers": [
+        "Your faith has healed you",
+        "You should not have touched me",
+        "Go home quietly",
+        "Tell everyone what happened"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the messenger say to Jairus?",
+      "answers": [
+        "Your daughter has died. Leave Jesus alone.",
+        "Your daughter is feeling better",
+        "Your wife wants you to come home quick",
+        "Nobody can help your daughter"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "After Jairus learned his daughter had died, what did Jesus say?",
+      "answers": [
+        "Just believe and she will be healed",
+        "Go home and rest",
+        "There is nothing to be done",
+        "It is too late for me to help"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jesus say to the crowd?",
+      "answers": [
+        "Don't cry. She's only sleeping.",
+        "Be quiet and pray.",
+        "Everybody, go home.",
+        "Watch closely."
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened when Jesus told the girl to get up?",
+      "answers": [
+        "She came to life and stood up",
+        "She opened her eyes slowly",
+        "Nothing happened",
+        "The crowd laughed at Jesus"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happens when sinners believe in Jesus?",
+      "answers": [
+        "They are saved from forever death and given forever life",
+        "They stop having problems",
+        "They never get sick again",
+        "They become famous"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

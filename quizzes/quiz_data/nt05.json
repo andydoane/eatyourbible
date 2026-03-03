@@ -1,0 +1,100 @@
+{
+  "lessonId": "nt05",
+  "pageTitle": "NT 05 Quiz",
+  "lessonTitleText": "Young Jesus at the Temple",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt05image.png",
+  "themeClass": "theme-kahoot-green",
+  "questions": [
+    {
+      "text": "What promise did God make to old Simeon?",
+      "answers": [
+        "He would see the Christ before he died",
+        "He would become a great teacher",
+        "He would become the Christ",
+        "He would live to be very old"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Simeon say about Jesus' future?",
+      "answers": [
+        "A sword would pierce Mary's heart, he'd make people rise and fall",
+        "He would become king of Rome",
+        "He would do many miracles",
+        "He would defeat the mighty Roman army"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why did Jesus' family travel to Jerusalem?",
+      "answers": [
+        "To celebrate the Passover",
+        "To move there",
+        "To visit relatives",
+        "To escape danger"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How old was Jesus in this story?",
+      "answers": [
+        "Twelve years old",
+        "Ten years old",
+        "Fourteen years old",
+        "Thirty years old"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When his family left for home, what did Jesus do?",
+      "answers": [
+        "Stayed behind in Jerusalem",
+        "Hid from them",
+        "Went with them",
+        "Went with another family"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "After three days, where did his parents find Jesus?",
+      "answers": [
+        "At the temple listening to teachers",
+        "In the marketplace",
+        "At a friend's house",
+        "At a playground"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the temple teachers think about Jesus' questions and answers?",
+      "answers": [
+        "They were amazed",
+        "They were angry",
+        "They were confused",
+        "They were sad"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When his mother Mary was upset, what did Jesus say?",
+      "answers": [
+        "Didn't you know I needed to be in my Father's house?",
+        "I wanted to stay with my friends",
+        "You should pay more attention to me",
+        "I didn't hear you calling me"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What does Luke say about Jesus when he went home?",
+      "answers": [
+        "He grew in wisdom, size, and relationships",
+        "He became famous immediately",
+        "He got into a lot of trouble",
+        "He kept getting left behind on accident"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

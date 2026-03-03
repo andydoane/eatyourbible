@@ -1,0 +1,110 @@
+{
+  "lessonId": "nt37",
+  "pageTitle": "NT 37 Quiz",
+  "lessonTitleText": "Peter Heals a Man Who Could Not Walk",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt37image.png",
+  "themeClass": "theme-white",
+  "questions": [
+    {
+      "text": "What problem did the man at the temple have?",
+      "answers": [
+        "He couldn’t walk",
+        "He couldn’t see",
+        "He couldn’t speak",
+        "He couldn’t hear"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Peter say to the man?",
+      "answers": [
+        "In Jesus’ name, stand up and walk",
+        "Be strong and try harder",
+        "Stop begging for money",
+        "Give me some silver and gold"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened to the man after Peter said these words?",
+      "answers": [
+        "His legs were healed, and he ran and jumped",
+        "He floated up into the clouds",
+        "He slowly crawled away",
+        "He fell asleep"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Peter say to the crowd that had gathered?",
+      "answers": [
+        "Jesus has risen! He has healed this man",
+        "I healed the man by my own power",
+        "The temple has special healing powers",
+        "This beggar was pretending he couldn't walk"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the Jewish leaders do to Peter and John?",
+      "answers": [
+        "Threw them in jail",
+        "Praised them",
+        "Gave them money",
+        "Asked them to do another miracle"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How many believers were there after Peter spoke to the crowd?",
+      "answers": [
+        "About 5,000 men",
+        "500 people",
+        "120 people",
+        "One million people"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Peter and John tell the Jewish leaders?",
+      "answers": [
+        "Jesus had risen, and His power healed this man",
+        "They would stop preaching",
+        "They made a mistake",
+        "They were only helping a friend"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What order did the Jewish leaders give to Peter and John?",
+      "answers": [
+        "Do not speak about Jesus anymore",
+        "Leave our city forever",
+        "Pay a fine",
+        "Tell us more about Jesus"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Peter and John say about this order?",
+      "answers": [
+        "Who should we obey: you or God?",
+        "We will obey you",
+        "We are sorry",
+        "We need more time to decide"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Before, the disciples ran away in fear. Now they spoke bravely. What changed?",
+      "answers": [
+        "The Holy Spirit was with them",
+        "They became stronger",
+        "The just decided to be brave",
+        "They had gone crazy"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

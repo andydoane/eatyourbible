@@ -1,0 +1,110 @@
+{
+  "lessonId": "nt09",
+  "pageTitle": "NT 09 Quiz",
+  "lessonTitleText": "Jesus and Nicodemus",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt09image.png",
+  "themeClass": "theme-kahoot-white",
+  "questions": [
+    {
+      "text": "Who was the Pharisee who came to talk to Jesus?",
+      "answers": [
+        "Nicodemus",
+        "Joseph",
+        "Saul",
+        "Judas"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Jesus said, 'To enter God's kingdom, you must...' what?",
+      "answers": [
+        "Be born again",
+        "Follow the law perfectly",
+        "Become a Pharisee",
+        "Give away everything you own"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Nicodemus say about being born again?",
+      "answers": [
+        "You can't go back inside your mother",
+        "Jesus, you are crazy!",
+        "I don't want to be a baby again",
+        "That's a dumb idea!"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What is the invisible part of you that makes you... you?",
+      "answers": [
+        "Spirit or soul",
+        "Your thoughts",
+        "Your heart",
+        "Your memories"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did King David say about us when we're babies?",
+      "answers": [
+        "We're sinners even inside our mother's belly",
+        "Babies are sinless",
+        "We become sinners on our first birthday",
+        "Babies are really cute"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How is being born again like the wind?",
+      "answers": [
+        "You can't see it with your eyes, but you can see what it changes",
+        "It makes you feel very cold",
+        "It makes a woosh sound",
+        "It blows your hair around"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How does the story of the snake on a pole point to Jesus?",
+      "answers": [
+        "Both the snake and Jesus were lifted up and saved people",
+        "Both stories happened in the wilderness",
+        "Jesus was afraid of snakes",
+        "Jesus also held up a snake on a pole"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What does Jesus tell us to do to receive eternal life?",
+      "answers": [
+        "Believe in him",
+        "Follow God's rules",
+        "Try to be a good person",
+        "Make sacrifices at the temple"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Can you make yourself be 'born again'?",
+      "answers": [
+        "No",
+        "Yes, by trying harder",
+        "Yes, by being baptized",
+        "Yes, by obeying the law"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who is the one who can bring our dead, sinful souls to life?",
+      "answers": [
+        "The Holy Spirit",
+        "A priest",
+        "Our pastor",
+        "Ourselves"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
