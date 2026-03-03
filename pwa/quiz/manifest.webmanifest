@@ -1,0 +1,14 @@
+{
+  "name": "Eat Your Bible Quizzes",
+  "short_name": "Quizzes",
+  "description": "Bible quizzes for kids.",
+  "start_url": "/eatyourbible/pwa/quiz/",
+  "scope": "/eatyourbible/pwa/quiz/",
+  "display": "standalone",
+  "background_color": "#7f66c6",
+  "theme_color": "#7f66c6",
+  "icons": [
+    { "src": "/eatyourbible/pwa/quiz/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/eatyourbible/pwa/quiz/icons/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
