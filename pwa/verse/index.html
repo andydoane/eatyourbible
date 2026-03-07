@@ -3036,24 +3036,34 @@ function bouncingStartMotion(fieldEl, btnRefs){
     if (st.done) return;
     if (!st.movers || !st.movers.length) return;
 
+    const pad = 16;
+
     for (const m of st.movers){
+      const fieldW = fieldEl.clientWidth;
+      const fieldH = fieldEl.clientHeight;
+
+      const minX = pad;
+      const maxX = Math.max(minX, fieldW - m.w - pad);
+      const minY = pad;
+      const maxY = Math.max(minY, fieldH - m.h - pad);
+
       m.x += m.vx;
       m.y += m.vy;
 
-      if (m.x <= 0){
-        m.x = 0;
+      if (m.x <= minX){
+        m.x = minX;
         m.vx *= -1;
       }
-      if (m.x + m.w >= m.fieldW){
-        m.x = Math.max(0, m.fieldW - m.w);
+      if (m.x >= maxX){
+        m.x = maxX;
         m.vx *= -1;
       }
-      if (m.y <= 0){
-        m.y = 0;
+      if (m.y <= minY){
+        m.y = minY;
         m.vy *= -1;
       }
-      if (m.y + m.h >= m.fieldH){
-        m.y = Math.max(0, m.fieldH - m.h);
+      if (m.y >= maxY){
+        m.y = maxY;
         m.vy *= -1;
       }
 
