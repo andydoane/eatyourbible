@@ -414,6 +414,49 @@ border-radius: 18px;
   color: #ffb3b3;
 }
 
+.bounce-burst{
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.scramble-word.spawn-in{
+  opacity: 0;
+  animation: bounceSpawnIn 0.42s cubic-bezier(.2,.8,.2,1) forwards;
+}
+
+.scramble-word.burst-out{
+  pointer-events: none;
+  animation: bounceBurstOut 0.2s ease forwards;
+}
+
+@keyframes bounceSpawnIn{
+  0%{
+    opacity: 0;
+    transform: rotate(var(--rot)) translateY(var(--pressY)) scale(0.72);
+  }
+  70%{
+    opacity: 1;
+    transform: rotate(var(--rot)) translateY(var(--pressY)) scale(1.04);
+  }
+  100%{
+    opacity: 1;
+    transform: rotate(var(--rot)) translateY(var(--pressY)) scale(1);
+  }
+}
+
+@keyframes bounceBurstOut{
+  0%{
+    opacity: 1;
+    transform: rotate(var(--rot)) translateY(var(--pressY)) scale(1);
+  }
+  100%{
+    opacity: 0;
+    transform: rotate(var(--rot)) translateY(var(--pressY)) scale(0.55);
+  }
+}
+
 @keyframes scrambleFloat{
   0%{ opacity: 0; transform: translate(-50%, 0); }
   20%{ opacity: 1; transform: translate(-50%, -4px); }
@@ -947,6 +990,7 @@ const State = {
   gameRunning: false,
   chainGame: null,
   scrambleGame: null,
+  bouncingGame: null,
 
   // Learn progression
   listenDone: false,
@@ -1402,6 +1446,112 @@ function scrambleShowPopup(field, x, y, text, good){
   }, 650);
 }
 
+function bouncingBurstAt(fieldEl, x, y){
+  const canvas = document.createElement("canvas");
+  canvas.className = "bounce-burst";
+  canvas.style.left = "0";
+  canvas.style.top = "0";
+
+  const width = Math.max(1, Math.floor(fieldEl.clientWidth));
+  const height = Math.max(1, Math.floor(fieldEl.clientHeight));
+
+  canvas.style.width = `${width}px`;
+  canvas.style.height = `${height}px`;
+
+  fieldEl.appendChild(canvas);
+
+  const ctx = canvas.getContext("2d");
+  const dpr = window.devicePixelRatio || 1;
+
+  canvas.width = width * dpr;
+  canvas.height = height * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  x = Math.max(0, Math.min(width, x));
+  y = Math.max(0, Math.min(height, y));
+
+  const colors = ["#ffd54f", "#ff8a65", "#81c784", "#64b5f6", "#ffffff"];
+  const particles = [];
+
+  for (let i = 0; i < 24; i++){
+    const angle = (Math.PI * 2 * i) / 24;
+    const speed = 1.8 + Math.random() * 2.8;
+    const life = 22 + Math.random() * 10;
+
+    particles.push({
+      x,
+      y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      life,
+      maxLife: life,
+      size: 2 + Math.random() * 3,
+      color: colors[i % colors.length]
+    });
+  }
+
+  function tick(){
+    ctx.clearRect(0, 0, width, height);
+
+    let alive = 0;
+
+    for (const p of particles){
+      if (p.life <= 0) continue;
+
+      alive += 1;
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.05;
+      p.life -= 1;
+
+      ctx.globalAlpha = Math.max(0, p.life / p.maxLife);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.fill();
+    }
+
+    ctx.globalAlpha = 1;
+
+    if (alive > 0){
+      requestAnimationFrame(tick);
+    } else {
+      canvas.remove();
+    }
+  }
+
+  requestAnimationFrame(tick);
+}
+
+function bouncingAnimateCorrectChoice(btnEl, fieldEl, onDone){
+  const st = State.bouncingGame;
+
+  let burstX = 0;
+  let burstY = 0;
+
+  const mover = st?.movers?.find(m => m.btn === btnEl);
+
+  if (mover){
+    burstX = mover.x + (mover.w / 2);
+    burstY = mover.y + (mover.h / 2);
+
+    btnEl.style.left = `${Math.round(mover.x)}px`;
+    btnEl.style.top = `${Math.round(mover.y)}px`;
+  } else {
+    const rectField = fieldEl.getBoundingClientRect();
+    const rectBtn = btnEl.getBoundingClientRect();
+    burstX = rectBtn.left - rectField.left + (rectBtn.width / 2);
+    burstY = rectBtn.top - rectField.top + (rectBtn.height / 2);
+  }
+
+  bouncingBurstAt(fieldEl, burstX, burstY);
+  btnEl.classList.add("burst-out");
+
+  setTimeout(() => {
+    onDone();
+  }, 210);
+}
+
 function startVerseScrambleGame(){
   const wordTokenIndices = scrambleWordTokenIndices();
   const meta = chainVerseMetaFromId(VERSE_ID);
@@ -1667,6 +1817,11 @@ function practiceRun(){
 
   if (g.title.includes("Verse Chain")){
     startGame("chain");
+    return;
+  }
+
+  if (g.title.includes("Bouncing Words")){
+    startGame("bouncing");
     return;
   }
 
@@ -2074,6 +2229,15 @@ right = (State.screen === Screen.GAME) ? "" : nextBtn;
         return;
       }
 
+      if (State.activeGame === "bouncing"){
+        showDialog({
+          title: "How to Play Bouncing Words",
+          body: "Tap the correct moving word to build the verse. Three words bounce around the screen. One is correct. Keep going until the whole verse is built. Then choose the correct Bible book and then the correct chapter and verse.",
+          actions: [dlgBtn("Close", {onClick: closeDialog})]
+        });
+        return;
+      }
+
       showDialog({
         title: "How to Play Verse Chain",
         body: "Use the arrows to look through the choices. Tap the big word when you think it is correct. First build the whole verse. Then choose the correct Bible book. Then choose the correct chapter and verse.",
@@ -2145,10 +2309,13 @@ function startGame(id){
 }
 
 function stopGame(){
+  bouncingStopMotion();
+
   State.activeGame = null;
   State.gameRunning = false;
   State.chainGame = null;
   State.scrambleGame = null;
+  State.bouncingGame = null;
 }
 
 registerGame({
@@ -2546,6 +2713,585 @@ registerGame({
     });
 
     coachActions.appendChild(field);
+  }
+});
+
+function bouncingBuiltVerseNode(){
+  const p = document.createElement("p");
+  p.className = "verse scramble-verse";
+
+  const st = State.bouncingGame;
+  const builtCount = st?.builtCount || 0;
+  const wordIdxs = st?.wordTokenIndices || [];
+  const builtSet = new Set(wordIdxs.slice(0, builtCount));
+
+  for (let i = 0; i < tokens.length; i++){
+    const t = tokens[i];
+
+    if (t.type === TokenType.SPACE || t.type === TokenType.PUNCT || t.type === TokenType.OTHER){
+      p.appendChild(document.createTextNode(t.text));
+      continue;
+    }
+
+    if (builtSet.has(i)){
+      p.appendChild(document.createTextNode(t.text));
+    } else {
+      break;
+    }
+  }
+
+  if (!st?.done && builtCount > 0){
+    p.appendChild(document.createTextNode(" …"));
+  }
+
+  if (!builtCount){
+    p.innerHTML = `
+      Build the verse one word at a time.<br>
+      <span style="font-weight:600;">Tap the first moving word to start.</span>
+    `;
+  }
+
+  return p;
+}
+
+function bouncingMakeChoices(wordTokenIndices, correctTokenIndex){
+  return scrambleMakeChoices(wordTokenIndices, correctTokenIndex);
+}
+
+function bouncingMakeBookChoices(correctBook){
+  return scrambleMakeBookChoices(correctBook);
+}
+
+function bouncingMakeReferenceChoices(correctChapter, correctVerse){
+  return scrambleMakeReferenceChoices(correctChapter, correctVerse);
+}
+
+function bouncingNextChoices(){
+  const st = State.bouncingGame;
+  if (!st) return;
+
+  if (st.phase === "words"){
+    const correctTokenIndex = st.wordTokenIndices[st.builtCount];
+    if (!Number.isFinite(correctTokenIndex)) return;
+    st.choices = bouncingMakeChoices(st.wordTokenIndices, correctTokenIndex);
+    return;
+  }
+
+  if (st.phase === "book"){
+    st.choices = bouncingMakeBookChoices(st.targetBook);
+    return;
+  }
+
+  if (st.phase === "ref"){
+    st.choices = bouncingMakeReferenceChoices(st.targetChapter, st.targetVerse);
+    return;
+  }
+
+  st.choices = [];
+}
+
+function bouncingRandomPositions(choices, fieldEl){
+  const st = State.bouncingGame;
+  const pad = 16;
+  const gap = 14;
+
+  const fieldRect = fieldEl?.getBoundingClientRect();
+  const fieldW = Math.max(260, Math.floor(fieldRect?.width || 320));
+  const fieldH = Math.max(240, Math.floor(fieldRect?.height || 240));
+
+  const measurer = document.createElement("div");
+  measurer.style.position = "absolute";
+  measurer.style.visibility = "hidden";
+  measurer.style.pointerEvents = "none";
+  measurer.style.left = "-9999px";
+  measurer.style.top = "-9999px";
+  document.body.appendChild(measurer);
+
+  function measureChoice(text){
+    const btn = document.createElement("button");
+    btn.className = "scramble-word";
+    btn.style.position = "absolute";
+    btn.style.left = "0";
+    btn.style.top = "0";
+    btn.style.maxWidth = `${Math.max(120, fieldW - (pad * 2))}px`;
+    btn.textContent = text;
+    measurer.appendChild(btn);
+
+    const rect = btn.getBoundingClientRect();
+    const size = {
+      w: Math.ceil(rect.width),
+      h: Math.ceil(rect.height)
+    };
+
+    btn.remove();
+    return size;
+  }
+
+  function overlaps(a, b){
+    return !(
+      a.x + a.w + gap <= b.x ||
+      b.x + b.w + gap <= a.x ||
+      a.y + a.h + gap <= b.y ||
+      b.y + b.h + gap <= a.y
+    );
+  }
+
+  function randBetween(min, max){
+    if (max <= min) return min;
+    return min + Math.random() * (max - min);
+  }
+
+  function makeZone(x1, x2, y1, y2){
+    return {
+      xMin: Math.round(x1 * fieldW),
+      xMax: Math.round(x2 * fieldW),
+      yMin: Math.round(y1 * fieldH),
+      yMax: Math.round(y2 * fieldH)
+    };
+  }
+
+  const layouts = [
+    [
+      makeZone(0.10, 0.30, 0.02, 0.10),
+      makeZone(0.42, 0.62, 0.44, 0.54),
+      makeZone(0.18, 0.38, 0.88, 0.96)
+    ],
+    [
+      makeZone(0.44, 0.64, 0.03, 0.11),
+      makeZone(0.12, 0.32, 0.45, 0.55),
+      makeZone(0.52, 0.72, 0.87, 0.95)
+    ],
+    [
+      makeZone(0.18, 0.38, 0.01, 0.09),
+      makeZone(0.54, 0.74, 0.43, 0.53),
+      makeZone(0.34, 0.54, 0.89, 0.97)
+    ],
+    [
+      makeZone(0.50, 0.70, 0.02, 0.10),
+      makeZone(0.28, 0.48, 0.46, 0.56),
+      makeZone(0.08, 0.28, 0.86, 0.94)
+    ],
+    [
+      makeZone(0.24, 0.44, 0.03, 0.11),
+      makeZone(0.46, 0.66, 0.44, 0.54),
+      makeZone(0.56, 0.76, 0.88, 0.96)
+    ]
+  ];
+
+  let layoutIndex = Math.floor(Math.random() * layouts.length);
+  if (layouts.length > 1 && st?.lastLayoutIndex === layoutIndex){
+    layoutIndex = (layoutIndex + 1 + Math.floor(Math.random() * (layouts.length - 1))) % layouts.length;
+  }
+  if (st) st.lastLayoutIndex = layoutIndex;
+
+  const chosenLayout = layouts[layoutIndex];
+  const sizes = choices.map(measureChoice);
+  const positions = [];
+  const placed = [];
+
+  for (let i = 0; i < sizes.length; i++){
+    const size = sizes[i];
+    const zone = chosenLayout[i] || chosenLayout[0];
+
+    const minX = Math.max(pad, zone.xMin);
+    const maxX = Math.max(minX, Math.min(zone.xMax - size.w, fieldW - size.w - pad));
+    const minY = Math.max(pad, zone.yMin);
+    const maxY = Math.max(minY, Math.min(zone.yMax - size.h, fieldH - size.h - pad));
+
+    let placedRect = null;
+
+    for (let attempt = 0; attempt < 120; attempt++){
+      const rect = {
+        x: randBetween(minX, maxX),
+        y: randBetween(minY, maxY),
+        w: size.w,
+        h: size.h
+      };
+
+      const hit = placed.some(p => overlaps(rect, p));
+      if (!hit){
+        placedRect = rect;
+        break;
+      }
+    }
+
+    if (!placedRect){
+      const fallbackRect = {
+        x: minX,
+        y: minY,
+        w: size.w,
+        h: size.h
+      };
+
+      const hit = placed.some(p => overlaps(fallbackRect, p));
+      if (!hit){
+        placedRect = fallbackRect;
+      }
+    }
+
+    if (!placedRect){
+      for (let attempt = 0; attempt < 140; attempt++){
+        const rect = {
+          x: randBetween(pad, Math.max(pad, fieldW - size.w - pad)),
+          y: randBetween(pad, Math.max(pad, fieldH - size.h - pad)),
+          w: size.w,
+          h: size.h
+        };
+
+        const hit = placed.some(p => overlaps(rect, p));
+        if (!hit){
+          placedRect = rect;
+          break;
+        }
+      }
+    }
+
+    if (!placedRect){
+      placedRect = {
+        x: pad,
+        y: pad + (i * (size.h + gap)),
+        w: size.w,
+        h: size.h
+      };
+    }
+
+    const rotationDeg = 0;
+
+    placed.push(placedRect);
+    positions.push({
+      leftPx: Math.round(placedRect.x),
+      topPx: Math.round(placedRect.y),
+      rotationDeg
+    });
+  }
+
+  measurer.remove();
+  return positions;
+}
+
+function bouncingRandomVelocity(){
+  const mag = 1.2 + (Math.random() * 1.0);
+  return Math.random() < 0.5 ? -mag : mag;
+}
+
+function bouncingBuildMovers(fieldEl, btnRefs){
+  const st = State.bouncingGame;
+  if (!st) return [];
+
+  const rectField = fieldEl.getBoundingClientRect();
+  const fieldW = Math.floor(rectField.width || 320);
+  const fieldH = Math.floor(rectField.height || 240);
+
+  return btnRefs.map((btn, i) => {
+    const pos = st.positions[i] || { leftPx: 20, topPx: 20, rotationDeg: 0 };
+    const rect = btn.getBoundingClientRect();
+    let vx = bouncingRandomVelocity();
+    let vy = bouncingRandomVelocity();
+
+    if (Math.abs(vx) < 1.1) vx = vx < 0 ? -1.1 : 1.1;
+    if (Math.abs(vy) < 1.1) vy = vy < 0 ? -1.1 : 1.1;
+
+    return {
+      btn,
+      x: pos.leftPx,
+      y: pos.topPx,
+      vx,
+      vy,
+      w: Math.ceil(rect.width),
+      h: Math.ceil(rect.height),
+      fieldW,
+      fieldH
+    };
+  });
+}
+
+function bouncingStopMotion(){
+  const st = State.bouncingGame;
+  if (!st) return;
+
+  if (st.rafId){
+    cancelAnimationFrame(st.rafId);
+    st.rafId = 0;
+  }
+
+  st.fieldEl = null;
+  st.btnRefs = null;
+  st.movers = null;
+}
+
+function bouncingStartMotion(fieldEl, btnRefs){
+  const st = State.bouncingGame;
+  if (!st || st.done) return;
+
+  bouncingStopMotion();
+
+  st.fieldEl = fieldEl;
+  st.btnRefs = btnRefs;
+  st.movers = bouncingBuildMovers(fieldEl, btnRefs);
+
+  function tick(){
+    const live = State.bouncingGame;
+    if (!live || live !== st) return;
+    if (State.screen !== Screen.GAME || State.activeGame !== "bouncing") return;
+    if (st.done) return;
+    if (!st.movers || !st.movers.length) return;
+
+    for (const m of st.movers){
+      m.x += m.vx;
+      m.y += m.vy;
+
+      if (m.x <= 0){
+        m.x = 0;
+        m.vx *= -1;
+      }
+      if (m.x + m.w >= m.fieldW){
+        m.x = Math.max(0, m.fieldW - m.w);
+        m.vx *= -1;
+      }
+      if (m.y <= 0){
+        m.y = 0;
+        m.vy *= -1;
+      }
+      if (m.y + m.h >= m.fieldH){
+        m.y = Math.max(0, m.fieldH - m.h);
+        m.vy *= -1;
+      }
+
+      m.btn.style.left = `${Math.round(m.x)}px`;
+      m.btn.style.top = `${Math.round(m.y)}px`;
+    }
+
+    st.rafId = requestAnimationFrame(tick);
+  }
+
+  st.rafId = requestAnimationFrame(tick);
+}
+
+function startBouncingWordsGame(){
+  const wordTokenIndices = scrambleWordTokenIndices();
+  const meta = chainVerseMetaFromId(VERSE_ID);
+
+  State.bouncingGame = {
+    wordTokenIndices,
+    builtCount: 0,
+    choices: [],
+    positions: [],
+    done: false,
+    wrongChoice: null,
+    phase: "words",
+    showRef: false,
+    targetBook: meta.book,
+    targetChapter: meta.chapter,
+    targetVerse: meta.verse,
+    score: 0,
+    wrongGuesses: 0,
+    startedAt: performance.now(),
+    endedAt: 0,
+    lastLayoutIndex: -1,
+    rafId: 0,
+    fieldEl: null,
+    btnRefs: null,
+    movers: null
+  };
+
+  bouncingNextChoices();
+  State.bouncingGame.positions = [];
+}
+
+function bouncingRoundRefresh(){
+  const st = State.bouncingGame;
+  if (!st) return;
+  bouncingNextChoices();
+  st.positions = [];
+}
+
+function bouncingElapsedMs(){
+  const st = State.bouncingGame;
+  if (!st) return 0;
+  return (st.endedAt || performance.now()) - st.startedAt;
+}
+
+function bouncingChoose(choice, btnEl, fieldEl){
+  const st = State.bouncingGame;
+  if (!st || st.done) return;
+
+  let correctChoice = "";
+
+  if (st.phase === "words"){
+    const correctTokenIndex = st.wordTokenIndices[st.builtCount];
+    if (!Number.isFinite(correctTokenIndex)) return;
+    correctChoice = tokens[correctTokenIndex].text;
+  } else if (st.phase === "book"){
+    correctChoice = st.targetBook;
+  } else if (st.phase === "ref"){
+    correctChoice = `${st.targetChapter}:${st.targetVerse}`;
+  } else {
+    return;
+  }
+
+  const rectField = fieldEl.getBoundingClientRect();
+  const rectBtn = btnEl.getBoundingClientRect();
+  const popX = rectBtn.left - rectField.left + (rectBtn.width / 2);
+  const popY = rectBtn.top - rectField.top - 6;
+
+  if (choice !== correctChoice){
+    st.score -= 25;
+    st.wrongGuesses += 1;
+    st.wrongChoice = choice;
+    scrambleShowPopup(fieldEl, popX, popY, "-25", false);
+
+    btnEl.classList.add("wrong");
+
+    setTimeout(() => {
+      btnEl.classList.remove("wrong");
+
+      if (State.bouncingGame && State.bouncingGame.wrongChoice === choice){
+        State.bouncingGame.wrongChoice = null;
+      }
+    }, 350);
+
+    return;
+  }
+
+  st.score += 100;
+  st.wrongChoice = null;
+  scrambleShowPopup(fieldEl, popX, popY, "+100", true);
+
+  const hitMover = st.movers?.find(m => m.btn === btnEl);
+  if (hitMover){
+    hitMover.btn.style.pointerEvents = "none";
+    hitMover.btn.style.visibility = "hidden";
+    hitMover.vx = 0;
+    hitMover.vy = 0;
+  }
+
+  bouncingAnimateCorrectChoice(btnEl, fieldEl, () => {
+    bouncingStopMotion();
+
+    const live = State.bouncingGame;
+    if (!live || live !== st) return;
+
+    if (st.phase === "words"){
+      st.builtCount += 1;
+
+      if (st.builtCount >= st.wordTokenIndices.length){
+        st.phase = "book";
+        bouncingRoundRefresh();
+        render();
+        return;
+      }
+
+      bouncingRoundRefresh();
+      render();
+      return;
+    }
+
+    if (st.phase === "book"){
+      st.phase = "ref";
+      bouncingRoundRefresh();
+      render();
+      return;
+    }
+
+    if (st.phase === "ref"){
+      st.phase = "done";
+      st.done = true;
+      st.showRef = true;
+      st.endedAt = performance.now();
+      st.choices = [];
+      st.positions = [];
+      render();
+    }
+  });
+  
+}
+
+registerGame({
+  id: "bouncing",
+  title: "Bouncing Words",
+  description: "Tap the correct moving word.",
+  start(stage){
+    if (!State.bouncingGame){
+      startBouncingWordsGame();
+    }
+
+    const st = State.bouncingGame;
+    bouncingStopMotion();
+    stage.innerHTML = "";
+
+    const verseBox = document.createElement("div");
+    verseBox.style.width = "100%";
+    verseBox.style.maxWidth = "760px";
+    verseBox.style.minHeight = "90px";
+    verseBox.style.display = "flex";
+    verseBox.style.alignItems = "center";
+    verseBox.style.justifyContent = "center";
+    verseBox.style.textAlign = "center";
+    verseBox.appendChild(bouncingBuiltVerseNode());
+    stage.appendChild(verseBox);
+
+    const gameLayout = stage.closest(".learn-layout");
+    const coachTitle = gameLayout?.querySelector("#gameCoachTitle");
+    const coachActions = gameLayout?.querySelector("#gameCoachActions");
+
+    if (coachTitle) coachTitle.textContent = "";
+
+    if (!coachActions) return;
+    coachActions.innerHTML = "";
+
+    if (st.done){
+      const doneMsg = document.createElement("div");
+      doneMsg.className = "small";
+      doneMsg.style.fontWeight = "900";
+      doneMsg.style.textAlign = "center";
+      doneMsg.style.maxWidth = "520px";
+      doneMsg.innerHTML = `
+        Score: ${st.score}<br>
+        Incorrect guesses: ${st.wrongGuesses}<br>
+        Total time: ${scrambleFormatTime(bouncingElapsedMs())}
+      `;
+      coachActions.appendChild(doneMsg);
+      return;
+    }
+
+    const field = document.createElement("div");
+    field.className = "scramble-field";
+
+    if (!st.positions.length || st.positions.length !== st.choices.length){
+      st.positions = bouncingRandomPositions(st.choices, field);
+    }
+
+    const btnRefs = [];
+
+    st.choices.forEach((choice, i) => {
+      const btn = document.createElement("button");
+      btn.className = "scramble-word no-zoom";
+      if (st.wrongChoice === choice) btn.classList.add("wrong");
+      btn.type = "button";
+      btn.textContent = choice;
+      btn.classList.add("spawn-in");
+
+      const pos = st.positions[i] || { leftPx: 20, topPx: 20, rotationDeg: 0 };
+      btn.style.left = `${pos.leftPx}px`;
+      btn.style.top = `${pos.topPx}px`;
+      btn.style.setProperty("--rot", `${pos.rotationDeg || 0}deg`);
+
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        bouncingChoose(choice, btn, field);
+      };
+
+      btnRefs.push(btn);
+      field.appendChild(btn);
+    });
+
+    coachActions.appendChild(field);
+
+    if (!st.done){
+      requestAnimationFrame(() => {
+        bouncingStartMotion(field, btnRefs);
+      });
+    }
   }
 });
 
@@ -2988,7 +3734,7 @@ function screenGame(idx){
     (State.activeGame !== "chain" && State.activeGame !== "scramble");
 
   inner.innerHTML = `
-    <div class="learn-layout ${State.activeGame === "scramble" ? "game-scramble" : ""}">
+        <div class="learn-layout ${(State.activeGame === "scramble" || State.activeGame === "bouncing") ? "game-scramble" : ""}">
 
       <div class="learn-ref">
         ${showGameRef ? `<div class="verse-ref-pill">${VERSE_REF}</div>` : ``}
