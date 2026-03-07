@@ -321,6 +321,99 @@ border-radius: 18px;
   background: #3fa66b;
 }
 
+.learn-layout.game-scramble .learn-ref{
+  flex: 0 0 8%;
+  min-height: 44px;
+  max-height: 72px;
+}
+
+.learn-layout.game-scramble .learn-verse{
+  flex: 0 0 30%;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 12px;
+}
+
+.learn-layout.game-scramble .learn-coach{
+  flex: 1 1 62%;
+  min-height: 260px;
+  padding: 6px 4px 10px;
+}
+
+.scramble-verse{
+  font-size: clamp(18px, 4.8vw, 34px);
+  line-height: 1.25;
+}
+
+.scramble-field{
+  position: relative;
+  width: 100%;
+  max-width: 760px;
+  height: 100%;
+  min-height: 260px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+.scramble-word{
+  position: absolute;
+  min-width: 110px;
+  max-width: min(220px, calc(100% - 32px));
+  padding: 12px 18px;
+  border: none;
+  border-radius: 999px;
+  background: white;
+  color: var(--purple);
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 900;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.25);
+  cursor: pointer;
+  z-index: 2;
+}
+
+.scramble-word:active{
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 rgba(0,0,0,0.25);
+}
+
+.scramble-word.wrong{
+  background: #ffb3b3;
+  color: #7a1111;
+  animation: scrambleBlink 0.35s ease;
+}
+
+.scramble-popup{
+  position: absolute;
+  font-size: 24px;
+  font-weight: 900;
+  pointer-events: none;
+  z-index: 3;
+  animation: scrambleFloat 0.6s ease forwards;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.35);
+}
+
+.scramble-popup.good{
+  color: #ffd54f;
+}
+
+.scramble-popup.bad{
+  color: #ffb3b3;
+}
+
+@keyframes scrambleFloat{
+  0%{ opacity: 0; transform: translate(-50%, 0); }
+  20%{ opacity: 1; transform: translate(-50%, -4px); }
+  100%{ opacity: 0; transform: translate(-50%, -28px); }
+}
+
+@keyframes scrambleBlink{
+  0%, 100%{ transform: scale(1); }
+  25%{ transform: scale(1.05); }
+  50%{ transform: scale(0.98); }
+  75%{ transform: scale(1.04); }
+}
+
 /* Zone 3: coach panel band (target ~40%) */
 .learn-coach{
   flex: 0 0 40%;
@@ -364,18 +457,41 @@ text-wrap: balance;
 }
 
 .coach-actions{
+  flex: 1;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 14px;
   align-items: center;
   width: 100%;
-  max-width: 520px;
 }
 
 .learn-coach .carousel-main{
   flex: 0 0 auto;     /* 🚫 do NOT grow vertically */
   width: 100%;
   max-width: 520px;
+}
+
+.game-carousel-row{
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.game-carousel-row .carousel-main{
+  flex: 1;
+  max-width: none;
+}
+
+.game-carousel-row + .carousel-dots{
+  width: 100%;
+  max-width: 760px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
     /* tappable blanks */
@@ -444,7 +560,7 @@ text-wrap: balance;
       padding: 18px;
       text-align:left;
     }
-    .dialog h3{ margin:0 0 8px; font-size:20px; font-weight:900; }
+    .dialog h3{ margin:0 0 8px; font-size:20px; font-weight:900; text-align:center; }
     .dialog p{ margin:0 0 14px; opacity:0.92; line-height:1.35; }
     .dialog .row{ display:flex; gap: 12px; }
     .dlg-btn{
@@ -796,6 +912,7 @@ const Screen = {
   FINAL_RECALL: "final_recall",
   CELEBRATION: "celebration",
   PRACTICE: "practice",
+  GAME: "game"
 };
 
 const State = {
@@ -804,6 +921,11 @@ const State = {
   isSliding: false,
   transitionFromIdx: null,
   transitionToIdx: null,
+
+  activeGame: null,
+  gameRunning: false,
+  chainGame: null,
+  scrambleGame: null,
 
   // Learn progression
   listenDone: false,
@@ -834,6 +956,7 @@ const TITLE_OPTIONS = [
 ];
 
 const PRACTICE_GAMES = [
+  { title:"🧪 Test Game", desc:"Test the new game framework." },
   { title:"🧩 Verse Scramble", desc:"Tap the phrases in the correct order." },
   { title:"🔗 Verse Chain", desc:"Pick the next word to build the verse." },
   { title:"🚗 Traffic Tap", desc:"Tap the moving correct word chip." },
@@ -841,6 +964,538 @@ const PRACTICE_GAMES = [
   { title:"🚀 Rocket Verse", desc:"Tap each word to launch it into place." },
   { title:"🧱 Stack It", desc:"Drag phrases into the correct order." },
 ];
+
+const VERSE_CHAIN_DECOY_WORDS = [
+  "apple","banana","rocket","castle","dragon","puppy","kitten","turtle","panda","eagle",
+  "river","ocean","mountain","forest","garden","rainbow","thunder","snowflake","sunshine","comet",
+  "teacher","student","friend","family","hero","helper","leader","builder","artist","explorer",
+  "jump","run","walk","laugh","smile","share","listen","learn","play","build",
+  "brave","kind","strong","gentle","happy","thankful","careful","honest","curious","patient",
+  "bright","quiet","loud","soft","quick","slow","wild","safe","fresh","new",
+  "circle","square","triangle","ladder","bridge","pencil","paper","backpack","window","door",
+  "soccer","baseball","puzzle","cookie","popcorn","pizza","sandwich","cereal","honey","water",
+  "planet","star","moon","cloud","storm","breeze","shadow","flame","spark","stone",
+  "music","drum","guitar","violin","dance","story","comic","movie","camera","ticket",
+  "train","bus","bicycle","helmet","scooter","airplane","map","compass","lantern",
+  "gold","silver","crystal","treasure","coin","badge","trophy","medal","ribbon","crown"
+];
+
+const BIBLE_BOOKS = [
+  "Genesis","Exodus","Leviticus","Numbers","Deuteronomy",
+  "Joshua","Judges","Ruth","1 Samuel","2 Samuel","1 Kings","2 Kings",
+  "1 Chronicles","2 Chronicles","Ezra","Nehemiah","Esther","Job","Psalms",
+  "Proverbs","Ecclesiastes","Song of Solomon","Isaiah","Jeremiah","Lamentations",
+  "Ezekiel","Daniel","Hosea","Joel","Amos","Obadiah","Jonah","Micah","Nahum",
+  "Habakkuk","Zephaniah","Haggai","Zechariah","Malachi",
+  "Matthew","Mark","Luke","John","Acts","Romans","1 Corinthians","2 Corinthians",
+  "Galatians","Ephesians","Philippians","Colossians","1 Thessalonians","2 Thessalonians",
+  "1 Timothy","2 Timothy","Titus","Philemon","Hebrews","James","1 Peter","2 Peter",
+  "1 John","2 John","3 John","Jude","Revelation"
+];
+
+function chainPickRandomItems(arr, count, exclude = []){
+  const excluded = new Set(exclude.map(x => String(x).toLowerCase()));
+  const pool = arr.filter(x => !excluded.has(String(x).toLowerCase()));
+  shuffleArray(pool);
+  return pool.slice(0, count);
+}
+
+function chainVerseMetaFromId(verseId){
+  const parts = String(verseId || "").split("_").filter(Boolean);
+
+  let nums = [];
+  while (parts.length && /^\d+$/.test(parts[parts.length - 1])){
+    nums.unshift(parts.pop());
+  }
+
+  const bookSlug = parts.join(" ");
+  const book = bookSlug.replace(/\b\w/g, c => c.toUpperCase());
+
+  const chapter = Number(nums[0] || 1);
+  const verse = Number(nums[1] || 1);
+  const verseEnd = nums[2] ? Number(nums[2]) : null;
+
+  return { book, chapter, verse, verseEnd };
+}
+
+function chainMakeBookChoices(correctBook){
+  const choices = [
+    correctBook,
+    ...chainPickRandomItems(BIBLE_BOOKS, 3, [correctBook])
+  ];
+  return shuffleArray(choices);
+}
+
+function chainMakeReferenceChoices(correctChapter, correctVerse){
+  const correctRef = `${correctChapter}:${correctVerse}`;
+  const refs = new Set([correctRef]);
+
+  let tries = 0;
+  while (refs.size < 4 && tries < 200){
+    const chapterBump = Math.floor(Math.random() * 11) - 5;
+    const verseBump = Math.floor(Math.random() * 21) - 10;
+
+    let fakeChapter = correctChapter + chapterBump;
+    let fakeVerse = correctVerse + verseBump;
+
+    if (fakeChapter < 1) fakeChapter = 1 + Math.floor(Math.random() * 5);
+    if (fakeVerse < 1) fakeVerse = 1 + Math.floor(Math.random() * 10);
+
+    refs.add(`${fakeChapter}:${fakeVerse}`);
+    tries += 1;
+  }
+
+  return shuffleArray(Array.from(refs));
+}
+
+function chainSetRandomChoiceIndex(){
+  const st = State.chainGame;
+  if (!st || !st.choices.length){
+    if (st) st.choiceIndex = 0;
+    return;
+  }
+  st.choiceIndex = Math.floor(Math.random() * st.choices.length);
+}
+
+function scrambleWordTokenIndices(){
+  const out = [];
+  for (let i = 0; i < tokens.length; i++){
+    if (tokens[i].type === TokenType.WORD){
+      out.push(i);
+    }
+  }
+  return out;
+}
+
+function scrambleBuiltVerseNode(){
+  const p = document.createElement("p");
+  p.className = "verse scramble-verse";
+
+  const st = State.scrambleGame;
+  const builtCount = st?.builtCount || 0;
+  const wordIdxs = st?.wordTokenIndices || [];
+  const builtSet = new Set(wordIdxs.slice(0, builtCount));
+
+  for (let i = 0; i < tokens.length; i++){
+    const t = tokens[i];
+
+    if (t.type === TokenType.SPACE || t.type === TokenType.PUNCT || t.type === TokenType.OTHER){
+      p.appendChild(document.createTextNode(t.text));
+      continue;
+    }
+
+    if (builtSet.has(i)){
+      p.appendChild(document.createTextNode(t.text));
+    } else {
+      break;
+    }
+  }
+
+  if (!st?.done && builtCount > 0){
+    p.appendChild(document.createTextNode(" …"));
+  }
+
+  if (!builtCount){
+    p.innerHTML = `
+      Build the verse one word at a time.<br>
+      <span style="font-weight:600;">Tap the first word to start.</span>
+    `;
+  }
+
+  return p;
+}
+
+function scrambleMakeChoices(wordTokenIndices, correctTokenIndex){
+  const correctWord = tokens[correctTokenIndex].text;
+
+  const verseWordsLower = wordTokenIndices
+    .map(idx => tokens[idx].text.toLowerCase());
+
+  const pool = VERSE_CHAIN_DECOY_WORDS
+    .filter(word => word.toLowerCase() !== correctWord.toLowerCase())
+    .filter((word, i, arr) => arr.indexOf(word) === i)
+    .filter(word => !verseWordsLower.includes(word.toLowerCase()));
+
+  shuffleArray(pool);
+
+  return [correctWord, ...pool.slice(0, 2)];
+}
+
+function scrambleMakeBookChoices(correctBook){
+  const choices = [
+    correctBook,
+    ...chainPickRandomItems(BIBLE_BOOKS, 2, [correctBook])
+  ];
+  return shuffleArray(choices);
+}
+
+function scrambleMakeReferenceChoices(correctChapter, correctVerse){
+  const correctRef = `${correctChapter}:${correctVerse}`;
+  const refs = new Set([correctRef]);
+
+  let tries = 0;
+  while (refs.size < 3 && tries < 200){
+    const chapterBump = Math.floor(Math.random() * 11) - 5;
+    const verseBump = Math.floor(Math.random() * 21) - 10;
+
+    let fakeChapter = correctChapter + chapterBump;
+    let fakeVerse = correctVerse + verseBump;
+
+    if (fakeChapter < 1) fakeChapter = 1 + Math.floor(Math.random() * 5);
+    if (fakeVerse < 1) fakeVerse = 1 + Math.floor(Math.random() * 10);
+
+    refs.add(`${fakeChapter}:${fakeVerse}`);
+    tries += 1;
+  }
+
+  return shuffleArray(Array.from(refs));
+}
+
+function scrambleNextChoices(){
+  const st = State.scrambleGame;
+  if (!st) return;
+
+  if (st.phase === "words"){
+    const correctTokenIndex = st.wordTokenIndices[st.builtCount];
+    if (!Number.isFinite(correctTokenIndex)) return;
+    st.choices = scrambleMakeChoices(st.wordTokenIndices, correctTokenIndex);
+    return;
+  }
+
+  if (st.phase === "book"){
+    st.choices = scrambleMakeBookChoices(st.targetBook);
+    return;
+  }
+
+  if (st.phase === "ref"){
+    st.choices = scrambleMakeReferenceChoices(st.targetChapter, st.targetVerse);
+    return;
+  }
+
+  st.choices = [];
+}
+
+function scrambleRandomPositions(choices, fieldEl){
+  const st = State.scrambleGame;
+  const pad = 16;
+  const gap = 14;
+
+  const fieldRect = fieldEl?.getBoundingClientRect();
+  const fieldW = Math.max(260, Math.floor(fieldRect?.width || 320));
+  const fieldH = Math.max(240, Math.floor(fieldRect?.height || 240));
+
+  const measurer = document.createElement("div");
+  measurer.style.position = "absolute";
+  measurer.style.visibility = "hidden";
+  measurer.style.pointerEvents = "none";
+  measurer.style.left = "-9999px";
+  measurer.style.top = "-9999px";
+  document.body.appendChild(measurer);
+
+  function measureChoice(text){
+    const btn = document.createElement("button");
+    btn.className = "scramble-word";
+    btn.style.position = "absolute";
+    btn.style.left = "0";
+    btn.style.top = "0";
+    btn.style.maxWidth = `${Math.max(120, fieldW - (pad * 2))}px`;
+    btn.textContent = text;
+    measurer.appendChild(btn);
+
+    const rect = btn.getBoundingClientRect();
+    const size = {
+      w: Math.ceil(rect.width),
+      h: Math.ceil(rect.height)
+    };
+
+    btn.remove();
+    return size;
+  }
+
+  function overlaps(a, b){
+    return !(
+      a.x + a.w + gap <= b.x ||
+      b.x + b.w + gap <= a.x ||
+      a.y + a.h + gap <= b.y ||
+      b.y + b.h + gap <= a.y
+    );
+  }
+
+  function randBetween(min, max){
+    if (max <= min) return min;
+    return min + Math.random() * (max - min);
+  }
+
+  function makeZone(x1, x2, y1, y2){
+    return {
+      xMin: Math.round(x1 * fieldW),
+      xMax: Math.round(x2 * fieldW),
+      yMin: Math.round(y1 * fieldH),
+      yMax: Math.round(y2 * fieldH)
+    };
+  }
+
+  const layouts = [
+  [
+    makeZone(0.06, 0.26, 0.08, 0.20),
+    makeZone(0.54, 0.74, 0.34, 0.46),
+    makeZone(0.28, 0.48, 0.68, 0.80)
+  ],
+  [
+    makeZone(0.46, 0.66, 0.06, 0.18),
+    makeZone(0.12, 0.32, 0.36, 0.48),
+    makeZone(0.58, 0.78, 0.70, 0.82)
+  ],
+  [
+    makeZone(0.20, 0.40, 0.10, 0.22),
+    makeZone(0.56, 0.76, 0.38, 0.50),
+    makeZone(0.10, 0.30, 0.66, 0.78)
+  ],
+  [
+    makeZone(0.58, 0.78, 0.08, 0.20),
+    makeZone(0.30, 0.50, 0.40, 0.52),
+    makeZone(0.14, 0.34, 0.70, 0.82)
+  ],
+  [
+    makeZone(0.12, 0.32, 0.06, 0.18),
+    makeZone(0.48, 0.68, 0.36, 0.48),
+    makeZone(0.40, 0.60, 0.68, 0.80)
+  ]
+];
+  
+
+  let layoutIndex = Math.floor(Math.random() * layouts.length);
+  if (layouts.length > 1 && st?.lastLayoutIndex === layoutIndex){
+    layoutIndex = (layoutIndex + 1 + Math.floor(Math.random() * (layouts.length - 1))) % layouts.length;
+  }
+  if (st) st.lastLayoutIndex = layoutIndex;
+
+  const chosenLayout = layouts[layoutIndex];
+  const sizes = choices.map(measureChoice);
+  const positions = [];
+  const placed = [];
+
+  for (let i = 0; i < sizes.length; i++){
+    const size = sizes[i];
+    const zone = chosenLayout[i] || chosenLayout[0];
+
+    const minX = Math.max(pad, zone.xMin);
+    const maxX = Math.max(minX, Math.min(zone.xMax - size.w, fieldW - size.w - pad));
+    const minY = Math.max(pad, zone.yMin);
+    const maxY = Math.max(minY, Math.min(zone.yMax - size.h, fieldH - size.h - pad));
+
+    let placedRect = null;
+
+    for (let attempt = 0; attempt < 120; attempt++){
+      const rect = {
+        x: randBetween(minX, maxX),
+        y: randBetween(minY, maxY),
+        w: size.w,
+        h: size.h
+      };
+
+      const hit = placed.some(p => overlaps(rect, p));
+      if (!hit){
+        placedRect = rect;
+        break;
+      }
+    }
+
+    if (!placedRect){
+      const fallbackRect = {
+        x: minX,
+        y: minY,
+        w: size.w,
+        h: size.h
+      };
+
+      const hit = placed.some(p => overlaps(fallbackRect, p));
+      if (!hit){
+        placedRect = fallbackRect;
+      }
+    }
+
+    if (!placedRect){
+      for (let attempt = 0; attempt < 140; attempt++){
+        const rect = {
+          x: randBetween(pad, Math.max(pad, fieldW - size.w - pad)),
+          y: randBetween(pad, Math.max(pad, fieldH - size.h - pad)),
+          w: size.w,
+          h: size.h
+        };
+
+        const hit = placed.some(p => overlaps(rect, p));
+        if (!hit){
+          placedRect = rect;
+          break;
+        }
+      }
+    }
+
+    if (!placedRect){
+      placedRect = {
+        x: pad,
+        y: pad + (i * (size.h + gap)),
+        w: size.w,
+        h: size.h
+      };
+    }
+
+    placed.push(placedRect);
+    positions.push({
+      leftPx: Math.round(placedRect.x),
+      topPx: Math.round(placedRect.y)
+    });
+  }
+
+  measurer.remove();
+  return positions;
+}
+
+
+
+function scrambleShowPopup(field, x, y, text, good){
+  const pop = document.createElement("div");
+  pop.className = `scramble-popup ${good ? "good" : "bad"}`;
+  pop.textContent = text;
+  pop.style.left = `${x}px`;
+  pop.style.top = `${y}px`;
+  field.appendChild(pop);
+
+  setTimeout(() => {
+    pop.remove();
+  }, 650);
+}
+
+function startVerseScrambleGame(){
+  const wordTokenIndices = scrambleWordTokenIndices();
+  const meta = chainVerseMetaFromId(VERSE_ID);
+
+  State.scrambleGame = {
+    wordTokenIndices,
+    builtCount: 0,
+    choices: [],
+    positions: [],
+    done: false,
+    wrongChoice: null,
+    phase: "words",
+    showRef: false,
+    targetBook: meta.book,
+    targetChapter: meta.chapter,
+    targetVerse: meta.verse,
+    score: 0,
+    wrongGuesses: 0,
+    startedAt: performance.now(),
+    endedAt: 0,
+    lastLayoutIndex: -1
+  };
+
+  scrambleNextChoices();
+  State.scrambleGame.positions = [];
+}
+
+function scrambleRoundRefresh(){
+  const st = State.scrambleGame;
+  if (!st) return;
+  scrambleNextChoices();
+  st.positions = [];
+}
+
+function scrambleElapsedMs(){
+  const st = State.scrambleGame;
+  if (!st) return 0;
+  return (st.endedAt || performance.now()) - st.startedAt;
+}
+
+function scrambleFormatTime(ms){
+  const totalSeconds = Math.max(0, Math.round(ms / 1000));
+  const mins = Math.floor(totalSeconds / 60);
+  const secs = totalSeconds % 60;
+  return mins ? `${mins}m ${secs}s` : `${secs}s`;
+}
+
+function scrambleChoose(choice, btnEl, fieldEl){
+  const st = State.scrambleGame;
+  if (!st || st.done) return;
+
+  let correctChoice = "";
+
+  if (st.phase === "words"){
+    const correctTokenIndex = st.wordTokenIndices[st.builtCount];
+    if (!Number.isFinite(correctTokenIndex)) return;
+    correctChoice = tokens[correctTokenIndex].text;
+  } else if (st.phase === "book"){
+    correctChoice = st.targetBook;
+  } else if (st.phase === "ref"){
+    correctChoice = `${st.targetChapter}:${st.targetVerse}`;
+  } else {
+    return;
+  }
+
+  const rectField = fieldEl.getBoundingClientRect();
+  const rectBtn = btnEl.getBoundingClientRect();
+  const popX = rectBtn.left - rectField.left + (rectBtn.width / 2);
+  const popY = rectBtn.top - rectField.top - 6;
+
+  if (choice !== correctChoice){
+    st.score -= 25;
+    st.wrongGuesses += 1;
+    st.wrongChoice = choice;
+    scrambleShowPopup(fieldEl, popX, popY, "-25", false);
+    render();
+
+    setTimeout(() => {
+      if (State.scrambleGame && State.scrambleGame.wrongChoice === choice){
+        State.scrambleGame.wrongChoice = null;
+        render();
+      }
+    }, 350);
+
+    return;
+  }
+
+  st.score += 100;
+  st.wrongChoice = null;
+  scrambleShowPopup(fieldEl, popX, popY, "+100", true);
+
+  if (st.phase === "words"){
+    st.builtCount += 1;
+
+    if (st.builtCount >= st.wordTokenIndices.length){
+      st.phase = "book";
+      setTimeout(() => {
+        scrambleRoundRefresh();
+        render();
+      }, 180);
+      return;
+    }
+
+    setTimeout(() => {
+      scrambleRoundRefresh();
+      render();
+    }, 180);
+    return;
+  }
+
+  if (st.phase === "book"){
+    st.phase = "ref";
+    setTimeout(() => {
+      scrambleRoundRefresh();
+      render();
+    }, 180);
+    return;
+  }
+
+  if (st.phase === "ref"){
+    st.phase = "done";
+    st.done = true;
+    st.showRef = true;
+    st.endedAt = performance.now();
+    st.choices = [];
+    st.positions = [];
+    render();
+  }
+}
 
 function resetLearn(goTitle=false){
   State.listenDone = false;
@@ -870,7 +1525,8 @@ function screenToIndex(screen){
     Screen.HIDE,
     Screen.FINAL_RECALL,
     Screen.CELEBRATION,
-    Screen.PRACTICE
+    Screen.PRACTICE,
+    Screen.GAME
   ];
   return order.indexOf(screen);
 }
@@ -959,13 +1615,32 @@ function practiceNext(){
   State.practiceIndex = (State.practiceIndex + 1) % PRACTICE_GAMES.length;
   render();
 }
+
 function practiceRun(){
+
   const g = PRACTICE_GAMES[State.practiceIndex];
+
+  if (g.title.includes("Test Game")){
+    startGame("test");
+    return;
+  }
+
+  if (g.title.includes("Verse Scramble")){
+    startGame("scramble");
+    return;
+  }
+
+  if (g.title.includes("Verse Chain")){
+    startGame("chain");
+    return;
+  }
+
   showDialog({
     title: g.title,
     body: "Coming soon 🙂",
     actions: [dlgBtn("OK", {onClick: closeDialog})]
   });
+
 }
 
 /* Build verse display with hidden items */
@@ -984,6 +1659,7 @@ function isTokenHidden(tokenIdx){
   }
   return false;
 }
+
 function hideInfoForToken(tokenIdx){
   for (let i = 0; i < Math.min(State.hideCount, planMixed.length); i++){
     const item = planMixed[i];
@@ -991,6 +1667,8 @@ function hideInfoForToken(tokenIdx){
   }
   return null;
 }
+
+
 
 function verseNode(){
   const p = document.createElement("p");
@@ -1285,26 +1963,34 @@ function renderNav(){
     </button>
   `;
 
+const homeBtn = `
+  <button class="nav-btn no-zoom" id="btnHome" title="Home">
+    ${SVG_BACK}
+  </button>
+`;
+
   const nextBtn = `
     <button class="nav-btn no-zoom" id="btnNext" title="Next">
       ${SVG_FORWARD}
     </button>
   `;
 
-  // left/back destinations
-  if (State.screen === Screen.TITLE) left = ""; // no back from title (acts like home)
-  else left = backBtn;
+// left/back destinations
+if (State.screen === Screen.TITLE) left = "";
+else if (State.screen === Screen.GAME) left = homeBtn;
+else left = backBtn;
 
-  // center label
-  if (State.screen === Screen.TITLE) center = "HOME";
-  if (State.screen === Screen.LISTEN) center = "LISTEN";
-  if (State.screen === Screen.ECHO) center = "ECHO";
-  if (State.screen === Screen.HIDE) center = "MEMORIZE";
-  if (State.screen === Screen.FINAL_RECALL) center = "FINAL";
-  if (State.screen === Screen.PRACTICE) center = "PRACTICE";
+// center label
+if (State.screen === Screen.TITLE) center = "HOME";
+if (State.screen === Screen.LISTEN) center = "LISTEN";
+if (State.screen === Screen.ECHO) center = "ECHO";
+if (State.screen === Screen.HIDE) center = "MEMORIZE";
+if (State.screen === Screen.FINAL_RECALL) center = "FINAL";
+if (State.screen === Screen.PRACTICE) center = "PRACTICE";
+if (State.screen === Screen.GAME) center = `<button class="nav-btn no-zoom" id="btnHelp" title="Help" style="width:auto; min-width:88px; padding:0 16px; font-weight:900;">HELP</button>`;
 
-  // right/next destinations (gated where needed)
-  right = nextBtn;
+// right/next destinations
+right = (State.screen === Screen.GAME) ? "" : nextBtn;
 
   navBar.innerHTML = `
     <div style="display:flex; gap:12px; align-items:center;">
@@ -1330,6 +2016,34 @@ function renderNav(){
         else if (State.screen === Screen.FINAL_RECALL) go(Screen.HIDE);
         else if (State.screen === Screen.PRACTICE) go(Screen.TITLE);
         else go(Screen.TITLE);
+    };
+  }
+
+  const btnHome = document.getElementById("btnHome");
+  if (btnHome){
+    btnHome.onclick = () => {
+      stopGame();
+      go(Screen.PRACTICE);
+    };
+  }
+
+  const btnHelp = document.getElementById("btnHelp");
+  if (btnHelp){
+    btnHelp.onclick = () => {
+      if (State.activeGame === "scramble"){
+        showDialog({
+          title: "How to Play Verse Scramble",
+          body: "Tap the correct next word in the verse. Three word choices appear at a time. One is correct. Try to score as many points as you can. After the verse is finished, choose the correct Bible book and then the correct chapter and verse.",
+          actions: [dlgBtn("Close", {onClick: closeDialog})]
+        });
+        return;
+      }
+
+      showDialog({
+        title: "How to Play Verse Chain",
+        body: "Use the arrows to look through the choices. Tap the big word when you think it is correct. First build the whole verse. Then choose the correct Bible book. Then choose the correct chapter and verse.",
+        actions: [dlgBtn("Close", {onClick: closeDialog})]
+      });
     };
   }
 
@@ -1373,6 +2087,431 @@ function makeSlide({idx, bg, navHidden=false, inner}){
   s.appendChild(inner);
   return s;
 }
+
+
+/* =========================================================
+   Game Framework
+========================================================= */
+
+const games = {};
+
+function registerGame(def){
+  games[def.id] = def;
+}
+
+function startGame(id){
+  const game = games[id];
+  if (!game) return;
+
+  State.activeGame = id;
+  State.gameRunning = true;
+
+  go(Screen.GAME);
+}
+
+function stopGame(){
+  State.activeGame = null;
+  State.gameRunning = false;
+  State.chainGame = null;
+  State.scrambleGame = null;
+}
+
+registerGame({
+  id: "test",
+  title: "Test Game",
+  description: "This is a placeholder game.",
+  start(stage){
+
+    const box = document.createElement("div");
+    box.style.fontSize = "28px";
+    box.style.fontWeight = "900";
+    box.textContent = "Game framework working!";
+
+    stage.appendChild(box);
+  }
+});
+
+function chainWordTokenIndices(){
+  const out = [];
+  for (let i = 0; i < tokens.length; i++){
+    if (tokens[i].type === TokenType.WORD){
+      out.push(i);
+    }
+  }
+  return out;
+}
+
+function chainBuiltVerseNode(){
+  const p = document.createElement("p");
+  p.className = "verse";
+
+  const st = State.chainGame;
+  const builtCount = st?.builtCount || 0;
+  const wordIdxs = st?.wordTokenIndices || [];
+
+  const builtSet = new Set(wordIdxs.slice(0, builtCount));
+
+  for (let i = 0; i < tokens.length; i++){
+    const t = tokens[i];
+
+    if (t.type === TokenType.SPACE || t.type === TokenType.PUNCT || t.type === TokenType.OTHER){
+      p.appendChild(document.createTextNode(t.text));
+      continue;
+    }
+
+    if (builtSet.has(i)){
+      p.appendChild(document.createTextNode(t.text));
+    } else {
+      break;
+    }
+  }
+
+  if (!st?.done && builtCount > 0){
+    p.appendChild(document.createTextNode(" …"));
+  }
+
+  if (!builtCount){
+    p.innerHTML = `
+      Build the verse one word at a time.<br>
+      <span style="font-weight:600;">Tap the first word to start.</span>
+    `;
+  }
+
+  return p;
+}
+
+function chainMakeChoices(wordTokenIndices, correctTokenIndex){
+  const correctWord = tokens[correctTokenIndex].text;
+
+  const verseWordsLower = wordTokenIndices
+    .map(idx => tokens[idx].text.toLowerCase());
+
+  const pool = VERSE_CHAIN_DECOY_WORDS
+    .filter(word => word.toLowerCase() !== correctWord.toLowerCase())
+    .filter((word, i, arr) => arr.indexOf(word) === i)
+    .filter(word => !verseWordsLower.includes(word.toLowerCase()));
+
+  shuffleArray(pool);
+
+  const choices = [correctWord, ...pool.slice(0, 3)];
+  return shuffleArray(choices);
+}
+
+
+function startVerseChainGame(){
+  const wordTokenIndices = chainWordTokenIndices();
+
+  const meta = chainVerseMetaFromId(VERSE_ID);
+
+  State.chainGame = {
+    wordTokenIndices,
+    builtCount: 0,
+    choices: [],
+    choiceIndex: 0,
+    done: false,
+    wrongChoice: null,
+    phase: "words",
+    showRef: false,
+    targetBook: meta.book,
+    targetChapter: meta.chapter,
+    targetVerse: meta.verse,
+  };
+
+  const firstTokenIndex = wordTokenIndices[0];
+  if (Number.isFinite(firstTokenIndex)){
+    State.chainGame.choices = chainMakeChoices(wordTokenIndices, firstTokenIndex);
+    chainSetRandomChoiceIndex();
+  }
+}
+
+function chainPrevChoice(){
+  const st = State.chainGame;
+  if (!st || st.done || !st.choices.length) return;
+  st.choiceIndex = (st.choiceIndex - 1 + st.choices.length) % st.choices.length;
+  render();
+}
+
+function chainNextChoice(){
+  const st = State.chainGame;
+  if (!st || st.done || !st.choices.length) return;
+  st.choiceIndex = (st.choiceIndex + 1) % st.choices.length;
+  render();
+}
+
+function chainCurrentChoice(){
+  const st = State.chainGame;
+  if (!st || !st.choices.length) return "";
+  return st.choices[st.choiceIndex];
+}
+
+function chainChoose(word){
+  const st = State.chainGame;
+  if (!st || st.done) return;
+
+  if (st.phase === "words"){
+    const correctTokenIndex = st.wordTokenIndices[st.builtCount];
+    if (!Number.isFinite(correctTokenIndex)) return;
+
+    const correctWord = tokens[correctTokenIndex].text;
+
+    if (word === correctWord){
+      st.builtCount += 1;
+      st.wrongChoice = null;
+
+      if (st.builtCount >= st.wordTokenIndices.length){
+        st.phase = "book";
+        st.choices = chainMakeBookChoices(st.targetBook);
+        chainSetRandomChoiceIndex();
+        render();
+        return;
+      }
+
+      const nextTokenIndex = st.wordTokenIndices[st.builtCount];
+      st.choices = chainMakeChoices(st.wordTokenIndices, nextTokenIndex);
+      chainSetRandomChoiceIndex();
+      render();
+      return;
+    }
+
+    st.wrongChoice = word;
+    render();
+
+    setTimeout(() => {
+      if (State.chainGame && State.chainGame.wrongChoice === word){
+        State.chainGame.wrongChoice = null;
+        render();
+      }
+    }, 350);
+
+    return;
+  }
+
+  if (st.phase === "book"){
+    if (word === st.targetBook){
+      st.phase = "ref";
+      st.wrongChoice = null;
+      st.choices = chainMakeReferenceChoices(st.targetChapter, st.targetVerse);
+      chainSetRandomChoiceIndex();
+      render();
+      return;
+    }
+
+    st.wrongChoice = word;
+    render();
+
+    setTimeout(() => {
+      if (State.chainGame && State.chainGame.wrongChoice === word){
+        State.chainGame.wrongChoice = null;
+        render();
+      }
+    }, 350);
+
+    return;
+  }
+
+  if (st.phase === "ref"){
+    const correctRef = `${st.targetChapter}:${st.targetVerse}`;
+
+    if (word === correctRef){
+      st.phase = "done";
+      st.done = true;
+      st.showRef = true;
+      st.wrongChoice = null;
+      st.choices = [];
+      render();
+      return;
+    }
+
+    st.wrongChoice = word;
+    render();
+
+    setTimeout(() => {
+      if (State.chainGame && State.chainGame.wrongChoice === word){
+        State.chainGame.wrongChoice = null;
+        render();
+      }
+    }, 350);
+
+    return;
+  }
+}
+
+registerGame({
+  id: "chain",
+  title: "Verse Chain",
+  description: "Use the arrows to find the next word, then tap it.",
+  start(stage){
+    if (!State.chainGame){
+      startVerseChainGame();
+    }
+
+    const st = State.chainGame;
+
+    stage.innerHTML = "";
+
+    const verseBox = document.createElement("div");
+    verseBox.style.width = "100%";
+    verseBox.style.maxWidth = "760px";
+    verseBox.style.minHeight = "140px";
+    verseBox.style.display = "flex";
+    verseBox.style.alignItems = "center";
+    verseBox.style.justifyContent = "center";
+    verseBox.style.textAlign = "center";
+    verseBox.appendChild(chainBuiltVerseNode());
+
+    stage.appendChild(verseBox);
+
+    const gameLayout = stage.closest(".learn-layout");
+    const coachTitle = gameLayout?.querySelector("#gameCoachTitle");
+    const coachActions = gameLayout?.querySelector("#gameCoachActions");
+
+
+    if (coachTitle) coachTitle.textContent = "";
+
+    if (coachActions){
+      coachActions.innerHTML = "";
+
+    if (st.done){
+      const doneMsg = document.createElement("div");
+      doneMsg.className = "small";
+      doneMsg.style.fontWeight = "900";
+      doneMsg.style.textAlign = "center";
+      doneMsg.style.maxWidth = "520px";
+      doneMsg.textContent = "Great job! You finished the verse! Tap Back below to go back to Practice Games.";
+      coachActions.appendChild(doneMsg);
+      return;
+    }
+
+      const row = document.createElement("div");
+      row.className = "game-carousel-row";
+
+      const prevBtn = document.createElement("button");
+      prevBtn.className = "carousel-arrow no-zoom";
+      prevBtn.type = "button";
+      prevBtn.innerHTML = SVG_BACK;
+      prevBtn.onclick = (e) => {
+        e.stopPropagation();
+        chainPrevChoice();
+      };
+
+      const mainBtn = document.createElement("button");
+      mainBtn.className = "carousel-main no-zoom";
+      mainBtn.type = "button";
+      mainBtn.textContent = chainCurrentChoice();
+      mainBtn.style.margin = "0";
+
+      if (st.wrongChoice === chainCurrentChoice()){
+        mainBtn.style.background = "#ffb3b3";
+        mainBtn.style.color = "#7a1111";
+        mainBtn.style.boxShadow = "0 4px 0 rgba(122,17,17,0.25)";
+      }
+
+      mainBtn.onclick = (e) => {
+        e.stopPropagation();
+        chainChoose(chainCurrentChoice());
+      };
+
+      const nextBtn = document.createElement("button");
+      nextBtn.className = "carousel-arrow no-zoom";
+      nextBtn.type = "button";
+      nextBtn.innerHTML = SVG_FORWARD;
+      nextBtn.onclick = (e) => {
+        e.stopPropagation();
+        chainNextChoice();
+      };
+
+      row.appendChild(prevBtn);
+      row.appendChild(mainBtn);
+      row.appendChild(nextBtn);
+      coachActions.appendChild(row);
+
+      const dots = document.createElement("div");
+      dots.className = "carousel-dots";
+      dots.innerHTML = st.choices.map((_, i) =>
+        `<span class="carousel-dot ${i === st.choiceIndex ? "active" : ""}"></span>`
+      ).join("");
+
+      coachActions.appendChild(dots);
+    }
+  }
+});
+
+registerGame({
+  id: "scramble",
+  title: "Verse Scramble",
+  description: "Tap the correct next word.",
+  start(stage){
+    if (!State.scrambleGame){
+      startVerseScrambleGame();
+    }
+
+    const st = State.scrambleGame;
+    stage.innerHTML = "";
+
+    const verseBox = document.createElement("div");
+    verseBox.style.width = "100%";
+    verseBox.style.maxWidth = "760px";
+    verseBox.style.minHeight = "90px";
+    verseBox.style.display = "flex";
+    verseBox.style.alignItems = "center";
+    verseBox.style.justifyContent = "center";
+    verseBox.style.textAlign = "center";
+    verseBox.appendChild(scrambleBuiltVerseNode());
+    stage.appendChild(verseBox);
+
+    const gameLayout = stage.closest(".learn-layout");
+    const coachTitle = gameLayout?.querySelector("#gameCoachTitle");
+    const coachActions = gameLayout?.querySelector("#gameCoachActions");
+
+    if (coachTitle) coachTitle.textContent = "";
+
+    if (!coachActions) return;
+    coachActions.innerHTML = "";
+
+    if (st.done){
+      const doneMsg = document.createElement("div");
+      doneMsg.className = "small";
+      doneMsg.style.fontWeight = "900";
+      doneMsg.style.textAlign = "center";
+      doneMsg.style.maxWidth = "520px";
+      doneMsg.innerHTML = `
+        Score: ${st.score}<br>
+        Incorrect guesses: ${st.wrongGuesses}<br>
+        Total time: ${scrambleFormatTime(scrambleElapsedMs())}
+      `;
+      coachActions.appendChild(doneMsg);
+      return;
+    }
+
+    const field = document.createElement("div");
+    field.className = "scramble-field";
+
+    if (!st.positions.length || st.positions.length !== st.choices.length){
+      st.positions = scrambleRandomPositions(st.choices, field);
+    }
+
+    st.choices.forEach((choice, i) => {
+      const btn = document.createElement("button");
+      btn.className = "scramble-word no-zoom";
+      if (st.wrongChoice === choice) btn.classList.add("wrong");
+      btn.type = "button";
+      btn.textContent = choice;
+
+      const pos = st.positions[i] || { leftPx: 20, topPx: 20 };
+      btn.style.left = `${pos.leftPx}px`;
+      btn.style.top = `${pos.topPx}px`;
+
+      btn.onclick = (e) => {
+        e.stopPropagation();
+        scrambleChoose(choice, btn, field);
+      };
+
+      field.appendChild(btn);
+    });
+
+    coachActions.appendChild(field);
+  }
+});
 
 function screenIntro(idx){
   const wrap = document.createElement("div");
@@ -1797,6 +2936,59 @@ function screenPractice(idx){
   return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner: wrap});
 }
 
+function screenGame(idx){
+
+  const inner = document.createElement("div");
+  inner.style.display = "flex";
+  inner.style.flexDirection = "column";
+  inner.style.height = "100%";
+
+  const game = games[State.activeGame];
+
+  
+  const showGameRef =
+    (State.activeGame === "chain" && State.chainGame?.showRef) ||
+    (State.activeGame === "scramble" && State.scrambleGame?.showRef) ||
+    (State.activeGame !== "chain" && State.activeGame !== "scramble");
+
+  inner.innerHTML = `
+    <div class="learn-layout ${State.activeGame === "scramble" ? "game-scramble" : ""}">
+
+      <div class="learn-ref">
+        ${showGameRef ? `<div class="verse-ref-pill">${VERSE_REF}</div>` : ``}
+      </div>
+
+      <div class="learn-verse">
+        <div id="gameStage" style="width:100%;"></div>
+      </div>
+
+      <div class="learn-coach">
+        <div>
+          <div class="coach-title" id="gameCoachTitle"></div>
+        </div>
+
+        <div class="coach-actions" id="gameCoachActions"></div>
+      </div>
+
+    </div>
+  `;
+
+  const stage = inner.querySelector("#gameStage");
+
+  if (game && typeof game.start === "function"){
+    game.start(stage);
+  }
+
+  return makeSlide({
+    idx,
+    bg: "var(--purple)",
+    navHidden: false,
+    inner
+  });
+}
+
+
+
 /* Render */
 function render(){
   app.innerHTML = "";
@@ -1812,7 +3004,7 @@ function render(){
 
   const uniq = Array.from(new Set(indicesToRender.filter(i => i !== null && i >= 0)));
   for (const idx of uniq){
-    const screen = ["intro","title","listen","echo","hide","final_recall","celebration","practice"][idx];
+    const screen = ["intro","title","listen","echo","hide","final_recall","celebration","practice","game"][idx];
     let slide = null;
     if (screen === Screen.INTRO) slide = screenIntro(idx);
     if (screen === Screen.TITLE) slide = screenTitle(idx);
@@ -1822,6 +3014,7 @@ function render(){
     if (screen === Screen.FINAL_RECALL) slide = screenFinalRecall(idx);
     if (screen === Screen.CELEBRATION) slide = screenCelebration(idx);
     if (screen === Screen.PRACTICE) slide = screenPractice(idx);
+    if (screen === Screen.GAME) slide = screenGame(idx);
     if (slide) app.appendChild(slide);
   }
 
