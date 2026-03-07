@@ -317,6 +317,10 @@
 border-radius: 18px;
 }
 
+.learn-verse.echo-green{
+  background: #3fa66b;
+}
+
 /* Zone 3: coach panel band (target ~40%) */
 .learn-coach{
   flex: 0 0 40%;
@@ -392,6 +396,10 @@ text-wrap: balance;
     .hintable.emoji{ background: rgba(0,0,0,0.30); }
     .hintable.underscore{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
 
+    .revealed-word{
+      color: #ffd54f;
+    }
+
     /* simple progress bar (quiz-esque) */
     .timer-wrap{
       width:100%;
@@ -466,6 +474,46 @@ text-wrap: balance;
       user-select: none;
       -webkit-touch-callout: none;
     }
+
+.celebration-screen{
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 24px 18px 110px;
+  text-align: center;
+  overflow: hidden;
+}
+
+.celebration-screen h2{
+  font-size: clamp(28px, 7vw, 52px);
+  font-weight: 900;
+  margin: 0 0 16px;
+  text-wrap: balance;
+  position: relative;
+  z-index: 2;
+}
+
+.celebration-actions{
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: min(420px, 100%);
+  position: relative;
+  z-index: 2;
+}
+
+#fireworksCanvas{
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+}
+
   </style>
 </head>
 <body>
@@ -745,6 +793,8 @@ const Screen = {
   LISTEN: "listen",
   ECHO: "echo",
   HIDE: "hide",
+  FINAL_RECALL: "final_recall",
+  CELEBRATION: "celebration",
   PRACTICE: "practice",
 };
 
@@ -752,14 +802,24 @@ const State = {
   screen: Screen.INTRO,
   slideX: 0,                // numeric index used for transforms
   isSliding: false,
+  transitionFromIdx: null,
+  transitionToIdx: null,
 
   // Learn progression
   listenDone: false,
   echoDone: false,
    echoIndex: 0,
+   echoSpeaking: false,
   hideCount: 0,
   revealedTokenIdx: new Set(),
-
+  sayVerseActive: false,
+  sayVerseStartedAt: 0,
+  sayVerseDurationMs: 0,
+  finalRecallActive: false,
+  finalRecallStartedAt: 0,
+  finalRecallDurationMs: 0,
+  finalRecallDone: false,
+  fireworksTimer: null,
   // Title carousel
   titleOptionIndex: 0,
 
@@ -788,6 +848,12 @@ function resetLearn(goTitle=false){
   State.hideCount = 0;
   State.revealedTokenIdx = new Set();
   reshuffleHidePlan();
+  State.finalRecallActive = false;
+  State.finalRecallStartedAt = 0;
+  State.finalRecallDurationMs = 0;
+  State.finalRecallDone = false;
+  stopFireworks();
+  
   try { audioEl.pause(); audioEl.currentTime = 0; } catch(e){}
   if (goTitle) go(Screen.TITLE);
   render();
@@ -796,7 +862,16 @@ function resetLearn(goTitle=false){
 /* Slide navigation */
 function screenToIndex(screen){
   // order matters for sliding
-  const order = [Screen.INTRO, Screen.TITLE, Screen.LISTEN, Screen.ECHO, Screen.HIDE, Screen.PRACTICE];
+  const order = [
+    Screen.INTRO,
+    Screen.TITLE,
+    Screen.LISTEN,
+    Screen.ECHO,
+    Screen.HIDE,
+    Screen.FINAL_RECALL,
+    Screen.CELEBRATION,
+    Screen.PRACTICE
+  ];
   return order.indexOf(screen);
 }
 
@@ -806,7 +881,6 @@ function go(nextScreen){
 
   const fromIdx = screenToIndex(from);
   const toIdx = screenToIndex(nextScreen);
-  const dir = toIdx > fromIdx ? 1 : -1;
 
   if (State.isSliding) return;
   State.isSliding = true;
@@ -821,19 +895,31 @@ function go(nextScreen){
     State.revealedTokenIdx = new Set();
   }
 
-  State.screen = nextScreen;
-  render(); // render with both slides
+  // Track the exact screens involved in this transition
+  State.transitionFromIdx = fromIdx;
+  State.transitionToIdx = toIdx;
 
-  // kick transition next tick
+  // Keep the old screen centered first
+  State.slideX = fromIdx;
+
+  // Update to the new logical screen, but don't jump visually yet
+  State.screen = nextScreen;
+  render();
+
+  // On the next frame, slide to the new screen
   requestAnimationFrame(() => {
-    State.slideX += dir;
+    State.slideX = toIdx;
     updateSlideTransforms();
+
     setTimeout(() => {
       State.isSliding = false;
-      render(); // prune to current only for perf
+      State.transitionFromIdx = null;
+      State.transitionToIdx = null;
+      render();
     }, 340);
   });
 }
+
 
 /* If you jump directly (no transition), call this */
 function setScreen(screen){
@@ -916,7 +1002,14 @@ function verseNode(){
       continue;
     }
     if (!isTokenHidden(i)){
-      p.appendChild(document.createTextNode(t.text));
+      if (State.revealedTokenIdx.has(i)){
+        const span = document.createElement("span");
+        span.className = "revealed-word";
+        span.textContent = t.text;
+        p.appendChild(span);
+      } else {
+        p.appendChild(document.createTextNode(t.text));
+      }
       continue;
     }
     const info = hideInfoForToken(i);
@@ -925,23 +1018,53 @@ function verseNode(){
     span.textContent = info?.type === "emoji"
       ? (info.emoji || "❓")
       : underscoresForWord(t.text);
+
     span.onclick = () => {
-      // reveal via dialog, and allow "Reveal" that persists
-      showDialog({
-        title: "Reveal",
-        body: t.text,
-        actions: [
-          dlgBtn("Reveal", { onClick: () => { State.revealedTokenIdx.add(i); closeDialog(); render(); } }),
-          dlgBtn("Close", { secondary:true, onClick: closeDialog }),
-        ]
-      });
+
+      // mark revealed in state
+      State.revealedTokenIdx.add(i);
+
+      // create yellow revealed word element
+      const revealed = document.createElement("span");
+      revealed.className = "revealed-word";
+      revealed.textContent = t.text;
+
+      // replace the blank directly without re-rendering the screen
+      span.replaceWith(revealed);
+
     };
+      
+
     p.appendChild(span);
   }
   return p;
 }
 
+function finalRecallNode(){
+  const p = document.createElement("p");
+  p.className = "verse";
 
+  for (let i = 0; i < tokens.length; i++){
+    const t = tokens[i];
+
+    if (t.type === TokenType.SPACE){
+      p.appendChild(document.createTextNode(t.text));
+      continue;
+    }
+
+    if (t.type === TokenType.WORD){
+      const span = document.createElement("span");
+      span.className = "hintable no-zoom underscore";
+      span.textContent = underscoresForWord(t.text);
+      p.appendChild(span);
+      continue;
+    }
+
+    p.appendChild(document.createTextNode(t.text));
+  }
+
+  return p;
+}
 
 function listenPlay(){
   setAudioSrc(AUDIO_FILE);
@@ -994,13 +1117,28 @@ function waitForDuration(timeoutMs = 2000){
   });
 }
 
+function getSayVersePct(){
+  if (!State.sayVerseActive || !State.sayVerseDurationMs) return 1;
+
+  const elapsed = performance.now() - State.sayVerseStartedAt;
+  return Math.max(0, 1 - elapsed / State.sayVerseDurationMs);
+}
+
+function getFinalRecallPct(){
+  if (!State.finalRecallActive || !State.finalRecallDurationMs) return 1;
+
+  const elapsed = performance.now() - State.finalRecallStartedAt;
+  return Math.max(0, 1 - elapsed / State.finalRecallDurationMs);
+}
+
 
 let echoCancelToken = 0;
 async function runEchoSequence(){
   const my = ++echoCancelToken;
   State.echoDone = false;
-  render();
+  State.echoSpeaking = false;
   State.echoIndex = 0;
+  render();
 
   for (let i = 0; i < ECHO_PARTS.length; i++){
     if (my !== echoCancelToken) return;
@@ -1028,10 +1166,16 @@ render();
       audioEl.addEventListener("ended", onEnd);
     });
 
+    State.echoSpeaking = true;
+    render();
+
     // Give the child time to repeat: duration × 1.25 (fallback 2s if unknown)
     const d = await waitForDuration();
     const repeatMs = (isFinite(d) && d > 0) ? (d * 1.25 * 1000) : 2000;
     await new Promise(r => setTimeout(r, repeatMs));
+
+    State.echoSpeaking = false;
+    render();
   }
 
   // restore main verse audio for later
@@ -1040,10 +1184,84 @@ render();
   render();
 }
 
+function stopFireworks(){
+  if (State.fireworksTimer){
+    clearInterval(State.fireworksTimer);
+    State.fireworksTimer = null;
+  }
+}
+
+function startFireworks(canvas){
+  stopFireworks();
+
+  const ctx = canvas.getContext("2d");
+  const particles = [];
+
+  function resize(){
+    canvas.width = canvas.clientWidth * window.devicePixelRatio;
+    canvas.height = canvas.clientHeight * window.devicePixelRatio;
+    ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+  }
+
+  resize();
+  window.addEventListener("resize", resize);
+
+  function burst(){
+    const x = Math.random() * canvas.clientWidth;
+    const y = 80 + Math.random() * (canvas.clientHeight * 0.45);
+
+    for (let i = 0; i < 28; i++){
+      const angle = (Math.PI * 2 * i) / 28;
+      const speed = 2 + Math.random() * 3.5;
+      particles.push({
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 40 + Math.random() * 20,
+        size: 2 + Math.random() * 3
+      });
+    }
+  }
+
+  burst();
+  State.fireworksTimer = setInterval(burst, 1400);
+
+  function tick(){
+    ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+
+    for (let i = particles.length - 1; i >= 0; i--){
+      const p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vy += 0.04;
+      p.life -= 1;
+
+      if (p.life <= 0){
+        particles.splice(i, 1);
+        continue;
+      }
+
+      ctx.globalAlpha = Math.max(0, p.life / 60);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fillStyle = ["#ffd54f", "#ff8a65", "#81c784", "#64b5f6", "#ffffff"][i % 5];
+      ctx.fill();
+    }
+
+    ctx.globalAlpha = 1;
+
+    if (State.screen === Screen.CELEBRATION){
+      requestAnimationFrame(tick);
+    }
+  }
+
+  requestAnimationFrame(tick);
+}
+
 /* Nav rendering */
 function renderNav(){
   // Always show nav except intro/title? Your other apps hide nav on intro.
-  const show = (State.screen !== Screen.INTRO);
+  const show = (State.screen !== Screen.INTRO && State.screen !== Screen.CELEBRATION);
   navBar.style.display = show ? "flex" : "none";
   if (!show){
     navBar.innerHTML = "";
@@ -1082,6 +1300,7 @@ function renderNav(){
   if (State.screen === Screen.LISTEN) center = "LISTEN";
   if (State.screen === Screen.ECHO) center = "ECHO";
   if (State.screen === Screen.HIDE) center = "MEMORIZE";
+  if (State.screen === Screen.FINAL_RECALL) center = "FINAL";
   if (State.screen === Screen.PRACTICE) center = "PRACTICE";
 
   // right/next destinations (gated where needed)
@@ -1105,12 +1324,12 @@ function renderNav(){
   const btnBack = document.getElementById("btnBack");
   if (btnBack){
     btnBack.onclick = () => {
-      if (State.isSliding) return;
-      if (State.screen === Screen.LISTEN) go(Screen.TITLE);
-      else if (State.screen === Screen.ECHO) go(Screen.LISTEN);
-      else if (State.screen === Screen.HIDE) go(Screen.ECHO);
-      else if (State.screen === Screen.PRACTICE) go(Screen.TITLE);
-      else go(Screen.TITLE);
+        if (State.screen === Screen.LISTEN) go(Screen.TITLE);
+        else if (State.screen === Screen.ECHO) go(Screen.LISTEN);
+        else if (State.screen === Screen.HIDE) go(Screen.ECHO);
+        else if (State.screen === Screen.FINAL_RECALL) go(Screen.HIDE);
+        else if (State.screen === Screen.PRACTICE) go(Screen.TITLE);
+        else go(Screen.TITLE);
     };
   }
 
@@ -1118,7 +1337,8 @@ function renderNav(){
   if (btnNext){
     const disabled =
       (State.screen === Screen.LISTEN && !State.listenDone) ||
-      (State.screen === Screen.ECHO && !State.echoDone);
+      (State.screen === Screen.ECHO && !State.echoDone) ||
+      (State.screen === Screen.FINAL_RECALL && !State.finalRecallDone);
 
     btnNext.style.opacity = disabled ? "0.45" : "1";
     btnNext.style.pointerEvents = disabled ? "none" : "auto";
@@ -1126,19 +1346,19 @@ function renderNav(){
     btnNext.onclick = () => {
       if (State.isSliding) return;
 
-      if (State.screen === Screen.TITLE) go(Screen.LISTEN);
-      else if (State.screen === Screen.LISTEN) go(Screen.ECHO);
-      else if (State.screen === Screen.ECHO) go(Screen.HIDE);
-      else if (State.screen === Screen.HIDE){
-        // If we've hidden everything, go to practice; else hide one more (tap-to-reveal still works)
-        if (State.hideCount >= planMixed.length){
-          go(Screen.PRACTICE);
-        } else {
-          State.hideCount = Math.min(planMixed.length, State.hideCount + 1);
-          render();
-        }
+    if (State.screen === Screen.TITLE) go(Screen.LISTEN);
+    else if (State.screen === Screen.LISTEN) go(Screen.ECHO);
+    else if (State.screen === Screen.ECHO) go(Screen.HIDE);
+    else if (State.screen === Screen.HIDE){
+      if (State.hideCount >= planMixed.length){
+        go(Screen.FINAL_RECALL);
+      } else {
+        State.hideCount = Math.min(planMixed.length, State.hideCount + 1);
+        render();
       }
-      else if (State.screen === Screen.PRACTICE) go(Screen.TITLE);
+    }
+    else if (State.screen === Screen.FINAL_RECALL) go(Screen.CELEBRATION);
+    else if (State.screen === Screen.PRACTICE) go(Screen.TITLE);
     };
   }
 }
@@ -1163,7 +1383,7 @@ function screenIntro(idx){
     <div class="site">EAT YOUR BIBLE</div>
     <div class="hint">Tap anywhere to start</div>
   `;
-  wrap.onclick = () => { setScreen(Screen.TITLE); };
+  wrap.onclick = () => { go(Screen.TITLE); };
   return makeSlide({idx, bg: "var(--purple)", navHidden:true, inner: wrap});
 }
 
@@ -1231,9 +1451,9 @@ inner.innerHTML = `
       </div>
 
 
-        <button class="carousel-main no-zoom" id="btnListenPlay" style="max-width:520px;">
-          🔊 Read it to me
-        </button>
+      <button class="carousel-main no-zoom" id="btnListenPlay" style="max-width:520px;">
+        ${State.listenDone ? "Continue" : "🔊 Read it to me"}
+      </button>
 
       </div>
     </div>
@@ -1241,6 +1461,13 @@ inner.innerHTML = `
 `;
 
   inner.querySelector("#btnListenPlay").onclick = async () => {
+
+    // If listen already completed, continue
+    if (State.listenDone){
+      go(Screen.ECHO);
+      return;
+    }
+
     State.listenDone = false;
     renderNav(); // lock Next
     listenPlay();
@@ -1261,7 +1488,7 @@ inner.innerHTML = `
       <div class="verse-ref-pill">${VERSE_REF}</div>
     </div>
 
-    <div class="learn-verse">
+    <div class="learn-verse ${State.echoSpeaking ? "echo-green" : ""}">
       <p class="verse">${
         ECHO_PARTS.length
           ? (ECHO_PARTS[State.echoIndex] || ECHO_PARTS[0] || VERSE_TEXT)
@@ -1277,7 +1504,7 @@ inner.innerHTML = `
 
       <div class="coach-actions">
         <button class="carousel-main no-zoom" id="btnEcho" style="max-width:520px;">
-          ${State.echoDone ? "Replay Echo" : "▶ Start Echo"}
+          ${State.echoDone ? "Continue" : "▶ Start Echo"}
         </button>
 
       </div>
@@ -1286,6 +1513,13 @@ inner.innerHTML = `
 `;
 
   inner.querySelector("#btnEcho").onclick = async () => {
+
+    // If echo already completed, continue
+    if (State.echoDone){
+      go(Screen.HIDE);
+      return;
+    }
+
     // cancel any prior
     echoCancelToken++;
     try { audioEl.pause(); audioEl.currentTime = 0; } catch(e){}
@@ -1317,15 +1551,25 @@ function screenHide(idx){
       <div class="learn-coach">
         <div>
           <div class="coach-title">Guess the Missing Words</div>
-          <div class="coach-text">Tap a missing part of the verse to reveal the word.</div>
+
+          ${
+            State.sayVerseActive
+              ? `<div class="timer-wrap"><div class="timer-bar" id="sayVerseBar"></div></div>`
+              : `<div class="coach-text">Tap a missing part of the verse to reveal the word.</div>`
+          }
         </div>
 
         <div class="coach-actions">
-          <div class="coach-status">
-            ${done
-              ? "Nice! Tap Next ➜ to go to Practice."
-              : `Hidden: ${hiddenNow} / ${planMixed.length} — Tap Next ➜ to hide one more.`}
-          </div>
+          <button
+            class="carousel-main no-zoom"
+            id="btnRemoveWord"
+            style="max-width:520px; ${
+              State.sayVerseActive ? "background:#3fa66b;color:white;box-shadow:none;" : ""
+            }"
+            ${State.sayVerseActive ? "disabled" : ""}
+          >
+            ${State.sayVerseActive ? "Say the Verse" : "Remove a word"}
+          </button>
         </div>
       </div>
     </div>
@@ -1335,7 +1579,181 @@ function screenHide(idx){
 
   inner.querySelector("#verseStage").appendChild(verseNode());
 
+  const btnRemove = inner.querySelector("#btnRemoveWord");
+  if (btnRemove){
+      btnRemove.onclick = async () => {
+
+        if (State.hideCount >= planMixed.length){
+          go(Screen.FINAL_RECALL);
+          return;
+        }
+
+        State.hideCount = Math.min(planMixed.length, State.hideCount + 1);
+        State.revealedTokenIdx = new Set();
+
+        // Activate Say-the-Verse phase
+        State.sayVerseActive = true;
+        render();
+
+        // Wait for audio duration
+        setAudioSrc(AUDIO_FILE);
+        const d = await waitForDuration();
+        const durationMs = (isFinite(d) && d > 0) ? d * 1000 : 5000;
+
+        State.sayVerseStartedAt = performance.now();
+        State.sayVerseDurationMs = durationMs;
+
+        const animate = () => {
+          const pct = getSayVersePct();
+          const currentBar = document.getElementById("sayVerseBar");
+
+          if (currentBar){
+            currentBar.style.width = (pct * 100) + "%";
+          }
+
+          if (pct > 0 && State.sayVerseActive){
+            requestAnimationFrame(animate);
+          }
+        };
+
+        requestAnimationFrame(animate);
+
+        await new Promise(r => setTimeout(r, durationMs));
+
+        State.sayVerseActive = false;
+        State.sayVerseStartedAt = 0;
+        State.sayVerseDurationMs = 0;
+
+        if (State.hideCount >= planMixed.length){
+          State.finalRecallActive = true;
+          State.finalRecallDone = false;
+
+          go(Screen.FINAL_RECALL);
+
+          setAudioSrc(AUDIO_FILE);
+          const d2 = await waitForDuration();
+          const finalDurationMs = (isFinite(d2) && d2 > 0) ? d2 * 1000 : 5000;
+
+          State.finalRecallStartedAt = performance.now();
+          State.finalRecallDurationMs = finalDurationMs;
+          render();
+
+          await new Promise(r => setTimeout(r, finalDurationMs));
+
+          State.finalRecallActive = false;
+          State.finalRecallStartedAt = 0;
+          State.finalRecallDurationMs = 0;
+          State.finalRecallDone = true;
+          render();
+          return;
+        }
+
+        render();
+      };
+  }
+
   return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner});
+}
+
+function screenFinalRecall(idx){
+  const inner = document.createElement("div");
+  inner.style.display = "flex";
+  inner.style.flexDirection = "column";
+  inner.style.height = "100%";
+
+  inner.innerHTML = `
+    <div class="learn-layout">
+      <div class="learn-ref">
+        <div class="verse-ref-pill">${VERSE_REF}</div>
+      </div>
+
+      <div class="learn-verse">
+        <div id="finalRecallStage"></div>
+      </div>
+
+      <div class="learn-coach">
+        <div>
+          <div class="coach-title">Say the Whole Verse</div>
+          ${
+            State.finalRecallActive
+              ? `<div class="timer-wrap"><div class="timer-bar" id="finalRecallBar" style="width:${getFinalRecallPct() * 100}%"></div></div>`
+              : `<div class="coach-text">Try saying the entire verse from memory.</div>`
+          }
+        </div>
+
+        <div class="coach-actions">
+          ${
+            State.finalRecallDone
+              ? `<button class="carousel-main no-zoom" id="btnFinalContinue" style="max-width:520px;">Continue</button>`
+              : ``
+          }
+        </div>
+      </div>
+    </div>
+  `;
+
+  inner.querySelector("#finalRecallStage").appendChild(finalRecallNode());
+
+  const btnFinalContinue = inner.querySelector("#btnFinalContinue");
+  if (btnFinalContinue){
+    btnFinalContinue.onclick = () => {
+      go(Screen.CELEBRATION);
+    };
+  }
+
+  if (State.finalRecallActive){
+    const animate = () => {
+      const pct = getFinalRecallPct();
+      const currentBar = document.getElementById("finalRecallBar");
+
+      if (currentBar){
+        currentBar.style.width = (pct * 100) + "%";
+      }
+
+      if (pct > 0 && State.finalRecallActive){
+        requestAnimationFrame(animate);
+      }
+    };
+
+    requestAnimationFrame(animate);
+  }
+
+  return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner});
+}
+
+function screenCelebration(idx){
+  const wrap = document.createElement("div");
+  wrap.className = "celebration-screen";
+
+  wrap.innerHTML = `
+    <canvas id="fireworksCanvas"></canvas>
+
+    <h2>Great Job Learning the Verse!</h2>
+
+    <div class="celebration-actions">
+      <button class="carousel-main no-zoom" id="btnCelebrateTitle">Title Screen</button>
+      <button class="carousel-main no-zoom" id="btnCelebrateGames">Verse Games</button>
+    </div>
+  `;
+
+  const canvas = wrap.querySelector("#fireworksCanvas");
+  setTimeout(() => {
+    if (State.screen === Screen.CELEBRATION){
+      startFireworks(canvas);
+    }
+  }, 0);
+
+  wrap.querySelector("#btnCelebrateTitle").onclick = () => {
+    stopFireworks();
+    go(Screen.TITLE);
+  };
+
+  wrap.querySelector("#btnCelebrateGames").onclick = () => {
+    stopFireworks();
+    go(Screen.PRACTICE);
+  };
+
+  return makeSlide({idx, bg:"var(--purple)", navHidden:true, inner: wrap});
 }
 
 function screenPractice(idx){
@@ -1384,24 +1802,33 @@ function render(){
   app.innerHTML = "";
 
   const currentIdx = screenToIndex(State.screen);
-  // If animating, render neighbor too for smooth slide
-  const indicesToRender = State.isSliding ? [currentIdx-1, currentIdx, currentIdx+1] : [currentIdx];
 
-  const uniq = Array.from(new Set(indicesToRender.filter(i => i >= 0)));
+  let indicesToRender;
+  if (State.isSliding) {
+    indicesToRender = [State.transitionFromIdx, State.transitionToIdx];
+  } else {
+    indicesToRender = [currentIdx];
+  }
+
+  const uniq = Array.from(new Set(indicesToRender.filter(i => i !== null && i >= 0)));
   for (const idx of uniq){
-    const screen = ["intro","title","listen","echo","hide","practice"][idx];
+    const screen = ["intro","title","listen","echo","hide","final_recall","celebration","practice"][idx];
     let slide = null;
     if (screen === Screen.INTRO) slide = screenIntro(idx);
     if (screen === Screen.TITLE) slide = screenTitle(idx);
     if (screen === Screen.LISTEN) slide = screenListen(idx);
     if (screen === Screen.ECHO) slide = screenEcho(idx);
     if (screen === Screen.HIDE) slide = screenHide(idx);
+    if (screen === Screen.FINAL_RECALL) slide = screenFinalRecall(idx);
+    if (screen === Screen.CELEBRATION) slide = screenCelebration(idx);
     if (screen === Screen.PRACTICE) slide = screenPractice(idx);
     if (slide) app.appendChild(slide);
   }
 
   // Ensure transform matches current slideX
-  State.slideX = currentIdx;
+  if (!State.isSliding) {
+    State.slideX = currentIdx;
+  }
   updateSlideTransforms();
 
   renderNav();
