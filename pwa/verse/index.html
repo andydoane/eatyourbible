@@ -379,17 +379,21 @@ border-radius: 18px;
   box-shadow: 0 6px 0 rgba(0,0,0,0.25);
   cursor: pointer;
   z-index: 2;
+  --rot: 0deg;
+  --pressY: 0px;
+  transform: rotate(var(--rot)) translateY(var(--pressY));
+  transform-origin: center center;
 }
 
 .scramble-word:active{
-  transform: translateY(4px);
+  --pressY: 4px;
   box-shadow: 0 2px 0 rgba(0,0,0,0.25);
 }
 
 .scramble-word.wrong{
   background: #ffb3b3;
   color: #7a1111;
-  animation: scrambleBlink 0.35s ease;
+  animation: scrambleShake 0.35s ease;
 }
 
 .scramble-popup{
@@ -416,11 +420,19 @@ border-radius: 18px;
   100%{ opacity: 0; transform: translate(-50%, -28px); }
 }
 
-@keyframes scrambleBlink{
-  0%, 100%{ transform: scale(1); }
-  25%{ transform: scale(1.05); }
-  50%{ transform: scale(0.98); }
-  75%{ transform: scale(1.04); }
+@keyframes scrambleShake{
+  0%, 100%{
+    transform: rotate(var(--rot)) translateY(var(--pressY)) scale(1);
+  }
+  25%{
+    transform: rotate(var(--rot)) translateY(var(--pressY)) scale(1.05);
+  }
+  50%{
+    transform: rotate(var(--rot)) translateY(var(--pressY)) scale(0.98);
+  }
+  75%{
+    transform: rotate(var(--rot)) translateY(var(--pressY)) scale(1.04);
+  }
 }
 
 /* Zone 3: coach panel band (target ~40%) */
@@ -1361,10 +1373,13 @@ function scrambleRandomPositions(choices, fieldEl){
       };
     }
 
+    const rotationDeg = Math.round((Math.random() * 20) - 10);
+
     placed.push(placedRect);
     positions.push({
       leftPx: Math.round(placedRect.x),
-      topPx: Math.round(placedRect.y)
+      topPx: Math.round(placedRect.y),
+      rotationDeg
     });
   }
 
@@ -2517,13 +2532,10 @@ registerGame({
       btn.type = "button";
       btn.textContent = choice;
 
-      const pos = st.positions[i] || { leftPx: 20, topPx: 20 };
+      const pos = st.positions[i] || { leftPx: 20, topPx: 20, rotationDeg: 0 };
       btn.style.left = `${pos.leftPx}px`;
       btn.style.top = `${pos.topPx}px`;
-
-      // random rotation between -10° and +10°
-      const rot = (Math.random() * 20) - 10;
-      btn.style.transform = `rotate(${rot}deg)`;
+      btn.style.setProperty("--rot", `${pos.rotationDeg || 0}deg`);
 
       btn.onclick = (e) => {
         e.stopPropagation();
