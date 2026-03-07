@@ -290,7 +290,7 @@
   padding: calc(14px + var(--safeT)) 18px 18px;
 
   /* padding between zones */
-  gap: 12px;
+  gap: 6px;
 }
 
 /* Zone 1: reference pill band (target ~10%) */
@@ -321,23 +321,31 @@ border-radius: 18px;
   background: #3fa66b;
 }
 
+.learn-layout.game-scramble{
+  padding: calc(14px + var(--safeT)) 18px 8px;
+  gap: 4px;
+}
+
 .learn-layout.game-scramble .learn-ref{
   flex: 0 0 8%;
-  min-height: 44px;
-  max-height: 72px;
+  min-height: 40px;
+  max-height: 60px;
 }
 
 .learn-layout.game-scramble .learn-verse{
-  flex: 0 0 30%;
+  flex: 0 0 28%;
   align-items: center;
   justify-content: center;
-  padding: 10px 12px;
+  padding: 8px 12px;
 }
 
 .learn-layout.game-scramble .learn-coach{
-  flex: 1 1 62%;
-  min-height: 260px;
-  padding: 6px 4px 10px;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
 }
 
 .scramble-verse{
@@ -349,9 +357,10 @@ border-radius: 18px;
   position: relative;
   width: 100%;
   max-width: 760px;
+  flex: 1 1 auto;
+  min-height: 0;
   height: 100%;
-  min-height: 260px;
-  margin: 0 auto;
+  margin: 0;
   overflow: hidden;
 }
 
@@ -1236,31 +1245,42 @@ function scrambleRandomPositions(choices, fieldEl){
   }
 
   const layouts = [
+
+  // SET 1
   [
-    makeZone(0.06, 0.26, 0.08, 0.20),
-    makeZone(0.54, 0.74, 0.34, 0.46),
-    makeZone(0.28, 0.48, 0.68, 0.80)
+    makeZone(0.10, 0.30, 0.02, 0.10),   // top left
+    makeZone(0.42, 0.62, 0.44, 0.54),   // middle center
+    makeZone(0.18, 0.38, 0.88, 0.96)    // bottom left-ish
   ],
+
+  // SET 2
   [
-    makeZone(0.46, 0.66, 0.06, 0.18),
-    makeZone(0.12, 0.32, 0.36, 0.48),
-    makeZone(0.58, 0.78, 0.70, 0.82)
+    makeZone(0.44, 0.64, 0.03, 0.11),   // top center
+    makeZone(0.12, 0.32, 0.45, 0.55),   // middle left
+    makeZone(0.52, 0.72, 0.87, 0.95)    // bottom right-ish
   ],
+
+  // SET 3
   [
-    makeZone(0.20, 0.40, 0.10, 0.22),
-    makeZone(0.56, 0.76, 0.38, 0.50),
-    makeZone(0.10, 0.30, 0.66, 0.78)
+    makeZone(0.18, 0.38, 0.01, 0.09),   // top left-ish
+    makeZone(0.54, 0.74, 0.43, 0.53),   // middle right
+    makeZone(0.34, 0.54, 0.89, 0.97)    // bottom center
   ],
+
+  // SET 4
   [
-    makeZone(0.58, 0.78, 0.08, 0.20),
-    makeZone(0.30, 0.50, 0.40, 0.52),
-    makeZone(0.14, 0.34, 0.70, 0.82)
+    makeZone(0.50, 0.70, 0.02, 0.10),   // top right-ish
+    makeZone(0.28, 0.48, 0.46, 0.56),   // middle left-center
+    makeZone(0.08, 0.28, 0.86, 0.94)    // bottom left
   ],
+
+  // SET 5
   [
-    makeZone(0.12, 0.32, 0.06, 0.18),
-    makeZone(0.48, 0.68, 0.36, 0.48),
-    makeZone(0.40, 0.60, 0.68, 0.80)
+    makeZone(0.24, 0.44, 0.03, 0.11),   // top left-center
+    makeZone(0.46, 0.66, 0.44, 0.54),   // middle center-right
+    makeZone(0.56, 0.76, 0.88, 0.96)    // bottom right
   ]
+
 ];
   
 
@@ -2500,6 +2520,10 @@ registerGame({
       const pos = st.positions[i] || { leftPx: 20, topPx: 20 };
       btn.style.left = `${pos.leftPx}px`;
       btn.style.top = `${pos.topPx}px`;
+
+      // random rotation between -10° and +10°
+      const rot = (Math.random() * 20) - 10;
+      btn.style.transform = `rotate(${rot}deg)`;
 
       btn.onclick = (e) => {
         e.stopPropagation();
