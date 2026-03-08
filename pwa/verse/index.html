@@ -4802,7 +4802,10 @@ function screenGame(idx){
 
   return makeSlide({
     idx,
-    bg: State.activeGame === "traffic" ? TRAFFIC_GREEN : "var(--purple)",
+    bg:
+      State.activeGame === "traffic" ? TRAFFIC_GREEN :
+      State.activeGame === "chain" ? "#40b9c5" :
+      "var(--purple)",
     navHidden: false,
     inner
   });
