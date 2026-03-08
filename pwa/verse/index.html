@@ -410,6 +410,21 @@ border-radius: 18px;
   color: #ffffff;
 }
 
+.scramble-word.bounce-color-1{
+  background: #ff5a51;
+  color: #ffffff;
+}
+
+.scramble-word.bounce-color-2{
+  background: #40b9c5;
+  color: #ffffff;
+}
+
+.scramble-word.bounce-color-3{
+  background: #7f66c6;
+  color: #ffffff;
+}
+
 .scramble-word.shape-slime-blob-soft{
   border-radius: 60px 34px 58px 38px / 42px 36px 46px 34px;
 }
@@ -860,12 +875,6 @@ text-wrap: balance;
 
 .traffic-car-btn{
   line-height: 1;
-}
-
-.traffic-car-emoji{
-  display: inline-block;
-  transform-origin: center center;
-  animation: trafficRumble 0.22s infinite alternate ease-in-out;
 }
 
 .traffic-word-btn{
@@ -1782,7 +1791,7 @@ function bouncingBurstAt(fieldEl, x, y){
 }
 
 function bouncingColorSet(){
-  const colors = ["color-1", "color-2", "color-3"];
+  const colors = ["bounce-color-1", "bounce-color-2", "bounce-color-3"];
   shuffleArray(colors);
   return colors;
 }
@@ -2567,7 +2576,7 @@ right = (State.screen === Screen.GAME) ? "" : nextBtn;
     <div class="nav-center">${center}</div>
     <div style="display:flex; gap:12px; align-items:center;">
       ${muteBtn}
-      ${right || `<div style="width:var(--tap);height:var(--tap)"></div>`}
+      ${right || ""}
     </div>
   `;
 
@@ -4305,7 +4314,9 @@ registerGame({
         if (st.wrongChoice === choice) btn.classList.add("wrong");
         btn.type = "button";
         btn.textContent = choice;
-        btn.classList.add("spawn-in");
+        if (!State.isSliding){
+          btn.classList.add("spawn-in");
+        }
         btn.classList.add(colorSet[i]);
 
 
@@ -4796,15 +4807,20 @@ function screenGame(idx){
 
   const stage = inner.querySelector("#gameStage");
 
-  if (game && typeof game.start === "function"){
+if (game && typeof game.start === "function"){
+  if (State.activeGame === "bouncing" && State.isSliding){
+    // wait until the slide transition is done
+  } else {
     game.start(stage);
   }
+}
 
   return makeSlide({
     idx,
     bg:
       State.activeGame === "traffic" ? TRAFFIC_GREEN :
       State.activeGame === "chain" ? "#40b9c5" :
+      State.activeGame === "bouncing" ? "#ffc751" :
       "var(--purple)",
     navHidden: false,
     inner
