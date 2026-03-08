@@ -3844,7 +3844,7 @@ function trafficSpawnItem(fieldEl){
   const emoji = TRAFFIC_EMOJIS[Math.floor(Math.random() * TRAFFIC_EMOJIS.length)];
   const direction = road === 0 ? -1 : 1;
   const x = direction < 0 ? fieldW + 130 : -130;
-  const speed = 58 + Math.random() * 18;
+  const speed = 100 + Math.random() * 6;
 
   const item = {
     id: st.nextItemId++,
