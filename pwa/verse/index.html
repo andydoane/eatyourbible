@@ -859,12 +859,12 @@ text-wrap: balance;
 }
 
 .traffic-car-btn{
-  font-size: clamp(28px, 7vw, 40px);
   line-height: 1;
 }
 
 .traffic-car-emoji{
   display: inline-block;
+  font-size: clamp(34px, 8.5vw, 50px);
   transform-origin: center center;
   animation: trafficRumble 0.22s infinite alternate ease-in-out;
 }
@@ -3755,11 +3755,8 @@ function trafficPhaseDecoyPool(st){
 
 function trafficStartPhase(st, phase){
   st.phase = phase;
-  st.items = [];
-  st.spawnSerial = 0;
-  st.lastSpawnAt = 0;
-  st.nextSpawnDelay = trafficRandomSpawnDelay();
   st.lastCorrectSpawnAt = 0;
+  st.nextSpawnDelay = Math.min(st.nextSpawnDelay || 9999, 500);
 }
 
 function startTrafficTapGame(){
@@ -3893,6 +3890,7 @@ function trafficRoadMetrics(fieldEl){
 
   const roadH = fieldH * 0.40;
   const gapH = fieldH * 0.08;
+  const laneH = roadH / 2;
 
   const topRoadTop = 0;
   const bottomRoadTop = roadH + gapH;
@@ -3902,6 +3900,7 @@ function trafficRoadMetrics(fieldEl){
     fieldH,
     roadH,
     gapH,
+    laneH,
     topRoadTop,
     bottomRoadTop,
     lane1CenterY: roadH * 0.25,
@@ -4118,6 +4117,12 @@ function trafficRenderItems(fieldEl){
         carFlip.style.transform = item.direction > 0
           ? `scaleX(-1)`
           : `scaleX(1)`;
+      }
+
+      const carEmoji = carBtn.querySelector(".traffic-car-emoji");
+      if (carEmoji){
+        const carSizePx = Math.round(metrics.laneH * 0.80);
+        carEmoji.style.fontSize = `${carSizePx}px`;
       }
     }
 
