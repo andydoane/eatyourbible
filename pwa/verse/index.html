@@ -788,6 +788,111 @@ text-wrap: balance;
   pointer-events: none;
 }
 
+/* ---------- Traffic Tap ---------- */
+.traffic-field{
+  position: relative;
+  width: 100%;
+  max-width: 760px;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+.traffic-road{
+  position: absolute;
+  left: 0;
+  width: 100%;
+  background: #020611;
+  border-top: 3px solid #f3c33b;
+  border-bottom: 3px solid #f3c33b;
+  overflow: hidden;
+}
+
+.traffic-road::after{
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(50% - 2px);
+  height: 4px;
+  background-image: repeating-linear-gradient(
+    to right,
+    rgba(255,255,255,0.98) 0 18px,
+    transparent 18px 34px
+  );
+  pointer-events: none;
+}
+
+.traffic-item{
+  position: absolute;
+  top: 0;
+  left: 0;
+  will-change: transform;
+}
+
+.traffic-car-btn,
+.traffic-word-btn{
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+  color: #fff;
+  font-family: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.traffic-car-btn{
+  font-size: clamp(28px, 7vw, 40px);
+  line-height: 1;
+  transform-origin: center center;
+  animation: trafficRumble 0.22s infinite alternate ease-in-out;
+}
+
+.traffic-word-btn{
+  font-size: clamp(18px, 4.9vw, 32px);
+  font-weight: 900;
+  line-height: 1.05;
+  white-space: nowrap;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.45);
+}
+
+.traffic-car-btn.wrong,
+.traffic-word-btn.wrong{
+  color: #ff6b6b;
+  animation: trafficWrongFlash 0.28s ease;
+}
+
+.traffic-done{
+  width: 100%;
+  max-width: 520px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+@keyframes trafficRumble{
+  0%{
+    transform: translateX(-50%) translateY(-1px) rotate(-2deg);
+  }
+  100%{
+    transform: translateX(-50%) translateY(1px) rotate(2deg);
+  }
+}
+
+@keyframes trafficWrongFlash{
+  0%{ opacity: 1; }
+  35%{ opacity: 0.45; }
+  100%{ opacity: 1; }
+}
+
   </style>
 </head>
 <body>
@@ -2501,7 +2606,7 @@ right = (State.screen === Screen.GAME) ? "" : nextBtn;
       if (State.activeGame === "traffic"){
         showDialog({
           title: "How to Play Traffic Tap",
-          body: "Tap the correct lane to build the verse one word at a time. Three choices appear. One is correct. After the verse is complete, choose the correct Bible book and then the correct chapter and verse.",
+          body: "Tap the moving car or word that matches the next part of the verse. Keep building the verse one word at a time. After the verse is complete, keep going to choose the correct Bible book and then the correct chapter and verse reference.",
           actions: [dlgBtn("Close", {onClick: closeDialog})]
         });
         return;
@@ -2579,6 +2684,7 @@ function startGame(id){
 
 function stopGame(){
   bouncingStopMotion();
+  trafficStopMotion();
 
   State.activeGame = null;
   State.gameRunning = false;
@@ -3499,14 +3605,13 @@ function bouncingChoose(choice, btnEl, fieldEl){
   
 }
 
-function trafficWordTokenIndices(){
-  const out = [];
-  for (let i = 0; i < tokens.length; i++){
-    if (tokens[i].type === TokenType.WORD){
-      out.push(i);
-    }
-  }
-  return out;
+const TRAFFIC_EMOJIS = ["🚗","🚕","🚙","🛻","🚓","🚘","🚖"];
+const TRAFFIC_GREEN = "#a7cb6f";
+
+function trafficElapsedMs(){
+  const st = State.trafficGame;
+  if (!st) return 0;
+  return (st.endedAt || performance.now()) - st.startedAt;
 }
 
 function trafficBuiltVerseNode(){
@@ -3540,176 +3645,337 @@ function trafficBuiltVerseNode(){
   if (!builtCount){
     p.innerHTML = `
       Build the verse one word at a time.<br>
-      <span style="font-weight:600;">Tap the correct lane.</span>
+      <span style="font-weight:600;">Tap the first word to start.</span>
     `;
   }
 
   return p;
 }
 
-function trafficMakeChoices(wordTokenIndices, correctTokenIndex){
-  const correctWord = tokens[correctTokenIndex].text;
+function trafficUniqueDecoys(pool, correct, count){
+  const excluded = new Set([String(correct).toLowerCase()]);
+  const out = [];
 
-  const verseWordsLower = wordTokenIndices
-    .map(idx => tokens[idx].text.toLowerCase());
+  for (const item of shuffleArray([...pool])){
+    const key = String(item).toLowerCase();
+    if (excluded.has(key)) continue;
+    if (out.some(x => String(x).toLowerCase() === key)) continue;
+    out.push(item);
+    if (out.length >= count) break;
+  }
 
-  const pool = VERSE_CHAIN_DECOY_WORDS
-    .filter(word => word.toLowerCase() !== correctWord.toLowerCase())
-    .filter((word, i, arr) => arr.indexOf(word) === i)
-    .filter(word => !verseWordsLower.includes(word.toLowerCase()));
-
-  shuffleArray(pool);
-
-  const choices = [correctWord, ...pool.slice(0, 2)];
-  return shuffleArray(choices);
+  return out;
 }
 
-function trafficMakeBookChoices(correctBook){
-  const choices = [
-    correctBook,
-    ...chainPickRandomItems(BIBLE_BOOKS, 2, [correctBook])
-  ];
-  return shuffleArray(choices);
-}
+function trafficMakeRefDecoys(correctRef){
+  const [chapterText, verseText] = String(correctRef).split(":");
+  const chapter = Number(chapterText || 1);
+  const verse = Number(verseText || 1);
 
-function trafficMakeReferenceChoices(correctChapter, correctVerse){
-  const correctRef = `${correctChapter}:${correctVerse}`;
-  const refs = new Set([correctRef]);
-
+  const refs = new Set();
   let tries = 0;
-  while (refs.size < 3 && tries < 200){
-    const chapterBump = Math.floor(Math.random() * 11) - 5;
-    const verseBump = Math.floor(Math.random() * 21) - 10;
 
-    let fakeChapter = correctChapter + chapterBump;
-    let fakeVerse = correctVerse + verseBump;
+  while (refs.size < 8 && tries < 200){
+    const chapterBump = Math.floor(Math.random() * 9) - 4;
+    const verseBump = Math.floor(Math.random() * 19) - 9;
 
-    if (fakeChapter < 1) fakeChapter = 1 + Math.floor(Math.random() * 5);
-    if (fakeVerse < 1) fakeVerse = 1 + Math.floor(Math.random() * 10);
+    let fakeChapter = chapter + chapterBump;
+    let fakeVerse = verse + verseBump;
 
-    refs.add(`${fakeChapter}:${fakeVerse}`);
+    if (fakeChapter < 1) fakeChapter = 1 + Math.floor(Math.random() * 6);
+    if (fakeVerse < 1) fakeVerse = 1 + Math.floor(Math.random() * 20);
+
+    const candidate = `${fakeChapter}:${fakeVerse}`;
+    if (candidate !== correctRef){
+      refs.add(candidate);
+    }
+
     tries += 1;
   }
 
-  return shuffleArray(Array.from(refs));
+  return Array.from(refs);
 }
 
-function trafficNextChoices(){
-  const st = State.trafficGame;
-  if (!st) return;
+function trafficCurrentCorrectLabel(st){
+  if (!st) return "";
 
   if (st.phase === "words"){
     const correctTokenIndex = st.wordTokenIndices[st.builtCount];
-    if (!Number.isFinite(correctTokenIndex)) return;
-    st.choices = trafficMakeChoices(st.wordTokenIndices, correctTokenIndex);
-    return;
+    if (!Number.isFinite(correctTokenIndex)) return "";
+    return tokens[correctTokenIndex].text;
   }
 
   if (st.phase === "book"){
-    st.choices = trafficMakeBookChoices(st.targetBook);
-    return;
+    return st.targetBook;
   }
 
   if (st.phase === "ref"){
-    st.choices = trafficMakeReferenceChoices(st.targetChapter, st.targetVerse);
-    return;
+    return `${st.targetChapter}:${st.targetVerse}`;
   }
 
-  st.choices = [];
+  return "";
+}
+
+function trafficPhaseDecoyPool(st){
+  if (!st) return [];
+
+  if (st.phase === "words"){
+    const verseWordsLower = st.wordTokenIndices
+      .map(idx => tokens[idx].text.toLowerCase());
+
+    return VERSE_CHAIN_DECOY_WORDS
+      .filter(word => !verseWordsLower.includes(word.toLowerCase()));
+  }
+
+  if (st.phase === "book"){
+    return BIBLE_BOOKS;
+  }
+
+  if (st.phase === "ref"){
+    const correctRef = `${st.targetChapter}:${st.targetVerse}`;
+    return trafficMakeRefDecoys(correctRef);
+  }
+
+  return [];
+}
+
+function trafficStartPhase(st, phase){
+  st.phase = phase;
+  st.items = [];
+  st.spawnSerial = 0;
+  st.lastSpawnAt = 0;
+  st.nextSpawnDelay = trafficRandomSpawnDelay();
+  st.lastCorrectSpawnAt = 0;
 }
 
 function startTrafficTapGame(){
-  const wordTokenIndices = trafficWordTokenIndices();
+  const wordTokenIndices = scrambleWordTokenIndices();
   const meta = chainVerseMetaFromId(VERSE_ID);
 
   State.trafficGame = {
     wordTokenIndices,
     builtCount: 0,
-    choices: [],
     done: false,
-    wrongChoice: null,
     phase: "words",
     showRef: false,
     targetBook: meta.book,
     targetChapter: meta.chapter,
     targetVerse: meta.verse,
-    score: 0,
-    wrongGuesses: 0,
     startedAt: performance.now(),
-    endedAt: 0
+    endedAt: 0,
+    items: [],
+    nextItemId: 1,
+    spawnSerial: 0,
+    totalSpawned: 0,
+    lastSpawnAt: 0,
+    nextSpawnDelay: 950,
+    lastCorrectSpawnAt: 0,
+    rafId: 0,
+    fieldEl: null,
+    slideEl: null,
+    gameLayout: null,
+    coachActions: null
+  };
+}
+
+function trafficRandomSpawnDelay(){
+  return 850 + Math.random() * 650;
+}
+
+function trafficChooseRoad(st){
+  const topCount = st.items.filter(x => x.road === 0).length;
+  const bottomCount = st.items.filter(x => x.road === 1).length;
+
+  if (topCount < bottomCount) return 0;
+  if (bottomCount < topCount) return 1;
+  return Math.random() < 0.5 ? 0 : 1;
+}
+
+function trafficCanSpawnCorrect(st){
+  if (!st || st.done) return false;
+  if (st.totalSpawned < 2) return false;
+  if (st.items.some(x => x.isCorrect)) return false;
+  return true;
+}
+
+function trafficShouldSpawnCorrect(st, now){
+  if (!trafficCanSpawnCorrect(st)) return false;
+
+  const timeSinceCorrect = now - (st.lastCorrectSpawnAt || st.startedAt || now);
+  if (timeSinceCorrect > 4200) return true;
+
+  return Math.random() < 0.38;
+}
+
+function trafficSpawnItem(fieldEl){
+  const st = State.trafficGame;
+  if (!st || st.done || !fieldEl) return;
+
+  const now = performance.now();
+  const fieldW = Math.max(320, fieldEl.clientWidth);
+
+  const correctLabel = trafficCurrentCorrectLabel(st);
+  if (!correctLabel) return;
+
+  const isCorrect = trafficShouldSpawnCorrect(st, now);
+  const pool = trafficPhaseDecoyPool(st);
+
+  let label = correctLabel;
+  if (!isCorrect){
+    const decoys = trafficUniqueDecoys(pool, correctLabel, 1);
+    label = decoys[0] || "apple";
+  }
+
+  const road = trafficChooseRoad(st);
+  const emoji = TRAFFIC_EMOJIS[Math.floor(Math.random() * TRAFFIC_EMOJIS.length)];
+  const direction = road === 0 ? -1 : 1;
+  const x = direction < 0 ? fieldW + 130 : -130;
+  const speed = 58 + Math.random() * 18;
+
+  const item = {
+    id: st.nextItemId++,
+    road,
+    direction,
+    emoji,
+    label,
+    isCorrect,
+    x,
+    speed,
+    width: 150,
+    destroy: false,
+    spawnedAt: now
   };
 
-  trafficNextChoices();
+  st.items.push(item);
+  st.totalSpawned += 1;
+  st.spawnSerial += 1;
+
+  if (isCorrect){
+    st.lastCorrectSpawnAt = now;
+  }
 }
 
-function trafficElapsedMs(){
+function trafficRoadMetrics(fieldEl){
+  const fieldW = Math.max(320, fieldEl.clientWidth);
+  const fieldH = Math.max(260, fieldEl.clientHeight);
+
+  const roadH = fieldH * 0.40;
+  const gapH = fieldH * 0.20;
+
+  const topRoadTop = 0;
+  const bottomRoadTop = roadH + gapH;
+
+  return {
+    fieldW,
+    fieldH,
+    roadH,
+    gapH,
+    topRoadTop,
+    bottomRoadTop,
+    lane1CenterY: roadH * 0.25,
+    lane2CenterY: roadH * 0.75
+  };
+}
+
+function trafficRemoveOffscreen(fieldEl){
   const st = State.trafficGame;
-  if (!st) return 0;
-  return (st.endedAt || performance.now()) - st.startedAt;
+  if (!st || !fieldEl) return;
+
+  const fieldW = Math.max(320, fieldEl.clientWidth);
+
+  st.items = st.items.filter(item => {
+    if (item.destroy) return false;
+    if (item.direction < 0 && item.x < -220) return false;
+    if (item.direction > 0 && item.x > fieldW + 220) return false;
+    return true;
+  });
 }
 
-function trafficFormatTime(ms){
-  const totalSeconds = Math.max(0, Math.round(ms / 1000));
-  const mins = Math.floor(totalSeconds / 60);
-  const secs = totalSeconds % 60;
-  return mins ? `${mins}m ${secs}s` : `${secs}s`;
-}
-
-function trafficChoose(choice){
+function trafficSpawnTick(fieldEl, now){
   const st = State.trafficGame;
   if (!st || st.done) return;
 
-  let correctChoice = "";
-
-  if (st.phase === "words"){
-    const correctTokenIndex = st.wordTokenIndices[st.builtCount];
-    if (!Number.isFinite(correctTokenIndex)) return;
-    correctChoice = tokens[correctTokenIndex].text;
-  } else if (st.phase === "book"){
-    correctChoice = st.targetBook;
-  } else if (st.phase === "ref"){
-    correctChoice = `${st.targetChapter}:${st.targetVerse}`;
-  } else {
+  if (!st.lastSpawnAt){
+    st.lastSpawnAt = now;
+    st.nextSpawnDelay = trafficRandomSpawnDelay();
     return;
   }
 
-  if (choice !== correctChoice){
-    st.score -= 25;
-    st.wrongGuesses += 1;
-    st.wrongChoice = choice;
-    render();
+  const timeSinceSpawn = now - st.lastSpawnAt;
+  if (timeSinceSpawn < st.nextSpawnDelay) return;
 
-    setTimeout(() => {
-      if (State.trafficGame && State.trafficGame.wrongChoice === choice){
-        State.trafficGame.wrongChoice = null;
-        render();
-      }
-    }, 350);
+  st.lastSpawnAt = now;
+  st.nextSpawnDelay = trafficRandomSpawnDelay();
 
+  const roadCounts = [
+    st.items.filter(x => x.road === 0).length,
+    st.items.filter(x => x.road === 1).length
+  ];
+
+  if (roadCounts[0] >= 4 && roadCounts[1] >= 4) return;
+
+  trafficSpawnItem(fieldEl);
+  trafficRenderItems(fieldEl);
+}
+
+function trafficFlashWrong(itemId){
+  const st = State.trafficGame;
+  if (!st || !st.fieldEl) return;
+
+  const itemEl = st.fieldEl.querySelector(`[data-traffic-id="${itemId}"]`);
+  if (!itemEl) return;
+
+  const carBtn = itemEl.querySelector(".traffic-car-btn");
+  const wordBtn = itemEl.querySelector(".traffic-word-btn");
+
+  if (carBtn) carBtn.classList.add("wrong");
+  if (wordBtn) wordBtn.classList.add("wrong");
+
+  setTimeout(() => {
+    if (carBtn) carBtn.classList.remove("wrong");
+    if (wordBtn) wordBtn.classList.remove("wrong");
+  }, 280);
+}
+
+function trafficChoose(itemId, tappedEl){
+  const st = State.trafficGame;
+  if (!st || st.done) return;
+
+  const item = st.items.find(x => x.id === itemId);
+  if (!item) return;
+
+  const fieldEl = st.fieldEl;
+  if (!fieldEl) return;
+
+  const rectField = fieldEl.getBoundingClientRect();
+  const rectBtn = tappedEl.getBoundingClientRect();
+  const popX = rectBtn.left - rectField.left + (rectBtn.width / 2);
+  const popY = rectBtn.top - rectField.top - 6;
+
+  if (!item.isCorrect){
+    trafficFlashWrong(item.id);
+    scrambleShowPopup(fieldEl, popX, popY, "✖", false);
     return;
   }
 
-  st.score += 100;
-  st.wrongChoice = null;
+  item.destroy = true;
+  scrambleShowPopup(fieldEl, popX, popY, "✔", true);
 
   if (st.phase === "words"){
     st.builtCount += 1;
 
     if (st.builtCount >= st.wordTokenIndices.length){
-      st.phase = "book";
-      trafficNextChoices();
+      trafficStartPhase(st, "book");
       render();
       return;
     }
 
-    trafficNextChoices();
     render();
     return;
   }
 
   if (st.phase === "book"){
-    st.phase = "ref";
-    trafficNextChoices();
+    trafficStartPhase(st, "ref");
     render();
     return;
   }
@@ -3719,117 +3985,219 @@ function trafficChoose(choice){
     st.done = true;
     st.showRef = true;
     st.endedAt = performance.now();
-    st.choices = [];
+    st.items = [];
     render();
   }
+}
+
+function trafficStopMotion(){
+  const st = State.trafficGame;
+  if (!st) return;
+
+  if (st.rafId){
+    cancelAnimationFrame(st.rafId);
+    st.rafId = 0;
+  }
+
+  st.fieldEl = null;
+  st.slideEl = null;
+  st.gameLayout = null;
+  st.coachActions = null;
+}
+
+function trafficUpdateSlideBg(slideEl){
+  if (!slideEl) return;
+  slideEl.style.background = TRAFFIC_GREEN;
+}
+
+function trafficRenderItems(fieldEl){
+  const st = State.trafficGame;
+  if (!st || !fieldEl) return;
+
+  const metrics = trafficRoadMetrics(fieldEl);
+
+  const topRoad = fieldEl.querySelector(".traffic-road.top");
+  const bottomRoad = fieldEl.querySelector(".traffic-road.bottom");
+
+  if (topRoad){
+    topRoad.style.top = `${metrics.topRoadTop}px`;
+    topRoad.style.height = `${metrics.roadH}px`;
+  }
+
+  if (bottomRoad){
+    bottomRoad.style.top = `${metrics.bottomRoadTop}px`;
+    bottomRoad.style.height = `${metrics.roadH}px`;
+  }
+
+  for (const item of st.items){
+    let itemEl = fieldEl.querySelector(`[data-traffic-id="${item.id}"]`);
+
+    if (!itemEl){
+      itemEl = document.createElement("div");
+      itemEl.className = "traffic-item";
+      itemEl.dataset.trafficId = String(item.id);
+
+      const carBtn = document.createElement("button");
+      carBtn.className = "traffic-car-btn no-zoom";
+      carBtn.type = "button";
+      carBtn.textContent = item.emoji;
+      carBtn.onclick = () => trafficChoose(item.id, carBtn);
+
+      const wordBtn = document.createElement("button");
+      wordBtn.className = "traffic-word-btn no-zoom";
+      wordBtn.type = "button";
+      wordBtn.textContent = item.label;
+      wordBtn.onclick = () => trafficChoose(item.id, wordBtn);
+
+      itemEl.appendChild(carBtn);
+      itemEl.appendChild(wordBtn);
+      fieldEl.appendChild(itemEl);
+
+      requestAnimationFrame(() => {
+        const w = Math.ceil(itemEl.offsetWidth || 150);
+        item.width = Math.max(110, w);
+      });
+    }
+
+    const roadTop = item.road === 0 ? metrics.topRoadTop : metrics.bottomRoadTop;
+    const itemLeft = item.x;
+
+    itemEl.style.transform = `translate(${itemLeft}px, ${roadTop}px)`;
+
+    const carBtn = itemEl.querySelector(".traffic-car-btn");
+    const wordBtn = itemEl.querySelector(".traffic-word-btn");
+
+    if (carBtn){
+      carBtn.style.top = `${metrics.lane1CenterY}px`;
+      carBtn.style.transform = `translateX(-50%) translateY(-50%)`;
+      if (item.direction > 0){
+        carBtn.style.scale = "-1 1";
+      } else {
+        carBtn.style.scale = "1 1";
+      }
+    }
+
+    if (wordBtn){
+      wordBtn.style.top = `${metrics.lane2CenterY}px`;
+      wordBtn.style.transform = `translateX(-50%) translateY(-50%)`;
+      wordBtn.textContent = item.label;
+    }
+  }
+
+  fieldEl.querySelectorAll(".traffic-item").forEach(el => {
+    const id = Number(el.dataset.trafficId || 0);
+    const found = st.items.some(item => item.id === id);
+    if (!found) el.remove();
+  });
+}
+
+function trafficStartMotion(fieldEl){
+  const st = State.trafficGame;
+  if (!st || st.done) return;
+
+  trafficStopMotion();
+  st.fieldEl = fieldEl;
+
+  let lastTs = performance.now();
+
+  function tick(ts){
+    const live = State.trafficGame;
+    if (!live || live !== st) return;
+    if (State.screen !== Screen.GAME || State.activeGame !== "traffic") return;
+    if (st.done) return;
+    if (!st.fieldEl) return;
+
+    const dt = Math.min(40, ts - lastTs);
+    lastTs = ts;
+
+    trafficSpawnTick(fieldEl, ts);
+
+    for (const item of st.items){
+      item.x += item.direction * item.speed * (dt / 1000);
+    }
+
+    trafficRemoveOffscreen(fieldEl);
+    trafficRenderItems(fieldEl);
+
+    st.rafId = requestAnimationFrame(tick);
+  }
+
+  st.rafId = requestAnimationFrame(tick);
 }
 
 registerGame({
   id: "traffic",
   title: "Traffic Tap",
-  description: "Tap the correct lane to build the verse.",
+  description: "Tap the moving correct word.",
   start(stage){
     if (!State.trafficGame){
       startTrafficTapGame();
     }
 
     const st = State.trafficGame;
+    trafficStopMotion();
+
     stage.innerHTML = "";
 
-    const wrap = document.createElement("div");
-    wrap.style.width = "100%";
-    wrap.style.maxWidth = "760px";
-    wrap.style.margin = "0 auto";
-    wrap.style.display = "flex";
-    wrap.style.flexDirection = "column";
-    wrap.style.alignItems = "center";
-    wrap.style.gap = "14px";
+    const verseBox = document.createElement("div");
+    verseBox.style.width = "100%";
+    verseBox.style.maxWidth = "760px";
+    verseBox.style.minHeight = "90px";
+    verseBox.style.display = "flex";
+    verseBox.style.alignItems = "center";
+    verseBox.style.justifyContent = "center";
+    verseBox.style.textAlign = "center";
+    verseBox.appendChild(trafficBuiltVerseNode());
+    stage.appendChild(verseBox);
 
-    wrap.appendChild(trafficBuiltVerseNode());
+    const gameLayout = stage.closest(".learn-layout");
+    const coachTitle = gameLayout?.querySelector("#gameCoachTitle");
+    const coachActions = gameLayout?.querySelector("#gameCoachActions");
+    const slideEl = stage.closest(".slide");
 
-    if (!st.done){
-      const laneWrap = document.createElement("div");
-      laneWrap.style.width = "100%";
-      laneWrap.style.display = "flex";
-      laneWrap.style.flexDirection = "column";
-      laneWrap.style.gap = "12px";
-      laneWrap.style.marginTop = "6px";
+    st.slideEl = slideEl || null;
+    st.gameLayout = gameLayout || null;
+    st.coachActions = coachActions || null;
 
-      st.choices.forEach((choice, i) => {
-        const btn = document.createElement("button");
-        btn.className = "carousel-main no-zoom";
-        btn.style.maxWidth = "100%";
-        btn.style.minHeight = "72px";
-        btn.style.borderRadius = "22px";
-        btn.style.fontSize = "22px";
-        btn.style.background = (st.wrongChoice === choice) ? "#ffb3b3" : "white";
-        btn.style.color = (st.wrongChoice === choice) ? "#7a1111" : "var(--purple)";
-        btn.style.border = "none";
-        btn.style.boxShadow = "0 6px 0 rgba(0,0,0,0.25)";
-        btn.textContent = choice;
-        btn.onclick = () => trafficChoose(choice);
-        laneWrap.appendChild(btn);
-      });
+    trafficUpdateSlideBg(slideEl);
 
-      wrap.appendChild(laneWrap);
-    } else {
-      const summary = document.createElement("div");
-      summary.className = "small";
-      summary.style.maxWidth = "34ch";
-      summary.style.fontWeight = "800";
-      summary.innerHTML = `
+    if (gameLayout){
+      gameLayout.style.background = "transparent";
+    }
+
+    if (coachTitle) coachTitle.textContent = "";
+
+    if (!coachActions) return;
+    coachActions.innerHTML = "";
+
+    if (st.done){
+      const doneMsg = document.createElement("div");
+      doneMsg.className = "traffic-done";
+      doneMsg.innerHTML = `
         Great job!<br>
-        Score: ${st.score}<br>
-        Wrong taps: ${st.wrongGuesses}<br>
-        Time: ${trafficFormatTime(trafficElapsedMs())}
+        Total time: ${scrambleFormatTime(trafficElapsedMs())}
       `;
-      wrap.appendChild(summary);
+      coachActions.appendChild(doneMsg);
+      return;
     }
 
-    stage.appendChild(wrap);
+    const field = document.createElement("div");
+    field.className = "traffic-field";
 
-    const coachTitle = document.getElementById("gameCoachTitle");
-    const coachActions = document.getElementById("gameCoachActions");
+    const topRoad = document.createElement("div");
+    topRoad.className = "traffic-road top";
 
-    if (coachTitle){
-      if (st.phase === "words") coachTitle.textContent = "Tap the next word";
-      else if (st.phase === "book") coachTitle.textContent = "Pick the Bible book";
-      else if (st.phase === "ref") coachTitle.textContent = "Pick the chapter and verse";
-      else coachTitle.textContent = "You finished!";
-    }
+    const bottomRoad = document.createElement("div");
+    bottomRoad.className = "traffic-road bottom";
 
-    if (coachActions){
-      coachActions.innerHTML = "";
+    field.appendChild(topRoad);
+    field.appendChild(bottomRoad);
+    coachActions.appendChild(field);
 
-      if (st.phase === "words"){
-        const tip = document.createElement("div");
-        tip.className = "coach-text";
-        tip.textContent = "Tap the correct lane.";
-        coachActions.appendChild(tip);
-      } else if (st.phase === "book"){
-        const tip = document.createElement("div");
-        tip.className = "coach-text";
-        tip.textContent = "Which Bible book is it from?";
-        coachActions.appendChild(tip);
-      } else if (st.phase === "ref"){
-        const tip = document.createElement("div");
-        tip.className = "coach-text";
-        tip.textContent = "Which chapter and verse is correct?";
-        coachActions.appendChild(tip);
-      } else {
-        const btn = document.createElement("button");
-        btn.className = "carousel-main no-zoom";
-        btn.textContent = "Play Again";
-        btn.onclick = () => {
-          State.trafficGame = null;
-          render();
-        };
-        coachActions.appendChild(btn);
-      }
-    }
+    trafficRenderItems(field);
+    trafficStartMotion(field);
   }
 });
-
 
 registerGame({
   id: "bouncing",
@@ -4361,8 +4729,7 @@ function screenGame(idx){
   const showGameRef =
     (State.activeGame === "chain" && State.chainGame?.showRef) ||
     (State.activeGame === "scramble" && State.scrambleGame?.showRef) ||
-    (State.activeGame === "traffic" && State.trafficGame?.showRef) ||
-    (State.activeGame !== "chain" && State.activeGame !== "scramble" && State.activeGame !== "traffic");
+    (State.activeGame !== "chain" && State.activeGame !== "scramble");
 
   inner.innerHTML = `
         <div class="learn-layout ${(State.activeGame === "scramble" || State.activeGame === "bouncing") ? "game-scramble" : ""}">
