@@ -1095,6 +1095,7 @@ const State = {
   chainGame: null,
   scrambleGame: null,
   bouncingGame: null,
+  trafficGame: null,
   debugBounce: false,
 
   // Learn progression
@@ -2074,6 +2075,11 @@ function practiceRun(){
     return;
   }
 
+  if (g.title.includes("Traffic Tap")){
+    startGame("traffic");
+    return;
+  }
+
   if (g.title.includes("Bouncing Words")){
     startGame("bouncing");
     return;
@@ -2492,6 +2498,15 @@ right = (State.screen === Screen.GAME) ? "" : nextBtn;
         return;
       }
 
+      if (State.activeGame === "traffic"){
+        showDialog({
+          title: "How to Play Traffic Tap",
+          body: "Tap the correct lane to build the verse one word at a time. Three choices appear. One is correct. After the verse is complete, choose the correct Bible book and then the correct chapter and verse.",
+          actions: [dlgBtn("Close", {onClick: closeDialog})]
+        });
+        return;
+      }
+
       showDialog({
         title: "How to Play Verse Chain",
         body: "Use the arrows to look through the choices. Tap the big word when you think it is correct. First build the whole verse. Then choose the correct Bible book. Then choose the correct chapter and verse.",
@@ -2570,6 +2585,7 @@ function stopGame(){
   State.chainGame = null;
   State.scrambleGame = null;
   State.bouncingGame = null;
+  State.trafficGame = null;
 }
 
 registerGame({
@@ -3483,6 +3499,338 @@ function bouncingChoose(choice, btnEl, fieldEl){
   
 }
 
+function trafficWordTokenIndices(){
+  const out = [];
+  for (let i = 0; i < tokens.length; i++){
+    if (tokens[i].type === TokenType.WORD){
+      out.push(i);
+    }
+  }
+  return out;
+}
+
+function trafficBuiltVerseNode(){
+  const p = document.createElement("p");
+  p.className = "verse scramble-verse";
+
+  const st = State.trafficGame;
+  const builtCount = st?.builtCount || 0;
+  const wordIdxs = st?.wordTokenIndices || [];
+  const builtSet = new Set(wordIdxs.slice(0, builtCount));
+
+  for (let i = 0; i < tokens.length; i++){
+    const t = tokens[i];
+
+    if (t.type === TokenType.SPACE || t.type === TokenType.PUNCT || t.type === TokenType.OTHER){
+      p.appendChild(document.createTextNode(t.text));
+      continue;
+    }
+
+    if (builtSet.has(i)){
+      p.appendChild(document.createTextNode(t.text));
+    } else {
+      break;
+    }
+  }
+
+  if (!st?.done && builtCount > 0){
+    p.appendChild(document.createTextNode(" …"));
+  }
+
+  if (!builtCount){
+    p.innerHTML = `
+      Build the verse one word at a time.<br>
+      <span style="font-weight:600;">Tap the correct lane.</span>
+    `;
+  }
+
+  return p;
+}
+
+function trafficMakeChoices(wordTokenIndices, correctTokenIndex){
+  const correctWord = tokens[correctTokenIndex].text;
+
+  const verseWordsLower = wordTokenIndices
+    .map(idx => tokens[idx].text.toLowerCase());
+
+  const pool = VERSE_CHAIN_DECOY_WORDS
+    .filter(word => word.toLowerCase() !== correctWord.toLowerCase())
+    .filter((word, i, arr) => arr.indexOf(word) === i)
+    .filter(word => !verseWordsLower.includes(word.toLowerCase()));
+
+  shuffleArray(pool);
+
+  const choices = [correctWord, ...pool.slice(0, 2)];
+  return shuffleArray(choices);
+}
+
+function trafficMakeBookChoices(correctBook){
+  const choices = [
+    correctBook,
+    ...chainPickRandomItems(BIBLE_BOOKS, 2, [correctBook])
+  ];
+  return shuffleArray(choices);
+}
+
+function trafficMakeReferenceChoices(correctChapter, correctVerse){
+  const correctRef = `${correctChapter}:${correctVerse}`;
+  const refs = new Set([correctRef]);
+
+  let tries = 0;
+  while (refs.size < 3 && tries < 200){
+    const chapterBump = Math.floor(Math.random() * 11) - 5;
+    const verseBump = Math.floor(Math.random() * 21) - 10;
+
+    let fakeChapter = correctChapter + chapterBump;
+    let fakeVerse = correctVerse + verseBump;
+
+    if (fakeChapter < 1) fakeChapter = 1 + Math.floor(Math.random() * 5);
+    if (fakeVerse < 1) fakeVerse = 1 + Math.floor(Math.random() * 10);
+
+    refs.add(`${fakeChapter}:${fakeVerse}`);
+    tries += 1;
+  }
+
+  return shuffleArray(Array.from(refs));
+}
+
+function trafficNextChoices(){
+  const st = State.trafficGame;
+  if (!st) return;
+
+  if (st.phase === "words"){
+    const correctTokenIndex = st.wordTokenIndices[st.builtCount];
+    if (!Number.isFinite(correctTokenIndex)) return;
+    st.choices = trafficMakeChoices(st.wordTokenIndices, correctTokenIndex);
+    return;
+  }
+
+  if (st.phase === "book"){
+    st.choices = trafficMakeBookChoices(st.targetBook);
+    return;
+  }
+
+  if (st.phase === "ref"){
+    st.choices = trafficMakeReferenceChoices(st.targetChapter, st.targetVerse);
+    return;
+  }
+
+  st.choices = [];
+}
+
+function startTrafficTapGame(){
+  const wordTokenIndices = trafficWordTokenIndices();
+  const meta = chainVerseMetaFromId(VERSE_ID);
+
+  State.trafficGame = {
+    wordTokenIndices,
+    builtCount: 0,
+    choices: [],
+    done: false,
+    wrongChoice: null,
+    phase: "words",
+    showRef: false,
+    targetBook: meta.book,
+    targetChapter: meta.chapter,
+    targetVerse: meta.verse,
+    score: 0,
+    wrongGuesses: 0,
+    startedAt: performance.now(),
+    endedAt: 0
+  };
+
+  trafficNextChoices();
+}
+
+function trafficElapsedMs(){
+  const st = State.trafficGame;
+  if (!st) return 0;
+  return (st.endedAt || performance.now()) - st.startedAt;
+}
+
+function trafficFormatTime(ms){
+  const totalSeconds = Math.max(0, Math.round(ms / 1000));
+  const mins = Math.floor(totalSeconds / 60);
+  const secs = totalSeconds % 60;
+  return mins ? `${mins}m ${secs}s` : `${secs}s`;
+}
+
+function trafficChoose(choice){
+  const st = State.trafficGame;
+  if (!st || st.done) return;
+
+  let correctChoice = "";
+
+  if (st.phase === "words"){
+    const correctTokenIndex = st.wordTokenIndices[st.builtCount];
+    if (!Number.isFinite(correctTokenIndex)) return;
+    correctChoice = tokens[correctTokenIndex].text;
+  } else if (st.phase === "book"){
+    correctChoice = st.targetBook;
+  } else if (st.phase === "ref"){
+    correctChoice = `${st.targetChapter}:${st.targetVerse}`;
+  } else {
+    return;
+  }
+
+  if (choice !== correctChoice){
+    st.score -= 25;
+    st.wrongGuesses += 1;
+    st.wrongChoice = choice;
+    render();
+
+    setTimeout(() => {
+      if (State.trafficGame && State.trafficGame.wrongChoice === choice){
+        State.trafficGame.wrongChoice = null;
+        render();
+      }
+    }, 350);
+
+    return;
+  }
+
+  st.score += 100;
+  st.wrongChoice = null;
+
+  if (st.phase === "words"){
+    st.builtCount += 1;
+
+    if (st.builtCount >= st.wordTokenIndices.length){
+      st.phase = "book";
+      trafficNextChoices();
+      render();
+      return;
+    }
+
+    trafficNextChoices();
+    render();
+    return;
+  }
+
+  if (st.phase === "book"){
+    st.phase = "ref";
+    trafficNextChoices();
+    render();
+    return;
+  }
+
+  if (st.phase === "ref"){
+    st.phase = "done";
+    st.done = true;
+    st.showRef = true;
+    st.endedAt = performance.now();
+    st.choices = [];
+    render();
+  }
+}
+
+registerGame({
+  id: "traffic",
+  title: "Traffic Tap",
+  description: "Tap the correct lane to build the verse.",
+  start(stage){
+    if (!State.trafficGame){
+      startTrafficTapGame();
+    }
+
+    const st = State.trafficGame;
+    stage.innerHTML = "";
+
+    const wrap = document.createElement("div");
+    wrap.style.width = "100%";
+    wrap.style.maxWidth = "760px";
+    wrap.style.margin = "0 auto";
+    wrap.style.display = "flex";
+    wrap.style.flexDirection = "column";
+    wrap.style.alignItems = "center";
+    wrap.style.gap = "14px";
+
+    wrap.appendChild(trafficBuiltVerseNode());
+
+    if (!st.done){
+      const laneWrap = document.createElement("div");
+      laneWrap.style.width = "100%";
+      laneWrap.style.display = "flex";
+      laneWrap.style.flexDirection = "column";
+      laneWrap.style.gap = "12px";
+      laneWrap.style.marginTop = "6px";
+
+      st.choices.forEach((choice, i) => {
+        const btn = document.createElement("button");
+        btn.className = "carousel-main no-zoom";
+        btn.style.maxWidth = "100%";
+        btn.style.minHeight = "72px";
+        btn.style.borderRadius = "22px";
+        btn.style.fontSize = "22px";
+        btn.style.background = (st.wrongChoice === choice) ? "#ffb3b3" : "white";
+        btn.style.color = (st.wrongChoice === choice) ? "#7a1111" : "var(--purple)";
+        btn.style.border = "none";
+        btn.style.boxShadow = "0 6px 0 rgba(0,0,0,0.25)";
+        btn.textContent = choice;
+        btn.onclick = () => trafficChoose(choice);
+        laneWrap.appendChild(btn);
+      });
+
+      wrap.appendChild(laneWrap);
+    } else {
+      const summary = document.createElement("div");
+      summary.className = "small";
+      summary.style.maxWidth = "34ch";
+      summary.style.fontWeight = "800";
+      summary.innerHTML = `
+        Great job!<br>
+        Score: ${st.score}<br>
+        Wrong taps: ${st.wrongGuesses}<br>
+        Time: ${trafficFormatTime(trafficElapsedMs())}
+      `;
+      wrap.appendChild(summary);
+    }
+
+    stage.appendChild(wrap);
+
+    const coachTitle = document.getElementById("gameCoachTitle");
+    const coachActions = document.getElementById("gameCoachActions");
+
+    if (coachTitle){
+      if (st.phase === "words") coachTitle.textContent = "Tap the next word";
+      else if (st.phase === "book") coachTitle.textContent = "Pick the Bible book";
+      else if (st.phase === "ref") coachTitle.textContent = "Pick the chapter and verse";
+      else coachTitle.textContent = "You finished!";
+    }
+
+    if (coachActions){
+      coachActions.innerHTML = "";
+
+      if (st.phase === "words"){
+        const tip = document.createElement("div");
+        tip.className = "coach-text";
+        tip.textContent = "Tap the correct lane.";
+        coachActions.appendChild(tip);
+      } else if (st.phase === "book"){
+        const tip = document.createElement("div");
+        tip.className = "coach-text";
+        tip.textContent = "Which Bible book is it from?";
+        coachActions.appendChild(tip);
+      } else if (st.phase === "ref"){
+        const tip = document.createElement("div");
+        tip.className = "coach-text";
+        tip.textContent = "Which chapter and verse is correct?";
+        coachActions.appendChild(tip);
+      } else {
+        const btn = document.createElement("button");
+        btn.className = "carousel-main no-zoom";
+        btn.textContent = "Play Again";
+        btn.onclick = () => {
+          State.trafficGame = null;
+          render();
+        };
+        coachActions.appendChild(btn);
+      }
+    }
+  }
+});
+
+
 registerGame({
   id: "bouncing",
   title: "Bouncing Words",
@@ -4013,7 +4361,8 @@ function screenGame(idx){
   const showGameRef =
     (State.activeGame === "chain" && State.chainGame?.showRef) ||
     (State.activeGame === "scramble" && State.scrambleGame?.showRef) ||
-    (State.activeGame !== "chain" && State.activeGame !== "scramble");
+    (State.activeGame === "traffic" && State.trafficGame?.showRef) ||
+    (State.activeGame !== "chain" && State.activeGame !== "scramble" && State.activeGame !== "traffic");
 
   inner.innerHTML = `
         <div class="learn-layout ${(State.activeGame === "scramble" || State.activeGame === "bouncing") ? "game-scramble" : ""}">
