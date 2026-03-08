@@ -4155,6 +4155,22 @@ registerGame({
     const coachActions = gameLayout?.querySelector("#gameCoachActions");
     const slideEl = stage.closest(".slide");
 
+    if (gameLayout){
+      if (
+        State.activeGame === "scramble" ||
+        State.activeGame === "bouncing" ||
+        State.activeGame === "traffic"
+      ){
+        gameLayout.classList.add("game-scramble");
+      } else {
+        gameLayout.classList.remove("game-scramble");
+      }
+    }
+
+    if (gameLayout){
+      gameLayout.classList.add("game-scramble");
+    }
+
     st.slideEl = slideEl || null;
     st.gameLayout = gameLayout || null;
     st.coachActions = coachActions || null;
@@ -4162,7 +4178,7 @@ registerGame({
     trafficUpdateSlideBg(slideEl);
 
     if (gameLayout){
-      gameLayout.style.background = "transparent";
+      
     }
 
     if (coachTitle) coachTitle.textContent = "";
