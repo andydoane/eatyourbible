@@ -4036,10 +4036,6 @@ function trafficStopMotion(){
   st.coachActions = null;
 }
 
-function trafficUpdateSlideBg(slideEl){
-  if (!slideEl) return;
-  slideEl.style.background = TRAFFIC_GREEN;
-}
 
 function trafficRenderItems(fieldEl){
   const st = State.trafficGame;
@@ -4209,11 +4205,7 @@ registerGame({
     st.gameLayout = gameLayout || null;
     st.coachActions = coachActions || null;
 
-    trafficUpdateSlideBg(slideEl);
 
-    if (gameLayout){
-      
-    }
 
     if (coachTitle) coachTitle.textContent = "";
 
@@ -4811,7 +4803,7 @@ function screenGame(idx){
 
   return makeSlide({
     idx,
-    bg: "var(--purple)",
+    bg: State.activeGame === "traffic" ? TRAFFIC_GREEN : "var(--purple)",
     navHidden: false,
     inner
   });
