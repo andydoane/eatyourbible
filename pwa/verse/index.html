@@ -385,6 +385,62 @@ border-radius: 18px;
   transform-origin: center center;
 }
 
+.scramble-word.color-1{
+  background: #ffc751;
+  color: #333333;
+}
+
+.scramble-word.color-2{
+  background: #a7cb6f;
+  color: #ffffff;
+}
+
+.scramble-word.color-3{
+  background: #ff5a51;
+  color: #ffffff;
+}
+
+.scramble-word.color-4{
+  background: #ff8cc8;
+  color: #ffffff;
+}
+
+.scramble-word.color-5{
+  background: #64b5f6;
+  color: #ffffff;
+}
+
+.scramble-word.shape-slime-blob-soft{
+  border-radius: 60px 34px 58px 38px / 42px 36px 46px 34px;
+}
+
+.scramble-word.shape-rocket-goo-soft{
+  border-radius: 72px 30px 62px 38px / 50px 34px 46px 36px;
+  padding-inline: 30px;
+}
+
+.scramble-word.shape-zig-round-b{
+  border-radius: 18px 40px 18px 40px;
+}
+
+.scramble-word.shape-organic-soft-b{
+  border-radius: 34px 22px 38px 18px;
+}
+
+.scramble-word.shape-splat-pill-soft{
+  border-radius: 36px 62px 40px 56px / 46px 38px 36px 50px;
+}
+
+.scramble-word.shape-wide-sploosh-b-soft{
+  border-radius: 36px 74px 28px 56px / 38px 64px 34px 48px;
+  min-width: 170px;
+}
+
+.scramble-word.shape-wide-sploosh-soft{
+  border-radius: 56px 36px 74px 28px / 48px 38px 64px 34px;
+  min-width: 170px;
+}
+
 .scramble-word:active{
   --pressY: 4px;
   box-shadow: 0 2px 0 rgba(0,0,0,0.25);
@@ -419,6 +475,44 @@ border-radius: 18px;
   inset: 0;
   pointer-events: none;
   z-index: 4;
+}
+
+.bounce-debug-line{
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 3px dashed rgba(255, 235, 59, 0.95);
+  pointer-events: none;
+  z-index: 5;
+}
+
+.bounce-debug-right-line{
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 2px solid rgba(255, 140, 0, 0.95);
+  pointer-events: none;
+  z-index: 5;
+}
+
+.bounce-debug-box{
+  position: absolute;
+  pointer-events: none;
+  border: 2px solid rgba(0, 255, 255, 0.95);
+  border-radius: 12px;
+  z-index: 5;
+}
+
+.scramble-debug-line{
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-left: 3px dashed rgba(255, 235, 59, 0.95);
+  pointer-events: none;
+  z-index: 5;
 }
 
 .scramble-word.spawn-in{
@@ -827,6 +921,16 @@ function dlgBtn(label, {secondary=false, onClick}={}){
   return b;
 }
 
+window.addEventListener("keydown", (e) => {
+  if (String(e.key).toLowerCase() !== "d") return;
+
+  State.debugBounce = !State.debugBounce;
+
+  if (State.screen === Screen.GAME && (State.activeGame === "bouncing" || State.activeGame === "scramble")){
+    render();
+  }
+});
+
 function getVerseIdFromUrl(){
   const params = new URLSearchParams(window.location.search);
   return params.get("v") || "john_3_16";
@@ -991,6 +1095,7 @@ const State = {
   chainGame: null,
   scrambleGame: null,
   bouncingGame: null,
+  debugBounce: false,
 
   // Learn progression
   listenDone: false,
@@ -1183,7 +1288,9 @@ function scrambleMakeChoices(wordTokenIndices, correctTokenIndex){
 
   shuffleArray(pool);
 
-  return [correctWord, ...pool.slice(0, 2)];
+  const choices = [correctWord, ...pool.slice(0, 2)];
+  shuffleArray(choices);
+  return choices;
 }
 
 function scrambleMakeBookChoices(correctBook){
@@ -1242,8 +1349,10 @@ function scrambleNextChoices(){
 
 function scrambleRandomPositions(choices, fieldEl){
   const st = State.scrambleGame;
-  const pad = 16;
+  const sidePad = 12;
+  const padY = 16;
   const gap = 14;
+  const horizontalShiftFactor = 0.75; // 50% of button width
 
   const fieldRect = fieldEl?.getBoundingClientRect();
   const fieldW = Math.max(260, Math.floor(fieldRect?.width || 320));
@@ -1257,20 +1366,20 @@ function scrambleRandomPositions(choices, fieldEl){
   measurer.style.top = "-9999px";
   document.body.appendChild(measurer);
 
-  function measureChoice(text){
+  function measureChoice(text, i){
     const btn = document.createElement("button");
     btn.className = "scramble-word";
+    btn.classList.add(st.colorSet[i]);
+    btn.classList.add(st.shapeSet[i]);
     btn.style.position = "absolute";
     btn.style.left = "0";
     btn.style.top = "0";
-    btn.style.maxWidth = `${Math.max(120, fieldW - (pad * 2))}px`;
     btn.textContent = text;
     measurer.appendChild(btn);
 
-    const rect = btn.getBoundingClientRect();
     const size = {
-      w: Math.ceil(rect.width),
-      h: Math.ceil(rect.height)
+      actualW: Math.ceil(btn.offsetWidth),
+      h: Math.ceil(btn.offsetHeight)
     };
 
     btn.remove();
@@ -1302,43 +1411,42 @@ function scrambleRandomPositions(choices, fieldEl){
 
   const layouts = [
 
-  // SET 1
-  [
-    makeZone(0.10, 0.30, 0.02, 0.10),   // top left
-    makeZone(0.42, 0.62, 0.44, 0.54),   // middle center
-    makeZone(0.18, 0.38, 0.88, 0.96)    // bottom left-ish
-  ],
+    // SET 1
+    [
+      makeZone(0.10, 0.30, 0.02, 0.10),
+      makeZone(0.42, 0.62, 0.44, 0.54),
+      makeZone(0.18, 0.38, 0.88, 0.96)
+    ],
 
-  // SET 2
-  [
-    makeZone(0.44, 0.64, 0.03, 0.11),   // top center
-    makeZone(0.12, 0.32, 0.45, 0.55),   // middle left
-    makeZone(0.52, 0.72, 0.87, 0.95)    // bottom right-ish
-  ],
+    // SET 2
+    [
+      makeZone(0.44, 0.64, 0.03, 0.11),
+      makeZone(0.12, 0.32, 0.45, 0.55),
+      makeZone(0.52, 0.72, 0.87, 0.95)
+    ],
 
-  // SET 3
-  [
-    makeZone(0.18, 0.38, 0.01, 0.09),   // top left-ish
-    makeZone(0.54, 0.74, 0.43, 0.53),   // middle right
-    makeZone(0.34, 0.54, 0.89, 0.97)    // bottom center
-  ],
+    // SET 3
+    [
+      makeZone(0.18, 0.38, 0.01, 0.09),
+      makeZone(0.54, 0.74, 0.43, 0.53),
+      makeZone(0.34, 0.54, 0.89, 0.97)
+    ],
 
-  // SET 4
-  [
-    makeZone(0.50, 0.70, 0.02, 0.10),   // top right-ish
-    makeZone(0.28, 0.48, 0.46, 0.56),   // middle left-center
-    makeZone(0.08, 0.28, 0.86, 0.94)    // bottom left
-  ],
+    // SET 4
+    [
+      makeZone(0.50, 0.70, 0.02, 0.10),
+      makeZone(0.28, 0.48, 0.46, 0.56),
+      makeZone(0.08, 0.28, 0.86, 0.94)
+    ],
 
-  // SET 5
-  [
-    makeZone(0.24, 0.44, 0.03, 0.11),   // top left-center
-    makeZone(0.46, 0.66, 0.44, 0.54),   // middle center-right
-    makeZone(0.56, 0.76, 0.88, 0.96)    // bottom right
-  ]
+    // SET 5
+    [
+      makeZone(0.24, 0.44, 0.03, 0.11),
+      makeZone(0.46, 0.66, 0.44, 0.54),
+      makeZone(0.56, 0.76, 0.88, 0.96)
+    ]
 
-];
-  
+  ];
 
   let layoutIndex = Math.floor(Math.random() * layouts.length);
   if (layouts.length > 1 && st?.lastLayoutIndex === layoutIndex){
@@ -1347,18 +1455,31 @@ function scrambleRandomPositions(choices, fieldEl){
   if (st) st.lastLayoutIndex = layoutIndex;
 
   const chosenLayout = layouts[layoutIndex];
-  const sizes = choices.map(measureChoice);
+  const sizes = choices.map((choice, i) => measureChoice(choice, i));
+
+  // Shared safe horizontal width for the round
+  const sharedW = Math.max(...sizes.map(s => s.actualW)) + 8;
+
   const positions = [];
   const placed = [];
 
   for (let i = 0; i < sizes.length; i++){
     const size = sizes[i];
+    const placeW = sharedW;
+    const actualW = size.actualW;
     const zone = chosenLayout[i] || chosenLayout[0];
 
-    const minX = Math.max(pad, zone.xMin);
-    const maxX = Math.max(minX, Math.min(zone.xMax - size.w, fieldW - size.w - pad));
-    const minY = Math.max(pad, zone.yMin);
-    const maxY = Math.max(minY, Math.min(zone.yMax - size.h, fieldH - size.h - pad));
+    const centerX = (fieldW - actualW) / 2;
+
+    const maxShiftByWidth = actualW * horizontalShiftFactor;
+    const maxShiftByEdges = Math.max(0, centerX - sidePad);
+    const allowedShift = Math.max(0, Math.min(maxShiftByWidth, maxShiftByEdges));
+
+    const minX = Math.max(sidePad, centerX - allowedShift);
+    const maxX = Math.min(fieldW - actualW - sidePad, centerX + allowedShift);
+
+    const minY = Math.max(padY, zone.yMin);
+    const maxY = Math.max(minY, Math.min(zone.yMax - size.h, fieldH - size.h - padY));
 
     let placedRect = null;
 
@@ -1366,7 +1487,7 @@ function scrambleRandomPositions(choices, fieldEl){
       const rect = {
         x: randBetween(minX, maxX),
         y: randBetween(minY, maxY),
-        w: size.w,
+        w: placeW,
         h: size.h
       };
 
@@ -1381,7 +1502,7 @@ function scrambleRandomPositions(choices, fieldEl){
       const fallbackRect = {
         x: minX,
         y: minY,
-        w: size.w,
+        w: placeW,
         h: size.h
       };
 
@@ -1394,9 +1515,9 @@ function scrambleRandomPositions(choices, fieldEl){
     if (!placedRect){
       for (let attempt = 0; attempt < 140; attempt++){
         const rect = {
-          x: randBetween(pad, Math.max(pad, fieldW - size.w - pad)),
-          y: randBetween(pad, Math.max(pad, fieldH - size.h - pad)),
-          w: size.w,
+          x: randBetween(minX, maxX),
+          y: randBetween(padY, Math.max(padY, fieldH - size.h - padY)),
+          w: placeW,
           h: size.h
         };
 
@@ -1409,12 +1530,12 @@ function scrambleRandomPositions(choices, fieldEl){
     }
 
     if (!placedRect){
-      placedRect = {
-        x: pad,
-        y: pad + (i * (size.h + gap)),
-        w: size.w,
-        h: size.h
-      };
+        placedRect = {
+          x: centerX,
+          y: padY + (i * (size.h + gap)),
+          w: placeW,
+          h: size.h
+        };
     }
 
     const rotationDeg = Math.round((Math.random() * 20) - 10);
@@ -1444,6 +1565,24 @@ function scrambleShowPopup(field, x, y, text, good){
   setTimeout(() => {
     pop.remove();
   }, 650);
+}
+
+function scrambleDebugOverlay(fieldEl){
+  if (!State.debugBounce || !fieldEl) return;
+
+  fieldEl.querySelectorAll(".scramble-debug-line").forEach(el => el.remove());
+
+  const padX = 6;
+
+  const leftLine = document.createElement("div");
+  leftLine.className = "scramble-debug-line";
+  leftLine.style.left = `${padX}px`;
+  fieldEl.appendChild(leftLine);
+
+  const rightLine = document.createElement("div");
+  rightLine.className = "scramble-debug-line";
+  rightLine.style.right = `${padX}px`;
+  fieldEl.appendChild(rightLine);
 }
 
 function bouncingBurstAt(fieldEl, x, y){
@@ -1523,6 +1662,32 @@ function bouncingBurstAt(fieldEl, x, y){
   requestAnimationFrame(tick);
 }
 
+function bouncingColorSet(){
+  const colors = ["color-1", "color-2", "color-3"];
+  shuffleArray(colors);
+  return colors;
+}
+
+function scrambleColorSet(){
+  const colors = ["color-1", "color-2", "color-3", "color-4", "color-5"];
+  shuffleArray(colors);
+  return colors.slice(0, 3);
+}
+
+function scrambleShapeSet(){
+  const shapes = [
+    "shape-slime-blob-soft",
+    "shape-rocket-goo-soft",
+    "shape-zig-round-b",
+    "shape-organic-soft-b",
+    "shape-splat-pill-soft",
+    "shape-wide-sploosh-b-soft",
+    "shape-wide-sploosh-soft"
+  ];
+  shuffleArray(shapes);
+  return shapes.slice(0, 3);
+}
+
 function bouncingAnimateCorrectChoice(btnEl, fieldEl, onDone){
   const st = State.bouncingGame;
 
@@ -1552,6 +1717,91 @@ function bouncingAnimateCorrectChoice(btnEl, fieldEl, onDone){
   }, 210);
 }
 
+function bouncingDebugOverlay(fieldEl, btnRefs){
+  const st = State.bouncingGame;
+  if (!State.debugBounce || !st || !fieldEl) return;
+
+  const pad = 16;
+  const fieldW = fieldEl.clientWidth;
+
+  fieldEl.querySelectorAll(".bounce-debug-line, .bounce-debug-right-line, .bounce-debug-box").forEach(el => el.remove());
+
+  const leftLine = document.createElement("div");
+  leftLine.className = "bounce-debug-line";
+  leftLine.style.left = `${pad}px`;
+  fieldEl.appendChild(leftLine);
+
+  const movers = st.movers || [];
+
+  movers.forEach((m) => {
+    const rightLine = document.createElement("div");
+    rightLine.className = "bounce-debug-right-line";
+
+    const rightBounceX = Math.max(pad, fieldW - m.w - pad);
+
+    rightLine.style.left = `${Math.round(rightBounceX)}px`;
+    fieldEl.appendChild(rightLine);
+
+    const box = document.createElement("div");
+    box.className = "bounce-debug-box";
+    box.style.left = `${Math.round(m.x)}px`;
+    box.style.top = `${Math.round(m.y)}px`;
+    box.style.width = `${Math.round(m.w)}px`;
+    box.style.height = `${Math.round(m.h)}px`;
+    fieldEl.appendChild(box);
+  });
+
+  if (!movers.length && Array.isArray(btnRefs)){
+    btnRefs.forEach((btn) => {
+      const rect = btn.getBoundingClientRect();
+      const fieldRect = fieldEl.getBoundingClientRect();
+
+      const w = Math.round(rect.width);
+      const h = Math.round(rect.height);
+      const x = Math.round(rect.left - fieldRect.left);
+      const y = Math.round(rect.top - fieldRect.top);
+
+
+      const box = document.createElement("div");
+      box.className = "bounce-debug-box";
+      box.style.left = `${x}px`;
+      box.style.top = `${y}px`;
+      box.style.width = `${w}px`;
+      box.style.height = `${h}px`;
+      fieldEl.appendChild(box);
+    });
+  }
+}
+
+function bouncingRefreshDebugOverlay(fieldEl){
+  if (!State.debugBounce || !fieldEl) return;
+
+  fieldEl.querySelectorAll(".bounce-debug-right-line, .bounce-debug-box").forEach(el => el.remove());
+
+  const st = State.bouncingGame;
+  const movers = st?.movers || [];
+  const pad = 16;
+  const fieldW = fieldEl.clientWidth;
+
+  movers.forEach((m) => {
+    const rightLine = document.createElement("div");
+    rightLine.className = "bounce-debug-right-line";
+
+    const rightBounceX = Math.max(pad, fieldW - m.w - pad);
+
+    rightLine.style.left = `${Math.round(rightBounceX)}px`;
+    fieldEl.appendChild(rightLine);
+
+    const box = document.createElement("div");
+    box.className = "bounce-debug-box";
+    box.style.left = `${Math.round(m.x)}px`;
+    box.style.top = `${Math.round(m.y)}px`;
+    box.style.width = `${Math.round(m.w)}px`;
+    box.style.height = `${Math.round(m.h)}px`;
+    fieldEl.appendChild(box);
+  });
+}
+
 function startVerseScrambleGame(){
   const wordTokenIndices = scrambleWordTokenIndices();
   const meta = chainVerseMetaFromId(VERSE_ID);
@@ -1561,6 +1811,8 @@ function startVerseScrambleGame(){
     builtCount: 0,
     choices: [],
     positions: [],
+    colorSet: [],
+    shapeSet: [],
     done: false,
     wrongChoice: null,
     phase: "words",
@@ -1584,6 +1836,8 @@ function scrambleRoundRefresh(){
   if (!st) return;
   scrambleNextChoices();
   st.positions = [];
+  st.colorSet = [];
+  st.shapeSet = [];
 }
 
 function scrambleElapsedMs(){
@@ -2688,6 +2942,14 @@ registerGame({
     const field = document.createElement("div");
     field.className = "scramble-field";
 
+    if (!st.colorSet.length || st.colorSet.length !== st.choices.length){
+      st.colorSet = scrambleColorSet();
+    }
+
+    if (!st.shapeSet.length || st.shapeSet.length !== st.choices.length){
+      st.shapeSet = scrambleShapeSet();
+    }
+
     if (!st.positions.length || st.positions.length !== st.choices.length){
       st.positions = scrambleRandomPositions(st.choices, field);
     }
@@ -2695,6 +2957,8 @@ registerGame({
     st.choices.forEach((choice, i) => {
       const btn = document.createElement("button");
       btn.className = "scramble-word no-zoom";
+      btn.classList.add(st.colorSet[i]);
+      btn.classList.add(st.shapeSet[i]);
       if (st.wrongChoice === choice) btn.classList.add("wrong");
       btn.type = "button";
       btn.textContent = choice;
@@ -2712,7 +2976,8 @@ registerGame({
       field.appendChild(btn);
     });
 
-    coachActions.appendChild(field);
+        coachActions.appendChild(field);
+    scrambleDebugOverlay(field);
   }
 });
 
@@ -2984,7 +3249,6 @@ function bouncingBuildMovers(fieldEl, btnRefs){
 
   return btnRefs.map((btn, i) => {
     const pos = st.positions[i] || { leftPx: 20, topPx: 20, rotationDeg: 0 };
-    const rect = btn.getBoundingClientRect();
     let vx = bouncingRandomVelocity();
     let vy = bouncingRandomVelocity();
 
@@ -2997,8 +3261,8 @@ function bouncingBuildMovers(fieldEl, btnRefs){
       y: pos.topPx,
       vx,
       vy,
-      w: Math.ceil(rect.width),
-      h: Math.ceil(rect.height),
+      w: Math.ceil(btn.offsetWidth),
+      h: Math.ceil(btn.offsetHeight),
       fieldW,
       fieldH
     };
@@ -3036,16 +3300,17 @@ function bouncingStartMotion(fieldEl, btnRefs){
     if (st.done) return;
     if (!st.movers || !st.movers.length) return;
 
-    const pad = 16;
+    const padX = 0;
+    const padY = 16;
 
     for (const m of st.movers){
       const fieldW = fieldEl.clientWidth;
       const fieldH = fieldEl.clientHeight;
 
-      const minX = pad;
-      const maxX = Math.max(minX, fieldW - m.w - pad);
-      const minY = pad;
-      const maxY = Math.max(minY, fieldH - m.h - pad);
+      const minX = padX;
+      const maxX = Math.max(minX, fieldW - m.w - padX);
+      const minY = padY;
+      const maxY = Math.max(minY, fieldH - m.h - padY);
 
       m.x += m.vx;
       m.y += m.vy;
@@ -3070,6 +3335,8 @@ function bouncingStartMotion(fieldEl, btnRefs){
       m.btn.style.left = `${Math.round(m.x)}px`;
       m.btn.style.top = `${Math.round(m.y)}px`;
     }
+
+    bouncingRefreshDebugOverlay(fieldEl);
 
     st.rafId = requestAnimationFrame(tick);
   }
@@ -3272,14 +3539,18 @@ registerGame({
     }
 
     const btnRefs = [];
+    const colorSet = bouncingColorSet();
+    
 
     st.choices.forEach((choice, i) => {
-      const btn = document.createElement("button");
-      btn.className = "scramble-word no-zoom";
-      if (st.wrongChoice === choice) btn.classList.add("wrong");
-      btn.type = "button";
-      btn.textContent = choice;
-      btn.classList.add("spawn-in");
+        const btn = document.createElement("button");
+        btn.className = "scramble-word no-zoom";
+        if (st.wrongChoice === choice) btn.classList.add("wrong");
+        btn.type = "button";
+        btn.textContent = choice;
+        btn.classList.add("spawn-in");
+        btn.classList.add(colorSet[i]);
+
 
       const pos = st.positions[i] || { leftPx: 20, topPx: 20, rotationDeg: 0 };
       btn.style.left = `${pos.leftPx}px`;
@@ -3296,6 +3567,7 @@ registerGame({
     });
 
     coachActions.appendChild(field);
+        bouncingDebugOverlay(field, btnRefs);
 
     if (!st.done){
       requestAnimationFrame(() => {
