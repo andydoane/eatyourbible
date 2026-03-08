@@ -848,9 +848,23 @@ text-wrap: balance;
   -webkit-tap-highlight-color: transparent;
 }
 
+.traffic-car-flip{
+  display: inline-block;
+}
+
+.traffic-car-emoji{
+  display: inline-block;
+  transform-origin: center center;
+  animation: trafficRumble 0.22s infinite alternate ease-in-out;
+}
+
 .traffic-car-btn{
   font-size: clamp(28px, 7vw, 40px);
   line-height: 1;
+}
+
+.traffic-car-emoji{
+  display: inline-block;
   transform-origin: center center;
   animation: trafficRumble 0.22s infinite alternate ease-in-out;
 }
@@ -880,10 +894,10 @@ text-wrap: balance;
 
 @keyframes trafficRumble{
   0%{
-    transform: translateX(-50%) translateY(-1px) rotate(-2deg);
+    transform: translateY(-1px) rotate(-2deg);
   }
   100%{
-    transform: translateX(-50%) translateY(1px) rotate(2deg);
+    transform: translateY(1px) rotate(2deg);
   }
 }
 
@@ -3605,7 +3619,7 @@ function bouncingChoose(choice, btnEl, fieldEl){
   
 }
 
-const TRAFFIC_EMOJIS = ["🚗","🚕","🚙","🛻","🚓","🚘","🚖"];
+const TRAFFIC_EMOJIS = ["🚗", "🚕", "🚙", "🏎️", "🚓", "🚌", "🚎", "🚐", "🚑", "🚒", "🚚", "🚛", "🚜", "🛻", "🚲", "🛵", "🏍️", "🛴", "🛺"];
 const TRAFFIC_GREEN = "#a7cb6f";
 
 function trafficElapsedMs(){
@@ -3855,6 +3869,24 @@ function trafficSpawnItem(fieldEl){
   }
 }
 
+function trafficSizeField(fieldEl){
+  const st = State.trafficGame;
+  if (!st || !fieldEl) return;
+
+  const verseEl = st.slideEl?.querySelector(".learn-verse");
+  const navEl = document.getElementById("navBar");
+
+  if (!verseEl || !navEl) return;
+
+  const verseRect = verseEl.getBoundingClientRect();
+  const navRect = navEl.getBoundingClientRect();
+
+  const usableHeight = Math.max(260, Math.floor(navRect.top - verseRect.bottom));
+
+  fieldEl.style.height = `${usableHeight}px`;
+  fieldEl.style.flex = "0 0 auto";
+}
+
 function trafficRoadMetrics(fieldEl){
   const fieldW = Math.max(320, fieldEl.clientWidth);
   const fieldH = Math.max(260, fieldEl.clientHeight);
@@ -4014,6 +4046,7 @@ function trafficRenderItems(fieldEl){
   const st = State.trafficGame;
   if (!st || !fieldEl) return;
 
+  trafficSizeField(fieldEl);
   const metrics = trafficRoadMetrics(fieldEl);
 
   const topRoad = fieldEl.querySelector(".traffic-road.top");
@@ -4040,7 +4073,16 @@ function trafficRenderItems(fieldEl){
       const carBtn = document.createElement("button");
       carBtn.className = "traffic-car-btn no-zoom";
       carBtn.type = "button";
-      carBtn.textContent = item.emoji;
+
+      const carFlip = document.createElement("span");
+      carFlip.className = "traffic-car-flip";
+
+      const carEmoji = document.createElement("span");
+      carEmoji.className = "traffic-car-emoji";
+      carEmoji.textContent = item.emoji;
+
+      carFlip.appendChild(carEmoji);
+      carBtn.appendChild(carFlip);
       carBtn.onclick = () => trafficChoose(item.id, carBtn);
 
       const wordBtn = document.createElement("button");
@@ -4070,10 +4112,12 @@ function trafficRenderItems(fieldEl){
     if (carBtn){
       carBtn.style.top = `${metrics.lane1CenterY}px`;
       carBtn.style.transform = `translateX(-50%) translateY(-50%)`;
-      if (item.direction > 0){
-        carBtn.style.scale = "-1 1";
-      } else {
-        carBtn.style.scale = "1 1";
+
+      const carFlip = carBtn.querySelector(".traffic-car-flip");
+      if (carFlip){
+        carFlip.style.transform = item.direction > 0
+          ? `scaleX(-1)`
+          : `scaleX(1)`;
       }
     }
 
@@ -4110,6 +4154,7 @@ function trafficStartMotion(fieldEl){
     const dt = Math.min(40, ts - lastTs);
     lastTs = ts;
 
+    trafficSizeField(fieldEl);
     trafficSpawnTick(fieldEl, ts);
 
     for (const item of st.items){
@@ -4154,22 +4199,6 @@ registerGame({
     const coachTitle = gameLayout?.querySelector("#gameCoachTitle");
     const coachActions = gameLayout?.querySelector("#gameCoachActions");
     const slideEl = stage.closest(".slide");
-
-    if (gameLayout){
-      if (
-        State.activeGame === "scramble" ||
-        State.activeGame === "bouncing" ||
-        State.activeGame === "traffic"
-      ){
-        gameLayout.classList.add("game-scramble");
-      } else {
-        gameLayout.classList.remove("game-scramble");
-      }
-    }
-
-    if (gameLayout){
-      gameLayout.classList.add("game-scramble");
-    }
 
     st.slideEl = slideEl || null;
     st.gameLayout = gameLayout || null;
@@ -4748,7 +4777,7 @@ function screenGame(idx){
     (State.activeGame !== "chain" && State.activeGame !== "scramble");
 
   inner.innerHTML = `
-        <div class="learn-layout ${(State.activeGame === "scramble" || State.activeGame === "bouncing") ? "game-scramble" : ""}">
+      <div class="learn-layout ${(State.activeGame === "scramble" || State.activeGame === "bouncing" || State.activeGame === "traffic") ? "game-scramble" : ""}">
 
       <div class="learn-ref">
         ${showGameRef ? `<div class="verse-ref-pill">${VERSE_REF}</div>` : ``}
