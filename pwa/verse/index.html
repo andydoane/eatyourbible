@@ -291,6 +291,10 @@
 
   /* padding between zones */
   gap: 6px;
+
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
 }
 
 /* Zone 1: reference pill band (target ~10%) */
@@ -317,13 +321,30 @@
 border-radius: 18px;
 }
 
+.learn-verse,
+.learn-coach{
+  width: 100%;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .learn-verse.echo-green{
   background: #3fa66b;
+}
+
+.learn-verse > *{
+  width: 100%;
+  max-width: 760px;
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
 }
 
 .learn-layout.game-scramble{
   padding: calc(14px + var(--safeT)) 18px 8px;
   gap: 4px;
+  max-width: 840px;
 }
 
 .learn-layout.game-scramble .learn-ref{
@@ -639,6 +660,12 @@ text-wrap: balance;
   width: 100%;
 }
 
+.coach-actions > *{
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .learn-coach .carousel-main{
   flex: 0 0 auto;     /* 🚫 do NOT grow vertically */
   width: 100%;
@@ -665,6 +692,277 @@ text-wrap: balance;
   max-width: 760px;
   margin-left: auto;
   margin-right: auto;
+}
+
+.learn-layout.game-tower{
+  padding: calc(8px + var(--safeT)) 18px 8px;
+  gap: 6px;
+  max-width: 860px;
+}
+
+.learn-layout.game-tower .learn-ref{
+  display: none;
+  flex: 0 0 0;
+  min-height: 0;
+  max-height: 0;
+}
+
+.learn-layout.game-tower .learn-verse{
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.learn-layout.game-tower .learn-coach{
+  flex: 0 0 auto;
+  min-height: 160px;
+  padding: 0 0 6px;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.tower-stage{
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 320px;
+  overflow: hidden;
+}
+
+.tower-cloud{
+  position: absolute;
+  background: rgba(255,255,255,0.62);
+  pointer-events: none;
+  z-index: 5;
+}
+
+.tower-cloud::before,
+.tower-cloud::after{
+  content: "";
+  position: absolute;
+  background: inherit;
+  border-radius: 999px;
+}
+
+.tower-cloud,
+.tower-cloud::before,
+.tower-cloud::after{
+  border-radius: 999px;
+}
+
+.tower-cloud.cloud-1{
+  width: 130px;
+  height: 44px;
+  left: 4%;
+  top: 18%;
+  animation: towerCloudDrift1 18s linear infinite alternate;
+}
+.tower-cloud.cloud-1::before{
+  width: 46px;
+  height: 46px;
+  left: 12px;
+  top: -20px;
+}
+.tower-cloud.cloud-1::after{
+  width: 58px;
+  height: 58px;
+  right: 10px;
+  top: -26px;
+}
+
+.tower-cloud.cloud-2{
+  width: 160px;
+  height: 52px;
+  right: 2%;
+  top: 6%;
+  animation: towerCloudDrift2 22s linear infinite alternate;
+}
+.tower-cloud.cloud-2::before{
+  width: 56px;
+  height: 56px;
+  left: 22px;
+  top: -22px;
+}
+.tower-cloud.cloud-2::after{
+  width: 70px;
+  height: 70px;
+  right: 20px;
+  top: -32px;
+}
+
+.tower-cloud.cloud-3{
+  width: 110px;
+  height: 38px;
+  left: 16%;
+  top: 46%;
+  opacity: 0.42;
+  animation: towerCloudDrift3 26s linear infinite alternate;
+}
+.tower-cloud.cloud-3::before{
+  width: 42px;
+  height: 42px;
+  left: 10px;
+  top: -16px;
+}
+.tower-cloud.cloud-3::after{
+  width: 50px;
+  height: 50px;
+  right: 10px;
+  top: -20px;
+}
+
+@keyframes towerCloudDrift1{
+  from{ transform: translateX(-8px); }
+  to{ transform: translateX(12px); }
+}
+@keyframes towerCloudDrift2{
+  from{ transform: translateX(10px); }
+  to{ transform: translateX(-12px); }
+}
+@keyframes towerCloudDrift3{
+  from{ transform: translateX(-6px); }
+  to{ transform: translateX(10px); }
+}
+
+.tower-stack-field{
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.tower-mode-wrap{
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  padding: 20px;
+}
+
+.tower-mode-card{
+  width: min(520px, 100%);
+  background: rgba(255,255,255,0.14);
+  border: 1px solid rgba(255,255,255,0.22);
+  border-radius: 24px;
+  padding: 18px 16px;
+  text-align: center;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.tower-mode-card h3{
+  margin: 0 0 8px;
+  font-size: 26px;
+  font-weight: 900;
+}
+
+.tower-mode-card p{
+  margin: 0 0 14px;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+  opacity: 0.95;
+}
+
+.tower-mode-buttons{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tower-mode-btn{
+  border: none;
+  border-radius: 18px;
+  padding: 14px 18px;
+  font-family: inherit;
+  font-size: 20px;
+  font-weight: 900;
+  background: rgba(255,255,255,0.92);
+  color: #111;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.22);
+  cursor: pointer;
+}
+
+.tower-mode-btn:active{
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 rgba(0,0,0,0.22);
+}
+
+.tower-brick{
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  height: 58px;
+  border-radius: 6px;
+  background: rgba(255,255,255,0.67);
+  color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0 12px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.14);
+  transition:
+    bottom 380ms cubic-bezier(.2,.8,.2,1),
+    width 380ms cubic-bezier(.2,.8,.2,1),
+    font-size 380ms cubic-bezier(.2,.8,.2,1),
+    opacity 200ms ease;
+  z-index: 10;
+}
+
+.tower-brick.word-wrong-flash{
+  animation: towerWrongFlash 0.34s ease;
+}
+
+@keyframes towerWrongFlash{
+  0%, 100%{ filter: none; }
+  40%{ filter: brightness(0.72) saturate(0.7); }
+}
+
+.tower-win{
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 18px;
+  z-index: 30;
+  pointer-events: none;
+}
+
+.tower-win-text{
+  font-size: clamp(28px, 7vw, 48px);
+  font-weight: 900;
+  line-height: 1.08;
+  text-shadow: 0 3px 12px rgba(0,0,0,0.38);
+  text-wrap: balance;
+}
+
+.tower-status-line{
+  min-height: 20px;
+  font-size: 14px;
+  font-weight: 800;
+  opacity: 0.95;
+  text-align: center;
+}
+
+.tower-choice-btn.wrong{
+  background: #ffd0d0;
+  color: #7a1111;
+  animation: scrambleShake 0.35s ease;
+}
+
+@media (min-width: 900px){
+  .tower-brick{
+    height: 62px;
+  }
 }
 
     /* tappable blanks */
@@ -1223,6 +1521,7 @@ const State = {
   scrambleGame: null,
   bouncingGame: null,
   trafficGame: null,
+  towerGame: null,
   debugBounce: false,
 
   // Learn progression
@@ -1260,7 +1559,7 @@ const PRACTICE_GAMES = [
   { title:"🚗 Traffic Tap", desc:"Tap the moving correct word chip." },
   { title:"🏀 Bouncing Words", desc:"Tap moving words in the correct order." },
   { title:"🚀 Rocket Verse", desc:"Tap each word to launch it into place." },
-  { title:"🧱 Stack It", desc:"Drag phrases into the correct order." },
+  { title:"🏰 Tower of Bible", desc:"Build a sky-high tower one word at a time." },
 ];
 
 const VERSE_CHAIN_DECOY_WORDS = [
@@ -2212,6 +2511,11 @@ function practiceRun(){
     return;
   }
 
+  if (g.title.includes("Tower of Bible") || g.title.includes("Stack It")){
+    startGame("tower");
+    return;
+  }
+
   showDialog({
     title: g.title,
     body: "Coming soon 🙂",
@@ -2634,6 +2938,15 @@ right = (State.screen === Screen.GAME) ? "" : nextBtn;
         return;
       }
 
+      if (State.activeGame === "tower"){
+        showDialog({
+          title: "How to Play Tower of Bible",
+          body: "Choose Easy, Medium, or Hard. Then use the arrows to look through the choices. Tap the big word when it is correct to add it to your tower. After all the words are stacked, choose the correct Bible book and then the correct chapter and verse reference. In Medium mode, wrong answers destroy some of the newest bricks. In Hard mode, a wrong answer destroys the whole tower.",
+          actions: [dlgBtn("Close", {onClick: closeDialog})]
+        });
+        return;
+      }
+
       showDialog({
         title: "How to Play Verse Chain",
         body: "Use the arrows to look through the choices. Tap the big word when you think it is correct. First build the whole verse. Then choose the correct Bible book. Then choose the correct chapter and verse.",
@@ -2714,6 +3027,7 @@ function stopGame(){
   State.scrambleGame = null;
   State.bouncingGame = null;
   State.trafficGame = null;
+  State.towerGame = null;
 }
 
 registerGame({
@@ -3626,6 +3940,402 @@ function bouncingChoose(choice, btnEl, fieldEl){
   });
   
 }
+
+function startTowerGame(){
+  const wordTokenIndices = chainWordTokenIndices();
+  const meta = chainVerseMetaFromId(VERSE_ID);
+
+  State.towerGame = {
+    wordTokenIndices,
+    targetBook: meta.book,
+    targetChapter: meta.chapter,
+    targetVerse: meta.verse,
+    mode: null,
+    progress: [],
+    choices: [],
+    choiceIndex: 0,
+    wrongChoice: null,
+    done: false
+  };
+}
+
+function towerProgressWordCount(st){
+  return st.progress.filter(x => x.type === "word").length;
+}
+
+function towerHasBook(st){
+  return st.progress.some(x => x.type === "book");
+}
+
+function towerHasRef(st){
+  return st.progress.some(x => x.type === "ref");
+}
+
+function towerCurrentPhase(st){
+  if (!st || !st.mode) return "mode";
+  if (towerHasRef(st)) return "done";
+  if (towerHasBook(st)) return "ref";
+  if (towerProgressWordCount(st) >= st.wordTokenIndices.length) return "book";
+  return "words";
+}
+
+function towerCurrentCorrectLabel(st){
+  const phase = towerCurrentPhase(st);
+
+  if (phase === "words"){
+    const builtWordCount = towerProgressWordCount(st);
+    const correctTokenIndex = st.wordTokenIndices[builtWordCount];
+    if (!Number.isFinite(correctTokenIndex)) return "";
+    return tokens[correctTokenIndex].text;
+  }
+
+  if (phase === "book"){
+    return st.targetBook;
+  }
+
+  if (phase === "ref"){
+    return `${st.targetChapter}:${st.targetVerse}`;
+  }
+
+  return "";
+}
+
+function towerSetRandomChoiceIndex(){
+  const st = State.towerGame;
+  if (!st || !st.choices.length){
+    if (st) st.choiceIndex = 0;
+    return;
+  }
+  st.choiceIndex = Math.floor(Math.random() * st.choices.length);
+}
+
+function towerMakeChoices(st){
+  const phase = towerCurrentPhase(st);
+
+  if (phase === "words"){
+    const builtWordCount = towerProgressWordCount(st);
+    const correctTokenIndex = st.wordTokenIndices[builtWordCount];
+    if (!Number.isFinite(correctTokenIndex)) return [];
+    return chainMakeChoices(st.wordTokenIndices, correctTokenIndex);
+  }
+
+  if (phase === "book"){
+    return chainMakeBookChoices(st.targetBook);
+  }
+
+  if (phase === "ref"){
+    return chainMakeReferenceChoices(st.targetChapter, st.targetVerse);
+  }
+
+  return [];
+}
+
+function towerRefreshChoices(){
+  const st = State.towerGame;
+  if (!st || !st.mode) return;
+  st.choices = towerMakeChoices(st);
+  towerSetRandomChoiceIndex();
+}
+
+function towerCurrentChoice(){
+  const st = State.towerGame;
+  if (!st || !st.choices.length) return "";
+  return st.choices[st.choiceIndex];
+}
+
+function towerPrevChoice(){
+  const st = State.towerGame;
+  if (!st || st.done || !st.mode || !st.choices.length) return;
+  st.choiceIndex = (st.choiceIndex - 1 + st.choices.length) % st.choices.length;
+  render();
+}
+
+function towerNextChoice(){
+  const st = State.towerGame;
+  if (!st || st.done || !st.mode || !st.choices.length) return;
+  st.choiceIndex = (st.choiceIndex + 1) % st.choices.length;
+  render();
+}
+
+function towerModeLabel(mode){
+  if (mode === "easy") return "Easy";
+  if (mode === "medium") return "Medium";
+  if (mode === "hard") return "Hard";
+  return "";
+}
+
+function towerChooseMode(mode){
+  const st = State.towerGame;
+  if (!st) return;
+
+  st.mode = mode;
+  st.progress = [];
+  st.done = false;
+  st.wrongChoice = null;
+  towerRefreshChoices();
+  render();
+}
+
+function towerShrinkScale(bottomLevel){
+  return Math.max(0.84, 1 - (bottomLevel * 0.02));
+}
+
+function towerSyncAfterLoss(st){
+  st.done = towerCurrentPhase(st) === "done";
+  towerRefreshChoices();
+}
+
+function towerApplyPenalty(st){
+  if (!st) return;
+
+  if (st.mode === "easy"){
+    return;
+  }
+
+  let removeCount = 0;
+
+  if (st.mode === "medium"){
+    removeCount = Math.min(st.progress.length, 2 + Math.floor(Math.random() * 3));
+  }
+
+  if (st.mode === "hard"){
+    removeCount = st.progress.length;
+  }
+
+  if (removeCount > 0){
+    st.progress.splice(st.progress.length - removeCount, removeCount);
+  }
+
+  towerSyncAfterLoss(st);
+  render();
+}
+
+function towerFlashWrong(word, withPenalty){
+  const st = State.towerGame;
+  if (!st) return;
+
+  st.wrongChoice = word;
+  render();
+
+  setTimeout(() => {
+    const live = State.towerGame;
+    if (!live) return;
+
+    if (live.wrongChoice === word){
+      live.wrongChoice = null;
+      render();
+    }
+
+    if (withPenalty){
+      towerApplyPenalty(live);
+    }
+  }, 320);
+}
+
+function towerChoose(choice){
+  const st = State.towerGame;
+  if (!st || !st.mode || st.done) return;
+
+  const phase = towerCurrentPhase(st);
+  const correct = towerCurrentCorrectLabel(st);
+
+  if (!correct) return;
+
+  if (choice !== correct){
+    towerFlashWrong(choice, st.mode === "medium" || st.mode === "hard");
+    return;
+  }
+
+  st.wrongChoice = null;
+
+  if (phase === "words"){
+    st.progress.push({
+      type: "word",
+      label: correct
+    });
+    towerRefreshChoices();
+    render();
+    return;
+  }
+
+  if (phase === "book"){
+    st.progress.push({
+      type: "book",
+      label: correct
+    });
+    towerRefreshChoices();
+    render();
+    return;
+  }
+
+  if (phase === "ref"){
+    st.progress.push({
+      type: "ref",
+      label: correct
+    });
+    st.done = true;
+    st.choices = [];
+    render();
+  }
+}
+
+function towerRenderModeSelect(stage, st, gameRoot){
+  stage.innerHTML = `
+    <div class="tower-stage">
+      <div class="tower-cloud cloud-1"></div>
+      <div class="tower-cloud cloud-2"></div>
+      <div class="tower-cloud cloud-3"></div>
+
+      <div class="tower-mode-wrap">
+        <div class="tower-mode-card">
+          <h3>Tower of Bible</h3>
+          <p>Choose your difficulty, then build the tower one correct word at a time.</p>
+
+          <div class="tower-mode-buttons">
+            <button class="tower-mode-btn no-zoom" id="towerModeEasy">Easy</button>
+            <button class="tower-mode-btn no-zoom" id="towerModeMedium">Medium</button>
+            <button class="tower-mode-btn no-zoom" id="towerModeHard">Hard</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  stage.querySelector("#towerModeEasy").onclick = () => towerChooseMode("easy");
+  stage.querySelector("#towerModeMedium").onclick = () => towerChooseMode("medium");
+  stage.querySelector("#towerModeHard").onclick = () => towerChooseMode("hard");
+
+  const titleEl = gameRoot ? gameRoot.querySelector("#gameCoachTitle") : null;
+  const actionsEl = gameRoot ? gameRoot.querySelector("#gameCoachActions") : null;
+
+  if (titleEl){
+    titleEl.textContent = "Choose Difficulty";
+  }
+
+  if (actionsEl){
+    actionsEl.innerHTML = `
+      <div class="tower-status-line">Easy = wrong answer flashes. Medium = lose 2–4 newest bricks. Hard = lose the whole tower.</div>
+    `;
+  }
+}
+
+function towerRenderBricks(fieldEl, st){
+  const total = st.progress.length;
+
+  for (let i = 0; i < total; i++){
+    const brick = st.progress[i];
+    const bottomLevel = total - 1 - i;
+    const scale = towerShrinkScale(bottomLevel);
+
+    const brickEl = document.createElement("div");
+    brickEl.className = "tower-brick";
+    brickEl.textContent = brick.label;
+
+    brickEl.style.bottom = `${8 + (bottomLevel * 66)}px`;
+    brickEl.style.width = `${(74 * scale).toFixed(2)}%`;
+    brickEl.style.fontSize = `${Math.max(18, 30 * scale).toFixed(2)}px`;
+
+    fieldEl.appendChild(brickEl);
+  }
+}
+
+function towerRenderStage(stage, st){
+  stage.innerHTML = `
+    <div class="tower-stage">
+      <div class="tower-cloud cloud-1"></div>
+      <div class="tower-cloud cloud-2"></div>
+      <div class="tower-cloud cloud-3"></div>
+      <div class="tower-stack-field" id="towerStackField"></div>
+      ${st.done ? `
+        <div class="tower-win">
+          <div class="tower-win-text">You completed the Tower of Bible!</div>
+        </div>
+      ` : ``}
+    </div>
+  `;
+
+  const fieldEl = stage.querySelector("#towerStackField");
+  towerRenderBricks(fieldEl, st);
+}
+
+function towerRenderCoach(st, gameRoot){
+  const titleEl = gameRoot ? gameRoot.querySelector("#gameCoachTitle") : null;
+  const actionsEl = gameRoot ? gameRoot.querySelector("#gameCoachActions") : null;
+  if (!actionsEl) return;
+
+  const phase = towerCurrentPhase(st);
+  const currentChoice = towerCurrentChoice();
+
+  if (titleEl){
+    titleEl.textContent = st.done
+      ? "Tower Complete"
+      : `Tower of Bible • ${towerModeLabel(st.mode)}`;
+  }
+
+  const phaseLabel =
+    phase === "words" ? "Next word" :
+    phase === "book" ? "Choose the Bible book" :
+    phase === "ref" ? "Choose the reference" :
+    "";
+
+  actionsEl.innerHTML = st.done ? `
+    <div class="tower-status-line">Look at that tower 😄</div>
+  ` : `
+    <div class="tower-status-line">${phaseLabel}</div>
+
+    <div class="game-carousel-row">
+      <button class="carousel-arrow no-zoom" id="towerPrev" aria-label="Previous">${SVG_BACK}</button>
+      <button class="carousel-main no-zoom tower-choice-btn ${st.wrongChoice === currentChoice ? "wrong" : ""}" id="towerChooseBtn">${currentChoice}</button>
+      <button class="carousel-arrow no-zoom" id="towerNext" aria-label="Next">${SVG_FORWARD}</button>
+    </div>
+
+    <div class="carousel-dots" id="towerDots"></div>
+  `;
+
+  if (st.done) return;
+
+  const btnPrev = gameRoot ? gameRoot.querySelector("#towerPrev") : null;
+  const btnNext = gameRoot ? gameRoot.querySelector("#towerNext") : null;
+  const btnChoose = gameRoot ? gameRoot.querySelector("#towerChooseBtn") : null;
+  const dots = gameRoot ? gameRoot.querySelector("#towerDots") : null;
+
+  if (btnPrev) btnPrev.onclick = (e) => { e.stopPropagation(); towerPrevChoice(); };
+  if (btnNext) btnNext.onclick = (e) => { e.stopPropagation(); towerNextChoice(); };
+  if (btnChoose) btnChoose.onclick = (e) => {
+    e.stopPropagation();
+    towerChoose(towerCurrentChoice());
+  };
+
+  if (dots){
+    dots.innerHTML = st.choices.map((_, i) =>
+      `<span class="carousel-dot ${i === st.choiceIndex ? "active" : ""}"></span>`
+    ).join("");
+  }
+}
+
+registerGame({
+  id: "tower",
+  title: "Tower of Bible",
+  description: "Build a tower one correct word at a time.",
+  start(stage){
+    if (!State.towerGame){
+      startTowerGame();
+    }
+
+    const st = State.towerGame;
+    if (!st) return;
+
+    const gameRoot = stage.closest(".learn-layout");
+
+    if (!st.mode){
+      towerRenderModeSelect(stage, st, gameRoot);
+      return;
+    }
+
+    towerRenderStage(stage, st);
+    towerRenderCoach(st, gameRoot);
+  }
+});
 
 const TRAFFIC_EMOJIS = ["🚗", "🚕", "🚙", "🏎️", "🚓", "🚌", "🚎", "🚐", "🚑", "🚒", "🚚", "🚛", "🚜", "🛻", "🚲", "🛵", "🏍️", "🛴", "🛺"];
 const TRAFFIC_GREEN = "#a7cb6f";
@@ -4777,21 +5487,24 @@ function screenGame(idx){
 
   const game = games[State.activeGame];
 
-  
   const showGameRef =
     (State.activeGame === "chain" && State.chainGame?.showRef) ||
     (State.activeGame === "scramble" && State.scrambleGame?.showRef) ||
-    (State.activeGame !== "chain" && State.activeGame !== "scramble");
+    (State.activeGame !== "chain" && State.activeGame !== "scramble" && State.activeGame !== "tower");
+
+  const gameLayoutClass =
+    State.activeGame === "tower" ? "game-tower" :
+    (State.activeGame === "scramble" || State.activeGame === "bouncing" || State.activeGame === "traffic") ? "game-scramble" :
+    "";
 
   inner.innerHTML = `
-      <div class="learn-layout ${(State.activeGame === "scramble" || State.activeGame === "bouncing" || State.activeGame === "traffic") ? "game-scramble" : ""}">
-
+    <div class="learn-layout ${gameLayoutClass}">
       <div class="learn-ref">
         ${showGameRef ? `<div class="verse-ref-pill">${VERSE_REF}</div>` : ``}
       </div>
 
       <div class="learn-verse">
-        <div id="gameStage" style="width:100%;"></div>
+        <div id="gameStage" style="width:100%; height:100%;"></div>
       </div>
 
       <div class="learn-coach">
@@ -4801,25 +5514,25 @@ function screenGame(idx){
 
         <div class="coach-actions" id="gameCoachActions"></div>
       </div>
-
     </div>
   `;
 
   const stage = inner.querySelector("#gameStage");
 
-if (game && typeof game.start === "function"){
-  if (State.activeGame === "bouncing" && State.isSliding){
-    // wait until the slide transition is done
-  } else {
-    game.start(stage);
+  if (game && typeof game.start === "function"){
+    if (State.activeGame === "bouncing" && State.isSliding){
+      // wait until the slide transition is done
+    } else {
+      game.start(stage);
+    }
   }
-}
 
   return makeSlide({
     idx,
     bg:
       State.activeGame === "traffic" ? TRAFFIC_GREEN :
       State.activeGame === "chain" ? "#40b9c5" :
+      State.activeGame === "tower" ? "#40b9c5" :
       State.activeGame === "bouncing" ? "#ffc751" :
       "var(--purple)",
     navHidden: false,
