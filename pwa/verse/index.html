@@ -718,10 +718,10 @@ text-wrap: balance;
 
 .learn-layout.game-tower .learn-coach{
   flex: 0 0 auto;
-  min-height: 160px;
-  padding: 0 0 6px;
+  min-height: 96px;
+  padding: 0 0 4px;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 0;
 }
 
 .tower-stage{
@@ -734,84 +734,46 @@ text-wrap: balance;
 
 .tower-cloud{
   position: absolute;
-  background: rgba(255,255,255,0.62);
   pointer-events: none;
   z-index: 5;
+  color: rgba(255,255,255,0.62);
 }
 
-.tower-cloud::before,
-.tower-cloud::after{
-  content: "";
-  position: absolute;
-  background: inherit;
-  border-radius: 999px;
+.tower-cloud-svg{
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
-.tower-cloud,
-.tower-cloud::before,
-.tower-cloud::after{
-  border-radius: 999px;
+.tower-cloud.cloud-1 .tower-cloud-svg,
+.tower-cloud.cloud-3 .tower-cloud-svg{
+  transform: scaleX(-1);
+  transform-origin: center;
 }
 
 .tower-cloud.cloud-1{
   width: 130px;
-  height: 44px;
+  height: 65px;
   left: 4%;
   top: 18%;
   animation: towerCloudDrift1 18s linear infinite alternate;
 }
-.tower-cloud.cloud-1::before{
-  width: 46px;
-  height: 46px;
-  left: 12px;
-  top: -20px;
-}
-.tower-cloud.cloud-1::after{
-  width: 58px;
-  height: 58px;
-  right: 10px;
-  top: -26px;
-}
 
 .tower-cloud.cloud-2{
   width: 160px;
-  height: 52px;
+  height: 80px;
   right: 2%;
   top: 6%;
   animation: towerCloudDrift2 22s linear infinite alternate;
 }
-.tower-cloud.cloud-2::before{
-  width: 56px;
-  height: 56px;
-  left: 22px;
-  top: -22px;
-}
-.tower-cloud.cloud-2::after{
-  width: 70px;
-  height: 70px;
-  right: 20px;
-  top: -32px;
-}
 
 .tower-cloud.cloud-3{
   width: 110px;
-  height: 38px;
+  height: 55px;
   left: 16%;
   top: 46%;
   opacity: 0.42;
   animation: towerCloudDrift3 26s linear infinite alternate;
-}
-.tower-cloud.cloud-3::before{
-  width: 42px;
-  height: 42px;
-  left: 10px;
-  top: -16px;
-}
-.tower-cloud.cloud-3::after{
-  width: 50px;
-  height: 50px;
-  right: 10px;
-  top: -20px;
 }
 
 @keyframes towerCloudDrift1{
@@ -945,18 +907,61 @@ text-wrap: balance;
   text-wrap: balance;
 }
 
-.tower-status-line{
-  min-height: 20px;
-  font-size: 14px;
-  font-weight: 800;
-  opacity: 0.95;
+.tower-start{
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
+  padding: 18px;
+  z-index: 22;
+  pointer-events: none;
+}
+
+.tower-start-text{
+  font-size: clamp(24px, 6vw, 40px);
+  font-weight: 900;
+  line-height: 1.08;
+  text-shadow: 0 3px 12px rgba(0,0,0,0.38);
+  text-wrap: balance;
+  max-width: 520px;
+}
+
+.tower-status-line{
+  display: none;
 }
 
 .tower-choice-btn.wrong{
   background: #ffd0d0;
   color: #7a1111;
   animation: scrambleShake 0.35s ease;
+}
+
+.learn-layout.game-tower .game-carousel-row{
+  position: relative;
+  z-index: 2;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.learn-layout.game-tower .game-carousel-row .carousel-main{
+  margin: 0;
+}
+
+.learn-layout.game-tower .game-carousel-row .carousel-arrow{
+  margin: 0;
+}
+
+.learn-layout.game-tower .coach-title:empty{
+  display: none;
+}
+
+.learn-layout.game-tower .coach-actions{
+  position: relative;
+  justify-content: flex-end;
+  gap: 0;
+  padding-top: 0;
 }
 
 @media (min-width: 900px){
@@ -1310,6 +1315,11 @@ const SVG_UNMUTE = `
     <path style="fill:none;stroke:#ffffff;stroke-width:26.4583;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1"
       d="m 626.65943,-233.57231 c 4.34269,-2.51562 16.69789,-10.99898 23.86366,-17.76894 23.32002,-22.03191 37.74343,-52.46821 37.74343,-86.08777 0,-33.61956 -14.42341,-64.05637 -37.74343,-86.08828 -7.16577,-6.76996 -19.52097,-15.25332 -23.86366,-17.76894" />
   </g>
+</svg>`;
+
+const SVG_TOWER_CLOUD = `
+<svg class="tower-cloud-svg" viewBox="0 0 211.66667 111.65417" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+  <path fill="currentColor" d="m 123.03978,3.2651746 c -20.6927,0.0302 -38.78982,13.9439004 -44.136843,33.9338504 -4.33607,-1.49815 -8.891178,-2.26447 -13.478764,-2.26756 -19.705594,0.003 -36.672558,13.9079 -40.546363,33.22898 -10.729505,0.47348 -19.2324185,9.24147 -19.2324185,20.09179 0,11.15585 8.9814225,20.136755 20.1372725,20.136755 H 172.26572 c 18.70063,0 33.75556,-15.054925 33.75556,-33.755555 0,-18.70063 -15.05493,-33.75557 -33.75556,-33.75557 h -4.21163 C 164.1158,19.106435 145.16455,3.2713046 123.03978,3.2651746 Z"/>
 </svg>`;
 
 /* =========================================================
@@ -4077,7 +4087,11 @@ function towerChooseMode(mode){
 }
 
 function towerShrinkScale(bottomLevel){
-  return Math.max(0.84, 1 - (bottomLevel * 0.02));
+  return Math.max(0.70, 1 - (bottomLevel * 0.02));
+}
+
+function towerBrickOpacity(bottomLevel){
+  return Math.max(0.28, 0.67 - (bottomLevel * 0.035));
 }
 
 function towerSyncAfterLoss(st){
@@ -4182,9 +4196,9 @@ function towerChoose(choice){
 function towerRenderModeSelect(stage, st, gameRoot){
   stage.innerHTML = `
     <div class="tower-stage">
-      <div class="tower-cloud cloud-1"></div>
-      <div class="tower-cloud cloud-2"></div>
-      <div class="tower-cloud cloud-3"></div>
+      <div class="tower-cloud cloud-1">${SVG_TOWER_CLOUD}</div>
+      <div class="tower-cloud cloud-2">${SVG_TOWER_CLOUD}</div>
+      <div class="tower-cloud cloud-3">${SVG_TOWER_CLOUD}</div>
 
       <div class="tower-mode-wrap">
         <div class="tower-mode-card">
@@ -4231,21 +4245,31 @@ function towerRenderBricks(fieldEl, st){
     brickEl.className = "tower-brick";
     brickEl.textContent = brick.label;
 
-    brickEl.style.bottom = `${8 + (bottomLevel * 66)}px`;
+    brickEl.style.bottom = `${-6 + (bottomLevel * 66)}px`;
     brickEl.style.width = `${(74 * scale).toFixed(2)}%`;
     brickEl.style.fontSize = `${Math.max(18, 30 * scale).toFixed(2)}px`;
+    brickEl.style.opacity = `${towerBrickOpacity(bottomLevel).toFixed(3)}`;
 
     fieldEl.appendChild(brickEl);
   }
 }
 
 function towerRenderStage(stage, st){
+  const showStartOverlay = !st.done && st.progress.length === 0 && st.mode;
+
   stage.innerHTML = `
     <div class="tower-stage">
-      <div class="tower-cloud cloud-1"></div>
-      <div class="tower-cloud cloud-2"></div>
-      <div class="tower-cloud cloud-3"></div>
+      <div class="tower-cloud cloud-1">${SVG_TOWER_CLOUD}</div>
+      <div class="tower-cloud cloud-2">${SVG_TOWER_CLOUD}</div>
+      <div class="tower-cloud cloud-3">${SVG_TOWER_CLOUD}</div>
       <div class="tower-stack-field" id="towerStackField"></div>
+
+      ${showStartOverlay ? `
+        <div class="tower-start">
+          <div class="tower-start-text">Tap the first word to start your tower.</div>
+        </div>
+      ` : ``}
+
       ${st.done ? `
         <div class="tower-win">
           <div class="tower-win-text">You completed the Tower of Bible!</div>
@@ -4263,33 +4287,18 @@ function towerRenderCoach(st, gameRoot){
   const actionsEl = gameRoot ? gameRoot.querySelector("#gameCoachActions") : null;
   if (!actionsEl) return;
 
-  const phase = towerCurrentPhase(st);
   const currentChoice = towerCurrentChoice();
 
   if (titleEl){
-    titleEl.textContent = st.done
-      ? "Tower Complete"
-      : `Tower of Bible • ${towerModeLabel(st.mode)}`;
+    titleEl.textContent = st.done ? "Tower Complete" : "";
   }
 
-  const phaseLabel =
-    phase === "words" ? "Next word" :
-    phase === "book" ? "Choose the Bible book" :
-    phase === "ref" ? "Choose the reference" :
-    "";
-
-  actionsEl.innerHTML = st.done ? `
-    <div class="tower-status-line">Look at that tower 😄</div>
-  ` : `
-    <div class="tower-status-line">${phaseLabel}</div>
-
+  actionsEl.innerHTML = st.done ? `` : `
     <div class="game-carousel-row">
       <button class="carousel-arrow no-zoom" id="towerPrev" aria-label="Previous">${SVG_BACK}</button>
       <button class="carousel-main no-zoom tower-choice-btn ${st.wrongChoice === currentChoice ? "wrong" : ""}" id="towerChooseBtn">${currentChoice}</button>
       <button class="carousel-arrow no-zoom" id="towerNext" aria-label="Next">${SVG_FORWARD}</button>
     </div>
-
-    <div class="carousel-dots" id="towerDots"></div>
   `;
 
   if (st.done) return;
@@ -4297,7 +4306,6 @@ function towerRenderCoach(st, gameRoot){
   const btnPrev = gameRoot ? gameRoot.querySelector("#towerPrev") : null;
   const btnNext = gameRoot ? gameRoot.querySelector("#towerNext") : null;
   const btnChoose = gameRoot ? gameRoot.querySelector("#towerChooseBtn") : null;
-  const dots = gameRoot ? gameRoot.querySelector("#towerDots") : null;
 
   if (btnPrev) btnPrev.onclick = (e) => { e.stopPropagation(); towerPrevChoice(); };
   if (btnNext) btnNext.onclick = (e) => { e.stopPropagation(); towerNextChoice(); };
@@ -4306,11 +4314,6 @@ function towerRenderCoach(st, gameRoot){
     towerChoose(towerCurrentChoice());
   };
 
-  if (dots){
-    dots.innerHTML = st.choices.map((_, i) =>
-      `<span class="carousel-dot ${i === st.choiceIndex ? "active" : ""}"></span>`
-    ).join("");
-  }
 }
 
 registerGame({
