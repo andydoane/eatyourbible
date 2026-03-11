@@ -320,7 +320,7 @@
   align-items: center;
   justify-content: center;
   padding: 8px 6px;
-  overflow: auto;              /* only scrolls if verse is too long */
+  overflow: hidden;              /* only scrolls if verse is too long */
    text-align: center; 
    background: rgba(0,0,0,0.40);
 border-radius: 18px;
@@ -339,7 +339,6 @@ border-radius: 18px;
 }
 
 .learn-verse > *{
-  width: 100%;
   max-width: 760px;
   margin-left: auto;
   margin-right: auto;
@@ -374,6 +373,18 @@ border-radius: 18px;
   justify-content: stretch;
 }
 
+.standard-game-stage{
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tower-game-stage{
+  width: 100%;
+  height: 100%;
+}
+
 .scramble-verse{
   font-size: clamp(18px, 4.8vw, 34px);
   line-height: 1.25;
@@ -386,11 +397,57 @@ border-radius: 18px;
   flex: 1 1 auto;
   min-height: 0;
   height: 100%;
-  margin: 0;
+  margin: 0 auto;
+  overflow: hidden;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  align-items: stretch;
+}
+
+.bouncing-field{
+  position: relative;
+  width: 100%;
+  max-width: 760px;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  margin: 0 auto;
   overflow: hidden;
 }
 
+.scramble-slot{
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
 .scramble-word{
+  position: relative;
+  min-width: 110px;
+  max-width: min(220px, calc(100% - 32px));
+  padding: 12px 18px;
+  border: none;
+  border-radius: 999px;
+  background: white;
+  color: var(--purple);
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 900;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.25);
+  cursor: pointer;
+  z-index: 2;
+  --rot: 0deg;
+  --pressY: 0px;
+  --spawnX: 0px;
+  transform: translateX(var(--spawnX)) rotate(var(--rot)) translateY(var(--pressY));
+  transform-origin: center center;
+}
+
+.bouncing-word{
   position: absolute;
   min-width: 110px;
   max-width: min(220px, calc(100% - 32px));
@@ -409,6 +466,27 @@ border-radius: 18px;
   --pressY: 0px;
   transform: rotate(var(--rot)) translateY(var(--pressY));
   transform-origin: center center;
+}
+
+.bouncing-word:active{
+  --pressY: 4px;
+  box-shadow: 0 2px 0 rgba(0,0,0,0.25);
+}
+
+.bouncing-word.wrong{
+  background: #ffb3b3;
+  color: #7a1111;
+  animation: scrambleShake 0.35s ease;
+}
+
+.bouncing-word.spawn-in{
+  opacity: 0;
+  animation: bounceSpawnIn 0.42s cubic-bezier(.2,.8,.2,1) forwards;
+}
+
+.bouncing-word.burst-out{
+  pointer-events: none;
+  animation: bounceBurstOut 0.2s ease forwards;
 }
 
 .scramble-word.color-1{
@@ -436,17 +514,20 @@ border-radius: 18px;
   color: #ffffff;
 }
 
-.scramble-word.bounce-color-1{
+.scramble-word.bounce-color-1,
+.bouncing-word.bounce-color-1{
   background: #ff5a51;
   color: #ffffff;
 }
 
-.scramble-word.bounce-color-2{
+.scramble-word.bounce-color-2,
+.bouncing-word.bounce-color-2{
   background: #40b9c5;
   color: #ffffff;
 }
 
-.scramble-word.bounce-color-3{
+.scramble-word.bounce-color-3,
+.bouncing-word.bounce-color-3{
   background: #7f66c6;
   color: #ffffff;
 }
@@ -1651,7 +1732,6 @@ const TITLE_OPTIONS = [
 ];
 
 const PRACTICE_GAMES = [
-  { title:"🧪 Test Game", desc:"Test the new game framework." },
   { title:"🧩 Verse Scramble", desc:"Tap the phrases in the correct order." },
   { title:"🔗 Verse Chain", desc:"Pick the next word to build the verse." },
   { title:"🚗 Traffic Tap", desc:"Tap the moving correct word chip." },
@@ -1856,225 +1936,24 @@ function scrambleNextChoices(){
     const correctTokenIndex = st.wordTokenIndices[st.builtCount];
     if (!Number.isFinite(correctTokenIndex)) return;
     st.choices = scrambleMakeChoices(st.wordTokenIndices, correctTokenIndex);
+    st.layoutSeeds = [];
     return;
   }
 
   if (st.phase === "book"){
     st.choices = scrambleMakeBookChoices(st.targetBook);
+    st.layoutSeeds = [];
     return;
   }
 
   if (st.phase === "ref"){
     st.choices = scrambleMakeReferenceChoices(st.targetChapter, st.targetVerse);
+    st.layoutSeeds = [];
     return;
   }
 
   st.choices = [];
-}
-
-function scrambleRandomPositions(choices, fieldEl){
-  const st = State.scrambleGame;
-  const sidePad = 12;
-  const padY = 16;
-  const gap = 14;
-  const horizontalShiftFactor = 0.75; // 50% of button width
-
-  const fieldRect = fieldEl?.getBoundingClientRect();
-  const fieldW = Math.max(260, Math.floor(fieldRect?.width || 320));
-  const fieldH = Math.max(240, Math.floor(fieldRect?.height || 240));
-
-  const measurer = document.createElement("div");
-  measurer.style.position = "absolute";
-  measurer.style.visibility = "hidden";
-  measurer.style.pointerEvents = "none";
-  measurer.style.left = "-9999px";
-  measurer.style.top = "-9999px";
-  document.body.appendChild(measurer);
-
-  function measureChoice(text, i){
-    const btn = document.createElement("button");
-    btn.className = "scramble-word";
-    btn.classList.add(st.colorSet[i]);
-    btn.classList.add(st.shapeSet[i]);
-    btn.style.position = "absolute";
-    btn.style.left = "0";
-    btn.style.top = "0";
-    btn.textContent = text;
-    measurer.appendChild(btn);
-
-    const size = {
-      actualW: Math.ceil(btn.offsetWidth),
-      h: Math.ceil(btn.offsetHeight)
-    };
-
-    btn.remove();
-    return size;
-  }
-
-  function overlaps(a, b){
-    return !(
-      a.x + a.w + gap <= b.x ||
-      b.x + b.w + gap <= a.x ||
-      a.y + a.h + gap <= b.y ||
-      b.y + b.h + gap <= a.y
-    );
-  }
-
-  function randBetween(min, max){
-    if (max <= min) return min;
-    return min + Math.random() * (max - min);
-  }
-
-  function makeZone(x1, x2, y1, y2){
-    return {
-      xMin: Math.round(x1 * fieldW),
-      xMax: Math.round(x2 * fieldW),
-      yMin: Math.round(y1 * fieldH),
-      yMax: Math.round(y2 * fieldH)
-    };
-  }
-
-  const layouts = [
-
-    // SET 1
-    [
-      makeZone(0.10, 0.30, 0.02, 0.10),
-      makeZone(0.42, 0.62, 0.44, 0.54),
-      makeZone(0.18, 0.38, 0.88, 0.96)
-    ],
-
-    // SET 2
-    [
-      makeZone(0.44, 0.64, 0.03, 0.11),
-      makeZone(0.12, 0.32, 0.45, 0.55),
-      makeZone(0.52, 0.72, 0.87, 0.95)
-    ],
-
-    // SET 3
-    [
-      makeZone(0.18, 0.38, 0.01, 0.09),
-      makeZone(0.54, 0.74, 0.43, 0.53),
-      makeZone(0.34, 0.54, 0.89, 0.97)
-    ],
-
-    // SET 4
-    [
-      makeZone(0.50, 0.70, 0.02, 0.10),
-      makeZone(0.28, 0.48, 0.46, 0.56),
-      makeZone(0.08, 0.28, 0.86, 0.94)
-    ],
-
-    // SET 5
-    [
-      makeZone(0.24, 0.44, 0.03, 0.11),
-      makeZone(0.46, 0.66, 0.44, 0.54),
-      makeZone(0.56, 0.76, 0.88, 0.96)
-    ]
-
-  ];
-
-  let layoutIndex = Math.floor(Math.random() * layouts.length);
-  if (layouts.length > 1 && st?.lastLayoutIndex === layoutIndex){
-    layoutIndex = (layoutIndex + 1 + Math.floor(Math.random() * (layouts.length - 1))) % layouts.length;
-  }
-  if (st) st.lastLayoutIndex = layoutIndex;
-
-  const chosenLayout = layouts[layoutIndex];
-  const sizes = choices.map((choice, i) => measureChoice(choice, i));
-
-  // Shared safe horizontal width for the round
-  const sharedW = Math.max(...sizes.map(s => s.actualW)) + 8;
-
-  const positions = [];
-  const placed = [];
-
-  for (let i = 0; i < sizes.length; i++){
-    const size = sizes[i];
-    const placeW = sharedW;
-    const actualW = size.actualW;
-    const zone = chosenLayout[i] || chosenLayout[0];
-
-    const centerX = (fieldW - actualW) / 2;
-
-    const maxShiftByWidth = actualW * horizontalShiftFactor;
-    const maxShiftByEdges = Math.max(0, centerX - sidePad);
-    const allowedShift = Math.max(0, Math.min(maxShiftByWidth, maxShiftByEdges));
-
-    const minX = Math.max(sidePad, centerX - allowedShift);
-    const maxX = Math.min(fieldW - actualW - sidePad, centerX + allowedShift);
-
-    const minY = Math.max(padY, zone.yMin);
-    const maxY = Math.max(minY, Math.min(zone.yMax - size.h, fieldH - size.h - padY));
-
-    let placedRect = null;
-
-    for (let attempt = 0; attempt < 120; attempt++){
-      const rect = {
-        x: randBetween(minX, maxX),
-        y: randBetween(minY, maxY),
-        w: placeW,
-        h: size.h
-      };
-
-      const hit = placed.some(p => overlaps(rect, p));
-      if (!hit){
-        placedRect = rect;
-        break;
-      }
-    }
-
-    if (!placedRect){
-      const fallbackRect = {
-        x: minX,
-        y: minY,
-        w: placeW,
-        h: size.h
-      };
-
-      const hit = placed.some(p => overlaps(fallbackRect, p));
-      if (!hit){
-        placedRect = fallbackRect;
-      }
-    }
-
-    if (!placedRect){
-      for (let attempt = 0; attempt < 140; attempt++){
-        const rect = {
-          x: randBetween(minX, maxX),
-          y: randBetween(padY, Math.max(padY, fieldH - size.h - padY)),
-          w: placeW,
-          h: size.h
-        };
-
-        const hit = placed.some(p => overlaps(rect, p));
-        if (!hit){
-          placedRect = rect;
-          break;
-        }
-      }
-    }
-
-    if (!placedRect){
-        placedRect = {
-          x: centerX,
-          y: padY + (i * (size.h + gap)),
-          w: placeW,
-          h: size.h
-        };
-    }
-
-    const rotationDeg = Math.round((Math.random() * 20) - 10);
-
-    placed.push(placedRect);
-    positions.push({
-      leftPx: Math.round(placedRect.x),
-      topPx: Math.round(placedRect.y),
-      rotationDeg
-    });
-  }
-
-  measurer.remove();
-  return positions;
+  st.layoutSeeds = [];
 }
 
 
@@ -2213,6 +2092,25 @@ function scrambleShapeSet(){
   return shapes.slice(0, 3);
 }
 
+function scrambleLayoutSeeds(count, maxHorizontalShift){
+  const seeds = [];
+
+  for (let i = 0; i < count; i++){
+    const shift = maxHorizontalShift === 0
+      ? 0
+      : Math.round((Math.random() * 2 - 1) * maxHorizontalShift);
+
+    const rotation = Math.round((Math.random() * 20) - 10);
+
+    seeds.push({
+      shift,
+      rotation
+    });
+  }
+
+  return seeds;
+}
+
 function bouncingAnimateCorrectChoice(btnEl, fieldEl, onDone){
   const st = State.bouncingGame;
 
@@ -2332,6 +2230,7 @@ function startVerseScrambleGame(){
   const meta = chainVerseMetaFromId(VERSE_ID);
 
   State.scrambleGame = {
+    layoutSeeds: [],
     wordTokenIndices,
     builtCount: 0,
     choices: [],
@@ -2584,10 +2483,6 @@ function practiceRun(){
 
   const g = PRACTICE_GAMES[State.practiceIndex];
 
-  if (g.title.includes("Test Game")){
-    startGame("test");
-    return;
-  }
 
   if (g.title.includes("Verse Scramble")){
     startGame("scramble");
@@ -3128,21 +3023,6 @@ function stopGame(){
   State.towerGame = null;
 }
 
-registerGame({
-  id: "test",
-  title: "Test Game",
-  description: "This is a placeholder game.",
-  start(stage){
-
-    const box = document.createElement("div");
-    box.style.fontSize = "28px";
-    box.style.fontWeight = "900";
-    box.textContent = "Game framework working!";
-
-    stage.appendChild(box);
-  }
-});
-
 function chainWordTokenIndices(){
   const out = [];
   for (let i = 0; i < tokens.length; i++){
@@ -3495,45 +3375,51 @@ registerGame({
       return;
     }
 
-    const field = document.createElement("div");
-    field.className = "scramble-field";
+const field = document.createElement("div");
+field.className = "scramble-field";
+coachActions.appendChild(field);
 
-    if (!st.colorSet.length || st.colorSet.length !== st.choices.length){
-      st.colorSet = scrambleColorSet();
-    }
+if (!st.colorSet.length || st.colorSet.length !== st.choices.length){
+  st.colorSet = scrambleColorSet();
+}
 
-    if (!st.shapeSet.length || st.shapeSet.length !== st.choices.length){
-      st.shapeSet = scrambleShapeSet();
-    }
+if (!st.shapeSet.length || st.shapeSet.length !== st.choices.length){
+  st.shapeSet = scrambleShapeSet();
+}
 
-    if (!st.positions.length || st.positions.length !== st.choices.length){
-      st.positions = scrambleRandomPositions(st.choices, field);
-    }
+const maxHorizontalShift = 48;
 
-    st.choices.forEach((choice, i) => {
-      const btn = document.createElement("button");
-      btn.className = "scramble-word no-zoom";
-      btn.classList.add(st.colorSet[i]);
-      btn.classList.add(st.shapeSet[i]);
-      if (st.wrongChoice === choice) btn.classList.add("wrong");
-      btn.type = "button";
-      btn.textContent = choice;
+if (!st.layoutSeeds.length || st.layoutSeeds.length !== st.choices.length){
+  st.layoutSeeds = scrambleLayoutSeeds(st.choices.length, maxHorizontalShift);
+}
 
-      const pos = st.positions[i] || { leftPx: 20, topPx: 20, rotationDeg: 0 };
-      btn.style.left = `${pos.leftPx}px`;
-      btn.style.top = `${pos.topPx}px`;
-      btn.style.setProperty("--rot", `${pos.rotationDeg || 0}deg`);
+st.choices.forEach((choice, i) => {
+  const slot = document.createElement("div");
+  slot.className = "scramble-slot";
 
-      btn.onclick = (e) => {
-        e.stopPropagation();
-        scrambleChoose(choice, btn, field);
-      };
+  const btn = document.createElement("button");
+  btn.className = "scramble-word no-zoom";
+  btn.classList.add(st.colorSet[i]);
+  btn.classList.add(st.shapeSet[i]);
+  if (st.wrongChoice === choice) btn.classList.add("wrong");
+  btn.type = "button";
+  btn.textContent = choice;
 
-      field.appendChild(btn);
-    });
+  const seed = st.layoutSeeds[i] || { shift: 0, rotation: 0 };
 
-        coachActions.appendChild(field);
-    scrambleDebugOverlay(field);
+  btn.style.setProperty("--spawnX", `${seed.shift}px`);
+  btn.style.setProperty("--rot", `${seed.rotation}deg`);
+
+  btn.onclick = (e) => {
+    e.stopPropagation();
+    scrambleChoose(choice, btn, field);
+  };
+
+  slot.appendChild(btn);
+  field.appendChild(slot);
+});
+
+scrambleDebugOverlay(field);
   }
 });
 
@@ -5266,7 +5152,7 @@ registerGame({
     }
 
     const field = document.createElement("div");
-    field.className = "scramble-field";
+    field.className = "bouncing-field";
 
     if (!st.positions.length || st.positions.length !== st.choices.length){
       st.positions = bouncingRandomPositions(st.choices, field);
@@ -5278,7 +5164,7 @@ registerGame({
 
     st.choices.forEach((choice, i) => {
         const btn = document.createElement("button");
-        btn.className = "scramble-word no-zoom";
+        btn.className = "bouncing-word no-zoom";
         if (st.wrongChoice === choice) btn.classList.add("wrong");
         btn.type = "button";
         btn.textContent = choice;
@@ -5717,10 +5603,6 @@ function screenPractice(idx){
       </div>
 
       <div class="carousel-dots" id="pDots"></div>
-
-      <div class="small" style="max-width: 60ch; margin-top: 10px;">
-        We'll add the full games next. For now, this is the practice hub.
-      </div>
     </div>
   `;
 
@@ -5762,7 +5644,10 @@ function screenGame(idx){
       </div>
 
       <div class="learn-verse">
-        <div id="gameStage" style="width:100%; height:100%;"></div>
+        ${State.activeGame === "tower"
+          ? `<div id="gameStage" style="width:100%; height:100%;"></div>`
+          : `<div id="gameStage" style="width:100%;"></div>`
+        }
       </div>
 
       <div class="learn-coach">
