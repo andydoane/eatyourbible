@@ -489,6 +489,290 @@ border-radius: 18px;
   animation: bounceBurstOut 0.2s ease forwards;
 }
 
+
+.learn-layout.game-fruitninja{
+  padding: calc(14px + var(--safeT)) 18px 8px;
+  gap: 6px;
+  max-width: 840px;
+  background: transparent;
+  border-radius: 0;
+}
+
+.learn-layout.game-fruitninja .learn-ref{
+  flex: 0 0 8%;
+  min-height: 40px;
+  max-height: 60px;
+}
+
+.learn-layout.game-fruitninja .learn-verse{
+  flex: 0 0 28%;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  background: transparent;
+}
+
+.learn-layout.game-fruitninja .learn-coach{
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0 0 4px;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  gap: 0;
+}
+
+.learn-layout.game-fruitninja .learn-coach > div:first-child{
+  display: none;
+}
+
+.fruitninja-verse-wrap{
+  width: 100%;
+  max-width: 760px;
+  min-height: 90px;
+  margin: 0 auto;
+  padding: 16px 18px;
+  border-radius: 24px;
+  background: #ff5a51;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-shadow: none;
+}
+
+.fruitninja-built-verse{
+  margin: 0;
+  color: #ffffff;
+  font-size: clamp(18px, 4.8vw, 34px);
+  line-height: 1.25;
+  font-weight: 900;
+}
+
+.fruitninja-field{
+  position: relative;
+  width: 100%;
+  max-width: 760px;
+  flex: 1 1 auto;
+  min-height: 320px;
+  height: 100%;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 0;
+  background: transparent;
+}
+
+.fruitninja-mode-wrap{
+  position: relative;
+  width: 100%;
+  max-width: 760px;
+  min-height: 320px;
+  height: 100%;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 0;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+.fruitninja-mode-card{
+  width: min(100%, 520px);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  color: #ffffff;
+  text-align: center;
+  box-shadow: none;
+}
+
+.fruitninja-mode-title{
+  font-size: clamp(24px, 6vw, 34px);
+  font-weight: 900;
+  margin-bottom: 8px;
+}
+
+.fruitninja-mode-sub{
+  font-size: 15px;
+  line-height: 1.45;
+  opacity: 0.9;
+  margin-bottom: 16px;
+}
+
+.fruitninja-mode-buttons{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fruitninja-mode-btn{
+  border: none;
+  border-radius: 20px;
+  padding: 16px 18px;
+  font: inherit;
+  cursor: pointer;
+  font-weight: 900;
+  color: #333333;
+  background: #ffffff;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.20);
+}
+
+.fruitninja-mode-btn .label{
+  display: block;
+  font-size: 20px;
+}
+
+.fruitninja-mode-btn .sub{
+  display: block;
+  font-size: 13px;
+  opacity: 0.8;
+  margin-top: 4px;
+}
+
+
+
+.fruitninja-launch{
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 124px;
+  height: 132px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  user-select: none;
+  touch-action: manipulation;
+  transform: translate3d(0,0,0);
+}
+
+.fruitninja-launch[disabled]{
+  pointer-events: none;
+}
+
+.fruitninja-fruit{
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  font-size: 62px;
+  line-height: 1;
+  filter: drop-shadow(0 10px 12px rgba(0,0,0,0.24));
+}
+
+.fruitninja-word{
+  position: absolute;
+  left: 50%;
+  top: 72px;
+  transform: translateX(-50%);
+  min-width: 92px;
+  max-width: 150px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.96);
+  color: #333333;
+  font-size: 18px;
+  font-weight: 900;
+  text-align: center;
+  white-space: nowrap;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.18);
+}
+
+.fruitninja-bomb .fruitninja-fruit{
+  font-size: 58px;
+}
+
+.fruitninja-flash-bad{
+  animation: fruitninjaBadFlash 0.35s ease;
+}
+
+.fruitninja-split{
+  position: absolute;
+  width: 72px;
+  height: 72px;
+  pointer-events: none;
+  z-index: 9;
+}
+
+.fruitninja-split-half{
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 72px;
+  height: 72px;
+  font-size: 62px;
+  line-height: 72px;
+  text-align: center;
+  transform: translate(-50%, -50%);
+  animation: fruitninjaSplitHalf 0.55s ease-out forwards;
+  filter: drop-shadow(0 8px 10px rgba(0,0,0,0.22));
+}
+
+.fruitninja-split-half.left{
+  clip-path: inset(0 50% 0 0);
+  --splitX: -28px;
+  --splitRot: -26deg;
+}
+
+.fruitninja-split-half.right{
+  clip-path: inset(0 0 0 50%);
+  --splitX: 28px;
+  --splitRot: 26deg;
+}
+
+.fruitninja-bonus-overlay{
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 7;
+  pointer-events: none;
+}
+
+.fruitninja-bonus-text{
+  padding: 18px 24px;
+  border-radius: 24px;
+  background: rgba(0,0,0,0.40);
+  color: #ffffff;
+  font-size: clamp(28px, 8vw, 52px);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-align: center;
+  box-shadow: 0 12px 26px rgba(0,0,0,0.22);
+}
+
+.fruitninja-done{
+  width: min(100%, 560px);
+  margin: auto;
+  text-align: center;
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1.5;
+}
+
+@keyframes fruitninjaBadFlash{
+  0% { box-shadow: inset 0 0 0 0 rgba(255,90,81,0.0); }
+  30% { box-shadow: inset 0 0 0 999px rgba(255,90,81,0.34); }
+  100% { box-shadow: inset 0 0 0 0 rgba(255,90,81,0.0); }
+}
+
+@keyframes fruitninjaSplitHalf{
+  0%{
+    opacity: 1;
+    transform: translate(-50%, -50%) translateX(0) translateY(0) rotate(0deg);
+  }
+  100%{
+    opacity: 0;
+    transform: translate(-50%, -50%) translateX(var(--splitX)) translateY(54px) rotate(var(--splitRot));
+  }
+}
+
+
 .scramble-word.color-1{
   background: #ffc751;
   color: #333333;
@@ -1736,7 +2020,7 @@ const PRACTICE_GAMES = [
   { title:"🔗 Verse Chain", desc:"Pick the next word to build the verse." },
   { title:"🚗 Traffic Tap", desc:"Tap the moving correct word chip." },
   { title:"🏀 Bouncing Words", desc:"Tap moving words in the correct order." },
-  { title:"🚀 Rocket Verse", desc:"Tap each word to launch it into place." },
+ { title:"🍉 Fruit Slice", desc:"Tap the fruit carrying the next correct word." },
   { title:"🏰 Tower of Bible", desc:"Build a sky-high tower one word at a time." },
 ];
 
@@ -2504,6 +2788,11 @@ function practiceRun(){
     return;
   }
 
+  if (g.title.includes("Fruit Slice")){
+    startGame("fruitninja");
+    return;
+  }
+
   if (g.title.includes("Tower of Bible") || g.title.includes("Stack It")){
     startGame("tower");
     return;
@@ -2931,6 +3220,15 @@ right = (State.screen === Screen.GAME) ? "" : nextBtn;
         return;
       }
 
+      if (State.activeGame === "fruitninja"){
+        showDialog({
+          title: "How to Play Fruit Ninja Verse",
+          body: "Choose Easy, Medium, or Hard. One fruit appears at a time. If the fruit has the next correct word in the verse, tap it. If it has a wrong word, let it fall. In Medium mode, a wrong tap removes up to two of your newest words. In Hard mode, bombs sometimes appear. Tapping a bomb clears the whole verse. Finish the verse to unlock a fun bonus round.",
+          actions: [dlgBtn("Close", {onClick: closeDialog})]
+        });
+        return;
+      }
+
       if (State.activeGame === "tower"){
         showDialog({
           title: "How to Play Tower of Bible",
@@ -3013,6 +3311,8 @@ function startGame(id){
 function stopGame(){
   bouncingStopMotion();
   trafficStopMotion();
+  fruitNinjaStopMotion();
+  fruitNinjaStopBonusMotion();
 
   State.activeGame = null;
   State.gameRunning = false;
@@ -3021,6 +3321,7 @@ function stopGame(){
   State.bouncingGame = null;
   State.trafficGame = null;
   State.towerGame = null;
+  State.fruitNinjaGame = null;
 }
 
 function chainWordTokenIndices(){
@@ -5199,6 +5500,736 @@ registerGame({
   }
 });
 
+const FRUIT_NINJA_FRUITS = ["🍎","🍊","🍉","🍓","🍇","🍍","🥝","🍑","🍒","🍋","🍐"];
+const FRUIT_NINJA_BOMB = "💣";
+
+const FRUIT_NINJA_MODES = {
+  easy: {
+    label: "Easy",
+    sub: "Wrong tap = red flash only",
+    correctChance: 0.55,
+    bombChance: 0,
+    penaltyType: "flash",
+    speedMul: 0.92
+  },
+  medium: {
+    label: "Medium",
+    sub: "Wrong tap = lose up to 2 newest words",
+    correctChance: 0.48,
+    bombChance: 0,
+    penaltyType: "minus2",
+    speedMul: 1.0
+  },
+  hard: {
+    label: "Hard",
+    sub: "Wrong tap = lose up to 2 words, bombs can wipe all progress",
+    correctChance: 0.42,
+    bombChance: 0.18,
+    penaltyType: "minus2",
+    speedMul: 1.08
+  }
+};
+
+function fruitNinjaWordTokenIndices(){
+  const out = [];
+  for (let i = 0; i < tokens.length; i++){
+    if (tokens[i].type === TokenType.WORD){
+      out.push(i);
+    }
+  }
+  return out;
+}
+
+function fruitNinjaWrongPool(wordTokenIndices, excludeWord){
+  const verseWordsLower = wordTokenIndices.map(idx => tokens[idx].text.toLowerCase());
+  return VERSE_CHAIN_DECOY_WORDS
+    .filter(word => word.toLowerCase() !== String(excludeWord || "").toLowerCase())
+    .filter((word, i, arr) => arr.indexOf(word) === i)
+    .filter(word => !verseWordsLower.includes(word.toLowerCase()));
+}
+
+function fruitNinjaBuiltVerseNode(){
+  const p = document.createElement("p");
+  p.className = "fruitninja-built-verse";
+
+  const st = State.fruitNinjaGame;
+  const builtCount = st?.builtCount || 0;
+  const wordIdxs = st?.wordTokenIndices || [];
+  const builtSet = new Set(wordIdxs.slice(0, builtCount));
+
+  for (let i = 0; i < tokens.length; i++){
+    const t = tokens[i];
+
+    if (t.type === TokenType.SPACE || t.type === TokenType.PUNCT || t.type === TokenType.OTHER){
+      p.appendChild(document.createTextNode(t.text));
+      continue;
+    }
+
+    if (builtSet.has(i)){
+      p.appendChild(document.createTextNode(t.text));
+    } else {
+      break;
+    }
+  }
+
+  if (!builtCount){
+    p.innerHTML = `
+      Tap the fruit carrying the next correct word.<br>
+      <span style="font-weight:700; font-size:0.82em;">Let wrong words fall.</span>
+    `;
+    return p;
+  }
+
+  if (!st?.done && !st?.bonusDone){
+    p.appendChild(document.createTextNode(" …"));
+  }
+
+  return p;
+}
+
+function fruitNinjaElapsedMs(){
+  const st = State.fruitNinjaGame;
+  if (!st) return 0;
+  return (st.endedAt || performance.now()) - st.startedAt;
+}
+
+function startFruitNinjaGame(){
+  const wordTokenIndices = fruitNinjaWordTokenIndices();
+
+  State.fruitNinjaGame = {
+    wordTokenIndices,
+    builtCount: 0,
+    mode: "",
+    startedAt: 0,
+    endedAt: 0,
+    done: false,
+    wrongTapCount: 0,
+    wrongLaunchStreak: 0,
+    activeLaunch: null,
+    motionRaf: 0,
+    launchDelayTimer: 0,
+    flashBadUntil: 0,
+    fieldEl: null,
+    coachActions: null,
+    verseWrap: null,
+    bonusActive: false,
+    bonusOverlayUntil: 0,
+    bonusStartedAt: 0,
+    bonusDone: false,
+    bonusRaf: 0,
+    bonusItems: [],
+    bonusSpawnTick: 0,
+    bonusFruitHits: 0,
+    slideEl: null
+  };
+}
+
+function fruitNinjaChooseMode(mode){
+  const st = State.fruitNinjaGame;
+  if (!st || !FRUIT_NINJA_MODES[mode]) return;
+
+  st.mode = mode;
+  st.startedAt = performance.now();
+  st.endedAt = 0;
+  st.done = false;
+  st.builtCount = 0;
+  st.wrongTapCount = 0;
+  st.wrongLaunchStreak = 0;
+  st.activeLaunch = null;
+  st.flashBadUntil = 0;
+  st.bonusActive = false;
+  st.bonusOverlayUntil = 0;
+  st.bonusStartedAt = 0;
+  st.bonusDone = false;
+  st.bonusItems = [];
+
+  fruitNinjaStopMotion();
+  fruitNinjaStopBonusMotion();
+
+  render();
+}
+
+function fruitNinjaStopMotion(){
+  const st = State.fruitNinjaGame;
+  if (!st) return;
+  if (st.motionRaf){
+    cancelAnimationFrame(st.motionRaf);
+    st.motionRaf = 0;
+  }
+  if (st.launchDelayTimer){
+    clearTimeout(st.launchDelayTimer);
+    st.launchDelayTimer = 0;
+  }
+}
+
+function fruitNinjaStopBonusMotion(){
+  const st = State.fruitNinjaGame;
+  if (!st) return;
+  if (st.bonusRaf){
+    cancelAnimationFrame(st.bonusRaf);
+    st.bonusRaf = 0;
+  }
+}
+
+function fruitNinjaFlashBad(fieldEl){
+  const st = State.fruitNinjaGame;
+  if (!st || !fieldEl) return;
+  st.flashBadUntil = performance.now() + 350;
+  fieldEl.classList.remove("fruitninja-flash-bad");
+  void fieldEl.offsetWidth;
+  fieldEl.classList.add("fruitninja-flash-bad");
+
+  setTimeout(() => {
+    fieldEl.classList.remove("fruitninja-flash-bad");
+  }, 360);
+}
+
+function fruitNinjaRemoveBuiltWords(count){
+  const st = State.fruitNinjaGame;
+  if (!st) return;
+  st.builtCount = Math.max(0, st.builtCount - count);
+}
+
+function fruitNinjaApplyWrongPenalty(kind){
+  const st = State.fruitNinjaGame;
+  if (!st || !st.mode) return;
+
+  st.wrongTapCount += 1;
+
+  if (kind === "bomb"){
+    st.builtCount = 0;
+    return;
+  }
+
+  const modeCfg = FRUIT_NINJA_MODES[st.mode];
+  if (!modeCfg) return;
+
+  if (modeCfg.penaltyType === "minus2"){
+    fruitNinjaRemoveBuiltWords(2);
+  }
+}
+
+function fruitNinjaCorrectWord(){
+  const st = State.fruitNinjaGame;
+  if (!st) return "";
+  const tokenIndex = st.wordTokenIndices[st.builtCount];
+  if (!Number.isFinite(tokenIndex)) return "";
+  return tokens[tokenIndex].text;
+}
+
+function fruitNinjaPickLaunchKind(){
+  const st = State.fruitNinjaGame;
+  if (!st || !st.mode) return "correct";
+
+  const cfg = FRUIT_NINJA_MODES[st.mode];
+  if (!cfg) return "correct";
+
+  if (st.mode === "hard" && st.builtCount >= 2 && Math.random() < cfg.bombChance){
+    return "bomb";
+  }
+
+  if (st.wrongLaunchStreak >= 3){
+    return "correct";
+  }
+
+  return Math.random() < cfg.correctChance ? "correct" : "wrong";
+}
+
+function fruitNinjaMakeLaunch(fieldEl){
+  const st = State.fruitNinjaGame;
+  if (!st || !fieldEl) return null;
+
+  const cfg = FRUIT_NINJA_MODES[st.mode];
+  const fieldW = Math.max(300, fieldEl.clientWidth || 760);
+  const fieldH = Math.max(240, fieldEl.clientHeight || 360);
+  const kind = fruitNinjaPickLaunchKind();
+
+  const startX = Math.round(70 + Math.random() * Math.max(80, fieldW - 140));
+  const xDrift = Math.round((Math.random() * 3.6 - 1.8) * 1.25);
+  const baseVy = (-14.2 - Math.random() * 2.8) * (cfg?.speedMul || 1);
+  const baseGravity = 0.42 * (cfg?.speedMul || 1);
+
+  let word = "";
+  let emoji = FRUIT_NINJA_FRUITS[Math.floor(Math.random() * FRUIT_NINJA_FRUITS.length)];
+
+  if (kind === "correct"){
+    word = fruitNinjaCorrectWord();
+    st.wrongLaunchStreak = 0;
+  } else if (kind === "wrong"){
+    const pool = fruitNinjaWrongPool(st.wordTokenIndices, fruitNinjaCorrectWord());
+    word = pool[Math.floor(Math.random() * pool.length)] || "apple";
+    st.wrongLaunchStreak += 1;
+  } else {
+    emoji = FRUIT_NINJA_BOMB;
+  }
+
+  return {
+    kind,
+    word,
+    emoji,
+    x: startX,
+    y: fieldH + 60,
+    vx: xDrift,
+    vy: baseVy,
+    gravity: baseGravity,
+    rotation: Math.random() * 360,
+    rotationSpeed: (Math.random() * 7 + 4) * (Math.random() < 0.5 ? -1 : 1),
+    width: 124,
+    height: kind === "bomb" ? 86 : 132,
+    removed: false,
+    tapped: false
+  };
+}
+
+function fruitNinjaScheduleNextLaunch(delayMs = 260){
+  const st = State.fruitNinjaGame;
+  if (!st || st.done || st.bonusActive || st.activeLaunch || st.launchDelayTimer) return;
+
+  st.launchDelayTimer = setTimeout(() => {
+    st.launchDelayTimer = 0;
+    render();
+  }, delayMs);
+}
+
+function fruitNinjaCreateSplit(fieldEl, launch){
+  if (!fieldEl || !launch) return;
+
+  const split = document.createElement("div");
+  split.className = "fruitninja-split";
+  split.style.left = `${launch.x + 26}px`;
+  split.style.top = `${launch.y + 6}px`;
+
+  const left = document.createElement("div");
+  left.className = "fruitninja-split-half left";
+  left.textContent = launch.emoji;
+
+  const right = document.createElement("div");
+  right.className = "fruitninja-split-half right";
+  right.textContent = launch.emoji;
+
+  split.appendChild(left);
+  split.appendChild(right);
+  fieldEl.appendChild(split);
+
+  setTimeout(() => {
+    split.remove();
+  }, 620);
+}
+
+function fruitNinjaFinishVerse(){
+  const st = State.fruitNinjaGame;
+  if (!st) return;
+  st.bonusActive = true;
+  st.bonusOverlayUntil = performance.now() + 3000;
+  st.activeLaunch = null;
+  fruitNinjaStopMotion();
+  render();
+}
+
+function fruitNinjaHandleTap(launch, fieldEl){
+  const st = State.fruitNinjaGame;
+  if (!st || !launch || launch.removed) return;
+
+  launch.tapped = true;
+  launch.removed = true;
+  fruitNinjaStopMotion();
+
+  if (launch.kind === "correct"){
+    fruitNinjaCreateSplit(fieldEl, launch);
+    st.activeLaunch = null;
+    st.builtCount += 1;
+
+    if (st.builtCount >= st.wordTokenIndices.length){
+      setTimeout(() => {
+        fruitNinjaFinishVerse();
+      }, 180);
+      return;
+    }
+
+    setTimeout(() => {
+      render();
+    }, 180);
+    return;
+  }
+
+  fruitNinjaFlashBad(fieldEl);
+  fruitNinjaApplyWrongPenalty(launch.kind);
+  st.activeLaunch = null;
+
+  setTimeout(() => {
+    render();
+  }, 220);
+}
+
+function fruitNinjaRenderLaunch(fieldEl, launch){
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "fruitninja-launch no-zoom" + (launch.kind === "bomb" ? " fruitninja-bomb" : "");
+  btn.style.left = `${launch.x}px`;
+  btn.style.top = `${launch.y}px`;
+  btn.style.transform = `translate3d(0,0,0)`;
+  btn.setAttribute("aria-label", launch.word ? launch.word : "bomb");
+
+  const fruit = document.createElement("div");
+  fruit.className = "fruitninja-fruit";
+  fruit.textContent = launch.emoji;
+  fruit.style.transform = `translateX(-50%) rotate(${launch.rotation}deg)`;
+
+  btn.appendChild(fruit);
+
+  if (launch.word){
+    const word = document.createElement("div");
+    word.className = "fruitninja-word";
+    word.textContent = launch.word;
+    btn.appendChild(word);
+  }
+
+  btn.onclick = (e) => {
+    e.stopPropagation();
+    fruitNinjaHandleTap(launch, fieldEl);
+  };
+
+  fieldEl.appendChild(btn);
+  launch.el = btn;
+  launch.fruitEl = fruit;
+}
+
+function fruitNinjaStartMotion(fieldEl, launch){
+  const st = State.fruitNinjaGame;
+  if (!st || !fieldEl || !launch || !launch.el) return;
+
+  fruitNinjaStopMotion();
+
+  let lastTs = performance.now();
+
+  const tick = (ts) => {
+    if (!State.fruitNinjaGame || State.fruitNinjaGame !== st) return;
+    if (!st.activeLaunch || st.activeLaunch !== launch) return;
+    if (!launch.el || launch.removed) return;
+
+    const step = Math.min(2.2, (ts - lastTs) / 16.6667);
+    lastTs = ts;
+
+    launch.x += launch.vx * step;
+    launch.y += launch.vy * step;
+    launch.vy += launch.gravity * step;
+    launch.rotation += launch.rotationSpeed * step;
+
+    launch.el.style.left = `${launch.x}px`;
+    launch.el.style.top = `${launch.y}px`;
+    if (launch.fruitEl){
+      launch.fruitEl.style.transform = `translateX(-50%) rotate(${launch.rotation}deg)`;
+    }
+
+    const fieldW = Math.max(300, fieldEl.clientWidth || 760);
+    const fieldH = Math.max(240, fieldEl.clientHeight || 360);
+
+    if (launch.x < -130) launch.x = -130;
+    if (launch.x > fieldW - 10) launch.x = fieldW - 10;
+
+    if (launch.y > fieldH + 80){
+      st.activeLaunch = null;
+      st.motionRaf = 0;
+      fruitNinjaScheduleNextLaunch(150);
+      return;
+    }
+
+    st.motionRaf = requestAnimationFrame(tick);
+  };
+
+  st.motionRaf = requestAnimationFrame(tick);
+}
+
+function fruitNinjaEnsureMainLaunch(fieldEl){
+  const st = State.fruitNinjaGame;
+  if (!st || !fieldEl || st.done || st.bonusActive || !st.mode) return;
+
+  if (!st.activeLaunch){
+    st.activeLaunch = fruitNinjaMakeLaunch(fieldEl);
+  }
+
+  if (st.activeLaunch){
+    fruitNinjaRenderLaunch(fieldEl, st.activeLaunch);
+    fruitNinjaStartMotion(fieldEl, st.activeLaunch);
+  }
+}
+
+function fruitNinjaSpawnBonusItem(fieldEl){
+  const fieldW = Math.max(300, fieldEl.clientWidth || 760);
+  const fieldH = Math.max(240, fieldEl.clientHeight || 360);
+
+  return {
+    emoji: FRUIT_NINJA_FRUITS[Math.floor(Math.random() * FRUIT_NINJA_FRUITS.length)],
+    x: Math.round(60 + Math.random() * Math.max(60, fieldW - 120)),
+    y: fieldH + 60,
+    vx: Math.round((Math.random() * 4.6) - 2.3),
+    vy: -13.6 - Math.random() * 3.4,
+    gravity: 0.40,
+    rotation: Math.random() * 360,
+    rotationSpeed: (Math.random() * 8 + 4) * (Math.random() < 0.5 ? -1 : 1),
+    width: 124,
+    removed: false,
+    tapped: false,
+    el: null,
+    fruitEl: null
+  };
+}
+
+function fruitNinjaHandleBonusTap(item, fieldEl){
+  const st = State.fruitNinjaGame;
+  if (!st || !item || item.removed) return;
+  item.removed = true;
+  st.bonusFruitHits += 1;
+  fruitNinjaCreateSplit(fieldEl, item);
+  if (item.el) item.el.remove();
+}
+
+function fruitNinjaRenderBonusItem(fieldEl, item){
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.className = "fruitninja-launch no-zoom";
+  btn.style.left = `${item.x}px`;
+  btn.style.top = `${item.y}px`;
+
+  const fruit = document.createElement("div");
+  fruit.className = "fruitninja-fruit";
+  fruit.textContent = item.emoji;
+  fruit.style.transform = `translateX(-50%) rotate(${item.rotation}deg)`;
+
+  btn.appendChild(fruit);
+
+  btn.onclick = (e) => {
+    e.stopPropagation();
+    fruitNinjaHandleBonusTap(item, fieldEl);
+  };
+
+  fieldEl.appendChild(btn);
+  item.el = btn;
+  item.fruitEl = fruit;
+}
+
+function fruitNinjaStartBonusMotion(fieldEl){
+  const st = State.fruitNinjaGame;
+  if (!st || !fieldEl || st.bonusRaf) return;
+
+  const ensureBonusCount = () => {
+    const target = 2 + Math.floor(Math.random() * 2);
+    while (st.bonusItems.filter(item => !item.removed).length < target){
+      const item = fruitNinjaSpawnBonusItem(fieldEl);
+      st.bonusItems.push(item);
+      fruitNinjaRenderBonusItem(fieldEl, item);
+    }
+  };
+
+  if (!st.bonusStartedAt){
+    st.bonusStartedAt = performance.now();
+  }
+
+  let lastTs = performance.now();
+
+  const tick = (ts) => {
+    if (!State.fruitNinjaGame || State.fruitNinjaGame !== st) return;
+
+    const now = performance.now();
+    if (now - st.bonusStartedAt >= 20000){
+      fruitNinjaStopBonusMotion();
+      st.bonusDone = true;
+      st.bonusActive = false;
+      st.done = true;
+      st.endedAt = performance.now();
+      render();
+      return;
+    }
+
+    const step = Math.min(2.2, (ts - lastTs) / 16.6667);
+    lastTs = ts;
+
+    ensureBonusCount();
+
+    const fieldW = Math.max(300, fieldEl.clientWidth || 760);
+    const fieldH = Math.max(240, fieldEl.clientHeight || 360);
+
+    st.bonusItems.forEach((item) => {
+      if (item.removed || !item.el) return;
+
+      item.x += item.vx * step;
+      item.y += item.vy * step;
+      item.vy += item.gravity * step;
+      item.rotation += item.rotationSpeed * step;
+
+      item.el.style.left = `${item.x}px`;
+      item.el.style.top = `${item.y}px`;
+      if (item.fruitEl){
+        item.fruitEl.style.transform = `translateX(-50%) rotate(${item.rotation}deg)`;
+      }
+
+      if (item.y > fieldH + 90 || item.x < -140 || item.x > fieldW + 40){
+        item.removed = true;
+        if (item.el) item.el.remove();
+      }
+    });
+
+    st.bonusItems = st.bonusItems.filter(item => !item.removed);
+
+    st.bonusRaf = requestAnimationFrame(tick);
+  };
+
+  st.bonusRaf = requestAnimationFrame(tick);
+}
+
+function fruitNinjaRenderModeSelect(stage, st){
+  stage.innerHTML = "";
+
+  const verseWrap = document.createElement("div");
+  verseWrap.className = "fruitninja-verse-wrap";
+  verseWrap.innerHTML = `
+    <p class="fruitninja-built-verse">
+      Fruit Slice<br>
+      <span style="font-weight:700; font-size:0.82em;">Choose a mode to begin.</span>
+    </p>
+  `;
+  stage.appendChild(verseWrap);
+
+  const gameLayout = stage.closest(".learn-layout");
+  const coachTitle = gameLayout?.querySelector("#gameCoachTitle");
+  const coachActions = gameLayout?.querySelector("#gameCoachActions");
+
+  if (coachTitle) coachTitle.textContent = "";
+  if (!coachActions) return;
+
+  coachActions.innerHTML = "";
+
+  const wrap = document.createElement("div");
+  wrap.className = "fruitninja-mode-wrap";
+
+  wrap.innerHTML = `
+    <div class="fruitninja-mode-card">
+      <div class="fruitninja-mode-title">Choose a Mode</div>
+      <div class="fruitninja-mode-sub">
+        One fruit appears at a time. Tap it only if it carries the next correct word.
+      </div>
+
+      <div class="fruitninja-mode-buttons">
+        <button class="fruitninja-mode-btn no-zoom" id="fruitNinjaEasy">
+          <span class="label">Easy</span>
+          <span class="sub">${FRUIT_NINJA_MODES.easy.sub}</span>
+        </button>
+
+        <button class="fruitninja-mode-btn no-zoom" id="fruitNinjaMedium">
+          <span class="label">Medium</span>
+          <span class="sub">${FRUIT_NINJA_MODES.medium.sub}</span>
+        </button>
+
+        <button class="fruitninja-mode-btn no-zoom" id="fruitNinjaHard">
+          <span class="label">Hard</span>
+          <span class="sub">${FRUIT_NINJA_MODES.hard.sub}</span>
+        </button>
+      </div>
+    </div>
+  `;
+
+  coachActions.appendChild(wrap);
+
+  const easyBtn = wrap.querySelector("#fruitNinjaEasy");
+  const mediumBtn = wrap.querySelector("#fruitNinjaMedium");
+  const hardBtn = wrap.querySelector("#fruitNinjaHard");
+
+  if (easyBtn) easyBtn.onclick = (e) => { e.stopPropagation(); fruitNinjaChooseMode("easy"); };
+  if (mediumBtn) mediumBtn.onclick = (e) => { e.stopPropagation(); fruitNinjaChooseMode("medium"); };
+  if (hardBtn) hardBtn.onclick = (e) => { e.stopPropagation(); fruitNinjaChooseMode("hard"); };
+}
+
+function fruitNinjaRenderGame(stage, st){
+  stage.innerHTML = "";
+
+  const verseWrap = document.createElement("div");
+  verseWrap.className = "fruitninja-verse-wrap";
+  verseWrap.appendChild(fruitNinjaBuiltVerseNode());
+  stage.appendChild(verseWrap);
+
+  const gameLayout = stage.closest(".learn-layout");
+  const coachTitle = gameLayout?.querySelector("#gameCoachTitle");
+  const coachActions = gameLayout?.querySelector("#gameCoachActions");
+  const slideEl = stage.closest(".slide");
+
+  st.verseWrap = verseWrap || null;
+  st.coachActions = coachActions || null;
+  st.slideEl = slideEl || null;
+
+  if (coachTitle) coachTitle.textContent = "";
+  if (!coachActions) return;
+
+  coachActions.innerHTML = "";
+
+  const field = document.createElement("div");
+  field.className = "fruitninja-field";
+  coachActions.appendChild(field);
+  st.fieldEl = field;
+
+
+  if (st.done){
+    const doneMsg = document.createElement("div");
+    doneMsg.className = "small";
+    doneMsg.style.fontWeight = "900";
+    doneMsg.style.textAlign = "center";
+    doneMsg.style.maxWidth = "520px";
+    doneMsg.style.color = "#ffffff";
+    doneMsg.style.margin = "auto";
+    doneMsg.innerHTML = `
+      Great job!<br>
+      Wrong taps: ${st.wrongTapCount}<br>
+      Bonus fruit sliced: ${st.bonusFruitHits}<br>
+      Total time: ${scrambleFormatTime(fruitNinjaElapsedMs())}
+    `;
+    coachActions.appendChild(doneMsg);
+    return;
+  }
+
+  if (st.bonusActive){
+    if (performance.now() < st.bonusOverlayUntil){
+      const overlay = document.createElement("div");
+      overlay.className = "fruitninja-bonus-overlay";
+      overlay.innerHTML = `<div class="fruitninja-bonus-text">BONUS ROUND</div>`;
+      field.appendChild(overlay);
+
+      setTimeout(() => {
+        if (State.activeGame === "fruitninja"){
+          render();
+        }
+      }, Math.max(0, st.bonusOverlayUntil - performance.now()) + 10);
+
+      return;
+    }
+
+    fruitNinjaStartBonusMotion(field);
+    return;
+  }
+
+  fruitNinjaEnsureMainLaunch(field);
+}
+
+registerGame({
+  id: "fruitninja",
+  title: "Fruit Ninja Verse",
+  description: "Tap the fruit carrying the next correct word.",
+  start(stage){
+    if (!State.fruitNinjaGame){
+      startFruitNinjaGame();
+    }
+
+    const st = State.fruitNinjaGame;
+    if (!st) return;
+
+    if (!st.mode){
+      fruitNinjaRenderModeSelect(stage, st);
+      return;
+    }
+
+    fruitNinjaRenderGame(stage, st);
+  }
+});
+
+
 function screenIntro(idx){
   const wrap = document.createElement("div");
   wrap.className = "quiz-intro";
@@ -5634,6 +6665,7 @@ function screenGame(idx){
 
   const gameLayoutClass =
     State.activeGame === "tower" ? "game-tower" :
+    State.activeGame === "fruitninja" ? "game-fruitninja" :
     (State.activeGame === "scramble" || State.activeGame === "bouncing" || State.activeGame === "traffic") ? "game-scramble" :
     "";
 
@@ -5673,6 +6705,7 @@ function screenGame(idx){
   return makeSlide({
     idx,
     bg:
+      State.activeGame === "fruitninja" ? "#333333" :
       State.activeGame === "traffic" ? TRAFFIC_GREEN :
       State.activeGame === "chain" ? "#40b9c5" :
       State.activeGame === "tower" ? "#40b9c5" :
