@@ -1575,6 +1575,86 @@ text-wrap: balance;
   text-align: center;
 }
 
+.foodslice-bomb-btn{
+  position: relative;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  line-height: 1;
+}
+
+.foodslice-bomb-emoji{
+  display: inline-block;
+  font-size: clamp(48px, 11vw, 72px);
+  transform-origin: center center;
+}
+
+.foodslice-slice-layer{
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.foodslice-slice-piece{
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  will-change: transform;
+  pointer-events: none;
+}
+
+.foodslice-slice-inner{
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  font-size: clamp(52px, 12vw, 78px);
+  line-height: 1;
+}
+
+.foodslice-slice-emoji{
+  display: inline-block;
+  transform-origin: center center;
+}
+
+.foodslice-slice-piece.left .foodslice-slice-inner{
+  clip-path: inset(0 50% 0 0);
+}
+
+.foodslice-slice-piece.right .foodslice-slice-inner{
+  clip-path: inset(0 0 0 50%);
+}
+
+.foodslice-slice-piece.left .foodslice-slice-emoji{
+  transform: translateX(10px);
+}
+
+.foodslice-slice-piece.right .foodslice-slice-emoji{
+  transform: translateX(-10px);
+}
+
+
+.foodslice-item.bomb-hit{
+  animation: foodsliceBombFlash 0.28s ease;
+}
+
+.foodslice-item.bomb-hit .foodslice-bomb-emoji{
+  filter: brightness(1.25);
+}
+
+@keyframes foodsliceBombFlash{
+  0%, 100%{ opacity: 1; }
+  35%{ opacity: 0.3; }
+  70%{ opacity: 1; }
+}
+
+
 .foodslice-item.wrong{
   opacity: 1;
   animation: foodsliceWrongFlash 0.26s ease;
@@ -2207,7 +2287,10 @@ function foodSliceSpawnOne(fieldEl){
 
 
   st.activeFruit = item;
+  st.activeBomb = null;
+  foodSliceSpawnBomb(fieldEl);
 }
+
 
 
 function foodSliceStopMotion(){
@@ -2221,46 +2304,105 @@ function foodSliceRenderField(fieldEl){
   const st = State.foodSliceGame;
   if (!st || !fieldEl) return;
 
-  fieldEl.innerHTML = "";
+  fieldEl.innerHTML = `<div class="foodslice-slice-layer" id="foodSliceSliceLayer"></div>`;
 
+  const sliceLayer = fieldEl.querySelector("#foodSliceSliceLayer");
   const item = st.activeFruit;
-  if (!item || !item.alive) return;
+  const bomb = st.activeBomb;
+  const slices = Array.isArray(st.activeSlices) ? st.activeSlices : [];
 
-  const wrap = document.createElement("div");
-  wrap.className = "foodslice-item";
-  if (item.flashWrong) wrap.classList.add("wrong");
-  wrap.style.transform = `translate(${item.x}px, ${item.y}px)`;
-
-  const stack = document.createElement("div");
-  stack.className = "foodslice-stack";
-
-  const btn = document.createElement("button");
-  btn.className = "foodslice-fruit-btn no-zoom";
-  btn.type = "button";
-  btn.setAttribute("aria-label", item.word ? `Fruit with word ${item.word}` : "Fruit");
-  btn.onpointerdown = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    foodSliceHandleTap();
-  };
+  if ((!item || !item.alive) && (!bomb || !bomb.alive) && !slices.length) return;
 
 
-  const fruit = document.createElement("span");
-  fruit.className = "foodslice-fruit-emoji";
-  fruit.textContent = item.fruit;
-  fruit.style.transform = `rotate(${item.rotation}deg)`;
+  if (item && item.alive){
+    const wrap = document.createElement("div");
+    wrap.className = "foodslice-item";
+    if (item.flashWrong) wrap.classList.add("wrong");
+    wrap.style.transform = `translate(${item.x}px, ${item.y}px)`;
 
-  const word = document.createElement("div");
-  word.className = "foodslice-word";
-  word.textContent = item.word;
+    const stack = document.createElement("div");
+    stack.className = "foodslice-stack";
 
-  btn.appendChild(fruit);
-  stack.appendChild(btn);
-  stack.appendChild(word);
-  wrap.appendChild(stack);
-  fieldEl.appendChild(wrap);
+    const btn = document.createElement("button");
+    btn.className = "foodslice-fruit-btn no-zoom";
+    btn.type = "button";
+    btn.setAttribute("aria-label", item.word ? `Fruit with word ${item.word}` : "Fruit");
+    btn.onpointerdown = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      foodSliceHandleTap();
+    };
 
+    const fruit = document.createElement("span");
+    fruit.className = "foodslice-fruit-emoji";
+    fruit.textContent = item.fruit;
+    fruit.style.transform = `rotate(${item.rotation}deg)`;
+
+    const word = document.createElement("div");
+    word.className = "foodslice-word";
+    word.textContent = item.word;
+
+    btn.appendChild(fruit);
+    stack.appendChild(btn);
+    stack.appendChild(word);
+    wrap.appendChild(stack);
+    fieldEl.appendChild(wrap);
+  }
+
+  if (bomb && bomb.alive){
+    const bombWrap = document.createElement("div");
+    bombWrap.className = "foodslice-item";
+    if (bomb.wasHit) bombWrap.classList.add("bomb-hit");
+    bombWrap.style.transform = `translate(${bomb.x}px, ${bomb.y}px)`;
+
+    const bombStack = document.createElement("div");
+    bombStack.className = "foodslice-stack";
+
+    const bombBtn = document.createElement("button");
+    bombBtn.className = "foodslice-bomb-btn no-zoom";
+    bombBtn.type = "button";
+    bombBtn.setAttribute("aria-label", "Bomb");
+    bombBtn.onpointerdown = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      foodSliceHandleBombTap();
+    };
+
+    const bombEmoji = document.createElement("span");
+    bombEmoji.className = "foodslice-bomb-emoji";
+    bombEmoji.textContent = "💣";
+    bombEmoji.style.transform = `rotate(${bomb.rotation}deg)`;
+
+    bombBtn.appendChild(bombEmoji);
+    bombStack.appendChild(bombBtn);
+    bombWrap.appendChild(bombStack);
+    fieldEl.appendChild(bombWrap);
+  }
+
+  if (sliceLayer && slices.length){
+    for (const piece of slices){
+      if (!piece || !piece.alive) continue;
+
+      const pieceEl = document.createElement("div");
+      pieceEl.className = `foodslice-slice-piece ${piece.side}`;
+      pieceEl.style.transform = `translate(${piece.x}px, ${piece.y}px) rotate(${piece.rotation}deg)`;
+
+      const inner = document.createElement("div");
+      inner.className = "foodslice-slice-inner";
+
+      const emoji = document.createElement("span");
+      emoji.className = "foodslice-slice-emoji";
+      emoji.textContent = piece.fruit;
+
+      inner.appendChild(emoji);
+      pieceEl.appendChild(inner);
+      sliceLayer.appendChild(pieceEl);
+    }
+  }
 }
+
+
+
 
 function foodSliceStep(fieldEl){
   const st = State.foodSliceGame;
@@ -2270,15 +2412,15 @@ function foodSliceStep(fieldEl){
     foodSliceSpawnOne(fieldEl);
   }
 
+  const fieldW = Math.max(320, fieldEl.clientWidth || 0);
+  const fieldH = Math.max(260, fieldEl.clientHeight || 0);
+
   const item = st.activeFruit;
   if (item){
     item.x += item.vx;
     item.y += item.vy;
     item.vy += item.gravity;
     item.rotation += item.spin;
-
-    const fieldW = Math.max(320, fieldEl.clientWidth || 0);
-    const fieldH = Math.max(260, fieldEl.clientHeight || 0);
 
     if (item.x < 18) item.x = 18;
     if (item.x > fieldW - 18) item.x = fieldW - 18;
@@ -2289,7 +2431,41 @@ function foodSliceStep(fieldEl){
     }
   }
 
+  const bomb = st.activeBomb;
+  if (bomb){
+    bomb.x += bomb.vx;
+    bomb.y += bomb.vy;
+    bomb.vy += bomb.gravity;
+    bomb.rotation += bomb.spin;
+
+    if (bomb.x < 18) bomb.x = 18;
+    if (bomb.x > fieldW - 18) bomb.x = fieldW - 18;
+
+    if (bomb.y > fieldH + 120){
+      bomb.alive = false;
+      st.activeBomb = null;
+    }
+  }
+
+  if (Array.isArray(st.activeSlices) && st.activeSlices.length){
+    for (const piece of st.activeSlices){
+      if (!piece || !piece.alive) continue;
+
+      piece.x += piece.vx;
+      piece.y += piece.vy;
+      piece.vy += piece.gravity;
+      piece.rotation += piece.spin;
+
+      if (piece.y > fieldH + 120){
+        piece.alive = false;
+      }
+    }
+
+    st.activeSlices = st.activeSlices.filter(piece => piece && piece.alive);
+  }
+
   foodSliceRenderField(fieldEl);
+
 
   st.rafId = requestAnimationFrame(() => foodSliceStep(fieldEl));
 }
@@ -2302,10 +2478,14 @@ function foodSliceStartRound(){
   st.nextWordIndex = 0;
   st.wordsBuilt = [];
   st.activeFruit = null;
+  st.activeBomb = null;
+  st.activeSlices = [];
   st.pendingIsCorrect = false;
   st.wrongStreak = 0;
   st.done = false;
   st.running = true;
+
+
 }
 
 
@@ -2329,6 +2509,12 @@ function foodSliceClearFruitSoon(delayMs = 0, resumeAfter = false){
       live.activeFruit.alive = false;
       live.activeFruit = null;
     }
+
+    if (!resumeAfter && live.activeBomb && live.done){
+      live.activeBomb.alive = false;
+      live.activeBomb = null;
+    }
+
 
     if (resumeAfter && !live.done){
       const field = document.getElementById("foodSliceField");
@@ -2354,11 +2540,19 @@ function foodSliceHandleTap(){
   item.wasTapped = true;
 
   if (item.isCorrect){
+    foodSliceCreateSlicesFromFruit(item);
+
     st.nextWordIndex += 1;
     st.wordsBuilt = st.wordTokenIndices.slice(0, st.nextWordIndex);
     foodSliceRefreshVerseBox();
 
+
     if (st.nextWordIndex >= st.wordTokenIndices.length){
+      const field = document.getElementById("foodSliceField");
+      if (field){
+        foodSliceRenderField(field);
+      }
+
       st.done = true;
       st.running = false;
       foodSliceStopMotion();
@@ -2368,13 +2562,23 @@ function foodSliceHandleTap(){
     }
 
 
+
+    const field = document.getElementById("foodSliceField");
+    if (field){
+      foodSliceRenderField(field);
+    }
+
     foodSliceClearFruitSoon(0);
     return;
+
   }
+
+  foodSliceApplyWrongPenalty();
 
   item.flashWrong = true;
   st.running = false;
   foodSliceStopMotion();
+
 
   const field = document.getElementById("foodSliceField");
   if (field){
@@ -2384,6 +2588,144 @@ function foodSliceHandleTap(){
   foodSliceClearFruitSoon(260, true);
 }
 
+function foodSliceApplyWrongPenalty(){
+  const st = State.foodSliceGame;
+  if (!st) return;
+
+  if (st.mode !== "medium" && st.mode !== "hard") return;
+
+  const removeCount = Math.min(2, st.nextWordIndex);
+  if (removeCount <= 0) return;
+
+  st.nextWordIndex -= removeCount;
+  st.wordsBuilt = st.wordTokenIndices.slice(0, st.nextWordIndex);
+  foodSliceRefreshVerseBox();
+}
+
+function foodSliceSpawnBomb(fieldEl){
+  const st = State.foodSliceGame;
+  if (!st || !fieldEl || st.mode !== "hard" || st.done) return;
+
+  if (Math.random() >= 0.28) return;
+
+  const fieldW = Math.max(320, fieldEl.clientWidth || 0);
+  const fieldH = Math.max(260, fieldEl.clientHeight || 0);
+
+  const startX = 52 + Math.random() * Math.max(40, fieldW - 104);
+
+  const peakRatio = fieldW >= 900 ? 0.16 : 0.24;
+  const targetPeakY = fieldH * peakRatio;
+
+  const startY = fieldH + 44;
+  const riseDistance = Math.max(140, startY - targetPeakY);
+
+  const gravity = 0.42;
+  const baseVy = Math.sqrt(2 * gravity * riseDistance);
+  const vy = -(baseVy + (Math.random() * 1.2 - 0.6));
+
+  const horizontalRange = Math.max(1.0, Math.min(2.6, fieldW / 260));
+  const vx = (Math.random() * 2 - 1) * horizontalRange;
+
+  const spin = -7 + Math.random() * 14;
+
+  st.activeBomb = {
+    x: startX,
+    y: startY,
+    vx,
+    vy,
+    gravity,
+    rotation: 0,
+    spin,
+    alive: true,
+    wasTapped: false,
+    wasHit: false
+  };
+}
+
+function foodSliceClearAllBuiltWords(){
+  const st = State.foodSliceGame;
+  if (!st) return;
+
+  st.nextWordIndex = 0;
+  st.wordsBuilt = [];
+  foodSliceRefreshVerseBox();
+}
+
+function foodSliceHandleBombTap(){
+  const st = State.foodSliceGame;
+  if (!st || !st.running || st.done) return;
+
+  const bomb = st.activeBomb;
+  if (!bomb || !bomb.alive || bomb.wasTapped) return;
+
+  bomb.wasTapped = true;
+  bomb.wasHit = true;
+
+  foodSliceClearAllBuiltWords();
+
+  st.running = false;
+  foodSliceStopMotion();
+
+  const field = document.getElementById("foodSliceField");
+  if (field){
+    foodSliceRenderField(field);
+  }
+
+  window.setTimeout(() => {
+    const live = State.foodSliceGame;
+    if (!live) return;
+
+    if (live.activeBomb){
+      live.activeBomb.alive = false;
+      live.activeBomb = null;
+    }
+
+    if (!live.done){
+      const nextField = document.getElementById("foodSliceField");
+      if (nextField){
+        live.running = true;
+        foodSliceStopMotion();
+        requestAnimationFrame(() => {
+          foodSliceStep(nextField);
+        });
+      }
+    }
+  }, 280);
+}
+
+function foodSliceCreateSlicesFromFruit(item){
+  const st = State.foodSliceGame;
+  if (!st || !item) return;
+
+  const baseRotation = item.rotation || 0;
+
+  st.activeSlices.push(
+    {
+      side: "left",
+      fruit: item.fruit,
+      x: item.x,
+      y: item.y,
+      vx: (item.vx || 0) - 1.6,
+      vy: (item.vy || 0) - 1.8,
+      gravity: item.gravity || 0.42,
+      rotation: baseRotation - 10,
+      spin: -4.5,
+      alive: true
+    },
+    {
+      side: "right",
+      fruit: item.fruit,
+      x: item.x,
+      y: item.y,
+      vx: (item.vx || 0) + 1.6,
+      vy: (item.vy || 0) - 1.8,
+      gravity: item.gravity || 0.42,
+      rotation: baseRotation + 10,
+      spin: 4.5,
+      alive: true
+    }
+  );
+}
 
 
 function scrambleBuiltVerseNode(){
@@ -3565,15 +3907,33 @@ function stopGame(){
   trafficStopMotion();
   foodSliceStopMotion();
 
-  State.activeGame = null;
-
-  State.gameRunning = false;
   State.chainGame = null;
   State.scrambleGame = null;
   State.bouncingGame = null;
   State.trafficGame = null;
   State.towerGame = null;
+  State.foodSliceGame = null;
+
+  State.activeGame = null;
+  State.gameRunning = false;
 }
+
+function stopGame(){
+  bouncingStopMotion();
+  trafficStopMotion();
+  foodSliceStopMotion();
+
+  State.chainGame = null;
+  State.scrambleGame = null;
+  State.bouncingGame = null;
+  State.trafficGame = null;
+  State.towerGame = null;
+  State.foodSliceGame = null;
+
+  State.activeGame = null;
+  State.gameRunning = false;
+}
+
 
 function chainWordTokenIndices(){
   const out = [];
@@ -4866,11 +5226,15 @@ function foodSliceChooseMode(mode){
   st.wordsBuilt = [];
   st.nextWordIndex = 0;
   st.activeFruit = null;
+  st.activeBomb = null;
+  st.activeSlices = [];
   st.bonusRound = false;
   st.wordTokenIndices = [];
   st.pendingIsCorrect = false;
   st.wrongStreak = 0;
   st.done = false;
+
+
 
   foodSliceStopMotion();
 
@@ -5830,6 +6194,8 @@ registerGame({
         wordsBuilt: [],
         nextWordIndex: 0,
         activeFruit: null,
+        activeBomb: null,
+        activeSlices: [],
         bonusRound: false,
         wordTokenIndices: [],
         pendingIsCorrect: false,
@@ -5837,6 +6203,8 @@ registerGame({
         rafId: 0,
         done: false
       };
+
+
 
     }
 
@@ -5869,7 +6237,7 @@ registerGame({
                 <div style="font-size:42px; line-height:1;">🎉</div>
                 <div class="foodslice-title">Great Job!</div>
                 <div class="foodslice-subtext">
-                  You finished the verse.
+                  You finished the verse in ${st.mode.charAt(0).toUpperCase() + st.mode.slice(1)} mode.
                 </div>
               </div>
             </div>
