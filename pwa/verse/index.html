@@ -2266,11 +2266,16 @@ function foodSliceBuiltVerseNode(){
     return p;
   }
 
-  if (stPhase === "reference"){
+  if (stPhase === "reference" && !st?.bonusRound){
     p.innerHTML = `
       <span style="font-weight:900;">Book complete!</span><br>
       <span style="font-weight:600;">Now slice the correct chapter and verse.</span>
     `;
+    return p;
+  }
+
+  if (st?.bonusRound || st?.done){
+    p.textContent = `${VERSE_REF} – ${VERSE_TEXT}`;
     return p;
   }
 
@@ -3051,6 +3056,8 @@ function foodSliceStartBonusRound(){
   st.bonusBannerUntil = now + 3000;
   st.bonusEndsAt = now + 23000;
   st.running = true;
+
+  foodSliceRefreshVerseBox();
 }
 
 function foodSliceSpawnBonusFruit(fieldEl){
