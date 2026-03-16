@@ -4481,7 +4481,7 @@ right = (State.screen === Screen.GAME) ? "" : nextBtn;
       if (State.activeGame === "scramble"){
         showDialog({
           title: "How to Play Verse Scramble",
-          body: "Three word choices appear at a time. One is correct. Tap the correct next word in the verse. Try to tap the correct words as fast as you can.",
+          body: "Three word blobs will appear.\nTap the correct next word in the verse as fast as you can until you reach the end.",
           actions: [dlgBtn("Close", {onClick: closeDialog})]
         });
         return;
@@ -4490,7 +4490,7 @@ right = (State.screen === Screen.GAME) ? "" : nextBtn;
       if (State.activeGame === "bouncing"){
         showDialog({
           title: "How to Play Bouncing Words",
-          body: "Three words bounce around the screen. One is correct. Tap the correct moving word to build the verse. Keep going until the whole verse is built.",
+          body: "Three words bounce around the screen. Tap the correct moving word to build the verse. Keep going until the whole verse is built.",
           actions: [dlgBtn("Close", {onClick: closeDialog})]
         });
         return;
