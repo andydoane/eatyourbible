@@ -6953,6 +6953,29 @@ function screenTitle(idx){
 
       versePicker.appendChild(opt);
     }
+
+    versePicker.onchange = async () => {
+      const nextVerseId = versePicker.value;
+      if (!nextVerseId) return;
+
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.set("v", nextVerseId);
+        history.replaceState(null, "", url.toString());
+
+        await loadVerse(nextVerseId);
+        HAS_VERSE_SELECTION = true;
+        resetLearn(false);
+        render();
+      } catch (err) {
+        console.error(err);
+        showDialog({
+          title: "Verse JSON not found",
+          body: `Could not load ${DATA_DIR}${nextVerseId}.json`,
+          actions: [dlgBtn("OK", { onClick: closeDialog })]
+        });
+      }
+    };
   }
 
   // dots
