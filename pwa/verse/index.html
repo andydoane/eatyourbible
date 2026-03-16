@@ -189,11 +189,12 @@
       margin: 14px 0 12px;
       text-wrap: balance;
     }
-    .title-screen img{
-      width: min(80%, 420px);
-      max-height: 34vh;
-      object-fit: contain;
-    }
+
+  .title-screen img{
+  width: min(80%, 280px);
+  max-height: 30vh;
+  object-fit: contain;
+  }
 
     .title-carousel{
       display:flex;
@@ -1809,7 +1810,7 @@ const IMG_DIR   = "verse_images/";
 // DEBUG fallback: lets the app run offline (file://) without fetch()
 // Set DEBUG_MODE = false when you’re ready to remove this.
 // =========================================================
-const DEBUG_MODE = false;
+const DEBUG_MODE = true;
 
 const DEBUG_VERSE_JSON = {
   "verseId": "john_3_16",
@@ -1838,7 +1839,7 @@ const DEBUG_VERSE_JSON = {
 
 /* Pick your actual filenames in verse_images/ (safe defaults) */
 const INTRO_LOGO = IMG_DIR + "eyb_logo_1.png";
-const TITLE_LOGO = IMG_DIR + "eyb_logo_2.png";
+const TITLE_LOGO = IMG_DIR + "memory_verse_title.png";
 
 /* =========================================================
    Inline SVG icons (copied from Ten Commandments / Creed apps)
@@ -6926,7 +6927,7 @@ function screenTitle(idx){
     <div class="title-content">
       <img src="${TITLE_LOGO}" alt="Title graphic" onerror="this.style.display='none'">
     <h2>
-      ${HAS_VERSE_SELECTION ? `Let's memorize ${VERSE_REF}` : "Choose a verse to begin"}
+      ${HAS_VERSE_SELECTION ? `Let's memorize<br>${VERSE_REF}` : "Choose a verse to begin"}
       ${DEBUG_MODE ? " (DEBUG)" : ""}
     </h2>
     
