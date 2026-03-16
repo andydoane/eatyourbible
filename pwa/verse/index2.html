@@ -7490,7 +7490,11 @@ function render(){
   HAS_VERSE_SELECTION = hasVerseIdInUrl();
 
   try{
-    await loadVerse(getVerseIdFromUrl());
+    const requestedVerseId = getRequestedVerseIdFromUrl();
+
+    if (requestedVerseId){
+      await loadVerse(requestedVerseId);
+    }
   }catch(e){
     // Show a friendly error (still allow app shell)
     console.error(e);
