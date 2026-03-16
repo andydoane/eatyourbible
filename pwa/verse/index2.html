@@ -1940,6 +1940,11 @@ function hasVerseIdInUrl(){
   return !!params.get("v");
 }
 
+function getRequestedVerseIdFromUrl(){
+  const params = new URLSearchParams(window.location.search);
+  return params.get("v") || "";
+}
+
 /* Audio */
 const audioEl = new Audio();
 audioEl.preload = "auto";
