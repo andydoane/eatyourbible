@@ -7388,6 +7388,8 @@ function render(){
 
 /* Bootstrap */
 (async function init(){
+  await loadVerseList();
+
   try{
     await loadVerse(getVerseIdFromUrl());
   }catch(e){
