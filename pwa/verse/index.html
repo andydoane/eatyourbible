@@ -7430,13 +7430,15 @@ function screenGame(idx){
   const game = games[State.activeGame];
 
   const showGameRef =
-    (State.activeGame === "chain" && State.chainGame?.showRef) ||
-    (State.activeGame === "scramble" && State.scrambleGame?.showRef) ||
-    (
-      State.activeGame !== "chain" &&
-      State.activeGame !== "scramble" &&
-      State.activeGame !== "tower" &&
-      State.activeGame !== "foodslice"
+    !State.gameIntroActive && (
+      (State.activeGame === "chain" && State.chainGame?.showRef) ||
+      (State.activeGame === "scramble" && State.scrambleGame?.showRef) ||
+      (
+        State.activeGame !== "chain" &&
+        State.activeGame !== "scramble" &&
+        State.activeGame !== "tower" &&
+        State.activeGame !== "foodslice"
+      )
     );
 
 
@@ -7473,8 +7475,39 @@ const gameLayoutClass =
   `;
 
   const stage = inner.querySelector("#gameStage");
+  const coachTitle = inner.querySelector("#gameCoachTitle");
+  const coachActions = inner.querySelector("#gameCoachActions");
 
-  if (game && typeof game.start === "function"){
+  if (State.gameIntroActive){
+    if (coachTitle) coachTitle.textContent = "";
+
+    if (stage){
+      stage.innerHTML = `
+        <div style="width:100%; display:flex; align-items:center; justify-content:center; text-align:center; min-height:140px;">
+          <div style="font-size:clamp(24px, 6vw, 40px); font-weight:900; line-height:1.1; text-wrap:balance;">
+            ${getGameIntroTitle()}
+          </div>
+        </div>
+      `;
+    }
+
+    if (coachActions){
+      coachActions.innerHTML = `
+        <div class="coach-text" style="max-width:620px; margin:0 auto 10px;">
+          ${getGameIntroText()}
+        </div>
+        <button class="carousel-main no-zoom" id="gameIntroStart">Start</button>
+      `;
+
+      const introStart = coachActions.querySelector("#gameIntroStart");
+      if (introStart){
+        introStart.onclick = () => {
+          State.gameIntroActive = false;
+          render();
+        };
+      }
+    }
+  } else if (game && typeof game.start === "function"){
     if (State.activeGame === "bouncing" && State.isSliding){
       // wait until the slide transition is done
     } else {
