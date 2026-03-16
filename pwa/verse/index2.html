@@ -1954,6 +1954,9 @@ let ATTRIBUTION = "";
 let VERSE_REF = "";
 let AUDIO_FILE = "";
 
+let VERSE_LIST = [];
+let HAS_VERSE_SELECTION = false;
+
 // tokenization (copied conceptually from old engine)
 const TokenType = { SPACE:"space", WORD:"word", PUNCT:"punct", OTHER:"other" };
 function tokenize(text){
