@@ -7443,6 +7443,7 @@ function screenGame(idx){
 
 
 const gameLayoutClass =
+  State.gameIntroActive ? "" :
   State.activeGame === "tower" ? "game-tower" :
   (State.activeGame === "scramble" || State.activeGame === "bouncing" || State.activeGame === "traffic") ? "game-scramble" :
   (State.activeGame === "foodslice" && !State.foodSliceGame?.mode) ? "game-foodslice-mode" :
