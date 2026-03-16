@@ -1810,7 +1810,7 @@ const IMG_DIR   = "verse_images/";
 // DEBUG fallback: lets the app run offline (file://) without fetch()
 // Set DEBUG_MODE = false when you’re ready to remove this.
 // =========================================================
-const DEBUG_MODE = false;
+const DEBUG_MODE = true;
 
 const DEBUG_VERSE_JSON = {
   "verseId": "john_3_16",
@@ -6931,10 +6931,9 @@ function screenTitle(idx){
       ${DEBUG_MODE ? " (DEBUG)" : ""}
     </h2>
     
-    <div class="title-picker">
-      <div class="title-picker-label">Choose a Verse</div>
-      <select id="versePicker" class="title-picker-select"></select>
-    </div>
+      <div class="title-picker">
+        <select id="versePicker" class="title-picker-select"></select>
+      </div>
       <div class="title-carousel">
         <button class="carousel-arrow no-zoom" id="titlePrev" aria-label="Previous">${SVG_BACK}</button>
         <button class="carousel-main no-zoom" id="titleMain">${opt.label}</button>
