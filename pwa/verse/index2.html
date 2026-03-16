@@ -6931,6 +6931,30 @@ function screenTitle(idx){
   wrap.querySelector("#titleNext").onclick = (e)=>{ e.stopPropagation(); titleNext(); };
   wrap.querySelector("#titleMain").onclick = (e)=>{ e.stopPropagation(); titleRun(); };
 
+  const versePicker = wrap.querySelector("#versePicker");
+  if (versePicker){
+    versePicker.innerHTML = "";
+
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Choose a verse...";
+    placeholder.disabled = true;
+    placeholder.selected = !HAS_VERSE_SELECTION;
+    versePicker.appendChild(placeholder);
+
+    for (const item of VERSE_LIST){
+      const opt = document.createElement("option");
+      opt.value = item.id;
+      opt.textContent = item.ref;
+
+      if (HAS_VERSE_SELECTION && item.id === VERSE_ID){
+        opt.selected = true;
+      }
+
+      versePicker.appendChild(opt);
+    }
+  }
+
   // dots
   const dots = wrap.querySelector("#titleDots");
   dots.innerHTML = TITLE_OPTIONS.map((_, i) =>
