@@ -949,6 +949,52 @@ text-wrap: balance;
   text-wrap: balance;
 }
 
+.game-intro-screen{
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 18px;
+  text-align: center;
+}
+
+.game-intro-content{
+  width: 100%;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.game-intro-emoji{
+  font-size: clamp(64px, 16vw, 110px);
+  line-height: 1;
+}
+
+.game-intro-heading{
+  font-size: clamp(28px, 7vw, 42px);
+  font-weight: 900;
+  line-height: 1.05;
+  text-wrap: balance;
+}
+
+.game-intro-body{
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.4;
+  opacity: 0.96;
+  text-wrap: balance;
+  max-width: 520px;
+}
+
+.game-intro-screen .carousel-main{
+  width: 100%;
+  max-width: 320px;
+}
+
 .learn-coach .carousel-main{
   flex: 0 0 auto;     /* 🚫 do NOT grow vertically */
   width: 100%;
