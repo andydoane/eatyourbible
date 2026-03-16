@@ -1822,7 +1822,7 @@ const IMG_DIR   = "verse_images/";
 // DEBUG fallback: lets the app run offline (file://) without fetch()
 // Set DEBUG_MODE = false when you’re ready to remove this.
 // =========================================================
-const DEBUG_MODE = true;
+const DEBUG_MODE = false;
 
 const DEBUG_VERSE_JSON = {
   "verseId": "john_3_16",
@@ -2143,6 +2143,7 @@ const State = {
 
   activeGame: null,
   gameRunning: false,
+  gameIntroActive: false,
   chainGame: null,
   scrambleGame: null,
   bouncingGame: null,
@@ -2180,11 +2181,11 @@ const TITLE_OPTIONS = [
 ];
 
 const PRACTICE_GAMES = [
-  { title:"🧩 Verse Scramble", desc:"Tap the phrases in the correct order." },
-  { title:"🔗 Verse Chain", desc:"Pick the next word to build the verse." },
-  { title:"🚗 Traffic Tap", desc:"Tap the moving correct word chip." },
+  { title:"🧩 Verse Scramble", desc:"Tap the words of the verse in the correct order." },
+  { title:"🔗 Verse Chain", desc:"Pick the next word to finish the verse." },
+  { title:"🚗 Traffic Tap", desc:"Tap the car with the next correct word of the verse" },
   { title:"🏀 Bouncing Words", desc:"Tap moving words in the correct order." },
-  { title:"🍉 Food Slice", desc:"Slice the correct flying word-fruit to build the verse." },
+  { title:"🍉 Food Slice", desc:"Tap the correct flying verse food to finish the verse." },
   { title:"🏰 Tower of Bible", desc:"Build a sky-high tower one word at a time." },
 ];
 
