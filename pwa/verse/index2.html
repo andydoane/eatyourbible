@@ -6907,7 +6907,11 @@ function screenTitle(idx){
       ${VERSE_REF ? `Let's memorize ${VERSE_REF}` : "Verse Memory"}
       ${DEBUG_MODE ? " (DEBUG)" : ""}
     </h2>
-
+    
+    <div class="title-picker">
+      <div class="title-picker-label">Choose a Verse</div>
+      <select id="versePicker" class="title-picker-select"></select>
+    </div>
       <div class="title-carousel">
         <button class="carousel-arrow no-zoom" id="titlePrev" aria-label="Previous">${SVG_BACK}</button>
         <button class="carousel-main no-zoom" id="titleMain">${opt.label}</button>
