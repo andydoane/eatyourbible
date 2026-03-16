@@ -7516,8 +7516,8 @@ function screenPractice(idx){
   return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner: wrap});
 }
 
-function screenGame(idx){
 
+function screenGame(idx){
   const inner = document.createElement("div");
   inner.style.display = "flex";
   inner.style.flexDirection = "column";
@@ -7525,40 +7525,54 @@ function screenGame(idx){
 
   const game = games[State.activeGame];
 
+  if (State.gameIntroActive){
+    inner.innerHTML = `
+      <div class="game-intro-screen">
+        <div class="game-intro-content">
+          <div class="game-intro-emoji">${getGameIntroEmoji()}</div>
+          <div class="game-intro-heading">${getGameIntroTitle()}</div>
+          <div class="game-intro-body">${getGameIntroText()}</div>
+          <button class="carousel-main no-zoom" id="gameIntroStart">Start</button>
+        </div>
+      </div>
+    `;
+
+    const introStart = inner.querySelector("#gameIntroStart");
+    if (introStart){
+      introStart.onclick = () => {
+        State.gameIntroActive = false;
+        render();
+      };
+    }
+
+    return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner});
+  }
+
   const showGameRef =
-    !State.gameIntroActive && (
-      (State.activeGame === "chain" && State.chainGame?.showRef) ||
-      (State.activeGame === "scramble" && State.scrambleGame?.showRef) ||
-      (
-        State.activeGame !== "chain" &&
-        State.activeGame !== "scramble" &&
-        State.activeGame !== "tower" &&
-        State.activeGame !== "foodslice"
-      )
+    (State.activeGame === "chain" && State.chainGame?.showRef) ||
+    (State.activeGame === "scramble" && State.scrambleGame?.showRef) ||
+    (
+      State.activeGame !== "chain" &&
+      State.activeGame !== "scramble" &&
+      State.activeGame !== "tower" &&
+      State.activeGame !== "foodslice"
     );
 
-
-const gameLayoutClass =
-  State.gameIntroActive ? "" :
-  State.activeGame === "tower" ? "game-tower" :
-  (State.activeGame === "scramble" || State.activeGame === "bouncing" || State.activeGame === "traffic") ? "game-scramble" :
-  (State.activeGame === "foodslice" && !State.foodSliceGame?.mode) ? "game-foodslice-mode" :
-  (State.activeGame === "foodslice") ? "game-foodslice" :
-  "";
-
-
+  const gameLayoutClass =
+    State.activeGame === "tower" ? "game-tower" :
+    (State.activeGame === "scramble" || State.activeGame === "bouncing" || State.activeGame === "traffic") ? "game-scramble" :
+    (State.activeGame === "foodslice" && !State.foodSliceGame?.mode) ? "game-foodslice-mode" :
+    (State.activeGame === "foodslice") ? "game-foodslice" :
+    "";
 
   inner.innerHTML = `
-    <div class="learn-layout ${gameLayoutClass} ${State.gameIntroActive ? "game-intro-layout" : ""}">
+    <div class="learn-layout ${gameLayoutClass}">
       <div class="learn-ref">
-        ${State.gameIntroActive
-          ? `<div class="game-intro-title">${getGameIntroTitle()}</div>`
-          : (showGameRef ? `<div class="verse-ref-pill">${VERSE_REF}</div>` : ``)
-        }
+        ${showGameRef ? `<div class="verse-ref-pill">${VERSE_REF}</div>` : ``}
       </div>
 
       <div class="learn-verse">
-        ${State.activeGame === "tower" && !State.gameIntroActive
+        ${State.activeGame === "tower"
           ? `<div id="gameStage" style="width:100%; height:100%;"></div>`
           : `<div id="gameStage" style="width:100%;"></div>`
         }
@@ -7575,32 +7589,14 @@ const gameLayoutClass =
   `;
 
   const stage = inner.querySelector("#gameStage");
-  const coachTitle = inner.querySelector("#gameCoachTitle");
-  const coachActions = inner.querySelector("#gameCoachActions");
 
-
-if (State.gameIntroActive){
-  inner.innerHTML = `
-    <div class="game-intro-screen">
-      <div class="game-intro-content">
-        <div class="game-intro-emoji">${getGameIntroEmoji()}</div>
-        <div class="game-intro-heading">${getGameIntroTitle()}</div>
-        <div class="game-intro-body">${getGameIntroText()}</div>
-        <button class="carousel-main no-zoom" id="gameIntroStart">Start</button>
-      </div>
-    </div>
-  `;
-
-  const introStart = inner.querySelector("#gameIntroStart");
-  if (introStart){
-    introStart.onclick = () => {
-      State.gameIntroActive = false;
-      render();
-    };
+  if (game && typeof game.start === "function"){
+    if (State.activeGame === "bouncing" && State.isSliding){
+      // wait until the slide transition is done
+    } else {
+      game.start(stage);
+    }
   }
-
-  return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner});
-}
 
   return makeSlide({
     idx,
