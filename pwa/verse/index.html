@@ -902,8 +902,21 @@ text-wrap: balance;
   width: 100%;
 }
 
+.game-intro-layout .learn-ref{
+  flex: 0 0 12%;
+  min-height: 44px;
+  max-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .game-intro-layout .learn-verse{
-  flex: 0 0 32%;
+  flex: 0 0 10%;
+  min-height: 20px;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -918,14 +931,22 @@ text-wrap: balance;
 .game-intro-layout .coach-actions{
   flex: 1 1 auto;
   justify-content: center;
-  gap: 16px;
+  gap: 18px;
 }
 
 .game-intro-layout .coach-text{
-  font-size: 16px;
-  line-height: 1.35;
+  font-size: 18px;
+  line-height: 1.4;
   max-width: 620px;
   margin: 0 auto;
+}
+
+.game-intro-title{
+  font-size: clamp(24px, 6vw, 38px);
+  font-weight: 900;
+  line-height: 1.05;
+  text-align: center;
+  text-wrap: balance;
 }
 
 .learn-coach .carousel-main{
@@ -7475,7 +7496,10 @@ const gameLayoutClass =
   inner.innerHTML = `
     <div class="learn-layout ${gameLayoutClass} ${State.gameIntroActive ? "game-intro-layout" : ""}">
       <div class="learn-ref">
-        ${showGameRef ? `<div class="verse-ref-pill">${VERSE_REF}</div>` : ``}
+        ${State.gameIntroActive
+          ? `<div class="game-intro-title">${getGameIntroTitle()}</div>`
+          : (showGameRef ? `<div class="verse-ref-pill">${VERSE_REF}</div>` : ``)
+        }
       </div>
 
       <div class="learn-verse">
@@ -7503,13 +7527,7 @@ const gameLayoutClass =
     if (coachTitle) coachTitle.textContent = "";
 
     if (stage){
-      stage.innerHTML = `
-        <div style="width:100%; display:flex; align-items:center; justify-content:center; text-align:center; min-height:140px;">
-          <div style="font-size:clamp(24px, 6vw, 40px); font-weight:900; line-height:1.1; text-wrap:balance;">
-            ${getGameIntroTitle()}
-          </div>
-        </div>
-      `;
+      stage.innerHTML = "";
     }
 
     if (coachActions){
