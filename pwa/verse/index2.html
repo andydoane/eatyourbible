@@ -2046,6 +2046,25 @@ try {
   reshuffleHidePlan();
 }
 
+async function loadVerseList(){
+  try {
+    const res = await fetch(`${DATA_DIR}verse_list.json`, { cache: "no-store" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const json = await res.json();
+    VERSE_LIST = Array.isArray(json) ? json.slice() : [];
+
+    VERSE_LIST.sort((a, b) => {
+      const refA = String(a?.ref || "");
+      const refB = String(b?.ref || "");
+      return refA.localeCompare(refB);
+    });
+  } catch (err) {
+    console.warn("Could not load verse_list.json", err);
+    VERSE_LIST = [];
+  }
+}
+
 /* App state / screens */
 const Screen = {
   INTRO: "intro",
