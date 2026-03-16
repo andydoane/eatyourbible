@@ -4604,6 +4604,15 @@ function getGameIntroTitle(){
   return "Verse Chain";
 }
 
+function getGameIntroEmoji(){
+  if (State.activeGame === "scramble") return "🧩";
+  if (State.activeGame === "bouncing") return "🏀";
+  if (State.activeGame === "traffic") return "🚗";
+  if (State.activeGame === "tower") return "🏰";
+  if (State.activeGame === "foodslice") return "🍉";
+  return "🔗";
+}
+
 function getGameIntroText(){
   if (State.activeGame === "scramble"){
     return "Tap the words of the verse in the correct order.";
@@ -7569,36 +7578,29 @@ const gameLayoutClass =
   const coachTitle = inner.querySelector("#gameCoachTitle");
   const coachActions = inner.querySelector("#gameCoachActions");
 
-  if (State.gameIntroActive){
-    if (coachTitle) coachTitle.textContent = "";
 
-    if (stage){
-      stage.innerHTML = "";
-    }
-
-    if (coachActions){
-      coachActions.innerHTML = `
-        <div class="coach-text" style="max-width:620px; margin:0 auto 10px;">
-          ${getGameIntroText()}
-        </div>
+if (State.gameIntroActive){
+  inner.innerHTML = `
+    <div class="game-intro-screen">
+      <div class="game-intro-content">
+        <div class="game-intro-emoji">${getGameIntroEmoji()}</div>
+        <div class="game-intro-heading">${getGameIntroTitle()}</div>
+        <div class="game-intro-body">${getGameIntroText()}</div>
         <button class="carousel-main no-zoom" id="gameIntroStart">Start</button>
-      `;
+      </div>
+    </div>
+  `;
 
-      const introStart = coachActions.querySelector("#gameIntroStart");
-      if (introStart){
-        introStart.onclick = () => {
-          State.gameIntroActive = false;
-          render();
-        };
-      }
-    }
-  } else if (game && typeof game.start === "function"){
-    if (State.activeGame === "bouncing" && State.isSliding){
-      // wait until the slide transition is done
-    } else {
-      game.start(stage);
-    }
+  const introStart = inner.querySelector("#gameIntroStart");
+  if (introStart){
+    introStart.onclick = () => {
+      State.gameIntroActive = false;
+      render();
+    };
   }
+
+  return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner});
+}
 
   return makeSlide({
     idx,
