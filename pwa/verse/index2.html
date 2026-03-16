@@ -2048,6 +2048,13 @@ function verseIdToRef(verseId, translation){
   return `${book} ${chapter}:${versePart}${t}`;
 }
 
+function getTitleSubtitle(){
+  if (!HAS_VERSE_SELECTION){
+    return "Choose a verse to begin";
+  }
+  return VERSE_REF;
+}
+
 async function loadVerse(verseId){
 let json;
 
@@ -6919,7 +6926,7 @@ function screenTitle(idx){
     <div class="title-content">
       <img src="${TITLE_LOGO}" alt="Title graphic" onerror="this.style.display='none'">
     <h2>
-      ${VERSE_REF ? `Let's memorize ${VERSE_REF}` : "Verse Memory"}
+      ${HAS_VERSE_SELECTION ? `Let's memorize ${VERSE_REF}` : "Choose a verse to begin"}
       ${DEBUG_MODE ? " (DEBUG)" : ""}
     </h2>
     
