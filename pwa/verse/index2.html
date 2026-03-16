@@ -1904,9 +1904,9 @@ window.addEventListener("keydown", (e) => {
   }
 });
 
-function getVerseIdFromUrl(){
+function hasVerseIdInUrl(){
   const params = new URLSearchParams(window.location.search);
-  return params.get("v") || "john_3_16";
+  return !!params.get("v");
 }
 
 /* Audio */
