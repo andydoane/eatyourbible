@@ -902,10 +902,30 @@ text-wrap: balance;
   width: 100%;
 }
 
-.coach-actions > *{
-  width: 100%;
-  margin-left: auto;
-  margin-right: auto;
+.game-intro-layout .learn-verse{
+  flex: 0 0 32%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.game-intro-layout .learn-coach{
+  flex: 1 1 auto;
+  min-height: 0;
+  justify-content: center;
+}
+
+.game-intro-layout .coach-actions{
+  flex: 1 1 auto;
+  justify-content: center;
+  gap: 16px;
+}
+
+.game-intro-layout .coach-text{
+  font-size: 16px;
+  line-height: 1.35;
+  max-width: 620px;
+  margin: 0 auto;
 }
 
 .learn-coach .carousel-main{
@@ -7453,7 +7473,7 @@ const gameLayoutClass =
 
 
   inner.innerHTML = `
-    <div class="learn-layout ${gameLayoutClass}">
+    <div class="learn-layout ${gameLayoutClass} ${State.gameIntroActive ? "game-intro-layout" : ""}">
       <div class="learn-ref">
         ${showGameRef ? `<div class="verse-ref-pill">${VERSE_REF}</div>` : ``}
       </div>
