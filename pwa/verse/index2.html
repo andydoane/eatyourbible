@@ -3910,7 +3910,17 @@ function titleNext(){
   State.titleOptionIndex = (State.titleOptionIndex + 1) % TITLE_OPTIONS.length;
   render();
 }
+
 function titleRun(){
+  if (!HAS_VERSE_SELECTION){
+    showDialog({
+      title: "Pick a verse first 🙂",
+      body: "Choose a verse from the dropdown before you start.",
+      actions: [dlgBtn("OK", { onClick: closeDialog })]
+    });
+    return;
+  }
+
   TITLE_OPTIONS[State.titleOptionIndex].action();
 }
 
