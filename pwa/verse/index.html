@@ -256,6 +256,32 @@
     }
     .carousel-dot.active{ background: rgba(255,255,255,0.95); }
 
+.title-picker{
+  width: 100%;
+  max-width: 420px;
+  margin-top: 6px;
+}
+
+.title-picker-label{
+  font-size: 15px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  opacity: 0.95;
+}
+
+.title-picker-select{
+  width: 100%;
+  height: 50px;
+  border: none;
+  border-radius: 14px;
+  padding: 0 14px;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 800;
+  background: rgba(255,255,255,0.95);
+  color: #111;
+}
+
     /* ---------- Verse text ---------- */
     .verse-ref-pill{
       font-size: 15px;
@@ -1909,6 +1935,16 @@ function getVerseIdFromUrl(){
   return params.get("v") || "john_3_16";
 }
 
+function hasVerseIdInUrl(){
+  const params = new URLSearchParams(window.location.search);
+  return !!params.get("v");
+}
+
+function getRequestedVerseIdFromUrl(){
+  const params = new URLSearchParams(window.location.search);
+  return params.get("v") || "";
+}
+
 /* Audio */
 const audioEl = new Audio();
 audioEl.preload = "auto";
@@ -1953,6 +1989,9 @@ let TRANSLATION = "";
 let ATTRIBUTION = "";
 let VERSE_REF = "";
 let AUDIO_FILE = "";
+
+let VERSE_LIST = [];
+let HAS_VERSE_SELECTION = false;
 
 // tokenization (copied conceptually from old engine)
 const TokenType = { SPACE:"space", WORD:"word", PUNCT:"punct", OTHER:"other" };
@@ -2009,6 +2048,13 @@ function verseIdToRef(verseId, translation){
   return `${book} ${chapter}:${versePart}${t}`;
 }
 
+function getTitleSubtitle(){
+  if (!HAS_VERSE_SELECTION){
+    return "Choose a verse to begin";
+  }
+  return VERSE_REF;
+}
+
 async function loadVerse(verseId){
 let json;
 
@@ -2041,6 +2087,25 @@ try {
   tokens = tokenize(VERSE_TEXT);
   planResolved = resolveHidePlanToTokenIndices(tokens, HIDE_PLAN);
   reshuffleHidePlan();
+}
+
+async function loadVerseList(){
+  try {
+    const res = await fetch(`${DATA_DIR}verse_list.json`, { cache: "no-store" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const json = await res.json();
+    VERSE_LIST = Array.isArray(json) ? json.slice() : [];
+
+    VERSE_LIST.sort((a, b) => {
+      const refA = String(a?.ref || "");
+      const refB = String(b?.ref || "");
+      return refA.localeCompare(refB);
+    });
+  } catch (err) {
+    console.warn("Could not load verse_list.json", err);
+    VERSE_LIST = [];
+  }
 }
 
 /* App state / screens */
@@ -3857,7 +3922,17 @@ function titleNext(){
   State.titleOptionIndex = (State.titleOptionIndex + 1) % TITLE_OPTIONS.length;
   render();
 }
+
 function titleRun(){
+  if (!HAS_VERSE_SELECTION){
+    showDialog({
+      title: "Pick a verse first 🙂",
+      body: "Choose a verse from the dropdown before you start.",
+      actions: [dlgBtn("OK", { onClick: closeDialog })]
+    });
+    return;
+  }
+
   TITLE_OPTIONS[State.titleOptionIndex].action();
 }
 
@@ -6851,10 +6926,14 @@ function screenTitle(idx){
     <div class="title-content">
       <img src="${TITLE_LOGO}" alt="Title graphic" onerror="this.style.display='none'">
     <h2>
-      ${VERSE_REF ? `Let's memorize ${VERSE_REF}` : "Verse Memory"}
+      ${HAS_VERSE_SELECTION ? `Let's memorize ${VERSE_REF}` : "Choose a verse to begin"}
       ${DEBUG_MODE ? " (DEBUG)" : ""}
     </h2>
-
+    
+    <div class="title-picker">
+      <div class="title-picker-label">Choose a Verse</div>
+      <select id="versePicker" class="title-picker-select"></select>
+    </div>
       <div class="title-carousel">
         <button class="carousel-arrow no-zoom" id="titlePrev" aria-label="Previous">${SVG_BACK}</button>
         <button class="carousel-main no-zoom" id="titleMain">${opt.label}</button>
@@ -6873,6 +6952,54 @@ function screenTitle(idx){
   wrap.querySelector("#titlePrev").onclick = (e)=>{ e.stopPropagation(); titlePrev(); };
   wrap.querySelector("#titleNext").onclick = (e)=>{ e.stopPropagation(); titleNext(); };
   wrap.querySelector("#titleMain").onclick = (e)=>{ e.stopPropagation(); titleRun(); };
+
+  const versePicker = wrap.querySelector("#versePicker");
+  if (versePicker){
+    versePicker.innerHTML = "";
+
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Choose a verse...";
+    placeholder.disabled = true;
+    placeholder.selected = !HAS_VERSE_SELECTION;
+    versePicker.appendChild(placeholder);
+
+    for (const item of VERSE_LIST){
+      const opt = document.createElement("option");
+      opt.value = item.id;
+      opt.textContent = item.ref;
+
+      if (HAS_VERSE_SELECTION && item.id === VERSE_ID){
+        opt.selected = true;
+      }
+
+      versePicker.appendChild(opt);
+    }
+
+    versePicker.onchange = async () => {
+      const nextVerseId = versePicker.value;
+      if (!nextVerseId) return;
+
+      try {
+        const url = new URL(window.location.href);
+        url.searchParams.set("v", nextVerseId);
+        history.replaceState(null, "", url.toString());
+
+        await loadVerse(nextVerseId);
+        HAS_VERSE_SELECTION = true;
+        State.titleOptionIndex = 0;
+        resetLearn(false);
+        render();
+      } catch (err) {
+        console.error(err);
+        showDialog({
+          title: "Verse JSON not found",
+          body: `Could not load ${DATA_DIR}${nextVerseId}.json`,
+          actions: [dlgBtn("OK", { onClick: closeDialog })]
+        });
+      }
+    };
+  }
 
   // dots
   const dots = wrap.querySelector("#titleDots");
@@ -7366,8 +7493,15 @@ function render(){
 
 /* Bootstrap */
 (async function init(){
+  await loadVerseList();
+  HAS_VERSE_SELECTION = hasVerseIdInUrl();
+
   try{
-    await loadVerse(getVerseIdFromUrl());
+    const requestedVerseId = getRequestedVerseIdFromUrl();
+
+    if (requestedVerseId){
+      await loadVerse(requestedVerseId);
+    }
   }catch(e){
     // Show a friendly error (still allow app shell)
     console.error(e);
