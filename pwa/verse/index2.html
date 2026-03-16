@@ -6975,6 +6975,7 @@ function screenTitle(idx){
 
         await loadVerse(nextVerseId);
         HAS_VERSE_SELECTION = true;
+        State.titleOptionIndex = 0;
         resetLearn(false);
         render();
       } catch (err) {
