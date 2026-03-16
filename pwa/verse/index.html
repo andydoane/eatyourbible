@@ -4508,6 +4508,39 @@ function startGame(id){
   go(Screen.GAME);
 }
 
+function getGameIntroTitle(){
+  if (State.activeGame === "scramble") return "Verse Scramble";
+  if (State.activeGame === "bouncing") return "Bouncing Words";
+  if (State.activeGame === "traffic") return "Traffic Tap";
+  if (State.activeGame === "tower") return "Tower of Bible";
+  if (State.activeGame === "foodslice") return "Food Slice";
+  return "Verse Chain";
+}
+
+function getGameIntroText(){
+  if (State.activeGame === "scramble"){
+    return "Tap the words of the verse in the correct order.";
+  }
+
+  if (State.activeGame === "bouncing"){
+    return "Tap the moving words in the correct order to build the verse.";
+  }
+
+  if (State.activeGame === "traffic"){
+    return "Tap the moving car or word that matches the next part of the verse. Keep building the verse one word at a time until you finish the verse.";
+  }
+
+  if (State.activeGame === "tower"){
+    return "Use the arrows to look through the choices. Tap the correct word to add it to your tower. In Medium mode, wrong answers destroy some of the newest bricks. In Hard mode, a wrong answer destroys the whole tower.";
+  }
+
+  if (State.activeGame === "foodslice"){
+    return "Tap the food carrying the next correct word to build the verse. In Medium mode, wrong taps remove up to 2 of your newest words. In Hard mode, wrong taps remove up to 2 newest words, and bombs sometimes appear. If you tap a bomb, all the verse words disappear.";
+  }
+
+  return "Use the arrows to look through the choices. Tap the big word when you think it is correct.";
+}
+
 function stopGame(){
   bouncingStopMotion();
   trafficStopMotion();
