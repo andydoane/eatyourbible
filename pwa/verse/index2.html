@@ -1904,6 +1904,11 @@ window.addEventListener("keydown", (e) => {
   }
 });
 
+function getVerseIdFromUrl(){
+  const params = new URLSearchParams(window.location.search);
+  return params.get("v") || "john_3_16";
+}
+
 function hasVerseIdInUrl(){
   const params = new URLSearchParams(window.location.search);
   return !!params.get("v");
