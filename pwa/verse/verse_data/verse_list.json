@@ -1,3 +1,6 @@
 [
-  { "id": "john_3_16", "ref": "John 3:16" }
+  { "id": "john_3_16", "ref": "John 3:16" },
+  { "id": "john_1_14", "ref": "John 1:14" },
+  { "id": "luke_2_11", "ref": "Luke 2:11" },
+  { "id": "philippians_2_10", "ref": "Philippians 2:10" }
 ]
