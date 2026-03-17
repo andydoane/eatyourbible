@@ -753,7 +753,7 @@ function scrambleLayoutSeeds(count, maxHorizontalShift){
       ? 0
       : Math.round((Math.random() * 2 - 1) * maxHorizontalShift);
 
-    const rotation = Math.round((Math.random() * 20) - 10);
+    const rotation = Math.round((Math.random() * 8) - 4);
 
     seeds.push({
       shift,
@@ -3928,7 +3928,7 @@ if (!st.shapeSet.length || st.shapeSet.length !== st.choices.length){
   st.shapeSet = scrambleShapeSet();
 }
 
-const maxHorizontalShift = 48;
+const maxHorizontalShift = 20;
 
 if (!st.layoutSeeds.length || st.layoutSeeds.length !== st.choices.length){
   st.layoutSeeds = scrambleLayoutSeeds(st.choices.length, maxHorizontalShift);
