@@ -3,9 +3,9 @@
    Practice Games
 
    This file contains:
-   1. Traffic Tap
-   2. Bouncing Words
-   3. Food Slice
+   1. Traffic Tap ✔
+   2. Bouncing Words ✔
+   3. Food Slice ✔
    4. Verse Chain
    5. Tower of Bible
    6. Verse Scramble
@@ -2360,6 +2360,539 @@ registerGame({
 /* =========================================================
     5. TOWER OF BIBLE CODE
    ========================================================= */
+function startTowerGame(){
+  const wordTokenIndices = chainWordTokenIndices();
+  const meta = chainVerseMetaFromId(VERSE_ID);
+
+  State.towerGame = {
+    wordTokenIndices,
+    targetBook: meta.book,
+    targetChapter: meta.chapter,
+    targetVerse: meta.verse,
+    mode: null,
+    progress: [],
+    choices: [],
+    choiceIndex: 0,
+    wrongChoice: null,
+    done: false,
+    isAnimating: false,
+    pendingSpawnIndex: -1
+  };
+}
+
+function towerProgressWordCount(st){
+  return st.progress.filter(x => x.type === "word").length;
+}
+
+function towerHasBook(st){
+  return st.progress.some(x => x.type === "book");
+}
+
+function towerHasRef(st){
+  return st.progress.some(x => x.type === "ref");
+}
+
+function towerCurrentPhase(st){
+  if (!st || !st.mode) return "mode";
+  if (towerHasRef(st)) return "done";
+  if (towerHasBook(st)) return "ref";
+  if (towerProgressWordCount(st) >= st.wordTokenIndices.length) return "book";
+  return "words";
+}
+
+function towerCurrentCorrectLabel(st){
+  const phase = towerCurrentPhase(st);
+
+  if (phase === "words"){
+    const builtWordCount = towerProgressWordCount(st);
+    const correctTokenIndex = st.wordTokenIndices[builtWordCount];
+    if (!Number.isFinite(correctTokenIndex)) return "";
+    return tokens[correctTokenIndex].text;
+  }
+
+  if (phase === "book"){
+    return st.targetBook;
+  }
+
+  if (phase === "ref"){
+    return `${st.targetChapter}:${st.targetVerse}`;
+  }
+
+  return "";
+}
+
+function towerSetRandomChoiceIndex(){
+  const st = State.towerGame;
+  if (!st || !st.choices.length){
+    if (st) st.choiceIndex = 0;
+    return;
+  }
+  st.choiceIndex = Math.floor(Math.random() * st.choices.length);
+}
+
+function towerMakeChoices(st){
+  const phase = towerCurrentPhase(st);
+
+  if (phase === "words"){
+    const builtWordCount = towerProgressWordCount(st);
+    const correctTokenIndex = st.wordTokenIndices[builtWordCount];
+    if (!Number.isFinite(correctTokenIndex)) return [];
+    return chainMakeChoices(st.wordTokenIndices, correctTokenIndex);
+  }
+
+  if (phase === "book"){
+    return chainMakeBookChoices(st.targetBook);
+  }
+
+  if (phase === "ref"){
+    return chainMakeReferenceChoices(st.targetChapter, st.targetVerse);
+  }
+
+  return [];
+}
+
+function towerRefreshChoices(){
+  const st = State.towerGame;
+  if (!st || !st.mode) return;
+  st.choices = towerMakeChoices(st);
+  towerSetRandomChoiceIndex();
+}
+
+function towerCurrentChoice(){
+  const st = State.towerGame;
+  if (!st || !st.choices.length) return "";
+  return st.choices[st.choiceIndex];
+}
+
+function towerPrevChoice(){
+  const st = State.towerGame;
+  if (!st || st.done || !st.mode || !st.choices.length || st.isAnimating) return;
+  st.choiceIndex = (st.choiceIndex - 1 + st.choices.length) % st.choices.length;
+  render();
+}
+
+function towerNextChoice(){
+  const st = State.towerGame;
+  if (!st || st.done || !st.mode || !st.choices.length || st.isAnimating) return;
+  st.choiceIndex = (st.choiceIndex + 1) % st.choices.length;
+  render();
+}
+
+function towerModeLabel(mode){
+  if (mode === "easy") return "Easy";
+  if (mode === "medium") return "Medium";
+  if (mode === "hard") return "Hard";
+  return "";
+}
+
+function towerChooseMode(mode){
+  const st = State.towerGame;
+  if (!st) return;
+
+  st.mode = mode;
+  st.progress = [];
+  st.done = false;
+  st.wrongChoice = null;
+  st.isAnimating = false;
+  st.pendingSpawnIndex = -1;
+  towerRefreshChoices();
+  render();
+}
+
+function towerShrinkScale(bottomLevel){
+  return Math.max(0.70, 1 - (bottomLevel * 0.015));
+}
+
+function towerBrickOpacity(bottomLevel){
+  return Math.max(0.28, 0.67 - (bottomLevel * 0.035));
+}
+
+function towerBrickBottom(bottomLevel){
+  return -6 + (bottomLevel * 56);
+}
+
+function towerApplyBrickStyles(brickEl, bottomLevel){
+  const scale = towerShrinkScale(bottomLevel);
+  brickEl.style.bottom = `${towerBrickBottom(bottomLevel)}px`;
+  brickEl.style.width = `${(74 * scale).toFixed(2)}%`;
+  brickEl.style.fontSize = `${Math.max(18, 30 * scale).toFixed(2)}px`;
+  brickEl.style.opacity = `${towerBrickOpacity(bottomLevel).toFixed(3)}`;
+}
+
+function towerAnimateAddBrick(st, onDone){
+  const shellEl = document.getElementById("towerStackShell");
+  if (!shellEl){
+    onDone();
+    return;
+  }
+
+  const bricks = Array.from(shellEl.querySelectorAll(".tower-brick"));
+  const newTotal = bricks.length + 1;
+
+  bricks.forEach((brickEl, i) => {
+    const newBottomLevel = newTotal - 1 - i;
+    towerApplyBrickStyles(brickEl, newBottomLevel);
+  });
+
+  const newBrickEl = document.createElement("div");
+  newBrickEl.className = "tower-brick spawn-in";
+  newBrickEl.textContent = towerCurrentCorrectLabel(st) || "";
+  towerApplyBrickStyles(newBrickEl, 0);
+  shellEl.appendChild(newBrickEl);
+
+  setTimeout(() => {
+    onDone();
+  }, 390);
+}
+
+function towerAnimateMediumLoss(st){
+  const shellEl = document.getElementById("towerStackShell");
+  const removeCount = Math.min(2, st.progress.length);
+
+  if (!shellEl || removeCount <= 0){
+    if (removeCount > 0){
+      st.progress.splice(st.progress.length - removeCount, removeCount);
+    }
+    towerSyncAfterLoss(st);
+    st.isAnimating = false;
+    render();
+    return;
+  }
+
+  const brickEls = Array.from(shellEl.querySelectorAll(".tower-brick"));
+  const removedEls = brickEls.slice(-removeCount);
+  const survivorEls = brickEls.slice(0, -removeCount);
+
+  removedEls.forEach(el => el.classList.add("crumble-out"));
+
+  setTimeout(() => {
+    removedEls.forEach(el => el.remove());
+
+    const newTotal = survivorEls.length;
+    survivorEls.forEach((el, i) => {
+      const newBottomLevel = newTotal - 1 - i;
+      towerApplyBrickStyles(el, newBottomLevel);
+      el.classList.add("settle-down");
+
+      setTimeout(() => {
+        el.classList.remove("settle-down");
+      }, 240);
+    });
+  }, 220);
+
+  setTimeout(() => {
+    st.progress.splice(st.progress.length - removeCount, removeCount);
+    towerSyncAfterLoss(st);
+    st.isAnimating = false;
+    render();
+  }, 620);
+}
+
+function towerAnimateHardLoss(st){
+  const shellEl = document.getElementById("towerStackShell");
+
+  if (!shellEl){
+    st.progress = [];
+    towerSyncAfterLoss(st);
+    st.isAnimating = false;
+    render();
+    return;
+  }
+
+  const brickEls = Array.from(shellEl.querySelectorAll(".tower-brick"));
+
+  if (!brickEls.length){
+    st.progress = [];
+    towerSyncAfterLoss(st);
+    st.isAnimating = false;
+    render();
+    return;
+  }
+
+  let tallestTop = 0;
+
+  brickEls.forEach((el) => {
+    const bottomPx = parseFloat(el.style.bottom || "0") || 0;
+    const topPx = bottomPx + el.offsetHeight;
+    if (topPx > tallestTop) tallestTop = topPx;
+  });
+
+  shellEl.style.height = `${Math.max(1, Math.ceil(tallestTop))}px`;
+
+  // force layout so the browser sees the new height before the animation starts
+  shellEl.getBoundingClientRect();
+
+  shellEl.classList.add("sink-away");
+
+  setTimeout(() => {
+    st.progress = [];
+    towerSyncAfterLoss(st);
+    st.isAnimating = false;
+    render();
+  }, 1600);
+}
+
+function towerSyncAfterLoss(st){
+  st.done = towerCurrentPhase(st) === "done";
+  towerRefreshChoices();
+}
+
+function towerApplyPenalty(st){
+  if (!st) return;
+
+  if (st.mode === "easy"){
+    st.isAnimating = false;
+    return;
+  }
+
+  if (st.mode === "medium"){
+    towerAnimateMediumLoss(st);
+    return;
+  }
+
+  if (st.mode === "hard"){
+    towerAnimateHardLoss(st);
+    return;
+  }
+
+  st.isAnimating = false;
+}
+
+function towerFlashWrong(word, withPenalty){
+  const st = State.towerGame;
+  if (!st) return;
+
+  st.wrongChoice = word;
+  render();
+
+  setTimeout(() => {
+    const live = State.towerGame;
+    if (!live) return;
+
+    if (live.wrongChoice === word){
+      live.wrongChoice = null;
+      render();
+    }
+
+    if (withPenalty){
+      towerApplyPenalty(live);
+    }
+  }, 320);
+}
+
+function towerChoose(choice){
+  const st = State.towerGame;
+  if (!st || !st.mode || st.done || st.isAnimating) return;
+
+  const phase = towerCurrentPhase(st);
+  const correct = towerCurrentCorrectLabel(st);
+
+  if (!correct) return;
+
+  if (choice !== correct){
+    st.isAnimating = st.mode === "medium" || st.mode === "hard";
+    towerFlashWrong(choice, st.mode === "medium" || st.mode === "hard");
+    return;
+  }
+
+  st.wrongChoice = null;
+  st.isAnimating = true;
+
+  towerAnimateAddBrick(st, () => {
+    const live = State.towerGame;
+    if (!live) return;
+
+    if (phase === "words"){
+      live.progress.push({
+        type: "word",
+        label: correct
+      });
+      live.pendingSpawnIndex = live.progress.length - 1;
+      live.isAnimating = false;
+      towerRefreshChoices();
+      render();
+      return;
+    }
+
+    if (phase === "book"){
+      live.progress.push({
+        type: "book",
+        label: correct
+      });
+      live.pendingSpawnIndex = -1;
+      live.isAnimating = false;
+      towerRefreshChoices();
+      render();
+      return;
+    }
+
+    if (phase === "ref"){
+      live.progress.push({
+        type: "ref",
+        label: correct
+      });
+      live.pendingSpawnIndex = -1;
+      live.done = true;
+      live.choices = [];
+      live.isAnimating = false;
+      render();
+    }
+  });
+}
+
+
+function towerRenderModeSelect(stage, st, gameRoot){
+  stage.innerHTML = `
+    <div class="tower-stage">
+      <div class="tower-cloud cloud-1">${SVG_TOWER_CLOUD}</div>
+      <div class="tower-cloud cloud-2">${SVG_TOWER_CLOUD}</div>
+
+      <div class="tower-mode-wrap">
+        <div class="tower-mode-card">
+          <h3>Tower of Bible</h3>
+          <p>Choose your difficulty, then build the tower one correct word at a time.</p>
+
+          <div class="tower-mode-buttons">
+            <button class="tower-mode-btn no-zoom" id="towerModeEasy">Easy</button>
+            <button class="tower-mode-btn no-zoom" id="towerModeMedium">Medium</button>
+            <button class="tower-mode-btn no-zoom" id="towerModeHard">Hard</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  stage.querySelector("#towerModeEasy").onclick = () => towerChooseMode("easy");
+  stage.querySelector("#towerModeMedium").onclick = () => towerChooseMode("medium");
+  stage.querySelector("#towerModeHard").onclick = () => towerChooseMode("hard");
+
+  const titleEl = gameRoot ? gameRoot.querySelector("#gameCoachTitle") : null;
+  const actionsEl = gameRoot ? gameRoot.querySelector("#gameCoachActions") : null;
+
+  if (titleEl){
+    titleEl.textContent = "Choose Difficulty";
+  }
+
+  if (actionsEl){
+    actionsEl.innerHTML = `
+          <div class="tower-status-line">Easy = wrong answer flashes. Medium = lose 2 newest bricks. Hard = lose the whole tower.</div>
+    `;
+  }
+}
+
+function towerRenderBricks(fieldEl, st){
+  const total = st.progress.length;
+
+  for (let i = 0; i < total; i++){
+    const brick = st.progress[i];
+    const bottomLevel = total - 1 - i;
+
+    const brickEl = document.createElement("div");
+    brickEl.className = "tower-brick";
+    brickEl.textContent = brick.label;
+
+    towerApplyBrickStyles(brickEl, bottomLevel);
+
+    fieldEl.appendChild(brickEl);
+  }
+
+  if (st.pendingSpawnIndex !== -1){
+    st.pendingSpawnIndex = -1;
+  }
+}
+
+function towerRenderStage(stage, st){
+  const showStartOverlay = !st.done && st.progress.length === 0 && st.mode;
+
+  let towerStage = stage.querySelector(".tower-stage");
+
+  if (!towerStage){
+    stage.innerHTML = `
+      <div class="tower-stage">
+        <div class="tower-cloud cloud-1">${SVG_TOWER_CLOUD}</div>
+        <div class="tower-cloud cloud-2">${SVG_TOWER_CLOUD}</div>
+        <div class="tower-stack-field" id="towerStackField">
+          <div class="tower-stack-shell" id="towerStackShell"></div>
+        </div>
+      </div>
+    `;
+    towerStage = stage.querySelector(".tower-stage");
+  }
+
+  let fieldEl = towerStage.querySelector("#towerStackField");
+  if (!fieldEl){
+    fieldEl = document.createElement("div");
+    fieldEl.className = "tower-stack-field";
+    fieldEl.id = "towerStackField";
+    towerStage.appendChild(fieldEl);
+  }
+
+  let shellEl = towerStage.querySelector("#towerStackShell");
+  if (!shellEl){
+    shellEl = document.createElement("div");
+    shellEl.className = "tower-stack-shell";
+    shellEl.id = "towerStackShell";
+    fieldEl.appendChild(shellEl);
+  }
+
+  shellEl.innerHTML = "";
+  towerRenderBricks(shellEl, st);
+
+  const oldStart = towerStage.querySelector(".tower-start");
+  if (oldStart) oldStart.remove();
+
+  const oldWin = towerStage.querySelector(".tower-win");
+  if (oldWin) oldWin.remove();
+
+  if (showStartOverlay){
+    const startEl = document.createElement("div");
+    startEl.className = "tower-start";
+    startEl.innerHTML = `<div class="tower-start-text">Tap the first word to start your tower.</div>`;
+    towerStage.appendChild(startEl);
+  }
+
+  if (st.done){
+    const winEl = document.createElement("div");
+    winEl.className = "tower-win";
+    winEl.innerHTML = `<div class="tower-win-text">You completed the Tower of Bible!</div>`;
+    towerStage.appendChild(winEl);
+  }
+}
+
+function towerRenderCoach(st, gameRoot){
+  const titleEl = gameRoot ? gameRoot.querySelector("#gameCoachTitle") : null;
+  const actionsEl = gameRoot ? gameRoot.querySelector("#gameCoachActions") : null;
+  if (!actionsEl) return;
+
+  const currentChoice = towerCurrentChoice();
+
+  if (titleEl){
+    titleEl.textContent = "";
+  }
+
+  actionsEl.innerHTML = st.done ? `` : `
+    <div class="game-carousel-row">
+      <button class="carousel-arrow no-zoom" id="towerPrev" aria-label="Previous">${SVG_BACK}</button>
+      <button class="carousel-main no-zoom tower-choice-btn ${st.wrongChoice === currentChoice ? "wrong" : ""}" id="towerChooseBtn">${currentChoice}</button>
+      <button class="carousel-arrow no-zoom" id="towerNext" aria-label="Next">${SVG_FORWARD}</button>
+    </div>
+  `;
+
+  if (st.done) return;
+
+  const btnPrev = gameRoot ? gameRoot.querySelector("#towerPrev") : null;
+  const btnNext = gameRoot ? gameRoot.querySelector("#towerNext") : null;
+  const btnChoose = gameRoot ? gameRoot.querySelector("#towerChooseBtn") : null;
+
+  if (btnPrev) btnPrev.onclick = (e) => { e.stopPropagation(); towerPrevChoice(); };
+  if (btnNext) btnNext.onclick = (e) => { e.stopPropagation(); towerNextChoice(); };
+  if (btnChoose) btnChoose.onclick = (e) => {
+    e.stopPropagation();
+    towerChoose(towerCurrentChoice());
+  };
+
+}
+
 
 registerGame({
   id: "tower",
