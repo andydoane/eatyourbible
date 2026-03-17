@@ -1,3 +1,17 @@
+/* =====================================================
+   Verse Memory
+   Main Application Script
+
+   Sections in this file:
+   1. Global State
+   2. Navigation / Slides
+   3. Verse Loading
+   4. Core Learn Screens
+   5. Practice System
+   6. Game Registry
+   7. Individual Games
+   ===================================================== */
+
 /* =========================================================
    Assets / folders (your GitHub directory structure)
    ========================================================= */
