@@ -393,6 +393,7 @@ const State = {
   finalRecallStartedAt: 0,
   finalRecallDurationMs: 0,
   finalRecallDone: false,
+  finalRecallRevealed: false,
   fireworksTimer: null,
   // Title carousel
   titleOptionIndex: 0,
@@ -580,6 +581,7 @@ function resetLearn(goTitle=false){
   State.finalRecallStartedAt = 0;
   State.finalRecallDurationMs = 0;
   State.finalRecallDone = false;
+  State.finalRecallRevealed = false;
 
   stopFireworks();
   
@@ -626,6 +628,14 @@ function go(nextScreen){
     State.sayVerseActive = false;
     State.sayVerseStartedAt = 0;
     State.sayVerseDurationMs = 0;
+  }
+
+  if (from === Screen.FINAL_RECALL && nextScreen !== Screen.FINAL_RECALL){
+    State.finalRecallActive = false;
+    State.finalRecallStartedAt = 0;
+    State.finalRecallDurationMs = 0;
+    State.finalRecallDone = false;
+    State.finalRecallRevealed = false;
   }
 
   // Auto-shuffle when entering the missing-words section (no user button)
@@ -829,7 +839,7 @@ function verseNode(){
   return p;
 }
 
-function finalRecallNode(){
+function finalRecallNode(showVerse=false){
   const p = document.createElement("p");
   p.className = "verse";
 
@@ -837,6 +847,11 @@ function finalRecallNode(){
     const t = tokens[i];
 
     if (t.type === TokenType.SPACE){
+      p.appendChild(document.createTextNode(t.text));
+      continue;
+    }
+
+    if (showVerse){
       p.appendChild(document.createTextNode(t.text));
       continue;
     }
@@ -956,6 +971,20 @@ function goToHideAndStartRound(){
   });
 }
 
+function goToFinalRecallAndStart(){
+  go(Screen.FINAL_RECALL);
+  runAfterSlide(() => {
+    if (
+      State.screen === Screen.FINAL_RECALL &&
+      !State.finalRecallActive &&
+      !State.finalRecallDone &&
+      !State.finalRecallRevealed
+    ){
+      startFinalRecallFlow();
+    }
+  });
+}
+
 async function startHideRound(){
   if (State.sayVerseActive) return;
 
@@ -1003,6 +1032,37 @@ async function startHideRound(){
   State.sayVerseActive = false;
   State.sayVerseStartedAt = 0;
   State.sayVerseDurationMs = 0;
+  render();
+}
+
+async function startFinalRecallFlow(){
+  if (State.finalRecallActive) return;
+
+  State.finalRecallActive = true;
+  State.finalRecallStartedAt = 0;
+  State.finalRecallDurationMs = 0;
+  State.finalRecallDone = false;
+  State.finalRecallRevealed = false;
+  render();
+
+  setAudioSrc(AUDIO_FILE);
+  const d = await waitForDuration();
+  const durationMs = (isFinite(d) && d > 0) ? d * 1000 : 5000;
+
+  if (State.screen !== Screen.FINAL_RECALL || !State.finalRecallActive) return;
+
+  State.finalRecallStartedAt = performance.now();
+  State.finalRecallDurationMs = durationMs;
+  render();
+
+  await new Promise(r => setTimeout(r, durationMs));
+
+  if (State.screen !== Screen.FINAL_RECALL) return;
+
+  State.finalRecallActive = false;
+  State.finalRecallStartedAt = 0;
+  State.finalRecallDurationMs = 0;
+  State.finalRecallDone = true;
   render();
 }
 
@@ -1315,7 +1375,7 @@ right = (State.screen === Screen.GAME) ? "" : nextBtn;
     const disabled =
       (State.screen === Screen.LISTEN && (!State.listenDone || State.listenPlaying)) ||
       (State.screen === Screen.ECHO && (!State.echoDone || State.echoRunning)) ||
-      (State.screen === Screen.FINAL_RECALL && !State.finalRecallDone);
+      (State.screen === Screen.FINAL_RECALL);
 
     btnNext.style.opacity = disabled ? "0.45" : "1";
     btnNext.style.pointerEvents = disabled ? "none" : "auto";
@@ -1333,7 +1393,7 @@ right = (State.screen === Screen.GAME) ? "" : nextBtn;
           startHideRound();
         }
       }
-      else if (State.screen === Screen.FINAL_RECALL) go(Screen.CELEBRATION);
+      else if (State.screen === Screen.FINAL_RECALL) return;
       else if (State.screen === Screen.PRACTICE) go(Screen.TITLE);
     };
   }
@@ -1695,9 +1755,16 @@ function screenHide(idx){
   const hiddenNow = Math.min(State.hideCount, planMixed.length);
   const done = hiddenNow >= planMixed.length;
 
+  let coachTitle = "Try to Say the Verse";
+  let coachBody = State.sayVerseActive
+    ? `<div class="timer-wrap"><div class="timer-bar" id="sayVerseBar"></div></div>`
+    : `<div class="coach-text">If you need help, tap a missing word.</div>`;
   let buttonLabel = "Remove a Word";
+
   if (done){
-    buttonLabel = "Final Challege";
+    coachTitle = "Final Test";
+    coachBody = `<div class="coach-text">Now try to say the whole verse from memory.</div>`;
+    buttonLabel = "Begin Final Test";
   } else if (hiddenNow > 0){
     buttonLabel = "Remove Another";
   }
@@ -1714,13 +1781,8 @@ function screenHide(idx){
 
       <div class="learn-coach">
         <div>
-          <div class="coach-title">Try to Say the Verse</div>
-
-          ${
-            State.sayVerseActive
-              ? `<div class="timer-wrap"><div class="timer-bar" id="sayVerseBar"></div></div>`
-              : `<div class="coach-text">If you need help, tap a missing word.</div>`
-          }
+          <div class="coach-title">${coachTitle}</div>
+          ${coachBody}
         </div>
 
         <div class="coach-actions">
@@ -1744,6 +1806,11 @@ function screenHide(idx){
   const btnRemove = inner.querySelector("#btnRemoveWord");
   if (btnRemove){
     btnRemove.onclick = async () => {
+      if (done){
+        goToFinalRecallAndStart();
+        return;
+      }
+
       await startHideRound();
     };
   }
@@ -1757,6 +1824,21 @@ function screenFinalRecall(idx){
   inner.style.flexDirection = "column";
   inner.style.height = "100%";
 
+  let coachTitle = "Final Test";
+  let coachBody = `<div class="coach-text">Try saying the entire verse from memory.</div>`;
+  let actionHtml = ``;
+
+  if (State.finalRecallActive){
+    coachBody = `<div class="timer-wrap"><div class="timer-bar" id="finalRecallBar" style="width:${getFinalRecallPct() * 100}%"></div></div>`;
+  } else if (State.finalRecallDone && !State.finalRecallRevealed){
+    coachBody = `<div class="coach-text">Nice job. Press below to reveal the verse.</div>`;
+    actionHtml = `<button class="carousel-main no-zoom" id="btnFinalReveal" style="max-width:520px;">Reveal Verse</button>`;
+  } else if (State.finalRecallRevealed){
+    coachTitle = "Great Job";
+    coachBody = `<div class="coach-text">You finished learning this verse. Head to the games to practice it.</div>`;
+    actionHtml = `<button class="carousel-main no-zoom" id="btnFinalGames" style="max-width:520px;">Verse Games</button>`;
+  }
+
   inner.innerHTML = `
     <div class="learn-layout">
       <div class="learn-ref">
@@ -1769,31 +1851,33 @@ function screenFinalRecall(idx){
 
       <div class="learn-coach">
         <div>
-          <div class="coach-title">Say the Whole Verse</div>
-          ${
-            State.finalRecallActive
-              ? `<div class="timer-wrap"><div class="timer-bar" id="finalRecallBar" style="width:${getFinalRecallPct() * 100}%"></div></div>`
-              : `<div class="coach-text">Try saying the entire verse from memory.</div>`
-          }
+          <div class="coach-title">${coachTitle}</div>
+          ${coachBody}
         </div>
 
         <div class="coach-actions">
-          ${
-            State.finalRecallDone
-              ? `<button class="carousel-main no-zoom" id="btnFinalContinue" style="max-width:520px;">Continue</button>`
-              : ``
-          }
+          ${actionHtml}
         </div>
       </div>
     </div>
   `;
 
-  inner.querySelector("#finalRecallStage").appendChild(finalRecallNode());
+  inner
+    .querySelector("#finalRecallStage")
+    .appendChild(finalRecallNode(State.finalRecallRevealed));
 
-  const btnFinalContinue = inner.querySelector("#btnFinalContinue");
-  if (btnFinalContinue){
-    btnFinalContinue.onclick = () => {
-      go(Screen.CELEBRATION);
+  const btnFinalReveal = inner.querySelector("#btnFinalReveal");
+  if (btnFinalReveal){
+    btnFinalReveal.onclick = () => {
+      State.finalRecallRevealed = true;
+      render();
+    };
+  }
+
+  const btnFinalGames = inner.querySelector("#btnFinalGames");
+  if (btnFinalGames){
+    btnFinalGames.onclick = () => {
+      go(Screen.PRACTICE);
     };
   }
 
