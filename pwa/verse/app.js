@@ -1761,7 +1761,9 @@ function screenHide(idx){
     : `<div class="coach-text">If you need help, tap a missing word.</div>`;
   let buttonLabel = "Remove a Word";
 
-  if (done){
+  if (State.sayVerseActive){
+    buttonLabel = hiddenNow > 1 ? "Remove Another" : "Remove a Word";
+  } else if (done){
     coachTitle = "Final Test";
     coachBody = `<div class="coach-text">Now try to say the whole verse from memory.</div>`;
     buttonLabel = "Begin Final Test";
