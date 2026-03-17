@@ -1276,7 +1276,13 @@ if (State.screen === Screen.PRACTICE) center = "PRACTICE";
 if (State.screen === Screen.GAME) center = `<button class="nav-btn no-zoom" id="btnHelp" title="Help" style="width:auto; min-width:88px; padding:0 16px; font-weight:900;">HELP</button>`;
 
 // right/next destinations
-right = (State.screen === Screen.GAME) ? "" : nextBtn;
+const isLearnScreen =
+  State.screen === Screen.LISTEN ||
+  State.screen === Screen.ECHO ||
+  State.screen === Screen.HIDE ||
+  State.screen === Screen.FINAL_RECALL;
+
+right = (State.screen === Screen.GAME || isLearnScreen) ? "" : nextBtn;
 
   navBar.innerHTML = `
     <div style="display:flex; gap:12px; align-items:center;">
