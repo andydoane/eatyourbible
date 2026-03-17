@@ -1,11 +1,12 @@
 [
+  { "id": "1_corinthians_15:22", "ref": "1 Corinthians 15:22" },
+  { "id": "genesis_1_1", "ref": "Genesis 1:1" },
+  { "id": "genesis_1_27", "ref": "Genesis 1:27" },
   { "id": "john_3_16", "ref": "John 3:16" },
   { "id": "john_1_14", "ref": "John 1:14" },
   { "id": "luke_2_11", "ref": "Luke 2:11" },
-  { "id": "psalm_105_8", "ref": "Psalm 105:8" },
   { "id": "philippians_2_10", "ref": "Philippians 2:10" },
-  { "id": "genesis_1_1", "ref": "Genesis 1:1" },
-  { "id": "genesis_1_27", "ref": "Genesis 1:27" },
-  { "id": "1_corinthians_15:22", "ref": "1 Corinthians 15:22" },
+  { "id": "psalm_105_8", "ref": "Psalm 105:8" },
+  { "id": "romans_6_23", "ref": "Romans 6:23" },
   { "id": "romans_8_28", "ref": "Romans 8:28" }
 ]
