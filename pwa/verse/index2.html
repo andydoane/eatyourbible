@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
 
   <style>
     :root{
@@ -169,31 +170,37 @@
       align-items:center;
       height:100%;
       padding: 24px 16px;
-      padding-bottom: 110px;
+      padding-bottom: calc(16px + var(--safeB));
       background: var(--purple);
       color: white;
       text-align:center;
     }
+
     .title-content{
       flex:1;
       display:flex;
       flex-direction:column;
-      justify-content:center;
       align-items:center;
       width:100%;
       max-width: 700px;
     }
+
+    .practice-content{
+      justify-content: center;
+    }    
+    
     .title-screen h2{
       font-size: clamp(22px, 5.2vw, 44px);
       font-weight: 800;
       margin: 14px 0 12px;
       text-wrap: balance;
     }
-    .title-screen img{
-      width: min(80%, 420px);
-      max-height: 34vh;
-      object-fit: contain;
-    }
+
+  .title-screen img{
+  width: min(80%, 280px);
+  max-height: 30vh;
+  object-fit: contain;
+  }
 
     .title-carousel{
       display:flex;
@@ -256,10 +263,22 @@
     }
     .carousel-dot.active{ background: rgba(255,255,255,0.95); }
 
+.practice-desc{
+  width: 100%;
+  max-width: 760px;
+  margin: 10px auto 0;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.25;
+  opacity: 0.95;
+  text-align: center;
+  text-wrap: balance;
+}
+
 .title-picker{
   width: 100%;
   max-width: 420px;
-  margin-top: 6px;
+  margin-top: 12px;
 }
 
 .title-picker-label{
@@ -310,6 +329,15 @@
       line-height: 1.35;
       text-wrap: balance;
     }
+
+.title-attribution{
+  font-size: clamp(11px, 3vw, 13px);
+  opacity: 0.75;
+  line-height: 1.25;
+  text-wrap: balance;
+  margin-top: auto;
+  padding-bottom: 0;
+}
 
 /* ---------- Learn (3-zone) layout ---------- */
 .learn-layout{
@@ -889,10 +917,97 @@ text-wrap: balance;
   width: 100%;
 }
 
-.coach-actions > *{
+.game-intro-layout .learn-ref{
+  flex: 0 0 12%;
+  min-height: 44px;
+  max-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.game-intro-layout .learn-verse{
+  flex: 0 0 10%;
+  min-height: 20px;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.game-intro-layout .learn-coach{
+  flex: 1 1 auto;
+  min-height: 0;
+  justify-content: center;
+}
+
+.game-intro-layout .coach-actions{
+  flex: 1 1 auto;
+  justify-content: center;
+  gap: 18px;
+}
+
+.game-intro-layout .coach-text{
+  font-size: 18px;
+  line-height: 1.4;
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+.game-intro-title{
+  font-size: clamp(24px, 6vw, 38px);
+  font-weight: 900;
+  line-height: 1.05;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.game-intro-screen{
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 18px;
+  text-align: center;
+}
+
+.game-intro-content{
   width: 100%;
-  margin-left: auto;
-  margin-right: auto;
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+}
+
+.game-intro-emoji{
+  font-size: clamp(64px, 16vw, 110px);
+  line-height: 1;
+}
+
+.game-intro-heading{
+  font-size: clamp(28px, 7vw, 42px);
+  font-weight: 900;
+  line-height: 1.05;
+  text-wrap: balance;
+}
+
+.game-intro-body{
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.4;
+  opacity: 0.96;
+  text-wrap: balance;
+  max-width: 520px;
+}
+
+.game-intro-screen .carousel-main{
+  width: 100%;
+  max-width: 320px;
 }
 
 .learn-coach .carousel-main{
@@ -1809,7 +1924,7 @@ const IMG_DIR   = "verse_images/";
 // DEBUG fallback: lets the app run offline (file://) without fetch()
 // Set DEBUG_MODE = false when you’re ready to remove this.
 // =========================================================
-const DEBUG_MODE = true;
+const DEBUG_MODE = false;
 
 const DEBUG_VERSE_JSON = {
   "verseId": "john_3_16",
@@ -1838,7 +1953,7 @@ const DEBUG_VERSE_JSON = {
 
 /* Pick your actual filenames in verse_images/ (safe defaults) */
 const INTRO_LOGO = IMG_DIR + "eyb_logo_1.png";
-const TITLE_LOGO = IMG_DIR + "eyb_logo_2.png";
+const TITLE_LOGO = IMG_DIR + "memory_verse_title.png";
 
 /* =========================================================
    Inline SVG icons (copied from Ten Commandments / Creed apps)
@@ -2130,6 +2245,7 @@ const State = {
 
   activeGame: null,
   gameRunning: false,
+  gameIntroActive: false,
   chainGame: null,
   scrambleGame: null,
   bouncingGame: null,
@@ -2167,11 +2283,11 @@ const TITLE_OPTIONS = [
 ];
 
 const PRACTICE_GAMES = [
-  { title:"🧩 Verse Scramble", desc:"Tap the phrases in the correct order." },
-  { title:"🔗 Verse Chain", desc:"Pick the next word to build the verse." },
-  { title:"🚗 Traffic Tap", desc:"Tap the moving correct word chip." },
+  { title:"🧩 Verse Scramble", desc:"Tap the words of the verse in the correct order." },
+  { title:"🔗 Verse Chain", desc:"Pick the next word to finish the verse." },
+  { title:"🚗 Traffic Tap", desc:"Tap the car with the next correct word of the verse" },
   { title:"🏀 Bouncing Words", desc:"Tap moving words in the correct order." },
-  { title:"🍉 Food Slice", desc:"Slice the correct flying word-fruit to build the verse." },
+  { title:"🍉 Food Slice", desc:"Tap the correct flying verse food to finish the verse." },
   { title:"🏰 Tower of Bible", desc:"Build a sky-high tower one word at a time." },
 ];
 
@@ -4286,7 +4402,11 @@ function startFireworks(canvas){
 /* Nav rendering */
 function renderNav(){
   // Always show nav except intro/title? Your other apps hide nav on intro.
-  const show = (State.screen !== Screen.INTRO && State.screen !== Screen.CELEBRATION);
+  const show = (
+    State.screen !== Screen.INTRO &&
+    State.screen !== Screen.TITLE &&
+    State.screen !== Screen.CELEBRATION
+  );
   navBar.style.display = show ? "flex" : "none";
   if (!show){
     navBar.innerHTML = "";
@@ -4380,7 +4500,7 @@ right = (State.screen === Screen.GAME) ? "" : nextBtn;
       if (State.activeGame === "scramble"){
         showDialog({
           title: "How to Play Verse Scramble",
-          body: "Three word choices appear at a time. One is correct. Tap the correct next word in the verse. Try to tap the correct words as fast as you can.",
+          body: "Three word blobs will appear. Tap the correct next word in the verse as fast as you can until you reach the end.",
           actions: [dlgBtn("Close", {onClick: closeDialog})]
         });
         return;
@@ -4389,7 +4509,7 @@ right = (State.screen === Screen.GAME) ? "" : nextBtn;
       if (State.activeGame === "bouncing"){
         showDialog({
           title: "How to Play Bouncing Words",
-          body: "Three words bounce around the screen. One is correct. Tap the correct moving word to build the verse. Keep going until the whole verse is built.",
+          body: "Three words bounce around the screen. Keep tapping the correct words until you finish the verse.",
           actions: [dlgBtn("Close", {onClick: closeDialog})]
         });
         return;
@@ -4398,7 +4518,7 @@ right = (State.screen === Screen.GAME) ? "" : nextBtn;
       if (State.activeGame === "traffic"){
         showDialog({
           title: "How to Play Traffic Tap",
-          body: "Tap the moving car or word that matches the next part of the verse. Keep building the verse one word at a time until you finish the verse",
+          body: "Tap the moving car or word that matches the next correct word until you finish the verse.",
           actions: [dlgBtn("Close", {onClick: closeDialog})]
         });
         return;
@@ -4407,7 +4527,7 @@ right = (State.screen === Screen.GAME) ? "" : nextBtn;
       if (State.activeGame === "tower"){
         showDialog({
           title: "How to Play Tower of Bible",
-          body: "Use the arrows to look through the choices. Tap the correct word to add it to your tower. In Medium mode, wrong answers destroy some of the newest bricks. In Hard mode, a wrong answer destroys the whole tower.",
+          body: "Use the arrows to look through the choices. Tap the correct words to build your tower to the sky.",
           actions: [dlgBtn("Close", {onClick: closeDialog})]
         });
         return;
@@ -4416,7 +4536,7 @@ right = (State.screen === Screen.GAME) ? "" : nextBtn;
       if (State.activeGame === "foodslice"){
         showDialog({
           title: "How to Play Food Slice",
-          body: "Tap the food carrying the next correct word to build the verse. In Medium mode, wrong taps remove up to 2 of your newest words. In Hard mode, wrong taps remove up to 2 newest words, and bombs sometimes appear. If you tap a bomb, all the verse words disappear.",
+          body: "Tap pieces of food that match the next word of the verse before it falls. Watch out for wrong words or bombs!",
           actions: [dlgBtn("Close", {onClick: closeDialog})]
         });
         return;
@@ -4489,8 +4609,51 @@ function startGame(id){
 
   State.activeGame = id;
   State.gameRunning = true;
+  State.gameIntroActive = true;
 
   go(Screen.GAME);
+}
+
+function getGameIntroTitle(){
+  if (State.activeGame === "scramble") return "Verse Scramble";
+  if (State.activeGame === "bouncing") return "Bouncing Words";
+  if (State.activeGame === "traffic") return "Traffic Tap";
+  if (State.activeGame === "tower") return "Tower of Bible";
+  if (State.activeGame === "foodslice") return "Food Slice";
+  return "Verse Chain";
+}
+
+function getGameIntroEmoji(){
+  if (State.activeGame === "scramble") return "🧩";
+  if (State.activeGame === "bouncing") return "🏀";
+  if (State.activeGame === "traffic") return "🚗";
+  if (State.activeGame === "tower") return "🏰";
+  if (State.activeGame === "foodslice") return "🍉";
+  return "🔗";
+}
+
+function getGameIntroText(){
+  if (State.activeGame === "scramble"){
+    return "Three word blobs will appear. Tap the correct next word in the verse as fast as you can until you reach the end.";
+  }
+
+  if (State.activeGame === "bouncing"){
+    return "Three words bounce around the screen. Keep tapping the correct words until you finish the verse.";
+  }
+
+  if (State.activeGame === "traffic"){
+    return "Tap the moving car or word that matches the next correct word until you finish the verse.";
+  }
+
+  if (State.activeGame === "tower"){
+    return "Use the arrows to look through the choices. Tap the correct words to build your tower to the sky.";
+  }
+
+  if (State.activeGame === "foodslice"){
+    return "Tap pieces of food that match the next word of the verse before it falls. Watch out for wrong words or bombs!";
+  }
+
+  return "Use the arrows to look through the choices. Tap the big word when you think it is correct.";
 }
 
 function stopGame(){
@@ -6926,14 +7089,13 @@ function screenTitle(idx){
     <div class="title-content">
       <img src="${TITLE_LOGO}" alt="Title graphic" onerror="this.style.display='none'">
     <h2>
-      ${HAS_VERSE_SELECTION ? `Let's memorize ${VERSE_REF}` : "Choose a verse to begin"}
+      ${HAS_VERSE_SELECTION ? `Let's memorize<br>${VERSE_REF}` : "Choose a verse to begin"}
       ${DEBUG_MODE ? " (DEBUG)" : ""}
     </h2>
     
-    <div class="title-picker">
-      <div class="title-picker-label">Choose a Verse</div>
-      <select id="versePicker" class="title-picker-select"></select>
-    </div>
+      <div class="title-picker">
+        <select id="versePicker" class="title-picker-select"></select>
+      </div>
       <div class="title-carousel">
         <button class="carousel-arrow no-zoom" id="titlePrev" aria-label="Previous">${SVG_BACK}</button>
         <button class="carousel-main no-zoom" id="titleMain">${opt.label}</button>
@@ -6942,7 +7104,7 @@ function screenTitle(idx){
 
       <div class="carousel-dots" id="titleDots"></div>
 
-      <div class="small" style="max-width: 60ch; margin-top: 10px;">
+      <div class="title-attribution" style="max-width: 60ch;">
         ${ATTRIBUTION ? ATTRIBUTION : ""}
       </div>
     </div>
@@ -7007,7 +7169,7 @@ function screenTitle(idx){
     `<span class="carousel-dot ${i === State.titleOptionIndex ? "active" : ""}"></span>`
   ).join("");
 
-  return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner: wrap});
+  return makeSlide({idx, bg:"var(--purple)", navHidden:true, inner: wrap});
 }
 
 function screenListen(idx){
@@ -7344,23 +7506,21 @@ function screenPractice(idx){
   const g = PRACTICE_GAMES[State.practiceIndex];
 
   wrap.innerHTML = `
-    <div class="title-content">
+    <div class="title-content practice-content">
       <h2>Practice Games</h2>
 
       <div class="title-carousel">
         <button class="carousel-arrow no-zoom" id="pPrev" aria-label="Previous">${SVG_BACK}</button>
 
-        <button class="carousel-main no-zoom" id="pMain" style="display:flex; flex-direction:column; gap:6px; align-items:center; justify-content:center;">
-          <div style="font-size:20px; font-weight:900;">${g.title}</div>
-          <div style="font-size:14px; opacity:0.85; font-weight:700;">${g.desc}</div>
-          <div style="font-size:12px; opacity:0.75; font-weight:800; margin-top:2px;">Tap for details</div>
+        <button class="carousel-main no-zoom" id="pMain">
+          ${g.title}
         </button>
 
         <button class="carousel-arrow no-zoom" id="pNext" aria-label="Next">${SVG_FORWARD}</button>
       </div>
 
       <div class="carousel-dots" id="pDots"></div>
-    </div>
+      <div class="practice-desc">${g.desc}</div>
   `;
 
   wrap.querySelector("#pPrev").onclick = (e)=>{ e.stopPropagation(); practicePrev(); };
@@ -7375,14 +7535,37 @@ function screenPractice(idx){
   return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner: wrap});
 }
 
-function screenGame(idx){
 
+function screenGame(idx){
   const inner = document.createElement("div");
   inner.style.display = "flex";
   inner.style.flexDirection = "column";
   inner.style.height = "100%";
 
   const game = games[State.activeGame];
+
+  if (State.gameIntroActive){
+    inner.innerHTML = `
+      <div class="game-intro-screen">
+        <div class="game-intro-content">
+          <div class="game-intro-emoji">${getGameIntroEmoji()}</div>
+          <div class="game-intro-heading">${getGameIntroTitle()}</div>
+          <div class="game-intro-body">${getGameIntroText()}</div>
+          <button class="carousel-main no-zoom" id="gameIntroStart">Start</button>
+        </div>
+      </div>
+    `;
+
+    const introStart = inner.querySelector("#gameIntroStart");
+    if (introStart){
+      introStart.onclick = () => {
+        State.gameIntroActive = false;
+        render();
+      };
+    }
+
+    return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner});
+  }
 
   const showGameRef =
     (State.activeGame === "chain" && State.chainGame?.showRef) ||
@@ -7394,15 +7577,12 @@ function screenGame(idx){
       State.activeGame !== "foodslice"
     );
 
-
-const gameLayoutClass =
-  State.activeGame === "tower" ? "game-tower" :
-  (State.activeGame === "scramble" || State.activeGame === "bouncing" || State.activeGame === "traffic") ? "game-scramble" :
-  (State.activeGame === "foodslice" && !State.foodSliceGame?.mode) ? "game-foodslice-mode" :
-  (State.activeGame === "foodslice") ? "game-foodslice" :
-  "";
-
-
+  const gameLayoutClass =
+    State.activeGame === "tower" ? "game-tower" :
+    (State.activeGame === "scramble" || State.activeGame === "bouncing" || State.activeGame === "traffic") ? "game-scramble" :
+    (State.activeGame === "foodslice" && !State.foodSliceGame?.mode) ? "game-foodslice-mode" :
+    (State.activeGame === "foodslice") ? "game-foodslice" :
+    "";
 
   inner.innerHTML = `
     <div class="learn-layout ${gameLayoutClass}">
@@ -7517,5 +7697,6 @@ function render(){
   applyMute();
 })();
 </script>
+  <script src="app.js"></script>
 </body>
 </html>
