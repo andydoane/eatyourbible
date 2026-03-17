@@ -336,6 +336,9 @@ const Screen = {
   GAME: "game"
 };
 
+/* =========================
+   1. Global State
+   ========================= */
 const State = {
   screen: Screen.INTRO,
   slideX: 0,                // numeric index used for transforms
@@ -2699,10 +2702,16 @@ function makeSlide({idx, bg, navHidden=false, inner}){
 
 const games = {};
 
+/* =========================
+   2. Game Registry
+   ========================= */
 function registerGame(def){
   games[def.id] = def;
 }
 
+/* =========================
+   3. Game Launching
+   ========================= */
 function startGame(id){
   const game = games[id];
   if (!game) return;
