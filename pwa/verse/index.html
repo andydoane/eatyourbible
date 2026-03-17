@@ -7159,7 +7159,7 @@ function screenTitle(idx){
     `<span class="carousel-dot ${i === State.titleOptionIndex ? "active" : ""}"></span>`
   ).join("");
 
-  return makeSlide({idx, bg:"var(--purple)", navHidden:true, inner});
+  return makeSlide({idx, bg:"var(--purple)", navHidden:true, inner: wrap});
 }
 
 function screenListen(idx){
