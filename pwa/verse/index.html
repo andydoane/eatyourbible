@@ -4490,7 +4490,7 @@ right = (State.screen === Screen.GAME) ? "" : nextBtn;
       if (State.activeGame === "bouncing"){
         showDialog({
           title: "How to Play Bouncing Words",
-          body: "Three words bounce around the screen. Tap the correct moving word to build the verse. Keep going until the whole verse is built.",
+          body: "Three words bounce around the screen. Keep tapping the correct words until you finish the verse.",
           actions: [dlgBtn("Close", {onClick: closeDialog})]
         });
         return;
@@ -4499,7 +4499,7 @@ right = (State.screen === Screen.GAME) ? "" : nextBtn;
       if (State.activeGame === "traffic"){
         showDialog({
           title: "How to Play Traffic Tap",
-          body: "Tap the moving car or word that matches the next part of the verse. Keep building the verse one word at a time until you finish the verse",
+          body: "Tap the moving car or word that matches the next correct word until you finish the verse.",
           actions: [dlgBtn("Close", {onClick: closeDialog})]
         });
         return;
@@ -4508,7 +4508,7 @@ right = (State.screen === Screen.GAME) ? "" : nextBtn;
       if (State.activeGame === "tower"){
         showDialog({
           title: "How to Play Tower of Bible",
-          body: "Use the arrows to look through the choices. Tap the correct word to add it to your tower. In Medium mode, wrong answers destroy some of the newest bricks. In Hard mode, a wrong answer destroys the whole tower.",
+          body: "Use the arrows to look through the choices. Tap the correct words to build your tower to the sky.",
           actions: [dlgBtn("Close", {onClick: closeDialog})]
         });
         return;
@@ -4517,7 +4517,7 @@ right = (State.screen === Screen.GAME) ? "" : nextBtn;
       if (State.activeGame === "foodslice"){
         showDialog({
           title: "How to Play Food Slice",
-          body: "Tap the food carrying the next correct word to build the verse. In Medium mode, wrong taps remove up to 2 of your newest words. In Hard mode, wrong taps remove up to 2 newest words, and bombs sometimes appear. If you tap a bomb, all the verse words disappear.",
+          body: "Tap pieces of food that match the next word of the verse before it falls. Watch out for wrong words or bombs!",
           actions: [dlgBtn("Close", {onClick: closeDialog})]
         });
         return;
@@ -4615,23 +4615,23 @@ function getGameIntroEmoji(){
 
 function getGameIntroText(){
   if (State.activeGame === "scramble"){
-    return "Tap the words of the verse in the correct order.";
+    return "Three word blobs will appear. Tap the correct next word in the verse as fast as you can until you reach the end.";
   }
 
   if (State.activeGame === "bouncing"){
-    return "Tap the moving words in the correct order to build the verse.";
+    return "Three words bounce around the screen. Keep tapping the correct words until you finish the verse.";
   }
 
   if (State.activeGame === "traffic"){
-    return "Tap the moving car or word that matches the next part of the verse. Keep building the verse one word at a time until you finish the verse.";
+    return "Tap the moving car or word that matches the next correct word until you finish the verse.";
   }
 
   if (State.activeGame === "tower"){
-    return "Use the arrows to look through the choices. Tap the correct word to add it to your tower. In Medium mode, wrong answers destroy some of the newest bricks. In Hard mode, a wrong answer destroys the whole tower.";
+    return "Use the arrows to look through the choices. Tap the correct words to build your tower to the sky.";
   }
 
   if (State.activeGame === "foodslice"){
-    return "Tap the food carrying the next correct word to build the verse. In Medium mode, wrong taps remove up to 2 of your newest words. In Hard mode, wrong taps remove up to 2 newest words, and bombs sometimes appear. If you tap a bomb, all the verse words disappear.";
+    return "Tap pieces of food that match the next word of the verse before it falls. Watch out for wrong words or bombs!";
   }
 
   return "Use the arrows to look through the choices. Tap the big word when you think it is correct.";
