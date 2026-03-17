@@ -15,7 +15,7 @@
     { "type": "emoji", "word": "love", "occurrence": 1, "emoji": "❤️" },
     { "type": "emoji", "word": "God", "occurrence": 1, "emoji": "👆" },
     { "type": "emoji", "word": "work", "occurrence": 1, "emoji": "🔨" },
-    { "type": "emoji", "word": "together", "occurrence": 1, "emoji": "" },
+    { "type": "emoji", "word": "together", "occurrence": 1, "emoji": "🤝" },
     { "type": "emoji", "word": "good", "occurrence": 1, "emoji": "👍" },
     { "type": "underscore", "word": "all", "occurrence": 1 },
     { "type": "underscore", "word": "things", "occurrence": 1 },
