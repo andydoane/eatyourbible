@@ -379,9 +379,11 @@ const State = {
 
   // Learn progression
   listenDone: false,
+  listenPlaying: false,
   echoDone: false,
-   echoIndex: 0,
-   echoSpeaking: false,
+  echoRunning: false,
+  echoIndex: 0,
+  echoSpeaking: false,
   hideCount: 0,
   revealedTokenIdx: new Set(),
   sayVerseActive: false,
@@ -559,14 +561,26 @@ function scrambleWordTokenIndices(){
 
 function resetLearn(goTitle=false){
   State.listenDone = false;
+  State.listenPlaying = false;
+
   State.echoDone = false;
+  State.echoRunning = false;
+  State.echoIndex = 0;
+  State.echoSpeaking = false;
+
   State.hideCount = 0;
   State.revealedTokenIdx = new Set();
+  State.sayVerseActive = false;
+  State.sayVerseStartedAt = 0;
+  State.sayVerseDurationMs = 0;
+
   reshuffleHidePlan();
+
   State.finalRecallActive = false;
   State.finalRecallStartedAt = 0;
   State.finalRecallDurationMs = 0;
   State.finalRecallDone = false;
+
   stopFireworks();
   
   try { audioEl.pause(); audioEl.currentTime = 0; } catch(e){}
@@ -603,6 +617,16 @@ function go(nextScreen){
 
   // stop audio when leaving a screen
   try { audioEl.pause(); audioEl.currentTime = 0; } catch(e){}
+
+  State.listenPlaying = false;
+  State.echoRunning = false;
+  State.echoSpeaking = false;
+
+  if (from === Screen.HIDE && nextScreen !== Screen.HIDE){
+    State.sayVerseActive = false;
+    State.sayVerseStartedAt = 0;
+    State.sayVerseDurationMs = 0;
+  }
 
   // Auto-shuffle when entering the missing-words section (no user button)
   if (nextScreen === Screen.HIDE && from !== Screen.HIDE) {
@@ -832,15 +856,25 @@ function finalRecallNode(){
 }
 
 function listenPlay(){
+  State.listenPlaying = true;
+  State.listenDone = false;
+
   setAudioSrc(AUDIO_FILE);
   audioEl.currentTime = 0;
-  safePlay().then(() => {
-    render(); // update UI state
-  });
+
+  safePlay()
+    .then(() => {
+      render();
+    })
+    .catch(() => {
+      State.listenPlaying = false;
+      render();
+    });
 }
 
 audioEl.addEventListener("ended", () => {
   if (State.screen === Screen.LISTEN){
+    State.listenPlaying = false;
     State.listenDone = true;
     render();
   }
@@ -896,57 +930,158 @@ function getFinalRecallPct(){
   return Math.max(0, 1 - elapsed / State.finalRecallDurationMs);
 }
 
+function runAfterSlide(fn){
+  setTimeout(() => {
+    if (!State.isSliding){
+      fn();
+    }
+  }, 380);
+}
+
+function goToEchoAndStart(){
+  go(Screen.ECHO);
+  runAfterSlide(() => {
+    if (State.screen === Screen.ECHO && !State.echoRunning && !State.echoDone){
+      startEchoFlow();
+    }
+  });
+}
+
+function goToHideAndStartRound(){
+  go(Screen.HIDE);
+  runAfterSlide(() => {
+    if (State.screen === Screen.HIDE && !State.sayVerseActive && State.hideCount === 0){
+      startHideRound();
+    }
+  });
+}
+
+async function startHideRound(){
+  if (State.sayVerseActive) return;
+
+  if (State.hideCount >= planMixed.length){
+    go(Screen.FINAL_RECALL);
+    return;
+  }
+
+  State.hideCount = Math.min(planMixed.length, State.hideCount + 1);
+  State.revealedTokenIdx = new Set();
+
+  State.sayVerseActive = true;
+  State.sayVerseStartedAt = 0;
+  State.sayVerseDurationMs = 0;
+  render();
+
+  setAudioSrc(AUDIO_FILE);
+  const d = await waitForDuration();
+  const durationMs = (isFinite(d) && d > 0) ? d * 1000 : 5000;
+
+  if (State.screen !== Screen.HIDE || !State.sayVerseActive) return;
+
+  State.sayVerseStartedAt = performance.now();
+  State.sayVerseDurationMs = durationMs;
+
+  const animate = () => {
+    const pct = getSayVersePct();
+    const currentBar = document.getElementById("sayVerseBar");
+
+    if (currentBar){
+      currentBar.style.width = (pct * 100) + "%";
+    }
+
+    if (pct > 0 && State.sayVerseActive && State.screen === Screen.HIDE){
+      requestAnimationFrame(animate);
+    }
+  };
+
+  requestAnimationFrame(animate);
+
+  await new Promise(r => setTimeout(r, durationMs));
+
+  if (State.screen !== Screen.HIDE) return;
+
+  State.sayVerseActive = false;
+  State.sayVerseStartedAt = 0;
+  State.sayVerseDurationMs = 0;
+  render();
+}
+
+async function startEchoFlow(){
+  if (State.echoRunning) return;
+
+  // cancel any prior
+  echoCancelToken++;
+  try { audioEl.pause(); audioEl.currentTime = 0; } catch(e){}
+
+  await runEchoSequence();
+}
 
 let echoCancelToken = 0;
 async function runEchoSequence(){
   const my = ++echoCancelToken;
+
   State.echoDone = false;
+  State.echoRunning = true;
   State.echoSpeaking = false;
   State.echoIndex = 0;
   render();
 
-  for (let i = 0; i < ECHO_PARTS.length; i++){
-    if (my !== echoCancelToken) return;
+  try {
+    for (let i = 0; i < ECHO_PARTS.length; i++){
+      if (my !== echoCancelToken) return;
 
-    const file = echoPartFileByIndex(i);
-    setAudioSrc(file);
-    audioEl.currentTime = 0;
+      const file = echoPartFileByIndex(i);
+      setAudioSrc(file);
+      audioEl.currentTime = 0;
 
-State.echoIndex = i;
-render();
+      State.echoIndex = i;
+      render();
 
-    try{
-      await safePlay();
-    }catch(e){
-      showDialog({
-        title: "Echo audio missing",
-        body: `Couldn't play: ${file}`,
-        actions: [dlgBtn("OK", {onClick: closeDialog})]
+      try{
+        await safePlay();
+      }catch(e){
+        showDialog({
+          title: "Echo audio missing",
+          body: `Couldn't play: ${file}`,
+          actions: [dlgBtn("OK", {onClick: closeDialog})]
+        });
+        return;
+      }
+
+      await new Promise((resolve) => {
+        const onEnd = () => {
+          audioEl.removeEventListener("ended", onEnd);
+          resolve();
+        };
+        audioEl.addEventListener("ended", onEnd);
       });
-      return;
+
+      if (my !== echoCancelToken) return;
+
+      State.echoSpeaking = true;
+      render();
+
+      // Give the child time to repeat: duration × 1.25 (fallback 2s if unknown)
+      const d = await waitForDuration();
+      const repeatMs = (isFinite(d) && d > 0) ? (d * 1.25 * 1000) : 2000;
+      await new Promise(r => setTimeout(r, repeatMs));
+
+      if (my !== echoCancelToken) return;
+
+      State.echoSpeaking = false;
+      render();
     }
 
-    await new Promise((resolve) => {
-      const onEnd = () => { audioEl.removeEventListener("ended", onEnd); resolve(); };
-      audioEl.addEventListener("ended", onEnd);
-    });
-
-    State.echoSpeaking = true;
-    render();
-
-    // Give the child time to repeat: duration × 1.25 (fallback 2s if unknown)
-    const d = await waitForDuration();
-    const repeatMs = (isFinite(d) && d > 0) ? (d * 1.25 * 1000) : 2000;
-    await new Promise(r => setTimeout(r, repeatMs));
-
-    State.echoSpeaking = false;
-    render();
+    // restore main verse audio for later
+    setAudioSrc(AUDIO_FILE);
+    State.echoDone = true;
+  } finally {
+    if (my === echoCancelToken){
+      State.echoRunning = false;
+      State.echoSpeaking = false;
+      render();
+    }
   }
-
-  // restore main verse audio for later
-  setAudioSrc(AUDIO_FILE);
-  State.echoDone = true;
-  render();
 }
 
 function stopFireworks(){
@@ -1178,8 +1313,8 @@ right = (State.screen === Screen.GAME) ? "" : nextBtn;
   const btnNext = document.getElementById("btnNext");
   if (btnNext){
     const disabled =
-      (State.screen === Screen.LISTEN && !State.listenDone) ||
-      (State.screen === Screen.ECHO && !State.echoDone) ||
+      (State.screen === Screen.LISTEN && (!State.listenDone || State.listenPlaying)) ||
+      (State.screen === Screen.ECHO && (!State.echoDone || State.echoRunning)) ||
       (State.screen === Screen.FINAL_RECALL && !State.finalRecallDone);
 
     btnNext.style.opacity = disabled ? "0.45" : "1";
@@ -1188,19 +1323,18 @@ right = (State.screen === Screen.GAME) ? "" : nextBtn;
     btnNext.onclick = () => {
       if (State.isSliding) return;
 
-    if (State.screen === Screen.TITLE) go(Screen.LISTEN);
-    else if (State.screen === Screen.LISTEN) go(Screen.ECHO);
-    else if (State.screen === Screen.ECHO) go(Screen.HIDE);
-    else if (State.screen === Screen.HIDE){
-      if (State.hideCount >= planMixed.length){
-        go(Screen.FINAL_RECALL);
-      } else {
-        State.hideCount = Math.min(planMixed.length, State.hideCount + 1);
-        render();
+      if (State.screen === Screen.TITLE) go(Screen.LISTEN);
+      else if (State.screen === Screen.LISTEN) goToEchoAndStart();
+      else if (State.screen === Screen.ECHO) goToHideAndStartRound();
+      else if (State.screen === Screen.HIDE){
+        if (State.hideCount >= planMixed.length){
+          go(Screen.FINAL_RECALL);
+        } else {
+          startHideRound();
+        }
       }
-    }
-    else if (State.screen === Screen.FINAL_RECALL) go(Screen.CELEBRATION);
-    else if (State.screen === Screen.PRACTICE) go(Screen.TITLE);
+      else if (State.screen === Screen.FINAL_RECALL) go(Screen.CELEBRATION);
+      else if (State.screen === Screen.PRACTICE) go(Screen.TITLE);
     };
   }
 }
@@ -1442,44 +1576,52 @@ function screenListen(idx){
   inner.style.flexDirection = "column";
   inner.style.height = "100%";
 
-inner.innerHTML = `
-  <div class="learn-layout">
-    <div class="learn-ref">
-      <div class="verse-ref-pill">${VERSE_REF}</div>
-    </div>
-
-    <div class="learn-verse">
-      <p class="verse">${VERSE_TEXT}</p>
-    </div>
-
-    <div class="learn-coach">
-      <div>
-        <div class="coach-title">Listen to the Verse</div>
-        <div class="coach-text">Press the button below to listen to the verse.</div>
+  inner.innerHTML = `
+    <div class="learn-layout">
+      <div class="learn-ref">
+        <div class="verse-ref-pill">${VERSE_REF}</div>
       </div>
 
+      <div class="learn-verse">
+        <p class="verse">${VERSE_TEXT}</p>
+      </div>
 
-      <button class="carousel-main no-zoom" id="btnListenPlay" style="max-width:520px;">
-        ${State.listenDone ? "Continue" : "🔊 Read it to me"}
-      </button>
+      <div class="learn-coach">
+        <div>
+          <div class="coach-title">Listen to the Verse</div>
+          <div class="coach-text">${
+            State.listenDone
+              ? "Nice job. Press below to start echoing right away."
+              : "Press the button below to listen to the verse."
+          }</div>
+        </div>
 
+        <div class="coach-actions">
+          ${
+            State.listenPlaying
+              ? ``
+              : `
+                <button class="carousel-main no-zoom" id="btnListenPlay" style="max-width:520px;">
+                  ${State.listenDone ? "Echo After Me" : "🔊 Read it to me"}
+                </button>
+              `
+          }
+        </div>
       </div>
     </div>
-  </div>
-`;
+  `;
 
-  inner.querySelector("#btnListenPlay").onclick = async () => {
+  const btn = inner.querySelector("#btnListenPlay");
+  if (btn){
+    btn.onclick = async () => {
+      if (State.listenDone){
+        goToEchoAndStart();
+        return;
+      }
 
-    // If listen already completed, continue
-    if (State.listenDone){
-      go(Screen.ECHO);
-      return;
-    }
-
-    State.listenDone = false;
-    renderNav(); // lock Next
-    listenPlay();
-  };
+      listenPlay();
+    };
+  }
 
   return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner});
 }
@@ -1490,49 +1632,56 @@ function screenEcho(idx){
   inner.style.flexDirection = "column";
   inner.style.height = "100%";
 
-inner.innerHTML = `
-  <div class="learn-layout">
-    <div class="learn-ref">
-      <div class="verse-ref-pill">${VERSE_REF}</div>
-    </div>
-
-    <div class="learn-verse ${State.echoSpeaking ? "echo-green" : ""}">
-      <p class="verse">${
-        ECHO_PARTS.length
-          ? (ECHO_PARTS[State.echoIndex] || ECHO_PARTS[0] || VERSE_TEXT)
-          : VERSE_TEXT
-      }</p>
-    </div>
-
-    <div class="learn-coach">
-      <div>
-        <div class="coach-title">Echo the Verse</div>
-        <div class="coach-text">Press the button, then repeat each part out loud during the pause.</div>
+  inner.innerHTML = `
+    <div class="learn-layout">
+      <div class="learn-ref">
+        <div class="verse-ref-pill">${VERSE_REF}</div>
       </div>
 
-      <div class="coach-actions">
-        <button class="carousel-main no-zoom" id="btnEcho" style="max-width:520px;">
-          ${State.echoDone ? "Continue" : "▶ Start Echo"}
-        </button>
+      <div class="learn-verse ${State.echoSpeaking ? "echo-green" : ""}">
+        <p class="verse">${
+          ECHO_PARTS.length
+            ? (ECHO_PARTS[State.echoIndex] || ECHO_PARTS[0] || VERSE_TEXT)
+            : VERSE_TEXT
+        }</p>
+      </div>
 
+      <div class="learn-coach">
+        <div>
+          <div class="coach-title">Echo the Verse</div>
+          <div class="coach-text">${
+            State.echoDone
+              ? "Great job. Press below to remove the first word."
+              : "Press the button, then repeat each part out loud during the pause."
+          }</div>
+        </div>
+
+        <div class="coach-actions">
+          ${
+            State.echoRunning
+              ? ``
+              : `
+                <button class="carousel-main no-zoom" id="btnEcho" style="max-width:520px;">
+                  ${State.echoDone ? "Remove a Word" : "▶ Start Echo"}
+                </button>
+              `
+          }
+        </div>
       </div>
     </div>
-  </div>
-`;
+  `;
 
-  inner.querySelector("#btnEcho").onclick = async () => {
+  const btn = inner.querySelector("#btnEcho");
+  if (btn){
+    btn.onclick = async () => {
+      if (State.echoDone){
+        goToHideAndStartRound();
+        return;
+      }
 
-    // If echo already completed, continue
-    if (State.echoDone){
-      go(Screen.HIDE);
-      return;
-    }
-
-    // cancel any prior
-    echoCancelToken++;
-    try { audioEl.pause(); audioEl.currentTime = 0; } catch(e){}
-    await runEchoSequence();
-  };
+      await startEchoFlow();
+    };
+  }
 
   return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner});
 }
@@ -1545,6 +1694,13 @@ function screenHide(idx){
 
   const hiddenNow = Math.min(State.hideCount, planMixed.length);
   const done = hiddenNow >= planMixed.length;
+
+  let buttonLabel = "Remove a Word";
+  if (done){
+    buttonLabel = "Final Recall";
+  } else if (hiddenNow > 0){
+    buttonLabel = "Remove Another";
+  }
 
   inner.innerHTML = `
     <div class="learn-layout">
@@ -1576,88 +1732,20 @@ function screenHide(idx){
             }"
             ${State.sayVerseActive ? "disabled" : ""}
           >
-            ${State.sayVerseActive ? "Say the Verse" : "Remove a word"}
+            ${buttonLabel}
           </button>
         </div>
       </div>
     </div>
   `;
 
-
-
   inner.querySelector("#verseStage").appendChild(verseNode());
 
   const btnRemove = inner.querySelector("#btnRemoveWord");
   if (btnRemove){
-      btnRemove.onclick = async () => {
-
-        if (State.hideCount >= planMixed.length){
-          go(Screen.FINAL_RECALL);
-          return;
-        }
-
-        State.hideCount = Math.min(planMixed.length, State.hideCount + 1);
-        State.revealedTokenIdx = new Set();
-
-        // Activate Say-the-Verse phase
-        State.sayVerseActive = true;
-        render();
-
-        // Wait for audio duration
-        setAudioSrc(AUDIO_FILE);
-        const d = await waitForDuration();
-        const durationMs = (isFinite(d) && d > 0) ? d * 1000 : 5000;
-
-        State.sayVerseStartedAt = performance.now();
-        State.sayVerseDurationMs = durationMs;
-
-        const animate = () => {
-          const pct = getSayVersePct();
-          const currentBar = document.getElementById("sayVerseBar");
-
-          if (currentBar){
-            currentBar.style.width = (pct * 100) + "%";
-          }
-
-          if (pct > 0 && State.sayVerseActive){
-            requestAnimationFrame(animate);
-          }
-        };
-
-        requestAnimationFrame(animate);
-
-        await new Promise(r => setTimeout(r, durationMs));
-
-        State.sayVerseActive = false;
-        State.sayVerseStartedAt = 0;
-        State.sayVerseDurationMs = 0;
-
-        if (State.hideCount >= planMixed.length){
-          State.finalRecallActive = true;
-          State.finalRecallDone = false;
-
-          go(Screen.FINAL_RECALL);
-
-          setAudioSrc(AUDIO_FILE);
-          const d2 = await waitForDuration();
-          const finalDurationMs = (isFinite(d2) && d2 > 0) ? d2 * 1000 : 5000;
-
-          State.finalRecallStartedAt = performance.now();
-          State.finalRecallDurationMs = finalDurationMs;
-          render();
-
-          await new Promise(r => setTimeout(r, finalDurationMs));
-
-          State.finalRecallActive = false;
-          State.finalRecallStartedAt = 0;
-          State.finalRecallDurationMs = 0;
-          State.finalRecallDone = true;
-          render();
-          return;
-        }
-
-        render();
-      };
+    btnRemove.onclick = async () => {
+      await startHideRound();
+    };
   }
 
   return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner});
