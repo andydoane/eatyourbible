@@ -69,6 +69,11 @@ const SVG_BACK = `
     transform="translate(246.77226)" />
 </svg>`;
 
+const SVG_HOME = `
+<svg class="nav-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+  <path d="M12 3L3 10h2v9h5v-6h4v6h5v-9h2L12 3z" fill="#ffffff"/>
+</svg>`;
+
 const SVG_FORWARD = `
 <svg class="nav-icon" viewBox="0 0 1270 889" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
   <path style="fill:#ffffff;stroke-width:74.9031;stroke-linecap:round"
@@ -405,7 +410,6 @@ const State = {
 const TITLE_OPTIONS = [
   { label: "Learn the Verse", action: () => go(Screen.LISTEN) },
   { label: "Practice Games", action: () => go(Screen.PRACTICE) },
-  { label: "Restart Learn",  action: () => resetLearn(true) },
 ];
 
 const PRACTICE_GAMES = [
@@ -1251,7 +1255,7 @@ function renderNav(){
 
 const homeBtn = `
   <button class="nav-btn no-zoom" id="btnHome" title="Home">
-    ${SVG_BACK}
+    ${SVG_HOME}
   </button>
 `;
 
@@ -1262,8 +1266,15 @@ const homeBtn = `
   `;
 
 // left/back destinations
+const isLearnScreen =
+  State.screen === Screen.LISTEN ||
+  State.screen === Screen.ECHO ||
+  State.screen === Screen.HIDE ||
+  State.screen === Screen.FINAL_RECALL;
+
 if (State.screen === Screen.TITLE) left = "";
 else if (State.screen === Screen.GAME) left = homeBtn;
+else if (isLearnScreen) left = homeBtn;
 else left = backBtn;
 
 // center label
@@ -1275,12 +1286,6 @@ if (State.screen === Screen.FINAL_RECALL) center = "FINAL";
 if (State.screen === Screen.PRACTICE) center = "PRACTICE";
 if (State.screen === Screen.GAME) center = `<button class="nav-btn no-zoom" id="btnHelp" title="Help" style="width:auto; min-width:88px; padding:0 16px; font-weight:900;">HELP</button>`;
 
-// right/next destinations
-const isLearnScreen =
-  State.screen === Screen.LISTEN ||
-  State.screen === Screen.ECHO ||
-  State.screen === Screen.HIDE ||
-  State.screen === Screen.FINAL_RECALL;
 
 right = (State.screen === Screen.GAME || isLearnScreen) ? "" : nextBtn;
 
@@ -1311,13 +1316,28 @@ right = (State.screen === Screen.GAME || isLearnScreen) ? "" : nextBtn;
     };
   }
 
-  const btnHome = document.getElementById("btnHome");
-  if (btnHome){
-    btnHome.onclick = () => {
+const btnHome = document.getElementById("btnHome");
+if (btnHome){
+  btnHome.onclick = () => {
+    if (State.screen === Screen.GAME){
       stopGame();
       go(Screen.PRACTICE);
-    };
-  }
+      return;
+    }
+
+    if (
+      State.screen === Screen.LISTEN ||
+      State.screen === Screen.ECHO ||
+      State.screen === Screen.HIDE ||
+      State.screen === Screen.FINAL_RECALL
+    ){
+      resetLearn(true);
+      return;
+    }
+
+    go(Screen.TITLE);
+  };
+}
 
   const btnHelp = document.getElementById("btnHelp");
   if (btnHelp){
@@ -1882,12 +1902,13 @@ function screenFinalRecall(idx){
     };
   }
 
-  const btnFinalGames = inner.querySelector("#btnFinalGames");
-  if (btnFinalGames){
-    btnFinalGames.onclick = () => {
-      go(Screen.PRACTICE);
-    };
-  }
+const btnFinalGames = inner.querySelector("#btnFinalGames");
+if (btnFinalGames){
+  btnFinalGames.onclick = () => {
+    resetLearn(false);
+    go(Screen.PRACTICE);
+  };
+}
 
   if (State.finalRecallActive){
     const animate = () => {
