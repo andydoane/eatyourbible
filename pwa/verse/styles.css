@@ -1383,27 +1383,38 @@ text-wrap: balance;
   }
 }
 
-    /* tappable blanks */
-    .hintable{
-      display:inline;
-      padding: 0 .18em;
-      margin: 0 .03em;
-      border-radius: .45em;
-      border: 1px solid rgba(255,255,255,.35);
-      background: rgba(255,255,255,.14);
-      color: #fff;
-      cursor:pointer;
-      user-select:none;
-      -webkit-tap-highlight-color: transparent;
-      white-space: nowrap;
-    }
-    .hintable:active{ transform: scale(.99); }
-    .hintable.emoji{ background: rgba(0,0,0,0.30); }
-    .hintable.underscore{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+  /* tappable blanks — scoped to Learn verse only */
+  .learn-verse .hintable{
+    display: inline-block;
+    padding: 0.02em 0.18em;
+    margin: 0 0.03em;
+    border-radius: 0.45em;
+    border: 1px solid rgba(255,255,255,0.35);
+    background: rgba(255,255,255,0.14);
+    color: #fff;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    white-space: nowrap;
+    vertical-align: baseline;
+    line-height: 1;
+  }
 
-    .revealed-word{
-      color: #ffd54f;
-    }
+  .learn-verse .hintable:active{
+    transform: scale(.99);
+  }
+
+  .learn-verse .hintable.emoji{
+    background: rgba(0,0,0,0.30);
+  }
+
+  .learn-verse .hintable.underscore{
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  }
+
+  .learn-verse .revealed-word{
+    color: #ffd54f;
+  }
 
     /* simple progress bar (quiz-esque) */
     .timer-wrap{
