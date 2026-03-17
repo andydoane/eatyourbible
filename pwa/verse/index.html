@@ -329,6 +329,8 @@
   opacity: 0.9;
   line-height: 1.25;
   text-wrap: balance;
+  margin-top: auto;
+  padding-bottom: calc(10px + var(--safeB));
 }
 
 /* ---------- Learn (3-zone) layout ---------- */
@@ -7092,7 +7094,7 @@ function screenTitle(idx){
 
       <div class="carousel-dots" id="titleDots"></div>
 
-      <div class="title-attribution" style="max-width: 60ch; margin-top: 10px;">
+      <div class="title-attribution" style="max-width: 60ch;">
         ${ATTRIBUTION ? ATTRIBUTION : ""}
       </div>
     </div>
@@ -7157,7 +7159,7 @@ function screenTitle(idx){
     `<span class="carousel-dot ${i === State.titleOptionIndex ? "active" : ""}"></span>`
   ).join("");
 
-  return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner: wrap});
+  return makeSlide({idx, bg:"var(--purple)", navHidden:true, inner});
 }
 
 function screenListen(idx){
