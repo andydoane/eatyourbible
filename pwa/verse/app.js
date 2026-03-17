@@ -906,7 +906,11 @@ function foodSliceRenderField(fieldEl){
 }
 
 
+/* =========================================================
+   FOOD SLICE CODE
+   ========================================================= */
 
+   
 
 
 function foodSliceStep(fieldEl){
@@ -4359,101 +4363,11 @@ registerGame({
   }
 });
 
-registerGame({
-  id: "bouncing",
-  title: "Bouncing Words",
-  description: "Tap the correct moving word.",
-  start(stage){
-    if (!State.bouncingGame){
-      startBouncingWordsGame();
-    }
-
-    const st = State.bouncingGame;
-    bouncingStopMotion();
-    stage.innerHTML = "";
-
-    const verseBox = document.createElement("div");
-    verseBox.style.width = "100%";
-    verseBox.style.maxWidth = "760px";
-    verseBox.style.minHeight = "90px";
-    verseBox.style.display = "flex";
-    verseBox.style.alignItems = "center";
-    verseBox.style.justifyContent = "center";
-    verseBox.style.textAlign = "center";
-    verseBox.appendChild(bouncingBuiltVerseNode());
-    stage.appendChild(verseBox);
-
-    const gameLayout = stage.closest(".learn-layout");
-    const coachTitle = gameLayout?.querySelector("#gameCoachTitle");
-    const coachActions = gameLayout?.querySelector("#gameCoachActions");
-
-    if (coachTitle) coachTitle.textContent = "";
-
-    if (!coachActions) return;
-    coachActions.innerHTML = "";
-
-    if (st.done){
-      const doneMsg = document.createElement("div");
-      doneMsg.className = "small";
-      doneMsg.style.fontWeight = "900";
-      doneMsg.style.textAlign = "center";
-      doneMsg.style.maxWidth = "520px";
-      doneMsg.innerHTML = `
-        Score: ${st.score}<br>
-        Incorrect guesses: ${st.wrongGuesses}<br>
-        Total time: ${scrambleFormatTime(bouncingElapsedMs())}
-      `;
-      coachActions.appendChild(doneMsg);
-      return;
-    }
-
-    const field = document.createElement("div");
-    field.className = "bouncing-field";
-
-    if (!st.positions.length || st.positions.length !== st.choices.length){
-      st.positions = bouncingRandomPositions(st.choices, field);
-    }
-
-    const btnRefs = [];
-    const colorSet = bouncingColorSet();
-    
-
-    st.choices.forEach((choice, i) => {
-        const btn = document.createElement("button");
-        btn.className = "bouncing-word no-zoom";
-        if (st.wrongChoice === choice) btn.classList.add("wrong");
-        btn.type = "button";
-        btn.textContent = choice;
-        if (!State.isSliding){
-          btn.classList.add("spawn-in");
-        }
-        btn.classList.add(colorSet[i]);
 
 
-      const pos = st.positions[i] || { leftPx: 20, topPx: 20, rotationDeg: 0 };
-      btn.style.left = `${pos.leftPx}px`;
-      btn.style.top = `${pos.topPx}px`;
-      btn.style.setProperty("--rot", `${pos.rotationDeg || 0}deg`);
-
-      btn.onclick = (e) => {
-        e.stopPropagation();
-        bouncingChoose(choice, btn, field);
-      };
-
-      btnRefs.push(btn);
-      field.appendChild(btn);
-    });
-
-    coachActions.appendChild(field);
-        bouncingDebugOverlay(field, btnRefs);
-
-    if (!st.done){
-      requestAnimationFrame(() => {
-        bouncingStartMotion(field, btnRefs);
-      });
-    }
-  }
-});
+/* =========================
+   Food Slice Registration
+   ========================= */
 
 registerGame({
   id: "foodslice",
