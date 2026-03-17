@@ -1556,8 +1556,8 @@ function screenIntro(idx){
   wrap.className = "quiz-intro";
   wrap.innerHTML = `
     <img src="${INTRO_LOGO}" alt="Logo" onerror="this.style.display='none'">
-    <div class="presented">PRESENTED BY</div>
-    <div class="site">EAT YOUR BIBLE</div>
+    <div class="presented">Presented by</div>
+    <div class="site">eatyourbible.com</div>
     <div class="hint">Tap anywhere to start</div>
   `;
   wrap.onclick = () => { go(Screen.TITLE); };
@@ -1573,7 +1573,7 @@ function screenTitle(idx){
     <div class="title-content">
       <img src="${TITLE_LOGO}" alt="Title graphic" onerror="this.style.display='none'">
     <h2>
-      ${HAS_VERSE_SELECTION ? `Let's memorize<br>${VERSE_REF}` : "Choose a verse to begin"}
+      ${HAS_VERSE_SELECTION ? `Let's memorize<br>${VERSE_REF}` : "Choose a verse from<br>below to begin"}
       ${DEBUG_MODE ? " (DEBUG)" : ""}
     </h2>
     
