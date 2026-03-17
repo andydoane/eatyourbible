@@ -3,9 +3,9 @@
    Practice Games
 
    This file contains:
-   1. Traffic Tap ✔
-   2. Bouncing Words ✔
-   3. Food Slice ✔
+   1. Traffic Tap
+   2. Bouncing Words
+   3. Food Slice
    4. Verse Chain
    5. Tower of Bible
    6. Verse Scramble
@@ -640,6 +640,508 @@ registerGame({
 /* =========================================================
    2. Bouncing Words
    ========================================================= */
+
+function bouncingBuiltVerseNode(){
+  const p = document.createElement("p");
+  p.className = "verse scramble-verse";
+
+  const st = State.bouncingGame;
+  const builtCount = st?.builtCount || 0;
+  const wordIdxs = st?.wordTokenIndices || [];
+  const builtSet = new Set(wordIdxs.slice(0, builtCount));
+
+  for (let i = 0; i < tokens.length; i++){
+    const t = tokens[i];
+
+    if (t.type === TokenType.SPACE || t.type === TokenType.PUNCT || t.type === TokenType.OTHER){
+      p.appendChild(document.createTextNode(t.text));
+      continue;
+    }
+
+    if (builtSet.has(i)){
+      p.appendChild(document.createTextNode(t.text));
+    } else {
+      break;
+    }
+  }
+
+  if (!st?.done && builtCount > 0){
+    p.appendChild(document.createTextNode(" …"));
+  }
+
+  if (!builtCount){
+    p.innerHTML = `
+      Build the verse one word at a time.<br>
+      <span style="font-weight:600;">Tap the first moving word to start.</span>
+    `;
+  }
+
+  return p;
+}
+
+function bouncingMakeChoices(wordTokenIndices, correctTokenIndex){
+  return scrambleMakeChoices(wordTokenIndices, correctTokenIndex);
+}
+
+function bouncingMakeBookChoices(correctBook){
+  return scrambleMakeBookChoices(correctBook);
+}
+
+function bouncingMakeReferenceChoices(correctChapter, correctVerse){
+  return scrambleMakeReferenceChoices(correctChapter, correctVerse);
+}
+
+function bouncingNextChoices(){
+  const st = State.bouncingGame;
+  if (!st) return;
+
+  if (st.phase === "words"){
+    const correctTokenIndex = st.wordTokenIndices[st.builtCount];
+    if (!Number.isFinite(correctTokenIndex)) return;
+    st.choices = bouncingMakeChoices(st.wordTokenIndices, correctTokenIndex);
+    return;
+  }
+
+  if (st.phase === "book"){
+    st.choices = bouncingMakeBookChoices(st.targetBook);
+    return;
+  }
+
+  if (st.phase === "ref"){
+    st.choices = bouncingMakeReferenceChoices(st.targetChapter, st.targetVerse);
+    return;
+  }
+
+  st.choices = [];
+}
+
+function bouncingRandomPositions(choices, fieldEl){
+  const st = State.bouncingGame;
+  const pad = 16;
+  const gap = 14;
+
+  const fieldRect = fieldEl?.getBoundingClientRect();
+  const fieldW = Math.max(260, Math.floor(fieldRect?.width || 320));
+  const fieldH = Math.max(240, Math.floor(fieldRect?.height || 240));
+
+  const measurer = document.createElement("div");
+  measurer.style.position = "absolute";
+  measurer.style.visibility = "hidden";
+  measurer.style.pointerEvents = "none";
+  measurer.style.left = "-9999px";
+  measurer.style.top = "-9999px";
+  document.body.appendChild(measurer);
+
+  function measureChoice(text){
+    const btn = document.createElement("button");
+    btn.className = "scramble-word";
+    btn.style.position = "absolute";
+    btn.style.left = "0";
+    btn.style.top = "0";
+    btn.style.maxWidth = `${Math.max(120, fieldW - (pad * 2))}px`;
+    btn.textContent = text;
+    measurer.appendChild(btn);
+
+    const rect = btn.getBoundingClientRect();
+    const size = {
+      w: Math.ceil(rect.width),
+      h: Math.ceil(rect.height)
+    };
+
+    btn.remove();
+    return size;
+  }
+
+  function overlaps(a, b){
+    return !(
+      a.x + a.w + gap <= b.x ||
+      b.x + b.w + gap <= a.x ||
+      a.y + a.h + gap <= b.y ||
+      b.y + b.h + gap <= a.y
+    );
+  }
+
+  function randBetween(min, max){
+    if (max <= min) return min;
+    return min + Math.random() * (max - min);
+  }
+
+  function makeZone(x1, x2, y1, y2){
+    return {
+      xMin: Math.round(x1 * fieldW),
+      xMax: Math.round(x2 * fieldW),
+      yMin: Math.round(y1 * fieldH),
+      yMax: Math.round(y2 * fieldH)
+    };
+  }
+
+  const layouts = [
+    [
+      makeZone(0.10, 0.30, 0.02, 0.10),
+      makeZone(0.42, 0.62, 0.44, 0.54),
+      makeZone(0.18, 0.38, 0.88, 0.96)
+    ],
+    [
+      makeZone(0.44, 0.64, 0.03, 0.11),
+      makeZone(0.12, 0.32, 0.45, 0.55),
+      makeZone(0.52, 0.72, 0.87, 0.95)
+    ],
+    [
+      makeZone(0.18, 0.38, 0.01, 0.09),
+      makeZone(0.54, 0.74, 0.43, 0.53),
+      makeZone(0.34, 0.54, 0.89, 0.97)
+    ],
+    [
+      makeZone(0.50, 0.70, 0.02, 0.10),
+      makeZone(0.28, 0.48, 0.46, 0.56),
+      makeZone(0.08, 0.28, 0.86, 0.94)
+    ],
+    [
+      makeZone(0.24, 0.44, 0.03, 0.11),
+      makeZone(0.46, 0.66, 0.44, 0.54),
+      makeZone(0.56, 0.76, 0.88, 0.96)
+    ]
+  ];
+
+  let layoutIndex = Math.floor(Math.random() * layouts.length);
+  if (layouts.length > 1 && st?.lastLayoutIndex === layoutIndex){
+    layoutIndex = (layoutIndex + 1 + Math.floor(Math.random() * (layouts.length - 1))) % layouts.length;
+  }
+  if (st) st.lastLayoutIndex = layoutIndex;
+
+  const chosenLayout = layouts[layoutIndex];
+  const sizes = choices.map(measureChoice);
+  const positions = [];
+  const placed = [];
+
+  for (let i = 0; i < sizes.length; i++){
+    const size = sizes[i];
+    const zone = chosenLayout[i] || chosenLayout[0];
+
+    const minX = Math.max(pad, zone.xMin);
+    const maxX = Math.max(minX, Math.min(zone.xMax - size.w, fieldW - size.w - pad));
+    const minY = Math.max(pad, zone.yMin);
+    const maxY = Math.max(minY, Math.min(zone.yMax - size.h, fieldH - size.h - pad));
+
+    let placedRect = null;
+
+    for (let attempt = 0; attempt < 120; attempt++){
+      const rect = {
+        x: randBetween(minX, maxX),
+        y: randBetween(minY, maxY),
+        w: size.w,
+        h: size.h
+      };
+
+      const hit = placed.some(p => overlaps(rect, p));
+      if (!hit){
+        placedRect = rect;
+        break;
+      }
+    }
+
+    if (!placedRect){
+      const fallbackRect = {
+        x: minX,
+        y: minY,
+        w: size.w,
+        h: size.h
+      };
+
+      const hit = placed.some(p => overlaps(fallbackRect, p));
+      if (!hit){
+        placedRect = fallbackRect;
+      }
+    }
+
+    if (!placedRect){
+      for (let attempt = 0; attempt < 140; attempt++){
+        const rect = {
+          x: randBetween(pad, Math.max(pad, fieldW - size.w - pad)),
+          y: randBetween(pad, Math.max(pad, fieldH - size.h - pad)),
+          w: size.w,
+          h: size.h
+        };
+
+        const hit = placed.some(p => overlaps(rect, p));
+        if (!hit){
+          placedRect = rect;
+          break;
+        }
+      }
+    }
+
+    if (!placedRect){
+      placedRect = {
+        x: pad,
+        y: pad + (i * (size.h + gap)),
+        w: size.w,
+        h: size.h
+      };
+    }
+
+    const rotationDeg = 0;
+
+    placed.push(placedRect);
+    positions.push({
+      leftPx: Math.round(placedRect.x),
+      topPx: Math.round(placedRect.y),
+      rotationDeg
+    });
+  }
+
+  measurer.remove();
+  return positions;
+}
+
+function bouncingRandomVelocity(){
+  const mag = 1.2 + (Math.random() * 1.0);
+  return Math.random() < 0.5 ? -mag : mag;
+}
+
+function bouncingBuildMovers(fieldEl, btnRefs){
+  const st = State.bouncingGame;
+  if (!st) return [];
+
+  const rectField = fieldEl.getBoundingClientRect();
+  const fieldW = Math.floor(rectField.width || 320);
+  const fieldH = Math.floor(rectField.height || 240);
+
+  return btnRefs.map((btn, i) => {
+    const pos = st.positions[i] || { leftPx: 20, topPx: 20, rotationDeg: 0 };
+    let vx = bouncingRandomVelocity();
+    let vy = bouncingRandomVelocity();
+
+    if (Math.abs(vx) < 1.1) vx = vx < 0 ? -1.1 : 1.1;
+    if (Math.abs(vy) < 1.1) vy = vy < 0 ? -1.1 : 1.1;
+
+    return {
+      btn,
+      x: pos.leftPx,
+      y: pos.topPx,
+      vx,
+      vy,
+      w: Math.ceil(btn.offsetWidth),
+      h: Math.ceil(btn.offsetHeight),
+      fieldW,
+      fieldH
+    };
+  });
+}
+
+function bouncingStopMotion(){
+  const st = State.bouncingGame;
+  if (!st) return;
+
+  if (st.rafId){
+    cancelAnimationFrame(st.rafId);
+    st.rafId = 0;
+  }
+
+  st.fieldEl = null;
+  st.btnRefs = null;
+  st.movers = null;
+}
+
+function bouncingStartMotion(fieldEl, btnRefs){
+  const st = State.bouncingGame;
+  if (!st || st.done) return;
+
+  bouncingStopMotion();
+
+  st.fieldEl = fieldEl;
+  st.btnRefs = btnRefs;
+  st.movers = bouncingBuildMovers(fieldEl, btnRefs);
+
+  function tick(){
+    const live = State.bouncingGame;
+    if (!live || live !== st) return;
+    if (State.screen !== Screen.GAME || State.activeGame !== "bouncing") return;
+    if (st.done) return;
+    if (!st.movers || !st.movers.length) return;
+
+    const padX = 0;
+    const padY = 16;
+
+    for (const m of st.movers){
+      const fieldW = fieldEl.clientWidth;
+      const fieldH = fieldEl.clientHeight;
+
+      const minX = padX;
+      const maxX = Math.max(minX, fieldW - m.w - padX);
+      const minY = padY;
+      const maxY = Math.max(minY, fieldH - m.h - padY);
+
+      m.x += m.vx;
+      m.y += m.vy;
+
+      if (m.x <= minX){
+        m.x = minX;
+        m.vx *= -1;
+      }
+      if (m.x >= maxX){
+        m.x = maxX;
+        m.vx *= -1;
+      }
+      if (m.y <= minY){
+        m.y = minY;
+        m.vy *= -1;
+      }
+      if (m.y >= maxY){
+        m.y = maxY;
+        m.vy *= -1;
+      }
+
+      m.btn.style.left = `${Math.round(m.x)}px`;
+      m.btn.style.top = `${Math.round(m.y)}px`;
+    }
+
+    bouncingRefreshDebugOverlay(fieldEl);
+
+    st.rafId = requestAnimationFrame(tick);
+  }
+
+  st.rafId = requestAnimationFrame(tick);
+}
+
+function startBouncingWordsGame(){
+  const wordTokenIndices = scrambleWordTokenIndices();
+  const meta = chainVerseMetaFromId(VERSE_ID);
+
+  State.bouncingGame = {
+    wordTokenIndices,
+    builtCount: 0,
+    choices: [],
+    positions: [],
+    done: false,
+    wrongChoice: null,
+    phase: "words",
+    showRef: false,
+    targetBook: meta.book,
+    targetChapter: meta.chapter,
+    targetVerse: meta.verse,
+    score: 0,
+    wrongGuesses: 0,
+    startedAt: performance.now(),
+    endedAt: 0,
+    lastLayoutIndex: -1,
+    rafId: 0,
+    fieldEl: null,
+    btnRefs: null,
+    movers: null
+  };
+
+  bouncingNextChoices();
+  State.bouncingGame.positions = [];
+}
+
+function bouncingRoundRefresh(){
+  const st = State.bouncingGame;
+  if (!st) return;
+  bouncingNextChoices();
+  st.positions = [];
+}
+
+function bouncingElapsedMs(){
+  const st = State.bouncingGame;
+  if (!st) return 0;
+  return (st.endedAt || performance.now()) - st.startedAt;
+}
+
+function bouncingChoose(choice, btnEl, fieldEl){
+  const st = State.bouncingGame;
+  if (!st || st.done) return;
+
+  let correctChoice = "";
+
+  if (st.phase === "words"){
+    const correctTokenIndex = st.wordTokenIndices[st.builtCount];
+    if (!Number.isFinite(correctTokenIndex)) return;
+    correctChoice = tokens[correctTokenIndex].text;
+  } else if (st.phase === "book"){
+    correctChoice = st.targetBook;
+  } else if (st.phase === "ref"){
+    correctChoice = `${st.targetChapter}:${st.targetVerse}`;
+  } else {
+    return;
+  }
+
+  const rectField = fieldEl.getBoundingClientRect();
+  const rectBtn = btnEl.getBoundingClientRect();
+  const popX = rectBtn.left - rectField.left + (rectBtn.width / 2);
+  const popY = rectBtn.top - rectField.top - 6;
+
+  if (choice !== correctChoice){
+    st.score -= 25;
+    st.wrongGuesses += 1;
+    st.wrongChoice = choice;
+    scrambleShowPopup(fieldEl, popX, popY, "-25", false);
+
+    btnEl.classList.add("wrong");
+
+    setTimeout(() => {
+      btnEl.classList.remove("wrong");
+
+      if (State.bouncingGame && State.bouncingGame.wrongChoice === choice){
+        State.bouncingGame.wrongChoice = null;
+      }
+    }, 350);
+
+    return;
+  }
+
+  st.score += 100;
+  st.wrongChoice = null;
+  scrambleShowPopup(fieldEl, popX, popY, "+100", true);
+
+  const hitMover = st.movers?.find(m => m.btn === btnEl);
+  if (hitMover){
+    hitMover.btn.style.pointerEvents = "none";
+    hitMover.btn.style.visibility = "hidden";
+    hitMover.vx = 0;
+    hitMover.vy = 0;
+  }
+
+  bouncingAnimateCorrectChoice(btnEl, fieldEl, () => {
+    bouncingStopMotion();
+
+    const live = State.bouncingGame;
+    if (!live || live !== st) return;
+
+    if (st.phase === "words"){
+      st.builtCount += 1;
+
+      if (st.builtCount >= st.wordTokenIndices.length){
+        st.phase = "book";
+        bouncingRoundRefresh();
+        render();
+        return;
+      }
+
+      bouncingRoundRefresh();
+      render();
+      return;
+    }
+
+    if (st.phase === "book"){
+      st.phase = "ref";
+      bouncingRoundRefresh();
+      render();
+      return;
+    }
+
+    if (st.phase === "ref"){
+      st.phase = "done";
+      st.done = true;
+      st.showRef = true;
+      st.endedAt = performance.now();
+      st.choices = [];
+      st.positions = [];
+      render();
+    }
+  });
+  
+}
 
 function scrambleBuiltVerseNode(){
   const p = document.createElement("p");
@@ -2256,6 +2758,212 @@ registerGame({
 /* =========================================================
     4. VERSE CHAIN CODE
    ========================================================= */
+
+function chainWordTokenIndices(){
+  const out = [];
+  for (let i = 0; i < tokens.length; i++){
+    if (tokens[i].type === TokenType.WORD){
+      out.push(i);
+    }
+  }
+  return out;
+}
+
+function chainBuiltVerseNode(){
+  const p = document.createElement("p");
+  p.className = "verse";
+
+  const st = State.chainGame;
+  const builtCount = st?.builtCount || 0;
+  const wordIdxs = st?.wordTokenIndices || [];
+
+  const builtSet = new Set(wordIdxs.slice(0, builtCount));
+
+  for (let i = 0; i < tokens.length; i++){
+    const t = tokens[i];
+
+    if (t.type === TokenType.SPACE || t.type === TokenType.PUNCT || t.type === TokenType.OTHER){
+      p.appendChild(document.createTextNode(t.text));
+      continue;
+    }
+
+    if (builtSet.has(i)){
+      p.appendChild(document.createTextNode(t.text));
+    } else {
+      break;
+    }
+  }
+
+  if (!st?.done && builtCount > 0){
+    p.appendChild(document.createTextNode(" …"));
+  }
+
+  if (!builtCount){
+    p.innerHTML = `
+      Build the verse one word at a time.<br>
+      <span style="font-weight:600;">Tap the first word to start.</span>
+    `;
+  }
+
+  return p;
+}
+
+function chainMakeChoices(wordTokenIndices, correctTokenIndex){
+  const correctWord = tokens[correctTokenIndex].text;
+
+  const verseWordsLower = wordTokenIndices
+    .map(idx => tokens[idx].text.toLowerCase());
+
+  const pool = VERSE_CHAIN_DECOY_WORDS
+    .filter(word => word.toLowerCase() !== correctWord.toLowerCase())
+    .filter((word, i, arr) => arr.indexOf(word) === i)
+    .filter(word => !verseWordsLower.includes(word.toLowerCase()));
+
+  shuffleArray(pool);
+
+  const choices = [correctWord, ...pool.slice(0, 3)];
+  return shuffleArray(choices);
+}
+
+
+function startVerseChainGame(){
+  const wordTokenIndices = chainWordTokenIndices();
+
+  const meta = chainVerseMetaFromId(VERSE_ID);
+
+  State.chainGame = {
+    wordTokenIndices,
+    builtCount: 0,
+    choices: [],
+    choiceIndex: 0,
+    done: false,
+    wrongChoice: null,
+    phase: "words",
+    showRef: false,
+    targetBook: meta.book,
+    targetChapter: meta.chapter,
+    targetVerse: meta.verse,
+  };
+
+  const firstTokenIndex = wordTokenIndices[0];
+  if (Number.isFinite(firstTokenIndex)){
+    State.chainGame.choices = chainMakeChoices(wordTokenIndices, firstTokenIndex);
+    chainSetRandomChoiceIndex();
+  }
+}
+
+function chainPrevChoice(){
+  const st = State.chainGame;
+  if (!st || st.done || !st.choices.length) return;
+  st.choiceIndex = (st.choiceIndex - 1 + st.choices.length) % st.choices.length;
+  render();
+}
+
+function chainNextChoice(){
+  const st = State.chainGame;
+  if (!st || st.done || !st.choices.length) return;
+  st.choiceIndex = (st.choiceIndex + 1) % st.choices.length;
+  render();
+}
+
+function chainCurrentChoice(){
+  const st = State.chainGame;
+  if (!st || !st.choices.length) return "";
+  return st.choices[st.choiceIndex];
+}
+
+function chainChoose(word){
+  const st = State.chainGame;
+  if (!st || st.done) return;
+
+  if (st.phase === "words"){
+    const correctTokenIndex = st.wordTokenIndices[st.builtCount];
+    if (!Number.isFinite(correctTokenIndex)) return;
+
+    const correctWord = tokens[correctTokenIndex].text;
+
+    if (word === correctWord){
+      st.builtCount += 1;
+      st.wrongChoice = null;
+
+      if (st.builtCount >= st.wordTokenIndices.length){
+        st.phase = "book";
+        st.choices = chainMakeBookChoices(st.targetBook);
+        chainSetRandomChoiceIndex();
+        render();
+        return;
+      }
+
+      const nextTokenIndex = st.wordTokenIndices[st.builtCount];
+      st.choices = chainMakeChoices(st.wordTokenIndices, nextTokenIndex);
+      chainSetRandomChoiceIndex();
+      render();
+      return;
+    }
+
+    st.wrongChoice = word;
+    render();
+
+    setTimeout(() => {
+      if (State.chainGame && State.chainGame.wrongChoice === word){
+        State.chainGame.wrongChoice = null;
+        render();
+      }
+    }, 350);
+
+    return;
+  }
+
+  if (st.phase === "book"){
+    if (word === st.targetBook){
+      st.phase = "ref";
+      st.wrongChoice = null;
+      st.choices = chainMakeReferenceChoices(st.targetChapter, st.targetVerse);
+      chainSetRandomChoiceIndex();
+      render();
+      return;
+    }
+
+    st.wrongChoice = word;
+    render();
+
+    setTimeout(() => {
+      if (State.chainGame && State.chainGame.wrongChoice === word){
+        State.chainGame.wrongChoice = null;
+        render();
+      }
+    }, 350);
+
+    return;
+  }
+
+  if (st.phase === "ref"){
+    const correctRef = `${st.targetChapter}:${st.targetVerse}`;
+
+    if (word === correctRef){
+      st.phase = "done";
+      st.done = true;
+      st.showRef = true;
+      st.wrongChoice = null;
+      st.choices = [];
+      render();
+      return;
+    }
+
+    st.wrongChoice = word;
+    render();
+
+    setTimeout(() => {
+      if (State.chainGame && State.chainGame.wrongChoice === word){
+        State.chainGame.wrongChoice = null;
+        render();
+      }
+    }, 350);
+
+    return;
+  }
+}
+
 
 registerGame({
   id: "chain",
