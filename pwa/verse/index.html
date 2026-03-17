@@ -169,7 +169,7 @@
       align-items:center;
       height:100%;
       padding: 24px 16px;
-      padding-bottom: 110px;
+      padding-bottom: calc(16px + var(--safeB));
       background: var(--purple);
       color: white;
       text-align:center;
@@ -327,11 +327,11 @@
 
 .title-attribution{
   font-size: clamp(11px, 3vw, 13px);
-  opacity: 0.9;
+  opacity: 0.75;
   line-height: 1.25;
   text-wrap: balance;
   margin-top: auto;
-  padding-bottom: calc(10px + var(--safeB));
+  padding-bottom: 0;
 }
 
 /* ---------- Learn (3-zone) layout ---------- */
