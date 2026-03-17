@@ -1386,7 +1386,7 @@ text-wrap: balance;
   /* tappable blanks — scoped to Learn verse only */
 .learn-verse .hintable{
   display: inline-block;
-  padding: 0.12em 0.22em;
+  padding: 0.13em 0.25em;
   margin: 0 0.04em;
   border-radius: 0.5em;
   border: 1px solid rgba(255,255,255,0.35);
@@ -1401,7 +1401,7 @@ text-wrap: balance;
 }
 
 .learn-verse .verse{
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
   .learn-verse .hintable:active{
