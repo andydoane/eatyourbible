@@ -258,12 +258,23 @@ function reshuffleHidePlan(){
 }
 
 function verseIdToRef(verseId, translation){
-  const parts = verseId.split("_");
-  const book = parts[0][0].toUpperCase() + parts[0].slice(1);
-  const chapter = parts[1];
-  const verses = parts.slice(2);
-  const versePart = verses.length === 1 ? verses[0] : `${verses[0]}–${verses[1]}`;
+  const parts = String(verseId || "").split("_").filter(Boolean);
+
+  let nums = [];
+  while (parts.length && /^\d+$/.test(parts[parts.length - 1])){
+    nums.unshift(parts.pop());
+  }
+
+  const bookSlug = parts.join(" ");
+  const book = bookSlug.replace(/\b\w/g, c => c.toUpperCase());
+
+  const chapter = nums[0] || "1";
+  const verse = nums[1] || "1";
+  const verseEnd = nums[2] || "";
+
+  const versePart = verseEnd ? `${verse}–${verseEnd}` : verse;
   const t = translation ? ` (${translation})` : "";
+
   return `${book} ${chapter}:${versePart}${t}`;
 }
 
@@ -403,6 +414,22 @@ const PRACTICE_GAMES = [
   { title:"🏰 Tower of Bible", desc:"Build a sky-high tower one word at a time." },
 ];
 
+/* =========================================================
+   6. Shared Game Helpers (Used Across Multiple Games)
+
+   These functions are intentionally kept in app.js because
+   they are shared between multiple games (Scramble, Chain,
+   Bouncing, Traffic, Tower, etc).
+
+   If you remove or move these, multiple games may break.
+
+   Includes:
+   - Random helpers
+   - Verse metadata parsing
+   - Choice/decoy generators
+   - Token helpers
+   ========================================================= */
+
 const VERSE_CHAIN_DECOY_WORDS = [
   "apple","banana","rocket","castle","dragon","puppy","kitten","turtle","panda","eagle",
   "river","ocean","mountain","forest","garden","rainbow","thunder","snowflake","sunshine","comet",
@@ -431,6 +458,7 @@ const BIBLE_BOOKS = [
   "1 John","2 John","3 John","Jude","Revelation"
 ];
 
+// Pick random unique items from a list (used for decoys)
 function chainPickRandomItems(arr, count, exclude = []){
   const excluded = new Set(exclude.map(x => String(x).toLowerCase()));
   const pool = arr.filter(x => !excluded.has(String(x).toLowerCase()));
@@ -438,6 +466,7 @@ function chainPickRandomItems(arr, count, exclude = []){
   return pool.slice(0, count);
 }
 
+// Extract book, chapter, verse from verseId (e.g. "john_3_16")
 function chainVerseMetaFromId(verseId){
   const parts = String(verseId || "").split("_").filter(Boolean);
 
@@ -456,6 +485,7 @@ function chainVerseMetaFromId(verseId){
   return { book, chapter, verse, verseEnd };
 }
 
+// Generate multiple-choice options for Bible book
 function chainMakeBookChoices(correctBook){
   const choices = [
     correctBook,
@@ -464,6 +494,7 @@ function chainMakeBookChoices(correctBook){
   return shuffleArray(choices);
 }
 
+// Generate multiple-choice options for chapter:verse reference
 function chainMakeReferenceChoices(correctChapter, correctVerse){
   const correctRef = `${correctChapter}:${correctVerse}`;
   const refs = new Set([correctRef]);
@@ -486,6 +517,7 @@ function chainMakeReferenceChoices(correctChapter, correctVerse){
   return shuffleArray(Array.from(refs));
 }
 
+// Pick a random index for which choice is highlighted/selected
 function chainSetRandomChoiceIndex(){
   const st = State.chainGame;
   if (!st || !st.choices.length){
@@ -495,6 +527,7 @@ function chainSetRandomChoiceIndex(){
   st.choiceIndex = Math.floor(Math.random() * st.choices.length);
 }
 
+// Get indices of all word tokens in the verse (used by many games)
 function scrambleWordTokenIndices(){
   const out = [];
   for (let i = 0; i < tokens.length; i++){
@@ -505,6 +538,18 @@ function scrambleWordTokenIndices(){
   return out;
 }
 
+/* NOTE:
+   The following helpers are used by multiple games:
+
+   - Verse Scramble
+   - Verse Chain
+   - Bouncing Words
+   - Traffic Tap
+   - Tower of Bible
+
+   They are NOT tied to one game, so they stay here instead
+   of being moved into games.js.
+*/
 
 
 
