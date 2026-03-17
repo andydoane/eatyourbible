@@ -386,9 +386,9 @@ border-radius: 18px;
 }
 
 .learn-layout.game-scramble{
-  padding: calc(14px + var(--safeT)) 18px 8px;
-  gap: 4px;
-  max-width: 840px;
+  padding: calc(14px + var(--safeT)) 20px 10px;
+  gap: 6px;
+  max-width: 1100px;
 }
 
 .learn-layout.game-scramble .learn-ref{
@@ -550,7 +550,7 @@ border-radius: 18px;
 .scramble-field{
   position: relative;
   width: 100%;
-  max-width: 760px;
+  max-width: 980px;
   flex: 1 1 auto;
   min-height: 0;
   height: 100%;
@@ -584,17 +584,20 @@ border-radius: 18px;
 
 .scramble-word{
   position: relative;
-  min-width: 110px;
-  max-width: min(220px, calc(100% - 32px));
-  padding: 12px 18px;
+  width: min(82%, 620px);
+  min-width: min(260px, calc(100% - 24px));
+  max-width: calc(100% - 24px);
+  min-height: clamp(72px, 10vh, 110px);
+  padding: clamp(16px, 2.2vw, 24px) clamp(24px, 4vw, 40px);
   border: none;
   border-radius: 999px;
   background: white;
   color: var(--purple);
   font-family: inherit;
-  font-size: 18px;
+  font-size: clamp(24px, 3vw, 34px);
   font-weight: 900;
-  box-shadow: 0 6px 0 rgba(0,0,0,0.25);
+  line-height: 1.05;
+  box-shadow: 0 8px 0 rgba(0,0,0,0.25);
   cursor: pointer;
   z-index: 2;
   --rot: 0deg;
@@ -695,7 +698,6 @@ border-radius: 18px;
 
 .scramble-word.shape-rocket-goo-soft{
   border-radius: 72px 30px 62px 38px / 50px 34px 46px 36px;
-  padding-inline: 30px;
 }
 
 .scramble-word.shape-zig-round-b{
@@ -712,12 +714,10 @@ border-radius: 18px;
 
 .scramble-word.shape-wide-sploosh-b-soft{
   border-radius: 36px 74px 28px 56px / 38px 64px 34px 48px;
-  min-width: 170px;
 }
 
 .scramble-word.shape-wide-sploosh-soft{
   border-radius: 56px 36px 74px 28px / 48px 38px 64px 34px;
-  min-width: 170px;
 }
 
 .scramble-word:active{
@@ -802,6 +802,14 @@ border-radius: 18px;
 .scramble-word.burst-out{
   pointer-events: none;
   animation: bounceBurstOut 0.2s ease forwards;
+}
+
+@media (min-width: 900px){
+  .scramble-word{
+    width: min(78%, 700px);
+    font-size: clamp(26px, 2.4vw, 36px);
+    min-height: 84px;
+  }
 }
 
 @keyframes bounceSpawnIn{
