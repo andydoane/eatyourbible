@@ -324,6 +324,13 @@
       text-wrap: balance;
     }
 
+.title-attribution{
+  font-size: clamp(11px, 3vw, 13px);
+  opacity: 0.9;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
 /* ---------- Learn (3-zone) layout ---------- */
 .learn-layout{
   height: 100%;
@@ -7085,7 +7092,7 @@ function screenTitle(idx){
 
       <div class="carousel-dots" id="titleDots"></div>
 
-      <div class="small" style="max-width: 60ch; margin-top: 10px;">
+      <div class="title-attribution" style="max-width: 60ch; margin-top: 6px;">
         ${ATTRIBUTION ? ATTRIBUTION : ""}
       </div>
     </div>
