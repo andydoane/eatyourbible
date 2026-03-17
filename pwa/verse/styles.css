@@ -1384,21 +1384,25 @@ text-wrap: balance;
 }
 
   /* tappable blanks — scoped to Learn verse only */
-  .learn-verse .hintable{
-    display: inline-block;
-    padding: 0.02em 0.18em;
-    margin: 0 0.03em;
-    border-radius: 0.45em;
-    border: 1px solid rgba(255,255,255,0.35);
-    background: rgba(255,255,255,0.14);
-    color: #fff;
-    cursor: pointer;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-    white-space: nowrap;
-    vertical-align: baseline;
-    line-height: 1;
-  }
+.learn-verse .hintable{
+  display: inline-block;
+  padding: 0.12em 0.22em;
+  margin: 0 0.04em;
+  border-radius: 0.5em;
+  border: 1px solid rgba(255,255,255,0.35);
+  background: rgba(255,255,255,0.14);
+  color: #fff;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  white-space: nowrap;
+  vertical-align: baseline;
+  line-height: 1.05;
+}
+
+.learn-verse .verse{
+  line-height: 1.4;
+}
 
   .learn-verse .hintable:active{
     transform: scale(.99);
