@@ -1697,7 +1697,7 @@ function screenHide(idx){
 
   let buttonLabel = "Remove a Word";
   if (done){
-    buttonLabel = "Final Recall";
+    buttonLabel = "Final Challege";
   } else if (hiddenNow > 0){
     buttonLabel = "Remove Another";
   }
@@ -1714,12 +1714,12 @@ function screenHide(idx){
 
       <div class="learn-coach">
         <div>
-          <div class="coach-title">Guess the Missing Words</div>
+          <div class="coach-title">Try to Say the Verse</div>
 
           ${
             State.sayVerseActive
               ? `<div class="timer-wrap"><div class="timer-bar" id="sayVerseBar"></div></div>`
-              : `<div class="coach-text">Tap a missing part of the verse to reveal the word.</div>`
+              : `<div class="coach-text">If you need help, tap a missing word.</div>`
           }
         </div>
 
