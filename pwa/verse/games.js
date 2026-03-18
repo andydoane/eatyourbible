@@ -1622,43 +1622,40 @@ function scrambleRenderModeSelect(stage, st, gameRoot){
   const actionsEl = gameRoot ? gameRoot.querySelector("#gameCoachActions") : null;
 
   if (titleEl){
-    titleEl.textContent = "";
+    titleEl.textContent = "Choose Difficulty";
   }
 
   if (actionsEl){
-    actionsEl.innerHTML = "";
-  }
+    actionsEl.innerHTML = `
+      <div class="scramble-mode-wrap">
+        <div class="scramble-mode-card">
+          <div class="scramble-mode-emoji">🧩 🟡 🟢 🔵</div>
+          <div class="scramble-mode-title">Verse Scramble</div>
+          <div class="scramble-mode-subtext">
+            Choose your difficulty, then tap the correct next blob to build the verse.
+          </div>
 
-  stage.innerHTML = `
-    <div class="scramble-mode-wrap">
-      <div class="scramble-mode-card">
-        <div class="scramble-mode-title-top">CHOOSE DIFFICULTY</div>
-        <div class="scramble-mode-emoji">🧩 🟡 🟢 🔵</div>
-        <div class="scramble-mode-title">Verse Scramble</div>
-        <div class="scramble-mode-subtext">
-          Choose your difficulty, then tap the correct next blob to build the verse.
-        </div>
+          <button class="carousel-main no-zoom" id="scrambleModeEasy">Easy</button>
+          <button class="carousel-main no-zoom" id="scrambleModeMedium">Medium</button>
+          <button class="carousel-main no-zoom" id="scrambleModeHard">Hard</button>
 
-        <button class="carousel-main no-zoom" id="scrambleModeEasy">Easy</button>
-        <button class="carousel-main no-zoom" id="scrambleModeMedium">Medium</button>
-        <button class="carousel-main no-zoom" id="scrambleModeHard">Hard</button>
-
-        <div class="scramble-mode-subtext scramble-mode-notes">
-          Easy = wrong taps have no penalty.<br>
-          Medium = wrong taps remove up to 2 placed words.<br>
-          Hard = wrong taps clear all placed words.
+          <div class="scramble-mode-subtext scramble-mode-notes">
+            Easy = wrong taps have no penalty.<br>
+            Medium = wrong taps remove up to 2 placed words.<br>
+            Hard = wrong taps clear all placed words.
+          </div>
         </div>
       </div>
-    </div>
-  `;
+    `;
 
-  const btnEasy = stage.querySelector("#scrambleModeEasy");
-  const btnMedium = stage.querySelector("#scrambleModeMedium");
-  const btnHard = stage.querySelector("#scrambleModeHard");
+    const btnEasy = gameRoot.querySelector("#scrambleModeEasy");
+    const btnMedium = gameRoot.querySelector("#scrambleModeMedium");
+    const btnHard = gameRoot.querySelector("#scrambleModeHard");
 
-  if (btnEasy) btnEasy.onclick = () => scrambleChooseMode("easy");
-  if (btnMedium) btnMedium.onclick = () => scrambleChooseMode("medium");
-  if (btnHard) btnHard.onclick = () => scrambleChooseMode("hard");
+    if (btnEasy) btnEasy.onclick = () => scrambleChooseMode("easy");
+    if (btnMedium) btnMedium.onclick = () => scrambleChooseMode("medium");
+    if (btnHard) btnHard.onclick = () => scrambleChooseMode("hard");
+  }
 }
 
 function scrambleElapsedMs(){
