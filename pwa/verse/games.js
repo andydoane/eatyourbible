@@ -1671,6 +1671,31 @@ function scrambleFormatTime(ms){
   return mins ? `${mins}m ${secs}s` : `${secs}s`;
 }
 
+function scrambleStartResultConfetti(containerEl){
+  if (!containerEl) return;
+
+  let active = true;
+
+  function spawn(){
+    if (!active) return;
+
+    const rect = containerEl.getBoundingClientRect();
+    const x = Math.random() * rect.width;
+    const y = Math.random() * rect.height * 0.6;
+
+    bouncingBurstAt(containerEl, x, y);
+
+    const delay = 700 + Math.random() * 500;
+    setTimeout(spawn, delay);
+  }
+
+  spawn();
+
+  return () => {
+    active = false;
+  };
+}
+
 function scrambleApplyPenalty(st){
   if (!st) return false;
 
@@ -4038,21 +4063,55 @@ start(stage){
     if (!coachActions) return;
     coachActions.innerHTML = "";
 
-    if (st.done){
-      const doneMsg = document.createElement("div");
-      doneMsg.className = "small";
-      doneMsg.style.fontWeight = "900";
-      doneMsg.style.textAlign = "center";
-      doneMsg.style.maxWidth = "520px";
-      doneMsg.innerHTML = `
-        Mode: ${st.mode ? st.mode[0].toUpperCase() + st.mode.slice(1) : "Easy"}<br>
-        Score: ${st.score}<br>
-        Incorrect guesses: ${st.wrongGuesses}<br>
-        Total time: ${scrambleFormatTime(scrambleElapsedMs())}
-      `;
-      coachActions.appendChild(doneMsg);
-      return;
-    }
+if (st.done){
+  stage.innerHTML = "";
+
+  const resultWrap = document.createElement("div");
+  resultWrap.style.display = "flex";
+  resultWrap.style.flexDirection = "column";
+  resultWrap.style.alignItems = "center";
+  resultWrap.style.justifyContent = "center";
+  resultWrap.style.textAlign = "center";
+  resultWrap.style.gap = "16px";
+  resultWrap.style.height = "100%";
+  resultWrap.style.padding = "20px";
+
+  const title = document.createElement("div");
+  title.textContent = "🎉 GREAT JOB!";
+  title.style.fontSize = "clamp(28px, 5vw, 42px)";
+  title.style.fontWeight = "900";
+  title.style.color = "#ffffff";
+
+  const stats = document.createElement("div");
+  stats.style.fontSize = "clamp(18px, 2.5vw, 22px)";
+  stats.style.lineHeight = "1.4";
+  stats.style.color = "rgba(255,255,255,0.95)";
+  stats.innerHTML = `
+    Score: ${st.score}<br>
+    Time: ${scrambleFormatTime(scrambleElapsedMs())}<br>
+    Mistakes: ${st.wrongGuesses}
+  `;
+
+  const btnGames = document.createElement("button");
+  btnGames.className = "carousel-main no-zoom";
+  btnGames.textContent = "Verse Games";
+
+  btnGames.onclick = () => {
+    resetLearn(false);
+    go(Screen.PRACTICE);
+  };
+
+  resultWrap.appendChild(title);
+  resultWrap.appendChild(stats);
+  resultWrap.appendChild(btnGames);
+
+  stage.appendChild(resultWrap);
+
+  // start confetti loop
+  scrambleStartResultConfetti(resultWrap);
+
+  return;
+}
 
 const field = document.createElement("div");
 field.className = "scramble-field";
