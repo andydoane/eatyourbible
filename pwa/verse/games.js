@@ -4005,32 +4005,36 @@ registerGame({
   id: "scramble",
   title: "Verse Scramble",
   description: "Tap the correct next word.",
-  start(stage){
-    if (!State.scrambleGame){
-      startVerseScrambleGame();
-    }
+start(stage){
+  if (!State.scrambleGame){
+    startVerseScrambleGame();
+  }
 
-    const st = State.scrambleGame;
-    stage.innerHTML = "";
+  const st = State.scrambleGame;
+  const gameLayout = stage.closest(".learn-layout");
+  const coachTitle = gameLayout?.querySelector("#gameCoachTitle");
+  const coachActions = gameLayout?.querySelector("#gameCoachActions");
 
-    const gameLayout = stage.closest(".learn-layout");
-    const coachTitle = gameLayout?.querySelector("#gameCoachTitle");
-    const coachActions = gameLayout?.querySelector("#gameCoachActions");
+  stage.innerHTML = "";
 
-    if (!st.mode){
-      scrambleRenderModeSelect(stage, st, gameLayout);
-      return;
-    }
+  if (!coachActions) return;
 
-    const verseBox = document.createElement("div");
-    verseBox.className = "scramble-verse-box";
-    if (st.penaltyFlashUntil && performance.now() < st.penaltyFlashUntil){
-      verseBox.classList.add("penalty-shake");
-    }
-    verseBox.appendChild(scrambleBuiltVerseNode());
-    stage.appendChild(verseBox);
+  if (!st.mode){
+    coachActions.innerHTML = "";
+    scrambleRenderModeSelect(stage, st, gameLayout);
+    return;
+  }
 
-    if (coachTitle) coachTitle.textContent = "";
+  const verseBox = document.createElement("div");
+  verseBox.className = "scramble-verse-box";
+  if (st.penaltyFlashUntil && performance.now() < st.penaltyFlashUntil){
+    verseBox.classList.add("penalty-shake");
+  }
+  verseBox.appendChild(scrambleBuiltVerseNode());
+  stage.appendChild(verseBox);
+
+  if (coachTitle) coachTitle.textContent = "";
+  coachActions.innerHTML = "";
 
     if (!coachActions) return;
     coachActions.innerHTML = "";
