@@ -764,6 +764,27 @@ function scrambleLayoutSeeds(count, maxHorizontalShift){
   return seeds;
 }
 
+function scrambleAnimateCorrectChoice(btnEl, fieldEl, onDone){
+  const rectField = fieldEl.getBoundingClientRect();
+  const rectBtn = btnEl.getBoundingClientRect();
+
+  const burstX = rectBtn.left - rectField.left + (rectBtn.width / 2);
+  const burstY = rectBtn.top - rectField.top + (rectBtn.height / 2);
+
+  bouncingBurstAt(fieldEl, burstX, burstY);
+
+  const allBtns = Array.from(fieldEl.querySelectorAll(".scramble-word"));
+  allBtns.forEach((btn) => {
+    btn.disabled = true;
+    btn.style.pointerEvents = "none";
+    btn.classList.add("burst-out");
+  });
+
+  setTimeout(() => {
+    onDone();
+  }, 230);
+}
+
 function bouncingAnimateCorrectChoice(btnEl, fieldEl, onDone){
   const st = State.bouncingGame;
 
@@ -1607,13 +1628,18 @@ function scrambleChoose(choice, btnEl, fieldEl){
     st.score -= 25;
     st.wrongGuesses += 1;
     st.wrongChoice = choice;
+
     scrambleShowPopup(fieldEl, popX, popY, "-25", false);
-    render();
+
+    btnEl.classList.remove("wrong");
+    void btnEl.offsetWidth; // restart animation cleanly
+    btnEl.classList.add("wrong");
 
     setTimeout(() => {
-      if (State.scrambleGame && State.scrambleGame.wrongChoice === choice){
+      btnEl.classList.remove("wrong");
+
+      if (State.scrambleGame && State.scrambleGame === st){
         State.scrambleGame.wrongChoice = null;
-        render();
       }
     }, 350);
 
@@ -1624,43 +1650,42 @@ function scrambleChoose(choice, btnEl, fieldEl){
   st.wrongChoice = null;
   scrambleShowPopup(fieldEl, popX, popY, "+100", true);
 
-  if (st.phase === "words"){
-    st.builtCount += 1;
+  scrambleAnimateCorrectChoice(btnEl, fieldEl, () => {
+    const live = State.scrambleGame;
+    if (!live || live !== st) return;
 
-    if (st.builtCount >= st.wordTokenIndices.length){
-      st.phase = "book";
-      setTimeout(() => {
+    if (st.phase === "words"){
+      st.builtCount += 1;
+
+      if (st.builtCount >= st.wordTokenIndices.length){
+        st.phase = "book";
         scrambleRoundRefresh();
         render();
-      }, 180);
+        return;
+      }
+
+      scrambleRoundRefresh();
+      render();
       return;
     }
 
-    setTimeout(() => {
+    if (st.phase === "book"){
+      st.phase = "ref";
       scrambleRoundRefresh();
       render();
-    }, 180);
-    return;
-  }
+      return;
+    }
 
-  if (st.phase === "book"){
-    st.phase = "ref";
-    setTimeout(() => {
-      scrambleRoundRefresh();
+    if (st.phase === "ref"){
+      st.phase = "done";
+      st.done = true;
+      st.showRef = true;
+      st.endedAt = performance.now();
+      st.choices = [];
+      st.positions = [];
       render();
-    }, 180);
-    return;
-  }
-
-  if (st.phase === "ref"){
-    st.phase = "done";
-    st.done = true;
-    st.showRef = true;
-    st.endedAt = performance.now();
-    st.choices = [];
-    st.positions = [];
-    render();
-  }
+    }
+  });
 }
 
 registerGame({
@@ -3942,6 +3967,7 @@ st.choices.forEach((choice, i) => {
   btn.className = "scramble-word no-zoom";
   btn.classList.add(st.colorSet[i]);
   btn.classList.add(st.shapeSet[i]);
+  btn.classList.add("spawn-in");
   if (st.wrongChoice === choice) btn.classList.add("wrong");
   btn.type = "button";
   btn.textContent = choice;
@@ -3950,6 +3976,9 @@ st.choices.forEach((choice, i) => {
 
   btn.style.setProperty("--spawnX", `${seed.shift}px`);
   btn.style.setProperty("--rot", `${seed.rotation}deg`);
+
+  const spawnDelayMs = (i * 75) + Math.floor(Math.random() * 45);
+  btn.style.animationDelay = `${spawnDelayMs}ms`;
 
   btn.onclick = (e) => {
     e.stopPropagation();
