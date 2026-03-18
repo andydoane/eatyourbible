@@ -797,11 +797,13 @@ border-radius: 18px;
 .scramble-word.spawn-in{
   opacity: 0;
   animation: bounceSpawnIn 0.42s cubic-bezier(.2,.8,.2,1) forwards;
+  animation-fill-mode: both;
 }
 
 .scramble-word.burst-out{
   pointer-events: none;
-  animation: bounceBurstOut 0.2s ease forwards;
+  animation: bounceBurstOut 0.22s ease forwards;
+  animation-fill-mode: both;
 }
 
 @media (min-width: 900px){
@@ -846,16 +848,19 @@ border-radius: 18px;
 
 @keyframes scrambleShake{
   0%, 100%{
-    transform: rotate(var(--rot)) translateY(var(--pressY)) scale(1);
+    transform: translateX(var(--spawnX)) rotate(var(--rot)) translateY(var(--pressY)) scale(1);
   }
-  25%{
-    transform: rotate(var(--rot)) translateY(var(--pressY)) scale(1.05);
+  20%{
+    transform: translateX(calc(var(--spawnX) - 12px)) rotate(var(--rot)) translateY(var(--pressY)) scale(1.02);
   }
-  50%{
-    transform: rotate(var(--rot)) translateY(var(--pressY)) scale(0.98);
+  40%{
+    transform: translateX(calc(var(--spawnX) + 10px)) rotate(var(--rot)) translateY(var(--pressY)) scale(1.02);
   }
-  75%{
-    transform: rotate(var(--rot)) translateY(var(--pressY)) scale(1.04);
+  60%{
+    transform: translateX(calc(var(--spawnX) - 8px)) rotate(var(--rot)) translateY(var(--pressY)) scale(1);
+  }
+  80%{
+    transform: translateX(calc(var(--spawnX) + 6px)) rotate(var(--rot)) translateY(var(--pressY)) scale(1.01);
   }
 }
 
