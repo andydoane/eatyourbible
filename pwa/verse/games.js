@@ -1622,15 +1622,18 @@ function scrambleRenderModeSelect(stage, st, gameRoot){
   const actionsEl = gameRoot ? gameRoot.querySelector("#gameCoachActions") : null;
 
   if (titleEl){
-    titleEl.textContent = "Choose Difficulty";
+    titleEl.textContent = "";
   }
 
-  if (!actionsEl) return;
+  if (actionsEl){
+    actionsEl.innerHTML = "";
+  }
 
-  actionsEl.innerHTML = `
+  stage.innerHTML = `
     <div class="scramble-mode-wrap">
       <div class="scramble-mode-card">
-        <div class="scramble-mode-emoji">🧩🟡🟢🔵</div>
+        <div class="scramble-mode-title-top">CHOOSE DIFFICULTY</div>
+        <div class="scramble-mode-emoji">🧩</div>
         <div class="scramble-mode-title">Verse Scramble</div>
         <div class="scramble-mode-subtext">
           Choose your difficulty, then tap the correct next blob to build the verse.
@@ -1649,9 +1652,9 @@ function scrambleRenderModeSelect(stage, st, gameRoot){
     </div>
   `;
 
-  const btnEasy = gameRoot.querySelector("#scrambleModeEasy");
-  const btnMedium = gameRoot.querySelector("#scrambleModeMedium");
-  const btnHard = gameRoot.querySelector("#scrambleModeHard");
+  const btnEasy = stage.querySelector("#scrambleModeEasy");
+  const btnMedium = stage.querySelector("#scrambleModeMedium");
+  const btnHard = stage.querySelector("#scrambleModeHard");
 
   if (btnEasy) btnEasy.onclick = () => scrambleChooseMode("easy");
   if (btnMedium) btnMedium.onclick = () => scrambleChooseMode("medium");
