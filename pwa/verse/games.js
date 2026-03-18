@@ -1674,23 +1674,28 @@ function scrambleFormatTime(ms){
 function scrambleApplyPenalty(st){
   if (!st) return false;
 
+  const beforeBuilt = st.builtCount;
+  const wordGoal = st.wordTokenIndices?.length || 0;
+
   if (st.mode === "easy"){
     return false;
   }
 
   if (st.mode === "medium"){
-    const before = st.builtCount;
     st.builtCount = Math.max(0, st.builtCount - 2);
-    return st.builtCount !== before;
-  }
-
-  if (st.mode === "hard"){
-    const before = st.builtCount;
+  } else if (st.mode === "hard"){
     st.builtCount = 0;
-    return st.builtCount !== before;
+  } else {
+    return false;
   }
 
-  return false;
+  const changed = st.builtCount !== beforeBuilt;
+
+  if (st.builtCount < wordGoal){
+    st.phase = "words";
+  }
+
+  return changed;
 }
 
 function scrambleChoose(choice, btnEl, fieldEl){
@@ -4012,6 +4017,11 @@ registerGame({
     const coachTitle = gameLayout?.querySelector("#gameCoachTitle");
     const coachActions = gameLayout?.querySelector("#gameCoachActions");
 
+    if (!st.mode){
+      scrambleRenderModeSelect(stage, st, gameLayout);
+      return;
+    }
+
     const verseBox = document.createElement("div");
     verseBox.className = "scramble-verse-box";
     if (st.penaltyFlashUntil && performance.now() < st.penaltyFlashUntil){
@@ -4019,11 +4029,6 @@ registerGame({
     }
     verseBox.appendChild(scrambleBuiltVerseNode());
     stage.appendChild(verseBox);
-
-    if (!st.mode){
-      scrambleRenderModeSelect(stage, st, gameLayout);
-      return;
-    }
 
     if (coachTitle) coachTitle.textContent = "";
 
