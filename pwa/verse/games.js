@@ -4020,13 +4020,12 @@ start(stage){
 
   stage.innerHTML = "";
 
-  if (!coachActions) return;
-
   if (!st.mode){
-    coachActions.innerHTML = "";
     scrambleRenderModeSelect(stage, st, gameLayout);
     return;
   }
+
+  if (!coachActions) return;
 
   const verseBox = document.createElement("div");
   verseBox.className = "scramble-verse-box";
