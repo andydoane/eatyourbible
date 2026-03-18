@@ -535,6 +535,51 @@ border-radius: 18px;
   max-width: 1100px;
 }
 
+.learn-layout.game-scramble-result{
+  padding: calc(14px + var(--safeT)) 20px 10px;
+  gap: 0;
+  max-width: 1100px;
+}
+
+.learn-layout.game-scramble-result .learn-ref{
+  display: none;
+  flex: 0 0 0;
+  min-height: 0;
+  max-height: 0;
+}
+
+.learn-layout.game-scramble-result .learn-verse{
+  display: none;
+  flex: 0 0 0;
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.learn-layout.game-scramble-result .learn-coach{
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.learn-layout.game-scramble-result .learn-coach > div:first-child{
+  display: none;
+}
+
+.learn-layout.game-scramble-result .coach-actions{
+  flex: 1 1 auto;
+  padding-top: 0;
+  gap: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
 .learn-layout.game-scramble-mode .learn-ref{
   display: none;
   flex: 0 0 0;
@@ -908,6 +953,39 @@ border-radius: 18px;
   pointer-events: none;
   animation: bounceBurstOut 0.22s ease forwards;
   animation-fill-mode: both;
+}
+
+.scramble-result-wrap{
+  position: relative;
+  width: 100%;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 18px;
+  padding: 24px 20px;
+  overflow: hidden;
+}
+
+.scramble-result-title{
+  font-size: clamp(30px, 5vw, 44px);
+  font-weight: 900;
+  color: #ffffff;
+  line-height: 1.05;
+}
+
+.scramble-result-stats{
+  font-size: clamp(20px, 2.8vw, 26px);
+  line-height: 1.5;
+  color: rgba(255,255,255,0.96);
+  font-weight: 800;
+}
+
+.scramble-result-wrap .carousel-main{
+  margin-top: 8px;
+  max-width: 360px;
 }
 
 @media (min-width: 900px){
