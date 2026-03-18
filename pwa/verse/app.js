@@ -1301,100 +1301,76 @@ right = (State.screen === Screen.GAME || isLearnScreen) ? "" : nextBtn;
   `;
 
   // wire events
+  const navPress = (el, handler) => {
+    if (!el) return;
+    el.onpointerdown = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      handler();
+    };
+  };
+
   const btnMute = document.getElementById("btnMute");
-  if (btnMute) btnMute.onclick = toggleMute;
+  navPress(btnMute, () => {
+    toggleMute();
+  });
 
   const btnBack = document.getElementById("btnBack");
-  if (btnBack){
-    btnBack.onclick = () => {
-        if (State.screen === Screen.LISTEN) go(Screen.TITLE);
-        else if (State.screen === Screen.ECHO) go(Screen.LISTEN);
-        else if (State.screen === Screen.HIDE) go(Screen.ECHO);
-        else if (State.screen === Screen.FINAL_RECALL) go(Screen.HIDE);
-        else if (State.screen === Screen.PRACTICE) go(Screen.TITLE);
-        else go(Screen.TITLE);
-    };
-  }
+  navPress(btnBack, () => {
+    if (State.screen === Screen.LISTEN) go(Screen.TITLE);
+    else if (State.screen === Screen.ECHO) go(Screen.LISTEN);
+    else if (State.screen === Screen.HIDE) go(Screen.ECHO);
+    else if (State.screen === Screen.FINAL_RECALL) go(Screen.HIDE);
+    else if (State.screen === Screen.PRACTICE) go(Screen.TITLE);
+    else go(Screen.TITLE);
+  });
 
-const btnHome = document.getElementById("btnHome");
-if (btnHome){
-  btnHome.onclick = () => {
-    if (State.screen === Screen.GAME){
-      stopGame();
-      go(Screen.PRACTICE);
-      return;
-    }
-
-    if (
-      State.screen === Screen.LISTEN ||
-      State.screen === Screen.ECHO ||
-      State.screen === Screen.HIDE ||
-      State.screen === Screen.FINAL_RECALL
-    ){
-      resetLearn(true);
-      return;
-    }
-
-    go(Screen.TITLE);
-  };
-}
+  const btnHome = document.getElementById("btnHome");
+  navPress(btnHome, () => {
+    stopGame();
+    go(Screen.PRACTICE);
+  });
 
   const btnHelp = document.getElementById("btnHelp");
-  if (btnHelp){
-    btnHelp.onclick = () => {
-      if (State.activeGame === "scramble"){
-        showDialog({
-          title: "How to Play Verse Scramble",
-          body: "Three word blobs will appear. Tap the correct next word in the verse as fast as you can until you reach the end.",
-          actions: [dlgBtn("Close", {onClick: closeDialog})]
-        });
-        return;
-      }
-
-      if (State.activeGame === "bouncing"){
-        showDialog({
-          title: "How to Play Bouncing Words",
-          body: "Three words bounce around the screen. Keep tapping the correct words until you finish the verse.",
-          actions: [dlgBtn("Close", {onClick: closeDialog})]
-        });
-        return;
-      }
-
-      if (State.activeGame === "traffic"){
-        showDialog({
-          title: "How to Play Traffic Tap",
-          body: "Tap the moving car or word that matches the next correct word until you finish the verse.",
-          actions: [dlgBtn("Close", {onClick: closeDialog})]
-        });
-        return;
-      }
-
-      if (State.activeGame === "tower"){
-        showDialog({
-          title: "How to Play Tower of Bible",
-          body: "Use the arrows to look through the choices. Tap the correct words to build your tower to the sky.",
-          actions: [dlgBtn("Close", {onClick: closeDialog})]
-        });
-        return;
-      }
-
-      if (State.activeGame === "foodslice"){
-        showDialog({
-          title: "How to Play Food Slice",
-          body: "Tap pieces of food that match the next word of the verse before it falls. Watch out for wrong words or bombs!",
-          actions: [dlgBtn("Close", {onClick: closeDialog})]
-        });
-        return;
-      }
-
+  navPress(btnHelp, () => {
+    if (State.activeGame === "scramble"){
       showDialog({
-        title: "How to Play Verse Chain",
-        body: "Use the arrows to look through the choices. Tap the big word when you think it is correct.",
-        actions: [dlgBtn("Close", {onClick: closeDialog})]
+        title: "Verse Scramble",
+        body: getGameHelpText(),
+        actions: [dlgBtn("OK", {onClick: closeDialog})]
       });
-
-    };
-  }
+    } else if (State.activeGame === "chain"){
+      showDialog({
+        title: "Verse Chain",
+        body: getGameHelpText(),
+        actions: [dlgBtn("OK", {onClick: closeDialog})]
+      });
+    } else if (State.activeGame === "bouncing"){
+      showDialog({
+        title: "Bouncing Words",
+        body: getGameHelpText(),
+        actions: [dlgBtn("OK", {onClick: closeDialog})]
+      });
+    } else if (State.activeGame === "traffic"){
+      showDialog({
+        title: "Traffic Tap",
+        body: getGameHelpText(),
+        actions: [dlgBtn("OK", {onClick: closeDialog})]
+      });
+    } else if (State.activeGame === "tower"){
+      showDialog({
+        title: "Tower of Bible",
+        body: getGameHelpText(),
+        actions: [dlgBtn("OK", {onClick: closeDialog})]
+      });
+    } else if (State.activeGame === "foodslice"){
+      showDialog({
+        title: "Food Slice",
+        body: getGameHelpText(),
+        actions: [dlgBtn("OK", {onClick: closeDialog})]
+      });
+    }
+  });
 
   const btnNext = document.getElementById("btnNext");
   if (btnNext){
@@ -1406,7 +1382,8 @@ if (btnHome){
     btnNext.style.opacity = disabled ? "0.45" : "1";
     btnNext.style.pointerEvents = disabled ? "none" : "auto";
 
-    btnNext.onclick = () => {
+    navPress(btnNext, () => {
+      if (disabled) return;
       if (State.isSliding) return;
 
       if (State.screen === Screen.TITLE) go(Screen.LISTEN);
@@ -1421,7 +1398,7 @@ if (btnHome){
       }
       else if (State.screen === Screen.FINAL_RECALL) return;
       else if (State.screen === Screen.PRACTICE) go(Screen.TITLE);
-    };
+    });
   }
 }
 
@@ -2042,14 +2019,12 @@ function screenGame(idx){
       State.activeGame !== "foodslice"
     );
 
-const gameLayoutClass =
-  State.activeGame === "tower" ? "game-tower" :
-  (State.activeGame === "scramble" && State.scrambleGame?.done) ? "game-scramble-result" :
-  (State.activeGame === "scramble" && !State.scrambleGame?.mode) ? "game-scramble-mode" :
-  (State.activeGame === "scramble" || State.activeGame === "bouncing" || State.activeGame === "traffic") ? "game-scramble" :
-  (State.activeGame === "foodslice" && !State.foodSliceGame?.mode) ? "game-foodslice-mode" :
-  (State.activeGame === "foodslice") ? "game-foodslice" :
-  "";
+  const gameLayoutClass =
+    State.activeGame === "tower" ? "game-tower" :
+    (State.activeGame === "scramble" || State.activeGame === "bouncing" || State.activeGame === "traffic") ? "game-scramble" :
+    (State.activeGame === "foodslice" && !State.foodSliceGame?.mode) ? "game-foodslice-mode" :
+    (State.activeGame === "foodslice") ? "game-foodslice" :
+    "";
 
   inner.innerHTML = `
     <div class="learn-layout ${gameLayoutClass}">
