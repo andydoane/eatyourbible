@@ -699,6 +699,13 @@ border-radius: 18px;
   color: rgba(255,255,255,0.95);
 }
 
+.scramble-mode-title-top{
+  font-size: clamp(20px, 3vw, 28px);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: #ffffff;
+}
+
 .scramble-mode-notes{
   font-size: clamp(14px, 2vw, 17px);
   opacity: 0.95;
