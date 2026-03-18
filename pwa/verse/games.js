@@ -1599,7 +1599,8 @@ function startVerseScrambleGame(){
     startedAt: performance.now(),
     endedAt: 0,
     lastLayoutIndex: -1,
-    penaltyFlashUntil: 0
+    penaltyFlashUntil: 0,
+    resultConfettiStop: null
   };
 
   scrambleNextChoices();
@@ -4049,6 +4050,11 @@ start(stage){
 
   if (!coachActions) return;
 
+if (!st.done && st.resultConfettiStop){
+  st.resultConfettiStop();
+  st.resultConfettiStop = null;
+}
+
   const verseBox = document.createElement("div");
   verseBox.className = "scramble-verse-box";
   if (st.penaltyFlashUntil && performance.now() < st.penaltyFlashUntil){
@@ -4067,25 +4073,14 @@ if (st.done){
   stage.innerHTML = "";
 
   const resultWrap = document.createElement("div");
-  resultWrap.style.display = "flex";
-  resultWrap.style.flexDirection = "column";
-  resultWrap.style.alignItems = "center";
-  resultWrap.style.justifyContent = "center";
-  resultWrap.style.textAlign = "center";
-  resultWrap.style.gap = "16px";
-  resultWrap.style.height = "100%";
-  resultWrap.style.padding = "20px";
+  resultWrap.className = "scramble-result-wrap";
 
   const title = document.createElement("div");
+  title.className = "scramble-result-title";
   title.textContent = "🎉 GREAT JOB!";
-  title.style.fontSize = "clamp(28px, 5vw, 42px)";
-  title.style.fontWeight = "900";
-  title.style.color = "#ffffff";
 
   const stats = document.createElement("div");
-  stats.style.fontSize = "clamp(18px, 2.5vw, 22px)";
-  stats.style.lineHeight = "1.4";
-  stats.style.color = "rgba(255,255,255,0.95)";
+  stats.className = "scramble-result-stats";
   stats.innerHTML = `
     Score: ${st.score}<br>
     Time: ${scrambleFormatTime(scrambleElapsedMs())}<br>
@@ -4095,8 +4090,11 @@ if (st.done){
   const btnGames = document.createElement("button");
   btnGames.className = "carousel-main no-zoom";
   btnGames.textContent = "Verse Games";
-
   btnGames.onclick = () => {
+    if (st.resultConfettiStop){
+      st.resultConfettiStop();
+      st.resultConfettiStop = null;
+    }
     resetLearn(false);
     go(Screen.PRACTICE);
   };
@@ -4104,11 +4102,11 @@ if (st.done){
   resultWrap.appendChild(title);
   resultWrap.appendChild(stats);
   resultWrap.appendChild(btnGames);
+  coachActions.appendChild(resultWrap);
 
-  stage.appendChild(resultWrap);
-
-  // start confetti loop
-  scrambleStartResultConfetti(resultWrap);
+  if (!st.resultConfettiStop){
+    st.resultConfettiStop = scrambleStartResultConfetti(resultWrap);
+  }
 
   return;
 }
