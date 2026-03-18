@@ -1301,14 +1301,20 @@ right = (State.screen === Screen.GAME || isLearnScreen) ? "" : nextBtn;
   `;
 
   // wire events
-  const navPress = (el, handler) => {
-    if (!el) return;
-    el.onpointerdown = (e) => {
+const navPress = (el, handler) => {
+  if (!el) return;
+
+  const run = (e) => {
+    if (e){
       e.preventDefault();
       e.stopPropagation();
-      handler();
-    };
+    }
+    handler();
   };
+
+  el.onpointerdown = run;
+  el.onclick = run;
+};
 
   const btnMute = document.getElementById("btnMute");
   navPress(btnMute, () => {
@@ -1330,6 +1336,7 @@ right = (State.screen === Screen.GAME || isLearnScreen) ? "" : nextBtn;
     stopGame();
     go(Screen.PRACTICE);
   });
+
 
   const btnHelp = document.getElementById("btnHelp");
   navPress(btnHelp, () => {
