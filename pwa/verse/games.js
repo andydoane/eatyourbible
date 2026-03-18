@@ -1633,7 +1633,7 @@ function scrambleRenderModeSelect(stage, st, gameRoot){
     <div class="scramble-mode-wrap">
       <div class="scramble-mode-card">
         <div class="scramble-mode-title-top">CHOOSE DIFFICULTY</div>
-        <div class="scramble-mode-emoji">🧩</div>
+        <div class="scramble-mode-emoji">🧩 🟡 🟢 🔵</div>
         <div class="scramble-mode-title">Verse Scramble</div>
         <div class="scramble-mode-subtext">
           Choose your difficulty, then tap the correct next blob to build the verse.
