@@ -1548,12 +1548,38 @@ function scrambleDebugOverlay(fieldEl){
   fieldEl.appendChild(rightLine);
 }
 
+function scrambleChooseMode(mode){
+  const st = State.scrambleGame;
+  if (!st) return;
+
+  st.mode = mode;
+  st.builtCount = 0;
+  st.choices = [];
+  st.positions = [];
+  st.colorSet = [];
+  st.shapeSet = [];
+  st.layoutSeeds = [];
+  st.done = false;
+  st.wrongChoice = null;
+  st.phase = "words";
+  st.showRef = false;
+  st.score = 0;
+  st.wrongGuesses = 0;
+  st.startedAt = performance.now();
+  st.endedAt = 0;
+  st.lastLayoutIndex = -1;
+  st.penaltyFlashUntil = 0;
+
+  scrambleNextChoices();
+  render();
+}
 
 function startVerseScrambleGame(){
   const wordTokenIndices = scrambleWordTokenIndices();
   const meta = chainVerseMetaFromId(VERSE_ID);
 
   State.scrambleGame = {
+    mode: null,
     layoutSeeds: [],
     wordTokenIndices,
     builtCount: 0,
@@ -1572,7 +1598,8 @@ function startVerseScrambleGame(){
     wrongGuesses: 0,
     startedAt: performance.now(),
     endedAt: 0,
-    lastLayoutIndex: -1
+    lastLayoutIndex: -1,
+    penaltyFlashUntil: 0
   };
 
   scrambleNextChoices();
@@ -1588,6 +1615,49 @@ function scrambleRoundRefresh(){
   st.shapeSet = [];
 }
 
+function scrambleRenderModeSelect(stage, st, gameRoot){
+  stage.innerHTML = "";
+
+  const titleEl = gameRoot ? gameRoot.querySelector("#gameCoachTitle") : null;
+  const actionsEl = gameRoot ? gameRoot.querySelector("#gameCoachActions") : null;
+
+  if (titleEl){
+    titleEl.textContent = "Choose Difficulty";
+  }
+
+  if (!actionsEl) return;
+
+  actionsEl.innerHTML = `
+    <div class="scramble-mode-wrap">
+      <div class="scramble-mode-card">
+        <div class="scramble-mode-emoji">🧩🟡🟢🔵</div>
+        <div class="scramble-mode-title">Verse Scramble</div>
+        <div class="scramble-mode-subtext">
+          Choose your difficulty, then tap the correct next blob to build the verse.
+        </div>
+
+        <button class="carousel-main no-zoom" id="scrambleModeEasy">Easy</button>
+        <button class="carousel-main no-zoom" id="scrambleModeMedium">Medium</button>
+        <button class="carousel-main no-zoom" id="scrambleModeHard">Hard</button>
+
+        <div class="scramble-mode-subtext scramble-mode-notes">
+          Easy = wrong taps have no penalty.<br>
+          Medium = wrong taps remove up to 2 placed words.<br>
+          Hard = wrong taps clear all placed words.
+        </div>
+      </div>
+    </div>
+  `;
+
+  const btnEasy = gameRoot.querySelector("#scrambleModeEasy");
+  const btnMedium = gameRoot.querySelector("#scrambleModeMedium");
+  const btnHard = gameRoot.querySelector("#scrambleModeHard");
+
+  if (btnEasy) btnEasy.onclick = () => scrambleChooseMode("easy");
+  if (btnMedium) btnMedium.onclick = () => scrambleChooseMode("medium");
+  if (btnHard) btnHard.onclick = () => scrambleChooseMode("hard");
+}
+
 function scrambleElapsedMs(){
   const st = State.scrambleGame;
   if (!st) return 0;
@@ -1601,9 +1671,31 @@ function scrambleFormatTime(ms){
   return mins ? `${mins}m ${secs}s` : `${secs}s`;
 }
 
+function scrambleApplyPenalty(st){
+  if (!st) return false;
+
+  if (st.mode === "easy"){
+    return false;
+  }
+
+  if (st.mode === "medium"){
+    const before = st.builtCount;
+    st.builtCount = Math.max(0, st.builtCount - 2);
+    return st.builtCount !== before;
+  }
+
+  if (st.mode === "hard"){
+    const before = st.builtCount;
+    st.builtCount = 0;
+    return st.builtCount !== before;
+  }
+
+  return false;
+}
+
 function scrambleChoose(choice, btnEl, fieldEl){
   const st = State.scrambleGame;
-  if (!st || st.done) return;
+  if (!st || st.done || !st.mode) return;
 
   let correctChoice = "";
 
@@ -1632,14 +1724,24 @@ function scrambleChoose(choice, btnEl, fieldEl){
     scrambleShowPopup(fieldEl, popX, popY, "-25", false);
 
     btnEl.classList.remove("wrong");
-    void btnEl.offsetWidth; // restart animation cleanly
+    void btnEl.offsetWidth;
     btnEl.classList.add("wrong");
 
-    setTimeout(() => {
-      btnEl.classList.remove("wrong");
+    const penalized = scrambleApplyPenalty(st);
+    if (penalized){
+      st.penaltyFlashUntil = performance.now() + 320;
+    }
 
-      if (State.scrambleGame && State.scrambleGame === st){
-        State.scrambleGame.wrongChoice = null;
+    scrambleRoundRefresh();
+    render();
+
+    setTimeout(() => {
+      const live = State.scrambleGame;
+      if (!live) return;
+
+      if (live.wrongChoice === choice){
+        live.wrongChoice = null;
+        render();
       }
     }, 350);
 
@@ -3906,20 +4008,22 @@ registerGame({
     const st = State.scrambleGame;
     stage.innerHTML = "";
 
-    const verseBox = document.createElement("div");
-    verseBox.style.width = "100%";
-    verseBox.style.maxWidth = "760px";
-    verseBox.style.minHeight = "90px";
-    verseBox.style.display = "flex";
-    verseBox.style.alignItems = "center";
-    verseBox.style.justifyContent = "center";
-    verseBox.style.textAlign = "center";
-    verseBox.appendChild(scrambleBuiltVerseNode());
-    stage.appendChild(verseBox);
-
     const gameLayout = stage.closest(".learn-layout");
     const coachTitle = gameLayout?.querySelector("#gameCoachTitle");
     const coachActions = gameLayout?.querySelector("#gameCoachActions");
+
+    const verseBox = document.createElement("div");
+    verseBox.className = "scramble-verse-box";
+    if (st.penaltyFlashUntil && performance.now() < st.penaltyFlashUntil){
+      verseBox.classList.add("penalty-shake");
+    }
+    verseBox.appendChild(scrambleBuiltVerseNode());
+    stage.appendChild(verseBox);
+
+    if (!st.mode){
+      scrambleRenderModeSelect(stage, st, gameLayout);
+      return;
+    }
 
     if (coachTitle) coachTitle.textContent = "";
 
@@ -3933,6 +4037,7 @@ registerGame({
       doneMsg.style.textAlign = "center";
       doneMsg.style.maxWidth = "520px";
       doneMsg.innerHTML = `
+        Mode: ${st.mode ? st.mode[0].toUpperCase() + st.mode.slice(1) : "Easy"}<br>
         Score: ${st.score}<br>
         Incorrect guesses: ${st.wrongGuesses}<br>
         Total time: ${scrambleFormatTime(scrambleElapsedMs())}
