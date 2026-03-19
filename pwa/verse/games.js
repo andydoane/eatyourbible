@@ -3147,7 +3147,7 @@ registerGame({
       }
 
       actionsEl.innerHTML = `
-        <div class="foodslice-stage">
+        <div class="foodslice-stage foodslice-live">
           <div class="foodslice-field" id="foodSliceField"></div>
         </div>
       `;
