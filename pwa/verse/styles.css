@@ -1921,6 +1921,7 @@ text-wrap: balance;
   height: 100%;
   min-height: 0;
   overflow: hidden;
+  touch-action: manipulation;
 }
 
 .foodslice-item{
