@@ -27,6 +27,7 @@
   --secondary-bg: #ffc751;
   --secondary-text: #333333;
 
+  /* ANDY CHECKED*/
   /* 6) Answer Button Backgrounds */
   --red: #ff00ff;
   --red-text: #a05a2c;
@@ -44,7 +45,7 @@
   --feedback-correct-text: #a7cb6f;
   --feedback-incorrect-text: #ff5a51;
 
-  
+  /* ANDY CHECKED*/
   /* 8) Question page background */
   --quiz-screen-bg: #f2f2f2;
 
