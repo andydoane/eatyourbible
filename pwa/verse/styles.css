@@ -1924,6 +1924,27 @@ text-wrap: balance;
   touch-action: manipulation;
 }
 
+.foodslice-stage.foodslice-live{
+  pointer-events: none;
+}
+
+.foodslice-stage.foodslice-live .foodslice-field{
+  pointer-events: none;
+}
+
+.foodslice-stage.foodslice-live .foodslice-item{
+  pointer-events: none;
+}
+
+.foodslice-stage.foodslice-live .foodslice-stack{
+  pointer-events: none;
+}
+
+.foodslice-stage.foodslice-live .foodslice-fruit-btn,
+.foodslice-stage.foodslice-live .foodslice-bomb-btn{
+  pointer-events: auto;
+}
+
 .foodslice-item{
   position: absolute;
   left: 0;
