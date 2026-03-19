@@ -2271,6 +2271,29 @@ function foodSliceStopMotion(){
   st.rafId = 0;
 }
 
+function foodSliceSizeField(fieldEl){
+  const st = State.foodSliceGame;
+  if (!st || !fieldEl) return;
+
+  const slideEl = fieldEl.closest(".slide");
+  const verseEl = slideEl?.querySelector(".learn-verse");
+  const navEl = document.getElementById("navBar");
+  const stageEl = fieldEl.closest(".foodslice-stage");
+
+  if (!verseEl || !navEl || !stageEl) return;
+
+  const verseRect = verseEl.getBoundingClientRect();
+  const navRect = navEl.getBoundingClientRect();
+
+  const usableHeight = Math.max(220, Math.floor(navRect.top - verseRect.bottom));
+
+  stageEl.style.height = `${usableHeight}px`;
+  stageEl.style.flex = "0 0 auto";
+
+  fieldEl.style.height = `${usableHeight}px`;
+  fieldEl.style.flex = "0 0 auto";
+}
+
 function foodSliceRenderField(fieldEl){
   const st = State.foodSliceGame;
   if (!st || !fieldEl) return;
@@ -3134,10 +3157,12 @@ registerGame({
         foodSliceStartRound();
       }
 
+      foodSliceSizeField(field);
       foodSliceStopMotion();
       foodSliceRenderField(field);
 
       requestAnimationFrame(() => {
+        foodSliceSizeField(field);
         foodSliceStep(field);
       });
     }
