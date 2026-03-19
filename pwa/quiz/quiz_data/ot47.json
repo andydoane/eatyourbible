@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot47",
+  "pageTitle": "OT 47 Quiz",
+  "lessonTitleText": "Ruth",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot47image.png",
+  "themeClass": "theme-red",
+  "questions": [
+    {
+      "text": "Why did Ruth and Naomi return to Israel?",
+      "answers": [
+        "Their husbands had died",
+        "They wanted to go on a vacation",
+        "They were kicked out of their country",
+        "They were looking for treasure"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What does it mean to glean?",
+      "answers": [
+        "To gather leftover grain from the field",
+        "To plant seeds on a farm",
+        "To cook food for others",
+        "To steal food from farmers"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Whose field did Ruth go to?",
+      "answers": [
+        "Boaz",
+        "David",
+        "Saul",
+        "Samuel"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What does it mean that Boaz was a family redeemer?",
+      "answers": [
+        "His job was to help and protect his family members",
+        "He ruled over many families",
+        "He collected taxes for the family",
+        "He was the strongest member of the family"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How was Boaz kind to Ruth?",
+      "answers": [
+        "He gave her food, protected her, and told workers to leave extra grain for her",
+        "He gave her a house to live in",
+        "He gave her a gold ring",
+        "He wrote her a poem"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Naomi tell Ruth to do at night?",
+      "answers": [
+        "Lie down near Boaz and uncover his feet",
+        "Sneak up and scare Boaz",
+        "Write a love poem to Boaz",
+        "Go to the food and steal extra grain"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Ruth ask Boaz to do, and what did he say?",
+      "answers": [
+        "Marry her; Boaz said yes but needed to speak to a closer relative first",
+        "Give her money; Boaz said no",
+        "Give her more grain; Boaz agreed",
+        "Marry Naomi; he said, 'I guess so.'"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What was the name of Ruth and Boaz’s child?",
+      "answers": [
+        "Obed",
+        "Jesse",
+        "David",
+        "Samuel"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who was Ruth and Boaz’s great-grandson?",
+      "answers": [
+        "King David",
+        "King Saul",
+        "Solomon",
+        "Moses"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jesus do to redeem us?",
+      "answers": [
+        "He paid the price of death for our sins",
+        "He married Ruth",
+        "He let us pick up grain from his field",
+        "He paid money to the devil to let us go free"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

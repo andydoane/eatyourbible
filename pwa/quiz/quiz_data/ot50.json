@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot50",
+  "pageTitle": "OT 50 Quiz",
+  "lessonTitleText": "The Philistines Capture the Ark",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot50image.png",
+  "themeClass": "theme-yellow",
+  "questions": [
+    {
+      "text": "Who defeated the Israelites in battle?",
+      "answers": [
+        "The Philistines",
+        "The Midianites",
+        "The Egyptians",
+        "The Assyrians"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the Israelites bring to the next battle?",
+      "answers": [
+        "The Ark of the Covenant",
+        "More soldiers",
+        "Noah's Ark",
+        "Goliath's sword"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened in the second battle?",
+      "answers": [
+        "Israel lost, the ark was captured, and Eli and his sons died",
+        "Israel won easily",
+        "It was a tie",
+        "God sent angels to fight the Philistines"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened in the temple of Dagon?",
+      "answers": [
+        "God knocked the statue down twice and it broke",
+        "The statue came to life",
+        "The temple burned down",
+        "The Ark of the Covenant disappeared"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened to the people in Ashdod, the first city where the ark was taken?",
+      "answers": [
+        "They developed painful lumps",
+        "God sent an earthquake",
+        "God sent fire from the sky",
+        "They had nightmares every night"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened to the people in Gath, the second city?",
+      "answers": [
+        "They had painful lumps and great panic",
+        "They became blind",
+        "They believed in God",
+        "They broke the Ark into pieces"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened to the people of Ekron, the third city?",
+      "answers": [
+        "They had painful lumps, panic, rats, and death",
+        "They couldn't see or hear",
+        "Their hair fell out",
+        "They buried the ark in a pit"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Besides the ark, what did the Philistines send back to Israel?",
+      "answers": [
+        "Golden rats and golden tumors",
+        "Only the ark",
+        "Gold and silver coins",
+        "A letter of apology"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did the Philistines test if God was punishing them?",
+      "answers": [
+        "They put the ark on a cart with cows — they took it to Israel, it was from God",
+        "They asked their priests to pray to Dagon",
+        "They waited for a rainbow to appear in the sky",
+        "They splashed water onto the Ark"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What was the result of the Philistines’ test?",
+      "answers": [
+        "God made the cows pull the cart straight to Israel",
+        "The cows ran back to their calves",
+        "The cart broke apart",
+        "Angels rode on the backs of the cows"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
