@@ -2383,7 +2383,8 @@ function foodSliceRenderField(fieldEl){
   const fruit = st.activeFruit;
   if (fruit && fruit.alive){
     dom.fruitWrap.style.display = "";
-    dom.fruitWrap.style.transform = `translate(${Math.round(fruit.x)}px, ${Math.round(fruit.y)}px) rotate(${Math.round(fruit.rotation)}deg)`;
+    dom.fruitWrap.style.transform = `translate(${Math.round(fruit.x)}px, ${Math.round(fruit.y)}px)`;
+    dom.fruitBtn.style.transform = `rotate(${Math.round(fruit.rotation)}deg)`;
     dom.fruitWrap.className = "foodslice-item" + (fruit.flashWrong ? " wrong" : "");
     dom.fruitEmoji.textContent = fruit.fruit || "🍎";
     dom.fruitWord.textContent = fruit.word || "";
@@ -2391,6 +2392,7 @@ function foodSliceRenderField(fieldEl){
     dom.fruitBtn.style.pointerEvents = (!st.running || st.done || fruit.wasTapped) ? "none" : "auto";
   } else {
     dom.fruitWrap.style.display = "none";
+    dom.fruitBtn.style.transform = "rotate(0deg)";
   }
 
   // ----- bomb -----
