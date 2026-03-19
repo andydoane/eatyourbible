@@ -1833,6 +1833,7 @@ text-wrap: balance;
   margin: 0;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
   line-height: 1;
 }
 
@@ -1863,6 +1864,7 @@ text-wrap: balance;
   margin: 0;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
   line-height: 1;
 }
 
