@@ -1,0 +1,100 @@
+{
+  "lessonId": "ot42",
+  "pageTitle": "OT 42 Quiz",
+  "lessonTitleText": "Achan's Sin",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot42image.png",
+  "themeClass": "theme-kahoot-yellow",
+  "questions": [
+    {
+      "text": "What were the Israelites supposed to do with the treasures of Jericho?",
+      "answers": [
+        "Give them to God",
+        "Keep them for themselves",
+        "Use the gold to make an idol",
+        "Hide them in the desert"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What was Achan’s secret sin?",
+      "answers": [
+        "He stole some of the treasures of Jericho",
+        "He refused to fight in battle",
+        "He was a spy for Ai",
+        "He forgot to return treasure he found"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why didn’t the Israelites send their whole army to Ai?",
+      "answers": [
+        "It was a small city with only a few people",
+        "They were too tired after the Battle of Jericho",
+        "They didn’t know where Ai was",
+        "They were trying to show off"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened at the first battle of Ai?",
+      "answers": [
+        "The Israelites lost and were chased away",
+        "The Israelites won easily",
+        "The people of Ai surrendered",
+        "It was a tie"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why didn’t God help the Israelites win the first battle of Ai?",
+      "answers": [
+        "Because Achan had sinned",
+        "Because the army was too small",
+        "Because they forgot to make a sacrifice first",
+        "Because Ai was too strong"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Achan do with the treasures he stole?",
+      "answers": [
+        "He hid them under his tent",
+        "He gave them to his friends",
+        "He threw them into the river",
+        "He sold them at the market"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did Joshua find out who had sinned?",
+      "answers": [
+        "God narrowed it down by tribe, group, and family",
+        "Achan confessed right away",
+        "The soldiers voted",
+        "The king of Ai told them"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened to Achan and the stolen treasures?",
+      "answers": [
+        "They were destroyed",
+        "They were returned to Jericho",
+        "They were thrown into the river",
+        "They were given to the priests"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened in the second battle of Ai?",
+      "answers": [
+        "Ai was totally defeated and burned to the ground",
+        "The Israelites lost again",
+        "Ai immediately surrendered",
+        "The battle was canceled"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
