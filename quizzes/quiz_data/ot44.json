@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot44",
+  "pageTitle": "OT 44 Quiz",
+  "lessonTitleText": "The First Three Judges",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot44image.png",
+  "themeClass": "theme-kahoot-red",
+  "questions": [
+    {
+      "text": "What 'J' word describes the rescuers God sent to save His people?",
+      "answers": [
+        "Judges",
+        "Joes",
+        "Jackrabbits",
+        "Jello"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who was the first judge God sent to rescue His people?",
+      "answers": [
+        "Othniel",
+        "Ehud",
+        "Shamgar",
+        "Samson"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What was Eglon like?",
+      "answers": [
+        "Very heavy",
+        "Very tall",
+        "Very fast",
+        "Very hairy"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who was the left-handed judge God sent to rescue Israel?",
+      "answers": [
+        "Ehud",
+        "Othniel",
+        "Shamgar",
+        "Gideon"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Ehud make, and where did he hide it?",
+      "answers": [
+        "A sword, hidden under his clothes on his right leg",
+        "A shield, hidden on his back",
+        "A spear, hidden in a bag",
+        "A dagger, hidden in his sandal"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Ehud do to Eglon?",
+      "answers": [
+        "He stabbed him in the belly and escaped",
+        "He captured him and took him prisoner",
+        "He pushed him out of the window",
+        "He challenged him to a duel"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why did the servants think King Eglon was taking so long?",
+      "answers": [
+        "They thought he was using the bathroom",
+        "They thought he was sleeping",
+        "They thought he was eating a big meal",
+        "They thought he was taking a bath"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "While the servants were waiting, what did Ehud do?",
+      "answers": [
+        "He escaped",
+        "He hid in the palace",
+        "He stole the king's treasure",
+        "He hid under Eglon's bed"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Shamgar do?",
+      "answers": [
+        "Defeated 600 Philistines with an oxgoad",
+        "Built a large tower",
+        "Led Israel out of Egypt",
+        "Defeated Goliath the giant"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened after God sent a judge to rescue His people?",
+      "answers": [
+        "They enjoyed a time of peace",
+        "They immediately worshiped other gods",
+        "Their enemies attacked again",
+        "They decided to never worship other gods again"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
