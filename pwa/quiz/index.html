@@ -271,7 +271,7 @@
       text-wrap: balance;
       overflow-wrap: anywhere;
 
-      color: rgba(255,255,255,0.98);
+      color: var(--opt-text, rgba(255,255,255,0.98));
       background: rgba(0,0,0,0.28);
 
       box-shadow: 0 10px 22px rgba(0,0,0,0.20);
@@ -287,6 +287,11 @@
     .answer.opt1{ background: var(--opt-b, #1368ce); }
     .answer.opt2{ background: var(--opt-c, #d89e00); }
     .answer.opt3{ background: var(--opt-d, #26890c); }
+
+    .answer.opt0{ color: var(--opt-a-text, rgba(255,255,255,0.98)); }
+    .answer.opt1{ color: var(--opt-b-text, rgba(255,255,255,0.98)); }
+    .answer.opt2{ color: var(--opt-c-text, rgba(255,255,255,0.98)); }
+    .answer.opt3{ color: var(--opt-d-text, rgba(255,255,255,0.98)); }
 
     /* Locked + reveal */
     .answers.locked .answer{
@@ -763,6 +768,7 @@ nav#nav{
    ========================================================= */
 
 /* 1) Background + text */
+/* 1) Background + text */
 :root{
   /* If theme provides a gradient background for quiz screens, we keep it here */
   --app-bg: var(--quiz-screen-bg, var(--quiz-bg, #222));
@@ -782,6 +788,12 @@ nav#nav{
   --opt-b: var(--blue, #1368ce);
   --opt-c: var(--yellow, #d89e00);
   --opt-d: var(--green, #26890c);
+
+  /* Answer text colors */
+  --opt-a-text: var(--red-text, rgba(255,255,255,0.98));
+  --opt-b-text: var(--blue-text, rgba(255,255,255,0.98));
+  --opt-c-text: var(--yellow-text, rgba(255,255,255,0.98));
+  --opt-d-text: var(--green-text, rgba(255,255,255,0.98));
 }
 
 /* =========================================================
