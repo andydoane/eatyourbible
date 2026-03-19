@@ -2271,25 +2271,6 @@ function foodSliceStopMotion(){
   st.rafId = 0;
 }
 
-const FOODSLICE_RENDER_MS = 42;
-
-function foodSliceOverlayOpen(){
-  const overlayEl = document.getElementById("overlay");
-  return !!overlayEl && overlayEl.classList.contains("show");
-}
-
-function foodSliceMaybeRender(fieldEl, force = false){
-  const st = State.foodSliceGame;
-  if (!st || !fieldEl) return;
-
-  const now = performance.now();
-
-  if (force || !st.lastRenderAt || (now - st.lastRenderAt) >= FOODSLICE_RENDER_MS){
-    st.lastRenderAt = now;
-    foodSliceRenderField(fieldEl);
-  }
-}
-
 function foodSliceRenderField(fieldEl){
   const st = State.foodSliceGame;
   if (!st || !fieldEl) return;
@@ -2443,15 +2424,9 @@ function foodSliceRenderField(fieldEl){
    
 
 
-
 function foodSliceStep(fieldEl){
   const st = State.foodSliceGame;
   if (!st || !fieldEl || !st.running) return;
-
-  if (foodSliceOverlayOpen()){
-    st.rafId = requestAnimationFrame(() => foodSliceStep(fieldEl));
-    return;
-  }
 
   const fieldW = Math.max(320, fieldEl.clientWidth || 0);
   const fieldH = Math.max(260, fieldEl.clientHeight || 0);
@@ -2514,7 +2489,7 @@ function foodSliceStep(fieldEl){
       return;
     }
 
-    foodSliceMaybeRender(fieldEl);
+    foodSliceRenderField(fieldEl);
   } else {
     if (!st.activeFruit || !st.activeFruit.alive){
       foodSliceSpawnOne(fieldEl);
@@ -2569,8 +2544,10 @@ function foodSliceStep(fieldEl){
       st.activeSlices = st.activeSlices.filter(piece => piece && piece.alive);
     }
 
-    foodSliceMaybeRender(fieldEl);
+    foodSliceRenderField(fieldEl);
   }
+  
+
 
   st.rafId = requestAnimationFrame(() => foodSliceStep(fieldEl));
 }
@@ -2601,9 +2578,11 @@ function foodSliceStartRound(){
   st.phaseChoiceIndex = 0;
   st.pendingIsCorrect = false;
   st.wrongStreak = 0;
-  st.lastRenderAt = 0;
   st.done = false;
   st.running = true;
+
+
+
 
 }
 
@@ -3061,30 +3040,7 @@ function foodSlicePickPhaseDisplayText(){
 
   return choice;
 }
-
-function foodSliceSizeField(fieldEl){
-  const st = State.foodSliceGame;
-  if (!st || !fieldEl) return;
-
-  const slideEl = fieldEl.closest(".slide");
-  const verseEl = slideEl?.querySelector(".learn-verse");
-  const navEl = document.getElementById("navBar");
-  const stageEl = fieldEl.closest(".foodslice-stage");
-
-  if (!verseEl || !navEl || !stageEl) return;
-
-  const verseRect = verseEl.getBoundingClientRect();
-  const navRect = navEl.getBoundingClientRect();
-
-  const usableHeight = Math.max(260, Math.floor(navRect.top - verseRect.bottom));
-
-  stageEl.style.height = `${usableHeight}px`;
-  stageEl.style.flex = "0 0 auto";
-
-  fieldEl.style.height = `${usableHeight}px`;
-  fieldEl.style.flex = "0 0 auto";
-}
-
+   
 registerGame({
   id: "foodslice",
   title: "Food Slice",
@@ -3119,7 +3075,6 @@ registerGame({
         pendingIsCorrect: false,
         wrongStreak: 0,
         rafId: 0,
-        lastRenderAt: 0,
         done: false
 
       };
@@ -3168,7 +3123,7 @@ registerGame({
       }
 
       actionsEl.innerHTML = `
-        <div class="foodslice-stage foodslice-live">
+        <div class="foodslice-stage">
           <div class="foodslice-field" id="foodSliceField"></div>
         </div>
       `;
@@ -3180,11 +3135,9 @@ registerGame({
       }
 
       foodSliceStopMotion();
-      foodSliceSizeField(field);
-      foodSliceMaybeRender(field, true);
+      foodSliceRenderField(field);
 
       requestAnimationFrame(() => {
-        foodSliceSizeField(field);
         foodSliceStep(field);
       });
     }
