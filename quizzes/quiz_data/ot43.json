@@ -1,0 +1,100 @@
+{
+  "lessonId": "ot43",
+  "pageTitle": "OT 43 Quiz",
+  "lessonTitleText": "The Sun Stands Still",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot43image.png",
+  "themeClass": "theme-kahoot-orange",
+  "questions": [
+    {
+      "text": "How did King Adoni-Zedek feel after hearing about Jericho and Ai?",
+      "answers": [
+        "His heart melted with fear",
+        "He was excited to meet Israel",
+        "It didn't bother him at all",
+        "He wanted to join Israel"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did King Adoni-Zedek do to Israel?",
+      "answers": [
+        "He joined four other kings and attacked Gibeon",
+        "He made peace with Joshua",
+        "He ran away from the land",
+        "He sent gifts to Israel"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When the Gibeonites were attacked, what did they do?",
+      "answers": [
+        "They asked Joshua to rescue them",
+        "They fought alone",
+        "They ran to Egypt",
+        "They hid in the mountains"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did God tell Joshua before the battle began?",
+      "answers": [
+        "Don’t be afraid. I have handed your enemies over to you",
+        "Wait until morning to fight",
+        "Send your army home",
+        "Make a deal with the kings"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "After Joshua’s men marched all night to Gibeon, what did God first do to their enemies?",
+      "answers": [
+        "He made the soldiers panic and run away",
+        "He made them blind",
+        "He made their weapons break",
+        "He caused them to sleep"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "As their enemies ran away, how did God help Israel?",
+      "answers": [
+        "He threw down hailstones from the sky",
+        "He sent fire from heaven",
+        "He sent an earthquake",
+        "He sent a flood"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What bold prayer did Joshua pray?",
+      "answers": [
+        "Sun, stand still!",
+        "Rain, fall down!",
+        "Wind, blow harder!",
+        "Stars, shine brighter!"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did God do after Joshua’s prayer?",
+      "answers": [
+        "He stopped the sun in the sky for about a day until the battle was over",
+        "He made the night come early",
+        "He sent darkness over the land",
+        "He made the moon shine brighter"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What does this teach us about God’s power?",
+      "answers": [
+        "He can do more than we imagine",
+        "He really liked Joshua",
+        "He can't hear our prayers",
+        "He only listens during the day"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
