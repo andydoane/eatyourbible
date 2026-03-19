@@ -2266,70 +2266,177 @@ function foodSliceSpawnOne(fieldEl){
 
 function foodSliceStopMotion(){
   const st = State.foodSliceGame;
-  if (!st?.rafId) return;
-  cancelAnimationFrame(st.rafId);
-  st.rafId = 0;
+  if (!st) return;
+
+  if (st.rafId){
+    cancelAnimationFrame(st.rafId);
+    st.rafId = 0;
+  }
+}
+
+function foodSliceEnsureFieldDom(fieldEl){
+  const st = State.foodSliceGame;
+  if (!st || !fieldEl) return null;
+
+  if (st.dom && st.dom.fieldEl === fieldEl){
+    return st.dom;
+  }
+
+  fieldEl.innerHTML = "";
+
+  const fruitWrap = document.createElement("div");
+  fruitWrap.className = "foodslice-item";
+  fruitWrap.style.display = "none";
+
+  const fruitStack = document.createElement("div");
+  fruitStack.className = "foodslice-stack";
+
+  const fruitBtn = document.createElement("button");
+  fruitBtn.className = "foodslice-fruit-btn no-zoom";
+  fruitBtn.type = "button";
+
+  const fruitEmoji = document.createElement("span");
+  fruitEmoji.className = "foodslice-fruit-emoji";
+
+  const fruitWord = document.createElement("div");
+  fruitWord.className = "foodslice-word";
+
+  fruitBtn.appendChild(fruitEmoji);
+  fruitStack.appendChild(fruitBtn);
+  fruitStack.appendChild(fruitWord);
+  fruitWrap.appendChild(fruitStack);
+
+  const bombWrap = document.createElement("div");
+  bombWrap.className = "foodslice-item";
+  bombWrap.style.display = "none";
+
+  const bombBtn = document.createElement("button");
+  bombBtn.className = "foodslice-bomb-btn no-zoom";
+  bombBtn.type = "button";
+
+  const bombEmoji = document.createElement("span");
+  bombEmoji.className = "foodslice-bomb-emoji";
+  bombEmoji.textContent = "💣";
+
+  bombBtn.appendChild(bombEmoji);
+  bombWrap.appendChild(bombBtn);
+
+  const sliceLayer = document.createElement("div");
+  sliceLayer.className = "foodslice-slice-layer";
+
+  const bonusBanner = document.createElement("div");
+  bonusBanner.className = "foodslice-bonus-banner";
+  bonusBanner.style.display = "none";
+
+  const bonusBannerText = document.createElement("div");
+  bonusBannerText.className = "foodslice-bonus-banner-text";
+  bonusBanner.appendChild(bonusBannerText);
+
+  fieldEl.appendChild(fruitWrap);
+  fieldEl.appendChild(bombWrap);
+  fieldEl.appendChild(sliceLayer);
+  fieldEl.appendChild(bonusBanner);
+
+  const tapFruit = (e) => {
+    e.preventDefault();
+    foodSliceHandleTap();
+  };
+
+  const tapBomb = (e) => {
+    e.preventDefault();
+    foodSliceHandleBombTap();
+  };
+
+  fruitBtn.onclick = tapFruit;
+  bombBtn.onclick = tapBomb;
+
+  fruitBtn.addEventListener("touchend", tapFruit, { passive: false });
+  bombBtn.addEventListener("touchend", tapBomb, { passive: false });
+
+  st.dom = {
+    fieldEl,
+    fruitWrap,
+    fruitBtn,
+    fruitEmoji,
+    fruitWord,
+    bombWrap,
+    bombBtn,
+    bombEmoji,
+    sliceLayer,
+    bonusBanner,
+    bonusBannerText
+  };
+
+  return st.dom;
 }
 
 function foodSliceRenderField(fieldEl){
   const st = State.foodSliceGame;
   if (!st || !fieldEl) return;
 
-  fieldEl.innerHTML = `<div class="foodslice-slice-layer" id="foodSliceSliceLayer"></div>`;
+  const dom = foodSliceEnsureFieldDom(fieldEl);
+  if (!dom) return;
 
-  const sliceLayer = fieldEl.querySelector("#foodSliceSliceLayer");
-  const item = st.activeFruit;
-  const bomb = st.activeBomb;
-  const slices = Array.isArray(st.activeSlices) ? st.activeSlices : [];
-  const bonusFruits = Array.isArray(st.bonusFruits) ? st.bonusFruits : [];
-  const showBonusBanner = st.bonusRound && performance.now() < st.bonusBannerUntil;
+  const now = performance.now();
 
-  if ((!item || !item.alive) && (!bomb || !bomb.alive) && !slices.length && !bonusFruits.length && !showBonusBanner) return;
-
-
-
-  if (!st.bonusRound && item && item.alive){
-    const wrap = document.createElement("div");
-    wrap.className = "foodslice-item";
-    if (item.flashWrong) wrap.classList.add("wrong");
-    wrap.style.transform = `translate(${item.x}px, ${item.y}px)`;
-
-    const stack = document.createElement("div");
-    stack.className = "foodslice-stack";
-
-    const btn = document.createElement("button");
-    btn.className = "foodslice-fruit-btn no-zoom";
-    btn.type = "button";
-    btn.setAttribute("aria-label", item.word ? `Fruit with word ${item.word}` : "Fruit");
-    btn.onpointerdown = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      foodSliceHandleTap();
-    };
-
-    const fruit = document.createElement("span");
-    fruit.className = "foodslice-fruit-emoji";
-    fruit.textContent = item.fruit;
-    fruit.style.transform = `rotate(${item.rotation}deg)`;
-
-    const word = document.createElement("div");
-    word.className = "foodslice-word";
-    word.textContent = item.word;
-
-    btn.appendChild(fruit);
-    stack.appendChild(btn);
-    stack.appendChild(word);
-    wrap.appendChild(stack);
-    fieldEl.appendChild(wrap);
+  // ----- fruit -----
+  const fruit = st.activeFruit;
+  if (fruit && fruit.alive){
+    dom.fruitWrap.style.display = "";
+    dom.fruitWrap.style.transform = `translate(${Math.round(fruit.x)}px, ${Math.round(fruit.y)}px) rotate(${Math.round(fruit.rotation)}deg)`;
+    dom.fruitWrap.className = "foodslice-item" + (fruit.flashWrong ? " wrong" : "");
+    dom.fruitEmoji.textContent = fruit.fruit || "🍎";
+    dom.fruitWord.textContent = fruit.word || "";
+    dom.fruitBtn.disabled = !st.running || st.done || fruit.wasTapped;
+    dom.fruitBtn.style.pointerEvents = (!st.running || st.done || fruit.wasTapped) ? "none" : "auto";
+  } else {
+    dom.fruitWrap.style.display = "none";
   }
 
-  if (st.bonusRound && bonusFruits.length){
-    for (const bonusItem of bonusFruits){
-      if (!bonusItem || !bonusItem.alive) continue;
+  // ----- bomb -----
+  const bomb = st.activeBomb;
+  if (bomb && bomb.alive){
+    dom.bombWrap.style.display = "";
+    dom.bombWrap.style.transform = `translate(${Math.round(bomb.x)}px, ${Math.round(bomb.y)}px) rotate(${Math.round(bomb.rotation)}deg)`;
+    dom.bombWrap.className = "foodslice-item" + (bomb.wasHit ? " bomb-hit" : "");
+    dom.bombBtn.disabled = !st.running || st.done || bomb.wasTapped;
+    dom.bombBtn.style.pointerEvents = (!st.running || st.done || bomb.wasTapped) ? "none" : "auto";
+  } else {
+    dom.bombWrap.style.display = "none";
+  }
 
-      const wrap = document.createElement("div");
-      wrap.className = "foodslice-item";
-      wrap.style.transform = `translate(${bonusItem.x}px, ${bonusItem.y}px)`;
+  // ----- slices -----
+  dom.sliceLayer.replaceChildren();
+
+  if (Array.isArray(st.activeSlices) && st.activeSlices.length){
+    for (const piece of st.activeSlices){
+      if (!piece || !piece.alive) continue;
+
+      const pieceEl = document.createElement("div");
+      pieceEl.className = `foodslice-slice-piece ${piece.side || ""}`;
+      pieceEl.style.transform = `translate(${Math.round(piece.x)}px, ${Math.round(piece.y)}px) rotate(${Math.round(piece.rotation)}deg)`;
+
+      const inner = document.createElement("div");
+      inner.className = "foodslice-slice-inner";
+
+      const emoji = document.createElement("span");
+      emoji.className = "foodslice-slice-emoji";
+      emoji.textContent = piece.fruit || "🍎";
+
+      inner.appendChild(emoji);
+      pieceEl.appendChild(inner);
+      dom.sliceLayer.appendChild(pieceEl);
+    }
+  }
+
+  // ----- bonus fruits -----
+  if (Array.isArray(st.bonusFruits) && st.bonusFruits.length){
+    for (const item of st.bonusFruits){
+      if (!item || !item.alive) continue;
+
+      const bonusEl = document.createElement("div");
+      bonusEl.className = "foodslice-item";
+      bonusEl.style.transform = `translate(${Math.round(item.x)}px, ${Math.round(item.y)}px) rotate(${Math.round(item.rotation)}deg)`;
 
       const stack = document.createElement("div");
       stack.className = "foodslice-stack";
@@ -2337,83 +2444,24 @@ function foodSliceRenderField(fieldEl){
       const btn = document.createElement("button");
       btn.className = "foodslice-fruit-btn no-zoom";
       btn.type = "button";
-      btn.setAttribute("aria-label", "Bonus fruit");
-      btn.onpointerdown = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        foodSliceHandleBonusTap(bonusItem);
-      };
-
-      const fruit = document.createElement("span");
-      fruit.className = "foodslice-fruit-emoji";
-      fruit.textContent = bonusItem.fruit;
-      fruit.style.transform = `rotate(${bonusItem.rotation}deg)`;
-
-      btn.appendChild(fruit);
-      stack.appendChild(btn);
-      wrap.appendChild(stack);
-      fieldEl.appendChild(wrap);
-    }
-  }
-
-
-  if (bomb && bomb.alive){
-    const bombWrap = document.createElement("div");
-    bombWrap.className = "foodslice-item";
-    if (bomb.wasHit) bombWrap.classList.add("bomb-hit");
-    bombWrap.style.transform = `translate(${bomb.x}px, ${bomb.y}px)`;
-
-    const bombStack = document.createElement("div");
-    bombStack.className = "foodslice-stack";
-
-    const bombBtn = document.createElement("button");
-    bombBtn.className = "foodslice-bomb-btn no-zoom";
-    bombBtn.type = "button";
-    bombBtn.setAttribute("aria-label", "Bomb");
-    bombBtn.onpointerdown = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      foodSliceHandleBombTap();
-    };
-
-    const bombEmoji = document.createElement("span");
-    bombEmoji.className = "foodslice-bomb-emoji";
-    bombEmoji.textContent = "💣";
-    bombEmoji.style.transform = `rotate(${bomb.rotation}deg)`;
-
-    bombBtn.appendChild(bombEmoji);
-    bombStack.appendChild(bombBtn);
-    bombWrap.appendChild(bombStack);
-    fieldEl.appendChild(bombWrap);
-  }
-
-  if (sliceLayer && slices.length){
-    for (const piece of slices){
-      if (!piece || !piece.alive) continue;
-
-      const pieceEl = document.createElement("div");
-      pieceEl.className = `foodslice-slice-piece ${piece.side}`;
-      pieceEl.style.transform = `translate(${piece.x}px, ${piece.y}px) rotate(${piece.rotation}deg)`;
-
-      const inner = document.createElement("div");
-      inner.className = "foodslice-slice-inner";
+      btn.disabled = true;
+      btn.style.pointerEvents = "none";
 
       const emoji = document.createElement("span");
-      emoji.className = "foodslice-slice-emoji";
-      emoji.textContent = piece.fruit;
+      emoji.className = "foodslice-fruit-emoji";
+      emoji.textContent = item.fruit || "🍎";
 
-      inner.appendChild(emoji);
-      pieceEl.appendChild(inner);
-      sliceLayer.appendChild(pieceEl);
+      btn.appendChild(emoji);
+      stack.appendChild(btn);
+      bonusEl.appendChild(stack);
+      dom.sliceLayer.appendChild(bonusEl);
     }
   }
 
-  if (showBonusBanner){
-    const banner = document.createElement("div");
-    banner.className = "foodslice-bonus-banner";
-    banner.innerHTML = `<div class="foodslice-bonus-banner-text">BONUS ROUND!</div>`;
-    fieldEl.appendChild(banner);
-  }
+  // ----- bonus banner -----
+  const showBanner = st.bonusBannerUntil && now < st.bonusBannerUntil;
+  dom.bonusBanner.style.display = showBanner ? "flex" : "none";
+  dom.bonusBannerText.textContent = showBanner ? "Bonus Round!" : "";
 }
 
 
@@ -2422,7 +2470,6 @@ function foodSliceRenderField(fieldEl){
    ========================================================= */
 
    
-
 
 function foodSliceStep(fieldEl){
   const st = State.foodSliceGame;
@@ -2580,6 +2627,7 @@ function foodSliceStartRound(){
   st.wrongStreak = 0;
   st.done = false;
   st.running = true;
+  st.dom = null;
 
 
 
@@ -3075,8 +3123,8 @@ registerGame({
         pendingIsCorrect: false,
         wrongStreak: 0,
         rafId: 0,
-        done: false
-
+        done: false,
+        dom: null
       };
 
       foodSliceEnsureTheme();
