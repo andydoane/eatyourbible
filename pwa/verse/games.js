@@ -3041,7 +3041,30 @@ function foodSlicePickPhaseDisplayText(){
 
   return choice;
 }
-   
+
+function foodSliceSizeField(fieldEl){
+  const st = State.foodSliceGame;
+  if (!st || !fieldEl) return;
+
+  const slideEl = fieldEl.closest(".slide");
+  const verseEl = slideEl?.querySelector(".learn-verse");
+  const navEl = document.getElementById("navBar");
+  const stageEl = fieldEl.closest(".foodslice-stage");
+
+  if (!verseEl || !navEl || !stageEl) return;
+
+  const verseRect = verseEl.getBoundingClientRect();
+  const navRect = navEl.getBoundingClientRect();
+
+  const usableHeight = Math.max(260, Math.floor(navRect.top - verseRect.bottom));
+
+  stageEl.style.height = `${usableHeight}px`;
+  stageEl.style.flex = "0 0 auto";
+
+  fieldEl.style.height = `${usableHeight}px`;
+  fieldEl.style.flex = "0 0 auto";
+}
+
 registerGame({
   id: "foodslice",
   title: "Food Slice",
@@ -3136,9 +3159,11 @@ registerGame({
       }
 
       foodSliceStopMotion();
+      foodSliceSizeField(field);
       foodSliceRenderField(field);
 
       requestAnimationFrame(() => {
+        foodSliceSizeField(field);
         foodSliceStep(field);
       });
     }
