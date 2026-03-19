@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot46",
+  "pageTitle": "OT 46 Quiz",
+  "lessonTitleText": "Samson",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot46image.png",
+  "themeClass": "theme-orange",
+  "questions": [
+    {
+      "text": "Who conquered the Israelites during Samson’s time?",
+      "answers": [
+        "The Philistines",
+        "The Midianites",
+        "The Egyptians",
+        "The Assyrians"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What were God’s special rules for Samson?",
+      "answers": [
+        "No wine, no unclean foods, and no cutting his hair",
+        "Only eat bread and water",
+        "Wear old clothes and eat bugs",
+        "Go to bed at 8 pm and brush his teeth three times a day"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Because God’s Spirit was with him, what did Samson do to the lion?",
+      "answers": [
+        "Ripped it apart with his bare hands",
+        "Scared it away with a shout",
+        "Swung it around by its tail",
+        "Punched it in the nose"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When the Philistines tied Samson with new ropes, what did he do?",
+      "answers": [
+        "Ripped them apart like burnt string",
+        "Nothing – he couldn't escape the ropes",
+        "Chewed through them slowly",
+        "Untied the ropes carefully"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What weapon did Samson use to defeat 1,000 men?",
+      "answers": [
+        "A donkey’s jawbone",
+        "A cow's legbone",
+        "A ram's horn",
+        "A pig's tail"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the Philistines secretly pay Delilah to do?",
+      "answers": [
+        "Find out the secret of Samson’s strength",
+        "Help Samson escape",
+        "Give Samson poison",
+        "Convince Samson to join the Philistine army"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When Delilah asked Samson his secret, what did he do the first three times?",
+      "answers": [
+        "He tricked her with lies",
+        "He told her the truth",
+        "He said he'd tell her if she gave him a kiss",
+        "He broke up with her"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When did Samson lose God’s Spirit and his strength?",
+      "answers": [
+        "When his hair was cut",
+        "When he defeated the lion",
+        "When he washed his hair with too much shampoo",
+        "When he went to sleep"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the Philistines do to Samson after capturing him?",
+      "answers": [
+        "They poked out his eyes and put him in prison",
+        "They made him king",
+        "They threw him into a lion's den",
+        "They made him join their army"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did Samson defeat the Philistines in the end?",
+      "answers": [
+        "He pushed down the pillars and collapsed their temple",
+        "He escaped and fought them again",
+        "He called an army to help him",
+        "He used another donkey's jawbone to attack the king"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot49",
+  "pageTitle": "OT 49 Quiz",
+  "lessonTitleText": "God Speaks to Samuel",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot49image.png",
+  "themeClass": "theme-purple",
+  "questions": [
+    {
+      "text": "What were Eli’s sons, Hophni and Phinehas, like?",
+      "answers": [
+        "They were wicked and did not honor the Lord",
+        "They were faithful priests",
+        "They were very tall and strong",
+        "They were identical twins"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When Eli warned his sons about their sin, what did they do?",
+      "answers": [
+        "They did not listen to him",
+        "They turned from their sins immediately",
+        "They ran away from the Tabernacle",
+        "They said, 'We'll think about it.'"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Where did Samuel sleep?",
+      "answers": [
+        "In the Tabernacle",
+        "At Eli’s house",
+        "Outside in the fields",
+        "In a tent outside the Tabernacle"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who called out to Samuel in the night?",
+      "answers": [
+        "The Lord God",
+        "Eli",
+        "Hophni",
+        "An angel"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who did Samuel think was calling him?",
+      "answers": [
+        "Eli",
+        "His mother",
+        "A priest",
+        "An angel"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How many times did Samuel run to Eli after hearing his name?",
+      "answers": [
+        "Three times",
+        "One time",
+        "Five times",
+        "Seven times"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Eli tell Samuel to say when God called again?",
+      "answers": [
+        "Speak, Lord, for your servant is listening",
+        "Please call me later",
+        "I am busy right now",
+        "Tell Eli instead"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What message did God give Samuel?",
+      "answers": [
+        "Eli’s sons would be punished and his family would no longer be priests",
+        "Israel would win many battles",
+        "Samuel would become king",
+        "Israel needed to go to war"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did Samuel feel the next morning?",
+      "answers": [
+        "He was afraid to tell Eli God’s message",
+        "He was sleepy because God kept waking him up",
+        "He was excited to share God's message",
+        "He was confused and thought he had been dreaming"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Eli say when he heard the message?",
+      "answers": [
+        "He is the Lord; let Him do what is best",
+        "That cannot be true",
+        "Why would God do this to me?",
+        "Samuel must be mistaken"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

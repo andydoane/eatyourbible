@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot45",
+  "pageTitle": "OT 45 Quiz",
+  "lessonTitleText": "Gideon",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot45image.png",
+  "themeClass": "theme-green",
+  "questions": [
+    {
+      "text": "What country conquered the Israelites?",
+      "answers": [
+        "Midian",
+        "Egypt",
+        "Philistia",
+        "Assyria"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why were the Israelites conquered by Midian?",
+      "answers": [
+        "They disobeyed God and worshiped false gods",
+        "They were too few in number",
+        "They forgot how to fight",
+        "Midian's gods were more powerful than the Lord"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What judge did God send to rescue Israel from the Midianites?",
+      "answers": [
+        "Gideon",
+        "Samson",
+        "Othniel",
+        "Ehud"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why didn’t Gideon think he could rescue Israel?",
+      "answers": [
+        "He felt unimportant, and his family was weak",
+        "He was too old",
+        "He didn’t know how to fight",
+        "He didn't know how to lead an army"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What two things did Gideon destroy at night?",
+      "answers": [
+        "The altar of Baal and the pole of Asherah",
+        "The city gates and walls",
+        "The Tower of Babel and the Ark of the Covenant",
+        "The king’s palace and throne"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What miracles did Gideon ask God to do with the fleece?",
+      "answers": [
+        "Make the wool wet and the ground dry, then the opposite",
+        "Turn the wool into gold",
+        "Make the wool disappear",
+        "Set the wool on fire"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why did God say Gideon had too many soldiers?",
+      "answers": [
+        "So Israel would know God won the battle, not their own strength",
+        "Because Israel's soldiers were wimps",
+        "The army was too noisy",
+        "Gideon didn't know how to lead an army"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did God shrink Gideon’s army down to 300 men?",
+      "answers": [
+        "He sent fearful men home and chose men based on how they drank water",
+        "He picked the tallest men",
+        "He chose only the strongest warriors",
+        "He selected a few men from each tribe of Israel"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What was the Israelites’ battle plan?",
+      "answers": [
+        "Split into groups, surround the enemy, break jars, and hold up torches",
+        "Charge straight into the camp",
+        "March around the Midianites for seven days like they did in Jericho",
+        "Pray for God to send fire from heaven"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did God cause the Midianite soldiers to do?",
+      "answers": [
+        "Panic and attack each other",
+        "Fall asleep",
+        "Go blind",
+        "Get sick and throw up"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

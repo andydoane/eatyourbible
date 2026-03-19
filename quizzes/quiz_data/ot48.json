@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot48",
+  "pageTitle": "OT 48 Quiz",
+  "lessonTitleText": "Samuel Is Born",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot48image.png",
+  "themeClass": "theme-blue",
+  "questions": [
+    {
+      "text": "What big problem did Hannah have?",
+      "answers": [
+        "She was unable to have children",
+        "She had no home",
+        "She had too many children",
+        "Her husband lost his job"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What promise did Hannah make to God?",
+      "answers": [
+        "If God gave her a son, she would give him back to serve Him",
+        "She would build another temple",
+        "She would pray every day",
+        "She would give away all her money"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Eli think when he saw Hannah praying silently?",
+      "answers": [
+        "He thought she was drunk",
+        "He thought she was sick",
+        "He thought she had a demon",
+        "He thought she was crazy"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Eli say to Hannah?",
+      "answers": [
+        "May God give you what you ask for",
+        "Go home and stop crying",
+        "God will never answer your prayer",
+        "Pray louder so I can hear you"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened after Hannah returned home?",
+      "answers": [
+        "God gave her a baby",
+        "She never had a baby",
+        "She died",
+        "He forgot all about her promise"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Hannah name her baby?",
+      "answers": [
+        "Samuel",
+        "David",
+        "Saul",
+        "Solomon"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When Samuel was old enough, what did Hannah do?",
+      "answers": [
+        "Brought him to serve with Eli at the Tabernacle",
+        "Sent him to school",
+        "Tried to hide him from God",
+        "Gave him to another family"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Hannah do each year?",
+      "answers": [
+        "Visited Samuel and brought him a robe she made",
+        "Wrote him letters",
+        "Brought him food every week",
+        "Begged Samuel to come back home"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What prayer of blessing did Eli pray for Hannah?",
+      "answers": [
+        "That God would give her more children",
+        "That she would become rich",
+        "That she would leave Samuel alone",
+        "That she would never be sad again"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How many more children did God give to Hannah?",
+      "answers": [
+        "Two sons and three daughters",
+        "Five sons",
+        "Zero",
+        "Seven daughters"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
