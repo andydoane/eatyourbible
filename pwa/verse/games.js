@@ -3754,6 +3754,11 @@ registerGame({
       };
 
       const mainBtn = document.createElement("button");
+      mainBtn.className = "carousel-main no-zoom";
+      mainBtn.type = "button";
+      mainBtn.disabled = !!st.animating;
+      mainBtn.textContent = chainCurrentChoice();
+      mainBtn.style.margin = "0";
 
       if (st.wrongChoice === chainCurrentChoice()){
         mainBtn.style.background = "#ffb3b3";
