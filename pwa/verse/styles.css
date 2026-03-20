@@ -2107,3 +2107,125 @@ text-wrap: balance;
     opacity: 0;
   }
 }
+
+/* =========================================================
+   Verse Chain — Pass 3 + Pass 4 effects
+   ========================================================= */
+
+.chain-source-hidden{
+  opacity: 0.18;
+}
+
+.chain-flight-clone{
+  position: fixed;
+  z-index: 12000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 18px;
+  border-radius: 999px;
+  background: white;
+  color: var(--purple);
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.25);
+  pointer-events: none;
+  transform: translate(0, 0) scale(1);
+  opacity: 1;
+  transition:
+    transform 360ms cubic-bezier(.2,.8,.2,1),
+    opacity 360ms ease;
+  will-change: transform, opacity;
+}
+
+.chain-flight-clone.chain-flight-pop{
+  opacity: 0;
+  transform: scale(1.35);
+  transition:
+    transform 180ms ease,
+    opacity 180ms ease;
+}
+
+.chain-flight-burst{
+  position: fixed;
+  z-index: 12001;
+  width: 18px;
+  height: 18px;
+  margin-left: -9px;
+  margin-top: -9px;
+  border-radius: 999px;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(255,255,255,0.98) 0%, rgba(255,255,255,0.65) 35%, rgba(255,255,255,0) 72%);
+  animation: chainFlightBurst 180ms ease-out forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes chainFlightBurst{
+  from{
+    transform: scale(0.4);
+    opacity: 1;
+  }
+  to{
+    transform: scale(5.2);
+    opacity: 0;
+  }
+}
+
+.chain-wrong-pop{
+  animation: chainWrongPop 240ms ease-out;
+}
+
+@keyframes chainWrongPop{
+  0%{
+    transform: scale(1);
+    opacity: 1;
+  }
+  40%{
+    transform: scale(1.14);
+    opacity: 1;
+  }
+  100%{
+    transform: scale(0.72);
+    opacity: 0.18;
+  }
+}
+
+.chain-wrong-burst{
+  position: fixed;
+  z-index: 12001;
+  width: 22px;
+  height: 22px;
+  margin-left: -11px;
+  margin-top: -11px;
+  border-radius: 999px;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(255,120,120,0.98) 0%, rgba(255,80,80,0.75) 38%, rgba(255,80,80,0) 74%);
+  animation: chainWrongBurst 240ms ease-out forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes chainWrongBurst{
+  from{
+    transform: scale(0.45);
+    opacity: 1;
+  }
+  to{
+    transform: scale(4.8);
+    opacity: 0;
+  }
+}
+
+.learn-layout.game-chain .learn-verse.chain-verse-shake{
+  animation: chainVerseShake 240ms ease-in-out;
+}
+
+@keyframes chainVerseShake{
+  0%   { transform: translateX(0); }
+  20%  { transform: translateX(-8px); }
+  40%  { transform: translateX(7px); }
+  60%  { transform: translateX(-6px); }
+  80%  { transform: translateX(4px); }
+  100% { transform: translateX(0); }
+}
