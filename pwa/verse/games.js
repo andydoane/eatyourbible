@@ -2151,6 +2151,12 @@ registerGame({
         if (!State.isSliding){
           btn.classList.add("spawn-in");
           btn.style.animationDelay = `${i * 90}ms`;
+
+          btn.addEventListener("animationend", (e) => {
+            if (e.animationName !== "bouncingWordSpawnIn") return;
+            btn.classList.remove("spawn-in");
+            btn.style.animationDelay = "";
+          }, { once: true });
         }
         btn.classList.add(colorSet[i]);
 
