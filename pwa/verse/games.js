@@ -1245,11 +1245,11 @@ function bouncingPulseStretch(mover, axis){
   if (!mover) return;
 
   if (axis === "x"){
-    mover.squashX = 1.18;
-    mover.squashY = 0.84;
+    mover.squashX = 1.32;
+    mover.squashY = 0.72;
   } else {
-    mover.squashX = 0.84;
-    mover.squashY = 1.18;
+    mover.squashX = 0.72;
+    mover.squashY = 1.32;
   }
 }
 
@@ -1328,8 +1328,8 @@ function bouncingStartMotion(fieldEl, btnRefs){
       if (bouncedX) bouncingPulseStretch(m, "x");
       if (bouncedY) bouncingPulseStretch(m, "y");
 
-      m.squashX += (1 - m.squashX) * 0.18;
-      m.squashY += (1 - m.squashY) * 0.18;
+      m.squashX += (1 - m.squashX) * 0.10;
+      m.squashY += (1 - m.squashY) * 0.10;
 
       if (ts - (m.lastTrailAt || 0) >= 90){
         bouncingDropTrail(fieldEl, m);
