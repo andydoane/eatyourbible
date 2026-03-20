@@ -5,7 +5,7 @@
   --card-bg: #ff00ff;
 
   /* 2) Presented-by (intro) screen */
-  --intro-bg: #ff00ff;e
+  --intro-bg: #ff00ff;
   --intro-text: #f2f2f2;
 
   /* 3) Main text colors */
@@ -20,7 +20,7 @@
   --question-bg: #f2f2f2;
   --question-text: #333333;
 
-  /* 5) “Next Question” / main buttons */
+  /* 5) "Next Question" / main buttons */
   --accent: #40b9c5;
   --accent-dark: #7f66c6;
   --primary-text: #f2f2f2;
