@@ -1632,7 +1632,7 @@ function runSuspenseVariant({ variant, questionBoxEl, answerBtns, done }) {
     const aPos = answerBtns.map(centerOf);
 
     if (variant === "magnifier") {
-      setSuspenseEmoji("🔍");
+      setSuspenseEmoji("🔍", { preserveTransform: true, preservePosition: true });
       const path = [qPos, aPos[0], aPos[1], aPos[2], aPos[3]];
       let idx = 0;
 
@@ -1650,7 +1650,7 @@ function runSuspenseVariant({ variant, questionBoxEl, answerBtns, done }) {
     }
 
     // pointerSweep: fast cycles, goes question -> down buttons -> question -> down ... etc.
-    setSuspenseEmoji("👉");
+    setSuspenseEmoji("👉", { preserveTransform: true, preservePosition: true });
     const path = [qPos, ...aPos, qPos, ...aPos, qPos, ...aPos, qPos];
     let idx = 0;
 
