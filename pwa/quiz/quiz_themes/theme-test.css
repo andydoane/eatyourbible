@@ -1,4 +1,30 @@
 :root.theme-test {
+
+  /* 4) Question area */
+  --question-bg: #333333;
+  --question-text: #f2f2f2;
+
+  /* 6) ✔ Answer Button Backgrounds */
+  --red: #ff00ff;
+  --red-text: #a05a2c;
+
+  --blue: #40b9c5;
+  --blue-text: #f2f2f2;
+
+  --yellow: #7f66c6;
+  --yellow-text: #f2f2f2;
+
+  --green: #a7cb6f;
+  --green-text: #f2f2f2;
+ 
+ 
+    /* 8)  Question page background */
+  --quiz-screen-bg: #ffc751;
+ 
+ 
+ 
+ 
+ 
   /* 1) Background of the whole page (blue Kahoot-y) */
   --bg-gradient-top: #ff00ff;
   --bg-gradient-bottom: #ff00ff;
@@ -16,21 +42,18 @@
   --title-main-text: #f2f2f2;
   --title-subtitle-text: #ffc751;
 
-  /* 4) Question area */
-  --question-bg: #f2f2f2;
-  --question-text: #333333;
 
-  /* 5) "Next Question" / main buttons */
+
+  /* 5) “Next Question” / main buttons */
   --accent: #40b9c5;
   --accent-dark: #7f66c6;
   --primary-text: #f2f2f2;
   --secondary-bg: #ffc751;
   --secondary-text: #333333;
 
-  /* ANDY CHECKED*/
-  /* 6) Answer Button Backgrounds */
-  --red: #ff5a51;
-  --red-text: #f2f2f2;
+  /* 6) ✔ Answer Button Backgrounds */
+  --red: #ff00ff;
+  --red-text: #a05a2c;
 
   --yellow: #ffc751;
   --yellow-text: #333333;
@@ -39,15 +62,15 @@
   --blue-text: #f2f2f2;
 
   --green: #a7cb6f;
-  --green-text: #f2f2f2;
+  --green-text: #333333;
 
   /* 7) Correct / incorrect feedback text */
   --feedback-correct-text: #a7cb6f;
   --feedback-incorrect-text: #ff5a51;
 
-  /* ANDY CHECKED*/
-  /* 8) Question page background */
-  --quiz-screen-bg: #333333;
+  
+  /* 8)  Question page background */
+  --quiz-screen-bg: #f2f2f2;
 
   /* 9) End screen backgrounds */
   --end-great-bg-top: #ffc751;
