@@ -791,11 +791,9 @@ nav#nav{
   --opt-c: var(--yellow, #d89e00);
   --opt-d: var(--green, #26890c);
 
-  /* Progress / timer bar */
-  --progress-track: var(--progress-track-bg, rgba(255,255,255,0.18));
-  --progress-high: var(--progress-fill-high, #3ddc84);
-  --progress-mid: var(--progress-fill-mid, #f4c542);
-  --progress-low: var(--progress-fill-low, #ff4d4d);
+  /* Intro screen */
+  --intro-screen-bg: var(--intro-bg, #7f66c6);
+  --intro-screen-text: var(--intro-text, #ffffff);
 }
 
 /* =========================================================
@@ -828,8 +826,8 @@ nav#nav{
 
 /* ---------- Creed-style Intro (for Quiz) ---------- */
 .quiz-intro {
-  background: #7f66c6; /* Creed purple */
-  color: #ffffff;     /* <-- FORCE WHITE TEXT */
+  background: var(--intro-screen-bg, #7f66c6);
+  color: var(--intro-screen-text, #ffffff);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -843,7 +841,7 @@ nav#nav{
 .quiz-intro .presented,
 .quiz-intro .site,
 .quiz-intro .hint {
-  color: #ffffff;
+  color: var(--intro-screen-text, #ffffff);
 }
 
 .quiz-intro img {
@@ -1813,7 +1811,7 @@ async function switchQuiz(quizId) {
     </div>
   `;
 
-  const slide = makeSlide(html, "#7f66c6");
+  const slide = makeSlide(html, "var(--intro-screen-bg, #7f66c6)");
 
   // IMPORTANT: attach behavior after the slide exists
   const goNext = () => {
