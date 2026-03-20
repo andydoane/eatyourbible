@@ -3525,9 +3525,8 @@ function chainAnimateCorrectChoice(btnEl, onDone){
     burst.style.top = `${Math.round(toRect.top + (toRect.height / 2))}px`;
     document.body.appendChild(burst);
 
-    verseArea.classList.add("chain-verse-hit");
     clone.style.opacity = "0";
-    clone.style.transform += " scale(1.1)";
+    verseArea.classList.add("chain-verse-hit");
 
     setTimeout(() => {
       verseArea.classList.remove("chain-verse-hit");
