@@ -3265,6 +3265,7 @@ function chainBuiltVerseNode(){
 
     const bookChip = document.createElement("div");
     bookChip.className = "chain-ref-chip";
+    bookChip.dataset.chainTarget = "book";
 
     const refChip = document.createElement("div");
     refChip.className = "chain-ref-chip";
@@ -3539,6 +3540,7 @@ function chainAnimateCorrectChoice(btnEl, onDone){
     return;
   }
 
+  const st = State.chainGame;
   const verseArea = document.querySelector(".learn-layout.game-chain .learn-verse");
   if (!verseArea){
     onDone();
@@ -3546,7 +3548,13 @@ function chainAnimateCorrectChoice(btnEl, onDone){
   }
 
   const fromRect = btnEl.getBoundingClientRect();
-  const toRect = verseArea.getBoundingClientRect();
+
+  let targetEl = verseArea;
+  if (st?.phase === "book"){
+    targetEl = document.querySelector('.chain-ref-chip[data-chain-target="book"]') || verseArea;
+  }
+
+  const toRect = targetEl.getBoundingClientRect();
 
   const clone = document.createElement("div");
   clone.className = "chain-flight-clone";
@@ -3623,10 +3631,10 @@ function chainAnimateCorrectChoice(btnEl, onDone){
     document.body.appendChild(burst);
 
     clone.style.opacity = "0";
-    verseArea.classList.add("chain-verse-hit");
+    targetEl.classList.add("chain-verse-hit");
 
     setTimeout(() => {
-      verseArea.classList.remove("chain-verse-hit");
+      targetEl.classList.remove("chain-verse-hit");
     }, 180);
 
     setTimeout(() => {
@@ -3714,25 +3722,35 @@ function chainChoose(word, btnEl){
     return;
   }
 
-  if (st.phase === "book"){
-    if (word === st.targetBook){
-      st.phase = "ref";
-      st.wrongChoice = null;
-      st.choices = chainMakeReferenceChoices(st.targetChapter, st.targetVerse);
-      chainSetRandomChoiceIndex();
-      render();
-      return;
-    }
-
+if (st.phase === "book"){
+  if (word === st.targetBook){
     st.animating = true;
-    chainAnimateWrongChoice(btnEl, () => {
+    st.wrongChoice = null;
+
+    chainAnimateCorrectChoice(btnEl, () => {
       const live = State.chainGame;
       if (!live) return;
+
+      live.phase = "ref";
+      live.choices = chainMakeReferenceChoices(live.targetChapter, live.targetVerse);
+      chainSetRandomChoiceIndex();
       live.animating = false;
-      chainShowWrongChoice(word);
+      render();
     });
+
+    render();
     return;
   }
+
+  st.animating = true;
+  chainAnimateWrongChoice(btnEl, () => {
+    const live = State.chainGame;
+    if (!live) return;
+    live.animating = false;
+    chainShowWrongChoice(word);
+  });
+  return;
+}
 
   if (st.phase === "ref"){
     const correctRef = `${st.targetChapter}:${st.targetVerse}`;
