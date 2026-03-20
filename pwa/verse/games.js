@@ -669,7 +669,7 @@ function bouncingBurstAt(fieldEl, x, y){
   const colors = ["#ffd54f", "#ff8a65", "#81c784", "#64b5f6", "#ffffff"];
   const particles = [];
 
-  for (let i = 0; i < 24; i++){
+  for (let i = 0; i < 48; i++){
     const angle = (Math.PI * 2 * i) / 24;
     const speed = 1.8 + Math.random() * 2.8;
     const life = 22 + Math.random() * 10;
@@ -1331,7 +1331,7 @@ function bouncingStartMotion(fieldEl, btnRefs){
       m.squashX += (1 - m.squashX) * 0.18;
       m.squashY += (1 - m.squashY) * 0.18;
 
-      if (ts - (m.lastTrailAt || 0) >= 90){
+      if (ts - (m.lastTrailAt || 0) >= 45){
         bouncingDropTrail(fieldEl, m);
         m.lastTrailAt = ts;
       }
@@ -2150,7 +2150,7 @@ registerGame({
         btn.textContent = choice;
         if (!State.isSliding){
           btn.classList.add("spawn-in");
-          btn.style.animationDelay = `${i * 70}ms`;
+          btn.style.animationDelay = `${i * 120}ms`;
         }
         btn.classList.add(colorSet[i]);
 
