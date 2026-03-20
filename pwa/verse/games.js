@@ -1331,7 +1331,7 @@ function bouncingStartMotion(fieldEl, btnRefs){
       m.squashX += (1 - m.squashX) * 0.18;
       m.squashY += (1 - m.squashY) * 0.18;
 
-      if (ts - (m.lastTrailAt || 0) >= 45){
+      if (ts - (m.lastTrailAt || 0) >= 70){
         bouncingDropTrail(fieldEl, m);
         m.lastTrailAt = ts;
       }
@@ -2150,7 +2150,7 @@ registerGame({
         btn.textContent = choice;
         if (!State.isSliding){
           btn.classList.add("spawn-in");
-          btn.style.animationDelay = `${i * 120}ms`;
+          btn.style.animationDelay = `${i * 90}ms`;
         }
         btn.classList.add(colorSet[i]);
 
