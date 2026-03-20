@@ -3526,7 +3526,8 @@ function chainAnimateCorrectChoice(btnEl, onDone){
     document.body.appendChild(burst);
 
     verseArea.classList.add("chain-verse-hit");
-    clone.classList.add("chain-flight-pop");
+    clone.style.opacity = "0";
+    clone.style.transform += " scale(1.1)";
 
     setTimeout(() => {
       verseArea.classList.remove("chain-verse-hit");
