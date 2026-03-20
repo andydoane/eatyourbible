@@ -3269,6 +3269,7 @@ function chainBuiltVerseNode(){
 
     const refChip = document.createElement("div");
     refChip.className = "chain-ref-chip";
+    refChip.dataset.chainTarget = "ref";
 
     const correctRef = `${st?.targetChapter}:${st?.targetVerse}`;
 
@@ -3552,6 +3553,8 @@ function chainAnimateCorrectChoice(btnEl, onDone){
   let targetEl = verseArea;
   if (st?.phase === "book"){
     targetEl = document.querySelector('.chain-ref-chip[data-chain-target="book"]') || verseArea;
+  } else if (st?.phase === "ref"){
+    targetEl = document.querySelector('.chain-ref-chip[data-chain-target="ref"]') || verseArea;
   }
 
   const toRect = targetEl.getBoundingClientRect();
@@ -3756,11 +3759,21 @@ if (st.phase === "book"){
     const correctRef = `${st.targetChapter}:${st.targetVerse}`;
 
     if (word === correctRef){
-      st.phase = "done";
-      st.done = true;
-      st.showRef = true;
+      st.animating = true;
       st.wrongChoice = null;
-      st.choices = [];
+
+      chainAnimateCorrectChoice(btnEl, () => {
+        const live = State.chainGame;
+        if (!live) return;
+
+        live.phase = "done";
+        live.done = true;
+        live.showRef = true;
+        live.choices = [];
+        live.animating = false;
+        render();
+      });
+
       render();
       return;
     }
