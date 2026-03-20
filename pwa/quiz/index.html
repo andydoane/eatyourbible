@@ -244,6 +244,41 @@
     }
     .secondary-btn:active{ transform: scale(0.99); }
 
+.dialog-cancel-btn{
+  height: 50px;
+  width: 100%;
+  border: 2px solid rgba(255,255,255,0.14);
+  border-radius: 16px;
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 18px;
+  background: #444444;
+  color: #f2f2f2;
+  cursor: pointer;
+}
+
+.dialog-cancel-btn:active{
+  transform: scale(0.99);
+}
+
+.dialog-quit-btn{
+  height: 56px;
+  width: 100%;
+  border: none;
+  border-radius: 18px;
+  font-family: inherit;
+  font-weight: 900;
+  font-size: 20px;
+  background: #ff5a51;
+  color: #f2f2f2;
+  box-shadow: 0 10px 22px rgba(0,0,0,0.25);
+  cursor: pointer;
+}
+
+.dialog-quit-btn:active{
+  transform: scale(0.985);
+}
+
     /* Question + answers */
     .question{
       margin: 0;
@@ -407,17 +442,17 @@
     }
 
     /* Small toast / overlay */
-.overlay{
-  position:fixed;
-  inset:0;
-  background: rgba(0,0,0,0.95); /* MUCH darker */
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index: 10000;
-    opacity: 0;
-  transition: opacity 250ms ease;
-}
+    .overlay{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,0.80);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index: 10000;
+      opacity: 0;
+      transition: opacity 250ms ease;
+    }
     
 
     .overlay.show{ 
@@ -570,10 +605,11 @@ nav#nav{
     .dialog{
       width:min(420px, 100%);
       border-radius: 22px;
-      background: rgba(20,20,20,0.88);
-      border: 1px solid rgba(255,255,255,0.16);
+      background: #333333;
+      border: 1px solid rgba(255,255,255,0.10);
       box-shadow: 0 18px 50px rgba(0,0,0,0.45);
       padding: 18px;
+      color: #f2f2f2;
     }
     .dialog h3{
       margin:0 0 8px;
@@ -892,8 +928,8 @@ nav#nav{
       <h3 id="overlayTitle">Quit quiz?</h3>
       <p id="overlayText">Are you sure you want to go back to the start?</p>
       <div class="row">
-        <button id="overlayCancel" class="secondary-btn" type="button">Cancel</button>
-        <button id="overlayOk" class="primary-btn" type="button">Quit</button>
+        <button id="overlayCancel" class="dialog-cancel-btn" type="button">Cancel</button>
+        <button id="overlayOk" class="dialog-quit-btn" type="button">Quit</button>
       </div>
     </div>
   </div>
