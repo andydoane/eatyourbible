@@ -927,6 +927,60 @@ border-radius: 18px;
   animation: bouncingVerseShake 240ms ease-in-out;
 }
 
+.bouncing-mode-stage{
+  position: relative;
+  width: 100%;
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 20px 28px;
+  box-sizing: border-box;
+}
+
+.bouncing-mode-wrap{
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.bouncing-mode-card{
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.bouncing-mode-emoji{
+  font-size: 40px;
+  line-height: 1;
+}
+
+.bouncing-mode-title-top{
+  font-size: clamp(20px, 3vw, 28px);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: #ffffff;
+}
+
+.bouncing-mode-title{
+  font-size: clamp(28px, 4vw, 40px);
+  font-weight: 900;
+  color: #ffffff;
+}
+
+.bouncing-mode-subtext{
+  max-width: 540px;
+  font-size: clamp(16px, 2.3vw, 20px);
+  line-height: 1.35;
+  color: rgba(255,255,255,0.95);
+}
+
 @keyframes bouncingWrongBurst{
   from{
     transform: scale(0.45);
