@@ -45,7 +45,7 @@
     }
 
     /* Keep page hidden while theme CSS swaps (same idea as Andy engine) */
-    .theme-loading body{ opacity:0; }
+    .theme-loading body{ opacity:1; }
 
     /* Keep the title screen stable while switching quizzes from the picker */
     html.title-refreshing,
@@ -1069,35 +1069,44 @@ const QUIZ_LIST = [
   /***********************
    * Theme loader (same convention as Andy engine)
    ***********************/
-  function applyTheme(themeClass) {
-    const themeLink = document.getElementById("theme-css");
-    if (!themeClass) return;
+async function applyTheme(themeClass) {
+  const themeLink = document.getElementById("theme-css");
+  if (!themeClass) return;
 
-    document.documentElement.classList.add("theme-loading");
+  const root = document.documentElement;
+  root.classList.add("theme-loading");
 
-    if (themeLink) {
-      const newHref = `quiz_themes/${themeClass}.css`;
-      if (themeLink.href.endsWith(newHref)) {
-        setThemeClass(themeClass);
-        document.documentElement.classList.remove("theme-loading");
-        return;
-      }
-
-      themeLink.onload = () => {
-        setThemeClass(themeClass);
-        document.documentElement.classList.remove("theme-loading");
-      };
-      themeLink.onerror = () => {
-        console.warn("Theme CSS failed to load:", newHref);
-        setThemeClass(themeClass);
-        document.documentElement.classList.remove("theme-loading");
-      };
-      themeLink.href = newHref;
-    } else {
-      setThemeClass(themeClass);
-      document.documentElement.classList.remove("theme-loading");
-    }
+  if (!themeLink) {
+    setThemeClass(themeClass);
+    root.classList.remove("theme-loading");
+    return;
   }
+
+  const newHref = `quiz_themes/${themeClass}.css`;
+
+  if (themeLink.href.endsWith(newHref)) {
+    setThemeClass(themeClass);
+    root.classList.remove("theme-loading");
+    return;
+  }
+
+  await new Promise((resolve) => {
+    themeLink.onload = () => {
+      setThemeClass(themeClass);
+      root.classList.remove("theme-loading");
+      resolve();
+    };
+
+    themeLink.onerror = () => {
+      console.warn("Theme CSS failed to load:", newHref);
+      setThemeClass(themeClass);
+      root.classList.remove("theme-loading");
+      resolve();
+    };
+
+    themeLink.href = newHref;
+  });
+}
 
   function setThemeClass(themeClass) {
     const el = document.documentElement;
@@ -1139,7 +1148,7 @@ const QUIZ_LIST = [
 
     document.title = PAGE_TITLE;
 
-    applyTheme(THEME_CLASS);
+    await applyTheme(THEME_CLASS);
   }
 
   /***********************
