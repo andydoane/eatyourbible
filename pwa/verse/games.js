@@ -3831,13 +3831,24 @@ registerGame({
       coachActions.innerHTML = "";
 
     if (st.done){
+      const doneWrap = document.createElement("div");
+      doneWrap.className = "chain-done";
+
       const doneMsg = document.createElement("div");
-      doneMsg.className = "small";
-      doneMsg.style.fontWeight = "900";
-      doneMsg.style.textAlign = "center";
-      doneMsg.style.maxWidth = "520px";
-      doneMsg.textContent = "Great job! You finished the verse! Tap Back below to go back to Practice Games.";
-      coachActions.appendChild(doneMsg);
+      doneMsg.className = "chain-done-text";
+      doneMsg.textContent = "Great job! You finished the verse!";
+
+      const practiceBtn = document.createElement("button");
+      practiceBtn.className = "chain-done-btn no-zoom";
+      practiceBtn.type = "button";
+      practiceBtn.textContent = "Practice Games";
+      practiceBtn.onclick = () => {
+        go(Screen.PRACTICE);
+      };
+
+      doneWrap.appendChild(doneMsg);
+      doneWrap.appendChild(practiceBtn);
+      coachActions.appendChild(doneWrap);
       return;
     }
 
