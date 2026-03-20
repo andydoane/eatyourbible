@@ -1992,3 +1992,53 @@ text-wrap: balance;
   35%{ opacity: 0.45; }
   100%{ opacity: 1; }
 }
+
+/* =========================================================
+   Verse Chain — active game layout
+   Pass 2: move verse higher + lower carousel for more travel space
+   ========================================================= */
+
+.learn-layout.game-chain {
+  gap: 0;
+}
+
+.learn-layout.game-chain .learn-ref {
+  display: none;
+}
+
+.learn-layout.game-chain .learn-verse {
+  flex: 0 0 auto;
+  min-height: 112px;
+  padding-top: 12px;
+  padding-bottom: 8px;
+}
+
+.learn-layout.game-chain .learn-coach {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding-top: 8px;
+  padding-bottom: calc(18px + env(safe-area-inset-bottom));
+}
+
+.learn-layout.game-chain #gameCoachTitle {
+  min-height: 0;
+  margin-bottom: 6px;
+}
+
+.learn-layout.game-chain #gameCoachActions {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding-top: 12px;
+}
+
+.learn-layout.game-chain .game-carousel-row {
+  margin-top: auto;
+  padding-top: 18px;
+}
+
+.learn-layout.game-chain .carousel-main {
+  min-height: 56px;
+}
