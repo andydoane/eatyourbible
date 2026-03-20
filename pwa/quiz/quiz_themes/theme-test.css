@@ -4,6 +4,10 @@
   --question-bg: #333333;
   --question-text: #f2f2f2;
 
+  /* 5) Intro screen */
+  --intro-bg: #ffc751;
+  --intro-text: #a7cb6f;
+
   /* 6) ✔ Answer Buttons */
   --red: #ff5a51;
   --red-text: #f2f2f2;
@@ -23,7 +27,6 @@
   --progress-fill-mid: #ffa351;
   --progress-fill-low: #ff5a51;
 
- 
     /* 8)  Whole page background */
   --quiz-screen-bg: #ffc751;
 
