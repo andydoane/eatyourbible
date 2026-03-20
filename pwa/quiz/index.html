@@ -1821,7 +1821,7 @@ async function switchQuiz(quizId) {
   await loadQuizFromJson(`quiz_data/${quizId}.json`);
 
   // 5) show the title screen again (now it will display the new quiz title / count)
-  showTitle();
+  showTitle("none");
 }
 
    function showIntro() {
@@ -1874,7 +1874,7 @@ async function switchQuiz(quizId) {
 }
 
 
-  function showTitle() {
+function showTitle(direction = "forward") {
     setNavVisible(false);
   const hasSelectedQuiz = !!(new URLSearchParams(window.location.search).get("q"));
   const hasQuestions = Array.isArray(QUESTIONS) && QUESTIONS.length > 0;
@@ -1968,7 +1968,7 @@ picker.addEventListener("change", async () => {
   }
 });
 
-    pushSlide(slide, "forward", false);
+    pushSlide(slide, direction, false);
   }
 
   function showQuestion(direction="forward") {
