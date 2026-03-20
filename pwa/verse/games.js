@@ -3283,6 +3283,7 @@ function chainChooseMode(mode){
   st.choiceIndex = 0;
   st.done = false;
   st.wrongChoice = null;
+  st.animating = false;
   st.phase = "words";
   st.showRef = false;
   st.targetBook = meta.book;
@@ -3389,19 +3390,20 @@ function startVerseChainGame(){
     targetBook: meta.book,
     targetChapter: meta.chapter,
     targetVerse: meta.verse,
+    animating: false,
   };
 }
 
 function chainPrevChoice(){
   const st = State.chainGame;
-  if (!st || st.done || !st.choices.length) return;
+  if (!st || st.done || st.animating || !st.choices.length) return;
   st.choiceIndex = (st.choiceIndex - 1 + st.choices.length) % st.choices.length;
   render();
 }
 
 function chainNextChoice(){
   const st = State.chainGame;
-  if (!st || st.done || !st.choices.length) return;
+  if (!st || st.done || st.animating || !st.choices.length) return;
   st.choiceIndex = (st.choiceIndex + 1) % st.choices.length;
   render();
 }
@@ -3412,9 +3414,69 @@ function chainCurrentChoice(){
   return st.choices[st.choiceIndex];
 }
 
-function chainChoose(word){
+function chainAnimateCorrectChoice(btnEl, onDone){
+  if (!btnEl){
+    onDone();
+    return;
+  }
+
+  const verseArea = document.querySelector(".learn-layout.game-chain .learn-verse");
+  if (!verseArea){
+    onDone();
+    return;
+  }
+
+  const fromRect = btnEl.getBoundingClientRect();
+  const toRect = verseArea.getBoundingClientRect();
+
+  const clone = document.createElement("div");
+  clone.className = "chain-flight-clone";
+  clone.textContent = btnEl.textContent || "";
+
+  clone.style.left = `${fromRect.left}px`;
+  clone.style.top = `${fromRect.top}px`;
+  clone.style.width = `${fromRect.width}px`;
+  clone.style.height = `${fromRect.height}px`;
+
+  document.body.appendChild(clone);
+
+  btnEl.classList.add("chain-source-hidden");
+
+  const targetX = (toRect.left + (toRect.width / 2)) - (fromRect.left + (fromRect.width / 2));
+  const targetY = (toRect.top + (toRect.height / 2)) - (fromRect.top + (fromRect.height / 2));
+
+  requestAnimationFrame(() => {
+    clone.style.transform = `translate(${Math.round(targetX)}px, ${Math.round(targetY)}px) scale(0.42)`;
+    clone.style.opacity = "0.92";
+  });
+
+  setTimeout(() => {
+    const burst = document.createElement("div");
+    burst.className = "chain-flight-burst";
+    burst.style.left = `${Math.round(toRect.left + (toRect.width / 2))}px`;
+    burst.style.top = `${Math.round(toRect.top + (toRect.height / 2))}px`;
+    document.body.appendChild(burst);
+
+    clone.classList.add("chain-flight-pop");
+
+    setTimeout(() => {
+      clone.remove();
+      burst.remove();
+      onDone();
+    }, 180);
+  }, 360);
+}
+
+function chainNextChoice(){
   const st = State.chainGame;
-  if (!st || st.done) return;
+  if (!st || st.done || st.animating || !st.choices.length) return;
+  st.choiceIndex = (st.choiceIndex + 1) % st.choices.length;
+  render();
+}
+
+function chainChoose(word, btnEl){
+  const st = State.chainGame;
+  if (!st || st.done || st.animating) return;
 
   if (st.phase === "words"){
     const correctTokenIndex = st.wordTokenIndices[st.builtCount];
@@ -3423,20 +3485,30 @@ function chainChoose(word){
     const correctWord = tokens[correctTokenIndex].text;
 
     if (word === correctWord){
-      st.builtCount += 1;
+      st.animating = true;
       st.wrongChoice = null;
 
-      if (st.builtCount >= st.wordTokenIndices.length){
-        st.phase = "book";
-        st.choices = chainMakeBookChoices(st.targetBook);
+      chainAnimateCorrectChoice(btnEl, () => {
+        const live = State.chainGame;
+        if (!live) return;
+
+        live.builtCount += 1;
+        live.animating = false;
+
+        if (live.builtCount >= live.wordTokenIndices.length){
+          live.phase = "book";
+          live.choices = chainMakeBookChoices(live.targetBook);
+          chainSetRandomChoiceIndex();
+          render();
+          return;
+        }
+
+        const nextTokenIndex = live.wordTokenIndices[live.builtCount];
+        live.choices = chainMakeChoices(live.wordTokenIndices, nextTokenIndex);
         chainSetRandomChoiceIndex();
         render();
-        return;
-      }
+      });
 
-      const nextTokenIndex = st.wordTokenIndices[st.builtCount];
-      st.choices = chainMakeChoices(st.wordTokenIndices, nextTokenIndex);
-      chainSetRandomChoiceIndex();
       render();
       return;
     }
@@ -3551,6 +3623,7 @@ registerGame({
 
       const prevBtn = document.createElement("button");
       prevBtn.className = "carousel-arrow no-zoom";
+      prevBtn.disabled = !!st.animating;
       prevBtn.type = "button";
       prevBtn.innerHTML = SVG_BACK;
       prevBtn.onclick = (e) => {
@@ -3560,6 +3633,7 @@ registerGame({
 
       const mainBtn = document.createElement("button");
       mainBtn.className = "carousel-main no-zoom";
+      mainBtn.disabled = !!st.animating;
       mainBtn.type = "button";
       mainBtn.textContent = chainCurrentChoice();
       mainBtn.style.margin = "0";
@@ -3572,11 +3646,12 @@ registerGame({
 
       mainBtn.onclick = (e) => {
         e.stopPropagation();
-        chainChoose(chainCurrentChoice());
+        chainChoose(chainCurrentChoice(), mainBtn);
       };
 
       const nextBtn = document.createElement("button");
       nextBtn.className = "carousel-arrow no-zoom";
+      nextBtn.disabled = !!st.animating;
       nextBtn.type = "button";
       nextBtn.innerHTML = SVG_FORWARD;
       nextBtn.onclick = (e) => {
