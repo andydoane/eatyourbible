@@ -27,12 +27,25 @@
        Phone-only, full-screen, slide-left app shell
        Inspired by Ten Commandments / Creed apps (solid backgrounds, no cards)
        ========================================================= */
-    :root{
-      --navH: 70px;
-      --safeB: env(safe-area-inset-bottom);
-      --safeT: env(safe-area-inset-top);
-      --tap: 44px;
-    }
+:root{
+  --app-bg: var(--quiz-screen-bg, var(--quiz-bg, #222));
+  --bg-solid: var(--quiz-screen-bg-solid, #222);
+
+  --text-primary: var(--primary-text, var(--title-main-text, #fff));
+
+  --btn-primary-bg: var(--accent, rgba(255,255,255,0.92));
+  --btn-primary-text: var(--accent-text, #111);
+
+  --opt-a: var(--red, #e21b3c);
+  --opt-b: var(--blue, #1368ce);
+  --opt-c: var(--yellow, #d89e00);
+  --opt-d: var(--green, #26890c);
+
+  --opt-a-text: var(--red-text, rgba(255,255,255,0.98));
+  --opt-b-text: var(--blue-text, rgba(255,255,255,0.98));
+  --opt-c-text: var(--yellow-text, rgba(255,255,255,0.98));
+  --opt-d-text: var(--green-text, rgba(255,255,255,0.98));
+}
 
     html, body{
       height:100%;
