@@ -3427,48 +3427,6 @@ function chainAnimateCorrectChoice(btnEl, onDone){
   }, 360);
 }
 
-function chainAnimateWrongChoice(btnEl, onDone){
-  const verseArea = document.querySelector(".learn-layout.game-chain .learn-verse");
-
-  if (!btnEl){
-    if (verseArea){
-      verseArea.classList.add("chain-verse-shake");
-      setTimeout(() => {
-        verseArea.classList.remove("chain-verse-shake");
-        onDone();
-      }, 260);
-    } else {
-      onDone();
-    }
-    return;
-  }
-
-  const rect = btnEl.getBoundingClientRect();
-
-  const burst = document.createElement("div");
-  burst.className = "chain-wrong-burst";
-  burst.style.left = `${Math.round(rect.left + (rect.width / 2))}px`;
-  burst.style.top = `${Math.round(rect.top + (rect.height / 2))}px`;
-  document.body.appendChild(burst);
-
-  btnEl.classList.add("chain-wrong-pop");
-
-  if (verseArea){
-    verseArea.classList.add("chain-verse-shake");
-  }
-
-  setTimeout(() => {
-    burst.remove();
-    btnEl.classList.remove("chain-wrong-pop");
-
-    if (verseArea){
-      verseArea.classList.remove("chain-verse-shake");
-    }
-
-    onDone();
-  }, 260);
-}
-
 function startVerseChainGame(){
   const wordTokenIndices = chainWordTokenIndices();
   const meta = chainVerseMetaFromId(VERSE_ID);
