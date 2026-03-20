@@ -2045,7 +2045,7 @@ function screenGame(idx){
   const gameLayoutClass =
     State.activeGame === "tower" ? "game-tower" :
     (State.activeGame === "scramble" && State.scrambleGame?.done) ? "game-scramble-result" :
-    (State.activeGame === "scramble" && !State.scrambleGame?.mode) ? "game-scramble-mode" :
+    (State.activeGame === "scramble" && !State.scrambleGame?.mode) ? "game-foodslice-mode" :
     (State.activeGame === "scramble" || State.activeGame === "bouncing" || State.activeGame === "traffic") ? "game-scramble" :
     (State.activeGame === "chain" && !State.chainGame?.mode) ? "game-foodslice-mode" :
     (State.activeGame === "chain") ? "game-chain" :
