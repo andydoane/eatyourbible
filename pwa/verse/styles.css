@@ -706,7 +706,7 @@ border-radius: 18px;
 
 .bouncing-word.spawn-in{
   opacity: 0;
-  animation: bouncingWordSpawnIn 0.82s cubic-bezier(.16,1,.3,1) forwards;
+  animation: bouncingWordSpawnIn 1.28s cubic-bezier(.16,1,.3,1) forwards;
   animation-fill-mode: both;
 }
 
@@ -717,30 +717,31 @@ border-radius: 18px;
 
 .bouncing-trail-dot{
   position: absolute;
-  width: 12px;
-  height: 12px;
+  width: 18px;
+  height: 18px;
   border-radius: 999px;
   pointer-events: none;
   opacity: 0;
   z-index: 1;
-  transform: scale(0.5);
+  transform: scale(0.6);
+  filter: blur(1px);
   will-change: transform, opacity;
 }
 
 .bouncing-trail-dot.trail-live{
-  animation: bouncingTrailFade 420ms linear forwards;
+  animation: bouncingTrailFade 900ms linear forwards;
 }
 
 .bouncing-trail-dot.trail-color-1{
-  background: rgba(255,90,81,0.55);
+  background: rgba(255,90,81,0.82);
 }
 
 .bouncing-trail-dot.trail-color-2{
-  background: rgba(64,185,197,0.55);
+  background: rgba(64,185,197,0.82);
 }
 
 .bouncing-trail-dot.trail-color-3{
-  background: rgba(127,102,198,0.55);
+  background: rgba(127,102,198,0.82);
 }
 
 .scramble-mode-wrap{
@@ -1027,15 +1028,19 @@ border-radius: 18px;
 @keyframes bouncingWordSpawnIn{
   0%{
     opacity: 0;
-    transform: rotate(var(--rot)) translateY(10px) scale(0.92);
+    transform: rotate(var(--rot)) translateY(16px) scale(0.94);
   }
-  45%{
-    opacity: 0.82;
-    transform: rotate(var(--rot)) translateY(3px) scale(0.985);
+  35%{
+    opacity: 0.28;
+    transform: rotate(var(--rot)) translateY(10px) scale(0.965);
   }
-  75%{
-    opacity: 1;
-    transform: rotate(var(--rot)) translateY(0) scale(1.01);
+  65%{
+    opacity: 0.72;
+    transform: rotate(var(--rot)) translateY(4px) scale(0.99);
+  }
+  85%{
+    opacity: 0.94;
+    transform: rotate(var(--rot)) translateY(1px) scale(1.005);
   }
   100%{
     opacity: 1;
