@@ -3638,7 +3638,6 @@ function chainChoose(word, btnEl){
       chainShowWrongChoice(word);
     });
 
-    render();
     return;
   }
 
@@ -3659,7 +3658,6 @@ function chainChoose(word, btnEl){
       live.animating = false;
       chainShowWrongChoice(word);
     });
-    render();
     return;
   }
 
@@ -3683,7 +3681,6 @@ function chainChoose(word, btnEl){
       live.animating = false;
       chainShowWrongChoice(word);
     });
-    render();
     return;
   }
 }
