@@ -2261,6 +2261,40 @@ text-wrap: balance;
   border: 2px dashed rgba(255,255,255,0.20);
 }
 
+.chain-done{
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.chain-done-text{
+  font-size: 20px;
+  font-weight: 900;
+  text-align: center;
+  max-width: 520px;
+}
+
+.chain-done-btn{
+  min-height: 44px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 999px;
+  background: white;
+  color: var(--purple);
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 900;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.25);
+  cursor: pointer;
+}
+
+.chain-done-btn:active{
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.25);
+}
+
 .chain-wrong-pop{
   animation: chainWrongPop 240ms ease-out;
 }
