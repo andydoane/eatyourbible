@@ -1983,6 +1983,51 @@ function scrambleChoose(choice, btnEl, fieldEl){
   });
 }
 
+function bouncingRenderModeSelect(stage, st, gameRoot){
+  stage.innerHTML = `
+    <div class="bouncing-mode-stage">
+      <div class="bouncing-mode-wrap">
+        <div class="bouncing-mode-card">
+          <div class="bouncing-mode-emoji">🏀</div>
+          <div class="bouncing-mode-title-top">Choose a Mode</div>
+          <div class="bouncing-mode-title">Bouncing Words</div>
+
+          <div class="bouncing-mode-subtext">
+            Tap the moving words in the correct order to build the verse.
+          </div>
+
+          <button class="carousel-main no-zoom" id="bouncingModeEasy">Easy</button>
+          <button class="carousel-main no-zoom" id="bouncingModeMedium">Medium</button>
+          <button class="carousel-main no-zoom" id="bouncingModeHard">Hard</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const btnEasy = stage.querySelector("#bouncingModeEasy");
+  const btnMedium = stage.querySelector("#bouncingModeMedium");
+  const btnHard = stage.querySelector("#bouncingModeHard");
+
+  if (btnEasy) btnEasy.onclick = () => bouncingChooseMode("easy");
+  if (btnMedium) btnMedium.onclick = () => bouncingChooseMode("medium");
+  if (btnHard) btnHard.onclick = () => bouncingChooseMode("hard");
+
+  const titleEl = gameRoot ? gameRoot.querySelector("#gameCoachTitle") : null;
+  const actionsEl = gameRoot ? gameRoot.querySelector("#gameCoachActions") : null;
+
+  if (titleEl){
+    titleEl.textContent = "Choose Difficulty";
+  }
+
+  if (actionsEl){
+    actionsEl.innerHTML = `
+      <div class="tower-status-line">
+        Easy = normal play. Medium = wrong tap removes 2 words. Hard = wrong tap removes all words.
+      </div>
+    `;
+  }
+}
+
 registerGame({
   id: "bouncing",
   title: "Bouncing Words",
@@ -1993,7 +2038,11 @@ registerGame({
     }
 
     const st = State.bouncingGame;
+    if (!st) return;
+
     const gameLayout = stage.closest(".learn-layout");
+    const coachTitle = gameLayout?.querySelector("#gameCoachTitle");
+    const coachActions = gameLayout?.querySelector("#gameCoachActions");
 
     bouncingStopMotion();
     stage.innerHTML = "";
@@ -2013,9 +2062,6 @@ registerGame({
     verseBox.style.textAlign = "center";
     verseBox.appendChild(bouncingBuiltVerseNode());
     stage.appendChild(verseBox);
-
-    const coachTitle = gameLayout?.querySelector("#gameCoachTitle");
-    const coachActions = gameLayout?.querySelector("#gameCoachActions");
 
     if (coachTitle) coachTitle.textContent = "";
 
