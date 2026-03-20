@@ -47,6 +47,17 @@
     /* Keep page hidden while theme CSS swaps (same idea as Andy engine) */
     .theme-loading body{ opacity:0; }
 
+    /* Keep the title screen stable while switching quizzes from the picker */
+    html.title-refreshing,
+    html.title-refreshing body,
+    html.title-refreshing #app{
+      background: #f2f2f2 !important;
+    }
+
+    html.title-refreshing.theme-loading body{
+      opacity: 1 !important;
+    }
+    
     #app{
       position:fixed;
       inset:0;
@@ -1094,6 +1105,14 @@ const QUIZ_LIST = [
     el.classList.add(themeClass);
   }
 
+  function freezeTitleRefresh() {
+    document.documentElement.classList.add("title-refreshing");
+  }
+
+  function unfreezeTitleRefresh() {
+    document.documentElement.classList.remove("title-refreshing");
+  }
+
   /***********************
    * Globals filled from JSON
    ***********************/
@@ -1802,7 +1821,7 @@ function stopRewardAnimations() {
   /***********************
    * Screens
    ***********************/
-  
+
 async function switchQuiz(quizId) {
   // 1) stop anything in progress
   stopTimer();
@@ -1817,11 +1836,26 @@ async function switchQuiz(quizId) {
   url.searchParams.set("q", quizId);
   history.replaceState(null, "", url.toString());
 
-  // 4) load the new quiz JSON
-  await loadQuizFromJson(`quiz_data/${quizId}.json`);
+  // 4) keep the title screen shell stable while the new theme loads
+  freezeTitleRefresh();
 
-  // 5) show the title screen again (now it will display the new quiz title / count)
-  showTitle("none");
+  try {
+    // 5) load the new quiz JSON
+    await loadQuizFromJson(`quiz_data/${quizId}.json`);
+
+    // 6) refresh the title screen in place (no slide animation)
+    showTitle("none");
+
+    // 7) wait until the new title screen has painted, then release the freeze
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        unfreezeTitleRefresh();
+      });
+    });
+  } catch (err) {
+    unfreezeTitleRefresh();
+    throw err;
+  }
 }
 
    function showIntro() {
