@@ -1230,8 +1230,10 @@ function bouncingStartMotion(fieldEl, btnRefs){
       const minY = padY;
       const maxY = Math.max(minY, fieldH - m.h - padY);
 
-      m.x += m.vx;
-      m.y += m.vy;
+      const speedMult = bouncingSpeedMultiplier(st);
+
+      m.x += m.vx * speedMult;
+      m.y += m.vy * speedMult;
 
       if (m.x <= minX){
         m.x = minX;
@@ -1268,6 +1270,7 @@ function startBouncingWordsGame(){
 
   State.bouncingGame = {
     wordTokenIndices,
+    mode: null,
     builtCount: 0,
     choices: [],
     positions: [],
@@ -1306,6 +1309,164 @@ function bouncingElapsedMs(){
   return (st.endedAt || performance.now()) - st.startedAt;
 }
 
+function bouncingChooseMode(mode){
+  const st = State.bouncingGame;
+  if (!st) return;
+
+  st.mode = mode;
+  st.builtCount = 0;
+  st.choices = [];
+  st.positions = [];
+  st.done = false;
+  st.wrongChoice = null;
+  st.phase = "words";
+  st.showRef = false;
+  st.score = 0;
+  st.wrongGuesses = 0;
+  st.startedAt = performance.now();
+  st.endedAt = 0;
+  st.lastLayoutIndex = -1;
+
+  bouncingStopMotion();
+  bouncingNextChoices();
+  render();
+}
+
+function bouncingRenderModeSelect(stage, st, gameRoot){
+  stage.innerHTML = "";
+
+  const titleEl = gameRoot ? gameRoot.querySelector("#gameCoachTitle") : null;
+  const actionsEl = gameRoot ? gameRoot.querySelector("#gameCoachActions") : null;
+
+  if (titleEl){
+    titleEl.textContent = "";
+  }
+
+  if (!actionsEl) return;
+
+  actionsEl.innerHTML = `
+    <div class="scramble-mode-wrap">
+      <div class="scramble-mode-card">
+        <div class="scramble-mode-emoji">🏀</div>
+        <div class="scramble-mode-title-top">Choose a Mode</div>
+        <div class="scramble-mode-title">Bouncing Words</div>
+
+        <div class="scramble-mode-subtext">
+          Tap the moving words in the correct order to build the verse.
+        </div>
+
+        <button class="carousel-main no-zoom" id="bouncingModeEasy">Easy</button>
+        <button class="carousel-main no-zoom" id="bouncingModeMedium">Medium</button>
+        <button class="carousel-main no-zoom" id="bouncingModeHard">Hard</button>
+
+        <div class="scramble-mode-subtext scramble-mode-notes">
+          Easy = wrong answers do not remove words.<br>
+          Medium = wrong answers remove 2 completed words and speed increases.<br>
+          Hard = wrong answers remove all completed words and speed increases more.
+        </div>
+      </div>
+    </div>
+  `;
+
+  const btnEasy = gameRoot.querySelector("#bouncingModeEasy");
+  const btnMedium = gameRoot.querySelector("#bouncingModeMedium");
+  const btnHard = gameRoot.querySelector("#bouncingModeHard");
+
+  if (btnEasy) btnEasy.onclick = () => bouncingChooseMode("easy");
+  if (btnMedium) btnMedium.onclick = () => bouncingChooseMode("medium");
+  if (btnHard) btnHard.onclick = () => bouncingChooseMode("hard");
+}
+
+function bouncingApplyWrongPenalty(){
+  const st = State.bouncingGame;
+  if (!st) return false;
+  if (st.phase !== "words") return false;
+
+  const beforeBuilt = st.builtCount;
+  const wordGoal = st.wordTokenIndices?.length || 0;
+
+  if (st.mode === "easy"){
+    return false;
+  }
+
+  if (st.mode === "medium"){
+    st.builtCount = Math.max(0, st.builtCount - 2);
+  } else if (st.mode === "hard"){
+    st.builtCount = 0;
+  } else {
+    return false;
+  }
+
+  const changed = st.builtCount !== beforeBuilt;
+
+  if (st.builtCount < wordGoal){
+    st.phase = "words";
+  }
+
+  return changed;
+}
+
+function bouncingAnimateWrongChoice(btnEl, onDone){
+  const verseArea = document.querySelector(".learn-layout .learn-verse");
+
+  if (!btnEl){
+    if (verseArea){
+      verseArea.classList.add("bouncing-verse-shake");
+      setTimeout(() => {
+        verseArea.classList.remove("bouncing-verse-shake");
+        onDone();
+      }, 260);
+    } else {
+      onDone();
+    }
+    return;
+  }
+
+  const rect = btnEl.getBoundingClientRect();
+
+  const burst = document.createElement("div");
+  burst.className = "bouncing-wrong-burst";
+  burst.style.left = `${Math.round(rect.left + (rect.width / 2))}px`;
+  burst.style.top = `${Math.round(rect.top + (rect.height / 2))}px`;
+  document.body.appendChild(burst);
+
+  btnEl.classList.remove("wrong-hit");
+  void btnEl.offsetWidth;
+  btnEl.classList.add("wrong-hit");
+
+  if (verseArea){
+    verseArea.classList.add("bouncing-verse-shake");
+  }
+
+  setTimeout(() => {
+    burst.remove();
+    btnEl.classList.remove("wrong-hit");
+
+    if (verseArea){
+      verseArea.classList.remove("bouncing-verse-shake");
+    }
+
+    onDone();
+  }, 260);
+}
+
+function bouncingSpeedMultiplier(st){
+  if (!st) return 1;
+  if (st.mode === "easy" || !st.wordTokenIndices?.length) return 1;
+
+  const progress = Math.min(1, st.builtCount / st.wordTokenIndices.length);
+
+  if (st.mode === "medium"){
+    return 1 + (progress * 0.28);
+  }
+
+  if (st.mode === "hard"){
+    return 1 + (progress * 0.48);
+  }
+
+  return 1;
+}
+
 function bouncingChoose(choice, btnEl, fieldEl){
   const st = State.bouncingGame;
   if (!st || st.done) return;
@@ -1332,18 +1493,18 @@ function bouncingChoose(choice, btnEl, fieldEl){
   if (choice !== correctChoice){
     st.score -= 25;
     st.wrongGuesses += 1;
-    st.wrongChoice = choice;
     scrambleShowPopup(fieldEl, popX, popY, "-25", false);
 
-    btnEl.classList.add("wrong");
+    bouncingAnimateWrongChoice(btnEl, () => {
+      const live = State.bouncingGame;
+      if (!live || live !== st) return;
 
-    setTimeout(() => {
-      btnEl.classList.remove("wrong");
-
-      if (State.bouncingGame && State.bouncingGame.wrongChoice === choice){
-        State.bouncingGame.wrongChoice = null;
+      const penalized = bouncingApplyWrongPenalty();
+      if (penalized){
+        bouncingRoundRefresh();
+        render();
       }
-    }, 350);
+    });
 
     return;
   }
@@ -1832,8 +1993,15 @@ registerGame({
     }
 
     const st = State.bouncingGame;
+    const gameLayout = stage.closest(".learn-layout");
+
     bouncingStopMotion();
     stage.innerHTML = "";
+
+    if (!st.mode){
+      bouncingRenderModeSelect(stage, st, gameLayout);
+      return;
+    }
 
     const verseBox = document.createElement("div");
     verseBox.style.width = "100%";
@@ -1846,7 +2014,6 @@ registerGame({
     verseBox.appendChild(bouncingBuiltVerseNode());
     stage.appendChild(verseBox);
 
-    const gameLayout = stage.closest(".learn-layout");
     const coachTitle = gameLayout?.querySelector("#gameCoachTitle");
     const coachActions = gameLayout?.querySelector("#gameCoachActions");
 
@@ -1889,6 +2056,7 @@ registerGame({
         btn.textContent = choice;
         if (!State.isSliding){
           btn.classList.add("spawn-in");
+          btn.style.animationDelay = `${i * 70}ms`;
         }
         btn.classList.add(colorSet[i]);
 
@@ -3836,7 +4004,7 @@ registerGame({
 
       const doneMsg = document.createElement("div");
       doneMsg.className = "chain-done-text";
-      doneMsg.textContent = "Great job! You finished the verse!";
+      doneMsg.textContent = "Great job!<br>You finished the verse!";
 
       const practiceBtn = document.createElement("button");
       practiceBtn.className = "chain-done-btn no-zoom";
