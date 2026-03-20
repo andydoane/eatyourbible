@@ -3374,58 +3374,7 @@ function chainShowWrongChoice(word){
   }, 350);
 }
 
-function chainAnimateCorrectChoice(btnEl, onDone){
-  if (!btnEl){
-    onDone();
-    return;
-  }
 
-  const verseArea = document.querySelector(".learn-layout.game-chain .learn-verse");
-  if (!verseArea){
-    onDone();
-    return;
-  }
-
-  const fromRect = btnEl.getBoundingClientRect();
-  const toRect = verseArea.getBoundingClientRect();
-
-  const clone = document.createElement("div");
-  clone.className = "chain-flight-clone";
-  clone.textContent = btnEl.textContent || "";
-
-  clone.style.left = `${fromRect.left}px`;
-  clone.style.top = `${fromRect.top}px`;
-  clone.style.width = `${fromRect.width}px`;
-  clone.style.height = `${fromRect.height}px`;
-
-  document.body.appendChild(clone);
-
-  btnEl.classList.add("chain-source-hidden");
-
-  const targetX = (toRect.left + (toRect.width / 2)) - (fromRect.left + (fromRect.width / 2));
-  const targetY = (toRect.top + (toRect.height / 2)) - (fromRect.top + (fromRect.height / 2));
-
-  requestAnimationFrame(() => {
-    clone.style.transform = `translate(${Math.round(targetX)}px, ${Math.round(targetY)}px) scale(0.42)`;
-    clone.style.opacity = "0.92";
-  });
-
-  setTimeout(() => {
-    const burst = document.createElement("div");
-    burst.className = "chain-flight-burst";
-    burst.style.left = `${Math.round(toRect.left + (toRect.width / 2))}px`;
-    burst.style.top = `${Math.round(toRect.top + (toRect.height / 2))}px`;
-    document.body.appendChild(burst);
-
-    clone.classList.add("chain-flight-pop");
-
-    setTimeout(() => {
-      clone.remove();
-      burst.remove();
-      onDone();
-    }, 180);
-  }, 360);
-}
 
 function chainAnimateWrongChoice(btnEl, onDone){
   const verseArea = document.querySelector(".learn-layout.game-chain .learn-verse");
@@ -3542,9 +3491,31 @@ function chainAnimateCorrectChoice(btnEl, onDone){
   const targetX = (toRect.left + (toRect.width / 2)) - (fromRect.left + (fromRect.width / 2));
   const targetY = (toRect.top + (toRect.height / 2)) - (fromRect.top + (fromRect.height / 2));
 
+  const launchDipY = 10;
+  const launchScaleX = 0.96;
+  const launchScaleY = 0.92;
+
+  const IGNITION_MS = 110;
+  const FLIGHT_MS = 520;
+  const IMPACT_MS = 220;
+  const IMPACT_PAUSE_MS = 90;
+
   requestAnimationFrame(() => {
-    clone.style.transform = `translate(${Math.round(targetX)}px, ${Math.round(targetY)}px) scale(0.42)`;
-    clone.style.opacity = "0.92";
+    clone.style.transition =
+      `transform ${IGNITION_MS}ms cubic-bezier(.2,.9,.3,1), ` +
+      `opacity ${IGNITION_MS}ms ease`;
+
+    clone.style.transform = `translate(0px, ${launchDipY}px) scale(${launchScaleX}, ${launchScaleY})`;
+    clone.style.opacity = "1";
+
+    setTimeout(() => {
+      clone.style.transition =
+        `transform ${FLIGHT_MS}ms cubic-bezier(.12,.2,.18,1), ` +
+        `opacity ${FLIGHT_MS}ms linear`;
+
+      clone.style.transform = `translate(${Math.round(targetX)}px, ${Math.round(targetY)}px) scale(0.42)`;
+      clone.style.opacity = "0.94";
+    }, IGNITION_MS);
   });
 
   setTimeout(() => {
@@ -3554,14 +3525,19 @@ function chainAnimateCorrectChoice(btnEl, onDone){
     burst.style.top = `${Math.round(toRect.top + (toRect.height / 2))}px`;
     document.body.appendChild(burst);
 
+    verseArea.classList.add("chain-verse-hit");
     clone.classList.add("chain-flight-pop");
+
+    setTimeout(() => {
+      verseArea.classList.remove("chain-verse-hit");
+    }, 180);
 
     setTimeout(() => {
       clone.remove();
       burst.remove();
       onDone();
-    }, 180);
-  }, 360);
+    }, IMPACT_MS + IMPACT_PAUSE_MS);
+  }, IGNITION_MS + FLIGHT_MS);
 }
 
 function chainNextChoice(){
