@@ -1199,6 +1199,58 @@ function bouncingStopMotion(){
   st.fieldEl = null;
   st.btnRefs = null;
   st.movers = null;
+  st.trailPool = null;
+  st.trailCursor = 0;
+}
+
+function bouncingEnsureTrailPool(fieldEl){
+  const st = State.bouncingGame;
+  if (!st || !fieldEl) return;
+
+  if (st.trailPool && st.trailPool.length) return;
+
+  st.trailPool = [];
+  st.trailCursor = 0;
+
+  for (let i = 0; i < 24; i++){
+    const dot = document.createElement("div");
+    dot.className = "bouncing-trail-dot";
+    dot.style.opacity = "0";
+    fieldEl.appendChild(dot);
+    st.trailPool.push(dot);
+  }
+}
+
+function bouncingDropTrail(fieldEl, mover){
+  const st = State.bouncingGame;
+  if (!st || !fieldEl || !mover) return;
+  if (!st.trailPool || !st.trailPool.length) return;
+
+  const dot = st.trailPool[st.trailCursor % st.trailPool.length];
+  st.trailCursor = (st.trailCursor + 1) % st.trailPool.length;
+
+  const x = mover.x + (mover.w * 0.5) - 6;
+  const y = mover.y + (mover.h * 0.5) - 6;
+
+  dot.className = `bouncing-trail-dot ${mover.trailClass || ""}`;
+  dot.style.left = `${Math.round(x)}px`;
+  dot.style.top = `${Math.round(y)}px`;
+
+  dot.classList.remove("trail-live");
+  void dot.offsetWidth;
+  dot.classList.add("trail-live");
+}
+
+function bouncingPulseStretch(mover, axis){
+  if (!mover) return;
+
+  if (axis === "x"){
+    mover.squashX = 1.18;
+    mover.squashY = 0.84;
+  } else {
+    mover.squashX = 0.84;
+    mover.squashY = 1.18;
+  }
 }
 
 function bouncingStartMotion(fieldEl, btnRefs){
@@ -1211,7 +1263,21 @@ function bouncingStartMotion(fieldEl, btnRefs){
   st.btnRefs = btnRefs;
   st.movers = bouncingBuildMovers(fieldEl, btnRefs);
 
-  function tick(){
+  bouncingEnsureTrailPool(fieldEl);
+
+  const now0 = performance.now();
+  for (const m of st.movers){
+    m.squashX = 1;
+    m.squashY = 1;
+    m.lastTrailAt = now0 + Math.random() * 60;
+
+    const btn = m.btn;
+    if (btn.classList.contains("bounce-color-1")) m.trailClass = "trail-color-1";
+    else if (btn.classList.contains("bounce-color-2")) m.trailClass = "trail-color-2";
+    else m.trailClass = "trail-color-3";
+  }
+
+  function tick(ts){
     const live = State.bouncingGame;
     if (!live || live !== st) return;
     if (State.screen !== Screen.GAME || State.activeGame !== "bouncing") return;
@@ -1235,25 +1301,45 @@ function bouncingStartMotion(fieldEl, btnRefs){
       m.x += m.vx * speedMult;
       m.y += m.vy * speedMult;
 
+      let bouncedX = false;
+      let bouncedY = false;
+
       if (m.x <= minX){
         m.x = minX;
         m.vx *= -1;
+        bouncedX = true;
       }
       if (m.x >= maxX){
         m.x = maxX;
         m.vx *= -1;
+        bouncedX = true;
       }
       if (m.y <= minY){
         m.y = minY;
         m.vy *= -1;
+        bouncedY = true;
       }
       if (m.y >= maxY){
         m.y = maxY;
         m.vy *= -1;
+        bouncedY = true;
+      }
+
+      if (bouncedX) bouncingPulseStretch(m, "x");
+      if (bouncedY) bouncingPulseStretch(m, "y");
+
+      m.squashX += (1 - m.squashX) * 0.18;
+      m.squashY += (1 - m.squashY) * 0.18;
+
+      if (ts - (m.lastTrailAt || 0) >= 90){
+        bouncingDropTrail(fieldEl, m);
+        m.lastTrailAt = ts;
       }
 
       m.btn.style.left = `${Math.round(m.x)}px`;
       m.btn.style.top = `${Math.round(m.y)}px`;
+      m.btn.style.setProperty("--squashX", String(m.squashX || 1));
+      m.btn.style.setProperty("--squashY", String(m.squashY || 1));
     }
 
     bouncingRefreshDebugOverlay(fieldEl);
@@ -2073,6 +2159,8 @@ registerGame({
       btn.style.left = `${pos.leftPx}px`;
       btn.style.top = `${pos.topPx}px`;
       btn.style.setProperty("--rot", `${pos.rotationDeg || 0}deg`);
+      btn.style.setProperty("--squashX", "1");
+      btn.style.setProperty("--squashY", "1");
 
       btn.onclick = (e) => {
         e.stopPropagation();
