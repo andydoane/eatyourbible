@@ -536,32 +536,24 @@ border-radius: 18px;
 }
 
 .learn-layout.game-bouncing-mode .learn-ref{
-  flex: 0 0 10%;
-  min-height: 56px;
-  max-height: 96px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: none;
+  flex: 0 0 0;
+  min-height: 0;
+  max-height: 0;
 }
 
 .learn-layout.game-bouncing-mode .learn-verse{
-  flex: 1 1 auto;
+  display: none;
+  flex: 0 0 0;
   min-height: 0;
-  padding: 8px 12px;
-  display: flex;
-  align-items: stretch;
-  justify-content: stretch;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
   overflow: hidden;
 }
 
-.learn-layout.game-bouncing-mode .learn-verse > *{
-  width: 100%;
-  max-width: none;
-  height: 100%;
-}
-
 .learn-layout.game-bouncing-mode .learn-coach{
-  flex: 0 0 auto;
+  flex: 1 1 auto;
   min-height: 0;
   padding: 0;
   display: flex;
@@ -569,10 +561,15 @@ border-radius: 18px;
   justify-content: stretch;
 }
 
-.learn-layout.game-bouncing-mode .coach-actions{
-  padding-top: 8px;
+.learn-layout.game-bouncing-mode .learn-coach > div:first-child{
+  display: none;
 }
 
+.learn-layout.game-bouncing-mode .coach-actions{
+  flex: 1 1 auto;
+  padding-top: 0;
+  gap: 0;
+}
 
 .standard-game-stage{
   width: 100%;
@@ -967,64 +964,6 @@ border-radius: 18px;
   will-change: transform, opacity;
 }
 
-.learn-layout .learn-verse.bouncing-verse-shake{
-  animation: bouncingVerseShake 240ms ease-in-out;
-}
-
-.bouncing-mode-stage{
-  position: relative;
-  width: 100%;
-  min-height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px 20px 28px;
-  box-sizing: border-box;
-}
-
-.bouncing-mode-wrap{
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.bouncing-mode-card{
-  width: 100%;
-  max-width: 520px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 14px;
-  text-align: center;
-}
-
-.bouncing-mode-emoji{
-  font-size: 40px;
-  line-height: 1;
-}
-
-.bouncing-mode-title-top{
-  font-size: clamp(20px, 3vw, 28px);
-  font-weight: 900;
-  letter-spacing: 0.04em;
-  color: #ffffff;
-}
-
-.bouncing-mode-title{
-  font-size: clamp(28px, 4vw, 40px);
-  font-weight: 900;
-  color: #ffffff;
-}
-
-.bouncing-mode-subtext{
-  max-width: 540px;
-  font-size: clamp(16px, 2.3vw, 20px);
-  line-height: 1.35;
-  color: rgba(255,255,255,0.95);
-}
-
 @keyframes bouncingWrongBurst{
   from{
     transform: scale(0.45);
@@ -1034,15 +973,6 @@ border-radius: 18px;
     transform: scale(4.8);
     opacity: 0;
   }
-}
-
-@keyframes bouncingVerseShake{
-  0%   { transform: translateX(0); }
-  20%  { transform: translateX(-8px); }
-  40%  { transform: translateX(7px); }
-  60%  { transform: translateX(-6px); }
-  80%  { transform: translateX(4px); }
-  100% { transform: translateX(0); }
 }
 
 @keyframes bouncingWrongHit{
