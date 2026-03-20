@@ -3216,6 +3216,9 @@ function chainWordTokenIndices(){
 }
 
 function chainBuiltVerseNode(){
+  const wrap = document.createElement("div");
+  wrap.className = "chain-verse-stack";
+
   const p = document.createElement("p");
   p.className = "verse";
 
@@ -3251,7 +3254,55 @@ function chainBuiltVerseNode(){
     `;
   }
 
-  return p;
+  wrap.appendChild(p);
+
+  const allWordsBuilt = builtCount >= wordIdxs.length;
+  const showRefRow = allWordsBuilt || st?.phase === "book" || st?.phase === "ref" || st?.done;
+
+  if (showRefRow){
+    const refRow = document.createElement("div");
+    refRow.className = "chain-ref-row";
+
+    const bookChip = document.createElement("div");
+    bookChip.className = "chain-ref-chip";
+
+    const refChip = document.createElement("div");
+    refChip.className = "chain-ref-chip";
+
+    const correctRef = `${st?.targetChapter}:${st?.targetVerse}`;
+
+    if (st?.phase === "book"){
+      bookChip.classList.add("is-placeholder");
+      bookChip.textContent = "Book";
+
+      refChip.classList.add("is-future");
+      refChip.textContent = "Chapter:Verse";
+    } else if (st?.phase === "ref"){
+      bookChip.classList.add("is-filled");
+      bookChip.textContent = st?.targetBook || "Book";
+
+      refChip.classList.add("is-placeholder");
+      refChip.textContent = "Chapter:Verse";
+    } else if (st?.done){
+      bookChip.classList.add("is-filled");
+      bookChip.textContent = st?.targetBook || "Book";
+
+      refChip.classList.add("is-filled");
+      refChip.textContent = correctRef;
+    } else {
+      bookChip.classList.add("is-placeholder");
+      bookChip.textContent = "Book";
+
+      refChip.classList.add("is-future");
+      refChip.textContent = "Chapter:Verse";
+    }
+
+    refRow.appendChild(bookChip);
+    refRow.appendChild(refChip);
+    wrap.appendChild(refRow);
+  }
+
+  return wrap;
 }
 
 function chainMakeChoices(wordTokenIndices, correctTokenIndex){
