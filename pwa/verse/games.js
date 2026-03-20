@@ -1561,6 +1561,7 @@ function scrambleChooseMode(mode){
   st.layoutSeeds = [];
   st.done = false;
   st.wrongChoice = null;
+  st.animating = false;
   st.phase = "words";
   st.showRef = false;
   st.score = 0;
@@ -3373,6 +3374,101 @@ function chainShowWrongChoice(word){
   }, 350);
 }
 
+function chainAnimateCorrectChoice(btnEl, onDone){
+  if (!btnEl){
+    onDone();
+    return;
+  }
+
+  const verseArea = document.querySelector(".learn-layout.game-chain .learn-verse");
+  if (!verseArea){
+    onDone();
+    return;
+  }
+
+  const fromRect = btnEl.getBoundingClientRect();
+  const toRect = verseArea.getBoundingClientRect();
+
+  const clone = document.createElement("div");
+  clone.className = "chain-flight-clone";
+  clone.textContent = btnEl.textContent || "";
+
+  clone.style.left = `${fromRect.left}px`;
+  clone.style.top = `${fromRect.top}px`;
+  clone.style.width = `${fromRect.width}px`;
+  clone.style.height = `${fromRect.height}px`;
+
+  document.body.appendChild(clone);
+
+  btnEl.classList.add("chain-source-hidden");
+
+  const targetX = (toRect.left + (toRect.width / 2)) - (fromRect.left + (fromRect.width / 2));
+  const targetY = (toRect.top + (toRect.height / 2)) - (fromRect.top + (fromRect.height / 2));
+
+  requestAnimationFrame(() => {
+    clone.style.transform = `translate(${Math.round(targetX)}px, ${Math.round(targetY)}px) scale(0.42)`;
+    clone.style.opacity = "0.92";
+  });
+
+  setTimeout(() => {
+    const burst = document.createElement("div");
+    burst.className = "chain-flight-burst";
+    burst.style.left = `${Math.round(toRect.left + (toRect.width / 2))}px`;
+    burst.style.top = `${Math.round(toRect.top + (toRect.height / 2))}px`;
+    document.body.appendChild(burst);
+
+    clone.classList.add("chain-flight-pop");
+
+    setTimeout(() => {
+      clone.remove();
+      burst.remove();
+      onDone();
+    }, 180);
+  }, 360);
+}
+
+function chainAnimateWrongChoice(btnEl, onDone){
+  const verseArea = document.querySelector(".learn-layout.game-chain .learn-verse");
+
+  if (!btnEl){
+    if (verseArea){
+      verseArea.classList.add("chain-verse-shake");
+      setTimeout(() => {
+        verseArea.classList.remove("chain-verse-shake");
+        onDone();
+      }, 260);
+    } else {
+      onDone();
+    }
+    return;
+  }
+
+  const rect = btnEl.getBoundingClientRect();
+
+  const burst = document.createElement("div");
+  burst.className = "chain-wrong-burst";
+  burst.style.left = `${Math.round(rect.left + (rect.width / 2))}px`;
+  burst.style.top = `${Math.round(rect.top + (rect.height / 2))}px`;
+  document.body.appendChild(burst);
+
+  btnEl.classList.add("chain-wrong-pop");
+
+  if (verseArea){
+    verseArea.classList.add("chain-verse-shake");
+  }
+
+  setTimeout(() => {
+    burst.remove();
+    btnEl.classList.remove("chain-wrong-pop");
+
+    if (verseArea){
+      verseArea.classList.remove("chain-verse-shake");
+    }
+
+    onDone();
+  }, 260);
+}
+
 function startVerseChainGame(){
   const wordTokenIndices = chainWordTokenIndices();
   const meta = chainVerseMetaFromId(VERSE_ID);
@@ -3393,6 +3489,7 @@ function startVerseChainGame(){
     animating: false,
   };
 }
+
 
 function chainPrevChoice(){
   const st = State.chainGame;
@@ -3513,24 +3610,35 @@ function chainChoose(word, btnEl){
       return;
     }
 
-    chainApplyWrongPenalty();
+    st.animating = true;
 
-    if (st.mode === "easy"){
+    chainAnimateWrongChoice(btnEl, () => {
+      const live = State.chainGame;
+      if (!live) return;
+
+      chainApplyWrongPenalty();
+
+      if (live.mode === "easy"){
+        live.animating = false;
+        chainShowWrongChoice(word);
+        return;
+      }
+
+      if (live.builtCount >= live.wordTokenIndices.length){
+        live.phase = "book";
+        live.choices = chainMakeBookChoices(live.targetBook);
+        chainSetRandomChoiceIndex();
+      } else {
+        const nextTokenIndex = live.wordTokenIndices[live.builtCount];
+        live.choices = chainMakeChoices(live.wordTokenIndices, nextTokenIndex);
+        chainSetRandomChoiceIndex();
+      }
+
+      live.animating = false;
       chainShowWrongChoice(word);
-      return;
-    }
+    });
 
-    if (st.builtCount >= st.wordTokenIndices.length){
-      st.phase = "book";
-      st.choices = chainMakeBookChoices(st.targetBook);
-      chainSetRandomChoiceIndex();
-    } else {
-      const nextTokenIndex = st.wordTokenIndices[st.builtCount];
-      st.choices = chainMakeChoices(st.wordTokenIndices, nextTokenIndex);
-      chainSetRandomChoiceIndex();
-    }
-
-    chainShowWrongChoice(word);
+    render();
     return;
   }
 
@@ -3544,7 +3652,14 @@ function chainChoose(word, btnEl){
       return;
     }
 
-    chainShowWrongChoice(word);
+    st.animating = true;
+    chainAnimateWrongChoice(btnEl, () => {
+      const live = State.chainGame;
+      if (!live) return;
+      live.animating = false;
+      chainShowWrongChoice(word);
+    });
+    render();
     return;
   }
 
@@ -3561,7 +3676,14 @@ function chainChoose(word, btnEl){
       return;
     }
 
-    chainShowWrongChoice(word);
+    st.animating = true;
+    chainAnimateWrongChoice(btnEl, () => {
+      const live = State.chainGame;
+      if (!live) return;
+      live.animating = false;
+      chainShowWrongChoice(word);
+    });
+    render();
     return;
   }
 }
@@ -3623,8 +3745,8 @@ registerGame({
 
       const prevBtn = document.createElement("button");
       prevBtn.className = "carousel-arrow no-zoom";
-      prevBtn.disabled = !!st.animating;
       prevBtn.type = "button";
+      prevBtn.disabled = !!st.animating;
       prevBtn.innerHTML = SVG_BACK;
       prevBtn.onclick = (e) => {
         e.stopPropagation();
@@ -3632,11 +3754,6 @@ registerGame({
       };
 
       const mainBtn = document.createElement("button");
-      mainBtn.className = "carousel-main no-zoom";
-      mainBtn.disabled = !!st.animating;
-      mainBtn.type = "button";
-      mainBtn.textContent = chainCurrentChoice();
-      mainBtn.style.margin = "0";
 
       if (st.wrongChoice === chainCurrentChoice()){
         mainBtn.style.background = "#ffb3b3";
@@ -3651,8 +3768,8 @@ registerGame({
 
       const nextBtn = document.createElement("button");
       nextBtn.className = "carousel-arrow no-zoom";
-      nextBtn.disabled = !!st.animating;
       nextBtn.type = "button";
+      nextBtn.disabled = !!st.animating;
       nextBtn.innerHTML = SVG_FORWARD;
       nextBtn.onclick = (e) => {
         e.stopPropagation();
