@@ -3443,9 +3443,15 @@ function chainChoose(word){
 
     chainApplyWrongPenalty();
 
+    if (st.mode === "easy"){
+      chainShowWrongChoice(word);
+      return;
+    }
+
     if (st.builtCount >= st.wordTokenIndices.length){
       st.phase = "book";
       st.choices = chainMakeBookChoices(st.targetBook);
+      chainSetRandomChoiceIndex();
     } else {
       const nextTokenIndex = st.wordTokenIndices[st.builtCount];
       st.choices = chainMakeChoices(st.wordTokenIndices, nextTokenIndex);
