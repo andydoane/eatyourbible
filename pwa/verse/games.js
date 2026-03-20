@@ -3270,14 +3270,115 @@ function chainMakeChoices(wordTokenIndices, correctTokenIndex){
   return shuffleArray(choices);
 }
 
+function chainChooseMode(mode){
+  const st = State.chainGame;
+  if (!st) return;
+
+  const meta = chainVerseMetaFromId(VERSE_ID);
+  const firstTokenIndex = st.wordTokenIndices[0];
+
+  st.mode = mode;
+  st.builtCount = 0;
+  st.choices = [];
+  st.choiceIndex = 0;
+  st.done = false;
+  st.wrongChoice = null;
+  st.phase = "words";
+  st.showRef = false;
+  st.targetBook = meta.book;
+  st.targetChapter = meta.chapter;
+  st.targetVerse = meta.verse;
+
+  if (Number.isFinite(firstTokenIndex)){
+    st.choices = chainMakeChoices(st.wordTokenIndices, firstTokenIndex);
+    chainSetRandomChoiceIndex();
+  }
+
+  render();
+}
+
+function chainRenderModeSelect(stage, st, gameRoot){
+  stage.innerHTML = "";
+
+  const titleEl = gameRoot ? gameRoot.querySelector("#gameCoachTitle") : null;
+  const actionsEl = gameRoot ? gameRoot.querySelector("#gameCoachActions") : null;
+
+  if (titleEl){
+    titleEl.textContent = "Choose Difficulty";
+  }
+
+  if (actionsEl){
+    actionsEl.innerHTML = `
+      <div class="scramble-mode-wrap">
+        <div class="scramble-mode-card">
+          <div class="scramble-mode-emoji">🔗 ⛓️ ✨</div>
+          <div class="scramble-mode-title">Verse Chain</div>
+          <div class="scramble-mode-subtext">
+            Choose your difficulty, then build the verse one word at a time.
+          </div>
+
+          <button class="carousel-main no-zoom" id="chainModeEasy">Easy</button>
+          <button class="carousel-main no-zoom" id="chainModeMedium">Medium</button>
+          <button class="carousel-main no-zoom" id="chainModeHard">Hard</button>
+
+          <div class="scramble-mode-subtext scramble-mode-notes">
+            Easy = wrong answers do not remove words.<br>
+            Medium = wrong answers remove 2 completed words.<br>
+            Hard = wrong answers remove all completed words.
+          </div>
+        </div>
+      </div>
+    `;
+
+    const btnEasy = gameRoot.querySelector("#chainModeEasy");
+    const btnMedium = gameRoot.querySelector("#chainModeMedium");
+    const btnHard = gameRoot.querySelector("#chainModeHard");
+
+    if (btnEasy) btnEasy.onclick = () => chainChooseMode("easy");
+    if (btnMedium) btnMedium.onclick = () => chainChooseMode("medium");
+    if (btnHard) btnHard.onclick = () => chainChooseMode("hard");
+  }
+}
+
+function chainApplyWrongPenalty(){
+  const st = State.chainGame;
+  if (!st) return;
+
+  if (st.phase !== "words") return;
+  if (st.mode === "easy") return;
+
+  if (st.mode === "medium"){
+    st.builtCount = Math.max(0, st.builtCount - 2);
+    return;
+  }
+
+  if (st.mode === "hard"){
+    st.builtCount = 0;
+  }
+}
+
+function chainShowWrongChoice(word){
+  const st = State.chainGame;
+  if (!st) return;
+
+  st.wrongChoice = word;
+  render();
+
+  setTimeout(() => {
+    if (State.chainGame && State.chainGame.wrongChoice === word){
+      State.chainGame.wrongChoice = null;
+      render();
+    }
+  }, 350);
+}
 
 function startVerseChainGame(){
   const wordTokenIndices = chainWordTokenIndices();
-
   const meta = chainVerseMetaFromId(VERSE_ID);
 
   State.chainGame = {
     wordTokenIndices,
+    mode: null,
     builtCount: 0,
     choices: [],
     choiceIndex: 0,
@@ -3289,12 +3390,6 @@ function startVerseChainGame(){
     targetChapter: meta.chapter,
     targetVerse: meta.verse,
   };
-
-  const firstTokenIndex = wordTokenIndices[0];
-  if (Number.isFinite(firstTokenIndex)){
-    State.chainGame.choices = chainMakeChoices(wordTokenIndices, firstTokenIndex);
-    chainSetRandomChoiceIndex();
-  }
 }
 
 function chainPrevChoice(){
@@ -3346,16 +3441,18 @@ function chainChoose(word){
       return;
     }
 
-    st.wrongChoice = word;
-    render();
+    chainApplyWrongPenalty();
 
-    setTimeout(() => {
-      if (State.chainGame && State.chainGame.wrongChoice === word){
-        State.chainGame.wrongChoice = null;
-        render();
-      }
-    }, 350);
+    if (st.builtCount >= st.wordTokenIndices.length){
+      st.phase = "book";
+      st.choices = chainMakeBookChoices(st.targetBook);
+    } else {
+      const nextTokenIndex = st.wordTokenIndices[st.builtCount];
+      st.choices = chainMakeChoices(st.wordTokenIndices, nextTokenIndex);
+      chainSetRandomChoiceIndex();
+    }
 
+    chainShowWrongChoice(word);
     return;
   }
 
@@ -3369,16 +3466,7 @@ function chainChoose(word){
       return;
     }
 
-    st.wrongChoice = word;
-    render();
-
-    setTimeout(() => {
-      if (State.chainGame && State.chainGame.wrongChoice === word){
-        State.chainGame.wrongChoice = null;
-        render();
-      }
-    }, 350);
-
+    chainShowWrongChoice(word);
     return;
   }
 
@@ -3395,16 +3483,7 @@ function chainChoose(word){
       return;
     }
 
-    st.wrongChoice = word;
-    render();
-
-    setTimeout(() => {
-      if (State.chainGame && State.chainGame.wrongChoice === word){
-        State.chainGame.wrongChoice = null;
-        render();
-      }
-    }, 350);
-
+    chainShowWrongChoice(word);
     return;
   }
 }
@@ -3420,6 +3499,12 @@ registerGame({
     }
 
     const st = State.chainGame;
+    const gameLayout = stage.closest(".learn-layout");
+
+    if (!st.mode){
+      chainRenderModeSelect(stage, st, gameLayout);
+      return;
+    }
 
     stage.innerHTML = "";
 
@@ -3435,7 +3520,6 @@ registerGame({
 
     stage.appendChild(verseBox);
 
-    const gameLayout = stage.closest(".learn-layout");
     const coachTitle = gameLayout?.querySelector("#gameCoachTitle");
     const coachActions = gameLayout?.querySelector("#gameCoachActions");
 
