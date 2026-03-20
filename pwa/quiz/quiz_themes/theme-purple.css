@@ -1,30 +1,30 @@
-:root.theme-rainbow {
+:root.theme-purple {
 
   /* Intro screen */
-  --intro-bg: #f2f2f2;
+  --intro-bg: #7f66c6;
   --intro-text: #333333;
 
   /* Whole page background */
-  --quiz-screen-bg: #f2f2f2;
+  --quiz-screen-bg: #7f66c6;
 
   /* Question Box at Top */
-  --question-bg: #ff5a51;
-  --question-text: #f2f2f2;
+  --question-bg: #f2f2f2;
+  --question-text: #333333;
 
   /* First Button */
-  --red: #ffc751;
-  --red-text: #333333;
+  --red: #ff5a51;
+  --red-text: #f2f2f2;
 
   /* Second Button */
-  --blue: #a7cb6f;
+  --blue: #40b9c5;
   --blue-text: #f2f2f2;
 
   /* Third Button */
-  --yellow: #40b9c5;
-  --yellow-text: #f2f2f2;
+  --yellow: #ffa351;
+  --yellow-text: #333333;
 
   /* Fourth Button */
-  --green: #7f66c6;
+  --green: #a7cb6f;
   --green-text: #f2f2f2;
 
   /* Progress / timer bar */
