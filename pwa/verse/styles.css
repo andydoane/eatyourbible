@@ -529,6 +529,50 @@ border-radius: 18px;
   gap: 0;
 }
 
+.learn-layout.game-bouncing-mode{
+  padding: calc(14px + var(--safeT)) 18px 8px;
+  gap: 0;
+  max-width: 840px;
+}
+
+.learn-layout.game-bouncing-mode .learn-ref{
+  flex: 0 0 10%;
+  min-height: 56px;
+  max-height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.learn-layout.game-bouncing-mode .learn-verse{
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 8px 12px;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  overflow: hidden;
+}
+
+.learn-layout.game-bouncing-mode .learn-verse > *{
+  width: 100%;
+  max-width: none;
+  height: 100%;
+}
+
+.learn-layout.game-bouncing-mode .learn-coach{
+  flex: 0 0 auto;
+  min-height: 0;
+  padding: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.learn-layout.game-bouncing-mode .coach-actions{
+  padding-top: 8px;
+}
+
 
 .standard-game-stage{
   width: 100%;
