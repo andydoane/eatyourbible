@@ -3460,6 +3460,28 @@ function chainCurrentChoice(){
   return st.choices[st.choiceIndex];
 }
 
+function chainSpawnSmokePuff(x, y, size = 18){
+  const puff = document.createElement("div");
+  puff.className = "chain-smoke-puff";
+
+  puff.style.left = `${Math.round(x)}px`;
+  puff.style.top = `${Math.round(y)}px`;
+  puff.style.width = `${size}px`;
+  puff.style.height = `${size}px`;
+  puff.style.marginLeft = `${Math.round(size / -2)}px`;
+  puff.style.marginTop = `${Math.round(size / -2)}px`;
+
+  puff.style.setProperty("--smoke-drift-x", `${Math.round((Math.random() * 18) - 9)}px`);
+  puff.style.setProperty("--smoke-drift-y", `${Math.round(-18 - (Math.random() * 18))}px`);
+  puff.style.setProperty("--smoke-scale-end", `${(1.55 + (Math.random() * 0.35)).toFixed(2)}`);
+
+  document.body.appendChild(puff);
+
+  puff.addEventListener("animationend", () => {
+    puff.remove();
+  }, { once: true });
+}
+
 function chainAnimateCorrectChoice(btnEl, onDone){
   if (!btnEl){
     onDone();
@@ -3488,8 +3510,11 @@ function chainAnimateCorrectChoice(btnEl, onDone){
 
   btnEl.classList.add("chain-source-hidden");
 
-  const targetX = (toRect.left + (toRect.width / 2)) - (fromRect.left + (fromRect.width / 2));
-  const targetY = (toRect.top + (toRect.height / 2)) - (fromRect.top + (fromRect.height / 2));
+  const fromCenterX = fromRect.left + (fromRect.width / 2);
+  const fromCenterY = fromRect.top + (fromRect.height / 2);
+
+  const targetX = (toRect.left + (toRect.width / 2)) - fromCenterX;
+  const targetY = (toRect.top + (toRect.height / 2)) - fromCenterY;
 
   const launchDipY = 10;
   const launchScaleX = 0.96;
@@ -3499,6 +3524,24 @@ function chainAnimateCorrectChoice(btnEl, onDone){
   const FLIGHT_MS = 520;
   const IMPACT_MS = 220;
   const IMPACT_PAUSE_MS = 90;
+
+  function scheduleSmoke(totalDelay, size, offsetY = 18){
+    setTimeout(() => {
+      const flightElapsed = Math.max(0, totalDelay - IGNITION_MS);
+      const progress = Math.min(0.42, flightElapsed / FLIGHT_MS);
+      const eased = progress * progress;
+
+      const puffX = fromCenterX + (targetX * eased) + ((Math.random() * 10) - 5);
+      const puffY = fromCenterY + launchDipY + (targetY * eased) + offsetY + (Math.random() * 4);
+
+      chainSpawnSmokePuff(puffX, puffY, size);
+    }, totalDelay);
+  }
+
+  scheduleSmoke(18, 16, 20);
+  scheduleSmoke(95, 18, 20);
+  scheduleSmoke(165, 20, 19);
+  scheduleSmoke(235, 18, 17);
 
   requestAnimationFrame(() => {
     clone.style.transition =
