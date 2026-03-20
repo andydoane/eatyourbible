@@ -1,33 +1,36 @@
-:root.theme-test {
+:root.theme-nick-purple {
 
-  /* 4) Question Box at Top */
-  --question-bg: #333333;
-  --question-text: #f2f2f2;
+  /* Intro screen */
+  --intro-bg: #641ba8;
+  --intro-text: #f2f2f2;
 
-  /* 5) Intro screen */
-  --intro-bg: #ffc751;
-  --intro-text: #333333;
+  /* Whole page background */
+  --quiz-screen-bg: #641ba8;
 
-  /* 6) ✔ Answer Buttons */
-  --red: #ff5a51;
+  /* Question Box at Top */
+  --question-bg: #f2f2f2;
+  --question-text: INSERTCOLOR;
+
+  /* First Button */
+  --red: #ff6800;
   --red-text: #f2f2f2;
 
-  --blue: #40b9c5;
+  /* Second Button */
+  --blue: #00CCFF;
   --blue-text: #f2f2f2;
 
-  --yellow: #7f66c6;
-  --yellow-text: #f2f2f2;
+  /* Third Button */
+  --yellow: #f9d325;
+  --yellow-text: #333333;
 
-  --green: #a7cb6f;
+  /* Fourth Button */
+  --green: #1bde01;
   --green-text: #f2f2f2;
- 
-  /* 7) Progress / timer bar */
-  --progress-track-bg: rgba(51, 51, 51, 0.22);
-  --progress-fill-high: #a7cb6f;
-  --progress-fill-mid: #ffa351;
-  --progress-fill-low: #ff5a51;
 
-    /* 8)  Whole page background */
-  --quiz-screen-bg: #ffc751;
+  /* Progress / timer bar */
+  --progress-track-bg: rgba(51, 51, 51, 0.22);
+  --progress-fill-high: #1bde01;
+  --progress-fill-mid: #f9d325;
+  --progress-fill-low: #FF0000;
 
 }
