@@ -339,26 +339,29 @@
 
     /* Bottom nav (solid bar style from Ten/Credo apps) */
     nav#nav{
-      height: var(--navH);
-      background: rgba(0,0,0,0.30);
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      color:white;
       position:fixed;
-      left:0; right:0; bottom:0;
-      z-index:9999;
-      padding: 0 22px calc(var(--safeB)) 22px;
-      box-sizing:border-box;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      left:0;
+      right:0;
+      bottom:0;
+
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+
+      padding: 10px 14px;
+
+      background: #333333;
+
+      border-top: 1px solid rgba(255,255,255,0.12);
+
+      color: white;
     }
     .nav-btn{
       width: var(--tap);
       height: var(--tap);
       border:none;
       border-radius: 14px;
-      background: rgba(255,255,255,0.12);
+      background: rgba(255,255,255,0.32);
       color: rgba(255,255,255,0.95);
       font-size: 18px;
       font-weight: 900;
