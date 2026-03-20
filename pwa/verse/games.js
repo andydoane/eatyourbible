@@ -3427,6 +3427,8 @@ function chainAnimateCorrectChoice(btnEl, onDone){
   }, 360);
 }
 
+
+
 function startVerseChainGame(){
   const wordTokenIndices = chainWordTokenIndices();
   const meta = chainVerseMetaFromId(VERSE_ID);
