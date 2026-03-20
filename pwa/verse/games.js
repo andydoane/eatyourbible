@@ -1339,7 +1339,7 @@ function bouncingRenderModeSelect(stage, st, gameRoot){
   const actionsEl = gameRoot ? gameRoot.querySelector("#gameCoachActions") : null;
 
   if (titleEl){
-    titleEl.textContent = "";
+    titleEl.textContent = "Choose Difficulty";
   }
 
   if (!actionsEl) return;
@@ -1348,11 +1348,9 @@ function bouncingRenderModeSelect(stage, st, gameRoot){
     <div class="scramble-mode-wrap">
       <div class="scramble-mode-card">
         <div class="scramble-mode-emoji">🏀</div>
-        <div class="scramble-mode-title-top">Choose a Mode</div>
         <div class="scramble-mode-title">Bouncing Words</div>
-
         <div class="scramble-mode-subtext">
-          Tap the moving words in the correct order to build the verse.
+          Choose your difficulty, then tap the moving words in the correct order to build the verse.
         </div>
 
         <button class="carousel-main no-zoom" id="bouncingModeEasy">Easy</button>
@@ -1360,9 +1358,9 @@ function bouncingRenderModeSelect(stage, st, gameRoot){
         <button class="carousel-main no-zoom" id="bouncingModeHard">Hard</button>
 
         <div class="scramble-mode-subtext scramble-mode-notes">
-          Easy = wrong answers do not remove words.<br>
-          Medium = wrong answers remove 2 completed words and speed increases.<br>
-          Hard = wrong answers remove all completed words and speed increases more.
+          Easy = wrong taps have no penalty.<br>
+          Medium = wrong taps remove up to 2 built words and speed increases.<br>
+          Hard = wrong taps clear all built words and speed increases more.
         </div>
       </div>
     </div>
@@ -1377,10 +1375,8 @@ function bouncingRenderModeSelect(stage, st, gameRoot){
   if (btnHard) btnHard.onclick = () => bouncingChooseMode("hard");
 }
 
-function bouncingApplyWrongPenalty(){
-  const st = State.bouncingGame;
+function bouncingApplyPenalty(st){
   if (!st) return false;
-  if (st.phase !== "words") return false;
 
   const beforeBuilt = st.builtCount;
   const wordGoal = st.wordTokenIndices?.length || 0;
@@ -1407,15 +1403,15 @@ function bouncingApplyWrongPenalty(){
 }
 
 function bouncingAnimateWrongChoice(btnEl, onDone){
-  const verseArea = document.querySelector(".learn-layout .learn-verse");
+  const verseBox = document.querySelector(".scramble-verse-box");
 
   if (!btnEl){
-    if (verseArea){
-      verseArea.classList.add("bouncing-verse-shake");
+    if (verseBox){
+      verseBox.classList.add("penalty-shake");
       setTimeout(() => {
-        verseArea.classList.remove("bouncing-verse-shake");
+        verseBox.classList.remove("penalty-shake");
         onDone();
-      }, 260);
+      }, 320);
     } else {
       onDone();
     }
@@ -1434,20 +1430,20 @@ function bouncingAnimateWrongChoice(btnEl, onDone){
   void btnEl.offsetWidth;
   btnEl.classList.add("wrong-hit");
 
-  if (verseArea){
-    verseArea.classList.add("bouncing-verse-shake");
+  if (verseBox){
+    verseBox.classList.add("penalty-shake");
   }
 
   setTimeout(() => {
     burst.remove();
     btnEl.classList.remove("wrong-hit");
 
-    if (verseArea){
-      verseArea.classList.remove("bouncing-verse-shake");
+    if (verseBox){
+      verseBox.classList.remove("penalty-shake");
     }
 
     onDone();
-  }, 260);
+  }, 320);
 }
 
 function bouncingSpeedMultiplier(st){
@@ -1466,6 +1462,7 @@ function bouncingSpeedMultiplier(st){
 
   return 1;
 }
+
 
 function bouncingChoose(choice, btnEl, fieldEl){
   const st = State.bouncingGame;
@@ -1493,16 +1490,27 @@ function bouncingChoose(choice, btnEl, fieldEl){
   if (choice !== correctChoice){
     st.score -= 25;
     st.wrongGuesses += 1;
+    st.wrongChoice = choice;
     scrambleShowPopup(fieldEl, popX, popY, "-25", false);
 
     bouncingAnimateWrongChoice(btnEl, () => {
       const live = State.bouncingGame;
       if (!live || live !== st) return;
 
-      const penalized = bouncingApplyWrongPenalty();
-      if (penalized){
-        bouncingRoundRefresh();
-        render();
+      const penalized = bouncingApplyPenalty(st);
+
+      bouncingRoundRefresh();
+      render();
+
+      if (!penalized){
+        setTimeout(() => {
+          const latest = State.bouncingGame;
+          if (!latest) return;
+          if (latest.wrongChoice === choice){
+            latest.wrongChoice = null;
+            render();
+          }
+        }, 220);
       }
     });
 
@@ -1983,51 +1991,6 @@ function scrambleChoose(choice, btnEl, fieldEl){
   });
 }
 
-function bouncingRenderModeSelect(stage, st, gameRoot){
-  stage.innerHTML = `
-    <div class="bouncing-mode-stage">
-      <div class="bouncing-mode-wrap">
-        <div class="bouncing-mode-card">
-          <div class="bouncing-mode-emoji">🏀</div>
-          <div class="bouncing-mode-title-top">Choose a Mode</div>
-          <div class="bouncing-mode-title">Bouncing Words</div>
-
-          <div class="bouncing-mode-subtext">
-            Tap the moving words in the correct order to build the verse.
-          </div>
-
-          <button class="carousel-main no-zoom" id="bouncingModeEasy">Easy</button>
-          <button class="carousel-main no-zoom" id="bouncingModeMedium">Medium</button>
-          <button class="carousel-main no-zoom" id="bouncingModeHard">Hard</button>
-        </div>
-      </div>
-    </div>
-  `;
-
-  const btnEasy = stage.querySelector("#bouncingModeEasy");
-  const btnMedium = stage.querySelector("#bouncingModeMedium");
-  const btnHard = stage.querySelector("#bouncingModeHard");
-
-  if (btnEasy) btnEasy.onclick = () => bouncingChooseMode("easy");
-  if (btnMedium) btnMedium.onclick = () => bouncingChooseMode("medium");
-  if (btnHard) btnHard.onclick = () => bouncingChooseMode("hard");
-
-  const titleEl = gameRoot ? gameRoot.querySelector("#gameCoachTitle") : null;
-  const actionsEl = gameRoot ? gameRoot.querySelector("#gameCoachActions") : null;
-
-  if (titleEl){
-    titleEl.textContent = "Choose Difficulty";
-  }
-
-  if (actionsEl){
-    actionsEl.innerHTML = `
-      <div class="tower-status-line">
-        Easy = normal play. Medium = wrong tap removes 2 words. Hard = wrong tap removes all words.
-      </div>
-    `;
-  }
-}
-
 registerGame({
   id: "bouncing",
   title: "Bouncing Words",
@@ -2038,11 +2001,7 @@ registerGame({
     }
 
     const st = State.bouncingGame;
-    if (!st) return;
-
     const gameLayout = stage.closest(".learn-layout");
-    const coachTitle = gameLayout?.querySelector("#gameCoachTitle");
-    const coachActions = gameLayout?.querySelector("#gameCoachActions");
 
     bouncingStopMotion();
     stage.innerHTML = "";
@@ -2062,6 +2021,9 @@ registerGame({
     verseBox.style.textAlign = "center";
     verseBox.appendChild(bouncingBuiltVerseNode());
     stage.appendChild(verseBox);
+
+    const coachTitle = gameLayout?.querySelector("#gameCoachTitle");
+    const coachActions = gameLayout?.querySelector("#gameCoachActions");
 
     if (coachTitle) coachTitle.textContent = "";
 
