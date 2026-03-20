@@ -1,63 +1,2579 @@
-/* sw.js - PWA service worker for /eatyourbible/pwa/quiz/ */
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Quiz</title>
 
-const CACHE_NAME = "eyb-quiz-2026_Mar_20 v1";
+  <!-- PWA -->
+  <link rel="manifest" href="/eatyourbible/pwa/quiz/manifest.webmanifest">
+  <meta name="theme-color" content="#7f66c6">
 
-/**
- * Core files needed so the app "boots" offline.
- * Add more items here if you want a stronger offline-first experience.
- */
-const CORE_ASSETS = [
-  "/eatyourbible/pwa/quiz/",
-  "/eatyourbible/pwa/quiz/index.html",
-  "/eatyourbible/pwa/quiz/manifest.webmanifest",
-  "/eatyourbible/pwa/quiz/sw.js",
+  <!-- iOS "Add to Home Screen" -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="/eatyourbible/pwa/quiz/icons/icon-192.png">
+  
+  <!-- Theme loader (same convention as Andy Kahoot Engine) -->
+  <link id="theme-css" rel="stylesheet" href="quiz_themes/theme-gray.css">
 
-  // Your default theme + key title assets (so intro/title loads offline)
-  "/eatyourbible/pwa/quiz/quiz_themes/theme-gray.css",
-  "/eatyourbible/pwa/quiz/quizimages/quiz_icon.png",
-  "/eatyourbible/pwa/quiz/quizimages/eyb_logo_1.png",
-  "/eatyourbible/pwa/quiz/quizimages/eyb_logo_2.png",
-  "/eatyourbible/pwa/quiz/quizsounds/sound_chomp.mp3"
+  <!-- Google Font used by Andy Kahoot Engine -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* =========================================================
+       Phone-only, full-screen, slide-left app shell
+       Inspired by Ten Commandments / Creed apps (solid backgrounds, no cards)
+       ========================================================= */
+    :root{
+      --navH: 70px;
+      --safeB: env(safe-area-inset-bottom);
+      --safeT: env(safe-area-inset-top);
+      --tap: 44px;
+    }
+
+    html, body{
+      height:100%;
+      margin:0;
+      padding:0;
+      font-family:"Baloo 2", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      overflow:hidden;
+      background: var(--app-bg, var(--bg-solid, #222));
+      color: var(--text-primary, #fff);
+    }
+
+    /* Keep page hidden while theme CSS swaps (same idea as Andy engine) */
+    .theme-loading body{ opacity:0; }
+
+    /* Keep the title screen stable while switching quizzes from the picker */
+    html.title-refreshing,
+    html.title-refreshing body,
+    html.title-refreshing #app{
+      background: #f2f2f2 !important;
+    }
+
+    html.title-refreshing.theme-loading body{
+      opacity: 1 !important;
+    }
+    
+    #app{
+      position:fixed;
+      inset:0;
+      overflow:hidden;
+      background: var(--app-bg, var(--bg-solid, #222));
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .slide{
+      position:absolute;
+      inset:0;
+      display:flex;
+      flex-direction:column;
+      min-height:0;
+      padding-bottom: calc(var(--navH) + var(--safeB));
+      transition: transform 320ms ease;
+      will-change: transform;
+    }
+
+*, *::before, *::after { box-sizing: border-box; }
+
+    .slide.nav-hidden{
+      padding-bottom: 0;
+    }
+
+    /* Top area */
+    .top{
+      padding: calc(14px + var(--safeT)) 18px 10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:0;
+    }
+
+    .brand img{
+      width:48px;
+      height:48px;
+      object-fit:contain;
+      filter: drop-shadow(0 6px 14px rgba(0,0,0,0.35));
+    }
+
+    .titles{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      line-height:1.05;
+    }
+
+    .titles .title{
+      font-size:20px;
+      font-weight:800;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .titles .subtitle{
+      font-size:14px;
+      opacity:0.92;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    /* Center content */
+    .content{
+      flex:1;
+      min-height:0;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;   /* <-- ADD THIS */
+      padding: 8px 18px 18px;
+      gap:14px;
+    }
+
+/* =========================================================
+   Quiz screen layout: 40% question + 4x15% answers (60% total)
+   ========================================================= */
+
+/* On quiz screen we want full-width stacking, not centered columns */
+.quiz-content{
+  align-items: stretch;
+
+  /* Add breathing room above the nav bar */
+  padding-bottom: 18px;   /* match your global content bottom padding vibe */
+}
+
+/* Parent layout for question + answers */
+.qa-layout{
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;              /* space between question block and answers stack */
+}
+
+/* Question "button" container */
+.question-box{
+  flex: 3;
+  min-height: 0;
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--question-bg, rgba(0,0,0,0.28));
+  color: #333333;
+  border-radius: 18px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+  /* nicer multi-line centering */
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+/* Ensure the question text inherits the hard-coded colors */
+.question-box .question{
+  margin: 0;
+  width: 100%;
+  text-align: center;
+
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1.15;
+  letter-spacing: 0.2px;
+
+  color: var(--question-text, #ffffff);
+  text-shadow: none;
+
+  text-wrap: balance;
+}
+
+/* Answers area = remaining 60% */
+.answers{
+  flex: 7;
+  min-height: 0;
+  display: flex;          /* switch from grid to vertical flex */
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Each answer gets 15% of the available space (since answers area is 60% and has 4 equal children) */
+
+
+
+    .big-text{
+      font-size:26px;
+      font-weight:800;
+      line-height:1.1;
+    }
+
+    .body-text{
+      font-size:18px;
+      opacity:0.95;
+      line-height:1.25;
+    }
+
+    /* Primary CTA */
+    .primary-btn{
+      height:56px;
+      border:none;
+      border-radius: 18px;
+      font-family:inherit;
+      font-weight:900;
+      font-size:20px;
+      cursor:pointer;
+      width:100%;
+      background: var(--btn-primary-bg, rgba(255,255,255,0.92));
+      color: var(--btn-primary-text, #111);
+      box-shadow: 0 10px 22px rgba(0,0,0,0.25);
+      transform: translateZ(0);
+    }
+    .primary-btn:active{ transform: scale(0.985); }
+
+    .secondary-btn{
+      height:50px;
+      border:2px solid rgba(255,255,255,0.55);
+      border-radius: 16px;
+      font-family:inherit;
+      font-weight:800;
+      font-size:18px;
+      width:100%;
+      background: transparent;
+      color: rgba(255,255,255,0.95);
+    }
+    .secondary-btn:active{ transform: scale(0.99); }
+
+.dialog-cancel-btn{
+  height: 50px;
+  width: 100%;
+  border: 2px solid rgba(255,255,255,0.14);
+  border-radius: 16px;
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 18px;
+  background: #444444;
+  color: #f2f2f2;
+  cursor: pointer;
+}
+
+.dialog-cancel-btn:active{
+  transform: scale(0.99);
+}
+
+.dialog-quit-btn{
+  height: 56px;
+  width: 100%;
+  border: none;
+  border-radius: 18px;
+  font-family: inherit;
+  font-weight: 900;
+  font-size: 20px;
+  background: #ff5a51;
+  color: #f2f2f2;
+  box-shadow: 0 10px 22px rgba(0,0,0,0.25);
+  cursor: pointer;
+}
+
+.dialog-quit-btn:active{
+  transform: scale(0.985);
+}
+
+    /* Question + answers */
+    .question{
+      margin: 0;
+    }
+
+    .answer{
+      flex:1;
+      min-height:0;
+      width:100%;
+
+      border-radius: 18px;
+      border:none;
+
+      font-family:inherit;
+      font-weight:900;
+      font-size:18px;
+
+      padding: 12px 16px;
+
+      display:flex;                 /* enables vertical centering */
+      align-items:center;           /* vertical center */
+      justify-content:center;       /* horizontal center */
+      text-align:center;
+      line-height: 1.15;
+      text-wrap: balance;
+      overflow-wrap: anywhere;
+
+      color: var(--opt-text, rgba(255,255,255,0.98));
+      background: rgba(0,0,0,0.28);
+
+      box-shadow: 0 10px 22px rgba(0,0,0,0.20);
+      cursor:pointer;
+      transform: translateZ(0);
+    }
+    
+
+    .answer:active{ transform: scale(0.99); }
+
+    /* Kahoot-ish colored options (uses theme vars if present; falls back otherwise) */
+    .answer.opt0{ background: var(--opt-a, #e21b3c); }
+    .answer.opt1{ background: var(--opt-b, #1368ce); }
+    .answer.opt2{ background: var(--opt-c, #d89e00); }
+    .answer.opt3{ background: var(--opt-d, #26890c); }
+
+    .answer.opt0{ color: var(--opt-a-text, rgba(255,255,255,0.98)); }
+    .answer.opt1{ color: var(--opt-b-text, rgba(255,255,255,0.98)); }
+    .answer.opt2{ color: var(--opt-c-text, rgba(255,255,255,0.98)); }
+    .answer.opt3{ color: var(--opt-d-text, rgba(255,255,255,0.98)); }
+
+    /* Locked + reveal */
+    .answers.locked .answer{
+      opacity:0.82;
+      pointer-events:none;
+    }
+    .answer.selected{
+      animation: pop 180ms ease-out both;
+      outline: 3px solid rgba(255,255,255,0.65);
+    }
+    .answer.correct{
+      outline: 4px solid rgba(255,255,255,0.95);
+      filter: saturate(1.15) brightness(1.05);
+    }
+    .answer.wrong{
+      opacity:0.55;
+      filter: grayscale(0.15);
+    }
+
+    @keyframes pop{
+      from{ transform: scale(0.98); }
+      to{ transform: scale(1.02); }
+    }
+
+    /* Suspense dots */
+    .suspense{
+      display:flex;
+      gap:6px;
+      align-items:center;
+      justify-content:center;
+      height: 24px;
+      opacity:0.95;
+    }
+    .dot{
+      width:10px; height:10px; border-radius:99px;
+      background: rgba(255,255,255,0.85);
+      animation: bounce 700ms infinite ease-in-out;
+    }
+    .dot:nth-child(2){ animation-delay:120ms; }
+    .dot:nth-child(3){ animation-delay:240ms; }
+    @keyframes bounce{
+      0%,100%{ transform: translateY(0); opacity:0.55; }
+      50%{ transform: translateY(-7px); opacity:1; }
+    }
+
+    /* Bottom nav (solid bar style from Ten/Credo apps) */
+    nav#nav{
+      position:fixed;
+      left:0;
+      right:0;
+      bottom:0;
+
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+
+      padding: 10px 14px;
+
+      background: #333333;
+
+      border-top: 1px solid rgba(255,255,255,0.12);
+
+      color: white;
+    }
+    .nav-btn{
+      width: var(--tap);
+      height: var(--tap);
+      border:none;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.20);
+      color: rgba(255,255,255,0.95);
+      font-size: 18px;
+      font-weight: 900;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .nav-btn:active{ transform: scale(0.98); }
+    .nav-center{
+      font-weight: 900;
+      font-size: 16px;
+      opacity:0.98;
+      letter-spacing:0.3px;
+    }
+
+    /* Timer bar (repurposed "progress bar" into countdown bar) */
+    .timer-wrap{
+      width:100%;
+      height: 12px;
+      border-radius: 99px;
+      background: var(--progress-track, rgba(255,255,255,0.18));
+      overflow:hidden;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.25);
+    }
+    .timer-bar{
+      height:100%;
+      width:100%;
+      transform-origin: left center;
+      background: #3ddc84; /* will be adjusted by JS */
+      transition: width 120ms linear, background-color 200ms linear;
+    }
+    .timer-row{
+      display:flex;
+      gap:12px;
+      align-items:center;
+    }
+    .timer-num{
+      font-weight:900;
+      font-size:16px;
+      min-width: 32px;
+      text-align:right;
+      opacity:0.95;
+    }
+
+    /* Small toast / overlay */
+    .overlay{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,0.80);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index: 10000;
+      opacity: 0;
+      transition: opacity 250ms ease;
+    }
+    
+
+    .overlay.show{ 
+    display:flex;
+    opacity:1;
+
+    }
+
+/* =========================================================
+   Suspense overlay (dims EVERYTHING)
+   ========================================================= */
+.suspense-overlay{
+  position:fixed;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background: rgba(0,0,0,0.65);
+  z-index: 20000; /* above nav (nav is 9999) */
+}
+
+.suspense-emoji{
+  font-size: clamp(80px, 50vw, 180px);
+  line-height: 1;
+  user-select: none;
+  filter: drop-shadow(0 18px 36px rgba(0,0,0,0.45));
+  transform-origin: center;
+}
+
+/* Smooth flip (used by coin + meter) */
+.suspense-emoji.flip{
+  transition: transform 130ms ease-in-out;
+  will-change: transform;
+}
+
+/* Bomb shockwave ring (from old Andy engine) */
+.shockwave{
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 8px solid #ffea00;
+  box-shadow: 0 0 22px rgba(255, 234, 0, 0.75);
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+  pointer-events: none;
+}
+
+@keyframes shockwaveExpand{
+  from { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  to   { transform: translate(-50%, -50%) scale(25); opacity: 0; }
+}
+
+
+/* Gravity-style jump for yesnoFlip */
+@keyframes yesnoJump {
+  0%   { transform: translateY(0); }
+  45%  { transform: translateY(-95px); }  /* apex height */
+  100% { transform: translateY(0); }
+}
+
+.suspense-emoji.jump{
+  animation: yesnoJump 420ms cubic-bezier(.22,.61,.34,1) both;
+}
+
+
+/* Smooth movement for position-based suspense (magnifier/pointer) */
+.suspense-emoji.mover{
+  position: fixed;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%);
+  transition: left 220ms ease, top 220ms ease;
+}
+
+/* =========================================================
+   Reveal verdict in question box
+   ========================================================= */
+.question-box.verdict{
+  background: #f2f2f2;
+}
+
+.question-box.verdict .question{
+  font-size: 44px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.question-box.verdict.correct .question{
+  color: #1b8f3a; /* green */
+}
+
+.question-box.verdict.incorrect .question{
+  color: #c62828; /* red */
+}
+
+/* Keep correct answer normal; dim others more clearly */
+.answer.dimmed{
+  opacity: 0.30 !important;
+  filter: grayscale(0.20);
+}
+
+/* =========================================================
+   Nav overlay CTA (Next question / See score)
+   ========================================================= */
+nav#nav{
+  position:fixed;
+}
+
+.nav-next{
+  position:absolute;
+  left:0;
+  right:0;
+  top:0;
+  bottom:0;
+  width:100%;
+  border:none;
+  border-radius: 0;
+  background: #333333;
+  color: rgba(255,255,255,0.98);
+  font-family: inherit;
+  font-weight: 900;
+  font-size: 20px;
+  letter-spacing: 0.3px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.nav-next:active{ transform: scale(0.99); }
+
+/* Bouncing hint arrow for the NEXT QUESTION button */
+.next-hint{
+  position:absolute;
+  left:50%;
+  bottom: calc(100% + 8px); /* sits slightly above the nav */
+  transform: translateX(-50%);
+  font-size: clamp(48px, 14vw, 120px);
+  line-height: 1;
+  filter: drop-shadow(0 10px 18px rgba(0,0,0,0.45));
+  pointer-events: none; /* never blocks taps */
+  z-index: 10001; /* above the nav-next button */
+  animation: nextHintBounce 780ms cubic-bezier(.2,.9,.2,1) infinite;
+}
+
+@keyframes nextHintBounce{
+  0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.95; }
+  50%      { transform: translateX(-50%) translateY(-18px); opacity: 1; }
+}
+    .dialog{
+      width:min(420px, 100%);
+      border-radius: 22px;
+      background: #333333;
+      border: 1px solid rgba(255,255,255,0.10);
+      box-shadow: 0 18px 50px rgba(0,0,0,0.45);
+      padding: 18px;
+      color: #f2f2f2;
+    }
+    .dialog h3{
+      margin:0 0 8px;
+      font-size:20px;
+      font-weight:900;
+    }
+    .dialog p{
+      margin:0 0 14px;
+      opacity:0.92;
+      line-height:1.25;
+    }
+    .dialog .row{
+      display:flex;
+      gap:12px;
+    }
+    .dialog button{
+      flex:1;
+    }
+
+    /* End / Present */
+.present{
+  /* No box — just the emoji */
+  width: auto;
+  height: auto;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+
+  display: inline-flex;
+  align-items:center;
+  justify-content:center;
+
+  font-size: 92px;
+  line-height: 1;
+  user-select:none;
+}
+.present:active{ transform: scale(0.98); }
+
+    .emoji-reward{
+      font-size: 92px;
+      text-align:center;
+      line-height:1;
+      user-select:none;
+      animation: rewardPop 420ms cubic-bezier(.2,1.4,.35,1) both;
+      filter: drop-shadow(0 14px 28px rgba(0,0,0,0.35));
+    }
+
+
+
+    
+    @keyframes rewardPop{
+      from{ transform: scale(0.6) rotate(-6deg); opacity:0.5; }
+      to{ transform: scale(1) rotate(0deg); opacity:1; }
+    }
+
+    @keyframes presentWiggle {
+  0%   { transform: rotate(0deg); }
+  15%  { transform: rotate(-10deg); }
+  30%  { transform: rotate(10deg); }
+  45%  { transform: rotate(-8deg); }
+  60%  { transform: rotate(8deg); }
+  75%  { transform: rotate(-4deg); }
+  100% { transform: rotate(0deg); }
+}
+
+/* Reward overlay layout text */
+.reward-top{
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0.3px;
+  text-align: center;
+}
+
+/* Reward overlay: make text fully bright (not dimmed by .hint opacity) */
+#overlay.show #rewardStage .reward-top,
+#overlay.show #rewardStage .hint,
+#overlay.show #rewardStage .reward-ui{
+  opacity: 1 !important;
+  color: #fff !important;
+  text-shadow: 0 3px 10px rgba(0,0,0,0.55);
+}
+
+/* ---------- Reward overlay layering ---------- */
+
+/* The reward screen container becomes the stacking context */
+#rewardStage{
+  position: relative;
+}
+
+
+
+
+
+/* --- Dance 1: Bounce Party (floatier) --- */
+@keyframes danceBounce {
+  0%, 100% { transform: translateY(0) scale(1,1); }
+
+  /* softer takeoff */
+  12% { transform: translateY(0) scale(1.06,0.92); }
+
+  /* rise */
+  32% { transform: translateY(-24vh) scale(1.04,0.96); }
+
+  /* hang time near apex (lighter gravity) */
+  46% { transform: translateY(-26vh) scale(1.03,0.97); }
+  58% { transform: translateY(-25vh) scale(1.03,0.97); }
+
+  /* soft landing */
+  78% { transform: translateY(0) scale(0.96,1.08); }
+
+  /* tiny rebound */
+  88% { transform: translateY(-4vh) scale(1.01,0.99); }
+}
+
+.emoji-reward.dance-bounce{
+  animation: danceBounce 1050ms cubic-bezier(.15,.85,.25,1) infinite;
+}
+
+/* --- Dance 2: Wiggle Shimmy --- */
+@keyframes danceWiggle {
+  0%   { transform: rotate(0deg) translateX(0); }
+  15%  { transform: rotate(-10deg) translateX(-6px); }
+  30%  { transform: rotate(10deg) translateX(6px); }
+  45%  { transform: rotate(-8deg) translateX(-4px); }
+  60%  { transform: rotate(8deg) translateX(4px); }
+  75%  { transform: rotate(-4deg) translateX(-2px); }
+  100% { transform: rotate(0deg) translateX(0); }
+}
+.emoji-reward.dance-wiggle{
+  animation: danceWiggle 640ms ease-in-out infinite;
+}
+
+/* --- Dance 3: Moonwalk Slide --- */
+@keyframes danceMoonwalk {
+  0%   { transform: translateX(-35vw) rotate(6deg); }
+  50%  { transform: translateX(35vw) rotate(-6deg); }
+  100% { transform: translateX(-35vw) rotate(6deg); }
+}
+
+
+.emoji-reward.dance-moonwalk{
+  animation: danceMoonwalk 980ms ease-in-out infinite;
+}
+
+/* --- Dance 4: Crazy Pong (JS-driven) --- */
+.emoji-reward.dance-pong{
+  animation: none !important; 
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%,-50%);
+  will-change: left, top;
+}
+
+/* --- Dance 5: Spin'spolsion (JS-driven spin-up) --- */
+.emoji-reward.dance-spin{
+  will-change: transform;
+  animation: none !important;
+}
+
+/* Particle burst for Spin'spolsion */
+.particle{
+  position:absolute;
+  left: 50%;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.95);
+  transform: translate(-50%,-50%);
+  pointer-events:none;
+  filter: drop-shadow(0 8px 14px rgba(0,0,0,0.35));
+}
+@keyframes particleFly{
+  from { transform: translate(-50%,-50%) translate(0,0) scale(1); opacity: 1; }
+  to   { transform: translate(-50%,-50%) translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; }
+}
+
+.present.wiggle {
+  animation: presentWiggle 520ms ease-in-out both;
+}
+
+    
+    /* Tiny corner hint */
+    .hint{
+      font-size: 13px;
+      opacity:0.85;
+      text-align:center;
+    }
+
+/* =========================================================
+   Theme bridge: maps Andy theme variables -> app variables
+   This lets all your existing quiz_themes/*.css work unchanged.
+   ========================================================= */
+
+/* 1) Background + text */
+:root{
+  --app-bg: var(--quiz-screen-bg, var(--quiz-bg, #222));
+  --bg-solid: var(--quiz-screen-bg-solid, #222);
+
+  --text-primary: var(--primary-text, var(--title-main-text, #fff));
+
+  --btn-primary-bg: var(--accent, rgba(255,255,255,0.92));
+  --btn-primary-text: var(--accent-text, #111);
+
+  --opt-a: var(--red, #e21b3c);
+  --opt-b: var(--blue, #1368ce);
+  --opt-c: var(--yellow, #d89e00);
+  --opt-d: var(--green, #26890c);
+
+  --opt-a-text: var(--red-text, rgba(255,255,255,0.98));
+  --opt-b-text: var(--blue-text, rgba(255,255,255,0.98));
+  --opt-c-text: var(--yellow-text, rgba(255,255,255,0.98));
+  --opt-d-text: var(--green-text, rgba(255,255,255,0.98));
+
+  /* Progress / timer bar */
+--progress-track: var(--progress-track-bg, rgba(255,255,255,0.18));
+--progress-high: var(--progress-fill-high, #3ddc84);
+--progress-mid: var(--progress-fill-mid, #f4c542);
+--progress-low: var(--progress-fill-low, #ff4d4d);
+}
+
+/* =========================================================
+   Title screen (NOT themed)
+   ========================================================= */
+.title-screen{
+  background: #f2f2f2;
+  color: #333333;
+  min-height: 100%;
+  width: 100%;
+  display: flex;
+}
+
+.title-screen .big-text,
+.title-screen .body-text,
+.title-screen .hint{
+  color: #333333;
+}
+
+.title-screen .primary-btn{
+  background: #7f66c6;
+  color: #ffffff;
+}
+
+.title-screen .secondary-btn{
+  border: 2px solid #333333;
+  color: #333333;
+}
+
+
+/* ---------- Creed-style Intro (for Quiz) ---------- */
+.quiz-intro {
+  background: var(--intro-screen-bg, #7f66c6);
+  color: var(--intro-screen-text, #ffffff);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  text-align: center;
+  gap: 16px;
+  padding: 24px 18px;
+}
+
+.quiz-intro .presented,
+.quiz-intro .site,
+.quiz-intro .hint {
+  color: var(--intro-screen-text, #ffffff);
+}
+
+.quiz-intro img {
+  width: min(70vw, 420px);
+  max-height: 45vh;
+  object-fit: contain;
+  animation: introWiggle 1s infinite alternate;
+  user-select: none;
+}
+
+@keyframes introWiggle {
+  0% { transform: rotate(-4deg); }
+  100% { transform: rotate(4deg); }
+}
+
+.quiz-intro .presented {
+  font-size: 18px;
+  font-weight: 800;
+  opacity: 0.95;
+}
+
+.quiz-intro .site {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0.3px;
+}
+
+  </style>
+</head>
+
+<body>
+  <div id="app"></div>
+
+<nav id="nav" aria-label="Quiz navigation" style="display:none;">
+  <button id="homeBtn" class="nav-btn" title="Home" aria-label="Home">⌂</button>
+  <div id="navCenter" class="nav-center">1 / 10</div>
+  <button id="muteBtn" class="nav-btn" title="Mute" aria-label="Mute">🔊</button>
+
+  <!-- Reveal-stage CTA that covers the whole nav -->
+  <button id="nextBtn" class="nav-next" type="button" style="display:none;">Next question</button>
+  <div id="nextHint" class="next-hint" style="display:none;" aria-hidden="true">👇</div>
+</nav>
+
+
+  <div id="overlay" class="overlay" role="dialog" aria-modal="true">
+    <div class="dialog">
+      <h3 id="overlayTitle">Quit quiz?</h3>
+      <p id="overlayText">Are you sure you want to go back to the start?</p>
+      <div class="row">
+        <button id="overlayCancel" class="dialog-cancel-btn" type="button">Cancel</button>
+        <button id="overlayOk" class="dialog-quit-btn" type="button">Quit</button>
+      </div>
+    </div>
+  </div>
+
+<!-- Suspense overlay: dims the whole screen and shows the suspense animation -->
+<div id="suspenseOverlay" class="suspense-overlay" style="display:none;">
+  <div id="suspenseEmoji" class="suspense-emoji" aria-hidden="true">👍</div>
+</div>
+
+
+  <script>
+  /*************************************************************
+   * Phone-Only Kahoot-Style Quiz
+   * - Keeps Andy Kahoot Engine JSON + theme conventions
+   * - Full-screen slides + bottom nav style from Ten/Credo apps
+   *************************************************************/
+
+  /***********************
+   * URL -> quiz_data/*.json (same convention)
+   ***********************/
+  function getQuizJsonPathFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const quizId = params.get("q");     // <-- no default
+    if (!quizId) return null;           // <-- IMPORTANT
+    return `quiz_data/${quizId}.json`;
+  }
+
+function setHomeDefaults() {
+  LESSON_ID = "";
+  PAGE_TITLE = "Eat Your Bible Quizzes";
+  LESSON_TITLE_TEXT = "Eat Your Bible Quizzes";
+  LESSON_SUBTITLE_TEXT = "";
+  LESSON_IMAGE_PATH = "quizimages/quiz_icon.png";
+  THEME_CLASS = "";      // title screen is not themed anyway
+  QUESTIONS = [];        // no quiz loaded yet
+  document.title = PAGE_TITLE;
+}
+
+  // === List of quizzes the user can pick from on the title screen ===
+const QUIZ_LIST = [
+  // ===== OLD TESTAMENT =====
+  { id: "ot01", title: "God Creates the World" },
+  { id: "ot02", title: "God Creates People" },
+  { id: "ot03", title: "The Fall of Man" },
+  { id: "ot04", title: "Cain and Abel" },
+  { id: "ot05", title: "The Great Flood" },
+  { id: "ot06", title: "Noah Leaves the Ark" },
+  { id: "ot07", title: "The Tower of Babel" },
+  { id: "ot08", title: "The Call of Abram" },
+  { id: "ot09", title: "Abram and Lot Separate" },
+  { id: "ot10", title: "The Birth of Isaac" },
+  { id: "ot11", title: "Sodom and Gomorrah" },
+  { id: "ot12", title: "The Book of Job" },
+  { id: "ot13", title: "Isaac and Rebekah" },
+  { id: "ot14", title: "Jacob, Esau, and the Birthright" },
+  { id: "ot15", title: "Jacob Steals the Blessing" },
+  { id: "ot16", title: "Jacob's Dream" },
+  { id: "ot17", title: "Jacob, Leah, and Rachel" },
+  { id: "ot18", title: "Jacob's Family" },
+  { id: "ot19", title: "Jacob Wrestles with God" },
+  { id: "ot20", title: "Joseph and his Brothers" },
+  { id: "ot21", title: "Joseph Works for Potiphar" },
+  { id: "ot22", title: "Joseph in Prison" },
+  { id: "ot23", title: "Pharaoh's Dreams" },
+  { id: "ot24", title: "Joseph Tests his Brothers" },
+  { id: "ot25", title: "Joseph Forgives his Brothers" },
+  { id: "ot26", title: "The Birth of Moses" },
+  { id: "ot27", title: "Moses and the Burning Bush" },
+  { id: "ot28", title: "Moses Speaks to Pharaoh" },
+  { id: "ot29", title: "The Plagues of Egypt" },
+  { id: "ot30", title: "The Passover" },
+  { id: "ot31", title: "God Parts the Red Sea" },
+  { id: "ot32", title: "God Provides in the Wilderness" },
+  { id: "ot33", title: "God Gives the Law" },
+  { id: "ot35", title: "The Golden Calf" },
+  { id: "ot36", title: "The Tabernacle" },
+  { id: "ot37", title: "Spies in the Promised Land" },
+  { id: "ot38", title: "Wandering in the Wilderness" },
+  { id: "ot39", title: "Rahab and the Spies" },
+  { id: "ot40", title: "Crossing the Jordan River" },
+  { id: "ot41", title: "The Battle of Jericho" },
+  { id: "ot42", title: "Achan's Sin" },
+  { id: "ot43", title: "The Sun Stands Still" },
+  { id: "ot44", title: "The First Three Judges" },
+  { id: "ot45", title: "Gideon" },
+  { id: "ot46", title: "Samson" },
+  { id: "ot47", title: "Ruth and Naomi" },
+  { id: "ot48", title: "Samuel is Born" },
+  { id: "ot49", title: "God Speaks to Samuel" },
+  { id: "ot50", title: "The Philistines Capture the Ark" },
+  { id: "ot79", title: "Nehemiah Rebuilds the Wall" },
+  { id: "ot99", title: "Test Quiz" },
+
+    // ===== NEW TESTAMENT =====
+  { id: "nt01", title: "Zechariah and Elizabeth" },
+  { id: "nt02", title: "An Angel Visits Mary and Joseph" },
+  { id: "nt03", title: "The Birth of Jesus" },
+  { id: "nt04", title: "Wise Men Visit Jesus" },
+  { id: "nt05", title: "Young Jesus at the Temple" },
+  { id: "nt06", title: "John the Baptist" },
+  { id: "nt07", title: "The Baptism & Temptation of Jesus" },
+  { id: "nt08", title: "The Twelve Disciples" },
+  { id: "nt09", title: "Jesus and Nicodemus" },
+  { id: "nt10", title: "Two Miracles of Jesus" },
+  { id: "nt11", title: "Jesus Heals a Man Who Could Not Walk" },
+  { id: "nt12", title: "Jesus Drives Out Evil Spirits" },
+  { id: "nt13", title: "Jesus Heals Jairus' Daughter" },
+  { id: "nt14", title: "Jesus Feeds the 5000" },
+  { id: "nt15", title: "Jesus Walks on Water" },
+  { id: "nt16", title: "The Pharisees" },
+  { id: "nt17", title: "Jesus Heals a Man Born Blind" },
+  { id: "nt18", title: "Mary, Martha, and Worry" },
+  { id: "nt19", title: "Jesus Raises Lazarus" },
+  { id: "nt20", title: "The Rich Young Man and Zacchaeus" },
+  { id: "nt36", title: "The Holy Spirit Comes" },
+  { id: "nt37", title: "Peter Heals a Man Who Could Not Walk" },
+  { id: "nt38", title: "Stephen and Philip" },
+  { id: "nt39", title: "Saul Meets Jesus" },
+  { id: "nt40", title: "Peter Escapes from Prison" },
+  { id: "nt41", title: "Saul and Barnabas' Missionary Journey" },
+  { id: "nt42", title: "Paul and Silas in Prison" },
+  { id: "nt43", title: "Paul's Journey to Rome" },
+  { id: "nt44", title: "Jesus is Coming Again" }
 ];
 
-self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(CORE_ASSETS))
-  );
-  self.skipWaiting();
-});
+  /***********************
+   * Theme loader (same convention as Andy engine)
+   ***********************/
+  function applyTheme(themeClass) {
+    const themeLink = document.getElementById("theme-css");
+    if (!themeClass) return;
 
-self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(keys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k)))
-    )
-  );
-  self.clients.claim();
-});
+    document.documentElement.classList.add("theme-loading");
 
-/**
- * Cache-first for same-origin GET requests:
- * - If the file is already cached, use it.
- * - Otherwise fetch it, then cache it for next time.
- * This means quiz JSON, extra themes, images, and sounds get cached after first use.
- */
-self.addEventListener("fetch", (event) => {
-  const req = event.request;
-  const url = new URL(req.url);
+    if (themeLink) {
+      const newHref = `quiz_themes/${themeClass}.css`;
+      if (themeLink.href.endsWith(newHref)) {
+        setThemeClass(themeClass);
+        document.documentElement.classList.remove("theme-loading");
+        return;
+      }
 
-  if (req.method !== "GET") return;
-  if (url.origin !== self.location.origin) return;
+      themeLink.onload = () => {
+        setThemeClass(themeClass);
+        document.documentElement.classList.remove("theme-loading");
+      };
+      themeLink.onerror = () => {
+        console.warn("Theme CSS failed to load:", newHref);
+        setThemeClass(themeClass);
+        document.documentElement.classList.remove("theme-loading");
+      };
+      themeLink.href = newHref;
+    } else {
+      setThemeClass(themeClass);
+      document.documentElement.classList.remove("theme-loading");
+    }
+  }
 
-  event.respondWith(
-    caches.match(req).then((cached) => {
-      if (cached) return cached;
+  function setThemeClass(themeClass) {
+    const el = document.documentElement;
+    [...el.classList].forEach(c => { if (c.startsWith("theme-")) el.classList.remove(c); });
+    el.classList.add(themeClass);
+  }
 
-      return fetch(req).then((resp) => {
-        const copy = resp.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(req, copy));
-        return resp;
+  function freezeTitleRefresh() {
+    document.documentElement.classList.add("title-refreshing");
+  }
+
+  function unfreezeTitleRefresh() {
+    document.documentElement.classList.remove("title-refreshing");
+  }
+
+  /***********************
+   * Globals filled from JSON
+   ***********************/
+  let LESSON_ID = "";
+  let PAGE_TITLE = "Quiz";
+  let LESSON_TITLE_TEXT = "";
+  let LESSON_SUBTITLE_TEXT = "";
+  let LESSON_IMAGE_PATH = "";
+  let THEME_CLASS = "";
+  let QUESTIONS = [];
+
+  async function loadQuizFromJson(jsonPath) {
+    const res = await fetch(jsonPath);
+    if (!res.ok) throw new Error(`Failed to load quiz JSON: ${jsonPath}`);
+    const quiz = await res.json();
+
+    LESSON_ID = quiz.lessonId || "";
+    PAGE_TITLE = quiz.pageTitle || "Quiz";
+    LESSON_TITLE_TEXT = quiz.lessonTitleText || "";
+    LESSON_SUBTITLE_TEXT = quiz.lessonSubtitleText || "";
+    LESSON_IMAGE_PATH = quiz.lessonImagePath || "";
+    THEME_CLASS = quiz.themeClass || "";
+    QUESTIONS = Array.isArray(quiz.questions) ? quiz.questions : [];
+
+    document.title = PAGE_TITLE;
+
+    applyTheme(THEME_CLASS);
+  }
+
+  /***********************
+   * Slide system (inspired by Ten/Credo apps)
+   ***********************/
+  const app = document.getElementById("app");
+  let currentSlideEl = null;
+  let isSliding = false;
+
+  
+  function pushSlide(newEl, direction = "forward", navVisible = true) {
+  // Special-case: first/instant slide (no animation)
+  // IMPORTANT: do NOT set isSliding=true here, because there will be no transitionend.
+  if (direction === "none") {
+    const oldEl = currentSlideEl;
+    currentSlideEl = newEl;
+
+    if (!navVisible) newEl.classList.add("nav-hidden");
+
+    newEl.style.transition = "none";
+    newEl.style.transform = "translateX(0)";
+    app.appendChild(newEl);
+
+    if (oldEl) oldEl.remove();
+    isSliding = false;
+    return;
+  }
+
+  if (isSliding) return;
+  isSliding = true;
+
+  const oldEl = currentSlideEl;
+  currentSlideEl = newEl;
+
+  if (!navVisible) newEl.classList.add("nav-hidden");
+
+  newEl.style.transition = "none";
+  if (direction === "back") newEl.style.transform = "translateX(-100%)";
+  else newEl.style.transform = "translateX(100%)";
+
+  app.appendChild(newEl);
+  newEl.offsetHeight; // force reflow
+
+  requestAnimationFrame(() => {
+    newEl.style.transition = "transform 320ms ease";
+    if (oldEl) oldEl.style.transition = "transform 320ms ease";
+
+    newEl.style.transform = "translateX(0)";
+    if (oldEl) oldEl.style.transform = (direction === "back") ? "translateX(100%)" : "translateX(-100%)";
+  });
+
+  const cleanup = () => {
+    newEl.removeEventListener("transitionend", cleanup);
+    if (oldEl) oldEl.remove();
+    isSliding = false;
+  };
+
+  // Fallback safety: if transitionend doesn't fire for any reason, unlock anyway.
+  const safety = setTimeout(() => cleanup(), 450);
+
+  newEl.addEventListener("transitionend", () => {
+    clearTimeout(safety);
+    cleanup();
+  }, { once: true });
+}
+
+  function makeSlide(innerHTML, bg) {
+    const el = document.createElement("section");
+    el.className = "slide";
+    el.style.background = bg || "var(--app-bg, var(--bg-solid, #222))";
+    el.innerHTML = innerHTML;
+    return el;
+  }
+
+  /***********************
+   * Bottom nav (Home + Counter + Mute)
+   ***********************/
+  const nav = document.getElementById("nav");
+  const navCenter = document.getElementById("navCenter");
+  const homeBtn = document.getElementById("homeBtn");
+  const muteBtn = document.getElementById("muteBtn");
+  const nextBtn = document.getElementById("nextBtn");
+  const nextHint = document.getElementById("nextHint");
+let hasShownNextHint = false; // only show once (first question reveal)
+  const suspenseOverlay = document.getElementById("suspenseOverlay");
+  const suspenseEmoji = document.getElementById("suspenseEmoji");
+  function setNavVisible(isVisible) {
+    nav.style.display = isVisible ? "flex" : "none";
+  }
+
+  function setNavCounter(idx, total) {
+    navCenter.textContent = `${idx} / ${total}`;
+  }
+
+  /***********************
+   * Quit confirm dialog
+   ***********************/
+  const overlay = document.getElementById("overlay");
+  const overlayCancel = document.getElementById("overlayCancel");
+  const overlayOk = document.getElementById("overlayOk");
+
+  let overlayOkHandler = null;
+
+  function showConfirm({ title="Quit quiz?", text="Are you sure?", okText="Quit", onOk }) {
+    document.getElementById("overlayTitle").textContent = title;
+    document.getElementById("overlayText").textContent = text;
+    overlayOk.textContent = okText;
+
+    overlayOkHandler = () => {
+      hideConfirm();
+      onOk && onOk();
+    };
+
+    overlay.classList.add("show");
+  }
+
+  function hideConfirm() {
+    overlay.classList.remove("show");
+    overlayOkHandler = null;
+  }
+
+  overlayCancel.addEventListener("click", hideConfirm);
+  overlayOk.addEventListener("click", () => overlayOkHandler && overlayOkHandler());
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) hideConfirm(); });
+
+  /***********************
+   * Audio (from Andy engine)
+   ***********************/
+  let audioCtx = null;
+  let soundEnabled = true;
+
+  const chompAudio = new Audio("quizsounds/sound_chomp.mp3");
+  chompAudio.preload = "auto";
+  let isChompReady = false;
+  chompAudio.addEventListener("canplaythrough", () => { isChompReady = true; });
+
+  function ensureAudioUnlocked() {
+    // On iOS/Android, an AudioContext may start suspended until user gesture
+    const ctx = getAudioContext();
+    if (ctx && ctx.state === "suspended") {
+      ctx.resume().catch(()=>{});
+    }
+  }
+
+  function getAudioContext() {
+    if (!audioCtx) {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) audioCtx = new AC();
+    }
+    return audioCtx;
+  }
+
+  function playBeepSequence(notes) {
+    if (!soundEnabled) return;
+    const ctx = getAudioContext();
+    if (!ctx) return;
+    const now = ctx.currentTime;
+
+    notes.forEach((note, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.type = "triangle";
+      osc.frequency.value = note.freq;
+
+      const t0 = now + i * note.duration;
+      const t1 = t0 + note.duration;
+
+      gain.gain.setValueAtTime(0, t0);
+      gain.gain.linearRampToValueAtTime(0.45, t0 + 0.02);
+      gain.gain.linearRampToValueAtTime(0.0, t1);
+
+      osc.start(t0);
+      osc.stop(t1 + 0.02);
+    });
+  }
+
+  function playCorrectSound() {
+    playBeepSequence([
+      { freq: 660, duration: 0.14 },
+      { freq: 880, duration: 0.14 },
+      { freq: 1040, duration: 0.16 }
+    ]);
+  }
+
+  function playIncorrectSound() {
+    playBeepSequence([
+      { freq: 260, duration: 0.18 },
+      { freq: 200, duration: 0.20 }
+    ]);
+  }
+
+  function playChompSound() {
+    if (!soundEnabled || !isChompReady) return;
+    try { chompAudio.currentTime = 0; chompAudio.play(); } catch(e) {}
+  }
+
+  function playTickTock(isThumbUp) {
+    if (!soundEnabled) return;
+    const rootHz = 250;
+    const fifthHz = rootHz * 1.5;
+    const seq = isThumbUp ? [{ freq: fifthHz, duration: 0.08 }] : [{ freq: rootHz, duration: 0.08 }];
+    playBeepSequence(seq);
+  }
+
+  function setMuteUi() {
+    muteBtn.textContent = soundEnabled ? "🔊" : "🔇";
+    muteBtn.setAttribute("aria-label", soundEnabled ? "Mute" : "Unmute");
+  }
+
+  muteBtn.addEventListener("click", () => {
+    ensureAudioUnlocked();
+    soundEnabled = !soundEnabled;
+    setMuteUi();
+  });
+
+  /***********************
+   * Emoji pools (from Andy engine)
+   ***********************/
+  const NEUTRAL_EMOJIS = [
+    "😀","😄","😊","😁","🤗","🙂","🤩","🤪","🥸","🤓","😧","😵‍💫","🙃","😺","😸","😻",
+    "😎","😇","😮‍💨","😌","😃"
+  ];
+  const CORRECT_EMOJIS = [
+    "🤩","😄","🎉","🥳","🙌","😎","😃","😁","😺","🎊","⭐",
+    "👏","🔥","💥","🌟","✨","🫶","😇","💫","🏆","🥇",
+    "🤗","😆","😻","💯","🎈"
+  ];
+  const INCORRECT_EMOJIS = [
+    "😢","😮","😯","😕","😟","🙁","😞","😔","🥺",
+    "😿","😣","😫","🤢","😥","🫤","😐","🙄"
+  ];
+  const FUNNY_EMOJIS = [
+    "🤪","🥸","🤡","🤠","💩","🦆","😹","🍕","🤤","👽","🌮","🍩","🥨","🍔","🐸","😏",
+    "🙊","🤯","🤮","🐯","🦁","🐶","🐼","🐰","🐳","🍟","🍪","🍿","🧀","🍎","🍍","🍰"
+  ];
+  const REWARD_EMOJI_POOLS = { 0:FUNNY_EMOJIS,1:FUNNY_EMOJIS,2:FUNNY_EMOJIS,3:FUNNY_EMOJIS,4:FUNNY_EMOJIS,5:FUNNY_EMOJIS,6:FUNNY_EMOJIS,7:FUNNY_EMOJIS,8:FUNNY_EMOJIS,9:FUNNY_EMOJIS,10:FUNNY_EMOJIS };
+
+  function pick(list){ return list[Math.floor(Math.random()*list.length)]; }
+
+/***********************
+ * Suspense variants (10)
+ ***********************/
+const SUSPENSE_VARIANTS = [
+  "thumbsClassic",
+  "faces",
+  "thumbWheel",
+  "bomb",
+  "coin",
+  "hands",
+  "meter",        // your custom face-flip meter
+  "pointerSweep", // your custom fast pointer mover
+  "magnifier",
+  "yesnoFlip"
+];
+
+function shuffledAnswerIndices(n=4){
+  const idx = Array.from({length:n}, (_,i)=>i);
+  for (let i = idx.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [idx[i], idx[j]] = [idx[j], idx[i]];
+  }
+  return idx;
+}
+
+let suspenseDeck = [];
+function shuffle(arr){
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+function nextSuspenseVariant(){
+  if (suspenseDeck.length === 0) suspenseDeck = shuffle([...SUSPENSE_VARIANTS]);
+  return suspenseDeck.pop();
+}
+
+function showSuspenseDim(isOn){
+  suspenseOverlay.style.display = isOn ? "flex" : "none";
+}
+
+function setSuspenseEmoji(text, opts = {}){
+  const { preserveTransform = false, preservePosition = false } = opts;
+
+  // Only remove mover mode if we're not preserving position-based behavior
+  if (!preservePosition) suspenseEmoji.classList.remove("mover");
+
+  suspenseEmoji.textContent = text;
+
+  // IMPORTANT: coin/meter need transform preserved during flip
+  if (!preserveTransform) suspenseEmoji.style.transform = "";
+
+  if (!preservePosition) {
+    suspenseEmoji.style.left = "";
+    suspenseEmoji.style.top = "";
+  }
+}
+
+function finishSuspense(cleanupFn, done){
+  try { cleanupFn && cleanupFn(); } catch(e) {}
+  showSuspenseDim(false);
+  done && done();
+}
+
+function runSuspenseVariant({ variant, questionBoxEl, answerBtns, done }) {
+  showSuspenseDim(true);
+
+  // default: centered emoji
+  suspenseEmoji.classList.remove("mover");
+  suspenseEmoji.classList.remove("flip");
+  suspenseEmoji.style.position = "";
+  suspenseEmoji.style.left = "";
+  suspenseEmoji.style.top = "";
+  suspenseEmoji.style.transform = "";
+  suspenseEmoji.style.fontSize = "";
+
+  // Helpers
+  const centerOf = (el) => {
+    const r = el.getBoundingClientRect();
+    return { x: r.left + r.width/2, y: r.top + r.height/2 };
+  };
+
+  // tick/tock helper like old engine
+  let tick = false;
+  const tt = () => { tick = !tick; playTickTock(tick); };
+
+  // ---- Variant implementations ----
+  if (variant === "thumbsClassic") {
+    let up = true;
+    setSuspenseEmoji("👍");
+    const iv = setInterval(() => { setSuspenseEmoji(up ? "👍" : "👎"); tt(); up = !up; }, 250);
+    const to = setTimeout(() => finishSuspense(()=>{clearInterval(iv);clearTimeout(to);}, done), 4000);
+    return;
+  }
+
+  if (variant === "faces") {
+    const faces = ["🤔","😮","😬","😐","😯","😵‍💫"];
+    let i = 0;
+    setSuspenseEmoji(faces[0]);
+    const iv = setInterval(() => { i=(i+1)%faces.length; setSuspenseEmoji(faces[i]); tt(); }, 250);
+    const to = setTimeout(() => finishSuspense(()=>{clearInterval(iv);clearTimeout(to);}, done), 3000);
+    return;
+  }
+
+  if (variant === "thumbWheel") {
+    setSuspenseEmoji("👍");
+    let rot = 0;
+    const iv = setInterval(() => {
+      rot = (rot + 45) % 360;
+      suspenseEmoji.style.transform = `rotate(${rot}deg)`;
+      tt();
+    }, 120);
+    const to = setTimeout(() => finishSuspense(()=>{clearInterval(iv);clearTimeout(to);suspenseEmoji.style.transform="";}, done), 3000);
+    return;
+  }
+
+  if (variant === "bomb") {
+  // Old Andy engine style: pulsing bomb, then yellow shockwave ring (no 💥 swap)
+  setSuspenseEmoji("💣");
+  suspenseEmoji.style.fontSize = "11rem";
+
+  let pulseCount = 0;
+  let up = false;
+
+  const iv = setInterval(() => {
+    // pulse
+    up = !up;
+    suspenseEmoji.style.transform = up ? "scale(1.35)" : "scale(1)";
+    tt();
+    pulseCount++;
+
+    if (pulseCount >= 6) {
+      clearInterval(iv);
+
+      // Clear emoji and do shockwave ring
+      suspenseEmoji.textContent = "";
+      suspenseEmoji.style.transform = "";
+      suspenseEmoji.style.fontSize = ""; // restore CSS default (clamp)
+
+      const ring = document.createElement("div");
+      ring.className = "shockwave";
+      suspenseOverlay.appendChild(ring);
+
+      // Trigger animation
+      ring.style.animation = "shockwaveExpand 900ms cubic-bezier(.3,.7,.4,1) forwards";
+
+      // Cleanup and finish suspense
+      setTimeout(() => {
+        try { ring.remove(); } catch(e) {}
+        finishSuspense(() => {}, done);
+      }, 930);
+    }
+  }, 320);
+
+  // Safety cleanup in case something interrupts
+  return;
+}
+
+  if (variant === "coin") {
+  // Animated coin flip using scaleX with a transition (no blinking)
+  const coins = ["🪙","🪙","🪙"];
+  let i = 0;
+
+  setSuspenseEmoji(coins[0]);
+  suspenseEmoji.classList.add("flip");
+  suspenseEmoji.style.transform = "scaleX(1)";
+
+  let running = true;
+  const endAt = Date.now() + 2600;
+
+  const doFlip = () => {
+    if (!running) return;
+
+    // 1) flip to thin
+    suspenseEmoji.style.transform = "scaleX(0.05)";
+    tt();
+
+    // 2) swap at the thin point
+    setTimeout(() => {
+      if (!running) return;
+      i = (i + 1) % coins.length;
+      setSuspenseEmoji(coins[i], { preserveTransform: true });
+
+      // 3) flip back to full
+      suspenseEmoji.style.transform = "scaleX(1)";
+
+      // schedule next flip
+      if (Date.now() >= endAt) {
+        running = false;
+        setTimeout(() => finishSuspense(() => {
+          suspenseEmoji.classList.remove("flip");
+          suspenseEmoji.style.transform = "";
+        }, done), 140);
+      } else {
+        setTimeout(doFlip, 160);
+      }
+    }, 130);
+  };
+
+  doFlip();
+  return;
+}
+  
+
+  if (variant === "hands") {
+    const hands = ["👆","☝️","👉","👈","👇","🤞","🖖"];
+    let i = 0;
+    setSuspenseEmoji(hands[0]);
+    const iv = setInterval(() => { i=(i+1)%hands.length; setSuspenseEmoji(hands[i]); tt(); }, 220);
+    const to = setTimeout(() => finishSuspense(()=>{clearInterval(iv);clearTimeout(to);}, done), 2800);
+    return;
+  }
+
+  if (variant === "meter") {
+  // Your custom: coin-flip mechanics swapping faces at the thin point
+  const faces = ["🙂","😢","😄","😡","🙂","😭"];
+  let i = 0;
+
+  setSuspenseEmoji(faces[0]);
+  suspenseEmoji.classList.add("flip");
+  suspenseEmoji.style.transform = "scaleX(1)";
+
+  let running = true;
+  const endAt = Date.now() + 2800;
+
+  const doFlip = () => {
+    if (!running) return;
+
+    // 1) flip to thin
+    suspenseEmoji.style.transform = "scaleX(0.05)";
+    tt();
+
+    // 2) swap at thin point
+    setTimeout(() => {
+      if (!running) return;
+      i = (i + 1) % faces.length;
+      setSuspenseEmoji(faces[i], { preserveTransform: true });
+
+      // 3) back to full
+      suspenseEmoji.style.transform = "scaleX(1)";
+
+      // schedule next flip
+      if (Date.now() >= endAt) {
+        running = false;
+        setTimeout(() => finishSuspense(() => {
+          suspenseEmoji.classList.remove("flip");
+          suspenseEmoji.style.transform = "";
+        }, done), 140);
+      } else {
+        setTimeout(doFlip, 160);
+      }
+    }, 130);
+  };
+
+  doFlip();
+  return;
+}
+
+  if (variant === "magnifier" || variant === "pointerSweep") {
+    // Position-based mover
+    suspenseEmoji.classList.add("mover");
+    suspenseEmoji.style.position = "fixed";
+    suspenseEmoji.style.transform = "translate(-50%, -50%)";
+
+    const qPos = centerOf(questionBoxEl);
+    const aPos = answerBtns.map(centerOf);
+
+    if (variant === "magnifier") {
+      setSuspenseEmoji("🔍", { preserveTransform: true, preservePosition: true });
+      const path = [qPos, aPos[0], aPos[1], aPos[2], aPos[3]];
+      let idx = 0;
+
+      const moveTo = (p) => { suspenseEmoji.style.left = `${p.x}px`; suspenseEmoji.style.top = `${p.y}px`; };
+      moveTo(path[0]);
+
+      const iv = setInterval(() => {
+        tt();
+        idx++;
+        if (idx >= path.length) { clearInterval(iv); setTimeout(() => finishSuspense(()=>{}, done), 450); return; }
+        moveTo(path[idx]);
+      }, 650);
+
+      return;
+    }
+
+    // pointerSweep: fast cycles, goes question -> down buttons -> question -> down ... etc.
+    setSuspenseEmoji("👉", { preserveTransform: true, preservePosition: true });
+    const path = [qPos, ...aPos, qPos, ...aPos, qPos, ...aPos, qPos];
+    let idx = 0;
+
+    const moveTo = (p) => { suspenseEmoji.style.left = `${p.x}px`; suspenseEmoji.style.top = `${p.y}px`; };
+    moveTo(path[0]);
+
+    const iv = setInterval(() => {
+      tt();
+      idx++;
+      if (idx >= path.length) { clearInterval(iv); finishSuspense(()=>{}, done); return; }
+      moveTo(path[idx]);
+    }, 190);
+
+    return;
+  }
+
+if (variant === "yesnoFlip") {
+  // Jumping ✅ / ❌ swap on landing (gravity feel)
+  let isCheck = true;
+  setSuspenseEmoji("✅");
+
+  // Make sure no previous animation class sticks around
+  suspenseEmoji.classList.remove("jump");
+
+  let jumps = 0;
+
+  const doOneJump = () => {
+    // restart the CSS animation cleanly
+    suspenseEmoji.classList.remove("jump");
+    // force reflow so animation re-triggers
+    void suspenseEmoji.offsetWidth;
+    suspenseEmoji.classList.add("jump");
+
+    // swap emoji on landing (end of animation)
+    const onEnd = () => {
+      suspenseEmoji.removeEventListener("animationend", onEnd);
+
+      tt(); // tick/tock on landing
+      isCheck = !isCheck;
+      setSuspenseEmoji(isCheck ? "✅" : "❌");
+
+      jumps++;
+      if (jumps >= 10) {
+        // finish shortly after final landing
+        setTimeout(() => finishSuspense(() => {
+          suspenseEmoji.classList.remove("jump");
+        }, done), 120);
+      } else {
+        // short pause between jumps
+        setTimeout(doOneJump, 90);
+      }
+    };
+
+    suspenseEmoji.addEventListener("animationend", onEnd);
+  };
+
+  doOneJump();
+  return;
+}
+
+  // fallback
+  setSuspenseEmoji("⏳");
+  const to = setTimeout(() => finishSuspense(()=>{clearTimeout(to);}, done), 1200);
+}
+
+  /***********************
+   * Quiz state
+   ***********************/
+  const TIMER_DURATION = 30;
+  let qIndex = 0;
+  let correctCount = 0;
+
+// =========================================================
+// Reward (present) cleanup so "tap anywhere to exit" works
+// =========================================================
+let rewardSpinInterval = null;
+let rewardPongInterval = null;
+let rewardCleanupTimers = [];
+
+function stopRewardAnimations() {
+  // stop any JS-driven intervals
+  if (rewardSpinInterval !== null) {
+    clearInterval(rewardSpinInterval);
+    rewardSpinInterval = null;
+  }
+  if (rewardPongInterval !== null) {
+    clearInterval(rewardPongInterval);
+    rewardPongInterval = null;
+  }
+
+  // stop any timeouts we created
+  for (const t of rewardCleanupTimers) clearTimeout(t);
+  rewardCleanupTimers = [];
+
+  // remove confetti/particles if present
+  try {
+    overlay.querySelectorAll(".particle").forEach(p => p.remove());
+  } catch (e) {}
+}
+
+  // per-question timer
+  let timeLeft = TIMER_DURATION;
+  let timerIntervalId = null;
+
+  function stopTimer() {
+    if (timerIntervalId !== null) {
+      clearInterval(timerIntervalId);
+      timerIntervalId = null;
+    }
+  }
+
+  function timerColor(ratio) {
+    // ratio: 1 -> 0
+    if (ratio > 0.5) return "var(--progress-high)";
+    if (ratio > 0.2) return "var(--progress-mid)";
+    return "var(--progress-low)";
+  }
+
+  function updateTimerVisual(timerBarEl, timerNumEl) {
+    const ratio = Math.max(0, Math.min(1, timeLeft / TIMER_DURATION));
+    timerBarEl.style.width = (ratio * 100).toFixed(2) + "%";
+    timerBarEl.style.backgroundColor = timerColor(ratio);
+    timerNumEl.textContent = String(timeLeft);
+  }
+
+  function startTimer(timerBarEl, timerNumEl, onTimeout) {
+    stopTimer();
+    timeLeft = TIMER_DURATION;
+    updateTimerVisual(timerBarEl, timerNumEl);
+
+    timerIntervalId = setInterval(() => {
+      timeLeft -= 1;
+      if (timeLeft < 0) timeLeft = 0;
+
+      // light tick-tock in the last 7 seconds
+      if (timeLeft <= 7 && timeLeft > 0) {
+        playTickTock(timeLeft % 2 === 0);
+      }
+
+      updateTimerVisual(timerBarEl, timerNumEl);
+
+      if (timeLeft <= 0) {
+        stopTimer();
+        onTimeout && onTimeout();
+      }
+    }, 1000);
+  }
+
+  /***********************
+   * Screens
+   ***********************/
+
+async function switchQuiz(quizId) {
+  // 1) stop anything in progress
+  stopTimer();
+
+  // 2) reset progress variables
+  qIndex = 0;
+  correctCount = 0;
+  hasShownNextHint = false;
+
+  // 3) update the URL so refreshing keeps the chosen quiz
+  const url = new URL(window.location.href);
+  url.searchParams.set("q", quizId);
+  history.replaceState(null, "", url.toString());
+
+  // 4) keep the title screen shell stable while the new theme loads
+  freezeTitleRefresh();
+
+  try {
+    // 5) load the new quiz JSON
+    await loadQuizFromJson(`quiz_data/${quizId}.json`);
+
+    // 6) refresh the title screen in place (no slide animation)
+    showTitle("none");
+
+    // 7) wait until the new title screen has painted, then release the freeze
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        unfreezeTitleRefresh();
       });
-    })
-  );
+    });
+  } catch (err) {
+    unfreezeTitleRefresh();
+    throw err;
+  }
+}
+
+   function showIntro() {
+  setNavVisible(false);
+
+  // NOTE:
+  // Image 1 shows first, image 2 is the "bite" swap.
+  // This matches the Creed behavior: click image -> swap -> chomp -> continue. :contentReference[oaicite:8]{index=8}
+  const html = `
+    <div class="quiz-intro">
+    <img
+      id="introImg"
+      src="quizimages/eyb_logo_1.png"
+      alt="Intro"
+      onerror="this.style.display='none'"
+    >
+
+      <div>
+        <div class="presented">Presented by</div>
+        <div class="site">eatyourbible.com</div>
+      </div>
+
+      <div class="hint" style="opacity:0.85;">Tap the image to begin</div>
+    </div>
+  `;
+
+  const slide = makeSlide(html, "var(--intro-screen-bg, #7f66c6)");
+
+  // IMPORTANT: attach behavior after the slide exists
+  const goNext = () => {
+    ensureAudioUnlocked();
+    // play the existing chomp sound from your quiz app
+    playChompSound();
+    setTimeout(() => showTitle(), 600);
+  };
+
+  // We want the Creed behavior: click image swaps, then continues
+  // (we do not advance on "tap anywhere", only on tapping the image).
+  slide.addEventListener("click", (e) => {
+    const img = e.target.closest("#introImg");
+    if (!img) return;
+
+    // swap to the "bite" image
+    img.src = "quizimages/eyb_logo_2.png";
+
+    goNext();
+  });
+
+  pushSlide(slide, "none", false);
+}
+
+
+function showTitle(direction = "forward") {
+    setNavVisible(false);
+  const hasSelectedQuiz = !!(new URLSearchParams(window.location.search).get("q"));
+  const hasQuestions = Array.isArray(QUESTIONS) && QUESTIONS.length > 0;
+  const imgPath = LESSON_IMAGE_PATH || "quizimages/quiz_icon.png";
+  const img = `
+    <img
+      src="${imgPath}"
+      alt=""
+      style="width:min(78vw, 420px); max-height:42vh; object-fit:contain;"
+      onerror="this.style.display='none'"
+    >
+  `;
+
+    const html = `
+      <div class="title-screen">
+        <div class="content" style="justify-content:center; text-align:center; gap:18px;">
+          ${img}
+          <div class="big-text">${escapeHtml(LESSON_TITLE_TEXT || "Eat Your Bible Quizzes")}</div>
+          <button id="startBtn" class="primary-btn" type="button">
+          ${hasSelectedQuiz ? "Start" : "Choose a quiz"}
+        </button>
+          <label class="body-text" for="quizPicker" style="margin-top:10px;">Quiz Selection:</label>
+        <select id="quizPicker" class="secondary-btn" style="height:46px; border-radius:14px; padding:0 14px;">
+          <option value="" disabled selected>Choose a quiz…</option>
+
+          <optgroup label="Old Testament">
+            ${QUIZ_LIST
+              .filter(q => q.id.startsWith("ot"))
+              .map(q => {
+                const match = q.id.match(/^([a-z]+)(\d+)$/i);
+                let prefix = q.id.toUpperCase();
+                if (match) prefix = match[1].toUpperCase() + " " + match[2];
+                return `<option value="${q.id}">${prefix} — ${escapeHtml(q.title)}</option>`;
+              })
+              .join("")}
+          </optgroup>
+
+          <optgroup label="New Testament">
+            ${QUIZ_LIST
+              .filter(q => q.id.startsWith("nt"))
+              .map(q => {
+                const match = q.id.match(/^([a-z]+)(\d+)$/i);
+                let prefix = q.id.toUpperCase();
+                if (match) prefix = match[1].toUpperCase() + " " + match[2];
+                return `<option value="${q.id}">${prefix} — ${escapeHtml(q.title)}</option>`;
+              })
+              .join("")}
+          </optgroup>
+
+        </select>
+
+        </div>
+      </div>
+    `;
+
+    const slide = makeSlide(html);
+    slide.querySelector("#startBtn").addEventListener("click", () => {
+      ensureAudioUnlocked();
+      playChompSound();
+
+    // If no quiz selected yet, just focus the dropdown
+    const picker = slide.querySelector("#quizPicker");
+    if (!picker.value) {
+      picker.focus();
+      return;
+    }
+
+      // Normal quiz start
+      qIndex = 0;
+      correctCount = 0;
+      showQuestion();
+    });
+
+    // Preselect current quiz based on the URL (?q=...)
+    // If there's no ?q=, leave the dropdown on the placeholder.
+    const params = new URLSearchParams(window.location.search);
+    const currentId = params.get("q") || "";
+    slide.querySelector("#quizPicker").value = currentId;
+
+// Auto-load when the dropdown selection changes
+const picker = slide.querySelector("#quizPicker");
+
+picker.addEventListener("change", async () => {
+  const quizId = picker.value;
+
+  try {
+    await switchQuiz(quizId);
+  } catch (e) {
+    console.error(e);
+    alert(`Could not load quiz_data/${quizId}.json`);
+  }
 });
+
+    pushSlide(slide, direction, false);
+  }
+
+  function showQuestion(direction="forward") {
+    setNavVisible(true);
+    setMuteUi();
+
+    const total = QUESTIONS.length;
+    const idx1 = qIndex + 1;
+    setNavCounter(idx1, total);
+
+    const q = QUESTIONS[qIndex];
+
+    // Shuffle answers per question display (slots 0-3 keep their colors)
+    const slotToOrig = shuffledAnswerIndices(4);   // e.g. [2,0,3,1]
+    const origToSlot = Array(4).fill(0);
+    slotToOrig.forEach((origIdx, slotIdx) => { origToSlot[origIdx] = slotIdx; });
+
+    const correctOrig = (q.correctIndex ?? 0);
+    const correctSlot = origToSlot[correctOrig];   // where the correct answer ended up
+
+    const html = `
+      <div class="top" style="flex-direction:column; align-items:stretch; gap:10px;">
+        <div class="timer-row">
+          <div class="timer-wrap"><div id="timerBar" class="timer-bar"></div></div>
+          <div id="timerNum" class="timer-num">30</div>
+        </div>
+      </div>
+
+      <div class="content quiz-content" style="justify-content:flex-start; padding-top: 6px;">
+        <div class="qa-layout">
+          <div class="question-box" role="group" aria-label="Question">
+            <div class="question">${escapeHtml(q.text || "")}</div>
+          </div>
+
+          <div id="answers" class="answers">
+
+          ${slotToOrig.map((origIdx, slotIdx) => `
+            <button class="answer opt${slotIdx}" data-i="${slotIdx}" type="button">
+              ${escapeHtml(q.answers[origIdx])}
+            </button>
+          `).join("")}
+
+          </div>
+
+          <div id="suspense" class="suspense" style="display:none;">
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const slide = makeSlide(html);
+    const timerBarEl = slide.querySelector("#timerBar");
+    const timerNumEl = slide.querySelector("#timerNum");
+    const answersEl = slide.querySelector("#answers");
+    const suspenseEl = slide.querySelector("#suspense");
+    const questionBoxEl = slide.querySelector(".question-box");
+    const questionTextEl = slide.querySelector(".question-box .question");
+
+    let answered = false;
+    let selectedIndex = null;
+
+    function lockAnswers() {
+      answersEl.classList.add("locked");
+      [...answersEl.querySelectorAll(".answer")].forEach(b => b.disabled = true);
+    }
+
+    
+    function reveal(correctIdx) {
+      lockAnswers();
+      suspenseEl.style.display = "none";
+
+      const btns = [...answersEl.querySelectorAll(".answer")];
+
+      // highlight correct, dim all others
+      btns.forEach((b, i) => {
+        b.classList.remove("wrong"); // we won't use the old wrong styling
+        b.classList.remove("correct");
+        b.classList.remove("dimmed");
+
+        if (i === correctIdx) {
+          b.classList.add("correct");
+        } else {
+          b.classList.add("dimmed");
+        }
+      });
+
+      const isCorrect = (selectedIndex === correctIdx);
+
+      // verdict in the question box
+      questionBoxEl.classList.add("verdict");
+      questionBoxEl.classList.toggle("correct", isCorrect);
+      questionBoxEl.classList.toggle("incorrect", !isCorrect);
+      questionTextEl.textContent = isCorrect ? "CORRECT" : "INCORRECT";
+
+      if (isCorrect) {
+        correctCount += 1;
+        playCorrectSound();
+      } else {
+        playIncorrectSound();
+      }
+
+      // Show the big CTA in the nav
+      const isLast = (qIndex >= QUESTIONS.length - 1);
+      nextBtn.textContent = isLast ? "SEE SCORE" : "NEXT QUESTION";
+      nextBtn.style.display = "block";
+
+      // Show the bouncing hint only the first time NEXT QUESTION appears (first question)
+      if (!hasShownNextHint && qIndex === 0 && !isLast) {
+        nextHint.style.display = "block";
+        hasShownNextHint = true;
+      } else {
+        nextHint.style.display = "none";
+      }
+
+      // Hide the normal nav contents while CTA is showing
+      homeBtn.style.visibility = "hidden";
+      navCenter.style.visibility = "hidden";
+      muteBtn.style.visibility = "hidden";
+
+      nextBtn.onclick = () => {
+        nextHint.style.display = "none";
+        // reset nav
+        nextBtn.style.display = "none";
+        homeBtn.style.visibility = "visible";
+        navCenter.style.visibility = "visible";
+        muteBtn.style.visibility = "visible";
+
+        // advance
+        qIndex += 1;
+        if (qIndex >= QUESTIONS.length) showEnd();
+        else showQuestion("forward");
+      };
+    }
+
+
+  function doSuspenseThenReveal() {
+    suspenseEl.style.display = "none"; // we won't use dots now
+    lockAnswers();
+
+    const variant = nextSuspenseVariant();
+
+    const answerBtns = [...answersEl.querySelectorAll(".answer")];
+    runSuspenseVariant({
+      variant,
+      questionBoxEl,
+      answerBtns,
+      done: () => {
+        reveal(correctSlot);
+      }
+    });
+  }
+
+    // answer clicks
+    answersEl.addEventListener("click", (e) => {
+      const btn = e.target.closest(".answer");
+      if (!btn || answered) return;
+
+      ensureAudioUnlocked();
+      answered = true;
+      stopTimer();
+
+      selectedIndex = Number(btn.getAttribute("data-i"));
+      btn.classList.add("selected");
+
+      doSuspenseThenReveal();
+    });
+
+    // timeout -> no selection, just reveal
+    startTimer(timerBarEl, timerNumEl, () => {
+      if (answered) return;
+      answered = true;
+      selectedIndex = null;
+      doSuspenseThenReveal();
+    });
+
+    // home confirm
+    homeBtn.onclick = () => {
+      showConfirm({
+        title: "Quit quiz?",
+        text: "Are you sure you want to go back to the start?",
+        okText: "Quit",
+        onOk: () => {
+          stopTimer();
+          showTitle();
+        }
+      });
+    };
+
+    pushSlide(slide, direction, true);
+  }
+
+  function showEnd() {
+    stopTimer();
+    setNavVisible(false);
+  // SAFETY: make sure no full-screen overlay is still blocking taps
+  overlay.classList.remove("show");        // hide confirm/reward overlay (z-index 10000)
+  overlay.style.display = "none";          // extra hard-hide (in case something set inline display)
+  overlay.onclick = null;
+  overlay.ontouchstart = null;
+
+
+    const total = QUESTIONS.length;
+    const score = correctCount;
+
+    const html = `
+      <div class="top">
+        <div class="brand">
+          <img src="quizimages/eyb_logo_1.png" alt="Logo" onerror="this.style.display='none'">
+          <div class="titles">
+            <div class="title">${escapeHtml(LESSON_TITLE_TEXT || "Quiz Complete")}</div>
+            <div class="subtitle">Tap the present!</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content" style="text-align:center; justify-content:center; gap:14px;">
+        <div class="big-text">Finished!</div>
+        <div class="body-text">Score: <b>${score}</b> / <b>${total}</b></div>
+
+        <div id="present" class="present" role="button" aria-label="Open present">🎁</div>
+        <div class="hint">Tap to open</div>
+
+        <button id="playAgain" class="secondary-btn" type="button">Play again</button>
+      </div>
+    `;
+
+    const slide = makeSlide(html, "var(--bg-solid, #222)");
+
+    slide.querySelector("#playAgain").addEventListener("click", (e) => {
+   e.stopPropagation();
+      ensureAudioUnlocked();
+      playChompSound();
+      qIndex = 0;
+      correctCount = 0;
+      showQuestion("forward");
+    });
+
+const presentEl = slide.querySelector("#present");
+
+// Wiggle every ~2 seconds until opened
+let presentWiggleTimer = setInterval(() => {
+  presentEl.classList.remove("wiggle");
+  // force reflow so the animation retriggers
+  void presentEl.offsetWidth;
+  presentEl.classList.add("wiggle");
+}, 2000);
+
+// Also do a small wiggle soon after arriving
+setTimeout(() => {
+  presentEl.classList.add("wiggle");
+}, 450);
+
+const openPresent = (e) => {
+  e.preventDefault();      // important for mobile
+  e.stopPropagation();     // prevents slide "tap anywhere" handler
+  ensureAudioUnlocked();
+  clearInterval(presentWiggleTimer);
+  openPresentReward(score, total);
+};
+
+// Mobile-first
+presentEl.addEventListener("touchstart", openPresent, { passive: false });
+// Desktop fallback
+presentEl.addEventListener("click", openPresent);
+
+function isInside(el, selector, e){
+  // make sure we have an Element to call closest() on
+  let target = e.target;
+  if (!(target instanceof Element)) {
+    const path = e.composedPath ? e.composedPath() : [];
+    target = path.find(n => n instanceof Element) || null;
+  }
+  return target ? !!target.closest(selector) : false;
+}
+
+const exitEnd = (e) => {
+  if (isInside(slide, "#present", e) || isInside(slide, "#playAgain", e)) return;
+  showTitle();
+};
+
+slide.addEventListener("touchstart", exitEnd, { passive: true });
+slide.addEventListener("click", exitEnd);
+
+    pushSlide(slide, "forward", false);
+  }
+
+  function openPresentReward(score, total) {
+    overlay.style.display = ""; // IMPORTANT: clear inline display:none so .show can work
+    setNavVisible(false);
+    // Choose pool by score (clamp 0..10 like Andy engine)
+    const bucket = Math.max(0, Math.min(10, score));
+    const pool = REWARD_EMOJI_POOLS[bucket] || FUNNY_EMOJIS;
+    const emoji = pick(pool);
+
+    overlay.classList.add("show");
+    overlay.querySelector(".dialog").style.display = "none";
+
+    // Pick one of the 5 dances (with debug override support)
+    const danceMap = {
+      bounce: "dance-bounce",
+      wiggle: "dance-wiggle",
+      moonwalk: "dance-moonwalk",
+      pong: "dance-pong",
+      spin: "dance-spin"
+    };
+
+    const params = new URLSearchParams(window.location.search);
+    const debugDance = params.get("dance");
+
+    let danceClass;
+
+    if (debugDance && danceMap[debugDance]) {
+      danceClass = danceMap[debugDance];
+    } else {
+      const dances = Object.values(danceMap);
+      danceClass = dances[Math.floor(Math.random() * dances.length)];
+    }
+
+    const showLabel = params.get("debug") === "1";
+
+    overlay.innerHTML = `
+      <div id="rewardStage" style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;">
+
+
+        <!-- UI text layer (above dark layer, below emoji) -->
+        <div class="reward-top reward-ui">You got a...</div>
+
+        ${showLabel ? `<div class="reward-ui" style="font-size:14px;">Testing: ${debugDance || "random"}</div>` : ""}
+
+        <!-- Emoji layer (always on top) -->
+        <div class="emoji-reward ${danceClass}" id="rewardEmoji">${emoji}</div>
+
+        <!-- UI text layer -->
+        <div class="hint reward-ui">Tap anywhere to exit</div>
+      </div>
+    `;
+
+const emojiEl = document.getElementById("rewardEmoji");
+
+// SPIN PERFORMANCE (slow 10s ramp, lower cap, pop at peak)
+if (danceClass === "dance-spin") {
+
+  let angle = 0;
+
+  const rampMs = 10000;     // ~10 seconds to reach top speed
+  const holdMs = 1200;      // hold at max speed before burst
+  const maxSpeed = 42;      // lower cap (degrees per frame-ish; tuned)
+  const start = performance.now();
+
+  let last = start;
+  let holding = false;
+  let holdStart = 0;
+
+  rewardSpinInterval = setInterval(() => {
+    const now = performance.now();
+    const dt = Math.min(32, now - last); // ms since last tick (clamped)
+    last = now;
+
+    // progress 0..1 over rampMs
+    const t = Math.max(0, Math.min(1, (now - start) / rampMs));
+
+    // ease-in ramp (starts very slow, accelerates)
+    const eased = t * t;
+
+    // speed in "degrees per 16ms frame"; normalize by dt so it stays consistent
+    const speed = (maxSpeed * eased) * (dt / 16);
+
+    angle += speed;
+    emojiEl.style.transform = `rotate(${angle}deg)`;
+
+    // once ramp finishes, hold briefly then burst
+    if (t >= 1 && !holding) {
+      holding = true;
+      holdStart = now;
+    }
+    if (holding && (now - holdStart) >= holdMs) {
+      clearInterval(rewardSpinInterval);
+rewardSpinInterval = null;
+
+      // Hide emoji before burst
+      emojiEl.style.visibility = "hidden";
+
+      createSpinBurst(emojiEl);
+    }
+  }, 16);
+}
+
+// PONG PERFORMANCE (true edge bounce + faster)
+if (danceClass === "dance-pong") {
+
+  const stage = document.getElementById("rewardStage");
+  const rect = stage.getBoundingClientRect();
+
+  let x = rect.width / 2;
+  let y = rect.height / 2;
+  let vx = 8;
+  let vy = 7;
+
+  emojiEl.style.position = "absolute";
+  emojiEl.style.transform = "translate(-50%, -50%)";
+
+  // Use real emoji size
+  const emojiRect = emojiEl.getBoundingClientRect();
+  const halfW = emojiRect.width / 2;
+  const halfH = emojiRect.height / 2;
+
+  rewardPongInterval = setInterval(() => {
+
+  x += vx;
+  y += vy;
+
+  // clamp + bounce so we never overshoot off-screen
+  const minX = halfW;
+  const maxX = rect.width - halfW;
+  const minY = halfH;
+  const maxY = rect.height - halfH;
+
+  if (x < minX) { x = minX; vx *= -1; }
+  if (x > maxX) { x = maxX; vx *= -1; }
+  if (y < minY) { y = minY; vy *= -1; }
+  if (y > maxY) { y = maxY; vy *= -1; }
+
+  emojiEl.style.left = x + "px";
+  emojiEl.style.top = y + "px";
+
+  }, 16);
+}
+
+
+// close on tap anywhere (works on mobile + desktop)
+const rewardExitHandler = (e) => {
+  // prevent weird mobile gesture defaults
+  if (e) {
+    e.preventDefault?.();
+    e.stopPropagation?.();
+  }
+  exitToTitle();
+};
+
+overlay.addEventListener("touchstart", rewardExitHandler, { passive: false, once: true });
+overlay.addEventListener("click", rewardExitHandler, { once: true });
+
+function exitToTitle() {
+  try { stopRewardAnimations(); } catch(e) {}
+
+  // restore overlay to original confirm dialog markup (for future Home/Quit dialogs)
+  overlay.className = "overlay";
+  overlay.innerHTML = `
+    <div class="dialog">
+      <h3 id="overlayTitle">Quit quiz?</h3>
+      <p id="overlayText">Are you sure you want to go back to the start?</p>
+      <div class="row">
+        <button id="overlayCancel" class="secondary-btn" type="button">Cancel</button>
+        <button id="overlayOk" class="primary-btn" type="button">Quit</button>
+      </div>
+    </div>
+  `;
+  // rebind elements + listeners
+  window.overlayCancel = document.getElementById("overlayCancel");
+  window.overlayOk = document.getElementById("overlayOk");
+  document.getElementById("overlayCancel").addEventListener("click", hideConfirm);
+  document.getElementById("overlayOk").addEventListener("click", () => overlayOkHandler && overlayOkHandler());
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) hideConfirm(); });
+
+  // IMPORTANT: go to title screen (no re-showEnd)
+  showTitle();
+}
+
+
+  }
+
+  /***********************
+   * Utilities
+   ***********************/
+  function escapeHtml(str) {
+    return String(str)
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+function createSpinBurst(el) {
+  const container = el.parentElement;
+
+  for (let i = 0; i < 18; i++) {
+    const p = document.createElement("div");
+    p.className = "particle";
+
+    const angle = (Math.PI * 2 * i) / 18;
+    const distance = 120 + Math.random() * 40;
+
+    const dx = Math.cos(angle) * distance + "px";
+    const dy = Math.sin(angle) * distance + "px";
+
+    p.style.setProperty("--dx", dx);
+    p.style.setProperty("--dy", dy);
+    p.style.animation = "particleFly 700ms ease-out forwards";
+
+    container.appendChild(p);
+
+    setTimeout(() => p.remove(), 750);
+  }
+}
+
+  /***********************
+   * Boot
+   ***********************/
+  (async function boot(){
+    try {
+      const jsonPath = getQuizJsonPathFromUrl();
+
+      if (jsonPath) {
+        await loadQuizFromJson(jsonPath);
+      } else {
+        setHomeDefaults();
+      }
+
+      // DEBUG MODE: only makes sense when a quiz is loaded
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("debug") === "1" && QUESTIONS.length > 0) {
+        qIndex = QUESTIONS.length;   // pretend we finished
+        correctCount = Math.floor(QUESTIONS.length / 2); // fake score
+        showEnd();
+        return;
+      }
+
+    } catch (e) {
+      console.error(e);
+      // Fallback screen if JSON fails
+      const s = makeSlide(`
+        <div class="top">
+          <div class="titles">
+            <div class="title">Couldn’t load quiz</div>
+            <div class="subtitle">Check your URL and file location.</div>
+          </div>
+        </div>
+        <div class="content" style="justify-content:center; text-align:center;">
+          <div class="body-text" style="opacity:0.95;">
+            Expected JSON at:<br><b>${escapeHtml(getQuizJsonPathFromUrl())}</b>
+          </div>
+          <button class="primary-btn" type="button" onclick="location.reload()">Retry</button>
+        </div>
+      `, "var(--bg-solid, #222)");
+      pushSlide(s, "none", false);
+      return;
+    }
+
+    // Home button at title also uses confirm (but no harm)
+    homeBtn.onclick = () => showConfirm({
+      title: "Go to start?",
+      text: "Return to the start screen?",
+      okText: "Go",
+      onOk: () => { stopTimer(); showTitle(); }
+    });
+
+    // start at intro like Andy
+    showIntro();
+  })();
+
+  /* ---- PWA: register service worker ---- */
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker
+        .register("/eatyourbible/pwa/quiz/sw.js")
+        .catch(() => {});
+    });
+  }
+
+  </script>
+</body>
+</html>
