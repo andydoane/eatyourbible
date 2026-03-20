@@ -3539,8 +3539,11 @@ function chainAnimateCorrectChoice(btnEl, onDone){
   }
 
   scheduleSmoke(20, 16, 10);
+  scheduleSmoke(70, 17, 11);
   scheduleSmoke(120, 18, 12);
+  scheduleSmoke(170, 19, 12);
   scheduleSmoke(210, 20, 12);
+  scheduleSmoke(260, 19, 11);
   scheduleSmoke(310, 18, 10);
 
   requestAnimationFrame(() => {
