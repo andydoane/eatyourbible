@@ -1747,6 +1747,14 @@ text-wrap: balance;
   min-height: 100%;
 }
 
+.scramble-done{
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+}
+
 .tower-start{
   position: absolute;
   inset: 0;
