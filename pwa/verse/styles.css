@@ -1583,7 +1583,7 @@ text-wrap: balance;
 
 .tower-mode-card{
   width: min(520px, 100%);
-  background: rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.55);
   border: 1px solid rgba(255,255,255,0.22);
   border-radius: 24px;
   padding: 18px 16px;
