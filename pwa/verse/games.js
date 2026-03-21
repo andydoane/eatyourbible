@@ -720,9 +720,15 @@ function bouncingBurstAt(fieldEl, x, y){
 }
 
 function bouncingColorSet(){
-  const colors = ["bounce-color-1", "bounce-color-2", "bounce-color-3"];
+  const colors = [
+    "bounce-color-1",
+    "bounce-color-2",
+    "bounce-color-3",
+    "bounce-color-4",
+    "bounce-color-5"
+  ];
   shuffleArray(colors);
-  return colors;
+  return colors.slice(0, 3);
 }
 
 function scrambleColorSet(){
@@ -1215,12 +1221,29 @@ function bouncingRandomPositions(choices, fieldEl){
   return positions;
 }
 
-function bouncingRandomVelocity(fieldW){
+function bouncingRandomVelocityPair(fieldW){
   const motionW = bouncingMotionWidth(fieldW);
-  const minMag = Math.max(1.2, Math.min(2.0, motionW * 0.0034));
-  const maxMag = Math.max(minMag + 0.30, Math.min(3.0, motionW * 0.0048));
-  const mag = minMag + (Math.random() * (maxMag - minMag));
-  return Math.random() < 0.5 ? -mag : mag;
+  const speed = Math.max(1.4, Math.min(3.0, motionW * 0.0048));
+
+  let angle = 0;
+  let tries = 0;
+
+  do {
+    angle = Math.random() * Math.PI * 2;
+    tries += 1;
+  } while (
+    tries < 20 &&
+    (
+      Math.abs(Math.cos(angle)) > 0.94 ||
+      Math.abs(Math.sin(angle)) > 0.94
+    )
+  );
+
+  const directionBias = 0.78 + (Math.random() * 0.44); // 0.78..1.22
+  const vx = Math.cos(angle) * speed * directionBias;
+  const vy = Math.sin(angle) * speed / directionBias;
+
+  return { vx, vy };
 }
 
 function bouncingBuildMovers(fieldEl, btnRefs){
@@ -1233,14 +1256,19 @@ function bouncingBuildMovers(fieldEl, btnRefs){
 
   return btnRefs.map((btn, i) => {
     const pos = st.positions[i] || { leftPx: 20, topPx: 20, rotationDeg: 0 };
-    let vx = bouncingRandomVelocity(fieldW);
-    let vy = bouncingRandomVelocity(fieldW);
+    const pair = bouncingRandomVelocityPair(fieldW);
+    let vx = pair.vx;
+    let vy = pair.vy;
 
     const motionW = bouncingMotionWidth(fieldW);
     const minStartSpeed = Math.max(1.1, Math.min(1.9, motionW * 0.0100));
 
-    if (Math.abs(vx) < minStartSpeed) vx = vx < 0 ? -minStartSpeed : minStartSpeed;
-    if (Math.abs(vy) < minStartSpeed) vy = vy < 0 ? -minStartSpeed : minStartSpeed;
+    const totalSpeed = Math.hypot(vx, vy);
+    if (totalSpeed < minStartSpeed){
+      const scale = minStartSpeed / Math.max(0.001, totalSpeed);
+      vx *= scale;
+      vy *= scale;
+    }
 
     return {
       btn,
@@ -1343,7 +1371,10 @@ function bouncingStartMotion(fieldEl, btnRefs){
     const btn = m.btn;
     if (btn.classList.contains("bounce-color-1")) m.trailClass = "trail-color-1";
     else if (btn.classList.contains("bounce-color-2")) m.trailClass = "trail-color-2";
-    else m.trailClass = "trail-color-3";
+    else if (btn.classList.contains("bounce-color-3")) m.trailClass = "trail-color-3";
+    else if (btn.classList.contains("bounce-color-4")) m.trailClass = "trail-color-4";
+    else if (btn.classList.contains("bounce-color-5")) m.trailClass = "trail-color-5";
+    else m.trailClass = "trail-color-1";
   }
 
   function tick(ts){
@@ -1654,19 +1685,18 @@ function bouncingChoose(choice, btnEl, fieldEl){
 
       const penalized = bouncingApplyPenalty(st);
 
-      bouncingRoundRefresh();
-      render();
-
-      if (!penalized){
-        setTimeout(() => {
-          const latest = State.bouncingGame;
-          if (!latest) return;
-          if (latest.wrongChoice === choice){
-            latest.wrongChoice = null;
-            render();
-          }
-        }, 220);
+      if (penalized){
+        render();
+        return;
       }
+
+      setTimeout(() => {
+        const latest = State.bouncingGame;
+        if (!latest || latest !== st) return;
+        if (latest.wrongChoice === choice){
+          latest.wrongChoice = null;
+        }
+      }, 220);
     });
 
     return;
