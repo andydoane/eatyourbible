@@ -2178,11 +2178,6 @@ function scrambleRenderModeSelect(stage, st, gameRoot){
           <button class="carousel-main no-zoom" id="scrambleModeMedium">Medium</button>
           <button class="carousel-main no-zoom" id="scrambleModeHard">Hard</button>
 
-          <div class="scramble-mode-subtext scramble-mode-notes">
-            Easy = wrong taps have no penalty.<br>
-            Medium = wrong taps remove up to 2 placed words.<br>
-            Hard = wrong taps clear all placed words.
-          </div>
         </div>
       </div>
     `;
