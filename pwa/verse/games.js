@@ -1521,6 +1521,65 @@ function bouncingChooseMode(mode){
   render();
 }
 
+function bouncingFindSafeSpawnPosition(fieldEl, movers, btnW, btnH){
+  const padX = 0;
+  const padY = 16;
+  const attempts = 10;
+  const minDist = 90;
+
+  const fieldW = Math.max(260, fieldEl.clientWidth || 320);
+  const fieldH = Math.max(240, fieldEl.clientHeight || 240);
+
+  const minX = padX;
+  const maxX = Math.max(minX, fieldW - btnW - padX);
+  const minY = padY;
+  const maxY = Math.max(minY, fieldH - btnH - padY);
+
+  let lastX = minX;
+  let lastY = minY;
+
+  for (let i = 0; i < attempts; i++){
+    const x = minX + Math.random() * Math.max(1, maxX - minX);
+    const y = minY + Math.random() * Math.max(1, maxY - minY);
+
+    lastX = x;
+    lastY = y;
+
+    const cx = x + (btnW / 2);
+    const cy = y + (btnH / 2);
+
+    let tooClose = false;
+
+    for (const other of movers || []){
+      if (!other) continue;
+
+      const ox = other.x + (other.w / 2);
+      const oy = other.y + (other.h / 2);
+
+      const dx = cx - ox;
+      const dy = cy - oy;
+      const dist = Math.hypot(dx, dy);
+
+      const sizeBuffer = Math.max(
+        minDist,
+        ((btnW + other.w) * 0.35),
+        ((btnH + other.h) * 0.60)
+      );
+
+      if (dist < sizeBuffer){
+        tooClose = true;
+        break;
+      }
+    }
+
+    if (!tooClose){
+      return { x, y };
+    }
+  }
+
+  return { x: lastX, y: lastY };
+}
+
 function bouncingReplaceOneMover(st, removeMover){
   if (!st || !st.movers || !st.fieldEl) return;
   if (!Array.isArray(st.choices) || st.choices.length !== 3) return;
@@ -1587,14 +1646,16 @@ function bouncingReplaceOneMover(st, removeMover){
   fieldEl.appendChild(btn);
 
   const rect = fieldEl.getBoundingClientRect();
-  const padX = 0;
-  const padY = 16;
 
-  const maxX = Math.max(padX, rect.width - btn.offsetWidth - padX);
-  const maxY = Math.max(padY, rect.height - btn.offsetHeight - padY);
+  const spawnPos = bouncingFindSafeSpawnPosition(
+    fieldEl,
+    survivors,
+    btn.offsetWidth,
+    btn.offsetHeight
+  );
 
-  const x = Math.random() * Math.max(1, maxX - padX) + padX;
-  const y = Math.random() * Math.max(1, maxY - padY) + padY;
+  const x = spawnPos.x;
+  const y = spawnPos.y;
 
   const pair = bouncingRandomVelocityPair(fieldW);
 
