@@ -3756,19 +3756,40 @@ registerGame({
 
     if (actionsEl){
       if (st.done){
-        actionsEl.innerHTML = `
-          <div class="foodslice-stage">
-            <div class="foodslice-placeholder">
-              <div class="foodslice-placeholder-inner">
-                <div style="font-size:42px; line-height:1;">🎉</div>
-                <div class="foodslice-title">Great Job!</div>
-                <div class="foodslice-subtext">
-                  You finished the verse in ${st.mode.charAt(0).toUpperCase() + st.mode.slice(1)} mode.
-                </div>
-              </div>
-            </div>
-          </div>
-        `;
+        const doneWrap = document.createElement("div");
+        doneWrap.className = "foodslice-stage foodslice-done";
+
+        const card = document.createElement("div");
+        card.className = "game-end-card";
+
+        const emoji = document.createElement("div");
+        emoji.className = "foodslice-done-emoji";
+        emoji.textContent = "🎉";
+
+        const title = document.createElement("div");
+        title.className = "game-end-title";
+        title.textContent = "Great job!";
+
+        const stats = document.createElement("div");
+        stats.className = "game-end-stats";
+        stats.textContent = `You finished the verse in ${st.mode.charAt(0).toUpperCase() + st.mode.slice(1)} mode.`;
+
+        const practiceBtn = document.createElement("button");
+        practiceBtn.className = "game-end-btn no-zoom";
+        practiceBtn.type = "button";
+        practiceBtn.textContent = "Practice Games";
+        practiceBtn.onclick = () => {
+          goToPracticeGamesFromGame();
+        };
+
+        card.appendChild(emoji);
+        card.appendChild(title);
+        card.appendChild(stats);
+        card.appendChild(practiceBtn);
+        doneWrap.appendChild(card);
+
+        actionsEl.innerHTML = "";
+        actionsEl.appendChild(doneWrap);
         return;
       }
 
