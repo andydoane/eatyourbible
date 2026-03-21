@@ -609,13 +609,33 @@ registerGame({
     coachActions.innerHTML = "";
 
     if (st.done){
-      const doneMsg = document.createElement("div");
-      doneMsg.className = "traffic-done";
-      doneMsg.innerHTML = `
-        Great job!<br>
-        Total time: ${scrambleFormatTime(trafficElapsedMs())}
-      `;
-      coachActions.appendChild(doneMsg);
+      const doneWrap = document.createElement("div");
+      doneWrap.className = "traffic-done";
+
+      const card = document.createElement("div");
+      card.className = "game-end-card";
+
+      const title = document.createElement("div");
+      title.className = "game-end-title";
+      title.textContent = "Great job!";
+
+      const stats = document.createElement("div");
+      stats.className = "game-end-stats";
+      stats.textContent = `Total time: ${scrambleFormatTime(trafficElapsedMs())}`;
+
+      const practiceBtn = document.createElement("button");
+      practiceBtn.className = "game-end-btn no-zoom";
+      practiceBtn.type = "button";
+      practiceBtn.textContent = "Practice Games";
+      practiceBtn.onclick = () => {
+        goToPracticeGamesFromGame();
+      };
+
+      card.appendChild(title);
+      card.appendChild(stats);
+      card.appendChild(practiceBtn);
+      doneWrap.appendChild(card);
+      coachActions.appendChild(doneWrap);
       return;
     }
 
