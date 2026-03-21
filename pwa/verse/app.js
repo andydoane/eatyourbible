@@ -594,6 +594,11 @@ function resetLearn(goTitle=false){
   render();
 }
 
+function goToPracticeGamesFromGame(){
+  stopGame();
+  go(Screen.PRACTICE);
+}
+
 /* Slide navigation */
 function screenToIndex(screen){
   // order matters for sliding
@@ -1320,8 +1325,7 @@ const btnHome = document.getElementById("btnHome");
 if (btnHome){
   btnHome.onclick = () => {
     if (State.screen === Screen.GAME){
-      stopGame();
-      go(Screen.PRACTICE);
+      goToPracticeGamesFromGame();
       return;
     }
 
