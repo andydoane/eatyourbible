@@ -1702,7 +1702,7 @@ function bouncingRenderModeSelect(stage, st, gameRoot){
         <div class="scramble-mode-emoji">🏀</div>
         <div class="scramble-mode-title">Bouncing Words</div>
         <div class="scramble-mode-subtext">
-          Choose your difficulty, then tap the moving words in the correct order to build the verse.
+          Choose your difficulty.
         </div>
 
         <button class="carousel-main no-zoom" id="bouncingModeEasy">Easy</button>
@@ -2166,7 +2166,7 @@ function scrambleRenderModeSelect(stage, st, gameRoot){
           <div class="scramble-mode-emoji">🧩 🟡 🟢 🔵</div>
           <div class="scramble-mode-title">Verse Scramble</div>
           <div class="scramble-mode-subtext">
-            Choose your difficulty, then tap the correct next blob to build the verse.
+            Choose your difficulty.
           </div>
 
           <button class="carousel-main no-zoom" id="scrambleModeEasy">Easy</button>
@@ -2564,16 +2564,13 @@ function foodSliceRenderModeSelect(stage, st, gameRoot){
             <div style="font-size:40px; line-height:1;">🍉🍓🍍</div>
             <div class="foodslice-title">Food Slice</div>
             <div class="foodslice-subtext">
-              Choose your difficulty, then tap the correct flying word-fruit to build the verse.
+              Choose your difficulty.
             </div>
 
             <button class="carousel-main no-zoom" id="foodSliceModeEasy">Easy</button>
             <button class="carousel-main no-zoom" id="foodSliceModeMedium">Medium</button>
             <button class="carousel-main no-zoom" id="foodSliceModeHard">Hard</button>
 
-            <div class="foodslice-subtext" style="max-width:520px;">
-              Easy = wrong taps only flash red. Medium = lose 2 words. Hard = lose 2 words and watch out for bombs.
-            </div>
           </div>
         </div>
       </div>
@@ -3952,7 +3949,7 @@ function chainRenderModeSelect(stage, st, gameRoot){
           <div class="scramble-mode-emoji">🔗 ⛓️ ✨</div>
           <div class="scramble-mode-title">Verse Chain</div>
           <div class="scramble-mode-subtext">
-            Choose your difficulty, then build the verse one word at a time.
+            Choose your difficulty.
           </div>
 
           <button class="carousel-main no-zoom" id="chainModeEasy">Easy</button>
@@ -4880,7 +4877,7 @@ function towerRenderModeSelect(stage, st, gameRoot){
       <div class="tower-mode-wrap">
         <div class="tower-mode-card">
           <h3>Tower of Bible</h3>
-          <p>Choose your difficulty, then build the tower one correct word at a time.</p>
+          <p>Choose your difficulty.</p>
 
           <div class="tower-mode-buttons">
             <button class="tower-mode-btn no-zoom" id="towerModeEasy">Easy</button>
