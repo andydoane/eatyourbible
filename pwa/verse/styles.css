@@ -2064,11 +2064,10 @@ text-wrap: balance;
 
 .traffic-done{
   width: 100%;
-  max-width: 520px;
-  text-align: center;
-  font-size: 18px;
-  font-weight: 900;
-  line-height: 1.35;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
 }
 
 /* ---------- Food Slice ---------- */
