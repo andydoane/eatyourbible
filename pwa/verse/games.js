@@ -3029,8 +3029,12 @@ function foodSliceRenderField(fieldEl){
       const btn = document.createElement("button");
       btn.className = "foodslice-fruit-btn no-zoom";
       btn.type = "button";
-      btn.disabled = true;
-      btn.style.pointerEvents = "none";
+      btn.setAttribute("aria-label", "Bonus fruit");
+      btn.onpointerdown = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        foodSliceHandleBonusTap(item);
+      };
 
       const emoji = document.createElement("span");
       emoji.className = "foodslice-fruit-emoji";
@@ -3039,7 +3043,7 @@ function foodSliceRenderField(fieldEl){
       btn.appendChild(emoji);
       stack.appendChild(btn);
       bonusEl.appendChild(stack);
-      dom.sliceLayer.appendChild(bonusEl);
+      fieldEl.appendChild(bonusEl);
     }
   }
 
