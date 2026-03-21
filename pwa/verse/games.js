@@ -973,14 +973,52 @@ function bouncingNextChoices(){
   st.choices = [];
 }
 
+function bouncingResponsiveWordMetrics(fieldW){
+  const safeW = Math.max(320, Math.floor(fieldW || 320));
+
+  const minWidthPx = Math.round(Math.max(110, Math.min(220, safeW * 0.20)));
+  const maxWidthPx = Math.round(Math.max(minWidthPx + 36, Math.min(360, safeW * 0.34)));
+  const fontPx = Math.round(Math.max(18, Math.min(32, safeW * 0.036)));
+  const padYPx = Math.round(Math.max(12, Math.min(18, safeW * 0.018)));
+  const padXPx = Math.round(Math.max(18, Math.min(30, safeW * 0.028)));
+  const shadowPx = Math.round(Math.max(6, Math.min(10, safeW * 0.010)));
+
+  return {
+    minWidthPx,
+    maxWidthPx,
+    fontPx,
+    padYPx,
+    padXPx,
+    shadowPx
+  };
+}
+
+function bouncingApplyResponsiveWordStyle(btn, fieldW){
+  if (!btn) return;
+
+  const m = bouncingResponsiveWordMetrics(fieldW);
+  const cappedMaxWidth = Math.max(m.minWidthPx, Math.min(m.maxWidthPx, Math.max(160, fieldW - 24)));
+
+  btn.style.minWidth = `${m.minWidthPx}px`;
+  btn.style.maxWidth = `${cappedMaxWidth}px`;
+  btn.style.padding = `${m.padYPx}px ${m.padXPx}px`;
+  btn.style.fontSize = `${m.fontPx}px`;
+  btn.style.boxShadow = `0 ${m.shadowPx}px 0 rgba(0,0,0,0.25)`;
+}
+
+function bouncingFieldSpeedMultiplier(fieldW){
+  const safeW = Math.max(390, Math.floor(fieldW || 390));
+  return Math.max(1, Math.min(1.85, safeW / 430));
+}
+
 function bouncingRandomPositions(choices, fieldEl){
   const st = State.bouncingGame;
   const pad = 16;
   const gap = 14;
 
   const fieldRect = fieldEl?.getBoundingClientRect();
-  const fieldW = Math.max(260, Math.floor(fieldRect?.width || 320));
-  const fieldH = Math.max(240, Math.floor(fieldRect?.height || 240));
+  const fieldW = Math.max(260, Math.floor(fieldEl?.clientWidth || fieldRect?.width || window.innerWidth || 320));
+  const fieldH = Math.max(240, Math.floor(fieldEl?.clientHeight || fieldRect?.height || 240));
 
   const measurer = document.createElement("div");
   measurer.style.position = "absolute";
@@ -992,12 +1030,14 @@ function bouncingRandomPositions(choices, fieldEl){
 
   function measureChoice(text){
     const btn = document.createElement("button");
-    btn.className = "scramble-word";
+    btn.className = "bouncing-word";
     btn.style.position = "absolute";
     btn.style.left = "0";
     btn.style.top = "0";
-    btn.style.maxWidth = `${Math.max(120, fieldW - (pad * 2))}px`;
     btn.textContent = text;
+
+    bouncingApplyResponsiveWordStyle(btn, fieldW);
+
     measurer.appendChild(btn);
 
     const rect = btn.getBoundingClientRect();
@@ -1152,8 +1192,11 @@ function bouncingRandomPositions(choices, fieldEl){
   return positions;
 }
 
-function bouncingRandomVelocity(){
-  const mag = 1.2 + (Math.random() * 1.0);
+function bouncingRandomVelocity(fieldW){
+  const safeW = Math.max(390, Math.floor(fieldW || 390));
+  const minMag = Math.max(1.25, Math.min(3.4, safeW * 0.0042));
+  const maxMag = Math.max(minMag + 0.35, Math.min(5.2, safeW * 0.0062));
+  const mag = minMag + (Math.random() * (maxMag - minMag));
   return Math.random() < 0.5 ? -mag : mag;
 }
 
@@ -1167,11 +1210,13 @@ function bouncingBuildMovers(fieldEl, btnRefs){
 
   return btnRefs.map((btn, i) => {
     const pos = st.positions[i] || { leftPx: 20, topPx: 20, rotationDeg: 0 };
-    let vx = bouncingRandomVelocity();
-    let vy = bouncingRandomVelocity();
+    let vx = bouncingRandomVelocity(fieldW);
+    let vy = bouncingRandomVelocity(fieldW);
 
-    if (Math.abs(vx) < 1.1) vx = vx < 0 ? -1.1 : 1.1;
-    if (Math.abs(vy) < 1.1) vy = vy < 0 ? -1.1 : 1.1;
+    const minStartSpeed = Math.max(1.1, Math.min(2.8, fieldW * 0.0038));
+
+    if (Math.abs(vx) < minStartSpeed) vx = vx < 0 ? -minStartSpeed : minStartSpeed;
+    if (Math.abs(vy) < minStartSpeed) vy = vy < 0 ? -minStartSpeed : minStartSpeed;
 
     return {
       btn,
@@ -1296,7 +1341,7 @@ function bouncingStartMotion(fieldEl, btnRefs){
       const minY = padY;
       const maxY = Math.max(minY, fieldH - m.h - padY);
 
-      const speedMult = bouncingSpeedMultiplier(st);
+      const speedMult = bouncingSpeedMultiplier(st) * bouncingFieldSpeedMultiplier(fieldW);
 
       m.x += m.vx * speedMult;
       m.y += m.vy * speedMult;
@@ -2118,7 +2163,7 @@ registerGame({
 
     if (st.done){
       const doneMsg = document.createElement("div");
-      doneMsg.className = "small";
+      doneMsg.className = "bouncing-done-msg small";
       doneMsg.style.fontWeight = "900";
       doneMsg.style.textAlign = "center";
       doneMsg.style.maxWidth = "520px";
@@ -2145,6 +2190,16 @@ registerGame({
     st.choices.forEach((choice, i) => {
         const btn = document.createElement("button");
         btn.className = "bouncing-word no-zoom";
+        const responsiveFieldW = Math.max(
+          320,
+          Math.floor(
+            gameLayout?.querySelector(".learn-coach")?.clientWidth ||
+            window.innerWidth ||
+            320
+          )
+        );
+
+        bouncingApplyResponsiveWordStyle(btn, responsiveFieldW);
         if (st.wrongChoice === choice) btn.classList.add("wrong");
         btn.type = "button";
         btn.textContent = choice;
