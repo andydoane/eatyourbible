@@ -414,7 +414,7 @@ const TITLE_OPTIONS = [
 
 const PRACTICE_GAMES = [
   { title:"🧩 Verse Scramble", desc:"Tap the words of the verse in the correct order." },
-  { title:"🔗 Verse Chain", desc:"Pick the next word to finish the verse." },
+  { title:"🚀 Verse Launch", desc:"Pick the next word to launch the verse." },
   { title:"🚗 Traffic Tap", desc:"Tap the car with the next correct word of the verse" },
   { title:"🏀 Bouncing Words", desc:"Tap moving words in the correct order." },
   { title:"🍉 Food Slice", desc:"Tap the correct flying verse food to finish the verse." },
