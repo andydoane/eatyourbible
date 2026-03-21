@@ -1686,6 +1686,7 @@ function bouncingChoose(choice, btnEl, fieldEl){
       const penalized = bouncingApplyPenalty(st);
 
       if (penalized){
+        bouncingRoundRefresh();
         render();
         return;
       }
@@ -1695,6 +1696,10 @@ function bouncingChoose(choice, btnEl, fieldEl){
         if (!latest || latest !== st) return;
         if (latest.wrongChoice === choice){
           latest.wrongChoice = null;
+        }
+
+        if (btnEl && btnEl.isConnected){
+          btnEl.classList.remove("wrong-hit");
         }
       }, 220);
     });
