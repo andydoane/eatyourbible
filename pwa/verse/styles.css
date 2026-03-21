@@ -2178,6 +2178,17 @@ text-wrap: balance;
   overflow: hidden;
 }
 
+.foodslice-bonus-layer{
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.foodslice-bonus-layer .foodslice-item{
+  pointer-events: auto;
+}
+
 .foodslice-slice-piece{
   position: absolute;
   left: 0;
