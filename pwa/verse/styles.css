@@ -597,10 +597,12 @@ border-radius: 18px;
 }
 
 .learn-layout.game-bouncing .learn-verse > *{
-  width: 100%;
-  max-width: 760px;
-  margin-left: clamp(16px, 5vw, 40px);
-  margin-right: clamp(16px, 5vw, 40px);
+  width: min(
+    760px,
+    calc(100% - (2 * clamp(16px, 5vw, 40px)))
+  );
+  margin-left: auto;
+  margin-right: auto;
   box-sizing: border-box;
 }
 
@@ -617,15 +619,7 @@ border-radius: 18px;
   padding-top: 0;
 }
 
-.learn-layout.game-bouncing .learn-verse > *{
-  width: 100%;
-  max-width: 760px;
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: clamp(16px, 5vw, 40px);
-  padding-right: clamp(16px, 5vw, 40px);
-  box-sizing: border-box;
-}
+
 
 .standard-game-stage{
   width: 100%;
