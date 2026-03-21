@@ -571,6 +571,17 @@ border-radius: 18px;
   gap: 0;
 }
 
+.learn-layout.game-bouncing-mode .scramble-mode-title,
+.learn-layout.game-bouncing-mode .scramble-mode-title-top{
+  color: #333333;
+}
+
+.learn-layout.game-bouncing-mode .scramble-mode-subtext,
+.learn-layout.game-bouncing-mode .scramble-mode-notes,
+.learn-layout.game-bouncing-mode #gameCoachTitle{
+  color: rgba(51,51,51,0.9);
+}
+
 .learn-layout.game-bouncing{
   padding: calc(14px + var(--safeT)) 0 10px;
   gap: 6px;
@@ -589,7 +600,7 @@ border-radius: 18px;
   flex: 0 0 28%;
   align-items: center;
   justify-content: center;
-  padding: 8px 18px;
+  padding: 8px clamp(24px, 6vw, 56px);
 }
 
 .learn-layout.game-bouncing .learn-coach{
@@ -665,6 +676,10 @@ border-radius: 18px;
   width: 28px;
   pointer-events: none;
   z-index: 3;
+}
+
+.learn-layout.game-bouncing .bouncing-done-msg{
+  color: #333333;
 }
 
 .bouncing-field::before{
