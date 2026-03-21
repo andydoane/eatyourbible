@@ -2136,6 +2136,17 @@ text-wrap: balance;
   gap: 14px;
 }
 
+.foodslice-done{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.foodslice-done-emoji{
+  font-size: clamp(40px, 10vw, 64px);
+  line-height: 1;
+}
+
 .foodslice-verse{
   font-size: clamp(18px, 4.8vw, 34px);
   line-height: 1.25;
