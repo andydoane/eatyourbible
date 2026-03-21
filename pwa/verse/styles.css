@@ -596,14 +596,11 @@ border-radius: 18px;
   max-height: 0;
 }
 
-.learn-layout.game-bouncing .learn-verse > *{
-  width: min(
-    760px,
-    calc(100% - (2 * clamp(16px, 5vw, 40px)))
-  );
-  margin-left: auto;
-  margin-right: auto;
-  box-sizing: border-box;
+.learn-layout.game-bouncing .learn-verse{
+  flex: 0 0 28%;
+  align-items: center;
+  justify-content: center;
+  padding: 8px clamp(24px, 6vw, 56px);
 }
 
 .learn-layout.game-bouncing .learn-coach{
@@ -619,7 +616,11 @@ border-radius: 18px;
   padding-top: 0;
 }
 
-
+.learn-layout.game-bouncing .learn-verse > *{
+  max-width: 760px;
+  margin-left: auto;
+  margin-right: auto;
+}
 
 .standard-game-stage{
   width: 100%;
