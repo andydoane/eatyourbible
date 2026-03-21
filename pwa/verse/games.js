@@ -2401,8 +2401,7 @@ registerGame({
       practiceBtn.type = "button";
       practiceBtn.textContent = "Practice Games";
       practiceBtn.onclick = () => {
-        stopGame();
-        go(Screen.PRACTICE);
+        goToPracticeGamesFromGame();
       };
 
       doneWrap.appendChild(doneMsg);
