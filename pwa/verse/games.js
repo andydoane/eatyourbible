@@ -1458,6 +1458,7 @@ function startBouncingWordsGame(){
 
   State.bouncingGame = {
     wordTokenIndices,
+    locked: false,
     mode: null,
     builtCount: 0,
     choices: [],
@@ -1500,7 +1501,7 @@ function bouncingElapsedMs(){
 function bouncingChooseMode(mode){
   const st = State.bouncingGame;
   if (!st) return;
-
+  st.locked = false;
   st.mode = mode;
   st.builtCount = 0;
   st.choices = [];
@@ -1817,9 +1818,15 @@ function bouncingChoose(choice, btnEl, fieldEl){
   scrambleShowPopup(fieldEl, popX, popY, "+100", true);
 
   const hitMover = st.movers?.find(m => m.btn === btnEl);
-  if (hitMover){
-    hitMover.btn.style.pointerEvents = "none";
+  if (!hitMover){
+    bouncingStopMotion();
+    bouncingRoundRefresh();
+    st.locked = false;
+    render();
+    return;
   }
+
+  hitMover.btn.style.pointerEvents = "none";
 
   st.locked = true;
 
