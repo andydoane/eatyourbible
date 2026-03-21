@@ -971,6 +971,13 @@ border-radius: 18px;
   opacity: 0.95;
 }
 
+.tower-mode .scramble-mode-card{
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255,255,255,0.12);
+}
+
 .scramble-word.color-1{
   background: #ffc751;
   color: #333333;
