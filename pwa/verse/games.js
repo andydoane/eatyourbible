@@ -1006,9 +1006,15 @@ function bouncingApplyResponsiveWordStyle(btn, fieldW){
   btn.style.boxShadow = `0 ${m.shadowPx}px 0 rgba(0,0,0,0.25)`;
 }
 
-function bouncingFieldSpeedMultiplier(fieldW){
+function bouncingMotionWidth(fieldW){
   const safeW = Math.max(390, Math.floor(fieldW || 390));
-  return Math.max(1, Math.min(1.85, safeW / 430));
+  return Math.min(520, safeW);
+}
+
+function bouncingFieldSpeedMultiplier(fieldW){
+  const motionW = bouncingMotionWidth(fieldW);
+  const extra = motionW - 390; // 0..130
+  return 1 + (extra / 130) * 0.10; // 1.00..1.10
 }
 
 function bouncingRandomPositions(choices, fieldEl){
@@ -1193,9 +1199,9 @@ function bouncingRandomPositions(choices, fieldEl){
 }
 
 function bouncingRandomVelocity(fieldW){
-  const safeW = Math.max(390, Math.floor(fieldW || 390));
-  const minMag = Math.max(1.25, Math.min(3.4, safeW * 0.0042));
-  const maxMag = Math.max(minMag + 0.35, Math.min(5.2, safeW * 0.0062));
+  const motionW = bouncingMotionWidth(fieldW);
+  const minMag = Math.max(1.2, Math.min(2.0, motionW * 0.0034));
+  const maxMag = Math.max(minMag + 0.30, Math.min(3.0, motionW * 0.0048));
   const mag = minMag + (Math.random() * (maxMag - minMag));
   return Math.random() < 0.5 ? -mag : mag;
 }
@@ -1213,7 +1219,8 @@ function bouncingBuildMovers(fieldEl, btnRefs){
     let vx = bouncingRandomVelocity(fieldW);
     let vy = bouncingRandomVelocity(fieldW);
 
-    const minStartSpeed = Math.max(1.1, Math.min(2.8, fieldW * 0.0038));
+    const motionW = bouncingMotionWidth(fieldW);
+    const minStartSpeed = Math.max(1.1, Math.min(1.9, motionW * 0.0030));
 
     if (Math.abs(vx) < minStartSpeed) vx = vx < 0 ? -minStartSpeed : minStartSpeed;
     if (Math.abs(vy) < minStartSpeed) vy = vy < 0 ? -minStartSpeed : minStartSpeed;
@@ -2162,17 +2169,24 @@ registerGame({
     coachActions.innerHTML = "";
 
     if (st.done){
+      const doneWrap = document.createElement("div");
+      doneWrap.className = "bouncing-done";
+
       const doneMsg = document.createElement("div");
-      doneMsg.className = "bouncing-done-msg small";
-      doneMsg.style.fontWeight = "900";
-      doneMsg.style.textAlign = "center";
-      doneMsg.style.maxWidth = "520px";
-      doneMsg.innerHTML = `
-        Score: ${st.score}<br>
-        Incorrect guesses: ${st.wrongGuesses}<br>
-        Total time: ${scrambleFormatTime(bouncingElapsedMs())}
-      `;
-      coachActions.appendChild(doneMsg);
+      doneMsg.className = "bouncing-done-text";
+      doneMsg.innerHTML = `Great job!<br>You finished the verse!`;
+
+      const practiceBtn = document.createElement("button");
+      practiceBtn.className = "bouncing-done-btn no-zoom";
+      practiceBtn.type = "button";
+      practiceBtn.textContent = "Practice Games";
+      practiceBtn.onclick = () => {
+        go(Screen.PRACTICE);
+      };
+
+      doneWrap.appendChild(doneMsg);
+      doneWrap.appendChild(practiceBtn);
+      coachActions.appendChild(doneWrap);
       return;
     }
 
