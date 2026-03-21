@@ -820,6 +820,8 @@ function bouncingAnimateCorrectChoice(btnEl, fieldEl, onDone){
   }, 210);
 }
 
+
+
 function bouncingDebugOverlay(fieldEl, btnRefs){
   const st = State.bouncingGame;
   if (!State.debugBounce || !st || !fieldEl) return;
@@ -1518,6 +1520,108 @@ function bouncingChooseMode(mode){
   render();
 }
 
+function bouncingReplaceOneMover(st, removeMover){
+  if (!st || !st.movers || !st.fieldEl) return;
+  if (!Array.isArray(st.choices) || st.choices.length !== 3) return;
+
+  const fieldEl = st.fieldEl;
+  const fieldW = fieldEl.clientWidth;
+  const colors = bouncingColorSet();
+
+  // remove tapped mover
+  st.movers = st.movers.filter(m => m !== removeMover);
+  st.btnRefs = (st.btnRefs || []).filter(btn => btn !== removeMover?.btn);
+
+  if (removeMover?.btn && removeMover.btn.parentNode){
+    removeMover.btn.remove();
+  }
+
+  const survivors = st.movers.slice(0, 2);
+
+  // update the 2 survivors in place
+  survivors.forEach((m, i) => {
+    const btn = m.btn;
+    const newWord = st.choices[i];
+
+    btn.textContent = newWord;
+    btn.classList.remove(
+      "wrong",
+      "wrong-hit",
+      "bounce-color-1",
+      "bounce-color-2",
+      "bounce-color-3",
+      "bounce-color-4",
+      "bounce-color-5"
+    );
+    btn.classList.add(colors[i]);
+
+    bouncingApplyResponsiveWordStyle(btn, fieldW);
+
+    m.w = Math.ceil(btn.offsetWidth);
+    m.h = Math.ceil(btn.offsetHeight);
+    m.trailClass = `trail-color-${colors[i].slice(-1)}`;
+
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      bouncingChoose(newWord, btn, fieldEl);
+    };
+  });
+
+  // create 1 new mover
+  const btn = document.createElement("button");
+  btn.className = "bouncing-word no-zoom spawn-in";
+  btn.type = "button";
+
+  const newWord = st.choices[2];
+  btn.textContent = newWord;
+  btn.classList.add(colors[2]);
+
+  bouncingApplyResponsiveWordStyle(btn, fieldW);
+
+  btn.addEventListener("animationend", (e) => {
+    if (e.animationName !== "bouncingWordSpawnIn") return;
+    btn.classList.remove("spawn-in");
+  }, { once: true });
+
+  fieldEl.appendChild(btn);
+
+  const rect = fieldEl.getBoundingClientRect();
+  const padX = 0;
+  const padY = 16;
+
+  const maxX = Math.max(padX, rect.width - btn.offsetWidth - padX);
+  const maxY = Math.max(padY, rect.height - btn.offsetHeight - padY);
+
+  const x = Math.random() * Math.max(1, maxX - padX) + padX;
+  const y = Math.random() * Math.max(1, maxY - padY) + padY;
+
+  const pair = bouncingRandomVelocityPair(fieldW);
+
+  const mover = {
+    btn,
+    x,
+    y,
+    vx: pair.vx,
+    vy: pair.vy,
+    w: Math.ceil(btn.offsetWidth),
+    h: Math.ceil(btn.offsetHeight),
+    fieldW: rect.width,
+    fieldH: rect.height,
+    squashX: 1,
+    squashY: 1,
+    lastTrailAt: performance.now() + Math.random() * 60,
+    trailClass: `trail-color-${colors[2].slice(-1)}`
+  };
+
+  btn.onclick = (e) => {
+    e.stopPropagation();
+    bouncingChoose(newWord, btn, fieldEl);
+  };
+
+  st.movers.push(mover);
+  st.btnRefs.push(btn);
+}
+
 function bouncingRenderModeSelect(stage, st, gameRoot){
   stage.innerHTML = "";
 
@@ -1652,7 +1756,7 @@ function bouncingSpeedMultiplier(st){
 
 function bouncingChoose(choice, btnEl, fieldEl){
   const st = State.bouncingGame;
-  if (!st || st.done) return;
+  if (!st || st.done || st.locked) return;
 
   let correctChoice = "";
 
@@ -1707,6 +1811,7 @@ function bouncingChoose(choice, btnEl, fieldEl){
     return;
   }
 
+
   st.score += 100;
   st.wrongChoice = null;
   scrambleShowPopup(fieldEl, popX, popY, "+100", true);
@@ -1714,14 +1819,11 @@ function bouncingChoose(choice, btnEl, fieldEl){
   const hitMover = st.movers?.find(m => m.btn === btnEl);
   if (hitMover){
     hitMover.btn.style.pointerEvents = "none";
-    hitMover.btn.style.visibility = "hidden";
-    hitMover.vx = 0;
-    hitMover.vy = 0;
   }
 
-  bouncingAnimateCorrectChoice(btnEl, fieldEl, () => {
-    bouncingStopMotion();
+  st.locked = true;
 
+  bouncingAnimateCorrectChoice(btnEl, fieldEl, () => {
     const live = State.bouncingGame;
     if (!live || live !== st) return;
 
@@ -1729,20 +1831,27 @@ function bouncingChoose(choice, btnEl, fieldEl){
       st.builtCount += 1;
 
       if (st.builtCount >= st.wordTokenIndices.length){
+        bouncingStopMotion();
         st.phase = "book";
         bouncingRoundRefresh();
+        st.locked = false;
         render();
         return;
       }
 
-      bouncingRoundRefresh();
-      render();
+      bouncingNextChoices();
+      bouncingReplaceOneMover(st, hitMover);
+
+      st.locked = false;
       return;
     }
+
+    bouncingStopMotion();
 
     if (st.phase === "book"){
       st.phase = "ref";
       bouncingRoundRefresh();
+      st.locked = false;
       render();
       return;
     }
@@ -1754,6 +1863,7 @@ function bouncingChoose(choice, btnEl, fieldEl){
       st.endedAt = performance.now();
       st.choices = [];
       st.positions = [];
+      st.locked = false;
       render();
     }
   });
