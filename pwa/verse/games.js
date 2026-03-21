@@ -1220,7 +1220,7 @@ function bouncingBuildMovers(fieldEl, btnRefs){
     let vy = bouncingRandomVelocity(fieldW);
 
     const motionW = bouncingMotionWidth(fieldW);
-    const minStartSpeed = Math.max(1.1, Math.min(1.9, motionW * 0.0050));
+    const minStartSpeed = Math.max(1.1, Math.min(1.9, motionW * 0.0100));
 
     if (Math.abs(vx) < minStartSpeed) vx = vx < 0 ? -minStartSpeed : minStartSpeed;
     if (Math.abs(vy) < minStartSpeed) vy = vy < 0 ? -minStartSpeed : minStartSpeed;
