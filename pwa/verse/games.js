@@ -5028,10 +5028,7 @@ function towerRenderStage(stage, st){
   }
 
   if (st.done){
-    const winEl = document.createElement("div");
-    winEl.className = "tower-win";
-    winEl.innerHTML = `<div class="tower-win-text">You completed the Tower of Bible!</div>`;
-    towerStage.appendChild(winEl);
+    // End screen now renders in the coach area.
   }
 }
 
@@ -5046,15 +5043,46 @@ function towerRenderCoach(st, gameRoot){
     titleEl.textContent = "";
   }
 
-  actionsEl.innerHTML = st.done ? `` : `
+  if (st.done){
+    const doneWrap = document.createElement("div");
+    doneWrap.className = "tower-done";
+
+    const card = document.createElement("div");
+    card.className = "game-end-card";
+
+    const title = document.createElement("div");
+    title.className = "game-end-title";
+    title.textContent = "Great job!";
+
+    const stats = document.createElement("div");
+    stats.className = "game-end-stats";
+    stats.textContent = "You completed the Tower of Bible!";
+
+    const practiceBtn = document.createElement("button");
+    practiceBtn.className = "game-end-btn no-zoom";
+    practiceBtn.type = "button";
+    practiceBtn.textContent = "Practice Games";
+    practiceBtn.onclick = () => {
+      goToPracticeGamesFromGame();
+    };
+
+    card.appendChild(title);
+    card.appendChild(stats);
+    card.appendChild(practiceBtn);
+
+    actionsEl.innerHTML = "";
+    doneWrap.appendChild(card);
+    actionsEl.appendChild(doneWrap);
+    return;
+  }
+
+  actionsEl.innerHTML = `
     <div class="game-carousel-row">
       <button class="carousel-arrow no-zoom" id="towerPrev" aria-label="Previous">${SVG_BACK}</button>
       <button class="carousel-main no-zoom tower-choice-btn ${st.wrongChoice === currentChoice ? "wrong" : ""}" id="towerChooseBtn">${currentChoice}</button>
       <button class="carousel-arrow no-zoom" id="towerNext" aria-label="Next">${SVG_FORWARD}</button>
     </div>
   `;
-
-  if (st.done) return;
 
   const btnPrev = gameRoot ? gameRoot.querySelector("#towerPrev") : null;
   const btnNext = gameRoot ? gameRoot.querySelector("#towerNext") : null;
