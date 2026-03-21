@@ -1488,26 +1488,26 @@ function getGameIntroEmoji(){
 
 function getGameIntroText(){
   if (State.activeGame === "scramble"){
-    return "Three word blobs will appear. Tap the correct next word in the verse as fast as you can until you reach the end.";
+    return "Three words will appear. Tap the correct next word in the verse as fast as you can.";
   }
 
   if (State.activeGame === "bouncing"){
-    return "Three words bounce around the screen. Keep tapping the correct words until you finish the verse.";
+    return "Three words bounce around the screen. Tap the next correct word of the vese.";
   }
 
   if (State.activeGame === "traffic"){
-    return "Tap the moving car or word that matches the next correct word until you finish the verse.";
+    return "Tap the moving car that matches the next correct word of the verse.";
   }
 
   if (State.activeGame === "tower"){
-    return "Use the arrows to look through the choices. Tap the correct words to build your tower to the sky.";
+    return "Use the arrows to look through the choices. Tap the correct words to add it to your tower.";
   }
 
   if (State.activeGame === "foodslice"){
-    return "Tap pieces of food that match the next word of the verse before it falls. Watch out for wrong words or bombs!";
+    return "Tap pieces of food that match the next word of the verse. Watch out for wrong words or bombs!";
   }
 
-  return "Use the arrows to look through the choices. Tap the big word when you think it is correct.";
+  return "Use the arrows to look through the choices. Tap the correct word to launch it into the verse!";
 }
 
 function stopGame(){
