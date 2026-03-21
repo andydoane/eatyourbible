@@ -1739,24 +1739,12 @@ text-wrap: balance;
   40%{ filter: brightness(0.72) saturate(0.7); }
 }
 
-.tower-win{
-  position: absolute;
-  inset: 0;
+.tower-done{
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  text-align: center;
-  padding: 18px;
-  z-index: 30;
-  pointer-events: none;
-}
-
-.tower-win-text{
-  font-size: clamp(28px, 7vw, 48px);
-  font-weight: 900;
-  line-height: 1.08;
-  text-shadow: 0 3px 12px rgba(0,0,0,0.38);
-  text-wrap: balance;
+  min-height: 100%;
 }
 
 .tower-start{
