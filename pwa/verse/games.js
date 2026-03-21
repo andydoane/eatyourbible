@@ -3964,11 +3964,6 @@ function chainRenderModeSelect(stage, st, gameRoot){
           <button class="carousel-main no-zoom" id="chainModeMedium">Medium</button>
           <button class="carousel-main no-zoom" id="chainModeHard">Hard</button>
 
-          <div class="scramble-mode-subtext scramble-mode-notes">
-            Easy = wrong answers do not remove words.<br>
-            Medium = wrong answers remove 2 completed words.<br>
-            Hard = wrong answers remove all completed words.
-          </div>
         </div>
       </div>
     `;
