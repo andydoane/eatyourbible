@@ -739,7 +739,7 @@ function practiceRun(){
     return;
   }
 
-  if (g.title.includes("Verse Chain")){
+  if (g.title.includes("Verse Launch")){
     startGame("chain");
     return;
   }
