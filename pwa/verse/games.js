@@ -4419,7 +4419,7 @@ registerGame({
 
       const doneMsg = document.createElement("div");
       doneMsg.className = "chain-done-text";
-      doneMsg.textContent = "Great job!<br>You finished the verse!";
+      doneMsg.textContent = "Great job! You finished the verse!";
 
       const practiceBtn = document.createElement("button");
       practiceBtn.className = "chain-done-btn no-zoom";
