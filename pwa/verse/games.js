@@ -2907,6 +2907,9 @@ function foodSliceEnsureFieldDom(fieldEl){
   const sliceLayer = document.createElement("div");
   sliceLayer.className = "foodslice-slice-layer";
 
+  const bonusLayer = document.createElement("div");
+  bonusLayer.className = "foodslice-bonus-layer";
+
   const bonusBanner = document.createElement("div");
   bonusBanner.className = "foodslice-bonus-banner";
   bonusBanner.style.display = "none";
@@ -2918,6 +2921,7 @@ function foodSliceEnsureFieldDom(fieldEl){
   fieldEl.appendChild(fruitWrap);
   fieldEl.appendChild(bombWrap);
   fieldEl.appendChild(sliceLayer);
+  fieldEl.appendChild(bonusLayer);
   fieldEl.appendChild(bonusBanner);
 
   const tapFruit = (e) => {
@@ -2946,6 +2950,7 @@ function foodSliceEnsureFieldDom(fieldEl){
     bombBtn,
     bombEmoji,
     sliceLayer,
+    bonusLayer,
     bonusBanner,
     bonusBannerText
   };
@@ -2992,6 +2997,7 @@ function foodSliceRenderField(fieldEl){
 
   // ----- slices -----
   dom.sliceLayer.replaceChildren();
+  dom.bonusLayer.replaceChildren();
 
   if (Array.isArray(st.activeSlices) && st.activeSlices.length){
     for (const piece of st.activeSlices){
@@ -3044,6 +3050,7 @@ function foodSliceRenderField(fieldEl){
       stack.appendChild(btn);
       bonusEl.appendChild(stack);
       fieldEl.appendChild(bonusEl);
+      dom.bonusLayer.appendChild(bonusEl);
     }
   }
 
