@@ -1006,6 +1006,23 @@ function bouncingApplyResponsiveWordStyle(btn, fieldW){
   btn.style.boxShadow = `0 ${m.shadowPx}px 0 rgba(0,0,0,0.25)`;
 }
 
+function bouncingApplyResponsiveDoneStyle(doneWrap, doneMsg, doneBtn, fieldW){
+  if (!doneWrap || !doneMsg || !doneBtn) return;
+
+  const m = bouncingResponsiveWordMetrics(fieldW);
+
+  const textSizePx = Math.round(Math.max(22, Math.min(34, fieldW * 0.060)));
+  const gapPx = Math.round(Math.max(12, Math.min(18, fieldW * 0.028)));
+  const padTopPx = Math.round(Math.max(20, Math.min(34, fieldW * 0.050)));
+
+  doneWrap.style.gap = `${gapPx}px`;
+  doneWrap.style.padding = `${padTopPx}px 16px 8px`;
+
+  doneMsg.style.fontSize = `${textSizePx}px`;
+
+  bouncingApplyResponsiveWordStyle(doneBtn, fieldW);
+}
+
 function bouncingMotionWidth(fieldW){
   const safeW = Math.max(390, Math.floor(fieldW || 390));
   return Math.min(520, safeW);
@@ -2181,12 +2198,25 @@ registerGame({
       practiceBtn.type = "button";
       practiceBtn.textContent = "Practice Games";
       practiceBtn.onclick = () => {
+        stopGame();
         go(Screen.PRACTICE);
       };
 
       doneWrap.appendChild(doneMsg);
       doneWrap.appendChild(practiceBtn);
       coachActions.appendChild(doneWrap);
+
+      const fieldW = Math.max(
+        320,
+        Math.floor(
+          coachActions.clientWidth ||
+          gameLayout?.querySelector(".learn-coach")?.clientWidth ||
+          window.innerWidth ||
+          320
+        )
+      );
+
+      bouncingApplyResponsiveDoneStyle(doneWrap, doneMsg, practiceBtn, fieldW);
       return;
     }
 
