@@ -3027,14 +3027,15 @@ function foodSliceRenderField(fieldEl){
 
       const bonusEl = document.createElement("div");
       bonusEl.className = "foodslice-item";
-      bonusEl.style.transform = `translate(${Math.round(item.x)}px, ${Math.round(item.y)}px) rotate(${Math.round(item.rotation)}deg)`;
-
+      bonusEl.style.transform = `translate(${Math.round(item.x)}px, ${Math.round(item.y)}px)`;
+      
       const stack = document.createElement("div");
       stack.className = "foodslice-stack";
 
       const btn = document.createElement("button");
       btn.className = "foodslice-fruit-btn no-zoom";
       btn.type = "button";
+      btn.style.transform = `rotate(${Math.round(item.rotation)}deg)`;
       btn.setAttribute("aria-label", "Bonus fruit");
       btn.onpointerdown = (e) => {
         e.preventDefault();
@@ -3049,7 +3050,6 @@ function foodSliceRenderField(fieldEl){
       btn.appendChild(emoji);
       stack.appendChild(btn);
       bonusEl.appendChild(stack);
-      fieldEl.appendChild(bonusEl);
       dom.bonusLayer.appendChild(bonusEl);
     }
   }
