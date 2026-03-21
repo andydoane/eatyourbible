@@ -5173,40 +5173,44 @@ if (!st.done && st.resultConfettiStop){
 if (st.done){
   stage.innerHTML = "";
 
-  const resultWrap = document.createElement("div");
-  resultWrap.className = "scramble-result-wrap";
+  const doneWrap = document.createElement("div");
+  doneWrap.className = "scramble-done";
+
+  const card = document.createElement("div");
+  card.className = "game-end-card";
 
   const title = document.createElement("div");
-  title.className = "scramble-result-title";
-  title.textContent = "🎉 GREAT JOB!";
+  title.className = "game-end-title";
+  title.textContent = "🎉 Great job!";
 
   const stats = document.createElement("div");
-  stats.className = "scramble-result-stats";
+  stats.className = "game-end-stats";
   stats.innerHTML = `
     Score: ${st.score}<br>
     Time: ${scrambleFormatTime(scrambleElapsedMs())}<br>
     Mistakes: ${st.wrongGuesses}
   `;
 
-  const btnGames = document.createElement("button");
-  btnGames.className = "carousel-main no-zoom";
-  btnGames.textContent = "Verse Games";
-  btnGames.onclick = () => {
+  const practiceBtn = document.createElement("button");
+  practiceBtn.className = "game-end-btn no-zoom";
+  practiceBtn.type = "button";
+  practiceBtn.textContent = "Practice Games";
+  practiceBtn.onclick = () => {
     if (st.resultConfettiStop){
       st.resultConfettiStop();
       st.resultConfettiStop = null;
     }
-    resetLearn(false);
-    go(Screen.PRACTICE);
+    goToPracticeGamesFromGame();
   };
 
-  resultWrap.appendChild(title);
-  resultWrap.appendChild(stats);
-  resultWrap.appendChild(btnGames);
-  coachActions.appendChild(resultWrap);
+  card.appendChild(title);
+  card.appendChild(stats);
+  card.appendChild(practiceBtn);
+  doneWrap.appendChild(card);
+  coachActions.appendChild(doneWrap);
 
   if (!st.resultConfettiStop){
-    st.resultConfettiStop = scrambleStartResultConfetti(resultWrap);
+    st.resultConfettiStop = scrambleStartResultConfetti(doneWrap);
   }
 
   return;
