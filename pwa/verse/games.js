@@ -1709,11 +1709,6 @@ function bouncingRenderModeSelect(stage, st, gameRoot){
         <button class="carousel-main no-zoom" id="bouncingModeMedium">Medium</button>
         <button class="carousel-main no-zoom" id="bouncingModeHard">Hard</button>
 
-        <div class="scramble-mode-subtext scramble-mode-notes">
-          Easy = wrong taps have no penalty.<br>
-          Medium = wrong taps remove up to 2 built words and speed increases.<br>
-          Hard = wrong taps clear all built words and speed increases more.
-        </div>
       </div>
     </div>
   `;
