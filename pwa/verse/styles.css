@@ -571,6 +571,46 @@ border-radius: 18px;
   gap: 0;
 }
 
+.learn-layout.game-bouncing{
+  padding: calc(14px + var(--safeT)) 0 10px;
+  gap: 6px;
+  max-width: 100%;
+  background: transparent;
+}
+
+.learn-layout.game-bouncing .learn-ref{
+  display: none;
+  flex: 0 0 0;
+  min-height: 0;
+  max-height: 0;
+}
+
+.learn-layout.game-bouncing .learn-verse{
+  flex: 0 0 28%;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 18px;
+}
+
+.learn-layout.game-bouncing .learn-coach{
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+}
+
+.learn-layout.game-bouncing .coach-actions{
+  padding-top: 0;
+}
+
+.learn-layout.game-bouncing .learn-verse > *{
+  max-width: 760px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .standard-game-stage{
   width: 100%;
   display: flex;
@@ -607,12 +647,34 @@ border-radius: 18px;
 .bouncing-field{
   position: relative;
   width: 100%;
-  max-width: 760px;
+  max-width: none;
   flex: 1 1 auto;
   min-height: 0;
   height: 100%;
-  margin: 0 auto;
+  margin: 0;
   overflow: hidden;
+  background: #f2f2f2;
+}
+
+.bouncing-field::before,
+.bouncing-field::after{
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 28px;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.bouncing-field::before{
+  left: 0;
+  background: linear-gradient(to right, rgba(242,242,242,0.98) 0%, rgba(242,242,242,0.78) 38%, rgba(242,242,242,0) 100%);
+}
+
+.bouncing-field::after{
+  right: 0;
+  background: linear-gradient(to left, rgba(242,242,242,0.98) 0%, rgba(242,242,242,0.78) 38%, rgba(242,242,242,0) 100%);
 }
 
 .scramble-verse-box{
