@@ -3822,7 +3822,7 @@ registerGame({
 
 
 /* =========================================================
-    4. VERSE CHAIN CODE
+    4. VERSE CHAIN CODE (VERSE LAUNCH)
    ========================================================= */
 
 function chainWordTokenIndices(){
@@ -3986,8 +3986,8 @@ function chainRenderModeSelect(stage, st, gameRoot){
     actionsEl.innerHTML = `
       <div class="scramble-mode-wrap">
         <div class="scramble-mode-card">
-          <div class="scramble-mode-emoji">🔗 ⛓️ ✨</div>
-          <div class="scramble-mode-title">Verse Chain</div>
+          <div class="scramble-mode-emoji">🧑‍🚀🚀</div>
+          <div class="scramble-mode-title">Verse Launch</div>
           <div class="scramble-mode-subtext">
             Choose your difficulty.
           </div>
@@ -4407,7 +4407,7 @@ if (st.phase === "book"){
 
 registerGame({
   id: "chain",
-  title: "Verse Chain",
+  title: "Verse Launch",
   description: "Use the arrows to find the next word, then tap it.",
   start(stage){
     if (!State.chainGame){
