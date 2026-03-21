@@ -600,6 +600,7 @@ registerGame({
     st.slideEl = slideEl || null;
     st.gameLayout = gameLayout || null;
     st.coachActions = coachActions || null;
+    st.verseBox = verseBox;
 
 
 
@@ -963,6 +964,14 @@ function bouncingBuiltVerseNode(){
   }
 
   return p;
+}
+
+function bouncingRefreshVerseDisplay(){
+  const st = State.bouncingGame;
+  if (!st || !st.verseBox) return;
+
+  st.verseBox.innerHTML = "";
+  st.verseBox.appendChild(bouncingBuiltVerseNode());
 }
 
 function bouncingMakeChoices(wordTokenIndices, correctTokenIndex){
@@ -1868,6 +1877,7 @@ function bouncingChoose(choice, btnEl, fieldEl){
 
       if (penalized){
         bouncingRoundRefresh();
+        bouncingRefreshVerseDisplay();
         render();
         return;
       }
@@ -1912,6 +1922,8 @@ function bouncingChoose(choice, btnEl, fieldEl){
 
     if (st.phase === "words"){
       st.builtCount += 1;
+
+      bouncingRefreshVerseDisplay();
 
       if (st.builtCount >= st.wordTokenIndices.length){
         bouncingStopMotion();
