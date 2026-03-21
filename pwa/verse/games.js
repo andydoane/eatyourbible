@@ -4449,20 +4449,29 @@ registerGame({
       const doneWrap = document.createElement("div");
       doneWrap.className = "chain-done";
 
-      const doneMsg = document.createElement("div");
-      doneMsg.className = "chain-done-text";
-      doneMsg.textContent = "Great job! You finished the verse!";
+      const card = document.createElement("div");
+      card.className = "game-end-card";
+
+      const title = document.createElement("div");
+      title.className = "game-end-title";
+      title.textContent = "Great job!";
+
+      const stats = document.createElement("div");
+      stats.className = "game-end-stats";
+      stats.textContent = "You finished the verse!";
 
       const practiceBtn = document.createElement("button");
-      practiceBtn.className = "chain-done-btn no-zoom";
+      practiceBtn.className = "game-end-btn no-zoom";
       practiceBtn.type = "button";
       practiceBtn.textContent = "Practice Games";
       practiceBtn.onclick = () => {
-        go(Screen.PRACTICE);
+        goToPracticeGamesFromGame();
       };
 
-      doneWrap.appendChild(doneMsg);
-      doneWrap.appendChild(practiceBtn);
+      card.appendChild(title);
+      card.appendChild(stats);
+      card.appendChild(practiceBtn);
+      doneWrap.appendChild(card);
       coachActions.appendChild(doneWrap);
       return;
     }
