@@ -1392,7 +1392,7 @@ if (btnHome){
       }
 
       showDialog({
-        title: "How to Play Verse Chain",
+        title: "How to Play Verse Launch",
         body: "Use the arrows to look through the choices. Tap the big word when you think it is correct.",
         actions: [dlgBtn("Close", {onClick: closeDialog})]
       });
@@ -1474,7 +1474,7 @@ function getGameIntroTitle(){
   if (State.activeGame === "traffic") return "Traffic Tap";
   if (State.activeGame === "tower") return "Tower of Bible";
   if (State.activeGame === "foodslice") return "Food Slice";
-  return "Verse Chain";
+  return "Verse Launch";
 }
 
 function getGameIntroEmoji(){
@@ -1483,7 +1483,7 @@ function getGameIntroEmoji(){
   if (State.activeGame === "traffic") return "🚗";
   if (State.activeGame === "tower") return "🏰";
   if (State.activeGame === "foodslice") return "🍉";
-  return "🔗";
+  return "🚀";
 }
 
 function getGameIntroText(){
