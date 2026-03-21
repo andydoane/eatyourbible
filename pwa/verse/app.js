@@ -2047,7 +2047,8 @@ function screenGame(idx){
     (State.activeGame === "scramble" && State.scrambleGame?.done) ? "game-scramble-result" :
     (State.activeGame === "scramble" && !State.scrambleGame?.mode) ? "game-foodslice-mode" :
     (State.activeGame === "bouncing" && !State.bouncingGame?.mode) ? "game-bouncing-mode" :
-    (State.activeGame === "scramble" || State.activeGame === "bouncing" || State.activeGame === "traffic") ? "game-scramble" :
+    (State.activeGame === "bouncing") ? "game-bouncing" :
+    (State.activeGame === "scramble" || State.activeGame === "traffic") ? "game-scramble" :
     (State.activeGame === "chain" && !State.chainGame?.mode) ? "game-foodslice-mode" :
     (State.activeGame === "chain") ? "game-chain" :
     (State.activeGame === "foodslice" && !State.foodSliceGame?.mode) ? "game-foodslice-mode" :
@@ -2093,7 +2094,7 @@ function screenGame(idx){
       State.activeGame === "traffic" ? TRAFFIC_GREEN :
       State.activeGame === "chain" ? "#40b9c5" :
       State.activeGame === "tower" ? "#40b9c5" :
-      State.activeGame === "bouncing" ? "#ffc751" :
+      State.activeGame === "bouncing" ? "#f2f2f2" :
       State.activeGame === "foodslice" ? "#333333" :
       "var(--purple)",
     navHidden: false,
