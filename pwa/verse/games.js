@@ -22,22 +22,22 @@ const TRAFFIC_THEMES = [
     id: "road",
     title: "Road",
     desc: "Cars and trucks race down the road.",
-    preview: "🚗 🚕 🚚",
+    preview: "🚗",
     movers: ["🚗", "🚕", "🚙", "🏎️", "🚓", "🚌", "🚎", "🚐", "🚑", "🚒", "🚚", "🚛", "🚜", "🛻"]
   },
   {
     id: "trail",
     title: "Trail",
     desc: "Animals hurry along a dirt path.",
-    preview: "🐑 🐇 🐕",
-    movers: ["🐑", "🐇", "🐕", "🦌", "🐢", "🦊", "🐐"]
+    preview: "🐅",
+    movers: ["🐒", "🦍", "🐕", "🐩", "🐈", "🐈‍⬛", "🐅", "🐆", "🐎", "🦓", "🦌", "🦬", "🐂", "🐃", "🐄", "🐖", "🐑", "🐐", "🐪", "🦙", "🦒", "🐘", "🦣", "🦏", "🦛", "🐁", "🐀", "🐇", "🐿️", "🦔", "🦥", "🦨", "🦘", "🦡", "🐍", "🐉", "🦕", "🦖", "🐌"]
   },
   {
     id: "river",
     title: "River",
     desc: "Boats and water animals glide by.",
-    preview: "🛶 ⛵ 🐬",
-    movers: ["🛶", "⛵", "🚤", "🐬", "🐢", "🐟", "🦆"]
+    preview: "⛵",
+    movers: ["🚣", "🐡", "⛵", "🐙", "🛥️", "🚤", "🐬", "🏊", "🐢", "🏄‍♀️", "🐟", "🐳", "🦆"]
   }
 ];
 
@@ -783,7 +783,6 @@ function trafficBuildThemeSelect(){
 
     btn.appendChild(preview);
     btn.appendChild(name);
-    btn.appendChild(desc);
 
     btn.onclick = () => {
       startTrafficTapGame(theme.id);
