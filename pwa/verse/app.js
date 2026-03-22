@@ -1492,7 +1492,7 @@ function getGameIntroText(){
   }
 
   if (State.activeGame === "bouncing"){
-    return "Three words bounce around the screen. Tap the next correct word of the vese.";
+    return "Three words bounce around the screen. Tap the next correct word of the verse.";
   }
 
   if (State.activeGame === "traffic"){
