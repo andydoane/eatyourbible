@@ -2110,37 +2110,70 @@ text-wrap: balance;
 }
 
 .traffic-field.traffic-theme-trail .traffic-road{
-  background: linear-gradient(180deg, #8c6239 0%, #7a542f 100%);
-  border-top: 3px solid #a4c76d;
-  border-bottom: 3px solid #a4c76d;
+  background:
+    linear-gradient(
+      180deg,
+      #7fb15b 0%,
+      #7fb15b 7%,
+      #9a6a3f 7%,
+      #b57b49 50%,
+      #9a6a3f 93%,
+      #7fb15b 93%,
+      #7fb15b 100%
+    );
+  border-top: 0;
+  border-bottom: 0;
 }
 
 .traffic-field.traffic-theme-trail .traffic-road::after{
-  top: calc(50% - 3px);
-  height: 6px;
-  background-image: repeating-linear-gradient(
-    to right,
-    rgba(255,240,190,0.65) 0 22px,
-    transparent 22px 42px
-  );
+  top: 0;
+  bottom: 0;
+  height: auto;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,0.10) 0%,
+      rgba(255,255,255,0.00) 18%,
+      rgba(0,0,0,0.06) 82%,
+      rgba(0,0,0,0.12) 100%
+    );
+  opacity: 0.7;
 }
 
 .traffic-field.traffic-theme-river .traffic-road{
-  background: linear-gradient(180deg, #0b77b8 0%, #0f5f96 100%);
-  border-top: 3px solid #9ddfff;
-  border-bottom: 3px solid #9ddfff;
+  background:
+    linear-gradient(
+      180deg,
+      #b8e7ef 0%,
+      #1aa0d8 8%,
+      #2fbee8 30%,
+      #1690d0 58%,
+      #127ab7 78%,
+      #b8e7ef 100%
+    );
+  border-top: 0;
+  border-bottom: 0;
 }
 
 .traffic-field.traffic-theme-river .traffic-road::after{
-  top: calc(50% - 5px);
-  height: 10px;
-  background-image: repeating-linear-gradient(
-    to right,
-    rgba(255,255,255,0.45) 0 18px,
-    rgba(255,255,255,0.12) 18px 34px,
-    transparent 34px 44px
-  );
-  opacity: 0.75;
+  top: 0;
+  bottom: 0;
+  height: auto;
+  background:
+    repeating-linear-gradient(
+      to right,
+      rgba(255,255,255,0.18) 0 18px,
+      rgba(255,255,255,0.06) 18px 36px,
+      transparent 36px 58px
+    ),
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,0.20) 0%,
+      rgba(255,255,255,0.05) 22%,
+      rgba(255,255,255,0.00) 45%,
+      rgba(0,0,0,0.06) 100%
+    );
+  opacity: 0.9;
 }
 
 .traffic-item{
