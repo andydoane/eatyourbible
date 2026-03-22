@@ -1966,7 +1966,7 @@ function bouncingChoose(choice, btnEl, fieldEl){
 
 function scrambleBuiltVerseNode(){
   const p = document.createElement("p");
-  p.className = "verse scramble-veerse";
+  p.className = "verse scramble-verse";
 
   const st = State.scrambleGame;
   const builtCount = st?.builtCount || 0;
