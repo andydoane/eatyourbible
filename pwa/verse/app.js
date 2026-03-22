@@ -10,7 +10,7 @@
    5. Screen Definitions
    6. Game Framework
    7. Main Render
-   8. App Bootstrap
+   8. App Bootstraps
 
    Tip:
    Search for "====" to quickly jump between sections.
@@ -1525,35 +1525,6 @@ function stopGame(){
   State.activeGame = null;
   State.gameRunning = false;
 }
-
-function stopGame(){
-  bouncingStopMotion();
-  trafficStopMotion();
-  foodSliceStopMotion();
-
-  State.chainGame = null;
-  State.scrambleGame = null;
-  State.bouncingGame = null;
-  State.trafficGame = null;
-  State.towerGame = null;
-  State.foodSliceGame = null;
-
-  State.activeGame = null;
-  State.gameRunning = false;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 function screenIntro(idx){
   const wrap = document.createElement("div");
