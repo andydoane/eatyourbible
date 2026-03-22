@@ -2246,7 +2246,8 @@ text-wrap: balance;
 
 .traffic-theme-card{
   width: min(100%, 760px);
-  background: rgba(255,255,255,0.92);
+  background: rgba(255,255,255,0.88);
+  backdrop-filter: blur(6px);
   color: #2f2f2f;
   border-radius: 28px;
   padding: 24px 18px 20px;
@@ -2288,10 +2289,15 @@ text-wrap: balance;
   background: #ffffff;
   color: #222;
   padding: 14px 16px;
-  text-align: left;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
   box-shadow: 0 5px 0 rgba(0,0,0,0.12);
   font-family: inherit;
   cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .traffic-theme-btn:active{
@@ -2302,6 +2308,7 @@ text-wrap: balance;
 .traffic-theme-preview{
   font-size: 28px;
   line-height: 1.1;
+  text-align: center;  
 }
 
 .traffic-theme-name{
@@ -2309,6 +2316,7 @@ text-wrap: balance;
   font-size: 20px;
   font-weight: 900;
   line-height: 1.1;
+  text-align: center;
 }
 
 .traffic-theme-desc{
@@ -2317,6 +2325,7 @@ text-wrap: balance;
   font-weight: 700;
   line-height: 1.25;
   color: rgba(34,34,34,0.78);
+  text-align: center;
 }
 
 /* ---------- Food Slice ---------- */
