@@ -794,7 +794,6 @@ function trafficBuildThemeSelect(){
 
   card.appendChild(emoji);
   card.appendChild(title);
-  card.appendChild(subtext);
   card.appendChild(grid);
   wrap.appendChild(card);
 
