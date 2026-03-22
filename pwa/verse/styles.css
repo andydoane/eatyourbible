@@ -2246,7 +2246,7 @@ text-wrap: balance;
 
 .traffic-theme-card{
   width: min(100%, 760px);
-  background: rgba(255,255,255,0.88);
+  background: rgba(255,255,255,0.50);
   backdrop-filter: blur(6px);
   color: #2f2f2f;
   border-radius: 28px;
