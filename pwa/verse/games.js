@@ -221,13 +221,142 @@ function trafficRandomSpawnDelay(){
   return 850 + Math.random() * 650;
 }
 
-function trafficChooseRoad(st){
-  const topCount = st.items.filter(x => x.road === 0).length;
-  const bottomCount = st.items.filter(x => x.road === 1).length;
+function trafficThemeSpeedRange(themeId){
+  if (themeId === "trail"){
+    return { min: 84, max: 94 };
+  }
 
-  if (topCount < bottomCount) return 0;
-  if (bottomCount < topCount) return 1;
-  return Math.random() < 0.5 ? 0 : 1;
+  if (themeId === "river"){
+    return { min: 78, max: 90 };
+  }
+
+  return { min: 96, max: 112 };
+}
+
+function trafficLaneItems(st, road){
+  return (st?.items || []).filter(item => item.road === road && !item.destroy);
+}
+
+function trafficSpawnEdgeX(fieldW, direction){
+  return direction < 0 ? fieldW + 130 : -130;
+}
+
+function trafficDistanceFromSpawn(item, fieldW){
+  const spawnX = trafficSpawnEdgeX(fieldW, item.direction);
+  return Math.abs(item.x - spawnX);
+}
+
+function trafficLaneHasSpawnRoom(st, road, fieldW, minGap){
+  const direction = road === 0 ? -1 : 1;
+  const laneItems = trafficLaneItems(st, road);
+
+  if (!laneItems.length) return true;
+
+  for (const item of laneItems){
+    const dist = trafficDistanceFromSpawn(item, fieldW);
+    const needed = Math.max(minGap, (item.width || 150) + 34);
+
+    if (dist < needed){
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function trafficRoadOrderBySpawnRoom(st, fieldW, minGap){
+  const roads = [0, 1];
+
+  roads.sort((a, b) => {
+    const aOpen = trafficLaneHasSpawnRoom(st, a, fieldW, minGap) ? 1 : 0;
+    const bOpen = trafficLaneHasSpawnRoom(st, b, fieldW, minGap) ? 1 : 0;
+
+    if (aOpen !== bOpen) return bOpen - aOpen;
+
+    const aCount = trafficLaneItems(st, a).length;
+    const bCount = trafficLaneItems(st, b).length;
+
+    if (aCount !== bCount) return aCount - bCount;
+
+    return Math.random() < 0.5 ? -1 : 1;
+  });
+
+  return roads;
+}
+
+function trafficLeaderAhead(item, st){
+  const laneItems = trafficLaneItems(st, item.road).filter(other => other.id !== item.id);
+
+  let leader = null;
+  let bestGap = Infinity;
+
+  for (const other of laneItems){
+    if (item.direction < 0){
+      if (other.x >= item.x) continue;
+      const gap = item.x - other.x - (other.width || 150);
+      if (gap < bestGap){
+        bestGap = gap;
+        leader = other;
+      }
+    } else {
+      if (other.x <= item.x) continue;
+      const gap = other.x - item.x - (item.width || 150);
+      if (gap < bestGap){
+        bestGap = gap;
+        leader = other;
+      }
+    }
+  }
+
+  return { leader, gap: bestGap };
+}
+
+function trafficUpdateItemSpeed(item, st, dt){
+  const accelPerSec = 24;
+  const closeGap = 52;
+  const followGap = 92;
+  const releaseGap = 130;
+
+  const { leader, gap } = trafficLeaderAhead(item, st);
+
+  let targetSpeed = item.baseSpeed || item.speed || 96;
+
+  if (leader){
+    const leaderSpeed = leader.speed || leader.baseSpeed || targetSpeed;
+
+    if (gap < closeGap){
+      targetSpeed = Math.min(targetSpeed, Math.max(leaderSpeed - 10, 58));
+    } else if (gap < followGap){
+      targetSpeed = Math.min(targetSpeed, leaderSpeed);
+    } else if (gap < releaseGap){
+      targetSpeed = Math.min(targetSpeed, leaderSpeed + 6);
+    }
+  }
+
+  const maxStep = accelPerSec * (dt / 1000);
+
+  if (item.speed < targetSpeed){
+    item.speed = Math.min(targetSpeed, item.speed + maxStep);
+  } else if (item.speed > targetSpeed){
+    item.speed = Math.max(targetSpeed, item.speed - maxStep * 1.5);
+  }
+
+  const minSpeed = 56;
+  const maxSpeed = item.maxSpeed || item.baseSpeed || 112;
+
+  item.speed = Math.max(minSpeed, Math.min(maxSpeed, item.speed));
+}
+
+function trafficChooseRoad(st, fieldW, minGap){
+  const ordered = trafficRoadOrderBySpawnRoom(st, fieldW, minGap);
+
+  for (const road of ordered){
+    if (trafficLaneHasSpawnRoom(st, road, fieldW, minGap)){
+      return road;
+    }
+  }
+
+  return -1;
 }
 
 function trafficCanSpawnCorrect(st){
@@ -248,13 +377,14 @@ function trafficShouldSpawnCorrect(st, now){
 
 function trafficSpawnItem(fieldEl){
   const st = State.trafficGame;
-  if (!st || st.done || !fieldEl) return;
+  if (!st || st.done || !fieldEl) return false;
 
   const now = performance.now();
   const fieldW = Math.max(320, fieldEl.clientWidth);
+  const minGap = 190;
 
   const correctLabel = trafficCurrentCorrectLabel(st);
-  if (!correctLabel) return;
+  if (!correctLabel) return false;
 
   const isCorrect = trafficShouldSpawnCorrect(st, now);
   const pool = trafficPhaseDecoyPool(st);
@@ -265,13 +395,17 @@ function trafficSpawnItem(fieldEl){
     label = decoys[0] || "apple";
   }
 
-  const road = trafficChooseRoad(st);
+  const road = trafficChooseRoad(st, fieldW, minGap);
+  if (road < 0) return false;
+
   const theme = trafficThemeById(st.theme || "road");
   const movers = theme.movers || ["🚗"];
   const emoji = movers[Math.floor(Math.random() * movers.length)];
   const direction = road === 0 ? -1 : 1;
   const x = direction < 0 ? fieldW + 130 : -130;
-  const speed = 100 + Math.random() * 6;
+
+  const range = trafficThemeSpeedRange(theme.id);
+  const baseSpeed = range.min + Math.random() * (range.max - range.min);
 
   const item = {
     id: st.nextItemId++,
@@ -281,7 +415,9 @@ function trafficSpawnItem(fieldEl){
     label,
     isCorrect,
     x,
-    speed,
+    speed: baseSpeed,
+    baseSpeed,
+    maxSpeed: baseSpeed + 10,
     width: 150,
     destroy: false,
     spawnedAt: now
@@ -294,6 +430,8 @@ function trafficSpawnItem(fieldEl){
   if (isCorrect){
     st.lastCorrectSpawnAt = now;
   }
+
+  return true;
 }
 
 function trafficSizeField(fieldEl){
@@ -375,8 +513,10 @@ function trafficSpawnTick(fieldEl, now){
 
   if (roadCounts[0] >= 4 && roadCounts[1] >= 4) return;
 
-  trafficSpawnItem(fieldEl);
-  trafficRenderItems(fieldEl);
+  const spawned = trafficSpawnItem(fieldEl);
+  if (spawned){
+    trafficRenderItems(fieldEl);
+  }
 }
 
 function trafficFlashWrong(itemId){
@@ -589,6 +729,7 @@ function trafficStartMotion(fieldEl){
     trafficSpawnTick(fieldEl, ts);
 
     for (const item of st.items){
+      trafficUpdateItemSpeed(item, st, dt);
       item.x += item.direction * item.speed * (dt / 1000);
     }
 
