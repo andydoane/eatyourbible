@@ -352,6 +352,7 @@ async function loadVerseList(){
 const Screen = {
   INTRO: "intro",
   TITLE: "title",
+  LEARN_LEVEL: "learn_level",
   LISTEN: "listen",
   ECHO: "echo",
   HIDE: "hide",
@@ -403,13 +404,39 @@ const State = {
   // Title carousel
   titleOptionIndex: 0,
 
+  // Learn level carousel
+  learnLevelIndex: 0,
+  learnLevel: null,
+  learnStartScreen: null,
+
   // Practice carousel
   practiceIndex: 0,
 };
 
 const TITLE_OPTIONS = [
-  { label: "Learn the Verse", action: () => go(Screen.LISTEN) },
+  { label: "Learn the Verse", action: () => go(Screen.LEARN_LEVEL) },
   { label: "Practice Games", action: () => go(Screen.PRACTICE) },
+];
+
+const LEARN_LEVEL_OPTIONS = [
+  {
+    label: "Not at all",
+    description: "Start from the beginning and learn it step by step.",
+    startScreen: Screen.LISTEN,
+    level: "not_at_all"
+  },
+  {
+    label: "A little bit",
+    description: "Skip ahead and start by echoing the verse.",
+    startScreen: Screen.ECHO,
+    level: "a_little"
+  },
+  {
+    label: "Pretty well",
+    description: "Jump in at echo practice and move faster.",
+    startScreen: Screen.ECHO,
+    level: "pretty_well"
+  }
 ];
 
 const PRACTICE_GAMES = [
@@ -565,8 +592,14 @@ function scrambleWordTokenIndices(){
 
 
 function resetLearn(goTitle=false){
+  const keepLearnLevel = State.learnLevel;
+  const keepLearnStartScreen = State.learnStartScreen;
+
   State.listenDone = false;
   State.listenPlaying = false;
+
+  State.learnLevel = keepLearnLevel;
+  State.learnStartScreen = keepLearnStartScreen;
 
   State.echoDone = false;
   State.echoRunning = false;
@@ -605,6 +638,7 @@ function screenToIndex(screen){
   const order = [
     Screen.INTRO,
     Screen.TITLE,
+    Screen.LEARN_LEVEL,
     Screen.LISTEN,
     Screen.ECHO,
     Screen.HIDE,
@@ -717,6 +751,38 @@ function titleRun(){
   }
 
   TITLE_OPTIONS[State.titleOptionIndex].action();
+}
+
+/* Learn level carousel controls */
+function learnLevelPrev(){
+  State.learnLevelIndex = (State.learnLevelIndex - 1 + LEARN_LEVEL_OPTIONS.length) % LEARN_LEVEL_OPTIONS.length;
+  render();
+}
+
+function learnLevelNext(){
+  State.learnLevelIndex = (State.learnLevelIndex + 1) % LEARN_LEVEL_OPTIONS.length;
+  render();
+}
+
+function learnLevelRun(){
+  const opt = LEARN_LEVEL_OPTIONS[State.learnLevelIndex];
+
+  State.learnLevel = opt.level;
+  State.learnStartScreen = opt.startScreen;
+
+  resetLearn(false);
+
+  if (opt.startScreen === Screen.LISTEN){
+    go(Screen.LISTEN);
+    return;
+  }
+
+  if (opt.startScreen === Screen.ECHO){
+    goToEchoAndStart();
+    return;
+  }
+
+  go(opt.startScreen);
 }
 
 /* Practice carousel controls */
@@ -1285,6 +1351,7 @@ else left = backBtn;
 // center label
 if (State.screen === Screen.TITLE) center = "HOME";
 if (State.screen === Screen.LISTEN) center = "LISTEN";
+if (State.screen === Screen.LEARN_LEVEL) center = "LEARN";
 if (State.screen === Screen.ECHO) center = "ECHO";
 if (State.screen === Screen.HIDE) center = "MEMORIZE";
 if (State.screen === Screen.FINAL_RECALL) center = "FINAL";
@@ -1312,8 +1379,12 @@ right = (State.screen === Screen.GAME || isLearnScreen) ? "" : nextBtn;
   const btnBack = document.getElementById("btnBack");
   if (btnBack){
     btnBack.onclick = () => {
-        if (State.screen === Screen.LISTEN) go(Screen.TITLE);
-        else if (State.screen === Screen.ECHO) go(Screen.LISTEN);
+        if (State.screen === Screen.LEARN_LEVEL) go(Screen.TITLE);
+        else if (State.screen === Screen.LISTEN) go(Screen.LEARN_LEVEL);
+        else if (State.screen === Screen.ECHO){
+          if (State.learnStartScreen === Screen.ECHO) go(Screen.LEARN_LEVEL);
+          else go(Screen.LISTEN);
+        }
         else if (State.screen === Screen.HIDE) go(Screen.ECHO);
         else if (State.screen === Screen.FINAL_RECALL) go(Screen.HIDE);
         else if (State.screen === Screen.PRACTICE) go(Screen.TITLE);
@@ -1413,7 +1484,8 @@ if (btnHome){
     btnNext.onclick = () => {
       if (State.isSliding) return;
 
-      if (State.screen === Screen.TITLE) go(Screen.LISTEN);
+      if (State.screen === Screen.TITLE) go(Screen.LEARN_LEVEL);
+      else if (State.screen === Screen.LEARN_LEVEL) learnLevelRun();
       else if (State.screen === Screen.LISTEN) goToEchoAndStart();
       else if (State.screen === Screen.ECHO) goToHideAndStartRound();
       else if (State.screen === Screen.HIDE){
@@ -1629,6 +1701,53 @@ function screenTitle(idx){
   ).join("");
 
   return makeSlide({idx, bg:"var(--purple)", navHidden:true, inner: wrap});
+}
+
+function screenLearnLevel(idx){
+  const wrap = document.createElement("div");
+  wrap.className = "title-screen";
+
+  const opt = LEARN_LEVEL_OPTIONS[State.learnLevelIndex];
+
+  wrap.innerHTML = `
+    <div class="title-content">
+      <h2>How well do you know this verse?</h2>
+
+      <div class="title-carousel">
+        <button class="carousel-arrow no-zoom" id="learnLevelPrev" aria-label="Previous">${SVG_BACK}</button>
+        <button class="carousel-main no-zoom" id="learnLevelMain">${opt.label}</button>
+        <button class="carousel-arrow no-zoom" id="learnLevelNext" aria-label="Next">${SVG_FORWARD}</button>
+      </div>
+
+      <div class="carousel-dots" id="learnLevelDots"></div>
+
+      <div class="title-attribution" style="max-width: 60ch; text-align:center;">
+        ${opt.description}
+      </div>
+    </div>
+  `;
+
+  wrap.querySelector("#learnLevelPrev").onclick = (e) => {
+    e.stopPropagation();
+    learnLevelPrev();
+  };
+
+  wrap.querySelector("#learnLevelNext").onclick = (e) => {
+    e.stopPropagation();
+    learnLevelNext();
+  };
+
+  wrap.querySelector("#learnLevelMain").onclick = (e) => {
+    e.stopPropagation();
+    learnLevelRun();
+  };
+
+  const dots = wrap.querySelector("#learnLevelDots");
+  dots.innerHTML = LEARN_LEVEL_OPTIONS.map((_, i) =>
+    `<span class="carousel-dot ${i === State.learnLevelIndex ? "active" : ""}"></span>`
+  ).join("");
+
+  return makeSlide({ idx, bg:"var(--purple)", navHidden:false, inner: wrap });
 }
 
 function screenListen(idx){
@@ -2098,10 +2217,11 @@ function render(){
 
   const uniq = Array.from(new Set(indicesToRender.filter(i => i !== null && i >= 0)));
   for (const idx of uniq){
-    const screen = ["intro","title","listen","echo","hide","final_recall","celebration","practice","game"][idx];
+    const screen = ["intro","title","learn_level","listen","echo","hide","final_recall","celebration","practice","game"][idx];
     let slide = null;
     if (screen === Screen.INTRO) slide = screenIntro(idx);
     if (screen === Screen.TITLE) slide = screenTitle(idx);
+    if (screen === Screen.LEARN_LEVEL) slide = screenLearnLevel(idx);
     if (screen === Screen.LISTEN) slide = screenListen(idx);
     if (screen === Screen.ECHO) slide = screenEcho(idx);
     if (screen === Screen.HIDE) slide = screenHide(idx);
