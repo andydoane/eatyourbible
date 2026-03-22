@@ -15,8 +15,66 @@
    1. Traffic Tap
    ========================================================= */
 
-const TRAFFIC_EMOJIS = ["🚗", "🚕", "🚙", "🏎️", "🚓", "🚌", "🚎", "🚐", "🚑", "🚒", "🚚", "🚛", "🚜", "🛻", "🚲", "🛵", "🏍️", "🛴", "🛺"];
 const TRAFFIC_GREEN = "#a7cb6f";
+
+const TRAFFIC_THEMES = [
+  {
+    id: "road",
+    title: "Road",
+    desc: "Cars and trucks race down the road.",
+    preview: "🚗 🚕 🚚",
+    movers: ["🚗", "🚕", "🚙", "🏎️", "🚓", "🚌", "🚎", "🚐", "🚑", "🚒", "🚚", "🚛", "🚜", "🛻"]
+  },
+  {
+    id: "trail",
+    title: "Trail",
+    desc: "Animals hurry along a dirt path.",
+    preview: "🐑 🐇 🐕",
+    movers: ["🐑", "🐇", "🐕", "🦌", "🐢", "🦊", "🐐"]
+  },
+  {
+    id: "river",
+    title: "River",
+    desc: "Boats and water animals glide by.",
+    preview: "🛶 ⛵ 🐬",
+    movers: ["🛶", "⛵", "🚤", "🐬", "🐢", "🐟", "🦆"]
+  }
+];
+
+function trafficThemeById(themeId){
+  return TRAFFIC_THEMES.find(theme => theme.id === themeId) || TRAFFIC_THEMES[0];
+}
+
+function trafficCreateState(theme = ""){
+  const wordTokenIndices = scrambleWordTokenIndices();
+  const meta = chainVerseMetaFromId(VERSE_ID);
+
+  return {
+    theme,
+    wordTokenIndices,
+    builtCount: 0,
+    done: false,
+    phase: "words",
+    showRef: false,
+    targetBook: meta.book,
+    targetChapter: meta.chapter,
+    targetVerse: meta.verse,
+    startedAt: performance.now(),
+    endedAt: 0,
+    items: [],
+    nextItemId: 1,
+    spawnSerial: 0,
+    totalSpawned: 0,
+    lastSpawnAt: 0,
+    nextSpawnDelay: 950,
+    lastCorrectSpawnAt: 0,
+    rafId: 0,
+    fieldEl: null,
+    slideEl: null,
+    gameLayout: null,
+    coachActions: null
+  };
+}
 
 function trafficElapsedMs(){
   const st = State.trafficGame;
@@ -155,34 +213,8 @@ function trafficStartPhase(st, phase){
   st.nextSpawnDelay = Math.min(st.nextSpawnDelay || 9999, 500);
 }
 
-function startTrafficTapGame(){
-  const wordTokenIndices = scrambleWordTokenIndices();
-  const meta = chainVerseMetaFromId(VERSE_ID);
-
-  State.trafficGame = {
-    wordTokenIndices,
-    builtCount: 0,
-    done: false,
-    phase: "words",
-    showRef: false,
-    targetBook: meta.book,
-    targetChapter: meta.chapter,
-    targetVerse: meta.verse,
-    startedAt: performance.now(),
-    endedAt: 0,
-    items: [],
-    nextItemId: 1,
-    spawnSerial: 0,
-    totalSpawned: 0,
-    lastSpawnAt: 0,
-    nextSpawnDelay: 950,
-    lastCorrectSpawnAt: 0,
-    rafId: 0,
-    fieldEl: null,
-    slideEl: null,
-    gameLayout: null,
-    coachActions: null
-  };
+function startTrafficTapGame(theme = ""){
+  State.trafficGame = trafficCreateState(theme);
 }
 
 function trafficRandomSpawnDelay(){
@@ -234,7 +266,9 @@ function trafficSpawnItem(fieldEl){
   }
 
   const road = trafficChooseRoad(st);
-  const emoji = TRAFFIC_EMOJIS[Math.floor(Math.random() * TRAFFIC_EMOJIS.length)];
+  const theme = trafficThemeById(st.theme || "road");
+  const movers = theme.movers || ["🚗"];
+  const emoji = movers[Math.floor(Math.random() * movers.length)];
   const direction = road === 0 ? -1 : 1;
   const x = direction < 0 ? fieldW + 130 : -130;
   const speed = 100 + Math.random() * 6;
@@ -567,6 +601,66 @@ function trafficStartMotion(fieldEl){
   st.rafId = requestAnimationFrame(tick);
 }
 
+function trafficBuildThemeSelect(){
+  const wrap = document.createElement("div");
+  wrap.className = "traffic-theme-wrap";
+
+  const card = document.createElement("div");
+  card.className = "traffic-theme-card";
+
+  const emoji = document.createElement("div");
+  emoji.className = "traffic-theme-top-emoji";
+  emoji.textContent = "🚗 🐑 🛶";
+
+  const title = document.createElement("div");
+  title.className = "traffic-theme-title";
+  title.textContent = "Choose a Theme";
+
+  const subtext = document.createElement("div");
+  subtext.className = "traffic-theme-subtext";
+  subtext.textContent = "Pick a world for Traffic Tap before you start.";
+
+  const grid = document.createElement("div");
+  grid.className = "traffic-theme-grid";
+
+  for (const theme of TRAFFIC_THEMES){
+    const btn = document.createElement("button");
+    btn.className = "traffic-theme-btn no-zoom";
+    btn.type = "button";
+
+    const preview = document.createElement("div");
+    preview.className = "traffic-theme-preview";
+    preview.textContent = theme.preview;
+
+    const name = document.createElement("div");
+    name.className = "traffic-theme-name";
+    name.textContent = theme.title;
+
+    const desc = document.createElement("div");
+    desc.className = "traffic-theme-desc";
+    desc.textContent = theme.desc;
+
+    btn.appendChild(preview);
+    btn.appendChild(name);
+    btn.appendChild(desc);
+
+    btn.onclick = () => {
+      startTrafficTapGame(theme.id);
+      render();
+    };
+
+    grid.appendChild(btn);
+  }
+
+  card.appendChild(emoji);
+  card.appendChild(title);
+  card.appendChild(subtext);
+  card.appendChild(grid);
+  wrap.appendChild(card);
+
+  return wrap;
+}
+
 registerGame({
   id: "traffic",
   title: "Traffic Tap",
@@ -581,17 +675,6 @@ registerGame({
 
     stage.innerHTML = "";
 
-    const verseBox = document.createElement("div");
-    verseBox.style.width = "100%";
-    verseBox.style.maxWidth = "760px";
-    verseBox.style.minHeight = "90px";
-    verseBox.style.display = "flex";
-    verseBox.style.alignItems = "center";
-    verseBox.style.justifyContent = "center";
-    verseBox.style.textAlign = "center";
-    verseBox.appendChild(trafficBuiltVerseNode());
-    stage.appendChild(verseBox);
-
     const gameLayout = stage.closest(".learn-layout");
     const coachTitle = gameLayout?.querySelector("#gameCoachTitle");
     const coachActions = gameLayout?.querySelector("#gameCoachActions");
@@ -601,12 +684,28 @@ registerGame({
     st.gameLayout = gameLayout || null;
     st.coachActions = coachActions || null;
 
-
-
     if (coachTitle) coachTitle.textContent = "";
-
     if (!coachActions) return;
+
     coachActions.innerHTML = "";
+
+    if (!st.theme){
+      coachActions.appendChild(trafficBuildThemeSelect());
+      return;
+    }
+
+    const verseBox = document.createElement("div");
+    verseBox.style.width = "100%";
+    verseBox.style.maxWidth = "760px";
+    verseBox.style.minHeight = "90px";
+    verseBox.style.display = "flex";
+    verseBox.style.alignItems = "center";
+    verseBox.style.justifyContent = "center";
+    verseBox.style.textAlign = "center";
+    verseBox.style.marginLeft = "auto";
+    verseBox.style.marginRight = "auto";
+    verseBox.appendChild(trafficBuiltVerseNode());
+    stage.appendChild(verseBox);
 
     if (st.done){
       const doneWrap = document.createElement("div");
@@ -640,7 +739,7 @@ registerGame({
     }
 
     const field = document.createElement("div");
-    field.className = "traffic-field";
+    field.className = `traffic-field traffic-theme-${st.theme}`;
 
     const topRoad = document.createElement("div");
     topRoad.className = "traffic-road top";
