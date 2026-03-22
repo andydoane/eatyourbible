@@ -600,7 +600,6 @@ registerGame({
     st.slideEl = slideEl || null;
     st.gameLayout = gameLayout || null;
     st.coachActions = coachActions || null;
-    st.verseBox = verseBox;
 
 
 
@@ -2419,6 +2418,8 @@ registerGame({
 
     if (!coachActions) return;
     coachActions.innerHTML = "";
+
+    st.verseBox = verseBox;
 
     if (st.done){
       const doneWrap = document.createElement("div");
