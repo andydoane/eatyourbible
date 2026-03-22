@@ -413,11 +413,11 @@ const TITLE_OPTIONS = [
 ];
 
 const PRACTICE_GAMES = [
-  { title:"🧩 Verse Scramble", desc:"Tap the words of the verse in the correct order." },
-  { title:"🚀 Verse Launch", desc:"Pick the next word to launch the verse." },
-  { title:"🚗 Traffic Tap", desc:"Tap the car with the next correct word of the verse." },
-  { title:"🏀 Bouncing Words", desc:"Tap moving words in the correct order." },
-  { title:"🍉 Food Slice", desc:"Tap the correct flying verse food to finish the verse." },
+  { title:"🧩 Verse Scramble", desc:"Pick the correct word blob." },
+  { title:"🚀 Verse Launch", desc:"Launch words into the verse." },
+  { title:"🚗 Traffic Tap", desc:"Tap moving cards and animals." },
+  { title:"🏀 Bouncing Words", desc:"Tap moving verse words." },
+  { title:"🍉 Food Slice", desc:"Tap the flying food." },
   { title:"🏰 Tower of Bible", desc:"Build a sky-high tower one word at a time." },
 ];
 
