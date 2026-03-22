@@ -2014,7 +2014,8 @@ function screenGame(idx){
       State.activeGame !== "chain" &&
       State.activeGame !== "scramble" &&
       State.activeGame !== "tower" &&
-      State.activeGame !== "foodslice"
+      State.activeGame !== "foodslice" &&
+      !(State.activeGame === "traffic" && !State.trafficGame?.theme)
     );
 
   const gameLayoutClass =
@@ -2023,7 +2024,9 @@ function screenGame(idx){
     (State.activeGame === "scramble" && !State.scrambleGame?.mode) ? "game-foodslice-mode" :
     (State.activeGame === "bouncing" && !State.bouncingGame?.mode) ? "game-bouncing-mode" :
     (State.activeGame === "bouncing") ? "game-bouncing" :
-    (State.activeGame === "scramble" || State.activeGame === "traffic") ? "game-scramble" :
+    (State.activeGame === "scramble") ? "game-scramble" :
+    (State.activeGame === "traffic" && !State.trafficGame?.theme) ? "game-traffic-theme" :
+    (State.activeGame === "traffic") ? "game-traffic" :
     (State.activeGame === "chain" && !State.chainGame?.mode) ? "game-foodslice-mode" :
     (State.activeGame === "chain") ? "game-chain" :
     (State.activeGame === "foodslice" && !State.foodSliceGame?.mode) ? "game-foodslice-mode" :
