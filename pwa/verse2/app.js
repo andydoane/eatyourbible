@@ -413,6 +413,7 @@ const State = {
   echoDone: false,
   echoRunning: false,
   echoAutoStarting: false,
+  echoNeedsSecondPass: false,
   echoIndex: 0,
   echoSpeaking: false,
   hideCount: 0,
@@ -645,6 +646,7 @@ function resetLearn(goTitle=false){
   State.echoDone = false;
   State.echoRunning = false;
   State.echoAutoStarting = false;
+  State.echoNeedsSecondPass = false;
   State.echoIndex = 0;
   State.echoSpeaking = false;
 
@@ -1187,13 +1189,29 @@ function goToChunksAndStart(){
 function goToEchoAndStart(){
   State.echoAutoStarting = true;
   go(Screen.ECHO);
+
   runAfterSlide(() => {
-    if (State.screen === Screen.ECHO && !State.echoRunning && !State.echoDone){
-      startEchoFlow();
-    } else {
+    if (State.screen !== Screen.ECHO){
       State.echoAutoStarting = false;
       render();
+      return;
     }
+
+    // Not at all: chunks already handled instruction
+    if (State.learnLevel === "not_at_all"){
+      if (!State.echoRunning && !State.echoDone){
+        startEchoFlow();
+      }
+      return;
+    }
+
+    // A little bit / Pretty well → play instruction first
+    playInstruction("echo1", {
+      doneFlag: "echoIntroPromptDone",
+      after: () => {
+        startEchoFlow();
+      }
+    });
   });
 }
 
@@ -1482,6 +1500,21 @@ async function runEchoSequence(){
     // restore main verse audio for later
     setAudioSrc(AUDIO_FILE);
     State.audioMode = null;
+
+    // Handle second echo for "Not at all"
+    if (State.learnLevel === "not_at_all" && !State.echoNeedsSecondPass){
+      State.echoNeedsSecondPass = true;
+
+      playInstruction("echo2", {
+        delayMs: 450,
+        after: () => {
+          startEchoFlow();
+        }
+      });
+
+      return;
+    }
+
     State.echoDone = true;
   } finally {
     if (my === echoCancelToken){
@@ -2255,15 +2288,19 @@ function screenEcho(idx){
         <div>
           <div class="coach-title">Echo the Verse</div>
           <div class="coach-text">${
-            State.echoDone
-              ? "Great job. Press below to remove the first word."
-              : "Press the button, then repeat each part out loud during the pause."
+            State.instructionPlaying && State.instructionKey === "echo1"
+              ? "Now echo the verse after me."
+              : State.instructionPlaying && State.instructionKey === "echo2"
+                ? "Echo the verse one more time."
+                : State.echoDone
+                  ? "Great job. Press below to remove the first word."
+                  : "Press the button, then repeat each part out loud during the pause."
           }</div>
         </div>
 
         <div class="coach-actions">
           ${
-            (State.echoRunning || State.echoAutoStarting)
+              (State.echoRunning || State.echoAutoStarting || State.instructionPlaying)
               ? ``
               : `
                 <button class="carousel-main no-zoom" id="btnEcho" style="max-width:520px;">
