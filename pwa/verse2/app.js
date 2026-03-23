@@ -2187,19 +2187,11 @@ function screenMeaning(idx){
 
       <div class="learn-verse learn-verse-meaning">
         <div class="meaning-wrap">
-          <div class="meaning-label">What It Means</div>
-          <div class="meaning-text">${VERSE_MEANING}</div>
+          <p class="verse meaning-text">${VERSE_MEANING}</p>
         </div>
       </div>
 
-      <div class="learn-coach learn-coach-meaning">
-        <div class="coach-copy">
-          <div class="coach-title">What It Means</div>
-          <div class="coach-text coach-text-meaning-prompt">
-            Read what this verse means, then tap the button below.
-          </div>
-        </div>
-
+      <div class="learn-coach learn-coach-meaning learn-coach-meaning-minimal">
         <div class="coach-actions">
           ${
             State.instructionPlaying
