@@ -2131,8 +2131,8 @@ function screenHide(idx){
   let coachBody = State.sayVerseActive
     ? `<div class="timer-wrap"><div class="timer-bar" id="sayVerseBar"></div></div>`
     : `<div class="coach-text">If you need help, tap a missing word.</div>`;
-  const removeLabel = hideWordsPerRound() === 2 ? "Remove 2 Words" : "Remove a Word";
-  const removeAnotherLabel = hideWordsPerRound() === 2 ? "Remove 2 More" : "Remove Another";
+  const removeLabel = hideWordsPerRound() === 2 ? "Remove Words" : "Remove a Word";
+  const removeAnotherLabel = hideWordsPerRound() === 2 ? "Remove More Words" : "Remove Another";
   let buttonLabel = removeLabel;
 
   if (State.sayVerseActive){
