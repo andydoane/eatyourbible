@@ -2094,7 +2094,7 @@ function screenEcho(idx){
               ? ``
               : `
                 <button class="carousel-main no-zoom" id="btnEcho" style="max-width:520px;">
-                  ${State.echoDone ? "Remove a Word" : "▶ Start Echo"}
+                  ${State.echoDone ? (hideWordsPerRound() === 2 ? "Remove Words" : "Remove a Word") : "▶ Start Echo"}
                 </button>
               `
           }
