@@ -2301,7 +2301,7 @@ function screenPracticeGate(idx){
   wrap.className = "title-screen learn-level-screen";
 
   wrap.innerHTML = `
-    <div class="title-content learn-level-content">
+    <div class="title-content learn-level-content practice-gate-content">
       <h2>WAIT! 🤚</h2>
 
       <div class="coach-text" style="max-width: 24ch; margin: 0 auto 20px; text-align:center;">
