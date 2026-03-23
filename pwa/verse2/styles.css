@@ -3025,55 +3025,6 @@ text-wrap: balance;
   width: min(100%, 420px);
 }
 
-/* ---------- Learn coach (ONLY Learn screens) ---------- */
-.learn-layout:not([class*="game-"]) .learn-coach{
-  flex: 1 1 40%;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: clamp(12px, 2vw, 22px) clamp(10px, 2.2vw, 20px);
-  gap: clamp(12px, 2.5vh, 26px);
-}
-
-.learn-layout:not([class*="game-"]) .learn-coach > div:first-child,
-.learn-layout:not([class*="game-"]) .learn-coach .coach-copy{
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-
-.coach-title{
-  text-align: center;
-}
-
-.coach-text{
-  max-width: min(92vw, 860px);
-  margin: 0 auto;
-  text-align: center;
-  font-size: clamp(18px, 2.6vw, 40px);
-  line-height: 1.45;
-}
-
-@media (min-width: 1000px){
-  .coach-text{
-    max-width: 920px;
-    font-size: clamp(22px, 2.2vw, 44px);
-  }
-}
-
-.coach-actions{
-  flex: 0 0 auto;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding-top: 0;
-}
-
-/* ---------- Meaning screen ---------- */
 .learn-layout-meaning .learn-verse{
   background: #ffffff;
   color: var(--purple);
