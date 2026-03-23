@@ -1705,47 +1705,30 @@ function screenTitle(idx){
 
 function screenLearnLevel(idx){
   const wrap = document.createElement("div");
-  wrap.className = "title-screen";
-
-  const opt = LEARN_LEVEL_OPTIONS[State.learnLevelIndex];
+  wrap.className = "title-screen learn-level-screen";
 
   wrap.innerHTML = `
-    <div class="title-content">
+    <div class="title-content learn-level-content">
       <h2>How well do you know this verse?</h2>
 
-      <div class="title-carousel">
-        <button class="carousel-arrow no-zoom" id="learnLevelPrev" aria-label="Previous">${SVG_BACK}</button>
-        <button class="carousel-main no-zoom" id="learnLevelMain">${opt.label}</button>
-        <button class="carousel-arrow no-zoom" id="learnLevelNext" aria-label="Next">${SVG_FORWARD}</button>
-      </div>
-
-      <div class="carousel-dots" id="learnLevelDots"></div>
-
-      <div class="title-attribution" style="max-width: 60ch; text-align:center;">
-        ${opt.description}
+      <div class="learn-level-stack">
+        ${LEARN_LEVEL_OPTIONS.map((opt, i) => `
+          <button class="learn-level-btn no-zoom" data-index="${i}">
+            <span class="learn-level-btn-title">${opt.label}</span>
+            <span class="learn-level-btn-desc">${opt.description}</span>
+          </button>
+        `).join("")}
       </div>
     </div>
   `;
 
-  wrap.querySelector("#learnLevelPrev").onclick = (e) => {
-    e.stopPropagation();
-    learnLevelPrev();
-  };
-
-  wrap.querySelector("#learnLevelNext").onclick = (e) => {
-    e.stopPropagation();
-    learnLevelNext();
-  };
-
-  wrap.querySelector("#learnLevelMain").onclick = (e) => {
-    e.stopPropagation();
-    learnLevelRun();
-  };
-
-  const dots = wrap.querySelector("#learnLevelDots");
-  dots.innerHTML = LEARN_LEVEL_OPTIONS.map((_, i) =>
-    `<span class="carousel-dot ${i === State.learnLevelIndex ? "active" : ""}"></span>`
-  ).join("");
+  wrap.querySelectorAll(".learn-level-btn").forEach((btn) => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      State.learnLevelIndex = Number(btn.dataset.index);
+      learnLevelRun();
+    };
+  });
 
   return makeSlide({ idx, bg:"var(--purple)", navHidden:false, inner: wrap });
 }
