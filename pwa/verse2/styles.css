@@ -3024,3 +3024,90 @@ text-wrap: balance;
   flex: 0 0 auto;
   width: min(100%, 420px);
 }
+
+/* ---------- Learn coach responsiveness / centering ---------- */
+.learn-coach{
+  flex: 1 1 40%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(12px, 2vw, 22px) clamp(10px, 2.2vw, 20px);
+  gap: clamp(10px, 2vh, 18px);
+}
+
+.learn-coach > div:first-child,
+.learn-coach .coach-copy{
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.coach-title{
+  text-align: center;
+}
+
+.coach-text{
+  max-width: min(92vw, 720px);
+  margin: 0 auto;
+  text-align: center;
+  font-size: clamp(16px, 1.9vw, 26px);
+  line-height: 1.45;
+}
+
+.coach-actions{
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-top: 0;
+}
+
+/* ---------- Meaning screen ---------- */
+.learn-layout-meaning .learn-verse{
+  background: #ffffff;
+  color: var(--purple);
+  border-radius: 22px;
+  padding: clamp(18px, 3vw, 34px);
+}
+
+.learn-verse-meaning{
+  text-align: center;
+}
+
+.meaning-wrap{
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(10px, 1.8vh, 18px);
+}
+
+.meaning-label{
+  font-size: clamp(14px, 1.3vw, 18px);
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.meaning-text{
+  font-size: clamp(22px, 2.5vw, 34px);
+  line-height: 1.45;
+  font-weight: 800;
+  color: var(--purple);
+}
+
+.learn-coach-meaning{
+  justify-content: space-between;
+}
+
+.coach-text-meaning-prompt{
+  max-width: min(90vw, 620px);
+}
