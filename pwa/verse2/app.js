@@ -1504,6 +1504,10 @@ async function runEchoSequence(){
     // Handle second echo for "Not at all"
     if (State.learnLevel === "not_at_all" && !State.echoNeedsSecondPass){
       State.echoNeedsSecondPass = true;
+      State.echoRunning = false;
+      State.echoSpeaking = false;
+      State.audioMode = null;
+      render();
 
       playInstruction("echo2", {
         delayMs: 450,
