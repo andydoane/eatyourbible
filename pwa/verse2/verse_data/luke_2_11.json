@@ -10,6 +10,7 @@
 ],
 
   "verseText": "For unto you is born this day in the city of David a Savior, who is Christ the Lord.",
+  "meaning": "This is how the angels let the shepherds know that Jesus the savior was born in Bethlehem.",
   "attribution": "Scripture quotations are from The ESV® Bible (The Holy Bible, English Standard Version®), © 2001 by Crossway, a publishing ministry of Good News Publishers. Used by permission. All rights reserved.",
   "hidePlan": [
     { "type": "emoji", "word": "born",  "occurrence": 1, "emoji": "👶" },
