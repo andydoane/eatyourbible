@@ -406,11 +406,13 @@ const State = {
 
   chunkDone: false,
   chunkRunning: false,
+  chunkAutoStarting: false,
   chunkIndex: 0,
   chunkPassCount: 0,
 
   echoDone: false,
   echoRunning: false,
+  echoAutoStarting: false,
   echoIndex: 0,
   echoSpeaking: false,
   hideCount: 0,
@@ -636,11 +638,13 @@ function resetLearn(goTitle=false){
 
   State.chunkDone = false;
   State.chunkRunning = false;
+  State.chunkAutoStarting = false;
   State.chunkIndex = 0;
   State.chunkPassCount = 0;
 
   State.echoDone = false;
   State.echoRunning = false;
+  State.echoAutoStarting = false;
   State.echoIndex = 0;
   State.echoSpeaking = false;
 
@@ -1168,19 +1172,27 @@ function runAfterSlide(fn){
 }
 
 function goToChunksAndStart(){
+  State.chunkAutoStarting = true;
   go(Screen.CHUNKS);
   runAfterSlide(() => {
     if (State.screen === Screen.CHUNKS && !State.chunkRunning && State.chunkPassCount === 0){
       startChunkFlow();
+    } else {
+      State.chunkAutoStarting = false;
+      render();
     }
   });
 }
 
 function goToEchoAndStart(){
+  State.echoAutoStarting = true;
   go(Screen.ECHO);
   runAfterSlide(() => {
     if (State.screen === Screen.ECHO && !State.echoRunning && !State.echoDone){
       startEchoFlow();
+    } else {
+      State.echoAutoStarting = false;
+      render();
     }
   });
 }
@@ -1303,6 +1315,8 @@ async function startFinalRecallFlow(){
 async function startChunkFlow(){
   if (State.chunkRunning) return;
 
+  State.chunkAutoStarting = false;
+
   // cancel any prior learn audio sequence
   cancelLearnAudio();
 
@@ -1385,6 +1399,8 @@ async function runChunkSequence(){
 async function startEchoFlow(){
   if (State.echoRunning) return;
 
+  State.echoAutoStarting = false;
+
   // cancel any prior
   cancelLearnAudio();
 
@@ -1403,7 +1419,9 @@ function cancelLearnAudio(){
 
   State.listenPlaying = false;
   State.chunkRunning = false;
+  State.chunkAutoStarting = false;
   State.echoRunning = false;
+  State.echoAutoStarting = false;
   State.echoSpeaking = false;
 }
 
@@ -2187,7 +2205,7 @@ function screenChunks(idx){
 
         <div class="coach-actions">
           ${
-            (State.chunkRunning || State.instructionPlaying)
+            (State.chunkRunning || State.chunkAutoStarting || State.instructionPlaying)
               ? ``
               : `
                 <button class="carousel-main no-zoom" id="btnChunks" style="max-width:520px;">
@@ -2247,7 +2265,7 @@ function screenEcho(idx){
 
         <div class="coach-actions">
           ${
-            State.echoRunning
+            (State.echoRunning || State.echoAutoStarting)
               ? ``
               : `
                 <button class="carousel-main no-zoom" id="btnEcho" style="max-width:520px;">
