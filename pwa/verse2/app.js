@@ -1299,6 +1299,16 @@ async function startHideRound(){
   State.sayVerseActive = false;
   State.sayVerseStartedAt = 0;
   State.sayVerseDurationMs = 0;
+
+  if (State.hideCount >= planMixed.length && !State.finalIntroPromptDone){
+    render();
+
+    playInstruction("final", {
+      doneFlag: "finalIntroPromptDone"
+    });
+    return;
+  }
+
   render();
 }
 
