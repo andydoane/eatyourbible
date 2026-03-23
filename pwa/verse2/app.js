@@ -1065,6 +1065,14 @@ function goToHideAndStartRound(){
   });
 }
 
+function hideWordsPerRound(){
+  return State.learnLevel === "pretty_well" ? 2 : 1;
+}
+
+function hideTimerMultiplier(){
+  return 1.3;
+}
+
 function goToFinalRecallAndStart(){
   go(Screen.FINAL_RECALL);
   runAfterSlide(() => {
@@ -1087,7 +1095,7 @@ async function startHideRound(){
     return;
   }
 
-  State.hideCount = Math.min(planMixed.length, State.hideCount + 1);
+  State.hideCount = Math.min(planMixed.length, State.hideCount + hideWordsPerRound());
   State.revealedTokenIdx = new Set();
 
   State.sayVerseActive = true;
@@ -1097,7 +1105,9 @@ async function startHideRound(){
 
   setAudioSrc(AUDIO_FILE);
   const d = await waitForDuration();
-  const durationMs = (isFinite(d) && d > 0) ? d * 1000 : 5000;
+  const durationMs = (isFinite(d) && d > 0)
+    ? d * 1000 * hideTimerMultiplier()
+    : 6500;
 
   if (State.screen !== Screen.HIDE || !State.sayVerseActive) return;
 
@@ -2121,16 +2131,18 @@ function screenHide(idx){
   let coachBody = State.sayVerseActive
     ? `<div class="timer-wrap"><div class="timer-bar" id="sayVerseBar"></div></div>`
     : `<div class="coach-text">If you need help, tap a missing word.</div>`;
-  let buttonLabel = "Remove a Word";
+  const removeLabel = hideWordsPerRound() === 2 ? "Remove 2 Words" : "Remove a Word";
+  const removeAnotherLabel = hideWordsPerRound() === 2 ? "Remove 2 More" : "Remove Another";
+  let buttonLabel = removeLabel;
 
   if (State.sayVerseActive){
-    buttonLabel = hiddenNow > 1 ? "Remove Another" : "Remove a Word";
+    buttonLabel = hiddenNow > 0 ? removeAnotherLabel : removeLabel;
   } else if (done){
     coachTitle = "Final Test";
     coachBody = `<div class="coach-text">Now try to say the whole verse from memory.</div>`;
     buttonLabel = "Begin Final Test";
   } else if (hiddenNow > 0){
-    buttonLabel = "Remove Another";
+    buttonLabel = removeAnotherLabel;
   }
 
   inner.innerHTML = `
