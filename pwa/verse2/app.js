@@ -207,6 +207,7 @@ function setAudioSrc(src){
 let cfg = null;
 let VERSE_ID = null;
 let VERSE_TEXT = "";
+let VERSE_MEANING = "";
 let ECHO_PARTS = [];
 let HIDE_PLAN = [];
 let TRANSLATION = "";
@@ -314,6 +315,7 @@ try {
   TRANSLATION = json.translation || "";
   ATTRIBUTION = json.attribution || "";
   VERSE_TEXT = json.verseText || "";
+  VERSE_MEANING = json.meaning || "This verse teaches us something important about God.";
   ECHO_PARTS = Array.isArray(json.echoParts) ? json.echoParts : [];
   HIDE_PLAN = Array.isArray(json.hidePlan) ? json.hidePlan : [];
 
@@ -354,6 +356,7 @@ const Screen = {
   TITLE: "title",
   LEARN_LEVEL: "learn_level",
   LISTEN: "listen",
+  MEANING: "meaning",
   ECHO: "echo",
   HIDE: "hide",
   FINAL_RECALL: "final_recall",
@@ -637,6 +640,7 @@ function screenToIndex(screen){
     Screen.TITLE,
     Screen.LEARN_LEVEL,
     Screen.LISTEN,
+    Screen.MEANING,
     Screen.ECHO,
     Screen.HIDE,
     Screen.FINAL_RECALL,
@@ -1349,6 +1353,7 @@ else left = backBtn;
 if (State.screen === Screen.TITLE) center = "HOME";
 if (State.screen === Screen.LISTEN) center = "LISTEN";
 if (State.screen === Screen.LEARN_LEVEL) center = "LEARN";
+if (State.screen === Screen.MEANING) center = "MEANING";
 if (State.screen === Screen.ECHO) center = "ECHO";
 if (State.screen === Screen.HIDE) center = "MEMORIZE";
 if (State.screen === Screen.FINAL_RECALL) center = "FINAL";
@@ -1378,9 +1383,10 @@ right = (State.screen === Screen.GAME || isLearnScreen) ? "" : nextBtn;
     btnBack.onclick = () => {
         if (State.screen === Screen.LEARN_LEVEL) go(Screen.TITLE);
         else if (State.screen === Screen.LISTEN) go(Screen.LEARN_LEVEL);
+        else if (State.screen === Screen.MEANING) go(Screen.LISTEN);
         else if (State.screen === Screen.ECHO){
           if (State.learnStartScreen === Screen.ECHO) go(Screen.LEARN_LEVEL);
-          else go(Screen.LISTEN);
+          else go(Screen.MEANING);
         }
         else if (State.screen === Screen.HIDE) go(Screen.ECHO);
         else if (State.screen === Screen.FINAL_RECALL) go(Screen.HIDE);
@@ -1483,7 +1489,8 @@ if (btnHome){
 
       if (State.screen === Screen.TITLE) go(Screen.LEARN_LEVEL);
       else if (State.screen === Screen.LEARN_LEVEL) learnLevelRun();
-      else if (State.screen === Screen.LISTEN) goToEchoAndStart();
+      else if (State.screen === Screen.LISTEN) go(Screen.MEANING);
+      else if (State.screen === Screen.MEANING) goToEchoAndStart();
       else if (State.screen === Screen.ECHO) goToHideAndStartRound();
       else if (State.screen === Screen.HIDE){
         if (State.hideCount >= planMixed.length){
@@ -1750,7 +1757,7 @@ function screenListen(idx){
           <div class="coach-title">Listen to the Verse</div>
           <div class="coach-text">${
             State.listenDone
-              ? "Nice job. Press below to start echoing right away."
+              ? "Nice job. Press below to see what this verse means."
               : "Press the button below to listen to the verse."
           }</div>
         </div>
@@ -1761,7 +1768,7 @@ function screenListen(idx){
               ? ``
               : `
                 <button class="carousel-main no-zoom" id="btnListenPlay" style="max-width:520px;">
-                  ${State.listenDone ? "Echo After Me" : "🔊 Read it to me"}
+                  ${State.listenDone ? "What It Means" : "🔊 Read it to me"}
                 </button>
               `
           }
@@ -1774,11 +1781,52 @@ function screenListen(idx){
   if (btn){
     btn.onclick = async () => {
       if (State.listenDone){
-        goToEchoAndStart();
+        go(Screen.MEANING);
         return;
       }
 
       listenPlay();
+    };
+  }
+
+  return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner});
+}
+
+function screenMeaning(idx){
+  const inner = document.createElement("div");
+  inner.style.display = "flex";
+  inner.style.flexDirection = "column";
+  inner.style.height = "100%";
+
+  inner.innerHTML = `
+    <div class="learn-layout">
+      <div class="learn-ref">
+        <div class="verse-ref-pill">${VERSE_REF}</div>
+      </div>
+
+      <div class="learn-verse">
+        <p class="verse">${VERSE_TEXT}</p>
+      </div>
+
+      <div class="learn-coach learn-coach-meaning">
+        <div>
+          <div class="coach-title">What It Means</div>
+          <div class="coach-text coach-text-meaning">${VERSE_MEANING}</div>
+        </div>
+
+        <div class="coach-actions">
+          <button class="carousel-main no-zoom" id="btnMeaningNext" style="max-width:520px;">
+            Echo the Verse
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const btn = inner.querySelector("#btnMeaningNext");
+  if (btn){
+    btn.onclick = () => {
+      goToEchoAndStart();
     };
   }
 
@@ -2196,12 +2244,13 @@ function render(){
 
   const uniq = Array.from(new Set(indicesToRender.filter(i => i !== null && i >= 0)));
   for (const idx of uniq){
-    const screen = ["intro","title","learn_level","listen","echo","hide","final_recall","celebration","practice","game"][idx];
+    const screen = ["intro","title","learn_level","listen","meaning","echo","hide","final_recall","celebration","practice","game"][idx];
     let slide = null;
     if (screen === Screen.INTRO) slide = screenIntro(idx);
     if (screen === Screen.TITLE) slide = screenTitle(idx);
     if (screen === Screen.LEARN_LEVEL) slide = screenLearnLevel(idx);
     if (screen === Screen.LISTEN) slide = screenListen(idx);
+    if (screen === Screen.MEANING) slide = screenMeaning(idx);
     if (screen === Screen.ECHO) slide = screenEcho(idx);
     if (screen === Screen.HIDE) slide = screenHide(idx);
     if (screen === Screen.FINAL_RECALL) slide = screenFinalRecall(idx);
