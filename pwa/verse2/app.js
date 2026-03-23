@@ -357,6 +357,7 @@ const Screen = {
   LEARN_LEVEL: "learn_level",
   LISTEN: "listen",
   MEANING: "meaning",
+  CHUNKS: "chunks",
   ECHO: "echo",
   HIDE: "hide",
   FINAL_RECALL: "final_recall",
@@ -389,6 +390,12 @@ const State = {
   // Learn progression
   listenDone: false,
   listenPlaying: false,
+
+  chunkDone: false,
+  chunkRunning: false,
+  chunkIndex: 0,
+  chunkPassCount: 0,
+
   echoDone: false,
   echoRunning: false,
   echoIndex: 0,
@@ -601,6 +608,11 @@ function resetLearn(goTitle=false){
   State.learnLevel = keepLearnLevel;
   State.learnStartScreen = keepLearnStartScreen;
 
+  State.chunkDone = false;
+  State.chunkRunning = false;
+  State.chunkIndex = 0;
+  State.chunkPassCount = 0;
+
   State.echoDone = false;
   State.echoRunning = false;
   State.echoIndex = 0;
@@ -641,6 +653,7 @@ function screenToIndex(screen){
     Screen.LEARN_LEVEL,
     Screen.LISTEN,
     Screen.MEANING,
+    Screen.CHUNKS,
     Screen.ECHO,
     Screen.HIDE,
     Screen.FINAL_RECALL,
@@ -1025,6 +1038,15 @@ function runAfterSlide(fn){
   }, 380);
 }
 
+function goToChunksAndStart(){
+  go(Screen.CHUNKS);
+  runAfterSlide(() => {
+    if (State.screen === Screen.CHUNKS && !State.chunkRunning && State.chunkPassCount === 0){
+      startChunkFlow();
+    }
+  });
+}
+
 function goToEchoAndStart(){
   go(Screen.ECHO);
   runAfterSlide(() => {
@@ -1136,6 +1158,74 @@ async function startFinalRecallFlow(){
   State.finalRecallDurationMs = 0;
   State.finalRecallDone = true;
   render();
+}
+
+async function startChunkFlow(){
+  if (State.chunkRunning) return;
+
+  // cancel any prior echo/chunk sequence
+  echoCancelToken++;
+  try { audioEl.pause(); audioEl.currentTime = 0; } catch(e){}
+
+  await runChunkSequence();
+}
+
+async function runChunkSequence(){
+  const my = ++echoCancelToken;
+
+  State.chunkDone = false;
+  State.chunkRunning = true;
+  State.chunkIndex = 0;
+  render();
+
+  try {
+    for (let i = 0; i < ECHO_PARTS.length; i++){
+      if (my !== echoCancelToken) return;
+
+      const file = echoPartFileByIndex(i);
+      setAudioSrc(file);
+      audioEl.currentTime = 0;
+
+      State.chunkIndex = i;
+      render();
+
+      try{
+        await safePlay();
+      }catch(e){
+        showDialog({
+          title: "Chunk audio missing",
+          body: `Couldn't play: ${file}`,
+          actions: [dlgBtn("OK", {onClick: closeDialog})]
+        });
+        return;
+      }
+
+      await new Promise((resolve) => {
+        const onEnd = () => {
+          audioEl.removeEventListener("ended", onEnd);
+          resolve();
+        };
+        audioEl.addEventListener("ended", onEnd);
+      });
+
+      if (my !== echoCancelToken) return;
+
+      const d = await waitForDuration();
+      const pauseMs = (isFinite(d) && d > 0) ? Math.max(500, d * 0.35 * 1000) : 700;
+      await new Promise(r => setTimeout(r, pauseMs));
+
+      if (my !== echoCancelToken) return;
+    }
+
+    setAudioSrc(AUDIO_FILE);
+    State.chunkDone = true;
+    State.chunkPassCount = Math.min(2, State.chunkPassCount + 1);
+  } finally {
+    if (my === echoCancelToken){
+      State.chunkRunning = false;
+      render();
+    }
+  }
 }
 
 async function startEchoFlow(){
@@ -1345,6 +1435,8 @@ const homeBtn = `
 // left/back destinations
 const isLearnScreen =
   State.screen === Screen.LISTEN ||
+  State.screen === Screen.MEANING ||
+  State.screen === Screen.CHUNKS ||
   State.screen === Screen.ECHO ||
   State.screen === Screen.HIDE ||
   State.screen === Screen.FINAL_RECALL;
@@ -1359,6 +1451,7 @@ if (State.screen === Screen.TITLE) center = "HOME";
 if (State.screen === Screen.LISTEN) center = "LISTEN";
 if (State.screen === Screen.LEARN_LEVEL) center = "LEARN";
 if (State.screen === Screen.MEANING) center = "MEANING";
+if (State.screen === Screen.CHUNKS) center = "CHUNKS";
 if (State.screen === Screen.ECHO) center = "ECHO";
 if (State.screen === Screen.HIDE) center = "MEMORIZE";
 if (State.screen === Screen.FINAL_RECALL) center = "FINAL";
@@ -1389,9 +1482,10 @@ right = (State.screen === Screen.GAME || isLearnScreen) ? "" : nextBtn;
         if (State.screen === Screen.LEARN_LEVEL) go(Screen.TITLE);
         else if (State.screen === Screen.LISTEN) go(Screen.LEARN_LEVEL);
         else if (State.screen === Screen.MEANING) go(Screen.LISTEN);
+        else if (State.screen === Screen.CHUNKS) go(Screen.MEANING);
         else if (State.screen === Screen.ECHO){
           if (State.learnStartScreen === Screen.ECHO) go(Screen.LEARN_LEVEL);
-          else go(Screen.MEANING);
+          else go(Screen.CHUNKS);
         }
         else if (State.screen === Screen.HIDE) go(Screen.ECHO);
         else if (State.screen === Screen.FINAL_RECALL) go(Screen.HIDE);
@@ -1410,6 +1504,8 @@ if (btnHome){
 
     if (
       State.screen === Screen.LISTEN ||
+      State.screen === Screen.MEANING ||
+      State.screen === Screen.CHUNKS ||
       State.screen === Screen.ECHO ||
       State.screen === Screen.HIDE ||
       State.screen === Screen.FINAL_RECALL
@@ -1495,7 +1591,11 @@ if (btnHome){
       if (State.screen === Screen.TITLE) go(Screen.LEARN_LEVEL);
       else if (State.screen === Screen.LEARN_LEVEL) learnLevelRun();
       else if (State.screen === Screen.LISTEN) go(Screen.MEANING);
-      else if (State.screen === Screen.MEANING) goToEchoAndStart();
+      else if (State.screen === Screen.MEANING) goToChunksAndStart();
+      else if (State.screen === Screen.CHUNKS){
+        if (State.chunkPassCount >= 2) goToEchoAndStart();
+        else if (!State.chunkRunning) startChunkFlow();
+      }
       else if (State.screen === Screen.ECHO) goToHideAndStartRound();
       else if (State.screen === Screen.HIDE){
         if (State.hideCount >= planMixed.length){
@@ -1832,6 +1932,116 @@ function screenMeaning(idx){
   if (btn){
     btn.onclick = () => {
       goToEchoAndStart();
+    };
+  }
+
+  return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner});
+}
+
+function screenMeaning(idx){
+  const inner = document.createElement("div");
+  inner.style.display = "flex";
+  inner.style.flexDirection = "column";
+  inner.style.height = "100%";
+
+  inner.innerHTML = `
+    <div class="learn-layout">
+      <div class="learn-ref">
+        <div class="verse-ref-pill">${VERSE_REF}</div>
+      </div>
+
+      <div class="learn-verse">
+        <p class="verse">${VERSE_TEXT}</p>
+      </div>
+
+      <div class="learn-coach learn-coach-meaning">
+        <div>
+          <div class="coach-title">What It Means</div>
+          <div class="coach-text coach-text-meaning">${VERSE_MEANING}</div>
+        </div>
+
+        <div class="coach-actions">
+          <button class="carousel-main no-zoom" id="btnMeaningNext" style="max-width:520px;">
+            Break It Down
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const btn = inner.querySelector("#btnMeaningNext");
+  if (btn){
+    btn.onclick = () => {
+      goToChunksAndStart();
+    };
+  }
+
+  return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner});
+}
+
+function screenChunks(idx){
+  const inner = document.createElement("div");
+  inner.style.display = "flex";
+  inner.style.flexDirection = "column";
+  inner.style.height = "100%";
+
+  const chunkText = ECHO_PARTS.length
+    ? (ECHO_PARTS[State.chunkIndex] || ECHO_PARTS[0] || VERSE_TEXT)
+    : VERSE_TEXT;
+
+  let coachText = "Listen to each part of the verse one chunk at a time.";
+  let buttonLabel = "▶ Start";
+
+  if (State.chunkRunning){
+    coachText = "Listen carefully as each chunk plays.";
+  } else if (State.chunkPassCount === 1){
+    coachText = "Great job. Listen through the chunks one more time.";
+    buttonLabel = "One More Time";
+  } else if (State.chunkPassCount >= 2){
+    coachText = "Awesome. Now you're ready to echo the verse.";
+    buttonLabel = "Echo the Verse";
+  }
+
+  inner.innerHTML = `
+    <div class="learn-layout">
+      <div class="learn-ref">
+        <div class="verse-ref-pill">${VERSE_REF}</div>
+      </div>
+
+      <div class="learn-verse">
+        <p class="verse">${chunkText}</p>
+      </div>
+
+      <div class="learn-coach">
+        <div>
+          <div class="coach-title">Break It into Chunks</div>
+          <div class="coach-text">${coachText}</div>
+        </div>
+
+        <div class="coach-actions">
+          ${
+            State.chunkRunning
+              ? ``
+              : `
+                <button class="carousel-main no-zoom" id="btnChunks" style="max-width:520px;">
+                  ${buttonLabel}
+                </button>
+              `
+          }
+        </div>
+      </div>
+    </div>
+  `;
+
+  const btn = inner.querySelector("#btnChunks");
+  if (btn){
+    btn.onclick = async () => {
+      if (State.chunkPassCount >= 2){
+        goToEchoAndStart();
+        return;
+      }
+
+      await startChunkFlow();
     };
   }
 
@@ -2249,13 +2459,14 @@ function render(){
 
   const uniq = Array.from(new Set(indicesToRender.filter(i => i !== null && i >= 0)));
   for (const idx of uniq){
-    const screen = ["intro","title","learn_level","listen","meaning","echo","hide","final_recall","celebration","practice","game"][idx];
+    const screen = ["intro","title","learn_level","listen","meaning","chunks","echo","hide","final_recall","celebration","practice","game"][idx];
     let slide = null;
     if (screen === Screen.INTRO) slide = screenIntro(idx);
     if (screen === Screen.TITLE) slide = screenTitle(idx);
     if (screen === Screen.LEARN_LEVEL) slide = screenLearnLevel(idx);
     if (screen === Screen.LISTEN) slide = screenListen(idx);
     if (screen === Screen.MEANING) slide = screenMeaning(idx);
+    if (screen === Screen.CHUNKS) slide = screenChunks(idx);
     if (screen === Screen.ECHO) slide = screenEcho(idx);
     if (screen === Screen.HIDE) slide = screenHide(idx);
     if (screen === Screen.FINAL_RECALL) slide = screenFinalRecall(idx);
