@@ -421,19 +421,16 @@ const TITLE_OPTIONS = [
 const LEARN_LEVEL_OPTIONS = [
   {
     label: "Not at all",
-    description: "Start from the beginning and learn it step by step.",
     startScreen: Screen.LISTEN,
     level: "not_at_all"
   },
   {
     label: "A little bit",
-    description: "Skip ahead and start by echoing the verse.",
     startScreen: Screen.ECHO,
     level: "a_little"
   },
   {
     label: "Pretty well",
-    description: "Jump in at echo practice and move faster.",
     startScreen: Screen.ECHO,
     level: "pretty_well"
   }
@@ -1715,7 +1712,6 @@ function screenLearnLevel(idx){
         ${LEARN_LEVEL_OPTIONS.map((opt, i) => `
           <button class="learn-level-btn no-zoom" data-index="${i}">
             <span class="learn-level-btn-title">${opt.label}</span>
-            <span class="learn-level-btn-desc">${opt.description}</span>
           </button>
         `).join("")}
       </div>
