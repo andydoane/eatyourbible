@@ -2180,19 +2180,24 @@ function screenMeaning(idx){
   inner.style.height = "100%";
 
   inner.innerHTML = `
-    <div class="learn-layout">
+    <div class="learn-layout learn-layout-meaning">
       <div class="learn-ref">
         <div class="verse-ref-pill">${VERSE_REF}</div>
       </div>
 
-      <div class="learn-verse">
-        <p class="verse">${VERSE_TEXT}</p>
+      <div class="learn-verse learn-verse-meaning">
+        <div class="meaning-wrap">
+          <div class="meaning-label">What It Means</div>
+          <div class="meaning-text">${VERSE_MEANING}</div>
+        </div>
       </div>
 
       <div class="learn-coach learn-coach-meaning">
-        <div>
+        <div class="coach-copy">
           <div class="coach-title">What It Means</div>
-          <div class="coach-text coach-text-meaning">${VERSE_MEANING}</div>
+          <div class="coach-text coach-text-meaning-prompt">
+            Read what this verse means, then tap the button below.
+          </div>
         </div>
 
         <div class="coach-actions">
