@@ -2120,7 +2120,7 @@ function screenListen(idx){
   inner.style.height = "100%";
 
   inner.innerHTML = `
-    <div class="learn-layout">
+    <div class="learn-layout learn-layout-coach-centered">
       <div class="learn-ref">
         <div class="verse-ref-pill">${VERSE_REF}</div>
       </div>
@@ -2254,7 +2254,7 @@ function screenChunks(idx){
   }
 
   inner.innerHTML = `
-    <div class="learn-layout">
+    <div class="learn-layout learn-layout-coach-centered">
       <div class="learn-ref">
         <div class="verse-ref-pill">${VERSE_REF}</div>
       </div>
@@ -2306,7 +2306,7 @@ function screenEcho(idx){
   inner.style.height = "100%";
 
   inner.innerHTML = `
-    <div class="learn-layout">
+    <div class="learn-layout learn-layout-coach-centered">
       <div class="learn-ref">
         <div class="verse-ref-pill">${VERSE_REF}</div>
       </div>
@@ -2400,7 +2400,7 @@ function screenHide(idx){
   }
 
   inner.innerHTML = `
-    <div class="learn-layout">
+    <div class="learn-layout learn-layout-coach-centered">
       <div class="learn-ref">
         <div class="verse-ref-pill">${VERSE_REF}</div>
       </div>
