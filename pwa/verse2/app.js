@@ -1419,9 +1419,7 @@ function cancelLearnAudio(){
 
   State.listenPlaying = false;
   State.chunkRunning = false;
-  State.chunkAutoStarting = false;
   State.echoRunning = false;
-  State.echoAutoStarting = false;
   State.echoSpeaking = false;
 }
 
