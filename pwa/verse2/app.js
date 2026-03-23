@@ -400,6 +400,8 @@ const State = {
   chunksIntroDone: false,
   chunksReplayPromptDone: false,
   echoIntroPromptDone: false,
+  removeIntroPromptDone: false,
+  finalIntroPromptDone: false,
 
   listenDone: false,
   listenPlaying: false,
@@ -630,6 +632,8 @@ function resetLearn(goTitle=false){
   State.chunksIntroDone = false;
   State.chunksReplayPromptDone = false;
   State.echoIntroPromptDone = false;
+  State.removeIntroPromptDone = false;
+  State.finalIntroPromptDone = false;
 
   State.listenDone = false;
   State.listenPlaying = false;
@@ -1519,6 +1523,24 @@ async function runEchoSequence(){
       return;
     }
 
+    if (!State.removeIntroPromptDone){
+      State.echoRunning = false;
+      State.echoSpeaking = false;
+      State.audioMode = null;
+      render();
+
+      playInstruction("remove", {
+        doneFlag: "removeIntroPromptDone",
+        delayMs: 450,
+        after: () => {
+          State.echoDone = true;
+          render();
+        }
+      });
+
+      return;
+    }
+
     State.echoDone = true;
   } finally {
     if (my === echoCancelToken){
@@ -1832,8 +1854,19 @@ if (btnHome){
       }
       else if (State.screen === Screen.ECHO) goToHideAndStartRound();
       else if (State.screen === Screen.HIDE){
+        if (State.instructionPlaying) return;
+
         if (State.hideCount >= planMixed.length){
-          go(Screen.FINAL_RECALL);
+          if (!State.finalIntroPromptDone){
+            playInstruction("final", {
+              doneFlag: "finalIntroPromptDone",
+              after: () => {
+                goToFinalRecallAndStart();
+              }
+            });
+          } else {
+            goToFinalRecallAndStart();
+          }
         } else {
           startHideRound();
         }
@@ -2296,9 +2329,13 @@ function screenEcho(idx){
               ? "Now echo the verse after me."
               : State.instructionPlaying && State.instructionKey === "echo2"
                 ? "Echo the verse one more time."
-                : State.echoDone
-                  ? "Great job. Press below to remove the first word."
-                  : "Press the button, then repeat each part out loud during the pause."
+                : State.instructionPlaying && State.instructionKey === "remove"
+                  ? "Now, let's remove words from the verse. Try to say the verse out loud each time. If you need a hint, tap that word."
+                  : State.echoDone
+                    ? (hideWordsPerRound() === 2
+                        ? "Great job. Press below to remove some words."
+                        : "Great job. Press below to remove the first word.")
+                    : "Press the button, then repeat each part out loud during the pause."
           }</div>
         </div>
 
@@ -2332,6 +2369,7 @@ function screenEcho(idx){
   return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner});
 }
 
+
 function screenHide(idx){
   const inner = document.createElement("div");
   inner.style.display = "flex";
@@ -2353,7 +2391,11 @@ function screenHide(idx){
     buttonLabel = hiddenNow > 0 ? removeAnotherLabel : removeLabel;
   } else if (done){
     coachTitle = "Final Test";
-    coachBody = `<div class="coach-text">Now try to say the whole verse from memory.</div>`;
+    coachBody = `<div class="coach-text">${
+      State.instructionPlaying && State.instructionKey === "final"
+        ? "Now it's time for your final test! Try to say the verse using only the first letter of each word."
+        : "Now try to say the whole verse from memory."
+    }</div>`;
     buttonLabel = "Begin Final Test";
   } else if (hiddenNow > 0){
     buttonLabel = removeAnotherLabel;
@@ -2376,16 +2418,19 @@ function screenHide(idx){
         </div>
 
         <div class="coach-actions">
-          <button
-            class="carousel-main no-zoom"
-            id="btnRemoveWord"
-            style="max-width:520px; ${
-              State.sayVerseActive ? "background:#3fa66b;color:white;box-shadow:none;" : ""
-            }"
-            ${State.sayVerseActive ? "disabled" : ""}
-          >
-            ${buttonLabel}
-          </button>
+          ${
+            (State.sayVerseActive || State.instructionPlaying)
+              ? ``
+              : `
+                <button
+                  class="carousel-main no-zoom"
+                  id="btnRemoveWord"
+                  style="max-width:520px;"
+                >
+                  ${buttonLabel}
+                </button>
+              `
+          }
         </div>
       </div>
     </div>
@@ -2397,6 +2442,16 @@ function screenHide(idx){
   if (btnRemove){
     btnRemove.onclick = async () => {
       if (done){
+        if (!State.finalIntroPromptDone){
+          playInstruction("final", {
+            doneFlag: "finalIntroPromptDone",
+            after: () => {
+              goToFinalRecallAndStart();
+            }
+          });
+          return;
+        }
+
         goToFinalRecallAndStart();
         return;
       }
