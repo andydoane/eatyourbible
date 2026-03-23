@@ -622,7 +622,7 @@ function resetLearn(goTitle=false){
 
   stopFireworks();
   
-  try { audioEl.pause(); audioEl.currentTime = 0; } catch(e){}
+  cancelLearnAudio();
   if (goTitle) go(Screen.TITLE);
   render();
 }
@@ -661,12 +661,8 @@ function go(nextScreen){
   if (State.isSliding) return;
   State.isSliding = true;
 
-  // stop audio when leaving a screen
-  try { audioEl.pause(); audioEl.currentTime = 0; } catch(e){}
-
-  State.listenPlaying = false;
-  State.echoRunning = false;
-  State.echoSpeaking = false;
+  // stop any learn audio/echo sequence when leaving a screen
+  cancelLearnAudio();
 
   if (from === Screen.HIDE && nextScreen !== Screen.HIDE){
     State.sayVerseActive = false;
@@ -1146,13 +1142,22 @@ async function startEchoFlow(){
   if (State.echoRunning) return;
 
   // cancel any prior
-  echoCancelToken++;
-  try { audioEl.pause(); audioEl.currentTime = 0; } catch(e){}
+  cancelLearnAudio();
 
   await runEchoSequence();
 }
 
 let echoCancelToken = 0;
+
+function cancelLearnAudio(){
+  echoCancelToken++;
+  try { audioEl.pause(); audioEl.currentTime = 0; } catch(e){}
+
+  State.listenPlaying = false;
+  State.echoRunning = false;
+  State.echoSpeaking = false;
+}
+
 async function runEchoSequence(){
   const my = ++echoCancelToken;
 
