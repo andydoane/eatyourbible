@@ -3051,10 +3051,10 @@ text-wrap: balance;
 }
 
 .coach-text{
-  max-width: min(92vw, 720px);
+  max-width: min(92vw, 760px);
   margin: 0 auto;
   text-align: center;
-  font-size: clamp(16px, 1.9vw, 26px);
+  font-size: clamp(18px, 2.3vw, 32px);
   line-height: 1.45;
 }
 
@@ -3080,34 +3080,28 @@ text-wrap: balance;
 
 .meaning-wrap{
   width: 100%;
-  max-width: 760px;
+  max-width: 860px;
   margin: 0 auto;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: clamp(10px, 1.8vh, 18px);
-}
-
-.meaning-label{
-  font-size: clamp(14px, 1.3vw, 18px);
-  font-weight: 900;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  opacity: 0.85;
 }
 
 .meaning-text{
-  font-size: clamp(22px, 2.5vw, 34px);
-  line-height: 1.45;
-  font-weight: 800;
   color: var(--purple);
+  text-shadow: none;
 }
 
 .learn-coach-meaning{
-  justify-content: space-between;
+  justify-content: center;
 }
 
-.coach-text-meaning-prompt{
-  max-width: min(90vw, 620px);
+.learn-coach-meaning-minimal{
+  flex: 0 0 auto;
+  min-height: 96px;
+  padding-top: 10px;
+}
+
+.learn-coach-meaning-minimal .coach-actions{
+  justify-content: center;
 }
