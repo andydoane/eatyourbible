@@ -3018,3 +3018,9 @@ text-wrap: balance;
     min-height: 240px;
   }
 }
+
+/* Practice gate screen */
+.practice-gate-content .carousel-main{
+  flex: 0 0 auto;
+  width: min(100%, 420px);
+}
