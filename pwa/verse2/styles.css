@@ -3025,8 +3025,8 @@ text-wrap: balance;
   width: min(100%, 420px);
 }
 
-/* ---------- Learn coach responsiveness / centering ---------- */
-.learn-coach{
+/* ---------- Learn coach (ONLY Learn screens) ---------- */
+.learn-layout:not([class*="game-"]) .learn-coach{
   flex: 1 1 40%;
   min-height: 0;
   display: flex;
@@ -3036,8 +3036,8 @@ text-wrap: balance;
   gap: clamp(12px, 2.5vh, 26px);
 }
 
-.learn-coach > div:first-child,
-.learn-coach .coach-copy{
+.learn-layout:not([class*="game-"]) .learn-coach > div:first-child,
+.learn-layout:not([class*="game-"]) .learn-coach .coach-copy{
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
@@ -3073,3 +3073,75 @@ text-wrap: balance;
   padding-top: 0;
 }
 
+/* ---------- Meaning screen ---------- */
+.learn-layout-meaning .learn-verse{
+  background: #ffffff;
+  color: var(--purple);
+  border-radius: 22px;
+  padding: clamp(18px, 3vw, 34px);
+}
+
+.learn-verse-meaning{
+  text-align: center;
+}
+
+.meaning-wrap{
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.meaning-text{
+  color: var(--purple);
+  text-shadow: none;
+}
+
+.learn-coach-meaning{
+  justify-content: center;
+}
+
+.learn-coach-meaning-minimal{
+  flex: 0 0 auto;
+  min-height: 96px;
+  padding-top: 10px;
+}
+
+.learn-coach-meaning-minimal .coach-actions{
+  justify-content: center;
+}
+
+/* ---------- Prevent Learn text-centering rules from affecting games ---------- */
+.learn-layout.game-scramble .learn-verse > *,
+.learn-layout.game-scramble-result .learn-verse > *,
+.learn-layout.game-bouncing .learn-verse > *,
+.learn-layout.game-traffic .learn-verse > *{
+  width: 100%;
+  max-width: none;
+  margin-left: 0;
+  margin-right: 0;
+  text-align: initial;
+}
+
+/* The generic centered first-child rule is good for Learn screens,
+   but game coach areas need their own layout behavior. */
+.learn-layout.game-scramble .learn-coach > div:first-child,
+.learn-layout.game-scramble-result .learn-coach > div:first-child,
+.learn-layout.game-bouncing .learn-coach > div:first-child,
+.learn-layout.game-traffic .learn-coach > div:first-child{
+  flex: 0 0 auto;
+  min-height: 0;
+  display: block;
+}
+
+/* Make sure the stage can actually fill the game area */
+.learn-layout.game-scramble #gameStage,
+.learn-layout.game-bouncing #gameStage,
+.learn-layout.game-traffic #gameStage{
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  margin: 0;
+}
