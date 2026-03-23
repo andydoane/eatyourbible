@@ -1867,16 +1867,7 @@ if (btnHome){
         if (State.instructionPlaying) return;
 
         if (State.hideCount >= planMixed.length){
-          if (!State.finalIntroPromptDone){
-            playInstruction("final", {
-              doneFlag: "finalIntroPromptDone",
-              after: () => {
-                goToFinalRecallAndStart();
-              }
-            });
-          } else {
-            goToFinalRecallAndStart();
-          }
+          goToFinalRecallAndStart();
         } else {
           startHideRound();
         }
@@ -2452,16 +2443,6 @@ function screenHide(idx){
   if (btnRemove){
     btnRemove.onclick = async () => {
       if (done){
-        if (!State.finalIntroPromptDone){
-          playInstruction("final", {
-            doneFlag: "finalIntroPromptDone",
-            after: () => {
-              goToFinalRecallAndStart();
-            }
-          });
-          return;
-        }
-
         goToFinalRecallAndStart();
         return;
       }
