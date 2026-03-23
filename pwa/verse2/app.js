@@ -327,6 +327,8 @@ try {
   tokens = tokenize(VERSE_TEXT);
   planResolved = resolveHidePlanToTokenIndices(tokens, HIDE_PLAN);
   reshuffleHidePlan();
+
+  State.hasLearnedVerse = false;
 }
 
 async function loadVerseList(){
@@ -355,6 +357,7 @@ const Screen = {
   INTRO: "intro",
   TITLE: "title",
   LEARN_LEVEL: "learn_level",
+  PRACTICE_GATE: "practice_gate",
   LISTEN: "listen",
   MEANING: "meaning",
   CHUNKS: "chunks",
@@ -388,6 +391,7 @@ const State = {
   debugBounce: false,
 
   // Learn progression
+  hasLearnedVerse: false,
   listenDone: false,
   listenPlaying: false,
 
@@ -424,8 +428,12 @@ const State = {
 };
 
 const TITLE_OPTIONS = [
-  { label: "Learn the Verse", action: () => go(Screen.LEARN_LEVEL) },
-  { label: "Practice Games", action: () => go(Screen.PRACTICE) },
+  { id: "learn", label: "Learn the Verse", action: () => go(Screen.LEARN_LEVEL) },
+  { id: "practice", label: "Practice Games", action: () => {
+      if (State.hasLearnedVerse) go(Screen.PRACTICE);
+      else go(Screen.PRACTICE_GATE);
+    }
+  },
 ];
 
 const LEARN_LEVEL_OPTIONS = [
@@ -651,6 +659,7 @@ function screenToIndex(screen){
     Screen.INTRO,
     Screen.TITLE,
     Screen.LEARN_LEVEL,
+    Screen.PRACTICE_GATE,
     Screen.LISTEN,
     Screen.MEANING,
     Screen.CHUNKS,
@@ -1167,6 +1176,7 @@ async function startFinalRecallFlow(){
   State.finalRecallStartedAt = 0;
   State.finalRecallDurationMs = 0;
   State.finalRecallDone = true;
+  State.hasLearnedVerse = true;
   render();
 }
 
@@ -1458,8 +1468,9 @@ else left = backBtn;
 
 // center label
 if (State.screen === Screen.TITLE) center = "HOME";
-if (State.screen === Screen.LISTEN) center = "LISTEN";
 if (State.screen === Screen.LEARN_LEVEL) center = "LEARN";
+if (State.screen === Screen.PRACTICE_GATE) center = "PRACTICE";
+if (State.screen === Screen.LISTEN) center = "LISTEN";
 if (State.screen === Screen.MEANING) center = "MEANING";
 if (State.screen === Screen.CHUNKS) center = "CHUNKS";
 if (State.screen === Screen.ECHO) center = "ECHO";
@@ -1467,7 +1478,6 @@ if (State.screen === Screen.HIDE) center = "MEMORIZE";
 if (State.screen === Screen.FINAL_RECALL) center = "FINAL";
 if (State.screen === Screen.PRACTICE) center = "PRACTICE";
 if (State.screen === Screen.GAME) center = `<button class="nav-btn no-zoom" id="btnHelp" title="Help" style="width:auto; min-width:88px; padding:0 16px; font-weight:900;">HELP</button>`;
-
 
 right = (State.screen === Screen.GAME || isLearnScreen) ? "" : nextBtn;
 
@@ -1490,6 +1500,7 @@ right = (State.screen === Screen.GAME || isLearnScreen) ? "" : nextBtn;
   if (btnBack){
     btnBack.onclick = () => {
         if (State.screen === Screen.LEARN_LEVEL) go(Screen.TITLE);
+        else if (State.screen === Screen.PRACTICE_GATE) go(Screen.TITLE);
         else if (State.screen === Screen.LISTEN) go(Screen.LEARN_LEVEL);
         else if (State.screen === Screen.MEANING) go(Screen.LISTEN);
         else if (State.screen === Screen.CHUNKS) go(Screen.MEANING);
@@ -1521,6 +1532,11 @@ if (btnHome){
       State.screen === Screen.FINAL_RECALL
     ){
       resetLearn(true);
+      return;
+    }
+
+    if (State.screen === Screen.PRACTICE_GATE){
+      go(Screen.TITLE);
       return;
     }
 
@@ -1600,6 +1616,10 @@ if (btnHome){
 
       if (State.screen === Screen.TITLE) go(Screen.LEARN_LEVEL);
       else if (State.screen === Screen.LEARN_LEVEL) learnLevelRun();
+      else if (State.screen === Screen.PRACTICE_GATE){
+        resetLearn(false);
+        go(Screen.LEARN_LEVEL);
+      }
       else if (State.screen === Screen.LISTEN) go(Screen.MEANING);
       else if (State.screen === Screen.MEANING) goToChunksAndStart();
       else if (State.screen === Screen.CHUNKS){
@@ -1734,6 +1754,10 @@ function screenTitle(idx){
   const wrap = document.createElement("div");
   wrap.className = "title-screen";
   const opt = TITLE_OPTIONS[State.titleOptionIndex];
+  const buttonLabel =
+    opt.id === "learn" && State.hasLearnedVerse
+      ? "Learn Again"
+      : opt.label;
 
   wrap.innerHTML = `
     <div class="title-content">
@@ -1748,7 +1772,7 @@ function screenTitle(idx){
       </div>
       <div class="title-carousel">
         <button class="carousel-arrow no-zoom" id="titlePrev" aria-label="Previous">${SVG_BACK}</button>
-        <button class="carousel-main no-zoom" id="titleMain">${opt.label}</button>
+        <button class="carousel-main no-zoom" id="titleMain">${buttonLabel}</button>
         <button class="carousel-arrow no-zoom" id="titleNext" aria-label="Next">${SVG_FORWARD}</button>
       </div>
 
@@ -1901,47 +1925,6 @@ function screenListen(idx){
       }
 
       listenPlay();
-    };
-  }
-
-  return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner});
-}
-
-function screenMeaning(idx){
-  const inner = document.createElement("div");
-  inner.style.display = "flex";
-  inner.style.flexDirection = "column";
-  inner.style.height = "100%";
-
-  inner.innerHTML = `
-    <div class="learn-layout">
-      <div class="learn-ref">
-        <div class="verse-ref-pill">${VERSE_REF}</div>
-      </div>
-
-      <div class="learn-verse">
-        <p class="verse">${VERSE_TEXT}</p>
-      </div>
-
-      <div class="learn-coach learn-coach-meaning">
-        <div>
-          <div class="coach-title">What It Means</div>
-          <div class="coach-text coach-text-meaning">${VERSE_MEANING}</div>
-        </div>
-
-        <div class="coach-actions">
-          <button class="carousel-main no-zoom" id="btnMeaningNext" style="max-width:520px;">
-            Echo the Verse
-          </button>
-        </div>
-      </div>
-    </div>
-  `;
-
-  const btn = inner.querySelector("#btnMeaningNext");
-  if (btn){
-    btn.onclick = () => {
-      goToEchoAndStart();
     };
   }
 
@@ -2313,6 +2296,35 @@ function screenCelebration(idx){
   return makeSlide({idx, bg:"var(--purple)", navHidden:true, inner: wrap});
 }
 
+function screenPracticeGate(idx){
+  const wrap = document.createElement("div");
+  wrap.className = "title-screen learn-level-screen";
+
+  wrap.innerHTML = `
+    <div class="title-content learn-level-content">
+      <h2>WAIT! 🤚</h2>
+
+      <div class="coach-text" style="max-width: 24ch; margin: 0 auto 20px; text-align:center;">
+        You need to know the verse a bit to play these games.
+      </div>
+
+      <button class="carousel-main no-zoom" id="btnPracticeGate" style="max-width:520px;">
+        Next
+      </button>
+    </div>
+  `;
+
+  const btn = wrap.querySelector("#btnPracticeGate");
+  if (btn){
+    btn.onclick = () => {
+      resetLearn(false);
+      go(Screen.LEARN_LEVEL);
+    };
+  }
+
+  return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner: wrap});
+}
+
 function screenPractice(idx){
   const wrap = document.createElement("div");
   wrap.className = "title-screen";
@@ -2471,11 +2483,12 @@ function render(){
 
   const uniq = Array.from(new Set(indicesToRender.filter(i => i !== null && i >= 0)));
   for (const idx of uniq){
-    const screen = ["intro","title","learn_level","listen","meaning","chunks","echo","hide","final_recall","celebration","practice","game"][idx];
+    const screen = ["intro","title","learn_level","practice_gate","listen","meaning","chunks","echo","hide","final_recall","celebration","practice","game"][idx];
     let slide = null;
     if (screen === Screen.INTRO) slide = screenIntro(idx);
     if (screen === Screen.TITLE) slide = screenTitle(idx);
     if (screen === Screen.LEARN_LEVEL) slide = screenLearnLevel(idx);
+    if (screen === Screen.PRACTICE_GATE) slide = screenPracticeGate(idx);
     if (screen === Screen.LISTEN) slide = screenListen(idx);
     if (screen === Screen.MEANING) slide = screenMeaning(idx);
     if (screen === Screen.CHUNKS) slide = screenChunks(idx);
