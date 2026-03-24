@@ -2267,6 +2267,7 @@ function screenMeaning(idx){
 
       <div class="learn-verse learn-verse-meaning">
         <div class="meaning-wrap">
+          <div class="meaning-title">WHAT IT MEANS</div>
           <p class="verse meaning-text">${VERSE_MEANING}</p>
         </div>
       </div>
