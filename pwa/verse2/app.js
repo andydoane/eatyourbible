@@ -2475,7 +2475,7 @@ function screenFinalRecall(idx){
 
   if (State.finalRecallActive){
     coachBody = `
-      <div class="coach-text">Try to say the verse.</div>
+      <div class="coach-text">Try to say the verse</div>
       <div class="timer-wrap"><div class="timer-bar" id="finalRecallBar" style="width:${getFinalRecallPct() * 100}%"></div></div>
     `;
   } else if (State.finalRecallDone && !State.finalRecallRevealed){
