@@ -1094,9 +1094,9 @@ async function playInstruction(key, { doneFlag = null, delayMs = 0, after = null
 function listenPlay(){
   State.listenPlaying = true;
   State.listenDone = false;
-  State.audioMode = "listen_verse";
+  State.audioMode = "listen_ref";
 
-  setAudioSrc(AUDIO_FILE);
+  setAudioSrc(refAudioFile());
   audioEl.currentTime = 0;
 
   safePlay()
@@ -1107,10 +1107,41 @@ function listenPlay(){
       State.listenPlaying = false;
       State.audioMode = null;
       render();
+
+      showDialog({
+        title: "Reference audio missing",
+        body: `Couldn't play: ${refAudioFile()}`,
+        actions: [dlgBtn("OK", {onClick: closeDialog})]
+      });
     });
 }
 
 audioEl.addEventListener("ended", () => {
+  if (State.screen === Screen.LISTEN && State.audioMode === "listen_ref"){
+    State.audioMode = "listen_verse";
+
+    setAudioSrc(AUDIO_FILE);
+    audioEl.currentTime = 0;
+
+    safePlay()
+      .then(() => {
+        render();
+      })
+      .catch(() => {
+        State.listenPlaying = false;
+        State.audioMode = null;
+        render();
+
+        showDialog({
+          title: "Verse audio missing",
+          body: `Couldn't play: ${AUDIO_FILE}`,
+          actions: [dlgBtn("OK", {onClick: closeDialog})]
+        });
+      });
+
+    return;
+  }
+
   if (State.screen === Screen.LISTEN && State.audioMode === "listen_verse"){
     State.listenPlaying = false;
     State.audioMode = null;
@@ -1136,6 +1167,32 @@ function echoPartFileByIndex(i){
   // a, b, c...
   const suffix = String.fromCharCode("a".charCodeAt(0) + i);
   return `${AUDIO_DIR}${VERSE_ID}${suffix}.mp3`;
+}
+
+function refAudioFile(){
+  return `${AUDIO_DIR}${VERSE_ID}_ref.mp3`;
+}
+
+function getLearnAudioParts(){
+  const parts = [
+    { text: VERSE_REF, file: refAudioFile() }
+  ];
+
+  if (ECHO_PARTS.length){
+    for (let i = 0; i < ECHO_PARTS.length; i++){
+      parts.push({
+        text: ECHO_PARTS[i],
+        file: echoPartFileByIndex(i)
+      });
+    }
+  } else {
+    parts.push({
+      text: VERSE_TEXT,
+      file: AUDIO_FILE
+    });
+  }
+
+  return parts;
 }
 
 function waitForDuration(timeoutMs = 2000){
@@ -1378,10 +1435,14 @@ async function runChunkSequence(){
   render();
 
   try {
-    for (let i = 0; i < ECHO_PARTS.length; i++){
+    const learnParts = getLearnAudioParts();
+
+    for (let i = 0; i < learnParts.length; i++){
       if (my !== echoCancelToken) return;
 
-      const file = echoPartFileByIndex(i);
+      const part = learnParts[i];
+      const file = part.file;
+
       setAudioSrc(file);
       audioEl.currentTime = 0;
 
@@ -1392,7 +1453,7 @@ async function runChunkSequence(){
         await safePlay();
       }catch(e){
         showDialog({
-          title: "Chunk audio missing",
+          title: "Learn audio missing",
           body: `Couldn't play: ${file}`,
           actions: [dlgBtn("OK", {onClick: closeDialog})]
         });
@@ -1479,10 +1540,14 @@ async function runEchoSequence(){
   render();
 
   try {
-    for (let i = 0; i < ECHO_PARTS.length; i++){
+    const learnParts = getLearnAudioParts();
+
+    for (let i = 0; i < learnParts.length; i++){
       if (my !== echoCancelToken) return;
 
-      const file = echoPartFileByIndex(i);
+      const part = learnParts[i];
+      const file = part.file;
+
       setAudioSrc(file);
       audioEl.currentTime = 0;
 
@@ -1493,7 +1558,7 @@ async function runEchoSequence(){
         await safePlay();
       }catch(e){
         showDialog({
-          title: "Echo audio missing",
+          title: "Learn audio missing",
           body: `Couldn't play: ${file}`,
           actions: [dlgBtn("OK", {onClick: closeDialog})]
         });
@@ -2243,9 +2308,8 @@ function screenChunks(idx){
   inner.style.flexDirection = "column";
   inner.style.height = "100%";
 
-  const chunkText = ECHO_PARTS.length
-    ? (ECHO_PARTS[State.chunkIndex] || ECHO_PARTS[0] || VERSE_TEXT)
-    : VERSE_TEXT;
+  const learnParts = getLearnAudioParts();
+  const chunkText = learnParts[State.chunkIndex]?.text || VERSE_TEXT;
 
   let coachText = "Listen to each part of the verse one chunk at a time.";
   let buttonLabel = "▶ Start";
@@ -2318,6 +2382,8 @@ function screenEcho(idx){
   inner.style.display = "flex";
   inner.style.flexDirection = "column";
   inner.style.height = "100%";
+  const learnParts = getLearnAudioParts();
+  const echoText = learnParts[State.echoIndex]?.text || VERSE_TEXT;
 
   inner.innerHTML = `
     <div class="learn-layout learn-layout-coach-centered">
@@ -2325,12 +2391,8 @@ function screenEcho(idx){
         <div class="verse-ref-pill">${VERSE_REF}</div>
       </div>
 
-      <div class="learn-verse ${getVerseFitClass(ECHO_PARTS.length ? (ECHO_PARTS[State.echoIndex] || ECHO_PARTS[0] || VERSE_TEXT) : VERSE_TEXT)} ${State.echoSpeaking ? "echo-green" : ""}">
-        <p class="verse">${
-          ECHO_PARTS.length
-            ? (ECHO_PARTS[State.echoIndex] || ECHO_PARTS[0] || VERSE_TEXT)
-            : VERSE_TEXT
-        }</p>
+      <div class="learn-verse ${getVerseFitClass(echoText)} ${State.echoSpeaking ? "echo-green" : ""}">
+        <p class="verse">${echoText}</p>
       </div>
 
       <div class="learn-coach">
