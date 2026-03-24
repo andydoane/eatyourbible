@@ -291,6 +291,19 @@ function getTitleSubtitle(){
   return VERSE_REF;
 }
 
+function getVerseFitClass(text){
+  const raw = String(text || "").trim();
+
+  if (!raw) return "verse-fit-medium";
+
+  const compact = raw.replace(/\s+/g, " ").trim();
+  const len = compact.length;
+
+  if (len <= 38) return "verse-fit-short";
+  if (len <= 90) return "verse-fit-medium";
+  return "verse-fit-long";
+}
+
 /* =========================
    4. Verse Loading
    ========================= */
@@ -2125,7 +2138,7 @@ function screenListen(idx){
         <div class="verse-ref-pill">${VERSE_REF}</div>
       </div>
 
-      <div class="learn-verse">
+      <div class="learn-verse ${getVerseFitClass(VERSE_TEXT)}">
         <p class="verse">${VERSE_TEXT}</p>
       </div>
 
@@ -2259,7 +2272,7 @@ function screenChunks(idx){
         <div class="verse-ref-pill">${VERSE_REF}</div>
       </div>
 
-      <div class="learn-verse">
+      <div class="learn-verse ${getVerseFitClass(chunkText)}">
         <p class="verse">${chunkText}</p>
       </div>
 
@@ -2311,7 +2324,7 @@ function screenEcho(idx){
         <div class="verse-ref-pill">${VERSE_REF}</div>
       </div>
 
-      <div class="learn-verse ${State.echoSpeaking ? "echo-green" : ""}">
+      <div class="learn-verse ${getVerseFitClass(ECHO_PARTS.length ? (ECHO_PARTS[State.echoIndex] || ECHO_PARTS[0] || VERSE_TEXT) : VERSE_TEXT)} ${State.echoSpeaking ? "echo-green" : ""}">
         <p class="verse">${
           ECHO_PARTS.length
             ? (ECHO_PARTS[State.echoIndex] || ECHO_PARTS[0] || VERSE_TEXT)
@@ -2405,7 +2418,7 @@ function screenHide(idx){
         <div class="verse-ref-pill">${VERSE_REF}</div>
       </div>
 
-      <div class="learn-verse">
+      <div class="learn-verse ${getVerseFitClass(VERSE_TEXT)}">
         <div id="verseStage"></div>
       </div>
 
