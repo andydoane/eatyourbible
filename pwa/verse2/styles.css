@@ -460,15 +460,22 @@ border-radius: 18px;
 }
 
 .learn-layout.learn-layout-coach-centered .learn-verse.verse-fit-short > *{
-  max-width: 18ch;
+  width: min(100%, 680px);
+  max-width: 26ch;
 }
 
 .learn-layout.learn-layout-coach-centered .learn-verse.verse-fit-medium > *{
-  max-width: 24ch;
+  width: min(100%, 760px);
+  max-width: 34ch;
 }
 
 .learn-layout.learn-layout-coach-centered .learn-verse.verse-fit-long > *{
-  max-width: 30ch;
+  width: min(100%, 820px);
+  max-width: 42ch;
+}
+
+.learn-layout.learn-layout-coach-centered .learn-verse #verseStage{
+  width: 100%;
 }
 
 .learn-layout.learn-layout-coach-centered .learn-verse.verse-fit-short .verse{
