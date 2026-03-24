@@ -2652,15 +2652,23 @@ function screenPracticeGate(idx){
 
   wrap.innerHTML = `
     <div class="title-content learn-level-content practice-gate-content">
-      <h2>WAIT! 🤚</h2>
+      <div class="practice-gate-stack">
+        <img
+          class="practice-gate-image"
+          src="${IMG_DIR}verse_wait_hand.png"
+          alt="Yellow hand"
+        />
 
-      <div class="coach-text" style="max-width: 24ch; margin: 0 auto 20px; text-align:center;">
-        You need to know the verse a bit to play these games.
+        <div class="practice-gate-title">WAIT!</div>
+
+        <div class="practice-gate-text">
+          You need to know the verse a bit to play these games.
+        </div>
+
+        <button class="carousel-main no-zoom" id="btnPracticeGate" style="max-width:520px;">
+          Next
+        </button>
       </div>
-
-      <button class="carousel-main no-zoom" id="btnPracticeGate" style="max-width:520px;">
-        Next
-      </button>
     </div>
   `;
 
