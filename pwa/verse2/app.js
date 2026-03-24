@@ -2150,7 +2150,7 @@ function screenListen(idx){
           <div class="coach-text">${
             State.listenDone
               ? "Tap the button to read what this verse means."
-              : "Tap the button to listen to the verse."
+              : "Listen to the verse."
           }</div>
         </div>
 
@@ -2346,7 +2346,7 @@ function screenEcho(idx){
                     ? (hideWordsPerRound() === 2
                         ? "Tap the button to remove some words."
                         : "Tap the button to remove the first word.")
-                    : "Repeat each chunk out loud during each pause."
+                    : "Repeat each chunk out loud during the pause."
           }</div>
         </div>
 
@@ -2391,8 +2391,11 @@ function screenHide(idx){
   const done = hiddenNow >= planMixed.length;
 
   let coachBody = State.sayVerseActive
-    ? `<div class="timer-wrap"><div class="timer-bar" id="sayVerseBar"></div></div>`
-    : `<div class="coach-text">If you need help, tap a missing word.</div>`;
+    ? `
+      <div class="coach-text">Say the verse out loud. If you need help, tap a missing word.</div>
+      <div class="timer-wrap"><div class="timer-bar" id="sayVerseBar"></div></div>
+    `
+    : `<div class="coach-text">Tap the button to continue removing words.</div>`;
   const removeLabel = hideWordsPerRound() === 2 ? "Remove Words" : "Remove a Word";
   const removeAnotherLabel = hideWordsPerRound() === 2 ? "Remove More Words" : "Remove Another";
   let buttonLabel = removeLabel;
@@ -2471,7 +2474,10 @@ function screenFinalRecall(idx){
   let actionHtml = ``;
 
   if (State.finalRecallActive){
-    coachBody = `<div class="timer-wrap"><div class="timer-bar" id="finalRecallBar" style="width:${getFinalRecallPct() * 100}%"></div></div>`;
+    coachBody = `
+      <div class="coach-text">Try to say the verse.</div>
+      <div class="timer-wrap"><div class="timer-bar" id="finalRecallBar" style="width:${getFinalRecallPct() * 100}%"></div></div>
+    `;
   } else if (State.finalRecallDone && !State.finalRecallRevealed){
     coachBody = `<div class="coach-text">Press below to reveal the verse.</div>`;
     actionHtml = `<button class="carousel-main no-zoom" id="btnFinalReveal" style="max-width:520px;">Reveal Verse</button>`;
