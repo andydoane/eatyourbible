@@ -476,6 +476,26 @@ border-radius: 18px;
 
 .learn-layout.learn-layout-coach-centered .learn-verse #verseStage{
   width: 100%;
+  max-width: none;
+}
+
+.learn-layout.learn-layout-coach-centered .learn-verse #verseStage .verse{
+  width: min(100%, 760px);
+  max-width: none;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.learn-layout.learn-layout-coach-centered .learn-verse.verse-fit-short #verseStage .verse{
+  width: min(100%, 640px);
+}
+
+.learn-layout.learn-layout-coach-centered .learn-verse.verse-fit-medium #verseStage .verse{
+  width: min(100%, 760px);
+}
+
+.learn-layout.learn-layout-coach-centered .learn-verse.verse-fit-long #verseStage .verse{
+  width: min(100%, 840px);
 }
 
 .learn-layout.learn-layout-coach-centered .learn-verse.verse-fit-short .verse{
