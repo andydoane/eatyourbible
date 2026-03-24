@@ -2149,8 +2149,8 @@ function screenListen(idx){
         <div>
           <div class="coach-text">${
             State.listenDone
-              ? "Nice job. Press below to see what this verse means."
-              : "Press the button below to listen to the verse."
+              ? "Tap the button to read what this verse means."
+              : "Tap the button to listen to the verse."
           }</div>
         </div>
 
@@ -2261,10 +2261,10 @@ function screenChunks(idx){
   } else if (State.chunkRunning){
     coachText = "Listen carefully as each chunk plays.";
   } else if (State.chunkPassCount === 1){
-    coachText = "Great job. Listen through the chunks one more time.";
+    coachText = "Listen through the chunks one more time.";
     buttonLabel = "One More Time";
   } else if (State.chunkPassCount >= 2){
-    coachText = "Awesome. Now you're ready to echo the verse.";
+    coachText = "Tap the button to echo the verse.";
     buttonLabel = "Echo the Verse";
   }
 
@@ -2344,9 +2344,9 @@ function screenEcho(idx){
                   ? "Now, let's remove words from the verse. Try to say the verse out loud each time. If you need a hint, tap that word."
                   : State.echoDone
                     ? (hideWordsPerRound() === 2
-                        ? "Great job. Press below to remove some words."
-                        : "Great job. Press below to remove the first word.")
-                    : "Press the button, then repeat each part out loud during the pause."
+                        ? "Tap the button to remove some words."
+                        : "Tap the button to remove the first word.")
+                    : "Repeat each chunk out loud during each pause."
           }</div>
         </div>
 
@@ -2402,8 +2402,8 @@ function screenHide(idx){
   } else if (done){
     coachBody = `<div class="coach-text">${
       State.instructionPlaying && State.instructionKey === "final"
-        ? "Now it's time for your final test! Try to say the verse using only the first letter of each word."
-        : "Now try to say the whole verse from memory."
+        ? "Time for your final test! Try to say the verse using only the first letter of each word."
+        : "Tap the button to test if you can say the whole verse from memory."
     }</div>`;
     buttonLabel = "Begin Final Test";
   } else if (hiddenNow > 0){
@@ -2473,20 +2473,20 @@ function screenFinalRecall(idx){
   if (State.finalRecallActive){
     coachBody = `<div class="timer-wrap"><div class="timer-bar" id="finalRecallBar" style="width:${getFinalRecallPct() * 100}%"></div></div>`;
   } else if (State.finalRecallDone && !State.finalRecallRevealed){
-    coachBody = `<div class="coach-text">Nice job. Press below to reveal the verse.</div>`;
+    coachBody = `<div class="coach-text">Press below to reveal the verse.</div>`;
     actionHtml = `<button class="carousel-main no-zoom" id="btnFinalReveal" style="max-width:520px;">Reveal Verse</button>`;
   } else if (State.finalRecallRevealed){
-    coachBody = `<div class="coach-text">You finished learning this verse. Head to the games to practice it.</div>`;
+    coachBody = `<div class="coach-text">Now that you've learned the verse, head to the games to practice it.</div>`;
     actionHtml = `<button class="carousel-main no-zoom" id="btnFinalGames" style="max-width:520px;">Verse Games</button>`;
   }
 
   inner.innerHTML = `
-    <div class="learn-layout">
+    <div class="learn-layout learn-layout-coach-centered">
       <div class="learn-ref">
         <div class="verse-ref-pill">${VERSE_REF}</div>
       </div>
 
-      <div class="learn-verse">
+      <div class="learn-verse ${getVerseFitClass(VERSE_TEXT)}">
         <div id="finalRecallStage"></div>
       </div>
 
