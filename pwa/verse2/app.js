@@ -1709,16 +1709,20 @@ else left = backBtn;
 if (State.screen === Screen.TITLE) center = "HOME";
 if (State.screen === Screen.LEARN_LEVEL) center = "LEARN";
 if (State.screen === Screen.PRACTICE_GATE) center = "PRACTICE";
-if (State.screen === Screen.LISTEN) center = "LISTEN";
-if (State.screen === Screen.MEANING) center = "MEANING";
-if (State.screen === Screen.CHUNKS) center = "CHUNKS";
-if (State.screen === Screen.ECHO) center = "ECHO";
-if (State.screen === Screen.HIDE) center = "MEMORIZE";
-if (State.screen === Screen.FINAL_RECALL) center = "FINAL";
+if (State.screen === Screen.LISTEN) center = "LISTEN TO THE VERSE";
+if (State.screen === Screen.MEANING) center = "WHAT IT MEANS";
+if (State.screen === Screen.CHUNKS) center = "BREAK IT INTO CHUNKS";
+if (State.screen === Screen.ECHO) center = "ECHO THE VERSE";
+if (State.screen === Screen.HIDE) center = "TRY TO SAY THE VERSE";
+if (State.screen === Screen.FINAL_RECALL) center = "FINAL TEST";
 if (State.screen === Screen.PRACTICE) center = "PRACTICE";
 if (State.screen === Screen.GAME) center = `<button class="nav-btn no-zoom" id="btnHelp" title="Help" style="width:auto; min-width:88px; padding:0 16px; font-weight:900;">HELP</button>`;
 
 right = (State.screen === Screen.GAME || isLearnScreen) ? "" : nextBtn;
+
+  const rightControls = isLearnScreen
+    ? `${right || ""}`
+    : `${muteBtn}${right || ""}`;
 
   navBar.innerHTML = `
     <div style="display:flex; gap:12px; align-items:center;">
@@ -1726,8 +1730,7 @@ right = (State.screen === Screen.GAME || isLearnScreen) ? "" : nextBtn;
     </div>
     <div class="nav-center">${center}</div>
     <div style="display:flex; gap:12px; align-items:center;">
-      ${muteBtn}
-      ${right || ""}
+      ${rightControls}
     </div>
   `;
 
@@ -2144,7 +2147,6 @@ function screenListen(idx){
 
       <div class="learn-coach">
         <div>
-          <div class="coach-title">Listen to the Verse</div>
           <div class="coach-text">${
             State.listenDone
               ? "Nice job. Press below to see what this verse means."
@@ -2278,7 +2280,6 @@ function screenChunks(idx){
 
       <div class="learn-coach">
         <div>
-          <div class="coach-title">Break It into Chunks</div>
           <div class="coach-text">${coachText}</div>
         </div>
 
@@ -2334,7 +2335,6 @@ function screenEcho(idx){
 
       <div class="learn-coach">
         <div>
-          <div class="coach-title">Echo the Verse</div>
           <div class="coach-text">${
             State.instructionPlaying && State.instructionKey === "echo1"
               ? "Now echo the verse after me."
@@ -2390,7 +2390,6 @@ function screenHide(idx){
   const hiddenNow = Math.min(State.hideCount, planMixed.length);
   const done = hiddenNow >= planMixed.length;
 
-  let coachTitle = "Try to Say the Verse";
   let coachBody = State.sayVerseActive
     ? `<div class="timer-wrap"><div class="timer-bar" id="sayVerseBar"></div></div>`
     : `<div class="coach-text">If you need help, tap a missing word.</div>`;
@@ -2401,7 +2400,6 @@ function screenHide(idx){
   if (State.sayVerseActive){
     buttonLabel = hiddenNow > 0 ? removeAnotherLabel : removeLabel;
   } else if (done){
-    coachTitle = "Final Test";
     coachBody = `<div class="coach-text">${
       State.instructionPlaying && State.instructionKey === "final"
         ? "Now it's time for your final test! Try to say the verse using only the first letter of each word."
@@ -2424,7 +2422,6 @@ function screenHide(idx){
 
       <div class="learn-coach">
         <div>
-          <div class="coach-title">${coachTitle}</div>
           ${coachBody}
         </div>
 
@@ -2470,7 +2467,6 @@ function screenFinalRecall(idx){
   inner.style.flexDirection = "column";
   inner.style.height = "100%";
 
-  let coachTitle = "Final Test";
   let coachBody = `<div class="coach-text">Try saying the entire verse from memory.</div>`;
   let actionHtml = ``;
 
@@ -2480,7 +2476,6 @@ function screenFinalRecall(idx){
     coachBody = `<div class="coach-text">Nice job. Press below to reveal the verse.</div>`;
     actionHtml = `<button class="carousel-main no-zoom" id="btnFinalReveal" style="max-width:520px;">Reveal Verse</button>`;
   } else if (State.finalRecallRevealed){
-    coachTitle = "Great Job";
     coachBody = `<div class="coach-text">You finished learning this verse. Head to the games to practice it.</div>`;
     actionHtml = `<button class="carousel-main no-zoom" id="btnFinalGames" style="max-width:520px;">Verse Games</button>`;
   }
@@ -2497,7 +2492,6 @@ function screenFinalRecall(idx){
 
       <div class="learn-coach">
         <div>
-          <div class="coach-title">${coachTitle}</div>
           ${coachBody}
         </div>
 
