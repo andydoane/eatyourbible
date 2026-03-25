@@ -1,0 +1,36 @@
+:root.theme-jellybean-light {
+
+  /* Intro screen */
+  --intro-bg: #f2f2f2;
+  --intro-text: #243846;
+
+  /* Whole page background */
+  --quiz-screen-bg: #f2f2f2;
+
+  /* Question Box at Top */
+  --question-bg: #243846;
+  --question-text: #f2f2f2;
+
+  /* First Button */
+  --red: #009700;
+  --red-text: #f2f2f2;
+
+  /* Second Button */
+  --blue: #fe0166;
+  --blue-text: #f2f2f2;
+
+  /* Third Button */
+  --yellow: #1d9e9d;
+  --yellow-text: #f2f2f2;
+
+  /* Fourth Button */
+  --green: #e4eb05;
+  --green-text: #243846;
+
+  /* Progress / timer bar */
+  --progress-track-bg: rgba(51, 51, 51, 0.22);
+  --progress-fill-high: #009700;
+  --progress-fill-mid: #e4eb05;
+  --progress-fill-low: #fe0166;
+
+}
