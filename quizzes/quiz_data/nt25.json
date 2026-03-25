@@ -1,0 +1,110 @@
+{
+  "lessonId": "nt25",
+  "pageTitle": "NT 25 Quiz",
+  "lessonTitleText": "Parables about God's Kingdom",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt25image.png",
+  "themeClass": "theme-jellybean-light",
+  "questions": [
+    {
+      "text": "What kingdom did Jesus talk about when He was on earth?",
+      "answers": [
+        "The kingdom of God/heaven",
+        "The Roman Empire",
+        "The kingdom of Israel",
+        "The kingdom of Egypt"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What are the four soils in Jesus’ parable?",
+      "answers": [
+        "The path, rocky, thorny, and good soil",
+        "Dry, wet, sandy, and muddy",
+        "Hard, soft, deep, and shallow",
+        "Garden, field, hill, and valley"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What does the seed represent in the parable?",
+      "answers": [
+        "The good news of God’s kingdom",
+        "Money and treasure",
+        "Different kinds of people",
+        "God's law"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What do the different soils represent?",
+      "answers": [
+        "Different kinds of people who hear the good news",
+        "Different types of land in Israel",
+        "Different laws in the Bible",
+        "Different kinds of plants"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "In Jesus' parable, which soil produced a crop?",
+      "answers": [
+        "Only the good soil",
+        "The rocky soil",
+        "The thorny soil",
+        "The soil on the path"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What is the main lesson of the parable of the soils?",
+      "answers": [
+        "If we truly believe, our lives will show good fruit",
+        "Be careful where you plant your seeds",
+        "Seeds grow slowly",
+        "Rain helps plants grow"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What kind of 'fruit' does a believer grow?",
+      "answers": [
+        "The fruit of the Spirit (love, joy, peace, and more)",
+        "Apples and grapes",
+        "Money and success",
+        "Strength and power"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "In Jesus' parable, what did the men do when they found treasure or a valuable pearl?",
+      "answers": [
+        "They sold everything to buy it",
+        "They tried to buy it at a cheap price",
+        "They stole it",
+        "They forgot about it"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What do the treasure and pearl represent?",
+      "answers": [
+        "Being part of God’s kingdom",
+        "Riches on earth",
+        "Becoming famous",
+        "God's laws"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What is the main lesson of the treasure and pearl parables?",
+      "answers": [
+        "God’s kingdom is worth giving up everything for",
+        "We should look for treasure",
+        "Pearls are valuable",
+        "Be careful where you hide your treasure"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
