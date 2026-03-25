@@ -1,0 +1,110 @@
+{
+  "lessonId": "nt24",
+  "pageTitle": "NT 24 Quiz",
+  "lessonTitleText": "Jesus Teaches about Prayer",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt24image.png",
+  "themeClass": "theme-jellybean-dark",
+  "questions": [
+    {
+      "text": "What is prayer?",
+      "answers": [
+        "Talking with God",
+        "Reading the Bible",
+        "Talking to yourself",
+        "Going to church"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What prayer did Jesus give us as an example?",
+      "answers": [
+        "The Lord’s Prayer",
+        "The Prayer of David",
+        "The Bible Prayer",
+        "The Temple Prayer"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jesus tell us to call God when we pray?",
+      "answers": [
+        "Our Father in heaven",
+        "Our King",
+        "Our Teacher",
+        "Our Judge"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How many requests (petitions) are in the Lord’s Prayer?",
+      "answers": [
+        "Six",
+        "Three",
+        "Ten",
+        "Twelve"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What does it mean to pray, 'Hallowed be Your name?'",
+      "answers": [
+        "That God’s name would be honored",
+        "That God’s name would become hollow",
+        "That people would forget God’s name",
+        "That God would change His name"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What does it mean to pray, 'Your kingdom come?'",
+      "answers": [
+        "That people believe the good news and join God’s kingdom",
+        "That our country grows bigger",
+        "That kings rule over people",
+        "That we become kings and queens"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What does it mean to pray, 'Your will be done on earth as it is in heaven?'",
+      "answers": [
+        "That people obey God like His angels do in heaven",
+        "That people go to heaven",
+        "That a man named Will would come to save us",
+        "That angels come to earth"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What does it mean to pray for our 'daily bread?'",
+      "answers": [
+        "Asking God for what we need each day",
+        "Asking God for a sandwich",
+        "Asking for extra food",
+        "Asking God to send miracle bread from heaven"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What does God do when we confess our sins?",
+      "answers": [
+        "He forgives us",
+        "He punishes us",
+        "He says, 'I don't forgive you.'",
+        "He yells at us"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What does it mean to be tempted?",
+      "answers": [
+        "when something tests you to disobey God’s commands",
+        "When someething makes you want to obey God",
+        "When you want something someone else has",
+        "When you are hungry and angry"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

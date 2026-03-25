@@ -1,0 +1,110 @@
+{
+  "lessonId": "nt26",
+  "pageTitle": "NT 26 Quiz",
+  "lessonTitleText": "Jesus and the Children",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt26image.png",
+  "themeClass": "theme-electric-dark",
+  "questions": [
+    {
+      "text": "Why did parents bring their children to Jesus?",
+      "answers": [
+        "So He would place His hands on them and bless them",
+        "So He could teach them to read",
+        "So they could meet the disciples",
+        "Because they wanted to see a miracle"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the disciples tell the parents?",
+      "answers": [
+        "To stop bringing their children to Jesus",
+        "To bring more children",
+        "To pay them money to meet Jesus",
+        "To tell the children to be quiet"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did Jesus feel about what the disciples did?",
+      "answers": [
+        "He was angry",
+        "He was happy",
+        "He cried",
+        "He laughed"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why was Jesus upset with the disciples?",
+      "answers": [
+        "Because God’s kingdom belongs to children, too",
+        "Because they were too loud",
+        "Because they hated kids",
+        "Because they didn’t listen to Him"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jesus mean by, 'You must become like children?'",
+      "answers": [
+        "We must trust God like a child trusts their parents",
+        "We must become younger",
+        "We must throw temper tantrums like toddlers",
+        "We must play all the time"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What warning did Jesus give about leading children into sin?",
+      "answers": [
+        "It would be better to be thrown into the sea with a millstone around your neck",
+        "You will become blind",
+        "You will be sent to jail",
+        "Your kids will run away"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What does the book of Psalms say children are like?",
+      "answers": [
+        "Arrows",
+        "Swords",
+        "Stars",
+        "Animals"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "If children are like arrows, how do parents 'aim' them?",
+      "answers": [
+        "By teaching them God’s commands",
+        "By kicking the out of the house when they grow up",
+        "By letting them decide everything",
+        "By doing whatever their children want"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When should parents talk about God’s law with their children?",
+      "answers": [
+        "At home and on the road, when waking up and going to sleep",
+        "Only at church",
+        "Not until they grow up",
+        "Only when children ask"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who did Peter say God’s promises are for?",
+      "answers": [
+        "Everyone, including children",
+        "Only adults",
+        "Only leaders",
+        "Only the disciples"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
