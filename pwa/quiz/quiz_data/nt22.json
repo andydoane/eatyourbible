@@ -1,0 +1,110 @@
+{
+  "lessonId": "nt22",
+  "pageTitle": "NT 22 Quiz",
+  "lessonTitleText": "The Good Samaritan",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt22image.png",
+  "themeClass": "theme-nick-purple",
+  "questions": [
+    {
+      "text": "What is a parable?",
+      "answers": [
+        "A story that teaches a lesson",
+        "A song of worship",
+        "A couple of bells",
+        "A kind of prayer"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What two questions did the law expert ask Jesus?",
+      "answers": [
+        "How can I receive eternal life? Who is my neighbor?",
+        "What's the meaning of life? What is God's favorite color?",
+        "How can I be rich? Can you show me a miracle??",
+        "When will the kingdom come? Who is in charge?"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened to the traveler in Jesus’ parable?",
+      "answers": [
+        "He was beaten and left for dead",
+        "He got lost in the desert",
+        "He found treasure",
+        "He fell into a pit"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the priest and Levite do for the traveler?",
+      "answers": [
+        "They passed by and did not help",
+        "They carried him to safety",
+        "They gave him money",
+        "They called for help"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the Samaritan do?",
+      "answers": [
+        "He cared for the man, took him to an inn, and paid for his care",
+        "He kicked the traveler",
+        "He passed by on the other side",
+        "He took his belongings"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did Israelites usually feel about Samaritans?",
+      "answers": [
+        "They hated them and avoided them",
+        "They loved them",
+        "They worshiped them",
+        "They beat them up"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Which person in the parable truly loved his neighbor?",
+      "answers": [
+        "The Samaritan",
+        "The priest",
+        "The Levite",
+        "The traveler"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jesus say to the law expert after telling the parable?",
+      "answers": [
+        "Go and do the same as the Samaritan did",
+        "Don't beat up travelers",
+        "Avoid dangerous roads",
+        "Give me all your money"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "According to Jesus, who is our neighbor?",
+      "answers": [
+        "Everyone",
+        "Only our family",
+        "Only our friends",
+        "Only people like us"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did Jesus show his love for us?",
+      "answers": [
+        "He died for our sins to save us",
+        "He gave us money",
+        "He gave us commands",
+        "He took us to an inn"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
