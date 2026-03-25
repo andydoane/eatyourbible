@@ -3340,3 +3340,53 @@ text-wrap: balance;
   font-size: 18px;
   font-weight: 700;
 }
+
+/* =========================
+   Verse Detail Screen
+   ========================= */
+.detail-screen{
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+}
+
+.detail-shell{
+  width: min(92vw, 760px);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.detail-heading{
+  font-size: clamp(26px, 6vw, 48px);
+  font-weight: 900;
+  text-align: center;
+}
+
+.detail-section{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.detail-row{
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.14);
+}
+
+.detail-label{
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.detail-stars{
+  font-size: 20px;
+  font-weight: 900;
+}
