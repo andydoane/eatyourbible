@@ -1,0 +1,100 @@
+{
+  "lessonId": "nt21",
+  "pageTitle": "NT 21 Quiz",
+  "lessonTitleText": "The Great Commandments",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt21image.png",
+  "themeClass": "theme-neon",
+  "questions": [
+    {
+      "text": "What question did the expert in God’s law ask Jesus?",
+      "answers": [
+        "What is the most important commandment?",
+        "How can I become rich?",
+        "Are you the Messiah?",
+        "How many commands are there in the Bible?"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jesus say was the most important commandment?",
+      "answers": [
+        "Love God with all your heart, soul, mind, and strength",
+        "Love your neighbor as yourself",
+        "Rest on the Sabbath",
+        "Obey your parents"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What does the first great commandment teach us to do?",
+      "answers": [
+        "Love God with everything and more than anything",
+        "Love God as much as you love yourself",
+        "Always tell the truth",
+        "Love God with half of your heart, soul, mind, and strength"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jesus say was the second most important commandment?",
+      "answers": [
+        "Love your neighbor as yourself",
+        "Honor your parents",
+        "Do not steal",
+        "Do not murder"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What is another way to say the second great commandment?",
+      "answers": [
+        "Do to others what you would have them do to you",
+        "Take care of yourself first",
+        "Love your friends and hate your enemies",
+        "Be nice to those who are nice to you"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Jesus said all of God’s commands are based on… what?",
+      "answers": [
+        "The two great commandments",
+        "The Ten Commandments only",
+        "What human beings think are right",
+        "Our feelings"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How are God’s commands like a thermometer?",
+      "answers": [
+        "They show us that we are sick with sin",
+        "We're supposed to put them in our mouth",
+        "They can save us from sin",
+        "They keep us from getting sick"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "If God’s law isn't the cure for sin, what is?",
+      "answers": [
+        "Jesus",
+        "Believing in yourself",
+        "Loving your neighbor",
+        "Trying your best"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jesus do to cure us from our sins?",
+      "answers": [
+        "He died on the cross for our sins and rose from the dead",
+        "He gave us more rules",
+        "He built a new temple",
+        "He punched the devil in the nose"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
