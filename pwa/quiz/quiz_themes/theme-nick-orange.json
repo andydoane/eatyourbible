@@ -1,0 +1,36 @@
+:root.theme-nick-orange {
+
+  /* Intro screen */
+  --intro-bg: #f9d325;
+  --intro-text: #333333;
+
+  /* Whole page background */
+  --quiz-screen-bg: #f9d325;
+
+  /* Question Box at Top */
+  --question-bg: #333333;
+  --question-text: #f2f2f2;
+
+  /* First Button */
+  --red: #1bde01;
+  --red-text: #f2f2f2;
+
+  /* Second Button */
+  --blue: #00ccff;
+  --blue-text: #f2f2f2;
+
+  /* Third Button */
+  --yellow: #ff6800;
+  --yellow-text: #f2f2f2;
+
+  /* Fourth Button */
+  --green: #641ba8;
+  --green-text: #f2f2f2;
+
+  /* Progress / timer bar */
+  --progress-track-bg: rgba(51, 51, 51, 0.22);
+  --progress-fill-high: #641ba8;
+  --progress-fill-mid: #00ccff;
+  --progress-fill-low: #ff6800;
+
+}
