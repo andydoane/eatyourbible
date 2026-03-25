@@ -3242,3 +3242,83 @@ text-wrap: balance;
 .learn-coach-meaning-minimal .coach-actions{
   justify-content: center;
 }
+
+/* =========================
+   Progress Screen (isolated)
+   ========================= */
+.progress-screen{
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+.progress-shell{
+  width: min(92vw, 760px);
+  min-height: 70vh;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+}
+
+.progress-heading{
+  font-size: clamp(30px, 6vw, 52px);
+  font-weight: 900;
+  line-height: 1.08;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.progress-subheading{
+  font-size: clamp(16px, 2.5vw, 22px);
+  line-height: 1.35;
+  opacity: 0.95;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.progress-list{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.progress-row{
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 16px;
+  min-height: 64px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.14);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+
+.progress-row-ref{
+  font-size: clamp(18px, 2.8vw, 24px);
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.progress-row-status{
+  min-width: 28px;
+  text-align: center;
+  font-size: 28px;
+  font-weight: 900;
+}
+
+.progress-empty-card{
+  margin-top: 10px;
+  padding: 20px 18px;
+  border-radius: 18px;
+  background: rgba(255,255,255,0.14);
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+}
