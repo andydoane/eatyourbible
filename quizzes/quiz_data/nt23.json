@@ -1,0 +1,110 @@
+{
+  "lessonId": "nt23",
+  "pageTitle": "NT 23 Quiz",
+  "lessonTitleText": "Three Parables about the Lost",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt23image.png",
+  "themeClass": "theme-nick-orange",
+  "questions": [
+    {
+      "text": "What did the Pharisees and Bible teachers wonder about Jesus?",
+      "answers": [
+        "Why He spent time with sinners",
+        "Why He avoided the temple",
+        "Why He didn't wash his hands",
+        "Why He spoke in parables"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the shepherd do when one of his 100 sheep was lost?",
+      "answers": [
+        "He left the 99 to go look for it",
+        "He stayed with the 99",
+        "He bought a new sheep",
+        "He said, 'Who cares?'"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the woman lose?",
+      "answers": [
+        "One of her ten coins",
+        "Her house key",
+        "Her wedding ring",
+        "Her marbles"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did the woman find her lost coin?",
+      "answers": [
+        "She lit a lamp and swept her house",
+        "She asked her neighbors to help",
+        "She waited for it to turn up",
+        "She never found it"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the younger son ask his father for?",
+      "answers": [
+        "His inheritance before his father died",
+        "A job in the field",
+        "A camel to ride",
+        "A new robe"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened to the money the younger son received?",
+      "answers": [
+        "He wasted it all on wild living",
+        "He used it to buy a camel",
+        "He gave it to the poor",
+        "It was stolen by robbers"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did the father respond when his lost son returned?",
+      "answers": [
+        "He was overjoyed and ran to him",
+        "He refused to talk to his son",
+        "He threw him in jail",
+        "He punished him immediately"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "In these parables, who do the sheep, coin, and son represent?",
+      "answers": [
+        "Lost sinners",
+        "Lost tngels",
+        "The Pharisees",
+        "Jesus"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who do the shepherd, the woman, and the father represent?",
+      "answers": [
+        "God",
+        "The Pharisees",
+        "The disciples",
+        "Lost sinners"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why did Jesus come to earth?",
+      "answers": [
+        "To find and rescue lost sinners",
+        "To see what it was like to be a human",
+        "To tell strange stories",
+        "To defeat Rome"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
