@@ -413,7 +413,8 @@ try {
   planResolved = resolveHidePlanToTokenIndices(tokens, HIDE_PLAN);
   reshuffleHidePlan();
 
-  State.hasLearnedVerse = false;
+  const verseProgress = getVerseProgress(VERSE_ID);
+  State.hasLearnedVerse = !!verseProgress.learnCompleted;
 }
 
 async function loadVerseList(){
