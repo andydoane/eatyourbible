@@ -502,6 +502,7 @@ const Screen = {
   INTRO: "intro",
   TITLE: "title",
   PROGRESS: "progress",
+  VERSE_DETAIL: "verse_detail",
   LEARN_LEVEL: "learn_level",
   PRACTICE_GATE: "practice_gate",
   LISTEN: "listen",
@@ -548,6 +549,7 @@ const State = {
   echoIntroPromptDone: false,
   removeIntroPromptDone: false,
   finalIntroPromptDone: false,
+  selectedVerseId: null,
 
   listenDone: false,
   listenPlaying: false,
@@ -845,6 +847,7 @@ function screenToIndex(screen){
     Screen.INTRO,
     Screen.TITLE,
     Screen.PROGRESS,
+    Screen.VERSE_DETAIL,
     Screen.LEARN_LEVEL,
     Screen.PRACTICE_GATE,
     Screen.LISTEN,
@@ -1914,6 +1917,7 @@ else left = backBtn;
 // center label
 if (State.screen === Screen.TITLE) center = "HOME";
 if (State.screen === Screen.PROGRESS) center = "PROGRESS";
+if (State.screen === Screen.VERSE_DETAIL) center = "PROGRESS";
 if (State.screen === Screen.LEARN_LEVEL) center = "LEARN";
 if (State.screen === Screen.PRACTICE_GATE) center = "PRACTICE";
 if (State.screen === Screen.LISTEN) center = "LISTEN TO THE VERSE";
@@ -1925,7 +1929,7 @@ if (State.screen === Screen.FINAL_RECALL) center = "FINAL TEST";
 if (State.screen === Screen.PRACTICE) center = "PRACTICE";
 if (State.screen === Screen.GAME) center = `<button class="nav-btn no-zoom" id="btnHelp" title="Help" style="width:auto; min-width:88px; padding:0 16px; font-weight:900;">HELP</button>`;
 
-right = (State.screen === Screen.GAME || isLearnScreen || State.screen === Screen.PROGRESS) ? "" : nextBtn;
+right = (State.screen === Screen.GAME || isLearnScreen || State.screen === Screen.PROGRESS || State.screen === Screen.VERSE_DETAIL) ? "" : nextBtn;
 
   const rightControls = isLearnScreen
     ? `${right || ""}`
@@ -1950,6 +1954,7 @@ right = (State.screen === Screen.GAME || isLearnScreen || State.screen === Scree
     btnBack.onclick = () => {
         if (State.screen === Screen.LEARN_LEVEL) go(Screen.TITLE);
         else if (State.screen === Screen.PROGRESS) go(Screen.TITLE);
+        else if (State.screen === Screen.VERSE_DETAIL) go(Screen.PROGRESS);
         else if (State.screen === Screen.PRACTICE_GATE) go(Screen.TITLE);
         else if (State.screen === Screen.LISTEN) go(Screen.LEARN_LEVEL);
         else if (State.screen === Screen.MEANING) go(Screen.LISTEN);
@@ -2334,7 +2339,7 @@ function screenProgress(idx){
     const learnBadge = verseProgress.learnCompleted ? "✔" : "";
 
     return `
-      <div class="progress-row">
+      <div class="progress-row" data-verse-id="${item.id}">
         <div class="progress-row-ref">${item.ref}</div>
         <div class="progress-row-stars">${starsDisplay}</div>
         <div class="progress-row-status">${learnBadge}</div>
@@ -2349,6 +2354,63 @@ function screenProgress(idx){
 
       <div class="progress-list">
         ${rowsHtml}
+      </div>
+    </div>
+  `;
+
+  // Add click handlers to rows
+  wrap.querySelectorAll(".progress-row").forEach(row => {
+    row.onclick = () => {
+      const verseId = row.getAttribute("data-verse-id");
+      State.selectedVerseId = verseId;
+      go(Screen.VERSE_DETAIL);
+    };
+  });
+
+  return makeSlide({ idx, bg: "var(--purple)", inner: wrap });
+}
+
+function screenVerseDetail(idx){
+  const verseId = State.selectedVerseId;
+  const verseItem = VERSE_LIST.find(v => v.id === verseId);
+
+  const verseProgress = getVerseProgress(verseId);
+
+  const learnStatus = verseProgress.learnCompleted ? "✔" : "";
+
+  function gameRow(label, gameId){
+    const stars = getGameStars(gameId, verseProgress.games[gameId]);
+    const starsDisplay = starsToString(stars);
+
+    return `
+      <div class="detail-row">
+        <div class="detail-label">${label}</div>
+        <div class="detail-stars">${starsDisplay}</div>
+      </div>
+    `;
+  }
+
+  const wrap = document.createElement("div");
+  wrap.className = "detail-screen";
+
+  wrap.innerHTML = `
+    <div class="detail-shell">
+      <div class="detail-heading">${verseItem ? verseItem.ref : ""}</div>
+
+      <div class="detail-section">
+        <div class="detail-row">
+          <div class="detail-label">Learn the Verse</div>
+          <div class="detail-stars">${learnStatus}</div>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        ${gameRow("Verse Scramble", "scramble")}
+        ${gameRow("Verse Launch", "chain")}
+        ${gameRow("Traffic Tap", "traffic")}
+        ${gameRow("Bouncing Words", "bouncing")}
+        ${gameRow("Food Slice", "foodslice")}
+        ${gameRow("Tower of Bible", "tower")}
       </div>
     </div>
   `;
@@ -3033,11 +3095,12 @@ function render(){
 
   const uniq = Array.from(new Set(indicesToRender.filter(i => i !== null && i >= 0)));
   for (const idx of uniq){
-    const screen = ["intro","title","progress","learn_level","practice_gate","listen","meaning","chunks","echo","hide","final_recall","celebration","practice","game"][idx];
+    const screen = ["intro","title","progress","verse detail","learn_level","practice_gate","listen","meaning","chunks","echo","hide","final_recall","celebration","practice","game"][idx];
     let slide = null;
     if (screen === Screen.INTRO) slide = screenIntro(idx);
     if (screen === Screen.TITLE) slide = screenTitle(idx);
     if (screen === Screen.PROGRESS) slide = screenProgress(idx);
+    if (screen === Screen.VERSE_DETAIL) slide = screenVerseDetail(idx);
     if (screen === Screen.LEARN_LEVEL) slide = screenLearnLevel(idx);
     if (screen === Screen.PRACTICE_GATE) slide = screenPracticeGate(idx);
     if (screen === Screen.LISTEN) slide = screenListen(idx);
