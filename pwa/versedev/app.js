@@ -290,6 +290,65 @@ function markLearnCompleted(verseId){
   });
 }
 
+/* =========================
+   Progress Star Helpers
+   ========================= */
+
+// All tracked games (internal IDs)
+const GAME_IDS = [
+  "scramble",
+  "chain",     // Verse Launch
+  "traffic",
+  "bouncing",
+  "foodslice",
+  "tower"
+];
+
+// Count stars for a single game
+function getGameStars(gameId, gameProgress){
+  if (!gameProgress) return 0;
+
+  // Special case: Traffic Tap uses themes
+  if (gameId === "traffic"){
+    let stars = 0;
+    if (gameProgress.roadCompleted) stars++;
+    if (gameProgress.trailCompleted) stars++;
+    if (gameProgress.riverCompleted) stars++;
+    return stars;
+  }
+
+  // Standard games use difficulty levels
+  let stars = 0;
+  if (gameProgress.easyCompleted) stars++;
+  if (gameProgress.mediumCompleted) stars++;
+  if (gameProgress.hardCompleted) stars++;
+  return stars;
+}
+
+// Calculate overall verse stars (0–3)
+function getVerseStars(verseProgress){
+  if (!verseProgress || !verseProgress.games) return 0;
+
+  let totalStars = 0;
+  let maxStars = GAME_IDS.length * 3;
+
+  for (const gameId of GAME_IDS){
+    const gameProgress = verseProgress.games[gameId];
+    totalStars += getGameStars(gameId, gameProgress);
+  }
+
+  const avg = totalStars / maxStars; // 0 → 1
+  return Math.round(avg * 3);        // scale to 0 → 3
+}
+
+// Convert number → display string
+function starsToString(stars){
+  if (stars === 3) return "⭐⭐⭐";
+  if (stars === 2) return "⭐⭐☆";
+  if (stars === 1) return "⭐☆☆";
+  return "☆☆☆";
+}
+
 // tokenization (copied conceptually from old engine)
 const TokenType = { SPACE:"space", WORD:"word", PUNCT:"punct", OTHER:"other" };
 function tokenize(text){
@@ -2270,11 +2329,14 @@ function screenProgress(idx){
 
   const rowsHtml = VERSE_LIST.map(item => {
     const verseProgress = getVerseProgress(item.id);
+    const stars = getVerseStars(verseProgress);
+    const starsDisplay = starsToString(stars);
     const learnBadge = verseProgress.learnCompleted ? "✔" : "";
 
     return `
-      <div class="progress-row" data-verse-id="${item.id}">
+      <div class="progress-row">
         <div class="progress-row-ref">${item.ref}</div>
+        <div class="progress-row-stars">${starsDisplay}</div>
         <div class="progress-row-status">${learnBadge}</div>
       </div>
     `;
