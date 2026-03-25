@@ -218,6 +218,78 @@ let AUDIO_FILE = "";
 let VERSE_LIST = [];
 let HAS_VERSE_SELECTION = false;
 
+/* =========================
+   Progress Storage
+   ========================= */
+const PROGRESS_STORAGE_KEY = "verseMemoryProgress";
+const PROGRESS_VERSION = 1;
+
+function createEmptyProgress(){
+  return {
+    version: PROGRESS_VERSION,
+    verses: {}
+  };
+}
+
+function loadProgress(){
+  try {
+    const raw = localStorage.getItem(PROGRESS_STORAGE_KEY);
+    if (!raw) return createEmptyProgress();
+
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return createEmptyProgress();
+    if (!parsed.verses || typeof parsed.verses !== "object") parsed.verses = {};
+    if (!parsed.version) parsed.version = PROGRESS_VERSION;
+
+    return parsed;
+  } catch (err) {
+    console.warn("Could not load progress from localStorage", err);
+    return createEmptyProgress();
+  }
+}
+
+function saveProgress(progress){
+  try {
+    localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(progress));
+  } catch (err) {
+    console.warn("Could not save progress to localStorage", err);
+  }
+}
+
+function getVerseProgress(verseId){
+  const progress = loadProgress();
+  const verseProgress = progress.verses[verseId];
+
+  if (verseProgress) return verseProgress;
+
+  return {
+    learnCompleted: false,
+    games: {}
+  };
+}
+
+function updateVerseProgress(verseId, updater){
+  if (!verseId) return;
+
+  const progress = loadProgress();
+
+  if (!progress.verses[verseId]) {
+    progress.verses[verseId] = {
+      learnCompleted: false,
+      games: {}
+    };
+  }
+
+  updater(progress.verses[verseId]);
+  saveProgress(progress);
+}
+
+function markLearnCompleted(verseId){
+  updateVerseProgress(verseId, (verseProgress) => {
+    verseProgress.learnCompleted = true;
+  });
+}
+
 // tokenization (copied conceptually from old engine)
 const TokenType = { SPACE:"space", WORD:"word", PUNCT:"punct", OTHER:"other" };
 function tokenize(text){
@@ -369,6 +441,7 @@ async function loadVerseList(){
 const Screen = {
   INTRO: "intro",
   TITLE: "title",
+  PROGRESS: "progress",
   LEARN_LEVEL: "learn_level",
   PRACTICE_GATE: "practice_gate",
   LISTEN: "listen",
@@ -461,6 +534,7 @@ const TITLE_OPTIONS = [
       else go(Screen.PRACTICE_GATE);
     }
   },
+  { id: "progress", label: "Progress", action: () => go(Screen.PROGRESS) },
 ];
 
 const LEARN_LEVEL_OPTIONS = [
@@ -710,6 +784,7 @@ function screenToIndex(screen){
   const order = [
     Screen.INTRO,
     Screen.TITLE,
+    Screen.PROGRESS,
     Screen.LEARN_LEVEL,
     Screen.PRACTICE_GATE,
     Screen.LISTEN,
@@ -1713,6 +1788,7 @@ function startFireworks(canvas){
   requestAnimationFrame(tick);
 }
 
+
 /* Nav rendering */
 function renderNav(){
   // Always show nav except intro/title? Your other apps hide nav on intro.
@@ -1772,6 +1848,7 @@ else left = backBtn;
 
 // center label
 if (State.screen === Screen.TITLE) center = "HOME";
+if (State.screen === Screen.PROGRESS) center = "PROGRESS";
 if (State.screen === Screen.LEARN_LEVEL) center = "LEARN";
 if (State.screen === Screen.PRACTICE_GATE) center = "PRACTICE";
 if (State.screen === Screen.LISTEN) center = "LISTEN TO THE VERSE";
@@ -1783,7 +1860,7 @@ if (State.screen === Screen.FINAL_RECALL) center = "FINAL TEST";
 if (State.screen === Screen.PRACTICE) center = "PRACTICE";
 if (State.screen === Screen.GAME) center = `<button class="nav-btn no-zoom" id="btnHelp" title="Help" style="width:auto; min-width:88px; padding:0 16px; font-weight:900;">HELP</button>`;
 
-right = (State.screen === Screen.GAME || isLearnScreen) ? "" : nextBtn;
+right = (State.screen === Screen.GAME || isLearnScreen || State.screen === Screen.PROGRESS) ? "" : nextBtn;
 
   const rightControls = isLearnScreen
     ? `${right || ""}`
@@ -1807,6 +1884,7 @@ right = (State.screen === Screen.GAME || isLearnScreen) ? "" : nextBtn;
   if (btnBack){
     btnBack.onclick = () => {
         if (State.screen === Screen.LEARN_LEVEL) go(Screen.TITLE);
+        else if (State.screen === Screen.PROGRESS) go(Screen.TITLE);
         else if (State.screen === Screen.PRACTICE_GATE) go(Screen.TITLE);
         else if (State.screen === Screen.LISTEN) go(Screen.LEARN_LEVEL);
         else if (State.screen === Screen.MEANING) go(Screen.LISTEN);
@@ -2163,6 +2241,51 @@ function screenTitle(idx){
   ).join("");
 
   return makeSlide({idx, bg:"var(--purple)", navHidden:true, inner: wrap});
+}
+
+function screenProgress(idx){
+  const wrap = document.createElement("div");
+  wrap.className = "progress-screen";
+
+  const hasVerses = Array.isArray(VERSE_LIST) && VERSE_LIST.length > 0;
+
+  if (!hasVerses){
+    wrap.innerHTML = `
+      <div class="progress-shell">
+        <div class="progress-heading">Look what you've accomplished ✨</div>
+        <div class="progress-subheading">Your verse progress will show up here.</div>
+        <div class="progress-empty-card">
+          No verses found yet.
+        </div>
+      </div>
+    `;
+    return makeSlide({ idx, bg: "var(--purple)", inner: wrap });
+  }
+
+  const rowsHtml = VERSE_LIST.map(item => {
+    const verseProgress = getVerseProgress(item.id);
+    const learnBadge = verseProgress.learnCompleted ? "✔" : "";
+
+    return `
+      <div class="progress-row" data-verse-id="${item.id}">
+        <div class="progress-row-ref">${item.ref}</div>
+        <div class="progress-row-status">${learnBadge}</div>
+      </div>
+    `;
+  }).join("");
+
+  wrap.innerHTML = `
+    <div class="progress-shell">
+      <div class="progress-heading">Look what you've accomplished ✨</div>
+      <div class="progress-subheading">Each verse you learn will show up here.</div>
+
+      <div class="progress-list">
+        ${rowsHtml}
+      </div>
+    </div>
+  `;
+
+  return makeSlide({ idx, bg: "var(--purple)", inner: wrap });
 }
 
 function screenLearnLevel(idx){
@@ -2612,6 +2735,10 @@ if (btnFinalGames){
 }
 
 function screenCelebration(idx){
+
+  if (VERSE_ID){
+  markLearnCompleted(VERSE_ID);
+  }
   const wrap = document.createElement("div");
   wrap.className = "celebration-screen";
 
@@ -2841,10 +2968,11 @@ function render(){
 
   const uniq = Array.from(new Set(indicesToRender.filter(i => i !== null && i >= 0)));
   for (const idx of uniq){
-    const screen = ["intro","title","learn_level","practice_gate","listen","meaning","chunks","echo","hide","final_recall","celebration","practice","game"][idx];
+    const screen = ["intro","title","progress","learn_level","practice_gate","listen","meaning","chunks","echo","hide","final_recall","celebration","practice","game"][idx];
     let slide = null;
     if (screen === Screen.INTRO) slide = screenIntro(idx);
     if (screen === Screen.TITLE) slide = screenTitle(idx);
+    if (screen === Screen.PROGRESS) slide = screenProgress(idx);
     if (screen === Screen.LEARN_LEVEL) slide = screenLearnLevel(idx);
     if (screen === Screen.PRACTICE_GATE) slide = screenPracticeGate(idx);
     if (screen === Screen.LISTEN) slide = screenListen(idx);
