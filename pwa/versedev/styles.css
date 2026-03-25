@@ -3300,7 +3300,7 @@ text-wrap: balance;
 
 .progress-row{
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr auto auto;
   align-items: center;
   gap: 16px;
   min-height: 60px;
@@ -3314,6 +3314,14 @@ text-wrap: balance;
   font-size: clamp(16px, 2.8vw, 24px);
   font-weight: 800;
   line-height: 1.2;
+}
+
+.progress-row-stars{
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  text-align: center;
+  min-width: 80px;
 }
 
 .progress-row-status{
