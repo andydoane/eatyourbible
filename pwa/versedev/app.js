@@ -1486,6 +1486,11 @@ async function startFinalRecallFlow(){
   State.finalRecallDurationMs = 0;
   State.finalRecallDone = true;
   State.hasLearnedVerse = true;
+
+  if (VERSE_ID){
+    markLearnCompleted(VERSE_ID);
+  }
+
   render();
 }
 
@@ -2736,9 +2741,6 @@ if (btnFinalGames){
 
 function screenCelebration(idx){
 
-  if (VERSE_ID){
-  markLearnCompleted(VERSE_ID);
-  }
   const wrap = document.createElement("div");
   wrap.className = "celebration-screen";
 
