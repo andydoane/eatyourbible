@@ -2188,16 +2188,20 @@ function bouncingChoose(choice, btnEl, fieldEl){
       return;
     }
 
-    if (st.phase === "ref"){
-      st.phase = "done";
-      st.done = true;
-      st.showRef = true;
-      st.endedAt = performance.now();
-      st.choices = [];
-      st.positions = [];
-      st.locked = false;
-      render();
-    }
+if (st.phase === "ref"){
+  st.phase = "done";
+  st.done = true;
+  st.showRef = true;
+  st.endedAt = performance.now();
+  st.choices = [];
+  st.positions = [];
+
+  if (VERSE_ID && st.mode){
+    markStandardGameCompleted(VERSE_ID, "bouncing", st.mode);
+  }
+
+  render();
+}
   });
   
 }
