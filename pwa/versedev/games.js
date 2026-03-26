@@ -5422,6 +5422,10 @@ if (!st.done && st.resultConfettiStop){
     coachActions.innerHTML = "";
 
 if (st.done){
+    if (VERSE_ID && st.mode){
+      markStandardGameCompleted(VERSE_ID, "scramble", st.mode);
+    } 
+  
   stage.innerHTML = "";
 
   const doneWrap = document.createElement("div");
