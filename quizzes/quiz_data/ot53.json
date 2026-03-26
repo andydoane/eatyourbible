@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot53",
+  "pageTitle": "OT 53 Quiz",
+  "lessonTitleText": "David Is Anointed King",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot53image.png",
+  "themeClass": "theme-kahoot-green",
+  "questions": [
+    {
+      "text": "What was God’s command to Saul about the Amalekites?",
+      "answers": [
+        "Destroy them completely",
+        "Make peace with them",
+        "Take their land only",
+        "Make them serve you"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did Saul disobey God’s command?",
+      "answers": [
+        "He spared the king and kept the best animals",
+        "He refused to fight",
+        "He ran away from battle",
+        "He teamed up with the Amalekites"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Samuel say is more important than sacrifices?",
+      "answers": [
+        "Obeying God",
+        "Giving money",
+        "Praying loudly",
+        "Reading the Bible"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What was Saul’s consequence for disobeying God?",
+      "answers": [
+        "His kingdom would be taken away",
+        "He would lose a battle",
+        "He would become sick",
+        "He would go to jail"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Saul do as Samuel tried to leave?",
+      "answers": [
+        "He grabbed Samuel’s robe and tore it",
+        "He tried to fight Samuel",
+        "He sent his soldiers to capture Samuel",
+        "He asked God to forgive me"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why did God send Samuel to Jesse’s house?",
+      "answers": [
+        "To anoint a new king",
+        "To buy sheep",
+        "To collect money for the Tabernacle",
+        "To visit family"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did God tell Samuel about Jesse’s sons?",
+      "answers": [
+        "Do not look at outside – God looks at the heart",
+        "Choose the tallest one",
+        "Pick the oldest son",
+        "Choose the strongest warrior"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did God say about Jesse’s first seven sons?",
+      "answers": [
+        "I have not chosen him",
+        "Each one will be king",
+        "They are all chosen",
+        "They aren't very good looking"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Where was Jesse’s youngest son?",
+      "answers": [
+        "Out taking care of the sheep",
+        "At the temple",
+        "Asleep in bed",
+        "Up in a tree"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What was the name of the son Samuel anointed as king?",
+      "answers": [
+        "David",
+        "Saul",
+        "Samuel",
+        "Jonathan"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
