@@ -316,6 +316,32 @@ function markStandardGameCompleted(verseId, gameId, mode){
   });
 }
 
+function markTrafficCompleted(verseId, theme){
+  if (!verseId || !theme) return;
+
+  updateVerseProgress(verseId, (verseProgress) => {
+    if (!verseProgress.games.traffic) {
+      verseProgress.games.traffic = {
+        roadCompleted: false,
+        trailCompleted: false,
+        riverCompleted: false
+      };
+    }
+
+    if (theme === "road") {
+      verseProgress.games.traffic.roadCompleted = true;
+    }
+
+    if (theme === "trail") {
+      verseProgress.games.traffic.trailCompleted = true;
+    }
+
+    if (theme === "river") {
+      verseProgress.games.traffic.riverCompleted = true;
+    }
+  });
+}
+
 /* =========================
    Progress Star Helpers
    ========================= */
