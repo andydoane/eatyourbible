@@ -290,6 +290,32 @@ function markLearnCompleted(verseId){
   });
 }
 
+function markStandardGameCompleted(verseId, gameId, mode){
+  if (!verseId || !gameId || !mode) return;
+
+  updateVerseProgress(verseId, (verseProgress) => {
+    if (!verseProgress.games[gameId]) {
+      verseProgress.games[gameId] = {
+        easyCompleted: false,
+        mediumCompleted: false,
+        hardCompleted: false
+      };
+    }
+
+    if (mode === "easy") {
+      verseProgress.games[gameId].easyCompleted = true;
+    }
+
+    if (mode === "medium") {
+      verseProgress.games[gameId].mediumCompleted = true;
+    }
+
+    if (mode === "hard") {
+      verseProgress.games[gameId].hardCompleted = true;
+    }
+  });
+}
+
 /* =========================
    Progress Star Helpers
    ========================= */
