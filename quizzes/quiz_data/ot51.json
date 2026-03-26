@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot51",
+  "pageTitle": "OT 51 Quiz",
+  "lessonTitleText": "Saul Becomes King",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot51image.png",
+  "themeClass": "theme-nick-purple",
+  "questions": [
+    {
+      "text": "What did the Israelites ask for?",
+      "answers": [
+        "A king like the other nations had",
+        "A queen",
+        "A miracle",
+        "A new prophet"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who was supposed to be Israel’s king?",
+      "answers": [
+        "God",
+        "Samuel",
+        "Moses",
+        "David"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "After Samuel prayed, what did God say?",
+      "answers": [
+        "They have rejected Me; let them have a king",
+        "Let me think about it",
+        "I'll never let you have a king",
+        "Samuel, you will be their king"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Samuel warn a king would do?",
+      "answers": [
+        "Take their riches, men his soldiers and women his servants",
+        "Star wars all the time",
+        "Make things a lot better",
+        "Lead them back to Egypt"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did Saul end up at Samuel’s house?",
+      "answers": [
+        "He was looking for his father’s lost donkeys",
+        "He was invited to a feast",
+        "He came to rob Samuel's house",
+        "He was looking for his mom's lost monkeys"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did Samuel know Saul was chosen by God?",
+      "answers": [
+        "God told him when he saw Saul",
+        "A light shown from heaven",
+        "The people all voted for Saul",
+        "He had a special dream from God"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What does it mean that Samuel anointed Saul?",
+      "answers": [
+        "He poured oil over his head to show he was chosen as king",
+        "He gave him a crown to wear",
+        "He gave him a special sword",
+        "He bowed down before him three times"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did God do to show Saul that God was with him?",
+      "answers": [
+        "Samuel described four things, and they all happened",
+        "He sent fire from heaven",
+        "He gave Saul super strength",
+        "He sent an angel with a message"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who came to Saul and gave him power?",
+      "answers": [
+        "God’s Spirit",
+        "An angel",
+        "A demon",
+        "One of the lost donkeys"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why couldn’t the people find Saul when he was chosen king?",
+      "answers": [
+        "He was hiding among the supplies",
+        "He ran away",
+        "He was lost",
+        "He was still looking for his lost donkeys"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
