@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot52",
+  "pageTitle": "OT 52 Quiz",
+  "lessonTitleText": "Saul Disobeys God",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot52image.png",
+  "themeClass": "theme-nick-orange",
+  "questions": [
+    {
+      "text": "What did King Nahash threaten to do to the people of Jabesh-Gilead?",
+      "answers": [
+        "Poke out their right eyes",
+        "Burn their city",
+        "Take all their money",
+        "Cut off their right eyes"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How was Saul able to defeat King Nahash’s army?",
+      "answers": [
+        "God’s Spirit gave him power",
+        "He had more soldiers",
+        "He used better weapons",
+        "He made a secret plan"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "During his last speech, what did Samuel talk about?",
+      "answers": [
+        "How God had rescued his people many times",
+        "How great it was that they asked for a king",
+        "How mad he was at them",
+        "How God was going to punish them"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Samuel warn the people and their king not to do?",
+      "answers": [
+        "Disobey God’s laws",
+        "Build a statue of the Lord God",
+        "Fight their enemies",
+        "Choose another king"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What miracle did God do to make the people listen to Samuel?",
+      "answers": [
+        "He sent a thunderstorm",
+        "He stopped the sun",
+        "He sent fire from heaven",
+        "He sent an earthquake"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Saul’s soldiers do when they saw the Philistine army?",
+      "answers": [
+        "They hid and ran away",
+        "They fought bravely",
+        "They surrended immediately",
+        "They asked for help"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Saul want Samuel to do before the battle?",
+      "answers": [
+        "Offer a sacrifice to ask for God’s blessing",
+        "Gather more soldiers",
+        "Speak to the enemy",
+        "Do a miracle to defeat the Philistines"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How long did Samuel tell Saul to wait for him to arrive?",
+      "answers": [
+        "Seven days",
+        "Three days",
+        "Ten days",
+        "Twelve days"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Saul do when Samuel was late?",
+      "answers": [
+        "He offered the sacrifice himself",
+        "He waited patiently",
+        "He started the battle",
+        "He prayed silently"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What consequence did Saul receive for disobeying God?",
+      "answers": [
+        "He would lose his kingdom; God would chose another king",
+        "He lost the battle to the Philistines",
+        "He became blind",
+        "God sent fire from heaven"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
