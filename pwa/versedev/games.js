@@ -5177,6 +5177,11 @@ function towerChoose(choice){
       live.done = true;
       live.choices = [];
       live.isAnimating = false;
+
+      if (VERSE_ID && live.mode){
+        markStandardGameCompleted(VERSE_ID, "tower", live.mode);
+      }
+
       render();
     }
   });
