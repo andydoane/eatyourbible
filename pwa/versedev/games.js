@@ -3388,6 +3388,11 @@ function foodSliceStep(fieldEl){
       st.bonusRound = false;
       st.running = false;
       st.done = true;
+
+      if (VERSE_ID && st.mode){
+        markStandardGameCompleted(VERSE_ID, "foodslice", st.mode);
+      }
+
       foodSliceStopMotion();
       render();
       return;
