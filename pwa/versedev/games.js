@@ -4697,6 +4697,9 @@ registerGame({
       coachActions.innerHTML = "";
 
     if (st.done){
+      if (VERSE_ID && st.mode){
+        markStandardGameCompleted(VERSE_ID, "chain", st.mode);
+      }
       const doneWrap = document.createElement("div");
       doneWrap.className = "chain-done";
 
