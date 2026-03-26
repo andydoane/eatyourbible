@@ -4637,6 +4637,11 @@ if (st.phase === "book"){
         live.showRef = true;
         live.choices = [];
         live.animating = false;
+
+        if (VERSE_ID && live.mode){
+          markStandardGameCompleted(VERSE_ID, "chain", live.mode);
+        }
+
         render();
       });
 
@@ -4697,9 +4702,7 @@ registerGame({
       coachActions.innerHTML = "";
 
     if (st.done){
-      if (VERSE_ID && st.mode){
-        markStandardGameCompleted(VERSE_ID, "chain", st.mode);
-      }
+
       const doneWrap = document.createElement("div");
       doneWrap.className = "chain-done";
 
