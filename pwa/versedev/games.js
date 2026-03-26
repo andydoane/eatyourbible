@@ -587,6 +587,11 @@ function trafficChoose(itemId, tappedEl){
     st.showRef = true;
     st.endedAt = performance.now();
     st.items = [];
+
+    if (VERSE_ID && st.theme){
+      markTrafficCompleted(VERSE_ID, st.theme);
+    }
+
     render();
   }
 }
