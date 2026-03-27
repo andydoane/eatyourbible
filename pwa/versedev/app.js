@@ -484,6 +484,88 @@ function getVerseDetailProgressDisplay(gameId, gameProgress){
   return getStandardGameMedals(gameProgress);
 }
 
+function getStandardModeMedal(mode){
+  if (mode === "easy") return "🥉";
+  if (mode === "medium") return "🥈";
+  if (mode === "hard") return "🥇";
+  return "🏅";
+}
+
+function getStandardModeLabel(mode){
+  if (mode === "easy") return "Easy";
+  if (mode === "medium") return "Medium";
+  if (mode === "hard") return "Hard";
+  return "Game";
+}
+
+function wasStandardModeAlreadyCompleted(verseId, gameId, mode){
+  if (!verseId || !gameId || !mode) return false;
+
+  const verseProgress = getVerseProgress(verseId);
+  const gameProgress = verseProgress.games?.[gameId];
+
+  if (!gameProgress) return false;
+
+  if (mode === "easy") return !!gameProgress.easyCompleted;
+  if (mode === "medium") return !!gameProgress.mediumCompleted;
+  if (mode === "hard") return !!gameProgress.hardCompleted;
+
+  return false;
+}
+
+function getStandardGameRewardTitle(verseId, gameId, mode){
+  const medal = getStandardModeMedal(mode);
+  const label = getStandardModeLabel(mode);
+  const alreadyEarned = wasStandardModeAlreadyCompleted(verseId, gameId, mode);
+
+  if (alreadyEarned){
+    return `You finished ${label} again!`;
+  }
+
+  return `You earned a ${medal}!`;
+}
+
+function getTrafficThemeLabel(theme){
+  if (theme === "road") return "Road";
+  if (theme === "trail") return "Trail";
+  if (theme === "river") return "River";
+  return "Theme";
+}
+
+function getTrafficThemeEmoji(theme){
+  if (theme === "road") return "🚗";
+  if (theme === "trail") return "🐾";
+  if (theme === "river") return "🌊";
+  return "🏁";
+}
+
+function wasTrafficThemeAlreadyCompleted(verseId, theme){
+  if (!verseId || !theme) return false;
+
+  const verseProgress = getVerseProgress(verseId);
+  const trafficProgress = verseProgress.games?.traffic;
+
+  if (!trafficProgress) return false;
+
+  if (theme === "road") return !!trafficProgress.roadCompleted;
+  if (theme === "trail") return !!trafficProgress.trailCompleted;
+  if (theme === "river") return !!trafficProgress.riverCompleted;
+
+  return false;
+}
+
+function getTrafficRewardTitle(verseId, theme){
+  const emoji = getTrafficThemeEmoji(theme);
+  const label = getTrafficThemeLabel(theme);
+  const alreadyEarned = wasTrafficThemeAlreadyCompleted(verseId, theme);
+
+  if (alreadyEarned){
+    return `You finished ${label} again!`;
+  }
+
+  return `You unlocked ${emoji} ${label}!`;
+}
+
 /* =========================
    BibloPet Helpers
    ========================= */
