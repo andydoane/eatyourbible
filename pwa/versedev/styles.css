@@ -3670,3 +3670,32 @@ text-wrap: balance;
   text-wrap: balance;
   opacity: 0.96;
 }
+
+/* =========================
+   Final Recall layout fix
+   ========================= */
+
+.final-recall-layout .learn-verse.verse-fit-short > *,
+.final-recall-layout .learn-verse.verse-fit-medium > *,
+.final-recall-layout .learn-verse.verse-fit-long > *{
+  width: min(100%, 1000px);
+  max-width: none;
+}
+
+.final-recall-layout .learn-verse #finalRecallStage{
+  width: 100%;
+  max-width: none;
+}
+
+.final-recall-layout .learn-verse #finalRecallStage .verse{
+  width: min(100%, 1000px);
+  max-width: none;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.final-recall-layout .learn-verse.verse-fit-short #finalRecallStage .verse,
+.final-recall-layout .learn-verse.verse-fit-medium #finalRecallStage .verse,
+.final-recall-layout .learn-verse.verse-fit-long #finalRecallStage .verse{
+  width: min(100%, 1000px);
+}
