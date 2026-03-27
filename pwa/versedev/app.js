@@ -316,32 +316,6 @@ function markStandardGameCompleted(verseId, gameId, mode){
   });
 }
 
-function markTrafficCompleted(verseId, theme){
-  if (!verseId || !theme) return;
-
-  updateVerseProgress(verseId, (verseProgress) => {
-    if (!verseProgress.games.traffic) {
-      verseProgress.games.traffic = {
-        roadCompleted: false,
-        trailCompleted: false,
-        riverCompleted: false
-      };
-    }
-
-    if (theme === "road") {
-      verseProgress.games.traffic.roadCompleted = true;
-    }
-
-    if (theme === "trail") {
-      verseProgress.games.traffic.trailCompleted = true;
-    }
-
-    if (theme === "river") {
-      verseProgress.games.traffic.riverCompleted = true;
-    }
-  });
-}
-
 /* =========================
    Progress Star Helpers
    ========================= */
@@ -399,6 +373,58 @@ function starsToString(stars){
   if (stars === 2) return "⭐⭐☆";
   if (stars === 1) return "⭐☆☆";
   return "☆☆☆";
+}
+
+/* =========================
+   BibloPet Helpers
+   ========================= */
+
+function isBibloPetUnlocked(verseProgress){
+  if (!verseProgress) return false;
+  return !!verseProgress.learnCompleted && getVerseStars(verseProgress) > 0;
+}
+
+function getVerseListItemById(verseId){
+  return VERSE_LIST.find(item => item.id === verseId) || null;
+}
+
+function getBibloPetEmojiForListItem(item){
+  return item?.biblopet || "🐾";
+}
+
+function getBibloPetEmojiForCurrentVerse(){
+  return cfg?.biblopet || "🐾";
+}
+
+function getBibloPetStatusEmoji(verseProgress){
+  if (!isBibloPetUnlocked(verseProgress)) return "";
+  return "😀";
+}
+
+function getBibloPetStatusText(verseProgress){
+  if (!isBibloPetUnlocked(verseProgress)){
+    return "Practice more to unlock your BibloPet.";
+  }
+
+  return "Your BibloPet is happy. Practice this verse again to keep it happy!";
+}
+
+async function playVerseDetailListen(){
+  try {
+    setAudioSrc(refAudioFile());
+    audioEl.currentTime = 0;
+    await safePlay();
+    await waitForAudioEnd();
+
+    setAudioSrc(AUDIO_FILE);
+    audioEl.currentTime = 0;
+    await safePlay();
+    await waitForAudioEnd();
+
+    setAudioSrc(AUDIO_FILE);
+  } catch (err) {
+    console.warn("Verse detail listen failed", err);
+  }
 }
 
 // tokenization (copied conceptually from old engine)
@@ -2374,8 +2400,8 @@ function screenProgress(idx){
   if (!hasVerses){
     wrap.innerHTML = `
       <div class="progress-shell">
-        <div class="progress-heading">Look what you've accomplished ✨</div>
-        <div class="progress-subheading">Your verse progress will show up here.</div>
+        <div class="progress-heading">BibloPet Zoo</div>
+        <div class="progress-subheading">Practice each verse to unlock its BibloPet.</div>
         <div class="progress-empty-card">
           No verses found yet.
         </div>
@@ -2386,23 +2412,31 @@ function screenProgress(idx){
 
   const rowsHtml = VERSE_LIST.map(item => {
     const verseProgress = getVerseProgress(item.id);
-    const stars = getVerseStars(verseProgress);
-    const starsDisplay = starsToString(stars);
-    const learnBadge = verseProgress.learnCompleted ? "✔" : "";
+    const unlocked = isBibloPetUnlocked(verseProgress);
+    const petEmoji = unlocked ? getBibloPetEmojiForListItem(item) : "🔒";
+    const statusEmoji = unlocked ? getBibloPetStatusEmoji(verseProgress) : "";
 
     return `
       <div class="progress-row" data-verse-id="${item.id}">
-        <div class="progress-row-ref">${item.ref}</div>
-        <div class="progress-row-stars">${starsDisplay}</div>
-        <div class="progress-row-status">${learnBadge}</div>
+        <div class="progress-row-pet">${petEmoji}</div>
+        <div class="progress-row-main">
+          <div class="progress-row-ref">${item.ref}</div>
+        </div>
+        <div class="progress-row-status">${statusEmoji}</div>
       </div>
     `;
   }).join("");
 
   wrap.innerHTML = `
     <div class="progress-shell">
-      <div class="progress-heading">Look what you've accomplished ✨</div>
-      <div class="progress-subheading">Each verse you learn will show up here.</div>
+      <div class="progress-heading">BibloPet Zoo</div>
+      <div class="progress-subheading">Practice each verse to unlock its BibloPet.</div>
+
+      <div class="progress-toolbar">
+        <button class="progress-stats-btn no-zoom" id="btnBibloPetStats" type="button">
+          BibloPet Stats
+        </button>
+      </div>
 
       <div class="progress-list">
         ${rowsHtml}
@@ -2410,7 +2444,17 @@ function screenProgress(idx){
     </div>
   `;
 
-  // Add click handlers to rows
+  const btnStats = wrap.querySelector("#btnBibloPetStats");
+  if (btnStats){
+    btnStats.onclick = () => {
+      showDialog({
+        title: "BibloPet Stats",
+        body: "Stats page coming soon 🙂",
+        actions: [dlgBtn("OK", { onClick: closeDialog })]
+      });
+    };
+  }
+
   wrap.querySelectorAll(".progress-row").forEach(row => {
     row.onclick = () => {
       const verseId = row.getAttribute("data-verse-id");
@@ -2424,10 +2468,13 @@ function screenProgress(idx){
 
 function screenVerseDetail(idx){
   const verseId = State.selectedVerseId;
-  const verseItem = VERSE_LIST.find(v => v.id === verseId);
-
+  const verseItem = getVerseListItemById(verseId);
   const verseProgress = getVerseProgress(verseId);
 
+  const unlocked = isBibloPetUnlocked(verseProgress);
+  const petEmoji = unlocked ? getBibloPetEmojiForCurrentVerse() : "🔒";
+  const statusEmoji = unlocked ? getBibloPetStatusEmoji(verseProgress) : "🔒";
+  const statusText = getBibloPetStatusText(verseProgress);
   const learnStatus = verseProgress.learnCompleted ? "✔" : "";
 
   function gameRow(label, gameId){
@@ -2449,23 +2496,60 @@ function screenVerseDetail(idx){
     <div class="detail-shell">
       <div class="detail-heading">${verseItem ? verseItem.ref : ""}</div>
 
-      <div class="detail-section">
-        <div class="detail-row">
-          <div class="detail-label">Learn the Verse</div>
-          <div class="detail-stars">${learnStatus}</div>
+      <div class="detail-scroll">
+        <div class="pet-card">
+          ${
+            unlocked
+              ? `
+                <div class="pet-stage">
+                  <div class="pet-emoji pet-emoji-unlocked">${petEmoji}</div>
+                </div>
+              `
+              : `
+                <div class="pet-stage">
+                  <div class="pet-emoji pet-emoji-locked">🔒</div>
+                  <div class="pet-locked-text">Practice more to unlock your BibloPet.</div>
+                </div>
+              `
+          }
         </div>
-      </div>
 
-      <div class="detail-section">
-        ${gameRow("Verse Scramble", "scramble")}
-        ${gameRow("Verse Launch", "chain")}
-        ${gameRow("Traffic Tap", "traffic")}
-        ${gameRow("Bouncing Words", "bouncing")}
-        ${gameRow("Food Slice", "foodslice")}
-        ${gameRow("Tower of Bible", "tower")}
+        <div class="pet-status-card">
+          <div class="pet-status-label">BibloPet Status:</div>
+          <div class="pet-status-emoji">${statusEmoji}</div>
+        </div>
+
+        <div class="pet-helper-text">${statusText}</div>
+
+        <button class="detail-listen-btn no-zoom" id="btnDetailListen" type="button">
+          Listen to the Verse
+        </button>
+
+        <div class="detail-section">
+          <div class="detail-row">
+            <div class="detail-label">Learn the Verse</div>
+            <div class="detail-stars">${learnStatus}</div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          ${gameRow("Verse Scramble", "scramble")}
+          ${gameRow("Verse Launch", "chain")}
+          ${gameRow("Traffic Tap", "traffic")}
+          ${gameRow("Bouncing Words", "bouncing")}
+          ${gameRow("Food Slice", "foodslice")}
+          ${gameRow("Tower of Bible", "tower")}
+        </div>
       </div>
     </div>
   `;
+
+  const btnDetailListen = wrap.querySelector("#btnDetailListen");
+  if (btnDetailListen){
+    btnDetailListen.onclick = () => {
+      playVerseDetailListen();
+    };
+  }
 
   return makeSlide({ idx, bg: "var(--purple)", inner: wrap });
 }
