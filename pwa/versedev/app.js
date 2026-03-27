@@ -2607,7 +2607,7 @@ function screenVerseDetail(idx){
   const verseProgress = getVerseProgress(verseId);
 
   const unlocked = isBibloPetUnlocked(verseProgress);
-  const petEmoji = unlocked ? getBibloPetEmojiForCurrentVerse() : "🔒";
+  const petEmoji = unlocked ? getBibloPetEmojiForVerseId(verseId) : "🔒";
   const statusEmoji = unlocked ? getBibloPetStatusEmoji(verseProgress) : "🔒";
   const statusText = getBibloPetStatusText(verseProgress);
   const learnStatus = verseProgress.learnCompleted ? "✔" : "";
@@ -3121,12 +3121,12 @@ function screenFinalRecall(idx){
     coachBody = `<div class="coach-text">Press below to reveal the verse.</div>`;
     actionHtml = `<button class="carousel-main no-zoom" id="btnFinalReveal" style="max-width:520px;">Reveal Verse</button>`;
   } else if (State.finalRecallRevealed){
-    coachBody = `<div class="coach-text">Now that you've learned the verse, head to the games to practice it.</div>`;
+    coachBody = `<div class="coach-text">Complete more Verse Games to unlock this verse's BibloPet! 🐾</div>`;
     actionHtml = `<button class="carousel-main no-zoom" id="btnFinalGames" style="max-width:520px;">Verse Games</button>`;
   }
 
   inner.innerHTML = `
-    <div class="learn-layout learn-layout-coach-centered">
+    <div class="learn-layout learn-layout-coach-centered final-recall-layout">
       <div class="learn-ref">
         <div class="verse-ref-pill">${VERSE_REF}</div>
       </div>
