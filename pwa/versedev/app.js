@@ -1072,6 +1072,7 @@ function screenToIndex(screen){
     Screen.PRACTICE,
     Screen.GAME
   ];
+  return order.indexOf(screen);
 }
 
 function go(nextScreen){
