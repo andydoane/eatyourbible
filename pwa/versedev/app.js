@@ -3126,7 +3126,7 @@ function screenFinalRecall(idx){
   }
 
   inner.innerHTML = `
-    <div class="learn-layout learn-layout-coach-centered">
+    <div class="learn-layout learn-layout-coach-centered final-recall-layout">
       <div class="learn-ref">
         <div class="verse-ref-pill">${VERSE_REF}</div>
       </div>
