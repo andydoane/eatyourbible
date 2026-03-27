@@ -646,6 +646,34 @@ function getBibloPetStatus(verseProgress){
   return "sleeping";
 }
 
+function getBibloPetStats(){
+  const stats = {
+    totalVerses: Array.isArray(VERSE_LIST) ? VERSE_LIST.length : 0,
+    unlocked: 0,
+    happy: 0,
+    hungry: 0,
+    sleeping: 0
+  };
+
+  if (!Array.isArray(VERSE_LIST)) return stats;
+
+  for (const item of VERSE_LIST){
+    const verseProgress = getVerseProgress(item.id);
+    const unlocked = isBibloPetUnlocked(verseProgress);
+
+    if (!unlocked) continue;
+
+    stats.unlocked += 1;
+
+    const status = getBibloPetStatus(verseProgress);
+    if (status === "happy") stats.happy += 1;
+    if (status === "hungry") stats.hungry += 1;
+    if (status === "sleeping") stats.sleeping += 1;
+  }
+
+  return stats;
+}
+
 async function playVerseDetailListen(){
   try {
     setAudioSrc(refAudioFile());
@@ -828,6 +856,7 @@ const Screen = {
   FINAL_RECALL: "final_recall",
   CELEBRATION: "celebration",
   PET_UNLOCK: "pet_unlock",
+  PET_STATS: "pet_stats",
   PRACTICE: "practice",
   GAME: "game"
 };
@@ -1164,6 +1193,7 @@ function screenToIndex(screen){
     Screen.INTRO,
     Screen.TITLE,
     Screen.PROGRESS,
+    Screen.PET_STATS,
     Screen.VERSE_DETAIL,
     Screen.LEARN_LEVEL,
     Screen.PRACTICE_GATE,
@@ -2236,6 +2266,7 @@ else left = backBtn;
 // center label
 if (State.screen === Screen.TITLE) center = "HOME";
 if (State.screen === Screen.PROGRESS) center = "PROGRESS";
+if (State.screen === Screen.PET_STATS) center = "STATS";
 if (State.screen === Screen.VERSE_DETAIL) center = "PROGRESS";
 if (State.screen === Screen.LEARN_LEVEL) center = "LEARN";
 if (State.screen === Screen.PRACTICE_GATE) center = "PRACTICE";
@@ -2248,7 +2279,7 @@ if (State.screen === Screen.FINAL_RECALL) center = "FINAL TEST";
 if (State.screen === Screen.PRACTICE) center = "PRACTICE";
 if (State.screen === Screen.GAME) center = `<button class="nav-btn no-zoom" id="btnHelp" title="Help" style="width:auto; min-width:88px; padding:0 16px; font-weight:900;">HELP</button>`;
 
-right = (State.screen === Screen.GAME || isLearnScreen || State.screen === Screen.PROGRESS || State.screen === Screen.VERSE_DETAIL) ? "" : nextBtn;
+right = (State.screen === Screen.GAME || isLearnScreen || State.screen === Screen.PROGRESS || State.screen === Screen.PET_STATS || State.screen === Screen.VERSE_DETAIL) ? "" : nextBtn;
 
   const rightControls = isLearnScreen
     ? `${right || ""}`
@@ -2273,6 +2304,7 @@ right = (State.screen === Screen.GAME || isLearnScreen || State.screen === Scree
     btnBack.onclick = () => {
         if (State.screen === Screen.LEARN_LEVEL) go(Screen.TITLE);
         else if (State.screen === Screen.PROGRESS) go(Screen.TITLE);
+        else if (State.screen === Screen.PET_STATS) go(Screen.PROGRESS);
         else if (State.screen === Screen.VERSE_DETAIL) go(Screen.PROGRESS);
         else if (State.screen === Screen.PRACTICE_GATE) go(Screen.TITLE);
         else if (State.screen === Screen.LISTEN) go(Screen.LEARN_LEVEL);
@@ -2688,11 +2720,7 @@ function screenProgress(idx){
   const btnStats = wrap.querySelector("#btnBibloPetStats");
   if (btnStats){
     btnStats.onclick = () => {
-      showDialog({
-        title: "BibloPet Stats",
-        body: "Stats page coming soon 🙂",
-        actions: [dlgBtn("OK", { onClick: closeDialog })]
-      });
+      go(Screen.PET_STATS);
     };
   }
 
@@ -2844,6 +2872,54 @@ function screenPetUnlock(idx){
   }
 
   return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
+}
+
+function screenPetStats(idx){
+  const stats = getBibloPetStats();
+
+  const wrap = document.createElement("div");
+  wrap.className = "pet-stats-screen";
+
+  wrap.innerHTML = `
+    <div class="pet-stats-shell">
+      <div class="pet-stats-heading">BibloPet Stats</div>
+      <div class="pet-stats-subheading">Here’s how your BibloPets are doing.</div>
+
+      <div class="pet-stats-grid">
+        <div class="pet-stats-card">
+          <div class="pet-stats-emoji">📖</div>
+          <div class="pet-stats-value">${stats.totalVerses}</div>
+          <div class="pet-stats-label">Total Verses</div>
+        </div>
+
+        <div class="pet-stats-card">
+          <div class="pet-stats-emoji">🐾</div>
+          <div class="pet-stats-value">${stats.unlocked}</div>
+          <div class="pet-stats-label">Unlocked Pets</div>
+        </div>
+
+        <div class="pet-stats-card">
+          <div class="pet-stats-emoji">😀</div>
+          <div class="pet-stats-value">${stats.happy}</div>
+          <div class="pet-stats-label">Happy</div>
+        </div>
+
+        <div class="pet-stats-card">
+          <div class="pet-stats-emoji">🤤</div>
+          <div class="pet-stats-value">${stats.hungry}</div>
+          <div class="pet-stats-label">Hungry</div>
+        </div>
+
+        <div class="pet-stats-card">
+          <div class="pet-stats-emoji">😴</div>
+          <div class="pet-stats-value">${stats.sleeping}</div>
+          <div class="pet-stats-label">Asleep</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  return makeSlide({ idx, bg: "var(--purple)", inner: wrap });
 }
 
 function screenLearnLevel(idx){
@@ -3524,11 +3600,12 @@ function render(){
 
   const uniq = Array.from(new Set(indicesToRender.filter(i => i !== null && i >= 0)));
   for (const idx of uniq){
-    const screen = ["intro","title","progress","verse_detail","learn_level","practice_gate","listen","meaning","chunks","echo","hide","final_recall","celebration","pet_unlock","practice","game"][idx];
+    ["intro","title","progress","pet_stats","verse_detail","learn_level","practice_gate","listen","meaning","chunks","echo","hide","final_recall","celebration","pet_unlock","practice","game"]
     let slide = null;
     if (screen === Screen.INTRO) slide = screenIntro(idx);
     if (screen === Screen.TITLE) slide = screenTitle(idx);
     if (screen === Screen.PROGRESS) slide = screenProgress(idx);
+    if (screen === Screen.PET_STATS) slide = screenPetStats(idx);
     if (screen === Screen.VERSE_DETAIL) slide = screenVerseDetail(idx);
     if (screen === Screen.LEARN_LEVEL) slide = screenLearnLevel(idx);
     if (screen === Screen.PRACTICE_GATE) slide = screenPracticeGate(idx);
