@@ -5354,7 +5354,7 @@ function towerRenderCoach(st, gameRoot){
 
     const title = document.createElement("div");
     title.className = "game-end-title";
-    title.textContent = rewardTitle;
+    title.textContent = st.rewardTitle || "Great job!";
 
     const stats = document.createElement("div");
     stats.className = "game-end-stats";
