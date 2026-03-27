@@ -3600,8 +3600,8 @@ function render(){
 
   const uniq = Array.from(new Set(indicesToRender.filter(i => i !== null && i >= 0)));
   for (const idx of uniq){
-    const screen = ["intro","title","progress","pet_stats","verse_detail","learn_level","practice_gate","listen","meaning","chunks","echo","hide","final_recall","celebration","pet_unlock","practice","game"];
-    let slide = null;
+  const screen = ["intro","title","progress","pet_stats","verse_detail","learn_level","practice_gate","listen","meaning","chunks","echo","hide","final_recall","celebration","pet_unlock","practice","game"][idx];
+  let slide = null;
     if (screen === Screen.INTRO) slide = screenIntro(idx);
     if (screen === Screen.TITLE) slide = screenTitle(idx);
     if (screen === Screen.PROGRESS) slide = screenProgress(idx);
