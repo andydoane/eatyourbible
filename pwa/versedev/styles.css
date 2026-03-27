@@ -3591,6 +3591,20 @@ text-wrap: balance;
   }
 }
 
+@keyframes petPop{
+  0%{
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  60%{
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  100%{
+    transform: scale(1);
+  }
+}
+
 /* =========================
    BibloPet Unlock Screen
    ========================= */
@@ -3647,6 +3661,7 @@ text-wrap: balance;
 .pet-unlock-emoji{
   font-size: clamp(88px, 22vw, 170px);
   line-height: 1;
+  animation: petPop 0.4s ease-out, petWobble 2.2s ease-in-out infinite;
 }
 
 .pet-unlock-title{
