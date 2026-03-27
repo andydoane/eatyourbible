@@ -3714,3 +3714,8 @@ text-wrap: balance;
 .final-recall-layout .learn-verse.verse-fit-long #finalRecallStage .verse{
   width: min(100%, 1000px);
 }
+
+.detail-medals{
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+}
