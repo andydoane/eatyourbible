@@ -294,30 +294,111 @@ function markLearnCompleted(verseId){
 function markStandardGameCompleted(verseId, gameId, mode){
   if (!verseId || !gameId || !mode) return;
 
-  updateVerseProgress(verseId, (verseProgress) => {
-    if (!verseProgress.games[gameId]) {
-      verseProgress.games[gameId] = {
-        easyCompleted: false,
-        mediumCompleted: false,
-        hardCompleted: false
-      };
-    }
+  const progress = loadProgress();
 
-    if (mode === "easy") {
-      verseProgress.games[gameId].easyCompleted = true;
-    }
+  if (!progress.verses[verseId]) {
+    progress.verses[verseId] = {
+      learnCompleted: false,
+      games: {}
+    };
+  }
 
-    if (mode === "medium") {
-      verseProgress.games[gameId].mediumCompleted = true;
-    }
+  const verseProgress = progress.verses[verseId];
+  const wasUnlocked = isBibloPetUnlocked(verseProgress);
 
-    if (mode === "hard") {
-      verseProgress.games[gameId].hardCompleted = true;
-    }
+  if (!verseProgress.games[gameId]) {
+    verseProgress.games[gameId] = {
+      easyCompleted: false,
+      mediumCompleted: false,
+      hardCompleted: false
+    };
+  }
 
-    verseProgress.lastPracticedAt = Date.now(); // 👈 ADD THIS
-    
-  });
+  if (mode === "easy") {
+    verseProgress.games[gameId].easyCompleted = true;
+  }
+
+  if (mode === "medium") {
+    verseProgress.games[gameId].mediumCompleted = true;
+  }
+
+  if (mode === "hard") {
+    verseProgress.games[gameId].hardCompleted = true;
+  }
+
+  verseProgress.lastPracticedAt = Date.now();
+
+  const isUnlockedNow = isBibloPetUnlocked(verseProgress);
+
+  if (!wasUnlocked && isUnlockedNow && !verseProgress.petUnlockShown) {
+    verseProgress.petUnlockShown = true;
+    State.pendingPetUnlockVerseId = verseId;
+  }
+
+  saveProgress(progress);
+
+  if (State.pendingPetUnlockVerseId === verseId) {
+    setTimeout(() => {
+      if (State.screen === Screen.GAME) {
+        go(Screen.PET_UNLOCK);
+      }
+    }, 0);
+  }
+}
+
+function markTrafficCompleted(verseId, theme){
+  if (!verseId || !theme) return;
+
+  const progress = loadProgress();
+
+  if (!progress.verses[verseId]) {
+    progress.verses[verseId] = {
+      learnCompleted: false,
+      games: {}
+    };
+  }
+
+  const verseProgress = progress.verses[verseId];
+  const wasUnlocked = isBibloPetUnlocked(verseProgress);
+
+  if (!verseProgress.games.traffic) {
+    verseProgress.games.traffic = {
+      roadCompleted: false,
+      trailCompleted: false,
+      riverCompleted: false
+    };
+  }
+
+  if (theme === "road") {
+    verseProgress.games.traffic.roadCompleted = true;
+  }
+
+  if (theme === "trail") {
+    verseProgress.games.traffic.trailCompleted = true;
+  }
+
+  if (theme === "river") {
+    verseProgress.games.traffic.riverCompleted = true;
+  }
+
+  verseProgress.lastPracticedAt = Date.now();
+
+  const isUnlockedNow = isBibloPetUnlocked(verseProgress);
+
+  if (!wasUnlocked && isUnlockedNow && !verseProgress.petUnlockShown) {
+    verseProgress.petUnlockShown = true;
+    State.pendingPetUnlockVerseId = verseId;
+  }
+
+  saveProgress(progress);
+
+  if (State.pendingPetUnlockVerseId === verseId) {
+    setTimeout(() => {
+      if (State.screen === Screen.GAME) {
+        go(Screen.PET_UNLOCK);
+      }
+    }, 0);
+  }
 }
 
 /* =========================
@@ -400,6 +481,15 @@ function getBibloPetEmojiForCurrentVerse(){
   return cfg?.biblopet || "🐾";
 }
 
+function getBibloPetEmojiForVerseId(verseId){
+  const item = getVerseListItemById(verseId);
+  if (item?.biblopet) return item.biblopet;
+
+  if (cfg?.verseId === verseId && cfg?.biblopet) return cfg.biblopet;
+
+  return "🐾";
+}
+
 function getBibloPetStatusEmoji(verseProgress){
   const status = getBibloPetStatus(verseProgress);
 
@@ -436,7 +526,11 @@ function getBibloPetStatus(verseProgress){
   if (!isBibloPetUnlocked(verseProgress)) return "locked";
 
   const last = verseProgress.lastPracticedAt;
-  if (!last) return "happy";
+    if (!last){
+      // If unlocked but never practiced timestamped,
+      // treat as hungry to encourage first interaction
+      return "hungry";
+    }
 
   const now = Date.now();
   const diffDays = (now - last) / (1000 * 60 * 60 * 24);
@@ -627,6 +721,7 @@ const Screen = {
   HIDE: "hide",
   FINAL_RECALL: "final_recall",
   CELEBRATION: "celebration",
+  PET_UNLOCK: "pet_unlock",
   PRACTICE: "practice",
   GAME: "game"
 };
@@ -665,6 +760,7 @@ const State = {
   removeIntroPromptDone: false,
   finalIntroPromptDone: false,
   selectedVerseId: null,
+  pendingPetUnlockVerseId: null,
 
   listenDone: false,
   listenPlaying: false,
@@ -972,10 +1068,10 @@ function screenToIndex(screen){
     Screen.HIDE,
     Screen.FINAL_RECALL,
     Screen.CELEBRATION,
+    Screen.PET_UNLOCK,
     Screen.PRACTICE,
     Screen.GAME
   ];
-  return order.indexOf(screen);
 }
 
 function go(nextScreen){
@@ -1978,7 +2074,8 @@ function renderNav(){
   const show = (
     State.screen !== Screen.INTRO &&
     State.screen !== Screen.TITLE &&
-    State.screen !== Screen.CELEBRATION
+    State.screen !== Screen.CELEBRATION &&
+    State.screen !== Screen.PET_UNLOCK
   );
   navBar.style.display = show ? "flex" : "none";
   if (!show){
@@ -2591,6 +2688,58 @@ function screenVerseDetail(idx){
   return makeSlide({ idx, bg: "var(--purple)", inner: wrap });
 }
 
+function screenPetUnlock(idx){
+  const verseId = State.pendingPetUnlockVerseId;
+  const verseItem = getVerseListItemById(verseId);
+  const petEmoji = getBibloPetEmojiForVerseId(verseId);
+
+  const wrap = document.createElement("div");
+  wrap.className = "pet-unlock-screen";
+
+  wrap.innerHTML = `
+    <div class="pet-unlock-shell">
+      <div class="pet-unlock-kicker">🎉</div>
+
+      <div class="pet-unlock-card">
+        <div class="pet-unlock-emoji pet-emoji-unlocked">${petEmoji}</div>
+      </div>
+
+      <div class="pet-unlock-title">You unlocked a new BibloPet!</div>
+      <div class="pet-unlock-ref">${verseItem ? verseItem.ref : ""}</div>
+      <div class="pet-unlock-subtext">A new BibloPet joined your zoo. Keep practicing to keep it happy!</div>
+
+      <div class="celebration-actions">
+        <button class="carousel-main no-zoom" id="btnPetUnlockPractice">Practice Games</button>
+        <button class="carousel-main no-zoom" id="btnPetUnlockVisit">Visit BibloPet</button>
+      </div>
+    </div>
+  `;
+
+  const btnPractice = wrap.querySelector("#btnPetUnlockPractice");
+  if (btnPractice){
+    btnPractice.onclick = () => {
+      const unlockedVerseId = State.pendingPetUnlockVerseId;
+      State.pendingPetUnlockVerseId = null;
+      if (unlockedVerseId) State.selectedVerseId = unlockedVerseId;
+      stopGame();
+      go(Screen.PRACTICE);
+    };
+  }
+
+  const btnVisit = wrap.querySelector("#btnPetUnlockVisit");
+  if (btnVisit){
+    btnVisit.onclick = () => {
+      const unlockedVerseId = State.pendingPetUnlockVerseId;
+      State.pendingPetUnlockVerseId = null;
+      if (unlockedVerseId) State.selectedVerseId = unlockedVerseId;
+      stopGame();
+      go(Screen.VERSE_DETAIL);
+    };
+  }
+
+  return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
+}
+
 function screenLearnLevel(idx){
   const wrap = document.createElement("div");
   wrap.className = "title-screen learn-level-screen";
@@ -3045,7 +3194,8 @@ function screenCelebration(idx){
   wrap.innerHTML = `
     <canvas id="fireworksCanvas"></canvas>
 
-    <h2>Great Job Learning the Verse!</h2>
+    <h2>Great job learning the verse!</h2>
+    <div class="celebration-prompt">Complete Verse Games to unlock a new BibloPet! 🐾</div>
 
     <div class="celebration-actions">
       <button class="carousel-main no-zoom" id="btnCelebrateTitle">Title Screen</button>
@@ -3268,7 +3418,7 @@ function render(){
 
   const uniq = Array.from(new Set(indicesToRender.filter(i => i !== null && i >= 0)));
   for (const idx of uniq){
-    const screen = ["intro","title","progress","verse_detail","learn_level","practice_gate","listen","meaning","chunks","echo","hide","final_recall","celebration","practice","game"][idx];
+    const screen = ["intro","title","progress","verse_detail","learn_level","practice_gate","listen","meaning","chunks","echo","hide","final_recall","celebration","pet_unlock","practice","game"][idx];
     let slide = null;
     if (screen === Screen.INTRO) slide = screenIntro(idx);
     if (screen === Screen.TITLE) slide = screenTitle(idx);
@@ -3283,6 +3433,7 @@ function render(){
     if (screen === Screen.HIDE) slide = screenHide(idx);
     if (screen === Screen.FINAL_RECALL) slide = screenFinalRecall(idx);
     if (screen === Screen.CELEBRATION) slide = screenCelebration(idx);
+    if (screen === Screen.PET_UNLOCK) slide = screenPetUnlock(idx);
     if (screen === Screen.PRACTICE) slide = screenPractice(idx);
     if (screen === Screen.GAME) slide = screenGame(idx);
     if (slide) app.appendChild(slide);
