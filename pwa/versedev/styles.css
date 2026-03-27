@@ -3590,3 +3590,83 @@ text-wrap: balance;
     transform: rotate(6deg) scale(1.03);
   }
 }
+
+/* =========================
+   BibloPet Unlock Screen
+   ========================= */
+
+.celebration-prompt{
+  font-size: clamp(18px, 4vw, 26px);
+  font-weight: 800;
+  line-height: 1.25;
+  text-align: center;
+  text-wrap: balance;
+  margin: 6px auto 2px;
+  max-width: 28ch;
+  opacity: 0.98;
+}
+
+.pet-unlock-screen{
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+.pet-unlock-shell{
+  width: min(92vw, 760px);
+  min-height: 70vh;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  text-align: center;
+}
+
+.pet-unlock-kicker{
+  font-size: clamp(28px, 8vw, 54px);
+  line-height: 1;
+}
+
+.pet-unlock-card{
+  width: min(100%, 420px);
+  min-height: 220px;
+  border-radius: 28px;
+  background: rgba(255,255,255,0.92);
+  color: #222;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 18px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.18);
+}
+
+.pet-unlock-emoji{
+  font-size: clamp(88px, 22vw, 170px);
+  line-height: 1;
+}
+
+.pet-unlock-title{
+  font-size: clamp(28px, 7vw, 52px);
+  font-weight: 900;
+  line-height: 1.08;
+  text-wrap: balance;
+}
+
+.pet-unlock-ref{
+  font-size: clamp(18px, 4vw, 28px);
+  font-weight: 900;
+  opacity: 0.98;
+}
+
+.pet-unlock-subtext{
+  font-size: clamp(16px, 3.8vw, 24px);
+  font-weight: 700;
+  line-height: 1.28;
+  max-width: 30ch;
+  text-wrap: balance;
+  opacity: 0.96;
+}
