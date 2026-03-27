@@ -3799,3 +3799,206 @@ text-wrap: balance;
     grid-template-columns: 1fr;
   }
 }
+
+/* =========================
+   BibloPet Status Animations
+   ========================= */
+
+.pet-stage{
+  position: relative;
+  overflow: hidden;
+}
+
+.pet-emoji-unlocked{
+  display: inline-block;
+  position: relative;
+  transform-origin: center center;
+  animation: none;
+  will-change: transform, opacity;
+}
+
+/* Happy animations */
+
+.pet-happy-pace{
+  animation: petHappyPace 5.4s ease-in-out infinite;
+}
+
+.pet-happy-squish{
+  animation: petHappySquish 2.1s ease-in-out infinite;
+}
+
+.pet-happy-flip{
+  animation: petHappyFlip 2.8s ease-in-out infinite;
+}
+
+/* Hungry animation */
+
+.pet-hungry-wobble{
+  animation: petHungryWobble 2.4s ease-in-out infinite;
+}
+
+/* Sleeping animation */
+
+.pet-sleeping{
+  opacity: 0.55;
+  animation: petSleepingBreathe 2.8s ease-in-out infinite;
+}
+
+.pet-sleep-zs{
+  position: absolute;
+  right: 18%;
+  top: 16%;
+  width: 90px;
+  height: 90px;
+  pointer-events: none;
+}
+
+.pet-sleep-zs span{
+  position: absolute;
+  font-weight: 900;
+  color: #7f66c6;
+  opacity: 0;
+  animation: petSleepZFloat 2.8s ease-in-out infinite;
+}
+
+.pet-sleep-zs span:nth-child(1){
+  left: 6px;
+  bottom: 10px;
+  font-size: 20px;
+  animation-delay: 0s;
+}
+
+.pet-sleep-zs span:nth-child(2){
+  left: 30px;
+  bottom: 28px;
+  font-size: 24px;
+  animation-delay: 0.9s;
+}
+
+.pet-sleep-zs span:nth-child(3){
+  left: 56px;
+  bottom: 50px;
+  font-size: 28px;
+  animation-delay: 1.8s;
+}
+
+@keyframes petHappyPace{
+  0%{
+    transform: translateX(-90px) translateY(0) scaleX(1);
+  }
+  12%{
+    transform: translateX(-50px) translateY(-4px) scaleX(1);
+  }
+  24%{
+    transform: translateX(0px) translateY(0) scaleX(1);
+  }
+  36%{
+    transform: translateX(50px) translateY(-4px) scaleX(1);
+  }
+  48%{
+    transform: translateX(90px) translateY(0) scaleX(1);
+  }
+  50%{
+    transform: translateX(90px) translateY(0) scaleX(-1);
+  }
+  62%{
+    transform: translateX(50px) translateY(-4px) scaleX(-1);
+  }
+  74%{
+    transform: translateX(0px) translateY(0) scaleX(-1);
+  }
+  86%{
+    transform: translateX(-50px) translateY(-4px) scaleX(-1);
+  }
+  98%{
+    transform: translateX(-90px) translateY(0) scaleX(-1);
+  }
+  100%{
+    transform: translateX(-90px) translateY(0) scaleX(1);
+  }
+}
+
+@keyframes petHappySquish{
+  0%, 100%{
+    transform: scale(1, 1);
+  }
+  15%{
+    transform: scale(1.12, 0.88);
+  }
+  30%{
+    transform: scale(0.9, 1.12);
+  }
+  45%{
+    transform: scale(1.08, 0.92);
+  }
+  60%{
+    transform: scale(0.94, 1.08);
+  }
+  75%{
+    transform: scale(1.04, 0.96);
+  }
+}
+
+@keyframes petHappyFlip{
+  0%, 100%{
+    transform: rotate(0deg) scaleX(1);
+  }
+  20%{
+    transform: rotate(180deg) scaleX(0.08);
+  }
+  40%{
+    transform: rotate(360deg) scaleX(1);
+  }
+  60%{
+    transform: rotate(540deg) scaleX(0.08);
+  }
+  80%{
+    transform: rotate(720deg) scaleX(1);
+  }
+}
+
+@keyframes petHungryWobble{
+  0%, 100%{
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+  18%{
+    transform: translateY(3px) rotate(-6deg) scale(0.98);
+  }
+  36%{
+    transform: translateY(0) rotate(5deg) scale(1.01);
+  }
+  54%{
+    transform: translateY(4px) rotate(-4deg) scale(0.97);
+  }
+  72%{
+    transform: translateY(1px) rotate(3deg) scale(1);
+  }
+}
+
+@keyframes petSleepingBreathe{
+  0%, 100%{
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50%{
+    transform: scale(1.06);
+    opacity: 0.68;
+  }
+}
+
+@keyframes petSleepZFloat{
+  0%{
+    transform: translateY(0) scale(0.9);
+    opacity: 0;
+  }
+  20%{
+    opacity: 0.9;
+  }
+  70%{
+    opacity: 0.85;
+  }
+  100%{
+    transform: translateY(-28px) scale(1.08);
+    opacity: 0;
+  }
+}
