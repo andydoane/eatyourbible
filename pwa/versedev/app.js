@@ -460,6 +460,30 @@ function starsToString(stars){
   return "☆☆☆";
 }
 
+function getStandardGameMedals(gameProgress){
+  return [
+    gameProgress?.easyCompleted ? "🥉" : "🔒",
+    gameProgress?.mediumCompleted ? "🥈" : "🔒",
+    gameProgress?.hardCompleted ? "🥇" : "🔒"
+  ].join(" ");
+}
+
+function getTrafficThemeSlots(gameProgress){
+  return [
+    gameProgress?.roadCompleted ? "🚗" : "🔒",
+    gameProgress?.trailCompleted ? "🐾" : "🔒",
+    gameProgress?.riverCompleted ? "🌊" : "🔒"
+  ].join(" ");
+}
+
+function getVerseDetailProgressDisplay(gameId, gameProgress){
+  if (gameId === "traffic"){
+    return getTrafficThemeSlots(gameProgress);
+  }
+
+  return getStandardGameMedals(gameProgress);
+}
+
 /* =========================
    BibloPet Helpers
    ========================= */
@@ -2613,13 +2637,12 @@ function screenVerseDetail(idx){
   const learnStatus = verseProgress.learnCompleted ? "✔" : "";
 
   function gameRow(label, gameId){
-    const stars = getGameStars(gameId, verseProgress.games[gameId]);
-    const starsDisplay = starsToString(stars);
+    const progressDisplay = getVerseDetailProgressDisplay(gameId, verseProgress.games[gameId]);
 
     return `
       <div class="detail-row">
         <div class="detail-label">${label}</div>
-        <div class="detail-stars">${starsDisplay}</div>
+        <div class="detail-stars detail-medals">${progressDisplay}</div>
       </div>
     `;
   }
