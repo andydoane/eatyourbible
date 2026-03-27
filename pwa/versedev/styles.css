@@ -3846,8 +3846,9 @@ text-wrap: balance;
 
 .pet-sleep-zs{
   position: absolute;
-  right: 18%;
-  top: 16%;
+  left: 50%;
+  top: 35%;
+  transform: translateX(40%);
   width: 90px;
   height: 90px;
   pointer-events: none;
