@@ -589,7 +589,10 @@ function trafficChoose(itemId, tappedEl){
     st.items = [];
 
     if (VERSE_ID && st.theme){
+      st.rewardTitle = getTrafficRewardTitle(VERSE_ID, st.theme);
       markTrafficCompleted(VERSE_ID, st.theme);
+    } else {
+      st.rewardTitle = "Great job!";
     }
 
     render();
@@ -860,7 +863,7 @@ registerGame({
 
       const title = document.createElement("div");
       title.className = "game-end-title";
-      title.textContent = "Great job!";
+      title.textContent = st.rewardTitle || "Great job!";
 
       const stats = document.createElement("div");
       stats.className = "game-end-stats";
@@ -5447,10 +5450,14 @@ if (!st.done && st.resultConfettiStop){
     coachActions.innerHTML = "";
 
 if (st.done){
-    if (VERSE_ID && st.mode){
-      markStandardGameCompleted(VERSE_ID, "scramble", st.mode);
-    } 
-  
+  const rewardTitle = (VERSE_ID && st.mode)
+    ? getStandardGameRewardTitle(VERSE_ID, "scramble", st.mode)
+    : "Great job!";
+
+  if (VERSE_ID && st.mode){
+    markStandardGameCompleted(VERSE_ID, "scramble", st.mode);
+  }
+
   stage.innerHTML = "";
 
   const doneWrap = document.createElement("div");
@@ -5461,7 +5468,7 @@ if (st.done){
 
   const title = document.createElement("div");
   title.className = "game-end-title";
-  title.textContent = "🎉 Great job!";
+  title.textContent = rewardTitle;
 
   const stats = document.createElement("div");
   stats.className = "game-end-stats";
