@@ -342,7 +342,7 @@ function markStandardGameCompleted(verseId, gameId, mode){
       if (State.screen === Screen.GAME) {
         go(Screen.PET_UNLOCK);
       }
-    }, 0);
+    }, 300);
   }
 }
 
@@ -397,7 +397,7 @@ function markTrafficCompleted(verseId, theme){
       if (State.screen === Screen.GAME) {
         go(Screen.PET_UNLOCK);
       }
-    }, 0);
+    }, 300);
   }
 }
 
@@ -3126,7 +3126,7 @@ function screenFinalRecall(idx){
   }
 
   inner.innerHTML = `
-    <div class="learn-layout learn-layout-coach-centered final-recall-layout">
+    <div class="learn-layout learn-layout-coach-centered">
       <div class="learn-ref">
         <div class="verse-ref-pill">${VERSE_REF}</div>
       </div>
