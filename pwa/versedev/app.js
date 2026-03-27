@@ -674,6 +674,52 @@ function getBibloPetStats(){
   return stats;
 }
 
+function isVerseMastered(verseProgress){
+  if (!verseProgress || !verseProgress.games) return false;
+
+  for (const gameId of GAME_IDS){
+    const gp = verseProgress.games[gameId];
+
+    if (gameId === "traffic"){
+      if (!gp?.roadCompleted || !gp?.trailCompleted || !gp?.riverCompleted){
+        return false;
+      }
+    } else {
+      if (!gp?.easyCompleted || !gp?.mediumCompleted || !gp?.hardCompleted){
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+function getVerseBackgroundIndex(verseId){
+  const verseProgress = getVerseProgress(verseId);
+  return Number.isInteger(verseProgress.bgIndex) ? verseProgress.bgIndex : 0;
+}
+
+function setVerseBackgroundIndex(verseId, index){
+  updateVerseProgress(verseId, (verseProgress) => {
+    verseProgress.bgIndex = index;
+  });
+}
+
+function cycleVerseBackground(verseId){
+  const current = getVerseBackgroundIndex(verseId);
+  const next = (current + 1) % 2;
+  setVerseBackgroundIndex(verseId, next);
+}
+
+function getVerseBackgroundClass(verseId, verseProgress){
+  if (!isVerseMastered(verseProgress)) return "";
+
+  const bgIndex = getVerseBackgroundIndex(verseId);
+
+  if (bgIndex === 1) return "pet-stage-stars";
+  return "pet-stage-rainbow";
+}
+
 function getRandomHappyPetAnimationClass(){
   const options = [
     "pet-happy-pace",
@@ -2788,11 +2834,13 @@ function screenVerseDetail(idx){
   const verseProgress = getVerseProgress(verseId);
 
   const unlocked = isBibloPetUnlocked(verseProgress);
+  const mastered = isVerseMastered(verseProgress);
   const petEmoji = unlocked ? getBibloPetEmojiForVerseId(verseId) : "🔒";
   const statusEmoji = unlocked ? getBibloPetStatusEmoji(verseProgress) : "🔒";
   const statusText = getBibloPetStatusText(verseProgress);
   const petStatus = getBibloPetStatus(verseProgress);
   const petAnimationClass = unlocked ? getBibloPetAnimationClass(verseId, verseProgress) : "";
+  const petBackgroundClass = unlocked ? getVerseBackgroundClass(verseId, verseProgress) : "";
   const learnStatus = verseProgress.learnCompleted ? "✔" : "";
 
   function gameRow(label, gameId){
@@ -2818,7 +2866,7 @@ function screenVerseDetail(idx){
           ${
             unlocked
               ? `
-                <div class="pet-stage">
+                <div class="pet-stage ${petBackgroundClass}">
                   ${
                     petStatus === "sleeping"
                       ? `
@@ -2832,6 +2880,10 @@ function screenVerseDetail(idx){
                   }
                   <div class="pet-emoji pet-emoji-unlocked ${petAnimationClass}">${petEmoji}</div>
                 </div>
+
+                <button class="pet-bg-btn no-zoom" id="btnChangePetBg" type="button">
+                  Change Background
+                </button>
               `
               : `
                 <div class="pet-stage">
@@ -2872,10 +2924,20 @@ function screenVerseDetail(idx){
     </div>
   `;
 
-  const btnDetailListen = wrap.querySelector("#btnDetailListen");
-  if (btnDetailListen){
-    btnDetailListen.onclick = () => {
-      playVerseDetailListen();
+  const btnChangePetBg = wrap.querySelector("#btnChangePetBg");
+  if (btnChangePetBg){
+    btnChangePetBg.onclick = () => {
+      if (!mastered){
+        showDialog({
+          title: "Locked",
+          body: "Complete all practice games to unlock custom backgrounds for this BibloPet.",
+          actions: [dlgBtn("OK", { onClick: closeDialog })]
+        });
+        return;
+      }
+
+      cycleVerseBackground(verseId);
+      render();
     };
   }
 
