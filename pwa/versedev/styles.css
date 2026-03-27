@@ -3390,3 +3390,203 @@ text-wrap: balance;
   font-size: 20px;
   font-weight: 900;
 }
+
+/* =========================
+   BibloPet Zoo / Detail
+   ========================= */
+
+.progress-toolbar{
+  display: flex;
+  justify-content: center;
+}
+
+.progress-stats-btn{
+  border: none;
+  border-radius: 999px;
+  padding: 12px 18px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 900;
+  background: rgba(255,255,255,0.18);
+  color: #ffffff;
+}
+
+.progress-row{
+  grid-template-columns: auto 1fr auto;
+  min-height: 72px;
+}
+
+.progress-row-pet{
+  font-size: 34px;
+  line-height: 1;
+  width: 44px;
+  text-align: center;
+}
+
+.progress-row-main{
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.progress-row-ref{
+  font-size: clamp(18px, 2.8vw, 24px);
+}
+
+.progress-row-status{
+  min-width: 36px;
+  font-size: 32px;
+}
+
+.progress-row-stars{
+  display: none;
+}
+
+.detail-screen{
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 14px calc(14px + var(--safeB));
+  overflow: hidden;
+}
+
+.detail-shell{
+  width: min(92vw, 760px);
+  margin: 0 auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.detail-heading{
+  flex: 0 0 auto;
+}
+
+.detail-scroll{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding-bottom: 10px;
+}
+
+.pet-card{
+  background: transparent;
+}
+
+.pet-stage{
+  width: 100%;
+  min-height: 190px;
+  border-radius: 28px;
+  background: rgba(255,255,255,0.92);
+  color: #222;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px 16px;
+  text-align: center;
+}
+
+.pet-emoji{
+  font-size: clamp(72px, 16vw, 128px);
+  line-height: 1;
+}
+
+.pet-emoji-unlocked{
+  animation: petWobble 2.2s ease-in-out infinite;
+  transform-origin: center bottom;
+}
+
+.pet-emoji-locked{
+  opacity: 0.78;
+}
+
+.pet-locked-text{
+  font-size: clamp(16px, 3.5vw, 22px);
+  font-weight: 800;
+  color: var(--purple);
+  text-wrap: balance;
+}
+
+.pet-status-card{
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 18px;
+  border-radius: 22px;
+  background: rgba(0,0,0,0.56);
+}
+
+.pet-status-label{
+  font-size: clamp(20px, 4vw, 28px);
+  font-weight: 900;
+}
+
+.pet-status-emoji{
+  font-size: clamp(42px, 8vw, 58px);
+  line-height: 1;
+}
+
+.pet-helper-text{
+  text-align: center;
+  font-size: clamp(17px, 3.2vw, 24px);
+  font-weight: 800;
+  line-height: 1.25;
+  text-wrap: balance;
+  padding: 2px 8px;
+}
+
+.detail-listen-btn{
+  width: 100%;
+  border: none;
+  border-radius: 22px;
+  padding: 16px 18px;
+  font: inherit;
+  font-size: clamp(18px, 3.2vw, 24px);
+  font-weight: 900;
+  background: rgba(255,255,255,0.16);
+  color: #ffffff;
+}
+
+.detail-section{
+  gap: 12px;
+}
+
+.detail-row{
+  min-height: 76px;
+  border-radius: 22px;
+  padding: 18px 18px;
+}
+
+.detail-label{
+  font-size: clamp(19px, 3.2vw, 24px);
+}
+
+.detail-stars{
+  font-size: clamp(22px, 4vw, 30px);
+}
+
+@keyframes petWobble{
+  0%, 100%{
+    transform: rotate(0deg) scale(1);
+  }
+  25%{
+    transform: rotate(-6deg) scale(1.03);
+  }
+  50%{
+    transform: rotate(0deg) scale(0.98);
+  }
+  75%{
+    transform: rotate(6deg) scale(1.03);
+  }
+}
