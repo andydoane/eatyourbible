@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot56",
+  "pageTitle": "OT 56 Quiz",
+  "lessonTitleText": "Saul Is Jealous of David",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot56image.png",
+  "themeClass": "theme-kahoot-yellow",
+  "questions": [
+    {
+      "text": "Who had God secretly picked to become king after Saul?",
+      "answers": [
+        "David",
+        "Jonathan, Saul's Son",
+        "Saul Jr.",
+        "Moses"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who was David’s best friend?",
+      "answers": [
+        "Jonathan, Saul’s son",
+        "Goliath the giant",
+        "King Saul",
+        "Saul's daughter"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jonathan give David?",
+      "answers": [
+        "Royal robes, armor, a sword, a bow, and a belt",
+        "The sword of Goliath",
+        "A pet dog",
+        "A chariot and horses"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why did David succeed in everything he did?",
+      "answers": [
+        "God was with him",
+        "He was the strongest",
+        "He was a giant",
+        "He had better weapons"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What words did the women sing as they celebrated?",
+      "answers": [
+        "Saul has defeated thousands, and David tens of thousand!s",
+        "Saul stinks, David is great!",
+        "David is so handsome!",
+        "David is a lucky guy!"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did Saul feel when he heard the song?",
+      "answers": [
+        "Angry and jealous",
+        "Happy and proud of David",
+        "Confused",
+        "Sad"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What was Saul afraid of losing?",
+      "answers": [
+        "His kingdom to David",
+        "His army",
+        "His palace",
+        "His hair"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Saul’s jealousy lead him to do?",
+      "answers": [
+        "Throw a spear at David",
+        "Kick David out of his country",
+        "Apologize to David",
+        "Build a statue of David"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How many times did David dodge Saul’s spear?",
+      "answers": [
+        "Two times",
+        "One time",
+        "Three times",
+        "Five times"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did the people feel about David after his victories?",
+      "answers": [
+        "They loved him",
+        "They feared him",
+        "They worshiped him",
+        "They got sick of winning"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

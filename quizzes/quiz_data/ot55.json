@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot55",
+  "pageTitle": "OT 55 Quiz",
+  "lessonTitleText": "David and Goliath",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot55image.png",
+  "themeClass": "theme-kahoot-red",
+  "questions": [
+    {
+      "text": "Who was Goliath?",
+      "answers": [
+        "A giant champion soldier from the Philistines",
+        "The King of the Philistines",
+        "A bigfoot-type creature",
+        "David's best friend"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What challenge did Goliath make?",
+      "answers": [
+        "One man fights him; the loser’s people serve the winner",
+        "A race across the battlefield – the loser dies",
+        "Whoever can lift the heaviest rock wins",
+        "A dance contest – the winner became king"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "For how many days did Goliath challenge Israel?",
+      "answers": [
+        "40 days",
+        "7 days",
+        "12 days",
+        "100 days"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why did David go to the battlefield?",
+      "answers": [
+        "To bring food and check on his brothers",
+        "To join the army",
+        "To see the king",
+        "To sing for the soldiers"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why did David believe he could defeat Goliath?",
+      "answers": [
+        "God had helped him defeat lions and bears",
+        "He had better armor",
+        "He was stronger than Goliath",
+        "Goliath wasn't very smart"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why didn’t David use Saul’s armor?",
+      "answers": [
+        "He wasn’t used to it",
+        "It smelled bad",
+        "It was broken",
+        "Saul wouldn’t let him"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Goliath do when he saw David?",
+      "answers": [
+        "He made fun of him and cursed God",
+        "He ran away in fear",
+        "He ate David",
+        "He kicked him and sent him flying away"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What lesson did David say God would teach through this battle?",
+      "answers": [
+        "That God doesn’t need weapons because He is the true God",
+        "That Israel is the strongest nation",
+        "That bigfoot is real",
+        "That slings are better than spears"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What weapon did David use, and where did he strike Goliath?",
+      "answers": [
+        "A sling; he struck Goliath in the head",
+        "A sword; he struck Goliath's arm",
+        "A spear; he struck Goliath's leg",
+        "A bow and arrow; he pierced Goliath's ear"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the Philistines do after Goliath was defeated?",
+      "answers": [
+        "They ran away",
+        "They attacked harder",
+        "They surrendered peacefully",
+        "They worshiped the Lord God"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
