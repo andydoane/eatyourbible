@@ -287,6 +287,7 @@ function updateVerseProgress(verseId, updater){
 function markLearnCompleted(verseId){
   updateVerseProgress(verseId, (verseProgress) => {
     verseProgress.learnCompleted = true;
+    verseProgress.lastPracticedAt = Date.now(); // 👈 ADD THIS
   });
 }
 
@@ -313,6 +314,9 @@ function markStandardGameCompleted(verseId, gameId, mode){
     if (mode === "hard") {
       verseProgress.games[gameId].hardCompleted = true;
     }
+
+    verseProgress.lastPracticedAt = Date.now(); // 👈 ADD THIS
+    
   });
 }
 
@@ -397,16 +401,49 @@ function getBibloPetEmojiForCurrentVerse(){
 }
 
 function getBibloPetStatusEmoji(verseProgress){
-  if (!isBibloPetUnlocked(verseProgress)) return "";
-  return "😀";
+  const status = getBibloPetStatus(verseProgress);
+
+  if (status === "happy") return "😀";
+  if (status === "hungry") return "🤤";
+  if (status === "sleeping") return "😴";
+
+  return "";
 }
 
 function getBibloPetStatusText(verseProgress){
-  if (!isBibloPetUnlocked(verseProgress)){
+  const status = getBibloPetStatus(verseProgress);
+
+  if (status === "locked"){
     return "Practice more to unlock your BibloPet.";
   }
 
-  return "Your BibloPet is happy. Practice this verse again to keep it happy!";
+  if (status === "happy"){
+    return "Your BibloPet is happy!";
+  }
+
+  if (status === "hungry"){
+    return "Your BibloPet is getting hungry. Practice this verse to feed it!";
+  }
+
+  if (status === "sleeping"){
+    return "Your BibloPet is asleep. Practice to wake it up.";
+  }
+
+  return "";
+}
+
+function getBibloPetStatus(verseProgress){
+  if (!isBibloPetUnlocked(verseProgress)) return "locked";
+
+  const last = verseProgress.lastPracticedAt;
+  if (!last) return "happy";
+
+  const now = Date.now();
+  const diffDays = (now - last) / (1000 * 60 * 60 * 24);
+
+  if (diffDays < 2) return "happy";
+  if (diffDays < 7) return "hungry";
+  return "sleeping";
 }
 
 async function playVerseDetailListen(){
