@@ -2205,7 +2205,10 @@ if (st.phase === "ref"){
   st.positions = [];
 
   if (VERSE_ID && st.mode){
+    st.rewardTitle = getStandardGameRewardTitle(VERSE_ID, "bouncing", st.mode);
     markStandardGameCompleted(VERSE_ID, "bouncing", st.mode);
+  } else {
+    st.rewardTitle = "Great job!";
   }
 
   render();
@@ -2681,7 +2684,7 @@ registerGame({
 
         const doneMsg = document.createElement("div");
         doneMsg.className = "bouncing-done-text";
-        doneMsg.innerHTML = `${rewardTitle}<br>You finished the verse!`;
+        doneMsg.innerHTML = `${st.rewardTitle || "Great job!"}<br>You finished the verse!`;
 
         const practiceBtn = document.createElement("button");
         practiceBtn.className = "bouncing-done-btn no-zoom";
@@ -3396,19 +3399,22 @@ function foodSliceStep(fieldEl){
       st.activeSlices = st.activeSlices.filter(piece => piece && piece.alive);
     }
 
-    if (now >= st.bonusEndsAt && (!st.bonusFruits || !st.bonusFruits.length) && (!st.activeSlices || !st.activeSlices.length)){
-      st.bonusRound = false;
-      st.running = false;
-      st.done = true;
+  if (now >= st.bonusEndsAt && (!st.bonusFruits || !st.bonusFruits.length) && (!st.activeSlices || !st.activeSlices.length)){
+    st.bonusRound = false;
+    st.running = false;
+    st.done = true;
 
-      if (VERSE_ID && st.mode){
-        markStandardGameCompleted(VERSE_ID, "foodslice", st.mode);
-      }
-
-      foodSliceStopMotion();
-      render();
-      return;
+    if (VERSE_ID && st.mode){
+      st.rewardTitle = getStandardGameRewardTitle(VERSE_ID, "foodslice", st.mode);
+      markStandardGameCompleted(VERSE_ID, "foodslice", st.mode);
+    } else {
+      st.rewardTitle = "Great job!";
     }
+
+    foodSliceStopMotion();
+    render();
+    return;
+  }
 
     foodSliceRenderField(fieldEl);
   } else {
@@ -4044,7 +4050,7 @@ registerGame({
 
         const title = document.createElement("div");
         title.className = "game-end-title";
-        title.textContent = rewardTitle;
+        title.textContent = st.rewardTitle || "Great job!";
 
         const stats = document.createElement("div");
         stats.className = "game-end-stats";
@@ -4560,26 +4566,25 @@ function chainChoose(word, btnEl){
       st.animating = true;
       st.wrongChoice = null;
 
-      chainAnimateCorrectChoice(btnEl, () => {
-        const live = State.chainGame;
-        if (!live) return;
+    chainAnimateCorrectChoice(btnEl, () => {
+      const live = State.chainGame;
+      if (!live) return;
 
-        live.builtCount += 1;
-        live.animating = false;
+      live.phase = "done";
+      live.done = true;
+      live.showRef = true;
+      live.choices = [];
+      live.animating = false;
 
-        if (live.builtCount >= live.wordTokenIndices.length){
-          live.phase = "book";
-          live.choices = chainMakeBookChoices(live.targetBook);
-          chainSetRandomChoiceIndex();
-          render();
-          return;
-        }
+      if (VERSE_ID && live.mode){
+        live.rewardTitle = getStandardGameRewardTitle(VERSE_ID, "chain", live.mode);
+        markStandardGameCompleted(VERSE_ID, "chain", live.mode);
+      } else {
+        live.rewardTitle = "Great job!";
+      }
 
-        const nextTokenIndex = live.wordTokenIndices[live.builtCount];
-        live.choices = chainMakeChoices(live.wordTokenIndices, nextTokenIndex);
-        chainSetRandomChoiceIndex();
-        render();
-      });
+      render();
+    });
 
       render();
       return;
@@ -4739,7 +4744,7 @@ registerGame({
 
       const title = document.createElement("div");
       title.className = "game-end-title";
-      title.textContent = rewardTitle;
+      title.textContent = st.rewardTitle || "Great job!";
 
       const stats = document.createElement("div");
       stats.className = "game-end-stats";
@@ -5198,7 +5203,10 @@ function towerChoose(choice){
       live.isAnimating = false;
 
       if (VERSE_ID && live.mode){
+        live.rewardTitle = getStandardGameRewardTitle(VERSE_ID, "tower", live.mode);
         markStandardGameCompleted(VERSE_ID, "tower", live.mode);
+      } else {
+        live.rewardTitle = "Great job!";
       }
 
       render();
