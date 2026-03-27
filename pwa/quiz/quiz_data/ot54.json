@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot54",
+  "pageTitle": "OT 54 Quiz",
+  "lessonTitleText": "David Plays Music for Saul",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot54image.png",
+  "themeClass": "theme-kahoot-blue",
+  "questions": [
+    {
+      "text": "When David was anointed, what did God’s Spirit do?",
+      "answers": [
+        "He left Saul and came upon David",
+        "He stayed with Saul, but lived in David, too",
+        "He left earth",
+        "He went to the temple"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What began to trouble Saul?",
+      "answers": [
+        "An evil spirit",
+        "A sickness",
+        "An enemy arm",
+        "A storm"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What idea did Saul’s servants have to help him?",
+      "answers": [
+        "Find someone to play music",
+        "Send him to battle",
+        "Build him a fancy new palace",
+        "Tell him to take a nap"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who did the servants find to play for Saul?",
+      "answers": [
+        "David",
+        "Samuel",
+        "Jonathan",
+        "Jesse"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened when David played his harp?",
+      "answers": [
+        "Saul felt better",
+        "Saul fell asleep",
+        "Saul became angry",
+        "Saul started dancing"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What book of the Bible contains many songs written by David?",
+      "answers": [
+        "Psalms",
+        "Proverbs",
+        "Genesis",
+        "David"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What does the word \"psalm\" mean?",
+      "answers": [
+        "Song",
+        "Prayer",
+        "Salt",
+        "Law"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jesus say on the cross that connects to the book of Psalms?",
+      "answers": [
+        "He said the opening words of Psalm 22",
+        "He spoke the Ten Commandments",
+        "He sang a brand new psalm",
+        "He sang every one of David's psalms"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What is Psalm 22 about?",
+      "answers": [
+        "The suffering and victory of Jesus",
+        "The creation of the world",
+        "King David",
+        "God parting the Red Sea"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How long before Jesus’ birth was Psalm 22 written?",
+      "answers": [
+        "About 1,000 years",
+        "About 100 years",
+        "About 10 years",
+        "About 2,000 years"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

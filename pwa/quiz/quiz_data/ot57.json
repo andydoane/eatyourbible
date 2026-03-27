@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot57",
+  "pageTitle": "OT 57 Quiz",
+  "lessonTitleText": "Jonathan Helps David Escape",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot57image.png",
+  "themeClass": "theme-kahoot-purple",
+  "questions": [
+    {
+      "text": "What promise did Saul make to Jonathan about David?",
+      "answers": [
+        "He would not harm David",
+        "He would let David keep Goliath's sword",
+        "He would let David be king after he died",
+        "He would reward David"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did Saul try to kill David the first time in this story?",
+      "answers": [
+        "He threw a spear at him while he played the harp",
+        "He sent soldiers after him",
+        "He poisoned his food",
+        "He locked him in a room"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did Michal help David escape from Saul?",
+      "answers": [
+        "She used a statue and goat hair to make it look like he was in bed",
+        "She hid him in a cave",
+        "She let him ride her fastest camel",
+        "She made a disguise for him to wear"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why didn’t David go to the New Moon feast?",
+      "answers": [
+        "To see how Saul reacted and if it was safe to return",
+        "He was sick",
+        "He was traveling",
+        "He forgot about it"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jonathan plan to use to signal David?",
+      "answers": [
+        "Arrows",
+        "A trumpet",
+        "A flag",
+        "A smoke signal"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why was Saul angry with Jonathan at the feast?",
+      "answers": [
+        "He thought Jonathan was on David’s side",
+        "Jonathan chewed with his mouth open",
+        "Jonathan spoke too loudly",
+        "Jonathan ate all the dessert"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Saul do to Jonathan in his anger?",
+      "answers": [
+        "He threw a spear at him",
+        "He sent him away",
+        "He took his bow",
+        "He punched him"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did Jonathan signal that it was not safe for David to return?",
+      "answers": [
+        "He shot an arrow far",
+        "He clapped his hands three times",
+        "He show at arrow short",
+        "He lit a fire"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who cried more when Jonathan and David said goodbye?",
+      "answers": [
+        "David",
+        "Jonathan",
+        "Saul",
+        "Michal"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How is Jesus the greatest friend?",
+      "answers": [
+        "He was willing to die to save His friends",
+        "He tells the funniest jokes",
+        "He listens to us",
+        "He helps us escape from King Saul"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
