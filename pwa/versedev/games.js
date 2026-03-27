@@ -2671,39 +2671,43 @@ registerGame({
 
     st.verseBox = verseBox;
 
-    if (st.done){
-      const doneWrap = document.createElement("div");
-      doneWrap.className = "bouncing-done";
+  if (st.done){
+        const rewardTitle = (VERSE_ID && st.mode)
+          ? getStandardGameRewardTitle(VERSE_ID, "bouncing", st.mode)
+          : "Great job!";
 
-      const doneMsg = document.createElement("div");
-      doneMsg.className = "bouncing-done-text";
-      doneMsg.innerHTML = `Great job!<br>You finished the verse!`;
+        const doneWrap = document.createElement("div");
+        doneWrap.className = "bouncing-done";
 
-      const practiceBtn = document.createElement("button");
-      practiceBtn.className = "bouncing-done-btn no-zoom";
-      practiceBtn.type = "button";
-      practiceBtn.textContent = "Practice Games";
-      practiceBtn.onclick = () => {
-        goToPracticeGamesFromGame();
-      };
+        const doneMsg = document.createElement("div");
+        doneMsg.className = "bouncing-done-text";
+        doneMsg.innerHTML = `${rewardTitle}<br>You finished the verse!`;
 
-      doneWrap.appendChild(doneMsg);
-      doneWrap.appendChild(practiceBtn);
-      coachActions.appendChild(doneWrap);
+        const practiceBtn = document.createElement("button");
+        practiceBtn.className = "bouncing-done-btn no-zoom";
+        practiceBtn.type = "button";
+        practiceBtn.textContent = "Practice Games";
+        practiceBtn.onclick = () => {
+          goToPracticeGamesFromGame();
+        };
 
-      const fieldW = Math.max(
-        320,
-        Math.floor(
-          coachActions.clientWidth ||
-          gameLayout?.querySelector(".learn-coach")?.clientWidth ||
-          window.innerWidth ||
-          320
-        )
-      );
+        doneWrap.appendChild(doneMsg);
+        doneWrap.appendChild(practiceBtn);
+        coachActions.appendChild(doneWrap);
 
-      bouncingApplyResponsiveDoneStyle(doneWrap, doneMsg, practiceBtn, fieldW);
-      return;
-    }
+        const fieldW = Math.max(
+          320,
+          Math.floor(
+            coachActions.clientWidth ||
+            gameLayout?.querySelector(".learn-coach")?.clientWidth ||
+            window.innerWidth ||
+            320
+          )
+        );
+
+        bouncingApplyResponsiveDoneStyle(doneWrap, doneMsg, practiceBtn, fieldW);
+        return;
+      }
 
     const field = document.createElement("div");
     field.className = "bouncing-field";
@@ -4034,9 +4038,13 @@ registerGame({
         emoji.className = "foodslice-done-emoji";
         emoji.textContent = "🎉";
 
+        const rewardTitle = (VERSE_ID && st.mode)
+          ? getStandardGameRewardTitle(VERSE_ID, "foodslice", st.mode)
+          : "Great job!";
+
         const title = document.createElement("div");
         title.className = "game-end-title";
-        title.textContent = "Great job!";
+        title.textContent = rewardTitle;
 
         const stats = document.createElement("div");
         stats.className = "game-end-stats";
@@ -4719,6 +4727,9 @@ registerGame({
       coachActions.innerHTML = "";
 
     if (st.done){
+      const rewardTitle = (VERSE_ID && st.mode)
+        ? getStandardGameRewardTitle(VERSE_ID, "chain", st.mode)
+        : "Great job!";
 
       const doneWrap = document.createElement("div");
       doneWrap.className = "chain-done";
@@ -4728,7 +4739,7 @@ registerGame({
 
       const title = document.createElement("div");
       title.className = "game-end-title";
-      title.textContent = "Great job!";
+      title.textContent = rewardTitle;
 
       const stats = document.createElement("div");
       stats.className = "game-end-stats";
@@ -5329,9 +5340,13 @@ function towerRenderCoach(st, gameRoot){
     const card = document.createElement("div");
     card.className = "game-end-card";
 
+    const rewardTitle = (VERSE_ID && st.mode)
+      ? getStandardGameRewardTitle(VERSE_ID, "tower", st.mode)
+      : "Great job!";
+
     const title = document.createElement("div");
     title.className = "game-end-title";
-    title.textContent = "Great job!";
+    title.textContent = rewardTitle;
 
     const stats = document.createElement("div");
     stats.className = "game-end-stats";
