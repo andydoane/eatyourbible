@@ -674,6 +674,50 @@ function getBibloPetStats(){
   return stats;
 }
 
+function getRandomHappyPetAnimationClass(){
+  const options = [
+    "pet-happy-pace",
+    "pet-happy-squish",
+    "pet-happy-flip"
+  ];
+
+  return options[Math.floor(Math.random() * options.length)];
+}
+
+function getBibloPetAnimationClass(verseId, verseProgress){
+  const status = getBibloPetStatus(verseProgress);
+
+  if (status === "locked") return "";
+
+  if (
+    State.petAnimationVerseId === verseId &&
+    State.petAnimationStatus === status &&
+    State.petAnimationClass
+  ){
+    return State.petAnimationClass;
+  }
+
+  let animationClass = "";
+
+  if (status === "happy"){
+    animationClass = getRandomHappyPetAnimationClass();
+  }
+
+  if (status === "hungry"){
+    animationClass = "pet-hungry-wobble";
+  }
+
+  if (status === "sleeping"){
+    animationClass = "pet-sleeping";
+  }
+
+  State.petAnimationVerseId = verseId;
+  State.petAnimationStatus = status;
+  State.petAnimationClass = animationClass;
+
+  return animationClass;
+}
+
 async function playVerseDetailListen(){
   try {
     setAudioSrc(refAudioFile());
@@ -896,6 +940,9 @@ const State = {
   finalIntroPromptDone: false,
   selectedVerseId: null,
   pendingPetUnlockVerseId: null,
+  petAnimationVerseId: null,
+  petAnimationStatus: "",
+  petAnimationClass: "",
 
   listenDone: false,
   listenPlaying: false,
@@ -2744,6 +2791,8 @@ function screenVerseDetail(idx){
   const petEmoji = unlocked ? getBibloPetEmojiForVerseId(verseId) : "🔒";
   const statusEmoji = unlocked ? getBibloPetStatusEmoji(verseProgress) : "🔒";
   const statusText = getBibloPetStatusText(verseProgress);
+  const petStatus = getBibloPetStatus(verseProgress);
+  const petAnimationClass = unlocked ? getBibloPetAnimationClass(verseId, verseProgress) : "";
   const learnStatus = verseProgress.learnCompleted ? "✔" : "";
 
   function gameRow(label, gameId){
@@ -2770,7 +2819,18 @@ function screenVerseDetail(idx){
             unlocked
               ? `
                 <div class="pet-stage">
-                  <div class="pet-emoji pet-emoji-unlocked">${petEmoji}</div>
+                  ${
+                    petStatus === "sleeping"
+                      ? `
+                        <div class="pet-sleep-zs" aria-hidden="true">
+                          <span>Z</span>
+                          <span>Z</span>
+                          <span>Z</span>
+                        </div>
+                      `
+                      : ""
+                  }
+                  <div class="pet-emoji pet-emoji-unlocked ${petAnimationClass}">${petEmoji}</div>
                 </div>
               `
               : `
@@ -3600,8 +3660,8 @@ function render(){
 
   const uniq = Array.from(new Set(indicesToRender.filter(i => i !== null && i >= 0)));
   for (const idx of uniq){
-  const screen = ["intro","title","progress","pet_stats","verse_detail","learn_level","practice_gate","listen","meaning","chunks","echo","hide","final_recall","celebration","pet_unlock","practice","game"][idx];
-  let slide = null;
+    const screen = ["intro","title","progress","pet_stats","verse_detail","learn_level","practice_gate","listen","meaning","chunks","echo","hide","final_recall","celebration","pet_unlock","practice","game"][idx];
+    let slide = null;
     if (screen === Screen.INTRO) slide = screenIntro(idx);
     if (screen === Screen.TITLE) slide = screenTitle(idx);
     if (screen === Screen.PROGRESS) slide = screenProgress(idx);
