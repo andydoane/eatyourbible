@@ -4429,58 +4429,83 @@ text-wrap: balance;
 }
 
 .pet-stage-rainbow{
-  animation: petRainbowShift 7s linear infinite;
-}
-
-@keyframes petRainbowShift{
-  0%   { background: #ff5f5f; }
-  16%  { background: #ff9f43; }
-  33%  { background: #ffe066; }
-  50%  { background: #5dd39e; }
-  66%  { background: #4dabf7; }
-  83%  { background: #b197fc; }
-  100% { background: #ff5f5f; }
+  background: linear-gradient(
+    180deg,
+    #ff5f5f 0%,
+    #ff9f43 18%,
+    #ffe066 36%,
+    #5dd39e 54%,
+    #4dabf7 72%,
+    #b197fc 88%,
+    #d88bff 100%
+  );
 }
 
 .pet-stage-stars{
   position: relative;
   overflow: hidden;
-  background: linear-gradient(180deg, #0d1230 0%, #171d45 100%);
+  background: linear-gradient(180deg, #081226 0%, #101a38 45%, #1a244a 100%);
 }
 
-.pet-stage-stars::before,
-.pet-stage-stars::after{
+.pet-stage-stars::before{
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
+  z-index: 0;
   background-image:
     radial-gradient(circle at 12% 22%, rgba(255,255,255,0.95) 0 1.2px, transparent 1.3px),
     radial-gradient(circle at 28% 68%, rgba(255,255,255,0.75) 0 1.5px, transparent 1.6px),
     radial-gradient(circle at 44% 18%, rgba(255,255,255,0.9) 0 1.1px, transparent 1.2px),
     radial-gradient(circle at 61% 56%, rgba(255,255,255,0.78) 0 1.4px, transparent 1.5px),
     radial-gradient(circle at 79% 28%, rgba(255,255,255,0.92) 0 1.2px, transparent 1.3px),
-    radial-gradient(circle at 88% 74%, rgba(255,255,255,0.82) 0 1.6px, transparent 1.7px);
-  opacity: 0.45;
-}
-
-.pet-stage-stars::before{
-  animation: petStarTwinkleA 3.2s ease-in-out infinite alternate;
+    radial-gradient(circle at 88% 74%, rgba(255,255,255,0.82) 0 1.6px, transparent 1.7px),
+    radial-gradient(circle at 20% 52%, rgba(255,255,255,0.65) 0 1px, transparent 1.1px),
+    radial-gradient(circle at 72% 14%, rgba(255,255,255,0.7) 0 1px, transparent 1.1px),
+    radial-gradient(circle at 84% 42%, rgba(255,255,255,0.58) 0 1.1px, transparent 1.2px);
+  opacity: 0.85;
 }
 
 .pet-stage-stars::after{
-  animation: petStarTwinkleB 4.2s ease-in-out infinite alternate;
+  content: "";
+  position: absolute;
+  width: 54px;
+  height: 54px;
+  top: 18px;
+  right: 22px;
+  border-radius: 50%;
+  background: #f7f1c6;
+  box-shadow:
+    0 0 0 2px rgba(255,255,255,0.04),
+    0 0 12px rgba(255,245,180,0.16);
+  pointer-events: none;
+  z-index: 0;
 }
 
-@keyframes petStarTwinkleA{
-  0%   { opacity: 0.18; }
-  100% { opacity: 0.72; }
+.pet-stage-stars::after{
+  clip-path: circle(50% at 50% 50%);
 }
 
-@keyframes petStarTwinkleB{
-  0%   { opacity: 0.08; }
-  100% { opacity: 0.5; }
+.pet-stage-stars{
+  isolation: isolate;
 }
+
+.pet-stage-stars .pet-emoji,
+.pet-stage-stars .pet-sleep-zs{
+  position: relative;
+  z-index: 1;
+}
+
+.pet-stage-stars::after{
+  box-sizing: border-box;
+}
+
+.pet-stage-stars::after{
+  background:
+    radial-gradient(circle at 38px 27px, #101a38 0 15px, transparent 16px),
+    #f7f1c6;
+}
+
 
 .pet-happy-idle{
   animation: petIdleSquish 1.6s ease-in-out infinite;
