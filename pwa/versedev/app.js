@@ -718,8 +718,7 @@ function setVerseBackgroundIndex(verseId, index){
 
 function cycleVerseBackground(verseId){
   const current = getVerseBackgroundIndex(verseId);
-  const TOTAL_BACKGROUNDS = 7;
-  const next = (current + 1) % TOTAL_BACKGROUNDS;
+  const next = (current + 1) % 2;
   setVerseBackgroundIndex(verseId, next);
 }
 
@@ -728,14 +727,8 @@ function getVerseBackgroundClass(verseId, verseProgress){
 
   const bgIndex = getVerseBackgroundIndex(verseId);
 
-  if (bgIndex === 1) return "pet-stage-rainbow";
-  if (bgIndex === 2) return "pet-stage-stars";
-  if (bgIndex === 3) return "pet-stage-checker";
-  if (bgIndex === 4) return "pet-stage-aurora";
-  if (bgIndex === 5) return "pet-stage-ocean";
-  if (bgIndex === 6) return "pet-stage-candy";
-
-  return "pet-stage-plain";
+  if (bgIndex === 1) return "pet-stage-stars";
+  return "pet-stage-rainbow";
 }
 
 function applyPetMotionVars(rootEl){
