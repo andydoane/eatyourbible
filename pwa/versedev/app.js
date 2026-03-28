@@ -674,6 +674,11 @@ function getBibloPetStats(){
   return stats;
 }
 
+const HAPPY_PET_ANIMATIONS = [
+  { class: "pet-happy-pace", duration: 2400 },
+  { class: "pet-happy-flip", duration: 1800 }
+];
+
 function isVerseMastered(verseProgress){
   if (!verseProgress || !verseProgress.games) return false;
 
@@ -782,25 +787,15 @@ function startPetAnimationCycle(verseId, verseProgress){
   }
 
   function scheduleAction(){
-    const actions = [
-      "pet-happy-pace",
-      "pet-happy-flip"
-    ];
+    const action =
+      HAPPY_PET_ANIMATIONS[Math.floor(Math.random() * HAPPY_PET_ANIMATIONS.length)];
 
-    State.petAnimActionClass =
-      actions[Math.floor(Math.random() * actions.length)];
+    State.petAnimActionClass = action.class;
+    State.petAnimActionDuration = action.duration;
     State.petAnimPhase = "action";
     render();
 
-    let actionTime = 1800;
-
-    if (State.petAnimActionClass === "pet-happy-pace"){
-      actionTime = 2400;
-    }
-
-    if (State.petAnimActionClass === "pet-happy-flip"){
-      actionTime = 1800;
-    }
+    const actionTime = State.petAnimActionDuration || 2000;
 
     State.petAnimTimer = setTimeout(() => {
       State.petAnimTimer = null;
@@ -1053,6 +1048,7 @@ const State = {
   petAnimTimer: null,
   petAnimPhase: "idle", // "idle" | "action"
   petAnimActionClass: "",
+  petAnimActionDuration: 0,
 
   listenDone: false,
   listenPlaying: false,
