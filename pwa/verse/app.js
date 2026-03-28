@@ -1221,14 +1221,14 @@ const LEARN_LEVEL_OPTIONS = [
     label: "Not at all",
     emoji: "👎",
     color: "#a7cb6f",
-    textColor: "#a7cb6f",
+    textColor: "#ffffff",
     startScreen: Screen.LISTEN,
     level: "not_at_all"
   },
   {
     label: "A little bit",
     emoji: "👌",
-    color: "#ffc751",
+    color: "#f2f2f2",
     textColor: "#333333",
     startScreen: Screen.ECHO,
     level: "a_little"
