@@ -718,7 +718,8 @@ function setVerseBackgroundIndex(verseId, index){
 
 function cycleVerseBackground(verseId){
   const current = getVerseBackgroundIndex(verseId);
-  const next = (current + 1) % 2;
+  const TOTAL_BACKGROUNDS = 19;
+  const next = (current + 1) % TOTAL_BACKGROUNDS;
   setVerseBackgroundIndex(verseId, next);
 }
 
@@ -728,6 +729,24 @@ function getVerseBackgroundClass(verseId, verseProgress){
   const bgIndex = getVerseBackgroundIndex(verseId);
 
   if (bgIndex === 1) return "pet-stage-stars";
+  if (bgIndex === 2) return "pet-stage-clouds";
+  if (bgIndex === 3) return "pet-stage-space";
+  if (bgIndex === 4) return "pet-stage-aurora-green";
+  if (bgIndex === 5) return "pet-stage-aurora-pink";
+  if (bgIndex === 6) return "pet-stage-aurora-ice";
+  if (bgIndex === 7) return "pet-stage-checker-classic";
+  if (bgIndex === 8) return "pet-stage-checker-sunset";
+  if (bgIndex === 9) return "pet-stage-checker-mint";
+  if (bgIndex === 10) return "pet-stage-checker-night";
+  if (bgIndex === 11) return "pet-stage-confetti";
+  if (bgIndex === 12) return "pet-stage-sunset";
+  if (bgIndex === 13) return "pet-stage-bubbles";
+  if (bgIndex === 14) return "pet-stage-lava";
+  if (bgIndex === 15) return "pet-stage-water";
+  if (bgIndex === 16) return "pet-stage-garden";
+  if (bgIndex === 17) return "pet-stage-ice";
+  if (bgIndex === 18) return "pet-stage-plain";
+
   return "pet-stage-rainbow";
 }
 
