@@ -4813,31 +4813,6 @@ text-wrap: balance;
   background-size: 220px 72px;
 }
 
-.pet-stage-garden{
-  position: relative;
-  overflow: hidden;
-  background: linear-gradient(180deg, #d7f7ff 0%, #bff3c9 44%, #6fcf6d 100%);
-}
-
-.pet-stage-garden::before{
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 42%;
-  pointer-events: none;
-  z-index: 0;
-  background:
-    radial-gradient(circle at 12% 84%, #ff7aa8 0 12px, transparent 13px),
-    radial-gradient(circle at 24% 78%, #ffd45c 0 12px, transparent 13px),
-    radial-gradient(circle at 38% 86%, #8ee8ff 0 12px, transparent 13px),
-    radial-gradient(circle at 54% 80%, #ff9a5e 0 12px, transparent 13px),
-    radial-gradient(circle at 68% 88%, #b897ff 0 12px, transparent 13px),
-    radial-gradient(circle at 82% 82%, #ff7aa8 0 12px, transparent 13px),
-    linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(48,128,48,.08) 44%, rgba(48,128,48,.18) 100%);
-}
-
 .pet-stage-ice{
   position: relative;
   overflow: hidden;
@@ -4853,6 +4828,156 @@ text-wrap: balance;
   background:
     linear-gradient(120deg, rgba(255,255,255,.22) 0 8%, transparent 8% 16%, rgba(255,255,255,.14) 16% 24%, transparent 24% 32%, rgba(255,255,255,.18) 32% 40%, transparent 40% 100%);
   opacity: .7;
+}
+
+
+
+.pet-stage-desert{
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, #9ed8ff 0%, #ffd090 48%, #f1a85f 100%);
+}
+
+.pet-stage-desert::before,
+.pet-stage-desert::after{
+  content: "";
+  position: absolute;
+  left: -10%;
+  right: -10%;
+  border-radius: 50%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.pet-stage-desert::before{
+  bottom: -14%;
+  height: 46%;
+  background:
+    radial-gradient(ellipse at 30% 40%, rgba(255,222,150,0.78) 0 22%, transparent 23%),
+    linear-gradient(180deg, #f6c77b 0%, #dd8e46 100%);
+}
+
+.pet-stage-desert::after{
+  bottom: -22%;
+  height: 38%;
+  background: linear-gradient(180deg, #e7b062 0%, #c97634 100%);
+  opacity: 0.9;
+}
+
+.pet-stage-library{
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, #6f4d33 0%, #8c6341 42%, #4b2f22 100%);
+}
+
+.pet-stage-library::before{
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      rgba(79,49,33,0.00) 0 24px,
+      rgba(46,28,18,0.28) 24px 28px,
+      rgba(163,106,66,0.18) 28px 44px,
+      rgba(68,42,28,0.30) 44px 48px,
+      rgba(127,83,53,0.18) 48px 74px,
+      rgba(46,28,18,0.28) 74px 78px
+    );
+  opacity: 0.82;
+}
+
+.pet-stage-library::after{
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 22%;
+  background: linear-gradient(180deg, rgba(0,0,0,0), rgba(0,0,0,0.22));
+  z-index: 0;
+}
+
+.pet-stage-denim-blue{
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, #b8d4ef 0%, #7ca7d0 100%);
+}
+
+.pet-stage-denim-blue::before{
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 74px, rgba(255,255,255,0.25) 74px 76px),
+    repeating-linear-gradient(180deg, transparent 0 74px, rgba(255,255,255,0.25) 74px 76px),
+    repeating-linear-gradient(90deg, rgba(41,82,122,0.10) 0 38px, rgba(90,131,175,0.06) 38px 76px),
+    repeating-linear-gradient(180deg, rgba(255,255,255,0.06) 0 38px, rgba(0,0,0,0.04) 38px 76px);
+  opacity: 0.9;
+}
+
+.pet-stage-denim-red{
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, #efb8b8 0%, #cf7c7c 100%);
+}
+
+.pet-stage-denim-red::before{
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 74px, rgba(255,255,255,0.25) 74px 76px),
+    repeating-linear-gradient(180deg, transparent 0 74px, rgba(255,255,255,0.25) 74px 76px),
+    repeating-linear-gradient(90deg, rgba(122,41,41,0.10) 0 38px, rgba(175,90,90,0.06) 38px 76px),
+    repeating-linear-gradient(180deg, rgba(255,255,255,0.06) 0 38px, rgba(0,0,0,0.04) 38px 76px);
+  opacity: 0.9;
+}
+
+.pet-stage-denim-green{
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, #c7e8c8 0%, #7eb887 100%);
+}
+
+.pet-stage-denim-green::before{
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 74px, rgba(255,255,255,0.25) 74px 76px),
+    repeating-linear-gradient(180deg, transparent 0 74px, rgba(255,255,255,0.25) 74px 76px),
+    repeating-linear-gradient(90deg, rgba(48,102,64,0.10) 0 38px, rgba(102,160,112,0.06) 38px 76px),
+    repeating-linear-gradient(180deg, rgba(255,255,255,0.06) 0 38px, rgba(0,0,0,0.04) 38px 76px);
+  opacity: 0.9;
+}
+
+/* 7. Blueprint Grid */
+.pet-stage-blueprint{
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, #0b5ea8 0%, #0a4d89 100%);
+}
+
+.pet-stage-blueprint::before{
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.08) 0 1px, transparent 1px 32px),
+    repeating-linear-gradient(180deg, rgba(255,255,255,0.08) 0 1px, transparent 1px 32px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.15) 0 2px, transparent 2px 160px),
+    repeating-linear-gradient(180deg, rgba(255,255,255,0.15) 0 2px, transparent 2px 160px);
 }
 
 .pet-stage-plain{
