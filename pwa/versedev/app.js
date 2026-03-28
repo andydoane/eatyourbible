@@ -755,6 +755,64 @@ function getVerseBackgroundClass(verseId, verseProgress){
   return "pet-stage-rainbow";
 }
 
+const HUNGRY_FOOD_POOL = [
+  "🍎", "🥩", "🧀", "🍓", "🥕", "🌮", "🍇", "🍪", "🥨", "🍌"
+];
+
+let hungryFoodTimer = null;
+
+function getRandomHungryFoodPair(){
+  if (HUNGRY_FOOD_POOL.length < 2){
+    return { left: "🍎", right: "🍞" };
+  }
+
+  const leftIndex = Math.floor(Math.random() * HUNGRY_FOOD_POOL.length);
+  let rightIndex = Math.floor(Math.random() * HUNGRY_FOOD_POOL.length);
+
+  while (rightIndex === leftIndex){
+    rightIndex = Math.floor(Math.random() * HUNGRY_FOOD_POOL.length);
+  }
+
+  return {
+    left: HUNGRY_FOOD_POOL[leftIndex],
+    right: HUNGRY_FOOD_POOL[rightIndex]
+  };
+}
+
+function clearHungryFoodCycle(){
+  if (hungryFoodTimer){
+    clearInterval(hungryFoodTimer);
+    hungryFoodTimer = null;
+  }
+}
+
+function updateHungryFoodTargets(rootEl){
+  const leftEl = rootEl?.querySelector(".pet-hungry-food-target.left");
+  const rightEl = rootEl?.querySelector(".pet-hungry-food-target.right");
+  if (!leftEl || !rightEl) return;
+
+  const pair = getRandomHungryFoodPair();
+  leftEl.textContent = pair.left;
+  rightEl.textContent = pair.right;
+}
+
+function startHungryFoodCycle(rootEl, petStatus){
+  clearHungryFoodCycle();
+
+  if (petStatus !== "hungry") return;
+
+  updateHungryFoodTargets(rootEl);
+
+  hungryFoodTimer = setInterval(() => {
+    if (!rootEl || !rootEl.isConnected){
+      clearHungryFoodCycle();
+      return;
+    }
+
+    updateHungryFoodTargets(rootEl);
+  }, 6000);
+}
+
 function applyPetMotionVars(rootEl){
   const stage = rootEl?.querySelector(".pet-stage");
   if (!stage) return;
@@ -804,9 +862,9 @@ function getBibloPetAnimationClass(verseId, verseProgress){
     return "pet-sleeping";
   }
 
-  // Hungry = simple loop (for now)
+  // Hungry = pacing with disappearing food targets
   if (status === "hungry"){
-    return "pet-hungry-wobble";
+    return "pet-hungry-pace";
   }
 
   // Happy = controlled system
@@ -3012,6 +3070,16 @@ function screenVerseDetail(idx){
                       `
                       : ""
                   }
+                  ${
+                    petStatus === "hungry"
+                      ? `
+                        <div class="pet-hungry-food-targets" aria-hidden="true">
+                          <span class="pet-hungry-food-target left">🍎</span>
+                          <span class="pet-hungry-food-target right">🍞</span>
+                        </div>
+                      `
+                      : ""
+                  }
                   <div class="pet-emoji pet-emoji-unlocked ${petAnimationClass}">${petEmoji}</div>
                 </div>
 
@@ -3077,6 +3145,7 @@ function screenVerseDetail(idx){
 
   requestAnimationFrame(() => {
     applyPetMotionVars(wrap);
+    startHungryFoodCycle(wrap, petStatus);
   });
 
   return makeSlide({ idx, bg: "var(--purple)", inner: wrap });
