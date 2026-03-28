@@ -679,6 +679,7 @@ const HAPPY_PET_ANIMATIONS = [
   { class: "pet-happy-flip", duration: 1800 },
   { class: "pet-happy-jump", duration: 2600 },
   { class: "pet-happy-dance", duration: 2200 },
+  { class: "pet-happy-lean", duration: 2000 },
   { class: "pet-happy-zoomies", duration: 2800 }
 ];
 
