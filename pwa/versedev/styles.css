@@ -3882,7 +3882,7 @@ text-wrap: balance;
 
 .pet-happy-hop-dance{
   transform-origin: center bottom;
-  animation: petHappyHopDance 10.8s ease-in-out 1 forwards;
+  animation: petHappyHopDance 18s ease-in-out 1 forwards;
 }
 
 /* Hungry animation */
@@ -4240,98 +4240,128 @@ text-wrap: balance;
     transform: translateX(0) translateY(0) skewX(0deg) scaleX(1) scaleY(1);
   }
 
-  /* -------------------------------------------------
-     Hop left
-     ------------------------------------------------- */
-  4%{
-    transform: translateX(0) translateY(0) skewX(0deg) scaleX(1.2) scaleY(0.8);
+  /* =========================
+     1) Hop LEFT
+     ========================= */
+  3%{
+    transform: translateX(0) translateY(0) scaleX(1.2) scaleY(0.8);
   }
-  10%{
-    transform: translateX(calc(var(--pet-hop-side) * -1)) translateY(calc(var(--pet-jump-3) * -1)) skewX(0deg) scaleX(0.86) scaleY(1.2);
+  8%{
+    transform: translateX(calc(var(--pet-hop-side) * -1)) translateY(calc(var(--pet-jump-3) * -1)) scaleX(0.86) scaleY(1.2);
   }
-  14%{
-    transform: translateX(calc(var(--pet-hop-side) * -1)) translateY(0) skewX(0deg) scaleX(1.12) scaleY(0.9);
+  11%{
+    transform: translateX(calc(var(--pet-hop-side) * -1)) translateY(0) scaleX(1.12) scaleY(0.9);
   }
 
-  /* -------------------------------------------------
-     Dance Ten at left
-     ------------------------------------------------- */
+  /* =========================
+     2) Dance LEFT
+     ========================= */
+  14%{
+    transform: translateX(calc(var(--pet-hop-side) * -1 - 6px)) skewX(-14deg) scale(1.04,.96);
+  }
   18%{
-    transform: translateX(calc(var(--pet-hop-side) * -1 - 6px)) translateY(0) skewX(-14deg) scaleX(1.04) scaleY(0.96);
+    transform: translateX(calc(var(--pet-hop-side) * -1 + 6px)) skewX(14deg) scale(.96,1.04);
   }
   22%{
-    transform: translateX(calc(var(--pet-hop-side) * -1 + 6px)) translateY(0) skewX(14deg) scaleX(0.96) scaleY(1.04);
+    transform: translateX(calc(var(--pet-hop-side) * -1 - 12px)) skewX(-20deg) scale(1.1,.9);
   }
   26%{
-    transform: translateX(calc(var(--pet-hop-side) * -1 - 12px)) translateY(0) skewX(-20deg) scaleX(1.1) scaleY(0.9);
+    transform: translateX(calc(var(--pet-hop-side) * -1 + 12px)) skewX(20deg) scale(.9,1.1);
   }
   30%{
-    transform: translateX(calc(var(--pet-hop-side) * -1 + 12px)) translateY(0) skewX(20deg) scaleX(0.9) scaleY(1.1);
+    transform: translateX(calc(var(--pet-hop-side) * -1)) skewX(0deg) scale(1.05,.95);
   }
-  34%{
-    transform: translateX(calc(var(--pet-hop-side) * -1 - 6px)) translateY(0) skewX(-10deg) scaleX(1.04) scaleY(0.96);
+
+  /* Flip to face right */
+  32%{
+    transform: translateX(calc(var(--pet-hop-side) * -1)) scaleX(-1) scaleY(0.95);
   }
-  38%{
-    transform: translateX(calc(var(--pet-hop-side) * -1 + 6px)) translateY(0) skewX(10deg) scaleX(0.96) scaleY(1.04);
+
+  /* =========================
+     3) Hop CENTER (facing right)
+     ========================= */
+  35%{
+    transform: translateX(calc(var(--pet-hop-side) * -1)) scaleX(-1.2) scaleY(0.8);
   }
-  42%{
-    transform: translateX(calc(var(--pet-hop-side) * -1 - 16px)) translateY(0) skewX(-24deg) scaleX(1.14) scaleY(0.86);
+  40%{
+    transform: translateX(0) translateY(calc(var(--pet-jump-3) * -1)) scaleX(-0.86) scaleY(1.2);
   }
+  43%{
+    transform: translateX(0) translateY(0) scaleX(-1.12) scaleY(0.9);
+  }
+
+  /* =========================
+     4) Dance CENTER (facing right)
+     ========================= */
   46%{
-    transform: translateX(calc(var(--pet-hop-side) * -1 + 16px)) translateY(0) skewX(24deg) scaleX(0.86) scaleY(1.14);
+    transform: translateX(-6px) skewX(-14deg) scaleX(-1.04) scaleY(0.96);
   }
   50%{
-    transform: translateX(calc(var(--pet-hop-side) * -1)) translateY(0) skewX(0deg) scaleX(1.05) scaleY(0.95);
+    transform: translateX(6px) skewX(14deg) scaleX(-0.96) scaleY(1.04);
   }
-
-  /* flip to face right */
-  52%{
-    transform: translateX(calc(var(--pet-hop-side) * -1)) translateY(0) skewX(0deg) scaleX(-1) scaleY(0.95);
+  54%{
+    transform: translateX(-12px) skewX(-20deg) scaleX(-1.1) scaleY(0.9);
   }
-
-  /* -------------------------------------------------
-     Hop back to center
-     ------------------------------------------------- */
-  56%{
-    transform: translateX(calc(var(--pet-hop-side) * -1)) translateY(0) skewX(0deg) scaleX(-1.2) scaleY(0.8);
+  58%{
+    transform: translateX(12px) skewX(20deg) scaleX(-0.9) scaleY(1.1);
   }
   62%{
-    transform: translateX(0) translateY(calc(var(--pet-jump-3) * -1)) skewX(0deg) scaleX(-0.86) scaleY(1.2);
-  }
-  66%{
-    transform: translateX(0) translateY(0) skewX(0deg) scaleX(-1.12) scaleY(0.9);
+    transform: translateX(0) skewX(0deg) scaleX(-1.05) scaleY(0.95);
   }
 
-  /* -------------------------------------------------
-     Dance Ten at center, facing right
-     ------------------------------------------------- */
+  /* =========================
+     5) Hop RIGHT (still facing right)
+     ========================= */
+  65%{
+    transform: translateX(0) scaleX(-1.2) scaleY(0.8);
+  }
   70%{
-    transform: translateX(-6px) translateY(0) skewX(-14deg) scaleX(-1.04) scaleY(0.96);
+    transform: translateX(var(--pet-hop-side)) translateY(calc(var(--pet-jump-3) * -1)) scaleX(-0.86) scaleY(1.2);
   }
-  74%{
-    transform: translateX(6px) translateY(0) skewX(14deg) scaleX(-0.96) scaleY(1.04);
+  73%{
+    transform: translateX(var(--pet-hop-side)) translateY(0) scaleX(-1.12) scaleY(0.9);
   }
-  78%{
-    transform: translateX(-12px) translateY(0) skewX(-20deg) scaleX(-1.1) scaleY(0.9);
+
+  /* =========================
+     6) Dance RIGHT
+     ========================= */
+  76%{
+    transform: translateX(calc(var(--pet-hop-side) - 6px)) skewX(-14deg) scaleX(-1.04) scaleY(0.96);
   }
-  82%{
-    transform: translateX(12px) translateY(0) skewX(20deg) scaleX(-0.9) scaleY(1.1);
+  80%{
+    transform: translateX(calc(var(--pet-hop-side) + 6px)) skewX(14deg) scaleX(-0.96) scaleY(1.04);
   }
-  86%{
-    transform: translateX(-6px) translateY(0) skewX(-10deg) scaleX(-1.04) scaleY(0.96);
+  84%{
+    transform: translateX(calc(var(--pet-hop-side) - 12px)) skewX(-20deg) scaleX(-1.1) scaleY(0.9);
   }
+  88%{
+    transform: translateX(calc(var(--pet-hop-side) + 12px)) skewX(20deg) scaleX(-0.9) scaleY(1.1);
+  }
+
+  /* Flip to face left */
   90%{
-    transform: translateX(6px) translateY(0) skewX(10deg) scaleX(-0.96) scaleY(1.04);
+    transform: translateX(var(--pet-hop-side)) scaleX(1) scaleY(0.95);
   }
-  94%{
-    transform: translateX(-16px) translateY(0) skewX(-24deg) scaleX(-1.14) scaleY(0.86);
+
+  /* =========================
+     7) Hop CENTER (facing left)
+     ========================= */
+  92%{
+    transform: translateX(var(--pet-hop-side)) scaleX(1.2) scaleY(0.8);
   }
+  96%{
+    transform: translateX(0) translateY(calc(var(--pet-jump-3) * -0.5)) scaleX(0.9) scaleY(1.1);
+  }
+
+  /* =========================
+     8) Final CENTER DANCE (settle)
+     ========================= */
   98%{
-    transform: translateX(16px) translateY(0) skewX(24deg) scaleX(-0.86) scaleY(1.14);
+    transform: translateX(-6px) skewX(-10deg) scale(1.04,.96);
   }
 
   100%{
-    transform: translateX(0) translateY(0) skewX(0deg) scaleX(1) scaleY(1);
+    transform: translateX(0) skewX(0deg) scale(1,1);
   }
 }
 
