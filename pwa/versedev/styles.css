@@ -4517,9 +4517,13 @@ text-wrap: balance;
 
 /* Put pet above decorative background layers */
 .pet-stage[class*="pet-stage-"] .pet-emoji,
-.pet-stage[class*="pet-stage-"] .pet-sleep-zs,
 .pet-stage[class*="pet-stage-"] .pet-locked-text{
   position: relative;
+  z-index: 1;
+}
+
+.pet-stage[class*="pet-stage-"] .pet-sleep-zs{
+  position: absolute;
   z-index: 1;
 }
 
