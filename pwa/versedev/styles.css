@@ -3501,6 +3501,9 @@ text-wrap: balance;
   --pet-jump-1: 48px;
   --pet-jump-2: 92px;
   --pet-jump-3: 220px;
+  --pet-roll-left: -200px;
+  --pet-roll-right: 200px;
+  --pet-hop-side: 140px;
   width: 100%;
   min-height: 190px;
   border-radius: 28px;
@@ -3857,11 +3860,6 @@ text-wrap: balance;
   animation: petHappyJump 2.6s ease-in-out 1 forwards;
 }
 
-.pet-happy-dance{
-  transform-origin: center bottom;
-  animation: petHappyDance 2.2s ease-in-out 1 forwards;
-}
-
 .pet-happy-zoomies{
   transform-origin: center bottom;
   animation: petHappyZoomies 2.8s ease-in-out 1 forwards;
@@ -3870,6 +3868,16 @@ text-wrap: balance;
 .pet-happy-lean{
   transform-origin: center bottom;
   animation: petHappyLean 2s ease-in-out 1 forwards;
+}
+
+.pet-happy-roll-bob{
+  transform-origin: center center;
+  animation: petHappyRollBob 4.8s ease-in-out 1 forwards;
+}
+
+.pet-happy-hop-combo{
+  transform-origin: center bottom;
+  animation: petHappyHopCombo 5.2s ease-in-out 1 forwards;
 }
 
 /* Hungry animation */
@@ -4041,35 +4049,6 @@ text-wrap: balance;
   }
 }
 
-@keyframes petHappyDance{
-  0%{
-    transform: translateX(0) translateY(0) rotate(0deg) skewX(0deg) scale(1,1);
-  }
-  12%{
-    transform: translateX(-10px) translateY(-4px) rotate(-5deg) skewX(-10deg) scale(1.03,0.97);
-  }
-  24%{
-    transform: translateX(10px) translateY(0) rotate(5deg) skewX(10deg) scale(0.98,1.02);
-  }
-  36%{
-    transform: translateX(-12px) translateY(-4px) rotate(-6deg) skewX(-12deg) scale(1.04,0.96);
-  }
-  48%{
-    transform: translateX(12px) translateY(0) rotate(6deg) skewX(12deg) scale(0.98,1.03);
-  }
-  60%{
-    transform: translateX(-8px) translateY(-3px) rotate(-4deg) skewX(-8deg) scale(1.02,0.98);
-  }
-  72%{
-    transform: translateX(8px) translateY(0) rotate(4deg) skewX(8deg) scale(0.99,1.01);
-  }
-  86%{
-    transform: translateX(0) translateY(-2px) rotate(0deg) skewX(0deg) scale(1.03,0.97);
-  }
-  100%{
-    transform: translateX(0) translateY(0) rotate(0deg) skewX(0deg) scale(1,1);
-  }
-}
 
 @keyframes petHappyLean{
   0%{
@@ -4163,6 +4142,83 @@ text-wrap: balance;
   }
   100%{
     transform: translateX(0) translateY(0) scaleX(1) scaleY(1);
+  }
+}
+
+@keyframes petHappyRollBob{
+  0%{
+    transform: translateX(0) translateY(0) rotate(0deg);
+  }
+  14%{
+    transform: translateX(calc(var(--pet-roll-left) * 0.45)) translateY(-6px) rotate(-420deg);
+  }
+  28%{
+    transform: translateX(var(--pet-roll-left)) translateY(0) rotate(-1080deg);
+  }
+  50%{
+    transform: translateX(0) translateY(-5px) rotate(0deg);
+  }
+  72%{
+    transform: translateX(var(--pet-roll-right)) translateY(0) rotate(1080deg);
+  }
+  86%{
+    transform: translateX(calc(var(--pet-roll-right) * 0.4)) translateY(-5px) rotate(420deg);
+  }
+  100%{
+    transform: translateX(0) translateY(0) rotate(0deg);
+  }
+}
+
+@keyframes petHappyHopCombo{
+  0%{
+    transform: translateX(0) translateY(0) scale(1,1);
+  }
+
+  /* Left and back */
+  8%{
+    transform: translateX(0) translateY(0) scale(1.2,0.8);
+  }
+  20%{
+    transform: translateX(calc(var(--pet-hop-side) * -1)) translateY(calc(var(--pet-jump-3) * -1)) scale(0.86,1.2);
+  }
+  28%{
+    transform: translateX(calc(var(--pet-hop-side) * -1)) translateY(0) scale(1.12,0.9);
+  }
+  32%{
+    transform: translateX(calc(var(--pet-hop-side) * -1)) translateY(0) scaleX(-1) scaleY(0.9);
+  }
+  40%{
+    transform: translateX(calc(var(--pet-hop-side) * -1)) translateY(0) scale(1.2,0.8) scaleX(-1);
+  }
+  52%{
+    transform: translateX(0) translateY(calc(var(--pet-jump-3) * -1)) scale(0.86,1.2) scaleX(-1);
+  }
+  58%{
+    transform: translateX(0) translateY(0) scale(1.12,0.9) scaleX(-1);
+  }
+
+  /* Right and back */
+  64%{
+    transform: translateX(0) translateY(0) scaleX(-1.2) scaleY(0.8);
+  }
+  76%{
+    transform: translateX(var(--pet-hop-side)) translateY(calc(var(--pet-jump-3) * -1)) scaleX(-0.86) scaleY(1.2);
+  }
+  84%{
+    transform: translateX(var(--pet-hop-side)) translateY(0) scaleX(-1.12) scaleY(0.9);
+  }
+  88%{
+    transform: translateX(var(--pet-hop-side)) translateY(0) scale(1,0.9);
+  }
+  92%{
+    transform: translateX(var(--pet-hop-side)) translateY(0) scale(1.2,0.8);
+  }
+  98%{
+    transform: translateX(0) translateY(calc(var(--pet-jump-3) * -0.3)) scale(0.96,1.06);
+  }
+
+  100%{
+    transform: translateX(0) translateY(0) scale(1,1);
   }
 }
 
