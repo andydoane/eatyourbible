@@ -3344,11 +3344,22 @@ text-wrap: balance;
 /* =========================
    Verse Detail Screen
    ========================= */
-.detail-screen{
-  height: 100%;
+.detail-scroll{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   display: flex;
   flex-direction: column;
-  padding: 14px;
+  gap: 14px;
+  padding-bottom: 10px;
+
+  scrollbar-width: none;      /* Firefox */
+  -ms-overflow-style: none;   /* old Edge/IE */
+}
+
+.detail-scroll::-webkit-scrollbar{
+  display: none;              /* Chrome, Safari */
 }
 
 .detail-shell{
@@ -3482,6 +3493,8 @@ text-wrap: balance;
 }
 
 .pet-stage{
+  position: relative;
+  overflow: hidden;
   width: 100%;
   min-height: 190px;
   border-radius: 28px;
@@ -3494,10 +3507,12 @@ text-wrap: balance;
   gap: 10px;
   padding: 20px 16px;
   text-align: center;
+
+  container-type: size;
 }
 
 .pet-emoji{
-  font-size: clamp(72px, 16vw, 128px);
+  font-size: clamp(56px, 33cqh, 88px);
   line-height: 1;
 }
 
