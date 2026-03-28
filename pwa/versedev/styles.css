@@ -3833,16 +3833,16 @@ text-wrap: balance;
 
 /* Happy animations */
 
-.pet-happy-pace{
-  animation: petHappyPace 5.4s ease-in-out infinite;
+.pet-happy-idle{
+  animation: petHappyIdle 1.5s ease-in-out infinite;
 }
 
-.pet-happy-squish{
-  animation: petHappySquish 2.1s ease-in-out infinite;
+.pet-happy-pace{
+  animation: petHappyPace 2.4s ease-in-out 1 forwards;
 }
 
 .pet-happy-flip{
-  animation: petHappyFlip 2.8s ease-in-out infinite;
+  animation: petHappyFlip 1.8s ease-in-out 1 forwards;
 }
 
 /* Hungry animation */
@@ -3899,39 +3899,40 @@ text-wrap: balance;
 
 @keyframes petHappyPace{
   0%{
-    transform: translateX(-90px) translateY(0) scaleX(1);
+    transform: translateX(0) translateY(0) scaleX(1);
   }
-  12%{
-    transform: translateX(-50px) translateY(-4px) scaleX(1);
+  10%{
+    transform: translateX(-18px) translateY(-3px) scaleX(1);
   }
-  24%{
-    transform: translateX(0px) translateY(0) scaleX(1);
+  20%{
+    transform: translateX(-42px) translateY(0) scaleX(1);
   }
-  36%{
-    transform: translateX(50px) translateY(-4px) scaleX(1);
+  30%{
+    transform: translateX(-18px) translateY(-3px) scaleX(1);
   }
-  48%{
-    transform: translateX(90px) translateY(0) scaleX(1);
+  40%{
+    transform: translateX(0) translateY(0) scaleX(1);
   }
   50%{
-    transform: translateX(90px) translateY(0) scaleX(-1);
+    transform: translateX(0) translateY(0) scaleX(-1);
   }
-  62%{
-    transform: translateX(50px) translateY(-4px) scaleX(-1);
+  60%{
+    transform: translateX(18px) translateY(-3px) scaleX(-1);
   }
-  74%{
-    transform: translateX(0px) translateY(0) scaleX(-1);
+  70%{
+    transform: translateX(42px) translateY(0) scaleX(-1);
   }
-  86%{
-    transform: translateX(-50px) translateY(-4px) scaleX(-1);
+  80%{
+    transform: translateX(18px) translateY(-3px) scaleX(-1);
   }
-  98%{
-    transform: translateX(-90px) translateY(0) scaleX(-1);
+  90%{
+    transform: translateX(0) translateY(0) scaleX(-1);
   }
   100%{
-    transform: translateX(-90px) translateY(0) scaleX(1);
+    transform: translateX(0) translateY(0) scaleX(1);
   }
 }
+
 
 @keyframes petHappySquish{
   0%, 100%{
@@ -3955,20 +3956,32 @@ text-wrap: balance;
 }
 
 @keyframes petHappyFlip{
-  0%, 100%{
-    transform: rotate(0deg) scaleX(1);
+  0%{
+    transform: translateX(0) translateY(0) rotate(0deg) scaleX(1);
   }
   20%{
-    transform: rotate(180deg) scaleX(0.08);
+    transform: translateX(0) translateY(-6px) rotate(180deg) scaleX(0.08);
   }
   40%{
-    transform: rotate(360deg) scaleX(1);
+    transform: translateX(0) translateY(0) rotate(360deg) scaleX(1);
   }
   60%{
-    transform: rotate(540deg) scaleX(0.08);
+    transform: translateX(0) translateY(-6px) rotate(540deg) scaleX(0.08);
   }
   80%{
-    transform: rotate(720deg) scaleX(1);
+    transform: translateX(0) translateY(0) rotate(720deg) scaleX(1);
+  }
+  100%{
+    transform: translateX(0) translateY(0) rotate(0deg) scaleX(1);
+  }
+}
+
+@keyframes petHappyIdle{
+  0%, 100%{
+    transform: translateX(0) translateY(0) scale(1);
+  }
+  50%{
+    transform: translateX(0) translateY(0) scale(1.04, 0.96);
   }
 }
 
