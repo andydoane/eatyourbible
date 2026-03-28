@@ -735,33 +735,80 @@ function getBibloPetAnimationClass(verseId, verseProgress){
 
   if (status === "locked") return "";
 
-  if (
-    State.petAnimationVerseId === verseId &&
-    State.petAnimationStatus === status &&
-    State.petAnimationClass
-  ){
-    return State.petAnimationClass;
-  }
-
-  let animationClass = "";
-
-  if (status === "happy"){
-    animationClass = getRandomHappyPetAnimationClass();
-  }
-
-  if (status === "hungry"){
-    animationClass = "pet-hungry-wobble";
-  }
-
+  // Sleeping = fixed
   if (status === "sleeping"){
-    animationClass = "pet-sleeping";
+    return "pet-sleeping";
   }
 
-  State.petAnimationVerseId = verseId;
-  State.petAnimationStatus = status;
-  State.petAnimationClass = animationClass;
+  // Hungry = simple loop (for now)
+  if (status === "hungry"){
+    return "pet-hungry-wobble";
+  }
 
-  return animationClass;
+  // Happy = controlled system
+  if (status === "happy"){
+    if (State.petAnimPhase === "action"){
+      return State.petAnimActionClass;
+    }
+
+    return "pet-happy-idle";
+  }
+
+  return "";
+}
+
+function startPetAnimationCycle(verseId, verseProgress){
+  const status = getBibloPetStatus(verseProgress);
+
+  if (status !== "happy"){
+    clearPetAnimationCycle();
+    return;
+  }
+
+  if (State.petAnimTimer) return;
+
+  function runCycle(){
+    // idle phase
+    State.petAnimPhase = "idle";
+    render();
+
+    const idleTime = 2000 + Math.random() * 2000;
+
+    State.petAnimTimer = setTimeout(() => {
+      // pick action
+      const actions = [
+        "pet-happy-pace",
+        "pet-happy-flip"
+      ];
+
+      State.petAnimActionClass =
+        actions[Math.floor(Math.random() * actions.length)];
+
+      State.petAnimPhase = "action";
+      render();
+
+      // action duration
+      const actionTime = 2000;
+
+      State.petAnimTimer = setTimeout(() => {
+        State.petAnimPhase = "idle";
+        render();
+
+        State.petAnimTimer = null;
+        runCycle();
+      }, actionTime);
+
+    }, idleTime);
+  }
+
+  runCycle();
+}
+
+function clearPetAnimationCycle(){
+  if (State.petAnimTimer){
+    clearTimeout(State.petAnimTimer);
+    State.petAnimTimer = null;
+  }
 }
 
 async function playVerseDetailListen(){
@@ -989,6 +1036,9 @@ const State = {
   petAnimationVerseId: null,
   petAnimationStatus: "",
   petAnimationClass: "",
+  petAnimTimer: null,
+  petAnimPhase: "idle", // "idle" | "action"
+  petAnimActionClass: "",
 
   listenDone: false,
   listenPlaying: false,
@@ -2840,6 +2890,11 @@ function screenVerseDetail(idx){
   const statusText = getBibloPetStatusText(verseProgress);
   const petStatus = getBibloPetStatus(verseProgress);
   const petAnimationClass = unlocked ? getBibloPetAnimationClass(verseId, verseProgress) : "";
+  if (unlocked){
+    startPetAnimationCycle(verseId, verseProgress);
+  } else {
+    clearPetAnimationCycle();
+  }
   const petBackgroundClass = unlocked ? getVerseBackgroundClass(verseId, verseProgress) : "";
   const learnStatus = verseProgress.learnCompleted ? "✔" : "";
 
