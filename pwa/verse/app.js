@@ -1221,22 +1221,22 @@ const LEARN_LEVEL_OPTIONS = [
     label: "Not at all",
     emoji: "🐣",
     color: "#ff8a5b",
-    textColor: "#ffffff",
+    textColor: "#a7cb6f",
     startScreen: Screen.LISTEN,
     level: "not_at_all"
   },
   {
     label: "A little bit",
     emoji: "🌱",
-    color: "#40b9c5",
-    textColor: "#ffffff",
+    color: "#ffc751",
+    textColor: "#333333",
     startScreen: Screen.ECHO,
     level: "a_little"
   },
   {
     label: "Pretty well",
     emoji: "🚀",
-    color: "#7f66c6",
+    color: "#ff5a51",
     textColor: "#ffffff",
     startScreen: Screen.ECHO,
     level: "pretty_well"
