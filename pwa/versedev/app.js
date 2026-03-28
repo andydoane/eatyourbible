@@ -736,8 +736,8 @@ function applyPetMotionVars(rootEl){
   if (!stageWidth) return;
 
   const paceDistance = Math.max(42, Math.min(180, Math.round(stageWidth * 0.22)));
-  const zoomNear = Math.max(180, Math.min(700, Math.round(stageWidth * 0.6)));
-  const zoomFar = Math.max(210, Math.min(900, Math.round(stageWidth * 0.75)));
+  const zoomNear = Math.max(180, Math.min(700, Math.round(stageWidth * 0.9)));
+  const zoomFar = Math.max(210, Math.min(900, Math.round(stageWidth * 0.9)));
 
   const jump1 = Math.max(48, Math.min(90, Math.round(stageWidth * 0.14)));
   const jump2 = Math.max(92, Math.min(150, Math.round(stageWidth * 0.27)));
