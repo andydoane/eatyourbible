@@ -676,7 +676,8 @@ function getBibloPetStats(){
 
 const HAPPY_PET_ANIMATIONS = [
   { class: "pet-happy-pace", duration: 2400 },
-  { class: "pet-happy-flip", duration: 1800 }
+  { class: "pet-happy-flip", duration: 1800 },
+  { class: "pet-happy-jump", duration: 2600 }
 ];
 
 function isVerseMastered(verseProgress){
