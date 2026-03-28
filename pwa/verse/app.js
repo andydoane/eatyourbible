@@ -1219,15 +1219,15 @@ const TITLE_OPTIONS = [
 const LEARN_LEVEL_OPTIONS = [
   {
     label: "Not at all",
-    emoji: "🐣",
-    color: "#ff8a5b",
+    emoji: "👎",
+    color: "#a7cb6f",
     textColor: "#a7cb6f",
     startScreen: Screen.LISTEN,
     level: "not_at_all"
   },
   {
     label: "A little bit",
-    emoji: "🌱",
+    emoji: "👌",
     color: "#ffc751",
     textColor: "#333333",
     startScreen: Screen.ECHO,
@@ -1235,7 +1235,7 @@ const LEARN_LEVEL_OPTIONS = [
   },
   {
     label: "Pretty well",
-    emoji: "🚀",
+    emoji: "👍",
     color: "#ff5a51",
     textColor: "#ffffff",
     startScreen: Screen.ECHO,
