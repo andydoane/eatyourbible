@@ -3266,6 +3266,7 @@ function screenLearnLevel(idx){
 
   wrap.innerHTML = `
     <div class="title-content learn-level-content">
+      <h2>Before we get started...</h2>
       <h2>How well do you know this verse?</h2>
 
       <div class="learn-level-stack">
