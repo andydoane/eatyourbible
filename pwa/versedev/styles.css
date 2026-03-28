@@ -4414,9 +4414,6 @@ text-wrap: balance;
 /* =========================
    BibloPet Mastery Backgrounds
    ========================= */
-/* =========================
-   BibloPet Mastery Backgrounds
-   ========================= */
 
 .pet-bg-btn{
   width: 100%;
@@ -4431,53 +4428,19 @@ text-wrap: balance;
   margin-top: 14px;
 }
 
-.pet-stage-plain{
-  background: rgba(255,255,255,0.96);
-}
-
-/* =========================
-   Rainbow
-   ========================= */
-
 .pet-stage-rainbow{
-  position: relative;
-  overflow: hidden;
-  background: #ff7f50;
+  animation: petRainbowShift 7s linear infinite;
 }
 
-.pet-stage-rainbow::before{
-  content: "";
-  position: absolute;
-  inset: 0;
-  width: 200%;
-  left: 0;
-  pointer-events: none;
-  z-index: 0;
-  background:
-    repeating-linear-gradient(
-      90deg,
-      #ff5f5f 0px,
-      #ff5f5f 80px,
-      #ff9f43 80px,
-      #ff9f43 160px,
-      #ffe066 160px,
-      #ffe066 240px,
-      #5dd39e 240px,
-      #5dd39e 320px,
-      #4dabf7 320px,
-      #4dabf7 400px,
-      #b197fc 400px,
-      #b197fc 480px,
-      #ff7ad9 480px,
-      #ff7ad9 560px
-    );
-  background-size: 560px 100%;
-  animation: petRainbowLoop 14s linear infinite;
+@keyframes petRainbowShift{
+  0%   { background: #ff5f5f; }
+  16%  { background: #ff9f43; }
+  33%  { background: #ffe066; }
+  50%  { background: #5dd39e; }
+  66%  { background: #4dabf7; }
+  83%  { background: #b197fc; }
+  100% { background: #ff5f5f; }
 }
-
-/* =========================
-   Stars
-   ========================= */
 
 .pet-stage-stars{
   position: relative;
@@ -4509,156 +4472,6 @@ text-wrap: balance;
   animation: petStarTwinkleB 4.2s ease-in-out infinite alternate;
 }
 
-/* =========================
-   Checker Pop
-   ========================= */
-
-.pet-stage-checker{
-  position: relative;
-  overflow: hidden;
-  background: linear-gradient(180deg, #8dc7ff 0%, #7f66c6 100%);
-}
-
-.pet-stage-checker::before{
-  content: "";
-  position: absolute;
-  inset: 0;
-  width: 200%;
-  left: 0;
-  pointer-events: none;
-  z-index: 0;
-  background:
-    linear-gradient(45deg, rgba(255,255,255,.26) 25%, transparent 25%, transparent 75%, rgba(255,255,255,.26) 75%) 0 0 / 54px 54px,
-    linear-gradient(45deg, rgba(255,255,255,.18) 25%, transparent 25%, transparent 75%, rgba(255,255,255,.18) 75%) 27px 27px / 54px 54px;
-  animation: petCheckerLoop 6s linear infinite;
-}
-
-/* =========================
-   Aurora Sky
-   ========================= */
-
-.pet-stage-aurora{
-  position: relative;
-  overflow: hidden;
-  background:
-    radial-gradient(circle at 20% 18%, rgba(255,255,255,.28) 0 4%, transparent 5%),
-    radial-gradient(circle at 78% 22%, rgba(255,255,255,.22) 0 3%, transparent 4%),
-    linear-gradient(180deg, #07142b 0%, #11234a 42%, #1b2b56 100%);
-}
-
-.pet-stage-aurora::before,
-.pet-stage-aurora::after{
-  content: "";
-  position: absolute;
-  top: -10%;
-  bottom: -10%;
-  width: 200%;
-  left: 0;
-  pointer-events: none;
-  z-index: 0;
-  filter: blur(16px);
-  mix-blend-mode: screen;
-}
-
-.pet-stage-aurora::before{
-  background:
-    radial-gradient(ellipse 18% 26% at 8% 46%, rgba(88,255,196,0.44) 0 52%, transparent 68%),
-    radial-gradient(ellipse 16% 22% at 24% 34%, rgba(118,214,255,0.34) 0 50%, transparent 66%),
-    radial-gradient(ellipse 18% 24% at 40% 50%, rgba(173,114,255,0.30) 0 52%, transparent 68%),
-    radial-gradient(ellipse 18% 26% at 58% 44%, rgba(88,255,196,0.44) 0 52%, transparent 68%),
-    radial-gradient(ellipse 16% 22% at 74% 32%, rgba(118,214,255,0.34) 0 50%, transparent 66%),
-    radial-gradient(ellipse 18% 24% at 90% 48%, rgba(173,114,255,0.30) 0 52%, transparent 68%);
-  animation: petAuroraLoopA 24s linear infinite;
-}
-
-.pet-stage-aurora::after{
-  background:
-    radial-gradient(ellipse 14% 18% at 10% 62%, rgba(114,255,173,0.22) 0 50%, transparent 66%),
-    radial-gradient(ellipse 12% 16% at 26% 28%, rgba(119,168,255,0.18) 0 48%, transparent 64%),
-    radial-gradient(ellipse 14% 18% at 42% 58%, rgba(114,255,173,0.22) 0 50%, transparent 66%),
-    radial-gradient(ellipse 12% 16% at 60% 30%, rgba(119,168,255,0.18) 0 48%, transparent 64%),
-    radial-gradient(ellipse 14% 18% at 76% 60%, rgba(114,255,173,0.22) 0 50%, transparent 66%),
-    radial-gradient(ellipse 12% 16% at 92% 34%, rgba(119,168,255,0.18) 0 48%, transparent 64%);
-  animation: petAuroraLoopB 34s linear infinite;
-}
-
-/* =========================
-   Ocean Waves
-   ========================= */
-
-.pet-stage-ocean{
-  position: relative;
-  overflow: hidden;
-  background: linear-gradient(180deg, #a8ecff 0%, #5ab7ff 36%, #2c63c7 100%);
-}
-
-.pet-stage-ocean::before,
-.pet-stage-ocean::after{
-  content: "";
-  position: absolute;
-  left: 0;
-  width: 200%;
-  pointer-events: none;
-  z-index: 0;
-  background-repeat: repeat-x;
-}
-
-.pet-stage-ocean::before{
-  bottom: 0;
-  height: 88px;
-  opacity: 0.95;
-  background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='88' viewBox='0 0 180 88'%3E%3Cpath d='M0 48 Q22.5 30 45 48 T90 48 T135 48 T180 48 L180 88 L0 88 Z' fill='rgba(255,255,255,0.22)'/%3E%3C/svg%3E") repeat-x left bottom / 180px 88px;
-  animation: petOceanLoopFront 6s linear infinite;
-}
-
-.pet-stage-ocean::after{
-  bottom: 10px;
-  height: 104px;
-  opacity: 0.72;
-  background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='104' viewBox='0 0 240 104'%3E%3Cpath d='M0 58 Q30 38 60 58 T120 58 T180 58 T240 58 L240 104 L0 104 Z' fill='rgba(255,255,255,0.14)'/%3E%3C/svg%3E") repeat-x left bottom / 240px 104px;
-  animation: petOceanLoopBack 9s linear infinite;
-}
-
-/* =========================
-   Candy Tiles
-   ========================= */
-
-.pet-stage-candy{
-  position: relative;
-  overflow: hidden;
-  background: #ffb6d9;
-}
-
-.pet-stage-candy::before{
-  content: "";
-  position: absolute;
-  inset: 0;
-  width: 200%;
-  left: 0;
-  pointer-events: none;
-  z-index: 0;
-  background:
-    repeating-linear-gradient(
-      135deg,
-      #ff8dc7 0px,
-      #ff8dc7 45px,
-      #ffd86b 45px,
-      #ffd86b 90px,
-      #8ee8ff 90px,
-      #8ee8ff 135px,
-      #bfa1ff 135px,
-      #bfa1ff 180px
-    );
-  background-size: 180px 180px;
-  animation: petCandyLoop 5s linear infinite;
-}
-
-/* =========================
-   Keyframes
-   ========================= */
-
 @keyframes petStarTwinkleA{
   0%   { opacity: 0.18; }
   100% { opacity: 0.72; }
@@ -4667,69 +4480,6 @@ text-wrap: balance;
 @keyframes petStarTwinkleB{
   0%   { opacity: 0.08; }
   100% { opacity: 0.5; }
-}
-
-@keyframes petRainbowLoop{
-  from{
-    transform: translateX(0);
-  }
-  to{
-    transform: translateX(-50%);
-  }
-}
-
-@keyframes petCheckerLoop{
-  from{
-    transform: translateX(0);
-  }
-  to{
-    transform: translateX(-50%);
-  }
-}
-
-@keyframes petAuroraLoopA{
-  from{
-    transform: translateX(0);
-  }
-  to{
-    transform: translateX(-50%);
-  }
-}
-
-@keyframes petAuroraLoopB{
-  from{
-    transform: translateX(-8%);
-  }
-  to{
-    transform: translateX(-58%);
-  }
-}
-
-@keyframes petOceanLoopFront{
-  from{
-    transform: translateX(0);
-  }
-  to{
-    transform: translateX(-50%);
-  }
-}
-
-@keyframes petOceanLoopBack{
-  from{
-    transform: translateX(-10%);
-  }
-  to{
-    transform: translateX(-60%);
-  }
-}
-
-@keyframes petCandyLoop{
-  from{
-    transform: translateX(0);
-  }
-  to{
-    transform: translateX(-50%);
-  }
 }
 
 .pet-happy-idle{
