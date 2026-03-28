@@ -762,46 +762,50 @@ function startPetAnimationCycle(verseId, verseProgress){
 
   if (status !== "happy"){
     clearPetAnimationCycle();
+    State.petAnimPhase = "idle";
+    State.petAnimActionClass = "";
     return;
   }
 
   if (State.petAnimTimer) return;
 
-  function runCycle(){
-    // idle phase
+  function scheduleIdle(){
     State.petAnimPhase = "idle";
+    State.petAnimActionClass = "";
     render();
 
     const idleTime = 2000 + Math.random() * 2000;
 
     State.petAnimTimer = setTimeout(() => {
-      // pick action
-      const actions = [
-        "pet-happy-pace",
-        "pet-happy-flip"
-      ];
-
-      State.petAnimActionClass =
-        actions[Math.floor(Math.random() * actions.length)];
-
-      State.petAnimPhase = "action";
-      render();
-
-      // action duration
-      const actionTime = 2000;
-
-      State.petAnimTimer = setTimeout(() => {
-        State.petAnimPhase = "idle";
-        render();
-
-        State.petAnimTimer = null;
-        runCycle();
-      }, actionTime);
-
+      State.petAnimTimer = null;
+      scheduleAction();
     }, idleTime);
   }
 
-  runCycle();
+  function scheduleAction(){
+    const actions = [
+      "pet-happy-pace",
+      "pet-happy-flip"
+    ];
+
+    State.petAnimActionClass =
+      actions[Math.floor(Math.random() * actions.length)];
+    State.petAnimPhase = "action";
+    render();
+
+    const actionTime = 2000;
+
+    State.petAnimTimer = setTimeout(() => {
+      State.petAnimTimer = null;
+      scheduleIdle();
+    }, actionTime);
+  }
+
+  // Start on the next tick, not during render
+  State.petAnimTimer = setTimeout(() => {
+    State.petAnimTimer = null;
+    scheduleIdle();
+  }, 0);
 }
 
 function clearPetAnimationCycle(){
@@ -809,6 +813,9 @@ function clearPetAnimationCycle(){
     clearTimeout(State.petAnimTimer);
     State.petAnimTimer = null;
   }
+
+  State.petAnimPhase = "idle";
+  State.petAnimActionClass = "";
 }
 
 async function playVerseDetailListen(){
@@ -1398,6 +1405,20 @@ function go(nextScreen){
   // Update to the new logical screen, but don't jump visually yet
   State.screen = nextScreen;
   render();
+  
+  if (nextScreen === Screen.VERSE_DETAIL){
+    setTimeout(() => {
+      if (State.screen !== Screen.VERSE_DETAIL) return;
+
+      const verseId = State.selectedVerseId;
+      const verseProgress = getVerseProgress(verseId);
+
+      startPetAnimationCycle(verseId, verseProgress);
+    }, 0);
+  } else {
+    clearPetAnimationCycle();
+  }
+
 
   // On the next frame, slide to the new screen
   requestAnimationFrame(() => {
@@ -2890,11 +2911,6 @@ function screenVerseDetail(idx){
   const statusText = getBibloPetStatusText(verseProgress);
   const petStatus = getBibloPetStatus(verseProgress);
   const petAnimationClass = unlocked ? getBibloPetAnimationClass(verseId, verseProgress) : "";
-  if (unlocked){
-    startPetAnimationCycle(verseId, verseProgress);
-  } else {
-    clearPetAnimationCycle();
-  }
   const petBackgroundClass = unlocked ? getVerseBackgroundClass(verseId, verseProgress) : "";
   const learnStatus = verseProgress.learnCompleted ? "✔" : "";
 
