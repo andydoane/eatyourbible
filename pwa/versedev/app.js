@@ -728,6 +728,29 @@ function getVerseBackgroundClass(verseId, verseProgress){
   return "pet-stage-rainbow";
 }
 
+function applyPetMotionVars(rootEl){
+  const stage = rootEl?.querySelector(".pet-stage");
+  if (!stage) return;
+
+  const stageWidth = stage.clientWidth || 0;
+  if (!stageWidth) return;
+
+  const paceDistance = Math.max(42, Math.min(120, Math.round(stageWidth * 0.16)));
+  const zoomNear = Math.max(180, Math.min(420, Math.round(stageWidth * 0.48)));
+  const zoomFar = Math.max(210, Math.min(520, Math.round(stageWidth * 0.58)));
+
+  const jump1 = Math.max(48, Math.min(90, Math.round(stageWidth * 0.14)));
+  const jump2 = Math.max(92, Math.min(150, Math.round(stageWidth * 0.27)));
+  const jump3 = Math.max(220, Math.min(360, Math.round(stageWidth * 0.52)));
+
+  stage.style.setProperty("--pet-pace-distance", `${paceDistance}px`);
+  stage.style.setProperty("--pet-zoomies-near", `${zoomNear}px`);
+  stage.style.setProperty("--pet-zoomies-far", `${zoomFar}px`);
+  stage.style.setProperty("--pet-jump-1", `${jump1}px`);
+  stage.style.setProperty("--pet-jump-2", `${jump2}px`);
+  stage.style.setProperty("--pet-jump-3", `${jump3}px`);
+}
+
 function getRandomHappyPetAnimationClass(){
   const options = [
     "pet-happy-pace",
@@ -3017,6 +3040,10 @@ function screenVerseDetail(idx){
       render();
     };
   }
+
+  requestAnimationFrame(() => {
+    applyPetMotionVars(wrap);
+  });
 
   return makeSlide({ idx, bg: "var(--purple)", inner: wrap });
 }
