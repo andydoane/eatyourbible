@@ -411,6 +411,11 @@ border-radius: 18px;
   gap: 0;
 }
 
+/* One section fix for text above progress bar */
+.learn-layout.learn-layout-coach-centered .learn-coach > div:first-child .coach-text + .timer-wrap{
+  margin-top: 14px;
+}
+
 .learn-layout.learn-layout-coach-centered .coach-title{
   display: none;
 }
