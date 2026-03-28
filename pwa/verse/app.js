@@ -1219,16 +1219,25 @@ const TITLE_OPTIONS = [
 const LEARN_LEVEL_OPTIONS = [
   {
     label: "Not at all",
+    emoji: "🐣",
+    color: "#ff8a5b",
+    textColor: "#ffffff",
     startScreen: Screen.LISTEN,
     level: "not_at_all"
   },
   {
     label: "A little bit",
+    emoji: "🌱",
+    color: "#40b9c5",
+    textColor: "#ffffff",
     startScreen: Screen.ECHO,
     level: "a_little"
   },
   {
     label: "Pretty well",
+    emoji: "🚀",
+    color: "#7f66c6",
+    textColor: "#ffffff",
     startScreen: Screen.ECHO,
     level: "pretty_well"
   }
@@ -3261,8 +3270,12 @@ function screenLearnLevel(idx){
 
       <div class="learn-level-stack">
         ${LEARN_LEVEL_OPTIONS.map((opt, i) => `
-          <button class="learn-level-btn no-zoom" data-index="${i}">
-            <span class="learn-level-btn-title">${opt.label}</span>
+          <button
+            class="learn-level-btn no-zoom"
+            data-index="${i}"
+            style="background:${opt.color}; color:${opt.textColor};"
+          >
+            <span class="learn-level-btn-title">${opt.emoji} ${opt.label}</span>
           </button>
         `).join("")}
       </div>
@@ -3286,14 +3299,22 @@ function screenListen(idx){
   inner.style.flexDirection = "column";
   inner.style.height = "100%";
 
+  const listenDisplayText =
+    (State.listenPlaying || State.listenDone) ? VERSE_TEXT : "Listen to the verse.";
+
+  const listenDisplayFitClass =
+    (State.listenPlaying || State.listenDone)
+      ? getVerseFitClass(VERSE_TEXT)
+      : "verse-fit-short";
+
   inner.innerHTML = `
     <div class="learn-layout learn-layout-coach-centered">
       <div class="learn-ref">
         <div class="verse-ref-pill">${VERSE_REF}</div>
       </div>
 
-      <div class="learn-verse ${getVerseFitClass(VERSE_TEXT)}">
-        <p class="verse">${VERSE_TEXT}</p>
+      <div class="learn-verse ${listenDisplayFitClass}">
+        <p class="verse">${listenDisplayText}</p>
       </div>
 
       <div class="learn-coach">
