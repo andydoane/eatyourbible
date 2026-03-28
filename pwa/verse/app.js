@@ -3300,11 +3300,16 @@ function screenListen(idx){
   inner.style.flexDirection = "column";
   inner.style.height = "100%";
 
+  const hasHeardVerse =
+    State.listenPlaying ||
+    State.listenDone ||
+    (State.instructionPlaying && State.instructionKey === "meaning");
+
   const listenDisplayText =
-    (State.listenPlaying || State.listenDone) ? VERSE_TEXT : "Listen to the verse.";
+    hasHeardVerse ? VERSE_TEXT : "Listen to the verse.";
 
   const listenDisplayFitClass =
-    (State.listenPlaying || State.listenDone)
+    hasHeardVerse
       ? getVerseFitClass(VERSE_TEXT)
       : "verse-fit-short";
 
