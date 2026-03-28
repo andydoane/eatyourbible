@@ -4429,17 +4429,31 @@ text-wrap: balance;
 }
 
 .pet-stage-rainbow{
-  animation: petRainbowShift 7s linear infinite;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    90deg,
+    #ff5f5f 0%,
+    #ff9f43 14%,
+    #ffe066 28%,
+    #5dd39e 42%,
+    #4dabf7 56%,
+    #b197fc 70%,
+    #ff7ad9 84%,
+    #ff5f5f 100%
+  );
+  background-size: 220% 100%;
+  animation: petRainbowScroll 14s linear infinite;
 }
 
-@keyframes petRainbowShift{
-  0%   { background: #ff5f5f; }
-  16%  { background: #ff9f43; }
-  33%  { background: #ffe066; }
-  50%  { background: #5dd39e; }
-  66%  { background: #4dabf7; }
-  83%  { background: #b197fc; }
-  100% { background: #ff5f5f; }
+
+@keyframes petRainbowScroll{
+  from{
+    background-position: 0% 0;
+  }
+  to{
+    background-position: 100% 0;
+  }
 }
 
 .pet-stage-stars{
@@ -4482,65 +4496,21 @@ text-wrap: balance;
   100% { opacity: 0.5; }
 }
 
-.pet-stage-checker{
+.pet-stage-candy{
   position: relative;
   overflow: hidden;
   background:
     linear-gradient(
-      45deg,
-      rgba(255,255,255,0.26) 25%,
-      transparent 25%,
-      transparent 75%,
-      rgba(255,255,255,0.26) 75%
-    ),
-    linear-gradient(
-      45deg,
-      rgba(255,255,255,0.18) 25%,
-      transparent 25%,
-      transparent 75%,
-      rgba(255,255,255,0.18) 75%
-    ),
-    linear-gradient(180deg, #8dc7ff 0%, #7f66c6 100%);
-  background-size: 54px 54px, 54px 54px, 100% 100%;
-  background-position: 0 0, 27px 27px, 0 0;
-  animation: petCheckerSlide 8s linear infinite;
+      135deg,
+      #ff8dc7 0 25%,
+      #ffd86b 25% 50%,
+      #8ee8ff 50% 75%,
+      #bfa1ff 75% 100%
+    );
+  background-size: 180px 180px;
+  animation: petCandySlide 4.8s linear infinite;
 }
 
-.pet-stage-aurora{
-  position: relative;
-  overflow: hidden;
-  background:
-    radial-gradient(circle at 20% 18%, rgba(255,255,255,0.28) 0 4%, transparent 5%),
-    radial-gradient(circle at 78% 22%, rgba(255,255,255,0.22) 0 3%, transparent 4%),
-    linear-gradient(180deg, #07142b 0%, #11234a 42%, #1b2b56 100%);
-}
-
-.pet-stage-aurora::before,
-.pet-stage-aurora::after{
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  mix-blend-mode: screen;
-  filter: blur(16px);
-  transform-origin: center;
-}
-
-.pet-stage-aurora::before{
-  background:
-    radial-gradient(ellipse 34% 24% at 24% 42%, rgba(88,255,196,0.52) 0 55%, transparent 72%),
-    radial-gradient(ellipse 30% 22% at 56% 34%, rgba(118,214,255,0.40) 0 52%, transparent 70%),
-    radial-gradient(ellipse 32% 24% at 78% 48%, rgba(173,114,255,0.36) 0 54%, transparent 72%);
-  animation: petAuroraFloatA 24s ease-in-out infinite alternate;
-}
-
-.pet-stage-aurora::after{
-  background:
-    radial-gradient(ellipse 26% 20% at 34% 62%, rgba(114,255,173,0.28) 0 52%, transparent 70%),
-    radial-gradient(ellipse 24% 18% at 72% 30%, rgba(119,168,255,0.24) 0 50%, transparent 68%);
-  animation: petAuroraFloatB 30s ease-in-out infinite alternate;
-}
 
 .pet-stage-ocean{
   position: relative;
@@ -4552,29 +4522,31 @@ text-wrap: balance;
 .pet-stage-ocean::after{
   content: "";
   position: absolute;
-  left: -8%;
-  width: 116%;
+  left: 0;
+  width: 300%;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.95;
   background-repeat: repeat-x;
 }
 
 .pet-stage-ocean::before{
   bottom: 0;
-  height: 82px;
-  background-size: 160px 82px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='82' viewBox='0 0 160 82'%3E%3Cpath d='M0 46 Q20 30 40 46 T80 46 T120 46 T160 46 L160 82 L0 82 Z' fill='rgba(255,255,255,0.22)'/%3E%3C/svg%3E");
-  animation: petOceanWaveFront 7s linear infinite;
+  height: 88px;
+  opacity: 0.95;
+  background-size: 180px 88px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='88' viewBox='0 0 180 88'%3E%3Cpath d='M0 48 Q22.5 30 45 48 T90 48 T135 48 T180 48 L180 88 L0 88 Z' fill='rgba(255,255,255,0.22)'/%3E%3C/svg%3E");
+  animation: petOceanWaveFront 6s linear infinite;
 }
 
 .pet-stage-ocean::after{
   bottom: 10px;
-  height: 96px;
-  background-size: 220px 96px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='96' viewBox='0 0 220 96'%3E%3Cpath d='M0 54 Q27.5 36 55 54 T110 54 T165 54 T220 54 L220 96 L0 96 Z' fill='rgba(255,255,255,0.14)'/%3E%3C/svg%3E");
-  animation: petOceanWaveBack 10s linear infinite;
+  height: 104px;
+  opacity: 0.72;
+  background-size: 240px 104px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='104' viewBox='0 0 240 104'%3E%3Cpath d='M0 58 Q30 38 60 58 T120 58 T180 58 T240 58 L240 104 L0 104 Z' fill='rgba(255,255,255,0.14)'/%3E%3C/svg%3E");
+  animation: petOceanWaveBack 9s linear infinite;
 }
+
 
 .pet-stage-candy{
   position: relative;
@@ -4591,79 +4563,94 @@ text-wrap: balance;
   animation: petCandySlide 7s linear infinite;
 }
 
+.pet-stage-aurora{
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 20% 18%, rgba(255,255,255,0.28) 0 4%, transparent 5%),
+    radial-gradient(circle at 78% 22%, rgba(255,255,255,0.22) 0 3%, transparent 4%),
+    linear-gradient(180deg, #07142b 0%, #11234a 42%, #1b2b56 100%);
+}
+
+.pet-stage-aurora::before,
+.pet-stage-aurora::after{
+  content: "";
+  position: absolute;
+  top: -12%;
+  bottom: -12%;
+  width: 220%;
+  left: -60%;
+  pointer-events: none;
+  z-index: 0;
+  mix-blend-mode: screen;
+  filter: blur(16px);
+  background-repeat: repeat-x;
+}
+
+.pet-stage-aurora::before{
+  background-image:
+    radial-gradient(ellipse 18% 24% at 10% 46%, rgba(88,255,196,0.46) 0 55%, transparent 72%),
+    radial-gradient(ellipse 16% 22% at 28% 34%, rgba(118,214,255,0.34) 0 52%, transparent 70%),
+    radial-gradient(ellipse 18% 24% at 44% 50%, rgba(173,114,255,0.30) 0 54%, transparent 72%),
+    radial-gradient(ellipse 18% 24% at 60% 40%, rgba(88,255,196,0.44) 0 55%, transparent 72%),
+    radial-gradient(ellipse 16% 22% at 78% 32%, rgba(118,214,255,0.30) 0 52%, transparent 70%),
+    radial-gradient(ellipse 18% 24% at 94% 48%, rgba(173,114,255,0.28) 0 54%, transparent 72%);
+  animation: petAuroraScrollA 24s linear infinite;
+}
+
+.pet-stage-aurora::after{
+  background-image:
+    radial-gradient(ellipse 14% 18% at 12% 62%, rgba(114,255,173,0.22) 0 52%, transparent 70%),
+    radial-gradient(ellipse 12% 16% at 34% 28%, rgba(119,168,255,0.20) 0 50%, transparent 68%),
+    radial-gradient(ellipse 14% 18% at 52% 58%, rgba(114,255,173,0.20) 0 52%, transparent 70%),
+    radial-gradient(ellipse 12% 16% at 74% 30%, rgba(119,168,255,0.18) 0 50%, transparent 68%),
+    radial-gradient(ellipse 14% 18% at 92% 60%, rgba(114,255,173,0.20) 0 52%, transparent 70%);
+  animation: petAuroraScrollB 34s linear infinite;
+}
+
+
 @keyframes petCheckerSlide{
   from{
     background-position: 0 0, 27px 27px, 0 0;
   }
   to{
-    background-position: 54px 0, 81px 27px, 0 0;
+    background-position: 54px 54px, 81px 81px, 0 0;
   }
 }
 
-@keyframes petAuroraFloatA{
-  0%{
-    transform: translate(0px, 0px) rotate(-1deg) scale(1);
+@keyframes petAuroraScrollA{
+  from{
+    transform: translateX(0);
   }
-  20%{
-    transform: translate(8px, -4px) rotate(1deg) scale(1.02);
-  }
-  40%{
-    transform: translate(-6px, 6px) rotate(-2deg) scale(0.99);
-  }
-  60%{
-    transform: translate(10px, 4px) rotate(1deg) scale(1.03);
-  }
-  80%{
-    transform: translate(-8px, -5px) rotate(-1deg) scale(1.01);
-  }
-  100%{
-    transform: translate(4px, 8px) rotate(2deg) scale(1.02);
+  to{
+    transform: translateX(-25%);
   }
 }
 
-@keyframes petAuroraFloatB{
-  0%{
-    transform: translate(0px, 0px) rotate(1deg) scale(1);
+@keyframes petAuroraScrollB{
+  from{
+    transform: translateX(-12%);
   }
-  25%{
-    transform: translate(-7px, 5px) rotate(-1deg) scale(1.02);
-  }
-  50%{
-    transform: translate(6px, -6px) rotate(2deg) scale(0.98);
-  }
-  75%{
-    transform: translate(-10px, -2px) rotate(-1deg) scale(1.03);
-  }
-  100%{
-    transform: translate(5px, 7px) rotate(1deg) scale(1.01);
+  to{
+    transform: translateX(-37%);
   }
 }
 
 @keyframes petOceanWaveFront{
-  0%{
-    background-position-x: 0;
-    transform: translateY(0);
+  from{
+    transform: translateX(0);
   }
-  50%{
-    transform: translateY(-3px);
-  }
-  100%{
-    background-position-x: 160px;
-    transform: translateY(0);
+  to{
+    transform: translateX(-180px);
   }
 }
 
 @keyframes petOceanWaveBack{
-  0%{
-    background-position-x: 0;
-    transform: translateY(0);
+  from{
+    transform: translateX(-120px);
   }
-  50%{
-    transform: translateY(-5px);
-  }
-  100%{
-    background-position-x: 220px;
-    transform: translateY(0);
+  to{
+    transform: translateX(-360px);
   }
 }
 
