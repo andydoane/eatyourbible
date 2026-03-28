@@ -3867,6 +3867,11 @@ text-wrap: balance;
   animation: petHappyZoomies 2.8s ease-in-out 1 forwards;
 }
 
+.pet-happy-lean{
+  transform-origin: center bottom;
+  animation: petHappyLean 2s ease-in-out 1 forwards;
+}
+
 /* Hungry animation */
 
 .pet-hungry-wobble{
@@ -4063,6 +4068,53 @@ text-wrap: balance;
   }
   100%{
     transform: translateX(0) translateY(0) rotate(0deg) skewX(0deg) scale(1,1);
+  }
+}
+
+@keyframes petHappyLean{
+  0%{
+    transform: translateX(0) rotate(0deg) skewX(0deg) scale(1,1);
+  }
+
+  /* Lean cycle 1 */
+  6%{
+    transform: translateX(-8px) rotate(-4deg) skewX(-12deg) scale(1.04,0.96);
+  }
+  12%{
+    transform: translateX(8px) rotate(4deg) skewX(12deg) scale(0.96,1.04);
+  }
+
+  /* Lean cycle 2 */
+  18%{
+    transform: translateX(-10px) rotate(-5deg) skewX(-14deg) scale(1.05,0.95);
+  }
+  24%{
+    transform: translateX(10px) rotate(5deg) skewX(14deg) scale(0.95,1.05);
+  }
+
+  /* Lean cycle 3 */
+  30%{
+    transform: translateX(-8px) rotate(-4deg) skewX(-12deg) scale(1.04,0.96);
+  }
+  36%{
+    transform: translateX(8px) rotate(4deg) skewX(12deg) scale(0.96,1.04);
+  }
+
+  /* Lean cycle 4 */
+  42%{
+    transform: translateX(-6px) rotate(-3deg) skewX(-10deg) scale(1.03,0.97);
+  }
+  48%{
+    transform: translateX(6px) rotate(3deg) skewX(10deg) scale(0.97,1.03);
+  }
+
+  /* settle */
+  70%{
+    transform: translateX(0) rotate(0deg) skewX(0deg) scale(1.02,0.98);
+  }
+
+  100%{
+    transform: translateX(0) rotate(0deg) skewX(0deg) scale(1,1);
   }
 }
 
