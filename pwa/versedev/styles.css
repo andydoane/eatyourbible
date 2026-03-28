@@ -3846,6 +3846,11 @@ text-wrap: balance;
   animation: petHappyFlip 1.8s ease-in-out 1 forwards;
 }
 
+.pet-happy-jump{
+  transform-origin: center bottom;
+  animation: petHappyJump 2.6s ease-in-out 1 forwards;
+}
+
 /* Hungry animation */
 
 .pet-hungry-wobble{
@@ -3856,6 +3861,7 @@ text-wrap: balance;
 
 .pet-sleeping{
   opacity: 0.55;
+  transform-origin: center bottom;
   animation: petSleepingBreathe 2.8s ease-in-out infinite;
 }
 
@@ -3971,6 +3977,46 @@ text-wrap: balance;
   }
   50%{
     transform: translateX(0) translateY(0) scale(1.04, 0.96);
+  }
+}
+
+@keyframes petHappyJump{
+  0%{
+    transform: translateX(0) translateY(0) scale(1, 1);
+  }
+
+  6%{
+    transform: translateX(0) translateY(0) scale(1.16, 0.84);
+  }
+  12%{
+    transform: translateX(0) translateY(-48px) scale(0.9, 1.14);
+  }
+  18%{
+    transform: translateX(0) translateY(0) scale(1.08, 0.92);
+  }
+
+  24%{
+    transform: translateX(0) translateY(0) scale(1.18, 0.82);
+  }
+  34%{
+    transform: translateX(0) translateY(-92px) scale(0.88, 1.18);
+  }
+  44%{
+    transform: translateX(0) translateY(0) scale(1.1, 0.9);
+  }
+
+  50%{
+    transform: translateX(0) translateY(0) scale(1.2, 0.8);
+  }
+  66%{
+    transform: translateX(0) translateY(-220px) scale(0.86, 1.2);
+  }
+  78%{
+    transform: translateX(0) translateY(0) scale(1.12, 0.9);
+  }
+
+  100%{
+    transform: translateX(0) translateY(0) scale(1, 1);
   }
 }
 
