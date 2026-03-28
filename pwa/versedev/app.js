@@ -723,7 +723,6 @@ function getVerseBackgroundClass(verseId, verseProgress){
 function getRandomHappyPetAnimationClass(){
   const options = [
     "pet-happy-pace",
-    "pet-happy-squish",
     "pet-happy-flip"
   ];
 
@@ -793,7 +792,15 @@ function startPetAnimationCycle(verseId, verseProgress){
     State.petAnimPhase = "action";
     render();
 
-    const actionTime = 2000;
+    let actionTime = 1800;
+
+    if (State.petAnimActionClass === "pet-happy-pace"){
+      actionTime = 2400;
+    }
+
+    if (State.petAnimActionClass === "pet-happy-flip"){
+      actionTime = 1800;
+    }
 
     State.petAnimTimer = setTimeout(() => {
       State.petAnimTimer = null;
@@ -1405,7 +1412,7 @@ function go(nextScreen){
   // Update to the new logical screen, but don't jump visually yet
   State.screen = nextScreen;
   render();
-  
+
   if (nextScreen === Screen.VERSE_DETAIL){
     setTimeout(() => {
       if (State.screen !== Screen.VERSE_DETAIL) return;
