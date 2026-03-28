@@ -678,9 +678,10 @@ const HAPPY_PET_ANIMATIONS = [
   { class: "pet-happy-pace", duration: 2400 },
   { class: "pet-happy-flip", duration: 1800 },
   { class: "pet-happy-jump", duration: 2600 },
-  { class: "pet-happy-dance", duration: 2200 },
   { class: "pet-happy-lean", duration: 2000 },
-  { class: "pet-happy-zoomies", duration: 2800 }
+  { class: "pet-happy-zoomies", duration: 2800 },
+  { class: "pet-happy-roll-bob", duration: 4800 },
+  { class: "pet-happy-hop-combo", duration: 5200 }
 ];
 
 function isVerseMastered(verseProgress){
@@ -744,12 +745,19 @@ function applyPetMotionVars(rootEl){
   const jump2 = Math.max(92, Math.min(150, Math.round(stageWidth * 0.27)));
   const jump3 = Math.max(220, Math.min(360, Math.round(stageWidth * 0.52)));
 
+  const rollLeft = Math.round(stageWidth * -0.42);
+  const rollRight = Math.round(stageWidth * 0.42);
+  const hopSide = Math.round(stageWidth * 0.27);
+
   stage.style.setProperty("--pet-pace-distance", `${paceDistance}px`);
   stage.style.setProperty("--pet-zoomies-near", `${zoomNear}px`);
   stage.style.setProperty("--pet-zoomies-far", `${zoomFar}px`);
   stage.style.setProperty("--pet-jump-1", `${jump1}px`);
   stage.style.setProperty("--pet-jump-2", `${jump2}px`);
   stage.style.setProperty("--pet-jump-3", `${jump3}px`);
+  stage.style.setProperty("--pet-roll-left", `${rollLeft}px`);
+  stage.style.setProperty("--pet-roll-right", `${rollRight}px`);
+  stage.style.setProperty("--pet-hop-side", `${hopSide}px`);
 }
 
 function getRandomHappyPetAnimationClass(){
@@ -805,7 +813,7 @@ function startPetAnimationCycle(verseId, verseProgress){
     State.petAnimActionClass = "";
     render();
 
-    const idleTime = 2000 + Math.random() * 2000;
+    const idleTime = 2000 + Math.random() * 4000;
 
     State.petAnimTimer = setTimeout(() => {
       State.petAnimTimer = null;
