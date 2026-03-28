@@ -3512,7 +3512,7 @@ text-wrap: balance;
 }
 
 .pet-emoji{
-  font-size: clamp(56px, 33cqh, 88px);
+  font-size: clamp(56px, 40cqh, 88px);
   line-height: 1;
 }
 
