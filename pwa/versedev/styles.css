@@ -4088,3 +4088,12 @@ text-wrap: balance;
   0%   { opacity: 0.08; }
   100% { opacity: 0.5; }
 }
+
+.pet-happy-idle{
+  animation: petIdleSquish 1.6s ease-in-out infinite;
+}
+
+@keyframes petIdleSquish{
+  0%, 100% { transform: scale(1, 1); }
+  50%      { transform: scale(1.06, 0.94); }
+}
