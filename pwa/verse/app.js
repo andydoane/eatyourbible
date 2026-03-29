@@ -256,6 +256,16 @@ function saveProgress(progress){
   }
 }
 
+function isTrackedGameCompleted(gameId, gameProgress){
+  if (!gameId || !gameProgress) return false;
+
+  if (gameId === "traffic"){
+    return !!(gameProgress.roadCompleted || gameProgress.trailCompleted || gameProgress.riverCompleted);
+  }
+
+  return !!(gameProgress.easyCompleted || gameProgress.mediumCompleted || gameProgress.hardCompleted);
+}
+
 function getVerseProgress(verseId){
   const progress = loadProgress();
   const verseProgress = progress.verses[verseId];
@@ -4075,7 +4085,6 @@ function render(){
       await loadVerse(requestedVerseId);
     }
   }catch(e){
-    // Show a friendly error (still allow app shell)
     console.error(e);
     showDialog({
       title: "Verse JSON not found",
@@ -4084,11 +4093,15 @@ function render(){
     });
   }
 
-  // start on intro
   const params = new URLSearchParams(window.location.search);
   const requestedScreen = params.get("screen");
+  const petUnlockVerseId = params.get("petUnlock");
 
-  if (requestedScreen === "practice" && HAS_VERSE_SELECTION){
+  if (petUnlockVerseId){
+    State.pendingPetUnlockVerseId = petUnlockVerseId;
+    State.selectedVerseId = petUnlockVerseId;
+    setScreen(Screen.PET_UNLOCK);
+  } else if (requestedScreen === "practice" && HAS_VERSE_SELECTION){
     setScreen(Screen.PRACTICE);
   } else {
     setScreen(Screen.INTRO);
