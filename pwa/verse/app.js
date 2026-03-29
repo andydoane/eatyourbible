@@ -406,7 +406,8 @@ function markTrafficCompleted(verseId, theme){
    ========================= */
 
 // All tracked games (internal IDs)
-const GAME_IDS = [
+// All tracked built-in games
+const BUILTIN_GAME_IDS = [
   "scramble",
   "chain",     // Verse Launch
   "traffic",
@@ -414,6 +415,20 @@ const GAME_IDS = [
   "foodslice",
   "tower"
 ];
+
+function getExternalTrackedGameIds(){
+  const list = Array.isArray(window.EXTERNAL_VERSE_GAMES) ? window.EXTERNAL_VERSE_GAMES : [];
+
+  return list
+    .filter(entry => entry && entry.enabled !== false)
+    .map(entry => entry.manifest)
+    .filter(manifest => manifest && manifest.progressType === "standard")
+    .map(manifest => manifest.id);
+}
+
+function getTrackedGameIds(){
+  return [...BUILTIN_GAME_IDS, ...getExternalTrackedGameIds()];
+}
 
 // Count stars for a single game
 function getGameStars(gameId, gameProgress){
@@ -440,10 +455,13 @@ function getGameStars(gameId, gameProgress){
 function getVerseStars(verseProgress){
   if (!verseProgress || !verseProgress.games) return 0;
 
-  let totalStars = 0;
-  let maxStars = GAME_IDS.length * 3;
+  const trackedGameIds = getTrackedGameIds();
+  if (!trackedGameIds.length) return 0;
 
-  for (const gameId of GAME_IDS){
+  let totalStars = 0;
+  let maxStars = trackedGameIds.length * 3;
+
+  for (const gameId of trackedGameIds){
     const gameProgress = verseProgress.games[gameId];
     totalStars += getGameStars(gameId, gameProgress);
   }
@@ -688,7 +706,10 @@ const HAPPY_PET_ANIMATIONS = [
 function isVerseMastered(verseProgress){
   if (!verseProgress || !verseProgress.games) return false;
 
-  for (const gameId of GAME_IDS){
+  const trackedGameIds = getTrackedGameIds();
+  if (!trackedGameIds.length) return false;
+
+  for (const gameId of trackedGameIds){
     const gp = verseProgress.games[gameId];
 
     if (gameId === "traffic"){
