@@ -75,37 +75,49 @@
     }
   }
 
-  function markCompleted(payload){
-    if (!payload || !payload.verseId || !payload.gameId || !payload.mode) return false;
+function markCompleted(payload){
+  if (!payload || !payload.verseId || !payload.gameId || !payload.mode) return false;
 
-    const progress = loadProgress();
+  const progress = loadProgress();
 
-    if (!progress.verses[payload.verseId]) {
-      progress.verses[payload.verseId] = {
-        learnCompleted: false,
-        games: {}
-      };
-    }
-
-    const verseProgress = progress.verses[payload.verseId];
-
-    if (!verseProgress.games[payload.gameId]) {
-      verseProgress.games[payload.gameId] = {
-        easyCompleted: false,
-        mediumCompleted: false,
-        hardCompleted: false
-      };
-    }
-
-    if (payload.mode === "easy") verseProgress.games[payload.gameId].easyCompleted = true;
-    if (payload.mode === "medium") verseProgress.games[payload.gameId].mediumCompleted = true;
-    if (payload.mode === "hard") verseProgress.games[payload.gameId].hardCompleted = true;
-
-    verseProgress.lastPracticedAt = Date.now();
-
-    saveProgress(progress);
-    return true;
+  if (!progress.verses[payload.verseId]) {
+    progress.verses[payload.verseId] = {
+      learnCompleted: false,
+      games: {}
+    };
   }
+
+  const verseProgress = progress.verses[payload.verseId];
+  const wasUnlockedBefore =
+    !!verseProgress.learnCompleted &&
+    Object.entries(verseProgress.games || {}).some(([gameId, gp]) => isTrackedGameCompleted(gameId, gp));
+
+  if (!verseProgress.games[payload.gameId]) {
+    verseProgress.games[payload.gameId] = {
+      easyCompleted: false,
+      mediumCompleted: false,
+      hardCompleted: false
+    };
+  }
+
+  if (payload.mode === "easy") verseProgress.games[payload.gameId].easyCompleted = true;
+  if (payload.mode === "medium") verseProgress.games[payload.gameId].mediumCompleted = true;
+  if (payload.mode === "hard") verseProgress.games[payload.gameId].hardCompleted = true;
+
+  verseProgress.lastPracticedAt = Date.now();
+
+  const isUnlockedNow =
+    !!verseProgress.learnCompleted &&
+    Object.entries(verseProgress.games || {}).some(([gameId, gp]) => isTrackedGameCompleted(gameId, gp));
+
+  if (!wasUnlockedBefore && isUnlockedNow && !verseProgress.petUnlockShown) {
+    verseProgress.petUnlockShown = true;
+    verseProgress.externalPetUnlockPending = true;
+  }
+
+  saveProgress(progress);
+  return true;
+}
 
   function buildFallbackReturnUrl(){
     const params = getParams();
@@ -120,21 +132,37 @@
     return fallback.href;
   }
   
-  function exitGame(){
-    const params = getParams();
-  
-    try {
-      const raw = params.returnTo || "";
-      const target = raw
-        ? new URL(raw, window.location.href).href
-        : buildFallbackReturnUrl();
-  
-      window.location.href = target;
-    } catch (err) {
-      console.warn("Could not resolve returnTo, using fallback", err);
-      window.location.href = buildFallbackReturnUrl();
+function exitGame(){
+  const params = getParams();
+
+  try {
+    const raw = params.returnTo || "";
+    const target = raw
+      ? new URL(raw, window.location.href)
+      : new URL("../../index.html", window.location.href);
+
+    const progress = loadProgress();
+    const verseProgress = progress.verses?.[params.verseId];
+
+    if (params.verseId && verseProgress?.externalPetUnlockPending){
+      target.searchParams.set("petUnlock", params.verseId);
+      delete verseProgress.externalPetUnlockPending;
+      saveProgress(progress);
     }
+
+    window.location.href = target.href;
+  } catch (err) {
+    console.warn("Could not resolve return target", err);
+
+    const fallback = new URL("../../index.html", window.location.href);
+    if (params.verseId){
+      fallback.searchParams.set("v", params.verseId);
+      fallback.searchParams.set("screen", "practice");
+    }
+
+    window.location.href = fallback.href;
   }
+}
 
   window.VerseGameBridge = {
     getLaunchParams: getParams,
