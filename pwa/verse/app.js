@@ -512,6 +512,34 @@ function getVerseDetailProgressDisplay(gameId, gameProgress){
   return getStandardGameMedals(gameProgress);
 }
 
+function getBuiltInVerseDetailGames(){
+  return [
+    { id: "scramble", label: "Verse Scramble" },
+    { id: "chain", label: "Verse Launch" },
+    { id: "traffic", label: "Traffic Tap" },
+    { id: "bouncing", label: "Bouncing Words" },
+    { id: "foodslice", label: "Food Slice" },
+    { id: "tower", label: "Tower of Bible" }
+  ];
+}
+
+function getExternalVerseDetailGames(){
+  const list = Array.isArray(window.EXTERNAL_VERSE_GAMES) ? window.EXTERNAL_VERSE_GAMES : [];
+
+  return list
+    .filter(entry => entry && entry.enabled !== false)
+    .map(entry => entry.manifest)
+    .filter(manifest => manifest && manifest.progressType === "standard")
+    .map(manifest => ({
+      id: manifest.id,
+      label: manifest.title
+    }));
+}
+
+function getVerseDetailGames(){
+  return [...getBuiltInVerseDetailGames(), ...getExternalVerseDetailGames()];
+}
+
 function getStandardModeMedal(mode){
   if (mode === "easy") return "🥉";
   if (mode === "medium") return "🥈";
@@ -3193,10 +3221,7 @@ function screenVerseDetail(idx){
         </button>
 
         <div class="detail-section">
-          <div class="detail-row">
-            <div class="detail-label">Learn the Verse</div>
-            <div class="detail-stars">${learnStatus}</div>
-          </div>
+          ${getVerseDetailGames().map(game => gameRow(game.label, game.id)).join("")}
         </div>
 
         <div class="detail-section">
