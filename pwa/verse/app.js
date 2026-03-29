@@ -588,9 +588,33 @@ function getTrafficRewardTitle(verseId, theme){
    BibloPet Helpers
    ========================= */
 
+function hasAnyTrackedGameCompletion(verseProgress){
+  if (!verseProgress || !verseProgress.games) return false;
+
+  const trackedGameIds = getTrackedGameIds();
+  if (!trackedGameIds.length) return false;
+
+  for (const gameId of trackedGameIds){
+    const gp = verseProgress.games[gameId];
+    if (!gp) continue;
+
+    if (gameId === "traffic"){
+      if (gp.roadCompleted || gp.trailCompleted || gp.riverCompleted){
+        return true;
+      }
+    } else {
+      if (gp.easyCompleted || gp.mediumCompleted || gp.hardCompleted){
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 function isBibloPetUnlocked(verseProgress){
   if (!verseProgress) return false;
-  return !!verseProgress.learnCompleted && getVerseStars(verseProgress) > 0;
+  return !!verseProgress.learnCompleted && hasAnyTrackedGameCompletion(verseProgress);
 }
 
 function getVerseListItemById(verseId){
