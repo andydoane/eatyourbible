@@ -75,6 +75,16 @@
     }
   }
 
+function isTrackedGameCompleted(gameId, gameProgress){
+  if (!gameId || !gameProgress) return false;
+
+  if (gameId === "traffic"){
+    return !!(gameProgress.roadCompleted || gameProgress.trailCompleted || gameProgress.riverCompleted);
+  }
+
+  return !!(gameProgress.easyCompleted || gameProgress.mediumCompleted || gameProgress.hardCompleted);
+}
+
 function markCompleted(payload){
   if (!payload || !payload.verseId || !payload.gameId || !payload.mode) return false;
 
