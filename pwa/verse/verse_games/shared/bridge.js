@@ -188,21 +188,10 @@ function exitGame(){
   }
 }
 
-  function hasPendingPetUnlock(){
-    const params = getParams();
-    if (!params.verseId) return false;
-
-    const progress = loadProgress();
-    const verseProgress = progress.verses?.[params.verseId];
-
-    return !!verseProgress?.externalPetUnlockPending;
-  }
-
   window.VerseGameBridge = {
     getLaunchParams: getParams,
     getVerseContext,
     markCompleted,
-    exitGame,
-    hasPendingPetUnlock
+    exitGame
   };
 })();
