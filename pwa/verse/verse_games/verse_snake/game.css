@@ -7,19 +7,29 @@ body{
 }
 
 #app.vm-shell{
-  min-height: 100vh;
-  height: 100vh;
+  min-height: 100dvh;
+  height: 100dvh;
   padding: 0;
   display: block;
   overflow: hidden;
 }
 
-.vs-game-shell{
-  height: 100vh;
+.vs-root{
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   background: var(--vm-purple);
   overflow: hidden;
+}
+
+.vs-stage{
+  width: 100%;
+  max-width: 840px;
+  margin: 0 auto;
+  min-height: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
 }
 
 .vs-build-wrap{
@@ -69,7 +79,7 @@ body{
 
 .vs-field{
   flex: 1 1 auto;
-  min-height: 220px;
+  min-height: 240px;
   background: #333333;
   position: relative;
   overflow: hidden;
@@ -143,8 +153,8 @@ body{
   height: 68px;
   border: none;
   border-radius: 22px;
-  background: rgba(255,255,255,0.95);
-  color: #333333;
+  background: rgba(0,0,0,0.34);
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -218,10 +228,64 @@ body{
   transform: scale(0.98);
 }
 
-.vs-note{
-  font-size: 16px;
-  line-height: 1.3;
-  opacity: 0.95;
+.vs-help-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.36);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  z-index: 9999;
+}
+
+.vs-help-overlay.show{
+  display: flex;
+}
+
+.vs-help-dialog{
+  width: min(100%, 460px);
+  background: #7f66c6;
+  color: #fff;
+  border-radius: 22px;
+  padding: 18px 18px 16px;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.25);
+  text-align: center;
+}
+
+.vs-help-title{
+  font-size: 22px;
+  font-weight: 900;
+  margin-bottom: 10px;
+}
+
+.vs-help-body{
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.35;
+  margin-bottom: 14px;
+}
+
+.vs-help-actions{
+  display: flex;
+  justify-content: center;
+}
+
+.vs-help-close{
+  border: none;
+  border-radius: 999px;
+  background: #fff;
+  color: #7f66c6;
+  padding: 12px 18px;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.20);
+}
+
+.vs-help-close:active{
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 rgba(0,0,0,0.20);
 }
 
 .vs-ref{
