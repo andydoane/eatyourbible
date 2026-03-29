@@ -74,14 +74,14 @@
     `;
 
     document.getElementById("completeBtn").onclick = () => {
-      window.VerseGameBridge.markCompleted({
+      const result = window.VerseGameBridge.markCompleted({
         verseId: ctx.verseId,
         gameId: "verse_snake",
         mode: selectedMode,
         progressType: "standard"
       });
 
-      const shouldAutoShowPetUnlock = window.VerseGameBridge.hasPendingPetUnlock();
+      const shouldAutoShowPetUnlock = !!result?.petUnlockTriggered;
 
       completed = true;
       renderDone(shouldAutoShowPetUnlock);
@@ -92,41 +92,41 @@
     };
   }
 
-    function renderDone(autoShowPetUnlock = false){
-      app.innerHTML = `
-        <div class="vm-stack">
-          <div class="vm-pill vs-ref">${ctx.verseRef || launch.ref || "Verse"}</div>
-          <div class="vm-title">🎉 Great job!</div>
-          <div class="vm-subtitle">
-            ${
-              autoShowPetUnlock
-                ? "You unlocked a BibloPet!"
-                : `Verse Snake ${selectedMode} was marked complete.`
-            }
-          </div>
+   function renderDone(autoShowPetUnlock = false){
+  app.innerHTML = `
+    <div class="vm-stack">
+      <div class="vm-pill vs-ref">${ctx.verseRef || launch.ref || "Verse"}</div>
+      <div class="vm-title">🎉 Great job!</div>
+      <div class="vm-subtitle">
+        ${
+          autoShowPetUnlock
+            ? "You unlocked a BibloPet!"
+            : `Verse Snake ${selectedMode} was marked complete.`
+        }
+      </div>
 
-          <div class="vm-actions">
-            <button class="vm-btn" id="againBtn">Play Again</button>
-            <button class="vm-btn vm-btn-dark" id="backBtn">Practice Games</button>
-          </div>
-        </div>
-      `;
+      <div class="vm-actions">
+        <button class="vm-btn" id="againBtn">Play Again</button>
+        <button class="vm-btn vm-btn-dark" id="backBtn">Practice Games</button>
+      </div>
+    </div>
+  `;
 
-      document.getElementById("againBtn").onclick = () => {
-        completed = false;
-        renderModeSelect();
-      };
+  document.getElementById("againBtn").onclick = () => {
+    completed = false;
+    renderModeSelect();
+  };
 
-      document.getElementById("backBtn").onclick = () => {
-        window.VerseGameBridge.exitGame();
-      };
+  document.getElementById("backBtn").onclick = () => {
+    window.VerseGameBridge.exitGame();
+  };
 
-      if (autoShowPetUnlock){
-        setTimeout(() => {
-          window.VerseGameBridge.exitGame();
-        }, 450);
-      }
-    }
+  if (autoShowPetUnlock){
+    setTimeout(() => {
+      window.VerseGameBridge.exitGame();
+    }, 450);
+  }
+}
 
   renderModeSelect();
 })();
