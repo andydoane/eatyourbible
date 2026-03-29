@@ -1732,10 +1732,14 @@ function practiceNext(){
 }
 
 function getReturnToPracticeUrl(){
-  const params = new URLSearchParams();
-  if (VERSE_ID) params.set("v", VERSE_ID);
-  params.set("screen", "practice");
-  return `./index.html?${params.toString()}`;
+  const url = new URL("index.html", window.location.href);
+
+  if (VERSE_ID) {
+    url.searchParams.set("v", VERSE_ID);
+  }
+
+  url.searchParams.set("screen", "practice");
+  return url.href;
 }
 
 function launchExternalGame(manifest){
