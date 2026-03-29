@@ -4046,6 +4046,15 @@ function screenGame(idx){
    7. Main Render
    ========================= */
 function render(){
+  let savedDetailScrollTop = 0;
+
+  if (State.screen === Screen.VERSE_DETAIL){
+    const existingDetailScroll = document.querySelector(".detail-scroll");
+    if (existingDetailScroll){
+      savedDetailScrollTop = existingDetailScroll.scrollTop;
+    }
+  }
+
   app.innerHTML = "";
 
   const currentIdx = screenToIndex(State.screen);
@@ -4081,13 +4090,21 @@ function render(){
     if (slide) app.appendChild(slide);
   }
 
-  // Ensure transform matches current slideX
   if (!State.isSliding) {
     State.slideX = currentIdx;
   }
   updateSlideTransforms();
 
   renderNav();
+
+  if (State.screen === Screen.VERSE_DETAIL && savedDetailScrollTop > 0){
+    requestAnimationFrame(() => {
+      const newDetailScroll = document.querySelector(".detail-scroll");
+      if (newDetailScroll){
+        newDetailScroll.scrollTop = savedDetailScrollTop;
+      }
+    });
+  }
 }
 
 /* =========================
