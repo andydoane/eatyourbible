@@ -21,7 +21,9 @@
       speed: 120
     },
     trail: [],
-    snakeLengthPx: 500
+    snakeLengthPx: 500,
+    fieldWidth: 0,
+    fieldHeight: 0
   };
 
   function getBackSvg(){
@@ -88,6 +90,8 @@
       cancelAnimationFrame(state.rafId);
       state.rafId = 0;
     }
+    window.onkeydown = null;
+    window.onkeyup = null;
   }
 
   function resetSnakeMotion(){
@@ -98,6 +102,8 @@
     state.head.angle = -Math.PI / 2;
     state.head.speed = getModeSpeed(selectedMode);
     state.trail = [];
+    state.fieldWidth = 0;
+    state.fieldHeight = 0;
   }
 
   function getModeSpeed(mode){
@@ -114,7 +120,7 @@
     stopLoop();
 
     app.innerHTML = `
-      <div class="vm-stack" style="padding:18px 16px 22px; min-height:100vh;">
+      <div class="vm-stack" style="padding:18px 16px 22px; min-height:100dvh;">
         <div class="vm-pill vs-ref">${ctx.verseRef || launch.ref || "Verse"}</div>
         <div class="vm-title">🐍 Verse Snake</div>
         <div class="vm-subtitle">Choose your difficulty.</div>
@@ -158,57 +164,76 @@
     resetSnakeMotion();
 
     app.innerHTML = `
-      <div class="vs-game-shell">
-        <div class="vs-build-wrap">
-          <div class="vs-build" id="vsBuild">
-            <div class="vs-build-text" id="vsBuildText">${getBuiltVerseText()}</div>
+      <div class="vs-root">
+        <div class="vs-stage">
+          <div class="vs-build-wrap">
+            <div class="vs-build" id="vsBuild">
+              <div class="vs-build-text" id="vsBuildText">${getBuiltVerseText()}</div>
+            </div>
+          </div>
+
+          <div class="vs-field-wrap">
+            <div class="vs-field" id="vsField">
+              <div class="vs-status">${selectedMode ? selectedMode[0].toUpperCase() + selectedMode.slice(1) : "Mode"}</div>
+
+              <svg class="vs-svg" id="vsSvg" aria-hidden="true">
+                <path class="vs-snake-body" id="vsSnakeBody" d=""></path>
+
+                <g id="vsSnakeHeadGroup">
+                  <circle class="vs-snake-head" id="vsSnakeHead" cx="0" cy="0" r="20"></circle>
+                  <circle class="vs-snake-eye" id="vsSnakeEyeLeft" cx="-7" cy="-5" r="2.8"></circle>
+                  <circle class="vs-snake-eye" id="vsSnakeEyeRight" cx="7" cy="-5" r="2.8"></circle>
+                  <path class="vs-snake-tongue" id="vsSnakeTongue" d=""></path>
+                </g>
+              </svg>
+            </div>
+
+            <div class="vs-controls">
+              <button class="vs-turn-btn no-zoom" id="turnLeftBtn" aria-label="Turn left">
+                ${getBackSvg()}
+              </button>
+              <button class="vs-turn-btn no-zoom" id="turnRightBtn" aria-label="Turn right">
+                ${getForwardSvg()}
+              </button>
+            </div>
+
+            <div class="vs-nav">
+              <button class="vs-nav-btn no-zoom" id="homeBtn" aria-label="Home">
+                ${getHomeSvg()}
+              </button>
+
+              <div class="vs-nav-center">
+                <button class="vs-help-btn no-zoom" id="helpBtn" type="button">HELP</button>
+              </div>
+
+              <button class="vs-nav-btn no-zoom" id="muteBtn" aria-label="Mute">
+                ${muted ? getMuteSvg() : getUnmuteSvg()}
+              </button>
+            </div>
           </div>
         </div>
 
-        <div class="vs-field-wrap">
-          <div class="vs-field" id="vsField">
-            <div class="vs-status">${selectedMode ? selectedMode[0].toUpperCase() + selectedMode.slice(1) : "Mode"}</div>
-
-            <svg class="vs-svg" id="vsSvg" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true">
-              <path class="vs-snake-body" id="vsSnakeBody" d=""></path>
-
-              <g id="vsSnakeHeadGroup">
-                <circle class="vs-snake-head" id="vsSnakeHead" cx="0" cy="0" r="20"></circle>
-                <circle class="vs-snake-eye" id="vsSnakeEyeLeft" cx="-7" cy="-4" r="2.8"></circle>
-                <circle class="vs-snake-eye" id="vsSnakeEyeRight" cx="7" cy="-4" r="2.8"></circle>
-                <path class="vs-snake-tongue" id="vsSnakeTongue" d=""></path>
-              </g>
-            </svg>
-          </div>
-
-          <div class="vs-controls">
-            <button class="vs-turn-btn no-zoom" id="turnLeftBtn" aria-label="Turn left">
-              ${getBackSvg()}
-            </button>
-            <button class="vs-turn-btn no-zoom" id="turnRightBtn" aria-label="Turn right">
-              ${getForwardSvg()}
-            </button>
-          </div>
-
-          <div class="vs-nav">
-            <button class="vs-nav-btn no-zoom" id="homeBtn" aria-label="Home">
-              ${getHomeSvg()}
-            </button>
-
-            <div class="vs-nav-center">
-              <button class="vs-help-btn no-zoom" id="helpBtn" type="button">Help</button>
+        <div class="vs-help-overlay" id="vsHelpOverlay" aria-hidden="true">
+          <div class="vs-help-dialog">
+            <div class="vs-help-title">How to Play Verse Snake</div>
+            <div class="vs-help-body">
+              Use the left and right arrows to steer the snake.<br><br>
+              This is the movement prototype, so word targets are coming next.
             </div>
-
-            <button class="vs-nav-btn no-zoom" id="muteBtn" aria-label="Mute">
-              ${muted ? getMuteSvg() : getUnmuteSvg()}
-            </button>
+            <div class="vs-help-actions">
+              <button class="vs-help-close no-zoom" id="vsHelpCloseBtn" type="button">OK</button>
+            </div>
           </div>
         </div>
       </div>
     `;
 
     wireGameControls();
-    startLoop();
+
+    requestAnimationFrame(() => {
+      initializeFieldAndSnake();
+      startLoop();
+    });
   }
 
   function wireGameControls(){
@@ -217,6 +242,8 @@
     const homeBtn = document.getElementById("homeBtn");
     const helpBtn = document.getElementById("helpBtn");
     const muteBtn = document.getElementById("muteBtn");
+    const helpOverlay = document.getElementById("vsHelpOverlay");
+    const helpCloseBtn = document.getElementById("vsHelpCloseBtn");
 
     const turnLeftStart = () => { state.turnDir = -1; };
     const turnRightStart = () => { state.turnDir = 1; };
@@ -238,12 +265,28 @@
     };
 
     helpBtn.onclick = () => {
-      alert("Verse Snake help:\\n\\nUse the left and right arrows to steer the snake.\\n\\nThis is the movement prototype, so word targets are coming next.");
+      helpOverlay.classList.add("show");
+      helpOverlay.setAttribute("aria-hidden", "false");
+    };
+
+    helpCloseBtn.onclick = () => {
+      helpOverlay.classList.remove("show");
+      helpOverlay.setAttribute("aria-hidden", "true");
+    };
+
+    helpOverlay.onclick = (e) => {
+      if (e.target === helpOverlay){
+        helpOverlay.classList.remove("show");
+        helpOverlay.setAttribute("aria-hidden", "true");
+      }
     };
 
     muteBtn.onclick = () => {
       muted = !muted;
-      renderGameScreen();
+      const btn = document.getElementById("muteBtn");
+      if (btn){
+        btn.innerHTML = muted ? getMuteSvg() : getUnmuteSvg();
+      }
     };
 
     window.onkeydown = (e) => {
@@ -263,22 +306,33 @@
     };
   }
 
-  function startLoop(){
-    const field = document.getElementById("vsField");
-    if (!field) return;
+  function initializeFieldAndSnake(){
+    syncFieldMetrics();
 
-    const rect = field.getBoundingClientRect();
-
-    state.head.x = rect.width * 0.50;
-    state.head.y = rect.height * 0.55;
+    state.head.x = state.fieldWidth * 0.50;
+    state.head.y = state.fieldHeight * 0.55;
     state.head.angle = -Math.PI / 2;
     state.head.speed = getModeSpeed(selectedMode);
 
     state.trail = [];
     seedTrail();
+    drawSnake();
+  }
 
+  function syncFieldMetrics(){
+    const field = document.getElementById("vsField");
+    const svg = document.getElementById("vsSvg");
+    if (!field || !svg) return;
+
+    const rect = field.getBoundingClientRect();
+    state.fieldWidth = Math.max(1, rect.width);
+    state.fieldHeight = Math.max(1, rect.height);
+
+    svg.setAttribute("viewBox", `0 0 ${state.fieldWidth} ${state.fieldHeight}`);
+  }
+
+  function startLoop(){
     state.running = true;
-
     let lastTs = performance.now();
 
     function tick(ts){
@@ -287,19 +341,20 @@
       const dt = Math.min(34, ts - lastTs);
       lastTs = ts;
 
+      syncFieldMetrics();
       updateMotion(dt);
       drawSnake();
 
       state.rafId = requestAnimationFrame(tick);
     }
 
-    drawSnake();
     state.rafId = requestAnimationFrame(tick);
   }
 
   function seedTrail(){
     state.trail = [];
     const step = 8;
+
     for (let i = 0; i < state.snakeLengthPx; i += step){
       state.trail.push({
         x: state.head.x,
@@ -310,10 +365,6 @@
   }
 
   function updateMotion(dt){
-    const field = document.getElementById("vsField");
-    if (!field) return;
-
-    const rect = field.getBoundingClientRect();
     const turnRate = 2.5;
 
     state.head.angle += state.turnDir * turnRate * (dt / 1000);
@@ -326,17 +377,17 @@
     const pad = 24;
 
     if (nextX < -pad){
-      nextX = rect.width + pad;
+      nextX = state.fieldWidth + pad;
       wrapped = true;
-    } else if (nextX > rect.width + pad){
+    } else if (nextX > state.fieldWidth + pad){
       nextX = -pad;
       wrapped = true;
     }
 
     if (nextY < -pad){
-      nextY = rect.height + pad;
+      nextY = state.fieldHeight + pad;
       wrapped = true;
-    } else if (nextY > rect.height + pad){
+    } else if (nextY > state.fieldHeight + pad){
       nextY = -pad;
       wrapped = true;
     }
@@ -363,12 +414,9 @@
 
       if (i > 0){
         const prev = state.trail[i - 1];
-
-        if (p.breakBefore){
-          continue;
+        if (!p.breakBefore){
+          total += Math.hypot(p.x - prev.x, p.y - prev.y);
         }
-
-        total += Math.hypot(p.x - prev.x, p.y - prev.y);
       }
 
       if (total >= state.snakeLengthPx){
@@ -491,7 +539,7 @@
     stopLoop();
 
     app.innerHTML = `
-      <div class="vm-stack" style="padding:18px 16px 22px; min-height:100vh;">
+      <div class="vm-stack" style="padding:18px 16px 22px; min-height:100dvh;">
         <div class="vm-pill vs-ref">${ctx.verseRef || launch.ref || "Verse"}</div>
         <div class="vm-title">🎉 Great job!</div>
         <div class="vm-subtitle">
