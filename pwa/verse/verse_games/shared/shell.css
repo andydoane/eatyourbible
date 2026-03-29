@@ -1,1 +1,115 @@
+:root{
+  --vm-purple: #7f66c6;
+  --vm-red: #ff5a51;
+  --vm-green: #a7cb6f;
+  --vm-dark: rgba(0,0,0,0.30);
+  --vm-white: #ffffff;
+  --vm-text-dark: #333333;
+  --vm-radius-pill: 999px;
+  --vm-radius-card: 24px;
+  --vm-shadow-btn: 0 6px 0 rgba(0,0,0,0.25);
+}
 
+*,
+*::before,
+*::after{
+  box-sizing: border-box;
+}
+
+html, body{
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  font-family: "Baloo 2", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  background: var(--vm-purple);
+  color: var(--vm-white);
+}
+
+body{
+  overflow: hidden;
+}
+
+.vm-shell{
+  min-height: 100vh;
+  padding: 18px 16px 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.vm-pill{
+  display: inline-block;
+  background: rgba(255,255,255,0.95);
+  color: #111;
+  border-radius: var(--vm-radius-pill);
+  padding: 8px 16px;
+  font-weight: 900;
+  font-size: 15px;
+}
+
+.vm-card{
+  width: min(100%, 760px);
+  background: rgba(0,0,0,0.30);
+  border-radius: var(--vm-radius-card);
+  padding: 18px;
+}
+
+.vm-btn{
+  border: none;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--vm-purple);
+  padding: 14px 18px;
+  font: inherit;
+  font-weight: 900;
+  font-size: 18px;
+  box-shadow: var(--vm-shadow-btn);
+  cursor: pointer;
+}
+
+.vm-btn:active{
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 rgba(0,0,0,0.25);
+}
+
+.vm-btn-dark{
+  background: rgba(0,0,0,0.30);
+  color: #fff;
+}
+
+.vm-stack{
+  width: min(100%, 820px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.vm-title{
+  font-size: clamp(26px, 6vw, 42px);
+  font-weight: 900;
+  line-height: 1.05;
+}
+
+.vm-subtitle{
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+  opacity: 0.96;
+}
+
+.vm-actions{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(100%, 360px);
+}
+
+.vm-nav{
+  width: min(100%, 820px);
+  margin-top: auto;
+  padding-top: 12px;
+  display: flex;
+  justify-content: center;
+}
