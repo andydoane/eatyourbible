@@ -3223,15 +3223,6 @@ function screenVerseDetail(idx){
         <div class="detail-section">
           ${getVerseDetailGames().map(game => gameRow(game.label, game.id)).join("")}
         </div>
-
-        <div class="detail-section">
-          ${gameRow("Verse Scramble", "scramble")}
-          ${gameRow("Verse Launch", "chain")}
-          ${gameRow("Traffic Tap", "traffic")}
-          ${gameRow("Bouncing Words", "bouncing")}
-          ${gameRow("Food Slice", "foodslice")}
-          ${gameRow("Tower of Bible", "tower")}
-        </div>
       </div>
     </div>
   `;
