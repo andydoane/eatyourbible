@@ -5,6 +5,7 @@
 
   let selectedMode = null;
   let completed = false;
+  let muted = false;
 
   const state = {
     rafId: 0,
@@ -13,7 +14,6 @@
     flashUntil: 0,
     happyUntil: 0,
     snakeStyle: "default",
-    fieldRect: null,
     head: {
       x: 0,
       y: 0,
@@ -21,8 +21,66 @@
       speed: 120
     },
     trail: [],
-    snakeLengthPx: 520
+    snakeLengthPx: 500
   };
+
+  function getBackSvg(){
+    return `
+      <svg class="nav-icon" viewBox="0 0 1270 889" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+        <path style="fill:#ffffff;stroke-width:74.9031;stroke-linecap:round"
+          d="M 90.101697,426.07323 665.52324,88.164306 a 20.830539,20.830539 29.78848 0 1 31.37872,17.962384 v 676.74658 a 20.830539,20.830539 150.21152 0 1 -31.37872,17.96238 L 90.101697,462.92673 a 21.369052,21.369052 90 0 1 0,-36.8535 z"
+          transform="translate(246.77226)" />
+      </svg>
+    `;
+  }
+
+  function getForwardSvg(){
+    return `
+      <svg class="nav-icon" viewBox="0 0 1270 889" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+        <path style="fill:#ffffff;stroke-width:74.9031;stroke-linecap:round"
+          d="M 90.101697,426.07323 665.52324,88.164306 a 20.830539,20.830539 29.78848 0 1 31.37872,17.962384 v 676.74658 a 20.830539,20.830539 150.21152 0 1 -31.37872,17.96238 L 90.101697,462.92673 a 21.369052,21.369052 90 0 1 0,-36.8535 z"
+          transform="matrix(-1,0,0,1,1023.2277,0)" />
+      </svg>
+    `;
+  }
+
+  function getHomeSvg(){
+    return `
+      <svg class="nav-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+        <path d="M12 3L3 10h2v9h5v-6h4v6h5v-9h2L12 3z" fill="#ffffff"/>
+      </svg>
+    `;
+  }
+
+  function getMuteSvg(){
+    return `
+      <svg class="nav-icon" viewBox="0 0 1270 889" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+        <path style="fill:#ffffff;stroke:none;stroke-width:44.9431;stroke-linecap:round"
+          d="M 660.98465,87.244161 409.97079,241.6972 a 150.47802,150.47802 0 0 1 -78.85883,22.31829 H 225.63234 a 42.587633,42.587633 0 0 0 -42.58762,42.58762 v 275.79372 a 42.587633,42.587633 0 0 0 42.58762,42.58762 h 105.47962 a 150.47802,150.47802 0 0 1 78.85883,22.3183 l 251.01386,154.45304 a 23.799138,23.799138 0 0 0 36.27121,-20.26933 V 107.51349 A 23.799138,23.799138 0 0 0 660.98465,87.244161 Z" />
+        <g transform="translate(-26.458334,-255.59263)">
+          <path style="fill:none;stroke:#ffffff;stroke-width:76.7747;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1"
+            d="M 1241.4124,524.69155 890.61025,875.49365" />
+          <path style="fill:none;stroke:#ffffff;stroke-width:76.7747;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1"
+            d="m 890.61025,524.69155 350.80215,350.8021" />
+        </g>
+      </svg>
+    `;
+  }
+
+  function getUnmuteSvg(){
+    return `
+      <svg class="nav-icon" viewBox="0 0 1270 889" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+        <g transform="matrix(2.9017243,0,0,2.9017243,-948.59169,1423.6267)">
+          <path style="fill:#ffffff;stroke:none;stroke-width:15.4884;stroke-linecap:round"
+            d="m 554.69651,-460.54773 -86.50507,53.22802 a 51.858137,51.858137 0 0 1 -27.17654,7.69139 h -36.35067 a 14.676664,14.676664 0 0 0 -14.67666,14.67666 v 95.04477 a 14.676664,14.676664 0 0 0 14.67666,14.67666 h 36.35067 a 51.858137,51.858137 0 0 1 27.17654,7.69139 l 86.50507,53.22802 a 8.2017227,8.2017227 0 0 0 12.49988,-6.98527 v -232.26637 a 8.2017227,8.2017227 0 0 0 -12.49988,-6.98527 z" />
+          <path style="fill:none;stroke:#ffffff;stroke-width:26.4583;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1"
+            d="m 596.38634,-270.01659 c 26.00162,-13.81364 42.0863,-39.52797 42.16745,-67.41243 -0.0102,-27.95044 -16.10446,-53.75052 -42.16745,-67.5969" />
+          <path style="fill:none;stroke:#ffffff;stroke-width:26.4583;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1"
+            d="m 626.65943,-233.57231 c 4.34269,-2.51562 16.69789,-10.99898 23.86366,-17.76894 23.32002,-22.03191 37.74343,-52.46821 37.74343,-86.08777 0,-33.61956 -14.42341,-64.05637 -37.74343,-86.08828 -7.16577,-6.76996 -19.52097,-15.25332 -23.86366,-17.76894" />
+        </g>
+      </svg>
+    `;
+  }
 
   function stopLoop(){
     state.running = false;
@@ -56,7 +114,7 @@
     stopLoop();
 
     app.innerHTML = `
-      <div class="vm-stack">
+      <div class="vm-stack" style="padding:18px 16px 22px; min-height:100vh;">
         <div class="vm-pill vs-ref">${ctx.verseRef || launch.ref || "Verse"}</div>
         <div class="vm-title">🐍 Verse Snake</div>
         <div class="vm-subtitle">Choose your difficulty.</div>
@@ -101,10 +159,6 @@
 
     app.innerHTML = `
       <div class="vs-game-shell">
-        <div class="vs-topbar">
-          <div class="vm-pill">${selectedMode ? selectedMode[0].toUpperCase() + selectedMode.slice(1) : "Mode"}</div>
-        </div>
-
         <div class="vs-build-wrap">
           <div class="vs-build" id="vsBuild">
             <div class="vs-build-text" id="vsBuildText">${getBuiltVerseText()}</div>
@@ -113,9 +167,11 @@
 
         <div class="vs-field-wrap">
           <div class="vs-field" id="vsField">
-            <div class="vs-status">Movement prototype</div>
+            <div class="vs-status">${selectedMode ? selectedMode[0].toUpperCase() + selectedMode.slice(1) : "Mode"}</div>
+
             <svg class="vs-svg" id="vsSvg" viewBox="0 0 1000 1000" preserveAspectRatio="none" aria-hidden="true">
               <path class="vs-snake-body" id="vsSnakeBody" d=""></path>
+
               <g id="vsSnakeHeadGroup">
                 <circle class="vs-snake-head" id="vsSnakeHead" cx="0" cy="0" r="20"></circle>
                 <circle class="vs-snake-eye" id="vsSnakeEyeLeft" cx="-7" cy="-4" r="2.8"></circle>
@@ -127,15 +183,25 @@
 
           <div class="vs-controls">
             <button class="vs-turn-btn no-zoom" id="turnLeftBtn" aria-label="Turn left">
-              ${typeof SVG_BACK !== "undefined" ? SVG_BACK : "←"}
+              ${getBackSvg()}
             </button>
             <button class="vs-turn-btn no-zoom" id="turnRightBtn" aria-label="Turn right">
-              ${typeof SVG_FORWARD !== "undefined" ? SVG_FORWARD : "→"}
+              ${getForwardSvg()}
             </button>
           </div>
 
-          <div class="vs-bottom-nav">
-            <button class="vm-btn vm-btn-dark" id="backBtn">Practice Games</button>
+          <div class="vs-nav">
+            <button class="vs-nav-btn no-zoom" id="homeBtn" aria-label="Home">
+              ${getHomeSvg()}
+            </button>
+
+            <div class="vs-nav-center">
+              <button class="vs-help-btn no-zoom" id="helpBtn" type="button">Help</button>
+            </div>
+
+            <button class="vs-nav-btn no-zoom" id="muteBtn" aria-label="Mute">
+              ${muted ? getMuteSvg() : getUnmuteSvg()}
+            </button>
           </div>
         </div>
       </div>
@@ -148,7 +214,9 @@
   function wireGameControls(){
     const leftBtn = document.getElementById("turnLeftBtn");
     const rightBtn = document.getElementById("turnRightBtn");
-    const backBtn = document.getElementById("backBtn");
+    const homeBtn = document.getElementById("homeBtn");
+    const helpBtn = document.getElementById("helpBtn");
+    const muteBtn = document.getElementById("muteBtn");
 
     const turnLeftStart = () => { state.turnDir = -1; };
     const turnRightStart = () => { state.turnDir = 1; };
@@ -164,9 +232,18 @@
     leftBtn.addEventListener("pointerleave", turnStop);
     rightBtn.addEventListener("pointerleave", turnStop);
 
-    backBtn.onclick = () => {
+    homeBtn.onclick = () => {
       stopLoop();
       window.VerseGameBridge.exitGame();
+    };
+
+    helpBtn.onclick = () => {
+      alert("Verse Snake help:\\n\\nUse the left and right arrows to steer the snake.\\n\\nThis is the movement prototype, so word targets are coming next.");
+    };
+
+    muteBtn.onclick = () => {
+      muted = !muted;
+      renderGameScreen();
     };
 
     window.onkeydown = (e) => {
@@ -191,7 +268,6 @@
     if (!field) return;
 
     const rect = field.getBoundingClientRect();
-    state.fieldRect = rect;
 
     state.head.x = rect.width * 0.50;
     state.head.y = rect.height * 0.55;
@@ -227,7 +303,8 @@
     for (let i = 0; i < state.snakeLengthPx; i += step){
       state.trail.push({
         x: state.head.x,
-        y: state.head.y + i
+        y: state.head.y + i,
+        breakBefore: false
       });
     }
   }
@@ -237,29 +314,43 @@
     if (!field) return;
 
     const rect = field.getBoundingClientRect();
-    state.fieldRect = rect;
-
     const turnRate = 2.5;
+
     state.head.angle += state.turnDir * turnRate * (dt / 1000);
 
     const speed = state.head.speed;
-    state.head.x += Math.cos(state.head.angle) * speed * (dt / 1000);
-    state.head.y += Math.sin(state.head.angle) * speed * (dt / 1000);
+    let nextX = state.head.x + Math.cos(state.head.angle) * speed * (dt / 1000);
+    let nextY = state.head.y + Math.sin(state.head.angle) * speed * (dt / 1000);
+    let wrapped = false;
 
-    wrapHead(rect);
-
-    state.trail.unshift({ x: state.head.x, y: state.head.y });
-
-    trimTrail();
-  }
-
-  function wrapHead(rect){
     const pad = 24;
 
-    if (state.head.x < -pad) state.head.x = rect.width + pad;
-    if (state.head.x > rect.width + pad) state.head.x = -pad;
-    if (state.head.y < -pad) state.head.y = rect.height + pad;
-    if (state.head.y > rect.height + pad) state.head.y = -pad;
+    if (nextX < -pad){
+      nextX = rect.width + pad;
+      wrapped = true;
+    } else if (nextX > rect.width + pad){
+      nextX = -pad;
+      wrapped = true;
+    }
+
+    if (nextY < -pad){
+      nextY = rect.height + pad;
+      wrapped = true;
+    } else if (nextY > rect.height + pad){
+      nextY = -pad;
+      wrapped = true;
+    }
+
+    state.head.x = nextX;
+    state.head.y = nextY;
+
+    state.trail.unshift({
+      x: state.head.x,
+      y: state.head.y,
+      breakBefore: wrapped
+    });
+
+    trimTrail();
   }
 
   function trimTrail(){
@@ -272,6 +363,11 @@
 
       if (i > 0){
         const prev = state.trail[i - 1];
+
+        if (p.breakBefore){
+          continue;
+        }
+
         total += Math.hypot(p.x - prev.x, p.y - prev.y);
       }
 
@@ -290,9 +386,17 @@
     if (!simplified.length) return "";
 
     let d = `M ${simplified[0].x.toFixed(1)} ${simplified[0].y.toFixed(1)}`;
+
     for (let i = 1; i < simplified.length; i++){
-      d += ` L ${simplified[i].x.toFixed(1)} ${simplified[i].y.toFixed(1)}`;
+      const p = simplified[i];
+
+      if (p.breakBefore){
+        d += ` M ${p.x.toFixed(1)} ${p.y.toFixed(1)}`;
+      } else {
+        d += ` L ${p.x.toFixed(1)} ${p.y.toFixed(1)}`;
+      }
     }
+
     return d;
   }
 
@@ -304,6 +408,13 @@
 
     for (let i = 1; i < points.length; i++){
       const p = points[i];
+
+      if (p.breakBefore){
+        out.push(p);
+        last = p;
+        continue;
+      }
+
       if (Math.hypot(p.x - last.x, p.y - last.y) >= minDist){
         out.push(p);
         last = p;
@@ -359,10 +470,7 @@
     rightEye.setAttribute("cx", "7");
     rightEye.setAttribute("cy", "-5");
 
-    tongue.setAttribute(
-      "d",
-      "M 0 -22 L -4 -34 L 0 -31 L 4 -34 Z"
-    );
+    tongue.setAttribute("d", "M 0 -22 L -4 -34 L 0 -31 L 4 -34 Z");
   }
 
   function getSnakeBodyColor(){
@@ -383,7 +491,7 @@
     stopLoop();
 
     app.innerHTML = `
-      <div class="vm-stack">
+      <div class="vm-stack" style="padding:18px 16px 22px; min-height:100vh;">
         <div class="vm-pill vs-ref">${ctx.verseRef || launch.ref || "Verse"}</div>
         <div class="vm-title">🎉 Great job!</div>
         <div class="vm-subtitle">
