@@ -1,30 +1,37 @@
-.vs-ref{
-  margin-top: 6px;
+html, body{
+  height: 100%;
+}
+
+body{
+  margin: 0;
+}
+
+#app.vm-shell{
+  min-height: 100vh;
+  height: 100vh;
+  padding: 0;
+  display: block;
+  overflow: hidden;
 }
 
 .vs-game-shell{
-  width: 100%;
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
-}
-
-.vs-topbar{
-  display: flex;
-  justify-content: center;
-  padding: 10px 16px 8px;
+  background: var(--vm-purple);
+  overflow: hidden;
 }
 
 .vs-build-wrap{
-  padding: 0 14px 10px;
+  padding: 12px 14px 10px;
+  flex: 0 0 auto;
 }
 
 .vs-build{
   background: #ffc751;
   color: #333333;
   border-radius: 22px;
-  min-height: 120px;
+  min-height: 112px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -56,17 +63,17 @@
 .vs-field-wrap{
   flex: 1 1 auto;
   min-height: 0;
-  padding: 0 0 10px;
   display: flex;
   flex-direction: column;
 }
 
 .vs-field{
   flex: 1 1 auto;
-  min-height: 320px;
+  min-height: 220px;
   background: #333333;
   position: relative;
   overflow: hidden;
+  width: 100%;
 }
 
 .vs-svg{
@@ -109,8 +116,23 @@
   fill: #ff5a51;
 }
 
+.vs-status{
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  z-index: 2;
+  background: rgba(255,255,255,0.10);
+  color: #fff;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
+}
+
 .vs-controls{
-  padding: 12px 14px 8px;
+  flex: 0 0 auto;
+  padding: 12px 14px 10px;
   display: flex;
   justify-content: center;
   gap: 18px;
@@ -140,14 +162,60 @@
   height: 34px;
 }
 
-.vs-bottom-nav{
-  padding: 4px 14px 18px;
+.vs-nav{
+  flex: 0 0 auto;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 0 18px;
+  background: rgba(0,0,0,0.30);
+  color: white;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.vs-nav-btn{
+  width: 54px;
+  height: 54px;
+  border: none;
+  border-radius: 16px;
+  background: rgba(255,255,255,0.12);
+  color: rgba(255,255,255,0.95);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.vs-nav-btn:active{
+  transform: scale(0.98);
+}
+
+.vs-nav-center{
+  min-width: 0;
+  flex: 1 1 auto;
   display: flex;
   justify-content: center;
 }
 
-.vs-bottom-nav .vm-btn{
-  min-width: 220px;
+.vs-help-btn{
+  min-width: 118px;
+  height: 44px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.14);
+  color: #fff;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.vs-help-btn:active{
+  transform: scale(0.98);
 }
 
 .vs-note{
@@ -156,16 +224,41 @@
   opacity: 0.95;
 }
 
-.vs-status{
-  position: absolute;
-  left: 12px;
-  top: 12px;
-  z-index: 2;
-  background: rgba(255,255,255,0.10);
-  color: #fff;
-  border-radius: 999px;
-  padding: 8px 12px;
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: 0.2px;
+.vs-ref{
+  margin-top: 6px;
+}
+
+@media (max-height: 760px){
+  .vs-build{
+    min-height: 96px;
+    padding: 14px 16px;
+  }
+
+  .vs-build-text{
+    font-size: clamp(20px, 5vw, 34px);
+  }
+
+  .vs-controls{
+    padding: 10px 14px 8px;
+  }
+
+  .vs-turn-btn{
+    width: 78px;
+    height: 62px;
+  }
+
+  .vs-nav{
+    height: 64px;
+  }
+
+  .vs-nav-btn{
+    width: 48px;
+    height: 48px;
+  }
+
+  .vs-help-btn{
+    min-width: 106px;
+    height: 40px;
+    font-size: 15px;
+  }
 }
