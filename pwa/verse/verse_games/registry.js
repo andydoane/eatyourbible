@@ -7,7 +7,7 @@ window.EXTERNAL_VERSE_GAMES = [
       description: "Steer the snake to eat the next correct word.",
       icon: "🐍",
       launchUrl: "./verse_games/verse_snake/index.html",
-      visibleInCarousel: true,
+      visibleInCarousel: false,
       progressType: "standard",
       modes: ["easy", "medium", "hard"]
     }
