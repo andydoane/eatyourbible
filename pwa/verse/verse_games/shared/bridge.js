@@ -107,9 +107,33 @@
     return true;
   }
 
+  function buildFallbackReturnUrl(){
+    const params = getParams();
+  
+    const fallback = new URL("../../index.html", window.location.href);
+  
+    if (params.verseId){
+      fallback.searchParams.set("v", params.verseId);
+    }
+  
+    fallback.searchParams.set("screen", "practice");
+    return fallback.href;
+  }
+  
   function exitGame(){
     const params = getParams();
-    window.location.href = params.returnTo || "../../index.html";
+  
+    try {
+      const raw = params.returnTo || "";
+      const target = raw
+        ? new URL(raw, window.location.href).href
+        : buildFallbackReturnUrl();
+  
+      window.location.href = target;
+    } catch (err) {
+      console.warn("Could not resolve returnTo, using fallback", err);
+      window.location.href = buildFallbackReturnUrl();
+    }
   }
 
   window.VerseGameBridge = {
