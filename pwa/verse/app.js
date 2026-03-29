@@ -1243,14 +1243,34 @@ const LEARN_LEVEL_OPTIONS = [
   }
 ];
 
-const PRACTICE_GAMES = [
-  { title:"🧩 Verse Scramble", desc:"Pick the correct word blob." },
-  { title:"🚀 Verse Launch", desc:"Launch words into the verse." },
-  { title:"🚗 Traffic Tap", desc:"Tap moving cards and animals." },
-  { title:"🏀 Bouncing Words", desc:"Tap moving verse words." },
-  { title:"🍉 Food Slice", desc:"Tap the flying food." },
-  { title:"🏰 Tower of Bible", desc:"Build a sky-high tower one word at a time." },
+const BUILTIN_PRACTICE_GAMES = [
+  { id:"scramble", title:"🧩 Verse Scramble", desc:"Pick the correct word blob.", source:"builtin" },
+  { id:"chain", title:"🚀 Verse Launch", desc:"Launch words into the verse.", source:"builtin" },
+  { id:"traffic", title:"🚗 Traffic Tap", desc:"Tap moving cards and animals.", source:"builtin" },
+  { id:"bouncing", title:"🏀 Bouncing Words", desc:"Tap moving verse words.", source:"builtin" },
+  { id:"foodslice", title:"🍉 Food Slice", desc:"Tap the flying food.", source:"builtin" },
+  { id:"tower", title:"🏰 Tower of Bible", desc:"Build a sky-high tower one word at a time.", source:"builtin" },
 ];
+
+function getExternalPracticeGames(){
+  const list = Array.isArray(window.EXTERNAL_VERSE_GAMES) ? window.EXTERNAL_VERSE_GAMES : [];
+
+  return list
+    .filter(entry => entry && entry.enabled !== false)
+    .map(entry => entry.manifest)
+    .filter(manifest => manifest && manifest.visibleInCarousel !== false)
+    .map(manifest => ({
+      id: manifest.id,
+      title: `${manifest.icon || "🎮"} ${manifest.title}`,
+      desc: manifest.description || "",
+      source: "external",
+      manifest
+    }));
+}
+
+function getPracticeGames(){
+  return [...BUILTIN_PRACTICE_GAMES, ...getExternalPracticeGames()];
+}
 
 /* =========================================================
    6. Shared Game Helpers (Used Across Multiple Games)
@@ -1641,56 +1661,53 @@ function learnLevelRun(){
 
 /* Practice carousel controls */
 function practicePrev(){
-  State.practiceIndex = (State.practiceIndex - 1 + PRACTICE_GAMES.length) % PRACTICE_GAMES.length;
+  const games = getPracticeGames();
+  if (!games.length) return;
+
+  State.practiceIndex = (State.practiceIndex - 1 + games.length) % games.length;
   render();
 }
+
 function practiceNext(){
-  State.practiceIndex = (State.practiceIndex + 1) % PRACTICE_GAMES.length;
+  const games = getPracticeGames();
+  if (!games.length) return;
+
+  State.practiceIndex = (State.practiceIndex + 1) % games.length;
   render();
+}
+
+function getReturnToPracticeUrl(){
+  const params = new URLSearchParams();
+  if (VERSE_ID) params.set("v", VERSE_ID);
+  params.set("screen", "practice");
+  return `./index.html?${params.toString()}`;
+}
+
+function launchExternalGame(manifest){
+  if (!manifest || !manifest.launchUrl || !VERSE_ID) return;
+
+  const params = new URLSearchParams({
+    verseId: VERSE_ID,
+    ref: VERSE_REF || "",
+    translation: TRANSLATION || "",
+    returnTo: getReturnToPracticeUrl(),
+    source: "verse_memory_app"
+  });
+
+  window.location.href = `${manifest.launchUrl}?${params.toString()}`;
 }
 
 function practiceRun(){
+  const games = getPracticeGames();
+  const g = games[State.practiceIndex];
+  if (!g) return;
 
-  const g = PRACTICE_GAMES[State.practiceIndex];
-
-
-  if (g.title.includes("Verse Scramble")){
-    startGame("scramble");
+  if (g.source === "external"){
+    launchExternalGame(g.manifest);
     return;
   }
 
-  if (g.title.includes("Verse Launch")){
-    startGame("chain");
-    return;
-  }
-
-  if (g.title.includes("Traffic Tap")){
-    startGame("traffic");
-    return;
-  }
-
-  if (g.title.includes("Bouncing Words")){
-    startGame("bouncing");
-    return;
-  }
-
-  if (g.title.includes("Food Slice")){
-    startGame("foodslice");
-    return;
-  }
-
-  if (g.title.includes("Tower of Bible") || g.title.includes("Stack It")){
-    startGame("tower");
-    return;
-  }
-
-
-  showDialog({
-    title: g.title,
-    body: "Coming soon 🙂",
-    actions: [dlgBtn("OK", {onClick: closeDialog})]
-  });
-
+  startGame(g.id);
 }
 
 /* Build verse display with hidden items */
@@ -3801,7 +3818,18 @@ function screenPracticeGate(idx){
 function screenPractice(idx){
   const wrap = document.createElement("div");
   wrap.className = "title-screen";
-  const g = PRACTICE_GAMES[State.practiceIndex];
+
+  const practiceGames = getPracticeGames();
+  const safeIndex = practiceGames.length
+    ? Math.max(0, Math.min(State.practiceIndex, practiceGames.length - 1))
+    : 0;
+
+  State.practiceIndex = safeIndex;
+
+  const g = practiceGames[safeIndex] || {
+    title: "No Practice Games",
+    desc: "No games are available right now."
+  };
 
   wrap.innerHTML = `
     <div class="title-content practice-content">
@@ -3826,7 +3854,7 @@ function screenPractice(idx){
   wrap.querySelector("#pMain").onclick = (e)=>{ e.stopPropagation(); practiceRun(); };
 
   const dots = wrap.querySelector("#pDots");
-  dots.innerHTML = PRACTICE_GAMES.map((_, i) =>
+  dots.innerHTML = practiceGames.map((_, i) =>
     `<span class="carousel-dot ${i === State.practiceIndex ? "active" : ""}"></span>`
   ).join("");
 
@@ -4012,6 +4040,14 @@ function render(){
   }
 
   // start on intro
-  setScreen(Screen.INTRO);
+  const params = new URLSearchParams(window.location.search);
+  const requestedScreen = params.get("screen");
+
+  if (requestedScreen === "practice" && HAS_VERSE_SELECTION){
+    setScreen(Screen.PRACTICE);
+  } else {
+    setScreen(Screen.INTRO);
+  }
+
   applyMute();
 })();
