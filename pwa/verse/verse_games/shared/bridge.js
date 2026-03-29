@@ -86,7 +86,9 @@ function isTrackedGameCompleted(gameId, gameProgress){
 }
 
 function markCompleted(payload){
-  if (!payload || !payload.verseId || !payload.gameId || !payload.mode) return false;
+  if (!payload || !payload.verseId || !payload.gameId || !payload.mode) {
+    return { ok: false, petUnlockTriggered: false };
+  }
 
   const progress = loadProgress();
 
@@ -98,9 +100,12 @@ function markCompleted(payload){
   }
 
   const verseProgress = progress.verses[payload.verseId];
+
   const wasUnlockedBefore =
     !!verseProgress.learnCompleted &&
-    Object.entries(verseProgress.games || {}).some(([gameId, gp]) => isTrackedGameCompleted(gameId, gp));
+    Object.entries(verseProgress.games || {}).some(([gameId, gp]) =>
+      isTrackedGameCompleted(gameId, gp)
+    );
 
   if (!verseProgress.games[payload.gameId]) {
     verseProgress.games[payload.gameId] = {
@@ -118,15 +123,24 @@ function markCompleted(payload){
 
   const isUnlockedNow =
     !!verseProgress.learnCompleted &&
-    Object.entries(verseProgress.games || {}).some(([gameId, gp]) => isTrackedGameCompleted(gameId, gp));
+    Object.entries(verseProgress.games || {}).some(([gameId, gp]) =>
+      isTrackedGameCompleted(gameId, gp)
+    );
+
+  let petUnlockTriggered = false;
 
   if (!wasUnlockedBefore && isUnlockedNow && !verseProgress.petUnlockShown) {
     verseProgress.petUnlockShown = true;
     verseProgress.externalPetUnlockPending = true;
+    petUnlockTriggered = true;
   }
 
   saveProgress(progress);
-  return true;
+
+  return {
+    ok: true,
+    petUnlockTriggered
+  };
 }
 
   function buildFallbackReturnUrl(){
