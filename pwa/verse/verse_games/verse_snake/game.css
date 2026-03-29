@@ -2,28 +2,170 @@
   margin-top: 6px;
 }
 
-.vs-verse{
-  font-size: clamp(24px, 5vw, 38px);
-  font-weight: 900;
-  line-height: 1.24;
-  text-wrap: balance;
+.vs-game-shell{
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
 }
 
-.vs-field{
-  width: min(100%, 760px);
-  min-height: 260px;
-  border-radius: 24px;
-  background: rgba(0,0,0,0.30);
+.vs-topbar{
+  display: flex;
+  justify-content: center;
+  padding: 10px 16px 8px;
+}
+
+.vs-build-wrap{
+  padding: 0 14px 10px;
+}
+
+.vs-build{
+  background: #ffc751;
+  color: #333333;
+  border-radius: 22px;
+  min-height: 120px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
-  font-size: 22px;
-  font-weight: 800;
+  padding: 18px 18px;
+  text-align: center;
+  box-shadow: inset 0 -4px 0 rgba(0,0,0,0.10);
+}
+
+.vs-build-text{
+  font-size: clamp(24px, 5.8vw, 42px);
+  font-weight: 900;
+  line-height: 1.2;
+  text-wrap: balance;
+}
+
+.vs-build.vs-shake{
+  animation: vsBuildShake 300ms ease;
+}
+
+@keyframes vsBuildShake{
+  0%   { transform: translateX(0); }
+  20%  { transform: translateX(-10px); }
+  40%  { transform: translateX(10px); }
+  60%  { transform: translateX(-7px); }
+  80%  { transform: translateX(7px); }
+  100% { transform: translateX(0); }
+}
+
+.vs-field-wrap{
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0 0 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.vs-field{
+  flex: 1 1 auto;
+  min-height: 320px;
+  background: #333333;
+  position: relative;
+  overflow: hidden;
+}
+
+.vs-svg{
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.vs-snake-body{
+  fill: none;
+  stroke: #a7cb6f;
+  stroke-width: 26;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 180ms linear;
+}
+
+.vs-snake-body.is-wrong{
+  stroke: #ff5a51;
+}
+
+.vs-snake-body.is-happy{
+  filter: drop-shadow(0 0 10px rgba(255,255,255,0.7));
+}
+
+.vs-snake-head{
+  fill: #a7cb6f;
+  transition: fill 180ms linear;
+}
+
+.vs-snake-head.is-wrong{
+  fill: #ff5a51;
+}
+
+.vs-snake-eye{
+  fill: #333333;
+}
+
+.vs-snake-tongue{
+  fill: #ff5a51;
+}
+
+.vs-controls{
+  padding: 12px 14px 8px;
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+}
+
+.vs-turn-btn{
+  width: 86px;
+  height: 68px;
+  border: none;
+  border-radius: 22px;
+  background: rgba(255,255,255,0.95);
+  color: #333333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.25);
+  cursor: pointer;
+}
+
+.vs-turn-btn:active{
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 rgba(0,0,0,0.25);
+}
+
+.vs-turn-btn .nav-icon{
+  width: 34px;
+  height: 34px;
+}
+
+.vs-bottom-nav{
+  padding: 4px 14px 18px;
+  display: flex;
+  justify-content: center;
+}
+
+.vs-bottom-nav .vm-btn{
+  min-width: 220px;
 }
 
 .vs-note{
   font-size: 16px;
   line-height: 1.3;
   opacity: 0.95;
+}
+
+.vs-status{
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  z-index: 2;
+  background: rgba(255,255,255,0.10);
+  color: #fff;
+  border-radius: 999px;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.2px;
 }
