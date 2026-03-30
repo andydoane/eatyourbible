@@ -152,11 +152,21 @@ body{
   font-size: clamp(24px, 5.8vw, 42px);
   font-weight: 900;
   line-height: 1.2;
+  width: 100%;
   text-wrap: balance;
 }
 
-.vs-build-text.is-placeholder{
-  opacity: 0.9;
+.vs-build-text.is-verse-layout{
+  text-align: center;
+}
+
+.vs-build-word{
+  color: transparent;
+  transition: color 160ms ease, opacity 160ms ease;
+}
+
+.vs-build-word.is-built{
+  color: #333333;
 }
 
 .vs-build.vs-shake{
@@ -217,6 +227,21 @@ body{
   gap: 8px;
   width: max-content;
   max-width: 130px;
+}
+
+.vs-target.is-visible{
+  animation: vsTargetPop 190ms cubic-bezier(.2,.9,.25,1.2);
+}
+
+@keyframes vsTargetPop{
+  0%{
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.58);
+  }
+  100%{
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
 }
 
 .vs-target-dot{
