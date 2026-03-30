@@ -350,6 +350,12 @@
     `).join(" ");
   }
 
+  function updateSnakeDebugLabel(){
+    const el = document.getElementById("vsDebugStyle");
+    if (!el) return;
+    el.textContent = `Snake: ${state.snakeStyle}`;
+  }
+
   function shakeBuildArea(){
     const build = document.getElementById("vsBuild");
     if (!build) return;
@@ -483,6 +489,7 @@
           <div class="vs-field-wrap">
             <div class="vs-field" id="vsField">
               <div class="vs-status">${selectedMode ? selectedMode[0].toUpperCase() + selectedMode.slice(1) : "Mode"}</div>
+              <div class="vs-debug-style" id="vsDebugStyle">Snake: default</div>
 
               <div class="vs-fruit-layer" id="vsFruitLayer"></div>
               <div class="vs-target-layer" id="vsTargetLayer"></div>
@@ -668,6 +675,7 @@
     state.trail = [];
     seedTrail();
     updateBuildText();
+    updateSnakeDebugLabel();
     scheduleTargetsSpawn();
     renderTargets();
     renderFruit();
@@ -881,8 +889,8 @@
     const headColor = getSnakeHeadColor();
     const bodyColor = getSnakeBodyColor();
 
-    head.setAttribute("fill", headColor);
-    body.setAttribute("stroke", bodyColor);
+    head.style.fill = headColor;
+    body.style.stroke = bodyColor;
 
     const angleDeg = (state.head.angle * 180 / Math.PI) + 90;
     headGroup.setAttribute(
@@ -1262,6 +1270,7 @@ function queueNextTargets(delayMs = 170, allowFruit = false){
     state.fruit = null;
     state.happyUntil = performance.now() + 340;
     cycleSnakeStyle();
+    updateSnakeDebugLabel();
     renderFruit();
   }
 
