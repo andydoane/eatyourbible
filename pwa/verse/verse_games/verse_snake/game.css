@@ -132,7 +132,6 @@ body{
   overflow: hidden;
 }
 
-
 .vs-mode-shell{
   min-height: 100dvh;
   display: flex;
@@ -160,11 +159,6 @@ body{
   justify-content: center;
   padding: 20px 18px 16px;
   text-align: center;
-}
-
-.vs-mode-top .vm-pill{
-  align-self: center;
-  margin-bottom: 10px;
 }
 
 .vs-mode-title{
@@ -206,8 +200,8 @@ body{
 
 @media (max-width: 520px){
   .vs-mode-top{
-    justify-content: flex-start;
-    padding-top: 28px;
+    justify-content: center;
+    padding: 20px 18px 16px;
   }
 
   .vs-mode-title{
