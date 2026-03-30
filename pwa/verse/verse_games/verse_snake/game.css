@@ -212,10 +212,34 @@ body{
   pointer-events: none;
 }
 
+.vs-fruit-layer,
 .vs-target-layer{
   position: absolute;
   inset: 0;
   pointer-events: none;
+}
+
+.vs-fruit{
+  position: absolute;
+  transform: translate(-50%, -50%);
+  font-size: 34px;
+  line-height: 1;
+  filter: drop-shadow(0 3px 0 rgba(0,0,0,0.28));
+}
+
+.vs-fruit.is-visible{
+  animation: vsFruitPop 220ms cubic-bezier(.2,.9,.25,1.2);
+}
+
+@keyframes vsFruitPop{
+  0%{
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.45);
+  }
+  100%{
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
 }
 
 .vs-target{
@@ -286,6 +310,17 @@ body{
 
 .vs-snake-body.is-happy{
   filter: drop-shadow(0 0 10px rgba(255,255,255,0.7));
+}
+
+.vs-snake-body.is-rainbow,
+.vs-snake-head.is-rainbow{
+  animation: vsRainbowHue 2s linear infinite;
+  filter: hue-rotate(0deg);
+}
+
+@keyframes vsRainbowHue{
+  0%   { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
 }
 
 .vs-snake-head{
@@ -524,5 +559,9 @@ body{
   .vs-target-dot{
     width: 38px;
     height: 38px;
+  }
+
+  .vs-fruit{
+    font-size: 30px;
   }
 }
