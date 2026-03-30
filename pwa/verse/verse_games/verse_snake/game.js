@@ -189,36 +189,71 @@
     return copy;
   }
 
-  function parseReferenceParts(ref, translation){
-    let raw = String(ref || "").trim();
-    const trans = String(translation || "").trim();
+ function parseReferenceParts(ref, translation){
+  let raw = String(ref || "").trim();
+  const trans = String(translation || "").trim();
+
+  const KNOWN_TRANSLATIONS = [
+    "ESV","NIV","NLT","KJV","NKJV","CSB","HCSB","NASB","NASB95","LSB",
+    "AMP","RSV","NRSV","NRSVUE","NET","MSG","GW","CEV","GNT","ERV","ICB"
+  ];
+
+  function stripTrailingTranslationToken(text){
+    let out = String(text || "").trim();
+
+    if (!out) return out;
 
     if (trans){
-      const transPattern = new RegExp(`\\s+${trans.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i");
-      raw = raw.replace(transPattern, "").trim();
+      const escapedTrans = trans.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      out = out.replace(new RegExp(`\\s*\\(?${escapedTrans}\\)?\\s*$`, "i"), "").trim();
     }
 
-    const match = raw.match(/^(.*)\s+(\d+:\d+(?:[-–]\d+(?::\d+)?)?)$/);
-    if (match){
-      return {
-        book: match[1].trim(),
-        reference: match[2].trim()
-      };
+    for (const code of KNOWN_TRANSLATIONS){
+      const escaped = code.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      out = out.replace(new RegExp(`\\s*\\(?${escaped}\\)?\\s*$`, "i"), "").trim();
     }
 
-    const lastSpace = raw.lastIndexOf(" ");
-    if (lastSpace > 0){
-      return {
-        book: raw.slice(0, lastSpace).trim(),
-        reference: raw.slice(lastSpace + 1).trim()
-      };
-    }
+    // Catch simple all-caps translation codes at the very end, like ESV / NIV / NLT
+    out = out.replace(/\s+\(?[A-Z]{2,8}\)?\s*$/, "").trim();
 
+    return out;
+  }
+
+  raw = stripTrailingTranslationToken(raw);
+
+  // Main intended pattern: "Book Name 1:1" or "Book Name 1:1-2"
+  let match = raw.match(/^(.*?)\s+(\d+:\d+(?:[-–]\d+(?::\d+)?)?)\s*$/);
+  if (match){
     return {
-      book: raw,
-      reference: ""
+      book: match[1].trim(),
+      reference: match[2].trim()
     };
   }
+
+  // Try one more time in case an extra trailing token survived
+  raw = stripTrailingTranslationToken(raw);
+
+  match = raw.match(/^(.*?)\s+(\d+:\d+(?:[-–]\d+(?::\d+)?)?)\s*$/);
+  if (match){
+    return {
+      book: match[1].trim(),
+      reference: match[2].trim()
+    };
+  }
+
+  const lastSpace = raw.lastIndexOf(" ");
+  if (lastSpace > 0){
+    return {
+      book: raw.slice(0, lastSpace).trim(),
+      reference: raw.slice(lastSpace + 1).trim()
+    };
+  }
+
+  return {
+    book: raw,
+    reference: ""
+  };
+}
 
   function getWordPhaseCount(){
     return state.words.length;
