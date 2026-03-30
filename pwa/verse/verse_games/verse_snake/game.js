@@ -7,6 +7,15 @@
   let completed = false;
   let muted = false;
 
+  const TARGET_COLORS = [
+    "#ff5a51",
+    "#ffa351",
+    "#ffc751",
+    "#40b9c5",
+    "#7f66c6",
+    "#a7cb6f"
+  ];
+
   const state = {
     rafId: 0,
     running: false,
@@ -23,7 +32,12 @@
     trail: [],
     snakeLengthPx: 500,
     fieldWidth: 0,
-    fieldHeight: 0
+    fieldHeight: 0,
+    words: [],
+    placedWords: [],
+    nextWordIndex: 0,
+    targets: [],
+    nextTargetId: 1
   };
 
   function getBackSvg(){
@@ -104,6 +118,11 @@
     state.trail = [];
     state.fieldWidth = 0;
     state.fieldHeight = 0;
+    state.words = [];
+    state.placedWords = [];
+    state.nextWordIndex = 0;
+    state.targets = [];
+    state.nextTargetId = 1;
   }
 
   function getModeSpeed(mode){
@@ -113,7 +132,52 @@
   }
 
   function getBuiltVerseText(){
-    return "Eat the first word to begin.";
+    if (!state.placedWords.length){
+      return "Eat the first word to begin.";
+    }
+    return state.placedWords.join(" ");
+  }
+
+  function tokenizeVerse(text){
+    return String(text || "")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+  }
+
+  function escapeHtml(str){
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function shuffle(arr){
+    const copy = arr.slice();
+    for (let i = copy.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  }
+
+  function updateBuildText(){
+    const el = document.getElementById("vsBuildText");
+    if (!el) return;
+
+    const text = getBuiltVerseText();
+    el.textContent = text;
+    el.classList.toggle("is-placeholder", state.placedWords.length === 0);
+  }
+
+  function shakeBuildArea(){
+    const build = document.getElementById("vsBuild");
+    if (!build) return;
+    build.classList.remove("vs-shake");
+    void build.offsetWidth;
+    build.classList.add("vs-shake");
   }
 
   function renderModeSelect(){
@@ -157,7 +221,7 @@
             <div class="vs-help-title">How to Play Verse Snake</div>
             <div class="vs-help-body">
               Use the left and right arrows to steer the snake.<br><br>
-              Eat the next correct word to build the verse.
+              Hit the colored circle above the correct next word.
             </div>
             <div class="vs-help-actions">
               <button class="vs-help-close no-zoom" id="vsHelpCloseBtn" type="button">OK</button>
@@ -185,42 +249,42 @@
     wireModeSelectNav();
   }
 
-function wireModeSelectNav(){
-  const homeBtn = document.getElementById("homeBtn");
-  const helpBtn = document.getElementById("helpBtn");
-  const muteBtn = document.getElementById("muteBtn");
-  const helpOverlay = document.getElementById("vsHelpOverlay");
-  const helpCloseBtn = document.getElementById("vsHelpCloseBtn");
+  function wireModeSelectNav(){
+    const homeBtn = document.getElementById("homeBtn");
+    const helpBtn = document.getElementById("helpBtn");
+    const muteBtn = document.getElementById("muteBtn");
+    const helpOverlay = document.getElementById("vsHelpOverlay");
+    const helpCloseBtn = document.getElementById("vsHelpCloseBtn");
 
-  homeBtn.onclick = () => {
-    window.VerseGameBridge.exitGame();
-  };
+    homeBtn.onclick = () => {
+      window.VerseGameBridge.exitGame();
+    };
 
-  helpBtn.onclick = () => {
-    helpOverlay.classList.add("show");
-    helpOverlay.setAttribute("aria-hidden", "false");
-  };
+    helpBtn.onclick = () => {
+      helpOverlay.classList.add("show");
+      helpOverlay.setAttribute("aria-hidden", "false");
+    };
 
-  helpCloseBtn.onclick = () => {
-    helpOverlay.classList.remove("show");
-    helpOverlay.setAttribute("aria-hidden", "true");
-  };
-
-  helpOverlay.onclick = (e) => {
-    if (e.target === helpOverlay){
+    helpCloseBtn.onclick = () => {
       helpOverlay.classList.remove("show");
       helpOverlay.setAttribute("aria-hidden", "true");
-    }
-  };
+    };
 
-  muteBtn.onclick = () => {
-    muted = !muted;
-    const btn = document.getElementById("muteBtn");
-    if (btn){
-      btn.innerHTML = muted ? getMuteSvg() : getUnmuteSvg();
-    }
-  };
-}
+    helpOverlay.onclick = (e) => {
+      if (e.target === helpOverlay){
+        helpOverlay.classList.remove("show");
+        helpOverlay.setAttribute("aria-hidden", "true");
+      }
+    };
+
+    muteBtn.onclick = () => {
+      muted = !muted;
+      const btn = document.getElementById("muteBtn");
+      if (btn){
+        btn.innerHTML = muted ? getMuteSvg() : getUnmuteSvg();
+      }
+    };
+  }
 
   function renderGameScreen(){
     stopLoop();
@@ -231,13 +295,15 @@ function wireModeSelectNav(){
         <div class="vs-stage">
           <div class="vs-build-wrap">
             <div class="vs-build" id="vsBuild">
-              <div class="vs-build-text" id="vsBuildText">${getBuiltVerseText()}</div>
+              <div class="vs-build-text is-placeholder" id="vsBuildText">${getBuiltVerseText()}</div>
             </div>
           </div>
 
           <div class="vs-field-wrap">
             <div class="vs-field" id="vsField">
               <div class="vs-status">${selectedMode ? selectedMode[0].toUpperCase() + selectedMode.slice(1) : "Mode"}</div>
+
+              <div class="vs-target-layer" id="vsTargetLayer"></div>
 
               <svg class="vs-svg" id="vsSvg" aria-hidden="true">
                 <path class="vs-snake-body" id="vsSnakeBody" d=""></path>
@@ -281,7 +347,7 @@ function wireModeSelectNav(){
             <div class="vs-help-title">How to Play Verse Snake</div>
             <div class="vs-help-body">
               Use the left and right arrows to steer the snake.<br><br>
-              This is the movement prototype, so word targets are coming next.
+              Hit the colored circle above the correct next word.
             </div>
             <div class="vs-help-actions">
               <button class="vs-help-close no-zoom" id="vsHelpCloseBtn" type="button">OK</button>
@@ -391,6 +457,10 @@ function wireModeSelectNav(){
       Math.min(state.fieldWidth * 0.5, 420)
     );
 
+    state.words = tokenizeVerse(ctx.verseText);
+    state.placedWords = [];
+    state.nextWordIndex = 0;
+
     state.head.x = state.fieldWidth * 0.50;
     state.head.y = state.fieldHeight * 0.55;
     state.head.angle = -Math.PI / 2;
@@ -398,6 +468,9 @@ function wireModeSelectNav(){
 
     state.trail = [];
     seedTrail();
+    updateBuildText();
+    spawnTargets();
+    renderTargets();
     drawSnake();
   }
 
@@ -425,7 +498,9 @@ function wireModeSelectNav(){
 
       syncFieldMetrics();
       updateMotion(dt);
+      checkTargetCollisions();
       drawSnake();
+      renderTargets();
 
       state.rafId = requestAnimationFrame(tick);
     }
@@ -441,7 +516,7 @@ function wireModeSelectNav(){
       state.trail.push({
         x: state.head.x,
         y: state.head.y + i,
-        breakBefore: i === 0 ? false : false
+        breakBefore: false
       });
     }
   }
@@ -474,8 +549,6 @@ function wireModeSelectNav(){
       wrapped = true;
     }
 
-    // If a wrap happened, mark the old head point as the start of a new segment
-    // so the tail does not connect across the whole screen.
     if (wrapped && state.trail.length > 0){
       state.trail[0].breakBefore = true;
     }
@@ -536,48 +609,48 @@ function wireModeSelectNav(){
     return d;
   }
 
-function simplifyTrail(points, minDist){
-  if (!points.length) return [];
+  function simplifyTrail(points, minDist){
+    if (!points.length) return [];
 
-  const out = [points[0]];
-  let last = points[0];
+    const out = [points[0]];
+    let last = points[0];
 
-  for (let i = 1; i < points.length; i++){
-    const p = points[i];
+    for (let i = 1; i < points.length; i++){
+      const p = points[i];
 
-    if (p.breakBefore){
-      out.push({
-        x: p.x,
-        y: p.y,
-        breakBefore: true
-      });
-      last = p;
-      continue;
+      if (p.breakBefore){
+        out.push({
+          x: p.x,
+          y: p.y,
+          breakBefore: true
+        });
+        last = p;
+        continue;
+      }
+
+      if (Math.hypot(p.x - last.x, p.y - last.y) >= minDist){
+        out.push({
+          x: p.x,
+          y: p.y,
+          breakBefore: false
+        });
+        last = p;
+      }
     }
 
-    if (Math.hypot(p.x - last.x, p.y - last.y) >= minDist){
+    const tail = points[points.length - 1];
+    const lastOut = out[out.length - 1];
+
+    if (!lastOut || lastOut.x !== tail.x || lastOut.y !== tail.y){
       out.push({
-        x: p.x,
-        y: p.y,
-        breakBefore: false
+        x: tail.x,
+        y: tail.y,
+        breakBefore: !!tail.breakBefore
       });
-      last = p;
     }
+
+    return out;
   }
-
-  const tail = points[points.length - 1];
-  const lastOut = out[out.length - 1];
-
-  if (!lastOut || lastOut.x !== tail.x || lastOut.y !== tail.y){
-    out.push({
-      x: tail.x,
-      y: tail.y,
-      breakBefore: !!tail.breakBefore
-    });
-  }
-
-  return out;
-}
 
   function drawSnake(){
     const body = document.getElementById("vsSnakeBody");
@@ -635,6 +708,170 @@ function simplifyTrail(points, minDist){
     if (state.snakeStyle === "ocean") return "#74c0fc";
     if (state.snakeStyle === "sun") return "#ffd43b";
     return "#a7cb6f";
+  }
+
+  function getCorrectWord(){
+    return state.words[state.nextWordIndex] || "";
+  }
+
+  function pickDecoyWords(correctWord){
+    const pool = shuffle(
+      Array.from(new Set(state.words.filter(word => word !== correctWord)))
+    );
+
+    const out = [];
+    for (const word of pool){
+      out.push(word);
+      if (out.length >= 2) break;
+    }
+
+    while (out.length < 2){
+      out.push(correctWord);
+    }
+
+    return out;
+  }
+
+  function distance(a, b){
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  }
+
+  function findSpawnPosition(existing){
+    const marginX = 64;
+    const marginTop = 90;
+    const marginBottom = 80;
+    const headPoint = { x: state.head.x, y: state.head.y };
+
+    for (let i = 0; i < 80; i++){
+      const p = {
+        x: marginX + Math.random() * Math.max(40, state.fieldWidth - marginX * 2),
+        y: marginTop + Math.random() * Math.max(40, state.fieldHeight - marginTop - marginBottom)
+      };
+
+      if (distance(p, headPoint) < 150) continue;
+
+      let tooClose = false;
+      for (const item of existing){
+        if (distance(p, item) < 115){
+          tooClose = true;
+          break;
+        }
+      }
+
+      if (!tooClose) return p;
+    }
+
+    return {
+      x: state.fieldWidth * 0.5,
+      y: state.fieldHeight * 0.5
+    };
+  }
+
+  function spawnTargets(){
+    const correctWord = getCorrectWord();
+    if (!correctWord) {
+      state.targets = [];
+      return;
+    }
+
+    const choices = [
+      { word: correctWord, isCorrect: true },
+      ...pickDecoyWords(correctWord).map(word => ({ word, isCorrect: false }))
+    ];
+
+    const shuffledChoices = shuffle(choices);
+    const usedPositions = [];
+
+    state.targets = shuffledChoices.map((choice, index) => {
+      const pos = findSpawnPosition(usedPositions);
+      usedPositions.push(pos);
+
+      return {
+        id: state.nextTargetId++,
+        word: choice.word,
+        isCorrect: choice.isCorrect,
+        x: pos.x,
+        y: pos.y,
+        r: 21,
+        color: TARGET_COLORS[index % TARGET_COLORS.length],
+        flashUntil: 0
+      };
+    });
+  }
+
+  function renderTargets(){
+    const layer = document.getElementById("vsTargetLayer");
+    if (!layer) return;
+
+    const now = performance.now();
+
+    layer.innerHTML = state.targets.map(target => `
+      <div
+        class="vs-target ${now < target.flashUntil ? "is-wrong" : ""}"
+        style="left:${target.x}px; top:${target.y}px;"
+      >
+        <div class="vs-target-dot" style="background:${target.color};"></div>
+        <div class="vs-target-word">${escapeHtml(target.word)}</div>
+      </div>
+    `).join("");
+  }
+
+  function completeCurrentMode(){
+    const result = window.VerseGameBridge.markCompleted({
+      verseId: ctx.verseId,
+      gameId: "verse_snake",
+      mode: selectedMode,
+      progressType: "standard"
+    });
+
+    const shouldAutoShowPetUnlock = !!result?.petUnlockTriggered;
+    completed = true;
+    renderDone(shouldAutoShowPetUnlock);
+  }
+
+  function handleCorrectTarget(target){
+    state.placedWords.push(target.word);
+    state.nextWordIndex += 1;
+    state.happyUntil = performance.now() + 260;
+
+    updateBuildText();
+
+    if (state.nextWordIndex >= state.words.length){
+      completeCurrentMode();
+      return;
+    }
+
+    spawnTargets();
+    renderTargets();
+  }
+
+  function handleWrongTarget(target){
+    const now = performance.now();
+    if (now < target.flashUntil) return;
+
+    target.flashUntil = now + 240;
+    state.flashUntil = now + 240;
+    shakeBuildArea();
+    renderTargets();
+  }
+
+  function checkTargetCollisions(){
+    if (!state.targets.length) return;
+
+    const headPoint = { x: state.head.x, y: state.head.y };
+    const headRadius = 18;
+
+    for (const target of state.targets){
+      const d = Math.hypot(headPoint.x - target.x, headPoint.y - target.y);
+      if (d <= target.r + headRadius){
+        if (target.isCorrect){
+          handleCorrectTarget(target);
+        } else {
+          handleWrongTarget(target);
+        }
+        break;
+      }
+    }
   }
 
   function renderDone(autoShowPetUnlock = false){
