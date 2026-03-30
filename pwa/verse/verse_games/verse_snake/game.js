@@ -145,7 +145,7 @@
   }
 
   function resetSnakeMotion(){
-    clearPendingSpawn;
+    clearPendingSpawn();
     state.turnDir = 0;
     state.flashUntil = 0;
     state.happyUntil = 0;
