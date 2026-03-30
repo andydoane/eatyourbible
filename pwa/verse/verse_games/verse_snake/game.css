@@ -4,6 +4,7 @@ html, body{
 
 body{
   margin: 0;
+  background: #333333;
 }
 
 #app.vm-shell{
@@ -18,7 +19,7 @@ body{
   height: 100dvh;
   display: flex;
   flex-direction: column;
-  background: var(--vm-purple);
+  background: #333333;
   overflow: hidden;
 }
 
@@ -197,6 +198,12 @@ body{
   align-items: center;
   justify-content: center;
   cursor: pointer;
+}
+
+.vs-nav-btn .nav-icon{
+  width: 26px;
+  height: 26px;
+  display: block;
 }
 
 .vs-nav-btn:active{
