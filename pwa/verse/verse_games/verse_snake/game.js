@@ -189,7 +189,36 @@
     return copy;
   }
 
- function parseReferenceParts(ref, translation){
+function titleCaseBookFromSlug(slug){
+  const smallWords = new Set(["of", "the"]);
+  return String(slug || "")
+    .split("_")
+    .filter(Boolean)
+    .map((part, index) => {
+      const lower = part.toLowerCase();
+      if (index > 0 && smallWords.has(lower)) return lower;
+      return lower.charAt(0).toUpperCase() + lower.slice(1);
+    })
+    .join(" ");
+}
+
+function parseReferenceParts(ref, translation, verseId){
+  const id = String(verseId || "").trim();
+
+  // Preferred path: derive from verseId, since that's the stable source in your JSON files.
+  // Examples:
+  //   genesis_1_1 -> Genesis / 1:1
+  //   1_corinthians_15_22 -> 1 Corinthians / 15:22
+  //   song_of_solomon_2_1 -> Song of Solomon / 2:1
+  const idMatch = id.match(/^(.+?)_(\d+)_(\d+(?:[-–]\d+)?)$/);
+  if (idMatch){
+    return {
+      book: titleCaseBookFromSlug(idMatch[1]),
+      reference: `${idMatch[2]}:${idMatch[3]}`
+    };
+  }
+
+  // Fallback: parse the incoming ref string if verseId is unavailable or unexpected.
   let raw = String(ref || "").trim();
   const trans = String(translation || "").trim();
 
@@ -200,7 +229,6 @@
 
   function stripTrailingTranslationToken(text){
     let out = String(text || "").trim();
-
     if (!out) return out;
 
     if (trans){
@@ -213,15 +241,12 @@
       out = out.replace(new RegExp(`\\s*\\(?${escaped}\\)?\\s*$`, "i"), "").trim();
     }
 
-    // Catch simple all-caps translation codes at the very end, like ESV / NIV / NLT
     out = out.replace(/\s+\(?[A-Z]{2,8}\)?\s*$/, "").trim();
-
     return out;
   }
 
   raw = stripTrailingTranslationToken(raw);
 
-  // Main intended pattern: "Book Name 1:1" or "Book Name 1:1-2"
   let match = raw.match(/^(.*?)\s+(\d+:\d+(?:[-–]\d+(?::\d+)?)?)\s*$/);
   if (match){
     return {
@@ -230,7 +255,6 @@
     };
   }
 
-  // Try one more time in case an extra trailing token survived
   raw = stripTrailingTranslationToken(raw);
 
   match = raw.match(/^(.*?)\s+(\d+:\d+(?:[-–]\d+(?::\d+)?)?)\s*$/);
@@ -604,7 +628,11 @@
 
     state.words = tokenizeVerse(ctx.verseText);
 
-    const refParts = parseReferenceParts(ctx.verseRef || launch.ref || "", ctx.translation);
+    const refParts = parseReferenceParts(
+      ctx.verseRef || launch.ref || "",
+      ctx.translation,
+      ctx.verseId || launch.verseId || ""
+    );
     state.bookLabel = refParts.book;
     state.referenceLabel = refParts.reference;
 
