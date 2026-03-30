@@ -40,6 +40,7 @@
 
   const state = {
     rafId: 0,
+    spawnTimerId: 0,
     running: false,
     turnDir: 0,
     flashUntil: 0,
@@ -131,11 +132,20 @@
       cancelAnimationFrame(state.rafId);
       state.rafId = 0;
     }
+    clearPendingSpawn();
     window.onkeydown = null;
     window.onkeyup = null;
   }
 
+  function clearPendingSpawn(){
+    if (state.spawnTimerId){
+      clearTimeout(state.spawnTimerId);
+      state.spawnTimerId = 0;
+    }
+  }
+
   function resetSnakeMotion(){
+    clearPendingSpawn;
     state.turnDir = 0;
     state.flashUntil = 0;
     state.happyUntil = 0;
@@ -908,7 +918,11 @@
 
   function cycleSnakeStyle(){
     state.fruitCount += 1;
-    state.snakeStyleIndex = (state.snakeStyleIndex + 1) % SNAKE_STYLES.length;
+
+    if (state.snakeStyleIndex < SNAKE_STYLES.length - 1){
+      state.snakeStyleIndex += 1;
+    }
+
     state.snakeStyle = SNAKE_STYLES[state.snakeStyleIndex];
   }
 
@@ -1096,7 +1110,8 @@
       return;
     }
 
-    const choices = getChoicesForCurrentPhase();
+    const desiredCount = getTargetCount();
+    const choices = getChoicesForCurrentPhase().slice(0, desiredCount);
     const shuffledChoices = shuffle(choices);
     const shuffledColors = shuffle(TARGET_COLORS);
     const usedPositions = [];
@@ -1123,6 +1138,25 @@
 
     renderTargets();
   }
+
+function queueNextTargets(delayMs = 170, allowFruit = false){
+  clearPendingSpawn();
+
+  state.targets = [];
+  renderTargets();
+
+  state.spawnTimerId = window.setTimeout(() => {
+    state.spawnTimerId = 0;
+
+    if (!state.running) return;
+
+    scheduleTargetsSpawn();
+
+    if (allowFruit){
+      maybeScheduleFruitSpawn(430);
+    }
+  }, delayMs);
+}
 
   function maybeScheduleFruitSpawn(delayMs = 480){
     if (state.fruit) return;
@@ -1242,14 +1276,7 @@
       return;
     }
 
-    state.targets = [];
-    renderTargets();
-
-    setTimeout(() => {
-      if (!state.running) return;
-      scheduleTargetsSpawn();
-      maybeScheduleFruitSpawn(430);
-    }, 170);
+    queueNextTargets(170, true);
   }
 
   function applyWrongPenalty(){
@@ -1289,10 +1316,7 @@
     renderTargets();
 
     if (changedProgress || state.targets.filter(t => t.visible && !t.isCorrect).length === 0){
-      setTimeout(() => {
-        if (!state.running) return;
-        scheduleTargetsSpawn();
-      }, 190);
+      queueNextTargets(190, false);
     }
   }
 
