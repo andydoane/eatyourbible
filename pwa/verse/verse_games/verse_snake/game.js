@@ -643,7 +643,6 @@ function simplifyTrail(points, minDist){
 
     app.innerHTML = `
       <div class="vm-stack" style="padding:18px 16px 22px; min-height:100dvh;">
-        <div class="vm-pill vs-ref">${ctx.verseRef || launch.ref || "Verse"}</div>
         <div class="vm-title">🎉 Great job!</div>
         <div class="vm-subtitle">
           ${
