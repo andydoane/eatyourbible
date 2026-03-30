@@ -29,32 +29,101 @@ body{
   overflow: hidden;
 }
 
+
 .vs-mode-shell{
   min-height: 100dvh;
-  width: min(100%, 460px);
-  margin: 0 auto;
-  padding: 18px 16px 22px;
   display: flex;
   flex-direction: column;
-  align-items: stretch;
+  background: #333333;
+  overflow: hidden;
+}
+
+.vs-mode-stage{
+  width: 100%;
+  max-width: 840px;
+  margin: 0 auto;
+  min-height: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.vs-mode-top{
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 18px 16px;
   text-align: center;
 }
 
-.vs-mode-shell .vm-pill{
+.vs-mode-top .vm-pill{
   align-self: center;
+  margin-bottom: 10px;
 }
 
-.vs-mode-shell .vm-title,
-.vs-mode-shell .vm-subtitle{
-  text-align: center;
+.vs-mode-title{
+  font-size: clamp(28px, 5vw, 58px);
+  font-weight: 900;
+  line-height: 1.04;
+  margin-bottom: 8px;
 }
 
-.vs-mode-shell .vm-card{
+.vs-mode-subtitle{
+  font-size: clamp(18px, 2.2vw, 30px);
+  font-weight: 800;
+  line-height: 1.15;
+  margin-bottom: 18px;
+}
+
+.vs-mode-card{
+  width: min(100%, 620px);
+  background: rgba(0,0,0,0.30);
+  border-radius: 26px;
+  padding: 14px;
+}
+
+.vs-mode-actions{
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.vs-mode-actions .vm-btn{
   width: 100%;
 }
 
-.vs-mode-shell .vm-nav{
-  margin-top: auto;
+.vs-mode-nav-wrap{
+  width: 100%;
+  max-width: 840px;
+  margin: 0 auto;
+}
+
+@media (max-width: 520px){
+  .vs-mode-top{
+    justify-content: flex-start;
+    padding-top: 28px;
+  }
+
+  .vs-mode-title{
+    font-size: 26px;
+  }
+
+  .vs-mode-subtitle{
+    font-size: 17px;
+    margin-bottom: 14px;
+  }
+
+  .vs-mode-card{
+    width: 100%;
+    padding: 12px;
+  }
+
+  .vs-mode-actions{
+    gap: 12px;
+  }
 }
 
 .vs-stage{
