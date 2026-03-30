@@ -226,7 +226,7 @@ body{
   align-items: center;
   gap: 8px;
   width: max-content;
-  max-width: 130px;
+  max-width: 150px;
 }
 
 .vs-target.is-visible{
