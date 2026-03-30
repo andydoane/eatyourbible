@@ -119,25 +119,54 @@
   function renderModeSelect(){
     stopLoop();
 
-  app.innerHTML = `
-    <div class="vs-mode-shell">
-      <div class="vm-pill vs-ref">${ctx.verseRef || launch.ref || "Verse"}</div>
-      <div class="vm-title">🐍 Verse Snake</div>
-      <div class="vm-subtitle">Choose your difficulty.</div>
+    app.innerHTML = `
+      <div class="vs-mode-shell">
+        <div class="vs-mode-stage">
+          <div class="vs-mode-top">
+            <div class="vm-pill vs-ref">${ctx.verseRef || launch.ref || "Verse"}</div>
+            <div class="vs-mode-title">🐍 Verse Snake</div>
+            <div class="vs-mode-subtitle">Choose your difficulty.</div>
 
-      <div class="vm-card">
-        <div class="vm-actions">
-          <button class="vm-btn" id="easyBtn">Easy</button>
-          <button class="vm-btn" id="mediumBtn">Medium</button>
-          <button class="vm-btn" id="hardBtn">Hard</button>
+            <div class="vs-mode-card">
+              <div class="vs-mode-actions">
+                <button class="vm-btn" id="easyBtn">Easy</button>
+                <button class="vm-btn" id="mediumBtn">Medium</button>
+                <button class="vm-btn" id="hardBtn">Hard</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="vs-mode-nav-wrap">
+          <div class="vs-nav">
+            <button class="vs-nav-btn no-zoom" id="homeBtn" aria-label="Home">
+              ${getHomeSvg()}
+            </button>
+
+            <div class="vs-nav-center">
+              <button class="vs-help-btn no-zoom" id="helpBtn" type="button">HELP</button>
+            </div>
+
+            <button class="vs-nav-btn no-zoom" id="muteBtn" aria-label="Mute">
+              ${muted ? getMuteSvg() : getUnmuteSvg()}
+            </button>
+          </div>
+        </div>
+
+        <div class="vs-help-overlay" id="vsHelpOverlay" aria-hidden="true">
+          <div class="vs-help-dialog">
+            <div class="vs-help-title">How to Play Verse Snake</div>
+            <div class="vs-help-body">
+              Use the left and right arrows to steer the snake.<br><br>
+              Eat the next correct word to build the verse.
+            </div>
+            <div class="vs-help-actions">
+              <button class="vs-help-close no-zoom" id="vsHelpCloseBtn" type="button">OK</button>
+            </div>
+          </div>
         </div>
       </div>
-
-      <div class="vm-nav">
-        <button class="vm-btn vm-btn-dark" id="backBtn">Back to Games</button>
-      </div>
-    </div>
-  `;
+    `;
 
     document.getElementById("easyBtn").onclick = () => {
       selectedMode = "easy";
@@ -154,10 +183,45 @@
       renderGameScreen();
     };
 
-    document.getElementById("backBtn").onclick = () => {
-      window.VerseGameBridge.exitGame();
-    };
+    wireModeSelectNav();
   }
+
+function wireModeSelectNav(){
+  const homeBtn = document.getElementById("homeBtn");
+  const helpBtn = document.getElementById("helpBtn");
+  const muteBtn = document.getElementById("muteBtn");
+  const helpOverlay = document.getElementById("vsHelpOverlay");
+  const helpCloseBtn = document.getElementById("vsHelpCloseBtn");
+
+  homeBtn.onclick = () => {
+    window.VerseGameBridge.exitGame();
+  };
+
+  helpBtn.onclick = () => {
+    helpOverlay.classList.add("show");
+    helpOverlay.setAttribute("aria-hidden", "false");
+  };
+
+  helpCloseBtn.onclick = () => {
+    helpOverlay.classList.remove("show");
+    helpOverlay.setAttribute("aria-hidden", "true");
+  };
+
+  helpOverlay.onclick = (e) => {
+    if (e.target === helpOverlay){
+      helpOverlay.classList.remove("show");
+      helpOverlay.setAttribute("aria-hidden", "true");
+    }
+  };
+
+  muteBtn.onclick = () => {
+    muted = !muted;
+    const btn = document.getElementById("muteBtn");
+    if (btn){
+      btn.innerHTML = muted ? getMuteSvg() : getUnmuteSvg();
+    }
+  };
+}
 
   function renderGameScreen(){
     stopLoop();
