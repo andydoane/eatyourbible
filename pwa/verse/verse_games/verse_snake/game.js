@@ -359,7 +359,7 @@
       state.trail.push({
         x: state.head.x,
         y: state.head.y + i,
-        breakBefore: false
+        breakBefore: i === 0 ? false : false
       });
     }
   }
@@ -392,13 +392,19 @@
       wrapped = true;
     }
 
+    // If a wrap happened, mark the old head point as the start of a new segment
+    // so the tail does not connect across the whole screen.
+    if (wrapped && state.trail.length > 0){
+      state.trail[0].breakBefore = true;
+    }
+
     state.head.x = nextX;
     state.head.y = nextY;
 
     state.trail.unshift({
       x: state.head.x,
       y: state.head.y,
-      breakBefore: wrapped
+      breakBefore: false
     });
 
     trimTrail();
@@ -448,34 +454,48 @@
     return d;
   }
 
-  function simplifyTrail(points, minDist){
-    if (!points.length) return [];
+function simplifyTrail(points, minDist){
+  if (!points.length) return [];
 
-    const out = [points[0]];
-    let last = points[0];
+  const out = [points[0]];
+  let last = points[0];
 
-    for (let i = 1; i < points.length; i++){
-      const p = points[i];
+  for (let i = 1; i < points.length; i++){
+    const p = points[i];
 
-      if (p.breakBefore){
-        out.push(p);
-        last = p;
-        continue;
-      }
-
-      if (Math.hypot(p.x - last.x, p.y - last.y) >= minDist){
-        out.push(p);
-        last = p;
-      }
+    if (p.breakBefore){
+      out.push({
+        x: p.x,
+        y: p.y,
+        breakBefore: true
+      });
+      last = p;
+      continue;
     }
 
-    const tail = points[points.length - 1];
-    if (out[out.length - 1] !== tail){
-      out.push(tail);
+    if (Math.hypot(p.x - last.x, p.y - last.y) >= minDist){
+      out.push({
+        x: p.x,
+        y: p.y,
+        breakBefore: false
+      });
+      last = p;
     }
-
-    return out;
   }
+
+  const tail = points[points.length - 1];
+  const lastOut = out[out.length - 1];
+
+  if (!lastOut || lastOut.x !== tail.x || lastOut.y !== tail.y){
+    out.push({
+      x: tail.x,
+      y: tail.y,
+      breakBefore: !!tail.breakBefore
+    });
+  }
+
+  return out;
+}
 
   function drawSnake(){
     const body = document.getElementById("vsSnakeBody");
