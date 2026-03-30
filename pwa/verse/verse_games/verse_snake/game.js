@@ -123,7 +123,6 @@
       <div class="vs-mode-shell">
         <div class="vs-mode-stage">
           <div class="vs-mode-top">
-            <div class="vm-pill vs-ref">${ctx.verseRef || launch.ref || "Verse"}</div>
             <div class="vs-mode-title">🐍 Verse Snake</div>
             <div class="vs-mode-subtitle">Choose your difficulty.</div>
 
