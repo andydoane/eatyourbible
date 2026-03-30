@@ -1,0 +1,110 @@
+{
+  "lessonId": "nt32",
+  "pageTitle": "NT 32 Quiz",
+  "lessonTitleText": "Jesus Rises from the Dead",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt32image.png",
+  "themeClass": "theme-kahoot-green",
+  "questions": [
+    {
+      "text": "Who buried Jesus’ body in the tomb?",
+      "answers": [
+        "Joseph and Nicodemus",
+        "Peter and John",
+        "The Roman soldiers",
+        "His mother Mary"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why were guards placed at the tomb?",
+      "answers": [
+        "To stop the disciples from stealing the body",
+        "To honor Jesus",
+        "To keep animals away",
+        "To attack Jesus if he rose from the dead"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What unusual things happened when the women came to the tomb?",
+      "answers": [
+        "There was an earthquake and an angel rolled away the stone",
+        "A wild thunderstorm began",
+        "They could hear someone knocking inside the tomb",
+        "They saw a spooky skeleton walking around"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the guards do when they saw the angel?",
+      "answers": [
+        "They fainted and became like dead men",
+        "They ran away immediately",
+        "They fought the angel",
+        "They believed in Jesus"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the angel tell the women?",
+      "answers": [
+        "Jesus isn’t here; He has risen! Go tell His disciples",
+        "Jesus went to heaven",
+        "You are at the wrong tomb",
+        "Jesus is still dead"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened as the women went to tell the disciples?",
+      "answers": [
+        "They met Jesus",
+        "They got lost",
+        "They got tired and had to rest",
+        "The soldiers arrested them"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did the disciples respond when the women told them about Jesus?",
+      "answers": [
+        "They did not believe them",
+        "They believed right away",
+        "They asked a lot of questions",
+        "They were angry"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Peter and John do after hearing about the empty tomb?",
+      "answers": [
+        "They ran to the tomb to see for themselves",
+        "They cried even more",
+        "They went back to fishing",
+        "They wanted to check it out, but were afraid of the soldiers"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When did the disciples finally see Jesus alive again?",
+      "answers": [
+        "That night in a locked room",
+        "At the temple the next morning",
+        "They never saw him",
+        "On the hill where he died on the cross"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did Jesus show He was not a ghost?",
+      "answers": [
+        "He ate fish and let them touch His hands and feet",
+        "He wrestled them",
+        "He gave every disciple a high-five",
+        "He picked up a heavy stone"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
