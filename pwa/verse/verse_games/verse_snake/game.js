@@ -119,25 +119,25 @@
   function renderModeSelect(){
     stopLoop();
 
-    app.innerHTML = `
-      <div class="vm-stack" style="padding:18px 16px 22px; min-height:100dvh;">
-        <div class="vm-pill vs-ref">${ctx.verseRef || launch.ref || "Verse"}</div>
-        <div class="vm-title">🐍 Verse Snake</div>
-        <div class="vm-subtitle">Choose your difficulty.</div>
+  app.innerHTML = `
+    <div class="vs-mode-shell">
+      <div class="vm-pill vs-ref">${ctx.verseRef || launch.ref || "Verse"}</div>
+      <div class="vm-title">🐍 Verse Snake</div>
+      <div class="vm-subtitle">Choose your difficulty.</div>
 
-        <div class="vm-card">
-          <div class="vm-actions">
-            <button class="vm-btn" id="easyBtn">Easy</button>
-            <button class="vm-btn" id="mediumBtn">Medium</button>
-            <button class="vm-btn" id="hardBtn">Hard</button>
-          </div>
-        </div>
-
-        <div class="vm-nav">
-          <button class="vm-btn vm-btn-dark" id="backBtn">Back to Games</button>
+      <div class="vm-card">
+        <div class="vm-actions">
+          <button class="vm-btn" id="easyBtn">Easy</button>
+          <button class="vm-btn" id="mediumBtn">Medium</button>
+          <button class="vm-btn" id="hardBtn">Hard</button>
         </div>
       </div>
-    `;
+
+      <div class="vm-nav">
+        <button class="vm-btn vm-btn-dark" id="backBtn">Back to Games</button>
+      </div>
+    </div>
+  `;
 
     document.getElementById("easyBtn").onclick = () => {
       selectedMode = "easy";
@@ -245,9 +245,20 @@
     const helpOverlay = document.getElementById("vsHelpOverlay");
     const helpCloseBtn = document.getElementById("vsHelpCloseBtn");
 
-    const turnLeftStart = () => { state.turnDir = -1; };
-    const turnRightStart = () => { state.turnDir = 1; };
-    const turnStop = () => { state.turnDir = 0; };
+    const turnLeftStart = (e) => {
+      if (e) e.preventDefault();
+      state.turnDir = -1;
+    };
+
+    const turnRightStart = (e) => {
+      if (e) e.preventDefault();
+      state.turnDir = 1;
+    };
+
+    const turnStop = (e) => {
+      if (e) e.preventDefault();
+      state.turnDir = 0;
+    };
 
     leftBtn.addEventListener("pointerdown", turnLeftStart);
     rightBtn.addEventListener("pointerdown", turnRightStart);
@@ -258,6 +269,9 @@
     rightBtn.addEventListener("pointercancel", turnStop);
     leftBtn.addEventListener("pointerleave", turnStop);
     rightBtn.addEventListener("pointerleave", turnStop);
+
+    leftBtn.addEventListener("dblclick", (e) => e.preventDefault());
+    rightBtn.addEventListener("dblclick", (e) => e.preventDefault());
 
     homeBtn.onclick = () => {
       stopLoop();
@@ -308,6 +322,11 @@
 
   function initializeFieldAndSnake(){
     syncFieldMetrics();
+
+    state.snakeLengthPx = Math.max(
+      180,
+      Math.min(state.fieldWidth * 0.5, 420)
+    );
 
     state.head.x = state.fieldWidth * 0.50;
     state.head.y = state.fieldHeight * 0.55;
