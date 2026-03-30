@@ -16,31 +16,23 @@
     "#a7cb6f"
   ];
 
-  const BOOK_DECOYS = [
-    "Genesis",
-    "Exodus",
-    "Joshua",
-    "Psalms",
-    "Proverbs",
-    "Isaiah",
-    "Jeremiah",
-    "Matthew",
-    "Mark",
-    "Luke",
-    "John",
-    "Romans",
-    "1 Corinthians",
-    "2 Corinthians",
-    "Galatians",
-    "Ephesians",
-    "Philippians",
-    "Colossians",
-    "Hebrews",
-    "James",
-    "1 Peter",
-    "2 Peter",
-    "1 John",
-    "Revelation"
+  const ALL_BIBLE_BOOKS = [
+    "Genesis","Exodus","Leviticus","Numbers","Deuteronomy","Joshua","Judges","Ruth",
+    "1 Samuel","2 Samuel","1 Kings","2 Kings","1 Chronicles","2 Chronicles","Ezra","Nehemiah","Esther",
+    "Job","Psalms","Proverbs","Ecclesiastes","Song of Solomon","Isaiah","Jeremiah","Lamentations",
+    "Ezekiel","Daniel","Hosea","Joel","Amos","Obadiah","Jonah","Micah","Nahum","Habakkuk","Zephaniah",
+    "Haggai","Zechariah","Malachi",
+    "Matthew","Mark","Luke","John","Acts","Romans","1 Corinthians","2 Corinthians","Galatians",
+    "Ephesians","Philippians","Colossians","1 Thessalonians","2 Thessalonians","1 Timothy","2 Timothy",
+    "Titus","Philemon","Hebrews","James","1 Peter","2 Peter","1 John","2 John","3 John","Jude","Revelation"
+  ];
+
+  const FUNNY_DECOY_WORDS = [
+    "taco","banana","penguin","cupcake","dinosaur","pickle","marshmallow","noodle","waffle","rocket",
+    "jellybean","pancake","popcorn","unicorn","bubble","muffin","otter","kangaroo","scooter","rainbow",
+    "pretzel","monkey","donut","cookie","balloon","zebra","narwhal","kitten","puppy","burrito",
+    "pirate","robot","slipper","backpack","bongo","volcano","watermelon","cheeseburger","toothbrush","snowman",
+    "duckling","hamster","meatball","spaghetti","blueberry","coconut","sundae","firetruck","yo-yo","treasure"
   ];
 
   const state = {
@@ -197,9 +189,14 @@
     return copy;
   }
 
-  function parseReferenceParts(ref){
-    const raw = String(ref || "").trim();
-    if (!raw) return { book: "", reference: "" };
+  function parseReferenceParts(ref, translation){
+    let raw = String(ref || "").trim();
+    const trans = String(translation || "").trim();
+
+    if (trans){
+      const transPattern = new RegExp(`\\s+${trans.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i");
+      raw = raw.replace(transPattern, "").trim();
+    }
 
     const match = raw.match(/^(.*)\s+(\d+:\d+(?:[-–]\d+(?::\d+)?)?)$/);
     if (match){
@@ -572,7 +569,7 @@
 
     state.words = tokenizeVerse(ctx.verseText);
 
-    const refParts = parseReferenceParts(ctx.verseRef || launch.ref || "");
+    const refParts = parseReferenceParts(ctx.verseRef || launch.ref || "", ctx.translation);
     state.bookLabel = refParts.book;
     state.referenceLabel = refParts.reference;
 
@@ -839,9 +836,8 @@
   }
 
   function pickWordDecoys(correctWord, count){
-    const pool = shuffle(
-      Array.from(new Set(state.words.filter(word => word !== correctWord)))
-    );
+    const safePool = FUNNY_DECOY_WORDS.filter(word => word.toLowerCase() !== String(correctWord).toLowerCase());
+    const pool = shuffle(Array.from(new Set(safePool)));
 
     const out = [];
     for (const word of pool){
@@ -850,7 +846,7 @@
     }
 
     while (out.length < count){
-      out.push(correctWord);
+      out.push("taco");
     }
 
     return out;
@@ -858,7 +854,7 @@
 
   function pickBookDecoys(correctBook, count){
     const pool = shuffle(
-      Array.from(new Set(BOOK_DECOYS.filter(book => book !== correctBook)))
+      Array.from(new Set(ALL_BIBLE_BOOKS.filter(book => book !== correctBook)))
     );
 
     const out = [];
@@ -1117,12 +1113,11 @@
 
     const changedProgress = applyWrongPenalty();
     updateBuildText();
+
+    state.targets = state.targets.filter(t => t.id !== target.id);
     renderTargets();
 
-    if (changedProgress){
-      state.targets = [];
-      renderTargets();
-
+    if (changedProgress || state.targets.filter(t => t.visible && !t.isCorrect).length === 0){
       setTimeout(() => {
         if (!state.running) return;
         scheduleTargetsSpawn();
