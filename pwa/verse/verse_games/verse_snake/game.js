@@ -131,13 +131,6 @@
     return 122;
   }
 
-  function getBuiltVerseText(){
-    if (!state.placedWords.length){
-      return "Eat the first word to begin.";
-    }
-    return state.placedWords.join(" ");
-  }
-
   function tokenizeVerse(text){
     return String(text || "")
       .trim()
@@ -167,9 +160,17 @@
     const el = document.getElementById("vsBuildText");
     if (!el) return;
 
-    const text = getBuiltVerseText();
-    el.textContent = text;
-    el.classList.toggle("is-placeholder", state.placedWords.length === 0);
+    if (!state.words.length){
+      el.textContent = "";
+      return;
+    }
+
+    el.classList.add("is-verse-layout");
+    el.innerHTML = state.words.map((word, index) => `
+      <span class="vs-build-word ${index < state.nextWordIndex ? "is-built" : ""}">
+        ${escapeHtml(word)}
+      </span>
+    `).join(" ");
   }
 
   function shakeBuildArea(){
@@ -295,7 +296,7 @@
         <div class="vs-stage">
           <div class="vs-build-wrap">
             <div class="vs-build" id="vsBuild">
-              <div class="vs-build-text is-placeholder" id="vsBuildText">${getBuiltVerseText()}</div>
+              <div class="vs-build-text" id="vsBuildText"></div>
             </div>
           </div>
 
@@ -469,7 +470,7 @@
     state.trail = [];
     seedTrail();
     updateBuildText();
-    spawnTargets();
+    scheduleTargetsSpawn();
     renderTargets();
     drawSnake();
   }
@@ -498,9 +499,9 @@
 
       syncFieldMetrics();
       updateMotion(dt);
+      updateTargetVisibility(ts);
       checkTargetCollisions();
       drawSnake();
-      renderTargets();
 
       state.rafId = requestAnimationFrame(tick);
     }
@@ -714,7 +715,11 @@
     return state.words[state.nextWordIndex] || "";
   }
 
-  function pickDecoyWords(correctWord){
+  function getTargetCount(){
+    return state.fieldWidth <= 520 ? 2 : 3;
+  }
+
+  function pickDecoyWords(correctWord, count){
     const pool = shuffle(
       Array.from(new Set(state.words.filter(word => word !== correctWord)))
     );
@@ -722,10 +727,10 @@
     const out = [];
     for (const word of pool){
       out.push(word);
-      if (out.length >= 2) break;
+      if (out.length >= count) break;
     }
 
-    while (out.length < 2){
+    while (out.length < count){
       out.push(correctWord);
     }
 
@@ -752,7 +757,7 @@
 
       let tooClose = false;
       for (const item of existing){
-        if (distance(p, item) < 115){
+        if (distance(p, item) < 120){
           tooClose = true;
           break;
         }
@@ -767,20 +772,25 @@
     };
   }
 
-  function spawnTargets(){
+  function scheduleTargetsSpawn(){
     const correctWord = getCorrectWord();
-    if (!correctWord) {
+    if (!correctWord){
       state.targets = [];
+      renderTargets();
       return;
     }
 
+    const targetCount = getTargetCount();
+    const decoys = pickDecoyWords(correctWord, targetCount - 1);
     const choices = [
       { word: correctWord, isCorrect: true },
-      ...pickDecoyWords(correctWord).map(word => ({ word, isCorrect: false }))
+      ...decoys.map(word => ({ word, isCorrect: false }))
     ];
 
     const shuffledChoices = shuffle(choices);
+    const shuffledColors = shuffle(TARGET_COLORS);
     const usedPositions = [];
+    const baseTime = performance.now() + 170;
 
     state.targets = shuffledChoices.map((choice, index) => {
       const pos = findSpawnPosition(usedPositions);
@@ -793,27 +803,52 @@
         x: pos.x,
         y: pos.y,
         r: 21,
-        color: TARGET_COLORS[index % TARGET_COLORS.length],
-        flashUntil: 0
+        color: shuffledColors[index % shuffledColors.length],
+        flashUntil: 0,
+        flashing: false,
+        visible: false,
+        visibleAt: baseTime + index * 120
       };
     });
+
+    renderTargets();
+  }
+
+  function updateTargetVisibility(now){
+    let changed = false;
+
+    for (const target of state.targets){
+      if (!target.visible && now >= target.visibleAt){
+        target.visible = true;
+        changed = true;
+      }
+
+      if (target.flashing && now >= target.flashUntil){
+        target.flashing = false;
+        changed = true;
+      }
+    }
+
+    if (changed){
+      renderTargets();
+    }
   }
 
   function renderTargets(){
     const layer = document.getElementById("vsTargetLayer");
     if (!layer) return;
 
-    const now = performance.now();
-
-    layer.innerHTML = state.targets.map(target => `
-      <div
-        class="vs-target ${now < target.flashUntil ? "is-wrong" : ""}"
-        style="left:${target.x}px; top:${target.y}px;"
-      >
-        <div class="vs-target-dot" style="background:${target.color};"></div>
-        <div class="vs-target-word">${escapeHtml(target.word)}</div>
-      </div>
-    `).join("");
+    layer.innerHTML = state.targets
+      .filter(target => target.visible)
+      .map(target => `
+        <div
+          class="vs-target is-visible ${target.flashing ? "is-wrong" : ""}"
+          style="left:${target.x}px; top:${target.y}px;"
+        >
+          <div class="vs-target-dot" style="background:${target.color};"></div>
+          <div class="vs-target-word">${escapeHtml(target.word)}</div>
+        </div>
+      `).join("");
   }
 
   function completeCurrentMode(){
@@ -841,14 +876,20 @@
       return;
     }
 
-    spawnTargets();
+    state.targets = [];
     renderTargets();
+
+    setTimeout(() => {
+      if (!state.running) return;
+      scheduleTargetsSpawn();
+    }, 170);
   }
 
   function handleWrongTarget(target){
     const now = performance.now();
-    if (now < target.flashUntil) return;
+    if (target.flashing) return;
 
+    target.flashing = true;
     target.flashUntil = now + 240;
     state.flashUntil = now + 240;
     shakeBuildArea();
@@ -862,6 +903,8 @@
     const headRadius = 18;
 
     for (const target of state.targets){
+      if (!target.visible) continue;
+
       const d = Math.hypot(headPoint.x - target.x, headPoint.y - target.y);
       if (d <= target.r + headRadius){
         if (target.isCorrect){
