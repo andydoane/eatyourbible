@@ -16,6 +16,33 @@
     "#a7cb6f"
   ];
 
+  const BOOK_DECOYS = [
+    "Genesis",
+    "Exodus",
+    "Joshua",
+    "Psalms",
+    "Proverbs",
+    "Isaiah",
+    "Jeremiah",
+    "Matthew",
+    "Mark",
+    "Luke",
+    "John",
+    "Romans",
+    "1 Corinthians",
+    "2 Corinthians",
+    "Galatians",
+    "Ephesians",
+    "Philippians",
+    "Colossians",
+    "Hebrews",
+    "James",
+    "1 Peter",
+    "2 Peter",
+    "1 John",
+    "Revelation"
+  ];
+
   const state = {
     rafId: 0,
     running: false,
@@ -34,8 +61,10 @@
     fieldWidth: 0,
     fieldHeight: 0,
     words: [],
-    placedWords: [],
-    nextWordIndex: 0,
+    bookLabel: "",
+    referenceLabel: "",
+    segments: [],
+    progressIndex: 0,
     targets: [],
     nextTargetId: 1
   };
@@ -114,21 +143,33 @@
     state.happyUntil = 0;
     state.snakeStyle = "default";
     state.head.angle = -Math.PI / 2;
-    state.head.speed = getModeSpeed(selectedMode);
+    state.head.speed = getBaseSpeed(selectedMode);
     state.trail = [];
     state.fieldWidth = 0;
     state.fieldHeight = 0;
     state.words = [];
-    state.placedWords = [];
-    state.nextWordIndex = 0;
+    state.bookLabel = "";
+    state.referenceLabel = "";
+    state.segments = [];
+    state.progressIndex = 0;
     state.targets = [];
     state.nextTargetId = 1;
   }
 
-  function getModeSpeed(mode){
-    if (mode === "medium") return 138;
-    if (mode === "hard") return 154;
+  function getBaseSpeed(mode){
+    if (mode === "medium") return 136;
+    if (mode === "hard") return 150;
     return 122;
+  }
+
+  function getSpeedRamp(mode){
+    if (mode === "medium") return 2.2;
+    if (mode === "hard") return 4.0;
+    return 0;
+  }
+
+  function getCurrentSpeed(){
+    return getBaseSpeed(selectedMode) + (state.progressIndex * getSpeedRamp(selectedMode));
   }
 
   function tokenizeVerse(text){
@@ -156,19 +197,86 @@
     return copy;
   }
 
+  function parseReferenceParts(ref){
+    const raw = String(ref || "").trim();
+    if (!raw) return { book: "", reference: "" };
+
+    const match = raw.match(/^(.*)\s+(\d+:\d+(?:[-–]\d+(?::\d+)?)?)$/);
+    if (match){
+      return {
+        book: match[1].trim(),
+        reference: match[2].trim()
+      };
+    }
+
+    const lastSpace = raw.lastIndexOf(" ");
+    if (lastSpace > 0){
+      return {
+        book: raw.slice(0, lastSpace).trim(),
+        reference: raw.slice(lastSpace + 1).trim()
+      };
+    }
+
+    return {
+      book: raw,
+      reference: ""
+    };
+  }
+
+  function getWordPhaseCount(){
+    return state.words.length;
+  }
+
+  function hasBookPhase(){
+    return !!state.bookLabel;
+  }
+
+  function hasReferencePhase(){
+    return !!state.referenceLabel;
+  }
+
+  function getPhaseForIndex(index){
+    const wordCount = getWordPhaseCount();
+
+    if (index < wordCount){
+      return "words";
+    }
+
+    if (hasBookPhase() && index === wordCount){
+      return "book";
+    }
+
+    if (hasReferencePhase()){
+      const refIndex = wordCount + (hasBookPhase() ? 1 : 0);
+      if (index === refIndex){
+        return "reference";
+      }
+    }
+
+    return "done";
+  }
+
+  function getCurrentPhase(){
+    return getPhaseForIndex(state.progressIndex);
+  }
+
+  function getCurrentCorrectLabel(){
+    return state.segments[state.progressIndex] || "";
+  }
+
   function updateBuildText(){
     const el = document.getElementById("vsBuildText");
     if (!el) return;
 
-    if (!state.words.length){
+    if (!state.segments.length){
       el.textContent = "";
       return;
     }
 
     el.classList.add("is-verse-layout");
-    el.innerHTML = state.words.map((word, index) => `
-      <span class="vs-build-word ${index < state.nextWordIndex ? "is-built" : ""}">
-        ${escapeHtml(word)}
+    el.innerHTML = state.segments.map((segment, index) => `
+      <span class="vs-build-word ${index < state.progressIndex ? "is-built" : ""}">
+        ${escapeHtml(segment)}
       </span>
     `).join(" ");
   }
@@ -221,8 +329,10 @@
           <div class="vs-help-dialog">
             <div class="vs-help-title">How to Play Verse Snake</div>
             <div class="vs-help-body">
-              Use the left and right arrows to steer the snake.<br><br>
-              Hit the colored circle above the correct next word.
+              Easy: no penalty.<br>
+              Medium: lose 2 built items.<br>
+              Hard: lose everything built.<br><br>
+              After the verse words, collect the book, then the reference.
             </div>
             <div class="vs-help-actions">
               <button class="vs-help-close no-zoom" id="vsHelpCloseBtn" type="button">OK</button>
@@ -347,8 +457,10 @@
           <div class="vs-help-dialog">
             <div class="vs-help-title">How to Play Verse Snake</div>
             <div class="vs-help-body">
-              Use the left and right arrows to steer the snake.<br><br>
-              Hit the colored circle above the correct next word.
+              Easy: no penalty.<br>
+              Medium: lose 2 built items.<br>
+              Hard: lose everything built.<br><br>
+              After the verse words, collect the book, then the reference.
             </div>
             <div class="vs-help-actions">
               <button class="vs-help-close no-zoom" id="vsHelpCloseBtn" type="button">OK</button>
@@ -459,13 +571,23 @@
     );
 
     state.words = tokenizeVerse(ctx.verseText);
-    state.placedWords = [];
-    state.nextWordIndex = 0;
+
+    const refParts = parseReferenceParts(ctx.verseRef || launch.ref || "");
+    state.bookLabel = refParts.book;
+    state.referenceLabel = refParts.reference;
+
+    state.segments = [
+      ...state.words,
+      ...(state.bookLabel ? [state.bookLabel] : []),
+      ...(state.referenceLabel ? [state.referenceLabel] : [])
+    ];
+
+    state.progressIndex = 0;
 
     state.head.x = state.fieldWidth * 0.50;
     state.head.y = state.fieldHeight * 0.55;
     state.head.angle = -Math.PI / 2;
-    state.head.speed = getModeSpeed(selectedMode);
+    state.head.speed = getCurrentSpeed();
 
     state.trail = [];
     seedTrail();
@@ -526,6 +648,7 @@
     const turnRate = 2.5;
 
     state.head.angle += state.turnDir * turnRate * (dt / 1000);
+    state.head.speed = getCurrentSpeed();
 
     const speed = state.head.speed;
     let nextX = state.head.x + Math.cos(state.head.angle) * speed * (dt / 1000);
@@ -711,15 +834,11 @@
     return "#a7cb6f";
   }
 
-  function getCorrectWord(){
-    return state.words[state.nextWordIndex] || "";
-  }
-
   function getTargetCount(){
     return state.fieldWidth <= 520 ? 2 : 3;
   }
 
-  function pickDecoyWords(correctWord, count){
+  function pickWordDecoys(correctWord, count){
     const pool = shuffle(
       Array.from(new Set(state.words.filter(word => word !== correctWord)))
     );
@@ -735,6 +854,94 @@
     }
 
     return out;
+  }
+
+  function pickBookDecoys(correctBook, count){
+    const pool = shuffle(
+      Array.from(new Set(BOOK_DECOYS.filter(book => book !== correctBook)))
+    );
+
+    const out = [];
+    for (const book of pool){
+      out.push(book);
+      if (out.length >= count) break;
+    }
+
+    while (out.length < count){
+      out.push(correctBook);
+    }
+
+    return out;
+  }
+
+  function buildReferenceDecoys(correctRef, count){
+    const out = [];
+    const match = String(correctRef || "").match(/^(\d+):(\d+)(.*)$/);
+
+    if (match){
+      const chapter = parseInt(match[1], 10);
+      const verse = parseInt(match[2], 10);
+      const suffix = match[3] || "";
+
+      const candidates = [
+        `${chapter}:${Math.max(1, verse - 1)}${suffix}`,
+        `${chapter}:${verse + 1}${suffix}`,
+        `${Math.max(1, chapter - 1)}:${verse}${suffix}`,
+        `${chapter + 1}:${verse}${suffix}`,
+        `${chapter}:${verse + 2}${suffix}`,
+        `${chapter + 1}:${verse + 1}${suffix}`
+      ];
+
+      for (const candidate of candidates){
+        if (candidate !== correctRef && !out.includes(candidate)){
+          out.push(candidate);
+        }
+        if (out.length >= count) break;
+      }
+    }
+
+    const fallbacks = ["1:1", "3:16", "8:28", "23:1", "5:13", "4:12"];
+    for (const candidate of fallbacks){
+      if (candidate !== correctRef && !out.includes(candidate)){
+        out.push(candidate);
+      }
+      if (out.length >= count) break;
+    }
+
+    while (out.length < count){
+      out.push(correctRef);
+    }
+
+    return out;
+  }
+
+  function getChoicesForCurrentPhase(){
+    const phase = getCurrentPhase();
+    const correct = getCurrentCorrectLabel();
+    const decoyCount = getTargetCount() - 1;
+
+    if (phase === "words"){
+      return [
+        { word: correct, isCorrect: true },
+        ...pickWordDecoys(correct, decoyCount).map(word => ({ word, isCorrect: false }))
+      ];
+    }
+
+    if (phase === "book"){
+      return [
+        { word: correct, isCorrect: true },
+        ...pickBookDecoys(correct, decoyCount).map(word => ({ word, isCorrect: false }))
+      ];
+    }
+
+    if (phase === "reference"){
+      return [
+        { word: correct, isCorrect: true },
+        ...buildReferenceDecoys(correct, decoyCount).map(word => ({ word, isCorrect: false }))
+      ];
+    }
+
+    return [];
   }
 
   function distance(a, b){
@@ -773,20 +980,14 @@
   }
 
   function scheduleTargetsSpawn(){
-    const correctWord = getCorrectWord();
-    if (!correctWord){
+    const correctLabel = getCurrentCorrectLabel();
+    if (!correctLabel){
       state.targets = [];
       renderTargets();
       return;
     }
 
-    const targetCount = getTargetCount();
-    const decoys = pickDecoyWords(correctWord, targetCount - 1);
-    const choices = [
-      { word: correctWord, isCorrect: true },
-      ...decoys.map(word => ({ word, isCorrect: false }))
-    ];
-
+    const choices = getChoicesForCurrentPhase();
     const shuffledChoices = shuffle(choices);
     const shuffledColors = shuffle(TARGET_COLORS);
     const usedPositions = [];
@@ -865,13 +1066,12 @@
   }
 
   function handleCorrectTarget(target){
-    state.placedWords.push(target.word);
-    state.nextWordIndex += 1;
+    state.progressIndex += 1;
     state.happyUntil = performance.now() + 260;
 
     updateBuildText();
 
-    if (state.nextWordIndex >= state.words.length){
+    if (state.progressIndex >= state.segments.length){
       completeCurrentMode();
       return;
     }
@@ -885,6 +1085,27 @@
     }, 170);
   }
 
+  function applyWrongPenalty(){
+    if (selectedMode === "easy"){
+      return false;
+    }
+
+    if (selectedMode === "medium"){
+      const newIndex = Math.max(0, state.progressIndex - 2);
+      const changed = newIndex !== state.progressIndex;
+      state.progressIndex = newIndex;
+      return changed;
+    }
+
+    if (selectedMode === "hard"){
+      const changed = state.progressIndex !== 0;
+      state.progressIndex = 0;
+      return changed;
+    }
+
+    return false;
+  }
+
   function handleWrongTarget(target){
     const now = performance.now();
     if (target.flashing) return;
@@ -893,7 +1114,20 @@
     target.flashUntil = now + 240;
     state.flashUntil = now + 240;
     shakeBuildArea();
+
+    const changedProgress = applyWrongPenalty();
+    updateBuildText();
     renderTargets();
+
+    if (changedProgress){
+      state.targets = [];
+      renderTargets();
+
+      setTimeout(() => {
+        if (!state.running) return;
+        scheduleTargetsSpawn();
+      }, 190);
+    }
   }
 
   function checkTargetCollisions(){
