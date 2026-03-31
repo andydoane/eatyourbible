@@ -362,11 +362,6 @@
     `).join(" ");
   }
 
-  function updateSnakeDebugLabel(){
-    const el = document.getElementById("vsDebugStyle");
-    if (!el) return;
-    el.textContent = `Snake: ${state.snakeStyle}`;
-  }
 
   function shakeBuildArea(){
     const build = document.getElementById("vsBuild");
@@ -501,7 +496,6 @@
           <div class="vs-field-wrap">
             <div class="vs-field" id="vsField">
               <div class="vs-status">${selectedMode ? selectedMode[0].toUpperCase() + selectedMode.slice(1) : "Mode"}</div>
-              <div class="vs-debug-style" id="vsDebugStyle">Snake: default</div>
 
               <div class="vs-fruit-layer" id="vsFruitLayer"></div>
               <div class="vs-target-layer" id="vsTargetLayer"></div>
@@ -687,7 +681,6 @@
     state.trail = [];
     seedTrail();
     updateBuildText();
-    updateSnakeDebugLabel();
     scheduleTargetsSpawn();
     renderTargets();
     renderFruit();
@@ -1206,55 +1199,109 @@ function findSpawnPosition(existing) {
   };
 }
 
-
 function findFruitSpawnPosition(){
   const isMobile = state.fieldWidth <= 520;
+
+  const marginX = isMobile ? 54 : 66;
+  const marginTop = 86;
+  const marginBottom = isMobile ? 108 : 96;
+
+  const minX = marginX;
+  const maxX = Math.max(minX + 20, state.fieldWidth - marginX);
+  const minY = marginTop;
+  const maxY = Math.max(minY + 20, state.fieldHeight - marginBottom);
+
   const headPoint = { x: state.head.x, y: state.head.y };
 
-  const baseCandidates = isMobile
-    ? [
-        { x: 0.18, y: 0.24 },
-        { x: 0.50, y: 0.22 },
-        { x: 0.82, y: 0.28 },
-        { x: 0.22, y: 0.48 },
-        { x: 0.78, y: 0.50 },
-        { x: 0.30, y: 0.68 },
-        { x: 0.70, y: 0.70 }
-      ]
-    : [
-        { x: 0.16, y: 0.22 },
-        { x: 0.50, y: 0.20 },
-        { x: 0.84, y: 0.24 },
-        { x: 0.22, y: 0.42 },
-        { x: 0.78, y: 0.44 },
-        { x: 0.20, y: 0.66 },
-        { x: 0.50, y: 0.58 },
-        { x: 0.80, y: 0.68 }
-      ];
+  const headBuffer = isMobile ? 150 : 168;
+  const targetBuffer = isMobile ? 98 : 114;
 
-  const candidates = shuffle(baseCandidates).map(p => ({
-    x: state.fieldWidth * p.x,
-    y: state.fieldHeight * p.y
-  }));
+  function randomPoint(){
+    return {
+      x: minX + Math.random() * (maxX - minX),
+      y: minY + Math.random() * (maxY - minY)
+    };
+  }
 
-  for (const p of candidates){
-    if (distance(p, headPoint) < (isMobile ? 150 : 165)) continue;
+  function isSafePoint(p, headScale = 1, targetScale = 1){
+    if (p.x < minX || p.x > maxX) return false;
+    if (p.y < minY || p.y > maxY) return false;
 
-    let tooClose = false;
+    if (distance(p, headPoint) < headBuffer * headScale){
+      return false;
+    }
+
     for (const target of state.targets){
-      if (distance(p, target) < (isMobile ? 96 : 110)){
-        tooClose = true;
-        break;
+      if (!target) continue;
+      if (distance(p, target) < targetBuffer * targetScale){
+        return false;
       }
     }
 
-    if (!tooClose){
+    return true;
+  }
+
+  // Pass 1:
+  // Pure random placements first, to keep fruit feeling organic.
+  for (let i = 0; i < 70; i++){
+    const p = randomPoint();
+    if (isSafePoint(p, 1, 1)){
       return p;
     }
   }
 
-  return null;
+  // Pass 2:
+  // Try softer random positions that slightly favor the mid play area
+  // without snapping into a fixed list of known spots.
+  for (let i = 0; i < 28; i++){
+    const centerish = {
+      x: minX + (maxX - minX) * (0.18 + Math.random() * 0.64),
+      y: minY + (maxY - minY) * (0.16 + Math.random() * 0.60)
+    };
+
+    if (isSafePoint(centerish, 0.94, 0.96)){
+      return centerish;
+    }
+  }
+
+  // Pass 3:
+  // Pick the best of several random candidates instead of using a fixed pattern.
+  let bestPoint = null;
+  let bestScore = -Infinity;
+
+  for (let i = 0; i < 24; i++){
+    const p = randomPoint();
+
+    const headDist = distance(p, headPoint);
+
+    let nearestTargetDist = Infinity;
+    for (const target of state.targets){
+      if (!target) continue;
+      nearestTargetDist = Math.min(nearestTargetDist, distance(p, target));
+    }
+
+    if (!Number.isFinite(nearestTargetDist)){
+      nearestTargetDist = targetBuffer * 1.5;
+    }
+
+    const edgeDist = Math.min(
+      p.x - minX,
+      maxX - p.x,
+      p.y - minY,
+      maxY - p.y
+    );
+
+    const score = (headDist * 0.8) + nearestTargetDist + (edgeDist * 0.25);
+
+    if (score > bestScore){
+      bestScore = score;
+      bestPoint = p;
+    }
+  }
+
+  return bestPoint;
 }
+
 
   function scheduleTargetsSpawn(){
     const correctLabel = getCurrentCorrectLabel();
@@ -1428,7 +1475,6 @@ function maybeScheduleFruitSpawn(delayMs = 480){
     state.fruit = null;
     state.happyUntil = performance.now() + 340;
     cycleSnakeStyle();
-    updateSnakeDebugLabel();
     renderFruit();
   }
 
