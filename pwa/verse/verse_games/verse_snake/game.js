@@ -48,6 +48,8 @@
     snakeStyle: "default",
     snakeStyleIndex: 0,
     fruitCount: 0,
+    wavesSinceFruit: 0,
+    targetGraceMs: 900,
     fruit: null,
     head: {
       x: 0,
@@ -152,6 +154,8 @@
     state.snakeStyle = "default";
     state.snakeStyleIndex = 0;
     state.fruitCount = 0;
+    state.wavesSinceFruit = 0;
+    state.targetGraceMs = 900;
     state.fruit = null;
     state.head.angle = -Math.PI / 2;
     state.head.speed = getBaseSpeed(selectedMode);
@@ -224,13 +228,21 @@
   function parseReferenceParts(ref, translation, verseId){
     const id = String(verseId || "").trim();
 
-    const idMatch = id.match(/^(.+?)_(\d+)_(\d+(?:[-–]\d+)?)$/);
-    if (idMatch){
-      return {
-        book: titleCaseBookFromSlug(idMatch[1]),
-        reference: `${idMatch[2]}:${idMatch[3]}`
-      };
-    }
+  const idRangeMatch = id.match(/^(.+?)_(\d+)_(\d+)_(\d+)$/);
+  if (idRangeMatch){
+    return {
+      book: titleCaseBookFromSlug(idRangeMatch[1]),
+      reference: `${idRangeMatch[2]}:${idRangeMatch[3]}-${idRangeMatch[4]}`
+    };
+  }
+
+  const idMatch = id.match(/^(.+?)_(\d+)_(\d+(?:[-–]\d+)?)$/);
+  if (idMatch){
+    return {
+      book: titleCaseBookFromSlug(idMatch[1]),
+      reference: `${idMatch[2]}:${idMatch[3]}`
+    };
+  }
 
     let raw = String(ref || "").trim();
     const trans = String(translation || "").trim();
@@ -1048,9 +1060,12 @@
   }
 
   function findSpawnPosition(existing){
-    const marginX = 64;
-    const marginTop = 90;
-    const marginBottom = 80;
+    const isMobile = state.fieldWidth <= 520;
+
+    const marginX = isMobile ? 58 : 64;
+    const marginTop = isMobile ? 96 : 90;
+    const marginBottom = isMobile ? 136 : 96;
+
     const headPoint = { x: state.head.x, y: state.head.y };
 
     for (let i = 0; i < 80; i++){
@@ -1059,11 +1074,11 @@
         y: marginTop + Math.random() * Math.max(40, state.fieldHeight - marginTop - marginBottom)
       };
 
-      if (distance(p, headPoint) < 150) continue;
+      if (distance(p, headPoint) < (isMobile ? 175 : 150)) continue;
 
       let tooClose = false;
       for (const item of existing){
-        if (distance(p, item) < 120){
+        if (distance(p, item) < (isMobile ? 132 : 120)){
           tooClose = true;
           break;
         }
@@ -1078,37 +1093,40 @@
 
     return {
       x: state.fieldWidth * 0.5,
-      y: state.fieldHeight * 0.5
+      y: Math.max(marginTop + 40, state.fieldHeight * 0.45)
     };
   }
 
-  function findFruitSpawnPosition(){
-    const marginX = 54;
-    const marginTop = 74;
-    const marginBottom = 74;
-    const headPoint = { x: state.head.x, y: state.head.y };
+function findFruitSpawnPosition(){
+  const isMobile = state.fieldWidth <= 520;
 
-    for (let i = 0; i < 80; i++){
-      const p = {
-        x: marginX + Math.random() * Math.max(40, state.fieldWidth - marginX * 2),
-        y: marginTop + Math.random() * Math.max(40, state.fieldHeight - marginTop - marginBottom)
-      };
+  const marginX = isMobile ? 54 : 54;
+  const marginTop = isMobile ? 86 : 74;
+  const marginBottom = isMobile ? 120 : 84;
 
-      if (distance(p, headPoint) < 165) continue;
+  const headPoint = { x: state.head.x, y: state.head.y };
 
-      let tooClose = false;
-      for (const target of state.targets){
-        if (distance(p, target) < 110){
-          tooClose = true;
-          break;
-        }
+  for (let i = 0; i < 80; i++){
+    const p = {
+      x: marginX + Math.random() * Math.max(40, state.fieldWidth - marginX * 2),
+      y: marginTop + Math.random() * Math.max(40, state.fieldHeight - marginTop - marginBottom)
+    };
+
+    if (distance(p, headPoint) < (isMobile ? 185 : 165)) continue;
+
+    let tooClose = false;
+    for (const target of state.targets){
+      if (distance(p, target) < 120){
+        tooClose = true;
+        break;
       }
-
-      if (!tooClose) return p;
     }
 
-    return null;
+    if (!tooClose) return p;
   }
+
+  return null;
+}
 
   function scheduleTargetsSpawn(){
     const correctLabel = getCurrentCorrectLabel();
@@ -1129,6 +1147,8 @@
       const pos = findSpawnPosition(usedPositions);
       usedPositions.push(pos);
 
+      const visibleAt = baseTime + index * 120;
+
       return {
         id: state.nextTargetId++,
         word: choice.word,
@@ -1140,7 +1160,8 @@
         flashUntil: 0,
         flashing: false,
         visible: false,
-        visibleAt: baseTime + index * 120
+        visibleAt,
+        activeAt: visibleAt + state.targetGraceMs
       };
     });
 
@@ -1166,25 +1187,33 @@ function queueNextTargets(delayMs = 170, allowFruit = false){
   }, delayMs);
 }
 
-  function maybeScheduleFruitSpawn(delayMs = 480){
-    if (state.fruit) return;
-    if (Math.random() > 0.38) return;
+function maybeScheduleFruitSpawn(delayMs = 480){
+  if (state.fruit) return;
 
-    const pos = findFruitSpawnPosition();
-    if (!pos) return;
+  state.wavesSinceFruit += 1;
 
-    state.fruit = {
-      emoji: FRUIT_EMOJIS[Math.floor(Math.random() * FRUIT_EMOJIS.length)],
-      x: pos.x,
-      y: pos.y,
-      r: 20,
-      visible: false,
-      visibleAt: performance.now() + delayMs,
-      expiresAt: performance.now() + delayMs + 6500
-    };
+  const shouldForceSpawn = state.wavesSinceFruit >= 3;
+  const shouldSpawnByChance = Math.random() <= 0.45;
 
-    renderFruit();
-  }
+  if (!shouldForceSpawn && !shouldSpawnByChance) return;
+
+  const pos = findFruitSpawnPosition();
+  if (!pos) return;
+
+  state.wavesSinceFruit = 0;
+
+  state.fruit = {
+    emoji: FRUIT_EMOJIS[Math.floor(Math.random() * FRUIT_EMOJIS.length)],
+    x: pos.x,
+    y: pos.y,
+    r: 20,
+    visible: false,
+    visibleAt: performance.now() + delayMs,
+    expiresAt: performance.now() + delayMs + 6500
+  };
+
+  renderFruit();
+}
 
   function updateTargetVisibility(now){
     let changed = false;
@@ -1349,6 +1378,7 @@ function queueNextTargets(delayMs = 170, allowFruit = false){
 
     for (const target of state.targets){
       if (!target.visible) continue;
+      if (performance.now() < target.activeAt) continue;
 
       const d = Math.hypot(headPoint.x - target.x, headPoint.y - target.y);
       if (d <= target.r + headRadius){
