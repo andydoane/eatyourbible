@@ -1059,38 +1059,61 @@
     return Math.hypot(a.x - b.x, a.y - b.y);
   }
 
+function clamp(value, min, max){
+  return Math.max(min, Math.min(max, value));
+}
+
 function findSpawnPosition(existing){
   const isMobile = state.fieldWidth <= 520;
   const count = getTargetCount();
   const index = existing.length;
 
-  const safeTop = isMobile ? 110 : 104;
-  const safeBottom = isMobile ? 150 : 112;
+  const safeLeft = isMobile ? 72 : 84;
+  const safeRight = isMobile ? 72 : 84;
+  const safeTop = isMobile ? 108 : 102;
+  const safeBottom = isMobile ? 154 : 118;
+
+  const usableWidth = Math.max(120, state.fieldWidth - safeLeft - safeRight);
   const usableHeight = Math.max(120, state.fieldHeight - safeTop - safeBottom);
 
-  const rows = isMobile
-    ? [0.30, 0.64]
+  const baseCols = count === 2
+    ? [0.30, 0.70]
+    : [0.22, 0.50, 0.78];
+
+  const baseRows = count === 2
+    ? [0.34, 0.66]
     : [0.28, 0.52, 0.74];
 
-  const yBase = safeTop + usableHeight * rows[Math.min(index, rows.length - 1)];
+  const laneX = safeLeft + usableWidth * baseCols[Math.min(index, baseCols.length - 1)];
+  const laneY = safeTop + usableHeight * baseRows[Math.min(index, baseRows.length - 1)];
 
-  let x;
-  let y = yBase;
+  const jitterX = isMobile ? 26 : 42;
+  const jitterY = isMobile ? 24 : 34;
 
-  if (count === 2){
-    x = index === 0 ? state.fieldWidth * 0.30 : state.fieldWidth * 0.70;
-  } else {
-    const cols = [0.22, 0.50, 0.78];
-    x = state.fieldWidth * cols[Math.min(index, cols.length - 1)];
-  }
+  let x = laneX + ((Math.random() * 2 - 1) * jitterX);
+  let y = laneY + ((Math.random() * 2 - 1) * jitterY);
+
+  x = clamp(x, safeLeft, state.fieldWidth - safeRight);
+  y = clamp(y, safeTop, state.fieldHeight - safeBottom);
 
   const headPoint = { x: state.head.x, y: state.head.y };
 
   if (distance({ x, y }, headPoint) < (isMobile ? 165 : 145)){
-    y = Math.min(
-      state.fieldHeight - safeBottom,
-      y + (isMobile ? 70 : 55)
+    y = clamp(
+      y + (isMobile ? 64 : 52),
+      safeTop,
+      state.fieldHeight - safeBottom
     );
+  }
+
+  for (const item of existing){
+    if (distance({ x, y }, item) < (isMobile ? 118 : 126)){
+      y = clamp(
+        y + (isMobile ? 54 : 44),
+        safeTop,
+        state.fieldHeight - safeBottom
+      );
+    }
   }
 
   return { x, y };
@@ -1100,29 +1123,38 @@ function findFruitSpawnPosition(){
   const isMobile = state.fieldWidth <= 520;
   const headPoint = { x: state.head.x, y: state.head.y };
 
-  const candidates = isMobile
+  const baseCandidates = isMobile
     ? [
-        { x: state.fieldWidth * 0.22, y: state.fieldHeight * 0.26 },
-        { x: state.fieldWidth * 0.78, y: state.fieldHeight * 0.34 },
-        { x: state.fieldWidth * 0.26, y: state.fieldHeight * 0.56 },
-        { x: state.fieldWidth * 0.74, y: state.fieldHeight * 0.62 }
+        { x: 0.18, y: 0.24 },
+        { x: 0.50, y: 0.22 },
+        { x: 0.82, y: 0.28 },
+        { x: 0.22, y: 0.48 },
+        { x: 0.78, y: 0.50 },
+        { x: 0.30, y: 0.68 },
+        { x: 0.70, y: 0.70 }
       ]
     : [
-        { x: state.fieldWidth * 0.18, y: state.fieldHeight * 0.24 },
-        { x: state.fieldWidth * 0.82, y: state.fieldHeight * 0.28 },
-        { x: state.fieldWidth * 0.22, y: state.fieldHeight * 0.58 },
-        { x: state.fieldWidth * 0.78, y: state.fieldHeight * 0.62 },
-        { x: state.fieldWidth * 0.50, y: state.fieldHeight * 0.40 }
+        { x: 0.16, y: 0.22 },
+        { x: 0.50, y: 0.20 },
+        { x: 0.84, y: 0.24 },
+        { x: 0.22, y: 0.42 },
+        { x: 0.78, y: 0.44 },
+        { x: 0.20, y: 0.66 },
+        { x: 0.50, y: 0.58 },
+        { x: 0.80, y: 0.68 }
       ];
 
-  const shuffled = shuffle(candidates);
+  const candidates = shuffle(baseCandidates).map(p => ({
+    x: state.fieldWidth * p.x,
+    y: state.fieldHeight * p.y
+  }));
 
-  for (const p of shuffled){
-    if (distance(p, headPoint) < (isMobile ? 180 : 165)) continue;
+  for (const p of candidates){
+    if (distance(p, headPoint) < (isMobile ? 150 : 165)) continue;
 
     let tooClose = false;
     for (const target of state.targets){
-      if (distance(p, target) < 120){
+      if (distance(p, target) < (isMobile ? 96 : 110)){
         tooClose = true;
         break;
       }
@@ -1200,8 +1232,9 @@ function maybeScheduleFruitSpawn(delayMs = 480){
 
   state.wavesSinceFruit += 1;
 
-  const shouldForceSpawn = state.wavesSinceFruit >= 3;
-  const shouldSpawnByChance = Math.random() <= 0.45;
+  const isMobile = state.fieldWidth <= 520;
+  const shouldForceSpawn = state.wavesSinceFruit >= (isMobile ? 2 : 3);
+  const shouldSpawnByChance = Math.random() <= (isMobile ? 0.62 : 0.45);
 
   if (!shouldForceSpawn && !shouldSpawnByChance) return;
 
