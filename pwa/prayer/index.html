@@ -441,6 +441,78 @@ button{ cursor:pointer; font-family:inherit; }
   object-fit:contain;
 }
 
+.guide-image-area{
+  flex: 0 0 auto;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding: 18px 20px 10px;
+  min-height:0;
+}
+
+.guide-image-area img{
+  width:min(56vw, 220px);
+  max-height:24vh;
+  object-fit:contain;
+}
+
+.guide-text-area{
+  flex: 0 0 auto;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding: 4px 20px 14px;
+  text-align:center;
+}
+
+.guide-phrase{
+  font-family:'Baloo 2', cursive;
+  font-size: clamp(18px, 5.8vw, 42px);
+  line-height:1.12;
+  color:white;
+  font-weight:700;
+  text-shadow:0 2px 6px rgba(0,0,0,0.35);
+  text-wrap: balance;
+}
+
+.guide-prompt-wrap{
+  flex:1;
+  min-height:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding: 0 16px 18px;
+}
+
+.guide-prompt-box{
+  width:min(860px, 100%);
+  background: rgba(0,0,0,0.30);
+  border-radius: 24px;
+  padding: 18px 18px 20px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+}
+
+.guide-prompt{
+  color:white;
+  font-size: clamp(18px, 4.8vw, 30px);
+  line-height:1.35;
+  text-align:center;
+  text-wrap: balance;
+}
+
+.guide-instruction{
+  color:white;
+  font-size: clamp(18px, 4.6vw, 28px);
+  line-height:1.35;
+  text-align:center;
+  text-wrap: balance;
+}
+
+.guide-refresh-btn{
+  font-size:26px !important;
+  line-height:1;
+}
+
 </style>
 </head>
 
@@ -572,6 +644,78 @@ Not only are we praying that God would keep us from sinning, we’re also asking
 
 To use the sixth petition as a checklist, you can think back to the sins you just confessed in the fifth petition (“and forgive our debts…”). Then, you can ask God to help you pass the test the next time you are tempted to sin. For example, after praying, “God, forgive me for punching my sister in the nose,” you could go on to pray, “And help me to control my temper the next time she makes me so mad!”`;
 
+const PERSECUTED_COUNTRIES = [
+  "North Korea",
+  "Somalia",
+  "Yemen",
+  "Sudan",
+  "Eritrea",
+  "Syria",
+  "Nigeria",
+  "Pakistan",
+  "Libya",
+  "Iran"
+];
+
+const PRAYER_GUIDE_INTRO_TEXT =
+  "We can use the Lord's Prayer like a checklist. Pray the words on each of these pages, filling in the blanks as you pray.";
+
+const PRAYER_GUIDE_INSTRUCTION =
+  "Begin by praying, “Our Father in heaven,” and remember that you are talking to your loving Father who cares for you.";
+
+const PRAYER_GUIDE_PROMPTS = [
+  [
+    PRAYER_GUIDE_INSTRUCTION
+  ],
+  [
+    "you are a God who is ____ and ____.",
+    "I praise you for being ___.",
+    "I praise you for creating things like ____ and ____.",
+    "In the Bible you demonstrated your power by ____.",
+    "I treasure you more than ____.",
+    "As I've read the Bible this week, I've learned that you are ____."
+  ],
+  [
+    "Help ____ (a member of your church) share the gospel.",
+    "May ____ (someone who is not a Christian) believe the good news.",
+    "Help ____ (one of your church's missionaries) share the gospel in ____ (city/country).",
+    "Help ____ (a church leader) teach God's word and make disciples.",
+    "Keep ____ (a friend/family member) believing the good news until Jesus returns.",
+    "Help ____ (someone who is not a Christian) understand that they are a sinner who needs a Savior."
+  ],
+  [
+    "Help me to show my love for you today by ____ (something you can do).",
+    "Help me obey your command to ____.",
+    "Help me to show my love for others today by ____ (something you can do).",
+    "Help me show the fruit of the Spirit by being a person who is ____.",
+    "Help ____ (a friend or family member) to obey your commands.",
+    "Give ____ (a leader in your area/country) wisdom and courage to do the right thing."
+  ],
+  [
+    "I ask you for ____ (something you need).",
+    "I thank you for taking care of my need for ____.",
+    "Take care of the needs of ____ (someone you know who is experiencing tough times).",
+    "Please take care of ____ (an older member of your church).",
+    "Thank you for answering my prayer for ____ (think about something you prayed for recently).",
+    "Provide ____ (someone who is not a Christian) with the things they need each day."
+  ],
+  [
+    "Thank you for sending Jesus to die for all the times I've ____.",
+    "I have sinned. Forgive me for ____.",
+    "Help me to forgive and not be angry at ____.",
+    "Help me be kind and forgiving to ____.",
+    "I failed to love my neighbor when I ____. Forgive me.",
+    "Forgive me for focusing more on ____ than you."
+  ],
+  [
+    "When I begin to worry about ____, help me to trust you to care for me.",
+    "When I feel tempted to ____, help me to obey your commands.",
+    "Protect ____ (a church member) from evil.",
+    "When I am afraid, help me to remember that you are ____.",
+    "Keep ____ (a friend or family member) safe from sin and the evil one.",
+    `Protect the persecuted Christians in ${PERSECUTED_COUNTRIES[Math.floor(Math.random() * PERSECUTED_COUNTRIES.length)]}.`
+  ]
+];
 
 const slideColors = [
   "#333333", // 1 - gray
@@ -592,6 +736,10 @@ let learnIntro=false;
 let digIntro=false;
 let isSliding=false;
 
+let guideIntro=false;
+let guidePromptIndices=[];
+let guidePromptCounts=[];
+
 // Dig Deeper state
 let digDeeperOpen=false;
 
@@ -600,8 +748,9 @@ let titleOptionIndex=0;
 
 const TITLE_OPTIONS = [
   { label: "Learn the Prayer", btnClass: "learn-btn", action: "startLearn" },
-  { label: "Test Yourself",      btnClass: "test-btn",  action: "modeSelect" },
-  { label: "Dig Deeper",         btnClass: "learn-btn", action: "startDigDeeper" }
+  { label: "Test Yourself", btnClass: "test-btn", action: "modeSelect" },
+  { label: "Dig Deeper", btnClass: "learn-btn", action: "startDigDeeper" },
+  { label: "Prayer Guide", btnClass: "test-btn", action: "startPrayerGuide" }
 ];
 
 function titlePrevOption(){
@@ -704,6 +853,9 @@ function preloadPrayerImages(priorityCount=3){
     img.decoding="async";
   }
 
+  // Prayer Guide Image
+  requestImage("prayer_images/prayer_checklist.png");
+
   // Intro images (optional; keep same pattern as your creed app)
   requestImage("prayer_images/intro_bible.png");
   requestImage("prayer_images/intro_bible_bite.png");
@@ -751,7 +903,10 @@ function setupKeyboardNav(){
       } else if (screen === "dig"){
         if (digIntro) beginDigDeeper();
         else forwardDigDeeper();
-      }
+      } else if (screen === "guide"){
+        if (guideIntro) beginPrayerGuide();
+        else forwardPrayerGuide();        
+      } 
       return;
     }
 
@@ -764,6 +919,9 @@ function setupKeyboardNav(){
       } else if (screen === "dig"){
         if (digIntro) titleScreen();
         else prevDigDeeper();
+      } else if (screen === "guide"){
+        if (guideIntro) titleScreen();
+        else prevPrayerGuide();
       }
     }
   });
@@ -1229,6 +1387,165 @@ function showDigDeeperEnd(){
         <div class="title-buttons">
           <button class="learn-btn" onclick="titleScreen()">Title Screen</button>
           <button class="test-btn" onclick="modeSelect()">Test Yourself</button>
+        </div>
+      </div>
+
+      <div class="footer">
+        More free Bible resources at:<br>
+        <a href="https://www.eatyourbible.com" target="_blank" style="color:white;">
+        www.eatyourbible.com</a>
+      </div>
+    </div>`;
+  showSlide(html, "#7f66c6");
+}
+
+/* ---------- Prayer Guide Mode ---------- */
+function createShuffledPromptOrder(promptCount){
+  const arr = Array.from({ length: promptCount }, (_, i) => i);
+  for (let i = arr.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+function resetPrayerGuideState(){
+  guidePromptIndices = PRAYER_GUIDE_PROMPTS.map(prompts => createShuffledPromptOrder(prompts.length));
+  guidePromptCounts = PRAYER_GUIDE_PROMPTS.map(() => 0);
+}
+
+function getGuidePromptForIndex(i){
+  const prompts = PRAYER_GUIDE_PROMPTS[i];
+  if (!prompts || !prompts.length) return "";
+
+  const order = guidePromptIndices[i];
+  const count = guidePromptCounts[i] || 0;
+  const promptIndex = order[count % order.length];
+  const prompt = prompts[promptIndex];
+
+  if (i === 6 && prompt.startsWith("Protect the persecuted Christians in ")){
+    return `Protect the persecuted Christians in ${PERSECUTED_COUNTRIES[Math.floor(Math.random() * PERSECUTED_COUNTRIES.length)]}.`;
+  }
+
+  return prompt;
+}
+
+function cycleGuidePrompt(){
+  const prompts = PRAYER_GUIDE_PROMPTS[index];
+  if (!prompts || prompts.length <= 1) return;
+
+  guidePromptCounts[index] = (guidePromptCounts[index] || 0) + 1;
+
+  if (guidePromptCounts[index] % prompts.length === 0){
+    guidePromptIndices[index] = createShuffledPromptOrder(prompts.length);
+  }
+
+  renderPrayerGuide("none");
+}
+
+function startPrayerGuide(){
+  screen = "guide";
+  index = 0;
+  guideIntro = true;
+  resetPrayerGuideState();
+  showPrayerGuideIntro();
+}
+
+function showPrayerGuideIntro(){
+  setNav("");
+  showSlide(`
+    <div class="content">
+      <div class="intro-content">
+        <img src="prayer_images/prayer_checklist.png" alt="Prayer checklist">
+        <div>
+          <div class="large-text">Prayer Guide</div>
+          <div class="small-text">${PRAYER_GUIDE_INTRO_TEXT}</div>
+
+          <div class="title-buttons">
+            <button class="learn-btn" onclick="beginPrayerGuide()">Begin</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `, "#7f66c6");
+}
+
+function beginPrayerGuide(){
+  guideIntro = false;
+  index = 0;
+  renderPrayerGuide("forward");
+}
+
+function forwardPrayerGuide(){
+  index++;
+  if (index >= COMMANDMENTS.length){
+    showPrayerGuideEnd();
+    return;
+  }
+  renderPrayerGuide("forward");
+}
+
+function prevPrayerGuide(){
+  if (index > 0){
+    index--;
+    renderPrayerGuide("back");
+  }
+}
+
+function renderPrayerGuide(direction="forward"){
+  const phrase = COMMANDMENTS[index][0];
+  const color = getColor(index);
+  const prompt = getGuidePromptForIndex(index);
+  const imageNumber = String(index + 1).padStart(2, "0");
+  const showRefresh = index !== 0;
+
+  const html = `
+    <div class="content">
+      <div class="guide-image-area">
+        <img src="prayer_images/prayer_${imageNumber}.png" alt="">
+      </div>
+
+      <div class="guide-text-area">
+        <div class="guide-phrase">${phrase}</div>
+      </div>
+
+      <div class="guide-prompt-wrap">
+        <div class="guide-prompt-box">
+          <div class="${index === 0 ? "guide-instruction" : "guide-prompt"}">${prompt}</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  setNav(`
+    <button class="no-zoom" onclick="prevPrayerGuide()" aria-label="Back">${SVG_BACK}</button>
+
+    <button class="no-zoom" onclick="titleScreen()" aria-label="Home">
+      ${SVG_HOME}
+    </button>
+
+    ${
+      showRefresh
+        ? `<button class="center-btn nav-pill no-zoom guide-refresh-btn" onclick="cycleGuidePrompt()" aria-label="Next prompt">🔁</button>`
+        : `<button class="center-btn nav-pill no-zoom" aria-label="Prayer guide">Pray</button>`
+    }
+
+    <button class="no-zoom" onclick="forwardPrayerGuide()" aria-label="Forward">${SVG_FORWARD}</button>
+  `);
+
+  showSlide(html, color, direction);
+}
+
+function showPrayerGuideEnd(){
+  setNav("");
+  const html = `
+    <div class="title-screen">
+      <div class="title-content">
+        <img src="prayer_images/prayer_title.png">
+        <h2>Great job!</h2>
+        <div class="title-buttons">
+          <button class="learn-btn" onclick="titleScreen()">Title Screen</button>
+          <button class="test-btn" onclick="startPrayerGuide()">Prayer Guide Again</button>
         </div>
       </div>
 
