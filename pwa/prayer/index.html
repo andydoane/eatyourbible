@@ -1,1 +1,1330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>The Lord's Prayer</title>
 
+<!-- PWA -->
+<link rel="manifest" href="/eatyourbible/pwa/prayer/manifest.webmanifest">
+<meta name="theme-color" content="#7f66c6">
+
+<!-- iOS "Add to Home Screen" -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="/eatyourbible/pwa/prayer/icons/icon-192.png">
+
+<style>
+/* Global box sizing fix */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: "Baloo 2", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+#app { position: relative; width: 100%; height: 100%; overflow: hidden; }
+
+/* ---------- Slide System ---------- */
+.slide{
+  position:absolute;
+  width:100%;
+  height:100%;
+  top:0; left:0;
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+  padding-bottom: calc(70px + env(safe-area-inset-bottom));
+}
+
+.slide.nav-hidden{ padding-bottom: env(safe-area-inset-bottom); }
+
+.content{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+}
+
+.image-area{
+  flex:1;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  cursor:pointer;
+  min-height:0;
+}
+
+.image-area img{
+  max-height:100%;
+  max-width: min(90vw, 520px);
+  object-fit:contain;
+}
+
+.text-area{
+  flex:1;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  padding:0 20px;
+  text-align:center;
+  min-height:0;
+}
+
+.phrase{
+  font-family:'Baloo 2', cursive;
+  font-size: clamp(24px, 8vw, 100px);
+  text-wrap: balance;
+  color:white;
+  font-weight:700;
+  text-shadow:0 2px 6px rgba(0,0,0,0.4);
+}
+
+.dark-text{ color:#111; text-shadow:none; }
+
+.small-text{
+  font-size: clamp(16px, 3vw, 20px);
+  opacity:.85;
+  color:white;
+  text-wrap: balance;
+}
+
+.large-text{
+  font-size: clamp(28px, 6vw, 48px);
+  color:white;
+  font-weight:700;
+  text-wrap: balance;
+}
+
+/* ---------- Navigation ---------- */
+.nav{
+  height:70px;
+  background: rgba(0,0,0,0.3);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  color:white;
+  font-size:28px;
+  position:fixed;
+  left:0; right:0; bottom:0;
+  z-index:9999;
+  padding: 0 30px calc(env(safe-area-inset-bottom)) 30px;
+}
+
+.nav button{
+  background:none;
+  border:none;
+  color:white;
+  font-size:28px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.nav-icon{ width:34px; height:34px; display:block; }
+
+.center-btn{ font-size:18px !important; }
+
+/* Pressable white pill buttons for Hint/Dig Deeper */
+.nav-pill{
+  background:white !important;
+  color:#333333 !important;
+  border:none;
+  border-radius:999px;
+  padding:10px 18px;
+  font-size:18px;
+  font-weight:700;
+  box-shadow:0 4px 0 rgba(0,0,0,0.25);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.nav-pill:active{
+  transform: translateY(3px);
+  box-shadow:0 1px 0 rgba(0,0,0,0.25);
+}
+
+/* ---------- Title ---------- */
+.title-screen{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  height:100%;
+  padding:24px 16px;
+  padding-bottom:110px;
+  background:#7f66c6;
+  color:white;
+  text-align:center;
+}
+
+.title-content{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  width:100%;
+  max-width:700px;
+  padding-bottom:0px;
+}
+
+.title-screen h2{
+  font-size: clamp(22px, 5.2vw, 44px);
+  font-weight:700;
+  margin:14px 0 12px;
+  text-wrap: balance;
+}
+
+.title-screen img{
+  width:min(80%, 420px);
+  max-height:34vh;
+  object-fit:contain;
+}
+
+.title-buttons button{
+  margin:10px 8px;
+  padding:14px 28px;
+  font-size:18px;
+  font-weight:700;
+  border-radius:999px;
+  border:none;
+  background:white;
+  color:#7f66c6;
+  box-shadow:0 6px 0 rgba(0,0,0,0.25);
+  transition: all 0.15s ease;
+}
+
+.title-buttons button:hover{
+  transform: translateY(-2px);
+  box-shadow:0 8px 0 rgba(0,0,0,0.25);
+}
+
+.title-buttons button:active{
+  transform: translateY(4px);
+  box-shadow:0 2px 0 rgba(0,0,0,0.25);
+}
+
+.title-buttons button.carousel-arrow:hover,
+.title-buttons button.carousel-arrow:active{
+  box-shadow:none;
+  transform:none;
+}
+
+.learn-btn{ background:white; color:#7f66c6; }
+.test-btn{ background:#ffc751; color:#333; }
+
+/* ---------- Title Button Carousel ---------- */
+.title-carousel{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  width:100%;
+}
+
+.title-buttons button.carousel-arrow{
+  width:54px;
+  height:54px;
+  padding:0;
+  margin:10px 0;
+  border-radius:999px;
+  background: rgba(0,0,0,0.30);
+  color:white;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  line-height:0;
+  font-size:28px;
+  font-weight:700;
+  box-shadow:none;
+  transform:none;
+}
+
+.title-buttons button.carousel-main{
+  margin:10px 0;
+  flex:1;
+  min-width:0;
+  max-width:420px;
+}
+
+.carousel-dots{
+  display:flex;
+  justify-content:center;
+  gap:10px;
+  margin-top:6px;
+}
+
+.carousel-dot{
+  width:10px;
+  height:10px;
+  border-radius:999px;
+  border:2px solid rgba(255,255,255,0.75);
+  opacity:0.9;
+}
+
+.carousel-dot.active{ background: rgba(255,255,255,0.95); }
+
+/* ---------- Mode Select (title-style buttons) ---------- */
+.mode-buttons{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  width:100%;
+  gap:14px;
+  margin-top:10px;
+}
+
+.mode-buttons button{
+  width:min(420px, 92%);
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+  line-height:1.1;
+}
+
+.mode-buttons .btn-desc{
+  font-size:14px;
+  font-weight:500;
+  opacity:0.85;
+}
+
+.hard-btn{ background:#ff5a51; color:white; }
+
+.footer{
+  position:absolute;
+  left:0; right:0; bottom:0;
+  background: rgba(0,0,0,0.30);
+  color:white;
+  text-align:center;
+  padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+  font-size:14px;
+  line-height:1.2;
+  z-index:9999;
+}
+
+/* ---------- Intro ---------- */
+.intro{
+  background:#7f66c6;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100%;
+}
+
+.intro img{
+  width:60%;
+  max-width:400px;
+  animation: wiggle 1s infinite alternate;
+}
+
+@keyframes wiggle { 0%{transform:rotate(-4deg);} 100%{transform:rotate(4deg);} }
+
+button{ cursor:pointer; font-family:inherit; }
+
+/* Prevent mobile double-tap zoom on specific controls */
+.no-zoom{
+  touch-action: manipulation;
+  -webkit-user-select:none;
+  user-select:none;
+  -webkit-touch-callout:none;
+}
+
+/* ---------- Dig Deeper Overlay ---------- */
+.dig-modal{
+  position:absolute;
+  top:0; left:0; right:0;
+  bottom: calc(70px + env(safe-area-inset-bottom));
+  z-index: 6000;
+  padding: 18px 16px 18px 16px;
+}
+
+.dig-modal-inner{
+  height:100%;
+  width: min(820px, 100%);
+  margin: 0 auto;
+  border-radius: 24px;
+  background: rgba(0,0,0,0.90);
+  box-shadow: 0 14px 40px rgba(0,0,0,0.28);
+  padding: 18px 16px;
+  display:flex;
+  flex-direction:column;
+  gap: 10px;
+}
+
+.dig-modal-title{
+  color:white;
+  font-weight:700;
+  font-size: clamp(18px, 3.8vw, 26px);
+  text-shadow:0 2px 6px rgba(0,0,0,0.35);
+}
+
+.dig-modal-scroll{
+  flex:1;
+  min-height:0;
+  overflow-y:auto;
+  -webkit-overflow-scrolling: touch;
+
+  position: relative;
+  padding-bottom: 70px;
+
+  /* Hide scrollbar but keep scrolling */
+  scrollbar-width: none;        /* Firefox */
+  -ms-overflow-style: none;     /* IE/Edge */
+}
+
+.dig-modal-scroll::-webkit-scrollbar{
+  display: none;                /* Chrome/Safari */
+}
+
+/* Fade overlay that stays pinned to the bottom of the card */
+.dig-modal-inner{
+  position: relative; /* IMPORTANT: anchors the fade */
+}
+
+.dig-fade{
+  position:absolute;
+  left:16px;
+  right:16px;
+  bottom:18px;      /* matches .dig-modal-inner padding */
+  height:62px;
+  pointer-events:none;
+  background: linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,0.90));
+}
+
+.dig-p{
+  margin: 0 0 24px 0;
+  color:white;
+  font-size: clamp(16px, 3.6vw, 22px);
+  font-weight: 400;
+  line-height: 1.55;
+  text-shadow:0 2px 6px rgba(0,0,0,0.35);
+  text-wrap: pretty;
+  text-align: justify;
+  hyphens: auto;
+  -webkit-hyphens: auto; /* Safari/iOS */
+  overflow-wrap: break-word; /* safety for long words */
+}
+
+.dig-p strong{
+  font-weight: 800;
+}
+
+
+.dig-p strong:first-child{
+  font-size: 1.1em;
+  letter-spacing: 0.5px;
+}
+
+.dig-p em{
+  font-style: italic;
+  opacity: 0.95;
+}
+</style>
+</head>
+
+<body>
+<div id="app"></div>
+<div id="navBar" class="nav" style="display:none;"></div>
+
+<script>
+/* ---------- Data ---------- */
+/*
+  Edit these later in VS Code:
+
+  - COMMANDMENTS: text + key words (for Test Yourself masking)
+  - DIG_DEEPER_TEXT: one long explanation per commandment
+*/
+
+const COMMANDMENTS = [
+  ["Our Father in heaven,", "Father", "heaven"],
+  ["Hallowed be your name,", "Hallowed", "name"],
+  ["Your kingdom come,", "kingdom", "come"],
+  ["Your will be done, on earth as it is in heaven.", "will", "earth", "heaven"],
+  ["Give us today our daily bread.", "today", "daily", "bread"],
+  ["And forgive us our debts, as we also have forgiven our debtors.", "forgive", "debts", "debtors"],
+  ["And lead us not into temptation, but deliver us from the evil one.", "temptation", "deliver", "evil" ]
+];
+
+// One explanation per part of the prayer
+// Use 
+
+ to create paragraph breaks.
+const DIG_DEEPER_TEXT = [];
+
+
+DIG_DEEPER_TEXT[0] = `**PART 1**
+
+Add your custom Dig Deeper text here for “Our Father in heaven,”.`;
+DIG_DEEPER_TEXT[1] = `**PART 2**
+
+Add your custom Dig Deeper text here for “Hallowed be your name,”.`;
+DIG_DEEPER_TEXT[2] = `**PART 3**
+
+Add your custom Dig Deeper text here for “Your kingdom come,”.`;
+DIG_DEEPER_TEXT[3] = `**PART 4**
+
+Add your custom Dig Deeper text here for “Your will be done, on earth as it is in heaven.”`;
+DIG_DEEPER_TEXT[4] = `**PART 5**
+
+Add your custom Dig Deeper text here for “Give us today our daily bread.”`;
+DIG_DEEPER_TEXT[5] = `**PART 6**
+
+Add your custom Dig Deeper text here for “And forgive us our debts, as we also have forgiven our debtors.”`;
+DIG_DEEPER_TEXT[6] = `**PART 7**
+
+Add your custom Dig Deeper text here for “And lead us not into temptation, but deliver us from the evil one.”`;
+
+const slideColors = [
+  "#7f66c6", // 1 - purple
+  "#ffc751", // 2 - yellow
+  "#333333", // 3 - gray
+  "#ffa351", // 4 - orange
+  "#a7cb6f", // 5 - green
+  "#ff5a51", // 6 - red
+  "#40b9c5"  // 7 - blue
+];
+
+let screen="intro";
+let index=0;
+let muted=false;
+let testMode=null;
+let hintState=0;
+let learnIntro=false;
+let digIntro=false;
+let isSliding=false;
+
+// Dig Deeper state
+let digDeeperOpen=false;
+
+// ---------- Title carousel ----------
+let titleOptionIndex=0;
+
+const TITLE_OPTIONS = [
+  { label: "Learn the Prayer", btnClass: "learn-btn", action: "startLearn" },
+  { label: "Test Yourself",      btnClass: "test-btn",  action: "modeSelect" },
+  { label: "Dig Deeper",         btnClass: "learn-btn", action: "startDigDeeper" }
+];
+
+function titlePrevOption(){
+  titleOptionIndex = (titleOptionIndex - 1 + TITLE_OPTIONS.length) % TITLE_OPTIONS.length;
+  updateTitleCarouselUI();
+}
+function titleNextOption(){
+  titleOptionIndex = (titleOptionIndex + 1) % TITLE_OPTIONS.length;
+  updateTitleCarouselUI();
+}
+function runTitleOption(){
+  const opt = TITLE_OPTIONS[titleOptionIndex];
+  window[opt.action]();
+}
+function updateTitleCarouselUI(){
+  const opt = TITLE_OPTIONS[titleOptionIndex];
+  const mainBtn = document.getElementById("titleMainBtn");
+  const indicator = document.getElementById("titleIndicator");
+
+  if (mainBtn){
+    mainBtn.textContent = opt.label;
+    mainBtn.className = `carousel-main ${opt.btnClass}`;
+  }
+  if (indicator){
+    indicator.innerHTML = TITLE_OPTIONS.map((_, i) =>
+      `<span class="carousel-dot ${i === titleOptionIndex ? "active" : ""}"></span>`
+    ).join("");
+  }
+}
+
+// --- Inline SVG icons (copied from your original file) ---
+const SVG_BACK = `
+<svg class="nav-icon" viewBox="0 0 1270 889" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+  <path style="fill:#ffffff;stroke-width:74.9031;stroke-linecap:round"
+    d="M 90.101697,426.07323 665.52324,88.164306 a 20.830539,20.830539 29.78848 0 1 31.37872,17.962384 v 676.74658 a 20.830539,20.830539 150.21152 0 1 -31.37872,17.96238 L 90.101697,462.92673 a 21.369052,21.369052 90 0 1 0,-36.8535 z"
+    transform="translate(246.77226)" />
+</svg>`;
+
+const SVG_FORWARD = `
+<svg class="nav-icon" viewBox="0 0 1270 889" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+  <path style="fill:#ffffff;stroke-width:74.9031;stroke-linecap:round"
+    d="M 90.101697,426.07323 665.52324,88.164306 a 20.830539,20.830539 29.78848 0 1 31.37872,17.962384 v 676.74658 a 20.830539,20.830539 150.21152 0 1 -31.37872,17.96238 L 90.101697,462.92673 a 21.369052,21.369052 90 0 1 0,-36.8535 z"
+    transform="matrix(-1,0,0,1,1023.2277,0)" />
+</svg>`;
+
+const SVG_UNMUTE = `
+<svg class="nav-icon" viewBox="0 0 1270 889" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+  <g transform="matrix(2.9017243,0,0,2.9017243,-948.59169,1423.6267)">
+    <path style="fill:#ffffff;stroke:none;stroke-width:15.4884;stroke-linecap:round"
+      d="m 554.69651,-460.54773 -86.50507,53.22802 a 51.858137,51.858137 0 0 1 -27.17654,7.69139 h -36.35067 a 14.676664,14.676664 0 0 0 -14.67666,14.67666 v 95.04477 a 14.676664,14.676664 0 0 0 14.67666,14.67666 h 36.35067 a 51.858137,51.858137 0 0 1 27.17654,7.69139 l 86.50507,53.22802 a 8.2017227,8.2017227 0 0 0 12.49988,-6.98527 v -232.26637 a 8.2017227,8.2017227 0 0 0 -12.49988,-6.98527 z" />
+    <path style="fill:none;stroke:#ffffff;stroke-width:26.4583;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1"
+      d="m 596.38634,-270.01659 c 26.00162,-13.81364 42.0863,-39.52797 42.16745,-67.41243 -0.0102,-27.95044 -16.10446,-53.75052 -42.16745,-67.5969" />
+    <path style="fill:none;stroke:#ffffff;stroke-width:26.4583;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1"
+      d="m 626.65943,-233.57231 c 4.34269,-2.51562 16.69789,-10.99898 23.86366,-17.76894 23.32002,-22.03191 37.74343,-52.46821 37.74343,-86.08777 0,-33.61956 -14.42341,-64.05637 -37.74343,-86.08828 -7.16577,-6.76996 -19.52097,-15.25332 -23.86366,-17.76894" />
+  </g>
+</svg>`;
+
+const SVG_MUTE = `
+<svg class="nav-icon" viewBox="0 0 1270 889" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+  <path style="fill:#ffffff;stroke:none;stroke-width:44.9431;stroke-linecap:round"
+    d="M 660.98465,87.244161 409.97079,241.6972 a 150.47802,150.47802 0 0 1 -78.85883,22.31829 H 225.63234 a 42.587633,42.587633 0 0 0 -42.58762,42.58762 v 275.79372 a 42.587633,42.587633 0 0 0 42.58762,42.58762 h 105.47962 a 150.47802,150.47802 0 0 1 78.85883,22.3183 l 251.01386,154.45304 a 23.799138,23.799138 0 0 0 36.27121,-20.26933 V 107.51349 A 23.799138,23.799138 0 0 0 660.98465,87.244161 Z" />
+  <g transform="translate(-26.458334,-255.59263)">
+    <path style="fill:none;stroke:#ffffff;stroke-width:76.7747;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1"
+      d="M 1241.4124,524.69155 890.61025,875.49365" />
+    <path style="fill:none;stroke:#ffffff;stroke-width:76.7747;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1"
+      d="m 890.61025,524.69155 350.80215,350.8021" />
+  </g>
+</svg>`;
+
+const SVG_HOME = `
+<svg class="nav-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+  <path d="M12 3L3 10h2v9h5v-6h4v6h5v-9h2L12 3z" fill="#ffffff"/>
+</svg>`;
+
+// Reuse one audio player (keeps behavior identical; safe if you later add audio)
+const audioPlayer = new Audio();
+audioPlayer.preload = "auto";
+let audioUnlocked = false;
+
+/* ---------- Utility ---------- */
+function getColor(i){ return slideColors[i]; }
+function isLightBg(color){ return color === "#ffc751" || color === "#f2f2f2"; }
+
+function setNav(html){
+  const nav = document.getElementById("navBar");
+  if (!nav) return;
+  if (!html){
+    nav.style.display="none";
+    nav.innerHTML="";
+    return;
+  }
+  nav.style.display="flex";
+  nav.innerHTML=html;
+}
+
+function preloadPrayerImages(priorityCount=3){
+  function requestImage(src){
+    const img = new Image();
+    img.src = src;
+    img.decoding="async";
+  }
+
+  // Intro images (optional; keep same pattern as your creed app)
+  requestImage("prayer_images/intro_bible.png");
+  requestImage("prayer_images/intro_bible_bite.png");
+
+  // Title/end image
+  requestImage("prayer_images/prayer_title.png");
+
+  const total = COMMANDMENTS.length;
+  const firstBatch = Math.min(priorityCount, total);
+
+  for (let i=1; i<=firstBatch; i++){
+    requestImage(`prayer_images/prayer_${String(i).padStart(2,"0")}.png`);
+  }
+
+  function preloadRemaining(){
+    for (let i=firstBatch+1; i<=total; i++){
+      requestImage(`prayer_images/prayer_${String(i).padStart(2,"0")}.png`);
+    }
+  }
+
+  if ("requestIdleCallback" in window){
+    requestIdleCallback(preloadRemaining, {timeout:1500});
+  } else {
+    setTimeout(preloadRemaining, 300);
+  }
+}
+
+function setupKeyboardNav(){
+  document.addEventListener("keydown", (e) => {
+    if (e.repeat) return;
+    if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+
+    // Prevent page from scrolling
+    e.preventDefault();
+
+    // Dig Deeper open = no keyboard nav
+    if (screen === "dig" && digDeeperOpen) return;
+
+    if (e.key === "ArrowRight"){
+      if (screen === "learn"){
+        if (learnIntro) nextLearn("forward");
+        else forwardLearn();
+      } else if (screen === "test"){
+        forwardTest();
+      } else if (screen === "dig"){
+        if (digIntro) beginDigDeeper();
+        else forwardDigDeeper();
+      }
+      return;
+    }
+
+    if (e.key === "ArrowLeft"){
+      if (screen === "learn"){
+        if (learnIntro) titleScreen();
+        else prevLearn();
+      } else if (screen === "test"){
+        prevTest();
+      } else if (screen === "dig"){
+        if (digIntro) titleScreen();
+        else prevDigDeeper();
+      }
+    }
+  });
+}
+
+function preventDoubleTapZoomOnButtons(){
+  let lastTouchEnd=0;
+  document.addEventListener("touchend", (e) => {
+    const btn = e.target.closest(".no-zoom");
+    if (!btn) return;
+
+    const now = Date.now();
+    if (now - lastTouchEnd <= 350) e.preventDefault();
+    lastTouchEnd = now;
+  }, { passive:false });
+}
+
+function playAudio(i){
+  if (muted) return;
+  audioPlayer.pause();
+  audioPlayer.currentTime = 0;
+  audioPlayer.src = `prayer_audio/prayer_${String(i+1).padStart(2,"0")}.mp3`;
+  audioPlayer.volume = 1;
+  audioPlayer.play().catch(()=>{});
+}
+
+function unlockAudioForIOS(){
+  if (audioUnlocked) return;
+  audioPlayer.src = `prayer_audio/silence.mp3`;
+  audioPlayer.volume = 0;
+  const p = audioPlayer.play();
+  if (p && typeof p.then === "function"){
+    p.then(()=>{
+      audioPlayer.pause();
+      audioPlayer.currentTime = 0;
+      audioPlayer.volume = 1;
+      audioUnlocked = true;
+    }).catch(()=>{});
+  }
+}
+
+/* ---------- Test Masking ---------- */
+function maskWord(word, revealLetters=0){
+  return word.split("").map((c,i)=>{
+    if (c===" ") return " ";
+    if (i<revealLetters) return word[i];
+    return "_";
+  }).join("");
+}
+
+function maskPhrase(phrase, removeWords, reveal=0){
+  let result = phrase;
+  removeWords.forEach(w=>{
+    if (!w) return;
+    const masked = reveal===2 ? w : reveal===1 ? maskWord(w,1) : maskWord(w,0);
+    result = result.replace(new RegExp(w,"i"), masked);
+  });
+  return result;
+}
+
+function computeTestDisplayPhrase(){
+  const phraseData = COMMANDMENTS[index];
+  const phrase = phraseData[0];
+
+  let remove = [];
+  if (testMode === "easy") remove = [phraseData[1]];
+  if (testMode === "medium") remove = phraseData.slice(1);
+
+  if (testMode === "hard" && hintState === 0) return "";
+  if (testMode === "hard" && hintState === 1) return maskPhrase(phrase, phraseData.slice(1), 0);
+  if (testMode === "hard" && hintState === 2) return phrase;
+
+  return maskPhrase(phrase, remove, hintState);
+}
+
+function updateTestHintUI(){
+  const phraseEl = document.getElementById("testPhrase");
+  if (phraseEl) phraseEl.textContent = computeTestDisplayPhrase();
+
+  const hintBtn = document.getElementById("hintBtn");
+  if (hintBtn) hintBtn.textContent = (hintState === 0) ? "Hint" : "Reveal";
+}
+
+/* ---------- Slide Engine ---------- */
+function showSlide(contentHTML, bgColor, direction="forward"){
+  const app = document.getElementById("app");
+
+  // Remove any non-slide screens (like title/mode screens)
+  [...app.children].forEach(child=>{
+    if (!child.classList || !child.classList.contains("slide")) child.remove();
+  });
+
+  if (direction !== "none" && isSliding) return;
+
+  const slides = app.querySelectorAll(".slide");
+  const oldSlide = slides.length ? slides[slides.length - 1] : null;
+
+  for (let i=0; i<slides.length-1; i++) slides[i].remove();
+
+  const newSlide = document.createElement("div");
+
+  const nav = document.getElementById("navBar");
+  const navHidden = !nav || nav.style.display === "none";
+
+  newSlide.className = navHidden ? "slide nav-hidden" : "slide";
+  newSlide.style.background = bgColor;
+  newSlide.innerHTML = contentHTML;
+  newSlide.style.transition = "none";
+
+  if (direction === "back") newSlide.style.transform = "translateX(-100%)";
+  else if (direction === "none") newSlide.style.transform = "translateX(0)";
+  else newSlide.style.transform = "translateX(100%)";
+
+  app.appendChild(newSlide);
+  newSlide.offsetHeight;
+
+  if (direction === "none"){
+    if (oldSlide) oldSlide.remove();
+    isSliding = false;
+    return;
+  }
+
+  isSliding = true;
+
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      newSlide.style.transition = "transform .4s ease";
+      newSlide.style.transform = "translateX(0)";
+
+      if (oldSlide){
+        oldSlide.style.transition = "transform .4s ease";
+        oldSlide.style.transform = (direction === "back") ? "translateX(100%)" : "translateX(-100%)";
+      }
+
+      setTimeout(()=>{
+        if (oldSlide) oldSlide.remove();
+        isSliding = false;
+      }, 410);
+    });
+  });
+}
+
+/* ---------- Screens ---------- */
+function introScreen(){
+  const html = `
+    <div class="intro">
+      <img id="introImg" src="prayer_images/intro_bible.png">
+    </div>`;
+  document.getElementById("app").innerHTML = html;
+  setNav("");
+
+  const img = document.getElementById("introImg");
+  img.onclick = ()=>{
+    img.src = "prayer_images/intro_bible_bite.png";
+    new Audio("prayer_audio/chomp.mp3").play().catch(()=>{});
+    setTimeout(()=>titleScreen(), 600);
+  };
+}
+
+function titleScreen(){
+  screen="title";
+  const html = `
+    <div class="title-screen">
+      <div class="title-content" id="titleContent">
+        <img src="prayer_images/prayer_title.png">
+        <h2>Let&#39;s Learn the Lord&#39;s Prayer</h2>
+
+        <div class="title-buttons">
+          <div class="title-carousel">
+            <button class="carousel-arrow no-zoom" onclick="titlePrevOption()" aria-label="Previous option">◀</button>
+
+            <button id="titleMainBtn" class="carousel-main learn-btn" onclick="runTitleOption()">
+              Learn the Prayer
+            </button>
+
+            <button class="carousel-arrow no-zoom" onclick="titleNextOption()" aria-label="Next option">▶</button>
+          </div>
+
+          <div class="carousel-dots" id="titleIndicator"></div>
+        </div>
+      </div>
+
+      <div class="footer">
+        More free Bible resources at:<br>
+        <a href="https://www.eatyourbible.com" target="_blank" style="color:white;">
+        www.eatyourbible.com</a>
+      </div>
+    </div>`;
+  document.getElementById("app").innerHTML = html;
+  setNav("");
+  updateTitleCarouselUI();
+}
+
+/* ---------- Learn Mode ---------- */
+function startLearn(){
+  unlockAudioForIOS();
+  screen="learn";
+  index=0;
+  showLearnIntro();
+}
+
+function showLearnIntro(){
+  learnIntro = true;
+  setNav("");
+  showSlide(`
+    <div class="content">
+      <div class="text-area">
+        <div>
+          <div class="large-text">Let's read the Lord's Prayer.</div>
+          <div class="small-text">Use the arrows to go forward and back.</div>
+
+          <div class="title-buttons">
+            <button class="learn-btn" onclick="nextLearn('forward')">Begin</button>
+          </div>
+        </div>
+      </div>
+    </div>`, "#7f66c6");
+}
+
+function nextLearn(direction="forward"){
+  learnIntro = false;
+  if (index >= COMMANDMENTS.length){
+    showLearnEnd();
+    return;
+  }
+
+  const phrase = COMMANDMENTS[index][0];
+  const color = getColor(index);
+  const textClass = isLightBg(color) ? "phrase dark-text" : "phrase";
+
+  const html = `
+    <div class="content">
+      <div class="image-area" onclick="forwardLearn()">
+        <img src="prayer_images/prayer_${String(index+1).padStart(2,'0')}.png">
+      </div>
+      <div class="text-area">
+        <div class="${textClass}">${phrase}</div>
+      </div>
+    </div>
+  `;
+
+  setNav(`
+    <button class="no-zoom" onclick="prevLearn()" aria-label="Back">${SVG_BACK}</button>
+
+    <button class="no-zoom" onclick="titleScreen()" aria-label="Home">
+      ${SVG_HOME}
+    </button>
+
+    <button class="center-btn" id="muteBtn" onclick="toggleMute()" aria-label="Mute toggle">
+      ${muted ? SVG_MUTE : SVG_UNMUTE}
+    </button>
+
+    <button class="no-zoom" onclick="forwardLearn()" aria-label="Forward">${SVG_FORWARD}</button>
+  `);
+
+  showSlide(html, color, direction);
+  playAudio(index);
+}
+
+function forwardLearn(){
+  index++;
+  nextLearn("forward");
+}
+
+function prevLearn(){
+  if (index > 0){
+    index--;
+    nextLearn("back");
+  }
+}
+
+function toggleMute(){
+  muted = !muted;
+  const btn = document.getElementById("muteBtn");
+  if (btn) btn.innerHTML = muted ? SVG_MUTE : SVG_UNMUTE;
+}
+
+function showLearnEnd(){
+  setNav("");
+  const html = `
+    <div class="title-screen">
+      <div class="title-content">
+        <img src="prayer_images/prayer_title.png">
+        <h2>Great job!</h2>
+        <div class="title-buttons">
+          <button class="learn-btn" onclick="titleScreen()">Title Screen</button>
+          <button class="test-btn" onclick="modeSelect()">Test Yourself</button>
+        </div>
+      </div>
+
+      <div class="footer">
+        More free Bible resources at:<br>
+        <a href="https://www.eatyourbible.com" target="_blank" style="color:white;">
+        www.eatyourbible.com</a>
+      </div>
+    </div>`;
+  showSlide(html, "#7f66c6");
+}
+
+/* ---------- Dig Deeper Mode ---------- */
+function showDigDeeperIntro(){
+  digIntro = true;
+  setNav("");
+  showSlide(`
+    <div class="content">
+      <div class="text-area">
+        <div>
+          <div class="large-text">Dig deeper into each part of the prayer</div>
+          <div class="small-text">Tap the Dig Deeper button to learn more about each part of the prayer.</div>
+
+          <div class="title-buttons">
+            <button class="learn-btn" onclick="beginDigDeeper()">Begin</button>
+          </div>
+        </div>
+      </div>
+    </div>`, "#7f66c6");
+}
+
+function startDigDeeper(){
+  unlockAudioForIOS();
+  screen="dig";
+  index=0;
+  digDeeperOpen=false;
+  showDigDeeperIntro();
+}
+
+function beginDigDeeper(){
+  digIntro = false;
+  renderDigDeeper("forward");
+}
+
+function openDigDeeper(){
+  if (digDeeperOpen) return;
+  digDeeperOpen = true;
+  renderDigDeeper("none");
+  // Reset scroll to top after render
+  setTimeout(()=>{
+    const sc = document.getElementById("digScroll");
+    const fade = document.querySelector(".dig-fade");
+    if (!sc) return;
+
+    // Always start at the top
+    sc.scrollTop = 0;
+
+    // Make sure fade is visible at first
+    if (fade) fade.classList.remove("hidden");
+
+    // Hide fade once the user scrolls even a little
+    sc.addEventListener("scroll", function onScroll(){
+  const nearBottom = sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 10;
+  if (nearBottom){
+    if (fade) fade.classList.add("hidden");
+    sc.removeEventListener("scroll", onScroll);
+  }
+}, { passive:true });
+  }, 0);
+  
+
+
+}
+
+function closeDigDeeper(){
+  if (!digDeeperOpen) return;
+  digDeeperOpen = false;
+  renderDigDeeper("none");
+}
+
+function forwardDigDeeper(){
+  if (digDeeperOpen) return; // lock navigation while open
+  index++;
+  digDeeperOpen=false;
+
+  if (index >= COMMANDMENTS.length){
+    showDigDeeperEnd();
+    return;
+  }
+  renderDigDeeper("forward");
+}
+
+function prevDigDeeper(){
+  if (digDeeperOpen) return; // lock navigation while open
+  if (index > 0){
+    index--;
+    digDeeperOpen=false;
+    renderDigDeeper("back");
+  }
+}
+
+function renderDigDeeper(direction="forward"){
+  const phrase = COMMANDMENTS[index][0];
+  const color = getColor(index);
+
+  const textClass = isLightBg(color) ? "phrase dark-text" : "phrase";
+  const btnLabel = digDeeperOpen ? "Close" : "Dig Deeper";
+
+  const explRaw = DIG_DEEPER_TEXT[index] || "Put explanation text here.";
+
+  // Support both real newlines and typed "\n" sequences inside strings.
+  const expl = String(explRaw).replaceAll("\\n", "\n");
+
+  const paragraphs = expl.split(/\n\s*\n/).map(p => p.trim()).filter(Boolean);
+
+  const digOverlay = digDeeperOpen ? `
+    <div class="dig-modal" onclick="/* click-through disabled */">
+      <div class="dig-modal-inner">
+        <div class="dig-modal-title">Part ${index+1}</div>
+        <div class="dig-modal-scroll" id="digScroll">
+          ${paragraphs.map(p => `<p class="dig-p">${formatDigText(p)}</p>`).join("")}
+        </div>
+        <div class="dig-fade"></div>
+        </div>
+      </div>
+    </div>
+  ` : "";
+
+  const html = `
+    <div class="content">
+      <div class="image-area" onclick="${digDeeperOpen ? "" : "forwardDigDeeper()"}">
+        <img src="prayer_images/prayer_${String(index+1).padStart(2,'0')}.png">
+      </div>
+
+      <div class="text-area">
+        <div class="${textClass}">${phrase}</div>
+      </div>
+
+      ${digOverlay}
+    </div>
+  `;
+
+  setNav(`
+    <button class="no-zoom" onclick="prevDigDeeper()" aria-label="Back">${SVG_BACK}</button>
+
+    <button class="no-zoom" onclick="${digDeeperOpen ? "return" : "titleScreen()"}" aria-label="Home">
+      ${SVG_HOME}
+    </button>
+
+    <button class="center-btn nav-pill no-zoom" id="digBtn" onclick="${digDeeperOpen ? "closeDigDeeper()" : "openDigDeeper()"}" aria-label="Dig Deeper toggle">
+      ${btnLabel}
+    </button>
+
+    <button class="no-zoom" onclick="forwardDigDeeper()" aria-label="Forward">${SVG_FORWARD}</button>
+  `);
+
+  showSlide(html, color, direction);
+
+}
+
+function showDigDeeperEnd(){
+  setNav("");
+  const html = `
+    <div class="title-screen">
+      <div class="title-content">
+        <img src="prayer_images/prayer_title.png">
+        <h2>Great job!</h2>
+        <div class="title-buttons">
+          <button class="learn-btn" onclick="titleScreen()">Title Screen</button>
+          <button class="test-btn" onclick="modeSelect()">Test Yourself</button>
+        </div>
+      </div>
+
+      <div class="footer">
+        More free Bible resources at:<br>
+        <a href="https://www.eatyourbible.com" target="_blank" style="color:white;">
+        www.eatyourbible.com</a>
+      </div>
+    </div>`;
+  showSlide(html, "#7f66c6");
+}
+
+/* ---------- Test Mode ---------- */
+function modeSelect(){
+  screen="mode";
+  const html = `
+    <div class="title-screen">
+      <div class="title-content">
+        <h2>Choose a mode</h2>
+
+        <div class="title-buttons mode-buttons">
+          <button class="learn-btn" onclick="startTest('easy')">
+            Easy
+            <span class="btn-desc">Guess 1 missing word</span>
+          </button>
+
+          <button class="test-btn" onclick="startTest('medium')">
+            Medium
+            <span class="btn-desc">More words go missing</span>
+          </button>
+
+          <button class="hard-btn" onclick="startTest('hard')">
+            Hard
+            <span class="btn-desc">Pictures only</span>
+          </button>
+
+          <button class="learn-btn" onclick="titleScreen()">
+            Back to Title
+          </button>
+        </div>
+      </div>
+
+      <div class="footer">
+        More free Bible resources at:<br>
+        <a href="https://www.eatyourbible.com" target="_blank" style="color:white;">
+        www.eatyourbible.com</a>
+      </div>
+    </div>`;
+  document.getElementById("app").innerHTML = html;
+  setNav("");
+}
+
+function startTest(mode){
+  screen="test";
+  testMode=mode;
+  index=0;
+  hintState=0;
+  nextTest();
+}
+
+function nextTest(){
+  if (index >= COMMANDMENTS.length){
+    showTestEnd();
+    return;
+  }
+  hintState=0;
+  renderTest();
+}
+
+function renderTest(direction="forward"){
+  const phraseData = COMMANDMENTS[index];
+  const phrase = phraseData[0];
+
+  let remove = [];
+  if (testMode === "easy") remove = [phraseData[1]];
+  if (testMode === "medium") remove = phraseData.slice(1);
+
+  let displayPhrase = phrase;
+
+  if (testMode === "hard" && hintState === 0) displayPhrase = "";
+  else if (testMode === "hard" && hintState === 1) displayPhrase = maskPhrase(phrase, phraseData.slice(1), 0);
+  else if (testMode === "hard" && hintState === 2) displayPhrase = phrase;
+  else displayPhrase = maskPhrase(phrase, remove, hintState);
+
+  const color = getColor(index);
+  const textClass = isLightBg(color) ? "phrase dark-text" : "phrase";
+
+  const html = `
+    <div class="content">
+      <div class="image-area" onclick="forwardTest()">
+        <img src="prayer_images/prayer_${String(index+1).padStart(2,'0')}.png">
+      </div>
+
+      <div class="text-area">
+        <div class="${textClass}" id="testPhrase">${displayPhrase}</div>
+      </div>
+    </div>
+  `;
+
+  setNav(`
+    <button class="no-zoom" onclick="prevTest()" aria-label="Back">${SVG_BACK}</button>
+
+    <button class="no-zoom" onclick="titleScreen()" aria-label="Home">
+      ${SVG_HOME}
+    </button>
+
+    <button class="center-btn nav-pill no-zoom" id="hintBtn" onclick="hint()">
+      ${hintState === 0 ? "Hint" : "Reveal"}
+    </button>
+
+    <button class="no-zoom" onclick="forwardTest()" aria-label="Forward">${SVG_FORWARD}</button>
+  `);
+
+  showSlide(html, color, direction);
+}
+
+function hint(){
+  if (hintState < 2) hintState++;
+  updateTestHintUI();
+}
+
+function forwardTest(){
+  index++;
+  hintState=0;
+  if (index >= COMMANDMENTS.length){
+    showTestEnd();
+    return;
+  }
+  renderTest("forward");
+}
+
+function prevTest(){
+  if (index > 0){
+    index--;
+    hintState=0;
+    renderTest("back");
+  }
+}
+
+function showTestEnd(){
+  setNav("");
+  const html = `
+    <div class="title-screen">
+      <div class="title-content">
+        <img src="prayer_images/prayer_title.png">
+        <h2>Great job!</h2>
+        <div class="title-buttons">
+          <button class="learn-btn" onclick="modeSelect()">Change Mode</button>
+          <button class="test-btn" onclick="titleScreen()">Title Screen</button>
+        </div>
+      </div>
+
+      <div class="footer">
+        More free Bible resources at:<br>
+        <a href="https://www.eatyourbible.com" target="_blank" style="color:white;">
+        www.eatyourbible.com</a>
+      </div>
+    </div>`;
+  showSlide(html, "#7f66c6");
+}
+
+/* ---------- Helpers ---------- */
+function escapeHtml(str){
+  return String(str)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function formatDigText(str){
+  let safe = escapeHtml(str);
+
+  // Bold using **text**
+  safe = safe.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+
+  // Italic using *text*
+  safe = safe.replace(/\*(.*?)\*/g, "<em>$1</em>");
+
+  return safe;
+}
+
+/* ---------- Start ---------- */
+setupKeyboardNav();
+preventDoubleTapZoomOnButtons();
+preloadPrayerImages(5);
+introScreen();
+
+/* ---- PWA: register service worker ---- */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker
+      .register("/eatyourbible/pwa/prayer/sw.js")
+      .catch(() => {});
+  });
+}
+
+
+</script>
+</body>
+</html>
