@@ -1059,60 +1059,66 @@
     return Math.hypot(a.x - b.x, a.y - b.y);
   }
 
-  function findSpawnPosition(existing){
-    const isMobile = state.fieldWidth <= 520;
-
-    const marginX = isMobile ? 58 : 64;
-    const marginTop = isMobile ? 96 : 90;
-    const marginBottom = isMobile ? 136 : 96;
-
-    const headPoint = { x: state.head.x, y: state.head.y };
-
-    for (let i = 0; i < 80; i++){
-      const p = {
-        x: marginX + Math.random() * Math.max(40, state.fieldWidth - marginX * 2),
-        y: marginTop + Math.random() * Math.max(40, state.fieldHeight - marginTop - marginBottom)
-      };
-
-      if (distance(p, headPoint) < (isMobile ? 175 : 150)) continue;
-
-      let tooClose = false;
-      for (const item of existing){
-        if (distance(p, item) < (isMobile ? 132 : 120)){
-          tooClose = true;
-          break;
-        }
-      }
-
-      if (state.fruit && distance(p, state.fruit) < 120){
-        tooClose = true;
-      }
-
-      if (!tooClose) return p;
-    }
-
-    return {
-      x: state.fieldWidth * 0.5,
-      y: Math.max(marginTop + 40, state.fieldHeight * 0.45)
-    };
-  }
-
-function findFruitSpawnPosition(){
+function findSpawnPosition(existing){
   const isMobile = state.fieldWidth <= 520;
+  const count = getTargetCount();
+  const index = existing.length;
 
-  const marginX = isMobile ? 54 : 54;
-  const marginTop = isMobile ? 86 : 74;
-  const marginBottom = isMobile ? 120 : 84;
+  const safeTop = isMobile ? 110 : 104;
+  const safeBottom = isMobile ? 150 : 112;
+  const usableHeight = Math.max(120, state.fieldHeight - safeTop - safeBottom);
+
+  const rows = isMobile
+    ? [0.30, 0.64]
+    : [0.28, 0.52, 0.74];
+
+  const yBase = safeTop + usableHeight * rows[Math.min(index, rows.length - 1)];
+
+  let x;
+  let y = yBase;
+
+  if (count === 2){
+    x = index === 0 ? state.fieldWidth * 0.30 : state.fieldWidth * 0.70;
+  } else {
+    const cols = [0.22, 0.50, 0.78];
+    x = state.fieldWidth * cols[Math.min(index, cols.length - 1)];
+  }
 
   const headPoint = { x: state.head.x, y: state.head.y };
 
-  for (let i = 0; i < 80; i++){
-    const p = {
-      x: marginX + Math.random() * Math.max(40, state.fieldWidth - marginX * 2),
-      y: marginTop + Math.random() * Math.max(40, state.fieldHeight - marginTop - marginBottom)
-    };
+  if (distance({ x, y }, headPoint) < (isMobile ? 165 : 145)){
+    y = Math.min(
+      state.fieldHeight - safeBottom,
+      y + (isMobile ? 70 : 55)
+    );
+  }
 
-    if (distance(p, headPoint) < (isMobile ? 185 : 165)) continue;
+  return { x, y };
+}
+
+function findFruitSpawnPosition(){
+  const isMobile = state.fieldWidth <= 520;
+  const headPoint = { x: state.head.x, y: state.head.y };
+
+  const candidates = isMobile
+    ? [
+        { x: state.fieldWidth * 0.22, y: state.fieldHeight * 0.26 },
+        { x: state.fieldWidth * 0.78, y: state.fieldHeight * 0.34 },
+        { x: state.fieldWidth * 0.26, y: state.fieldHeight * 0.56 },
+        { x: state.fieldWidth * 0.74, y: state.fieldHeight * 0.62 }
+      ]
+    : [
+        { x: state.fieldWidth * 0.18, y: state.fieldHeight * 0.24 },
+        { x: state.fieldWidth * 0.82, y: state.fieldHeight * 0.28 },
+        { x: state.fieldWidth * 0.22, y: state.fieldHeight * 0.58 },
+        { x: state.fieldWidth * 0.78, y: state.fieldHeight * 0.62 },
+        { x: state.fieldWidth * 0.50, y: state.fieldHeight * 0.40 }
+      ];
+
+  const shuffled = shuffle(candidates);
+
+  for (const p of shuffled){
+    if (distance(p, headPoint) < (isMobile ? 180 : 165)) continue;
 
     let tooClose = false;
     for (const target of state.targets){
@@ -1122,7 +1128,9 @@ function findFruitSpawnPosition(){
       }
     }
 
-    if (!tooClose) return p;
+    if (!tooClose){
+      return p;
+    }
   }
 
   return null;
