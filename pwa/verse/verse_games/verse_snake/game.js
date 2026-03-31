@@ -371,6 +371,72 @@
     build.classList.add("vs-shake");
   }
 
+function renderIntroScreen(){
+  stopLoop();
+
+  app.innerHTML = `
+    <div class="vs-mode-shell">
+      <div class="vs-mode-stage">
+        <div class="vs-mode-top">
+          <div style="font-size:72px; line-height:1; margin-bottom:10px;">🐍</div>
+
+          <div class="vs-mode-title">Verse Snake</div>
+
+          <div class="vs-mode-subtitle" style="max-width:700px;">
+            Steer the snake into the correct next word.<br>
+            After the verse is complete, collect the book, then the reference.
+          </div>
+
+          <div class="vs-mode-card">
+            <div class="vs-mode-actions">
+              <button class="vm-btn" id="startBtn">Start</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="vs-mode-nav-wrap">
+        <div class="vs-nav">
+          <button class="vs-nav-btn no-zoom" id="homeBtn" aria-label="Home">
+            ${getHomeSvg()}
+          </button>
+
+          <div class="vs-nav-center">
+            <button class="vs-help-btn no-zoom" id="helpBtn" type="button">HELP</button>
+          </div>
+
+          <button class="vs-nav-btn no-zoom" id="muteBtn" aria-label="Mute">
+            ${muted ? getMuteSvg() : getUnmuteSvg()}
+          </button>
+        </div>
+      </div>
+
+      <div class="vs-help-overlay" id="vsHelpOverlay" aria-hidden="true">
+        <div class="vs-help-dialog">
+          <div class="vs-help-title">How to Play Verse Snake</div>
+          <div class="vs-help-body">
+            Steer left and right to hit the correct next word.<br><br>
+            Easy: no penalty.<br>
+            Medium: lose 2 built items.<br>
+            Hard: lose everything built.<br><br>
+            After the verse words, collect the book, then the reference.<br><br>
+            Grab fruit for fun snake color changes.
+          </div>
+          <div class="vs-help-actions">
+            <button class="vs-help-close no-zoom" id="vsHelpCloseBtn" type="button">OK</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById("startBtn").onclick = () => {
+    renderModeSelect();
+  };
+
+  wireModeSelectNav();
+}
+
   function renderModeSelect(){
     stopLoop();
 
@@ -1641,5 +1707,5 @@ app.innerHTML = `
     }
   }
 
-  renderModeSelect();
+  renderIntroScreen();
 })();
