@@ -1570,48 +1570,60 @@ function maybeScheduleFruitSpawn(delayMs = 480){
   function renderDone(autoShowPetUnlock = false){
     stopLoop();
 
-    app.innerHTML = `
-        <div
-          class="vm-stack"
-          style="
-            min-height:100dvh;
-            padding:18px 16px 22px;
-            box-sizing:border-box;
-            display:flex;
-            flex-direction:column;
-            align-items:center;
-            justify-content:center;
-          "
-        >
-          <div
-            style="
-              width:100%;
-              max-width:520px;
-              display:flex;
-              flex-direction:column;
-              align-items:center;
-              text-align:center;
-            "
-          >
-            <div class="vm-title">🎉 Great job!</div>
-            <div class="vm-subtitle">
-          ${
-            autoShowPetUnlock
-              ? "You unlocked a BibloPet!"
-              : `Verse Snake ${selectedMode} was marked complete.`
-          }
-        </div>
-        <div class="vm-subtitle" style="margin-top:6px;">
-          Fruit eaten: ${state.fruitCount}
-        </div>
+app.innerHTML = `
+  <div
+    style="
+      min-height:100dvh;
+      padding:24px 18px 28px;
+      box-sizing:border-box;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:#333333;
+    "
+  >
+    <div
+      style="
+        width:min(100%, 560px);
+        margin:0 auto;
+        display:flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:center;
+        text-align:center;
+        gap:18px;
+      "
+    >
+      <div class="vm-title">🎉 Great job!</div>
 
-        <div class="vm-actions" style="width:100%; max-width:520px;">
-          <button class="vm-btn" id="againBtn">Play Again</button>
-          <button class="vm-btn vm-btn-dark" id="backBtn">Practice Games</button>
-        </div>
+      <div class="vm-subtitle">
+        ${
+          autoShowPetUnlock
+            ? "You unlocked a BibloPet!"
+            : "Verse Snake " + selectedMode + " was marked complete."
+        }
+      </div>
+
+      <div class="vm-subtitle" style="margin-top:2px;">
+        Fruit eaten: ${state.fruitCount}
+      </div>
+
+      <div
+        class="vm-actions"
+        style="
+          width:100%;
+          display:flex;
+          flex-direction:column;
+          gap:16px;
+          margin-top:8px;
+        "
+      >
+        <button class="vm-btn" id="againBtn">Play Again</button>
+        <button class="vm-btn vm-btn-dark" id="backBtn">Practice Games</button>
       </div>
     </div>
-    `;
+  </div>
+`;
 
     document.getElementById("againBtn").onclick = () => {
       completed = false;
