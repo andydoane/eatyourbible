@@ -1065,58 +1065,43 @@ function clamp(value, min, max){
 
 function findSpawnPosition(existing){
   const isMobile = state.fieldWidth <= 520;
-  const count = getTargetCount();
-  const index = existing.length;
 
-  const safeLeft = isMobile ? 72 : 84;
-  const safeRight = isMobile ? 72 : 84;
-  const safeTop = isMobile ? 108 : 102;
-  const safeBottom = isMobile ? 154 : 118;
-
-  const usableWidth = Math.max(120, state.fieldWidth - safeLeft - safeRight);
-  const usableHeight = Math.max(120, state.fieldHeight - safeTop - safeBottom);
-
-  const baseCols = count === 2
-    ? [0.30, 0.70]
-    : [0.22, 0.50, 0.78];
-
-  const baseRows = count === 2
-    ? [0.34, 0.66]
-    : [0.28, 0.52, 0.74];
-
-  const laneX = safeLeft + usableWidth * baseCols[Math.min(index, baseCols.length - 1)];
-  const laneY = safeTop + usableHeight * baseRows[Math.min(index, baseRows.length - 1)];
-
-  const jitterX = isMobile ? 26 : 42;
-  const jitterY = isMobile ? 24 : 34;
-
-  let x = laneX + ((Math.random() * 2 - 1) * jitterX);
-  let y = laneY + ((Math.random() * 2 - 1) * jitterY);
-
-  x = clamp(x, safeLeft, state.fieldWidth - safeRight);
-  y = clamp(y, safeTop, state.fieldHeight - safeBottom);
+  const marginX = isMobile ? 64 : 72;
+  const marginTop = isMobile ? 96 : 90;
+  const marginBottom = isMobile ? 150 : 118;
 
   const headPoint = { x: state.head.x, y: state.head.y };
 
-  if (distance({ x, y }, headPoint) < (isMobile ? 165 : 145)){
-    y = clamp(
-      y + (isMobile ? 64 : 52),
-      safeTop,
-      state.fieldHeight - safeBottom
-    );
-  }
+  for (let i = 0; i < 100; i++){
+    const p = {
+      x: marginX + Math.random() * Math.max(40, state.fieldWidth - marginX * 2),
+      y: marginTop + Math.random() * Math.max(40, state.fieldHeight - marginTop - marginBottom)
+    };
 
-  for (const item of existing){
-    if (distance({ x, y }, item) < (isMobile ? 118 : 126)){
-      y = clamp(
-        y + (isMobile ? 54 : 44),
-        safeTop,
-        state.fieldHeight - safeBottom
-      );
+    if (distance(p, headPoint) < (isMobile ? 175 : 150)) continue;
+
+    let tooClose = false;
+
+    for (const item of existing){
+      if (distance(p, item) < (isMobile ? 118 : 126)){
+        tooClose = true;
+        break;
+      }
     }
+
+    if (tooClose) continue;
+
+    if (state.fruit && distance(p, state.fruit) < 120){
+      continue;
+    }
+
+    return p;
   }
 
-  return { x, y };
+  return {
+    x: state.fieldWidth * 0.5,
+    y: Math.max(marginTop + 40, state.fieldHeight * 0.42)
+  };
 }
 
 function findFruitSpawnPosition(){
