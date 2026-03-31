@@ -898,9 +898,10 @@
     head.classList.toggle("is-wrong", isWrong);
     head.classList.toggle("is-rainbow", isRainbow);
 
-    const headColor = getSnakeHeadColor();
-    const bodyColor = getSnakeBodyColor();
-
+    const wrongColor = "#ff5a51";
+    const headColor = isWrong ? wrongColor : getSnakeHeadColor();
+    const bodyColor = isWrong ? wrongColor : getSnakeBodyColor();
+    
     head.style.fill = headColor;
     body.style.stroke = bodyColor;
 
