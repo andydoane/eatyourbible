@@ -54,22 +54,23 @@ body{
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 20px 18px 16px;
+  padding: 28px 18px 28px;
   text-align: center;
+  gap: 10px;
 }
 
 .vs-mode-title{
   font-size: clamp(28px, 5vw, 58px);
   font-weight: 900;
   line-height: 1.04;
-  margin-bottom: 8px;
+  margin-bottom: 14px;
 }
 
 .vs-mode-subtitle{
   font-size: clamp(18px, 2.2vw, 30px);
   font-weight: 800;
-  line-height: 1.15;
-  margin-bottom: 18px;
+  line-height: 1.18;
+  margin-bottom: 24px;
 }
 
 .vs-mode-card{
@@ -82,7 +83,7 @@ body{
 .vs-mode-actions{
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 18px;
 }
 
 .vs-mode-actions .vm-btn{
@@ -96,10 +97,11 @@ body{
 }
 
 @media (max-width: 520px){
-  .vs-mode-top{
-    justify-content: center;
-    padding: 20px 18px 16px;
-  }
+.vs-mode-top{
+  justify-content: center;
+  padding: 24px 18px 24px;
+  gap: 8px;
+}
 
   .vs-mode-title{
     font-size: 26px;
@@ -107,7 +109,7 @@ body{
 
   .vs-mode-subtitle{
     font-size: 17px;
-    margin-bottom: 14px;
+    margin-bottom: 18px;
   }
 
   .vs-mode-card{
@@ -116,7 +118,7 @@ body{
   }
 
   .vs-mode-actions{
-    gap: 12px;
+    gap: 14px;
   }
 }
 
