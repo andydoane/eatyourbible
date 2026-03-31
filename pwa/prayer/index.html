@@ -423,6 +423,24 @@ button{ cursor:pointer; font-family:inherit; }
   font-style: italic;
   opacity: 0.95;
 }
+
+.intro-content{
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  height:100%;
+  padding:20px;
+  gap:20px;
+}
+
+.intro-content img{
+  width:min(60%, 260px);
+  max-height:30vh;
+  object-fit:contain;
+}
+
 </style>
 </head>
 
@@ -952,7 +970,10 @@ function showLearnIntro(){
   setNav("");
   showSlide(`
     <div class="content">
-      <div class="text-area">
+      <div class="intro-content">
+
+        <img src="prayer_images/praying_man.png">
+
         <div>
           <div class="large-text">Let's read the Lord's Prayer.</div>
           <div class="small-text">Use the arrows to go forward and back.</div>
@@ -961,6 +982,7 @@ function showLearnIntro(){
             <button class="learn-btn" onclick="nextLearn('forward')">Begin</button>
           </div>
         </div>
+
       </div>
     </div>`, "#7f66c6");
 }
@@ -1051,7 +1073,10 @@ function showDigDeeperIntro(){
   setNav("");
   showSlide(`
     <div class="content">
-      <div class="text-area">
+      <div class="intro-content">
+
+        <img src="prayer_images/praying_man.png">
+
         <div>
           <div class="large-text">Dig deeper into each part of the prayer</div>
           <div class="small-text">Tap the Dig Deeper button to learn more about each part of the prayer.</div>
@@ -1060,6 +1085,7 @@ function showDigDeeperIntro(){
             <button class="learn-btn" onclick="beginDigDeeper()">Begin</button>
           </div>
         </div>
+
       </div>
     </div>`, "#7f66c6");
 }
