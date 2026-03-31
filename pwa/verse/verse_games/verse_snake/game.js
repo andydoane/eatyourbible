@@ -1063,43 +1063,50 @@ function clamp(value, min, max){
   return Math.max(min, Math.min(max, value));
 }
 
-function findSpawnPosition(existing){
+function findSpawnPosition(existing) {
   const isMobile = state.fieldWidth <= 520;
 
-  const marginX = isMobile ? 64 : 64;
-  const marginTop = isMobile ? 90 : 90;
-  const marginBottom = isMobile ? 140 : 80;
+  // We reduced the marginBottom from 140 to 90 to open up the bottom of the screen.
+  const marginX = 64;
+  const marginTop = 90;
+  const marginBottom = isMobile ? 90 : 80;
 
   const headPoint = { x: state.head.x, y: state.head.y };
 
-  for (let i = 0; i < 80; i++){
+  for (let i = 0; i < 80; i++) {
     const p = {
       x: marginX + Math.random() * Math.max(40, state.fieldWidth - marginX * 2),
       y: marginTop + Math.random() * Math.max(40, state.fieldHeight - marginTop - marginBottom)
     };
 
-    if (distance(p, headPoint) < (isMobile ? 165 : 150)) continue;
+    // Reduced distance buffers (110 instead of 165) so random spots are easier to find on mobile
+    const headBuffer = isMobile ? 110 : 150;
+    const itemBuffer = isMobile ? 100 : 150;
+
+    if (distance(p, headPoint) < headBuffer) continue;
 
     let tooClose = false;
 
-    for (const item of existing){
-      if (distance(p, item) < (isMobile ? 140 : 150)){
+    for (const item of existing) {
+      if (distance(p, item) < itemBuffer) {
         tooClose = true;
         break;
       }
     }
 
-    if (state.fruit && distance(p, state.fruit) < (isMobile ? 140 : 150)){
+    if (state.fruit && distance(p, state.fruit) < itemBuffer) {
       tooClose = true;
     }
 
     if (!tooClose) return p;
   }
 
+  // If randomness fails, we now have a fallback at 80% height (y: 0.80)
   const fallbackSpots = isMobile
     ? [
         { x: state.fieldWidth * 0.30, y: state.fieldHeight * 0.34 },
-        { x: state.fieldWidth * 0.70, y: state.fieldHeight * 0.58 }
+        { x: state.fieldWidth * 0.70, y: state.fieldHeight * 0.58 },
+        { x: state.fieldWidth * 0.50, y: state.fieldHeight * 0.80 } 
       ]
     : [
         { x: state.fieldWidth * 0.24, y: state.fieldHeight * 0.30 },
@@ -1109,6 +1116,7 @@ function findSpawnPosition(existing){
 
   return fallbackSpots[Math.min(existing.length, fallbackSpots.length - 1)];
 }
+
 
 function findFruitSpawnPosition(){
   const isMobile = state.fieldWidth <= 520;
