@@ -1083,13 +1083,13 @@ function findSpawnPosition(existing){
     let tooClose = false;
 
     for (const item of existing){
-      if (distance(p, item) < (isMobile ? 118 : 120)){
+      if (distance(p, item) < (isMobile ? 140 : 150)){
         tooClose = true;
         break;
       }
     }
 
-    if (state.fruit && distance(p, state.fruit) < 120){
+    if (state.fruit && distance(p, state.fruit) < (isMobile ? 140 : 150)){
       tooClose = true;
     }
 
