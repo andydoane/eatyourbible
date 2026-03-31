@@ -1571,9 +1571,30 @@ function maybeScheduleFruitSpawn(delayMs = 480){
     stopLoop();
 
     app.innerHTML = `
-      <div class="vm-stack" style="padding:18px 16px 22px; min-height:100dvh;">
-        <div class="vm-title">🎉 Great job!</div>
-        <div class="vm-subtitle">
+        <div
+          class="vm-stack"
+          style="
+            min-height:100dvh;
+            padding:18px 16px 22px;
+            box-sizing:border-box;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+          "
+        >
+          <div
+            style="
+              width:100%;
+              max-width:520px;
+              display:flex;
+              flex-direction:column;
+              align-items:center;
+              text-align:center;
+            "
+          >
+            <div class="vm-title">🎉 Great job!</div>
+            <div class="vm-subtitle">
           ${
             autoShowPetUnlock
               ? "You unlocked a BibloPet!"
@@ -1584,11 +1605,12 @@ function maybeScheduleFruitSpawn(delayMs = 480){
           Fruit eaten: ${state.fruitCount}
         </div>
 
-        <div class="vm-actions">
+        <div class="vm-actions" style="width:100%; max-width:520px;">
           <button class="vm-btn" id="againBtn">Play Again</button>
           <button class="vm-btn vm-btn-dark" id="backBtn">Practice Games</button>
         </div>
       </div>
+    </div>
     `;
 
     document.getElementById("againBtn").onclick = () => {
