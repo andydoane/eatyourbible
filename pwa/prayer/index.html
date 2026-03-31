@@ -51,7 +51,7 @@ html, body {
 }
 
 .image-area{
-  flex:1;
+  flex:2;
   display:flex;
   justify-content:center;
   align-items:center;
@@ -66,11 +66,11 @@ html, body {
 }
 
 .text-area{
-  flex:1;
+  flex:0 0 auto;
   display:flex;
   justify-content:center;
   align-items:center;
-  padding:0 20px;
+  padding: 20px 20px 30px;
   text-align:center;
   min-height:0;
 }
@@ -444,7 +444,7 @@ const COMMANDMENTS = [
   ["Hallowed be your name,", "Hallowed", "name"],
   ["Your kingdom come,", "kingdom", "come"],
   ["Your will be done, on earth as it is in heaven.", "will", "earth", "heaven"],
-  ["Give us today our daily bread.", "today", "daily", "bread"],
+  ["Give us today our daily bread.", "bread", "today", "daily"],
   ["And forgive us our debts, as we also have forgiven our debtors.", "forgive", "debts", "debtors"],
   ["And lead us not into temptation, but deliver us from the evil one.", "temptation", "deliver", "evil" ]
 ];
@@ -477,13 +477,13 @@ DIG_DEEPER_TEXT[6] = `**PART 7**
 Add your custom Dig Deeper text here for “And lead us not into temptation, but deliver us from the evil one.”`;
 
 const slideColors = [
-  "#7f66c6", // 1 - purple
+  "#333333", // 1 - gray
   "#ffc751", // 2 - yellow
-  "#333333", // 3 - gray
+  "#40b9c5", // 3 - blue
   "#ffa351", // 4 - orange
   "#a7cb6f", // 5 - green
   "#ff5a51", // 6 - red
-  "#40b9c5"  // 7 - blue
+  "#7f66c6"  // 7 - purple
 ];
 
 let screen="intro";
