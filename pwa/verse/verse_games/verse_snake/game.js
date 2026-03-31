@@ -1066,55 +1066,143 @@ function clamp(value, min, max){
 function findSpawnPosition(existing) {
   const isMobile = state.fieldWidth <= 520;
 
-  // We reduced the marginBottom from 140 to 90 to open up the bottom of the screen.
-  const marginX = 64;
+  const marginX = isMobile ? 54 : 64;
   const marginTop = 90;
-  const marginBottom = isMobile ? 90 : 80;
+  const marginBottom = isMobile ? 92 : 82;
+
+  const minX = marginX;
+  const maxX = Math.max(minX + 20, state.fieldWidth - marginX);
+  const minY = marginTop;
+  const maxY = Math.max(minY + 20, state.fieldHeight - marginBottom);
 
   const headPoint = { x: state.head.x, y: state.head.y };
 
-  for (let i = 0; i < 80; i++) {
-    const p = {
-      x: marginX + Math.random() * Math.max(40, state.fieldWidth - marginX * 2),
-      y: marginTop + Math.random() * Math.max(40, state.fieldHeight - marginTop - marginBottom)
-    };
+  const headBuffer = isMobile ? 112 : 150;
+  const itemBuffer = isMobile ? 102 : 148;
+  const fruitBuffer = isMobile ? 96 : 136;
 
-    // Reduced distance buffers (110 instead of 165) so random spots are easier to find on mobile
-    const headBuffer = isMobile ? 110 : 150;
-    const itemBuffer = isMobile ? 100 : 150;
+  function isSafePoint(p, bufferScale = 1){
+    if (p.x < minX || p.x > maxX) return false;
+    if (p.y < minY || p.y > maxY) return false;
 
-    if (distance(p, headPoint) < headBuffer) continue;
+    if (distance(p, headPoint) < headBuffer * bufferScale) return false;
 
-    let tooClose = false;
-
-    for (const item of existing) {
-      if (distance(p, item) < itemBuffer) {
-        tooClose = true;
-        break;
+    for (const item of existing){
+      if (!item) continue;
+      if (distance(p, item) < itemBuffer * bufferScale){
+        return false;
       }
     }
 
-    if (state.fruit && distance(p, state.fruit) < itemBuffer) {
-      tooClose = true;
+    if (state.fruit && distance(p, state.fruit) < fruitBuffer * bufferScale){
+      return false;
     }
 
-    if (!tooClose) return p;
+    return true;
   }
 
-  // If randomness fails, we now have a fallback at 80% height (y: 0.80)
-  const fallbackSpots = isMobile
-    ? [
-        { x: state.fieldWidth * 0.30, y: state.fieldHeight * 0.34 },
-        { x: state.fieldWidth * 0.70, y: state.fieldHeight * 0.58 },
-        { x: state.fieldWidth * 0.50, y: state.fieldHeight * 0.80 } 
-      ]
-    : [
-        { x: state.fieldWidth * 0.24, y: state.fieldHeight * 0.30 },
-        { x: state.fieldWidth * 0.50, y: state.fieldHeight * 0.48 },
-        { x: state.fieldWidth * 0.76, y: state.fieldHeight * 0.66 }
-      ];
+  function randomPoint(){
+    return {
+      x: minX + Math.random() * (maxX - minX),
+      y: minY + Math.random() * (maxY - minY)
+    };
+  }
 
-  return fallbackSpots[Math.min(existing.length, fallbackSpots.length - 1)];
+  function clampPoint(p){
+    return {
+      x: clamp(p.x, minX, maxX),
+      y: clamp(p.y, minY, maxY)
+    };
+  }
+
+  function jitterPoint(base, radiusX, radiusY){
+    return clampPoint({
+      x: base.x + ((Math.random() * 2 - 1) * radiusX),
+      y: base.y + ((Math.random() * 2 - 1) * radiusY)
+    });
+  }
+
+  // Pass 1:
+  // Pure random placements, which keeps the older organic feel.
+  for (let i = 0; i < 90; i++){
+    const p = randomPoint();
+    if (isSafePoint(p, 1)){
+      return p;
+    }
+  }
+
+  // Pass 2:
+  // Build a few soft random anchors, then jitter around them.
+  // This still feels random, but rescues tighter layouts without obvious fixed lanes.
+  const anchorCount = isMobile ? 6 : 8;
+  const anchors = [];
+
+  for (let i = 0; i < anchorCount; i++){
+    anchors.push({
+      x: minX + (maxX - minX) * (0.14 + Math.random() * 0.72),
+      y: minY + (maxY - minY) * (0.10 + Math.random() * 0.78)
+    });
+  }
+
+  for (const anchor of shuffle(anchors)){
+    for (let j = 0; j < 10; j++){
+      const p = jitterPoint(
+        anchor,
+        isMobile ? 54 : 72,
+        isMobile ? 46 : 62
+      );
+
+      if (isSafePoint(p, 0.96)){
+        return p;
+      }
+    }
+  }
+
+  // Pass 3:
+  // Last resort, still random-ish:
+  // choose the safest point among several random candidates instead of snapping
+  // to the same repeated fallback spots every wave.
+  let bestPoint = null;
+  let bestScore = -Infinity;
+
+  for (let i = 0; i < 24; i++){
+    const p = randomPoint();
+
+    const headDist = distance(p, headPoint);
+    let nearestItemDist = Infinity;
+
+    for (const item of existing){
+      if (!item) continue;
+      nearestItemDist = Math.min(nearestItemDist, distance(p, item));
+    }
+
+    if (state.fruit){
+      nearestItemDist = Math.min(nearestItemDist, distance(p, state.fruit));
+    }
+
+    if (!Number.isFinite(nearestItemDist)){
+      nearestItemDist = itemBuffer * 1.5;
+    }
+
+    const edgeDist = Math.min(
+      p.x - minX,
+      maxX - p.x,
+      p.y - minY,
+      maxY - p.y
+    );
+
+    const score = (headDist * 0.75) + nearestItemDist + (edgeDist * 0.35);
+
+    if (score > bestScore){
+      bestScore = score;
+      bestPoint = p;
+    }
+  }
+
+  return bestPoint || {
+    x: state.fieldWidth * 0.5,
+    y: clamp(state.fieldHeight * 0.52, minY, maxY)
+  };
 }
 
 
