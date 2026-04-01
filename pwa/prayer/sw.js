@@ -1,6 +1,6 @@
 /* sw.js - PWA service worker for /eatyourbible/pwa/prayer/ */
 
-const CACHE_NAME = "lords-prayer-v1 2026_Mar_31e";
+const CACHE_NAME = "lords-prayer-v1 2026_Mar_31f";
 
 const CORE_ASSETS = [
   "/eatyourbible/pwa/prayer/",
