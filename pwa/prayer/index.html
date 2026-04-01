@@ -1166,11 +1166,12 @@ function nextLearn(direction="forward"){
   const textClass = isLightBg(color) ? "phrase dark-text" : "phrase";
 
   const html = `
-    <div class="content">
-      <div class="image-area" onclick="forwardLearn()">
+    <div class="content learn-layout">
+      <div class="learn-top image-area" onclick="forwardLearn()">
         <img src="prayer_images/prayer_${String(index+1).padStart(2,'0')}.png">
       </div>
-      <div class="text-area">
+
+      <div class="learn-bottom text-area">
         <div class="${textClass}">${phrase}</div>
       </div>
     </div>
