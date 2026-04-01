@@ -1411,13 +1411,15 @@ function renderDigDeeper(direction="forward"){
   ` : "";
 
   const html = `
-    <div class="content">
-      <div class="image-area" onclick="${digDeeperOpen ? "" : "forwardDigDeeper()"}">
-        <img src="prayer_images/prayer_${String(index+1).padStart(2,'0')}.png">
-      </div>
+    <div class="content learn-layout">
+      <div class="learn-stack">
+        <div class="learn-image-wrap image-area" onclick="${digDeeperOpen ? "" : "forwardDigDeeper()"}">
+          <img src="prayer_images/prayer_${String(index+1).padStart(2,'0')}.png">
+        </div>
 
-      <div class="text-area">
-        <div class="${textClass}">${phrase}</div>
+        <div class="learn-text-wrap text-area">
+          <div class="${textClass}">${phrase}</div>
+        </div>
       </div>
 
       ${digOverlay}
