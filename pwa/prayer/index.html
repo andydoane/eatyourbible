@@ -812,7 +812,8 @@ const TITLE_OPTIONS = [
   { label: "Learn the Prayer", btnClass: "learn-btn", action: "startLearn" },
   { label: "Test Yourself", btnClass: "test-btn", action: "modeSelect" },
   { label: "Dig Deeper", btnClass: "learn-btn", action: "startDigDeeper" },
-  { label: "Prayer Guide", btnClass: "test-btn", action: "startPrayerGuide" }
+  { label: "Prayer Guide", btnClass: "test-btn", action: "startPrayerGuide" },
+  { label: "Copyright", btnClass: "learn-btn", action: "showCopyright" }
 ];
 
 function titlePrevOption(){
@@ -1463,6 +1464,37 @@ function showDigDeeperEnd(){
         www.eatyourbible.com</a>
       </div>
     </div>`;
+  showSlide(html, "#7f66c6");
+}
+
+function showCopyright(){
+  screen = "copyright";
+
+  const html = `
+    <div class="content">
+      <div class="intro-content">
+
+        <img src="prayer_images/praying_man.png">
+
+        <div>
+          <div class="large-text">Bible Information</div>
+
+          <div class="small-text" style="max-width:700px; margin-top:10px;">
+            All scripture quotations, unless otherwise indicated, are taken from the Holy Bible, New International Version®, NIV®. 
+            Copyright ©1973, 1978, 1984, 2011 by Biblica, Inc.™ Used by permission of Zondervan. 
+            All rights reserved worldwide. www.zondervan.com
+          </div>
+
+          <div class="title-buttons">
+            <button class="learn-btn" onclick="titleScreen()">Back</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  `;
+
+  setNav("");
   showSlide(html, "#7f66c6");
 }
 
