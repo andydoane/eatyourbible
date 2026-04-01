@@ -79,38 +79,48 @@ html, body {
   min-height:0;
 }
 
+
 .learn-layout{
   height:100%;
+  width:100%;
   display:flex;
-  flex-direction:column;
-  min-height:0;
+  justify-content:center;
+  align-items:center;
+  padding: 18px 20px 28px;
 }
 
-.learn-top,
-.learn-bottom{
-  flex:1 1 50%;
+.learn-stack{
   width:100%;
-  min-height:0;
+  max-width: 980px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  gap: 26px;
+}
+
+.learn-image-wrap{
+  width:100%;
   display:flex;
   justify-content:center;
   align-items:center;
 }
 
-.learn-top{
-  padding: 12px 20px 12px;
-}
-
-.learn-bottom{
-  padding: 12px 20px 24px;
-}
-
-.learn-top img{
+.learn-image-wrap img{
   max-width: min(90vw, 520px);
-  max-height: 82%;
+  max-height: min(44vh, 420px);
   object-fit:contain;
 }
 
-.learn-bottom .phrase{
+.learn-text-wrap{
+  width:100%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+}
+
+.learn-text-wrap .phrase{
   max-width: 900px;
 }
 
@@ -1210,12 +1220,14 @@ function nextLearn(direction="forward"){
 
   const html = `
     <div class="content learn-layout">
-      <div class="learn-top image-area" onclick="forwardLearn()">
-        <img src="prayer_images/prayer_${String(index+1).padStart(2,'0')}.png">
-      </div>
+      <div class="learn-stack">
+        <div class="learn-image-wrap image-area" onclick="forwardLearn()">
+          <img src="prayer_images/prayer_${String(index+1).padStart(2,'0')}.png">
+        </div>
 
-      <div class="learn-bottom text-area">
-        <div class="${textClass}">${phrase}</div>
+        <div class="learn-text-wrap text-area">
+          <div class="${textClass}">${phrase}</div>
+        </div>
       </div>
     </div>
   `;
