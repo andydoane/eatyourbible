@@ -480,47 +480,54 @@ button{ cursor:pointer; font-family:inherit; }
   object-fit:contain;
 }
 
-.guide-image-area{
-  flex: 0 0 auto;
+.guide-layout{
+  height:100%;
   display:flex;
-  justify-content:center;
-  align-items:center;
-  padding: 18px 20px 10px;
+  flex-direction:column;
   min-height:0;
 }
 
-.guide-image-area img{
-  width:min(56vw, 220px);
-  max-height:24vh;
-  object-fit:contain;
-}
-
-.guide-text-area{
-  flex: 0 0 auto;
+.guide-top,
+.guide-middle,
+.guide-bottom{
+  width:100%;
+  min-height:0;
   display:flex;
   justify-content:center;
   align-items:center;
-  padding: 4px 20px 14px;
+}
+
+.guide-top{
+  flex:34 1 0;
+  padding: 12px 20px 8px;
+}
+
+.guide-middle{
+  flex:33 1 0;
+  padding: 6px 20px 8px;
   text-align:center;
+}
+
+.guide-bottom{
+  flex:33 1 0;
+  padding: 8px 16px 18px;
+}
+
+.guide-top img{
+  width:min(58vw, 240px);
+  max-height:82%;
+  object-fit:contain;
 }
 
 .guide-phrase{
   font-family:'Baloo 2', cursive;
-  font-size: clamp(18px, 5.8vw, 42px);
+  font-size: clamp(18px, 5.2vw, 38px);
   line-height:1.12;
   color:white;
   font-weight:700;
   text-shadow:0 2px 6px rgba(0,0,0,0.35);
   text-wrap: balance;
-}
-
-.guide-prompt-wrap{
-  flex:1;
-  min-height:0;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding: 0 16px 18px;
+  max-width: 900px;
 }
 
 .guide-prompt-box{
@@ -533,7 +540,7 @@ button{ cursor:pointer; font-family:inherit; }
 
 .guide-prompt{
   color:white;
-  font-size: clamp(18px, 4.8vw, 30px);
+  font-size: clamp(18px, 4.6vw, 28px);
   line-height:1.35;
   text-align:center;
   text-wrap: balance;
@@ -541,7 +548,7 @@ button{ cursor:pointer; font-family:inherit; }
 
 .guide-instruction{
   color:white;
-  font-size: clamp(18px, 4.6vw, 28px);
+  font-size: clamp(18px, 4.4vw, 27px);
   line-height:1.35;
   text-align:center;
   text-wrap: balance;
@@ -1540,16 +1547,16 @@ function renderPrayerGuide(direction="forward"){
   const showRefresh = index !== 0;
 
   const html = `
-    <div class="content">
-      <div class="guide-image-area">
+    <div class="content guide-layout">
+      <div class="guide-top">
         <img src="prayer_images/prayer_${imageNumber}.png" alt="">
       </div>
 
-      <div class="guide-text-area">
+      <div class="guide-middle">
         <div class="guide-phrase">${phrase}</div>
       </div>
 
-      <div class="guide-prompt-wrap">
+      <div class="guide-bottom">
         <div class="guide-prompt-box">
           <div class="${index === 0 ? "guide-instruction" : "guide-prompt"}">${prompt}</div>
         </div>
