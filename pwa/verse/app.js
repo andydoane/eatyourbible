@@ -1296,7 +1296,7 @@ const TITLE_OPTIONS = [
       else go(Screen.PRACTICE_GATE);
     }
   },
-  { id: "progress", label: "Progress", action: () => go(Screen.PROGRESS) },
+  { id: "progress", label: "BibloPet Zoo", action: () => go(Screen.PROGRESS) },
 ];
 
 const LEARN_LEVEL_OPTIONS = [
