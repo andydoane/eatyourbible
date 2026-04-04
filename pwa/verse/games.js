@@ -4570,19 +4570,19 @@ function chainChoose(word, btnEl){
       const live = State.chainGame;
       if (!live) return;
 
-      live.phase = "done";
-      live.done = true;
-      live.showRef = true;
-      live.choices = [];
-      live.animating = false;
+      live.builtCount += 1;
 
-      if (VERSE_ID && live.mode){
-        live.rewardTitle = getStandardGameRewardTitle(VERSE_ID, "chain", live.mode);
-        markStandardGameCompleted(VERSE_ID, "chain", live.mode);
+      if (live.builtCount >= live.wordTokenIndices.length){
+        live.phase = "book";
+        live.choices = chainMakeBookChoices(live.targetBook);
+        chainSetRandomChoiceIndex();
       } else {
-        live.rewardTitle = "Great job!";
+        const nextTokenIndex = live.wordTokenIndices[live.builtCount];
+        live.choices = chainMakeChoices(live.wordTokenIndices, nextTokenIndex);
+        chainSetRandomChoiceIndex();
       }
 
+      live.animating = false;
       render();
     });
 
