@@ -59,6 +59,7 @@ function trafficCreateState(theme = ""){
     targetBook: meta.book,
     targetChapter: meta.chapter,
     targetVerse: meta.verse,
+    targetVerseEnd: meta.verseEnd,
     startedAt: performance.now(),
     endedAt: 0,
     items: [],
@@ -136,9 +137,12 @@ function trafficUniqueDecoys(pool, correct, count){
 }
 
 function trafficMakeRefDecoys(correctRef){
-  const [chapterText, verseText] = String(correctRef).split(":");
-  const chapter = Number(chapterText || 1);
-  const verse = Number(verseText || 1);
+  const match = String(correctRef || "").match(/^(\d+):(\d+)(?:-(\d+))?$/);
+
+  const chapter = match ? Number(match[1]) : 1;
+  const verse = match ? Number(match[2]) : 1;
+  const verseEnd = match && match[3] ? Number(match[3]) : null;
+  const verseSpan = Number.isFinite(verseEnd) ? Math.max(0, verseEnd - verse) : 0;
 
   const refs = new Set();
   let tries = 0;
@@ -153,7 +157,9 @@ function trafficMakeRefDecoys(correctRef){
     if (fakeChapter < 1) fakeChapter = 1 + Math.floor(Math.random() * 6);
     if (fakeVerse < 1) fakeVerse = 1 + Math.floor(Math.random() * 20);
 
-    const candidate = `${fakeChapter}:${fakeVerse}`;
+    const fakeVerseEnd = verseSpan > 0 ? fakeVerse + verseSpan : null;
+    const candidate = chainFormatReference(fakeChapter, fakeVerse, fakeVerseEnd);
+
     if (candidate !== correctRef){
       refs.add(candidate);
     }
@@ -178,7 +184,7 @@ function trafficCurrentCorrectLabel(st){
   }
 
   if (st.phase === "ref"){
-    return `${st.targetChapter}:${st.targetVerse}`;
+    return chainFormatReference(st.targetChapter, st.targetVerse, st.targetVerseEnd);
   }
 
   return "";
@@ -200,7 +206,7 @@ function trafficPhaseDecoyPool(st){
   }
 
   if (st.phase === "ref"){
-    const correctRef = `${st.targetChapter}:${st.targetVerse}`;
+    const correctRef = chainFormatReference(st.targetChapter, st.targetVerse, st.targetVerseEnd);
     return trafficMakeRefDecoys(correctRef);
   }
 
@@ -1744,6 +1750,7 @@ function startBouncingWordsGame(){
     targetBook: meta.book,
     targetChapter: meta.chapter,
     targetVerse: meta.verse,
+    targetVerseEnd: meta.verseEnd,
     score: 0,
     wrongGuesses: 0,
     startedAt: performance.now(),
@@ -2411,6 +2418,7 @@ function startVerseScrambleGame(){
     targetBook: meta.book,
     targetChapter: meta.chapter,
     targetVerse: meta.verse,
+    targetVerseEnd: meta.verseEnd,
     score: 0,
     wrongGuesses: 0,
     startedAt: performance.now(),
@@ -3880,9 +3888,13 @@ function foodSliceMakeBookChoices(correctBook){
   return shuffleArray(choices);
 }
 
-function foodSliceMakeReferenceChoices(correctChapter, correctVerse){
-  const correctRef = `${correctChapter}:${correctVerse}`;
+function foodSliceMakeReferenceChoices(correctChapter, correctVerse, correctVerseEnd = null){
+  const correctRef = chainFormatReference(correctChapter, correctVerse, correctVerseEnd);
   const refs = new Set([correctRef]);
+
+  const verseSpan = Number.isFinite(correctVerseEnd)
+    ? Math.max(0, correctVerseEnd - correctVerse)
+    : 0;
 
   let tries = 0;
   while (refs.size < 4 && tries < 200){
@@ -3895,7 +3907,8 @@ function foodSliceMakeReferenceChoices(correctChapter, correctVerse){
     if (fakeChapter < 1) fakeChapter = 1 + Math.floor(Math.random() * 5);
     if (fakeVerse < 1) fakeVerse = 1 + Math.floor(Math.random() * 10);
 
-    refs.add(`${fakeChapter}:${fakeVerse}`);
+    const fakeVerseEnd = verseSpan > 0 ? fakeVerse + verseSpan : null;
+    refs.add(chainFormatReference(fakeChapter, fakeVerse, fakeVerseEnd));
     tries += 1;
   }
 
@@ -3910,9 +3923,11 @@ function foodSliceStartBookPhase(){
 
   st.phase = "book";
   st.targetBook = meta.book;
+  st.targetBook = meta.book;
   st.targetChapter = meta.chapter;
   st.targetVerse = meta.verse;
-  st.targetReference = `${meta.chapter}:${meta.verse}`;
+  st.targetVerseEnd = meta.verseEnd;
+  st.targetReference = chainFormatReference(meta.chapter, meta.verse, meta.verseEnd);
   st.phaseChoices = foodSliceMakeBookChoices(meta.book);
   st.phaseChoiceIndex = 0;
   st.activeFruit = null;
@@ -3927,8 +3942,8 @@ function foodSliceStartReferencePhase(){
   if (!st) return;
 
   st.phase = "reference";
-  st.targetReference = `${st.targetChapter}:${st.targetVerse}`;
-  st.phaseChoices = foodSliceMakeReferenceChoices(st.targetChapter, st.targetVerse);
+  st.targetReference = chainFormatReference(st.targetChapter, st.targetVerse, st.targetVerseEnd);
+  st.phaseChoices = foodSliceMakeReferenceChoices(st.targetChapter, st.targetVerse, st.targetVerseEnd);
   st.phaseChoiceIndex = 0;
   st.activeFruit = null;
   st.activeBomb = null;
@@ -4173,7 +4188,7 @@ function chainBuiltVerseNode(){
     refChip.className = "chain-ref-chip";
     refChip.dataset.chainTarget = "ref";
 
-    const correctRef = `${st?.targetChapter}:${st?.targetVerse}`;
+    const correctRef = chainFormatReference(st?.targetChapter, st?.targetVerse, st?.targetVerseEnd);
 
     if (st?.phase === "book"){
       bookChip.classList.add("is-placeholder");
@@ -4245,6 +4260,7 @@ function chainChooseMode(mode){
   st.targetBook = meta.book;
   st.targetChapter = meta.chapter;
   st.targetVerse = meta.verse;
+  st.targetVerseEnd = meta.verseEnd;
 
   if (Number.isFinite(firstTokenIndex)){
     st.choices = chainMakeChoices(st.wordTokenIndices, firstTokenIndex);
@@ -4385,6 +4401,7 @@ function startVerseChainGame(){
     targetBook: meta.book,
     targetChapter: meta.chapter,
     targetVerse: meta.verse,
+    targetVerseEnd: meta.verseEnd,
     animating: false,
   };
 }
@@ -4631,7 +4648,7 @@ if (st.phase === "book"){
       if (!live) return;
 
       live.phase = "ref";
-      live.choices = chainMakeReferenceChoices(live.targetChapter, live.targetVerse);
+      live.choices = chainMakeReferenceChoices(live.targetChapter, live.targetVerse, live.targetVerseEnd);
       chainSetRandomChoiceIndex();
       live.animating = false;
       render();
@@ -4652,7 +4669,7 @@ if (st.phase === "book"){
 }
 
   if (st.phase === "ref"){
-    const correctRef = `${st.targetChapter}:${st.targetVerse}`;
+    const correctRef = chainFormatReference(st.targetChapter, st.targetVerse, st.targetVerseEnd);
 
     if (word === correctRef){
       st.animating = true;
@@ -4835,6 +4852,7 @@ function startTowerGame(){
     targetBook: meta.book,
     targetChapter: meta.chapter,
     targetVerse: meta.verse,
+    targetVerseEnd: meta.verseEnd,
     mode: null,
     progress: [],
     choices: [],
