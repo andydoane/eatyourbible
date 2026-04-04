@@ -17,7 +17,8 @@
   ];
 
   const FRUIT_EMOJIS = ["🍎","🍓","🍇","🍊","🍉","🍒","🍑","🍍","🥝","🍋"];
-  const SNAKE_STYLES = ["default","berry","ocean","sun","rainbow"];
+  const BASE_SNAKE_STYLES = ["default","berry","ocean","sun"];
+  const SPECIAL_SNAKE_STYLES = ["rainbow","lava","ice","candy","midnight","mono"];
 
   const ALL_BIBLE_BOOKS = [
     "Genesis","Exodus","Leviticus","Numbers","Deuteronomy","Joshua","Judges","Ruth",
@@ -934,6 +935,12 @@ function renderIntroScreen(){
     return out;
   }
 
+  function getRandomSpecialSnakeStyle(excludeStyle = ""){
+    const pool = SPECIAL_SNAKE_STYLES.filter(style => style !== excludeStyle);
+    if (!pool.length) return "rainbow";
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+
   function drawSnake(){
     const body = document.getElementById("vsSnakeBody");
     const head = document.getElementById("vsSnakeHead");
@@ -947,20 +954,25 @@ function renderIntroScreen(){
     const now = performance.now();
     const isWrong = now < state.flashUntil;
     const isHappy = now < state.happyUntil;
-    const isRainbow = state.snakeStyle === "rainbow";
+
+    const styleClasses = ["rainbow","lava","ice","candy","midnight","mono"];
 
     body.setAttribute("d", buildBodyPath(state.trail));
     body.classList.toggle("is-wrong", isWrong);
     body.classList.toggle("is-happy", isHappy);
-    body.classList.toggle("is-rainbow", isRainbow);
 
     head.classList.toggle("is-wrong", isWrong);
-    head.classList.toggle("is-rainbow", isRainbow);
+
+    for (const styleName of styleClasses){
+      const active = state.snakeStyle === styleName;
+      body.classList.toggle(`is-${styleName}`, active);
+      head.classList.toggle(`is-${styleName}`, active);
+    }
 
     const wrongColor = "#ff5a51";
     const headColor = isWrong ? wrongColor : getSnakeHeadColor();
     const bodyColor = isWrong ? wrongColor : getSnakeBodyColor();
-    
+
     head.style.fill = headColor;
     body.style.stroke = bodyColor;
 
@@ -986,6 +998,11 @@ function renderIntroScreen(){
     if (state.snakeStyle === "berry") return "#ff7eb6";
     if (state.snakeStyle === "ocean") return "#74c0fc";
     if (state.snakeStyle === "sun") return "#ffd43b";
+    if (state.snakeStyle === "lava") return "#ff7a45";
+    if (state.snakeStyle === "ice") return "#bfe9ff";
+    if (state.snakeStyle === "candy") return "#ff9ecf";
+    if (state.snakeStyle === "midnight") return "#5a4bff";
+    if (state.snakeStyle === "mono") return "#f2f2f2";
     return "#a7cb6f";
   }
 
@@ -993,17 +1010,33 @@ function renderIntroScreen(){
     if (state.snakeStyle === "berry") return "#ff7eb6";
     if (state.snakeStyle === "ocean") return "#74c0fc";
     if (state.snakeStyle === "sun") return "#ffd43b";
+    if (state.snakeStyle === "lava") return "#ff944d";
+    if (state.snakeStyle === "ice") return "#d8f4ff";
+    if (state.snakeStyle === "candy") return "#ffd3e8";
+    if (state.snakeStyle === "midnight") return "#7e72ff";
+    if (state.snakeStyle === "mono") return "#ffffff";
     return "#a7cb6f";
   }
 
   function cycleSnakeStyle(){
     state.fruitCount += 1;
 
-    if (state.snakeStyleIndex < SNAKE_STYLES.length - 1){
-      state.snakeStyleIndex += 1;
+    if (state.fruitCount === 1){
+      state.snakeStyle = "berry";
+      return;
     }
 
-    state.snakeStyle = SNAKE_STYLES[state.snakeStyleIndex];
+    if (state.fruitCount === 2){
+      state.snakeStyle = "ocean";
+      return;
+    }
+
+    if (state.fruitCount === 3){
+      state.snakeStyle = "sun";
+      return;
+    }
+
+    state.snakeStyle = getRandomSpecialSnakeStyle(state.snakeStyle);
   }
 
   function getTargetCount(){
