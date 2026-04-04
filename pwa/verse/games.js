@@ -1233,8 +1233,8 @@ function bouncingMakeBookChoices(correctBook){
   return scrambleMakeBookChoices(correctBook);
 }
 
-function bouncingMakeReferenceChoices(correctChapter, correctVerse){
-  return scrambleMakeReferenceChoices(correctChapter, correctVerse);
+function bouncingMakeReferenceChoices(correctChapter, correctVerse, correctVerseEnd){
+  return scrambleMakeReferenceChoices(correctChapter, correctVerse, correctVerseEnd);
 }
 
 function bouncingNextChoices(){
@@ -1254,7 +1254,7 @@ function bouncingNextChoices(){
   }
 
   if (st.phase === "ref"){
-    st.choices = bouncingMakeReferenceChoices(st.targetChapter, st.targetVerse);
+    st.choices = bouncingMakeReferenceChoices(st.targetChapter, st.targetVerse, st.targetVerseEnd);
     return;
   }
 
@@ -2105,7 +2105,7 @@ function bouncingChoose(choice, btnEl, fieldEl){
   } else if (st.phase === "book"){
     correctChoice = st.targetBook;
   } else if (st.phase === "ref"){
-    correctChoice = `${st.targetChapter}:${st.targetVerse}`;
+    correctChoice = chainFormatReference(st.targetChapter, st.targetVerse, st.targetVerseEnd);
   } else {
     return;
   }
@@ -2329,7 +2329,7 @@ function scrambleNextChoices(){
   }
 
   if (st.phase === "ref"){
-    st.choices = scrambleMakeReferenceChoices(st.targetChapter, st.targetVerse);
+    st.choices = scrambleMakeReferenceChoices(st.targetChapter, st.targetVerse, st.targetVerseEnd);
     st.layoutSeeds = [];
     return;
   }
@@ -2557,7 +2557,7 @@ function scrambleChoose(choice, btnEl, fieldEl){
   } else if (st.phase === "book"){
     correctChoice = st.targetBook;
   } else if (st.phase === "ref"){
-    correctChoice = `${st.targetChapter}:${st.targetVerse}`;
+    correctChoice = chainFormatReference(st.targetChapter, st.targetVerse, st.targetVerseEnd);
   } else {
     return;
   }
@@ -4899,7 +4899,7 @@ function towerCurrentCorrectLabel(st){
   }
 
   if (phase === "ref"){
-    return `${st.targetChapter}:${st.targetVerse}`;
+    return chainFormatReference(st.targetChapter, st.targetVerse, st.targetVerseEnd);
   }
 
   return "";
@@ -4929,7 +4929,7 @@ function towerMakeChoices(st){
   }
 
   if (phase === "ref"){
-    return chainMakeReferenceChoices(st.targetChapter, st.targetVerse);
+    return chainMakeReferenceChoices(st.targetChapter, st.targetVerse, st.targetVerseEnd);
   }
 
   return [];
