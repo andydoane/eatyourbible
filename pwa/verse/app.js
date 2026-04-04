@@ -1426,6 +1426,11 @@ function chainVerseMetaFromId(verseId){
   return { book, chapter, verse, verseEnd };
 }
 
+function chainFormatReference(chapter, verse, verseEnd = null){
+  return verseEnd ? `${chapter}:${verse}-${verseEnd}` : `${chapter}:${verse}`;
+}
+
+
 // Generate multiple-choice options for Bible book
 function chainMakeBookChoices(correctBook){
   const choices = [
@@ -1436,9 +1441,13 @@ function chainMakeBookChoices(correctBook){
 }
 
 // Generate multiple-choice options for chapter:verse reference
-function chainMakeReferenceChoices(correctChapter, correctVerse){
-  const correctRef = `${correctChapter}:${correctVerse}`;
+function chainMakeReferenceChoices(correctChapter, correctVerse, correctVerseEnd = null){
+  const correctRef = chainFormatReference(correctChapter, correctVerse, correctVerseEnd);
   const refs = new Set([correctRef]);
+
+  const verseSpan = Number.isFinite(correctVerseEnd)
+    ? Math.max(0, correctVerseEnd - correctVerse)
+    : 0;
 
   let tries = 0;
   while (refs.size < 4 && tries < 200){
@@ -1451,7 +1460,8 @@ function chainMakeReferenceChoices(correctChapter, correctVerse){
     if (fakeChapter < 1) fakeChapter = 1 + Math.floor(Math.random() * 5);
     if (fakeVerse < 1) fakeVerse = 1 + Math.floor(Math.random() * 10);
 
-    refs.add(`${fakeChapter}:${fakeVerse}`);
+    const fakeVerseEnd = verseSpan > 0 ? (fakeVerse + verseSpan) : null;
+    refs.add(chainFormatReference(fakeChapter, fakeVerse, fakeVerseEnd));
     tries += 1;
   }
 
