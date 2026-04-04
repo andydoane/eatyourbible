@@ -325,6 +325,67 @@ body{
   100% { filter: hue-rotate(360deg); }
 }
 
+.vs-snake-body.is-lava,
+.vs-snake-head.is-lava{
+  animation: vsLavaPulse 1s ease-in-out infinite;
+}
+
+@keyframes vsLavaPulse{
+  0%, 100%{
+    filter: drop-shadow(0 0 4px rgba(255,120,60,0.30));
+  }
+  50%{
+    filter: drop-shadow(0 0 14px rgba(255,90,40,0.85));
+  }
+}
+
+.vs-snake-body.is-ice,
+.vs-snake-head.is-ice{
+  animation: vsIcePulse 1.3s ease-in-out infinite;
+}
+
+@keyframes vsIcePulse{
+  0%, 100%{
+    filter: drop-shadow(0 0 5px rgba(160,230,255,0.28));
+  }
+  50%{
+    filter: drop-shadow(0 0 16px rgba(180,245,255,0.88));
+  }
+}
+
+.vs-snake-body.is-candy,
+.vs-snake-head.is-candy{
+  animation: vsCandyPulse 1.15s ease-in-out infinite;
+}
+
+@keyframes vsCandyPulse{
+  0%, 100%{
+    filter: drop-shadow(0 0 4px rgba(255,158,207,0.24));
+  }
+  50%{
+    filter: drop-shadow(0 0 12px rgba(255,180,220,0.78));
+  }
+}
+
+.vs-snake-body.is-midnight,
+.vs-snake-head.is-midnight{
+  animation: vsMidnightGlow 1.4s ease-in-out infinite;
+}
+
+@keyframes vsMidnightGlow{
+  0%, 100%{
+    filter: drop-shadow(0 0 5px rgba(90,75,255,0.28));
+  }
+  50%{
+    filter: drop-shadow(0 0 16px rgba(126,114,255,0.82));
+  }
+}
+
+.vs-snake-body.is-mono,
+.vs-snake-head.is-mono{
+  filter: drop-shadow(0 0 8px rgba(255,255,255,0.32));
+}
+
 .vs-snake-head{
   fill: #a7cb6f;
   transition: fill 180ms linear;
@@ -365,7 +426,7 @@ body{
 }
 
 .vs-turn-btn{
-  width: 86px;
+  width: 104px;
   height: 68px;
   border: none;
   border-radius: 22px;
@@ -535,7 +596,7 @@ body{
   }
 
   .vs-turn-btn{
-    width: 78px;
+    width: 94px;
     height: 62px;
   }
 
