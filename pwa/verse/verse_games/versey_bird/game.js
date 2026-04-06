@@ -1,110 +1,892 @@
-const bird = document.getElementById("bird");
-const gameArea = document.getElementById("gameArea");
-const builtArea = document.getElementById("builtArea");
-const flash = document.getElementById("flash");
-
-const gravity = 0.5;
-const flapPower = -8;
-
-let velocity = 0;
-let birdY = 200;
-
-let running = true;
-
-/* ======================
-   BRIDGE INIT
-====================== */
-
-async function init() {
+(async function(){
+  const app = document.getElementById("app");
   const launch = window.VerseGameBridge.getLaunchParams();
   const ctx = await window.VerseGameBridge.getVerseContext();
 
-  builtArea.textContent = ctx.verseText;
+  const GAME_ID = "versey_bird";
+  const TARGET_COLORS = ["#ff5a51","#ffa351","#ffc751","#40b9c5","#7f66c6","#a7cb6f"];
+  const BIRDS = ["🐦","🐓","🐤","🦆","🦅","🐧","🐥"];
+  const BOOKS = [
+    "Genesis","Exodus","Leviticus","Numbers","Deuteronomy","Joshua","Judges","Ruth",
+    "1 Samuel","2 Samuel","1 Kings","2 Kings","1 Chronicles","2 Chronicles","Ezra","Nehemiah","Esther",
+    "Job","Psalms","Proverbs","Ecclesiastes","Song of Solomon","Isaiah","Jeremiah","Lamentations",
+    "Ezekiel","Daniel","Hosea","Joel","Amos","Obadiah","Jonah","Micah","Nahum","Habakkuk","Zephaniah",
+    "Haggai","Zechariah","Malachi","Matthew","Mark","Luke","John","Acts","Romans","1 Corinthians",
+    "2 Corinthians","Galatians","Ephesians","Philippians","Colossians","1 Thessalonians","2 Thessalonians",
+    "1 Timothy","2 Timothy","Titus","Philemon","Hebrews","James","1 Peter","2 Peter",
+    "1 John","2 John","3 John","Jude","Revelation"
+  ];
+  const FUN_DECOYS = [
+    "taco","banana","penguin","cupcake","pickle","rocket","waffle","balloon","otter","pretzel",
+    "pancake","bubble","marshmallow","treasure","robot","firetruck","yo-yo","snowman","blueberry","noodle"
+  ];
+  const GRASS_SVGS = [
+    `<svg viewBox="0 0 120 40" xmlns="http://www.w3.org/2000/svg"><path fill="#a7cb6f" d="M8 38c5-11 10-16 15-22 2 9 3 13 6 22 6-18 13-27 22-36 1 13 2 22 5 36 7-16 16-25 27-34-1 12 2 24 8 34 4-11 11-20 22-28-2 11 1 19 7 28H8z"/></svg>`,
+    `<svg viewBox="0 0 120 40" xmlns="http://www.w3.org/2000/svg"><path fill="#a7cb6f" d="M4 38c7-12 14-19 18-28 4 10 6 16 7 28 8-22 16-31 27-38 0 14 2 25 5 38 5-13 13-22 22-29 0 12 4 22 10 29 3-8 9-15 23-26-4 13-4 19 2 26H4z"/></svg>`,
+    `<svg viewBox="0 0 120 40" xmlns="http://www.w3.org/2000/svg"><path fill="#a7cb6f" d="M6 38c4-10 7-16 10-27 5 8 7 15 10 27 6-19 14-29 21-36 3 14 5 21 8 36 6-14 12-22 20-30 2 12 5 21 12 30 4-12 11-20 22-31 1 11 5 20 12 31H6z"/></svg>`
+  ];
 
-  document.getElementById("exitBtn").onclick = () => {
-    window.VerseGameBridge.exitGame();
+  let selectedMode = null;
+  let completed = false;
+  let muted = false;
+
+  const state = {
+    running: false,
+    rafId: 0,
+    spawnCooldown: 0,
+    birdEmoji: BIRDS[Math.floor(Math.random() * BIRDS.length)],
+    birdX: 0,
+    birdY: 0,
+    birdVY: 0,
+    birdRadius: 30,
+    gravity: 1180,
+    flapVelocity: -410,
+    fieldWidth: 0,
+    fieldHeight: 0,
+    groundHeight: 74,
+    clouds: [],
+    particles: [],
+    trail: [],
+    targets: [],
+    nextTargetId: 1,
+    words: tokenizeVerse(ctx.verseText),
+    bookLabel: "",
+    referenceLabel: "",
+    segments: [],
+    progressIndex: 0,
+    streak: 0,
+    flashUntil: 0,
+    shakeUntil: 0,
+    lastTs: 0
   };
-}
 
-init();
+  setupReferenceSegments();
+  renderIntro();
 
-/* ======================
-   INPUT
-====================== */
+  function renderIntro(){
+    stopLoop();
+    app.innerHTML = `
+      <div class="vb-mode-shell">
+        <div class="vb-mode-stage">
+          <div class="vb-mode-top">
+            <div style="font-size:72px; line-height:1;">🐤</div>
+            <div class="vb-mode-title">Versey Bird</div>
+            <div class="vb-mode-subtitle">
+              Flap into the next correct word.<br>
+              Then collect the book and reference.
+            </div>
 
-function flap() {
-  velocity = flapPower;
+            <div class="vb-mode-card">
+              <div class="vb-mode-actions">
+                <button class="vm-btn" id="startBtn">Start</button>
+              </div>
+            </div>
+          </div>
+        </div>
 
-  bird.style.transform = "rotate(-20deg)";
-  setTimeout(() => {
-    bird.style.transform = "rotate(20deg)";
-  }, 100);
-}
+        ${renderNav()}
 
-window.addEventListener("pointerdown", (e) => {
-  e.preventDefault();
-  flap();
-});
+        ${renderHelpOverlay("Tap or click to flap.<br><br>Hit the next correct word.<br>Wrong hits and missed correct words reset your streak, but they do not end the run.<br><br>After the verse is built, collect the book, then the reference.")}
+      </div>
+    `;
 
-/* ======================
-   GAME LOOP
-====================== */
-
-function update() {
-  if (!running) return;
-
-  velocity += gravity;
-  birdY += velocity;
-
-  if (birdY < 0) {
-    birdY = 0;
-    velocity = 0;
+    document.getElementById("startBtn").onclick = renderModeSelect;
+    wireCommonNav();
   }
 
-  const groundY = gameArea.clientHeight - 52;
+  function renderModeSelect(){
+    stopLoop();
+    app.innerHTML = `
+      <div class="vb-mode-shell">
+        <div class="vb-mode-stage">
+          <div class="vb-mode-top">
+            <div class="vb-mode-title">🐤 Versey Bird</div>
+            <div class="vb-mode-subtitle">Choose your difficulty.</div>
 
-  if (birdY > groundY) {
-    birdY = groundY;
-    velocity = 0;
+            <div class="vb-mode-card">
+              <div class="vb-mode-actions">
+                <button class="vm-btn" id="easyBtn">Easy</button>
+                <button class="vm-btn" id="mediumBtn">Medium</button>
+                <button class="vm-btn" id="hardBtn">Hard</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        ${renderNav()}
+
+        ${renderHelpOverlay("Easy: slower speed, fewer decoys, bigger targets.<br><br>Medium: balanced.<br><br>Hard: faster speed, more decoys, smaller targets.")}
+      </div>
+    `;
+
+    document.getElementById("easyBtn").onclick = () => startGame("easy");
+    document.getElementById("mediumBtn").onclick = () => startGame("medium");
+    document.getElementById("hardBtn").onclick = () => startGame("hard");
+    wireCommonNav();
   }
 
-  bird.style.top = birdY + "px";
+  function startGame(mode){
+    selectedMode = mode;
+    completed = false;
 
-  requestAnimationFrame(update);
-}
+    state.running = true;
+    state.progressIndex = 0;
+    state.streak = 0;
+    state.targets = [];
+    state.trail = [];
+    state.particles = [];
+    state.clouds = [];
+    state.nextTargetId = 1;
+    state.spawnCooldown = 0;
+    state.lastTs = 0;
+    state.flashUntil = 0;
+    state.shakeUntil = 0;
 
-update();
+    app.innerHTML = `
+      <div class="vb-root">
+        <div class="vb-stage">
+          <div class="vb-build-wrap">
+            <div class="vb-build" id="vbBuild">
+              <div class="vb-build-text" id="vbBuildText"></div>
+            </div>
+          </div>
 
-/* ======================
-   SIMPLE CLOUDS
-====================== */
+          <div class="vb-topbar">
+            <div class="vb-pill" id="vbModePill">${escapeHtml(capitalize(mode))}</div>
+            <div class="vb-pill" id="vbStreakPill">Streak: 0</div>
+          </div>
 
-function spawnCloud() {
-  const cloud = document.createElement("div");
-  cloud.textContent = "☁️";
+          <div class="vb-field-wrap">
+            <div class="vb-field" id="vbField">
+              <div class="vb-clouds" id="vbClouds"></div>
+              <div class="vb-trail" id="vbTrail"></div>
+              <div class="vb-particles" id="vbParticles"></div>
+              <div class="vb-targets" id="vbTargets"></div>
+              <div class="vb-bird" id="vbBird">${state.birdEmoji}</div>
+              <div class="vb-flash" id="vbFlash"></div>
 
-  cloud.style.position = "absolute";
-  cloud.style.left = "100%";
-  cloud.style.top = Math.random() * 60 + "%";
-  cloud.style.fontSize = (20 + Math.random() * 30) + "px";
-  cloud.style.opacity = 0.3 + Math.random() * 0.5;
+              <div class="vb-ground">
+                <div class="vb-grass-top">
+                  <div class="vb-grass-track" id="vbGrassTrack"></div>
+                </div>
+                <div class="vb-dirt"></div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-  document.getElementById("cloudLayer").appendChild(cloud);
+        ${renderNav()}
 
-  let x = window.innerWidth;
+        ${renderHelpOverlay("Tap or click to flap.<br><br>Touch the next correct item.<br><br>Wrong hits and missed correct words reset your streak only.<br><br>Build the whole verse, then collect the book, then the reference.")}
+      </div>
+    `;
 
-  function move() {
-    x -= 0.5;
-    cloud.style.left = x + "px";
+    wireCommonNav();
+    wireGameInput();
+    populateGrass();
+    updateBuildText();
+    recalcField();
+    resetBird();
+    seedClouds();
+    spawnBatch();
+    startLoop();
+  }
 
-    if (x > -100) {
-      requestAnimationFrame(move);
-    } else {
-      cloud.remove();
+  function renderComplete(){
+    stopLoop();
+    app.innerHTML = `
+      <div class="vb-mode-shell">
+        <div class="vb-mode-stage">
+          <div class="vb-mode-top">
+            <div class="vb-complete-icon">🏅</div>
+            <div class="vb-mode-title">Versey Bird Complete!</div>
+            <div class="vb-mode-subtitle">
+              You finished ${escapeHtml(ctx.verseRef || "")}.
+            </div>
+
+            <div class="vb-mode-card">
+              <div class="vb-mode-actions">
+                <button class="vm-btn" id="playAgainBtn">Play Again</button>
+                <button class="vm-btn" id="doneBtn">Back to Practice</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        ${renderNav()}
+
+        ${renderHelpOverlay("Great job! This completion has already been recorded for medals, stars, and BibloPets.")}
+      </div>
+    `;
+
+    document.getElementById("playAgainBtn").onclick = renderModeSelect;
+    document.getElementById("doneBtn").onclick = () => window.VerseGameBridge.exitGame();
+    wireCommonNav();
+  }
+
+  function renderNav(){
+    return `
+      <div class="vb-nav-wrap">
+        <div class="vb-nav">
+          <button class="vb-nav-btn" id="homeBtn" aria-label="Home">${getHomeSvg()}</button>
+          <div class="vb-nav-center">
+            <button class="vb-help-btn" id="helpBtn" type="button">HELP</button>
+          </div>
+          <button class="vb-nav-btn" id="muteBtn" aria-label="Mute">${muted ? getMuteSvg() : getUnmuteSvg()}</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderHelpOverlay(body){
+    return `
+      <div class="vb-help-overlay" id="vbHelpOverlay" aria-hidden="true">
+        <div class="vb-help-dialog">
+          <div class="vb-help-title">How to Play</div>
+          <div class="vb-help-body">${body}</div>
+          <div class="vb-help-actions">
+            <button class="vm-btn" id="vbHelpCloseBtn">OK</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function wireCommonNav(){
+    const homeBtn = document.getElementById("homeBtn");
+    const helpBtn = document.getElementById("helpBtn");
+    const muteBtn = document.getElementById("muteBtn");
+    const helpOverlay = document.getElementById("vbHelpOverlay");
+    const helpCloseBtn = document.getElementById("vbHelpCloseBtn");
+
+    if (homeBtn) homeBtn.onclick = () => window.VerseGameBridge.exitGame();
+    if (helpBtn) helpBtn.onclick = () => helpOverlay.classList.add("is-open");
+    if (helpCloseBtn) helpCloseBtn.onclick = () => helpOverlay.classList.remove("is-open");
+    if (helpOverlay){
+      helpOverlay.onclick = (e) => {
+        if (e.target === helpOverlay) helpOverlay.classList.remove("is-open");
+      };
+    }
+    if (muteBtn){
+      muteBtn.onclick = () => {
+        muted = !muted;
+        muteBtn.innerHTML = muted ? getMuteSvg() : getUnmuteSvg();
+      };
     }
   }
 
-  move();
-}
+  function wireGameInput(){
+    const field = document.getElementById("vbField");
+    const flapHandler = (e) => {
+      e.preventDefault();
+      flap();
+    };
+    field.addEventListener("pointerdown", flapHandler, { passive: false });
+    field.addEventListener("touchstart", flapHandler, { passive: false });
+    window.addEventListener("resize", recalcField);
+  }
 
-setInterval(spawnCloud, 2000);
+  function flap(){
+    if (!state.running) return;
+    state.birdVY = state.flapVelocity;
+    createPuffs();
+  }
+
+  function startLoop(){
+    stopLoop();
+    state.lastTs = 0;
+    state.rafId = requestAnimationFrame(loop);
+  }
+
+  function stopLoop(){
+    if (state.rafId) cancelAnimationFrame(state.rafId);
+    state.rafId = 0;
+    state.running = false;
+  }
+
+  function loop(ts){
+    if (!state.running) return;
+    if (!state.lastTs) state.lastTs = ts;
+    const dt = Math.min(0.032, (ts - state.lastTs) / 1000);
+    state.lastTs = ts;
+
+    recalcField();
+    updateBird(dt);
+    updateClouds(dt);
+    updateParticles(dt);
+    updateTrail(dt);
+    updateTargets(dt, ts);
+    maybeSpawnBatch(dt);
+    renderFrame(ts);
+
+    state.rafId = requestAnimationFrame(loop);
+  }
+
+  function recalcField(){
+    const field = document.getElementById("vbField");
+    if (!field) return;
+    const rect = field.getBoundingClientRect();
+    state.fieldWidth = rect.width;
+    state.fieldHeight = rect.height;
+    state.birdX = Math.max(70, rect.width * 0.2);
+  }
+
+  function resetBird(){
+    state.birdY = state.fieldHeight * 0.48;
+    state.birdVY = 0;
+  }
+
+  function updateBird(dt){
+    state.birdVY += state.gravity * dt;
+    state.birdY += state.birdVY * dt;
+
+    const topBound = 18;
+    const groundTop = state.fieldHeight - state.groundHeight;
+
+    if (state.birdY < topBound){
+      state.birdY = topBound;
+      state.birdVY = 0;
+    }
+
+    if (state.birdY + state.birdRadius > groundTop){
+      state.birdY = groundTop - state.birdRadius;
+      if (state.birdVY > 0) state.birdVY *= 0.12;
+    }
+  }
+
+  function updateClouds(dt){
+    for (const cloud of state.clouds){
+      cloud.x -= cloud.speed * dt;
+    }
+    state.clouds = state.clouds.filter(cloud => cloud.x > -120);
+
+    while (state.clouds.length < 5){
+      state.clouds.push(makeCloud(state.clouds.length === 0));
+    }
+  }
+
+  function seedClouds(){
+    state.clouds = [];
+    for (let i = 0; i < 5; i++){
+      state.clouds.push(makeCloud(true, i));
+    }
+  }
+
+  function makeCloud(seed = false, index = 0){
+    const size = 22 + Math.random() * 34;
+    return {
+      id: Math.random().toString(36).slice(2),
+      x: seed ? state.fieldWidth * (0.18 + index * 0.22) : state.fieldWidth + Math.random() * 120,
+      y: 34 + Math.random() * Math.max(80, state.fieldHeight * 0.42),
+      size,
+      opacity: 0.22 + Math.random() * 0.35,
+      speed: 10 + Math.random() * 16
+    };
+  }
+
+  function createPuffs(){
+    for (let i = 0; i < 4; i++){
+      state.particles.push({
+        id: Math.random().toString(36).slice(2),
+        type: "puff",
+        x: state.birdX - 18 + Math.random() * 8,
+        y: state.birdY + 8 + (Math.random() * 12 - 6),
+        vx: -70 - Math.random() * 40,
+        vy: -10 + Math.random() * 20,
+        life: 0.42 + Math.random() * 0.16,
+        age: 0,
+        size: 8 + Math.random() * 12
+      });
+    }
+  }
+
+  function updateParticles(dt){
+    for (const p of state.particles){
+      p.age += dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vx *= 0.98;
+      p.vy *= 0.98;
+    }
+    state.particles = state.particles.filter(p => p.age < p.life);
+  }
+
+  function updateTrail(dt){
+    const tier = getTrailTier();
+    if (tier > 0){
+      state.trail.push({
+        id: Math.random().toString(36).slice(2),
+        x: state.birdX - 16,
+        y: state.birdY + 4,
+        age: 0,
+        life: 0.42 + tier * 0.07,
+        size: 12 + tier * 3,
+        color: getTrailColor()
+      });
+    }
+
+    for (const t of state.trail){
+      t.age += dt;
+      t.x -= (90 + tier * 14) * dt;
+    }
+    state.trail = state.trail.filter(t => t.age < t.life);
+  }
+
+  function getTrailTier(){
+    if (state.streak < 5) return 0;
+    return 1 + Math.floor((state.streak - 5) / 2);
+  }
+
+  function getTrailColor(){
+    const tier = getTrailTier();
+    const rainbow = ["#ff5a51","#ffa351","#ffc751","#a7cb6f","#40b9c5","#7f66c6"];
+    if (tier <= 1) return "#ffc751";
+    if (tier === 2) return "#ffa351";
+    if (tier === 3) return "#ff5a51";
+    return rainbow[Math.floor(Math.random() * rainbow.length)];
+  }
+
+  function maybeSpawnBatch(dt){
+    if (state.targets.length > 0) return;
+    state.spawnCooldown = Math.max(0, state.spawnCooldown - dt);
+    if (state.spawnCooldown <= 0 && getCurrentPhase() !== "done"){
+      spawnBatch();
+    }
+  }
+
+  function spawnBatch(){
+    const phase = getCurrentPhase();
+    if (phase === "done") return;
+
+    const correctLabel = getCurrentCorrectLabel();
+    const decoys = getDecoysForPhase(phase, correctLabel, getDecoyCount());
+    const all = shuffle([{ label: correctLabel, correct: true }, ...decoys.map(label => ({ label, correct: false }))]);
+
+    const lanes = buildLaneYs(all.length);
+    const circleSize = getCircleSize();
+
+    state.targets = all.map((item, index) => ({
+      id: state.nextTargetId++,
+      x: state.fieldWidth + 80 + index * 14,
+      y: lanes[index],
+      label: item.label,
+      correct: item.correct,
+      color: TARGET_COLORS[index % TARGET_COLORS.length],
+      speed: getScrollSpeed(),
+      circleSize
+    }));
+  }
+
+  function updateTargets(dt, ts){
+    const groundTop = state.fieldHeight - state.groundHeight;
+
+    for (const target of state.targets){
+      target.x -= target.speed * dt;
+    }
+
+    let missedCorrect = false;
+
+    for (const target of state.targets){
+      if (target.x < -90){
+        if (target.correct) missedCorrect = true;
+      }
+    }
+
+    state.targets = state.targets.filter(target => target.x > -90);
+
+    if (missedCorrect){
+      registerMistake(ts);
+      state.targets = [];
+      state.spawnCooldown = 0.55;
+      return;
+    }
+
+    for (const target of state.targets){
+      const dx = target.x - state.birdX;
+      const dy = (target.y - 12) - state.birdY;
+      const dist = Math.hypot(dx, dy);
+
+      if (dist <= state.birdRadius + (target.circleSize * 0.5)){
+        if (target.correct){
+          handleCorrect();
+        } else {
+          registerMistake(ts);
+          state.targets = [];
+          state.spawnCooldown = 0.42;
+        }
+        return;
+      }
+
+      if (target.y > groundTop - 8){
+        target.y = groundTop - 8;
+      }
+    }
+  }
+
+  function handleCorrect(){
+    state.progressIndex += 1;
+    state.streak += 1;
+    state.targets = [];
+    state.spawnCooldown = 0.36;
+    updateBuildText();
+    updateStreakPill();
+
+    if (getCurrentPhase() === "done"){
+      finishRun();
+    }
+  }
+
+  function registerMistake(ts){
+    state.streak = 0;
+    state.flashUntil = ts + 160;
+    state.shakeUntil = ts + 260;
+    updateStreakPill();
+
+    const build = document.getElementById("vbBuild");
+    const flash = document.getElementById("vbFlash");
+    if (build){
+      build.classList.remove("vb-shake");
+      void build.offsetWidth;
+      build.classList.add("vb-shake");
+    }
+    if (flash){
+      flash.classList.add("is-on");
+      setTimeout(() => flash.classList.remove("is-on"), 160);
+    }
+  }
+
+  async function finishRun(){
+    if (completed) return;
+    completed = true;
+    state.running = false;
+
+    try{
+      await window.VerseGameBridge.markCompleted({
+        verseId: ctx.verseId,
+        gameId: GAME_ID,
+        mode: selectedMode
+      });
+    }catch(err){
+      console.error("markCompleted failed", err);
+    }
+
+    renderComplete();
+  }
+
+  function renderFrame(ts){
+    renderBuildShake(ts);
+    renderClouds();
+    renderTargets();
+    renderParticles();
+    renderTrail();
+    renderBird();
+    renderGrass(ts);
+  }
+
+  function renderBuildShake(ts){
+    const build = document.getElementById("vbBuild");
+    if (!build) return;
+    if (ts > state.shakeUntil){
+      build.classList.remove("vb-shake");
+    }
+  }
+
+  function renderBird(){
+    const bird = document.getElementById("vbBird");
+    if (!bird) return;
+    const angle = clamp((state.birdVY / 9), -24, 54);
+    bird.style.left = `${state.birdX}px`;
+    bird.style.top = `${state.birdY}px`;
+    bird.style.transform = `translate(-50%, -50%) scaleX(-1) rotate(${angle}deg)`;
+  }
+
+  function renderClouds(){
+    const layer = document.getElementById("vbClouds");
+    if (!layer) return;
+    layer.innerHTML = state.clouds.map(cloud => `
+      <div class="vb-cloud"
+           style="left:${cloud.x}px; top:${cloud.y}px; font-size:${cloud.size}px; opacity:${cloud.opacity};">
+        ☁️
+      </div>
+    `).join("");
+  }
+
+  function renderParticles(){
+    const layer = document.getElementById("vbParticles");
+    if (!layer) return;
+    layer.innerHTML = state.particles.map(p => {
+      const alpha = 1 - (p.age / p.life);
+      return `
+        <div class="vb-puff"
+             style="left:${p.x}px; top:${p.y}px; width:${p.size}px; height:${p.size}px; opacity:${alpha};">
+        </div>
+      `;
+    }).join("");
+  }
+
+  function renderTrail(){
+    const layer = document.getElementById("vbTrail");
+    if (!layer) return;
+    layer.innerHTML = state.trail.map(t => {
+      const alpha = 1 - (t.age / t.life);
+      return `
+        <div class="vb-trail-dot"
+             style="left:${t.x}px; top:${t.y}px; width:${t.size}px; height:${t.size}px; background:${t.color}; opacity:${alpha};">
+        </div>
+      `;
+    }).join("");
+  }
+
+  function renderTargets(){
+    const layer = document.getElementById("vbTargets");
+    if (!layer) return;
+    layer.innerHTML = state.targets.map(target => `
+      <div class="vb-target" style="left:${target.x}px; top:${target.y}px;">
+        <div class="vb-target-circle" style="background:${target.color}; --circle-size:${target.circleSize}px;"></div>
+        <div class="vb-target-label">${escapeHtml(target.label)}</div>
+      </div>
+    `).join("");
+  }
+
+  function populateGrass(){
+    const track = document.getElementById("vbGrassTrack");
+    if (!track) return;
+
+    const items = [];
+    for (let i = 0; i < 18; i++){
+      const svg = GRASS_SVGS[i % GRASS_SVGS.length];
+      const width = 38 + Math.random() * 34;
+      const scaleY = 0.7 + Math.random() * 0.9;
+      const yNudge = -2 + Math.random() * 3;
+      items.push(`
+        <div class="vb-grass-tuft"
+             style="left:${i * 48}px; width:${width}px; transform:translateX(-50%) scaleY(${scaleY}); bottom:${yNudge}px;">
+          ${svg}
+        </div>
+      `);
+    }
+    track.innerHTML = items.join("");
+  }
+
+  function renderGrass(ts){
+    const track = document.getElementById("vbGrassTrack");
+    if (!track) return;
+    const x = -((ts * 0.045) % 48);
+    track.style.transform = `translateX(${x}px)`;
+  }
+
+  function updateBuildText(){
+    const el = document.getElementById("vbBuildText");
+    if (!el) return;
+    el.innerHTML = state.segments.map((segment, index) => `
+      <span class="vb-build-word ${index < state.progressIndex ? "is-built" : ""}">
+        ${escapeHtml(segment)}
+      </span>
+    `).join(" ");
+  }
+
+  function updateStreakPill(){
+    const pill = document.getElementById("vbStreakPill");
+    if (!pill) return;
+    const tier = getTrailTier();
+    let suffix = "";
+    if (tier >= 4) suffix = " 🌈";
+    else if (tier >= 2) suffix = " ✨";
+    pill.textContent = `Streak: ${state.streak}${suffix}`;
+  }
+
+  function setupReferenceSegments(){
+    const parsed = parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
+    state.bookLabel = parsed.book || "";
+    state.referenceLabel = parsed.reference || "";
+    state.segments = [...state.words];
+    if (state.bookLabel) state.segments.push(state.bookLabel);
+    if (state.referenceLabel) state.segments.push(state.referenceLabel);
+  }
+
+  function getCurrentPhase(){
+    const wordCount = state.words.length;
+    if (state.progressIndex < wordCount) return "words";
+    if (state.progressIndex === wordCount && state.bookLabel) return "book";
+    if (state.progressIndex === wordCount + (state.bookLabel ? 1 : 0) && state.referenceLabel) return "reference";
+    return "done";
+  }
+
+  function getCurrentCorrectLabel(){
+    return state.segments[state.progressIndex] || "";
+  }
+
+  function getDecoyCount(){
+    if (selectedMode === "hard") return 4;
+    if (selectedMode === "medium") return 3;
+    return 2;
+  }
+
+  function getCircleSize(){
+    if (selectedMode === "hard") return 26;
+    if (selectedMode === "medium") return 30;
+    return 35;
+  }
+
+  function getScrollSpeed(){
+    if (selectedMode === "hard") return 205;
+    if (selectedMode === "medium") return 172;
+    return 140;
+  }
+
+  function buildLaneYs(count){
+    const groundTop = state.fieldHeight - state.groundHeight;
+    const top = 54;
+    const bottom = groundTop - 54;
+    const lanes = [];
+    if (count === 1) return [(top + bottom) * 0.5];
+    const step = (bottom - top) / (count - 1);
+    for (let i = 0; i < count; i++){
+      lanes.push(top + step * i + (Math.random() * 20 - 10));
+    }
+    return shuffle(lanes);
+  }
+
+  function getDecoysForPhase(phase, correctLabel, count){
+    const out = new Set();
+
+    if (phase === "words"){
+      const verseWords = state.words.map(normalizeWord);
+      for (const word of shuffle(FUN_DECOYS)){
+        if (out.size >= count) break;
+        if (!verseWords.includes(normalizeWord(word)) && normalizeWord(word) !== normalizeWord(correctLabel)){
+          out.add(word);
+        }
+      }
+      for (const word of shuffle(state.words)){
+        if (out.size >= count) break;
+        if (normalizeWord(word) !== normalizeWord(correctLabel)){
+          out.add(word);
+        }
+      }
+    }
+
+    if (phase === "book"){
+      for (const book of shuffle(BOOKS)){
+        if (out.size >= count) break;
+        if (book !== correctLabel) out.add(book);
+      }
+    }
+
+    if (phase === "reference"){
+      const match = correctLabel.match(/^(\d+):(\d+)(?:-(\d+))?$/);
+      const chapter = match ? Number(match[1]) : 1;
+      const verse = match ? Number(match[2]) : 1;
+      let tries = 0;
+      while (out.size < count && tries < 40){
+        tries++;
+        const c = Math.max(1, chapter + Math.floor(Math.random() * 5) - 2);
+        const v = Math.max(1, verse + Math.floor(Math.random() * 9) - 4);
+        const label = `${c}:${v}`;
+        if (label !== correctLabel) out.add(label);
+      }
+    }
+
+    return Array.from(out).slice(0, count);
+  }
+
+  function tokenizeVerse(text){
+    return String(text || "").trim().split(/\s+/).filter(Boolean);
+  }
+
+  function normalizeWord(word){
+    return String(word || "").toLowerCase().replace(/[^a-z0-9']/g, "");
+  }
+
+  function escapeHtml(str){
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function shuffle(arr){
+    const copy = arr.slice();
+    for (let i = copy.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+    return copy;
+  }
+
+  function clamp(v, min, max){
+    return Math.max(min, Math.min(max, v));
+  }
+
+  function capitalize(str){
+    return String(str).charAt(0).toUpperCase() + String(str).slice(1);
+  }
+
+  function titleCaseBookFromSlug(slug){
+    const smallWords = new Set(["of", "the"]);
+    return String(slug || "")
+      .split("_")
+      .filter(Boolean)
+      .map((part, index) => {
+        const lower = part.toLowerCase();
+        if (index > 0 && smallWords.has(lower)) return lower;
+        return lower.charAt(0).toUpperCase() + lower.slice(1);
+      })
+      .join(" ");
+  }
+
+  function parseReferenceParts(ref, translation, verseId){
+    const id = String(verseId || "").trim();
+
+    const idRangeMatch = id.match(/^(.+?)_(\d+)_(\d+)_(\d+)$/);
+    if (idRangeMatch){
+      return {
+        book: titleCaseBookFromSlug(idRangeMatch[1]),
+        reference: `${idRangeMatch[2]}:${idRangeMatch[3]}-${idRangeMatch[4]}`
+      };
+    }
+
+    const idMatch = id.match(/^(.+?)_(\d+)_(\d+(?:[-–]\d+)?)$/);
+    if (idMatch){
+      return {
+        book: titleCaseBookFromSlug(idMatch[1]),
+        reference: `${idMatch[2]}:${idMatch[3]}`
+      };
+    }
+
+    let raw = String(ref || "").trim();
+    const trans = String(translation || "").trim();
+    if (trans){
+      raw = raw.replace(new RegExp(`\\s*\\(?${trans.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\)?\\s*$`, "i"), "").trim();
+    }
+
+    const match = raw.match(/^(.*?)\s+(\d+:\d+(?:[-–]\d+(?::\d+)?)?)\s*$/);
+    if (match){
+      return { book: match[1].trim(), reference: match[2].trim() };
+    }
+
+    const lastSpace = raw.lastIndexOf(" ");
+    if (lastSpace > 0){
+      return {
+        book: raw.slice(0, lastSpace).trim(),
+        reference: raw.slice(lastSpace + 1).trim()
+      };
+    }
+
+    return { book: raw, reference: "" };
+  }
+
+  function getHomeSvg(){
+    return `<svg class="nav-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3L3 10h2v9h5v-6h4v6h5v-9h2L12 3z" fill="#ffffff"/></svg>`;
+  }
+
+  function getMuteSvg(){
+    return `<svg class="nav-icon" viewBox="0 0 1270 889" xmlns="http://www.w3.org/2000/svg"><path style="fill:#ffffff;stroke:none;stroke-width:44.9431;stroke-linecap:round" d="M 660.98465,87.244161 409.97079,241.6972 a 150.47802,150.47802 0 0 1 -78.85883,22.31829 H 225.63234 a 42.587633,42.587633 0 0 0 -42.58762,42.58762 v 275.79372 a 42.587633,42.587633 0 0 0 42.58762,42.58762 h 105.47962 a 150.47802,150.47802 0 0 1 78.85883,22.3183 l 251.01386,154.45304 a 23.799138,23.799138 0 0 0 36.27121,-20.26933 V 107.51349 A 23.799138,23.799138 0 0 0 660.98465,87.244161 Z"/><g transform="translate(-26.458334,-255.59263)"><path style="fill:none;stroke:#ffffff;stroke-width:76.7747;stroke-linecap:round" d="M 1241.4124,524.69155 890.61025,875.49365"/><path style="fill:none;stroke:#ffffff;stroke-width:76.7747;stroke-linecap:round" d="m 890.61025,524.69155 350.80215,350.8021"/></g></svg>`;
+  }
+
+  function getUnmuteSvg(){
+    return `<svg class="nav-icon" viewBox="0 0 1270 889" xmlns="http://www.w3.org/2000/svg"><path style="fill:#ffffff;stroke:none;stroke-width:44.9431;stroke-linecap:round" d="M 660.98465,87.244161 409.97079,241.6972 a 150.47802,150.47802 0 0 1 -78.85883,22.31829 H 225.63234 a 42.587633,42.587633 0 0 0 -42.58762,42.58762 v 275.79372 a 42.587633,42.587633 0 0 0 42.58762,42.58762 h 105.47962 a 150.47802,150.47802 0 0 1 78.85883,22.3183 l 251.01386,154.45304 a 23.799138,23.799138 0 0 0 36.27121,-20.26933 V 107.51349 A 23.799138,23.799138 0 0 0 660.98465,87.244161 Z"/><path style="fill:none;stroke:#ffffff;stroke-width:63;stroke-linecap:round" d="M 877 307 Q 982 444 877 582"/><path style="fill:none;stroke:#ffffff;stroke-width:63;stroke-linecap:round" d="M 959 241 Q 1111 444 959 648"/></svg>`;
+  }
+})();
