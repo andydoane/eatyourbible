@@ -57,6 +57,8 @@
     streak: 0,
     flashUntil: 0,
     shakeUntil: 0,
+    successFlashUntil: 0,
+    inputLockedUntil: 0,
     lastTs: 0
   };
 
@@ -141,6 +143,8 @@
     state.lastTs = 0;
     state.flashUntil = 0;
     state.shakeUntil = 0;
+    state.successFlashUntil = 0;
+    state.inputLockedUntil = 0;
 
     app.innerHTML = `
       <div class="vb-root">
@@ -194,6 +198,8 @@
 
   function renderComplete(){
     stopLoop();
+    const unlockAt = performance.now() + 700;
+
     app.innerHTML = `
       <div class="vb-mode-shell">
         <div class="vb-mode-stage">
@@ -206,8 +212,8 @@
 
             <div class="vb-mode-card">
               <div class="vb-mode-actions">
-                <button class="vm-btn" id="playAgainBtn">Play Again</button>
-                <button class="vm-btn" id="doneBtn">Back to Practice</button>
+                <button class="vm-btn" id="playAgainBtn" disabled>Play Again</button>
+                <button class="vm-btn" id="doneBtn" disabled>Back to Practice</button>
               </div>
             </div>
           </div>
@@ -219,8 +225,24 @@
       </div>
     `;
 
-    document.getElementById("playAgainBtn").onclick = renderModeSelect;
-    document.getElementById("doneBtn").onclick = () => window.VerseGameBridge.exitGame();
+    const playAgainBtn = document.getElementById("playAgainBtn");
+    const doneBtn = document.getElementById("doneBtn");
+
+    playAgainBtn.onclick = () => {
+      if (performance.now() < unlockAt) return;
+      renderModeSelect();
+    };
+
+    doneBtn.onclick = () => {
+      if (performance.now() < unlockAt) return;
+      window.VerseGameBridge.exitGame();
+    };
+
+    setTimeout(() => {
+      if (playAgainBtn) playAgainBtn.disabled = false;
+      if (doneBtn) doneBtn.disabled = false;
+    }, 700);
+
     wireCommonNav();
   }
 
@@ -288,6 +310,7 @@
 
   function flap(){
     if (!state.running) return;
+    if (performance.now() < state.inputLockedUntil) return;
     state.birdVY = state.flapVelocity;
     createPuffs();
   }
@@ -463,21 +486,24 @@
 
     const correctLabel = getCurrentCorrectLabel();
     const decoys = getDecoysForPhase(phase, correctLabel, getDecoyCount());
-    const all = shuffle([{ label: correctLabel, correct: true }, ...decoys.map(label => ({ label, correct: false }))]);
+    const shouldSpawnCorrect = Math.random() < getCorrectSpawnChance();
+    const label = (shouldSpawnCorrect || decoys.length === 0)
+      ? correctLabel
+      : decoys[Math.floor(Math.random() * decoys.length)];
 
-    const lanes = buildLaneYs(all.length);
+    const laneY = pickSingleLaneY();
     const circleSize = getCircleSize();
 
-    state.targets = all.map((item, index) => ({
+    state.targets = [{
       id: state.nextTargetId++,
-      x: state.fieldWidth + 80 + index * 14,
-      y: lanes[index],
-      label: item.label,
-      correct: item.correct,
-      color: TARGET_COLORS[index % TARGET_COLORS.length],
+      x: state.fieldWidth + 90,
+      y: laneY,
+      label,
+      correct: label === correctLabel,
+      color: TARGET_COLORS[Math.floor(Math.random() * TARGET_COLORS.length)],
       speed: getScrollSpeed(),
       circleSize
-    }));
+    }];
   }
 
   function updateTargets(dt, ts){
@@ -500,7 +526,7 @@
     if (missedCorrect){
       registerMistake(ts);
       state.targets = [];
-      state.spawnCooldown = 0.55;
+      state.spawnCooldown = 0.22;
       return;
     }
 
@@ -511,11 +537,12 @@
 
       if (dist <= state.birdRadius + (target.circleSize * 0.5)){
         if (target.correct){
+          registerSuccess(ts, target.x, target.y - 12);
           handleCorrect();
         } else {
           registerMistake(ts);
           state.targets = [];
-          state.spawnCooldown = 0.42;
+          state.spawnCooldown = 0.18;
         }
         return;
       }
@@ -530,7 +557,7 @@
     state.progressIndex += 1;
     state.streak += 1;
     state.targets = [];
-    state.spawnCooldown = 0.36;
+    state.spawnCooldown = 0.14;
     updateBuildText();
     updateStreakPill();
 
@@ -546,15 +573,30 @@
     updateStreakPill();
 
     const build = document.getElementById("vbBuild");
-    const flash = document.getElementById("vbFlash");
     if (build){
       build.classList.remove("vb-shake");
       void build.offsetWidth;
       build.classList.add("vb-shake");
     }
-    if (flash){
-      flash.classList.add("is-on");
-      setTimeout(() => flash.classList.remove("is-on"), 160);
+  }
+
+  function registerSuccess(ts, targetX, targetY){
+    state.successFlashUntil = ts + 130;
+
+    for (let i = 0; i < 8; i++){
+      const angle = (Math.PI * 2 * i) / 8;
+      const speed = 70 + Math.random() * 55;
+      state.particles.push({
+        id: Math.random().toString(36).slice(2),
+        type: "spark",
+        x: targetX,
+        y: targetY,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 0.24 + Math.random() * 0.08,
+        age: 0,
+        size: 7 + Math.random() * 6
+      });
     }
   }
 
@@ -583,6 +625,7 @@
     renderParticles();
     renderTrail();
     renderBird();
+    renderFlash(ts);
     renderGrass(ts);
   }
 
@@ -592,6 +635,25 @@
     if (ts > state.shakeUntil){
       build.classList.remove("vb-shake");
     }
+  }
+
+  function renderFlash(ts){
+    const flash = document.getElementById("vbFlash");
+    if (!flash) return;
+
+    if (ts <= state.flashUntil){
+      flash.classList.add("is-on");
+      flash.style.background = "rgba(255, 90, 81, 0.34)";
+      return;
+    }
+
+    if (ts <= state.successFlashUntil){
+      flash.classList.add("is-on");
+      flash.style.background = "rgba(64, 185, 197, 0.26)";
+      return;
+    }
+
+    flash.classList.remove("is-on");
   }
 
   function renderBird(){
@@ -617,11 +679,13 @@
   function renderParticles(){
     const layer = document.getElementById("vbParticles");
     if (!layer) return;
+
     layer.innerHTML = state.particles.map(p => {
       const alpha = 1 - (p.age / p.life);
+      const bg = p.type === "spark" ? "#ffffff" : "rgba(255,255,255,0.92)";
       return `
         <div class="vb-puff"
-             style="left:${p.x}px; top:${p.y}px; width:${p.size}px; height:${p.size}px; opacity:${alpha};">
+             style="left:${p.x}px; top:${p.y}px; width:${p.size}px; height:${p.size}px; opacity:${alpha}; background:${bg};">
         </div>
       `;
     }).join("");
@@ -748,6 +812,22 @@
       lanes.push(top + step * i + (Math.random() * 20 - 10));
     }
     return shuffle(lanes);
+  }
+
+  function getCorrectSpawnChance(){
+    if (selectedMode === "hard") return 0.38;
+    if (selectedMode === "medium") return 0.48;
+    return 0.58;
+  }
+
+  function pickSingleLaneY(){
+    const groundTop = state.fieldHeight - state.groundHeight;
+    const lanes = [
+      Math.max(64, groundTop * 0.24),
+      Math.max(92, groundTop * 0.50),
+      Math.max(120, groundTop * 0.76)
+    ];
+    return lanes[Math.floor(Math.random() * lanes.length)];
   }
 
   function getDecoysForPhase(phase, correctLabel, count){
