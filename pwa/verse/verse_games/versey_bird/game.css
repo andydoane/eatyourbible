@@ -131,12 +131,17 @@ body{
   100%{ transform: translateX(0); }
 }
 
-.vb-topbar{
+.vb-overlay-pills{
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 16px 8px;
   gap: 10px;
+  z-index: 7;
+  pointer-events: none;
 }
 
 .vb-pill{
@@ -409,10 +414,6 @@ body{
 
   .vb-bird{
     font-size: 48px;
-  }
-
-  .vb-topbar{
-    padding: 0 14px 8px;
   }
 
   .vb-pill{
