@@ -1,42 +1,19 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
   <title>Versey Bird</title>
 
-  <link rel="stylesheet" href="../shared/shell.css" />
-  <link rel="stylesheet" href="./game.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="../shared/shell.css">
+  <link rel="stylesheet" href="./game.css">
 </head>
 <body>
-  <div id="app">
-
-    <!-- BUILT AREA -->
-    <div id="builtArea"></div>
-
-    <!-- GAME AREA -->
-    <div id="gameArea">
-      <div id="cloudLayer"></div>
-
-      <div id="bird">🐤</div>
-
-      <div id="targetsLayer"></div>
-      <div id="particlesLayer"></div>
-
-      <div id="ground">
-        <div id="grass"></div>
-        <div id="dirt"></div>
-      </div>
-
-      <div id="flash"></div>
-    </div>
-
-    <!-- NAV -->
-    <div id="bottomNav">
-      <button id="exitBtn">Exit</button>
-    </div>
-
-  </div>
+  <div id="app" class="vm-shell"></div>
 
   <script src="../shared/bridge.js"></script>
   <script src="./game.js"></script>
