@@ -151,13 +151,28 @@
             </div>
           </div>
 
-          <div class="vb-topbar">
-            <div class="vb-pill" id="vbModePill">${escapeHtml(capitalize(mode))}</div>
-            <div class="vb-pill" id="vbStreakPill">Streak: 0</div>
-          </div>
-
           <div class="vb-field-wrap">
             <div class="vb-field" id="vbField">
+              <div class="vb-overlay-pills">
+                <div class="vb-pill" id="vbModePill">${escapeHtml(capitalize(mode))}</div>
+                <div class="vb-pill" id="vbStreakPill">Streak: 0</div>
+              </div>
+
+              <div class="vb-clouds" id="vbClouds"></div>
+              <div class="vb-trail" id="vbTrail"></div>
+              <div class="vb-particles" id="vbParticles"></div>
+              <div class="vb-targets" id="vbTargets"></div>
+              <div class="vb-bird" id="vbBird">${state.birdEmoji}</div>
+              <div class="vb-flash" id="vbFlash"></div>
+
+              <div class="vb-ground">
+                <div class="vb-grass-top">
+                  <div class="vb-grass-track" id="vbGrassTrack"></div>
+                </div>
+                <div class="vb-dirt"></div>
+              </div>
+            </div>
+          </div>
               <div class="vb-clouds" id="vbClouds"></div>
               <div class="vb-trail" id="vbTrail"></div>
               <div class="vb-particles" id="vbParticles"></div>
@@ -293,10 +308,13 @@
   }
 
   function startLoop(){
-    stopLoop();
+    if (state.rafId) cancelAnimationFrame(state.rafId);
+    state.rafId = 0;
+    state.running = true;
     state.lastTs = 0;
     state.rafId = requestAnimationFrame(loop);
   }
+  
 
   function stopLoop(){
     if (state.rafId) cancelAnimationFrame(state.rafId);
