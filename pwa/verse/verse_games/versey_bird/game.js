@@ -642,7 +642,7 @@
   }
 
   function getGroundBandWidth(){
-    return state.groundHeight;
+    return 22;
   }
 
   function getGroundBandGap(){
@@ -658,7 +658,7 @@
     const bandWidth = getGroundBandWidth();
     const spacing = bandWidth + getGroundBandGap();
 
-    for (let x = -bandWidth; x < state.fieldWidth + spacing; x += spacing){
+    for (let x = -spacing; x < state.fieldWidth + spacing; x += spacing){
       state.groundBands.push({
         id: state.nextGroundBandId++,
         x,
@@ -671,23 +671,23 @@
     const speed = getGroundBandSpeed();
 
     for (const band of state.groundBands){
-      band.x += speed * dt;
+      band.x -= speed * dt;
     }
 
     const bandWidth = getGroundBandWidth();
     const spacing = bandWidth + getGroundBandGap();
 
-    state.groundBands = state.groundBands.filter(band => band.x < state.fieldWidth + bandWidth * 2);
+    state.groundBands = state.groundBands.filter(band => band.x > -bandWidth * 2);
 
-    let leftmost = state.groundBands.length
-      ? Math.min(...state.groundBands.map(b => b.x))
-      : bandWidth;
+    let rightmost = state.groundBands.length
+      ? Math.max(...state.groundBands.map(b => b.x))
+      : -spacing;
 
-    while (leftmost > -spacing){
-      leftmost -= spacing;
+    while (rightmost < state.fieldWidth + spacing){
+      rightmost += spacing;
       state.groundBands.push({
         id: state.nextGroundBandId++,
-        x: leftmost,
+        x: rightmost,
         width: bandWidth
       });
     }
@@ -703,13 +703,7 @@
         style="
           left:${band.x}px;
           width:${band.width}px;
-          background:linear-gradient(
-            to right,
-            transparent 0%,
-            ${state.theme.bandColor} 34%,
-            ${state.theme.bandColor} 66%,
-            transparent 100%
-          );
+          background:${state.theme.bandColor};
         "
       ></div>
     `).join("");
