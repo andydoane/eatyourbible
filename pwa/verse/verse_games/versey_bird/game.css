@@ -176,6 +176,7 @@ body{
 .vb-trail,
 .vb-particles,
 .vb-targets,
+.vb-obstacles,
 .vb-flash{
   position: absolute;
   inset: 0;
@@ -198,6 +199,14 @@ body{
   filter: drop-shadow(0 4px 0 rgba(0,0,0,0.22));
   z-index: 5;
   will-change: transform;
+}
+
+.vb-obstacle{
+  position: absolute;
+  transform: translate(-50%, -50%);
+  line-height: 1;
+  z-index: 4;
+  filter: drop-shadow(0 3px 0 rgba(0,0,0,0.20));
 }
 
 .vb-target{
