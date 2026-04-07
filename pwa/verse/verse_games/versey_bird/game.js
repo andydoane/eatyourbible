@@ -5,7 +5,65 @@
 
   const GAME_ID = "versey_bird";
   const TARGET_COLORS = ["#ff5a51","#ffa351","#ffc751","#40b9c5","#7f66c6","#a7cb6f"];
-  const BIRDS = ["🐦","🐓","🐤","🦆","🦅","🐧","🐥"];
+  const MEADOW_BIRDS = ["🐦","🐓","🐤","🦆","🦅","🐥"];
+
+  const SPECIAL_THEMES = [
+    {
+      id: "penguin_ice",
+      playerEmoji: "🐧",
+      sky: "#87c7ee",
+      cloudEmoji: "❄️",
+      groundTop1: "#b7e7ff",
+      groundTop2: "#8fd2f5",
+      groundBase1: "#75b8e0",
+      groundBase2: "#5aa1ca",
+      bandColor: "rgba(10, 54, 92, 0.12)"
+    },
+    {
+      id: "phoenix_desert",
+      playerEmoji: "🐦‍🔥",
+      sky: "#e7b15e",
+      cloudEmoji: "☁️",
+      groundTop1: "#f2d28a",
+      groundTop2: "#dfbb69",
+      groundBase1: "#c99652",
+      groundBase2: "#b57f41",
+      bandColor: "rgba(96, 54, 16, 0.10)"
+    },
+    {
+      id: "ufo_moon",
+      playerEmoji: "🛸",
+      sky: "#101318",
+      cloudEmoji: "⭐",
+      groundTop1: "#b9bcc4",
+      groundTop2: "#a4a8b2",
+      groundBase1: "#7c828f",
+      groundBase2: "#646a76",
+      bandColor: "rgba(0, 0, 0, 0.22)"
+    },
+    {
+      id: "butterfly_rainbow",
+      playerEmoji: "🦋",
+      sky: "#8dd7ff",
+      cloudEmoji: "✨",
+      groundTop1: "#ffd6f3",
+      groundTop2: "#ffd26a",
+      groundBase1: "#cba8ff",
+      groundBase2: "#8fd7a6",
+      bandColor: "rgba(110, 56, 145, 0.10)"
+    },
+    {
+      id: "bumble_honey",
+      playerEmoji: "🐝",
+      sky: "#f7d661",
+      cloudEmoji: "☁️",
+      groundTop1: "#ffd95c",
+      groundTop2: "#f0bc2e",
+      groundBase1: "#c6862a",
+      groundBase2: "#9f6617",
+      bandColor: "rgba(86, 52, 0, 0.12)"
+    }
+  ];
   const BOOKS = [
     "Genesis","Exodus","Leviticus","Numbers","Deuteronomy","Joshua","Judges","Ruth",
     "1 Samuel","2 Samuel","1 Kings","2 Kings","1 Chronicles","2 Chronicles","Ezra","Nehemiah","Esther",
@@ -30,7 +88,7 @@
     running: false,
     rafId: 0,
     spawnCooldown: 0,
-    birdEmoji: BIRDS[Math.floor(Math.random() * BIRDS.length)],
+    birdEmoji: "",
     birdX: 0,
     birdY: 0,
     birdVY: 0,
@@ -44,6 +102,9 @@
     particles: [],
     trail: [],
     targets: [],
+    theme: null,
+    groundBands: [],
+    nextGroundBandId: 1,
     nextTargetId: 1,
     words: tokenizeVerse(ctx.verseText),
     bookLabel: "",
@@ -60,6 +121,27 @@
 
   setupReferenceSegments();
   renderIntro();
+
+  function createMeadowTheme(){
+    const bird = MEADOW_BIRDS[Math.floor(Math.random() * MEADOW_BIRDS.length)];
+    return {
+      id: "meadow",
+      playerEmoji: bird,
+      sky: "#40b9c5",
+      cloudEmoji: "☁️",
+      groundTop1: "#b7d97b",
+      groundTop2: "#a7cb6f",
+      groundBase1: "#9b6a3c",
+      groundBase2: "#8c5d33",
+      bandColor: "rgba(0, 0, 0, 0.08)"
+    };
+  }
+
+  function pickRandomTheme(){
+    const pool = [createMeadowTheme(), createMeadowTheme(), createMeadowTheme(), ...SPECIAL_THEMES];
+    const chosen = pool[Math.floor(Math.random() * pool.length)];
+    return { ...chosen };
+  }
 
   function renderIntro(){
     stopLoop();
@@ -126,6 +208,10 @@
   function startGame(mode){
     selectedMode = mode;
     completed = false;
+    state.theme = pickRandomTheme();
+    state.birdEmoji = state.theme.playerEmoji;
+    state.groundBands = [];
+    state.nextGroundBandId = 1;
 
     state.running = true;
     state.progressIndex = 0;
@@ -152,7 +238,7 @@
           </div>
 
           <div class="vb-field-wrap">
-            <div class="vb-field" id="vbField">
+              <div class="vb-field" id="vbField" style="background:${state.theme.sky};">
               <div class="vb-overlay-pills">
                 <div class="vb-pill" id="vbModePill">${escapeHtml(capitalize(mode))}</div>
                 <div class="vb-pill" id="vbStreakPill">Streak: 0</div>
@@ -166,8 +252,15 @@
               <div class="vb-flash" id="vbFlash"></div>
 
               <div class="vb-ground">
-                <div class="vb-grass-top"></div>
-                <div class="vb-dirt"></div>
+                <div
+                  class="vb-grass-top"
+                  style="background:linear-gradient(to bottom, ${state.theme.groundTop1} 0%, ${state.theme.groundTop2} 100%);"
+                ></div>
+                <div class="vb-ground-bands" id="vbGroundBands"></div>
+                <div
+                  class="vb-dirt"
+                  style="background:linear-gradient(to bottom, ${state.theme.groundBase1} 0%, ${state.theme.groundBase2} 100%);"
+                ></div>
               </div>
             </div>
           </div>
@@ -183,6 +276,7 @@
     wireGameInput();
     updateBuildText();
     recalcField();
+    seedGroundBands();
     resetBird();
     seedClouds();
     spawnBatch();
@@ -334,6 +428,7 @@
     updateClouds(dt);
     updateParticles(dt);
     updateTrail(dt);
+    updateGroundBands(dt);
     updateTargets(dt, ts);
     maybeSpawnBatch(dt);
     renderFrame(ts);
@@ -546,6 +641,80 @@
     }
   }
 
+  function getGroundBandWidth(){
+    return state.groundHeight;
+  }
+
+  function getGroundBandGap(){
+    return getGroundBandWidth();
+  }
+
+  function getGroundBandSpeed(){
+    return getScrollSpeed();
+  }
+
+  function seedGroundBands(){
+    state.groundBands = [];
+    const bandWidth = getGroundBandWidth();
+    const spacing = bandWidth + getGroundBandGap();
+
+    for (let x = -bandWidth; x < state.fieldWidth + spacing; x += spacing){
+      state.groundBands.push({
+        id: state.nextGroundBandId++,
+        x,
+        width: bandWidth
+      });
+    }
+  }
+
+  function updateGroundBands(dt){
+    const speed = getGroundBandSpeed();
+
+    for (const band of state.groundBands){
+      band.x += speed * dt;
+    }
+
+    const bandWidth = getGroundBandWidth();
+    const spacing = bandWidth + getGroundBandGap();
+
+    state.groundBands = state.groundBands.filter(band => band.x < state.fieldWidth + bandWidth * 2);
+
+    let leftmost = state.groundBands.length
+      ? Math.min(...state.groundBands.map(b => b.x))
+      : bandWidth;
+
+    while (leftmost > -spacing){
+      leftmost -= spacing;
+      state.groundBands.push({
+        id: state.nextGroundBandId++,
+        x: leftmost,
+        width: bandWidth
+      });
+    }
+  }
+
+  function renderGroundBands(){
+    const layer = document.getElementById("vbGroundBands");
+    if (!layer || !state.theme) return;
+
+    layer.innerHTML = state.groundBands.map(band => `
+      <div
+        class="vb-ground-band"
+        style="
+          left:${band.x}px;
+          width:${band.width}px;
+          background:linear-gradient(
+            to right,
+            transparent 0%,
+            ${state.theme.bandColor} 34%,
+            ${state.theme.bandColor} 66%,
+            transparent 100%
+          );
+        "
+      ></div>
+    `).join("");
+  }
+
   function handleCorrect(){
     state.progressIndex += 1;
     state.streak += 1;
@@ -619,6 +788,7 @@
     renderTrail();
     renderBird();
     renderFlash(ts);
+    renderGroundBands();
   }
 
   function renderBuildShake(ts){
@@ -660,10 +830,13 @@
   function renderClouds(){
     const layer = document.getElementById("vbClouds");
     if (!layer) return;
+
+    const emoji = state.theme?.cloudEmoji || "☁️";
+
     layer.innerHTML = state.clouds.map(cloud => `
       <div class="vb-cloud"
            style="left:${cloud.x}px; top:${cloud.y}px; font-size:${cloud.size}px; opacity:${cloud.opacity};">
-        ☁️
+        ${emoji}
       </div>
     `).join("");
   }
