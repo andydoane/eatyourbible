@@ -797,13 +797,6 @@
     return 26 + Math.random() * 30;
   }
 
-  function renderGrass(ts){
-    const track = document.getElementById("vbGrassTrack");
-    if (!track) return;
-    const x = -((ts * 0.03) % 42);
-    track.style.transform = `translateX(${x}px)`;
-  }
-
   function updateBuildText(){
     const el = document.getElementById("vbBuildText");
     if (!el) return;
