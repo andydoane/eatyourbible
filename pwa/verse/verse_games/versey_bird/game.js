@@ -120,7 +120,7 @@
     prizes: [],
     prizeSpawnTimer: 0,
     nextPrizeId: 1,
-    prizeTrailUntil: 0,
+    prizeAuraUntil: 0,
     birdSpinUntil: 0,
     theme: null,
     groundBands: [],
@@ -248,7 +248,7 @@
     state.prizes = [];
     state.prizeSpawnTimer = 3.2;
     state.nextPrizeId = 1;
-    state.prizeTrailUntil = 0;
+    state.prizeAuraUntil = 0;
     state.birdSpinUntil = 0;
     state.nextTargetId = 1;
     state.spawnCooldown = 0;
@@ -280,6 +280,7 @@
               <div class="vb-targets" id="vbTargets"></div>
               <div class="vb-obstacles" id="vbObstacles"></div>
               <div class="vb-prizes" id="vbPrizes"></div>
+              <div class="vb-aura" id="vbAura"></div>
               <div class="vb-bird" id="vbBird">${state.birdEmoji}</div>
               <div class="vb-flash" id="vbFlash"></div>
 
@@ -534,17 +535,20 @@
   }
 
   function createPuffs(){
-    for (let i = 0; i < 4; i++){
+    const auraMode = performance.now() < state.prizeAuraUntil;
+    const puffCount = auraMode ? 6 : 4;
+
+    for (let i = 0; i < puffCount; i++){
       state.particles.push({
         id: Math.random().toString(36).slice(2),
-        type: "puff",
+        type: auraMode ? "auraPuff" : "puff",
         x: state.birdX - 18 + Math.random() * 8,
         y: state.birdY + 8 + (Math.random() * 12 - 6),
         vx: -70 - Math.random() * 40,
         vy: -10 + Math.random() * 20,
-        life: 0.42 + Math.random() * 0.16,
+        life: auraMode ? (0.52 + Math.random() * 0.18) : (0.42 + Math.random() * 0.16),
         age: 0,
-        size: 8 + Math.random() * 12
+        size: auraMode ? (12 + Math.random() * 14) : (8 + Math.random() * 12)
       });
     }
   }
@@ -587,11 +591,6 @@
   }
 
   function getTrailColor(){
-    if (performance.now() < state.prizeTrailUntil){
-      const stars = ["#ff5a51","#ffa351","#ffc751","#a7cb6f","#40b9c5","#7f66c6"];
-      return stars[Math.floor(Math.random() * stars.length)];
-    }
-
     const tier = getTrailTier();
     const rainbow = ["#ff5a51","#ffa351","#ffc751","#a7cb6f","#40b9c5","#7f66c6"];
     if (tier <= 1) return "#ffc751";
@@ -903,7 +902,7 @@ function getObstacleGroundY(){
 
   function handlePrizePickup(ts, prizeId, x, y){
     state.prizes = state.prizes.filter(p => p.id !== prizeId);
-    state.prizeTrailUntil = performance.now() + 3500;
+    state.prizeAuraUntil = performance.now() + 3500;
 
     for (let i = 0; i < 10; i++){
       const angle = (Math.PI * 2 * i) / 10;
@@ -1015,6 +1014,7 @@ function getObstacleGroundY(){
     renderTrail();
     renderObstacles();
     renderPrizes();
+    renderAura();
     renderBird();
     renderFlash(ts);
     renderGroundBands();
@@ -1062,6 +1062,35 @@ function getObstacleGroundY(){
     bird.style.transform = `translate(-50%, -50%) scaleX(-1) rotate(${angle}deg)`;
   }
 
+  function renderAura(){
+    const layer = document.getElementById("vbAura");
+    if (!layer) return;
+
+    if (performance.now() >= state.prizeAuraUntil){
+      layer.innerHTML = "";
+      return;
+    }
+
+    const t = performance.now() / 1000;
+    const radius = 24;
+    const sparkles = [];
+
+    for (let i = 0; i < 3; i++){
+      const angle = t * 3.4 + (i * Math.PI * 2 / 3);
+      const x = state.birdX + Math.cos(angle) * radius;
+      const y = state.birdY + Math.sin(angle) * 14;
+
+      sparkles.push(`
+        <div class="vb-aura-star" style="left:${x}px; top:${y}px;">✨</div>
+      `);
+    }
+
+    layer.innerHTML = `
+      <div class="vb-aura-glow" style="left:${state.birdX}px; top:${state.birdY}px;"></div>
+      ${sparkles.join("")}
+    `;
+  }
+
   function renderClouds(){
     const layer = document.getElementById("vbClouds");
     if (!layer) return;
@@ -1097,6 +1126,21 @@ function getObstacleGroundY(){
         `;
       }
 
+      if (p.type === "auraPuff"){
+        return `
+          <div class="vb-puff"
+               style="
+                 left:${p.x}px;
+                 top:${p.y}px;
+                 width:${p.size}px;
+                 height:${p.size}px;
+                 opacity:${alpha};
+                 background:rgba(255, 239, 160, 0.92);
+               ">
+          </div>
+        `;
+      }
+
       const bg = p.type === "spark" ? "#ffffff" : "rgba(255,255,255,0.92)";
       return `
         <div class="vb-puff"
@@ -1110,25 +1154,8 @@ function getObstacleGroundY(){
     const layer = document.getElementById("vbTrail");
     if (!layer) return;
 
-    const prizeMode = performance.now() < state.prizeTrailUntil;
-
     layer.innerHTML = state.trail.map(t => {
       const alpha = 1 - (t.age / t.life);
-
-      if (prizeMode){
-        return `
-          <div
-            class="vb-trail-star"
-            style="
-              left:${t.x}px;
-              top:${t.y}px;
-              font-size:${Math.max(12, t.size)}px;
-              opacity:${alpha};
-            "
-          >⭐</div>
-        `;
-      }
-
       return `
         <div class="vb-trail-dot"
              style="left:${t.x}px; top:${t.y}px; width:${t.size}px; height:${t.size}px; background:${t.color}; opacity:${alpha};">
