@@ -183,7 +183,6 @@
     wireGameInput();
     updateBuildText();
     recalcField();
-    seedGrass();
     resetBird();
     seedClouds();
     spawnBatch();
