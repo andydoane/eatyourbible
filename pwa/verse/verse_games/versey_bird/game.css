@@ -278,25 +278,6 @@ body{
   background: linear-gradient(to bottom, #b7d97b 0%, #a7cb6f 100%);
 }
 
-.vb-grass-sprites{
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: -18px;
-  height: 40px;
-  overflow: visible;
-  pointer-events: none;
-}
-
-.vb-grass-tuft{
-  position: absolute;
-  transform-origin: 50% 100%;
-  opacity: 0.98;
-  line-height: 0;
-  will-change: transform;
-  pointer-events: none;
-}
-
 .vb-dirt{
   position: absolute;
   left: 0;
