@@ -770,10 +770,14 @@ function getObstacleGroundY(){
     }
 
     for (const obstacle of state.obstacles){
+      const obstacleHalfHeight = obstacle.size * 0.5;
+      const obstacleCenterY = obstacle.y - obstacleHalfHeight;
+
       const dx = obstacle.x - state.birdX;
-      const dy = obstacle.y - state.birdY;
+      const dy = obstacleCenterY - state.birdY;
+
       const hitX = Math.abs(dx) < 24;
-      const hitY = Math.abs(dy) < 28;
+      const hitY = Math.abs(dy) < (state.birdRadius + obstacleHalfHeight - 4);
 
       if (hitX && hitY && performance.now() >= state.inputLockedUntil){
         handleObstacleHit(ts, obstacle.id);
