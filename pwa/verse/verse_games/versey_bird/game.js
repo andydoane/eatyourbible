@@ -732,9 +732,9 @@
     return getScrollSpeed();
   }
 
-  function getObstacleGroundY(){
-    return state.fieldHeight - state.groundHeight + 4;
-  }
+function getObstacleGroundY(){
+  return state.fieldHeight - state.groundHeight + 2;
+}
 
   function makeObstacle(x){
     return {
