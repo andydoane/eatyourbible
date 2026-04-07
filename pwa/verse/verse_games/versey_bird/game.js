@@ -48,6 +48,9 @@
     particles: [],
     trail: [],
     targets: [],
+    grassTufts: [],
+    grassSpawnTimer: 0,
+    nextGrassId: 1,
     nextTargetId: 1,
     words: tokenizeVerse(ctx.verseText),
     bookLabel: "",
@@ -138,6 +141,9 @@
     state.trail = [];
     state.particles = [];
     state.clouds = [];
+    state.grassTufts = [];
+    state.grassSpawnTimer = 0;
+    state.nextGrassId = 1;
     state.nextTargetId = 1;
     state.spawnCooldown = 0;
     state.lastTs = 0;
@@ -170,9 +176,8 @@
               <div class="vb-flash" id="vbFlash"></div>
 
               <div class="vb-ground">
-                <div class="vb-grass-top">
-                  <div class="vb-grass-track" id="vbGrassTrack"></div>
-                </div>
+                <div class="vb-grass-top"></div>
+                <div class="vb-grass-sprites" id="vbGrassSprites"></div>
                 <div class="vb-dirt"></div>
               </div>
             </div>
@@ -189,7 +194,7 @@
     wireGameInput();
     updateBuildText();
     recalcField();
-    populateGrass();
+    seedGrass();
     resetBird();
     seedClouds();
     spawnBatch();
@@ -341,6 +346,7 @@
     updateClouds(dt);
     updateParticles(dt);
     updateTrail(dt);
+    updateGrass(dt);
     updateTargets(dt, ts);
     maybeSpawnBatch(dt);
     renderFrame(ts);
@@ -626,7 +632,7 @@
     renderTrail();
     renderBird();
     renderFlash(ts);
-    renderGrass(ts);
+    renderGrass();
   }
 
   function renderBuildShake(ts){
@@ -715,31 +721,80 @@
     `).join("");
   }
 
-  function populateGrass(){
-    const track = document.getElementById("vbGrassTrack");
-    if (!track) return;
+  function seedGrass(){
+    state.grassTufts = [];
+    state.grassSpawnTimer = 0;
 
-    const items = [];
-    const spacing = 42;
-    const count = Math.ceil((state.fieldWidth + 120) / spacing);
+    let x = -30;
+    while (x < state.fieldWidth + 80){
+      const tuft = makeGrassTuft(x);
+      state.grassTufts.push(tuft);
+      x += getNextGrassGap();
+    }
+  }
 
-    for (let i = 0; i < count; i++){
-      const svg = GRASS_SVGS[i % GRASS_SVGS.length];
-      const width = 34 + Math.random() * 36;
-      const scaleY = 0.55 + Math.random() * 0.85;
-      const scaleX = 0.78 + Math.random() * 0.55;
-      const yNudge = -2 + Math.random() * 4;
-      const rotate = -4 + Math.random() * 8;
-
-      items.push(`
-        <div class="vb-grass-tuft"
-             style="left:${i * spacing}px; width:${width}px; transform:translateX(-50%) scaleX(${scaleX}) scaleY(${scaleY}) rotate(${rotate}deg); bottom:${yNudge}px;">
-          ${svg}
-        </div>
-      `);
+  function updateGrass(dt){
+    for (const tuft of state.grassTufts){
+      tuft.x -= tuft.speed * dt;
     }
 
-    track.innerHTML = items.join("");
+    state.grassTufts = state.grassTufts.filter(tuft => tuft.x > -120);
+
+    state.grassSpawnTimer -= dt;
+    if (state.grassSpawnTimer <= 0){
+      const rightmostX = state.grassTufts.length
+        ? Math.max(...state.grassTufts.map(t => t.x))
+        : -9999;
+
+      if (rightmostX < state.fieldWidth + 20){
+        state.grassTufts.push(makeGrassTuft(state.fieldWidth + 50));
+        state.grassSpawnTimer = 0.08 + Math.random() * 0.14;
+      } else {
+        state.grassSpawnTimer = 0.04;
+      }
+    }
+  }
+
+  function renderGrass(){
+    const layer = document.getElementById("vbGrassSprites");
+    if (!layer) return;
+
+    layer.innerHTML = state.grassTufts.map(tuft => `
+      <div class="vb-grass-tuft"
+           style="
+             left:${tuft.x}px;
+             width:${tuft.width}px;
+             bottom:${tuft.bottom}px;
+             transform:translateX(-50%) scaleX(${tuft.scaleX}) scaleY(${tuft.scaleY}) rotate(${tuft.rotate}deg);
+           ">
+        ${tuft.svg}
+      </div>
+    `).join("");
+  }
+
+  function makeGrassTuft(x){
+    const width = 34 + Math.random() * 36;
+    const scaleY = 0.55 + Math.random() * 0.85;
+    const scaleX = 0.78 + Math.random() * 0.55;
+    const rotate = -4 + Math.random() * 8;
+    const bottom = 14 + Math.random() * 4;
+    const speed = 70 + Math.random() * 18;
+
+    return {
+      id: state.nextGrassId++,
+      x,
+      width,
+      scaleX,
+      scaleY,
+      rotate,
+      bottom,
+      speed,
+      svg: GRASS_SVGS[Math.floor(Math.random() * GRASS_SVGS.length)]
+    };
+  }
+
+  function getNextGrassGap(){
+    return 26 + Math.random() * 30;
   }
 
   function renderGrass(ts){
@@ -806,19 +861,6 @@
     if (selectedMode === "hard") return 205;
     if (selectedMode === "medium") return 172;
     return 140;
-  }
-
-  function buildLaneYs(count){
-    const groundTop = state.fieldHeight - state.groundHeight;
-    const top = 54;
-    const bottom = groundTop - 54;
-    const lanes = [];
-    if (count === 1) return [(top + bottom) * 0.5];
-    const step = (bottom - top) / (count - 1);
-    for (let i = 0; i < count; i++){
-      lanes.push(top + step * i + (Math.random() * 20 - 10));
-    }
-    return shuffle(lanes);
   }
 
   function getCorrectSpawnChance(){
