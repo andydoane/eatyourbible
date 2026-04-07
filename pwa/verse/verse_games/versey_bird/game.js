@@ -11,6 +11,7 @@
     {
       id: "penguin_ice",
       playerEmoji: "🐧",
+      obstacleEmoji: "🧊",
       sky: "#87c7ee",
       cloudEmoji: "❄️",
       groundTop1: "#b7e7ff",
@@ -22,6 +23,7 @@
     {
       id: "phoenix_desert",
       playerEmoji: "🐦‍🔥",
+      obstacleEmoji: "🌵",
       sky: "#e7b15e",
       cloudEmoji: "☁️",
       groundTop1: "#f2d28a",
@@ -33,6 +35,7 @@
     {
       id: "ufo_moon",
       playerEmoji: "🛸",
+      obstacleEmoji: "🪨",
       sky: "#101318",
       cloudEmoji: "⭐",
       groundTop1: "#b9bcc4",
@@ -44,6 +47,7 @@
     {
       id: "butterfly_rainbow",
       playerEmoji: "🦋",
+      obstacleEmoji: "🕸️",
       sky: "#8dd7ff",
       cloudEmoji: "✨",
       groundTop1: "#ffd6f3",
@@ -55,6 +59,7 @@
     {
       id: "bumble_honey",
       playerEmoji: "🐝",
+      obstacleEmoji: "🍯",
       sky: "#f7d661",
       cloudEmoji: "☁️",
       groundTop1: "#ffd95c",
@@ -64,6 +69,8 @@
       bandColor: "rgba(86, 52, 0, 0.12)"
     }
   ];
+  
+
   const BOOKS = [
     "Genesis","Exodus","Leviticus","Numbers","Deuteronomy","Joshua","Judges","Ruth",
     "1 Samuel","2 Samuel","1 Kings","2 Kings","1 Chronicles","2 Chronicles","Ezra","Nehemiah","Esther",
@@ -102,6 +109,10 @@
     particles: [],
     trail: [],
     targets: [],
+    obstacles: [],
+    obstacleSpawnTimer: 0,
+    nextObstacleId: 1,
+    birdSpinUntil: 0,
     theme: null,
     groundBands: [],
     nextGroundBandId: 1,
@@ -127,6 +138,7 @@
     return {
       id: "meadow",
       playerEmoji: bird,
+      obstacleEmoji: "🪨",
       sky: "#40b9c5",
       cloudEmoji: "☁️",
       groundTop1: "#b7d97b",
@@ -220,6 +232,10 @@
     state.trail = [];
     state.particles = [];
     state.clouds = [];
+    state.obstacles = [];
+    state.obstacleSpawnTimer = 1.2;
+    state.nextObstacleId = 1;
+    state.birdSpinUntil = 0;
     state.nextTargetId = 1;
     state.spawnCooldown = 0;
     state.lastTs = 0;
@@ -248,6 +264,7 @@
               <div class="vb-trail" id="vbTrail"></div>
               <div class="vb-particles" id="vbParticles"></div>
               <div class="vb-targets" id="vbTargets"></div>
+              <div class="vb-obstacles" id="vbObstacles"></div>
               <div class="vb-bird" id="vbBird">${state.birdEmoji}</div>
               <div class="vb-flash" id="vbFlash"></div>
 
@@ -429,7 +446,9 @@
     updateParticles(dt);
     updateTrail(dt);
     updateGroundBands(dt);
+    updateObstacles(dt, ts);
     updateTargets(dt, ts);
+    
     maybeSpawnBatch(dt);
     renderFrame(ts);
 
@@ -709,6 +728,88 @@
     `).join("");
   }
 
+  function getObstacleSpeed(){
+    return getScrollSpeed();
+  }
+
+  function getObstacleGroundY(){
+    return state.fieldHeight - state.groundHeight + 4;
+  }
+
+  function makeObstacle(x){
+    return {
+      id: state.nextObstacleId++,
+      x,
+      y: getObstacleGroundY(),
+      size: 28 + Math.random() * 6,
+      emoji: state.theme?.obstacleEmoji || "🪨",
+      speed: getObstacleSpeed()
+    };
+  }
+
+  function updateObstacles(dt, ts){
+    for (const obstacle of state.obstacles){
+      obstacle.x -= obstacle.speed * dt;
+      obstacle.y = getObstacleGroundY();
+    }
+
+    state.obstacles = state.obstacles.filter(obstacle => obstacle.x > -60);
+
+    state.obstacleSpawnTimer -= dt;
+    if (state.obstacleSpawnTimer <= 0){
+      const rightmost = state.obstacles.length
+        ? Math.max(...state.obstacles.map(o => o.x))
+        : -9999;
+
+      if (rightmost < state.fieldWidth - 120){
+        state.obstacles.push(makeObstacle(state.fieldWidth + 50));
+        state.obstacleSpawnTimer = 2.0 + Math.random() * 1.8;
+      } else {
+        state.obstacleSpawnTimer = 0.25;
+      }
+    }
+
+    for (const obstacle of state.obstacles){
+      const dx = obstacle.x - state.birdX;
+      const dy = obstacle.y - state.birdY;
+      const hitX = Math.abs(dx) < 24;
+      const hitY = Math.abs(dy) < 28;
+
+      if (hitX && hitY && performance.now() >= state.inputLockedUntil){
+        handleObstacleHit(ts, obstacle.id);
+        return;
+      }
+    }
+  }
+
+  function handleObstacleHit(ts, obstacleId){
+    state.obstacles = state.obstacles.filter(o => o.id !== obstacleId);
+    registerMistake(ts);
+
+    state.inputLockedUntil = performance.now() + 1000;
+    state.birdSpinUntil = performance.now() + 1000;
+
+    state.birdVY = -120;
+  }
+
+  function renderObstacles(){
+    const layer = document.getElementById("vbObstacles");
+    if (!layer) return;
+
+    layer.innerHTML = state.obstacles.map(obstacle => `
+      <div
+        class="vb-obstacle"
+        style="
+          left:${obstacle.x}px;
+          top:${obstacle.y}px;
+          font-size:${obstacle.size}px;
+        "
+      >
+        ${obstacle.emoji}
+      </div>
+    `).join("");
+  }
+
   function handleCorrect(){
     state.progressIndex += 1;
     state.streak += 1;
@@ -780,6 +881,7 @@
     renderTargets();
     renderParticles();
     renderTrail();
+    renderObstacles();
     renderBird();
     renderFlash(ts);
     renderGroundBands();
@@ -815,7 +917,13 @@
   function renderBird(){
     const bird = document.getElementById("vbBird");
     if (!bird) return;
-    const angle = clamp((state.birdVY / 9), -24, 54);
+
+    let angle = clamp((state.birdVY / 9), -24, 54);
+
+    if (performance.now() < state.birdSpinUntil){
+      angle = ((performance.now() / 1000) * 720) % 360;
+    }
+
     bird.style.left = `${state.birdX}px`;
     bird.style.top = `${state.birdY}px`;
     bird.style.transform = `translate(-50%, -50%) scaleX(-1) rotate(${angle}deg)`;
