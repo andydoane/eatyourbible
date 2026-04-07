@@ -20,11 +20,7 @@
     "taco","banana","penguin","cupcake","pickle","rocket","waffle","balloon","otter","pretzel",
     "pancake","bubble","marshmallow","treasure","robot","firetruck","yo-yo","snowman","blueberry","noodle"
   ];
-  const GRASS_SVGS = [
-    `<svg viewBox="0 0 2540 1651" xmlns="http://www.w3.org/2000/svg"><path fill="#a7cb6f" d="m 1231.6382,523.41679 c -83.6762,-0.0945 -171.6464,460.6266 -149.2495,784.60141 l 21.1527,320.7409 -291.25151,-281.3909 C 499.98023,1045.8205 309.82567,904.22381 270.04011,943.94701 c -46.94035,46.81565 82.46308,406.56359 218.39965,608.81789 23.95202,34.6838 44.01533,67.9683 61.65339,98.2352 H 2018.7291 l 108.4058,-261.2642 c 144.397,-347.3052 194.8208,-622.13268 114.4731,-622.13268 -98.6396,-0.12283 -387.0908,313.52368 -522.7156,567.97608 -72.1054,135.1892 -143.0904,245.7415 -158.0529,245.7727 -14.3086,-3.1102 -46.7533,-132.7631 -70.6741,-295.0145 -47.22,-316.137 -198.9268,-762.85835 -258.9628,-762.88953 z"/></svg>`,
-    `<svg viewBox="0 0 2540 1651" xmlns="http://www.w3.org/2000/svg"><path fill="#a7cb6f" d="m 1644.2751,13.517174 c -48.6513,0 -197.8696,250.563676 -276.7557,464.701426 -42.3365,115.06359 -108.6552,372.40794 -147.3835,571.9574 l -70.3936,362.7032 -111.8286,-362.7032 C 902.56946,611.23015 669.76761,52.493998 634.77209,82.605024 544.87455,159.71782 592.52916,1033.409 702.14894,1317.8175 c 18.97493,49.4591 27.99661,89.8351 19.59754,89.8351 -8.39908,0 -125.17272,-73.1626 -259.6156,-162.6246 C 223.9164,1086.4772 31.801425,1034.8403 31.801425,1129.2492 c 0,35.1193 191.337425,345.3759 313.741935,521.7509 H 2007.8182 c 16.7972,-45.6649 66.4123,-131.6747 135.8733,-231.7135 224.1231,-322.7305 364.5067,-561.25583 364.5067,-619.33229 0,-167.63388 -526.3236,160.82109 -778.038,485.54319 -87.4411,112.7924 -158.7369,181.1962 -158.3637,152.0489 0,-29.24 22.7077,-241.3247 50.0505,-471.35837 53.9695,-456.11623 65.6971,-952.670856 22.397,-952.670856 z"/></svg>`,
-    `<svg viewBox="0 0 2540 1651" xmlns="http://www.w3.org/2000/svg"><path fill="#a7cb6f" d="m 795.40834,94.155707 -0.4335,0.0816 c 0.0332,-0.0014 0.0712,0.02623 0.107,0.02478 -83.371,8.660863 -144.1702,681.452993 -103.0124,1147.702913 L 727.26834,1651 h 921.49416 l 91.0378,-378.9147 c 123.9418,-514.68586 158.2873,-916.58108 78.0759,-909.80449 -98.4794,8.14159 -368.1904,486.27872 -488.7779,865.87859 -64.1163,201.6835 -128.5476,367.6248 -143.4828,368.9325 -14.4654,-3.2934 -54.4,-188.1489 -87.7217,-420.8888 C 1032.3948,723.03693 855.12314,89.987818 795.08594,94.262088 c 0.1085,-0.0043 0.214,-0.09711 0.3224,-0.105657 z"/></svg>`
-  ];
+
 
   let selectedMode = null;
   let completed = false;
@@ -48,9 +44,6 @@
     particles: [],
     trail: [],
     targets: [],
-    grassTufts: [],
-    grassSpawnTimer: 0,
-    nextGrassId: 1,
     nextTargetId: 1,
     words: tokenizeVerse(ctx.verseText),
     bookLabel: "",
@@ -141,9 +134,6 @@
     state.trail = [];
     state.particles = [];
     state.clouds = [];
-    state.grassTufts = [];
-    state.grassSpawnTimer = 0;
-    state.nextGrassId = 1;
     state.nextTargetId = 1;
     state.spawnCooldown = 0;
     state.lastTs = 0;
@@ -177,7 +167,6 @@
 
               <div class="vb-ground">
                 <div class="vb-grass-top"></div>
-                <div class="vb-grass-sprites" id="vbGrassSprites"></div>
                 <div class="vb-dirt"></div>
               </div>
             </div>
@@ -346,7 +335,6 @@
     updateClouds(dt);
     updateParticles(dt);
     updateTrail(dt);
-    updateGrass(dt);
     updateTargets(dt, ts);
     maybeSpawnBatch(dt);
     renderFrame(ts);
@@ -632,7 +620,6 @@
     renderTrail();
     renderBird();
     renderFlash(ts);
-    renderGrass();
   }
 
   function renderBuildShake(ts){
@@ -719,82 +706,6 @@
         <div class="vb-target-label">${escapeHtml(target.label)}</div>
       </div>
     `).join("");
-  }
-
-  function seedGrass(){
-    state.grassTufts = [];
-    state.grassSpawnTimer = 0;
-
-    let x = -30;
-    while (x < state.fieldWidth + 80){
-      const tuft = makeGrassTuft(x);
-      state.grassTufts.push(tuft);
-      x += getNextGrassGap();
-    }
-  }
-
-  function updateGrass(dt){
-    for (const tuft of state.grassTufts){
-      tuft.x -= tuft.speed * dt;
-    }
-
-    state.grassTufts = state.grassTufts.filter(tuft => tuft.x > -120);
-
-    state.grassSpawnTimer -= dt;
-    if (state.grassSpawnTimer <= 0){
-      const rightmostX = state.grassTufts.length
-        ? Math.max(...state.grassTufts.map(t => t.x))
-        : -9999;
-
-      if (rightmostX < state.fieldWidth + 20){
-        state.grassTufts.push(makeGrassTuft(state.fieldWidth + 50));
-        state.grassSpawnTimer = 0.08 + Math.random() * 0.14;
-      } else {
-        state.grassSpawnTimer = 0.04;
-      }
-    }
-  }
-
-  function renderGrass(){
-    const layer = document.getElementById("vbGrassSprites");
-    if (!layer) return;
-
-    layer.innerHTML = state.grassTufts.map(tuft => `
-      <div class="vb-grass-tuft"
-           style="
-             left:${tuft.x}px;
-             width:${tuft.width}px;
-             bottom:${tuft.bottom}px;
-             transform:translateX(-50%) scaleX(${tuft.scaleX}) scaleY(${tuft.scaleY}) rotate(${tuft.rotate}deg);
-           ">
-        ${tuft.svg}
-      </div>
-    `).join("");
-  }
-
-  function makeGrassTuft(x){
-    const width = 34 + Math.random() * 36;
-    const scaleY = 0.55 + Math.random() * 0.85;
-    const scaleX = 0.78 + Math.random() * 0.55;
-    const rotate = -4 + Math.random() * 8;
-    const bottom = 14 + Math.random() * 4;
-    const speed = 70 + Math.random() * 18;
-
-    return {
-      id: state.nextGrassId++,
-      x,
-      width,
-      scaleX,
-      scaleY,
-      rotate,
-      bottom,
-      speed,
-      svg: GRASS_SVGS[Math.floor(Math.random() * GRASS_SVGS.length)]
-    };
-  }
-
-  function getNextGrassGap(){
-    return 26 + Math.random() * 30;
   }
 
   function updateBuildText(){
