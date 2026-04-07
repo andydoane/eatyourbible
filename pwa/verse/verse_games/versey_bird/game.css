@@ -262,11 +262,11 @@ body{
 
 .vb-aura-glow{
   position: absolute;
-  width: 46px;
-  height: 46px;
+  width: 64px;
+  height: 64px;
   transform: translate(-50%, -50%);
   border-radius: 999px;
-  background: radial-gradient(circle, rgba(255,239,160,0.38) 0%, rgba(255,239,160,0.18) 45%, rgba(255,239,160,0) 75%);
+  background: radial-gradient(circle, rgba(255,239,160,0.42) 0%, rgba(255,239,160,0.20) 48%, rgba(255,239,160,0) 76%);
   z-index: 4;
 }
 
@@ -275,7 +275,7 @@ body{
   transform: translate(-50%, -50%);
   line-height: 1;
   z-index: 4;
-  filter: drop-shadow(0 0 4px rgba(255,255,255,0.35));
+  filter: drop-shadow(0 0 6px rgba(255,255,255,0.45));
 }
 
 .vb-puff{
