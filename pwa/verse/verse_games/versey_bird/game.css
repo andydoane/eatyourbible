@@ -177,6 +177,7 @@ body{
 .vb-particles,
 .vb-targets,
 .vb-obstacles,
+.vb-prizes,
 .vb-flash{
   position: absolute;
   inset: 0;
@@ -207,6 +208,14 @@ body{
   line-height: 1;
   z-index: 4;
   filter: drop-shadow(0 3px 0 rgba(0,0,0,0.20));
+}
+
+.vb-prize{
+  position: absolute;
+  transform: translate(-50%, -100%);
+  line-height: 1;
+  z-index: 4;
+  filter: drop-shadow(0 3px 0 rgba(0,0,0,0.16));
 }
 
 .vb-target{
@@ -250,11 +259,25 @@ body{
   z-index: 2;
 }
 
+.vb-trail-star{
+  position: absolute;
+  transform: translate(-50%, -50%);
+  line-height: 1;
+  z-index: 2;
+}
+
 .vb-puff{
   position: absolute;
   border-radius: 999px;
   background: rgba(255,255,255,0.92);
   transform: translate(-50%, -50%);
+  z-index: 3;
+}
+
+.vb-prize-spark{
+  position: absolute;
+  transform: translate(-50%, -50%);
+  line-height: 1;
   z-index: 3;
 }
 
