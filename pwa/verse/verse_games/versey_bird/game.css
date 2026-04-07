@@ -278,6 +278,19 @@ body{
   background: linear-gradient(to bottom, #b7d97b 0%, #a7cb6f 100%);
 }
 
+.vb-ground-bands{
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.vb-ground-band{
+  position: absolute;
+  top: 0;
+  bottom: 0;
+}
+
 .vb-dirt{
   position: absolute;
   left: 0;
