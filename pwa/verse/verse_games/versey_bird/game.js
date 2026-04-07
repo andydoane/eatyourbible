@@ -6,6 +6,7 @@
   const GAME_ID = "versey_bird";
   const TARGET_COLORS = ["#ff5a51","#ffa351","#ffc751","#40b9c5","#7f66c6","#a7cb6f"];
   const MEADOW_BIRDS = ["🐦","🐓","🐤","🦆","🦅","🐥"];
+  const AURA_EMOJIS = ["✨","⭐","💫","🌟","🔆","🪄","💥","🎉","🫧","🌈"];
 
   const SPECIAL_THEMES = [
     {
@@ -123,6 +124,7 @@
     prizeAuraUntil: 0,
     birdSpinUntil: 0,
     theme: null,
+    auraEmojis: [],
     groundBands: [],
     nextGroundBandId: 1,
     nextTargetId: 1,
@@ -232,6 +234,7 @@
     completed = false;
     state.theme = pickRandomTheme();
     state.birdEmoji = state.theme.playerEmoji;
+    state.auraEmojis = shuffle(AURA_EMOJIS).slice(0, 3);
     state.groundBands = [];
     state.nextGroundBandId = 1;
 
@@ -782,8 +785,13 @@ function getObstacleGroundY(){
         : -9999;
 
       if (rightmost < state.fieldWidth - 120){
-        state.obstacles.push(makeObstacle(state.fieldWidth + 50));
-        state.obstacleSpawnTimer = 2.0 + Math.random() * 1.8;
+        const spawnX = findSafeGroundSpawnX(state.fieldWidth + 50, 110, 44, 10);
+        if (spawnX !== null){
+          state.obstacles.push(makeObstacle(spawnX));
+          state.obstacleSpawnTimer = 2.0 + Math.random() * 1.8;
+        } else {
+          state.obstacleSpawnTimer = 0.45;
+        }
       } else {
         state.obstacleSpawnTimer = 0.25;
       }
@@ -804,6 +812,25 @@ function getObstacleGroundY(){
         return;
       }
     }
+  }
+
+  function hasNearbyGroundItem(x, minGap){
+    for (const obstacle of state.obstacles){
+      if (Math.abs(obstacle.x - x) < minGap) return true;
+    }
+    for (const prize of state.prizes){
+      if (Math.abs(prize.x - x) < minGap) return true;
+    }
+    return false;
+  }
+
+  function findSafeGroundSpawnX(baseX, minGap, step = 40, attempts = 8){
+    let x = baseX;
+    for (let i = 0; i < attempts; i++){
+      if (!hasNearbyGroundItem(x, minGap)) return x;
+      x += step;
+    }
+    return null;
   }
 
   function handleObstacleHit(ts, obstacleId){
@@ -876,8 +903,13 @@ function getObstacleGroundY(){
         rightmostObstacle > state.fieldWidth - 180;
 
       if (!blockedByOtherThing){
-        state.prizes.push(makePrize(state.fieldWidth + 70));
-        state.prizeSpawnTimer = 5.0 + Math.random() * 3.0;
+        const spawnX = findSafeGroundSpawnX(state.fieldWidth + 70, 110, 44, 10);
+        if (spawnX !== null){
+          state.prizes.push(makePrize(spawnX));
+          state.prizeSpawnTimer = 5.0 + Math.random() * 3.0;
+        } else {
+          state.prizeSpawnTimer = 0.8;
+        }
       } else {
         state.prizeSpawnTimer = 0.6;
       }
@@ -1072,16 +1104,25 @@ function getObstacleGroundY(){
     }
 
     const t = performance.now() / 1000;
-    const radius = 24;
+    const radiusX = 42;
+    const radiusY = 24;
     const sparkles = [];
+    const auraSet = state.auraEmojis?.length ? state.auraEmojis : ["✨","⭐","💫"];
 
-    for (let i = 0; i < 3; i++){
-      const angle = t * 3.4 + (i * Math.PI * 2 / 3);
-      const x = state.birdX + Math.cos(angle) * radius;
-      const y = state.birdY + Math.sin(angle) * 14;
+    for (let i = 0; i < auraSet.length; i++){
+      const angle = t * 3.2 + (i * Math.PI * 2 / auraSet.length);
+      const x = state.birdX + Math.cos(angle) * radiusX;
+      const y = state.birdY + Math.sin(angle) * radiusY;
 
       sparkles.push(`
-        <div class="vb-aura-star" style="left:${x}px; top:${y}px;">✨</div>
+        <div
+          class="vb-aura-star"
+          style="
+            left:${x}px;
+            top:${y}px;
+            font-size:${18 + (i % 2) * 4}px;
+          "
+        >${auraSet[i]}</div>
       `);
     }
 
