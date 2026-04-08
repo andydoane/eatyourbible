@@ -25,5 +25,19 @@ window.EXTERNAL_VERSE_GAMES = [
       progressType: "standard",
       modes: ["easy", "medium", "hard"]
     }
+  },
+
+  {
+    enabled: true,
+    manifest: {
+      id: "dino_dash",
+      title: "Dino Dash",
+      description: "Run, jump, and collect the verse in order.",
+      icon: "🦖",
+      launchUrl: "./verse_games/dino_dash/index.html",
+      visibleInCarousel: true,
+      progressType: "standard",
+      modes: ["easy", "medium", "hard"]
+    }
   }
 ];
