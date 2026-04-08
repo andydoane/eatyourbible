@@ -523,8 +523,8 @@
     state.phaseRemaining = getObstacleTargetCount();
     state.obstacleGoal = state.phaseRemaining;
     state.obstaclesResolved = 0;
-    state.spawnPause = 0.95;
-    state.phaseBannerUntil = ts + 1200;
+    state.spawnPause = 0.38;
+    state.phaseBannerUntil = ts + 900;
     updatePills();
   }
 
@@ -676,9 +676,9 @@
 
   function spawnGap(){
     const width = getGapWidth();
-    const spacing = getObstacleSpacing();
+    const spacing = getHazardSpacing() * 0.78;
     const startX = Math.max(
-      state.fieldWidth + 120 * state.scale,
+      state.fieldWidth + 70 * state.scale,
       getRightmostHazardEnd() + spacing
     );
 
@@ -691,30 +691,30 @@
     appendGroundSegment("gap", width, true);
 
     const landingPad = Math.max(
-      150 * state.scale,
-      spacing * 0.9
+      110 * state.scale,
+      spacing * 0.65
     );
     appendGroundSegment("ground", landingPad, true);
 
     state.lastHazardSpawnX = startX + width;
     state.phaseRemaining -= 1;
-    state.spawnPause = 0.62 + Math.random() * 0.18;
+    state.spawnPause = 0.26 + Math.random() * 0.12;
   }
 
   function spawnObstacle(){
     const size = getObstacleSize();
-    const spacing = getObstacleSpacing();
+    const spacing = getHazardSpacing();
     const lane = Math.random() < 0.18 ? "top" : "ground";
     const emojiSet = lane === "top"
       ? (state.theme?.obstacleTop || ["☁️"])
       : (state.theme?.obstacleGround || ["🪨"]);
 
     const minX = Math.max(
-      state.fieldWidth + 90 * state.scale,
+      state.fieldWidth + 55 * state.scale,
       getRightmostHazardEnd() + spacing
     );
 
-    ensureGroundToRight(minX + spacing + 160 * state.scale);
+    ensureGroundToRight(minX + spacing + 120 * state.scale);
 
     const obstacleX = findGroundSpawnX(minX, size);
 
@@ -730,7 +730,7 @@
 
     state.lastHazardSpawnX = obstacleX;
     state.phaseRemaining -= 1;
-    state.spawnPause = 0.58 + Math.random() * 0.18;
+    state.spawnPause = 0.22 + Math.random() * 0.12;
   }
 
   function getRightmostHazardEnd(){
@@ -827,14 +827,14 @@
       const halfW = getWordHitHalfWidth(word.label, word.lane);
       const rect = {
         x: word.x - halfW,
-        y: word.y - (word.lane === "bottom" ? 18 : 22) * state.scale,
+        y: word.y - (word.lane === "bottom" ? 12 : 20) * state.scale,
         w: halfW * 2,
-        h: (word.lane === "bottom" ? 30 : 38) * state.scale
+        h: (word.lane === "bottom" ? 20 : 34) * state.scale
       };
 
       if (word.lane === "bottom"){
         const playerFeet = playerRect.y + playerRect.h;
-        const clearAbove = playerFeet < word.y - 14 * state.scale;
+        const clearAbove = playerFeet < word.y - 4 * state.scale;
         if (clearAbove) continue;
       }
 
@@ -1268,6 +1268,10 @@
     return (selectedMode === "hard" ? 190 : selectedMode === "medium" ? 220 : 250) * state.scale;
   }
 
+  function getHazardSpacing(){
+    return getObstacleSpacing() * 0.72;
+  }
+
   function getGapWidth(){
     return (selectedMode === "hard" ? 120 : selectedMode === "medium" ? 108 : 96) * state.scale;
   }
@@ -1297,11 +1301,11 @@
 
   function getWordHitHalfWidth(label, lane){
     const text = String(label || "");
-    const base = lane === "bottom" ? 54 : 62;
-    const perChar = lane === "bottom" ? 3.4 : 4.2;
+    const base = lane === "bottom" ? 38 : 54;
+    const perChar = lane === "bottom" ? 2.1 : 3.4;
     return Math.max(
-      34 * state.scale,
-      Math.min(base * state.scale, (text.length * perChar + 22) * state.scale)
+      24 * state.scale,
+      Math.min(base * state.scale, (text.length * perChar + 14) * state.scale)
     );
   }
 
