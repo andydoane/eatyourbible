@@ -109,6 +109,8 @@
     birdRadius: 30,
     gravity: 1180,
     flapVelocity: -410,
+    baseGravity: 1180,
+    baseFlapVelocity: -410,
     fieldWidth: 0,
     fieldHeight: 0,
     groundHeight: 74,
@@ -489,6 +491,8 @@ function recalcField(){
   state.scale = 1 + t * 0.35;
 
   state.birdX = Math.max(70, rect.width * 0.2);
+  state.gravity = state.baseGravity * state.scale;
+  state.flapVelocity = state.baseFlapVelocity * state.scale;
 }
 
   function resetBird(){
@@ -771,7 +775,7 @@ function getObstacleGroundY(){
       id: state.nextObstacleId++,
       x,
       y: getObstacleGroundY(),
-      size: (28 + Math.random() * 6) * state.scale,
+      size: 56 * state.scale,
       emoji: state.theme?.obstacleEmoji || "🪨",
       speed: getObstacleSpeed()
     };
@@ -881,7 +885,7 @@ function getObstacleGroundY(){
       id: state.nextPrizeId++,
       x,
       y: getPrizeGroundY(),
-      size: (24 + Math.random() * 6) * state.scale,
+      size: 56 * state.scale,
       emoji: state.theme?.prizeEmoji || "🐣",
       speed: getPrizeSpeed()
     };
@@ -1283,11 +1287,13 @@ function getObstacleGroundY(){
     return base * state.scale;
   }
 
-  function getScrollSpeed(){
-    if (selectedMode === "hard") return 205;
-    if (selectedMode === "medium") return 172;
-    return 140;
-  }
+function getScrollSpeed(){
+  const base =
+    selectedMode === "hard" ? 205 :
+    selectedMode === "medium" ? 172 : 140;
+
+  return base * state.scale;
+}
 
   function getCorrectSpawnChance(){
     if (selectedMode === "hard") return 0.38;
