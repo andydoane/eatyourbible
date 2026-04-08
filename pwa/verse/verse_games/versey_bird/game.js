@@ -775,7 +775,7 @@ function getObstacleGroundY(){
       id: state.nextObstacleId++,
       x,
       y: getObstacleGroundY(),
-      size: 56 * state.scale,
+      size: 56 * state.scale * 0.75
       emoji: state.theme?.obstacleEmoji || "🪨",
       speed: getObstacleSpeed()
     };
@@ -885,7 +885,7 @@ function getObstacleGroundY(){
       id: state.nextPrizeId++,
       x,
       y: getPrizeGroundY(),
-      size: 56 * state.scale,
+      size: 56 * state.scale * 0.75,
       emoji: state.theme?.prizeEmoji || "🐣",
       speed: getPrizeSpeed()
     };
