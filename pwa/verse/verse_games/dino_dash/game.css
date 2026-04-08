@@ -189,10 +189,12 @@ body{
 .dd-overlay-pills{
   left: 14px;
   right: 14px;
-  bottom: 12px;
+  top: 12px;
+  bottom: auto;
+  inset: auto 14px auto 14px;
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   z-index: 12;
 }
