@@ -227,7 +227,7 @@ body{
   align-items: center;
   gap: 8px;
   width: max-content;
-  max-width: 170px;
+  max-width: clamp(170px, 22vw, 260px);
   z-index: 4;
 }
 
@@ -244,7 +244,7 @@ body{
   color: #333333;
   border-radius: 18px;
   padding: 4px 10px;
-  font-size: clamp(18px, 2.4vw, 26px);
+  font-size: clamp(18px, 2.6vw, 32px);
   font-weight: 900;
   line-height: 1.02;
   box-shadow: 0 4px 0 rgba(0,0,0,0.16);
@@ -457,7 +457,7 @@ body{
   }
 
   .vb-bird{
-    font-size: 48px;
+    font-size: clamp(48px, 6vw, 72px);
   }
 
   .vb-pill{
