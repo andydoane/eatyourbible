@@ -35,7 +35,7 @@ window.EXTERNAL_VERSE_GAMES = [
       description: "Run, jump, and collect the verse in order.",
       icon: "🦖",
       launchUrl: "./verse_games/dino_dash/index.html",
-      visibleInCarousel: true,
+      visibleInCarousel: false,
       progressType: "standard",
       modes: ["easy", "medium", "hard"]
     }
