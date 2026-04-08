@@ -134,7 +134,8 @@
     groundSpawnCursor: 0,
     bandSpawnCursor: 0,
     spawnPause: 0,
-    inputLockUntil: 0
+    inputLockUntil: 0,
+    lastHazardSpawnX: 0
   };
 
   const referenceParts = parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
@@ -232,6 +233,7 @@
     state.spawnPause = 0.9;
     state.inputLockUntil = 0;
     state.bobTimer = 0;
+    state.lastHazardSpawnX = 0;
 
     renderGame();
     recalcField();
@@ -674,20 +676,47 @@
 
   function spawnGap(){
     const width = getGapWidth();
-    const buffer = 70 * state.scale;
-    ensureGroundToRight(state.fieldWidth + buffer);
-    const startX = state.groundSpawnCursor + buffer;
+    const spacing = getObstacleSpacing();
+    const startX = Math.max(
+      state.fieldWidth + 120 * state.scale,
+      getRightmostHazardEnd() + spacing
+    );
+
+    ensureGroundToRight(startX);
+
+    if (state.groundSpawnCursor < startX){
+      appendGroundSegment("ground", startX - state.groundSpawnCursor, true);
+    }
+
     appendGroundSegment("gap", width, true);
-    appendGroundSegment("ground", getObstacleSpacing() + 120 * state.scale, true);
+
+    const landingPad = Math.max(
+      150 * state.scale,
+      spacing * 0.9
+    );
+    appendGroundSegment("ground", landingPad, true);
+
+    state.lastHazardSpawnX = startX + width;
     state.phaseRemaining -= 1;
-    state.spawnPause = 0.44 + Math.random() * 0.18;
+    state.spawnPause = 0.62 + Math.random() * 0.18;
   }
 
   function spawnObstacle(){
-    const obstacleX = state.fieldWidth + 50 + Math.random() * 30;
     const size = getObstacleSize();
+    const spacing = getObstacleSpacing();
     const lane = Math.random() < 0.18 ? "top" : "ground";
-    const emojiSet = lane === "top" ? (state.theme?.obstacleTop || ["☁️"]) : (state.theme?.obstacleGround || ["🪨"]);
+    const emojiSet = lane === "top"
+      ? (state.theme?.obstacleTop || ["☁️"])
+      : (state.theme?.obstacleGround || ["🪨"]);
+
+    const minX = Math.max(
+      state.fieldWidth + 90 * state.scale,
+      getRightmostHazardEnd() + spacing
+    );
+
+    ensureGroundToRight(minX + spacing + 160 * state.scale);
+
+    const obstacleX = findGroundSpawnX(minX, size);
 
     state.obstacles.push({
       id: state.nextId++,
@@ -699,9 +728,40 @@
       topY: lane === "top" ? state.laneTopY + 24 * state.scale : state.fieldFloorY + 2
     });
 
-    ensureGroundToRight(obstacleX + getObstacleSpacing() + 120 * state.scale);
+    state.lastHazardSpawnX = obstacleX;
     state.phaseRemaining -= 1;
-    state.spawnPause = 0.48 + Math.random() * 0.18;
+    state.spawnPause = 0.58 + Math.random() * 0.18;
+  }
+
+  function getRightmostHazardEnd(){
+    let rightmost = state.fieldWidth + 40 * state.scale;
+
+    for (const obstacle of state.obstacles){
+      rightmost = Math.max(rightmost, obstacle.x + obstacle.size * 0.45);
+    }
+
+    for (const seg of state.groundSegments){
+      if (seg.kind === "gap"){
+        rightmost = Math.max(rightmost, seg.x + seg.width);
+      }
+    }
+
+    return Math.max(rightmost, state.lastHazardSpawnX || 0);
+  }
+
+  function findGroundSpawnX(minX, size){
+    const margin = Math.max(26 * state.scale, size * 0.4);
+
+    for (const seg of state.groundSegments){
+      if (seg.kind !== "ground") continue;
+      const left = seg.x + margin;
+      const right = seg.x + seg.width - margin;
+      if (right >= minX){
+        return Math.max(minX, left);
+      }
+    }
+
+    return minX;
   }
 
   function ensureGroundToRight(targetRight){
@@ -764,7 +824,20 @@
 
     const playerRect = getPlayerRect();
     for (const word of state.activeWords){
-      const rect = { x: word.x - getWordHalfWidth(word.label), y: word.y - 24 * state.scale, w: getWordHalfWidth(word.label) * 2, h: 48 * state.scale };
+      const halfW = getWordHitHalfWidth(word.label, word.lane);
+      const rect = {
+        x: word.x - halfW,
+        y: word.y - (word.lane === "bottom" ? 18 : 22) * state.scale,
+        w: halfW * 2,
+        h: (word.lane === "bottom" ? 30 : 38) * state.scale
+      };
+
+      if (word.lane === "bottom"){
+        const playerFeet = playerRect.y + playerRect.h;
+        const clearAbove = playerFeet < word.y - 14 * state.scale;
+        if (clearAbove) continue;
+      }
+
       if (rectsOverlap(playerRect, rect)){
         word.resolved = true;
         state.wordsResolved += 1;
@@ -810,7 +883,7 @@
       }
     }
 
-    if (!hit && isPlayerOverGap()){
+    if (!hit && isPlayerFallingIntoGap()){
       hit = { id: -1, kind: "gap" };
     }
 
@@ -1084,8 +1157,6 @@
       } else {
         pieces.push(`
           <div class="dd-gap-hole" style="left:${seg.x}px; top:${state.fieldFloorY}px; width:${seg.width}px; height:${state.groundHeight + state.groundDepth}px;"></div>
-          <div class="dd-gap-rim" style="left:${seg.x}px; top:${state.fieldFloorY}px; width:10px;"></div>
-          <div class="dd-gap-rim" style="left:${seg.x + seg.width - 10}px; top:${state.fieldFloorY}px; width:10px;"></div>
         `);
       }
     }
@@ -1224,6 +1295,16 @@
     return Math.max(38 * state.scale, Math.min(118 * state.scale, (String(label || "").length * 9 + 30) * state.scale * 0.52));
   }
 
+  function getWordHitHalfWidth(label, lane){
+    const text = String(label || "");
+    const base = lane === "bottom" ? 54 : 62;
+    const perChar = lane === "bottom" ? 3.4 : 4.2;
+    return Math.max(
+      34 * state.scale,
+      Math.min(base * state.scale, (text.length * perChar + 22) * state.scale)
+    );
+  }
+
   function getDecoysForPhase(phase, correctLabel, count){
     const out = new Set();
 
@@ -1270,12 +1351,20 @@
     return state.fieldFloorY;
   }
 
-  function isPlayerOverGap(){
-    const left = state.playerX - getPlayerRadius() * 0.45;
-    const right = state.playerX + getPlayerRadius() * 0.45;
+  function isPlayerFallingIntoGap(){
+    const radius = getPlayerRadius();
+    const left = state.playerX - radius * 0.42;
+    const right = state.playerX + radius * 0.42;
     const leftSupport = getSupportYAtX(left);
     const rightSupport = getSupportYAtX(right);
-    return leftSupport > state.fieldHeight && rightSupport > state.fieldHeight;
+    const overGap = leftSupport > state.fieldHeight && rightSupport > state.fieldHeight;
+
+    if (!overGap) return false;
+
+    const feetY = state.playerY + radius;
+    const lipY = state.fieldFloorY - 4 * state.scale;
+
+    return feetY >= lipY;
   }
 
   function tokenizeVerse(text){
