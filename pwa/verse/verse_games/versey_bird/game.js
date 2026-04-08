@@ -109,7 +109,6 @@
     birdRadius: 30,
     gravity: 1180,
     flapVelocity: -410,
-    birdSpinVelocity: 0,
     baseGravity: 1180,
     baseFlapVelocity: -410,
     fieldWidth: 0,
@@ -439,10 +438,6 @@
     if (!state.running) return;
     if (performance.now() < state.inputLockedUntil) return;
     state.birdVY = state.flapVelocity;
-
-    // Add spin impulse
-    state.birdSpinVelocity = -720; // degrees per second
-
     createPuffs();
   }
 
@@ -509,14 +504,6 @@ function recalcField(){
     state.birdVY += state.gravity * dt;
     state.birdY += state.birdVY * dt;
 
-    // Apply spin decay
-    state.birdSpinVelocity *= 0.88;
-
-    // Stop tiny jitter
-    if (Math.abs(state.birdSpinVelocity) < 5){
-      state.birdSpinVelocity = 0;
-    }
-
     const topBound = 18;
     const groundTop = state.fieldHeight - state.groundHeight;
 
@@ -529,9 +516,6 @@ function recalcField(){
       state.birdY = groundTop - state.birdRadius;
       if (state.birdVY > 0) state.birdVY *= 0.12;
     }
-
-    if (!state.birdSpinAngle) state.birdSpinAngle = 0;
-    state.birdSpinAngle += state.birdSpinVelocity * dt;
   }
 
   function updateClouds(dt){
@@ -1110,12 +1094,8 @@ function getObstacleGroundY(){
     const bird = document.getElementById("vbBird");
     if (!bird) return;
 
-    let baseAngle = clamp((state.birdVY / 9), -24, 54);
-    let spinAngle = state.birdSpinAngle || 0;
+    let angle = clamp((state.birdVY / 9), -24, 54);
 
-    let angle = baseAngle + spinAngle;
-
-    // Keep obstacle stun override
     if (performance.now() < state.birdSpinUntil){
       angle = ((performance.now() / 1000) * 720) % 360;
     }
