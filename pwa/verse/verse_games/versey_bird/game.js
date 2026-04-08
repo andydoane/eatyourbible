@@ -112,7 +112,6 @@
     fieldWidth: 0,
     fieldHeight: 0,
     groundHeight: 74,
-    baseGroundHeight: 74,
     clouds: [],
     particles: [],
     trail: [],
@@ -478,7 +477,6 @@
   }
 
 function recalcField(){
-  state.groundHeight = state.baseGroundHeight * state.scale;
   const field = document.getElementById("vbField");
   if (!field) return;
 
