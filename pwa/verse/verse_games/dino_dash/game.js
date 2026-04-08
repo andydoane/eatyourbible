@@ -110,7 +110,8 @@
     groundSegments: [],
     particles: [],
     trail: [],
-    words: [],
+    verseWords: [],
+    activeWords: [],
     obstacles: [],
     nextId: 1,
     progressIndex: 0,
@@ -139,8 +140,8 @@
   const referenceParts = parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
   state.bookLabel = referenceParts.book || "";
   state.referenceLabel = referenceParts.reference || "";
-  state.words = tokenizeVerse(ctx.verseText);
-  state.buildSegments = [...state.words];
+  state.verseWords = tokenizeVerse(ctx.verseText);
+  state.buildSegments = [...state.verseWords];
   if (state.bookLabel) state.buildSegments.push(state.bookLabel);
   if (state.referenceLabel) state.buildSegments.push(state.referenceLabel);
 
@@ -215,7 +216,7 @@
     state.decor = [];
     state.bands = [];
     state.groundSegments = [];
-    state.words = [];
+    state.activeWords = [];
     state.obstacles = [];
     state.nextId = 1;
     state.flashUntil = 0;
@@ -238,6 +239,7 @@
     seedClouds();
     seedDecor();
     seedInitialGround();
+    resetPlayer();
     state.phaseRemaining = getObstacleTargetCount();
     updateBuildText();
     updatePills();
@@ -462,8 +464,8 @@
     const radius = getPlayerRadius();
     const targetY = support - radius;
 
-    if (state.playerVY >= 0 && state.playerY >= targetY){
-      if (state.playerY < targetY + 16 * state.scale){
+    if (support <= state.fieldHeight + 50 && state.playerY >= targetY){
+      if (state.playerVY >= 0 || state.playerY < targetY + 18 * state.scale){
         if (state.playerVY > 220 * state.scale) createLandingDust();
         state.playerY = targetY;
         state.playerVY = 0;
@@ -482,7 +484,7 @@
 
     if (getCurrentProgressPhase() === "done") return;
 
-    const activeWords = state.words.length;
+    const activeWords = state.activeWords.length;
     const activeObstacles = state.obstacles.length;
 
     if (state.currentPhase === "obstacle"){
@@ -726,7 +728,7 @@
       : decoys[Math.floor(Math.random() * decoys.length)];
 
     const lane = Math.random() < 0.5 ? "top" : "bottom";
-    state.words.push({
+    state.activeWords.push({
       id: state.nextId++,
       x: state.fieldWidth + 60,
       y: lane === "top" ? state.laneTopY : state.laneBottomY,
@@ -743,25 +745,25 @@
   }
 
   function updateWords(dt, ts){
-    for (const word of state.words) word.x -= word.speed * dt;
+    for (const word of state.activeWords) word.x -= word.speed * dt;
 
     let missedCorrect = false;
-    for (const word of state.words){
+    for (const word of state.activeWords){
       if (word.x < -140 && word.correct && !word.resolved) missedCorrect = true;
     }
 
-    state.words = state.words.filter(word => word.x > -160 && !word.resolved);
+    state.activeWords = state.activeWords.filter(word => word.x > -160 && !word.resolved);
 
     if (missedCorrect){
       registerMistake(ts);
       state.wordsResolved += 1;
       updatePills();
-      if (state.phaseRemaining <= 0 && state.words.length === 0) switchToObstaclePhase(ts);
+      if (state.phaseRemaining <= 0 && state.activeWords.length === 0) switchToObstaclePhase(ts);
       return;
     }
 
     const playerRect = getPlayerRect();
-    for (const word of state.words){
+    for (const word of state.activeWords){
       const rect = { x: word.x - getWordHalfWidth(word.label), y: word.y - 24 * state.scale, w: getWordHalfWidth(word.label) * 2, h: 48 * state.scale };
       if (rectsOverlap(playerRect, rect)){
         word.resolved = true;
@@ -777,7 +779,7 @@
       }
     }
 
-    state.words = state.words.filter(word => !word.resolved && word.x > -160);
+    state.activeWords = state.activeWords.filter(word => !word.resolved && word.x > -160);
   }
 
   function updateObstacles(dt, ts){
@@ -843,8 +845,8 @@
     state.obstaclesResolved += 1;
     updatePills();
 
-    const safeY = getSupportYAtX(state.playerX + 24 * state.scale);
-    state.playerY = Math.min(state.playerY, safeY - getPlayerRadius());
+    const safeY = Math.min(getSupportYAtX(state.playerX + 24 * state.scale), getSupportYAtX(state.playerX - 24 * state.scale));
+    if (safeY <= state.fieldHeight + 50) state.playerY = Math.min(state.playerY, safeY - getPlayerRadius());
 
     if (state.phaseRemaining <= 0 && state.obstacles.length === 0) switchToWordPhase(ts);
   }
@@ -860,7 +862,7 @@
       return;
     }
 
-    if (state.phaseRemaining <= 0 && state.words.length === 0){
+    if (state.phaseRemaining <= 0 && state.activeWords.length === 0){
       switchToObstaclePhase(ts);
     }
   }
@@ -1055,7 +1057,7 @@
   function renderWords(){
     const layer = document.getElementById("ddWords");
     if (!layer) return;
-    layer.innerHTML = state.words.map(word => `
+    layer.innerHTML = state.activeWords.map(word => `
       <div class="dd-word ${word.correct ? "is-correct" : "is-decoy"}" style="left:${word.x}px; top:${word.y}px;">
         <div class="dd-word-bubble">${escapeHtml(word.label)}</div>
       </div>
@@ -1158,16 +1160,16 @@
       if (state.currentPhase === "obstacle"){
         phasePill.textContent = `Phase: Obstacles ${Math.max(0, state.phaseRemaining + state.obstacles.length)}`;
       } else {
-        phasePill.textContent = `Phase: Words ${Math.max(0, state.phaseRemaining + state.words.length)}`;
+        phasePill.textContent = `Phase: Words ${Math.max(0, state.phaseRemaining + state.activeWords.length)}`;
       }
     }
   }
 
   function getCurrentProgressPhase(){
-    const wordCount = state.buildSegments.length - (state.bookLabel ? 1 : 0) - (state.referenceLabel ? 1 : 0);
-    if (state.progressIndex < state.words.length) return "words";
-    if (state.progressIndex === state.words.length && state.bookLabel) return "book";
-    if (state.progressIndex === state.words.length + (state.bookLabel ? 1 : 0) && state.referenceLabel) return "reference";
+    const wordCount = state.verseWords.length;
+    if (state.progressIndex < wordCount) return "words";
+    if (state.progressIndex === wordCount && state.bookLabel) return "book";
+    if (state.progressIndex === wordCount + (state.bookLabel ? 1 : 0) && state.referenceLabel) return "reference";
     return "done";
   }
 
@@ -1226,12 +1228,12 @@
     const out = new Set();
 
     if (phase === "words"){
-      const verseWords = state.words.map(normalizeWord);
+      const verseWords = state.verseWords.map(normalizeWord);
       for (const word of shuffle(FUN_DECOYS)){
         if (out.size >= count) break;
         if (!verseWords.includes(normalizeWord(word)) && normalizeWord(word) !== normalizeWord(correctLabel)) out.add(word);
       }
-      for (const word of shuffle(state.words)){
+      for (const word of shuffle(state.verseWords)){
         if (out.size >= count) break;
         if (normalizeWord(word) !== normalizeWord(correctLabel)) out.add(word);
       }
