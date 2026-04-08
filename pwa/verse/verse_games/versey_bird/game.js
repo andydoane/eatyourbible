@@ -99,6 +99,7 @@
 
   const state = {
     running: false,
+    scale: 1,
     rafId: 0,
     spawnCooldown: 0,
     birdEmoji: "",
@@ -111,6 +112,7 @@
     fieldWidth: 0,
     fieldHeight: 0,
     groundHeight: 74,
+    baseGroundHeight: 74,
     clouds: [],
     particles: [],
     trail: [],
@@ -475,14 +477,21 @@
     state.rafId = requestAnimationFrame(loop);
   }
 
-  function recalcField(){
-    const field = document.getElementById("vbField");
-    if (!field) return;
-    const rect = field.getBoundingClientRect();
-    state.fieldWidth = rect.width;
-    state.fieldHeight = rect.height;
-    state.birdX = Math.max(70, rect.width * 0.2);
-  }
+function recalcField(){
+  state.groundHeight = state.baseGroundHeight * state.scale;
+  const field = document.getElementById("vbField");
+  if (!field) return;
+
+  const rect = field.getBoundingClientRect();
+  state.fieldWidth = rect.width;
+  state.fieldHeight = rect.height;
+
+  // Scale factor: 1 → 1.35 based on width
+  const t = clamp((rect.width - 360) / (840 - 360), 0, 1);
+  state.scale = 1 + t * 0.35;
+
+  state.birdX = Math.max(70, rect.width * 0.2);
+}
 
   function resetBird(){
     state.birdY = state.fieldHeight * 0.48;
@@ -764,7 +773,7 @@ function getObstacleGroundY(){
       id: state.nextObstacleId++,
       x,
       y: getObstacleGroundY(),
-      size: 28 + Math.random() * 6,
+      size: (28 + Math.random() * 6) * state.scale,
       emoji: state.theme?.obstacleEmoji || "🪨",
       speed: getObstacleSpeed()
     };
@@ -874,7 +883,7 @@ function getObstacleGroundY(){
       id: state.nextPrizeId++,
       x,
       y: getPrizeGroundY(),
-      size: 24 + Math.random() * 6,
+      size: (24 + Math.random() * 6) * state.scale,
       emoji: state.theme?.prizeEmoji || "🐣",
       speed: getPrizeSpeed()
     };
@@ -1091,7 +1100,8 @@ function getObstacleGroundY(){
 
     bird.style.left = `${state.birdX}px`;
     bird.style.top = `${state.birdY}px`;
-    bird.style.transform = `translate(-50%, -50%) scaleX(-1) rotate(${angle}deg)`;
+    const scale = state.scale;
+    bird.style.transform = `translate(-50%, -50%) scale(${scale}) scaleX(-1) rotate(${angle}deg)`;
   }
 
   function renderAura(){
@@ -1104,8 +1114,8 @@ function getObstacleGroundY(){
     }
 
     const t = performance.now() / 1000;
-    const radiusX = 42;
-    const radiusY = 24;
+    const radiusX = 42 * state.scale;
+    const radiusY = 24 * state.scale;
     const sparkles = [];
     const auraSet = state.auraEmojis?.length ? state.auraEmojis : ["✨","⭐","💫"];
 
@@ -1127,7 +1137,11 @@ function getObstacleGroundY(){
     }
 
     layer.innerHTML = `
-      <div class="vb-aura-glow" style="left:${state.birdX}px; top:${state.birdY}px;"></div>
+      <div class="vb-aura-glow" style="
+        left:${state.birdX}px;
+        top:${state.birdY}px;
+        transform: translate(-50%, -50%) scale(${state.scale});
+      "></div>
       ${sparkles.join("")}
     `;
   }
@@ -1264,9 +1278,11 @@ function getObstacleGroundY(){
   }
 
   function getCircleSize(){
-    if (selectedMode === "hard") return 26;
-    if (selectedMode === "medium") return 30;
-    return 35;
+    const base =
+      selectedMode === "hard" ? 26 :
+      selectedMode === "medium" ? 30 : 35;
+
+    return base * state.scale;
   }
 
   function getScrollSpeed(){
@@ -1283,11 +1299,14 @@ function getObstacleGroundY(){
 
   function pickSingleLaneY(){
     const groundTop = state.fieldHeight - state.groundHeight;
+    const spread = 0.22 + (state.scale - 1) * 0.15;
+
     const lanes = [
-      Math.max(64, groundTop * 0.24),
+      Math.max(64, groundTop * (0.18 + spread)),
       Math.max(92, groundTop * 0.50),
-      Math.max(120, groundTop * 0.76)
+      Math.max(120, groundTop * (0.82 - spread))
     ];
+
     return lanes[Math.floor(Math.random() * lanes.length)];
   }
 
