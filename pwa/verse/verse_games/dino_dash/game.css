@@ -270,10 +270,6 @@ body{
   background: rgba(31, 24, 20, 0.54);
 }
 
-.dd-gap-rim{
-  height: 6px;
-  background: rgba(255,255,255,0.16);
-}
 
 .dd-particle,
 .dd-trail,
