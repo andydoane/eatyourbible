@@ -1,0 +1,423 @@
+html, body{
+  height: 100%;
+}
+
+body{
+  margin: 0;
+  background: #333333;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+#app.vm-shell{
+  min-height: 100dvh;
+  height: 100dvh;
+  padding: 0;
+  display: block;
+  overflow: hidden;
+}
+
+.dd-root,
+.dd-mode-shell{
+  height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  background: #333333;
+  overflow: hidden;
+}
+
+.dd-stage,
+.dd-mode-stage{
+  width: 100%;
+  max-width: 840px;
+  margin: 0 auto;
+  min-height: 0;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.dd-mode-top{
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 28px 18px;
+  gap: 10px;
+  text-align: center;
+}
+
+.dd-mode-title{
+  font-size: clamp(28px, 5vw, 58px);
+  font-weight: 900;
+  line-height: 1.04;
+}
+
+.dd-mode-subtitle{
+  font-size: clamp(18px, 2.2vw, 30px);
+  font-weight: 800;
+  line-height: 1.18;
+  max-width: 700px;
+}
+
+.dd-mode-card{
+  width: min(100%, 620px);
+  background: rgba(0,0,0,0.30);
+  border-radius: 26px;
+  padding: 14px;
+  margin-top: 10px;
+}
+
+.dd-mode-actions{
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.dd-nav-wrap{
+  width: 100%;
+  max-width: 840px;
+  margin: 0 auto;
+}
+
+.dd-build-wrap{
+  padding: 12px 14px 10px;
+  flex: 0 0 auto;
+}
+
+.dd-build{
+  background: #ffc751;
+  color: #333333;
+  border-radius: 22px;
+  min-height: 112px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  text-align: center;
+  box-shadow: inset 0 -4px 0 rgba(0,0,0,0.10);
+}
+
+.dd-build-text{
+  font-size: clamp(24px, 5.7vw, 42px);
+  font-weight: 900;
+  line-height: 1.2;
+  width: 100%;
+  text-wrap: balance;
+}
+
+.dd-build-word{
+  color: transparent;
+  text-shadow: 0 0 0 rgba(51,51,51,0.16);
+  transition: color 160ms ease, opacity 160ms ease;
+}
+
+.dd-build-word.is-built{
+  color: #333333;
+  text-shadow: none;
+}
+
+.dd-build.dd-shake{
+  animation: ddBuildShake 300ms ease;
+}
+
+@keyframes ddBuildShake{
+  0%{ transform: translateX(0); }
+  20%{ transform: translateX(-10px); }
+  40%{ transform: translateX(10px); }
+  60%{ transform: translateX(-7px); }
+  80%{ transform: translateX(7px); }
+  100%{ transform: translateX(0); }
+}
+
+.dd-field-wrap{
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0 14px 0;
+}
+
+.dd-field{
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 280px;
+  overflow: hidden;
+  background: #9ddaf7;
+  border-radius: 26px 26px 0 0;
+  touch-action: none;
+}
+
+.dd-sky,
+.dd-backdrop,
+.dd-trails,
+.dd-particles,
+.dd-words,
+.dd-obstacles,
+.dd-player-layer,
+.dd-feedback,
+.dd-bands,
+.dd-ground,
+.dd-overlay-pills,
+.dd-clouds{
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.dd-cloud,
+.dd-back-emoji,
+.dd-obstacle,
+.dd-word,
+.dd-particle,
+.dd-trail,
+.dd-dust,
+.dd-band,
+.dd-ground-piece,
+.dd-gap-hole,
+.dd-gap-rim,
+.dd-phase-banner,
+.dd-player,
+.dd-aura,
+.dd-flash{
+  position: absolute;
+}
+
+.dd-overlay-pills{
+  left: 14px;
+  right: 14px;
+  bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  z-index: 12;
+}
+
+.dd-pill{
+  background: rgba(255,255,255,0.95);
+  color: #333333;
+  border-radius: 999px;
+  padding: 5px 14px;
+  font-weight: 900;
+  font-size: 16px;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.18);
+}
+
+.dd-cloud,
+.dd-back-emoji{
+  line-height: 1;
+  filter: drop-shadow(0 3px 0 rgba(0,0,0,0.10));
+}
+
+.dd-player{
+  transform: translate(-50%, -50%) scaleX(-1);
+  transform-origin: center;
+  line-height: 1;
+  z-index: 9;
+  filter: drop-shadow(0 5px 0 rgba(0,0,0,0.22));
+  will-change: transform;
+}
+
+.dd-word{
+  transform: translate(-50%, -50%);
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dd-word-bubble{
+  background: rgba(255,255,255,0.97);
+  color: #333333;
+  border-radius: 18px;
+  padding: 5px 12px;
+  font-size: clamp(18px, 2.5vw, 30px);
+  font-weight: 900;
+  line-height: 1.02;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.18);
+  border: 3px solid rgba(255,255,255,0.70);
+  white-space: nowrap;
+}
+
+.dd-word.is-correct .dd-word-bubble{
+  box-shadow: 0 4px 0 rgba(0,0,0,0.18), 0 0 0 4px rgba(167, 203, 111, 0.18);
+}
+
+.dd-obstacle{
+  transform: translate(-50%, -100%);
+  line-height: 1;
+  z-index: 8;
+  filter: drop-shadow(0 3px 0 rgba(0,0,0,0.18));
+}
+
+.dd-ground-piece{
+  background: linear-gradient(to bottom, var(--ground-top1), var(--ground-top2) 16px, var(--ground-base1) 16px, var(--ground-base2));
+  box-shadow: inset 0 4px 0 rgba(255,255,255,0.12);
+}
+
+.dd-band{
+  top: 0;
+  bottom: 0;
+}
+
+.dd-gap-hole{
+  background: rgba(31, 24, 20, 0.54);
+}
+
+.dd-gap-rim{
+  height: 6px;
+  background: rgba(255,255,255,0.16);
+}
+
+.dd-particle,
+.dd-trail,
+.dd-dust,
+.dd-aura{
+  transform: translate(-50%, -50%);
+  line-height: 1;
+}
+
+.dd-trail{
+  z-index: 5;
+}
+
+.dd-dust{
+  z-index: 7;
+}
+
+.dd-particle{
+  z-index: 10;
+}
+
+.dd-flash{
+  inset: 0;
+  opacity: 0;
+  transition: opacity 90ms linear;
+  z-index: 11;
+}
+
+.dd-flash.is-on{
+  opacity: 1;
+}
+
+.dd-phase-banner{
+  left: 50%;
+  top: 14px;
+  transform: translateX(-50%);
+  background: rgba(255,255,255,0.94);
+  color: #333333;
+  border-radius: 999px;
+  padding: 5px 14px;
+  font-size: 15px;
+  font-weight: 900;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.14);
+  z-index: 11;
+}
+
+.dd-nav{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px 14px;
+  background: #333333;
+}
+
+.dd-nav-btn{
+  width: 56px;
+  height: 56px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.16);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.dd-nav-center{
+  flex: 1 1 auto;
+  display: flex;
+  justify-content: center;
+}
+
+.dd-help-btn{
+  min-width: 110px;
+  height: 50px;
+  border: none;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #7f66c6;
+  font: inherit;
+  font-weight: 900;
+  font-size: 18px;
+  cursor: pointer;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.18);
+}
+
+.nav-icon{
+  width: 26px;
+  height: 26px;
+}
+
+.dd-help-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  z-index: 40;
+}
+
+.dd-help-overlay.is-open{
+  display: flex;
+}
+
+.dd-help-dialog{
+  width: min(100%, 500px);
+  background: #7f66c6;
+  color: #fff;
+  border-radius: 26px;
+  padding: 22px 18px 18px;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.24);
+  text-align: center;
+}
+
+.dd-help-title{
+  font-size: 28px;
+  font-weight: 900;
+}
+
+.dd-help-body{
+  margin-top: 8px;
+  font-size: 20px;
+  line-height: 1.2;
+}
+
+.dd-help-actions{
+  margin-top: 16px;
+}
+
+@media (max-width: 520px){
+  .dd-nav-btn{
+    width: 50px;
+    height: 50px;
+  }
+
+  .dd-help-btn{
+    min-width: 96px;
+    height: 46px;
+    font-size: 16px;
+  }
+
+  .dd-pill{
+    font-size: 14px;
+    padding: 5px 12px;
+  }
+}
