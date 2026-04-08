@@ -6,7 +6,7 @@
   const GAME_ID = "versey_bird";
   const TARGET_COLORS = ["#ff5a51","#ffa351","#ffc751","#40b9c5","#7f66c6","#a7cb6f"];
   const MEADOW_BIRDS = ["🐦","🐓","🐤","🦆","🦅","🐥"];
-  const AURA_EMOJIS = ["✨","⭐","💫","🌟","🔆","🪄","💥","🎉","🫧","🌈"];
+  const AURA_EMOJIS = ["✨","⭐","💎","🌟","🔆","🔹","💥","🟢","🫧","🌈"];
 
   const SPECIAL_THEMES = [
     {
