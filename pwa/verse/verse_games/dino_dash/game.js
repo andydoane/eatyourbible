@@ -621,13 +621,14 @@ function wrapHillLayer(layer){
   if (layer.length < 2) return;
 
   const [a, b] = layer;
+  const overlap = 2 * state.scale;
 
   if (a.x + a.width <= 0){
-    a.x = b.x + b.width;
+    a.x = b.x + b.width - overlap;
   }
 
   if (b.x + b.width <= 0){
-    b.x = a.x + a.width;
+    b.x = a.x + a.width - overlap;
   }
 }
 
@@ -1176,15 +1177,19 @@ function renderHills(){
   const layer = document.getElementById("ddBackdrop");
   if (!layer) return;
 
+  const hillSink = 10 * state.scale;
+  const bottomY = state.groundHeight - hillSink;
+  const seamPad = Math.ceil(2 * state.scale);
+
   layer.innerHTML = `
     ${state.hillsBack.map(h => `
-      <div style="position:absolute; left:${h.x}px; bottom:${state.groundHeight}px; width:${h.width}px;">
+      <div style="position:absolute; left:${Math.round(h.x) - seamPad}px; bottom:${bottomY}px; width:${Math.ceil(h.width) + seamPad * 2}px;">
         ${getBackHillSVG()}
       </div>
     `).join("")}
 
     ${state.hillsFront.map(h => `
-      <div style="position:absolute; left:${h.x}px; bottom:${state.groundHeight}px; width:${h.width}px;">
+      <div style="position:absolute; left:${Math.round(h.x) - seamPad}px; bottom:${bottomY}px; width:${Math.ceil(h.width) + seamPad * 2}px;">
         ${getFrontHillSVG()}
       </div>
     `).join("")}
