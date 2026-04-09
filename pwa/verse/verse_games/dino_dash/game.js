@@ -5,8 +5,19 @@
 
   const GAME_ID = "dino_dash";
   const FUN_DECOYS = [
-    "taco","banana","penguin","cupcake","pickle","rocket","waffle","balloon","otter","pretzel",
-    "pancake","bubble","marshmallow","treasure","robot","firetruck","yo-yo","snowman","blueberry","noodle"
+    // Short Nouns
+    "taco", "panda", "pizza", "donut", "shark", "lemon", "grape", "berry", "sock", "boot", 
+    "kite", "plane", "cat", "dog", "pig", "cow", "bug", "ant", "frog", "duck", 
+    "bear", "bat", "bird", "fish", "jam", "pie", "cake", "egg", "star", "ball",
+    
+    // Short Verbs
+    "hop", "skip", "jump", "run", "spin", "clap", "yell", "sing", "swim", "kick", 
+    "dig", "nap", "hug", "tug", "push", "pull", "snap", "wave", "wink", "grin", 
+    "zoom", "zip", "pop", "bop", "pet", "chop", "stir", "bake", "flip", "dash",
+
+    // Short Adjectives
+    "red", "blue", "pink", "gold", "big", "tiny", "cold", "hot", "wet", "dry", 
+    "soft", "hard", "fast", "slow", "loud", "sour", "sweet", "cute", "cool", "fun"
   ];
   const BOOKS = [
     "Genesis","Exodus","Leviticus","Numbers","Deuteronomy","Joshua","Judges","Ruth",
@@ -105,7 +116,8 @@
     groundDepth: 36,
     theme: null,
     clouds: [],
-    decor: [],
+    hillsBack: [],
+    hillsFront: [],
     bands: [],
     groundSegments: [],
     particles: [],
@@ -215,7 +227,8 @@
     state.particles = [];
     state.trail = [];
     state.clouds = [];
-    state.decor = [];
+    state.hillsBack = [];
+    state.hillsFront = [];
     state.bands = [];
     state.groundSegments = [];
     state.activeWords = [];
@@ -241,7 +254,7 @@
     recalcField();
     resetPlayer();
     seedClouds();
-    seedDecor();
+    seedHills();
     seedInitialGround();
     resetPlayer();
     state.phaseRemaining = getObstacleTargetCount();
@@ -409,7 +422,7 @@
     recalcField();
     updatePhase(dt, ts);
     updateClouds(dt);
-    updateDecor(dt);
+    updateHills(dt);
     updateGround(dt);
     updatePlayer(dt);
     updateWords(dt, ts);
@@ -573,33 +586,51 @@
     }
   }
 
-  function seedDecor(){
-    state.decor = [];
-    for (let i = 0; i < 4; i++){
-      state.decor.push(makeDecor(i === 0, i));
-    }
+function seedHills(){
+  const frontWidth = 1200 * state.scale;
+  const backWidth = 2400 * state.scale;
+
+  state.hillsFront = [
+    { x: 0, width: frontWidth },
+    { x: frontWidth, width: frontWidth }
+  ];
+
+  state.hillsBack = [
+    { x: 0, width: backWidth },
+    { x: backWidth, width: backWidth }
+  ];
+}
+
+function updateHills(dt){
+  const frontSpeed = state.worldSpeed * 0.28;
+  const backSpeed = state.worldSpeed * 0.14;
+
+  for (const h of state.hillsFront){
+    h.x -= frontSpeed * dt;
   }
 
-  function makeDecor(seed = false, index = 0){
-    const set = state.theme?.decor || ["🌳"];
-    return {
-      id: state.nextId++,
-      x: seed ? state.fieldWidth * (0.12 + index * 0.28) : state.fieldWidth + 50 + Math.random() * 120,
-      y: Math.max(52, state.laneTopY - 48 * state.scale + Math.random() * 24 * state.scale),
-      emoji: set[Math.floor(Math.random() * set.length)],
-      size: (24 + Math.random() * 28) * state.scale,
-      speed: state.worldSpeed * (0.24 + Math.random() * 0.12),
-      opacity: 0.28 + Math.random() * 0.18
-    };
+  for (const h of state.hillsBack){
+    h.x -= backSpeed * dt;
   }
 
-  function updateDecor(dt){
-    for (const item of state.decor) item.x -= item.speed * dt;
-    state.decor = state.decor.filter(item => item.x > -80);
-    while (state.decor.length < 4){
-      state.decor.push(makeDecor());
-    }
+  wrapHillLayer(state.hillsFront);
+  wrapHillLayer(state.hillsBack);
+}
+
+function wrapHillLayer(layer){
+  if (layer.length < 2) return;
+
+  const [a, b] = layer;
+
+  if (a.x + a.width <= 0){
+    a.x = b.x + b.width;
   }
+
+  if (b.x + b.width <= 0){
+    b.x = a.x + a.width;
+  }
+}
+
 
   function seedInitialGround(){
     state.groundSegments = [];
@@ -1098,7 +1129,7 @@
   function renderFrame(ts){
     renderBuildShake(ts);
     renderClouds();
-    renderDecor();
+    renderHills();
     renderTrail();
     renderParticles();
     renderWords();
@@ -1124,13 +1155,41 @@
     `).join("");
   }
 
-  function renderDecor(){
-    const layer = document.getElementById("ddBackdrop");
-    if (!layer) return;
-    layer.innerHTML = state.decor.map(item => `
-      <div class="dd-back-emoji" style="left:${item.x}px; top:${item.y}px; font-size:${item.size}px; opacity:${item.opacity};">${item.emoji}</div>
-    `).join("");
-  }
+function getFrontHillSVG(){
+  return `
+    <svg viewBox="0 0 1200 260" preserveAspectRatio="none" width="100%" height="140">
+      <path d="M150,176.45142 C98.4249,176.53449 41.0438,201.26831 0,201.26831 V260 H1200 V201.26831 C1149.0098,203.29656 1100.4425,188.85986 1050,188.85986 999.5575,188.85986 950,197.13216 900,201.26831 850,205.40446 800.4425,213.67676 750,213.67676 699.5575,213.67676 650,205.40446 600,201.26831 550,197.13216 500.4425,188.85986 450,188.85986 399.5575,188.85986 350.9902,203.29656 300,201.26831 249.0098,199.24006 201.747,176.36807 150,176.45142 Z" fill="#5fa24d"/>
+    </svg>
+  `;
+}
+
+function getBackHillSVG(){
+  return `
+    <svg viewBox="0 0 2400 260" preserveAspectRatio="none" width="100%" height="160">
+      <path d="M1161.498,22.560547 C1072.3358,26.816623 987.5485,62.382591 900,82.789062 799.9446,106.11074 705.4092,169.11613 600,162.78906 494.5908,156.46199 406.5103,45.919012 300,42.789062 193.4897,39.659112 100.287,135.47416 0,142.78906 V260 H2400 V142.78906 C2296.5056,149.23239 2200.4987,92.740396 2100,82.789062 1999.5013,72.837729 1900.222,76.137033 1800,82.789062 1699.778,89.441092 1602.6859,132.53218 1500,122.78906 1397.3141,113.04594 1303.4944,29.232394 1200,22.789062 1187.0632,21.983646 1174.2355,21.952536 1161.498,22.560547 Z"
+            fill="#7fb86a"/>
+    </svg>
+  `;
+}
+
+function renderHills(){
+  const layer = document.getElementById("ddBackdrop");
+  if (!layer) return;
+
+  layer.innerHTML = `
+    ${state.hillsBack.map(h => `
+      <div style="position:absolute; left:${h.x}px; bottom:${state.groundHeight}px; width:${h.width}px;">
+        ${getBackHillSVG()}
+      </div>
+    `).join("")}
+
+    ${state.hillsFront.map(h => `
+      <div style="position:absolute; left:${h.x}px; bottom:${state.groundHeight}px; width:${h.width}px;">
+        ${getFrontHillSVG()}
+      </div>
+    `).join("")}
+  `;
+}
 
   function renderTrail(){
     const layer = document.getElementById("ddTrails");
