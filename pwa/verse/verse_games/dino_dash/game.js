@@ -755,7 +755,7 @@
   }
 
   function getRightmostHazardEnd(){
-    let rightmost = state.fieldWidth + 40 * state.scale;
+    let rightmost = -Infinity;
 
     for (const obstacle of state.obstacles){
       rightmost = Math.max(rightmost, obstacle.x + obstacle.size * 0.45);
@@ -767,7 +767,15 @@
       }
     }
 
-    return Math.max(rightmost, state.lastHazardSpawnX || 0);
+    if (state.lastHazardSpawnX > 0){
+      rightmost = Math.max(rightmost, state.lastHazardSpawnX);
+    }
+
+    if (rightmost === -Infinity){
+      return -Infinity;
+    }
+
+    return rightmost;
   }
 
   function findGroundSpawnX(minX, size){
