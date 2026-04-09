@@ -148,7 +148,9 @@
     spawnPause: 0,
     inputLockUntil: 0,
     lastHazardSpawnX: 0,
-    lastHazardSpawnAt: 0
+    lastHazardSpawnAt: 0,
+    pitRecovering: false,
+    pitRespawnAt: 0
   };
 
   const referenceParts = parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
@@ -249,6 +251,8 @@
     state.bobTimer = 0;
     state.lastHazardSpawnX = 0;
     state.lastHazardSpawnAt = 0;
+    state.pitRecovering = false;
+    state.pitRespawnAt = 0;
 
     renderGame();
     recalcField();
@@ -425,6 +429,7 @@
     updateHills(dt);
     updateGround(dt);
     updatePlayer(dt);
+    updatePitRecovery(ts);
     updateWords(dt, ts);
     updateObstacles(dt, ts);
     updateParticles(dt);
@@ -945,12 +950,13 @@ function wrapHillLayer(layer){
       }
     }
 
-    if (!hit && isPlayerFallingIntoGap()){
-      hit = { id: -1, kind: "gap" };
-    }
-
     if (hit && performance.now() >= state.inputLockUntil){
       handleObstacleHit(ts, hit.id);
+      return;
+    }
+
+    if (!state.pitRecovering && hasPlayerFallenIntoPit()){
+      handlePitFall(ts);
       return;
     }
 
@@ -984,6 +990,16 @@ function wrapHillLayer(layer){
     if (safeY <= state.fieldHeight + 50) state.playerY = Math.min(state.playerY, safeY - getPlayerRadius());
 
     if (state.phaseRemaining <= 0 && state.obstacles.length === 0) switchToWordPhase(ts);
+  }
+
+  function handlePitFall(ts){
+    state.pitRecovering = true;
+    state.pitRespawnAt = performance.now() + 420;
+
+    registerMistake(ts);
+
+    state.playerVY = 0;
+    state.inputLockUntil = performance.now() + 900;
   }
 
   function handleCorrectWord(ts){
@@ -1268,6 +1284,13 @@ function renderHills(){
   function renderPlayer(){
     const player = document.getElementById("ddPlayer");
     if (!player) return;
+
+    if (state.pitRecovering){
+      player.style.opacity = "0";
+      return;
+    }
+
+    player.style.opacity = "1";
     const size = state.playerBaseSize * state.scale;
     const groundY = state.fieldFloorY - getPlayerRadius();
     const onGround = Math.abs(state.playerY - groundY) < 3;
@@ -1453,6 +1476,41 @@ function renderHills(){
     if (!seg) return state.fieldFloorY;
     if (seg.kind === "gap") return includeGapsAsFloor ? state.fieldHeight + 300 : state.fieldHeight + 300;
     return state.fieldFloorY;
+  }
+
+  function hasPlayerFallenIntoPit(){
+    return state.playerY - getPlayerRadius() > state.fieldHeight + 24 * state.scale;
+  }
+
+  function updatePitRecovery(ts){
+    if (!state.pitRecovering) return;
+    if (performance.now() < state.pitRespawnAt) return;
+
+    const respawnX = state.playerX;
+    const safeLeft = respawnX - 36 * state.scale;
+    const safeRight = respawnX + 130 * state.scale;
+
+    const supportLeft = getSupportYAtX(safeLeft);
+    const supportMid = getSupportYAtX(respawnX);
+    const supportRight = getSupportYAtX(safeRight);
+    const hasGround = (
+      supportLeft <= state.fieldHeight + 50 &&
+      supportMid <= state.fieldHeight + 50 &&
+      supportRight <= state.fieldHeight + 50
+    );
+
+    if (!hasGround) return;
+
+    state.obstacles = state.obstacles.filter(obstacle => {
+      if (obstacle.kind === "top"){
+        return obstacle.x < safeLeft || obstacle.x > safeRight;
+      }
+      return obstacle.x < safeLeft || obstacle.x > safeRight;
+    });
+
+    state.playerY = state.fieldFloorY - getPlayerRadius();
+    state.playerVY = 0;
+    state.pitRecovering = false;
   }
 
   function isPlayerFallingIntoGap(){
