@@ -663,7 +663,7 @@ function wrapHillLayer(layer){
     let cursor;
     if (state.bands.length > 0){
       const rightmost = Math.max(...state.bands.map(band => band.x + band.width));
-        cursor = rightmost + spacing;
+         cursor = rightmost + (spacing - bandWidth);
     } else {
       cursor = -40;
     }
