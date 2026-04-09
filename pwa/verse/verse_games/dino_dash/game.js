@@ -150,7 +150,9 @@
     lastHazardSpawnX: 0,
     lastHazardSpawnAt: 0,
     pitRecovering: false,
-    pitRespawnAt: 0
+    pitRespawnAt: 0,
+    jumpsRemaining: 0,
+    maxJumps: 2
   };
 
   const referenceParts = parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
@@ -253,6 +255,7 @@
     state.lastHazardSpawnAt = 0;
     state.pitRecovering = false;
     state.pitRespawnAt = 0;
+    state.jumpsRemaining = 2;
 
     renderGame();
     recalcField();
@@ -470,9 +473,20 @@
     if (!state.running) return;
     const now = performance.now();
     if (now < state.inputLockUntil) return;
-    const onGround = state.playerY >= state.fieldFloorY - getPlayerRadius() - 4;
-    if (!onGround) return;
-    state.playerVY = state.jumpVelocity;
+
+    if (state.jumpsRemaining <= 0) return;
+
+    const isFirstJump = state.jumpsRemaining === state.maxJumps;
+
+    if (isFirstJump){
+      state.playerVY = state.jumpVelocity;
+    } else {
+      // weaker second jump (~70%)
+      state.playerVY = state.jumpVelocity * 0.7;
+    }
+
+    state.jumpsRemaining -= 1;
+
     createJumpDust();
   }
 
@@ -490,6 +504,9 @@
         if (state.playerVY > 220 * state.scale) createLandingDust();
         state.playerY = targetY;
         state.playerVY = 0;
+
+        // reset jumps on landing
+        state.jumpsRemaining = state.maxJumps;
       }
     }
 
@@ -1294,7 +1311,16 @@ function renderHills(){
     const groundY = state.fieldFloorY - getPlayerRadius();
     const onGround = Math.abs(state.playerY - groundY) < 3;
     const bob = onGround ? Math.sin(state.bobTimer * 11) * (2.6 * state.scale) : 0;
-    const angle = onGround ? Math.sin(state.bobTimer * 12) * 2 : clamp(state.playerVY / 16, -22, 28);
+    let angle;
+
+    if (onGround){
+      angle = Math.sin(state.bobTimer * 12) * 2;
+    } else if (state.streak >= 5){
+      // spin jump
+      angle = (state.bobTimer * 720) % 360;
+    } else {
+      angle = clamp(state.playerVY / 16, -22, 28);
+    }
 
     player.style.left = `${state.playerX}px`;
     player.style.top = `${state.playerY + bob}px`;
