@@ -289,8 +289,8 @@
                 <div class="dd-flash" id="ddFlash"></div>
                 <div class="dd-phase-banner" id="ddPhaseBanner"></div>
               </div>
-              <div class="dd-bands" id="ddBands"></div>
               <div class="dd-ground" id="ddGround"></div>
+              <div class="dd-bands" id="ddBands"></div>
               <div class="dd-overlay-pills">
                 <div class="dd-pill" id="ddPhasePill">Phase: Obstacles</div>
                 <div class="dd-pill" id="ddStreakPill">Streak: 0</div>
