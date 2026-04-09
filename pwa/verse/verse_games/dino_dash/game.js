@@ -659,7 +659,15 @@ function wrapHillLayer(layer){
   function refillBands(){
     const bandWidth = 26 * state.scale;
     const spacing = bandWidth * 2;
-    let cursor = state.bandSpawnCursor;
+
+    let cursor;
+    if (state.bands.length > 0){
+      const rightmost = Math.max(...state.bands.map(band => band.x + band.width));
+      cursor = rightmost + spacing;
+    } else {
+      cursor = -40;
+    }
+
     while (cursor < state.fieldWidth + 90){
       const support = getSupportYAtX(cursor + bandWidth * 0.5, false);
       if (support < state.fieldHeight + 100){
@@ -673,6 +681,7 @@ function wrapHillLayer(layer){
       }
       cursor += spacing;
     }
+
     state.bandSpawnCursor = cursor;
   }
 
@@ -1252,7 +1261,7 @@ function renderHills(){
     const layer = document.getElementById("ddBands");
     if (!layer) return;
     layer.innerHTML = state.bands.map(band => `
-      <div class="dd-band" style="left:${Math.round(band.x)}px; top:${state.fieldFloorY}px; width:${Math.ceil(band.width)}px; height:${state.groundHeight + state.groundDepth}px; background:rgba(255,255,255,0.22);"></div>
+      <div class="dd-band" style="left:${Math.round(band.x)}px; top:${state.fieldFloorY}px; width:${Math.ceil(band.width)}px; height:${state.groundHeight + state.groundDepth}px; background:${state.theme?.bandColor || 'rgba(0,0,0,0.08)'};"></div>
     `).join("");
   }
 
