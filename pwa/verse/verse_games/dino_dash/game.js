@@ -1252,7 +1252,7 @@ function renderHills(){
     const layer = document.getElementById("ddBands");
     if (!layer) return;
     layer.innerHTML = state.bands.map(band => `
-      <div class="dd-band" style="left:${band.x}px; top:${state.fieldFloorY}px; width:${band.width}px; height:${state.groundHeight + state.groundDepth}px; background:${state.theme?.bandColor || 'rgba(0,0,0,0.08)'};"></div>
+      <div class="dd-band" style="left:${Math.round(band.x)}px; top:${state.fieldFloorY}px; width:${Math.ceil(band.width)}px; height:${state.groundHeight + state.groundDepth}px; background:rgba(255,255,255,0.22);"></div>
     `).join("");
   }
 
