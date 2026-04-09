@@ -767,14 +767,6 @@
       }
     }
 
-    if (state.lastHazardSpawnX > 0){
-      rightmost = Math.max(rightmost, state.lastHazardSpawnX);
-    }
-
-    if (rightmost === -Infinity){
-      return -Infinity;
-    }
-
     return rightmost;
   }
 
