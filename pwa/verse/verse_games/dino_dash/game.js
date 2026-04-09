@@ -135,7 +135,8 @@
     bandSpawnCursor: 0,
     spawnPause: 0,
     inputLockUntil: 0,
-    lastHazardSpawnX: 0
+    lastHazardSpawnX: 0,
+    lastHazardSpawnAt: 0
   };
 
   const referenceParts = parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
@@ -234,6 +235,7 @@
     state.inputLockUntil = 0;
     state.bobTimer = 0;
     state.lastHazardSpawnX = 0;
+    state.lastHazardSpawnAt = 0;
 
     renderGame();
     recalcField();
@@ -492,8 +494,8 @@
     if (state.currentPhase === "obstacle"){
       if (state.phaseRemaining <= 0 && activeObstacles === 0){
         switchToWordPhase(ts);
-      } else if (state.spawnPause <= 0 && activeObstacles < 2 && state.phaseRemaining > 0){
-        spawnObstacleOrGap();
+      } else if (state.phaseRemaining > 0 && canSpawnNextHazard(ts)){
+        spawnObstacleOrGap(ts);
       }
       return;
     }
@@ -665,20 +667,37 @@
     refillBands();
   }
 
-  function spawnObstacleOrGap(){
+  function canSpawnNextHazard(ts){
+    if (state.spawnPause > 0) return false;
+
+    const minDelay = getHazardMinDelay();
+    if (state.lastHazardSpawnAt && (ts - state.lastHazardSpawnAt) < minDelay){
+      return false;
+    }
+
+    const minSpaceAhead = 34 * state.scale;
+    const rightmost = getRightmostHazardEnd();
+    if (rightmost > state.fieldWidth + minSpaceAhead){
+      return false;
+    }
+
+    return true;
+  }
+
+  function spawnObstacleOrGap(ts){
     const wantsGap = Math.random() < 0.35;
     if (wantsGap){
-      spawnGap();
+      spawnGap(ts);
     } else {
-      spawnObstacle();
+      spawnObstacle(ts);
     }
   }
 
-  function spawnGap(){
+  function spawnGap(ts){
     const width = getGapWidth();
-    const spacing = getHazardSpacing() * 0.78;
+    const spacing = getHazardSpacing() * 0.72;
     const startX = Math.max(
-      state.fieldWidth + 70 * state.scale,
+      state.fieldWidth + 42 * state.scale,
       getRightmostHazardEnd() + spacing
     );
 
@@ -692,16 +711,17 @@
 
     const landingPad = Math.max(
       110 * state.scale,
-      spacing * 0.65
+      spacing * 0.6
     );
     appendGroundSegment("ground", landingPad, true);
 
     state.lastHazardSpawnX = startX + width;
+    state.lastHazardSpawnAt = ts;
     state.phaseRemaining -= 1;
-    state.spawnPause = 0.26 + Math.random() * 0.12;
+    state.spawnPause = 0;
   }
 
-  function spawnObstacle(){
+  function spawnObstacle(ts){
     const size = getObstacleSize();
     const spacing = getHazardSpacing();
     const lane = Math.random() < 0.18 ? "top" : "ground";
@@ -710,11 +730,11 @@
       : (state.theme?.obstacleGround || ["🪨"]);
 
     const minX = Math.max(
-      state.fieldWidth + 55 * state.scale,
+      state.fieldWidth + 38 * state.scale,
       getRightmostHazardEnd() + spacing
     );
 
-    ensureGroundToRight(minX + spacing + 120 * state.scale);
+    ensureGroundToRight(minX + spacing + 90 * state.scale);
 
     const obstacleX = findGroundSpawnX(minX, size);
 
@@ -729,8 +749,9 @@
     });
 
     state.lastHazardSpawnX = obstacleX;
+    state.lastHazardSpawnAt = ts;
     state.phaseRemaining -= 1;
-    state.spawnPause = 0.22 + Math.random() * 0.12;
+    state.spawnPause = 0;
   }
 
   function getRightmostHazardEnd(){
@@ -1270,6 +1291,12 @@
 
   function getHazardSpacing(){
     return getObstacleSpacing() * 0.72;
+  }
+
+  function getHazardMinDelay(){
+    if (selectedMode === "hard") return 420;
+    if (selectedMode === "medium") return 520;
+    return 620;
   }
 
   function getGapWidth(){
