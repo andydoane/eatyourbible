@@ -296,7 +296,6 @@
               <div class="dd-ground" id="ddGround"></div>
               <div class="dd-bands" id="ddBands"></div>
               <div class="dd-overlay-pills">
-                <div class="dd-pill" id="ddPhasePill">Phase: Obstacles</div>
                 <div class="dd-pill" id="ddStreakPill">Streak: 0</div>
               </div>
             </div>
@@ -1318,12 +1317,7 @@ function renderHills(){
       }
     }
     if (banner){
-      if (ts <= state.phaseBannerUntil){
-        banner.style.display = "block";
-        banner.textContent = state.currentPhase === "obstacle" ? "Obstacle phase" : "Word phase";
-      } else {
-        banner.style.display = "none";
-      }
+      banner.style.display = "none";
     }
   }
 
@@ -1337,19 +1331,11 @@ function renderHills(){
 
   function updatePills(){
     const streakPill = document.getElementById("ddStreakPill");
-    const phasePill = document.getElementById("ddPhasePill");
     if (streakPill){
       let flair = "";
       if (state.streak >= 10) flair = " 🌈";
       else if (state.streak >= 5) flair = " ✨";
       streakPill.textContent = `Streak: ${state.streak}${flair}`;
-    }
-    if (phasePill){
-      if (state.currentPhase === "obstacle"){
-        phasePill.textContent = `Phase: Obstacles ${Math.max(0, state.phaseRemaining + state.obstacles.length)}`;
-      } else {
-        phasePill.textContent = `Phase: Words ${Math.max(0, state.phaseRemaining + state.activeWords.length)}`;
-      }
     }
   }
 
