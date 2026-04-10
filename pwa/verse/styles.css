@@ -235,19 +235,47 @@
       transform: translateY(4px);
       box-shadow: 0 2px 0 rgba(0,0,0,0.25);
     }
-    .carousel-dots{
-      display:flex;
-      justify-content:center;
-      gap: 10px;
-      margin-top: 6px;
-    }
-    .carousel-dot{
-      width: 10px; height: 10px;
-      border-radius: 999px;
-      border: 2px solid rgba(255,255,255,0.75);
-      opacity: 0.9;
-    }
-    .carousel-dot.active{ background: rgba(255,255,255,0.95); }
+
+    .practice-icons{
+  display:flex;
+  justify-content:center;
+  align-items:flex-end;
+  gap: 14px;
+  margin-top: 8px;
+  min-height: 42px;
+}
+
+.practice-icon{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  line-height: 1;
+  user-select:none;
+  transition:
+    transform 180ms ease,
+    opacity 180ms ease,
+    filter 180ms ease;
+  transform-origin:center bottom;
+}
+
+.practice-icon.active{
+  font-size: 34px;
+  opacity: 1;
+  transform: translateY(-2px) scale(1.12);
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.22));
+}
+
+.practice-icon.near{
+  font-size: 26px;
+  opacity: 0.82;
+  transform: scale(0.96);
+}
+
+.practice-icon.far{
+  font-size: 21px;
+  opacity: 0.48;
+  transform: scale(0.88);
+}
 
 .practice-desc{
   width: 100%;
@@ -3825,6 +3853,22 @@ text-wrap: balance;
 @media (max-width: 520px){
   .pet-stats-grid{
     grid-template-columns: 1fr;
+  }
+    .practice-icons{
+    gap: 10px;
+    min-height: 36px;
+  }
+
+  .practice-icon.active{
+    font-size: 30px;
+  }
+
+  .practice-icon.near{
+    font-size: 23px;
+  }
+
+  .practice-icon.far{
+    font-size: 19px;
   }
 }
 
