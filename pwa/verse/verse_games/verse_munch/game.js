@@ -33,6 +33,14 @@
   };
   const TRAIL_EMOJIS = ["✨","⭐","💫","🫧","🌟"];
 
+  const POSITIVE_REACTIONS = [
+  "is-react-yum-tilt",
+  "is-react-sparkle-pop",
+  "is-react-jelly",
+  "is-react-hop",
+  "is-react-victory-wiggle"
+];
+
   let selectedMode = null;
   let completed = false;
   let muted = false;
@@ -583,7 +591,18 @@ app.innerHTML = `
   async function playReactionAnimation(isCorrect){
     const reaction = randomFrom(isCorrect ? HAPPY_REACTIONS : SAD_REACTIONS);
     state.faceDisplay = reaction;
-    state.faceClasses = new Set([isCorrect ? "is-react-positive" : "is-react-negative"]);
+
+    if (isCorrect){
+      const animClass = randomFrom(POSITIVE_REACTIONS);
+      state.faceClasses = new Set([animClass]);
+
+      if (animClass === "is-react-sparkle-pop"){
+        spawnReactionSparkles();
+      }
+    } else {
+      state.faceClasses = new Set(["is-react-negative"]);
+    }
+
     await waitSeconds(getTiming().reaction);
   }
 
@@ -910,6 +929,27 @@ function spawnChewCrumbs(isSecondary = false){
         color:randomFrom(["#ff5a51", "#ffc751", "#40b9c5", "#a7cb6f", "#ffffff", "#7f66c6"]),
         rotation:Math.random() * 180,
         spin:-340 + Math.random() * 680
+      });
+    }
+  }
+
+  function spawnReactionSparkles(){
+    const center = getMouthPoint();
+    const sparks = ["✨","⭐","💫","🌟"];
+
+    for (let i = 0; i < 6; i++){
+      state.particles.push({
+        type: "spark",
+        value: randomFrom(sparks),
+        x: center.x + (Math.random()*20 - 10),
+        y: center.y - 20 + (Math.random()*10),
+        vx: -60 + Math.random()*120,
+        vy: -120 + Math.random()*80,
+        gravity: 180,
+        age: 0,
+        life: 0.5 + Math.random()*0.2,
+        size: 12 + Math.random()*8,
+        color: "#fff"
       });
     }
   }
