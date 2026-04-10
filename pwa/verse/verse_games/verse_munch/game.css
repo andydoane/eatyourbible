@@ -167,11 +167,15 @@ body{
 
 .vmunch-overlay-pills{
   z-index:11;
-  inset:auto 0 10px 0;
+  top: 10px;
+  left: 10px;
+  right: 10px;
+  position: absolute;
   display:flex;
   justify-content:space-between;
   align-items:center;
   gap:10px;
+  pointer-events:none;
 }
 
 .vmunch-pill{
