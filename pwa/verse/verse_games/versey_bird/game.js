@@ -1296,9 +1296,7 @@ function getScrollSpeed(){
 }
 
   function getCorrectSpawnChance(){
-    if (selectedMode === "hard") return 0.38;
-    if (selectedMode === "medium") return 0.48;
-    return 0.58;
+    return 0.70;
   }
 
   function pickSingleLaneY(){
