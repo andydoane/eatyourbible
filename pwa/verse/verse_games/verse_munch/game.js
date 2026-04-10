@@ -873,9 +873,12 @@ app.innerHTML = `
     const correctLabel = getCurrentCorrectLabel();
     const decoys = getDecoysForPhase(phase, correctLabel, 3);
     const labels = shuffle([correctLabel, ...decoys]);
+    // pick 4 unique random foods
+    const foods = shuffle(FOOD_EMOJIS).slice(0, labels.length);
+
     state.carouselItems = labels.map((label, index) => ({
       label,
-      food:FOOD_EMOJIS[(state.progressIndex + index) % FOOD_EMOJIS.length],
+      food:foods[index],
       type:phase === "words" ? "word" : phase === "book" ? "book" : "reference"
     }));
     state.carouselIndex = Math.floor(Math.random() * state.carouselItems.length);
