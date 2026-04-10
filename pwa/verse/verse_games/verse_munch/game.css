@@ -1,0 +1,622 @@
+:root{
+  --vmunch-bg-1: #7f66c6;
+  --vmunch-bg-2: #5d49a8;
+  --vmunch-panel: rgba(0,0,0,0.24);
+  --vmunch-panel-soft: rgba(255,255,255,0.14);
+  --vmunch-shadow: 0 14px 28px rgba(0,0,0,0.18);
+  --vmunch-card-shadow: 0 10px 0 rgba(0,0,0,0.18);
+  --vmunch-white: #fff;
+  --vmunch-red: #ff5a51;
+  --vmunch-yellow: #ffc751;
+  --vmunch-green: #a7cb6f;
+  --vmunch-cyan: #40b9c5;
+}
+
+body{
+  background:
+    radial-gradient(circle at top, rgba(255,255,255,0.16), transparent 36%),
+    linear-gradient(180deg, var(--vmunch-bg-1) 0%, var(--vmunch-bg-2) 100%);
+}
+
+.vmunch-root,
+.vmunch-mode-shell{
+  width: min(100%, 920px);
+  min-height: calc(100vh - 40px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.vmunch-stage,
+.vmunch-mode-stage{
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.vmunch-build-wrap{
+  flex: 0 0 auto;
+}
+
+.vmunch-build{
+  min-height: 116px;
+  padding: 16px 18px;
+  border-radius: 28px;
+  background: rgba(0,0,0,0.24);
+  box-shadow: var(--vmunch-shadow);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+}
+
+.vmunch-build-ref{
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  opacity: 0.92;
+}
+
+.vmunch-build-text{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 8px;
+  justify-content: center;
+  align-items: center;
+  min-height: 44px;
+}
+
+.vmunch-token{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 5px 10px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.26);
+  font-size: clamp(18px, 2.55vw, 26px);
+  font-weight: 800;
+  line-height: 1.06;
+  transform: translateY(0) scale(1);
+  transition: color 180ms ease, background 180ms ease, transform 180ms ease, opacity 180ms ease;
+}
+
+.vmunch-token.is-revealed{
+  color: #fff;
+  background: rgba(255,255,255,0.13);
+}
+
+.vmunch-token.is-current{
+  transform: translateY(-2px) scale(1.04);
+  background: rgba(255,255,255,0.22);
+}
+
+.vmunch-field-wrap{
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.vmunch-field{
+  position: relative;
+  height: 100%;
+  min-height: 460px;
+  border-radius: 30px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 12%, rgba(255,255,255,0.16), transparent 28%),
+    linear-gradient(180deg, #8d74d6 0%, #6a52bb 100%);
+  box-shadow: var(--vmunch-shadow);
+}
+
+.vmunch-overlay-pills,
+.vmunch-bg,
+.vmunch-trails,
+.vmunch-particles,
+.vmunch-food-flight,
+.vmunch-feedback,
+.vmunch-confetti{
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.vmunch-overlay-pills{
+  z-index: 11;
+  inset: 14px 14px auto 14px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.vmunch-pill{
+  border-radius: 999px;
+  background: rgba(255,255,255,0.94);
+  color: #2a2356;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 900;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.15);
+}
+
+.vmunch-bg .bubble{
+  position: absolute;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.08);
+}
+
+.vmunch-main{
+  position: absolute;
+  inset: 68px 18px 18px;
+  z-index: 3;
+  display: grid;
+  grid-template-rows: minmax(190px, 1.45fr) 10px minmax(168px, 1fr);
+  gap: 0;
+}
+
+.vmunch-face-zone,
+.vmunch-carousel-zone{
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vmunch-face-stack{
+  position: relative;
+  width: min(100%, 360px);
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vmunch-face-glow{
+  position: absolute;
+  inset: 14%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,0.18), transparent 70%);
+  filter: blur(10px);
+}
+
+.vmunch-face{
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: clamp(124px, 24vw, 220px);
+  line-height: 1;
+  filter: drop-shadow(0 16px 0 rgba(0,0,0,0.12));
+  transform-origin: 50% 62%;
+  user-select: none;
+}
+
+.vmunch-face.is-idle-bob{ animation: vmunchBob 900ms ease; }
+.vmunch-face.is-idle-sway{ animation: vmunchSway 1100ms ease; }
+.vmunch-face.is-idle-blink{ animation: vmunchBlink 500ms ease; }
+.vmunch-face.is-idle-wiggle{ animation: vmunchWiggle 780ms ease; }
+.vmunch-face.is-open{ transform: scale(1.04) translateY(-4px); }
+.vmunch-face.is-chew{ animation: vmunchChew 360ms ease 2; }
+.vmunch-face.is-react-positive{ animation: vmunchHappyPop 520ms ease; }
+.vmunch-face.is-react-negative{ animation: vmunchSadNod 520ms ease; }
+.vmunch-face.is-bonus{ transition: transform 240ms ease; }
+
+.vmunch-face-caption{
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  padding: 8px 14px;
+  background: rgba(0,0,0,0.26);
+  color: #fff;
+  font-weight: 800;
+  font-size: clamp(14px, 2.8vw, 18px);
+  white-space: nowrap;
+}
+
+.vmunch-carousel-shell{
+  width: min(100%, 700px);
+  border-radius: 28px;
+  padding: 16px 14px 18px;
+  background: rgba(0,0,0,0.20);
+  box-shadow: var(--vmunch-shadow);
+}
+
+.vmunch-carousel-title{
+  margin-bottom: 12px;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  opacity: 0.95;
+}
+
+.vmunch-carousel-row{
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) 64px;
+  gap: 10px;
+  align-items: center;
+}
+
+.vmunch-arrow-btn,
+.vmunch-select-btn,
+.vmunch-nav-btn,
+.vmunch-help-btn{
+  border: none;
+  cursor: pointer;
+  font: inherit;
+}
+
+.vmunch-arrow-btn{
+  height: 64px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.92);
+  color: #5f4ab1;
+  box-shadow: 0 8px 0 rgba(0,0,0,0.16);
+  font-size: 34px;
+  font-weight: 900;
+}
+
+.vmunch-arrow-btn:active,
+.vmunch-select-btn:active,
+.vmunch-nav-btn:active,
+.vmunch-help-btn:active{
+  transform: translateY(4px);
+  box-shadow: 0 3px 0 rgba(0,0,0,0.16);
+}
+
+.vmunch-arrow-btn:disabled,
+.vmunch-select-btn:disabled{
+  opacity: 0.5;
+  cursor: default;
+  transform: none;
+}
+
+.vmunch-carousel-viewport{
+  position: relative;
+  height: 152px;
+  overflow: hidden;
+}
+
+.vmunch-carousel-track{
+  position: absolute;
+  inset: 0;
+}
+
+.vmunch-card{
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  width: min(230px, 72%);
+  min-height: 124px;
+  padding: 12px 12px 14px;
+  border-radius: 24px;
+  background: rgba(255,255,255,0.14);
+  border: 2px solid rgba(255,255,255,0.14);
+  box-shadow: var(--vmunch-card-shadow);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  transform-origin: center center;
+  transition: transform 220ms ease, opacity 220ms ease, background 220ms ease, border-color 220ms ease;
+}
+
+.vmunch-card.is-center{
+  background: rgba(255,255,255,0.24);
+  border-color: rgba(255,255,255,0.42);
+}
+
+.vmunch-card-food{
+  font-size: clamp(26px, 5vw, 34px);
+  line-height: 1;
+}
+
+.vmunch-card-word{
+  color: #fff;
+  font-size: clamp(22px, 4.6vw, 34px);
+  line-height: 1.08;
+  font-weight: 900;
+  text-wrap: balance;
+}
+
+.vmunch-card-sub{
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  opacity: 0.72;
+}
+
+.vmunch-select-btn{
+  margin-top: 14px;
+  width: 100%;
+  border-radius: 18px;
+  padding: 12px 16px;
+  background: #fff;
+  color: #5f4ab1;
+  font-size: 18px;
+  font-weight: 900;
+  box-shadow: 0 8px 0 rgba(0,0,0,0.16);
+}
+
+.vmunch-status-line{
+  min-height: 24px;
+  margin-top: 10px;
+  font-size: 15px;
+  font-weight: 800;
+  opacity: 0.92;
+}
+
+.vmunch-flying-food,
+.vmunch-trail-particle,
+.vmunch-spark,
+.vmunch-confetto,
+.vmunch-hit-word{
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  will-change: transform, opacity;
+}
+
+.vmunch-flying-food{
+  z-index: 8;
+  font-size: clamp(26px, 7vw, 42px);
+}
+
+.vmunch-hit-word{
+  z-index: 8;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.95);
+  color: #33295f;
+  font-size: clamp(16px, 3.2vw, 22px);
+  font-weight: 900;
+}
+
+.vmunch-trail-particle{
+  z-index: 7;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.9);
+}
+
+.vmunch-spark{
+  z-index: 6;
+  font-size: clamp(20px, 4vw, 28px);
+}
+
+.vmunch-confetto{
+  z-index: 9;
+  border-radius: 6px;
+}
+
+.vmunch-feedback-badge{
+  position: absolute;
+  top: 54%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.32);
+  padding: 10px 16px;
+  font-size: clamp(18px, 4vw, 28px);
+  font-weight: 900;
+  color: #fff;
+}
+
+.vmunch-nav-wrap{
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.vmunch-nav{
+  display: grid;
+  grid-template-columns: 56px minmax(0,1fr) 56px;
+  align-items: center;
+  gap: 12px;
+}
+
+.vmunch-nav-btn,
+.vmunch-help-btn{
+  height: 56px;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.28);
+  color: #fff;
+  box-shadow: 0 8px 0 rgba(0,0,0,0.18);
+}
+
+.vmunch-nav-btn{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vmunch-help-btn{
+  width: 100%;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+}
+
+.nav-icon{
+  width: 26px;
+  height: 26px;
+}
+
+.vmunch-help-overlay{
+  position: fixed;
+  inset: 0;
+  background: rgba(17,10,44,0.62);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 50;
+}
+
+.vmunch-help-overlay.is-open{
+  display: flex;
+}
+
+.vmunch-help-dialog{
+  width: min(100%, 420px);
+  border-radius: 28px;
+  background: #fff;
+  color: #33295f;
+  padding: 22px 18px 18px;
+  box-shadow: 0 18px 38px rgba(0,0,0,0.28);
+}
+
+.vmunch-help-title{
+  font-size: 28px;
+  font-weight: 900;
+}
+
+.vmunch-help-body{
+  margin-top: 10px;
+  font-size: 18px;
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+.vmunch-help-actions{
+  margin-top: 18px;
+}
+
+.vmunch-mode-top{
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 10px 0;
+}
+
+.vmunch-mode-title{
+  font-size: clamp(30px, 7vw, 44px);
+  font-weight: 900;
+  line-height: 1.04;
+}
+
+.vmunch-mode-subtitle{
+  width: min(100%, 620px);
+  font-size: clamp(18px, 4vw, 23px);
+  line-height: 1.2;
+  font-weight: 700;
+  opacity: 0.98;
+}
+
+.vmunch-mode-card{
+  width: min(100%, 520px);
+  padding: 20px 18px;
+  border-radius: 30px;
+  background: rgba(0,0,0,0.24);
+  box-shadow: var(--vmunch-shadow);
+}
+
+.vmunch-mode-actions{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.vmunch-complete-icon{
+  font-size: 76px;
+  line-height: 1;
+}
+
+@keyframes vmunchBob{
+  0%,100%{ transform: translateY(0) scale(1); }
+  50%{ transform: translateY(-6px) scale(1.01); }
+}
+@keyframes vmunchSway{
+  0%,100%{ transform: rotate(0deg); }
+  25%{ transform: rotate(-4deg); }
+  75%{ transform: rotate(4deg); }
+}
+@keyframes vmunchBlink{
+  0%,100%{ transform: scaleY(1); }
+  40%,60%{ transform: scaleY(0.86); }
+}
+@keyframes vmunchWiggle{
+  0%,100%{ transform: rotate(0deg); }
+  20%{ transform: rotate(-5deg) translateX(-2px); }
+  40%{ transform: rotate(4deg) translateX(1px); }
+  60%{ transform: rotate(-3deg) translateX(-1px); }
+}
+@keyframes vmunchChew{
+  0%,100%{ transform: scale(1); }
+  25%{ transform: scale(1.03, 0.95); }
+  50%{ transform: scale(0.98, 1.03); }
+  75%{ transform: scale(1.02, 0.97); }
+}
+@keyframes vmunchHappyPop{
+  0%{ transform: scale(0.96); }
+  45%{ transform: scale(1.08); }
+  100%{ transform: scale(1); }
+}
+@keyframes vmunchSadNod{
+  0%{ transform: translateY(-2px); }
+  40%{ transform: translateY(6px) rotate(-5deg); }
+  100%{ transform: translateY(0) rotate(0deg); }
+}
+
+@media (max-width: 720px){
+  .vmunch-main{
+    inset: 64px 12px 12px;
+    grid-template-rows: minmax(180px, 1.3fr) 8px minmax(196px, 1fr);
+  }
+
+  .vmunch-carousel-shell{
+    padding: 14px 10px 14px;
+  }
+
+  .vmunch-carousel-row{
+    grid-template-columns: 54px minmax(0, 1fr) 54px;
+    gap: 6px;
+  }
+
+  .vmunch-arrow-btn{
+    height: 54px;
+    font-size: 30px;
+  }
+
+  .vmunch-card{
+    width: min(215px, 76%);
+    min-height: 116px;
+  }
+}
+
+@media (max-width: 480px){
+  .vmunch-build{
+    min-height: 106px;
+    padding: 14px 14px;
+  }
+
+  .vmunch-field{
+    min-height: 430px;
+  }
+
+  .vmunch-main{
+    inset: 60px 8px 10px;
+    grid-template-rows: minmax(170px, 1.18fr) 10px minmax(208px, 1fr);
+  }
+
+  .vmunch-face-stack{
+    width: min(100%, 300px);
+  }
+
+  .vmunch-carousel-shell{
+    border-radius: 24px;
+  }
+
+  .vmunch-status-line{
+    font-size: 14px;
+  }
+}
