@@ -1383,6 +1383,60 @@ function getPracticeGames(){
   return [...BUILTIN_PRACTICE_GAMES, ...getExternalPracticeGames()];
 }
 
+function getPracticeGameIcon(game){
+  if (!game) return "🎮";
+
+  const title = String(game.title || "").trim();
+
+  const firstSymbolMatch = title.match(/^(\p{Extended_Pictographic}|\p{Emoji_Presentation}|[\u2600-\u27BF])/u);
+  if (firstSymbolMatch) return firstSymbolMatch[0];
+
+  return "🎮";
+}
+
+function getPracticeIconWindow(total, current, maxVisible = 5){
+  if (total <= 0) return [];
+
+  const visible = Math.min(maxVisible, total);
+  const half = Math.floor(visible / 2);
+
+  let start = current - half;
+  let end = start + visible;
+
+  if (start < 0){
+    start = 0;
+    end = visible;
+  }
+
+  if (end > total){
+    end = total;
+    start = total - visible;
+  }
+
+  const out = [];
+  for (let i = start; i < end; i++){
+    out.push(i);
+  }
+  return out;
+}
+
+function renderPracticeIconStrip(practiceGames, currentIndex){
+  const windowIndices = getPracticeIconWindow(practiceGames.length, currentIndex, 5);
+
+  return windowIndices.map((gameIndex) => {
+    const game = practiceGames[gameIndex];
+    const icon = getPracticeGameIcon(game);
+    const distance = Math.abs(gameIndex - currentIndex);
+
+    let cls = "practice-icon";
+    if (gameIndex === currentIndex) cls += " active";
+    else if (distance === 1) cls += " near";
+    else cls += " far";
+
+    return `<span class="${cls}" aria-hidden="true">${icon}</span>`;
+  }).join("");
+}
+
 /* =========================================================
    6. Shared Game Helpers (Used Across Multiple Games)
 
@@ -3960,7 +4014,7 @@ function screenPractice(idx){
         <button class="carousel-arrow no-zoom" id="pNext" aria-label="Next">${SVG_FORWARD}</button>
       </div>
 
-      <div class="carousel-dots" id="pDots"></div>
+      <div class="practice-icons" id="pIcons"></div>
       <div class="practice-desc">${g.desc}</div>
   `;
 
@@ -3968,10 +4022,10 @@ function screenPractice(idx){
   wrap.querySelector("#pNext").onclick = (e)=>{ e.stopPropagation(); practiceNext(); };
   wrap.querySelector("#pMain").onclick = (e)=>{ e.stopPropagation(); practiceRun(); };
 
-  const dots = wrap.querySelector("#pDots");
-  dots.innerHTML = practiceGames.map((_, i) =>
-    `<span class="carousel-dot ${i === State.practiceIndex ? "active" : ""}"></span>`
-  ).join("");
+  const icons = wrap.querySelector("#pIcons");
+  if (icons){
+    icons.innerHTML = renderPracticeIconStrip(practiceGames, State.practiceIndex);
+  }
 
   return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner: wrap});
 }
