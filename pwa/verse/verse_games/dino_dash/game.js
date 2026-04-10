@@ -152,7 +152,8 @@
     pitRecovering: false,
     pitRespawnAt: 0,
     jumpsRemaining: 0,
-    maxJumps: 2
+    maxJumps: 2,
+    lastTrailSpawnAt: 0
   };
 
   const referenceParts = parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
@@ -256,6 +257,7 @@
     state.pitRecovering = false;
     state.pitRespawnAt = 0;
     state.jumpsRemaining = 2;
+    state.lastTrailSpawnAt = 0;
 
     renderGame();
     recalcField();
@@ -501,7 +503,10 @@
 
     if (support <= state.fieldHeight + 50 && state.playerY >= targetY){
       if (state.playerVY >= 0 || state.playerY < targetY + 18 * state.scale){
-        if (state.playerVY > 220 * state.scale) createLandingDust();
+        if (state.playerVY > 220 * state.scale){
+          createLandingDust();
+          createLandingCloudPuff();
+        }
         state.playerY = targetY;
         state.playerVY = 0;
 
@@ -1119,6 +1124,26 @@ function wrapHillLayer(layer){
     }
   }
 
+  function createLandingCloudPuff(){
+    const baseX = state.playerX - 10 * state.scale;
+    const baseY = state.fieldFloorY - 10 * state.scale;
+
+    for (let i = 0; i < 5; i++){
+      state.particles.push({
+        id: state.nextId++,
+        type: "landing-cloud",
+        x: baseX + (Math.random() * 22 - 11) * state.scale,
+        y: baseY + (Math.random() * 8 - 4) * state.scale,
+        vx: (-45 + Math.random() * 24) * state.scale,
+        vy: (-18 + Math.random() * 16) * state.scale,
+        size: (18 + Math.random() * 10) * state.scale,
+        life: 0.34 + Math.random() * 0.14,
+        age: 0,
+        emoji: "☁️"
+      });
+    }
+  }
+
   function updateParticles(dt){
     for (const particle of state.particles){
       particle.age += dt;
@@ -1131,23 +1156,94 @@ function wrapHillLayer(layer){
   }
 
   function updateTrail(dt){
-    if (state.streak >= 4){
-      state.trail.push({
-        id: state.nextId++,
-        x: state.playerX - 12 * state.scale,
-        y: state.playerY + 4 * state.scale,
-        age: 0,
-        life: 0.28 + Math.min(0.22, state.streak * 0.01),
-        emoji: state.streak >= 10 ? "🌈" : state.streak >= 7 ? "✨" : "⭐",
-        size: 10 + Math.min(18, state.streak * 1.1)
-      });
+    const now = performance.now();
+
+    if (state.streak >= 4 && !state.pitRecovering){
+      const spawnInterval = state.streak >= 10 ? 26 : state.streak >= 7 ? 34 : 42;
+
+      if (!state.lastTrailSpawnAt || now - state.lastTrailSpawnAt >= spawnInterval){
+        state.lastTrailSpawnAt = now;
+
+        const originX = state.playerX - 18 * state.scale;
+        const originY = state.playerY + 2 * state.scale;
+
+        const baseSpeed = (150 + Math.min(110, state.streak * 10)) * state.scale;
+        const spreadAngles = [0, -5, 5];
+
+        for (const deg of spreadAngles){
+          const rad = deg * Math.PI / 180;
+          const vx = -Math.cos(rad) * baseSpeed;
+          const vy = Math.sin(rad) * baseSpeed * 0.45;
+
+          const glow = getTrailGlow(state.streak, now);
+
+          state.trail.push({
+            id: state.nextId++,
+            x: originX,
+            y: originY,
+            vx,
+            vy,
+            age: 0,
+            life: 0.22 + Math.min(0.20, state.streak * 0.012),
+            size: (state.streak >= 10 ? 16 : state.streak >= 7 ? 13 : state.streak >= 5 ? 11 : 9) * state.scale,
+            color: glow.color,
+            blur: glow.blur,
+            alpha: glow.alpha
+          });
+        }
+      }
     }
 
     for (const item of state.trail){
       item.age += dt;
-      item.x -= (80 + state.streak * 5) * state.scale * dt;
+      item.x += item.vx * dt;
+      item.y += item.vy * dt;
+      item.vx *= 0.985;
+      item.vy *= 0.99;
     }
+
     state.trail = state.trail.filter(item => item.age < item.life);
+  }
+
+  function getTrailGlow(streak, now){
+    if (streak >= 15){
+      const hue = (now * 0.18) % 360;
+      return {
+        color: `hsla(${hue}, 95%, 60%, 1)`,
+        blur: 10 * state.scale,
+        alpha: 0.95
+      };
+    }
+
+    if (streak >= 10){
+      return {
+        color: "rgba(255, 90, 70, 1)",
+        blur: 9 * state.scale,
+        alpha: 0.9
+      };
+    }
+
+    if (streak >= 7){
+      return {
+        color: "rgba(255, 212, 74, 1)",
+        blur: 8 * state.scale,
+        alpha: 0.88
+      };
+    }
+
+    if (streak >= 5){
+      return {
+        color: "rgba(72, 170, 255, 1)",
+        blur: 7 * state.scale,
+        alpha: 0.84
+      };
+    }
+
+    return {
+      color: "rgba(105, 220, 120, 1)",
+      blur: 6 * state.scale,
+      alpha: 0.8
+    };
   }
 
   async function finishRun(){
@@ -1240,9 +1336,26 @@ function renderHills(){
   function renderTrail(){
     const layer = document.getElementById("ddTrails");
     if (!layer) return;
-    layer.innerHTML = state.trail.map(item => `
-      <div class="dd-trail" style="left:${item.x}px; top:${item.y}px; font-size:${item.size}px; opacity:${1 - item.age / item.life};">${item.emoji}</div>
-    `).join("");
+
+    layer.innerHTML = state.trail.map(item => {
+      const t = item.age / item.life;
+      const opacity = Math.max(0, (1 - t) * item.alpha);
+      const scale = 1 - t * 0.5;
+
+      return `
+        <div class="dd-trail" style="
+          left:${item.x}px;
+          top:${item.y}px;
+          width:${item.size}px;
+          height:${item.size}px;
+          border-radius:999px;
+          background:${item.color};
+          opacity:${opacity};
+          filter: blur(${item.blur}px);
+          transform: translate(-50%, -50%) scale(${scale});
+        "></div>
+      `;
+    }).join("");
   }
 
   function renderParticles(){
