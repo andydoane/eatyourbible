@@ -288,7 +288,7 @@ body{
   justify-content:center;
   width:100%;
   height:100%;
-  font-size:clamp(124px, 24vw, 220px);
+  font-size:clamp(160px, 22vw, 380px);
   line-height:1;
   filter:drop-shadow(0 16px 0 rgba(0,0,0,0.12));
   transform-origin:50% 62%;
