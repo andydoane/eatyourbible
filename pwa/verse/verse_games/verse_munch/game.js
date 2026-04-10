@@ -23,13 +23,13 @@
   const SAD_REACTIONS = ["🤮","🤢","😵‍💫"];
   const ANTICIPATION_FACES = ["😕","🫤","😐"];
   const EMOTION_FACE = {
-    "-3": "😡",
-    "-2": "😠",
-    "-1": "🤨",
-    "0": "😐",
-    "1": "🙂",
-    "2": "😊",
-    "3": "😁"
+    "-3":"😡",
+    "-2":"😠",
+    "-1":"🤨",
+    "0":"😐",
+    "1":"🙂",
+    "2":"😊",
+    "3":"😁"
   };
   const TRAIL_EMOJIS = ["✨","⭐","💫","🫧","🌟"];
 
@@ -39,38 +39,37 @@
   let bonusRunning = false;
 
   const state = {
-    running: false,
-    rafId: 0,
-    lastTs: 0,
-    scale: 1,
-    fieldWidth: 0,
-    fieldHeight: 0,
-    words: tokenizeVerse(ctx.verseText),
-    segments: [],
-    bookLabel: "",
-    referenceLabel: "",
-    progressIndex: 0,
-    streak: 0,
-    emotionLevel: 0,
-    carouselItems: [],
-    carouselIndex: 0,
-    inputLocked: false,
-    faceBase: "😐",
-    faceDisplay: "😐",
-    faceCaption: "Ready for the next bite.",
-    faceClasses: new Set(),
-    idleTimer: 0,
-    idleVariant: "",
-    flyingFood: null,
-    hitWord: null,
-    trails: [],
-    particles: [],
-    confetti: [],
-    feedbackBadge: "",
-    feedbackUntil: 0,
-    faceScaleBoost: 0,
-    bonusCount: 0,
-    celebrationPending: false
+    running:false,
+    rafId:0,
+    lastTs:0,
+    scale:1,
+    fieldWidth:0,
+    fieldHeight:0,
+    words:tokenizeVerse(ctx.verseText),
+    segments:[],
+    bookLabel:"",
+    referenceLabel:"",
+    progressIndex:0,
+    streak:0,
+    emotionLevel:0,
+    carouselItems:[],
+    carouselIndex:0,
+    inputLocked:false,
+    faceBase:"😐",
+    faceDisplay:"😐",
+    faceCaption:"Ready for the next bite.",
+    faceClasses:new Set(),
+    idleTimer:0,
+    flyingFood:null,
+    hitWord:null,
+    trails:[],
+    particles:[],
+    confetti:[],
+    feedbackBadge:"",
+    feedbackUntil:0,
+    faceScaleBoost:0,
+    bonusCount:0,
+    buildShakeUntil:0
   };
 
   setupReferenceSegments();
@@ -85,7 +84,7 @@
             <div style="font-size:82px;line-height:1;">😋</div>
             <div class="vmunch-mode-title">Verse Munch</div>
             <div class="vmunch-mode-subtitle">
-              Spin the word carousel, feed the face the next correct word, then finish with the book and reference.
+              Spin the selector, feed the face the next correct word, then finish with the book and reference.
             </div>
 
             <div class="vmunch-mode-card">
@@ -97,7 +96,7 @@
         </div>
 
         ${renderNav()}
-        ${renderHelpOverlay("Use the left and right arrows to rotate the carousel.<br><br>Select the centered word to feed it to the face.<br><br>Correct picks build the verse and grow your streak. Wrong picks only reset your streak.<br><br>After the full verse is built, munch the book, then the chapter and verse.")}
+        ${renderHelpOverlay("Use the left and right arrows to rotate the selector.<br><br>Tap the centered word to feed it to the face.<br><br>Correct picks build the verse and grow your streak. Wrong picks only reset your streak.<br><br>After the full verse is built, munch the book, then the chapter and verse.")}
       </div>
     `;
 
@@ -149,7 +148,6 @@
     state.faceCaption = "Ready for the next bite.";
     state.faceClasses = new Set();
     state.idleTimer = getIdleDelay();
-    state.idleVariant = "";
     state.flyingFood = null;
     state.hitWord = null;
     state.trails = [];
@@ -159,7 +157,7 @@
     state.feedbackUntil = 0;
     state.faceScaleBoost = 0;
     state.bonusCount = 0;
-    state.celebrationPending = false;
+    state.buildShakeUntil = 0;
     state.inputLocked = false;
     buildCarouselForCurrentStep();
 
@@ -174,11 +172,6 @@
 
           <div class="vmunch-field-wrap">
             <div class="vmunch-field" id="vmunchField">
-              <div class="vmunch-overlay-pills">
-                <div class="vmunch-pill" id="vmunchModePill">${escapeHtml(capitalize(mode))}</div>
-                <div class="vmunch-pill" id="vmunchStreakPill">Streak: 0</div>
-              </div>
-
               <div class="vmunch-bg" id="vmunchBg"></div>
               <div class="vmunch-trails" id="vmunchTrails"></div>
               <div class="vmunch-particles" id="vmunchParticles"></div>
@@ -195,24 +188,31 @@
                   </div>
                 </div>
 
+                <div class="vmunch-food-zone">
+                  <div class="vmunch-food-display" id="vmunchFoodDisplay"></div>
+                </div>
+
                 <div class="vmunch-carousel-zone">
                   <div class="vmunch-carousel-shell">
                     <div class="vmunch-carousel-row">
                       <button class="vmunch-arrow-btn" id="vmunchPrevBtn" aria-label="Previous choice">‹</button>
-                      <div class="vmunch-carousel-viewport">
-                        <div class="vmunch-carousel-track" id="vmunchCarouselTrack"></div>
-                      </div>
+                      <button class="vmunch-choice-btn" id="vmunchChoiceBtn" type="button"></button>
                       <button class="vmunch-arrow-btn" id="vmunchNextBtn" aria-label="Next choice">›</button>
                     </div>
                   </div>
                 </div>
+              </div>
+
+              <div class="vmunch-overlay-pills">
+                <div class="vmunch-pill" id="vmunchModePill">${escapeHtml(capitalize(mode))}</div>
+                <div class="vmunch-pill" id="vmunchStreakPill">Streak: 0</div>
               </div>
             </div>
           </div>
         </div>
 
         ${renderNav()}
-        ${renderHelpOverlay("Rotate the carousel with the arrows.<br><br>Tap the centered word to feed it to the face.<br><br>Correct picks build the verse and grow your streak. Wrong picks only reset your streak.<br><br>After the verse is built, munch the book, then the chapter and verse.")}
+        ${renderHelpOverlay("Rotate the selector with the arrows.<br><br>Tap the word to feed it upward.<br><br>The face emotion changes only after each reaction finishes.<br><br>Wrong picks reset your streak but never end the run.")}
       </div>
     `;
 
@@ -220,7 +220,6 @@
     wireCommonNav();
     wireGameInput();
     recalcField();
-    renderBuildText();
     renderFrame(performance.now());
     startLoop();
   }
@@ -325,7 +324,7 @@
   function wireGameInput(){
     const prevBtn = document.getElementById("vmunchPrevBtn");
     const nextBtn = document.getElementById("vmunchNextBtn");
-    const track = document.getElementById("vmunchCarouselTrack");
+    const choiceBtn = document.getElementById("vmunchChoiceBtn");
 
     prevBtn.addEventListener("pointerup", (e) => {
       e.preventDefault();
@@ -335,11 +334,7 @@
       e.preventDefault();
       rotateCarousel(1);
     });
-    track.addEventListener("pointerup", (e) => {
-      const card = e.target.closest("[data-carousel-index]");
-      if (!card) return;
-      const cardIndex = Number(card.getAttribute("data-carousel-index"));
-      if (cardIndex !== state.carouselIndex) return;
+    choiceBtn.addEventListener("pointerup", (e) => {
       e.preventDefault();
       handleCenteredSelection();
     });
@@ -408,7 +403,6 @@
 
     const variants = getIdleVariants();
     const variant = variants[Math.floor(Math.random() * variants.length)];
-    state.idleVariant = variant;
     state.faceClasses = new Set([variant]);
     state.idleTimer = getIdleDelay();
 
@@ -426,9 +420,7 @@
     food.x = lerp(food.startX, food.endX, eased);
     food.y = lerp(food.startY, food.endY, eased);
     food.scale = lerp(food.startScale, food.endScale, eased);
-    if (t >= 1 && food.active){
-      food.active = false;
-    }
+    if (t >= 1 && food.active) food.active = false;
   }
 
   function updateTrails(dt){
@@ -480,11 +472,11 @@
     const currentCorrect = getCurrentCorrectLabel();
     const isCorrect = normalizeWord(item.label) === normalizeWord(currentCorrect);
     state.hitWord = {
-      text: item.label,
-      x: getCardCenterX(state.carouselIndex),
-      y: getCarouselCenterY(),
-      age: 0,
-      life: 0.42
+      text:item.label,
+      x:getChoiceCenterX(),
+      y:getChoiceCenterY(),
+      age:0,
+      life:0.42
     };
 
     await playFoodLaunchAnimation(item);
@@ -501,8 +493,8 @@
     } else {
       state.streak = 0;
       state.faceCaption = getNegativeCaption(item.label, currentCorrect);
+      state.buildShakeUntil = performance.now() + 280;
       spawnMissParticles();
-      triggerBuildShake();
     }
 
     state.emotionLevel = clamp(state.emotionLevel + (isCorrect ? 1 : -1), -3, 3);
@@ -523,7 +515,6 @@
     buildCarouselForCurrentStep();
     state.inputLocked = false;
     state.idleTimer = getIdleDelay();
-    renderBuildText();
     renderFrame(performance.now());
   }
 
@@ -531,20 +522,20 @@
     const launchDuration = getTiming().launch;
     state.faceCaption = bonusRunning ? "Bonus bite!" : "Up it goes...";
     state.flyingFood = {
-      emoji: item.food,
-      label: item.label,
-      startX: getCardCenterX(state.carouselIndex),
-      startY: getCarouselCenterY(),
-      endX: getMouthPoint().x,
-      endY: getMouthPoint().y,
-      x: getCardCenterX(state.carouselIndex),
-      y: getCarouselCenterY(),
-      startScale: 1,
-      endScale: 1.18,
-      scale: 1,
-      elapsed: 0,
-      duration: launchDuration,
-      active: true
+      emoji:item.food,
+      label:item.label,
+      startX:getFoodStartPoint().x,
+      startY:getFoodStartPoint().y,
+      endX:getMouthPoint().x,
+      endY:getMouthPoint().y,
+      x:getFoodStartPoint().x,
+      y:getFoodStartPoint().y,
+      startScale:1,
+      endScale:2,
+      scale:1,
+      elapsed:0,
+      duration:launchDuration,
+      active:true
     };
 
     const trailTier = getTrailTier();
@@ -552,15 +543,15 @@
       const trailCount = 4 + trailTier * 2;
       for (let i = 0; i < trailCount; i++){
         state.trails.push({
-          id: Math.random().toString(36).slice(2),
-          emoji: randomFrom(TRAIL_EMOJIS),
-          x: getCardCenterX(state.carouselIndex),
-          y: getCarouselCenterY(),
-          vx: -40 + Math.random() * 80,
-          vy: -60 - Math.random() * 50,
-          age: 0,
-          life: 0.42 + trailTier * 0.08,
-          size: 16 + trailTier * 3 + Math.random() * 8
+          id:Math.random().toString(36).slice(2),
+          emoji:randomFrom(TRAIL_EMOJIS),
+          x:getFoodStartPoint().x,
+          y:getFoodStartPoint().y,
+          vx:-40 + Math.random() * 80,
+          vy:-60 - Math.random() * 50,
+          age:0,
+          life:0.42 + trailTier * 0.08,
+          size:16 + trailTier * 3 + Math.random() * 8
         });
       }
     }
@@ -607,8 +598,8 @@
     for (let i = 0; i < 5; i++){
       state.bonusCount = i + 1;
       const bonusItem = {
-        label: "bonus",
-        food: FOOD_EMOJIS[i % FOOD_EMOJIS.length]
+        label:"bonus",
+        food:FOOD_EMOJIS[i % FOOD_EMOJIS.length]
       };
       state.faceScaleBoost = 1 + (i + 1) * 0.08;
       await playFoodLaunchAnimation(bonusItem);
@@ -635,9 +626,9 @@
 
     try {
       await window.VerseGameBridge.markCompleted({
-        verseId: ctx.verseId,
-        gameId: GAME_ID,
-        mode: selectedMode
+        verseId:ctx.verseId,
+        gameId:GAME_ID,
+        mode:selectedMode
       });
     } catch (err) {
       console.error("markCompleted failed", err);
@@ -659,9 +650,10 @@
   }
 
   function renderFrame(ts){
-    renderBuildText();
+    updateBuildText();
+    renderBuildShake(ts);
     renderFace();
-    renderCarousel();
+    renderSelector();
     renderFlight();
     renderTrails();
     renderParticles();
@@ -670,56 +662,26 @@
     updateStreakPill();
   }
 
-  function renderBuildText(){
-    const buildText = document.getElementById("vmunchBuildText");
-    if (!buildText) return;
+  function updateBuildText(){
+    const el = document.getElementById("vmunchBuildText");
+    if (!el) return;
+    el.innerHTML = state.segments.map((segment, index) => `
+      <span class="vmunch-build-word ${index < state.progressIndex ? "is-built" : ""}">
+        ${escapeHtml(segment)}
+      </span>
+    `).join(" ");
+  }
 
-    const builtWords = Math.min(state.progressIndex, state.words.length);
-    let verseHtml = "";
-
-    if (!builtWords){
-      verseHtml = '<p class="vmunch-build-verse vmunch-build-empty">Build the verse one word at a time.</p>';
-    } else {
-      const visibleWords = state.words.slice(0, builtWords).map(escapeHtml).join(" ");
-      const needsEllipsis = builtWords < state.words.length;
-      verseHtml = `<p class="vmunch-build-verse">${visibleWords}${needsEllipsis ? ' <span class="vmunch-build-ellipsis">…</span>' : ""}</p>`;
-    }
-
-    const phase = getCurrentPhase();
-    const showRefRow = builtWords >= state.words.length || phase === "book" || phase === "reference" || phase === "done";
-    let refHtml = "";
-
-    if (showRefRow){
-      let bookClass = "is-placeholder";
-      let refClass = "is-future";
-      let bookText = "Book";
-      let refText = "Chapter:Verse";
-
-      if (phase === "reference"){
-        bookClass = "is-filled";
-        refClass = "is-placeholder";
-        bookText = state.bookLabel || "Book";
-      } else if (phase === "done"){
-        bookClass = "is-filled";
-        refClass = "is-filled";
-        bookText = state.bookLabel || "Book";
-        refText = state.referenceLabel || "Chapter:Verse";
-      }
-
-      refHtml = `
-        <div class="vmunch-ref-row">
-          <div class="vmunch-ref-chip ${bookClass}">${escapeHtml(bookText)}</div>
-          <div class="vmunch-ref-chip ${refClass}">${escapeHtml(refText)}</div>
-        </div>
-      `;
-    }
-
-    buildText.innerHTML = `<div class="vmunch-build-stack">${verseHtml}${refHtml}</div>`;
+  function renderBuildShake(ts){
+    const build = document.getElementById("vmunchBuild");
+    if (!build) return;
+    build.classList.toggle("vmunch-build-shake", ts < state.buildShakeUntil);
   }
 
   function renderFace(){
     const face = document.getElementById("vmunchFace");
     const caption = document.getElementById("vmunchFaceCaption");
+    const foodDisplay = document.getElementById("vmunchFoodDisplay");
     if (!face) return;
 
     face.className = "vmunch-face";
@@ -728,40 +690,20 @@
     face.style.transform = state.faceScaleBoost > 0 ? `scale(${state.faceScaleBoost})` : "";
 
     if (caption) caption.textContent = state.faceCaption;
+    if (foodDisplay) foodDisplay.textContent = getCurrentFoodEmoji();
   }
 
-  function renderCarousel(){
-    const track = document.getElementById("vmunchCarouselTrack");
+  function renderSelector(){
+    const choiceBtn = document.getElementById("vmunchChoiceBtn");
     const prevBtn = document.getElementById("vmunchPrevBtn");
     const nextBtn = document.getElementById("vmunchNextBtn");
-    if (!track) return;
+    if (!choiceBtn) return;
 
-    const viewportWidth = track.parentElement ? track.parentElement.clientWidth : 320;
-    const baseOffset = Math.min(118, viewportWidth * 0.30);
+    const item = state.carouselItems[state.carouselIndex];
+    choiceBtn.textContent = item ? item.label : "";
 
-    track.innerHTML = state.carouselItems.map((item, index) => {
-      const rawDelta = wrapDelta(index - state.carouselIndex, state.carouselItems.length);
-      const x = rawDelta * baseOffset;
-      const scale = rawDelta === 0 ? 1 : 0.9;
-      const opacity = rawDelta === 0 ? 1 : 0.42;
-      const z = 10 - Math.abs(rawDelta);
-      const classes = ["vmunch-card"];
-      if (rawDelta === 0) classes.push("is-center");
-      return `
-        <button
-          class="${classes.join(" ")}"
-          data-carousel-index="${index}"
-          type="button"
-          aria-label="Choose ${escapeHtml(item.label)}"
-          style="transform:translateX(calc(-50% + ${x}px)) scale(${scale});opacity:${opacity};z-index:${z};"
-        >
-          <div class="vmunch-card-food">${escapeHtml(item.food)}</div>
-          <div class="vmunch-card-word">${escapeHtml(item.label)}</div>
-        </button>
-      `;
-    }).join("");
-
-    const locked = state.inputLocked || bonusRunning;
+    const locked = state.inputLocked || bonusRunning || !item;
+    choiceBtn.disabled = locked;
     prevBtn.disabled = locked;
     nextBtn.disabled = locked;
   }
@@ -851,11 +793,10 @@
     const labels = shuffle([correctLabel, ...decoys]);
     state.carouselItems = labels.map((label, index) => ({
       label,
-      food: FOOD_EMOJIS[(state.progressIndex + index) % FOOD_EMOJIS.length],
-      type: phase === "words" ? "word" : phase === "book" ? "book" : "reference"
+      food:FOOD_EMOJIS[(state.progressIndex + index) % FOOD_EMOJIS.length],
+      type:phase === "words" ? "word" : phase === "book" ? "book" : "reference"
     }));
-    state.carouselIndex = state.carouselItems.findIndex(item => item.label === correctLabel);
-    if (state.carouselIndex < 0) state.carouselIndex = 0;
+    state.carouselIndex = Math.floor(Math.random() * state.carouselItems.length);
   }
 
   function getDecoysForPhase(phase, correctLabel, count){
@@ -898,17 +839,17 @@
     const count = isBonus ? 18 : 12;
     for (let i = 0; i < count; i++){
       state.particles.push({
-        type: Math.random() < 0.5 ? "spark" : "dot",
-        value: randomFrom(TRAIL_EMOJIS),
-        x: center.x + (Math.random() * 24 - 12),
-        y: center.y + (Math.random() * 24 - 12),
-        vx: -140 + Math.random() * 280,
-        vy: -180 + Math.random() * 160,
-        gravity: 220,
-        age: 0,
-        life: 0.75 + Math.random() * 0.25,
-        size: 12 + Math.random() * 16,
-        color: randomFrom(["#ffc751","#ff5a51","#40b9c5","#a7cb6f","#ffffff"])
+        type:Math.random() < 0.5 ? "spark" : "dot",
+        value:randomFrom(TRAIL_EMOJIS),
+        x:center.x + (Math.random() * 24 - 12),
+        y:center.y + (Math.random() * 24 - 12),
+        vx:-140 + Math.random() * 280,
+        vy:-180 + Math.random() * 160,
+        gravity:220,
+        age:0,
+        life:0.75 + Math.random() * 0.25,
+        size:12 + Math.random() * 16,
+        color:randomFrom(["#ffc751", "#ff5a51", "#40b9c5", "#a7cb6f", "#ffffff"])
       });
     }
   }
@@ -917,17 +858,17 @@
     const center = getMouthPoint();
     for (let i = 0; i < 10; i++){
       state.particles.push({
-        type: i % 2 === 0 ? "spark" : "dot",
-        value: i % 2 === 0 ? "💨" : "🫧",
-        x: center.x + (Math.random() * 24 - 12),
-        y: center.y + (Math.random() * 18 - 9),
-        vx: -120 + Math.random() * 240,
-        vy: -40 + Math.random() * 130,
-        gravity: 260,
-        age: 0,
-        life: 0.45 + Math.random() * 0.2,
-        size: 11 + Math.random() * 8,
-        color: randomFrom(["#ffffff","#e8e4ff","#ffcad0"])
+        type:i % 2 === 0 ? "spark" : "dot",
+        value:i % 2 === 0 ? "💨" : "🫧",
+        x:center.x + (Math.random() * 24 - 12),
+        y:center.y + (Math.random() * 18 - 9),
+        vx:-120 + Math.random() * 240,
+        vy:-40 + Math.random() * 130,
+        gravity:260,
+        age:0,
+        life:0.45 + Math.random() * 0.2,
+        size:11 + Math.random() * 8,
+        color:randomFrom(["#ffffff", "#e8e4ff", "#ffcad0"])
       });
     }
   }
@@ -937,18 +878,18 @@
     const centerY = state.fieldHeight * 0.32;
     for (let i = 0; i < 70; i++){
       state.confetti.push({
-        x: centerX,
-        y: centerY,
-        vx: -220 + Math.random() * 440,
-        vy: -260 + Math.random() * 130,
-        gravity: 380,
-        age: 0,
-        life: 1.5 + Math.random() * 0.8,
-        w: 7 + Math.random() * 9,
-        h: 12 + Math.random() * 12,
-        color: randomFrom(["#ff5a51","#ffc751","#40b9c5","#a7cb6f","#ffffff","#7f66c6"]),
-        rotation: Math.random() * 180,
-        spin: -340 + Math.random() * 680
+        x:centerX,
+        y:centerY,
+        vx:-220 + Math.random() * 440,
+        vy:-260 + Math.random() * 130,
+        gravity:380,
+        age:0,
+        life:1.5 + Math.random() * 0.8,
+        w:7 + Math.random() * 9,
+        h:12 + Math.random() * 12,
+        color:randomFrom(["#ff5a51", "#ffc751", "#40b9c5", "#a7cb6f", "#ffffff", "#7f66c6"]),
+        rotation:Math.random() * 180,
+        spin:-340 + Math.random() * 680
       });
     }
   }
@@ -973,23 +914,9 @@
   }
 
   function getIdleVariants(){
-    if (state.emotionLevel >= 2) return ["is-idle-bob","is-idle-sway","is-idle-wiggle"];
-    if (state.emotionLevel <= -2) return ["is-idle-blink","is-idle-sway"];
-    return ["is-idle-bob","is-idle-blink","is-idle-sway"];
-  }
-
-  function getCarouselTitle(){
-    const phase = getCurrentPhase();
-    if (phase === "book") return "Choose the correct book";
-    if (phase === "reference") return "Choose the correct chapter & verse";
-    return "Choose the next word";
-  }
-
-  function getStatusLine(){
-    const phase = getCurrentPhase();
-    if (phase === "book") return "The verse is built. Now feed the book.";
-    if (phase === "reference") return "Last step: feed the chapter and verse.";
-    return `One meaningful choice at a time. Word ${Math.min(state.progressIndex + 1, state.words.length)} of ${state.words.length}.`;
+    if (state.emotionLevel >= 2) return ["is-idle-bob", "is-idle-sway", "is-idle-wiggle"];
+    if (state.emotionLevel <= -2) return ["is-idle-blink", "is-idle-sway"];
+    return ["is-idle-bob", "is-idle-blink", "is-idle-sway"];
   }
 
   function getPositiveCaption(){
@@ -1003,15 +930,6 @@
     if (getCurrentPhase() === "book") return `Not ${chosen}. The right book is still hiding.`;
     if (getCurrentPhase() === "reference") return `${chosen} was off. Try the right reference.`;
     return `Not ${chosen}. Looking for ${correct}.`;
-  }
-
-  function triggerBuildShake(){
-    const build = document.getElementById("vmunchBuild");
-    if (!build) return;
-    build.classList.remove("vmunch-shake");
-    void build.offsetWidth;
-    build.classList.add("vmunch-shake");
-    setTimeout(() => build.classList.remove("vmunch-shake"), 320);
   }
 
   function updateStreakPill(){
@@ -1033,12 +951,12 @@
 
   function getTiming(){
     if (selectedMode === "hard"){
-      return { launch: 0.34, mouthOpen: 0.14, chew: 0.24, anticipation: 0.22, reaction: 0.36, bonusReaction: 0.22 };
+      return { launch:0.34, mouthOpen:0.14, chew:0.24, anticipation:0.22, reaction:0.36, bonusReaction:0.22 };
     }
     if (selectedMode === "medium"){
-      return { launch: 0.40, mouthOpen: 0.16, chew: 0.28, anticipation: 0.26, reaction: 0.40, bonusReaction: 0.24 };
+      return { launch:0.40, mouthOpen:0.16, chew:0.28, anticipation:0.26, reaction:0.40, bonusReaction:0.24 };
     }
-    return { launch: 0.46, mouthOpen: 0.18, chew: 0.32, anticipation: 0.30, reaction: 0.46, bonusReaction: 0.28 };
+    return { launch:0.46, mouthOpen:0.18, chew:0.32, anticipation:0.30, reaction:0.46, bonusReaction:0.28 };
   }
 
   function getIdleDelay(){
@@ -1047,29 +965,48 @@
     return 1.9 + Math.random() * 1.2;
   }
 
-  function getCardCenterX(index){
-    const track = document.getElementById("vmunchCarouselTrack");
-    if (!track) return state.fieldWidth * 0.5;
-    const viewport = track.parentElement;
-    const rect = viewport.getBoundingClientRect();
-    const rawDelta = wrapDelta(index - state.carouselIndex, state.carouselItems.length || 1);
-    const baseOffset = Math.min(144, rect.width * 0.35);
-    return rect.left - document.getElementById("vmunchField").getBoundingClientRect().left + rect.width * 0.5 + rawDelta * baseOffset;
+  function getCurrentFoodEmoji(){
+    const item = state.carouselItems[state.carouselIndex];
+    if (!item) return bonusRunning ? FOOD_EMOJIS[state.bonusCount % FOOD_EMOJIS.length] : FOOD_EMOJIS[state.progressIndex % FOOD_EMOJIS.length];
+    return item.food;
   }
 
-  function getCarouselCenterY(){
-    const viewport = document.querySelector(".vmunch-carousel-viewport");
+  function getFoodStartPoint(){
+    const el = document.getElementById("vmunchFoodDisplay");
     const field = document.getElementById("vmunchField");
-    if (!viewport || !field) return state.fieldHeight * 0.78;
-    const rect = viewport.getBoundingClientRect();
+    if (!el || !field){
+      return { x:state.fieldWidth * 0.5, y:state.fieldHeight * 0.68 };
+    }
+    const rect = el.getBoundingClientRect();
     const fieldRect = field.getBoundingClientRect();
-    return rect.top - fieldRect.top + rect.height * 0.52;
+    return {
+      x:rect.left - fieldRect.left + rect.width * 0.5,
+      y:rect.top - fieldRect.top + rect.height * 0.5
+    };
+  }
+
+  function getChoiceCenterX(){
+    const btn = document.getElementById("vmunchChoiceBtn");
+    const field = document.getElementById("vmunchField");
+    if (!btn || !field) return state.fieldWidth * 0.5;
+    const rect = btn.getBoundingClientRect();
+    const fieldRect = field.getBoundingClientRect();
+    return rect.left - fieldRect.left + rect.width * 0.5;
+  }
+
+  function getChoiceCenterY(){
+    const btn = document.getElementById("vmunchChoiceBtn");
+    const field = document.getElementById("vmunchField");
+    if (!btn || !field) return state.fieldHeight * 0.82;
+    const rect = btn.getBoundingClientRect();
+    const fieldRect = field.getBoundingClientRect();
+    return rect.top - fieldRect.top + rect.height * 0.5;
   }
 
   function getMouthPoint(){
     return {
-      x: state.fieldWidth * 0.5,
-      y: Math.max(84, state.fieldHeight * 0.28)
+      x:state.fieldWidth * 0.5,
+      y:Math.max(84, state.fieldHeight * 0.28)
     };
   }
 
@@ -1087,39 +1024,39 @@
     const idRangeMatch = id.match(/^(.+?)_(\d+)_(\d+)_(\d+)$/);
     if (idRangeMatch){
       return {
-        book: titleCaseBookFromSlug(idRangeMatch[1]),
-        reference: `${idRangeMatch[2]}:${idRangeMatch[3]}-${idRangeMatch[4]}`
+        book:titleCaseBookFromSlug(idRangeMatch[1]),
+        reference:`${idRangeMatch[2]}:${idRangeMatch[3]}-${idRangeMatch[4]}`
       };
     }
 
     const idMatch = id.match(/^(.+?)_(\d+)_(\d+(?:[-–]\d+)?)$/);
     if (idMatch){
       return {
-        book: titleCaseBookFromSlug(idMatch[1]),
-        reference: `${idMatch[2]}:${idMatch[3]}`
+        book:titleCaseBookFromSlug(idMatch[1]),
+        reference:`${idMatch[2]}:${idMatch[3]}`
       };
     }
 
     let raw = String(ref || "").trim();
     const trans = String(translation || "").trim();
     if (trans){
-      raw = raw.replace(new RegExp(`\\s*\\(?${trans.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\)?\\s*$`, "i"), "").trim();
+      raw = raw.replace(new RegExp(`\\s*\\(?${trans.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")}\\)?\\s*$`, "i"), "").trim();
     }
 
     const match = raw.match(/^(.*?)\s+(\d+:\d+(?:[-–]\d+(?::\d+)?)?)\s*$/);
     if (match){
-      return { book: match[1].trim(), reference: match[2].trim() };
+      return { book:match[1].trim(), reference:match[2].trim() };
     }
 
     const lastSpace = raw.lastIndexOf(" ");
     if (lastSpace > 0){
       return {
-        book: raw.slice(0, lastSpace).trim(),
-        reference: raw.slice(lastSpace + 1).trim()
+        book:raw.slice(0, lastSpace).trim(),
+        reference:raw.slice(lastSpace + 1).trim()
       };
     }
 
-    return { book: raw, reference: "" };
+    return { book:raw, reference:"" };
   }
 
   function titleCaseBookFromSlug(slug){
@@ -1133,14 +1070,6 @@
         return lower.charAt(0).toUpperCase() + lower.slice(1);
       })
       .join(" ");
-  }
-
-  function wrapDelta(delta, len){
-    let out = delta;
-    if (len <= 1) return 0;
-    while (out > len / 2) out -= len;
-    while (out < -len / 2) out += len;
-    return out;
   }
 
   function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
