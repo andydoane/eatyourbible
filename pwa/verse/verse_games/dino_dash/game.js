@@ -542,7 +542,7 @@
     if (state.currentPhase === "word"){
       if (state.phaseRemaining <= 0 && activeWords === 0){
         switchToObstaclePhase(ts);
-      } else if (state.spawnPause <= 0 && activeWords === 0 && state.phaseRemaining > 0){
+      } else if (state.spawnPause <= 0 && activeWords < 2 && state.phaseRemaining > 0){
         spawnWord();
       }
     }
@@ -576,9 +576,7 @@
   }
 
   function getWordTargetCount(){
-    if (selectedMode === "hard") return 4;
-    if (selectedMode === "medium") return 3;
-    return 2 + Math.round(Math.random());
+    return 4 + Math.round(Math.random());
   }
 
   function seedClouds(){
@@ -1301,17 +1299,17 @@ function wrapHillLayer(layer){
     `).join("");
   }
 
-function getFrontHillSVG(){
+function getFrontHillSVG(heightPx){
   return `
-    <svg viewBox="0 0 1200 260" preserveAspectRatio="none" width="100%" height="140">
+    <svg viewBox="0 0 1200 260" preserveAspectRatio="none" width="100%" height="${heightPx}">
       <path d="M150,176.45142 C98.4249,176.53449 41.0438,201.26831 0,201.26831 V260 H1200 V201.26831 C1149.0098,203.29656 1100.4425,188.85986 1050,188.85986 999.5575,188.85986 950,197.13216 900,201.26831 850,205.40446 800.4425,213.67676 750,213.67676 699.5575,213.67676 650,205.40446 600,201.26831 550,197.13216 500.4425,188.85986 450,188.85986 399.5575,188.85986 350.9902,203.29656 300,201.26831 249.0098,199.24006 201.747,176.36807 150,176.45142 Z" fill="#5fa24d"/>
     </svg>
   `;
 }
 
-function getBackHillSVG(){
+function getBackHillSVG(heightPx){
   return `
-    <svg viewBox="0 0 2400 260" preserveAspectRatio="none" width="100%" height="160">
+    <svg viewBox="0 0 2400 260" preserveAspectRatio="none" width="100%" height="${heightPx}">
       <path d="M1161.498,22.560547 C1072.3358,26.816623 987.5485,62.382591 900,82.789062 799.9446,106.11074 705.4092,169.11613 600,162.78906 494.5908,156.46199 406.5103,45.919012 300,42.789062 193.4897,39.659112 100.287,135.47416 0,142.78906 V260 H2400 V142.78906 C2296.5056,149.23239 2200.4987,92.740396 2100,82.789062 1999.5013,72.837729 1900.222,76.137033 1800,82.789062 1699.778,89.441092 1602.6859,132.53218 1500,122.78906 1397.3141,113.04594 1303.4944,29.232394 1200,22.789062 1187.0632,21.983646 1174.2355,21.952536 1161.498,22.560547 Z"
             fill="#7fb86a"/>
     </svg>
@@ -1326,16 +1324,23 @@ function renderHills(){
   const bottomY = state.groundHeight - hillSink;
   const seamPad = Math.ceil(2 * state.scale);
 
+  // tweak these later if you want
+  const frontHillHeightPct = 0.35;
+  const backHillHeightPct = 0.50;
+
+  const frontHillHeightPx = Math.round(state.fieldHeight * frontHillHeightPct);
+  const backHillHeightPx = Math.round(state.fieldHeight * backHillHeightPct);
+
   layer.innerHTML = `
     ${state.hillsBack.map(h => `
       <div style="position:absolute; left:${Math.round(h.x) - seamPad}px; bottom:${bottomY}px; width:${Math.ceil(h.width) + seamPad * 2}px;">
-        ${getBackHillSVG()}
+        ${getBackHillSVG(backHillHeightPx)}
       </div>
     `).join("")}
 
     ${state.hillsFront.map(h => `
       <div style="position:absolute; left:${Math.round(h.x) - seamPad}px; bottom:${bottomY}px; width:${Math.ceil(h.width) + seamPad * 2}px;">
-        ${getFrontHillSVG()}
+        ${getFrontHillSVG(frontHillHeightPx)}
       </div>
     `).join("")}
   `;
@@ -1499,9 +1504,7 @@ function renderHills(){
   }
 
   function getCorrectSpawnChance(){
-    if (selectedMode === "hard") return 0.42;
-    if (selectedMode === "medium") return 0.52;
-    return 0.62;
+    return 0.70;
   }
 
   function getObstacleSpeed(){
