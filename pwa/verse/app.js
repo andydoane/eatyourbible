@@ -504,6 +504,34 @@ function getTrafficThemeSlots(gameProgress){
   ].join(" ");
 }
 
+function getVerseCompletedMedalCount(verseProgress){
+  if (!verseProgress || !verseProgress.games) return 0;
+
+  let total = 0;
+  const trackedGameIds = getTrackedGameIds();
+
+  for (const gameId of trackedGameIds){
+    const gp = verseProgress.games[gameId];
+    if (!gp) continue;
+
+    if (gameId === "traffic"){
+      if (gp.roadCompleted) total++;
+      if (gp.trailCompleted) total++;
+      if (gp.riverCompleted) total++;
+    } else {
+      if (gp.easyCompleted) total++;
+      if (gp.mediumCompleted) total++;
+      if (gp.hardCompleted) total++;
+    }
+  }
+
+  return total;
+}
+
+function canUseCustomPetBackgrounds(verseProgress){
+  return getVerseCompletedMedalCount(verseProgress) >= 5;
+}
+
 function getVerseDetailProgressDisplay(gameId, gameProgress){
   if (gameId === "traffic"){
     return getTrafficThemeSlots(gameProgress);
@@ -807,7 +835,7 @@ function cycleVerseBackground(verseId){
 }
 
 function getVerseBackgroundClass(verseId, verseProgress){
-  if (!isVerseMastered(verseProgress)) return "";
+  if (!canUseCustomPetBackgrounds(verseProgress)) return "";
 
   const bgIndex = getVerseBackgroundIndex(verseId);
 
@@ -3240,10 +3268,12 @@ function screenVerseDetail(idx){
   const btnChangePetBg = wrap.querySelector("#btnChangePetBg");
   if (btnChangePetBg){
     btnChangePetBg.onclick = () => {
-      if (!mastered){
+      const medalCount = getVerseCompletedMedalCount(verseProgress);
+
+      if (!canUseCustomPetBackgrounds(verseProgress)){
         showDialog({
           title: "Locked",
-          body: "Complete all practice games to unlock custom backgrounds for this BibloPet.",
+          body: `Earn 5 total medals on this verse to unlock custom backgrounds for this BibloPet. You currently have ${medalCount}/5.`,
           actions: [dlgBtn("OK", { onClick: closeDialog })]
         });
         return;
