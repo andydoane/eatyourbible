@@ -161,60 +161,60 @@
     state.inputLocked = false;
     buildCarouselForCurrentStep();
 
-    app.innerHTML = `
-      <div class="vmunch-root">
-        <div class="vmunch-stage">
-          <div class="vmunch-build-wrap">
-            <div class="vmunch-build" id="vmunchBuild">
-              <div class="vmunch-build-text" id="vmunchBuildText"></div>
-            </div>
-          </div>
+app.innerHTML = `
+  <div class="vmunch-root">
+    <div class="vmunch-stage">
+      <div class="vmunch-build-wrap">
+        <div class="vmunch-build" id="vmunchBuild">
+          <div class="vmunch-build-text" id="vmunchBuildText"></div>
+        </div>
+      </div>
 
-          <div class="vmunch-field-wrap">
-            <div class="vmunch-field" id="vmunchField">
-              <div class="vmunch-bg" id="vmunchBg"></div>
-              <div class="vmunch-trails" id="vmunchTrails"></div>
-              <div class="vmunch-particles" id="vmunchParticles"></div>
-              <div class="vmunch-food-flight" id="vmunchFoodFlight"></div>
-              <div class="vmunch-feedback" id="vmunchFeedback"></div>
-              <div class="vmunch-confetti" id="vmunchConfetti"></div>
+      <div class="vmunch-overlay-pills">
+        <div class="vmunch-pill" id="vmunchModePill">${escapeHtml(capitalize(mode))}</div>
+        <div class="vmunch-pill" id="vmunchStreakPill">Streak: 0</div>
+      </div>
 
-              <div class="vmunch-main">
-                <div class="vmunch-face-zone">
-                  <div class="vmunch-face-stack">
-                    <div class="vmunch-face-glow"></div>
-                    <div class="vmunch-face" id="vmunchFace"></div>
-                    <div class="vmunch-face-caption" id="vmunchFaceCaption"></div>
-                  </div>
-                </div>
+      <div class="vmunch-field-wrap">
+        <div class="vmunch-field" id="vmunchField">
+          <div class="vmunch-bg" id="vmunchBg"></div>
+          <div class="vmunch-trails" id="vmunchTrails"></div>
+          <div class="vmunch-particles" id="vmunchParticles"></div>
+          <div class="vmunch-food-flight" id="vmunchFoodFlight"></div>
+          <div class="vmunch-feedback" id="vmunchFeedback"></div>
+          <div class="vmunch-confetti" id="vmunchConfetti"></div>
 
-                <div class="vmunch-food-zone">
-                  <div class="vmunch-food-display" id="vmunchFoodDisplay"></div>
-                </div>
-
-                <div class="vmunch-carousel-zone">
-                  <div class="vmunch-carousel-shell">
-                    <div class="vmunch-carousel-row">
-                      <button class="vmunch-arrow-btn" id="vmunchPrevBtn" aria-label="Previous choice">‹</button>
-                      <button class="vmunch-choice-btn" id="vmunchChoiceBtn" type="button"></button>
-                      <button class="vmunch-arrow-btn" id="vmunchNextBtn" aria-label="Next choice">›</button>
-                    </div>
-                  </div>
-                </div>
+          <div class="vmunch-main">
+            <div class="vmunch-face-zone">
+              <div class="vmunch-face-stack">
+                <div class="vmunch-face-glow"></div>
+                <div class="vmunch-face" id="vmunchFace"></div>
+                <div class="vmunch-face-caption" id="vmunchFaceCaption"></div>
               </div>
+            </div>
 
-              <div class="vmunch-overlay-pills">
-                <div class="vmunch-pill" id="vmunchModePill">${escapeHtml(capitalize(mode))}</div>
-                <div class="vmunch-pill" id="vmunchStreakPill">Streak: 0</div>
+            <div class="vmunch-food-zone">
+              <div class="vmunch-food-display" id="vmunchFoodDisplay"></div>
+            </div>
+
+            <div class="vmunch-carousel-zone">
+              <div class="vmunch-carousel-shell">
+                <div class="vmunch-carousel-row">
+                  <button class="vmunch-arrow-btn" id="vmunchPrevBtn" aria-label="Previous choice">‹</button>
+                  <button class="vmunch-choice-btn" id="vmunchChoiceBtn" type="button"></button>
+                  <button class="vmunch-arrow-btn" id="vmunchNextBtn" aria-label="Next choice">›</button>
+                </div>
               </div>
             </div>
           </div>
         </div>
-
-        ${renderNav()}
-        ${renderHelpOverlay("Rotate the selector with the arrows.<br><br>Tap the word to feed it upward.<br><br>The face emotion changes only after each reaction finishes.<br><br>Wrong picks reset your streak but never end the run.")}
       </div>
-    `;
+    </div>
+
+    ${renderNav()}
+    ${renderHelpOverlay("Rotate the selector with the arrows.<br><br>Tap the word to feed it upward.<br><br>The face emotion changes only after each reaction finishes.<br><br>Wrong picks reset your streak but never end the run.")}
+  </div>
+`;
 
     seedBackground();
     wireCommonNav();
