@@ -755,7 +755,13 @@ app.innerHTML = `
     face.textContent = state.faceDisplay;
     face.style.transform = state.faceScaleBoost > 0 ? `scale(${state.faceScaleBoost})` : "";
 
-    if (foodDisplay) foodDisplay.textContent = getCurrentFoodEmoji();
+    if (foodDisplay){
+      if (state.flyingFood){
+        foodDisplay.textContent = "";
+      } else {
+        foodDisplay.textContent = getCurrentFoodEmoji();
+      }
+    }
   }
 
   function renderSelector(){
