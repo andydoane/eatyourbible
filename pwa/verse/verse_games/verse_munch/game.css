@@ -257,6 +257,24 @@ body{
 .vmunch-face.is-react-head-no-hard{
   animation:vmunchReactHeadNoHard 520ms cubic-bezier(.2,.84,.2,1) both;
 }
+.vmunch-face.is-react-yum-tilt{
+  animation: vmunchReactYumTilt 520ms cubic-bezier(.2,.88,.24,1) both;
+}
+.vmunch-face.is-react-sparkle-pop{
+  animation: vmunchReactSparklePop 520ms cubic-bezier(.2,.88,.24,1) both;
+  filter:
+    drop-shadow(0 16px 0 rgba(0,0,0,0.12))
+    drop-shadow(0 0 20px rgba(255,255,255,0.28));
+}
+.vmunch-face.is-react-jelly{
+  animation: vmunchReactJelly 520ms cubic-bezier(.18,.86,.2,1) both;
+}
+.vmunch-face.is-react-hop{
+  animation: vmunchReactHop 520ms cubic-bezier(.2,.88,.24,1) both;
+}
+.vmunch-face.is-react-victory-wiggle{
+  animation: vmunchReactVictoryWiggle 520ms cubic-bezier(.2,.88,.24,1) both;
+}
 .vmunch-face.is-bonus{ transition:transform 240ms ease; }
 
 .vmunch-food-display{
@@ -540,22 +558,6 @@ body{
   0%{ transform:translateY(-2px); }
   40%{ transform:translateY(6px) rotate(-5deg); }
   100%{ transform:translateY(0) rotate(0deg); }
-}
-@keyframes vmunchReactBarfBounce{
-  0%{ transform:translateY(0) scale(1); }
-  18%{ transform:translateY(8px) scale(1.03,.96); }
-  36%{ transform:translateY(-5px) scale(.98,1.02); }
-  58%{ transform:translateY(3px) scale(1.01,.99); }
-  100%{ transform:translateY(0) scale(1); }
-}
-@keyframes vmunchReactHeadNoHard{
-  0%{ transform:translateY(0) rotate(0deg) scale(1); }
-  12%{ transform:translateY(-2px) rotate(-12deg) scale(1.03); }
-  24%{ transform:translateY(0) rotate(11deg) scale(1.02); }
-  36%{ transform:translateY(-1px) rotate(-10deg) scale(1.01); }
-  48%{ transform:translateY(0) rotate(8deg) scale(1); }
-  60%{ transform:translateY(-1px) rotate(-6deg) scale(1); }
-  100%{ transform:translateY(0) rotate(0deg) scale(1); }
 }
 
 @media (max-width: 720px){
