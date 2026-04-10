@@ -756,7 +756,7 @@ app.innerHTML = `
     face.style.transform = state.faceScaleBoost > 0 ? `scale(${state.faceScaleBoost})` : "";
 
     if (foodDisplay){
-      if (state.flyingFood){
+      if (state.inputLocked){
         foodDisplay.textContent = "";
       } else {
         foodDisplay.textContent = getCurrentFoodEmoji();
