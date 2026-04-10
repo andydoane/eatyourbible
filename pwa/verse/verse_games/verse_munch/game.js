@@ -583,9 +583,31 @@ app.innerHTML = `
   }
 
   async function playAnticipationAnimation(){
-    state.faceDisplay = randomFrom(ANTICIPATION_FACES);
-    state.faceClasses = new Set();
-    await waitSeconds(getTiming().anticipation);
+    const faces = ["😕","🫤","😐","🤨"];
+    let flipped = false;
+
+    for (let i = 0; i < 3; i++){
+      // pick a random face each cycle
+      state.faceDisplay = randomFrom(faces);
+
+      // build class list
+      const classes = ["is-anticipation-lean-in"];
+      if (flipped){
+        classes.push("is-flipped");
+      }
+
+      state.faceClasses = new Set(classes);
+
+      // play lean-in
+      await waitSeconds(0.32);
+
+      // small pause (this is IMPORTANT for readability)
+      state.faceClasses = new Set(flipped ? ["is-flipped"] : []);
+      await waitSeconds(0.12);
+
+      // flip for next iteration
+      flipped = !flipped;
+    }
   }
 
   async function playReactionAnimation(isCorrect){
