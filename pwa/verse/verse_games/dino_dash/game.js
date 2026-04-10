@@ -1206,8 +1206,8 @@ function wrapHillLayer(layer){
   }
 
   function getTrailGlow(streak, now){
-    if (streak >= 15){
-      const hue = (now * 0.18) % 360;
+    if (streak >= 9){
+      const hue = (now * 0.22) % 360;
       return {
         color: `hsla(${hue}, 95%, 60%, 1)`,
         blur: 10 * state.scale,
@@ -1215,15 +1215,23 @@ function wrapHillLayer(layer){
       };
     }
 
-    if (streak >= 10){
+    if (streak >= 8){
       return {
-        color: "rgba(255, 90, 70, 1)",
+        color: "rgba(255, 70, 70, 1)",
         blur: 9 * state.scale,
-        alpha: 0.9
+        alpha: 0.92
       };
     }
 
     if (streak >= 7){
+      return {
+        color: "rgba(255, 145, 45, 1)",
+        blur: 8.5 * state.scale,
+        alpha: 0.9
+      };
+    }
+
+    if (streak >= 6){
       return {
         color: "rgba(255, 212, 74, 1)",
         blur: 8 * state.scale,
