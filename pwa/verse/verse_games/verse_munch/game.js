@@ -765,6 +765,7 @@ app.innerHTML = `
   }
 
   function renderSelector(){
+    const row = document.querySelector(".vmunch-carousel-row");
     const choiceBtn = document.getElementById("vmunchChoiceBtn");
     const prevBtn = document.getElementById("vmunchPrevBtn");
     const nextBtn = document.getElementById("vmunchNextBtn");
@@ -777,6 +778,10 @@ app.innerHTML = `
     choiceBtn.disabled = locked;
     prevBtn.disabled = locked;
     nextBtn.disabled = locked;
+
+    if (row){
+      row.classList.toggle("is-hidden", locked);
+    }
   }
 
   function renderFlight(){
