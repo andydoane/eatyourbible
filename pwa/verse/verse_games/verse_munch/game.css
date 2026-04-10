@@ -226,6 +226,18 @@ body{
   filter:blur(10px);
 }
 
+.vmunch-face.is-tilt-left{
+  transform: rotate(-5deg);
+}
+
+.vmunch-face.is-tilt-right{
+  transform: rotate(10deg);
+}
+
+.vmunch-face.is-tilt-left-strong{
+  transform: rotate(-10deg);
+}
+
 .vmunch-face.is-flipped{
   transform: scaleX(-1);
 }
@@ -235,10 +247,22 @@ body{
 }
 
 @keyframes vmunchAnticipationLeanIn{
-  0%{ transform:translateY(0) scale(1); }
-  30%{ transform:translateY(6px) scale(1.03,.97); }
-  60%{ transform:translateY(2px) scale(1.01,.99); }
-  100%{ transform:translateY(0) scale(1); }
+  0%{
+    scale: 1;
+    translate: 0 0;
+  }
+  30%{
+    scale: 1.03 .97;
+    translate: 0 6px;
+  }
+  60%{
+    scale: 1.01 .99;
+    translate: 0 2px;
+  }
+  100%{
+    scale: 1;
+    translate: 0 0;
+  }
 }
 
 .vmunch-face{
