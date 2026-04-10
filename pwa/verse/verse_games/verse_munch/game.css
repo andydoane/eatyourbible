@@ -226,6 +226,21 @@ body{
   filter:blur(10px);
 }
 
+.vmunch-face.is-flipped{
+  transform: scaleX(-1);
+}
+
+.vmunch-face.is-anticipation-lean-in{
+  animation: vmunchAnticipationLeanIn 320ms cubic-bezier(.2,.88,.24,1) both;
+}
+
+@keyframes vmunchAnticipationLeanIn{
+  0%{ transform:translateY(0) scale(1); }
+  30%{ transform:translateY(6px) scale(1.03,.97); }
+  60%{ transform:translateY(2px) scale(1.01,.99); }
+  100%{ transform:translateY(0) scale(1); }
+}
+
 .vmunch-face{
   position:relative;
   z-index:2;
