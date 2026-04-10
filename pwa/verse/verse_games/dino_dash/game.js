@@ -867,13 +867,23 @@ function wrapHillLayer(layer){
     if (progressPhase === "done") return;
 
     const correctLabel = getCurrentCorrectLabel();
-    const allowCorrect = Math.random() < getCorrectSpawnChance();
+    const hasCorrectAlreadyOnScreen = state.activeWords.some(word => word.correct && !word.resolved);
+
     const decoys = getDecoysForPhase(progressPhase, correctLabel, 3);
+
+    let allowCorrect = Math.random() < getCorrectSpawnChance();
+
+    // Never allow a second unresolved correct word on screen
+    if (hasCorrectAlreadyOnScreen){
+      allowCorrect = false;
+    }
+
     const label = (allowCorrect || decoys.length === 0)
       ? correctLabel
       : decoys[Math.floor(Math.random() * decoys.length)];
 
     const lane = Math.random() < 0.5 ? "top" : "bottom";
+
     state.activeWords.push({
       id: state.nextId++,
       x: state.fieldWidth + 60,
