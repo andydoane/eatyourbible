@@ -1,207 +1,156 @@
 :root{
-  --vmunch-bg-1: #7f66c6;
-  --vmunch-bg-2: #5d49a8;
-  --vmunch-shadow: 0 14px 28px rgba(0,0,0,0.18);
-  --vmunch-card-shadow: 0 8px 0 rgba(0,0,0,0.18);
+  --vmunch-bg-1:#7f66c6;
+  --vmunch-bg-2:#5d49a8;
+  --vmunch-panel-soft:rgba(255,255,255,0.14);
+  --vmunch-shadow:0 14px 28px rgba(0,0,0,0.18);
+  --vmunch-card-shadow:0 10px 0 rgba(0,0,0,0.18);
+  --vmunch-white:#fff;
 }
 
-html, body{
-  height: 100%;
+html,body{
+  height:100%;
 }
 
 body{
-  margin: 0;
+  margin:0;
   background:
     radial-gradient(circle at top, rgba(255,255,255,0.16), transparent 36%),
     linear-gradient(180deg, var(--vmunch-bg-1) 0%, var(--vmunch-bg-2) 100%);
-  -webkit-user-select: none;
-  user-select: none;
-  -webkit-touch-callout: none;
+  -webkit-user-select:none;
+  user-select:none;
+  -webkit-touch-callout:none;
 }
 
 #app.vm-shell{
-  min-height: 100dvh;
-  height: 100dvh;
-  padding: 0;
-  display: block;
-  overflow: hidden;
+  min-height:100dvh;
+  height:100dvh;
+  padding:0;
+  display:block;
+  overflow:hidden;
 }
 
 .vmunch-root,
 .vmunch-mode-shell{
-  height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  background:
-    radial-gradient(circle at top, rgba(255,255,255,0.16), transparent 36%),
-    linear-gradient(180deg, var(--vmunch-bg-1) 0%, var(--vmunch-bg-2) 100%);
-  overflow: hidden;
+  height:100dvh;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
 }
 
 .vmunch-stage,
 .vmunch-mode-stage{
-  width: 100%;
-  max-width: 840px;
-  margin: 0 auto;
-  min-height: 0;
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
+  width:100%;
+  max-width:840px;
+  margin:0 auto;
+  min-height:0;
+  flex:1 1 auto;
+  display:flex;
+  flex-direction:column;
 }
 
 .vmunch-mode-top{
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  padding: 28px 18px;
-  text-align: center;
+  flex:1 1 auto;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  padding:28px 18px;
+  gap:10px;
+  text-align:center;
 }
 
 .vmunch-mode-title{
-  font-size: clamp(28px, 5vw, 58px);
-  font-weight: 900;
-  line-height: 1.04;
+  font-size:clamp(28px, 5vw, 58px);
+  font-weight:900;
+  line-height:1.04;
 }
 
 .vmunch-mode-subtitle{
-  width: min(100%, 700px);
-  font-size: clamp(18px, 2.2vw, 30px);
-  font-weight: 800;
-  line-height: 1.18;
+  font-size:clamp(18px, 2.2vw, 30px);
+  font-weight:800;
+  line-height:1.18;
+  max-width:700px;
 }
 
 .vmunch-mode-card{
-  width: min(100%, 620px);
-  background: rgba(0,0,0,0.30);
-  border-radius: 26px;
-  padding: 14px;
-  margin-top: 10px;
-  box-shadow: var(--vmunch-shadow);
+  width:min(100%, 620px);
+  background:rgba(0,0,0,0.30);
+  border-radius:26px;
+  padding:14px;
+  margin-top:10px;
+  box-shadow:var(--vmunch-shadow);
 }
 
 .vmunch-mode-actions{
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
+  display:flex;
+  flex-direction:column;
+  gap:18px;
 }
 
 .vmunch-build-wrap{
-  padding: 12px 14px 10px;
-  flex: 0 0 auto;
+  padding:12px 14px 10px;
+  flex:0 0 auto;
 }
 
 .vmunch-build{
-  background: #ffc751;
-  color: #333333;
-  border-radius: 22px;
-  min-height: 112px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 18px;
-  text-align: center;
-  box-shadow: inset 0 -4px 0 rgba(0,0,0,0.10);
+  background:#ffffff;
+  color:#333333;
+  border-radius:22px;
+  min-height:112px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  text-align:center;
+  box-shadow:inset 0 -4px 0 rgba(0,0,0,0.08);
 }
 
-.vmunch-build-stack{
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 14px;
+.vmunch-build.vb-shake,
+.vmunch-build.vmunch-build-shake{
+  animation:vmunchBuildShake 300ms ease;
 }
 
-.vmunch-build-verse{
-  width: 100%;
-  margin: 0;
-  font-size: clamp(24px, 5.7vw, 42px);
-  font-weight: 900;
-  line-height: 1.2;
-  text-wrap: balance;
+.vmunch-build-text{
+  font-size:clamp(22px, 5.4vw, 40px);
+  font-weight:900;
+  line-height:1.2;
+  width:100%;
+  text-wrap:balance;
 }
 
-.vmunch-build-empty{
-  opacity: 0.82;
+.vmunch-build-word{
+  color:transparent;
+  transition:color 160ms ease;
 }
 
-.vmunch-build-ellipsis{
-  opacity: 0.72;
-}
-
-.vmunch-ref-row{
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-  width: 100%;
-}
-
-.vmunch-ref-chip{
-  min-height: 38px;
-  padding: 8px 16px;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 15px;
-  font-weight: 900;
-  line-height: 1;
-  white-space: nowrap;
-}
-
-.vmunch-ref-chip.is-filled{
-  background: rgba(255,255,255,0.96);
-  color: #111;
-  box-shadow: 0 4px 0 rgba(0,0,0,0.22);
-}
-
-.vmunch-ref-chip.is-placeholder{
-  background: rgba(255,255,255,0.18);
-  color: rgba(51,51,51,0.92);
-  border: 2px dashed rgba(51,51,51,0.30);
-}
-
-.vmunch-ref-chip.is-future{
-  background: rgba(255,255,255,0.10);
-  color: rgba(51,51,51,0.55);
-  border: 2px dashed rgba(51,51,51,0.18);
-}
-
-.vmunch-build.vmunch-shake{
-  animation: vmunchBuildShake 300ms ease;
+.vmunch-build-word.is-built{
+  color:#333333;
 }
 
 @keyframes vmunchBuildShake{
-  0%{ transform: translateX(0); }
-  20%{ transform: translateX(-10px); }
-  40%{ transform: translateX(10px); }
-  60%{ transform: translateX(-7px); }
-  80%{ transform: translateX(7px); }
-  100%{ transform: translateX(0); }
+  0%{ transform:translateX(0); }
+  20%{ transform:translateX(-10px); }
+  40%{ transform:translateX(10px); }
+  60%{ transform:translateX(-7px); }
+  80%{ transform:translateX(7px); }
+  100%{ transform:translateX(0); }
 }
 
 .vmunch-field-wrap{
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  padding: 0 14px 0;
+  flex:1 1 auto;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  padding:0 14px 0;
 }
 
 .vmunch-field{
-  position: relative;
-  flex: 1 1 auto;
-  min-height: 300px;
-  overflow: hidden;
-  background:
-    radial-gradient(circle at 50% 12%, rgba(255,255,255,0.16), transparent 28%),
-    linear-gradient(180deg, #8d74d6 0%, #6a52bb 100%);
-  border-radius: 26px 26px 0 0;
-  touch-action: manipulation;
+  position:relative;
+  flex:1 1 auto;
+  min-height:320px;
+  overflow:hidden;
+  touch-action:none;
 }
 
 .vmunch-overlay-pills,
@@ -211,213 +160,174 @@ body{
 .vmunch-food-flight,
 .vmunch-feedback,
 .vmunch-confetti{
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
+  position:absolute;
+  inset:0;
+  pointer-events:none;
 }
 
 .vmunch-overlay-pills{
-  left: 14px;
-  right: 14px;
-  top: 12px;
-  bottom: auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 10px;
-  z-index: 12;
+  z-index:11;
+  inset:auto 0 10px 0;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:10px;
 }
 
 .vmunch-pill{
-  background: rgba(255,255,255,0.95);
-  color: #333333;
-  border-radius: 999px;
-  padding: 5px 14px;
-  font-weight: 900;
-  font-size: 16px;
-  box-shadow: 0 4px 0 rgba(0,0,0,0.18);
+  background:rgba(255,255,255,0.95);
+  color:#333333;
+  border-radius:999px;
+  padding:5px 14px;
+  font-weight:900;
+  font-size:16px;
+  box-shadow:0 4px 0 rgba(0,0,0,0.18);
 }
 
 .vmunch-bg .bubble{
-  position: absolute;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.08);
+  position:absolute;
+  border-radius:999px;
+  background:rgba(255,255,255,0.08);
 }
 
 .vmunch-main{
-  position: absolute;
-  inset: 56px 14px 16px;
-  z-index: 3;
-  display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
-  gap: 18px;
-  align-items: stretch;
+  position:absolute;
+  inset:4px 0 0;
+  display:grid;
+  grid-template-rows:minmax(190px, 1.8fr) minmax(150px, .78fr) minmax(112px, .72fr);
+  align-items:center;
+  z-index:3;
 }
 
 .vmunch-face-zone,
+.vmunch-food-zone,
 .vmunch-carousel-zone{
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 0;
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 
 .vmunch-face-stack{
-  position: relative;
-  width: min(100%, 360px);
-  max-width: 100%;
-  aspect-ratio: 1 / 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  position:relative;
+  width:min(100%, 360px);
+  aspect-ratio:1/1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 
 .vmunch-face-glow{
-  position: absolute;
-  inset: 14%;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,255,255,0.18), transparent 70%);
-  filter: blur(10px);
+  position:absolute;
+  inset:14%;
+  border-radius:50%;
+  background:radial-gradient(circle, rgba(255,255,255,0.18), transparent 70%);
+  filter:blur(10px);
 }
 
 .vmunch-face{
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  font-size: clamp(120px, 22vw, 220px);
-  line-height: 1;
-  filter: drop-shadow(0 16px 0 rgba(0,0,0,0.12));
-  transform-origin: 50% 62%;
-  user-select: none;
+  position:relative;
+  z-index:2;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  height:100%;
+  font-size:clamp(124px, 24vw, 220px);
+  line-height:1;
+  filter:drop-shadow(0 16px 0 rgba(0,0,0,0.12));
+  transform-origin:50% 62%;
+  user-select:none;
 }
 
-.vmunch-face.is-idle-bob{ animation: vmunchBob 900ms ease; }
-.vmunch-face.is-idle-sway{ animation: vmunchSway 1100ms ease; }
-.vmunch-face.is-idle-blink{ animation: vmunchBlink 500ms ease; }
-.vmunch-face.is-idle-wiggle{ animation: vmunchWiggle 780ms ease; }
-.vmunch-face.is-open{ transform: scale(1.04) translateY(-4px); }
-.vmunch-face.is-chew{ animation: vmunchChew 360ms ease 2; }
-.vmunch-face.is-react-positive{ animation: vmunchHappyPop 520ms ease; }
-.vmunch-face.is-react-negative{ animation: vmunchSadNod 520ms ease; }
-.vmunch-face.is-bonus{ transition: transform 240ms ease; }
+.vmunch-face.is-idle-bob{ animation:vmunchBob 900ms ease; }
+.vmunch-face.is-idle-sway{ animation:vmunchSway 1100ms ease; }
+.vmunch-face.is-idle-blink{ animation:vmunchBlink 500ms ease; }
+.vmunch-face.is-idle-wiggle{ animation:vmunchWiggle 780ms ease; }
+.vmunch-face.is-open{ transform:scale(1.04) translateY(-4px); }
+.vmunch-face.is-chew{ animation:vmunchChew 360ms ease 2; }
+.vmunch-face.is-react-positive{ animation:vmunchHappyPop 520ms ease; }
+.vmunch-face.is-react-negative{ animation:vmunchSadNod 520ms ease; }
+.vmunch-face.is-bonus{ transition:transform 240ms ease; }
 
 .vmunch-face-caption{
-  position: absolute;
-  bottom: 8px;
-  left: 50%;
-  transform: translateX(-50%);
-  border-radius: 999px;
-  padding: 8px 14px;
-  background: rgba(0,0,0,0.26);
-  color: #fff;
-  font-weight: 800;
-  font-size: clamp(14px, 2.8vw, 18px);
-  white-space: nowrap;
-  max-width: calc(100% - 24px);
-  overflow: hidden;
-  text-overflow: ellipsis;
+  position:absolute;
+  bottom:12px;
+  left:50%;
+  transform:translateX(-50%);
+  border-radius:999px;
+  padding:8px 14px;
+  background:rgba(0,0,0,0.26);
+  color:#fff;
+  font-weight:800;
+  font-size:clamp(14px, 2.8vw, 18px);
+  white-space:nowrap;
+}
+
+.vmunch-food-display{
+  font-size:clamp(42px, 10vw, 68px);
+  line-height:1;
+  filter:drop-shadow(0 8px 0 rgba(0,0,0,0.12));
 }
 
 .vmunch-carousel-shell{
-  width: min(100%, 640px);
-  padding: 6px 0 0;
+  width:min(100%, 700px);
+  padding:0 0 8px;
 }
 
 .vmunch-carousel-row{
-  display: grid;
-  grid-template-columns: 64px minmax(0, 1fr) 64px;
-  gap: 10px;
-  align-items: center;
+  display:grid;
+  grid-template-columns:64px minmax(0, 1fr) 64px;
+  gap:12px;
+  align-items:center;
 }
 
 .vmunch-arrow-btn,
+.vmunch-choice-btn,
 .vmunch-nav-btn,
 .vmunch-help-btn{
-  border: none;
-  cursor: pointer;
-  font: inherit;
+  border:none;
+  cursor:pointer;
+  font:inherit;
 }
 
 .vmunch-arrow-btn{
-  width: 64px;
-  height: 64px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.94);
-  color: #5f4ab1;
-  box-shadow: 0 8px 0 rgba(0,0,0,0.16);
-  font-size: 34px;
-  font-weight: 900;
+  height:64px;
+  border-radius:999px;
+  background:rgba(255,255,255,0.92);
+  color:#5f4ab1;
+  box-shadow:0 8px 0 rgba(0,0,0,0.16);
+  font-size:34px;
+  font-weight:900;
+}
+
+.vmunch-choice-btn{
+  width:100%;
+  min-height:84px;
+  border-radius:24px;
+  padding:14px 18px;
+  background:#ffffff;
+  color:#5f4ab1;
+  box-shadow:0 10px 0 rgba(0,0,0,0.16);
+  font-size:clamp(26px, 4.8vw, 36px);
+  font-weight:900;
+  line-height:1.08;
+  text-wrap:balance;
 }
 
 .vmunch-arrow-btn:active,
+.vmunch-choice-btn:active,
 .vmunch-nav-btn:active,
 .vmunch-help-btn:active{
-  transform: translateY(4px);
-  box-shadow: 0 3px 0 rgba(0,0,0,0.16);
+  transform:translateY(4px);
+  box-shadow:0 3px 0 rgba(0,0,0,0.16);
 }
 
-.vmunch-arrow-btn:disabled{
-  opacity: 0.5;
-  cursor: default;
-  transform: none;
-}
-
-.vmunch-carousel-viewport{
-  position: relative;
-  height: 150px;
-  overflow: hidden;
-}
-
-.vmunch-carousel-track{
-  position: absolute;
-  inset: 0;
-}
-
-.vmunch-card{
-  position: absolute;
-  top: 16px;
-  left: 50%;
-  width: min(240px, 76%);
-  min-height: 116px;
-  padding: 12px 14px 16px;
-  border: none;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.18);
-  box-shadow: var(--vmunch-card-shadow);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  transform-origin: center center;
-  transition: transform 220ms ease, opacity 220ms ease, background 220ms ease;
-  pointer-events: auto;
-}
-
-.vmunch-card.is-center{
-  background: rgba(255,255,255,0.96);
-}
-
-.vmunch-card-food{
-  font-size: clamp(28px, 5vw, 34px);
-  line-height: 1;
-}
-
-.vmunch-card-word{
-  color: #ffffff;
-  font-size: clamp(22px, 4.8vw, 34px);
-  line-height: 1.05;
-  font-weight: 900;
-  text-wrap: balance;
-}
-
-.vmunch-card.is-center .vmunch-card-word{
-  color: #5f4ab1;
+.vmunch-arrow-btn:disabled,
+.vmunch-choice-btn:disabled{
+  opacity:0.5;
+  cursor:default;
+  transform:none;
 }
 
 .vmunch-flying-food,
@@ -425,270 +335,264 @@ body{
 .vmunch-spark,
 .vmunch-confetto,
 .vmunch-hit-word{
-  position: absolute;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  will-change: transform, opacity;
+  position:absolute;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  will-change:transform, opacity;
 }
 
 .vmunch-flying-food{
-  z-index: 8;
-  font-size: clamp(26px, 7vw, 42px);
+  z-index:8;
+  font-size:clamp(28px, 7.4vw, 46px);
 }
 
 .vmunch-hit-word{
-  z-index: 8;
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.95);
-  color: #33295f;
-  font-size: clamp(16px, 3.2vw, 22px);
-  font-weight: 900;
+  z-index:8;
+  padding:6px 12px;
+  border-radius:999px;
+  background:rgba(255,255,255,0.95);
+  color:#33295f;
+  font-size:clamp(16px, 3.2vw, 22px);
+  font-weight:900;
 }
 
 .vmunch-trail-particle{
-  z-index: 7;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.9);
+  z-index:7;
+  border-radius:999px;
+  background:rgba(255,255,255,0.9);
 }
 
 .vmunch-spark{
-  z-index: 6;
-  font-size: clamp(20px, 4vw, 28px);
+  z-index:6;
+  font-size:clamp(20px, 4vw, 28px);
 }
 
 .vmunch-confetto{
-  z-index: 9;
-  border-radius: 6px;
+  z-index:9;
+  border-radius:6px;
 }
 
 .vmunch-feedback-badge{
-  position: absolute;
-  top: 52%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 10;
-  border-radius: 999px;
-  background: rgba(0,0,0,0.32);
-  padding: 10px 16px;
-  font-size: clamp(18px, 4vw, 28px);
-  font-weight: 900;
-  color: #fff;
+  position:absolute;
+  top:52%;
+  left:50%;
+  transform:translate(-50%, -50%);
+  z-index:10;
+  border-radius:999px;
+  background:rgba(0,0,0,0.32);
+  padding:10px 16px;
+  font-size:clamp(18px, 4vw, 28px);
+  font-weight:900;
+  color:#fff;
 }
 
 .vmunch-nav-wrap{
-  width: 100%;
-  max-width: 840px;
-  margin: 0 auto;
+  width:100%;
+  max-width:840px;
+  margin:0 auto;
 }
 
 .vmunch-nav{
-  width: 100%;
-  max-width: 840px;
-  margin: 0 auto;
-  height: calc(72px + env(safe-area-inset-bottom));
-  padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
-  background: #333333;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
+  width:100%;
+  max-width:840px;
+  margin:0 auto;
+  height:calc(72px + env(safe-area-inset-bottom));
+  padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
 }
 
 .vmunch-nav-btn{
-  width: 72px;
-  min-width: 72px;
-  height: 52px;
-  border-radius: 999px;
-  background: rgba(255,255,255,0.18);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width:72px;
+  min-width:72px;
+  height:52px;
+  border-radius:999px;
+  background:rgba(255,255,255,0.18);
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 
 .vmunch-nav-center{
-  flex: 1 1 auto;
-  display: flex;
-  justify-content: center;
+  flex:1 1 auto;
+  display:flex;
+  justify-content:center;
 }
 
 .vmunch-help-btn{
-  border-radius: 999px;
-  height: 52px;
-  min-width: 140px;
-  padding: 0 24px;
-  background: #ffffff;
-  color: #7f66c6;
-  font-size: 22px;
-  font-weight: 900;
-  box-shadow: 0 6px 0 rgba(0,0,0,0.22);
+  border-radius:999px;
+  height:52px;
+  min-width:140px;
+  padding:0 24px;
+  background:#ffffff;
+  color:#7f66c6;
+  font:inherit;
+  font-size:22px;
+  font-weight:900;
+  box-shadow:0 6px 0 rgba(0,0,0,0.22);
 }
 
 .nav-icon{
-  width: 26px;
-  height: 26px;
-  display: block;
+  width:26px;
+  height:26px;
+  display:block;
 }
 
 .vmunch-help-overlay{
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.35);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 18px;
-  z-index: 40;
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.35);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  z-index:40;
 }
 
 .vmunch-help-overlay.is-open{
-  display: flex;
+  display:flex;
 }
 
 .vmunch-help-dialog{
-  width: min(100%, 560px);
-  background: #333333;
-  color: #fff;
-  border-radius: 28px;
-  padding: 20px 18px 18px;
-  box-shadow: 0 16px 40px rgba(0,0,0,0.28);
-  text-align: center;
+  width:min(100%, 560px);
+  background:#333333;
+  border-radius:28px;
+  padding:20px 18px 18px;
+  box-shadow:0 16px 40px rgba(0,0,0,0.28);
+  text-align:center;
 }
 
 .vmunch-help-title{
-  font-size: 32px;
-  font-weight: 900;
-  margin-bottom: 10px;
+  font-size:32px;
+  font-weight:900;
+  line-height:1.1;
 }
 
 .vmunch-help-body{
-  font-size: 21px;
-  font-weight: 700;
-  line-height: 1.22;
+  margin-top:10px;
+  font-size:21px;
+  font-weight:700;
+  line-height:1.28;
 }
 
 .vmunch-help-actions{
-  margin-top: 16px;
+  margin-top:16px;
 }
 
 .vmunch-complete-icon{
-  font-size: 72px;
-  line-height: 1;
+  font-size:76px;
+  line-height:1;
 }
 
 @keyframes vmunchBob{
-  0%,100%{ transform: translateY(0) scale(1); }
-  50%{ transform: translateY(-6px) scale(1.01); }
+  0%,100%{ transform:translateY(0) scale(1); }
+  50%{ transform:translateY(-6px) scale(1.01); }
 }
 @keyframes vmunchSway{
-  0%,100%{ transform: rotate(0deg); }
-  25%{ transform: rotate(-4deg); }
-  75%{ transform: rotate(4deg); }
+  0%,100%{ transform:rotate(0deg); }
+  25%{ transform:rotate(-4deg); }
+  75%{ transform:rotate(4deg); }
 }
 @keyframes vmunchBlink{
-  0%,100%{ transform: scaleY(1); }
-  40%,60%{ transform: scaleY(0.86); }
+  0%,100%{ transform:scaleY(1); }
+  40%,60%{ transform:scaleY(0.86); }
 }
 @keyframes vmunchWiggle{
-  0%,100%{ transform: rotate(0deg); }
-  20%{ transform: rotate(-5deg) translateX(-2px); }
-  40%{ transform: rotate(4deg) translateX(1px); }
-  60%{ transform: rotate(-3deg) translateX(-1px); }
+  0%,100%{ transform:rotate(0deg); }
+  20%{ transform:rotate(-5deg) translateX(-2px); }
+  40%{ transform:rotate(4deg) translateX(1px); }
+  60%{ transform:rotate(-3deg) translateX(-1px); }
 }
 @keyframes vmunchChew{
-  0%,100%{ transform: scale(1); }
-  25%{ transform: scale(1.03, 0.95); }
-  50%{ transform: scale(0.98, 1.03); }
-  75%{ transform: scale(1.02, 0.97); }
+  0%,100%{ transform:scale(1); }
+  25%{ transform:scale(1.03, 0.95); }
+  50%{ transform:scale(0.98, 1.03); }
+  75%{ transform:scale(1.02, 0.97); }
 }
 @keyframes vmunchHappyPop{
-  0%{ transform: scale(0.96); }
-  45%{ transform: scale(1.08); }
-  100%{ transform: scale(1); }
+  0%{ transform:scale(0.96); }
+  45%{ transform:scale(1.08); }
+  100%{ transform:scale(1); }
 }
 @keyframes vmunchSadNod{
-  0%{ transform: translateY(-2px); }
-  40%{ transform: translateY(6px) rotate(-5deg); }
-  100%{ transform: translateY(0) rotate(0deg); }
+  0%{ transform:translateY(-2px); }
+  40%{ transform:translateY(6px) rotate(-5deg); }
+  100%{ transform:translateY(0) rotate(0deg); }
 }
 
 @media (max-width: 720px){
   .vmunch-main{
-    inset: 58px 12px 12px;
-    gap: 12px;
+    grid-template-rows:minmax(176px, 1.72fr) minmax(108px, .64fr) minmax(110px, .72fr);
   }
 
   .vmunch-face-stack{
-    width: min(100%, 320px);
+    width:min(100%, 320px);
   }
 
   .vmunch-carousel-row{
-    grid-template-columns: 54px minmax(0, 1fr) 54px;
-    gap: 6px;
+    grid-template-columns:54px minmax(0, 1fr) 54px;
+    gap:8px;
   }
 
   .vmunch-arrow-btn{
-    width: 54px;
-    height: 54px;
-    font-size: 30px;
+    height:54px;
+    font-size:30px;
   }
 
-  .vmunch-card{
-    width: min(220px, 82%);
-    min-height: 112px;
+  .vmunch-choice-btn{
+    min-height:78px;
+    border-radius:20px;
+    font-size:clamp(24px, 5vw, 32px);
   }
 
   .vmunch-help-body{
-    font-size: 18px;
+    font-size:18px;
   }
 }
 
-@media (max-width: 520px){
-  .vmunch-mode-top{
-    padding: 24px 18px;
+@media (max-width: 480px){
+  .vmunch-build-wrap,
+  .vmunch-field-wrap{
+    padding-left:10px;
+    padding-right:10px;
   }
 
   .vmunch-build{
-    min-height: 104px;
-    padding: 16px;
+    min-height:102px;
+    padding:14px 16px;
   }
 
-  .vmunch-build-verse{
-    font-size: clamp(22px, 6vw, 34px);
+  .vmunch-build-text{
+    font-size:clamp(20px, 6vw, 30px);
   }
 
   .vmunch-main{
-    inset: 56px 8px 10px;
+    grid-template-rows:minmax(164px, 1.56fr) minmax(96px, .56fr) minmax(100px, .66fr);
   }
 
-  .vmunch-face{
-    font-size: clamp(112px, 28vw, 170px);
+  .vmunch-face-stack{
+    width:min(100%, 280px);
   }
 
-  .vmunch-face-caption{
-    bottom: 0;
-    font-size: 14px;
+  .vmunch-food-display{
+    font-size:clamp(38px, 11vw, 54px);
   }
 
-  .vmunch-carousel-viewport{
-    height: 136px;
-  }
-
-  .vmunch-card{
-    top: 12px;
-    width: min(204px, 86%);
-    min-height: 104px;
-    padding: 10px 12px 14px;
+  .vmunch-choice-btn{
+    min-height:74px;
+    padding:12px 14px;
   }
 
   .vmunch-nav-btn{
-    width: 64px;
-    min-width: 64px;
+    width:62px;
+    min-width:62px;
   }
 
   .vmunch-help-btn{
-    min-width: 118px;
-    font-size: 20px;
+    min-width:120px;
+    font-size:20px;
   }
 }
