@@ -1451,20 +1451,44 @@ function renderHills(){
     const size = state.playerBaseSize * state.scale;
     const groundY = state.fieldFloorY - getPlayerRadius();
     const onGround = Math.abs(state.playerY - groundY) < 3;
-    const bob = onGround ? Math.sin(state.bobTimer * 11) * (2.6 * state.scale) : 0;
 
-    let angle;
+    // SPRINGY BOUNCE LOOP (0.40s timing)
+    let bob = 0;
+    let squashX = 1;
+    let squashY = 1;
+    let angle = 0;
+
     if (onGround){
-      angle = Math.sin(state.bobTimer * 12) * 2;
+      const cycle = (state.bobTimer % 0.40) / 0.40; // 0 → 1 loop
+
+      if (cycle < 0.5){
+        // upward phase
+        const t = cycle / 0.5;
+        bob = -6 * state.scale * Math.sin(t * Math.PI);
+
+        squashX = 1.04 - 0.08 * t;
+        squashY = 0.96 + 0.09 * t;
+        angle = -1.5 + 3 * t;
+      } else {
+        // downward squash phase
+        const t = (cycle - 0.5) / 0.5;
+        bob = -6 * state.scale * Math.sin((1 - t) * Math.PI);
+
+        squashX = 0.96 + 0.08 * t;
+        squashY = 1.05 - 0.09 * t;
+        angle = 1.5 - 3 * t;
+      }
+
     } else if (state.streak >= 5){
-      // spin jump
+      // spin jump stays the same
       angle = (state.bobTimer * 720) % 360;
     } else {
+      // air tilt stays
       angle = clamp(state.playerVY / 16, -22, 28);
     }
 
-    let squashX = 1;
-    let squashY = 1;
+    // keep existing squash from run cycle
+    // (do NOT reset squashX/Y here)
 
     const squashRemaining = state.landingSquashUntil - performance.now();
     if (squashRemaining > 0){
