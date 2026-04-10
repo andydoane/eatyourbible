@@ -164,7 +164,7 @@ body{
   position:relative;
   flex:1 1 auto;
   min-height:320px;
-  overflow:hidden;
+  overflow:visible;
   touch-action:none;
 }
 
@@ -800,7 +800,7 @@ body{
 
   .vmunch-main{
     inset:20px 0 0;
-    grid-template-rows:minmax(132px, 1.25fr) minmax(68px, .34fr) minmax(82px, .42fr);
+    grid-template-rows:minmax(132px, 1.18fr) minmax(72px, .30fr) minmax(108px, .62fr);
   }
 
   .vmunch-face-stack{
