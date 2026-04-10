@@ -367,6 +367,12 @@ body{
   grid-template-columns:64px minmax(0, 1fr) 64px;
   gap:12px;
   align-items:center;
+  transition:opacity 100ms ease;
+}
+
+.vmunch-carousel-row.is-hidden{
+  opacity:0;
+  pointer-events:none;
 }
 
 .vmunch-arrow-btn,
@@ -412,12 +418,6 @@ body{
 
 .vmunch-arrow-btn:disabled{
   opacity:0.5;
-  cursor:default;
-  transform:none;
-}
-
-.vmunch-choice-btn:disabled{
-  opacity:0;
   cursor:default;
   transform:none;
 }
