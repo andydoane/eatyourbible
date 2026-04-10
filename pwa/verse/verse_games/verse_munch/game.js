@@ -559,10 +559,19 @@ app.innerHTML = `
   }
 
   async function playChewAnimation(){
-    state.faceDisplay = "😬";
+    const chewFaces = ["😀","😐","😀","😐","😀","😐"];
+    const chewDuration = getTiming().chew;
+    const stepDuration = chewDuration / chewFaces.length;
+
     state.faceClasses = new Set(["is-chew"]);
     state.flyingFood = null;
-    await waitSeconds(getTiming().chew);
+    spawnChewCrumbs();
+
+    for (let i = 0; i < chewFaces.length; i++){
+      state.faceDisplay = chewFaces[i];
+      if (i === 3) spawnChewCrumbs(true);
+      await waitSeconds(stepDuration);
+    }
   }
 
   async function playAnticipationAnimation(){
@@ -857,6 +866,31 @@ app.innerHTML = `
     }
   }
 
+  function spawnChewCrumbs(isSecondary = false){
+    const center = getMouthPoint();
+    const crumbColors = ["#f6dfa6", "#f7c96d", "#fff4cf", "#f4b66a", "#ffffff"];
+    const countPerSide = isSecondary ? 4 : 6;
+
+    for (const dir of [-1, 1]){
+      for (let i = 0; i < countPerSide; i++){
+        const speedX = 90 + Math.random() * (isSecondary ? 60 : 90);
+        const speedY = 45 + Math.random() * 70;
+        state.particles.push({
+          type:"dot",
+          x:center.x + dir * (6 + Math.random() * 8),
+          y:center.y + Math.random() * 12 - 4,
+          vx:dir * speedX,
+          vy:-speedY,
+          gravity:240 + Math.random() * 80,
+          age:0,
+          life:0.34 + Math.random() * 0.18,
+          size:4 + Math.random() * 5,
+          color:randomFrom(crumbColors)
+        });
+      }
+    }
+  }
+
   function spawnConfettiBurst(){
     const centerX = state.fieldWidth * 0.5;
     const centerY = state.fieldHeight * 0.32;
@@ -935,12 +969,12 @@ app.innerHTML = `
 
   function getTiming(){
     if (selectedMode === "hard"){
-      return { launch:0.34, mouthOpen:0.14, chew:0.24, anticipation:0.22, reaction:0.36, bonusReaction:0.22 };
+      return { launch:0.34, mouthOpen:0.14, chew:0.80, anticipation:0.22, reaction:0.36, bonusReaction:0.22 };
     }
     if (selectedMode === "medium"){
-      return { launch:0.40, mouthOpen:0.16, chew:0.28, anticipation:0.26, reaction:0.40, bonusReaction:0.24 };
+      return { launch:0.40, mouthOpen:0.16, chew:0.80, anticipation:0.26, reaction:0.40, bonusReaction:0.24 };
     }
-    return { launch:0.46, mouthOpen:0.18, chew:0.32, anticipation:0.30, reaction:0.46, bonusReaction:0.28 };
+    return { launch:0.46, mouthOpen:0.18, chew:0.80, anticipation:0.30, reaction:0.46, bonusReaction:0.28 };
   }
 
   function getIdleDelay(){
