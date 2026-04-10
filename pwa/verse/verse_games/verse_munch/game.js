@@ -584,30 +584,24 @@ app.innerHTML = `
 
   async function playAnticipationAnimation(){
     const faces = ["😕","🫤","😐","🤨"];
-
-    // pick ONE face for the entire sequence
     const face = randomFrom(faces);
     state.faceDisplay = face;
 
-    let flipped = false;
+    const steps = [
+      "is-tilt-left",
+      "is-tilt-right",
+      "is-tilt-left-strong"
+    ];
 
-    for (let i = 0; i < 3; i++){
-      const classes = ["is-anticipation-lean-in"];
-      if (flipped){
-        classes.push("is-flipped");
-      }
-
-      state.faceClasses = new Set(classes);
-
-      // lean in
+    for (const tiltClass of steps){
+      state.faceClasses = new Set([tiltClass, "is-anticipation-lean-in"]);
       await waitSeconds(0.32);
 
-      // pause (no animation, but keep flip state)
-      state.faceClasses = new Set(flipped ? ["is-flipped"] : []);
+      state.faceClasses = new Set([tiltClass]);
       await waitSeconds(0.12);
-
-      flipped = !flipped;
     }
+
+    state.faceClasses = new Set();
   }
 
   async function playReactionAnimation(isCorrect){
