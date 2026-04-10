@@ -196,7 +196,7 @@ body{
 
 .vmunch-main{
   position:absolute;
-  inset:4px 0 0;
+  inset:48px 0 0;
   display:grid;
   grid-template-rows:minmax(190px, 1.8fr) minmax(150px, .78fr) minmax(112px, .72fr);
   align-items:center;
