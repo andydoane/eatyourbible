@@ -629,15 +629,22 @@ app.innerHTML = `
       await playFoodLaunchAnimation(bonusItem);
       await playMouthOpenAnimation();
       await playChewAnimation();
+
+      const bonusAnimClass = randomFrom(POSITIVE_REACTIONS);
       state.faceDisplay = randomFrom(HAPPY_REACTIONS);
-      state.faceClasses = new Set(["is-react-positive", "is-bonus"]);
+      state.faceClasses = new Set([bonusAnimClass, "is-bonus"]);
+
+      if (bonusAnimClass === "is-react-sparkle-pop"){
+        spawnReactionSparkles();
+      }
+
       spawnSuccessParticles(true);
       await waitSeconds(getTiming().bonusReaction);
     }
 
     spawnConfettiBurst();
     state.faceDisplay = "🥳";
-    state.faceClasses = new Set(["is-react-positive", "is-bonus"]);
+    state.faceClasses = new Set(["is-react-victory-wiggle", "is-bonus"]);
     await waitSeconds(0.9);
   }
 
