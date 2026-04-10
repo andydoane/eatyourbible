@@ -39,5 +39,19 @@ window.EXTERNAL_VERSE_GAMES = [
       progressType: "standard",
       modes: ["easy", "medium", "hard"]
     }
+  },
+
+  {
+    enabled: true,
+    manifest: {
+      id: "verse_munch",
+      title: "Verse Munch",
+      description: "Spin the carousel and feed the next correct word to the face.",
+      icon: "😋",
+      launchUrl: "./verse_games/verse_munch/index.html",
+      visibleInCarousel: true,
+      progressType: "standard",
+      modes: ["easy", "medium", "hard"]
+    }
   }
 ];
