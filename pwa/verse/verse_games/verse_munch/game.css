@@ -367,7 +367,6 @@ body{
   grid-template-columns:64px minmax(0, 1fr) 64px;
   gap:12px;
   align-items:center;
-  transition:opacity 100ms ease;
 }
 
 .vmunch-carousel-row.is-hidden{
