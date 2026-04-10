@@ -235,12 +235,13 @@ body{
 .vmunch-food-zone{
   flex:0 0 auto;
   padding-top:8px;
+  padding-bottom:18px;
 }
 
 .vmunch-carousel-zone{
   flex:0 0 auto;
   margin-top:auto;
-  padding:0 0 10px;
+  padding:0 0 2px;
 }
 
 .vmunch-face-stack{
@@ -351,7 +352,7 @@ body{
 .vmunch-face.is-bonus{ transition:transform 240ms ease; }
 
 .vmunch-food-display{
-  font-size:clamp(42px, 10vw, 68px);
+  font-size:clamp(48px, 11vw, 76px);
   line-height:1;
   filter:drop-shadow(0 8px 0 rgba(0,0,0,0.12));
 }
@@ -826,49 +827,6 @@ body{
   .vmunch-choice-btn{
     min-height:64px;
     font-size:clamp(20px, 4.6vw, 28px);
-    padding:10px 12px;
-  }
-}
-
-@media (max-height: 760px){
-  .vmunch-main{
-    top:24px;
-  }
-
-  .vmunch-face-stack{
-    width:min(100%, 260px);
-  }
-
-  .vmunch-food-display{
-    font-size:clamp(30px, 8vw, 44px);
-  }
-
-  .vmunch-choice-btn{
-    min-height:68px;
-    font-size:clamp(22px, 4.8vw, 30px);
-    padding:10px 12px;
-  }
-
-  .vmunch-arrow-btn{
-    height:52px;
-  }
-}
-
-@media (max-width: 480px){
-  .vmunch-main{
-    top:20px;
-  }
-
-  .vmunch-face-stack{
-    width:min(100%, 240px);
-  }
-
-  .vmunch-food-display{
-    font-size:clamp(34px, 10vw, 48px);
-  }
-
-  .vmunch-choice-btn{
-    min-height:70px;
     padding:10px 12px;
   }
 }
