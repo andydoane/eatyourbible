@@ -31,6 +31,17 @@
     "2":"😊",
     "3":"😁"
   };
+
+  const EMOTION_LABEL = {
+    "-3":"Mad",
+    "-2":"Grumpy",
+    "-1":"Annoyed",
+    "0":"Calm",
+    "1":"Pleased",
+    "2":"Cheerful",
+    "3":"Happy"
+  };
+
   const TRAIL_EMOJIS = ["✨","⭐","💫","🫧","🌟"];
 
   const POSITIVE_REACTIONS = [
@@ -74,6 +85,8 @@
     confetti:[],
     feedbackBadge:"",
     feedbackUntil:0,
+    reactionFlash:"",
+    reactionFlashUntil:0,
     faceScaleBoost:0,
     bonusCount:0,
     buildShakeUntil:0
@@ -161,6 +174,8 @@
     state.confetti = [];
     state.feedbackBadge = "";
     state.feedbackUntil = 0;
+    state.reactionFlash = "";
+    state.reactionFlashUntil = 0;
     state.faceScaleBoost = 0;
     state.bonusCount = 0;
     state.buildShakeUntil = 0;
@@ -177,7 +192,7 @@ app.innerHTML = `
       </div>
 
       <div class="vmunch-overlay-pills">
-        <div class="vmunch-pill" id="vmunchModePill">${escapeHtml(capitalize(mode))}</div>
+        <div class="vmunch-pill" id="vmunchModePill">${escapeHtml(getMoodLabel())}</div>
         <div class="vmunch-pill" id="vmunchStreakPill">Streak: 0</div>
       </div>
 
@@ -605,6 +620,9 @@ app.innerHTML = `
   }
 
   async function playReactionAnimation(isCorrect){
+    state.reactionFlash = isCorrect ? "is-flash-positive" : "is-flash-negative";
+    state.reactionFlashUntil = performance.now() + (getTiming().reaction * 1000);
+
     if (isCorrect){
       const reaction = randomFrom(HAPPY_REACTIONS);
       state.faceDisplay = reaction;
@@ -630,6 +648,8 @@ app.innerHTML = `
     await waitSeconds(getTiming().reaction);
   }
 
+
+  
   async function startBonusRound(){
     if (bonusRunning) return;
     bonusRunning = true;
@@ -695,6 +715,7 @@ app.innerHTML = `
   }
 
   function renderFrame(ts){
+    renderReactionFlash(ts);
     updateBuildText();
     renderBuildShake(ts);
     renderFace();
@@ -704,6 +725,7 @@ app.innerHTML = `
     renderParticles();
     renderConfetti();
     renderFeedback(ts);
+    updateMoodPill();
     updateStreakPill();
   }
 
@@ -800,6 +822,17 @@ app.innerHTML = `
       const alpha = 1 - (c.age / c.life);
       return `<div class="vmunch-confetto" style="left:${c.x}px;top:${c.y}px;width:${c.w}px;height:${c.h}px;opacity:${alpha};background:${c.color};transform:translate(-50%,-50%) rotate(${c.rotation}deg);"></div>`;
     }).join("");
+  }
+
+  function renderReactionFlash(ts){
+    const root = document.querySelector(".vmunch-root, .vmunch-mode-shell");
+    if (!root) return;
+
+    root.classList.remove("is-flash-positive", "is-flash-negative");
+
+    if (state.reactionFlash && ts < state.reactionFlashUntil){
+      root.classList.add(state.reactionFlash);
+    }
   }
 
   function renderFeedback(ts){
@@ -1004,6 +1037,10 @@ function spawnChewCrumbs(isSecondary = false){
     return EMOTION_FACE[String(state.emotionLevel)] || "😐";
   }
 
+  function getMoodLabel(){
+    return EMOTION_LABEL[String(state.emotionLevel)] || "Calm";
+  }
+
   function getIdleVariants(){
     if (state.emotionLevel >= 2) return ["is-idle-bob", "is-idle-sway", "is-idle-wiggle"];
     if (state.emotionLevel <= -2) return ["is-idle-blink", "is-idle-sway"];
@@ -1031,6 +1068,12 @@ function spawnChewCrumbs(isSecondary = false){
     if (tier >= 3) suffix = " 🌈";
     else if (tier >= 1) suffix = " ✨";
     pill.textContent = `Streak: ${state.streak}${suffix}`;
+  }
+
+  function updateMoodPill(){
+    const pill = document.getElementById("vmunchModePill");
+    if (!pill) return;
+    pill.textContent = getMoodLabel();
   }
 
   function getTrailTier(){
