@@ -57,7 +57,6 @@
     inputLocked:false,
     faceBase:"😐",
     faceDisplay:"😐",
-    faceCaption:"Ready for the next bite.",
     faceClasses:new Set(),
     idleTimer:0,
     flyingFood:null,
@@ -145,7 +144,6 @@
     state.emotionLevel = 0;
     state.faceBase = getEmotionFace();
     state.faceDisplay = state.faceBase;
-    state.faceCaption = "Ready for the next bite.";
     state.faceClasses = new Set();
     state.idleTimer = getIdleDelay();
     state.flyingFood = null;
@@ -189,7 +187,6 @@ app.innerHTML = `
               <div class="vmunch-face-stack">
                 <div class="vmunch-face-glow"></div>
                 <div class="vmunch-face" id="vmunchFace"></div>
-                <div class="vmunch-face-caption" id="vmunchFaceCaption"></div>
               </div>
             </div>
 
@@ -457,7 +454,6 @@ app.innerHTML = `
     if (!state.running || state.inputLocked || !state.carouselItems.length) return;
     const len = state.carouselItems.length;
     state.carouselIndex = (state.carouselIndex + dir + len) % len;
-    state.faceCaption = dir < 0 ? "Looking left..." : "Looking right...";
     renderFrame(performance.now());
   }
 
@@ -488,11 +484,9 @@ app.innerHTML = `
     if (isCorrect){
       state.progressIndex += 1;
       state.streak += 1;
-      state.faceCaption = getPositiveCaption();
       spawnSuccessParticles();
     } else {
       state.streak = 0;
-      state.faceCaption = getNegativeCaption(item.label, currentCorrect);
       state.buildShakeUntil = performance.now() + 280;
       spawnMissParticles();
     }
@@ -520,7 +514,6 @@ app.innerHTML = `
 
   async function playFoodLaunchAnimation(item){
     const launchDuration = getTiming().launch;
-    state.faceCaption = bonusRunning ? "Bonus bite!" : "Up it goes...";
     state.flyingFood = {
       emoji:item.food,
       label:item.label,
@@ -562,14 +555,12 @@ app.innerHTML = `
   async function playMouthOpenAnimation(){
     state.faceDisplay = getOpenMouthFace();
     state.faceClasses = new Set(["is-open"]);
-    state.faceCaption = "Open wide...";
     await waitSeconds(getTiming().mouthOpen);
   }
 
   async function playChewAnimation(){
     state.faceDisplay = "😬";
     state.faceClasses = new Set(["is-chew"]);
-    state.faceCaption = "Chomp chomp...";
     state.flyingFood = null;
     await waitSeconds(getTiming().chew);
   }
@@ -577,7 +568,6 @@ app.innerHTML = `
   async function playAnticipationAnimation(){
     state.faceDisplay = randomFrom(ANTICIPATION_FACES);
     state.faceClasses = new Set();
-    state.faceCaption = "Thinking...";
     await waitSeconds(getTiming().anticipation);
   }
 
@@ -585,14 +575,12 @@ app.innerHTML = `
     const reaction = randomFrom(isCorrect ? HAPPY_REACTIONS : SAD_REACTIONS);
     state.faceDisplay = reaction;
     state.faceClasses = new Set([isCorrect ? "is-react-positive" : "is-react-negative"]);
-    state.faceCaption = isCorrect ? "That was tasty!" : "Bleh, not that one.";
     await waitSeconds(getTiming().reaction);
   }
 
   async function startBonusRound(){
     if (bonusRunning) return;
     bonusRunning = true;
-    state.faceCaption = "Bonus round! Five happy bites!";
     state.inputLocked = true;
 
     for (let i = 0; i < 5; i++){
@@ -607,7 +595,6 @@ app.innerHTML = `
       await playChewAnimation();
       state.faceDisplay = randomFrom(HAPPY_REACTIONS);
       state.faceClasses = new Set(["is-react-positive", "is-bonus"]);
-      state.faceCaption = `Bonus bite ${i + 1} / 5!`;
       spawnSuccessParticles(true);
       await waitSeconds(getTiming().bonusReaction);
     }
@@ -615,7 +602,6 @@ app.innerHTML = `
     spawnConfettiBurst();
     state.faceDisplay = "🥳";
     state.faceClasses = new Set(["is-react-positive", "is-bonus"]);
-    state.faceCaption = "Mega munch complete!";
     await waitSeconds(0.9);
   }
 
@@ -680,7 +666,6 @@ app.innerHTML = `
 
   function renderFace(){
     const face = document.getElementById("vmunchFace");
-    const caption = document.getElementById("vmunchFaceCaption");
     const foodDisplay = document.getElementById("vmunchFoodDisplay");
     if (!face) return;
 
@@ -689,7 +674,6 @@ app.innerHTML = `
     face.textContent = state.faceDisplay;
     face.style.transform = state.faceScaleBoost > 0 ? `scale(${state.faceScaleBoost})` : "";
 
-    if (caption) caption.textContent = state.faceCaption;
     if (foodDisplay) foodDisplay.textContent = getCurrentFoodEmoji();
   }
 
