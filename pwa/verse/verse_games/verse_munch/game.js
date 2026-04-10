@@ -589,10 +589,10 @@ app.innerHTML = `
   }
 
   async function playReactionAnimation(isCorrect){
-    const reaction = randomFrom(isCorrect ? HAPPY_REACTIONS : SAD_REACTIONS);
-    state.faceDisplay = reaction;
-
     if (isCorrect){
+      const reaction = randomFrom(HAPPY_REACTIONS);
+      state.faceDisplay = reaction;
+
       const animClass = randomFrom(POSITIVE_REACTIONS);
       state.faceClasses = new Set([animClass]);
 
@@ -600,7 +600,15 @@ app.innerHTML = `
         spawnReactionSparkles();
       }
     } else {
-      state.faceClasses = new Set(["is-react-negative"]);
+      const negativeOptions = [
+        { face: "🤮", cls: "is-react-negative" },
+        { face: "🤢", cls: "is-react-barf-bounce" },
+        { face: "😵‍💫", cls: "is-react-head-no-hard" }
+      ];
+
+      const choice = randomFrom(negativeOptions);
+      state.faceDisplay = choice.face;
+      state.faceClasses = new Set([choice.cls]);
     }
 
     await waitSeconds(getTiming().reaction);
