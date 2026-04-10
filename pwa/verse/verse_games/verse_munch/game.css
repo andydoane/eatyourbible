@@ -226,7 +226,7 @@ body{
 
 .vmunch-face-stack{
   position:relative;
-  width:min(100%, 360px);
+  width:min(100%, 520px);
   aspect-ratio:1/1;
   display:flex;
   align-items:center;
