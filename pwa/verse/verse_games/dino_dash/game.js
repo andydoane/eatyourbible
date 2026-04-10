@@ -399,12 +399,13 @@
   function wireGameInput(){
     const field = document.getElementById("ddField");
     if (!field) return;
+
     const jumpHandler = (e) => {
       e.preventDefault();
       jump();
     };
+
     field.addEventListener("pointerdown", jumpHandler, { passive: false });
-    field.addEventListener("touchstart", jumpHandler, { passive: false });
     window.addEventListener("resize", recalcField);
   }
 
