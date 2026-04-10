@@ -153,7 +153,8 @@
     pitRespawnAt: 0,
     jumpsRemaining: 0,
     maxJumps: 2,
-    lastTrailSpawnAt: 0
+    lastTrailSpawnAt: 0,
+    landingSquashUntil: 0
   };
 
   const referenceParts = parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
@@ -258,6 +259,7 @@
     state.pitRespawnAt = 0;
     state.jumpsRemaining = 2;
     state.lastTrailSpawnAt = 0;
+    state.landingSquashUntil = 0;
 
     renderGame();
     recalcField();
@@ -507,6 +509,7 @@
         if (state.playerVY > 220 * state.scale){
           createLandingDust();
           createLandingCloudPuff();
+          state.landingSquashUntil = performance.now() + 160;
         }
         state.playerY = targetY;
         state.playerVY = 0;
@@ -1336,7 +1339,7 @@ function renderHills(){
   const seamPad = Math.ceil(2 * state.scale);
 
   // tweak these later if you want
-  const frontHillHeightPct = 0.35;
+  const frontHillHeightPct = 0.50;
   const backHillHeightPct = 0.50;
 
   const frontHillHeightPx = Math.round(state.fieldHeight * frontHillHeightPct);
@@ -1444,12 +1447,13 @@ function renderHills(){
     }
 
     player.style.opacity = "1";
+
     const size = state.playerBaseSize * state.scale;
     const groundY = state.fieldFloorY - getPlayerRadius();
     const onGround = Math.abs(state.playerY - groundY) < 3;
     const bob = onGround ? Math.sin(state.bobTimer * 11) * (2.6 * state.scale) : 0;
-    let angle;
 
+    let angle;
     if (onGround){
       angle = Math.sin(state.bobTimer * 12) * 2;
     } else if (state.streak >= 5){
@@ -1459,10 +1463,30 @@ function renderHills(){
       angle = clamp(state.playerVY / 16, -22, 28);
     }
 
+    let squashX = 1;
+    let squashY = 1;
+
+    const squashRemaining = state.landingSquashUntil - performance.now();
+    if (squashRemaining > 0){
+      const t = 1 - squashRemaining / 160;
+
+      if (t < 0.45){
+        // quick squash
+        const k = t / 0.45;
+        squashX = 1 + 0.22 * k;
+        squashY = 1 - 0.18 * k;
+      } else {
+        // rebound back to normal
+        const k = (t - 0.45) / 0.55;
+        squashX = 1.22 - 0.22 * k;
+        squashY = 0.82 + 0.18 * k;
+      }
+    }
+
     player.style.left = `${state.playerX}px`;
     player.style.top = `${state.playerY + bob}px`;
     player.style.fontSize = `${size}px`;
-    player.style.transform = `translate(-50%, -50%) scaleX(-1) rotate(${angle}deg)`;
+    player.style.transform = `translate(-50%, -50%) scaleX(${-1 * squashX}) scaleY(${squashY}) rotate(${angle}deg)`;
   }
 
   function renderFeedback(ts){
