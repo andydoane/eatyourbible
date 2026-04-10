@@ -455,8 +455,8 @@
     state.scale = 1 + t * 0.34;
     state.gravity = state.gravityBase * state.scale;
     state.jumpVelocity = state.jumpVelocityBase * state.scale;
-    state.groundHeight = Math.round((72 + t * 18) * state.scale);
-    state.groundDepth = Math.round((28 + t * 8) * state.scale);
+    state.groundHeight = Math.round((96 + t * 22) * state.scale);
+    state.groundDepth = Math.round((40 + t * 10) * state.scale);
     state.fieldFloorY = state.fieldHeight - state.groundHeight;
     state.playerX = Math.max(76, state.fieldWidth * 0.22);
     state.laneBottomY = state.fieldFloorY - 28 * state.scale;
@@ -887,7 +887,7 @@ function wrapHillLayer(layer){
 
     state.activeWords.push({
       id: state.nextId++,
-      x: state.fieldWidth + 60,
+      x: state.fieldWidth + 85,
       y: lane === "top" ? state.laneTopY : state.laneBottomY,
       lane,
       label,
@@ -898,7 +898,7 @@ function wrapHillLayer(layer){
 
     ensureGroundToRight(state.fieldWidth + 180);
     state.phaseRemaining -= 1;
-    state.spawnPause = 0.55 + Math.random() * 0.22;
+    state.spawnPause = 0.65 + Math.random() * 0.22;
   }
 
   function updateWords(dt, ts){
