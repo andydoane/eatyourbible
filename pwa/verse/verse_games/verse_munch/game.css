@@ -245,25 +245,13 @@ body{
 .vmunch-face.is-idle-sway{ animation:vmunchSway 1100ms ease; }
 .vmunch-face.is-idle-blink{ animation:vmunchBlink 500ms ease; }
 .vmunch-face.is-idle-wiggle{ animation:vmunchWiggle 780ms ease; }
-.vmunch-face.is-open{ transform:scale(1.04) translateY(-4px); }
+.vmunch-face.is-open{
+  animation: vmunchOpenNibble 180ms cubic-bezier(.2,.88,.24,1) both;
+}
 .vmunch-face.is-chew{ animation:vmunchChew 360ms ease 2; }
 .vmunch-face.is-react-positive{ animation:vmunchHappyPop 520ms ease; }
 .vmunch-face.is-react-negative{ animation:vmunchSadNod 520ms ease; }
 .vmunch-face.is-bonus{ transition:transform 240ms ease; }
-
-.vmunch-face-caption{
-  position:absolute;
-  bottom:12px;
-  left:50%;
-  transform:translateX(-50%);
-  border-radius:999px;
-  padding:8px 14px;
-  background:rgba(0,0,0,0.26);
-  color:#fff;
-  font-weight:800;
-  font-size:clamp(14px, 2.8vw, 18px);
-  white-space:nowrap;
-}
 
 .vmunch-food-display{
   font-size:clamp(42px, 10vw, 68px);
@@ -486,6 +474,24 @@ body{
 .vmunch-complete-icon{
   font-size:76px;
   line-height:1;
+}
+
+@keyframes vmunchOpenNibble{
+  0%{
+    transform: scaleX(1) scaleY(1) translateY(0);
+  }
+  22%{
+    transform: scaleX(0.92) scaleY(1.10) translateY(-3px);
+  }
+  52%{
+    transform: scaleX(0.84) scaleY(1.18) translateY(-7px);
+  }
+  78%{
+    transform: scaleX(0.93) scaleY(1.08) translateY(-2px);
+  }
+  100%{
+    transform: scaleX(1) scaleY(1) translateY(0);
+  }
 }
 
 @keyframes vmunchBob{
