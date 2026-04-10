@@ -584,13 +584,14 @@ app.innerHTML = `
 
   async function playAnticipationAnimation(){
     const faces = ["😕","🫤","😐","🤨"];
+
+    // pick ONE face for the entire sequence
+    const face = randomFrom(faces);
+    state.faceDisplay = face;
+
     let flipped = false;
 
     for (let i = 0; i < 3; i++){
-      // pick a random face each cycle
-      state.faceDisplay = randomFrom(faces);
-
-      // build class list
       const classes = ["is-anticipation-lean-in"];
       if (flipped){
         classes.push("is-flipped");
@@ -598,14 +599,13 @@ app.innerHTML = `
 
       state.faceClasses = new Set(classes);
 
-      // play lean-in
+      // lean in
       await waitSeconds(0.32);
 
-      // small pause (this is IMPORTANT for readability)
+      // pause (no animation, but keep flip state)
       state.faceClasses = new Set(flipped ? ["is-flipped"] : []);
       await waitSeconds(0.12);
 
-      // flip for next iteration
       flipped = !flipped;
     }
   }
