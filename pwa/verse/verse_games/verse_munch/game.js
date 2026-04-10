@@ -167,8 +167,7 @@
       <div class="vmunch-root">
         <div class="vmunch-stage">
           <div class="vmunch-build-wrap">
-            <div class="vmunch-build">
-              <div class="vmunch-build-ref" id="vmunchBuildRef">${escapeHtml(ctx.verseRef || "")}</div>
+            <div class="vmunch-build" id="vmunchBuild">
               <div class="vmunch-build-text" id="vmunchBuildText"></div>
             </div>
           </div>
@@ -195,20 +194,15 @@
                     <div class="vmunch-face-caption" id="vmunchFaceCaption"></div>
                   </div>
                 </div>
-                <div></div>
+
                 <div class="vmunch-carousel-zone">
                   <div class="vmunch-carousel-shell">
-                    <div class="vmunch-carousel-title" id="vmunchCarouselTitle"></div>
                     <div class="vmunch-carousel-row">
-                      <button class="vmunch-arrow-btn" id="vmunchPrevBtn" aria-label="Previous word">‹</button>
-                      <div>
-                        <div class="vmunch-carousel-viewport">
-                          <div class="vmunch-carousel-track" id="vmunchCarouselTrack"></div>
-                        </div>
-                        <button class="vmunch-select-btn" id="vmunchSelectBtn">Feed centered choice</button>
-                        <div class="vmunch-status-line" id="vmunchStatusLine"></div>
+                      <button class="vmunch-arrow-btn" id="vmunchPrevBtn" aria-label="Previous choice">‹</button>
+                      <div class="vmunch-carousel-viewport">
+                        <div class="vmunch-carousel-track" id="vmunchCarouselTrack"></div>
                       </div>
-                      <button class="vmunch-arrow-btn" id="vmunchNextBtn" aria-label="Next word">›</button>
+                      <button class="vmunch-arrow-btn" id="vmunchNextBtn" aria-label="Next choice">›</button>
                     </div>
                   </div>
                 </div>
@@ -218,7 +212,7 @@
         </div>
 
         ${renderNav()}
-        ${renderHelpOverlay("Rotate the carousel with the arrows.<br><br>Tap the centered card to feed it upward.<br><br>The face emotion changes only after each reaction finishes.<br><br>Wrong picks reset your streak but never end the run.")}
+        ${renderHelpOverlay("Rotate the carousel with the arrows.<br><br>Tap the centered word to feed it to the face.<br><br>Correct picks build the verse and grow your streak. Wrong picks only reset your streak.<br><br>After the verse is built, munch the book, then the chapter and verse.")}
       </div>
     `;
 
@@ -282,7 +276,9 @@
       <div class="vmunch-nav-wrap">
         <div class="vmunch-nav">
           <button class="vmunch-nav-btn" id="homeBtn" aria-label="Home">${getHomeSvg()}</button>
-          <button class="vmunch-help-btn" id="helpBtn" type="button">HELP</button>
+          <div class="vmunch-nav-center">
+            <button class="vmunch-help-btn" id="helpBtn" type="button">HELP</button>
+          </div>
           <button class="vmunch-nav-btn" id="muteBtn" aria-label="Mute">${muted ? getMuteSvg() : getUnmuteSvg()}</button>
         </div>
       </div>
@@ -329,7 +325,6 @@
   function wireGameInput(){
     const prevBtn = document.getElementById("vmunchPrevBtn");
     const nextBtn = document.getElementById("vmunchNextBtn");
-    const selectBtn = document.getElementById("vmunchSelectBtn");
     const track = document.getElementById("vmunchCarouselTrack");
 
     prevBtn.addEventListener("pointerup", (e) => {
@@ -340,18 +335,13 @@
       e.preventDefault();
       rotateCarousel(1);
     });
-    selectBtn.addEventListener("pointerup", (e) => {
-      e.preventDefault();
-      handleCenteredSelection();
-    });
     track.addEventListener("pointerup", (e) => {
       const card = e.target.closest("[data-carousel-index]");
       if (!card) return;
       const cardIndex = Number(card.getAttribute("data-carousel-index"));
-      if (cardIndex === state.carouselIndex){
-        e.preventDefault();
-        handleCenteredSelection();
-      }
+      if (cardIndex !== state.carouselIndex) return;
+      e.preventDefault();
+      handleCenteredSelection();
     });
 
     window.addEventListener("resize", recalcField);
@@ -512,6 +502,7 @@
       state.streak = 0;
       state.faceCaption = getNegativeCaption(item.label, currentCorrect);
       spawnMissParticles();
+      triggerBuildShake();
     }
 
     state.emotionLevel = clamp(state.emotionLevel + (isCorrect ? 1 : -1), -3, 3);
@@ -683,19 +674,52 @@
     const buildText = document.getElementById("vmunchBuildText");
     if (!buildText) return;
 
-    buildText.innerHTML = state.segments.map((segment, index) => {
-      const classes = ["vmunch-token"];
-      if (index < state.progressIndex) classes.push("is-revealed");
-      if (index === state.progressIndex && getCurrentPhase() !== "done") classes.push("is-current");
-      return `<span class="${classes.join(" ")}">${escapeHtml(segment)}</span>`;
-    }).join("");
+    const builtWords = Math.min(state.progressIndex, state.words.length);
+    let verseHtml = "";
+
+    if (!builtWords){
+      verseHtml = '<p class="vmunch-build-verse vmunch-build-empty">Build the verse one word at a time.</p>';
+    } else {
+      const visibleWords = state.words.slice(0, builtWords).map(escapeHtml).join(" ");
+      const needsEllipsis = builtWords < state.words.length;
+      verseHtml = `<p class="vmunch-build-verse">${visibleWords}${needsEllipsis ? ' <span class="vmunch-build-ellipsis">…</span>' : ""}</p>`;
+    }
+
+    const phase = getCurrentPhase();
+    const showRefRow = builtWords >= state.words.length || phase === "book" || phase === "reference" || phase === "done";
+    let refHtml = "";
+
+    if (showRefRow){
+      let bookClass = "is-placeholder";
+      let refClass = "is-future";
+      let bookText = "Book";
+      let refText = "Chapter:Verse";
+
+      if (phase === "reference"){
+        bookClass = "is-filled";
+        refClass = "is-placeholder";
+        bookText = state.bookLabel || "Book";
+      } else if (phase === "done"){
+        bookClass = "is-filled";
+        refClass = "is-filled";
+        bookText = state.bookLabel || "Book";
+        refText = state.referenceLabel || "Chapter:Verse";
+      }
+
+      refHtml = `
+        <div class="vmunch-ref-row">
+          <div class="vmunch-ref-chip ${bookClass}">${escapeHtml(bookText)}</div>
+          <div class="vmunch-ref-chip ${refClass}">${escapeHtml(refText)}</div>
+        </div>
+      `;
+    }
+
+    buildText.innerHTML = `<div class="vmunch-build-stack">${verseHtml}${refHtml}</div>`;
   }
 
   function renderFace(){
     const face = document.getElementById("vmunchFace");
     const caption = document.getElementById("vmunchFaceCaption");
-    const title = document.getElementById("vmunchCarouselTitle");
-    const status = document.getElementById("vmunchStatusLine");
     if (!face) return;
 
     face.className = "vmunch-face";
@@ -704,43 +728,40 @@
     face.style.transform = state.faceScaleBoost > 0 ? `scale(${state.faceScaleBoost})` : "";
 
     if (caption) caption.textContent = state.faceCaption;
-    if (title) title.textContent = getCarouselTitle();
-    if (status) status.textContent = bonusRunning ? "Bonus round: every bite is a happy bite." : getStatusLine();
   }
 
   function renderCarousel(){
     const track = document.getElementById("vmunchCarouselTrack");
-    const selectBtn = document.getElementById("vmunchSelectBtn");
     const prevBtn = document.getElementById("vmunchPrevBtn");
     const nextBtn = document.getElementById("vmunchNextBtn");
     if (!track) return;
 
     const viewportWidth = track.parentElement ? track.parentElement.clientWidth : 320;
-    const baseOffset = Math.min(144, viewportWidth * 0.35);
+    const baseOffset = Math.min(118, viewportWidth * 0.30);
 
     track.innerHTML = state.carouselItems.map((item, index) => {
       const rawDelta = wrapDelta(index - state.carouselIndex, state.carouselItems.length);
       const x = rawDelta * baseOffset;
-      const scale = rawDelta === 0 ? 1 : rawDelta === -1 || rawDelta === 1 ? 0.82 : 0.68;
-      const opacity = rawDelta === 0 ? 1 : rawDelta === -1 || rawDelta === 1 ? 0.62 : 0.18;
+      const scale = rawDelta === 0 ? 1 : 0.9;
+      const opacity = rawDelta === 0 ? 1 : 0.42;
       const z = 10 - Math.abs(rawDelta);
       const classes = ["vmunch-card"];
       if (rawDelta === 0) classes.push("is-center");
-      const sub = item.type === "word" ? "Verse word" : item.type === "book" ? "Book" : "Chapter & verse";
       return `
-        <div
-          class="${classes.join(" ")}" data-carousel-index="${index}"
+        <button
+          class="${classes.join(" ")}"
+          data-carousel-index="${index}"
+          type="button"
+          aria-label="Choose ${escapeHtml(item.label)}"
           style="transform:translateX(calc(-50% + ${x}px)) scale(${scale});opacity:${opacity};z-index:${z};"
         >
           <div class="vmunch-card-food">${escapeHtml(item.food)}</div>
           <div class="vmunch-card-word">${escapeHtml(item.label)}</div>
-          <div class="vmunch-card-sub">${sub}</div>
-        </div>
+        </button>
       `;
     }).join("");
 
     const locked = state.inputLocked || bonusRunning;
-    selectBtn.disabled = locked;
     prevBtn.disabled = locked;
     nextBtn.disabled = locked;
   }
@@ -982,6 +1003,15 @@
     if (getCurrentPhase() === "book") return `Not ${chosen}. The right book is still hiding.`;
     if (getCurrentPhase() === "reference") return `${chosen} was off. Try the right reference.`;
     return `Not ${chosen}. Looking for ${correct}.`;
+  }
+
+  function triggerBuildShake(){
+    const build = document.getElementById("vmunchBuild");
+    if (!build) return;
+    build.classList.remove("vmunch-shake");
+    void build.offsetWidth;
+    build.classList.add("vmunch-shake");
+    setTimeout(() => build.classList.remove("vmunch-shake"), 320);
   }
 
   function updateStreakPill(){
