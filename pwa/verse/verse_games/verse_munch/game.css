@@ -37,6 +37,21 @@ body{
   overflow:hidden;
 }
 
+.vmunch-root,
+.vmunch-mode-shell{
+  transition:background-color 120ms ease;
+}
+
+.vmunch-root.is-flash-positive,
+.vmunch-mode-shell.is-flash-positive{
+  background:#a7cb6f;
+}
+
+.vmunch-root.is-flash-negative,
+.vmunch-mode-shell.is-flash-negative{
+  background:#ff5a51;
+}
+
 .vmunch-stage,
 .vmunch-mode-stage{
   width:100%;
@@ -375,9 +390,14 @@ body{
   box-shadow:0 3px 0 rgba(0,0,0,0.16);
 }
 
-.vmunch-arrow-btn:disabled,
-.vmunch-choice-btn:disabled{
+.vmunch-arrow-btn:disabled{
   opacity:0.5;
+  cursor:default;
+  transform:none;
+}
+
+.vmunch-choice-btn:disabled{
+  opacity:0;
   cursor:default;
   transform:none;
 }
