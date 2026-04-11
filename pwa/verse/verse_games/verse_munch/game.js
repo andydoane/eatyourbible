@@ -1151,12 +1151,25 @@ function spawnChewCrumbs(isSecondary = false){
     return rect.top - fieldRect.top + rect.height * 0.5;
   }
 
-  function getMouthPoint(){
+function getMouthPoint(){
+  const face = document.getElementById("vmunchFace");
+  const field = document.getElementById("vmunchField");
+
+  if (!face || !field){
     return {
-      x:state.fieldWidth * 0.5,
-      y:Math.max(84, state.fieldHeight * 0.28)
+      x: state.fieldWidth * 0.5,
+      y: state.fieldHeight * 0.42
     };
   }
+
+  const faceRect = face.getBoundingClientRect();
+  const fieldRect = field.getBoundingClientRect();
+
+  return {
+    x: faceRect.left - fieldRect.left + faceRect.width * 0.5,
+    y: faceRect.top - fieldRect.top + faceRect.height * 0.64
+  };
+}
 
   function tokenizeVerse(text){
     return String(text || "").trim().split(/\s+/).filter(Boolean);
