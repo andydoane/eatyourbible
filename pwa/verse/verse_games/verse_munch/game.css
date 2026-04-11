@@ -25,6 +25,7 @@
 
   --vmunch-fruit-to-carousel-gap:18px;
   --vmunch-carousel-to-nav-gap:10px;
+  --vmunch-face-to-fruit-gap:18px;
 
   --vmunch-carousel-gap-bottom:6px;
   --vmunch-carousel-min-height:96px;
@@ -282,7 +283,21 @@ body{
 }
 
 .vmunch-face-zone{
-  flex:1 1 auto;
+  position:absolute;
+  left:0;
+  right:0;
+  top:0;
+  bottom:calc(
+    var(--vmunch-carousel-to-nav-gap)
+    + var(--vmunch-carousel-min-height)
+    + var(--vmunch-fruit-to-carousel-gap)
+    + var(--vmunch-food-zone-min-height)
+    + var(--vmunch-face-to-fruit-gap)
+    + env(safe-area-inset-bottom)
+  );
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 
 .vmunch-food-zone{
@@ -314,6 +329,7 @@ body{
 .vmunch-face-stack{
   position:relative;
   width:min(100%, var(--vmunch-face-stack-max));
+  height:min(100%, var(--vmunch-face-stack-max));
   aspect-ratio:1/1;
   display:flex;
   align-items:center;
@@ -782,6 +798,7 @@ body{
     --vmunch-carousel-min-height:84px;
     --vmunch-carousel-shell-min-height:78px;
     --vmunch-carousel-shell-padding-bottom:8px;
+    --vmunch-face-to-fruit-gap:12px;
 
     --vmunch-fruit-to-carousel-gap:14px;
     --vmunch-carousel-to-nav-gap:8px;
@@ -833,6 +850,7 @@ body{
 
     --vmunch-pills-margin-top:4px;
     --vmunch-pills-margin-bottom:6px;
+    --vmunch-face-to-fruit-gap:12px;
 
     --vmunch-build-min-height:102px;
     --vmunch-build-padding-y:14px;
@@ -867,6 +885,7 @@ body{
     --vmunch-carousel-min-height:78px;
     --vmunch-carousel-shell-min-height:72px;
     --vmunch-carousel-shell-padding-bottom:6px;
+    --vmunch-face-to-fruit-gap:10px;
 
     --vmunch-fruit-to-carousel-gap:12px;
     --vmunch-carousel-to-nav-gap:6px;
