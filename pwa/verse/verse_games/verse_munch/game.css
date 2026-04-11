@@ -10,8 +10,10 @@
   --vmunch-nav-reserve:84px;
   --vmunch-food-gap-top:8px;
   --vmunch-food-gap-bottom:18px;
+  --vmunch-food-zone-min-height:82px;
   --vmunch-carousel-gap-bottom:2px;
   --vmunch-carousel-min-height:96px;
+  --vmunch-carousel-shell-min-height:92px;
 }
 
 html,body{
@@ -241,6 +243,7 @@ body{
 
 .vmunch-food-zone{
   flex:0 0 auto;
+  min-height:var(--vmunch-food-zone-min-height);
   padding-top:var(--vmunch-food-gap-top);
   padding-bottom:var(--vmunch-food-gap-bottom);
 }
@@ -367,6 +370,9 @@ body{
 
 .vmunch-carousel-shell{
   width:min(100%, 700px);
+  min-height:var(--vmunch-carousel-shell-min-height);
+  display:flex;
+  align-items:end;
   padding:0 0 8px;
 }
 
@@ -381,6 +387,7 @@ body{
 .vmunch-carousel-row.is-hidden{
   opacity:0;
   pointer-events:none;
+  visibility:hidden;
 }
 
 .vmunch-arrow-btn,
@@ -712,8 +719,10 @@ body{
     --vmunch-nav-reserve:84px;
     --vmunch-food-gap-top:6px;
     --vmunch-food-gap-bottom:14px;
+    --vmunch-food-zone-min-height:64px;
     --vmunch-carousel-gap-bottom:2px;
     --vmunch-carousel-min-height:84px;
+    --vmunch-carousel-shell-min-height:78px;
   }
 
   .vmunch-build{
@@ -818,8 +827,10 @@ body{
     --vmunch-nav-reserve:84px;
     --vmunch-food-gap-top:6px;
     --vmunch-food-gap-bottom:12px;
+    --vmunch-food-zone-min-height:58px;
     --vmunch-carousel-gap-bottom:2px;
     --vmunch-carousel-min-height:78px;
+    --vmunch-carousel-shell-min-height:72px;
   }
 
   .vmunch-build{
