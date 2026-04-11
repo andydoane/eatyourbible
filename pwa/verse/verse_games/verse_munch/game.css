@@ -22,6 +22,10 @@
   --vmunch-food-gap-top:8px;
   --vmunch-food-gap-bottom:22px;
   --vmunch-food-zone-min-height:82px;
+
+  --vmunch-fruit-to-carousel-gap:18px;
+  --vmunch-carousel-to-nav-gap:10px;
+
   --vmunch-carousel-gap-bottom:6px;
   --vmunch-carousel-min-height:96px;
   --vmunch-carousel-shell-min-height:92px;
@@ -206,7 +210,7 @@ body{
   min-height:0;
   display:flex;
   flex-direction:column;
-  padding:0 var(--vmunch-side-padding) calc(var(--vmunch-nav-reserve) + env(safe-area-inset-bottom));
+  padding:0 var(--vmunch-side-padding) env(safe-area-inset-bottom);
 }
 
 .vmunch-field{
@@ -278,21 +282,33 @@ body{
 }
 
 .vmunch-face-zone{
-  flex:0 0 auto;
+  flex:1 1 auto;
 }
 
 .vmunch-food-zone{
-  flex:0 0 auto;
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:calc(
+    var(--vmunch-carousel-to-nav-gap)
+    + var(--vmunch-carousel-min-height)
+    + var(--vmunch-fruit-to-carousel-gap)
+    + env(safe-area-inset-bottom)
+  );
+  display:flex;
+  justify-content:center;
   min-height:var(--vmunch-food-zone-min-height);
-  padding-top:var(--vmunch-food-gap-top);
-  padding-bottom:var(--vmunch-food-gap-bottom);
 }
 
 .vmunch-carousel-zone{
-  flex:0 0 auto;
-  margin-top:auto;
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:calc(var(--vmunch-carousel-to-nav-gap) + env(safe-area-inset-bottom));
+  display:flex;
+  justify-content:center;
   min-height:var(--vmunch-carousel-min-height);
-  padding:0 0 var(--vmunch-carousel-gap-bottom);
+  pointer-events:auto;
 }
 
 .vmunch-face-stack{
@@ -767,6 +783,9 @@ body{
     --vmunch-carousel-shell-min-height:78px;
     --vmunch-carousel-shell-padding-bottom:8px;
 
+    --vmunch-fruit-to-carousel-gap:14px;
+    --vmunch-carousel-to-nav-gap:8px;
+
     --vmunch-pills-margin-top:4px;
     --vmunch-pills-margin-bottom:6px;
 
@@ -821,7 +840,7 @@ body{
     --vmunch-build-text-size:clamp(20px, 6vw, 30px);
 
     --vmunch-face-stack-max:280px;
-    --vmunch-food-size:clamp(38px, 11vw, 54px);
+    --vmunch-food-size:clamp(44px, 12vw, 60px);
     --vmunch-choice-min-height:74px;
     --vmunch-choice-padding-y:12px;
     --vmunch-choice-padding-x:14px;
@@ -848,6 +867,9 @@ body{
     --vmunch-carousel-min-height:78px;
     --vmunch-carousel-shell-min-height:72px;
     --vmunch-carousel-shell-padding-bottom:6px;
+
+    --vmunch-fruit-to-carousel-gap:12px;
+    --vmunch-carousel-to-nav-gap:6px;
 
     --vmunch-pills-margin-top:4px;
     --vmunch-pills-margin-bottom:6px;
