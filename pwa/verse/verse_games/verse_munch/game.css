@@ -372,8 +372,13 @@ body{
   width:min(100%, 700px);
   min-height:var(--vmunch-carousel-shell-min-height);
   display:flex;
-  align-items:end;
+  align-items:flex-end;
+  justify-content:center;
   padding:0 0 8px;
+}
+
+.vmunch-carousel-row{
+  width:100%;
 }
 
 .vmunch-carousel-row{
