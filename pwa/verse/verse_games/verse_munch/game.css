@@ -6,6 +6,10 @@
   --vmunch-card-shadow:0 10px 0 rgba(0,0,0,0.18);
   --vmunch-white:#fff;
 
+  --vmunch-side-padding:14px;
+  --vmunch-build-top-padding:12px;
+  --vmunch-build-bottom-padding:10px;
+
   --vmunch-main-top:32px;
   --vmunch-nav-reserve:84px;
   --vmunch-food-gap-top:8px;
@@ -14,6 +18,12 @@
   --vmunch-carousel-gap-bottom:2px;
   --vmunch-carousel-min-height:96px;
   --vmunch-carousel-shell-min-height:92px;
+
+  --vmunch-build-min-height:112px;
+  --vmunch-build-padding-y:18px;
+  --vmunch-build-padding-x:18px;
+  --vmunch-build-text-size:clamp(22px, 5.4vw, 40px);
+  --vmunch-build-line-height:1.2;
 
   --vmunch-face-stack-max:360px;
   --vmunch-food-size:clamp(48px, 11vw, 76px);
@@ -29,6 +39,11 @@
   --vmunch-choice-padding-x:18px;
   --vmunch-choice-font:clamp(26px, 4.8vw, 36px);
   --vmunch-choice-radius:24px;
+
+  --vmunch-nav-btn-width:72px;
+  --vmunch-nav-btn-min-width:72px;
+  --vmunch-help-min-width:140px;
+  --vmunch-help-font-size:22px;
 }
 
 html,body{
@@ -127,20 +142,23 @@ body{
   gap:18px;
 }
 
-.vmunch-build-wrap{
-  padding:12px 14px 10px;
-  flex:0 0 auto;
+.vmunch-field-wrap{
+  flex:1 1 auto;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  padding:0 14px calc(var(--vmunch-nav-reserve) + env(safe-area-inset-bottom));
 }
 
 .vmunch-build{
   background:#ffffff;
   color:#333333;
   border-radius:22px;
-  min-height:112px;
+  min-height:var(--vmunch-build-min-height);
   display:flex;
   align-items:center;
   justify-content:center;
-  padding:18px;
+  padding:var(--vmunch-build-padding-y) var(--vmunch-build-padding-x);
   text-align:center;
   box-shadow:inset 0 -4px 0 rgba(0,0,0,0.08);
 }
@@ -151,9 +169,9 @@ body{
 }
 
 .vmunch-build-text{
-  font-size:clamp(22px, 5.4vw, 40px);
+  font-size:var(--vmunch-build-text-size);
   font-weight:900;
-  line-height:1.2;
+  line-height:var(--vmunch-build-line-height);
   width:100%;
   text-wrap:balance;
 }
@@ -181,7 +199,7 @@ body{
   min-height:0;
   display:flex;
   flex-direction:column;
-  padding:0 14px calc(var(--vmunch-nav-reserve) + env(safe-area-inset-bottom));
+  padding:0 var(--vmunch-side-padding) calc(var(--vmunch-nav-reserve) + env(safe-area-inset-bottom));
 }
 
 .vmunch-field{
@@ -530,8 +548,8 @@ body{
 }
 
 .vmunch-nav-btn{
-  width:72px;
-  min-width:72px;
+  width:var(--vmunch-nav-btn-width);
+  min-width:var(--vmunch-nav-btn-min-width);
   height:52px;
   border-radius:999px;
   background:rgba(255,255,255,0.18);
@@ -549,12 +567,12 @@ body{
 .vmunch-help-btn{
   border-radius:999px;
   height:52px;
-  min-width:140px;
+  min-width:var(--vmunch-help-min-width);
   padding:0 24px;
   background:#ffffff;
   color:#7f66c6;
   font:inherit;
-  font-size:22px;
+  font-size:var(--vmunch-help-font-size);
   font-weight:900;
   box-shadow:0 6px 0 rgba(0,0,0,0.22);
 }
@@ -741,6 +759,12 @@ body{
     --vmunch-carousel-min-height:84px;
     --vmunch-carousel-shell-min-height:78px;
 
+    --vmunch-build-min-height:88px;
+    --vmunch-build-padding-y:12px;
+    --vmunch-build-padding-x:14px;
+    --vmunch-build-text-size:clamp(18px, 5vw, 26px);
+    --vmunch-build-line-height:1.12;
+
     --vmunch-face-stack-max:240px;
     --vmunch-food-size:clamp(30px, 8vw, 44px);
 
@@ -751,16 +775,6 @@ body{
     --vmunch-choice-padding-y:10px;
     --vmunch-choice-padding-x:12px;
     --vmunch-choice-font:clamp(22px, 4.8vw, 30px);
-  }
-
-  .vmunch-build{
-    min-height:88px;
-    padding:12px 14px;
-  }
-
-  .vmunch-build-text{
-    font-size:clamp(18px, 5vw, 26px);
-    line-height:1.12;
   }
 }
 
@@ -782,37 +796,24 @@ body{
 }
 
 @media (max-width: 480px){
-  .vmunch-build-wrap,
-  .vmunch-field-wrap{
-    padding-left:10px;
-    padding-right:10px;
-  }
-
-  .vmunch-build{
-    min-height:102px;
-    padding:14px 16px;
-  }
-
-  .vmunch-build-text{
-    font-size:clamp(20px, 6vw, 30px);
-  }
-
   :root{
+    --vmunch-side-padding:10px;
+
+    --vmunch-build-min-height:102px;
+    --vmunch-build-padding-y:14px;
+    --vmunch-build-padding-x:16px;
+    --vmunch-build-text-size:clamp(20px, 6vw, 30px);
+
     --vmunch-face-stack-max:280px;
     --vmunch-food-size:clamp(38px, 11vw, 54px);
     --vmunch-choice-min-height:74px;
     --vmunch-choice-padding-y:12px;
     --vmunch-choice-padding-x:14px;
-  }
 
-  .vmunch-nav-btn{
-    width:62px;
-    min-width:62px;
-  }
-
-  .vmunch-help-btn{
-    min-width:120px;
-    font-size:20px;
+    --vmunch-nav-btn-width:62px;
+    --vmunch-nav-btn-min-width:62px;
+    --vmunch-help-min-width:120px;
+    --vmunch-help-font-size:20px;
   }
 }
 
@@ -827,6 +828,12 @@ body{
     --vmunch-carousel-min-height:78px;
     --vmunch-carousel-shell-min-height:72px;
 
+    --vmunch-build-min-height:88px;
+    --vmunch-build-padding-y:12px;
+    --vmunch-build-padding-x:14px;
+    --vmunch-build-text-size:clamp(18px, 5vw, 26px);
+    --vmunch-build-line-height:1.12;
+
     --vmunch-face-stack-max:220px;
     --vmunch-food-size:clamp(28px, 8vw, 40px);
 
@@ -840,15 +847,5 @@ body{
     --vmunch-choice-padding-y:10px;
     --vmunch-choice-padding-x:12px;
     --vmunch-choice-font:clamp(20px, 4.6vw, 28px);
-  }
-
-  .vmunch-build{
-    min-height:88px;
-    padding:12px 14px;
-  }
-
-  .vmunch-build-text{
-    font-size:clamp(18px, 5vw, 26px);
-    line-height:1.12;
   }
 }
