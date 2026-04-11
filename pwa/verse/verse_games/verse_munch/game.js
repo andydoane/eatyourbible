@@ -42,6 +42,42 @@
     "3":"Happy"
   };
 
+const FACE_MAP = {
+  // moods
+  "😡":"munch_angry_3.png",
+  "😠":"munch_angry_2.png",
+  "🤨":"munch_angry_1.png",
+  "😐":"munch_neutral.png",
+  "🙂":"munch_happy_1.png",
+  "😊":"munch_happy_2.png",
+  "😁":"munch_happy_3.png",
+
+  // negatives
+  "🤢":"munch_negative_sick.png",
+  "🤮":"munch_negative_puke.png",
+  "😵‍💫":"munch_negative_dizzy.png",
+
+  // positives
+  "☺️":"munch_positive_1.png",
+  "😋":"munch_positive_2.png",
+
+  // mouth open (all map to same)
+  "😄":"munch_mouth_open.png",
+  "😮":"munch_mouth_open.png",
+  "😦":"munch_mouth_open.png",
+
+  // chew
+  "😀":"munch_chew_open.png",
+
+  // anticipation
+  "😕":"munch_anticipation_1.png",
+  "🫤":"munch_anticipation_2.png",
+
+  // bonus
+  "🥳":"munch_celebration.png"
+};
+
+
   const TRAIL_EMOJIS = ["✨","⭐","💫","🫧","🌟"];
 
   const POSITIVE_REACTIONS = [
@@ -101,7 +137,9 @@
       <div class="vmunch-mode-shell">
         <div class="vmunch-mode-stage">
           <div class="vmunch-mode-top">
-            <div style="font-size:82px;line-height:1;">😋</div>
+            <div style="width:82px;height:82px;">
+              <img src="verse_munch_images/munch_positive_2.png" style="width:100%;height:100%;object-fit:contain;">
+            </div>
             <div class="vmunch-mode-title">Verse Munch</div>
             <div class="vmunch-mode-subtitle">
               Spin the selector, feed the face the next correct word, then finish with the book and reference.
@@ -752,7 +790,13 @@ app.innerHTML = `
 
     face.className = "vmunch-face";
     for (const cls of state.faceClasses) face.classList.add(cls);
-    face.textContent = state.faceDisplay;
+    const file = FACE_MAP[state.faceDisplay];
+
+    if (file){
+      face.innerHTML = `<img src="verse_munch_images/${file}" alt="">`;
+    } else {
+      face.innerHTML = "";
+    }
     face.style.transform = state.faceScaleBoost > 0 ? `scale(${state.faceScaleBoost})` : "";
 
     if (foodDisplay){
