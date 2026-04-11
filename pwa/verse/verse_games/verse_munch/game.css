@@ -142,12 +142,9 @@ body{
   gap:18px;
 }
 
-.vmunch-field-wrap{
-  flex:1 1 auto;
-  min-height:0;
-  display:flex;
-  flex-direction:column;
-  padding:0 14px calc(var(--vmunch-nav-reserve) + env(safe-area-inset-bottom));
+.vmunch-build-wrap{
+  padding:var(--vmunch-build-top-padding) var(--vmunch-side-padding) var(--vmunch-build-bottom-padding);
+  flex:0 0 auto;
 }
 
 .vmunch-build{
