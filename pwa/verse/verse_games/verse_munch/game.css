@@ -14,6 +14,21 @@
   --vmunch-carousel-gap-bottom:2px;
   --vmunch-carousel-min-height:96px;
   --vmunch-carousel-shell-min-height:92px;
+
+  --vmunch-face-stack-max:360px;
+  --vmunch-food-size:clamp(48px, 11vw, 76px);
+
+  --vmunch-carousel-side:64px;
+  --vmunch-carousel-gap:12px;
+
+  --vmunch-arrow-height:64px;
+  --vmunch-arrow-font:34px;
+
+  --vmunch-choice-min-height:84px;
+  --vmunch-choice-padding-y:14px;
+  --vmunch-choice-padding-x:18px;
+  --vmunch-choice-font:clamp(26px, 4.8vw, 36px);
+  --vmunch-choice-radius:24px;
 }
 
 html,body{
@@ -257,7 +272,7 @@ body{
 
 .vmunch-face-stack{
   position:relative;
-  width:min(100%, 360px);
+  width:min(100%, var(--vmunch-face-stack-max));
   aspect-ratio:1/1;
   display:flex;
   align-items:center;
@@ -363,7 +378,7 @@ body{
 .vmunch-face.is-bonus{ transition:transform 240ms ease; }
 
 .vmunch-food-display{
-  font-size:clamp(48px, 11vw, 76px);
+  font-size:var(--vmunch-food-size);
   line-height:1;
   filter:drop-shadow(0 8px 0 rgba(0,0,0,0.12));
 }
@@ -379,12 +394,9 @@ body{
 
 .vmunch-carousel-row{
   width:100%;
-}
-
-.vmunch-carousel-row{
   display:grid;
-  grid-template-columns:64px minmax(0, 1fr) 64px;
-  gap:12px;
+  grid-template-columns:var(--vmunch-carousel-side) minmax(0, 1fr) var(--vmunch-carousel-side);
+  gap:var(--vmunch-carousel-gap);
   align-items:center;
   transition:opacity 100ms ease;
 }
@@ -405,24 +417,24 @@ body{
 }
 
 .vmunch-arrow-btn{
-  height:64px;
+  height:var(--vmunch-arrow-height);
   border-radius:999px;
   background:rgba(255,255,255,0.92);
   color:#5f4ab1;
   box-shadow:0 8px 0 rgba(0,0,0,0.16);
-  font-size:34px;
+  font-size:var(--vmunch-arrow-font);
   font-weight:900;
 }
 
 .vmunch-choice-btn{
   width:100%;
-  min-height:84px;
-  border-radius:24px;
-  padding:14px 18px;
+  min-height:var(--vmunch-choice-min-height);
+  border-radius:var(--vmunch-choice-radius);
+  padding:var(--vmunch-choice-padding-y) var(--vmunch-choice-padding-x);
   background:#ffffff;
   color:#5f4ab1;
   box-shadow:0 10px 0 rgba(0,0,0,0.16);
-  font-size:clamp(26px, 4.8vw, 36px);
+  font-size:var(--vmunch-choice-font);
   font-weight:900;
   line-height:1.08;
   text-wrap:balance;
@@ -728,6 +740,17 @@ body{
     --vmunch-carousel-gap-bottom:2px;
     --vmunch-carousel-min-height:84px;
     --vmunch-carousel-shell-min-height:78px;
+
+    --vmunch-face-stack-max:240px;
+    --vmunch-food-size:clamp(30px, 8vw, 44px);
+
+    --vmunch-arrow-height:52px;
+    --vmunch-arrow-font:30px;
+
+    --vmunch-choice-min-height:68px;
+    --vmunch-choice-padding-y:10px;
+    --vmunch-choice-padding-x:12px;
+    --vmunch-choice-font:clamp(22px, 4.8vw, 30px);
   }
 
   .vmunch-build{
@@ -739,46 +762,18 @@ body{
     font-size:clamp(18px, 5vw, 26px);
     line-height:1.12;
   }
-
-  .vmunch-face-stack{
-    width:min(100%, 240px);
-  }
-
-  .vmunch-food-display{
-    font-size:clamp(30px, 8vw, 44px);
-  }
-
-  .vmunch-choice-btn{
-    min-height:68px;
-    font-size:clamp(22px, 4.8vw, 30px);
-    padding:10px 12px;
-  }
-
-  .vmunch-arrow-btn{
-    height:52px;
-  }
 }
 
 @media (max-width: 720px){
-
-  .vmunch-face-stack{
-    width:min(100%, 320px);
-  }
-
-  .vmunch-carousel-row{
-    grid-template-columns:54px minmax(0, 1fr) 54px;
-    gap:8px;
-  }
-
-  .vmunch-arrow-btn{
-    height:54px;
-    font-size:30px;
-  }
-
-  .vmunch-choice-btn{
-    min-height:78px;
-    border-radius:20px;
-    font-size:clamp(24px, 5vw, 32px);
+  :root{
+    --vmunch-face-stack-max:320px;
+    --vmunch-carousel-side:54px;
+    --vmunch-carousel-gap:8px;
+    --vmunch-arrow-height:54px;
+    --vmunch-arrow-font:30px;
+    --vmunch-choice-min-height:78px;
+    --vmunch-choice-font:clamp(24px, 5vw, 32px);
+    --vmunch-choice-radius:20px;
   }
 
   .vmunch-help-body{
@@ -802,17 +797,12 @@ body{
     font-size:clamp(20px, 6vw, 30px);
   }
 
-  .vmunch-face-stack{
-    width:min(100%, 280px);
-  }
-
-  .vmunch-food-display{
-    font-size:clamp(38px, 11vw, 54px);
-  }
-
-  .vmunch-choice-btn{
-    min-height:74px;
-    padding:12px 14px;
+  :root{
+    --vmunch-face-stack-max:280px;
+    --vmunch-food-size:clamp(38px, 11vw, 54px);
+    --vmunch-choice-min-height:74px;
+    --vmunch-choice-padding-y:12px;
+    --vmunch-choice-padding-x:14px;
   }
 
   .vmunch-nav-btn{
@@ -836,6 +826,20 @@ body{
     --vmunch-carousel-gap-bottom:2px;
     --vmunch-carousel-min-height:78px;
     --vmunch-carousel-shell-min-height:72px;
+
+    --vmunch-face-stack-max:220px;
+    --vmunch-food-size:clamp(28px, 8vw, 40px);
+
+    --vmunch-carousel-side:50px;
+    --vmunch-carousel-gap:8px;
+
+    --vmunch-arrow-height:50px;
+    --vmunch-arrow-font:28px;
+
+    --vmunch-choice-min-height:64px;
+    --vmunch-choice-padding-y:10px;
+    --vmunch-choice-padding-x:12px;
+    --vmunch-choice-font:clamp(20px, 4.6vw, 28px);
   }
 
   .vmunch-build{
@@ -846,29 +850,5 @@ body{
   .vmunch-build-text{
     font-size:clamp(18px, 5vw, 26px);
     line-height:1.12;
-  }
-
-  .vmunch-face-stack{
-    width:min(100%, 220px);
-  }
-
-  .vmunch-food-display{
-    font-size:clamp(28px, 8vw, 40px);
-  }
-
-  .vmunch-carousel-row{
-    grid-template-columns:50px minmax(0, 1fr) 50px;
-    gap:8px;
-  }
-
-  .vmunch-arrow-btn{
-    height:50px;
-    font-size:28px;
-  }
-
-  .vmunch-choice-btn{
-    min-height:64px;
-    font-size:clamp(20px, 4.6vw, 28px);
-    padding:10px 12px;
   }
 }
