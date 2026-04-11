@@ -14,14 +14,18 @@
   --vmunch-nav-top-padding:10px;
   --vmunch-nav-bottom-padding:10px;
 
+  --vmunch-pills-margin-top:4px;
+  --vmunch-pills-margin-bottom:8px;
+
   --vmunch-main-top:32px;
   --vmunch-nav-reserve:84px;
   --vmunch-food-gap-top:8px;
-  --vmunch-food-gap-bottom:18px;
+  --vmunch-food-gap-bottom:22px;
   --vmunch-food-zone-min-height:82px;
-  --vmunch-carousel-gap-bottom:2px;
+  --vmunch-carousel-gap-bottom:6px;
   --vmunch-carousel-min-height:96px;
   --vmunch-carousel-shell-min-height:92px;
+  --vmunch-carousel-shell-padding-bottom:10px;
 
   --vmunch-build-min-height:112px;
   --vmunch-build-padding-y:18px;
@@ -230,7 +234,7 @@ body{
   align-items:center;
   gap:10px;
   padding:0 var(--vmunch-pills-side-padding);
-  margin:4px 0 6px;
+  margin:var(--vmunch-pills-margin-top) 0 var(--vmunch-pills-margin-bottom);
   pointer-events:none;
   flex:0 0 auto;
 }
@@ -410,7 +414,7 @@ body{
   display:flex;
   align-items:flex-end;
   justify-content:center;
-  padding:0 0 8px;
+  padding:0 0 var(--vmunch-carousel-shell-padding-bottom);
 }
 
 .vmunch-carousel-row{
@@ -756,11 +760,15 @@ body{
     --vmunch-main-top:24px;
     --vmunch-nav-reserve:84px;
     --vmunch-food-gap-top:6px;
-    --vmunch-food-gap-bottom:14px;
+    --vmunch-food-gap-bottom:16px;
     --vmunch-food-zone-min-height:64px;
-    --vmunch-carousel-gap-bottom:2px;
+    --vmunch-carousel-gap-bottom:4px;
     --vmunch-carousel-min-height:84px;
     --vmunch-carousel-shell-min-height:78px;
+    --vmunch-carousel-shell-padding-bottom:8px;
+
+    --vmunch-pills-margin-top:4px;
+    --vmunch-pills-margin-bottom:6px;
 
     --vmunch-build-min-height:88px;
     --vmunch-build-padding-y:12px;
@@ -804,6 +812,9 @@ body{
     --vmunch-pills-side-padding:10px;
     --vmunch-nav-side-padding:10px;
 
+    --vmunch-pills-margin-top:4px;
+    --vmunch-pills-margin-bottom:6px;
+
     --vmunch-build-min-height:102px;
     --vmunch-build-padding-y:14px;
     --vmunch-build-padding-x:16px;
@@ -814,6 +825,10 @@ body{
     --vmunch-choice-min-height:74px;
     --vmunch-choice-padding-y:12px;
     --vmunch-choice-padding-x:14px;
+
+    --vmunch-food-gap-bottom:18px;
+    --vmunch-carousel-gap-bottom:4px;
+    --vmunch-carousel-shell-padding-bottom:8px;
 
     --vmunch-nav-btn-width:62px;
     --vmunch-nav-btn-min-width:62px;
@@ -832,6 +847,10 @@ body{
     --vmunch-carousel-gap-bottom:2px;
     --vmunch-carousel-min-height:78px;
     --vmunch-carousel-shell-min-height:72px;
+    --vmunch-carousel-shell-padding-bottom:6px;
+
+    --vmunch-pills-margin-top:4px;
+    --vmunch-pills-margin-bottom:6px;
 
     --vmunch-build-min-height:88px;
     --vmunch-build-padding-y:12px;
