@@ -132,7 +132,8 @@ const FACE_MAP = {
     reactionFlashUntil:0,
     faceScaleBoost:0,
     bonusCount:0,
-    buildShakeUntil:0
+    buildShakeUntil:0,
+    lastFaceFile:""
   };
 
   setupReferenceSegments();
@@ -798,12 +799,15 @@ app.innerHTML = `
 
     face.className = "vmunch-face";
     for (const cls of state.faceClasses) face.classList.add(cls);
-    const file = FACE_MAP[state.faceDisplay];
+    const file = FACE_MAP[state.faceDisplay] || "";
 
-    if (file){
-      face.innerHTML = `<img src="verse_munch_images/${file}" alt="">`;
-    } else {
-      face.innerHTML = "";
+    if (file !== state.lastFaceFile){
+      if (file){
+        face.innerHTML = `<img src="verse_munch_images/${file}" alt="">`;
+      } else {
+        face.innerHTML = "";
+      }
+      state.lastFaceFile = file;
     }
     face.style.transform = state.faceScaleBoost > 0 ? `scale(${state.faceScaleBoost})` : "";
 
