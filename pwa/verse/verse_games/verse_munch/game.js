@@ -78,6 +78,13 @@ const FACE_MAP = {
 };
 
 
+  function preloadFaceImages(){
+    Object.values(FACE_MAP).forEach(file => {
+      const img = new Image();
+      img.src = `verse_munch_images/${file}`;
+    });
+  }
+
   const TRAIL_EMOJIS = ["✨","⭐","💫","🫧","🌟"];
 
   const POSITIVE_REACTIONS = [
@@ -130,6 +137,7 @@ const FACE_MAP = {
 
   setupReferenceSegments();
   renderIntro();
+  preloadFaceImages();
 
   function renderIntro(){
     stopLoop();
