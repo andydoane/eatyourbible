@@ -9,6 +9,10 @@
   --vmunch-side-padding:14px;
   --vmunch-build-top-padding:12px;
   --vmunch-build-bottom-padding:10px;
+  --vmunch-pills-side-padding:14px;
+  --vmunch-nav-side-padding:14px;
+  --vmunch-nav-top-padding:10px;
+  --vmunch-nav-bottom-padding:10px;
 
   --vmunch-main-top:32px;
   --vmunch-nav-reserve:84px;
@@ -42,7 +46,9 @@
 
   --vmunch-nav-btn-width:72px;
   --vmunch-nav-btn-min-width:72px;
+  --vmunch-nav-btn-height:52px;
   --vmunch-help-min-width:140px;
+  --vmunch-help-height:52px;
   --vmunch-help-font-size:22px;
 }
 
@@ -223,7 +229,7 @@ body{
   justify-content:space-between;
   align-items:center;
   gap:10px;
-  padding:0 14px;
+  padding:0 var(--vmunch-pills-side-padding);
   margin:4px 0 6px;
   pointer-events:none;
   flex:0 0 auto;
@@ -537,7 +543,7 @@ body{
   max-width:840px;
   margin:0 auto;
   height:calc(72px + env(safe-area-inset-bottom));
-  padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+  padding:var(--vmunch-nav-top-padding) var(--vmunch-nav-side-padding) calc(var(--vmunch-nav-bottom-padding) + env(safe-area-inset-bottom));
   display:flex;
   align-items:center;
   justify-content:space-between;
@@ -547,7 +553,7 @@ body{
 .vmunch-nav-btn{
   width:var(--vmunch-nav-btn-width);
   min-width:var(--vmunch-nav-btn-min-width);
-  height:52px;
+  height:var(--vmunch-nav-btn-height);
   border-radius:999px;
   background:rgba(255,255,255,0.18);
   display:flex;
@@ -563,7 +569,7 @@ body{
 
 .vmunch-help-btn{
   border-radius:999px;
-  height:52px;
+  height:var(--vmunch-help-height);
   min-width:var(--vmunch-help-min-width);
   padding:0 24px;
   background:#ffffff;
@@ -795,6 +801,8 @@ body{
 @media (max-width: 480px){
   :root{
     --vmunch-side-padding:10px;
+    --vmunch-pills-side-padding:10px;
+    --vmunch-nav-side-padding:10px;
 
     --vmunch-build-min-height:102px;
     --vmunch-build-padding-y:14px;
