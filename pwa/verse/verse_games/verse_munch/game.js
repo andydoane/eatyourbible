@@ -2,15 +2,7 @@
   const app = document.getElementById("app");
   const ctx = await window.VerseGameBridge.getVerseContext();
 
-  const GAME_ID = "verse_invaders";
-  const LANE_KEYS = ["left", "center", "right"];
-  const LANE_COLORS = [
-    { key: "red", hex: "#ff5a51", alien: "👾" },
-    { key: "yellow", hex: "#ffc751", alien: "👽" },
-    { key: "blue", hex: "#40b9c5", alien: "🤖" }
-  ];
-  const CORRECT_EFFECT_POOL = ["alienPop", "starburst", "chrysanthemum", "novaBurst"];
-  const BONUS_FIREWORK_POOL = ["flashRing", "classicFirework", "confettiBloom", "plasmaBurst", "cosmicCrackle"];
+  const GAME_ID = "verse_munch";
   const BOOKS = [
     "Genesis","Exodus","Leviticus","Numbers","Deuteronomy","Joshua","Judges","Ruth",
     "1 Samuel","2 Samuel","1 Kings","2 Kings","1 Chronicles","2 Chronicles","Ezra","Nehemiah","Esther",
@@ -22,19 +14,91 @@
     "1 John","2 John","3 John","Jude","Revelation"
   ];
   const FUN_DECOYS = [
-    "taco","banana","penguin","cupcake","pickle","rocket","waffle","balloon","otter","pretzel",
-    "pancake","bubble","marshmallow","treasure","robot","firetruck","yo-yo","snowman","blueberry","noodle",
-    "pizza","donut","shark","lemon","grape","berry","sock","boot","kite","plane","cat","dog",
-    "pig","cow","bug","ant","frog","duck","bear","bat","bird","fish","jam","pie","cake","egg",
-    "star","ball","hop","skip","jump","run","spin","clap","sing","swim","kick","dig","nap",
-    "hug","tug","push","pull","snap","wave","wink","grin","zoom","zip","pop","bop","glimmer","snorf",
-    "plinko","dazzle","whizzle","bloop","tinker","wobble","zapper","muffin","noony","pibble","crumble"
+    "taco","penguin","waffle","otter","pretzel","robot","balloon","muffin","snowman","pickle",
+    "marshmallow","scooter","cupcake","backpack","blueberry","firetruck","treasure","noodle","narwhal","bongo",
+    "yo-yo","zebra","meatball","pirate","volcano","hamster","jellybean","pancake","monkey","donut"
   ];
+  const FOOD_EMOJIS = ["🍎","🍇","🍓","🍉","🍊","🍒","🍍","🥝","🍋","🥨","🧀","🥕"];
+  const HAPPY_REACTIONS = ["😋","☺️","😁"];
+  const SAD_REACTIONS = ["🤮","🤢","😵‍💫"];
+  const ANTICIPATION_FACES = ["😕","🫤","😐"];
+  const EMOTION_FACE = {
+    "-3":"😡",
+    "-2":"😠",
+    "-1":"🤨",
+    "0":"😐",
+    "1":"🙂",
+    "2":"😊",
+    "3":"😁"
+  };
+
+  const EMOTION_LABEL = {
+    "-3":"Mad",
+    "-2":"Grumpy",
+    "-1":"Annoyed",
+    "0":"Calm",
+    "1":"Pleased",
+    "2":"Cheerful",
+    "3":"Happy"
+  };
+
+const FACE_MAP = {
+  // moods
+  "😡":"munch_angry_3.png",
+  "😠":"munch_angry_2.png",
+  "🤨":"munch_angry_1.png",
+  "😐":"munch_neutral.png",
+  "🙂":"munch_happy_1.png",
+  "😊":"munch_happy_2.png",
+  "😁":"munch_happy_3.png",
+
+  // negatives
+  "🤢":"munch_negative_sick.png",
+  "🤮":"munch_negative_puke.png",
+  "😵‍💫":"munch_negative_dizzy.png",
+
+  // positives
+  "☺️":"munch_positive_1.png",
+  "😋":"munch_positive_2.png",
+
+  // mouth open (all map to same)
+  "😄":"munch_mouth_open.png",
+  "😮":"munch_mouth_open.png",
+  "😦":"munch_mouth_open.png",
+
+  // chew
+  "😀":"munch_chew_open.png",
+
+  // anticipation
+  "😕":"munch_anticipation_1.png",
+  "🫤":"munch_anticipation_2.png",
+
+  // bonus
+  "🥳":"munch_celebration.png"
+};
+
+
+  function preloadFaceImages(){
+    Object.values(FACE_MAP).forEach(file => {
+      const img = new Image();
+      img.src = `verse_munch_images/${file}`;
+    });
+  }
+
+  const TRAIL_EMOJIS = ["✨","⭐","💫","🫧","🌟"];
+
+  const POSITIVE_REACTIONS = [
+  "is-react-yum-tilt",
+  "is-react-sparkle-pop",
+  "is-react-jelly",
+  "is-react-hop",
+  "is-react-victory-wiggle"
+];
 
   let selectedMode = null;
+  let completed = false;
   let muted = false;
-  let completionMarked = false;
-  let resizeHandlerBound = false;
+  let bonusRunning = false;
 
   const state = {
     running:false,
@@ -43,88 +107,66 @@
     scale:1,
     fieldWidth:0,
     fieldHeight:0,
-    controlsTopY:0,
-    bottomZoneY:0,
-    buttonsLocked:false,
-    activeLane:null,
-    flashBadUntil:0,
-    buildShakeUntil:0,
-    overlayMessage:"",
-    overlayUntil:0,
-    queue:[],
-    builtCount:0,
-    phase:"words",
+    words:tokenizeVerse(ctx.verseText),
+    segments:[],
+    bookLabel:"",
+    referenceLabel:"",
+    progressIndex:0,
     streak:0,
-    mistakes:0,
-    wrongGuessesThisRound:0,
-    roundIndex:0,
-    roundSpeed:0,
-    entities:[],
-    rocket:null,
+    emotionLevel:0,
+    carouselItems:[],
+    carouselIndex:0,
+    inputLocked:false,
+    faceBase:"😐",
+    faceDisplay:"😐",
+    faceClasses:new Set(),
+    idleTimer:0,
+    flyingFood:null,
+    hitWord:null,
     trails:[],
-    effects:[],
-    roundStatus:"idle",
-    scheduledActions:[],
-    bonusMode:false,
-    bonusShotsLeft:0,
-    bonusAutoTimer:0,
-    bonusFinished:false,
-    bonusFireworks:[],
-    modeTiming:{
-      easy:{ start:4.9, step:0 },
-      medium:{ start:4.7, step:-0.15 },
-      hard:{ start:4.0, step:-0.16 }
-    }
+    particles:[],
+    confetti:[],
+    feedbackBadge:"",
+    feedbackUntil:0,
+    reactionFlash:"",
+    reactionFlashUntil:0,
+    faceScaleBoost:0,
+    bonusCount:0,
+    buildShakeUntil:0,
+    lastFaceFile:""
   };
 
-  const parsedRef = parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
-  const verseWords = tokenizeVerse(ctx.verseText);
-
-  renderConstructionScreen();
-
-  function renderConstructionScreen(){
-    stopLoop();
-    app.innerHTML = `
-      <div class="vinv-mode-shell">
-        <div class="vinv-mode-stage">
-          <div class="vinv-mode-top">
-            <div class="vinv-title">🚧 Verse Invaders</div>
-            <div class="vinv-subtitle">UNDER CONSTRUCTION: This game might be buggy!</div>
-            <div class="vinv-mode-card">
-              <div class="vinv-mode-actions">
-                <button class="vm-btn" id="constructionOkBtn">OK</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        ${renderNav()}
-        ${renderHelpOverlay(helpHtml())}
-      </div>
-    `;
-    document.getElementById("constructionOkBtn").onclick = renderIntro;
-    wireCommonNav();
-  }
+  setupReferenceSegments();
+  renderIntro();
+  preloadFaceImages();
 
   function renderIntro(){
     stopLoop();
     app.innerHTML = `
-      <div class="vinv-mode-shell">
-        <div class="vinv-mode-stage">
-          <div class="vinv-mode-top">
-            <div style="font-size:70px;line-height:1;">👾🚀</div>
-            <div class="vinv-title">Verse Invaders</div>
-            <div class="vinv-subtitle">Blast the next correct word before the aliens reach the buttons. Then keep going right into the book and reference.</div>
-            <div class="vinv-mode-card">
-              <div class="vinv-mode-actions">
+      <div class="vmunch-mode-shell">
+        <div class="vmunch-mode-stage">
+          <div class="vmunch-mode-top">
+            <div style="width:82px;height:82px;">
+              <img src="verse_munch_images/munch_positive_2.png" style="width:100%;height:100%;object-fit:contain;">
+            </div>
+            <div class="vmunch-mode-title">Verse Munch</div>
+            <div class="vmunch-mode-subtitle">
+              Spin the selector, feed the face the next correct word, then finish with the book and reference.
+            </div>
+
+            <div class="vmunch-mode-card">
+              <div class="vmunch-mode-actions">
                 <button class="vm-btn" id="startBtn">Start</button>
               </div>
             </div>
           </div>
         </div>
+
         ${renderNav()}
-        ${renderHelpOverlay(helpHtml())}
+        ${renderHelpOverlay("Use the left and right arrows to rotate the selector.<br><br>Tap the centered word to feed it to the face.<br><br>Correct picks build the verse and grow your streak. Wrong picks only reset your streak.<br><br>After the full verse is built, munch the book, then the chapter and verse.")}
       </div>
     `;
+
     document.getElementById("startBtn").onclick = renderModeSelect;
     wireCommonNav();
   }
@@ -132,13 +174,14 @@
   function renderModeSelect(){
     stopLoop();
     app.innerHTML = `
-      <div class="vinv-mode-shell">
-        <div class="vinv-mode-stage">
-          <div class="vinv-mode-top">
-            <div class="vinv-title">Choose Your Difficulty</div>
-            <div class="vinv-subtitle">Easy stays steady. Medium speeds up each round. Hard starts faster and keeps speeding up.</div>
-            <div class="vinv-mode-card">
-              <div class="vinv-mode-actions">
+      <div class="vmunch-mode-shell">
+        <div class="vmunch-mode-stage">
+          <div class="vmunch-mode-top">
+            <div class="vmunch-mode-title">😋 Verse Munch</div>
+            <div class="vmunch-mode-subtitle">Choose your difficulty.</div>
+
+            <div class="vmunch-mode-card">
+              <div class="vmunch-mode-actions">
                 <button class="vm-btn" id="easyBtn">Easy</button>
                 <button class="vm-btn" id="mediumBtn">Medium</button>
                 <button class="vm-btn" id="hardBtn">Hard</button>
@@ -146,10 +189,12 @@
             </div>
           </div>
         </div>
+
         ${renderNav()}
-        ${renderHelpOverlay(helpHtml())}
+        ${renderHelpOverlay("Easy: slower animation timing and gentler pace.<br><br>Medium: balanced default timing.<br><br>Hard: snappier timing and less dwell before the next choice.")}
       </div>
     `;
+
     document.getElementById("easyBtn").onclick = () => startGame("easy");
     document.getElementById("mediumBtn").onclick = () => startGame("medium");
     document.getElementById("hardBtn").onclick = () => startGame("hard");
@@ -158,90 +203,149 @@
 
   function startGame(mode){
     selectedMode = mode;
-    completionMarked = false;
+    completed = false;
+    bonusRunning = false;
     state.running = true;
     state.lastTs = 0;
-    state.buttonsLocked = false;
-    state.activeLane = null;
-    state.flashBadUntil = 0;
-    state.buildShakeUntil = 0;
-    state.overlayMessage = "";
-    state.overlayUntil = 0;
-    state.queue = [...verseWords, parsedRef.book, parsedRef.reference].filter(Boolean);
-    state.builtCount = 0;
-    state.phase = "words";
+    state.progressIndex = 0;
     state.streak = 0;
-    state.mistakes = 0;
-    state.wrongGuessesThisRound = 0;
-    state.roundIndex = 0;
-    state.entities = [];
-    state.rocket = null;
+    state.emotionLevel = 0;
+    state.faceBase = getEmotionFace();
+    state.faceDisplay = state.faceBase;
+    state.faceClasses = new Set();
+    state.idleTimer = getIdleDelay();
+    state.flyingFood = null;
+    state.hitWord = null;
     state.trails = [];
-    state.effects = [];
-    state.roundStatus = "idle";
-    state.scheduledActions = [];
-    state.bonusMode = false;
-    state.bonusShotsLeft = 0;
-    state.bonusAutoTimer = 0;
-    state.bonusFinished = false;
-    state.bonusFireworks = [];
-    state.roundSpeed = 0;
+    state.particles = [];
+    state.confetti = [];
+    state.feedbackBadge = "";
+    state.feedbackUntil = 0;
+    state.reactionFlash = "";
+    state.reactionFlashUntil = 0;
+    state.faceScaleBoost = 0;
+    state.bonusCount = 0;
+    state.buildShakeUntil = 0;
+    state.inputLocked = false;
+    buildCarouselForCurrentStep();
 
-    app.innerHTML = `
-      <div class="vinv-shell">
-        <div class="vinv-stage">
-          <div class="vinv-build-wrap">
-            <div class="vinv-build" id="vinvBuild">
-              <div class="vinv-build-text" id="vinvBuildText"></div>
-            </div>
-          </div>
+app.innerHTML = `
+  <div class="vmunch-root">
+    <div class="vmunch-stage">
+      <div class="vmunch-build-wrap">
+        <div class="vmunch-build" id="vmunchBuild">
+          <div class="vmunch-build-text" id="vmunchBuildText"></div>
+        </div>
+      </div>
 
-          <div class="vinv-field-wrap">
-            <div class="vinv-field" id="vinvField">
-              <div class="vinv-lanes" id="vinvLanes"></div>
-              <div class="vinv-entities" id="vinvEntities"></div>
-              <div class="vinv-rockets" id="vinvRockets"></div>
-              <div class="vinv-effects" id="vinvEffects"></div>
-              <div class="vinv-bottom" id="vinvBottom"></div>
-              <div class="vinv-bonus" id="vinvBonus"></div>
-              <div class="vinv-overlay-msg" id="vinvOverlay"></div>
-              <div class="vinv-hud-overlay">
-                <div class="vinv-corner-pill vinv-corner-left" id="vinvModePill"></div>
-                <div class="vinv-corner-pill vinv-corner-right" id="vinvStreakPill"></div>
+      <div class="vmunch-overlay-pills">
+        <div class="vmunch-pill" id="vmunchModePill">${escapeHtml(getMoodLabel())}</div>
+        <div class="vmunch-pill" id="vmunchStreakPill">Streak: 0</div>
+      </div>
+
+      <div class="vmunch-field-wrap">
+        <div class="vmunch-field" id="vmunchField">
+          <div class="vmunch-bg" id="vmunchBg"></div>
+          <div class="vmunch-trails" id="vmunchTrails"></div>
+          <div class="vmunch-particles" id="vmunchParticles"></div>
+          <div class="vmunch-food-flight" id="vmunchFoodFlight"></div>
+          <div class="vmunch-feedback" id="vmunchFeedback"></div>
+          <div class="vmunch-confetti" id="vmunchConfetti"></div>
+
+          <div class="vmunch-main">
+            <div class="vmunch-face-zone">
+              <div class="vmunch-face-stack">
+                <div class="vmunch-face-glow"></div>
+                <div class="vmunch-face" id="vmunchFace"></div>
               </div>
             </div>
 
-            <div class="vinv-controls" id="vinvControls">
-              <button class="vinv-lane-btn" data-lane="left"></button>
-              <button class="vinv-lane-btn" data-lane="center"></button>
-              <button class="vinv-lane-btn" data-lane="right"></button>
+            <div class="vmunch-food-zone">
+              <div class="vmunch-food-display" id="vmunchFoodDisplay"></div>
+            </div>
+
+            <div class="vmunch-carousel-zone">
+              <div class="vmunch-carousel-shell">
+                <div class="vmunch-carousel-row">
+                  <button class="vmunch-arrow-btn" id="vmunchPrevBtn" aria-label="Previous choice">‹</button>
+                  <button class="vmunch-choice-btn" id="vmunchChoiceBtn" type="button"></button>
+                  <button class="vmunch-arrow-btn" id="vmunchNextBtn" aria-label="Next choice">›</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    ${renderNav()}
+    ${renderHelpOverlay("Rotate the selector with the arrows.<br><br>Tap the word to feed it upward.<br><br>The face emotion changes only after each reaction finishes.<br><br>Wrong picks reset your streak but never end the run.")}
+  </div>
+`;
+
+    seedBackground();
+    wireCommonNav();
+    wireGameInput();
+    recalcField();
+    renderFrame(performance.now());
+    startLoop();
+  }
+
+  function renderComplete(){
+    stopLoop();
+    const unlockAt = performance.now() + 700;
+
+    app.innerHTML = `
+      <div class="vmunch-mode-shell">
+        <div class="vmunch-mode-stage">
+          <div class="vmunch-mode-top">
+            <div class="vmunch-complete-icon">🎉</div>
+            <div class="vmunch-mode-title">Verse Munch Complete!</div>
+            <div class="vmunch-mode-subtitle">You finished ${escapeHtml(ctx.verseRef || "")}. Nice munching.</div>
+
+            <div class="vmunch-mode-card">
+              <div class="vmunch-mode-actions">
+                <button class="vm-btn" id="playAgainBtn" disabled>Play Again</button>
+                <button class="vm-btn" id="doneBtn" disabled>Back to Practice</button>
+              </div>
             </div>
           </div>
         </div>
 
         ${renderNav()}
-        ${renderHelpOverlay(helpHtml())}
+        ${renderHelpOverlay("Great job! This completion has already been recorded for medals, stars, and BibloPets.")}
       </div>
     `;
 
+    const playAgainBtn = document.getElementById("playAgainBtn");
+    const doneBtn = document.getElementById("doneBtn");
+
+    playAgainBtn.onclick = () => {
+      if (performance.now() < unlockAt) return;
+      renderModeSelect();
+    };
+    doneBtn.onclick = () => {
+      if (performance.now() < unlockAt) return;
+      window.VerseGameBridge.exitGame();
+    };
+
+    setTimeout(() => {
+      if (playAgainBtn) playAgainBtn.disabled = false;
+      if (doneBtn) doneBtn.disabled = false;
+    }, 700);
+
     wireCommonNav();
-    wireGameInput();
-    recalcField();
-    renderHud();
-    renderStaticField();
-    spawnRound();
-    startLoop();
   }
 
   function renderNav(){
     return `
-      <div class="vinv-nav-wrap">
-        <div class="vinv-nav">
-          <button class="vinv-nav-btn" id="homeBtn" aria-label="Home">⌂</button>
-          <div class="vinv-nav-center">
-            <button class="vinv-help-btn" id="helpBtn" type="button">HELP</button>
+      <div class="vmunch-nav-wrap">
+        <div class="vmunch-nav">
+          <button class="vmunch-nav-btn" id="homeBtn" aria-label="Home">${getHomeSvg()}</button>
+          <div class="vmunch-nav-center">
+            <button class="vmunch-help-btn" id="helpBtn" type="button">HELP</button>
           </div>
-          <button class="vinv-nav-btn" id="muteBtn" aria-label="Mute">${muted ? "🔇" : "🔊"}</button>
+          <button class="vmunch-nav-btn" id="muteBtn" aria-label="Mute">${muted ? getMuteSvg() : getUnmuteSvg()}</button>
         </div>
       </div>
     `;
@@ -249,607 +353,879 @@
 
   function renderHelpOverlay(body){
     return `
-      <div class="vinv-help-overlay" id="vinvHelpOverlay" aria-hidden="true">
-        <div class="vinv-help-dialog">
-          <div class="vinv-help-title">How to Play</div>
-          <div class="vinv-help-body">${body}</div>
-          <div class="vinv-help-actions">
-            <button class="vm-btn" id="vinvHelpCloseBtn">OK</button>
+      <div class="vmunch-help-overlay" id="vmunchHelpOverlay" aria-hidden="true">
+        <div class="vmunch-help-dialog">
+          <div class="vmunch-help-title">How to Play</div>
+          <div class="vmunch-help-body">${body}</div>
+          <div class="vmunch-help-actions">
+            <button class="vm-btn" id="vmunchHelpCloseBtn">OK</button>
           </div>
         </div>
       </div>
     `;
-  }
-
-  function helpHtml(){
-    return `Tap the button under the lane holding the next correct word.<br><br>
-      A correct hit explodes and adds the word to the build area.<br><br>
-      A wrong hit resets your streak. After two wrong hits in one round, that set clears and a new one begins.<br><br>
-      If the correct word reaches the buttons, it abducts a human and the streak resets.`;
   }
 
   function wireCommonNav(){
     const homeBtn = document.getElementById("homeBtn");
-    const muteBtn = document.getElementById("muteBtn");
     const helpBtn = document.getElementById("helpBtn");
-    const overlay = document.getElementById("vinvHelpOverlay");
-    const closeBtn = document.getElementById("vinvHelpCloseBtn");
+    const muteBtn = document.getElementById("muteBtn");
+    const helpOverlay = document.getElementById("vmunchHelpOverlay");
+    const helpCloseBtn = document.getElementById("vmunchHelpCloseBtn");
 
     if (homeBtn) homeBtn.onclick = () => window.VerseGameBridge.exitGame();
-    if (muteBtn) muteBtn.onclick = () => {
-      muted = !muted;
-      muteBtn.textContent = muted ? "🔇" : "🔊";
-    };
-    if (helpBtn) helpBtn.onclick = () => overlay.classList.add("is-open");
-    if (closeBtn) closeBtn.onclick = () => overlay.classList.remove("is-open");
-    if (overlay) overlay.onclick = (e) => { if (e.target === overlay) overlay.classList.remove("is-open"); };
+    if (helpBtn) helpBtn.onclick = () => helpOverlay.classList.add("is-open");
+    if (helpCloseBtn) helpCloseBtn.onclick = () => helpOverlay.classList.remove("is-open");
+    if (helpOverlay){
+      helpOverlay.onclick = (e) => {
+        if (e.target === helpOverlay) helpOverlay.classList.remove("is-open");
+      };
+    }
+    if (muteBtn){
+      muteBtn.onclick = () => {
+        muted = !muted;
+        muteBtn.innerHTML = muted ? getMuteSvg() : getUnmuteSvg();
+      };
+    }
   }
 
   function wireGameInput(){
-    if (!resizeHandlerBound){
-      window.addEventListener("resize", recalcField);
-      resizeHandlerBound = true;
-    }
+    const prevBtn = document.getElementById("vmunchPrevBtn");
+    const nextBtn = document.getElementById("vmunchNextBtn");
+    const choiceBtn = document.getElementById("vmunchChoiceBtn");
 
-    document.querySelectorAll(".vinv-lane-btn").forEach((btn) => {
-      btn.onclick = () => handleLanePress(btn.dataset.lane);
+    prevBtn.addEventListener("pointerup", (e) => {
+      e.preventDefault();
+      rotateCarousel(-1);
+    });
+    nextBtn.addEventListener("pointerup", (e) => {
+      e.preventDefault();
+      rotateCarousel(1);
+    });
+    choiceBtn.addEventListener("pointerup", (e) => {
+      e.preventDefault();
+      handleCenteredSelection();
     });
 
+    window.addEventListener("resize", recalcField);
     window.onkeydown = (e) => {
-      if (!state.running) return;
-      if (e.key === "ArrowLeft" || e.key.toLowerCase() === "a") handleLanePress("left");
-      if (e.key === "ArrowDown" || e.key.toLowerCase() === "s") handleLanePress("center");
-      if (e.key === "ArrowRight" || e.key.toLowerCase() === "d") handleLanePress("right");
+      if (!state.running || state.inputLocked) return;
+      if (e.key === "ArrowLeft"){
+        e.preventDefault();
+        rotateCarousel(-1);
+      } else if (e.key === "ArrowRight"){
+        e.preventDefault();
+        rotateCarousel(1);
+      } else if (e.key === "Enter" || e.key === " "){
+        e.preventDefault();
+        handleCenteredSelection();
+      }
     };
   }
 
-  function recalcField(){
-    const field = document.getElementById("vinvField");
-    const controls = document.getElementById("vinvControls");
-    if (!field) return;
+  function startLoop(){
+    if (state.rafId) cancelAnimationFrame(state.rafId);
+    state.rafId = requestAnimationFrame(loop);
+  }
 
-    const fieldRect = field.getBoundingClientRect();
-    state.fieldWidth = fieldRect.width;
-    state.fieldHeight = fieldRect.height;
-    state.scale = clamp(fieldRect.width / 390, 0.88, 1.45);
-
-    if (controls){
-      const controlsRect = controls.getBoundingClientRect();
-      state.controlsTopY = Math.max(0, controlsRect.top - fieldRect.top);
-      state.bottomZoneY = Math.max(110, state.controlsTopY - 8);
-    } else {
-      state.controlsTopY = Math.max(180, state.fieldHeight - 90);
-      state.bottomZoneY = Math.max(110, state.fieldHeight - 98);
+  function stopLoop(){
+    state.running = false;
+    if (state.rafId){
+      cancelAnimationFrame(state.rafId);
+      state.rafId = 0;
     }
-
-    state.roundSpeed = getRoundSpeed();
-    renderStaticField();
-  }
-
-  function renderStaticField(){
-    const lanesEl = document.getElementById("vinvLanes");
-    const bottomEl = document.getElementById("vinvBottom");
-    if (!lanesEl || !bottomEl) return;
-
-    lanesEl.innerHTML = LANE_KEYS.map((lane, index) => `
-      <div class="vinv-lane" style="left:${index * 33.3333}%">
-        <div class="vinv-lane-guide"></div>
-      </div>
-    `).join("");
-
-    bottomEl.innerHTML = "";
-  }
-
-  function renderHud(){
-    const modePill = document.getElementById("vinvModePill");
-    const streakPill = document.getElementById("vinvStreakPill");
-    if (modePill) modePill.textContent = capitalize(selectedMode);
-    if (streakPill) streakPill.textContent = `🔥 ${state.streak}`;
-    renderBuildArea();
-    renderButtons();
-  }
-
-  function renderBuildArea(){
-    const buildText = document.getElementById("vinvBuildText");
-    const build = document.getElementById("vinvBuild");
-    if (!buildText || !build) return;
-
-    build.classList.toggle("is-shake", state.buildShakeUntil > performance.now());
-    buildText.innerHTML = state.queue.map((token, index) => {
-      const phaseClass = getBuildTokenPhase(index);
-      const builtClass = index < state.builtCount ? "is-built" : "";
-      return `<span class="vinv-build-token ${phaseClass} ${builtClass}">${escapeHtml(token)}</span>`;
-    }).join(" ");
-  }
-
-  function getBuildTokenPhase(index){
-    if (index < verseWords.length) return "is-verse";
-    if (index === verseWords.length) return "is-book";
-    return "is-reference";
-  }
-
-  function renderButtons(){
-    const buttons = document.querySelectorAll(".vinv-lane-btn");
-    const round = state.entities;
-    buttons.forEach((btn) => {
-      const lane = btn.dataset.lane;
-      const entity = round.find((item) => item.lane === lane && item.visible);
-      const colorKey = entity?.color?.key || laneToDefaultColor(lane).key;
-      btn.dataset.color = colorKey;
-      btn.textContent = laneLabel(lane);
-      const shouldDim = state.activeLane && state.activeLane !== lane;
-      btn.classList.toggle("is-dim", !!shouldDim);
-      btn.disabled = state.buttonsLocked || (!state.bonusMode && !entity);
-    });
-  }
-
-  function spawnRound(){
-    if (state.builtCount >= state.queue.length){
-      startBonusRound();
-      return;
-    }
-
-    state.roundIndex += 1;
-    state.roundStatus = "falling";
-    state.buttonsLocked = false;
-    state.activeLane = null;
-    state.wrongGuessesThisRound = 0;
-    state.rocket = null;
-    state.trails = [];
-    state.effects = state.effects.filter(effect => effect.kind === "fireworkParticle");
-    state.scheduledActions = [];
-    state.roundSpeed = getRoundSpeed();
-
-    const correctLabel = state.queue[state.builtCount];
-    state.phase = getCurrentPhase();
-    const decoys = getDecoysForPhase(state.phase, correctLabel, 2);
-    const labels = shuffle([correctLabel, ...decoys]);
-    const colors = shuffle([...LANE_COLORS]);
-
-    state.entities = LANE_KEYS.map((lane, index) => {
-      const label = labels[index];
-      const isCorrect = label === correctLabel;
-      return {
-        id:`entity-${state.roundIndex}-${lane}`,
-        lane,
-        label,
-        correct:isCorrect,
-        color:colors[index],
-        x:getLaneCenterX(lane),
-        y:-22 - index * 18,
-        visible:true,
-        status:"falling"
-      };
-    });
-
-    renderHud();
-    renderDynamic();
-  }
-
-  function handleLanePress(lane){
-    if (!state.running) return;
-    if (state.buttonsLocked) return;
-
-    if (state.bonusMode){
-      if (state.bonusShotsLeft <= 0) return;
-      launchBonusRocket(lane);
-      return;
-    }
-
-    const target = state.entities.find(item => item.lane === lane && item.visible);
-    if (!target) return;
-
-    state.buttonsLocked = true;
-    state.activeLane = lane;
-    state.rocket = {
-      lane,
-      x:getLaneCenterX(lane),
-      y:state.controlsTopY - 16,
-      targetY:Math.max(56, target.y + 48),
-      speed:Math.max(380, state.fieldHeight * 1.55),
-      targetId:target.id,
-      resolved:false,
-      white:false
-    };
-    renderButtons();
-  }
-
-  function resolveRocketHit(){
-    if (!state.rocket || state.rocket.resolved) return;
-    state.rocket.resolved = true;
-    const target = state.entities.find(item => item.id === state.rocket.targetId);
-    if (!target || !target.visible){
-      unlockAfterDelay(260);
-      return;
-    }
-
-    if (target.correct) handleCorrectHit(target);
-    else handleWrongHit(target);
-  }
-
-  function handleWrongHit(target){
-    state.streak = 0;
-    state.mistakes += 1;
-    state.wrongGuessesThisRound += 1;
-    state.flashBadUntil = performance.now() + 260;
-    state.buildShakeUntil = performance.now() + 280;
-    state.overlayMessage = state.wrongGuessesThisRound >= 2 ? "Too many wrong guesses!" : "Wrong lane!";
-    state.overlayUntil = performance.now() + 420;
-    target.visible = false;
-    addEffect(makeSmokePuffEffect(target.x, target.y + 28));
-    renderHud();
-    renderDynamic();
-
-    if (state.wrongGuessesThisRound >= 2){
-      state.buttonsLocked = true;
-      state.activeLane = null;
-      scheduleAction(260, () => {
-        state.entities.forEach(item => {
-          if (item.visible) item.status = "fade";
-        });
-        renderDynamic();
-      });
-      scheduleAction(560, () => {
-        state.entities.forEach(item => { item.visible = false; });
-        spawnRound();
-      });
-    } else {
-      unlockAfterDelay(320);
-    }
-  }
-
-  function handleCorrectHit(target){
-    state.streak += 1;
-    state.buttonsLocked = true;
-    state.activeLane = target.lane;
-    target.status = "correct";
-    renderDynamic();
-
-    scheduleAction(120, () => {
-      addEffect(makeCorrectHitEffect(target.x, target.y + 22, target.color.hex, state.streak));
-      target.visible = false;
-      state.entities.forEach(item => {
-        if (item.id !== target.id && item.visible) item.status = "fade";
-      });
-      state.builtCount += 1;
-      renderHud();
-      renderDynamic();
-    });
-
-    scheduleAction(620, async () => {
-      state.entities.forEach(item => { if (item.id !== target.id) item.visible = false; });
-      if (state.builtCount >= state.queue.length) await startBonusRound();
-      else spawnRound();
-    });
-  }
-
-  function handleBottomMiss(target){
-    state.streak = 0;
-    state.mistakes += 1;
-    state.buttonsLocked = true;
-    state.activeLane = null;
-    state.overlayMessage = "Abducted!";
-    state.overlayUntil = performance.now() + 720;
-    state.flashBadUntil = performance.now() + 260;
-    state.buildShakeUntil = performance.now() + 280;
-
-    state.entities.forEach(item => {
-      item.visible = false;
-    });
-
-    addEffect(makeAbductionEffect(target.x, state.bottomZoneY - 12, target.color));
-    renderHud();
-    renderDynamic();
-
-    scheduleAction(1480, () => {
-      spawnRound();
-    });
-  }
-
-  function unlockAfterDelay(ms){
-    scheduleAction(ms, () => {
-      state.buttonsLocked = false;
-      state.activeLane = null;
-      state.rocket = null;
-      renderButtons();
-    });
-  }
-
-  async function startBonusRound(){
-    if (state.bonusMode) return;
-    state.bonusMode = true;
-    state.buttonsLocked = false;
-    state.activeLane = null;
-    state.entities = [];
-    state.rocket = null;
-    state.trails = [];
-    state.overlayMessage = "Bonus Fireworks!";
-    state.overlayUntil = performance.now() + 1000;
-    state.bonusShotsLeft = getBonusShots();
-    state.bonusAutoTimer = 0.18;
-    state.bonusFinished = false;
-    renderHud();
-    renderDynamic();
-
-    if (!completionMarked){
-      completionMarked = true;
-      await window.VerseGameBridge.markCompleted({
-        verseId: ctx.verseId,
-        gameId: GAME_ID,
-        mode: selectedMode
-      });
-    }
-  }
-
-  function launchBonusRocket(lane){
-    state.bonusShotsLeft = Math.max(0, state.bonusShotsLeft - 1);
-    const x = getLaneCenterX(lane);
-    state.bonusFireworks.push({
-      id:`fw-${Date.now()}-${Math.random()}`,
-      x,
-      y:state.controlsTopY - 12,
-      targetY:randBetween(state.fieldHeight * 0.16, state.fieldHeight * 0.48),
-      speed:Math.max(320, state.fieldHeight * 1.4),
-      exploded:false
-    });
-    renderHud();
-  }
-
-  function finishBonusRound(){
-    state.bonusFinished = true;
-    state.buttonsLocked = true;
-    state.activeLane = null;
-    state.overlayMessage = "Great job!";
-    state.overlayUntil = performance.now() + 1500;
-    renderButtons();
-    setTimeout(() => renderVictory(), 900);
-  }
-
-  function renderVictory(){
-    stopLoop();
-    app.innerHTML = `
-      <div class="vinv-mode-shell">
-        <div class="vinv-mode-stage">
-          <div class="vinv-mode-top">
-            <div style="font-size:74px;line-height:1;">🎆</div>
-            <div class="vinv-title">Verse Invaders Complete!</div>
-            <div class="vinv-subtitle">You finished the verse, book, and reference in one run.</div>
-            <div class="vinv-mode-card">
-              <div class="vinv-mode-actions">
-                <button class="vm-btn" id="playAgainBtn">Play Again</button>
-                <button class="vm-btn" id="homeDoneBtn">Done</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        ${renderNav()}
-        ${renderHelpOverlay(helpHtml())}
-      </div>
-    `;
-    document.getElementById("playAgainBtn").onclick = renderModeSelect;
-    document.getElementById("homeDoneBtn").onclick = () => window.VerseGameBridge.exitGame();
-    wireCommonNav();
+    window.onkeydown = null;
   }
 
   function loop(ts){
-    if (!state.running && !state.bonusMode) return;
+    if (!state.running) return;
     if (!state.lastTs) state.lastTs = ts;
     const dt = Math.min(0.032, (ts - state.lastTs) / 1000);
     state.lastTs = ts;
 
-    updateGame(dt, ts);
-    renderDynamic();
+    recalcField();
+    updateIdle(dt);
+    updateFlyingFood(dt);
+    updateTrails(dt);
+    updateParticles(dt);
+    updateConfetti(dt);
+    renderFrame(ts);
+
     state.rafId = requestAnimationFrame(loop);
   }
 
-  function updateGame(dt, ts){
-    state.effects = state.effects.filter(effect => effect.until > ts);
-    state.trails = state.trails.filter(trail => trail.until > ts);
-    processScheduledActions(ts);
+  function recalcField(){
+    const field = document.getElementById("vmunchField");
+    if (!field) return;
+    const rect = field.getBoundingClientRect();
+    state.fieldWidth = rect.width;
+    state.fieldHeight = rect.height;
+    const t = clamp((rect.width - 360) / (920 - 360), 0, 1);
+    state.scale = 1 + t * 0.25;
+  }
 
-    if (state.buildShakeUntil && ts > state.buildShakeUntil) renderHud();
+  function updateIdle(dt){
+    if (state.inputLocked || bonusRunning) return;
+    state.idleTimer -= dt;
+    if (state.idleTimer > 0) return;
 
-    if (!state.bonusMode){
-      const speed = state.roundSpeed;
-      for (const entity of state.entities){
-        if (!entity.visible || entity.status !== "falling") continue;
-        entity.y += speed * dt;
-        if (entity.correct && entity.y >= state.bottomZoneY - 48){
-          handleBottomMiss(entity);
-          break;
-        }
+    const variants = getIdleVariants();
+    const variant = variants[Math.floor(Math.random() * variants.length)];
+    state.faceClasses = new Set([variant]);
+    state.idleTimer = getIdleDelay();
+
+    setTimeout(() => {
+      if (!state.inputLocked) state.faceClasses = new Set();
+    }, 640);
+  }
+
+  function updateFlyingFood(dt){
+    const food = state.flyingFood;
+    if (!food) return;
+    food.elapsed += dt;
+    const t = clamp(food.elapsed / food.duration, 0, 1);
+    const eased = easeOutCubic(t);
+    food.x = lerp(food.startX, food.endX, eased);
+    food.y = lerp(food.startY, food.endY, eased);
+    food.scale = lerp(food.startScale, food.endScale, eased);
+    if (t >= 1 && food.active) food.active = false;
+  }
+
+  function updateTrails(dt){
+    for (const part of state.trails){
+      part.age += dt;
+      part.x += part.vx * dt;
+      part.y += part.vy * dt;
+    }
+    state.trails = state.trails.filter(part => part.age < part.life);
+  }
+
+  function updateParticles(dt){
+    for (const p of state.particles){
+      p.age += dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vy += p.gravity * dt;
+    }
+    state.particles = state.particles.filter(p => p.age < p.life);
+  }
+
+  function updateConfetti(dt){
+    for (const c of state.confetti){
+      c.age += dt;
+      c.x += c.vx * dt;
+      c.y += c.vy * dt;
+      c.vy += c.gravity * dt;
+      c.rotation += c.spin * dt;
+    }
+    state.confetti = state.confetti.filter(c => c.age < c.life);
+  }
+
+  function rotateCarousel(dir){
+    if (!state.running || state.inputLocked || !state.carouselItems.length) return;
+    const len = state.carouselItems.length;
+    state.carouselIndex = (state.carouselIndex + dir + len) % len;
+    renderFrame(performance.now());
+  }
+
+  async function handleCenteredSelection(){
+    if (!state.running || state.inputLocked || !state.carouselItems.length) return;
+    const item = state.carouselItems[state.carouselIndex];
+    if (!item) return;
+
+    state.inputLocked = true;
+    state.faceClasses = new Set();
+
+    const currentCorrect = getCurrentCorrectLabel();
+    const isCorrect = normalizeWord(item.label) === normalizeWord(currentCorrect);
+    state.hitWord = {
+      text:item.label,
+      x:getChoiceCenterX(),
+      y:getChoiceCenterY(),
+      age:0,
+      life:0.42
+    };
+
+    await playFoodLaunchAnimation(item);
+    await playMouthOpenAnimation();
+    await playChewAnimation();
+    await playAnticipationAnimation();
+    await playReactionAnimation(isCorrect);
+
+    if (isCorrect){
+      state.progressIndex += 1;
+      state.streak += 1;
+      spawnSuccessParticles();
+    } else {
+      state.streak = 0;
+      state.buildShakeUntil = performance.now() + 280;
+      spawnMissParticles();
+    }
+
+    state.emotionLevel = clamp(state.emotionLevel + (isCorrect ? 1 : -1), -3, 3);
+    state.faceBase = getEmotionFace();
+    state.faceDisplay = state.faceBase;
+    state.faceClasses = new Set();
+    state.feedbackBadge = isCorrect ? "Correct!" : "Nope!";
+    state.feedbackUntil = performance.now() + 650;
+    state.hitWord = null;
+    updateStreakPill();
+
+    if (getCurrentPhase() === "done"){
+      await startBonusRound();
+      await finishRun();
+      return;
+    }
+
+    buildCarouselForCurrentStep();
+    state.inputLocked = false;
+    state.idleTimer = getIdleDelay();
+    renderFrame(performance.now());
+  }
+
+  async function playFoodLaunchAnimation(item){
+    const launchDuration = getTiming().launch;
+    state.flyingFood = {
+      emoji:item.food,
+      label:item.label,
+      startX:getFoodStartPoint().x,
+      startY:getFoodStartPoint().y,
+      endX:getMouthPoint().x,
+      endY:getMouthPoint().y,
+      x:getFoodStartPoint().x,
+      y:getFoodStartPoint().y,
+      startScale:1,
+      endScale:2,
+      scale:1,
+      elapsed:0,
+      duration:launchDuration,
+      active:true
+    };
+
+    const trailTier = getTrailTier();
+    if (trailTier > 0){
+      const trailCount = 4 + trailTier * 2;
+      for (let i = 0; i < trailCount; i++){
+        state.trails.push({
+          id:Math.random().toString(36).slice(2),
+          emoji:randomFrom(TRAIL_EMOJIS),
+          x:getFoodStartPoint().x,
+          y:getFoodStartPoint().y,
+          vx:-40 + Math.random() * 80,
+          vy:-60 - Math.random() * 50,
+          age:0,
+          life:0.42 + trailTier * 0.08,
+          size:16 + trailTier * 3 + Math.random() * 8
+        });
       }
+    }
 
-      if (state.rocket){
-        state.rocket.y -= state.rocket.speed * dt;
-        addTrail(state.rocket.x, state.rocket.y + 18, state.rocket.white);
-        if (state.rocket.y <= state.rocket.targetY){
-          resolveRocketHit();
-          state.rocket = null;
-        }
+    await waitSeconds(launchDuration * 0.84);
+  }
+
+  async function playMouthOpenAnimation(){
+    state.faceDisplay = getOpenMouthFace();
+    state.faceClasses = new Set(["is-open"]);
+    await waitSeconds(getTiming().mouthOpen);
+  }
+
+  async function playChewAnimation(){
+    const chewFaces = ["😀","😐","😀","😐","😀","😐"];
+    const chewDuration = getTiming().chew;
+    const stepDuration = chewDuration / chewFaces.length;
+
+    state.faceClasses = new Set(["is-chew"]);
+    state.flyingFood = null;
+    spawnChewCrumbs();
+
+    for (let i = 0; i < chewFaces.length; i++){
+      state.faceDisplay = chewFaces[i];
+      if (i === 3) spawnChewCrumbs(true);
+      await waitSeconds(stepDuration);
+    }
+  }
+
+  async function playAnticipationAnimation(){
+    const faces = ["😕","🫤","😐","🤨"];
+    const face = randomFrom(faces);
+    state.faceDisplay = face;
+
+    const steps = [
+      "is-tilt-left",
+      "is-tilt-right",
+      "is-tilt-left-strong"
+    ];
+
+    for (const tiltClass of steps){
+      state.faceClasses = new Set([tiltClass, "is-anticipation-lean-in"]);
+      await waitSeconds(0.32);
+
+      state.faceClasses = new Set([tiltClass]);
+      await waitSeconds(0.12);
+    }
+
+    state.faceClasses = new Set();
+  }
+
+  async function playReactionAnimation(isCorrect){
+    state.reactionFlash = isCorrect ? "is-flash-positive" : "is-flash-negative";
+    state.reactionFlashUntil = performance.now() + (getTiming().reaction * 1000);
+
+    if (isCorrect){
+      const reaction = randomFrom(HAPPY_REACTIONS);
+      state.faceDisplay = reaction;
+
+      const animClass = randomFrom(POSITIVE_REACTIONS);
+      state.faceClasses = new Set([animClass]);
+
+      if (animClass === "is-react-sparkle-pop"){
+        spawnReactionSparkles();
       }
     } else {
-      if (state.bonusShotsLeft > 0){
-        state.bonusAutoTimer -= dt;
-        if (state.bonusAutoTimer <= 0){
-          state.bonusAutoTimer = randBetween(0.26, 0.5);
-          launchBonusRocket(randomFrom(LANE_KEYS));
-        }
+      const negativeOptions = [
+        { face: "🤮", cls: "is-react-negative" },
+        { face: "🤢", cls: "is-react-barf-bounce" },
+        { face: "😵‍💫", cls: "is-react-head-no-hard" }
+      ];
+
+      const choice = randomFrom(negativeOptions);
+      state.faceDisplay = choice.face;
+      state.faceClasses = new Set([choice.cls]);
+    }
+
+    await waitSeconds(getTiming().reaction);
+  }
+
+
+  
+  async function startBonusRound(){
+    if (bonusRunning) return;
+    bonusRunning = true;
+    state.inputLocked = true;
+
+    for (let i = 0; i < 5; i++){
+      state.bonusCount = i + 1;
+      const bonusItem = {
+        label:"bonus",
+        food:FOOD_EMOJIS[i % FOOD_EMOJIS.length]
+      };
+      state.faceScaleBoost = 1 + (i + 1) * 0.08;
+      await playFoodLaunchAnimation(bonusItem);
+      await playMouthOpenAnimation();
+      await playChewAnimation();
+
+      const bonusAnimClass = randomFrom(POSITIVE_REACTIONS);
+      state.faceDisplay = randomFrom(HAPPY_REACTIONS);
+      state.faceClasses = new Set([bonusAnimClass, "is-bonus"]);
+
+      if (bonusAnimClass === "is-react-sparkle-pop"){
+        spawnReactionSparkles();
       }
 
-      for (const firework of state.bonusFireworks){
-        if (firework.exploded) continue;
-        firework.y -= firework.speed * dt;
-        addTrail(firework.x, firework.y + 18, true);
-        if (firework.y <= firework.targetY){
-          firework.exploded = true;
-          addEffect(makeBonusFireworkEffect(firework.x, firework.y));
-        }
-      }
-      state.bonusFireworks = state.bonusFireworks.filter(item => !item.exploded);
+      spawnSuccessParticles(true);
+      await waitSeconds(getTiming().bonusReaction);
+    }
 
-      if (!state.bonusFinished && state.bonusShotsLeft <= 0 && state.bonusFireworks.length === 0 && !state.effects.some(item => item.kind === "fireworkParticle")){
-        finishBonusRound();
+    spawnConfettiBurst();
+    state.faceDisplay = "🥳";
+    state.faceClasses = new Set(["is-react-victory-wiggle", "is-bonus"]);
+    await waitSeconds(0.9);
+  }
+
+  async function finishRun(){
+    if (completed) return;
+    completed = true;
+    state.running = false;
+
+    try {
+      await window.VerseGameBridge.markCompleted({
+        verseId:ctx.verseId,
+        gameId:GAME_ID,
+        mode:selectedMode
+      });
+    } catch (err) {
+      console.error("markCompleted failed", err);
+    }
+
+    renderComplete();
+  }
+
+  function seedBackground(){
+    const bg = document.getElementById("vmunchBg");
+    if (!bg) return;
+    const bubbleCount = state.fieldWidth < 420 ? 8 : 12;
+    let html = "";
+    for (let i = 0; i < bubbleCount; i++){
+      const size = 18 + Math.random() * 82;
+      html += `<div class="bubble" style="width:${size}px;height:${size}px;left:${Math.random() * 100}%;top:${Math.random() * 100}%;opacity:${0.04 + Math.random() * 0.10};transform:translate(-50%,-50%);"></div>`;
+    }
+    bg.innerHTML = html;
+  }
+
+  function renderFrame(ts){
+    renderReactionFlash(ts);
+    updateBuildText();
+    renderBuildShake(ts);
+    renderFace();
+    renderSelector();
+    renderFlight();
+    renderTrails();
+    renderParticles();
+    renderConfetti();
+    renderFeedback(ts);
+    updateMoodPill();
+    updateStreakPill();
+  }
+
+  function updateBuildText(){
+    const el = document.getElementById("vmunchBuildText");
+    if (!el) return;
+    el.innerHTML = state.segments.map((segment, index) => `
+      <span class="vmunch-build-word ${index < state.progressIndex ? "is-built" : ""}">
+        ${escapeHtml(segment)}
+      </span>
+    `).join(" ");
+  }
+
+  function renderBuildShake(ts){
+    const build = document.getElementById("vmunchBuild");
+    if (!build) return;
+    build.classList.toggle("vmunch-build-shake", ts < state.buildShakeUntil);
+  }
+
+  function renderFace(){
+    const face = document.getElementById("vmunchFace");
+    const foodDisplay = document.getElementById("vmunchFoodDisplay");
+    if (!face) return;
+
+    face.className = "vmunch-face";
+    for (const cls of state.faceClasses) face.classList.add(cls);
+    const file = FACE_MAP[state.faceDisplay] || "";
+
+    if (file !== state.lastFaceFile){
+      if (file){
+        face.innerHTML = `<img src="verse_munch_images/${file}" alt="">`;
+      } else {
+        face.innerHTML = "";
+      }
+      state.lastFaceFile = file;
+    }
+    face.style.transform = state.faceScaleBoost > 0 ? `scale(${state.faceScaleBoost})` : "";
+
+    if (foodDisplay){
+      if (state.inputLocked){
+        foodDisplay.textContent = "";
+      } else {
+        foodDisplay.textContent = getCurrentFoodEmoji();
       }
     }
   }
 
-  function renderDynamic(){
-    const entitiesEl = document.getElementById("vinvEntities");
-    const rocketsEl = document.getElementById("vinvRockets");
-    const effectsEl = document.getElementById("vinvEffects");
-    const bonusEl = document.getElementById("vinvBonus");
-    const overlayEl = document.getElementById("vinvOverlay");
-    const field = document.getElementById("vinvField");
-    if (!entitiesEl || !rocketsEl || !effectsEl || !overlayEl || !field || !bonusEl) return;
+  function renderSelector(){
+    const row = document.querySelector(".vmunch-carousel-row");
+    const choiceBtn = document.getElementById("vmunchChoiceBtn");
+    const prevBtn = document.getElementById("vmunchPrevBtn");
+    const nextBtn = document.getElementById("vmunchNextBtn");
+    if (!choiceBtn) return;
 
-    const now = performance.now();
-    field.classList.toggle("is-flash-bad", state.flashBadUntil > now);
+    const item = state.carouselItems[state.carouselIndex];
+    choiceBtn.textContent = item ? item.label : "";
 
-    entitiesEl.innerHTML = state.entities.map((entity) => {
-      const hidden = entity.visible ? "" : "opacity:0;";
-      const className = entity.status === "fade"
-        ? "is-fade"
-        : entity.status === "correct"
-          ? "is-correct-pause"
-          : "";
+    const locked = state.inputLocked || bonusRunning || !item;
+    choiceBtn.disabled = locked;
+    prevBtn.disabled = locked;
+    nextBtn.disabled = locked;
 
-      return `
-        <div class="vinv-entity ${className}" style="left:${entity.x}px; top:${entity.y}px; ${hidden}">
-          <div class="vinv-alien" style="color:${entity.color.hex}">${entity.color.alien}</div>
-          <div class="vinv-word" style="color:${entity.color.hex}">${escapeHtml(entity.label)}</div>
+    if (row){
+      row.classList.toggle("is-hidden", locked);
+    }
+  }
+
+  function renderFlight(){
+    const layer = document.getElementById("vmunchFoodFlight");
+    if (!layer) return;
+    let html = "";
+    if (state.flyingFood){
+      html += `
+        <div class="vmunch-flying-food" style="left:${state.flyingFood.x}px;top:${state.flyingFood.y}px;transform:translate(-50%,-50%) scale(${state.flyingFood.scale});">
+          ${escapeHtml(state.flyingFood.emoji)}
         </div>
       `;
+    }
+    if (state.hitWord){
+      html += `
+        <div class="vmunch-hit-word" style="left:${state.hitWord.x}px;top:${state.hitWord.y}px;transform:translate(-50%,-50%);">
+          ${escapeHtml(state.hitWord.text)}
+        </div>
+      `;
+    }
+    layer.innerHTML = html;
+  }
+
+  function renderTrails(){
+    const layer = document.getElementById("vmunchTrails");
+    if (!layer) return;
+    layer.innerHTML = state.trails.map((part) => {
+      const alpha = 1 - (part.age / part.life);
+      return `<div class="vmunch-spark" style="left:${part.x}px;top:${part.y}px;opacity:${alpha};transform:translate(-50%,-50%) scale(${part.size / 24});">${part.emoji}</div>`;
     }).join("");
+  }
 
-    rocketsEl.innerHTML = `
-      ${state.rocket ? `<div class="vinv-rocket" style="left:${state.rocket.x}px; top:${state.rocket.y}px;">🚀</div>` : ""}
-      ${state.trails.map(trail => `<div class="vinv-trail ${trail.white ? "white" : ""}" style="left:${trail.x}px; top:${trail.y}px; opacity:${trail.opacity}">${trail.icon}</div>`).join("")}
-      ${state.bonusFireworks.map(fw => `<div class="vinv-rocket white" style="left:${fw.x}px; top:${fw.y}px;">⚪</div>`).join("")}
-    `;
+  function renderParticles(){
+    const layer = document.getElementById("vmunchParticles");
+    if (!layer) return;
+    layer.innerHTML = state.particles.map((p) => {
+      const alpha = 1 - (p.age / p.life);
+      if (p.type === "spark"){
+        return `<div class="vmunch-spark" style="left:${p.x}px;top:${p.y}px;opacity:${alpha};transform:translate(-50%,-50%) scale(${p.size / 22});">${p.value}</div>`;
+      }
+      return `<div class="vmunch-trail-particle" style="left:${p.x}px;top:${p.y}px;width:${p.size}px;height:${p.size}px;opacity:${alpha};transform:translate(-50%,-50%);background:${p.color};"></div>`;
+    }).join("");
+  }
 
-    effectsEl.innerHTML = state.effects.map((effect) => renderEffect(effect, now)).join("");
+  function renderConfetti(){
+    const layer = document.getElementById("vmunchConfetti");
+    if (!layer) return;
+    layer.innerHTML = state.confetti.map((c) => {
+      const alpha = 1 - (c.age / c.life);
+      return `<div class="vmunch-confetto" style="left:${c.x}px;top:${c.y}px;width:${c.w}px;height:${c.h}px;opacity:${alpha};background:${c.color};transform:translate(-50%,-50%) rotate(${c.rotation}deg);"></div>`;
+    }).join("");
+  }
 
-    bonusEl.innerHTML = "";
-    overlayEl.innerHTML = state.overlayUntil > now && state.overlayMessage
-      ? `<div class="vinv-overlay-pill">${escapeHtml(state.overlayMessage)}</div>`
-      : "";
+  function renderReactionFlash(ts){
+    const root = document.querySelector(".vmunch-root, .vmunch-mode-shell");
+    if (!root) return;
 
-    renderButtons();
+    root.classList.remove("is-flash-positive", "is-flash-negative");
+
+    if (state.reactionFlash && ts < state.reactionFlashUntil){
+      root.classList.add(state.reactionFlash);
+    }
+  }
+
+  function renderFeedback(ts){
+    const layer = document.getElementById("vmunchFeedback");
+    if (!layer) return;
+    if (!state.feedbackBadge || ts > state.feedbackUntil){
+      layer.innerHTML = "";
+      return;
+    }
+    layer.innerHTML = `<div class="vmunch-feedback-badge">${escapeHtml(state.feedbackBadge)}</div>`;
   }
 
   function getCurrentPhase(){
-    if (state.builtCount < verseWords.length) return "words";
-    if (state.builtCount === verseWords.length) return "book";
-    return "reference";
+    const wordCount = state.words.length;
+    if (state.progressIndex < wordCount) return "words";
+    if (state.progressIndex === wordCount && state.bookLabel) return "book";
+    if (state.progressIndex === wordCount + (state.bookLabel ? 1 : 0) && state.referenceLabel) return "reference";
+    return "done";
+  }
+
+  function getCurrentCorrectLabel(){
+    return state.segments[state.progressIndex] || "";
+  }
+
+  function buildCarouselForCurrentStep(){
+    const phase = getCurrentPhase();
+    if (phase === "done"){
+      state.carouselItems = [];
+      return;
+    }
+
+    const correctLabel = getCurrentCorrectLabel();
+    const decoys = getDecoysForPhase(phase, correctLabel, 3);
+    const labels = shuffle([correctLabel, ...decoys]);
+    // pick 4 unique random foods
+    const foods = shuffle(FOOD_EMOJIS).slice(0, labels.length);
+
+    state.carouselItems = labels.map((label, index) => ({
+      label,
+      food:foods[index],
+      type:phase === "words" ? "word" : phase === "book" ? "book" : "reference"
+    }));
+    state.carouselIndex = Math.floor(Math.random() * state.carouselItems.length);
   }
 
   function getDecoysForPhase(phase, correctLabel, count){
     const out = new Set();
-
     if (phase === "words"){
-      const versePool = verseWords.map(normalizeWord);
+      const verseWords = state.words.map(normalizeWord);
       for (const word of shuffle(FUN_DECOYS)){
         if (out.size >= count) break;
-        if (!versePool.includes(normalizeWord(word)) && normalizeWord(word) !== normalizeWord(correctLabel)) out.add(word);
+        const normalized = normalizeWord(word);
+        if (!verseWords.includes(normalized) && normalized !== normalizeWord(correctLabel)) out.add(word);
       }
-    }
-
-    if (phase === "book"){
+    } else if (phase === "book"){
       for (const book of shuffle(BOOKS)){
         if (out.size >= count) break;
         if (book !== correctLabel) out.add(book);
       }
-    }
-
-    if (phase === "reference"){
-      const match = String(correctLabel || "").match(/^(\d+):(\d+)(?:-(\d+))?$/);
+    } else if (phase === "reference"){
+      const match = String(correctLabel).match(/^(\d+):(\d+)(?:-(\d+))?$/);
       const chapter = match ? Number(match[1]) : 1;
-      const verse = match ? Number(match[2]) : 1;
+      const verseA = match ? Number(match[2]) : 1;
+      const verseB = match && match[3] ? Number(match[3]) : null;
       let tries = 0;
-      while (out.size < count && tries < 50){
-        tries += 1;
+      while (out.size < count && tries < 80){
+        tries++;
         const c = Math.max(1, chapter + Math.floor(Math.random() * 5) - 2);
-        const v = Math.max(1, verse + Math.floor(Math.random() * 9) - 4);
-        const label = `${c}:${v}`;
+        const v = Math.max(1, verseA + Math.floor(Math.random() * 9) - 4);
+        let label = `${c}:${v}`;
+        if (verseB && Math.random() < 0.35){
+          const end = Math.max(v + 1, verseB + Math.floor(Math.random() * 3) - 1);
+          label = `${c}:${v}-${end}`;
+        }
         if (label !== correctLabel) out.add(label);
       }
     }
-
     return Array.from(out).slice(0, count);
   }
 
-  function getRoundSpeed(){
-    const usableDistance = Math.max(180, state.bottomZoneY + 28);
-    const cfg = state.modeTiming[selectedMode] || state.modeTiming.easy;
-    const roundSeconds = clamp(cfg.start + Math.max(0, state.roundIndex - 1) * cfg.step, 2.2, 5.4);
-    return usableDistance / roundSeconds;
-  }
-
-  function getBonusShots(){
-    const max = 12;
-    const penalty = Math.min(8, state.mistakes);
-    return Math.max(4, max - penalty);
-  }
-
-  function getLaneCenterX(lane){
-    const index = LANE_KEYS.indexOf(lane);
-    return state.fieldWidth * ((index + 0.5) / 3);
-  }
-
-  function laneLabel(lane){
-    if (lane === "left") return "LEFT";
-    if (lane === "center") return "CENTER";
-    return "RIGHT";
-  }
-
-  function laneToDefaultColor(lane){
-    if (lane === "left") return LANE_COLORS[0];
-    if (lane === "center") return LANE_COLORS[1];
-    return LANE_COLORS[2];
-  }
-
-  function parseReferenceParts(ref, translation, verseId){
-    const id = String(verseId || "").trim();
-    const idRangeMatch = id.match(/^(.+?)_(\d+)_(\d+)_(\d+)$/);
-    if (idRangeMatch){
-      return { book:titleCaseBookFromSlug(idRangeMatch[1]), reference:`${idRangeMatch[2]}:${idRangeMatch[3]}-${idRangeMatch[4]}` };
+  function spawnSuccessParticles(isBonus = false){
+    const center = getMouthPoint();
+    const count = isBonus ? 18 : 12;
+    for (let i = 0; i < count; i++){
+      state.particles.push({
+        type:Math.random() < 0.5 ? "spark" : "dot",
+        value:randomFrom(TRAIL_EMOJIS),
+        x:center.x + (Math.random() * 24 - 12),
+        y:center.y + (Math.random() * 24 - 12),
+        vx:-140 + Math.random() * 280,
+        vy:-180 + Math.random() * 160,
+        gravity:220,
+        age:0,
+        life:0.75 + Math.random() * 0.25,
+        size:12 + Math.random() * 16,
+        color:randomFrom(["#ffc751", "#ff5a51", "#40b9c5", "#a7cb6f", "#ffffff"])
+      });
     }
-
-    const idMatch = id.match(/^(.+?)_(\d+)_(\d+(?:[-–]\d+)?)$/);
-    if (idMatch){
-      return { book:titleCaseBookFromSlug(idMatch[1]), reference:`${idMatch[2]}:${idMatch[3]}` };
-    }
-
-    let raw = String(ref || "").trim();
-    const trans = String(translation || "").trim();
-    if (trans){
-      raw = raw.replace(new RegExp(`\\s*\\(?${trans.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")}\\)?\\s*$`, "i"), "").trim();
-    }
-
-    const match = raw.match(/^(.*?)\s+(\d+:\d+(?:[-–]\d+(?::\d+)?)?)\s*$/);
-    if (match) return { book:match[1].trim(), reference:match[2].trim() };
-
-    const lastSpace = raw.lastIndexOf(" ");
-    if (lastSpace > 0){
-      return { book:raw.slice(0, lastSpace).trim(), reference:raw.slice(lastSpace + 1).trim() };
-    }
-
-    return { book:raw, reference:"" };
   }
 
-  function titleCaseBookFromSlug(slug){
-    const small = new Set(["of","the"]);
-    return String(slug || "")
-      .split("_")
-      .filter(Boolean)
-      .map((part, index) => {
-        const lower = part.toLowerCase();
-        if (index > 0 && small.has(lower)) return lower;
-        return lower.charAt(0).toUpperCase() + lower.slice(1);
-      })
-      .join(" ");
+  function spawnMissParticles(){
+    const center = getMouthPoint();
+    for (let i = 0; i < 10; i++){
+      state.particles.push({
+        type:i % 2 === 0 ? "spark" : "dot",
+        value:i % 2 === 0 ? "💨" : "🫧",
+        x:center.x + (Math.random() * 24 - 12),
+        y:center.y + (Math.random() * 18 - 9),
+        vx:-120 + Math.random() * 240,
+        vy:-40 + Math.random() * 130,
+        gravity:260,
+        age:0,
+        life:0.45 + Math.random() * 0.2,
+        size:11 + Math.random() * 8,
+        color:randomFrom(["#ffffff", "#e8e4ff", "#ffcad0"])
+      });
+    }
   }
+
+function spawnChewCrumbs(isSecondary = false){
+  const center = getMouthPoint();
+  const crumbColors = ["#f6dfa6", "#f7c96d", "#fff4cf", "#f4b66a", "#ffffff"];
+  const countPerSide = isSecondary ? 4 : 6;
+  const s = state.scale || 1;
+
+  for (const dir of [-1, 1]){
+    for (let i = 0; i < countPerSide; i++){
+      const speedX = (90 + Math.random() * (isSecondary ? 60 : 90)) * s;
+      const speedY = (45 + Math.random() * 70) * s;
+
+      state.particles.push({
+        type: "dot",
+        x: center.x + dir * (6 + Math.random() * 8) * s,
+        y: center.y + (Math.random() * 12 - 4) * s,
+        vx: dir * speedX,
+        vy: -speedY,
+        gravity: (240 + Math.random() * 80) * s,
+        age: 0,
+        life: 0.34 + Math.random() * 0.18,
+        size: (6 + Math.random() * 7) * s,
+        color: randomFrom(crumbColors)
+      });
+    }
+  }
+}
+
+  function spawnConfettiBurst(){
+    const centerX = state.fieldWidth * 0.5;
+    const centerY = state.fieldHeight * 0.32;
+    for (let i = 0; i < 70; i++){
+      state.confetti.push({
+        x:centerX,
+        y:centerY,
+        vx:-220 + Math.random() * 440,
+        vy:-260 + Math.random() * 130,
+        gravity:380,
+        age:0,
+        life:1.5 + Math.random() * 0.8,
+        w:7 + Math.random() * 9,
+        h:12 + Math.random() * 12,
+        color:randomFrom(["#ff5a51", "#ffc751", "#40b9c5", "#a7cb6f", "#ffffff", "#7f66c6"]),
+        rotation:Math.random() * 180,
+        spin:-340 + Math.random() * 680
+      });
+    }
+  }
+
+  function spawnReactionSparkles(){
+    const center = getMouthPoint();
+    const sparks = ["✨","⭐","💫","🌟"];
+
+    for (let i = 0; i < 6; i++){
+      state.particles.push({
+        type: "spark",
+        value: randomFrom(sparks),
+        x: center.x + (Math.random()*20 - 10),
+        y: center.y - 20 + (Math.random()*10),
+        vx: -60 + Math.random()*120,
+        vy: -120 + Math.random()*80,
+        gravity: 180,
+        age: 0,
+        life: 0.5 + Math.random()*0.2,
+        size: 12 + Math.random()*8,
+        color: "#fff"
+      });
+    }
+  }
+
+  function setupReferenceSegments(){
+    const parsed = parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
+    state.bookLabel = parsed.book || "";
+    state.referenceLabel = parsed.reference || "";
+    state.segments = [...state.words];
+    if (state.bookLabel) state.segments.push(state.bookLabel);
+    if (state.referenceLabel) state.segments.push(state.referenceLabel);
+  }
+
+  function getOpenMouthFace(){
+    if (state.emotionLevel >= 2) return "😄";
+    if (state.emotionLevel >= 0) return "😮";
+    return "😦";
+  }
+
+  function getEmotionFace(){
+    return EMOTION_FACE[String(state.emotionLevel)] || "😐";
+  }
+
+  function getMoodLabel(){
+    return EMOTION_LABEL[String(state.emotionLevel)] || "Calm";
+  }
+
+  function getIdleVariants(){
+    if (state.emotionLevel >= 2) return ["is-idle-bob", "is-idle-sway", "is-idle-wiggle"];
+    if (state.emotionLevel <= -2) return ["is-idle-blink", "is-idle-sway"];
+    return ["is-idle-bob", "is-idle-blink", "is-idle-sway"];
+  }
+
+  function getPositiveCaption(){
+    if (getCurrentPhase() === "book") return "Book unlocked!";
+    if (getCurrentPhase() === "reference") return "Reference unlocked!";
+    if (state.progressIndex >= state.words.length) return "Verse complete! Keep feeding the reference.";
+    return state.streak >= 4 ? "Yum. On a roll!" : "Nice bite!";
+  }
+
+  function getNegativeCaption(chosen, correct){
+    if (getCurrentPhase() === "book") return `Not ${chosen}. The right book is still hiding.`;
+    if (getCurrentPhase() === "reference") return `${chosen} was off. Try the right reference.`;
+    return `Not ${chosen}. Looking for ${correct}.`;
+  }
+
+  function updateStreakPill(){
+    const pill = document.getElementById("vmunchStreakPill");
+    if (!pill) return;
+    let suffix = "";
+    const tier = getTrailTier();
+    if (tier >= 3) suffix = " 🌈";
+    else if (tier >= 1) suffix = " ✨";
+    pill.textContent = `Streak: ${state.streak}${suffix}`;
+  }
+
+  function updateMoodPill(){
+    const pill = document.getElementById("vmunchModePill");
+    if (!pill) return;
+    pill.textContent = getMoodLabel();
+  }
+
+  function getTrailTier(){
+    if (state.streak < 2) return 0;
+    if (state.streak < 4) return 1;
+    if (state.streak < 7) return 2;
+    return 3;
+  }
+
+  function getTiming(){
+    if (selectedMode === "hard"){
+      return { launch:0.34, mouthOpen:0.14, chew:0.80, anticipation:0.22, reaction:0.36, bonusReaction:0.22 };
+    }
+    if (selectedMode === "medium"){
+      return { launch:0.40, mouthOpen:0.16, chew:0.80, anticipation:0.26, reaction:0.40, bonusReaction:0.24 };
+    }
+    return { launch:0.46, mouthOpen:0.18, chew:0.80, anticipation:0.30, reaction:0.46, bonusReaction:0.28 };
+  }
+
+  function getIdleDelay(){
+    if (selectedMode === "hard") return 1.3 + Math.random() * 1.0;
+    if (selectedMode === "medium") return 1.6 + Math.random() * 1.1;
+    return 1.9 + Math.random() * 1.2;
+  }
+
+  function getCurrentFoodEmoji(){
+    const item = state.carouselItems[state.carouselIndex];
+    if (!item) return bonusRunning ? FOOD_EMOJIS[state.bonusCount % FOOD_EMOJIS.length] : FOOD_EMOJIS[state.progressIndex % FOOD_EMOJIS.length];
+    return item.food;
+  }
+
+  function getFoodStartPoint(){
+    const el = document.getElementById("vmunchFoodDisplay");
+    const field = document.getElementById("vmunchField");
+    if (!el || !field){
+      return { x:state.fieldWidth * 0.5, y:state.fieldHeight * 0.68 };
+    }
+    const rect = el.getBoundingClientRect();
+    const fieldRect = field.getBoundingClientRect();
+    return {
+      x:rect.left - fieldRect.left + rect.width * 0.5,
+      y:rect.top - fieldRect.top + rect.height * 0.5
+    };
+  }
+
+  function getChoiceCenterX(){
+    const btn = document.getElementById("vmunchChoiceBtn");
+    const field = document.getElementById("vmunchField");
+    if (!btn || !field) return state.fieldWidth * 0.5;
+    const rect = btn.getBoundingClientRect();
+    const fieldRect = field.getBoundingClientRect();
+    return rect.left - fieldRect.left + rect.width * 0.5;
+  }
+
+  function getChoiceCenterY(){
+    const btn = document.getElementById("vmunchChoiceBtn");
+    const field = document.getElementById("vmunchField");
+    if (!btn || !field) return state.fieldHeight * 0.82;
+    const rect = btn.getBoundingClientRect();
+    const fieldRect = field.getBoundingClientRect();
+    return rect.top - fieldRect.top + rect.height * 0.5;
+  }
+
+function getMouthPoint(){
+  const face = document.getElementById("vmunchFace");
+  const field = document.getElementById("vmunchField");
+
+  if (!face || !field){
+    return {
+      x: state.fieldWidth * 0.5,
+      y: state.fieldHeight * 0.42
+    };
+  }
+
+  const faceRect = face.getBoundingClientRect();
+  const fieldRect = field.getBoundingClientRect();
+
+  return {
+    x: faceRect.left - fieldRect.left + faceRect.width * 0.5,
+    y: faceRect.top - fieldRect.top + faceRect.height * 0.64
+  };
+}
 
   function tokenizeVerse(text){
     return String(text || "").trim().split(/\s+/).filter(Boolean);
@@ -859,242 +1235,94 @@
     return String(word || "").toLowerCase().replace(/[^a-z0-9']/g, "");
   }
 
-  function addTrail(x, y, white){
-    state.trails.push({
-      x,
-      y,
-      icon: white ? "·" : "✨",
-      opacity: white ? 0.85 : 0.95,
-      white:!!white,
-      until: performance.now() + 180
-    });
-    if (state.trails.length > 24) state.trails.shift();
-  }
+  function parseReferenceParts(ref, translation, verseId){
+    const id = String(verseId || "").trim();
 
-  function addEffect(effect){
-    state.effects.push(effect);
-    if (state.effects.length > 30) state.effects.shift();
-  }
-
-  function makeSmokePuffEffect(x, y){
-    const born = performance.now();
-    const particles = Array.from({ length: 7 }, (_, i) => ({
-      angle: (Math.PI * 2 * i / 7) + randBetween(-0.24, 0.24),
-      speed: randBetween(6, 18),
-      size: randBetween(12, 24),
-      color: Math.random() < 0.5 ? "rgba(255,255,255,0.72)" : "rgba(210,218,226,0.68)",
-      alpha: randBetween(0.62, 0.92),
-      gravity: randBetween(-1, 2),
-      drift: randBetween(-4, 4),
-      style: "smoke",
-      spin: randBetween(-40, 40)
-    }));
-    return {
-      kind:"particle",
-      group:"smoke",
-      preset:"smokePuff",
-      x,
-      y,
-      born,
-      life:420,
-      until: born + 420,
-      particles,
-      ring:0,
-      center:0
-    };
-  }
-
-  function makeCorrectHitEffect(x, y, baseColor, streak){
-    return makeParticleEffect(randomFrom(CORRECT_EFFECT_POOL), x, y, baseColor, streak, "hit");
-  }
-
-  function makeBonusFireworkEffect(x, y){
-    const color = randomFrom([LANE_COLORS[0].hex, LANE_COLORS[1].hex, LANE_COLORS[2].hex, "#f28fff", "#ffffff"]);
-    return makeParticleEffect(randomFrom(BONUS_FIREWORK_POOL), x, y, color, 5, "fireworkParticle");
-  }
-
-  function makeParticleEffect(preset, x, y, baseColor, streak, group){
-    const born = performance.now();
-    const strong = streak >= 4;
-    const configMap = {
-      alienPop: { life:620, count: strong ? 16 : 12, speedMin:82, speedMax:152, sizeMin:4, sizeMax:9, gravity:18, ring:0.68, center:1, style:"dot", shell:false, flash:false, cross:false },
-      starburst: { life:680, count: strong ? 15 : 11, speedMin:90, speedMax:168, sizeMin:5, sizeMax:10, gravity:10, ring:0.46, center:0.95, style:"star", shell:false, flash:false, cross:false },
-      chrysanthemum: { life:760, count: strong ? 20 : 16, speedMin:78, speedMax:148, sizeMin:4, sizeMax:8, gravity:8, ring:0.58, center:0.98, style:"petal", shell:true, flash:false, cross:false },
-      novaBurst: { life:720, count: strong ? 18 : 14, speedMin:100, speedMax:178, sizeMin:4, sizeMax:10, gravity:14, ring:0.82, center:1.08, style:"shard", shell:false, flash:false, cross:true },
-      flashRing: { life:900, count:18, speedMin:92, speedMax:154, sizeMin:5, sizeMax:10, gravity:8, ring:1.02, center:1.14, style:"dot", shell:false, flash:true, cross:false },
-      classicFirework: { life:980, count:24, speedMin:102, speedMax:188, sizeMin:4, sizeMax:9, gravity:14, ring:0.86, center:1.02, style:"petal", shell:true, flash:false, cross:false },
-      confettiBloom: { life:980, count:22, speedMin:84, speedMax:148, sizeMin:5, sizeMax:10, gravity:24, ring:0.64, center:0.84, style:"confetti", shell:false, flash:false, cross:false },
-      plasmaBurst: { life:920, count:20, speedMin:112, speedMax:198, sizeMin:5, sizeMax:11, gravity:8, ring:0.88, center:1.1, style:"plasma", shell:false, flash:true, cross:false },
-      cosmicCrackle: { life:1040, count:26, speedMin:74, speedMax:176, sizeMin:3, sizeMax:8, gravity:20, ring:0.76, center:1.0, style:"crackle", shell:true, flash:false, cross:false }
-    };
-    const cfg = configMap[preset] || configMap.alienPop;
-    const palette = buildPalette(baseColor, preset);
-    const particles = [];
-    for (let i = 0; i < cfg.count; i++){
-      particles.push({
-        angle: (Math.PI * 2 * i / cfg.count) + randBetween(-0.18, 0.18),
-        speed: randBetween(cfg.speedMin, cfg.speedMax),
-        size: randBetween(cfg.sizeMin, cfg.sizeMax),
-        color: randomFrom(palette),
-        alpha: randBetween(0.82, 1),
-        gravity: cfg.gravity,
-        drift: randBetween(-8, 8),
-        style: cfg.style,
-        spin: randBetween(-220, 220)
-      });
-      if (preset === "cosmicCrackle" && i % 5 === 0){
-        particles.push({
-          angle: (Math.PI * 2 * i / cfg.count) + randBetween(-0.12, 0.12),
-          speed: randBetween(cfg.speedMax * 0.65, cfg.speedMax * 1.05),
-          size: randBetween(2, 4),
-          color: "#ffffff",
-          alpha: 1,
-          gravity: cfg.gravity + 4,
-          drift: randBetween(-10, 10),
-          style: "spark",
-          spin: randBetween(-280, 280)
-        });
-      }
-    }
-    return {
-      kind:"particle",
-      group,
-      preset,
-      x,
-      y,
-      born,
-      life: cfg.life,
-      until: born + cfg.life,
-      particles,
-      ring: cfg.ring,
-      center: cfg.center,
-      flash: cfg.flash,
-      shell: cfg.shell,
-      cross: cfg.cross
-    };
-  }
-
-  function makeAbductionEffect(x, y, color){
-    const born = performance.now();
-    return {
-      kind:"abduction",
-      group:"abduction",
-      x,
-      y,
-      born,
-      life:1380,
-      until: born + 1380,
-      colorHex: color.hex,
-      alien: color.alien
-    };
-  }
-
-  function buildPalette(baseColor, preset){
-    if (preset === "confettiBloom") return ["#ff5a51", "#ffc751", "#40b9c5", "#f28fff", "#ffffff", "#a7cb6f"];
-    if (preset === "plasmaBurst") return [baseColor, lightenColor(baseColor, 0.3), "#ffffff", "#d596ff", "#77f0ff"];
-    if (preset === "cosmicCrackle") return [baseColor, "#ffffff", "#ffd96c", "#8af2ff", "#ff9fe7"];
-    return [baseColor, lightenColor(baseColor, 0.2), lightenColor(baseColor, 0.36), "#ffffff", "#ffe082"];
-  }
-
-  function renderEffect(effect, now){
-    if (effect.kind === "abduction"){
-      const progress = clamp((now - effect.born) / effect.life, 0, 1);
-      const hold = 0.22;
-      const travel = progress <= hold ? 0 : (progress - hold) / (1 - hold);
-      const liftY = -travel * Math.max(220, state.fieldHeight * 0.62);
-      const beamOpacity = Math.max(0, 0.82 - progress * 0.55);
-      return `
-        <div class="vinv-effect-wrap vinv-abduct-wrap" style="left:${effect.x}px; top:${effect.y}px; transform:translate(-50%,-50%) translateY(${liftY.toFixed(1)}px); opacity:${Math.max(0, 1 - Math.max(0, progress - 0.82) * 5).toFixed(3)};">
-          <div class="vinv-beam vinv-beam-abduct" style="opacity:${beamOpacity.toFixed(3)}"></div>
-          <div class="vinv-abduct-stack">
-            <div class="vinv-alien" style="color:${effect.colorHex}">${effect.alien}</div>
-            <div class="vinv-word" style="color:${effect.colorHex}; visibility:hidden; height:0; margin:0; padding:0;"></div>
-            <div class="vinv-abduct-passenger">🧍</div>
-          </div>
-        </div>
-      `;
+    const idRangeMatch = id.match(/^(.+?)_(\d+)_(\d+)_(\d+)$/);
+    if (idRangeMatch){
+      return {
+        book:titleCaseBookFromSlug(idRangeMatch[1]),
+        reference:`${idRangeMatch[2]}:${idRangeMatch[3]}-${idRangeMatch[4]}`
+      };
     }
 
-    if (effect.kind !== "particle") return "";
-
-    const progress = clamp((now - effect.born) / effect.life, 0, 1);
-    const particleHtml = effect.particles.map((particle) => {
-      const dx = Math.cos(particle.angle) * particle.speed * progress + particle.drift * progress;
-      const dy = Math.sin(particle.angle) * particle.speed * progress + (particle.gravity || 0) * progress * progress * 40;
-      const opacity = clamp((particle.alpha || 1) * (1 - Math.pow(progress, effect.preset === "smokePuff" ? 1.05 : 1.55)), 0, 1);
-      const scale = effect.preset === "smokePuff" ? (0.82 + progress * 0.62) : (0.72 + progress * 0.62);
-      const rotation = (particle.spin || 0) * progress;
-      return `<div class="vinv-particle is-${particle.style}" style="transform:translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) translate(-50%,-50%) rotate(${rotation.toFixed(1)}deg) scale(${scale.toFixed(2)});width:${particle.size.toFixed(1)}px;height:${particle.size.toFixed(1)}px;background:${particle.color};opacity:${opacity.toFixed(3)};"></div>`;
-    }).join("");
-
-    const ringSize = 18 + progress * 84 * (effect.ring || 0);
-    const centerSize = 18 + (effect.center || 0) * 18 + progress * 10;
-    const ring = effect.ring ? `<div class="vinv-effect-ring" style="width:${ringSize.toFixed(1)}px;height:${ringSize.toFixed(1)}px;opacity:${Math.max(0, 0.82 - progress * 0.95).toFixed(3)};border-width:${Math.max(2, 4 - progress * 2).toFixed(1)}px;"></div>` : "";
-    const center = effect.center ? `<div class="vinv-effect-center" style="width:${centerSize.toFixed(1)}px;height:${centerSize.toFixed(1)}px;opacity:${Math.max(0, 0.95 - progress * 1.2).toFixed(3)};"></div>` : "";
-    const flash = effect.flash ? `<div class="vinv-effect-flash" style="width:${(74 + progress * 50).toFixed(1)}px;height:${(74 + progress * 50).toFixed(1)}px;opacity:${Math.max(0, 0.28 - progress * 0.32).toFixed(3)};"></div>` : "";
-    const shell = effect.shell ? `<div class="vinv-effect-shell" style="width:${(42 + progress * 36).toFixed(1)}px;height:${(42 + progress * 36).toFixed(1)}px;opacity:${Math.max(0, 0.3 - progress * 0.36).toFixed(3)};"></div>` : "";
-    const cross = effect.cross ? `<div class="vinv-effect-cross" style="opacity:${Math.max(0, 0.54 - progress * 0.6).toFixed(3)};"></div>` : "";
-
-    return `<div class="vinv-effect-wrap" style="left:${effect.x}px; top:${effect.y}px;">${flash}${shell}${ring}${center}${cross}${particleHtml}</div>`;
-  }
-
-  function lightenColor(hex, amount){
-    const clean = String(hex || "#ffffff").replace("#", "");
-    if (clean.length !== 6) return "#ffffff";
-    const r = parseInt(clean.slice(0, 2), 16);
-    const g = parseInt(clean.slice(2, 4), 16);
-    const b = parseInt(clean.slice(4, 6), 16);
-    const nr = Math.round(r + (255 - r) * amount);
-    const ng = Math.round(g + (255 - g) * amount);
-    const nb = Math.round(b + (255 - b) * amount);
-    return `#${nr.toString(16).padStart(2, "0")}${ng.toString(16).padStart(2, "0")}${nb.toString(16).padStart(2, "0")}`;
-  }
-
-  function scheduleAction(delayMs, fn){
-    state.scheduledActions.push({ at: performance.now() + delayMs, run: fn });
-  }
-
-  function processScheduledActions(ts){
-    if (!state.scheduledActions.length) return;
-    const ready = [];
-    const later = [];
-    for (const action of state.scheduledActions){
-      if (ts >= action.at) ready.push(action);
-      else later.push(action);
+    const idMatch = id.match(/^(.+?)_(\d+)_(\d+(?:[-–]\d+)?)$/);
+    if (idMatch){
+      return {
+        book:titleCaseBookFromSlug(idMatch[1]),
+        reference:`${idMatch[2]}:${idMatch[3]}`
+      };
     }
-    state.scheduledActions = later;
-    for (const action of ready) action.run();
+
+    let raw = String(ref || "").trim();
+    const trans = String(translation || "").trim();
+    if (trans){
+      raw = raw.replace(new RegExp(`\\s*\\(?${trans.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")}\\)?\\s*$`, "i"), "").trim();
+    }
+
+    const match = raw.match(/^(.*?)\s+(\d+:\d+(?:[-–]\d+(?::\d+)?)?)\s*$/);
+    if (match){
+      return { book:match[1].trim(), reference:match[2].trim() };
+    }
+
+    const lastSpace = raw.lastIndexOf(" ");
+    if (lastSpace > 0){
+      return {
+        book:raw.slice(0, lastSpace).trim(),
+        reference:raw.slice(lastSpace + 1).trim()
+      };
+    }
+
+    return { book:raw, reference:"" };
   }
 
-  function stopLoop(){
-    if (state.rafId) cancelAnimationFrame(state.rafId);
-    state.rafId = 0;
-    state.running = false;
-  }
-
-  function startLoop(){
-    if (state.rafId) cancelAnimationFrame(state.rafId);
-    state.rafId = requestAnimationFrame(loop);
+  function titleCaseBookFromSlug(slug){
+    const smallWords = new Set(["of", "the"]);
+    return String(slug || "")
+      .split("_")
+      .filter(Boolean)
+      .map((part, index) => {
+        const lower = part.toLowerCase();
+        if (index > 0 && smallWords.has(lower)) return lower;
+        return lower.charAt(0).toUpperCase() + lower.slice(1);
+      })
+      .join(" ");
   }
 
   function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
-  function randomFrom(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
-  function randBetween(min, max){ return min + Math.random() * (max - min); }
+  function lerp(a, b, t){ return a + (b - a) * t; }
+  function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
   function capitalize(str){ return String(str).charAt(0).toUpperCase() + String(str).slice(1); }
+  function randomFrom(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+  function waitSeconds(seconds){ return new Promise(resolve => setTimeout(resolve, seconds * 1000)); }
+
   function shuffle(arr){
-    const copy = [...arr];
+    const copy = arr.slice();
     for (let i = copy.length - 1; i > 0; i--){
       const j = Math.floor(Math.random() * (i + 1));
       [copy[i], copy[j]] = [copy[j], copy[i]];
     }
     return copy;
   }
-  function escapeHtml(value){
-    return String(value || "")
+
+  function escapeHtml(str){
+    return String(str)
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
       .replace(/\"/g, "&quot;")
       .replace(/'/g, "&#39;");
+  }
+
+  function getHomeSvg(){
+    return `<svg class="nav-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3L3 10h2v9h5v-6h4v6h5v-9h2L12 3z" fill="#ffffff"/></svg>`;
+  }
+
+  function getMuteSvg(){
+    return `<svg class="nav-icon" viewBox="0 0 1270 889" xmlns="http://www.w3.org/2000/svg"><path style="fill:#ffffff;stroke:none;stroke-width:44.9431;stroke-linecap:round" d="M 660.98465,87.244161 409.97079,241.6972 a 150.47802,150.47802 0 0 1 -78.85883,22.31829 H 225.63234 a 42.587633,42.587633 0 0 0 -42.58762,42.58762 v 275.79372 a 42.587633,42.587633 0 0 0 42.58762,42.58762 h 105.47962 a 150.47802,150.47802 0 0 1 78.85883,22.3183 l 251.01386,154.45304 a 23.799138,23.799138 0 0 0 36.27121,-20.26933 V 107.51349 A 23.799138,23.799138 0 0 0 660.98465,87.244161 Z"/><g transform="translate(-26.458334,-255.59263)"><path style="fill:none;stroke:#ffffff;stroke-width:76.7747;stroke-linecap:round" d="M 1241.4124,524.69155 890.61025,875.49365"/><path style="fill:none;stroke:#ffffff;stroke-width:76.7747;stroke-linecap:round" d="m 890.61025,524.69155 350.80215,350.8021"/></g></svg>`;
+  }
+
+  function getUnmuteSvg(){
+    return `<svg class="nav-icon" viewBox="0 0 1270 889" xmlns="http://www.w3.org/2000/svg"><path style="fill:#ffffff;stroke:none;stroke-width:44.9431;stroke-linecap:round" d="M 660.98465,87.244161 409.97079,241.6972 a 150.47802,150.47802 0 0 1 -78.85883,22.31829 H 225.63234 a 42.587633,42.587633 0 0 0 -42.58762,42.58762 v 275.79372 a 42.587633,42.587633 0 0 0 42.58762,42.58762 h 105.47962 a 150.47802,150.47802 0 0 1 78.85883,22.3183 l 251.01386,154.45304 a 23.799138,23.799138 0 0 0 36.27121,-20.26933 V 107.51349 A 23.799138,23.799138 0 0 0 660.98465,87.244161 Z"/><path style="fill:none;stroke:#ffffff;stroke-width:63;stroke-linecap:round" d="M 877 307 Q 982 444 877 582"/><path style="fill:none;stroke:#ffffff;stroke-width:63;stroke-linecap:round" d="M 959 241 Q 1111 444 959 648"/></svg>`;
   }
 })();
