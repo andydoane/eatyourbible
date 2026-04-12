@@ -53,5 +53,19 @@ window.EXTERNAL_VERSE_GAMES = [
       progressType: "standard",
       modes: ["easy", "medium", "hard"]
     }
+  },
+
+  {
+    enabled: true,
+    manifest: {
+      id: "verse_invaders",
+      title: "Verse Invaders",
+      description: "Blast the next correct word before the aliens reach the bottom.",
+      icon: "👾",
+      launchUrl: "./verse_games/verse_invaders/index.html",
+      visibleInCarousel: true,
+      progressType: "standard",
+      modes: ["easy", "medium", "hard"]
+    }
   }
 ];
