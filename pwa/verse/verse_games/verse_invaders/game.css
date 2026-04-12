@@ -223,9 +223,9 @@ body{
   width:min(29vw,170px);
   max-width:170px;
   min-width:84px;
-  transform:translate(-50%, 0);
   text-align:center;
   will-change:transform, opacity;
+  transform-origin:center top;
 }
 
 .vinv-alien{
