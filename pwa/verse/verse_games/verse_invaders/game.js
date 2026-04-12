@@ -508,16 +508,20 @@
     scheduleAction(120, () => {
       addEffect(makeCorrectHitEffect(target.x, target.y + 22, target.color.hex, state.streak));
       target.visible = false;
+
       state.entities.forEach(item => {
-        if (item.id !== target.id && item.visible) item.status = "fade";
+        if (item.id !== target.id && item.visible){
+          item.visible = false;
+          addEffect(makeSmokePuffEffect(item.x, item.y + 28));
+        }
       });
+
       state.builtCount += 1;
       renderHud();
       renderDynamic();
     });
 
     scheduleAction(620, async () => {
-      state.entities.forEach(item => { if (item.id !== target.id) item.visible = false; });
       if (state.builtCount >= state.queue.length) await startBonusRound();
       else spawnRound();
     });
@@ -917,15 +921,16 @@
     const born = performance.now();
     const strong = streak >= 4;
     const configMap = {
-      alienPop: { life:620, count: strong ? 16 : 12, speedMin:82, speedMax:152, sizeMin:4, sizeMax:9, gravity:18, ring:0.68, center:1, style:"dot", shell:false, flash:false, cross:false },
-      starburst: { life:680, count: strong ? 15 : 11, speedMin:90, speedMax:168, sizeMin:5, sizeMax:10, gravity:10, ring:0.46, center:0.95, style:"star", shell:false, flash:false, cross:false },
-      chrysanthemum: { life:760, count: strong ? 20 : 16, speedMin:78, speedMax:148, sizeMin:4, sizeMax:8, gravity:8, ring:0.58, center:0.98, style:"petal", shell:true, flash:false, cross:false },
-      novaBurst: { life:720, count: strong ? 18 : 14, speedMin:100, speedMax:178, sizeMin:4, sizeMax:10, gravity:14, ring:0.82, center:1.08, style:"shard", shell:false, flash:false, cross:true },
+      alienPop: { life:620, count: strong ? 16 : 12, speedMin:88, speedMax:162, sizeMin:4, sizeMax:9, gravity:6, ring:0, center:0.18, style:"dot", shell:false, flash:false, cross:false },
+      starburst: { life:680, count: strong ? 15 : 11, speedMin:96, speedMax:176, sizeMin:5, sizeMax:10, gravity:4, ring:0, center:0.12, style:"star", shell:false, flash:false, cross:false },
+      chrysanthemum: { life:760, count: strong ? 20 : 16, speedMin:82, speedMax:154, sizeMin:4, sizeMax:8, gravity:3, ring:0.18, center:0.16, style:"petal", shell:false, flash:false, cross:false },
+      novaBurst: { life:720, count: strong ? 18 : 14, speedMin:108, speedMax:186, sizeMin:4, sizeMax:10, gravity:5, ring:0, center:0.14, style:"shard", shell:false, flash:false, cross:true },
+
       flashRing: { life:900, count:18, speedMin:92, speedMax:154, sizeMin:5, sizeMax:10, gravity:8, ring:1.02, center:1.14, style:"dot", shell:false, flash:true, cross:false },
-      classicFirework: { life:980, count:24, speedMin:102, speedMax:188, sizeMin:4, sizeMax:9, gravity:14, ring:0.86, center:1.02, style:"petal", shell:true, flash:false, cross:false },
-      confettiBloom: { life:980, count:22, speedMin:84, speedMax:148, sizeMin:5, sizeMax:10, gravity:24, ring:0.64, center:0.84, style:"confetti", shell:false, flash:false, cross:false },
-      plasmaBurst: { life:920, count:20, speedMin:112, speedMax:198, sizeMin:5, sizeMax:11, gravity:8, ring:0.88, center:1.1, style:"plasma", shell:false, flash:true, cross:false },
-      cosmicCrackle: { life:1040, count:26, speedMin:74, speedMax:176, sizeMin:3, sizeMax:8, gravity:20, ring:0.76, center:1.0, style:"crackle", shell:true, flash:false, cross:false }
+      classicFirework: { life:980, count:24, speedMin:102, speedMax:188, sizeMin:4, sizeMax:9, gravity:10, ring:0.86, center:0.82, style:"petal", shell:true, flash:false, cross:false },
+      confettiBloom: { life:980, count:22, speedMin:84, speedMax:148, sizeMin:5, sizeMax:10, gravity:14, ring:0.34, center:0.28, style:"confetti", shell:false, flash:false, cross:false },
+      plasmaBurst: { life:920, count:20, speedMin:112, speedMax:198, sizeMin:5, sizeMax:11, gravity:6, ring:0.88, center:0.72, style:"plasma", shell:false, flash:true, cross:false },
+      cosmicCrackle: { life:1040, count:26, speedMin:74, speedMax:176, sizeMin:3, sizeMax:8, gravity:12, ring:0.52, center:0.38, style:"crackle", shell:true, flash:false, cross:false }
     };
     const cfg = configMap[preset] || configMap.alienPop;
     const palette = buildPalette(baseColor, preset);
