@@ -5,9 +5,29 @@
   const GAME_ID = "verse_invaders";
   const LANE_KEYS = ["left", "center", "right"];
   const LANE_COLORS = [
-    { key: "red", hex: "#ff5a51", alien: "👾" },
-    { key: "yellow", hex: "#ffc751", alien: "👽" },
-    { key: "blue", hex: "#40b9c5", alien: "🤖" }
+    {
+      key: "red",
+      hex: "#ff5a51",
+      alienImg: "./verse_invaders_images/verse_invaders_alien_red.png",
+      alienAlt: "Red alien"
+    },
+    {
+      key: "yellow",
+      hex: "#ffc751",
+      alienImg: "./verse_invaders_images/verse_invaders_alien_yellow.png",
+      alienAlt: "Yellow alien"
+    },
+    {
+      key: "blue",
+      hex: "#40b9c5",
+      alienImg: "./verse_invaders_images/verse_invaders_alien_blue.png",
+      alienAlt: "Blue alien"
+    }
+  ];
+
+  const ABDUCTEE_IMAGES = [
+    "./verse_invaders_images/verse_invaders_abductee_1.png",
+    "./verse_invaders_images/verse_invaders_abductee_2.png"
   ];
   const BUTTON_COLOR_ORDER = {
     left: LANE_COLORS[0],
@@ -752,7 +772,14 @@
 
       return `
         <div class="vinv-entity ${className}" style="left:${entity.x}px; top:${entity.y}px; ${hidden}">
-          <div class="vinv-alien" style="color:${entity.color.hex}">${entity.color.alien}</div>
+          <div class="vinv-alien">
+            <img
+              class="vinv-alien-img"
+              src="${entity.color.alienImg}"
+              alt="${entity.color.alienAlt}"
+              draggable="false"
+            />
+          </div>
           <div class="vinv-word" style="color:${entity.color.hex}">${escapeHtml(entity.label)}</div>
         </div>
       `;
@@ -1040,20 +1067,22 @@
     };
   }
 
-  function makeAbductionEffect(x, y, color){
-    const born = performance.now();
-    return {
-      kind:"abduction",
-      group:"abduction",
-      x,
-      y,
-      born,
-      life:1700,
-      until: born + 1700,
-      colorHex: color.hex,
-      alien: color.alien
-    };
-  }
+function makeAbductionEffect(x, y, color){
+  const born = performance.now();
+  return {
+    kind:"abduction",
+    group:"abduction",
+    x,
+    y,
+    born,
+    life:1700,
+    until: born + 1700,
+    colorHex: color.hex,
+    alienImg: color.alienImg,
+    alienAlt: color.alienAlt,
+    abducteeImg: randomFrom(ABDUCTEE_IMAGES)
+  };
+}
 
   function buildPalette(baseColor, preset){
     if (preset === "confettiBloom") return ["#ff5a51", "#ffc751", "#40b9c5", "#f28fff", "#ffffff", "#a7cb6f"];
@@ -1083,9 +1112,23 @@
         <div class="vinv-effect-wrap vinv-abduct-wrap" style="left:${effect.x}px; top:${effect.y}px; transform:translate(-50%,-50%) translateY(${liftY.toFixed(1)}px); opacity:${wholeOpacity.toFixed(3)};">
           <div class="vinv-beam vinv-beam-abduct" style="opacity:${beamOpacity.toFixed(3)}"></div>
           <div class="vinv-abduct-stack">
-            <div class="vinv-alien" style="color:${effect.colorHex}">${effect.alien}</div>
+            <div class="vinv-alien">
+              <img
+                class="vinv-alien-img"
+                src="${effect.alienImg}"
+                alt="${effect.alienAlt}"
+                draggable="false"
+              />
+            </div>
             <div class="vinv-word" style="color:${effect.colorHex}; visibility:hidden; height:0; margin:0; padding:0;"></div>
-            <div class="vinv-abduct-passenger">🧍</div>
+            <div class="vinv-abduct-passenger">
+              <img
+                class="vinv-abductee-img"
+                src="${effect.abducteeImg}"
+                alt="Abductee"
+                draggable="false"
+              />
+            </div>
           </div>
         </div>
       `;
