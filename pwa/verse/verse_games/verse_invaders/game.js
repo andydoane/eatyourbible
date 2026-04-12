@@ -545,7 +545,7 @@
     renderHud();
     renderDynamic();
 
-    scheduleAction(1480, () => {
+    scheduleAction(1820, () => {
       spawnRound();
     });
   }
@@ -987,8 +987,8 @@
       x,
       y,
       born,
-      life:1380,
-      until: born + 1380,
+      life:1700,
+      until: born + 1700,
       colorHex: color.hex,
       alien: color.alien
     };
@@ -1004,12 +1004,22 @@
   function renderEffect(effect, now){
     if (effect.kind === "abduction"){
       const progress = clamp((now - effect.born) / effect.life, 0, 1);
-      const hold = 0.22;
+      const hold = 0.18;
       const travel = progress <= hold ? 0 : (progress - hold) / (1 - hold);
-      const liftY = -travel * Math.max(220, state.fieldHeight * 0.62);
-      const beamOpacity = Math.max(0, 0.82 - progress * 0.55);
+
+      const liftDistance = Math.max(state.fieldHeight + 140, state.bottomZoneY + 260);
+      const liftY = -travel * liftDistance;
+
+      const beamOpacity = progress < 0.72
+        ? 0.82
+        : Math.max(0, 0.82 - ((progress - 0.72) / 0.28) * 0.82);
+
+      const wholeOpacity = progress < 0.92
+        ? 1
+        : Math.max(0, 1 - ((progress - 0.92) / 0.08));
+
       return `
-        <div class="vinv-effect-wrap vinv-abduct-wrap" style="left:${effect.x}px; top:${effect.y}px; transform:translate(-50%,-50%) translateY(${liftY.toFixed(1)}px); opacity:${Math.max(0, 1 - Math.max(0, progress - 0.82) * 5).toFixed(3)};">
+        <div class="vinv-effect-wrap vinv-abduct-wrap" style="left:${effect.x}px; top:${effect.y}px; transform:translate(-50%,-50%) translateY(${liftY.toFixed(1)}px); opacity:${wholeOpacity.toFixed(3)};">
           <div class="vinv-beam vinv-beam-abduct" style="opacity:${beamOpacity.toFixed(3)}"></div>
           <div class="vinv-abduct-stack">
             <div class="vinv-alien" style="color:${effect.colorHex}">${effect.alien}</div>
