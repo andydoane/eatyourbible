@@ -9,6 +9,11 @@
     { key: "yellow", hex: "#ffc751", alien: "👽" },
     { key: "blue", hex: "#40b9c5", alien: "🤖" }
   ];
+  const BUTTON_COLOR_ORDER = {
+    left: LANE_COLORS[0],
+    center: LANE_COLORS[1],
+    right: LANE_COLORS[2]
+  };
   const CORRECT_EFFECT_POOL = ["alienPop", "starburst", "chrysanthemum", "novaBurst"];
   const BONUS_FIREWORK_POOL = ["flashRing", "classicFirework", "confettiBloom", "plasmaBurst", "cosmicCrackle"];
   const BOOKS = [
@@ -113,7 +118,7 @@
           <div class="vinv-mode-top">
             <div style="font-size:70px;line-height:1;">👾🚀</div>
             <div class="vinv-title">Verse Invaders</div>
-            <div class="vinv-subtitle">Blast the next correct word before the aliens reach the buttons. Then keep going right into the book and reference.</div>
+            <div class="vinv-subtitle">Press the color of the next correct word. Rockets lock onto that color wherever it is.</div>
             <div class="vinv-mode-card">
               <div class="vinv-mode-actions">
                 <button class="vm-btn" id="startBtn">Start</button>
@@ -262,7 +267,8 @@
   }
 
   function helpHtml(){
-    return `Tap the button under the lane holding the next correct word.<br><br>
+    return `Tap the color of the next correct word.<br><br>
+      The three buttons are always red, yellow, and blue from left to right.<br><br>
       A correct hit explodes and adds the word to the build area.<br><br>
       A wrong hit resets your streak. After two wrong hits in one round, that set clears and a new one begins.<br><br>
       If the correct word reaches the buttons, it abducts a human and the streak resets.`;
@@ -292,14 +298,14 @@
     }
 
     document.querySelectorAll(".vinv-lane-btn").forEach((btn) => {
-      btn.onclick = () => handleLanePress(btn.dataset.lane);
+      btn.onclick = () => handleColorPress(btn.dataset.lane);
     });
 
     window.onkeydown = (e) => {
       if (!state.running) return;
-      if (e.key === "ArrowLeft" || e.key.toLowerCase() === "a") handleLanePress("left");
-      if (e.key === "ArrowDown" || e.key.toLowerCase() === "s") handleLanePress("center");
-      if (e.key === "ArrowRight" || e.key.toLowerCase() === "d") handleLanePress("right");
+      if (e.key === "ArrowLeft" || e.key.toLowerCase() === "a") handleColorPress("left");
+      if (e.key === "ArrowDown" || e.key.toLowerCase() === "s") handleColorPress("center");
+      if (e.key === "ArrowRight" || e.key.toLowerCase() === "d") handleColorPress("right");
     };
   }
 
@@ -370,16 +376,14 @@
 
   function renderButtons(){
     const buttons = document.querySelectorAll(".vinv-lane-btn");
-    const round = state.entities;
     buttons.forEach((btn) => {
       const lane = btn.dataset.lane;
-      const entity = round.find((item) => item.lane === lane && item.visible);
-      const colorKey = entity?.color?.key || laneToDefaultColor(lane).key;
-      btn.dataset.color = colorKey;
-      btn.textContent = laneLabel(lane);
+      const fixedColor = buttonLaneToColor(lane);
+      btn.dataset.color = fixedColor.key;
+      btn.textContent = fixedColor.key.toUpperCase();
       const shouldDim = state.activeLane && state.activeLane !== lane;
       btn.classList.toggle("is-dim", !!shouldDim);
-      btn.disabled = state.buttonsLocked || (!state.bonusMode && !entity);
+      btn.disabled = state.buttonsLocked || (!state.bonusMode && !hasVisibleEntityForColor(fixedColor.key));
     });
   }
 
@@ -408,12 +412,11 @@
 
     state.entities = LANE_KEYS.map((lane, index) => {
       const label = labels[index];
-      const isCorrect = label === correctLabel;
       return {
         id:`entity-${state.roundIndex}-${lane}`,
         lane,
         label,
-        correct:isCorrect,
+        correct:label === correctLabel,
         color:colors[index],
         x:getLaneCenterX(lane),
         y:-22 - index * 18,
@@ -426,30 +429,50 @@
     renderDynamic();
   }
 
-  function handleLanePress(lane){
+  function handleColorPress(buttonLane){
     if (!state.running) return;
     if (state.buttonsLocked) return;
 
     if (state.bonusMode){
       if (state.bonusShotsLeft <= 0) return;
-      launchBonusRocket(lane);
+      launchBonusRocket(buttonLane);
       return;
     }
 
-    const target = state.entities.find(item => item.lane === lane && item.visible);
+    const buttonColor = buttonLaneToColor(buttonLane);
+    const target = state.entities.find(item => item.visible && item.color.key === buttonColor.key);
     if (!target) return;
 
     state.buttonsLocked = true;
-    state.activeLane = lane;
+    state.activeLane = buttonLane;
+
+    const rocketStartX = getLaneCenterX(buttonLane);
+    const rocketStartY = state.controlsTopY - 16;
+    const rocketSpeed = Math.max(420, state.fieldHeight * 1.62);
+    const intercept = computeIntercept(rocketStartX, rocketStartY, target.x, target.y + 38, 0, state.roundSpeed, rocketSpeed);
+    const dx = intercept.x - rocketStartX;
+    const dy = intercept.y - rocketStartY;
+    const distance = Math.max(1, Math.hypot(dx, dy));
+    const flightTime = Math.max(0.08, distance / rocketSpeed);
+    const vx = dx / flightTime;
+    const vy = dy / flightTime;
+    const angleDeg = Math.atan2(vy, vx) * 180 / Math.PI + 90;
+
     state.rocket = {
-      lane,
-      x:getLaneCenterX(lane),
-      y:state.controlsTopY - 16,
-      targetY:Math.max(56, target.y + 48),
-      speed:Math.max(380, state.fieldHeight * 1.55),
-      targetId:target.id,
+      lane: buttonLane,
+      x: rocketStartX,
+      y: rocketStartY,
+      vx,
+      vy,
+      speed: rocketSpeed,
+      targetId: target.id,
+      targetColorKey: target.color.key,
       resolved:false,
-      white:false
+      white:false,
+      age:0,
+      maxAge: flightTime + 0.12,
+      hitRadius: Math.max(28, 22 * state.scale),
+      angleDeg
     };
     renderButtons();
   }
@@ -473,7 +496,7 @@
     state.wrongGuessesThisRound += 1;
     state.flashBadUntil = performance.now() + 260;
     state.buildShakeUntil = performance.now() + 280;
-    state.overlayMessage = state.wrongGuessesThisRound >= 2 ? "Too many wrong guesses!" : "Wrong lane!";
+    state.overlayMessage = state.wrongGuessesThisRound >= 2 ? "Too many wrong guesses!" : "Wrong color!";
     state.overlayUntil = performance.now() + 420;
     target.visible = false;
     addEffect(makeSmokePuffEffect(target.x, target.y + 28));
@@ -501,8 +524,6 @@
   function handleCorrectHit(target){
     state.streak += 1;
     state.buttonsLocked = true;
-    state.activeLane = target.lane;
-    target.status = "correct";
     renderDynamic();
 
     scheduleAction(120, () => {
@@ -585,9 +606,9 @@
     }
   }
 
-  function launchBonusRocket(lane){
+  function launchBonusRocket(buttonLane){
     state.bonusShotsLeft = Math.max(0, state.bonusShotsLeft - 1);
-    const x = getLaneCenterX(lane);
+    const x = getLaneCenterX(buttonLane);
     state.bonusFireworks.push({
       id:`fw-${Date.now()}-${Math.random()}`,
       x,
@@ -665,11 +686,22 @@
       }
 
       if (state.rocket){
-        state.rocket.y -= state.rocket.speed * dt;
+        state.rocket.age += dt;
+        state.rocket.x += state.rocket.vx * dt;
+        state.rocket.y += state.rocket.vy * dt;
         addTrail(state.rocket.x, state.rocket.y + 18, state.rocket.white);
-        if (state.rocket.y <= state.rocket.targetY){
-          resolveRocketHit();
+
+        const target = state.entities.find(item => item.id === state.rocket.targetId && item.visible);
+        if (!target){
           state.rocket = null;
+          unlockAfterDelay(220);
+        } else {
+          const dx = target.x - state.rocket.x;
+          const dy = (target.y + 40) - state.rocket.y;
+          if (Math.hypot(dx, dy) <= state.rocket.hitRadius || state.rocket.age >= state.rocket.maxAge){
+            resolveRocketHit();
+            state.rocket = null;
+          }
         }
       }
     } else {
@@ -727,7 +759,7 @@
     }).join("");
 
     rocketsEl.innerHTML = `
-      ${state.rocket ? `<div class="vinv-rocket" style="left:${state.rocket.x}px; top:${state.rocket.y}px;">🚀</div>` : ""}
+      ${state.rocket ? `<div class="vinv-rocket" style="left:${state.rocket.x}px; top:${state.rocket.y}px; transform:translate(-50%,-50%) rotate(${state.rocket.angleDeg.toFixed(1)}deg);">🚀</div>` : ""}
       ${state.trails.map(trail => `<div class="vinv-trail ${trail.white ? "white" : ""}" style="left:${trail.x}px; top:${trail.y}px; opacity:${trail.opacity}">${trail.icon}</div>`).join("")}
       ${state.bonusFireworks.map(fw => `<div class="vinv-rocket white" style="left:${fw.x}px; top:${fw.y}px;">⚪</div>`).join("")}
     `;
@@ -807,10 +839,39 @@
     return "RIGHT";
   }
 
-  function laneToDefaultColor(lane){
-    if (lane === "left") return LANE_COLORS[0];
-    if (lane === "center") return LANE_COLORS[1];
-    return LANE_COLORS[2];
+  function buttonLaneToColor(lane){
+    return BUTTON_COLOR_ORDER[lane] || BUTTON_COLOR_ORDER.left;
+  }
+
+  function hasVisibleEntityForColor(colorKey){
+    return state.entities.some(item => item.visible && item.color.key === colorKey);
+  }
+
+  function computeIntercept(sx, sy, tx, ty, tvx, tvy, projectileSpeed){
+    const rx = tx - sx;
+    const ry = ty - sy;
+    const a = (tvx * tvx + tvy * tvy) - (projectileSpeed * projectileSpeed);
+    const b = 2 * (rx * tvx + ry * tvy);
+    const c = (rx * rx + ry * ry);
+
+    let t = null;
+    if (Math.abs(a) < 0.0001){
+      if (Math.abs(b) > 0.0001) t = -c / b;
+    } else {
+      const disc = b * b - 4 * a * c;
+      if (disc >= 0){
+        const root = Math.sqrt(disc);
+        const t1 = (-b - root) / (2 * a);
+        const t2 = (-b + root) / (2 * a);
+        const candidates = [t1, t2].filter(v => Number.isFinite(v) && v > 0);
+        if (candidates.length) t = Math.min(...candidates);
+      }
+    }
+
+    if (!Number.isFinite(t) || t <= 0) t = Math.max(0.12, Math.hypot(rx, ry) / projectileSpeed);
+    t = clamp(t, 0.12, 1.35);
+
+    return { x: tx + tvx * t, y: ty + tvy * t, t };
   }
 
   function parseReferenceParts(ref, translation, verseId){
