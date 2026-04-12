@@ -441,10 +441,10 @@
         x:getLaneCenterX(lane),
         y:-22 - index * 18,
         visible:true,
-        status:"falling"
+        status:"falling",
+        motionPhase: Math.random() * Math.PI * 2
       };
     });
-
     renderHud();
     renderDynamic();
   }
@@ -469,7 +469,16 @@
     const rocketStartX = getLaneCenterX(buttonLane);
     const rocketStartY = state.controlsTopY - 16;
     const rocketSpeed = Math.max(420, state.fieldHeight * 1.62);
-    const intercept = computeIntercept(rocketStartX, rocketStartY, target.x, target.y + 38, 0, state.roundSpeed, rocketSpeed);
+    const targetPoint = getEntityHitPoint(target);
+    const intercept = computeIntercept(
+      rocketStartX,
+      rocketStartY,
+      targetPoint.x,
+      targetPoint.y,
+      0,
+      state.roundSpeed,
+      rocketSpeed
+    );
     const dx = intercept.x - rocketStartX;
     const dy = intercept.y - rocketStartY;
     const distance = Math.max(1, Math.hypot(dx, dy));
@@ -519,7 +528,8 @@
     state.overlayMessage = state.wrongGuessesThisRound >= 2 ? "Too many wrong guesses!" : "Wrong color!";
     state.overlayUntil = performance.now() + 420;
     target.visible = false;
-    addEffect(makeSmokePuffEffect(target.x, target.y + 28));
+    const targetPoint = getEntityHitPoint(target);
+    addEffect(makeSmokePuffEffect(targetPoint.x, target.y + 28));
     renderHud();
     renderDynamic();
 
@@ -547,13 +557,15 @@
     renderDynamic();
 
     scheduleAction(120, () => {
-      addEffect(makeCorrectHitEffect(target.x, target.y + 22, target.color.hex, state.streak));
+      const targetPoint = getEntityHitPoint(target);
+      addEffect(makeCorrectHitEffect(targetPoint.x, target.y + 22, target.color.hex, state.streak));
       target.visible = false;
 
       state.entities.forEach(item => {
         if (item.id !== target.id && item.visible){
+          const itemPoint = getEntityHitPoint(item);
           item.visible = false;
-          addEffect(makeSmokePuffEffect(item.x, item.y + 28));
+          addEffect(makeSmokePuffEffect(itemPoint.x, item.y + 28));
         }
       });
 
@@ -582,7 +594,8 @@
       item.visible = false;
     });
 
-    addEffect(makeAbductionEffect(target.x, state.bottomZoneY - 12, target.color));
+    const targetPoint = getEntityHitPoint(target);
+    addEffect(makeAbductionEffect(targetPoint.x, state.bottomZoneY - 12, target.color));
     renderHud();
     renderDynamic();
 
@@ -716,8 +729,9 @@
           state.rocket = null;
           unlockAfterDelay(220);
         } else {
-          const dx = target.x - state.rocket.x;
-          const dy = (target.y + 40) - state.rocket.y;
+        const targetPoint = getEntityHitPoint(target, ts);
+        const dx = targetPoint.x - state.rocket.x;
+        const dy = targetPoint.y - state.rocket.y;
           if (Math.hypot(dx, dy) <= state.rocket.hitRadius || state.rocket.age >= state.rocket.maxAge){
             resolveRocketHit();
             state.rocket = null;
@@ -770,8 +784,21 @@
           ? "is-correct-pause"
           : "";
 
+      const motion = getEntityMotionState(entity, now);
+
       return `
-        <div class="vinv-entity ${className}" style="left:${entity.x}px; top:${entity.y}px; ${hidden}">
+        <div
+          class="vinv-entity ${className}"
+          style="
+            left:${entity.x}px;
+            top:${entity.y}px;
+            ${hidden}
+            transform:translate(calc(-50% + ${motion.swayX.toFixed(1)}px), 0)
+              rotate(${motion.rotateDeg.toFixed(2)}deg)
+              skewX(${motion.skewXDeg.toFixed(2)}deg)
+              scale(${motion.scaleX.toFixed(3)}, ${motion.scaleY.toFixed(3)});
+          "
+        >
           <div class="vinv-alien">
             <img
               class="vinv-alien-img"
@@ -855,12 +882,35 @@
     return Math.max(4, max - penalty);
   }
 
-  function getLaneCenterX(lane){
-    const index = LANE_KEYS.indexOf(lane);
-    return state.fieldWidth * ((index + 0.5) / 3);
-  }
+function getLaneCenterX(lane){
+  const index = LANE_KEYS.indexOf(lane);
+  return state.fieldWidth * ((index + 0.5) / 3);
+}
 
-  function laneLabel(lane){
+function getEntityMotionState(entity, now = performance.now()){
+  const phase = entity.motionPhase || 0;
+  const sway = Math.sin(now * 0.0032 + phase) * 18;
+  const pulse = Math.sin(now * 0.0044 + phase * 0.7);
+
+  return {
+    swayX: sway,
+    renderX: entity.x + sway,
+    rotateDeg: Math.sin(now * 0.0032 + phase) * 4.5,
+    skewXDeg: Math.sin(now * 0.0032 + phase) * 3.5,
+    scaleX: 1 + pulse * 0.035,
+    scaleY: 1 - pulse * 0.035
+  };
+}
+
+function getEntityHitPoint(entity, now = performance.now()){
+  const motion = getEntityMotionState(entity, now);
+  return {
+    x: motion.renderX,
+    y: entity.y + 40
+  };
+}
+
+function laneLabel(lane){
     if (lane === "left") return "LEFT";
     if (lane === "center") return "CENTER";
     return "RIGHT";
