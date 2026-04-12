@@ -1,0 +1,517 @@
+:root{
+  --vinv-bg:#333333;
+  --vinv-build-bg:#ffffff;
+  --vinv-text-dark:#333333;
+  --vinv-red:#ff5a51;
+  --vinv-yellow:#ffc751;
+  --vinv-blue:#40b9c5;
+  --vinv-green:#a7cb6f;
+  --vinv-white:#ffffff;
+  --vinv-side:14px;
+  --vinv-stage-max:860px;
+}
+
+html,body{
+  height:100%;
+}
+
+body{
+  margin:0;
+  background:var(--vinv-bg);
+  color:var(--vinv-white);
+  -webkit-user-select:none;
+  user-select:none;
+  -webkit-touch-callout:none;
+}
+
+#app.vm-shell{
+  min-height:100dvh;
+  height:100dvh;
+  padding:0;
+  display:block;
+  overflow:hidden;
+}
+
+.vinv-shell,
+.vinv-mode-shell{
+  min-height:100dvh;
+  height:100dvh;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  background:var(--vinv-bg);
+}
+
+.vinv-stage,
+.vinv-mode-stage{
+  width:100%;
+  max-width:var(--vinv-stage-max);
+  margin:0 auto;
+  flex:1 1 auto;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+}
+
+.vinv-mode-top{
+  flex:1 1 auto;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  gap:12px;
+  padding:24px 18px;
+}
+
+.vinv-title{
+  font-size:clamp(30px,6vw,58px);
+  font-weight:900;
+  line-height:1.02;
+}
+
+.vinv-subtitle{
+  font-size:clamp(18px,2.6vw,28px);
+  font-weight:800;
+  line-height:1.18;
+  max-width:700px;
+}
+
+.vinv-mode-card{
+  width:min(100%,640px);
+  background:rgba(255,255,255,0.08);
+  border-radius:24px;
+  padding:16px;
+}
+
+.vinv-mode-actions{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+
+.vm-btn{
+  min-height:58px;
+  border:none;
+  border-radius:20px;
+  background:#ffffff;
+  color:#333333;
+  font:inherit;
+  font-size:clamp(20px,4vw,28px);
+  font-weight:900;
+  box-shadow:0 6px 0 rgba(0,0,0,0.24);
+}
+
+.vinv-build-wrap{
+  flex:0 0 auto;
+  padding:12px var(--vinv-side) 10px;
+}
+
+.vinv-build{
+  background:var(--vinv-build-bg);
+  color:var(--vinv-text-dark);
+  border-radius:22px;
+  padding:16px 18px;
+  min-height:108px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+}
+
+.vinv-build.is-shake{
+  animation:vinvShake 280ms ease;
+}
+
+.vinv-build-text{
+  font-size:clamp(21px,5vw,38px);
+  line-height:1.18;
+  font-weight:900;
+  text-wrap:balance;
+}
+
+.vinv-build-token{
+  color:transparent;
+  transition:color 160ms ease;
+}
+
+.vinv-build-token.is-built.is-verse{
+  color:var(--vinv-text-dark);
+}
+
+.vinv-build-token.is-built.is-book{
+  color:var(--vinv-blue);
+}
+
+.vinv-build-token.is-built.is-reference{
+  color:var(--vinv-red);
+}
+
+.vinv-field-wrap{
+  flex:1 1 auto;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  padding:0 var(--vinv-side);
+}
+
+.vinv-field{
+  position:relative;
+  flex:1 1 auto;
+  min-height:280px;
+  border-radius:26px 26px 0 0;
+  overflow:hidden;
+  background:
+    radial-gradient(circle at top, rgba(255,255,255,0.09), transparent 40%),
+    linear-gradient(180deg, rgba(255,255,255,0.02), rgba(0,0,0,0.12));
+}
+
+.vinv-field.is-flash-bad{
+  animation:vinvFlashBad 260ms ease;
+}
+
+.vinv-lanes,
+.vinv-entities,
+.vinv-rockets,
+.vinv-effects,
+.vinv-bottom,
+.vinv-bonus,
+.vinv-overlay-msg,
+.vinv-hud-overlay{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+}
+
+.vinv-lane{
+  position:absolute;
+  top:0;
+  bottom:0;
+  width:33.3333%;
+  border-left:1px solid rgba(255,255,255,0.08);
+}
+.vinv-lane:first-child{ border-left:none; }
+
+.vinv-lane-guide{
+  position:absolute;
+  left:50%;
+  top:0;
+  bottom:18px;
+  width:2px;
+  transform:translateX(-50%);
+  background:linear-gradient(180deg, rgba(255,255,255,0.12), rgba(255,255,255,0));
+}
+
+.vinv-hud-overlay{
+  z-index:2;
+}
+
+.vinv-corner-pill{
+  position:absolute;
+  top:12px;
+  background:rgba(255,255,255,0.96);
+  color:#333333;
+  border-radius:999px;
+  padding:6px 12px;
+  font-weight:900;
+  font-size:15px;
+}
+
+.vinv-corner-left{ left:12px; }
+.vinv-corner-right{ right:12px; }
+
+.vinv-entity{
+  position:absolute;
+  width:min(29vw,170px);
+  max-width:170px;
+  min-width:84px;
+  transform:translate(-50%, 0);
+  text-align:center;
+  will-change:transform, opacity;
+}
+
+.vinv-alien{
+  font-size:clamp(30px,7vw,60px);
+  line-height:1;
+  filter:drop-shadow(0 3px 0 rgba(0,0,0,0.18));
+}
+
+.vinv-word{
+  margin-top:6px;
+  font-weight:900;
+  font-size:clamp(18px,3.8vw,32px);
+  line-height:1.06;
+  text-shadow:0 2px 0 rgba(0,0,0,0.20);
+  word-break:break-word;
+}
+
+.vinv-abduct-passenger{
+  margin-top:8px;
+  font-size:clamp(18px,5vw,30px);
+  line-height:1;
+}
+
+.vinv-entity.is-hit-wrong{ animation:vinvWrongPop 240ms ease forwards; }
+.vinv-entity.is-fade{ animation:vinvFadeOut 240ms ease forwards; }
+.vinv-entity.is-correct-pause{ animation:vinvCorrectPause 140ms ease forwards; }
+.vinv-entity.is-abduct{ animation:vinvAbduct 900ms ease forwards; }
+
+.vinv-puff,
+.vinv-burst,
+.vinv-beam,
+.vinv-firework{
+  position:absolute;
+  transform:translate(-50%,-50%);
+  text-align:center;
+}
+
+.vinv-puff{ font-size:clamp(24px,6vw,42px); animation:vinvPuff 320ms ease forwards; }
+.vinv-burst{ font-size:clamp(34px,9vw,72px); animation:vinvBurst 560ms ease forwards; }
+.vinv-burst.is-large{ font-size:clamp(42px,11vw,88px); }
+
+.vinv-beam{
+  width:clamp(36px,8vw,68px);
+  height:118px;
+  border-radius:999px;
+  background:linear-gradient(180deg, rgba(255,255,255,0), rgba(255,245,160,0.8), rgba(255,255,255,0));
+  animation:vinvBeam 260ms ease-in-out infinite alternate;
+}
+
+.vinv-firework{
+  width:0;
+  height:0;
+  animation:vinvFirework 760ms ease forwards;
+}
+
+.vinv-firework-core{
+  position:absolute;
+  left:0;
+  top:0;
+  transform:translate(-50%,-50%);
+  font-size:clamp(34px,10vw,82px);
+  line-height:1;
+}
+
+.vinv-firework.is-large .vinv-firework-core{
+  font-size:clamp(44px,12vw,98px);
+}
+
+.vinv-firework-ring{
+  position:absolute;
+  left:0;
+  top:0;
+  width:12px;
+  height:12px;
+  border:3px solid rgba(255,255,255,0.9);
+  border-radius:999px;
+  transform:translate(-50%,-50%) scale(0.2);
+  animation:vinvFireworkRing 760ms ease forwards;
+}
+
+.vinv-controls{
+  flex:0 0 auto;
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0,1fr));
+  gap:12px;
+  padding:12px 0 8px;
+}
+
+.vinv-lane-btn{
+  min-height:62px;
+  border:none;
+  border-radius:22px;
+  color:#ffffff;
+  font:inherit;
+  font-size:clamp(18px,3.8vw,26px);
+  font-weight:900;
+  box-shadow:0 6px 0 rgba(0,0,0,0.24);
+  transition:transform 90ms ease, opacity 140ms ease, filter 140ms ease;
+}
+
+.vinv-lane-btn:active{ transform:translateY(4px); box-shadow:0 2px 0 rgba(0,0,0,0.24); }
+.vinv-lane-btn.is-dim{ opacity:0.34; filter:saturate(0.6); }
+.vinv-lane-btn:disabled{ cursor:default; }
+
+.vinv-lane-btn[data-color="red"]{ background:var(--vinv-red); }
+.vinv-lane-btn[data-color="yellow"]{ background:var(--vinv-yellow); color:#4b3500; }
+.vinv-lane-btn[data-color="blue"]{ background:var(--vinv-blue); }
+
+.vinv-rocket{
+  position:absolute;
+  transform:translate(-50%,-50%);
+  font-size:clamp(22px,5vw,34px);
+}
+
+.vinv-rocket.white{ filter:grayscale(1) brightness(1.7); }
+.vinv-trail{
+  position:absolute;
+  transform:translate(-50%,-50%);
+  font-size:clamp(14px,3vw,20px);
+  opacity:0.9;
+}
+
+.vinv-overlay-msg{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.vinv-overlay-pill{
+  background:rgba(255,255,255,0.96);
+  color:#333333;
+  border-radius:999px;
+  padding:10px 16px;
+  font-weight:900;
+  font-size:clamp(18px,3vw,24px);
+  animation:vinvOverlayPop 260ms ease;
+}
+
+.vinv-nav-wrap{
+  flex:0 0 auto;
+  padding:0 var(--vinv-side) calc(10px + env(safe-area-inset-bottom));
+}
+
+.vinv-nav{
+  max-width:var(--vinv-stage-max);
+  margin:0 auto;
+  display:flex;
+  gap:12px;
+  align-items:center;
+}
+
+.vinv-nav-btn,
+.vinv-help-btn{
+  min-height:52px;
+  border:none;
+  border-radius:999px;
+  font:inherit;
+  font-size:20px;
+  font-weight:900;
+  box-shadow:0 6px 0 rgba(0,0,0,0.24);
+}
+
+.vinv-nav-btn{
+  width:72px;
+  min-width:72px;
+  background:rgba(255,255,255,0.95);
+  color:#333333;
+}
+
+.vinv-nav-center{ flex:1 1 auto; display:flex; justify-content:center; }
+.vinv-help-btn{ width:min(100%,220px); padding:0 22px; background:#ffffff; color:#333333; }
+
+.vinv-help-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.42);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  z-index:20;
+}
+
+.vinv-help-overlay.is-open{ display:flex; }
+
+.vinv-help-dialog{
+  width:min(100%,560px);
+  background:#ffffff;
+  color:#333333;
+  border-radius:24px;
+  padding:22px 18px;
+  text-align:center;
+}
+
+.vinv-help-title{
+  font-size:clamp(26px,5vw,38px);
+  font-weight:900;
+}
+
+.vinv-help-body{
+  margin-top:10px;
+  font-size:clamp(18px,3.8vw,24px);
+  line-height:1.25;
+  font-weight:800;
+}
+
+.vinv-help-actions{
+  margin-top:16px;
+  display:flex;
+  justify-content:center;
+}
+
+@keyframes vinvShake{
+  0%{transform:translateX(0)}
+  25%{transform:translateX(-8px)}
+  50%{transform:translateX(8px)}
+  75%{transform:translateX(-5px)}
+  100%{transform:translateX(0)}
+}
+
+@keyframes vinvFlashBad{
+  0%{ background-color:rgba(255,90,81,0); }
+  20%{ background-color:rgba(255,90,81,0.34); }
+  100%{ background-color:rgba(255,90,81,0); }
+}
+
+@keyframes vinvWrongPop{
+  0%{ opacity:1; transform:translate(-50%,0) scale(1); }
+  100%{ opacity:0; transform:translate(-50%,-10px) scale(0.68); }
+}
+
+@keyframes vinvFadeOut{
+  from{ opacity:1; }
+  to{ opacity:0; }
+}
+
+@keyframes vinvCorrectPause{
+  0%{ transform:translate(-50%,0) scale(1); }
+  100%{ transform:translate(-50%,0) scale(1.12); }
+}
+
+@keyframes vinvAbduct{
+  0%{ opacity:1; transform:translate(-50%,0); }
+  18%{ opacity:1; transform:translate(-50%,0); }
+  100%{ opacity:0; transform:translate(-50%,-230px); }
+}
+
+@keyframes vinvPuff{
+  0%{ opacity:1; transform:translate(-50%,-50%) scale(0.8); }
+  100%{ opacity:0; transform:translate(-50%,-72%) scale(1.45); }
+}
+
+@keyframes vinvBurst{
+  0%{ opacity:0; transform:translate(-50%,-50%) scale(0.3); }
+  20%{ opacity:1; }
+  100%{ opacity:0; transform:translate(-50%,-50%) scale(1.75); }
+}
+
+@keyframes vinvBeam{
+  from{ opacity:0.45; }
+  to{ opacity:0.9; }
+}
+
+@keyframes vinvFirework{
+  0%{ opacity:0; transform:translate(-50%,-50%) scale(0.2); }
+  12%{ opacity:1; }
+  100%{ opacity:0; transform:translate(-50%,-50%) scale(1.35); }
+}
+
+@keyframes vinvFireworkRing{
+  0%{ opacity:0.9; transform:translate(-50%,-50%) scale(0.2); }
+  100%{ opacity:0; transform:translate(-50%,-50%) scale(9); }
+}
+
+@keyframes vinvOverlayPop{
+  0%{ opacity:0; transform:scale(0.85); }
+  100%{ opacity:1; transform:scale(1); }
+}
+
+@media (max-width:560px){
+  .vinv-controls{ gap:10px; }
+  .vinv-lane-btn{ min-height:58px; border-radius:18px; }
+  .vinv-nav{ gap:10px; }
+  .vinv-nav-btn{ width:64px; min-width:64px; }
+  .vinv-corner-pill{ top:10px; font-size:14px; padding:5px 10px; }
+}
