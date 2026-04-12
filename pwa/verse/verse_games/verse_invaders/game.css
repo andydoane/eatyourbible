@@ -229,9 +229,20 @@ body{
 }
 
 .vinv-alien{
-  font-size:clamp(30px,7vw,60px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
   line-height:1;
+}
+
+.vinv-alien-img{
+  display:block;
+  width:clamp(62px, 15vw, 118px);
+  height:auto;
   filter:drop-shadow(0 3px 0 rgba(0,0,0,0.18));
+  pointer-events:none;
+  user-select:none;
+  -webkit-user-drag:none;
 }
 
 .vinv-word{
@@ -245,8 +256,19 @@ body{
 
 .vinv-abduct-passenger{
   margin-top:8px;
-  font-size:clamp(18px,5vw,30px);
   line-height:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+
+.vinv-abductee-img{
+  display:block;
+  width:clamp(42px, 10vw, 78px);
+  height:auto;
+  pointer-events:none;
+  user-select:none;
+  -webkit-user-drag:none;
 }
 
 .vinv-abduct-wrap{
