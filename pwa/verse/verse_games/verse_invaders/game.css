@@ -151,14 +151,14 @@ body{
   min-height:0;
   display:flex;
   flex-direction:column;
-  padding:0 var(--vinv-side);
+  padding:0 var(--vinv-side) calc(10px + env(safe-area-inset-bottom));
 }
 
 .vinv-field{
   position:relative;
   flex:1 1 auto;
   min-height:280px;
-  border-radius:26px 26px 0 0;
+  border-radius:26px;
   overflow:hidden;
   background:
     radial-gradient(circle at top, rgba(255,255,255,0.09), transparent 40%),
@@ -203,6 +203,16 @@ body{
 
 .vinv-hud-overlay{
   z-index:2;
+}
+
+.vinv-hud-overlay{
+  z-index:2;
+  pointer-events:none;
+}
+
+.vinv-corner-pill{
+  pointer-events:auto;
+  cursor:pointer;
 }
 
 .vinv-corner-pill{
@@ -408,11 +418,11 @@ body{
   display:grid;
   grid-template-columns:repeat(3, minmax(0,1fr));
   gap:12px;
-  padding:12px 0 8px;
+  padding:14px 0 0;
 }
 
 .vinv-lane-btn{
-  min-height:62px;
+  min-height:68px;
   border:none;
   border-radius:22px;
   color:#ffffff;
@@ -567,6 +577,31 @@ body{
   justify-content:center;
 }
 
+.vinv-game-menu-dialog{
+  background:#ffffff;
+}
+
+.vinv-game-menu-title{
+  color:#7f66c6;
+}
+
+.vinv-game-menu-actions{
+  margin-top:16px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.vinv-game-menu-btn{
+  background:#7f66c6;
+  color:#ffffff;
+}
+
+.vinv-corner-left{
+  min-width:44px;
+  text-align:center;
+}
+
 @keyframes vinvShake{
   0%{transform:translateX(0)}
   25%{transform:translateX(-8px)}
@@ -603,7 +638,7 @@ body{
 
 @media (max-width:560px){
   .vinv-controls{ gap:10px; }
-  .vinv-lane-btn{ min-height:58px; border-radius:18px; }
+  .vinv-lane-btn{ min-height:62px; border-radius:18px; }
   .vinv-nav{ gap:10px; }
   .vinv-nav-btn{ width:64px; min-width:64px; }
   .vinv-corner-pill{ top:10px; font-size:14px; padding:5px 10px; }
