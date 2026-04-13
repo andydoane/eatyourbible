@@ -78,6 +78,7 @@
     buildShakeUntil:0,
     overlayMessage:"",
     overlayUntil:0,
+    buildSizeClass:"normal",
     queue:[],
     builtCount:0,
     phase:"words",
@@ -175,6 +176,7 @@
     state.overlayMessage = "";
     state.overlayUntil = 0;
     state.queue = [...verseWords, parsedRef.book, parsedRef.reference].filter(Boolean);
+    state.buildSizeClass = getBuildSizeClass(ctx.verseText, parsedRef.book, parsedRef.reference);
     state.builtCount = 0;
     state.phase = "words";
     state.streak = 0;
@@ -511,6 +513,7 @@ function backToMenuFromHelp(){
     if (!buildText || !build) return;
 
     build.classList.toggle("is-shake", state.buildShakeUntil > performance.now());
+    buildText.className = `vinv-build-text ${state.buildSizeClass}`;
     buildText.innerHTML = state.queue.map((token, index) => {
       const phaseClass = getBuildTokenPhase(index);
       const builtClass = index < state.builtCount ? "is-built" : "";
@@ -518,13 +521,26 @@ function backToMenuFromHelp(){
     }).join(" ");
   }
 
-  function getBuildTokenPhase(index){
-    if (index < verseWords.length) return "is-verse";
-    if (index === verseWords.length) return "is-book";
-    return "is-reference";
-  }
+function getBuildTokenPhase(index){
+  if (index < verseWords.length) return "is-verse";
+  if (index === verseWords.length) return "is-book";
+  return "is-reference";
+}
 
-  function renderButtons(){
+function getBuildLengthScore(verseText, book, reference){
+  return String(verseText || "").length
+    + String(book || "").length
+    + String(reference || "").length;
+}
+
+function getBuildSizeClass(verseText, book, reference){
+  const score = getBuildLengthScore(verseText, book, reference);
+  if (score >= 136) return "is-small";
+  if (score >= 106) return "is-medium";
+  return "is-normal";
+}
+
+function renderButtons(){
     const buttons = document.querySelectorAll(".vinv-lane-btn");
     buttons.forEach((btn) => {
       const lane = btn.dataset.lane;
