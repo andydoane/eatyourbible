@@ -18,7 +18,7 @@
   --vmunch-pills-margin-bottom:8px;
 
   --vmunch-main-top:32px;
-  --vmunch-nav-reserve:84px;
+  --vmunch-nav-reserve:0px;
   --vmunch-food-gap-top:8px;
   --vmunch-food-gap-bottom:22px;
   --vmunch-food-zone-min-height:82px;
@@ -229,7 +229,7 @@ body{
   min-height:0;
   display:flex;
   flex-direction:column;
-  padding:0 var(--vmunch-side-padding) env(safe-area-inset-bottom);
+  padding:0 var(--vmunch-side-padding) calc(10px + env(safe-area-inset-bottom));
 }
 
 .vmunch-field{
@@ -258,8 +258,8 @@ body{
   gap:10px;
   padding:0 var(--vmunch-pills-side-padding);
   margin:var(--vmunch-pills-margin-top) 0 var(--vmunch-pills-margin-bottom);
-  pointer-events:none;
   flex:0 0 auto;
+  pointer-events:none;
 }
 
 .vmunch-pill{
@@ -270,6 +270,14 @@ body{
   font-weight:900;
   font-size:16px;
   box-shadow:0 4px 0 rgba(0,0,0,0.18);
+  border:none;
+  pointer-events:auto;
+}
+
+.vmunch-menu-pill{
+  min-width:44px;
+  text-align:center;
+  cursor:pointer;
 }
 
 .vmunch-bg .bubble{
@@ -665,9 +673,10 @@ body{
 
 .vmunch-help-dialog{
   width:min(100%, 560px);
-  background:#333333;
-  border-radius:28px;
-  padding:20px 18px 18px;
+  background:#ffffff;
+  color:#333333;
+  border-radius:24px;
+  padding:22px 18px 18px;
   box-shadow:0 16px 40px rgba(0,0,0,0.28);
   text-align:center;
 }
@@ -683,10 +692,32 @@ body{
   font-size:21px;
   font-weight:700;
   line-height:1.28;
+  text-wrap:balance;
+  overflow-wrap:break-word;
 }
 
 .vmunch-help-actions{
   margin-top:16px;
+}
+
+.vmunch-game-menu-dialog{
+  background:#ffffff;
+}
+
+.vmunch-game-menu-title{
+  color:#7f66c6;
+}
+
+.vmunch-game-menu-actions{
+  margin-top:16px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.vmunch-game-menu-btn{
+  background:#7f66c6;
+  color:#ffffff;
 }
 
 .vmunch-complete-icon{
