@@ -104,6 +104,8 @@ const FACE_MAP = {
     running:false,
     rafId:0,
     lastTs:0,
+    paused:false,
+    pauseReason:"",
     scale:1,
     fieldWidth:0,
     fieldHeight:0,
@@ -208,6 +210,8 @@ const FACE_MAP = {
     bonusRunning = false;
     state.running = true;
     state.lastTs = 0;
+    state.paused = false;
+    state.pauseReason = "";
     state.progressIndex = 0;
     state.streak = 0;
     state.emotionLevel = 0;
@@ -240,8 +244,8 @@ app.innerHTML = `
       </div>
 
       <div class="vmunch-overlay-pills">
-        <div class="vmunch-pill" id="vmunchModePill">${escapeHtml(getMoodLabel())}</div>
-        <div class="vmunch-pill" id="vmunchStreakPill">Streak: 0</div>
+        <button class="vmunch-pill vmunch-menu-pill" id="vmunchMenuPill" aria-label="Game Menu">☰</button>
+        <div class="vmunch-pill" id="vmunchMoodPill">${escapeHtml(getMoodLabel())}</div>
       </div>
 
       <div class="vmunch-field-wrap">
@@ -279,8 +283,8 @@ app.innerHTML = `
       </div>
     </div>
 
-    ${renderNav()}
     ${renderHelpOverlay("Rotate the selector with the arrows.<br><br>Tap the word to feed it upward.<br><br>The face emotion changes only after each reaction finishes.<br><br>Wrong picks reset your streak but never end the run.")}
+    ${renderGameMenuOverlay()}
   </div>
 `;
 
@@ -366,28 +370,166 @@ app.innerHTML = `
     `;
   }
 
-  function wireCommonNav(){
-    const homeBtn = document.getElementById("homeBtn");
-    const helpBtn = document.getElementById("helpBtn");
-    const muteBtn = document.getElementById("muteBtn");
-    const helpOverlay = document.getElementById("vmunchHelpOverlay");
-    const helpCloseBtn = document.getElementById("vmunchHelpCloseBtn");
+function renderGameMenuOverlay(){
+  return `
+    <div class="vmunch-help-overlay" id="vmunchGameMenuOverlay" aria-hidden="true">
+      <div class="vmunch-help-dialog vmunch-game-menu-dialog">
+        <div class="vmunch-help-title vmunch-game-menu-title">Game Menu</div>
+        <div class="vmunch-game-menu-actions">
+          <button class="vm-btn vmunch-game-menu-btn" id="vmunchMenuHowToBtn">How to Play</button>
+          <button class="vm-btn vmunch-game-menu-btn" id="vmunchMenuMuteBtn">${muted ? "Unmute" : "Mute"}</button>
+          <button class="vm-btn vmunch-game-menu-btn" id="vmunchMenuExitBtn">Exit Game</button>
+          <button class="vm-btn vmunch-game-menu-btn" id="vmunchMenuCloseBtn">Close</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
 
-    if (homeBtn) homeBtn.onclick = () => window.VerseGameBridge.exitGame();
-    if (helpBtn) helpBtn.onclick = () => helpOverlay.classList.add("is-open");
-    if (helpCloseBtn) helpCloseBtn.onclick = () => helpOverlay.classList.remove("is-open");
-    if (helpOverlay){
-      helpOverlay.onclick = (e) => {
-        if (e.target === helpOverlay) helpOverlay.classList.remove("is-open");
-      };
-    }
-    if (muteBtn){
-      muteBtn.onclick = () => {
-        muted = !muted;
-        muteBtn.innerHTML = muted ? getMuteSvg() : getUnmuteSvg();
-      };
-    }
+function wireCommonNav(){
+  const homeBtn = document.getElementById("homeBtn");
+  const helpBtn = document.getElementById("helpBtn");
+  const muteBtn = document.getElementById("muteBtn");
+
+  const helpOverlay = document.getElementById("vmunchHelpOverlay");
+  const helpCloseBtn = document.getElementById("vmunchHelpCloseBtn");
+
+  const menuOverlay = document.getElementById("vmunchGameMenuOverlay");
+  const menuHowToBtn = document.getElementById("vmunchMenuHowToBtn");
+  const menuMuteBtn = document.getElementById("vmunchMenuMuteBtn");
+  const menuExitBtn = document.getElementById("vmunchMenuExitBtn");
+  const menuCloseBtn = document.getElementById("vmunchMenuCloseBtn");
+
+  if (homeBtn) homeBtn.onclick = () => window.VerseGameBridge.exitGame();
+
+  if (helpBtn) {
+    helpBtn.onclick = () => {
+      if (helpOverlay){
+        helpOverlay.classList.add("is-open");
+        helpOverlay.dataset.mode = "close";
+        if (helpCloseBtn) helpCloseBtn.textContent = "OK";
+      }
+    };
   }
+
+  if (helpCloseBtn) {
+    helpCloseBtn.onclick = () => {
+      const mode = helpOverlay?.dataset.mode || "close";
+      if (mode === "back"){
+        backToMenuFromHelp();
+      } else {
+        closeHelpOverlay();
+      }
+    };
+  }
+
+  if (helpOverlay){
+    helpOverlay.onclick = (e) => {
+      if (e.target === helpOverlay){
+        const mode = helpOverlay.dataset.mode || "close";
+        if (mode === "back"){
+          backToMenuFromHelp();
+        } else {
+          closeHelpOverlay();
+        }
+      }
+    };
+  }
+
+  if (muteBtn){
+    muteBtn.onclick = () => {
+      muted = !muted;
+      muteBtn.innerHTML = muted ? getMuteSvg() : getUnmuteSvg();
+      if (menuMuteBtn) menuMuteBtn.textContent = muted ? "Unmute" : "Mute";
+    };
+  }
+
+  if (menuHowToBtn){
+    menuHowToBtn.onclick = () => {
+      openHelpFromMenu();
+    };
+  }
+
+  if (menuMuteBtn){
+    menuMuteBtn.onclick = () => {
+      muted = !muted;
+      menuMuteBtn.textContent = muted ? "Unmute" : "Mute";
+      if (muteBtn) muteBtn.innerHTML = muted ? getMuteSvg() : getUnmuteSvg();
+    };
+  }
+
+  if (menuExitBtn){
+    menuExitBtn.onclick = () => window.VerseGameBridge.exitGame();
+  }
+
+  if (menuCloseBtn){
+    menuCloseBtn.onclick = () => closeGameMenu();
+  }
+
+  if (menuOverlay){
+    menuOverlay.onclick = (e) => {
+      if (e.target === menuOverlay) closeGameMenu();
+    };
+  }
+}
+
+function setPaused(paused, reason = ""){
+  state.paused = paused;
+  state.pauseReason = paused ? reason : "";
+  if (!paused){
+    state.lastTs = performance.now();
+  }
+}
+
+function openGameMenu(){
+  const menuOverlay = document.getElementById("vmunchGameMenuOverlay");
+  if (menuOverlay){
+    setPaused(true, "menu");
+    menuOverlay.classList.add("is-open");
+  }
+}
+
+function closeGameMenu(){
+  const menuOverlay = document.getElementById("vmunchGameMenuOverlay");
+  if (menuOverlay){
+    menuOverlay.classList.remove("is-open");
+  }
+  const helpOverlay = document.getElementById("vmunchHelpOverlay");
+  if (!helpOverlay || !helpOverlay.classList.contains("is-open")){
+    setPaused(false, "");
+  }
+}
+
+function openHelpFromMenu(){
+  const menuOverlay = document.getElementById("vmunchGameMenuOverlay");
+  const helpOverlay = document.getElementById("vmunchHelpOverlay");
+  const helpCloseBtn = document.getElementById("vmunchHelpCloseBtn");
+
+  if (menuOverlay) menuOverlay.classList.remove("is-open");
+  if (helpOverlay){
+    helpOverlay.classList.add("is-open");
+    helpOverlay.dataset.mode = "back";
+  }
+  if (helpCloseBtn) helpCloseBtn.textContent = "Back";
+
+  setPaused(true, "help");
+}
+
+function closeHelpOverlay(){
+  const helpOverlay = document.getElementById("vmunchHelpOverlay");
+  if (helpOverlay) helpOverlay.classList.remove("is-open");
+  setPaused(false, "");
+}
+
+function backToMenuFromHelp(){
+  const helpOverlay = document.getElementById("vmunchHelpOverlay");
+  const menuOverlay = document.getElementById("vmunchGameMenuOverlay");
+
+  if (helpOverlay) helpOverlay.classList.remove("is-open");
+  if (menuOverlay) menuOverlay.classList.add("is-open");
+
+  setPaused(true, "menu");
+}
 
   function wireGameInput(){
     const prevBtn = document.getElementById("vmunchPrevBtn");
@@ -396,20 +538,23 @@ app.innerHTML = `
 
     prevBtn.addEventListener("pointerup", (e) => {
       e.preventDefault();
+      if (state.paused) return;
       rotateCarousel(-1);
     });
     nextBtn.addEventListener("pointerup", (e) => {
       e.preventDefault();
+      if (state.paused) return;
       rotateCarousel(1);
     });
     choiceBtn.addEventListener("pointerup", (e) => {
       e.preventDefault();
+      if (state.paused) return;
       handleCenteredSelection();
     });
 
     window.addEventListener("resize", recalcField);
     window.onkeydown = (e) => {
-      if (!state.running || state.inputLocked) return;
+      if (!state.running || state.inputLocked || state.paused) return;
       if (e.key === "ArrowLeft"){
         e.preventDefault();
         rotateCarousel(-1);
@@ -444,13 +589,16 @@ app.innerHTML = `
     state.lastTs = ts;
 
     recalcField();
-    updateIdle(dt);
-    updateFlyingFood(dt);
-    updateTrails(dt);
-    updateParticles(dt);
-    updateConfetti(dt);
-    renderFrame(ts);
 
+    if (!state.paused){
+      updateIdle(dt);
+      updateFlyingFood(dt);
+      updateTrails(dt);
+      updateParticles(dt);
+      updateConfetti(dt);
+    }
+
+    renderFrame(ts);
     state.rafId = requestAnimationFrame(loop);
   }
 
@@ -773,8 +921,8 @@ app.innerHTML = `
     renderParticles();
     renderConfetti();
     renderFeedback(ts);
+    updateMenuPill();
     updateMoodPill();
-    updateStreakPill();
   }
 
   function updateBuildText(){
@@ -1149,18 +1297,17 @@ function spawnChewCrumbs(isSecondary = false){
     return `Not ${chosen}. Looking for ${correct}.`;
   }
 
-  function updateStreakPill(){
-    const pill = document.getElementById("vmunchStreakPill");
+
+  function updateMenuPill(){
+    const pill = document.getElementById("vmunchMenuPill");
     if (!pill) return;
-    let suffix = "";
-    const tier = getTrailTier();
-    if (tier >= 3) suffix = " 🌈";
-    else if (tier >= 1) suffix = " ✨";
-    pill.textContent = `Streak: ${state.streak}${suffix}`;
+    pill.textContent = "☰";
+    pill.setAttribute("aria-label", "Game Menu");
+    pill.onclick = () => openGameMenu();
   }
 
   function updateMoodPill(){
-    const pill = document.getElementById("vmunchModePill");
+    const pill = document.getElementById("vmunchMoodPill");
     if (!pill) return;
     pill.textContent = getMoodLabel();
   }
