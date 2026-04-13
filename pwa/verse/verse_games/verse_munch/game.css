@@ -191,6 +191,21 @@ body{
   text-wrap:balance;
 }
 
+.vmunch-build-text.is-normal{
+  font-size:var(--vmunch-build-text-size);
+  line-height:var(--vmunch-build-line-height);
+}
+
+.vmunch-build-text.is-medium{
+  font-size:clamp(20px, 4.8vw, 34px);
+  line-height:1.14;
+}
+
+.vmunch-build-text.is-small{
+  font-size:clamp(18px, 4.1vw, 29px);
+  line-height:1.10;
+}
+
 .vmunch-build-word{
   color:transparent;
   transition:color 160ms ease;
