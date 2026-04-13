@@ -105,30 +105,8 @@
   const parsedRef = parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
   const verseWords = tokenizeVerse(ctx.verseText);
 
-  renderConstructionScreen();
+  renderIntro();
 
-  function renderConstructionScreen(){
-    stopLoop();
-    app.innerHTML = `
-      <div class="vinv-mode-shell">
-        <div class="vinv-mode-stage">
-          <div class="vinv-mode-top">
-            <div class="vinv-title">🚧 Verse Invaders</div>
-            <div class="vinv-subtitle">UNDER CONSTRUCTION: This game might be buggy!</div>
-            <div class="vinv-mode-card">
-              <div class="vinv-mode-actions">
-                <button class="vm-btn" id="constructionOkBtn">OK</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        ${renderNav()}
-        ${renderHelpOverlay(helpHtml())}
-      </div>
-    `;
-    document.getElementById("constructionOkBtn").onclick = renderIntro;
-    wireCommonNav();
-  }
 
   function renderIntro(){
     stopLoop();
@@ -244,8 +222,8 @@
           </div>
         </div>
 
-        ${renderNav()}
         ${renderHelpOverlay(helpHtml())}
+        ${renderGameMenuOverlay()}
       </div>
     `;
 
@@ -286,6 +264,22 @@
     `;
   }
 
+function renderGameMenuOverlay(){
+  return `
+    <div class="vinv-help-overlay" id="vinvGameMenuOverlay" aria-hidden="true">
+      <div class="vinv-help-dialog vinv-game-menu-dialog">
+        <div class="vinv-help-title vinv-game-menu-title">Game Menu</div>
+        <div class="vinv-game-menu-actions">
+          <button class="vm-btn vinv-game-menu-btn" id="vinvMenuHowToBtn">How to Play</button>
+          <button class="vm-btn vinv-game-menu-btn" id="vinvMenuMuteBtn">${muted ? "Unmute" : "Mute"}</button>
+          <button class="vm-btn vinv-game-menu-btn" id="vinvMenuExitBtn">Exit Game</button>
+          <button class="vm-btn vinv-game-menu-btn" id="vinvMenuCloseBtn">Close</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
   function helpHtml(){
     return `Tap the color of the next correct word.<br><br>
       The three buttons are always red, yellow, and blue from left to right.<br><br>
@@ -294,22 +288,95 @@
       If the correct word reaches the buttons, it abducts a human and the streak resets.`;
   }
 
-  function wireCommonNav(){
-    const homeBtn = document.getElementById("homeBtn");
-    const muteBtn = document.getElementById("muteBtn");
-    const helpBtn = document.getElementById("helpBtn");
-    const overlay = document.getElementById("vinvHelpOverlay");
-    const closeBtn = document.getElementById("vinvHelpCloseBtn");
+function wireCommonNav(){
+  const homeBtn = document.getElementById("homeBtn");
+  const muteBtn = document.getElementById("muteBtn");
+  const helpBtn = document.getElementById("helpBtn");
 
-    if (homeBtn) homeBtn.onclick = () => window.VerseGameBridge.exitGame();
-    if (muteBtn) muteBtn.onclick = () => {
-      muted = !muted;
-      muteBtn.textContent = muted ? "🔇" : "🔊";
+  const helpOverlay = document.getElementById("vinvHelpOverlay");
+  const helpCloseBtn = document.getElementById("vinvHelpCloseBtn");
+
+  const menuOverlay = document.getElementById("vinvGameMenuOverlay");
+  const menuHowToBtn = document.getElementById("vinvMenuHowToBtn");
+  const menuMuteBtn = document.getElementById("vinvMenuMuteBtn");
+  const menuExitBtn = document.getElementById("vinvMenuExitBtn");
+  const menuCloseBtn = document.getElementById("vinvMenuCloseBtn");
+
+  if (homeBtn) homeBtn.onclick = () => window.VerseGameBridge.exitGame();
+
+  if (muteBtn) muteBtn.onclick = () => {
+    muted = !muted;
+    muteBtn.textContent = muted ? "🔇" : "🔊";
+    if (menuMuteBtn) menuMuteBtn.textContent = muted ? "Unmute" : "Mute";
+  };
+
+  if (helpBtn) helpBtn.onclick = () => {
+    if (helpOverlay) {
+      helpOverlay.classList.add("is-open");
+      helpOverlay.dataset.mode = "close";
+      if (helpCloseBtn) helpCloseBtn.textContent = "OK";
+    }
+  };
+
+  if (helpCloseBtn) {
+    helpCloseBtn.onclick = () => {
+      const mode = helpOverlay?.dataset.mode || "close";
+      if (mode === "back"){
+        helpOverlay?.classList.remove("is-open");
+        menuOverlay?.classList.add("is-open");
+      } else {
+        helpOverlay?.classList.remove("is-open");
+      }
     };
-    if (helpBtn) helpBtn.onclick = () => overlay.classList.add("is-open");
-    if (closeBtn) closeBtn.onclick = () => overlay.classList.remove("is-open");
-    if (overlay) overlay.onclick = (e) => { if (e.target === overlay) overlay.classList.remove("is-open"); };
   }
+
+  if (helpOverlay) {
+    helpOverlay.onclick = (e) => {
+      if (e.target === helpOverlay){
+        const mode = helpOverlay.dataset.mode || "close";
+        if (mode === "back"){
+          helpOverlay.classList.remove("is-open");
+          menuOverlay?.classList.add("is-open");
+        } else {
+          helpOverlay.classList.remove("is-open");
+        }
+      }
+    };
+  }
+
+  if (menuHowToBtn) {
+    menuHowToBtn.onclick = () => {
+      menuOverlay?.classList.remove("is-open");
+      if (helpOverlay) {
+        helpOverlay.classList.add("is-open");
+        helpOverlay.dataset.mode = "back";
+      }
+      if (helpCloseBtn) helpCloseBtn.textContent = "Back";
+    };
+  }
+
+  if (menuMuteBtn) {
+    menuMuteBtn.onclick = () => {
+      muted = !muted;
+      menuMuteBtn.textContent = muted ? "Unmute" : "Mute";
+      if (muteBtn) muteBtn.textContent = muted ? "🔇" : "🔊";
+    };
+  }
+
+  if (menuExitBtn) {
+    menuExitBtn.onclick = () => window.VerseGameBridge.exitGame();
+  }
+
+  if (menuCloseBtn) {
+    menuCloseBtn.onclick = () => menuOverlay?.classList.remove("is-open");
+  }
+
+  if (menuOverlay) {
+    menuOverlay.onclick = (e) => {
+      if (e.target === menuOverlay) menuOverlay.classList.remove("is-open");
+    };
+  }
+}
 
   function wireGameInput(){
     if (!resizeHandlerBound){
@@ -369,7 +436,16 @@
   function renderHud(){
     const modePill = document.getElementById("vinvModePill");
     const streakPill = document.getElementById("vinvStreakPill");
-    if (modePill) modePill.textContent = capitalize(selectedMode);
+
+    if (modePill){
+      modePill.textContent = "☰";
+      modePill.setAttribute("aria-label", "Game Menu");
+      modePill.onclick = () => {
+        const menuOverlay = document.getElementById("vinvGameMenuOverlay");
+        if (menuOverlay) menuOverlay.classList.add("is-open");
+      };
+    }
+
     if (streakPill) streakPill.textContent = `🔥 ${state.streak}`;
     renderBuildArea();
     renderButtons();
