@@ -65,6 +65,8 @@
     running:false,
     rafId:0,
     lastTs:0,
+    paused:false,
+    pauseReason:"",
     scale:1,
     fieldWidth:0,
     fieldHeight:0,
@@ -164,6 +166,8 @@
     completionMarked = false;
     state.running = true;
     state.lastTs = 0;
+    state.paused = false;
+    state.pauseReason = "";
     state.buttonsLocked = false;
     state.activeLane = null;
     state.flashBadUntil = 0;
@@ -322,10 +326,9 @@ function wireCommonNav(){
     helpCloseBtn.onclick = () => {
       const mode = helpOverlay?.dataset.mode || "close";
       if (mode === "back"){
-        helpOverlay?.classList.remove("is-open");
-        menuOverlay?.classList.add("is-open");
+        backToMenuFromHelp();
       } else {
-        helpOverlay?.classList.remove("is-open");
+        closeHelpOverlay();
       }
     };
   }
@@ -335,10 +338,9 @@ function wireCommonNav(){
       if (e.target === helpOverlay){
         const mode = helpOverlay.dataset.mode || "close";
         if (mode === "back"){
-          helpOverlay.classList.remove("is-open");
-          menuOverlay?.classList.add("is-open");
+          backToMenuFromHelp();
         } else {
-          helpOverlay.classList.remove("is-open");
+          closeHelpOverlay();
         }
       }
     };
@@ -346,12 +348,7 @@ function wireCommonNav(){
 
   if (menuHowToBtn) {
     menuHowToBtn.onclick = () => {
-      menuOverlay?.classList.remove("is-open");
-      if (helpOverlay) {
-        helpOverlay.classList.add("is-open");
-        helpOverlay.dataset.mode = "back";
-      }
-      if (helpCloseBtn) helpCloseBtn.textContent = "Back";
+      openHelpFromMenu();
     };
   }
 
@@ -368,14 +365,72 @@ function wireCommonNav(){
   }
 
   if (menuCloseBtn) {
-    menuCloseBtn.onclick = () => menuOverlay?.classList.remove("is-open");
+    menuCloseBtn.onclick = () => closeGameMenu();
   }
 
   if (menuOverlay) {
     menuOverlay.onclick = (e) => {
-      if (e.target === menuOverlay) menuOverlay.classList.remove("is-open");
+      if (e.target === menuOverlay) closeGameMenu();
     };
   }
+}
+
+function setPaused(paused, reason = ""){
+  state.paused = paused;
+  state.pauseReason = paused ? reason : "";
+  if (!paused){
+    state.lastTs = performance.now();
+  }
+}
+
+function openGameMenu(){
+  const menuOverlay = document.getElementById("vinvGameMenuOverlay");
+  if (menuOverlay){
+    setPaused(true, "menu");
+    menuOverlay.classList.add("is-open");
+  }
+}
+
+function closeGameMenu(){
+  const menuOverlay = document.getElementById("vinvGameMenuOverlay");
+  if (menuOverlay){
+    menuOverlay.classList.remove("is-open");
+  }
+  const helpOverlay = document.getElementById("vinvHelpOverlay");
+  if (!helpOverlay || !helpOverlay.classList.contains("is-open")){
+    setPaused(false, "");
+  }
+}
+
+function openHelpFromMenu(){
+  const menuOverlay = document.getElementById("vinvGameMenuOverlay");
+  const helpOverlay = document.getElementById("vinvHelpOverlay");
+  const helpCloseBtn = document.getElementById("vinvHelpCloseBtn");
+
+  if (menuOverlay) menuOverlay.classList.remove("is-open");
+  if (helpOverlay){
+    helpOverlay.classList.add("is-open");
+    helpOverlay.dataset.mode = "back";
+  }
+  if (helpCloseBtn) helpCloseBtn.textContent = "Back";
+
+  setPaused(true, "help");
+}
+
+function closeHelpOverlay(){
+  const helpOverlay = document.getElementById("vinvHelpOverlay");
+  if (helpOverlay) helpOverlay.classList.remove("is-open");
+  setPaused(false, "");
+}
+
+function backToMenuFromHelp(){
+  const helpOverlay = document.getElementById("vinvHelpOverlay");
+  const menuOverlay = document.getElementById("vinvGameMenuOverlay");
+
+  if (helpOverlay) helpOverlay.classList.remove("is-open");
+  if (menuOverlay) menuOverlay.classList.add("is-open");
+
+  setPaused(true, "menu");
 }
 
   function wireGameInput(){
@@ -389,7 +444,7 @@ function wireCommonNav(){
     });
 
     window.onkeydown = (e) => {
-      if (!state.running) return;
+      if (!state.running || state.paused) return;
       if (e.key === "ArrowLeft" || e.key.toLowerCase() === "a") handleColorPress("left");
       if (e.key === "ArrowDown" || e.key.toLowerCase() === "s") handleColorPress("center");
       if (e.key === "ArrowRight" || e.key.toLowerCase() === "d") handleColorPress("right");
@@ -441,8 +496,7 @@ function wireCommonNav(){
       modePill.textContent = "☰";
       modePill.setAttribute("aria-label", "Game Menu");
       modePill.onclick = () => {
-        const menuOverlay = document.getElementById("vinvGameMenuOverlay");
-        if (menuOverlay) menuOverlay.classList.add("is-open");
+        openGameMenu();
       };
     }
 
@@ -772,7 +826,10 @@ function wireCommonNav(){
     const dt = Math.min(0.032, (ts - state.lastTs) / 1000);
     state.lastTs = ts;
 
-    updateGame(dt, ts);
+    if (!state.paused){
+      updateGame(dt, ts);
+    }
+
     renderDynamic();
     state.rafId = requestAnimationFrame(loop);
   }
