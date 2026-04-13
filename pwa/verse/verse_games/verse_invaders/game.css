@@ -132,6 +132,21 @@ body{
   text-wrap:balance;
 }
 
+.vinv-build-text.is-normal{
+  font-size:clamp(21px,5vw,38px);
+  line-height:1.18;
+}
+
+.vinv-build-text.is-medium{
+  font-size:clamp(19px,4.4vw,33px);
+  line-height:1.14;
+}
+
+.vinv-build-text.is-small{
+  font-size:clamp(17px,3.8vw,28px);
+  line-height:1.10;
+}
+
 .vinv-build-token{
   color:transparent;
   transition:color 160ms ease;
