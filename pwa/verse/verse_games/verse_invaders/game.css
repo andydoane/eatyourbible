@@ -569,6 +569,8 @@ body{
   font-size:clamp(18px,3.8vw,24px);
   line-height:1.25;
   font-weight:800;
+  text-wrap:balance;
+  overflow-wrap:break-word;
 }
 
 .vinv-help-actions{
