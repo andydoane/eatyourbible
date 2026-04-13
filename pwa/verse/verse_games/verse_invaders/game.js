@@ -96,9 +96,9 @@
     bonusFinished:false,
     bonusFireworks:[],
     modeTiming:{
-      easy:{ start:4.9, step:0 },
-      medium:{ start:4.7, step:-0.15 },
-      hard:{ start:4.0, step:-0.16 }
+      easy:{ start:6.2, step:0 },
+      medium:{ start:5.8, step:-0.08 },
+      hard:{ start:5.1, step:-0.10 }
     }
   };
 
@@ -400,7 +400,8 @@
       const lane = btn.dataset.lane;
       const fixedColor = buttonLaneToColor(lane);
       btn.dataset.color = fixedColor.key;
-      btn.textContent = fixedColor.key.toUpperCase();
+      btn.textContent = "";
+      btn.setAttribute("aria-label", fixedColor.key.toUpperCase());
       const shouldDim = state.activeLane && state.activeLane !== lane;
       btn.classList.toggle("is-dim", !!shouldDim);
       btn.disabled = state.buttonsLocked || (!state.bonusMode && !hasVisibleEntityForColor(fixedColor.key));
