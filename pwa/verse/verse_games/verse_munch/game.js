@@ -717,7 +717,6 @@ function backToMenuFromHelp(){
     state.feedbackBadge = isCorrect ? "Correct!" : "Nope!";
     state.feedbackUntil = performance.now() + 650;
     state.hitWord = null;
-    updateStreakPill();
 
     if (getCurrentPhase() === "done"){
       await startBonusRound();
