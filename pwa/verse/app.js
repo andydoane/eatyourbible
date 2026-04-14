@@ -418,7 +418,6 @@ function markTrafficCompleted(verseId, theme){
 // All tracked games (internal IDs)
 // All tracked built-in games
 const BUILTIN_GAME_IDS = [
-  "scramble",
   "chain",     // Verse Launch
   "traffic",
   "bouncing",
@@ -542,7 +541,6 @@ function getVerseDetailProgressDisplay(gameId, gameProgress){
 
 function getBuiltInVerseDetailGames(){
   return [
-    { id: "scramble", label: "Verse Scramble" },
     { id: "chain", label: "Verse Launch" },
     { id: "traffic", label: "Traffic Tap" },
     { id: "bouncing", label: "Bouncing Words" },
