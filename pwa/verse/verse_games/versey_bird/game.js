@@ -101,6 +101,8 @@
     running: false,
     scale: 1,
     rafId: 0,
+    paused: false,
+    pauseReason: "",
     spawnCooldown: 0,
     birdEmoji: "",
     birdX: 0,
@@ -243,6 +245,8 @@
     state.nextGroundBandId = 1;
 
     state.running = true;
+    state.paused = false;
+    state.pauseReason = "";
     state.progressIndex = 0;
     state.streak = 0;
     state.targets = [];
@@ -277,7 +281,7 @@
           <div class="vb-field-wrap">
               <div class="vb-field" id="vbField" style="background:${state.theme.sky};">
               <div class="vb-overlay-pills">
-                <div class="vb-pill" id="vbModePill">${escapeHtml(capitalize(mode))}</div>
+                <button class="vb-pill vb-menu-pill" id="vbMenuPill" aria-label="Game Menu">☰</button>
                 <div class="vb-pill" id="vbStreakPill">Streak: 0</div>
               </div>
 
@@ -306,9 +310,8 @@
           </div>
         </div>
 
-        ${renderNav()}
-
         ${renderHelpOverlay("Tap or click to flap.<br><br>Touch the next correct item.<br><br>Wrong hits and missed correct words reset your streak only.<br><br>Build the whole verse, then collect the book, then the reference.")}
+        ${renderGameMenuOverlay()}
       </div>
     `;
 
@@ -401,33 +404,172 @@
     `;
   }
 
+  function renderGameMenuOverlay(){
+    return `
+      <div class="vb-help-overlay" id="vbGameMenuOverlay" aria-hidden="true">
+        <div class="vb-help-dialog vb-game-menu-dialog">
+          <div class="vb-help-title vb-game-menu-title">Game Menu</div>
+          <div class="vb-game-menu-actions">
+            <button class="vm-btn vb-game-menu-btn" id="vbMenuHowToBtn">How to Play</button>
+            <button class="vm-btn vb-game-menu-btn" id="vbMenuMuteBtn">${muted ? "Unmute" : "Mute"}</button>
+            <button class="vm-btn vb-game-menu-btn" id="vbMenuExitBtn">Exit Game</button>
+            <button class="vm-btn vb-game-menu-btn" id="vbMenuCloseBtn">Close</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   function wireCommonNav(){
     const homeBtn = document.getElementById("homeBtn");
     const helpBtn = document.getElementById("helpBtn");
     const muteBtn = document.getElementById("muteBtn");
+
     const helpOverlay = document.getElementById("vbHelpOverlay");
     const helpCloseBtn = document.getElementById("vbHelpCloseBtn");
 
+    const menuOverlay = document.getElementById("vbGameMenuOverlay");
+    const menuHowToBtn = document.getElementById("vbMenuHowToBtn");
+    const menuMuteBtn = document.getElementById("vbMenuMuteBtn");
+    const menuExitBtn = document.getElementById("vbMenuExitBtn");
+    const menuCloseBtn = document.getElementById("vbMenuCloseBtn");
+
     if (homeBtn) homeBtn.onclick = () => window.VerseGameBridge.exitGame();
-    if (helpBtn) helpBtn.onclick = () => helpOverlay.classList.add("is-open");
-    if (helpCloseBtn) helpCloseBtn.onclick = () => helpOverlay.classList.remove("is-open");
-    if (helpOverlay){
-      helpOverlay.onclick = (e) => {
-        if (e.target === helpOverlay) helpOverlay.classList.remove("is-open");
+
+    if (helpBtn) {
+      helpBtn.onclick = () => {
+        if (helpOverlay){
+          helpOverlay.classList.add("is-open");
+          helpOverlay.dataset.mode = "close";
+          if (helpCloseBtn) helpCloseBtn.textContent = "OK";
+        }
       };
     }
+
+    if (helpCloseBtn) {
+      helpCloseBtn.onclick = () => {
+        const mode = helpOverlay?.dataset.mode || "close";
+        if (mode === "back"){
+          backToMenuFromHelp();
+        } else {
+          closeHelpOverlay();
+        }
+      };
+    }
+
+    if (helpOverlay){
+      helpOverlay.onclick = (e) => {
+        if (e.target === helpOverlay){
+          const mode = helpOverlay.dataset.mode || "close";
+          if (mode === "back"){
+            backToMenuFromHelp();
+          } else {
+            closeHelpOverlay();
+          }
+        }
+      };
+    }
+
     if (muteBtn){
       muteBtn.onclick = () => {
         muted = !muted;
         muteBtn.innerHTML = muted ? getMuteSvg() : getUnmuteSvg();
+        if (menuMuteBtn) menuMuteBtn.textContent = muted ? "Unmute" : "Mute";
       };
     }
+
+    if (menuHowToBtn){
+      menuHowToBtn.onclick = () => {
+        openHelpFromMenu();
+      };
+    }
+
+    if (menuMuteBtn){
+      menuMuteBtn.onclick = () => {
+        muted = !muted;
+        menuMuteBtn.textContent = muted ? "Unmute" : "Mute";
+        if (muteBtn) muteBtn.innerHTML = muted ? getMuteSvg() : getUnmuteSvg();
+      };
+    }
+
+    if (menuExitBtn){
+      menuExitBtn.onclick = () => window.VerseGameBridge.exitGame();
+    }
+
+    if (menuCloseBtn){
+      menuCloseBtn.onclick = () => closeGameMenu();
+    }
+
+    if (menuOverlay){
+      menuOverlay.onclick = (e) => {
+        if (e.target === menuOverlay) closeGameMenu();
+      };
+    }
+  }
+
+  function setPaused(paused, reason = ""){
+    state.paused = paused;
+    state.pauseReason = paused ? reason : "";
+    if (!paused){
+      state.lastTs = performance.now();
+    }
+  }
+
+  function openGameMenu(){
+    const menuOverlay = document.getElementById("vbGameMenuOverlay");
+    if (menuOverlay){
+      setPaused(true, "menu");
+      menuOverlay.classList.add("is-open");
+    }
+  }
+
+  function closeGameMenu(){
+    const menuOverlay = document.getElementById("vbGameMenuOverlay");
+    if (menuOverlay){
+      menuOverlay.classList.remove("is-open");
+    }
+    const helpOverlay = document.getElementById("vbHelpOverlay");
+    if (!helpOverlay || !helpOverlay.classList.contains("is-open")){
+      setPaused(false, "");
+    }
+  }
+
+  function openHelpFromMenu(){
+    const menuOverlay = document.getElementById("vbGameMenuOverlay");
+    const helpOverlay = document.getElementById("vbHelpOverlay");
+    const helpCloseBtn = document.getElementById("vbHelpCloseBtn");
+
+    if (menuOverlay) menuOverlay.classList.remove("is-open");
+    if (helpOverlay){
+      helpOverlay.classList.add("is-open");
+      helpOverlay.dataset.mode = "back";
+    }
+    if (helpCloseBtn) helpCloseBtn.textContent = "Back";
+
+    setPaused(true, "help");
+  }
+
+  function closeHelpOverlay(){
+    const helpOverlay = document.getElementById("vbHelpOverlay");
+    if (helpOverlay) helpOverlay.classList.remove("is-open");
+    setPaused(false, "");
+  }
+
+  function backToMenuFromHelp(){
+    const helpOverlay = document.getElementById("vbHelpOverlay");
+    const menuOverlay = document.getElementById("vbGameMenuOverlay");
+
+    if (helpOverlay) helpOverlay.classList.remove("is-open");
+    if (menuOverlay) menuOverlay.classList.add("is-open");
+
+    setPaused(true, "menu");
   }
 
   function wireGameInput(){
     const field = document.getElementById("vbField");
     const flapHandler = (e) => {
       e.preventDefault();
+      if (state.paused) return;
       flap();
     };
     field.addEventListener("pointerdown", flapHandler, { passive: false });
@@ -436,7 +578,7 @@
   }
 
   function flap(){
-    if (!state.running) return;
+    if (!state.running || state.paused) return;
     if (performance.now() < state.inputLockedUntil) return;
     state.birdVY = state.flapVelocity;
     createPuffs();
@@ -464,18 +606,20 @@
     state.lastTs = ts;
 
     recalcField();
-    updateBird(dt);
-    updateClouds(dt);
-    updateParticles(dt);
-    updateTrail(dt);
-    updateGroundBands(dt);
-    updateObstacles(dt, ts);
-    updatePrizes(dt, ts);
-    updateTargets(dt, ts);
 
-    maybeSpawnBatch(dt);
+    if (!state.paused){
+      updateBird(dt);
+      updateClouds(dt);
+      updateParticles(dt);
+      updateTrail(dt);
+      updateGroundBands(dt);
+      updateObstacles(dt, ts);
+      updatePrizes(dt, ts);
+      updateTargets(dt, ts);
+      maybeSpawnBatch(dt);
+    }
+
     renderFrame(ts);
-
     state.rafId = requestAnimationFrame(loop);
   }
 
@@ -1062,6 +1206,7 @@ function getObstacleGroundY(){
     renderBird();
     renderFlash(ts);
     renderGroundBands();
+    updateMenuPill();
   }
 
   function renderBuildShake(ts){
@@ -1244,6 +1389,14 @@ function getObstacleGroundY(){
         ${escapeHtml(segment)}
       </span>
     `).join(" ");
+  }
+
+  function updateMenuPill(){
+    const pill = document.getElementById("vbMenuPill");
+    if (!pill) return;
+    pill.textContent = "☰";
+    pill.setAttribute("aria-label", "Game Menu");
+    pill.onclick = () => openGameMenu();
   }
 
   function updateStreakPill(){
