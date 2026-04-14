@@ -67,5 +67,19 @@ window.EXTERNAL_VERSE_GAMES = [
       progressType: "standard",
       modes: ["easy", "medium", "hard"]
     }
+  },
+  {
+    enabled: true,
+    manifest: {
+      id: "verse_scramble_neo",
+      title: "Verse Scramble Neo",
+      description: "Tap the next correct word as fast as you can.",
+      icon: "🧩",
+      launchUrl: "./verse_games/verse_scramble_neo/index.html",
+      visibleInCarousel: true,
+      progressType: "standard",
+      modes: ["easy", "medium", "hard"]
+    }
   }
+  
 ];
