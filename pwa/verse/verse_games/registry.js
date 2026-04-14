@@ -72,7 +72,7 @@ window.EXTERNAL_VERSE_GAMES = [
     enabled: true,
     manifest: {
       id: "verse_scramble_neo",
-      title: "Verse Scramble Neo",
+      title: "Verse Scramble",
       description: "Tap the next correct word as fast as you can.",
       icon: "🧩",
       launchUrl: "./verse_games/verse_scramble_neo/index.html",
