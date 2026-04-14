@@ -17,12 +17,26 @@
     "vsn-color-blue",
     "vsn-color-pink"
   ];
-  const BUTTON_SHAPES = [
-    "vsn-shape-blob",
-    "vsn-shape-splat",
-    "vsn-shape-pill",
-    "vsn-shape-cloud"
-  ];
+const BUTTON_SHAPES = [
+  "vsn-shape-blob",
+  "vsn-shape-splat",
+  "vsn-shape-pill",
+  "vsn-shape-cloud",
+  "vsn-shape-goo",
+  "vsn-shape-marshmallow",
+  "vsn-shape-puddle",
+  "vsn-shape-jelly",
+  "vsn-shape-soft-boom",
+  "vsn-shape-soft-star",
+  "vsn-shape-squish",
+  "vsn-shape-gumdrop",
+  "vsn-shape-splash",
+  "vsn-shape-melt",
+  "vsn-shape-cushion",
+  "vsn-shape-muffin-top",
+  "vsn-shape-bubble-blob",
+  "vsn-shape-wobble"
+];
   const FUN_DECOYS = [
     "taco","banana","penguin","cupcake","dinosaur","pickle","marshmallow","noodle","waffle","rocket",
     "jellybean","pancake","popcorn","unicorn","bubble","muffin","otter","kangaroo","scooter","rainbow",
