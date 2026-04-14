@@ -3,7 +3,7 @@
   if (app) app.classList.add("vm-shell");
 
   const ctx = await window.VerseGameBridge.getVerseContext();
-  const GAME_ID = "verse_scramble_neo";
+  const GAME_ID = "scramble";
 
   let selectedMode = null;
   let muted = false;
