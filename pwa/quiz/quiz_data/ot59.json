@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot59",
+  "pageTitle": "OT 59 Quiz",
+  "lessonTitleText": "God's Promise to David",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot59image.png",
+  "themeClass": "theme-yellow",
+  "questions": [
+    {
+      "text": "Who died in the battle with the Philistines?",
+      "answers": [
+        "Saul and his three sons",
+        "David",
+        "Saul's wife and her three daughters",
+        "David's father"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened after Saul died?",
+      "answers": [
+        "There were two kings for a time, then David became king of all Israel",
+        "Israel had no king",
+        "Jonathan became king",
+        "Samuel became king"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did David want to bring to Jerusalem?",
+      "answers": [
+        "The Ark of the Covenant",
+        "The sword of Goliath",
+        "King Saul's spear",
+        "Noah's ark"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What terrible decision did Uzzah make with the ark?",
+      "answers": [
+        "He touched the ark",
+        "He dropped the ark",
+        "He opened the ark",
+        "He stole it"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened to Uzzah when he touched the ark?",
+      "answers": [
+        "He died",
+        "He became sick",
+        "He transformed into an angel",
+        "He turned to gold"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did David do differently the second time he moved the ark?",
+      "answers": [
+        "It was carried on poles instead of on a cart",
+        "He told the priests to wear golden gloves",
+        "He prayed for angels to move it",
+        "He left it where it was"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did David want to build for the ark?",
+      "answers": [
+        "A house (a temple)",
+        "A table",
+        "A chair",
+        "A palace"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did God promise to give Israel?",
+      "answers": [
+        "Peace from their enemies",
+        "Lots of riches",
+        "More kings",
+        "Ten more commandments"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What promise did God make to David?",
+      "answers": [
+        "His kingdom would last forever",
+        "He would never fight again",
+        "He would build the temple",
+        "He would live forever"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did God keep His promise to David?",
+      "answers": [
+        "He sent Jesus to rule as King forever",
+        "He made David live forever",
+        "He gave David more land",
+        "God broke his promise to David"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
