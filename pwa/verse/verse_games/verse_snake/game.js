@@ -43,6 +43,9 @@
     rafId: 0,
     spawnTimerId: 0,
     running: false,
+    paused: false,
+    pauseReason: "",
+    pauseStartedAt: 0,
     turnDir: 0,
     flashUntil: 0,
     happyUntil: 0,
@@ -148,8 +151,121 @@
     }
   }
 
+  function shiftPauseSensitiveTimers(deltaMs){
+    if (state.flashUntil) state.flashUntil += deltaMs;
+    if (state.happyUntil) state.happyUntil += deltaMs;
+
+    for (const target of state.targets){
+      if (target.visibleAt) target.visibleAt += deltaMs;
+      if (target.activeAt) target.activeAt += deltaMs;
+      if (target.flashUntil) target.flashUntil += deltaMs;
+    }
+
+    if (state.fruit){
+      if (state.fruit.visibleAt) state.fruit.visibleAt += deltaMs;
+      if (state.fruit.expiresAt) state.fruit.expiresAt += deltaMs;
+    }
+  }
+
+  function setPaused(paused, reason = ""){
+    if (paused){
+      if (state.paused) return;
+      state.paused = true;
+      state.pauseReason = reason;
+      state.pauseStartedAt = performance.now();
+      state.turnDir = 0;
+      clearPendingSpawn();
+      return;
+    }
+
+    if (!state.paused) return;
+
+    const deltaMs = performance.now() - (state.pauseStartedAt || performance.now());
+    state.paused = false;
+    state.pauseReason = "";
+    state.pauseStartedAt = 0;
+    state.turnDir = 0;
+
+    shiftPauseSensitiveTimers(deltaMs);
+
+    if (state.running && !state.targets.length && state.progressIndex < state.segments.length){
+      queueNextTargets(170, false);
+    }
+  }
+
+  function openGameMenu(){
+    const menuOverlay = document.getElementById("vsGameMenuOverlay");
+    if (!menuOverlay) return;
+    setPaused(true, "menu");
+    menuOverlay.classList.add("show");
+    menuOverlay.setAttribute("aria-hidden", "false");
+  }
+
+  function closeGameMenu(){
+    const menuOverlay = document.getElementById("vsGameMenuOverlay");
+    if (menuOverlay){
+      menuOverlay.classList.remove("show");
+      menuOverlay.setAttribute("aria-hidden", "true");
+    }
+
+    const helpOverlay = document.getElementById("vsHelpOverlay");
+    if (!helpOverlay || !helpOverlay.classList.contains("show")){
+      setPaused(false, "");
+    }
+  }
+
+  function openHelpFromMenu(){
+    const menuOverlay = document.getElementById("vsGameMenuOverlay");
+    const helpOverlay = document.getElementById("vsHelpOverlay");
+    const helpCloseBtn = document.getElementById("vsHelpCloseBtn");
+
+    if (menuOverlay){
+      menuOverlay.classList.remove("show");
+      menuOverlay.setAttribute("aria-hidden", "true");
+    }
+
+    if (helpOverlay){
+      helpOverlay.classList.add("show");
+      helpOverlay.setAttribute("aria-hidden", "false");
+      helpOverlay.dataset.mode = "back";
+    }
+
+    if (helpCloseBtn) helpCloseBtn.textContent = "Back";
+
+    setPaused(true, "help");
+  }
+
+  function closeHelpOverlay(){
+    const helpOverlay = document.getElementById("vsHelpOverlay");
+    if (helpOverlay){
+      helpOverlay.classList.remove("show");
+      helpOverlay.setAttribute("aria-hidden", "true");
+    }
+    setPaused(false, "");
+  }
+
+  function backToMenuFromHelp(){
+    const helpOverlay = document.getElementById("vsHelpOverlay");
+    const menuOverlay = document.getElementById("vsGameMenuOverlay");
+
+    if (helpOverlay){
+      helpOverlay.classList.remove("show");
+      helpOverlay.setAttribute("aria-hidden", "true");
+    }
+
+    if (menuOverlay){
+      menuOverlay.classList.add("show");
+      menuOverlay.setAttribute("aria-hidden", "false");
+    }
+
+    setPaused(true, "menu");
+  }
+  
   function resetSnakeMotion(){
     clearPendingSpawn();
+    state.paused = false;
+    state.pauseReason = "";
+    state.pauseStartedAt = 0;
     state.turnDir = 0;
     state.flashUntil = 0;
     state.happyUntil = 0;
@@ -377,6 +493,22 @@
     `).join(" ");
   }
 
+  function renderGameMenuOverlay(){
+    return `
+      <div class="vs-help-overlay" id="vsGameMenuOverlay" aria-hidden="true">
+        <div class="vs-help-dialog vs-game-menu-dialog">
+          <div class="vs-help-title vs-game-menu-title">Game Menu</div>
+          <div class="vs-game-menu-actions">
+            <button class="vs-help-close vs-game-menu-btn no-zoom" id="vsMenuHowToBtn" type="button">How to Play</button>
+            <button class="vs-help-close vs-game-menu-btn no-zoom" id="vsMenuMuteBtn" type="button">${muted ? "Unmute" : "Mute"}</button>
+            <button class="vs-help-close vs-game-menu-btn no-zoom" id="vsMenuExitBtn" type="button">Exit Game</button>
+            <button class="vs-help-close vs-game-menu-btn no-zoom" id="vsMenuCloseBtn" type="button">Close</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
 
   function shakeBuildArea(){
     const build = document.getElementById("vsBuild");
@@ -430,7 +562,6 @@ function renderIntroScreen(){
         <div class="vs-help-dialog">
           <div class="vs-help-title">How to Play Verse Snake</div>
           <div class="vs-help-body">
-            Steer left and right to hit the correct next word.<br><br>
             Easy: no penalty.<br>
             Medium: lose 2 built items.<br>
             Hard: lose everything built.<br><br>
@@ -442,8 +573,10 @@ function renderIntroScreen(){
           </div>
         </div>
       </div>
-    </div>
-  `;
+
+      ${renderGameMenuOverlay()}
+      </div>
+      `;
 
   document.getElementById("startBtn").onclick = () => {
     renderModeSelect();
@@ -576,7 +709,10 @@ function renderIntroScreen(){
 
           <div class="vs-field-wrap">
             <div class="vs-field" id="vsField">
-              <div class="vs-status">${selectedMode ? selectedMode[0].toUpperCase() + selectedMode.slice(1) : "Mode"}</div>
+              <div class="vs-overlay-pills">
+                <button class="vs-pill vs-menu-pill no-zoom" id="vsMenuPill" aria-label="Game Menu" type="button">☰</button>
+                <div class="vs-pill" id="vsModePill">${selectedMode ? selectedMode[0].toUpperCase() + selectedMode.slice(1) : "Mode"}</div>
+              </div>
 
               <div class="vs-fruit-layer" id="vsFruitLayer"></div>
               <div class="vs-target-layer" id="vsTargetLayer"></div>
@@ -599,20 +735,6 @@ function renderIntroScreen(){
               </button>
               <button class="vs-turn-btn no-zoom" id="turnRightBtn" aria-label="Turn right">
                 ${getForwardSvg()}
-              </button>
-            </div>
-
-            <div class="vs-nav">
-              <button class="vs-nav-btn no-zoom" id="homeBtn" aria-label="Home">
-                ${getHomeSvg()}
-              </button>
-
-              <div class="vs-nav-center">
-                <button class="vs-help-btn no-zoom" id="helpBtn" type="button">HELP</button>
-              </div>
-
-              <button class="vs-nav-btn no-zoom" id="muteBtn" aria-label="Mute">
-                ${muted ? getMuteSvg() : getUnmuteSvg()}
               </button>
             </div>
           </div>
@@ -647,19 +769,27 @@ function renderIntroScreen(){
   function wireGameControls(){
     const leftBtn = document.getElementById("turnLeftBtn");
     const rightBtn = document.getElementById("turnRightBtn");
-    const homeBtn = document.getElementById("homeBtn");
-    const helpBtn = document.getElementById("helpBtn");
-    const muteBtn = document.getElementById("muteBtn");
+    const menuPill = document.getElementById("vsMenuPill");
+    const modePill = document.getElementById("vsModePill");
+
     const helpOverlay = document.getElementById("vsHelpOverlay");
     const helpCloseBtn = document.getElementById("vsHelpCloseBtn");
 
+    const menuOverlay = document.getElementById("vsGameMenuOverlay");
+    const menuHowToBtn = document.getElementById("vsMenuHowToBtn");
+    const menuMuteBtn = document.getElementById("vsMenuMuteBtn");
+    const menuExitBtn = document.getElementById("vsMenuExitBtn");
+    const menuCloseBtn = document.getElementById("vsMenuCloseBtn");
+
     const turnLeftStart = (e) => {
       if (e) e.preventDefault();
+      if (state.paused) return;
       state.turnDir = -1;
     };
 
     const turnRightStart = (e) => {
       if (e) e.preventDefault();
+      if (state.paused) return;
       state.turnDir = 1;
     };
 
@@ -681,37 +811,74 @@ function renderIntroScreen(){
     leftBtn.addEventListener("dblclick", (e) => e.preventDefault());
     rightBtn.addEventListener("dblclick", (e) => e.preventDefault());
 
-    homeBtn.onclick = () => {
-      stopLoop();
-      window.VerseGameBridge.exitGame();
-    };
+    if (menuPill){
+      menuPill.onclick = (e) => {
+        e.stopPropagation();
+        openGameMenu();
+      };
+    }
 
-    helpBtn.onclick = () => {
-      helpOverlay.classList.add("show");
-      helpOverlay.setAttribute("aria-hidden", "false");
-    };
+    if (modePill){
+      modePill.textContent = selectedMode ? selectedMode[0].toUpperCase() + selectedMode.slice(1) : "Mode";
+    }
 
-    helpCloseBtn.onclick = () => {
-      helpOverlay.classList.remove("show");
-      helpOverlay.setAttribute("aria-hidden", "true");
-    };
+    if (helpCloseBtn){
+      helpCloseBtn.onclick = () => {
+        const mode = helpOverlay?.dataset.mode || "close";
+        if (mode === "back"){
+          backToMenuFromHelp();
+        } else {
+          closeHelpOverlay();
+        }
+      };
+    }
 
-    helpOverlay.onclick = (e) => {
-      if (e.target === helpOverlay){
-        helpOverlay.classList.remove("show");
-        helpOverlay.setAttribute("aria-hidden", "true");
-      }
-    };
+    if (helpOverlay){
+      helpOverlay.onclick = (e) => {
+        if (e.target === helpOverlay){
+          const mode = helpOverlay.dataset.mode || "close";
+          if (mode === "back"){
+            backToMenuFromHelp();
+          } else {
+            closeHelpOverlay();
+          }
+        }
+      };
+    }
 
-    muteBtn.onclick = () => {
-      muted = !muted;
-      const btn = document.getElementById("muteBtn");
-      if (btn){
-        btn.innerHTML = muted ? getMuteSvg() : getUnmuteSvg();
-      }
-    };
+    if (menuHowToBtn){
+      menuHowToBtn.onclick = () => openHelpFromMenu();
+    }
+
+    if (menuMuteBtn){
+      menuMuteBtn.onclick = () => {
+        muted = !muted;
+        menuMuteBtn.textContent = muted ? "Unmute" : "Mute";
+      };
+    }
+
+    if (menuExitBtn){
+      menuExitBtn.onclick = () => {
+        stopLoop();
+        window.VerseGameBridge.exitGame();
+      };
+    }
+
+    if (menuCloseBtn){
+      menuCloseBtn.onclick = () => closeGameMenu();
+    }
+
+    if (menuOverlay){
+      menuOverlay.onclick = (e) => {
+        if (e.target === menuOverlay){
+          closeGameMenu();
+        }
+      };
+    }
 
     window.onkeydown = (e) => {
+      if (state.paused) return;
+
       if (e.key === "ArrowLeft") {
         e.preventDefault();
         state.turnDir = -1;
@@ -792,13 +959,16 @@ function renderIntroScreen(){
       lastTs = ts;
 
       syncFieldMetrics();
-      updateMotion(dt);
-      updateTargetVisibility(ts);
-      updateFruitVisibility(ts);
-      checkFruitCollision();
-      checkTargetCollisions();
-      drawSnake();
 
+      if (!state.paused){
+        updateMotion(dt);
+        updateTargetVisibility(ts);
+        updateFruitVisibility(ts);
+        checkFruitCollision();
+        checkTargetCollisions();
+      }
+
+      drawSnake();
       state.rafId = requestAnimationFrame(tick);
     }
 
