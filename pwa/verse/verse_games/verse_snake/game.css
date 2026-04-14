@@ -432,6 +432,37 @@ body{
   letter-spacing: 0.2px;
 }
 
+.vs-overlay-pills{
+  position: absolute;
+  top: 16px;
+  left: 14px;
+  right: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.vs-pill{
+  background: rgba(255,255,255,0.95);
+  color: #333333;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-weight: 900;
+  font-size: 16px;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.18);
+  border: none;
+  pointer-events: auto;
+}
+
+.vs-menu-pill{
+  min-width: 44px;
+  text-align: center;
+  cursor: pointer;
+}
+
 .vs-controls{
   flex: 0 0 auto;
   padding: 12px 14px 10px;
@@ -552,11 +583,11 @@ body{
 }
 
 .vs-help-dialog{
-  width: min(100%, 460px);
-  background: #7f66c6;
-  color: #fff;
-  border-radius: 22px;
-  padding: 18px 18px 16px;
+  width: min(100%, 560px);
+  background: #ffffff;
+  color: #333333;
+  border-radius: 24px;
+  padding: 22px 18px 18px;
   box-shadow: 0 16px 40px rgba(0,0,0,0.25);
   text-align: center;
 }
@@ -572,11 +603,33 @@ body{
   font-weight: 700;
   line-height: 1.35;
   margin-bottom: 14px;
+  text-wrap: balance;
+  overflow-wrap: break-word;
 }
 
 .vs-help-actions{
   display: flex;
   justify-content: center;
+}
+
+.vs-game-menu-dialog{
+  background: #ffffff;
+}
+
+.vs-game-menu-title{
+  color: #7f66c6;
+}
+
+.vs-game-menu-actions{
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.vs-game-menu-btn{
+  background: #7f66c6;
+  color: #ffffff;
 }
 
 .vs-help-close{
