@@ -13,9 +13,9 @@
     "vsn-color-red",
     "vsn-color-orange",
     "vsn-color-yellow",
-    "vsn-color-teal",
-    "vsn-color-purple",
-    "vsn-color-green"
+    "vsn-color-green",
+    "vsn-color-blue",
+    "vsn-color-pink"
   ];
   const BUTTON_SHAPES = [
     "vsn-shape-blob",
