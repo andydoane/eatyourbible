@@ -66,6 +66,7 @@
     bookLabel: "",
     referenceLabel: "",
     segments: [],
+    buildSizeClass: "is-normal",
     progressIndex: 0,
     targets: [],
     nextTargetId: 1
@@ -305,6 +306,19 @@
     };
   }
 
+  function getBuildLengthScore(verseText, book, reference){
+    return String(verseText || "").length
+      + String(book || "").length
+      + String(reference || "").length;
+  }
+
+  function getBuildSizeClass(verseText, book, reference){
+    const score = getBuildLengthScore(verseText, book, reference);
+    if (score >= 136) return "is-small";
+    if (score >= 106) return "is-medium";
+    return "is-normal";
+  }
+
   function getWordPhaseCount(){
     return state.words.length;
   }
@@ -355,7 +369,7 @@
       return;
     }
 
-    el.classList.add("is-verse-layout");
+    el.className = `vs-build-text is-verse-layout ${state.buildSizeClass}`;
     el.innerHTML = state.segments.map((segment, index) => `
       <span class="vs-build-word ${index < state.progressIndex ? "is-built" : ""}">
         ${escapeHtml(segment)}
@@ -731,6 +745,7 @@ function renderIntroScreen(){
     );
     state.bookLabel = refParts.book;
     state.referenceLabel = refParts.reference;
+    state.buildSizeClass = getBuildSizeClass(ctx.verseText, state.bookLabel, state.referenceLabel);
 
     state.segments = [
       ...state.words,
