@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot58",
+  "pageTitle": "OT 58 Quiz",
+  "lessonTitleText": "David Spares Saul's Life",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot58image.png",
+  "themeClass": "theme-purple",
+  "questions": [
+    {
+      "text": "Where did David and his family hide from Saul?",
+      "answers": [
+        "In a cave",
+        "In the palace",
+        "In the temple",
+        "Under a waterfall"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why did Saul go into the cave?",
+      "answers": [
+        "To use the bathroom",
+        "To look for David",
+        "To hunt a bear",
+        "To take a nap"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did David’s men want him to do to Saul?",
+      "answers": [
+        "Kill him",
+        "Capture him",
+        "Let a bear eat him",
+        "Ignore him"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did David do instead of killing Saul?",
+      "answers": [
+        "Cut off a piece of Saul’s robe",
+        "Stole his sword",
+        "Jumped out and scared him",
+        "Ran away"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why did David refuse to kill Saul?",
+      "answers": [
+        "Because Saul was God’s anointed king",
+        "Because Saul was too strong",
+        "Because David was afraid",
+        "Because he didn't have a sharp sword"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "David showed the torn piece of robe to Saul. What did that prove?",
+      "answers": [
+        "David could have killed Saul but chose not to",
+        "David thought Saul's robe was ugly",
+        "David was a robe maker",
+        "David had a robe that looked just like Saul's"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why could David and Abishai sneak into Saul’s camp without being seen?",
+      "answers": [
+        "God caused a deep sleep to fall on everyone",
+        "Saul's guards were lazy",
+        "It was very dark",
+        "God made everyone become blind"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Abishai ask David for permission to do?",
+      "answers": [
+        "Kill Saul with a spear",
+        "Wake Saul up",
+        "Feed Saul to a bear",
+        "Pour water on Saul's face"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did David do instead of killing Saul in the camp?",
+      "answers": [
+        "Took his spear and water jug",
+        "Cut his robe again",
+        "Gave Saul a funny haircut",
+        "Wrote a scary message and left it on Saul's chest"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Saul do when he saw David with his spear and water jug?",
+      "answers": [
+        "He admitted he had sinned and stopped chasing David",
+        "He attacked David",
+        "He asked David to fix his robe",
+        "He gave his crown to David"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
