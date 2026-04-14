@@ -148,9 +148,9 @@ body{
 
 .vb-overlay-pills{
   position: absolute;
+  top: 16px;
   left: 14px;
   right: 14px;
-  bottom: 12px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -167,6 +167,14 @@ body{
   font-weight: 900;
   font-size: 16px;
   box-shadow: 0 4px 0 rgba(0,0,0,0.18);
+  border: none;
+  pointer-events: auto;
+}
+
+.vb-menu-pill{
+  min-width: 44px;
+  text-align: center;
+  cursor: pointer;
 }
 
 .vb-field-wrap{
@@ -174,7 +182,7 @@ body{
   min-height: 0;
   display: flex;
   flex-direction: column;
-  padding: 0 14px 0;
+  padding: 0 14px calc(10px + env(safe-area-inset-bottom));
 }
 
 .vb-field{
@@ -183,7 +191,7 @@ body{
   min-height: 280px;
   overflow: hidden;
   background: #40b9c5;
-  border-radius: 26px 26px 0 0;
+  border-radius: 26px;
   touch-action: none;
 }
 
@@ -434,9 +442,10 @@ body{
 
 .vb-help-dialog{
   width: min(100%, 560px);
-  background: #333333;
-  border-radius: 28px;
-  padding: 20px 18px 18px;
+  background: #ffffff;
+  color: #333333;
+  border-radius: 24px;
+  padding: 22px 18px 18px;
   box-shadow: 0 16px 40px rgba(0,0,0,0.28);
   text-align: center;
 }
@@ -451,10 +460,32 @@ body{
   font-size: 21px;
   font-weight: 700;
   line-height: 1.22;
+  text-wrap: balance;
+  overflow-wrap: break-word;
 }
 
 .vb-help-actions{
   margin-top: 16px;
+}
+
+.vb-game-menu-dialog{
+  background: #ffffff;
+}
+
+.vb-game-menu-title{
+  color: #7f66c6;
+}
+
+.vb-game-menu-actions{
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.vb-game-menu-btn{
+  background: #7f66c6;
+  color: #ffffff;
 }
 
 .vb-complete-icon{
