@@ -349,8 +349,57 @@ button, input, select{
 .vsn-choice.is-spawning{
   animation:vsnChoiceSpawn 320ms cubic-bezier(.2,.92,.24,1.2);
 }
+
+.vsn-choice.vsn-dance-bouncey{
+  animation:vsnDanceBouncey 1.02s ease-in-out infinite;
+}
+
+.vsn-choice.vsn-dance-jelly{
+  animation:vsnDanceJelly 1.08s ease-in-out infinite;
+}
+
+.vsn-choice.vsn-dance-wiggle{
+  animation:vsnDanceWiggle 0.96s ease-in-out infinite;
+}
+
+.vsn-choice.vsn-dance-bobble{
+  animation:vsnDanceBobble 1.12s ease-in-out infinite;
+}
+
+.vsn-choice.vsn-dance-sway{
+  animation:vsnDanceSway 1.18s ease-in-out infinite;
+}
+
+.vsn-choice.vsn-dance-pulse{
+  animation:vsnDancePulse 0.98s ease-in-out infinite;
+}
+
+.vsn-choice.vsn-dance-scoot{
+  animation:vsnDanceScoot 1.10s ease-in-out infinite;
+}
+
+.vsn-choice.vsn-dance-wobble{
+  animation:vsnDanceWobble 1.06s ease-in-out infinite;
+}
+
+.vsn-choice.vsn-dance-plop{
+  animation:vsnDancePlop 1.00s ease-in-out infinite;
+}
+
+.vsn-choice.vsn-dance-noodle{
+  animation:vsnDanceNoodle 1.14s ease-in-out infinite;
+}
+
+.vsn-choice.vsn-dance-squash{
+  animation:vsnDanceSquash 0.94s ease-in-out infinite;
+}
+
+.vsn-choice.vsn-dance-float{
+  animation:vsnDanceFloat 1.20s ease-in-out infinite;
+}
+
 .vsn-choice.is-dancing{
-  animation:vsnChoiceDance 1.15s ease-in-out infinite;
+  animation:none;
 }
 .vsn-choice.is-bursting{
   animation:vsnChoiceBurst 300ms ease forwards;
@@ -517,6 +566,82 @@ button, input, select{
   30%{ transform:rotate(calc(var(--vsn-rot, 0deg) - 1deg)) scale(1.03, 0.97); }
   60%{ transform:rotate(calc(var(--vsn-rot, 0deg) + 1deg)) scale(0.98, 1.04); }
 }
+
+@keyframes vsnDanceBouncey{
+  0%, 100%{ transform:rotate(var(--vsn-rot, 0deg)) translateY(0) scale(1, 1); }
+  30%{ transform:rotate(calc(var(--vsn-rot, 0deg) - 1deg)) translateY(-5px) scale(1.04, 0.96); }
+  60%{ transform:rotate(calc(var(--vsn-rot, 0deg) + 1deg)) translateY(1px) scale(0.98, 1.03); }
+}
+
+@keyframes vsnDanceJelly{
+  0%, 100%{ transform:rotate(var(--vsn-rot, 0deg)) scale(1, 1); }
+  25%{ transform:rotate(calc(var(--vsn-rot, 0deg) - 1deg)) scale(1.06, 0.92); }
+  50%{ transform:rotate(calc(var(--vsn-rot, 0deg) + 1deg)) scale(0.94, 1.07); }
+  75%{ transform:rotate(calc(var(--vsn-rot, 0deg) - 0.5deg)) scale(1.03, 0.97); }
+}
+
+@keyframes vsnDanceWiggle{
+  0%, 100%{ transform:rotate(calc(var(--vsn-rot, 0deg) - 1deg)) scale(1,1); }
+  25%{ transform:rotate(calc(var(--vsn-rot, 0deg) + 1.8deg)) scale(1.01,0.99); }
+  50%{ transform:rotate(calc(var(--vsn-rot, 0deg) - 1.6deg)) scale(0.99,1.01); }
+  75%{ transform:rotate(calc(var(--vsn-rot, 0deg) + 1.2deg)) scale(1.01,0.99); }
+}
+
+@keyframes vsnDanceBobble{
+  0%, 100%{ transform:rotate(var(--vsn-rot, 0deg)) translateY(0) scale(1,1); }
+  20%{ transform:rotate(calc(var(--vsn-rot, 0deg) - 1deg)) translateY(-3px) scale(1.03,0.97); }
+  50%{ transform:rotate(calc(var(--vsn-rot, 0deg) + 1deg)) translateY(-6px) scale(0.98,1.04); }
+  80%{ transform:rotate(calc(var(--vsn-rot, 0deg) - 0.6deg)) translateY(-2px) scale(1.02,0.98); }
+}
+
+@keyframes vsnDanceSway{
+  0%, 100%{ transform:rotate(calc(var(--vsn-rot, 0deg) - 1.2deg)) translateX(0) scale(1,1); }
+  50%{ transform:rotate(calc(var(--vsn-rot, 0deg) + 1.2deg)) translateX(3px) scale(1.01,0.99); }
+}
+
+@keyframes vsnDancePulse{
+  0%, 100%{ transform:rotate(var(--vsn-rot, 0deg)) scale(1); }
+  50%{ transform:rotate(var(--vsn-rot, 0deg)) scale(1.05); }
+}
+
+@keyframes vsnDanceScoot{
+  0%, 100%{ transform:rotate(calc(var(--vsn-rot, 0deg) - 0.8deg)) translateX(0) scale(1,1); }
+  35%{ transform:rotate(calc(var(--vsn-rot, 0deg) + 1deg)) translateX(4px) scale(1.03,0.97); }
+  70%{ transform:rotate(calc(var(--vsn-rot, 0deg) - 0.6deg)) translateX(-2px) scale(0.99,1.02); }
+}
+
+@keyframes vsnDanceWobble{
+  0%, 100%{ transform:rotate(calc(var(--vsn-rot, 0deg) - 1deg)) skewX(0deg) scale(1,1); }
+  25%{ transform:rotate(calc(var(--vsn-rot, 0deg) + 1.2deg)) skewX(1.5deg) scale(1.03,0.97); }
+  50%{ transform:rotate(calc(var(--vsn-rot, 0deg) - 1.4deg)) skewX(-1.8deg) scale(0.98,1.03); }
+  75%{ transform:rotate(calc(var(--vsn-rot, 0deg) + 0.8deg)) skewX(1deg) scale(1.01,0.99); }
+}
+
+@keyframes vsnDancePlop{
+  0%, 100%{ transform:rotate(var(--vsn-rot, 0deg)) translateY(0) scale(1,1); }
+  18%{ transform:rotate(calc(var(--vsn-rot, 0deg) - 1deg)) translateY(-4px) scale(1.04,0.94); }
+  38%{ transform:rotate(calc(var(--vsn-rot, 0deg) + 0.6deg)) translateY(2px) scale(0.95,1.06); }
+  60%{ transform:rotate(calc(var(--vsn-rot, 0deg) - 0.4deg)) translateY(-1px) scale(1.02,0.98); }
+}
+
+@keyframes vsnDanceNoodle{
+  0%, 100%{ transform:rotate(calc(var(--vsn-rot, 0deg) - 0.8deg)) scale(1,1); }
+  25%{ transform:rotate(calc(var(--vsn-rot, 0deg) + 1deg)) skewY(1deg) scale(1.04,0.96); }
+  50%{ transform:rotate(calc(var(--vsn-rot, 0deg) - 1.2deg)) skewY(-1deg) scale(0.97,1.05); }
+  75%{ transform:rotate(calc(var(--vsn-rot, 0deg) + 0.5deg)) skewY(0.6deg) scale(1.02,0.99); }
+}
+
+@keyframes vsnDanceSquash{
+  0%, 100%{ transform:rotate(var(--vsn-rot, 0deg)) scale(1,1); }
+  35%{ transform:rotate(calc(var(--vsn-rot, 0deg) - 0.8deg)) scale(1.07,0.92); }
+  65%{ transform:rotate(calc(var(--vsn-rot, 0deg) + 0.8deg)) scale(0.95,1.06); }
+}
+
+@keyframes vsnDanceFloat{
+  0%, 100%{ transform:rotate(calc(var(--vsn-rot, 0deg) - 0.6deg)) translateY(0) scale(1,1); }
+  50%{ transform:rotate(calc(var(--vsn-rot, 0deg) + 0.8deg)) translateY(-6px) scale(1.02,0.98); }
+}
+
 @keyframes vsnChoiceBurst{
   0%{ opacity:1; transform:rotate(var(--vsn-rot, 0deg)) scale(1); }
   100%{ opacity:0; transform:rotate(var(--vsn-rot, 0deg)) scale(0.75); }
