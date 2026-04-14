@@ -271,14 +271,73 @@ button, input, select{
 .vsn-shape-blob{
   border-radius:56% 44% 58% 42% / 42% 58% 46% 54%;
 }
+
 .vsn-shape-splat{
   border-radius:42% 58% 46% 54% / 56% 42% 58% 44%;
 }
+
 .vsn-shape-pill{
   border-radius:999px;
 }
+
 .vsn-shape-cloud{
   border-radius:48% 52% 43% 57% / 55% 40% 60% 45%;
+}
+
+.vsn-shape-goo{
+  border-radius:58% 42% 52% 48% / 47% 63% 37% 53%;
+}
+
+.vsn-shape-marshmallow{
+  border-radius:38% 42% 40% 36% / 42% 44% 40% 38%;
+}
+
+.vsn-shape-puddle{
+  border-radius:60% 40% 55% 45% / 52% 60% 40% 48%;
+}
+
+.vsn-shape-jelly{
+  border-radius:46% 54% 50% 50% / 60% 42% 58% 40%;
+}
+
+.vsn-shape-soft-boom{
+  border-radius:54% 46% 57% 43% / 43% 61% 39% 57%;
+}
+
+.vsn-shape-soft-star{
+  border-radius:50% 50% 44% 56% / 58% 42% 58% 42%;
+}
+
+.vsn-shape-squish{
+  border-radius:44% 56% 48% 52% / 38% 62% 38% 62%;
+}
+
+.vsn-shape-gumdrop{
+  border-radius:52% 48% 46% 54% / 60% 40% 52% 48%;
+}
+
+.vsn-shape-splash{
+  border-radius:59% 41% 53% 47% / 45% 59% 41% 55%;
+}
+
+.vsn-shape-melt{
+  border-radius:47% 53% 58% 42% / 39% 55% 45% 61%;
+}
+
+.vsn-shape-cushion{
+  border-radius:36% 40% 38% 42% / 38% 36% 44% 42%;
+}
+
+.vsn-shape-muffin-top{
+  border-radius:55% 45% 50% 50% / 62% 48% 38% 42%;
+}
+
+.vsn-shape-bubble-blob{
+  border-radius:51% 49% 60% 40% / 44% 58% 42% 56%;
+}
+
+.vsn-shape-wobble{
+  border-radius:57% 43% 49% 51% / 51% 39% 61% 49%;
 }
 .vsn-color-red{ background:var(--vsn-red); color:#fff; }
 .vsn-color-orange{ background:var(--vsn-orange); color:#fff; }
