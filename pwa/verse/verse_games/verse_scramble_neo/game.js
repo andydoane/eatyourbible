@@ -372,7 +372,7 @@ const BUTTON_DANCES = [
         <div class="vsn-mode-stage">
           <div class="vsn-mode-top">
             <div style="font-size:72px;line-height:1;">🧩</div>
-            <div class="vsn-mode-title">Verse Scramble Neo</div>
+            <div class="vsn-mode-title">Verse Scramble</div>
             <div class="vsn-mode-subtitle">Tap the next correct word as fast as you can. Build the verse, then the book, then the reference.</div>
             <div class="vsn-mode-card">
               <div class="vsn-mode-actions">
@@ -393,7 +393,7 @@ const BUTTON_DANCES = [
       <div class="vsn-mode-shell">
         <div class="vsn-mode-stage">
           <div class="vsn-mode-top">
-            <div class="vsn-mode-title">🧩 Verse Scramble Neo</div>
+            <div class="vsn-mode-title">🧩 Verse Scramble</div>
             <div class="vsn-mode-subtitle">Choose your difficulty.</div>
             <div class="vsn-mode-card">
               <div class="vsn-mode-actions">
@@ -479,7 +479,7 @@ const BUTTON_DANCES = [
       <div class="vsn-mode-shell">
         <div class="vsn-mode-stage">
           <div class="vsn-end-card">
-            <div class="vsn-end-title">You finished Verse Scramble Neo!</div>
+            <div class="vsn-end-title">You finished Verse Scramble!</div>
             <div class="vsn-speedometer">
               <div class="vsn-speedometer-label">Your speed was</div>
               <div class="vsn-speedometer-value">${wpm}</div>
@@ -518,7 +518,7 @@ const BUTTON_DANCES = [
     return `
       <div class="vsn-help-overlay ${state.helpOpen ? "show" : ""}" id="vsnHelpOverlay" aria-hidden="${state.helpOpen ? "false" : "true"}">
         <div class="vsn-help-dialog">
-          <div class="vsn-help-title">How to Play Verse Scramble Neo</div>
+          <div class="vsn-help-title">How to Play Verse Scramble</div>
           <div class="vsn-help-body">
             Tap the next correct word as quickly as you can.<br><br>
             Easy: fun decoys.<br>
