@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot61",
+  "pageTitle": "OT 61 Quiz",
+  "lessonTitleText": "God Gives Solomon Wisdom",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot61image.png",
+  "themeClass": "theme-nick-orange",
+  "questions": [
+    {
+      "text": "Who was the king right before Solomon?",
+      "answers": [
+        "David",
+        "Saul",
+        "Samuel",
+        "Jonathan"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What were David’s last words to Solomon?",
+      "answers": [
+        "Follow God’s commands",
+        "Build a bigger army",
+        "Make peace with enemies",
+        "Build a giant statue of me"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did God speak to Solomon?",
+      "answers": [
+        "In a dream",
+        "Through a storm",
+        "Through a prophet",
+        "In a loud voice from heaven"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did God tell Solomon to do?",
+      "answers": [
+        "Ask for anything he wanted",
+        "Build a temple right away",
+        "Never cut his hair",
+        "Build a great big boat"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Solomon ask God for?",
+      "answers": [
+        "A wise heart to lead his people",
+        "Riches and gold",
+        "A long life",
+        "Victory in battle"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What is wisdom?",
+      "answers": [
+        "Knowing the difference between right and wrong",
+        "Being very strong",
+        "Having lots of money",
+        "Being really smart"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did God feel about Solomon’s request?",
+      "answers": [
+        "He was pleased",
+        "He was angry",
+        "He laughed",
+        "He was confused"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did God give Solomon?",
+      "answers": [
+        "Wisdom, riches, and fame",
+        "Only wisdom",
+        "A pair of angel wings",
+        "Nothing"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What kinds of things did Solomon know about?",
+      "answers": [
+        "Plants and animals; he also wrote songs and proverbs",
+        "Computer and gadgets",
+        "Movies and sports",
+        "Funny dad jokes"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why did the Queen of Sheba visit Solomon?",
+      "answers": [
+        "To ask him hard questions",
+        "To give him gold",
+        "To become queen of Israel",
+        "To see his army"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
