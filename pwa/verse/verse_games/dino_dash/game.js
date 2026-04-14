@@ -97,6 +97,8 @@
     running: false,
     rafId: 0,
     lastTs: 0,
+    paused: false,
+    pauseReason: "",
     scale: 1,
     fieldWidth: 0,
     fieldHeight: 0,
@@ -230,6 +232,8 @@
     completed = false;
     state.theme = { ...THEMES[Math.floor(Math.random() * THEMES.length)] };
     state.running = true;
+    state.paused = false;
+    state.pauseReason = "";
     state.progressIndex = 0;
     state.streak = 0;
     state.particles = [];
@@ -305,15 +309,15 @@
               <div class="dd-ground" id="ddGround"></div>
               <div class="dd-bands" id="ddBands"></div>
               <div class="dd-overlay-pills">
+                <button class="dd-pill dd-menu-pill" id="ddMenuPill" aria-label="Game Menu">☰</button>
                 <div class="dd-pill" id="ddStreakPill">Streak: 0</div>
               </div>
             </div>
           </div>
         </div>
 
-        ${renderNav()}
-
         ${renderHelpOverlay("Tap or click to jump.<br><br>Obstacle phase: jump over hazards and gaps.<br><br>Word phase: choose top or bottom lane for the next word.<br><br>Build the whole verse, then collect the book, then the reference.")}
+        ${renderGameMenuOverlay()}
       </div>
     `;
 
@@ -377,27 +381,165 @@
     `;
   }
 
+  function renderGameMenuOverlay(){
+    return `
+      <div class="dd-help-overlay" id="ddGameMenuOverlay" aria-hidden="true">
+        <div class="dd-help-dialog dd-game-menu-dialog">
+          <div class="dd-help-title dd-game-menu-title">Game Menu</div>
+          <div class="dd-game-menu-actions">
+            <button class="vm-btn dd-game-menu-btn" id="ddMenuHowToBtn">How to Play</button>
+            <button class="vm-btn dd-game-menu-btn" id="ddMenuMuteBtn">${muted ? "Unmute" : "Mute"}</button>
+            <button class="vm-btn dd-game-menu-btn" id="ddMenuExitBtn">Exit Game</button>
+            <button class="vm-btn dd-game-menu-btn" id="ddMenuCloseBtn">Close</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   function wireCommonNav(){
     const homeBtn = document.getElementById("homeBtn");
     const helpBtn = document.getElementById("helpBtn");
     const muteBtn = document.getElementById("muteBtn");
+
     const helpOverlay = document.getElementById("ddHelpOverlay");
     const helpCloseBtn = document.getElementById("ddHelpCloseBtn");
 
+    const menuOverlay = document.getElementById("ddGameMenuOverlay");
+    const menuHowToBtn = document.getElementById("ddMenuHowToBtn");
+    const menuMuteBtn = document.getElementById("ddMenuMuteBtn");
+    const menuExitBtn = document.getElementById("ddMenuExitBtn");
+    const menuCloseBtn = document.getElementById("ddMenuCloseBtn");
+
     if (homeBtn) homeBtn.onclick = () => window.VerseGameBridge.exitGame();
-    if (helpBtn && helpOverlay) helpBtn.onclick = () => helpOverlay.classList.add("is-open");
-    if (helpCloseBtn && helpOverlay) helpCloseBtn.onclick = () => helpOverlay.classList.remove("is-open");
-    if (helpOverlay){
-      helpOverlay.onclick = (e) => {
-        if (e.target === helpOverlay) helpOverlay.classList.remove("is-open");
+
+    if (helpBtn) {
+      helpBtn.onclick = () => {
+        if (helpOverlay){
+          helpOverlay.classList.add("is-open");
+          helpOverlay.dataset.mode = "close";
+          if (helpCloseBtn) helpCloseBtn.textContent = "OK";
+        }
       };
     }
+
+    if (helpCloseBtn) {
+      helpCloseBtn.onclick = () => {
+        const mode = helpOverlay?.dataset.mode || "close";
+        if (mode === "back"){
+          backToMenuFromHelp();
+        } else {
+          closeHelpOverlay();
+        }
+      };
+    }
+
+    if (helpOverlay){
+      helpOverlay.onclick = (e) => {
+        if (e.target === helpOverlay){
+          const mode = helpOverlay.dataset.mode || "close";
+          if (mode === "back"){
+            backToMenuFromHelp();
+          } else {
+            closeHelpOverlay();
+          }
+        }
+      };
+    }
+
     if (muteBtn){
       muteBtn.onclick = () => {
         muted = !muted;
         muteBtn.innerHTML = muted ? getMuteSvg() : getUnmuteSvg();
+        if (menuMuteBtn) menuMuteBtn.textContent = muted ? "Unmute" : "Mute";
       };
     }
+
+    if (menuHowToBtn){
+      menuHowToBtn.onclick = () => {
+        openHelpFromMenu();
+      };
+    }
+
+    if (menuMuteBtn){
+      menuMuteBtn.onclick = () => {
+        muted = !muted;
+        menuMuteBtn.textContent = muted ? "Unmute" : "Mute";
+        if (muteBtn) muteBtn.innerHTML = muted ? getMuteSvg() : getUnmuteSvg();
+      };
+    }
+
+    if (menuExitBtn){
+      menuExitBtn.onclick = () => window.VerseGameBridge.exitGame();
+    }
+
+    if (menuCloseBtn){
+      menuCloseBtn.onclick = () => closeGameMenu();
+    }
+
+    if (menuOverlay){
+      menuOverlay.onclick = (e) => {
+        if (e.target === menuOverlay) closeGameMenu();
+      };
+    }
+  }
+
+  function setPaused(paused, reason = ""){
+    state.paused = paused;
+    state.pauseReason = paused ? reason : "";
+    if (!paused){
+      state.lastTs = performance.now();
+    }
+  }
+
+  function openGameMenu(){
+    const menuOverlay = document.getElementById("ddGameMenuOverlay");
+    if (menuOverlay){
+      setPaused(true, "menu");
+      menuOverlay.classList.add("is-open");
+    }
+  }
+
+  function closeGameMenu(){
+    const menuOverlay = document.getElementById("ddGameMenuOverlay");
+    if (menuOverlay){
+      menuOverlay.classList.remove("is-open");
+    }
+    const helpOverlay = document.getElementById("ddHelpOverlay");
+    if (!helpOverlay || !helpOverlay.classList.contains("is-open")){
+      setPaused(false, "");
+    }
+  }
+
+  function openHelpFromMenu(){
+    const menuOverlay = document.getElementById("ddGameMenuOverlay");
+    const helpOverlay = document.getElementById("ddHelpOverlay");
+    const helpCloseBtn = document.getElementById("ddHelpCloseBtn");
+
+    if (menuOverlay) menuOverlay.classList.remove("is-open");
+    if (helpOverlay){
+      helpOverlay.classList.add("is-open");
+      helpOverlay.dataset.mode = "back";
+    }
+    if (helpCloseBtn) helpCloseBtn.textContent = "Back";
+
+    setPaused(true, "help");
+  }
+
+  function closeHelpOverlay(){
+    const helpOverlay = document.getElementById("ddHelpOverlay");
+    if (helpOverlay) helpOverlay.classList.remove("is-open");
+    setPaused(false, "");
+  }
+
+  function backToMenuFromHelp(){
+    const helpOverlay = document.getElementById("ddHelpOverlay");
+    const menuOverlay = document.getElementById("ddGameMenuOverlay");
+
+    if (helpOverlay) helpOverlay.classList.remove("is-open");
+    if (menuOverlay) menuOverlay.classList.add("is-open");
+
+    setPaused(true, "menu");
   }
 
   function wireGameInput(){
@@ -406,6 +548,7 @@
 
     const jumpHandler = (e) => {
       e.preventDefault();
+      if (state.paused) return;
       jump();
     };
 
@@ -433,18 +576,21 @@
     state.lastTs = ts;
 
     recalcField();
-    updatePhase(dt, ts);
-    updateClouds(dt);
-    updateHills(dt);
-    updateGround(dt);
-    updatePlayer(dt);
-    updatePitRecovery(ts);
-    updateWords(dt, ts);
-    updateObstacles(dt, ts);
-    updateParticles(dt);
-    updateTrail(dt);
-    renderFrame(ts);
 
+    if (!state.paused){
+      updatePhase(dt, ts);
+      updateClouds(dt);
+      updateHills(dt);
+      updateGround(dt);
+      updatePlayer(dt);
+      updatePitRecovery(ts);
+      updateWords(dt, ts);
+      updateObstacles(dt, ts);
+      updateParticles(dt);
+      updateTrail(dt);
+    }
+
+    renderFrame(ts);
     state.rafId = requestAnimationFrame(loop);
   }
 
@@ -477,7 +623,7 @@
   }
 
   function jump(){
-    if (!state.running) return;
+    if (!state.running || state.paused) return;
     const now = performance.now();
     if (now < state.inputLockUntil) return;
 
@@ -1298,6 +1444,7 @@ function wrapHillLayer(layer){
     renderBands();
     renderPlayer();
     renderFeedback(ts);
+    updateMenuPill();
   }
 
   function renderBuildShake(ts){
@@ -1556,6 +1703,14 @@ function renderHills(){
     el.innerHTML = state.buildSegments.map((segment, index) => `
       <span class="dd-build-word ${index < state.progressIndex ? "is-built" : ""}">${escapeHtml(segment)}</span>
     `).join(" ");
+  }
+
+  function updateMenuPill(){
+    const pill = document.getElementById("ddMenuPill");
+    if (!pill) return;
+    pill.textContent = "☰";
+    pill.setAttribute("aria-label", "Game Menu");
+    pill.onclick = () => openGameMenu();
   }
 
   function updatePills(){
