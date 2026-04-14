@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot60",
+  "pageTitle": "OT 60 Quiz",
+  "lessonTitleText": "David and Bathsheba",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot60image.png",
+  "themeClass": "theme-nick-purple",
+  "questions": [
+    {
+      "text": "What was the name of the woman David saw from his roof?",
+      "answers": [
+        "Bathsheba",
+        "Abigail",
+        "Delilah",
+        "Ruth"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who was Bathsheba’s husband?",
+      "answers": [
+        "Uriah, a soldier",
+        "Prince Jonathan",
+        "King Saul",
+        "Samuel the prophet"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What sin did David commit with Bathsheba?",
+      "answers": [
+        "Adultery",
+        "Stealing",
+        "Lying",
+        "Idolatry"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened that revealed David’s sin?",
+      "answers": [
+        "Bathsheba became pregnant",
+        "Uriah returned home",
+        "God spoke from heaveb",
+        "Bathsheba told everyone"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What message did David send to Joab?",
+      "answers": [
+        "Put Uriah in heavy fighting and leave him alone",
+        "Bring Uriah home safely",
+        "Tell Uriah that I have sinned",
+        "Put Uriah in prison"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened to Uriah in the battle?",
+      "answers": [
+        "He died",
+        "He was captured",
+        "He escaped",
+        "He joined the enemy"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Bathsheba do after her husband died?",
+      "answers": [
+        "She mourned, then married David and had a son",
+        "She left Israel",
+        "She stayed alone forever",
+        "She hid in a cave"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What story did Nathan tell David?",
+      "answers": [
+        "A rich man stole a poor man’s beloved lamb",
+        "A king lost his crown",
+        "A shepherd searched for a sheep",
+        "A price was turned into a frog"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did Nathan’s story relate to David?",
+      "answers": [
+        "David was like the rich man who stole the lamb",
+        "David was like the poor man who lost his lamb",
+        "David was like the lamb who was stolen",
+        "The story had nothing to do with David"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Nathan tell David after he confessed?",
+      "answers": [
+        "God forgave his sin, but the child would sadly die",
+        "God would make him king forever",
+        "Urian would be the new king",
+        "It's no big deal"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
