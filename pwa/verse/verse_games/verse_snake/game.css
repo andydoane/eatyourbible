@@ -162,6 +162,21 @@ body{
   text-align: center;
 }
 
+.vs-build-text.is-normal{
+  font-size: clamp(24px, 5.8vw, 42px);
+  line-height: 1.2;
+}
+
+.vs-build-text.is-medium{
+  font-size: clamp(21px, 4.9vw, 35px);
+  line-height: 1.14;
+}
+
+.vs-build-text.is-small{
+  font-size: clamp(18px, 4.2vw, 30px);
+  line-height: 1.10;
+}
+
 .vs-build-word{
   color: transparent;
   transition: color 160ms ease, opacity 160ms ease;
