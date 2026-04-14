@@ -202,11 +202,9 @@ body{
 }
 
 .dd-overlay-pills{
+  top: 16px;
   left: 14px;
   right: 14px;
-  top: 12px;
-  bottom: auto;
-  inset: auto 14px auto 14px;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
