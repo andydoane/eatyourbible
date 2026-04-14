@@ -568,6 +568,7 @@
   function wireGameInput(){
     const field = document.getElementById("vbField");
     const flapHandler = (e) => {
+      if (e.target && e.target.closest && e.target.closest("#vbMenuPill")) return;
       e.preventDefault();
       if (state.paused) return;
       flap();
@@ -1396,7 +1397,10 @@ function getObstacleGroundY(){
     if (!pill) return;
     pill.textContent = "☰";
     pill.setAttribute("aria-label", "Game Menu");
-    pill.onclick = () => openGameMenu();
+    pill.onclick = (e) => {
+      e.stopPropagation();
+      openGameMenu();
+    };
   }
 
   function updateStreakPill(){
