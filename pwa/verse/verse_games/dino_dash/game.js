@@ -131,6 +131,7 @@
     buildSegments: [],
     bookLabel: "",
     referenceLabel: "",
+    buildSizeClass: "is-normal",
     flashUntil: 0,
     successFlashUntil: 0,
     shakeUntil: 0,
@@ -161,6 +162,7 @@
   state.bookLabel = referenceParts.book || "";
   state.referenceLabel = referenceParts.reference || "";
   state.verseWords = tokenizeVerse(ctx.verseText);
+  state.buildSizeClass = getBuildSizeClass(ctx.verseText, state.bookLabel, state.referenceLabel);
   state.buildSegments = [...state.verseWords];
   if (state.bookLabel) state.buildSegments.push(state.bookLabel);
   if (state.referenceLabel) state.buildSegments.push(state.referenceLabel);
@@ -1532,9 +1534,25 @@ function renderHills(){
     }
   }
 
+  function getBuildLengthScore(verseText, book, reference){
+    return String(verseText || "").length
+      + String(book || "").length
+      + String(reference || "").length;
+  }
+
+  function getBuildSizeClass(verseText, book, reference){
+    const score = getBuildLengthScore(verseText, book, reference);
+    if (score >= 136) return "is-small";
+    if (score >= 106) return "is-medium";
+    return "is-normal";
+  }
+
   function updateBuildText(){
     const el = document.getElementById("ddBuildText");
     if (!el) return;
+
+    el.className = `dd-build-text ${state.buildSizeClass}`;
+
     el.innerHTML = state.buildSegments.map((segment, index) => `
       <span class="dd-build-word ${index < state.progressIndex ? "is-built" : ""}">${escapeHtml(segment)}</span>
     `).join(" ");
