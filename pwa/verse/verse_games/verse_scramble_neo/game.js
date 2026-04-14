@@ -37,6 +37,22 @@ const BUTTON_SHAPES = [
   "vsn-shape-bubble-blob",
   "vsn-shape-wobble"
 ];
+
+const BUTTON_DANCES = [
+  "vsn-dance-bouncey",
+  "vsn-dance-jelly",
+  "vsn-dance-wiggle",
+  "vsn-dance-bobble",
+  "vsn-dance-sway",
+  "vsn-dance-pulse",
+  "vsn-dance-scoot",
+  "vsn-dance-wobble",
+  "vsn-dance-plop",
+  "vsn-dance-noodle",
+  "vsn-dance-squash",
+  "vsn-dance-float"
+];
+
   const FUN_DECOYS = [
     "taco","banana","penguin","cupcake","dinosaur","pickle","marshmallow","noodle","waffle","rocket",
     "jellybean","pancake","popcorn","unicorn","bubble","muffin","otter","kangaroo","scooter","rainbow",
@@ -297,12 +313,15 @@ const BUTTON_SHAPES = [
 
     const colors = shuffle(BUTTON_COLORS).slice(0, 3);
     const shaped = shuffle(BUTTON_SHAPES);
+    const dances = shuffle(BUTTON_DANCES).slice(0, 3);
+
     const perRow = shuffle(choices).map((label, index) => ({
       id: `choice_${state.boardSeed}_${index}`,
       label,
       isCorrect: normalizeWord(label) === normalizeWord(correct),
       colorClass: colors[index],
       shapeClass: shaped[index % shaped.length],
+      danceClass: dances[index],
       rotation: `${[-5,-2,3,5,1,-3][Math.floor(Math.random() * 6)]}deg`
     }));
     state.roundChoices = perRow;
@@ -423,7 +442,7 @@ const BUTTON_SHAPES = [
                   ${state.roundChoices.map((choice, index) => `
                     <div class="vsn-row" data-row="${index}">
                       <button
-                        class="vsn-choice ${choice.colorClass} ${choice.shapeClass} ${streakDancing() ? "is-dancing" : ""} is-spawning no-zoom"
+                        class="vsn-choice ${choice.colorClass} ${choice.shapeClass} ${streakDancing() ? choice.danceClass : ""} is-spawning no-zoom"
                         id="${choice.id}"
                         data-choice-id="${choice.id}"
                         type="button"
