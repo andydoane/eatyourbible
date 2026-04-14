@@ -1355,7 +1355,6 @@ const LEARN_LEVEL_OPTIONS = [
 ];
 
 const BUILTIN_PRACTICE_GAMES = [
-  { id:"scramble", title:"🧩 Verse Scramble", desc:"Pick the correct word blob.", source:"builtin" },
   { id:"chain", title:"🚀 Verse Launch", desc:"Launch words into the verse.", source:"builtin" },
   { id:"traffic", title:"🚗 Traffic Tap", desc:"Tap moving cards and animals.", source:"builtin" },
   { id:"bouncing", title:"🏀 Bouncing Words", desc:"Tap moving verse words.", source:"builtin" },
