@@ -628,8 +628,8 @@ body{
 }
 
 .vs-game-menu-btn{
-  background: #7f66c6;
-  color: #ffffff;
+  background: #7f66c6 !important;
+  color: #ffffff !important;
 }
 
 .vs-help-close{
