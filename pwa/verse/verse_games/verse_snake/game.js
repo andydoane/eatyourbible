@@ -633,8 +633,6 @@ function renderIntroScreen(){
             </div>
           </div>
         </div>
-
-        ${renderGameMenuOverlay()}
       </div>
     `;
 
@@ -754,6 +752,7 @@ function renderIntroScreen(){
             </div>
           </div>
         </div>
+        ${renderGameMenuOverlay()}
       </div>
     `;
 
