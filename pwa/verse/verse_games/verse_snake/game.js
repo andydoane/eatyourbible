@@ -573,9 +573,6 @@ function renderIntroScreen(){
           </div>
         </div>
       </div>
-
-      ${renderGameMenuOverlay()}
-      </div>
       `;
 
   document.getElementById("startBtn").onclick = () => {
@@ -636,6 +633,8 @@ function renderIntroScreen(){
             </div>
           </div>
         </div>
+
+        ${renderGameMenuOverlay()}
       </div>
     `;
 
