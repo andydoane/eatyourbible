@@ -135,6 +135,7 @@
     bookLabel: "",
     referenceLabel: "",
     segments: [],
+    buildSizeClass: "is-normal",
     progressIndex: 0,
     streak: 0,
     flashUntil: 0,
@@ -1235,6 +1236,9 @@ function getObstacleGroundY(){
   function updateBuildText(){
     const el = document.getElementById("vbBuildText");
     if (!el) return;
+
+    el.className = `vb-build-text ${state.buildSizeClass}`;
+
     el.innerHTML = state.segments.map((segment, index) => `
       <span class="vb-build-word ${index < state.progressIndex ? "is-built" : ""}">
         ${escapeHtml(segment)}
@@ -1252,10 +1256,25 @@ function getObstacleGroundY(){
     pill.textContent = `Streak: ${state.streak}${suffix}`;
   }
 
+  function getBuildLengthScore(verseText, book, reference){
+    return String(verseText || "").length
+      + String(book || "").length
+      + String(reference || "").length;
+  }
+
+  function getBuildSizeClass(verseText, book, reference){
+    const score = getBuildLengthScore(verseText, book, reference);
+    if (score >= 136) return "is-small";
+    if (score >= 106) return "is-medium";
+    return "is-normal";
+  }
+
   function setupReferenceSegments(){
     const parsed = parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
     state.bookLabel = parsed.book || "";
     state.referenceLabel = parsed.reference || "";
+    state.buildSizeClass = getBuildSizeClass(ctx.verseText, state.bookLabel, state.referenceLabel);
+
     state.segments = [...state.words];
     if (state.bookLabel) state.segments.push(state.bookLabel);
     if (state.referenceLabel) state.segments.push(state.referenceLabel);
