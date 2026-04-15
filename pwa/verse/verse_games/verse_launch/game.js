@@ -1,6 +1,6 @@
 (async function(){
   const app = document.getElementById("app");
-  if (app) app.classList.add("vm-shell");
+  if (app) app.classList.add("vm-shell", "vl-shell");
 
   const ctx = await window.VerseGameBridge.getVerseContext();
   const GAME_ID = "chain";
