@@ -50,6 +50,7 @@
     referenceLabel:"",
     medalMessage:"",
     medalSubmessage:"",
+    countdownValue:"",
   };
 
   let muted = false;
@@ -144,6 +145,7 @@
     state.completed = false;
     state.medalMessage = "";
     state.medalSubmessage = "";
+    state.countdownValue = "";
   }
 
   function currentPhase(){
@@ -291,6 +293,14 @@ function renderModeNav(){
       </div>`;
   }
 
+  function renderCountdownOverlay(){
+    if (!state.countdownValue) return "";
+    return `
+      <div class="vl-countdown-overlay" aria-hidden="true">
+        <div class="vl-countdown-box is-pop">${escapeHtml(state.countdownValue)}</div>
+      </div>`;
+  }
+
   function getPreviewChoice(offset){
     if (!state.choices.length) return null;
     const total = state.choices.length;
@@ -303,7 +313,7 @@ function renderModeNav(){
       <div class="${preview ? "vl-side-preview" : "vl-main-launcher"} no-zoom" data-choice-id="${choice.id}">
         <div class="${preview ? "" : "vl-rocket-stack"}">
           <img class="${preview ? "vl-preview-rocket" : "vl-rocket"}" src="${choice.rocket.src}" alt="" />
-          ${preview ? "" : `<div class="vl-smoke-base"><span class="vl-smoke-dot"></span><span class="vl-smoke-dot"></span><span class="vl-smoke-dot"></span></div><button class="vl-launcher-hitbox no-zoom" data-choice-id="${choice.id}" type="button" aria-label="Launch ${escapeHtml(choice.label)}"></button>`}
+          ${preview ? "" : `<button class="vl-launcher-hitbox no-zoom" data-choice-id="${choice.id}" type="button" aria-label="Launch ${escapeHtml(choice.label)}"></button>`}
         </div>
         <div class="${preview ? "vl-preview-bubble" : `vl-choice-bubble ${choice.rocket.textDark ? "vl-text-dark" : ""}`}" style="--bubble:${choice.rocket.color}">${escapeHtml(choice.label)}</div>
       </div>`;
@@ -371,6 +381,7 @@ function renderModeNav(){
               <div class="vl-board-content">
                 <div class="vl-overlay-pills"><button class="vl-pill vl-menu-pill no-zoom" id="vlMenuPill" type="button" aria-label="Game Menu">☰</button></div>
                 <div class="vl-launch-area">
+                  ${renderCountdownOverlay()}
                   <div class="vl-carousel">
                     <button class="vl-arrow no-zoom" id="vlPrevBtn" type="button" aria-label="Previous launcher">‹</button>
                     <div class="vl-main-launcher-wrap">
@@ -449,13 +460,23 @@ function renderModeNav(){
     el.classList.remove("is-flashing"); void el.offsetWidth; el.classList.add("is-flashing");
   }
 
-  function spawnSmoke(x, y, count=8){
+  function spawnSmoke(x, y, count=8, options={}){
     const layer = $("#vlSmokeLayer") || document.body;
+    const {
+      spreadX = 30,
+      spreadY = 16,
+      size = 18,
+      color = "rgba(255,255,255,.68)"
+    } = options;
+
     for (let i = 0; i < count; i++){
       const puff = document.createElement("div");
       puff.className = "vl-smoke-puff";
-      puff.style.left = `${x + (Math.random() * 30 - 15)}px`;
-      puff.style.top = `${y + (Math.random() * 16 - 8)}px`;
+      puff.style.left = `${x + (Math.random() * spreadX - spreadX / 2)}px`;
+      puff.style.top = `${y + (Math.random() * spreadY - spreadY / 2)}px`;
+      puff.style.width = `${size}px`;
+      puff.style.height = `${size}px`;
+      puff.style.setProperty("--vl-smoke-color", color);
       puff.style.setProperty("--sx", `${Math.round(Math.random() * 28 - 14)}px`);
       puff.style.setProperty("--sy", `${Math.round(-16 - Math.random() * 26)}px`);
       layer.appendChild(puff);
@@ -481,6 +502,16 @@ function renderModeNav(){
   }
 
   function getModeMedal(mode){ return mode === "easy" ? "🥉" : mode === "medium" ? "🥈" : mode === "hard" ? "🥇" : "🏅"; }
+
+  async function playLaunchCountdown(){
+    for (const value of ["3","2","1"]){
+      state.countdownValue = value;
+      render();
+      await sleep(300);
+    }
+    state.countdownValue = "";
+    render();
+  }
 
   async function animateLaunch(choice, sourceEl){
     const sourceRocket = sourceEl?.querySelector(".vl-rocket") || sourceEl;
@@ -551,15 +582,23 @@ function renderModeNav(){
 
   async function animateFailedLaunch(sourceEl){
     const rocket = sourceEl?.querySelector(".vl-rocket");
-    const bubble = sourceEl?.querySelector(".vl-choice-bubble");
-    if (!rocket || !bubble) return;
+    if (!rocket) return;
+
     const rocketRect = rocket.getBoundingClientRect();
-    const bubbleRect = bubble.getBoundingClientRect();
-    sourceEl.classList.add("is-arming");
-    spawnSmoke(rocketRect.left + rocketRect.width/2, bubbleRect.bottom - 4, 6);
-    await sleep(180);
-    spawnSmoke(rocketRect.left + rocketRect.width/2, rocketRect.top + rocketRect.height/2, 12);
-    sourceEl.classList.remove("is-arming");
+    const smokeLayerRect = ($("#vlSmokeLayer") || document.body).getBoundingClientRect();
+
+    const centerX = rocketRect.left + rocketRect.width / 2 - smokeLayerRect.left;
+    const centerY = rocketRect.top + rocketRect.height / 2 - smokeLayerRect.top;
+    const smokeSize = Math.round(rocketRect.width * 1.5);
+
+    spawnSmoke(centerX, centerY, 18, {
+      spreadX: smokeSize * 0.55,
+      spreadY: smokeSize * 0.55,
+      size: smokeSize,
+      color: "rgba(70,70,70,.78)"
+    });
+
+    await sleep(220);
   }
 
   async function finishGame(){
@@ -591,6 +630,8 @@ function renderModeNav(){
     const sourceEl = document.querySelector(`.vl-main-launcher[data-choice-id="${choiceId}"]`) || document.querySelector(`.vl-launcher-hitbox[data-choice-id="${choiceId}"]`)?.closest('.vl-main-launcher');
     if (!choice || !sourceEl) return;
     state.busy = true;
+
+    await playLaunchCountdown();
 
     if (choice.isCorrect){
       await animateLaunch(choice, sourceEl);
