@@ -493,9 +493,11 @@ function renderModeNav(){
     const unit = document.createElement("div");
     unit.className = "vl-flight-unit";
     unit.innerHTML = `<img class="vl-flight-rocket" src="${choice.rocket.src}" alt=""><div class="vl-flight-label ${choice.rocket.textDark ? "vl-text-dark" : ""}" style="background:${choice.rocket.color}">${escapeHtml(choice.label)}</div>`;
-    unit.style.left = `${rocketRect.left + (rocketRect.width/2) - 39}px`;
-    unit.style.top = `${rocketRect.top - 8}px`;
     document.body.appendChild(unit);
+
+    const unitRect = unit.getBoundingClientRect();
+    unit.style.left = `${rocketRect.left + (rocketRect.width / 2) - (unitRect.width / 2)}px`;
+    unit.style.top = `${rocketRect.top - 8}px`;
 
     const startX = rocketRect.left + rocketRect.width / 2;
     const startY = rocketRect.top + rocketRect.height / 2;
