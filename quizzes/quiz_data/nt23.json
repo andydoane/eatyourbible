@@ -4,7 +4,7 @@
   "lessonTitleText": "Three Parables about the Lost",
   "lessonSubtitleText": "Test how well you know this story",
   "lessonImagePath": "quizimages/nt23image.png",
-  "themeClass": "theme-nick-orange",
+  "themeClass": "theme-kahoot-orange",
   "questions": [
     {
       "text": "What did the Pharisees and Bible teachers wonder about Jesus?",
