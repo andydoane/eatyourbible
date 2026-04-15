@@ -513,22 +513,30 @@ function renderModeNav(){
     spawnSmoke(smokeStartX, smokeBubbleBottom - 4, 5);
     await sleep(220);
     spawnSmoke(smokeStartX, smokeBubbleBottom - 6, 8);
+
     unit.style.transition = "transform 240ms ease, opacity 240ms ease";
     unit.style.transform = "translate(0,-22px) scale(.98)";
+    unit.style.opacity = "1";
     await sleep(240);
 
     const dx = Math.round(endX - startX);
     const dy = Math.round(endY - startY);
-    const frames = 8;
-    for (let i = 0; i < frames; i++){
-      const t = i / frames;
-      spawnSmoke(smokeStartX + dx * t * 0.65, smokeStartY + dy * t * 0.65 + 54, 2);
-      await sleep(26);
-    }
 
     unit.style.transition = "transform 640ms cubic-bezier(.12,.2,.18,1), opacity 640ms linear";
     unit.style.transform = `translate(${dx}px, ${dy}px) scale(.44)`;
     unit.style.opacity = ".96";
+
+    const frames = 8;
+    await sleep(40);
+    for (let i = 0; i < frames; i++){
+      const t = i / frames;
+      spawnSmoke(
+        smokeStartX + dx * t * 0.65,
+        smokeStartY + dy * t * 0.65 + 64,
+        2
+      );
+      await sleep(26);
+    }
     await sleep(640);
     unit.remove();
     sourceEl.classList.remove("is-arming");
