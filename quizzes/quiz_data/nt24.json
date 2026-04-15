@@ -4,7 +4,7 @@
   "lessonTitleText": "Jesus Teaches about Prayer",
   "lessonSubtitleText": "Test how well you know this story",
   "lessonImagePath": "quizimages/nt24image.png",
-  "themeClass": "theme-jellybean-dark",
+  "themeClass": "theme-kahoot-blue",
   "questions": [
     {
       "text": "What is prayer?",
