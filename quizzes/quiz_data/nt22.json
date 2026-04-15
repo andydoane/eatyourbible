@@ -4,7 +4,7 @@
   "lessonTitleText": "The Good Samaritan",
   "lessonSubtitleText": "Test how well you know this story",
   "lessonImagePath": "quizimages/nt22image.png",
-  "themeClass": "theme-nick-purple",
+  "themeClass": "theme-kahoot-purple",
   "questions": [
     {
       "text": "What is a parable?",
