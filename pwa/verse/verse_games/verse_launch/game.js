@@ -243,16 +243,19 @@
   function formatMode(mode){ return mode ? mode.charAt(0).toUpperCase() + mode.slice(1) : "Mode"; }
   function totalElapsedMs(){ return Math.max(1, (state.endTime || performance.now()) - state.startTime); }
 
-  function renderModeNav(){
-    return `
-        <div style="width:100%;padding:0 0 calc(12px + var(--vl-safe-bottom));background:rgba(0,0,0,.30);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);">
-          <div style="width:100%;max-width:840px;margin:0 auto;padding:0 14px;height:70px;display:flex;justify-content:space-between;align-items:center;gap:14px;">
-            <button class="no-zoom" id="vlHomeBtn" aria-label="Home" style="width:54px;height:54px;border:none;border-radius:16px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;color:#fff;font-size:26px;">⌂</button>
-            <button class="no-zoom" id="vlHelpBtn" type="button" style="min-width:118px;height:44px;padding:0 16px;border:none;border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font-size:16px;font-weight:900;">HELP</button>
-            <button class="no-zoom" id="vlMuteBtn" aria-label="Mute" style="width:54px;height:54px;border:none;border-radius:16px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;">${muted ? "🔇" : "🔊"}</button>
-          </div>
-        </div>`;
-  }
+function renderModeNav(){
+  return `
+    <div class="vl-nav-wrap">
+      <div class="vl-nav">
+        <button class="vl-nav-btn no-zoom" id="vlHomeBtn" aria-label="Home">⌂</button>
+        <div class="vl-nav-center">
+          <button class="vl-help-btn no-zoom" id="vlHelpBtn" type="button">HELP</button>
+        </div>
+        <button class="vl-nav-btn no-zoom" id="vlMuteBtn" aria-label="Mute">${muted ? "🔇" : "🔊"}</button>
+      </div>
+    </div>
+  `;
+}
 
   function renderHelpOverlay(){
     return `
