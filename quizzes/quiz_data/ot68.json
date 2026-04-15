@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot68",
+  "pageTitle": "OT 68 Quiz",
+  "lessonTitleText": "God Heals Naaman",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot68image.png",
+  "themeClass": "theme-kahoot-blue",
+  "questions": [
+    {
+      "text": "What job did Naaman have?",
+      "answers": [
+        "An commander in the army of Syria",
+        "He was the king of Syria",
+        "He was a prophet like Elisha",
+        "He was the cupbearer to the king of Syria"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What problem did Naaman have?",
+      "answers": [
+        "Leprosy",
+        "Blindness",
+        "A broken leg",
+        "He was bald"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the servant girl tell Naaman?",
+      "answers": [
+        "The prophet Elisha in Israel could heal him",
+        "He should stop eating junk food",
+        "He should see a doctor",
+        "He should pray and ask Baal to heal him"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When Naaman went to Elisha, what gifts did he bring with him?",
+      "answers": [
+        "Gold, silver, and clothes",
+        "Gold, frankincense, and myrrh",
+        "Lots of weapons",
+        "Food for Elisha to eat"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who spoke to Naaman at Elisha’s house, and what did he say?",
+      "answers": [
+        "A messenger told Naaman to wash in the Jordan seven times",
+        "Elisha told him to go home",
+        "A servant gave him food",
+        "A priest told him to pray"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why was Naaman upset?",
+      "answers": [
+        "He expected Elisha to wave his hand over him and heal him",
+        "He didn’t like taking baths",
+        "He wanted to see what Elisha looked like",
+        "He didn’t trust the servant girl"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who convinced Naaman to obey?",
+      "answers": [
+        "His servants",
+        "Elisha",
+        "Naaman's wife",
+        "The servant girl"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened after Naaman washed seven times in the river?",
+      "answers": [
+        "His skin became clean like a child’s",
+        "Elisha came out and waved his hand over Naaman",
+        "He drowned",
+        "He got even sicker"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Naaman say after he was healed?",
+      "answers": [
+        "The God of Israel is the only true God",
+        "The Jordan River is gross",
+        "This must be a dream",
+        "I was healed by Baal"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Naaman want to take home with him?",
+      "answers": [
+        "Soil from Israel to worship God in his own land",
+        "Gold to give to his king",
+        "Water from the Jordan River",
+        "Elisha's staff"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

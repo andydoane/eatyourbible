@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot67",
+  "pageTitle": "OT 67 Quiz",
+  "lessonTitleText": "Elisha's Many Miracles",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot67image.png",
+  "themeClass": "theme-orange",
+  "questions": [
+    {
+      "text": "What was wrong with the water in Jericho?",
+      "answers": [
+        "It was bad and crops would not grow",
+        "It was frozen",
+        "It was too salty to drink",
+        "It was full of fish"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Elisha do to fix the water?",
+      "answers": [
+        "He put salt in it and it became pure",
+        "He boiled it",
+        "He prayed and waited",
+        "He parted the waters in two"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What problem did the poor widow have?",
+      "answers": [
+        "Her sons might be taken as slaves because of the money she owed",
+        "She had no home",
+        "She was sick",
+        "She fell down a well"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did Elisha help the widow?",
+      "answers": [
+        "Her oil multiplied and filled many jars",
+        "He prayed for God to send her bread from heaven",
+        "He found her a job",
+        "He married her"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What promise did Elisha give to the woman who let him stay at her house?",
+      "answers": [
+        "She would have a baby in a year",
+        "She would become rich",
+        "She would live forever",
+        "She would never be sick"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened one year after Elisha’s promise?",
+      "answers": [
+        "She had a baby",
+        "She diedy",
+        "She became sick",
+        "She bought a puppy"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened to her son later?",
+      "answers": [
+        "He became sick and died",
+        "He ran away",
+        "He became Elisha's helper",
+        "He became king of Israel"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did Elisha help the dead boy?",
+      "answers": [
+        "He prayed and stretched out on him, and the boy came back to life",
+        "He buried him",
+        "He sent for an angel to take the boy to heaven",
+        "He tapped the boy with his staff seven times"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What was wrong with the stew, and how was it fixed?",
+      "answers": [
+        "It was poisonous; Elisha added flour and it became safe",
+        "It was too cold, so he heated it up",
+        "It tasted gross, so he added salt and pepper",
+        "It was burned, but he ate it anyways"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What miracle did Elisha do with bread?",
+      "answers": [
+        "He fed 100 men with 20 loaves",
+        "He prayed for bread to come down from heaven",
+        "He turned bread into fish",
+        "He taught the men how to make sandwiches"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

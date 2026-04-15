@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot64",
+  "pageTitle": "OT 64 Quiz",
+  "lessonTitleText": "Elijah and the Widow",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot64image.png",
+  "themeClass": "theme-electric-dark",
+  "questions": [
+    {
+      "text": "Who was the king of Israel during Elijah’s time?",
+      "answers": [
+        "King Ahab",
+        "King David",
+        "King Solomon",
+        "King Saul"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What was King Ahab like?",
+      "answers": [
+        "He was very evil and worshiped other gods",
+        "He was a good and faithful king",
+        "He was the greatest king of Israel",
+        "He was an okay king"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What message did Elijah give to Ahab?",
+      "answers": [
+        "It would not rain until Elijah said so",
+        "A war was coming",
+        "The sun would not shine until Elijah said so",
+        "The temple would be destroyed"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why did stopping the rain make Baal look powerless?",
+      "answers": [
+        "Baal was supposed to control the rain",
+        "Baal liked taking baths",
+        "Baal lived in a cloud",
+        "Baal was the ocean God"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did God take care of Elijah by the brook?",
+      "answers": [
+        "He drank from the brook and ravens brought him food",
+        "People brought him food",
+        "Ravens brought him glasses of water to drink",
+        "God made water pour out from a rock"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Where did God send Elijah after the brook dried up?",
+      "answers": [
+        "To a widow",
+        "Back to King Ahab",
+        "To the land of Egypt",
+        "To the top of a mountain"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the widow say when Elijah asked for food?",
+      "answers": [
+        "She only had a little left before she and her son would die",
+        "She had plenty to share",
+        "She refused to help him",
+        "She asked Elijah to pay her a lot of money"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did God provide for Elijah, the widow, and her son?",
+      "answers": [
+        "The widow's oil and flour never ran out",
+        "He sent rain right away",
+        "Ravens brought them bread and meat to eat",
+        "God sent manna from heaven"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened to the widow’s son?",
+      "answers": [
+        "He became sick and died",
+        "He ran away",
+        "He stole Elijah's staff",
+        "He became Elijah's helper"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Elijah do when the boy died?",
+      "answers": [
+        "He prayed and God brought the boy back to life",
+        "He buried him",
+        "He called for help",
+        "He asked Baal to heal the boy"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot66",
+  "pageTitle": "OT 66 Quiz",
+  "lessonTitleText": "Elijah Is Taken to Heaven",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot66image.png",
+  "themeClass": "theme-blue",
+  "questions": [
+    {
+      "text": "When Jezebel threatened to kill Elijah, what did Elijah ask God to do?",
+      "answers": [
+        "Let him die",
+        "Sent an angel to help",
+        "Make him king",
+        "Make Jezebel become blind"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who did God choose to replace Elijah as prophet?",
+      "answers": [
+        "Elisha",
+        "Joshua",
+        "Jezebel",
+        "Isaiah"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Elisha do when Elijah placed his coat on him?",
+      "answers": [
+        "Said goodbye to his parents and followed Elijah",
+        "Started to cry",
+        "Ran away",
+        "Stole Elijah's coat"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Elijah tell Elisha to do as they traveled?",
+      "answers": [
+        "Stay behind",
+        "Never leave him, no matter what",
+        "Find food",
+        "Try to do a miracle"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did Elisha respond when Elijah told him to stay?",
+      "answers": [
+        "He said he would not leave and kept following him",
+        "He did what Elijah asked and stayed behind",
+        "He went back home to his parents",
+        "He told Elijah to be quiet"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened when Elijah struck the Jordan River with his coat?",
+      "answers": [
+        "The waters parted",
+        "The waters turned to blood",
+        "The coat turned into a boat",
+        "He caught a large amount of fish"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Elisha ask Elijah for?",
+      "answers": [
+        "A double portion of his spirit",
+        "Lots of money",
+        "Long hair",
+        "A new coat"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Elijah say Elisha must do to receive what he asked for?",
+      "answers": [
+        "Watch when Elijah is taken away",
+        "Pray all night",
+        "Do a miracle",
+        "Be baptized in the Jordan River"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did Elijah leave the earth?",
+      "answers": [
+        "He rode a fiery chariot in a whirlwind",
+        "He climbed a golden ladder",
+        "He was carried up by angels",
+        "He disappeared in a puff of smoke"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened when Elisha struck the river with Elijah's ccoat?",
+      "answers": [
+        "He struck the river and it parted",
+        "A chariot came to also take Elisha to heaven",
+        "It caught on fire",
+        "The river dried up completely"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
