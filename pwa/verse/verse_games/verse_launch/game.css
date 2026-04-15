@@ -41,6 +41,79 @@ button,input,select{font:inherit}
 .vl-mode-subtitle{font-size:clamp(18px,2.4vw,28px);font-weight:800;line-height:1.2;max-width:720px;text-wrap:balance}
 .vl-mode-card{width:min(100%,620px);background:rgba(0,0,0,.28);border-radius:26px;padding:14px}
 .vl-mode-actions{display:flex;flex-direction:column;gap:16px}
+
+.vl-nav-wrap{
+  width: 100%;
+  max-width: 840px;
+  margin: 0 auto;
+}
+
+.vl-nav{
+  width: 100%;
+  max-width: 840px;
+  margin: 0 auto;
+  height: calc(72px + var(--vl-safe-bottom));
+  padding: 10px 14px calc(10px + var(--vl-safe-bottom));
+  background: var(--vl-purple);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.vl-nav-btn{
+  width: 72px;
+  min-width: 72px;
+  height: 52px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #fff;
+  font-size: 24px;
+}
+
+.vl-nav-center{
+  flex: 1 1 auto;
+  display: flex;
+  justify-content: center;
+}
+
+.vl-help-btn{
+  border: none;
+  border-radius: 999px;
+  height: 52px;
+  min-width: 140px;
+  padding: 0 24px;
+  background: #ffffff;
+  color: #7f66c6;
+  font: inherit;
+  font-size: 22px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.22);
+}
+
+.vl-nav-btn:active,
+.vl-help-btn:active{
+  transform: translateY(4px);
+}
+
+@media (max-width: 520px){
+  .vl-nav-btn{
+    width: 64px;
+    min-width: 64px;
+  }
+
+  .vl-help-btn{
+    min-width: 118px;
+    font-size: 20px;
+  }
+}
+
 .vm-btn{
   width:100%;border:none;border-radius:999px;background:#fff;color:var(--vl-purple);font-size:clamp(20px,4vw,30px);
   font-weight:900;padding:16px 22px;box-shadow:0 6px 0 rgba(0,0,0,.24);cursor:pointer;
