@@ -490,6 +490,7 @@ function renderModeNav(){
 
     const rocketRect = sourceRocket.getBoundingClientRect();
     const bubbleRect = sourceBubble.getBoundingClientRect();
+    const smokeLayerRect = ($("#vlSmokeLayer") || document.body).getBoundingClientRect();
     const unit = document.createElement("div");
     unit.className = "vl-flight-unit";
     unit.innerHTML = `<img class="vl-flight-rocket" src="${choice.rocket.src}" alt=""><div class="vl-flight-label ${choice.rocket.textDark ? "vl-text-dark" : ""}" style="background:${choice.rocket.color}">${escapeHtml(choice.label)}</div>`;
@@ -504,10 +505,14 @@ function renderModeNav(){
     const endX = buildRect.left + buildRect.width / 2;
     const endY = buildRect.top + buildRect.height / 2;
 
+    const smokeStartX = startX - smokeLayerRect.left;
+    const smokeStartY = startY - smokeLayerRect.top;
+    const smokeBubbleBottom = bubbleRect.bottom - smokeLayerRect.top;
+
     sourceEl.classList.add("is-arming");
-    spawnSmoke(startX, bubbleRect.bottom - 4, 5);
+    spawnSmoke(smokeStartX, smokeBubbleBottom - 4, 5);
     await sleep(220);
-    spawnSmoke(startX, bubbleRect.bottom - 6, 8);
+    spawnSmoke(smokeStartX, smokeBubbleBottom - 6, 8);
     unit.style.transition = "transform 240ms ease, opacity 240ms ease";
     unit.style.transform = "translate(0,-22px) scale(.98)";
     await sleep(240);
@@ -517,7 +522,7 @@ function renderModeNav(){
     const frames = 8;
     for (let i = 0; i < frames; i++){
       const t = i / frames;
-      spawnSmoke(startX + dx * t * 0.65, startY + dy * t * 0.65 + 54, 2);
+      spawnSmoke(smokeStartX + dx * t * 0.65, smokeStartY + dy * t * 0.65 + 54, 2);
       await sleep(26);
     }
 
