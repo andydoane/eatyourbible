@@ -4,7 +4,7 @@
   "lessonTitleText": "David and Bathsheba",
   "lessonSubtitleText": "Test how well you know this story",
   "lessonImagePath": "quizimages/ot60image.png",
-  "themeClass": "theme-nick-purple",
+  "themeClass": "theme-kahoot-purple",
   "questions": [
     {
       "text": "What was the name of the woman David saw from his roof?",
