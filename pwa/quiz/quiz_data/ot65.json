@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot65",
+  "pageTitle": "OT 65 Quiz",
+  "lessonTitleText": "Elijah vs. the Prophets of Baal",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot65image.png",
+  "themeClass": "theme-yellow",
+  "questions": [
+    {
+      "text": "How long had Israel gone without rain?",
+      "answers": [
+        "Three years",
+        "One year",
+        "Seven years",
+        "Forty days"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Elijah tell Ahab to do?",
+      "answers": [
+        "Gather the prophets and people on Mount Carmel",
+        "Fix God's temple",
+        "Built a statue of Baal",
+        "Leave the land"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Elijah want the people to decide?",
+      "answers": [
+        "Who the real God is — the Lord or Baal",
+        "Who should be king – Elijah or Ahab",
+        "What they wanted to eat for dinner",
+        "Where to build a new temple"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What was Elijah’s contest?",
+      "answers": [
+        "The God who answers a prayer with fire wins",
+        "The strongest soldier wins",
+        "The fastest runner wins",
+        "The loudest prayer wins"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How many prophets of Baal were there, and how long did they pray?",
+      "answers": [
+        "450 prophets prayed from morning until noon",
+        "100 prophets prayed all day",
+        "300 prophets prayed for one hour",
+        "50 prophets prayed for three days"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did Elijah make fun of Baal?",
+      "answers": [
+        "He said maybe Baal was asleep,on a trip, or using the bathroom",
+        "He shouted mean words at him",
+        "He called him silly names",
+        "He dressed up like Baal and acted like a fool"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Elijah have done to the Lord’s altar?",
+      "answers": [
+        "Water was poured on it three times",
+        "It was covered with gold",
+        "Oil was poured over it",
+        "He had them knock it down"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened when Elijah prayed?",
+      "answers": [
+        "God sent fire that burned everything — even the water",
+        "Nothing happened",
+        "Rain fell immediately",
+        "An angel came down and lit a fire on the altar"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the people shout after seeing the fire?",
+      "answers": [
+        "The Lord is the one and only God!",
+        "Baal is powerful!",
+        "Aah! We are going to die!",
+        "Baal is a wimp!"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did God do after the mountaintop contest?",
+      "answers": [
+        "He sent rain",
+        "He sent fire again",
+        "He made Elijah the new king",
+        "He caused an earthquake"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
