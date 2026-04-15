@@ -245,11 +245,13 @@
 
   function renderModeNav(){
     return `
-      <div style="width:100%;max-width:840px;margin:0 auto;padding:0 14px calc(12px + var(--vl-safe-bottom));display:flex;justify-content:space-between;align-items:center;gap:14px;background:rgba(0,0,0,.30);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);height:70px;">
-        <button class="no-zoom" id="vlHomeBtn" aria-label="Home" style="width:54px;height:54px;border:none;border-radius:16px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;color:#fff;font-size:26px;">⌂</button>
-        <button class="no-zoom" id="vlHelpBtn" type="button" style="min-width:118px;height:44px;padding:0 16px;border:none;border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font-size:16px;font-weight:900;">HELP</button>
-        <button class="no-zoom" id="vlMuteBtn" aria-label="Mute" style="width:54px;height:54px;border:none;border-radius:16px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;">${muted ? "🔇" : "🔊"}</button>
-      </div>`;
+        <div style="width:100%;padding:0 0 calc(12px + var(--vl-safe-bottom));background:rgba(0,0,0,.30);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);">
+          <div style="width:100%;max-width:840px;margin:0 auto;padding:0 14px;height:70px;display:flex;justify-content:space-between;align-items:center;gap:14px;">
+            <button class="no-zoom" id="vlHomeBtn" aria-label="Home" style="width:54px;height:54px;border:none;border-radius:16px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;color:#fff;font-size:26px;">⌂</button>
+            <button class="no-zoom" id="vlHelpBtn" type="button" style="min-width:118px;height:44px;padding:0 16px;border:none;border-radius:999px;background:rgba(255,255,255,.14);color:#fff;font-size:16px;font-weight:900;">HELP</button>
+            <button class="no-zoom" id="vlMuteBtn" aria-label="Mute" style="width:54px;height:54px;border:none;border-radius:16px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;">${muted ? "🔇" : "🔊"}</button>
+          </div>
+        </div>`;
   }
 
   function renderHelpOverlay(){
@@ -352,7 +354,7 @@
   }
 
   function renderGame(){
-    const center = getPreviewChoice(0), left = getPreviewChoice(-1), right = getPreviewChoice(1);
+    const center = getPreviewChoice(0);
     app.innerHTML = `
       <div class="vl-root">
         <div class="vl-stage">
@@ -369,10 +371,8 @@
                   <div class="vl-carousel">
                     <button class="vl-arrow no-zoom" id="vlPrevBtn" type="button" aria-label="Previous launcher">‹</button>
                     <div class="vl-main-launcher-wrap">
-                      <div style="width:100%;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr) minmax(0,1fr);align-items:end;gap:10px;">
-                        <div class="vl-side-preview is-left">${renderLauncher(left, true)}</div>
+                      <div>
                         ${renderLauncher(center, false)}
-                        <div class="vl-side-preview is-right">${renderLauncher(right, true)}</div>
                       </div>
                     </div>
                     <button class="vl-arrow no-zoom" id="vlNextBtn" type="button" aria-label="Next launcher">›</button>
