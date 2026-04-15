@@ -47,10 +47,10 @@ button,input,select{font:inherit}
 }
 .vm-btn:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,.24)}
 
-.vl-build-wrap{flex:0 0 auto;padding:12px 14px 10px}
+.vl-build-wrap{flex:0 0 auto;padding:8px 14px 8px}
 .vl-build{
-  position:relative;background:var(--vl-build-bg);color:var(--vl-dark);border-radius:22px;min-height:112px;
-  display:flex;align-items:center;justify-content:center;text-align:center;padding:18px;box-shadow:inset 0 -4px 0 rgba(0,0,0,.10);
+  position:relative;background:var(--vl-build-bg);color:var(--vl-dark);border-radius:22px;min-height:96px;
+  display:flex;align-items:center;justify-content:center;text-align:center;padding:14px 16px;box-shadow:inset 0 -4px 0 rgba(0,0,0,.10);
 }
 .vl-build.vl-shake{animation:vlBuildShake 320ms ease}
 .vl-build-text{font-size:clamp(24px,5.8vw,42px);font-weight:900;line-height:1.2;width:100%;text-wrap:balance}
@@ -76,16 +76,23 @@ button,input,select{font:inherit}
 .vl-launch-area{position:relative;flex:1 1 auto;min-height:0;display:flex;align-items:flex-end;justify-content:center;padding:18px 0 14px}
 .vl-flight-layer,.vl-smoke-layer,.vl-firework-layer{position:absolute;inset:0;pointer-events:none;z-index:3}
 .vl-carousel{width:min(100%,720px);display:grid;grid-template-columns:72px minmax(0,1fr) 72px;align-items:end;gap:10px;position:relative;z-index:4}
-.vl-side-preview{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:8px;opacity:.34;filter:saturate(.85);padding-bottom:10px}
-.vl-side-preview.is-left{transform:translateX(-6px)}
-.vl-side-preview.is-right{transform:translateX(6px)}
-.vl-preview-rocket{width:44px;height:44px;object-fit:contain;transform:rotate(-45deg)}
+.vl-side-preview{display:none}
+.vl-side-preview.is-left{transform:none}
+.vl-side-preview.is-right{transform:none}
+.vl-preview-rocket{width:44px;height:44px;object-fit:contain;transform:none}
 .vl-preview-bubble{max-width:100%;padding:10px 12px;border-radius:22px;background:rgba(255,255,255,.18);font-size:16px;font-weight:900;line-height:1.04;text-align:center;text-wrap:balance}
 
-.vl-main-launcher-wrap{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:10px;min-width:0}
+.vl-main-launcher-wrap{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:10px;min-width:0;width:100%}
+
+.vl-main-launcher-wrap > div{
+  width:100%;
+  display:flex;
+  justify-content:center;
+}
+
 .vl-main-launcher{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:10px;cursor:pointer;min-width:0;width:100%}
 .vl-rocket-stack{position:relative;display:flex;align-items:center;justify-content:center;min-height:180px;width:100%}
-.vl-rocket{width:96px;height:96px;object-fit:contain;transform:rotate(-45deg);filter:drop-shadow(0 10px 16px rgba(0,0,0,.26));will-change:transform,opacity}
+.vl-rocket{width:96px;height:96px;object-fit:contain;transform:none;filter:drop-shadow(0 10px 16px rgba(0,0,0,.26));will-change:transform,opacity}
 .vl-smoke-base{position:absolute;left:50%;bottom:24px;transform:translateX(-50%);display:flex;gap:8px;opacity:0;transition:opacity 120ms ease}
 .vl-main-launcher.is-arming .vl-smoke-base{opacity:1}
 .vl-smoke-dot{width:18px;height:18px;border-radius:999px;background:rgba(255,255,255,.72);filter:blur(1px);animation:vlSmokeBob 720ms ease-in-out infinite}
@@ -117,7 +124,7 @@ button,input,select{font:inherit}
 .vl-end-sub{font-size:18px;font-weight:700;line-height:1.3;text-wrap:balance}
 
 .vl-flight-unit{position:fixed;left:0;top:0;pointer-events:none;z-index:10000;display:flex;flex-direction:column;align-items:center;gap:8px;transform-origin:center center}
-.vl-flight-rocket{width:78px;height:78px;object-fit:contain;transform:rotate(-45deg);filter:drop-shadow(0 10px 16px rgba(0,0,0,.3))}
+.vl-flight-rocket{width:78px;height:78px;object-fit:contain;transform:none;filter:drop-shadow(0 10px 16px rgba(0,0,0,.3))}
 .vl-flight-label{padding:12px 18px;border-radius:999px;box-shadow:0 8px 0 rgba(0,0,0,.24);font-size:26px;font-weight:900;line-height:1;text-align:center;text-wrap:balance;color:#fff;max-width:420px}
 .vl-firework{position:absolute;transform:translate(-50%,-50%);width:14px;height:14px;border-radius:999px;background:var(--pcolor,#fff);animation:vlFirework 720ms cubic-bezier(.15,.82,.25,1) forwards}
 .vl-smoke-puff{position:absolute;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:999px;background:rgba(255,255,255,.68);filter:blur(1px);animation:vlSmokePuff 460ms ease forwards}
