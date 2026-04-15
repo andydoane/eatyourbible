@@ -2,6 +2,34 @@ window.EXTERNAL_VERSE_GAMES = [
   {
     enabled: true,
     manifest: {
+      id: "scramble",
+      title: "Verse Scramble",
+      description: "Tap the next correct word as fast as you can.",
+      icon: "🧩",
+      launchUrl: "./verse_games/verse_scramble_neo/index.html",
+      visibleInCarousel: true,
+      progressType: "standard",
+      modes: ["easy", "medium", "hard"]
+    }
+  },
+  
+  {
+  enabled: true,
+  manifest: {
+    id: "chain",
+    title: "Verse Launch",
+    description: "Launch the next correct word into the verse.",
+    icon: "🚀",
+    launchUrl: "./verse_games/verse_launch/index.html",
+    visibleInCarousel: true,
+    progressType: "standard",
+    modes: ["easy", "medium", "hard"]
+  }
+},
+  
+  {
+    enabled: true,
+    manifest: {
       id: "verse_snake",
       title: "Verse Snake",
       description: "Steer the snake to eat the next correct word.",
@@ -67,19 +95,5 @@ window.EXTERNAL_VERSE_GAMES = [
       progressType: "standard",
       modes: ["easy", "medium", "hard"]
     }
-  },
-  {
-    enabled: true,
-    manifest: {
-      id: "scramble",
-      title: "Verse Scramble",
-      description: "Tap the next correct word as fast as you can.",
-      icon: "🧩",
-      launchUrl: "./verse_games/verse_scramble_neo/index.html",
-      visibleInCarousel: true,
-      progressType: "standard",
-      modes: ["easy", "medium", "hard"]
-    }
-  }
-  
+  }  
 ];
