@@ -381,15 +381,19 @@ function renderModeNav(){
               <div class="vl-board-content">
                 <div class="vl-overlay-pills"><button class="vl-pill vl-menu-pill no-zoom" id="vlMenuPill" type="button" aria-label="Game Menu">☰</button></div>
                 <div class="vl-launch-area">
-                  ${renderCountdownOverlay()}
-                  <div class="vl-carousel">
-                    <button class="vl-arrow no-zoom" id="vlPrevBtn" type="button" aria-label="Previous launcher">‹</button>
-                    <div class="vl-main-launcher-wrap">
-                      <div>
-                        ${renderLauncher(center, false)}
+                  <div class="vl-flight-space">
+                    ${renderCountdownOverlay()}
+                  </div>
+                  <div class="vl-launcher-band">
+                    <div class="vl-carousel">
+                      <button class="vl-arrow no-zoom" id="vlPrevBtn" type="button" aria-label="Previous launcher">‹</button>
+                      <div class="vl-main-launcher-wrap">
+                        <div>
+                          ${renderLauncher(center, false)}
+                        </div>
                       </div>
+                      <button class="vl-arrow no-zoom" id="vlNextBtn" type="button" aria-label="Next launcher">›</button>
                     </div>
-                    <button class="vl-arrow no-zoom" id="vlNextBtn" type="button" aria-label="Next launcher">›</button>
                   </div>
                 </div>
               </div>
