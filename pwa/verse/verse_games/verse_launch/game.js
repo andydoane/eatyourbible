@@ -507,7 +507,7 @@ function renderModeNav(){
     for (const value of ["3","2","1"]){
       state.countdownValue = value;
       render();
-      await sleep(300);
+      await sleep(520);
     }
     state.countdownValue = "";
     render();
@@ -540,7 +540,7 @@ function renderModeNav(){
     const smokeStartY = startY - smokeLayerRect.top;
     const smokeBubbleBottom = bubbleRect.bottom - smokeLayerRect.top;
 
-    sourceEl.classList.add("is-arming");
+    sourceEl.classList.add("is-hidden-during-flight");
     spawnSmoke(smokeStartX, smokeBubbleBottom - 4, 5);
     await sleep(220);
     spawnSmoke(smokeStartX, smokeBubbleBottom - 6, 8);
@@ -570,7 +570,7 @@ function renderModeNav(){
     }
     await sleep(640);
     unit.remove();
-    sourceEl.classList.remove("is-arming");
+    sourceEl.classList.remove("is-hidden-during-flight");
     spawnFireworks(endX, endY);
   }
 
@@ -591,14 +591,14 @@ function renderModeNav(){
     const centerY = rocketRect.top + rocketRect.height / 2 - smokeLayerRect.top;
     const smokeSize = Math.round(rocketRect.width * 1.5);
 
-    spawnSmoke(centerX, centerY, 18, {
-      spreadX: smokeSize * 0.55,
-      spreadY: smokeSize * 0.55,
+    spawnSmoke(centerX, centerY, 22, {
+      spreadX: smokeSize * 0.50,
+      spreadY: smokeSize * 0.50,
       size: smokeSize,
-      color: "rgba(70,70,70,.78)"
+      color: "rgba(70,70,70,.82)"
     });
 
-    await sleep(220);
+    await sleep(280);
   }
 
   async function finishGame(){
@@ -624,17 +624,26 @@ function renderModeNav(){
     setScreen("end");
   }
 
-  async function handleLaunch(choiceId){
-    if (state.busy || state.menuOpen || state.helpOpen || state.completed) return;
-    const choice = state.choices.find(c => c.id === choiceId);
-    const sourceEl = document.querySelector(`.vl-main-launcher[data-choice-id="${choiceId}"]`) || document.querySelector(`.vl-launcher-hitbox[data-choice-id="${choiceId}"]`)?.closest('.vl-main-launcher');
-    if (!choice || !sourceEl) return;
-    state.busy = true;
+async function handleLaunch(choiceId){
+  if (state.busy || state.menuOpen || state.helpOpen || state.completed) return;
+  const choice = state.choices.find(c => c.id === choiceId);
+  if (!choice) return;
 
-    await playLaunchCountdown();
+  state.busy = true;
+  await playLaunchCountdown();
 
-    if (choice.isCorrect){
-      await animateLaunch(choice, sourceEl);
+  const liveSourceEl =
+    document.querySelector(`.vl-main-launcher[data-choice-id="${choiceId}"]`) ||
+    document.querySelector(`.vl-launcher-hitbox[data-choice-id="${choiceId}"]`)?.closest('.vl-main-launcher');
+
+  if (!liveSourceEl){
+    state.busy = false;
+    render();
+    return;
+  }
+
+  if (choice.isCorrect){
+    await animateLaunch(choice, liveSourceEl);
       state.progressIndex += 1;
       if (state.progressIndex >= state.segments.length){
         await finishGame();
@@ -646,7 +655,7 @@ function renderModeNav(){
       return;
     }
 
-    await animateFailedLaunch(sourceEl);
+    await animateFailedLaunch(liveSourceEl);
     flashWrongBoard();
     showBuildShake();
 
