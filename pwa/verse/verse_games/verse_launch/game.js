@@ -73,6 +73,7 @@
     astroRunning:false,
     astroMoonPhase:false,
     astroMoonY:-240,
+    astroMoonVisible:false,
     astroMoonDone:false,
     astroLandingPhase:false,
     astroPlayerLiftPx:0,
@@ -201,6 +202,7 @@
     state.astroRunning = false;
     state.astroMoonPhase = false;
     state.astroMoonY = -340;
+    state.astroMoonVisible = false;
     state.astroMoonDone = false;
     state.astroLandingPhase = false;
     state.astroPlayerLiftPx = 0;
@@ -812,28 +814,26 @@ function renderModeNav(){
     }
 
     const playerX = state.astroPlayerX;
-
-    const filtered = candidates.filter(x => {
-      const farFromLast = state.astroLastSpawnX < 0 || Math.abs(x - state.astroLastSpawnX) >= (minGapPct * 0.82);
-      return farFromLast;
+    const source = candidates.filter(x => {
+      return state.astroLastSpawnX < 0 || Math.abs(x - state.astroLastSpawnX) >= (minGapPct * 0.82);
     });
 
+    const usable = source.length ? source : candidates;
     const weightedPool = [];
-    const source = filtered.length ? filtered : candidates;
 
-    source.forEach(x => {
+    usable.forEach(x => {
       const distFromPlayer = Math.abs(x - playerX);
 
-      if (distFromPlayer >= (minGapPct * 0.70)){
-        weightedPool.push(x, x, x);
-      } else if (distFromPlayer >= (minGapPct * 0.42)){
+      if (distFromPlayer >= (minGapPct * 0.75)){
+        weightedPool.push(x, x);
+      } else if (distFromPlayer >= (minGapPct * 0.32)){
         weightedPool.push(x, x);
       } else {
-        weightedPool.push(x);
+        weightedPool.push(x, x, x);
       }
     });
 
-    const pool = weightedPool.length ? weightedPool : source;
+    const pool = weightedPool.length ? weightedPool : usable;
     const chosenX = pool[Math.floor(Math.random() * pool.length)];
 
     state.astroAsteroids.push({
@@ -1105,6 +1105,7 @@ function resetMoonOffscreen(){
     });
 
     moon.style.top = `${state.astroMoonY}px`;
+    moon.classList.toggle("is-visible", !!state.astroMoonVisible);
   }
 
   function asteroidHitTest(stageRect, asteroid){
@@ -1198,11 +1199,19 @@ function resetMoonOffscreen(){
       const spinStep = 360 * dtSec;
       state.astroSpinDeg += spinStep;
       state.astroSpinMs = Math.max(0, state.astroSpinMs - dtMs);
-    } else if (state.astroSpinDeg !== 0){
+    }
+
+    if (state.astroSpinMs <= 0 && state.astroSpinDeg !== 0){
       state.astroSpinDeg *= 0.82;
       if (Math.abs(state.astroSpinDeg) < 2){
         state.astroSpinDeg = 0;
       }
+    }
+
+    if (state.astroSpinDeg > 180){
+      state.astroSpinDeg -= 360;
+    } else if (state.astroSpinDeg < -180){
+      state.astroSpinDeg += 360;
     }
 
     if (!state.astroMoonPhase){
@@ -1247,6 +1256,8 @@ function resetMoonOffscreen(){
       } else if (!state.astroLandingPhase){
         const moonTargetY = rect.height * 0.14;
         const moonRiseSpeed = rect.height * 0.0038;
+
+        state.astroMoonVisible = true;
 
         if (state.astroMoonY < moonTargetY){
           state.astroMoonY = Math.min(moonTargetY, state.astroMoonY + moonRiseSpeed);
@@ -1306,6 +1317,7 @@ function startAstroLoop(){
   renderAstroEntities();
   resetMoonOffscreen();
   renderAstroEntities();
+  state.astroMoonVisible = false;
 
   state.astroRaf = requestAnimationFrame(astroTick);
 }
