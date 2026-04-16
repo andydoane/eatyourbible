@@ -1109,32 +1109,36 @@ function renderModeNav(){
 
 async function handleLaunch(choiceId){
   if (state.busy || state.menuOpen || state.helpOpen || state.completed) return;
-  const choice = state.choices.find(c => c.id === choiceId);
-  if (!choice) return;
 
   if (choiceId === "bonus_launch"){
     state.busy = true;
     await playLaunchCountdown();
+
     const liveSourceEl =
       document.querySelector(`.vl-main-launcher[data-choice-id="bonus_launch"]`) ||
-      document.querySelector(`.vl-launcher-hitbox[data-choice-id="bonus_launch"]`)?.closest('.vl-main-launcher');
+      document.querySelector(`.vl-launcher-hitbox[data-choice-id="bonus_launch"]`)?.closest(".vl-main-launcher");
+
     if (!liveSourceEl){
       state.busy = false;
       render();
       return;
     }
+
     await animateBonusLaunch(liveSourceEl);
     state.busy = false;
     await startBonusSequence();
     return;
   }
 
+  const choice = state.choices.find(c => c.id === choiceId);
+  if (!choice) return;
+
   state.busy = true;
   await playLaunchCountdown();
 
   const liveSourceEl =
     document.querySelector(`.vl-main-launcher[data-choice-id="${choiceId}"]`) ||
-    document.querySelector(`.vl-launcher-hitbox[data-choice-id="${choiceId}"]`)?.closest('.vl-main-launcher');
+    document.querySelector(`.vl-launcher-hitbox[data-choice-id="${choiceId}"]`)?.closest(".vl-main-launcher");
 
   if (!liveSourceEl){
     state.busy = false;
@@ -1144,41 +1148,43 @@ async function handleLaunch(choiceId){
 
   if (choice.isCorrect){
     await animateLaunch(choice, liveSourceEl);
-      state.progressIndex += 1;
-      if (state.progressIndex >= state.segments.length){
-        state.bonusReady = true;
-        state.busy = false;
-        render();
-        return;
-      }
-      buildChoices();
+    state.progressIndex += 1;
+
+    if (state.progressIndex >= state.segments.length){
+      state.bonusReady = true;
       state.busy = false;
       render();
       return;
     }
 
-    await animateFailedLaunch(liveSourceEl);
-    flashWrongBoard();
-    showBuildShake();
-
-    if (state.mode === "hard"){
-      const removeCount = Math.min(2, state.progressIndex);
-      const removing = new Set();
-      for (let i = 0; i < removeCount; i++) removing.add(state.progressIndex - 1 - i);
-      state.buildRemoving = removing;
-      render();
-      showBuildShake();
-      await sleep(360);
-      state.progressIndex = Math.max(0, state.progressIndex - removeCount);
-      state.buildRemoving = new Set();
-    } else {
-      await sleep(260);
-    }
-
     buildChoices();
     state.busy = false;
     render();
+    return;
   }
+
+  await animateFailedLaunch(liveSourceEl);
+  flashWrongBoard();
+  showBuildShake();
+
+  if (state.mode === "hard"){
+    const removeCount = Math.min(2, state.progressIndex);
+    const removing = new Set();
+    for (let i = 0; i < removeCount; i++) removing.add(state.progressIndex - 1 - i);
+    state.buildRemoving = removing;
+    render();
+    showBuildShake();
+    await sleep(360);
+    state.progressIndex = Math.max(0, state.progressIndex - removeCount);
+    state.buildRemoving = new Set();
+  } else {
+    await sleep(260);
+  }
+
+  buildChoices();
+  state.busy = false;
+  render();
+}
 
   function setScreen(screen){ state.screen = screen; render(); }
   function render(){
