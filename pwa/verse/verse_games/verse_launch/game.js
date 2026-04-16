@@ -740,14 +740,13 @@ function renderModeNav(){
     let alreadyEarned = false;
     try {
       if (window.VerseGameBridge && typeof window.VerseGameBridge.wasAlreadyCompleted === "function") {
-        alreadyEarned = !!(await window.VerseGameBridge.wasAlreadyCompleted(GAME_ID, state.mode));
+        alreadyEarned = !!(await window.VerseGameBridge.wasAlreadyCompleted(ctx.verseId, GAME_ID, state.mode));
       }
     } catch (err) {
       alreadyEarned = false;
     }
 
     state.bonusMedalAlreadyEarned = alreadyEarned;
-    console.log("Verse Launch alreadyEarned:", alreadyEarned, "mode:", state.mode, "game:", GAME_ID);
 
     await window.VerseGameBridge.markCompleted({
       verseId: ctx.verseId,
