@@ -13,7 +13,7 @@
 
   async function getVerseContext(){
     const params = getParams();
-    const verseId = params.verseId;e
+    const verseId = params.verseId;
 
     if (!verseId){
       return {
