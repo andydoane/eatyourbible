@@ -412,6 +412,17 @@ button,input,select{font:inherit}
   z-index:1;
 }
 
+.vl-travel-vignette{
+  position:absolute;
+  left:0;
+  right:0;
+  top:0;
+  height:140px;
+  pointer-events:none;
+  z-index:4;
+  background:linear-gradient(to bottom, rgba(0,0,0,.42) 0%, rgba(0,0,0,.18) 40%, rgba(0,0,0,0) 100%);
+}
+
 .vl-screen-fade{
   position:absolute;
   inset:0;
@@ -454,8 +465,12 @@ button,input,select{font:inherit}
   transition:transform 120ms ease, opacity 180ms ease;
 }
 
+.vl-player-rocket.is-despawned{
+  opacity:0;
+}
+
 .vl-player-rocket.is-hit{
-  animation:vlPlayerSpin 1000ms linear;
+  animation:none;
 }
 
 .vl-player-rocket.is-flash{
