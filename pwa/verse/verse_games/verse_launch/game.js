@@ -812,16 +812,29 @@ function renderModeNav(){
     }
 
     const playerX = state.astroPlayerX;
+
     const filtered = candidates.filter(x => {
-      const farFromLast = state.astroLastSpawnX < 0 || Math.abs(x - state.astroLastSpawnX) >= minGapPct;
-      const leavesPlayerGap = Math.abs(x - playerX) >= (minGapPct * 0.72);
-      return farFromLast && leavesPlayerGap;
+      const farFromLast = state.astroLastSpawnX < 0 || Math.abs(x - state.astroLastSpawnX) >= (minGapPct * 0.82);
+      return farFromLast;
     });
 
-    const pool = filtered.length ? filtered : candidates
-      .filter(x => Math.abs(x - playerX) >= (minGapPct * 0.55));
+    const weightedPool = [];
+    const source = filtered.length ? filtered : candidates;
 
-    const chosenX = (pool.length ? pool : candidates)[Math.floor(Math.random() * (pool.length ? pool.length : candidates.length))];
+    source.forEach(x => {
+      const distFromPlayer = Math.abs(x - playerX);
+
+      if (distFromPlayer >= (minGapPct * 0.70)){
+        weightedPool.push(x, x, x);
+      } else if (distFromPlayer >= (minGapPct * 0.42)){
+        weightedPool.push(x, x);
+      } else {
+        weightedPool.push(x);
+      }
+    });
+
+    const pool = weightedPool.length ? weightedPool : source;
+    const chosenX = pool[Math.floor(Math.random() * pool.length)];
 
     state.astroAsteroids.push({
       id:`ast_${Date.now()}_${Math.random().toString(36).slice(2)}`,
@@ -1185,11 +1198,10 @@ function resetMoonOffscreen(){
       const spinStep = 360 * dtSec;
       state.astroSpinDeg += spinStep;
       state.astroSpinMs = Math.max(0, state.astroSpinMs - dtMs);
-      if (state.astroSpinMs === 0){
-        state.astroSpinDeg *= 0.82;
-        if (Math.abs(state.astroSpinDeg) < 2){
-          state.astroSpinDeg = 0;
-        }
+    } else if (state.astroSpinDeg !== 0){
+      state.astroSpinDeg *= 0.82;
+      if (Math.abs(state.astroSpinDeg) < 2){
+        state.astroSpinDeg = 0;
       }
     }
 
