@@ -64,6 +64,8 @@
     astroPlayerX:0.5,
     astroMoveDir:0,
     astroPlayerTilt:0,
+    astroSpinDeg:0,
+    astroSpinMs:0,
     astroAsteroids:[],
     astroRunning:false,
     astroMoonPhase:false,
@@ -187,6 +189,8 @@
     state.astroPlayerX = 0.5;
     state.astroMoveDir = 0;
     state.astroPlayerTilt = 0;
+    state.astroSpinDeg = 0;
+    state.astroSpinMs = 0;
     state.astroAsteroids = [];
     state.astroRunning = false;
     state.astroMoonPhase = false;
@@ -482,6 +486,7 @@ function renderModeNav(){
         </div>
         <div class="vl-bonus-stage" id="vlTravelStage">
           <div class="vl-travel-smoke" id="vlTravelSmoke"></div>
+          <div class="vl-travel-vignette"></div>
           <img class="vl-travel-rocket" id="vlTravelRocket" src="${rocket.src}" alt="">
           <div class="vl-travel-text ${state.bonusTravelTextVisible ? "is-visible" : ""}" id="vlTravelText">Reach the moon! Watch out for asteroids!</div>
           <div class="vl-screen-fade ${state.bonusFadeActive ? "is-active" : ""}"></div>
@@ -581,12 +586,21 @@ function renderModeNav(){
       state.menuOpen = true;
       state.helpOpen = false;
       state.helpBackMode = false;
+      state.astroMoveDir = 0;
       render();
     };
 
     const menuOverlay = $("#vlGameMenuOverlay"), helpOverlay = $("#vlHelpOverlay"), closeHelp = $("#vlHelpCloseBtn");
     const howTo = $("#vlMenuHowToBtn"), muteBtn = $("#vlMenuMuteBtn"), exitBtn = $("#vlMenuExitBtn"), closeBtn = $("#vlMenuCloseBtn");
-    if (howTo) howTo.onclick = () => { state.menuOpen = false; state.helpOpen = true; state.helpBackMode = true; render(); };
+
+    if (howTo) howTo.onclick = () => {
+      state.menuOpen = false;
+      state.helpOpen = true;
+      state.helpBackMode = true;
+      state.astroMoveDir = 0;
+      render();
+    };
+
     if (muteBtn) muteBtn.onclick = () => { muted = !muted; render(); };
     if (exitBtn) exitBtn.onclick = () => { stopAstroLoop(); window.VerseGameBridge.exitGame(); };
     if (closeBtn) closeBtn.onclick = () => { state.menuOpen = false; render(); };
@@ -911,7 +925,7 @@ function resetMoonOffscreen(){
 
     const unit = document.createElement("div");
     unit.className = "vl-flight-unit";
-    unit.innerHTML = `<img class="vl-flight-rocket" src="${rocket.getAttribute("src")}" alt=""><div class="vl-flight-label" style="background:#ffffff;color:#7f66c6">⭐ LAUNCH</div>`;
+    unit.innerHTML = `<img class="vl-flight-rocket" src="${rocket.getAttribute("src")}" alt="">`;
     document.body.appendChild(unit);
 
     const unitRect = unit.getBoundingClientRect();
@@ -999,19 +1013,31 @@ function resetMoonOffscreen(){
     const rect = stage.getBoundingClientRect();
     const leftPx = rect.width * state.astroPlayerX;
     rocket.style.left = `${leftPx}px`;
-        rocket.style.transform = `translateX(-50%) translateY(${-state.astroPlayerLiftPx}px) rotate(${state.astroPlayerTilt}deg) scale(${state.astroPlayerScale})`;
+    rocket.style.transform = `translateX(-50%) translateY(${-state.astroPlayerLiftPx}px) rotate(${state.astroPlayerTilt + state.astroSpinDeg}deg) scale(${state.astroPlayerScale})`;
 
     trail.innerHTML = "";
-    for (let i = 0; i < 3; i++){
+    const trailColor = getSmokeTrailColor();
+    const baseY = rect.height - 118;
+    const spinOffsetX = Math.sin((state.astroSpinDeg || 0) * (Math.PI / 180)) * 4;
+
+    for (let i = 0; i < 7; i++){
       const puff = document.createElement("div");
       puff.className = "vl-smoke-puff";
-      puff.style.left = `${leftPx}px`;
-      puff.style.top = `${rect.height - 118 + (i * 18)}px`;
-      puff.style.width = "22px";
-      puff.style.height = "22px";
-      puff.style.setProperty("--vl-smoke-color", getSmokeTrailColor());
-      puff.style.setProperty("--sx", `${Math.round(Math.random() * 14 - 7)}px`);
-      puff.style.setProperty("--sy", `${Math.round(10 + Math.random() * 10)}px`);
+
+      const size = 14 + (i * 3);
+      const driftX = Math.round((Math.random() * 18 - 9) + spinOffsetX);
+      const driftY = Math.round(14 + Math.random() * 14);
+      const xJitter = Math.round(Math.random() * 12 - 6);
+      const yPos = baseY + (i * 12);
+
+      puff.style.left = `${leftPx + xJitter}px`;
+      puff.style.top = `${yPos}px`;
+      puff.style.width = `${size}px`;
+      puff.style.height = `${size}px`;
+      puff.style.opacity = `${Math.max(0.22, 0.72 - (i * 0.07))}`;
+      puff.style.setProperty("--vl-smoke-color", trailColor);
+      puff.style.setProperty("--sx", `${driftX}px`);
+      puff.style.setProperty("--sy", `${driftY}px`);
       trail.appendChild(puff);
     }
 
@@ -1051,18 +1077,37 @@ function resetMoonOffscreen(){
     state.astroInvulnerable = true;
     state.astroHits += 1;
 
+    state.astroSpinDeg = 0;
+    state.astroSpinMs = 1000;
+
     const rocket = $("#vlPlayerRocket");
     if (rocket){
-      rocket.classList.remove("is-hit", "is-flash");
+      rocket.classList.remove("is-hit", "is-flash", "is-despawned");
       void rocket.offsetWidth;
-      rocket.classList.add("is-hit", "is-flash");
+      rocket.classList.add("is-flash");
     }
 
     if (state.astroHits >= 3){
       const stage = $("#vlAstroStage")?.getBoundingClientRect();
+      const rocket = $("#vlPlayerRocket");
+
       if (stage){
-        spawnFireworks(stage.width * state.astroPlayerX, stage.height - 118);
+        const centerX = stage.width * state.astroPlayerX;
+        const centerY = stage.height - 118;
+        const smokeSize = 126;
+
+        spawnSmoke(centerX, centerY, 22, {
+          spreadX: smokeSize * 0.50,
+          spreadY: smokeSize * 0.50,
+          size: smokeSize,
+          color: "rgba(255,255,255,.92)"
+        });
       }
+
+      if (rocket){
+        rocket.classList.add("is-despawned");
+      }
+
       await sleep(900);
       stopAstroLoop();
       await finalizeBonusOutcome(false);
@@ -1087,10 +1132,25 @@ function resetMoonOffscreen(){
     }
 
     const rect = stage.getBoundingClientRect();
+    if (state.menuOpen || state.helpOpen){
+      state.astroLastTs = ts;
+      renderAstroEntities();
+      state.astroRaf = requestAnimationFrame(astroTick);
+      return;
+    }
     const dtSec = dtMs / 1000;
     const moveSpeed = 0.62 * dtSec;
     state.astroPlayerX = safeLeftPct(state.astroPlayerX + state.astroMoveDir * moveSpeed);
     state.astroPlayerTilt = state.astroMoveDir === 0 ? 0 : (state.astroMoveDir < 0 ? -12 : 12);
+
+    if (state.astroSpinMs > 0){
+      const spinStep = 360 * dtSec;
+      state.astroSpinDeg += spinStep;
+      state.astroSpinMs = Math.max(0, state.astroSpinMs - dtMs);
+      if (state.astroSpinMs === 0){
+        state.astroSpinDeg = 0;
+      }
+    }
 
     if (!state.astroMoonPhase){
       state.astroTimerMs += dtMs;
@@ -1162,6 +1222,8 @@ function startAstroLoop(){
   state.astroPlayerX = 0.5;
   state.astroMoveDir = 0;
   state.astroPlayerTilt = 0;
+  state.astroSpinDeg = 0;
+  state.astroSpinMs = 0;
   state.astroAsteroids = [];
   state.astroMoonPhase = false;
   state.astroMoonDone = false;
