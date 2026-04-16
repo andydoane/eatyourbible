@@ -67,6 +67,9 @@
     astroSpinDeg:0,
     astroSpinMs:0,
     astroAsteroids:[],
+    astroSpawnCooldownMs:0,
+    astroLastSpawnX:-1,
+    astroDrainPhase:false,
     astroRunning:false,
     astroMoonPhase:false,
     astroMoonY:-240,
@@ -192,6 +195,9 @@
     state.astroSpinDeg = 0;
     state.astroSpinMs = 0;
     state.astroAsteroids = [];
+    state.astroSpawnCooldownMs = 0;
+    state.astroLastSpawnX = -1;
+    state.astroDrainPhase = false;
     state.astroRunning = false;
     state.astroMoonPhase = false;
     state.astroMoonY = -340;
@@ -199,6 +205,7 @@
     state.astroLandingPhase = false;
     state.astroPlayerLiftPx = 0;
     state.astroPlayerScale = 1;
+    state.astroDrainPhase = false;
     state.astroLastTs = 0;
     if (state.astroRaf){
       cancelAnimationFrame(state.astroRaf);
@@ -783,20 +790,50 @@ function renderModeNav(){
     return ASTRO_MODE_MULTIPLIER[state.mode] || 1;
   }
 
-  function maybeSpawnAsteroid(dtMs){
-    const chancePerSecond = state.astroMoonPhase ? 0 : 1.7;
+  function maybeSpawnAsteroid(dtMs, stageWidth){
+    if (state.astroMoonPhase || state.astroDrainPhase) return;
+
+    state.astroSpawnCooldownMs = Math.max(0, state.astroSpawnCooldownMs - dtMs);
+    if (state.astroSpawnCooldownMs > 0) return;
+
+    const chancePerSecond = 1.45;
     const roll = Math.random();
     if (roll > chancePerSecond * (dtMs / 1000)) return;
 
     const size = 44 + Math.random() * 22;
+
+    const leftBound = 0.14;
+    const rightBound = 0.86;
+    const minGapPct = stageWidth < 420 ? 0.26 : stageWidth < 560 ? 0.22 : 0.18;
+
+    const candidates = [];
+    for (let i = 0; i < 7; i++){
+      candidates.push(leftBound + ((rightBound - leftBound) * (i / 6)));
+    }
+
+    const playerX = state.astroPlayerX;
+    const filtered = candidates.filter(x => {
+      const farFromLast = state.astroLastSpawnX < 0 || Math.abs(x - state.astroLastSpawnX) >= minGapPct;
+      const leavesPlayerGap = Math.abs(x - playerX) >= (minGapPct * 0.72);
+      return farFromLast && leavesPlayerGap;
+    });
+
+    const pool = filtered.length ? filtered : candidates
+      .filter(x => Math.abs(x - playerX) >= (minGapPct * 0.55));
+
+    const chosenX = (pool.length ? pool : candidates)[Math.floor(Math.random() * (pool.length ? pool.length : candidates.length))];
+
     state.astroAsteroids.push({
       id:`ast_${Date.now()}_${Math.random().toString(36).slice(2)}`,
-      x: 0.1 + Math.random() * 0.8,
+      x: chosenX,
       yPx: -size - 20,
       size,
       rot: Math.random() * 360,
       rotSpeed: (Math.random() * 90) - 45
     });
+
+    state.astroLastSpawnX = chosenX;
+    state.astroSpawnCooldownMs = stageWidth < 420 ? 420 : stageWidth < 560 ? 340 : 280;
   }
 
   function asteroidSpeedPxPerSec(viewH){
@@ -1141,20 +1178,24 @@ function resetMoonOffscreen(){
     const dtSec = dtMs / 1000;
     const moveSpeed = 0.62 * dtSec;
     state.astroPlayerX = safeLeftPct(state.astroPlayerX + state.astroMoveDir * moveSpeed);
-    state.astroPlayerTilt = state.astroMoveDir === 0 ? 0 : (state.astroMoveDir < 0 ? -12 : 12);
+    const targetTilt = state.astroMoveDir === 0 ? 0 : (state.astroMoveDir < 0 ? -12 : 12);
+    state.astroPlayerTilt += (targetTilt - state.astroPlayerTilt) * 0.18;
 
     if (state.astroSpinMs > 0){
       const spinStep = 360 * dtSec;
       state.astroSpinDeg += spinStep;
       state.astroSpinMs = Math.max(0, state.astroSpinMs - dtMs);
       if (state.astroSpinMs === 0){
-        state.astroSpinDeg = 0;
+        state.astroSpinDeg *= 0.82;
+        if (Math.abs(state.astroSpinDeg) < 2){
+          state.astroSpinDeg = 0;
+        }
       }
     }
 
     if (!state.astroMoonPhase){
       state.astroTimerMs += dtMs;
-      maybeSpawnAsteroid(dtMs);
+      maybeSpawnAsteroid(dtMs, rect.width);
 
       const fallSpeed = asteroidSpeedPxPerSec(rect.height);
       state.astroAsteroids.forEach(ast => {
@@ -1174,14 +1215,30 @@ function resetMoonOffscreen(){
 
       if (state.astroTimerMs >= ASTRO_DURATION_MS){
         state.astroMoonPhase = true;
+        state.astroDrainPhase = true;
+        state.astroMoveDir = 0;
       }
     } else {
-      state.astroAsteroids = [];
+      const fallSpeed = asteroidSpeedPxPerSec(rect.height);
+      state.astroAsteroids.forEach(ast => {
+        ast.yPx += fallSpeed * dtSec;
+        ast.rot += ast.rotSpeed * dtSec;
+      });
+      state.astroAsteroids = state.astroAsteroids.filter(ast => ast.yPx < rect.height + ast.size + 20);
 
-      const moonTargetY = rect.height * 0.18;
-      if (!state.astroLandingPhase){
+      if (state.astroDrainPhase){
+        state.astroPlayerTilt *= 0.88;
+
+        if (state.astroAsteroids.length === 0){
+          state.astroDrainPhase = false;
+        }
+      } else if (!state.astroLandingPhase){
+        const moonTargetY = rect.height * 0.14;
+        const moonRiseSpeed = rect.height * 0.0038;
+
         if (state.astroMoonY < moonTargetY){
-          state.astroMoonY = Math.min(moonTargetY, state.astroMoonY + rect.height * 0.010);
+          state.astroMoonY = Math.min(moonTargetY, state.astroMoonY + moonRiseSpeed);
+          state.astroPlayerTilt *= 0.90;
         } else {
           state.astroMoonDone = true;
           state.astroLandingPhase = true;
@@ -1195,7 +1252,7 @@ function resetMoonOffscreen(){
         state.astroPlayerX += (targetX - state.astroPlayerX) * 0.08;
         state.astroPlayerLiftPx += (targetLiftPx - state.astroPlayerLiftPx) * 0.08;
         state.astroPlayerScale += (targetScale - state.astroPlayerScale) * 0.08;
-        state.astroPlayerTilt *= 0.82;
+        state.astroPlayerTilt *= 0.90;
 
         const centered = Math.abs(targetX - state.astroPlayerX) < 0.008;
         const lifted = Math.abs(targetLiftPx - state.astroPlayerLiftPx) < 3;
@@ -1225,6 +1282,9 @@ function startAstroLoop(){
   state.astroSpinDeg = 0;
   state.astroSpinMs = 0;
   state.astroAsteroids = [];
+  state.astroSpawnCooldownMs = 0;
+  state.astroLastSpawnX = -1;
+  state.astroDrainPhase = false;
   state.astroMoonPhase = false;
   state.astroMoonDone = false;
   state.astroLandingPhase = false;
