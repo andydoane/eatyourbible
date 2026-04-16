@@ -1,0 +1,36 @@
+:root.theme-perry-white {
+
+  /* Intro screen */
+  --intro-bg: #09d0b7;
+  --intro-text: #FFFFFF;
+
+  /* Whole page background */
+  --quiz-screen-bg: #FFFFFF;
+
+  /* Question Box at Top */
+  --question-bg: #09d0b7;
+  --question-text: #FFFFFF;
+
+  /* First Button */
+  --red: #feb313;
+  --red-text: #333333;
+
+  /* Second Button */
+  --blue: #abefe6;
+  --blue-text: #333333;
+
+  /* Third Button */
+  --yellow: #333333;
+  --yellow-text: #FFFFFF;
+
+  /* Fourth Button */
+  --green: #dad9da;
+  --green-text: #333333;
+
+  /* Progress / timer bar */
+  --progress-track-bg: rgba(51, 51, 51, 0.22);
+  --progress-fill-high: #09d0b7;
+  --progress-fill-mid: #feb313;
+  --progress-fill-low: #FB0B22;
+
+}
