@@ -51,9 +51,32 @@
     medalMessage:"",
     medalSubmessage:"",
     countdownValue:"",
+        bonusReady:false,
+    bonusTravelTextVisible:false,
+    bonusFadeActive:false,
+    bonusRocketColorKey:"red",
+
+    astroHits:0,
+    astroInvulnerable:false,
+    astroTimerMs:0,
+    astroPlayerX:0.5,
+    astroMoveDir:0,
+    astroPlayerTilt:0,
+    astroAsteroids:[],
+    astroRunning:false,
+    astroMoonPhase:false,
+    astroMoonY:-240,
+    astroMoonDone:false,
+    astroLastTs:0,
+    astroRaf:0,
   };
 
   let muted = false;
+
+  const ASTRO_DURATION_MS = 60000;
+  const ASTRO_HITBOX_SCALE = 0.5;
+  const ASTRO_BASE_SPEED_VH_PER_SEC = 42;
+  const ASTRO_MODE_MULTIPLIER = { easy:1, medium:1.18, hard:1.38 };
 
   const $ = (s) => document.querySelector(s);
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
@@ -146,6 +169,27 @@
     state.medalMessage = "";
     state.medalSubmessage = "";
     state.countdownValue = "";
+    state.bonusReady = false;
+    state.bonusTravelTextVisible = false;
+    state.bonusFadeActive = false;
+    state.bonusRocketColorKey = "red";
+
+    state.astroHits = 0;
+    state.astroInvulnerable = false;
+    state.astroTimerMs = 0;
+    state.astroPlayerX = 0.5;
+    state.astroMoveDir = 0;
+    state.astroPlayerTilt = 0;
+    state.astroAsteroids = [];
+    state.astroRunning = false;
+    state.astroMoonPhase = false;
+    state.astroMoonY = -240;
+    state.astroMoonDone = false;
+    state.astroLastTs = 0;
+    if (state.astroRaf){
+      cancelAnimationFrame(state.astroRaf);
+      state.astroRaf = 0;
+    }
   }
 
   function currentPhase(){
@@ -368,6 +412,19 @@ function renderModeNav(){
 
   function renderGame(){
     const center = getPreviewChoice(0);
+
+    const bonusRocket = getBonusRocket();
+    const launcherMarkup = state.bonusReady
+      ? `
+        <div class="vl-main-launcher no-zoom" data-choice-id="bonus_launch">
+          <div class="vl-rocket-stack">
+            <img class="vl-rocket" src="${bonusRocket.src}" alt="" />
+            <button class="vl-launcher-hitbox no-zoom" data-choice-id="bonus_launch" type="button" aria-label="Launch to space"></button>
+          </div>
+          <button class="vl-star-launch-btn no-zoom" data-choice-id="bonus_launch" type="button">⭐ LAUNCH</button>
+        </div>`
+      : renderLauncher(center, false);
+
     app.innerHTML = `
       <div class="vl-root">
         <div class="vl-stage">
@@ -389,7 +446,7 @@ function renderModeNav(){
                       <button class="vl-arrow no-zoom" id="vlPrevBtn" type="button" aria-label="Previous launcher">‹</button>
                       <div class="vl-main-launcher-wrap">
                         <div>
-                          ${renderLauncher(center, false)}
+                          ${launcherMarkup}
                         </div>
                       </div>
                       <button class="vl-arrow no-zoom" id="vlNextBtn" type="button" aria-label="Next launcher">›</button>
@@ -404,6 +461,55 @@ function renderModeNav(){
         ${renderGameMenuOverlay()}
       </div>`;
     wireGameScreen();
+  }
+
+  function renderTravel(){
+    const rocket = getBonusRocket();
+    app.innerHTML = `
+      <div class="vl-travel-screen">
+        <div class="vl-bonus-topbar">
+          <button class="vl-pill vl-menu-pill no-zoom" id="vlMenuPill" type="button" aria-label="Game Menu">☰</button>
+        </div>
+        <div class="vl-bonus-stage" id="vlTravelStage">
+          <div class="vl-travel-smoke" id="vlTravelSmoke"></div>
+          <img class="vl-travel-rocket" id="vlTravelRocket" src="${rocket.src}" alt="">
+          ${state.bonusTravelTextVisible ? `<div class="vl-travel-text">Reach the moon! Watch out for asteroids!</div>` : ""}
+          <div class="vl-screen-fade ${state.bonusFadeActive ? "is-active" : ""}"></div>
+        </div>
+        ${renderHelpOverlay()}
+        ${renderGameMenuOverlay()}
+      </div>`;
+    wireBonusMenuOnly();
+  }
+
+  function renderAsteroidGame(){
+    const rocket = getBonusRocket();
+    app.innerHTML = `
+      <div class="vl-asteroid-screen">
+        <div class="vl-bonus-topbar">
+          <button class="vl-pill vl-menu-pill no-zoom" id="vlMenuPill" type="button" aria-label="Game Menu">☰</button>
+        </div>
+        <div class="vl-bonus-stage" id="vlAstroStage">
+          <div class="vl-space-layer" id="vlSpaceLayer">
+            <img class="vl-moon" id="vlMoon" src="./verse_launch_images/verse_launch_moon.png" alt="">
+          </div>
+          <div class="vl-player-trail" id="vlPlayerTrail"></div>
+          <img class="vl-player-rocket" id="vlPlayerRocket" src="${rocket.src}" alt="">
+          <div class="vl-space-status">
+            <span class="vl-hit-pip ${state.astroHits >= 1 ? "is-on" : ""}"></span>
+            <span class="vl-hit-pip ${state.astroHits >= 2 ? "is-on" : ""}"></span>
+            <span class="vl-hit-pip ${state.astroHits >= 3 ? "is-on" : ""}"></span>
+          </div>
+          <div class="vl-space-controls">
+            <button class="vl-space-arrow no-zoom" id="vlLeftBtn" type="button" aria-label="Move left">‹</button>
+            <button class="vl-space-arrow no-zoom" id="vlRightBtn" type="button" aria-label="Move right">›</button>
+          </div>
+        </div>
+        ${renderHelpOverlay()}
+        ${renderGameMenuOverlay()}
+      </div>`;
+    wireBonusMenuOnly();
+    wireAstroControls();
   }
 
   function renderEnd(){
@@ -458,6 +564,78 @@ function renderModeNav(){
     if (helpOverlay) helpOverlay.onclick = (e) => { if (e.target === helpOverlay){ if (state.helpBackMode){ state.helpOpen = false; state.menuOpen = true; state.helpBackMode = false; } else { state.helpOpen = false; } render(); } };
   }
 
+  function wireBonusMenuOnly(){
+    const menuPill = $("#vlMenuPill");
+    if (menuPill) menuPill.onclick = (e) => {
+      e.stopPropagation();
+      state.menuOpen = true;
+      state.helpOpen = false;
+      state.helpBackMode = false;
+      render();
+    };
+
+    const menuOverlay = $("#vlGameMenuOverlay"), helpOverlay = $("#vlHelpOverlay"), closeHelp = $("#vlHelpCloseBtn");
+    const howTo = $("#vlMenuHowToBtn"), muteBtn = $("#vlMenuMuteBtn"), exitBtn = $("#vlMenuExitBtn"), closeBtn = $("#vlMenuCloseBtn");
+    if (howTo) howTo.onclick = () => { state.menuOpen = false; state.helpOpen = true; state.helpBackMode = true; render(); };
+    if (muteBtn) muteBtn.onclick = () => { muted = !muted; render(); };
+    if (exitBtn) exitBtn.onclick = () => { stopAstroLoop(); window.VerseGameBridge.exitGame(); };
+    if (closeBtn) closeBtn.onclick = () => { state.menuOpen = false; render(); };
+    if (menuOverlay) menuOverlay.onclick = (e) => { if (e.target === menuOverlay){ state.menuOpen = false; render(); } };
+    if (closeHelp) closeHelp.onclick = () => {
+      if (state.helpBackMode){
+        state.helpOpen = false;
+        state.menuOpen = true;
+        state.helpBackMode = false;
+      } else {
+        state.helpOpen = false;
+      }
+      render();
+    };
+    if (helpOverlay) helpOverlay.onclick = (e) => {
+      if (e.target === helpOverlay){
+        if (state.helpBackMode){
+          state.helpOpen = false;
+          state.menuOpen = true;
+          state.helpBackMode = false;
+        } else {
+          state.helpOpen = false;
+        }
+        render();
+      }
+    };
+  }
+
+  function wireAstroControls(){
+    const leftBtn = $("#vlLeftBtn");
+    const rightBtn = $("#vlRightBtn");
+
+    function setDir(dir){
+      if (!state.astroMoonPhase) state.astroMoveDir = dir;
+    }
+
+    function clearDir(dir){
+      if (state.astroMoveDir === dir) state.astroMoveDir = 0;
+    }
+
+    [["pointerdown", -1], ["pointerup", -1], ["pointercancel", -1], ["pointerleave", -1]].forEach(() => {});
+
+    if (leftBtn){
+      leftBtn.onpointerdown = (e) => { e.preventDefault(); setDir(-1); };
+      leftBtn.onpointerup = (e) => { e.preventDefault(); clearDir(-1); };
+      leftBtn.onpointercancel = (e) => { e.preventDefault(); clearDir(-1); };
+      leftBtn.onpointerleave = (e) => { e.preventDefault(); clearDir(-1); };
+      leftBtn.oncontextmenu = (e) => e.preventDefault();
+    }
+
+    if (rightBtn){
+      rightBtn.onpointerdown = (e) => { e.preventDefault(); setDir(1); };
+      rightBtn.onpointerup = (e) => { e.preventDefault(); clearDir(1); };
+      rightBtn.onpointercancel = (e) => { e.preventDefault(); clearDir(1); };
+      rightBtn.onpointerleave = (e) => { e.preventDefault(); clearDir(1); };
+      rightBtn.oncontextmenu = (e) => e.preventDefault();
+    }
+  }
+
   function flashWrongBoard(){
     const el = $("#vlRedFlash");
     if (!el) return;
@@ -506,6 +684,56 @@ function renderModeNav(){
   }
 
   function getModeMedal(mode){ return mode === "easy" ? "🥉" : mode === "medium" ? "🥈" : mode === "hard" ? "🥇" : "🏅"; }
+
+  function getRocketByKey(key){
+    return ROCKETS.find(r => r.key === key) || ROCKETS[0];
+  }
+
+  function getSmokeTrailColor(){
+    if (state.astroHits <= 0) return "#ffc751";
+    if (state.astroHits === 1) return "#ffa351";
+    return "#ff5a51";
+  }
+
+  function getBonusRocket(){
+    return getRocketByKey(state.bonusRocketColorKey || "red");
+  }
+
+  function stopAstroLoop(){
+    if (state.astroRaf){
+      cancelAnimationFrame(state.astroRaf);
+      state.astroRaf = 0;
+    }
+    state.astroRunning = false;
+  }
+
+  function safeLeftPct(x){
+    return Math.max(0.08, Math.min(0.92, x));
+  }
+
+  function modeAstroMultiplier(){
+    return ASTRO_MODE_MULTIPLIER[state.mode] || 1;
+  }
+
+  function maybeSpawnAsteroid(dtMs){
+    const chancePerSecond = state.astroMoonPhase ? 0 : 1.7;
+    const roll = Math.random();
+    if (roll > chancePerSecond * (dtMs / 1000)) return;
+
+    const size = 72 + Math.random() * 40;
+    state.astroAsteroids.push({
+      id:`ast_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      x: 0.1 + Math.random() * 0.8,
+      yPx: -size - 20,
+      size,
+      rot: Math.random() * 360,
+      rotSpeed: (Math.random() * 90) - 45
+    });
+  }
+
+  function asteroidSpeedPxPerSec(viewH){
+    return (ASTRO_BASE_SPEED_VH_PER_SEC / 100) * viewH * modeAstroMultiplier();
+  }
 
   async function playLaunchCountdown(){
     for (const value of ["3","2","1"]){
@@ -605,6 +833,257 @@ function renderModeNav(){
     await sleep(280);
   }
 
+  async function animateBonusLaunch(sourceEl){
+    const rocket = sourceEl?.querySelector(".vl-rocket");
+    const button = sourceEl?.querySelector(".vl-star-launch-btn");
+    if (!rocket || !button) return;
+
+    const rocketRect = rocket.getBoundingClientRect();
+    const smokeLayerRect = ($("#vlSmokeLayer") || document.body).getBoundingClientRect();
+    const startX = rocketRect.left + rocketRect.width / 2;
+    const startY = rocketRect.top + rocketRect.height / 2;
+    const smokeX = startX - smokeLayerRect.left;
+    const smokeY = startY - smokeLayerRect.top;
+
+    const unit = document.createElement("div");
+    unit.className = "vl-flight-unit";
+    unit.innerHTML = `<img class="vl-flight-rocket" src="${rocket.getAttribute("src")}" alt=""><div class="vl-flight-label" style="background:#ffffff;color:#7f66c6">⭐ LAUNCH</div>`;
+    document.body.appendChild(unit);
+
+    const unitRect = unit.getBoundingClientRect();
+    unit.style.left = `${rocketRect.left + (rocketRect.width / 2) - (unitRect.width / 2)}px`;
+    unit.style.top = `${rocketRect.top - 8}px`;
+
+    sourceEl.classList.add("is-hidden-during-flight");
+    spawnSmoke(smokeX, smokeY + 42, 8, { color:getSmokeTrailColor() });
+    await sleep(220);
+    spawnSmoke(smokeX, smokeY + 38, 10, { color:getSmokeTrailColor() });
+
+    unit.style.transition = "transform 220ms ease, opacity 220ms ease";
+    unit.style.transform = "translate(0,-26px) scale(.98)";
+    await sleep(220);
+
+    const endY = -window.innerHeight - 200;
+    unit.style.transition = "transform 980ms cubic-bezier(.12,.2,.18,1), opacity 980ms linear";
+    unit.style.transform = `translate(0, ${endY}px) scale(.42)`;
+    unit.style.opacity = ".96";
+
+    for (let i = 0; i < 16; i++){
+      const t = i / 16;
+      spawnSmoke(smokeX, smokeY - (window.innerHeight * 0.75 * t), 2, { color:getSmokeTrailColor() });
+      await sleep(36);
+    }
+
+    await sleep(980);
+    unit.remove();
+    sourceEl.classList.remove("is-hidden-during-flight");
+  }
+
+  async function startBonusSequence(){
+    setScreen("travel");
+    await sleep(220);
+
+    const rocket = $("#vlTravelRocket");
+    const smokeLayer = $("#vlTravelSmoke");
+    if (rocket){
+      const startBottom = -120;
+      const endBottom = window.innerHeight + 120;
+      rocket.animate(
+        [
+          { transform:"translateX(-50%) translateY(0)" },
+          { transform:`translateX(-50%) translateY(${-endBottom}px)` }
+        ],
+        { duration:1600, easing:"cubic-bezier(.15,.6,.2,1)", fill:"forwards" }
+      );
+    }
+
+    for (let i = 0; i < 20; i++){
+      const y = window.innerHeight - (i * 34);
+      const x = window.innerWidth / 2;
+      spawnSmoke(x, y, 2, { color:getSmokeTrailColor() });
+      await sleep(42);
+    }
+
+    state.bonusTravelTextVisible = true;
+    render();
+    await sleep(1400);
+
+    state.bonusFadeActive = true;
+    render();
+    await sleep(430);
+
+    state.bonusFadeActive = false;
+    state.bonusTravelTextVisible = false;
+    setScreen("asteroids");
+    startAstroLoop();
+  }
+
+  function renderAstroEntities(){
+    const stage = $("#vlAstroStage");
+    const layer = $("#vlSpaceLayer");
+    const rocket = $("#vlPlayerRocket");
+    const moon = $("#vlMoon");
+    const trail = $("#vlPlayerTrail");
+    if (!stage || !layer || !rocket || !moon || !trail) return;
+
+    const rect = stage.getBoundingClientRect();
+    const leftPx = rect.width * state.astroPlayerX;
+    rocket.style.left = `${leftPx}px`;
+    rocket.style.transform = `translateX(-50%) rotate(${state.astroPlayerTilt}deg)`;
+
+    trail.innerHTML = "";
+    for (let i = 0; i < 3; i++){
+      const puff = document.createElement("div");
+      puff.className = "vl-smoke-puff";
+      puff.style.left = `${leftPx}px`;
+      puff.style.top = `${rect.height - 118 + (i * 18)}px`;
+      puff.style.width = "22px";
+      puff.style.height = "22px";
+      puff.style.setProperty("--vl-smoke-color", getSmokeTrailColor());
+      puff.style.setProperty("--sx", `${Math.round(Math.random() * 14 - 7)}px`);
+      puff.style.setProperty("--sy", `${Math.round(10 + Math.random() * 10)}px`);
+      trail.appendChild(puff);
+    }
+
+    layer.querySelectorAll(".vl-asteroid").forEach(n => n.remove());
+    state.astroAsteroids.forEach(ast => {
+      const img = document.createElement("img");
+      img.className = "vl-asteroid";
+      img.src = "./verse_launch_images/verse_launch_asteroid.png";
+      img.style.width = `${ast.size}px`;
+      img.style.height = `${ast.size}px`;
+      img.style.left = `${rect.width * ast.x - ast.size / 2}px`;
+      img.style.top = `${ast.yPx}px`;
+      img.style.transform = `rotate(${ast.rot}deg)`;
+      layer.appendChild(img);
+    });
+
+    moon.style.top = `${state.astroMoonY}px`;
+  }
+
+  function asteroidHitTest(stageRect, asteroid){
+    const rocketX = stageRect.width * state.astroPlayerX;
+    const rocketY = stageRect.height - 118 - 42;
+    const rocketW = 84 * ASTRO_HITBOX_SCALE;
+    const rocketH = 84 * ASTRO_HITBOX_SCALE;
+
+    const astW = asteroid.size * ASTRO_HITBOX_SCALE;
+    const astH = asteroid.size * ASTRO_HITBOX_SCALE;
+    const astX = stageRect.width * asteroid.x;
+    const astY = asteroid.yPx + asteroid.size / 2;
+
+    return Math.abs(rocketX - astX) < (rocketW + astW) / 2 &&
+           Math.abs(rocketY - astY) < (rocketH + astH) / 2;
+  }
+
+  async function astroHandleHit(){
+    if (state.astroInvulnerable || state.astroMoonPhase) return;
+    state.astroInvulnerable = true;
+    state.astroHits += 1;
+
+    const rocket = $("#vlPlayerRocket");
+    if (rocket){
+      rocket.classList.remove("is-hit", "is-flash");
+      void rocket.offsetWidth;
+      rocket.classList.add("is-hit", "is-flash");
+    }
+
+    if (state.astroHits >= 3){
+      const stage = $("#vlAstroStage")?.getBoundingClientRect();
+      if (stage){
+        spawnFireworks(stage.width * state.astroPlayerX, stage.height - 118);
+      }
+      await sleep(900);
+      stopAstroLoop();
+      state.endTime = performance.now();
+      setScreen("end");
+      return;
+    }
+
+    renderAstroEntities();
+    await sleep(1000);
+    state.astroInvulnerable = false;
+  }
+
+  function astroTick(ts){
+    if (!state.astroRunning) return;
+    if (!state.astroLastTs) state.astroLastTs = ts;
+    const dtMs = Math.min(34, ts - state.astroLastTs);
+    state.astroLastTs = ts;
+
+    const stage = $("#vlAstroStage");
+    if (!stage){
+      state.astroRaf = requestAnimationFrame(astroTick);
+      return;
+    }
+
+    const rect = stage.getBoundingClientRect();
+    const dtSec = dtMs / 1000;
+    const moveSpeed = 0.62 * dtSec;
+    state.astroPlayerX = safeLeftPct(state.astroPlayerX + state.astroMoveDir * moveSpeed);
+    state.astroPlayerTilt = state.astroMoveDir === 0 ? 0 : (state.astroMoveDir < 0 ? -12 : 12);
+
+    if (!state.astroMoonPhase){
+      state.astroTimerMs += dtMs;
+      maybeSpawnAsteroid(dtMs);
+
+      const fallSpeed = asteroidSpeedPxPerSec(rect.height);
+      state.astroAsteroids.forEach(ast => {
+        ast.yPx += fallSpeed * dtSec;
+        ast.rot += ast.rotSpeed * dtSec;
+      });
+      state.astroAsteroids = state.astroAsteroids.filter(ast => ast.yPx < rect.height + ast.size + 20);
+
+      if (!state.astroInvulnerable){
+        for (const ast of state.astroAsteroids){
+          if (asteroidHitTest(rect, ast)){
+            astroHandleHit();
+            break;
+          }
+        }
+      }
+
+      if (state.astroTimerMs >= ASTRO_DURATION_MS){
+        state.astroMoonPhase = true;
+      }
+    } else {
+      state.astroAsteroids = [];
+      if (state.astroMoonY < rect.height * 0.18){
+        state.astroMoonY += rect.height * 0.010;
+      } else if (!state.astroMoonDone){
+        state.astroMoonDone = true;
+        const targetX = 0.5;
+        state.astroPlayerX += (targetX - state.astroPlayerX) * 0.06;
+        if (Math.abs(targetX - state.astroPlayerX) < 0.01){
+          stopAstroLoop();
+          state.endTime = performance.now();
+          setScreen("end");
+          return;
+        }
+      }
+    }
+
+    renderAstroEntities();
+    state.astroRaf = requestAnimationFrame(astroTick);
+  }
+
+  function startAstroLoop(){
+    state.astroRunning = true;
+    state.astroLastTs = 0;
+    state.astroTimerMs = 0;
+    state.astroHits = 0;
+    state.astroInvulnerable = false;
+    state.astroPlayerX = 0.5;
+    state.astroMoveDir = 0;
+    state.astroPlayerTilt = 0;
+    state.astroAsteroids = [];
+    state.astroMoonPhase = false;
+    state.astroMoonY = -240;
+    state.astroMoonDone = false;
+    renderAstroEntities();
+    state.astroRaf = requestAnimationFrame(astroTick);
+  }
+
   async function finishGame(){
     state.completed = true;
     state.endTime = performance.now();
@@ -633,6 +1112,23 @@ async function handleLaunch(choiceId){
   const choice = state.choices.find(c => c.id === choiceId);
   if (!choice) return;
 
+  if (choiceId === "bonus_launch"){
+    state.busy = true;
+    await playLaunchCountdown();
+    const liveSourceEl =
+      document.querySelector(`.vl-main-launcher[data-choice-id="bonus_launch"]`) ||
+      document.querySelector(`.vl-launcher-hitbox[data-choice-id="bonus_launch"]`)?.closest('.vl-main-launcher');
+    if (!liveSourceEl){
+      state.busy = false;
+      render();
+      return;
+    }
+    await animateBonusLaunch(liveSourceEl);
+    state.busy = false;
+    await startBonusSequence();
+    return;
+  }
+
   state.busy = true;
   await playLaunchCountdown();
 
@@ -650,7 +1146,9 @@ async function handleLaunch(choiceId){
     await animateLaunch(choice, liveSourceEl);
       state.progressIndex += 1;
       if (state.progressIndex >= state.segments.length){
-        await finishGame();
+        state.bonusReady = true;
+        state.busy = false;
+        render();
         return;
       }
       buildChoices();
@@ -687,6 +1185,8 @@ async function handleLaunch(choiceId){
     if (state.screen === "intro") return renderIntro();
     if (state.screen === "mode") return renderMode();
     if (state.screen === "game") return renderGame();
+    if (state.screen === "travel") return renderTravel();
+    if (state.screen === "asteroids") return renderAsteroidGame();
     if (state.screen === "end") return renderEnd();
   }
 
