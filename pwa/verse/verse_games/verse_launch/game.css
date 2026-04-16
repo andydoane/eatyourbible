@@ -376,7 +376,7 @@ button,input,select{font:inherit}
   position:absolute;
   left:50%;
   top:50%;
-  transform:translate(-50%,-50%);
+  transform:translate(-50%,-50%) scale(.96);
   width:min(88vw, 620px);
   text-align:center;
   font-size:clamp(24px,4.5vw,42px);
@@ -384,6 +384,13 @@ button,input,select{font:inherit}
   line-height:1.15;
   text-wrap:balance;
   z-index:3;
+  opacity:0;
+  transition:opacity 260ms ease, transform 260ms ease;
+}
+
+.vl-travel-text.is-visible{
+  opacity:1;
+  transform:translate(-50%,-50%) scale(1);
 }
 
 .vl-travel-rocket{
@@ -444,7 +451,7 @@ button,input,select{font:inherit}
   transform:translateX(-50%);
   z-index:5;
   filter:drop-shadow(0 10px 16px rgba(0,0,0,.28));
-  transition:transform 120ms ease;
+  transition:transform 120ms ease, opacity 180ms ease;
 }
 
 .vl-player-rocket.is-hit{
