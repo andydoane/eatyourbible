@@ -1356,7 +1356,7 @@ function startAstroLoop(){
     let alreadyEarned = false;
     try {
       if (window.VerseGameBridge && typeof window.VerseGameBridge.wasAlreadyCompleted === "function") {
-        alreadyEarned = !!(await window.VerseGameBridge.wasAlreadyCompleted(GAME_ID, state.mode));
+        alreadyEarned = !!(await window.VerseGameBridge.wasAlreadyCompleted(ctx.verseId, GAME_ID, state.mode));
       }
     } catch (err) {
       alreadyEarned = false;
@@ -1403,7 +1403,7 @@ async function handleLaunch(choiceId){
 
   const shouldShowInitialCountdown =
     !state.hasShownInitialCountdown &&
-    state.phase === "words" &&
+    currentPhase() === "words" &&
     state.progressIndex === 0;
 
   if (shouldShowInitialCountdown){
