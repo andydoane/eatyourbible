@@ -747,6 +747,7 @@ function renderModeNav(){
     }
 
     state.bonusMedalAlreadyEarned = alreadyEarned;
+    console.log("Verse Launch alreadyEarned:", alreadyEarned, "mode:", state.mode, "game:", GAME_ID);
 
     await window.VerseGameBridge.markCompleted({
       verseId: ctx.verseId,
@@ -757,7 +758,7 @@ function renderModeNav(){
     if (success){
       if (alreadyEarned){
         state.medalMessage = "Mission accomplished!";
-        state.medalSubmessage = "You reached the moon!";
+        state.medalSubmessage = "You reached the moon again. Try to beat your time!";
       } else {
         state.medalMessage = `Mission accomplished! You earned a ${getModeMedal(state.mode)}`;
         state.medalSubmessage = "You reached the moon!";
@@ -765,7 +766,7 @@ function renderModeNav(){
     } else {
       if (alreadyEarned){
         state.medalMessage = "Rocket lost!";
-        state.medalSubmessage = "You built the verse, but your rocket crashed.";
+        state.medalSubmessage = "You already earned this medal. Try again for a cleaner run!";
       } else {
         state.medalMessage = `Launch complete! You earned a ${getModeMedal(state.mode)}`;
         state.medalSubmessage = "You built the verse, but your rocket crashed.";
@@ -1128,14 +1129,18 @@ function resetMoonOffscreen(){
     state.astroInvulnerable = true;
     state.astroHits += 1;
 
-    state.astroSpinDeg = 0;
-    state.astroSpinMs = 1000;
-
     const rocket = $("#vlPlayerRocket");
+    const isFatalHit = (state.astroHits >= 3);
+
+    state.astroSpinDeg = 0;
+    state.astroSpinMs = isFatalHit ? 0 : 1000;
+
     if (rocket){
       rocket.classList.remove("is-hit", "is-flash", "is-despawned");
       void rocket.offsetWidth;
-      rocket.classList.add("is-flash");
+      if (!isFatalHit){
+        rocket.classList.add("is-flash");
+      }
     }
 
     if (state.astroHits >= 3){
@@ -1158,6 +1163,8 @@ function resetMoonOffscreen(){
       if (rocket){
         rocket.classList.add("is-despawned");
       }
+      state.astroSpinDeg = 0;
+      state.astroSpinMs = 0;
 
       await sleep(900);
       stopAstroLoop();
