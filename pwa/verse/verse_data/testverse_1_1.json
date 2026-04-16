@@ -1,0 +1,14 @@
+{
+  "verseId": "testverse_1_1",
+  "translation": "ESV",
+  "echoParts": [
+    "Test"
+  ],
+
+  "verseText": "Test",
+  "meaning": "Test.",
+  "attribution": "Scripture quotations are from The ESV® Bible (The Holy Bible, English Standard Version®), © 2001 by Crossway, a publishing ministry of Good News Publishers. Used by permission. All rights reserved.",
+  "hidePlan": [
+    { "type": "emoji", "word": "test", "occurrence": 1, "emoji": "📘" }
+  ]
+}
