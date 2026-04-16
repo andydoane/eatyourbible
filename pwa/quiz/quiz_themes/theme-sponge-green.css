@@ -1,0 +1,36 @@
+:root.theme-sponge-green {
+
+  /* Intro screen */
+  --intro-bg: #baec52;
+  --intro-text: #333333;
+
+  /* Whole page background */
+  --quiz-screen-bg: #baec52;
+
+  /* Question Box at Top */
+  --question-bg: #FFFFFF;
+  --question-text: #333333;
+
+  /* First Button */
+  --red: #00c2f7;
+  --red-text: #FFFFFF;
+
+  /* Second Button */
+  --blue: #333333;
+  --blue-text: #FFFFFF;
+
+  /* Third Button */
+  --yellow: #ff2300;
+  --yellow-text: #FFFFFF;
+
+  /* Fourth Button */
+  --green: #fcfb58;
+  --green-text: #333333;
+
+  /* Progress / timer bar */
+  --progress-track-bg: rgba(51, 51, 51, 0.22);
+  --progress-fill-high: #00c2f7;
+  --progress-fill-mid: #fcfb58;
+  --progress-fill-low: #ff2300;
+
+}
