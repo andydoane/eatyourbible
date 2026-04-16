@@ -1,0 +1,36 @@
+:root.theme-bombpop-blue {
+
+  /* Intro screen */
+  --intro-bg: #08b8cd;
+  --intro-text: #ffffff;
+
+  /* Whole page background */
+  --quiz-screen-bg: #08b8cd;
+
+  /* Question Box at Top */
+  --question-bg: #FFFFFF;
+  --question-text: #333333;
+
+  /* First Button */
+  --red: #ade1ea;
+  --red-text: #333333;
+
+  /* Second Button */
+  --blue: #ff001f;
+  --blue-text: #FFFFFF;
+
+  /* Third Button */
+  --yellow: #1a1a1a;
+  --yellow-text: #FFFFFF;
+
+  /* Fourth Button */
+  --green: #FFFFFF;
+  --green-text: #08b8cd;
+
+  /* Progress / timer bar */
+  --progress-track-bg: rgba(51, 51, 51, 0.22);
+  --progress-fill-high: #05E12B;
+  --progress-fill-mid: #FFB005;
+  --progress-fill-low: #ff001f;
+
+}
