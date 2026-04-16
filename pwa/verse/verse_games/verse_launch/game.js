@@ -55,6 +55,8 @@
     bonusTravelTextVisible:false,
     bonusFadeActive:false,
     bonusRocketColorKey:"red",
+    bonusOutcome:"",
+    bonusMedalAlreadyEarned:false,
 
     astroHits:0,
     astroInvulnerable:false,
@@ -67,6 +69,9 @@
     astroMoonPhase:false,
     astroMoonY:-240,
     astroMoonDone:false,
+    astroLandingPhase:false,
+    astroPlayerLiftPx:0,
+    astroPlayerScale:1,
     astroLastTs:0,
     astroRaf:0,
   };
@@ -173,6 +178,8 @@
     state.bonusTravelTextVisible = false;
     state.bonusFadeActive = false;
     state.bonusRocketColorKey = "red";
+    state.bonusOutcome = "";
+    state.bonusMedalAlreadyEarned = false;
 
     state.astroHits = 0;
     state.astroInvulnerable = false;
@@ -185,6 +192,9 @@
     state.astroMoonPhase = false;
     state.astroMoonY = -340;
     state.astroMoonDone = false;
+    state.astroLandingPhase = false;
+    state.astroPlayerLiftPx = 0;
+    state.astroPlayerScale = 1;
     state.astroLastTs = 0;
     if (state.astroRaf){
       cancelAnimationFrame(state.astroRaf);
@@ -473,7 +483,7 @@ function renderModeNav(){
         <div class="vl-bonus-stage" id="vlTravelStage">
           <div class="vl-travel-smoke" id="vlTravelSmoke"></div>
           <img class="vl-travel-rocket" id="vlTravelRocket" src="${rocket.src}" alt="">
-          ${state.bonusTravelTextVisible ? `<div class="vl-travel-text">Reach the moon! Watch out for asteroids!</div>` : ""}
+          <div class="vl-travel-text ${state.bonusTravelTextVisible ? "is-visible" : ""}" id="vlTravelText">Reach the moon! Watch out for asteroids!</div>
           <div class="vl-screen-fade ${state.bonusFadeActive ? "is-active" : ""}"></div>
         </div>
         ${renderHelpOverlay()}
@@ -699,6 +709,50 @@ function renderModeNav(){
     return getRocketByKey(state.bonusRocketColorKey || "red");
   }
 
+  async function finalizeBonusOutcome(success){
+    state.completed = true;
+    state.endTime = performance.now();
+    state.bonusOutcome = success ? "success" : "crash";
+
+    let alreadyEarned = false;
+    try {
+      if (window.VerseGameBridge && typeof window.VerseGameBridge.wasAlreadyCompleted === "function") {
+        alreadyEarned = !!(await window.VerseGameBridge.wasAlreadyCompleted(GAME_ID, state.mode));
+      }
+    } catch (err) {
+      alreadyEarned = false;
+    }
+
+    state.bonusMedalAlreadyEarned = alreadyEarned;
+
+    await window.VerseGameBridge.markCompleted({
+      verseId: ctx.verseId,
+      gameId: GAME_ID,
+      mode: state.mode
+    });
+
+    if (success){
+      if (alreadyEarned){
+        state.medalMessage = "Mission accomplished!";
+        state.medalSubmessage = "You reached the moon!";
+      } else {
+        state.medalMessage = `Mission accomplished! You earned a ${getModeMedal(state.mode)}`;
+        state.medalSubmessage = "You reached the moon!";
+      }
+    } else {
+      if (alreadyEarned){
+        state.medalMessage = "Rocket lost!";
+        state.medalSubmessage = "You built the verse, but your rocket crashed.";
+      } else {
+        state.medalMessage = `Launch complete! You earned a ${getModeMedal(state.mode)}`;
+        state.medalSubmessage = "You built the verse, but your rocket crashed.";
+      }
+    }
+
+    state.busy = false;
+    setScreen("end");
+  }
+
   function stopAstroLoop(){
     if (state.astroRaf){
       cancelAnimationFrame(state.astroRaf);
@@ -914,12 +968,18 @@ function resetMoonOffscreen(){
       await sleep(42);
     }
 
+    const travelText = $("#vlTravelText");
+    if (travelText){
+      travelText.classList.add("is-visible");
+    }
     state.bonusTravelTextVisible = true;
-    render();
     await sleep(1400);
 
+    const fade = document.querySelector(".vl-screen-fade");
+    if (fade){
+      fade.classList.add("is-active");
+    }
     state.bonusFadeActive = true;
-    render();
     await sleep(430);
 
     state.bonusFadeActive = false;
@@ -939,7 +999,7 @@ function resetMoonOffscreen(){
     const rect = stage.getBoundingClientRect();
     const leftPx = rect.width * state.astroPlayerX;
     rocket.style.left = `${leftPx}px`;
-    rocket.style.transform = `translateX(-50%) rotate(${state.astroPlayerTilt}deg)`;
+        rocket.style.transform = `translateX(-50%) translateY(${-state.astroPlayerLiftPx}px) rotate(${state.astroPlayerTilt}deg) scale(${state.astroPlayerScale})`;
 
     trail.innerHTML = "";
     for (let i = 0; i < 3; i++){
@@ -1005,8 +1065,7 @@ function resetMoonOffscreen(){
       }
       await sleep(900);
       stopAstroLoop();
-      state.endTime = performance.now();
-      setScreen("end");
+      await finalizeBonusOutcome(false);
       return;
     }
 
@@ -1060,19 +1119,31 @@ function resetMoonOffscreen(){
       state.astroAsteroids = [];
 
       const moonTargetY = rect.height * 0.18;
-      if (state.astroMoonY < moonTargetY){
-        state.astroMoonY = Math.min(moonTargetY, state.astroMoonY + rect.height * 0.010);
+      if (!state.astroLandingPhase){
+        if (state.astroMoonY < moonTargetY){
+          state.astroMoonY = Math.min(moonTargetY, state.astroMoonY + rect.height * 0.010);
+        } else {
+          state.astroMoonDone = true;
+          state.astroLandingPhase = true;
+          state.astroMoveDir = 0;
+        }
       } else {
-        state.astroMoonDone = true;
-
         const targetX = 0.5;
-        state.astroPlayerX += (targetX - state.astroPlayerX) * 0.06;
-        state.astroPlayerTilt *= 0.85;
+        const targetLiftPx = rect.height * 0.42;
+        const targetScale = 0.05;
 
-        if (Math.abs(targetX - state.astroPlayerX) < 0.01){
+        state.astroPlayerX += (targetX - state.astroPlayerX) * 0.08;
+        state.astroPlayerLiftPx += (targetLiftPx - state.astroPlayerLiftPx) * 0.08;
+        state.astroPlayerScale += (targetScale - state.astroPlayerScale) * 0.08;
+        state.astroPlayerTilt *= 0.82;
+
+        const centered = Math.abs(targetX - state.astroPlayerX) < 0.008;
+        const lifted = Math.abs(targetLiftPx - state.astroPlayerLiftPx) < 3;
+        const scaled = Math.abs(targetScale - state.astroPlayerScale) < 0.02;
+
+        if (centered && lifted && scaled){
           stopAstroLoop();
-          state.endTime = performance.now();
-          setScreen("end");
+          finalizeBonusOutcome(true);
           return;
         }
       }
@@ -1094,6 +1165,9 @@ function startAstroLoop(){
   state.astroAsteroids = [];
   state.astroMoonPhase = false;
   state.astroMoonDone = false;
+  state.astroLandingPhase = false;
+  state.astroPlayerLiftPx = 0;
+  state.astroPlayerScale = 1;
 
   renderAstroEntities();
   resetMoonOffscreen();
