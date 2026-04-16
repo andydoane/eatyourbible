@@ -445,7 +445,7 @@ button,input,select{font:inherit}
 .vl-moon{
   position:absolute;
   left:50%;
-  top:-240px;
+  top:-420px;
   width:min(56vw, 320px);
   height:auto;
   transform:translateX(-50%);
