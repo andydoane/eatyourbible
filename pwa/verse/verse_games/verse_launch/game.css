@@ -12,6 +12,9 @@
   --vl-pink:#ff8cc8;
   --vl-safe-top:env(safe-area-inset-top, 0px);
   --vl-safe-bottom:env(safe-area-inset-bottom, 0px);
+  --vl-smoke-good:#ffc751;
+  --vl-smoke-warn:#ffa351;
+  --vl-smoke-bad:#ff5a51;
 }
 
 *{box-sizing:border-box}
@@ -317,6 +320,224 @@ button,input,select{font:inherit}
   0%{ transform:scale(.78); opacity:0; }
   70%{ transform:scale(1.06); opacity:1; }
   100%{ transform:scale(1); opacity:1; }
+}
+
+.vl-star-launch-btn{
+  min-width:min(320px, 88vw);
+  padding:18px 26px;
+  border:none;
+  border-radius:999px;
+  background:#fff;
+  color:var(--vl-purple);
+  font-size:clamp(22px,4.6vw,34px);
+  font-weight:900;
+  line-height:1;
+  box-shadow:0 8px 0 rgba(0,0,0,.24);
+  cursor:pointer;
+}
+.vl-star-launch-btn:active{
+  transform:translateY(4px);
+  box-shadow:0 2px 0 rgba(0,0,0,.24);
+}
+
+.vl-travel-screen,
+.vl-asteroid-screen{
+  min-height:100dvh;
+  height:100dvh;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+}
+
+.vl-travel-screen{
+  background:linear-gradient(to bottom, #333333 0%, #7f66c6 100%);
+}
+
+.vl-asteroid-screen{
+  background:#333333;
+}
+
+.vl-bonus-topbar{
+  flex:0 0 auto;
+  padding:calc(10px + var(--vl-safe-top)) 14px 0;
+  display:flex;
+  justify-content:flex-start;
+  align-items:center;
+}
+
+.vl-bonus-stage{
+  position:relative;
+  flex:1 1 auto;
+  min-height:0;
+  overflow:hidden;
+}
+
+.vl-travel-text{
+  position:absolute;
+  left:50%;
+  top:50%;
+  transform:translate(-50%,-50%);
+  width:min(88vw, 620px);
+  text-align:center;
+  font-size:clamp(24px,4.5vw,42px);
+  font-weight:900;
+  line-height:1.15;
+  text-wrap:balance;
+  z-index:3;
+}
+
+.vl-travel-rocket{
+  position:absolute;
+  left:50%;
+  bottom:-120px;
+  width:72px;
+  height:72px;
+  object-fit:contain;
+  transform:translateX(-50%);
+  z-index:2;
+  filter:drop-shadow(0 10px 16px rgba(0,0,0,.32));
+}
+
+.vl-travel-smoke{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  z-index:1;
+}
+
+.vl-screen-fade{
+  position:absolute;
+  inset:0;
+  background:#333333;
+  pointer-events:none;
+  opacity:0;
+  z-index:20;
+}
+
+.vl-screen-fade.is-active{
+  animation:vlScreenFadeIn 420ms ease forwards;
+}
+
+.vl-space-layer{
+  position:absolute;
+  inset:0;
+  overflow:hidden;
+}
+
+.vl-moon{
+  position:absolute;
+  left:50%;
+  top:-240px;
+  width:min(56vw, 320px);
+  height:auto;
+  transform:translateX(-50%);
+  z-index:1;
+}
+
+.vl-player-rocket{
+  position:absolute;
+  left:50%;
+  bottom:118px;
+  width:84px;
+  height:84px;
+  object-fit:contain;
+  transform:translateX(-50%);
+  z-index:5;
+  filter:drop-shadow(0 10px 16px rgba(0,0,0,.28));
+  transition:transform 120ms ease;
+}
+
+.vl-player-rocket.is-hit{
+  animation:vlPlayerSpin 1000ms linear;
+}
+
+.vl-player-rocket.is-flash{
+  animation:vlPlayerFlash 180ms linear 5;
+}
+
+.vl-player-trail{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  z-index:4;
+}
+
+.vl-asteroid{
+  position:absolute;
+  width:84px;
+  height:84px;
+  object-fit:contain;
+  transform-origin:center center;
+  z-index:3;
+  pointer-events:none;
+}
+
+.vl-space-controls{
+  position:absolute;
+  left:0;
+  right:0;
+  bottom:18px;
+  display:flex;
+  justify-content:center;
+  gap:18px;
+  z-index:8;
+}
+
+.vl-space-arrow{
+  width:78px;
+  height:78px;
+  border:none;
+  border-radius:22px;
+  background:rgba(255,255,255,.14);
+  color:#fff;
+  font-size:40px;
+  font-weight:900;
+  box-shadow:0 6px 0 rgba(0,0,0,.24);
+  cursor:pointer;
+  touch-action:manipulation;
+  -webkit-user-select:none;
+  user-select:none;
+  -webkit-touch-callout:none;
+}
+
+.vl-space-arrow:active{
+  transform:translateY(4px);
+  box-shadow:0 2px 0 rgba(0,0,0,.24);
+}
+
+.vl-space-status{
+  position:absolute;
+  right:14px;
+  top:14px;
+  z-index:8;
+  display:flex;
+  gap:8px;
+}
+
+.vl-hit-pip{
+  width:16px;
+  height:16px;
+  border-radius:999px;
+  background:rgba(255,255,255,.22);
+}
+
+.vl-hit-pip.is-on{
+  background:#fff;
+}
+
+@keyframes vlScreenFadeIn{
+  0%{ opacity:0; }
+  100%{ opacity:1; }
+}
+
+@keyframes vlPlayerSpin{
+  0%{ transform:translateX(-50%) rotate(0deg); }
+  100%{ transform:translateX(-50%) rotate(360deg); }
+}
+
+@keyframes vlPlayerFlash{
+  0%,100%{ filter:drop-shadow(0 10px 16px rgba(0,0,0,.28)); opacity:1; }
+  50%{ filter:drop-shadow(0 10px 16px rgba(255,90,81,.5)); opacity:.35; }
 }
 
 @media (max-height:760px){
