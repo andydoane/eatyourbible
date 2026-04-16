@@ -1,0 +1,36 @@
+:root.theme-yogi-light {
+
+  /* Intro screen */
+  --intro-bg: #f5fff9;
+  --intro-text: #333333;
+
+  /* Whole page background */
+  --quiz-screen-bg: #f5fff9;
+
+  /* Question Box at Top */
+  --question-bg: #f5fff9;
+  --question-text: #333333;
+
+  /* First Button */
+  --red: #b45332;
+  --red-text: #FFFFFF;
+
+  /* Second Button */
+  --blue: #95ce70;
+  --blue-text: #FFFFFF;
+
+  /* Third Button */
+  --yellow: #ffde75;
+  --yellow-text: #333333;
+
+  /* Fourth Button */
+  --green: #333333;
+  --green-text: #FFFFFF;
+
+  /* Progress / timer bar */
+  --progress-track-bg: rgba(51, 51, 51, 0.22);
+  --progress-fill-high: #95ce70;
+  --progress-fill-mid: #ffde75;
+  --progress-fill-low: #b45332;
+
+}
