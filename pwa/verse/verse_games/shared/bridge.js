@@ -13,7 +13,7 @@
 
   async function getVerseContext(){
     const params = getParams();
-    const verseId = params.verseId;
+    const verseId = params.verseId;e
 
     if (!verseId){
       return {
@@ -143,6 +143,22 @@ function markCompleted(payload){
   };
 }
 
+function wasAlreadyCompleted(verseId, gameId, mode){
+  if (!verseId || !gameId || !mode) return false;
+
+  const progress = loadProgress();
+  const verseProgress = progress.verses?.[verseId];
+  const gameProgress = verseProgress?.games?.[gameId];
+
+  if (!gameProgress) return false;
+
+  if (mode === "easy") return !!gameProgress.easyCompleted;
+  if (mode === "medium") return !!gameProgress.mediumCompleted;
+  if (mode === "hard") return !!gameProgress.hardCompleted;
+
+  return false;
+}
+
   function buildFallbackReturnUrl(){
     const params = getParams();
   
@@ -191,6 +207,7 @@ function exitGame(){
   window.VerseGameBridge = {
     getLaunchParams: getParams,
     getVerseContext,
+    wasAlreadyCompleted,
     markCompleted,
     exitGame
   };
