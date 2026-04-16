@@ -12,6 +12,9 @@
     { key:"yellow", src:"./verse_launch_images/verse_launch_rocket_yellow.png", color:"#ffc751", textDark:true }
   ];
 
+  const ASTEROID_IMAGE_SRC = "./verse_launch_images/verse_launch_asteroid.png";
+  const MOON_IMAGE_SRC = "./verse_launch_images/verse_launch_moon.png";
+
   const FUN_DECOYS = [
     "taco","banana","penguin","cupcake","dinosaur","pickle","marshmallow","noodle","waffle","rocket",
     "jellybean","pancake","popcorn","unicorn","bubble","muffin","otter","kangaroo","scooter","rainbow",
@@ -51,8 +54,9 @@
     medalMessage:"",
     medalSubmessage:"",
     countdownValue:"",
-        bonusReady:false,
+    bonusReady:false,
     bonusTravelTextVisible:false,
+    hasShownInitialCountdown:false,
     bonusFadeActive:false,
     bonusRocketColorKey:"red",
     bonusOutcome:"",
@@ -106,6 +110,17 @@
   function tokenizeVerse(text){ return String(text||"").trim().split(/\s+/).filter(Boolean); }
   function normalizeWord(word){ return String(word||"").toLowerCase(); }
 
+  function preloadImages(srcList){
+    return Promise.all(
+      srcList.map(src => new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => resolve();
+        img.onerror = () => resolve(); // don't block the game if one fails
+        img.src = src;
+      }))
+    );
+  }
+
   function titleCaseBookFromSlug(slug){
     const smallWords = new Set(["of","the"]);
     return String(slug||"").split("_").filter(Boolean).map((part,index)=>{
@@ -158,6 +173,12 @@
     return "is-normal";
   }
 
+  await preloadImages([
+    ...ROCKETS.map(r => r.src),
+    ASTEROID_IMAGE_SRC,
+    MOON_IMAGE_SRC
+  ]);
+
   function initVerseData(){
     state.words = tokenizeVerse(ctx.verseText);
     const parsed = parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
@@ -180,6 +201,7 @@
     state.medalMessage = "";
     state.medalSubmessage = "";
     state.countdownValue = "";
+    state.hasShownInitialCountdown = false;
     state.bonusReady = false;
     state.bonusTravelTextVisible = false;
     state.bonusFadeActive = false;
@@ -1378,7 +1400,16 @@ async function handleLaunch(choiceId){
   if (!choice) return;
 
   state.busy = true;
-  await playLaunchCountdown();
+
+  const shouldShowInitialCountdown =
+    !state.hasShownInitialCountdown &&
+    state.phase === "words" &&
+    state.progressIndex === 0;
+
+  if (shouldShowInitialCountdown){
+    state.hasShownInitialCountdown = true;
+    await playLaunchCountdown();
+  }
 
   const liveSourceEl =
     document.querySelector(`.vl-main-launcher[data-choice-id="${choiceId}"]`) ||
