@@ -73,7 +73,7 @@
 
   let muted = false;
 
-  const ASTRO_DURATION_MS = 60000;
+  const ASTRO_DURATION_MS = 30000;
   const ASTRO_HITBOX_SCALE = 0.5;
   const ASTRO_BASE_SPEED_VH_PER_SEC = 42;
   const ASTRO_MODE_MULTIPLIER = { easy:1, medium:1.18, hard:1.38 };
@@ -183,7 +183,7 @@
     state.astroAsteroids = [];
     state.astroRunning = false;
     state.astroMoonPhase = false;
-    state.astroMoonY = -240;
+    state.astroMoonY = -340;
     state.astroMoonDone = false;
     state.astroLastTs = 0;
     if (state.astroRaf){
@@ -720,7 +720,7 @@ function renderModeNav(){
     const roll = Math.random();
     if (roll > chancePerSecond * (dtMs / 1000)) return;
 
-    const size = 72 + Math.random() * 40;
+    const size = 44 + Math.random() * 22;
     state.astroAsteroids.push({
       id:`ast_${Date.now()}_${Math.random().toString(36).slice(2)}`,
       x: 0.1 + Math.random() * 0.8,
@@ -734,6 +734,16 @@ function renderModeNav(){
   function asteroidSpeedPxPerSec(viewH){
     return (ASTRO_BASE_SPEED_VH_PER_SEC / 100) * viewH * modeAstroMultiplier();
   }
+
+function resetMoonOffscreen(){
+  const moon = $("#vlMoon");
+  if (moon){
+    const moonHeight = moon.getBoundingClientRect().height || 240;
+    state.astroMoonY = -moonHeight - 24;
+  } else {
+    state.astroMoonY = -340;
+  }
+}
 
   async function playLaunchCountdown(){
     for (const value of ["3","2","1"]){
@@ -1048,12 +1058,17 @@ function renderModeNav(){
       }
     } else {
       state.astroAsteroids = [];
-      if (state.astroMoonY < rect.height * 0.18){
-        state.astroMoonY += rect.height * 0.010;
-      } else if (!state.astroMoonDone){
+
+      const moonTargetY = rect.height * 0.18;
+      if (state.astroMoonY < moonTargetY){
+        state.astroMoonY = Math.min(moonTargetY, state.astroMoonY + rect.height * 0.010);
+      } else {
         state.astroMoonDone = true;
+
         const targetX = 0.5;
         state.astroPlayerX += (targetX - state.astroPlayerX) * 0.06;
+        state.astroPlayerTilt *= 0.85;
+
         if (Math.abs(targetX - state.astroPlayerX) < 0.01){
           stopAstroLoop();
           state.endTime = performance.now();
@@ -1067,22 +1082,25 @@ function renderModeNav(){
     state.astroRaf = requestAnimationFrame(astroTick);
   }
 
-  function startAstroLoop(){
-    state.astroRunning = true;
-    state.astroLastTs = 0;
-    state.astroTimerMs = 0;
-    state.astroHits = 0;
-    state.astroInvulnerable = false;
-    state.astroPlayerX = 0.5;
-    state.astroMoveDir = 0;
-    state.astroPlayerTilt = 0;
-    state.astroAsteroids = [];
-    state.astroMoonPhase = false;
-    state.astroMoonY = -240;
-    state.astroMoonDone = false;
-    renderAstroEntities();
-    state.astroRaf = requestAnimationFrame(astroTick);
-  }
+function startAstroLoop(){
+  state.astroRunning = true;
+  state.astroLastTs = 0;
+  state.astroTimerMs = 0;
+  state.astroHits = 0;
+  state.astroInvulnerable = false;
+  state.astroPlayerX = 0.5;
+  state.astroMoveDir = 0;
+  state.astroPlayerTilt = 0;
+  state.astroAsteroids = [];
+  state.astroMoonPhase = false;
+  state.astroMoonDone = false;
+
+  renderAstroEntities();
+  resetMoonOffscreen();
+  renderAstroEntities();
+
+  state.astroRaf = requestAnimationFrame(astroTick);
+}
 
   async function finishGame(){
     state.completed = true;
