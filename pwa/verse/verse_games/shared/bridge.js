@@ -26,7 +26,8 @@
     }
 
     try {
-      const res = await fetch(`../../verse_data/${verseId}.json`, { cache: "no-store" });
+      const verseUrl = `../../verse_data/${verseId}.json`;
+      const res = await fetch(verseUrl, { cache: "no-store" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       const json = await res.json();
@@ -39,7 +40,7 @@
         attribution: json.attribution || ""
       };
     } catch (err) {
-      console.warn("Could not load verse context for external game", err);
+      console.warn("Could not load verse context for external game", verseUrl, err);
 
       return {
         verseId,
@@ -54,16 +55,43 @@
   function loadProgress(){
     try {
       const raw = localStorage.getItem("verseMemoryProgress");
-      if (!raw) return { version: 1, verses: {} };
+
+      if (!raw) {
+        return {
+          ok: true,
+          progress: { version: 1, verses: {} }
+        };
+      }
 
       const parsed = JSON.parse(raw);
-      if (!parsed || typeof parsed !== "object") return { version: 1, verses: {} };
-      if (!parsed.verses || typeof parsed.verses !== "object") parsed.verses = {};
 
-      return parsed;
+      if (!parsed || typeof parsed !== "object") {
+        return {
+          ok: false,
+          progress: null,
+          error: new Error("Progress JSON was not an object")
+        };
+      }
+
+      if (!parsed.verses || typeof parsed.verses !== "object") {
+        parsed.verses = {};
+      }
+
+      if (!parsed.version) {
+        parsed.version = 1;
+      }
+
+      return {
+        ok: true,
+        progress: parsed
+      };
     } catch (err) {
       console.warn("Could not load progress in external bridge", err);
-      return { version: 1, verses: {} };
+      return {
+        ok: false,
+        progress: null,
+        error: err
+      };
     }
   }
 
@@ -90,7 +118,13 @@ function markCompleted(payload){
     return { ok: false, petUnlockTriggered: false };
   }
 
-  const progress = loadProgress();
+  const loaded = loadProgress();
+  if (!loaded.ok || !loaded.progress) {
+    console.warn("markCompleted aborted because progress could not be loaded safely.");
+    return { ok: false, petUnlockTriggered: false };
+  }
+
+  const progress = loaded.progress;
 
   if (!progress.verses[payload.verseId]) {
     progress.verses[payload.verseId] = {
@@ -143,21 +177,24 @@ function markCompleted(payload){
   };
 }
 
-function wasAlreadyCompleted(verseId, gameId, mode){
-  if (!verseId || !gameId || !mode) return false;
+  function wasAlreadyCompleted(verseId, gameId, mode){
+    if (!verseId || !gameId || !mode) return false;
 
-  const progress = loadProgress();
-  const verseProgress = progress.verses?.[verseId];
-  const gameProgress = verseProgress?.games?.[gameId];
+    const loaded = loadProgress();
+    if (!loaded.ok || !loaded.progress) return false;
 
-  if (!gameProgress) return false;
+    const progress = loaded.progress;
+    const verseProgress = progress.verses?.[verseId];
+    const gameProgress = verseProgress?.games?.[gameId];
 
-  if (mode === "easy") return !!gameProgress.easyCompleted;
-  if (mode === "medium") return !!gameProgress.mediumCompleted;
-  if (mode === "hard") return !!gameProgress.hardCompleted;
+    if (!gameProgress) return false;
 
-  return false;
-}
+    if (mode === "easy") return !!gameProgress.easyCompleted;
+    if (mode === "medium") return !!gameProgress.mediumCompleted;
+    if (mode === "hard") return !!gameProgress.hardCompleted;
+
+    return false;
+  }
 
   function buildFallbackReturnUrl(){
     const params = getParams();
@@ -181,10 +218,11 @@ function exitGame(){
       ? new URL(raw, window.location.href)
       : new URL("../../index.html", window.location.href);
 
-    const progress = loadProgress();
-    const verseProgress = progress.verses?.[params.verseId];
+    const loaded = loadProgress();
+    const progress = loaded.ok && loaded.progress ? loaded.progress : null;
+    const verseProgress = progress?.verses?.[params.verseId];
 
-    if (params.verseId && verseProgress?.externalPetUnlockPending){
+    if (params.verseId && verseProgress?.externalPetUnlockPending && progress){
       target.searchParams.set("petUnlock", params.verseId);
       delete verseProgress.externalPetUnlockPending;
       saveProgress(progress);
