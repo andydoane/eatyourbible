@@ -415,15 +415,15 @@
 
   function currentBounds(){
     const boardMain = $("#vspBoardMain");
-    if (!boardMain) return { width: 300, height: 300, topInset: 14, leftInset: 14, rightInset: 14, bottomInset: 14 };
+    if (!boardMain) return { width: 300, height: 300, topInset: 0, leftInset: 0, rightInset: 0, bottomInset: 0 };
     const rect = boardMain.getBoundingClientRect();
     return {
       width: rect.width,
       height: rect.height,
-      topInset: 14,
-      leftInset: 14,
-      rightInset: 14,
-      bottomInset: 14,
+      topInset: 0,
+      leftInset: 0,
+      rightInset: 0,
+      bottomInset: 0,
       node: boardMain,
       blobLayer: $("#vspBlobLayer"),
       effectLayer: $("#vspEffectLayer")
@@ -519,11 +519,15 @@
     if (!layer) return;
     layer.innerHTML = state.blobs.map(blobMarkup).join("");
     layer.querySelectorAll(".vsp-blob-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
+      const onPress = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
         const parent = btn.closest(".vsp-blob");
         if (!parent) return;
         handleBlobTap(Number(parent.dataset.blobId));
-      });
+      };
+      btn.addEventListener("pointerdown", onPress, { passive:false });
+      btn.addEventListener("touchstart", onPress, { passive:false });
     });
     state.blobs.forEach(blob => updateBlobDom(blob));
   }
@@ -872,11 +876,15 @@
     if (!layer) return;
     layer.innerHTML = state.bonusBlobs.filter(blob => blob.alive).map(bonusBlobMarkup).join("");
     layer.querySelectorAll(".vsp-blob-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
+      const onPress = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
         const parent = btn.closest(".vsp-blob");
         if (!parent) return;
         handleBonusBlobTap(Number(parent.dataset.bonusId));
-      });
+      };
+      btn.addEventListener("pointerdown", onPress, { passive:false });
+      btn.addEventListener("touchstart", onPress, { passive:false });
     });
     state.bonusBlobs.forEach(updateBonusBlobDom);
   }

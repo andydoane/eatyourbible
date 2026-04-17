@@ -83,7 +83,7 @@ body{overflow:hidden}
   border-radius:32px;
   overflow:hidden;
   display:block;
-  box-shadow:var(--vsp-shadow);
+  box-shadow:none;
 }
 .vsp-board-topbar{position:absolute;left:12px;right:12px;top:12px;z-index:8;display:flex;justify-content:flex-start;align-items:flex-start;gap:10px;pointer-events:none}
 .vsp-menu-pill,
@@ -95,19 +95,24 @@ body{overflow:hidden}
 .vsp-menu-pill:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.18)}
 .vsp-board-main{position:absolute;inset:0;min-height:0}
 .vsp-blob-layer,.vsp-effect-layer,.vsp-flash-layer{position:absolute;inset:0}
+.vsp-blob-layer{z-index:3}
+.vsp-effect-layer{z-index:4}
+.vsp-flash-layer{z-index:5}
 .vsp-flash-layer{pointer-events:none;opacity:0;background:rgba(255,70,70,.24)}
 .vsp-flash-layer.is-active{animation:vspFlash .28s ease}
 
 .vsp-blob{position:absolute;left:0;top:0;will-change:transform;touch-action:manipulation;pointer-events:auto}
 .vsp-blob-btn{
-  width:100%;height:100%;border:none;background:transparent;padding:0;cursor:pointer;touch-action:manipulation;appearance:none;-webkit-appearance:none;display:block;font-family:inherit
+  width:100%;height:100%;border:none;background:transparent;padding:0;cursor:pointer;touch-action:manipulation;appearance:none;-webkit-appearance:none;display:block;font-family:inherit;position:relative;z-index:2
 }
 .vsp-blob-body{
   width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+  pointer-events:none;
   padding:0 .2em;border-radius:46% 54% 53% 47% / 52% 47% 53% 48%;
   box-shadow:inset 0 -8px 0 rgba(0,0,0,.08);
 }
 .vsp-blob-label{
+  pointer-events:none;
   display:block;max-width:88%;text-align:center;font-weight:900;line-height:1.02;
   font-size:clamp(16px,3.7vw,30px);
   transform-origin:center center;
