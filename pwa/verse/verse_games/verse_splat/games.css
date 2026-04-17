@@ -93,15 +93,15 @@ body{overflow:hidden}
 .vsp-menu-pill{cursor:pointer;pointer-events:auto;min-width:52px;display:inline-flex;align-items:center;justify-content:center;font-size:24px;line-height:1;padding:8px 16px}
 .vsp-bonus-timer-chip{margin-left:auto}
 .vsp-menu-pill:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(0,0,0,.18)}
-.vsp-board-main{position:absolute;inset:0;min-height:0}
+.vsp-board-main{position:absolute;inset:0;min-height:0;touch-action:none}
 .vsp-blob-layer,.vsp-effect-layer,.vsp-flash-layer{position:absolute;inset:0}
-.vsp-blob-layer{z-index:3}
+.vsp-blob-layer{z-index:3;pointer-events:none}
 .vsp-effect-layer{z-index:4}
 .vsp-flash-layer{z-index:5}
 .vsp-flash-layer{pointer-events:none;opacity:0;background:rgba(255,70,70,.24)}
 .vsp-flash-layer.is-active{animation:vspFlash .28s ease}
 
-.vsp-blob{position:absolute;left:0;top:0;will-change:transform;touch-action:none;pointer-events:auto;cursor:pointer;user-select:none;-webkit-user-select:none}
+.vsp-blob{position:absolute;left:0;top:0;will-change:transform;touch-action:none;pointer-events:none;cursor:pointer;user-select:none;-webkit-user-select:none}
 .vsp-blob-body{
   width:100%;height:100%;display:flex;align-items:center;justify-content:center;
   pointer-events:none;
