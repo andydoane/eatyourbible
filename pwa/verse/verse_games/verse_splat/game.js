@@ -185,6 +185,22 @@
     return shuffle(mapped);
   }
 function easyDecoys(correct){
+  const verseWords = new Set(state.words.map(normalizeWord));
+  const filtered = FUN_DECOYS.filter(word =>
+    !verseWords.has(normalizeWord(word)) &&
+    normalizeWord(word) !== normalizeWord(correct)
+  );
+
+  console.log("Verse Splat easyDecoys debug:", {
+    correct,
+    verseWordsCount: verseWords.size,
+    verseWordsPreview: Array.from(verseWords).slice(0, 12),
+    filteredLength: filtered.length,
+    filteredPreview: filtered.slice(0, 12)
+  });
+
+  return shuffle(filtered);
+}
   function bookDecoys(correct){ return shuffle(BIBLE_BOOKS.filter(book => normalizeWord(book) !== normalizeWord(correct))); }
   function refDecoys(correctRef){
     const out = [];
