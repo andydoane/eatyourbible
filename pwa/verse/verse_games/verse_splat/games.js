@@ -233,6 +233,63 @@
     }).join("");
   }
 
+  function getBlobIdFromPoint(clientX, clientY, bonus=false){
+    const selector = bonus ? "[data-bonus-id]" : "[data-blob-id]";
+    const nodes = Array.from(document.querySelectorAll(selector));
+    for (let i = nodes.length - 1; i >= 0; i--){
+      const node = nodes[i];
+      const rect = node.getBoundingClientRect();
+      if (clientX >= rect.left && clientX <= rect.right && clientY >= rect.top && clientY <= rect.bottom){
+        return Number(node.dataset[bonus ? "bonusId" : "blobId"]);
+      }
+    }
+    return null;
+  }
+
+  function extractClientPoint(event){
+    if (event.touches && event.touches[0]) return { x:event.touches[0].clientX, y:event.touches[0].clientY };
+    if (event.changedTouches && event.changedTouches[0]) return { x:event.changedTouches[0].clientX, y:event.changedTouches[0].clientY };
+    return { x:event.clientX, y:event.clientY };
+  }
+
+  function bindBlobLayerInteraction(){
+    const layer = $("#vspBlobLayer");
+    if (!layer || layer.dataset.boundBlobPress === "1") return;
+    const onPress = (event) => {
+      if (state.menuOpen || state.helpOpen || state.screen !== "game" || state.busy) return;
+      const blobNode = event.target.closest ? event.target.closest("[data-blob-id]") : null;
+      const point = extractClientPoint(event);
+      const blobId = blobNode ? Number(blobNode.dataset.blobId) : getBlobIdFromPoint(point.x, point.y, false);
+      if (!blobId) return;
+      event.preventDefault();
+      event.stopPropagation();
+      handleBlobTap(blobId);
+    };
+    layer.addEventListener("pointerdown", onPress, { passive:false });
+    layer.addEventListener("touchstart", onPress, { passive:false });
+    layer.addEventListener("click", onPress, { passive:false });
+    layer.dataset.boundBlobPress = "1";
+  }
+
+  function bindBonusBlobLayerInteraction(){
+    const layer = $("#vspBlobLayer");
+    if (!layer || layer.dataset.boundBonusBlobPress === "1") return;
+    const onPress = (event) => {
+      if (state.menuOpen || state.helpOpen || state.screen !== "bonus") return;
+      const blobNode = event.target.closest ? event.target.closest("[data-bonus-id]") : null;
+      const point = extractClientPoint(event);
+      const blobId = blobNode ? Number(blobNode.dataset.bonusId) : getBlobIdFromPoint(point.x, point.y, true);
+      if (!blobId) return;
+      event.preventDefault();
+      event.stopPropagation();
+      handleBonusBlobTap(blobId);
+    };
+    layer.addEventListener("pointerdown", onPress, { passive:false });
+    layer.addEventListener("touchstart", onPress, { passive:false });
+    layer.addEventListener("click", onPress, { passive:false });
+    layer.dataset.boundBonusBlobPress = "1";
+  }
+
   function renderIntro(){
     return `
       <div class="vsp-stack" style="margin:auto 0;">
@@ -504,12 +561,10 @@
 
   function blobMarkup(blob){
     return `
-      <div class="vsp-blob ${blob.state === 'spawning' ? 'is-spawning' : ''}" data-blob-id="${blob.id}" style="width:${blob.width}px;height:${blob.height}px;">
-        <button class="vsp-blob-btn" type="button" aria-label="${escapeHtml(blob.label)}">
-          <div class="vsp-blob-body" style="background:${blob.color};color:${blob.textColor};">
-            <span class="vsp-blob-label">${escapeHtml(blob.label)}</span>
-          </div>
-        </button>
+      <div class="vsp-blob ${blob.state === 'spawning' ? 'is-spawning' : ''}" data-blob-id="${blob.id}" role="button" tabindex="0" aria-label="${escapeHtml(blob.label)}" style="width:${blob.width}px;height:${blob.height}px;">
+        <div class="vsp-blob-body" style="background:${blob.color};color:${blob.textColor};">
+          <span class="vsp-blob-label">${escapeHtml(blob.label)}</span>
+        </div>
       </div>
     `;
   }
@@ -518,17 +573,7 @@
     const layer = $("#vspBlobLayer");
     if (!layer) return;
     layer.innerHTML = state.blobs.map(blobMarkup).join("");
-    layer.querySelectorAll(".vsp-blob-btn").forEach(btn => {
-      const onPress = (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        const parent = btn.closest(".vsp-blob");
-        if (!parent) return;
-        handleBlobTap(Number(parent.dataset.blobId));
-      };
-      btn.addEventListener("pointerdown", onPress, { passive:false });
-      btn.addEventListener("touchstart", onPress, { passive:false });
-    });
+    bindBlobLayerInteraction();
     state.blobs.forEach(blob => updateBlobDom(blob));
   }
 
@@ -863,10 +908,8 @@
 
   function bonusBlobMarkup(blob){
     return `
-      <div class="vsp-blob" data-bonus-id="${blob.id}" style="width:${blob.size}px;height:${blob.size}px;">
-        <button class="vsp-blob-btn" type="button" aria-label="splat blob">
-          <div class="vsp-blob-body" style="background:${blob.color};"></div>
-        </button>
+      <div class="vsp-blob" data-bonus-id="${blob.id}" role="button" tabindex="0" aria-label="splat blob" style="width:${blob.size}px;height:${blob.size}px;">
+        <div class="vsp-blob-body" style="background:${blob.color};"></div>
       </div>
     `;
   }
@@ -875,17 +918,7 @@
     const layer = $("#vspBlobLayer");
     if (!layer) return;
     layer.innerHTML = state.bonusBlobs.filter(blob => blob.alive).map(bonusBlobMarkup).join("");
-    layer.querySelectorAll(".vsp-blob-btn").forEach(btn => {
-      const onPress = (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-        const parent = btn.closest(".vsp-blob");
-        if (!parent) return;
-        handleBonusBlobTap(Number(parent.dataset.bonusId));
-      };
-      btn.addEventListener("pointerdown", onPress, { passive:false });
-      btn.addEventListener("touchstart", onPress, { passive:false });
-    });
+    bindBonusBlobLayerInteraction();
     state.bonusBlobs.forEach(updateBonusBlobDom);
   }
 
