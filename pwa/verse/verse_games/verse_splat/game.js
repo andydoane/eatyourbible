@@ -184,10 +184,7 @@
     }
     return shuffle(mapped);
   }
-  function easyDecoys(correct){
-    const verseWords = new Set(state.words.map(normalizeWord));
-    return shuffle(FUN_DECOYS.filter(word => !verseWords.has(normalizeWord(word)) && normalizeWord(word) !== normalizeWord(correct)));
-  }
+function easyDecoys(correct){
   function bookDecoys(correct){ return shuffle(BIBLE_BOOKS.filter(book => normalizeWord(book) !== normalizeWord(correct))); }
   function refDecoys(correctRef){
     const out = [];
@@ -374,12 +371,18 @@ function makeRoundLabels(){
 
   labels = labels.slice(0, 3);
 
-  console.log("Verse Splat labels:", {
-    phase,
-    correct,
-    poolPreview: pool.slice(0, 8),
-    labels
-  });
+console.log("Verse Splat labels debug:", {
+  phase,
+  correct,
+  correctType: typeof correct,
+  wordsCount: state.words.length,
+  wordsPreview: state.words.slice(0, 10),
+  poolLength: pool.length,
+  poolPreview: pool.slice(0, 12),
+  labelsLength: labels.length,
+  labels,
+  labelsTypes: labels.map(x => typeof x)
+});
 
   return shuffle(labels);
 }
