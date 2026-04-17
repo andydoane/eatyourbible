@@ -21,7 +21,7 @@ window.EXTERNAL_VERSE_GAMES = [
       description: "Tap the next correct goo blob as it bounces around the screen.",
       icon: "🫟",
       launchUrl: "./verse_games/verse_splat/index.html",
-      visibleInCarousel: true,
+      visibleInCarousel: false,
       progressType: "standard",
       modes: ["easy", "medium", "hard"]
     }
