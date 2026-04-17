@@ -344,11 +344,19 @@ function makeRoundLabels(){
   const phase = currentPhase();
   const correct = currentCorrectLabel();
 
-  const pool = currentRoundDecoyPool(correct, phase) || [];
+  const pool = (currentRoundDecoyPool(correct, phase) || [])
+    .filter(item => typeof item === "string" && item.trim());
 
-  let labels = uniqueVisibleChoices(correct, pool)
-    .filter(item => typeof item === "string" && item.trim())
-    .slice(0, 3);
+  const labels = [correct];
+  const seen = new Set([normalizeWord(correct)]);
+
+  for (const item of pool){
+    const key = normalizeWord(item);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    labels.push(item);
+    if (labels.length >= 3) break;
+  }
 
   const fallbackPool = [
     ...(phase === "book" ? bookDecoys(correct) : easyDecoys(correct)),
@@ -364,45 +372,27 @@ function makeRoundLabels(){
     if (labels.length >= 3) break;
     if (typeof item !== "string" || !item.trim()) continue;
 
-    const alreadyUsed = labels.some(label => normalizeWord(label) === normalizeWord(item));
-    if (alreadyUsed) continue;
+    const key = normalizeWord(item);
+    if (!key || seen.has(key)) continue;
 
+    seen.add(key);
     labels.push(item);
   }
-
-  const hasCorrect = labels.some(label => normalizeWord(label) === normalizeWord(correct));
-  if (!hasCorrect && typeof correct === "string" && correct.trim()){
-    labels.unshift(correct);
-  }
-
-  labels = labels
-    .filter(item => typeof item === "string" && item.trim())
-    .filter((item, index, arr) =>
-      arr.findIndex(other => normalizeWord(other) === normalizeWord(item)) === index
-    );
 
   while (labels.length < 3){
     labels.push(`decoy-${labels.length + 1}`);
   }
 
-  labels = labels.slice(0, 3);
+  console.log("Verse Splat labels debug:", {
+    phase,
+    correct,
+    poolLength: pool.length,
+    poolPreview: pool.slice(0, 12),
+    labels
+  });
 
-console.log("Verse Splat labels debug:", {
-  phase,
-  correct,
-  correctType: typeof correct,
-  wordsCount: state.words.length,
-  wordsPreview: state.words.slice(0, 10),
-  poolLength: pool.length,
-  poolPreview: pool.slice(0, 12),
-  labelsLength: labels.length,
-  labels,
-  labelsTypes: labels.map(x => typeof x)
-});
-
-  return shuffle(labels);
+  return shuffle(labels.slice(0, 3));
 }
-
   function respawnRound(keepIds = []){
     const fieldRect = currentFieldRect();
     if (!fieldRect) return;
