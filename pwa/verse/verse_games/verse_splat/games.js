@@ -7,6 +7,7 @@
   const GAME_ID = "verse_splat";
   const GAME_TITLE = "Verse Splat";
   const BONUS_TIME_LIMIT_MS = 30000;
+  let muted = false;
 
   const $ = (s, root=document) => root.querySelector(s);
   const escapeHtml = (str) => String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&quot;").replace(/'/g,"&#39;");
@@ -303,28 +304,27 @@
     boardMain.dataset.boundVerseSplatPress = "1";
   }
 
-  function renderIntro(){
-    return `
-      <div class="vsp-stack" style="margin:auto 0;">
-        <div class="vm-pill">${escapeHtml(GAME_TITLE)}</div>
-        <div class="vsp-card">
-          <div class="vsp-title">Splat the next correct word.</div>
-          <div class="vsp-copy" style="margin-top:10px;">Three gooey word blobs bounce around the board. Tap the next correct word to build the verse, then the book, then the reference.</div>
-          <div class="vsp-chip-row" style="margin-top:14px;">
-            <span class="vsp-chip">Correct = colorful splat</span>
-            <span class="vsp-chip">Wrong = poof</span>
-            <span class="vsp-chip">Bonus splat round</span>
+
+function renderIntro(){
+  return `
+    <div class="vsp-mode-shell">
+      <div class="vsp-mode-stage">
+        <div class="vsp-mode-top">
+          <div class="vsp-splash-emoji">🫧💥</div>
+          <div class="vsp-title">Verse Splat</div>
+          <div class="vsp-subtitle">Tap the next correct goo blob to build the verse, then the book and reference.</div>
+          <div class="vsp-mode-card vsp-mode-card-single">
+            <div class="vsp-mode-actions">
+              <button class="vm-btn" data-action="go-mode">Start</button>
+            </div>
           </div>
         </div>
-        <div class="vsp-actions">
-          <button class="vm-btn" data-action="go-mode">Play</button>
-          <button class="vm-btn vm-btn-dark" data-action="show-help-intro">How to Play</button>
-        </div>
       </div>
-    `;
-  }
+    </div>
+  `;
+}
 
-  function renderModeScreen(){
+function renderModeScreen(){
     return `
       <div class="vsp-stack" style="margin:auto 0;">
         <div class="vm-pill">Choose a mode</div>
@@ -349,40 +349,41 @@
     `;
   }
 
-  function overlayMarkup(){
-    if (state.helpOpen){
-      return `
-        <div class="vsp-overlay">
-          <div class="vsp-overlay-card">
-            <div class="vsp-overlay-title">How to Play</div>
-            <div class="vsp-overlay-copy">Tap the next correct blob word to build the verse. After the verse, finish the book and then the reference. Wrong taps poof blobs away. In hard mode, wrong taps also remove two built words.</div>
-            <div class="vsp-overlay-actions">
-              <button class="vsp-overlay-btn" data-action="close-help">Got it</button>
-              ${state.helpBackMode ? '<button class="vsp-overlay-btn vsp-dark" data-action="help-back-menu">Back to Menu</button>' : ''}
-            </div>
-          </div>
-        </div>
-      `;
-    }
-    if (state.menuOpen){
-      return `
-        <div class="vsp-overlay">
-          <div class="vsp-overlay-card vsp-overlay-card-menu">
-            <div class="vsp-overlay-title">Game Menu</div>
-            <div class="vsp-overlay-actions">
-              <button class="vsp-overlay-btn" data-action="open-help-from-menu">How to Play</button>
-              <button class="vsp-overlay-btn" data-action="toggle-mute">Mute / Unmute</button>
-              <button class="vsp-overlay-btn" data-action="resume-game">Close Menu</button>
-              <button class="vsp-overlay-btn vsp-dark" data-action="exit-game">Exit Game</button>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-    return "";
-  }
 
-  function gameplayShell({ bonus=false }){
+function overlayMarkup(){
+  if (state.helpOpen){
+    return `
+      <div class="vsp-overlay">
+        <div class="vsp-overlay-card">
+          <div class="vsp-overlay-title">How to Play</div>
+          <div class="vsp-overlay-copy">Tap the next correct blob word to build the verse. After the verse, finish the book and then the reference. Wrong taps poof blobs away. In hard mode, wrong taps also remove two built words.</div>
+          <div class="vsp-overlay-actions">
+            <button class="vm-btn vsp-menu-action" data-action="close-help">${state.helpBackMode ? 'Back' : 'OK'}</button>
+            ${state.helpBackMode ? '<button class="vm-btn vsp-menu-action" data-action="help-back-menu">Back to Menu</button>' : ''}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  if (state.menuOpen){
+    return `
+      <div class="vsp-overlay">
+        <div class="vsp-overlay-card vsp-overlay-card-menu">
+          <div class="vsp-overlay-title vsp-overlay-title-menu">Game Menu</div>
+          <div class="vsp-overlay-actions">
+            <button class="vm-btn vsp-menu-action" data-action="open-help-from-menu">How to Play</button>
+            <button class="vm-btn vsp-menu-action" data-action="toggle-mute">${muted ? 'Unmute' : 'Mute'}</button>
+            <button class="vm-btn vsp-menu-action" data-action="exit-game">Exit Game</button>
+            <button class="vm-btn vsp-menu-action" data-action="resume-game">Close</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+  return "";
+}
+
+function gameplayShell({ bonus=false }){
     return `
       <div class="${bonus ? 'vsp-bonus-screen' : 'vsp-game-screen'}">
         ${bonus ? '' : `
@@ -453,7 +454,7 @@
     app.querySelectorAll("[data-action='open-help-from-menu']").forEach(btn => btn.onclick = () => { state.helpBackMode = true; state.menuOpen = false; state.helpOpen = true; render(); });
     app.querySelectorAll("[data-action='close-help']").forEach(btn => btn.onclick = closeHelp);
     app.querySelectorAll("[data-action='help-back-menu']").forEach(btn => btn.onclick = () => { state.helpOpen = false; state.menuOpen = true; render(); });
-    app.querySelectorAll("[data-action='toggle-mute']").forEach(btn => btn.onclick = () => closeMenu());
+    app.querySelectorAll("[data-action='toggle-mute']").forEach(btn => btn.onclick = () => { muted = !muted; render(); if (state.screen === "game") afterGameScreenRender(); if (state.screen === "bonus") afterBonusScreenRender(); });
     app.querySelectorAll("[data-action='play-again']").forEach(btn => btn.onclick = () => setScreen("mode"));
     app.querySelectorAll("[data-action='exit-game']").forEach(btn => btn.onclick = () => window.VerseGameBridge.exitGame());
   }
