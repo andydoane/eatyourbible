@@ -222,12 +222,6 @@
     return state.segments[state.progressIndex] || "";
   }
 
-  function phaseChip(){
-    if (state.phase === "words") return `Verse ${Math.min(state.progressIndex + 1, state.words.length || 1)} / ${state.words.length || 1}`;
-    if (state.phase === "book") return "Book";
-    if (state.phase === "reference") return "Reference";
-    return "Complete";
-  }
 
   function renderBuildText(){
     return state.segments.map((segment, index) => {
@@ -303,7 +297,7 @@
     if (state.menuOpen){
       return `
         <div class="vsp-overlay">
-          <div class="vsp-overlay-card">
+          <div class="vsp-overlay-card vsp-overlay-card-menu">
             <div class="vsp-overlay-title">Game Menu</div>
             <div class="vsp-overlay-actions">
               <button class="vsp-overlay-btn" data-action="open-help-from-menu">How to Play</button>
@@ -331,8 +325,8 @@
         <div class="vsp-board-wrap">
           <div class="vsp-board" id="vspBoard">
             <div class="vsp-board-topbar">
-              <div class="vsp-stage-pill" style="visibility:visible;">${bonus ? `Time ${Math.ceil(state.bonusRemainingMs / 1000)}` : phaseChip()}</div>
-              <button class="vsp-menu-pill" data-action="open-menu">Menu</button>
+              <button class="vsp-menu-pill" data-action="open-menu" aria-label="Open game menu">☰</button>
+              ${bonus ? `<div class="vsp-bonus-timer-chip" id="vspBonusTimerChip">Time ${Math.ceil(state.bonusRemainingMs / 1000)}</div>` : ''}
             </div>
             <div class="vsp-board-main" id="vspBoardMain">
               <div class="vsp-flash-layer ${state.flashKey ? 'is-active' : ''}" id="vspFlashLayer"></div>
@@ -421,12 +415,15 @@
 
   function currentBounds(){
     const boardMain = $("#vspBoardMain");
-    if (!boardMain) return { width: 300, height: 300, topInset: 14 };
+    if (!boardMain) return { width: 300, height: 300, topInset: 14, leftInset: 14, rightInset: 14, bottomInset: 14 };
     const rect = boardMain.getBoundingClientRect();
     return {
       width: rect.width,
       height: rect.height,
-      topInset: 10,
+      topInset: 14,
+      leftInset: 14,
+      rightInset: 14,
+      bottomInset: 14,
       node: boardMain,
       blobLayer: $("#vspBlobLayer"),
       effectLayer: $("#vspEffectLayer")
@@ -534,10 +531,11 @@
   function updateBlobDom(blob){
     const node = document.querySelector(`[data-blob-id="${blob.id}"]`);
     if (!node) return;
+    const bounds = currentBounds();
     const wobble = Math.sin(blob.wobblePhase) * 0.035;
     const squeezeX = 1 + blob.impactX + wobble;
     const squeezeY = 1 + blob.impactY - wobble;
-    node.style.transform = `translate(${blob.x * 100}%, ${blob.y * 100}%)`;
+    node.style.transform = `translate(${blob.x * bounds.width}px, ${blob.y * bounds.height}px)`;
     const body = $(".vsp-blob-body", node);
     if (body) body.style.transform = `scale(${squeezeX}, ${squeezeY}) rotate(${Math.sin(blob.wobblePhase * 0.7) * 1.6}deg)`;
     const label = $(".vsp-blob-label", node);
@@ -548,10 +546,13 @@
     const bounds = currentBounds();
     const insetX = size.width / bounds.width;
     const insetY = size.height / bounds.height;
-    const topGuard = Math.max(0.12, insetY + 0.01);
+    const minX = bounds.leftInset / bounds.width;
+    const maxX = Math.max(minX, 1 - insetX - (bounds.rightInset / bounds.width));
+    const minY = bounds.topInset / bounds.height;
+    const maxY = Math.max(minY, 1 - insetY - (bounds.bottomInset / bounds.height));
     for (let attempt = 0; attempt < 40; attempt++){
-      const x = rand(0.02, Math.max(0.02, 1 - insetX - 0.02));
-      const y = rand(topGuard, Math.max(topGuard, 1 - insetY - 0.03));
+      const x = rand(minX, maxX);
+      const y = rand(minY, maxY);
       const overlaps = existing.some(other => {
         const dx = ((x + insetX/2) - (other.x + (other.width / bounds.width) / 2)) * bounds.width;
         const dy = ((y + insetY/2) - (other.y + (other.height / bounds.height) / 2)) * bounds.height;
@@ -560,7 +561,7 @@
       });
       if (!overlaps) return { x, y };
     }
-    return { x: rand(0.04, 0.72), y: rand(0.18, 0.72) };
+    return { x: rand(minX, maxX), y: rand(minY, maxY) };
   }
 
   function makeBlob({ label, isCorrect=false, preserveColor=null, preserveMotion=null }){
@@ -797,13 +798,15 @@
     blob.x += blob.vx * dt;
     blob.y += blob.vy * dt;
 
-    const maxX = Math.max(0.02, 1 - blob.width / bounds.width - 0.02);
-    const maxY = Math.max(0.08, 1 - blob.height / bounds.height - 0.02);
+    const minX = bounds.leftInset / bounds.width;
+    const maxX = Math.max(minX, 1 - blob.width / bounds.width - (bounds.rightInset / bounds.width));
+    const minY = bounds.topInset / bounds.height;
+    const maxY = Math.max(minY, 1 - blob.height / bounds.height - (bounds.bottomInset / bounds.height));
 
-    if (blob.x <= 0.02){ blob.x = 0.02; blob.vx = Math.abs(blob.vx); blob.impactX = -0.18; blob.impactY = 0.18; }
+    if (blob.x <= minX){ blob.x = minX; blob.vx = Math.abs(blob.vx); blob.impactX = -0.18; blob.impactY = 0.18; }
     else if (blob.x >= maxX){ blob.x = maxX; blob.vx = -Math.abs(blob.vx); blob.impactX = -0.18; blob.impactY = 0.18; }
 
-    if (blob.y <= 0.08){ blob.y = 0.08; blob.vy = Math.abs(blob.vy); blob.impactY = -0.18; blob.impactX = 0.18; }
+    if (blob.y <= minY){ blob.y = minY; blob.vy = Math.abs(blob.vy); blob.impactY = -0.18; blob.impactX = 0.18; }
     else if (blob.y >= maxY){ blob.y = maxY; blob.vy = -Math.abs(blob.vy); blob.impactY = -0.18; blob.impactX = 0.18; }
 
     blob.wobblePhase += dt * blob.wobbleSpeed * 3.2;
@@ -881,7 +884,8 @@
   function updateBonusBlobDom(blob){
     const node = document.querySelector(`[data-bonus-id="${blob.id}"]`);
     if (!node) return;
-    node.style.transform = `translate(${blob.x * 100}%, ${blob.y * 100}%)`;
+    const bounds = currentBounds();
+    node.style.transform = `translate(${blob.x * bounds.width}px, ${blob.y * bounds.height}px)`;
     const body = $(".vsp-blob-body", node);
     if (body){
       const wobble = Math.sin(blob.wobblePhase) * 0.07;
@@ -907,7 +911,7 @@
       blob.wobblePhase += 0.045 * blob.wobbleSpeed;
       updateBonusBlobDom(blob);
     });
-    const pill = $(".vsp-stage-pill");
+    const pill = $("#vspBonusTimerChip");
     if (pill) pill.textContent = `Time ${Math.ceil(state.bonusRemainingMs / 1000)}`;
     if (state.bonusRemainingMs <= 0 || state.bonusBlobs.every(blob => !blob.alive)){
       finishBonusRound();
