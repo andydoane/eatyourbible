@@ -327,22 +327,62 @@
     return [];
   }
 
-  function makeRoundLabels(){
-    const phase = currentPhase();
-    const correct = currentCorrectLabel();
-    const pool = currentRoundDecoyPool(correct, phase);
-    const labels = uniqueVisibleChoices(correct, pool).slice(0, 3);
-    while (labels.length < 3){
-      const fallback = phase === "book" ? bookDecoys(correct) : easyDecoys(correct);
-      for (const item of fallback){
-        if (labels.map(normalizeWord).includes(normalizeWord(item))) continue;
-        labels.push(item);
-        if (labels.length >= 3) break;
-      }
-    }
-    console.log("Verse Splat labels:", { phase, correct, labels });
-    return shuffle(labels);
+function makeRoundLabels(){
+  const phase = currentPhase();
+  const correct = currentCorrectLabel();
+
+  const pool = currentRoundDecoyPool(correct, phase) || [];
+
+  let labels = uniqueVisibleChoices(correct, pool)
+    .filter(item => typeof item === "string" && item.trim())
+    .slice(0, 3);
+
+  const fallbackPool = [
+    ...(phase === "book" ? bookDecoys(correct) : easyDecoys(correct)),
+    "apple",
+    "kitten",
+    "rocket",
+    "banana",
+    "puzzle",
+    "happy"
+  ];
+
+  for (const item of fallbackPool){
+    if (labels.length >= 3) break;
+    if (typeof item !== "string" || !item.trim()) continue;
+
+    const alreadyUsed = labels.some(label => normalizeWord(label) === normalizeWord(item));
+    if (alreadyUsed) continue;
+
+    labels.push(item);
   }
+
+  const hasCorrect = labels.some(label => normalizeWord(label) === normalizeWord(correct));
+  if (!hasCorrect && typeof correct === "string" && correct.trim()){
+    labels.unshift(correct);
+  }
+
+  labels = labels
+    .filter(item => typeof item === "string" && item.trim())
+    .filter((item, index, arr) =>
+      arr.findIndex(other => normalizeWord(other) === normalizeWord(item)) === index
+    );
+
+  while (labels.length < 3){
+    labels.push(`decoy-${labels.length + 1}`);
+  }
+
+  labels = labels.slice(0, 3);
+
+  console.log("Verse Splat labels:", {
+    phase,
+    correct,
+    poolPreview: pool.slice(0, 8),
+    labels
+  });
+
+  return shuffle(labels);
+}
 
   function respawnRound(keepIds = []){
     const fieldRect = currentFieldRect();
