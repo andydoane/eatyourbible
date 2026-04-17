@@ -1354,6 +1354,9 @@ const BUILTIN_PRACTICE_GAMES = [
   { id:"tower", title:"🏰 Tower of Bible", desc:"Build a sky-high tower one word at a time.", source:"builtin" },
 ];
 
+const HIDDEN_PRACTICE_GAME_ID = "verse_splat";
+const HIDDEN_PRACTICE_LONG_PRESS_MS = 2000;
+
 function getExternalPracticeGames(){
   const list = Array.isArray(window.EXTERNAL_VERSE_GAMES) ? window.EXTERNAL_VERSE_GAMES : [];
 
@@ -1372,6 +1375,28 @@ function getExternalPracticeGames(){
 
 function getPracticeGames(){
   return [...BUILTIN_PRACTICE_GAMES, ...getExternalPracticeGames()];
+}
+
+function getExternalGameManifestById(gameId){
+  const list = Array.isArray(window.EXTERNAL_VERSE_GAMES) ? window.EXTERNAL_VERSE_GAMES : [];
+
+  for (const entry of list){
+    if (!entry || entry.enabled === false) continue;
+    const manifest = entry.manifest;
+    if (manifest && manifest.id === gameId) return manifest;
+  }
+
+  return null;
+}
+
+function launchHiddenPracticeGame(gameId = HIDDEN_PRACTICE_GAME_ID){
+  const manifest = getExternalGameManifestById(gameId);
+  if (!manifest){
+    console.warn(`Hidden practice game not found: ${gameId}`);
+    return;
+  }
+
+  launchExternalGame(manifest);
 }
 
 function getPracticeGameIcon(game){
@@ -3993,7 +4018,7 @@ function screenPractice(idx){
 
   wrap.innerHTML = `
     <div class="title-content practice-content">
-      <h2>Practice Games</h2>
+      <h2 id="practiceTitle">Practice Games</h2>
 
       <div class="title-carousel">
         <button class="carousel-arrow no-zoom" id="pPrev" aria-label="Previous">${SVG_BACK}</button>
@@ -4016,6 +4041,58 @@ function screenPractice(idx){
   const icons = wrap.querySelector("#pIcons");
   if (icons){
     icons.innerHTML = renderPracticeIconStrip(practiceGames, State.practiceIndex);
+  }
+
+  const practiceTitle = wrap.querySelector("#practiceTitle");
+  if (practiceTitle){
+    let longPressTimer = 0;
+    let pointerStartX = 0;
+    let pointerStartY = 0;
+    let longPressTriggered = false;
+    const MOVE_CANCEL_PX = 12;
+
+    const clearLongPressTimer = () => {
+      if (longPressTimer){
+        window.clearTimeout(longPressTimer);
+        longPressTimer = 0;
+      }
+    };
+
+    const cancelLongPress = () => {
+      clearLongPressTimer();
+      longPressTriggered = false;
+    };
+
+    practiceTitle.addEventListener("pointerdown", (e) => {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+
+      longPressTriggered = false;
+      pointerStartX = e.clientX;
+      pointerStartY = e.clientY;
+      clearLongPressTimer();
+
+      longPressTimer = window.setTimeout(() => {
+        longPressTriggered = true;
+        launchHiddenPracticeGame();
+      }, HIDDEN_PRACTICE_LONG_PRESS_MS);
+    });
+
+    practiceTitle.addEventListener("pointermove", (e) => {
+      if (!longPressTimer) return;
+
+      const dx = Math.abs(e.clientX - pointerStartX);
+      const dy = Math.abs(e.clientY - pointerStartY);
+      if (dx > MOVE_CANCEL_PX || dy > MOVE_CANCEL_PX){
+        cancelLongPress();
+      }
+    });
+
+    practiceTitle.addEventListener("pointerup", cancelLongPress);
+    practiceTitle.addEventListener("pointercancel", cancelLongPress);
+    practiceTitle.addEventListener("pointerleave", cancelLongPress);
+    practiceTitle.addEventListener("contextmenu", (e) => {
+      if (longPressTriggered) e.preventDefault();
+    });
   }
 
   return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner: wrap});
