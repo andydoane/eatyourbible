@@ -34,18 +34,58 @@ button{font:inherit}
   overflow:hidden;
   background:var(--vs-bg);
 }
+
+
 .vs-stage{
-  width:min(100%,62rem);
+  width:100%;
+  max-width:62rem;
   margin:0 auto;
   flex:1 1 auto;
   min-height:0;
   display:flex;
   flex-direction:column;
 }
+
 .vs-build-wrap{
   flex:0 0 auto;
-  padding:clamp(.5rem,1.8vw,.8rem) clamp(.75rem,2.8vw,1rem) clamp(.4rem,1.2vw,.6rem);
+  padding:clamp(.22rem,.9vw,.45rem) clamp(.35rem,1.4vw,.7rem) clamp(.12rem,.5vw,.28rem);
 }
+
+.vs-board-wrap{
+  flex:1 1 auto;
+  min-height:0;
+  display:flex;
+  padding:0 clamp(.2rem,1vw,.55rem) calc(clamp(.2rem,.8vw,.45rem) + var(--vs-safe-bottom));
+}
+
+.vs-board{
+  position:relative;
+  flex:1 1 auto;
+  min-height:0;
+  height:100%;
+  overflow:hidden;
+  border-radius:1.3rem;
+  background:transparent;
+}
+
+.vs-board-content{
+  position:relative;
+  z-index:2;
+  display:flex;
+  flex-direction:column;
+  height:100%;
+  min-height:0;
+  padding:clamp(.22rem,.9vw,.5rem);
+}
+
+.vs-field{
+  position:relative;
+  flex:1 1 auto;
+  min-height:0;
+}
+
+
+  
 .vs-build{
   background:var(--vs-build);
   color:#fff;
@@ -68,29 +108,15 @@ button{font:inherit}
 .vs-build-word.is-meta.is-built{color:var(--vs-orange)}
 .vs-build-word.is-removing{animation:vsBuildRemove .34s ease forwards}
 
-.vs-board-wrap{
-  flex:1 1 auto;
-  min-height:0;
-  padding:0 clamp(.75rem,2.8vw,1rem) calc(clamp(.55rem,1.6vw,.8rem) + var(--vs-safe-bottom));
-}
-.vs-board{
-  position:relative;
-  flex:1 1 auto;
-  min-height:0;
-  overflow:hidden;
-  border-radius:1.6rem;
-  background:transparent;
-}
+
+
+
+
+
 .vs-board-flash{position:absolute;inset:0;background:rgba(255,90,81,0);pointer-events:none;z-index:1}
 .vs-board-flash.is-flashing{animation:vsBoardFlash .34s ease}
-.vs-board-content{
-  position:relative;
-  z-index:2;
-  display:flex;
-  flex-direction:column;
-  height:100%;
-  padding:clamp(.75rem,2vw,1rem);
-}
+
+
 .vs-top-row{display:flex;justify-content:flex-start;align-items:center;gap:.6rem;flex:0 0 auto}
 .vs-pill{
   border:none;
@@ -103,7 +129,8 @@ button{font:inherit}
   box-shadow:0 .25rem 0 rgba(0,0,0,.16);
 }
 .vs-menu-pill{min-width:2.7rem;cursor:pointer}
-.vs-field{position:relative;flex:1 1 auto;min-height:14rem}
+
+
 
 .vs-blob{
   position:absolute;
