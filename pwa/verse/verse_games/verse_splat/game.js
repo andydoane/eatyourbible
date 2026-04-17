@@ -212,6 +212,10 @@
 
   function initVerseData(){
     state.words = tokenizeVerse(ctx.verseText);
+
+    if (!state.words.length && ctx.verseRef) {
+      state.words = [ctx.verseRef];
+    }
     const parsed = parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
     state.bookLabel = parsed.book || "";
     state.referenceLabel = parsed.reference || "";
@@ -273,18 +277,23 @@
   }
 
   function measureBlobSize(fieldRect, label){
-    const width = clamp(fieldRect.width * 0.28, 108, fieldRect.width * 0.42);
-    const font = clamp(fieldRect.width * 0.05, 16, 28);
-    const wordFactor = clamp(String(label || "").length / 10, 0.7, 1.45);
-    const blobW = clamp(width * wordFactor, fieldRect.width * 0.22, fieldRect.width * 0.48);
-    const blobH = clamp(fieldRect.height * 0.16, 64, fieldRect.height * 0.26);
+    const len = String(label || "").length;
+
+    const baseWidth = clamp(fieldRect.width * 0.34, fieldRect.width * 0.25, fieldRect.width * 0.52);
+    const wordFactor = clamp(len / 8.5, 0.82, 1.58);
+
+    const blobW = clamp(baseWidth * wordFactor, fieldRect.width * 0.28, fieldRect.width * 0.62);
+    const blobH = clamp(fieldRect.height * 0.18, fieldRect.height * 0.12, fieldRect.height * 0.28);
+
+    const font = clamp(blobW * 0.145, 18, 36);
+
     return { w: blobW, h: blobH, font };
   }
 
   function findSafePosition(fieldRect, existing, w, h){
     const attempts = 120;
-    const pad = Math.min(fieldRect.width, fieldRect.height) * 0.03;
-    const minDist = Math.min(fieldRect.width, fieldRect.height) * 0.18;
+    const pad = Math.min(fieldRect.width, fieldRect.height) * 0.012;
+    const minDist = Math.min(fieldRect.width, fieldRect.height) * 0.13;
     const minX = pad;
     const maxX = Math.max(minX, fieldRect.width - w - pad);
     const minY = pad;
@@ -849,7 +858,7 @@
 
   function buildBonusBlobs(){
     const stageRect = currentFieldRect() || { width: window.innerWidth, height: window.innerHeight };
-    const count = clamp(Math.round((stageRect.width * stageRect.height) / 70000), 10, 20);
+    const count = clamp(Math.round((stageRect.width * stageRect.height) / 95000), 8, 16);
     const blobs = [];
     for (let i = 0; i < count; i++){
       const sizeBase = Math.min(stageRect.width, stageRect.height);
