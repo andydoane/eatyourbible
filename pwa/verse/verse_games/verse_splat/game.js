@@ -340,6 +340,7 @@
         if (labels.length >= 3) break;
       }
     }
+    console.log("Verse Splat labels:", { phase, correct, labels });
     return shuffle(labels);
   }
 
@@ -352,7 +353,7 @@
     const colorsAvailable = shuffle(BLOB_COLORS.slice());
 
     survivors.forEach((blob, idx) => {
-      const label = labels[idx];
+      const label = labels[idx] || currentCorrectLabel() || `decoy-${idx + 1}`;
       const color = colorsAvailable[idx];
       blob.label = label;
       blob.isCorrect = normalizeWord(label) === normalizeWord(currentCorrectLabel());
@@ -366,7 +367,7 @@
     const needed = 3 - survivors.length;
     const existing = survivors.slice();
     for (let i = 0; i < needed; i++){
-      const label = labels[survivors.length + i];
+      const label = labels[survivors.length + i] || `decoy-${i + 1}`;
       const color = colorsAvailable[survivors.length + i];
       const size = measureBlobSize(fieldRect, label);
       const pos = findSafePosition(fieldRect, existing, size.w, size.h);
