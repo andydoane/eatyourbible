@@ -32,8 +32,8 @@ body{overflow:hidden}
   display:flex;
   flex-direction:column;
   overflow:hidden;
-  background:var(--vsp-bg);
-  color:var(--vsp-text);
+  background:var(--vsp-purple);
+  color:var(--vsp-white);
 }
 
 .vsp-mode-stage{
@@ -67,7 +67,7 @@ body{overflow:hidden}
   font-size:clamp(30px,6vw,58px);
   font-weight:900;
   line-height:1.02;
-  color:var(--vsp-text);
+  color:var(--vsp-white);
 }
 
 .vsp-subtitle{
@@ -75,12 +75,12 @@ body{overflow:hidden}
   font-weight:800;
   line-height:1.18;
   max-width:700px;
-  color:var(--vsp-text);
+  color:var(--vsp-white);
 }
 
 .vsp-mode-card{
   width:min(100%,640px);
-  background:rgba(0,0,0,0.08);
+  background:rgba(255,255,255,0.08);
   border-radius:24px;
   padding:16px;
 }
@@ -102,6 +102,41 @@ body{overflow:hidden}
 .vsp-mode-copy{font-size:16px;font-weight:700;line-height:1.15;opacity:.95;margin-top:4px}
 .vsp-chip-row{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}
 .vsp-chip{display:inline-block;background:rgba(255,255,255,.95);color:#222;border-radius:999px;padding:7px 14px;font-size:14px;font-weight:900}
+
+.vsp-nav-wrap{
+  flex:0 0 auto;
+  padding:0 14px calc(10px + env(safe-area-inset-bottom));
+}
+
+.vsp-nav{
+  max-width:860px;
+  margin:0 auto;
+  display:flex;
+  gap:12px;
+  align-items:center;
+}
+
+.vsp-nav-btn,
+.vsp-help-btn{
+  min-height:52px;
+  border:none;
+  border-radius:999px;
+  font:inherit;
+  font-size:20px;
+  font-weight:900;
+  box-shadow:0 6px 0 rgba(0,0,0,0.24);
+  background:#ffffff;
+  color:#333333;
+}
+
+.vsp-nav-btn{
+  width:72px;
+  min-width:72px;
+}
+
+.vsp-nav-center{flex:1 1 auto;display:flex;justify-content:center;}
+.vsp-help-btn{width:min(100%,220px);padding:0 22px;}
+
 
 .vsp-game-screen,
 .vsp-bonus-screen{

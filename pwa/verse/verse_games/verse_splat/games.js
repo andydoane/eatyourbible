@@ -305,6 +305,25 @@
   }
 
 
+
+function nonGameHelpHtml(){
+  return `Tap the next correct blob word to build the verse. After the verse, finish the book and then the reference. Wrong taps poof blobs away. In hard mode, wrong taps also remove two built words.`;
+}
+
+function renderNav(){
+  return `
+    <div class="vsp-nav-wrap">
+      <div class="vsp-nav">
+        <button class="vsp-nav-btn" data-action="exit-game" aria-label="Home">⌂</button>
+        <div class="vsp-nav-center">
+          <button class="vsp-help-btn" data-action="show-help-intro" type="button">HELP</button>
+        </div>
+        <button class="vsp-nav-btn" data-action="toggle-mute" aria-label="Mute">${muted ? "🔇" : "🔊"}</button>
+      </div>
+    </div>
+  `;
+}
+
 function renderIntro(){
   return `
     <div class="vsp-mode-shell">
@@ -320,34 +339,33 @@ function renderIntro(){
           </div>
         </div>
       </div>
+      ${renderNav()}
+      ${state.helpOpen ? overlayMarkup() : ""}
     </div>
   `;
 }
 
 function renderModeScreen(){
-    return `
-      <div class="vsp-stack" style="margin:auto 0;">
-        <div class="vm-pill">Choose a mode</div>
-        <div class="vsp-mode-grid">
-          <button class="vsp-mode-card" data-mode="easy">
-            <div class="vsp-mode-title">Easy</div>
-            <div class="vsp-mode-copy">Standard bouncing blobs with fun decoys.</div>
-          </button>
-          <button class="vsp-mode-card" data-mode="medium">
-            <div class="vsp-mode-title">Medium</div>
-            <div class="vsp-mode-copy">Decoys come from verse words and Bible content.</div>
-          </button>
-          <button class="vsp-mode-card" data-mode="hard">
-            <div class="vsp-mode-title">Hard</div>
-            <div class="vsp-mode-copy">Verse-style decoys. Wrong taps also remove two built words.</div>
-          </button>
-        </div>
-        <div class="vsp-actions">
-          <button class="vm-btn vm-btn-dark" data-action="back-intro">Back</button>
+  return `
+    <div class="vsp-mode-shell">
+      <div class="vsp-mode-stage">
+        <div class="vsp-mode-top">
+          <div class="vsp-title">Choose Your Difficulty</div>
+          <div class="vsp-subtitle">Easy keeps things friendly. Medium uses verse-based decoys. Hard uses verse-based decoys and removes two built words on mistakes.</div>
+          <div class="vsp-mode-card">
+            <div class="vsp-mode-actions">
+              <button class="vm-btn" data-mode="easy">Easy</button>
+              <button class="vm-btn" data-mode="medium">Medium</button>
+              <button class="vm-btn" data-mode="hard">Hard</button>
+            </div>
+          </div>
         </div>
       </div>
-    `;
-  }
+      ${renderNav()}
+      ${state.helpOpen ? overlayMarkup() : ""}
+    </div>
+  `;
+}
 
 
 function overlayMarkup(){
@@ -359,7 +377,6 @@ function overlayMarkup(){
           <div class="vsp-overlay-copy">Tap the next correct blob word to build the verse. After the verse, finish the book and then the reference. Wrong taps poof blobs away. In hard mode, wrong taps also remove two built words.</div>
           <div class="vsp-overlay-actions">
             <button class="vm-btn vsp-menu-action" data-action="close-help">${state.helpBackMode ? 'Back' : 'OK'}</button>
-            ${state.helpBackMode ? '<button class="vm-btn vsp-menu-action" data-action="help-back-menu">Back to Menu</button>' : ''}
           </div>
         </div>
       </div>
@@ -417,22 +434,28 @@ function gameplayShell({ bonus=false }){
   }
 
   function renderEndScreen(){
-    return `
-      <div class="vsp-stack" style="margin:auto 0;">
-        <div class="vm-pill">${escapeHtml(GAME_TITLE)}</div>
-        <div class="vsp-card">
-          <div class="vsp-title">Nice splatting.</div>
+  return `
+    <div class="vsp-mode-shell">
+      <div class="vsp-mode-stage">
+        <div class="vsp-mode-top">
+          <div class="vsp-splash-emoji">🎉</div>
+          <div class="vsp-title">Verse Splat Complete!</div>
           <div class="vsp-subtitle">${escapeHtml(state.medalMessage || `You completed ${state.mode}.`)}</div>
-          <div class="vsp-copy">${escapeHtml(state.medalSubmessage || 'Verse, book, and reference complete.')}</div>
-          <div class="vsp-end-stat" style="margin-top:12px;">Bonus blobs splatted: <strong>${state.bonusScore}</strong></div>
-        </div>
-        <div class="vsp-actions">
-          <button class="vm-btn" data-action="play-again">Play Again</button>
-          <button class="vm-btn vm-btn-dark" data-action="exit-game">Exit Game</button>
+          <div class="vsp-mode-card">
+            <div class="vsp-copy">${escapeHtml(state.medalSubmessage || 'Verse, book, and reference complete.')}</div>
+            <div class="vsp-end-stat" style="margin-top:12px;">Bonus blobs splatted: <strong>${state.bonusScore}</strong></div>
+            <div class="vsp-mode-actions" style="margin-top:16px;">
+              <button class="vm-btn" data-action="play-again">Play Again</button>
+              <button class="vm-btn" data-action="exit-game">Done</button>
+            </div>
+          </div>
         </div>
       </div>
-    `;
-  }
+      ${renderNav()}
+      ${state.helpOpen ? overlayMarkup() : ""}
+    </div>
+  `;
+}
 
   function render(){
     if (state.screen === "intro") app.innerHTML = renderIntro();
@@ -453,7 +476,6 @@ function gameplayShell({ bonus=false }){
     app.querySelectorAll("[data-action='show-help-intro']").forEach(btn => btn.onclick = () => { state.helpBackMode = false; state.helpOpen = true; render(); });
     app.querySelectorAll("[data-action='open-help-from-menu']").forEach(btn => btn.onclick = () => { state.helpBackMode = true; state.menuOpen = false; state.helpOpen = true; render(); });
     app.querySelectorAll("[data-action='close-help']").forEach(btn => btn.onclick = closeHelp);
-    app.querySelectorAll("[data-action='help-back-menu']").forEach(btn => btn.onclick = () => { state.helpOpen = false; state.menuOpen = true; render(); });
     app.querySelectorAll("[data-action='toggle-mute']").forEach(btn => btn.onclick = () => { muted = !muted; render(); if (state.screen === "game") afterGameScreenRender(); if (state.screen === "bonus") afterBonusScreenRender(); });
     app.querySelectorAll("[data-action='play-again']").forEach(btn => btn.onclick = () => setScreen("mode"));
     app.querySelectorAll("[data-action='exit-game']").forEach(btn => btn.onclick = () => window.VerseGameBridge.exitGame());
@@ -473,10 +495,15 @@ function gameplayShell({ bonus=false }){
   }
 
   function closeHelp(){
+    const returnToMenu = state.helpBackMode && (state.screen === "game" || state.screen === "bonus");
     state.helpOpen = false;
+    state.helpBackMode = false;
+    if (returnToMenu) {
+      state.menuOpen = true;
+    }
     render();
-    if (state.screen === "game") afterGameScreenRender();
-    if (state.screen === "bonus") afterBonusScreenRender();
+    if (state.screen === "game" && !state.menuOpen) afterGameScreenRender();
+    if (state.screen === "bonus" && !state.menuOpen) afterBonusScreenRender();
   }
 
   function startMode(mode){
