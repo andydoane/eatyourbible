@@ -12,20 +12,6 @@ window.EXTERNAL_VERSE_GAMES = [
       modes: ["easy", "medium", "hard"]
     }
   },
-
-    {
-    enabled: true,
-    manifest: {
-      id: "bouncing",
-      title: "Verse Splat",
-      description: "Tap the next correct goo blob as it bounces around the screen.",
-      icon: "🫟",
-      launchUrl: "./verse_games/verse_splat/index.html",
-      visibleInCarousel: false,
-      progressType: "standard",
-      modes: ["easy", "medium", "hard"]
-    }
-  },
   
   {
   enabled: true,
