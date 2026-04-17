@@ -47,6 +47,12 @@
     hard: { speedMultiplier: 1.05, rollbackCount: 2, decoyMode: "verse" }
   };
 
+  function medalEmojiForMode(mode){
+    if (mode === "easy") return "🥉";
+    if (mode === "medium") return "🥈";
+    return "🥇";
+  }
+
   const state = {
     screen: "intro",
     mode: null,
@@ -1053,7 +1059,7 @@ function gameplayShell({ bonus=false }){
       : false;
     state.medalAlreadyEarned = wasAlreadyCompleted;
     await window.VerseGameBridge.markCompleted({ verseId: ctx.verseId, gameId: GAME_ID, mode: state.mode });
-    state.medalMessage = wasAlreadyCompleted ? `You finished ${state.mode} again.` : `${state.mode[0].toUpperCase() + state.mode.slice(1)} medal earned!`;
+    state.medalMessage = wasAlreadyCompleted ? `You finished ${state.mode} again.` : `${medalEmojiForMode(state.mode)} earned!`;
     state.medalSubmessage = wasAlreadyCompleted ? "The medal was already yours, but the splats were still worth it." : "Your verse progress, stars, and BibloPet flow have been updated.";
     state.bonusIntroVisible = true;
     setScreen("bonus");
