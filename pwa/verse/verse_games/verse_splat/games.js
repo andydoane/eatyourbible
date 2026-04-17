@@ -349,7 +349,7 @@ function renderIntro(){
     <div class="vsp-mode-shell">
       <div class="vsp-mode-stage">
         <div class="vsp-mode-top">
-          <div class="vsp-splash-emoji">🫧💥</div>
+          <div class="vsp-splash-emoji">🫟</div>
           <div class="vsp-title">Verse Splat</div>
           <div class="vsp-subtitle">Tap the next correct goo blob to build the verse, then the book and reference.</div>
           <div class="vsp-mode-card vsp-mode-card-single">
@@ -642,8 +642,8 @@ function gameplayShell({ bonus=false }){
     const node = document.querySelector(`[data-blob-id="${blob.id}"]`);
     if (!node) return;
     const bounds = currentBounds();
-    const wobbleX = Math.sin(blob.wobblePhase) * 0.018;
-    const wobbleY = Math.cos(blob.wobblePhase * 0.9) * 0.014;
+    const wobbleX = Math.sin(blob.wobblePhase) * 0.012;
+    const wobbleY = Math.cos(blob.wobblePhase * 0.9) * 0.01;
     const scaleX = 1 + wobbleX + blob.impactX;
     const scaleY = 1 + wobbleY + blob.impactY;
     node.style.transform = `translate(${blob.x * bounds.width}px, ${blob.y * bounds.height}px)`;
@@ -927,31 +927,31 @@ function gameplayShell({ bonus=false }){
     if (blob.x <= minX){
       blob.x = minX;
       blob.vx = Math.abs(blob.vx);
-      blob.impactX = -0.28;
-      blob.impactY = 0.18;
+      blob.impactX = -0.42;
+      blob.impactY = 0.24;
     }
     else if (blob.x >= maxX){
       blob.x = maxX;
       blob.vx = -Math.abs(blob.vx);
-      blob.impactX = -0.28;
-      blob.impactY = 0.18;
+      blob.impactX = -0.42;
+      blob.impactY = 0.24;
     }
 
     if (blob.y <= minY){
       blob.y = minY;
       blob.vy = Math.abs(blob.vy);
-      blob.impactY = -0.28;
-      blob.impactX = 0.18;
+      blob.impactY = -0.42;
+      blob.impactX = 0.24;
     }
     else if (blob.y >= maxY){
       blob.y = maxY;
       blob.vy = -Math.abs(blob.vy);
-      blob.impactY = -0.28;
-      blob.impactX = 0.18;
+      blob.impactY = -0.42;
+      blob.impactX = 0.24;
     }
 
     blob.wobblePhase += dt * blob.wobbleSpeed * 3.2;
-    const decay = Math.pow(0.001, dt * 2.1);
+    const decay = Math.pow(0.001, dt * 1.25);
     blob.impactX *= decay;
     blob.impactY *= decay;
   }
