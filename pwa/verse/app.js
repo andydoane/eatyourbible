@@ -419,7 +419,6 @@ function markTrafficCompleted(verseId, theme){
 // All tracked built-in games
 const BUILTIN_GAME_IDS = [
   "traffic",
-  "bouncing",
   "foodslice",
   "tower"
 ];
@@ -541,7 +540,6 @@ function getVerseDetailProgressDisplay(gameId, gameProgress){
 function getBuiltInVerseDetailGames(){
   return [
     { id: "traffic", label: "Traffic Tap" },
-    { id: "bouncing", label: "Bouncing Words" },
     { id: "foodslice", label: "Food Slice" },
     { id: "tower", label: "Tower of Bible" }
   ];
@@ -1352,7 +1350,6 @@ const LEARN_LEVEL_OPTIONS = [
 
 const BUILTIN_PRACTICE_GAMES = [
   { id:"traffic", title:"🚗 Traffic Tap", desc:"Tap moving cards and animals.", source:"builtin" },
-  { id:"bouncing", title:"🏀 Bouncing Words", desc:"Tap moving verse words.", source:"builtin" },
   { id:"foodslice", title:"🍉 Food Slice", desc:"Tap the flying food.", source:"builtin" },
   { id:"tower", title:"🏰 Tower of Bible", desc:"Build a sky-high tower one word at a time.", source:"builtin" },
 ];
