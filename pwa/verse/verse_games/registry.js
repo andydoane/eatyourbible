@@ -106,7 +106,7 @@ window.EXTERNAL_VERSE_GAMES = [
       description: "Splat the next correct bouncing goo blob.",
       icon: "🫟",
       launchUrl: "./verse_games/verse_splat/index.html",
-      visibleInCarousel: true,
+      visibleInCarousel: false,
       progressType: "standard",
       modes: ["easy", "medium", "hard"]
     }
