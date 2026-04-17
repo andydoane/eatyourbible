@@ -260,26 +260,40 @@
   }
 
   function hitTestBlobIdAtBoardPoint(boardX, boardY, bonus=false){
-    const list = bonus ? state.bonusBlobs.filter(blob => blob.alive) : state.blobs.slice();
-    for (let i = list.length - 1; i >= 0; i--){
-      const blob = list[i];
-      const width = bonus ? blob.size : blob.width;
-      const height = bonus ? blob.size : blob.height;
-      const left = blob.x * (bonus ? 1 : 1); /* state coords are normalized; convert below */
-      const top = blob.y * (bonus ? 1 : 1);
-    }
     const bounds = currentBounds();
+    const list = bonus ? state.bonusBlobs.filter(blob => blob.alive) : state.blobs.slice();
+    const hits = [];
+
     for (let i = list.length - 1; i >= 0; i--){
       const blob = list[i];
       const width = bonus ? blob.size : blob.width;
       const height = bonus ? blob.size : blob.height;
       const left = blob.x * bounds.width;
       const top = blob.y * bounds.height;
-      if (boardX >= left && boardX <= left + width && boardY >= top && boardY <= top + height){
-        return blob.id;
+      const centerX = left + width / 2;
+      const centerY = top + height / 2;
+      const nx = (boardX - centerX) / (width / 2);
+      const ny = (boardY - centerY) / (height / 2);
+      const ellipseScore = nx * nx + ny * ny;
+      if (ellipseScore <= 1.08){
+        hits.push({
+          id: blob.id,
+          isCorrect: bonus ? false : !!blob.isCorrect,
+          score: ellipseScore,
+          area: width * height,
+          order: i
+        });
       }
     }
-    return null;
+
+    if (!hits.length) return null;
+    if (!bonus){
+      const correctHits = hits.filter(hit => hit.isCorrect);
+      if (correctHits.length === 1) return correctHits[0].id;
+    }
+
+    hits.sort((a, b) => (a.score - b.score) || (a.area - b.area) || (a.order - b.order));
+    return hits[0].id;
   }
 
   function bindBoardMainInteraction(){
@@ -628,14 +642,15 @@ function gameplayShell({ bonus=false }){
     const node = document.querySelector(`[data-blob-id="${blob.id}"]`);
     if (!node) return;
     const bounds = currentBounds();
-    const wobble = Math.sin(blob.wobblePhase) * 0.035;
-    const squeezeX = 1 + blob.impactX + wobble;
-    const squeezeY = 1 + blob.impactY - wobble;
+    const wobbleX = Math.sin(blob.wobblePhase) * 0.018;
+    const wobbleY = Math.cos(blob.wobblePhase * 0.9) * 0.014;
+    const scaleX = 1 + wobbleX + blob.impactX;
+    const scaleY = 1 + wobbleY + blob.impactY;
     node.style.transform = `translate(${blob.x * bounds.width}px, ${blob.y * bounds.height}px)`;
     const body = $(".vsp-blob-body", node);
-    if (body) body.style.transform = `scale(${squeezeX}, ${squeezeY}) rotate(${Math.sin(blob.wobblePhase * 0.7) * 1.6}deg)`;
+    if (body) body.style.transform = `scale(${scaleX}, ${scaleY}) rotate(${Math.sin(blob.wobblePhase * 0.55) * 1.2}deg)`;
     const label = $(".vsp-blob-label", node);
-    if (label) label.style.letterSpacing = `${Math.sin(blob.wobblePhase) * 0.018}em`;
+    if (label) label.style.letterSpacing = `${Math.sin(blob.wobblePhase) * 0.012}em`;
   }
 
   function safeSpawnPoint(size, existing){
@@ -798,6 +813,16 @@ function gameplayShell({ bonus=false }){
   }
 
   function blobCenterPx(blob){
+    const node = document.querySelector(`[data-blob-id="${blob.id}"]`);
+    const layer = $("#vspEffectLayer");
+    if (node && layer){
+      const nodeRect = node.getBoundingClientRect();
+      const layerRect = layer.getBoundingClientRect();
+      return {
+        x: (nodeRect.left - layerRect.left) + nodeRect.width / 2,
+        y: (nodeRect.top - layerRect.top) + nodeRect.height / 2
+      };
+    }
     const bounds = currentBounds();
     return {
       x: blob.x * bounds.width + blob.width / 2,
@@ -899,15 +924,36 @@ function gameplayShell({ bonus=false }){
     const minY = bounds.topInset / bounds.height;
     const maxY = Math.max(minY, 1 - blob.height / bounds.height - (bounds.bottomInset / bounds.height));
 
-    if (blob.x <= minX){ blob.x = minX; blob.vx = Math.abs(blob.vx); blob.impactX = -0.18; blob.impactY = 0.18; }
-    else if (blob.x >= maxX){ blob.x = maxX; blob.vx = -Math.abs(blob.vx); blob.impactX = -0.18; blob.impactY = 0.18; }
+    if (blob.x <= minX){
+      blob.x = minX;
+      blob.vx = Math.abs(blob.vx);
+      blob.impactX = -0.28;
+      blob.impactY = 0.18;
+    }
+    else if (blob.x >= maxX){
+      blob.x = maxX;
+      blob.vx = -Math.abs(blob.vx);
+      blob.impactX = -0.28;
+      blob.impactY = 0.18;
+    }
 
-    if (blob.y <= minY){ blob.y = minY; blob.vy = Math.abs(blob.vy); blob.impactY = -0.18; blob.impactX = 0.18; }
-    else if (blob.y >= maxY){ blob.y = maxY; blob.vy = -Math.abs(blob.vy); blob.impactY = -0.18; blob.impactX = 0.18; }
+    if (blob.y <= minY){
+      blob.y = minY;
+      blob.vy = Math.abs(blob.vy);
+      blob.impactY = -0.28;
+      blob.impactX = 0.18;
+    }
+    else if (blob.y >= maxY){
+      blob.y = maxY;
+      blob.vy = -Math.abs(blob.vy);
+      blob.impactY = -0.28;
+      blob.impactX = 0.18;
+    }
 
     blob.wobblePhase += dt * blob.wobbleSpeed * 3.2;
-    blob.impactX *= Math.pow(0.001, dt * 2.4);
-    blob.impactY *= Math.pow(0.001, dt * 2.4);
+    const decay = Math.pow(0.001, dt * 2.1);
+    blob.impactX *= decay;
+    blob.impactY *= decay;
   }
 
   function tickGame(ts){
@@ -1025,6 +1071,16 @@ function gameplayShell({ bonus=false }){
   }
 
   function bonusBlobCenterPx(blob){
+    const node = document.querySelector(`[data-bonus-id="${blob.id}"]`);
+    const layer = $("#vspEffectLayer");
+    if (node && layer){
+      const nodeRect = node.getBoundingClientRect();
+      const layerRect = layer.getBoundingClientRect();
+      return {
+        x: (nodeRect.left - layerRect.left) + nodeRect.width / 2,
+        y: (nodeRect.top - layerRect.top) + nodeRect.height / 2
+      };
+    }
     const bounds = currentBounds();
     return { x: blob.x * bounds.width + blob.size / 2, y: blob.y * bounds.height + blob.size / 2 };
   }
