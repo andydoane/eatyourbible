@@ -10,6 +10,7 @@
   --fs-green:#a7cb6f;
   --fs-stage-max:860px;
   --fs-side:14px;
+  --fs-menu-btn:#7f66c6;
 }
 
 html,body{ height:100%; }
@@ -127,7 +128,7 @@ body{
 .fs-build-token.is-reference{ color:rgba(255,199,81,0.4); }
 .fs-build-token.is-book.is-built,
 .fs-build-token.is-reference.is-built{ color:var(--fs-build-book); }
-.fs-build-gap{ display:inline-block; width:0.45ch; }
+.fs-build-gap{ display:inline-block; width:0.35ch; }
 
 .fs-bonus-counter{
   font-size:clamp(34px,10vw,86px);
@@ -145,18 +146,15 @@ body{
   min-height:0;
   display:flex;
   flex-direction:column;
-  padding:0 var(--fs-side) calc(10px + env(safe-area-inset-bottom));
+  padding:0;
 }
 
 .fs-field{
   position:relative;
   flex:1 1 auto;
   min-height:300px;
-  border-radius:26px;
   overflow:hidden;
-  background:
-    radial-gradient(circle at top, rgba(255,255,255,0.09), transparent 40%),
-    linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.18));
+  background:transparent;
 }
 
 .fs-field.is-flash-bad{ animation:fsFlashBad 260ms ease; }
@@ -196,7 +194,6 @@ body{
   position:absolute;
   left:0;
   top:0;
-  transform:translate(-50%, -50%);
   will-change:transform;
 }
 
@@ -210,52 +207,63 @@ body{
 .fs-fruit-btn,
 .fs-bomb-btn{
   border:none;
-  border-radius:50%;
-  width:clamp(68px, 14vw, 112px);
-  height:clamp(68px, 14vw, 112px);
-  background:#fff;
-  color:var(--fs-dark);
+  background:transparent;
+  color:var(--fs-white);
   font:inherit;
-  box-shadow:0 8px 0 rgba(0,0,0,0.22);
   display:flex;
+  flex-direction:column;
   align-items:center;
   justify-content:center;
+  gap:8px;
   padding:0;
   touch-action:manipulation;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
 }
 
-.fs-fruit-btn:active,
-.fs-bomb-btn:active{
-  transform:translateY(4px);
-  box-shadow:0 3px 0 rgba(0,0,0,0.22);
+.fs-fruit-btn{
+  min-width:clamp(72px, 15vw, 120px);
+}
+
+.fs-bomb-btn{
+  min-width:clamp(68px, 14vw, 112px);
+}
+
+.fs-fruit-btn:disabled,
+.fs-bomb-btn:disabled{
+  pointer-events:none;
 }
 
 .fs-fruit-emoji,
 .fs-bomb-emoji{
-  font-size:clamp(34px, 8vw, 58px);
+  display:block;
+  font-size:clamp(40px, 9vw, 66px);
   line-height:1;
+  filter:drop-shadow(0 6px 0 rgba(0,0,0,0.22));
+}
+
+.fs-fruit-emoji{
+  transform-origin:center center;
 }
 
 .fs-word-chip{
   min-width:min(52vw, 250px);
-  max-width:min(62vw, 310px);
-  background:rgba(255,255,255,0.97);
-  color:#333333;
-  border-radius:999px;
-  padding:6px 14px;
-  font-size:clamp(19px,4.2vw,29px);
+  max-width:min(68vw, 340px);
+  color:#ffffff;
+  padding:0;
+  font-size:clamp(21px,4.6vw,31px);
   font-weight:900;
   line-height:1.08;
   text-align:center;
-  box-shadow:0 6px 0 rgba(0,0,0,0.16);
+  text-shadow:0 2px 0 rgba(0,0,0,0.35);
 }
 
 .fs-item.is-wrong .fs-word-chip,
-.fs-item.is-wrong .fs-fruit-btn{
+.fs-item.is-wrong .fs-fruit-emoji{
   animation:fsWrong 240ms ease;
 }
 
-.fs-item.is-bomb-hit .fs-bomb-btn{
+.fs-item.is-bomb-hit .fs-bomb-emoji{
   animation:fsBombHit 280ms ease;
 }
 
@@ -265,7 +273,6 @@ body{
   top:0;
   width:clamp(36px, 8vw, 66px);
   height:clamp(36px, 8vw, 66px);
-  transform:translate(-50%, -50%);
 }
 
 .fs-slice-inner{
@@ -277,6 +284,7 @@ body{
   overflow:hidden;
   font-size:clamp(28px, 7vw, 48px);
   line-height:1;
+  filter:drop-shadow(0 6px 0 rgba(0,0,0,0.22));
 }
 
 .fs-slice-piece.left .fs-slice-inner{ clip-path:inset(0 50% 0 0); }
@@ -405,7 +413,10 @@ body{
 }
 
 .fs-game-menu-dialog .vm-btn,
-.fs-help-actions .vm-btn{ color:#333333; }
+.fs-help-actions .vm-btn{
+  background:var(--fs-menu-btn);
+  color:#ffffff;
+}
 
 .fs-end-emoji{
   font-size:70px;
@@ -415,6 +426,8 @@ body{
 .fs-end-card{ width:min(100%, 640px); }
 .fs-end-title{ font-size:clamp(28px,5vw,48px); font-weight:900; line-height:1.05; }
 .fs-end-text{ font-size:clamp(18px,4vw,28px); font-weight:800; line-height:1.18; margin-top:10px; }
+
+.fs-end-lock{ opacity:0.72; pointer-events:none; }
 
 @keyframes fsShake{
   0%,100%{ transform:translateX(0); }
@@ -427,10 +440,10 @@ body{
   100%{ box-shadow: inset 0 0 0 999px rgba(255,90,81,0); }
 }
 @keyframes fsWrong{
-  0%,100%{ transform:translateY(0); }
-  25%{ transform:translateY(0) translateX(-4px); }
-  50%{ transform:translateY(0) translateX(4px); }
-  75%{ transform:translateY(0) translateX(-3px); }
+  0%,100%{ transform:translateX(0); }
+  25%{ transform:translateX(-4px); }
+  50%{ transform:translateX(4px); }
+  75%{ transform:translateX(-3px); }
 }
 @keyframes fsBombHit{
   0%{ transform:scale(1); }

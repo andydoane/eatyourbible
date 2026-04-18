@@ -32,6 +32,7 @@
   let completionMarked = false;
   let alreadyCompletedForMode = false;
   let resizeBound = false;
+  let endScreenUnlockTimer = 0;
 
   const state = {
     running:false,
@@ -46,7 +47,8 @@
     wordEntries:[],
     wordsBuilt:0,
     phase:"words",
-    phaseBuilt:false,
+    bookBuilt:false,
+    referenceBuilt:false,
     buildSizeClass:"is-normal",
     activeFruit:null,
     activeBomb:null,
@@ -63,7 +65,6 @@
     bonusIdCounter:0,
     bonusCount:0,
     done:false,
-    dom:null,
     verseMeta:parseReference(ctx.verseRef || ""),
     bookChoices:[],
     referenceChoices:[]
@@ -80,7 +81,7 @@
       <div class="fs-mode-shell">
         <div class="fs-mode-stage">
           <div class="fs-mode-top">
-            <div style="font-size:70px;line-height:1;">🍉🍓🍍</div>
+            <div style="font-size:70px;line-height:1;">🍉</div>
             <div class="fs-title">Food Slice</div>
             <div class="fs-subtitle">Slice the next correct flying food to build the verse, then finish the book and reference.</div>
             <div class="fs-mode-card">
@@ -104,6 +105,7 @@
       <div class="fs-mode-shell">
         <div class="fs-mode-stage">
           <div class="fs-mode-top">
+            <div style="font-size:70px;line-height:1;">🍉</div>
             <div class="fs-title">Choose Your Difficulty</div>
             <div class="fs-subtitle">Easy is forgiving. Medium uses verse-word decoys with no penalty. Hard uses verse-word decoys too, but a wrong slice removes two built words and bombs can appear.</div>
             <div class="fs-mode-card">
@@ -136,7 +138,8 @@
     state.lastTs = 0;
     state.wordsBuilt = 0;
     state.phase = "words";
-    state.phaseBuilt = false;
+    state.bookBuilt = false;
+    state.referenceBuilt = false;
     state.activeFruit = null;
     state.activeBomb = null;
     state.activeSlices = [];
@@ -152,7 +155,6 @@
     state.bonusIdCounter = 0;
     state.bonusCount = 0;
     state.done = false;
-    state.dom = null;
     state.theme = pickRandom(FOOD_THEMES);
     state.bookChoices = makeBookChoices(state.verseMeta.book);
     state.referenceChoices = makeReferenceChoices(state.verseMeta.chapter, state.verseMeta.verse, state.verseMeta.verseEnd);
@@ -209,9 +211,9 @@
             <div class="fs-mode-card fs-end-card">
               <div class="fs-end-title">${escapeHtml(title)}</div>
               <div class="fs-end-text">${escapeHtml(subtitle)}</div>
-              <div class="fs-mode-actions" style="margin-top:16px;">
-                <button class="vm-btn" id="playAgainBtn">Play Again</button>
-                <button class="vm-btn" id="exitBtn">Practice Games</button>
+              <div class="fs-mode-actions fs-end-lock" id="fsEndActions" style="margin-top:16px;">
+                <button class="vm-btn" id="playAgainBtn" disabled>Play Again</button>
+                <button class="vm-btn" id="exitBtn" disabled>Practice Games</button>
               </div>
             </div>
           </div>
@@ -220,8 +222,20 @@
         ${renderHelpOverlay(helpHtml())}
       </div>
     `;
-    document.getElementById("playAgainBtn").onclick = renderModeSelect;
-    document.getElementById("exitBtn").onclick = () => window.VerseGameBridge.exitGame();
+    const playAgainBtn = document.getElementById("playAgainBtn");
+    const exitBtn = document.getElementById("exitBtn");
+    const endActions = document.getElementById("fsEndActions");
+
+    if (playAgainBtn) playAgainBtn.onclick = () => renderModeSelect();
+    if (exitBtn) exitBtn.onclick = () => window.VerseGameBridge.exitGame();
+
+    window.clearTimeout(endScreenUnlockTimer);
+    endScreenUnlockTimer = window.setTimeout(() => {
+      if (playAgainBtn) playAgainBtn.disabled = false;
+      if (exitBtn) exitBtn.disabled = false;
+      if (endActions) endActions.classList.remove("fs-end-lock");
+    }, 550);
+
     wireCommonNav();
   }
 
@@ -336,8 +350,13 @@
       window.addEventListener("resize", recalcField);
       resizeBound = true;
     }
+
     const menuPill = document.getElementById("fsMenuPill");
-    if (menuPill) menuPill.onclick = openGameMenu;
+    if (menuPill) {
+      menuPill.onclick = openGameMenu;
+      menuPill.onpointerdown = (e) => e.stopPropagation();
+    }
+
     window.onkeydown = (e) => {
       if (e.key === "Escape" && state.running){
         if (document.getElementById("fsGameMenuOverlay")?.classList.contains("is-open")) closeGameMenu();
@@ -432,11 +451,6 @@
       return;
     }
 
-    if (!state.wordsBuilt){
-      text.innerHTML = `Slice the first correct food to start.<br><span style="font-weight:800;">Build the verse one word at a time.</span>`;
-      return;
-    }
-
     let html = "";
     let builtWordsSeen = 0;
     for (const token of state.tokens){
@@ -454,13 +468,11 @@
       }
     }
 
-    const bookBuilt = state.phase === "reference" || state.phaseBuilt || state.bonusRound || state.done;
-    const refBuilt = (state.phaseBuilt && state.phase === "reference") || state.bonusRound || state.done;
     if (state.wordsBuilt >= state.wordEntries.length && state.verseMeta.book){
-      html += `<span class="fs-build-gap"> </span><span class="fs-build-token is-book ${bookBuilt ? "is-built" : ""}">${escapeHtml(state.verseMeta.book)}</span>`;
+      html += `<span class="fs-build-gap"> </span><span class="fs-build-token is-book ${state.bookBuilt ? "is-built" : ""}">${escapeHtml(state.verseMeta.book)}</span>`;
     }
     if (state.wordsBuilt >= state.wordEntries.length && state.verseMeta.reference){
-      html += `<span class="fs-build-gap"> </span><span class="fs-build-token is-reference ${refBuilt ? "is-built" : ""}">${escapeHtml(state.verseMeta.reference)}</span>`;
+      html += `<span class="fs-build-gap"> </span><span class="fs-build-token is-reference ${state.referenceBuilt ? "is-built" : ""}">${escapeHtml(state.verseMeta.reference)}</span>`;
     }
 
     text.innerHTML = html;
@@ -477,34 +489,39 @@
     field.classList.toggle("is-flash-bad", state.fieldFlashUntil > performance.now());
 
     let playHtml = "";
-    if (state.activeFruit?.alive){
-      playHtml += renderFruitItem(state.activeFruit, false);
-    }
-    if (state.activeBomb?.alive){
-      playHtml += renderBombItem(state.activeBomb);
-    }
+    if (state.activeFruit?.alive) playHtml += renderFruitItem(state.activeFruit, false);
+    if (state.activeBomb?.alive) playHtml += renderBombItem(state.activeBomb);
     for (const bonusFruit of state.bonusFruits){
       if (bonusFruit?.alive) playHtml += renderFruitItem(bonusFruit, true);
     }
     playLayer.innerHTML = playHtml;
 
     playLayer.querySelectorAll("[data-role='fruit']").forEach((el) => {
-      el.onclick = (e) => {
+      const onPress = (e) => {
         e.preventDefault();
+        e.stopPropagation();
         const id = el.dataset.id;
         if (id === "main") handleMainFruitTap();
         else handleBonusTap(Number(id));
       };
+      el.onclick = onPress;
+      el.onpointerdown = onPress;
+      el.ontouchstart = onPress;
     });
+
     playLayer.querySelectorAll("[data-role='bomb']").forEach((el) => {
-      el.onclick = (e) => {
+      const onPress = (e) => {
         e.preventDefault();
+        e.stopPropagation();
         handleBombTap();
       };
+      el.onclick = onPress;
+      el.onpointerdown = onPress;
+      el.ontouchstart = onPress;
     });
 
     sliceLayer.innerHTML = state.activeSlices.filter(Boolean).map((piece) => `
-      <div class="fs-slice-piece ${piece.side}" style="transform:translate(${piece.x}px, ${piece.y}px) rotate(${piece.rotation}deg)">
+      <div class="fs-slice-piece ${piece.side}" style="transform:translate(${piece.x}px, ${piece.y}px) translate(-50%, -50%) rotate(${piece.rotation}deg)">
         <div class="fs-slice-inner">${escapeHtml(piece.fruit || "🍎")}</div>
       </div>
     `).join("");
@@ -521,26 +538,23 @@
   function renderFruitItem(item, isBonus){
     const cls = `fs-item ${item.flashWrong ? "is-wrong" : ""}`;
     const id = isBonus ? item.id : "main";
+    const wordHtml = isBonus ? "" : `<div class="fs-word-chip">${escapeHtml(item.word || "")}</div>`;
     return `
-      <div class="${cls}" style="transform:translate(${item.x}px, ${item.y}px)">
-        <div class="fs-stack">
-          <button class="fs-fruit-btn" data-role="fruit" data-id="${id}" type="button" aria-label="Slice food">
-            <span class="fs-fruit-emoji">${escapeHtml(item.fruit || "🍎")}</span>
-          </button>
-          ${!isBonus ? `<div class="fs-word-chip">${escapeHtml(item.word || "")}</div>` : ""}
-        </div>
+      <div class="${cls}" style="transform:translate(${item.x}px, ${item.y}px) translate(-50%, -50%)">
+        <button class="fs-fruit-btn" data-role="fruit" data-id="${id}" type="button" aria-label="Slice food">
+          <span class="fs-fruit-emoji" style="transform:rotate(${Math.round((item.tilt || 0) + (item.rotation || 0))}deg)">${escapeHtml(item.fruit || "🍎")}</span>
+          ${wordHtml}
+        </button>
       </div>
     `;
   }
 
   function renderBombItem(item){
     return `
-      <div class="fs-item ${item.wasHit ? "is-bomb-hit" : ""}" style="transform:translate(${item.x}px, ${item.y}px)">
-        <div class="fs-stack">
-          <button class="fs-bomb-btn" data-role="bomb" type="button" aria-label="Bomb">
-            <span class="fs-bomb-emoji">💣</span>
-          </button>
-        </div>
+      <div class="fs-item ${item.wasHit ? "is-bomb-hit" : ""}" style="transform:translate(${item.x}px, ${item.y}px) translate(-50%, -50%)">
+        <button class="fs-bomb-btn" data-role="bomb" type="button" aria-label="Bomb">
+          <span class="fs-bomb-emoji" style="transform:rotate(${Math.round(item.rotation || 0)}deg)">💣</span>
+        </button>
       </div>
     `;
   }
@@ -606,7 +620,7 @@
     item.y += item.vy * stepScale;
     item.vy += item.gravity * stepScale;
     item.rotation += item.spin * stepScale;
-    item.x = clamp(item.x, 18, state.fieldWidth - 18);
+    item.x = clamp(item.x, 28, state.fieldWidth - 28);
     if (item.y > state.fieldHeight + 160) item.alive = false;
   }
 
@@ -631,33 +645,35 @@
       isCorrect,
       alive:true,
       flashWrong:false,
-      wasTapped:false
+      wasTapped:false,
+      tilt:-16 + Math.random() * 32
     };
   }
 
   function createFlyingBomb(){
     return {
-      ...createArcMotion(),
+      ...createArcMotion(true),
       alive:true,
       wasTapped:false,
       wasHit:false
     };
   }
 
-  function createArcMotion(){
+  function createArcMotion(isBomb = false){
     const fieldW = Math.max(320, state.fieldWidth || 320);
     const fieldH = Math.max(260, state.fieldHeight || 260);
-    const startX = 52 + Math.random() * Math.max(40, fieldW - 104);
-    const peakRatio = fieldW >= 900 ? 0.16 : 0.24;
+    const sideInset = Math.max(44, Math.min(96, fieldW * 0.12));
+    const startX = sideInset + Math.random() * Math.max(24, fieldW - sideInset * 2);
+    const peakRatio = fieldW >= 900 ? 0.22 : 0.28;
     const targetPeakY = fieldH * peakRatio;
-    const startY = fieldH + 44;
-    const riseDistance = Math.max(140, startY - targetPeakY);
-    const gravity = fieldH / 620;
+    const startY = fieldH + 36;
+    const riseDistance = Math.max(120, startY - targetPeakY);
+    const gravity = fieldH / 860;
     const baseVy = Math.sqrt(2 * gravity * riseDistance);
-    const vy = -(baseVy + (Math.random() * 1.2 - 0.6));
-    const horizontalRange = Math.max(1.0, Math.min(2.6, fieldW / 260));
+    const vy = -(baseVy + (Math.random() * 0.8 - 0.4));
+    const horizontalRange = Math.max(0.7, Math.min(1.8, fieldW / 420));
     const vx = (Math.random() * 2 - 1) * horizontalRange;
-    const spin = -6 + Math.random() * 12;
+    const spin = isBomb ? (-4 + Math.random() * 8) : (-3 + Math.random() * 6);
     return { x:startX, y:startY, vx, vy, gravity, rotation:0, spin };
   }
 
@@ -675,16 +691,17 @@
         state.wordsBuilt += 1;
         if (state.wordsBuilt >= state.wordEntries.length){
           state.phase = "book";
-          state.phaseBuilt = false;
+          state.bookBuilt = false;
+          state.referenceBuilt = false;
           showOverlay("Now slice the Bible book");
         }
       } else if (state.phase === "book"){
-        state.phaseBuilt = true;
+        state.bookBuilt = true;
         state.phase = "reference";
-        state.phaseBuilt = false;
+        state.referenceBuilt = false;
         showOverlay("Now slice the chapter and verse");
       } else if (state.phase === "reference"){
-        state.phaseBuilt = true;
+        state.referenceBuilt = true;
         startBonusRound();
       }
       return;
@@ -701,9 +718,7 @@
     window.setTimeout(() => {
       item.alive = false;
       if (state.activeFruit === item) state.activeFruit = null;
-      if (!state.done){
-        setPaused(false, "");
-      }
+      if (!state.done) setPaused(false, "");
       renderHud();
     }, 260);
   }
@@ -714,6 +729,8 @@
     bomb.wasTapped = true;
     bomb.wasHit = true;
     state.wordsBuilt = 0;
+    state.bookBuilt = false;
+    state.referenceBuilt = false;
     state.buildShakeUntil = performance.now() + 280;
     state.fieldFlashUntil = performance.now() + 260;
     setPaused(true, "bomb");
@@ -743,7 +760,8 @@
       ...createArcMotion(),
       fruit: pickRandom(state.theme),
       alive:true,
-      wasTapped:false
+      wasTapped:false,
+      tilt:-16 + Math.random() * 32
     });
   }
 
@@ -761,13 +779,13 @@
     state.activeSlices.push(
       {
         side:"left", fruit:item.fruit, x:item.x, y:item.y,
-        vx:(item.vx || 0) - 1.6, vy:(item.vy || 0) - 1.8,
-        gravity:item.gravity || 0.42, rotation:baseRotation - 10, spin:-4.5, alive:true
+        vx:(item.vx || 0) - 1.3, vy:(item.vy || 0) - 1.4,
+        gravity:item.gravity || 0.42, rotation:baseRotation - 10, spin:-3.8, alive:true
       },
       {
         side:"right", fruit:item.fruit, x:item.x, y:item.y,
-        vx:(item.vx || 0) + 1.6, vy:(item.vy || 0) - 1.8,
-        gravity:item.gravity || 0.42, rotation:baseRotation + 10, spin:4.5, alive:true
+        vx:(item.vx || 0) + 1.3, vy:(item.vy || 0) - 1.4,
+        gravity:item.gravity || 0.42, rotation:baseRotation + 10, spin:3.8, alive:true
       }
     );
   }
@@ -834,7 +852,6 @@
 
   function getVerseDerivedDecoys(targetIndex, correct){
     const targetNorm = normalizeWord(correct);
-    const targetEntry = state.wordEntries[targetIndex];
     const candidates = state.wordEntries.filter((entry, idx) => {
       if (idx === targetIndex) return false;
       const norm = normalizeWord(entry.display);
