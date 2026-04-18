@@ -269,12 +269,17 @@
   function initVerseData(){
     state.words = tokenizeVerse(ctx.verseText);
     const parts = parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
-    state.bookTokens = String(parts.book || "").trim().split(/\s+/).filter(Boolean);
+
+    const wholeBook = String(parts.book || "").trim();
+    state.bookTokens = wholeBook ? [wholeBook] : [];
+
     state.referenceToken = String(parts.reference || "").trim();
     state.segments = [...state.words, ...state.bookTokens, ...(state.referenceToken ? [state.referenceToken] : [])];
+
     state.metaIndices = new Set();
     for (let i = state.words.length; i < state.words.length + state.bookTokens.length; i++) state.metaIndices.add(i);
     if (state.referenceToken) state.metaIndices.add(state.segments.length - 1);
+
     state.buildSizeClass = getBuildSizeClass(ctx.verseText, parts.book, parts.reference);
   }
 
