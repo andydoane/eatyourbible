@@ -35,7 +35,7 @@ window.EXTERNAL_VERSE_GAMES = [
       description: "Slice the correct flying food to build the verse.",
       icon: "🍉",
       launchUrl: "./verse_games/foodslice/index.html",
-      visibleInCarousel: false,
+      visibleInCarousel: true,
       progressType: "standard",
       modes: ["easy", "medium", "hard"]
     }
