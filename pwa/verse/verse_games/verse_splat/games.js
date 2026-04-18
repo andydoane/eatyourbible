@@ -24,26 +24,6 @@
     { fill:"#7f66c6", text:"#fff" }
   ];
 
-  const SPLAT_SVG = `<svg
-   width="100"
-   height="100"
-   viewBox="0 0 26.458333 26.458333"
-   version="1.1"
-   id="svg1"
-   xml:space="preserve"
-   xmlns="http://www.w3.org/2000/svg"
-   xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
-     id="namedview1"
-     pagecolor="#ffffff"
-     bordercolor="#000000"
-     borderopacity="0.25"
-     borderlayer="false" /><defs
-     id="defs1" /><g
-     id="layer1"><path
-       style="fill:currentColor;stroke-width:0.403725"
-       d="m 16.398026,23.907619 c -0.87602,-0.44524 -1.1569,-1.01346 -1.3654,-2.76221 -0.10453,-0.87674 -0.22365,-1.38053 -0.42254,-1.78704 -0.81496,-1.66572 -2.71338,-1.8616 -3.98673,-0.41133 -0.42654,0.4858 -0.6618002,0.95858 -1.0247902,2.05944 -0.51819,1.57153 -1.31318,2.42504 -2.37599,2.55092 -1.04936,0.12428 -1.84866,-0.61853 -1.84866,-1.71801 0,-0.95529 0.54104,-1.73365 1.89213,-2.72213 1.38506,-1.01333 1.99395,-2.05567 1.7437,-2.98501 -0.19614,-0.72842 -0.78194,-1.09774 -1.74779,-1.10192 -0.52682,-0.002 -0.87999,0.0852 -1.75424,0.43435 -1.7736,0.70839 -2.72393,0.69385 -3.5521,-0.0544 -1.31141004,-1.18478 -0.46907,-3.08582 1.46901,-3.31536 0.40294,-0.0477 0.84603,0.018 1.82496,0.27063 2.05645,0.53072 3.04526,0.40441 3.71517,-0.47458 0.25909,-0.33996 0.30747,-0.50246 0.30438,-1.02244 -0.003,-0.50988 -0.0597,-0.6985 -0.32337,-1.0761797 -0.17583,-0.25188 -0.54802,-0.60216 -0.82708,-0.77841 -1.53759,-0.97112 -1.85957,-1.21441 -2.13998,-1.61693 -1.01553,-1.45778 0.22508,-3.28292 1.92109,-2.82623 0.69593,0.1874 1.35361,0.85293 1.86232,1.88456 0.2449602,0.49676 0.6325302,1.1158 0.8612502,1.37565 1.0582,1.20218 2.55655,1.00823 3.29488,-0.42649 0.23432,-0.45533 0.2745,-0.7011 0.32993,-2.01817 0.0521,-1.23651 0.10291,-1.57701 0.28979,-1.94024 0.88848,-1.72692 3.1241,-1.3062 3.15276,0.59331 0.008,0.50867 -0.16715,0.93876 -0.99306,2.44312 -0.49707,0.90537 -0.56548,1.55728 -0.22245,2.11984 0.58953,0.96681 2.09007,0.53256 3.15024,-0.91168 0.99862,-1.3604 2.17946,-2.06315 3.06571,-1.82451 0.85084,0.22911 1.36522,0.98547 1.21924,1.79279 -0.15944,0.88168 -0.96395,1.61994 -2.23028,2.0466 -1.95116,0.6573897 -2.85333,1.7995197 -2.1886,2.7706997 0.46358,0.6773 0.89556,0.8099 2.65296,0.81441 1.44172,0.004 1.58185,0.0222 2.02543,0.26705 0.66444,0.3668 0.9655,0.84853 0.9655,1.5449 0,0.70479 -0.30531,1.19024 -0.96223,1.52996 -0.74777,0.38671 -1.50284,0.28749 -2.95785,-0.38865 -0.63987,-0.29735 -1.40281,-0.5724 -1.69542,-0.61121 -1.01399,-0.13451 -1.96086,0.31405 -2.36921,1.12238 -0.48435,0.95875 -0.24435,2.01633 0.72604,3.19938 0.89217,1.0877 1.06317,1.45523 1.06317,2.28495 0,0.74445 -0.21412,1.19163 -0.76648,1.60073 -0.43319,0.32084 -1.21814,0.35065 -1.77541,0.0674 z"
-       id="path7" /></g></svg>`;
-
   const FUN_DECOYS = [
     "taco","banana","penguin","cupcake","dinosaur","pickle","marshmallow","noodle","waffle","rocket",
     "jellybean","pancake","popcorn","unicorn","bubble","muffin","otter","kangaroo","scooter","rainbow",
@@ -280,40 +260,26 @@
   }
 
   function hitTestBlobIdAtBoardPoint(boardX, boardY, bonus=false){
-    const bounds = currentBounds();
     const list = bonus ? state.bonusBlobs.filter(blob => blob.alive) : state.blobs.slice();
-    const hits = [];
-
+    for (let i = list.length - 1; i >= 0; i--){
+      const blob = list[i];
+      const width = bonus ? blob.size : blob.width;
+      const height = bonus ? blob.size : blob.height;
+      const left = blob.x * (bonus ? 1 : 1); /* state coords are normalized; convert below */
+      const top = blob.y * (bonus ? 1 : 1);
+    }
+    const bounds = currentBounds();
     for (let i = list.length - 1; i >= 0; i--){
       const blob = list[i];
       const width = bonus ? blob.size : blob.width;
       const height = bonus ? blob.size : blob.height;
       const left = blob.x * bounds.width;
       const top = blob.y * bounds.height;
-      const centerX = left + width / 2;
-      const centerY = top + height / 2;
-      const nx = (boardX - centerX) / (width / 2);
-      const ny = (boardY - centerY) / (height / 2);
-      const ellipseScore = nx * nx + ny * ny;
-      if (ellipseScore <= 1.08){
-        hits.push({
-          id: blob.id,
-          isCorrect: bonus ? false : !!blob.isCorrect,
-          score: ellipseScore,
-          area: width * height,
-          order: i
-        });
+      if (boardX >= left && boardX <= left + width && boardY >= top && boardY <= top + height){
+        return blob.id;
       }
     }
-
-    if (!hits.length) return null;
-    if (!bonus){
-      const correctHits = hits.filter(hit => hit.isCorrect);
-      if (correctHits.length === 1) return correctHits[0].id;
-    }
-
-    hits.sort((a, b) => (a.score - b.score) || (a.area - b.area) || (a.order - b.order));
-    return hits[0].id;
+    return null;
   }
 
   function bindBoardMainInteraction(){
@@ -369,7 +335,7 @@ function renderIntro(){
     <div class="vsp-mode-shell">
       <div class="vsp-mode-stage">
         <div class="vsp-mode-top">
-          <div class="vsp-splash-emoji">🫟</div>
+          <div class="vsp-splash-emoji">🫧💥</div>
           <div class="vsp-title">Verse Splat</div>
           <div class="vsp-subtitle">Tap the next correct goo blob to build the verse, then the book and reference.</div>
           <div class="vsp-mode-card vsp-mode-card-single">
@@ -458,6 +424,7 @@ function gameplayShell({ bonus=false }){
             </div>
             <div class="vsp-board-main" id="vspBoardMain">
               <div class="vsp-flash-layer ${state.flashKey ? 'is-active' : ''}" id="vspFlashLayer"></div>
+              <div class="vsp-back-effect-layer" id="vspBackEffectLayer"></div>
               <div class="vsp-blob-layer" id="vspBlobLayer"></div>
               <div class="vsp-effect-layer" id="vspEffectLayer"></div>
               ${bonus && state.bonusIntroVisible ? `<div class="vsp-bonus-intro"><div><div class="vsp-bonus-title">SPLAT TIME!</div><div class="vsp-bonus-copy">Splat as many blobs as you can!</div></div></div>` : ''}
@@ -564,6 +531,7 @@ function gameplayShell({ bonus=false }){
       bottomInset: 0,
       node: boardMain,
       blobLayer: $("#vspBlobLayer"),
+      backEffectLayer: $("#vspBackEffectLayer"),
       effectLayer: $("#vspEffectLayer")
     };
   }
@@ -662,15 +630,14 @@ function gameplayShell({ bonus=false }){
     const node = document.querySelector(`[data-blob-id="${blob.id}"]`);
     if (!node) return;
     const bounds = currentBounds();
-    const wobbleX = Math.sin(blob.wobblePhase) * 0.044;
-    const wobbleY = Math.cos(blob.wobblePhase * 0.9) * 0.044;
-    const scaleX = 1 + wobbleX + blob.impactX;
-    const scaleY = 1 + wobbleY + blob.impactY;
+    const wobble = Math.sin(blob.wobblePhase) * 0.035;
+    const squeezeX = 1 + blob.impactX + wobble;
+    const squeezeY = 1 + blob.impactY - wobble;
     node.style.transform = `translate(${blob.x * bounds.width}px, ${blob.y * bounds.height}px)`;
     const body = $(".vsp-blob-body", node);
-    if (body) body.style.transform = `scale(${scaleX}, ${scaleY}) rotate(${Math.sin(blob.wobblePhase * 0.55) * 6}deg)`;
+    if (body) body.style.transform = `scale(${squeezeX}, ${squeezeY}) rotate(${Math.sin(blob.wobblePhase * 0.7) * 1.6}deg)`;
     const label = $(".vsp-blob-label", node);
-    if (label) label.style.letterSpacing = `${Math.sin(blob.wobblePhase) * 0.012}em`;
+    if (label) label.style.letterSpacing = `${Math.sin(blob.wobblePhase) * 0.018}em`;
   }
 
   function safeSpawnPoint(size, existing){
@@ -698,7 +665,7 @@ function gameplayShell({ bonus=false }){
   function makeBlob({ label, isCorrect=false, preserveColor=null, preserveMotion=null }){
     const bounds = currentBounds();
     const size = labelSizeForBoard(label, bounds, false);
-    const velocityMag = 0.25 * MODE_CONFIG[state.mode].speedMultiplier;
+    const velocityMag = (0.18 + Math.random() * 0.08) * MODE_CONFIG[state.mode].speedMultiplier;
     const angle = rand(0, Math.PI * 2);
     const chosenColor = preserveColor || randomColorSet(1, state.blobs.map(b => b.color))[0] || BLOB_COLORS[0];
     const existing = state.blobs.filter(blob => blob.state === "live" || blob.state === "spawning");
@@ -820,8 +787,8 @@ function gameplayShell({ bonus=false }){
     if (buildText) buildText.innerHTML = renderBuildText();
   }
 
-  function effectNodeAt(x, y, markup){
-    const layer = $("#vspEffectLayer");
+  function effectNodeAtInLayer(layerId, x, y, markup){
+    const layer = $(layerId);
     if (!layer) return null;
     const node = document.createElement("div");
     node.className = "vsp-effect";
@@ -832,17 +799,15 @@ function gameplayShell({ bonus=false }){
     return node;
   }
 
+  function effectNodeAt(x, y, markup){
+    return effectNodeAtInLayer("#vspEffectLayer", x, y, markup);
+  }
+
+  function backEffectNodeAt(x, y, markup){
+    return effectNodeAtInLayer("#vspBackEffectLayer", x, y, markup);
+  }
+
   function blobCenterPx(blob){
-    const node = document.querySelector(`[data-blob-id="${blob.id}"]`);
-    const layer = $("#vspEffectLayer");
-    if (node && layer){
-      const nodeRect = node.getBoundingClientRect();
-      const layerRect = layer.getBoundingClientRect();
-      return {
-        x: (nodeRect.left - layerRect.left) + nodeRect.width / 2,
-        y: (nodeRect.top - layerRect.top) + nodeRect.height / 2
-      };
-    }
     const bounds = currentBounds();
     return {
       x: blob.x * bounds.width + blob.width / 2,
@@ -850,19 +815,21 @@ function gameplayShell({ bonus=false }){
     };
   }
 
-  
   function spawnSplatEffect(blob){
     const center = blobCenterPx(blob);
     const fill = blob.color;
-    const rotation = rand(-18, 18).toFixed(2);
-    const finalScale = rand(0.92, 1.08).toFixed(3);
-    const popScale = (parseFloat(finalScale) * 1.12).toFixed(3);
     const markup = `
-      <div class="vsp-splat-svg" style="color:${fill};--splat-rot:${rotation}deg;--splat-scale-final:${finalScale};--splat-scale-pop:${popScale};">
-        ${SPLAT_SVG}
+      <div class="vsp-splat">
+        <div class="vsp-splat-core" style="background:${fill};"></div>
+        <div class="vsp-splat-lobe" style="left:2%;top:24%;background:${fill};"></div>
+        <div class="vsp-splat-lobe" style="right:4%;top:18%;background:${fill};width:34%;height:34%;"></div>
+        <div class="vsp-splat-lobe" style="left:16%;bottom:8%;background:${fill};width:28%;height:28%;"></div>
+        <div class="vsp-splat-lobe" style="right:12%;bottom:10%;background:${fill};width:24%;height:24%;"></div>
+        <div class="vsp-drip" style="left:28%;background:${fill};"></div>
+        <div class="vsp-drip" style="left:56%;height:42%;background:${fill};"></div>
       </div>`;
     const node = effectNodeAt(center.x, center.y, markup);
-    if (node) setTimeout(() => node.remove(), 1400);
+    if (node) setTimeout(() => node.remove(), 620);
   }
 
   function spawnPoofEffect(blob){
@@ -887,7 +854,7 @@ function gameplayShell({ bonus=false }){
   async function handleCorrectTap(blob){
     if (state.busy) return;
     state.busy = true;
-    spawnSplatEffect(blob);
+    spawnCorrectHitEffects(blob);
     removeBlobById(blob.id);
     state.progressIndex += 1;
     state.wrongCountThisField = 0;
@@ -942,36 +909,15 @@ function gameplayShell({ bonus=false }){
     const minY = bounds.topInset / bounds.height;
     const maxY = Math.max(minY, 1 - blob.height / bounds.height - (bounds.bottomInset / bounds.height));
 
-    if (blob.x <= minX){
-      blob.x = minX;
-      blob.vx = Math.abs(blob.vx);
-      blob.impactX = -0.23;
-      blob.impactY = 0.8;
-    }
-    else if (blob.x >= maxX){
-      blob.x = maxX;
-      blob.vx = -Math.abs(blob.vx);
-      blob.impactX = -0.23;
-      blob.impactY = 0.8;
-    }
+    if (blob.x <= minX){ blob.x = minX; blob.vx = Math.abs(blob.vx); blob.impactX = -0.18; blob.impactY = 0.18; }
+    else if (blob.x >= maxX){ blob.x = maxX; blob.vx = -Math.abs(blob.vx); blob.impactX = -0.18; blob.impactY = 0.18; }
 
-    if (blob.y <= minY){
-      blob.y = minY;
-      blob.vy = Math.abs(blob.vy);
-      blob.impactY = -0.57;
-      blob.impactX = 0.39;
-    }
-    else if (blob.y >= maxY){
-      blob.y = maxY;
-      blob.vy = -Math.abs(blob.vy);
-      blob.impactY = -0.57;
-      blob.impactX = 0.39;
-    }
+    if (blob.y <= minY){ blob.y = minY; blob.vy = Math.abs(blob.vy); blob.impactY = -0.18; blob.impactX = 0.18; }
+    else if (blob.y >= maxY){ blob.y = maxY; blob.vy = -Math.abs(blob.vy); blob.impactY = -0.18; blob.impactX = 0.18; }
 
     blob.wobblePhase += dt * blob.wobbleSpeed * 3.2;
-    const decay = Math.pow(0.001, dt * 1);
-    blob.impactX *= decay;
-    blob.impactY *= decay;
+    blob.impactX *= Math.pow(0.001, dt * 2.4);
+    blob.impactY *= Math.pow(0.001, dt * 2.4);
   }
 
   function tickGame(ts){
@@ -1089,16 +1035,6 @@ function gameplayShell({ bonus=false }){
   }
 
   function bonusBlobCenterPx(blob){
-    const node = document.querySelector(`[data-bonus-id="${blob.id}"]`);
-    const layer = $("#vspEffectLayer");
-    if (node && layer){
-      const nodeRect = node.getBoundingClientRect();
-      const layerRect = layer.getBoundingClientRect();
-      return {
-        x: (nodeRect.left - layerRect.left) + nodeRect.width / 2,
-        y: (nodeRect.top - layerRect.top) + nodeRect.height / 2
-      };
-    }
     const bounds = currentBounds();
     return { x: blob.x * bounds.width + blob.size / 2, y: blob.y * bounds.height + blob.size / 2 };
   }
@@ -1108,17 +1044,7 @@ function gameplayShell({ bonus=false }){
     const blob = state.bonusBlobs.find(entry => entry.id === id);
     if (!blob || !blob.alive) return;
     const center = bonusBlobCenterPx(blob);
-    const node = effectNodeAt(center.x, center.y, `
-      <div class="vsp-splat">
-        <div class="vsp-splat-core" style="background:${blob.color};"></div>
-        <div class="vsp-splat-lobe" style="left:4%;top:18%;background:${blob.color};"></div>
-        <div class="vsp-splat-lobe" style="right:8%;top:20%;background:${blob.color};"></div>
-        <div class="vsp-splat-lobe" style="left:18%;bottom:12%;background:${blob.color};"></div>
-        <div class="vsp-splat-lobe" style="right:14%;bottom:10%;background:${blob.color};"></div>
-        <div class="vsp-drip" style="left:30%;background:${blob.color};"></div>
-        <div class="vsp-drip" style="left:58%;height:44%;background:${blob.color};"></div>
-      </div>`);
-    if (node) setTimeout(() => node.remove(), 620);
+    spawnCorrectHitEffectsAt(center, blob.color);
     blob.alive = false;
     state.bonusScore += 1;
     const blobNode = document.querySelector(`[data-bonus-id="${id}"]`);
