@@ -39,7 +39,7 @@ window.EXTERNAL_VERSE_GAMES = [
       progressType: "standard",
       modes: ["easy", "medium", "hard"]
     }
-  }
+  },
   
   {
     enabled: true,
