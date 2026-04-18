@@ -4,11 +4,11 @@
   const GAME_ID = "foodslice";
 
   const FOOD_THEMES = [
-    ["🍎","🍐","🍊","🍋","🍌","🍉","🍇","🍓","🫐","🍈","🍒","🍑","🥭","🍍","🥥","🥝"],
+    ["🍎","🍐","🍊","🍋","🍌","🍉","🍇","🍓","🫐","🍈","🍒","🥭","🍍","🥥","🥝"],
     ["🍕","🍔","🍟","🌭","🍿","🥓","🥪","🥨","🌮","🌯","🥗","🥘","🍝","🍜","🍲","🍣","🍱"],
     ["🍦","🍧","🍨","🍩","🍪","🎂","🍰","🧁","🥧","🍫","🍬","🍭","🍮","🍯"],
     ["🍞","🥐","🥖","🫓","🥨","🥯","🥞","🧇","🥚","🍳"],
-    ["🥦","🥬","🥕","🌽","🌶️","🫑","🥒","🍆","🥑","🍄","🥔","🧅","🧄"],
+    ["🥦","🥬","🥕","🌽","🌶️","🫑","🥒","🥑","🍄","🥔","🧅","🧄"],
     ["🍗","🍖","🥩","🍤","🦀","🦞","🧀","🥚","🥛"]
   ];
   const BOOKS = [
@@ -42,6 +42,12 @@
     lastTs:0,
     fieldWidth:0,
     fieldHeight:0,
+    fruitHitSize:96,
+    fruitEmojiSize:56,
+    bombHitSize:84,
+    bombEmojiSize:50,
+    sliceSize:54,
+    sliceEmojiSize:42,
     theme:pickRandom(FOOD_THEMES),
     tokens:tokenizeVerseWithSpaces(ctx.verseText || ""),
     wordEntries:[],
@@ -173,8 +179,8 @@
               <div class="fs-slice-layer" id="fsSliceLayer"></div>
               <div class="fs-banner-layer" id="fsBannerLayer"></div>
               <div class="fs-overlay-msg" id="fsOverlay"></div>
-              <div class="fs-hud-overlay">
-                <div class="fs-corner-pill fs-corner-left" id="fsMenuPill">☰</div>
+              <div class="fs-controls-layer">
+                <button class="fs-corner-pill fs-corner-left" id="fsMenuPill" type="button" aria-label="Game menu">☰</button>
                 <div class="fs-corner-pill fs-corner-right" id="fsPhasePill"></div>
               </div>
             </div>
@@ -353,8 +359,16 @@
 
     const menuPill = document.getElementById("fsMenuPill");
     if (menuPill) {
-      menuPill.onclick = openGameMenu;
-      menuPill.onpointerdown = (e) => e.stopPropagation();
+      const openFromPill = (e) => {
+        if (e){
+          if (e.cancelable) e.preventDefault();
+          e.stopPropagation();
+        }
+        openGameMenu();
+      };
+      menuPill.onclick = openFromPill;
+      menuPill.onpointerdown = openFromPill;
+      menuPill.ontouchstart = openFromPill;
     }
 
     window.onkeydown = (e) => {
@@ -419,6 +433,21 @@
     const rect = field.getBoundingClientRect();
     state.fieldWidth = rect.width;
     state.fieldHeight = rect.height;
+
+    state.fruitHitSize = clamp(state.fieldWidth * 0.27, 108, 182);
+    state.fruitEmojiSize = clamp(state.fieldWidth * 0.155, 62, 102);
+    state.bombHitSize = clamp(state.fieldWidth * 0.19, 84, 134);
+    state.bombEmojiSize = clamp(state.fieldWidth * 0.108, 46, 72);
+    state.sliceSize = clamp(state.fieldWidth * 0.11, 40, 74);
+    state.sliceEmojiSize = clamp(state.fieldWidth * 0.092, 32, 58);
+
+    field.style.setProperty("--fs-fruit-hit", `${state.fruitHitSize}px`);
+    field.style.setProperty("--fs-fruit-emoji", `${state.fruitEmojiSize}px`);
+    field.style.setProperty("--fs-bomb-hit", `${state.bombHitSize}px`);
+    field.style.setProperty("--fs-bomb-emoji", `${state.bombEmojiSize}px`);
+    field.style.setProperty("--fs-slice-size", `${state.sliceSize}px`);
+    field.style.setProperty("--fs-slice-emoji", `${state.sliceEmojiSize}px`);
+
     renderHud();
   }
 
@@ -622,8 +651,13 @@
     item.y += item.vy * stepScale;
     item.vy += item.gravity * stepScale;
     item.rotation += item.spin * stepScale;
-    item.x = clamp(item.x, 28, state.fieldWidth - 28);
-    if (item.y > state.fieldHeight + 160) item.alive = false;
+
+    const halfSize = item.kind === "bomb"
+      ? state.bombHitSize * 0.34
+      : state.fruitHitSize * 0.34;
+
+    item.x = clamp(item.x, halfSize, state.fieldWidth - halfSize);
+    if (item.y > state.fieldHeight + Math.max(160, state.fruitHitSize * 1.1)) item.alive = false;
   }
 
   function spawnMainFruit(){
@@ -649,7 +683,8 @@
       flashWrong:false,
       rejecting:false,
       wasTapped:false,
-      tilt:-16 + Math.random() * 32
+      tilt:-16 + Math.random() * 32,
+      kind:"fruit"
     };
   }
 
@@ -658,25 +693,29 @@
       ...createArcMotion(true),
       alive:true,
       wasTapped:false,
-      wasHit:false
+      wasHit:false,
+      kind:"bomb"
     };
   }
 
   function createArcMotion(isBomb = false){
     const fieldW = Math.max(320, state.fieldWidth || 320);
     const fieldH = Math.max(260, state.fieldHeight || 260);
-    const sideInset = Math.max(44, Math.min(96, fieldW * 0.12));
+    const sideInset = Math.max(state.fruitHitSize * 0.46, fieldW * 0.12);
     const startX = sideInset + Math.random() * Math.max(24, fieldW - sideInset * 2);
-    const peakRatio = fieldW >= 900 ? 0.22 : 0.28;
+    const peakRatio = fieldW >= 900 ? 0.24 : 0.30;
     const targetPeakY = fieldH * peakRatio;
-    const startY = fieldH + 36;
-    const riseDistance = Math.max(120, startY - targetPeakY);
-    const gravity = fieldH / 860;
+    const startY = fieldH + Math.max(24, state.fruitHitSize * 0.22);
+    const riseDistance = Math.max(fieldH * 0.42, startY - targetPeakY);
+
+    const gravity = fieldH * (isBomb ? 0.00130 : 0.00120);
     const baseVy = Math.sqrt(2 * gravity * riseDistance);
-    const vy = -(baseVy + (Math.random() * 0.8 - 0.4));
-    const horizontalRange = Math.max(0.7, Math.min(1.8, fieldW / 420));
+    const vy = -(baseVy + (Math.random() * fieldH * 0.00035 - fieldH * 0.000175));
+
+    const horizontalRange = fieldW * (isBomb ? 0.0025 : 0.0022);
     const vx = (Math.random() * 2 - 1) * horizontalRange;
-    const spin = isBomb ? (-4 + Math.random() * 8) : (-3 + Math.random() * 6);
+    const spin = isBomb ? (-3.4 + Math.random() * 6.8) : (-2.8 + Math.random() * 5.6);
+
     return { x:startX, y:startY, vx, vy, gravity, rotation:0, spin };
   }
 
@@ -767,7 +806,8 @@
       fruit: pickRandom(state.theme),
       alive:true,
       wasTapped:false,
-      tilt:-16 + Math.random() * 32
+      tilt:-16 + Math.random() * 32,
+      kind:"fruit"
     });
   }
 

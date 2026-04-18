@@ -11,6 +11,12 @@
   --fs-stage-max:860px;
   --fs-side:14px;
   --fs-menu-btn:#7f66c6;
+  --fs-fruit-hit:20vw;
+  --fs-fruit-emoji:11vw;
+  --fs-bomb-hit:18vw;
+  --fs-bomb-emoji:10vw;
+  --fs-slice-size:9vw;
+  --fs-slice-emoji:8vw;
 }
 
 html,body{ height:100%; }
@@ -162,31 +168,44 @@ body{
 .fs-play-layer,
 .fs-slice-layer,
 .fs-banner-layer,
-.fs-hud-overlay,
-.fs-overlay-msg{
+.fs-overlay-msg,
+.fs-controls-layer{
   position:absolute;
   inset:0;
 }
 
+.fs-play-layer{ z-index:1; }
+.fs-slice-layer{ z-index:2; }
+.fs-banner-layer{ z-index:3; }
+.fs-overlay-msg{ z-index:4; }
+
 .fs-slice-layer,
 .fs-banner-layer,
-.fs-overlay-msg,
-.fs-hud-overlay{ pointer-events:none; }
+.fs-overlay-msg{ pointer-events:none; }
 
-.fs-hud-overlay{ z-index:2; }
+.fs-controls-layer{
+  z-index:20;
+  pointer-events:none;
+}
 
 .fs-corner-pill{
   position:absolute;
-  top:12px;
+  top:clamp(10px, 2.5vw, 16px);
   background:rgba(255,255,255,0.96);
   color:#333333;
   border-radius:999px;
-  padding:6px 12px;
+  padding:clamp(7px, 1.8vw, 11px) clamp(12px, 3vw, 18px);
   font-weight:900;
-  font-size:15px;
+  font-size:clamp(16px, 3.8vw, 20px);
+  min-height:clamp(40px, 10vw, 52px);
   pointer-events:auto;
   cursor:pointer;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+  z-index:4;
 }
+
+
 .fs-corner-left{ left:12px; }
 .fs-corner-right{ right:12px; }
 
@@ -222,11 +241,15 @@ body{
 }
 
 .fs-fruit-btn{
-  min-width:clamp(72px, 15vw, 120px);
+  width:var(--fs-fruit-hit);
+  min-width:var(--fs-fruit-hit);
+  min-height:var(--fs-fruit-hit);
 }
 
 .fs-bomb-btn{
-  min-width:clamp(68px, 14vw, 112px);
+  width:var(--fs-bomb-hit);
+  min-width:var(--fs-bomb-hit);
+  min-height:var(--fs-bomb-hit);
 }
 
 .fs-fruit-btn:disabled,
@@ -237,10 +260,12 @@ body{
 .fs-fruit-emoji,
 .fs-bomb-emoji{
   display:block;
-  font-size:clamp(40px, 9vw, 66px);
   line-height:1;
   filter:drop-shadow(0 6px 0 rgba(0,0,0,0.22));
 }
+
+.fs-fruit-emoji{ font-size:var(--fs-fruit-emoji); }
+.fs-bomb-emoji{ font-size:var(--fs-bomb-emoji); }
 
 .fs-fruit-emoji{
   transform-origin:center center;
@@ -271,8 +296,8 @@ body{
   position:absolute;
   left:0;
   top:0;
-  width:clamp(36px, 8vw, 66px);
-  height:clamp(36px, 8vw, 66px);
+  width:var(--fs-slice-size);
+  height:var(--fs-slice-size);
 }
 
 .fs-slice-inner{
@@ -282,7 +307,7 @@ body{
   align-items:center;
   justify-content:center;
   overflow:hidden;
-  font-size:clamp(28px, 7vw, 48px);
+  font-size:var(--fs-slice-emoji);
   line-height:1;
   filter:drop-shadow(0 6px 0 rgba(0,0,0,0.22));
 }
@@ -449,6 +474,15 @@ body{
   0%{ transform:scale(1); }
   35%{ transform:scale(1.14); }
   100%{ transform:scale(1); }
+}
+
+@keyframes fsRejectDrop{
+  0%{ opacity:1; transform:translateY(0) scale(1); }
+  100%{ opacity:0; transform:translateY(18px) scale(0.92); }
+}
+
+.fs-item.is-rejecting{
+  animation:fsRejectDrop 320ms ease forwards;
 }
 
 @media (max-width: 480px){
