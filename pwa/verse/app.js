@@ -1356,6 +1356,7 @@ const BUILTIN_PRACTICE_GAMES = [
 
 const HIDDEN_PRACTICE_GAME_ID = "verse_splat";
 const HIDDEN_PRACTICE_LONG_PRESS_MS = 2000;
+const HIDDEN_LEARN_COMPLETE_LONG_PRESS_MS = 2000;
 
 function getExternalPracticeGames(){
   const list = Array.isArray(window.EXTERNAL_VERSE_GAMES) ? window.EXTERNAL_VERSE_GAMES : [];
@@ -1397,6 +1398,62 @@ function launchHiddenPracticeGame(gameId = HIDDEN_PRACTICE_GAME_ID){
   }
 
   launchExternalGame(manifest);
+}
+
+function bindLongPress(element, {
+  delay = 2000,
+  onLongPress = () => {},
+  shouldStart = () => true
+} = {}){
+  if (!element) return;
+
+  let timer = null;
+  let fired = false;
+
+  const clearPress = () => {
+    if (timer){
+      clearTimeout(timer);
+      timer = null;
+    }
+  };
+
+  const startPress = (event) => {
+    if (!shouldStart()) return;
+
+    fired = false;
+    clearPress();
+
+    timer = setTimeout(() => {
+      timer = null;
+      fired = true;
+      onLongPress(event);
+    }, delay);
+  };
+
+  const endPress = () => {
+    clearPress();
+  };
+
+  element.addEventListener("pointerdown", startPress, { passive: true });
+  element.addEventListener("pointerup", endPress, { passive: true });
+  element.addEventListener("pointercancel", endPress, { passive: true });
+  element.addEventListener("pointerleave", endPress, { passive: true });
+
+  element.addEventListener("touchstart", startPress, { passive: true });
+  element.addEventListener("touchend", endPress, { passive: true });
+  element.addEventListener("touchcancel", endPress, { passive: true });
+
+  element.addEventListener("mousedown", startPress, { passive: true });
+  element.addEventListener("mouseup", endPress, { passive: true });
+  element.addEventListener("mouseleave", endPress, { passive: true });
+
+  element.addEventListener("click", (event) => {
+    if (fired){
+      event.preventDefault();
+      event.stopPropagation();
+      fired = false;
+    }
+  }, true);
 }
 
 function getPracticeGameIcon(game){
@@ -3085,7 +3142,7 @@ function screenTitle(idx){
 
   wrap.innerHTML = `
     <div class="title-content">
-      <img src="${TITLE_LOGO}" alt="Title graphic" onerror="this.style.display='none'">
+      <img id="titleLogoSecret" src="${TITLE_LOGO}" alt="Title graphic" onerror="this.style.display='none'">
     <h2>
       ${HAS_VERSE_SELECTION ? `Let's memorize<br>${VERSE_REF}` : "Choose a verse from<br>below to begin"}
       ${DEBUG_MODE ? " (DEBUG)" : ""}
@@ -3112,6 +3169,26 @@ function screenTitle(idx){
   wrap.querySelector("#titlePrev").onclick = (e)=>{ e.stopPropagation(); titlePrev(); };
   wrap.querySelector("#titleNext").onclick = (e)=>{ e.stopPropagation(); titleNext(); };
   wrap.querySelector("#titleMain").onclick = (e)=>{ e.stopPropagation(); titleRun(); };
+
+
+  const titleLogoSecret = wrap.querySelector("#titleLogoSecret");
+  bindLongPress(titleLogoSecret, {
+    delay: HIDDEN_LEARN_COMPLETE_LONG_PRESS_MS,
+    shouldStart: () => HAS_VERSE_SELECTION && !!VERSE_ID,
+    onLongPress: () => {
+      if (!VERSE_ID) return;
+
+      markLearnCompleted(VERSE_ID);
+      State.hasLearnedVerse = true;
+      render();
+
+      showDialog({
+        title: "Debug Learn Complete",
+        body: `${VERSE_REF} was marked as Learn completed.`,
+        actions: [dlgBtn("OK", { onClick: closeDialog })]
+      });
+    }
+  });
 
   const versePicker = wrap.querySelector("#versePicker");
   if (versePicker){
