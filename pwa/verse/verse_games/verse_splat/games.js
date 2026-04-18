@@ -702,14 +702,21 @@ function gameplayShell({ bonus=false }){
     if (label) label.style.letterSpacing = `${Math.sin(blob.wobblePhase) * 0.012}em`;
   }
 
-  function safeSpawnPoint(size, existing){
+  function safeSpawnPoint(size, existing, insetOverrides=null){
     const bounds = currentBounds();
     const insetX = size.width / bounds.width;
     const insetY = size.height / bounds.height;
-    const minX = bounds.leftInset / bounds.width;
-    const maxX = Math.max(minX, 1 - insetX - (bounds.rightInset / bounds.width));
-    const minY = bounds.topInset / bounds.height;
-    const maxY = Math.max(minY, 1 - insetY - (bounds.bottomInset / bounds.height));
+
+    const leftInset = insetOverrides?.leftInset ?? bounds.leftInset;
+    const rightInset = insetOverrides?.rightInset ?? bounds.rightInset;
+    const topInset = insetOverrides?.topInset ?? bounds.topInset;
+    const bottomInset = insetOverrides?.bottomInset ?? bounds.bottomInset;
+
+    const minX = leftInset / bounds.width;
+    const maxX = Math.max(minX, 1 - insetX - (rightInset / bounds.width));
+    const minY = topInset / bounds.height;
+    const maxY = Math.max(minY, 1 - insetY - (bottomInset / bounds.height));
+
     for (let attempt = 0; attempt < 40; attempt++){
       const x = rand(minX, maxX);
       const y = rand(minY, maxY);
@@ -721,7 +728,32 @@ function gameplayShell({ bonus=false }){
       });
       if (!overlaps) return { x, y };
     }
+
     return { x: rand(minX, maxX), y: rand(minY, maxY) };
+  }
+
+  function bonusSpawnInsets(size){
+    const board = $("#vspBoard");
+    const topbar = $(".vsp-board-topbar", board || document);
+    if (!board || !topbar){
+      return { topInset: 0, leftInset: 0, rightInset: 0, bottomInset: 0 };
+    }
+
+    const boardRect = board.getBoundingClientRect();
+    const topbarRect = topbar.getBoundingClientRect();
+
+    const topbarBottom = topbarRect.bottom - boardRect.top;
+
+    // Let blobs overlap the pills a little, but not sit fully under them.
+    const allowedOverlap = size * 0.35;
+    const topInset = Math.max(0, topbarBottom - allowedOverlap);
+
+    return {
+      topInset,
+      leftInset: 0,
+      rightInset: 0,
+      bottomInset: 0
+    };
   }
 
   function makeBlob({ label, isCorrect=false, preserveColor=null, preserveMotion=null }){
@@ -1078,13 +1110,19 @@ function gameplayShell({ bonus=false }){
     state.rafId = 0;
   }
 
+
   function makeBonusBlob(color){
     const bounds = currentBounds();
     const size = rand(clamp(bounds.width * 0.11, 54, 74), clamp(bounds.width * 0.16, 88, 124));
     const width = size;
     const height = size * rand(0.86, 1.08);
     const existing = state.bonusBlobs.map(blob => ({ x: blob.x, y: blob.y, width: blob.size, height: blob.size }));
-    const point = safeSpawnPoint({ width, height }, existing);
+    const point = safeSpawnPoint(
+      { width, height },
+      existing,
+      bonusSpawnInsets(size)
+    );
+
     return {
       id: state.nextBonusBlobId++,
       x: point.x,
@@ -1097,6 +1135,7 @@ function gameplayShell({ bonus=false }){
       alive: true
     };
   }
+
 
   function bonusBlobMarkup(blob){
     return `
