@@ -284,7 +284,8 @@ body{overflow:hidden}
   margin-left:calc(var(--pw) * -0.5);
   margin-top:calc(var(--ph) * -0.5);
   border-radius:999px;
-  background:currentColor;
+  background:var(--pcolor, currentColor);
+  box-shadow:0 2px 4px rgba(0,0,0,.16);
   opacity:0;
   transform:
     translate(0, 0)
