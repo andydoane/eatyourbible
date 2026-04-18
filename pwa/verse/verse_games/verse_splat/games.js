@@ -90,6 +90,53 @@
     "2 Peter","1 John","2 John","3 John","Jude","Revelation"
   ];
 
+
+    const BOOK_DECOY_LABELS = [
+    "Job",
+    "Ruth",
+    "Amos",
+    "Joel",
+    "Luke",
+    "John",
+    "Acts",
+    "Jude",
+    "Hosea",
+    "Jonah",
+    "Micah",
+    "Nahum",
+    "Titus",
+    "James",
+    "Exodus",
+    "Psalms",
+    "Isaiah",
+    "Daniel",
+    "Esther",
+    "Haggai",
+    "Romans",
+    "Genesis",
+    "Numbers",
+    "Judges",
+    "Ezekiel",
+    "Obadiah",
+    "Malachi",
+    "Matthew",
+    "Mark",
+    "Hebrews",
+    "Nehemiah",
+    "Jeremiah",
+    "Habakkuk",
+    "Zechariah",
+    "Leviticus",
+    "Zephaniah",
+    "Proverbs",
+    "Philemon",
+    "Ephesians",
+    "Galatians",
+    "Revelation",
+    "Colossians"
+  ];
+
+
   const MODE_CONFIG = {
     easy: { speedMultiplier: 1, rollbackCount: 0, decoyMode: "fun" },
     medium: { speedMultiplier: 1, rollbackCount: 0, decoyMode: "verse" },
@@ -647,8 +694,9 @@ function gameplayShell({ bonus=false }){
   }
 
   function bookDecoys(correct){
-    const bookWordPool = uniqueLabels(BIBLE_BOOKS.flatMap(book => book.split(/\s+/))).filter(token => normalizeWord(token) !== normalizeWord(correct));
-    return shuffle(bookWordPool).slice(0, 12);
+    return shuffle(
+      BOOK_DECOY_LABELS.filter(label => normalizeWord(label) !== normalizeWord(correct))
+    ).slice(0, 12);
   }
 
   function referenceDecoys(correct){
