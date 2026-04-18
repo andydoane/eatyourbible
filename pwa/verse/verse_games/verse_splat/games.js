@@ -5,7 +5,6 @@
 
   const ctx = await window.VerseGameBridge.getVerseContext();
   const GAME_ID = "verse_splat";
-  const GAME_ID = "verse_splat";
   const GAME_TITLE = "Verse Splat";
   const BONUS_TIME_LIMIT_MS = 30000;
   const CORRECT_TAP_LOCK_MS = 180;
