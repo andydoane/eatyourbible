@@ -64,6 +64,8 @@
     fieldFlashUntil:0,
     overlayMessage:"",
     overlayUntil:0,
+    bonusIntroActive:false,
+    bonusIntroUntil:0,
     bonusRound:false,
     bonusBannerUntil:0,
     bonusEndsAt:0,
@@ -154,6 +156,8 @@
     state.fieldFlashUntil = 0;
     state.overlayMessage = "";
     state.overlayUntil = 0;
+    state.bonusIntroActive = false;
+    state.bonusIntroUntil = 0;
     state.bonusRound = false;
     state.bonusBannerUntil = 0;
     state.bonusEndsAt = 0;
@@ -179,6 +183,13 @@
               <div class="fs-slice-layer" id="fsSliceLayer"></div>
               <div class="fs-banner-layer" id="fsBannerLayer"></div>
               <div class="fs-overlay-msg" id="fsOverlay"></div>
+              <div class="fs-bonus-intro-overlay" id="fsBonusIntroOverlay" aria-hidden="true">
+                <div class="fs-bonus-intro-burst"></div>
+                <div class="fs-bonus-intro-content">
+                  <div class="fs-bonus-intro-title">BONUS ROUND!</div>
+                  <div class="fs-bonus-intro-subtitle">Slice as much food as you can!</div>
+                </div>
+              </div>
               <div class="fs-controls-layer">
                 <button class="fs-corner-pill fs-corner-left" id="fsMenuPill" type="button" aria-label="Game menu">☰</button>
                 <div class="fs-corner-pill fs-corner-right" id="fsPhasePill"></div>
@@ -512,8 +523,9 @@
     const sliceLayer = document.getElementById("fsSliceLayer");
     const bannerLayer = document.getElementById("fsBannerLayer");
     const overlay = document.getElementById("fsOverlay");
+    const bonusIntroOverlay = document.getElementById("fsBonusIntroOverlay");
     const field = document.getElementById("fsField");
-    if (!playLayer || !sliceLayer || !bannerLayer || !overlay || !field) return;
+    if (!playLayer || !sliceLayer || !bannerLayer || !overlay || !field || !bonusIntroOverlay) return;
 
     field.classList.toggle("is-flash-bad", state.fieldFlashUntil > performance.now());
 
@@ -564,6 +576,10 @@
     overlay.innerHTML = (state.overlayUntil > performance.now() && state.overlayMessage)
       ? `<div class="fs-overlay-msg-inner">${escapeHtml(state.overlayMessage)}</div>`
       : "";
+
+    const showBonusIntro = state.bonusIntroActive && performance.now() < state.bonusIntroUntil;
+    bonusIntroOverlay.classList.toggle("is-open", showBonusIntro);
+    bonusIntroOverlay.setAttribute("aria-hidden", showBonusIntro ? "false" : "true");
   }
 
   function renderFruitItem(item, isBonus){
@@ -617,6 +633,19 @@
   }
 
   function step(dt, now){
+    if (state.bonusIntroActive){
+      if (now >= state.bonusIntroUntil){
+        state.bonusIntroActive = false;
+        state.bonusRound = true;
+        state.bonusBannerUntil = 0;
+        state.bonusEndsAt = performance.now() + 23000;
+        state.bonusFruits = [];
+        state.bonusCount = 0;
+      } else {
+        return;
+      }
+    }
+
     if (!state.bonusRound && !state.activeFruit){
       spawnMainFruit();
       maybeSpawnBomb();
@@ -790,12 +819,15 @@
   function startBonusRound(){
     state.activeFruit = null;
     state.activeBomb = null;
-    state.bonusRound = true;
-    state.bonusBannerUntil = performance.now() + 3000;
-    state.bonusEndsAt = performance.now() + 23000;
+    state.bonusRound = false;
+    state.bonusIntroActive = true;
+    state.bonusIntroUntil = performance.now() + 1700;
+    state.bonusBannerUntil = 0;
+    state.bonusEndsAt = 0;
     state.bonusFruits = [];
     state.bonusCount = 0;
-    showOverlay("Slice as much bonus food as you can");
+    setPaused(false, "");
+    renderHud();
   }
 
   function spawnBonusFruit(){
