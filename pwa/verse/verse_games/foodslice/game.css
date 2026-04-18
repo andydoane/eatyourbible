@@ -353,16 +353,19 @@ body{
 }
 
 .fs-bonus-intro-overlay{
-  display:none;
+  display:flex;
   align-items:center;
   justify-content:center;
   background:#ff5a51;
   overflow:hidden;
   pointer-events:none;
+  opacity:0;
+  visibility:hidden;
 }
 
 .fs-bonus-intro-overlay.is-open{
-  display:flex;
+  visibility:visible;
+  animation:fsBonusOverlayInOut 1.7s ease both;
 }
 
 .fs-bonus-intro-burst{
@@ -543,6 +546,22 @@ body{
   0%{ transform:rotate(0deg); }
   100%{ transform:rotate(360deg); }
 }
+
+@keyframes fsBonusOverlayInOut{
+  0%{
+    opacity:0;
+  }
+  12%{
+    opacity:1;
+  }
+  78%{
+    opacity:1;
+  }
+  100%{
+    opacity:0;
+  }
+}
+
 .fs-item.is-rejecting{
   animation:fsRejectDrop 320ms ease forwards;
 }
