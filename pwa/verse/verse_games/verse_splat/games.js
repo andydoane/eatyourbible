@@ -1184,61 +1184,16 @@ function gameplayShell({ bonus=false }){
     return { x: blob.x * bounds.width + blob.size / 2, y: blob.y * bounds.height + blob.size / 2 };
   }
 
-  function spawnBonusSplatEffect(blob){
-    const center = bonusBlobCenterPx(blob, "#vspBackEffectLayer");
-    const fill = blob.color;
-    const rotation = rand(-18, 18).toFixed(2);
-    const finalScale = rand(0.92, 1.08).toFixed(3);
-    const popScale = (parseFloat(finalScale) * 1.12).toFixed(3);
-    const markup = `
-      <div class="vsp-splat-svg" style="color:${fill};--splat-rot:${rotation}deg;--splat-scale-final:${finalScale};--splat-scale-pop:${popScale};">
-        ${SPLAT_SVG}
-      </div>`;
-    const node = effectNodeAt(center.x, center.y, markup, "#vspBackEffectLayer");
-    if (node) setTimeout(() => node.remove(), 1400);
-  }
-
-  function spawnBonusParticleBurst(blob){
-    const center = bonusBlobCenterPx(blob, "#vspBackEffectLayer");
-    const fill = blob.color;
-    const count = Math.floor(rand(7, 11));
-    let particles = "";
-
-    for (let i = 0; i < count; i++){
-      const angle = rand(0, Math.PI * 2);
-      const distance = rand(26, 72);
-      const tx = Math.cos(angle) * distance;
-      const ty = Math.sin(angle) * distance;
-      const w = rand(10, 24).toFixed(1);
-      const h = rand(6, 16).toFixed(1);
-      const rot = rand(-40, 40).toFixed(1);
-      const dur = rand(320, 520).toFixed(0);
-
-      particles += `
-        <div class="vsp-particle"
-          style="
-            --tx:${tx.toFixed(1)}px;
-            --ty:${ty.toFixed(1)}px;
-            --pw:${w}px;
-            --ph:${h}px;
-            --prot:${rot}deg;
-            --pdur:${dur}ms;
-          ">
-        </div>`;
-    }
-
-    const markup = `<div class="vsp-particle-burst" style="color:${fill};">${particles}</div>`;
-    const node = effectNodeAt(center.x, center.y, markup, "#vspBackEffectLayer");
-    if (node) setTimeout(() => node.remove(), 700);
-  }
+ 
 
   function handleBonusBlobTap(id){
     if (state.screen !== "bonus" || state.menuOpen || state.helpOpen) return;
     const blob = state.bonusBlobs.find(entry => entry.id === id);
     if (!blob || !blob.alive) return;
 
-    spawnBonusSplatEffect(blob);
-    spawnBonusParticleBurst(blob);
+    const center = bonusBlobCenterPx(blob, "#vspBackEffectLayer");
+    spawnSplatEffect(blob, center, "#vspBackEffectLayer");
+    spawnParticleBurst(blob, center, "#vspBackEffectLayer");
 
     blob.alive = false;
     state.bonusScore += 1;
