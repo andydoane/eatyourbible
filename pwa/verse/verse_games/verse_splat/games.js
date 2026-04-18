@@ -667,19 +667,21 @@ function gameplayShell({ bonus=false }){
     ]).filter(label => normalizeWord(label) !== normalizeWord(correct));
   }
 
-function decoysForCurrentPhase(correct){
-  if (MODE_CONFIG[state.mode].decoyMode === "fun") return easyDecoys(correct);
+  function decoysForCurrentPhase(correct){
+    if (state.phase === "book"){
+      return bookDecoys(correct);
+    }
 
-  if (state.phase === "book"){
-    return bookDecoys(correct);
+    if (state.phase === "reference"){
+      return referenceDecoys(correct);
+    }
+
+    if (MODE_CONFIG[state.mode].decoyMode === "fun"){
+      return easyDecoys(correct);
+    }
+
+    return verseWordDecoys(correct);
   }
-
-  if (state.phase === "reference"){
-    return referenceDecoys(correct);
-  }
-
-  return verseWordDecoys(correct);
-}
 
   function randomColorSet(count, takenColors=[]){
     const pool = shuffle(BLOB_COLORS.filter(c => !takenColors.includes(c.fill)));
