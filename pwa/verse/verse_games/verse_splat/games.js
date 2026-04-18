@@ -855,17 +855,22 @@ function gameplayShell({ bonus=false }){
     const center = centerOverride || blobCenterPx(blob, layerSelector);
     const fill = blob.color;
     const count = Math.floor(rand(7, 11));
+    const splatScale = rand(0.92, 1.08);
+    const splatBase = clamp(currentBounds().width * 0.20, 120, 200);
+    const splatSize = splatBase * splatScale;
     let particles = "";
 
     for (let i = 0; i < count; i++){
       const angle = rand(0, Math.PI * 2);
-      const distance = rand(26, 72);
+      const distance = rand(splatSize * 0.18, splatSize * 0.46);
       const tx = Math.cos(angle) * distance;
       const ty = Math.sin(angle) * distance;
-      const w = rand(10, 24).toFixed(1);
-      const h = rand(6, 16).toFixed(1);
+
+      const w = rand(splatSize * 0.14, splatSize * 0.28).toFixed(1);
+      const h = rand(splatSize * 0.08, splatSize * 0.18).toFixed(1);
+
       const rot = rand(-40, 40).toFixed(1);
-      const dur = rand(320, 520).toFixed(0);
+      const dur = rand(420, 620).toFixed(0);
 
       particles += `
         <div class="vsp-particle"
@@ -882,7 +887,7 @@ function gameplayShell({ bonus=false }){
 
     const markup = `<div class="vsp-particle-burst" style="color:${fill};">${particles}</div>`;
     const node = effectNodeAt(center.x, center.y, markup, layerSelector);
-    if (node) setTimeout(() => node.remove(), 700);
+    if (node) setTimeout(() => node.remove(), 800);
   }
 
   
