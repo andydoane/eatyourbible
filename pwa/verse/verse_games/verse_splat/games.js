@@ -15,6 +15,34 @@
   const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
   const rand = (min, max) => min + Math.random() * (max - min);
 
+  function hexToRgb(hex){
+    const clean = String(hex || "").replace("#", "").trim();
+    if (clean.length !== 6) return { r:255, g:255, b:255 };
+    return {
+      r: parseInt(clean.slice(0, 2), 16),
+      g: parseInt(clean.slice(2, 4), 16),
+      b: parseInt(clean.slice(4, 6), 16)
+    };
+  }
+
+  function rgbToHex(r, g, b){
+    const toHex = (n) => clamp(Math.round(n), 0, 255).toString(16).padStart(2, "0");
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+  }
+
+  function adjustHexColor(hex, amount){
+    const { r, g, b } = hexToRgb(hex);
+    if (amount >= 0){
+      return rgbToHex(
+        r + (255 - r) * amount,
+        g + (255 - g) * amount,
+        b + (255 - b) * amount
+      );
+    }
+    const factor = 1 + amount;
+    return rgbToHex(r * factor, g * factor, b * factor);
+  }
+
   const BLOB_COLORS = [
     { fill:"#ff5a51", text:"#fff" },
     { fill:"#ffa351", text:"#fff" },
@@ -890,6 +918,52 @@ function gameplayShell({ bonus=false }){
     if (node) setTimeout(() => node.remove(), 800);
   }
 
+
+  function spawnParticleBurst(blob, centerOverride=null, layerSelector="#vspBackEffectLayer"){
+    const center = centerOverride || blobCenterPx(blob, layerSelector);
+    const fill = blob.color;
+    const count = Math.floor(rand(7, 11));
+    const splatScale = rand(0.92, 1.08);
+    const splatBase = clamp(currentBounds().width * 0.20, 120, 200);
+    const splatSize = splatBase * splatScale;
+    let particles = "";
+
+    for (let i = 0; i < count; i++){
+      const angle = rand(0, Math.PI * 2);
+      const distance = rand(splatSize * 0.18, splatSize * 0.46);
+      const tx = Math.cos(angle) * distance;
+      const ty = Math.sin(angle) * distance;
+
+      const w = rand(splatSize * 0.14, splatSize * 0.28).toFixed(1);
+      const h = rand(splatSize * 0.08, splatSize * 0.18).toFixed(1);
+
+      const rot = rand(-40, 40).toFixed(1);
+      const dur = rand(420, 620).toFixed(0);
+
+      const shadeAmount = Math.random() < 0.5
+        ? rand(0.10, 0.18)
+        : -rand(0.10, 0.18);
+
+      const particleColor = adjustHexColor(fill, shadeAmount);
+
+      particles += `
+        <div class="vsp-particle"
+          style="
+            --tx:${tx.toFixed(1)}px;
+            --ty:${ty.toFixed(1)}px;
+            --pw:${w}px;
+            --ph:${h}px;
+            --prot:${rot}deg;
+            --pdur:${dur}ms;
+            --pcolor:${particleColor};
+          ">
+        </div>`;
+    }
+
+    const markup = `<div class="vsp-particle-burst" style="color:${fill};">${particles}</div>`;
+    const node = effectNodeAt(center.x, center.y, markup, layerSelector);
+    if (node) setTimeout(() => node.remove(), 800);
+  }
   
   function spawnSplatEffect(blob, centerOverride=null, layerSelector="#vspBackEffectLayer"){
     const center = centerOverride || blobCenterPx(blob, layerSelector);
