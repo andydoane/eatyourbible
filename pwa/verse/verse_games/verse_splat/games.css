@@ -13,15 +13,11 @@
   --vsp-shadow:0 8px 20px rgba(0,0,0,.14);
 }
 
-html,body{height:100%;min-height:100svh;background:var(--vsp-bg)}
+html,body{background:var(--vsp-bg)}
 body{overflow:hidden}
-#app.vm-shell{height:100%;min-height:100svh;}
 
 .vsp-shell{
-  min-height:100svh;
-  min-height:100dvh;
-  height:100svh;
-  height:100dvh;
+  min-height:100vh;
   padding:0;
   display:block;
   overflow:hidden;
@@ -31,9 +27,7 @@ body{overflow:hidden}
 }
 
 .vsp-mode-shell{
-  min-height:100svh;
   min-height:100dvh;
-  height:100svh;
   height:100dvh;
   display:flex;
   flex-direction:column;
@@ -61,7 +55,7 @@ body{overflow:hidden}
   align-items:center;
   text-align:center;
   gap:12px;
-  padding:calc(24px + env(safe-area-inset-top)) 18px 24px;
+  padding:24px 18px;
 }
 
 .vsp-splash-emoji{
@@ -86,9 +80,9 @@ body{overflow:hidden}
 
 .vsp-mode-card{
   width:min(100%,640px);
-  background:transparent;
+  background:rgba(255,255,255,0.08);
   border-radius:24px;
-  padding:16px 0 0;
+  padding:16px;
 }
 
 .vsp-mode-card-single{ margin-top:4px; }
@@ -100,8 +94,8 @@ body{overflow:hidden}
 }
 
 .vsp-stack{width:min(100%,860px);display:flex;flex-direction:column;align-items:center;gap:16px}
-.vsp-card{width:min(100%,760px);background:transparent;border-radius:24px;padding:0}
-.vsp-copy{font-size:clamp(16px,4vw,20px);font-weight:700;line-height:1.25;opacity:.96;color:var(--vsp-white)}
+.vsp-card{width:min(100%,760px);background:rgba(0,0,0,.08);border-radius:24px;padding:18px}
+.vsp-copy{font-size:clamp(16px,4vw,20px);font-weight:700;line-height:1.25;opacity:.96;color:var(--vsp-text)}
 .vsp-actions{width:min(100%,360px);display:flex;flex-direction:column;gap:12px}
 .vsp-mode-grid{width:min(100%,760px);display:grid;gap:14px}
 .vsp-mode-title{font-size:clamp(22px,6vw,30px);font-weight:900;line-height:1.05}
@@ -147,16 +141,13 @@ body{overflow:hidden}
 .vsp-game-screen,
 .vsp-bonus-screen{
   width:min(100%,880px);
-  min-height:100svh;
   min-height:100dvh;
-  height:100svh;
-  height:100dvh;
   margin:0 auto;
   flex:1 1 auto;
   display:flex;
   flex-direction:column;
   gap:12px;
-  padding:calc(18px + env(safe-area-inset-top)) 16px calc(22px + env(safe-area-inset-bottom));
+  padding:18px 16px 22px;
   box-sizing:border-box;
 }
 
@@ -229,10 +220,11 @@ body{overflow:hidden}
 .vsp-bonus-timer-chip{margin-left:auto}
 .vsp-menu-pill:active{transform:translateY(1px)}
 .vsp-board-main{position:absolute;inset:0;min-height:0;touch-action:none}
-.vsp-blob-layer,.vsp-effect-layer,.vsp-flash-layer{position:absolute;inset:0}
+.vsp-back-effect-layer,.vsp-blob-layer,.vsp-effect-layer,.vsp-flash-layer{position:absolute;inset:0}
+.vsp-back-effect-layer{z-index:2;pointer-events:none}
 .vsp-blob-layer{z-index:3;pointer-events:none}
-.vsp-effect-layer{z-index:2}
-.vsp-flash-layer{z-index:4}
+.vsp-effect-layer{z-index:4;pointer-events:none}
+.vsp-flash-layer{z-index:5}
 .vsp-flash-layer{pointer-events:none;opacity:0;background:rgba(255,70,70,.24)}
 .vsp-flash-layer.is-active{animation:vspFlash .28s ease}
 
@@ -255,42 +247,28 @@ body{overflow:hidden}
 .vsp-blob.is-hit{pointer-events:none}
 
 .vsp-effect{position:absolute;left:0;top:0;pointer-events:none;transform:translate(-50%,-50%)}
-.vsp-splat-svg{
-  width:clamp(120px,20vw,200px);
-  aspect-ratio:1;
-  position:relative;
-  opacity:0;
-  transform-origin:center center;
-  animation:vspSplatSvgPop .59s cubic-bezier(.18,.9,.16,1) forwards, vspSplatSvgFade .32s linear .95s forwards;
-}
-.vsp-splat-svg svg{display:block;width:100%;height:100%}
-.vsp-splat-svg [fill]:not([fill="none"]){fill:currentColor !important}
-.vsp-splat-svg path,.vsp-splat-svg ellipse,.vsp-splat-svg circle,.vsp-splat-svg polygon{fill:currentColor !important;stroke:none !important}
-
-.vsp-particle-burst{
-  position:absolute;
-  inset:0;
-  pointer-events:none;
-}
-.vsp-particle{
-  position:absolute;
-  left:50%;
-  top:50%;
-  width:var(--p-w);
-  height:var(--p-h);
-  margin-left:calc(var(--p-w) * -0.5);
-  margin-top:calc(var(--p-h) * -0.5);
-  border-radius:999px;
-  background:currentColor;
-  opacity:.92;
-  transform:translate(0,0) rotate(var(--p-rot));
-  animation:vspParticleBurst var(--p-dur) cubic-bezier(.16,.84,.2,1) forwards;
-}
+.vsp-splat{width:clamp(90px,18vw,180px);aspect-ratio:1;position:relative;animation:vspSplat .55s ease forwards}
+.vsp-splat-core,.vsp-splat-lobe,.vsp-poof-puff{position:absolute;border-radius:50%}
+.vsp-splat-core{inset:18%}
+.vsp-splat-lobe{width:36%;height:36%}
+.vsp-drip{position:absolute;width:14%;height:34%;bottom:-8%;border-radius:999px}
 .vsp-poof{width:clamp(54px,10vw,100px);aspect-ratio:1;position:relative;animation:vspPoof .35s ease forwards}
 .vsp-poof-puff:nth-child(1){left:12%;top:32%;width:30%;height:30%}
 .vsp-poof-puff:nth-child(2){left:36%;top:16%;width:36%;height:36%}
 .vsp-poof-puff:nth-child(3){left:54%;top:40%;width:24%;height:24%}
 .vsp-poof-puff:nth-child(4){left:26%;top:52%;width:28%;height:28%}
+.vsp-particle-burst{position:relative;width:1px;height:1px}
+.vsp-particle{
+  position:absolute;
+  left:0;top:0;
+  width:var(--p-size,18px);
+  height:calc(var(--p-size,18px) * var(--p-stretch, .72));
+  border-radius:999px;
+  background:var(--p-color,#fff);
+  opacity:0;
+  transform:translate(-50%,-50%) rotate(var(--p-rot,0deg));
+  animation:vspParticleBurst var(--p-life,560ms) cubic-bezier(.14,.88,.22,1) forwards;
+}
 
 .vsp-overlay{
   position:absolute;
@@ -356,16 +334,14 @@ body{overflow:hidden}
 .vsp-bonus-timer{font-size:clamp(20px,5vw,28px);font-weight:900;color:#333}
 .vsp-bonus-score{font-size:clamp(16px,4vw,22px);font-weight:800;color:#333}
 
-.vsp-end-stat{font-size:clamp(16px,4vw,22px);font-weight:800;line-height:1.15;opacity:.96;color:var(--vsp-white)}
+.vsp-end-stat{font-size:clamp(16px,4vw,22px);font-weight:800;line-height:1.15;opacity:.96;color:var(--vsp-text)}
 
 @keyframes vspShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(5px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
 @keyframes vspRemove{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-12px) scale(.8)}}
 @keyframes vspFlash{0%{opacity:0}25%{opacity:1}100%{opacity:0}}
 @keyframes vspBlobPop{0%{transform:scale(.72)}65%{transform:scale(1.08)}100%{transform:scale(1)}}
-@keyframes vspSplatSvgPop{0%{transform:scale(.22) rotate(var(--splat-rot));opacity:0}18%{opacity:1}58%{transform:scale(var(--splat-scale-pop)) rotate(var(--splat-rot));opacity:1}100%{transform:scale(var(--splat-scale-final)) rotate(var(--splat-rot));opacity:1}}
-@keyframes vspSplatSvgFade{0%{opacity:1}100%{opacity:0}}
-@keyframes vspParticleBurst{0%{transform:translate(0,0) scale(.35) rotate(var(--p-rot));opacity:0}12%{opacity:.96}100%{transform:translate(var(--p-x), var(--p-y)) scale(1) rotate(var(--p-rot));opacity:0}}
-@keyframes vspPoof{0%{transform:scale(.55);opacity:0}25%{opacity:1}100%{transform:scale(1.15);opacity:0}}
+@keyframes vspSplat{0%{transform:translate(-50%,-50%) scale(.4);opacity:0}18%{transform:translate(-50%,-50%) scale(1.12);opacity:1}100%{transform:translate(-50%,-50%) scale(1);opacity:0}}
+@keyframes vspPoof{0%{transform:translate(-50%,-50%) scale(.55);opacity:0}25%{opacity:1}100%{transform:translate(-50%,-50%) scale(1.15);opacity:0}}
 @keyframes vspBonusIntro{0%{opacity:0}12%,70%{opacity:1}100%{opacity:0;visibility:hidden}}
 
 @media (min-width:760px){
