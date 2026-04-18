@@ -505,6 +505,7 @@ function gameplayShell({ bonus=false }){
               <div class="vsp-back-effect-layer" id="vspBackEffectLayer"></div>
               <div class="vsp-blob-layer" id="vspBlobLayer"></div>
               <div class="vsp-effect-layer" id="vspEffectLayer"></div>
+              <div class="vsp-front-effect-layer" id="vspFrontEffectLayer"></div>
               ${bonus && state.bonusIntroVisible ? `<div class="vsp-bonus-intro"><div><div class="vsp-bonus-title">SPLAT TIME!</div><div class="vsp-bonus-copy">Splat as many blobs as you can!</div></div></div>` : ''}
             </div>
             ${overlayMarkup()}
@@ -927,6 +928,21 @@ function gameplayShell({ bonus=false }){
     };
   }
 
+function viewportCenterPx(layerSelector="#vspFrontEffectLayer"){
+  const layer = $(layerSelector);
+  if (layer){
+    const rect = layer.getBoundingClientRect();
+    return {
+      x: rect.width / 2,
+      y: rect.height / 2
+    };
+  }
+  return {
+    x: window.innerWidth / 2,
+    y: window.innerHeight / 2
+  };
+}
+
   function spawnParticleBurst(blob, centerOverride=null, layerSelector="#vspBackEffectLayer"){
     const center = centerOverride || blobCenterPx(blob, layerSelector);
     const fill = blob.color;
@@ -1006,6 +1022,72 @@ function gameplayShell({ bonus=false }){
     if (node) setTimeout(() => node.remove(), 420);
   }
 
+function spawnWrongFaceSplat(){
+  const center = viewportCenterPx("#vspFrontEffectLayer");
+  const bounds = currentBounds();
+  const fill = "#333333";
+  const rotation = rand(-18, 18).toFixed(2);
+  const finalScale = rand(0.92, 1.08).toFixed(3);
+  const popScale = (parseFloat(finalScale) * 1.12).toFixed(3);
+  const wrongSplatSize = `${Math.max(bounds.width, 240)}px`;
+
+  const markup = `
+    <div class="vsp-splat-svg is-wrong-face" style="color:${fill};--wrong-splat-size:${wrongSplatSize};--splat-rot:${rotation}deg;--splat-scale-final:${finalScale};--splat-scale-pop:${popScale};">
+      ${SPLAT_SVG}
+    </div>`;
+
+  const node = effectNodeAt(center.x, center.y, markup, "#vspFrontEffectLayer");
+  if (node) setTimeout(() => node.remove(), 1400);
+}
+
+function spawnWrongFaceParticleBurst(){
+  const center = viewportCenterPx("#vspFrontEffectLayer");
+  const bounds = currentBounds();
+  const fill = "#333333";
+  const count = Math.floor(rand(7, 11));
+  const splatScale = rand(0.92, 1.08);
+  const splatBase = bounds.width;
+  const splatSize = splatBase * splatScale;
+  const baseAngle = rand(0, Math.PI * 2);
+  const step = (Math.PI * 2) / count;
+  let particles = "";
+
+  for (let i = 0; i < count; i++){
+    const angleJitter = rand(-0.10, 0.10);
+    const angle = baseAngle + (i * step) + angleJitter;
+
+    const distance = rand(splatSize * 0.62, splatSize * 1.08);
+    const tx = Math.cos(angle) * distance;
+    const ty = Math.sin(angle) * distance;
+
+    const dotSize = rand(splatSize * 0.10, splatSize * 0.18);
+    const w = dotSize.toFixed(1);
+    const h = (dotSize * rand(0.94, 1.03)).toFixed(1);
+
+    const rot = rand(-40, 40).toFixed(1);
+    const dur = rand(420, 620).toFixed(0);
+
+    const particleColor = adjustHexColor(fill, rand(0.10, 0.18));
+
+    particles += `
+      <div class="vsp-particle"
+        style="
+          --tx:${tx.toFixed(1)}px;
+          --ty:${ty.toFixed(1)}px;
+          --pw:${w}px;
+          --ph:${h}px;
+          --prot:${rot}deg;
+          --pdur:${dur}ms;
+          --pcolor:${particleColor};
+        ">
+      </div>`;
+  }
+
+  const markup = `<div class="vsp-particle-burst" style="color:${fill};">${particles}</div>`;
+  const node = effectNodeAt(center.x, center.y, markup, "#vspFrontEffectLayer");
+  if (node) setTimeout(() => node.remove(), 800);
+}
+
   function removeBlobById(id){
     state.blobs = state.blobs.filter(blob => blob.id !== id);
     const node = document.querySelector(`[data-blob-id="${id}"]`);
@@ -1035,7 +1117,8 @@ function gameplayShell({ bonus=false }){
   async function handleWrongTap(blob){
     if (state.busy) return;
     state.busy = true;
-    spawnPoofEffect(blob);
+    spawnWrongFaceSplat();
+    spawnWrongFaceParticleBurst();
     removeBlobById(blob.id);
     triggerBuildShake();
     triggerWrongFlash();
@@ -1044,7 +1127,6 @@ function gameplayShell({ bonus=false }){
       await animateHardRollback(MODE_CONFIG[state.mode].rollbackCount);
     }
     if (state.wrongCountThisField >= 2){
-      state.blobs.slice().forEach(leftover => spawnPoofEffect(leftover));
       state.blobs = [];
       renderBlobNodes();
       await sleep(140);
