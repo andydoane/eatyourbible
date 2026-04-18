@@ -65,7 +65,7 @@
     bonusIdCounter:0,
     bonusCount:0,
     done:false,
-    verseMeta:parseReference(ctx.verseRef || ""),
+    verseMeta:parseVerseMeta(ctx.verseId || "", ctx.verseRef || ""),
     bookChoices:[],
     referenceChoices:[]
   };
@@ -468,10 +468,10 @@
       }
     }
 
-    if (state.wordsBuilt >= state.wordEntries.length && state.verseMeta.book){
+    if (state.verseMeta.book){
       html += `<span class="fs-build-gap"> </span><span class="fs-build-token is-book ${state.bookBuilt ? "is-built" : ""}">${escapeHtml(state.verseMeta.book)}</span>`;
     }
-    if (state.wordsBuilt >= state.wordEntries.length && state.verseMeta.reference){
+    if (state.verseMeta.reference){
       html += `<span class="fs-build-gap"> </span><span class="fs-build-token is-reference ${state.referenceBuilt ? "is-built" : ""}">${escapeHtml(state.verseMeta.reference)}</span>`;
     }
 
@@ -497,27 +497,29 @@
     playLayer.innerHTML = playHtml;
 
     playLayer.querySelectorAll("[data-role='fruit']").forEach((el) => {
-      const onPress = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+      const onActivate = (e) => {
+        if (e){
+          if (e.cancelable) e.preventDefault();
+          e.stopPropagation();
+        }
         const id = el.dataset.id;
         if (id === "main") handleMainFruitTap();
         else handleBonusTap(Number(id));
       };
-      el.onclick = onPress;
-      el.onpointerdown = onPress;
-      el.ontouchstart = onPress;
+      el.onclick = onActivate;
+      el.onpointerdown = onActivate;
     });
 
     playLayer.querySelectorAll("[data-role='bomb']").forEach((el) => {
-      const onPress = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
+      const onActivate = (e) => {
+        if (e){
+          if (e.cancelable) e.preventDefault();
+          e.stopPropagation();
+        }
         handleBombTap();
       };
-      el.onclick = onPress;
-      el.onpointerdown = onPress;
-      el.ontouchstart = onPress;
+      el.onclick = onActivate;
+      el.onpointerdown = onActivate;
     });
 
     sliceLayer.innerHTML = state.activeSlices.filter(Boolean).map((piece) => `
@@ -536,7 +538,7 @@
   }
 
   function renderFruitItem(item, isBonus){
-    const cls = `fs-item ${item.flashWrong ? "is-wrong" : ""}`;
+    const cls = `fs-item ${item.flashWrong ? "is-wrong" : ""} ${item.rejecting ? "is-rejecting" : ""}`;
     const id = isBonus ? item.id : "main";
     const wordHtml = isBonus ? "" : `<div class="fs-word-chip">${escapeHtml(item.word || "")}</div>`;
     return `
@@ -645,6 +647,7 @@
       isCorrect,
       alive:true,
       flashWrong:false,
+      rejecting:false,
       wasTapped:false,
       tilt:-16 + Math.random() * 32
     };
@@ -708,19 +711,21 @@
     }
 
     item.flashWrong = true;
+    item.rejecting = true;
     state.wrongStreak += 1;
-    state.buildShakeUntil = performance.now() + 280;
+    state.buildShakeUntil = performance.now() + 320;
     state.fieldFlashUntil = performance.now() + 260;
     if (selectedMode === "hard" && state.phase === "words"){
       state.wordsBuilt = Math.max(0, state.wordsBuilt - 2);
     }
     setPaused(true, "wrong");
+    renderHud();
     window.setTimeout(() => {
       item.alive = false;
       if (state.activeFruit === item) state.activeFruit = null;
       if (!state.done) setPaused(false, "");
       renderHud();
-    }, 260);
+    }, 320);
   }
 
   function handleBombTap(){
@@ -731,9 +736,10 @@
     state.wordsBuilt = 0;
     state.bookBuilt = false;
     state.referenceBuilt = false;
-    state.buildShakeUntil = performance.now() + 280;
+    state.buildShakeUntil = performance.now() + 320;
     state.fieldFlashUntil = performance.now() + 260;
     setPaused(true, "bomb");
+    renderHud();
     window.setTimeout(() => {
       bomb.alive = false;
       if (state.activeBomb === bomb) state.activeBomb = null;
@@ -881,6 +887,7 @@
 
   function makeReferenceChoices(chapter, verse, verseEnd){
     const correct = formatReference(chapter, verse, verseEnd);
+    if (!correct) return [];
     const refs = new Set([correct]);
     const span = Number.isFinite(verseEnd) ? Math.max(0, verseEnd - verse) : 0;
     let tries = 0;
@@ -896,10 +903,42 @@
     return shuffle([...refs]);
   }
 
-  function parseReference(ref){
+  function parseVerseMeta(verseId, fallbackRef){
+    const slug = String(verseId || "").trim().toLowerCase();
+    if (slug){
+      const parts = slug.split("_").filter(Boolean);
+      const nums = [];
+      while (parts.length && /^\d+$/.test(parts[parts.length - 1])){
+        nums.unshift(Number(parts.pop()));
+      }
+
+      if (parts.length){
+        const book = parts.map((part, index) => {
+          if (/^\d+$/.test(part)) return part;
+          if (index === 0 && /^\d+$/.test(parts[0])) return part.charAt(0).toUpperCase() + part.slice(1);
+          return part.charAt(0).toUpperCase() + part.slice(1);
+        }).join(" ");
+        const chapter = Number.isFinite(nums[0]) ? nums[0] : null;
+        const verse = Number.isFinite(nums[1]) ? nums[1] : null;
+        const verseEnd = Number.isFinite(nums[2]) ? nums[2] : null;
+        return {
+          book,
+          chapter,
+          verse,
+          verseEnd,
+          reference: formatReference(chapter, verse, verseEnd)
+        };
+      }
+    }
+
+    return parseReferenceFallback(fallbackRef);
+  }
+
+  function parseReferenceFallback(ref){
     const text = String(ref || "").trim();
-    const match = text.match(/^(.*?)(?:\s+(\d+):(\d+)(?:-(\d+))?)?$/);
-    const book = (match?.[1] || text).trim();
+    const cleaned = text.replace(/,\s*[A-Z0-9-]+$/i, "").trim();
+    const match = cleaned.match(/^(.*?)(?:\s+(\d+):(\d+)(?:-(\d+))?)?$/);
+    const book = (match?.[1] || cleaned).trim();
     const chapter = match?.[2] ? Number(match[2]) : null;
     const verse = match?.[3] ? Number(match[3]) : null;
     const verseEnd = match?.[4] ? Number(match[4]) : null;
@@ -908,7 +947,7 @@
       chapter,
       verse,
       verseEnd,
-      reference: chapter && verse ? formatReference(chapter, verse, verseEnd) : ""
+      reference: formatReference(chapter, verse, verseEnd)
     };
   }
 
