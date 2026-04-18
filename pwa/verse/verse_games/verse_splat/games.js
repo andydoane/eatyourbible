@@ -886,50 +886,14 @@ function gameplayShell({ bonus=false }){
     const splatScale = rand(0.92, 1.08);
     const splatBase = clamp(currentBounds().width * 0.20, 120, 200);
     const splatSize = splatBase * splatScale;
+    const baseAngle = rand(0, Math.PI * 2);
+    const step = (Math.PI * 2) / count;
     let particles = "";
 
     for (let i = 0; i < count; i++){
-      const angle = rand(0, Math.PI * 2);
-      const distance = rand(splatSize * 0.18, splatSize * 0.46);
-      const tx = Math.cos(angle) * distance;
-      const ty = Math.sin(angle) * distance;
+      const angleJitter = rand(-0.10, 0.10);
+      const angle = baseAngle + (i * step) + angleJitter;
 
-      const w = rand(splatSize * 0.14, splatSize * 0.28).toFixed(1);
-      const h = rand(splatSize * 0.08, splatSize * 0.18).toFixed(1);
-
-      const rot = rand(-40, 40).toFixed(1);
-      const dur = rand(420, 620).toFixed(0);
-
-      particles += `
-        <div class="vsp-particle"
-          style="
-            --tx:${tx.toFixed(1)}px;
-            --ty:${ty.toFixed(1)}px;
-            --pw:${w}px;
-            --ph:${h}px;
-            --prot:${rot}deg;
-            --pdur:${dur}ms;
-          ">
-        </div>`;
-    }
-
-    const markup = `<div class="vsp-particle-burst" style="color:${fill};">${particles}</div>`;
-    const node = effectNodeAt(center.x, center.y, markup, layerSelector);
-    if (node) setTimeout(() => node.remove(), 800);
-  }
-
-
-  function spawnParticleBurst(blob, centerOverride=null, layerSelector="#vspBackEffectLayer"){
-    const center = centerOverride || blobCenterPx(blob, layerSelector);
-    const fill = blob.color;
-    const count = Math.floor(rand(7, 11));
-    const splatScale = rand(0.92, 1.08);
-    const splatBase = clamp(currentBounds().width * 0.20, 120, 200);
-    const splatSize = splatBase * splatScale;
-    let particles = "";
-
-    for (let i = 0; i < count; i++){
-      const angle = rand(0, Math.PI * 2);
       const distance = rand(splatSize * 0.18, splatSize * 0.46);
       const tx = Math.cos(angle) * distance;
       const ty = Math.sin(angle) * distance;
@@ -964,6 +928,7 @@ function gameplayShell({ bonus=false }){
     const node = effectNodeAt(center.x, center.y, markup, layerSelector);
     if (node) setTimeout(() => node.remove(), 800);
   }
+
   
   function spawnSplatEffect(blob, centerOverride=null, layerSelector="#vspBackEffectLayer"){
     const center = centerOverride || blobCenterPx(blob, layerSelector);
