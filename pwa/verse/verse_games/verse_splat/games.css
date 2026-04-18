@@ -231,8 +231,8 @@ body{overflow:hidden}
 .vsp-board-main{position:absolute;inset:0;min-height:0;touch-action:none}
 .vsp-blob-layer,.vsp-effect-layer,.vsp-flash-layer{position:absolute;inset:0}
 .vsp-blob-layer{z-index:3;pointer-events:none}
-.vsp-effect-layer{z-index:4}
-.vsp-flash-layer{z-index:5}
+.vsp-effect-layer{z-index:2}
+.vsp-flash-layer{z-index:4}
 .vsp-flash-layer{pointer-events:none;opacity:0;background:rgba(255,70,70,.24)}
 .vsp-flash-layer.is-active{animation:vspFlash .28s ease}
 
@@ -266,6 +266,26 @@ body{overflow:hidden}
 .vsp-splat-svg svg{display:block;width:100%;height:100%}
 .vsp-splat-svg [fill]:not([fill="none"]){fill:currentColor !important}
 .vsp-splat-svg path,.vsp-splat-svg ellipse,.vsp-splat-svg circle,.vsp-splat-svg polygon{fill:currentColor !important;stroke:none !important}
+
+.vsp-particle-burst{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+}
+.vsp-particle{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:var(--p-w);
+  height:var(--p-h);
+  margin-left:calc(var(--p-w) * -0.5);
+  margin-top:calc(var(--p-h) * -0.5);
+  border-radius:999px;
+  background:currentColor;
+  opacity:.92;
+  transform:translate(0,0) rotate(var(--p-rot));
+  animation:vspParticleBurst var(--p-dur) cubic-bezier(.16,.84,.2,1) forwards;
+}
 .vsp-poof{width:clamp(54px,10vw,100px);aspect-ratio:1;position:relative;animation:vspPoof .35s ease forwards}
 .vsp-poof-puff:nth-child(1){left:12%;top:32%;width:30%;height:30%}
 .vsp-poof-puff:nth-child(2){left:36%;top:16%;width:36%;height:36%}
@@ -344,6 +364,7 @@ body{overflow:hidden}
 @keyframes vspBlobPop{0%{transform:scale(.72)}65%{transform:scale(1.08)}100%{transform:scale(1)}}
 @keyframes vspSplatSvgPop{0%{transform:scale(.22) rotate(var(--splat-rot));opacity:0}18%{opacity:1}58%{transform:scale(var(--splat-scale-pop)) rotate(var(--splat-rot));opacity:1}100%{transform:scale(var(--splat-scale-final)) rotate(var(--splat-rot));opacity:1}}
 @keyframes vspSplatSvgFade{0%{opacity:1}100%{opacity:0}}
+@keyframes vspParticleBurst{0%{transform:translate(0,0) scale(.35) rotate(var(--p-rot));opacity:0}12%{opacity:.96}100%{transform:translate(var(--p-x), var(--p-y)) scale(1) rotate(var(--p-rot));opacity:0}}
 @keyframes vspPoof{0%{transform:scale(.55);opacity:0}25%{opacity:1}100%{transform:scale(1.15);opacity:0}}
 @keyframes vspBonusIntro{0%{opacity:0}12%,70%{opacity:1}100%{opacity:0;visibility:hidden}}
 

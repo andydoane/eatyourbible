@@ -854,15 +854,8 @@ function gameplayShell({ bonus=false }){
   function spawnSplatEffect(blob){
     const center = blobCenterPx(blob);
     const fill = blob.color;
-    const rotation = rand(-18, 18).toFixed(2);
-    const finalScale = rand(0.92, 1.08).toFixed(3);
-    const popScale = (parseFloat(finalScale) * 1.12).toFixed(3);
-    const markup = `
-      <div class="vsp-splat-svg" style="color:${fill};--splat-rot:${rotation}deg;--splat-scale-final:${finalScale};--splat-scale-pop:${popScale};">
-        ${SPLAT_SVG}
-      </div>`;
-    const node = effectNodeAt(center.x, center.y, markup);
-    if (node) setTimeout(() => node.remove(), 1400);
+    spawnSplatAt(center, fill);
+    spawnParticleBurstAt(center, fill);
   }
 
   function spawnPoofEffect(blob){
@@ -1108,17 +1101,8 @@ function gameplayShell({ bonus=false }){
     const blob = state.bonusBlobs.find(entry => entry.id === id);
     if (!blob || !blob.alive) return;
     const center = bonusBlobCenterPx(blob);
-    const node = effectNodeAt(center.x, center.y, `
-      <div class="vsp-splat">
-        <div class="vsp-splat-core" style="background:${blob.color};"></div>
-        <div class="vsp-splat-lobe" style="left:4%;top:18%;background:${blob.color};"></div>
-        <div class="vsp-splat-lobe" style="right:8%;top:20%;background:${blob.color};"></div>
-        <div class="vsp-splat-lobe" style="left:18%;bottom:12%;background:${blob.color};"></div>
-        <div class="vsp-splat-lobe" style="right:14%;bottom:10%;background:${blob.color};"></div>
-        <div class="vsp-drip" style="left:30%;background:${blob.color};"></div>
-        <div class="vsp-drip" style="left:58%;height:44%;background:${blob.color};"></div>
-      </div>`);
-    if (node) setTimeout(() => node.remove(), 620);
+    spawnSplatAt(center, blob.color);
+    spawnParticleBurstAt(center, blob.color);
     blob.alive = false;
     state.bonusScore += 1;
     const blobNode = document.querySelector(`[data-bonus-id="${id}"]`);
