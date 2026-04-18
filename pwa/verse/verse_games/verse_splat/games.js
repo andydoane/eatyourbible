@@ -642,13 +642,13 @@ function gameplayShell({ bonus=false }){
     const node = document.querySelector(`[data-blob-id="${blob.id}"]`);
     if (!node) return;
     const bounds = currentBounds();
-    const wobbleX = Math.sin(blob.wobblePhase) * 0.012;
-    const wobbleY = Math.cos(blob.wobblePhase * 0.9) * 0.01;
+    const wobbleX = Math.sin(blob.wobblePhase) * 0.044;
+    const wobbleY = Math.cos(blob.wobblePhase * 0.9) * 0.044;
     const scaleX = 1 + wobbleX + blob.impactX;
     const scaleY = 1 + wobbleY + blob.impactY;
     node.style.transform = `translate(${blob.x * bounds.width}px, ${blob.y * bounds.height}px)`;
     const body = $(".vsp-blob-body", node);
-    if (body) body.style.transform = `scale(${scaleX}, ${scaleY}) rotate(${Math.sin(blob.wobblePhase * 0.55) * 1.2}deg)`;
+    if (body) body.style.transform = `scale(${scaleX}, ${scaleY}) rotate(${Math.sin(blob.wobblePhase * 0.55) * 6}deg)`;
     const label = $(".vsp-blob-label", node);
     if (label) label.style.letterSpacing = `${Math.sin(blob.wobblePhase) * 0.012}em`;
   }
@@ -678,7 +678,7 @@ function gameplayShell({ bonus=false }){
   function makeBlob({ label, isCorrect=false, preserveColor=null, preserveMotion=null }){
     const bounds = currentBounds();
     const size = labelSizeForBoard(label, bounds, false);
-    const velocityMag = (0.18 + Math.random() * 0.08) * MODE_CONFIG[state.mode].speedMultiplier;
+    const velocityMag = 0.25 * MODE_CONFIG[state.mode].speedMultiplier;
     const angle = rand(0, Math.PI * 2);
     const chosenColor = preserveColor || randomColorSet(1, state.blobs.map(b => b.color))[0] || BLOB_COLORS[0];
     const existing = state.blobs.filter(blob => blob.state === "live" || blob.state === "spawning");
@@ -927,31 +927,31 @@ function gameplayShell({ bonus=false }){
     if (blob.x <= minX){
       blob.x = minX;
       blob.vx = Math.abs(blob.vx);
-      blob.impactX = -0.42;
-      blob.impactY = 0.24;
+      blob.impactX = -0.23;
+      blob.impactY = 0.8;
     }
     else if (blob.x >= maxX){
       blob.x = maxX;
       blob.vx = -Math.abs(blob.vx);
-      blob.impactX = -0.42;
-      blob.impactY = 0.24;
+      blob.impactX = -0.23;
+      blob.impactY = 0.8;
     }
 
     if (blob.y <= minY){
       blob.y = minY;
       blob.vy = Math.abs(blob.vy);
-      blob.impactY = -0.42;
-      blob.impactX = 0.24;
+      blob.impactY = -0.57;
+      blob.impactX = 0.39;
     }
     else if (blob.y >= maxY){
       blob.y = maxY;
       blob.vy = -Math.abs(blob.vy);
-      blob.impactY = -0.42;
-      blob.impactX = 0.24;
+      blob.impactY = -0.57;
+      blob.impactX = 0.39;
     }
 
     blob.wobblePhase += dt * blob.wobbleSpeed * 3.2;
-    const decay = Math.pow(0.001, dt * 1.25);
+    const decay = Math.pow(0.001, dt * 1);
     blob.impactX *= decay;
     blob.impactY *= decay;
   }
