@@ -5,8 +5,10 @@
 
   const ctx = await window.VerseGameBridge.getVerseContext();
   const GAME_ID = "verse_splat";
+  const GAME_ID = "verse_splat";
   const GAME_TITLE = "Verse Splat";
   const BONUS_TIME_LIMIT_MS = 30000;
+  const CORRECT_TAP_LOCK_MS = 180;
   let muted = false;
 
   const $ = (s, root=document) => root.querySelector(s);
@@ -127,6 +129,7 @@
     rafId: 0,
     lastTs: 0,
     fieldRect: null,
+    inputLockedUntil: 0,
 
     shakeKey: 0,
     flashKey: 0,
@@ -251,6 +254,7 @@
     state.nextBlobId = 1;
     state.wrongCountThisField = 0;
     state.lastTs = 0;
+    state.inputLockedUntil = 0;
     state.shakeKey = 0;
     state.flashKey = 0;
     state.bonusIntroVisible = false;
@@ -271,6 +275,16 @@
     else if (state.progressIndex < state.words.length + state.bookTokens.length) state.phase = "book";
     else if (state.progressIndex < state.segments.length) state.phase = "reference";
     else state.phase = "complete";
+  }
+
+  function releaseSpawningBlobsSoon(delay = CORRECT_TAP_LOCK_MS){
+    window.setTimeout(() => {
+      for (const blob of state.blobs){
+        if (blob.state === "spawning"){
+          blob.state = "live";
+        }
+      }
+    }, delay);
   }
 
   function currentCorrectLabel(){
@@ -309,7 +323,9 @@
 
   function hitTestBlobIdAtBoardPoint(boardX, boardY, bonus=false){
     const bounds = currentBounds();
-    const list = bonus ? state.bonusBlobs.filter(blob => blob.alive) : state.blobs.slice();
+    const list = bonus
+      ? state.bonusBlobs.filter(blob => blob.alive)
+      : state.blobs.filter(blob => blob.state === "live");
     const hits = [];
 
     for (let i = list.length - 1; i >= 0; i--){
@@ -350,6 +366,7 @@
 
     const onPress = (event) => {
       if (state.menuOpen || state.helpOpen || state.busy) return;
+      if (performance.now() < state.inputLockedUntil) return;
       if (state.screen !== "game" && state.screen !== "bonus") return;
 
       const point = extractClientPoint(event);
@@ -817,7 +834,7 @@ function gameplayShell({ bonus=false }){
       state.blobs.push(blob);
     });
     renderBlobNodes();
-    state.blobs.forEach(blob => blob.state = "live");
+    releaseSpawningBlobsSoon();
   }
 
   function refillFieldAfterCorrect(){
@@ -834,7 +851,7 @@ function gameplayShell({ bonus=false }){
       state.blobs.push(makeBlob({ label, isCorrect: normalizeWord(label) === normalizeWord(correct), preserveColor:newColors[i] }));
     }
     renderBlobNodes();
-    state.blobs.forEach(blob => blob.state = "live");
+    releaseSpawningBlobsSoon();
   }
 
   function refillFieldAfterSecondWrong(){
@@ -999,6 +1016,7 @@ function gameplayShell({ bonus=false }){
   async function handleCorrectTap(blob){
     if (state.busy) return;
     state.busy = true;
+    state.inputLockedUntil = performance.now() + CORRECT_TAP_LOCK_MS;
     spawnSplatEffect(blob);
     spawnParticleBurst(blob);
     removeBlobById(blob.id);
