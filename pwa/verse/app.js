@@ -1409,6 +1409,8 @@ function bindLongPress(element, {
 
   let timer = null;
   let fired = false;
+  let startX = 0;
+  let startY = 0;
 
   const clearPress = () => {
     if (timer){
@@ -1420,6 +1422,10 @@ function bindLongPress(element, {
   const startPress = (event) => {
     if (!shouldStart()) return;
 
+    const point = event.touches?.[0] || event;
+    startX = point?.clientX ?? 0;
+    startY = point?.clientY ?? 0;
+
     fired = false;
     clearPress();
 
@@ -1430,20 +1436,44 @@ function bindLongPress(element, {
     }, delay);
   };
 
+  const movePress = (event) => {
+    if (!timer) return;
+    const point = event.touches?.[0] || event;
+    const x = point?.clientX ?? startX;
+    const y = point?.clientY ?? startY;
+    const dx = x - startX;
+    const dy = y - startY;
+    if (Math.hypot(dx, dy) > 12){
+      clearPress();
+    }
+  };
+
   const endPress = () => {
     clearPress();
   };
 
+  element.style.webkitTouchCallout = "none";
+  element.style.webkitUserSelect = "none";
+  element.style.userSelect = "none";
+  element.style.touchAction = "manipulation";
+
+  element.addEventListener("contextmenu", (event) => {
+    event.preventDefault();
+  });
+
   element.addEventListener("pointerdown", startPress, { passive: true });
+  element.addEventListener("pointermove", movePress, { passive: true });
   element.addEventListener("pointerup", endPress, { passive: true });
   element.addEventListener("pointercancel", endPress, { passive: true });
   element.addEventListener("pointerleave", endPress, { passive: true });
 
   element.addEventListener("touchstart", startPress, { passive: true });
+  element.addEventListener("touchmove", movePress, { passive: true });
   element.addEventListener("touchend", endPress, { passive: true });
   element.addEventListener("touchcancel", endPress, { passive: true });
 
   element.addEventListener("mousedown", startPress, { passive: true });
+  element.addEventListener("mousemove", movePress, { passive: true });
   element.addEventListener("mouseup", endPress, { passive: true });
   element.addEventListener("mouseleave", endPress, { passive: true });
 
@@ -3142,7 +3172,14 @@ function screenTitle(idx){
 
   wrap.innerHTML = `
     <div class="title-content">
-      <img id="titleLogoSecret" src="${TITLE_LOGO}" alt="Title graphic" onerror="this.style.display='none'">
+      <div id="titleLogoSecretWrap" class="title-logo-secret-wrap">
+        <img
+          id="titleLogoSecret"
+          src="${TITLE_LOGO}"
+          alt="Title graphic"
+          draggable="false"
+          onerror="this.style.display='none'">
+      </div>
     <h2>
       ${HAS_VERSE_SELECTION ? `Let's memorize<br>${VERSE_REF}` : "Choose a verse from<br>below to begin"}
       ${DEBUG_MODE ? " (DEBUG)" : ""}
@@ -3171,8 +3208,21 @@ function screenTitle(idx){
   wrap.querySelector("#titleMain").onclick = (e)=>{ e.stopPropagation(); titleRun(); };
 
 
+  const titleLogoSecretWrap = wrap.querySelector("#titleLogoSecretWrap");
   const titleLogoSecret = wrap.querySelector("#titleLogoSecret");
-  bindLongPress(titleLogoSecret, {
+
+  if (titleLogoSecret){
+    titleLogoSecret.setAttribute("draggable", "false");
+    titleLogoSecret.style.webkitUserDrag = "none";
+    titleLogoSecret.style.webkitTouchCallout = "none";
+    titleLogoSecret.style.userSelect = "none";
+    titleLogoSecret.style.webkitUserSelect = "none";
+    titleLogoSecret.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+    });
+  }
+
+  bindLongPress(titleLogoSecretWrap, {
     delay: HIDDEN_LEARN_COMPLETE_LONG_PRESS_MS,
     shouldStart: () => HAS_VERSE_SELECTION && !!VERSE_ID,
     onLongPress: () => {
