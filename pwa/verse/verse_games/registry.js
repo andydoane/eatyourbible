@@ -26,6 +26,20 @@ window.EXTERNAL_VERSE_GAMES = [
     modes: ["easy", "medium", "hard"]
   }
 },
+
+  {
+    enabled: true,
+    manifest: {
+      id: "foodslice",
+      title: "Food Slice",
+      description: "Slice the correct flying food to build the verse.",
+      icon: "🍉",
+      launchUrl: "./verse_games/foodslice/index.html",
+      visibleInCarousel: true,
+      progressType: "standard",
+      modes: ["easy", "medium", "hard"]
+    }
+  }
   
   {
     enabled: true,
