@@ -894,12 +894,13 @@ function gameplayShell({ bonus=false }){
       const angleJitter = rand(-0.10, 0.10);
       const angle = baseAngle + (i * step) + angleJitter;
 
-      const distance = rand(splatSize * 0.18, splatSize * 0.46);
+      const distance = rand(splatSize * 0.62, splatSize * 1.08);
       const tx = Math.cos(angle) * distance;
       const ty = Math.sin(angle) * distance;
 
-      const w = rand(splatSize * 0.14, splatSize * 0.28).toFixed(1);
-      const h = rand(splatSize * 0.08, splatSize * 0.18).toFixed(1);
+      const dotSize = rand(splatSize * 0.10, splatSize * 0.18);
+      const w = dotSize.toFixed(1);
+      const h = (dotSize * rand(0.94, 1.03)).toFixed(1);
 
       const rot = rand(-40, 40).toFixed(1);
       const dur = rand(420, 620).toFixed(0);
