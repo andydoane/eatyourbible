@@ -255,11 +255,17 @@ body{overflow:hidden}
 .vsp-blob.is-hit{pointer-events:none}
 
 .vsp-effect{position:absolute;left:0;top:0;pointer-events:none;transform:translate(-50%,-50%)}
-.vsp-splat{width:clamp(90px,18vw,180px);aspect-ratio:1;position:relative;animation:vspSplat .55s ease forwards}
-.vsp-splat-core,.vsp-splat-lobe,.vsp-poof-puff{position:absolute;border-radius:50%}
-.vsp-splat-core{inset:18%}
-.vsp-splat-lobe{width:36%;height:36%}
-.vsp-drip{position:absolute;width:14%;height:34%;bottom:-8%;border-radius:999px}
+.vsp-splat-svg{
+  width:clamp(120px,20vw,200px);
+  aspect-ratio:1;
+  position:relative;
+  opacity:0;
+  transform-origin:center center;
+  animation:vspSplatSvgPop .59s cubic-bezier(.18,.9,.16,1) forwards, vspSplatSvgFade .32s linear .95s forwards;
+}
+.vsp-splat-svg svg{display:block;width:100%;height:100%}
+.vsp-splat-svg [fill]:not([fill="none"]){fill:currentColor !important}
+.vsp-splat-svg path,.vsp-splat-svg ellipse,.vsp-splat-svg circle,.vsp-splat-svg polygon{fill:currentColor !important;stroke:none !important}
 .vsp-poof{width:clamp(54px,10vw,100px);aspect-ratio:1;position:relative;animation:vspPoof .35s ease forwards}
 .vsp-poof-puff:nth-child(1){left:12%;top:32%;width:30%;height:30%}
 .vsp-poof-puff:nth-child(2){left:36%;top:16%;width:36%;height:36%}
@@ -336,7 +342,8 @@ body{overflow:hidden}
 @keyframes vspRemove{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-12px) scale(.8)}}
 @keyframes vspFlash{0%{opacity:0}25%{opacity:1}100%{opacity:0}}
 @keyframes vspBlobPop{0%{transform:scale(.72)}65%{transform:scale(1.08)}100%{transform:scale(1)}}
-@keyframes vspSplat{0%{transform:scale(.4);opacity:0}18%{transform:scale(1.12);opacity:1}100%{transform:scale(1);opacity:0}}
+@keyframes vspSplatSvgPop{0%{transform:scale(.22) rotate(var(--splat-rot));opacity:0}18%{opacity:1}58%{transform:scale(var(--splat-scale-pop)) rotate(var(--splat-rot));opacity:1}100%{transform:scale(var(--splat-scale-final)) rotate(var(--splat-rot));opacity:1}}
+@keyframes vspSplatSvgFade{0%{opacity:1}100%{opacity:0}}
 @keyframes vspPoof{0%{transform:scale(.55);opacity:0}25%{opacity:1}100%{transform:scale(1.15);opacity:0}}
 @keyframes vspBonusIntro{0%{opacity:0}12%,70%{opacity:1}100%{opacity:0;visibility:hidden}}
 
