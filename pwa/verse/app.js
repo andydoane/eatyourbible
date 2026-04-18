@@ -419,7 +419,6 @@ function markTrafficCompleted(verseId, theme){
 // All tracked built-in games
 const BUILTIN_GAME_IDS = [
   "traffic",
-  "foodslice",
   "tower"
 ];
 
@@ -540,7 +539,6 @@ function getVerseDetailProgressDisplay(gameId, gameProgress){
 function getBuiltInVerseDetailGames(){
   return [
     { id: "traffic", label: "Traffic Tap" },
-    { id: "foodslice", label: "Food Slice" },
     { id: "tower", label: "Tower of Bible" }
   ];
 }
@@ -1248,7 +1246,6 @@ const State = {
   bouncingGame: null,
   trafficGame: null,
   towerGame: null,
-  foodSliceGame: null,
   debugBounce: false,
 
   // Learn progression
@@ -1350,11 +1347,10 @@ const LEARN_LEVEL_OPTIONS = [
 
 const BUILTIN_PRACTICE_GAMES = [
   { id:"traffic", title:"🚗 Traffic Tap", desc:"Tap moving cards and animals.", source:"builtin" },
-  { id:"foodslice", title:"🍉 Food Slice", desc:"Tap the flying food.", source:"builtin" },
   { id:"tower", title:"🏰 Tower of Bible", desc:"Build a sky-high tower one word at a time.", source:"builtin" },
 ];
 
-const HIDDEN_PRACTICE_GAME_ID = "verse_splat";
+const HIDDEN_PRACTICE_GAME_ID = "foodslice";
 const HIDDEN_PRACTICE_LONG_PRESS_MS = 2000;
 const HIDDEN_LEARN_COMPLETE_LONG_PRESS_MS = 2000;
 
@@ -3091,11 +3087,8 @@ function startGame(id){
 }
 
 function getGameIntroTitle(){
-  if (State.activeGame === "scramble") return "Verse Scramble";
-  if (State.activeGame === "bouncing") return "Bouncing Words";
   if (State.activeGame === "traffic") return "Traffic Tap";
   if (State.activeGame === "tower") return "Tower of Bible";
-  if (State.activeGame === "foodslice") return "Food Slice";
   return "Verse Launch";
 }
 
@@ -3104,7 +3097,6 @@ function getGameIntroEmoji(){
   if (State.activeGame === "bouncing") return "🏀";
   if (State.activeGame === "traffic") return "🚗";
   if (State.activeGame === "tower") return "🏰";
-  if (State.activeGame === "foodslice") return "🍉";
   return "🚀";
 }
 
@@ -3125,24 +3117,18 @@ function getGameIntroText(){
     return "Use the arrows to look through the choices. Tap the correct words to add it to your tower.";
   }
 
-  if (State.activeGame === "foodslice"){
-    return "Tap pieces of food that match the next word of the verse. Watch out for wrong words or bombs!";
-  }
-
   return "Use the arrows to look through the choices. Tap the correct word to launch it into the verse!";
 }
 
 function stopGame(){
   bouncingStopMotion();
   trafficStopMotion();
-  foodSliceStopMotion();
 
   State.chainGame = null;
   State.scrambleGame = null;
   State.bouncingGame = null;
   State.trafficGame = null;
   State.towerGame = null;
-  State.foodSliceGame = null;
 
   State.activeGame = null;
   State.gameRunning = false;
@@ -4264,7 +4250,6 @@ function screenGame(idx){
       State.activeGame !== "chain" &&
       State.activeGame !== "scramble" &&
       State.activeGame !== "tower" &&
-      State.activeGame !== "foodslice" &&
       !(State.activeGame === "traffic" && !State.trafficGame?.theme)
     );
 
@@ -4279,8 +4264,6 @@ function screenGame(idx){
     (State.activeGame === "traffic") ? "game-traffic" :
     (State.activeGame === "chain" && !State.chainGame?.mode) ? "game-foodslice-mode" :
     (State.activeGame === "chain") ? "game-chain" :
-    (State.activeGame === "foodslice" && !State.foodSliceGame?.mode) ? "game-foodslice-mode" :
-    (State.activeGame === "foodslice") ? "game-foodslice" :
     "";
 
   inner.innerHTML = `
@@ -4323,7 +4306,6 @@ function screenGame(idx){
       State.activeGame === "chain" ? "#40b9c5" :
       State.activeGame === "tower" ? "#40b9c5" :
       State.activeGame === "bouncing" ? "#f2f2f2" :
-      State.activeGame === "foodslice" ? "#333333" :
       "var(--purple)",
     navHidden: false,
     inner
