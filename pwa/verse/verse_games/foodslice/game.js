@@ -737,7 +737,7 @@
     const startY = fieldH + Math.max(24, state.fruitHitSize * 0.22);
     const riseDistance = Math.max(fieldH * 0.42, startY - targetPeakY);
 
-    const gravity = fieldH * (isBomb ? 0.00130 : 0.00120);
+    const gravity = fieldH * (isBomb ? 0.00115 : 0.00105);
     const baseVy = Math.sqrt(2 * gravity * riseDistance);
     const vy = -(baseVy + (Math.random() * fieldH * 0.00035 - fieldH * 0.000175));
 
