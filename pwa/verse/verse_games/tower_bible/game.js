@@ -1,7 +1,7 @@
 (async function(){
   const app = document.getElementById("app");
   const ctx = await window.VerseGameBridge.getVerseContext();
-  const GAME_ID = "tower";
+  const GAME_ID = "tower_bible";
 
   const BOOKS = [
     "Genesis","Exodus","Leviticus","Numbers","Deuteronomy","Joshua","Judges","Ruth",
@@ -22,15 +22,15 @@
     medium:[0.10,0.20,0.40,0.20,0.10],
     hard:[0.20,0.20,0.20,0.20,0.20]
   };
-  const SPEEDS = {
-    easy:0.10,
-    medium:0.122,
-    hard:0.14
+  const LANE_SECONDS = {
+    easy:8.2,
+    medium:7.1,
+    hard:6.2
   };
   const THRESHOLDS = {
     easy:{warn1:999,warn2:999,collapse:999},
-    medium:{warn1:7,warn2:9,collapse:11},
-    hard:{warn1:5,warn2:7,collapse:9}
+    medium:{warn1:7,warn2:10,collapse:13},
+    hard:{warn1:5,warn2:8,collapse:10}
   };
 
   let selectedMode = null;
@@ -50,35 +50,46 @@
     pauseReason:"",
     rafId:0,
     lastTs:0,
+
     fieldWidth:0,
     fieldHeight:0,
     laneY:0,
     laneHeight:0,
+    lanePadX:0,
     guideCenterX:0,
-    guideWidth:0,
     guideLeftX:0,
+    guideRightX:0,
+    guideWidth:0,
+    brickWidth:0,
+    brickHeight:0,
+    brickGap:0,
+    brickStep:0,
+    beltSpeed:0,
     towerWidth:0,
-    progress:[], // newest at bottom
+
+    progress:[],
     phase:"words",
     wordIndex:0,
-    buildShakeUntil:0,
+
     towerShakeUntil:0,
+    guideFlashUntil:0,
     overlayMessage:"",
     overlayUntil:0,
     warningLevel:0,
     collapseTriggered:false,
     collapseEndsAt:0,
-    pendingRecenterUntil:0,
+
     stream:[],
     streamId:0,
-    currentCorrectPresent:false,
     fx:[],
     enteringBrick:null,
     enteringId:0,
     done:false,
-    bonusMessage:"",
+
     pendingCorrectLabel:"",
-    pendingCorrectType:"word"
+    pendingCorrectType:"word",
+    pendingCorrectVisible:0,
+    spawnIndex:0
   };
 
   renderIntro();
@@ -89,7 +100,7 @@
       <div class="tb-mode-shell">
         <div class="tb-mode-stage">
           <div class="tb-mode-top">
-            <div style="font-size:70px;line-height:1;">🗼📖</div>
+            <div style="font-size:70px;line-height:1;">🏰</div>
             <div class="tb-title">Tower of Bible</div>
             <div class="tb-subtitle">Tap the correct brick when it lines up with the guide. Don’t let your tower lean too far either way.</div>
             <div class="tb-mode-card">
@@ -112,9 +123,9 @@
       <div class="tb-mode-shell">
         <div class="tb-mode-stage">
           <div class="tb-mode-top">
-            <div style="font-size:70px;line-height:1;">🗼📖</div>
+            <div style="font-size:70px;line-height:1;">🏰</div>
             <div class="tb-title">Choose Your Difficulty</div>
-            <div class="tb-subtitle">Easy has a slower conveyor and a generous center zone. Medium uses verse-word decoys and tougher leaning. Hard is faster and the balance threshold is stricter.</div>
+            <div class="tb-subtitle">Easy has the biggest center timing zone. Medium uses verse-word decoys and a little more speed. Hard is the fastest and has the toughest lean threshold.</div>
             <div class="tb-mode-card">
               <div class="tb-mode-actions">
                 <button class="vm-btn" id="easyBtn">Easy</button>
@@ -141,12 +152,12 @@
     Object.assign(state, {
       running:true, paused:false, pauseReason:"", lastTs:0,
       progress:[], phase:"words", wordIndex:0,
-      buildShakeUntil:0, towerShakeUntil:0,
+      towerShakeUntil:0, guideFlashUntil:0,
       overlayMessage:"", overlayUntil:0,
       warningLevel:0, collapseTriggered:false, collapseEndsAt:0,
-      pendingRecenterUntil:0, stream:[], streamId:0, currentCorrectPresent:false,
-      fx:[], enteringBrick:null, enteringId:0, done:false, bonusMessage:"",
-      pendingCorrectLabel:"", pendingCorrectType:"word"
+      stream:[], streamId:0, fx:[], enteringBrick:null, enteringId:0,
+      done:false, pendingCorrectLabel:"", pendingCorrectType:"word",
+      pendingCorrectVisible:0, spawnIndex:0
     });
     seedPendingCorrect();
 
@@ -257,9 +268,9 @@
 
   function helpHtml(){
     return `Tap the correct brick when it lines up with the guide.<br><br>
-      Correct timing snaps the brick into one of five placement zones.<br><br>
-      In easy mode the center zone is generous and the tower cannot fall.<br><br>
-      In medium and hard, don’t let your tower lean too far either way.<br><br>
+      Bricks only become tappable inside the guide window.<br><br>
+      Easy gives you the biggest center timing zone. Medium and hard are stricter.<br><br>
+      Keep your tower from leaning too far left or right.<br><br>
       After the verse words are placed, build the book and then the chapter and verse reference to finish the tower.`;
   }
 
@@ -282,25 +293,47 @@
       if (menuMuteBtn) menuMuteBtn.textContent = muted ? "Unmute" : "Mute";
     };
     if (helpBtn) helpBtn.onclick = () => {
-      if (helpOverlay){ helpOverlay.classList.add("is-open"); helpOverlay.dataset.mode = "close"; if (helpCloseBtn) helpCloseBtn.textContent = "OK"; }
+      if (helpOverlay){
+        helpOverlay.classList.add("is-open");
+        helpOverlay.dataset.mode = "close";
+        if (helpCloseBtn) helpCloseBtn.textContent = "OK";
+      }
     };
     if (helpCloseBtn) helpCloseBtn.onclick = () => {
       const mode = helpOverlay?.dataset.mode || "close";
       if (mode === "back") backToMenuFromHelp(); else closeHelpOverlay();
     };
-    if (helpOverlay) helpOverlay.onclick = (e) => { if (e.target === helpOverlay){ const mode = helpOverlay.dataset.mode || "close"; if (mode === "back") backToMenuFromHelp(); else closeHelpOverlay(); } };
+    if (helpOverlay) helpOverlay.onclick = (e) => {
+      if (e.target === helpOverlay){
+        const mode = helpOverlay.dataset.mode || "close";
+        if (mode === "back") backToMenuFromHelp(); else closeHelpOverlay();
+      }
+    };
     if (menuHowToBtn) menuHowToBtn.onclick = openHelpFromMenu;
-    if (menuMuteBtn) menuMuteBtn.onclick = () => { muted = !muted; menuMuteBtn.textContent = muted ? "Unmute" : "Mute"; if (muteBtn) muteBtn.textContent = muted ? "🔇" : "🔊"; };
+    if (menuMuteBtn) menuMuteBtn.onclick = () => {
+      muted = !muted;
+      menuMuteBtn.textContent = muted ? "Unmute" : "Mute";
+      if (muteBtn) muteBtn.textContent = muted ? "🔇" : "🔊";
+    };
     if (menuExitBtn) menuExitBtn.onclick = () => window.VerseGameBridge.exitGame();
     if (menuCloseBtn) menuCloseBtn.onclick = closeGameMenu;
     if (menuOverlay) menuOverlay.onclick = (e) => { if (e.target === menuOverlay) closeGameMenu(); };
   }
 
   function wireGameInput(){
-    if (!resizeBound){ window.addEventListener("resize", recalcField); resizeBound = true; }
+    if (!resizeBound){
+      window.addEventListener("resize", recalcField);
+      resizeBound = true;
+    }
     const menuPill = document.getElementById("tbMenuPill");
     if (menuPill){
-      const openFromPill = (e) => { if (e){ if (e.cancelable) e.preventDefault(); e.stopPropagation(); } openGameMenu(); };
+      const openFromPill = (e) => {
+        if (e){
+          if (e.cancelable) e.preventDefault();
+          e.stopPropagation();
+        }
+        openGameMenu();
+      };
       menuPill.onclick = openFromPill;
       menuPill.onpointerdown = openFromPill;
       menuPill.ontouchstart = openFromPill;
@@ -313,31 +346,79 @@
     };
   }
 
-  function openGameMenu(){ const menuOverlay = document.getElementById("tbGameMenuOverlay"); if (menuOverlay){ setPaused(true, "menu"); menuOverlay.classList.add("is-open"); } }
-  function closeGameMenu(){ const menuOverlay = document.getElementById("tbGameMenuOverlay"); if (menuOverlay) menuOverlay.classList.remove("is-open"); const helpOverlay = document.getElementById("tbHelpOverlay"); if (!helpOverlay || !helpOverlay.classList.contains("is-open")) setPaused(false, ""); }
-  function openHelpFromMenu(){ const menuOverlay = document.getElementById("tbGameMenuOverlay"); const helpOverlay = document.getElementById("tbHelpOverlay"); const helpCloseBtn = document.getElementById("tbHelpCloseBtn"); if (menuOverlay) menuOverlay.classList.remove("is-open"); if (helpOverlay){ helpOverlay.classList.add("is-open"); helpOverlay.dataset.mode = "back"; } if (helpCloseBtn) helpCloseBtn.textContent = "Back"; setPaused(true, "help"); }
-  function closeHelpOverlay(){ const helpOverlay = document.getElementById("tbHelpOverlay"); if (helpOverlay) helpOverlay.classList.remove("is-open"); setPaused(false, ""); }
-  function backToMenuFromHelp(){ const helpOverlay = document.getElementById("tbHelpOverlay"); const menuOverlay = document.getElementById("tbGameMenuOverlay"); if (helpOverlay) helpOverlay.classList.remove("is-open"); if (menuOverlay) menuOverlay.classList.add("is-open"); setPaused(true, "menu"); }
-  function setPaused(paused, reason=""){ state.paused = paused; state.pauseReason = paused ? reason : ""; if (!paused) state.lastTs = performance.now(); }
+  function openGameMenu(){
+    const menuOverlay = document.getElementById("tbGameMenuOverlay");
+    if (menuOverlay){
+      setPaused(true, "menu");
+      menuOverlay.classList.add("is-open");
+    }
+  }
+  function closeGameMenu(){
+    const menuOverlay = document.getElementById("tbGameMenuOverlay");
+    if (menuOverlay) menuOverlay.classList.remove("is-open");
+    const helpOverlay = document.getElementById("tbHelpOverlay");
+    if (!helpOverlay || !helpOverlay.classList.contains("is-open")) setPaused(false, "");
+  }
+  function openHelpFromMenu(){
+    const menuOverlay = document.getElementById("tbGameMenuOverlay");
+    const helpOverlay = document.getElementById("tbHelpOverlay");
+    const helpCloseBtn = document.getElementById("tbHelpCloseBtn");
+    if (menuOverlay) menuOverlay.classList.remove("is-open");
+    if (helpOverlay){
+      helpOverlay.classList.add("is-open");
+      helpOverlay.dataset.mode = "back";
+    }
+    if (helpCloseBtn) helpCloseBtn.textContent = "Back";
+    setPaused(true, "help");
+  }
+  function closeHelpOverlay(){
+    const helpOverlay = document.getElementById("tbHelpOverlay");
+    if (helpOverlay) helpOverlay.classList.remove("is-open");
+    setPaused(false, "");
+  }
+  function backToMenuFromHelp(){
+    const helpOverlay = document.getElementById("tbHelpOverlay");
+    const menuOverlay = document.getElementById("tbGameMenuOverlay");
+    if (helpOverlay) helpOverlay.classList.remove("is-open");
+    if (menuOverlay) menuOverlay.classList.add("is-open");
+    setPaused(true, "menu");
+  }
+  function setPaused(paused, reason=""){
+    state.paused = paused;
+    state.pauseReason = paused ? reason : "";
+    if (!paused) state.lastTs = performance.now();
+  }
 
   function recalcField(){
     const field = document.getElementById("tbField");
     if (!field) return;
     const rect = field.getBoundingClientRect();
+
     state.fieldWidth = rect.width;
     state.fieldHeight = rect.height;
-    state.laneHeight = clamp(state.fieldWidth * 0.14, 86, 118);
-    state.laneY = state.fieldHeight - clamp(state.fieldWidth * 0.05, 24, 38) - state.laneHeight / 2;
+
+    state.brickWidth = clamp(state.fieldWidth * 0.27, 130, 188);
+    state.brickHeight = clamp(state.fieldWidth * 0.11, 58, 78);
+    state.brickGap = clamp(state.brickWidth * 1.08, 150, 236);
+    state.brickStep = state.brickWidth + state.brickGap;
+    state.guideWidth = state.brickWidth;
+    state.laneHeight = Math.max(state.brickHeight + 18, clamp(state.fieldWidth * 0.16, 94, 126));
+    state.lanePadX = clamp(state.fieldWidth * 0.04, 18, 30);
+    state.laneY = state.fieldHeight - clamp(state.fieldWidth * 0.055, 24, 42) - state.laneHeight / 2;
     state.guideCenterX = state.fieldWidth / 2;
-    state.towerWidth = Math.min(state.fieldWidth * 0.86, 560);
-    state.guideWidth = clamp(state.fieldWidth * 0.18, 110, 170);
     state.guideLeftX = state.guideCenterX - state.guideWidth / 2;
+    state.guideRightX = state.guideCenterX + state.guideWidth / 2;
+    state.towerWidth = Math.min(state.fieldWidth * 0.86, 560);
+
+    const travelDistance = state.fieldWidth + state.brickWidth + state.brickStep;
+    state.beltSpeed = travelDistance / LANE_SECONDS[selectedMode || "easy"];
+
     renderHud();
   }
 
   function renderHud(){
     const phasePill = document.getElementById("tbPhasePill");
-    if (phasePill){ phasePill.textContent = currentPhaseLabel(); }
+    if (phasePill) phasePill.textContent = currentPhaseLabel();
     renderField();
   }
 
@@ -365,28 +446,39 @@
   }
 
   function renderGuide(layer){
-    layer.innerHTML = `<div class="tb-guide" style="left:${state.guideCenterX}px;width:${state.guideWidth}px;top:${state.laneY}px"></div>`;
+    layer.innerHTML = `
+      <div class="tb-guide-wrap" style="left:${state.guideCenterX}px;top:${state.laneY}px;">
+        <div class="tb-guide" style="width:${state.guideWidth}px;height:${state.brickHeight}px;"></div>
+      </div>`;
   }
 
   function renderConveyor(layer){
-    let html = `<div class="tb-conveyor-lane"><div class="tb-lane-track"></div>`;
+    const laneBottom = clamp(state.fieldWidth * 0.055, 24, 42);
+    let html = `
+      <div class="tb-conveyor-lane" style="left:${state.lanePadX}px;right:${state.lanePadX}px;bottom:${laneBottom}px;height:${state.laneHeight}px;">
+        <div class="tb-lane-track"></div>`;
     for (const brick of state.stream){
-      const within = isBrickTappable(brick) && !state.collapseTriggered && !state.enteringBrick;
+      const tappable = isBrickTappable(brick) && !state.collapseTriggered && !state.enteringBrick;
       const classes = ["tb-choice-brick"];
-      if (!within) classes.push("is-dim");
+      if (!tappable) classes.push("is-dim");
       if (brick.kind === "book") classes.push("is-book");
       if (brick.kind === "reference") classes.push("is-ref");
       if (brick.flashWrong) classes.push("is-wrong");
-      html += `<button class="${classes.join(" ")}" data-id="${brick.id}" style="left:${brick.x}px;width:${brick.width}px;font-size:${brick.fontSize}px;transform:translateY(-50%);top:50%;opacity:${within ? 1 : 0.42}">${escapeHtml(brick.label)}</button>`;
+      html += `
+        <button class="${classes.join(" ")}" data-id="${brick.id}" style="left:${brick.left}px;width:${state.brickWidth}px;height:${state.brickHeight}px;font-size:${brick.fontSize}px;" aria-label="${brick.isCorrect ? "Correct brick" : "Brick"}">${escapeHtml(brick.label)}</button>`;
     }
     html += `</div>`;
     layer.innerHTML = html;
+
     layer.querySelectorAll("[data-id]").forEach((el) => {
       const id = Number(el.dataset.id);
       const brick = state.stream.find((b) => b.id === id);
       if (!brick) return;
       const onActivate = (e) => {
-        if (e){ if (e.cancelable) e.preventDefault(); e.stopPropagation(); }
+        if (e){
+          if (e.cancelable) e.preventDefault();
+          e.stopPropagation();
+        }
         handleBrickTap(id);
       };
       el.onclick = onActivate;
@@ -401,42 +493,49 @@
     if (state.warningLevel >= 2) towerShellClass.push("tb-tower-wobble-2");
 
     const lean = getVisualLean();
-    let html = `<div class="${towerShellClass.join(" ")}" id="tbTowerShell">`;
     const count = state.progress.length;
-    const maxLeanPx = Math.min(state.fieldWidth * 0.12, 86);
+    const maxLeanPx = Math.min(state.fieldWidth * 0.065, 46);
+
+    let html = `<div class="${towerShellClass.join(" ")}" id="tbTowerShell">`;
+
+    let cumulativeBottom = 0;
     for (let i = 0; i < count; i++){
       const brick = state.progress[i];
       const level = i;
       const t = count <= 1 ? 0 : level / Math.max(1, count - 1);
-      const curve = Math.pow(t, 1.45);
-      const scale = Math.max(0.42, Math.pow(0.95, level));
+      const curve = Math.pow(t, 1.55);
+      const scale = Math.max(0.54, Math.pow(0.95, level));
       const width = state.towerWidth * 0.76 * scale;
-      const height = Math.max(36, 54 * scale);
-      const fontSize = Math.max(14, 25 * scale);
-      const bottom = level * (height + 6);
+      const height = Math.max(34, state.brickHeight * 0.9 * scale);
+      const fontSize = Math.max(13, state.brickHeight * 0.33 * scale);
       const offsetX = count <= 1 ? 0 : lean * maxLeanPx * curve;
-      const rot = count <= 2 ? 0 : lean * 2.2 * Math.pow(t, 1.65);
+      const rot = count <= 2 ? 0 : lean * 1.15 * Math.pow(t, 1.7);
       const cls = ["tb-tower-brick"];
       if (brick.kind === "book") cls.push("book");
       if (brick.kind === "reference") cls.push("ref", "capstone");
-      html += `<div class="${cls.join(" ")}" style="bottom:${bottom}px;width:${width}px;height:${height}px;font-size:${fontSize}px;transform:translateX(calc(-50% + ${offsetX}px)) rotate(${rot}deg)">${escapeHtml(brick.label)}</div>`;
+      html += `<div class="${cls.join(" ")}" style="bottom:${cumulativeBottom}px;width:${width}px;height:${height}px;font-size:${fontSize}px;transform:translateX(calc(-50% + ${offsetX}px)) rotate(${rot}deg)">${escapeHtml(brick.label)}</div>`;
+      cumulativeBottom += height + clamp(state.brickHeight * 0.07, 4, 8);
     }
+
     if (state.enteringBrick){
       const e = state.enteringBrick;
-      const scale = Math.max(0.42, Math.pow(0.95, 0));
-      const width = state.towerWidth * 0.76 * scale;
-      const height = Math.max(36, 54 * scale);
-      const fontSize = Math.max(14, 25 * scale);
+      const width = state.towerWidth * 0.76;
+      const height = state.brickHeight * 0.9;
+      const fontSize = Math.max(14, state.brickHeight * 0.33);
       const cls = ["tb-tower-brick", "tb-tower-entering"];
       if (e.kind === "book") cls.push("book");
       if (e.kind === "reference") cls.push("ref", "capstone");
       html += `<div class="${cls.join(" ")}" style="bottom:${e.y}px;width:${width}px;height:${height}px;font-size:${fontSize}px;transform:translateX(calc(-50% + ${e.xOffset}px)) rotate(${e.rot}deg)">${escapeHtml(e.label)}</div>`;
     }
+
     html += `</div>`;
     layer.innerHTML = html;
 
     if (state.collapseTriggered){
-      smokeLayer.innerHTML = `<div class="tb-base-smoke is-open"><div class="p p1"></div><div class="p p2"></div><div class="p p3"></div><div class="p p4"></div><div class="p p5"></div></div>` + smokeLayer.innerHTML;
+      smokeLayer.innerHTML = `
+        <div class="tb-base-smoke is-open">
+          <div class="p p1"></div><div class="p p2"></div><div class="p p3"></div><div class="p p4"></div><div class="p p5"></div>
+        </div>` + smokeLayer.innerHTML;
     }
   }
 
@@ -451,7 +550,10 @@
   }
 
   function renderWarning(layer){
-    if (state.warningLevel === 0){ layer.innerHTML = ""; return; }
+    if (state.warningLevel === 0){
+      layer.innerHTML = "";
+      return;
+    }
     const text = state.warningLevel === 1 ? "⚠️" : "⚠️⚠️";
     layer.innerHTML = `<div style="position:absolute;left:50%;top:18px;transform:translateX(-50%);font-size:${state.warningLevel === 1 ? 22 : 26}px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.18));">${text}</div>`;
   }
@@ -464,7 +566,11 @@
     if (!state.lastTs) state.lastTs = ts;
     const dt = Math.min(34, ts - state.lastTs);
     state.lastTs = ts;
-    if (!state.paused){ step(dt, ts); renderHud(); }
+
+    if (!state.paused){
+      step(dt, ts);
+      renderHud();
+    }
     state.rafId = requestAnimationFrame(frame);
   }
 
@@ -478,42 +584,48 @@
     }
 
     stepStream(dt);
-    stepEntering(dt, now);
+    stepEntering(dt);
     updateWarnings();
   }
 
   function stepStream(dt){
-    const speed = state.fieldWidth * SPEEDS[selectedMode || "easy"] * (dt / 1000);
+    const distance = state.beltSpeed * (dt / 1000);
     for (const brick of state.stream){
-      brick.x -= speed;
-      if (brick.flashWrongUntil && performance.now() >= brick.flashWrongUntil){ brick.flashWrong = false; brick.flashWrongUntil = 0; }
+      brick.left -= distance;
+      brick.center = brick.left + brick.width / 2;
+      if (brick.flashWrongUntil && performance.now() >= brick.flashWrongUntil){
+        brick.flashWrong = false;
+        brick.flashWrongUntil = 0;
+      }
     }
-    const leftCull = -220;
-    let removedCorrect = false;
-    state.stream = state.stream.filter((brick) => {
-      const keep = brick.x + brick.width / 2 > leftCull;
-      if (!keep && brick.isCorrect) removedCorrect = true;
-      return keep;
-    });
-    if (removedCorrect) state.currentCorrectPresent = false;
+
+    const leftCull = -state.brickWidth - 40;
+    state.stream = state.stream.filter((brick) => brick.left > leftCull);
+    state.pendingCorrectVisible = state.stream.filter((brick) => brick.isCorrect).length;
     ensureStreamFilled();
   }
 
-  function stepEntering(dt, now){
+  function stepEntering(dt){
     if (!state.enteringBrick) return;
     const e = state.enteringBrick;
-    const speed = dt / 240;
-    e.progress = clamp(e.progress + speed, 0, 1);
-    const eased = easeOutBack(Math.min(1, e.progress));
+    e.progress = clamp(e.progress + dt / 280, 0, 1);
+    const eased = easeOutBack(e.progress);
     e.y = lerp(e.fromY, e.toY, eased);
     e.xOffset = lerp(e.fromXOffset, e.toXOffset, eased);
     e.rot = lerp(0, e.toRot, eased);
+
     if (e.progress >= 1){
       state.progress.unshift({ label:e.label, kind:e.kind, zone:e.zone });
       state.enteringBrick = null;
       advancePhaseAfterPlacement();
       updateWarnings();
-      if (!state.done) seedPendingCorrect();
+
+      if (!state.done){
+        state.pendingCorrectVisible = state.stream.filter((brick) => brick.isCorrect).length;
+        seedPendingCorrect();
+        retargetExistingCorrectBricks();
+        ensureStreamFilled();
+      }
     }
   }
 
@@ -530,7 +642,7 @@
     state.progress = [];
     state.warningLevel = 0;
     state.enteringBrick = null;
-    state.currentCorrectPresent = false;
+    state.pendingCorrectVisible = 0;
     seedPendingCorrect();
     state.stream = [];
     fillInitialStream();
@@ -539,85 +651,116 @@
 
   function fillInitialStream(){
     state.stream = [];
-    let x = 0;
-    while (x < state.fieldWidth + 220){
-      const brick = createStreamBrick(x + 40);
+    let left = -state.brickWidth * 0.35;
+    while (left < state.fieldWidth + state.brickWidth + 40){
+      const brick = createStreamBrick(left);
       state.stream.push(brick);
-      x = brick.x + brick.width / 2 + getBrickGap();
+      left += state.brickStep;
     }
+    state.pendingCorrectVisible = state.stream.filter((brick) => brick.isCorrect).length;
   }
 
   function ensureStreamFilled(){
-    let rightMost = state.stream.reduce((m, b) => Math.max(m, b.x + b.width / 2), -Infinity);
-    if (!Number.isFinite(rightMost)) rightMost = -40;
-    while (rightMost < state.fieldWidth + 160){
-      const startCenter = rightMost + getBrickGap();
-      const brick = createStreamBrick(startCenter);
+    let rightMostLeft = state.stream.reduce((m, b) => Math.max(m, b.left), -Infinity);
+    if (!Number.isFinite(rightMostLeft)) rightMostLeft = -state.brickWidth;
+    while (rightMostLeft < state.fieldWidth + state.brickStep){
+      const left = rightMostLeft + state.brickStep;
+      const brick = createStreamBrick(left);
       state.stream.push(brick);
-      rightMost = brick.x + brick.width / 2;
+      rightMostLeft = left;
     }
+    state.pendingCorrectVisible = state.stream.filter((brick) => brick.isCorrect).length;
   }
 
-  function createStreamBrick(startCenterX){
+  function createStreamBrick(left){
     const correctKind = getPendingCorrectKind();
     const correctLabel = getPendingCorrectLabel();
     let isCorrect = false;
     let label = "";
     let kind = "word";
-    if (!state.currentCorrectPresent){
+
+    if (shouldSpawnCorrect(left)){
       isCorrect = true;
       label = correctLabel;
       kind = correctKind;
-      state.currentCorrectPresent = true;
+      state.pendingCorrectVisible += 1;
     } else {
       const decoy = makeDecoy(correctKind, correctLabel);
       label = decoy.label;
       kind = decoy.kind;
     }
-    const width = measureBrickWidth(label, kind);
-    const fontSize = clamp(width * 0.14, 17, 28);
-    return {
+
+    const fontSize = getConveyorFontSize(label, kind);
+    const brick = {
       id: ++state.streamId,
-      x:startCenterX + width / 2,
-      width,
+      left,
+      width:state.brickWidth,
       label,
       isCorrect,
       kind,
       fontSize,
       flashWrong:false,
-      flashWrongUntil:0
+      flashWrongUntil:0,
+      spawnIndex: state.spawnIndex++
     };
+    brick.center = brick.left + brick.width / 2;
+    return brick;
   }
 
-  function getBrickGap(){ return clamp(state.fieldWidth * 0.014, 10, 16); }
+  function shouldSpawnCorrect(left){
+    if (state.pendingCorrectVisible >= 2) return false;
+    if (!getPendingCorrectLabel()) return false;
 
-  function measureBrickWidth(label, kind){
-    const base = kind === "reference" ? 172 : (kind === "book" ? 188 : 132);
-    return clamp(base + String(label || "").length * 9.5, 118, Math.min(state.fieldWidth * 0.64, kind === "word" ? 240 : 320));
+    const recentCorrects = state.stream.filter((brick) => brick.isCorrect).sort((a, b) => b.left - a.left);
+    if (recentCorrects.length){
+      const nearest = recentCorrects[0];
+      if (left - nearest.left < state.brickStep * 2.2) return false;
+    }
+
+    if (state.pendingCorrectVisible === 0) return true;
+    return Math.random() < 0.48;
+  }
+
+  function retargetExistingCorrectBricks(){
+    const remaining = state.stream.filter((brick) => brick.isCorrect);
+    for (const brick of remaining){
+      brick.label = getPendingCorrectLabel();
+      brick.kind = getPendingCorrectKind();
+      brick.fontSize = getConveyorFontSize(brick.label, brick.kind);
+    }
+  }
+
+  function getConveyorFontSize(label, kind){
+    const len = String(label || "").length;
+    if (kind === "reference") return clamp(state.brickWidth * 0.13 - Math.max(0, len - 8) * 0.22, 13, 23);
+    if (kind === "book") return clamp(state.brickWidth * 0.13 - Math.max(0, len - 10) * 0.2, 13, 23);
+    return clamp(state.brickWidth * 0.145 - Math.max(0, len - 8) * 0.22, 14, 24);
   }
 
   function isBrickTappable(brick){
-    const delta = brick.x - state.guideCenterX;
-    return Math.abs(delta) <= brick.width * 0.5;
+    return brick.left <= state.guideRightX && (brick.left + brick.width) >= state.guideLeftX;
   }
 
   function handleBrickTap(id){
     if (state.paused || state.done || state.collapseTriggered || state.enteringBrick) return;
+
     const brick = state.stream.find((b) => b.id === id);
     if (!brick || !isBrickTappable(brick)) return;
+
     if (!brick.isCorrect){
-      brick.flashWrong = true; brick.flashWrongUntil = performance.now() + 260;
+      brick.flashWrong = true;
+      brick.flashWrongUntil = performance.now() + 260;
       state.towerShakeUntil = performance.now() + 300;
-      state.buildShakeUntil = performance.now() + 300;
-      addSmoke(brick.x, state.laneY);
+      state.guideFlashUntil = performance.now() + 300;
+      addSmoke(brick.center, state.laneY);
       return;
     }
 
     const zone = getTapZone(brick);
-    const visual = zoneToVisualOffset(zone, brick.width);
-    const enteringHeight = Math.max(36, 54);
+    const visual = zoneToEntryOffset(zone);
     state.stream = state.stream.filter((b) => b.id !== id);
-    state.currentCorrectPresent = false;
+    state.pendingCorrectVisible = state.stream.filter((b) => b.isCorrect).length;
+
     state.enteringBrick = {
       id: ++state.enteringId,
       label:brick.label,
@@ -633,29 +776,33 @@
       toRot:0,
       rot:0
     };
+
+    seedPendingCorrect();
+    retargetExistingCorrectBricks();
     ensureStreamFilled();
   }
 
   function getTapZone(brick){
-    const delta = brick.x - state.guideCenterX;
-    const width = brick.width;
-    const relative = clamp((delta + width * 0.5) / width, 0, 1);
-    const zones = ZONE_PERCENTAGES[selectedMode || "easy"];
-    let acc = 0;
-    const values = [-2,-1,0,1,2];
-    for (let i = 0; i < zones.length; i++){
-      acc += zones[i];
-      if (relative <= acc + 1e-6) return values[i];
-    }
+    const delta = brick.center - state.guideCenterX;
+    const normalized = clamp(delta / state.brickWidth, -0.5, 0.5);
+
+    const [far, slight, centerPct] = [ZONE_PERCENTAGES[selectedMode || "easy"][0], ZONE_PERCENTAGES[selectedMode || "easy"][1], ZONE_PERCENTAGES[selectedMode || "easy"][2]];
+    const centerHalf = centerPct / 2;
+    const slightHalf = centerHalf + slight;
+
+    if (normalized <= -slightHalf) return -2;
+    if (normalized < -centerHalf) return -1;
+    if (normalized <= centerHalf) return 0;
+    if (normalized < slightHalf) return 1;
     return 2;
   }
 
-  function zoneToVisualOffset(zone, brickWidth){
+  function zoneToEntryOffset(zone){
     if (zone === 0) return 0;
-    if (zone === -1) return -brickWidth * 0.25;
-    if (zone === 1) return brickWidth * 0.25;
-    if (zone === -2) return -brickWidth * 0.5;
-    return brickWidth * 0.5;
+    if (zone === -1) return -state.brickWidth * 0.25;
+    if (zone === 1) return state.brickWidth * 0.25;
+    if (zone === -2) return -state.brickWidth * 0.5;
+    return state.brickWidth * 0.5;
   }
 
   function seedPendingCorrect(){
@@ -668,8 +815,10 @@
   function getCurrentCorrectKind(){
     if (state.phase === "words") return "word";
     if (state.phase === "book") return "book";
-    return "reference";
+    if (state.phase === "reference") return "reference";
+    return "";
   }
+
   function getCurrentCorrectLabel(){
     if (state.phase === "words") return wordEntries[state.wordIndex]?.display || "";
     if (state.phase === "book") return verseMeta.book || "";
@@ -678,23 +827,25 @@
   }
 
   function makeDecoy(kind, correct){
-    if (kind === "book") return { label:pickRandom(shuffle(BOOKS.filter((b) => b !== correct)).slice(0, 8)), kind:"book" };
-    if (kind === "reference") return { label:pickRandom(makeReferenceChoices(verseMeta.chapter, verseMeta.verse, verseMeta.verseEnd).filter((r) => r !== correct)), kind:"reference" };
-    if (selectedMode === "medium" || selectedMode === "hard"){
-      const pool = getVerseDerivedDecoys(state.wordIndex, correct);
-      return { label:pickRandom(pool), kind:"word" };
-    }
-    return { label:pickRandom(FUN_DECOYS.filter((d) => normalizeWord(d) !== normalizeWord(correct))), kind:"word" };
+    if (kind === "book") return { label: pickRandom(shuffle(BOOKS.filter((b) => b !== correct)).slice(0, 8)), kind:"book" };
+    if (kind === "reference") return { label: pickRandom(makeReferenceChoices(verseMeta.chapter, verseMeta.verse, verseMeta.verseEnd).filter((r) => r !== correct)), kind:"reference" };
+    if (selectedMode === "medium" || selectedMode === "hard") return { label: pickRandom(getVerseDerivedDecoys(state.wordIndex, correct)), kind:"word" };
+    return { label: pickRandom(FUN_DECOYS.filter((d) => normalizeWord(d) !== normalizeWord(correct))), kind:"word" };
   }
 
   function advancePhaseAfterPlacement(){
     if (state.phase === "words"){
       state.wordIndex += 1;
-      if (state.wordIndex >= wordEntries.length){ state.phase = "book"; showOverlay("Now place the Bible book"); return; }
+      if (state.wordIndex >= wordEntries.length){
+        state.phase = "book";
+        showOverlay("Now place the Bible book");
+      }
       return;
     }
     if (state.phase === "book"){
-      state.phase = "reference"; showOverlay("Now place the chapter and verse"); return;
+      state.phase = "reference";
+      showOverlay("Now place the chapter and verse");
+      return;
     }
     if (state.phase === "reference"){
       state.done = true;
@@ -705,10 +856,11 @@
   function getLeanScore(){
     const count = state.progress.length;
     if (count <= 1) return 0;
+
     let sum = 0;
     for (let i = 0; i < count; i++){
       const brick = state.progress[i];
-      const weight = 1 + (i / Math.max(1, count - 1)) * 1.8;
+      const weight = 1 + (i / Math.max(1, count - 1)) * 1.6;
       sum += (brick.zone || 0) * weight;
     }
     return sum;
@@ -718,7 +870,7 @@
     const raw = getLeanScore();
     const sign = Math.sign(raw);
     const mag = Math.abs(raw);
-    const soft = 1 - Math.exp(-mag / 6.2);
+    const soft = 1 - Math.exp(-mag / 7.4);
     return sign * soft;
   }
 
@@ -729,6 +881,7 @@
     if (mag >= t.warn2) level = 2;
     else if (mag >= t.warn1) level = 1;
     state.warningLevel = level;
+
     if (selectedMode !== "easy" && mag >= t.collapse && !state.collapseTriggered){
       triggerCollapse();
     }
@@ -736,18 +889,16 @@
 
   function triggerCollapse(){
     state.collapseTriggered = true;
-    state.collapseEndsAt = performance.now() + 1100;
+    state.collapseEndsAt = performance.now() + 1150;
     state.towerShakeUntil = performance.now() + 500;
-    for (let i = 0; i < state.progress.length; i++){
-      state.progress[i].collapseTime = 0;
-      state.progress[i].collapseDelay = i * 55;
-    }
   }
 
   function addSmoke(x, y){ state.fx.push({ x, y, until:performance.now() + 420 }); }
 
   async function finishGame(){
-    state.running = false; state.done = true; stopLoop();
+    state.running = false;
+    state.done = true;
+    stopLoop();
     let reward = { ok:false, petUnlockTriggered:false };
     if (!completionMarked && ctx.verseId && selectedMode){
       completionMarked = true;
@@ -756,7 +907,7 @@
     renderEndScreen(reward);
   }
 
-  function showOverlay(message, duration=1400){ state.overlayMessage = message; state.overlayUntil = performance.now() + duration; }
+  function showOverlay(message, duration = 1400){ state.overlayMessage = message; state.overlayUntil = performance.now() + duration; }
 
   function getVerseDerivedDecoys(targetIndex, correct){
     const targetNorm = normalizeWord(correct);
@@ -820,6 +971,7 @@
     const verseEnd = match?.[4] ? Number(match[4]) : null;
     return { book, chapter, verse, verseEnd, reference:formatReference(chapter, verse, verseEnd) };
   }
+
   function formatReference(chapter, verse, verseEnd){ if (!chapter || !verse) return ""; return verseEnd ? `${chapter}:${verse}-${verseEnd}` : `${chapter}:${verse}`; }
   function tokenizeVerse(text){
     const tokens = [];
