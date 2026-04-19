@@ -14,18 +14,18 @@ window.EXTERNAL_VERSE_GAMES = [
   },
   
   {
-  enabled: true,
-  manifest: {
-    id: "chain",
-    title: "Verse Launch",
-    description: "Launch the next correct word into the verse.",
-    icon: "🚀",
-    launchUrl: "./verse_games/verse_launch/index.html",
-    visibleInCarousel: true,
-    progressType: "standard",
-    modes: ["easy", "medium", "hard"]
-  }
-},
+    enabled: true,
+    manifest: {
+      id: "chain",
+      title: "Verse Launch",
+      description: "Launch the next correct word into the verse.",
+      icon: "🚀",
+      launchUrl: "./verse_games/verse_launch/index.html",
+      visibleInCarousel: true,
+      progressType: "standard",
+      modes: ["easy", "medium", "hard"]
+    }
+  },
 
   {
     enabled: true,
@@ -41,6 +41,20 @@ window.EXTERNAL_VERSE_GAMES = [
     }
   },
   
+  {
+    enabled: true,
+    manifest: {
+      id: "tower_bible",
+      title: "Tower of Bible",
+      description: "Tap the correct moving brick and keep your tower balanced.",
+      icon: "🏰",
+      launchUrl: "./verse_games/tower_bible/index.html",
+      visibleInCarousel: false,
+      progressType: "standard",
+      modes: ["easy", "medium", "hard"]
+    }
+  },
+
   {
     enabled: true,
     manifest: {
@@ -109,9 +123,8 @@ window.EXTERNAL_VERSE_GAMES = [
       progressType: "standard",
       modes: ["easy", "medium", "hard"]
     }
-  }  
+  },
 
-,
   {
     enabled: true,
     manifest: {
@@ -125,5 +138,4 @@ window.EXTERNAL_VERSE_GAMES = [
       modes: ["easy", "medium", "hard"]
     }
   }
-
 ];
