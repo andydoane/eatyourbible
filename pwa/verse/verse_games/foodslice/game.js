@@ -852,21 +852,37 @@
     createSlicesFrom(item);
   }
 
-  function createSlicesFrom(item){
-    const baseRotation = item.rotation || 0;
-    state.activeSlices.push(
-      {
-        side:"left", fruit:item.fruit, x:item.x, y:item.y,
-        vx:(item.vx || 0) - 1.3, vy:(item.vy || 0) - 1.4,
-        gravity:item.gravity || 0.42, rotation:baseRotation - 10, spin:-3.8, alive:true
-      },
-      {
-        side:"right", fruit:item.fruit, x:item.x, y:item.y,
-        vx:(item.vx || 0) + 1.3, vy:(item.vy || 0) - 1.4,
-        gravity:item.gravity || 0.42, rotation:baseRotation + 10, spin:3.8, alive:true
-      }
-    );
-  }
+function createSlicesFrom(item){
+  const baseRotation = item.rotation || 0;
+  const splitOffset = state.fruitHitSize * 0.18;
+
+  state.activeSlices.push(
+    {
+      side:"left",
+      fruit:item.fruit,
+      x:item.x - splitOffset,
+      y:item.y,
+      vx:(item.vx || 0) - 1.3,
+      vy:(item.vy || 0) - 1.4,
+      gravity:item.gravity || 0.42,
+      rotation:baseRotation - 10,
+      spin:-3.8,
+      alive:true
+    },
+    {
+      side:"right",
+      fruit:item.fruit,
+      x:item.x + splitOffset,
+      y:item.y,
+      vx:(item.vx || 0) + 1.3,
+      vy:(item.vy || 0) - 1.4,
+      gravity:item.gravity || 0.42,
+      rotation:baseRotation + 10,
+      spin:3.8,
+      alive:true
+    }
+  );
+}
 
   async function finishGame(){
     state.running = false;
