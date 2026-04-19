@@ -22,10 +22,10 @@
     medium:[0.10,0.20,0.40,0.20,0.10],
     hard:[0.20,0.20,0.20,0.20,0.20]
   };
-  const LANE_SECONDS = {
-    easy:8.2,
-    medium:7.1,
-    hard:6.2
+  const BELT_SPEED_FACTORS = {
+    easy:0.92,
+    medium:1.04,
+    hard:1.18
   };
   const THRESHOLDS = {
     easy:{warn1:999,warn2:999,collapse:999},
@@ -327,16 +327,13 @@
     }
     const menuPill = document.getElementById("tbMenuPill");
     if (menuPill){
-      const openFromPill = (e) => {
+      menuPill.onclick = (e) => {
         if (e){
           if (e.cancelable) e.preventDefault();
           e.stopPropagation();
         }
         openGameMenu();
       };
-      menuPill.onclick = openFromPill;
-      menuPill.onpointerdown = openFromPill;
-      menuPill.ontouchstart = openFromPill;
     }
     window.onkeydown = (e) => {
       if (e.key === "Escape" && state.running){
@@ -410,8 +407,8 @@
     state.guideRightX = state.guideCenterX + state.guideWidth / 2;
     state.towerWidth = Math.min(state.fieldWidth * 0.86, 560);
 
-    const travelDistance = state.fieldWidth + state.brickWidth + state.brickStep;
-    state.beltSpeed = travelDistance / LANE_SECONDS[selectedMode || "easy"];
+    const effectiveStep = clamp(state.brickStep, 310, 390);
+    state.beltSpeed = effectiveStep * BELT_SPEED_FACTORS[selectedMode || "easy"];
 
     renderHud();
   }
@@ -454,20 +451,23 @@
 
   function renderConveyor(layer){
     const laneBottom = clamp(state.fieldWidth * 0.055, 24, 42);
+    const vignetteWidth = clamp(state.fieldWidth * 0.12, 46, 118);
     let html = `
       <div class="tb-conveyor-lane" style="left:${state.lanePadX}px;right:${state.lanePadX}px;bottom:${laneBottom}px;height:${state.laneHeight}px;">
-        <div class="tb-lane-track"></div>`;
+    `;
     for (const brick of state.stream){
       const tappable = isBrickTappable(brick) && !state.collapseTriggered && !state.enteringBrick;
       const classes = ["tb-choice-brick"];
-      if (!tappable) classes.push("is-dim");
       if (brick.kind === "book") classes.push("is-book");
       if (brick.kind === "reference") classes.push("is-ref");
       if (brick.flashWrong) classes.push("is-wrong");
       html += `
-        <button class="${classes.join(" ")}" data-id="${brick.id}" style="left:${brick.left}px;width:${state.brickWidth}px;height:${state.brickHeight}px;font-size:${brick.fontSize}px;" aria-label="${brick.isCorrect ? "Correct brick" : "Brick"}">${escapeHtml(brick.label)}</button>`;
+        <button class="${classes.join(" ")}" data-id="${brick.id}" style="left:${brick.left}px;width:${state.brickWidth}px;height:${state.brickHeight}px;font-size:${brick.fontSize}px;opacity:${brickVisualOpacity(brick).toFixed(3)};" aria-label="${brick.isCorrect ? "Correct brick" : "Brick"}">${escapeHtml(brick.label)}</button>`;
     }
-    html += `</div>`;
+    html += `
+        <div class="tb-lane-vignette tb-lane-vignette-left" style="width:${vignetteWidth}px;"></div>
+        <div class="tb-lane-vignette tb-lane-vignette-right" style="width:${vignetteWidth}px;"></div>
+      </div>`;
     layer.innerHTML = html;
 
     layer.querySelectorAll("[data-id]").forEach((el) => {
@@ -511,9 +511,10 @@
       const offsetX = count <= 1 ? 0 : lean * maxLeanPx * curve;
       const rot = count <= 2 ? 0 : lean * 1.15 * Math.pow(t, 1.7);
       const cls = ["tb-tower-brick"];
+      const opacity = Math.max(0.72, 1 - level * 0.02);
       if (brick.kind === "book") cls.push("book");
       if (brick.kind === "reference") cls.push("ref", "capstone");
-      html += `<div class="${cls.join(" ")}" style="bottom:${cumulativeBottom}px;width:${width}px;height:${height}px;font-size:${fontSize}px;transform:translateX(calc(-50% + ${offsetX}px)) rotate(${rot}deg)">${escapeHtml(brick.label)}</div>`;
+      html += `<div class="${cls.join(" ")}" style="bottom:${cumulativeBottom}px;width:${width}px;height:${height}px;font-size:${fontSize}px;opacity:${opacity.toFixed(3)};transform:translateX(calc(-50% + ${offsetX}px)) rotate(${rot}deg)">${escapeHtml(brick.label)}</div>`;
       cumulativeBottom += height + clamp(state.brickHeight * 0.07, 4, 8);
     }
 
@@ -525,7 +526,7 @@
       const cls = ["tb-tower-brick", "tb-tower-entering"];
       if (e.kind === "book") cls.push("book");
       if (e.kind === "reference") cls.push("ref", "capstone");
-      html += `<div class="${cls.join(" ")}" style="bottom:${e.y}px;width:${width}px;height:${height}px;font-size:${fontSize}px;transform:translateX(calc(-50% + ${e.xOffset}px)) rotate(${e.rot}deg)">${escapeHtml(e.label)}</div>`;
+      html += `<div class="${cls.join(" ")}" style="bottom:${e.bottom}px;width:${width}px;height:${height}px;font-size:${fontSize}px;opacity:1;transform:translateX(calc(-50% + ${e.xOffset}px)) rotate(${e.rot}deg)">${escapeHtml(e.label)}</div>`;
     }
 
     html += `</div>`;
@@ -610,7 +611,7 @@
     const e = state.enteringBrick;
     e.progress = clamp(e.progress + dt / 280, 0, 1);
     const eased = easeOutBack(e.progress);
-    e.y = lerp(e.fromY, e.toY, eased);
+    e.bottom = lerp(e.fromBottom, e.toBottom, eased);
     e.xOffset = lerp(e.fromXOffset, e.toXOffset, eased);
     e.rot = lerp(0, e.toRot, eased);
 
@@ -737,6 +738,25 @@
     return clamp(state.brickWidth * 0.145 - Math.max(0, len - 8) * 0.22, 14, 24);
   }
 
+  function brickVisualOpacity(brick){
+    const laneLeft = state.lanePadX;
+    const laneRight = state.fieldWidth - state.lanePadX;
+    const edgeFade = clamp(state.fieldWidth * 0.12, 46, 118);
+    const center = brick.center;
+
+    if (center <= laneLeft + edgeFade){
+      const t = clamp((center - laneLeft) / edgeFade, 0, 1);
+      return lerp(0.18, 0.98, t);
+    }
+
+    if (center >= laneRight - edgeFade){
+      const t = clamp((laneRight - center) / edgeFade, 0, 1);
+      return lerp(0.18, 0.98, t);
+    }
+
+    return 0.98;
+  }
+
   function isBrickTappable(brick){
     return brick.left <= state.guideRightX && (brick.left + brick.width) >= state.guideLeftX;
   }
@@ -761,15 +781,18 @@
     state.stream = state.stream.filter((b) => b.id !== id);
     state.pendingCorrectVisible = state.stream.filter((b) => b.isCorrect).length;
 
+    const enteringHeight = state.brickHeight * 0.9;
+    const laneStartBottom = Math.max(0, state.fieldHeight - state.laneY - enteringHeight * 0.5);
+
     state.enteringBrick = {
       id: ++state.enteringId,
       label:brick.label,
       kind:brick.kind,
       zone,
       progress:0,
-      fromY:state.laneY - state.laneHeight * 0.1,
-      toY:0,
-      y:state.laneY - state.laneHeight * 0.1,
+      fromBottom:laneStartBottom,
+      toBottom:0,
+      bottom:laneStartBottom,
       fromXOffset: visual,
       toXOffset: 0,
       xOffset: visual,
