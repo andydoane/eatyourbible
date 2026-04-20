@@ -1093,6 +1093,63 @@ const QUIZ_LIST = [
   /***********************
    * Theme loader (same convention as Andy engine)
    ***********************/
+  async function getRandomThemeFromRegistry() {
+    try {
+      const res = await fetch("quiz_themes/theme-registry.json");
+      if (!res.ok) throw new Error("Failed to load theme registry");
+
+      const data = await res.json();
+      const themes = Array.isArray(data.themes) ? data.themes : [];
+
+      if (!themes.length) return "theme-gray";
+
+      return themes[Math.floor(Math.random() * themes.length)];
+    } catch (err) {
+      console.warn("Theme registry load failed:", err);
+      return "theme-gray";
+    }
+  }
+
+  async function applyTheme(themeClass) {
+    const themeLink = document.getElementById("theme-css");
+    if (!themeClass) return;
+
+    const root = document.documentElement;
+    root.classList.add("theme-loading");
+
+    if (!themeLink) {
+      setThemeClass(themeClass);
+      root.classList.remove("theme-loading");
+      return;
+    }
+
+    const newHref = `quiz_themes/${themeClass}.css`;
+
+    if (themeLink.href.endsWith(newHref)) {
+      setThemeClass(themeClass);
+      root.classList.remove("theme-loading");
+      return;
+    }
+
+    await new Promise((resolve) => {
+      themeLink.onload = () => {
+        setThemeClass(themeClass);
+        root.classList.remove("theme-loading");
+        resolve();
+      };
+
+      themeLink.onerror = () => {
+        console.warn("Theme CSS failed to load:", newHref);
+        setThemeClass(themeClass);
+        root.classList.remove("theme-loading");
+        resolve();
+      };
+
+      themeLink.href = newHref;
+    });
+  }
+
+
 async function applyTheme(themeClass) {
   const themeLink = document.getElementById("theme-css");
   if (!themeClass) return;
@@ -1167,7 +1224,7 @@ async function applyTheme(themeClass) {
     LESSON_TITLE_TEXT = quiz.lessonTitleText || "";
     LESSON_SUBTITLE_TEXT = quiz.lessonSubtitleText || "";
     LESSON_IMAGE_PATH = quiz.lessonImagePath || "";
-    THEME_CLASS = quiz.themeClass || "";
+    THEME_CLASS = await getRandomThemeFromRegistry();
     QUESTIONS = Array.isArray(quiz.questions) ? quiz.questions : [];
 
     document.title = PAGE_TITLE;
