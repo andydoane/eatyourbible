@@ -400,7 +400,7 @@
     state.brickStep = state.brickWidth + state.brickGap;
     state.guideWidth = state.brickWidth;
     state.laneHeight = Math.max(state.brickHeight + 18, clamp(state.fieldWidth * 0.16, 94, 126));
-    state.lanePadX = clamstate.lanePadX = 0;
+    state.lanePadX = 0;
     state.laneY = state.fieldHeight - clamp(state.fieldWidth * 0.055, 24, 42) - state.laneHeight / 2;
     state.guideCenterX = state.fieldWidth / 2;
     state.guideLeftX = state.guideCenterX - state.guideWidth / 2;
@@ -451,6 +451,7 @@
 
   function renderConveyor(layer){
     const laneBottom = clamp(state.fieldWidth * 0.055, 24, 42);
+
     let html = `
       <div class="tb-conveyor-lane" style="left:${state.lanePadX}px;right:${state.lanePadX}px;bottom:${laneBottom}px;height:${state.laneHeight}px;">
     `;
