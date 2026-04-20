@@ -400,7 +400,7 @@
     state.brickStep = state.brickWidth + state.brickGap;
     state.guideWidth = state.brickWidth;
     state.laneHeight = Math.max(state.brickHeight + 18, clamp(state.fieldWidth * 0.16, 94, 126));
-    state.lanePadX = clamp(state.fieldWidth * 0.04, 18, 30);
+    state.lanePadX = clamstate.lanePadX = 0;
     state.laneY = state.fieldHeight - clamp(state.fieldWidth * 0.055, 24, 42) - state.laneHeight / 2;
     state.guideCenterX = state.fieldWidth / 2;
     state.guideLeftX = state.guideCenterX - state.guideWidth / 2;
@@ -451,7 +451,6 @@
 
   function renderConveyor(layer){
     const laneBottom = clamp(state.fieldWidth * 0.055, 24, 42);
-    const vignetteWidth = clamp(state.fieldWidth * 0.12, 46, 118);
     let html = `
       <div class="tb-conveyor-lane" style="left:${state.lanePadX}px;right:${state.lanePadX}px;bottom:${laneBottom}px;height:${state.laneHeight}px;">
     `;
@@ -465,8 +464,6 @@
         <button class="${classes.join(" ")}" data-id="${brick.id}" style="left:${brick.left}px;width:${state.brickWidth}px;height:${state.brickHeight}px;font-size:${brick.fontSize}px;opacity:${brickVisualOpacity(brick).toFixed(3)};" aria-label="${brick.isCorrect ? "Correct brick" : "Brick"}">${escapeHtml(brick.label)}</button>`;
     }
     html += `
-        <div class="tb-lane-vignette tb-lane-vignette-left" style="width:${vignetteWidth}px;"></div>
-        <div class="tb-lane-vignette tb-lane-vignette-right" style="width:${vignetteWidth}px;"></div>
       </div>`;
     layer.innerHTML = html;
 
