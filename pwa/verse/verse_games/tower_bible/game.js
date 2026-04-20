@@ -565,7 +565,8 @@
     state.fx = state.fx.filter((fx) => fx.until > now);
     let html = layer.innerHTML || "";
     for (const fx of state.fx){
-      html += `<div class="tb-smoke-puff" style="left:${fx.x}px;top:${fx.y}px"></div>`;
+      const scale = fx.scale || 1;
+      html += `<div class="tb-smoke-puff" style="left:${fx.x}px;top:${fx.y}px;transform:translate(-50%,-50%) scale(${scale});"></div>`;
     }
     layer.innerHTML = html;
   }
@@ -645,7 +646,7 @@
       state.towerSettleUntil = performance.now() + 220;
 
       const puffY = state.fieldHeight - towerBaseBottom() - state.brickHeight * 0.45;
-      addSmoke(state.fieldWidth * 0.5, puffY);
+      addLandingSmoke(state.fieldWidth * 0.5, puffY);
 
       advancePhaseAfterPlacement();
       updateWarnings();
@@ -975,7 +976,18 @@
     state.towerShakeUntil = performance.now() + 500;
   }
 
-  function addSmoke(x, y){ state.fx.push({ x, y, until:performance.now() + 420 }); }
+  function addSmoke(x, y){
+    state.fx.push({ x, y, until:performance.now() + 420, scale:1 });
+  }
+
+  function addLandingSmoke(x, y){
+    const now = performance.now();
+    state.fx.push(
+      { x:x - 16, y:y + 2, until:now + 420, scale:1.05 },
+      { x:x,      y:y - 4, until:now + 470, scale:1.35 },
+      { x:x + 18, y:y + 1, until:now + 430, scale:0.95 }
+    );
+  }
 
   async function finishGame(){
     state.running = false;
