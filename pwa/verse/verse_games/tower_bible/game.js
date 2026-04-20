@@ -33,6 +33,8 @@
     hard:{warn1:5,warn2:8,collapse:10}
   };
 
+  const DEBUG_COLLAPSE = true;
+
   let selectedMode = null;
   let muted = false;
   let completionMarked = false;
@@ -181,6 +183,7 @@
               <div class="tb-conveyor-layer" id="tbConveyorLayer"></div>
               <div class="tb-enter-layer" id="tbEnterLayer"></div>
               <div class="tb-smoke-layer" id="tbSmokeLayer"></div>
+              <div id="tbDebugLayer" style="position:absolute;left:8px;bottom:8px;z-index:20;pointer-events:none;"></div>
               <div class="tb-controls-layer">
                 <button class="tb-corner-pill tb-corner-left" id="tbMenuPill" type="button" aria-label="Game menu">☰</button>
                 <div class="tb-corner-pill tb-corner-right" id="tbPhasePill"></div>
@@ -441,6 +444,7 @@
     const enterLayer = document.getElementById("tbEnterLayer");
     const smokeLayer = document.getElementById("tbSmokeLayer");
     const warningLayer = document.getElementById("tbWarningLayer");
+    const debugLayer = document.getElementById("tbDebugLayer");
     if (!towerLayer || !guideLayer || !conveyorLayer || !enterLayer || !smokeLayer || !warningLayer) return;
 
     renderTower(towerLayer);
@@ -449,6 +453,7 @@
     renderEnteringBrick(enterLayer);
     renderEffects(smokeLayer);
     renderWarning(warningLayer);
+    renderDebug(debugLayer);
   }
 
   function renderGuide(layer){
@@ -647,6 +652,63 @@
     }
     const text = state.warningLevel === 1 ? "⚠️" : "⚠️⚠️";
     layer.innerHTML = `<div style="position:absolute;left:50%;top:18px;transform:translateX(-50%);font-size:${state.warningLevel === 1 ? 22 : 26}px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.18));">${text}</div>`;
+  }
+
+  function renderDebug(layer){
+    if (!layer) return;
+    if (!DEBUG_COLLAPSE){
+      layer.innerHTML = "";
+      return;
+    }
+
+    const leanScore = getLeanScore();
+    const visualLean = getVisualLean();
+
+    const fmtPose = (arr) => {
+      if (!arr || !arr.length) return "[]";
+      return arr.slice(0, 4).map((p, i) => {
+        const x = Number(p?.offsetX || 0).toFixed(1);
+        const r = Number(p?.rot || 0).toFixed(1);
+        return `${i}:{x:${x},r:${r}}`;
+      }).join("  ");
+    };
+
+    const deltaText = (() => {
+      const a = state.pendingPreCollapsePose || [];
+      const b = state.collapseBasePose || [];
+      const parts = [];
+      const n = Math.min(4, Math.max(a.length, b.length));
+      for (let i = 0; i < n; i++){
+        const ax = Number(a[i]?.offsetX || 0);
+        const bx = Number(b[i]?.offsetX || 0);
+        const ar = Number(a[i]?.rot || 0);
+        const br = Number(b[i]?.rot || 0);
+        parts.push(`${i}:{dx:${(bx-ax).toFixed(1)},dr:${(br-ar).toFixed(1)}}`);
+      }
+      return parts.join("  ");
+    })();
+
+    layer.innerHTML = `
+      <div style="
+        max-width:min(92vw, 560px);
+        background:rgba(0,0,0,.72);
+        color:#fff;
+        border-radius:10px;
+        padding:8px 10px;
+        font:12px/1.3 monospace;
+        white-space:pre-wrap;
+        word-break:break-word;
+        box-shadow:0 4px 14px rgba(0,0,0,.25);
+      ">
+DBG
+warn=${state.warningLevel}  collapse=${state.collapseTriggered}  progress=${state.progress.length}
+leanScore=${leanScore.toFixed(2)}  visualLean=${visualLean.toFixed(3)}
+lastStable: ${fmtPose(state.lastStableTowerPose)}
+pendingPre: ${fmtPose(state.pendingPreCollapsePose)}
+collapseBase: ${fmtPose(state.collapseBasePose)}
+delta pre→collapse: ${deltaText}
+      </div>
+    `;
   }
 
   function startLoop(){ stopLoop(); state.lastTs = 0; state.rafId = requestAnimationFrame(frame); }
@@ -1070,6 +1132,23 @@
       collapseBufferMs;
 
     state.towerShakeUntil = 0;
+
+    if (DEBUG_COLLAPSE){
+      console.log("[TowerCollapseDebug]", {
+        warningLevel: state.warningLevel,
+        leanScore: getLeanScore(),
+        visualLean: getVisualLean(),
+        progress: state.progress.map((b, i) => ({
+          i,
+          label: b.label,
+          zone: b.zone,
+          kind: b.kind
+        })),
+        lastStableTowerPose: state.lastStableTowerPose,
+        pendingPreCollapsePose: state.pendingPreCollapsePose,
+        collapseBasePose: state.collapseBasePose
+      });
+    }
   }
 
   function addSmoke(x, y){
