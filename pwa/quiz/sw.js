@@ -1,6 +1,6 @@
 /* sw.js - PWA service worker for /eatyourbible/pwa/quiz/ */
 
-const CACHE_NAME = "eyb-quiz-2026_Mar_20 v3";
+const CACHE_NAME = "eyb-quiz-2026_Apr_20 v1";
 
 /**
  * Core files needed so the app "boots" offline.
@@ -14,6 +14,7 @@ const CORE_ASSETS = [
 
   // Your default theme + key title assets (so intro/title loads offline)
   "/eatyourbible/pwa/quiz/quiz_themes/theme-gray.css",
+  "/eatyourbible/pwa/quiz/quiz_themes/theme-registry.json",
   "/eatyourbible/pwa/quiz/quizimages/quiz_icon.png",
   "/eatyourbible/pwa/quiz/quizimages/eyb_logo_1.png",
   "/eatyourbible/pwa/quiz/quizimages/eyb_logo_2.png",
