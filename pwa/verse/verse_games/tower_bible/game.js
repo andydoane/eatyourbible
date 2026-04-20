@@ -520,10 +520,12 @@
   function renderTower(layer){
     const now = performance.now();
     const towerShellClass = ["tb-tower-shell"];
-    if (state.towerShakeUntil > now) towerShellClass.push("tb-tower-shake");
-    else if (state.towerSettleUntil > now) towerShellClass.push("tb-tower-settle");
-    if (state.warningLevel === 1) towerShellClass.push("tb-tower-wobble-1");
-    if (state.warningLevel >= 2) towerShellClass.push("tb-tower-wobble-2");
+    if (!state.collapseTriggered){
+      if (state.towerShakeUntil > now) towerShellClass.push("tb-tower-shake");
+      else if (state.towerSettleUntil > now) towerShellClass.push("tb-tower-settle");
+      if (state.warningLevel === 1) towerShellClass.push("tb-tower-wobble-1");
+      if (state.warningLevel >= 2) towerShellClass.push("tb-tower-wobble-2");
+    }
 
     const lean = getVisualLean();
     const count = state.progress.length;
@@ -1005,8 +1007,23 @@
     state.collapseTriggered = true;
     state.collapseStartedAt = performance.now();
     state.collapseDir = lean < 0 ? -1 : 1;
-    state.collapseEndsAt = state.collapseStartedAt + 3500;
-    state.towerShakeUntil = state.collapseStartedAt + 180;
+
+    const count = Math.max(1, state.progress.length);
+    const collapseTensionMs = 180;
+    const collapseStepMs = 250;
+    const collapseTipMs = 240;
+    const collapseDropMs = 900;
+    const collapseBufferMs = 220;
+
+    state.collapseEndsAt =
+      state.collapseStartedAt +
+      collapseTensionMs +
+      Math.max(0, count - 1) * collapseStepMs +
+      collapseTipMs +
+      collapseDropMs +
+      collapseBufferMs;
+
+    state.towerShakeUntil = 0;
   }
 
   function addSmoke(x, y){
