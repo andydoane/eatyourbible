@@ -1,0 +1,110 @@
+{
+  "lessonId": "nt29",
+  "pageTitle": "NT 29 Quiz",
+  "lessonTitleText": "The Garden of Gethsemane",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt29image.png",
+  "themeClass": "theme-green",
+  "questions": [
+    {
+      "text": "What did the chief priests and elders secretly plan to do?",
+      "answers": [
+        "Arrest and kill Jesus",
+        "Make Jesus king",
+        "Become disciples of Jesus",
+        "Kidnap Jesus and take him to Egypt"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Judas do with the disciples’ money bag?",
+      "answers": [
+        "He stole money for himself",
+        "He gave it all to the poor",
+        "He lost it",
+        "He used the money to buy Jesus a gift"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why was Judas upset that Mary poured perfume on Jesus?",
+      "answers": [
+        "He wanted it sold so he could steal the money",
+        "He did not like the smell",
+        "He was jealous",
+        "He thought she was making a mess"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Judas agree to do for 30 silver coins?",
+      "answers": [
+        "Help the chief priests and elders arrest Jesus",
+        "Help the chief priests and elders become disciples",
+        "Wash the disciples' feet",
+        "Buy food for the Passover"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jesus do in the garden of Gethsemane?",
+      "answers": [
+        "Prayed to God",
+        "Preached to a crowd",
+        "Planted flowers",
+        "Went to sleep"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What prayer did Jesus pray three times?",
+      "answers": [
+        "If possible, take away this suffering, but do what You want, not what I want",
+        "Send angels to fight for Me",
+        "Make Judas change his mind",
+        "Let the disciples stay awake"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the disciples do when they were supposed to be praying?",
+      "answers": [
+        "They fell asleep",
+        "They ran away",
+        "They played basketball",
+        "They climbed a tree"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Jesus was so troubled, his sweat was like... what?",
+      "answers": [
+        "Drops of blood",
+        "Rain from the sky",
+        "Oil from a lamp",
+        "A waterfall"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who did Judas bring to the garden to arrest Jesus?",
+      "answers": [
+        "Men with swords and clubs",
+        "Only the Pharisees",
+        "The rest of the disciples",
+        "Roman horses and chariots"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What was Judas’ signal to the men?",
+      "answers": [
+        "The one I kiss is Jesus",
+        "The one holding a lamp is Jesus",
+        "The one with the long beard is Jesus",
+        "The one wearing white is Jesus"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

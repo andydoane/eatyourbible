@@ -1,0 +1,110 @@
+{
+  "lessonId": "nt31",
+  "pageTitle": "NT 31 Quiz",
+  "lessonTitleText": "Jesus Is Crucified",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt31image.png",
+  "themeClass": "theme-white",
+  "questions": [
+    {
+      "text": "Which prisoner did the crowd ask Pilate to release instead of Jesus?",
+      "answers": [
+        "Barabbas",
+        "Peter",
+        "Judas",
+        "John"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the crowd tell Pilate to do with Jesus?",
+      "answers": [
+        "Crucify Him",
+        "Set Him free",
+        "Throw him off a cliff",
+        "Make Him king"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What does it mean that Jesus was scourged?",
+      "answers": [
+        "He was whipped with a harsh whip",
+        "He was put in prison",
+        "He was made fun of",
+        "He was pokef with a spear"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did the soldiers mock Jesus?",
+      "answers": [
+        "They gave Him a crown of thorns and a robe, then hit him",
+        "They made fun of his name",
+        "They threw food at him",
+        "They shaved his head"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the soldiers force Simon to do?",
+      "answers": [
+        "Carry Jesus’ cross",
+        "Guard the tomb",
+        "Help the disciples",
+        "Nail Jesus to the cross"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did the crowd mock Jesus?",
+      "answers": [
+        "They told Him to save Himself if He was God’s Son",
+        "They pretended to bow down to him",
+        "They sang songs about him",
+        "They threw stones at him"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jesus say to the criminal who believed in Him?",
+      "answers": [
+        "Today you will be with Me in paradise",
+        "I will rescue you from the cross",
+        "I can't help you",
+        "It's too late to be saved"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jesus say right before He died?",
+      "answers": [
+        "It is finished",
+        "I will get revenge",
+        "Somebody help me",
+        "God will punish you"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What amazing things happened as Jesus was dying?",
+      "answers": [
+        "Darkness, an earthquake, and the temple curtain tore",
+        "Lightning struck the temple",
+        "A wild rainstorm flooded the city",
+        "Everyone began to believe in him"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the Roman soldier say when he saw Jesus die?",
+      "answers": [
+        "Truly, he was the Son of God",
+        "This man was innocent",
+        "I am glad he is dead",
+        "We have made a mistake"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
