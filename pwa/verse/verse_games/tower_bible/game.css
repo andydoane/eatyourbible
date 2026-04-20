@@ -70,12 +70,13 @@ body{
 .tb-cloud.c1{left:3%;top:8%;font-size:clamp(52px,7vw,88px);}
 .tb-cloud.c2{right:2%;top:14%;font-size:clamp(62px,9vw,108px);transform:scaleX(-1);}
 
-.tb-tower-layer,.tb-conveyor-layer,.tb-smoke-layer,.tb-guide-layer,.tb-controls-layer,.tb-warning-layer{position:absolute;inset:0;}
+.tb-tower-layer,.tb-conveyor-layer,.tb-enter-layer,.tb-smoke-layer,.tb-guide-layer,.tb-controls-layer,.tb-warning-layer{position:absolute;inset:0;}
 .tb-tower-layer{z-index:1;pointer-events:none;}
 .tb-warning-layer{z-index:2;pointer-events:none;}
 .tb-guide-layer{z-index:3;pointer-events:none;}
 .tb-conveyor-layer{z-index:4;}
-.tb-smoke-layer{z-index:5;pointer-events:none;}
+.tb-enter-layer{z-index:5;pointer-events:none;}
+.tb-smoke-layer{z-index:6;pointer-events:none;}
 .tb-controls-layer{z-index:10;pointer-events:none;}
 
 .tb-corner-pill{position:absolute;top:clamp(10px,2.5vw,16px);background:rgba(255,255,255,.96);color:#333;border-radius:999px;padding:clamp(7px,1.8vw,11px) clamp(12px,3vw,18px);font-weight:900;font-size:clamp(16px,3.8vw,20px);min-height:clamp(40px,10vw,52px);pointer-events:auto;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
@@ -100,7 +101,27 @@ body{
 .tb-tower-shake{animation:tbTowerShake 260ms ease;}
 .tb-tower-wobble-1{animation:tbTowerWobble1 1.4s ease-in-out infinite;}
 .tb-tower-wobble-2{animation:tbTowerWobble2 .9s ease-in-out infinite;}
+
 .tb-tower-entering{z-index:10;}
+.tb-enter-brick{
+  position:absolute;
+  transform-origin:center center;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:10px;
+  background:#ffffff;
+  color:#111;
+  font-weight:900;
+  text-align:center;
+  padding:0 10px;
+  line-height:1.05;
+  box-shadow:0 6px 0 rgba(0,0,0,.14);
+  pointer-events:none;
+}
+.tb-enter-brick.book{background:#ffc751;color:#333;}
+.tb-enter-brick.ref{background:#ffefb5;color:#333;}
+
 .tb-tower-settle{animation:tbTowerSettle 220ms ease-out;}
 
 .tb-smoke-puff{position:absolute;width:18px;height:18px;border-radius:999px;background:radial-gradient(circle, rgba(255,255,255,.98) 0%, rgba(255,255,255,.72) 34%, rgba(255,255,255,0) 72%);pointer-events:none;animation:tbSmokePuff 420ms ease-out forwards;will-change:transform,opacity;}
