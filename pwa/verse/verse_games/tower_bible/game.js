@@ -86,6 +86,7 @@
     collapseBasePose:null,
     lastStableTowerPose:null,
     pendingPreCollapsePose:null,
+    collapseDebugFramesLeft:0,
 
     stream:[],
     streamId:0,
@@ -162,7 +163,7 @@
       progress:[], phase:"words", wordIndex:0,
       towerShakeUntil:0, towerSettleUntil:0, guideFlashUntil:0,
       overlayMessage:"", overlayUntil:0,
-      warningLevel:0, collapseTriggered:false, collapseEndsAt:0, collapseStartedAt:0, collapseDir:1, collapseBasePose:null, lastStableTowerPose:null, pendingPreCollapsePose:null,
+      warningLevel:0, collapseTriggered:false, collapseEndsAt:0, collapseStartedAt:0, collapseDir:1, collapseBasePose:null, lastStableTowerPose:null, pendingPreCollapsePose:null, collapseDebugFramesLeft:0,
       stream:[], streamId:0, fx:[], enteringBrick:null, enteringId:0,
       done:false, pendingCorrectLabel:"", pendingCorrectType:"word",
       pendingCorrectVisible:0, spawnIndex:0
@@ -546,6 +547,7 @@
     let html = `<div class="${towerShellClass.join(" ")}" id="tbTowerShell" style="transform:translateX(-50%) rotate(${shellRot}deg);">`;
 
     let cumulativeBottom = 0;
+    const debugRenderedBricks = [];
     for (let i = 0; i < count; i++){
       const brick = state.progress[i];
       const level = i;
@@ -601,7 +603,21 @@
 
 
 
+
+      if (DEBUG_COLLAPSE && state.collapseTriggered){
+        debugRenderedBricks.push({
+          i,
+          label: brick.label,
+          baseOffsetX,
+          offsetX,
+          baseRot,
+          rot,
+          bottom
+        });
+      }
+
       html += `<div class="${cls.join(" ")}" style="bottom:${bottom}px;width:${width}px;height:${height}px;font-size:${fontSize}px;opacity:${opacity.toFixed(3)};transform:translateX(calc(-50% + ${offsetX}px)) rotate(${rot}deg)">${escapeHtml(brick.label)}</div>`;
+
       cumulativeBottom += height + clamp(state.brickHeight * 0.07, 4, 8);
     }
 
@@ -621,6 +637,8 @@
 
     html += `</div>`;
     layer.innerHTML = html;
+
+    logCollapseFrame(now, debugRenderedBricks);
 
   }
 
@@ -656,10 +674,35 @@
 
   function renderDebug(layer){
     if (!layer) return;
-    if (!DEBUG_COLLAPSE){
-      layer.innerHTML = "";
-      return;
-    }
+    layer.innerHTML = "";
+  }
+
+  function logCollapseFrame(now, renderedBricks){
+    if (!DEBUG_COLLAPSE) return;
+    if (!state.collapseTriggered) return;
+    if (state.collapseDebugFramesLeft <= 0) return;
+
+    const elapsed = now - state.collapseStartedAt;
+    const summary = renderedBricks.slice(0, 5).map((b) => ({
+      i: b.i,
+      label: b.label,
+      baseOffsetX: Number(b.baseOffsetX.toFixed(2)),
+      offsetX: Number(b.offsetX.toFixed(2)),
+      baseRot: Number(b.baseRot.toFixed(2)),
+      rot: Number(b.rot.toFixed(2)),
+      bottom: Number(b.bottom.toFixed(2))
+    }));
+
+    console.group(`[TowerCollapseDebug] frame ${9 - state.collapseDebugFramesLeft}`);
+    console.log("elapsed", Number(elapsed.toFixed(2)));
+    console.log("warningLevel", state.warningLevel);
+    console.log("leanScore", Number(getLeanScore().toFixed(3)));
+    console.log("visualLean", Number(getVisualLean().toFixed(3)));
+    console.log("renderedBricks", summary);
+    console.groupEnd();
+
+    state.collapseDebugFramesLeft -= 1;
+  }
 
     const leanScore = getLeanScore();
     const visualLean = getVisualLean();
@@ -804,6 +847,7 @@ delta pre→collapse: ${deltaText}
     state.collapseBasePose = null;
     state.lastStableTowerPose = null;
     state.pendingPreCollapsePose = null;
+    state.collapseDebugFramesLeft = 0;
     state.progress = [];
     state.phase = "words";
     state.wordIndex = 0;
@@ -1134,20 +1178,21 @@ delta pre→collapse: ${deltaText}
     state.towerShakeUntil = 0;
 
     if (DEBUG_COLLAPSE){
-      console.log("[TowerCollapseDebug]", {
-        warningLevel: state.warningLevel,
-        leanScore: getLeanScore(),
-        visualLean: getVisualLean(),
-        progress: state.progress.map((b, i) => ({
-          i,
-          label: b.label,
-          zone: b.zone,
-          kind: b.kind
-        })),
-        lastStableTowerPose: state.lastStableTowerPose,
-        pendingPreCollapsePose: state.pendingPreCollapsePose,
-        collapseBasePose: state.collapseBasePose
-      });
+      state.collapseDebugFramesLeft = 8;
+      console.group("[TowerCollapseDebug] trigger");
+      console.log("warningLevel", state.warningLevel);
+      console.log("leanScore", getLeanScore());
+      console.log("visualLean", getVisualLean());
+      console.log("progress", state.progress.map((b, i) => ({
+        i,
+        label: b.label,
+        zone: b.zone,
+        kind: b.kind
+      })));
+      console.log("lastStableTowerPose", state.lastStableTowerPose);
+      console.log("pendingPreCollapsePose", state.pendingPreCollapsePose);
+      console.log("collapseBasePose", state.collapseBasePose);
+      console.groupEnd();
     }
   }
 
