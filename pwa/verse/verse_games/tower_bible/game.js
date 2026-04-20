@@ -79,6 +79,8 @@
     warningLevel:0,
     collapseTriggered:false,
     collapseEndsAt:0,
+    collapseStartedAt:0,
+    collapseDir:1,
 
     stream:[],
     streamId:0,
@@ -155,7 +157,7 @@
       progress:[], phase:"words", wordIndex:0,
       towerShakeUntil:0, towerSettleUntil:0, guideFlashUntil:0,
       overlayMessage:"", overlayUntil:0,
-      warningLevel:0, collapseTriggered:false, collapseEndsAt:0,
+      warningLevel:0, collapseTriggered:false, collapseEndsAt:0, collapseStartedAt:0, collapseDir:1,
       stream:[], streamId:0, fx:[], enteringBrick:null, enteringId:0,
       done:false, pendingCorrectLabel:"", pendingCorrectType:"word",
       pendingCorrectVisible:0, spawnIndex:0
@@ -526,6 +528,10 @@
     const lean = getVisualLean();
     const count = state.progress.length;
     const maxLeanPx = Math.min(state.fieldWidth * 0.065, 46);
+    const collapseElapsed = state.collapseTriggered ? (now - state.collapseStartedAt) : 0;
+    const collapseTensionMs = 220;
+    const collapseStepMs = 80;
+    const collapseDropMs = 520;
 
     let html = `<div class="${towerShellClass.join(" ")}" id="tbTowerShell">`;
 
@@ -539,13 +545,32 @@
       const width = state.towerWidth * 0.76 * scale;
       const height = Math.max(34, state.brickHeight * 0.9 * scale);
       const fontSize = Math.max(13, state.brickHeight * 0.33 * scale);
-      const offsetX = count <= 1 ? 0 : lean * maxLeanPx * curve;
-      const rot = count <= 2 ? 0 : lean * 1.15 * Math.pow(t, 1.7);
+      const baseOffsetX = count <= 1 ? 0 : lean * maxLeanPx * curve;
+      const baseRot = count <= 2 ? 0 : lean * 1.15 * Math.pow(t, 1.7);
       const cls = ["tb-tower-brick"];
-      const opacity = Math.max(0.72, 1 - level * 0.02);
+      let opacity = Math.max(0.72, 1 - level * 0.02);
+      let bottom = cumulativeBottom;
+      let offsetX = baseOffsetX;
+      let rot = baseRot;
+
       if (brick.kind === "book") cls.push("book");
       if (brick.kind === "reference") cls.push("ref", "capstone");
-      html += `<div class="${cls.join(" ")}" style="bottom:${cumulativeBottom}px;width:${width}px;height:${height}px;font-size:${fontSize}px;opacity:${opacity.toFixed(3)};transform:translateX(calc(-50% + ${offsetX}px)) rotate(${rot}deg)">${escapeHtml(brick.label)}</div>`;
+
+      if (state.collapseTriggered){
+        cls.push("is-collapsing");
+
+        const topIndex = count - 1 - i; // top brick starts first
+        const localStart = collapseTensionMs + topIndex * collapseStepMs;
+        const localT = clamp((collapseElapsed - localStart) / collapseDropMs, 0, 1);
+        const eased = localT <= 0 ? 0 : (1 - Math.pow(1 - localT, 2.2));
+
+        offsetX = baseOffsetX + state.collapseDir * (20 + 86 * eased + topIndex * 5);
+        bottom = cumulativeBottom - (8 * eased) - (state.fieldHeight * 0.62 * eased);
+        rot = baseRot + state.collapseDir * (10 + 62 * eased);
+        opacity = Math.max(0, opacity * (1 - eased * 0.78));
+      }
+
+      html += `<div class="${cls.join(" ")}" style="bottom:${bottom}px;width:${width}px;height:${height}px;font-size:${fontSize}px;opacity:${opacity.toFixed(3)};transform:translateX(calc(-50% + ${offsetX}px)) rotate(${rot}deg)">${escapeHtml(brick.label)}</div>`;
       cumulativeBottom += height + clamp(state.brickHeight * 0.07, 4, 8);
     }
 
@@ -660,15 +685,14 @@
   }
 
   function stepCollapse(dt){
-    for (let i = 0; i < state.progress.length; i++){
-      const brick = state.progress[i];
-      if (brick.collapseDelay == null) brick.collapseDelay = i * 55;
-      brick.collapseTime = (brick.collapseTime || 0) + dt;
-    }
+    // Visual collapse is driven directly from render time using
+    // collapseStartedAt and collapseDir, so no per-frame mutation is needed here.
   }
 
   function resetAfterCollapse(){
     state.collapseTriggered = false;
+    state.collapseStartedAt = 0;
+    state.collapseDir = 1;
     state.progress = [];
     state.warningLevel = 0;
     state.enteringBrick = null;
@@ -962,9 +986,12 @@
   }
 
   function triggerCollapse(){
+    const lean = getVisualLean();
     state.collapseTriggered = true;
-    state.collapseEndsAt = performance.now() + 1150;
-    state.towerShakeUntil = performance.now() + 500;
+    state.collapseStartedAt = performance.now();
+    state.collapseDir = lean < 0 ? -1 : 1;
+    state.collapseEndsAt = state.collapseStartedAt + 1500;
+    state.towerShakeUntil = state.collapseStartedAt + 240;
   }
 
   function addSmoke(x, y){

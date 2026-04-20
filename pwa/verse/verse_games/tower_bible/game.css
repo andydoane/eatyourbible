@@ -98,6 +98,7 @@ body{
 .tb-tower-brick.book{background:#ffc751;color:#333;}
 .tb-tower-brick.ref{background:#ffefb5;color:#333;}
 .tb-tower-brick.capstone{box-shadow:0 8px 0 rgba(0,0,0,.18);}
+.tb-tower-brick.is-collapsing{transition:none;will-change:transform,bottom,opacity;}
 .tb-tower-shake{animation:tbTowerShake 260ms ease;}
 .tb-tower-wobble-1{animation:tbTowerWobble1 1.4s ease-in-out infinite;}
 .tb-tower-wobble-2{animation:tbTowerWobble2 .9s ease-in-out infinite;}
@@ -163,6 +164,13 @@ body{
   35%{transform:translateX(-50%) translateY(4px);}
   70%{transform:translateX(-50%) translateY(-2px);}
   100%{transform:translateX(-50%) translateY(0);}
+}
+
+@keyframes tbTowerTension{
+  0%{transform:translateX(-50%) rotate(0deg);}
+  35%{transform:translateX(-50%) rotate(.4deg);}
+  70%{transform:translateX(-50%) rotate(-.35deg);}
+  100%{transform:translateX(-50%) rotate(0deg);}
 }
 
 @keyframes tbTowerWobble1{0%,100%{transform:translateX(-50%) rotate(0deg);}25%{transform:translateX(-50%) rotate(-0.55deg);}50%{transform:translateX(-50%) rotate(0.55deg);}75%{transform:translateX(-50%) rotate(-0.35deg);}}
