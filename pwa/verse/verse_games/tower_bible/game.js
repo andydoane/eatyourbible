@@ -647,7 +647,7 @@
 
       state.towerSettleUntil = performance.now() + 220;
 
-      const puffY = state.fieldHeight - towerBaseBottom() - state.brickHeight * 0.45;
+      const puffY = state.fieldHeight - towerBaseBottom() - state.brickHeight * 0.16;
       addLandingSmoke(state.fieldWidth * 0.5, puffY);
 
       advancePhaseAfterPlacement();
@@ -985,9 +985,10 @@
   function addLandingSmoke(x, y){
     const now = performance.now();
     state.fx.push(
-      { x:x - 22, y:y + 4, until:now + 440, scale:1.45 },
-      { x:x,      y:y - 6, until:now + 520, scale:1.9 },
-      { x:x + 24, y:y + 3, until:now + 450, scale:1.35 }
+      { x:x - 34, y:y + 10, until:now + 560, scale:1.85 },
+      { x:x - 10, y:y + 2,  until:now + 610, scale:2.35 },
+      { x:x + 18, y:y + 6,  until:now + 590, scale:2.05 },
+      { x:x + 40, y:y + 12, until:now + 540, scale:1.65 }
     );
   }
 
