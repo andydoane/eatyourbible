@@ -440,7 +440,7 @@
     const warningLayer = document.getElementById("tbWarningLayer");
     if (!towerLayer || !guideLayer || !conveyorLayer || !enterLayer || !smokeLayer || !warningLayer) return;
 
-    renderTower(towerLayer, smokeLayer);
+    renderTower(towerLayer);
     renderGuide(guideLayer);
     renderConveyor(conveyorLayer);
     renderEnteringBrick(enterLayer);
@@ -517,7 +517,7 @@
     `;
   }
 
-  function renderTower(layer, smokeLayer){
+  function renderTower(layer){
     const now = performance.now();
     const towerShellClass = ["tb-tower-shell"];
     if (state.towerShakeUntil > now) towerShellClass.push("tb-tower-shake");
@@ -529,9 +529,10 @@
     const count = state.progress.length;
     const maxLeanPx = Math.min(state.fieldWidth * 0.065, 46);
     const collapseElapsed = state.collapseTriggered ? (now - state.collapseStartedAt) : 0;
-    const collapseTensionMs = 220;
-const collapseStepMs = 120;
-    const collapseDropMs = 520;
+    const collapseTensionMs = 180;
+    const collapseStepMs = 150;
+    const collapseTipMs = 170;
+    const collapseDropMs = 620;
 
     let html = `<div class="${towerShellClass.join(" ")}" id="tbTowerShell">`;
 
@@ -561,13 +562,23 @@ const collapseStepMs = 120;
 
         const topIndex = count - 1 - i; // top brick starts first
         const localStart = collapseTensionMs + topIndex * collapseStepMs;
-        const localT = clamp((collapseElapsed - localStart) / collapseDropMs, 0, 1);
-        const eased = localT <= 0 ? 0 : (1 - Math.pow(1 - localT, 2.2));
+        const elapsedForBrick = collapseElapsed - localStart;
 
-        offsetX = baseOffsetX + state.collapseDir * (28 + 118 * eased + topIndex * 7);
-        bottom = cumulativeBottom - (18 * eased) - ((state.fieldHeight + 220 + topIndex * 36) * eased);
-        rot = baseRot + state.collapseDir * (14 + 84 * eased);
-        opacity = Math.max(0, opacity * (1 - eased * 0.78));
+        const tipT = clamp(elapsedForBrick / collapseTipMs, 0, 1);
+        const fallT = clamp((elapsedForBrick - collapseTipMs) / collapseDropMs, 0, 1);
+
+        const tipEase = tipT <= 0 ? 0 : Math.pow(tipT, 1.65);
+        const fallEase = fallT <= 0 ? 0 : (1 - Math.pow(1 - fallT, 2.25));
+
+        const tipRot = state.collapseDir * (12 + 10 * tipEase);
+        const fallRot = state.collapseDir * (84 * fallEase);
+        const tipShift = state.collapseDir * (10 * tipEase);
+        const fallShift = state.collapseDir * (132 * fallEase + topIndex * 8);
+
+        offsetX = baseOffsetX + tipShift + fallShift;
+        bottom = cumulativeBottom - (10 * tipEase) - ((state.fieldHeight + 260 + topIndex * 44) * fallEase);
+        rot = baseRot + tipRot + fallRot;
+        opacity = Math.max(0, opacity * (1 - fallEase * 0.84));
       }
 
       html += `<div class="${cls.join(" ")}" style="bottom:${bottom}px;width:${width}px;height:${height}px;font-size:${fontSize}px;opacity:${opacity.toFixed(3)};transform:translateX(calc(-50% + ${offsetX}px)) rotate(${rot}deg)">${escapeHtml(brick.label)}</div>`;
@@ -577,12 +588,6 @@ const collapseStepMs = 120;
     html += `</div>`;
     layer.innerHTML = html;
 
-    if (state.collapseTriggered){
-      smokeLayer.innerHTML = `
-        <div class="tb-base-smoke is-open">
-          <div class="p p1"></div><div class="p p2"></div><div class="p p3"></div><div class="p p4"></div><div class="p p5"></div>
-        </div>` + smokeLayer.innerHTML;
-    }
   }
 
   function renderEffects(layer){
@@ -590,6 +595,13 @@ const collapseStepMs = 120;
     state.fx = state.fx.filter((fx) => fx.until > now);
 
     let html = "";
+
+    if (state.collapseTriggered && (now - state.collapseStartedAt) < 700){
+      html += `
+        <div class="tb-base-smoke is-open">
+          <div class="p p1"></div><div class="p p2"></div><div class="p p3"></div><div class="p p4"></div><div class="p p5"></div>
+        </div>`;
+    }
 
     for (const fx of state.fx){
       const scale = fx.scale || 1;
@@ -993,8 +1005,8 @@ const collapseStepMs = 120;
     state.collapseTriggered = true;
     state.collapseStartedAt = performance.now();
     state.collapseDir = lean < 0 ? -1 : 1;
-    state.collapseEndsAt = state.collapseStartedAt + 1500;
-    state.towerShakeUntil = state.collapseStartedAt + 240;
+    state.collapseEndsAt = state.collapseStartedAt + 2050;
+    state.towerShakeUntil = state.collapseStartedAt + 180;
   }
 
   function addSmoke(x, y){
