@@ -82,6 +82,7 @@
     collapseStartedAt:0,
     collapseDir:1,
     collapseBasePose:null,
+    lastStableTowerPose:null,
 
     stream:[],
     streamId:0,
@@ -158,7 +159,7 @@
       progress:[], phase:"words", wordIndex:0,
       towerShakeUntil:0, towerSettleUntil:0, guideFlashUntil:0,
       overlayMessage:"", overlayUntil:0,
-      warningLevel:0, collapseTriggered:false, collapseEndsAt:0, collapseStartedAt:0, collapseDir:1, collapseBasePose:null,
+      warningLevel:0, collapseTriggered:false, collapseEndsAt:0, collapseStartedAt:0, collapseDir:1, collapseBasePose:null, lastStableTowerPose:null,
       stream:[], streamId:0, fx:[], enteringBrick:null, enteringId:0,
       done:false, pendingCorrectLabel:"", pendingCorrectType:"word",
       pendingCorrectVisible:0, spawnIndex:0
@@ -549,6 +550,8 @@
       const width = state.towerWidth * 0.76 * scale;
       const height = Math.max(34, state.brickHeight * 0.9 * scale);
       const fontSize = Math.max(13, state.brickHeight * 0.33 * scale);
+
+
       const liveBaseOffsetX = count <= 1 ? 0 : lean * maxLeanPx * curve;
       const liveBaseRot = count <= 2 ? 0 : lean * 1.15 * Math.pow(t, 1.7);
       const frozenPose = state.collapseBasePose?.[i] || null;
@@ -589,6 +592,20 @@
 
       html += `<div class="${cls.join(" ")}" style="bottom:${bottom}px;width:${width}px;height:${height}px;font-size:${fontSize}px;opacity:${opacity.toFixed(3)};transform:translateX(calc(-50% + ${offsetX}px)) rotate(${rot}deg)">${escapeHtml(brick.label)}</div>`;
       cumulativeBottom += height + clamp(state.brickHeight * 0.07, 4, 8);
+    }
+
+    if (!state.collapseTriggered){
+      state.lastStableTowerPose = state.progress.map((brick, i) => {
+        const level = i;
+        const t = count <= 1 ? 0 : level / Math.max(1, count - 1);
+        const curve = Math.pow(t, 1.55);
+        const liveBaseOffsetX = count <= 1 ? 0 : lean * maxLeanPx * curve;
+        const liveBaseRot = count <= 2 ? 0 : lean * 1.15 * Math.pow(t, 1.7);
+        return {
+          offsetX: liveBaseOffsetX,
+          rot: liveBaseRot
+        };
+      });
     }
 
     html += `</div>`;
@@ -713,6 +730,7 @@
     state.collapseStartedAt = 0;
     state.collapseDir = 1;
     state.collapseBasePose = null;
+    state.lastStableTowerPose = null;
     state.progress = [];
     state.phase = "words";
     state.wordIndex = 0;
@@ -1010,22 +1028,18 @@
   function triggerCollapse(){
     const lean = getVisualLean();
     const count = state.progress.length;
-    const maxLeanPx = Math.min(state.fieldWidth * 0.065, 46);
 
     state.collapseTriggered = true;
     state.collapseStartedAt = performance.now();
     state.collapseDir = lean < 0 ? -1 : 1;
 
+    const previousPose = state.lastStableTowerPose || [];
+
     state.collapseBasePose = state.progress.map((brick, i) => {
-      const level = i;
-      const t = count <= 1 ? 0 : level / Math.max(1, count - 1);
-      const curve = Math.pow(t, 1.55);
-      const baseOffsetX = count <= 1 ? 0 : lean * maxLeanPx * curve;
-      const baseRot = count <= 2 ? 0 : lean * 1.15 * Math.pow(t, 1.7);
-      return {
-        offsetX: baseOffsetX,
-        rot: baseRot
-      };
+      if (i === 0){
+        return { offsetX:0, rot:0 };
+      }
+      return previousPose[i - 1] || { offsetX:0, rot:0 };
     });
 
     const collapseTensionMs = 180;

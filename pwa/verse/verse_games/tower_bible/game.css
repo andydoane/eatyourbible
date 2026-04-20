@@ -100,8 +100,8 @@ body{
 .tb-tower-brick.capstone{box-shadow:0 8px 0 rgba(0,0,0,.18);}
 .tb-tower-brick.is-collapsing{transition:none;will-change:transform,bottom,opacity;}
 .tb-tower-shake{animation:tbTowerShake 260ms ease;}
-.tb-tower-wobble-1{animation:tbTowerWobble1 1.4s ease-in-out infinite;}
-.tb-tower-wobble-2{animation:tbTowerWobble2 .9s ease-in-out infinite;}
+.tb-tower-wobble-1{animation:tbTowerWobble1 1.1s ease-in-out infinite;}
+.tb-tower-wobble-2{animation:tbTowerWobble2 .72s ease-in-out infinite;}
 
 .tb-tower-entering{z-index:10;}
 .tb-enter-brick{
@@ -173,8 +173,19 @@ body{
   100%{transform:translateX(-50%) rotate(0deg);}
 }
 
-@keyframes tbTowerWobble1{0%,100%{transform:translateX(-50%) rotate(0deg);}25%{transform:translateX(-50%) rotate(-0.55deg);}50%{transform:translateX(-50%) rotate(0.55deg);}75%{transform:translateX(-50%) rotate(-0.35deg);}}
-@keyframes tbTowerWobble2{0%,100%{transform:translateX(-50%) rotate(0deg);}25%{transform:translateX(-50%) rotate(-1.1deg);}50%{transform:translateX(-50%) rotate(1deg);}75%{transform:translateX(-50%) rotate(-0.72deg);}}
+@keyframes tbTowerWobble1{
+  0%,100%{transform:translateX(-50%) rotate(0deg);}
+  25%{transform:translateX(-50%) rotate(-1.2deg);}
+  50%{transform:translateX(-50%) rotate(1.15deg);}
+  75%{transform:translateX(-50%) rotate(-0.8deg);}
+}
+
+@keyframes tbTowerWobble2{
+  0%,100%{transform:translateX(-50%) rotate(0deg);}
+  25%{transform:translateX(-50%) rotate(-2.2deg);}
+  50%{transform:translateX(-50%) rotate(2deg);}
+  75%{transform:translateX(-50%) rotate(-1.45deg);}
+}
 
 @keyframes tbSmokePuff{
   0%{opacity:1;transform:translate(-50%,-50%) scale(.45);}
