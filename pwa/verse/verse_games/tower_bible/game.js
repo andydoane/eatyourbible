@@ -696,7 +696,7 @@
     console.log("warningLevel", state.warningLevel);
     console.log("leanScore", Number(getLeanScore().toFixed(3)));
     console.log("visualLean", Number(getVisualLean().toFixed(3)));
-    console.log("renderedBricks", summary);
+    console.table(summary);
     console.groupEnd();
 
     state.collapseDebugFramesLeft -= 1;
@@ -794,7 +794,7 @@
     state.collapseDir = 1;
     state.collapseBasePose = null;
     state.lastStableTowerPose = null;
-    state.pendingPreCollapsePose = null;
+
     state.collapseDebugFramesLeft = 0;
     state.progress = [];
     state.phase = "words";
@@ -1107,8 +1107,6 @@
       return previousPose[i - 1] || { offsetX:0, rot:0 };
     });
 
-    state.pendingPreCollapsePose = null;
-
     const collapseTensionMs = 180;
     const collapseStepMs = 250;
     const collapseTipMs = 240;
@@ -1125,23 +1123,54 @@
 
     state.towerShakeUntil = 0;
 
-    if (DEBUG_COLLAPSE){
-      state.collapseDebugFramesLeft = 8;
-      console.group("[TowerCollapseDebug] trigger");
-      console.log("warningLevel", state.warningLevel);
-      console.log("leanScore", getLeanScore());
-      console.log("visualLean", getVisualLean());
-      console.log("progress", state.progress.map((b, i) => ({
+if (DEBUG_COLLAPSE){
+  const fmtPoseRows = (arr) => (arr || []).map((p, i) => ({
+    i,
+    x: Number((p?.offsetX || 0).toFixed(2)),
+    r: Number((p?.rot || 0).toFixed(2))
+  }));
+
+  const fmtDeltaRows = (a, b) => {
+    const out = [];
+    const n = Math.max(a?.length || 0, b?.length || 0);
+    for (let i = 0; i < n; i++){
+      const ax = Number(a?.[i]?.offsetX || 0);
+      const bx = Number(b?.[i]?.offsetX || 0);
+      const ar = Number(a?.[i]?.rot || 0);
+      const br = Number(b?.[i]?.rot || 0);
+      out.push({
         i,
-        label: b.label,
-        zone: b.zone,
-        kind: b.kind
-      })));
-      console.log("lastStableTowerPose", state.lastStableTowerPose);
-      console.log("pendingPreCollapsePose", state.pendingPreCollapsePose);
-      console.log("collapseBasePose", state.collapseBasePose);
-      console.groupEnd();
+        dx: Number((bx - ax).toFixed(2)),
+        dr: Number((br - ar).toFixed(2))
+      });
     }
+    return out;
+  };
+
+  state.collapseDebugFramesLeft = 8;
+
+  console.group("[TowerCollapseDebug] trigger");
+  console.log("warningLevel", state.warningLevel);
+  console.log("leanScore", Number(getLeanScore().toFixed(3)));
+  console.log("visualLean", Number(getVisualLean().toFixed(3)));
+  console.table(state.progress.map((b, i) => ({
+    i,
+    label: b.label,
+    zone: b.zone,
+    kind: b.kind
+  })));
+  console.log("lastStable raw", state.lastStableTowerPose);
+  console.log("pendingPre raw", state.pendingPreCollapsePose);
+  console.log("collapseBase raw", state.collapseBasePose);
+  console.table(fmtPoseRows(state.lastStableTowerPose));
+  console.table(fmtPoseRows(state.pendingPreCollapsePose));
+  console.table(fmtPoseRows(state.collapseBasePose));
+  console.table(fmtDeltaRows(state.pendingPreCollapsePose, state.collapseBasePose));
+  console.groupEnd();
+}
+
+state.pendingPreCollapsePose = null;
+      state.pendingPreCollapsePose = null;
   }
 
   function addSmoke(x, y){
