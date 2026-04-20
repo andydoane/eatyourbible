@@ -83,6 +83,7 @@
     collapseDir:1,
     collapseBasePose:null,
     lastStableTowerPose:null,
+    pendingPreCollapsePose:null,
 
     stream:[],
     streamId:0,
@@ -159,7 +160,7 @@
       progress:[], phase:"words", wordIndex:0,
       towerShakeUntil:0, towerSettleUntil:0, guideFlashUntil:0,
       overlayMessage:"", overlayUntil:0,
-      warningLevel:0, collapseTriggered:false, collapseEndsAt:0, collapseStartedAt:0, collapseDir:1, collapseBasePose:null, lastStableTowerPose:null,
+      warningLevel:0, collapseTriggered:false, collapseEndsAt:0, collapseStartedAt:0, collapseDir:1, collapseBasePose:null, lastStableTowerPose:null, pendingPreCollapsePose:null,
       stream:[], streamId:0, fx:[], enteringBrick:null, enteringId:0,
       done:false, pendingCorrectLabel:"", pendingCorrectType:"word",
       pendingCorrectVisible:0, spawnIndex:0
@@ -525,8 +526,6 @@
     if (!state.collapseTriggered){
       if (state.towerShakeUntil > now) towerShellClass.push("tb-tower-shake");
       else if (state.towerSettleUntil > now) towerShellClass.push("tb-tower-settle");
-      if (state.warningLevel === 1) towerShellClass.push("tb-tower-wobble-1");
-      if (state.warningLevel >= 2) towerShellClass.push("tb-tower-wobble-2");
     }
 
     const lean = getVisualLean();
@@ -538,7 +537,8 @@
     const collapseTipMs = 240;
     const collapseDropMs = 900;
 
-    let html = `<div class="${towerShellClass.join(" ")}" id="tbTowerShell">`;
+    const shellRot = getTowerShellRotation(now);
+    let html = `<div class="${towerShellClass.join(" ")}" id="tbTowerShell" style="transform:translateX(-50%) rotate(${shellRot}deg);">`;
 
     let cumulativeBottom = 0;
     for (let i = 0; i < count; i++){
@@ -703,6 +703,10 @@
     e.rot = lerp(0, e.toRot, eased);
 
     if (e.progress >= 1){
+      state.pendingPreCollapsePose = state.lastStableTowerPose
+        ? state.lastStableTowerPose.map((p) => ({ offsetX:p.offsetX, rot:p.rot }))
+        : [];
+
       state.progress.unshift({ label:e.label, kind:e.kind, zone:e.zone });
       state.enteringBrick = null;
 
@@ -731,6 +735,7 @@
     state.collapseDir = 1;
     state.collapseBasePose = null;
     state.lastStableTowerPose = null;
+    state.pendingPreCollapsePose = null;
     state.progress = [];
     state.phase = "words";
     state.wordIndex = 0;
@@ -1033,7 +1038,7 @@
     state.collapseStartedAt = performance.now();
     state.collapseDir = lean < 0 ? -1 : 1;
 
-    const previousPose = state.lastStableTowerPose || [];
+    const previousPose = state.pendingPreCollapsePose || state.lastStableTowerPose || [];
 
     state.collapseBasePose = state.progress.map((brick, i) => {
       if (i === 0){
@@ -1041,6 +1046,8 @@
       }
       return previousPose[i - 1] || { offsetX:0, rot:0 };
     });
+
+    state.pendingPreCollapsePose = null;
 
     const collapseTensionMs = 180;
     const collapseStepMs = 250;
@@ -1156,6 +1163,17 @@
 
   function laneBottomOffset(){ return clamp(state.fieldWidth * 0.055, 24, 42); }
   function towerBaseBottom(){ return laneBottomOffset() + state.laneHeight + 10; }
+
+  function getTowerShellRotation(now){
+    if (state.collapseTriggered) return 0;
+    if (state.warningLevel === 1){
+      return Math.sin(now / 180) * 1.15;
+    }
+    if (state.warningLevel >= 2){
+      return Math.sin(now / 120) * 2.1;
+    }
+    return 0;
+  }
 
   function lerp(a,b,t){ return a + (b - a) * t; }
   function easeOutBack(x){ const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); }
