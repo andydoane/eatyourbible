@@ -590,6 +590,12 @@
         opacity = Math.max(0, opacity * (1 - fallEase * 0.84));
       }
 
+      else if (i === count - 1 && state.warningLevel > 0){
+        rot += getTopBrickWarningWobble(now);
+      }
+
+
+
       html += `<div class="${cls.join(" ")}" style="bottom:${bottom}px;width:${width}px;height:${height}px;font-size:${fontSize}px;opacity:${opacity.toFixed(3)};transform:translateX(calc(-50% + ${offsetX}px)) rotate(${rot}deg)">${escapeHtml(brick.label)}</div>`;
       cumulativeBottom += height + clamp(state.brickHeight * 0.07, 4, 8);
     }
@@ -1165,12 +1171,16 @@
   function towerBaseBottom(){ return laneBottomOffset() + state.laneHeight + 10; }
 
   function getTowerShellRotation(now){
+    return 0;
+  }
+
+  function getTopBrickWarningWobble(now){
     if (state.collapseTriggered) return 0;
     if (state.warningLevel === 1){
-      return Math.sin(now / 180) * 1.15;
+      return Math.sin(now / 180) * 1.35;
     }
     if (state.warningLevel >= 2){
-      return Math.sin(now / 120) * 2.1;
+      return Math.sin(now / 120) * 2.4;
     }
     return 0;
   }
