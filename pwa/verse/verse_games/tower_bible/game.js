@@ -530,9 +530,9 @@
     const maxLeanPx = Math.min(state.fieldWidth * 0.065, 46);
     const collapseElapsed = state.collapseTriggered ? (now - state.collapseStartedAt) : 0;
     const collapseTensionMs = 180;
-    const collapseStepMs = 150;
-    const collapseTipMs = 170;
-    const collapseDropMs = 620;
+    const collapseStepMs = 250;
+    const collapseTipMs = 240;
+    const collapseDropMs = 900;
 
     let html = `<div class="${towerShellClass.join(" ")}" id="tbTowerShell">`;
 
@@ -572,7 +572,7 @@
 
         const tipRot = state.collapseDir * (22 * tipEase);
         const fallRot = state.collapseDir * (84 * fallEase);
-        const tipShift = state.collapseDir * (10 * tipEase);
+        const tipShift = 0;
         const fallShift = state.collapseDir * (132 * fallEase + topIndex * 8);
 
         offsetX = baseOffsetX + tipShift + fallShift;
@@ -1005,7 +1005,7 @@
     state.collapseTriggered = true;
     state.collapseStartedAt = performance.now();
     state.collapseDir = lean < 0 ? -1 : 1;
-    state.collapseEndsAt = state.collapseStartedAt + 2050;
+    state.collapseEndsAt = state.collapseStartedAt + 3500;
     state.towerShakeUntil = state.collapseStartedAt + 180;
   }
 
