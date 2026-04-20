@@ -1,0 +1,110 @@
+{
+  "lessonId": "nt28",
+  "pageTitle": "NT 28 Quiz",
+  "lessonTitleText": "The Last Supper",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt28image.png",
+  "themeClass": "theme-red",
+  "questions": [
+    {
+      "text": "What meal did Jesus plan to eat with His disciples?",
+      "answers": [
+        "The Passover",
+        "The Lord’s Supper",
+        "Breakfast",
+        "Taco Tuesday"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the Passover meal remind God’s people of?",
+      "answers": [
+        "How God rescued them from Egypt",
+        "How David defeated Goliath",
+        "How Noah built the Ark",
+        "How Elijah called down fire"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When Jesus gave the disciples bread, what did He say?",
+      "answers": [
+        "This is my body",
+        "This is my bread",
+        "Don't eat it too quickly",
+        "Don't eat it"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When Jesus gave the disciples wine, what did He say?",
+      "answers": [
+        "This is my blood",
+        "Save this for later",
+        "This is your blood",
+        "I created this from water"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What surprising thing did Jesus do after the meal?",
+      "answers": [
+        "He washed His disciples’ feet",
+        "He went to sleep",
+        "He fed another crowd",
+        "He left for heaven"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Whose job was it usually to wash feet?",
+      "answers": [
+        "Servants",
+        "Cleaners",
+        "Jailers",
+        "Fishermen"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Peter say when Jesus came to wash his feet?",
+      "answers": [
+        "You will never wash my feet!",
+        "Please wash only one foot",
+        "Be careful – my feet are ticklish!",
+        "My feet are not dirty"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why did Jesus wash the disciples’ feet?",
+      "answers": [
+        "To teach them to serve one another",
+        "To make them clean for dinner",
+        "Just to be nice",
+        "Because they were smelly"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What is the name of the special meal that the church eats to remember Jesus’ death?",
+      "answers": [
+        "The Lord’s Supper",
+        "The Passover",
+        "Peter's Lunch",
+        "The Supper of David"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How long should the church continue to eat the Lord’s Supper?",
+      "answers": [
+        "Until Jesus returns",
+        "Until the year 3000",
+        "For forty days",
+        "Until the end of time"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
