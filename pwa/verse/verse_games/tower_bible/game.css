@@ -101,6 +101,7 @@ body{
 .tb-tower-wobble-1{animation:tbTowerWobble1 1.4s ease-in-out infinite;}
 .tb-tower-wobble-2{animation:tbTowerWobble2 .9s ease-in-out infinite;}
 .tb-tower-entering{z-index:10;}
+.tb-tower-settle{animation:tbTowerSettle 220ms ease-out;}
 
 .tb-smoke-puff{position:absolute;width:18px;height:18px;border-radius:999px;background:radial-gradient(circle, rgba(255,255,255,.98) 0%, rgba(255,255,255,.72) 34%, rgba(255,255,255,0) 72%);pointer-events:none;animation:tbSmokePuff 420ms ease-out forwards;will-change:transform,opacity;}
 .tb-base-smoke{position:absolute;left:50%;bottom:calc(clamp(24px,5vw,42px) + clamp(94px,16vw,126px) + 10px);transform:translateX(-50%);width:min(76vw,520px);height:min(26vw,160px);pointer-events:none;display:none;}
@@ -135,6 +136,14 @@ body{
 @keyframes tbGuidePulse{0%{box-shadow:0 0 0 3px rgba(0,0,0,.18) inset,0 0 0 0 rgba(255,255,255,.06);}100%{box-shadow:0 0 0 3px rgba(0,0,0,.18) inset,0 0 0 8px rgba(255,255,255,.06);}}
 @keyframes tbWrongBrick{0%,100%{transform:translateY(-50%);}25%{transform:translate(-6px,-50%);}50%{transform:translate(6px,-50%);}75%{transform:translate(-4px,-50%);}}
 @keyframes tbTowerShake{0%,100%{transform:translateX(-50%);}25%{transform:translateX(calc(-50% - 5px));}50%{transform:translateX(calc(-50% + 5px));}75%{transform:translateX(calc(-50% - 3px));}}
+
+@keyframes tbTowerSettle{
+  0%{transform:translateX(-50%) translateY(0);}
+  35%{transform:translateX(-50%) translateY(4px);}
+  70%{transform:translateX(-50%) translateY(-2px);}
+  100%{transform:translateX(-50%) translateY(0);}
+}
+
 @keyframes tbTowerWobble1{0%,100%{transform:translateX(-50%) rotate(0deg);}25%{transform:translateX(-50%) rotate(-0.55deg);}50%{transform:translateX(-50%) rotate(0.55deg);}75%{transform:translateX(-50%) rotate(-0.35deg);}}
 @keyframes tbTowerWobble2{0%,100%{transform:translateX(-50%) rotate(0deg);}25%{transform:translateX(-50%) rotate(-1.1deg);}50%{transform:translateX(-50%) rotate(1deg);}75%{transform:translateX(-50%) rotate(-0.72deg);}}
 @keyframes tbSmokePuff{from{opacity:1;transform:translate(-50%,-50%) scale(.4);}to{opacity:0;transform:translate(-50%,-50%) scale(4.5);}}
