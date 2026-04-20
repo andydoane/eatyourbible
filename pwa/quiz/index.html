@@ -1225,6 +1225,7 @@ async function applyTheme(themeClass) {
     LESSON_SUBTITLE_TEXT = quiz.lessonSubtitleText || "";
     LESSON_IMAGE_PATH = quiz.lessonImagePath || "";
     THEME_CLASS = await getRandomThemeFromRegistry();
+    console.log("Random theme chosen:", THEME_CLASS);
     QUESTIONS = Array.isArray(quiz.questions) ? quiz.questions : [];
 
     document.title = PAGE_TITLE;
