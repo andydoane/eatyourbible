@@ -570,7 +570,7 @@
         const tipEase = tipT <= 0 ? 0 : Math.pow(tipT, 1.65);
         const fallEase = fallT <= 0 ? 0 : (1 - Math.pow(1 - fallT, 2.25));
 
-        const tipRot = state.collapseDir * (12 + 10 * tipEase);
+        const tipRot = state.collapseDir * (22 * tipEase);
         const fallRot = state.collapseDir * (84 * fallEase);
         const tipShift = state.collapseDir * (10 * tipEase);
         const fallShift = state.collapseDir * (132 * fallEase + topIndex * 8);
