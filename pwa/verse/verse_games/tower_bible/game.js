@@ -674,8 +674,10 @@
 
   function renderDebug(layer){
     if (!layer) return;
-    layer.innerHTML = "";
-  }
+    if (!DEBUG_COLLAPSE){
+      layer.innerHTML = "";
+      return;
+    }
 
   function logCollapseFrame(now, renderedBricks){
     if (!DEBUG_COLLAPSE) return;
