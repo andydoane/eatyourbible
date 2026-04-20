@@ -647,9 +647,6 @@
 
       state.towerSettleUntil = performance.now() + 220;
 
-      const puffY = state.fieldHeight - towerBaseBottom() - state.brickHeight * 0.16;
-      addLandingSmoke(state.fieldWidth * 0.5, puffY);
-
       advancePhaseAfterPlacement();
       updateWarnings();
 
@@ -809,7 +806,7 @@
     }
 
     const zone = getTapZone(brick);
-    const visual = zoneToEntryOffset(zone);
+    const visual = 0;
     state.stream = state.stream.filter((b) => b.id !== id);
     state.pendingCorrectVisible = state.stream.filter((b) => b.isCorrect).length;
 
@@ -880,14 +877,6 @@
     if (normalized <= centerHalf) return 0;
     if (normalized < slightHalf) return 1;
     return 2;
-  }
-
-  function zoneToEntryOffset(zone){
-    if (zone === 0) return 0;
-    if (zone === -1) return -state.brickWidth * 0.25;
-    if (zone === 1) return state.brickWidth * 0.25;
-    if (zone === -2) return -state.brickWidth * 0.5;
-    return state.brickWidth * 0.5;
   }
 
   function seedPendingCorrect(){
@@ -982,15 +971,6 @@
     state.fx.push({ x, y, until:performance.now() + 420, scale:1 });
   }
 
-  function addLandingSmoke(x, y){
-    const now = performance.now();
-    state.fx.push(
-      { x:x - 34, y:y + 10, until:now + 560, scale:1.85 },
-      { x:x - 10, y:y + 2,  until:now + 610, scale:2.35 },
-      { x:x + 18, y:y + 6,  until:now + 590, scale:2.05 },
-      { x:x + 40, y:y + 12, until:now + 540, scale:1.65 }
-    );
-  }
 
   async function finishGame(){
     state.running = false;
