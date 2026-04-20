@@ -530,7 +530,7 @@
     const maxLeanPx = Math.min(state.fieldWidth * 0.065, 46);
     const collapseElapsed = state.collapseTriggered ? (now - state.collapseStartedAt) : 0;
     const collapseTensionMs = 220;
-    const collapseStepMs = 80;
+const collapseStepMs = 120;
     const collapseDropMs = 520;
 
     let html = `<div class="${towerShellClass.join(" ")}" id="tbTowerShell">`;
@@ -564,9 +564,9 @@
         const localT = clamp((collapseElapsed - localStart) / collapseDropMs, 0, 1);
         const eased = localT <= 0 ? 0 : (1 - Math.pow(1 - localT, 2.2));
 
-        offsetX = baseOffsetX + state.collapseDir * (20 + 86 * eased + topIndex * 5);
-        bottom = cumulativeBottom - (8 * eased) - (state.fieldHeight * 0.62 * eased);
-        rot = baseRot + state.collapseDir * (10 + 62 * eased);
+        offsetX = baseOffsetX + state.collapseDir * (28 + 118 * eased + topIndex * 7);
+        bottom = cumulativeBottom - (18 * eased) - ((state.fieldHeight + 220 + topIndex * 36) * eased);
+        rot = baseRot + state.collapseDir * (14 + 84 * eased);
         opacity = Math.max(0, opacity * (1 - eased * 0.78));
       }
 
@@ -590,6 +590,7 @@
     state.fx = state.fx.filter((fx) => fx.until > now);
 
     let html = "";
+
     for (const fx of state.fx){
       const scale = fx.scale || 1;
       html += `<div class="tb-smoke-puff" style="left:${fx.x}px;top:${fx.y}px;transform:translate(-50%,-50%) scale(${scale});"></div>`;
@@ -694,6 +695,8 @@
     state.collapseStartedAt = 0;
     state.collapseDir = 1;
     state.progress = [];
+    state.phase = "words";
+    state.wordIndex = 0;
     state.warningLevel = 0;
     state.enteringBrick = null;
     state.pendingCorrectVisible = 0;
