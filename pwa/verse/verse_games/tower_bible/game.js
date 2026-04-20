@@ -174,6 +174,7 @@
               <div class="tb-warning-layer" id="tbWarningLayer"></div>
               <div class="tb-guide-layer" id="tbGuideLayer"></div>
               <div class="tb-conveyor-layer" id="tbConveyorLayer"></div>
+              <div class="tb-enter-layer" id="tbEnterLayer"></div>
               <div class="tb-smoke-layer" id="tbSmokeLayer"></div>
               <div class="tb-controls-layer">
                 <button class="tb-corner-pill tb-corner-left" id="tbMenuPill" type="button" aria-label="Game menu">☰</button>
@@ -402,7 +403,7 @@
     state.guideWidth = state.brickWidth;
     state.laneHeight = Math.max(state.brickHeight + 18, clamp(state.fieldWidth * 0.16, 94, 126));
     state.lanePadX = 0;
-    state.laneY = state.fieldHeight - clamp(state.fieldWidth * 0.055, 24, 42) - state.laneHeight / 2;
+    state.laneY = state.fieldHeight - laneBottomOffset() - state.laneHeight / 2;
     state.guideCenterX = state.fieldWidth / 2;
     state.guideLeftX = state.guideCenterX - state.guideWidth / 2;
     state.guideRightX = state.guideCenterX + state.guideWidth / 2;
@@ -432,13 +433,15 @@
     const towerLayer = document.getElementById("tbTowerLayer");
     const guideLayer = document.getElementById("tbGuideLayer");
     const conveyorLayer = document.getElementById("tbConveyorLayer");
+    const enterLayer = document.getElementById("tbEnterLayer");
     const smokeLayer = document.getElementById("tbSmokeLayer");
     const warningLayer = document.getElementById("tbWarningLayer");
-    if (!towerLayer || !guideLayer || !conveyorLayer || !smokeLayer || !warningLayer) return;
+    if (!towerLayer || !guideLayer || !conveyorLayer || !enterLayer || !smokeLayer || !warningLayer) return;
 
     renderTower(towerLayer, smokeLayer);
     renderGuide(guideLayer);
     renderConveyor(conveyorLayer);
+    renderEnteringBrick(enterLayer);
     renderEffects(smokeLayer);
     renderWarning(warningLayer);
   }
@@ -485,6 +488,33 @@
     });
   }
 
+  function renderEnteringBrick(layer){
+    const e = state.enteringBrick;
+    if (!e){
+      layer.innerHTML = "";
+      return;
+    }
+
+    const cls = ["tb-enter-brick"];
+    if (e.kind === "book") cls.push("book");
+    if (e.kind === "reference") cls.push("ref");
+
+    layer.innerHTML = `
+      <div class="${cls.join(" ")}"
+           style="
+             left:${e.left}px;
+             bottom:${e.bottom}px;
+             width:${e.width}px;
+             height:${e.height}px;
+             font-size:${e.fontSize}px;
+             transform:translateX(0) rotate(${e.rot}deg);
+             opacity:1;
+           ">
+        ${escapeHtml(e.label)}
+      </div>
+    `;
+  }
+
   function renderTower(layer, smokeLayer){
     const now = performance.now();
     const towerShellClass = ["tb-tower-shell"];
@@ -517,17 +547,6 @@
       if (brick.kind === "reference") cls.push("ref", "capstone");
       html += `<div class="${cls.join(" ")}" style="bottom:${cumulativeBottom}px;width:${width}px;height:${height}px;font-size:${fontSize}px;opacity:${opacity.toFixed(3)};transform:translateX(calc(-50% + ${offsetX}px)) rotate(${rot}deg)">${escapeHtml(brick.label)}</div>`;
       cumulativeBottom += height + clamp(state.brickHeight * 0.07, 4, 8);
-    }
-
-    if (state.enteringBrick){
-      const e = state.enteringBrick;
-      const width = state.towerWidth * 0.76;
-      const height = state.brickHeight * 0.9;
-      const fontSize = Math.max(14, state.brickHeight * 0.33);
-      const cls = ["tb-tower-brick", "tb-tower-entering"];
-      if (e.kind === "book") cls.push("book");
-      if (e.kind === "reference") cls.push("ref", "capstone");
-      html += `<div class="${cls.join(" ")}" style="bottom:${e.bottom}px;width:${width}px;height:${height}px;font-size:${fontSize}px;opacity:1;transform:translateX(calc(-50% + ${e.xOffset}px)) rotate(${e.rot}deg)">${escapeHtml(e.label)}</div>`;
     }
 
     html += `</div>`;
@@ -610,10 +629,13 @@
   function stepEntering(dt){
     if (!state.enteringBrick) return;
     const e = state.enteringBrick;
-    e.progress = clamp(e.progress + dt / 280, 0, 1);
+    e.progress = clamp(e.progress + dt / 320, 0, 1);
     const eased = easeOutBack(e.progress);
+    e.left = lerp(e.fromLeft, e.toLeft, eased);
     e.bottom = lerp(e.fromBottom, e.toBottom, eased);
-    e.xOffset = lerp(e.fromXOffset, e.toXOffset, eased);
+    e.width = lerp(e.fromWidth, e.toWidth, eased);
+    e.height = lerp(e.fromHeight, e.toHeight, eased);
+    e.fontSize = lerp(e.fromFontSize, e.toFontSize, eased);
     e.rot = lerp(0, e.toRot, eased);
 
     if (e.progress >= 1){
@@ -622,8 +644,8 @@
 
       state.towerSettleUntil = performance.now() + 220;
 
-      const towerShellTop = state.fieldHeight - (clamp(state.fieldWidth * 0.055, 24, 42) + state.laneHeight + 10);
-      addSmoke(state.guideCenterX, towerShellTop + state.brickHeight * 0.55);
+      const puffY = state.fieldHeight - towerBaseBottom() - state.brickHeight * 0.45;
+      addSmoke(state.fieldWidth * 0.5, puffY);
 
       advancePhaseAfterPlacement();
       updateWarnings();
@@ -788,8 +810,19 @@
     state.stream = state.stream.filter((b) => b.id !== id);
     state.pendingCorrectVisible = state.stream.filter((b) => b.isCorrect).length;
 
-    const enteringHeight = state.brickHeight * 0.9;
-    const laneStartBottom = Math.max(0, state.fieldHeight - state.laneY - enteringHeight * 0.5);
+    const startWidth = state.brickWidth;
+    const startHeight = state.brickHeight;
+    const startFontSize = brick.fontSize;
+
+    const endWidth = state.towerWidth * 0.76;
+    const endHeight = state.brickHeight * 0.9;
+    const endFontSize = Math.max(14, state.brickHeight * 0.33);
+
+    const startLeft = brick.left;
+    const startBottom = state.fieldHeight - state.laneY - startHeight * 0.5;
+
+    const endLeft = (state.fieldWidth * 0.5) - (endWidth * 0.5) + visual;
+    const endBottom = towerBaseBottom();
 
     state.enteringBrick = {
       id: ++state.enteringId,
@@ -797,12 +830,31 @@
       kind:brick.kind,
       zone,
       progress:0,
-      fromBottom:laneStartBottom,
-      toBottom:-4,
-      bottom:laneStartBottom,
-      fromXOffset: visual,
-      toXOffset: 0,
-      xOffset: visual,
+
+      fromLeft:startLeft,
+      toLeft:endLeft,
+      left:startLeft,
+
+      fromBottom:startBottom,
+      toBottom:endBottom,
+      bottom:startBottom,
+
+      fromWidth:startWidth,
+      toWidth:endWidth,
+      width:startWidth,
+
+      fromHeight:startHeight,
+      toHeight:endHeight,
+      height:startHeight,
+
+      fromFontSize:startFontSize,
+      toFontSize:endFontSize,
+      fontSize:startFontSize,
+
+      fromXOffset:0,
+      toXOffset:0,
+      xOffset:0,
+
       toRot:0,
       rot:0
     };
@@ -1014,6 +1066,9 @@
     return tokens;
   }
   function extractWordEntries(tokens){ return tokens.filter((t) => t.kind === "word").map((t) => ({ display:t.text })); }
+
+  function laneBottomOffset(){ return clamp(state.fieldWidth * 0.055, 24, 42); }
+  function towerBaseBottom(){ return laneBottomOffset() + state.laneHeight + 10; }
 
   function lerp(a,b,t){ return a + (b - a) * t; }
   function easeOutBack(x){ const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); }
