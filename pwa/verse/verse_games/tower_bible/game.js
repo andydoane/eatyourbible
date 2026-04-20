@@ -72,6 +72,7 @@
     wordIndex:0,
 
     towerShakeUntil:0,
+    towerSettleUntil:0,
     guideFlashUntil:0,
     overlayMessage:"",
     overlayUntil:0,
@@ -152,7 +153,7 @@
     Object.assign(state, {
       running:true, paused:false, pauseReason:"", lastTs:0,
       progress:[], phase:"words", wordIndex:0,
-      towerShakeUntil:0, guideFlashUntil:0,
+      towerShakeUntil:0, towerSettleUntil:0, guideFlashUntil:0,
       overlayMessage:"", overlayUntil:0,
       warningLevel:0, collapseTriggered:false, collapseEndsAt:0,
       stream:[], streamId:0, fx:[], enteringBrick:null, enteringId:0,
@@ -485,8 +486,10 @@
   }
 
   function renderTower(layer, smokeLayer){
+    const now = performance.now();
     const towerShellClass = ["tb-tower-shell"];
-    if (state.towerShakeUntil > performance.now()) towerShellClass.push("tb-tower-shake");
+    if (state.towerShakeUntil > now) towerShellClass.push("tb-tower-shake");
+    else if (state.towerSettleUntil > now) towerShellClass.push("tb-tower-settle");
     if (state.warningLevel === 1) towerShellClass.push("tb-tower-wobble-1");
     if (state.warningLevel >= 2) towerShellClass.push("tb-tower-wobble-2");
 
@@ -616,6 +619,12 @@
     if (e.progress >= 1){
       state.progress.unshift({ label:e.label, kind:e.kind, zone:e.zone });
       state.enteringBrick = null;
+
+      state.towerSettleUntil = performance.now() + 220;
+
+      const towerShellTop = state.fieldHeight - (clamp(state.fieldWidth * 0.055, 24, 42) + state.laneHeight + 10);
+      addSmoke(state.guideCenterX, towerShellTop + state.brickHeight * 0.55);
+
       advancePhaseAfterPlacement();
       updateWarnings();
 
@@ -789,7 +798,7 @@
       zone,
       progress:0,
       fromBottom:laneStartBottom,
-      toBottom:0,
+      toBottom:-4,
       bottom:laneStartBottom,
       fromXOffset: visual,
       toXOffset: 0,
