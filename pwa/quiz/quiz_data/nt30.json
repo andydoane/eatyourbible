@@ -1,0 +1,112 @@
+{
+  "lessonId": "nt30",
+  "pageTitle": "NT 30 Quiz",
+  "lessonTitleText": "Peter Denies Jesus",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt30image.png",
+  "themeClass": "theme-gray",
+  "questions": [
+    {
+      "text": "What did Jesus say all the disciples would do?",
+      "answers": [
+        "Run away",
+        "Fight the soldiers",
+        "Die on a cross like him",
+        "Bravely follow Jesus"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jesus say Peter would do?",
+      "answers": [
+        "Deny knowing Him three times before the rooster crowed",
+        "Protect Him with a sword",
+        "Follow Him to prison",
+        "Run away faster than everyone else"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Peter and the other disciples say they were willing to do?",
+      "answers": [
+        "Stay with Jesus, even if it meant dying",
+        "Run and hide",
+        "Pray for Jesus",
+        "Join the Israelite army"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Peter do when they tried to arrest Jesus?",
+      "answers": [
+        "Peter cut off a servant's ear, and Jesus healed it",
+        "Peter ran away",
+        "Peter cut off a servant's nose",
+        "Peter hid in a bush"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why did Jesus allow Himself to be arrested?",
+      "answers": [
+        "So the Scriptures would come true and He could complete His mission",
+        "Because He was afraid",
+        "Because the disciples left Him",
+        "Because the soldiers were stronger"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "After Jesus said He was the Messiah, what punishment did the leaders say He deserved?",
+      "answers": [
+        "Death",
+        "Prison",
+        "Seven years of hard work",
+        "A $100 fine"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the leaders do to Jesus after the trial?",
+      "answers": [
+        "They beat Him and spit on Him",
+        "They sent Him home",
+        "They threw him in a pit",
+        "They became his disciples"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Where was Peter while Jesus was on trial?",
+      "answers": [
+        "Outside in the courtyard by the fire",
+        "Hiding in a bush",
+        "At the temple",
+        "At home, praying for Jesus"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "When three different people asked Peter if he was with Jesus, what did Peter say?",
+      "answers": [
+        "I don’t know Him",
+        "Yes, I am with Him",
+        "I am Jesus' brother",
+        "Ask John instead"
+      ],
+      "correctIndex": 0
+    },
+
+    {
+      "text": "What happened after Peter said he didn't know Jesus three times?",
+      "answers": [
+        "A rooster crowed",
+        "A dog barked",
+        "A cat meowed",
+        "A donkey hee-hawed"
+      ],
+      "correctIndex": 0
+    }
+
+  ]
+}
