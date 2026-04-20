@@ -81,6 +81,7 @@
     collapseEndsAt:0,
     collapseStartedAt:0,
     collapseDir:1,
+    collapseBasePose:null,
 
     stream:[],
     streamId:0,
@@ -157,7 +158,7 @@
       progress:[], phase:"words", wordIndex:0,
       towerShakeUntil:0, towerSettleUntil:0, guideFlashUntil:0,
       overlayMessage:"", overlayUntil:0,
-      warningLevel:0, collapseTriggered:false, collapseEndsAt:0, collapseStartedAt:0, collapseDir:1,
+      warningLevel:0, collapseTriggered:false, collapseEndsAt:0, collapseStartedAt:0, collapseDir:1, collapseBasePose:null,
       stream:[], streamId:0, fx:[], enteringBrick:null, enteringId:0,
       done:false, pendingCorrectLabel:"", pendingCorrectType:"word",
       pendingCorrectVisible:0, spawnIndex:0
@@ -548,8 +549,12 @@
       const width = state.towerWidth * 0.76 * scale;
       const height = Math.max(34, state.brickHeight * 0.9 * scale);
       const fontSize = Math.max(13, state.brickHeight * 0.33 * scale);
-      const baseOffsetX = count <= 1 ? 0 : lean * maxLeanPx * curve;
-      const baseRot = count <= 2 ? 0 : lean * 1.15 * Math.pow(t, 1.7);
+      const liveBaseOffsetX = count <= 1 ? 0 : lean * maxLeanPx * curve;
+      const liveBaseRot = count <= 2 ? 0 : lean * 1.15 * Math.pow(t, 1.7);
+      const frozenPose = state.collapseBasePose?.[i] || null;
+      const baseOffsetX = frozenPose ? frozenPose.offsetX : liveBaseOffsetX;
+      const baseRot = frozenPose ? frozenPose.rot : liveBaseRot;
+
       const cls = ["tb-tower-brick"];
       let opacity = Math.max(0.72, 1 - level * 0.02);
       let bottom = cumulativeBottom;
@@ -574,11 +579,10 @@
 
         const tipRot = state.collapseDir * (22 * tipEase);
         const fallRot = state.collapseDir * (84 * fallEase);
-        const tipShift = 0;
         const fallShift = state.collapseDir * (132 * fallEase + topIndex * 8);
 
-        offsetX = baseOffsetX + tipShift + fallShift;
-        bottom = cumulativeBottom - (10 * tipEase) - ((state.fieldHeight + 260 + topIndex * 44) * fallEase);
+        offsetX = baseOffsetX + fallShift;
+        bottom = cumulativeBottom - ((state.fieldHeight + 260 + topIndex * 44) * fallEase);
         rot = baseRot + tipRot + fallRot;
         opacity = Math.max(0, opacity * (1 - fallEase * 0.84));
       }
@@ -708,6 +712,7 @@
     state.collapseTriggered = false;
     state.collapseStartedAt = 0;
     state.collapseDir = 1;
+    state.collapseBasePose = null;
     state.progress = [];
     state.phase = "words";
     state.wordIndex = 0;
@@ -1004,11 +1009,25 @@
 
   function triggerCollapse(){
     const lean = getVisualLean();
+    const count = state.progress.length;
+    const maxLeanPx = Math.min(state.fieldWidth * 0.065, 46);
+
     state.collapseTriggered = true;
     state.collapseStartedAt = performance.now();
     state.collapseDir = lean < 0 ? -1 : 1;
 
-    const count = Math.max(1, state.progress.length);
+    state.collapseBasePose = state.progress.map((brick, i) => {
+      const level = i;
+      const t = count <= 1 ? 0 : level / Math.max(1, count - 1);
+      const curve = Math.pow(t, 1.55);
+      const baseOffsetX = count <= 1 ? 0 : lean * maxLeanPx * curve;
+      const baseRot = count <= 2 ? 0 : lean * 1.15 * Math.pow(t, 1.7);
+      return {
+        offsetX: baseOffsetX,
+        rot: baseRot
+      };
+    });
+
     const collapseTensionMs = 180;
     const collapseStepMs = 250;
     const collapseTipMs = 240;
