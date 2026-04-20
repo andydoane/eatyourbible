@@ -1,0 +1,110 @@
+{
+  "lessonId": "nt27",
+  "pageTitle": "NT 27 Quiz",
+  "lessonTitleText": "The Triumphal Entry",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt27image.png",
+  "themeClass": "theme-purple",
+  "questions": [
+    {
+      "text": "What animal did Jesus tell His disciples to go get?",
+      "answers": [
+        "A donkey",
+        "A horse",
+        "A camel",
+        "A lamb"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the prophet say about the Messiah entering Jerusalem?",
+      "answers": [
+        "He would ride in on a donkey",
+        "He would come with an army",
+        "He would arrive in a chariot",
+        "He would have big muscles"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the people put on the road as Jesus entered?",
+      "answers": [
+        "Their coats",
+        "Stones",
+        "Food",
+        "Flowers"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the people wave, as Jesus entered Jerusalem?",
+      "answers": [
+        "Palm branches",
+        "Flags",
+        "Torches",
+        "Their hands"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the people shout?",
+      "answers": [
+        "Hosanna to the Son of David",
+        "Long live the king",
+        "Peace on earth",
+        "Yay, Jesus!"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jesus say would happen if people didn’t praise Him?",
+      "answers": [
+        "The stones would cry out",
+        "The sky would go dark",
+        "The temple would fall",
+        "The birds would tweet his praise"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jesus do at the temple?",
+      "answers": [
+        "Turned over tables and drove out sellers",
+        "Built a statue of himself",
+        "Stole money from the sellers",
+        "Offered a sacrifice"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What miracles did Jesus do in Jerusalem?",
+      "answers": [
+        "He healed the blind and those who couldn’t walk",
+        "He calmed a storm",
+        "He fed a crowd",
+        "He made a donkey talk"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did many people think the Messiah came to do?",
+      "answers": [
+        "Defeat their enemies like the Romans",
+        "Die on a cross ",
+        "Build a new city",
+        "Take them to heaven"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jesus actually come to do?",
+      "answers": [
+        "Die to save us from our sins",
+        "Sit on a throne as king of the world",
+        "Defeat the Romans",
+        "Make Israel rich"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
