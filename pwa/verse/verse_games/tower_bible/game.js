@@ -589,7 +589,7 @@
 
         const tipRot = state.collapseDir * (22 * tipEase);
         const fallRot = state.collapseDir * (84 * fallEase);
-        const fallShift = state.collapseDir * (132 * fallEase + topIndex * 8);
+        const fallShift = state.collapseDir * (132 * fallEase);
 
         offsetX = baseOffsetX + fallShift;
         bottom = cumulativeBottom - ((state.fieldHeight + 260 + topIndex * 44) * fallEase);
