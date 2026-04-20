@@ -603,7 +603,6 @@
 
 
 
-
       if (DEBUG_COLLAPSE && state.collapseTriggered){
         debugRenderedBricks.push({
           i,
@@ -617,7 +616,6 @@
       }
 
       html += `<div class="${cls.join(" ")}" style="bottom:${bottom}px;width:${width}px;height:${height}px;font-size:${fontSize}px;opacity:${opacity.toFixed(3)};transform:translateX(calc(-50% + ${offsetX}px)) rotate(${rot}deg)">${escapeHtml(brick.label)}</div>`;
-
       cumulativeBottom += height + clamp(state.brickHeight * 0.07, 4, 8);
     }
 
@@ -674,10 +672,8 @@
 
   function renderDebug(layer){
     if (!layer) return;
-    if (!DEBUG_COLLAPSE){
-      layer.innerHTML = "";
-      return;
-    }
+    layer.innerHTML = "";
+  }
 
   function logCollapseFrame(now, renderedBricks){
     if (!DEBUG_COLLAPSE) return;
@@ -704,56 +700,6 @@
     console.groupEnd();
 
     state.collapseDebugFramesLeft -= 1;
-  }
-
-    const leanScore = getLeanScore();
-    const visualLean = getVisualLean();
-
-    const fmtPose = (arr) => {
-      if (!arr || !arr.length) return "[]";
-      return arr.slice(0, 4).map((p, i) => {
-        const x = Number(p?.offsetX || 0).toFixed(1);
-        const r = Number(p?.rot || 0).toFixed(1);
-        return `${i}:{x:${x},r:${r}}`;
-      }).join("  ");
-    };
-
-    const deltaText = (() => {
-      const a = state.pendingPreCollapsePose || [];
-      const b = state.collapseBasePose || [];
-      const parts = [];
-      const n = Math.min(4, Math.max(a.length, b.length));
-      for (let i = 0; i < n; i++){
-        const ax = Number(a[i]?.offsetX || 0);
-        const bx = Number(b[i]?.offsetX || 0);
-        const ar = Number(a[i]?.rot || 0);
-        const br = Number(b[i]?.rot || 0);
-        parts.push(`${i}:{dx:${(bx-ax).toFixed(1)},dr:${(br-ar).toFixed(1)}}`);
-      }
-      return parts.join("  ");
-    })();
-
-    layer.innerHTML = `
-      <div style="
-        max-width:min(92vw, 560px);
-        background:rgba(0,0,0,.72);
-        color:#fff;
-        border-radius:10px;
-        padding:8px 10px;
-        font:12px/1.3 monospace;
-        white-space:pre-wrap;
-        word-break:break-word;
-        box-shadow:0 4px 14px rgba(0,0,0,.25);
-      ">
-DBG
-warn=${state.warningLevel}  collapse=${state.collapseTriggered}  progress=${state.progress.length}
-leanScore=${leanScore.toFixed(2)}  visualLean=${visualLean.toFixed(3)}
-lastStable: ${fmtPose(state.lastStableTowerPose)}
-pendingPre: ${fmtPose(state.pendingPreCollapsePose)}
-collapseBase: ${fmtPose(state.collapseBasePose)}
-delta pre→collapse: ${deltaText}
-      </div>
-    `;
   }
 
   function startLoop(){ stopLoop(); state.lastTs = 0; state.rafId = requestAnimationFrame(frame); }
