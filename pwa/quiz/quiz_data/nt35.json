@@ -1,0 +1,110 @@
+{
+  "lessonId": "nt35",
+  "pageTitle": "NT 35 Quiz",
+  "lessonTitleText": "The Ascension",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt35image.png",
+  "themeClass": "theme-blue",
+  "questions": [
+    {
+      "text": "What mission did Jesus give to his disciples?",
+      "answers": [
+        "Make disciples of all nations",
+        "Build a temple in Jerusalem",
+        "Make disciples only in Israel",
+        "Conquer the world with an army of angels"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What promise did Jesus make after giving them their mission?",
+      "answers": [
+        "He would be with them to the end",
+        "They would never suffer",
+        "They would all become rich",
+        "They would have an easy life"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How many days did Jesus appear to his disciples after he rose from the dead?",
+      "answers": [
+        "40",
+        "3",
+        "7",
+        "12"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who did Jesus say would come to give the disciples power?",
+      "answers": [
+        "The Holy Spirit",
+        "An angel",
+        "God the Father",
+        "Moses"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did Jesus leave earth?",
+      "answers": [
+        "He ascended through the clouds to heaven",
+        "He walked into the desert and disappeared",
+        "He climbed a stairway to heaven",
+        "In a chariot of fire"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What special word describes how Jesus left earth?",
+      "answers": [
+        "Ascension",
+        "Resurrection",
+        "Teleportation",
+        "Redemption"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the two angels tell the disciples?",
+      "answers": [
+        "Jesus will return in the same way he left",
+        "Jesus will never return",
+        "You are coming to heaven today, too",
+        "Jesus will return, but in a different way"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jesus say no one knows?",
+      "answers": [
+        "The day or time of his return",
+        "Where heaven is",
+        "Who the Holy Spirit is",
+        "His middle name"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How does Noah and the ark teach us about Jesus’ return?",
+      "answers": [
+        "We should be ready for Jesus’ return like Noah was ready for the flood",
+        "We should build a bigger boat",
+        "We should hide from storms",
+        "We should gather two of every animal"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What special words describe the mission Jesus gave us?",
+      "answers": [
+        "The Great Commission",
+        "The Great Commandment",
+        "The Lord’s Prayer",
+        "The Good News Plan"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

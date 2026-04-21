@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot70",
+  "pageTitle": "OT 70 Quiz",
+  "lessonTitleText": "Jonah and the Big Fish",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot70image.png",
+  "themeClass": "theme-blue",
+  "questions": [
+    {
+      "text": "What did God tell Jonah to do?",
+      "answers": [
+        "Go to Nineveh and tell them to turn from their sin",
+        "Stay in Israel and preach",
+        "Build a boat",
+        "Write a story about a whale"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jonah do instead?",
+      "answers": [
+        "He sailed in the opposite direction",
+        "He obeyed right away",
+        "He stayed home",
+        "He hid in a cave"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened while Jonah was on the ship?",
+      "answers": [
+        "God sent a powerful storm",
+        "The sea became calm",
+        "A whale attacked the boat",
+        "They were attacked by pirates"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the sailors think was causing the storm?",
+      "answers": [
+        "A god was punishing someone for sin",
+        "The weather changed suddenly",
+        "Bad luck",
+        "Jonah had done something wrong"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jonah tell the sailors to do?",
+      "answers": [
+        "Throw him into the sea",
+        "Pray louder",
+        "Turn the ship around",
+        "Jump into the sea with him"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened to Jonah after he was thrown into the sea?",
+      "answers": [
+        "A great fish swallowed him for three days",
+        "He swam to shore",
+        "He was stung by a jellyfish",
+        "He rode on the back by a dolphin"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jonah do inside the fish?",
+      "answers": [
+        "He prayed to God",
+        "He fell asleep",
+        "He tried to escape",
+        "He shouted for help"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did God command the fish to do?",
+      "answers": [
+        "Spit Jonah onto dry land",
+        "Swim deeper into the sea",
+        "Bite Jonah in half",
+        "Take Jonah to another country"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What message did Jonah give to Nineveh?",
+      "answers": [
+        "In 40 days, the city will be destroyed",
+        "Give your money to me",
+        "God is very pleased with you",
+        "In 40 days, our army will attack you"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the people of Nineveh do?",
+      "answers": [
+        "They repented, and God did not destroy the city",
+        "They threw Jonah in prison",
+        "They chased Jonah out of the city",
+        "They threw Jonah back into the sea"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
