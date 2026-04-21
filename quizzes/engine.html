@@ -66,16 +66,12 @@
         </div>
         <div class="mode-buttons">
           <button id="big-screen-btn" class="primary-button">
-            <span>Big-Screen Mode</span> <span>📺</span>
-          </button>
-          <button id="phone-mode-btn" class="secondary-button">
-            <span>Phone Mode</span> <span>📱</span>
+            <span>Start Quiz</span>
           </button>
         </div>
-       <p class="mode-note">
-  Big-Screen Mode is best for TVs and computers.<br>
-  Phone Mode is sized to fit smaller screens.
-</p>
+        <p class="mode-note">
+          Test how well you know this story.
+        </p>
 
       </div>
     </div>
@@ -2479,8 +2475,13 @@ function handleAnswerClick(e) {
     /***********************
      * EVENT LISTENERS
      ***********************/
-    bigScreenBtn.addEventListener("click", () => startGame("big"));
-    phoneModeBtn.addEventListener("click", () => startGame("phone"));
+    if (bigScreenBtn) {
+      bigScreenBtn.addEventListener("click", () => startGame("big"));
+    }
+
+    if (phoneModeBtn) {
+      phoneModeBtn.addEventListener("click", () => startGame("phone"));
+    }
 
     answerButtons.forEach(btn => {
       btn.addEventListener("click", handleAnswerClick);
