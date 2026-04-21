@@ -30,13 +30,17 @@
   <div id="app"></div>
 
 <nav id="nav" aria-label="Quiz navigation" style="display:none;">
-  <button id="homeBtn" class="nav-btn" title="Home" aria-label="Home">⌂</button>
-  <div id="navCenter" class="nav-center">1 / 10</div>
-  <button id="muteBtn" class="nav-btn" title="Mute" aria-label="Mute">🔊</button>
+  <div class="nav-shell">
+    <div class="nav-inner">
+      <button id="homeBtn" class="nav-btn" title="Home" aria-label="Home">⌂</button>
+      <div id="navCenter" class="nav-center">1 / 10</div>
+      <button id="muteBtn" class="nav-btn" title="Mute" aria-label="Mute">🔊</button>
 
-  <!-- Reveal-stage CTA that covers the whole nav -->
-  <button id="nextBtn" class="nav-next" type="button" style="display:none;">Next question</button>
-  <div id="nextHint" class="next-hint" style="display:none;" aria-hidden="true">👇</div>
+      <!-- Reveal-stage CTA that covers the capped nav only -->
+      <button id="nextBtn" class="nav-next" type="button" style="display:none;">Next question</button>
+      <div id="nextHint" class="next-hint" style="display:none;" aria-hidden="true">👇</div>
+    </div>
+  </div>
 </nav>
 
 
@@ -216,45 +220,6 @@ const QUIZ_LIST = [
       console.warn("Theme registry load failed:", err);
       return "theme-gray";
     }
-  }
-
-  async function applyTheme(themeClass) {
-    const themeLink = document.getElementById("theme-css");
-    if (!themeClass) return;
-
-    const root = document.documentElement;
-    root.classList.add("theme-loading");
-
-    if (!themeLink) {
-      setThemeClass(themeClass);
-      root.classList.remove("theme-loading");
-      return;
-    }
-
-    const newHref = `quiz_themes/${themeClass}.css`;
-
-    if (themeLink.href.endsWith(newHref)) {
-      setThemeClass(themeClass);
-      root.classList.remove("theme-loading");
-      return;
-    }
-
-    await new Promise((resolve) => {
-      themeLink.onload = () => {
-        setThemeClass(themeClass);
-        root.classList.remove("theme-loading");
-        resolve();
-      };
-
-      themeLink.onerror = () => {
-        console.warn("Theme CSS failed to load:", newHref);
-        setThemeClass(themeClass);
-        root.classList.remove("theme-loading");
-        resolve();
-      };
-
-      themeLink.href = newHref;
-    });
   }
 
 
@@ -1225,9 +1190,11 @@ picker.addEventListener("change", async () => {
 
     const html = `
       <div class="top" style="flex-direction:column; align-items:stretch; gap:10px;">
-        <div class="timer-row">
-          <div class="timer-wrap"><div id="timerBar" class="timer-bar"></div></div>
-          <div id="timerNum" class="timer-num">30</div>
+        <div class="timer-shell">
+          <div class="timer-row">
+            <div class="timer-wrap"><div id="timerBar" class="timer-bar"></div></div>
+            <div id="timerNum" class="timer-num">30</div>
+          </div>
         </div>
       </div>
 
