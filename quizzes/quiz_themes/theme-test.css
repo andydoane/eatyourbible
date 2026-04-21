@@ -1,4 +1,4 @@
-:root.theme-red {
+:root.theme-test {
   /* 1) Background of the whole page (red Kahoot-y) */
   --bg-gradient-top: #ffa351;      /* orange mixing into red */
   --bg-gradient-bottom: #ff5a51;   /* main red */
