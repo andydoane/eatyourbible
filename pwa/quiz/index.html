@@ -27,12 +27,16 @@
        Phone-only, full-screen, slide-left app shell
        Inspired by Ten Commandments / Creed apps (solid backgrounds, no cards)
        ========================================================= */
-    :root{
-      --navH: 70px;
-      --safeB: env(safe-area-inset-bottom);
-      --safeT: env(safe-area-inset-top);
-      --tap: 44px;
-    }
+  :root{
+    --navH: 70px;
+    --safeB: env(safe-area-inset-bottom);
+    --safeT: env(safe-area-inset-top);
+    --tap: 44px;
+
+    /* New: width caps so the app doesn't stretch horribly on desktop */
+    --content-max: 560px;
+    --content-max-wide: 860px;
+  }
 
     html, body{
       height:100%;
@@ -142,6 +146,21 @@
       gap:14px;
     }
 
+    /* Centered inner rails for desktop responsiveness */
+    .content-frame,
+    .content-frame-wide{
+      width: 100%;
+      margin-inline: auto;
+    }
+
+    .content-frame{
+      max-width: var(--content-max);
+    }
+
+    .content-frame-wide{
+      max-width: var(--content-max-wide);
+    }
+
 /* =========================================================
    Quiz screen layout: 40% question + 4x15% answers (60% total)
    ========================================================= */
@@ -189,7 +208,7 @@
   width: 100%;
   text-align: center;
 
-  font-size: 26px;
+  font-size: clamp(26px, 2.2vw, 40px);
   font-weight: 900;
   line-height: 1.15;
   letter-spacing: 0.2px;
@@ -212,18 +231,17 @@
 /* Each answer gets 15% of the available space (since answers area is 60% and has 4 equal children) */
 
 
+.big-text{
+  font-size: clamp(26px, 2.4vw, 42px);
+  font-weight:800;
+  line-height:1.1;
+}
 
-    .big-text{
-      font-size:26px;
-      font-weight:800;
-      line-height:1.1;
-    }
-
-    .body-text{
-      font-size:18px;
-      opacity:0.95;
-      line-height:1.25;
-    }
+.body-text{
+  font-size: clamp(18px, 1.3vw, 22px);
+  opacity:0.95;
+  line-height:1.25;
+}
 
     /* Primary CTA */
     .primary-btn{
@@ -232,7 +250,7 @@
       border-radius: 18px;
       font-family:inherit;
       font-weight:900;
-      font-size:20px;
+      font-size: clamp(20px, 1.4vw, 24px);
       cursor:pointer;
       width:100%;
       background: var(--btn-primary-bg, rgba(255,255,255,0.92));
@@ -248,7 +266,7 @@
       border-radius: 16px;
       font-family:inherit;
       font-weight:800;
-      font-size:18px;
+      font-size: clamp(18px, 1.2vw, 22px);
       width:100%;
       background: transparent;
       color: rgba(255,255,255,0.95);
@@ -295,35 +313,35 @@
       margin: 0;
     }
 
-    .answer{
-      flex:1;
-      min-height:0;
-      width:100%;
+.answer{
+  flex:1;
+  min-height:0;
+  width:100%;
 
-      border-radius: 18px;
-      border:none;
+  border-radius: 18px;
+  border:none;
 
-      font-family:inherit;
-      font-weight:900;
-      font-size:18px;
+  font-family:inherit;
+  font-weight:900;
+  font-size: clamp(18px, 1.5vw, 28px);
 
-      padding: 12px 16px;
+  padding: 12px 16px;
 
-      display:flex;                 /* enables vertical centering */
-      align-items:center;           /* vertical center */
-      justify-content:center;       /* horizontal center */
-      text-align:center;
-      line-height: 1.15;
-      text-wrap: balance;
-      overflow-wrap: anywhere;
+  display:flex;                 /* enables vertical centering */
+  align-items:center;           /* vertical center */
+  justify-content:center;       /* horizontal center */
+  text-align:center;
+  line-height: 1.15;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
 
-      color: var(--opt-text, rgba(255,255,255,0.98));
-      background: rgba(0,0,0,0.28);
+  color: var(--opt-text, rgba(255,255,255,0.98));
+  background: rgba(0,0,0,0.28);
 
-      box-shadow: 0 10px 22px rgba(0,0,0,0.20);
-      cursor:pointer;
-      transform: translateZ(0);
-    }
+  box-shadow: 0 10px 22px rgba(0,0,0,0.20);
+  cursor:pointer;
+  transform: translateZ(0);
+}
     
 
     .answer:active{ transform: scale(0.99); }
@@ -871,6 +889,13 @@ nav#nav{
   color: #333333;
 }
 
+.title-screen .content-frame{
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  align-items: stretch;
+}
+
 
 /* ---------- Creed-style Intro (for Quiz) ---------- */
 .quiz-intro {
@@ -915,6 +940,28 @@ nav#nav{
   font-size: 22px;
   font-weight: 900;
   letter-spacing: 0.3px;
+}
+
+@media (min-width: 900px){
+  .quiz-content{
+    padding-left: 24px;
+    padding-right: 24px;
+    padding-bottom: 24px;
+  }
+
+  .qa-layout{
+    gap: 16px;
+  }
+
+  .question-box{
+    padding: 22px 24px;
+    border-radius: 22px;
+  }
+
+  .answer{
+    padding: 16px 20px;
+    border-radius: 20px;
+  }
 }
 
   </style>
@@ -2015,17 +2062,18 @@ function showTitle(direction = "forward") {
     >
   `;
 
-    const html = `
-      <div class="title-screen">
-        <div class="content" style="justify-content:center; text-align:center; gap:18px;">
+  const html = `
+    <div class="title-screen">
+      <div class="content" style="justify-content:center; text-align:center; gap:18px;">
+        <div class="content-frame">
           ${img}
           <div class="big-text">${escapeHtml(LESSON_TITLE_TEXT || "Eat Your Bible Quizzes")}</div>
           <button id="startBtn" class="primary-btn" type="button">
-          ${hasSelectedQuiz ? "Start" : "Choose a quiz"}
-        </button>
+            ${hasSelectedQuiz ? "Start" : "Choose a quiz"}
+          </button>
           <label class="body-text" for="quizPicker" style="margin-top:10px;">Quiz Selection:</label>
-        <select id="quizPicker" class="secondary-btn" style="height:46px; border-radius:14px; padding:0 14px;">
-          <option value="" disabled selected>Choose a quiz…</option>
+          <select id="quizPicker" class="secondary-btn" style="height:46px; border-radius:14px; padding:0 14px;">
+            <option value="" disabled selected>Choose a quiz…</option>
 
           <optgroup label="Old Testament">
             ${QUIZ_LIST
@@ -2052,10 +2100,10 @@ function showTitle(direction = "forward") {
           </optgroup>
 
         </select>
-
-        </div>
       </div>
-    `;
+    </div>
+  </div>
+`;
 
     const slide = makeSlide(html);
     slide.querySelector("#startBtn").addEventListener("click", () => {
@@ -2125,7 +2173,7 @@ picker.addEventListener("change", async () => {
       </div>
 
       <div class="content quiz-content" style="justify-content:flex-start; padding-top: 6px;">
-        <div class="qa-layout">
+        <div class="content-frame-wide qa-layout">
           <div class="question-box" role="group" aria-label="Question">
             <div class="question">${escapeHtml(q.text || "")}</div>
           </div>
