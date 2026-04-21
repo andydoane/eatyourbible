@@ -341,7 +341,25 @@ let THEME_CLASS = "";
 // Questions are now loaded dynamically
 let QUESTIONS = [];
 
+async function loadThemeRegistry() {
+  const res = await fetch("quiz_themes/theme-registry.json");
+  if (!res.ok) {
+    throw new Error("Failed to load theme registry: quiz_themes/theme-registry.json");
+  }
 
+  const registry = await res.json();
+
+  if (!registry || !Array.isArray(registry.themes) || registry.themes.length === 0) {
+    throw new Error("Theme registry is missing a valid non-empty themes array.");
+  }
+
+  return registry.themes;
+}
+
+function pickRandomTheme(themeList) {
+  const randomIndex = Math.floor(Math.random() * themeList.length);
+  return themeList[randomIndex];
+}
 
 // Option B (recommended): load via URL like:
 //   index.html?quiz=ot02
@@ -387,7 +405,15 @@ async function loadQuizFromJson(jsonPath) {
   LESSON_TITLE_TEXT = quiz.lessonTitleText || "";
   LESSON_SUBTITLE_TEXT = quiz.lessonSubtitleText || "";
   LESSON_IMAGE_PATH = quiz.lessonImagePath || "";
-  THEME_CLASS = quiz.themeClass || "";
+
+  try {
+    const themeList = await loadThemeRegistry();
+    THEME_CLASS = pickRandomTheme(themeList);
+  } catch (themeErr) {
+    console.warn("Could not load random theme registry. Falling back to theme-kahoot-white.", themeErr);
+    THEME_CLASS = "theme-kahoot-white";
+  }
+
   QUESTIONS = Array.isArray(quiz.questions) ? quiz.questions : [];
 
   // Dynamic page title (<title>…</title>)
