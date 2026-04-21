@@ -1,51 +1,51 @@
 :root.theme-test {
   /* 1) Background of the whole page */
-  --bg-gradient-top: #641ba8;
-  --bg-gradient-bottom: #641ba8;
+  --bg-gradient-top: #f9d325;
+  --bg-gradient-bottom: #f9d325;
   --card-bg: #f2f2f2;
 
   /* 2) Presented-by (intro) screen */
-  --intro-bg: #641ba8;
-  --intro-text: #f2f2f2;
+  --intro-bg: #f9d325;
+  --intro-text: #333333;
 
   /* 3) Main text colors */
   --text-main: #333333;
-  --text-muted: #f2f2f2;
+  --text-muted: #333333;
 
   /* 3a) Title screen text colors */
-  --title-main-text: #f2f2f2;
-  --title-subtitle-text: #f2f2f2;
+  --title-main-text: #333333;
+  --title-subtitle-text: #333333;
 
   /* 4) Question area */
-  --question-bg: #f2f2f2;
-  --question-text: #333333;
+  --question-bg: #333333;
+  --question-text: #f2f2f2;
 
   /* 5) Main buttons */
-  --accent: #641ba8;
-  --accent-dark: #641ba8;
+  --accent: #ff6800;
+  --accent-dark: #ff6800;
   --primary-text: #f2f2f2;
-  --secondary-bg: #f2f2f2;
-  --secondary-text: #333333;
+  --secondary-bg: #333333;
+  --secondary-text: #f2f2f2;
 
   /* 6) Answer buttons */
-  --red: #ff6800;
+  --red: #1bde01;
   --red-text: #f2f2f2;
 
   --blue: #00ccff;
   --blue-text: #f2f2f2;
 
-  --yellow: #f9d325;
-  --yellow-text: #333333;
+  --yellow: #ff6800;
+  --yellow-text: #f2f2f2;
 
-  --green: #1bde01;
+  --green: #641ba8;
   --green-text: #f2f2f2;
 
   /* 7) Correct / incorrect feedback text */
   --feedback-correct-text: #1bde01;
-  --feedback-incorrect-text: #ff0000;
+  --feedback-incorrect-text: #ff6800;
 
   /* 8) Question page background */
-  --quiz-screen-bg: #641ba8;
+  --quiz-screen-bg: #f9d325;
 
   /* 9) End screen backgrounds */
   --end-great-bg-top: #1bde01;
@@ -54,8 +54,8 @@
   --end-good-bg-top: #00ccff;
   --end-good-bg-bottom: #00ccff;
 
-  --end-try-bg-top: #641ba8;
-  --end-try-bg-bottom: #641ba8;
+  --end-try-bg-top: #f9d325;
+  --end-try-bg-bottom: #f9d325;
 
   --end-score-text: #333333;
   --end-detail-text: #333333;
@@ -66,12 +66,12 @@
 
   /* 10) Progress bar & timer colors */
   --progress-track-bg: rgba(51, 51, 51, 0.22);
-  --progress-fill-gradient: #1bde01;
+  --progress-fill-gradient: #641ba8;
 
-  --timer-bg: #f2f2f2;
+  --timer-bg: #333333;
   --timer-ring-bg: rgba(51, 51, 51, 0.22);
-  --timer-ring-fg: #1bde01;
-  --timer-text: #333333;
+  --timer-ring-fg: #641ba8;
+  --timer-text: #f2f2f2;
 
   /* 11) Little number pill on answer buttons */
   --answer-key-pill-bg: rgba(51, 51, 51, 0.7);
@@ -93,18 +93,18 @@
   --answer-border: rgba(242, 242, 242, 0.95);
   --answer-border-strong: rgba(242, 242, 242, 1);
 
-  --red-border: #ff6800;
+  --red-border: #1bde01;
   --blue-border: #00ccff;
-  --yellow-border: #f9d325;
-  --green-border: #1bde01;
+  --yellow-border: #ff6800;
+  --green-border: #641ba8;
 
   /* 16) Timer explosion effects */
-  --timer-particle-gradient: #f9d325;
+  --timer-particle-gradient: #ff6800;
 
   /* 17) Dynamic reaction flash colors */
   --flash-correct-bg: rgba(27, 222, 1, 0.25);
-  --flash-incorrect-bg: rgba(255, 0, 0, 0.25);
-  --flash-return-bg: #641ba8;
+  --flash-incorrect-bg: rgba(255, 104, 0, 0.25);
+  --flash-return-bg: #f9d325;
 
   /* 18) Screen card shadow */
   --screen-card-shadow: rgba(51, 51, 51, 0.35);
@@ -122,7 +122,7 @@
   --pointer-glow-bible: #f9d325;
 
   /* 20) Answer feedback subtitle text */
-  --feedback-subtitle-text: #f2f2f2;
+  --feedback-subtitle-text: #333333;
 
-  --timer-explosion-glow: rgba(249, 211, 37, 0.9);
+  --timer-explosion-glow: rgba(255, 104, 0, 0.9);
 }
