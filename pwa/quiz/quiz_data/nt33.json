@@ -1,0 +1,100 @@
+{
+  "lessonId": "nt33",
+  "pageTitle": "NT 33 Quiz",
+  "lessonTitleText": "Thomas Doubts",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt33image.png",
+  "themeClass": "theme-orange",
+  "questions": [
+    {
+      "text": "Why did the disciples lock themselves in a room?",
+      "answers": [
+        "They were afraid of the men who killed Jesus",
+        "They were playing Hide and eek",
+        "They were scared of Jesus' ghost",
+        "They were eating dinner"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who appeared to the disciples in the locked room?",
+      "answers": [
+        "Jesus",
+        "An angel",
+        "Peter",
+        "Thomas"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jesus show them to prove it was really Him?",
+      "answers": [
+        "His scars",
+        "His robe",
+        "A loaf of bread",
+        "The cross"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who was not there when Jesus first appeared to the disciples?",
+      "answers": [
+        "Thomas",
+        "John",
+        "Peter",
+        "James"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Thomas said he'd never believe Jesus rose unless what happened?",
+      "answers": [
+        "He saw Jesus and touched his scars",
+        "An angel came to tell him",
+        "He visited the empty tomb",
+        "He spoke with Mary"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How many days later did Jesus appear again?",
+      "answers": [
+        "Seven",
+        "Three",
+        "Twelve",
+        "Forty"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Thomas say when he saw Jesus?",
+      "answers": [
+        "My Lord and my God",
+        "Its a g-g-ghost!",
+        "Please forgive me",
+        "How did You get in here?"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who did Jesus say was blessed?",
+      "answers": [
+        "Those who believe in him without seeing",
+        "Those who never doubt",
+        "Those who saw the empty tomb",
+        "Those who locked the doors"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who are some other people who saw Jesus after He rose from the dead?",
+      "answers": [
+        "Mary, Peter, James, Paul, and more than 500 others",
+        "No one but the twelve disciples",
+        "The Pharisees",
+        "The Roman Caesar"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
