@@ -361,6 +361,31 @@ function pickRandomTheme(themeList) {
   return themeList[randomIndex];
 }
 
+function enableDebugTestTheme() {
+  THEME_CLASS = "theme-test";
+  applyTheme(THEME_CLASS);
+  console.log("Debug theme loaded: theme-test");
+  alert("Debug theme loaded: theme-test");
+}
+
+function startTitleImageHoldDebug() {
+  clearTitleImageHoldDebug();
+
+  titleImageHoldTriggered = false;
+
+  titleImageHoldTimer = setTimeout(() => {
+    titleImageHoldTriggered = true;
+    enableDebugTestTheme();
+  }, 3000);
+}
+
+function clearTitleImageHoldDebug() {
+  if (titleImageHoldTimer) {
+    clearTimeout(titleImageHoldTimer);
+    titleImageHoldTimer = null;
+  }
+}
+
 // Option B (recommended): load via URL like:
 //   index.html?quiz=ot02
 // (If you want this, comment out QUIZ_JSON_PATH above and use the function below)
@@ -583,6 +608,9 @@ const REWARD_EMOJI_POOLS = {
     let emojiIntervalId = null;
     let emojiLockedUntil = 0;
     let isTransitioningQuestion = false;
+
+    let titleImageHoldTimer = null;
+    let titleImageHoldTriggered = false;
 
     let suspenseIntervalId = null;
     let suspenseTimeoutId = null;
@@ -2505,6 +2533,26 @@ function handleAnswerClick(e) {
     if (phoneModeBtn) {
       phoneModeBtn.addEventListener("click", () => startGame("phone"));
     }
+
+    if (lessonImageEl) {
+  lessonImageEl.addEventListener("mousedown", () => {
+    if (!titleScreen.classList.contains("hidden")) {
+      startTitleImageHoldDebug();
+    }
+  });
+
+  lessonImageEl.addEventListener("mouseup", clearTitleImageHoldDebug);
+  lessonImageEl.addEventListener("mouseleave", clearTitleImageHoldDebug);
+
+  lessonImageEl.addEventListener("touchstart", () => {
+    if (!titleScreen.classList.contains("hidden")) {
+      startTitleImageHoldDebug();
+    }
+  }, { passive: true });
+
+  lessonImageEl.addEventListener("touchend", clearTitleImageHoldDebug);
+  lessonImageEl.addEventListener("touchcancel", clearTitleImageHoldDebug);
+}
 
     answerButtons.forEach(btn => {
       btn.addEventListener("click", handleAnswerClick);
