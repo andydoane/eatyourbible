@@ -1415,3 +1415,58 @@ body.show-real-cursor * {
   cursor: auto !important;
 }
 
+/* ==========================================
+   HARDCODED TITLE SCREEN OVERRIDES
+   ========================================== */
+
+body.mode-title {
+  background: #f2f2f2 !important;
+  animation: none !important;
+  color: #333333 !important;
+}
+
+#title-screen.screen-card {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+#title-screen,
+#title-screen-content {
+  color: #333333 !important;
+}
+
+#title-screen .card-title,
+#title-screen .card-subtitle,
+#title-screen .mode-note {
+  color: #333333 !important;
+}
+
+#title-screen .primary-button {
+  background: #7f66c6 !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 25px rgba(127, 102, 198, 0.28) !important;
+  filter: none !important;
+}
+
+#title-screen .primary-button:hover {
+  background: #7f66c6 !important;
+  color: #ffffff !important;
+  filter: brightness(1.05) !important;
+  box-shadow: 0 14px 30px rgba(127, 102, 198, 0.34) !important;
+}
+
+#title-screen .primary-button:active {
+  background: #7f66c6 !important;
+  color: #ffffff !important;
+  filter: brightness(0.95) !important;
+  box-shadow: 0 6px 12px rgba(127, 102, 198, 0.22) !important;
+}
+
+#title-screen .mode-buttons {
+  max-width: 320px;
+}
+
+#title-screen .lesson-image {
+  animation: none;
+}
