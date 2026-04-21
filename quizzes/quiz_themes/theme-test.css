@@ -1,61 +1,61 @@
 :root.theme-test {
   /* 1) Background of the whole page */
-  --bg-gradient-top: #ff00aa;
-  --bg-gradient-bottom: #ff00aa;
+  --bg-gradient-top: #fcfb58;
+  --bg-gradient-bottom: #fcfb58;
   --card-bg: #ffffff;
 
   /* 2) Presented-by (intro) screen */
-  --intro-bg: #ff00aa;
-  --intro-text: #ffffff;
+  --intro-bg: #fcfb58;
+  --intro-text: #333333;
 
   /* 3) Main text colors */
   --text-main: #333333;
-  --text-muted: #ffffff;
+  --text-muted: #333333;
 
   /* 3a) Title screen text colors */
-  --title-main-text: #ffffff;
-  --title-subtitle-text: #ffffff;
+  --title-main-text: #333333;
+  --title-subtitle-text: #333333;
 
   /* 4) Question area */
   --question-bg: #ffffff;
   --question-text: #333333;
 
   /* 5) Main buttons */
-  --accent: #aa00ff;
-  --accent-dark: #aa00ff;
+  --accent: #00c2f7;
+  --accent-dark: #00c2f7;
   --primary-text: #ffffff;
-  --secondary-bg: #ffaa00;
-  --secondary-text: #333333;
+  --secondary-bg: #333333;
+  --secondary-text: #ffffff;
 
   /* 6) Answer buttons */
-  --red: #aaff00;
-  --red-text: #333333;
+  --red: #00c2f7;
+  --red-text: #ffffff;
 
-  --blue: #aa00ff;
+  --blue: #333333;
   --blue-text: #ffffff;
 
-  --yellow: #ffaa00;
-  --yellow-text: #333333;
+  --yellow: #ff2300;
+  --yellow-text: #ffffff;
 
-  --green: #00aaff;
+  --green: #8a400e;
   --green-text: #ffffff;
 
   /* 7) Correct / incorrect feedback text */
-  --feedback-correct-text: #00aaff;
-  --feedback-incorrect-text: #aaff00;
+  --feedback-correct-text: #baec52;
+  --feedback-incorrect-text: #ff2300;
 
   /* 8) Question page background */
-  --quiz-screen-bg: #ff00aa;
+  --quiz-screen-bg: #fcfb58;
 
   /* 9) End screen backgrounds */
-  --end-great-bg-top: #00aaff;
-  --end-great-bg-bottom: #00aaff;
+  --end-great-bg-top: #baec52;
+  --end-great-bg-bottom: #baec52;
 
-  --end-good-bg-top: #ffaa00;
-  --end-good-bg-bottom: #ffaa00;
+  --end-good-bg-top: #00c2f7;
+  --end-good-bg-bottom: #00c2f7;
 
-  --end-try-bg-top: #ff00aa;
-  --end-try-bg-bottom: #ff00aa;
+  --end-try-bg-top: #fcfb58;
+  --end-try-bg-bottom: #fcfb58;
 
   --end-score-text: #333333;
   --end-detail-text: #333333;
@@ -66,11 +66,11 @@
 
   /* 10) Progress bar & timer colors */
   --progress-track-bg: rgba(51, 51, 51, 0.22);
-  --progress-fill-gradient: #00aaff;
+  --progress-fill-gradient: #baec52;
 
   --timer-bg: #ffffff;
   --timer-ring-bg: rgba(51, 51, 51, 0.22);
-  --timer-ring-fg: #00aaff;
+  --timer-ring-fg: #baec52;
   --timer-text: #333333;
 
   /* 11) Little number pill on answer buttons */
@@ -93,36 +93,36 @@
   --answer-border: rgba(255, 255, 255, 0.95);
   --answer-border-strong: rgba(255, 255, 255, 1);
 
-  --red-border: #aaff00;
-  --blue-border: #aa00ff;
-  --yellow-border: #ffaa00;
-  --green-border: #00aaff;
+  --red-border: #00c2f7;
+  --blue-border: #333333;
+  --yellow-border: #ff2300;
+  --green-border: #8a400e;
 
   /* 16) Timer explosion effects */
-  --timer-particle-gradient: #ffaa00;
+  --timer-particle-gradient: #00c2f7;
 
   /* 17) Dynamic reaction flash colors */
-  --flash-correct-bg: rgba(0, 170, 255, 0.25);
-  --flash-incorrect-bg: rgba(170, 255, 0, 0.25);
-  --flash-return-bg: #ff00aa;
+  --flash-correct-bg: rgba(186, 236, 82, 0.25);
+  --flash-incorrect-bg: rgba(255, 35, 0, 0.25);
+  --flash-return-bg: #fcfb58;
 
   /* 18) Screen card shadow */
   --screen-card-shadow: rgba(51, 51, 51, 0.35);
 
   /* 19) Pointer comet glow colors */
-  --pointer-glow-star: #ffaa00;
-  --pointer-glow-ocean: #00aaff;
-  --pointer-glow-garden: #aaff00;
-  --pointer-glow-fire: #ff00aa;
-  --pointer-glow-galaxy: #aa00ff;
+  --pointer-glow-star: #fcfb58;
+  --pointer-glow-ocean: #00c2f7;
+  --pointer-glow-garden: #baec52;
+  --pointer-glow-fire: #ff2300;
+  --pointer-glow-galaxy: #8a400e;
   --pointer-glow-animal: #333333;
-  --pointer-glow-joy: #ffaa00;
-  --pointer-glow-heart: #ff00aa;
+  --pointer-glow-joy: #00c2f7;
+  --pointer-glow-heart: #ff2300;
   --pointer-glow-rainbow: #ffffff;
-  --pointer-glow-bible: #aaff00;
+  --pointer-glow-bible: #fcfb58;
 
   /* 20) Answer feedback subtitle text */
-  --feedback-subtitle-text: #ffffff;
+  --feedback-subtitle-text: #333333;
 
-  --timer-explosion-glow: rgba(0, 170, 255, 0.9);
+  --timer-explosion-glow: rgba(0, 194, 247, 0.9);
 }
