@@ -378,22 +378,30 @@
 
     /* Bottom nav (solid bar style from Ten/Credo apps) */
     nav#nav{
-      position:fixed;
-      left:0;
-      right:0;
-      bottom:0;
+    position:fixed;
+    left:0;
+    right:0;
+    bottom:0;
+    padding: 10px 14px;
+    color: white;
+    }
 
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
+    .nav-shell{
+    width: 100%;
+    max-width: var(--content-max-wide);
+    margin-inline: auto;
+    }
 
-      padding: 10px 14px;
-
-      background: #333333;
-
-      border-top: 1px solid rgba(255,255,255,0.12);
-
-      color: white;
+    .nav-inner{
+    position: relative;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background: #333333;
+    border-top: 1px solid rgba(255,255,255,0.12);
+    border-radius: 18px 18px 0 0;
+    padding: 0;
+    min-height: 64px;
     }
     .nav-btn{
       width: var(--tap);
@@ -432,11 +440,19 @@
       background: #3ddc84; /* will be adjusted by JS */
       transition: width 120ms linear, background-color 200ms linear;
     }
-    .timer-row{
-      display:flex;
-      gap:12px;
-      align-items:center;
+        
+    .timer-shell{
+    width: 100%;
+    max-width: var(--content-max-wide);
+    margin-inline: auto;
     }
+
+    .timer-row{
+    display:flex;
+    gap:12px;
+    align-items:center;
+    }
+
     .timer-num{
       font-weight:900;
       font-size:16px;
@@ -564,9 +580,6 @@
 /* =========================================================
    Nav overlay CTA (Next question / See score)
    ========================================================= */
-nav#nav{
-  position:fixed;
-}
 
 .nav-next{
   position:absolute;
@@ -871,6 +884,10 @@ nav#nav{
   align-items: stretch;
 }
 
+.title-screen .content-frame img{
+  display: block;
+  margin-inline: auto;
+}
 
 /* ---------- Creed-style Intro (for Quiz) ---------- */
 .quiz-intro {
