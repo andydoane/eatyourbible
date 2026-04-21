@@ -1,0 +1,940 @@
+    /* =========================================================
+       Phone-only, full-screen, slide-left app shell
+       Inspired by Ten Commandments / Creed apps (solid backgrounds, no cards)
+       ========================================================= */
+  :root{
+    --navH: 70px;
+    --safeB: env(safe-area-inset-bottom);
+    --safeT: env(safe-area-inset-top);
+    --tap: 44px;
+
+    /* New: width caps so the app doesn't stretch horribly on desktop */
+    --content-max: 560px;
+    --content-max-wide: 860px;
+  }
+
+    html, body{
+      height:100%;
+      margin:0;
+      padding:0;
+      font-family:"Baloo 2", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      overflow:hidden;
+      background: var(--app-bg, var(--bg-solid, #222));
+      color: var(--text-primary, #fff);
+    }
+
+    /* Keep page hidden while theme CSS swaps (same idea as Andy engine) */
+    .theme-loading body{ opacity:1; }
+
+    /* Keep the title screen stable while switching quizzes from the picker */
+    html.title-refreshing,
+    html.title-refreshing body,
+    html.title-refreshing #app{
+      background: #f2f2f2 !important;
+    }
+
+    html.title-refreshing.theme-loading body{
+      opacity: 1 !important;
+    }
+    
+    #app{
+      position:fixed;
+      inset:0;
+      overflow:hidden;
+      background: var(--app-bg, var(--bg-solid, #222));
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .slide{
+      position:absolute;
+      inset:0;
+      display:flex;
+      flex-direction:column;
+      min-height:0;
+      padding-bottom: calc(var(--navH) + var(--safeB));
+      transition: transform 320ms ease;
+      will-change: transform;
+    }
+
+*, *::before, *::after { box-sizing: border-box; }
+
+    .slide.nav-hidden{
+      padding-bottom: 0;
+    }
+
+    /* Top area */
+    .top{
+      padding: calc(14px + var(--safeT)) 18px 10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:0;
+    }
+
+    .brand img{
+      width:48px;
+      height:48px;
+      object-fit:contain;
+      filter: drop-shadow(0 6px 14px rgba(0,0,0,0.35));
+    }
+
+    .titles{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      line-height:1.05;
+    }
+
+    .titles .title{
+      font-size:20px;
+      font-weight:800;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    .titles .subtitle{
+      font-size:14px;
+      opacity:0.92;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+
+    /* Center content */
+    .content{
+      flex:1;
+      min-height:0;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;   /* <-- ADD THIS */
+      padding: 8px 18px 18px;
+      gap:14px;
+    }
+
+    /* Centered inner rails for desktop responsiveness */
+    .content-frame,
+    .content-frame-wide{
+      width: 100%;
+      margin-inline: auto;
+    }
+
+    .content-frame{
+      max-width: var(--content-max);
+    }
+
+    .content-frame-wide{
+      max-width: var(--content-max-wide);
+    }
+
+/* =========================================================
+   Quiz screen layout: 40% question + 4x15% answers (60% total)
+   ========================================================= */
+
+/* On quiz screen we want full-width stacking, not centered columns */
+.quiz-content{
+  align-items: stretch;
+
+  /* Add breathing room above the nav bar */
+  padding-bottom: 18px;   /* match your global content bottom padding vibe */
+}
+
+/* Parent layout for question + answers */
+.qa-layout{
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;              /* space between question block and answers stack */
+}
+
+/* Question "button" container */
+.question-box{
+  flex: 3;
+  min-height: 0;
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--question-bg, rgba(0,0,0,0.28));
+  color: #333333;
+  border-radius: 18px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+  /* nicer multi-line centering */
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+/* Ensure the question text inherits the hard-coded colors */
+.question-box .question{
+  margin: 0;
+  width: 100%;
+  text-align: center;
+
+  font-size: clamp(26px, 2.2vw, 40px);
+  font-weight: 900;
+  line-height: 1.15;
+  letter-spacing: 0.2px;
+
+  color: var(--question-text, #ffffff);
+  text-shadow: none;
+
+  text-wrap: balance;
+}
+
+/* Answers area = remaining 60% */
+.answers{
+  flex: 7;
+  min-height: 0;
+  display: flex;          /* switch from grid to vertical flex */
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Each answer gets 15% of the available space (since answers area is 60% and has 4 equal children) */
+
+
+.big-text{
+  font-size: clamp(26px, 2.4vw, 42px);
+  font-weight:800;
+  line-height:1.1;
+}
+
+.body-text{
+  font-size: clamp(18px, 1.3vw, 22px);
+  opacity:0.95;
+  line-height:1.25;
+}
+
+    /* Primary CTA */
+    .primary-btn{
+      height:56px;
+      border:none;
+      border-radius: 18px;
+      font-family:inherit;
+      font-weight:900;
+      font-size: clamp(20px, 1.4vw, 24px);
+      cursor:pointer;
+      width:100%;
+      background: var(--btn-primary-bg, rgba(255,255,255,0.92));
+      color: var(--btn-primary-text, #111);
+      box-shadow: 0 10px 22px rgba(0,0,0,0.25);
+      transform: translateZ(0);
+    }
+    .primary-btn:active{ transform: scale(0.985); }
+
+    .secondary-btn{
+      height:50px;
+      border:2px solid rgba(255,255,255,0.55);
+      border-radius: 16px;
+      font-family:inherit;
+      font-weight:800;
+      font-size: clamp(18px, 1.2vw, 22px);
+      width:100%;
+      background: transparent;
+      color: rgba(255,255,255,0.95);
+    }
+    .secondary-btn:active{ transform: scale(0.99); }
+
+.dialog-cancel-btn{
+  height: 50px;
+  width: 100%;
+  border: 2px solid rgba(255,255,255,0.14);
+  border-radius: 16px;
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 18px;
+  background: #444444;
+  color: #f2f2f2;
+  cursor: pointer;
+}
+
+.dialog-cancel-btn:active{
+  transform: scale(0.99);
+}
+
+.dialog-quit-btn{
+  height: 56px;
+  width: 100%;
+  border: none;
+  border-radius: 18px;
+  font-family: inherit;
+  font-weight: 900;
+  font-size: 20px;
+  background: #ff5a51;
+  color: #f2f2f2;
+  box-shadow: 0 10px 22px rgba(0,0,0,0.25);
+  cursor: pointer;
+}
+
+.dialog-quit-btn:active{
+  transform: scale(0.985);
+}
+
+    /* Question + answers */
+    .question{
+      margin: 0;
+    }
+
+.answer{
+  flex:1;
+  min-height:0;
+  width:100%;
+
+  border-radius: 18px;
+  border:none;
+
+  font-family:inherit;
+  font-weight:900;
+  font-size: clamp(18px, 1.5vw, 28px);
+
+  padding: 12px 16px;
+
+  display:flex;                 /* enables vertical centering */
+  align-items:center;           /* vertical center */
+  justify-content:center;       /* horizontal center */
+  text-align:center;
+  line-height: 1.15;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+
+  color: var(--opt-text, rgba(255,255,255,0.98));
+  background: rgba(0,0,0,0.28);
+
+  box-shadow: 0 10px 22px rgba(0,0,0,0.20);
+  cursor:pointer;
+  transform: translateZ(0);
+}
+    
+
+    .answer:active{ transform: scale(0.99); }
+
+    /* Kahoot-ish colored options (uses theme vars if present; falls back otherwise) */
+    .answer.opt0{ background: var(--opt-a, #e21b3c); }
+    .answer.opt1{ background: var(--opt-b, #1368ce); }
+    .answer.opt2{ background: var(--opt-c, #d89e00); }
+    .answer.opt3{ background: var(--opt-d, #26890c); }
+
+    .answer.opt0{ color: var(--opt-a-text, rgba(255,255,255,0.98)); }
+    .answer.opt1{ color: var(--opt-b-text, rgba(255,255,255,0.98)); }
+    .answer.opt2{ color: var(--opt-c-text, rgba(255,255,255,0.98)); }
+    .answer.opt3{ color: var(--opt-d-text, rgba(255,255,255,0.98)); }
+
+    /* Locked + reveal */
+    .answers.locked .answer{
+      opacity:0.82;
+      pointer-events:none;
+    }
+    .answer.selected{
+      animation: pop 180ms ease-out both;
+      outline: 3px solid rgba(255,255,255,0.65);
+    }
+    .answer.correct{
+      outline: 4px solid rgba(255,255,255,0.95);
+      filter: saturate(1.15) brightness(1.05);
+    }
+    .answer.wrong{
+      opacity:0.55;
+      filter: grayscale(0.15);
+    }
+
+    @keyframes pop{
+      from{ transform: scale(0.98); }
+      to{ transform: scale(1.02); }
+    }
+
+    /* Suspense dots */
+    .suspense{
+      display:flex;
+      gap:6px;
+      align-items:center;
+      justify-content:center;
+      height: 24px;
+      opacity:0.95;
+    }
+    .dot{
+      width:10px; height:10px; border-radius:99px;
+      background: rgba(255,255,255,0.85);
+      animation: bounce 700ms infinite ease-in-out;
+    }
+    .dot:nth-child(2){ animation-delay:120ms; }
+    .dot:nth-child(3){ animation-delay:240ms; }
+    @keyframes bounce{
+      0%,100%{ transform: translateY(0); opacity:0.55; }
+      50%{ transform: translateY(-7px); opacity:1; }
+    }
+
+    /* Bottom nav (solid bar style from Ten/Credo apps) */
+    nav#nav{
+      position:fixed;
+      left:0;
+      right:0;
+      bottom:0;
+
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+
+      padding: 10px 14px;
+
+      background: #333333;
+
+      border-top: 1px solid rgba(255,255,255,0.12);
+
+      color: white;
+    }
+    .nav-btn{
+      width: var(--tap);
+      height: var(--tap);
+      border:none;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.20);
+      color: rgba(255,255,255,0.95);
+      font-size: 18px;
+      font-weight: 900;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .nav-btn:active{ transform: scale(0.98); }
+    .nav-center{
+      font-weight: 900;
+      font-size: 16px;
+      opacity:0.98;
+      letter-spacing:0.3px;
+    }
+
+    /* Timer bar (repurposed "progress bar" into countdown bar) */
+    .timer-wrap{
+      width:100%;
+      height: 12px;
+      border-radius: 99px;
+      background: var(--progress-track, rgba(255,255,255,0.18));
+      overflow:hidden;
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.25);
+    }
+    .timer-bar{
+      height:100%;
+      width:100%;
+      transform-origin: left center;
+      background: #3ddc84; /* will be adjusted by JS */
+      transition: width 120ms linear, background-color 200ms linear;
+    }
+    .timer-row{
+      display:flex;
+      gap:12px;
+      align-items:center;
+    }
+    .timer-num{
+      font-weight:900;
+      font-size:16px;
+      min-width: 32px;
+      text-align:right;
+      opacity:0.95;
+    }
+
+    /* Small toast / overlay */
+    .overlay{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,0.80);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index: 10000;
+      opacity: 0;
+      transition: opacity 250ms ease;
+    }
+    
+
+    .overlay.show{ 
+    display:flex;
+    opacity:1;
+
+    }
+
+/* =========================================================
+   Suspense overlay (dims EVERYTHING)
+   ========================================================= */
+.suspense-overlay{
+  position:fixed;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background: rgba(0,0,0,0.65);
+  z-index: 20000; /* above nav (nav is 9999) */
+}
+
+.suspense-emoji{
+  font-size: clamp(80px, 50vw, 180px);
+  line-height: 1;
+  user-select: none;
+  filter: drop-shadow(0 18px 36px rgba(0,0,0,0.45));
+  transform-origin: center;
+}
+
+/* Smooth flip (used by coin + meter) */
+.suspense-emoji.flip{
+  transition: transform 130ms ease-in-out;
+  will-change: transform;
+}
+
+/* Bomb shockwave ring (from old Andy engine) */
+.shockwave{
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 8px solid #ffea00;
+  box-shadow: 0 0 22px rgba(255, 234, 0, 0.75);
+  transform: translate(-50%, -50%) scale(1);
+  opacity: 1;
+  pointer-events: none;
+}
+
+@keyframes shockwaveExpand{
+  from { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  to   { transform: translate(-50%, -50%) scale(25); opacity: 0; }
+}
+
+
+/* Gravity-style jump for yesnoFlip */
+@keyframes yesnoJump {
+  0%   { transform: translateY(0); }
+  45%  { transform: translateY(-95px); }  /* apex height */
+  100% { transform: translateY(0); }
+}
+
+.suspense-emoji.jump{
+  animation: yesnoJump 420ms cubic-bezier(.22,.61,.34,1) both;
+}
+
+
+/* Smooth movement for position-based suspense (magnifier/pointer) */
+.suspense-emoji.mover{
+  position: fixed;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -50%);
+  transition: left 220ms ease, top 220ms ease;
+}
+
+/* =========================================================
+   Reveal verdict in question box
+   ========================================================= */
+.question-box.verdict{
+  background: #f2f2f2;
+}
+
+.question-box.verdict .question{
+  font-size: 44px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.question-box.verdict.correct .question{
+  color: #1b8f3a; /* green */
+}
+
+.question-box.verdict.incorrect .question{
+  color: #c62828; /* red */
+}
+
+/* Keep correct answer normal; dim others more clearly */
+.answer.dimmed{
+  opacity: 0.30 !important;
+  filter: grayscale(0.20);
+}
+
+/* =========================================================
+   Nav overlay CTA (Next question / See score)
+   ========================================================= */
+nav#nav{
+  position:fixed;
+}
+
+.nav-next{
+  position:absolute;
+  left:0;
+  right:0;
+  top:0;
+  bottom:0;
+  width:100%;
+  border:none;
+  border-radius: 0;
+  background: #333333;
+  color: rgba(255,255,255,0.98);
+  font-family: inherit;
+  font-weight: 900;
+  font-size: 20px;
+  letter-spacing: 0.3px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.nav-next:active{ transform: scale(0.99); }
+
+/* Bouncing hint arrow for the NEXT QUESTION button */
+.next-hint{
+  position:absolute;
+  left:50%;
+  bottom: calc(100% + 8px); /* sits slightly above the nav */
+  transform: translateX(-50%);
+  font-size: clamp(48px, 14vw, 120px);
+  line-height: 1;
+  filter: drop-shadow(0 10px 18px rgba(0,0,0,0.45));
+  pointer-events: none; /* never blocks taps */
+  z-index: 10001; /* above the nav-next button */
+  animation: nextHintBounce 780ms cubic-bezier(.2,.9,.2,1) infinite;
+}
+
+@keyframes nextHintBounce{
+  0%, 100% { transform: translateX(-50%) translateY(0); opacity: 0.95; }
+  50%      { transform: translateX(-50%) translateY(-18px); opacity: 1; }
+}
+    .dialog{
+      width:min(420px, 100%);
+      border-radius: 22px;
+      background: #333333;
+      border: 1px solid rgba(255,255,255,0.10);
+      box-shadow: 0 18px 50px rgba(0,0,0,0.45);
+      padding: 18px;
+      color: #f2f2f2;
+    }
+    .dialog h3{
+      margin:0 0 8px;
+      font-size:20px;
+      font-weight:900;
+    }
+    .dialog p{
+      margin:0 0 14px;
+      opacity:0.92;
+      line-height:1.25;
+    }
+    .dialog .row{
+      display:flex;
+      gap:12px;
+    }
+    .dialog button{
+      flex:1;
+    }
+
+    /* End / Present */
+.present{
+  /* No box — just the emoji */
+  width: auto;
+  height: auto;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+
+  display: inline-flex;
+  align-items:center;
+  justify-content:center;
+
+  font-size: 92px;
+  line-height: 1;
+  user-select:none;
+}
+.present:active{ transform: scale(0.98); }
+
+    .emoji-reward{
+      font-size: 92px;
+      text-align:center;
+      line-height:1;
+      user-select:none;
+      animation: rewardPop 420ms cubic-bezier(.2,1.4,.35,1) both;
+      filter: drop-shadow(0 14px 28px rgba(0,0,0,0.35));
+    }
+
+
+
+    
+    @keyframes rewardPop{
+      from{ transform: scale(0.6) rotate(-6deg); opacity:0.5; }
+      to{ transform: scale(1) rotate(0deg); opacity:1; }
+    }
+
+    @keyframes presentWiggle {
+  0%   { transform: rotate(0deg); }
+  15%  { transform: rotate(-10deg); }
+  30%  { transform: rotate(10deg); }
+  45%  { transform: rotate(-8deg); }
+  60%  { transform: rotate(8deg); }
+  75%  { transform: rotate(-4deg); }
+  100% { transform: rotate(0deg); }
+}
+
+/* Reward overlay layout text */
+.reward-top{
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0.3px;
+  text-align: center;
+}
+
+/* Reward overlay: make text fully bright (not dimmed by .hint opacity) */
+#overlay.show #rewardStage .reward-top,
+#overlay.show #rewardStage .hint,
+#overlay.show #rewardStage .reward-ui{
+  opacity: 1 !important;
+  color: #fff !important;
+  text-shadow: 0 3px 10px rgba(0,0,0,0.55);
+}
+
+/* ---------- Reward overlay layering ---------- */
+
+/* The reward screen container becomes the stacking context */
+#rewardStage{
+  position: relative;
+}
+
+
+
+
+
+/* --- Dance 1: Bounce Party (floatier) --- */
+@keyframes danceBounce {
+  0%, 100% { transform: translateY(0) scale(1,1); }
+
+  /* softer takeoff */
+  12% { transform: translateY(0) scale(1.06,0.92); }
+
+  /* rise */
+  32% { transform: translateY(-24vh) scale(1.04,0.96); }
+
+  /* hang time near apex (lighter gravity) */
+  46% { transform: translateY(-26vh) scale(1.03,0.97); }
+  58% { transform: translateY(-25vh) scale(1.03,0.97); }
+
+  /* soft landing */
+  78% { transform: translateY(0) scale(0.96,1.08); }
+
+  /* tiny rebound */
+  88% { transform: translateY(-4vh) scale(1.01,0.99); }
+}
+
+.emoji-reward.dance-bounce{
+  animation: danceBounce 1050ms cubic-bezier(.15,.85,.25,1) infinite;
+}
+
+/* --- Dance 2: Wiggle Shimmy --- */
+@keyframes danceWiggle {
+  0%   { transform: rotate(0deg) translateX(0); }
+  15%  { transform: rotate(-10deg) translateX(-6px); }
+  30%  { transform: rotate(10deg) translateX(6px); }
+  45%  { transform: rotate(-8deg) translateX(-4px); }
+  60%  { transform: rotate(8deg) translateX(4px); }
+  75%  { transform: rotate(-4deg) translateX(-2px); }
+  100% { transform: rotate(0deg) translateX(0); }
+}
+.emoji-reward.dance-wiggle{
+  animation: danceWiggle 640ms ease-in-out infinite;
+}
+
+/* --- Dance 3: Moonwalk Slide --- */
+@keyframes danceMoonwalk {
+  0%   { transform: translateX(-35vw) rotate(6deg); }
+  50%  { transform: translateX(35vw) rotate(-6deg); }
+  100% { transform: translateX(-35vw) rotate(6deg); }
+}
+
+
+.emoji-reward.dance-moonwalk{
+  animation: danceMoonwalk 980ms ease-in-out infinite;
+}
+
+/* --- Dance 4: Crazy Pong (JS-driven) --- */
+.emoji-reward.dance-pong{
+  animation: none !important; 
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%,-50%);
+  will-change: left, top;
+}
+
+/* --- Dance 5: Spin'spolsion (JS-driven spin-up) --- */
+.emoji-reward.dance-spin{
+  will-change: transform;
+  animation: none !important;
+}
+
+/* Particle burst for Spin'spolsion */
+.particle{
+  position:absolute;
+  left: 50%;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.95);
+  transform: translate(-50%,-50%);
+  pointer-events:none;
+  filter: drop-shadow(0 8px 14px rgba(0,0,0,0.35));
+}
+@keyframes particleFly{
+  from { transform: translate(-50%,-50%) translate(0,0) scale(1); opacity: 1; }
+  to   { transform: translate(-50%,-50%) translate(var(--dx), var(--dy)) scale(0.2); opacity: 0; }
+}
+
+.present.wiggle {
+  animation: presentWiggle 520ms ease-in-out both;
+}
+
+    
+    /* Tiny corner hint */
+    .hint{
+      font-size: 13px;
+      opacity:0.85;
+      text-align:center;
+    }
+
+/* =========================================================
+   Theme bridge: maps Andy theme variables -> app variables
+   This lets all your existing quiz_themes/*.css work unchanged.
+   ========================================================= */
+
+/* 1) Background + text */
+:root{
+  --app-bg: var(--quiz-screen-bg, var(--quiz-bg, #222));
+  --bg-solid: var(--quiz-screen-bg-solid, #222);
+
+  --text-primary: var(--primary-text, var(--title-main-text, #fff));
+
+  --btn-primary-bg: var(--accent, rgba(255,255,255,0.92));
+  --btn-primary-text: var(--accent-text, #111);
+
+  --opt-a: var(--red, #e21b3c);
+  --opt-b: var(--blue, #1368ce);
+  --opt-c: var(--yellow, #d89e00);
+  --opt-d: var(--green, #26890c);
+
+  --opt-a-text: var(--red-text, rgba(255,255,255,0.98));
+  --opt-b-text: var(--blue-text, rgba(255,255,255,0.98));
+  --opt-c-text: var(--yellow-text, rgba(255,255,255,0.98));
+  --opt-d-text: var(--green-text, rgba(255,255,255,0.98));
+
+  /* Progress / timer bar */
+--progress-track: var(--progress-track-bg, rgba(255,255,255,0.18));
+--progress-high: var(--progress-fill-high, #3ddc84);
+--progress-mid: var(--progress-fill-mid, #f4c542);
+--progress-low: var(--progress-fill-low, #ff4d4d);
+}
+
+/* =========================================================
+   Title screen (NOT themed)
+   ========================================================= */
+.title-screen{
+  background: #f2f2f2;
+  color: #333333;
+  min-height: 100%;
+  width: 100%;
+  display: flex;
+}
+
+.title-screen .big-text,
+.title-screen .body-text,
+.title-screen .hint{
+  color: #333333;
+}
+
+.title-screen .primary-btn{
+  background: #7f66c6;
+  color: #ffffff;
+}
+
+.title-screen .secondary-btn{
+  border: 2px solid #333333;
+  color: #333333;
+}
+
+.title-screen .content-frame{
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  align-items: stretch;
+}
+
+
+/* ---------- Creed-style Intro (for Quiz) ---------- */
+.quiz-intro {
+  background: var(--intro-screen-bg, #7f66c6);
+  color: var(--intro-screen-text, #ffffff);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  text-align: center;
+  gap: 16px;
+  padding: 24px 18px;
+}
+
+.quiz-intro .presented,
+.quiz-intro .site,
+.quiz-intro .hint {
+  color: var(--intro-screen-text, #ffffff);
+}
+
+.quiz-intro img {
+  width: min(70vw, 420px);
+  max-height: 45vh;
+  object-fit: contain;
+  animation: introWiggle 1s infinite alternate;
+  user-select: none;
+}
+
+@keyframes introWiggle {
+  0% { transform: rotate(-4deg); }
+  100% { transform: rotate(4deg); }
+}
+
+.quiz-intro .presented {
+  font-size: 18px;
+  font-weight: 800;
+  opacity: 0.95;
+}
+
+.quiz-intro .site {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: 0.3px;
+}
+
+@media (min-width: 900px){
+  .quiz-content{
+    padding-left: 24px;
+    padding-right: 24px;
+    padding-bottom: 24px;
+  }
+
+  .qa-layout{
+    gap: 16px;
+  }
+
+  .question-box{
+    padding: 22px 24px;
+    border-radius: 22px;
+  }
+
+  .answer{
+    padding: 16px 20px;
+    border-radius: 20px;
+  }
+}
