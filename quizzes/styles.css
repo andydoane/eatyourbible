@@ -57,6 +57,11 @@ body.mode-big #app {
   
 }
 
+body.intro-mode #app {
+  max-width: none;
+  width: 100%;
+}
+
 
 
 
