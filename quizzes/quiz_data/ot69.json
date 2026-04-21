@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot69",
+  "pageTitle": "OT 69 Quiz",
+  "lessonTitleText": "God Saves Elisha from an Army",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot69image.png",
+  "themeClass": "theme-green",
+  "questions": [
+    {
+      "text": "How could Elisha tell the king of Israel about Syria’s secret plans?",
+      "answers": [
+        "God let him hear what the king of Syria said",
+        "He had spies everywhere",
+        "He guessed correctly",
+        "He was best friends with the King of Syria"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the king of Syria think when his plans were discovered?",
+      "answers": [
+        "One of his servants was a spy",
+        "The king of Israel was lucky",
+        "There must be a hidden microphone recording him",
+        "The gods were punishing him"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the servants tell the king of Syria?",
+      "answers": [
+        "Elisha knows what you say, even in your bedroom",
+        "There is a spy among us",
+        "We've been sharing your secrets with Elisha",
+        "The Lord God is punishing us"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the king of Syria send his soldiers to do?",
+      "answers": [
+        "Capture Elisha",
+        "Attack Jerusalem",
+        "Look for secret spies",
+        "Find out Elisha's secret plans"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Elisha’s servant see when God opened his eyes?",
+      "answers": [
+        "An army of angels with fiery horses and chariots",
+        "An evil army of demons",
+        "Light shining from heaven",
+        "One angel in the sky"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened when Elisha prayed for the soldiers?",
+      "answers": [
+        "God made the soldiers blind",
+        "God made the soldiers run away",
+        "God sent fire from the sky",
+        "God made the soldiers fall asleep"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Where did Elisha lead the blind army?",
+      "answers": [
+        "To Samaria",
+        "To the Red Sea",
+        "To the desert",
+        "Back to Syria"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the king of Israel want to do to the soldiers?",
+      "answers": [
+        "Kill them",
+        "Send them away",
+        "Make them servants",
+        "Hide from them"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Elisha tell the king to do instead?",
+      "answers": [
+        "Feed them and send them home",
+        "Put them in prison",
+        "Shave their hair and their beards",
+        "Make them become his slaves"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened after the soldiers returned home?",
+      "answers": [
+        "They stopped attacking Israel",
+        "They came back stronger",
+        "They built a new army",
+        "They became followers of the Lord God"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

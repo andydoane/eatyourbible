@@ -1,0 +1,110 @@
+{
+  "lessonId": "nt34",
+  "pageTitle": "NT 34 Quiz",
+  "lessonTitleText": "Jesus on the Road to Emmaus",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/nt34image.png",
+  "themeClass": "theme-red",
+  "questions": [
+    {
+      "text": "Where were the two travelers going?",
+      "answers": [
+        "To Emmaus",
+        "To Jerusalem",
+        "To Jesus' tomb",
+        "To Bethlehem"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who were the two travelers?",
+      "answers": [
+        "Cleopas and possibly his wife Mary",
+        "Peter and John",
+        "James and Andrew",
+        "Paul and Barnabas"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who joined them on the road?",
+      "answers": [
+        "Jesus",
+        "An angel",
+        "Judas",
+        "A priest"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did God do as Jesus walked with them?",
+      "answers": [
+        "Kept the travelers from recognizing Jesus",
+        "Made them run as fast as a cheetah",
+        "Made the travelers totally blind",
+        "Instantly teleported them to Emmaus"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What were the travelers talking about?",
+      "answers": [
+        "Jesus’ death and the empty tomb",
+        "Noah's ark",
+        "The weather",
+        "Their favorite books"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jesus say about the Scriptures?",
+      "answers": [
+        "They point to the Messiah",
+        "They are just pretend stories",
+        "They are not important",
+        "They are hard to understand"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Jesus say the Messiah had to do?",
+      "answers": [
+        "Suffer for our sins",
+        "Build a kingdom on earth",
+        "Defeat Rome",
+        "Return to heaven"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened as they ate with Jesus?",
+      "answers": [
+        "Their eyes were opened and they recognized him",
+        "They fell asleep",
+        "They heard a voice from heaven",
+        "Jesus rose up to the clouds"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened after they recognized Jesus?",
+      "answers": [
+        "Jesus disappeared",
+        "The travelers disappeared",
+        "Jesus walked with them back to Jerusalem",
+        "The travelers were scared and ran away"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the two travelers do after Jesus disappeared?",
+      "answers": [
+        "They ran back to Jerusalem to tell the disciples",
+        "They stayed in Emmaus",
+        "They sent a message to the disciples",
+        "They went to sleep"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
