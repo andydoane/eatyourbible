@@ -49,7 +49,7 @@ window.EXTERNAL_VERSE_GAMES = [
       description: "Tap the correct moving brick and keep your tower balanced.",
       icon: "🏰",
       launchUrl: "./verse_games/tower_bible/index.html",
-      visibleInCarousel: false,
+      visibleInCarousel: true,
       progressType: "standard",
       modes: ["easy", "medium", "hard"]
     }
