@@ -99,6 +99,8 @@
     enteringBrick:null,
     enteringId:0,
     done:false,
+    frenzyActive:false,
+    frenzyInputLockedUntil:0,
 
     pendingCorrectLabel:"",
     pendingCorrectType:"word",
@@ -170,7 +172,7 @@
       overlayMessage:"", overlayUntil:0,
       warningLevel:0, hadWarning2BeforePlacement:false, beltRespawnLockUntil:0, beltNeedsFreshSpawn:false, collapseTriggered:false, collapseEndsAt:0, collapseStartedAt:0, collapseDir:1, collapseBasePose:null, lastStableTowerPose:null, pendingPreCollapsePose:null, collapseBurstFired:{}, collapseDebugFramesLeft:0,
       stream:[], streamId:0, fx:[], enteringBrick:null, enteringId:0,
-      done:false, pendingCorrectLabel:"", pendingCorrectType:"word",
+      done:false, frenzyActive:false, frenzyInputLockedUntil:0, pendingCorrectLabel:"", pendingCorrectType:"word",
       pendingCorrectVisible:0, spawnIndex:0
     });
     seedPendingCorrect();
@@ -350,6 +352,20 @@
         openGameMenu();
       };
     }
+
+    const field = document.getElementById("tbField");
+    if (field){
+      field.onpointerdown = (e) => {
+        const menuPillEl = document.getElementById("tbMenuPill");
+        if (menuPillEl && menuPillEl.contains(e.target)) return;
+        if (state.frenzyActive){
+          if (e.cancelable) e.preventDefault();
+          e.stopPropagation();
+          handleFrenzyTap();
+        }
+      };
+    }
+
     window.onkeydown = (e) => {
       if (e.key === "Escape" && state.running){
         if (document.getElementById("tbGameMenuOverlay")?.classList.contains("is-open")) closeGameMenu();
@@ -435,6 +451,7 @@
   }
 
   function currentPhaseLabel(){
+    if (state.frenzyActive) return "Destroy!";
     if (state.done) return "Done";
     if (state.phase === "words") return `${state.wordIndex}/${wordEntries.length}`;
     if (state.phase === "book") return "Book";
@@ -456,6 +473,7 @@
     renderGuide(guideLayer);
     renderConveyor(conveyorLayer);
     renderEnteringBrick(enterLayer);
+    renderOverlayMessage(guideLayer);
     renderEffects(smokeLayer);
     renderWarning(warningLayer);
     renderDebug(debugLayer);
@@ -465,6 +483,17 @@
     layer.innerHTML = `
       <div class="tb-guide-wrap" style="left:${state.guideCenterX}px;top:${state.laneY}px;">
         <div class="tb-guide" style="width:${state.guideWidth}px;height:${state.brickHeight}px;"></div>
+      </div>`;
+  }
+
+  function renderOverlayMessage(layer){
+    const now = performance.now();
+    if (!layer) return;
+    if (!state.overlayMessage || now >= state.overlayUntil) return;
+
+    layer.innerHTML += `
+      <div class="tb-center-overlay-msg">
+        ${escapeHtml(state.overlayMessage)}
       </div>`;
   }
 
@@ -742,6 +771,7 @@
 
   function step(dt, now){
     if (state.done) return;
+    if (state.frenzyActive) return;
 
     if (state.collapseTriggered){
       stepCollapse(dt);
@@ -834,6 +864,8 @@
     state.beltRespawnLockUntil = 0;
     state.beltNeedsFreshSpawn = false;
     state.enteringBrick = null;
+    state.frenzyActive = false;
+    state.frenzyInputLockedUntil = 0;
     state.pendingCorrectVisible = 0;
     seedPendingCorrect();
     state.stream = [];
@@ -965,6 +997,11 @@
   }
 
   function handleBrickTap(id){
+    if (state.frenzyActive){
+      handleFrenzyTap();
+      return;
+    }
+
     if (state.paused || state.done || state.collapseTriggered || state.enteringBrick) return;
 
     const brick = state.stream.find((b) => b.id === id);
@@ -1096,8 +1133,7 @@
       return;
     }
     if (state.phase === "reference"){
-      state.done = true;
-      finishGame();
+      startDestroyFrenzy();
     }
   }
 
@@ -1255,10 +1291,60 @@ if (DEBUG_COLLAPSE){
     state.beltRespawnLockUntil = performance.now() + 520;
   }
 
+  function startDestroyFrenzy(){
+    state.frenzyActive = true;
+    state.overlayMessage = "Tap to destroy your tower!";
+    state.overlayUntil = performance.now() + 999999;
+    state.stream = [];
+    state.pendingCorrectVisible = 0;
+    state.enteringBrick = null;
+  }
+
+  function handleFrenzyTap(){
+    const now = performance.now();
+    if (!state.frenzyActive) return;
+    if (now < state.frenzyInputLockedUntil) return;
+    if (!state.progress.length) return;
+
+    const topIndex = state.progress.length - 1;
+    const topBrick = state.progress[topIndex];
+
+    let cumulativeBottom = 0;
+    for (let i = 0; i < topIndex; i++){
+      const level = i;
+      const scale = Math.max(0.54, Math.pow(0.95, level));
+      const height = Math.max(34, state.brickHeight * 0.9 * scale);
+      cumulativeBottom += height + clamp(state.brickHeight * 0.07, 4, 8);
+    }
+
+    const level = topIndex;
+    const t = state.progress.length <= 1 ? 0 : level / Math.max(1, state.progress.length - 1);
+    const curve = Math.pow(t, 1.55);
+    const scale = Math.max(0.54, Math.pow(0.95, level));
+    const height = Math.max(34, state.brickHeight * 0.9 * scale);
+    const lean = getVisualLean();
+    const maxLeanPx = Math.min(state.fieldWidth * 0.065, 46);
+    const offsetX = state.progress.length <= 1 ? 0 : lean * maxLeanPx * curve;
+
+    const burstX = state.fieldWidth * 0.5 + offsetX;
+    const burstY = state.fieldHeight - (towerBaseBottom() + cumulativeBottom + height * 0.5);
+
+    addChunkBurst(burstX, burstY, Math.max(0.95, scale));
+    state.progress.pop();
+
+    if (!state.progress.length){
+      state.frenzyActive = false;
+      state.overlayMessage = "";
+      state.overlayUntil = 0;
+      state.frenzyInputLockedUntil = performance.now() + 350;
+      finishGame();
+    }
+  }
 
   async function finishGame(){
     state.running = false;
     state.done = true;
+    state.frenzyActive = false;
     stopLoop();
     let reward = { ok:false, petUnlockTriggered:false };
     if (!completionMarked && ctx.verseId && selectedMode){
