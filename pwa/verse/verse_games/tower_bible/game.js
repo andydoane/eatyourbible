@@ -620,6 +620,12 @@
       }
 
       html += `<div class="${cls.join(" ")}" style="bottom:${bottom}px;width:${width}px;height:${height}px;font-size:${fontSize}px;opacity:${opacity.toFixed(3)};transform:translateX(calc(-50% + ${offsetX}px)) rotate(${rot}deg)">${escapeHtml(brick.label)}</div>`;
+
+      if (!state.collapseTriggered && i === 0 && showBottomWarningOverlay(now)){
+        const warningClass = state.warningLevel >= 2 ? "tb-warning-overlay danger" : "tb-warning-overlay";
+        const warningText = state.warningLevel >= 2 ? "WARNING!" : "WARNING";
+        html += `<div class="${warningClass}" style="bottom:${bottom}px;width:${width}px;height:${height}px;font-size:${fontSize}px;transform:translateX(calc(-50% + ${offsetX}px)) rotate(${rot}deg)">${warningText}</div>`;
+      }
       cumulativeBottom += height + clamp(state.brickHeight * 0.07, 4, 8);
     }
 
@@ -674,12 +680,8 @@
   }
 
   function renderWarning(layer){
-    if (state.warningLevel === 0){
-      layer.innerHTML = "";
-      return;
-    }
-    const text = state.warningLevel === 1 ? "⚠️" : "⚠️⚠️";
-    layer.innerHTML = `<div style="position:absolute;left:50%;top:18px;transform:translateX(-50%);font-size:${state.warningLevel === 1 ? 22 : 26}px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.18));">${text}</div>`;
+    if (!layer) return;
+    layer.innerHTML = "";
   }
 
   function renderDebug(layer){
@@ -1339,6 +1341,13 @@ if (DEBUG_COLLAPSE){
 
   function getTowerShellRotation(now){
     return 0;
+  }
+
+  function showBottomWarningOverlay(now){
+    if (state.warningLevel <= 0 || state.collapseTriggered) return false;
+    const cycleMs = state.warningLevel >= 2 ? 1600 : 3000;
+    const onMs = state.warningLevel >= 2 ? 800 : 1500;
+    return (now % cycleMs) < onMs;
   }
 
   function getTopBrickWarningWobble(now){
