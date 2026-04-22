@@ -82,6 +82,7 @@
     warningLevel:0,
     hadWarning2BeforePlacement:false,
     beltRespawnLockUntil:0,
+    beltNeedsFreshSpawn:false,
     collapseTriggered:false,
     collapseEndsAt:0,
     collapseStartedAt:0,
@@ -166,7 +167,7 @@
       progress:[], phase:"words", wordIndex:0,
       towerShakeUntil:0, towerSettleUntil:0, guideFlashUntil:0,
       overlayMessage:"", overlayUntil:0,
-      warningLevel:0, hadWarning2BeforePlacement:false, beltRespawnLockUntil:0, collapseTriggered:false, collapseEndsAt:0, collapseStartedAt:0, collapseDir:1, collapseBasePose:null, lastStableTowerPose:null, pendingPreCollapsePose:null, collapseDebugFramesLeft:0,
+      warningLevel:0, hadWarning2BeforePlacement:false, beltRespawnLockUntil:0, beltNeedsFreshSpawn:false, collapseTriggered:false, collapseEndsAt:0, collapseStartedAt:0, collapseDir:1, collapseBasePose:null, lastStableTowerPose:null, pendingPreCollapsePose:null, collapseDebugFramesLeft:0,
       stream:[], streamId:0, fx:[], enteringBrick:null, enteringId:0,
       done:false, pendingCorrectLabel:"", pendingCorrectType:"word",
       pendingCorrectVisible:0, spawnIndex:0
@@ -820,6 +821,7 @@
     state.warningLevel = 0;
     state.hadWarning2BeforePlacement = false;
     state.beltRespawnLockUntil = 0;
+    state.beltNeedsFreshSpawn = false;
     state.enteringBrick = null;
     state.pendingCorrectVisible = 0;
     seedPendingCorrect();
@@ -841,7 +843,19 @@
 
   function ensureStreamFilled(){
     let rightMostLeft = state.stream.reduce((m, b) => Math.max(m, b.left), -Infinity);
-    if (!Number.isFinite(rightMostLeft)) rightMostLeft = -state.brickWidth;
+
+    if (state.beltNeedsFreshSpawn || !Number.isFinite(rightMostLeft)){
+      let left = state.fieldWidth + state.brickWidth * 0.35;
+      while (left < state.fieldWidth + state.brickWidth + state.brickStep * 3){
+        const brick = createStreamBrick(left);
+        state.stream.push(brick);
+        left += state.brickStep;
+      }
+      state.beltNeedsFreshSpawn = false;
+      state.pendingCorrectVisible = state.stream.filter((brick) => brick.isCorrect).length;
+      return;
+    }
+
     while (rightMostLeft < state.fieldWidth + state.brickStep){
       const left = rightMostLeft + state.brickStep;
       const brick = createStreamBrick(left);
@@ -1225,6 +1239,7 @@ if (DEBUG_COLLAPSE){
     }
     state.stream = [];
     state.pendingCorrectVisible = 0;
+    state.beltNeedsFreshSpawn = true;
     state.beltRespawnLockUntil = performance.now() + 520;
   }
 
