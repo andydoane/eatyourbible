@@ -1307,7 +1307,6 @@ if (DEBUG_COLLAPSE){
     if (!state.progress.length) return;
 
     const topIndex = state.progress.length - 1;
-    const topBrick = state.progress[topIndex];
 
     let cumulativeBottom = 0;
     for (let i = 0; i < topIndex; i++){
