@@ -121,8 +121,8 @@ body{
 }
 
 .tb-warning-overlay.danger{
-  background:#ffb347;
-  color:#333;
+  background:#ff5a51;
+  color:#ffffff;
   animation:tbWarningOverlayPulseDanger 220ms ease-in-out infinite alternate;
 }
 
@@ -196,13 +196,13 @@ body{
 @keyframes tbTowerShake{0%,100%{transform:translateX(-50%);}25%{transform:translateX(calc(-50% - 5px));}50%{transform:translateX(calc(-50% + 5px));}75%{transform:translateX(calc(-50% - 3px));}}
 
 @keyframes tbWarningOverlayPulse{
-  0%{opacity:.9;filter:brightness(1);}
-  100%{opacity:1;filter:brightness(1.08);}
+  0%{opacity:1;filter:brightness(1);}
+  100%{opacity:1;filter:brightness(1.05);}
 }
 
 @keyframes tbWarningOverlayPulseDanger{
-  0%{opacity:.88;filter:brightness(1);}
-  100%{opacity:1;filter:brightness(1.16);}
+  0%{opacity:1;filter:brightness(1);}
+  100%{opacity:1;filter:brightness(1.08);}
 }
 
 @keyframes tbTowerSettle{
