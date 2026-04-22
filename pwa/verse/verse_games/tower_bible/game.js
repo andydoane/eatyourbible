@@ -1362,19 +1362,47 @@ if (DEBUG_COLLAPSE){
 
   function getVerseDerivedDecoys(targetIndex, correct){
     const targetNorm = normalizeWord(correct);
+
+    const futureTargetNorms = new Set(
+      wordEntries
+        .slice(targetIndex + 1)
+        .map((entry) => normalizeWord(entry.display))
+        .filter(Boolean)
+    );
+
     const candidates = wordEntries.filter((entry, idx) => {
       if (idx === targetIndex) return false;
+
       const norm = normalizeWord(entry.display);
       if (!norm || norm === targetNorm) return false;
+
+      // Do not use words that will be needed later as decoys.
+      if (futureTargetNorms.has(norm)) return false;
+
+      // Keep nearby words out when possible so the belt reads cleaner.
       if (Math.abs(idx - targetIndex) <= 1 && wordEntries.length > 4) return false;
+
       return true;
     });
+
     const unique = [];
     const seen = new Set();
-    for (const entry of candidates){ const norm = normalizeWord(entry.display); if (seen.has(norm)) continue; seen.add(norm); unique.push(entry.display); }
+    for (const entry of candidates){
+      const norm = normalizeWord(entry.display);
+      if (seen.has(norm)) continue;
+      seen.add(norm);
+      unique.push(entry.display);
+    }
+
     const nonTiny = unique.filter((word) => normalizeWord(word).length > 2);
     const pool = nonTiny.length >= 2 ? nonTiny : unique;
-    return pool.length ? pool : FUN_DECOYS.filter((word) => normalizeWord(word) !== targetNorm);
+
+    return pool.length
+      ? pool
+      : FUN_DECOYS.filter((word) => {
+          const norm = normalizeWord(word);
+          return norm !== targetNorm && !futureTargetNorms.has(norm);
+        });
   }
 
   function makeReferenceChoices(chapter, verse, verseEnd){
