@@ -180,7 +180,6 @@
         <div class="tb-stage">
           <div class="tb-field-wrap">
             <div class="tb-field" id="tbField">
-              <div class="tb-sky-vignette"></div>
               <div class="tb-cloud c1">☁️</div>
               <div class="tb-cloud c2">☁️</div>
               <div class="tb-tower-layer" id="tbTowerLayer"></div>
