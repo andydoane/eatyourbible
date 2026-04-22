@@ -1337,7 +1337,12 @@ if (DEBUG_COLLAPSE){
       state.overlayMessage = "";
       state.overlayUntil = 0;
       state.frenzyInputLockedUntil = performance.now() + 350;
-      finishGame();
+
+      window.setTimeout(() => {
+        if (!state.done){
+          finishGame();
+        }
+      }, 350);
     }
   }
 
