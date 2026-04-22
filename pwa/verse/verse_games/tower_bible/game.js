@@ -90,6 +90,7 @@
     collapseBasePose:null,
     lastStableTowerPose:null,
     pendingPreCollapsePose:null,
+    collapseBurstFired:{},
     collapseDebugFramesLeft:0,
 
     stream:[],
@@ -167,7 +168,7 @@
       progress:[], phase:"words", wordIndex:0,
       towerShakeUntil:0, towerSettleUntil:0, guideFlashUntil:0,
       overlayMessage:"", overlayUntil:0,
-      warningLevel:0, hadWarning2BeforePlacement:false, beltRespawnLockUntil:0, beltNeedsFreshSpawn:false, collapseTriggered:false, collapseEndsAt:0, collapseStartedAt:0, collapseDir:1, collapseBasePose:null, lastStableTowerPose:null, pendingPreCollapsePose:null, collapseDebugFramesLeft:0,
+      warningLevel:0, hadWarning2BeforePlacement:false, beltRespawnLockUntil:0, beltNeedsFreshSpawn:false, collapseTriggered:false, collapseEndsAt:0, collapseStartedAt:0, collapseDir:1, collapseBasePose:null, lastStableTowerPose:null, pendingPreCollapsePose:null, collapseBurstFired:{}, collapseDebugFramesLeft:0,
       stream:[], streamId:0, fx:[], enteringBrick:null, enteringId:0,
       done:false, pendingCorrectLabel:"", pendingCorrectType:"word",
       pendingCorrectVisible:0, spawnIndex:0
@@ -591,6 +592,14 @@
         const tipEase = tipT <= 0 ? 0 : Math.pow(tipT, 1.65);
         const fallEase = fallT <= 0 ? 0 : (1 - Math.pow(1 - fallT, 2.25));
 
+        const burstKey = `c${i}`;
+        if (fallT > 0 && !state.collapseBurstFired[burstKey]){
+          const burstX = state.fieldWidth * 0.5 + baseOffsetX;
+          const burstY = state.fieldHeight - (towerBaseBottom() + cumulativeBottom + height * 0.5);
+          addChunkBurst(burstX, burstY, Math.max(0.9, scale * 0.95));
+          state.collapseBurstFired[burstKey] = true;
+        }
+
         const tipRot = state.collapseDir * (22 * tipEase);
         const fallRot = state.collapseDir * (84 * fallEase);
         const fallShift = state.collapseDir * (132 * fallEase);
@@ -815,6 +824,7 @@
     state.collapseBasePose = null;
     state.lastStableTowerPose = null;
     state.pendingPreCollapsePose = null;
+    state.collapseBurstFired = {};
 
     state.collapseDebugFramesLeft = 0;
     state.progress = [];
@@ -1138,6 +1148,7 @@
     state.collapseTriggered = true;
     state.collapseStartedAt = performance.now();
     state.collapseDir = lean < 0 ? -1 : 1;
+    state.collapseBurstFired = {};
 
     const previousPose = state.pendingPreCollapsePose || state.lastStableTowerPose || [];
 
