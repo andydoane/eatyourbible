@@ -126,6 +126,15 @@ body{
 .tb-tower-settle{animation:tbTowerSettle 220ms ease-out;}
 
 .tb-smoke-puff{position:absolute;width:44px;height:44px;border-radius:999px;background:radial-gradient(circle, rgba(255,255,255,.98) 0%, rgba(255,255,255,.78) 32%, rgba(255,255,255,.18) 56%, rgba(255,255,255,0) 78%);pointer-events:none;animation:tbSmokePuff 560ms ease-out forwards;will-change:transform,opacity;}
+
+.tb-chunk-puff{
+  position:absolute;
+  background:#ffffff;
+  border-radius:4px;
+  pointer-events:none;
+  box-shadow:0 2px 0 rgba(0,0,0,.12);
+}
+
 .tb-base-smoke{position:absolute;left:50%;bottom:calc(clamp(24px,5vw,42px) + clamp(94px,16vw,126px) + 10px);transform:translateX(-50%);width:min(76vw,520px);height:min(26vw,160px);pointer-events:none;display:none;}
 .tb-base-smoke.is-open{display:block;}
 .tb-base-smoke .p{position:absolute;border-radius:999px;background:radial-gradient(circle, rgba(255,255,255,.98) 0%, rgba(255,255,255,.75) 34%, rgba(255,255,255,0) 74%);animation:tbBaseSmoke 900ms ease-out forwards;}
