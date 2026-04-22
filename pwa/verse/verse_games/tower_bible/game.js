@@ -27,13 +27,14 @@
     medium:1.04,
     hard:1.18
   };
+
   const THRESHOLDS = {
     easy:{warn1:999,warn2:999,collapse:999},
-    medium:{warn1:7,warn2:10,collapse:13},
-    hard:{warn1:5,warn2:8,collapse:10}
+    medium:{warn1:8,warn2:12,collapse:16},
+    hard:{warn1:7,warn2:11,collapse:15}
   };
 
-  const DEBUG_COLLAPSE = true;
+  const DEBUG_COLLAPSE = false;
 
   let selectedMode = null;
   let muted = false;
@@ -79,6 +80,8 @@
     overlayMessage:"",
     overlayUntil:0,
     warningLevel:0,
+    hadWarning2BeforePlacement:false,
+    beltRespawnLockUntil:0,
     collapseTriggered:false,
     collapseEndsAt:0,
     collapseStartedAt:0,
@@ -163,7 +166,7 @@
       progress:[], phase:"words", wordIndex:0,
       towerShakeUntil:0, towerSettleUntil:0, guideFlashUntil:0,
       overlayMessage:"", overlayUntil:0,
-      warningLevel:0, collapseTriggered:false, collapseEndsAt:0, collapseStartedAt:0, collapseDir:1, collapseBasePose:null, lastStableTowerPose:null, pendingPreCollapsePose:null, collapseDebugFramesLeft:0,
+      warningLevel:0, hadWarning2BeforePlacement:false, beltRespawnLockUntil:0, collapseTriggered:false, collapseEndsAt:0, collapseStartedAt:0, collapseDir:1, collapseBasePose:null, lastStableTowerPose:null, pendingPreCollapsePose:null, collapseDebugFramesLeft:0,
       stream:[], streamId:0, fx:[], enteringBrick:null, enteringId:0,
       done:false, pendingCorrectLabel:"", pendingCorrectType:"word",
       pendingCorrectVisible:0, spawnIndex:0
@@ -654,8 +657,16 @@
     }
 
     for (const fx of state.fx){
-      const scale = fx.scale || 1;
-      html += `<div class="tb-smoke-puff" style="left:${fx.x}px;top:${fx.y}px;transform:translate(-50%,-50%) scale(${scale});"></div>`;
+      if (fx.kind === "chunk"){
+        const life = Math.max(0, (fx.until - now) / 480);
+        const t = 1 - life;
+        const x = fx.x + (fx.dx || 0) * t;
+        const y = fx.y + (fx.dy || 0) * t + 18 * t * t;
+        html += `<div class="tb-chunk-puff" style="left:${x}px;top:${y}px;width:${fx.size}px;height:${fx.size}px;opacity:${life.toFixed(3)};transform:translate(-50%,-50%) rotate(${fx.rot}deg);"></div>`;
+      } else {
+        const scale = fx.scale || 1;
+        html += `<div class="tb-smoke-puff" style="left:${fx.x}px;top:${fx.y}px;transform:translate(-50%,-50%) scale(${scale});"></div>`;
+      }
     }
 
     layer.innerHTML = html;
@@ -746,7 +757,10 @@
     const leftCull = -state.brickWidth - 40;
     state.stream = state.stream.filter((brick) => brick.left > leftCull);
     state.pendingCorrectVisible = state.stream.filter((brick) => brick.isCorrect).length;
-    ensureStreamFilled();
+
+    if (performance.now() >= state.beltRespawnLockUntil){
+      ensureStreamFilled();
+    }
   }
 
   function stepEntering(dt){
@@ -766,12 +780,15 @@
         ? state.lastStableTowerPose.map((p) => ({ offsetX:p.offsetX, rot:p.rot }))
         : [];
 
+      const prevWarningLevel = state.warningLevel;
+
       state.progress.unshift({ label:e.label, kind:e.kind, zone:e.zone });
       state.enteringBrick = null;
 
       state.towerSettleUntil = performance.now() + 220;
 
       advancePhaseAfterPlacement();
+      state.hadWarning2BeforePlacement = prevWarningLevel >= 2;
       updateWarnings();
 
       if (!state.done){
@@ -794,12 +811,15 @@
     state.collapseDir = 1;
     state.collapseBasePose = null;
     state.lastStableTowerPose = null;
+    state.pendingPreCollapsePose = null;
 
     state.collapseDebugFramesLeft = 0;
     state.progress = [];
     state.phase = "words";
     state.wordIndex = 0;
     state.warningLevel = 0;
+    state.hadWarning2BeforePlacement = false;
+    state.beltRespawnLockUntil = 0;
     state.enteringBrick = null;
     state.pendingCorrectVisible = 0;
     seedPendingCorrect();
@@ -916,7 +936,7 @@
   }
 
   function isBrickTappable(brick){
-    return brick.left <= state.guideRightX && (brick.left + brick.width) >= state.guideLeftX;
+    return brick.left < state.fieldWidth && (brick.left + brick.width) > 0;
   }
 
   function handleBrickTap(id){
@@ -930,7 +950,7 @@
       brick.flashWrongUntil = performance.now() + 260;
       state.towerShakeUntil = performance.now() + 300;
       state.guideFlashUntil = performance.now() + 300;
-      addSmoke(brick.center, state.laneY);
+      clearStreamWithBurst();
       return;
     }
 
@@ -1085,7 +1105,12 @@
     else if (mag >= t.warn1) level = 1;
     state.warningLevel = level;
 
-    if (selectedMode !== "easy" && mag >= t.collapse && !state.collapseTriggered){
+    if (
+      selectedMode !== "easy" &&
+      mag >= t.collapse &&
+      state.hadWarning2BeforePlacement &&
+      !state.collapseTriggered
+    ){
       triggerCollapse();
     }
   }
@@ -1169,12 +1194,38 @@ if (DEBUG_COLLAPSE){
   console.groupEnd();
 }
 
-state.pendingPreCollapsePose = null;
-      state.pendingPreCollapsePose = null;
+  state.pendingPreCollapsePose = null;
   }
 
   function addSmoke(x, y){
-    state.fx.push({ x, y, until:performance.now() + 420, scale:1 });
+    state.fx.push({ x, y, until:performance.now() + 420, scale:1, kind:"smoke" });
+  }
+
+  function addChunkBurst(x, y, scale = 1){
+    const now = performance.now();
+    for (let i = 0; i < 7; i++){
+      const angle = (Math.PI * 2 * i) / 7 + Math.random() * 0.35;
+      const speed = 26 + Math.random() * 34;
+      state.fx.push({
+        kind:"chunk",
+        x,
+        y,
+        dx:Math.cos(angle) * speed,
+        dy:Math.sin(angle) * speed - 8,
+        size:(10 + Math.random() * 10) * scale,
+        rot:(Math.random() * 60) - 30,
+        until:now + 360 + Math.random() * 120
+      });
+    }
+  }
+
+  function clearStreamWithBurst(){
+    for (const brick of state.stream){
+      addChunkBurst(brick.center, state.laneY, 1);
+    }
+    state.stream = [];
+    state.pendingCorrectVisible = 0;
+    state.beltRespawnLockUntil = performance.now() + 520;
   }
 
 
