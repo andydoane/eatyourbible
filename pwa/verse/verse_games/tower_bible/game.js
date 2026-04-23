@@ -214,9 +214,9 @@
     stopLoop();
     const title = reward?.petUnlockTriggered
       ? "BibloPet Unlocked!"
-      : (alreadyCompletedForMode ? "Tower rebuilt!" : "Great job!");
+      : (alreadyCompletedForMode ? "Well done!" : "Great job!");
     const subtitle = reward?.petUnlockTriggered
-      ? "You completed this game for the first time on a learned verse, so your BibloPet progression advanced."
+      ? "You unlocked this verse's BibloPet!"
       : (alreadyCompletedForMode
           ? `You finished ${ctx.verseRef} again in ${capitalize(selectedMode)} mode.`
           : `You completed ${ctx.verseRef} in ${capitalize(selectedMode)} mode.`);
