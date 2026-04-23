@@ -141,7 +141,7 @@
           <div class="tb-mode-top">
             <div style="font-size:70px;line-height:1;">🏰</div>
             <div class="tb-title">Choose Your Difficulty</div>
-            <div class="tb-subtitle">Easy has the biggest center timing zone. Medium uses verse-word decoys and a little more speed. Hard is the fastest and has the toughest lean threshold.</div>
+            <div class="tb-subtitle">Leaning towers will fall down on Medium and Hard.</div>
             <div class="tb-mode-card">
               <div class="tb-mode-actions">
                 <button class="vm-btn" id="easyBtn">Easy</button>
