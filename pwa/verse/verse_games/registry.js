@@ -27,6 +27,20 @@ window.EXTERNAL_VERSE_GAMES = [
     }
   },
 
+{
+  enabled: true,
+  manifest: {
+    id: "traffic_tap_external",
+    title: "Traffic Tap",
+    description: "Tap the correct moving word to build the verse.",
+    icon: "🚗",
+    launchUrl: "./verse_games/traffic_tap/index.html",
+    visibleInCarousel: false,
+    progressType: "standard",
+    modes: ["easy", "medium", "hard"]
+  }
+},
+
   {
     enabled: true,
     manifest: {
