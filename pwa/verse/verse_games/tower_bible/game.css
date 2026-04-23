@@ -85,6 +85,27 @@ body{
 .tb-conveyor-lane{position:absolute;}
 .tb-guide-wrap{position:absolute;transform:translate(-50%,-50%);}
 .tb-guide{border:5px solid rgba(255,255,255,.96);border-radius:12px;box-shadow:0 0 0 3px rgba(0,0,0,.18) inset;animation:tbGuidePulse 900ms ease-in-out infinite alternate;}
+
+.tb-center-overlay-msg{
+  position:absolute;
+  left:50%;
+  top:42%;
+  transform:translate(-50%,-50%);
+  max-width:min(82vw, 720px);
+  padding:0;
+  background:none;
+  color:#ffc751;
+  font-weight:900;
+  font-size:clamp(30px,7vw,56px);
+  line-height:1.02;
+  text-align:center;
+  text-shadow:
+    0 3px 0 rgba(0,0,0,.28),
+    0 8px 18px rgba(0,0,0,.22);
+  pointer-events:none;
+  z-index:7;
+}
+
 .tb-choice-brick{position:absolute;top:50%;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;text-align:center;padding:0 clamp(12px,2vw,16px);border:none;border-radius:10px;background:rgba(255,255,255,.96);color:#111;font:inherit;font-weight:900;line-height:1.05;box-shadow:0 6px 0 rgba(0,0,0,.18);white-space:nowrap;transition:opacity 220ms ease, transform 120ms ease, background 120ms ease;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
 
 .tb-choice-brick.is-book{background:#ffc751;color:#333;}
@@ -241,3 +262,4 @@ body{
 @keyframes tbBaseSmoke{from{opacity:.95;transform:translateY(8px) scale(.8);}to{opacity:0;transform:translateY(-22px) scale(1.35);}}
 
 @media (max-width:480px){.tb-help-dialog{padding:18px 16px;}}
+
