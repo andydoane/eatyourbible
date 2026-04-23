@@ -1123,13 +1123,11 @@
       state.wordIndex += 1;
       if (state.wordIndex >= wordEntries.length){
         state.phase = "book";
-        showOverlay("Now place the Bible book");
       }
       return;
     }
     if (state.phase === "book"){
       state.phase = "reference";
-      showOverlay("Now place the chapter and verse");
       return;
     }
     if (state.phase === "reference"){
