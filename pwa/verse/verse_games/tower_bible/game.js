@@ -1293,7 +1293,7 @@ if (DEBUG_COLLAPSE){
 
   function startDestroyFrenzy(){
     state.frenzyActive = true;
-    state.overlayMessage = "Tap to destroy your tower!";
+    state.overlayMessage = "Tap to Destroy the Tower!";
     state.overlayUntil = performance.now() + 999999;
     state.stream = [];
     state.pendingCorrectVisible = 0;
@@ -1305,6 +1305,11 @@ if (DEBUG_COLLAPSE){
     if (!state.frenzyActive) return;
     if (now < state.frenzyInputLockedUntil) return;
     if (!state.progress.length) return;
+
+    if (state.overlayMessage){
+      state.overlayMessage = "";
+      state.overlayUntil = 0;
+    }
 
     const topIndex = state.progress.length - 1;
 
