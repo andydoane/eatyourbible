@@ -1346,7 +1346,7 @@ const BUILTIN_PRACTICE_GAMES = [
   { id:"traffic", title:"🚗 Traffic Tap", desc:"Tap moving cards and animals.", source:"builtin" }
 ];
 
-const HIDDEN_PRACTICE_GAME_ID = "tower_bible";
+const HIDDEN_PRACTICE_GAME_ID = "traffic_tap_external";
 const HIDDEN_PRACTICE_LONG_PRESS_MS = 2000;
 const HIDDEN_LEARN_COMPLETE_LONG_PRESS_MS = 2000;
 
