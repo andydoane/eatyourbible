@@ -1,5 +1,5 @@
 :root{
-  --tt-bg:#333333;
+  --tt-bg:#a7cb6f;
   --tt-white:#ffffff;
   --tt-dark:#333333;
   --tt-red:#ff5a51;
@@ -144,7 +144,7 @@ body{
   flex:1 1 auto;
   min-height:320px;
   overflow:hidden;
-  background:linear-gradient(180deg, #3d3d3d 0%, #2e2e2e 100%);
+  background:transparent;
 }
 
 .tt-roads,
@@ -230,37 +230,39 @@ body{
   position:absolute;
   left:0;
   top:0;
+  width:var(--tt-item-w, 210px);
+  height:var(--tt-item-h, 170px);
   transform:translate3d(0,0,0);
   will-change:transform, opacity;
 }
 
 .tt-unit{
   position:relative;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  min-width:128px;
-  max-width:min(240px, calc(100vw - 30px));
-  height:74px;
+  width:100%;
+  height:100%;
   touch-action:manipulation;
   -webkit-tap-highlight-color:transparent;
 }
 
 .tt-car-btn,
 .tt-word-btn{
+  position:absolute;
+  left:50%;
   border:none;
   font:inherit;
   cursor:pointer;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
 }
 
 .tt-car-btn{
-  position:absolute;
-  inset:auto 0 auto 0;
-  width:100%;
-  height:100%;
-  border-radius:22px;
+  top:30%;
+  transform:translate(-50%, -50%);
+  width:var(--tt-item-w, 210px);
+  height:var(--tt-car-hit-h, 76px);
+  border-radius:24px;
   background:transparent;
-  font-size:clamp(42px, 8vw, 58px);
+  font-size:var(--tt-car-size, 70px);
   line-height:1;
   display:flex;
   align-items:center;
@@ -269,19 +271,18 @@ body{
 }
 
 .tt-word-btn{
-  position:absolute;
-  left:50%;
-  top:50%;
+  top:72%;
   transform:translate(-50%, -50%);
-  min-width:80px;
-  max-width:88%;
+  width:var(--tt-word-w, 180px);
+  max-width:100%;
+  min-height:var(--tt-word-h, 48px);
   border-radius:999px;
-  padding:8px 14px;
+  padding:10px 16px;
   background:#ffffff;
   color:var(--tt-dark);
-  font-size:clamp(16px, 3.6vw, 20px);
+  font-size:var(--tt-word-size, 20px);
   font-weight:900;
-  line-height:1;
+  line-height:1.05;
   box-shadow:0 5px 0 rgba(0,0,0,0.22);
   white-space:nowrap;
   overflow:hidden;
@@ -492,6 +493,10 @@ body{
   pointer-events:auto;
 }
 
+.tt-bonus-buttons[hidden]{
+  display:none !important;
+}
+
 .tt-bonus-btn{
   flex:1;
   border:none;
@@ -505,6 +510,12 @@ body{
   box-shadow:0 6px 0 rgba(0,0,0,0.24);
 }
 .tt-bonus-btn:active{ transform:translateY(4px); box-shadow:0 2px 0 rgba(0,0,0,0.24); }
+
+.tt-item.is-wrong .tt-car-btn{ animation:ttBonk 260ms ease; }
+
+@media (min-width: 700px){
+  .tt-stage{ max-width:min(1180px, calc(100vw - 36px)); }
+}
 
 .tt-help-overlay{
   position:fixed;
