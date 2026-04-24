@@ -234,6 +234,7 @@ body{
   height:var(--tt-item-h, 170px);
   transform:translate3d(0,0,0);
   will-change:transform, opacity;
+  pointer-events:none;
 }
 
 .tt-unit{
@@ -253,10 +254,11 @@ body{
   cursor:pointer;
   touch-action:manipulation;
   -webkit-tap-highlight-color:transparent;
+  pointer-events:auto;
 }
 
 .tt-car-btn{
-  top:30%;
+  top:var(--tt-car-center-y, 25%);
   transform:translate(-50%, -50%);
   width:var(--tt-item-w, 210px);
   height:var(--tt-car-hit-h, 76px);
@@ -270,32 +272,31 @@ body{
   filter:drop-shadow(0 4px 8px rgba(0,0,0,0.25));
 }
 
+.tt-item.is-flipped .tt-car-btn{
+  transform:translate(-50%, -50%) scaleX(-1);
+}
+
 .tt-word-btn{
-  top:72%;
+  top:var(--tt-word-center-y, 75%);
   transform:translate(-50%, -50%);
   width:var(--tt-word-w, 180px);
   max-width:100%;
   min-height:var(--tt-word-h, 48px);
   border-radius:999px;
-  padding:10px 16px;
-  background:#ffffff;
-  color:var(--tt-dark);
+  padding:8px 12px;
+  background:transparent;
+  color:#ffffff;
   font-size:var(--tt-word-size, 20px);
   font-weight:900;
   line-height:1.05;
-  box-shadow:0 5px 0 rgba(0,0,0,0.22);
+  box-shadow:none;
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
+  text-shadow:0 2px 6px rgba(0,0,0,0.42);
 }
 
-.tt-item.is-correct .tt-word-btn{ background:var(--tt-yellow); }
-.tt-item.is-deco1 .tt-word-btn{ background:#ffffff; }
-.tt-item.is-deco2 .tt-word-btn{ background:#dff6ff; }
-.tt-item.is-deco3 .tt-word-btn{ background:#e9ffd9; }
-.tt-item.is-deco4 .tt-word-btn{ background:#ffe3f3; }
-.tt-item.is-deco5 .tt-word-btn{ background:#fff2d9; }
-.tt-item.is-wrong .tt-word-btn{ background:#ffd0d0; color:#7a1111; animation:ttShakeMini 220ms ease; }
+.tt-item.is-wrong .tt-word-btn{ color:#ffd0d0; animation:ttShakeMini 220ms ease; }
 .tt-item.is-swerve{ animation:ttSwerve 260ms ease; }
 .tt-item.is-vanish{ animation:ttBurstOut 180ms ease forwards; pointer-events:none; }
 .tt-item.is-crashing{ pointer-events:none; }
@@ -626,3 +627,6 @@ body{
   .tt-unit{ min-width:150px; height:82px; }
   .tt-word-btn{ padding:10px 16px; }
 }
+
+
+.tt-bonus-buttons[hidden]{ display:none !important; }
