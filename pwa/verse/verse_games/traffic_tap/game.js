@@ -39,6 +39,7 @@
   let alreadyCompletedForMode = false;
   let resizeBound = false;
   let endScreenUnlockTimer = 0;
+  let itemsClickBound = false;
 
   const verseMeta = parseVerseMeta(ctx.verseRef || "");
   const buildTokens = tokenizeForBuild(ctx.verseText || "");
@@ -189,6 +190,8 @@
     state.bonusStunUntil = 0;
     state.bonusBonks = [];
     state.bonusCompleted = false;
+
+    itemsClickBound = false;
 
     app.innerHTML = `
       <div class="tt-shell">
@@ -407,6 +410,18 @@
     if (upBtn) upBtn.onclick = () => switchBonusLane("upper");
     if (downBtn) downBtn.onclick = () => switchBonusLane("lower");
 
+    const itemsLayer = document.getElementById("ttItemsLayer");
+    if (itemsLayer && !itemsClickBound){
+      itemsLayer.addEventListener("click", (e) => {
+        const hit = e.target.closest(".tt-hit-btn");
+        if (!hit) return;
+        const id = Number(hit.dataset.itemId);
+        if (!Number.isFinite(id)) return;
+        chooseMainItem(id, hit);
+      });
+      itemsClickBound = true;
+    }
+
     window.onkeydown = (e) => {
       if (e.key === "Escape" && state.running){
         if (document.getElementById("ttGameMenuOverlay")?.classList.contains("is-open")) closeGameMenu();
@@ -565,7 +580,7 @@
     }
 
     const html = state.mainItems.map(item => {
-      const y = laneCenterY(item.road);
+      const y = roadTopY(item.road);
       const cls = ["tt-item", item.isCorrect ? "is-correct" : (item.styleClass || "is-deco1")];
       if (item.flashWrongUntil > performance.now()) cls.push("is-wrong");
       if (item.swerveUntil > performance.now()) cls.push("is-swerve");
@@ -575,23 +590,16 @@
       const bob = Math.sin((performance.now() / 220) + item.bobSeed) * 2.5;
       const tilt = item.tilt || 0;
       return `
-        <div class="${cls.join(" ")}" data-item-id="${item.id}" style="transform:translate3d(${item.x}px, ${y + bob}px, 0) rotate(${tilt}deg)">
+        <div class="${cls.join(" ")}" style="transform:translate3d(${item.x}px, ${y + bob}px, 0) rotate(${tilt}deg);--tt-item-w:${item.width}px;--tt-item-h:${item.height}px;--tt-word-w:${item.wordWidth}px;--tt-word-h:${item.wordHeight}px;--tt-word-size:${item.wordFont}px;--tt-car-size:${item.carSize}px;--tt-car-hit-h:${item.carHitHeight}px;">
           <div class="tt-unit">
-            <button class="tt-car-btn" data-item-id="${item.id}" aria-label="${escapeHtml(item.label)}">${item.emoji}</button>
-            <button class="tt-word-btn" data-item-id="${item.id}" aria-label="${escapeHtml(item.label)}">${escapeHtml(item.label)}</button>
+            <button type="button" class="tt-car-btn tt-hit-btn" data-item-id="${item.id}" aria-label="${escapeHtml(item.label)}">${item.emoji}</button>
+            <button type="button" class="tt-word-btn tt-hit-btn" data-item-id="${item.id}" aria-label="${escapeHtml(item.label)}">${escapeHtml(item.label)}</button>
           </div>
         </div>
       `;
     }).join("");
 
     layer.innerHTML = html;
-
-    layer.querySelectorAll("[data-item-id]").forEach(el => {
-      el.onclick = (e) => {
-        const id = Number(e.currentTarget.dataset.itemId);
-        chooseMainItem(id, e.currentTarget);
-      };
-    });
   }
 
   function renderEffects(){
@@ -766,8 +774,9 @@
 
   function makeMainItem({ road, label, isCorrect, delayUsed }){
     const direction = road === 0 ? -1 : 1;
-    const x = direction < 0 ? state.fieldWidth + 140 : -140;
-    const width = estimateItemWidth(label);
+    const metrics = getItemMetrics(label);
+    const x = direction < 0 ? state.fieldWidth + metrics.width + 40 : -(metrics.width + 40);
+    const width = metrics.width;
     const norm = clamp((delayUsed - 700) / 440, 0, 1);
     const baseMin = 104;
     const baseMax = 146;
@@ -785,6 +794,12 @@
       baseSpeed,
       targetSpeed: baseSpeed,
       bobSeed: Math.random() * Math.PI * 2,
+      height: metrics.height,
+      wordWidth: metrics.wordWidth,
+      wordHeight: metrics.wordHeight,
+      wordFont: metrics.wordFont,
+      carSize: metrics.carSize,
+      carHitHeight: metrics.carHitHeight,
       styleClass: DECOY_CLASSES[state.nextItemId % DECOY_CLASSES.length],
       flashWrongUntil:0,
       bonkUntil:0,
@@ -797,7 +812,8 @@
 
   function laneHasSpawnRoom(road, minGap){
     const dir = road === 0 ? -1 : 1;
-    const spawnX = dir < 0 ? state.fieldWidth + 140 : -140;
+    const sampleWidth = estimateItemWidth(currentTargetLabel() || "word");
+    const spawnX = dir < 0 ? state.fieldWidth + sampleWidth + 40 : -(sampleWidth + 40);
     for (const item of state.mainItems){
       if (item.road !== road || item.crashing) continue;
       const dist = Math.abs(item.x - spawnX);
@@ -1075,8 +1091,12 @@
     return 720 + Math.random() * 420;
   }
 
+  function roadTopY(road){
+    return road === 0 ? 0 : (state.roadHeight + state.gapHeight);
+  }
+
   function laneCenterY(road){
-    return road === 0 ? (state.roadHeight * 0.5) : (state.roadHeight + state.gapHeight + (state.roadHeight * 0.5));
+    return roadTopY(road) + (state.roadHeight * 0.5);
   }
 
   function bonusLaneY(lane){
@@ -1088,7 +1108,7 @@
   }
 
   function itemCenter(item){
-    return { x: item.x + ((item.width || 150) / 2), y: laneCenterY(item.road) };
+    return { x: item.x + ((item.width || 150) / 2), y: roadTopY(item.road) + ((item.height || state.roadHeight) * 0.6) };
   }
 
   function addPopup(x, y, text, good){
@@ -1100,8 +1120,22 @@
     state.overlayUntil = performance.now() + 900;
   }
 
+  function getItemMetrics(label){
+    const labelLen = String(label || "").length;
+    const roadH = Math.max(110, state.roadHeight || 160);
+    const maxByField = Math.max(190, state.fieldWidth * 0.30);
+    const width = clamp((state.fieldWidth < 520 ? state.fieldWidth * 0.36 : state.fieldWidth * 0.22) + labelLen * 6, 170, Math.min(340, maxByField));
+    const height = clamp(roadH * 0.92, 116, 190);
+    const wordWidth = clamp(width * 0.82, 120, width - 10);
+    const wordHeight = clamp(roadH * 0.24, 38, 54);
+    const wordFont = clamp(roadH * 0.16, 15, 24);
+    const carSize = clamp(roadH * 0.48, 42, 82);
+    const carHitHeight = clamp(roadH * 0.38, 44, 88);
+    return { width, height, wordWidth, wordHeight, wordFont, carSize, carHitHeight };
+  }
+
   function estimateItemWidth(label){
-    return clamp(80 + String(label || "").length * 11, 128, 220);
+    return getItemMetrics(label).width;
   }
 
   function parseVerseMeta(ref){
