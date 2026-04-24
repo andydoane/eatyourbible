@@ -412,13 +412,17 @@
 
     const itemsLayer = document.getElementById("ttItemsLayer");
     if (itemsLayer && !itemsClickBound){
-      itemsLayer.addEventListener("click", (e) => {
+      const activateHit = (e) => {
         const hit = e.target.closest(".tt-hit-btn");
         if (!hit) return;
+        if (e.cancelable) e.preventDefault();
+        e.stopPropagation();
         const id = Number(hit.dataset.itemId);
         if (!Number.isFinite(id)) return;
         chooseMainItem(id, hit);
-      });
+      };
+      itemsLayer.addEventListener("pointerdown", activateHit);
+      itemsLayer.addEventListener("click", activateHit);
       itemsClickBound = true;
     }
 
@@ -581,7 +585,7 @@
 
     const html = state.mainItems.map(item => {
       const y = roadTopY(item.road);
-      const cls = ["tt-item", item.isCorrect ? "is-correct" : (item.styleClass || "is-deco1")];
+      const cls = ["tt-item", item.direction > 0 ? "is-flipped" : ""];
       if (item.flashWrongUntil > performance.now()) cls.push("is-wrong");
       if (item.swerveUntil > performance.now()) cls.push("is-swerve");
       if (item.crashing) cls.push("is-crashing");
@@ -590,7 +594,7 @@
       const bob = Math.sin((performance.now() / 220) + item.bobSeed) * 2.5;
       const tilt = item.tilt || 0;
       return `
-        <div class="${cls.join(" ")}" style="transform:translate3d(${item.x}px, ${y + bob}px, 0) rotate(${tilt}deg);--tt-item-w:${item.width}px;--tt-item-h:${item.height}px;--tt-word-w:${item.wordWidth}px;--tt-word-h:${item.wordHeight}px;--tt-word-size:${item.wordFont}px;--tt-car-size:${item.carSize}px;--tt-car-hit-h:${item.carHitHeight}px;">
+        <div class="${cls.filter(Boolean).join(" ")}" style="transform:translate3d(${item.x}px, ${y + bob}px, 0) rotate(${tilt}deg);--tt-item-w:${item.width}px;--tt-item-h:${item.height}px;--tt-word-w:${item.wordWidth}px;--tt-word-h:${item.wordHeight}px;--tt-word-size:${item.wordFont}px;--tt-car-size:${item.carSize}px;--tt-car-hit-h:${item.carHitHeight}px;--tt-car-center-y:${item.carCenterY}%;--tt-word-center-y:${item.wordCenterY}%;">
           <div class="tt-unit">
             <button type="button" class="tt-car-btn tt-hit-btn" data-item-id="${item.id}" aria-label="${escapeHtml(item.label)}">${item.emoji}</button>
             <button type="button" class="tt-word-btn tt-hit-btn" data-item-id="${item.id}" aria-label="${escapeHtml(item.label)}">${escapeHtml(item.label)}</button>
@@ -800,6 +804,8 @@
       wordFont: metrics.wordFont,
       carSize: metrics.carSize,
       carHitHeight: metrics.carHitHeight,
+      carCenterY: metrics.carCenterY,
+      wordCenterY: metrics.wordCenterY,
       styleClass: DECOY_CLASSES[state.nextItemId % DECOY_CLASSES.length],
       flashWrongUntil:0,
       bonkUntil:0,
@@ -864,6 +870,7 @@
 
   function chooseMainItem(itemId, tappedEl){
     const item = state.mainItems.find(x => x.id === itemId);
+    if (item && (item.vanishUntil || item.crashing || item.removeAt)) return;
     if (!item || state.bonusRound || state.bonusIntro) return;
     const layerRect = document.getElementById("ttField")?.getBoundingClientRect();
     const rect = tappedEl.getBoundingClientRect();
@@ -1108,7 +1115,7 @@
   }
 
   function itemCenter(item){
-    return { x: item.x + ((item.width || 150) / 2), y: roadTopY(item.road) + ((item.height || state.roadHeight) * 0.6) };
+    return { x: item.x + ((item.width || 150) / 2), y: roadTopY(item.road) + ((item.height || state.roadHeight) * 0.75) };
   }
 
   function addPopup(x, y, text, good){
@@ -1123,15 +1130,17 @@
   function getItemMetrics(label){
     const labelLen = String(label || "").length;
     const roadH = Math.max(110, state.roadHeight || 160);
-    const maxByField = Math.max(190, state.fieldWidth * 0.30);
+    const maxByField = Math.max(210, state.fieldWidth * 0.30);
     const width = clamp((state.fieldWidth < 520 ? state.fieldWidth * 0.36 : state.fieldWidth * 0.22) + labelLen * 6, 170, Math.min(340, maxByField));
-    const height = clamp(roadH * 0.92, 116, 190);
-    const wordWidth = clamp(width * 0.82, 120, width - 10);
-    const wordHeight = clamp(roadH * 0.24, 38, 54);
-    const wordFont = clamp(roadH * 0.16, 15, 24);
-    const carSize = clamp(roadH * 0.48, 42, 82);
-    const carHitHeight = clamp(roadH * 0.38, 44, 88);
-    return { width, height, wordWidth, wordHeight, wordFont, carSize, carHitHeight };
+    const height = Math.round(roadH);
+    const wordWidth = clamp(width * 0.86, 124, width - 8);
+    const wordHeight = clamp(roadH * 0.22, 34, 50);
+    const wordFont = clamp(roadH * 0.145, 15, 23);
+    const carSize = clamp(roadH * 0.42, 42, 78);
+    const carHitHeight = clamp(roadH * 0.34, 42, 78);
+    const carCenterY = 25;
+    const wordCenterY = 75;
+    return { width, height, wordWidth, wordHeight, wordFont, carSize, carHitHeight, carCenterY, wordCenterY };
   }
 
   function estimateItemWidth(label){
