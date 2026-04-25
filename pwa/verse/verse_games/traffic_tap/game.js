@@ -38,6 +38,16 @@
     <path fill="currentColor" d="M 12.949771,1.5464282 A 6.0017493,5.3230522 7.1160496 0 0 6.9820601,6.4190471 5.3405872,4.7400094 7.154063 0 0 6.8563886,6.4134999 5.3405872,4.7400094 7.154063 0 0 1.5243277,11.020646 5.3405872,4.7400094 7.154063 0 0 2.4259083,13.677302 4.0181559,3.5662928 7.1540647 0 0 0.66145837,16.583588 4.0181559,3.5662928 7.1540647 0 0 4.6728467,20.261811 4.0181559,3.5662928 7.1540647 0 0 5.1732885,20.243 a 5.3405872,4.7400094 7.154063 0 0 5.2883005,4.342428 5.3405872,4.7400094 7.154063 0 0 3.656255,-1.210431 4.0181559,3.5662928 7.1540647 0 0 3.300558,1.639798 4.0181559,3.5662928 7.1540647 0 0 4.011389,-3.466536 4.0181559,3.5662928 7.1540647 0 0 -0.416848,-1.594767 5.3405872,4.7400094 7.154063 0 0 4.783932,-4.586787 5.3405872,4.7400094 7.154063 0 0 -1.9322,-3.706541 4.0181559,3.5662928 7.1540647 0 0 0.764128,-2.0624453 4.0181559,3.5662928 7.1540647 0 0 -4.011389,-3.6776624 4.0181559,3.5662928 7.1540647 0 0 -1.744813,0.3148283 6.0017493,5.3230522 7.1160496 0 0 -5.92283,-4.6884523 z"/>
   </svg>`;
 
+  const RAINBOW_BURST_COLORS = [
+    "#ff8cc8",
+    "#ff5a51",
+    "#ffa351",
+    "#ffc751",
+    "#a7cb6f",
+    "#40b9c5",
+    "#7f66c6"
+  ];
+
   let selectedMode = null;
   let muted = false;
   let completionMarked = false;
@@ -626,68 +636,75 @@ function renderEffects(){
   }
 }
 
-  function spawnCrashBurst(x, y, opts = {}){
-    const layer = document.getElementById("ttEffectsLayer");
-    if (!layer) return;
+function spawnCrashBurst(x, y, opts = {}){
+  const layer = document.getElementById("ttEffectsLayer");
+  if (!layer) return;
 
-    const count = opts.count ?? 9;
-    const distance = opts.distance ?? 58;
-    const jitter = opts.jitter ?? 5;
-    const duration = opts.duration ?? 650;
-    const cloudSize = opts.cloudSize ?? 74;
-    const sizePool = opts.sizePool ?? [8, 9, 10, 12, 15, 18];
+  const count = opts.count ?? 9;
+  const distance = opts.distance ?? 58;
+  const jitter = opts.jitter ?? 5;
+  const duration = opts.duration ?? 650;
+  const cloudSize = opts.cloudSize ?? 74;
+  const sizePool = opts.sizePool ?? [8, 9, 10, 12, 15, 18];
+  const colors = opts.colors ?? ["#ffffff"];
+  const showCloud = opts.showCloud ?? true;
 
-    const burst = document.createElement("div");
-    burst.className = "tt-crash-burst";
-    burst.style.left = `${x}px`;
-    burst.style.top = `${y}px`;
+  const burst = document.createElement("div");
+  burst.className = "tt-crash-burst";
+  burst.style.left = `${x}px`;
+  burst.style.top = `${y}px`;
 
-    const cloud = document.createElement("div");
+  let cloud = null;
+  if (showCloud){
+    cloud = document.createElement("div");
     cloud.className = "tt-crash-burst-cloud";
     cloud.style.setProperty("--tt-crash-cloud-size", `${cloudSize}px`);
     cloud.style.setProperty("--tt-crash-cloud-dur", `${Math.max(520, duration - 90)}ms`);
     cloud.innerHTML = CRASH_CLOUD_SVG;
     burst.appendChild(cloud);
-
-    const baseAngle = Math.random() * Math.PI * 2;
-    const step = (Math.PI * 2) / count;
-
-    for (let i = 0; i < count; i += 1){
-      const angle = baseAngle + step * i + rand(-0.12, 0.12);
-      const dist = distance + rand(-jitter, jitter);
-      const tx = Math.cos(angle) * dist;
-      const ty = Math.sin(angle) * dist;
-      const size = pickRandom(sizePool) + rand(-0.5, 0.5);
-      const grow = rand(1.02, 1.14);
-
-      const particle = document.createElement("div");
-      particle.className = "tt-crash-particle";
-      particle.style.setProperty("--tt-size", `${size.toFixed(1)}px`);
-      particle.style.setProperty("--tt-dur", `${duration}ms`);
-      particle.style.setProperty("--tt-start-scale", `${rand(0.68, 0.82).toFixed(2)}`);
-      particle.style.setProperty("--tt-end-scale", `${(grow + 0.08).toFixed(2)}`);
-      particle.style.setProperty("--tt-tx", `${tx.toFixed(1)}px`);
-      particle.style.setProperty("--tt-ty", `${ty.toFixed(1)}px`);
-      particle.style.setProperty("--tt-delay", `${Math.round(rand(0, 18))}ms`);
-      burst.appendChild(particle);
-    }
-
-    layer.appendChild(burst);
-
-    requestAnimationFrame(() => {
-      cloud.classList.add("is-live");
-      burst.querySelectorAll(".tt-crash-particle").forEach((particle) => {
-        const delay = Number.parseInt(particle.style.getPropertyValue("--tt-delay"), 10) || 0;
-        window.setTimeout(() => {
-          particle.classList.add("is-live");
-        }, delay);
-      });
-    });
-
-    window.setTimeout(() => {
-      burst.remove();
-    }, duration + 120);
   }
+
+  const baseAngle = Math.random() * Math.PI * 2;
+  const step = (Math.PI * 2) / count;
+
+  for (let i = 0; i < count; i += 1){
+    const angle = baseAngle + step * i + rand(-0.12, 0.12);
+    const dist = distance + rand(-jitter, jitter);
+    const tx = Math.cos(angle) * dist;
+    const ty = Math.sin(angle) * dist;
+    const size = pickRandom(sizePool) + rand(-0.5, 0.5);
+    const grow = rand(1.02, 1.14);
+    const color = colors[i % colors.length];
+
+    const particle = document.createElement("div");
+    particle.className = "tt-crash-particle";
+    particle.style.setProperty("--tt-size", `${size.toFixed(1)}px`);
+    particle.style.setProperty("--tt-dur", `${duration}ms`);
+    particle.style.setProperty("--tt-start-scale", `${rand(0.68, 0.82).toFixed(2)}`);
+    particle.style.setProperty("--tt-end-scale", `${(grow + 0.08).toFixed(2)}`);
+    particle.style.setProperty("--tt-tx", `${tx.toFixed(1)}px`);
+    particle.style.setProperty("--tt-ty", `${ty.toFixed(1)}px`);
+    particle.style.setProperty("--tt-delay", `${Math.round(rand(0, 18))}ms`);
+    particle.style.background = color;
+    burst.appendChild(particle);
+  }
+
+  layer.appendChild(burst);
+
+  requestAnimationFrame(() => {
+    if (cloud) cloud.classList.add("is-live");
+    burst.querySelectorAll(".tt-crash-particle").forEach((particle) => {
+      const delay = Number.parseInt(particle.style.getPropertyValue("--tt-delay"), 10) || 0;
+      window.setTimeout(() => {
+        particle.classList.add("is-live");
+      }, delay);
+    });
+  });
+
+  window.setTimeout(() => {
+    burst.remove();
+  }, duration + 120);
+}
 
   function rand(min, max){
     return min + Math.random() * (max - min);
@@ -962,6 +979,18 @@ function renderEffects(){
     item.removeAt = performance.now() + 190;
     addPopup(x, y, "✔", true);
     state.buildPopUntil = performance.now() + 200;
+
+    const center = itemCenter(item);
+    spawnCrashBurst(center.x, center.y, {
+      count: 7,
+      distance: 58,
+      jitter: 5,
+      duration: 620,
+      cloudSize: 0,
+      sizePool: [8, 10, 12, 14, 17, 20],
+      colors: RAINBOW_BURST_COLORS,
+      showCloud: false
+    });
 
     const target = currentTargetLabel();
     if (item.label === target){
