@@ -493,22 +493,37 @@ body{
   backdrop-filter:blur(4px);
   -webkit-backdrop-filter:blur(4px);
   border-radius:26px;
-  padding:20px 24px;
-  width:min(86vw, 420px);
+  padding:22px 24px 26px;
+  width:min(88vw, 500px);
   text-align:center;
 }
 
 .tt-bonus-intro-title{
-  font-size:clamp(32px, 8vw, 50px);
+  font-size:clamp(28px, 6vw, 44px);
   line-height:1;
   font-weight:900;
 }
 
-.tt-bonus-intro-subtitle{
-  margin-top:8px;
-  font-size:clamp(16px, 4.2vw, 24px);
-  font-weight:800;
-  line-height:1.15;
+.tt-bonus-intro-targetline{
+  margin-top:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:14px;
+  line-height:1;
+}
+
+.tt-bonus-intro-bullseye,
+.tt-bonus-intro-target{
+  font-size:clamp(56px, 16vw, 108px);
+  line-height:1;
+}
+
+.tt-bonus-intro-equals{
+  font-size:clamp(34px, 8vw, 56px);
+  line-height:1;
+  font-weight:900;
+  color:#ffffff;
 }
 
 
@@ -691,4 +706,29 @@ body{
 
 .tt-bonus-build-score.is-results{
   font-size:clamp(17px, 4.2vw, 24px);
+}
+
+.tt-bonus-build{
+  gap:10px;
+}
+
+.tt-bonus-build-targetline{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:10px;
+  line-height:1;
+}
+
+.tt-bonus-build-bullseye,
+.tt-bonus-build-target{
+  font-size:clamp(34px, 8vw, 54px);
+  line-height:1;
+}
+
+.tt-bonus-build-equals{
+  font-size:clamp(26px, 6vw, 40px);
+  line-height:1;
+  font-weight:900;
+  color:var(--tt-dark);
 }
