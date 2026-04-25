@@ -220,8 +220,11 @@
                 <div class="tt-bonus-intro-burst"></div>
                 <div class="tt-bonus-intro-content">
                   <div class="tt-bonus-intro-title">BONUS ROUND!</div>
-                  <div class="tt-bonus-intro-subtitle" id="ttBonusIntroCopy">Tap this car!</div>
-                  <div class="tt-bonus-intro-target" id="ttBonusIntroTarget">🚗</div>
+                  <div class="tt-bonus-intro-targetline">
+                    <span class="tt-bonus-intro-bullseye">🎯</span>
+                    <span class="tt-bonus-intro-equals">=</span>
+                    <span class="tt-bonus-intro-target" id="ttBonusIntroTarget">🚗</span>
+                  </div>
                 </div>
               </div>
               <div class="tt-controls-layer">
@@ -527,8 +530,11 @@
       text.className = "tt-build-text";
       text.innerHTML = `
         <div class="tt-bonus-build">
-          <div class="tt-bonus-build-target">${escapeHtml(state.bonusTargetEmoji || "🚗")}</div>
-          <div class="tt-bonus-build-copy">Tap this car!</div>
+          <div class="tt-bonus-build-targetline">
+            <span class="tt-bonus-build-bullseye">🎯</span>
+            <span class="tt-bonus-build-equals">=</span>
+            <span class="tt-bonus-build-target">${escapeHtml(state.bonusTargetEmoji || "🚗")}</span>
+          </div>
           <div class="tt-bonus-build-score">
             <span>Score: ${state.bonusScore}</span>
             <span>Streak: ${state.bonusStreak}</span>
