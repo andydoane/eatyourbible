@@ -338,7 +338,7 @@
       Easy uses fun decoys and steady speed.<br><br>
       Medium and hard use words from the verse as decoys. Traffic speeds up as you build, with a stronger ramp on hard.<br><br>
       Wrong taps crash only that road, clearing the lane but keeping your progress.<br><br>
-      After the verse, tap the correct book and then the correct chapter and verse. Then enjoy the bonus race.`;
+      After the verse, tap the correct book and then the correct chapter and verse. Then enjoy a quick bonus car hunt.`;
   }
 
   function wireCommonNav(){
@@ -492,7 +492,6 @@
     state.fieldHeight = rect.height;
     state.gapHeight = clamp(rect.height * 0.06, 12, 28);
     state.roadHeight = Math.max(110, (rect.height - state.gapHeight) / 2);
-    state.bonusPlayerY = bonusLaneY(state.bonusLane);
     renderHud();
   }
 
@@ -1391,44 +1390,6 @@ function spawnCrashBurst(x, y, opts = {}){
     }
   }
 
-  function spawnBonusPattern(){
-    const pattern = SPAWN_PATTERNS[state.bonusPatternIndex % SPAWN_PATTERNS.length];
-    state.bonusPatternIndex += 1;
-    const trimmed = pattern.slice(0, 2);
-    trimmed.forEach((lane, index) => {
-      state.bonusRivals.push({
-        lane,
-        x: state.fieldWidth + 120 + index * 140,
-        speed: 220 + Math.random() * 34,
-        emoji: pickRandom(BONUS_RIVALS),
-        hitUntil:0
-      });
-    });
-  }
-
-  async function completeBonusRound(){
-    if (state.bonusCompleted) return;
-    state.bonusCompleted = true;
-    state.running = false;
-    stopLoop();
-
-    let reward = null;
-    try {
-      reward = await window.VerseGameBridge.markCompleted({
-        verseId: ctx.verseId,
-        gameId: GAME_ID,
-        mode: selectedMode
-      });
-    } catch (err) {
-      console.error(err);
-    }
-    renderEndScreen(reward);
-  }
-
-  function switchBonusLane(lane){
-    if (!state.bonusRound) return;
-    state.bonusWantedLane = lane;
-  }
 
   function currentTargetLabel(){
     if (state.phase === "words") return verseWords[state.wordsBuilt] || "";
