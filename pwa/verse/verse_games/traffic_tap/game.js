@@ -1149,32 +1149,38 @@
     return getItemMetrics(label).width;
   }
 
-  function parseVerseMeta(ref){
-    const value = String(ref || "").trim().replace(/\s+/g, " ");
-    let cleaned = value
-      .replace(/\s*\(([A-Z]{2,8}|KJV|NKJV|ESV|NIV|NLT|CSB|NASB|AMP|MSG)\)\s*$/i, "")
-      .replace(/\s+([A-Z]{2,8}|KJV|NKJV|ESV|NIV|NLT|CSB|NASB|AMP|MSG)\s*$/i, "")
-      .replace(/\s*[—-]\s*([A-Z]{2,8}|KJV|NKJV|ESV|NIV|NLT|CSB|NASB|AMP|MSG)\s*$/i, "")
-      .trim();
+function parseVerseMeta(ref){
+  let cleaned = String(ref || "").trim();
 
-    const match = cleaned.match(/^(.*?)\s+(\d+):(\d+)(?:-(\d+))?$/);
-    if (!match){
-      return { book: cleaned, chapter: 1, verse: 1, verseEnd: null, reference: "" };
-    }
+  cleaned = cleaned
+    .replace(/\s*\(([A-Za-z]{2,8})\)\s*$/i, "")
+    .replace(/\s*[-–—]\s*([A-Za-z]{2,8})\s*$/i, "")
+    .replace(/\s+([A-Za-z]{2,8})\s*$/i, (match, code) => {
+      return /^(ESV|NIV|KJV|NKJV|NLT|CSB|NASB|NET|NRSV|RSV|MSG)$/i.test(code) ? "" : match;
+    })
+    .trim();
 
-    const book = match[1].trim();
-    const chapter = Number(match[2]);
-    const verse = Number(match[3]);
-    const verseEnd = match[4] ? Number(match[4]) : null;
+  cleaned = cleaned.replace(/[–—−]/g, "-");
 
+  const match = cleaned.match(/^(.*?)\s+(\d+):(\d+)(?:-(\d+))?$/);
+  if (!match){
     return {
-      book,
-      chapter,
-      verse,
-      verseEnd,
-      reference: `${chapter}:${verse}${verseEnd ? `-${verseEnd}` : ""}`
+      book: cleaned,
+      chapter: 1,
+      verse: 1,
+      verseEnd: null,
+      reference: ""
     };
   }
+
+  return {
+    book: match[1].trim(),
+    chapter: Number(match[2]),
+    verse: Number(match[3]),
+    verseEnd: match[4] ? Number(match[4]) : null,
+    reference: `${match[2]}:${match[3]}${match[4] ? `-${match[4]}` : ""}`
+  };
+}
 
   function tokenizeForBuild(text){
     const raw = String(text || "");
