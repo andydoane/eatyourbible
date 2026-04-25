@@ -919,7 +919,8 @@ function spawnCrashBurst(x, y, opts = {}){
       const road = Math.random() < 0.5 ? 0 : 1;
       const slot = Math.random() < 0.58 ? "upper" : "lower";
       const emoji = Math.random() < 0.24 ? state.bonusTargetEmoji : pickRandom(VEHICLES);
-      const speed = speedBase + Math.random() * 90;
+      const rawSpeed = speedBase + Math.random() * 90;
+      const speed = cappedBonusSpeed(road, slot, rawSpeed);
 
       if (bonusLaneHasSpawnRoom(road, slot, 150)){
         state.bonusItems.push(makeBonusItem({ road, slot, emoji, speed }));
@@ -960,7 +961,10 @@ function spawnCrashBurst(x, y, opts = {}){
       addPopup(x, y, `+${10 + Math.min(40, (state.bonusStreak - 1) * 2)}`, true);
       spawnBonusSuccessBurst(x, y);
     } else {
-      item.flashWrongUntil = performance.now() + 260;
+      const now = performance.now();
+      item.flashWrongUntil = now + 260;
+      item.vanishUntil = now + 140;
+      item.removeAt = now + 150;
       state.bonusWrongHits += 1;
       state.bonusStreak = 0;
       state.bonusScore = Math.max(0, state.bonusScore - 12);
@@ -975,6 +979,38 @@ function spawnCrashBurst(x, y, opts = {}){
         showCloud: true
       });
     }
+  }
+
+  function cappedBonusSpeed(road, slot, proposedSpeed){
+    const direction = road === 0 ? -1 : 1;
+    const sameLane = state.bonusItems.filter(item =>
+      item.road === road &&
+      item.slot === slot &&
+      !item.removeAt
+    );
+
+    if (!sameLane.length) return proposedSpeed;
+
+    let nearestAhead = null;
+
+    for (const item of sameLane){
+      const isAhead = direction < 0 ? item.x > state.fieldWidth * 0.5 : item.x < state.fieldWidth * 0.5;
+      if (!isAhead) continue;
+
+      if (!nearestAhead){
+        nearestAhead = item;
+        continue;
+      }
+
+      if (direction < 0){
+        if (item.x < nearestAhead.x) nearestAhead = item;
+      } else {
+        if (item.x > nearestAhead.x) nearestAhead = item;
+      }
+    }
+
+    if (!nearestAhead) return proposedSpeed;
+    return Math.min(proposedSpeed, Math.max(120, nearestAhead.speed - 18));
   }
 
   function spawnBonusSuccessBurst(x, y){
