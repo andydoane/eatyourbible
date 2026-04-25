@@ -595,13 +595,32 @@
       if (item.swerveUntil > performance.now()) unitCls.push("is-swerve");
       if (item.vanishUntil > performance.now()) unitCls.push("is-vanish");
       if (item.bonkUntil > performance.now()) unitCls.push("is-bonk");
-      if (item.launching && performance.now() < item.launchPhaseUntil) unitCls.push("is-launch-prep");
       if (item.launching && performance.now() >= item.launchPhaseUntil) unitCls.push("is-launching");
       const bob = Math.sin((performance.now() / 220) + item.bobSeed) * 2.5;
       const tilt = item.tilt || 0;
+
+      const now = performance.now();
+      let launchScaleX = 1;
+      let launchScaleY = 1;
+
+      if (item.launching && now < item.launchPhaseUntil){
+        const total = Math.max(1, item.launchPhaseUntil - item.launchStartAt);
+        const t = clamp((now - item.launchStartAt) / total, 0, 1);
+
+        if (t < 0.45){
+          const p = t / 0.45;
+          launchScaleX = 1 - (0.12 * p);
+          launchScaleY = 1 + (0.12 * p);
+        } else {
+          const p = (t - 0.45) / 0.55;
+          launchScaleX = 0.88 + (0.20 * p);
+          launchScaleY = 1.12 - (0.20 * p);
+        }
+      }
+
       return `
         <div class="${cls.filter(Boolean).join(" ")}" style="transform:translate3d(${item.x}px, ${y + bob}px, 0);--tt-item-w:${item.width}px;--tt-item-h:${item.height}px;--tt-word-w:${item.wordWidth}px;--tt-word-h:${item.wordHeight}px;--tt-word-size:${item.wordFont}px;--tt-car-size:${item.carSize}px;--tt-car-hit-h:${item.carHitHeight}px;--tt-car-center-y:${item.carCenterY}%;--tt-word-center-y:${item.wordCenterY}%;--tt-item-tilt:${tilt}deg;">
-          <div class="${unitCls.join(" ")}">
+          <div class="${unitCls.join(" ")}" style="--tt-launch-scale-x:${launchScaleX};--tt-launch-scale-y:${launchScaleY};">
             <button type="button" class="tt-car-btn tt-hit-btn" data-item-id="${item.id}" aria-label="${escapeHtml(item.label)}">${item.emoji}</button>
             <button type="button" class="tt-word-btn tt-hit-btn ${item.launching ? "is-launch-fade" : ""}" data-item-id="${item.id}" aria-label="${escapeHtml(item.label)}">${escapeHtml(item.label)}</button>
           </div>

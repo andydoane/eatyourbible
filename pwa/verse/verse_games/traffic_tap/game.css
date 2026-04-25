@@ -251,19 +251,15 @@ body{
   position:relative;
   width:100%;
   height:100%;
-  transform:rotate(var(--tt-item-tilt, 0deg));
+  transform:rotate(var(--tt-item-tilt, 0deg)) scale(var(--tt-launch-scale-x, 1), var(--tt-launch-scale-y, 1));
   transform-origin:center center;
   will-change:transform, opacity;
   touch-action:manipulation;
   -webkit-tap-highlight-color:transparent;
 }
 
-.tt-unit.is-launch-prep{
-  animation:ttLaunchPrep 110ms ease-out forwards;
-}
-
 .tt-unit.is-launching{
-  transform:rotate(var(--tt-item-tilt, 0deg)) scale(1.02);
+  transform:rotate(var(--tt-item-tilt, 0deg)) scale(1.02, 0.98);
 }
 
 .tt-word-btn.is-launch-fade{
@@ -735,18 +731,6 @@ body{
   100%{
     opacity:0;
     transform:translate(-50%, -50%) scale(1.08);
-  }
-}
-
-@keyframes ttLaunchPrep{
-  0%{
-    transform:rotate(var(--tt-item-tilt, 0deg)) scale(1, 1);
-  }
-  45%{
-    transform:rotate(var(--tt-item-tilt, 0deg)) scale(0.88, 1.12);
-  }
-  100%{
-    transform:rotate(var(--tt-item-tilt, 0deg)) scale(1.08, 0.92);
   }
 }
 
