@@ -105,6 +105,7 @@ body{
 }
 
 .tt-build{
+  height:108px;
   min-height:108px;
   border-radius:22px;
   background:#ffffff;
@@ -115,9 +116,14 @@ body{
   justify-content:center;
   text-align:center;
   box-shadow:0 8px 24px rgba(0,0,0,0.16);
+  overflow:hidden;
 }
 
-.tt-build-text,
+.tt-build-text{
+  width:100%;
+  height:100%;
+}
+
 .tt-bonus-build{
   width:100%;
   height:100%;
