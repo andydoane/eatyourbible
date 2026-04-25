@@ -423,7 +423,6 @@
         else chooseMainItem(id, hit);
       };
       itemsLayer.addEventListener("pointerdown", activateHit);
-      itemsLayer.addEventListener("click", activateHit);
       itemsClickBound = true;
     }
 
