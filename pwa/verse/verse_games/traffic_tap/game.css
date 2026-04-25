@@ -315,20 +315,62 @@ body{
 .tt-unit.is-bonk{ animation:ttBonk 260ms ease; }
 .tt-item.is-crashing{ pointer-events:none; }
 
-.tt-crash-cloud{
+.tt-crash-burst{
   position:absolute;
-  width:84px;
-  height:84px;
+  width:132px;
+  height:132px;
   transform:translate(-50%, -50%);
-  border-radius:999px;
-  background:
-    radial-gradient(circle at 30% 35%, #fff 0 20%, transparent 20%),
-    radial-gradient(circle at 55% 30%, #fef8f1 0 26%, transparent 26%),
-    radial-gradient(circle at 72% 45%, #f5efe8 0 22%, transparent 22%),
-    radial-gradient(circle at 42% 63%, #f1e4d7 0 22%, transparent 22%),
-    radial-gradient(circle at 60% 66%, #e9d4c4 0 24%, transparent 24%);
-  filter:drop-shadow(0 6px 10px rgba(0,0,0,0.18));
-  animation:ttCrashPop 480ms ease forwards;
+  pointer-events:none;
+  z-index:12;
+}
+
+.tt-crash-burst-cloud{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:var(--tt-crash-cloud-size, 74px);
+  height:var(--tt-crash-cloud-size, 74px);
+  transform:translate(-50%, -50%) scale(0.14);
+  opacity:0;
+  color:#ffffff;
+  filter:drop-shadow(0 2px 0 rgba(255,255,255,0.22)) drop-shadow(0 6px 10px rgba(0,0,0,0.18));
+}
+
+.tt-crash-burst-cloud svg{
+  width:100%;
+  height:100%;
+  display:block;
+}
+
+.tt-crash-burst-cloud path{
+  fill:currentColor;
+}
+
+.tt-crash-burst-cloud.is-live{
+  animation:ttCrashCloudRipple var(--tt-crash-cloud-dur, 560ms) linear forwards;
+}
+
+.tt-crash-particle{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:var(--tt-size, 12px);
+  height:var(--tt-size, 12px);
+  margin-left:calc(var(--tt-size, 12px) / -2);
+  margin-top:calc(var(--tt-size, 12px) / -2);
+  border-radius:50%;
+  background:#ffffff;
+  opacity:1;
+  transform:translate(0, 0) scale(var(--tt-start-scale, 0.75));
+  filter:drop-shadow(0 1px 0 rgba(255,255,255,0.28));
+  transition:
+    transform var(--tt-dur, 650ms) cubic-bezier(0.12, 0.75, 0.22, 1),
+    opacity var(--tt-dur, 650ms) linear;
+}
+
+.tt-crash-particle.is-live{
+  opacity:0;
+  transform:translate(var(--tt-tx, 0px), var(--tt-ty, 0px)) scale(var(--tt-end-scale, 1.12));
 }
 
 .tt-popup{
@@ -637,6 +679,33 @@ body{
 @keyframes ttPlayerBonk{ 0%,100%{ transform:translate(-50%, -50%) scale(1);} 30%{ transform:translate(-50%, -50%) scale(1.08) rotate(-8deg);} 60%{ transform:translate(-50%, -50%) scale(0.94) rotate(6deg);} }
 @keyframes ttBonk{ 0%,100%{ transform:translate3d(0,0,0);} 25%{ transform:translate3d(-8px,-2px,0);} 50%{ transform:translate3d(6px,2px,0);} 75%{ transform:translate3d(-4px,0,0);} }
 @keyframes ttSwerve{ 0%{ transform:translate3d(0,0,0);} 35%{ transform:translate3d(0,-10px,0) rotate(-4deg);} 70%{ transform:translate3d(0,6px,0) rotate(3deg);} 100%{ transform:translate3d(0,0,0);} }
+
+@keyframes ttCrashCloudRipple{
+  0%{
+    opacity:0;
+    transform:translate(-50%, -50%) scale(0.14);
+  }
+  10%{
+    opacity:1;
+    transform:translate(-50%, -50%) scale(1.06);
+  }
+  22%{
+    opacity:1;
+    transform:translate(-50%, -50%) scale(0.97);
+  }
+  48%{
+    opacity:0.86;
+    transform:translate(-50%, -50%) scale(1.02);
+  }
+  72%{
+    opacity:0.34;
+    transform:translate(-50%, -50%) scale(1.06);
+  }
+  100%{
+    opacity:0;
+    transform:translate(-50%, -50%) scale(1.08);
+  }
+}
 
 @media (min-width:700px){
   .tt-build{ min-height:122px; }
