@@ -610,18 +610,21 @@
     layer.innerHTML = html;
   }
 
-  function renderEffects(){
-    const layer = document.getElementById("ttEffectsLayer");
-    if (!layer) return;
+function renderEffects(){
+  const layer = document.getElementById("ttEffectsLayer");
+  if (!layer) return;
 
-    const html = [];
-    for (const pop of state.effectPopups){
-      html.push(
-        `<div class="tt-popup ${pop.good ? "good" : "bad"}" style="left:${pop.x}px;top:${pop.y}px">${escapeHtml(pop.text)}</div>`
-      );
-    }
-    layer.innerHTML = html.join("");
+  layer.querySelectorAll(".tt-popup").forEach((node) => node.remove());
+
+  for (const pop of state.effectPopups){
+    const el = document.createElement("div");
+    el.className = `tt-popup ${pop.good ? "good" : "bad"}`;
+    el.style.left = `${pop.x}px`;
+    el.style.top = `${pop.y}px`;
+    el.textContent = pop.text;
+    layer.appendChild(el);
   }
+}
 
   function spawnCrashBurst(x, y, opts = {}){
     const layer = document.getElementById("ttEffectsLayer");
