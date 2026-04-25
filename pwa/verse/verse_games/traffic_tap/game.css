@@ -146,12 +146,25 @@ body{
 .tt-build-text.is-medium{ font-size:clamp(19px,4.5vw,33px); line-height:1.15; }
 .tt-build-text.is-small{ font-size:clamp(17px,3.9vw,28px); line-height:1.12; }
 
-.tt-build-token{ color:rgba(51,51,51,0.18); transition:color 150ms ease, transform 150ms ease; }
-.tt-build-token.is-built{ color:var(--tt-dark); }
+.tt-build-token{
+  color:transparent;
+  transition:color 150ms ease, transform 150ms ease, opacity 150ms ease;
+}
+
+.tt-build-token.is-built{
+  color:var(--tt-dark);
+}
+
 .tt-build-token.is-book,
-.tt-build-token.is-reference{ color:rgba(127,102,198,0.25); }
+.tt-build-token.is-reference{
+  color:transparent;
+}
+
 .tt-build-token.is-book.is-built,
-.tt-build-token.is-reference.is-built{ color:var(--tt-purple); }
+.tt-build-token.is-reference.is-built{
+  color:var(--tt-purple);
+}
+
 .tt-build-gap{ display:inline-block; width:0.35ch; }
 .tt-build-placeholder{ color:rgba(51,51,51,0.82); line-height:1.18; }
 .tt-build-placeholder strong{ color:var(--tt-purple); }
