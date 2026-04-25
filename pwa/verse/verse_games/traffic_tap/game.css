@@ -40,7 +40,16 @@ body{
   background:var(--tt-bg);
 }
 
-.tt-stage,
+.tt-stage{
+  width:100%;
+  max-width:none;
+  margin:0;
+  flex:1 1 auto;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+}
+
 .tt-mode-stage{
   width:100%;
   max-width:var(--tt-stage-max);
@@ -194,13 +203,14 @@ body{
 
 .tt-road-center-line{
   position:absolute;
-  left:0;
-  right:0;
+  left:-64px;
+  width:calc(100% + 128px);
   top:50%;
   height:6px;
   margin-top:-3px;
   background:repeating-linear-gradient(90deg, rgba(255,255,255,0.86) 0 24px, transparent 24px 54px);
   opacity:0.9;
+  will-change:transform;
 }
 
 .tt-road.top .tt-road-center-line{ animation:ttRoadDriftLeft 1.2s linear infinite; }
@@ -520,7 +530,7 @@ body{
 .tt-item.is-wrong .tt-car-btn{ animation:ttBonk 260ms ease; }
 
 @media (min-width: 700px){
-  .tt-stage{ max-width:min(1180px, calc(100vw - 36px)); }
+  .tt-mode-stage{ max-width:min(1180px, calc(100vw - 36px)); }
 }
 
 .tt-help-overlay{
@@ -573,7 +583,8 @@ body{
 }
 
 .tt-nav{
-  width:min(100%, var(--tt-stage-max));
+  width:100%;
+  max-width:var(--tt-stage-max);
   margin:0 auto;
   display:flex;
   align-items:center;

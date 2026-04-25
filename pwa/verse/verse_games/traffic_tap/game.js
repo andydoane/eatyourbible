@@ -1151,17 +1151,28 @@
 
   function parseVerseMeta(ref){
     const value = String(ref || "").trim().replace(/\s+/g, " ");
-    const cleaned = value.replace(/\s+([A-Z]{2,6}|KJV|NKJV|ESV|NIV|NLT|CSB|NASB|AMP|MSG)$/i, "").trim();
+    let cleaned = value
+      .replace(/\s*\(([A-Z]{2,8}|KJV|NKJV|ESV|NIV|NLT|CSB|NASB|AMP|MSG)\)\s*$/i, "")
+      .replace(/\s+([A-Z]{2,8}|KJV|NKJV|ESV|NIV|NLT|CSB|NASB|AMP|MSG)\s*$/i, "")
+      .replace(/\s*[—-]\s*([A-Z]{2,8}|KJV|NKJV|ESV|NIV|NLT|CSB|NASB|AMP|MSG)\s*$/i, "")
+      .trim();
+
     const match = cleaned.match(/^(.*?)\s+(\d+):(\d+)(?:-(\d+))?$/);
     if (!match){
-      return { book:cleaned, chapter:1, verse:1, verseEnd:null, reference:cleaned };
+      return { book: cleaned, chapter: 1, verse: 1, verseEnd: null, reference: "" };
     }
+
+    const book = match[1].trim();
+    const chapter = Number(match[2]);
+    const verse = Number(match[3]);
+    const verseEnd = match[4] ? Number(match[4]) : null;
+
     return {
-      book: match[1].trim(),
-      chapter: Number(match[2]),
-      verse: Number(match[3]),
-      verseEnd: match[4] ? Number(match[4]) : null,
-      reference: `${match[2]}:${match[3]}${match[4] ? `-${match[4]}` : ""}`
+      book,
+      chapter,
+      verse,
+      verseEnd,
+      reference: `${chapter}:${verse}${verseEnd ? `-${verseEnd}` : ""}`
     };
   }
 
