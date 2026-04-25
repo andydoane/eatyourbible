@@ -898,7 +898,7 @@ function spawnCrashBurst(x, y, opts = {}){
         }
       }
 
-      item.tilt = item.direction < 0 ? -10 : 10;
+      item.tilt = item.direction < 0 ? 10 : -10;
 
       const offscreen = item.direction < 0
         ? item.x < -(item.width || 150) - 120
