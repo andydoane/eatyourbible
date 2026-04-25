@@ -1198,7 +1198,15 @@ function renderEffects(){
   }
 
   function itemCenter(item){
-    return { x: item.x + ((item.width || 150) / 2), y: roadTopY(item.road) + ((item.height || state.roadHeight) * 0.75) };
+    const width = item.width || 150;
+    const roadTop = roadTopY(item.road);
+    const height = item.height || state.roadHeight;
+    const carCenterPct = (typeof item.carCenterY === "number" ? item.carCenterY : 25) / 100;
+
+    return {
+      x: item.x + (width / 2),
+      y: roadTop + (height * carCenterPct)
+    };
   }
 
   function addPopup(x, y, text, good){
