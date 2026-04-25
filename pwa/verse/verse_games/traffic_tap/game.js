@@ -991,14 +991,15 @@ function spawnCrashBurst(x, y, opts = {}){
   }
 
   function finishBonusRound(){
-    state.bonusRound = false;
     state.bonusItems = [];
     state.bonusShowScore = true;
     state.overlayMessage = "";
     state.overlayUntil = 0;
 
     window.setTimeout(() => {
+      state.bonusRound = false;
       state.bonusShowScore = false;
+      state.running = false;
       endRunAndMaybeAward();
     }, 1800);
   }
