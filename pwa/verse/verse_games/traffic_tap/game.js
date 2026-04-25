@@ -38,16 +38,6 @@
     <path fill="currentColor" d="M 12.949771,1.5464282 A 6.0017493,5.3230522 7.1160496 0 0 6.9820601,6.4190471 5.3405872,4.7400094 7.154063 0 0 6.8563886,6.4134999 5.3405872,4.7400094 7.154063 0 0 1.5243277,11.020646 5.3405872,4.7400094 7.154063 0 0 2.4259083,13.677302 4.0181559,3.5662928 7.1540647 0 0 0.66145837,16.583588 4.0181559,3.5662928 7.1540647 0 0 4.6728467,20.261811 4.0181559,3.5662928 7.1540647 0 0 5.1732885,20.243 a 5.3405872,4.7400094 7.154063 0 0 5.2883005,4.342428 5.3405872,4.7400094 7.154063 0 0 3.656255,-1.210431 4.0181559,3.5662928 7.1540647 0 0 3.300558,1.639798 4.0181559,3.5662928 7.1540647 0 0 4.011389,-3.466536 4.0181559,3.5662928 7.1540647 0 0 -0.416848,-1.594767 5.3405872,4.7400094 7.154063 0 0 4.783932,-4.586787 5.3405872,4.7400094 7.154063 0 0 -1.9322,-3.706541 4.0181559,3.5662928 7.1540647 0 0 0.764128,-2.0624453 4.0181559,3.5662928 7.1540647 0 0 -4.011389,-3.6776624 4.0181559,3.5662928 7.1540647 0 0 -1.744813,0.3148283 6.0017493,5.3230522 7.1160496 0 0 -5.92283,-4.6884523 z"/>
   </svg>`;
 
-  const RAINBOW_BURST_COLORS = [
-    "#ff8cc8",
-    "#ff5a51",
-    "#ffa351",
-    "#ffc751",
-    "#a7cb6f",
-    "#40b9c5",
-    "#7f66c6"
-  ];
-
   let selectedMode = null;
   let muted = false;
   let completionMarked = false;
@@ -605,13 +595,15 @@
       if (item.swerveUntil > performance.now()) unitCls.push("is-swerve");
       if (item.vanishUntil > performance.now()) unitCls.push("is-vanish");
       if (item.bonkUntil > performance.now()) unitCls.push("is-bonk");
+      if (item.launching && performance.now() < item.launchPhaseUntil) unitCls.push("is-launch-prep");
+      if (item.launching && performance.now() >= item.launchPhaseUntil) unitCls.push("is-launching");
       const bob = Math.sin((performance.now() / 220) + item.bobSeed) * 2.5;
       const tilt = item.tilt || 0;
       return `
         <div class="${cls.filter(Boolean).join(" ")}" style="transform:translate3d(${item.x}px, ${y + bob}px, 0);--tt-item-w:${item.width}px;--tt-item-h:${item.height}px;--tt-word-w:${item.wordWidth}px;--tt-word-h:${item.wordHeight}px;--tt-word-size:${item.wordFont}px;--tt-car-size:${item.carSize}px;--tt-car-hit-h:${item.carHitHeight}px;--tt-car-center-y:${item.carCenterY}%;--tt-word-center-y:${item.wordCenterY}%;--tt-item-tilt:${tilt}deg;">
           <div class="${unitCls.join(" ")}">
             <button type="button" class="tt-car-btn tt-hit-btn" data-item-id="${item.id}" aria-label="${escapeHtml(item.label)}">${item.emoji}</button>
-            <button type="button" class="tt-word-btn tt-hit-btn" data-item-id="${item.id}" aria-label="${escapeHtml(item.label)}">${escapeHtml(item.label)}</button>
+            <button type="button" class="tt-word-btn tt-hit-btn ${item.launching ? "is-launch-fade" : ""}" data-item-id="${item.id}" aria-label="${escapeHtml(item.label)}">${escapeHtml(item.label)}</button>
           </div>
         </div>
       `;
@@ -708,6 +700,64 @@ function spawnCrashBurst(x, y, opts = {}){
 
   function rand(min, max){
     return min + Math.random() * (max - min);
+  }
+
+  function spawnWakePuff(x, y, size = 10){
+    const layer = document.getElementById("ttEffectsLayer");
+    if (!layer) return;
+
+    const puff = document.createElement("div");
+    puff.className = "tt-wake-puff";
+    puff.style.left = `${x}px`;
+    puff.style.top = `${y}px`;
+    puff.style.width = `${size}px`;
+    puff.style.height = `${size}px`;
+    puff.style.marginLeft = `${size / -2}px`;
+    puff.style.marginTop = `${size / -2}px`;
+    layer.appendChild(puff);
+
+    requestAnimationFrame(() => puff.classList.add("is-live"));
+    window.setTimeout(() => puff.remove(), 280);
+  }
+
+  function fadeBlockingCarsAhead(tappedItem){
+    const now = performance.now();
+    for (const item of state.mainItems){
+      if (item.id === tappedItem.id) continue;
+      if (item.road !== tappedItem.road) continue;
+      if (item.crashing || item.launching) continue;
+
+      const isAhead = tappedItem.direction < 0
+        ? item.x < tappedItem.x
+        : item.x > tappedItem.x;
+
+      if (!isAhead) continue;
+
+      item.vanishUntil = now + 160;
+      item.removeAt = now + 170;
+    }
+  }
+
+  function startSuccessLaunch(item){
+    const now = performance.now();
+
+    item.launching = true;
+    item.launchStartAt = now;
+    item.launchPhaseUntil = now + 110;
+    item.launchTrailUntil = now + 520;
+    item.launchTrailNextAt = now + 36;
+    item.wordFadeUntil = now + 90;
+
+    item.targetSpeed = Math.max(item.targetSpeed || item.baseSpeed || 120, 900);
+
+    fadeBlockingCarsAhead(item);
+  }
+
+  function launchTrailPoint(item){
+    const width = item.width || 150;
+    const x = item.x + (width / 2) - (item.direction * width * 0.18);
+    const y = itemCenter(item).y + rand(-4, 4);
+    return { x, y };
   }
 
   function renderBonus(){
@@ -812,13 +862,43 @@ function spawnCrashBurst(x, y, opts = {}){
 
     const multiplier = trafficSpeedMultiplier();
     for (const item of state.mainItems){
-      item.speed = item.speed || item.baseSpeed;
-      item.targetSpeed = (item.baseSpeed || 90) * multiplier;
-      updateItemSpeed(item, dt);
-      if (!item.crashing && !item.vanishUntil){
+
+    item.speed = item.speed || item.baseSpeed;
+
+    if (item.launching){
+      if (now < item.launchPhaseUntil){
+        item.speed = Math.max(item.baseSpeed || 120, 40);
+      } else {
+        item.speed = Math.min(1400, (item.speed || 0) + (2200 * (dt / 1000)));
         item.x += (item.direction < 0 ? -1 : 1) * item.speed * (dt / 1000);
+
+        if (now >= item.launchTrailNextAt && now <= item.launchTrailUntil){
+          const wake = launchTrailPoint(item);
+          spawnWakePuff(wake.x, wake.y, rand(8, 14));
+          item.launchTrailNextAt = now + rand(22, 34);
+        }
       }
-      item.tilt = (item.targetSpeed - item.speed) * 0.06 * (item.direction < 0 ? -1 : 1);
+
+      item.tilt = item.direction < 0 ? -10 : 10;
+
+      const offscreen = item.direction < 0
+        ? item.x < -(item.width || 150) - 120
+        : item.x > state.fieldWidth + (item.width || 150) + 120;
+
+      if (offscreen){
+        item.removeAt = now;
+      }
+
+      continue;
+    }
+
+    item.targetSpeed = (item.baseSpeed || 90) * multiplier;
+    updateItemSpeed(item, dt);
+    if (!item.crashing && !item.vanishUntil){
+      item.x += (item.direction < 0 ? -1 : 1) * item.speed * (dt / 1000);
+    }
+    item.tilt = (item.targetSpeed - item.speed) * 0.06 * (item.direction < 0 ? -1 : 1);
+
     }
 
     const buffer = 240;
@@ -902,6 +982,12 @@ function spawnCrashBurst(x, y, opts = {}){
       swerveUntil:0,
       crashing:false,
       removeAt:0,
+      launching:false,
+      launchStartAt:0,
+      launchPhaseUntil:0,
+      launchTrailNextAt:0,
+      launchTrailUntil:0,
+      wordFadeUntil:0,
       tilt:0
     };
   }
@@ -975,22 +1061,9 @@ function spawnCrashBurst(x, y, opts = {}){
       return;
     }
 
-    item.vanishUntil = performance.now() + 180;
-    item.removeAt = performance.now() + 190;
     addPopup(x, y, "✔", true);
     state.buildPopUntil = performance.now() + 200;
-
-    const center = itemCenter(item);
-    spawnCrashBurst(center.x, center.y, {
-      count: 7,
-      distance: 58,
-      jitter: 5,
-      duration: 620,
-      cloudSize: 0,
-      sizePool: [8, 10, 12, 14, 17, 20],
-      colors: RAINBOW_BURST_COLORS,
-      showCloud: false
-    });
+    startSuccessLaunch(item);
 
     const target = currentTargetLabel();
     if (item.label === target){

@@ -258,6 +258,37 @@ body{
   -webkit-tap-highlight-color:transparent;
 }
 
+.tt-unit.is-launch-prep{
+  animation:ttLaunchPrep 110ms ease-out forwards;
+}
+
+.tt-unit.is-launching{
+  transform:rotate(var(--tt-item-tilt, 0deg)) scale(1.02);
+}
+
+.tt-word-btn.is-launch-fade{
+  opacity:0;
+  transition:opacity 90ms linear;
+}
+
+.tt-wake-puff{
+  position:absolute;
+  border-radius:50%;
+  background:#ffffff;
+  opacity:0.95;
+  transform:scale(0.55);
+  pointer-events:none;
+  z-index:11;
+}
+
+.tt-wake-puff.is-live{
+  opacity:0;
+  transform:scale(1.45);
+  transition:
+    transform 260ms ease-out,
+    opacity 260ms linear;
+}
+
 .tt-car-btn,
 .tt-word-btn{
   position:absolute;
@@ -704,6 +735,18 @@ body{
   100%{
     opacity:0;
     transform:translate(-50%, -50%) scale(1.08);
+  }
+}
+
+@keyframes ttLaunchPrep{
+  0%{
+    transform:rotate(var(--tt-item-tilt, 0deg)) scale(1, 1);
+  }
+  45%{
+    transform:rotate(var(--tt-item-tilt, 0deg)) scale(0.88, 1.12);
+  }
+  100%{
+    transform:rotate(var(--tt-item-tilt, 0deg)) scale(1.08, 0.92);
   }
 }
 
