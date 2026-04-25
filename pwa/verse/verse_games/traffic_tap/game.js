@@ -149,6 +149,7 @@
 
   function startGame(mode){
     selectedMode = mode;
+    itemsClickBound = false;
     completionMarked = false;
     alreadyCompletedForMode = !!window.VerseGameBridge.wasAlreadyCompleted?.(ctx.verseId, GAME_ID, selectedMode);
 
@@ -585,17 +586,17 @@
 
     const html = state.mainItems.map(item => {
       const y = roadTopY(item.road);
-      const cls = ["tt-item", item.direction > 0 ? "is-flipped" : ""];
-      if (item.flashWrongUntil > performance.now()) cls.push("is-wrong");
-      if (item.swerveUntil > performance.now()) cls.push("is-swerve");
-      if (item.crashing) cls.push("is-crashing");
-      if (item.vanishUntil > performance.now()) cls.push("is-vanish");
-      if (item.bonkUntil > performance.now()) cls.push("is-bonk");
+      const cls = ["tt-item", item.direction > 0 ? "is-flipped" : "", item.crashing ? "is-crashing" : ""];
+      const unitCls = ["tt-unit"];
+      if (item.flashWrongUntil > performance.now()) unitCls.push("is-wrong");
+      if (item.swerveUntil > performance.now()) unitCls.push("is-swerve");
+      if (item.vanishUntil > performance.now()) unitCls.push("is-vanish");
+      if (item.bonkUntil > performance.now()) unitCls.push("is-bonk");
       const bob = Math.sin((performance.now() / 220) + item.bobSeed) * 2.5;
       const tilt = item.tilt || 0;
       return `
-        <div class="${cls.filter(Boolean).join(" ")}" style="transform:translate3d(${item.x}px, ${y + bob}px, 0) rotate(${tilt}deg);--tt-item-w:${item.width}px;--tt-item-h:${item.height}px;--tt-word-w:${item.wordWidth}px;--tt-word-h:${item.wordHeight}px;--tt-word-size:${item.wordFont}px;--tt-car-size:${item.carSize}px;--tt-car-hit-h:${item.carHitHeight}px;--tt-car-center-y:${item.carCenterY}%;--tt-word-center-y:${item.wordCenterY}%;">
-          <div class="tt-unit">
+        <div class="${cls.filter(Boolean).join(" ")}" style="transform:translate3d(${item.x}px, ${y + bob}px, 0);--tt-item-w:${item.width}px;--tt-item-h:${item.height}px;--tt-word-w:${item.wordWidth}px;--tt-word-h:${item.wordHeight}px;--tt-word-size:${item.wordFont}px;--tt-car-size:${item.carSize}px;--tt-car-hit-h:${item.carHitHeight}px;--tt-car-center-y:${item.carCenterY}%;--tt-word-center-y:${item.wordCenterY}%;--tt-item-tilt:${tilt}deg;">
+          <div class="${unitCls.join(" ")}">
             <button type="button" class="tt-car-btn tt-hit-btn" data-item-id="${item.id}" aria-label="${escapeHtml(item.label)}">${item.emoji}</button>
             <button type="button" class="tt-word-btn tt-hit-btn" data-item-id="${item.id}" aria-label="${escapeHtml(item.label)}">${escapeHtml(item.label)}</button>
           </div>
@@ -960,7 +961,7 @@
     state.bonusDistance = 8200;
     state.bonusRivals = [];
     state.bonusBonks = [];
-    state.bonusNextSpawnAt = performance.now() + 380;
+    state.bonusNextSpawnAt = performance.now() + 650;
     state.bonusPatternIndex = 0;
     state.bonusFinishSpawned = false;
     state.bonusFinishX = state.fieldWidth + 120;
@@ -984,7 +985,7 @@
 
     if (!state.bonusFinishSpawned && now >= state.bonusNextSpawnAt){
       spawnBonusPattern();
-      state.bonusNextSpawnAt = now + 680;
+      state.bonusNextSpawnAt = now + 980;
     }
 
     for (const rival of state.bonusRivals){
@@ -1015,11 +1016,12 @@
   function spawnBonusPattern(){
     const pattern = SPAWN_PATTERNS[state.bonusPatternIndex % SPAWN_PATTERNS.length];
     state.bonusPatternIndex += 1;
-    pattern.forEach((lane, index) => {
+    const trimmed = pattern.slice(0, 2);
+    trimmed.forEach((lane, index) => {
       state.bonusRivals.push({
         lane,
-        x: state.fieldWidth + 120 + index * 110,
-        speed: 250 + Math.random() * 40,
+        x: state.fieldWidth + 120 + index * 140,
+        speed: 220 + Math.random() * 34,
         emoji: pickRandom(BONUS_RIVALS),
         hitUntil:0
       });
@@ -1130,16 +1132,16 @@
   function getItemMetrics(label){
     const labelLen = String(label || "").length;
     const roadH = Math.max(110, state.roadHeight || 160);
-    const maxByField = Math.max(210, state.fieldWidth * 0.30);
-    const width = clamp((state.fieldWidth < 520 ? state.fieldWidth * 0.36 : state.fieldWidth * 0.22) + labelLen * 6, 170, Math.min(340, maxByField));
+    const maxByField = Math.max(230, state.fieldWidth * 0.33);
+    const width = clamp((state.fieldWidth < 520 ? state.fieldWidth * 0.40 : state.fieldWidth * 0.245) + labelLen * 7, 180, Math.min(380, maxByField));
     const height = Math.round(roadH);
-    const wordWidth = clamp(width * 0.86, 124, width - 8);
-    const wordHeight = clamp(roadH * 0.22, 34, 50);
-    const wordFont = clamp(roadH * 0.145, 15, 23);
-    const carSize = clamp(roadH * 0.42, 42, 78);
-    const carHitHeight = clamp(roadH * 0.34, 42, 78);
-    const carCenterY = 25;
-    const wordCenterY = 75;
+    const wordWidth = clamp(width * 0.90, 132, width - 4);
+    const wordHeight = clamp(roadH * 0.24, 36, 54);
+    const wordFont = clamp(roadH * 0.155, 16, 26);
+    const carSize = clamp(roadH * 0.46, 48, 88);
+    const carHitHeight = clamp(roadH * 0.38, 48, 86);
+    const carCenterY = 24;
+    const wordCenterY = 74;
     return { width, height, wordWidth, wordHeight, wordFont, carSize, carHitHeight, carCenterY, wordCenterY };
   }
 
@@ -1148,10 +1150,11 @@
   }
 
   function parseVerseMeta(ref){
-    const value = String(ref || "").trim();
-    const match = value.match(/^(.*?)(\d+):(\d+)(?:-(\d+))?$/);
+    const value = String(ref || "").trim().replace(/\s+/g, " ");
+    const cleaned = value.replace(/\s+([A-Z]{2,6}|KJV|NKJV|ESV|NIV|NLT|CSB|NASB|AMP|MSG)$/i, "").trim();
+    const match = cleaned.match(/^(.*?)\s+(\d+):(\d+)(?:-(\d+))?$/);
     if (!match){
-      return { book:value, chapter:1, verse:1, verseEnd:null, reference:value };
+      return { book:cleaned, chapter:1, verse:1, verseEnd:null, reference:cleaned };
     }
     return {
       book: match[1].trim(),

@@ -241,6 +241,9 @@ body{
   position:relative;
   width:100%;
   height:100%;
+  transform:rotate(var(--tt-item-tilt, 0deg));
+  transform-origin:center center;
+  will-change:transform, opacity;
   touch-action:manipulation;
   -webkit-tap-highlight-color:transparent;
 }
@@ -296,11 +299,11 @@ body{
   text-shadow:0 2px 6px rgba(0,0,0,0.42);
 }
 
-.tt-item.is-wrong .tt-word-btn{ color:#ffd0d0; animation:ttShakeMini 220ms ease; }
-.tt-item.is-swerve{ animation:ttSwerve 260ms ease; }
-.tt-item.is-vanish{ animation:ttBurstOut 180ms ease forwards; pointer-events:none; }
+.tt-unit.is-wrong .tt-word-btn{ color:#ffd0d0; animation:ttShakeMini 220ms ease; }
+.tt-unit.is-swerve{ animation:ttSwerve 260ms ease; }
+.tt-unit.is-vanish{ animation:ttBurstOut 180ms ease forwards; pointer-events:none; }
+.tt-unit.is-bonk{ animation:ttBonk 260ms ease; }
 .tt-item.is-crashing{ pointer-events:none; }
-.tt-item.is-bonk{ animation:ttBonk 260ms ease; }
 
 .tt-crash-cloud{
   position:absolute;
@@ -450,6 +453,7 @@ body{
   line-height:1;
   filter:drop-shadow(0 6px 10px rgba(0,0,0,0.22));
   transition:top 140ms ease;
+  transform:translate(-50%, -50%) scaleX(-1);
 }
 
 .tt-bonus-player.is-stunned{ animation:ttPlayerBonk 320ms ease; }
@@ -463,6 +467,7 @@ body{
   font-size:50px;
   line-height:1;
   filter:drop-shadow(0 4px 8px rgba(0,0,0,0.20));
+  transform:translate(-50%, -50%) scaleX(-1);
 }
 
 .tt-bonus-finish{
@@ -624,7 +629,6 @@ body{
 
 @media (min-width:700px){
   .tt-build{ min-height:122px; }
-  .tt-unit{ min-width:150px; height:82px; }
   .tt-word-btn{ padding:10px 16px; }
 }
 
