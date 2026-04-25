@@ -1351,21 +1351,6 @@ function spawnCrashBurst(x, y, opts = {}){
     if (introTarget) introTarget.textContent = state.bonusIntroTarget;
   }
 
-  function startBonusRound(){
-    state.bonusRound = true;
-    state.bonusLane = "upper";
-    state.bonusWantedLane = "upper";
-    state.bonusPlayerY = bonusLaneY("upper");
-    state.bonusRoadSpeed = 420;
-    state.bonusDistance = 8200;
-    state.bonusRivals = [];
-    state.bonusBonks = [];
-    state.bonusNextSpawnAt = performance.now() + 650;
-    state.bonusPatternIndex = 0;
-    state.bonusFinishSpawned = false;
-    state.bonusFinishX = state.fieldWidth + 120;
-    state.bonusStunUntil = 0;
-  }
 
   function updateBonus(dt, now){
     state.bonusTimeLeft = Math.max(0, state.bonusEndsAt - now);
