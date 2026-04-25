@@ -732,3 +732,14 @@ body{
   font-weight:900;
   color:var(--tt-dark);
 }
+
+.tt-field.is-hitbox-debug .tt-car-btn{
+  outline:2px dashed rgba(255, 0, 0, 0.95);
+  outline-offset:-2px;
+  background:rgba(255, 0, 0, 0.14);
+  border-radius:24px;
+}
+
+.tt-field.is-hitbox-debug .tt-item.is-flipped .tt-car-btn{
+  outline:2px dashed rgba(255, 0, 0, 0.95);
+}
