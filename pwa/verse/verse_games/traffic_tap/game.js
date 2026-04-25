@@ -1428,12 +1428,14 @@ function spawnCrashBurst(x, y, opts = {}){
         return pickRandom(pool) || pickRandom(FUN_DECOYS);
       }
 
+      const blocked = blockedUpcomingWordLabels(2);
+
       const versePool = uniqueStrings(
         verseWords
           .map(w => String(w || "").trim())
           .filter(Boolean)
           .map(w => w.toLowerCase())
-      ).filter(word => word !== lowerCorrect);
+      ).filter(word => !blocked.has(word));
 
       if (versePool.length){
         return pickRandom(versePool);
@@ -1455,6 +1457,17 @@ function spawnCrashBurst(x, y, opts = {}){
     }
 
     return pickRandom(FUN_DECOYS);
+  }
+
+  function blockedUpcomingWordLabels(count = 2){
+    const blocked = new Set();
+
+    for (let i = 0; i <= count; i += 1){
+      const word = verseWords[state.wordsBuilt + i];
+      if (word) blocked.add(String(word).toLowerCase());
+    }
+
+    return blocked;
   }
 
   function trafficSpeedMultiplier(){
