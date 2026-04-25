@@ -95,6 +95,7 @@
     bonusNextSpawnAt:0,
     bonusRoundDuration:20000,
     bonusIntroTarget:"",
+    debugHitboxes:false,
     bonusShowScore:false
   };
 
@@ -241,6 +242,7 @@
     wireCommonNav();
     wireGameInput();
     recalcField();
+    applyDebugHitboxes();
     renderHud();
     startLoop();
   }
@@ -430,6 +432,13 @@
     }
 
     window.onkeydown = (e) => {
+
+      if (e.key === "d" || e.key === "D"){
+        state.debugHitboxes = !state.debugHitboxes;
+        applyDebugHitboxes();
+        return;
+      }
+
       if (e.key === "Escape" && state.running){
         if (document.getElementById("ttGameMenuOverlay")?.classList.contains("is-open")) closeGameMenu();
         else openGameMenu();
@@ -1625,6 +1634,12 @@ function parseVerseMeta(ref){
     if (len > 72) return "is-medium";
     return "";
   }
+
+function applyDebugHitboxes(){
+  const field = document.getElementById("ttField");
+  if (!field) return;
+  field.classList.toggle("is-hitbox-debug", !!state.debugHitboxes);
+}
 
   function uniqueStrings(items){
     const out = [];
