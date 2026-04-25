@@ -147,7 +147,7 @@ body{
 .tt-build-text.is-small{ font-size:clamp(17px,3.9vw,28px); line-height:1.12; }
 
 .tt-build-token{
-  color:transparent;
+  color:rgba(51,51,51,0.18);
   transition:color 150ms ease, transform 150ms ease, opacity 150ms ease;
 }
 
@@ -157,12 +157,18 @@ body{
 
 .tt-build-token.is-book,
 .tt-build-token.is-reference{
-  color:transparent;
+  color:rgba(127,102,198,0.25);
 }
 
 .tt-build-token.is-book.is-built,
 .tt-build-token.is-reference.is-built{
   color:var(--tt-purple);
+}
+
+.tt-build-text.is-hide-unbuilt .tt-build-token:not(.is-built),
+.tt-build-text.is-hide-unbuilt .tt-build-token.is-book:not(.is-built),
+.tt-build-text.is-hide-unbuilt .tt-build-token.is-reference:not(.is-built){
+  color:transparent;
 }
 
 .tt-build-gap{ display:inline-block; width:0.35ch; }
