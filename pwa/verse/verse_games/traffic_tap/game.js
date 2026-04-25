@@ -611,7 +611,7 @@
         if (item.vanishUntil > performance.now()) unitCls.push("is-vanish");
 
         return `
-          <div class="${cls.filter(Boolean).join(" ")}" style="transform:translate3d(${item.x}px, ${y + (item.slot === "lower" ? state.roadHeight * 0.26 : 0)}px, 0);--tt-item-w:${item.width}px;--tt-item-h:${item.height}px;--tt-car-size:${item.carSize}px;--tt-car-hit-h:${item.carHitHeight}px;--tt-car-center-y:${item.slot === "lower" ? 74 : 24}%;--tt-item-tilt:0deg;">
+          <div class="${cls.filter(Boolean).join(" ")}" style="transform:translate3d(${item.x}px, ${y + (item.slot === "lower" ? state.roadHeight * 0.18 : 0)}px, 0);--tt-item-w:${item.width}px;--tt-item-h:${item.height}px;--tt-car-size:${item.carSize}px;--tt-car-hit-h:${item.carHitHeight}px;--tt-car-center-y:${item.slot === "lower" ? 68 : 24}%;--tt-item-tilt:0deg;">
             <div class="${unitCls.join(" ")}">
               <button type="button" class="tt-car-btn tt-hit-btn" data-item-id="${item.id}" aria-label="${escapeHtml(item.emoji)}">${item.emoji}</button>
             </div>
@@ -1000,7 +1000,7 @@ function spawnCrashBurst(x, y, opts = {}){
       state.bonusRound = false;
       state.bonusShowScore = false;
       state.running = false;
-      endRunAndMaybeAward();
+      renderEndScreen(null);
     }, 1800);
   }
 
