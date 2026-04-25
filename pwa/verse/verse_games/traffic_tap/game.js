@@ -609,12 +609,12 @@
 
         if (t < 0.45){
           const p = t / 0.45;
-          launchScaleX = 1 - (0.12 * p);
-          launchScaleY = 1 + (0.12 * p);
+          launchScaleX = 1 - (0.22 * p);
+          launchScaleY = 1 + (0.22 * p);
         } else {
           const p = (t - 0.45) / 0.55;
-          launchScaleX = 0.88 + (0.20 * p);
-          launchScaleY = 1.12 - (0.20 * p);
+          launchScaleX = 0.78 + (0.28 * p);
+          launchScaleY = 1.22 - (0.28 * p);
         }
       }
 
@@ -763,7 +763,7 @@ function spawnCrashBurst(x, y, opts = {}){
     item.launching = true;
     item.launchStartAt = now;
     item.launchPhaseUntil = now + 110;
-    item.launchTrailUntil = now + 520;
+    item.launchTrailUntil = Infinity;
     item.launchTrailNextAt = now + 36;
     item.wordFadeUntil = now + 90;
 
@@ -891,10 +891,10 @@ function spawnCrashBurst(x, y, opts = {}){
         item.speed = Math.min(1400, (item.speed || 0) + (2200 * (dt / 1000)));
         item.x += (item.direction < 0 ? -1 : 1) * item.speed * (dt / 1000);
 
-        if (now >= item.launchTrailNextAt && now <= item.launchTrailUntil){
+        if (now >= item.launchTrailNextAt){
           const wake = launchTrailPoint(item);
           spawnWakePuff(wake.x, wake.y, rand(8, 14));
-          item.launchTrailNextAt = now + rand(22, 34);
+          item.launchTrailNextAt = now + rand(28, 42);
         }
       }
 
