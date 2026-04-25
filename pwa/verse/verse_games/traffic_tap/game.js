@@ -595,7 +595,6 @@
       if (item.swerveUntil > performance.now()) unitCls.push("is-swerve");
       if (item.vanishUntil > performance.now()) unitCls.push("is-vanish");
       if (item.bonkUntil > performance.now()) unitCls.push("is-bonk");
-      const tilt = item.tilt || 0;
       const now = performance.now();
 
       let rideBob = 0;
@@ -669,7 +668,7 @@
       }
 
       return `
-        <div class="${cls.filter(Boolean).join(" ")}" style="transform:translate3d(${item.x}px, ${y + ridebob}px, 0);--tt-item-w:${item.width}px;--tt-item-h:${item.height}px;--tt-word-w:${item.wordWidth}px;--tt-word-h:${item.wordHeight}px;--tt-word-size:${item.wordFont}px;--tt-car-size:${item.carSize}px;--tt-car-hit-h:${item.carHitHeight}px;--tt-car-center-y:${item.carCenterY}%;--tt-word-center-y:${item.wordCenterY}%;--tt-item-tilt:${tilt}deg;">
+        <div class="${cls.filter(Boolean).join(" ")}" style="transform:translate3d(${item.x}px, ${y + rideBob}px, 0);--tt-item-w:${item.width}px;--tt-item-h:${item.height}px;--tt-word-w:${item.wordWidth}px;--tt-word-h:${item.wordHeight}px;--tt-word-size:${item.wordFont}px;--tt-car-size:${item.carSize}px;--tt-car-hit-h:${item.carHitHeight}px;--tt-car-center-y:${item.carCenterY}%;--tt-word-center-y:${item.wordCenterY}%;--tt-item-tilt:${tilt}deg;">
           <div class="${unitCls.join(" ")}" style="--tt-launch-scale-x:${(launchScaleX * rideScaleX).toFixed(4)};--tt-launch-scale-y:${(launchScaleY * rideScaleY).toFixed(4)};">
             <button type="button" class="tt-car-btn tt-hit-btn" data-item-id="${item.id}" aria-label="${escapeHtml(item.label)}">${item.emoji}</button>
             <button type="button" class="tt-word-btn tt-hit-btn ${item.launching ? "is-launch-fade" : ""}" data-item-id="${item.id}" aria-label="${escapeHtml(item.label)}">${escapeHtml(item.label)}</button>
@@ -1036,7 +1035,7 @@ function spawnCrashBurst(x, y, opts = {}){
       speed: baseSpeed,
       baseSpeed,
       targetSpeed: baseSpeed,
-      bobSeed: Math.random() * Math.PI * 2,
+      bounceOffset: Math.random(),
       height: metrics.height,
       wordWidth: metrics.wordWidth,
       wordHeight: metrics.wordHeight,
