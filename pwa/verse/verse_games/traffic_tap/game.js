@@ -595,11 +595,61 @@
       if (item.swerveUntil > performance.now()) unitCls.push("is-swerve");
       if (item.vanishUntil > performance.now()) unitCls.push("is-vanish");
       if (item.bonkUntil > performance.now()) unitCls.push("is-bonk");
-      if (item.launching && performance.now() >= item.launchPhaseUntil) unitCls.push("is-launching");
-      const bob = Math.sin((performance.now() / 220) + item.bobSeed) * 2.5;
+      const tilt = item.tilt || 0;
+      const now = performance.now();
+
+      let rideBob = 0;
+      let rideScaleX = 1;
+      let rideScaleY = 1;
+
+      if (!item.launching && !item.crashing && !(item.vanishUntil > now)){
+        const cycleMs = 1680;
+        const t = (((now + (item.bounceOffset * cycleMs)) % cycleMs) / cycleMs);
+
+        if (t < 0.12){
+          const p = t / 0.12;
+          rideBob = 5 * p;
+          rideScaleX = 1 + (0.03 * p);
+          rideScaleY = 1 - (0.05 * p);
+        } else if (t < 0.24){
+          const p = (t - 0.12) / 0.12;
+          rideBob = 5 - (4 * p);
+          rideScaleX = 1.03 - (0.035 * p);
+          rideScaleY = 0.95 + (0.055 * p);
+        } else if (t < 0.36){
+          const p = (t - 0.24) / 0.12;
+          rideBob = 1 + (3 * p);
+          rideScaleX = 0.995 + (0.025 * p);
+          rideScaleY = 1.005 - (0.035 * p);
+        } else if (t < 0.48){
+          const p = (t - 0.36) / 0.12;
+          rideBob = 4 - (4 * p);
+          rideScaleX = 1.02 - (0.02 * p);
+          rideScaleY = 0.97 + (0.03 * p);
+        } else if (t < 0.60){
+          const p = (t - 0.48) / 0.12;
+          rideBob = 5 * p;
+          rideScaleX = 1 + (0.03 * p);
+          rideScaleY = 1 - (0.05 * p);
+        } else if (t < 0.72){
+          const p = (t - 0.60) / 0.12;
+          rideBob = 5 - (4 * p);
+          rideScaleX = 1.03 - (0.035 * p);
+          rideScaleY = 0.95 + (0.055 * p);
+        } else if (t < 0.84){
+          const p = (t - 0.72) / 0.12;
+          rideBob = 1 + (3 * p);
+          rideScaleX = 0.995 + (0.025 * p);
+          rideScaleY = 1.005 - (0.035 * p);
+        } else {
+          const p = (t - 0.84) / 0.16;
+          rideBob = 4 - (4 * p);
+          rideScaleX = 1.02 - (0.02 * p);
+          rideScaleY = 0.97 + (0.03 * p);
+        }
+      }
       const tilt = item.tilt || 0;
 
-      const now = performance.now();
       let launchScaleX = 1;
       let launchScaleY = 1;
 
@@ -619,8 +669,8 @@
       }
 
       return `
-        <div class="${cls.filter(Boolean).join(" ")}" style="transform:translate3d(${item.x}px, ${y + bob}px, 0);--tt-item-w:${item.width}px;--tt-item-h:${item.height}px;--tt-word-w:${item.wordWidth}px;--tt-word-h:${item.wordHeight}px;--tt-word-size:${item.wordFont}px;--tt-car-size:${item.carSize}px;--tt-car-hit-h:${item.carHitHeight}px;--tt-car-center-y:${item.carCenterY}%;--tt-word-center-y:${item.wordCenterY}%;--tt-item-tilt:${tilt}deg;">
-          <div class="${unitCls.join(" ")}" style="--tt-launch-scale-x:${launchScaleX};--tt-launch-scale-y:${launchScaleY};">
+        <div class="${cls.filter(Boolean).join(" ")}" style="transform:translate3d(${item.x}px, ${y + ridebob}px, 0);--tt-item-w:${item.width}px;--tt-item-h:${item.height}px;--tt-word-w:${item.wordWidth}px;--tt-word-h:${item.wordHeight}px;--tt-word-size:${item.wordFont}px;--tt-car-size:${item.carSize}px;--tt-car-hit-h:${item.carHitHeight}px;--tt-car-center-y:${item.carCenterY}%;--tt-word-center-y:${item.wordCenterY}%;--tt-item-tilt:${tilt}deg;">
+          <div class="${unitCls.join(" ")}" style="--tt-launch-scale-x:${(launchScaleX * rideScaleX).toFixed(4)};--tt-launch-scale-y:${(launchScaleY * rideScaleY).toFixed(4)};">
             <button type="button" class="tt-car-btn tt-hit-btn" data-item-id="${item.id}" aria-label="${escapeHtml(item.label)}">${item.emoji}</button>
             <button type="button" class="tt-word-btn tt-hit-btn ${item.launching ? "is-launch-fade" : ""}" data-item-id="${item.id}" aria-label="${escapeHtml(item.label)}">${escapeHtml(item.label)}</button>
           </div>
