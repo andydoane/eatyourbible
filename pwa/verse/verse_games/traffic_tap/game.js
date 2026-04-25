@@ -1423,17 +1423,24 @@ function spawnCrashBurst(x, y, opts = {}){
     const lowerCorrect = String(correctLabel || "").toLowerCase();
 
     if (state.phase === "words"){
-      let pool = [];
       if (selectedMode === "easy"){
-        pool = FUN_DECOYS.filter(word => word.toLowerCase() !== lowerCorrect);
-      } else {
-        const previousWords = uniqueStrings(verseWords.slice(0, Math.max(1, state.wordsBuilt)).map(w => w.toLowerCase()));
-        pool = previousWords.filter(word => word !== lowerCorrect);
-        if (pool.length < 4){
-          pool = [...pool, ...FUN_DECOYS.filter(word => !pool.includes(word.toLowerCase()) && word.toLowerCase() !== lowerCorrect)];
-        }
+        const pool = FUN_DECOYS.filter(word => word.toLowerCase() !== lowerCorrect);
+        return pickRandom(pool) || pickRandom(FUN_DECOYS);
       }
-      return pickRandom(pool) || pickRandom(FUN_DECOYS);
+
+      const versePool = uniqueStrings(
+        verseWords
+          .map(w => String(w || "").trim())
+          .filter(Boolean)
+          .map(w => w.toLowerCase())
+      ).filter(word => word !== lowerCorrect);
+
+      if (versePool.length){
+        return pickRandom(versePool);
+      }
+
+      const fallback = FUN_DECOYS.filter(word => word.toLowerCase() !== lowerCorrect);
+      return pickRandom(fallback) || pickRandom(FUN_DECOYS);
     }
 
     if (state.phase === "book"){
@@ -1442,7 +1449,8 @@ function spawnCrashBurst(x, y, opts = {}){
     }
 
     if (state.phase === "reference"){
-      const pool = makeReferenceChoices(verseMeta.chapter, verseMeta.verse, verseMeta.verseEnd).filter(ref => ref.toLowerCase() !== lowerCorrect);
+      const pool = makeReferenceChoices(verseMeta.chapter, verseMeta.verse, verseMeta.verseEnd)
+        .filter(ref => ref.toLowerCase() !== lowerCorrect);
       return pickRandom(pool) || "1:1";
     }
 
@@ -1451,9 +1459,18 @@ function spawnCrashBurst(x, y, opts = {}){
 
   function trafficSpeedMultiplier(){
     if (selectedMode === "easy") return 1;
+
     const progress = clamp(state.wordsBuilt / Math.max(1, verseWords.length - 1), 0, 1);
-    if (selectedMode === "medium") return 1 + (state.phase === "words" ? 0.15 * progress : 0.15);
-    return 1 + (state.phase === "words" ? 0.30 * progress : 0.30);
+
+    if (selectedMode === "medium"){
+      return state.phase === "words"
+        ? 1.05 + (0.15 * progress)
+        : 1.20;
+    }
+
+    return state.phase === "words"
+      ? 1.10 + (0.25 * progress)
+      : 1.35;
   }
 
   function randomSpawnDelay(){
