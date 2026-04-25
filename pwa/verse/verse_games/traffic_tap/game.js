@@ -1391,14 +1391,21 @@ function spawnCrashBurst(x, y, opts = {}){
   function getItemMetrics(label){
     const labelLen = String(label || "").length;
     const roadH = Math.max(110, state.roadHeight || 160);
-    const maxByField = Math.max(230, state.fieldWidth * 0.33);
-    const width = clamp((state.fieldWidth < 520 ? state.fieldWidth * 0.40 : state.fieldWidth * 0.245) + labelLen * 7, 180, Math.min(380, maxByField));
+
+    const isMobile = state.fieldWidth < 520;
+    const maxByField = Math.max(250, state.fieldWidth * (isMobile ? 0.42 : 0.36));
+    const width = clamp(
+      (isMobile ? state.fieldWidth * 0.42 : state.fieldWidth * 0.285) + labelLen * 8,
+      190,
+      Math.min(430, maxByField)
+    );
+
     const height = Math.round(roadH);
-    const wordWidth = clamp(width * 0.90, 132, width - 4);
-    const wordHeight = clamp(roadH * 0.24, 36, 54);
-    const wordFont = clamp(roadH * 0.155, 16, 26);
-    const carSize = clamp(roadH * 0.46, 48, 88);
-    const carHitHeight = clamp(roadH * 0.38, 48, 86);
+    const wordWidth = clamp(width * 0.92, 138, width - 4);
+    const wordHeight = clamp(roadH * 0.25, 38, 58);
+    const wordFont = clamp(roadH * 0.17, 17, 30);
+    const carSize = clamp(roadH * 0.52, 52, 102);
+    const carHitHeight = clamp(roadH * 0.40, 50, 92);
     const carCenterY = 24;
     const wordCenterY = 74;
     return { width, height, wordWidth, wordHeight, wordFont, carSize, carHitHeight, carCenterY, wordCenterY };

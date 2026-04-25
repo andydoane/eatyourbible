@@ -42,8 +42,8 @@ body{
 
 .tt-stage{
   width:100%;
-  max-width:none;
-  margin:0;
+  max-width:min(1180px, calc(100vw - 24px));
+  margin:0 auto;
   flex:1 1 auto;
   min-height:0;
   display:flex;
@@ -739,5 +739,17 @@ body{
   .tt-word-btn{ padding:10px 16px; }
 }
 
+
+@media (min-width: 900px){
+  .tt-build-wrap{
+    padding-left:0;
+    padding-right:0;
+  }
+
+  .tt-field-wrap{
+    padding-left:0;
+    padding-right:0;
+  }
+}
 
 .tt-bonus-buttons[hidden]{ display:none !important; }
