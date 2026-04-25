@@ -82,19 +82,20 @@
     roadCrashUntil:[0,0],
     effectPopups:[],
     recentCorrectConverted:false,
-    bonusLane:"upper",
-    bonusPlayerY:0,
-    bonusWantedLane:"upper",
-    bonusRoadSpeed:420,
-    bonusRivals:[],
+    bonusTargetEmoji:"",
+    bonusTargetLabel:"",
+    bonusTimeLeft:0,
+    bonusEndsAt:0,
+    bonusScore:0,
+    bonusCorrectHits:0,
+    bonusWrongHits:0,
+    bonusStreak:0,
+    bonusBestStreak:0,
+    bonusItems:[],
     bonusNextSpawnAt:0,
-    bonusPatternIndex:0,
-    bonusDistance:0,
-    bonusFinishSpawned:false,
-    bonusFinishX:0,
-    bonusStunUntil:0,
-    bonusBonks:[],
-    bonusCompleted:false
+    bonusRoundDuration:20000,
+    bonusIntroTarget:"",
+    bonusShowScore:false
   };
 
   renderIntro();
@@ -182,18 +183,20 @@
     state.roadCrashUntil = [0,0];
     state.effectPopups = [];
     state.recentCorrectConverted = false;
-    state.bonusLane = "upper";
-    state.bonusWantedLane = "upper";
-    state.bonusRoadSpeed = 420;
-    state.bonusRivals = [];
+    state.bonusTargetEmoji = "";
+    state.bonusTargetLabel = "";
+    state.bonusTimeLeft = 0;
+    state.bonusEndsAt = 0;
+    state.bonusScore = 0;
+    state.bonusCorrectHits = 0;
+    state.bonusWrongHits = 0;
+    state.bonusStreak = 0;
+    state.bonusBestStreak = 0;
+    state.bonusItems = [];
     state.bonusNextSpawnAt = 0;
-    state.bonusPatternIndex = 0;
-    state.bonusDistance = 8200;
-    state.bonusFinishSpawned = false;
-    state.bonusFinishX = 0;
-    state.bonusStunUntil = 0;
-    state.bonusBonks = [];
-    state.bonusCompleted = false;
+    state.bonusRoundDuration = 20000;
+    state.bonusIntroTarget = "";
+    state.bonusShowScore = false;
 
     itemsClickBound = false;
 
@@ -217,15 +220,12 @@
                 <div class="tt-bonus-intro-burst"></div>
                 <div class="tt-bonus-intro-content">
                   <div class="tt-bonus-intro-title">BONUS ROUND!</div>
-                  <div class="tt-bonus-intro-subtitle">Tap UP or DOWN to switch lanes.</div>
+                  <div class="tt-bonus-intro-subtitle" id="ttBonusIntroCopy">Tap this car!</div>
+                  <div class="tt-bonus-intro-target" id="ttBonusIntroTarget">🚗</div>
                 </div>
               </div>
               <div class="tt-controls-layer">
                 <button class="tt-corner-pill tt-corner-left" id="ttMenuPill" type="button" aria-label="Game menu">☰</button>
-                <div class="tt-bonus-buttons" id="ttBonusButtons" hidden>
-                  <button class="tt-bonus-btn" id="ttUpBtn">UP</button>
-                  <button class="tt-bonus-btn" id="ttDownBtn">DOWN</button>
-                </div>
               </div>
             </div>
           </div>
@@ -409,10 +409,6 @@
       menuPill.ontouchstart = open;
     }
 
-    const upBtn = document.getElementById("ttUpBtn");
-    const downBtn = document.getElementById("ttDownBtn");
-    if (upBtn) upBtn.onclick = () => switchBonusLane("upper");
-    if (downBtn) downBtn.onclick = () => switchBonusLane("lower");
 
     const itemsLayer = document.getElementById("ttItemsLayer");
     if (itemsLayer && !itemsClickBound){
@@ -423,7 +419,8 @@
         e.stopPropagation();
         const id = Number(hit.dataset.itemId);
         if (!Number.isFinite(id)) return;
-        chooseMainItem(id, hit);
+        if (state.bonusRound) chooseBonusItem(id, hit);
+        else chooseMainItem(id, hit);
       };
       itemsLayer.addEventListener("pointerdown", activateHit);
       itemsLayer.addEventListener("click", activateHit);
@@ -436,8 +433,6 @@
         else openGameMenu();
       }
       if (!state.bonusRound) return;
-      if (e.key === "ArrowUp" || e.key.toLowerCase() === "w") switchBonusLane("upper");
-      if (e.key === "ArrowDown" || e.key.toLowerCase() === "s") switchBonusLane("lower");
     };
   }
 
@@ -514,6 +509,38 @@
     const now = performance.now();
     build.classList.toggle("is-shake", state.buildShakeUntil > now);
     build.classList.toggle("is-pop", state.buildPopUntil > now);
+
+    if (state.bonusShowScore){
+      text.className = "tt-build-text";
+      text.innerHTML = `
+        <div class="tt-bonus-build">
+          <div class="tt-bonus-build-copy">Bonus Complete!</div>
+          <div class="tt-bonus-build-score is-results">
+            <span>Score: ${state.bonusScore}</span>
+            <span>Correct: ${state.bonusCorrectHits}</span>
+            <span>Best Streak: ${state.bonusBestStreak}</span>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    if (state.bonusRound){
+      text.className = "tt-build-text";
+      text.innerHTML = `
+        <div class="tt-bonus-build">
+          <div class="tt-bonus-build-target">${escapeHtml(state.bonusTargetEmoji || "🚗")}</div>
+          <div class="tt-bonus-build-copy">Tap this car!</div>
+          <div class="tt-bonus-build-score">
+            <span>Score: ${state.bonusScore}</span>
+            <span>Streak: ${state.bonusStreak}</span>
+            <span>Time: ${Math.max(0, Math.ceil(state.bonusTimeLeft / 1000))}</span>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
     text.className = `tt-build-text ${state.buildSizeClass}`;
 
     if (!state.bonusRound && !state.mainDone && state.wordsBuilt === 0 && !state.bookBuilt && !state.referenceBuilt){
@@ -561,12 +588,6 @@
     const marks = document.getElementById("ttRoadMarks");
     if (!roads || !marks) return;
 
-    if (state.bonusRound){
-      roads.innerHTML = "";
-      marks.innerHTML = "";
-      return;
-    }
-
     const top = 0;
     const bottom = state.roadHeight + state.gapHeight;
     roads.innerHTML = `
@@ -583,7 +604,23 @@
     const layer = document.getElementById("ttItemsLayer");
     if (!layer) return;
     if (state.bonusRound){
-      layer.innerHTML = "";
+      const html = state.bonusItems.map(item => {
+        const y = roadTopY(item.road);
+        const cls = ["tt-item", item.direction > 0 ? "is-flipped" : "", item.removeAt ? "is-crashing" : ""];
+        const unitCls = ["tt-unit"];
+        if (item.flashWrongUntil > performance.now()) unitCls.push("is-wrong");
+        if (item.vanishUntil > performance.now()) unitCls.push("is-vanish");
+
+        return `
+          <div class="${cls.filter(Boolean).join(" ")}" style="transform:translate3d(${item.x}px, ${y + (item.slot === "lower" ? state.roadHeight * 0.26 : 0)}px, 0);--tt-item-w:${item.width}px;--tt-item-h:${item.height}px;--tt-car-size:${item.carSize}px;--tt-car-hit-h:${item.carHitHeight}px;--tt-car-center-y:${item.slot === "lower" ? 74 : 24}%;--tt-item-tilt:0deg;">
+            <div class="${unitCls.join(" ")}">
+              <button type="button" class="tt-car-btn tt-hit-btn" data-item-id="${item.id}" aria-label="${escapeHtml(item.emoji)}">${item.emoji}</button>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      layer.innerHTML = html;
       return;
     }
 
@@ -828,41 +865,149 @@ function spawnCrashBurst(x, y, opts = {}){
     return { x, y };
   }
 
+  function pickBonusTargetEmoji(){
+    return pickRandom(VEHICLES);
+  }
+
+  function startBonusRound(){
+    state.bonusRound = true;
+    state.bonusShowScore = false;
+    state.bonusItems = [];
+    state.bonusTargetEmoji = state.bonusIntroTarget || pickBonusTargetEmoji();
+    state.bonusTargetLabel = state.bonusTargetEmoji;
+    state.bonusScore = 0;
+    state.bonusCorrectHits = 0;
+    state.bonusWrongHits = 0;
+    state.bonusStreak = 0;
+    state.bonusBestStreak = 0;
+    state.bonusEndsAt = performance.now() + state.bonusRoundDuration;
+    state.bonusTimeLeft = state.bonusRoundDuration;
+    state.bonusNextSpawnAt = performance.now() + 220;
+  }
+
+  function makeBonusItem({ road, slot, emoji, speed }){
+    const metrics = getItemMetrics("car");
+    const direction = road === 0 ? -1 : 1;
+    const x = direction < 0 ? state.fieldWidth + metrics.width + 30 : -(metrics.width + 30);
+
+    return {
+      id: state.nextItemId++,
+      road,
+      slot,
+      direction,
+      x,
+      width: metrics.width,
+      height: metrics.height,
+      carSize: metrics.carSize,
+      carHitHeight: metrics.carHitHeight,
+      emoji,
+      isTarget: emoji === state.bonusTargetEmoji,
+      speed,
+      vanishUntil: 0,
+      flashWrongUntil: 0,
+      removeAt: 0
+    };
+  }
+
+  function spawnBonusTraffic(now){
+    if (now < state.bonusNextSpawnAt) return;
+
+    const progress = 1 - (state.bonusTimeLeft / state.bonusRoundDuration);
+    const speedBase = 170 + progress * 135;
+    const burstCount = Math.random() < 0.5 ? 2 : 3;
+
+    for (let i = 0; i < burstCount; i += 1){
+      const road = Math.random() < 0.5 ? 0 : 1;
+      const slot = Math.random() < 0.58 ? "upper" : "lower";
+      const emoji = Math.random() < 0.24 ? state.bonusTargetEmoji : pickRandom(VEHICLES);
+      const speed = speedBase + Math.random() * 90;
+
+      if (bonusLaneHasSpawnRoom(road, slot, 150)){
+        state.bonusItems.push(makeBonusItem({ road, slot, emoji, speed }));
+      }
+    }
+
+    state.bonusNextSpawnAt = now + (220 - progress * 70) + Math.random() * 120;
+  }
+
+  function bonusLaneHasSpawnRoom(road, slot, minGap){
+    const direction = road === 0 ? -1 : 1;
+    const metrics = getItemMetrics("car");
+    const spawnX = direction < 0 ? state.fieldWidth + metrics.width + 30 : -(metrics.width + 30);
+
+    for (const item of state.bonusItems){
+      if (item.road !== road || item.slot !== slot) continue;
+      if (Math.abs(item.x - spawnX) < minGap) return false;
+    }
+    return true;
+  }
+
+  function chooseBonusItem(itemId, tappedEl){
+    const item = state.bonusItems.find(x => x.id === itemId);
+    if (!item || item.removeAt || item.vanishUntil) return;
+
+    const layerRect = document.getElementById("ttField")?.getBoundingClientRect();
+    const rect = tappedEl.getBoundingClientRect();
+    const x = rect.left - layerRect.left + rect.width / 2;
+    const y = rect.top - layerRect.top + rect.height / 2;
+
+    if (item.isTarget){
+      item.vanishUntil = performance.now() + 140;
+      item.removeAt = performance.now() + 150;
+      state.bonusCorrectHits += 1;
+      state.bonusStreak += 1;
+      state.bonusBestStreak = Math.max(state.bonusBestStreak, state.bonusStreak);
+      state.bonusScore += 10 + Math.min(40, (state.bonusStreak - 1) * 2);
+      addPopup(x, y, `+${10 + Math.min(40, (state.bonusStreak - 1) * 2)}`, true);
+      spawnBonusSuccessBurst(x, y);
+    } else {
+      item.flashWrongUntil = performance.now() + 260;
+      state.bonusWrongHits += 1;
+      state.bonusStreak = 0;
+      state.bonusScore = Math.max(0, state.bonusScore - 12);
+      addPopup(x, y, "-12", false);
+      spawnCrashBurst(x, y, {
+        count: 8,
+        distance: 52,
+        jitter: 5,
+        duration: 560,
+        cloudSize: 62,
+        sizePool: [7, 8, 10, 12, 14],
+        showCloud: true
+      });
+    }
+  }
+
+  function spawnBonusSuccessBurst(x, y){
+    spawnCrashBurst(x, y, {
+      count: 7,
+      distance: 42,
+      jitter: 4,
+      duration: 420,
+      cloudSize: 0,
+      sizePool: [6, 8, 10, 12],
+      colors: ["#ffd44f", "#ffffff", "#ffd44f", "#ffffff"],
+      showCloud: false
+    });
+  }
+
+  function finishBonusRound(){
+    state.bonusRound = false;
+    state.bonusItems = [];
+    state.bonusShowScore = true;
+    state.overlayMessage = "";
+    state.overlayUntil = 0;
+
+    window.setTimeout(() => {
+      state.bonusShowScore = false;
+      endRunAndMaybeAward();
+    }, 1800);
+  }
+
   function renderBonus(){
     const layer = document.getElementById("ttBonusLayer");
-    const buttons = document.getElementById("ttBonusButtons");
-    if (!layer || !buttons) return;
-
-    buttons.hidden = !state.bonusRound;
-    if (!state.bonusRound){
-      layer.innerHTML = "";
-      return;
-    }
-
-    const playerX = state.fieldWidth * 0.28;
-    const roadTop = state.fieldHeight * 0.18;
-    const roadHeight = state.fieldHeight * 0.56;
-    const bonusRoadCenter = roadTop + (roadHeight / 2);
-
-    let html = `
-      <div class="tt-bonus-road" style="top:${bonusRoadCenter}px;height:${roadHeight}px">
-        <div class="tt-bonus-lines"></div>
-        <div class="tt-bonus-player ${state.bonusStunUntil > performance.now() ? "is-stunned" : ""}" style="left:${playerX}px;top:${bonusLaneY(state.bonusLane)}px">🏎️</div>
-    `;
-
-    for (const rival of state.bonusRivals){
-      html += `<div class="tt-bonus-rival" style="left:${rival.x}px;top:${bonusLaneY(rival.lane)}px">${rival.emoji}</div>`;
-    }
-    if (state.bonusFinishSpawned){
-      html += `<div class="tt-bonus-finish" style="left:${state.bonusFinishX}px"></div>`;
-    }
-    html += `</div>`;
-
-    for (const bonk of state.bonusBonks){
-      html += `<div class="tt-bonus-bonk" style="left:${bonk.x}px;top:${bonk.y}px">💥</div>`;
-    }
-
-    layer.innerHTML = html;
+    if (!layer) return;
+    layer.innerHTML = "";
   }
 
   function renderOverlays(){
@@ -913,7 +1058,7 @@ function spawnCrashBurst(x, y, opts = {}){
 
   function cleanupTransientEffects(now){
     state.effectPopups = state.effectPopups.filter(p => now < p.until);
-    state.bonusBonks = state.bonusBonks.filter(b => now < b.until);
+    state.bonusItems = state.bonusItems.filter(item => !item.removeAt || now < item.removeAt);
     state.mainItems = state.mainItems.filter(item => !item.removeAt || now < item.removeAt);
   }
 
@@ -1201,6 +1346,10 @@ function spawnCrashBurst(x, y, opts = {}){
     state.overlayUntil = performance.now() + 520;
     state.bonusIntro = true;
     state.bonusIntroUntil = performance.now() + 1400;
+    state.bonusIntroTarget = pickBonusTargetEmoji();
+
+    const introTarget = document.getElementById("ttBonusIntroTarget");
+    if (introTarget) introTarget.textContent = state.bonusIntroTarget;
   }
 
   function startBonusRound(){
@@ -1220,47 +1369,25 @@ function spawnCrashBurst(x, y, opts = {}){
   }
 
   function updateBonus(dt, now){
-    const playerX = state.fieldWidth * 0.28;
-    state.bonusLane = state.bonusWantedLane;
-    state.bonusPlayerY = bonusLaneY(state.bonusLane);
+    state.bonusTimeLeft = Math.max(0, state.bonusEndsAt - now);
 
-    const speedMultiplier = now < state.bonusStunUntil ? 0.58 : 1;
-    const roadSpeed = state.bonusRoadSpeed * speedMultiplier;
+    spawnBonusTraffic(now);
 
-    state.bonusDistance -= roadSpeed * (dt / 1000);
-
-    if (!state.bonusFinishSpawned && state.bonusDistance <= 1200){
-      state.bonusFinishSpawned = true;
-      state.bonusFinishX = state.fieldWidth + 150;
+    for (const item of state.bonusItems){
+      if (item.removeAt) continue;
+      item.x += (item.direction < 0 ? -1 : 1) * item.speed * (dt / 1000);
     }
 
-    if (!state.bonusFinishSpawned && now >= state.bonusNextSpawnAt){
-      spawnBonusPattern();
-      state.bonusNextSpawnAt = now + 980;
-    }
+    const buffer = 240;
+    state.bonusItems = state.bonusItems.filter(item => {
+      if (item.removeAt && now >= item.removeAt) return false;
+      if (item.direction < 0 && item.x < -buffer) return false;
+      if (item.direction > 0 && item.x > state.fieldWidth + buffer) return false;
+      return true;
+    });
 
-    for (const rival of state.bonusRivals){
-      rival.x -= rival.speed * (dt / 1000);
-    }
-    state.bonusRivals = state.bonusRivals.filter(rival => rival.x > -140);
-
-    if (state.bonusFinishSpawned){
-      state.bonusFinishX -= roadSpeed * (dt / 1000);
-      if (state.bonusFinishX <= playerX + 30){
-        completeBonusRound();
-        return;
-      }
-    }
-
-    for (const rival of state.bonusRivals){
-      if (rival.hitUntil && now < rival.hitUntil) continue;
-      const dx = Math.abs(rival.x - playerX);
-      const sameLane = rival.lane === state.bonusLane;
-      if (sameLane && dx < 54){
-        rival.hitUntil = now + 420;
-        state.bonusStunUntil = now + 420;
-        state.bonusBonks.push({ x:playerX + 34, y:state.bonusPlayerY, until: now + 480 });
-      }
+    if (state.bonusTimeLeft <= 0){
+      finishBonusRound();
     }
   }
 

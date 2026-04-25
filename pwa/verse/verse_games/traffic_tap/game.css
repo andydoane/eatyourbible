@@ -741,3 +741,38 @@ body{
 
 
 .tt-bonus-buttons[hidden]{ display:none !important; }
+
+.tt-bonus-build{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+}
+
+.tt-bonus-build-target{
+  font-size:clamp(48px, 12vw, 88px);
+  line-height:1;
+  filter:drop-shadow(0 4px 8px rgba(0,0,0,0.12));
+}
+
+.tt-bonus-build-copy{
+  font-size:clamp(18px, 4.6vw, 28px);
+  font-weight:900;
+  line-height:1.1;
+  color:var(--tt-dark);
+}
+
+.tt-bonus-build-score{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px 16px;
+  justify-content:center;
+  font-size:clamp(14px, 3.8vw, 20px);
+  font-weight:800;
+  color:rgba(51,51,51,0.88);
+}
+
+.tt-bonus-build-score.is-results{
+  font-size:clamp(17px, 4.2vw, 24px);
+}
