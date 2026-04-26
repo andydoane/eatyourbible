@@ -1358,12 +1358,10 @@ function chooseMainItem(itemId, tappedEl){
     if (state.phase === "words"){
       state.wordsBuilt += 1;
       if (state.wordsBuilt >= verseWords.length){
-        showPhaseOverlay("BOOK");
         state.phase = "book";
       }
     } else if (state.phase === "book"){
       state.bookBuilt = true;
-      showPhaseOverlay("REFERENCE");
       state.phase = "reference";
     } else if (state.phase === "reference"){
       state.referenceBuilt = true;
