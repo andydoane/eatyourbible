@@ -743,3 +743,8 @@ body{
 .tt-field.is-hitbox-debug .tt-item.is-flipped .tt-car-btn{
   outline:2px dashed rgba(255, 0, 0, 0.95);
 }
+
+.tt-item.is-exiting{
+  opacity:0.82;
+  transition:opacity 180ms linear;
+}
