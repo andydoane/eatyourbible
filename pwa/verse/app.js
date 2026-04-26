@@ -3062,6 +3062,16 @@ function screenVerseDetail(idx){
           Listen to the Verse
         </button>
 
+        ${
+          verseProgress.learnCompleted
+            ? `
+              <button class="detail-listen-btn no-zoom" id="btnDetailPractice" type="button">
+                Practice this verse
+              </button>
+            `
+            : ""
+        }
+
         <div class="detail-section">
           ${getVerseDetailGames().map(game => gameRow(game.label, game.id)).join("")}
         </div>
@@ -3091,21 +3101,33 @@ function screenVerseDetail(idx){
   const btnDetailListen = wrap.querySelector("#btnDetailListen");
   if (btnDetailListen){
     btnDetailListen.onclick = () => {
+      const verseAudioFile = `${AUDIO_DIR}${verseId}.mp3`;
+
       try {
         audioEl.pause();
         audioEl.currentTime = 0;
       } catch(e){}
 
-      setAudioSrc(AUDIO_FILE);
+      setAudioSrc(verseAudioFile);
       audioEl.currentTime = 0;
 
       safePlay().catch(() => {
         showDialog({
           title: "Verse audio missing",
-          body: `Couldn't play: ${AUDIO_FILE}`,
+          body: `Couldn't play: ${verseAudioFile}`,
           actions: [dlgBtn("OK", { onClick: closeDialog })]
         });
       });
+    };
+  }
+
+  const btnDetailPractice = wrap.querySelector("#btnDetailPractice");
+  if (btnDetailPractice){
+    btnDetailPractice.onclick = () => {
+      const url = new URL("index.html", window.location.href);
+      url.searchParams.set("v", verseId);
+      url.searchParams.set("screen", "practice");
+      window.location.href = url.href;
     };
   }
 

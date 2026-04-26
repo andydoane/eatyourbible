@@ -1459,8 +1459,15 @@ text-wrap: balance;
   font: inherit;
   font-size: clamp(18px, 3.2vw, 24px);
   font-weight: 900;
-  background: rgba(255,255,255,0.16);
-  color: #ffffff;
+  background: #ffffff;
+  color: #7f66c6;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.22);
+  cursor: pointer;
+}
+
+.detail-listen-btn:active{
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 rgba(0,0,0,0.22);
 }
 
 .detail-section{
