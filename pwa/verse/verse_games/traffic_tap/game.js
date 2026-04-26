@@ -502,6 +502,12 @@ function backToMenuFromHelp(){
 function setPaused(paused, reason=""){
   state.paused = paused;
   state.pauseReason = paused ? reason : "";
+
+  const field = document.getElementById("ttField");
+  if (field){
+    field.classList.toggle("is-paused", !!paused);
+  }
+
   if (!paused) state.lastTs = performance.now();
 }
 
