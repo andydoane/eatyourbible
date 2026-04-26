@@ -1600,11 +1600,12 @@ function getItemMetrics(label){
   );
 
   const height = Math.round(roadH);
+  const laneH = roadH * 0.5;
   const wordWidth = clamp(width * 0.92, 138, width - 4);
   const wordHeight = clamp(roadH * 0.25, 38, 58);
   const wordFont = clamp(roadH * 0.17, 17, 30);
-  const carSize = clamp(roadH * 0.52, 52, 102);
-  const carHitHeight = clamp(roadH * 0.40, 50, 92);
+  const carSize = clamp(laneH * 0.78, 56, 126);
+  const carHitHeight = clamp(laneH * 0.82, 46, 92);
   const carCenterY = 24;
   const wordCenterY = 74;
   return { width, height, wordWidth, wordHeight, wordFont, carSize, carHitHeight, carCenterY, wordCenterY };
