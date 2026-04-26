@@ -1165,10 +1165,6 @@ const State = {
   transitionFromIdx: null,
   transitionToIdx: null,
 
-  activeGame: null,
-  gameRunning: false,
-  gameIntroActive: false,
-
   // Learn progression
   hasLearnedVerse: false,
   audioMode: null,
@@ -1519,10 +1515,6 @@ function startListenInstructionIfNeeded(){
   playInstruction("listen", {
     doneFlag: "listenInstructionDone"
   });
-}
-
-function goToPracticeGamesFromGame(){
-  go(Screen.PRACTICE);
 }
 
 /* Slide navigation */
@@ -2613,7 +2605,6 @@ const isLearnScreen =
   State.screen === Screen.FINAL_RECALL;
 
 if (State.screen === Screen.TITLE) left = "";
-else if (State.screen === Screen.GAME) left = homeBtn;
 else if (isLearnScreen) left = homeBtn;
 else left = backBtn;
 
@@ -2631,9 +2622,8 @@ if (State.screen === Screen.ECHO) center = "ECHO THE VERSE";
 if (State.screen === Screen.HIDE) center = "TRY TO SAY THE VERSE";
 if (State.screen === Screen.FINAL_RECALL) center = "FINAL TEST";
 if (State.screen === Screen.PRACTICE) center = "PRACTICE";
-if (State.screen === Screen.GAME) center = `<button class="nav-btn no-zoom" id="btnHelp" title="Help" style="width:auto; min-width:88px; padding:0 16px; font-weight:900;">HELP</button>`;
 
-right = (State.screen === Screen.GAME || isLearnScreen || State.screen === Screen.PROGRESS || State.screen === Screen.PET_STATS || State.screen === Screen.VERSE_DETAIL) ? "" : nextBtn;
+right = (isLearnScreen || State.screen === Screen.PROGRESS || State.screen === Screen.PET_STATS || State.screen === Screen.VERSE_DETAIL) ? "" : nextBtn;
 
   const rightControls = isLearnScreen
     ? `${right || ""}`
@@ -2678,11 +2668,6 @@ right = (State.screen === Screen.GAME || isLearnScreen || State.screen === Scree
 const btnHome = document.getElementById("btnHome");
 if (btnHome){
   btnHome.onclick = () => {
-    if (State.screen === Screen.GAME){
-      goToPracticeGamesFromGame();
-      return;
-    }
-
     if (
       State.screen === Screen.LISTEN ||
       State.screen === Screen.MEANING ||
