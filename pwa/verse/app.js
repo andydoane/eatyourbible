@@ -140,6 +140,31 @@ function dlgBtn(label, {secondary=false, onClick}={}){
   return b;
 }
 
+function homePillHtml(label = "Home"){
+  return `
+    <button class="screen-home-pill no-zoom" data-home-pill type="button" aria-label="${label}">
+      ${SVG_HOME}
+      <span>${label}</span>
+    </button>
+  `;
+}
+
+function bindHomePill(rootEl){
+  const btn = rootEl?.querySelector?.("[data-home-pill]");
+  if (!btn) return;
+
+  btn.onclick = (e) => {
+    e.stopPropagation();
+
+    try {
+      audioEl.pause();
+      audioEl.currentTime = 0;
+    } catch(e){}
+
+    go(Screen.TITLE);
+  };
+}
+
 function ensureLearnMenuOverlay(){
   if (document.getElementById("learnMenuOverlay")) return;
 
@@ -2667,8 +2692,12 @@ const show = (
   State.screen !== Screen.INTRO &&
   State.screen !== Screen.TITLE &&
   State.screen !== Screen.CELEBRATION &&
+  State.screen !== Screen.LEARN_LEVEL &&
+  State.screen !== Screen.PRACTICE_GATE &&
+  State.screen !== Screen.PRACTICE &&
   !isLearnFlowScreen(State.screen)
 );
+
   navBar.style.display = show ? "flex" : "none";
   if (!show){
     navBar.innerHTML = "";
@@ -3371,6 +3400,7 @@ function screenLearnLevel(idx){
   wrap.className = "title-screen learn-level-screen";
 
   wrap.innerHTML = `
+    ${homePillHtml()}
     <div class="title-content learn-level-content">
       <h2>Before we get started...</h2>
       <h2>How well do you know this verse?</h2>
@@ -3397,7 +3427,9 @@ function screenLearnLevel(idx){
     };
   });
 
-  return makeSlide({ idx, bg:"var(--purple)", navHidden:false, inner: wrap });
+    bindHomePill(wrap);
+
+  return makeSlide({ idx, bg:"var(--purple)", navHidden:true, inner: wrap });
 }
 
 function screenListen(idx){
@@ -3872,6 +3904,7 @@ function screenPracticeGate(idx){
   wrap.className = "title-screen learn-level-screen";
 
   wrap.innerHTML = `
+    ${homePillHtml()}
     <div class="title-content learn-level-content practice-gate-content">
       <div class="practice-gate-stack">
         <img
@@ -3901,7 +3934,9 @@ function screenPracticeGate(idx){
     };
   }
 
-  return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner: wrap});
+  bindHomePill(wrap);
+
+  return makeSlide({idx, bg:"var(--purple)", navHidden:true, inner: wrap});
 }
 
 function screenPractice(idx){
@@ -3921,6 +3956,7 @@ function screenPractice(idx){
   };
 
   wrap.innerHTML = `
+    ${homePillHtml()}
     <div class="title-content practice-content">
       <h2 id="practiceTitle">Practice Games</h2>
 
@@ -3937,6 +3973,8 @@ function screenPractice(idx){
       <div class="practice-icons" id="pIcons"></div>
       <div class="practice-desc">${g.desc}</div>
   `;
+
+  bindHomePill(wrap);
 
   wrap.querySelector("#pPrev").onclick = (e)=>{ e.stopPropagation(); practicePrev(); };
   wrap.querySelector("#pNext").onclick = (e)=>{ e.stopPropagation(); practiceNext(); };
@@ -3999,7 +4037,7 @@ function screenPractice(idx){
     });
   }
 
-  return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner: wrap});
+    return makeSlide({idx, bg:"var(--purple)", navHidden:true, inner: wrap});
 }
 
 

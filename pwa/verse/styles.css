@@ -85,6 +85,53 @@
       text-align:center;
     }
 
+/* ---------- Screen-level top Home pill ---------- */
+.screen-home-pill{
+  position: absolute;
+  top: calc(14px + var(--safeT));
+  left: 18px;
+  z-index: 20;
+  min-height: var(--tap);
+  border: none;
+  border-radius: 999px;
+  padding: 0 14px;
+  background: rgba(0,0,0,0.30);
+  color: #ffffff;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+  cursor: pointer;
+}
+
+.screen-home-pill .nav-icon{
+  width: 24px;
+  height: 24px;
+}
+
+.screen-home-pill:active{
+  transform: scale(0.98);
+}
+
+@media (max-width: 380px){
+  .screen-home-pill{
+    left: 14px;
+    min-height: 40px;
+    padding: 0 12px;
+    font-size: 15px;
+  }
+
+  .screen-home-pill .nav-icon{
+    width: 22px;
+    height: 22px;
+  }
+}
+
 /* ---------- Learn flow top menu ---------- */
 .learn-layout.learn-layout-with-menu .learn-ref{
   display: grid;
