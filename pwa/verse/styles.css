@@ -2119,6 +2119,32 @@ text-wrap: balance;
     color: #ffd54f;
   }
 
+/* Missing Words + Final Test only */
+.learn-verse.missing-words-theme{
+  background: #ffffff;
+  color: #111111;
+}
+
+.learn-verse.missing-words-theme .verse{
+  color: #111111;
+  text-shadow: none;
+}
+
+.learn-verse.missing-words-theme .hintable{
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  color: #111111;
+}
+
+.learn-verse.missing-words-theme .hintable.emoji{
+  background: transparent;
+}
+
+.learn-verse.missing-words-theme .revealed-word{
+  color: #7f66c6;
+}
+
     /* simple progress bar (quiz-esque) */
     .timer-wrap{
       width:100%;

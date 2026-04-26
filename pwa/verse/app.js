@@ -3823,7 +3823,7 @@ function screenHide(idx){
         <div class="verse-ref-pill">${VERSE_REF}</div>
       </div>
 
-      <div class="learn-verse ${getVerseFitClass(VERSE_TEXT)}">
+      <div class="learn-verse missing-words-theme ${getVerseFitClass(VERSE_TEXT)}">
         <div id="verseStage"></div>
       </div>
 
@@ -3896,7 +3896,7 @@ function screenFinalRecall(idx){
         <div class="verse-ref-pill">${VERSE_REF}</div>
       </div>
 
-      <div class="learn-verse ${getVerseFitClass(VERSE_TEXT)}">
+      <div class="learn-verse missing-words-theme ${getVerseFitClass(VERSE_TEXT)}">
         <div id="finalRecallStage"></div>
       </div>
 
