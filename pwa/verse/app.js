@@ -1062,7 +1062,8 @@ function getVerseFitClass(text){
 
   if (len <= 38) return "verse-fit-short";
   if (len <= 90) return "verse-fit-medium";
-  return "verse-fit-long";
+  if (len <= 135) return "verse-fit-long";
+  return "verse-fit-extra-long";
 }
 
 /* =========================

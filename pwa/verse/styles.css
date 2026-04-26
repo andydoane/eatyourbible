@@ -487,6 +487,12 @@ border-radius: 18px;
   padding: 18px 20px;
 }
 
+.learn-layout.learn-layout-coach-centered .learn-verse.verse-fit-extra-long{
+  min-height: clamp(280px, 38vh, 400px);
+  max-height: clamp(340px, 48vh, 500px);
+  padding: 14px 16px;
+}
+
 .learn-layout.learn-layout-coach-centered .learn-verse.verse-fit-short > *{
   width: min(100%, 680px);
   max-width: 26ch;
@@ -500,6 +506,11 @@ border-radius: 18px;
 .learn-layout.learn-layout-coach-centered .learn-verse.verse-fit-long > *{
   width: min(100%, 820px);
   max-width: 42ch;
+}
+
+.learn-layout.learn-layout-coach-centered .learn-verse.verse-fit-extra-long > *{
+  width: min(100%, 860px);
+  max-width: 48ch;
 }
 
 .learn-layout.learn-layout-coach-centered .learn-verse #verseStage{
@@ -526,6 +537,10 @@ border-radius: 18px;
   width: min(100%, 840px);
 }
 
+.learn-layout.learn-layout-coach-centered .learn-verse.verse-fit-extra-long #verseStage .verse{
+  width: min(100%, 860px);
+}
+
 .learn-layout.learn-layout-coach-centered .learn-verse.verse-fit-short .verse{
   font-size: clamp(34px, 8vw, 62px);
   line-height: 1.12;
@@ -539,6 +554,11 @@ border-radius: 18px;
 .learn-layout.learn-layout-coach-centered .learn-verse.verse-fit-long .verse{
   font-size: clamp(24px, 5.8vw, 44px);
   line-height: 1.24;
+}
+
+.learn-layout.learn-layout-coach-centered .learn-verse.verse-fit-extra-long .verse{
+  font-size: clamp(18px, 4.7vw, 34px);
+  line-height: 1.16;
 }
 
 .standard-game-stage{
@@ -1604,7 +1624,8 @@ text-wrap: balance;
 
 .final-recall-layout .learn-verse.verse-fit-short > *,
 .final-recall-layout .learn-verse.verse-fit-medium > *,
-.final-recall-layout .learn-verse.verse-fit-long > *{
+.final-recall-layout .learn-verse.verse-fit-long > *,
+.final-recall-layout .learn-verse.verse-fit-extra-long > *{
   width: min(100%, 1000px);
   max-width: none;
 }
@@ -1623,7 +1644,8 @@ text-wrap: balance;
 
 .final-recall-layout .learn-verse.verse-fit-short #finalRecallStage .verse,
 .final-recall-layout .learn-verse.verse-fit-medium #finalRecallStage .verse,
-.final-recall-layout .learn-verse.verse-fit-long #finalRecallStage .verse{
+.final-recall-layout .learn-verse.verse-fit-long #finalRecallStage .verse,
+.final-recall-layout .learn-verse.verse-fit-extra-long #finalRecallStage .verse{
   width: min(100%, 1000px);
 }
 
