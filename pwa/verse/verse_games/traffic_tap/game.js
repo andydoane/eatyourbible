@@ -1088,7 +1088,10 @@ function renderOverlays(){
   if (!overlay || !bonusIntro) return;
 
   if (state.overlayUntil > performance.now() && state.overlayMessage){
-    overlay.innerHTML = `<div class="tt-overlay-pill is-show">${escapeHtml(state.overlayMessage)}</div>`;
+    const current = overlay.firstElementChild;
+    if (!current || current.textContent !== state.overlayMessage){
+      overlay.innerHTML = `<div class="tt-overlay-pill is-show">${escapeHtml(state.overlayMessage)}</div>`;
+    }
   } else {
     overlay.innerHTML = "";
   }
