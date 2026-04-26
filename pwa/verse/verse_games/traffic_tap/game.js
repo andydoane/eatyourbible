@@ -1060,14 +1060,17 @@ function finishBonusRound(){
 
   state.bonusStopSpawn = true;
   state.bonusEnding = true;
-  state.bonusEndingUntil = now + 700;
+  state.bonusEndingUntil = now +900;
   state.bonusShowScore = false;
 
   state.overlayMessage = "Bonus Complete!";
   state.overlayUntil = now + 900;
+  state.overlayMessage = "Bonus Complete!";
+  state.overlayUntil = now + 1100;
+  state.bonusEndingUntil = now + 1200;
 
   for (const item of state.bonusItems){
-    item.speed = Math.max(item.speed || 0, 520);
+    item.speed = item.speed || 0;
     item.vanishUntil = 0;
     item.flashWrongUntil = 0;
   }
