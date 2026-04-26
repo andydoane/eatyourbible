@@ -223,12 +223,55 @@ let HAS_VERSE_SELECTION = false;
    ========================= */
 const PROGRESS_STORAGE_KEY = "verseMemoryProgress";
 const PROGRESS_VERSION = 1;
+const TRAFFIC_PROGRESS_MIGRATION_VERSION = 1;
 
 function createEmptyProgress(){
   return {
     version: PROGRESS_VERSION,
     verses: {}
   };
+}
+
+function migrateTrafficProgress(progress){
+  if (!progress || typeof progress !== "object") return false;
+
+  let changed = false;
+
+  if (!progress.migrations || typeof progress.migrations !== "object"){
+    progress.migrations = {};
+    changed = true;
+  }
+
+  if (progress.migrations.trafficTapExternal >= TRAFFIC_PROGRESS_MIGRATION_VERSION){
+    return changed;
+  }
+
+  if (progress.verses && typeof progress.verses === "object"){
+    for (const verseId of Object.keys(progress.verses)){
+      const verseProgress = progress.verses[verseId];
+      if (!verseProgress || typeof verseProgress !== "object") continue;
+
+      if (!verseProgress.games || typeof verseProgress.games !== "object") continue;
+
+      const oldTraffic = verseProgress.games.traffic;
+      const newTraffic = verseProgress.games.traffic_tap_external;
+
+      if (!oldTraffic || newTraffic) continue;
+
+      verseProgress.games.traffic_tap_external = {
+        easyCompleted: !!oldTraffic.roadCompleted,
+        mediumCompleted: !!oldTraffic.trailCompleted,
+        hardCompleted: !!oldTraffic.riverCompleted
+      };
+
+      changed = true;
+    }
+  }
+
+  progress.migrations.trafficTapExternal = TRAFFIC_PROGRESS_MIGRATION_VERSION;
+  changed = true;
+
+  return changed;
 }
 
 function loadProgress(){
@@ -240,6 +283,11 @@ function loadProgress(){
     if (!parsed || typeof parsed !== "object") return createEmptyProgress();
     if (!parsed.verses || typeof parsed.verses !== "object") parsed.verses = {};
     if (!parsed.version) parsed.version = PROGRESS_VERSION;
+
+    const changed = migrateTrafficProgress(parsed);
+    if (changed){
+      saveProgress(parsed);
+    }
 
     return parsed;
   } catch (err) {
@@ -356,60 +404,6 @@ function markStandardGameCompleted(verseId, gameId, mode){
   }
 }
 
-function markTrafficCompleted(verseId, theme){
-  if (!verseId || !theme) return;
-
-  const progress = loadProgress();
-
-  if (!progress.verses[verseId]) {
-    progress.verses[verseId] = {
-      learnCompleted: false,
-      games: {}
-    };
-  }
-
-  const verseProgress = progress.verses[verseId];
-  const wasUnlocked = isBibloPetUnlocked(verseProgress);
-
-  if (!verseProgress.games.traffic) {
-    verseProgress.games.traffic = {
-      roadCompleted: false,
-      trailCompleted: false,
-      riverCompleted: false
-    };
-  }
-
-  if (theme === "road") {
-    verseProgress.games.traffic.roadCompleted = true;
-  }
-
-  if (theme === "trail") {
-    verseProgress.games.traffic.trailCompleted = true;
-  }
-
-  if (theme === "river") {
-    verseProgress.games.traffic.riverCompleted = true;
-  }
-
-  verseProgress.lastPracticedAt = Date.now();
-
-  const isUnlockedNow = isBibloPetUnlocked(verseProgress);
-
-  if (!wasUnlocked && isUnlockedNow && !verseProgress.petUnlockShown) {
-    verseProgress.petUnlockShown = true;
-    State.pendingPetUnlockVerseId = verseId;
-  }
-
-  saveProgress(progress);
-
-  if (State.pendingPetUnlockVerseId === verseId) {
-    setTimeout(() => {
-      if (State.screen === Screen.GAME) {
-        go(Screen.PET_UNLOCK);
-      }
-    }, 300);
-  }
-}
 
 /* =========================
    Progress Star Helpers
@@ -417,9 +411,7 @@ function markTrafficCompleted(verseId, theme){
 
 // All tracked games (internal IDs)
 // All tracked built-in games
-const BUILTIN_GAME_IDS = [
-  "traffic"
-];
+const BUILTIN_GAME_IDS = [];
 
 function getExternalTrackedGameIds(){
   const list = Array.isArray(window.EXTERNAL_VERSE_GAMES) ? window.EXTERNAL_VERSE_GAMES : [];
@@ -491,14 +483,6 @@ function getStandardGameMedals(gameProgress){
   ].join(" ");
 }
 
-function getTrafficThemeSlots(gameProgress){
-  return [
-    gameProgress?.roadCompleted ? "🚗" : "🔒",
-    gameProgress?.trailCompleted ? "🐾" : "🔒",
-    gameProgress?.riverCompleted ? "🌊" : "🔒"
-  ].join(" ");
-}
-
 function getVerseCompletedMedalCount(verseProgress){
   if (!verseProgress || !verseProgress.games) return 0;
 
@@ -536,9 +520,7 @@ function getVerseDetailProgressDisplay(gameId, gameProgress){
 }
 
 function getBuiltInVerseDetailGames(){
-  return [
-    { id: "traffic", label: "Traffic Tap" }
-  ];
+  return [];
 }
 
 function getExternalVerseDetailGames(){
@@ -599,46 +581,6 @@ function getStandardGameRewardTitle(verseId, gameId, mode){
   return `You earned a ${medal}!`;
 }
 
-function getTrafficThemeLabel(theme){
-  if (theme === "road") return "Road";
-  if (theme === "trail") return "Trail";
-  if (theme === "river") return "River";
-  return "Theme";
-}
-
-function getTrafficThemeEmoji(theme){
-  if (theme === "road") return "🚗";
-  if (theme === "trail") return "🐾";
-  if (theme === "river") return "🌊";
-  return "🏁";
-}
-
-function wasTrafficThemeAlreadyCompleted(verseId, theme){
-  if (!verseId || !theme) return false;
-
-  const verseProgress = getVerseProgress(verseId);
-  const trafficProgress = verseProgress.games?.traffic;
-
-  if (!trafficProgress) return false;
-
-  if (theme === "road") return !!trafficProgress.roadCompleted;
-  if (theme === "trail") return !!trafficProgress.trailCompleted;
-  if (theme === "river") return !!trafficProgress.riverCompleted;
-
-  return false;
-}
-
-function getTrafficRewardTitle(verseId, theme){
-  const emoji = getTrafficThemeEmoji(theme);
-  const label = getTrafficThemeLabel(theme);
-  const alreadyEarned = wasTrafficThemeAlreadyCompleted(verseId, theme);
-
-  if (alreadyEarned){
-    return `You finished ${label} again!`;
-  }
-
-  return `You unlocked ${emoji} ${label}!`;
-}
 
 /* =========================
    BibloPet Helpers
@@ -1342,9 +1284,7 @@ const LEARN_LEVEL_OPTIONS = [
   }
 ];
 
-const BUILTIN_PRACTICE_GAMES = [
-  { id:"traffic", title:"🚗 Traffic Tap", desc:"Tap moving cards and animals.", source:"builtin" }
-];
+const BUILTIN_PRACTICE_GAMES = [];
 
 const HIDDEN_PRACTICE_GAME_ID = "traffic_tap_external";
 const HIDDEN_PRACTICE_LONG_PRESS_MS = 2000;
@@ -3083,19 +3023,14 @@ function startGame(id){
 }
 
 function getGameIntroTitle(){
-  if (State.activeGame === "traffic") return "Traffic Tap";
   return "Verse Launch";
 }
 
 function getGameIntroEmoji(){
-  if (State.activeGame === "traffic") return "🚗";
   return "🚀";
 }
 
 function getGameIntroText(){
-  if (State.activeGame === "traffic"){
-    return "Tap the moving car that matches the next correct word of the verse.";
-  }
 
 
   return "Use the arrows to look through the choices. Tap the correct word to launch it into the verse!";
@@ -3103,12 +3038,10 @@ function getGameIntroText(){
 
 function stopGame(){
   bouncingStopMotion();
-  trafficStopMotion();
 
   State.chainGame = null;
   State.scrambleGame = null;
   State.bouncingGame = null;
-  State.trafficGame = null;
 
   State.activeGame = null;
   State.gameRunning = false;
