@@ -35,7 +35,7 @@ window.EXTERNAL_VERSE_GAMES = [
     description: "Tap the correct moving word to build the verse.",
     icon: "🚗",
     launchUrl: "./verse_games/traffic_tap/index.html",
-    visibleInCarousel: false,
+    visibleInCarousel: true,
     progressType: "standard",
     modes: ["easy", "medium", "hard"]
   }
