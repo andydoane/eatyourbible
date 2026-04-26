@@ -384,7 +384,7 @@ function markStandardGameCompleted(verseId, gameId, mode){
 
   if (State.pendingPetUnlockVerseId === verseId) {
     setTimeout(() => {
-      if (State.screen === Screen.GAME) {
+      if (State.pendingPetUnlockVerseId === verseId) {
         go(Screen.PET_UNLOCK);
       }
     }, 300);
