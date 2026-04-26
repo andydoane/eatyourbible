@@ -99,7 +99,9 @@ const state = {
   bonusEnding:false,
   bonusEndingUntil:0,
   bonusStopSpawn:false,
-  bonusShowScore:false
+  bonusShowScore:false,
+  awaitingBonusStart:false,
+  awaitingBonusItemId:0
 };
 
 renderIntro();
@@ -204,6 +206,8 @@ function startGame(mode){
   state.bonusEnding = false;
   state.bonusEndingUntil = 0;
   state.bonusStopSpawn = false;
+  state.awaitingBonusStart = false;
+  state.awaitingBonusItemId = 0;
 
   itemsClickBound = false;
 
@@ -1365,7 +1369,8 @@ function chooseMainItem(itemId, tappedEl){
       state.phase = "reference";
     } else if (state.phase === "reference"){
       state.referenceBuilt = true;
-      finishMainGame();
+      state.awaitingBonusStart = true;
+      state.awaitingBonusItemId = item.id;
     }
     convertOtherCorrectCopies(item.road, target);
   }
@@ -1465,6 +1470,15 @@ function updateBonus(dt, now){
     if (item.direction > 0 && item.x > state.fieldWidth + buffer) return false;
     return true;
   });
+
+  if (state.awaitingBonusStart){
+    const launchedRefCarStillExists = state.mainItems.some(item => item.id === state.awaitingBonusItemId);
+    if (!launchedRefCarStillExists){
+      state.awaitingBonusStart = false;
+      state.awaitingBonusItemId = 0;
+      finishMainGame();
+    }
+  }
 
   if (state.bonusTimeLeft <= 0){
     finishBonusRound();
