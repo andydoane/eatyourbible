@@ -1699,10 +1699,11 @@ return {
 
 function tokenizeForBuild(text){
   const raw = String(text || "");
-  const parts = raw.match(/\s+|[^\s]+/g) || [];
+  const parts = raw.match(/\s+|[A-Za-z0-9]+(?:['’][A-Za-z0-9]+)*|[^\sA-Za-z0-9]/g) || [];
+
   return parts.map(part => {
     if (/^\s+$/.test(part)) return { kind:"space", text:part };
-    if (/[A-Za-z0-9]/.test(part)) return { kind:"word", text:part };
+    if (/^[A-Za-z0-9]+(?:['’][A-Za-z0-9]+)*$/.test(part)) return { kind:"word", text:part };
     return { kind:"punct", text:part };
   });
 }
