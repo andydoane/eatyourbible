@@ -3369,6 +3369,27 @@ function screenVerseDetail(idx){
     };
   }
 
+  const btnDetailListen = wrap.querySelector("#btnDetailListen");
+  if (btnDetailListen){
+    btnDetailListen.onclick = () => {
+      try {
+        audioEl.pause();
+        audioEl.currentTime = 0;
+      } catch(e){}
+
+      setAudioSrc(AUDIO_FILE);
+      audioEl.currentTime = 0;
+
+      safePlay().catch(() => {
+        showDialog({
+          title: "Verse audio missing",
+          body: `Couldn't play: ${AUDIO_FILE}`,
+          actions: [dlgBtn("OK", { onClick: closeDialog })]
+        });
+      });
+    };
+  }
+
   requestAnimationFrame(() => {
     applyPetMotionVars(wrap);
     startHungryFoodCycle(wrap, petStatus);
