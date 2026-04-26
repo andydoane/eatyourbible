@@ -176,6 +176,7 @@ function ensureLearnMenuOverlay(){
   const exitBtn = menu.querySelector("#learnMenuExit");
   if (exitBtn){
     exitBtn.onclick = () => {
+      learnMenuPausedAudio = false;
       closeLearnMenu();
       resetLearn(true);
     };
@@ -188,6 +189,13 @@ function openLearnMenu(){
   const menu = document.getElementById("learnMenuOverlay");
   if (!menu) return;
 
+  learnMenuOpen = true;
+  learnMenuPausedAudio = !audioEl.paused;
+
+  try {
+    audioEl.pause();
+  } catch(e){}
+
   menu.classList.add("show");
   menu.setAttribute("aria-hidden", "false");
 }
@@ -198,6 +206,16 @@ function closeLearnMenu(){
 
   menu.classList.remove("show");
   menu.setAttribute("aria-hidden", "true");
+
+  learnMenuOpen = false;
+
+  if (learnMenuPausedAudio){
+    learnMenuPausedAudio = false;
+
+    safePlay().catch(() => {
+      // If the browser refuses resume, the user can tap the main screen button again.
+    });
+  }
 }
 
 function getVerseIdFromUrl(){
@@ -218,6 +236,9 @@ function getRequestedVerseIdFromUrl(){
 /* Audio */
 const audioEl = new Audio();
 audioEl.preload = "auto";
+
+let learnMenuOpen = false;
+let learnMenuPausedAudio = false;
 
 let muted = false;
 function applyMute(){
@@ -1927,6 +1948,32 @@ function waitForAudioEnd(){
   });
 }
 
+function waitForPausableDelay(ms){
+  return new Promise((resolve) => {
+    let remaining = ms;
+    let last = performance.now();
+
+    function tick(){
+      const now = performance.now();
+
+      if (!learnMenuOpen){
+        remaining -= (now - last);
+      }
+
+      last = now;
+
+      if (remaining <= 0){
+        resolve();
+        return;
+      }
+
+      setTimeout(tick, 50);
+    }
+
+    tick();
+  });
+}
+
 async function playInstruction(key, { doneFlag = null, delayMs = 0, after = null } = {}){
   const my = ++echoCancelToken;
 
@@ -2371,7 +2418,7 @@ async function runChunkSequence(){
 
       const d = await waitForDuration();
       const pauseMs = (isFinite(d) && d > 0) ? Math.max(500, d * 0.35 * 1000) : 700;
-      await new Promise(r => setTimeout(r, pauseMs));
+      await waitForPausableDelay(pauseMs);
 
       if (my !== echoCancelToken) return;
     }
@@ -2480,7 +2527,7 @@ async function runEchoSequence(){
       // Give the child time to repeat: duration × 1.25 (fallback 2s if unknown)
       const d = await waitForDuration();
       const repeatMs = (isFinite(d) && d > 0) ? (d * 1.25 * 1000) : 2000;
-      await new Promise(r => setTimeout(r, repeatMs));
+      await waitForPausableDelay(repeatMs);
 
       if (my !== echoCancelToken) return;
 
@@ -2807,11 +2854,21 @@ if (btnHome){
 /* Screen builders */
 function makeSlide({idx, bg, navHidden=false, inner}){
   const learnLayout = inner?.querySelector?.(".learn-layout");
-  const hasLearnMenu = !!learnLayout;
+  const learnRef = learnLayout?.querySelector?.(".learn-ref");
+  const hasLearnMenu = !!learnLayout && !!learnRef;
 
   if (hasLearnMenu){
     navHidden = true;
     learnLayout.classList.add("learn-layout-with-menu");
+
+    const menuBtn = document.createElement("button");
+    menuBtn.className = "learn-menu-btn no-zoom";
+    menuBtn.type = "button";
+    menuBtn.textContent = "☰";
+    menuBtn.setAttribute("aria-label", "Learn Menu");
+    menuBtn.onclick = openLearnMenu;
+
+    learnRef.prepend(menuBtn);
   }
 
   const s = document.createElement("div");
@@ -2820,16 +2877,6 @@ function makeSlide({idx, bg, navHidden=false, inner}){
   s.dataset.idx = String(idx);
   s.innerHTML = "";
   s.appendChild(inner);
-
-  if (hasLearnMenu){
-    const menuBtn = document.createElement("button");
-    menuBtn.className = "learn-menu-btn no-zoom";
-    menuBtn.type = "button";
-    menuBtn.textContent = "☰";
-    menuBtn.setAttribute("aria-label", "Learn Menu");
-    menuBtn.onclick = openLearnMenu;
-    s.appendChild(menuBtn);
-  }
 
   return s;
 }

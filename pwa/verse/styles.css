@@ -86,11 +86,23 @@
     }
 
 /* ---------- Learn flow top menu ---------- */
+.learn-layout.learn-layout-with-menu .learn-ref{
+  display: grid;
+  grid-template-columns: var(--tap) 1fr var(--tap);
+  align-items: center;
+  justify-items: center;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.learn-layout.learn-layout-with-menu .verse-ref-pill{
+  grid-column: 2;
+  justify-self: center;
+}
+
 .learn-menu-btn{
-  position: absolute;
-  top: calc(14px + var(--safeT));
-  left: 18px;
-  z-index: 10;
+  grid-column: 1;
+  justify-self: start;
   width: var(--tap);
   height: var(--tap);
   border: none;
@@ -110,11 +122,6 @@
 
 .learn-menu-btn:active{
   transform: scale(0.98);
-}
-
-.learn-layout.learn-layout-with-menu .learn-ref{
-  padding-left: 56px;
-  padding-right: 56px;
 }
 
 .learn-menu-overlay{
@@ -175,16 +182,14 @@
 }
 
 @media (max-width: 380px){
+  .learn-layout.learn-layout-with-menu .learn-ref{
+    grid-template-columns: 40px 1fr 40px;
+  }
+
   .learn-menu-btn{
-    left: 14px;
     width: 40px;
     height: 40px;
     font-size: 23px;
-  }
-
-  .learn-layout.learn-layout-with-menu .learn-ref{
-    padding-left: 48px;
-    padding-right: 48px;
   }
 }
 
@@ -660,8 +665,8 @@ border-radius: 18px;
 }
 
 .learn-layout.learn-layout-coach-centered .learn-verse.verse-fit-extra-long .verse{
-  font-size: clamp(18px, 4.7vw, 34px);
-  line-height: 1.16;
+  font-size: clamp(20px, 5.2vw, 38px);
+  line-height: 1.18;
 }
 
 .standard-game-stage{
