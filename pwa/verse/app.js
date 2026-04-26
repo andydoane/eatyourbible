@@ -1750,7 +1750,7 @@ function practiceRun(){
     return;
   }
 
-  startGame(g.id);
+  console.warn("Practice game is not external and cannot be launched:", g);
 }
 
 /* Build verse display with hidden items */
