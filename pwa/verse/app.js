@@ -1692,7 +1692,6 @@ function startListenInstructionIfNeeded(){
 }
 
 function goToPracticeGamesFromGame(){
-  stopGame();
   go(Screen.PRACTICE);
 }
 
@@ -3036,16 +3035,6 @@ function getGameIntroText(){
   return "Use the arrows to look through the choices. Tap the correct word to launch it into the verse!";
 }
 
-function stopGame(){
-  bouncingStopMotion();
-
-  State.chainGame = null;
-  State.scrambleGame = null;
-  State.bouncingGame = null;
-
-  State.activeGame = null;
-  State.gameRunning = false;
-}
 
 function screenIntro(idx){
   const wrap = document.createElement("div");
@@ -3421,7 +3410,6 @@ function screenPetUnlock(idx){
       const unlockedVerseId = State.pendingPetUnlockVerseId;
       State.pendingPetUnlockVerseId = null;
       if (unlockedVerseId) State.selectedVerseId = unlockedVerseId;
-      stopGame();
       go(Screen.PRACTICE);
     };
   }
@@ -3432,7 +3420,6 @@ function screenPetUnlock(idx){
       const unlockedVerseId = State.pendingPetUnlockVerseId;
       State.pendingPetUnlockVerseId = null;
       if (unlockedVerseId) State.selectedVerseId = unlockedVerseId;
-      stopGame();
       go(Screen.VERSE_DETAIL);
     };
   }
