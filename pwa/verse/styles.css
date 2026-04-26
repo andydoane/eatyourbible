@@ -118,6 +118,16 @@
   transform: scale(0.98);
 }
 
+.progress-screen .progress-shell,
+.detail-screen .detail-shell,
+.pet-stats-screen .pet-stats-shell{
+  padding-top: calc(var(--tap) + 14px);
+}
+
+.pet-unlock-screen .pet-unlock-shell{
+  padding-top: calc(var(--tap) + 8px);
+}
+
 @media (max-width: 380px){
   .screen-home-pill{
     left: 14px;

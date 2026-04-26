@@ -161,6 +161,7 @@ function bindHomePill(rootEl){
       audioEl.currentTime = 0;
     } catch(e){}
 
+    State.pendingPetUnlockVerseId = null;
     go(Screen.TITLE);
   };
 }
@@ -2695,6 +2696,10 @@ const show = (
   State.screen !== Screen.LEARN_LEVEL &&
   State.screen !== Screen.PRACTICE_GATE &&
   State.screen !== Screen.PRACTICE &&
+  State.screen !== Screen.PROGRESS &&
+  State.screen !== Screen.VERSE_DETAIL &&
+  State.screen !== Screen.PET_STATS &&
+  State.screen !== Screen.PET_UNLOCK &&
   !isLearnFlowScreen(State.screen)
 );
 
@@ -3073,6 +3078,7 @@ function screenProgress(idx){
 
   if (!hasVerses){
     wrap.innerHTML = `
+      ${homePillHtml()}
       <div class="progress-shell">
         <div class="progress-heading">BibloPet Zoo</div>
         <div class="progress-subheading">Practice each verse to unlock its BibloPet.</div>
@@ -3081,7 +3087,10 @@ function screenProgress(idx){
         </div>
       </div>
     `;
-    return makeSlide({ idx, bg: "var(--purple)", inner: wrap });
+
+    bindHomePill(wrap);
+
+    return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
   }
 
   const rowsHtml = VERSE_LIST.map(item => {
@@ -3102,6 +3111,7 @@ function screenProgress(idx){
   }).join("");
 
   wrap.innerHTML = `
+    ${homePillHtml()}
     <div class="progress-shell">
       <div class="progress-heading">BibloPet Zoo</div>
       <div class="progress-subheading">Practice each verse to unlock its BibloPet.</div>
@@ -3133,7 +3143,10 @@ function screenProgress(idx){
     };
   });
 
-  return makeSlide({ idx, bg: "var(--purple)", inner: wrap });
+  bindHomePill(wrap);
+
+  return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
+
 }
 
 function screenVerseDetail(idx){
@@ -3166,6 +3179,7 @@ function screenVerseDetail(idx){
   wrap.className = "detail-screen";
 
   wrap.innerHTML = `
+    ${homePillHtml()}
     <div class="detail-shell">
       <div class="detail-heading">${verseItem ? verseItem.ref : ""}</div>
 
@@ -3292,12 +3306,14 @@ function screenVerseDetail(idx){
     };
   }
 
+  bindHomePill(wrap);
+
   requestAnimationFrame(() => {
     applyPetMotionVars(wrap);
     startHungryFoodCycle(wrap, petStatus);
   });
 
-  return makeSlide({ idx, bg: "var(--purple)", inner: wrap });
+  return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
 }
 
 function screenPetUnlock(idx){
@@ -3309,6 +3325,7 @@ function screenPetUnlock(idx){
   wrap.className = "pet-unlock-screen";
 
   wrap.innerHTML = `
+    ${homePillHtml()}
     <div class="pet-unlock-shell">
       <div class="pet-unlock-card">
         <div class="pet-unlock-emoji pet-emoji-unlocked">${petEmoji}</div>
@@ -3344,7 +3361,9 @@ function screenPetUnlock(idx){
     };
   }
 
-  return makeSlide({ idx, bg: "var(--purple)", navHidden: false, inner: wrap });
+    bindHomePill(wrap);
+
+  return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
 }
 
 function screenPetStats(idx){
@@ -3354,6 +3373,7 @@ function screenPetStats(idx){
   wrap.className = "pet-stats-screen";
 
   wrap.innerHTML = `
+    ${homePillHtml()}
     <div class="pet-stats-shell">
       <div class="pet-stats-heading">BibloPet Stats</div>
       <div class="pet-stats-subheading">Here’s how your BibloPets are doing.</div>
@@ -3392,7 +3412,9 @@ function screenPetStats(idx){
     </div>
   `;
 
-  return makeSlide({ idx, bg: "var(--purple)", inner: wrap });
+  bindHomePill(wrap);
+
+  return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
 }
 
 function screenLearnLevel(idx){
