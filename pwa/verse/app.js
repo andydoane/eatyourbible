@@ -3127,9 +3127,8 @@ function screenPetUnlock(idx){
         <div class="pet-unlock-emoji pet-emoji-unlocked">${petEmoji}</div>
       </div>
 
-      <div class="pet-unlock-title">You unlocked a new BibloPet!</div>
+      <div class="pet-unlock-title">BibloPet Unlocked!</div>
       <div class="pet-unlock-ref">${verseItem ? verseItem.ref : ""}</div>
-      <div class="pet-unlock-subtext">A new BibloPet joined your zoo. Keep practicing to keep it happy!</div>
 
       <div class="celebration-actions">
         <button class="carousel-main no-zoom" id="btnPetUnlockPractice">Practice Games</button>
