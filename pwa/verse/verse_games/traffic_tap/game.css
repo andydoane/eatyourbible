@@ -509,11 +509,18 @@ body{
   display:flex;
   align-items:center;
   justify-content:center;
+  opacity:0;
+  visibility:hidden;
   transform:scale(0.98);
-  transition:opacity 180ms ease, transform 180ms ease;
+  transition:opacity 180ms ease, transform 180ms ease, visibility 0s linear 180ms;
 }
 
-.tt-bonus-intro-overlay.is-open{ opacity:1; transform:scale(1); }
+.tt-bonus-intro-overlay.is-open{
+  opacity:1;
+  visibility:visible;
+  transform:scale(1);
+  transition:opacity 180ms ease, transform 180ms ease;
+}
 
 .tt-bonus-intro-burst{
   position:absolute;
