@@ -2545,12 +2545,11 @@ function startFireworks(canvas){
 /* Nav rendering */
 function renderNav(){
   // Always show nav except intro/title? Your other apps hide nav on intro.
-  const show = (
-    State.screen !== Screen.INTRO &&
-    State.screen !== Screen.TITLE &&
-    State.screen !== Screen.CELEBRATION &&
-    State.screen !== Screen.PET_UNLOCK
-  );
+const show = (
+  State.screen !== Screen.INTRO &&
+  State.screen !== Screen.TITLE &&
+  State.screen !== Screen.CELEBRATION
+);
   navBar.style.display = show ? "flex" : "none";
   if (!show){
     navBar.innerHTML = "";
@@ -2612,9 +2611,16 @@ if (State.screen === Screen.CHUNKS) center = "BREAK IT INTO CHUNKS";
 if (State.screen === Screen.ECHO) center = "ECHO THE VERSE";
 if (State.screen === Screen.HIDE) center = "TRY TO SAY THE VERSE";
 if (State.screen === Screen.FINAL_RECALL) center = "FINAL TEST";
+if (State.screen === Screen.PET_UNLOCK) center = "BIBLOPET";
 if (State.screen === Screen.PRACTICE) center = "PRACTICE";
 
-right = (isLearnScreen || State.screen === Screen.PROGRESS || State.screen === Screen.PET_STATS || State.screen === Screen.VERSE_DETAIL) ? "" : nextBtn;
+right = (
+  isLearnScreen ||
+  State.screen === Screen.PROGRESS ||
+  State.screen === Screen.PET_STATS ||
+  State.screen === Screen.VERSE_DETAIL ||
+  State.screen === Screen.PET_UNLOCK
+) ? "" : nextBtn;
 
   const rightControls = isLearnScreen
     ? `${right || ""}`
@@ -3155,7 +3161,7 @@ function screenPetUnlock(idx){
     };
   }
 
-  return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
+  return makeSlide({ idx, bg: "var(--purple)", navHidden: false, inner: wrap });
 }
 
 function screenPetStats(idx){
