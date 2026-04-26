@@ -3121,8 +3121,6 @@ function screenPetUnlock(idx){
 
   wrap.innerHTML = `
     <div class="pet-unlock-shell">
-      <div class="pet-unlock-kicker">🎉</div>
-
       <div class="pet-unlock-card">
         <div class="pet-unlock-emoji pet-emoji-unlocked">${petEmoji}</div>
       </div>
