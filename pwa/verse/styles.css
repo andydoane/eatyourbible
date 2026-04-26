@@ -85,6 +85,109 @@
       text-align:center;
     }
 
+/* ---------- Learn flow top menu ---------- */
+.learn-menu-btn{
+  position: absolute;
+  top: calc(14px + var(--safeT));
+  left: 18px;
+  z-index: 10;
+  width: var(--tap);
+  height: var(--tap);
+  border: none;
+  border-radius: 999px;
+  background: rgba(0,0,0,0.30);
+  color: #ffffff;
+  font: inherit;
+  font-size: 25px;
+  font-weight: 900;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+  cursor: pointer;
+}
+
+.learn-menu-btn:active{
+  transform: scale(0.98);
+}
+
+.learn-layout.learn-layout-with-menu .learn-ref{
+  padding-left: 56px;
+  padding-right: 56px;
+}
+
+.learn-menu-overlay{
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(0,0,0,0.72);
+}
+
+.learn-menu-overlay.show{
+  display: flex;
+}
+
+.learn-menu-dialog{
+  width: min(92vw, 420px);
+  border-radius: 28px;
+  background: #ffffff;
+  color: #7f66c6;
+  padding: 22px;
+  box-shadow: 0 18px 50px rgba(0,0,0,0.35);
+  text-align: center;
+}
+
+.learn-menu-title{
+  font-size: clamp(28px, 7vw, 42px);
+  font-weight: 900;
+  line-height: 1.05;
+  margin-bottom: 18px;
+}
+
+.learn-menu-actions{
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.learn-menu-action{
+  width: 100%;
+  border: none;
+  border-radius: 999px;
+  padding: 15px 18px;
+  font: inherit;
+  font-size: clamp(18px, 4.5vw, 24px);
+  font-weight: 900;
+  background: #7f66c6;
+  color: #ffffff;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.22);
+  cursor: pointer;
+}
+
+.learn-menu-action:active{
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 rgba(0,0,0,0.22);
+}
+
+@media (max-width: 380px){
+  .learn-menu-btn{
+    left: 14px;
+    width: 40px;
+    height: 40px;
+    font-size: 23px;
+  }
+
+  .learn-layout.learn-layout-with-menu .learn-ref{
+    padding-left: 48px;
+    padding-right: 48px;
+  }
+}
+
     /* ---------- Bottom nav (Creed/Commandments style) ---------- */
     nav#navBar{
       height: var(--navH);

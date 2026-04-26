@@ -140,6 +140,65 @@ function dlgBtn(label, {secondary=false, onClick}={}){
   return b;
 }
 
+function ensureLearnMenuOverlay(){
+  if (document.getElementById("learnMenuOverlay")) return;
+
+  const menu = document.createElement("div");
+  menu.id = "learnMenuOverlay";
+  menu.className = "learn-menu-overlay";
+  menu.setAttribute("aria-hidden", "true");
+
+  menu.innerHTML = `
+    <div class="learn-menu-dialog" role="dialog" aria-modal="true" aria-label="Learn Menu">
+      <div class="learn-menu-title">Learn Menu</div>
+
+      <div class="learn-menu-actions">
+        <button class="learn-menu-action no-zoom" id="learnMenuClose" type="button">
+          Close
+        </button>
+
+        <button class="learn-menu-action no-zoom" id="learnMenuExit" type="button">
+          Exit Learn
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(menu);
+
+  menu.addEventListener("click", (e) => {
+    if (e.target === menu) closeLearnMenu();
+  });
+
+  const closeBtn = menu.querySelector("#learnMenuClose");
+  if (closeBtn) closeBtn.onclick = closeLearnMenu;
+
+  const exitBtn = menu.querySelector("#learnMenuExit");
+  if (exitBtn){
+    exitBtn.onclick = () => {
+      closeLearnMenu();
+      resetLearn(true);
+    };
+  }
+}
+
+function openLearnMenu(){
+  ensureLearnMenuOverlay();
+
+  const menu = document.getElementById("learnMenuOverlay");
+  if (!menu) return;
+
+  menu.classList.add("show");
+  menu.setAttribute("aria-hidden", "false");
+}
+
+function closeLearnMenu(){
+  const menu = document.getElementById("learnMenuOverlay");
+  if (!menu) return;
+
+  menu.classList.remove("show");
+  menu.setAttribute("aria-hidden", "true");
+}
 
 function getVerseIdFromUrl(){
   const params = new URLSearchParams(window.location.search);
@@ -1147,6 +1206,17 @@ const Screen = {
   PET_STATS: "pet_stats",
   PRACTICE: "practice"
 };
+
+function isLearnFlowScreen(screen){
+  return (
+    screen === Screen.LISTEN ||
+    screen === Screen.MEANING ||
+    screen === Screen.CHUNKS ||
+    screen === Screen.ECHO ||
+    screen === Screen.HIDE ||
+    screen === Screen.FINAL_RECALL
+  );
+}
 
 /* =========================
    1. Global State
@@ -2549,7 +2619,8 @@ function renderNav(){
 const show = (
   State.screen !== Screen.INTRO &&
   State.screen !== Screen.TITLE &&
-  State.screen !== Screen.CELEBRATION
+  State.screen !== Screen.CELEBRATION &&
+  !isLearnFlowScreen(State.screen)
 );
   navBar.style.display = show ? "flex" : "none";
   if (!show){
@@ -2587,13 +2658,7 @@ const homeBtn = `
   `;
 
 // left/back destinations
-const isLearnScreen =
-  State.screen === Screen.LISTEN ||
-  State.screen === Screen.MEANING ||
-  State.screen === Screen.CHUNKS ||
-  State.screen === Screen.ECHO ||
-  State.screen === Screen.HIDE ||
-  State.screen === Screen.FINAL_RECALL;
+const isLearnScreen = isLearnFlowScreen(State.screen);
 
 if (State.screen === Screen.TITLE) left = "";
 else if (isLearnScreen) left = homeBtn;
@@ -2741,12 +2806,31 @@ if (btnHome){
 
 /* Screen builders */
 function makeSlide({idx, bg, navHidden=false, inner}){
+  const learnLayout = inner?.querySelector?.(".learn-layout");
+  const hasLearnMenu = !!learnLayout;
+
+  if (hasLearnMenu){
+    navHidden = true;
+    learnLayout.classList.add("learn-layout-with-menu");
+  }
+
   const s = document.createElement("div");
   s.className = "slide" + (navHidden ? " nav-hidden" : "");
   s.style.setProperty("--bg", bg);
   s.dataset.idx = String(idx);
   s.innerHTML = "";
   s.appendChild(inner);
+
+  if (hasLearnMenu){
+    const menuBtn = document.createElement("button");
+    menuBtn.className = "learn-menu-btn no-zoom";
+    menuBtn.type = "button";
+    menuBtn.textContent = "☰";
+    menuBtn.setAttribute("aria-label", "Learn Menu");
+    menuBtn.onclick = openLearnMenu;
+    s.appendChild(menuBtn);
+  }
+
   return s;
 }
 
