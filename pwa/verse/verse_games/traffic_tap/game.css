@@ -222,6 +222,10 @@ body{
   background:transparent;
 }
 
+.tt-field.is-paused .tt-road-center-line{
+  animation-play-state:paused;
+}
+
 .tt-roads,
 .tt-items-layer,
 .tt-effects-layer,
