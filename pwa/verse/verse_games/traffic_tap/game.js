@@ -1200,6 +1200,15 @@ function updateMain(dt, now){
     if (item.direction > 0 && item.x > state.fieldWidth + buffer) return false;
     return true;
   });
+
+  if (state.awaitingBonusStart){
+    const launchedRefCarStillExists = state.mainItems.some(item => item.id === state.awaitingBonusItemId);
+    if (!launchedRefCarStillExists){
+      state.awaitingBonusStart = false;
+      state.awaitingBonusItemId = 0;
+      finishMainGame();
+    }
+  }
 }
 
 function trafficSpawnTick(now){
