@@ -396,9 +396,6 @@ function markStandardGameCompleted(verseId, gameId, mode){
    Progress Star Helpers
    ========================= */
 
-// All tracked games (internal IDs)
-// All tracked built-in games
-const BUILTIN_GAME_IDS = [];
 
 function getExternalTrackedGameIds(){
   const list = Array.isArray(window.EXTERNAL_VERSE_GAMES) ? window.EXTERNAL_VERSE_GAMES : [];
@@ -411,7 +408,7 @@ function getExternalTrackedGameIds(){
 }
 
 function getTrackedGameIds(){
-  return [...BUILTIN_GAME_IDS, ...getExternalTrackedGameIds()];
+  return getExternalTrackedGameIds();
 }
 
 // Count stars for a single game
@@ -506,10 +503,6 @@ function getVerseDetailProgressDisplay(gameId, gameProgress){
   return getStandardGameMedals(gameProgress);
 }
 
-function getBuiltInVerseDetailGames(){
-  return [];
-}
-
 function getExternalVerseDetailGames(){
   const list = Array.isArray(window.EXTERNAL_VERSE_GAMES) ? window.EXTERNAL_VERSE_GAMES : [];
 
@@ -524,7 +517,7 @@ function getExternalVerseDetailGames(){
 }
 
 function getVerseDetailGames(){
-  return [...getBuiltInVerseDetailGames(), ...getExternalVerseDetailGames()];
+  return getExternalVerseDetailGames();
 }
 
 function getStandardModeMedal(mode){
@@ -1151,8 +1144,7 @@ const Screen = {
   CELEBRATION: "celebration",
   PET_UNLOCK: "pet_unlock",
   PET_STATS: "pet_stats",
-  PRACTICE: "practice",
-  GAME: "game"
+  PRACTICE: "practice"
 };
 
 /* =========================
@@ -1536,8 +1528,7 @@ function screenToIndex(screen){
     Screen.FINAL_RECALL,
     Screen.CELEBRATION,
     Screen.PET_UNLOCK,
-    Screen.PRACTICE,
-    Screen.GAME
+    Screen.PRACTICE
   ];
   return order.indexOf(screen);
 }
