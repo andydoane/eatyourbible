@@ -105,10 +105,6 @@ const SVG_UNMUTE = `
   </g>
 </svg>`;
 
-const SVG_TOWER_CLOUD = `
-<svg class="tower-cloud-svg" viewBox="0 0 211.66667 111.65417" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-  <path fill="currentColor" d="m 123.03978,3.2651746 c -20.6927,0.0302 -38.78982,13.9439004 -44.136843,33.9338504 -4.33607,-1.49815 -8.891178,-2.26447 -13.478764,-2.26756 -19.705594,0.003 -36.672558,13.9079 -40.546363,33.22898 -10.729505,0.47348 -19.2324185,9.24147 -19.2324185,20.09179 0,11.15585 8.9814225,20.136755 20.1372725,20.136755 H 172.26572 c 18.70063,0 33.75556,-15.054925 33.75556,-33.755555 0,-18.70063 -15.05493,-33.75557 -33.75556,-33.75557 h -4.21163 C 164.1158,19.106435 145.16455,3.2713046 123.03978,3.2651746 Z"/>
-</svg>`;
 
 /* =========================================================
    Minimal Verse Engine (Learn flow)
@@ -144,15 +140,6 @@ function dlgBtn(label, {secondary=false, onClick}={}){
   return b;
 }
 
-window.addEventListener("keydown", (e) => {
-  if (String(e.key).toLowerCase() !== "d") return;
-
-  State.debugBounce = !State.debugBounce;
-
-  if (State.screen === Screen.GAME && (State.activeGame === "bouncing" || State.activeGame === "scramble")){
-    render();
-  }
-});
 
 function getVerseIdFromUrl(){
   const params = new URLSearchParams(window.location.search);
@@ -1181,11 +1168,6 @@ const State = {
   activeGame: null,
   gameRunning: false,
   gameIntroActive: false,
-  chainGame: null,
-  scrambleGame: null,
-  bouncingGame: null,
-  trafficGame: null,
-  debugBounce: false,
 
   // Learn progression
   hasLearnedVerse: false,
@@ -1471,26 +1453,6 @@ function renderPracticeIconStrip(practiceGames, currentIndex){
     return `<span class="${cls}" aria-hidden="true">${icon}</span>`;
   }).join("");
 }
-
-
-
-/* NOTE:
-   The following helpers are used by multiple games:
-
-   - Verse Scramble
-   - Verse Chain
-   - Bouncing Words
-   - Traffic Tap
-   - Tower of Bible
-
-   They are NOT tied to one game, so they stay here instead
-   of being moved into games.js.
-*/
-
-
-
-
-
 
 
 function resetLearn(goTitle=false){
@@ -2742,62 +2704,6 @@ if (btnHome){
   };
 }
 
-  const btnHelp = document.getElementById("btnHelp");
-  if (btnHelp){
-    btnHelp.onclick = () => {
-      if (State.activeGame === "scramble"){
-        showDialog({
-          title: "How to Play Verse Scramble",
-          body: "Three word blobs will appear. Tap the correct next word in the verse as fast as you can until you reach the end.",
-          actions: [dlgBtn("Close", {onClick: closeDialog})]
-        });
-        return;
-      }
-
-      if (State.activeGame === "bouncing"){
-        showDialog({
-          title: "How to Play Bouncing Words",
-          body: "Three words bounce around the screen. Keep tapping the correct words until you finish the verse.",
-          actions: [dlgBtn("Close", {onClick: closeDialog})]
-        });
-        return;
-      }
-
-      if (State.activeGame === "traffic"){
-        showDialog({
-          title: "How to Play Traffic Tap",
-          body: "Tap the moving car or word that matches the next correct word until you finish the verse.",
-          actions: [dlgBtn("Close", {onClick: closeDialog})]
-        });
-        return;
-      }
-
-      if (State.activeGame === "tower"){
-        showDialog({
-          title: "How to Play Tower of Bible",
-          body: "Use the arrows to look through the choices. Tap the correct words to build your tower to the sky.",
-          actions: [dlgBtn("Close", {onClick: closeDialog})]
-        });
-        return;
-      }
-
-      if (State.activeGame === "foodslice"){
-        showDialog({
-          title: "How to Play Food Slice",
-          body: "Tap pieces of food that match the next word of the verse before it falls. Watch out for wrong words or bombs!",
-          actions: [dlgBtn("Close", {onClick: closeDialog})]
-        });
-        return;
-      }
-
-      showDialog({
-        title: "How to Play Verse Launch",
-        body: "Use the arrows to look through the choices. Tap the big word when you think it is correct.",
-        actions: [dlgBtn("Close", {onClick: closeDialog})]
-      });
-
-    };
-  }
 
   const btnNext = document.getElementById("btnNext");
   if (btnNext){
@@ -3964,100 +3870,6 @@ function screenPractice(idx){
 }
 
 
-function screenGame(idx){
-  const inner = document.createElement("div");
-  inner.style.display = "flex";
-  inner.style.flexDirection = "column";
-  inner.style.height = "100%";
-
-  const game = games[State.activeGame];
-
-  if (State.gameIntroActive){
-    inner.innerHTML = `
-      <div class="game-intro-screen">
-        <div class="game-intro-content">
-          <div class="game-intro-emoji">${getGameIntroEmoji()}</div>
-          <div class="game-intro-heading">${getGameIntroTitle()}</div>
-          <div class="game-intro-body">${getGameIntroText()}</div>
-          <button class="carousel-main no-zoom" id="gameIntroStart">Start</button>
-        </div>
-      </div>
-    `;
-
-    const introStart = inner.querySelector("#gameIntroStart");
-    if (introStart){
-      introStart.onclick = () => {
-        State.gameIntroActive = false;
-        render();
-      };
-    }
-
-    return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner});
-  }
-
-  const showGameRef =
-    (State.activeGame === "chain" && State.chainGame?.showRef) ||
-    (State.activeGame === "scramble" && State.scrambleGame?.showRef) ||
-    (
-      State.activeGame !== "chain" &&
-      State.activeGame !== "scramble" &&
-      !(State.activeGame === "traffic" && !State.trafficGame?.theme)
-    );
-
-  const gameLayoutClass =
-    (State.activeGame === "scramble" && State.scrambleGame?.done) ? "game-scramble-result" :
-    (State.activeGame === "scramble" && !State.scrambleGame?.mode) ? "game-foodslice-mode" :
-    (State.activeGame === "bouncing" && !State.bouncingGame?.mode) ? "game-bouncing-mode" :
-    (State.activeGame === "bouncing") ? "game-bouncing" :
-    (State.activeGame === "scramble") ? "game-scramble" :
-    (State.activeGame === "traffic" && !State.trafficGame?.theme) ? "game-traffic-theme" :
-    (State.activeGame === "traffic") ? "game-traffic" :
-    (State.activeGame === "chain" && !State.chainGame?.mode) ? "game-foodslice-mode" :
-    (State.activeGame === "chain") ? "game-chain" :
-    "";
-
-  inner.innerHTML = `
-    <div class="learn-layout ${gameLayoutClass}">
-      <div class="learn-ref">
-        ${showGameRef ? `<div class="verse-ref-pill">${VERSE_REF}</div>` : ``}
-      </div>
-
-      <div class="learn-verse">
-        <div id="gameStage" style="width:100%;"></div>
-      </div>
-
-      <div class="learn-coach">
-        <div>
-          <div class="coach-title" id="gameCoachTitle"></div>
-        </div>
-
-        <div class="coach-actions" id="gameCoachActions"></div>
-      </div>
-    </div>
-  `;
-
-  const stage = inner.querySelector("#gameStage");
-
-  if (game && typeof game.start === "function"){
-    if (State.activeGame === "bouncing" && State.isSliding){
-      // wait until the slide transition is done
-    } else {
-      game.start(stage);
-    }
-  }
-
-  return makeSlide({
-    idx,
-    bg:
-      State.activeGame === "traffic" ? TRAFFIC_GREEN :
-      State.activeGame === "chain" ? "#40b9c5" :
-      State.activeGame === "bouncing" ? "#f2f2f2" :
-      "var(--purple)",
-    navHidden: false,
-    inner
-  });
-}
-
 
 /* =========================
    7. Main Render
@@ -4103,7 +3915,6 @@ function render(){
     if (screen === Screen.CELEBRATION) slide = screenCelebration(idx);
     if (screen === Screen.PET_UNLOCK) slide = screenPetUnlock(idx);
     if (screen === Screen.PRACTICE) slide = screenPractice(idx);
-    if (screen === Screen.GAME) slide = screenGame(idx);
     if (slide) app.appendChild(slide);
   }
 
