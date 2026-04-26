@@ -599,6 +599,15 @@ body{
   text-align:center;
 }
 
+#ttGameMenuOverlay .tt-help-dialog{
+  background:#7f66c6;
+  color:#ffffff;
+}
+
+#ttGameMenuOverlay .tt-help-title{
+  color:#ffffff;
+}
+
 .tt-help-title{
   font-size:clamp(24px,6vw,32px);
   line-height:1.05;
