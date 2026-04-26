@@ -257,6 +257,26 @@ function startGame(mode){
   startLoop();
 }
 
+async function completeGameAndRenderEndScreen(){
+  let reward = null;
+
+  if (!completionMarked && ctx?.verseId && GAME_ID && selectedMode){
+    completionMarked = true;
+
+    try {
+      reward = await window.VerseGameBridge.markCompleted({
+        verseId: ctx.verseId,
+        gameId: GAME_ID,
+        mode: selectedMode
+      });
+    } catch (err) {
+      console.warn("Could not mark Traffic Tap complete", err);
+    }
+  }
+
+  renderEndScreen(reward);
+}
+
 function renderEndScreen(reward){
   stopLoop();
   const title = reward?.petUnlockTriggered
@@ -1464,7 +1484,7 @@ function updateBonus(dt, now){
       state.bonusEnding = false;
       state.bonusShowScore = false;
       state.running = false;
-      renderEndScreen(null);
+      completeGameAndRenderEndScreen();
     }
     return;
   }
