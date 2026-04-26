@@ -1566,13 +1566,13 @@ function trafficSpeedMultiplier(){
 
   if (selectedMode === "medium"){
     return state.phase === "words"
-      ? 1.15 + (0.25 * progress)
-      : 1.40;
+      ? 1.10 + (0.20 * progress)
+      : 1.30;
   }
 
   return state.phase === "words"
-    ? 1.3 + (0.35 * progress)
-    : 1.75;
+    ? 1.15 + (0.30 * progress)
+    : 1.45;
 }
 
 function randomSpawnDelay(){
