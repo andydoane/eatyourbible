@@ -665,7 +665,7 @@ border-radius: 18px;
 }
 
 .learn-layout.learn-layout-coach-centered .learn-verse.verse-fit-extra-long .verse{
-  font-size: clamp(20px, 5.2vw, 38px);
+  font-size: clamp(23px, 6vw, 42px);
   line-height: 1.18;
 }
 
