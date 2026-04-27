@@ -401,6 +401,7 @@ function startLearnInstruction(key){
   State.instructionPlaying = false;
   State.instructionKey = "";
 
+  State.forceSlideForward = true;
   go(Screen.LEARN_INSTRUCTION);
 }
 
@@ -1476,6 +1477,7 @@ const State = {
   isSliding: false,
   transitionFromIdx: null,
   transitionToIdx: null,
+  forceSlideForward: false,
 
   // Learn progression
   hasLearnedVerse: false,
@@ -1864,12 +1866,20 @@ function screenToIndex(screen){
 
 function go(nextScreen){
   const from = State.screen;
-  if (from === nextScreen) return;
+
+  if (from === nextScreen){
+    State.forceSlideForward = false;
+    return;
+  }
 
   const fromIdx = screenToIndex(from);
   const toIdx = screenToIndex(nextScreen);
 
-  if (State.isSliding) return;
+  if (State.isSliding){
+    State.forceSlideForward = false;
+    return;
+  }
+
   State.isSliding = true;
 
   // stop any learn audio/echo sequence when leaving a screen
@@ -1930,6 +1940,7 @@ function go(nextScreen){
       State.isSliding = false;
       State.transitionFromIdx = null;
       State.transitionToIdx = null;
+      State.forceSlideForward = false;
       render();
     }, 340);
   });
@@ -1945,9 +1956,29 @@ function setScreen(screen){
 
 function updateSlideTransforms(){
   const slides = document.querySelectorAll(".slide");
+
+  const forceForward =
+    State.isSliding &&
+    State.forceSlideForward &&
+    State.transitionFromIdx !== null &&
+    State.transitionToIdx !== null;
+
   slides.forEach(slide => {
     const idx = Number(slide.dataset.idx || 0);
-    const dx = (idx - State.slideX) * 100;
+    let dx;
+
+    if (forceForward){
+      if (idx === State.transitionFromIdx){
+        dx = (State.slideX === State.transitionFromIdx) ? 0 : -100;
+      } else if (idx === State.transitionToIdx){
+        dx = (State.slideX === State.transitionFromIdx) ? 100 : 0;
+      } else {
+        dx = (idx - State.slideX) * 100;
+      }
+    } else {
+      dx = (idx - State.slideX) * 100;
+    }
+
     slide.style.transform = `translateX(${dx}%)`;
   });
 }
