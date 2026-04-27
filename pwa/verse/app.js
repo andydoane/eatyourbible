@@ -1535,6 +1535,7 @@ const State = {
   listenDone: false,
   listenPlaying: false,
   listenAutoStarting: false,
+  listenAutoFallbackReady: false,
 
   chunkDone: false,
   chunkRunning: false,
@@ -1819,6 +1820,7 @@ function resetLearn(goTitle=false){
   State.listenDone = false;
   State.listenPlaying = false;
   State.listenAutoStarting = false;
+  State.listenAutoFallbackReady = false;
 
   State.learnLevel = keepLearnLevel;
   State.learnStartScreen = keepLearnStartScreen;
@@ -2325,6 +2327,7 @@ async function playInstruction(key, { doneFlag = null, delayMs = 0, after = null
 
 function listenPlay(){
   State.listenAutoStarting = false;
+  State.listenAutoFallbackReady = false;
   State.listenPlaying = true;
   State.listenDone = false;
   State.audioMode = "listen_ref";
@@ -2338,6 +2341,8 @@ function listenPlay(){
     })
     .catch(() => {
       State.listenPlaying = false;
+      State.listenAutoStarting = false;
+      State.listenAutoFallbackReady = true;
       State.audioMode = null;
       render();
 
@@ -2460,17 +2465,30 @@ function getFinalRecallPct(){
   return Math.max(0, 1 - elapsed / State.finalRecallDurationMs);
 }
 
-function runAfterSlide(fn){
-  setTimeout(() => {
+function runAfterSlide(fn, { timeoutMs = 2200, intervalMs = 50 } = {}){
+  const startedAt = Date.now();
+
+  function check(){
     if (!State.isSliding){
       fn();
+      return;
     }
-  }, 380);
+
+    if (Date.now() - startedAt >= timeoutMs){
+      fn();
+      return;
+    }
+
+    setTimeout(check, intervalMs);
+  }
+
+  setTimeout(check, intervalMs);
 }
 
 function goToListenAndStart(){
   State.listenDone = false;
   State.listenAutoStarting = true;
+  State.listenAutoFallbackReady = false;
 
   go(Screen.LISTEN);
 
@@ -2484,6 +2502,18 @@ function goToListenAndStart(){
       listenPlay();
     }
   });
+
+  setTimeout(() => {
+    if (
+      State.screen === Screen.LISTEN &&
+      State.listenAutoStarting &&
+      !State.listenPlaying &&
+      !State.listenDone
+    ){
+      State.listenAutoFallbackReady = true;
+      render();
+    }
+  }, 1600);
 }
 
 function goToChunksAndStart(){
@@ -3806,14 +3836,20 @@ function screenListen(idx){
         <div class="coach-actions">
           ${
             (
-              State.listenAutoStarting ||
               State.listenPlaying ||
-              State.instructionPlaying
+              State.instructionPlaying ||
+              (State.listenAutoStarting && !State.listenAutoFallbackReady)
             )
             ? ``
             : `
                 <button class="carousel-main no-zoom" id="btnListenPlay" style="max-width:520px;">
-                  ${State.listenDone ? "What It Means" : "🔊 Read it to me"}
+                  ${
+                    State.listenDone
+                      ? "What It Means"
+                      : State.listenAutoFallbackReady
+                        ? "Tap to Play Verse"
+                        : "🔊 Read it to me"
+                  }
                 </button>
               `
           }
