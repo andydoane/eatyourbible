@@ -1553,6 +1553,7 @@ const State = {
   sayVerseActive: false,
   sayVerseStartedAt: 0,
   sayVerseDurationMs: 0,
+  hideReadyForFinal: false,
   finalRecallActive: false,
   finalRecallStartedAt: 0,
   finalRecallDurationMs: 0,
@@ -1840,6 +1841,7 @@ function resetLearn(goTitle=false){
   State.sayVerseActive = false;
   State.sayVerseStartedAt = 0;
   State.sayVerseDurationMs = 0;
+  State.hideReadyForFinal = false;
 
   reshuffleHidePlan();
 
@@ -1932,6 +1934,7 @@ function go(nextScreen){
     reshuffleHidePlan();
     State.hideCount = 0;
     State.revealedTokenIdx = new Set();
+    State.hideReadyForFinal = false;
   }
 
   // Track the exact screens involved in this transition
@@ -2554,12 +2557,15 @@ function goToFinalRecallAndStart(){
 
 async function startHideRound(){
   if (State.sayVerseActive) return;
+  if (State.hideReadyForFinal) return;
 
   if (State.hideCount >= planMixed.length){
-    startLearnInstruction("final");
+    State.hideReadyForFinal = true;
+    render();
     return;
   }
 
+  State.hideReadyForFinal = false;
   State.hideCount = Math.min(planMixed.length, State.hideCount + hideWordsPerRound());
   State.revealedTokenIdx = new Set();
 
@@ -2603,7 +2609,8 @@ async function startHideRound(){
   State.sayVerseDurationMs = 0;
 
   if (State.hideCount >= planMixed.length){
-    startLearnInstruction("final");
+    State.hideReadyForFinal = true;
+    render();
     return;
   }
 
@@ -4038,12 +4045,8 @@ function screenHide(idx){
   if (State.sayVerseActive){
     buttonLabel = hiddenNow > 0 ? removeAnotherLabel : removeLabel;
   } else if (done){
-    coachBody = `<div class="coach-text">${
-      State.instructionPlaying && State.instructionKey === "final"
-        ? "Time for your final test! Try to say the verse using only the first letter of each word."
-        : "Tap the button to test if you can say the whole verse from memory."
-    }</div>`;
-    buttonLabel = "Begin Final Test";
+    coachBody = `<div class="coach-text">Ready to test your progress?</div>`;
+    buttonLabel = "Test Your Progress";
   } else if (hiddenNow > 0){
     buttonLabel = removeAnotherLabel;
   }
@@ -4088,7 +4091,7 @@ function screenHide(idx){
   if (btnRemove){
     btnRemove.onclick = async () => {
       if (done){
-        goToFinalRecallAndStart();
+        startLearnInstruction("final");
         return;
       }
 
