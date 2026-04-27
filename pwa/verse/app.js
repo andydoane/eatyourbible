@@ -144,7 +144,6 @@ function homePillHtml(label = "Home"){
   return `
     <button class="screen-home-pill no-zoom" data-home-pill type="button" aria-label="${label}">
       ${SVG_HOME}
-      <span>${label}</span>
     </button>
   `;
 }
@@ -153,7 +152,6 @@ function titleHomePillHtml(label = "Home"){
   return `
     <button class="screen-title-pill no-zoom" data-home-pill type="button" aria-label="${label}">
       ${SVG_HOME}
-      <span>${label}</span>
     </button>
   `;
 }
@@ -162,7 +160,6 @@ function zooBackPillHtml(label = "Zoo"){
   return `
     <button class="screen-title-pill no-zoom" data-zoo-back-pill type="button" aria-label="Back to BibloPet Zoo">
       ${SVG_BACK}
-      <span>${label}</span>
     </button>
   `;
 }
