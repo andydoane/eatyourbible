@@ -3045,7 +3045,8 @@ if (btnHome){
 function makeSlide({idx, bg, navHidden=false, inner}){
   const learnLayout = inner?.querySelector?.(".learn-layout");
   const learnRef = learnLayout?.querySelector?.(".learn-ref");
-  const hasLearnMenu = !!learnLayout && !!learnRef;
+  const isInstructionLayout = !!learnLayout?.classList?.contains("learn-layout-instruction");
+  const hasLearnMenu = !!learnLayout && !!learnRef && !isInstructionLayout;
 
   if (hasLearnMenu){
     navHidden = true;
@@ -3640,9 +3641,6 @@ function screenLearnInstruction(idx){
 
   inner.innerHTML = `
     <div class="learn-layout learn-layout-instruction">
-      <div class="learn-ref">
-        <div class="verse-ref-pill">${VERSE_REF}</div>
-      </div>
 
       <div class="learn-instruction-card">
         <img
@@ -3728,11 +3726,10 @@ function screenListen(idx){
           ${
             (
               State.listenPlaying ||
-              State.instructionPlaying ||
-              (State.learnLevel === "not_at_all" && !State.listenInstructionDone && !State.listenDone)
+              State.instructionPlaying
             )
-              ? ``
-              : `
+            ? ``
+            : `
                 <button class="carousel-main no-zoom" id="btnListenPlay" style="max-width:520px;">
                   ${State.listenDone ? "What It Means" : "🔊 Read it to me"}
                 </button>
