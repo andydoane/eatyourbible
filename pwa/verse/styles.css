@@ -218,10 +218,10 @@
 
 .learn-layout-instruction{
   height: 100%;
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-  gap: 12px;
-  padding: calc(12px + var(--safeT)) 18px calc(18px + var(--safeB));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(18px + var(--safeT)) 18px calc(18px + var(--safeB));
 }
 
 .learn-instruction-card{
@@ -261,14 +261,23 @@
 }
 
 .learn-instruction-actions{
-  min-height: 78px;
+  width: 100%;
+  min-height: 58px;
+  display: flex;
+  align-items: center;
   justify-content: center;
+  margin-top: 4px;
+}
+
+.learn-instruction-actions .carousel-main{
+  width: min(100%, 520px);
+  flex: 0 0 auto;
 }
 
 @media (max-height: 680px){
   .learn-layout-instruction{
-    gap: 8px;
-    padding-top: calc(8px + var(--safeT));
+    padding-top: calc(12px + var(--safeT));
+    padding-bottom: calc(12px + var(--safeB));
   }
 
   .learn-instruction-card{
@@ -280,7 +289,7 @@
   }
 
   .learn-instruction-actions{
-    min-height: 66px;
+    min-height: 54px;
   }
 }
 

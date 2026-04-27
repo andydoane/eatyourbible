@@ -3652,14 +3652,12 @@ function screenLearnInstruction(idx){
 
         <div class="learn-instruction-title">${title}</div>
         <div class="learn-instruction-subtext">${subtext}</div>
-      </div>
 
-      <div class="learn-coach learn-instruction-actions">
-        <div class="coach-actions">
+        <div class="learn-instruction-actions">
           ${
             State.learnInstructionReady
               ? `
-                <button class="carousel-main no-zoom" id="btnLearnInstructionContinue" style="max-width:520px;">
+                <button class="carousel-main no-zoom" id="btnLearnInstructionContinue">
                   ${button}
                 </button>
               `
