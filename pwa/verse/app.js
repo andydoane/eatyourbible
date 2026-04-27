@@ -3685,9 +3685,11 @@ function screenLearnInstruction(idx){
     };
   }
 
-  setTimeout(() => {
-    playLearnInstructionAudio();
-  }, 0);
+  runAfterSlide(() => {
+    if (State.screen === Screen.LEARN_INSTRUCTION){
+      playLearnInstructionAudio();
+    }
+  });
 
   return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner});
 }
