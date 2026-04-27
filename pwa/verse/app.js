@@ -2310,7 +2310,7 @@ audioEl.addEventListener("ended", () => {
     State.audioMode = null;
     State.listenDone = true;
 
-    go(Screen.MEANING);
+    startLearnInstruction("meaning");
   }
 });
 
@@ -2400,19 +2400,23 @@ function runAfterSlide(fn){
 
 function goToListenAndStart(){
   State.listenDone = false;
-  State.listenPlaying = false;
+
+  // Hide the old Listen button immediately while the slide moves in.
+  State.listenPlaying = true;
+  State.audioMode = "listen_pending";
 
   go(Screen.LISTEN);
 
   runAfterSlide(() => {
     if (
       State.screen === Screen.LISTEN &&
-      !State.listenPlaying &&
+      State.audioMode === "listen_pending" &&
       !State.listenDone
     ){
       listenPlay();
     }
   });
+}
 }
 
 function goToChunksAndStart(){
@@ -3748,7 +3752,7 @@ function screenListen(idx){
   if (btn){
     btn.onclick = async () => {
       if (State.listenDone){
-        go(Screen.MEANING);
+        startLearnInstruction("meaning");
         return;
       }
 
