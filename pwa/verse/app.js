@@ -149,6 +149,40 @@ function homePillHtml(label = "Home"){
   `;
 }
 
+function titleHomePillHtml(label = "Home"){
+  return `
+    <button class="screen-title-pill no-zoom" data-home-pill type="button" aria-label="${label}">
+      ${SVG_HOME}
+      <span>${label}</span>
+    </button>
+  `;
+}
+
+function zooBackPillHtml(label = "Zoo"){
+  return `
+    <button class="screen-title-pill no-zoom" data-zoo-back-pill type="button" aria-label="Back to BibloPet Zoo">
+      ${SVG_BACK}
+      <span>${label}</span>
+    </button>
+  `;
+}
+
+function bindZooBackPill(rootEl){
+  const btn = rootEl?.querySelector?.("[data-zoo-back-pill]");
+  if (!btn) return;
+
+  btn.onclick = (e) => {
+    e.stopPropagation();
+
+    try {
+      audioEl.pause();
+      audioEl.currentTime = 0;
+    } catch(e){}
+
+    go(Screen.PROGRESS);
+  };
+}
+
 function bindHomePill(rootEl){
   const btn = rootEl?.querySelector?.("[data-home-pill]");
   if (!btn) return;
@@ -3078,9 +3112,13 @@ function screenProgress(idx){
 
   if (!hasVerses){
     wrap.innerHTML = `
-      ${homePillHtml()}
       <div class="progress-shell">
-        <div class="progress-heading">BibloPet Zoo</div>
+        <div class="biblopet-title-row">
+          ${titleHomePillHtml()}
+          <div class="progress-heading">BibloPet Zoo</div>
+          <div class="biblopet-title-spacer"></div>
+        </div>
+
         <div class="progress-subheading">Practice each verse to unlock its BibloPet.</div>
         <div class="progress-empty-card">
           No verses found yet.
@@ -3111,9 +3149,13 @@ function screenProgress(idx){
   }).join("");
 
   wrap.innerHTML = `
-    ${homePillHtml()}
     <div class="progress-shell">
-      <div class="progress-heading">BibloPet Zoo</div>
+      <div class="biblopet-title-row">
+        ${titleHomePillHtml()}
+        <div class="progress-heading">BibloPet Zoo</div>
+        <div class="biblopet-title-spacer"></div>
+      </div>
+
       <div class="progress-subheading">Practice each verse to unlock its BibloPet.</div>
 
       <div class="progress-toolbar">
@@ -3179,9 +3221,12 @@ function screenVerseDetail(idx){
   wrap.className = "detail-screen";
 
   wrap.innerHTML = `
-    ${homePillHtml()}
     <div class="detail-shell">
-      <div class="detail-heading">${verseItem ? verseItem.ref : ""}</div>
+      <div class="biblopet-title-row">
+        ${zooBackPillHtml()}
+        <div class="detail-heading">${verseItem ? verseItem.ref : ""}</div>
+        <div class="biblopet-title-spacer"></div>
+      </div>
 
       <div class="detail-scroll">
         <div class="pet-card">
@@ -3306,7 +3351,7 @@ function screenVerseDetail(idx){
     };
   }
 
-  bindHomePill(wrap);
+  bindZooBackPill(wrap);
 
   requestAnimationFrame(() => {
     applyPetMotionVars(wrap);
@@ -3373,9 +3418,13 @@ function screenPetStats(idx){
   wrap.className = "pet-stats-screen";
 
   wrap.innerHTML = `
-    ${homePillHtml()}
     <div class="pet-stats-shell">
-      <div class="pet-stats-heading">BibloPet Stats</div>
+      <div class="biblopet-title-row">
+        ${zooBackPillHtml()}
+        <div class="pet-stats-heading">BibloPet Stats</div>
+        <div class="biblopet-title-spacer"></div>
+      </div>
+
       <div class="pet-stats-subheading">Here’s how your BibloPets are doing.</div>
 
       <div class="pet-stats-grid">
@@ -3412,7 +3461,7 @@ function screenPetStats(idx){
     </div>
   `;
 
-  bindHomePill(wrap);
+  bindZooBackPill(wrap);
 
   return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
 }

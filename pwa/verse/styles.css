@@ -118,10 +118,80 @@
   transform: scale(0.98);
 }
 
-.progress-screen .progress-shell,
-.detail-screen .detail-shell,
-.pet-stats-screen .pet-stats-shell{
-  padding-top: calc(var(--tap) + 14px);
+/* ---------- BibloPet title-row navigation ---------- */
+.biblopet-title-row{
+  width: 100%;
+  display: grid;
+  grid-template-columns: 88px 1fr 88px;
+  align-items: center;
+  gap: 8px;
+}
+
+.biblopet-title-row .progress-heading,
+.biblopet-title-row .detail-heading,
+.biblopet-title-row .pet-stats-heading{
+  margin: 0;
+  min-width: 0;
+  text-align: center;
+  justify-self: center;
+}
+
+.screen-title-pill{
+  width: 88px;
+  min-height: var(--tap);
+  border: none;
+  border-radius: 999px;
+  padding: 0 10px;
+  background: rgba(0,0,0,0.30);
+  color: #ffffff;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+  cursor: pointer;
+}
+
+.screen-title-pill .nav-icon{
+  width: 22px;
+  height: 22px;
+}
+
+.screen-title-pill:active{
+  transform: scale(0.98);
+}
+
+.biblopet-title-spacer{
+  width: 88px;
+  height: var(--tap);
+}
+
+@media (max-width: 380px){
+  .biblopet-title-row{
+    grid-template-columns: 76px 1fr 76px;
+    gap: 6px;
+  }
+
+  .screen-title-pill{
+    width: 76px;
+    min-height: 40px;
+    padding: 0 8px;
+    font-size: 14px;
+  }
+
+  .screen-title-pill .nav-icon{
+    width: 20px;
+    height: 20px;
+  }
+
+  .biblopet-title-spacer{
+    width: 76px;
+    height: 40px;
+  }
 }
 
 .pet-unlock-screen .pet-unlock-shell{
