@@ -1540,21 +1540,27 @@ const State = {
   chunkDone: false,
   chunkRunning: false,
   chunkAutoStarting: false,
+  chunkAutoFallbackReady: false,
   chunkIndex: 0,
   chunkPassCount: 0,
 
   echoDone: false,
   echoRunning: false,
   echoAutoStarting: false,
+  echoAutoFallbackReady: false,
   echoNeedsSecondPass: false,
   echoIndex: 0,
   echoSpeaking: false,
   hideCount: 0,
   revealedTokenIdx: new Set(),
+  hideAutoStarting: false,
+  hideAutoFallbackReady: false,
   sayVerseActive: false,
   sayVerseStartedAt: 0,
   sayVerseDurationMs: 0,
   hideReadyForFinal: false,
+  finalRecallAutoStarting: false,
+  finalRecallAutoFallbackReady: false,
   finalRecallActive: false,
   finalRecallStartedAt: 0,
   finalRecallDurationMs: 0,
@@ -1828,18 +1834,22 @@ function resetLearn(goTitle=false){
   State.chunkDone = false;
   State.chunkRunning = false;
   State.chunkAutoStarting = false;
+  State.chunkAutoFallbackReady = false;
   State.chunkIndex = 0;
   State.chunkPassCount = 0;
 
   State.echoDone = false;
   State.echoRunning = false;
   State.echoAutoStarting = false;
+  State.echoAutoFallbackReady = false;
   State.echoNeedsSecondPass = false;
   State.echoIndex = 0;
   State.echoSpeaking = false;
 
   State.hideCount = 0;
   State.revealedTokenIdx = new Set();
+  State.hideAutoStarting = false;
+  State.hideAutoFallbackReady = false;
   State.sayVerseActive = false;
   State.sayVerseStartedAt = 0;
   State.sayVerseDurationMs = 0;
@@ -1847,6 +1857,8 @@ function resetLearn(goTitle=false){
 
   reshuffleHidePlan();
 
+  State.finalRecallAutoStarting = false;
+  State.finalRecallAutoFallbackReady = false;
   State.finalRecallActive = false;
   State.finalRecallStartedAt = 0;
   State.finalRecallDurationMs = 0;
@@ -2516,51 +2528,112 @@ function goToListenAndStart(){
   }, 1600);
 }
 
+
 function goToChunksAndStart(){
   State.chunkAutoStarting = true;
+  State.chunkAutoFallbackReady = false;
+
   go(Screen.CHUNKS);
 
   runAfterSlide(() => {
     if (
       State.screen === Screen.CHUNKS &&
+      State.chunkAutoStarting &&
       !State.chunkRunning &&
       State.chunkPassCount < 2
     ){
       startChunkFlow();
     } else {
       State.chunkAutoStarting = false;
+      State.chunkAutoFallbackReady = false;
       render();
     }
   });
+
+  setTimeout(() => {
+    if (
+      State.screen === Screen.CHUNKS &&
+      State.chunkAutoStarting &&
+      !State.chunkRunning &&
+      State.chunkPassCount < 2
+    ){
+      State.chunkAutoFallbackReady = true;
+      render();
+    }
+  }, 1600);
 }
 
 
 function goToEchoAndStart(){
   State.echoAutoStarting = true;
+  State.echoAutoFallbackReady = false;
+
   go(Screen.ECHO);
 
   runAfterSlide(() => {
     if (State.screen !== Screen.ECHO){
       State.echoAutoStarting = false;
+      State.echoAutoFallbackReady = false;
       render();
       return;
     }
 
-    if (!State.echoRunning && !State.echoDone){
+    if (
+      State.echoAutoStarting &&
+      !State.echoRunning &&
+      !State.echoDone
+    ){
       startEchoFlow();
     }
   });
+
+  setTimeout(() => {
+    if (
+      State.screen === Screen.ECHO &&
+      State.echoAutoStarting &&
+      !State.echoRunning &&
+      !State.echoDone
+    ){
+      State.echoAutoFallbackReady = true;
+      render();
+    }
+  }, 1600);
 }
 
 
 
 function goToHideAndStartRound(){
+  State.hideAutoStarting = true;
+  State.hideAutoFallbackReady = false;
+
   go(Screen.HIDE);
+
   runAfterSlide(() => {
-    if (State.screen === Screen.HIDE && !State.sayVerseActive && State.hideCount === 0){
+    if (
+      State.screen === Screen.HIDE &&
+      State.hideAutoStarting &&
+      !State.sayVerseActive &&
+      State.hideCount === 0
+    ){
       startHideRound();
+    } else if (State.screen !== Screen.HIDE){
+      State.hideAutoStarting = false;
+      State.hideAutoFallbackReady = false;
+      render();
     }
   });
+
+  setTimeout(() => {
+    if (
+      State.screen === Screen.HIDE &&
+      State.hideAutoStarting &&
+      !State.sayVerseActive &&
+      State.hideCount === 0
+    ){
+      State.hideAutoFallbackReady = true;
+      render();
+    }
+  }, 1600);
 }
 
 function hideWordsPerRound(){
@@ -2572,22 +2645,47 @@ function hideTimerMultiplier(){
 }
 
 function goToFinalRecallAndStart(){
+  State.finalRecallAutoStarting = true;
+  State.finalRecallAutoFallbackReady = false;
+
   go(Screen.FINAL_RECALL);
+
   runAfterSlide(() => {
     if (
       State.screen === Screen.FINAL_RECALL &&
+      State.finalRecallAutoStarting &&
       !State.finalRecallActive &&
       !State.finalRecallDone &&
       !State.finalRecallRevealed
     ){
       startFinalRecallFlow();
+    } else if (State.screen !== Screen.FINAL_RECALL){
+      State.finalRecallAutoStarting = false;
+      State.finalRecallAutoFallbackReady = false;
+      render();
     }
   });
+
+  setTimeout(() => {
+    if (
+      State.screen === Screen.FINAL_RECALL &&
+      State.finalRecallAutoStarting &&
+      !State.finalRecallActive &&
+      !State.finalRecallDone &&
+      !State.finalRecallRevealed
+    ){
+      State.finalRecallAutoFallbackReady = true;
+      render();
+    }
+  }, 1600);
 }
 
 async function startHideRound(){
   if (State.sayVerseActive) return;
   if (State.hideReadyForFinal) return;
+
+  State.hideAutoStarting = false;
+  State.hideAutoFallbackReady = false;
 
   if (State.hideCount >= planMixed.length){
     State.hideReadyForFinal = true;
@@ -2650,6 +2748,8 @@ async function startHideRound(){
 async function startFinalRecallFlow(){
   if (State.finalRecallActive) return;
 
+  State.finalRecallAutoStarting = false;
+  State.finalRecallAutoFallbackReady = false;
   State.finalRecallActive = true;
   State.finalRecallStartedAt = 0;
   State.finalRecallDurationMs = 0;
@@ -2688,6 +2788,7 @@ async function startChunkFlow(){
   if (State.chunkRunning) return;
 
   State.chunkAutoStarting = false;
+  State.chunkAutoFallbackReady = false;
 
   // cancel any prior learn audio sequence
   cancelLearnAudio();
@@ -2774,6 +2875,7 @@ async function startEchoFlow(){
   if (State.echoRunning) return;
 
   State.echoAutoStarting = false;
+  State.echoAutoFallbackReady = false;
 
   // cancel any prior
   cancelLearnAudio();
@@ -3965,7 +4067,11 @@ function screenChunks(idx){
 
         <div class="coach-actions">
           ${
-            (State.chunkRunning || State.chunkAutoStarting || State.instructionPlaying)
+            (
+              State.chunkRunning ||
+              State.instructionPlaying ||
+              (State.chunkAutoStarting && !State.chunkAutoFallbackReady)
+            )
               ? ``
               : `
                 <button class="carousel-main no-zoom" id="btnChunks" style="max-width:520px;">
@@ -4030,7 +4136,11 @@ function screenEcho(idx){
 
         <div class="coach-actions">
           ${
-              (State.echoRunning || State.echoAutoStarting || State.instructionPlaying)
+              (
+                State.echoRunning ||
+                State.instructionPlaying ||
+                (State.echoAutoStarting && !State.echoAutoFallbackReady)
+              )
               ? ``
               : `
                 <button class="carousel-main no-zoom" id="btnEcho" style="max-width:520px;">
@@ -4104,7 +4214,11 @@ function screenHide(idx){
 
         <div class="coach-actions">
           ${
-            (State.sayVerseActive || State.instructionPlaying)
+            (
+              State.sayVerseActive ||
+              State.instructionPlaying ||
+              (State.hideAutoStarting && !State.hideAutoFallbackReady)
+            )
               ? ``
               : `
                 <button
@@ -4145,7 +4259,9 @@ function screenFinalRecall(idx){
   inner.style.height = "100%";
 
   let coachBody = `<div class="coach-text">Try saying the entire verse from memory.</div>`;
-  let actionHtml = ``;
+  let actionHtml = State.finalRecallAutoFallbackReady
+    ? `<button class="carousel-main no-zoom" id="btnFinalStart" style="max-width:520px;">Begin Test</button>`
+    : ``;
 
   if (State.finalRecallActive){
     coachBody = `
@@ -4186,7 +4302,12 @@ function screenFinalRecall(idx){
     .querySelector("#finalRecallStage")
     .appendChild(finalRecallNode(State.finalRecallRevealed));
 
-  const btnFinalReveal = inner.querySelector("#btnFinalReveal");
+  const btnFinalStart = inner.querySelector("#btnFinalStart");
+  if (btnFinalStart){
+    btnFinalStart.onclick = () => {
+      startFinalRecallFlow();
+    };
+  }
   if (btnFinalReveal){
     btnFinalReveal.onclick = () => {
       State.finalRecallRevealed = true;
