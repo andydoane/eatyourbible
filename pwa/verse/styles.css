@@ -212,6 +212,79 @@
   }
 }
 
+/* =========================
+   Learn Instruction Screens
+   ========================= */
+
+.learn-layout-instruction{
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 12px;
+  padding: calc(12px + var(--safeT)) 18px calc(18px + var(--safeB));
+}
+
+.learn-instruction-card{
+  width: min(92vw, 720px);
+  margin: 0 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  text-align: center;
+}
+
+.learn-instruction-image{
+  width: min(70vw, 360px);
+  max-height: 38vh;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.learn-instruction-title{
+  font-size: clamp(32px, 8vw, 60px);
+  font-weight: 900;
+  line-height: 1.02;
+  text-wrap: balance;
+}
+
+.learn-instruction-subtext{
+  width: min(92vw, 620px);
+  font-size: clamp(18px, 4.4vw, 28px);
+  font-weight: 800;
+  line-height: 1.18;
+  opacity: 0.96;
+  text-wrap: balance;
+}
+
+.learn-instruction-actions{
+  min-height: 78px;
+  justify-content: center;
+}
+
+@media (max-height: 680px){
+  .learn-layout-instruction{
+    gap: 8px;
+    padding-top: calc(8px + var(--safeT));
+  }
+
+  .learn-instruction-card{
+    gap: 9px;
+  }
+
+  .learn-instruction-image{
+    max-height: 30vh;
+  }
+
+  .learn-instruction-actions{
+    min-height: 66px;
+  }
+}
+
+
 /* ---------- Learn flow top menu ---------- */
 .learn-layout.learn-layout-with-menu .learn-ref{
   display: grid;

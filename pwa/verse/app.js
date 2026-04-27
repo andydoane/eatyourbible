@@ -327,6 +327,175 @@ function setAudioSrc(src){
   try { audioEl.load(); } catch(e){}
 }
 
+function getRemoveInstructionButtonText(){
+  return hideWordsPerRound() > 1 ? "Remove Words" : "Remove a Word";
+}
+
+function getLearnInstructionConfig(key){
+  const configs = {
+    listen: {
+      image: "verse_listen.png",
+      title: "Listen to the verse",
+      subtext: "Tap the button to listen to the verse.",
+      button: "Read It To Me",
+      audio: "instructions_listen.mp3"
+    },
+    meaning: {
+      image: "verse_meaning.png",
+      title: "What It Means",
+      subtext: "Let's look at what this verse means.",
+      button: "What It Means",
+      audio: "instructions_meaning.mp3"
+    },
+    chunks1: {
+      image: "verse_chunks.png",
+      title: "Break It Down",
+      subtext: "Let's break the verse down into bite-sized chunks.",
+      button: "Break It Down",
+      audio: "instructions_chunks1.mp3"
+    },
+    chunks2: {
+      image: "verse_chunks.png",
+      title: "One More Time",
+      subtext: "Let's do that one more time.",
+      button: "One More Time",
+      audio: "instructions_chunks2.mp3"
+    },
+    echo1: {
+      image: "verse_echo.png",
+      title: "Echo the Verse",
+      subtext: "Repeat after me when each chunk turns green.",
+      button: "Echo the Verse",
+      audio: "instructions_echo1.mp3"
+    },
+    remove: {
+      image: "verse_remove.png",
+      title: "Remove Words",
+      subtext: "Let's remove one word at a time.",
+      button: getRemoveInstructionButtonText(),
+      audio: "instructions_remove.mp3"
+    },
+    final: {
+      image: "verse_final.png",
+      title: "Final Test",
+      subtext: "Try to say the verse with only the first letters visible.",
+      button: "Begin Test",
+      audio: "instructions_final.mp3"
+    },
+    games: {
+      image: "verse_games.png",
+      title: "Practice the Verse",
+      subtext: "Let's play some games.",
+      button: "Practice Games",
+      audio: "instructions_games.mp3"
+    }
+  };
+
+  return configs[key] || null;
+}
+
+function startLearnInstruction(key){
+  State.learnInstructionKey = key;
+  State.learnInstructionReady = false;
+  State.learnInstructionAudioStarted = false;
+  State.instructionPlaying = false;
+  State.instructionKey = "";
+
+  go(Screen.LEARN_INSTRUCTION);
+}
+
+async function playLearnInstructionAudio(){
+  if (State.screen !== Screen.LEARN_INSTRUCTION) return;
+  if (State.learnInstructionAudioStarted) return;
+
+  const cfg = getLearnInstructionConfig(State.learnInstructionKey);
+  if (!cfg) return;
+
+  State.learnInstructionAudioStarted = true;
+  State.learnInstructionReady = false;
+  State.instructionPlaying = true;
+  State.instructionKey = State.learnInstructionKey;
+  State.audioMode = "instruction";
+  render();
+
+  setAudioSrc(`${AUDIO_DIR}${cfg.audio}`);
+  audioEl.currentTime = 0;
+
+  try {
+    await safePlay();
+  } catch(e) {
+    State.instructionPlaying = false;
+    State.learnInstructionReady = true;
+    render();
+    return;
+  }
+
+  await new Promise((resolve) => {
+    const onEnd = () => {
+      audioEl.removeEventListener("ended", onEnd);
+      resolve();
+    };
+    audioEl.addEventListener("ended", onEnd);
+  });
+
+  if (State.screen !== Screen.LEARN_INSTRUCTION) return;
+
+  State.instructionPlaying = false;
+  State.instructionKey = "";
+  State.audioMode = null;
+  State.learnInstructionReady = true;
+  render();
+}
+
+function continueLearnInstruction(){
+  const key = State.learnInstructionKey;
+
+  State.learnInstructionReady = false;
+  State.learnInstructionAudioStarted = false;
+  State.instructionPlaying = false;
+  State.instructionKey = "";
+
+  if (key === "listen"){
+    go(Screen.LISTEN);
+    return;
+  }
+
+  if (key === "meaning"){
+    go(Screen.MEANING);
+    return;
+  }
+
+  if (key === "chunks1" || key === "chunks2"){
+    goToChunksAndStart();
+    return;
+  }
+
+  if (key === "echo1"){
+    goToEchoAndStart();
+    return;
+  }
+
+  if (key === "remove"){
+    goToHideAndStartRound();
+    return;
+  }
+
+  if (key === "final"){
+    goToFinalRecallAndStart();
+    return;
+  }
+
+  if (key === "games"){
+    State.hasLearnedVerse = true;
+
+    if (VERSE_ID){
+      markLearnCompleted(VERSE_ID);
+    }
+
+    go(Screen.PRACTICE);
+  }
+}
+
 /* JSON-configured verse */
 let cfg = null;
 let VERSE_ID = null;
@@ -1273,6 +1442,7 @@ const Screen = {
   VERSE_DETAIL: "verse_detail",
   LEARN_LEVEL: "learn_level",
   PRACTICE_GATE: "practice_gate",
+  LEARN_INSTRUCTION: "learn_instruction",
   LISTEN: "listen",
   MEANING: "meaning",
   CHUNKS: "chunks",
@@ -1287,6 +1457,7 @@ const Screen = {
 
 function isLearnFlowScreen(screen){
   return (
+    screen === Screen.LEARN_INSTRUCTION ||
     screen === Screen.LISTEN ||
     screen === Screen.MEANING ||
     screen === Screen.CHUNKS ||
@@ -1311,6 +1482,9 @@ const State = {
   audioMode: null,
   instructionPlaying: false,
   instructionKey: "",
+  learnInstructionKey: "",
+  learnInstructionReady: false,
+  learnInstructionAudioStarted: false,
   listenInstructionDone: false,
   meaningInstructionDone: false,
   chunksIntroDone: false,
@@ -1599,6 +1773,9 @@ function resetLearn(goTitle=false){
   State.audioMode = null;
   State.instructionPlaying = false;
   State.instructionKey = "";
+  State.learnInstructionKey = "";
+  State.learnInstructionReady = false;
+  State.learnInstructionAudioStarted = false;
   State.listenInstructionDone = false;
   State.meaningInstructionDone = false;
   State.chunksIntroDone = false;
@@ -1669,6 +1846,7 @@ function screenToIndex(screen){
     Screen.VERSE_DETAIL,
     Screen.LEARN_LEVEL,
     Screen.PRACTICE_GATE,
+    Screen.LEARN_INSTRUCTION,
     Screen.LISTEN,
     Screen.MEANING,
     Screen.CHUNKS,
@@ -1814,20 +1992,7 @@ function learnLevelRun(){
 
   resetLearn(false);
 
-  if (opt.startScreen === Screen.LISTEN){
-    go(Screen.LISTEN);
-    runAfterSlide(() => {
-      startListenInstructionIfNeeded();
-    });
-    return;
-  }
-
-  if (opt.startScreen === Screen.ECHO){
-    goToEchoAndStart();
-    return;
-  }
-
-  go(opt.startScreen);
+  startLearnInstruction("listen");
 }
 
 /* Practice carousel controls */
@@ -2248,8 +2413,13 @@ function runAfterSlide(fn){
 function goToChunksAndStart(){
   State.chunkAutoStarting = true;
   go(Screen.CHUNKS);
+
   runAfterSlide(() => {
-    if (State.screen === Screen.CHUNKS && !State.chunkRunning && State.chunkPassCount === 0){
+    if (
+      State.screen === Screen.CHUNKS &&
+      !State.chunkRunning &&
+      State.chunkPassCount < 2
+    ){
       startChunkFlow();
     } else {
       State.chunkAutoStarting = false;
@@ -2257,6 +2427,7 @@ function goToChunksAndStart(){
     }
   });
 }
+
 
 function goToEchoAndStart(){
   State.echoAutoStarting = true;
@@ -2269,23 +2440,13 @@ function goToEchoAndStart(){
       return;
     }
 
-    // Not at all: chunks already handled instruction
-    if (State.learnLevel === "not_at_all"){
-      if (!State.echoRunning && !State.echoDone){
-        startEchoFlow();
-      }
-      return;
+    if (!State.echoRunning && !State.echoDone){
+      startEchoFlow();
     }
-
-    // A little bit / Pretty well → play instruction first
-    playInstruction("echo1", {
-      doneFlag: "echoIntroPromptDone",
-      after: () => {
-        startEchoFlow();
-      }
-    });
   });
 }
+
+
 
 function goToHideAndStartRound(){
   go(Screen.HIDE);
@@ -2322,7 +2483,7 @@ async function startHideRound(){
   if (State.sayVerseActive) return;
 
   if (State.hideCount >= planMixed.length){
-    go(Screen.FINAL_RECALL);
+    startLearnInstruction("final");
     return;
   }
 
@@ -2368,12 +2529,8 @@ async function startHideRound(){
   State.sayVerseStartedAt = 0;
   State.sayVerseDurationMs = 0;
 
-  if (State.hideCount >= planMixed.length && !State.finalIntroPromptDone){
-    render();
-
-    playInstruction("final", {
-      doneFlag: "finalIntroPromptDone"
-    });
+  if (State.hideCount >= planMixed.length){
+    startLearnInstruction("final");
     return;
   }
 
@@ -2414,7 +2571,7 @@ async function startFinalRecallFlow(){
     markLearnCompleted(VERSE_ID);
   }
 
-  render();
+  startLearnInstruction("games");
 }
 
 async function startChunkFlow(){
@@ -2484,25 +2641,23 @@ async function runChunkSequence(){
     State.audioMode = null;
     State.chunkDone = true;
     State.chunkPassCount = Math.min(2, State.chunkPassCount + 1);
-  } finally {
-    if (my === echoCancelToken){
-      State.chunkRunning = false;
+    } finally {
+      if (my === echoCancelToken){
+        State.chunkRunning = false;
 
-      if (State.learnLevel === "not_at_all" && State.chunkPassCount === 1){
-        playInstruction("chunks2", {
-          doneFlag: "chunksReplayPromptDone",
-          delayMs: 450
-        });
-      } else if (State.learnLevel === "not_at_all" && State.chunkPassCount >= 2){
-        playInstruction("echo1", {
-          doneFlag: "echoIntroPromptDone",
-          delayMs: 450
-        });
-      } else {
+        if (State.screen === Screen.CHUNKS && State.chunkPassCount === 1){
+          startLearnInstruction("chunks2");
+          return;
+        }
+
+        if (State.screen === Screen.CHUNKS && State.chunkPassCount >= 2){
+          startLearnInstruction("echo1");
+          return;
+        }
+
         render();
       }
     }
-  }
 }
 
 async function startEchoFlow(){
@@ -2594,45 +2749,15 @@ async function runEchoSequence(){
 
     // restore main verse audio for later
     setAudioSrc(AUDIO_FILE);
-    State.audioMode = null;
-
-    // Handle second echo for "Not at all"
-    if (State.learnLevel === "not_at_all" && !State.echoNeedsSecondPass){
-      State.echoNeedsSecondPass = true;
-      State.echoRunning = false;
-      State.echoSpeaking = false;
-      State.audioMode = null;
-      render();
-
-      playInstruction("echo2", {
-        delayMs: 450,
-        after: () => {
-          startEchoFlow();
-        }
-      });
-
-      return;
-    }
-
-    if (!State.removeIntroPromptDone){
-      State.echoRunning = false;
-      State.echoSpeaking = false;
-      State.audioMode = null;
-      render();
-
-      playInstruction("remove", {
-        doneFlag: "removeIntroPromptDone",
-        delayMs: 450,
-        after: () => {
-          State.echoDone = true;
-          render();
-        }
-      });
-
-      return;
-    }
 
     State.echoDone = true;
+    State.echoRunning = false;
+    State.echoSpeaking = false;
+    State.audioMode = null;
+
+    startLearnInstruction("remove");
+    return;
+
   } finally {
     if (my === echoCancelToken){
       State.echoRunning = false;
@@ -3500,6 +3625,67 @@ function screenLearnLevel(idx){
   return makeSlide({ idx, bg:"var(--purple)", navHidden:true, inner: wrap });
 }
 
+function screenLearnInstruction(idx){
+  const cfg = getLearnInstructionConfig(State.learnInstructionKey);
+
+  const image = cfg?.image || "verse_listen.png";
+  const title = cfg?.title || "";
+  const subtext = cfg?.subtext || "";
+  const button = cfg?.button || "Continue";
+
+  const inner = document.createElement("div");
+  inner.style.display = "flex";
+  inner.style.flexDirection = "column";
+  inner.style.height = "100%";
+
+  inner.innerHTML = `
+    <div class="learn-layout learn-layout-instruction">
+      <div class="learn-ref">
+        <div class="verse-ref-pill">${VERSE_REF}</div>
+      </div>
+
+      <div class="learn-instruction-card">
+        <img
+          class="learn-instruction-image"
+          src="${IMG_DIR}${image}"
+          alt=""
+          draggable="false"
+          onerror="this.style.display='none'">
+
+        <div class="learn-instruction-title">${title}</div>
+        <div class="learn-instruction-subtext">${subtext}</div>
+      </div>
+
+      <div class="learn-coach learn-instruction-actions">
+        <div class="coach-actions">
+          ${
+            State.learnInstructionReady
+              ? `
+                <button class="carousel-main no-zoom" id="btnLearnInstructionContinue" style="max-width:520px;">
+                  ${button}
+                </button>
+              `
+              : ``
+          }
+        </div>
+      </div>
+    </div>
+  `;
+
+  const btn = inner.querySelector("#btnLearnInstructionContinue");
+  if (btn){
+    btn.onclick = () => {
+      continueLearnInstruction();
+    };
+  }
+
+  setTimeout(() => {
+    playLearnInstructionAudio();
+  }, 0);
+
+  return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner});
+}
+
 function screenListen(idx){
   const inner = document.createElement("div");
   inner.style.display = "flex";
@@ -3561,7 +3747,7 @@ function screenListen(idx){
   if (btn){
     btn.onclick = async () => {
       if (State.listenDone){
-        go(Screen.MEANING);
+        startLearnInstruction("meaning");
         return;
       }
 
@@ -3610,12 +3796,7 @@ function screenMeaning(idx){
   const btn = inner.querySelector("#btnMeaningNext");
   if (btn){
     btn.onclick = () => {
-      playInstruction("chunks1", {
-        doneFlag: "chunksIntroDone",
-        after: () => {
-          goToChunksAndStart();
-        }
-      });
+      startLearnInstruction("chunks1");
     };
   }
 
@@ -4136,7 +4317,7 @@ function render(){
 
   const uniq = Array.from(new Set(indicesToRender.filter(i => i !== null && i >= 0)));
   for (const idx of uniq){
-    const screen = ["intro","title","progress","pet_stats","verse_detail","learn_level","practice_gate","listen","meaning","chunks","echo","hide","final_recall","celebration","pet_unlock","practice","game"][idx];
+    const screen = ["intro","title","progress","pet_stats","verse_detail","learn_level","practice_gate","learn_instruction","listen","meaning","chunks","echo","hide","final_recall","celebration","pet_unlock","practice","game"][idx];
     let slide = null;
     if (screen === Screen.INTRO) slide = screenIntro(idx);
     if (screen === Screen.TITLE) slide = screenTitle(idx);
@@ -4145,6 +4326,7 @@ function render(){
     if (screen === Screen.VERSE_DETAIL) slide = screenVerseDetail(idx);
     if (screen === Screen.LEARN_LEVEL) slide = screenLearnLevel(idx);
     if (screen === Screen.PRACTICE_GATE) slide = screenPracticeGate(idx);
+    if (screen === Screen.LEARN_INSTRUCTION) slide = screenLearnInstruction(idx);
     if (screen === Screen.LISTEN) slide = screenListen(idx);
     if (screen === Screen.MEANING) slide = screenMeaning(idx);
     if (screen === Screen.CHUNKS) slide = screenChunks(idx);
