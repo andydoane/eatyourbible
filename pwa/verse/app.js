@@ -4316,6 +4316,8 @@ function screenFinalRecall(idx){
       startFinalRecallFlow();
     };
   }
+
+  const btnFinalReveal = inner.querySelector("#btnFinalReveal");
   if (btnFinalReveal){
     btnFinalReveal.onclick = () => {
       State.finalRecallRevealed = true;
@@ -4323,7 +4325,7 @@ function screenFinalRecall(idx){
     };
   }
 
-const btnFinalGames = inner.querySelector("#btnFinalGames");
+  const btnFinalGames = inner.querySelector("#btnFinalGames");
 if (btnFinalGames){
   btnFinalGames.onclick = () => {
     startLearnInstruction("games");
