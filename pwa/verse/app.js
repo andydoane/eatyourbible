@@ -394,6 +394,34 @@ function getLearnInstructionConfig(key){
   return configs[key] || null;
 }
 
+const LEARN_INSTRUCTION_KEYS = [
+  "listen",
+  "meaning",
+  "chunks1",
+  "chunks2",
+  "echo1",
+  "remove",
+  "final",
+  "games"
+];
+
+const preloadedInstructionImages = new Set();
+
+function preloadLearnInstructionImages(){
+  for (const key of LEARN_INSTRUCTION_KEYS){
+    const cfg = getLearnInstructionConfig(key);
+    if (!cfg?.image) continue;
+
+    const src = `${IMG_DIR}${cfg.image}`;
+    if (preloadedInstructionImages.has(src)) continue;
+
+    const img = new Image();
+    img.src = src;
+
+    preloadedInstructionImages.add(src);
+  }
+}
+
 function startLearnInstruction(key){
   State.learnInstructionKey = key;
   State.learnInstructionReady = false;
@@ -2025,6 +2053,11 @@ function learnLevelRun(){
 
   resetLearn(false);
 
+  if (State.learnStartScreen === Screen.ECHO){
+    startLearnInstruction("echo1");
+    return;
+  }
+
   startLearnInstruction("listen");
 }
 
@@ -2611,7 +2644,7 @@ async function startFinalRecallFlow(){
     markLearnCompleted(VERSE_ID);
   }
 
-  startLearnInstruction("games");
+  render();
 }
 
 async function startChunkFlow(){
@@ -4084,8 +4117,8 @@ function screenFinalRecall(idx){
     coachBody = `<div class="coach-text">Press below to reveal the verse.</div>`;
     actionHtml = `<button class="carousel-main no-zoom" id="btnFinalReveal" style="max-width:520px;">Reveal Verse</button>`;
   } else if (State.finalRecallRevealed){
-    coachBody = `<div class="coach-text">Complete more Verse Games to unlock this verse's BibloPet! 🐾</div>`;
-    actionHtml = `<button class="carousel-main no-zoom" id="btnFinalGames" style="max-width:520px;">Verse Games</button>`;
+    coachBody = `<div class="coach-text">Great job! Now it is practice time.</div>`;
+    actionHtml = `<button class="carousel-main no-zoom" id="btnFinalGames" style="max-width:520px;">Practice time</button>`;
   }
 
   inner.innerHTML = `
@@ -4125,8 +4158,7 @@ function screenFinalRecall(idx){
 const btnFinalGames = inner.querySelector("#btnFinalGames");
 if (btnFinalGames){
   btnFinalGames.onclick = () => {
-    resetLearn(false);
-    go(Screen.PRACTICE);
+    startLearnInstruction("games");
   };
 }
 
@@ -4400,6 +4432,8 @@ function render(){
    ========================= */
 
 (async function init(){
+  preloadLearnInstructionImages();
+
   await loadVerseList();
   HAS_VERSE_SELECTION = hasVerseIdInUrl();
 
