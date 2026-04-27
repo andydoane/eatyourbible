@@ -1504,6 +1504,7 @@ const State = {
 
   listenDone: false,
   listenPlaying: false,
+  listenAutoStarting: false,
 
   chunkDone: false,
   chunkRunning: false,
@@ -1786,6 +1787,7 @@ function resetLearn(goTitle=false){
 
   State.listenDone = false;
   State.listenPlaying = false;
+  State.listenAutoStarting = false;
 
   State.learnLevel = keepLearnLevel;
   State.learnStartScreen = keepLearnStartScreen;
@@ -2255,6 +2257,7 @@ async function playInstruction(key, { doneFlag = null, delayMs = 0, after = null
 }
 
 function listenPlay(){
+  State.listenAutoStarting = false;
   State.listenPlaying = true;
   State.listenDone = false;
   State.audioMode = "listen_ref";
@@ -2400,17 +2403,15 @@ function runAfterSlide(fn){
 
 function goToListenAndStart(){
   State.listenDone = false;
-
-  // Hide the old Listen button immediately while the slide moves in.
-  State.listenPlaying = true;
-  State.audioMode = "listen_pending";
+  State.listenAutoStarting = true;
 
   go(Screen.LISTEN);
 
   runAfterSlide(() => {
     if (
       State.screen === Screen.LISTEN &&
-      State.audioMode === "listen_pending" &&
+      State.listenAutoStarting &&
+      !State.listenPlaying &&
       !State.listenDone
     ){
       listenPlay();
@@ -3732,6 +3733,7 @@ function screenListen(idx){
         <div class="coach-actions">
           ${
             (
+              State.listenAutoStarting ||
               State.listenPlaying ||
               State.instructionPlaying
             )
