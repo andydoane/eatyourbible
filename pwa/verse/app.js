@@ -2487,6 +2487,14 @@ function runAfterSlide(fn, { timeoutMs = 2200, intervalMs = 50 } = {}){
     }
 
     if (Date.now() - startedAt >= timeoutMs){
+      State.isSliding = false;
+      State.transitionFromIdx = null;
+      State.transitionToIdx = null;
+      State.forceSlideForward = false;
+      State.slideX = screenToIndex(State.screen);
+
+      updateSlideTransforms();
+
       fn();
       return;
     }
