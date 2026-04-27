@@ -274,6 +274,59 @@
   flex: 0 0 auto;
 }
 
+.learn-instruction-btn{
+  transform-origin: center;
+  transition:
+    opacity 180ms ease,
+    filter 180ms ease,
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.learn-instruction-btn.is-waiting{
+  opacity: 0.45;
+  filter: saturate(0.65);
+  cursor: default;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.18);
+}
+
+.learn-instruction-btn.is-waiting:active{
+  transform: none;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.18);
+}
+
+.learn-instruction-btn.is-ready{
+  opacity: 1;
+  filter: none;
+  animation: instructionTapWiggle 2400ms ease-in-out 600ms infinite;
+}
+
+@keyframes instructionTapWiggle{
+  0%, 72%, 100%{
+    transform: rotate(0deg) scale(1);
+  }
+
+  76%{
+    transform: rotate(-2deg) scale(1.03);
+  }
+
+  80%{
+    transform: rotate(2deg) scale(1.03);
+  }
+
+  84%{
+    transform: rotate(-1deg) scale(1.02);
+  }
+
+  88%{
+    transform: rotate(1deg) scale(1.02);
+  }
+
+  92%{
+    transform: rotate(0deg) scale(1);
+  }
+}
+
 @media (max-height: 680px){
   .learn-layout-instruction{
     padding-top: calc(12px + var(--safeT));

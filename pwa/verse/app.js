@@ -456,7 +456,7 @@ function continueLearnInstruction(){
   State.instructionKey = "";
 
   if (key === "listen"){
-    go(Screen.LISTEN);
+    goToListenAndStart();
     return;
   }
 
@@ -2308,21 +2308,9 @@ audioEl.addEventListener("ended", () => {
   if (State.screen === Screen.LISTEN && State.audioMode === "listen_verse"){
     State.listenPlaying = false;
     State.audioMode = null;
-
-    if (State.learnLevel === "not_at_all"){
-      playInstruction("meaning", {
-        doneFlag: "meaningInstructionDone",
-        delayMs: 450,
-        after: () => {
-          State.listenDone = true;
-          render();
-        }
-      });
-      return;
-    }
-
     State.listenDone = true;
-    render();
+
+    go(Screen.MEANING);
   }
 });
 
@@ -2408,6 +2396,23 @@ function runAfterSlide(fn){
       fn();
     }
   }, 380);
+}
+
+function goToListenAndStart(){
+  State.listenDone = false;
+  State.listenPlaying = false;
+
+  go(Screen.LISTEN);
+
+  runAfterSlide(() => {
+    if (
+      State.screen === Screen.LISTEN &&
+      !State.listenPlaying &&
+      !State.listenDone
+    ){
+      listenPlay();
+    }
+  });
 }
 
 function goToChunksAndStart(){
@@ -3654,15 +3659,15 @@ function screenLearnInstruction(idx){
         <div class="learn-instruction-subtext">${subtext}</div>
 
         <div class="learn-instruction-actions">
-          ${
-            State.learnInstructionReady
-              ? `
-                <button class="carousel-main no-zoom" id="btnLearnInstructionContinue">
-                  ${button}
-                </button>
-              `
-              : ``
-          }
+          <button
+            class="carousel-main no-zoom learn-instruction-btn ${State.learnInstructionReady ? "is-ready" : "is-waiting"}"
+            id="btnLearnInstructionContinue"
+            type="button"
+            ${State.learnInstructionReady ? "" : "disabled"}
+            aria-disabled="${State.learnInstructionReady ? "false" : "true"}"
+          >
+            ${button}
+          </button>
         </div>
       </div>
     </div>
@@ -3671,6 +3676,7 @@ function screenLearnInstruction(idx){
   const btn = inner.querySelector("#btnLearnInstructionContinue");
   if (btn){
     btn.onclick = () => {
+      if (!State.learnInstructionReady) return;
       continueLearnInstruction();
     };
   }
@@ -3742,7 +3748,7 @@ function screenListen(idx){
   if (btn){
     btn.onclick = async () => {
       if (State.listenDone){
-        startLearnInstruction("meaning");
+        go(Screen.MEANING);
         return;
       }
 
