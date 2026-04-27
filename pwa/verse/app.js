@@ -2417,7 +2417,6 @@ function goToListenAndStart(){
     }
   });
 }
-}
 
 function goToChunksAndStart(){
   State.chunkAutoStarting = true;
