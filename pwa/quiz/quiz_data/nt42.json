@@ -5,9 +5,9 @@
   "lessonSubtitleText": "Test how well you know this story",
   "lessonImagePath": "quizimages/nt42image.png",
   "themeClass": "theme-orange",
-  "text": [
+  "questions": [
     {
-      "question": "What power did the evil spirit give the slave girl?",
+      "text": "What power did the evil spirit give the slave girl?",
       "answers": [
         "To tell people secrets about their lives and the future",
         "To heal sick people",
@@ -17,7 +17,7 @@
       "correctIndex": 0
     },
     {
-      "question": "Why did Paul order the spirit to leave in Jesus’ name?",
+      "text": "Why did Paul order the spirit to leave in Jesus’ name?",
       "answers": [
         "Because it kept bothering them",
         "Because the girl asked him to",
@@ -27,7 +27,7 @@
       "correctIndex": 0
     },
     {
-      "question": "Why were the slave girl’s owners angry?",
+      "text": "Why were the slave girl’s owners angry?",
       "answers": [
         "Without the spirit’s power, the slave girl couldn’t make them money",
         "The slave girl ran away from home",
@@ -37,7 +37,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What punishment did the leaders in Philippi give Paul and Silas?",
+      "text": "What punishment did the leaders in Philippi give Paul and Silas?",
       "answers": [
         "They were beaten and thrown in prison",
         "They were fined money",
@@ -47,7 +47,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What did Paul and Silas do while in prison?",
+      "text": "What did Paul and Silas do while in prison?",
       "answers": [
         "They sang hymns and prayed",
         "They complained loudly",
@@ -57,7 +57,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What happened around midnight?",
+      "text": "What happened around midnight?",
       "answers": [
         "An earthquake shook the jail, opened the doors, and loosened the chains",
         "A fire broke out",
@@ -67,7 +67,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What question did the jailer ask Paul and Silas?",
+      "text": "What question did the jailer ask Paul and Silas?",
       "answers": [
         "What must I do to be saved?",
         "Why are you singing?",
@@ -77,7 +77,7 @@
       "correctIndex": 0
     },
     {
-      "question": "What was Paul’s answer to the jailer?",
+      "text": "What was Paul’s answer to the jailer?",
       "answers": [
         "Believe in the Lord Jesus, and you will be saved",
         "Follow God's laws, and you will be saved",
@@ -87,7 +87,7 @@
       "correctIndex": 0
     },
     {
-      "question": "How did the jailer care for Paul and Silas?",
+      "text": "How did the jailer care for Paul and Silas?",
       "answers": [
         "He washed their wounds and fed them at his home",
         "He gave them a better prison cell",
@@ -97,7 +97,7 @@
       "correctIndex": 0
     },
     {
-      "question": "Who did Paul and Silas baptize?",
+      "text": "Who did Paul and Silas baptize?",
       "answers": [
         "The jailer and his whole family",
         "Only the jailer",
