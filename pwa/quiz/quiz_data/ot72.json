@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot72",
+  "pageTitle": "OT 72 Quiz",
+  "lessonTitleText": "The Kingdoms Fall",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot72image.png",
+  "themeClass": "theme-purple",
+  "questions": [
+    {
+      "text": "What warning did God give his people as they entered the promised land?",
+      "answers": [
+        "If they ignored his commands, they would be thrown out",
+        "They could live there forever, no matter what they did",
+        "Watch out for quicksand",
+        "Don't pollute the land with trash"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How many good kings did the kingdom of Israel have?",
+      "answers": [
+        "None of them were good",
+        "Some of them were good",
+        "Half of them were good",
+        "All of them were good"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the Assyrians do to Israel?",
+      "answers": [
+        "They attacked and carried the people away",
+        "They made peace with them",
+        "They gave them gold",
+        "They offered to help them in battle"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why did God allow the Assyrians to defeat Israel?",
+      "answers": [
+        "They worshiped other gods and ignored his commands",
+        "He forgot about his people",
+        "He didn't love Israel anymore",
+        "God liked the Assyrians better"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What does the Bible say about the kings after Josiah in Judah?",
+      "answers": [
+        "They did evil in God’s sight",
+        "They followed God completely",
+        "They were okay",
+        "They weren't very smart"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who attacked the kingdom of Judah?",
+      "answers": [
+        "Babylon",
+        "The Assyrians",
+        "Egypt",
+        "The Philistines"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the Babylonians take from Judah?",
+      "answers": [
+        "Treasures, riches, and many people",
+        "Everything",
+        "Their soldiers",
+        "Their shoes"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Nebuzaradan do to Jerusalem?",
+      "answers": [
+        "He burned the city and temple and tore down the walls",
+        "He flooded it with water",
+        "He fixed it up to look nice",
+        "He left it alone"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened to the people of Judah 70 years later?",
+      "answers": [
+        "God brought them back to their land",
+        "The king of Babylon destroyed them all",
+        "They moved to Egypt",
+        "They defeated the Babylonians in battle"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What does it mean that God steadfastly loves his people?",
+      "answers": [
+        "He loves with a never-stopping, never-giving-up love",
+        "He loves only when they obey",
+        "He loves only some people",
+        "His love changes from day to day"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
