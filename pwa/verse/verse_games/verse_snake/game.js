@@ -102,43 +102,6 @@
     `;
   }
 
-  function getHomeSvg(){
-    return `
-      <svg class="nav-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-        <path d="M12 3L3 10h2v9h5v-6h4v6h5v-9h2L12 3z" fill="#ffffff"/>
-      </svg>
-    `;
-  }
-
-  function getMuteSvg(){
-    return `
-      <svg class="nav-icon" viewBox="0 0 1270 889" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-        <path style="fill:#ffffff;stroke:none;stroke-width:44.9431;stroke-linecap:round"
-          d="M 660.98465,87.244161 409.97079,241.6972 a 150.47802,150.47802 0 0 1 -78.85883,22.31829 H 225.63234 a 42.587633,42.587633 0 0 0 -42.58762,42.58762 v 275.79372 a 42.587633,42.587633 0 0 0 42.58762,42.58762 h 105.47962 a 150.47802,150.47802 0 0 1 78.85883,22.3183 l 251.01386,154.45304 a 23.799138,23.799138 0 0 0 36.27121,-20.26933 V 107.51349 A 23.799138,23.799138 0 0 0 660.98465,87.244161 Z" />
-        <g transform="translate(-26.458334,-255.59263)">
-          <path style="fill:none;stroke:#ffffff;stroke-width:76.7747;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1"
-            d="M 1241.4124,524.69155 890.61025,875.49365" />
-          <path style="fill:none;stroke:#ffffff;stroke-width:76.7747;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1"
-            d="m 890.61025,524.69155 350.80215,350.8021" />
-        </g>
-      </svg>
-    `;
-  }
-
-  function getUnmuteSvg(){
-    return `
-      <svg class="nav-icon" viewBox="0 0 1270 889" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-        <g transform="matrix(2.9017243,0,0,2.9017243,-948.59169,1423.6267)">
-          <path style="fill:#ffffff;stroke:none;stroke-width:15.4884;stroke-linecap:round"
-            d="m 554.69651,-460.54773 -86.50507,53.22802 a 51.858137,51.858137 0 0 1 -27.17654,7.69139 h -36.35067 a 14.676664,14.676664 0 0 0 -14.67666,14.67666 v 95.04477 a 14.676664,14.676664 0 0 0 14.67666,14.67666 h 36.35067 a 51.858137,51.858137 0 0 1 27.17654,7.69139 l 86.50507,53.22802 a 8.2017227,8.2017227 0 0 0 12.49988,-6.98527 v -232.26637 a 8.2017227,8.2017227 0 0 0 -12.49988,-6.98527 z" />
-          <path style="fill:none;stroke:#ffffff;stroke-width:26.4583;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1"
-            d="m 596.38634,-270.01659 c 26.00162,-13.81364 42.0863,-39.52797 42.16745,-67.41243 -0.0102,-27.95044 -16.10446,-53.75052 -42.16745,-67.5969" />
-          <path style="fill:none;stroke:#ffffff;stroke-width:26.4583;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1"
-            d="m 626.65943,-233.57231 c 4.34269,-2.51562 16.69789,-10.99898 23.86366,-17.76894 23.32002,-22.03191 37.74343,-52.46821 37.74343,-86.08777 0,-33.61956 -14.42341,-64.05637 -37.74343,-86.08828 -7.16577,-6.76996 -19.52097,-15.25332 -23.86366,-17.76894" />
-        </g>
-      </svg>
-    `;
-  }
 
   function stopLoop(){
     state.running = false;
@@ -562,43 +525,6 @@ function renderModeSelect(){
     }
   });
 }
-
-  function wireModeSelectNav(){
-    const homeBtn = document.getElementById("homeBtn");
-    const helpBtn = document.getElementById("helpBtn");
-    const muteBtn = document.getElementById("muteBtn");
-    const helpOverlay = document.getElementById("vsHelpOverlay");
-    const helpCloseBtn = document.getElementById("vsHelpCloseBtn");
-
-    homeBtn.onclick = () => {
-      window.VerseGameBridge.exitGame();
-    };
-
-    helpBtn.onclick = () => {
-      helpOverlay.classList.add("show");
-      helpOverlay.setAttribute("aria-hidden", "false");
-    };
-
-    helpCloseBtn.onclick = () => {
-      helpOverlay.classList.remove("show");
-      helpOverlay.setAttribute("aria-hidden", "true");
-    };
-
-    helpOverlay.onclick = (e) => {
-      if (e.target === helpOverlay){
-        helpOverlay.classList.remove("show");
-        helpOverlay.setAttribute("aria-hidden", "true");
-      }
-    };
-
-    muteBtn.onclick = () => {
-      muted = !muted;
-      const btn = document.getElementById("muteBtn");
-      if (btn){
-        btn.innerHTML = muted ? getMuteSvg() : getUnmuteSvg();
-      }
-    };
-  }
 
   function renderGameScreen(){
     stopLoop();
