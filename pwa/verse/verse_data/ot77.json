@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot77",
+  "pageTitle": "OT 77 Quiz",
+  "lessonTitleText": "The Temple Is Rebuilt",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot77image.png",
+  "themeClass": "theme-kahoot-green",
+  "questions": [
+    {
+      "text": "What order did King Cyrus give?",
+      "answers": [
+        "The people of Judah could return home and rebuild the temple",
+        "The people of Judah must be destroyed",
+        "Everyone must bow down to a statue of him",
+        "Everyone must pray only to him for 30 days"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why did Cyrus allow the people to leave?",
+      "answers": [
+        "God changed his heart",
+        "The people of Judah paid him money",
+        "An angel spoke to him in a dream",
+        "He was afraid of them"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What was the first thing the people rebuilt?",
+      "answers": [
+        "The altar",
+        "The walls",
+        "The temple",
+        "Their homes"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did the people react when the temple foundation was laid?",
+      "answers": [
+        "Young people celebrated, older people wept",
+        "Young people wept, older people celebrated",
+        "Everyone celebrated",
+        "Everyone wept"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the people do when enemies discouraged them?",
+      "answers": [
+        "They stopped building for many years",
+        "They kept on working",
+        "They prayed to God for help",
+        "They fought their enemies and won"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who were Haggai and Zechariah?",
+      "answers": [
+        "Prophets who told the people to keep building",
+        "Kings of Judah",
+        "Priests in the temple",
+        "Enemies of the people"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the people do after hearing the prophets?",
+      "answers": [
+        "They started rebuilding again",
+        "They ignored them",
+        "They threw stones at them",
+        "They told the prophets to be quiet"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Governor Tattenai ask the workers?",
+      "answers": [
+        "Who gave you permission to build?",
+        "Why are you working so slowly?",
+        "Where is your king?",
+        "When will you finish?"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened after Tattenai wrote to King Darius?",
+      "answers": [
+        "They found Cyrus’s order allowing the work",
+        "The people stopped working again",
+        "The king sent his soldiers to attack",
+        "Tattenai destroyed the temple"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the people do after the king's order was found?",
+      "answers": [
+        "They finished building the temple",
+        "They stopped again",
+        "They built a wall instead",
+        "They said, 'I told you so.'"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

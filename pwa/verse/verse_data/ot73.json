@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot73",
+  "pageTitle": "OT 73 Quiz",
+  "lessonTitleText": "Daniel and the King's Dream",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot73image.png",
+  "themeClass": "theme-gray", 
+  "questions": [
+    {
+      "text": "Why did Nebuchadnezzar bring Daniel and his friends to Babylon?",
+      "answers": [
+        "To serve as his wise men",
+        "To make them soldiers",
+        "To throw them in prison",
+        "To put in a zoo"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Daniel want to eat instead of the king’s food, and why?",
+      "answers": [
+        "Vegetables, so he would not disobey God’s laws",
+        "Bread, because he was on a diet",
+        "Meat, because he had allergies",
+        "Fruit, because he was a picky eater"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did Daniel and his friends look after the ten-day test?",
+      "answers": [
+        "Healthier than the others",
+        "Weaker than the others",
+        "The same as the others",
+        "Very sick"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why was Nebuchadnezzar so troubled that he could not sleep?",
+      "answers": [
+        "He had a strange dream",
+        "He was sick",
+        "His country was under attack",
+        "He lost his crown"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Nebuchadnezzar want his wise men to do?",
+      "answers": [
+        "Tell him his dream and explain it",
+        "Just explain the dream",
+        "Explain why people dream",
+        "Give him a sleeping potion"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the wise men say about the king’s request?",
+      "answers": [
+        "Only a god could tell you what you dreamed",
+        "It will be easy",
+        "We won't help you",
+        "Your dream doesn't mean anything"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Daniel tell his friends to do?",
+      "answers": [
+        "Pray that God would reveal the dream",
+        "Run away",
+        "Hide from the king",
+        "Pray that God would destroy King Nebuchadnezzar"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did Daniel learn the king’s dream and its meaning?",
+      "answers": [
+        "God showed him in a vision",
+        "A lucky guess",
+        "An angel came and told him",
+        "He read it in a book"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What was the king’s dream?",
+      "answers": [
+        "A huge statue was smashed by a rock that became a mountain",
+        "A river flowed through the king's palace",
+        "The sun, moon, and stars bowed down to him",
+        "A monster was coming to eat him"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the dream mean?",
+      "answers": [
+        "Four kingdoms would rise and fall, and God’s kingdom would fill the earth",
+        "Nebuchadnezzar would rule forever",
+        "God wanted Nebuchadnezzar to build a statue",
+        "Daniel would become king"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}

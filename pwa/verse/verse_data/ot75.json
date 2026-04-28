@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot75",
+  "pageTitle": "OT 75 Quiz",
+  "lessonTitleText": "Nebuchadnezzar's Second Dream",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot75image.png",
+  "themeClass": "theme-INSERT",
+  "questions": [
+    {
+      "text": "What was the tree like in Nebuchadnezzar’s dream?",
+      "answers": [
+        "It reached the sky and gave food and shade to many",
+        "It was small and weak",
+        "It was dry and dead",
+        "It was covered in gold"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the angel say about the tree?",
+      "answers": [
+        "Cut it down but leave the stump",
+        "Cut it down and burn the stump",
+        "Plant it by the river",
+        "Climb up to the top"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the angel say would happen to Nebuchadnezzar?",
+      "answers": [
+        "He would live like an animal for a time",
+        "He would become richer",
+        "He would turn into a tree",
+        "He would be able to talk to animals"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who explained the dream to the king?",
+      "answers": [
+        "Daniel",
+        "Meshach",
+        "Shadrach",
+        "Abednego"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the tree represent?",
+      "answers": [
+        "Nebuchadnezzar’s powerful kingdom",
+        "Daniel's brain",
+        "The nation of Israel",
+        "God's kingdom"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why was God going to make the king live like an animal?",
+      "answers": [
+        "To show that God rules over all",
+        "To punish him forever",
+        "To play a prank",
+        "To destroy his kingdom"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Nebuchadnezzar do a year after the dream?",
+      "answers": [
+        "He bragged about his kingdom",
+        "He prayed to God",
+        "He built a tall statue",
+        "He chopped down a tree"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened right after he boasted?",
+      "answers": [
+        "God made him think like an animal",
+        "God turned him into a lion",
+        "He became sick",
+        "He became blind"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Nebuchadnezzar look like after living like an animal?",
+      "answers": [
+        "He had long hair and nails like claws",
+        "He was covered in fur",
+        "He grew the wings of a bird",
+        "All of his teeth fell out"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened when Nebuchadnezzar’s mind returned?",
+      "answers": [
+        "He praised God and became king again",
+        "He cursed God",
+        "He thought it all had been a dream",
+        "He bragged about his kingdom again"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
