@@ -3,6 +3,14 @@
   const ctx = await window.VerseGameBridge.getVerseContext();
 
   const GAME_ID = "verse_invaders";
+
+  const GAME_THEME = {
+    bg: "#333333",
+    accent: "#333333"
+  };
+
+  const HELP_OVERLAY_ID = "vinvHelpOverlay";
+
   const LANE_KEYS = ["left", "center", "right"];
   const LANE_COLORS = [
     {
@@ -114,66 +122,33 @@
 function renderIntro(){
   stopLoop();
 
-  app.innerHTML = `
-    <div class="vm-game-screen" style="--vm-game-bg:#333333; --vm-game-accent:#333333;">
-      <button class="vm-game-back-pill no-zoom" id="homeBtn" type="button" aria-label="Back to Practice Games">
-        ◀
-      </button>
-
-      <div class="vm-game-stage">
-        <div class="vm-game-center">
-          <div class="vm-game-icon" aria-hidden="true">👾</div>
-
-          <div class="vm-game-title">Verse Invaders</div>
-
-          <div class="vm-game-actions">
-            <button class="vm-btn" id="startBtn" type="button">Start</button>
-            <button class="vm-btn vm-btn-secondary" id="helpBtn" type="button">How to Play</button>
-          </div>
-        </div>
-      </div>
-
-      ${renderHelpOverlay(helpHtml())}
-    </div>
-  `;
-
-  document.getElementById("startBtn").onclick = renderModeSelect;
-  wireCommonNav();
+  window.VerseGameShell.renderTitleScreen({
+    app,
+    title: "Verse Invaders",
+    icon: "👾",
+    helpHtml: helpHtml(),
+    helpOverlayId: HELP_OVERLAY_ID,
+    theme: GAME_THEME,
+    backLabel: "Back to Practice Games",
+    onBack: () => window.VerseGameBridge.exitGame(),
+    onStart: renderModeSelect
+  });
 }
 
 function renderModeSelect(){
   stopLoop();
 
-  app.innerHTML = `
-    <div class="vm-game-screen" style="--vm-game-bg:#333333; --vm-game-accent:#333333;">
-      <button class="vm-game-back-pill no-zoom" id="modeBackBtn" type="button" aria-label="Back to Verse Invaders title">
-        ◀
-      </button>
-
-      <div class="vm-game-stage">
-        <div class="vm-game-center">
-          <div class="vm-game-difficulty-icon" aria-hidden="true">🥉🥈🥇</div>
-
-          <div class="vm-game-title">Choose Your Difficulty</div>
-
-          <div class="vm-game-actions">
-            <button class="vm-btn" id="easyBtn" type="button">🥉 Easy</button>
-            <button class="vm-btn" id="mediumBtn" type="button">🥈 Medium</button>
-            <button class="vm-btn" id="hardBtn" type="button">🥇 Hard</button>
-          </div>
-        </div>
-      </div>
-
-      ${renderHelpOverlay(helpHtml())}
-    </div>
-  `;
-
-  document.getElementById("modeBackBtn").onclick = renderIntro;
-  document.getElementById("easyBtn").onclick = () => startGame("easy");
-  document.getElementById("mediumBtn").onclick = () => startGame("medium");
-  document.getElementById("hardBtn").onclick = () => startGame("hard");
-
-  wireCommonNav();
+  window.VerseGameShell.renderModeSelect({
+    app,
+    title: "Choose Your Difficulty",
+    icon: "🥉🥈🥇",
+    helpHtml: helpHtml(),
+    helpOverlayId: HELP_OVERLAY_ID,
+    theme: GAME_THEME,
+    backLabel: "Back to Verse Invaders title",
+    onBack: renderIntro,
+    onSelect: startGame
+  });
 }
 
   function startGame(mode){
@@ -271,21 +246,10 @@ function renderModeSelect(){
   }
 
 function renderHelpOverlay(body){
-  return `
-    <div class="vm-game-help-overlay" id="vinvHelpOverlay" aria-hidden="true">
-      <div class="vm-game-help-panel">
-        <div class="vm-game-help-title">How to Play</div>
-
-        <div class="vm-game-help-body-wrap">
-          <div class="vm-game-help-body">${body}</div>
-        </div>
-
-        <div class="vm-game-help-actions">
-          <button class="vm-btn" id="vinvHelpCloseBtn" type="button">Close</button>
-        </div>
-      </div>
-    </div>
-  `;
+  return window.VerseGameShell.helpOverlayHtml({
+    id: HELP_OVERLAY_ID,
+    body
+  });
 }
 
 function renderGameMenuOverlay(){
@@ -334,37 +298,13 @@ function wireCommonNav(){
     if (menuMuteBtn) menuMuteBtn.textContent = muted ? "Unmute" : "Mute";
   };
 
-  if (helpBtn) helpBtn.onclick = () => {
-    if (helpOverlay) {
-      helpOverlay.classList.add("is-open");
-      helpOverlay.dataset.mode = "close";
-      if (helpCloseBtn) helpCloseBtn.textContent = "Close";
-    }
-  };
-
-  if (helpCloseBtn) {
-    helpCloseBtn.onclick = () => {
-      const mode = helpOverlay?.dataset.mode || "close";
-      if (mode === "back"){
-        backToMenuFromHelp();
-      } else {
-        closeHelpOverlay();
-      }
-    };
-  }
-
-  if (helpOverlay) {
-    helpOverlay.onclick = (e) => {
-      if (e.target === helpOverlay){
-        const mode = helpOverlay.dataset.mode || "close";
-        if (mode === "back"){
-          backToMenuFromHelp();
-        } else {
-          closeHelpOverlay();
-        }
-      }
-    };
-  }
+  window.VerseGameShell.wireHelp({
+    id: HELP_OVERLAY_ID,
+    triggerId: "helpBtn",
+    closeText: "Close",
+    onBack: backToMenuFromHelp,
+    onClose: () => setPaused(false, "")
+  });
 
   if (menuHowToBtn) {
     menuHowToBtn.onclick = () => {
@@ -428,26 +368,20 @@ function openHelpFromMenu(){
   const helpCloseBtn = document.getElementById("vinvHelpCloseBtn");
 
   if (menuOverlay) menuOverlay.classList.remove("is-open");
-  if (helpOverlay){
-    helpOverlay.classList.add("is-open");
-    helpOverlay.dataset.mode = "back";
-  }
-  if (helpCloseBtn) helpCloseBtn.textContent = "Back";
+  window.VerseGameShell.openHelp(HELP_OVERLAY_ID, "back", "Back");
 
   setPaused(true, "help");
 }
 
 function closeHelpOverlay(){
-  const helpOverlay = document.getElementById("vinvHelpOverlay");
-  if (helpOverlay) helpOverlay.classList.remove("is-open");
+  window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
   setPaused(false, "");
 }
 
 function backToMenuFromHelp(){
-  const helpOverlay = document.getElementById("vinvHelpOverlay");
-  const menuOverlay = document.getElementById("vinvGameMenuOverlay");
+  window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
 
-  if (helpOverlay) helpOverlay.classList.remove("is-open");
+  const menuOverlay = document.getElementById("vinvGameMenuOverlay");
   if (menuOverlay) menuOverlay.classList.add("is-open");
 
   setPaused(true, "menu");
