@@ -381,8 +381,8 @@ body{
 
   .vm-game-help-body{
     max-height: min(46vh, 360px);
-    font-size: clamp(16px, 4vh, 21px);
-    line-height: 1.12;
+    font-size: clamp(15px, 3.7vh, 20px);
+    line-height: 1.18;
     padding-right: 18px;
   }
 
