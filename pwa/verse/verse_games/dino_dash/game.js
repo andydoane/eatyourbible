@@ -4,6 +4,14 @@
   const ctx = await window.VerseGameBridge.getVerseContext();
 
   const GAME_ID = "dino_dash";
+
+const GAME_THEME = {
+  bg: "#333333",
+  accent: "#333333"
+};
+
+const HELP_OVERLAY_ID = "ddHelpOverlay";
+
   const FUN_DECOYS = [
     // Short Nouns
     "taco", "panda", "pizza", "donut", "shark", "lemon", "grape", "berry", "sock", "boot", 
@@ -171,61 +179,70 @@
 
   renderIntro();
 
-  function renderIntro(){
-    stopLoop();
-    app.innerHTML = `
-      <div class="dd-mode-shell">
-        <div class="dd-mode-stage">
-          <div class="dd-mode-top">
-            <div style="font-size:72px; line-height:1;">🦖</div>
-            <div class="dd-mode-title">Dino Dash</div>
-            <div class="dd-mode-subtitle">
-              Jump through obstacle runs.<br>
-              Then choose the next verse word lane by lane.
-            </div>
-            <div class="dd-mode-card">
-              <div class="dd-mode-actions">
-                <button class="vm-btn" id="startBtn">Start</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        ${renderNav()}
-        ${renderHelpOverlay("Tap or click to jump.<br><br>Obstacle phase: jump over hazards and gaps.<br><br>Word phase: one word appears at a time. Jump for the top lane, stay low for the bottom lane.<br><br>Correct words build the verse. Mistakes only reset your streak.")}
-      </div>
-    `;
+function introHelpHtml(){
+  return `
+    Tap or click to jump.<br><br>
+    Obstacle phase: jump over hazards and gaps.<br><br>
+    Word phase: one word appears at a time. Jump for the top lane, stay low for the bottom lane.<br><br>
+    Correct words build the verse. Mistakes only reset your streak.
+  `;
+}
 
-    document.getElementById("startBtn").onclick = renderModeSelect;
-    wireCommonNav();
-  }
+function modeHelpHtml(){
+  return `
+    Easy: slower runs and more forgiving word timing.<br><br>
+    Medium: balanced pace.<br><br>
+    Hard: faster ground, quicker reactions, smaller reading window.
+  `;
+}
 
-  function renderModeSelect(){
-    stopLoop();
-    app.innerHTML = `
-      <div class="dd-mode-shell">
-        <div class="dd-mode-stage">
-          <div class="dd-mode-top">
-            <div class="dd-mode-title">🦖 Dino Dash</div>
-            <div class="dd-mode-subtitle">Choose your difficulty.</div>
-            <div class="dd-mode-card">
-              <div class="dd-mode-actions">
-                <button class="vm-btn" id="easyBtn">Easy</button>
-                <button class="vm-btn" id="mediumBtn">Medium</button>
-                <button class="vm-btn" id="hardBtn">Hard</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        ${renderNav()}
-        ${renderHelpOverlay("Easy: slower runs and more forgiving word timing.<br><br>Medium: balanced pace.<br><br>Hard: faster ground, quicker reactions, smaller reading window.")}
-      </div>
-    `;
+function gameHelpHtml(){
+  return `
+    Tap or click to jump.<br><br>
+    Obstacle phase: jump over hazards and gaps.<br><br>
+    Word phase: choose top or bottom lane for the next word.<br><br>
+    Build the whole verse, then collect the book, then the reference.
+  `;
+}
 
-    document.getElementById("easyBtn").onclick = () => startGame("easy");
-    document.getElementById("mediumBtn").onclick = () => startGame("medium");
-    document.getElementById("hardBtn").onclick = () => startGame("hard");
-    wireCommonNav();
-  }
+function completeHelpHtml(){
+  return `
+    Great job! This completion is already recorded for your app progress.
+  `;
+}
+
+
+function renderIntro(){
+  stopLoop();
+
+  window.VerseGameShell.renderTitleScreen({
+    app,
+    title: "Dino Dash",
+    icon: "🦖",
+    helpHtml: introHelpHtml(),
+    helpOverlayId: HELP_OVERLAY_ID,
+    theme: GAME_THEME,
+    backLabel: "Back to Practice Games",
+    onBack: () => window.VerseGameBridge.exitGame(),
+    onStart: renderModeSelect
+  });
+}
+
+function renderModeSelect(){
+  stopLoop();
+
+  window.VerseGameShell.renderModeSelect({
+    app,
+    title: "Choose Your Difficulty",
+    icon: "🥉🥈🥇",
+    helpHtml: modeHelpHtml(),
+    helpOverlayId: HELP_OVERLAY_ID,
+    theme: GAME_THEME,
+    backLabel: "Back to Dino Dash title",
+    onBack: renderIntro,
+    onSelect: startGame
+  });
+}
 
   function startGame(mode){
     selectedMode = mode;
@@ -316,7 +333,7 @@
           </div>
         </div>
 
-        ${renderHelpOverlay("Tap or click to jump.<br><br>Obstacle phase: jump over hazards and gaps.<br><br>Word phase: choose top or bottom lane for the next word.<br><br>Build the whole verse, then collect the book, then the reference.")}
+        ${renderHelpOverlay(gameHelpHtml())}
         ${renderGameMenuOverlay()}
       </div>
     `;
@@ -325,33 +342,49 @@
     wireGameInput();
   }
 
-  function renderComplete(){
-    stopLoop();
-    const doneText = selectedMode ? `${capitalize(selectedMode)} complete!` : "Complete!";
-    app.innerHTML = `
-      <div class="dd-mode-shell">
-        <div class="dd-mode-stage">
-          <div class="dd-mode-top">
-            <div style="font-size:72px; line-height:1;">🏁</div>
-            <div class="dd-mode-title">${doneText}</div>
-            <div class="dd-mode-subtitle">You dashed through the verse.</div>
-            <div class="dd-mode-card">
-              <div class="dd-mode-actions">
-                <button class="vm-btn" id="againBtn">Play Again</button>
-                <button class="vm-btn vm-btn-dark" id="doneBtn">Done</button>
-              </div>
-            </div>
+function renderComplete(){
+  stopLoop();
+
+  const doneText = selectedMode ? `${capitalize(selectedMode)} complete!` : "Complete!";
+
+  app.innerHTML = `
+    <div class="vm-game-screen" style="--vm-game-bg:#333333; --vm-game-accent:#333333;">
+      <button class="vm-game-back-pill no-zoom" id="doneTopBtn" type="button" aria-label="Back to Practice Games">
+        ◀
+      </button>
+
+      <div class="vm-game-stage">
+        <div class="vm-game-center">
+          <div class="vm-game-icon" aria-hidden="true">🏁</div>
+
+          <div class="vm-game-title">${doneText}</div>
+
+          <div class="vm-game-actions">
+            <button class="vm-btn" id="againBtn" type="button">Play Again</button>
+            <button class="vm-btn vm-btn-secondary" id="doneBtn" type="button">Done</button>
           </div>
         </div>
-        ${renderNav()}
-        ${renderHelpOverlay("Great job! This completion is already recorded for your app progress.")}
       </div>
-    `;
 
-    document.getElementById("againBtn").onclick = () => startGame(selectedMode || "easy");
-    document.getElementById("doneBtn").onclick = () => window.VerseGameBridge.exitGame();
-    wireCommonNav();
-  }
+      ${renderHelpOverlay(completeHelpHtml())}
+    </div>
+  `;
+
+  document.getElementById("againBtn").onclick = () => startGame(selectedMode || "easy");
+
+  const exitToPractice = () => window.VerseGameBridge.exitGame();
+
+  document.getElementById("doneBtn").onclick = exitToPractice;
+  document.getElementById("doneTopBtn").onclick = exitToPractice;
+
+  window.VerseGameShell.wireHelp({
+    id: HELP_OVERLAY_ID,
+    triggerId: "helpBtn",
+    closeText: "Close",
+    onBack: backToMenuFromHelp,
+    onClose: () => setPaused(false, "")
+  });
+}
 
   function renderNav(){
     return `
@@ -367,19 +400,14 @@
     `;
   }
 
-  function renderHelpOverlay(body){
-    return `
-      <div class="dd-help-overlay" id="ddHelpOverlay" aria-hidden="true">
-        <div class="dd-help-dialog">
-          <div class="dd-help-title">How to Play</div>
-          <div class="dd-help-body">${body}</div>
-          <div class="dd-help-actions">
-            <button class="vm-btn" id="ddHelpCloseBtn">OK</button>
-          </div>
-        </div>
-      </div>
-    `;
-  }
+function renderHelpOverlay(body){
+  return window.VerseGameShell.helpOverlayHtml({
+    id: HELP_OVERLAY_ID,
+    title: "How to Play",
+    body,
+    closeText: "Close"
+  });
+}
 
   function renderGameMenuOverlay(){
     return `
@@ -413,39 +441,13 @@
 
     if (homeBtn) homeBtn.onclick = () => window.VerseGameBridge.exitGame();
 
-    if (helpBtn) {
-      helpBtn.onclick = () => {
-        if (helpOverlay){
-          helpOverlay.classList.add("is-open");
-          helpOverlay.dataset.mode = "close";
-          if (helpCloseBtn) helpCloseBtn.textContent = "OK";
-        }
-      };
-    }
-
-    if (helpCloseBtn) {
-      helpCloseBtn.onclick = () => {
-        const mode = helpOverlay?.dataset.mode || "close";
-        if (mode === "back"){
-          backToMenuFromHelp();
-        } else {
-          closeHelpOverlay();
-        }
-      };
-    }
-
-    if (helpOverlay){
-      helpOverlay.onclick = (e) => {
-        if (e.target === helpOverlay){
-          const mode = helpOverlay.dataset.mode || "close";
-          if (mode === "back"){
-            backToMenuFromHelp();
-          } else {
-            closeHelpOverlay();
-          }
-        }
-      };
-    }
+window.VerseGameShell.wireHelp({
+  id: HELP_OVERLAY_ID,
+  triggerId: "helpBtn",
+  closeText: "Close",
+  onBack: backToMenuFromHelp,
+  onClose: () => setPaused(false, "")
+});
 
     if (muteBtn){
       muteBtn.onclick = () => {
@@ -511,36 +513,29 @@
     }
   }
 
-  function openHelpFromMenu(){
-    const menuOverlay = document.getElementById("ddGameMenuOverlay");
-    const helpOverlay = document.getElementById("ddHelpOverlay");
-    const helpCloseBtn = document.getElementById("ddHelpCloseBtn");
+function openHelpFromMenu(){
+  const menuOverlay = document.getElementById("ddGameMenuOverlay");
 
-    if (menuOverlay) menuOverlay.classList.remove("is-open");
-    if (helpOverlay){
-      helpOverlay.classList.add("is-open");
-      helpOverlay.dataset.mode = "back";
-    }
-    if (helpCloseBtn) helpCloseBtn.textContent = "Back";
+  if (menuOverlay) menuOverlay.classList.remove("is-open");
 
-    setPaused(true, "help");
-  }
+  window.VerseGameShell.openHelp(HELP_OVERLAY_ID, "back", "Back");
 
-  function closeHelpOverlay(){
-    const helpOverlay = document.getElementById("ddHelpOverlay");
-    if (helpOverlay) helpOverlay.classList.remove("is-open");
-    setPaused(false, "");
-  }
+  setPaused(true, "help");
+}
 
-  function backToMenuFromHelp(){
-    const helpOverlay = document.getElementById("ddHelpOverlay");
-    const menuOverlay = document.getElementById("ddGameMenuOverlay");
+function closeHelpOverlay(){
+  window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
+  setPaused(false, "");
+}
 
-    if (helpOverlay) helpOverlay.classList.remove("is-open");
-    if (menuOverlay) menuOverlay.classList.add("is-open");
+function backToMenuFromHelp(){
+  window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
 
-    setPaused(true, "menu");
-  }
+  const menuOverlay = document.getElementById("ddGameMenuOverlay");
+  if (menuOverlay) menuOverlay.classList.add("is-open");
+
+  setPaused(true, "menu");
+}
 
   function wireGameInput(){
     const field = document.getElementById("ddField");
