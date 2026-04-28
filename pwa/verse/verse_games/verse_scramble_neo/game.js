@@ -443,39 +443,26 @@ function renderMode(){
     return Math.max(1, Math.round(taps / minutes));
   }
 
-  function renderEnd(){
-    const wpm = wordsPerMinute();
-    bestWpm = Math.max(bestWpm, wpm);
-    const timeSecs = (totalElapsedMs() / 1000).toFixed(1);
-    app.innerHTML = `
-      <div class="vsn-mode-shell">
-        <div class="vsn-mode-stage">
-          <div class="vsn-end-card">
-            <div class="vsn-end-title">You finished Verse Scramble!</div>
-            <div class="vsn-speedometer">
-              <div class="vsn-speedometer-label">Your speed was</div>
-              <div class="vsn-speedometer-value">${wpm}</div>
-              <div class="vsn-speedometer-label">words per minute</div>
-              <div class="vsn-speedometer-sub">Time: ${timeSecs}s · Best streak: ${state.bestStreak}<br>Beat your top speed of ${bestWpm} WPM.</div>
-            </div>
-            <div class="vsn-end-stats">Mode: ${escapeHtml(formatMode(selectedMode))}</div>
-            <div class="vsn-mode-card">
-              <div class="vsn-mode-actions">
-                <button class="vm-btn no-zoom" id="vsnPlayAgainBtn">Play Again</button>
-                <button class="vm-btn no-zoom" id="vsnExitBtn">Exit Game</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>`;
-    document.getElementById("vsnPlayAgainBtn").onclick = () => {
-      initVerseData();
-      state.startTime = performance.now();
-      buildRoundChoices();
-      setScreen("game");
-    };
-    document.getElementById("vsnExitBtn").onclick = () => window.VerseGameBridge.exitGame();
-  }
+function renderEnd(){
+  const wpm = wordsPerMinute();
+  bestWpm = Math.max(bestWpm, wpm);
+  const timeSecs = (totalElapsedMs() / 1000).toFixed(1);
+
+  window.VerseGameShell.renderCompleteScreen({
+    app,
+    icon: "🧩",
+    title: `${formatMode(selectedMode)} Complete!`,
+    statsText: `${wpm} WPM · ${timeSecs}s · Best streak: ${state.bestStreak}`,
+    theme: GAME_THEME,
+    playAgainText: "Play Again",
+    moreGamesText: "More Games",
+    backLabel: "Back to Practice Games",
+    onPlayAgain: () => {
+      setScreen("mode");
+    },
+    onMoreGames: () => window.VerseGameBridge.exitGame()
+  });
+}
 
 
 function helpHtml(){
