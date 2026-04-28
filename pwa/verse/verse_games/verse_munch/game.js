@@ -307,65 +307,56 @@ app.innerHTML = `
     startLoop();
   }
 
-  function renderComplete(){
-    stopLoop();
-    const unlockAt = performance.now() + 700;
+function renderComplete(){
+  stopLoop();
+  const unlockAt = performance.now() + 700;
 
-    app.innerHTML = `
-      <div class="vmunch-mode-shell">
-        <div class="vmunch-mode-stage">
-          <div class="vmunch-mode-top">
-            <div class="vmunch-complete-icon">🎉</div>
-            <div class="vmunch-mode-title">Verse Munch Complete!</div>
-            <div class="vmunch-mode-subtitle">You finished ${escapeHtml(ctx.verseRef || "")}. Nice munching.</div>
+  app.innerHTML = `
+    <div class="vm-game-screen" style="--vm-game-bg:#7f66c6; --vm-game-accent:#7f66c6;">
+      <button class="vm-game-back-pill no-zoom" id="doneTopBtn" type="button" aria-label="Back to Practice">
+        ◀
+      </button>
 
-            <div class="vmunch-mode-card">
-              <div class="vmunch-mode-actions">
-                <button class="vm-btn" id="playAgainBtn" disabled>Play Again</button>
-                <button class="vm-btn" id="doneBtn" disabled>Back to Practice</button>
-              </div>
-            </div>
+      <div class="vm-game-stage">
+        <div class="vm-game-center">
+          <div class="vm-game-icon" aria-hidden="true">🎉</div>
+
+          <div class="vm-game-title">Verse Munch Complete!</div>
+
+          <div class="vm-game-actions">
+            <button class="vm-btn" id="playAgainBtn" type="button" disabled>Play Again</button>
+            <button class="vm-btn vm-btn-secondary" id="doneBtn" type="button" disabled>Back to Practice</button>
           </div>
         </div>
-
-        ${renderNav()}
-        ${renderHelpOverlay(completeHelpHtml())}
       </div>
-    `;
+    </div>
+  `;
 
-    const playAgainBtn = document.getElementById("playAgainBtn");
-    const doneBtn = document.getElementById("doneBtn");
+  const playAgainBtn = document.getElementById("playAgainBtn");
+  const doneBtn = document.getElementById("doneBtn");
+  const doneTopBtn = document.getElementById("doneTopBtn");
 
-    playAgainBtn.onclick = () => {
-      if (performance.now() < unlockAt) return;
-      renderModeSelect();
-    };
-    doneBtn.onclick = () => {
-      if (performance.now() < unlockAt) return;
-      window.VerseGameBridge.exitGame();
-    };
+  const canLeave = () => performance.now() >= unlockAt;
 
-    setTimeout(() => {
-      if (playAgainBtn) playAgainBtn.disabled = false;
-      if (doneBtn) doneBtn.disabled = false;
-    }, 700);
+  playAgainBtn.onclick = () => {
+    if (!canLeave()) return;
+    renderModeSelect();
+  };
 
-    wireCommonNav();
-  }
+  const exitToPractice = () => {
+    if (!canLeave()) return;
+    window.VerseGameBridge.exitGame();
+  };
 
-  function renderNav(){
-    return `
-      <div class="vmunch-nav-wrap">
-        <div class="vmunch-nav">
-          <button class="vmunch-nav-btn" id="homeBtn" aria-label="Home">${getHomeSvg()}</button>
-          <div class="vmunch-nav-center">
-            <button class="vmunch-help-btn" id="helpBtn" type="button">HELP</button>
-          </div>
-          <button class="vmunch-nav-btn" id="muteBtn" aria-label="Mute">${muted ? getMuteSvg() : getUnmuteSvg()}</button>
-        </div>
-      </div>
-    `;
-  }
+  doneBtn.onclick = exitToPractice;
+  doneTopBtn.onclick = exitToPractice;
+
+  setTimeout(() => {
+    if (playAgainBtn) playAgainBtn.disabled = false;
+    if (doneBtn) doneBtn.disabled = false;
+  }, 700);
+}
+
 
 function renderHelpOverlay(body){
   return window.VerseGameShell.helpOverlayHtml({
@@ -1453,15 +1444,5 @@ function getMouthPoint(){
       .replace(/'/g, "&#39;");
   }
 
-  function getHomeSvg(){
-    return `<svg class="nav-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3L3 10h2v9h5v-6h4v6h5v-9h2L12 3z" fill="#ffffff"/></svg>`;
-  }
 
-  function getMuteSvg(){
-    return `<svg class="nav-icon" viewBox="0 0 1270 889" xmlns="http://www.w3.org/2000/svg"><path style="fill:#ffffff;stroke:none;stroke-width:44.9431;stroke-linecap:round" d="M 660.98465,87.244161 409.97079,241.6972 a 150.47802,150.47802 0 0 1 -78.85883,22.31829 H 225.63234 a 42.587633,42.587633 0 0 0 -42.58762,42.58762 v 275.79372 a 42.587633,42.587633 0 0 0 42.58762,42.58762 h 105.47962 a 150.47802,150.47802 0 0 1 78.85883,22.3183 l 251.01386,154.45304 a 23.799138,23.799138 0 0 0 36.27121,-20.26933 V 107.51349 A 23.799138,23.799138 0 0 0 660.98465,87.244161 Z"/><g transform="translate(-26.458334,-255.59263)"><path style="fill:none;stroke:#ffffff;stroke-width:76.7747;stroke-linecap:round" d="M 1241.4124,524.69155 890.61025,875.49365"/><path style="fill:none;stroke:#ffffff;stroke-width:76.7747;stroke-linecap:round" d="m 890.61025,524.69155 350.80215,350.8021"/></g></svg>`;
-  }
-
-  function getUnmuteSvg(){
-    return `<svg class="nav-icon" viewBox="0 0 1270 889" xmlns="http://www.w3.org/2000/svg"><path style="fill:#ffffff;stroke:none;stroke-width:44.9431;stroke-linecap:round" d="M 660.98465,87.244161 409.97079,241.6972 a 150.47802,150.47802 0 0 1 -78.85883,22.31829 H 225.63234 a 42.587633,42.587633 0 0 0 -42.58762,42.58762 v 275.79372 a 42.587633,42.587633 0 0 0 42.58762,42.58762 h 105.47962 a 150.47802,150.47802 0 0 1 78.85883,22.3183 l 251.01386,154.45304 a 23.799138,23.799138 0 0 0 36.27121,-20.26933 V 107.51349 A 23.799138,23.799138 0 0 0 660.98465,87.244161 Z"/><path style="fill:none;stroke:#ffffff;stroke-width:63;stroke-linecap:round" d="M 877 307 Q 982 444 877 582"/><path style="fill:none;stroke:#ffffff;stroke-width:63;stroke-linecap:round" d="M 959 241 Q 1111 444 959 648"/></svg>`;
-  }
 })();
