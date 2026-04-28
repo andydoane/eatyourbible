@@ -1690,11 +1690,6 @@ function renderDone(autoShowPetUnlock = false){
   document.getElementById("backBtn").onclick = exitToPractice;
   document.getElementById("doneTopBtn").onclick = exitToPractice;
 
-  if (autoShowPetUnlock){
-    setTimeout(() => {
-      window.VerseGameBridge.exitGame();
-    }, 450);
-  }
 }
 
   renderIntroScreen();
