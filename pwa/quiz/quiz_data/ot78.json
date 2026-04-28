@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot78",
+  "pageTitle": "OT 78 Quiz",
+  "lessonTitleText": "Esther and Mordecai",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot78image.png",
+  "themeClass": "theme-kahoot-purple",
+  "questions": [
+    {
+      "text": "Who was the king of Persia?",
+      "answers": [
+        "King Xerxes",
+        "King Cyrus",
+        "King Darius",
+        "King Saul"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What was Esther chosen to be?",
+      "answers": [
+        "Queen of Persia",
+        "A servant to the king",
+        "A dancer for the king",
+        "Queen of Israel"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did Mordecai save the life of King Xerxes?",
+      "answers": [
+        "He reported that the king's guards planned to kill him",
+        "He fought off attackers with a sword",
+        "He warned the king that his drink was poisoned",
+        "He gave the king medicine when he was sick"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did Mordecai make Haman angry?",
+      "answers": [
+        "He refused to bow to him",
+        "He spoke badly about him",
+        "He made fun of him",
+        "He stole money from him"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What permission did Xerxes give Haman?",
+      "answers": [
+        "To destroy all the Jews",
+        "To become king",
+        "To throw Mordecai in prison",
+        "To throw a parade for himself"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why was Esther afraid to go to the king?",
+      "answers": [
+        "She could be sent to death if she went uninvited",
+        "Xerxes was in a bad mood",
+        "She had a big fight with Xerxes the day before",
+        "She was afraid of Haman"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Xerxes do when he couldn’t sleep?",
+      "answers": [
+        "He had the royal records read to him",
+        "He went for a walk",
+        "He called for Esther",
+        "He ate a snack"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened when Xerxes asked Haman how to honor someone?",
+      "answers": [
+        "Haman suggested a parade and had to lead it for Mordecai",
+        "Haman asked to sit on the king's throne",
+        "Mordecai had to lead a parade to celebrate Haman",
+        "Haman asked to wear the king's crown, but Xerxes put it on Mordecai"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Esther ask the king at her feast?",
+      "answers": [
+        "For her people, the Jews, to be saved from Haman",
+        "For a parade to be put on in her honor",
+        "For Haman to be sent to prison",
+        "To let Esther and her people go back to Israel"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Xerxes give Mordecai, and what did he do with it?",
+      "answers": [
+        "His signet ring, and Mordecai made a law for the Jews to defend themselves",
+        "A crown, and Mordecai became a prince",
+        "A sword and Mordecai led an army",
+        "His horse, and Mordecai led a parade"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
