@@ -357,22 +357,6 @@ const BUTTON_DANCES = [
     }).join(" ");
   }
 
-  function navIcon(svg){ return svg; }
-
-  function getHomeSvg(){
-    return `<svg class="nav-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path d="M12 3L3 10h2v9h5v-6h4v6h5v-9h2L12 3z" fill="#ffffff"/></svg>`;
-  }
-  function getMuteSvg(){
-    return `<svg class="nav-icon" viewBox="0 0 1270 889" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><path style="fill:#ffffff;stroke:none;stroke-width:44.9431;stroke-linecap:round" d="M 660.98465,87.244161 409.97079,241.6972 a 150.47802,150.47802 0 0 1 -78.85883,22.31829 H 225.63234 a 42.587633,42.587633 0 0 0 -42.58762,42.58762 v 275.79372 a 42.587633,42.587633 0 0 0 42.58762,42.58762 h 105.47962 a 150.47802,150.47802 0 0 1 78.85883,22.3183 l 251.01386,154.45304 a 23.799138,23.799138 0 0 0 36.27121,-20.26933 V 107.51349 A 23.799138,23.799138 0 0 0 660.98465,87.244161 Z" /><g transform="translate(-26.458334,-255.59263)"><path style="fill:none;stroke:#ffffff;stroke-width:76.7747;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1" d="M 1241.4124,524.69155 890.61025,875.49365" /><path style="fill:none;stroke:#ffffff;stroke-width:76.7747;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1" d="m 890.61025,524.69155 350.80215,350.8021" /></g></svg>`;
-  }
-  function getUnmuteSvg(){
-    return `<svg class="nav-icon" viewBox="0 0 1270 889" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false"><g transform="matrix(2.9017243,0,0,2.9017243,-948.59169,1423.6267)"><path style="fill:#ffffff;stroke:none;stroke-width:15.4884;stroke-linecap:round" d="m 554.69651,-460.54773 -86.50507,53.22802 a 51.858137,51.858137 0 0 1 -27.17654,7.69139 h -36.35067 a 14.676664,14.676664 0 0 0 -14.67666,14.67666 v 95.04477 a 14.676664,14.676664 0 0 0 14.67666,14.67666 h 36.35067 a 51.858137,51.858137 0 0 1 27.17654,7.69139 l 86.50507,53.22802 a 8.2017227,8.2017227 0 0 0 12.49988,-6.98527 v -232.26637 a 8.2017227,8.2017227 0 0 0 -12.49988,-6.98527 z" /><path style="fill:none;stroke:#ffffff;stroke-width:26.4583;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1" d="m 596.38634,-270.01659 c 26.00162,-13.81364 42.0863,-39.52797 42.16745,-67.41243 -0.0102,-27.95044 -16.10446,-53.75052 -42.16745,-67.5969" /><path style="fill:none;stroke:#ffffff;stroke-width:26.4583;stroke-linecap:round;stroke-dasharray:none;stroke-opacity:1" d="m 626.65943,-233.57231 c 4.34269,-2.51562 16.69789,-10.99898 23.86366,-17.76894 23.32002,-22.03191 37.74343,-52.46821 37.74343,-86.08777 0,-33.61956 -14.42341,-64.05637 -37.74343,-86.08828 -7.16577,-6.76996 -19.52097,-15.25332 -23.86366,-17.76894" /></g></svg>`;
-  }
-
-  function renderTopNav(){
-    return `<div class="vsn-mode-card" style="display:none"></div>`;
-  }
-
 function renderIntro(){
   window.VerseGameShell.renderTitleScreen({
     app,
@@ -493,14 +477,6 @@ function renderMode(){
     document.getElementById("vsnExitBtn").onclick = () => window.VerseGameBridge.exitGame();
   }
 
-  function renderModeNav(){
-    return `
-      <div style="width:100%;max-width:840px;margin:0 auto;padding:0 14px calc(12px + var(--vsn-safe-bottom));display:flex;justify-content:space-between;align-items:center;gap:14px;background:rgba(0,0,0,0.30);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);height:70px;">
-        <button class="no-zoom" id="vsnHomeBtn" aria-label="Home" style="width:54px;height:54px;border:none;border-radius:16px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;">${navIcon(getHomeSvg())}</button>
-        <button class="no-zoom" id="vsnHelpBtn" type="button" style="min-width:118px;height:44px;padding:0 16px;border:none;border-radius:999px;background:rgba(255,255,255,0.14);color:#fff;font-size:16px;font-weight:900;">HELP</button>
-        <button class="no-zoom" id="vsnMuteBtn" aria-label="Mute" style="width:54px;height:54px;border:none;border-radius:16px;background:rgba(255,255,255,0.12);display:flex;align-items:center;justify-content:center;">${muted ? getMuteSvg() : getUnmuteSvg()}</button>
-      </div>`;
-  }
 
 function helpHtml(){
   return `
@@ -534,22 +510,6 @@ function renderHelpOverlay(){
           </div>
         </div>
       </div>`;
-  }
-
-  function wireModeNav(){
-    const homeBtn = document.getElementById("vsnHomeBtn");
-    const helpBtn = document.getElementById("vsnHelpBtn");
-    const muteBtn = document.getElementById("vsnMuteBtn");
-    const helpOverlay = document.getElementById("vsnHelpOverlay");
-    const helpCloseBtn = document.getElementById("vsnHelpCloseBtn");
-
-    if (homeBtn) homeBtn.onclick = () => window.VerseGameBridge.exitGame();
-    if (helpBtn) helpBtn.onclick = () => { state.helpOpen = true; state.helpBackMode = false; render(); };
-    if (helpCloseBtn) helpCloseBtn.onclick = () => { state.helpOpen = false; state.helpBackMode = false; render(); };
-    if (helpOverlay) helpOverlay.onclick = (e) => {
-      if (e.target === helpOverlay){ state.helpOpen = false; state.helpBackMode = false; render(); }
-    };
-    if (muteBtn) muteBtn.onclick = () => { muted = !muted; render(); };
   }
 
   function wireGameScreen(){
