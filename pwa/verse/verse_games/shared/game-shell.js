@@ -219,6 +219,63 @@
     wireHelp({ id: helpOverlayId, triggerId: "helpBtn" });
   }
 
+
+function renderCompleteScreen({
+  app,
+  title = "Complete!",
+  icon = "🎉",
+  iconHtml = "",
+  statsText = "",
+  statsHtml = "",
+  playAgainText = "Play Again",
+  moreGamesText = "More Games",
+  backLabel = "Back to Practice Games",
+  theme = {},
+  onPlayAgain,
+  onMoreGames
+} = {}){
+  if (!app) return;
+
+  const statsMarkup = statsHtml
+    ? `<div class="vm-game-complete-stats">${statsHtml}</div>`
+    : statsText
+      ? `<div class="vm-game-complete-stats">${escapeHtml(statsText)}</div>`
+      : "";
+
+  app.innerHTML = `
+    <div class="vm-game-screen"${styleVarsHtml(theme)}>
+      <button class="vm-game-back-pill no-zoom" id="gameShellCompleteBackBtn" type="button" aria-label="${escapeHtml(backLabel)}">
+        ◀
+      </button>
+
+      <div class="vm-game-stage">
+        <div class="vm-game-center">
+          <div class="vm-game-icon" aria-hidden="true">
+            ${iconHtml || escapeHtml(icon)}
+          </div>
+
+          <div class="vm-game-title">${escapeHtml(title)}</div>
+
+          ${statsMarkup}
+
+          <div class="vm-game-actions">
+            <button class="vm-btn" id="gameShellPlayAgainBtn" type="button">${escapeHtml(playAgainText)}</button>
+            <button class="vm-btn vm-btn-secondary" id="gameShellMoreGamesBtn" type="button">${escapeHtml(moreGamesText)}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  const playAgainBtn = document.getElementById("gameShellPlayAgainBtn");
+  const moreGamesBtn = document.getElementById("gameShellMoreGamesBtn");
+  const backBtn = document.getElementById("gameShellCompleteBackBtn");
+
+  if (playAgainBtn && typeof onPlayAgain === "function") playAgainBtn.onclick = onPlayAgain;
+  if (moreGamesBtn && typeof onMoreGames === "function") moreGamesBtn.onclick = onMoreGames;
+  if (backBtn && typeof onMoreGames === "function") backBtn.onclick = onMoreGames;
+}
+
   window.VerseGameShell = {
     escapeHtml,
     helpOverlayHtml,
@@ -226,6 +283,7 @@
     closeHelp,
     wireHelp,
     renderTitleScreen,
-    renderModeSelect
+    renderModeSelect,
+    renderCompleteScreen
   };
 })();
