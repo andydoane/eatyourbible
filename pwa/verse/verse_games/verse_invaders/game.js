@@ -115,14 +115,14 @@ function renderIntro(){
   stopLoop();
 
   app.innerHTML = `
-    <div class="vm-game-screen">
+    <div class="vm-game-screen" style="--vm-game-bg:#333333; --vm-game-accent:#333333;">
       <button class="vm-game-back-pill no-zoom" id="homeBtn" type="button" aria-label="Back to Practice Games">
-        ←
+        ◀
       </button>
 
       <div class="vm-game-stage">
         <div class="vm-game-center">
-          <div class="vm-game-icon" aria-hidden="true">👾🚀</div>
+          <div class="vm-game-icon" aria-hidden="true">👾</div>
 
           <div class="vm-game-title">Verse Invaders</div>
 
@@ -145,9 +145,9 @@ function renderModeSelect(){
   stopLoop();
 
   app.innerHTML = `
-    <div class="vm-game-screen">
+    <div class="vm-game-screen" style="--vm-game-bg:#333333; --vm-game-accent:#333333;">
       <button class="vm-game-back-pill no-zoom" id="modeBackBtn" type="button" aria-label="Back to Verse Invaders title">
-        ←
+        ◀
       </button>
 
       <div class="vm-game-stage">
@@ -270,19 +270,19 @@ function renderModeSelect(){
     `;
   }
 
-  function renderHelpOverlay(body){
-    return `
-      <div class="vinv-help-overlay" id="vinvHelpOverlay" aria-hidden="true">
-        <div class="vinv-help-dialog">
-          <div class="vinv-help-title">How to Play</div>
-          <div class="vinv-help-body">${body}</div>
-          <div class="vinv-help-actions">
-            <button class="vm-btn" id="vinvHelpCloseBtn">OK</button>
-          </div>
+function renderHelpOverlay(body){
+  return `
+    <div class="vm-game-help-overlay" id="vinvHelpOverlay" aria-hidden="true">
+      <div class="vm-game-help-panel">
+        <div class="vm-game-help-title">How to Play</div>
+        <div class="vm-game-help-body">${body}</div>
+        <div class="vm-game-help-actions">
+          <button class="vm-btn" id="vinvHelpCloseBtn" type="button">Close</button>
         </div>
       </div>
-    `;
-  }
+    </div>
+  `;
+}
 
 function renderGameMenuOverlay(){
   return `
@@ -334,7 +334,7 @@ function wireCommonNav(){
     if (helpOverlay) {
       helpOverlay.classList.add("is-open");
       helpOverlay.dataset.mode = "close";
-      if (helpCloseBtn) helpCloseBtn.textContent = "OK";
+      if (helpCloseBtn) helpCloseBtn.textContent = "Close";
     }
   };
 
