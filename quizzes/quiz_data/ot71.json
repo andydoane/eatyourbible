@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot71",
+  "pageTitle": "OT 71 Quiz",
+  "lessonTitleText": "Josiah Finds God's Law",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot71image.png",
+  "themeClass": "theme-kahoot-purple",
+  "questions": [
+    {
+      "text": "How old was Josiah when he became king?",
+      "answers": [
+        "Eight years old",
+        "Twelve years old",
+        "Sixteen years old",
+        "Twenty years old"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How does 2 Chronicles describe Josiah as king?",
+      "answers": [
+        "He did what was right in God’s eyes and followed God like David",
+        "He worshiped many false gods like Ahab",
+        "He wasn't very smart",
+        "He slept on a pile of gold"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Josiah do to clean up the sin in the land?",
+      "answers": [
+        "He destroyed altars, idols, and false god statues",
+        "He built more temples",
+        "He put the sinners in prision",
+        "He built more idol statues"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Josiah order his men to repair?",
+      "answers": [
+        "The temple",
+        "His palace",
+        "The city wall",
+        "The statues of the false gods"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Hilkiah the priest find while the temple was being repaired?",
+      "answers": [
+        "A lost scroll of God’s law",
+        "A chest of gold",
+        "A hidden idol",
+        "A treasure map"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Shaphan do when he brought the scroll to Josiah?",
+      "answers": [
+        "He read it to the king",
+        "He ripped it into pieces",
+        "He drew a picture on it",
+        "He burned it"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did Josiah respond when the scroll was read to him?",
+      "answers": [
+        "He was sad and tore his clothes",
+        "He laughed and ignored it",
+        "He was angry at Shaphan for bothering him",
+        "He gave Shaphan a reward"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What message did the prophet Huldah give to Josiah?",
+      "answers": [
+        "God's sinful people would be punished, but not until after Josiah died",
+        "Josiah would be king forever",
+        "Josiah would be defeated by his enemies",
+        "Josiah should throw away the lost scroll"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Josiah do when he gathered the people together?",
+      "answers": [
+        "He read the scroll of God’s law to them",
+        "He yelled at them for sinning",
+        "He told them to find a new god to worship",
+        "He sent them to look for more lost scrolls"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What promise did Josiah and the people make?",
+      "answers": [
+        "To obey God’s commands with all their heart",
+        "To build a bigger temple",
+        "To fight every nation around them",
+        "To build a giant statue of the Lord God"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
