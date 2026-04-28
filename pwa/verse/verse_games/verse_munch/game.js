@@ -309,52 +309,19 @@ app.innerHTML = `
 
 function renderComplete(){
   stopLoop();
-  const unlockAt = performance.now() + 700;
 
-  app.innerHTML = `
-    <div class="vm-game-screen" style="--vm-game-bg:#7f66c6; --vm-game-accent:#7f66c6;">
-      <button class="vm-game-back-pill no-zoom" id="doneTopBtn" type="button" aria-label="Back to Practice">
-        ◀
-      </button>
-
-      <div class="vm-game-stage">
-        <div class="vm-game-center">
-          <div class="vm-game-icon" aria-hidden="true">🎉</div>
-
-          <div class="vm-game-title">Verse Munch Complete!</div>
-
-          <div class="vm-game-actions">
-            <button class="vm-btn" id="playAgainBtn" type="button" disabled>Play Again</button>
-            <button class="vm-btn vm-btn-secondary" id="doneBtn" type="button" disabled>Back to Practice</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-
-  const playAgainBtn = document.getElementById("playAgainBtn");
-  const doneBtn = document.getElementById("doneBtn");
-  const doneTopBtn = document.getElementById("doneTopBtn");
-
-  const canLeave = () => performance.now() >= unlockAt;
-
-  playAgainBtn.onclick = () => {
-    if (!canLeave()) return;
-    renderModeSelect();
-  };
-
-  const exitToPractice = () => {
-    if (!canLeave()) return;
-    window.VerseGameBridge.exitGame();
-  };
-
-  doneBtn.onclick = exitToPractice;
-  doneTopBtn.onclick = exitToPractice;
-
-  setTimeout(() => {
-    if (playAgainBtn) playAgainBtn.disabled = false;
-    if (doneBtn) doneBtn.disabled = false;
-  }, 700);
+  window.VerseGameShell.renderCompleteScreen({
+    app,
+    icon: "🎉",
+    title: "Verse Munch Complete!",
+    statsText: "",
+    theme: GAME_THEME,
+    playAgainText: "Play Again",
+    moreGamesText: "More Games",
+    backLabel: "Back to Practice Games",
+    onPlayAgain: renderModeSelect,
+    onMoreGames: () => window.VerseGameBridge.exitGame()
+  });
 }
 
 
