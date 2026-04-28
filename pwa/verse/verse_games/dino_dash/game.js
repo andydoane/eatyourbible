@@ -370,7 +370,7 @@ function renderComplete(){
     </div>
   `;
 
-  document.getElementById("againBtn").onclick = () => startGame(selectedMode || "easy");
+  document.getElementById("againBtn").onclick = () => renderModeSelect();
 
   const exitToPractice = () => window.VerseGameBridge.exitGame();
 
