@@ -1654,79 +1654,48 @@ function maybeScheduleFruitSpawn(delayMs = 480){
     }
   }
 
-  function renderDone(autoShowPetUnlock = false){
-    stopLoop();
+function renderDone(autoShowPetUnlock = false){
+  stopLoop();
 
-app.innerHTML = `
-  <div
-    style="
-      min-height:100dvh;
-      padding:24px 18px 28px;
-      box-sizing:border-box;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      background:#333333;
-    "
-  >
-    <div
-      style="
-        width:min(100%, 560px);
-        margin:0 auto;
-        display:flex;
-        flex-direction:column;
-        align-items:center;
-        justify-content:center;
-        text-align:center;
-        gap:18px;
-      "
-    >
-      <div class="vm-title">🎉 Great job!</div>
+  app.innerHTML = `
+    <div class="vm-game-screen" style="--vm-game-bg:#333333; --vm-game-accent:#333333;">
+      <button class="vm-game-back-pill no-zoom" id="doneTopBtn" type="button" aria-label="Back to Practice Games">
+        ◀
+      </button>
 
-      <div class="vm-subtitle">
-        ${
-          autoShowPetUnlock
-            ? "You unlocked a BibloPet!"
-            : "Verse Snake " + selectedMode + " was marked complete."
-        }
-      </div>
+      <div class="vm-game-stage">
+        <div class="vm-game-center">
+          <div class="vm-game-icon" aria-hidden="true">🎉</div>
 
-      <div class="vm-subtitle" style="margin-top:2px;">
-        Fruit eaten: ${state.fruitCount}
-      </div>
+          <div class="vm-game-title">Great job!</div>
 
-      <div
-        class="vm-actions"
-        style="
-          width:100%;
-          display:flex;
-          flex-direction:column;
-          gap:16px;
-          margin-top:8px;
-        "
-      >
-        <button class="vm-btn" id="againBtn">Play Again</button>
-        <button class="vm-btn vm-btn-dark" id="backBtn">Practice Games</button>
+          <div class="vm-game-actions">
+            <button class="vm-btn" id="againBtn" type="button">Play Again</button>
+            <button class="vm-btn vm-btn-secondary" id="backBtn" type="button">Practice Games</button>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-`;
+  `;
 
-    document.getElementById("againBtn").onclick = () => {
-      completed = false;
-      renderModeSelect();
-    };
+  document.getElementById("againBtn").onclick = () => {
+    completed = false;
+    renderModeSelect();
+  };
 
-    document.getElementById("backBtn").onclick = () => {
+  const exitToPractice = () => {
+    window.VerseGameBridge.exitGame();
+  };
+
+  document.getElementById("backBtn").onclick = exitToPractice;
+  document.getElementById("doneTopBtn").onclick = exitToPractice;
+
+  if (autoShowPetUnlock){
+    setTimeout(() => {
       window.VerseGameBridge.exitGame();
-    };
-
-    if (autoShowPetUnlock){
-      setTimeout(() => {
-        window.VerseGameBridge.exitGame();
-      }, 450);
-    }
+    }, 450);
   }
+}
 
   renderIntroScreen();
 })();
