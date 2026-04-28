@@ -322,7 +322,7 @@ body{
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-gutter: stable;
-  font-size: clamp(16px, 3.7vw, 22px);
+  font-size: clamp(20px, 4.8vw, 28px);
   font-weight: 800;
   line-height: 1.18;
   text-align: center;
@@ -381,7 +381,7 @@ body{
 
   .vm-game-help-body{
     max-height: min(46vh, 360px);
-    font-size: clamp(18px, 4.8vh, 24px);
+    font-size: clamp(16px, 4vh, 21px);
     line-height: 1.12;
     padding-right: 18px;
   }
