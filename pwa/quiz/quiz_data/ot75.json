@@ -4,7 +4,7 @@
   "lessonTitleText": "Nebuchadnezzar's Second Dream",
   "lessonSubtitleText": "Test how well you know this story",
   "lessonImagePath": "quizimages/ot75image.png",
-  "themeClass": "theme-INSERT",
+  "themeClass": "theme-white",
   "questions": [
     {
       "text": "What was the tree like in Nebuchadnezzar’s dream?",
