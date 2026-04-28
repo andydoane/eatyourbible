@@ -111,56 +111,70 @@
   renderIntro();
 
 
-  function renderIntro(){
-    stopLoop();
-    app.innerHTML = `
-      <div class="vinv-mode-shell">
-        <div class="vinv-mode-stage">
-          <div class="vinv-mode-top">
-            <div style="font-size:70px;line-height:1;">👾🚀</div>
-            <div class="vinv-title">Verse Invaders</div>
-            <div class="vinv-subtitle">Press the color of the next correct word. Rockets lock onto that color wherever it is.</div>
-            <div class="vinv-mode-card">
-              <div class="vinv-mode-actions">
-                <button class="vm-btn" id="startBtn">Start</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        ${renderNav()}
-        ${renderHelpOverlay(helpHtml())}
-      </div>
-    `;
-    document.getElementById("startBtn").onclick = renderModeSelect;
-    wireCommonNav();
-  }
+function renderIntro(){
+  stopLoop();
 
-  function renderModeSelect(){
-    stopLoop();
-    app.innerHTML = `
-      <div class="vinv-mode-shell">
-        <div class="vinv-mode-stage">
-          <div class="vinv-mode-top">
-            <div class="vinv-title">Choose Your Difficulty</div>
-            <div class="vinv-subtitle">Easy stays steady. Medium speeds up each round. Hard starts faster and keeps speeding up.</div>
-            <div class="vinv-mode-card">
-              <div class="vinv-mode-actions">
-                <button class="vm-btn" id="easyBtn">Easy</button>
-                <button class="vm-btn" id="mediumBtn">Medium</button>
-                <button class="vm-btn" id="hardBtn">Hard</button>
-              </div>
-            </div>
+  app.innerHTML = `
+    <div class="vm-game-screen">
+      <button class="vm-game-back-pill no-zoom" id="homeBtn" type="button" aria-label="Back to Practice Games">
+        ←
+      </button>
+
+      <div class="vm-game-stage">
+        <div class="vm-game-center">
+          <div class="vm-game-icon" aria-hidden="true">👾🚀</div>
+
+          <div class="vm-game-title">Verse Invaders</div>
+
+          <div class="vm-game-actions">
+            <button class="vm-btn" id="startBtn" type="button">Start</button>
+            <button class="vm-btn vm-btn-secondary" id="helpBtn" type="button">How to Play</button>
           </div>
         </div>
-        ${renderNav()}
-        ${renderHelpOverlay(helpHtml())}
       </div>
-    `;
-    document.getElementById("easyBtn").onclick = () => startGame("easy");
-    document.getElementById("mediumBtn").onclick = () => startGame("medium");
-    document.getElementById("hardBtn").onclick = () => startGame("hard");
-    wireCommonNav();
-  }
+
+      ${renderHelpOverlay(helpHtml())}
+    </div>
+  `;
+
+  document.getElementById("startBtn").onclick = renderModeSelect;
+  wireCommonNav();
+}
+
+function renderModeSelect(){
+  stopLoop();
+
+  app.innerHTML = `
+    <div class="vm-game-screen">
+      <button class="vm-game-back-pill no-zoom" id="modeBackBtn" type="button" aria-label="Back to Verse Invaders title">
+        ←
+      </button>
+
+      <div class="vm-game-stage">
+        <div class="vm-game-center">
+          <div class="vm-game-difficulty-icon" aria-hidden="true">🥉🥈🥇</div>
+
+          <div class="vm-game-title">Choose Your Difficulty</div>
+
+          <div class="vm-game-actions">
+            <button class="vm-btn" id="easyBtn" type="button">🥉 Easy</button>
+            <button class="vm-btn" id="mediumBtn" type="button">🥈 Medium</button>
+            <button class="vm-btn" id="hardBtn" type="button">🥇 Hard</button>
+          </div>
+        </div>
+      </div>
+
+      ${renderHelpOverlay(helpHtml())}
+    </div>
+  `;
+
+  document.getElementById("modeBackBtn").onclick = renderIntro;
+  document.getElementById("easyBtn").onclick = () => startGame("easy");
+  document.getElementById("mediumBtn").onclick = () => startGame("medium");
+  document.getElementById("hardBtn").onclick = () => startGame("hard");
+
+  wireCommonNav();
+}
 
   function startGame(mode){
     selectedMode = mode;
