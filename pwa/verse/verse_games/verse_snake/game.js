@@ -3,6 +3,13 @@
   const launch = window.VerseGameBridge.getLaunchParams();
   const ctx = await window.VerseGameBridge.getVerseContext();
 
+  const GAME_THEME = {
+    bg: "#333333",
+    accent: "#333333"
+  };
+
+  const HELP_OVERLAY_ID = "vsHelpOverlay";
+
   let selectedMode = null;
   let completed = false;
   let muted = false;
@@ -214,52 +221,36 @@
     }
   }
 
-  function openHelpFromMenu(){
-    const menuOverlay = document.getElementById("vsGameMenuOverlay");
-    const helpOverlay = document.getElementById("vsHelpOverlay");
-    const helpCloseBtn = document.getElementById("vsHelpCloseBtn");
+function openHelpFromMenu(){
+  const menuOverlay = document.getElementById("vsGameMenuOverlay");
 
-    if (menuOverlay){
-      menuOverlay.classList.remove("show");
-      menuOverlay.setAttribute("aria-hidden", "true");
-    }
-
-    if (helpOverlay){
-      helpOverlay.classList.add("show");
-      helpOverlay.setAttribute("aria-hidden", "false");
-      helpOverlay.dataset.mode = "back";
-    }
-
-    if (helpCloseBtn) helpCloseBtn.textContent = "Back";
-
-    setPaused(true, "help");
+  if (menuOverlay){
+    menuOverlay.classList.remove("show");
+    menuOverlay.setAttribute("aria-hidden", "true");
   }
 
-  function closeHelpOverlay(){
-    const helpOverlay = document.getElementById("vsHelpOverlay");
-    if (helpOverlay){
-      helpOverlay.classList.remove("show");
-      helpOverlay.setAttribute("aria-hidden", "true");
-    }
-    setPaused(false, "");
+  window.VerseGameShell.openHelp(HELP_OVERLAY_ID, "back", "Back");
+
+  setPaused(true, "help");
+}
+
+function closeHelpOverlay(){
+  window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
+  setPaused(false, "");
+}
+
+function backToMenuFromHelp(){
+  window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
+
+  const menuOverlay = document.getElementById("vsGameMenuOverlay");
+
+  if (menuOverlay){
+    menuOverlay.classList.add("show");
+    menuOverlay.setAttribute("aria-hidden", "false");
   }
 
-  function backToMenuFromHelp(){
-    const helpOverlay = document.getElementById("vsHelpOverlay");
-    const menuOverlay = document.getElementById("vsGameMenuOverlay");
-
-    if (helpOverlay){
-      helpOverlay.classList.remove("show");
-      helpOverlay.setAttribute("aria-hidden", "true");
-    }
-
-    if (menuOverlay){
-      menuOverlay.classList.add("show");
-      menuOverlay.setAttribute("aria-hidden", "false");
-    }
-
-    setPaused(true, "menu");
-  }
+  setPaused(true, "menu");
+}
   
   function resetSnakeMotion(){
     clearPendingSpawn();
@@ -493,6 +484,25 @@
     `).join(" ");
   }
 
+function helpHtml(){
+  return `
+    Easy: no penalty.<br>
+    Medium: lose 2 built items.<br>
+    Hard: lose everything built.<br><br>
+    After the verse words, collect the book, then the reference.<br><br>
+    Grab fruit for fun snake color changes.
+  `;
+}
+
+function renderHelpOverlay(){
+  return window.VerseGameShell.helpOverlayHtml({
+    id: HELP_OVERLAY_ID,
+    title: "How to Play",
+    body: helpHtml(),
+    closeText: "Close"
+  });
+}
+
   function renderGameMenuOverlay(){
     return `
       <div class="vs-help-overlay" id="vsGameMenuOverlay" aria-hidden="true">
@@ -521,138 +531,37 @@
 function renderIntroScreen(){
   stopLoop();
 
-  app.innerHTML = `
-    <div class="vs-mode-shell">
-      <div class="vs-mode-stage">
-        <div class="vs-mode-top">
-          <div style="font-size:72px; line-height:1; margin-bottom:10px;">🐍</div>
-
-          <div class="vs-mode-title">Verse Snake</div>
-
-          <div class="vs-mode-subtitle" style="max-width:700px;">
-            Steer the snake into the correct next word.<br>
-            After the verse is complete, collect the book, then the reference.
-          </div>
-
-          <div class="vs-mode-card">
-            <div class="vs-mode-actions">
-              <button class="vm-btn" id="startBtn">Start</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="vs-mode-nav-wrap">
-        <div class="vs-nav">
-          <button class="vs-nav-btn no-zoom" id="homeBtn" aria-label="Home">
-            ${getHomeSvg()}
-          </button>
-
-          <div class="vs-nav-center">
-            <button class="vs-help-btn no-zoom" id="helpBtn" type="button">HELP</button>
-          </div>
-
-          <button class="vs-nav-btn no-zoom" id="muteBtn" aria-label="Mute">
-            ${muted ? getMuteSvg() : getUnmuteSvg()}
-          </button>
-        </div>
-      </div>
-
-      <div class="vs-help-overlay" id="vsHelpOverlay" aria-hidden="true">
-        <div class="vs-help-dialog">
-          <div class="vs-help-title">How to Play Verse Snake</div>
-          <div class="vs-help-body">
-            Easy: no penalty.<br>
-            Medium: lose 2 built items.<br>
-            Hard: lose everything built.<br><br>
-            After the verse words, collect the book, then the reference.<br><br>
-            Grab fruit for fun snake color changes.
-          </div>
-          <div class="vs-help-actions">
-            <button class="vs-help-close no-zoom" id="vsHelpCloseBtn" type="button">OK</button>
-          </div>
-        </div>
-      </div>
-      `;
-
-  document.getElementById("startBtn").onclick = () => {
-    renderModeSelect();
-  };
-
-  wireModeSelectNav();
+  window.VerseGameShell.renderTitleScreen({
+    app,
+    title: "Verse Snake",
+    icon: "🐍",
+    helpHtml: helpHtml(),
+    helpOverlayId: HELP_OVERLAY_ID,
+    theme: GAME_THEME,
+    backLabel: "Back to Practice Games",
+    onBack: () => window.VerseGameBridge.exitGame(),
+    onStart: renderModeSelect
+  });
 }
 
-  function renderModeSelect(){
-    stopLoop();
+function renderModeSelect(){
+  stopLoop();
 
-    app.innerHTML = `
-      <div class="vs-mode-shell">
-        <div class="vs-mode-stage">
-          <div class="vs-mode-top">
-            <div class="vs-mode-title">🐍 Verse Snake</div>
-            <div class="vs-mode-subtitle">Choose your difficulty.</div>
-
-            <div class="vs-mode-card">
-              <div class="vs-mode-actions">
-                <button class="vm-btn" id="easyBtn">Easy</button>
-                <button class="vm-btn" id="mediumBtn">Medium</button>
-                <button class="vm-btn" id="hardBtn">Hard</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="vs-mode-nav-wrap">
-          <div class="vs-nav">
-            <button class="vs-nav-btn no-zoom" id="homeBtn" aria-label="Home">
-              ${getHomeSvg()}
-            </button>
-
-            <div class="vs-nav-center">
-              <button class="vs-help-btn no-zoom" id="helpBtn" type="button">HELP</button>
-            </div>
-
-            <button class="vs-nav-btn no-zoom" id="muteBtn" aria-label="Mute">
-              ${muted ? getMuteSvg() : getUnmuteSvg()}
-            </button>
-          </div>
-        </div>
-
-        <div class="vs-help-overlay" id="vsHelpOverlay" aria-hidden="true">
-          <div class="vs-help-dialog">
-            <div class="vs-help-title">How to Play Verse Snake</div>
-            <div class="vs-help-body">
-              Easy: no penalty.<br>
-              Medium: lose 2 built items.<br>
-              Hard: lose everything built.<br><br>
-              After the verse words, collect the book, then the reference.<br><br>
-              Grab fruit for fun snake color changes.
-            </div>
-            <div class="vs-help-actions">
-              <button class="vs-help-close no-zoom" id="vsHelpCloseBtn" type="button">OK</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-
-    document.getElementById("easyBtn").onclick = () => {
-      selectedMode = "easy";
+  window.VerseGameShell.renderModeSelect({
+    app,
+    title: "Choose Your Difficulty",
+    icon: "🥉🥈🥇",
+    helpHtml: helpHtml(),
+    helpOverlayId: HELP_OVERLAY_ID,
+    theme: GAME_THEME,
+    backLabel: "Back to Verse Snake title",
+    onBack: renderIntroScreen,
+    onSelect: (mode) => {
+      selectedMode = mode;
       renderGameScreen();
-    };
-
-    document.getElementById("mediumBtn").onclick = () => {
-      selectedMode = "medium";
-      renderGameScreen();
-    };
-
-    document.getElementById("hardBtn").onclick = () => {
-      selectedMode = "hard";
-      renderGameScreen();
-    };
-
-    wireModeSelectNav();
-  }
+    }
+  });
+}
 
   function wireModeSelectNav(){
     const homeBtn = document.getElementById("homeBtn");
@@ -737,21 +646,7 @@ function renderIntroScreen(){
           </div>
         </div>
 
-        <div class="vs-help-overlay" id="vsHelpOverlay" aria-hidden="true">
-          <div class="vs-help-dialog">
-            <div class="vs-help-title">How to Play Verse Snake</div>
-            <div class="vs-help-body">
-              Easy: no penalty.<br>
-              Medium: lose 2 built items.<br>
-              Hard: lose everything built.<br><br>
-              After the verse words, collect the book, then the reference.<br><br>
-              Grab fruit for fun snake color changes.
-            </div>
-            <div class="vs-help-actions">
-              <button class="vs-help-close no-zoom" id="vsHelpCloseBtn" type="button">OK</button>
-            </div>
-          </div>
-        </div>
+        ${renderHelpOverlay()}
         ${renderGameMenuOverlay()}
       </div>
     `;
@@ -820,29 +715,13 @@ function renderIntroScreen(){
       modePill.textContent = selectedMode ? selectedMode[0].toUpperCase() + selectedMode.slice(1) : "Mode";
     }
 
-    if (helpCloseBtn){
-      helpCloseBtn.onclick = () => {
-        const mode = helpOverlay?.dataset.mode || "close";
-        if (mode === "back"){
-          backToMenuFromHelp();
-        } else {
-          closeHelpOverlay();
-        }
-      };
-    }
-
-    if (helpOverlay){
-      helpOverlay.onclick = (e) => {
-        if (e.target === helpOverlay){
-          const mode = helpOverlay.dataset.mode || "close";
-          if (mode === "back"){
-            backToMenuFromHelp();
-          } else {
-            closeHelpOverlay();
-          }
-        }
-      };
-    }
+window.VerseGameShell.wireHelp({
+  id: HELP_OVERLAY_ID,
+  triggerId: "helpBtn",
+  closeText: "Close",
+  onBack: backToMenuFromHelp,
+  onClose: () => setPaused(false, "")
+});
 
     if (menuHowToBtn){
       menuHowToBtn.onclick = () => openHelpFromMenu();
