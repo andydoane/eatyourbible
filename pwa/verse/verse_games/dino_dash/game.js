@@ -345,44 +345,19 @@ function renderModeSelect(){
 function renderComplete(){
   stopLoop();
 
-  const doneText = selectedMode ? `${capitalize(selectedMode)} complete!` : "Complete!";
+  const doneText = selectedMode ? `${capitalize(selectedMode)} Complete!` : "Complete!";
 
-  app.innerHTML = `
-    <div class="vm-game-screen" style="--vm-game-bg:#333333; --vm-game-accent:#333333;">
-      <button class="vm-game-back-pill no-zoom" id="doneTopBtn" type="button" aria-label="Back to Practice Games">
-        ◀
-      </button>
-
-      <div class="vm-game-stage">
-        <div class="vm-game-center">
-          <div class="vm-game-icon" aria-hidden="true">🏁</div>
-
-          <div class="vm-game-title">${doneText}</div>
-
-          <div class="vm-game-actions">
-            <button class="vm-btn" id="againBtn" type="button">Play Again</button>
-            <button class="vm-btn vm-btn-secondary" id="doneBtn" type="button">Done</button>
-          </div>
-        </div>
-      </div>
-
-      ${renderHelpOverlay(completeHelpHtml())}
-    </div>
-  `;
-
-  document.getElementById("againBtn").onclick = () => renderModeSelect();
-
-  const exitToPractice = () => window.VerseGameBridge.exitGame();
-
-  document.getElementById("doneBtn").onclick = exitToPractice;
-  document.getElementById("doneTopBtn").onclick = exitToPractice;
-
-  window.VerseGameShell.wireHelp({
-    id: HELP_OVERLAY_ID,
-    triggerId: "helpBtn",
-    closeText: "Close",
-    onBack: backToMenuFromHelp,
-    onClose: () => setPaused(false, "")
+  window.VerseGameShell.renderCompleteScreen({
+    app,
+    icon: "🏁",
+    title: doneText,
+    statsText: "",
+    theme: GAME_THEME,
+    playAgainText: "Play Again",
+    moreGamesText: "More Games",
+    backLabel: "Back to Practice Games",
+    onPlayAgain: renderModeSelect,
+    onMoreGames: () => window.VerseGameBridge.exitGame()
   });
 }
 
