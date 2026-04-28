@@ -275,7 +275,11 @@ function renderHelpOverlay(body){
     <div class="vm-game-help-overlay" id="vinvHelpOverlay" aria-hidden="true">
       <div class="vm-game-help-panel">
         <div class="vm-game-help-title">How to Play</div>
-        <div class="vm-game-help-body">${body}</div>
+
+        <div class="vm-game-help-body-wrap">
+          <div class="vm-game-help-body">${body}</div>
+        </div>
+
         <div class="vm-game-help-actions">
           <button class="vm-btn" id="vinvHelpCloseBtn" type="button">Close</button>
         </div>
