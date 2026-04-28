@@ -762,31 +762,22 @@ function renderButtons(){
     setTimeout(() => renderVictory(), 900);
   }
 
-  function renderVictory(){
-    stopLoop();
-    app.innerHTML = `
-      <div class="vinv-mode-shell">
-        <div class="vinv-mode-stage">
-          <div class="vinv-mode-top">
-            <div style="font-size:74px;line-height:1;">🎆</div>
-            <div class="vinv-title">Verse Invaders Complete!</div>
-            <div class="vinv-subtitle">You finished the verse, book, and reference in one run.</div>
-            <div class="vinv-mode-card">
-              <div class="vinv-mode-actions">
-                <button class="vm-btn" id="playAgainBtn">Play Again</button>
-                <button class="vm-btn" id="homeDoneBtn">Done</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        ${renderNav()}
-        ${renderHelpOverlay(helpHtml())}
-      </div>
-    `;
-    document.getElementById("playAgainBtn").onclick = renderModeSelect;
-    document.getElementById("homeDoneBtn").onclick = () => window.VerseGameBridge.exitGame();
-    wireCommonNav();
-  }
+function renderVictory(){
+  stopLoop();
+
+  window.VerseGameShell.renderCompleteScreen({
+    app,
+    icon: "🎆",
+    title: "Verse Invaders Complete!",
+    statsText: "",
+    theme: GAME_THEME,
+    playAgainText: "Play Again",
+    moreGamesText: "More Games",
+    backLabel: "Back to Practice Games",
+    onPlayAgain: renderModeSelect,
+    onMoreGames: () => window.VerseGameBridge.exitGame()
+  });
+}
 
   function loop(ts){
     if (!state.running && !state.bonusMode) return;
