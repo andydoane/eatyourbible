@@ -3,6 +3,13 @@
   const ctx = await window.VerseGameBridge.getVerseContext();
   const GAME_ID = "foodslice";
 
+const GAME_THEME = {
+  bg: "#333333",
+  accent: "#333333"
+};
+
+const HELP_OVERLAY_ID = "fsHelpOverlay";
+
   const FOOD_THEMES = [
     ["🍎","🍐","🍊","🍋","🍌","🍉","🍇","🍓","🫐","🍈","🍒","🥭","🍍","🥥","🥝"],
     ["🍕","🍔","🍟","🌭","🍿","🥓","🥪","🥨","🌮","🌯","🥗","🥘","🍝","🍜","🍲","🍣","🍱"],
@@ -83,57 +90,37 @@
 
   renderIntro();
 
-  function renderIntro(){
-    stopLoop();
-    app.innerHTML = `
-      <div class="fs-mode-shell">
-        <div class="fs-mode-stage">
-          <div class="fs-mode-top">
-            <div style="font-size:70px;line-height:1;">🍉</div>
-            <div class="fs-title">Food Slice</div>
-            <div class="fs-subtitle">Slice the next correct flying food to build the verse, then finish the book and reference.</div>
-            <div class="fs-mode-card">
-              <div class="fs-mode-actions">
-                <button class="vm-btn" id="startBtn">Start</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        ${renderNav()}
-        ${renderHelpOverlay(helpHtml())}
-      </div>
-    `;
-    document.getElementById("startBtn").onclick = renderModeSelect;
-    wireCommonNav();
-  }
+function renderIntro(){
+  stopLoop();
 
-  function renderModeSelect(){
-    stopLoop();
-    app.innerHTML = `
-      <div class="fs-mode-shell">
-        <div class="fs-mode-stage">
-          <div class="fs-mode-top">
-            <div style="font-size:70px;line-height:1;">🍉</div>
-            <div class="fs-title">Choose Your Difficulty</div>
-            <div class="fs-subtitle">Easy is forgiving. Medium uses verse-word decoys with no penalty. Hard uses verse-word decoys too, but a wrong slice removes two built words and bombs can appear.</div>
-            <div class="fs-mode-card">
-              <div class="fs-mode-actions">
-                <button class="vm-btn" id="easyBtn">Easy</button>
-                <button class="vm-btn" id="mediumBtn">Medium</button>
-                <button class="vm-btn" id="hardBtn">Hard</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        ${renderNav()}
-        ${renderHelpOverlay(helpHtml())}
-      </div>
-    `;
-    document.getElementById("easyBtn").onclick = () => startGame("easy");
-    document.getElementById("mediumBtn").onclick = () => startGame("medium");
-    document.getElementById("hardBtn").onclick = () => startGame("hard");
-    wireCommonNav();
-  }
+  window.VerseGameShell.renderTitleScreen({
+    app,
+    title: "Food Slice",
+    icon: "🍉",
+    helpHtml: helpHtml(),
+    helpOverlayId: HELP_OVERLAY_ID,
+    theme: GAME_THEME,
+    backLabel: "Back to Practice Games",
+    onBack: () => window.VerseGameBridge.exitGame(),
+    onStart: renderModeSelect
+  });
+}
+
+function renderModeSelect(){
+  stopLoop();
+
+  window.VerseGameShell.renderModeSelect({
+    app,
+    title: "Choose Your Difficulty",
+    icon: "🥉🥈🥇",
+    helpHtml: helpHtml(),
+    helpOverlayId: HELP_OVERLAY_ID,
+    theme: GAME_THEME,
+    backLabel: "Back to Food Slice title",
+    onBack: renderIntro,
+    onSelect: startGame
+  });
+}
 
   function startGame(mode){
     selectedMode = mode;
@@ -209,52 +196,29 @@
     startLoop();
   }
 
-  function renderEndScreen(reward){
-    stopLoop();
-    const title = reward?.petUnlockTriggered
-      ? "BibloPet Unlocked!"
-      : (alreadyCompletedForMode ? "Nice slicing!" : "Great job!");
-    const subtitle = reward?.petUnlockTriggered
-      ? "You completed this game for the first time on a learned verse, so your BibloPet progression advanced."
-      : (alreadyCompletedForMode
-          ? `You finished ${ctx.verseRef} again in ${capitalize(selectedMode)} mode.`
-          : `You completed ${ctx.verseRef} in ${capitalize(selectedMode)} mode.`);
+function renderEndScreen(reward){
+  stopLoop();
 
-    app.innerHTML = `
-      <div class="fs-mode-shell">
-        <div class="fs-mode-stage">
-          <div class="fs-mode-top">
-            <div class="fs-end-emoji">🎉</div>
-            <div class="fs-mode-card fs-end-card">
-              <div class="fs-end-title">${escapeHtml(title)}</div>
-              <div class="fs-end-text">${escapeHtml(subtitle)}</div>
-              <div class="fs-mode-actions fs-end-lock" id="fsEndActions" style="margin-top:16px;">
-                <button class="vm-btn" id="playAgainBtn" disabled>Play Again</button>
-                <button class="vm-btn" id="exitBtn" disabled>Practice Games</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        ${renderNav()}
-        ${renderHelpOverlay(helpHtml())}
-      </div>
-    `;
-    const playAgainBtn = document.getElementById("playAgainBtn");
-    const exitBtn = document.getElementById("exitBtn");
-    const endActions = document.getElementById("fsEndActions");
+  window.clearTimeout(endScreenUnlockTimer);
+  endScreenUnlockTimer = 0;
 
-    if (playAgainBtn) playAgainBtn.onclick = () => renderModeSelect();
-    if (exitBtn) exitBtn.onclick = () => window.VerseGameBridge.exitGame();
+  const doneText = selectedMode
+    ? `${capitalize(selectedMode)} Complete!`
+    : "Complete!";
 
-    window.clearTimeout(endScreenUnlockTimer);
-    endScreenUnlockTimer = window.setTimeout(() => {
-      if (playAgainBtn) playAgainBtn.disabled = false;
-      if (exitBtn) exitBtn.disabled = false;
-      if (endActions) endActions.classList.remove("fs-end-lock");
-    }, 550);
-
-    wireCommonNav();
-  }
+  window.VerseGameShell.renderCompleteScreen({
+    app,
+    icon: "🍉",
+    title: doneText,
+    statsText: `Bonus slices: ${state.bonusCount}`,
+    theme: GAME_THEME,
+    playAgainText: "Play Again",
+    moreGamesText: "More Games",
+    backLabel: "Back to Practice Games",
+    onPlayAgain: renderModeSelect,
+    onMoreGames: () => window.VerseGameBridge.exitGame()
+  });
+}
 
   function renderNav(){
     return `
@@ -270,19 +234,14 @@
     `;
   }
 
-  function renderHelpOverlay(body){
-    return `
-      <div class="fs-help-overlay" id="fsHelpOverlay" aria-hidden="true">
-        <div class="fs-help-dialog">
-          <div class="fs-help-title">How to Play</div>
-          <div class="fs-help-body">${body}</div>
-          <div class="fs-help-actions">
-            <button class="vm-btn" id="fsHelpCloseBtn">OK</button>
-          </div>
-        </div>
-      </div>
-    `;
-  }
+function renderHelpOverlay(body){
+  return window.VerseGameShell.helpOverlayHtml({
+    id: HELP_OVERLAY_ID,
+    title: "How to Play",
+    body,
+    closeText: "Close"
+  });
+}
 
   function renderGameMenuOverlay(){
     return `
@@ -326,29 +285,15 @@
       muteBtn.textContent = muted ? "🔇" : "🔊";
       if (menuMuteBtn) menuMuteBtn.textContent = muted ? "Unmute" : "Mute";
     };
-    if (helpBtn) helpBtn.onclick = () => {
-      if (helpOverlay){
-        helpOverlay.classList.add("is-open");
-        helpOverlay.dataset.mode = "close";
-        if (helpCloseBtn) helpCloseBtn.textContent = "OK";
-      }
-    };
-    if (helpCloseBtn) {
-      helpCloseBtn.onclick = () => {
-        const mode = helpOverlay?.dataset.mode || "close";
-        if (mode === "back") backToMenuFromHelp();
-        else closeHelpOverlay();
-      };
-    }
-    if (helpOverlay) {
-      helpOverlay.onclick = (e) => {
-        if (e.target === helpOverlay){
-          const mode = helpOverlay.dataset.mode || "close";
-          if (mode === "back") backToMenuFromHelp();
-          else closeHelpOverlay();
-        }
-      };
-    }
+
+window.VerseGameShell.wireHelp({
+  id: HELP_OVERLAY_ID,
+  triggerId: "helpBtn",
+  closeText: "Close",
+  onBack: backToMenuFromHelp,
+  onClose: () => setPaused(false, "")
+});
+
     if (menuHowToBtn) menuHowToBtn.onclick = openHelpFromMenu;
     if (menuMuteBtn) menuMuteBtn.onclick = () => {
       muted = !muted;
@@ -405,32 +350,30 @@
     if (!helpOverlay || !helpOverlay.classList.contains("is-open")) setPaused(false, "");
   }
 
-  function openHelpFromMenu(){
-    const menuOverlay = document.getElementById("fsGameMenuOverlay");
-    const helpOverlay = document.getElementById("fsHelpOverlay");
-    const helpCloseBtn = document.getElementById("fsHelpCloseBtn");
-    if (menuOverlay) menuOverlay.classList.remove("is-open");
-    if (helpOverlay){
-      helpOverlay.classList.add("is-open");
-      helpOverlay.dataset.mode = "back";
-    }
-    if (helpCloseBtn) helpCloseBtn.textContent = "Back";
-    setPaused(true, "help");
-  }
+function openHelpFromMenu(){
+  const menuOverlay = document.getElementById("fsGameMenuOverlay");
 
-  function closeHelpOverlay(){
-    const helpOverlay = document.getElementById("fsHelpOverlay");
-    if (helpOverlay) helpOverlay.classList.remove("is-open");
-    setPaused(false, "");
-  }
+  if (menuOverlay) menuOverlay.classList.remove("is-open");
 
-  function backToMenuFromHelp(){
-    const helpOverlay = document.getElementById("fsHelpOverlay");
-    const menuOverlay = document.getElementById("fsGameMenuOverlay");
-    if (helpOverlay) helpOverlay.classList.remove("is-open");
-    if (menuOverlay) menuOverlay.classList.add("is-open");
-    setPaused(true, "menu");
-  }
+  window.VerseGameShell.openHelp(HELP_OVERLAY_ID, "back", "Back");
+
+  setPaused(true, "help");
+}
+  
+
+function closeHelpOverlay(){
+  window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
+  setPaused(false, "");
+}
+
+function backToMenuFromHelp(){
+  window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
+
+  const menuOverlay = document.getElementById("fsGameMenuOverlay");
+  if (menuOverlay) menuOverlay.classList.add("is-open");
+
+  setPaused(true, "menu");
+}
 
   function setPaused(paused, reason=""){
     state.paused = paused;
