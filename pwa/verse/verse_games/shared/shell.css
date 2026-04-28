@@ -124,7 +124,7 @@ body{
   width: 100%;
   position: relative;
   overflow: hidden;
-  background: var(--vm-purple);
+  background: var(--vm-game-bg, var(--vm-purple));
   color: var(--vm-white);
   display: flex;
   align-items: center;
@@ -154,7 +154,7 @@ body{
   border: none;
   border-radius: 999px;
   background: rgba(255,255,255,0.95);
-  color: var(--vm-purple);
+  color: var(--vm-game-accent, var(--vm-purple));
   font: inherit;
   font-size: 22px;
   font-weight: 900;
@@ -255,5 +255,94 @@ body{
 
   .vm-game-actions .vm-btn{
     min-height: 54px;
+  }
+}
+
+/* =========================================================
+   Shared external game How to Play overlay
+   ========================================================= */
+
+.vm-game-help-overlay{
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding:
+    calc(18px + env(safe-area-inset-top))
+    16px
+    calc(18px + env(safe-area-inset-bottom));
+  background: rgba(0,0,0,0.46);
+}
+
+.vm-game-help-overlay.is-open{
+  display: flex;
+}
+
+.vm-game-help-panel{
+  width: min(100%, 520px);
+  max-height: 100%;
+  background: #ffffff;
+  color: var(--vm-text-dark);
+  border-radius: 28px;
+  padding: clamp(18px, 4vw, 26px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 10px 0 rgba(0,0,0,0.22);
+}
+
+.vm-game-help-title{
+  font-size: clamp(32px, 7vw, 48px);
+  font-weight: 900;
+  line-height: 1;
+  text-align: center;
+}
+
+.vm-game-help-body{
+  min-height: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  font-size: clamp(20px, 4.8vw, 28px);
+  font-weight: 800;
+  line-height: 1.18;
+  text-align: center;
+  padding: 4px 4px 2px;
+}
+
+.vm-game-help-actions{
+  flex: 0 0 auto;
+  width: min(100%, 360px);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.vm-game-help-actions .vm-btn{
+  width: 100%;
+  min-height: 58px;
+  font-size: clamp(22px, 5vw, 30px);
+}
+
+@media (max-height: 620px){
+  .vm-game-help-panel{
+    border-radius: 24px;
+    padding: 16px;
+    gap: 10px;
+  }
+
+  .vm-game-help-title{
+    font-size: clamp(28px, 7vh, 38px);
+  }
+
+  .vm-game-help-body{
+    font-size: clamp(18px, 4.8vh, 24px);
+    line-height: 1.12;
+  }
+
+  .vm-game-help-actions .vm-btn{
+    min-height: 52px;
   }
 }
