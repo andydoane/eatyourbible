@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot74",
+  "pageTitle": "OT 74 Quiz",
+  "lessonTitleText": "Shadrach, Meshach, and Abednego",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot74image.png",
+  "themeClass": "theme-kahoot-orange",
+  "questions": [
+    {
+      "text": "What large object did Nebuchadnezzar build?",
+      "answers": [
+        "A 90-foot-tall gold statue",
+        "A 9-foot-tall silver statue",
+        "An ark",
+        "A golden throne"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What command did the king give about his statue?",
+      "answers": [
+        "Bow down to the statue or be thrown into a fiery furnace",
+        "Pray to the statue or go to jail",
+        "Leave presents at the feet of the statue",
+        "Sing songs to the statue"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why didn’t Shadrach, Meshach, and Abednego bow?",
+      "answers": [
+        "God commands us to worship only him",
+        "They were afraid",
+        "They didn’t hear the order",
+        "They thought the statue was ugly"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did the three men say to Nebuchadnezzar?",
+      "answers": [
+        "God can rescue us, but even if not, we will not bow",
+        "We will bow tomorrow",
+        "We will obey you",
+        "Give us more time to think about it"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How much hotter was the furnace made?",
+      "answers": [
+        "Seven times hotter",
+        "Twice as hot",
+        "Ten times hotter",
+        "A million times hotter"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened to the soldiers who threw them into the furnace?",
+      "answers": [
+        "They died from the heat",
+        "They ran away",
+        "They were unharmed",
+        "They fell into the fire with them"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why was Nebuchadnezzar amazed?",
+      "answers": [
+        "He saw four men walking in the fire, not tied up",
+        "The fire went out",
+        "The statue fell over",
+        "The three friends burned up"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Who was the fourth person in the fire?",
+      "answers": [
+        "An angel or perhaps Jesus",
+        "One of the king's soldiers",
+        "King Nebuchadnezzar",
+        "Daniel"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What was true about the three men after they came out?",
+      "answers": [
+        "They were completely unharmed and didn’t smell like smoke",
+        "Their clothes were burned",
+        "They were burned to a crisp",
+        "Their eyebrows had burned off, but that was it"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What new order did Nebuchadnezzar give?",
+      "answers": [
+        "Anyone who speaks against the Lord God will be punished",
+        "Everyone must bow to the statue",
+        "The furnace must be even hotter",
+        "Throw Daniel in the fire next"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
