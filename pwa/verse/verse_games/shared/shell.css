@@ -322,7 +322,7 @@ body{
   overflow: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-gutter: stable;
-  font-size: clamp(18px, 4.2vw, 25px);
+  font-size: clamp(16px, 3.7vw, 22px);
   font-weight: 800;
   line-height: 1.18;
   text-align: center;
