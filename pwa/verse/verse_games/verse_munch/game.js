@@ -3,6 +3,14 @@
   const ctx = await window.VerseGameBridge.getVerseContext();
 
   const GAME_ID = "verse_munch";
+
+  const GAME_THEME = {
+    bg: "#7f66c6",
+    accent: "#7f66c6"
+  };
+
+  const HELP_OVERLAY_ID = "vmunchHelpOverlay";
+
   const BOOKS = [
     "Genesis","Exodus","Leviticus","Numbers","Deuteronomy","Joshua","Judges","Ruth",
     "1 Samuel","2 Samuel","1 Kings","2 Kings","1 Chronicles","2 Chronicles","Ezra","Nehemiah","Esther",
@@ -143,66 +151,69 @@ const FACE_MAP = {
   renderIntro();
   preloadFaceImages();
 
-  function renderIntro(){
-    stopLoop();
-    app.innerHTML = `
-      <div class="vmunch-mode-shell">
-        <div class="vmunch-mode-stage">
-          <div class="vmunch-mode-top">
-            <div style="width:82px;height:82px;">
-              <img src="verse_munch_images/munch_positive_2.png" style="width:100%;height:100%;object-fit:contain;">
-            </div>
-            <div class="vmunch-mode-title">Verse Munch</div>
-            <div class="vmunch-mode-subtitle">
-              Spin the selector, feed the face the next correct word, then finish with the book and reference.
-            </div>
+function introHelpHtml(){
+  return `
+    Use the left and right arrows to rotate the selector.<br><br>
+    Tap the centered word to feed it to the face.<br><br>
+    Correct picks build the verse and grow your streak. Wrong picks only reset your streak.<br><br>
+    After the full verse is built, munch the book, then the chapter and verse.
+  `;
+}
 
-            <div class="vmunch-mode-card">
-              <div class="vmunch-mode-actions">
-                <button class="vm-btn" id="startBtn">Start</button>
-              </div>
-            </div>
-          </div>
-        </div>
+function modeHelpHtml(){
+  return `
+    Easy: slower animation timing and gentler pace.<br><br>
+    Medium: balanced default timing.<br><br>
+    Hard: snappier timing and less dwell before the next choice.
+  `;
+}
 
-        ${renderNav()}
-        ${renderHelpOverlay("Use the left and right arrows to rotate the selector.<br><br>Tap the centered word to feed it to the face.<br><br>Correct picks build the verse and grow your streak. Wrong picks only reset your streak.<br><br>After the full verse is built, munch the book, then the chapter and verse.")}
-      </div>
-    `;
+function gameHelpHtml(){
+  return `
+    Rotate the selector with the arrows.<br><br>
+    Tap the word to feed it upward.<br><br>
+    The face emotion changes only after each reaction finishes.<br><br>
+    Wrong picks reset your streak but never end the run.
+  `;
+}
 
-    document.getElementById("startBtn").onclick = renderModeSelect;
-    wireCommonNav();
-  }
+function completeHelpHtml(){
+  return `
+    Great job! This completion has already been recorded for medals, stars, and BibloPets.
+  `;
+}
 
-  function renderModeSelect(){
-    stopLoop();
-    app.innerHTML = `
-      <div class="vmunch-mode-shell">
-        <div class="vmunch-mode-stage">
-          <div class="vmunch-mode-top">
-            <div class="vmunch-mode-title">😋 Verse Munch</div>
-            <div class="vmunch-mode-subtitle">Choose your difficulty.</div>
+function renderIntro(){
+  stopLoop();
 
-            <div class="vmunch-mode-card">
-              <div class="vmunch-mode-actions">
-                <button class="vm-btn" id="easyBtn">Easy</button>
-                <button class="vm-btn" id="mediumBtn">Medium</button>
-                <button class="vm-btn" id="hardBtn">Hard</button>
-              </div>
-            </div>
-          </div>
-        </div>
+  window.VerseGameShell.renderTitleScreen({
+    app,
+    title: "Verse Munch",
+    iconHtml: `<img src="verse_munch_images/munch_positive_2.png" alt="" draggable="false">`,
+    helpHtml: introHelpHtml(),
+    helpOverlayId: HELP_OVERLAY_ID,
+    theme: GAME_THEME,
+    backLabel: "Back to Practice Games",
+    onBack: () => window.VerseGameBridge.exitGame(),
+    onStart: renderModeSelect
+  });
+}
 
-        ${renderNav()}
-        ${renderHelpOverlay("Easy: slower animation timing and gentler pace.<br><br>Medium: balanced default timing.<br><br>Hard: snappier timing and less dwell before the next choice.")}
-      </div>
-    `;
+function renderModeSelect(){
+  stopLoop();
 
-    document.getElementById("easyBtn").onclick = () => startGame("easy");
-    document.getElementById("mediumBtn").onclick = () => startGame("medium");
-    document.getElementById("hardBtn").onclick = () => startGame("hard");
-    wireCommonNav();
-  }
+  window.VerseGameShell.renderModeSelect({
+    app,
+    title: "Choose Your Difficulty",
+    icon: "🥉🥈🥇",
+    helpHtml: modeHelpHtml(),
+    helpOverlayId: HELP_OVERLAY_ID,
+    theme: GAME_THEME,
+    backLabel: "Back to Verse Munch title",
+    onBack: renderIntro,
+    onSelect: startGame
+  });
+}
 
   function startGame(mode){
     selectedMode = mode;
@@ -283,7 +294,7 @@ app.innerHTML = `
       </div>
     </div>
 
-    ${renderHelpOverlay("Rotate the selector with the arrows.<br><br>Tap the word to feed it upward.<br><br>The face emotion changes only after each reaction finishes.<br><br>Wrong picks reset your streak but never end the run.")}
+    ${renderHelpOverlay(gameHelpHtml())}
     ${renderGameMenuOverlay()}
   </div>
 `;
@@ -318,7 +329,7 @@ app.innerHTML = `
         </div>
 
         ${renderNav()}
-        ${renderHelpOverlay("Great job! This completion has already been recorded for medals, stars, and BibloPets.")}
+        ${renderHelpOverlay(completeHelpHtml())}
       </div>
     `;
 
@@ -356,19 +367,14 @@ app.innerHTML = `
     `;
   }
 
-  function renderHelpOverlay(body){
-    return `
-      <div class="vmunch-help-overlay" id="vmunchHelpOverlay" aria-hidden="true">
-        <div class="vmunch-help-dialog">
-          <div class="vmunch-help-title">How to Play</div>
-          <div class="vmunch-help-body">${body}</div>
-          <div class="vmunch-help-actions">
-            <button class="vm-btn" id="vmunchHelpCloseBtn">OK</button>
-          </div>
-        </div>
-      </div>
-    `;
-  }
+function renderHelpOverlay(body){
+  return window.VerseGameShell.helpOverlayHtml({
+    id: HELP_OVERLAY_ID,
+    title: "How to Play",
+    body,
+    closeText: "Close"
+  });
+}
 
 function renderGameMenuOverlay(){
   return `
@@ -402,39 +408,13 @@ function wireCommonNav(){
 
   if (homeBtn) homeBtn.onclick = () => window.VerseGameBridge.exitGame();
 
-  if (helpBtn) {
-    helpBtn.onclick = () => {
-      if (helpOverlay){
-        helpOverlay.classList.add("is-open");
-        helpOverlay.dataset.mode = "close";
-        if (helpCloseBtn) helpCloseBtn.textContent = "OK";
-      }
-    };
-  }
-
-  if (helpCloseBtn) {
-    helpCloseBtn.onclick = () => {
-      const mode = helpOverlay?.dataset.mode || "close";
-      if (mode === "back"){
-        backToMenuFromHelp();
-      } else {
-        closeHelpOverlay();
-      }
-    };
-  }
-
-  if (helpOverlay){
-    helpOverlay.onclick = (e) => {
-      if (e.target === helpOverlay){
-        const mode = helpOverlay.dataset.mode || "close";
-        if (mode === "back"){
-          backToMenuFromHelp();
-        } else {
-          closeHelpOverlay();
-        }
-      }
-    };
-  }
+window.VerseGameShell.wireHelp({
+  id: HELP_OVERLAY_ID,
+  triggerId: "helpBtn",
+  closeText: "Close",
+  onBack: backToMenuFromHelp,
+  onClose: () => setPaused(false, "")
+});
 
   if (muteBtn){
     muteBtn.onclick = () => {
@@ -502,30 +482,24 @@ function closeGameMenu(){
 
 function openHelpFromMenu(){
   const menuOverlay = document.getElementById("vmunchGameMenuOverlay");
-  const helpOverlay = document.getElementById("vmunchHelpOverlay");
-  const helpCloseBtn = document.getElementById("vmunchHelpCloseBtn");
 
   if (menuOverlay) menuOverlay.classList.remove("is-open");
-  if (helpOverlay){
-    helpOverlay.classList.add("is-open");
-    helpOverlay.dataset.mode = "back";
-  }
-  if (helpCloseBtn) helpCloseBtn.textContent = "Back";
+
+  window.VerseGameShell.openHelp(HELP_OVERLAY_ID, "back", "Back");
 
   setPaused(true, "help");
 }
 
+
 function closeHelpOverlay(){
-  const helpOverlay = document.getElementById("vmunchHelpOverlay");
-  if (helpOverlay) helpOverlay.classList.remove("is-open");
+  window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
   setPaused(false, "");
 }
 
 function backToMenuFromHelp(){
-  const helpOverlay = document.getElementById("vmunchHelpOverlay");
-  const menuOverlay = document.getElementById("vmunchGameMenuOverlay");
+  window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
 
-  if (helpOverlay) helpOverlay.classList.remove("is-open");
+  const menuOverlay = document.getElementById("vmunchGameMenuOverlay");
   if (menuOverlay) menuOverlay.classList.add("is-open");
 
   setPaused(true, "menu");
