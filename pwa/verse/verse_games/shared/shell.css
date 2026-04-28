@@ -298,15 +298,15 @@ body{
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--vm-game-accent, var(--vm-purple));
-  color: #ffffff;
+  background: var(--vm-game-help-title-bg, var(--vm-game-accent, var(--vm-purple)));
+  color: var(--vm-game-help-title-color, #ffffff);
   border-radius: 999px;
   padding: 10px 22px;
   font-size: clamp(28px, 6.5vw, 44px);
   font-weight: 900;
   line-height: 1;
   text-align: center;
-  box-shadow: 0 5px 0 rgba(0,0,0,0.20);
+  text-wrap: balance;
 }
 
 .vm-game-help-body-wrap{
@@ -326,6 +326,7 @@ body{
   font-weight: 800;
   line-height: 1.18;
   text-align: center;
+  text-wrap: balance;
   padding: 4px 18px 26px 4px;
 }
 
@@ -357,7 +358,13 @@ body{
   width: 100%;
   min-height: 58px;
   font-size: clamp(22px, 5vw, 30px);
-  color: var(--vm-game-accent, var(--vm-purple));
+  background: var(--vm-game-help-close-bg, var(--vm-purple));
+  color: var(--vm-game-help-close-color, #ffffff);
+  box-shadow: none;
+}
+
+.vm-game-help-actions .vm-btn:active{
+  box-shadow: none;
 }
 
 @media (max-height: 620px){
