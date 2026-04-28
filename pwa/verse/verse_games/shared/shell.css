@@ -224,6 +224,7 @@ body{
   font-size: clamp(58px, 15vw, 104px);
   line-height: 1;
   filter: drop-shadow(0 5px 0 rgba(0,0,0,0.18));
+  white-space: nowrap;
 }
 
 @media (min-width: 700px){
