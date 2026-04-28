@@ -5,6 +5,13 @@
   const ctx = await window.VerseGameBridge.getVerseContext();
   const GAME_ID = "scramble";
 
+  const GAME_THEME = {
+    bg: "#7f66c6",
+    accent: "#7f66c6"
+  };
+
+  const HELP_OVERLAY_ID = "vsnHelpOverlay";
+
   let selectedMode = null;
   let muted = false;
   let bestWpm = 0;
@@ -366,58 +373,39 @@ const BUTTON_DANCES = [
     return `<div class="vsn-mode-card" style="display:none"></div>`;
   }
 
-  function renderIntro(){
-    app.innerHTML = `
-      <div class="vsn-mode-shell">
-        <div class="vsn-mode-stage">
-          <div class="vsn-mode-top">
-            <div style="font-size:72px;line-height:1;">🧩</div>
-            <div class="vsn-mode-title">Verse Scramble</div>
-            <div class="vsn-mode-subtitle">Tap the next correct word as fast as you can. Build the verse, then the book, then the reference.</div>
-            <div class="vsn-mode-card">
-              <div class="vsn-mode-actions">
-                <button class="vm-btn no-zoom" id="vsnStartBtn">Start</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        ${renderModeNav()}
-        ${renderHelpOverlay()}
-      </div>`;
-    wireModeNav();
-    document.getElementById("vsnStartBtn").onclick = () => setScreen("mode");
-  }
+function renderIntro(){
+  window.VerseGameShell.renderTitleScreen({
+    app,
+    title: "Verse Scramble",
+    icon: "🧩",
+    helpHtml: helpHtml(),
+    helpOverlayId: HELP_OVERLAY_ID,
+    theme: GAME_THEME,
+    backLabel: "Back to Practice Games",
+    onBack: () => window.VerseGameBridge.exitGame(),
+    onStart: () => setScreen("mode")
+  });
+}
 
-  function renderMode(){
-    app.innerHTML = `
-      <div class="vsn-mode-shell">
-        <div class="vsn-mode-stage">
-          <div class="vsn-mode-top">
-            <div class="vsn-mode-title">🧩 Verse Scramble</div>
-            <div class="vsn-mode-subtitle">Choose your difficulty.</div>
-            <div class="vsn-mode-card">
-              <div class="vsn-mode-actions">
-                <button class="vm-btn no-zoom" data-mode="easy">Easy</button>
-                <button class="vm-btn no-zoom" data-mode="medium">Medium</button>
-                <button class="vm-btn no-zoom" data-mode="hard">Hard</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        ${renderModeNav()}
-        ${renderHelpOverlay()}
-      </div>`;
-    wireModeNav();
-    document.querySelectorAll("[data-mode]").forEach(btn => {
-      btn.onclick = () => {
-        selectedMode = btn.dataset.mode;
-        initVerseData();
-        state.startTime = performance.now();
-        buildRoundChoices();
-        setScreen("game");
-      };
-    });
-  }
+function renderMode(){
+  window.VerseGameShell.renderModeSelect({
+    app,
+    title: "Choose Your Difficulty",
+    icon: "🥉🥈🥇",
+    helpHtml: helpHtml(),
+    helpOverlayId: HELP_OVERLAY_ID,
+    theme: GAME_THEME,
+    backLabel: "Back to Verse Scramble title",
+    onBack: () => setScreen("intro"),
+    onSelect: (mode) => {
+      selectedMode = mode;
+      initVerseData();
+      state.startTime = performance.now();
+      buildRoundChoices();
+      setScreen("game");
+    }
+  });
+}
 
   function renderGame(){
     app.innerHTML = `
@@ -514,24 +502,24 @@ const BUTTON_DANCES = [
       </div>`;
   }
 
-  function renderHelpOverlay(){
-    return `
-      <div class="vsn-help-overlay ${state.helpOpen ? "show" : ""}" id="vsnHelpOverlay" aria-hidden="${state.helpOpen ? "false" : "true"}">
-        <div class="vsn-help-dialog">
-          <div class="vsn-help-title">How to Play Verse Scramble</div>
-          <div class="vsn-help-body">
-            Tap the next correct word as quickly as you can.<br><br>
-            Easy: fun decoys.<br>
-            Medium: decoys are other words from the verse.<br>
-            Hard: same as Medium, but wrong taps remove two built words.<br><br>
-            After the verse words, collect the book, then the reference.
-          </div>
-          <div class="vsn-help-actions">
-            <button class="vsn-help-close no-zoom" id="vsnHelpCloseBtn" type="button">${state.helpBackMode ? "Back" : "OK"}</button>
-          </div>
-        </div>
-      </div>`;
-  }
+function helpHtml(){
+  return `
+    Tap the next correct word as quickly as you can.<br><br>
+    Easy: fun decoys.<br>
+    Medium: decoys are other words from the verse.<br>
+    Hard: same as Medium, but wrong taps remove two built words.<br><br>
+    After the verse words, collect the book, then the reference.
+  `;
+}
+
+function renderHelpOverlay(){
+  return window.VerseGameShell.helpOverlayHtml({
+    id: HELP_OVERLAY_ID,
+    title: "How to Play",
+    body: helpHtml(),
+    closeText: state.helpBackMode ? "Back" : "Close"
+  });
+}
 
   function renderGameMenuOverlay(){
     return `
@@ -589,33 +577,55 @@ const BUTTON_DANCES = [
     const exitBtn = document.getElementById("vsnMenuExitBtn");
     const closeBtn = document.getElementById("vsnMenuCloseBtn");
 
-    if (howTo) howTo.onclick = () => { state.menuOpen = false; state.helpOpen = true; state.helpBackMode = true; render(); };
-    if (muteBtn) muteBtn.onclick = () => { muted = !muted; render(); };
+    if (howTo) howTo.onclick = () => {
+      state.menuOpen = false;
+      state.helpOpen = true;
+      state.helpBackMode = true;
+
+      if (menuOverlay) menuOverlay.classList.remove("show");
+      window.VerseGameShell.openHelp(HELP_OVERLAY_ID, "back", "Back");
+    };
+
+    if (muteBtn) muteBtn.onclick = () => {
+      muted = !muted;
+      render();
+    };
+
     if (exitBtn) exitBtn.onclick = () => window.VerseGameBridge.exitGame();
-    if (closeBtn) closeBtn.onclick = () => { state.menuOpen = false; render(); };
-    if (menuOverlay) menuOverlay.onclick = (e) => { if (e.target === menuOverlay){ state.menuOpen = false; render(); } };
-    if (closeHelp) closeHelp.onclick = () => {
-      if (state.helpBackMode){
+
+    if (closeBtn) closeBtn.onclick = () => {
+      state.menuOpen = false;
+      render();
+    };
+
+    if (menuOverlay) {
+      menuOverlay.onclick = (e) => {
+        if (e.target === menuOverlay){
+          state.menuOpen = false;
+          render();
+        }
+      };
+    }
+
+    window.VerseGameShell.wireHelp({
+      id: HELP_OVERLAY_ID,
+      triggerId: "vsnHelpBtn",
+      closeText: "Close",
+      onBack: () => {
         state.helpOpen = false;
         state.menuOpen = true;
         state.helpBackMode = false;
-      } else {
+
+        window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
+
+        const freshMenuOverlay = document.getElementById("vsnGameMenuOverlay");
+        if (freshMenuOverlay) freshMenuOverlay.classList.add("show");
+      },
+      onClose: () => {
         state.helpOpen = false;
+        state.helpBackMode = false;
       }
-      render();
-    };
-    if (helpOverlay) helpOverlay.onclick = (e) => {
-      if (e.target === helpOverlay){
-        if (state.helpBackMode){
-          state.helpOpen = false;
-          state.menuOpen = true;
-          state.helpBackMode = false;
-        } else {
-          state.helpOpen = false;
-        }
-        render();
-      }
-    };
+    });
   }
 
   function flashWrongBoard(){
