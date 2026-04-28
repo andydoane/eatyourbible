@@ -1,6 +1,6 @@
 /* sw.js - PWA service worker for /eatyourbible/pwa/quiz/ */
 
-const CACHE_NAME = "eyb-quiz-2026_Apr_20 v1";
+const CACHE_NAME = "eyb-quiz-2026_Apr_28";
 
 /**
  * Core files needed so the app "boots" offline.
