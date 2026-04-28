@@ -1657,39 +1657,25 @@ function maybeScheduleFruitSpawn(delayMs = 480){
 function renderDone(autoShowPetUnlock = false){
   stopLoop();
 
-  app.innerHTML = `
-    <div class="vm-game-screen" style="--vm-game-bg:#333333; --vm-game-accent:#333333;">
-      <button class="vm-game-back-pill no-zoom" id="doneTopBtn" type="button" aria-label="Back to Practice Games">
-        ◀
-      </button>
+  const doneText = selectedMode
+    ? `${selectedMode.charAt(0).toUpperCase() + selectedMode.slice(1)} Complete!`
+    : "Complete!";
 
-      <div class="vm-game-stage">
-        <div class="vm-game-center">
-          <div class="vm-game-icon" aria-hidden="true">🎉</div>
-
-          <div class="vm-game-title">Great job!</div>
-
-          <div class="vm-game-actions">
-            <button class="vm-btn" id="againBtn" type="button">Play Again</button>
-            <button class="vm-btn vm-btn-secondary" id="backBtn" type="button">Practice Games</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-
-  document.getElementById("againBtn").onclick = () => {
-    completed = false;
-    renderModeSelect();
-  };
-
-  const exitToPractice = () => {
-    window.VerseGameBridge.exitGame();
-  };
-
-  document.getElementById("backBtn").onclick = exitToPractice;
-  document.getElementById("doneTopBtn").onclick = exitToPractice;
-
+  window.VerseGameShell.renderCompleteScreen({
+    app,
+    icon: "🎉",
+    title: doneText,
+    statsText: `Fruit eaten: ${state.fruitCount}`,
+    theme: GAME_THEME,
+    playAgainText: "Play Again",
+    moreGamesText: "More Games",
+    backLabel: "Back to Practice Games",
+    onPlayAgain: () => {
+      completed = false;
+      renderModeSelect();
+    },
+    onMoreGames: () => window.VerseGameBridge.exitGame()
+  });
 }
 
   renderIntroScreen();
