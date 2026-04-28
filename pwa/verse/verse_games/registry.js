@@ -133,7 +133,7 @@ window.EXTERNAL_VERSE_GAMES = [
       description: "Blast the next correct word before the aliens reach the bottom.",
       icon: "👾",
       launchUrl: "./verse_games/verse_invaders/index.html",
-      visibleInCarousel: true,
+      visibleInCarousel: false,
       progressType: "standard",
       modes: ["easy", "medium", "hard"]
     }
