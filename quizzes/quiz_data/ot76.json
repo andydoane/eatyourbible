@@ -1,0 +1,110 @@
+{
+  "lessonId": "ot76",
+  "pageTitle": "OT 76 Quiz",
+  "lessonTitleText": "Daniel and the Lion's Den",
+  "lessonSubtitleText": "Test how well you know this story",
+  "lessonImagePath": "quizimages/ot76image.png",
+  "themeClass": "theme-kahoot-yellow",
+  "questions": [
+    {
+      "text": "What job did Darius give Daniel, and how did he do?",
+      "answers": [
+        "He was a leader in the kingdom and did his work very well",
+        "He became a soldier and won many battles",
+        "He worked in the temple of Darius' god",
+        "He collected taxes, but kept the money for himself"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did the other leaders feel about Daniel?",
+      "answers": [
+        "They were jealous",
+        "They loved him",
+        "They didn't care about him",
+        "They helped him"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What law did the leaders convince Darius to make?",
+      "answers": [
+        "People could only pray to the king for 30 days",
+        "No one could work for 30 days",
+        "Everyone must worship idols",
+        "People could only pray to Daniel for 30 days"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why did the leaders want this law?",
+      "answers": [
+        "To trap Daniel",
+        "To honor the king",
+        "To make fun of Daniel",
+        "To show Daniel that they hated him"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What did Daniel do after the law was signed?",
+      "answers": [
+        "He kept praying to God three times a day",
+        "He stopped praying",
+        "He prayed secretly at home",
+        "He prayed to King Darius instead of the Lord"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did the king feel when he heard Daniel broke the law?",
+      "answers": [
+        "He was upset and tried to save Daniel",
+        "He was angry with Daniel",
+        "He ignored it",
+        "He thought it was funny"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "Why couldn’t the king save Daniel?",
+      "answers": [
+        "Even the king was not allowed to change the laws",
+        "He didn’t care enough",
+        "He forgot",
+        "He was asleep"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "How did Daniel survive in the lion’s den?",
+      "answers": [
+        "God sent an angel to shut the lions’ mouths",
+        "He fought the lions",
+        "God gave the lions a tummy ache",
+        "He hid in a corner"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What happened to the leaders who trapped Daniel?",
+      "answers": [
+        "They were thrown into the lion’s den and eaten",
+        "They believed in Daniel's God",
+        "They were forgiven",
+        "They ran away to Egypt"
+      ],
+      "correctIndex": 0
+    },
+    {
+      "text": "What new law did Darius make?",
+      "answers": [
+        "Everyone must respect Daniel’s God",
+        "No one could pray anymore",
+        "Only Daniel could pray",
+        "Everyone must pray to Daniel"
+      ],
+      "correctIndex": 0
+    }
+  ]
+}
