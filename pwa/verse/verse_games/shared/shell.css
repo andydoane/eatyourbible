@@ -220,6 +220,18 @@ body{
   color: #ffffff;
 }
 
+
+.vm-game-complete-stats{
+  width: min(100%, 380px);
+  color: rgba(255,255,255,0.96);
+  font-size: clamp(20px, 4.8vw, 28px);
+  font-weight: 900;
+  line-height: 1.15;
+  text-align: center;
+  text-wrap: balance;
+}
+
+
 .vm-game-difficulty-icon{
   font-size: clamp(58px, 15vw, 104px);
   line-height: 1;
