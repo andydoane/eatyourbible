@@ -21,7 +21,7 @@ const HELP_OVERLAY_ID = "vspHelpOverlay";
   const $ = (s, root=document) => root.querySelector(s);
   const escapeHtml = (str) => String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&quot;").replace(/'/g,"&#39;");
   const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-  const clamp = (n, min, max) => Math.max(min, Math.min(max, n));
+const clamp = window.VerseGameShell.clamp;
   const rand = (min, max) => min + Math.random() * (max - min);
 
   function hexToRgb(hex){
@@ -142,14 +142,7 @@ const BOOK_DECOY_LABELS = window.VerseGameShell.getBibleBookDecoys();
     medalSubmessage: ""
   };
 
-  function shuffle(arr){
-    const copy = arr.slice();
-    for (let i = copy.length - 1; i > 0; i--){
-      const j = Math.floor(Math.random() * (i + 1));
-      [copy[i], copy[j]] = [copy[j], copy[i]];
-    }
-    return copy;
-  }
+const shuffle = window.VerseGameShell.shuffle;
 
   function normalizeWord(word){
     return String(word || "")
