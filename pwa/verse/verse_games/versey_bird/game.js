@@ -4,6 +4,14 @@
   const ctx = await window.VerseGameBridge.getVerseContext();
 
   const GAME_ID = "versey_bird";
+
+const GAME_THEME = {
+  bg: "#333333",
+  accent: "#333333"
+};
+
+const HELP_OVERLAY_ID = "vbHelpOverlay";
+
   const TARGET_COLORS = ["#ff5a51","#ffa351","#ffc751","#40b9c5","#7f66c6","#a7cb6f"];
   const MEADOW_BIRDS = ["🐦","🐓","🐤","🦆","🦅","🐥"];
   const AURA_EMOJIS = ["✨","⭐","💎","🌟","🔆","🔹","💥","🟢","🫧","🌈"];
@@ -150,6 +158,32 @@
   setupReferenceSegments();
   renderIntro();
 
+function introHelpHtml(){
+  return `
+    Tap or click to flap.<br><br>
+    Hit the next correct word.<br>
+    Wrong hits and missed correct words reset your streak, but they do not end the run.<br><br>
+    After the verse is built, collect the book, then the reference.
+  `;
+}
+
+function modeHelpHtml(){
+  return `
+    Easy: slower speed, fewer decoys, bigger targets.<br><br>
+    Medium: balanced.<br><br>
+    Hard: faster speed, more decoys, smaller targets.
+  `;
+}
+
+function gameHelpHtml(){
+  return `
+    Tap or click to flap.<br><br>
+    Touch the next correct item.<br><br>
+    Wrong hits and missed correct words reset your streak only.<br><br>
+    Build the whole verse, then collect the book, then the reference.
+  `;
+}
+
   function createMeadowTheme(){
     const bird = MEADOW_BIRDS[Math.floor(Math.random() * MEADOW_BIRDS.length)];
     return {
@@ -173,67 +207,38 @@
     return { ...chosen };
   }
 
-  function renderIntro(){
-    stopLoop();
-    app.innerHTML = `
-      <div class="vb-mode-shell">
-        <div class="vb-mode-stage">
-          <div class="vb-mode-top">
-            <div style="font-size:72px; line-height:1;">🐤</div>
-            <div class="vb-mode-title">Versey Bird</div>
-            <div class="vb-mode-subtitle">
-              Flap into the next correct word.<br>
-              Then collect the book and reference.
-            </div>
+function renderIntro(){
+  stopLoop();
 
-            <div class="vb-mode-card">
-              <div class="vb-mode-actions">
-                <button class="vm-btn" id="startBtn">Start</button>
-              </div>
-            </div>
-          </div>
-        </div>
+  window.VerseGameShell.renderTitleScreen({
+    app,
+    title: "Versey Bird",
+    icon: "🐤",
+    helpHtml: introHelpHtml(),
+    helpOverlayId: HELP_OVERLAY_ID,
+    theme: GAME_THEME,
+    backLabel: "Back to Practice Games",
+    onBack: () => window.VerseGameBridge.exitGame(),
+    onStart: renderModeSelect
+  });
+}
+  
 
-        ${renderNav()}
+function renderModeSelect(){
+  stopLoop();
 
-        ${renderHelpOverlay("Tap or click to flap.<br><br>Hit the next correct word.<br>Wrong hits and missed correct words reset your streak, but they do not end the run.<br><br>After the verse is built, collect the book, then the reference.")}
-      </div>
-    `;
-
-    document.getElementById("startBtn").onclick = renderModeSelect;
-    wireCommonNav();
-  }
-
-  function renderModeSelect(){
-    stopLoop();
-    app.innerHTML = `
-      <div class="vb-mode-shell">
-        <div class="vb-mode-stage">
-          <div class="vb-mode-top">
-            <div class="vb-mode-title">🐤 Versey Bird</div>
-            <div class="vb-mode-subtitle">Choose your difficulty.</div>
-
-            <div class="vb-mode-card">
-              <div class="vb-mode-actions">
-                <button class="vm-btn" id="easyBtn">Easy</button>
-                <button class="vm-btn" id="mediumBtn">Medium</button>
-                <button class="vm-btn" id="hardBtn">Hard</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        ${renderNav()}
-
-        ${renderHelpOverlay("Easy: slower speed, fewer decoys, bigger targets.<br><br>Medium: balanced.<br><br>Hard: faster speed, more decoys, smaller targets.")}
-      </div>
-    `;
-
-    document.getElementById("easyBtn").onclick = () => startGame("easy");
-    document.getElementById("mediumBtn").onclick = () => startGame("medium");
-    document.getElementById("hardBtn").onclick = () => startGame("hard");
-    wireCommonNav();
-  }
+  window.VerseGameShell.renderModeSelect({
+    app,
+    title: "Choose Your Difficulty",
+    icon: "🥉🥈🥇",
+    helpHtml: modeHelpHtml(),
+    helpOverlayId: HELP_OVERLAY_ID,
+    theme: GAME_THEME,
+    backLabel: "Back to Versey Bird title",
+    onBack: renderIntro,
+    onSelect: startGame
+  });
+}
 
   function startGame(mode){
     selectedMode = mode;
@@ -310,7 +315,7 @@
           </div>
         </div>
 
-        ${renderHelpOverlay("Tap or click to flap.<br><br>Touch the next correct item.<br><br>Wrong hits and missed correct words reset your streak only.<br><br>Build the whole verse, then collect the book, then the reference.")}
+        ${renderHelpOverlay(gameHelpHtml())}
         ${renderGameMenuOverlay()}
       </div>
     `;
@@ -326,55 +331,26 @@
     startLoop();
   }
 
-  function renderComplete(){
-    stopLoop();
-    const unlockAt = performance.now() + 700;
+function renderComplete(){
+  stopLoop();
 
-    app.innerHTML = `
-      <div class="vb-mode-shell">
-        <div class="vb-mode-stage">
-          <div class="vb-mode-top">
-            <div class="vb-complete-icon">🏅</div>
-            <div class="vb-mode-title">Versey Bird Complete!</div>
-            <div class="vb-mode-subtitle">
-              You finished ${escapeHtml(ctx.verseRef || "")}.
-            </div>
+  const doneText = selectedMode
+    ? `${capitalize(selectedMode)} Complete!`
+    : "Complete!";
 
-            <div class="vb-mode-card">
-              <div class="vb-mode-actions">
-                <button class="vm-btn" id="playAgainBtn" disabled>Play Again</button>
-                <button class="vm-btn" id="doneBtn" disabled>Back to Practice</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        ${renderNav()}
-
-        ${renderHelpOverlay("Great job! This completion has already been recorded for medals, stars, and BibloPets.")}
-      </div>
-    `;
-
-    const playAgainBtn = document.getElementById("playAgainBtn");
-    const doneBtn = document.getElementById("doneBtn");
-
-    playAgainBtn.onclick = () => {
-      if (performance.now() < unlockAt) return;
-      renderModeSelect();
-    };
-
-    doneBtn.onclick = () => {
-      if (performance.now() < unlockAt) return;
-      window.VerseGameBridge.exitGame();
-    };
-
-    setTimeout(() => {
-      if (playAgainBtn) playAgainBtn.disabled = false;
-      if (doneBtn) doneBtn.disabled = false;
-    }, 700);
-
-    wireCommonNav();
-  }
+  window.VerseGameShell.renderCompleteScreen({
+    app,
+    icon: "🐤",
+    title: doneText,
+    statsText: `Finished ${ctx.verseRef || "the verse"}`,
+    theme: GAME_THEME,
+    playAgainText: "Play Again",
+    moreGamesText: "More Games",
+    backLabel: "Back to Practice Games",
+    onPlayAgain: renderModeSelect,
+    onMoreGames: () => window.VerseGameBridge.exitGame()
+  });
+}
 
   function renderNav(){
     return `
@@ -390,19 +366,14 @@
     `;
   }
 
-  function renderHelpOverlay(body){
-    return `
-      <div class="vb-help-overlay" id="vbHelpOverlay" aria-hidden="true">
-        <div class="vb-help-dialog">
-          <div class="vb-help-title">How to Play</div>
-          <div class="vb-help-body">${body}</div>
-          <div class="vb-help-actions">
-            <button class="vm-btn" id="vbHelpCloseBtn">OK</button>
-          </div>
-        </div>
-      </div>
-    `;
-  }
+function renderHelpOverlay(body){
+  return window.VerseGameShell.helpOverlayHtml({
+    id: HELP_OVERLAY_ID,
+    title: "How to Play",
+    body,
+    closeText: "Close"
+  });
+}
 
   function renderGameMenuOverlay(){
     return `
@@ -436,39 +407,13 @@
 
     if (homeBtn) homeBtn.onclick = () => window.VerseGameBridge.exitGame();
 
-    if (helpBtn) {
-      helpBtn.onclick = () => {
-        if (helpOverlay){
-          helpOverlay.classList.add("is-open");
-          helpOverlay.dataset.mode = "close";
-          if (helpCloseBtn) helpCloseBtn.textContent = "OK";
-        }
-      };
-    }
-
-    if (helpCloseBtn) {
-      helpCloseBtn.onclick = () => {
-        const mode = helpOverlay?.dataset.mode || "close";
-        if (mode === "back"){
-          backToMenuFromHelp();
-        } else {
-          closeHelpOverlay();
-        }
-      };
-    }
-
-    if (helpOverlay){
-      helpOverlay.onclick = (e) => {
-        if (e.target === helpOverlay){
-          const mode = helpOverlay.dataset.mode || "close";
-          if (mode === "back"){
-            backToMenuFromHelp();
-          } else {
-            closeHelpOverlay();
-          }
-        }
-      };
-    }
+window.VerseGameShell.wireHelp({
+  id: HELP_OVERLAY_ID,
+  triggerId: "helpBtn",
+  closeText: "Close",
+  onBack: backToMenuFromHelp,
+  onClose: () => setPaused(false, "")
+});
 
     if (muteBtn){
       muteBtn.onclick = () => {
@@ -534,36 +479,29 @@
     }
   }
 
-  function openHelpFromMenu(){
-    const menuOverlay = document.getElementById("vbGameMenuOverlay");
-    const helpOverlay = document.getElementById("vbHelpOverlay");
-    const helpCloseBtn = document.getElementById("vbHelpCloseBtn");
+function openHelpFromMenu(){
+  const menuOverlay = document.getElementById("vbGameMenuOverlay");
 
-    if (menuOverlay) menuOverlay.classList.remove("is-open");
-    if (helpOverlay){
-      helpOverlay.classList.add("is-open");
-      helpOverlay.dataset.mode = "back";
-    }
-    if (helpCloseBtn) helpCloseBtn.textContent = "Back";
+  if (menuOverlay) menuOverlay.classList.remove("is-open");
 
-    setPaused(true, "help");
-  }
+  window.VerseGameShell.openHelp(HELP_OVERLAY_ID, "back", "Back");
 
-  function closeHelpOverlay(){
-    const helpOverlay = document.getElementById("vbHelpOverlay");
-    if (helpOverlay) helpOverlay.classList.remove("is-open");
-    setPaused(false, "");
-  }
+  setPaused(true, "help");
+}
 
-  function backToMenuFromHelp(){
-    const helpOverlay = document.getElementById("vbHelpOverlay");
-    const menuOverlay = document.getElementById("vbGameMenuOverlay");
+function closeHelpOverlay(){
+  window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
+  setPaused(false, "");
+}
 
-    if (helpOverlay) helpOverlay.classList.remove("is-open");
-    if (menuOverlay) menuOverlay.classList.add("is-open");
+function backToMenuFromHelp(){
+  window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
 
-    setPaused(true, "menu");
-  }
+  const menuOverlay = document.getElementById("vbGameMenuOverlay");
+  if (menuOverlay) menuOverlay.classList.add("is-open");
+
+  setPaused(true, "menu");
+}
 
   function wireGameInput(){
     const field = document.getElementById("vbField");
