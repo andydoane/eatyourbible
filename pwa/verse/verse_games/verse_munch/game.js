@@ -1351,21 +1351,14 @@ function getMouthPoint(){
       .join(" ");
   }
 
-  function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
-  function lerp(a, b, t){ return a + (b - a) * t; }
-  function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
-  function capitalize(str){ return String(str).charAt(0).toUpperCase() + String(str).slice(1); }
-  function randomFrom(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
-  function waitSeconds(seconds){ return new Promise(resolve => setTimeout(resolve, seconds * 1000)); }
+const clamp = window.VerseGameShell.clamp;
+function lerp(a, b, t){ return a + (b - a) * t; }
+function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
+const capitalize = window.VerseGameShell.capitalize;
+function randomFrom(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+function waitSeconds(seconds){ return new Promise(resolve => setTimeout(resolve, seconds * 1000)); }
 
-  function shuffle(arr){
-    const copy = arr.slice();
-    for (let i = copy.length - 1; i > 0; i--){
-      const j = Math.floor(Math.random() * (i + 1));
-      [copy[i], copy[j]] = [copy[j], copy[i]];
-    }
-    return copy;
-  }
+const shuffle = window.VerseGameShell.shuffle;
 
   function escapeHtml(str){
     return String(str)
