@@ -1662,28 +1662,15 @@ function uniqueStrings(items){
   return out;
 }
 
-function shuffle(items){
-  const copy = [...items];
-  for (let i = copy.length - 1; i > 0; i -= 1){
-    const j = Math.floor(Math.random() * (i + 1));
-    [copy[i], copy[j]] = [copy[j], copy[i]];
-  }
-  return copy;
-}
+const shuffle = window.VerseGameShell.shuffle;
 
 function pickRandom(items){
   if (!items || !items.length) return "";
   return items[Math.floor(Math.random() * items.length)];
 }
 
-function clamp(value, min, max){
-  return Math.max(min, Math.min(max, value));
-}
-
-function capitalize(value){
-  const text = String(value || "");
-  return text ? text[0].toUpperCase() + text.slice(1) : text;
-}
+const clamp = window.VerseGameShell.clamp;
+const capitalize = window.VerseGameShell.capitalize;
 
 function escapeHtml(value){
   return String(value ?? "")
