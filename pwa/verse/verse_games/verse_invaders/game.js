@@ -1290,18 +1290,11 @@ function makeAbductionEffect(x, y, color){
     state.rafId = requestAnimationFrame(loop);
   }
 
-  function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
-  function randomFrom(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
-  function randBetween(min, max){ return min + Math.random() * (max - min); }
-  function capitalize(str){ return String(str).charAt(0).toUpperCase() + String(str).slice(1); }
-  function shuffle(arr){
-    const copy = [...arr];
-    for (let i = copy.length - 1; i > 0; i--){
-      const j = Math.floor(Math.random() * (i + 1));
-      [copy[i], copy[j]] = [copy[j], copy[i]];
-    }
-    return copy;
-  }
+const clamp = window.VerseGameShell.clamp;
+function randomFrom(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+function randBetween(min, max){ return min + Math.random() * (max - min); }
+const capitalize = window.VerseGameShell.capitalize;
+const shuffle = window.VerseGameShell.shuffle;
   function escapeHtml(value){
     return String(value || "")
       .replace(/&/g, "&amp;")
