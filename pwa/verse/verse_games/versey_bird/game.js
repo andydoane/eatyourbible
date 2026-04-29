@@ -352,19 +352,6 @@ function renderComplete(){
   });
 }
 
-  function renderNav(){
-    return `
-      <div class="vb-nav-wrap">
-        <div class="vb-nav">
-          <button class="vb-nav-btn" id="homeBtn" aria-label="Home">${getHomeSvg()}</button>
-          <div class="vb-nav-center">
-            <button class="vb-help-btn" id="helpBtn" type="button">HELP</button>
-          </div>
-          <button class="vb-nav-btn" id="muteBtn" aria-label="Mute">${muted ? getMuteSvg() : getUnmuteSvg()}</button>
-        </div>
-      </div>
-    `;
-  }
 
 function renderHelpOverlay(body){
   return window.VerseGameShell.helpOverlayHtml({
@@ -392,36 +379,18 @@ function renderHelpOverlay(body){
   }
 
   function wireCommonNav(){
-    const homeBtn = document.getElementById("homeBtn");
-    const helpBtn = document.getElementById("helpBtn");
-    const muteBtn = document.getElementById("muteBtn");
-
-    const helpOverlay = document.getElementById("vbHelpOverlay");
-    const helpCloseBtn = document.getElementById("vbHelpCloseBtn");
-
     const menuOverlay = document.getElementById("vbGameMenuOverlay");
     const menuHowToBtn = document.getElementById("vbMenuHowToBtn");
     const menuMuteBtn = document.getElementById("vbMenuMuteBtn");
     const menuExitBtn = document.getElementById("vbMenuExitBtn");
     const menuCloseBtn = document.getElementById("vbMenuCloseBtn");
 
-    if (homeBtn) homeBtn.onclick = () => window.VerseGameBridge.exitGame();
-
 window.VerseGameShell.wireHelp({
   id: HELP_OVERLAY_ID,
-  triggerId: "helpBtn",
   closeText: "Close",
   onBack: backToMenuFromHelp,
   onClose: () => setPaused(false, "")
 });
-
-    if (muteBtn){
-      muteBtn.onclick = () => {
-        muted = !muted;
-        muteBtn.innerHTML = muted ? getMuteSvg() : getUnmuteSvg();
-        if (menuMuteBtn) menuMuteBtn.textContent = muted ? "Unmute" : "Mute";
-      };
-    }
 
     if (menuHowToBtn){
       menuHowToBtn.onclick = () => {
@@ -433,7 +402,6 @@ window.VerseGameShell.wireHelp({
       menuMuteBtn.onclick = () => {
         muted = !muted;
         menuMuteBtn.textContent = muted ? "Unmute" : "Mute";
-        if (muteBtn) muteBtn.innerHTML = muted ? getMuteSvg() : getUnmuteSvg();
       };
     }
 
@@ -1557,15 +1525,4 @@ function getScrollSpeed(){
     return { book: raw, reference: "" };
   }
 
-  function getHomeSvg(){
-    return `<svg class="nav-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 3L3 10h2v9h5v-6h4v6h5v-9h2L12 3z" fill="#ffffff"/></svg>`;
-  }
-
-  function getMuteSvg(){
-    return `<svg class="nav-icon" viewBox="0 0 1270 889" xmlns="http://www.w3.org/2000/svg"><path style="fill:#ffffff;stroke:none;stroke-width:44.9431;stroke-linecap:round" d="M 660.98465,87.244161 409.97079,241.6972 a 150.47802,150.47802 0 0 1 -78.85883,22.31829 H 225.63234 a 42.587633,42.587633 0 0 0 -42.58762,42.58762 v 275.79372 a 42.587633,42.587633 0 0 0 42.58762,42.58762 h 105.47962 a 150.47802,150.47802 0 0 1 78.85883,22.3183 l 251.01386,154.45304 a 23.799138,23.799138 0 0 0 36.27121,-20.26933 V 107.51349 A 23.799138,23.799138 0 0 0 660.98465,87.244161 Z"/><g transform="translate(-26.458334,-255.59263)"><path style="fill:none;stroke:#ffffff;stroke-width:76.7747;stroke-linecap:round" d="M 1241.4124,524.69155 890.61025,875.49365"/><path style="fill:none;stroke:#ffffff;stroke-width:76.7747;stroke-linecap:round" d="m 890.61025,524.69155 350.80215,350.8021"/></g></svg>`;
-  }
-
-  function getUnmuteSvg(){
-    return `<svg class="nav-icon" viewBox="0 0 1270 889" xmlns="http://www.w3.org/2000/svg"><path style="fill:#ffffff;stroke:none;stroke-width:44.9431;stroke-linecap:round" d="M 660.98465,87.244161 409.97079,241.6972 a 150.47802,150.47802 0 0 1 -78.85883,22.31829 H 225.63234 a 42.587633,42.587633 0 0 0 -42.58762,42.58762 v 275.79372 a 42.587633,42.587633 0 0 0 42.58762,42.58762 h 105.47962 a 150.47802,150.47802 0 0 1 78.85883,22.3183 l 251.01386,154.45304 a 23.799138,23.799138 0 0 0 36.27121,-20.26933 V 107.51349 A 23.799138,23.799138 0 0 0 660.98465,87.244161 Z"/><path style="fill:none;stroke:#ffffff;stroke-width:63;stroke-linecap:round" d="M 877 307 Q 982 444 877 582"/><path style="fill:none;stroke:#ffffff;stroke-width:63;stroke-linecap:round" d="M 959 241 Q 1111 444 959 648"/></svg>`;
-  }
 })();
