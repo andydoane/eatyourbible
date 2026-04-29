@@ -3,6 +3,14 @@ const app = document.getElementById("app");
 const ctx = await window.VerseGameBridge.getVerseContext();
 
 const GAME_ID = "traffic_tap_external";
+
+const GAME_THEME = {
+  bg: "#a7cb6f",
+  accent: "#a7cb6f"
+};
+
+const HELP_OVERLAY_ID = "ttHelpOverlay";
+
 const BOOKS = [
   "Genesis","Exodus","Leviticus","Numbers","Deuteronomy","Joshua","Judges","Ruth",
   "1 Samuel","2 Samuel","1 Kings","2 Kings","1 Chronicles","2 Chronicles","Ezra","Nehemiah","Esther",
@@ -108,54 +116,34 @@ renderIntro();
 
 function renderIntro(){
   stopLoop();
-  app.innerHTML = `
-    <div class="tt-mode-shell">
-      <div class="tt-mode-stage">
-        <div class="tt-mode-top">
-          <div style="font-size:72px;line-height:1;">🚗</div>
-          <div class="tt-title">Traffic Tap</div>
-          <div class="tt-subtitle">Tap the correct moving word to build the verse.</div>
-          <div class="tt-mode-card">
-            <div class="tt-mode-actions">
-              <button class="vm-btn" id="startBtn">Start</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      ${renderNav()}
-      ${renderHelpOverlay(helpHtml())}
-    </div>
-  `;
-  document.getElementById("startBtn").onclick = renderModeSelect;
-  wireCommonNav();
+
+  window.VerseGameShell.renderTitleScreen({
+    app,
+    title: "Traffic Tap",
+    icon: "🚗",
+    helpHtml: helpHtml(),
+    helpOverlayId: HELP_OVERLAY_ID,
+    theme: GAME_THEME,
+    backLabel: "Back to Practice Games",
+    onBack: () => window.VerseGameBridge.exitGame(),
+    onStart: renderModeSelect
+  });
 }
 
 function renderModeSelect(){
   stopLoop();
-  app.innerHTML = `
-    <div class="tt-mode-shell">
-      <div class="tt-mode-stage">
-        <div class="tt-mode-top">
-          <div style="font-size:72px;line-height:1;">🚗</div>
-          <div class="tt-title">Choose Your Difficulty</div>
-          <div class="tt-subtitle">Easy uses fun decoys and steady traffic. Medium and hard use verse-word decoys, with a bigger speed ramp on hard.</div>
-          <div class="tt-mode-card">
-            <div class="tt-mode-actions">
-              <button class="vm-btn" id="easyBtn">Easy</button>
-              <button class="vm-btn" id="mediumBtn">Medium</button>
-              <button class="vm-btn" id="hardBtn">Hard</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      ${renderNav()}
-      ${renderHelpOverlay(helpHtml())}
-    </div>
-  `;
-  document.getElementById("easyBtn").onclick = () => startGame("easy");
-  document.getElementById("mediumBtn").onclick = () => startGame("medium");
-  document.getElementById("hardBtn").onclick = () => startGame("hard");
-  wireCommonNav();
+
+  window.VerseGameShell.renderModeSelect({
+    app,
+    title: "Choose Your Difficulty",
+    icon: "🥉🥈🥇",
+    helpHtml: helpHtml(),
+    helpOverlayId: HELP_OVERLAY_ID,
+    theme: GAME_THEME,
+    backLabel: "Back to Traffic Tap title",
+    onBack: renderIntro,
+    onSelect: startGame
+  });
 }
 
 function startGame(mode){
@@ -279,49 +267,28 @@ async function completeGameAndRenderEndScreen(){
 
 function renderEndScreen(reward){
   stopLoop();
-  const title = reward?.petUnlockTriggered
-    ? "BibloPet Unlocked!"
-    : (alreadyCompletedForMode ? "Nice driving!" : "Great job!");
-  const subtitle = reward?.petUnlockTriggered
-    ? "You completed this game for the first time on a learned verse, so your BibloPet progression advanced."
-    : (alreadyCompletedForMode
-        ? `You finished ${ctx.verseRef} again in ${capitalize(selectedMode)} mode.`
-        : `You completed ${ctx.verseRef} in ${capitalize(selectedMode)} mode.`);
-
-  app.innerHTML = `
-    <div class="tt-mode-shell">
-      <div class="tt-mode-stage">
-        <div class="tt-mode-top">
-          <div class="tt-end-emoji">🏁</div>
-          <div class="tt-end-card">
-            <div class="tt-end-title">${escapeHtml(title)}</div>
-            <div class="tt-end-text">${escapeHtml(subtitle)}</div>
-            <div class="tt-mode-actions tt-end-lock" id="ttEndActions" style="margin-top:16px;">
-              <button class="vm-btn" id="playAgainBtn" disabled>Play Again</button>
-              <button class="vm-btn" id="exitBtn" disabled>Practice Games</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      ${renderNav()}
-      ${renderHelpOverlay(helpHtml())}
-    </div>
-  `;
-
-  const playAgainBtn = document.getElementById("playAgainBtn");
-  const exitBtn = document.getElementById("exitBtn");
-  const endActions = document.getElementById("ttEndActions");
-  if (playAgainBtn) playAgainBtn.onclick = renderModeSelect;
-  if (exitBtn) exitBtn.onclick = () => window.VerseGameBridge.exitGame();
 
   window.clearTimeout(endScreenUnlockTimer);
-  endScreenUnlockTimer = window.setTimeout(() => {
-    if (playAgainBtn) playAgainBtn.disabled = false;
-    if (exitBtn) exitBtn.disabled = false;
-    if (endActions) endActions.classList.remove("tt-end-lock");
-  }, 550);
+  endScreenUnlockTimer = 0;
 
-  wireCommonNav();
+  const doneText = selectedMode
+    ? `${capitalize(selectedMode)} Complete!`
+    : "Complete!";
+
+  const statsText = `Bonus score: ${state.bonusScore} · Best streak: ${state.bonusBestStreak}`;
+
+  window.VerseGameShell.renderCompleteScreen({
+    app,
+    icon: "🏁",
+    title: doneText,
+    statsText,
+    theme: GAME_THEME,
+    playAgainText: "Play Again",
+    moreGamesText: "More Games",
+    backLabel: "Back to Practice Games",
+    onPlayAgain: renderModeSelect,
+    onMoreGames: () => window.VerseGameBridge.exitGame()
+  });
 }
 
 function renderNav(){
@@ -339,17 +306,12 @@ function renderNav(){
 }
 
 function renderHelpOverlay(body){
-  return `
-    <div class="tt-help-overlay" id="ttHelpOverlay" aria-hidden="true">
-      <div class="tt-help-dialog">
-        <div class="tt-help-title">How to Play</div>
-        <div class="tt-help-body">${body}</div>
-        <div class="tt-help-actions">
-          <button class="vm-btn" id="ttHelpCloseBtn">OK</button>
-        </div>
-      </div>
-    </div>
-  `;
+  return window.VerseGameShell.helpOverlayHtml({
+    id: HELP_OVERLAY_ID,
+    title: "How to Play",
+    body,
+    closeText: "Close"
+  });
 }
 
 function renderGameMenuOverlay(){
@@ -390,25 +352,15 @@ function wireCommonNav(){
 
   if (homeBtn) homeBtn.onclick = () => window.VerseGameBridge.exitGame();
   if (muteBtn) muteBtn.onclick = () => toggleMute(muteBtn, menuMuteBtn);
-  if (helpBtn) helpBtn.onclick = () => {
-    if (helpOverlay){
-      helpOverlay.classList.add("is-open");
-      helpOverlay.dataset.mode = "close";
-      if (helpCloseBtn) helpCloseBtn.textContent = "OK";
-    }
-  };
-  if (helpCloseBtn) helpCloseBtn.onclick = () => {
-    const mode = helpOverlay?.dataset.mode || "close";
-    if (mode === "back") backToMenuFromHelp();
-    else closeHelpOverlay();
-  };
-  if (helpOverlay) helpOverlay.onclick = (e) => {
-    if (e.target === helpOverlay){
-      const mode = helpOverlay.dataset.mode || "close";
-      if (mode === "back") backToMenuFromHelp();
-      else closeHelpOverlay();
-    }
-  };
+
+window.VerseGameShell.wireHelp({
+  id: HELP_OVERLAY_ID,
+  triggerId: "helpBtn",
+  closeText: "Close",
+  onBack: backToMenuFromHelp,
+  onClose: () => setPaused(false, "")
+});
+
   if (menuHowToBtn) menuHowToBtn.onclick = openHelpFromMenu;
   if (menuMuteBtn) menuMuteBtn.onclick = () => toggleMute(muteBtn, menuMuteBtn);
   if (menuExitBtn) menuExitBtn.onclick = () => window.VerseGameBridge.exitGame();
@@ -494,28 +446,25 @@ function closeGameMenu(){
 
 function openHelpFromMenu(){
   const menuOverlay = document.getElementById("ttGameMenuOverlay");
-  const helpOverlay = document.getElementById("ttHelpOverlay");
-  const helpCloseBtn = document.getElementById("ttHelpCloseBtn");
+
   if (menuOverlay) menuOverlay.classList.remove("is-open");
-  if (helpOverlay){
-    helpOverlay.classList.add("is-open");
-    helpOverlay.dataset.mode = "back";
-  }
-  if (helpCloseBtn) helpCloseBtn.textContent = "Back";
+
+  window.VerseGameShell.openHelp(HELP_OVERLAY_ID, "back", "Back");
+
   setPaused(true, "help");
 }
 
 function closeHelpOverlay(){
-  const helpOverlay = document.getElementById("ttHelpOverlay");
-  if (helpOverlay) helpOverlay.classList.remove("is-open");
+  window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
   setPaused(false, "");
 }
 
 function backToMenuFromHelp(){
-  const helpOverlay = document.getElementById("ttHelpOverlay");
+  window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
+
   const menuOverlay = document.getElementById("ttGameMenuOverlay");
-  if (helpOverlay) helpOverlay.classList.remove("is-open");
   if (menuOverlay) menuOverlay.classList.add("is-open");
+
   setPaused(true, "menu");
 }
 
