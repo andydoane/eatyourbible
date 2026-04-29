@@ -177,12 +177,6 @@ function gameHelpHtml(){
   `;
 }
 
-function completeHelpHtml(){
-  return `
-    Great job! This completion has already been recorded for medals, stars, and BibloPets.
-  `;
-}
-
 function renderIntro(){
   stopLoop();
 
@@ -351,36 +345,19 @@ function renderGameMenuOverlay(){
 }
 
 function wireCommonNav(){
-  const homeBtn = document.getElementById("homeBtn");
-  const helpBtn = document.getElementById("helpBtn");
-  const muteBtn = document.getElementById("muteBtn");
-
-  const helpOverlay = document.getElementById("vmunchHelpOverlay");
-  const helpCloseBtn = document.getElementById("vmunchHelpCloseBtn");
-
   const menuOverlay = document.getElementById("vmunchGameMenuOverlay");
   const menuHowToBtn = document.getElementById("vmunchMenuHowToBtn");
   const menuMuteBtn = document.getElementById("vmunchMenuMuteBtn");
   const menuExitBtn = document.getElementById("vmunchMenuExitBtn");
   const menuCloseBtn = document.getElementById("vmunchMenuCloseBtn");
 
-  if (homeBtn) homeBtn.onclick = () => window.VerseGameBridge.exitGame();
-
 window.VerseGameShell.wireHelp({
   id: HELP_OVERLAY_ID,
-  triggerId: "helpBtn",
   closeText: "Close",
   onBack: backToMenuFromHelp,
   onClose: () => setPaused(false, "")
 });
 
-  if (muteBtn){
-    muteBtn.onclick = () => {
-      muted = !muted;
-      muteBtn.innerHTML = muted ? getMuteSvg() : getUnmuteSvg();
-      if (menuMuteBtn) menuMuteBtn.textContent = muted ? "Unmute" : "Mute";
-    };
-  }
 
   if (menuHowToBtn){
     menuHowToBtn.onclick = () => {
@@ -388,13 +365,12 @@ window.VerseGameShell.wireHelp({
     };
   }
 
-  if (menuMuteBtn){
-    menuMuteBtn.onclick = () => {
-      muted = !muted;
-      menuMuteBtn.textContent = muted ? "Unmute" : "Mute";
-      if (muteBtn) muteBtn.innerHTML = muted ? getMuteSvg() : getUnmuteSvg();
-    };
-  }
+if (menuMuteBtn){
+  menuMuteBtn.onclick = () => {
+    muted = !muted;
+    menuMuteBtn.textContent = muted ? "Unmute" : "Mute";
+  };
+}
 
   if (menuExitBtn){
     menuExitBtn.onclick = () => window.VerseGameBridge.exitGame();
