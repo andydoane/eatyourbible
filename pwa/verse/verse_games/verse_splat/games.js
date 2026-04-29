@@ -454,19 +454,6 @@ function nonGameHelpHtml(){
   return `Tap the next correct blob word to build the verse. After the verse, finish the book and then the reference. Wrong taps poof blobs away. In hard mode, wrong taps also remove two built words.`;
 }
 
-function renderNav(){
-  return `
-    <div class="vsp-nav-wrap">
-      <div class="vsp-nav">
-        <button class="vsp-nav-btn" data-action="exit-game" aria-label="Home">⌂</button>
-        <div class="vsp-nav-center">
-          <button class="vsp-help-btn" data-action="show-help-intro" type="button">HELP</button>
-        </div>
-        <button class="vsp-nav-btn" data-action="toggle-mute" aria-label="Mute">${muted ? "🔇" : "🔊"}</button>
-      </div>
-    </div>
-  `;
-}
 
 function renderIntro(){
   window.VerseGameShell.renderTitleScreen({
@@ -602,8 +589,6 @@ function render(){
 }
 
   function bindScreenEvents(){
-    app.querySelectorAll("[data-action='go-mode']").forEach(btn => btn.onclick = () => setScreen("mode"));
-    app.querySelectorAll("[data-action='back-intro']").forEach(btn => btn.onclick = () => setScreen("intro"));
     app.querySelectorAll("[data-mode]").forEach(btn => btn.onclick = () => startMode(btn.dataset.mode));
     app.querySelectorAll("[data-action='open-menu']").forEach(btn => btn.onclick = openMenu);
     app.querySelectorAll("[data-action='resume-game']").forEach(btn => btn.onclick = closeMenu);
