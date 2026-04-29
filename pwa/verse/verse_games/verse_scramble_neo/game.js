@@ -516,13 +516,11 @@ function renderHelpOverlay(){
       btn.onclick = () => handleChoice(btn.dataset.choiceId);
     });
 
-    const menuOverlay = document.getElementById("vsnGameMenuOverlay");
-    const helpOverlay = document.getElementById("vsnHelpOverlay");
-    const closeHelp = document.getElementById("vsnHelpCloseBtn");
-    const howTo = document.getElementById("vsnMenuHowToBtn");
-    const muteBtn = document.getElementById("vsnMenuMuteBtn");
-    const exitBtn = document.getElementById("vsnMenuExitBtn");
-    const closeBtn = document.getElementById("vsnMenuCloseBtn");
+const menuOverlay = document.getElementById("vsnGameMenuOverlay");
+const howTo = document.getElementById("vsnMenuHowToBtn");
+const muteBtn = document.getElementById("vsnMenuMuteBtn");
+const exitBtn = document.getElementById("vsnMenuExitBtn");
+const closeBtn = document.getElementById("vsnMenuCloseBtn");
 
     if (howTo) howTo.onclick = () => {
       state.menuOpen = false;
@@ -556,7 +554,6 @@ function renderHelpOverlay(){
 
     window.VerseGameShell.wireHelp({
       id: HELP_OVERLAY_ID,
-      triggerId: "vsnHelpBtn",
       closeText: "Close",
       onBack: () => {
         state.helpOpen = false;
