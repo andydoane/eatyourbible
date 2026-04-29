@@ -6,6 +6,14 @@
   const ctx = await window.VerseGameBridge.getVerseContext();
   const GAME_ID = "verse_splat";
   const GAME_TITLE = "Verse Splat";
+
+const GAME_THEME = {
+  bg: "#7f66c6",
+  accent: "#7f66c6"
+};
+
+const HELP_OVERLAY_ID = "vspHelpOverlay";
+
   const BONUS_TIME_LIMIT_MS = 30000;
   const CORRECT_TAP_LOCK_MS = 180;
   let muted = false;
@@ -461,46 +469,31 @@ function renderNav(){
 }
 
 function renderIntro(){
-  return `
-    <div class="vsp-mode-shell">
-      <div class="vsp-mode-stage">
-        <div class="vsp-mode-top">
-          <div class="vsp-splash-emoji">🫟</div>
-          <div class="vsp-title">Verse Splat</div>
-          <div class="vsp-subtitle">Tap the next correct goo blob to build the verse, then the book and reference.</div>
-          <div class="vsp-mode-card vsp-mode-card-single">
-            <div class="vsp-mode-actions">
-              <button class="vm-btn" data-action="go-mode">Start</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      ${renderNav()}
-      ${state.helpOpen ? overlayMarkup() : ""}
-    </div>
-  `;
+  window.VerseGameShell.renderTitleScreen({
+    app,
+    title: GAME_TITLE,
+    icon: "🫟",
+    helpHtml: nonGameHelpHtml(),
+    helpOverlayId: HELP_OVERLAY_ID,
+    theme: GAME_THEME,
+    backLabel: "Back to Practice Games",
+    onBack: () => window.VerseGameBridge.exitGame(),
+    onStart: () => setScreen("mode")
+  });
 }
 
 function renderModeScreen(){
-  return `
-    <div class="vsp-mode-shell">
-      <div class="vsp-mode-stage">
-        <div class="vsp-mode-top">
-          <div class="vsp-title">Choose Your Difficulty</div>
-          <div class="vsp-subtitle">Easy keeps things friendly. Medium uses verse-based decoys. Hard uses verse-based decoys and removes two built words on mistakes.</div>
-          <div class="vsp-mode-card">
-            <div class="vsp-mode-actions">
-              <button class="vm-btn" data-mode="easy">Easy</button>
-              <button class="vm-btn" data-mode="medium">Medium</button>
-              <button class="vm-btn" data-mode="hard">Hard</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      ${renderNav()}
-      ${state.helpOpen ? overlayMarkup() : ""}
-    </div>
-  `;
+  window.VerseGameShell.renderModeSelect({
+    app,
+    title: "Choose Your Difficulty",
+    icon: "🥉🥈🥇",
+    helpHtml: nonGameHelpHtml(),
+    helpOverlayId: HELP_OVERLAY_ID,
+    theme: GAME_THEME,
+    backLabel: "Back to Verse Splat title",
+    onBack: () => setScreen("intro"),
+    onSelect: startMode
+  });
 }
 
 
@@ -571,39 +564,42 @@ function gameplayShell({ bonus=false }){
     return gameplayShell({ bonus:true });
   }
 
-  function renderEndScreen(){
-  return `
-    <div class="vsp-mode-shell">
-      <div class="vsp-mode-stage">
-        <div class="vsp-mode-top">
-          <div class="vsp-splash-emoji">🎉</div>
-          <div class="vsp-title">Verse Splat Complete!</div>
-          <div class="vsp-subtitle">${escapeHtml(state.medalMessage || `You completed ${state.mode}.`)}</div>
-          <div class="vsp-mode-card">
-            <div class="vsp-copy">${escapeHtml(state.medalSubmessage || 'Verse, book, and reference complete.')}</div>
-            <div class="vsp-end-stat" style="margin-top:12px;">Bonus blobs splatted: <strong>${state.bonusScore}</strong></div>
-            <div class="vsp-mode-actions" style="margin-top:16px;">
-              <button class="vm-btn" data-action="play-again">Play Again</button>
-              <button class="vm-btn" data-action="exit-game">Done</button>
-            </div>
-          </div>
-        </div>
-      </div>
-      ${renderNav()}
-      ${state.helpOpen ? overlayMarkup() : ""}
-    </div>
-  `;
+function renderEndScreen(){
+  const modeName = state.mode
+    ? state.mode.charAt(0).toUpperCase() + state.mode.slice(1)
+    : "Mode";
+
+  window.VerseGameShell.renderCompleteScreen({
+    app,
+    icon: "🫟",
+    title: `${modeName} Complete!`,
+    statsText: `Bonus blobs splatted: ${state.bonusScore}`,
+    theme: GAME_THEME,
+    playAgainText: "Play Again",
+    moreGamesText: "More Games",
+    backLabel: "Back to Practice Games",
+    onPlayAgain: () => setScreen("mode"),
+    onMoreGames: () => window.VerseGameBridge.exitGame()
+  });
 }
 
-  function render(){
-    if (state.screen === "intro") app.innerHTML = renderIntro();
-    else if (state.screen === "mode") app.innerHTML = renderModeScreen();
-    else if (state.screen === "game") app.innerHTML = gameplayShell({ bonus:false });
-    else if (state.screen === "bonus_intro") app.innerHTML = gameplayShell({ bonus:true });
-    else if (state.screen === "bonus") app.innerHTML = renderBonusScreen();
-    else if (state.screen === "end") app.innerHTML = renderEndScreen();
-    bindScreenEvents();
+function render(){
+  if (state.screen === "intro"){
+    renderIntro();
+  } else if (state.screen === "mode"){
+    renderModeScreen();
+  } else if (state.screen === "game"){
+    app.innerHTML = gameplayShell({ bonus:false });
+  } else if (state.screen === "bonus_intro"){
+    app.innerHTML = gameplayShell({ bonus:true });
+  } else if (state.screen === "bonus"){
+    app.innerHTML = renderBonusScreen();
+  } else if (state.screen === "end"){
+    renderEndScreen();
   }
+
+  bindScreenEvents();
+}
 
   function bindScreenEvents(){
     app.querySelectorAll("[data-action='go-mode']").forEach(btn => btn.onclick = () => setScreen("mode"));
