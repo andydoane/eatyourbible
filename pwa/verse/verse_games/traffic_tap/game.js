@@ -291,20 +291,6 @@ function renderEndScreen(reward){
   });
 }
 
-function renderNav(){
-  return `
-    <div class="tt-nav-wrap">
-      <div class="tt-nav">
-        <button class="tt-nav-btn" id="homeBtn" aria-label="Home">⌂</button>
-        <div class="tt-nav-center">
-          <button class="tt-help-btn" id="helpBtn" type="button">HELP</button>
-        </div>
-        <button class="tt-nav-btn" id="muteBtn" aria-label="Mute">${muted ? "🔇" : "🔊"}</button>
-      </div>
-    </div>
-  `;
-}
-
 function renderHelpOverlay(body){
   return window.VerseGameShell.helpOverlayHtml({
     id: HELP_OVERLAY_ID,
@@ -339,30 +325,22 @@ function helpHtml(){
 }
 
 function wireCommonNav(){
-  const homeBtn = document.getElementById("homeBtn");
-  const muteBtn = document.getElementById("muteBtn");
-  const helpBtn = document.getElementById("helpBtn");
-  const helpOverlay = document.getElementById("ttHelpOverlay");
-  const helpCloseBtn = document.getElementById("ttHelpCloseBtn");
   const menuOverlay = document.getElementById("ttGameMenuOverlay");
   const menuHowToBtn = document.getElementById("ttMenuHowToBtn");
   const menuMuteBtn = document.getElementById("ttMenuMuteBtn");
   const menuExitBtn = document.getElementById("ttMenuExitBtn");
   const menuCloseBtn = document.getElementById("ttMenuCloseBtn");
 
-  if (homeBtn) homeBtn.onclick = () => window.VerseGameBridge.exitGame();
-  if (muteBtn) muteBtn.onclick = () => toggleMute(muteBtn, menuMuteBtn);
 
 window.VerseGameShell.wireHelp({
   id: HELP_OVERLAY_ID,
-  triggerId: "helpBtn",
   closeText: "Close",
   onBack: backToMenuFromHelp,
   onClose: () => setPaused(false, "")
 });
 
   if (menuHowToBtn) menuHowToBtn.onclick = openHelpFromMenu;
-  if (menuMuteBtn) menuMuteBtn.onclick = () => toggleMute(muteBtn, menuMuteBtn);
+  if (menuMuteBtn) menuMuteBtn.onclick = () => toggleMute(null, menuMuteBtn);
   if (menuExitBtn) menuExitBtn.onclick = () => window.VerseGameBridge.exitGame();
   if (menuCloseBtn) menuCloseBtn.onclick = closeGameMenu;
   if (menuOverlay) menuOverlay.onclick = (e) => {
