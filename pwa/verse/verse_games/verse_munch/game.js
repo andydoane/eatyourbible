@@ -13,11 +13,8 @@
 
 const BOOKS = window.VerseGameShell.getBibleBookDecoys();
   
-  const FUN_DECOYS = [
-    "taco","penguin","waffle","otter","pretzel","robot","balloon","muffin","snowman","pickle",
-    "marshmallow","scooter","cupcake","backpack","blueberry","firetruck","treasure","noodle","narwhal","bongo",
-    "yo-yo","zebra","meatball","pirate","volcano","hamster","jellybean","pancake","monkey","donut"
-  ];
+const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
+  
   const FOOD_EMOJIS = ["🍎","🍇","🍓","🍉","🍊","🍒","🍍","🥝","🍋","🥨","🧀","🥕"];
   const HAPPY_REACTIONS = ["😋","☺️","😁"];
   const SAD_REACTIONS = ["🤮","🤢","😵‍💫"];
