@@ -227,13 +227,6 @@ function renderEndScreen(reward){
   });
 }
 
-  function renderNav(){
-    return `<div class="tb-nav-wrap"><div class="tb-nav">
-      <button class="tb-nav-btn" id="homeBtn" aria-label="Home">⌂</button>
-      <div class="tb-nav-center"><button class="tb-help-btn" id="helpBtn" type="button">HELP</button></div>
-      <button class="tb-nav-btn" id="muteBtn" aria-label="Mute">${muted ? "🔇" : "🔊"}</button>
-    </div></div>`;
-  }
 
 function renderHelpOverlay(body){
   return window.VerseGameShell.helpOverlayHtml({
@@ -266,27 +259,14 @@ function renderHelpOverlay(body){
   }
 
   function wireCommonNav(){
-    const homeBtn = document.getElementById("homeBtn");
-    const muteBtn = document.getElementById("muteBtn");
-    const helpBtn = document.getElementById("helpBtn");
-    const helpOverlay = document.getElementById("tbHelpOverlay");
-    const helpCloseBtn = document.getElementById("tbHelpCloseBtn");
     const menuOverlay = document.getElementById("tbGameMenuOverlay");
     const menuHowToBtn = document.getElementById("tbMenuHowToBtn");
     const menuMuteBtn = document.getElementById("tbMenuMuteBtn");
     const menuExitBtn = document.getElementById("tbMenuExitBtn");
     const menuCloseBtn = document.getElementById("tbMenuCloseBtn");
 
-    if (homeBtn) homeBtn.onclick = () => window.VerseGameBridge.exitGame();
-    if (muteBtn) muteBtn.onclick = () => {
-      muted = !muted;
-      muteBtn.textContent = muted ? "🔇" : "🔊";
-      if (menuMuteBtn) menuMuteBtn.textContent = muted ? "Unmute" : "Mute";
-    };
-
 window.VerseGameShell.wireHelp({
   id: HELP_OVERLAY_ID,
-  triggerId: "helpBtn",
   closeText: "Close",
   onBack: backToMenuFromHelp,
   onClose: () => setPaused(false, "")
@@ -296,7 +276,6 @@ window.VerseGameShell.wireHelp({
     if (menuMuteBtn) menuMuteBtn.onclick = () => {
       muted = !muted;
       menuMuteBtn.textContent = muted ? "Unmute" : "Mute";
-      if (muteBtn) muteBtn.textContent = muted ? "🔇" : "🔊";
     };
     if (menuExitBtn) menuExitBtn.onclick = () => window.VerseGameBridge.exitGame();
     if (menuCloseBtn) menuCloseBtn.onclick = closeGameMenu;
