@@ -12,31 +12,9 @@ const GAME_THEME = {
 
 const HELP_OVERLAY_ID = "ddHelpOverlay";
 
-  const FUN_DECOYS = [
-    // Short Nouns
-    "taco", "panda", "pizza", "donut", "shark", "lemon", "grape", "berry", "sock", "boot", 
-    "kite", "plane", "cat", "dog", "pig", "cow", "bug", "ant", "frog", "duck", 
-    "bear", "bat", "bird", "fish", "jam", "pie", "cake", "egg", "star", "ball",
-    
-    // Short Verbs
-    "hop", "skip", "jump", "run", "spin", "clap", "yell", "sing", "swim", "kick", 
-    "dig", "nap", "hug", "tug", "push", "pull", "snap", "wave", "wink", "grin", 
-    "zoom", "zip", "pop", "bop", "pet", "chop", "stir", "bake", "flip", "dash",
-
-    // Short Adjectives
-    "red", "blue", "pink", "gold", "big", "tiny", "cold", "hot", "wet", "dry", 
-    "soft", "hard", "fast", "slow", "loud", "sour", "sweet", "cute", "cool", "fun"
-  ];
-  const BOOKS = [
-    "Genesis","Exodus","Leviticus","Numbers","Deuteronomy","Joshua","Judges","Ruth",
-    "1 Samuel","2 Samuel","1 Kings","2 Kings","1 Chronicles","2 Chronicles","Ezra","Nehemiah","Esther",
-    "Job","Psalms","Proverbs","Ecclesiastes","Song of Solomon","Isaiah","Jeremiah","Lamentations",
-    "Ezekiel","Daniel","Hosea","Joel","Amos","Obadiah","Jonah","Micah","Nahum","Habakkuk","Zephaniah",
-    "Haggai","Zechariah","Malachi","Matthew","Mark","Luke","John","Acts","Romans","1 Corinthians",
-    "2 Corinthians","Galatians","Ephesians","Philippians","Colossians","1 Thessalonians","2 Thessalonians",
-    "1 Timothy","2 Timothy","Titus","Philemon","Hebrews","James","1 Peter","2 Peter",
-    "1 John","2 John","3 John","Jude","Revelation"
-  ];
+const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
+  
+const BOOKS = window.VerseGameShell.getBibleBookDecoys();
 
   const THEMES = [
     {
