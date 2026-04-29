@@ -546,7 +546,7 @@ function renderEnd(){
     app,
     icon: "🚀",
     title: `${formatMode(state.mode)} Complete!`,
-    statsText: `${state.medalMessage || "Mission complete!"} · Time: ${timeSecs}s`,
+    statsText: `Time: ${timeSecs}s`,
     theme: GAME_THEME,
     playAgainText: "Play Again",
     moreGamesText: "More Games",
