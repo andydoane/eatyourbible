@@ -1829,22 +1829,9 @@ function renderHills(){
       .replace(/'/g, "&#39;");
   }
 
-  function shuffle(arr){
-    const copy = arr.slice();
-    for (let i = copy.length - 1; i > 0; i--){
-      const j = Math.floor(Math.random() * (i + 1));
-      [copy[i], copy[j]] = [copy[j], copy[i]];
-    }
-    return copy;
-  }
-
-  function clamp(v, min, max){
-    return Math.max(min, Math.min(max, v));
-  }
-
-  function capitalize(str){
-    return String(str).charAt(0).toUpperCase() + String(str).slice(1);
-  }
+  const shuffle = window.VerseGameShell.shuffle;
+  const clamp = window.VerseGameShell.clamp;
+  const capitalize = window.VerseGameShell.capitalize;
 
   function titleCaseBookFromSlug(slug){
     const smallWords = new Set(["of", "the"]);
