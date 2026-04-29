@@ -260,14 +260,7 @@ function backToMenuFromHelp(){
       .replace(/'/g, "&#39;");
   }
 
-  function shuffle(arr){
-    const copy = arr.slice();
-    for (let i = copy.length - 1; i > 0; i--){
-      const j = Math.floor(Math.random() * (i + 1));
-      [copy[i], copy[j]] = [copy[j], copy[i]];
-    }
-    return copy;
-  }
+const shuffle = window.VerseGameShell.shuffle;
 
   function titleCaseBookFromSlug(slug){
     const smallWords = new Set(["of", "the"]);
@@ -1121,9 +1114,7 @@ window.VerseGameShell.wireHelp({
     return Math.hypot(a.x - b.x, a.y - b.y);
   }
 
-function clamp(value, min, max){
-  return Math.max(min, Math.min(max, value));
-}
+const clamp = window.VerseGameShell.clamp;
 
 function findSpawnPosition(existing) {
   const isMobile = state.fieldWidth <= 520;
