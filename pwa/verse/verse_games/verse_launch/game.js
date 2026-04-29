@@ -6,6 +6,13 @@
   const GAME_ID = "chain";
   const GAME_TITLE = "Verse Launch";
 
+const GAME_THEME = {
+  bg: "#7f66c6",
+  accent: "#7f66c6"
+};
+
+const HELP_OVERLAY_ID = "vlHelpOverlay";
+
   const ROCKETS = [
     { key:"red", src:"./verse_launch_images/verse_launch_rocket_red.png", color:"#ff5a51", textDark:false },
     { key:"blue", src:"./verse_launch_images/verse_launch_rocket_blue.png", color:"#64b5f6", textDark:false },
@@ -334,6 +341,16 @@
   function formatMode(mode){ return mode ? mode.charAt(0).toUpperCase() + mode.slice(1) : "Mode"; }
   function totalElapsedMs(){ return Math.max(1, (state.endTime || performance.now()) - state.startTime); }
 
+function helpHtml(){
+  return `
+    Find the next correct word and launch it into the verse.<br><br>
+    Easy: fun decoys.<br>
+    Medium: decoys are other words from the verse.<br>
+    Hard: same as Medium, but wrong launches remove up to 2 built words.<br><br>
+    After the verse words, launch the book, then the reference.
+  `;
+}
+
 function renderModeNav(){
   return `
     <div class="vl-nav-wrap">
@@ -348,24 +365,14 @@ function renderModeNav(){
   `;
 }
 
-  function renderHelpOverlay(){
-    return `
-      <div class="vl-help-overlay ${state.helpOpen ? "show" : ""}" id="vlHelpOverlay" aria-hidden="${state.helpOpen ? "false" : "true"}">
-        <div class="vl-help-dialog">
-          <div class="vl-help-title">How to Play Verse Launch</div>
-          <div class="vl-help-body">
-            Find the next correct word and launch it into the verse.<br><br>
-            Easy: fun decoys.<br>
-            Medium: decoys are other words from the verse.<br>
-            Hard: same as Medium, but wrong launches remove up to 2 built words.<br><br>
-            After the verse words, launch the book, then the reference.
-          </div>
-          <div class="vl-help-actions">
-            <button class="vl-help-close no-zoom" id="vlHelpCloseBtn" type="button">${state.helpBackMode ? "Back" : "OK"}</button>
-          </div>
-        </div>
-      </div>`;
-  }
+function renderHelpOverlay(){
+  return window.VerseGameShell.helpOverlayHtml({
+    id: HELP_OVERLAY_ID,
+    title: "How to Play",
+    body: helpHtml(),
+    closeText: "Close"
+  });
+}
 
   function renderGameMenuOverlay(){
     return `
@@ -408,52 +415,39 @@ function renderModeNav(){
       </div>`;
   }
 
-  function renderIntro(){
-    app.innerHTML = `
-      <div class="vl-mode-shell">
-        <div class="vl-mode-stage">
-          <div class="vl-mode-top">
-            <div style="font-size:72px;line-height:1;">🚀</div>
-            <div class="vl-mode-title">${GAME_TITLE}</div>
-            <div class="vl-mode-subtitle">Launch the next correct word into the verse, then launch the book, then the reference.</div>
-            <div class="vl-mode-card"><div class="vl-mode-actions"><button class="vm-btn no-zoom" id="vlStartBtn">Start</button></div></div>
-          </div>
-        </div>
-        ${renderModeNav()}
-        ${renderHelpOverlay()}
-      </div>`;
-    wireModeNav();
-    $("#vlStartBtn").onclick = () => setScreen("mode");
-  }
+function renderIntro(){
+  window.VerseGameShell.renderTitleScreen({
+    app,
+    title: GAME_TITLE,
+    icon: "🚀",
+    helpHtml: helpHtml(),
+    helpOverlayId: HELP_OVERLAY_ID,
+    theme: GAME_THEME,
+    backLabel: "Back to Practice Games",
+    onBack: () => window.VerseGameBridge.exitGame(),
+    onStart: () => setScreen("mode")
+  });
+}
 
-  function renderMode(){
-    app.innerHTML = `
-      <div class="vl-mode-shell">
-        <div class="vl-mode-stage">
-          <div class="vl-mode-top">
-            <div class="vl-mode-title">🚀 ${GAME_TITLE}</div>
-            <div class="vl-mode-subtitle">Choose your difficulty.</div>
-            <div class="vl-mode-card"><div class="vl-mode-actions">
-              <button class="vm-btn no-zoom" data-mode="easy">Easy</button>
-              <button class="vm-btn no-zoom" data-mode="medium">Medium</button>
-              <button class="vm-btn no-zoom" data-mode="hard">Hard</button>
-            </div></div>
-          </div>
-        </div>
-        ${renderModeNav()}
-        ${renderHelpOverlay()}
-      </div>`;
-    wireModeNav();
-    document.querySelectorAll("[data-mode]").forEach(btn => {
-      btn.onclick = () => {
-        state.mode = btn.dataset.mode;
-        initVerseData();
-        state.startTime = performance.now();
-        buildChoices();
-        setScreen("game");
-      };
-    });
-  }
+function renderMode(){
+  window.VerseGameShell.renderModeSelect({
+    app,
+    title: "Choose Your Difficulty",
+    icon: "🥉🥈🥇",
+    helpHtml: helpHtml(),
+    helpOverlayId: HELP_OVERLAY_ID,
+    theme: GAME_THEME,
+    backLabel: "Back to Verse Launch title",
+    onBack: () => setScreen("intro"),
+    onSelect: (mode) => {
+      state.mode = mode;
+      initVerseData();
+      state.startTime = performance.now();
+      buildChoices();
+      setScreen("game");
+    }
+  });
+}
 
   function renderGame(){
     const center = getPreviewChoice(0);
@@ -558,25 +552,22 @@ function renderModeNav(){
     wireAstroControls();
   }
 
-  function renderEnd(){
-    const timeSecs = (totalElapsedMs() / 1000).toFixed(1);
-    app.innerHTML = `
-      <div class="vl-mode-shell">
-        <div class="vl-mode-stage">
-          <div class="vl-end-card">
-            <div class="vl-end-title">${escapeHtml(state.medalMessage || "Great job!")}</div>
-            <div class="vl-end-sub">${escapeHtml(state.medalSubmessage || "You finished Verse Launch!")}</div>
-            <div class="vl-end-stats">Mode: ${escapeHtml(formatMode(state.mode))} · Time: ${timeSecs}s</div>
-            <div class="vl-mode-card"><div class="vl-mode-actions">
-              <button class="vm-btn no-zoom" id="vlPlayAgainBtn">Play Again</button>
-              <button class="vm-btn no-zoom" id="vlExitBtn">Exit Game</button>
-            </div></div>
-          </div>
-        </div>
-      </div>`;
-    $("#vlPlayAgainBtn").onclick = () => { initVerseData(); state.startTime = performance.now(); buildChoices(); setScreen("game"); };
-    $("#vlExitBtn").onclick = () => window.VerseGameBridge.exitGame();
-  }
+function renderEnd(){
+  const timeSecs = (totalElapsedMs() / 1000).toFixed(1);
+
+  window.VerseGameShell.renderCompleteScreen({
+    app,
+    icon: "🚀",
+    title: `${formatMode(state.mode)} Complete!`,
+    statsText: `${state.medalMessage || "Mission complete!"} · Time: ${timeSecs}s`,
+    theme: GAME_THEME,
+    playAgainText: "Play Again",
+    moreGamesText: "More Games",
+    backLabel: "Back to Practice Games",
+    onPlayAgain: () => setScreen("mode"),
+    onMoreGames: () => window.VerseGameBridge.exitGame()
+  });
+}
 
   function wireModeNav(){
     const homeBtn = $("#vlHomeBtn"), helpBtn = $("#vlHelpBtn"), muteBtn = $("#vlMuteBtn");
@@ -599,15 +590,50 @@ function renderModeNav(){
     if (nextBtn) nextBtn.onclick = nextChoice;
     document.querySelectorAll("[data-choice-id]").forEach(el => { el.onclick = () => handleLaunch(el.dataset.choiceId); });
 
-    const menuOverlay = $("#vlGameMenuOverlay"), helpOverlay = $("#vlHelpOverlay"), closeHelp = $("#vlHelpCloseBtn");
-    const howTo = $("#vlMenuHowToBtn"), muteBtn = $("#vlMenuMuteBtn"), exitBtn = $("#vlMenuExitBtn"), closeBtn = $("#vlMenuCloseBtn");
-    if (howTo) howTo.onclick = () => { state.menuOpen = false; state.helpOpen = true; state.helpBackMode = true; render(); };
-    if (muteBtn) muteBtn.onclick = () => { muted = !muted; render(); };
-    if (exitBtn) exitBtn.onclick = () => window.VerseGameBridge.exitGame();
-    if (closeBtn) closeBtn.onclick = () => { state.menuOpen = false; render(); };
-    if (menuOverlay) menuOverlay.onclick = (e) => { if (e.target === menuOverlay){ state.menuOpen = false; render(); } };
-    if (closeHelp) closeHelp.onclick = () => { if (state.helpBackMode){ state.helpOpen = false; state.menuOpen = true; state.helpBackMode = false; } else { state.helpOpen = false; } render(); };
-    if (helpOverlay) helpOverlay.onclick = (e) => { if (e.target === helpOverlay){ if (state.helpBackMode){ state.helpOpen = false; state.menuOpen = true; state.helpBackMode = false; } else { state.helpOpen = false; } render(); } };
+const menuOverlay = $("#vlGameMenuOverlay");
+const howTo = $("#vlMenuHowToBtn");
+const muteBtn = $("#vlMenuMuteBtn");
+const exitBtn = $("#vlMenuExitBtn");
+const closeBtn = $("#vlMenuCloseBtn");
+
+if (howTo) howTo.onclick = () => {
+  state.menuOpen = false;
+  state.helpOpen = true;
+  state.helpBackMode = true;
+
+  if (menuOverlay) menuOverlay.classList.remove("show");
+  window.VerseGameShell.openHelp(HELP_OVERLAY_ID, "back", "Back");
+};
+
+if (muteBtn) muteBtn.onclick = () => { muted = !muted; render(); };
+if (exitBtn) exitBtn.onclick = () => window.VerseGameBridge.exitGame();
+if (closeBtn) closeBtn.onclick = () => { state.menuOpen = false; render(); };
+
+if (menuOverlay) menuOverlay.onclick = (e) => {
+  if (e.target === menuOverlay){
+    state.menuOpen = false;
+    render();
+  }
+};
+
+window.VerseGameShell.wireHelp({
+  id: HELP_OVERLAY_ID,
+  closeText: "Close",
+  onBack: () => {
+    state.helpOpen = false;
+    state.menuOpen = true;
+    state.helpBackMode = false;
+
+    window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
+
+    const freshMenuOverlay = $("#vlGameMenuOverlay");
+    if (freshMenuOverlay) freshMenuOverlay.classList.add("show");
+  },
+  onClose: () => {
+    state.helpOpen = false;
+    state.helpBackMode = false;
+  }
+});
   }
 
   function wireBonusMenuOnly(){
@@ -621,43 +647,54 @@ function renderModeNav(){
       render();
     };
 
-    const menuOverlay = $("#vlGameMenuOverlay"), helpOverlay = $("#vlHelpOverlay"), closeHelp = $("#vlHelpCloseBtn");
-    const howTo = $("#vlMenuHowToBtn"), muteBtn = $("#vlMenuMuteBtn"), exitBtn = $("#vlMenuExitBtn"), closeBtn = $("#vlMenuCloseBtn");
+const menuOverlay = $("#vlGameMenuOverlay");
+const howTo = $("#vlMenuHowToBtn");
+const muteBtn = $("#vlMenuMuteBtn");
+const exitBtn = $("#vlMenuExitBtn");
+const closeBtn = $("#vlMenuCloseBtn");
 
-    if (howTo) howTo.onclick = () => {
-      state.menuOpen = false;
-      state.helpOpen = true;
-      state.helpBackMode = true;
-      state.astroMoveDir = 0;
-      render();
-    };
+if (howTo) howTo.onclick = () => {
+  state.menuOpen = false;
+  state.helpOpen = true;
+  state.helpBackMode = true;
+  state.astroMoveDir = 0;
 
-    if (muteBtn) muteBtn.onclick = () => { muted = !muted; render(); };
-    if (exitBtn) exitBtn.onclick = () => { stopAstroLoop(); window.VerseGameBridge.exitGame(); };
-    if (closeBtn) closeBtn.onclick = () => { state.menuOpen = false; render(); };
-    if (menuOverlay) menuOverlay.onclick = (e) => { if (e.target === menuOverlay){ state.menuOpen = false; render(); } };
-    if (closeHelp) closeHelp.onclick = () => {
-      if (state.helpBackMode){
-        state.helpOpen = false;
-        state.menuOpen = true;
-        state.helpBackMode = false;
-      } else {
-        state.helpOpen = false;
-      }
-      render();
-    };
-    if (helpOverlay) helpOverlay.onclick = (e) => {
-      if (e.target === helpOverlay){
-        if (state.helpBackMode){
-          state.helpOpen = false;
-          state.menuOpen = true;
-          state.helpBackMode = false;
-        } else {
-          state.helpOpen = false;
-        }
-        render();
-      }
-    };
+  if (menuOverlay) menuOverlay.classList.remove("show");
+  window.VerseGameShell.openHelp(HELP_OVERLAY_ID, "back", "Back");
+};
+
+if (muteBtn) muteBtn.onclick = () => { muted = !muted; render(); };
+if (exitBtn) exitBtn.onclick = () => { stopAstroLoop(); window.VerseGameBridge.exitGame(); };
+if (closeBtn) closeBtn.onclick = () => { state.menuOpen = false; render(); };
+
+if (menuOverlay) menuOverlay.onclick = (e) => {
+  if (e.target === menuOverlay){
+    state.menuOpen = false;
+    render();
+  }
+};
+
+window.VerseGameShell.wireHelp({
+  id: HELP_OVERLAY_ID,
+  closeText: "Close",
+  onBack: () => {
+    state.helpOpen = false;
+    state.menuOpen = true;
+    state.helpBackMode = false;
+    state.astroMoveDir = 0;
+
+    window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
+
+    const freshMenuOverlay = $("#vlGameMenuOverlay");
+    if (freshMenuOverlay) freshMenuOverlay.classList.add("show");
+  },
+  onClose: () => {
+    state.helpOpen = false;
+    state.helpBackMode = false;
+    state.astroMoveDir = 0;
+  }
+});
+
   }
 
   function wireAstroControls(){
