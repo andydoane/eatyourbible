@@ -22,21 +22,9 @@ const HELP_OVERLAY_ID = "vlHelpOverlay";
   const ASTEROID_IMAGE_SRC = "./verse_launch_images/verse_launch_asteroid.png";
   const MOON_IMAGE_SRC = "./verse_launch_images/verse_launch_moon.png";
 
-  const FUN_DECOYS = [
-    "taco","banana","penguin","cupcake","dinosaur","pickle","marshmallow","noodle","waffle","rocket",
-    "jellybean","pancake","popcorn","unicorn","bubble","muffin","otter","kangaroo","scooter","rainbow",
-    "pretzel","monkey","donut","cookie","balloon","zebra","narwhal","kitten","puppy","burrito",
-    "pirate","robot","slipper","backpack","bongo","volcano","watermelon","cheeseburger","toothbrush","snowman"
-  ];
-  const BIBLE_BOOKS = [
-    "Genesis","Exodus","Leviticus","Numbers","Deuteronomy","Joshua","Judges","Ruth",
-    "1 Samuel","2 Samuel","1 Kings","2 Kings","1 Chronicles","2 Chronicles","Ezra","Nehemiah","Esther",
-    "Job","Psalms","Proverbs","Ecclesiastes","Song of Solomon","Isaiah","Jeremiah","Lamentations",
-    "Ezekiel","Daniel","Hosea","Joel","Amos","Obadiah","Jonah","Micah","Nahum","Habakkuk","Zephaniah",
-    "Haggai","Zechariah","Malachi","Matthew","Mark","Luke","John","Acts","Romans","1 Corinthians","2 Corinthians",
-    "Galatians","Ephesians","Philippians","Colossians","1 Thessalonians","2 Thessalonians","1 Timothy","2 Timothy",
-    "Titus","Philemon","Hebrews","James","1 Peter","2 Peter","1 John","2 John","3 John","Jude","Revelation"
-  ];
+const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
+  
+const BIBLE_BOOKS = window.VerseGameShell.getBibleBookDecoys();
 
   const state = {
     screen:"intro",
