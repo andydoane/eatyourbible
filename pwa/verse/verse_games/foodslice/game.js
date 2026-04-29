@@ -220,20 +220,6 @@ function renderEndScreen(reward){
   });
 }
 
-  function renderNav(){
-    return `
-      <div class="fs-nav-wrap">
-        <div class="fs-nav">
-          <button class="fs-nav-btn" id="homeBtn" aria-label="Home">⌂</button>
-          <div class="fs-nav-center">
-            <button class="fs-help-btn" id="helpBtn" type="button">HELP</button>
-          </div>
-          <button class="fs-nav-btn" id="muteBtn" aria-label="Mute">${muted ? "🔇" : "🔊"}</button>
-        </div>
-      </div>
-    `;
-  }
-
 function renderHelpOverlay(body){
   return window.VerseGameShell.helpOverlayHtml({
     id: HELP_OVERLAY_ID,
@@ -268,27 +254,14 @@ function renderHelpOverlay(body){
   }
 
   function wireCommonNav(){
-    const homeBtn = document.getElementById("homeBtn");
-    const muteBtn = document.getElementById("muteBtn");
-    const helpBtn = document.getElementById("helpBtn");
-    const helpOverlay = document.getElementById("fsHelpOverlay");
-    const helpCloseBtn = document.getElementById("fsHelpCloseBtn");
     const menuOverlay = document.getElementById("fsGameMenuOverlay");
     const menuHowToBtn = document.getElementById("fsMenuHowToBtn");
     const menuMuteBtn = document.getElementById("fsMenuMuteBtn");
     const menuExitBtn = document.getElementById("fsMenuExitBtn");
     const menuCloseBtn = document.getElementById("fsMenuCloseBtn");
 
-    if (homeBtn) homeBtn.onclick = () => window.VerseGameBridge.exitGame();
-    if (muteBtn) muteBtn.onclick = () => {
-      muted = !muted;
-      muteBtn.textContent = muted ? "🔇" : "🔊";
-      if (menuMuteBtn) menuMuteBtn.textContent = muted ? "Unmute" : "Mute";
-    };
-
 window.VerseGameShell.wireHelp({
   id: HELP_OVERLAY_ID,
-  triggerId: "helpBtn",
   closeText: "Close",
   onBack: backToMenuFromHelp,
   onClose: () => setPaused(false, "")
@@ -298,7 +271,6 @@ window.VerseGameShell.wireHelp({
     if (menuMuteBtn) menuMuteBtn.onclick = () => {
       muted = !muted;
       menuMuteBtn.textContent = muted ? "Unmute" : "Mute";
-      if (muteBtn) muteBtn.textContent = muted ? "🔇" : "🔊";
     };
     if (menuExitBtn) menuExitBtn.onclick = () => window.VerseGameBridge.exitGame();
     if (menuCloseBtn) menuCloseBtn.onclick = closeGameMenu;
