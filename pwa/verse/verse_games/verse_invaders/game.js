@@ -44,25 +44,8 @@
   };
   const CORRECT_EFFECT_POOL = ["alienPop", "starburst", "chrysanthemum", "novaBurst"];
   const BONUS_FIREWORK_POOL = ["flashRing", "classicFirework", "confettiBloom", "plasmaBurst", "cosmicCrackle"];
-  const BOOKS = [
-    "Genesis","Exodus","Leviticus","Numbers","Deuteronomy","Joshua","Judges","Ruth",
-    "1 Samuel","2 Samuel","1 Kings","2 Kings","1 Chronicles","2 Chronicles","Ezra","Nehemiah","Esther",
-    "Job","Psalms","Proverbs","Ecclesiastes","Song of Solomon","Isaiah","Jeremiah","Lamentations",
-    "Ezekiel","Daniel","Hosea","Joel","Amos","Obadiah","Jonah","Micah","Nahum","Habakkuk","Zephaniah",
-    "Haggai","Zechariah","Malachi","Matthew","Mark","Luke","John","Acts","Romans","1 Corinthians",
-    "2 Corinthians","Galatians","Ephesians","Philippians","Colossians","1 Thessalonians","2 Thessalonians",
-    "1 Timothy","2 Timothy","Titus","Philemon","Hebrews","James","1 Peter","2 Peter",
-    "1 John","2 John","3 John","Jude","Revelation"
-  ];
-  const FUN_DECOYS = [
-    "taco","banana","penguin","cupcake","pickle","rocket","waffle","balloon","otter","pretzel",
-    "pancake","bubble","marshmallow","treasure","robot","firetruck","yo-yo","snowman","blueberry","noodle",
-    "pizza","donut","shark","lemon","grape","berry","sock","boot","kite","plane","cat","dog",
-    "pig","cow","bug","ant","frog","duck","bear","bat","bird","fish","jam","pie","cake","egg",
-    "star","ball","hop","skip","jump","run","spin","clap","sing","swim","kick","dig","nap",
-    "hug","tug","push","pull","snap","wave","wink","grin","zoom","zip","pop","bop","glimmer","snorf",
-    "plinko","dazzle","whizzle","bloop","tinker","wobble","zapper","muffin","noony","pibble","crumble"
-  ];
+const BOOKS = window.VerseGameShell.getBibleBookDecoys();
+const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
 
   let selectedMode = null;
   let muted = false;
