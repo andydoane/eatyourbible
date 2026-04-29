@@ -975,17 +975,11 @@ function createSlicesFrom(item){
     state.overlayUntil = performance.now() + duration;
   }
 
-  function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
-  function pickRandom(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
-  function shuffle(arr){
-    const copy = [...arr];
-    for (let i = copy.length - 1; i > 0; i--){
-      const j = Math.floor(Math.random() * (i + 1));
-      [copy[i], copy[j]] = [copy[j], copy[i]];
-    }
-    return copy;
-  }
-  function capitalize(s){ return s ? s.charAt(0).toUpperCase() + s.slice(1) : ""; }
+const clamp = window.VerseGameShell.clamp;
+function pickRandom(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+const shuffle = window.VerseGameShell.shuffle;
+const capitalize = window.VerseGameShell.capitalize;
+  
   function normalizeWord(s){ return String(s || "").toLowerCase().replace(/[^a-z0-9']+/g, ""); }
   function escapeHtml(str){
     return String(str || "")
