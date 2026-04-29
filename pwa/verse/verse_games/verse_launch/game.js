@@ -351,19 +351,6 @@ function helpHtml(){
   `;
 }
 
-function renderModeNav(){
-  return `
-    <div class="vl-nav-wrap">
-      <div class="vl-nav">
-        <button class="vl-nav-btn no-zoom" id="vlHomeBtn" aria-label="Home">⌂</button>
-        <div class="vl-nav-center">
-          <button class="vl-help-btn no-zoom" id="vlHelpBtn" type="button">HELP</button>
-        </div>
-        <button class="vl-nav-btn no-zoom" id="vlMuteBtn" aria-label="Mute">${muted ? "🔇" : "🔊"}</button>
-      </div>
-    </div>
-  `;
-}
 
 function renderHelpOverlay(){
   return window.VerseGameShell.helpOverlayHtml({
@@ -568,16 +555,6 @@ function renderEnd(){
     onMoreGames: () => window.VerseGameBridge.exitGame()
   });
 }
-
-  function wireModeNav(){
-    const homeBtn = $("#vlHomeBtn"), helpBtn = $("#vlHelpBtn"), muteBtn = $("#vlMuteBtn");
-    const helpOverlay = $("#vlHelpOverlay"), helpCloseBtn = $("#vlHelpCloseBtn");
-    if (homeBtn) homeBtn.onclick = () => window.VerseGameBridge.exitGame();
-    if (helpBtn) helpBtn.onclick = () => { state.helpOpen = true; state.helpBackMode = false; render(); };
-    if (helpCloseBtn) helpCloseBtn.onclick = () => { state.helpOpen = false; state.helpBackMode = false; render(); };
-    if (helpOverlay) helpOverlay.onclick = (e) => { if (e.target === helpOverlay){ state.helpOpen = false; state.helpBackMode = false; render(); } };
-    if (muteBtn) muteBtn.onclick = () => { muted = !muted; render(); };
-  }
 
   function prevChoice(){ if (state.busy || state.completed || !state.choices.length) return; state.choiceIndex = (state.choiceIndex - 1 + state.choices.length) % state.choices.length; render(); }
   function nextChoice(){ if (state.busy || state.completed || !state.choices.length) return; state.choiceIndex = (state.choiceIndex + 1) % state.choices.length; render(); }
