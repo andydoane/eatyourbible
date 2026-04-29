@@ -145,6 +145,34 @@
   function getBibleBookDecoys(){
     return [...SHARED_BIBLE_BOOK_DECOYS];
   }
+
+ function shuffle(array){
+    const copy = Array.isArray(array) ? array.slice() : [];
+
+    for (let i = copy.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [copy[i], copy[j]] = [copy[j], copy[i]];
+    }
+
+    return copy;
+  }
+
+  function clamp(value, min, max){
+    const number = Number(value);
+    const lower = Number(min);
+    const upper = Number(max);
+
+    if (!Number.isFinite(number)) return lower;
+    if (!Number.isFinite(lower) || !Number.isFinite(upper)) return number;
+
+    return Math.max(lower, Math.min(upper, number));
+  }
+
+  function capitalize(value){
+    const text = String(value ?? "");
+    if (!text) return "";
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  }
   
   function helpOverlayHtml({
     id = "verseGameHelpOverlay",
@@ -405,6 +433,9 @@ function renderCompleteScreen({
     escapeHtml,
     getFunDecoys,
     getBibleBookDecoys,
+    shuffle,
+    clamp,
+    capitalize,
     helpOverlayHtml,
     openHelp,
     closeHelp,
