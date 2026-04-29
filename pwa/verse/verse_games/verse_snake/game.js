@@ -591,9 +591,6 @@ function renderModeSelect(){
     const menuPill = document.getElementById("vsMenuPill");
     const modePill = document.getElementById("vsModePill");
 
-    const helpOverlay = document.getElementById("vsHelpOverlay");
-    const helpCloseBtn = document.getElementById("vsHelpCloseBtn");
-
     const menuOverlay = document.getElementById("vsGameMenuOverlay");
     const menuHowToBtn = document.getElementById("vsMenuHowToBtn");
     const menuMuteBtn = document.getElementById("vsMenuMuteBtn");
@@ -643,7 +640,6 @@ function renderModeSelect(){
 
 window.VerseGameShell.wireHelp({
   id: HELP_OVERLAY_ID,
-  triggerId: "helpBtn",
   closeText: "Close",
   onBack: backToMenuFromHelp,
   onClose: () => setPaused(false, "")
@@ -1545,18 +1541,17 @@ function maybeScheduleFruitSpawn(delayMs = 480){
     `;
   }
 
-  function completeCurrentMode(){
-    const result = window.VerseGameBridge.markCompleted({
-      verseId: ctx.verseId,
-      gameId: "verse_snake",
-      mode: selectedMode,
-      progressType: "standard"
-    });
+function completeCurrentMode(){
+  window.VerseGameBridge.markCompleted({
+    verseId: ctx.verseId,
+    gameId: "verse_snake",
+    mode: selectedMode,
+    progressType: "standard"
+  });
 
-    const shouldAutoShowPetUnlock = !!result?.petUnlockTriggered;
-    completed = true;
-    renderDone(shouldAutoShowPetUnlock);
-  }
+  completed = true;
+  renderDone();
+}
 
   function handleFruitPickup(){
     state.fruit = null;
@@ -1654,7 +1649,7 @@ function maybeScheduleFruitSpawn(delayMs = 480){
     }
   }
 
-function renderDone(autoShowPetUnlock = false){
+function renderDone(){
   stopLoop();
 
   const doneText = selectedMode
