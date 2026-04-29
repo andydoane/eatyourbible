@@ -10,20 +10,10 @@ const GAME_THEME = {
 
 const HELP_OVERLAY_ID = "tbHelpOverlay";
 
-  const BOOKS = [
-    "Genesis","Exodus","Leviticus","Numbers","Deuteronomy","Joshua","Judges","Ruth",
-    "1 Samuel","2 Samuel","1 Kings","2 Kings","1 Chronicles","2 Chronicles","Ezra","Nehemiah","Esther",
-    "Job","Psalms","Proverbs","Ecclesiastes","Song of Solomon","Isaiah","Jeremiah","Lamentations",
-    "Ezekiel","Daniel","Hosea","Joel","Amos","Obadiah","Jonah","Micah","Nahum","Habakkuk","Zephaniah",
-    "Haggai","Zechariah","Malachi","Matthew","Mark","Luke","John","Acts","Romans","1 Corinthians",
-    "2 Corinthians","Galatians","Ephesians","Philippians","Colossians","1 Thessalonians","2 Thessalonians",
-    "1 Timothy","2 Timothy","Titus","Philemon","Hebrews","James","1 Peter","2 Peter",
-    "1 John","2 John","3 John","Jude","Revelation"
-  ];
-  const FUN_DECOYS = [
-    "apple","banana","rocket","castle","pickle","friend","planet","music","marshmallow","purple",
-    "otter","waffle","robot","muffin","bubble","gentle","sunshine","forest","taco","penguin"
-  ];
+const BOOKS = window.VerseGameShell.getBibleBookDecoys();
+  
+const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
+  
   const ZONE_PERCENTAGES = {
     easy:[0.05,0.15,0.60,0.15,0.05],
     medium:[0.10,0.20,0.40,0.20,0.10],
