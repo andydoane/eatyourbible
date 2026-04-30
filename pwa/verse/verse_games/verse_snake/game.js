@@ -245,10 +245,7 @@ function backToMenuFromHelp(){
   }
 
   function tokenizeVerse(text){
-    return String(text || "")
-      .trim()
-      .split(/\s+/)
-      .filter(Boolean);
+    return window.VerseGameShell.tokenizeVerseWords(text);
   }
 
   function escapeHtml(str){
@@ -262,96 +259,12 @@ function backToMenuFromHelp(){
 
 const shuffle = window.VerseGameShell.shuffle;
 
-  function titleCaseBookFromSlug(slug){
-    const smallWords = new Set(["of", "the"]);
-    return String(slug || "")
-      .split("_")
-      .filter(Boolean)
-      .map((part, index) => {
-        const lower = part.toLowerCase();
-        if (index > 0 && smallWords.has(lower)) return lower;
-        return lower.charAt(0).toUpperCase() + lower.slice(1);
-      })
-      .join(" ");
+  function normalizeWord(value){
+    return window.VerseGameShell.normalizeWord(value);
   }
 
   function parseReferenceParts(ref, translation, verseId){
-    const id = String(verseId || "").trim();
-
-  const idRangeMatch = id.match(/^(.+?)_(\d+)_(\d+)_(\d+)$/);
-  if (idRangeMatch){
-    return {
-      book: titleCaseBookFromSlug(idRangeMatch[1]),
-      reference: `${idRangeMatch[2]}:${idRangeMatch[3]}-${idRangeMatch[4]}`
-    };
-  }
-
-  const idMatch = id.match(/^(.+?)_(\d+)_(\d+(?:[-–]\d+)?)$/);
-  if (idMatch){
-    return {
-      book: titleCaseBookFromSlug(idMatch[1]),
-      reference: `${idMatch[2]}:${idMatch[3]}`
-    };
-  }
-
-    let raw = String(ref || "").trim();
-    const trans = String(translation || "").trim();
-
-    const KNOWN_TRANSLATIONS = [
-      "ESV","NIV","NLT","KJV","NKJV","CSB","HCSB","NASB","NASB95","LSB",
-      "AMP","RSV","NRSV","NRSVUE","NET","MSG","GW","CEV","GNT","ERV","ICB"
-    ];
-
-    function stripTrailingTranslationToken(text){
-      let out = String(text || "").trim();
-      if (!out) return out;
-
-      if (trans){
-        const escapedTrans = trans.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        out = out.replace(new RegExp(`\\s*\\(?${escapedTrans}\\)?\\s*$`, "i"), "").trim();
-      }
-
-      for (const code of KNOWN_TRANSLATIONS){
-        const escaped = code.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        out = out.replace(new RegExp(`\\s*\\(?${escaped}\\)?\\s*$`, "i"), "").trim();
-      }
-
-      out = out.replace(/\s+\(?[A-Z]{2,8}\)?\s*$/, "").trim();
-      return out;
-    }
-
-    raw = stripTrailingTranslationToken(raw);
-
-    let match = raw.match(/^(.*?)\s+(\d+:\d+(?:[-–]\d+(?::\d+)?)?)\s*$/);
-    if (match){
-      return {
-        book: match[1].trim(),
-        reference: match[2].trim()
-      };
-    }
-
-    raw = stripTrailingTranslationToken(raw);
-
-    match = raw.match(/^(.*?)\s+(\d+:\d+(?:[-–]\d+(?::\d+)?)?)\s*$/);
-    if (match){
-      return {
-        book: match[1].trim(),
-        reference: match[2].trim()
-      };
-    }
-
-    const lastSpace = raw.lastIndexOf(" ");
-    if (lastSpace > 0){
-      return {
-        book: raw.slice(0, lastSpace).trim(),
-        reference: raw.slice(lastSpace + 1).trim()
-      };
-    }
-
-    return {
-      book: raw,
-      reference: ""
-    };
+    return window.VerseGameShell.parseReferenceParts(ref, translation, verseId);
   }
 
   function getBuildLengthScore(verseText, book, reference){
@@ -1006,7 +919,7 @@ window.VerseGameShell.wireHelp({
   }
 
   function pickWordDecoys(correctWord, count){
-    const safePool = FUNNY_DECOY_WORDS.filter(word => word.toLowerCase() !== String(correctWord).toLowerCase());
+    const safePool = FUNNY_DECOY_WORDS.filter(word => normalizeWord(word) !== normalizeWord(correctWord));
     const pool = shuffle(Array.from(new Set(safePool)));
 
     const out = [];
@@ -1024,7 +937,7 @@ window.VerseGameShell.wireHelp({
 
   function pickBookDecoys(correctBook, count){
     const pool = shuffle(
-      Array.from(new Set(ALL_BIBLE_BOOKS.filter(book => book !== correctBook)))
+      Array.from(new Set(ALL_BIBLE_BOOKS.filter(book => normalizeWord(book) !== normalizeWord(correctBook))))
     );
 
     const out = [];
