@@ -46,6 +46,7 @@ const BIBLE_BOOKS = window.VerseGameShell.getBibleBookDecoys();
     endTime:0,
     bookLabel:"",
     referenceLabel:"",
+    referenceMeta:null,
     medalMessage:"",
     medalSubmessage:"",
     countdownValue:"",
@@ -140,6 +141,7 @@ const BIBLE_BOOKS = window.VerseGameShell.getBibleBookDecoys();
   function initVerseData(){
     state.words = tokenizeVerse(ctx.verseText);
     const parsed = parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
+    state.referenceMeta = parsed;
     state.bookLabel = parsed.book || "";
     state.referenceLabel = parsed.reference || "";
     state.buildSizeClass = getBuildSizeClass(ctx.verseText, state.bookLabel, state.referenceLabel);
@@ -229,26 +231,14 @@ const BIBLE_BOOKS = window.VerseGameShell.getBibleBookDecoys();
     return shuffle(FUN_DECOYS.filter(word => !verseWords.has(normalizeWord(word)) && normalizeWord(word) !== normalizeWord(correct)));
   }
   function bookDecoys(correct){ return shuffle(BIBLE_BOOKS.filter(book => normalizeWord(book) !== normalizeWord(correct))); }
-  function refDecoys(correctRef){
-    const out = [];
-    const match = String(correctRef || "").match(/^(\d+):(\d+)(.*)$/);
-    if (match){
-      const chapter = parseInt(match[1],10);
-      const verse = parseInt(match[2],10);
-      const suffix = match[3] || "";
-      const candidates = [
-        `${chapter}:${Math.max(1, verse - 1)}${suffix}`,
-        `${chapter}:${verse + 1}${suffix}`,
-        `${Math.max(1, chapter - 1)}:${verse}${suffix}`,
-        `${chapter + 1}:${verse}${suffix}`,
-        `${chapter}:${verse + 2}${suffix}`,
-        `${chapter + 1}:${verse + 1}${suffix}`
-      ];
-      for (const candidate of candidates){ if (candidate !== correctRef && !out.includes(candidate)) out.push(candidate); }
-    }
-    for (const fallback of ["1:1","3:16","8:28","23:1","5:13","4:12"]){ if (fallback !== correctRef && !out.includes(fallback)) out.push(fallback); }
-    return shuffle(out);
-  }
+
+function refDecoys(correctRef){
+  return shuffle(
+    window.VerseGameShell
+      .getReferenceDecoys(state.referenceMeta, state.mode, 6)
+      .filter((ref) => normalizeWord(ref) !== normalizeWord(correctRef))
+  );
+}
 
   function buildChoices(){
     const correct = currentCorrectLabel();
