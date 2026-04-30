@@ -1365,46 +1365,24 @@ if (DEBUG_COLLAPSE){
   }
 
   function parseVerseMeta(verseId, fallbackRef){
-    const slug = String(verseId || "").trim().toLowerCase();
-    if (slug){
-      const parts = slug.split("_").filter(Boolean);
-      const nums = [];
-      while (parts.length && /^\d+$/.test(parts[parts.length - 1])) nums.unshift(Number(parts.pop()));
-      if (parts.length){
-        const book = parts.map((part) => /^\d+$/.test(part) ? part : part.charAt(0).toUpperCase() + part.slice(1)).join(" ");
-        const chapter = Number.isFinite(nums[0]) ? nums[0] : null;
-        const verse = Number.isFinite(nums[1]) ? nums[1] : null;
-        const verseEnd = Number.isFinite(nums[2]) ? nums[2] : null;
-        return { book, chapter, verse, verseEnd, reference:formatReference(chapter, verse, verseEnd) };
-      }
-    }
-    return parseReferenceFallback(fallbackRef);
+    return window.VerseGameShell.parseReferenceParts(
+      fallbackRef,
+      ctx.translation,
+      verseId
+    );
   }
 
-  function parseReferenceFallback(ref){
-    const text = String(ref || "").trim();
-    const cleaned = text.replace(/,\s*[A-Z0-9-]+$/i, "").trim();
-    const match = cleaned.match(/^(.*?)(?:\s+(\d+):(\d+)(?:-(\d+))?)?$/);
-    const book = (match?.[1] || cleaned).trim();
-    const chapter = match?.[2] ? Number(match[2]) : null;
-    const verse = match?.[3] ? Number(match[3]) : null;
-    const verseEnd = match?.[4] ? Number(match[4]) : null;
-    return { book, chapter, verse, verseEnd, reference:formatReference(chapter, verse, verseEnd) };
-  }
 
   function formatReference(chapter, verse, verseEnd){ if (!chapter || !verse) return ""; return verseEnd ? `${chapter}:${verse}-${verseEnd}` : `${chapter}:${verse}`; }
-  function tokenizeVerse(text){
-    const tokens = [];
-    const re = /(\s+|[^\s\w']+|[\w']+)/g;
-    for (const part of String(text || "").match(re) || []){
-      if (/^\s+$/.test(part)) tokens.push({ kind:"space", text:part });
-      else if (/^[\w']+$/.test(part)) tokens.push({ kind:"word", text:part });
-      else tokens.push({ kind:"punct", text:part });
-    }
-    return tokens;
-  }
-  function extractWordEntries(tokens){ return tokens.filter((t) => t.kind === "word").map((t) => ({ display:t.text })); }
 
+  function tokenizeVerse(text){
+    return window.VerseGameShell.tokenizeVerseForBuild(text);
+  }
+
+  function extractWordEntries(tokens){
+    return window.VerseGameShell.extractWordEntries(tokens);
+  }  
+  
   function laneBottomOffset(){ return clamp(state.fieldWidth * 0.055, 24, 42); }
   function towerBaseBottom(){ return laneBottomOffset() + state.laneHeight + 10; }
 
@@ -1436,7 +1414,12 @@ const clamp = window.VerseGameShell.clamp;
 function pickRandom(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
 const shuffle = window.VerseGameShell.shuffle;
 const capitalize = window.VerseGameShell.capitalize;
-function normalizeWord(s){ return String(s || "").toLowerCase().replace(/[^a-z0-9']+/g, ""); }
+
+function normalizeWord(value){
+  return window.VerseGameShell.normalizeWord(value);
+}
+
+
 function escapeHtml(str){ return String(str || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&quot;").replace(/'/g,"&#39;"); }
 
 })();
