@@ -40,7 +40,7 @@ let resizeBound = false;
 let endScreenUnlockTimer = 0;
 let itemsClickBound = false;
 
-const verseMeta = parseVerseMeta(ctx.verseRef || "");
+const verseMeta = parseVerseMeta(ctx.verseId || "", ctx.verseRef || "");
 const buildTokens = tokenizeForBuild(ctx.verseText || "");
 const verseWords = buildTokens.filter(t => t.kind === "word").map(t => t.text);
 
@@ -1442,11 +1442,11 @@ function currentTargetLabel(){
 }
 
 function nextDecoyLabel(correctLabel){
-  const lowerCorrect = String(correctLabel || "").toLowerCase();
+  const lowerCorrect = normalizeWord(correctLabel);
 
   if (state.phase === "words"){
     if (selectedMode === "easy"){
-      const pool = FUN_DECOYS.filter(word => word.toLowerCase() !== lowerCorrect);
+        const pool = FUN_DECOYS.filter(word => normalizeWord(word) !== lowerCorrect);
       return pickRandom(pool) || pickRandom(FUN_DECOYS);
     }
 
@@ -1456,25 +1456,25 @@ function nextDecoyLabel(correctLabel){
       verseWords
         .map(w => String(w || "").trim())
         .filter(Boolean)
-        .map(w => w.toLowerCase())
+        .map(normalizeWord)
     ).filter(word => !blocked.has(word));
 
     if (versePool.length){
       return pickRandom(versePool);
     }
 
-    const fallback = FUN_DECOYS.filter(word => word.toLowerCase() !== lowerCorrect);
+    const fallback = FUN_DECOYS.filter(word => normalizeWord(word) !== lowerCorrect);
     return pickRandom(fallback) || pickRandom(FUN_DECOYS);
   }
 
   if (state.phase === "book"){
-    const pool = BOOKS.filter(book => book.toLowerCase() !== lowerCorrect);
+    const pool = BOOKS.filter(book => normalizeWord(book) !== lowerCorrect);
     return pickRandom(pool) || "Psalms";
   }
 
   if (state.phase === "reference"){
     const pool = makeReferenceChoices(verseMeta.chapter, verseMeta.verse, verseMeta.verseEnd)
-      .filter(ref => ref.toLowerCase() !== lowerCorrect);
+    .filter(ref => normalizeWord(ref) !== lowerCorrect);
     return pickRandom(pool) || "1:1";
   }
 
@@ -1486,7 +1486,7 @@ function blockedUpcomingWordLabels(count = 2){
 
   for (let i = 0; i <= count; i += 1){
     const word = verseWords[state.wordsBuilt + i];
-    if (word) blocked.add(String(word).toLowerCase());
+    if (word) blocked.add(normalizeWord(word));
   }
 
   return blocked;
@@ -1577,48 +1577,16 @@ function estimateItemWidth(label){
   return getItemMetrics(label).width;
 }
 
-function parseVerseMeta(ref){
-let cleaned = String(ref || "").trim();
-
-cleaned = cleaned
-  .replace(/\s*\(([A-Za-z]{2,8})\)\s*$/i, "")
-  .replace(/\s*[-–—]\s*([A-Za-z]{2,8})\s*$/i, "")
-  .replace(/\s+([A-Za-z]{2,8})\s*$/i, (match, code) => {
-    return /^(ESV|NIV|KJV|NKJV|NLT|CSB|NASB|NET|NRSV|RSV|MSG)$/i.test(code) ? "" : match;
-  })
-  .trim();
-
-cleaned = cleaned.replace(/[–—−]/g, "-");
-
-const match = cleaned.match(/^(.*?)\s+(\d+):(\d+)(?:-(\d+))?$/);
-if (!match){
-  return {
-    book: cleaned,
-    chapter: 1,
-    verse: 1,
-    verseEnd: null,
-    reference: ""
-  };
-}
-
-return {
-  book: match[1].trim(),
-  chapter: Number(match[2]),
-  verse: Number(match[3]),
-  verseEnd: match[4] ? Number(match[4]) : null,
-  reference: `${match[2]}:${match[3]}${match[4] ? `-${match[4]}` : ""}`
-};
+function parseVerseMeta(verseId, fallbackRef){
+  return window.VerseGameShell.parseReferenceParts(
+    fallbackRef,
+    ctx.translation,
+    verseId
+  );
 }
 
 function tokenizeForBuild(text){
-  const raw = String(text || "");
-  const parts = raw.match(/\s+|[A-Za-z0-9]+(?:['’][A-Za-z0-9]+)*|[^\sA-Za-z0-9]/g) || [];
-
-  return parts.map(part => {
-    if (/^\s+$/.test(part)) return { kind:"space", text:part };
-    if (/^[A-Za-z0-9]+(?:['’][A-Za-z0-9]+)*$/.test(part)) return { kind:"word", text:part };
-    return { kind:"punct", text:part };
-  });
+  return window.VerseGameShell.tokenizeVerseForBuild(text);
 }
 
 function makeReferenceChoices(chapter, verse, verseEnd){
@@ -1660,6 +1628,10 @@ function uniqueStrings(items){
     out.push(item);
   }
   return out;
+}
+
+function normalizeWord(value){
+  return window.VerseGameShell.normalizeWord(value);
 }
 
 const shuffle = window.VerseGameShell.shuffle;
