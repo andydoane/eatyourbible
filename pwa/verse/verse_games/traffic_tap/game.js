@@ -1473,8 +1473,10 @@ function nextDecoyLabel(correctLabel){
   }
 
   if (state.phase === "reference"){
-    const pool = makeReferenceChoices(verseMeta.chapter, verseMeta.verse, verseMeta.verseEnd)
-    .filter(ref => normalizeWord(ref) !== lowerCorrect);
+    const pool = window.VerseGameShell
+      .getReferenceDecoys(verseMeta, selectedMode, 8)
+      .filter(ref => normalizeWord(ref) !== lowerCorrect);
+
     return pickRandom(pool) || "1:1";
   }
 
@@ -1587,22 +1589,6 @@ function parseVerseMeta(verseId, fallbackRef){
 
 function tokenizeForBuild(text){
   return window.VerseGameShell.tokenizeVerseForBuild(text);
-}
-
-function makeReferenceChoices(chapter, verse, verseEnd){
-  const correct = `${chapter}:${verse}${verseEnd ? `-${verseEnd}` : ""}`;
-  const set = new Set([correct]);
-  let tries = 0;
-  while (set.size < 9 && tries < 180){
-    let c = chapter + Math.floor(Math.random() * 9) - 4;
-    let v = verse + Math.floor(Math.random() * 19) - 9;
-    if (c < 1) c = 1 + Math.floor(Math.random() * 5);
-    if (v < 1) v = 1 + Math.floor(Math.random() * 20);
-    const ref = `${c}:${v}${verseEnd ? `-${v + (verseEnd - verse)}` : ""}`;
-    set.add(ref);
-    tries += 1;
-  }
-  return shuffle(Array.from(set));
 }
 
 function getBuildSizeClass(verseText, book, reference){
