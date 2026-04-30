@@ -96,7 +96,7 @@
     "Nehemiah",
     "Esther",
     "Job",
-    "Psalms",
+    "Psalm",
     "Proverbs",
     "Isaiah",
     "Jeremiah",
