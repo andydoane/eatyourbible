@@ -1051,7 +1051,17 @@ function backToMenuFromHelp(){
 
   function makeDecoy(kind, correct){
     if (kind === "book") return { label: pickRandom(shuffle(BOOKS.filter((b) => b !== correct)).slice(0, 8)), kind:"book" };
-    if (kind === "reference") return { label: pickRandom(makeReferenceChoices(verseMeta.chapter, verseMeta.verse, verseMeta.verseEnd).filter((r) => r !== correct)), kind:"reference" };
+
+if (kind === "reference") {
+  return {
+    label: pickRandom(
+      makeReferenceChoices(verseMeta, selectedMode)
+        .filter((ref) => normalizeWord(ref) !== normalizeWord(correct))
+    ),
+    kind: "reference"
+  };
+}
+
     if (selectedMode === "medium" || selectedMode === "hard") return { label: pickRandom(getVerseDerivedDecoys(state.wordIndex, correct)), kind:"word" };
     return { label: pickRandom(FUN_DECOYS.filter((d) => normalizeWord(d) !== normalizeWord(correct))), kind:"word" };
   }
@@ -1346,23 +1356,9 @@ if (DEBUG_COLLAPSE){
         });
   }
 
-  function makeReferenceChoices(chapter, verse, verseEnd){
-    const correct = formatReference(chapter, verse, verseEnd);
-    if (!correct) return [];
-    const refs = new Set([correct]);
-    const span = Number.isFinite(verseEnd) ? Math.max(0, verseEnd - verse) : 0;
-    let tries = 0;
-    while (refs.size < 10 && tries < 240){
-      let fakeChapter = chapter + Math.floor(Math.random() * 11) - 5;
-      let fakeVerse = verse + Math.floor(Math.random() * 21) - 10;
-      if (fakeChapter < 1) fakeChapter = 1 + Math.floor(Math.random() * 5);
-      if (fakeVerse < 1) fakeVerse = 1 + Math.floor(Math.random() * 10);
-      const fakeEnd = span > 0 ? fakeVerse + span : null;
-      refs.add(formatReference(fakeChapter, fakeVerse, fakeEnd));
-      tries += 1;
-    }
-    return [...refs];
-  }
+function makeReferenceChoices(referenceMeta, mode){
+  return window.VerseGameShell.getReferenceDecoys(referenceMeta, mode, 10);
+}
 
   function parseVerseMeta(verseId, fallbackRef){
     return window.VerseGameShell.parseReferenceParts(
@@ -1371,9 +1367,6 @@ if (DEBUG_COLLAPSE){
       verseId
     );
   }
-
-
-  function formatReference(chapter, verse, verseEnd){ if (!chapter || !verse) return ""; return verseEnd ? `${chapter}:${verse}-${verseEnd}` : `${chapter}:${verse}`; }
 
   function tokenizeVerse(text){
     return window.VerseGameShell.tokenizeVerseForBuild(text);
