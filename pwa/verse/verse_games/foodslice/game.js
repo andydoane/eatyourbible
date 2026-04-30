@@ -143,7 +143,7 @@ function renderModeSelect(){
     state.done = false;
     state.theme = pickRandom(FOOD_THEMES);
     state.bookChoices = makeBookChoices(state.verseMeta.book);
-    state.referenceChoices = makeReferenceChoices(state.verseMeta.chapter, state.verseMeta.verse, state.verseMeta.verseEnd);
+    state.referenceChoices = makeReferenceChoices(state.verseMeta, selectedMode);
 
     app.innerHTML = `
       <div class="fs-shell">
@@ -877,22 +877,17 @@ function createSlicesFrom(item){
     return shuffle([correctBook, ...others]);
   }
 
-  function makeReferenceChoices(chapter, verse, verseEnd){
-    const correct = formatReference(chapter, verse, verseEnd);
+  function makeReferenceChoices(referenceMeta, mode){
+    const correct = String(referenceMeta?.reference || "").trim();
+
     if (!correct) return [];
-    const refs = new Set([correct]);
-    const span = Number.isFinite(verseEnd) ? Math.max(0, verseEnd - verse) : 0;
-    let tries = 0;
-    while (refs.size < 4 && tries < 200){
-      let fakeChapter = chapter + Math.floor(Math.random() * 11) - 5;
-      let fakeVerse = verse + Math.floor(Math.random() * 21) - 10;
-      if (fakeChapter < 1) fakeChapter = 1 + Math.floor(Math.random() * 5);
-      if (fakeVerse < 1) fakeVerse = 1 + Math.floor(Math.random() * 10);
-      const fakeEnd = span > 0 ? fakeVerse + span : null;
-      refs.add(formatReference(fakeChapter, fakeVerse, fakeEnd));
-      tries += 1;
-    }
-    return shuffle([...refs]);
+
+    const decoys = window.VerseGameShell.getReferenceDecoys(referenceMeta, mode, 3);
+
+    return shuffle([
+      correct,
+      ...decoys.filter((ref) => normalizeWord(ref) !== normalizeWord(correct))
+    ]).slice(0, 4);
   }
 
   function parseVerseMeta(verseId, fallbackRef){
@@ -903,10 +898,6 @@ function createSlicesFrom(item){
     );
   }
 
-  function formatReference(chapter, verse, verseEnd){
-    if (!chapter || !verse) return "";
-    return verseEnd ? `${chapter}:${verse}-${verseEnd}` : `${chapter}:${verse}`;
-  }
 
   function tokenizeVerseWithSpaces(text){
     return window.VerseGameShell.tokenizeVerseForBuild(text);
