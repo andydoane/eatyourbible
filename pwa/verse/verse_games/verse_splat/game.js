@@ -111,6 +111,7 @@ const BOOK_DECOY_LABELS = window.VerseGameShell.getBibleBookDecoys();
     words: [],
     bookTokens: [],
     referenceToken: "",
+    referenceMeta: null,
     segments: [],
     metaIndices: new Set(),
     progressIndex: 0,
@@ -170,6 +171,7 @@ const shuffle = window.VerseGameShell.shuffle;
   function initVerseData(){
     state.words = tokenizeVerse(ctx.verseText);
     const parts = parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
+    state.referenceMeta = parts;
 
     const wholeBook = String(parts.book || "").trim();
     state.bookTokens = wholeBook ? [wholeBook] : [];
@@ -579,19 +581,9 @@ function render(){
   }
 
   function referenceDecoys(correct){
-    const match = String(correct || "").match(/^(\d+):(\d+(?:-\d+)?)$/);
-    if (!match) return ["1:1", "3:16", "23:4", "8:28"];
-    const ch = parseInt(match[1], 10);
-    const verse = match[2];
-    const simple = verse.split("-")[0];
-    return uniqueLabels([
-      `${ch+1}:${verse}`,
-      `${Math.max(1, ch-1)}:${verse}`,
-      `${ch}:${Math.max(1, parseInt(simple, 10)+1)}`,
-      `${ch}:${Math.max(1, parseInt(simple, 10)-1)}`,
-      `${Math.max(1, ch+2)}:${Math.max(1, parseInt(simple, 10)+2)}`,
-      `${Math.max(1, ch-2)}:${Math.max(1, parseInt(simple, 10)+3)}`
-    ]).filter(label => normalizeWord(label) !== normalizeWord(correct));
+    return window.VerseGameShell
+      .getReferenceDecoys(state.referenceMeta, state.mode, 12)
+      .filter((ref) => normalizeWord(ref) !== normalizeWord(correct));
   }
 
   function decoysForCurrentPhase(correct){
