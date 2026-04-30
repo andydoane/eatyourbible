@@ -70,7 +70,7 @@
 </head>
 <body>
   <div id="timer">90</div>
-  <div id="message">Click “Enable notifications” to get an alert when time is up.</div>
+  <div id="message">Click “Enable notifications” to get alerts at 30 seconds and when time is up.</div>
   <button id="notifyButton">Enable notifications</button>
 
   <script>
@@ -82,24 +82,23 @@
 
     let secondsLeft = START_SECONDS;
     let hasFinished = false;
+    let hasSentThirtySecondNotification = false;
 
     function updateDisplay() {
       timerElement.textContent = secondsLeft;
       document.title = String(secondsLeft);
     }
 
-    function sendFinishedNotification() {
+    function sendNotification(title, body) {
       if (!("Notification" in window)) {
-        alert("Time is up!");
+        alert(title);
         return;
       }
 
       if (Notification.permission === "granted") {
-        new Notification("Time is up!", {
-          body: "Your 90 second timer has finished."
-        });
+        new Notification(title, { body });
       } else {
-        alert("Time is up!");
+        alert(title);
       }
     }
 
@@ -113,18 +112,22 @@
       messageElement.textContent = "Time is up!";
       document.title = "Time is up!";
 
-      sendFinishedNotification();
+      sendNotification("Time is up!", "Your 90 second timer has finished.");
     }
 
     function tick() {
       if (hasFinished) return;
 
       secondsLeft -= 1;
+      updateDisplay();
+
+      if (secondsLeft === 30 && !hasSentThirtySecondNotification) {
+        hasSentThirtySecondNotification = true;
+        sendNotification("30 seconds remaining", "Your timer has 30 seconds left.");
+      }
 
       if (secondsLeft <= 0) {
         finishTimer();
-      } else {
-        updateDisplay();
       }
     }
 
