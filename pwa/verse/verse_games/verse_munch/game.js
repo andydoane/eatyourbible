@@ -1005,7 +1005,7 @@ function backToMenuFromHelp(){
     } else if (phase === "book"){
       for (const book of shuffle(BOOKS)){
         if (out.size >= count) break;
-        if (book !== correctLabel) out.add(book);
+        if (normalizeWord(book) !== normalizeWord(correctLabel)) out.add(book);
       }
     } else if (phase === "reference"){
       const match = String(correctLabel).match(/^(\d+):(\d+)(?:-(\d+))?$/);
@@ -1290,66 +1290,17 @@ function getMouthPoint(){
 }
 
   function tokenizeVerse(text){
-    return String(text || "").trim().split(/\s+/).filter(Boolean);
+    return window.VerseGameShell.tokenizeVerseWords(text);
   }
 
-  function normalizeWord(word){
-    return String(word || "").toLowerCase().replace(/[^a-z0-9']/g, "");
+  function normalizeWord(value){
+    return window.VerseGameShell.normalizeWord(value);
   }
 
   function parseReferenceParts(ref, translation, verseId){
-    const id = String(verseId || "").trim();
-
-    const idRangeMatch = id.match(/^(.+?)_(\d+)_(\d+)_(\d+)$/);
-    if (idRangeMatch){
-      return {
-        book:titleCaseBookFromSlug(idRangeMatch[1]),
-        reference:`${idRangeMatch[2]}:${idRangeMatch[3]}-${idRangeMatch[4]}`
-      };
-    }
-
-    const idMatch = id.match(/^(.+?)_(\d+)_(\d+(?:[-–]\d+)?)$/);
-    if (idMatch){
-      return {
-        book:titleCaseBookFromSlug(idMatch[1]),
-        reference:`${idMatch[2]}:${idMatch[3]}`
-      };
-    }
-
-    let raw = String(ref || "").trim();
-    const trans = String(translation || "").trim();
-    if (trans){
-      raw = raw.replace(new RegExp(`\\s*\\(?${trans.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&")}\\)?\\s*$`, "i"), "").trim();
-    }
-
-    const match = raw.match(/^(.*?)\s+(\d+:\d+(?:[-–]\d+(?::\d+)?)?)\s*$/);
-    if (match){
-      return { book:match[1].trim(), reference:match[2].trim() };
-    }
-
-    const lastSpace = raw.lastIndexOf(" ");
-    if (lastSpace > 0){
-      return {
-        book:raw.slice(0, lastSpace).trim(),
-        reference:raw.slice(lastSpace + 1).trim()
-      };
-    }
-
-    return { book:raw, reference:"" };
+    return window.VerseGameShell.parseReferenceParts(ref, translation, verseId);
   }
 
-  function titleCaseBookFromSlug(slug){
-    const smallWords = new Set(["of", "the"]);
-    return String(slug || "")
-      .split("_")
-      .filter(Boolean)
-      .map((part, index) => {
-        const lower = part.toLowerCase();
-        if (index > 0 && smallWords.has(lower)) return lower;
-        return lower.charAt(0).toUpperCase() + lower.slice(1);
-      })
-      .join(" ");
-  }
 
 const clamp = window.VerseGameShell.clamp;
 function lerp(a, b, t){ return a + (b - a) * t; }
