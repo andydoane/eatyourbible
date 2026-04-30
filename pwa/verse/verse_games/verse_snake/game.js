@@ -60,6 +60,7 @@ const FUNNY_DECOY_WORDS = window.VerseGameShell.getFunDecoys();
     words: [],
     bookLabel: "",
     referenceLabel: "",
+    referenceMeta: null,
     segments: [],
     buildSizeClass: "is-normal",
     progressIndex: 0,
@@ -222,6 +223,7 @@ function backToMenuFromHelp(){
     state.words = [];
     state.bookLabel = "";
     state.referenceLabel = "";
+    state.referenceMeta = null;
     state.segments = [];
     state.progressIndex = 0;
     state.targets = [];
@@ -600,6 +602,7 @@ window.VerseGameShell.wireHelp({
       ctx.translation,
       ctx.verseId || launch.verseId || ""
     );
+    state.referenceMeta = refParts;
     state.bookLabel = refParts.book;
     state.referenceLabel = refParts.reference;
     state.buildSizeClass = getBuildSizeClass(ctx.verseText, state.bookLabel, state.referenceLabel);
@@ -954,44 +957,15 @@ window.VerseGameShell.wireHelp({
   }
 
   function buildReferenceDecoys(correctRef, count){
-    const out = [];
-    const match = String(correctRef || "").match(/^(\d+):(\d+)(.*)$/);
+    const decoys = window.VerseGameShell
+      .getReferenceDecoys(state.referenceMeta, selectedMode, count)
+      .filter((ref) => normalizeWord(ref) !== normalizeWord(correctRef));
 
-    if (match){
-      const chapter = parseInt(match[1], 10);
-      const verse = parseInt(match[2], 10);
-      const suffix = match[3] || "";
-
-      const candidates = [
-        `${chapter}:${Math.max(1, verse - 1)}${suffix}`,
-        `${chapter}:${verse + 1}${suffix}`,
-        `${Math.max(1, chapter - 1)}:${verse}${suffix}`,
-        `${chapter + 1}:${verse}${suffix}`,
-        `${chapter}:${verse + 2}${suffix}`,
-        `${chapter + 1}:${verse + 1}${suffix}`
-      ];
-
-      for (const candidate of candidates){
-        if (candidate !== correctRef && !out.includes(candidate)){
-          out.push(candidate);
-        }
-        if (out.length >= count) break;
-      }
+    while (decoys.length < count){
+      decoys.push("1:1");
     }
 
-    const fallbacks = ["1:1", "3:16", "8:28", "23:1", "5:13", "4:12"];
-    for (const candidate of fallbacks){
-      if (candidate !== correctRef && !out.includes(candidate)){
-        out.push(candidate);
-      }
-      if (out.length >= count) break;
-    }
-
-    while (out.length < count){
-      out.push(correctRef);
-    }
-
-    return out;
+    return decoys.slice(0, count);
   }
 
   function getChoicesForCurrentPhase(){
