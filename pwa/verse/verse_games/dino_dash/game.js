@@ -1734,16 +1734,9 @@ function renderHills(){
     }
 
     if (phase === "reference"){
-      const clean = String(correctLabel || "").match(/^(\d+):(\d+)(?:-(\d+))?$/);
-      const chapter = clean ? Number(clean[1]) : 1;
-      const verse = clean ? Number(clean[2]) : 1;
-      let tries = 0;
-      while (out.size < count && tries < 40){
-        tries++;
-        const c = Math.max(1, chapter + Math.floor(Math.random() * 5) - 2);
-        const v = Math.max(1, verse + Math.floor(Math.random() * 9) - 4);
-        const label = `${c}:${v}`;
-        if (label !== correctLabel) out.add(label);
+      for (const ref of window.VerseGameShell.getReferenceDecoys(referenceParts, selectedMode, count + 4)){
+        if (out.size >= count) break;
+        if (normalizeWord(ref) !== normalizeWord(correctLabel)) out.add(ref);
       }
     }
 
