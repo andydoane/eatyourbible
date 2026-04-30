@@ -1,0 +1,17 @@
+{
+  "biblopet": "📃",
+  "verseId": "1_testverse_15_3_4",
+  "translation": "ESV",
+  "echoParts": [
+    "testword1",
+    "testword2"
+  ],
+
+  "verseText": "There’s no god like the Lord’s—he said: ‘Love your enemies, rejoice!’ Is any among you suffering? He is a two-edged sword; 144,000 sing.",
+   "meaning": "Test meaning text",
+  "attribution": "Scripture quotations are from The ESV® Bible (The Holy Bible, English Standard Version®), © 2001 by Crossway, a publishing ministry of Good News Publishers. Used by permission. All rights reserved.",
+  "hidePlan": [
+    { "type": "emoji", "word": "testword1", "occurrence": 1, "emoji": "🍩" },
+    { "type": "underscore", "word": "testword2", "occurrence": 1 }
+  ]
+}
