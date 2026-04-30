@@ -173,6 +173,184 @@
     if (!text) return "";
     return text.charAt(0).toUpperCase() + text.slice(1);
   }
+
+  function normalizeWord(value){
+    return String(value ?? "")
+      .trim()
+      .replace(/[‘’]/g, "'")
+      .toLowerCase()
+      .replace(/^[^a-z0-9]+/gi, "")
+      .replace(/[^a-z0-9]+$/gi, "")
+      .replace(/[^a-z0-9']/gi, "");
+  }
+
+  function tokenizeVerseWords(text){
+    const normalized = String(text ?? "")
+      .replace(/[‘’]/g, "'")
+      .replace(/[“”]/g, '"')
+      .replace(/[–—−]/g, "-");
+
+    const words = [];
+    const re = /[A-Za-z0-9]+(?:'[A-Za-z0-9]+)?(?:,[0-9]{3})*/g;
+
+    for (const match of normalized.matchAll(re)){
+      const word = match[0];
+      if (word) words.push(word);
+    }
+
+    return words;
+  }
+
+  function tokenizeVerseForBuild(text){
+    const raw = String(text ?? "");
+    const tokens = [];
+    const re = /(\s+|[A-Za-z0-9]+(?:[’'][A-Za-z0-9]+)?(?:,[0-9]{3})*|[^\sA-Za-z0-9]+)/g;
+
+    for (const part of raw.match(re) || []){
+      if (/^\s+$/.test(part)){
+        tokens.push({ kind: "space", text: part });
+      } else if (/^[A-Za-z0-9]+(?:[’'][A-Za-z0-9]+)?(?:,[0-9]{3})*$/.test(part)){
+        tokens.push({ kind: "word", text: part });
+      } else {
+        tokens.push({ kind: "punct", text: part });
+      }
+    }
+
+    return tokens;
+  }
+
+  function extractWordEntries(tokens){
+    return Array.isArray(tokens)
+      ? tokens
+          .filter((token) => token && token.kind === "word")
+          .map((token) => ({ display: token.text }))
+      : [];
+  }
+
+  function titleCaseBookFromSlug(slug){
+    const smallWords = new Set(["of", "the"]);
+
+    return String(slug ?? "")
+      .replace(/\.json$/i, "")
+      .split("_")
+      .filter(Boolean)
+      .map((part, index) => {
+        const lower = part.toLowerCase();
+        if (index > 0 && smallWords.has(lower)) return lower;
+        return lower.charAt(0).toUpperCase() + lower.slice(1);
+      })
+      .join(" ");
+  }
+
+  function stripTranslationFromReference(ref, translation){
+    let raw = String(ref ?? "").trim();
+    const trans = String(translation ?? "").trim();
+
+    const knownTranslations = [
+      "ESV", "NIV", "NLT", "KJV", "NKJV", "CSB", "HCSB", "NASB", "NASB95",
+      "LSB", "AMP", "RSV", "NRSV", "NRSVUE", "NET", "MSG", "GW", "CEV",
+      "GNT", "ERV", "ICB"
+    ];
+
+    const stripCode = (text, code) => {
+      const escaped = String(code).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      return String(text)
+        .replace(new RegExp(`\\s*\\(${escaped}\\)\\s*$`, "i"), "")
+        .replace(new RegExp(`\\s+${escaped}\\s*$`, "i"), "")
+        .replace(new RegExp(`\\s*[-–—]\\s*${escaped}\\s*$`, "i"), "")
+        .trim();
+    };
+
+    if (trans) raw = stripCode(raw, trans);
+    for (const code of knownTranslations){
+      raw = stripCode(raw, code);
+    }
+
+    return raw.trim();
+  }
+
+  function parseReferenceParts(ref, translation, verseId){
+    const rawId = String(verseId ?? "")
+      .trim()
+      .replace(/\.json$/i, "")
+      .replace(/[–—−]/g, "-");
+
+    if (rawId){
+      const parts = rawId.split("_").filter(Boolean);
+      const nums = [];
+
+      while (parts.length && /^\d+$/.test(parts[parts.length - 1])){
+        nums.unshift(Number(parts.pop()));
+      }
+
+      if (parts.length && nums.length >= 2){
+        const book = titleCaseBookFromSlug(parts.join("_"));
+        const chapter = nums[0];
+        const verse = nums[1];
+        const verseEnd = nums.length >= 3 ? nums[2] : null;
+        const reference = verseEnd ? `${chapter}:${verse}-${verseEnd}` : `${chapter}:${verse}`;
+
+        return {
+          book,
+          chapter,
+          verse,
+          verseEnd,
+          reference,
+          display: `${book} ${reference}`
+        };
+      }
+    }
+
+    const rawRef = stripTranslationFromReference(ref, translation).replace(/[–—−]/g, "-");
+
+    const match = rawRef.match(/^(.*?)\s+(\d+):(\d+)(?:-(?:(\d+):)?(\d+))?\s*$/);
+    if (match){
+      const book = match[1].trim();
+      const chapter = Number(match[2]);
+      const verse = Number(match[3]);
+      const endChapter = match[4] ? Number(match[4]) : null;
+      const verseEnd = match[5] ? Number(match[5]) : null;
+
+      const reference = verseEnd
+        ? endChapter && endChapter !== chapter
+          ? `${chapter}:${verse}-${endChapter}:${verseEnd}`
+          : `${chapter}:${verse}-${verseEnd}`
+        : `${chapter}:${verse}`;
+
+      return {
+        book,
+        chapter,
+        verse,
+        verseEnd,
+        reference,
+        display: `${book} ${reference}`
+      };
+    }
+
+    const lastSpace = rawRef.lastIndexOf(" ");
+    if (lastSpace > 0){
+      const book = rawRef.slice(0, lastSpace).trim();
+      const reference = rawRef.slice(lastSpace + 1).trim();
+
+      return {
+        book,
+        chapter: null,
+        verse: null,
+        verseEnd: null,
+        reference,
+        display: rawRef
+      };
+    }
+
+    return {
+      book: rawRef,
+      chapter: null,
+      verse: null,
+      verseEnd: null,
+      reference: "",
+      display: rawRef
+    };
+  }
   
   function helpOverlayHtml({
     id = "verseGameHelpOverlay",
@@ -436,6 +614,12 @@ function renderCompleteScreen({
     shuffle,
     clamp,
     capitalize,
+    normalizeWord,
+    tokenizeVerseWords,
+    tokenizeVerseForBuild,
+    extractWordEntries,
+    titleCaseBookFromSlug,
+    parseReferenceParts,
     helpOverlayHtml,
     openHelp,
     closeHelp,
