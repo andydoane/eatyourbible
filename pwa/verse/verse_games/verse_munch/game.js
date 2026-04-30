@@ -110,6 +110,7 @@ const FACE_MAP = {
     segments:[],
     bookLabel:"",
     referenceLabel:"",
+    referenceMeta:null,
     progressIndex:0,
     streak:0,
     emotionLevel:0,
@@ -1008,21 +1009,9 @@ function backToMenuFromHelp(){
         if (normalizeWord(book) !== normalizeWord(correctLabel)) out.add(book);
       }
     } else if (phase === "reference"){
-      const match = String(correctLabel).match(/^(\d+):(\d+)(?:-(\d+))?$/);
-      const chapter = match ? Number(match[1]) : 1;
-      const verseA = match ? Number(match[2]) : 1;
-      const verseB = match && match[3] ? Number(match[3]) : null;
-      let tries = 0;
-      while (out.size < count && tries < 80){
-        tries++;
-        const c = Math.max(1, chapter + Math.floor(Math.random() * 5) - 2);
-        const v = Math.max(1, verseA + Math.floor(Math.random() * 9) - 4);
-        let label = `${c}:${v}`;
-        if (verseB && Math.random() < 0.35){
-          const end = Math.max(v + 1, verseB + Math.floor(Math.random() * 3) - 1);
-          label = `${c}:${v}-${end}`;
-        }
-        if (label !== correctLabel) out.add(label);
+      for (const ref of window.VerseGameShell.getReferenceDecoys(state.referenceMeta, selectedMode, count + 4)){
+        if (out.size >= count) break;
+        if (normalizeWord(ref) !== normalizeWord(correctLabel)) out.add(ref);
       }
     }
     return Array.from(out).slice(0, count);
@@ -1151,6 +1140,7 @@ function spawnChewCrumbs(isSecondary = false){
 
   function setupReferenceSegments(){
     const parsed = parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
+    state.referenceMeta = parsed;
     state.bookLabel = parsed.book || "";
     state.referenceLabel = parsed.reference || "";
     state.buildSizeClass = getBuildSizeClass(ctx.verseText, state.bookLabel, state.referenceLabel);
