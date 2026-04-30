@@ -351,6 +351,106 @@
       display: rawRef
     };
   }
+
+  function getReferenceDecoys(referenceMeta, mode = "easy", count = 6){
+    const chapter = Number(referenceMeta?.chapter);
+    const verse = Number(referenceMeta?.verse);
+    const verseEnd = referenceMeta?.verseEnd == null ? null : Number(referenceMeta.verseEnd);
+    const correct = String(referenceMeta?.reference ?? "").trim();
+    const difficulty = String(mode || "easy").toLowerCase();
+    const desiredCount = Math.max(0, Number(count) || 0);
+
+    if (!desiredCount) return [];
+
+    const hasParsedReference =
+      Number.isFinite(chapter) &&
+      chapter >= 1 &&
+      Number.isFinite(verse) &&
+      verse >= 1;
+
+    const span =
+      Number.isFinite(verseEnd) && verseEnd > verse
+        ? verseEnd - verse
+        : 0;
+
+    const formatReference = (rawChapter, rawVerse) => {
+      const safeChapter = Math.max(1, Math.floor(Number(rawChapter) || 1));
+      const safeVerse = Math.max(1, Math.floor(Number(rawVerse) || 1));
+
+      return span > 0
+        ? `${safeChapter}:${safeVerse}-${safeVerse + span}`
+        : `${safeChapter}:${safeVerse}`;
+    };
+
+    const addCandidate = (set, candidate) => {
+      const text = String(candidate ?? "").trim();
+      if (!text) return;
+      if (text === correct) return;
+      set.add(text);
+    };
+
+    const fallbackRefs = [
+      "1:1",
+      "3:16",
+      "8:28",
+      "23:4",
+      "4:12",
+      "5:13",
+      "6:27",
+      "10:10",
+      "12:2",
+      "15:3"
+    ];
+
+    const out = new Set();
+
+    if (!hasParsedReference){
+      for (const ref of fallbackRefs){
+        addCandidate(out, ref);
+        if (out.size >= desiredCount) return [...out];
+      }
+      return [...out].slice(0, desiredCount);
+    }
+
+    if (difficulty === "medium" || difficulty === "hard"){
+      const offsets = [
+        [0, -1],
+        [0, 1],
+        [-1, 0],
+        [1, 0],
+        [-1, -1],
+        [-1, 1],
+        [1, -1],
+        [1, 1],
+        [0, -2],
+        [0, 2],
+        [-2, 0],
+        [2, 0]
+      ];
+
+      for (const [chapterOffset, verseOffset] of offsets){
+        addCandidate(out, formatReference(chapter + chapterOffset, verse + verseOffset));
+        if (out.size >= desiredCount) return [...out];
+      }
+    }
+
+    let tries = 0;
+    while (out.size < desiredCount && tries < 200){
+      tries += 1;
+
+      const randomChapter = 1 + Math.floor(Math.random() * 28);
+      const randomVerse = 1 + Math.floor(Math.random() * 40);
+
+      addCandidate(out, formatReference(randomChapter, randomVerse));
+    }
+
+    for (const ref of fallbackRefs){
+      addCandidate(out, ref);
+      if (out.size >= desiredCount) break;
+    }
+
+    return [...out].slice(0, desiredCount);
+  }
   
   function helpOverlayHtml({
     id = "verseGameHelpOverlay",
@@ -620,6 +720,7 @@ function renderCompleteScreen({
     extractWordEntries,
     titleCaseBookFromSlug,
     parseReferenceParts,
+    getReferenceDecoys,
     helpOverlayHtml,
     openHelp,
     closeHelp,
