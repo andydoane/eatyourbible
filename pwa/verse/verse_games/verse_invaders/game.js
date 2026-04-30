@@ -897,16 +897,9 @@ function renderVictory(){
     }
 
     if (phase === "reference"){
-      const match = String(correctLabel || "").match(/^(\d+):(\d+)(?:-(\d+))?$/);
-      const chapter = match ? Number(match[1]) : 1;
-      const verse = match ? Number(match[2]) : 1;
-      let tries = 0;
-      while (out.size < count && tries < 50){
-        tries += 1;
-        const c = Math.max(1, chapter + Math.floor(Math.random() * 5) - 2);
-        const v = Math.max(1, verse + Math.floor(Math.random() * 9) - 4);
-        const label = `${c}:${v}`;
-        if (label !== correctLabel) out.add(label);
+      for (const ref of window.VerseGameShell.getReferenceDecoys(parsedRef, selectedMode, count + 4)){
+        if (out.size >= count) break;
+        if (normalizeWord(ref) !== normalizeWord(correctLabel)) out.add(ref);
       }
     }
 
