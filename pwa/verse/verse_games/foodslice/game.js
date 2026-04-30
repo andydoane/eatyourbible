@@ -908,9 +908,13 @@ function createSlicesFrom(item){
     return verseEnd ? `${chapter}:${verse}-${verseEnd}` : `${chapter}:${verse}`;
   }
 
-  const tokenizeVerseWithSpaces = window.VerseGameShell.tokenizeVerseForBuild;
+  function tokenizeVerseWithSpaces(text){
+    return window.VerseGameShell.tokenizeVerseForBuild(text);
+  }
 
-  const extractWordEntries = window.VerseGameShell.extractWordEntries;
+  function extractWordEntries(tokens){
+    return window.VerseGameShell.extractWordEntries(tokens);
+  }
 
   function getBuildSizeClass(verseText, book, reference){
     const combinedLength = `${verseText || ""} ${book || ""} ${reference || ""}`.trim().length;
