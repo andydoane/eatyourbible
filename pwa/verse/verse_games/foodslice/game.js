@@ -8,6 +8,8 @@ const GAME_THEME = {
   accent: "#333333"
 };
 
+const BUILD_AREA = "large";
+  
 const HELP_OVERLAY_ID = "fsHelpOverlay";
 
   const FOOD_THEMES = [
@@ -79,7 +81,7 @@ const GENERIC_DECOYS = window.VerseGameShell.getFunDecoys();
     verseText: ctx.verseText || "",
     book: state.verseMeta.book,
     reference: state.verseMeta.reference,
-    buildArea: "large"
+    buildArea: BUILD_AREA
   });
 
   state.wordEntries = state.buildData.words.map((word) => ({ display: word }));
