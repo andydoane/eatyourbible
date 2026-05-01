@@ -321,6 +321,7 @@ body{
 
 .vm-build--large .vm-build-text{
   line-height: 1.14;
+  transform: translateY(-2px);
 }
 
 .vm-build--large .vm-build-text.is-normal{
