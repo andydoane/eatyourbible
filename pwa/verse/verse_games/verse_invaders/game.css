@@ -148,8 +148,17 @@ body{
 }
 
 .vinv-build-token{
-  color:transparent;
-  transition:color 160ms ease;
+  color:var(--vinv-text-dark);
+  transition:color 160ms ease, opacity 160ms ease;
+}
+
+.vinv-build-token.is-verse{
+  color:var(--vinv-text-dark);
+}
+
+.vinv-build-token.is-book,
+.vinv-build-token.is-reference{
+  color:var(--vinv-green);
 }
 
 .vinv-build-token.is-built.is-verse{

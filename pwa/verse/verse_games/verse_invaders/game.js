@@ -180,8 +180,8 @@ function renderModeSelect(){
       <div class="vinv-shell">
         <div class="vinv-stage">
           <div class="vinv-build-wrap">
-            <div class="vinv-build" id="vinvBuild">
-              <div class="vinv-build-text" id="vinvBuildText"></div>
+            <div class="vinv-build vm-build vm-build--${BUILD_AREA}" id="vinvBuild">
+              <div class="vinv-build-text vm-build-text" id="vinvBuildText"></div>
             </div>
           </div>
 
@@ -424,11 +424,11 @@ function backToMenuFromHelp(){
     if (!buildText || !build) return;
 
     build.classList.toggle("is-shake", state.buildShakeUntil > performance.now());
-    buildText.className = `vinv-build-text ${state.buildSizeClass}`;
+    buildText.className = `vinv-build-text vm-build-text vm-build-text--progress ${state.buildSizeClass} ${selectedMode === "hard" ? "is-hide-unbuilt" : ""}`;
     buildText.innerHTML = state.queue.map((token, index) => {
       const phaseClass = getBuildTokenPhase(index);
       const builtClass = index < state.builtCount ? "is-built" : "";
-      return `<span class="vinv-build-token ${phaseClass} ${builtClass}">${escapeHtml(token)}</span>`;
+      return `<span class="vinv-build-token vm-build-token ${phaseClass} ${builtClass}">${escapeHtml(token)}</span>`;
     }).join(" ");
   }
 
