@@ -138,10 +138,13 @@ const tokenizeVerse = window.VerseGameShell.tokenizeVerseWords;
   }
 
   function currentPhase(){
-    if (state.progressIndex < state.words.length) return "words";
-    if (state.progressIndex === state.words.length && state.bookLabel) return "book";
-    if (state.progressIndex < state.segments.length) return "reference";
-    return "done";
+    return window.VerseGameShell.getPhaseForProgress({
+      progressIndex: state.progressIndex,
+      wordCount: state.words.length,
+      totalSegments: state.segments.length,
+      bookLabel: state.bookLabel,
+      referenceLabel: state.referenceLabel
+    });
   }
 
   function currentCorrectLabel(){
