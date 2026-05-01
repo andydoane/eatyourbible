@@ -1050,7 +1050,12 @@ function backToMenuFromHelp(){
   }
 
   function makeDecoy(kind, correct){
-    if (kind === "book") return { label: pickRandom(shuffle(BOOKS.filter((b) => b !== correct)).slice(0, 8)), kind:"book" };
+    if (kind === "book") {
+    return {
+      label: pickRandom(window.VerseGameShell.getBookDecoys(correct, 8)),
+      kind: "book"
+    };
+  }
 
 if (kind === "reference") {
   return {
@@ -1063,7 +1068,16 @@ if (kind === "reference") {
 }
 
     if (selectedMode === "medium" || selectedMode === "hard") return { label: pickRandom(getVerseDerivedDecoys(state.wordIndex, correct)), kind:"word" };
-    return { label: pickRandom(FUN_DECOYS.filter((d) => normalizeWord(d) !== normalizeWord(correct))), kind:"word" };
+    return {
+      label: pickRandom(
+        window.VerseGameShell.getFunWordDecoys(
+          correct,
+          wordEntries.map((entry) => entry.display),
+          8
+        )
+      ),
+      kind: "word"
+    };
   }
 
   function advancePhaseAfterPlacement(){
