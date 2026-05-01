@@ -269,22 +269,41 @@
     );
   }
 
-  function getBuildSizeClass(verseText, book, reference){
+  function getBuildSizeClass(verseText, book, reference, buildArea = "large"){
     const score = getBuildLengthScore(verseText, book, reference);
 
-    if (score >= 136) return "is-small";
-    if (score >= 106) return "is-medium";
+    const profiles = {
+      large: {
+        mediumAt: 106,
+        smallAt: 136
+      },
+      compact: {
+        mediumAt: 73,
+        smallAt: 121
+      },
+      none: {
+        mediumAt: Infinity,
+        smallAt: Infinity
+      }
+    };
+
+    const profile = profiles[String(buildArea || "large").toLowerCase()] || profiles.large;
+
+    if (score >= profile.smallAt) return "is-small";
+    if (score >= profile.mediumAt) return "is-medium";
     return "is-normal";
   }
 
   function buildVerseSegments({
     verseText = "",
     book = "",
-    reference = ""
+    reference = "",
+    buildArea = "large"
   } = {}){
     const words = tokenizeVerseWords(verseText);
     const bookLabel = String(book || "").trim();
     const referenceLabel = String(reference || "").trim();
+    const area = String(buildArea || "large").toLowerCase();
 
     const segments = [...words];
     const metaIndices = new Set();
@@ -305,7 +324,8 @@
       metaIndices,
       bookLabel,
       referenceLabel,
-      buildSizeClass: getBuildSizeClass(verseText, bookLabel, referenceLabel)
+      buildArea: area,
+      buildSizeClass: getBuildSizeClass(verseText, bookLabel, referenceLabel, area)
     };
   }
 
