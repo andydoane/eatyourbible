@@ -880,41 +880,51 @@ function renderVictory(){
   }
 
   function getDecoysForPhase(phase, correctLabel, count){
-    const out = new Set();
+    const out = [];
+    const seen = new Set([normalizeWord(correctLabel)]);
+
+    function addDecoys(list){
+      for (const item of list || []){
+        const key = normalizeWord(item);
+        if (!key || seen.has(key)) continue;
+        seen.add(key);
+        out.push(item);
+        if (out.length >= count) break;
+      }
+    }
 
     if (phase === "words"){
-      const decoys = selectedMode === "easy"
-        ? window.VerseGameShell.getFunWordDecoys(correctLabel, verseWords, count)
-        : window.VerseGameShell.getVerseWordDecoys({
-            words: verseWords,
-            correct: correctLabel,
-            targetIndex: state.builtCount,
-            count,
-            avoidNext: 2,
-            fallbackToFun: true
-          });
+      if (selectedMode === "easy"){
+        addDecoys(window.VerseGameShell.getFunWordDecoys(correctLabel, verseWords, count));
+      } else {
+        addDecoys(window.VerseGameShell.getVerseWordDecoys({
+          words: verseWords,
+          correct: correctLabel,
+          targetIndex: state.builtCount,
+          count,
+          avoidNext: 2,
+          fallbackToFun: true
+        }));
 
-      for (const word of decoys){
-        if (out.size >= count) break;
-        if (normalizeWord(word) !== normalizeWord(correctLabel)) out.add(word);
+        if (out.length < count){
+          addDecoys(window.VerseGameShell.getFunWordDecoys(correctLabel, verseWords, count));
+        }
+
+        if (out.length < count){
+          addDecoys(FUN_DECOYS);
+        }
       }
     }
 
     if (phase === "book"){
-      for (const book of window.VerseGameShell.getBookDecoys(correctLabel, count)){
-        if (out.size >= count) break;
-        out.add(book);
-      }
+      addDecoys(window.VerseGameShell.getBookDecoys(correctLabel, count));
     }
 
     if (phase === "reference"){
-      for (const ref of window.VerseGameShell.getReferenceDecoys(parsedRef, selectedMode, count + 4)){
-        if (out.size >= count) break;
-        if (normalizeWord(ref) !== normalizeWord(correctLabel)) out.add(ref);
-      }
+      addDecoys(window.VerseGameShell.getReferenceDecoys(parsedRef, selectedMode, count + 4));
     }
 
-    return Array.from(out).slice(0, count);
+    return out.slice(0, count);
   }
 
   function getRoundSpeed(){
