@@ -1387,21 +1387,53 @@ function getScrollSpeed(){
     const out = new Set();
 
     if (phase === "words"){
-      const decoys = selectedMode === "easy"
-        ? window.VerseGameShell.getFunWordDecoys(correctLabel, state.words, count)
-        : window.VerseGameShell.getVerseWordDecoys({
+      const correctNorm = normalizeWord(correctLabel);
+
+      if (selectedMode === "easy"){
+        for (const word of window.VerseGameShell.getFunWordDecoys(correctLabel, state.words, count)){
+          if (out.size >= count) break;
+          if (normalizeWord(word) !== correctNorm){
+            out.add(word);
+          }
+        }
+      } else {
+        const strictAllowed = new Set();
+
+        state.words.forEach((word, index) => {
+          const norm = normalizeWord(word);
+          if (!norm || norm === correctNorm) return;
+          if (index > state.progressIndex && index <= state.progressIndex + 2) return;
+          strictAllowed.add(norm);
+        });
+
+        if (strictAllowed.size){
+          const verseDecoys = window.VerseGameShell.getVerseWordDecoys({
             words: state.words,
             correct: correctLabel,
             targetIndex: state.progressIndex,
             count,
             avoidNext: 2,
-            fallbackToFun: true
+            fallbackToFun: false
           });
 
-      for (const word of decoys){
-        if (out.size >= count) break;
-        if (normalizeWord(word) !== normalizeWord(correctLabel)){
-          out.add(word);
+          for (const word of verseDecoys){
+            if (out.size >= count) break;
+            const norm = normalizeWord(word);
+            if (!norm || norm === correctNorm) continue;
+            if (!strictAllowed.has(norm)) continue;
+            out.add(word);
+          }
+        }
+
+        if (out.size < count){
+          const funDecoys = window.VerseGameShell.getFunWordDecoys(correctLabel, state.words, count);
+          for (const word of funDecoys){
+            if (out.size >= count) break;
+            const norm = normalizeWord(word);
+            if (!norm || norm === correctNorm) continue;
+            if (out.has(word)) continue;
+            out.add(word);
+          }
         }
       }
     }
