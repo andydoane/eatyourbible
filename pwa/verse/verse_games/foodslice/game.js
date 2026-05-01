@@ -45,6 +45,8 @@ const GENERIC_DECOYS = window.VerseGameShell.getFunDecoys();
     sliceSize:54,
     sliceEmojiSize:42,
     theme:pickRandom(FOOD_THEMES),
+    verseMeta:parseVerseMeta(ctx.verseId || "", ctx.verseRef || ""),
+    buildData:null,
     tokens:tokenizeVerseWithSpaces(ctx.verseText || ""),
     wordEntries:[],
     wordsBuilt:0,
@@ -69,13 +71,18 @@ const GENERIC_DECOYS = window.VerseGameShell.getFunDecoys();
     bonusIdCounter:0,
     bonusCount:0,
     done:false,
-    verseMeta:parseVerseMeta(ctx.verseId || "", ctx.verseRef || ""),
     bookChoices:[],
     referenceChoices:[]
   };
 
-  state.wordEntries = extractWordEntries(state.tokens);
-  state.buildSizeClass = getBuildSizeClass(ctx.verseText, state.verseMeta.book, state.verseMeta.reference);
+  state.buildData = window.VerseGameShell.buildVerseSegments({
+    verseText: ctx.verseText || "",
+    book: state.verseMeta.book,
+    reference: state.verseMeta.reference
+  });
+
+  state.wordEntries = state.buildData.words.map((word) => ({ display: word }));
+  state.buildSizeClass = state.buildData.buildSizeClass;
 
   renderIntro();
 
@@ -910,13 +917,6 @@ function createSlicesFrom(item){
 
   function extractWordEntries(tokens){
     return window.VerseGameShell.extractWordEntries(tokens);
-  }
-
-  function getBuildSizeClass(verseText, book, reference){
-    const combinedLength = `${verseText || ""} ${book || ""} ${reference || ""}`.trim().length;
-    if (combinedLength > 120) return "is-small";
-    if (combinedLength > 72) return "is-medium";
-    return "is-normal";
   }
 
   function showOverlay(message, duration = 1400){
