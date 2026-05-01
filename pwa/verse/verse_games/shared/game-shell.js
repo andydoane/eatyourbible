@@ -261,6 +261,54 @@
       : [];
   }
 
+  function getBuildLengthScore(verseText, book, reference){
+    return (
+      String(verseText || "").length +
+      String(book || "").length +
+      String(reference || "").length
+    );
+  }
+
+  function getBuildSizeClass(verseText, book, reference){
+    const score = getBuildLengthScore(verseText, book, reference);
+
+    if (score >= 136) return "is-small";
+    if (score >= 106) return "is-medium";
+    return "is-normal";
+  }
+
+  function buildVerseSegments({
+    verseText = "",
+    book = "",
+    reference = ""
+  } = {}){
+    const words = tokenizeVerseWords(verseText);
+    const bookLabel = String(book || "").trim();
+    const referenceLabel = String(reference || "").trim();
+
+    const segments = [...words];
+    const metaIndices = new Set();
+
+    if (bookLabel){
+      metaIndices.add(segments.length);
+      segments.push(bookLabel);
+    }
+
+    if (referenceLabel){
+      metaIndices.add(segments.length);
+      segments.push(referenceLabel);
+    }
+
+    return {
+      words,
+      segments,
+      metaIndices,
+      bookLabel,
+      referenceLabel,
+      buildSizeClass: getBuildSizeClass(verseText, bookLabel, referenceLabel)
+    };
+  }
+
   function titleCaseBookFromSlug(slug){
     const smallWords = new Set(["of", "the"]);
 
@@ -754,6 +802,9 @@ function renderCompleteScreen({
     tokenizeVerseWords,
     tokenizeVerseForBuild,
     extractWordEntries,
+    getBuildLengthScore,
+    getBuildSizeClass,
+    buildVerseSegments,
     titleCaseBookFromSlug,
     parseReferenceParts,
     getReferenceDecoys,
