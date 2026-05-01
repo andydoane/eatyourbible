@@ -154,6 +154,7 @@ function renderModeSelect(){
       done:false, frenzyActive:false, frenzyInputLockedUntil:0, pendingCorrectLabel:"", pendingCorrectType:"word",
       pendingCorrectVisible:0, spawnIndex:0
     });
+    updatePhaseFromProgress(0);
     seedPendingCorrect();
 
     app.innerHTML = `
@@ -395,6 +396,35 @@ function backToMenuFromHelp(){
     if (state.phase === "book") return "Book";
     if (state.phase === "reference") return "Reference";
     return "Ready";
+  }
+
+  function getLinearProgressIndex(){
+    if (state.phase === "words"){
+      return state.wordIndex;
+    }
+
+    if (state.phase === "book"){
+      return wordEntries.length;
+    }
+
+    if (state.phase === "reference"){
+      return wordEntries.length + (verseMeta.book ? 1 : 0);
+    }
+
+    return wordEntries.length + (verseMeta.book ? 1 : 0) + (verseMeta.reference ? 1 : 0);
+  }
+
+  function updatePhaseFromProgress(progressIndex = getLinearProgressIndex()){
+    const phase = window.VerseGameShell.getPhaseForProgress({
+      progressIndex,
+      wordCount: wordEntries.length,
+      totalSegments: wordEntries.length + (verseMeta.book ? 1 : 0) + (verseMeta.reference ? 1 : 0),
+      bookLabel: verseMeta.book,
+      referenceLabel: verseMeta.reference
+    });
+
+    state.phase = phase;
+    return phase;
   }
 
   function renderField(){
@@ -1081,19 +1111,39 @@ if (kind === "reference") {
   }
 
   function advancePhaseAfterPlacement(){
-    if (state.phase === "words"){
+    const previousPhase = state.phase;
+
+    if (previousPhase === "words"){
       state.wordIndex += 1;
-      if (state.wordIndex >= wordEntries.length){
-        state.phase = "book";
+      const nextPhase = updatePhaseFromProgress(state.wordIndex);
+
+      if (nextPhase === "done"){
+        startDestroyFrenzy();
       }
+
       return;
     }
-    if (state.phase === "book"){
-      state.phase = "reference";
+
+    if (previousPhase === "book"){
+      const nextPhase = updatePhaseFromProgress(
+        wordEntries.length + (verseMeta.book ? 1 : 0)
+      );
+
+      if (nextPhase === "done"){
+        startDestroyFrenzy();
+      }
+
       return;
     }
-    if (state.phase === "reference"){
-      startDestroyFrenzy();
+
+    if (previousPhase === "reference"){
+      const nextPhase = updatePhaseFromProgress(
+        wordEntries.length + (verseMeta.book ? 1 : 0) + (verseMeta.reference ? 1 : 0)
+      );
+
+      if (nextPhase === "done"){
+        startDestroyFrenzy();
+      }
     }
   }
 
