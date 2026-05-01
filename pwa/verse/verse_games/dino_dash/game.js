@@ -282,8 +282,8 @@ function renderModeSelect(){
       <div class="dd-root">
         <div class="dd-stage">
           <div class="dd-build-wrap">
-            <div class="dd-build" id="ddBuild">
-              <div class="dd-build-text" id="ddBuildText"></div>
+            <div class="dd-build vm-build vm-build--${BUILD_AREA}" id="ddBuild">
+              <div class="dd-build-text vm-build-text" id="ddBuildText"></div>
             </div>
           </div>
 
@@ -1605,10 +1605,10 @@ function renderHills(){
     const el = document.getElementById("ddBuildText");
     if (!el) return;
 
-    el.className = `dd-build-text ${state.buildSizeClass}`;
+    el.className = `dd-build-text vm-build-text vm-build-text--progress ${state.buildSizeClass} ${selectedMode === "hard" ? "is-hide-unbuilt" : ""}`;
 
     el.innerHTML = state.buildSegments.map((segment, index) => `
-      <span class="dd-build-word ${index < state.progressIndex ? "is-built" : ""}">${escapeHtml(segment)}</span>
+      <span class="dd-build-word vm-build-word ${index < state.progressIndex ? "is-built" : ""}">${escapeHtml(segment)}</span>
     `).join(" ");
   }
 
