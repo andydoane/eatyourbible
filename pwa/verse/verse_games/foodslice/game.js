@@ -861,27 +861,14 @@ function createSlicesFrom(item){
   }
 
   function getVerseDerivedDecoys(targetIndex, correct){
-    const targetNorm = normalizeWord(correct);
-    const candidates = state.wordEntries.filter((entry, idx) => {
-      if (idx === targetIndex) return false;
-      const norm = normalizeWord(entry.display);
-      if (!norm || norm === targetNorm) return false;
-      if (Math.abs(idx - targetIndex) <= 1 && state.wordEntries.length > 4) return false;
-      return true;
+    return window.VerseGameShell.getVerseWordDecoys({
+      words: state.wordEntries.map((entry) => entry.display),
+      correct,
+      targetIndex,
+      count: 12,
+      avoidNext: 2,
+      fallbackToFun: true
     });
-
-    const unique = [];
-    const seen = new Set();
-    for (const entry of candidates){
-      const norm = normalizeWord(entry.display);
-      if (seen.has(norm)) continue;
-      seen.add(norm);
-      unique.push(entry.display);
-    }
-
-    const nonTiny = unique.filter((word) => normalizeWord(word).length > 2);
-    const pool = nonTiny.length >= 2 ? nonTiny : unique;
-    return pool.length ? pool : GENERIC_DECOYS.filter((word) => normalizeWord(word) !== targetNorm);
   }
 
   function makeBookChoices(correctBook){
