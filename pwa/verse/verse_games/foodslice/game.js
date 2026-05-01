@@ -159,8 +159,8 @@ function renderModeSelect(){
       <div class="fs-shell">
         <div class="fs-stage">
           <div class="fs-build-wrap">
-            <div class="fs-build" id="fsBuild">
-              <div class="fs-build-text ${state.buildSizeClass}" id="fsBuildText"></div>
+            <div class="fs-build vm-build vm-build--${BUILD_AREA}" id="fsBuild">
+              <div class="fs-build-text vm-build-text ${state.buildSizeClass}" id="fsBuildText"></div>
             </div>
           </div>
           <div class="fs-field-wrap">
@@ -398,12 +398,13 @@ function backToMenuFromHelp(){
     if (!build || !text) return;
 
     build.classList.toggle("is-shake", state.buildShakeUntil > performance.now());
-    text.className = `fs-build-text ${state.buildSizeClass}`;
-
     if (state.bonusRound){
+      text.className = "fs-build-text vm-build-text";
       text.innerHTML = `<div class="fs-bonus-counter">${state.bonusCount}<span class="fs-bonus-label">Bonus slices</span></div>`;
       return;
     }
+
+    text.className = `fs-build-text vm-build-text vm-build-text--progress ${state.buildSizeClass} ${selectedMode === "hard" ? "is-hide-unbuilt" : ""}`;
 
     let html = "";
     let builtWordsSeen = 0;
@@ -414,19 +415,19 @@ function backToMenuFromHelp(){
       }
       if (token.kind === "word"){
         const built = builtWordsSeen < state.wordsBuilt;
-        html += `<span class="fs-build-token is-verse ${built ? "is-built" : ""}">${escapeHtml(token.text)}</span>`;
+        html += `<span class="fs-build-token vm-build-token is-verse ${built ? "is-built" : ""}">${escapeHtml(token.text)}</span>`;
         builtWordsSeen += 1;
       } else {
         const built = builtWordsSeen <= state.wordsBuilt;
-        html += `<span class="fs-build-token is-verse ${built ? "is-built" : ""}">${escapeHtml(token.text)}</span>`;
+        html += `<span class="fs-build-token vm-build-token is-verse ${built ? "is-built" : ""}">${escapeHtml(token.text)}</span>`;
       }
     }
 
     if (state.verseMeta.book){
-      html += `<span class="fs-build-gap"> </span><span class="fs-build-token is-book ${state.bookBuilt ? "is-built" : ""}">${escapeHtml(state.verseMeta.book)}</span>`;
+      html += `<span class="fs-build-gap"> </span><span class="fs-build-token vm-build-token is-book ${state.bookBuilt ? "is-built" : ""}">${escapeHtml(state.verseMeta.book)}</span>`;
     }
     if (state.verseMeta.reference){
-      html += `<span class="fs-build-gap"> </span><span class="fs-build-token is-reference ${state.referenceBuilt ? "is-built" : ""}">${escapeHtml(state.verseMeta.reference)}</span>`;
+      html += `<span class="fs-build-gap"> </span><span class="fs-build-token vm-build-token is-reference ${state.referenceBuilt ? "is-built" : ""}">${escapeHtml(state.verseMeta.reference)}</span>`;
     }
 
     text.innerHTML = html;
