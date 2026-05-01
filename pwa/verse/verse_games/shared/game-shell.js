@@ -146,6 +146,40 @@
     return [...SHARED_BIBLE_BOOK_DECOYS];
   }
 
+  function getBookDecoys(correctBook, count = 6){
+    const correctNorm = normalizeWord(correctBook);
+    const desiredCount = Math.max(0, Number(count) || 0);
+
+    if (!desiredCount) return [];
+
+    return shuffle(
+      getBibleBookDecoys().filter((book) => normalizeWord(book) !== correctNorm)
+    ).slice(0, desiredCount);
+  }
+
+  function getFunWordDecoys(correctWord, verseWords = [], count = 6){
+    const correctNorm = normalizeWord(correctWord);
+    const desiredCount = Math.max(0, Number(count) || 0);
+
+    if (!desiredCount) return [];
+
+    const verseWordSet = new Set(
+      (Array.isArray(verseWords) ? verseWords : [])
+        .map(normalizeWord)
+        .filter(Boolean)
+    );
+
+    return shuffle(
+      getFunDecoys().filter((word) => {
+        const key = normalizeWord(word);
+        if (!key) return false;
+        if (key === correctNorm) return false;
+        if (verseWordSet.has(key)) return false;
+        return true;
+      })
+    ).slice(0, desiredCount);
+  }
+
  function shuffle(array){
     const copy = Array.isArray(array) ? array.slice() : [];
 
@@ -711,6 +745,8 @@ function renderCompleteScreen({
     escapeHtml,
     getFunDecoys,
     getBibleBookDecoys,
+    getBookDecoys,
+    getFunWordDecoys,
     shuffle,
     clamp,
     capitalize,
