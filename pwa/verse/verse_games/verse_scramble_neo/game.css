@@ -152,12 +152,18 @@ button, input, select{
   line-height:1.10;
 }
 .vsn-build-word{
-  color:transparent;
+  color:var(--vsn-dark);
   transition:color 180ms ease, opacity 180ms ease, transform 180ms ease;
 }
+
 .vsn-build-word.is-built{
   color:var(--vsn-dark);
 }
+
+.vsn-build-word.is-meta{
+  color:var(--vsn-red);
+}
+
 .vsn-build-word.is-meta.is-built{
   color:var(--vsn-red);
 }

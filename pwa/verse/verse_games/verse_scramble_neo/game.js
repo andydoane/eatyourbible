@@ -246,7 +246,7 @@ const tokenizeVerse = window.VerseGameShell.tokenizeVerseWords;
       const built = index < state.progressIndex;
       const meta = state.metaIndices.has(index);
       const removing = state.buildRemoving.has(index);
-      return `<span class="vsn-build-word ${built ? "is-built" : ""} ${meta ? "is-meta" : ""} ${removing ? "is-removing" : ""}">${escapeHtml(segment)}</span>`;
+      return `<span class="vsn-build-word vm-build-word ${built ? "is-built" : ""} ${meta ? "is-meta" : ""} ${removing ? "is-removing" : ""}">${escapeHtml(segment)}</span>`;
     }).join(" ");
   }
 
@@ -289,8 +289,8 @@ function renderMode(){
       <div class="vsn-root">
         <div class="vsn-stage">
           <div class="vsn-build-wrap">
-            <div class="vsn-build ${state.buildRemoving.size ? "vsn-shake" : ""}" id="vsnBuild">
-              <div class="vsn-build-text ${state.buildSizeClass}" id="vsnBuildText">${renderBuildText()}</div>
+            <div class="vsn-build vm-build vm-build--${BUILD_AREA} ${state.buildRemoving.size ? "vsn-shake" : ""}" id="vsnBuild">
+              <div class="vsn-build-text vm-build-text vm-build-text--progress ${state.buildSizeClass} ${selectedMode === "hard" ? "is-hide-unbuilt" : ""}" id="vsnBuildText">${renderBuildText()}</div>
             </div>
           </div>
           <div class="vsn-game-wrap">
