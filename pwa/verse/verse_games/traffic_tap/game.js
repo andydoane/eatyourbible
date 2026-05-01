@@ -1446,7 +1446,7 @@ function nextDecoyLabel(correctLabel){
 
   if (state.phase === "words"){
     if (selectedMode === "easy"){
-        const pool = FUN_DECOYS.filter(word => normalizeWord(word) !== lowerCorrect);
+      const pool = window.VerseGameShell.getFunWordDecoys(correctLabel, verseWords, 12);
       return pickRandom(pool) || pickRandom(FUN_DECOYS);
     }
 
@@ -1463,13 +1463,13 @@ function nextDecoyLabel(correctLabel){
       return pickRandom(versePool);
     }
 
-    const fallback = FUN_DECOYS.filter(word => normalizeWord(word) !== lowerCorrect);
+    const fallback = window.VerseGameShell.getFunWordDecoys(correctLabel, verseWords, 12);
     return pickRandom(fallback) || pickRandom(FUN_DECOYS);
   }
 
   if (state.phase === "book"){
-    const pool = BOOKS.filter(book => normalizeWord(book) !== lowerCorrect);
-    return pickRandom(pool) || "Psalms";
+    const pool = window.VerseGameShell.getBookDecoys(correctLabel, 12);
+    return pickRandom(pool) || "Psalm";
   }
 
   if (state.phase === "reference"){
