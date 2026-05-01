@@ -999,37 +999,47 @@ function backToMenuFromHelp(){
   }
 
   function getDecoysForPhase(phase, correctLabel, count){
-    const out = new Set();
+    const out = [];
+    const seen = new Set([normalizeWord(correctLabel)]);
 
-    if (phase === "words"){
-      const decoys = selectedMode === "easy"
-        ? window.VerseGameShell.getFunWordDecoys(correctLabel, state.words, count)
-        : window.VerseGameShell.getVerseWordDecoys({
-            words: state.words,
-            correct: correctLabel,
-            targetIndex: state.progressIndex,
-            count,
-            avoidNext: 2,
-            fallbackToFun: true
-          });
-
-      for (const word of decoys){
-        if (out.size >= count) break;
-        if (normalizeWord(word) !== normalizeWord(correctLabel)) out.add(word);
-      }
-    } else if (phase === "book"){
-      for (const book of window.VerseGameShell.getBookDecoys(correctLabel, count)){
-        if (out.size >= count) break;
-        out.add(book);
-      }
-    } else if (phase === "reference"){
-      for (const ref of window.VerseGameShell.getReferenceDecoys(state.referenceMeta, selectedMode, count + 4)){
-        if (out.size >= count) break;
-        if (normalizeWord(ref) !== normalizeWord(correctLabel)) out.add(ref);
+    function addDecoys(list){
+      for (const item of list || []){
+        const key = normalizeWord(item);
+        if (!key || seen.has(key)) continue;
+        seen.add(key);
+        out.push(item);
+        if (out.length >= count) break;
       }
     }
 
-    return Array.from(out).slice(0, count);
+    if (phase === "words"){
+      if (selectedMode === "easy"){
+        addDecoys(window.VerseGameShell.getFunWordDecoys(correctLabel, state.words, count));
+      } else {
+        addDecoys(window.VerseGameShell.getVerseWordDecoys({
+          words: state.words,
+          correct: correctLabel,
+          targetIndex: state.progressIndex,
+          count,
+          avoidNext: 2,
+          fallbackToFun: true
+        }));
+
+        if (out.length < count){
+          addDecoys(window.VerseGameShell.getFunWordDecoys(correctLabel, state.words, count));
+        }
+
+        if (out.length < count){
+          addDecoys(FUN_DECOYS);
+        }
+      }
+    } else if (phase === "book"){
+      addDecoys(window.VerseGameShell.getBookDecoys(correctLabel, count));
+    } else if (phase === "reference"){
+      addDecoys(window.VerseGameShell.getReferenceDecoys(state.referenceMeta, selectedMode, count + 4));
+    }
+
+    return out.slice(0, count);
   }
 
   function spawnSuccessParticles(isBonus = false){
