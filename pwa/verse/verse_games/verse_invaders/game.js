@@ -879,9 +879,20 @@ function renderVictory(){
     const out = new Set();
 
     if (phase === "words"){
-      for (const word of window.VerseGameShell.getFunWordDecoys(correctLabel, verseWords, count)){
+      const decoys = selectedMode === "easy"
+        ? window.VerseGameShell.getFunWordDecoys(correctLabel, verseWords, count)
+        : window.VerseGameShell.getVerseWordDecoys({
+            words: verseWords,
+            correct: correctLabel,
+            targetIndex: state.builtCount,
+            count,
+            avoidNext: 2,
+            fallbackToFun: true
+          });
+
+      for (const word of decoys){
         if (out.size >= count) break;
-        out.add(word);
+        if (normalizeWord(word) !== normalizeWord(correctLabel)) out.add(word);
       }
     }
 
