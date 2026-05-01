@@ -207,8 +207,8 @@ body{
 }
 
 .vmunch-build-word{
-  color:transparent;
-  transition:color 160ms ease;
+  color:#333333;
+  transition:color 160ms ease, opacity 160ms ease;
 }
 
 .vmunch-build-word.is-built{
