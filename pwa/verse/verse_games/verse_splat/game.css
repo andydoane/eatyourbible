@@ -173,7 +173,18 @@ body{overflow:hidden}
   justify-content:center;
 }
 .vsp-build.is-error{animation:vspShake .28s ease}
-.vsp-build-text{display:flex;flex-wrap:wrap;justify-content:center;gap:.32em .36em;line-height:1.1;font-weight:800;max-width:100%}
+
+
+.vsp-build-text{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:.18em .24em;
+  line-height:1.1;
+  font-weight:800;
+  max-width:100%;
+}
+
 .vsp-build-text.is-normal{font-size:clamp(20px,4.8vw,34px)}
 .vsp-build-text.is-medium{font-size:clamp(18px,4.2vw,29px)}
 .vsp-build-text.is-small{font-size:clamp(15px,3.6vw,24px)}
