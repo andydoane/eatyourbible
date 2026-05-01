@@ -177,10 +177,23 @@ body{overflow:hidden}
 .vsp-build-text.is-normal{font-size:clamp(20px,4.8vw,34px)}
 .vsp-build-text.is-medium{font-size:clamp(18px,4.2vw,29px)}
 .vsp-build-text.is-small{font-size:clamp(15px,3.6vw,24px)}
-.vsp-build-word{opacity:.17;transform:translateY(0);transition:opacity .18s ease, transform .18s ease, color .18s ease}
-.vsp-build-word.is-built{opacity:1}
-.vsp-build-word.is-meta{color:#ffd369}
-.vsp-build-word.is-removing{animation:vspRemove .35s ease forwards}
+.vsp-build-word{
+  color:#ffffff;
+  transform:translateY(0);
+  transition:opacity .18s ease, transform .18s ease, color .18s ease;
+}
+
+.vsp-build-word.is-built{
+  color:#ffffff;
+}
+
+.vsp-build-word.is-meta{
+  color:#ffd369;
+}
+
+.vsp-build-word.is-removing{
+  animation:vspRemove .35s ease forwards;
+}
 
 .vsp-board-wrap{flex:1 1 auto;min-height:0;display:flex}
 .vsp-board{

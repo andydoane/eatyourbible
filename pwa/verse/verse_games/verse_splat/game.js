@@ -239,15 +239,15 @@ const shuffle = window.VerseGameShell.shuffle;
   }
 
 
-  function renderBuildText(){
-    return state.segments.map((segment, index) => {
-      const cls = ["vsp-build-word"];
-      if (index < state.progressIndex) cls.push("is-built");
-      if (state.metaIndices.has(index)) cls.push("is-meta");
-      if (state.buildRemoving.has(index)) cls.push("is-removing");
-      return `<span class="${cls.join(" ")}">${escapeHtml(segment)}</span>`;
-    }).join("");
-  }
+function renderBuildText(){
+  return state.segments.map((segment, index) => {
+    const cls = ["vsp-build-word", "vm-build-word"];
+    if (index < state.progressIndex) cls.push("is-built");
+    if (state.metaIndices.has(index)) cls.push("is-meta");
+    if (state.buildRemoving.has(index)) cls.push("is-removing");
+    return `<span class="${cls.join(" ")}">${escapeHtml(segment)}</span>`;
+  }).join("");
+}
 
 
   function extractClientPoint(event){
@@ -409,8 +409,8 @@ function gameplayShell({ bonus=false }){
       <div class="${bonus ? 'vsp-bonus-screen' : 'vsp-game-screen'}">
         ${bonus ? '' : `
           <div class="vsp-build-wrap">
-            <div class="vsp-build ${state.shakeKey ? 'is-error' : ''}" id="vspBuild">
-              <div class="vsp-build-text ${state.buildSizeClass}" id="vspBuildText">${renderBuildText()}</div>
+            <div class="vsp-build vm-build vm-build--${BUILD_AREA} ${state.shakeKey ? 'is-error' : ''}" id="vspBuild">
+              <div class="vsp-build-text vm-build-text vm-build-text--progress ${state.buildSizeClass} ${state.mode === "hard" ? "is-hide-unbuilt" : ""}" id="vspBuildText">${renderBuildText()}</div>
             </div>
           </div>
         `}
