@@ -126,14 +126,23 @@ body{
 .fs-build-text.is-small{ font-size:clamp(17px,3.8vw,28px); line-height:1.10; }
 
 .fs-build-token{
-  color:rgba(255,255,255,0.3);
-  transition:color 150ms ease, transform 150ms ease;
+  color:var(--fs-white);
+  transition:color 150ms ease, opacity 150ms ease, transform 150ms ease;
 }
-.fs-build-token.is-built{ color:var(--fs-white); }
+
+.fs-build-token.is-built{
+  color:var(--fs-white);
+}
+
 .fs-build-token.is-book,
-.fs-build-token.is-reference{ color:rgba(255,199,81,0.4); }
+.fs-build-token.is-reference{
+  color:var(--fs-build-book);
+}
+
 .fs-build-token.is-book.is-built,
-.fs-build-token.is-reference.is-built{ color:var(--fs-build-book); }
+.fs-build-token.is-reference.is-built{
+  color:var(--fs-build-book);
+}
 .fs-build-gap{ display:inline-block; width:0.35ch; }
 
 .fs-bonus-counter{
