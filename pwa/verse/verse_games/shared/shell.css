@@ -379,7 +379,9 @@ body{
 
 .vm-build-text--progress .is-verse,
 .vm-build-text--progress .is-book,
-.vm-build-text--progress .is-reference{
+.vm-build-text--progress .is-reference,
+.vm-build-text--progress .vm-build-token,
+.vm-build-text--progress .vm-build-word{
   opacity: 0.32;
 }
 
@@ -387,10 +389,12 @@ body{
   opacity: 1;
 }
 
-/* Optional hard-mode behavior: hide unbuilt tokens completely */
+/* Hard mode: hide unbuilt tokens completely */
 .vm-build-text--progress.is-hide-unbuilt .is-verse:not(.is-built),
 .vm-build-text--progress.is-hide-unbuilt .is-book:not(.is-built),
-.vm-build-text--progress.is-hide-unbuilt .is-reference:not(.is-built){
+.vm-build-text--progress.is-hide-unbuilt .is-reference:not(.is-built),
+.vm-build-text--progress.is-hide-unbuilt .vm-build-token:not(.is-built),
+.vm-build-text--progress.is-hide-unbuilt .vm-build-word:not(.is-built){
   opacity: 0;
 }
 
