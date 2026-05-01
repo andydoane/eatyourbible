@@ -1,99 +1,210 @@
 (async function(){
   const app = document.getElementById("app");
+  const launch = window.VerseGameBridge.getLaunchParams();
   const ctx = await window.VerseGameBridge.getVerseContext();
-  const GAME_ID = "foodslice";
+
+  const GAME_ID = "versey_bird";
 
 const GAME_THEME = {
   bg: "#333333",
   accent: "#333333"
 };
 
-const HELP_OVERLAY_ID = "fsHelpOverlay";
+const HELP_OVERLAY_ID = "vbHelpOverlay";
 
-  const FOOD_THEMES = [
-    ["🍎","🍐","🍊","🍋","🍌","🍉","🍇","🍓","🫐","🍈","🍒","🥭","🍍","🥥","🥝"],
-    ["🍕","🍔","🍟","🌭","🍿","🥓","🥪","🥨","🌮","🌯","🥗","🥘","🍝","🍜","🍲","🍣","🍱"],
-    ["🍦","🍧","🍨","🍩","🍪","🎂","🍰","🧁","🥧","🍫","🍬","🍭","🍮","🍯"],
-    ["🍞","🥐","🥖","🫓","🥨","🥯","🥞","🧇","🥚","🍳"],
-    ["🥦","🥬","🥕","🌽","🌶️","🫑","🥒","🥑","🍄","🥔","🧅","🧄"],
-    ["🍗","🍖","🥩","🍤","🦀","🦞","🧀","🥚","🥛"]
+  const TARGET_COLORS = ["#ff5a51","#ffa351","#ffc751","#40b9c5","#7f66c6","#a7cb6f"];
+  const MEADOW_BIRDS = ["🐦","🐓","🐤","🦆","🦅","🐥"];
+  const AURA_EMOJIS = ["✨","⭐","💎","🌟","🔆","🔹","💥","🟢","🫧","🌈"];
+
+  const SPECIAL_THEMES = [
+    {
+      id: "penguin_ice",
+      playerEmoji: "🐧",
+      obstacleEmoji: "🧊",
+      prizeEmoji: "🐟",
+      sky: "#87c7ee",
+      cloudEmoji: "❄️",
+      groundTop1: "#b7e7ff",
+      groundTop2: "#8fd2f5",
+      groundBase1: "#75b8e0",
+      groundBase2: "#5aa1ca",
+      bandColor: "rgba(10, 54, 92, 0.12)"
+    },
+    {
+      id: "phoenix_desert",
+      playerEmoji: "🐦‍🔥",
+      obstacleEmoji: "🌵",
+      prizeEmoji: "🔥",
+      sky: "#e7b15e",
+      cloudEmoji: "☁️",
+      groundTop1: "#f2d28a",
+      groundTop2: "#dfbb69",
+      groundBase1: "#c99652",
+      groundBase2: "#b57f41",
+      bandColor: "rgba(96, 54, 16, 0.10)"
+    },
+    {
+      id: "ufo_moon",
+      playerEmoji: "🛸",
+      obstacleEmoji: "🪨",
+      prizeEmoji: "⭐",
+      sky: "#101318",
+      cloudEmoji: "⭐",
+      groundTop1: "#b9bcc4",
+      groundTop2: "#a4a8b2",
+      groundBase1: "#7c828f",
+      groundBase2: "#646a76",
+      bandColor: "rgba(0, 0, 0, 0.22)"
+    },
+    {
+      id: "butterfly_rainbow",
+      playerEmoji: "🦋",
+      obstacleEmoji: "🕸️",
+      prizeEmoji: "🌈",
+      sky: "#8dd7ff",
+      cloudEmoji: "✨",
+      groundTop1: "#ffd6f3",
+      groundTop2: "#ffd26a",
+      groundBase1: "#cba8ff",
+      groundBase2: "#8fd7a6",
+      bandColor: "rgba(110, 56, 145, 0.10)"
+    },
+    {
+      id: "bumble_honey",
+      playerEmoji: "🐝",
+      obstacleEmoji: "🍯",
+      prizeEmoji: "🌼",
+      sky: "#f7d661",
+      cloudEmoji: "☁️",
+      groundTop1: "#ffd95c",
+      groundTop2: "#f0bc2e",
+      groundBase1: "#c6862a",
+      groundBase2: "#9f6617",
+      bandColor: "rgba(86, 52, 0, 0.12)"
+    }
   ];
+  
 
 const BOOKS = window.VerseGameShell.getBibleBookDecoys();
   
-const GENERIC_DECOYS = window.VerseGameShell.getFunDecoys();
+const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
+
 
   let selectedMode = null;
+  let completed = false;
   let muted = false;
-  let completionMarked = false;
-  let alreadyCompletedForMode = false;
-  let resizeBound = false;
-  let endScreenUnlockTimer = 0;
 
   const state = {
-    running:false,
-    paused:false,
-    pauseReason:"",
-    rafId:0,
-    lastTs:0,
-    fieldWidth:0,
-    fieldHeight:0,
-    fruitHitSize:96,
-    fruitEmojiSize:56,
-    bombHitSize:84,
-    bombEmojiSize:50,
-    sliceSize:54,
-    sliceEmojiSize:42,
-    theme:pickRandom(FOOD_THEMES),
-    verseMeta:parseVerseMeta(ctx.verseId || "", ctx.verseRef || ""),
-    buildData:null,
-    tokens:tokenizeVerseWithSpaces(ctx.verseText || ""),
-    wordEntries:[],
-    wordsBuilt:0,
-    phase:"words",
-    bookBuilt:false,
-    referenceBuilt:false,
-    buildSizeClass:"is-normal",
-    activeFruit:null,
-    activeBomb:null,
-    activeSlices:[],
-    wrongStreak:0,
-    buildShakeUntil:0,
-    fieldFlashUntil:0,
-    overlayMessage:"",
-    overlayUntil:0,
-    bonusIntroActive:false,
-    bonusIntroUntil:0,
-    bonusRound:false,
-    bonusBannerUntil:0,
-    bonusEndsAt:0,
-    bonusFruits:[],
-    bonusIdCounter:0,
-    bonusCount:0,
-    done:false,
-    bookChoices:[],
-    referenceChoices:[]
+    running: false,
+    scale: 1,
+    rafId: 0,
+    paused: false,
+    pauseReason: "",
+    spawnCooldown: 0,
+    birdEmoji: "",
+    birdX: 0,
+    birdY: 0,
+    birdVY: 0,
+    birdRadius: 30,
+    gravity: 1180,
+    flapVelocity: -410,
+    baseGravity: 1180,
+    baseFlapVelocity: -410,
+    fieldWidth: 0,
+    fieldHeight: 0,
+    groundHeight: 74,
+    clouds: [],
+    particles: [],
+    trail: [],
+    targets: [],
+    obstacles: [],
+    obstacleSpawnTimer: 0,
+    nextObstacleId: 1,
+    prizes: [],
+    prizeSpawnTimer: 0,
+    nextPrizeId: 1,
+    prizeAuraUntil: 0,
+    birdSpinUntil: 0,
+    theme: null,
+    auraEmojis: [],
+    groundBands: [],
+    nextGroundBandId: 1,
+    nextTargetId: 1,
+    words: tokenizeVerse(ctx.verseText),
+    bookLabel: "",
+    referenceLabel: "",
+    referenceMeta: null,
+    segments: [],
+    buildSizeClass: "is-normal",
+    progressIndex: 0,
+    streak: 0,
+    flashUntil: 0,
+    shakeUntil: 0,
+    successFlashUntil: 0,
+    inputLockedUntil: 0,
+    lastTs: 0
   };
 
-  state.buildData = window.VerseGameShell.buildVerseSegments({
-    verseText: ctx.verseText || "",
-    book: state.verseMeta.book,
-    reference: state.verseMeta.reference
-  });
-
-  state.wordEntries = state.buildData.words.map((word) => ({ display: word }));
-  state.buildSizeClass = state.buildData.buildSizeClass;
-
+  setupReferenceSegments();
   renderIntro();
+
+function introHelpHtml(){
+  return `
+    Tap or click to flap.<br><br>
+    Hit the next correct word.<br>
+    Wrong hits and missed correct words reset your streak, but they do not end the run.<br><br>
+    After the verse is built, collect the book, then the reference.
+  `;
+}
+
+function modeHelpHtml(){
+  return `
+    Easy: slower speed, fewer decoys, bigger targets.<br><br>
+    Medium: balanced.<br><br>
+    Hard: faster speed, more decoys, smaller targets.
+  `;
+}
+
+function gameHelpHtml(){
+  return `
+    Tap or click to flap.<br><br>
+    Touch the next correct item.<br><br>
+    Wrong hits and missed correct words reset your streak only.<br><br>
+    Build the whole verse, then collect the book, then the reference.
+  `;
+}
+
+  function createMeadowTheme(){
+    const bird = MEADOW_BIRDS[Math.floor(Math.random() * MEADOW_BIRDS.length)];
+    return {
+      id: "meadow",
+      playerEmoji: bird,
+      obstacleEmoji: "🪨",
+      prizeEmoji: "🐣",
+      sky: "#40b9c5",
+      cloudEmoji: "☁️",
+      groundTop1: "#b7d97b",
+      groundTop2: "#a7cb6f",
+      groundBase1: "#9b6a3c",
+      groundBase2: "#8c5d33",
+      bandColor: "rgba(0, 0, 0, 0.08)"
+    };
+  }
+
+  function pickRandomTheme(){
+    const pool = [createMeadowTheme(), createMeadowTheme(), createMeadowTheme(), ...SPECIAL_THEMES];
+    const chosen = pool[Math.floor(Math.random() * pool.length)];
+    return { ...chosen };
+  }
 
 function renderIntro(){
   stopLoop();
 
   window.VerseGameShell.renderTitleScreen({
     app,
-    title: "Food Slice",
-    icon: "🍉",
-    helpHtml: helpHtml(),
+    title: "Versey Bird",
+    icon: "🐤",
+    helpHtml: introHelpHtml(),
     helpOverlayId: HELP_OVERLAY_ID,
     theme: GAME_THEME,
     backLabel: "Back to Practice Games",
@@ -101,6 +212,7 @@ function renderIntro(){
     onStart: renderModeSelect
   });
 }
+  
 
 function renderModeSelect(){
   stopLoop();
@@ -109,10 +221,10 @@ function renderModeSelect(){
     app,
     title: "Choose Your Difficulty",
     icon: "🥉🥈🥇",
-    helpHtml: helpHtml(),
+    helpHtml: modeHelpHtml(),
     helpOverlayId: HELP_OVERLAY_ID,
     theme: GAME_THEME,
-    backLabel: "Back to Food Slice title",
+    backLabel: "Back to Versey Bird title",
     onBack: renderIntro,
     onSelect: startGame
   });
@@ -120,83 +232,97 @@ function renderModeSelect(){
 
   function startGame(mode){
     selectedMode = mode;
-    completionMarked = false;
-    alreadyCompletedForMode = !!window.VerseGameBridge.wasAlreadyCompleted?.(ctx.verseId, GAME_ID, selectedMode);
+    completed = false;
+    state.theme = pickRandomTheme();
+    state.birdEmoji = state.theme.playerEmoji;
+    state.auraEmojis = shuffle(AURA_EMOJIS).slice(0, 3);
+    state.groundBands = [];
+    state.nextGroundBandId = 1;
 
     state.running = true;
     state.paused = false;
     state.pauseReason = "";
+    state.progressIndex = 0;
+    state.streak = 0;
+    state.targets = [];
+    state.trail = [];
+    state.particles = [];
+    state.clouds = [];
+    state.obstacles = [];
+    state.obstacleSpawnTimer = 1.2;
+    state.nextObstacleId = 1;
+    state.prizes = [];
+    state.prizeSpawnTimer = 3.2;
+    state.nextPrizeId = 1;
+    state.prizeAuraUntil = 0;
+    state.birdSpinUntil = 0;
+    state.nextTargetId = 1;
+    state.spawnCooldown = 0;
     state.lastTs = 0;
-    state.wordsBuilt = 0;
-    state.phase = "words";
-    state.bookBuilt = false;
-    state.referenceBuilt = false;
-    state.activeFruit = null;
-    state.activeBomb = null;
-    state.activeSlices = [];
-    state.wrongStreak = 0;
-    state.buildShakeUntil = 0;
-    state.fieldFlashUntil = 0;
-    state.overlayMessage = "";
-    state.overlayUntil = 0;
-    state.bonusIntroActive = false;
-    state.bonusIntroUntil = 0;
-    state.bonusRound = false;
-    state.bonusBannerUntil = 0;
-    state.bonusEndsAt = 0;
-    state.bonusFruits = [];
-    state.bonusIdCounter = 0;
-    state.bonusCount = 0;
-    state.done = false;
-    state.theme = pickRandom(FOOD_THEMES);
-    state.bookChoices = makeBookChoices(state.verseMeta.book);
-    state.referenceChoices = makeReferenceChoices(state.verseMeta, selectedMode);
+    state.flashUntil = 0;
+    state.shakeUntil = 0;
+    state.successFlashUntil = 0;
+    state.inputLockedUntil = 0;
 
     app.innerHTML = `
-      <div class="fs-shell">
-        <div class="fs-stage">
-          <div class="fs-build-wrap">
-            <div class="fs-build" id="fsBuild">
-              <div class="fs-build-text ${state.buildSizeClass}" id="fsBuildText"></div>
+      <div class="vb-root">
+        <div class="vb-stage">
+          <div class="vb-build-wrap">
+            <div class="vb-build" id="vbBuild">
+              <div class="vb-build-text" id="vbBuildText"></div>
             </div>
           </div>
-          <div class="fs-field-wrap">
-            <div class="fs-field" id="fsField">
-              <div class="fs-play-layer" id="fsPlayLayer"></div>
-              <div class="fs-slice-layer" id="fsSliceLayer"></div>
-              <div class="fs-banner-layer" id="fsBannerLayer"></div>
-              <div class="fs-overlay-msg" id="fsOverlay"></div>
-              <div class="fs-bonus-intro-overlay" id="fsBonusIntroOverlay" aria-hidden="true">
-                <div class="fs-bonus-intro-burst"></div>
-                <div class="fs-bonus-intro-content">
-                  <div class="fs-bonus-intro-title">BONUS ROUND!</div>
-                  <div class="fs-bonus-intro-subtitle">Slice as much food as you can!</div>
-                </div>
+
+          <div class="vb-field-wrap">
+              <div class="vb-field" id="vbField" style="background:${state.theme.sky};">
+              <div class="vb-overlay-pills">
+                <button class="vb-pill vb-menu-pill" id="vbMenuPill" aria-label="Game Menu">☰</button>
+                <div class="vb-pill" id="vbStreakPill">Streak: 0</div>
               </div>
-              <div class="fs-controls-layer">
-                <button class="fs-corner-pill fs-corner-left" id="fsMenuPill" type="button" aria-label="Game menu">☰</button>
-                <div class="fs-corner-pill fs-corner-right" id="fsPhasePill"></div>
+
+              <div class="vb-clouds" id="vbClouds"></div>
+              <div class="vb-trail" id="vbTrail"></div>
+              <div class="vb-particles" id="vbParticles"></div>
+              <div class="vb-targets" id="vbTargets"></div>
+              <div class="vb-obstacles" id="vbObstacles"></div>
+              <div class="vb-prizes" id="vbPrizes"></div>
+              <div class="vb-aura" id="vbAura"></div>
+              <div class="vb-bird" id="vbBird">${state.birdEmoji}</div>
+              <div class="vb-flash" id="vbFlash"></div>
+
+              <div class="vb-ground">
+                <div
+                  class="vb-grass-top"
+                  style="background:linear-gradient(to bottom, ${state.theme.groundTop1} 0%, ${state.theme.groundTop2} 100%);"
+                ></div>
+                <div class="vb-ground-bands" id="vbGroundBands"></div>
+                <div
+                  class="vb-dirt"
+                  style="background:linear-gradient(to bottom, ${state.theme.groundBase1} 0%, ${state.theme.groundBase2} 100%);"
+                ></div>
               </div>
             </div>
           </div>
         </div>
-        ${renderHelpOverlay(helpHtml())}
+
+        ${renderHelpOverlay(gameHelpHtml())}
         ${renderGameMenuOverlay()}
       </div>
     `;
 
     wireCommonNav();
     wireGameInput();
+    updateBuildText();
     recalcField();
-    renderHud();
+    seedGroundBands();
+    resetBird();
+    seedClouds();
+    spawnBatch();
     startLoop();
   }
 
-function renderEndScreen(reward){
+function renderComplete(){
   stopLoop();
-
-  window.clearTimeout(endScreenUnlockTimer);
-  endScreenUnlockTimer = 0;
 
   const doneText = selectedMode
     ? `${capitalize(selectedMode)} Complete!`
@@ -204,9 +330,9 @@ function renderEndScreen(reward){
 
   window.VerseGameShell.renderCompleteScreen({
     app,
-    icon: "🍉",
+    icon: "🐤",
     title: doneText,
-    statsText: `Bonus slices: ${state.bonusCount}`,
+    statsText: `Finished ${ctx.verseRef || "the verse"}`,
     theme: GAME_THEME,
     playAgainText: "Play Again",
     moreGamesText: "More Games",
@@ -215,6 +341,7 @@ function renderEndScreen(reward){
     onMoreGames: () => window.VerseGameBridge.exitGame()
   });
 }
+
 
 function renderHelpOverlay(body){
   return window.VerseGameShell.helpOverlayHtml({
@@ -227,34 +354,26 @@ function renderHelpOverlay(body){
 
   function renderGameMenuOverlay(){
     return `
-      <div class="fs-help-overlay" id="fsGameMenuOverlay" aria-hidden="true">
-        <div class="fs-help-dialog fs-game-menu-dialog">
-          <div class="fs-help-title">Game Menu</div>
-          <div class="fs-game-menu-actions">
-            <button class="vm-btn" id="fsMenuHowToBtn">How to Play</button>
-            <button class="vm-btn" id="fsMenuMuteBtn">${muted ? "Unmute" : "Mute"}</button>
-            <button class="vm-btn" id="fsMenuExitBtn">Exit Game</button>
-            <button class="vm-btn" id="fsMenuCloseBtn">Close</button>
+      <div class="vb-help-overlay" id="vbGameMenuOverlay" aria-hidden="true">
+        <div class="vb-help-dialog vb-game-menu-dialog">
+          <div class="vb-help-title vb-game-menu-title">Game Menu</div>
+          <div class="vb-game-menu-actions">
+            <button class="vm-btn vb-game-menu-btn" id="vbMenuHowToBtn">How to Play</button>
+            <button class="vm-btn vb-game-menu-btn" id="vbMenuMuteBtn">${muted ? "Unmute" : "Mute"}</button>
+            <button class="vm-btn vb-game-menu-btn" id="vbMenuExitBtn">Exit Game</button>
+            <button class="vm-btn vb-game-menu-btn" id="vbMenuCloseBtn">Close</button>
           </div>
         </div>
       </div>
     `;
   }
 
-  function helpHtml(){
-    return `Slice the next correct word to build the verse.<br><br>
-      In easy mode, wrong choices do not remove built words.<br><br>
-      In medium mode, decoys are chosen from other words in the verse, but there is no wrong-slice penalty.<br><br>
-      In hard mode, those same verse-word decoys appear, bombs can show up, and a wrong slice removes two built words.<br><br>
-      After the verse is built, slice the correct book and then the correct chapter and verse. Finish by slicing as much bonus food as you can.`;
-  }
-
   function wireCommonNav(){
-    const menuOverlay = document.getElementById("fsGameMenuOverlay");
-    const menuHowToBtn = document.getElementById("fsMenuHowToBtn");
-    const menuMuteBtn = document.getElementById("fsMenuMuteBtn");
-    const menuExitBtn = document.getElementById("fsMenuExitBtn");
-    const menuCloseBtn = document.getElementById("fsMenuCloseBtn");
+    const menuOverlay = document.getElementById("vbGameMenuOverlay");
+    const menuHowToBtn = document.getElementById("vbMenuHowToBtn");
+    const menuMuteBtn = document.getElementById("vbMenuMuteBtn");
+    const menuExitBtn = document.getElementById("vbMenuExitBtn");
+    const menuCloseBtn = document.getElementById("vbMenuCloseBtn");
 
 window.VerseGameShell.wireHelp({
   id: HELP_OVERLAY_ID,
@@ -263,48 +382,44 @@ window.VerseGameShell.wireHelp({
   onClose: () => setPaused(false, "")
 });
 
-    if (menuHowToBtn) menuHowToBtn.onclick = openHelpFromMenu;
-    if (menuMuteBtn) menuMuteBtn.onclick = () => {
-      muted = !muted;
-      menuMuteBtn.textContent = muted ? "Unmute" : "Mute";
-    };
-    if (menuExitBtn) menuExitBtn.onclick = () => window.VerseGameBridge.exitGame();
-    if (menuCloseBtn) menuCloseBtn.onclick = closeGameMenu;
-    if (menuOverlay) menuOverlay.onclick = (e) => {
-      if (e.target === menuOverlay) closeGameMenu();
-    };
+    if (menuHowToBtn){
+      menuHowToBtn.onclick = () => {
+        openHelpFromMenu();
+      };
+    }
+
+    if (menuMuteBtn){
+      menuMuteBtn.onclick = () => {
+        muted = !muted;
+        menuMuteBtn.textContent = muted ? "Unmute" : "Mute";
+      };
+    }
+
+    if (menuExitBtn){
+      menuExitBtn.onclick = () => window.VerseGameBridge.exitGame();
+    }
+
+    if (menuCloseBtn){
+      menuCloseBtn.onclick = () => closeGameMenu();
+    }
+
+    if (menuOverlay){
+      menuOverlay.onclick = (e) => {
+        if (e.target === menuOverlay) closeGameMenu();
+      };
+    }
   }
 
-  function wireGameInput(){
-    if (!resizeBound){
-      window.addEventListener("resize", recalcField);
-      resizeBound = true;
+  function setPaused(paused, reason = ""){
+    state.paused = paused;
+    state.pauseReason = paused ? reason : "";
+    if (!paused){
+      state.lastTs = performance.now();
     }
-
-    const menuPill = document.getElementById("fsMenuPill");
-    if (menuPill) {
-      const openFromPill = (e) => {
-        if (e){
-          if (e.cancelable) e.preventDefault();
-          e.stopPropagation();
-        }
-        openGameMenu();
-      };
-      menuPill.onclick = openFromPill;
-      menuPill.onpointerdown = openFromPill;
-      menuPill.ontouchstart = openFromPill;
-    }
-
-    window.onkeydown = (e) => {
-      if (e.key === "Escape" && state.running){
-        if (document.getElementById("fsGameMenuOverlay")?.classList.contains("is-open")) closeGameMenu();
-        else openGameMenu();
-      }
-    };
   }
 
   function openGameMenu(){
-    const menuOverlay = document.getElementById("fsGameMenuOverlay");
+    const menuOverlay = document.getElementById("vbGameMenuOverlay");
     if (menuOverlay){
       setPaused(true, "menu");
       menuOverlay.classList.add("is-open");
@@ -312,14 +427,18 @@ window.VerseGameShell.wireHelp({
   }
 
   function closeGameMenu(){
-    const menuOverlay = document.getElementById("fsGameMenuOverlay");
-    if (menuOverlay) menuOverlay.classList.remove("is-open");
-    const helpOverlay = document.getElementById("fsHelpOverlay");
-    if (!helpOverlay || !helpOverlay.classList.contains("is-open")) setPaused(false, "");
+    const menuOverlay = document.getElementById("vbGameMenuOverlay");
+    if (menuOverlay){
+      menuOverlay.classList.remove("is-open");
+    }
+    const helpOverlay = document.getElementById("vbHelpOverlay");
+    if (!helpOverlay || !helpOverlay.classList.contains("is-open")){
+      setPaused(false, "");
+    }
   }
 
 function openHelpFromMenu(){
-  const menuOverlay = document.getElementById("fsGameMenuOverlay");
+  const menuOverlay = document.getElementById("vbGameMenuOverlay");
 
   if (menuOverlay) menuOverlay.classList.remove("is-open");
 
@@ -327,7 +446,6 @@ function openHelpFromMenu(){
 
   setPaused(true, "help");
 }
-  
 
 function closeHelpOverlay(){
   window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
@@ -337,605 +455,993 @@ function closeHelpOverlay(){
 function backToMenuFromHelp(){
   window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
 
-  const menuOverlay = document.getElementById("fsGameMenuOverlay");
+  const menuOverlay = document.getElementById("vbGameMenuOverlay");
   if (menuOverlay) menuOverlay.classList.add("is-open");
 
   setPaused(true, "menu");
 }
 
-  function setPaused(paused, reason=""){
-    state.paused = paused;
-    state.pauseReason = paused ? reason : "";
-    if (!paused) state.lastTs = performance.now();
+  function wireGameInput(){
+    const field = document.getElementById("vbField");
+    const flapHandler = (e) => {
+      if (e.target && e.target.closest && e.target.closest("#vbMenuPill")) return;
+      e.preventDefault();
+      if (state.paused) return;
+      flap();
+    };
+    field.addEventListener("pointerdown", flapHandler, { passive: false });
+    field.addEventListener("touchstart", flapHandler, { passive: false });
+    window.addEventListener("resize", recalcField);
   }
 
-  function recalcField(){
-    const field = document.getElementById("fsField");
-    if (!field) return;
-    const rect = field.getBoundingClientRect();
-    state.fieldWidth = rect.width;
-    state.fieldHeight = rect.height;
-
-    state.fruitHitSize = clamp(state.fieldWidth * 0.27, 108, 182);
-    state.fruitEmojiSize = clamp(state.fieldWidth * 0.155, 62, 102);
-    state.bombHitSize = clamp(state.fieldWidth * 0.19, 84, 134);
-    state.bombEmojiSize = clamp(state.fieldWidth * 0.108, 46, 72);
-    state.sliceSize = clamp(state.fieldWidth * 0.11, 40, 74);
-    state.sliceEmojiSize = clamp(state.fieldWidth * 0.092, 32, 58);
-
-    field.style.setProperty("--fs-fruit-hit", `${state.fruitHitSize}px`);
-    field.style.setProperty("--fs-fruit-emoji", `${state.fruitEmojiSize}px`);
-    field.style.setProperty("--fs-bomb-hit", `${state.bombHitSize}px`);
-    field.style.setProperty("--fs-bomb-emoji", `${state.bombEmojiSize}px`);
-    field.style.setProperty("--fs-slice-size", `${state.sliceSize}px`);
-    field.style.setProperty("--fs-slice-emoji", `${state.sliceEmojiSize}px`);
-
-    renderHud();
-  }
-
-  function renderHud(){
-    const phasePill = document.getElementById("fsPhasePill");
-    if (phasePill){
-      phasePill.textContent = state.bonusRound ? `🍽️ ${state.bonusCount}` : getPhaseLabel();
-    }
-    renderBuildArea();
-    renderField();
-  }
-
-  function getPhaseLabel(){
-    if (state.phase === "words") return `${state.wordsBuilt}/${state.wordEntries.length}`;
-    if (state.phase === "book") return "Book";
-    if (state.phase === "reference") return "Reference";
-    return "Ready";
-  }
-
-  function renderBuildArea(){
-    const build = document.getElementById("fsBuild");
-    const text = document.getElementById("fsBuildText");
-    if (!build || !text) return;
-
-    build.classList.toggle("is-shake", state.buildShakeUntil > performance.now());
-    text.className = `fs-build-text ${state.buildSizeClass}`;
-
-    if (state.bonusRound){
-      text.innerHTML = `<div class="fs-bonus-counter">${state.bonusCount}<span class="fs-bonus-label">Bonus slices</span></div>`;
-      return;
-    }
-
-    let html = "";
-    let builtWordsSeen = 0;
-    for (const token of state.tokens){
-      if (token.kind === "space"){
-        html += `<span class="fs-build-gap"> </span>`;
-        continue;
-      }
-      if (token.kind === "word"){
-        const built = builtWordsSeen < state.wordsBuilt;
-        html += `<span class="fs-build-token is-verse ${built ? "is-built" : ""}">${escapeHtml(token.text)}</span>`;
-        builtWordsSeen += 1;
-      } else {
-        const built = builtWordsSeen <= state.wordsBuilt;
-        html += `<span class="fs-build-token is-verse ${built ? "is-built" : ""}">${escapeHtml(token.text)}</span>`;
-      }
-    }
-
-    if (state.verseMeta.book){
-      html += `<span class="fs-build-gap"> </span><span class="fs-build-token is-book ${state.bookBuilt ? "is-built" : ""}">${escapeHtml(state.verseMeta.book)}</span>`;
-    }
-    if (state.verseMeta.reference){
-      html += `<span class="fs-build-gap"> </span><span class="fs-build-token is-reference ${state.referenceBuilt ? "is-built" : ""}">${escapeHtml(state.verseMeta.reference)}</span>`;
-    }
-
-    text.innerHTML = html;
-  }
-
-  function renderField(){
-    const playLayer = document.getElementById("fsPlayLayer");
-    const sliceLayer = document.getElementById("fsSliceLayer");
-    const bannerLayer = document.getElementById("fsBannerLayer");
-    const overlay = document.getElementById("fsOverlay");
-    const bonusIntroOverlay = document.getElementById("fsBonusIntroOverlay");
-    const field = document.getElementById("fsField");
-    if (!playLayer || !sliceLayer || !bannerLayer || !overlay || !field || !bonusIntroOverlay) return;
-
-    field.classList.toggle("is-flash-bad", state.fieldFlashUntil > performance.now());
-
-    let playHtml = "";
-    if (state.activeFruit?.alive) playHtml += renderFruitItem(state.activeFruit, false);
-    if (state.activeBomb?.alive) playHtml += renderBombItem(state.activeBomb);
-    for (const bonusFruit of state.bonusFruits){
-      if (bonusFruit?.alive) playHtml += renderFruitItem(bonusFruit, true);
-    }
-    playLayer.innerHTML = playHtml;
-
-    playLayer.querySelectorAll("[data-role='fruit']").forEach((el) => {
-      const onActivate = (e) => {
-        if (e){
-          if (e.cancelable) e.preventDefault();
-          e.stopPropagation();
-        }
-        const id = el.dataset.id;
-        if (id === "main") handleMainFruitTap();
-        else handleBonusTap(Number(id));
-      };
-      el.onclick = onActivate;
-      el.onpointerdown = onActivate;
-    });
-
-    playLayer.querySelectorAll("[data-role='bomb']").forEach((el) => {
-      const onActivate = (e) => {
-        if (e){
-          if (e.cancelable) e.preventDefault();
-          e.stopPropagation();
-        }
-        handleBombTap();
-      };
-      el.onclick = onActivate;
-      el.onpointerdown = onActivate;
-    });
-
-    sliceLayer.innerHTML = state.activeSlices.filter(Boolean).map((piece) => `
-      <div class="fs-slice-piece ${piece.side}" style="transform:translate(${piece.x}px, ${piece.y}px) translate(-50%, -50%) rotate(${piece.rotation}deg)">
-        <div class="fs-slice-inner">${escapeHtml(piece.fruit || "🍎")}</div>
-      </div>
-    `).join("");
-
-    bannerLayer.innerHTML = (state.bonusRound && performance.now() < state.bonusBannerUntil)
-      ? `<div class="fs-bonus-banner"><div class="fs-bonus-banner-text">Bonus Round!</div></div>`
-      : "";
-
-    overlay.innerHTML = (state.overlayUntil > performance.now() && state.overlayMessage)
-      ? `<div class="fs-overlay-msg-inner">${escapeHtml(state.overlayMessage)}</div>`
-      : "";
-
-    const showBonusIntro = state.bonusIntroActive && performance.now() < state.bonusIntroUntil;
-    bonusIntroOverlay.classList.toggle("is-open", showBonusIntro);
-    bonusIntroOverlay.setAttribute("aria-hidden", showBonusIntro ? "false" : "true");
-  }
-
-  function renderFruitItem(item, isBonus){
-    const cls = `fs-item ${item.flashWrong ? "is-wrong" : ""} ${item.rejecting ? "is-rejecting" : ""}`;
-    const id = isBonus ? item.id : "main";
-    const wordHtml = isBonus ? "" : `<div class="fs-word-chip">${escapeHtml(item.word || "")}</div>`;
-    return `
-      <div class="${cls}" style="transform:translate(${item.x}px, ${item.y}px) translate(-50%, -50%)">
-        <button class="fs-fruit-btn" data-role="fruit" data-id="${id}" type="button" aria-label="Slice food">
-          <span class="fs-fruit-emoji" style="transform:rotate(${Math.round((item.tilt || 0) + (item.rotation || 0))}deg)">${escapeHtml(item.fruit || "🍎")}</span>
-          ${wordHtml}
-        </button>
-      </div>
-    `;
-  }
-
-  function renderBombItem(item){
-    return `
-      <div class="fs-item ${item.wasHit ? "is-bomb-hit" : ""}" style="transform:translate(${item.x}px, ${item.y}px) translate(-50%, -50%)">
-        <button class="fs-bomb-btn" data-role="bomb" type="button" aria-label="Bomb">
-          <span class="fs-bomb-emoji" style="transform:rotate(${Math.round(item.rotation || 0)}deg)">💣</span>
-        </button>
-      </div>
-    `;
+  function flap(){
+    if (!state.running || state.paused) return;
+    if (performance.now() < state.inputLockedUntil) return;
+    state.birdVY = state.flapVelocity;
+    createPuffs();
   }
 
   function startLoop(){
-    stopLoop();
+    if (state.rafId) cancelAnimationFrame(state.rafId);
+    state.rafId = 0;
+    state.running = true;
     state.lastTs = 0;
-    state.rafId = requestAnimationFrame(frame);
+    state.rafId = requestAnimationFrame(loop);
   }
+  
 
   function stopLoop(){
-    if (state.rafId){
-      cancelAnimationFrame(state.rafId);
-      state.rafId = 0;
-    }
+    if (state.rafId) cancelAnimationFrame(state.rafId);
+    state.rafId = 0;
+    state.running = false;
   }
 
-  function frame(ts){
+  function loop(ts){
     if (!state.running) return;
     if (!state.lastTs) state.lastTs = ts;
-    const dt = Math.min(34, ts - state.lastTs);
+    const dt = Math.min(0.032, (ts - state.lastTs) / 1000);
     state.lastTs = ts;
 
+    recalcField();
+
     if (!state.paused){
-      step(dt, ts);
-      renderHud();
-    }
-    state.rafId = requestAnimationFrame(frame);
-  }
-
-  function step(dt, now){
-    if (state.bonusIntroActive){
-      if (now >= state.bonusIntroUntil){
-        state.bonusIntroActive = false;
-        state.bonusRound = true;
-        state.bonusBannerUntil = 0;
-        state.bonusEndsAt = performance.now() + 23000;
-        state.bonusFruits = [];
-        state.bonusCount = 0;
-      } else {
-        return;
-      }
+      updateBird(dt);
+      updateClouds(dt);
+      updateParticles(dt);
+      updateTrail(dt);
+      updateGroundBands(dt);
+      updateObstacles(dt, ts);
+      updatePrizes(dt, ts);
+      updateTargets(dt, ts);
+      maybeSpawnBatch(dt);
     }
 
-    if (!state.bonusRound && !state.activeFruit){
-      spawnMainFruit();
-      maybeSpawnBomb();
+    renderFrame(ts);
+    state.rafId = requestAnimationFrame(loop);
+  }
+
+function recalcField(){
+  const field = document.getElementById("vbField");
+  if (!field) return;
+
+  const rect = field.getBoundingClientRect();
+  state.fieldWidth = rect.width;
+  state.fieldHeight = rect.height;
+
+  // Scale factor: 1 → 1.35 based on width
+  const t = clamp((rect.width - 360) / (840 - 360), 0, 1);
+  state.scale = 1 + t * 0.35;
+
+  state.birdX = Math.max(70, rect.width * 0.2);
+  state.gravity = state.baseGravity * state.scale;
+  state.flapVelocity = state.baseFlapVelocity * state.scale;
+}
+
+  function resetBird(){
+    state.birdY = state.fieldHeight * 0.48;
+    state.birdVY = 0;
+  }
+
+  function updateBird(dt){
+    state.birdVY += state.gravity * dt;
+    state.birdY += state.birdVY * dt;
+
+    const topBound = 18;
+    const groundTop = state.fieldHeight - state.groundHeight;
+
+    if (state.birdY < topBound){
+      state.birdY = topBound;
+      state.birdVY = 0;
     }
 
-    updateMovingEntity(state.activeFruit, dt);
-    updateMovingEntity(state.activeBomb, dt);
-    state.activeSlices.forEach((piece) => updateMovingEntity(piece, dt));
-    state.activeSlices = state.activeSlices.filter((piece) => piece.alive);
-
-    if (state.activeFruit && state.activeFruit.y > state.fieldHeight + 140) state.activeFruit = null;
-    if (state.activeBomb && state.activeBomb.y > state.fieldHeight + 140) state.activeBomb = null;
-
-    if (state.bonusRound){
-      if (now >= state.bonusBannerUntil && now < state.bonusEndsAt){
-        const targetCount = 2 + Math.floor(Math.random() * 2);
-        const live = state.bonusFruits.filter((item) => item.alive).length;
-        if (live < targetCount) spawnBonusFruit();
-      }
-      state.bonusFruits.forEach((item) => updateMovingEntity(item, dt));
-      state.bonusFruits = state.bonusFruits.filter((item) => item.alive && item.y <= state.fieldHeight + 140);
-      if (now >= state.bonusEndsAt && state.bonusFruits.length === 0 && state.activeSlices.length === 0){
-        finishGame();
-      }
+    if (state.birdY + state.birdRadius > groundTop){
+      state.birdY = groundTop - state.birdRadius;
+      if (state.birdVY > 0) state.birdVY *= 0.12;
     }
   }
 
-  function updateMovingEntity(item, dt){
-    if (!item || !item.alive) return;
-    const stepScale = dt / 16.6667;
-    item.x += item.vx * stepScale;
-    item.y += item.vy * stepScale;
-    item.vy += item.gravity * stepScale;
-    item.rotation += item.spin * stepScale;
+  function updateClouds(dt){
+    for (const cloud of state.clouds){
+      cloud.x -= cloud.speed * dt;
+    }
+    state.clouds = state.clouds.filter(cloud => cloud.x > -120);
 
-    const halfSize = item.kind === "bomb"
-      ? state.bombHitSize * 0.34
-      : state.fruitHitSize * 0.34;
-
-    item.x = clamp(item.x, halfSize, state.fieldWidth - halfSize);
-    if (item.y > state.fieldHeight + Math.max(160, state.fruitHitSize * 1.1)) item.alive = false;
+    while (state.clouds.length < 5){
+      state.clouds.push(makeCloud(state.clouds.length === 0));
+    }
   }
 
-  function spawnMainFruit(){
-    const target = getCurrentTargetText();
-    const { text, isCorrect } = pickDisplayTextForCurrentPhase(target);
-    state.activeFruit = createFlyingFood({ word:text, isCorrect });
+  function seedClouds(){
+    state.clouds = [];
+    for (let i = 0; i < 5; i++){
+      state.clouds.push(makeCloud(true, i));
+    }
   }
 
-  function maybeSpawnBomb(){
-    if (selectedMode !== "hard" || state.bonusRound || state.done) return;
-    if (Math.random() >= 0.28) return;
-    state.activeBomb = createFlyingBomb();
-  }
-
-  function createFlyingFood({ word, isCorrect }){
-    const motion = createArcMotion();
+  function makeCloud(seed = false, index = 0){
+    const size = 22 + Math.random() * 34;
     return {
-      ...motion,
-      fruit: pickRandom(state.theme),
-      word,
-      isCorrect,
-      alive:true,
-      flashWrong:false,
-      rejecting:false,
-      wasTapped:false,
-      tilt:-16 + Math.random() * 32,
-      kind:"fruit"
+      id: Math.random().toString(36).slice(2),
+      x: seed ? state.fieldWidth * (0.18 + index * 0.22) : state.fieldWidth + Math.random() * 120,
+      y: 34 + Math.random() * Math.max(80, state.fieldHeight * 0.42),
+      size,
+      opacity: 0.22 + Math.random() * 0.35,
+      speed: 10 + Math.random() * 16
     };
   }
 
-  function createFlyingBomb(){
-    return {
-      ...createArcMotion(true),
-      alive:true,
-      wasTapped:false,
-      wasHit:false,
-      kind:"bomb"
-    };
+  function createPuffs(){
+    const auraMode = performance.now() < state.prizeAuraUntil;
+    const puffCount = auraMode ? 6 : 4;
+
+    for (let i = 0; i < puffCount; i++){
+      state.particles.push({
+        id: Math.random().toString(36).slice(2),
+        type: auraMode ? "auraPuff" : "puff",
+        x: state.birdX - 18 + Math.random() * 8,
+        y: state.birdY + 8 + (Math.random() * 12 - 6),
+        vx: -70 - Math.random() * 40,
+        vy: -10 + Math.random() * 20,
+        life: auraMode ? (0.52 + Math.random() * 0.18) : (0.42 + Math.random() * 0.16),
+        age: 0,
+        size: auraMode ? (12 + Math.random() * 14) : (8 + Math.random() * 12)
+      });
+    }
   }
 
-  function createArcMotion(isBomb = false){
-    const fieldW = Math.max(320, state.fieldWidth || 320);
-    const fieldH = Math.max(260, state.fieldHeight || 260);
-    const sideInset = Math.max(state.fruitHitSize * 0.46, fieldW * 0.12);
-    const startX = sideInset + Math.random() * Math.max(24, fieldW - sideInset * 2);
-    const peakRatio = fieldW >= 900 ? 0.24 : 0.30;
-    const targetPeakY = fieldH * peakRatio;
-    const startY = fieldH + Math.max(24, state.fruitHitSize * 0.22);
-    const riseDistance = Math.max(fieldH * 0.42, startY - targetPeakY);
-
-    const gravity = fieldH * (isBomb ? 0.00115 : 0.00105);
-    const baseVy = Math.sqrt(2 * gravity * riseDistance);
-    const vy = -(baseVy + (Math.random() * fieldH * 0.00035 - fieldH * 0.000175));
-
-    const horizontalRange = fieldW * (isBomb ? 0.0025 : 0.0022);
-    const vx = (Math.random() * 2 - 1) * horizontalRange;
-    const spin = isBomb ? (-3.4 + Math.random() * 6.8) : (-2.8 + Math.random() * 5.6);
-
-    return { x:startX, y:startY, vx, vy, gravity, rotation:0, spin };
+  function updateParticles(dt){
+    for (const p of state.particles){
+      p.age += dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vx *= 0.98;
+      p.vy *= 0.98;
+    }
+    state.particles = state.particles.filter(p => p.age < p.life);
   }
 
-  function handleMainFruitTap(){
-    const item = state.activeFruit;
-    if (!item || !item.alive || item.wasTapped || state.paused || state.done) return;
-    item.wasTapped = true;
+  function updateTrail(dt){
+    const tier = getTrailTier();
+    if (tier > 0){
+      state.trail.push({
+        id: Math.random().toString(36).slice(2),
+        x: state.birdX - 16,
+        y: state.birdY + 4,
+        age: 0,
+        life: 0.42 + tier * 0.07,
+        size: 12 + tier * 3,
+        color: getTrailColor()
+      });
+    }
 
-    if (item.isCorrect){
-      createSlicesFrom(item);
-      state.activeFruit = null;
-      state.wrongStreak = 0;
+    for (const t of state.trail){
+      t.age += dt;
+      t.x -= (90 + tier * 14) * dt;
+    }
+    state.trail = state.trail.filter(t => t.age < t.life);
+  }
 
-      if (state.phase === "words"){
-        state.wordsBuilt += 1;
-        if (state.wordsBuilt >= state.wordEntries.length){
-          state.phase = "book";
-          state.bookBuilt = false;
-          state.referenceBuilt = false;
-          showOverlay("Now slice the Bible book");
-        }
-      } else if (state.phase === "book"){
-        state.bookBuilt = true;
-        state.phase = "reference";
-        state.referenceBuilt = false;
-        showOverlay("Now slice the chapter and verse");
-      } else if (state.phase === "reference"){
-        state.referenceBuilt = true;
-        startBonusRound();
+  function getTrailTier(){
+    if (state.streak < 5) return 0;
+    return 1 + Math.floor((state.streak - 5) / 2);
+  }
+
+  function getTrailColor(){
+    const tier = getTrailTier();
+    const rainbow = ["#ff5a51","#ffa351","#ffc751","#a7cb6f","#40b9c5","#7f66c6"];
+    if (tier <= 1) return "#ffc751";
+    if (tier === 2) return "#ffa351";
+    if (tier === 3) return "#ff5a51";
+    return rainbow[Math.floor(Math.random() * rainbow.length)];
+  }
+
+  function maybeSpawnBatch(dt){
+    if (state.targets.length > 0) return;
+    state.spawnCooldown = Math.max(0, state.spawnCooldown - dt);
+    if (state.spawnCooldown <= 0 && getCurrentPhase() !== "done"){
+      spawnBatch();
+    }
+  }
+
+  function spawnBatch(){
+    const phase = getCurrentPhase();
+    if (phase === "done") return;
+
+    const correctLabel = getCurrentCorrectLabel();
+    const decoys = getDecoysForPhase(phase, correctLabel, getDecoyCount());
+    const shouldSpawnCorrect = Math.random() < getCorrectSpawnChance();
+    const label = (shouldSpawnCorrect || decoys.length === 0)
+      ? correctLabel
+      : decoys[Math.floor(Math.random() * decoys.length)];
+
+    const laneY = pickSingleLaneY();
+    const circleSize = getCircleSize();
+
+    state.targets = [{
+      id: state.nextTargetId++,
+      x: state.fieldWidth + 90,
+      y: laneY,
+      label,
+      correct: label === correctLabel,
+      color: TARGET_COLORS[Math.floor(Math.random() * TARGET_COLORS.length)],
+      speed: getScrollSpeed(),
+      circleSize
+    }];
+  }
+
+  function updateTargets(dt, ts){
+    const groundTop = state.fieldHeight - state.groundHeight;
+
+    for (const target of state.targets){
+      target.x -= target.speed * dt;
+    }
+
+    let missedCorrect = false;
+
+    for (const target of state.targets){
+      if (target.x < -90){
+        if (target.correct) missedCorrect = true;
       }
+    }
+
+    state.targets = state.targets.filter(target => target.x > -90);
+
+    if (missedCorrect){
+      registerMistake(ts);
+      state.targets = [];
+      state.spawnCooldown = 0.22;
       return;
     }
 
-    item.flashWrong = true;
-    item.rejecting = true;
-    state.wrongStreak += 1;
-    state.buildShakeUntil = performance.now() + 320;
-    state.fieldFlashUntil = performance.now() + 260;
-    if (selectedMode === "hard" && state.phase === "words"){
-      state.wordsBuilt = Math.max(0, state.wordsBuilt - 2);
+    for (const target of state.targets){
+      const dx = target.x - state.birdX;
+      const dy = (target.y - 12) - state.birdY;
+      const dist = Math.hypot(dx, dy);
+
+      if (dist <= state.birdRadius + (target.circleSize * 0.5)){
+        if (target.correct){
+          registerSuccess(ts, target.x, target.y - 12);
+          handleCorrect();
+        } else {
+          registerMistake(ts);
+          state.targets = [];
+          state.spawnCooldown = 0.18;
+        }
+        return;
+      }
+
+      if (target.y > groundTop - 8){
+        target.y = groundTop - 8;
+      }
     }
-    setPaused(true, "wrong");
-    renderHud();
-    window.setTimeout(() => {
-      item.alive = false;
-      if (state.activeFruit === item) state.activeFruit = null;
-      if (!state.done) setPaused(false, "");
-      renderHud();
-    }, 320);
   }
 
-  function handleBombTap(){
-    const bomb = state.activeBomb;
-    if (!bomb || !bomb.alive || bomb.wasTapped || state.paused || state.done || state.bonusRound) return;
-    bomb.wasTapped = true;
-    bomb.wasHit = true;
-    state.wordsBuilt = 0;
-    state.bookBuilt = false;
-    state.referenceBuilt = false;
-    state.buildShakeUntil = performance.now() + 320;
-    state.fieldFlashUntil = performance.now() + 260;
-    setPaused(true, "bomb");
-    renderHud();
-    window.setTimeout(() => {
-      bomb.alive = false;
-      if (state.activeBomb === bomb) state.activeBomb = null;
-      if (!state.done) setPaused(false, "");
-      renderHud();
-    }, 280);
+  function getGroundBandWidth(){
+    return 22;
   }
 
-  function startBonusRound(){
-    state.activeFruit = null;
-    state.activeBomb = null;
-    state.bonusRound = false;
-    state.bonusIntroActive = true;
-    state.bonusIntroUntil = performance.now() + 1700;
-    state.bonusBannerUntil = 0;
-    state.bonusEndsAt = 0;
-    state.bonusFruits = [];
-    state.bonusCount = 0;
-    setPaused(false, "");
-    renderHud();
+  function getGroundBandGap(){
+    return getGroundBandWidth();
   }
 
-  function spawnBonusFruit(){
-    state.bonusIdCounter += 1;
-    state.bonusFruits.push({
-      id: state.bonusIdCounter,
-      ...createArcMotion(),
-      fruit: pickRandom(state.theme),
-      alive:true,
-      wasTapped:false,
-      tilt:-16 + Math.random() * 32,
-      kind:"fruit"
-    });
+  function getGroundBandSpeed(){
+    return getScrollSpeed();
   }
 
-  function handleBonusTap(id){
-    const item = state.bonusFruits.find((fruit) => fruit.id === id);
-    if (!item || item.wasTapped || state.paused || !state.bonusRound) return;
-    item.wasTapped = true;
-    item.alive = false;
-    state.bonusCount += 1;
-    createSlicesFrom(item);
-  }
+  function seedGroundBands(){
+    state.groundBands = [];
+    const bandWidth = getGroundBandWidth();
+    const spacing = bandWidth + getGroundBandGap();
 
-function createSlicesFrom(item){
-  const baseRotation = item.rotation || 0;
-  const splitOffset = state.fruitHitSize * 0.18;
-
-  state.activeSlices.push(
-    {
-      side:"left",
-      fruit:item.fruit,
-      x:item.x - splitOffset,
-      y:item.y,
-      vx:(item.vx || 0) - 1.3,
-      vy:(item.vy || 0) - 1.4,
-      gravity:item.gravity || 0.42,
-      rotation:baseRotation - 10,
-      spin:-3.8,
-      alive:true
-    },
-    {
-      side:"right",
-      fruit:item.fruit,
-      x:item.x + splitOffset,
-      y:item.y,
-      vx:(item.vx || 0) + 1.3,
-      vy:(item.vy || 0) - 1.4,
-      gravity:item.gravity || 0.42,
-      rotation:baseRotation + 10,
-      spin:3.8,
-      alive:true
+    for (let x = -spacing; x < state.fieldWidth + spacing; x += spacing){
+      state.groundBands.push({
+        id: state.nextGroundBandId++,
+        x,
+        width: bandWidth
+      });
     }
-  );
+  }
+
+  function updateGroundBands(dt){
+    const speed = getGroundBandSpeed();
+
+    for (const band of state.groundBands){
+      band.x -= speed * dt;
+    }
+
+    const bandWidth = getGroundBandWidth();
+    const spacing = bandWidth + getGroundBandGap();
+
+    state.groundBands = state.groundBands.filter(band => band.x > -bandWidth * 2);
+
+    let rightmost = state.groundBands.length
+      ? Math.max(...state.groundBands.map(b => b.x))
+      : -spacing;
+
+    while (rightmost < state.fieldWidth + spacing){
+      rightmost += spacing;
+      state.groundBands.push({
+        id: state.nextGroundBandId++,
+        x: rightmost,
+        width: bandWidth
+      });
+    }
+  }
+
+  function renderGroundBands(){
+    const layer = document.getElementById("vbGroundBands");
+    if (!layer || !state.theme) return;
+
+    layer.innerHTML = state.groundBands.map(band => `
+      <div
+        class="vb-ground-band"
+        style="
+          left:${band.x}px;
+          width:${band.width}px;
+          background:${state.theme.bandColor};
+        "
+      ></div>
+    `).join("");
+  }
+
+  function getObstacleSpeed(){
+    return getScrollSpeed();
+  }
+
+function getObstacleGroundY(){
+  return state.fieldHeight - state.groundHeight + 2;
 }
 
-  async function finishGame(){
-    state.running = false;
-    state.done = true;
-    stopLoop();
+  function makeObstacle(x){
+    return {
+      id: state.nextObstacleId++,
+      x,
+      y: getObstacleGroundY(),
+      size: 56 * state.scale * 0.75,
+      emoji: state.theme?.obstacleEmoji || "🪨",
+      speed: getObstacleSpeed()
+    };
+  }
 
-    let reward = { ok:false, petUnlockTriggered:false };
-    if (!completionMarked && ctx.verseId && selectedMode){
-      completionMarked = true;
-      reward = await window.VerseGameBridge.markCompleted({
+  function updateObstacles(dt, ts){
+    for (const obstacle of state.obstacles){
+      obstacle.x -= obstacle.speed * dt;
+      obstacle.y = getObstacleGroundY();
+    }
+
+    state.obstacles = state.obstacles.filter(obstacle => obstacle.x > -60);
+
+    state.obstacleSpawnTimer -= dt;
+    if (state.obstacleSpawnTimer <= 0){
+      const rightmost = state.obstacles.length
+        ? Math.max(...state.obstacles.map(o => o.x))
+        : -9999;
+
+      if (rightmost < state.fieldWidth - 120){
+        const spawnX = findSafeGroundSpawnX(state.fieldWidth + 50, 110, 44, 10);
+        if (spawnX !== null){
+          state.obstacles.push(makeObstacle(spawnX));
+          state.obstacleSpawnTimer = 2.0 + Math.random() * 1.8;
+        } else {
+          state.obstacleSpawnTimer = 0.45;
+        }
+      } else {
+        state.obstacleSpawnTimer = 0.25;
+      }
+    }
+
+    for (const obstacle of state.obstacles){
+      const obstacleHalfHeight = obstacle.size * 0.5;
+      const obstacleCenterY = obstacle.y - obstacleHalfHeight;
+
+      const dx = obstacle.x - state.birdX;
+      const dy = obstacleCenterY - state.birdY;
+
+      const hitX = Math.abs(dx) < 24;
+      const hitY = Math.abs(dy) < (state.birdRadius + obstacleHalfHeight - 4);
+
+      if (hitX && hitY && performance.now() >= state.inputLockedUntil){
+        handleObstacleHit(ts, obstacle.id);
+        return;
+      }
+    }
+  }
+
+  function hasNearbyGroundItem(x, minGap){
+    for (const obstacle of state.obstacles){
+      if (Math.abs(obstacle.x - x) < minGap) return true;
+    }
+    for (const prize of state.prizes){
+      if (Math.abs(prize.x - x) < minGap) return true;
+    }
+    return false;
+  }
+
+  function findSafeGroundSpawnX(baseX, minGap, step = 40, attempts = 8){
+    let x = baseX;
+    for (let i = 0; i < attempts; i++){
+      if (!hasNearbyGroundItem(x, minGap)) return x;
+      x += step;
+    }
+    return null;
+  }
+
+  function handleObstacleHit(ts, obstacleId){
+    state.obstacles = state.obstacles.filter(o => o.id !== obstacleId);
+    registerMistake(ts);
+
+    state.inputLockedUntil = performance.now() + 1000;
+    state.birdSpinUntil = performance.now() + 1000;
+
+    state.birdVY = -120;
+  }
+
+  function renderObstacles(){
+    const layer = document.getElementById("vbObstacles");
+    if (!layer) return;
+
+    layer.innerHTML = state.obstacles.map(obstacle => `
+      <div
+        class="vb-obstacle"
+        style="
+          left:${obstacle.x}px;
+          top:${obstacle.y}px;
+          font-size:${obstacle.size}px;
+        "
+      >
+        ${obstacle.emoji}
+      </div>
+    `).join("");
+  }
+
+  function getPrizeSpeed(){
+    return getScrollSpeed();
+  }
+
+  function getPrizeGroundY(){
+    return state.fieldHeight - state.groundHeight - 4;
+  }
+
+  function makePrize(x){
+    return {
+      id: state.nextPrizeId++,
+      x,
+      y: getPrizeGroundY(),
+      size: 56 * state.scale * 0.75,
+      emoji: state.theme?.prizeEmoji || "🐣",
+      speed: getPrizeSpeed()
+    };
+  }
+
+  function updatePrizes(dt, ts){
+    for (const prize of state.prizes){
+      prize.x -= prize.speed * dt;
+      prize.y = getPrizeGroundY();
+    }
+
+    state.prizes = state.prizes.filter(prize => prize.x > -60);
+
+    state.prizeSpawnTimer -= dt;
+    if (state.prizeSpawnTimer <= 0){
+      const rightmostPrize = state.prizes.length
+        ? Math.max(...state.prizes.map(p => p.x))
+        : -9999;
+
+      const rightmostObstacle = state.obstacles.length
+        ? Math.max(...state.obstacles.map(o => o.x))
+        : -9999;
+
+      const blockedByOtherThing =
+        rightmostPrize > state.fieldWidth - 180 ||
+        rightmostObstacle > state.fieldWidth - 180;
+
+      if (!blockedByOtherThing){
+        const spawnX = findSafeGroundSpawnX(state.fieldWidth + 70, 110, 44, 10);
+        if (spawnX !== null){
+          state.prizes.push(makePrize(spawnX));
+          state.prizeSpawnTimer = 5.0 + Math.random() * 3.0;
+        } else {
+          state.prizeSpawnTimer = 0.8;
+        }
+      } else {
+        state.prizeSpawnTimer = 0.6;
+      }
+    }
+
+    for (const prize of state.prizes){
+      const prizeHalfHeight = prize.size * 0.5;
+      const prizeCenterY = prize.y - prizeHalfHeight;
+
+      const dx = prize.x - state.birdX;
+      const dy = prizeCenterY - state.birdY;
+
+      const hitX = Math.abs(dx) < 24;
+      const hitY = Math.abs(dy) < (state.birdRadius + prizeHalfHeight - 6);
+
+      if (hitX && hitY){
+        handlePrizePickup(ts, prize.id, prize.x, prizeCenterY);
+        return;
+      }
+    }
+  }
+
+  function handlePrizePickup(ts, prizeId, x, y){
+    state.prizes = state.prizes.filter(p => p.id !== prizeId);
+    state.prizeAuraUntil = performance.now() + 3500;
+
+    for (let i = 0; i < 10; i++){
+      const angle = (Math.PI * 2 * i) / 10;
+      const speed = 55 + Math.random() * 65;
+      state.particles.push({
+        id: Math.random().toString(36).slice(2),
+        type: "prizeSpark",
+        x,
+        y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 0.38 + Math.random() * 0.14,
+        age: 0,
+        size: 8 + Math.random() * 5
+      });
+    }
+
+    state.successFlashUntil = Math.max(state.successFlashUntil, ts + 150);
+  }
+
+  function renderPrizes(){
+    const layer = document.getElementById("vbPrizes");
+    if (!layer) return;
+
+    layer.innerHTML = state.prizes.map(prize => `
+      <div
+        class="vb-prize"
+        style="
+          left:${prize.x}px;
+          top:${prize.y}px;
+          font-size:${prize.size}px;
+        "
+      >
+        ${prize.emoji}
+      </div>
+    `).join("");
+  }
+
+  function handleCorrect(){
+    state.progressIndex += 1;
+    state.streak += 1;
+    state.targets = [];
+    state.spawnCooldown = 0.14;
+    updateBuildText();
+    updateStreakPill();
+
+    if (getCurrentPhase() === "done"){
+      finishRun();
+    }
+  }
+
+  function registerMistake(ts){
+    state.streak = 0;
+    state.flashUntil = ts + 160;
+    state.shakeUntil = ts + 260;
+    updateStreakPill();
+
+    const build = document.getElementById("vbBuild");
+    if (build){
+      build.classList.remove("vb-shake");
+      void build.offsetWidth;
+      build.classList.add("vb-shake");
+    }
+  }
+
+  function registerSuccess(ts, targetX, targetY){
+    state.successFlashUntil = ts + 130;
+
+    for (let i = 0; i < 8; i++){
+      const angle = (Math.PI * 2 * i) / 8;
+      const speed = 70 + Math.random() * 55;
+      state.particles.push({
+        id: Math.random().toString(36).slice(2),
+        type: "spark",
+        x: targetX,
+        y: targetY,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 0.24 + Math.random() * 0.08,
+        age: 0,
+        size: 7 + Math.random() * 6
+      });
+    }
+  }
+
+  async function finishRun(){
+    if (completed) return;
+    completed = true;
+    state.running = false;
+
+    try{
+      await window.VerseGameBridge.markCompleted({
         verseId: ctx.verseId,
         gameId: GAME_ID,
         mode: selectedMode
       });
-    }
-    renderEndScreen(reward);
-  }
-
-  function getCurrentTargetText(){
-    if (state.phase === "book") return state.verseMeta.book || "";
-    if (state.phase === "reference") return state.verseMeta.reference || "";
-    return state.wordEntries[state.wordsBuilt]?.display || "";
-  }
-
-  function pickDisplayTextForCurrentPhase(correct){
-    if (state.phase === "book") return pickPhaseChoice(correct, state.bookChoices);
-    if (state.phase === "reference") return pickPhaseChoice(correct, state.referenceChoices);
-
-    const verseWordsLower = new Set(state.wordEntries.map((entry) => normalizeWord(entry.display)));
-    let wrongPool = [];
-    if (selectedMode === "medium" || selectedMode === "hard"){
-      wrongPool = getVerseDerivedDecoys(state.wordsBuilt, correct);
-    } else {
-      wrongPool = window.VerseGameShell.getFunWordDecoys(
-        correct,
-        state.wordEntries.map((entry) => entry.display),
-        12
-      );
+    }catch(err){
+      console.error("markCompleted failed", err);
     }
 
-    const mustUseCorrect = state.wrongStreak >= 2;
-    const useCorrect = mustUseCorrect || Math.random() < 0.6 || !wrongPool.length;
-    if (useCorrect){
-      state.wrongStreak = 0;
-      return { text:correct, isCorrect:true };
-    }
-    state.wrongStreak += 1;
-    return { text:pickRandom(wrongPool), isCorrect:false };
+    renderComplete();
   }
 
-  function pickPhaseChoice(correct, choicePool){
-    const mustUseCorrect = state.wrongStreak >= 2;
-    const wrongs = (choicePool || []).filter((item) => item !== correct);
-    const useCorrect = mustUseCorrect || Math.random() < 0.6 || !wrongs.length;
-    if (useCorrect){
-      state.wrongStreak = 0;
-      return { text:correct, isCorrect:true };
-    }
-    state.wrongStreak += 1;
-    return { text:pickRandom(wrongs), isCorrect:false };
+  function renderFrame(ts){
+    renderBuildShake(ts);
+    renderClouds();
+    renderTargets();
+    renderParticles();
+    renderTrail();
+    renderObstacles();
+    renderPrizes();
+    renderAura();
+    renderBird();
+    renderFlash(ts);
+    renderGroundBands();
+    updateMenuPill();
   }
 
-  function getVerseDerivedDecoys(targetIndex, correct){
-    const targetNorm = normalizeWord(correct);
-    const candidates = state.wordEntries.filter((entry, idx) => {
-      if (idx === targetIndex) return false;
-      const norm = normalizeWord(entry.display);
-      if (!norm || norm === targetNorm) return false;
-      if (Math.abs(idx - targetIndex) <= 1 && state.wordEntries.length > 4) return false;
-      return true;
-    });
+  function renderBuildShake(ts){
+    const build = document.getElementById("vbBuild");
+    if (!build) return;
+    if (ts > state.shakeUntil){
+      build.classList.remove("vb-shake");
+    }
+  }
 
-    const unique = [];
-    const seen = new Set();
-    for (const entry of candidates){
-      const norm = normalizeWord(entry.display);
-      if (seen.has(norm)) continue;
-      seen.add(norm);
-      unique.push(entry.display);
+  function renderFlash(ts){
+    const flash = document.getElementById("vbFlash");
+    if (!flash) return;
+
+    if (ts <= state.flashUntil){
+      flash.classList.add("is-on");
+      flash.style.background = "rgba(255, 90, 81, 0.34)";
+      return;
     }
 
-    const nonTiny = unique.filter((word) => normalizeWord(word).length > 2);
-    const pool = nonTiny.length >= 2 ? nonTiny : unique;
-    return pool.length ? pool : GENERIC_DECOYS.filter((word) => normalizeWord(word) !== targetNorm);
+    if (ts <= state.successFlashUntil){
+      flash.classList.add("is-on");
+      flash.style.background = "rgba(64, 185, 197, 0.26)";
+      return;
+    }
+
+    flash.classList.remove("is-on");
   }
 
-  function makeBookChoices(correctBook){
-    const correct = String(correctBook || "").trim();
-    if (!correct) return [];
+  function renderBird(){
+    const bird = document.getElementById("vbBird");
+    if (!bird) return;
 
-    const others = window.VerseGameShell.getBookDecoys(correct, 3);
+    let angle = clamp((state.birdVY / 9), -24, 54);
 
-    return shuffle([correct, ...others]).slice(0, 4);
+    if (performance.now() < state.birdSpinUntil){
+      angle = ((performance.now() / 1000) * 720) % 360;
+    }
+
+    bird.style.left = `${state.birdX}px`;
+    bird.style.top = `${state.birdY}px`;
+    const scale = state.scale;
+    bird.style.transform = `translate(-50%, -50%) scale(${scale}) scaleX(-1) rotate(${angle}deg)`;
   }
 
-  function makeReferenceChoices(referenceMeta, mode){
-    const correct = String(referenceMeta?.reference || "").trim();
+  function renderAura(){
+    const layer = document.getElementById("vbAura");
+    if (!layer) return;
 
-    if (!correct) return [];
+    if (performance.now() >= state.prizeAuraUntil){
+      layer.innerHTML = "";
+      return;
+    }
 
-    const decoys = window.VerseGameShell.getReferenceDecoys(referenceMeta, mode, 3);
+    const t = performance.now() / 1000;
+    const radiusX = 42 * state.scale;
+    const radiusY = 24 * state.scale;
+    const sparkles = [];
+    const auraSet = state.auraEmojis?.length ? state.auraEmojis : ["✨","⭐","💫"];
 
-    return shuffle([
-      correct,
-      ...decoys.filter((ref) => normalizeWord(ref) !== normalizeWord(correct))
-    ]).slice(0, 4);
+    for (let i = 0; i < auraSet.length; i++){
+      const angle = t * 3.2 + (i * Math.PI * 2 / auraSet.length);
+      const x = state.birdX + Math.cos(angle) * radiusX;
+      const y = state.birdY + Math.sin(angle) * radiusY;
+
+      sparkles.push(`
+        <div
+          class="vb-aura-star"
+          style="
+            left:${x}px;
+            top:${y}px;
+            font-size:${18 + (i % 2) * 4}px;
+          "
+        >${auraSet[i]}</div>
+      `);
+    }
+
+    layer.innerHTML = `
+      <div class="vb-aura-glow" style="
+        left:${state.birdX}px;
+        top:${state.birdY}px;
+        transform: translate(-50%, -50%) scale(${state.scale});
+      "></div>
+      ${sparkles.join("")}
+    `;
   }
 
-  function parseVerseMeta(verseId, fallbackRef){
-    return window.VerseGameShell.parseReferenceParts(
-      fallbackRef,
-      ctx.translation,
-      verseId
-    );
+  function renderClouds(){
+    const layer = document.getElementById("vbClouds");
+    if (!layer) return;
+
+    const emoji = state.theme?.cloudEmoji || "☁️";
+
+    layer.innerHTML = state.clouds.map(cloud => `
+      <div class="vb-cloud"
+           style="left:${cloud.x}px; top:${cloud.y}px; font-size:${cloud.size}px; opacity:${cloud.opacity};">
+        ${emoji}
+      </div>
+    `).join("");
   }
 
+  function renderParticles(){
+    const layer = document.getElementById("vbParticles");
+    if (!layer) return;
 
-  function tokenizeVerseWithSpaces(text){
-    return window.VerseGameShell.tokenizeVerseForBuild(text);
+    layer.innerHTML = state.particles.map(p => {
+      const alpha = 1 - (p.age / p.life);
+
+      if (p.type === "prizeSpark"){
+        return `
+          <div
+            class="vb-prize-spark"
+            style="
+              left:${p.x}px;
+              top:${p.y}px;
+              font-size:${p.size}px;
+              opacity:${alpha};
+            "
+          >⭐</div>
+        `;
+      }
+
+      if (p.type === "auraPuff"){
+        return `
+          <div class="vb-puff"
+               style="
+                 left:${p.x}px;
+                 top:${p.y}px;
+                 width:${p.size}px;
+                 height:${p.size}px;
+                 opacity:${alpha};
+                 background:rgba(255, 239, 160, 0.92);
+               ">
+          </div>
+        `;
+      }
+
+      const bg = p.type === "spark" ? "#ffffff" : "rgba(255,255,255,0.92)";
+      return `
+        <div class="vb-puff"
+             style="left:${p.x}px; top:${p.y}px; width:${p.size}px; height:${p.size}px; opacity:${alpha}; background:${bg};">
+        </div>
+      `;
+    }).join("");
   }
 
-  function extractWordEntries(tokens){
-    return window.VerseGameShell.extractWordEntries(tokens);
+  function renderTrail(){
+    const layer = document.getElementById("vbTrail");
+    if (!layer) return;
+
+    layer.innerHTML = state.trail.map(t => {
+      const alpha = 1 - (t.age / t.life);
+      return `
+        <div class="vb-trail-dot"
+             style="left:${t.x}px; top:${t.y}px; width:${t.size}px; height:${t.size}px; background:${t.color}; opacity:${alpha};">
+        </div>
+      `;
+    }).join("");
   }
 
-  function showOverlay(message, duration = 1400){
-    state.overlayMessage = message;
-    state.overlayUntil = performance.now() + duration;
+  function renderTargets(){
+    const layer = document.getElementById("vbTargets");
+    if (!layer) return;
+    layer.innerHTML = state.targets.map(target => `
+      <div class="vb-target" style="left:${target.x}px; top:${target.y}px;">
+        <div class="vb-target-circle" style="background:${target.color}; --circle-size:${target.circleSize}px;"></div>
+        <div class="vb-target-label">${escapeHtml(target.label)}</div>
+      </div>
+    `).join("");
   }
 
-const clamp = window.VerseGameShell.clamp;
-function pickRandom(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
-const shuffle = window.VerseGameShell.shuffle;
-const capitalize = window.VerseGameShell.capitalize;
-  
-  const normalizeWord = window.VerseGameShell.normalizeWord;
+  function updateBuildText(){
+    const el = document.getElementById("vbBuildText");
+    if (!el) return;
+
+    el.className = `vb-build-text ${state.buildSizeClass}`;
+
+    el.innerHTML = state.segments.map((segment, index) => `
+      <span class="vb-build-word ${index < state.progressIndex ? "is-built" : ""}">
+        ${escapeHtml(segment)}
+      </span>
+    `).join(" ");
+  }
+
+  function updateMenuPill(){
+    const pill = document.getElementById("vbMenuPill");
+    if (!pill) return;
+    pill.textContent = "☰";
+    pill.setAttribute("aria-label", "Game Menu");
+    pill.onclick = (e) => {
+      e.stopPropagation();
+      openGameMenu();
+    };
+  }
+
+  function updateStreakPill(){
+    const pill = document.getElementById("vbStreakPill");
+    if (!pill) return;
+    const tier = getTrailTier();
+    let suffix = "";
+    if (tier >= 4) suffix = " 🌈";
+    else if (tier >= 2) suffix = " ✨";
+    pill.textContent = `Streak: ${state.streak}${suffix}`;
+  }
+
+  function getBuildLengthScore(verseText, book, reference){
+    return String(verseText || "").length
+      + String(book || "").length
+      + String(reference || "").length;
+  }
+
+  function getBuildSizeClass(verseText, book, reference){
+    const score = getBuildLengthScore(verseText, book, reference);
+    if (score >= 136) return "is-small";
+    if (score >= 106) return "is-medium";
+    return "is-normal";
+  }
+
+  function setupReferenceSegments(){
+    const parsed = parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
+    state.referenceMeta = parsed;
+    state.bookLabel = parsed.book || "";
+    state.referenceLabel = parsed.reference || "";
+    state.buildSizeClass = getBuildSizeClass(ctx.verseText, state.bookLabel, state.referenceLabel);
+
+    state.segments = [...state.words];
+    if (state.bookLabel) state.segments.push(state.bookLabel);
+    if (state.referenceLabel) state.segments.push(state.referenceLabel);
+  }
+
+  function getCurrentPhase(){
+    const wordCount = state.words.length;
+    if (state.progressIndex < wordCount) return "words";
+    if (state.progressIndex === wordCount && state.bookLabel) return "book";
+    if (state.progressIndex === wordCount + (state.bookLabel ? 1 : 0) && state.referenceLabel) return "reference";
+    return "done";
+  }
+
+  function getCurrentCorrectLabel(){
+    return state.segments[state.progressIndex] || "";
+  }
+
+  function getDecoyCount(){
+    if (selectedMode === "hard") return 4;
+    if (selectedMode === "medium") return 3;
+    return 2;
+  }
+
+  function getCircleSize(){
+    const base =
+      selectedMode === "hard" ? 26 :
+      selectedMode === "medium" ? 30 : 35;
+
+    return base * state.scale;
+  }
+
+function getScrollSpeed(){
+  const base =
+    selectedMode === "hard" ? 205 :
+    selectedMode === "medium" ? 172 : 140;
+
+  return base * state.scale;
+}
+
+  function getCorrectSpawnChance(){
+    return 0.70;
+  }
+
+  function pickSingleLaneY(){
+    const groundTop = state.fieldHeight - state.groundHeight;
+    const spread = 0.22 + (state.scale - 1) * 0.15;
+
+    const lanes = [
+      Math.max(64, groundTop * (0.18 + spread)),
+      Math.max(92, groundTop * 0.50),
+      Math.max(120, groundTop * (0.82 - spread))
+    ];
+
+    return lanes[Math.floor(Math.random() * lanes.length)];
+  }
+
+  function getDecoysForPhase(phase, correctLabel, count){
+    const out = new Set();
+
+    if (phase === "words"){
+      for (const word of window.VerseGameShell.getFunWordDecoys(correctLabel, state.words, count)){
+        if (out.size >= count) break;
+        out.add(word);
+      }
+
+      for (const word of shuffle(state.words)){
+        if (out.size >= count) break;
+        if (normalizeWord(word) !== normalizeWord(correctLabel)){
+          out.add(word);
+        }
+      }
+    }
+
+    if (phase === "book"){
+      for (const book of window.VerseGameShell.getBookDecoys(correctLabel, count)){
+        if (out.size >= count) break;
+        out.add(book);
+      }
+    }
+
+    if (phase === "reference"){
+      for (const ref of window.VerseGameShell.getReferenceDecoys(state.referenceMeta, selectedMode, count + 4)){
+        if (out.size >= count) break;
+        if (normalizeWord(ref) !== normalizeWord(correctLabel)) out.add(ref);
+      }
+    }
+
+    return Array.from(out).slice(0, count);
+  }
+
+  function tokenizeVerse(text){
+    return window.VerseGameShell.tokenizeVerseWords(text);
+  }
+
+  function normalizeWord(value){
+    return window.VerseGameShell.normalizeWord(value);
+  }
+
   function escapeHtml(str){
-    return String(str || "")
+    return String(str)
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
-      .replace(/\"/g, "&quot;")
+      .replace(/"/g, "&quot;")
       .replace(/'/g, "&#39;");
   }
+
+  const shuffle = window.VerseGameShell.shuffle;
+  const clamp = window.VerseGameShell.clamp;
+  const capitalize = window.VerseGameShell.capitalize;
+
+  function parseReferenceParts(ref, translation, verseId){
+    return window.VerseGameShell.parseReferenceParts(ref, translation, verseId);
+  }
+
 })();
