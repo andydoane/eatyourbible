@@ -998,10 +998,22 @@ function backToMenuFromHelp(){
 
   function getDecoysForPhase(phase, correctLabel, count){
     const out = new Set();
+
     if (phase === "words"){
-      for (const word of window.VerseGameShell.getFunWordDecoys(correctLabel, state.words, count)){
+      const decoys = selectedMode === "easy"
+        ? window.VerseGameShell.getFunWordDecoys(correctLabel, state.words, count)
+        : window.VerseGameShell.getVerseWordDecoys({
+            words: state.words,
+            correct: correctLabel,
+            targetIndex: state.progressIndex,
+            count,
+            avoidNext: 2,
+            fallbackToFun: true
+          });
+
+      for (const word of decoys){
         if (out.size >= count) break;
-        out.add(word);
+        if (normalizeWord(word) !== normalizeWord(correctLabel)) out.add(word);
       }
     } else if (phase === "book"){
       for (const book of window.VerseGameShell.getBookDecoys(correctLabel, count)){
@@ -1014,6 +1026,7 @@ function backToMenuFromHelp(){
         if (normalizeWord(ref) !== normalizeWord(correctLabel)) out.add(ref);
       }
     }
+
     return Array.from(out).slice(0, count);
   }
 
