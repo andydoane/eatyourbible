@@ -997,16 +997,14 @@ function backToMenuFromHelp(){
   function getDecoysForPhase(phase, correctLabel, count){
     const out = new Set();
     if (phase === "words"){
-      const verseWords = state.words.map(normalizeWord);
-      for (const word of shuffle(FUN_DECOYS)){
+      for (const word of window.VerseGameShell.getFunWordDecoys(correctLabel, state.words, count)){
         if (out.size >= count) break;
-        const normalized = normalizeWord(word);
-        if (!verseWords.includes(normalized) && normalized !== normalizeWord(correctLabel)) out.add(word);
+        out.add(word);
       }
     } else if (phase === "book"){
-      for (const book of shuffle(BOOKS)){
+      for (const book of window.VerseGameShell.getBookDecoys(correctLabel, count)){
         if (out.size >= count) break;
-        if (normalizeWord(book) !== normalizeWord(correctLabel)) out.add(book);
+        out.add(book);
       }
     } else if (phase === "reference"){
       for (const ref of window.VerseGameShell.getReferenceDecoys(state.referenceMeta, selectedMode, count + 4)){
