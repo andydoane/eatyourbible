@@ -30,6 +30,8 @@ body{
 #app.vm-shell{
   min-height:100dvh;
   height:100dvh;
+  padding:0;
+  display:block;
   overflow:hidden;
 }
 button, input, select{
