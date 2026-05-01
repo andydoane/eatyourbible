@@ -562,8 +562,14 @@ function render(){
   }
 
   function verseWordDecoys(correct){
-    const pool = state.segments.filter(token => normalizeWord(token) !== normalizeWord(correct));
-    return uniqueLabels(shuffle(pool)).slice(0, 12);
+    return window.VerseGameShell.getVerseWordDecoys({
+      words: state.words,
+      correct,
+      targetIndex: state.progressIndex,
+      count: 12,
+      avoidNext: 2,
+      fallbackToFun: true
+    });
   }
 
   function bookDecoys(correct){
