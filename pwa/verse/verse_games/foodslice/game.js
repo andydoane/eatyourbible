@@ -78,7 +78,8 @@ const GENERIC_DECOYS = window.VerseGameShell.getFunDecoys();
   state.buildData = window.VerseGameShell.buildVerseSegments({
     verseText: ctx.verseText || "",
     book: state.verseMeta.book,
-    reference: state.verseMeta.reference
+    reference: state.verseMeta.reference,
+    buildArea: "large"
   });
 
   state.wordEntries = state.buildData.words.map((word) => ({ display: word }));
