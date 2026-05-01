@@ -218,10 +218,15 @@ const shuffle = window.VerseGameShell.shuffle;
   }
 
   function updatePhase(){
-    if (state.progressIndex < state.words.length) state.phase = "words";
-    else if (state.progressIndex < state.words.length + state.bookTokens.length) state.phase = "book";
-    else if (state.progressIndex < state.segments.length) state.phase = "reference";
-    else state.phase = "complete";
+    const phase = window.VerseGameShell.getPhaseForProgress({
+      progressIndex: state.progressIndex,
+      wordCount: state.words.length,
+      totalSegments: state.segments.length,
+      bookLabel: state.bookTokens[0] || "",
+      referenceLabel: state.referenceToken
+    });
+
+    state.phase = phase === "done" ? "complete" : phase;
   }
 
   function releaseSpawningBlobsSoon(delay = CORRECT_TAP_LOCK_MS){
