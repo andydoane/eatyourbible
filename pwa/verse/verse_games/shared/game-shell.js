@@ -393,6 +393,41 @@
     };
   }
 
+  function getPhaseForProgress({
+    progressIndex = 0,
+    wordCount = 0,
+    totalSegments = 0,
+    bookLabel = "",
+    referenceLabel = "",
+    hasBook = null,
+    hasReference = null
+  } = {}){
+    const index = Math.max(0, Number(progressIndex) || 0);
+    const words = Math.max(0, Number(wordCount) || 0);
+    const total = Math.max(words, Number(totalSegments) || 0);
+
+    const book = hasBook === null ? !!String(bookLabel || "").trim() : !!hasBook;
+    const reference = hasReference === null ? !!String(referenceLabel || "").trim() : !!hasReference;
+
+    if (index < words) return "words";
+
+    let cursor = words;
+
+    if (book){
+      if (index === cursor) return "book";
+      cursor += 1;
+    }
+
+    if (reference){
+      if (index === cursor) return "reference";
+      cursor += 1;
+    }
+
+    if (index < total) return "reference";
+
+    return "done";
+  }
+
   function titleCaseBookFromSlug(slug){
     const smallWords = new Set(["of", "the"]);
 
@@ -890,6 +925,7 @@ function renderCompleteScreen({
     getBuildLengthScore,
     getBuildSizeClass,
     buildVerseSegments,
+    getPhaseForProgress,
     titleCaseBookFromSlug,
     parseReferenceParts,
     getReferenceDecoys,
