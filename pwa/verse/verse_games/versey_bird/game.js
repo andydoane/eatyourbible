@@ -1389,13 +1389,11 @@ function getScrollSpeed(){
     const out = new Set();
 
     if (phase === "words"){
-      const verseWords = state.words.map(normalizeWord);
-      for (const word of shuffle(FUN_DECOYS)){
+      for (const word of window.VerseGameShell.getFunWordDecoys(correctLabel, state.words, count)){
         if (out.size >= count) break;
-        if (!verseWords.includes(normalizeWord(word)) && normalizeWord(word) !== normalizeWord(correctLabel)){
-          out.add(word);
-        }
+        out.add(word);
       }
+
       for (const word of shuffle(state.words)){
         if (out.size >= count) break;
         if (normalizeWord(word) !== normalizeWord(correctLabel)){
@@ -1405,9 +1403,9 @@ function getScrollSpeed(){
     }
 
     if (phase === "book"){
-      for (const book of shuffle(BOOKS)){
+      for (const book of window.VerseGameShell.getBookDecoys(correctLabel, count)){
         if (out.size >= count) break;
-        if (normalizeWord(book) !== normalizeWord(correctLabel)) out.add(book);
+        out.add(book);
       }
     }
 
