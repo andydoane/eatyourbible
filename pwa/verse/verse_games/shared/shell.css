@@ -272,6 +272,111 @@ body{
 }
 
 /* =========================================================
+   Shared in-game build area profiles
+   ========================================================= */
+
+/*
+  Usage in games:
+
+  Large build area:
+  <div class="game-build vm-build vm-build--large">
+    <div class="game-build-text vm-build-text is-small">...</div>
+  </div>
+
+  Compact build area:
+  <div class="game-build vm-build vm-build--compact">
+    <div class="game-build-text vm-build-text is-small">...</div>
+  </div>
+
+  The game-specific build class can still own colors, shadows,
+  border radius, animations, etc. These shared classes own sizing,
+  padding, centering, and font tiers.
+*/
+
+.vm-build{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.vm-build-text{
+  width: 100%;
+  height: auto;
+  max-height: 100%;
+  box-sizing: border-box;
+  font-weight: 900;
+  text-wrap: balance;
+}
+
+/* Large build area profile */
+
+.vm-build--large{
+  min-height: 112px;
+  padding: 16px 18px;
+}
+
+.vm-build--large .vm-build-text{
+  line-height: 1.14;
+}
+
+.vm-build--large .vm-build-text.is-normal{
+  font-size: clamp(24px, 5.8vw, 42px);
+}
+
+.vm-build--large .vm-build-text.is-medium{
+  font-size: clamp(21px, 4.9vw, 35px);
+  line-height: 1.12;
+}
+
+.vm-build--large .vm-build-text.is-small{
+  font-size: clamp(18px, 4.2vw, 30px);
+  line-height: 1.08;
+}
+
+/* Compact build area profile */
+
+.vm-build--compact{
+  min-height: 108px;
+  padding: 10px 12px;
+}
+
+.vm-build--compact .vm-build-text{
+  line-height: 1.12;
+}
+
+.vm-build--compact .vm-build-text.is-normal{
+  font-size: clamp(22px, 5vw, 38px);
+}
+
+.vm-build--compact .vm-build-text.is-medium{
+  font-size: clamp(18px, 4.15vw, 31px);
+  line-height: 1.1;
+}
+
+.vm-build--compact .vm-build-text.is-small{
+  font-size: clamp(15px, 3.75vw, 24px);
+  line-height: 1.06;
+}
+
+/* Short-screen adjustment */
+
+@media (max-height: 700px){
+  .vm-build--large{
+    min-height: 96px;
+    padding: 12px 14px;
+  }
+
+  .vm-build--compact{
+    min-height: 96px;
+    padding: 8px 10px;
+  }
+}
+
+
+/* =========================================================
    Shared external game How to Play overlay
    ========================================================= */
 
