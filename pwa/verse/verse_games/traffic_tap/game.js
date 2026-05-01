@@ -160,10 +160,10 @@ function startGame(mode){
   state.buildShakeUntil = 0;
   state.overlayMessage = "";
   state.overlayUntil = 0;
-  state.phase = "words";
   state.wordsBuilt = 0;
   state.bookBuilt = false;
   state.referenceBuilt = false;
+  updatePhaseFromProgress();
   state.mainItems = [];
   state.nextItemId = 1;
   state.lastSpawnAt = 0;
@@ -468,6 +468,24 @@ function recalcField(){
 function renderHud(){
   renderBuildArea();
   renderField();
+}
+
+function getLinearProgressIndex(){
+  return (
+    state.wordsBuilt +
+    (state.bookBuilt ? 1 : 0) +
+    (state.referenceBuilt ? 1 : 0)
+  );
+}
+
+function updatePhaseFromProgress(){
+  state.phase = window.VerseGameShell.getPhaseForProgress({
+    progressIndex: getLinearProgressIndex(),
+    wordCount: verseWords.length,
+    totalSegments: buildData.segments.length,
+    bookLabel: verseMeta.book,
+    referenceLabel: verseMeta.reference
+  });
 }
 
 function renderBuildArea(){
@@ -1317,19 +1335,23 @@ function chooseMainItem(itemId, tappedEl){
 
   const target = currentTargetLabel();
   if (item.label === target){
+    const previousPhase = state.phase;
+
     if (state.phase === "words"){
       state.wordsBuilt += 1;
-      if (state.wordsBuilt >= verseWords.length){
-        state.phase = "book";
-      }
     } else if (state.phase === "book"){
       state.bookBuilt = true;
-      state.phase = "reference";
     } else if (state.phase === "reference"){
       state.referenceBuilt = true;
+    }
+
+    updatePhaseFromProgress();
+
+    if (previousPhase === "reference" && state.phase === "done"){
       state.awaitingBonusStart = true;
       state.awaitingBonusItemId = item.id;
     }
+
     convertOtherCorrectCopies(item.road, target);
   }
 }
