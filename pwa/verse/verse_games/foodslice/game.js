@@ -820,10 +820,11 @@ function createSlicesFrom(item){
     if (selectedMode === "medium" || selectedMode === "hard"){
       wrongPool = getVerseDerivedDecoys(state.wordsBuilt, correct);
     } else {
-      wrongPool = GENERIC_DECOYS.filter((word) => {
-        const lower = normalizeWord(word);
-        return lower !== normalizeWord(correct) && !verseWordsLower.has(lower);
-      });
+      wrongPool = window.VerseGameShell.getFunWordDecoys(
+        correct,
+        state.wordEntries.map((entry) => entry.display),
+        12
+      );
     }
 
     const mustUseCorrect = state.wrongStreak >= 2;
@@ -873,8 +874,12 @@ function createSlicesFrom(item){
   }
 
   function makeBookChoices(correctBook){
-    const others = shuffle(BOOKS.filter((b) => b !== correctBook)).slice(0, 3);
-    return shuffle([correctBook, ...others]);
+    const correct = String(correctBook || "").trim();
+    if (!correct) return [];
+
+    const others = window.VerseGameShell.getBookDecoys(correct, 3);
+
+    return shuffle([correct, ...others]).slice(0, 4);
   }
 
   function makeReferenceChoices(referenceMeta, mode){
