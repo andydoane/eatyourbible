@@ -199,8 +199,8 @@ function startGame(mode){
     <div class="tt-shell">
       <div class="tt-stage">
         <div class="tt-build-wrap">
-          <div class="tt-build" id="ttBuild">
-            <div class="tt-build-text ${state.buildSizeClass}" id="ttBuildText"></div>
+          <div class="tt-build vm-build vm-build--${BUILD_AREA}" id="ttBuild">
+            <div class="tt-build-text vm-build-text ${state.buildSizeClass}" id="ttBuildText"></div>
           </div>
         </div>
         <div class="tt-field-wrap">
@@ -480,7 +480,7 @@ function renderBuildArea(){
   build.classList.toggle("is-pop", state.buildPopUntil > now);
 
   if (state.bonusShowScore){
-    text.className = "tt-build-text";
+    text.className = "tt-build-text vm-build-text";
     text.innerHTML = `
       <div class="tt-bonus-build">
         <div class="tt-bonus-build-copy">Bonus Complete!</div>
@@ -495,7 +495,7 @@ function renderBuildArea(){
   }
 
   if (state.bonusRound){
-    text.className = "tt-build-text";
+    text.className = "tt-build-text vm-build-text";
     text.innerHTML = `
       <div class="tt-bonus-build">
         <div class="tt-bonus-build-targetline">
@@ -513,7 +513,7 @@ function renderBuildArea(){
     return;
   }
 
-  text.className = `tt-build-text ${state.buildSizeClass} ${selectedMode === "hard" ? "is-hide-unbuilt" : ""}`;
+  text.className = `tt-build-text vm-build-text ${state.buildSizeClass} ${selectedMode === "hard" ? "is-hide-unbuilt" : ""}`;
 
   if (!state.bonusRound && !state.mainDone && state.wordsBuilt === 0 && !state.bookBuilt && !state.referenceBuilt){
     text.innerHTML = `<div class="tt-build-placeholder">Build the verse one word at a time.<br><strong>Tap the first word to start.</strong></div>`;
