@@ -1,210 +1,118 @@
 (async function(){
-  const app = document.getElementById("app");
-  const launch = window.VerseGameBridge.getLaunchParams();
-  const ctx = await window.VerseGameBridge.getVerseContext();
+const app = document.getElementById("app");
+const ctx = await window.VerseGameBridge.getVerseContext();
 
-  const GAME_ID = "versey_bird";
+const GAME_ID = "traffic_tap_external";
 
 const GAME_THEME = {
-  bg: "#333333",
-  accent: "#333333"
+  bg: "#a7cb6f",
+  accent: "#a7cb6f"
 };
 
-const HELP_OVERLAY_ID = "vbHelpOverlay";
-
-  const TARGET_COLORS = ["#ff5a51","#ffa351","#ffc751","#40b9c5","#7f66c6","#a7cb6f"];
-  const MEADOW_BIRDS = ["🐦","🐓","🐤","🦆","🦅","🐥"];
-  const AURA_EMOJIS = ["✨","⭐","💎","🌟","🔆","🔹","💥","🟢","🫧","🌈"];
-
-  const SPECIAL_THEMES = [
-    {
-      id: "penguin_ice",
-      playerEmoji: "🐧",
-      obstacleEmoji: "🧊",
-      prizeEmoji: "🐟",
-      sky: "#87c7ee",
-      cloudEmoji: "❄️",
-      groundTop1: "#b7e7ff",
-      groundTop2: "#8fd2f5",
-      groundBase1: "#75b8e0",
-      groundBase2: "#5aa1ca",
-      bandColor: "rgba(10, 54, 92, 0.12)"
-    },
-    {
-      id: "phoenix_desert",
-      playerEmoji: "🐦‍🔥",
-      obstacleEmoji: "🌵",
-      prizeEmoji: "🔥",
-      sky: "#e7b15e",
-      cloudEmoji: "☁️",
-      groundTop1: "#f2d28a",
-      groundTop2: "#dfbb69",
-      groundBase1: "#c99652",
-      groundBase2: "#b57f41",
-      bandColor: "rgba(96, 54, 16, 0.10)"
-    },
-    {
-      id: "ufo_moon",
-      playerEmoji: "🛸",
-      obstacleEmoji: "🪨",
-      prizeEmoji: "⭐",
-      sky: "#101318",
-      cloudEmoji: "⭐",
-      groundTop1: "#b9bcc4",
-      groundTop2: "#a4a8b2",
-      groundBase1: "#7c828f",
-      groundBase2: "#646a76",
-      bandColor: "rgba(0, 0, 0, 0.22)"
-    },
-    {
-      id: "butterfly_rainbow",
-      playerEmoji: "🦋",
-      obstacleEmoji: "🕸️",
-      prizeEmoji: "🌈",
-      sky: "#8dd7ff",
-      cloudEmoji: "✨",
-      groundTop1: "#ffd6f3",
-      groundTop2: "#ffd26a",
-      groundBase1: "#cba8ff",
-      groundBase2: "#8fd7a6",
-      bandColor: "rgba(110, 56, 145, 0.10)"
-    },
-    {
-      id: "bumble_honey",
-      playerEmoji: "🐝",
-      obstacleEmoji: "🍯",
-      prizeEmoji: "🌼",
-      sky: "#f7d661",
-      cloudEmoji: "☁️",
-      groundTop1: "#ffd95c",
-      groundTop2: "#f0bc2e",
-      groundBase1: "#c6862a",
-      groundBase2: "#9f6617",
-      bandColor: "rgba(86, 52, 0, 0.12)"
-    }
-  ];
-  
+const HELP_OVERLAY_ID = "ttHelpOverlay";
 
 const BOOKS = window.VerseGameShell.getBibleBookDecoys();
-  
+
 const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
+  
+const VEHICLES = ["🚗","🚕","🚙","🏎️","🚓","🚌","🚐","🚑","🚒","🚚","🛻"];
+const BONUS_RIVALS = ["🚗","🚕","🚙","🏎️","🚓","🚐","🚚"];
+const DECOY_CLASSES = ["is-deco1","is-deco2","is-deco3","is-deco4","is-deco5"];
+const SPAWN_PATTERNS = [
+  ["upper"],
+  ["lower"],
+  ["upper","lower"],
+  ["lower","upper"],
+  ["upper","upper","lower"],
+  ["lower","lower","upper"]
+];
 
+const CRASH_CLOUD_SVG = `
+<svg viewBox="0 0 26.458333 26.458333" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <path fill="currentColor" d="M 12.949771,1.5464282 A 6.0017493,5.3230522 7.1160496 0 0 6.9820601,6.4190471 5.3405872,4.7400094 7.154063 0 0 6.8563886,6.4134999 5.3405872,4.7400094 7.154063 0 0 1.5243277,11.020646 5.3405872,4.7400094 7.154063 0 0 2.4259083,13.677302 4.0181559,3.5662928 7.1540647 0 0 0.66145837,16.583588 4.0181559,3.5662928 7.1540647 0 0 4.6728467,20.261811 4.0181559,3.5662928 7.1540647 0 0 5.1732885,20.243 a 5.3405872,4.7400094 7.154063 0 0 5.2883005,4.342428 5.3405872,4.7400094 7.154063 0 0 3.656255,-1.210431 4.0181559,3.5662928 7.1540647 0 0 3.300558,1.639798 4.0181559,3.5662928 7.1540647 0 0 4.011389,-3.466536 4.0181559,3.5662928 7.1540647 0 0 -0.416848,-1.594767 5.3405872,4.7400094 7.154063 0 0 4.783932,-4.586787 5.3405872,4.7400094 7.154063 0 0 -1.9322,-3.706541 4.0181559,3.5662928 7.1540647 0 0 0.764128,-2.0624453 4.0181559,3.5662928 7.1540647 0 0 -4.011389,-3.6776624 4.0181559,3.5662928 7.1540647 0 0 -1.744813,0.3148283 6.0017493,5.3230522 7.1160496 0 0 -5.92283,-4.6884523 z"/>
+</svg>`;
 
-  let selectedMode = null;
-  let completed = false;
-  let muted = false;
+let selectedMode = null;
+let muted = false;
+let completionMarked = false;
+let alreadyCompletedForMode = false;
+let resizeBound = false;
+let endScreenUnlockTimer = 0;
+let itemsClickBound = false;
 
-  const state = {
-    running: false,
-    scale: 1,
-    rafId: 0,
-    paused: false,
-    pauseReason: "",
-    spawnCooldown: 0,
-    birdEmoji: "",
-    birdX: 0,
-    birdY: 0,
-    birdVY: 0,
-    birdRadius: 30,
-    gravity: 1180,
-    flapVelocity: -410,
-    baseGravity: 1180,
-    baseFlapVelocity: -410,
-    fieldWidth: 0,
-    fieldHeight: 0,
-    groundHeight: 74,
-    clouds: [],
-    particles: [],
-    trail: [],
-    targets: [],
-    obstacles: [],
-    obstacleSpawnTimer: 0,
-    nextObstacleId: 1,
-    prizes: [],
-    prizeSpawnTimer: 0,
-    nextPrizeId: 1,
-    prizeAuraUntil: 0,
-    birdSpinUntil: 0,
-    theme: null,
-    auraEmojis: [],
-    groundBands: [],
-    nextGroundBandId: 1,
-    nextTargetId: 1,
-    words: tokenizeVerse(ctx.verseText),
-    bookLabel: "",
-    referenceLabel: "",
-    referenceMeta: null,
-    segments: [],
-    buildSizeClass: "is-normal",
-    progressIndex: 0,
-    streak: 0,
-    flashUntil: 0,
-    shakeUntil: 0,
-    successFlashUntil: 0,
-    inputLockedUntil: 0,
-    lastTs: 0
-  };
+const verseMeta = parseVerseMeta(ctx.verseId || "", ctx.verseRef || "");
+const buildData = window.VerseGameShell.buildVerseSegments({
+  verseText: ctx.verseText || "",
+  book: verseMeta.book,
+  reference: verseMeta.reference
+});
+const buildTokens = tokenizeForBuild(ctx.verseText || "");
+const verseWords = buildData.words;
 
-  setupReferenceSegments();
-  renderIntro();
+const state = {
+  running:false,
+  paused:false,
+  pauseReason:"",
+  lastTs:0,
+  rafId:0,
+  fieldWidth:0,
+  fieldHeight:0,
+  roadHeight:0,
+  gapHeight:0,
+  mainDone:false,
+  bonusRound:false,
+  bonusIntro:false,
+  bonusIntroUntil:0,
+  buildPopUntil:0,
+  buildShakeUntil:0,
+  overlayMessage:"",
+  overlayUntil:0,
+  buildSizeClass: buildData.buildSizeClass,
+  phase:"words",
+  wordsBuilt:0,
+  bookBuilt:false,
+  referenceBuilt:false,
+  mainItems:[],
+  nextItemId:1,
+  lastSpawnAt:0,
+  nextSpawnDelay:860,
+  totalSpawned:0,
+  lastCorrectSpawnAt:0,
+  roadCrashUntil:[0,0],
+  effectPopups:[],
+  recentCorrectConverted:false,
+  bonusTargetEmoji:"",
+  bonusTargetLabel:"",
+  bonusTimeLeft:0,
+  bonusEndsAt:0,
+  bonusScore:0,
+  bonusCorrectHits:0,
+  bonusWrongHits:0,
+  bonusStreak:0,
+  bonusBestStreak:0,
+  bonusItems:[],
+  bonusNextSpawnAt:0,
+  bonusRoundDuration:20000,
+  bonusIntroTarget:"",
+  debugHitboxes:false,
+  bonusEnding:false,
+  bonusEndingUntil:0,
+  bonusStopSpawn:false,
+  bonusShowScore:false,
+  awaitingBonusStart:false,
+  awaitingBonusItemId:0
+};
 
-function introHelpHtml(){
-  return `
-    Tap or click to flap.<br><br>
-    Hit the next correct word.<br>
-    Wrong hits and missed correct words reset your streak, but they do not end the run.<br><br>
-    After the verse is built, collect the book, then the reference.
-  `;
-}
-
-function modeHelpHtml(){
-  return `
-    Easy: slower speed, fewer decoys, bigger targets.<br><br>
-    Medium: balanced.<br><br>
-    Hard: faster speed, more decoys, smaller targets.
-  `;
-}
-
-function gameHelpHtml(){
-  return `
-    Tap or click to flap.<br><br>
-    Touch the next correct item.<br><br>
-    Wrong hits and missed correct words reset your streak only.<br><br>
-    Build the whole verse, then collect the book, then the reference.
-  `;
-}
-
-  function createMeadowTheme(){
-    const bird = MEADOW_BIRDS[Math.floor(Math.random() * MEADOW_BIRDS.length)];
-    return {
-      id: "meadow",
-      playerEmoji: bird,
-      obstacleEmoji: "🪨",
-      prizeEmoji: "🐣",
-      sky: "#40b9c5",
-      cloudEmoji: "☁️",
-      groundTop1: "#b7d97b",
-      groundTop2: "#a7cb6f",
-      groundBase1: "#9b6a3c",
-      groundBase2: "#8c5d33",
-      bandColor: "rgba(0, 0, 0, 0.08)"
-    };
-  }
-
-  function pickRandomTheme(){
-    const pool = [createMeadowTheme(), createMeadowTheme(), createMeadowTheme(), ...SPECIAL_THEMES];
-    const chosen = pool[Math.floor(Math.random() * pool.length)];
-    return { ...chosen };
-  }
+renderIntro();
 
 function renderIntro(){
   stopLoop();
 
   window.VerseGameShell.renderTitleScreen({
     app,
-    title: "Versey Bird",
-    icon: "🐤",
-    helpHtml: introHelpHtml(),
+    title: "Traffic Tap",
+    icon: "🚗",
+    helpHtml: helpHtml(),
     helpOverlayId: HELP_OVERLAY_ID,
     theme: GAME_THEME,
     backLabel: "Back to Practice Games",
@@ -212,7 +120,6 @@ function renderIntro(){
     onStart: renderModeSelect
   });
 }
-  
 
 function renderModeSelect(){
   stopLoop();
@@ -221,118 +128,151 @@ function renderModeSelect(){
     app,
     title: "Choose Your Difficulty",
     icon: "🥉🥈🥇",
-    helpHtml: modeHelpHtml(),
+    helpHtml: helpHtml(),
     helpOverlayId: HELP_OVERLAY_ID,
     theme: GAME_THEME,
-    backLabel: "Back to Versey Bird title",
+    backLabel: "Back to Traffic Tap title",
     onBack: renderIntro,
     onSelect: startGame
   });
 }
 
-  function startGame(mode){
-    selectedMode = mode;
-    completed = false;
-    state.theme = pickRandomTheme();
-    state.birdEmoji = state.theme.playerEmoji;
-    state.auraEmojis = shuffle(AURA_EMOJIS).slice(0, 3);
-    state.groundBands = [];
-    state.nextGroundBandId = 1;
+function startGame(mode){
+  selectedMode = mode;
+  itemsClickBound = false;
+  completionMarked = false;
+  alreadyCompletedForMode = !!window.VerseGameBridge.wasAlreadyCompleted?.(ctx.verseId, GAME_ID, selectedMode);
 
-    state.running = true;
-    state.paused = false;
-    state.pauseReason = "";
-    state.progressIndex = 0;
-    state.streak = 0;
-    state.targets = [];
-    state.trail = [];
-    state.particles = [];
-    state.clouds = [];
-    state.obstacles = [];
-    state.obstacleSpawnTimer = 1.2;
-    state.nextObstacleId = 1;
-    state.prizes = [];
-    state.prizeSpawnTimer = 3.2;
-    state.nextPrizeId = 1;
-    state.prizeAuraUntil = 0;
-    state.birdSpinUntil = 0;
-    state.nextTargetId = 1;
-    state.spawnCooldown = 0;
-    state.lastTs = 0;
-    state.flashUntil = 0;
-    state.shakeUntil = 0;
-    state.successFlashUntil = 0;
-    state.inputLockedUntil = 0;
+  state.running = true;
+  state.paused = false;
+  state.pauseReason = "";
+  state.lastTs = 0;
+  state.mainDone = false;
+  state.bonusRound = false;
+  state.bonusIntro = false;
+  state.bonusIntroUntil = 0;
+  state.buildPopUntil = 0;
+  state.buildShakeUntil = 0;
+  state.overlayMessage = "";
+  state.overlayUntil = 0;
+  state.phase = "words";
+  state.wordsBuilt = 0;
+  state.bookBuilt = false;
+  state.referenceBuilt = false;
+  state.mainItems = [];
+  state.nextItemId = 1;
+  state.lastSpawnAt = 0;
+  state.nextSpawnDelay = randomSpawnDelay();
+  state.totalSpawned = 0;
+  state.lastCorrectSpawnAt = 0;
+  state.roadCrashUntil = [0,0];
+  state.effectPopups = [];
+  state.recentCorrectConverted = false;
+  state.bonusTargetEmoji = "";
+  state.bonusTargetLabel = "";
+  state.bonusTimeLeft = 0;
+  state.bonusEndsAt = 0;
+  state.bonusScore = 0;
+  state.bonusCorrectHits = 0;
+  state.bonusWrongHits = 0;
+  state.bonusStreak = 0;
+  state.bonusBestStreak = 0;
+  state.bonusItems = [];
+  state.bonusNextSpawnAt = 0;
+  state.bonusRoundDuration = 20000;
+  state.bonusIntroTarget = "";
+  state.bonusShowScore = false;
+  state.bonusEnding = false;
+  state.bonusEndingUntil = 0;
+  state.bonusStopSpawn = false;
+  state.awaitingBonusStart = false;
+  state.awaitingBonusItemId = 0;
 
-    app.innerHTML = `
-      <div class="vb-root">
-        <div class="vb-stage">
-          <div class="vb-build-wrap">
-            <div class="vb-build" id="vbBuild">
-              <div class="vb-build-text" id="vbBuildText"></div>
-            </div>
+  itemsClickBound = false;
+
+  app.innerHTML = `
+    <div class="tt-shell">
+      <div class="tt-stage">
+        <div class="tt-build-wrap">
+          <div class="tt-build" id="ttBuild">
+            <div class="tt-build-text ${state.buildSizeClass}" id="ttBuildText"></div>
           </div>
-
-          <div class="vb-field-wrap">
-              <div class="vb-field" id="vbField" style="background:${state.theme.sky};">
-              <div class="vb-overlay-pills">
-                <button class="vb-pill vb-menu-pill" id="vbMenuPill" aria-label="Game Menu">☰</button>
-                <div class="vb-pill" id="vbStreakPill">Streak: 0</div>
+        </div>
+        <div class="tt-field-wrap">
+          <div class="tt-field" id="ttField">
+            <div class="tt-roads" id="ttRoads"></div>
+            <div class="tt-road-mark-layer" id="ttRoadMarks"></div>
+            <div class="tt-items-layer" id="ttItemsLayer"></div>
+            <div class="tt-effects-layer" id="ttEffectsLayer"></div>
+            <div class="tt-bonus-layer" id="ttBonusLayer"></div>
+            <div class="tt-overlay-msg" id="ttOverlay"></div>
+            <div class="tt-bonus-intro-overlay" id="ttBonusIntroOverlay" aria-hidden="true">
+              <div class="tt-bonus-intro-burst"></div>
+              <div class="tt-bonus-intro-content">
+                <div class="tt-bonus-intro-title">BONUS ROUND!</div>
+                <div class="tt-bonus-intro-targetline">
+                  <span class="tt-bonus-intro-bullseye">🎯</span>
+                  <span class="tt-bonus-intro-equals">=</span>
+                  <span class="tt-bonus-intro-target" id="ttBonusIntroTarget">🚗</span>
+                </div>
               </div>
-
-              <div class="vb-clouds" id="vbClouds"></div>
-              <div class="vb-trail" id="vbTrail"></div>
-              <div class="vb-particles" id="vbParticles"></div>
-              <div class="vb-targets" id="vbTargets"></div>
-              <div class="vb-obstacles" id="vbObstacles"></div>
-              <div class="vb-prizes" id="vbPrizes"></div>
-              <div class="vb-aura" id="vbAura"></div>
-              <div class="vb-bird" id="vbBird">${state.birdEmoji}</div>
-              <div class="vb-flash" id="vbFlash"></div>
-
-              <div class="vb-ground">
-                <div
-                  class="vb-grass-top"
-                  style="background:linear-gradient(to bottom, ${state.theme.groundTop1} 0%, ${state.theme.groundTop2} 100%);"
-                ></div>
-                <div class="vb-ground-bands" id="vbGroundBands"></div>
-                <div
-                  class="vb-dirt"
-                  style="background:linear-gradient(to bottom, ${state.theme.groundBase1} 0%, ${state.theme.groundBase2} 100%);"
-                ></div>
-              </div>
+            </div>
+            <div class="tt-controls-layer">
+              <button class="tt-corner-pill tt-corner-left" id="ttMenuPill" type="button" aria-label="Game menu">☰</button>
             </div>
           </div>
         </div>
-
-        ${renderHelpOverlay(gameHelpHtml())}
-        ${renderGameMenuOverlay()}
       </div>
-    `;
+      ${renderHelpOverlay(helpHtml())}
+      ${renderGameMenuOverlay()}
+    </div>
+  `;
 
-    wireCommonNav();
-    wireGameInput();
-    updateBuildText();
-    recalcField();
-    seedGroundBands();
-    resetBird();
-    seedClouds();
-    spawnBatch();
-    startLoop();
+  wireCommonNav();
+  wireGameInput();
+  recalcField();
+  applyDebugHitboxes();
+  renderHud();
+  startLoop();
+}
+
+async function completeGameAndRenderEndScreen(){
+  let reward = null;
+
+  if (!completionMarked && ctx?.verseId && GAME_ID && selectedMode){
+    completionMarked = true;
+
+    try {
+      reward = await window.VerseGameBridge.markCompleted({
+        verseId: ctx.verseId,
+        gameId: GAME_ID,
+        mode: selectedMode
+      });
+    } catch (err) {
+      console.warn("Could not mark Traffic Tap complete", err);
+    }
   }
 
-function renderComplete(){
+  renderEndScreen(reward);
+}
+
+function renderEndScreen(reward){
   stopLoop();
+
+  window.clearTimeout(endScreenUnlockTimer);
+  endScreenUnlockTimer = 0;
 
   const doneText = selectedMode
     ? `${capitalize(selectedMode)} Complete!`
     : "Complete!";
 
+  const statsText = `Bonus score: ${state.bonusScore} · Best streak: ${state.bonusBestStreak}`;
+
   window.VerseGameShell.renderCompleteScreen({
     app,
-    icon: "🐤",
+    icon: "🏁",
     title: doneText,
-    statsText: `Finished ${ctx.verseRef || "the verse"}`,
+    statsText,
     theme: GAME_THEME,
     playAgainText: "Play Again",
     moreGamesText: "More Games",
@@ -341,7 +281,6 @@ function renderComplete(){
     onMoreGames: () => window.VerseGameBridge.exitGame()
   });
 }
-
 
 function renderHelpOverlay(body){
   return window.VerseGameShell.helpOverlayHtml({
@@ -352,28 +291,37 @@ function renderHelpOverlay(body){
   });
 }
 
-  function renderGameMenuOverlay(){
-    return `
-      <div class="vb-help-overlay" id="vbGameMenuOverlay" aria-hidden="true">
-        <div class="vb-help-dialog vb-game-menu-dialog">
-          <div class="vb-help-title vb-game-menu-title">Game Menu</div>
-          <div class="vb-game-menu-actions">
-            <button class="vm-btn vb-game-menu-btn" id="vbMenuHowToBtn">How to Play</button>
-            <button class="vm-btn vb-game-menu-btn" id="vbMenuMuteBtn">${muted ? "Unmute" : "Mute"}</button>
-            <button class="vm-btn vb-game-menu-btn" id="vbMenuExitBtn">Exit Game</button>
-            <button class="vm-btn vb-game-menu-btn" id="vbMenuCloseBtn">Close</button>
-          </div>
+function renderGameMenuOverlay(){
+  return `
+    <div class="tt-help-overlay" id="ttGameMenuOverlay" aria-hidden="true">
+      <div class="tt-help-dialog">
+        <div class="tt-help-title">Game Menu</div>
+        <div class="tt-game-menu-actions">
+          <button class="vm-btn" id="ttMenuHowToBtn">How to Play</button>
+          <button class="vm-btn" id="ttMenuMuteBtn">${muted ? "Unmute" : "Mute"}</button>
+          <button class="vm-btn" id="ttMenuExitBtn">Exit Game</button>
+          <button class="vm-btn" id="ttMenuCloseBtn">Close</button>
         </div>
       </div>
-    `;
-  }
+    </div>
+  `;
+}
 
-  function wireCommonNav(){
-    const menuOverlay = document.getElementById("vbGameMenuOverlay");
-    const menuHowToBtn = document.getElementById("vbMenuHowToBtn");
-    const menuMuteBtn = document.getElementById("vbMenuMuteBtn");
-    const menuExitBtn = document.getElementById("vbMenuExitBtn");
-    const menuCloseBtn = document.getElementById("vbMenuCloseBtn");
+function helpHtml(){
+  return `Tap the correct moving word to build the verse in order.<br><br>
+    Easy uses fun decoys and steady speed.<br><br>
+    Medium and hard use words from the verse as decoys. Traffic speeds up as you build, with a stronger ramp on hard.<br><br>
+    Wrong taps crash only that road, clearing the lane but keeping your progress.<br><br>
+    After the verse, tap the correct book and then the correct chapter and verse. Then enjoy a quick bonus car hunt.`;
+}
+
+function wireCommonNav(){
+  const menuOverlay = document.getElementById("ttGameMenuOverlay");
+  const menuHowToBtn = document.getElementById("ttMenuHowToBtn");
+  const menuMuteBtn = document.getElementById("ttMenuMuteBtn");
+  const menuExitBtn = document.getElementById("ttMenuExitBtn");
+  const menuCloseBtn = document.getElementById("ttMenuCloseBtn");
+
 
 window.VerseGameShell.wireHelp({
   id: HELP_OVERLAY_ID,
@@ -382,63 +330,91 @@ window.VerseGameShell.wireHelp({
   onClose: () => setPaused(false, "")
 });
 
-    if (menuHowToBtn){
-      menuHowToBtn.onclick = () => {
-        openHelpFromMenu();
-      };
-    }
+  if (menuHowToBtn) menuHowToBtn.onclick = openHelpFromMenu;
+  if (menuMuteBtn) menuMuteBtn.onclick = () => toggleMute(null, menuMuteBtn);
+  if (menuExitBtn) menuExitBtn.onclick = () => window.VerseGameBridge.exitGame();
+  if (menuCloseBtn) menuCloseBtn.onclick = closeGameMenu;
+  if (menuOverlay) menuOverlay.onclick = (e) => {
+    if (e.target === menuOverlay) closeGameMenu();
+  };
+}
 
-    if (menuMuteBtn){
-      menuMuteBtn.onclick = () => {
-        muted = !muted;
-        menuMuteBtn.textContent = muted ? "Unmute" : "Mute";
-      };
-    }
+function toggleMute(muteBtn, menuMuteBtn){
+  muted = !muted;
+  if (muteBtn) muteBtn.textContent = muted ? "🔇" : "🔊";
+  if (menuMuteBtn) menuMuteBtn.textContent = muted ? "Unmute" : "Mute";
+}
 
-    if (menuExitBtn){
-      menuExitBtn.onclick = () => window.VerseGameBridge.exitGame();
-    }
-
-    if (menuCloseBtn){
-      menuCloseBtn.onclick = () => closeGameMenu();
-    }
-
-    if (menuOverlay){
-      menuOverlay.onclick = (e) => {
-        if (e.target === menuOverlay) closeGameMenu();
-      };
-    }
+function wireGameInput(){
+  if (!resizeBound){
+    window.addEventListener("resize", recalcField);
+    resizeBound = true;
   }
 
-  function setPaused(paused, reason = ""){
-    state.paused = paused;
-    state.pauseReason = paused ? reason : "";
-    if (!paused){
-      state.lastTs = performance.now();
-    }
+  const menuPill = document.getElementById("ttMenuPill");
+  if (menuPill){
+    const open = (e) => {
+      if (e){
+        if (e.cancelable) e.preventDefault();
+        e.stopPropagation();
+      }
+      openGameMenu();
+    };
+    menuPill.onclick = open;
+    menuPill.onpointerdown = open;
+    menuPill.ontouchstart = open;
   }
 
-  function openGameMenu(){
-    const menuOverlay = document.getElementById("vbGameMenuOverlay");
-    if (menuOverlay){
-      setPaused(true, "menu");
-      menuOverlay.classList.add("is-open");
-    }
+
+  const itemsLayer = document.getElementById("ttItemsLayer");
+  if (itemsLayer && !itemsClickBound){
+    const activateHit = (e) => {
+      const hit = e.target.closest(".tt-hit-btn");
+      if (!hit) return;
+      if (e.cancelable) e.preventDefault();
+      e.stopPropagation();
+      const id = Number(hit.dataset.itemId);
+      if (!Number.isFinite(id)) return;
+      if (state.bonusRound) chooseBonusItem(id, hit);
+      else chooseMainItem(id, hit);
+    };
+    itemsLayer.addEventListener("pointerdown", activateHit);
+    itemsClickBound = true;
   }
 
-  function closeGameMenu(){
-    const menuOverlay = document.getElementById("vbGameMenuOverlay");
-    if (menuOverlay){
-      menuOverlay.classList.remove("is-open");
+  window.onkeydown = (e) => {
+
+    if (e.key === "d" || e.key === "D"){
+      state.debugHitboxes = !state.debugHitboxes;
+      applyDebugHitboxes();
+      return;
     }
-    const helpOverlay = document.getElementById("vbHelpOverlay");
-    if (!helpOverlay || !helpOverlay.classList.contains("is-open")){
-      setPaused(false, "");
+
+    if (e.key === "Escape" && state.running){
+      if (document.getElementById("ttGameMenuOverlay")?.classList.contains("is-open")) closeGameMenu();
+      else openGameMenu();
     }
+    if (!state.bonusRound) return;
+  };
+}
+
+function openGameMenu(){
+  const overlay = document.getElementById("ttGameMenuOverlay");
+  if (overlay){
+    setPaused(true, "menu");
+    overlay.classList.add("is-open");
   }
+}
+
+function closeGameMenu(){
+  const overlay = document.getElementById("ttGameMenuOverlay");
+  if (overlay) overlay.classList.remove("is-open");
+  const helpOverlay = document.getElementById("ttHelpOverlay");
+  if (!helpOverlay || !helpOverlay.classList.contains("is-open")) setPaused(false, "");
+}
 
 function openHelpFromMenu(){
-  const menuOverlay = document.getElementById("vbGameMenuOverlay");
+  const menuOverlay = document.getElementById("ttGameMenuOverlay");
 
   if (menuOverlay) menuOverlay.classList.remove("is-open");
 
@@ -455,993 +431,1210 @@ function closeHelpOverlay(){
 function backToMenuFromHelp(){
   window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
 
-  const menuOverlay = document.getElementById("vbGameMenuOverlay");
+  const menuOverlay = document.getElementById("ttGameMenuOverlay");
   if (menuOverlay) menuOverlay.classList.add("is-open");
 
   setPaused(true, "menu");
 }
 
-  function wireGameInput(){
-    const field = document.getElementById("vbField");
-    const flapHandler = (e) => {
-      if (e.target && e.target.closest && e.target.closest("#vbMenuPill")) return;
-      e.preventDefault();
-      if (state.paused) return;
-      flap();
-    };
-    field.addEventListener("pointerdown", flapHandler, { passive: false });
-    field.addEventListener("touchstart", flapHandler, { passive: false });
-    window.addEventListener("resize", recalcField);
+function setPaused(paused, reason=""){
+  state.paused = paused;
+  state.pauseReason = paused ? reason : "";
+
+  const field = document.getElementById("ttField");
+  if (field){
+    field.classList.toggle("is-paused", !!paused);
   }
 
-  function flap(){
-    if (!state.running || state.paused) return;
-    if (performance.now() < state.inputLockedUntil) return;
-    state.birdVY = state.flapVelocity;
-    createPuffs();
-  }
-
-  function startLoop(){
-    if (state.rafId) cancelAnimationFrame(state.rafId);
-    state.rafId = 0;
-    state.running = true;
-    state.lastTs = 0;
-    state.rafId = requestAnimationFrame(loop);
-  }
-  
-
-  function stopLoop(){
-    if (state.rafId) cancelAnimationFrame(state.rafId);
-    state.rafId = 0;
-    state.running = false;
-  }
-
-  function loop(ts){
-    if (!state.running) return;
-    if (!state.lastTs) state.lastTs = ts;
-    const dt = Math.min(0.032, (ts - state.lastTs) / 1000);
-    state.lastTs = ts;
-
-    recalcField();
-
-    if (!state.paused){
-      updateBird(dt);
-      updateClouds(dt);
-      updateParticles(dt);
-      updateTrail(dt);
-      updateGroundBands(dt);
-      updateObstacles(dt, ts);
-      updatePrizes(dt, ts);
-      updateTargets(dt, ts);
-      maybeSpawnBatch(dt);
-    }
-
-    renderFrame(ts);
-    state.rafId = requestAnimationFrame(loop);
-  }
+  if (!paused) state.lastTs = performance.now();
+}
 
 function recalcField(){
-  const field = document.getElementById("vbField");
+  const field = document.getElementById("ttField");
   if (!field) return;
-
   const rect = field.getBoundingClientRect();
   state.fieldWidth = rect.width;
   state.fieldHeight = rect.height;
-
-  // Scale factor: 1 → 1.35 based on width
-  const t = clamp((rect.width - 360) / (840 - 360), 0, 1);
-  state.scale = 1 + t * 0.35;
-
-  state.birdX = Math.max(70, rect.width * 0.2);
-  state.gravity = state.baseGravity * state.scale;
-  state.flapVelocity = state.baseFlapVelocity * state.scale;
+  state.gapHeight = clamp(rect.height * 0.06, 12, 28);
+  state.roadHeight = Math.max(110, (rect.height - state.gapHeight) / 2);
+  renderHud();
 }
 
-  function resetBird(){
-    state.birdY = state.fieldHeight * 0.48;
-    state.birdVY = 0;
-  }
-
-  function updateBird(dt){
-    state.birdVY += state.gravity * dt;
-    state.birdY += state.birdVY * dt;
-
-    const topBound = 18;
-    const groundTop = state.fieldHeight - state.groundHeight;
-
-    if (state.birdY < topBound){
-      state.birdY = topBound;
-      state.birdVY = 0;
-    }
-
-    if (state.birdY + state.birdRadius > groundTop){
-      state.birdY = groundTop - state.birdRadius;
-      if (state.birdVY > 0) state.birdVY *= 0.12;
-    }
-  }
-
-  function updateClouds(dt){
-    for (const cloud of state.clouds){
-      cloud.x -= cloud.speed * dt;
-    }
-    state.clouds = state.clouds.filter(cloud => cloud.x > -120);
-
-    while (state.clouds.length < 5){
-      state.clouds.push(makeCloud(state.clouds.length === 0));
-    }
-  }
-
-  function seedClouds(){
-    state.clouds = [];
-    for (let i = 0; i < 5; i++){
-      state.clouds.push(makeCloud(true, i));
-    }
-  }
-
-  function makeCloud(seed = false, index = 0){
-    const size = 22 + Math.random() * 34;
-    return {
-      id: Math.random().toString(36).slice(2),
-      x: seed ? state.fieldWidth * (0.18 + index * 0.22) : state.fieldWidth + Math.random() * 120,
-      y: 34 + Math.random() * Math.max(80, state.fieldHeight * 0.42),
-      size,
-      opacity: 0.22 + Math.random() * 0.35,
-      speed: 10 + Math.random() * 16
-    };
-  }
-
-  function createPuffs(){
-    const auraMode = performance.now() < state.prizeAuraUntil;
-    const puffCount = auraMode ? 6 : 4;
-
-    for (let i = 0; i < puffCount; i++){
-      state.particles.push({
-        id: Math.random().toString(36).slice(2),
-        type: auraMode ? "auraPuff" : "puff",
-        x: state.birdX - 18 + Math.random() * 8,
-        y: state.birdY + 8 + (Math.random() * 12 - 6),
-        vx: -70 - Math.random() * 40,
-        vy: -10 + Math.random() * 20,
-        life: auraMode ? (0.52 + Math.random() * 0.18) : (0.42 + Math.random() * 0.16),
-        age: 0,
-        size: auraMode ? (12 + Math.random() * 14) : (8 + Math.random() * 12)
-      });
-    }
-  }
-
-  function updateParticles(dt){
-    for (const p of state.particles){
-      p.age += dt;
-      p.x += p.vx * dt;
-      p.y += p.vy * dt;
-      p.vx *= 0.98;
-      p.vy *= 0.98;
-    }
-    state.particles = state.particles.filter(p => p.age < p.life);
-  }
-
-  function updateTrail(dt){
-    const tier = getTrailTier();
-    if (tier > 0){
-      state.trail.push({
-        id: Math.random().toString(36).slice(2),
-        x: state.birdX - 16,
-        y: state.birdY + 4,
-        age: 0,
-        life: 0.42 + tier * 0.07,
-        size: 12 + tier * 3,
-        color: getTrailColor()
-      });
-    }
-
-    for (const t of state.trail){
-      t.age += dt;
-      t.x -= (90 + tier * 14) * dt;
-    }
-    state.trail = state.trail.filter(t => t.age < t.life);
-  }
-
-  function getTrailTier(){
-    if (state.streak < 5) return 0;
-    return 1 + Math.floor((state.streak - 5) / 2);
-  }
-
-  function getTrailColor(){
-    const tier = getTrailTier();
-    const rainbow = ["#ff5a51","#ffa351","#ffc751","#a7cb6f","#40b9c5","#7f66c6"];
-    if (tier <= 1) return "#ffc751";
-    if (tier === 2) return "#ffa351";
-    if (tier === 3) return "#ff5a51";
-    return rainbow[Math.floor(Math.random() * rainbow.length)];
-  }
-
-  function maybeSpawnBatch(dt){
-    if (state.targets.length > 0) return;
-    state.spawnCooldown = Math.max(0, state.spawnCooldown - dt);
-    if (state.spawnCooldown <= 0 && getCurrentPhase() !== "done"){
-      spawnBatch();
-    }
-  }
-
-  function spawnBatch(){
-    const phase = getCurrentPhase();
-    if (phase === "done") return;
-
-    const correctLabel = getCurrentCorrectLabel();
-    const decoys = getDecoysForPhase(phase, correctLabel, getDecoyCount());
-    const shouldSpawnCorrect = Math.random() < getCorrectSpawnChance();
-    const label = (shouldSpawnCorrect || decoys.length === 0)
-      ? correctLabel
-      : decoys[Math.floor(Math.random() * decoys.length)];
-
-    const laneY = pickSingleLaneY();
-    const circleSize = getCircleSize();
-
-    state.targets = [{
-      id: state.nextTargetId++,
-      x: state.fieldWidth + 90,
-      y: laneY,
-      label,
-      correct: label === correctLabel,
-      color: TARGET_COLORS[Math.floor(Math.random() * TARGET_COLORS.length)],
-      speed: getScrollSpeed(),
-      circleSize
-    }];
-  }
-
-  function updateTargets(dt, ts){
-    const groundTop = state.fieldHeight - state.groundHeight;
-
-    for (const target of state.targets){
-      target.x -= target.speed * dt;
-    }
-
-    let missedCorrect = false;
-
-    for (const target of state.targets){
-      if (target.x < -90){
-        if (target.correct) missedCorrect = true;
-      }
-    }
-
-    state.targets = state.targets.filter(target => target.x > -90);
-
-    if (missedCorrect){
-      registerMistake(ts);
-      state.targets = [];
-      state.spawnCooldown = 0.22;
-      return;
-    }
-
-    for (const target of state.targets){
-      const dx = target.x - state.birdX;
-      const dy = (target.y - 12) - state.birdY;
-      const dist = Math.hypot(dx, dy);
-
-      if (dist <= state.birdRadius + (target.circleSize * 0.5)){
-        if (target.correct){
-          registerSuccess(ts, target.x, target.y - 12);
-          handleCorrect();
-        } else {
-          registerMistake(ts);
-          state.targets = [];
-          state.spawnCooldown = 0.18;
-        }
-        return;
-      }
-
-      if (target.y > groundTop - 8){
-        target.y = groundTop - 8;
-      }
-    }
-  }
-
-  function getGroundBandWidth(){
-    return 22;
-  }
-
-  function getGroundBandGap(){
-    return getGroundBandWidth();
-  }
-
-  function getGroundBandSpeed(){
-    return getScrollSpeed();
-  }
-
-  function seedGroundBands(){
-    state.groundBands = [];
-    const bandWidth = getGroundBandWidth();
-    const spacing = bandWidth + getGroundBandGap();
-
-    for (let x = -spacing; x < state.fieldWidth + spacing; x += spacing){
-      state.groundBands.push({
-        id: state.nextGroundBandId++,
-        x,
-        width: bandWidth
-      });
-    }
-  }
-
-  function updateGroundBands(dt){
-    const speed = getGroundBandSpeed();
-
-    for (const band of state.groundBands){
-      band.x -= speed * dt;
-    }
-
-    const bandWidth = getGroundBandWidth();
-    const spacing = bandWidth + getGroundBandGap();
-
-    state.groundBands = state.groundBands.filter(band => band.x > -bandWidth * 2);
-
-    let rightmost = state.groundBands.length
-      ? Math.max(...state.groundBands.map(b => b.x))
-      : -spacing;
-
-    while (rightmost < state.fieldWidth + spacing){
-      rightmost += spacing;
-      state.groundBands.push({
-        id: state.nextGroundBandId++,
-        x: rightmost,
-        width: bandWidth
-      });
-    }
-  }
-
-  function renderGroundBands(){
-    const layer = document.getElementById("vbGroundBands");
-    if (!layer || !state.theme) return;
-
-    layer.innerHTML = state.groundBands.map(band => `
-      <div
-        class="vb-ground-band"
-        style="
-          left:${band.x}px;
-          width:${band.width}px;
-          background:${state.theme.bandColor};
-        "
-      ></div>
-    `).join("");
-  }
-
-  function getObstacleSpeed(){
-    return getScrollSpeed();
-  }
-
-function getObstacleGroundY(){
-  return state.fieldHeight - state.groundHeight + 2;
+function renderHud(){
+  renderBuildArea();
+  renderField();
 }
 
-  function makeObstacle(x){
-    return {
-      id: state.nextObstacleId++,
-      x,
-      y: getObstacleGroundY(),
-      size: 56 * state.scale * 0.75,
-      emoji: state.theme?.obstacleEmoji || "🪨",
-      speed: getObstacleSpeed()
-    };
-  }
+function renderBuildArea(){
+  const build = document.getElementById("ttBuild");
+  const text = document.getElementById("ttBuildText");
+  if (!build || !text) return;
 
-  function updateObstacles(dt, ts){
-    for (const obstacle of state.obstacles){
-      obstacle.x -= obstacle.speed * dt;
-      obstacle.y = getObstacleGroundY();
-    }
+  const now = performance.now();
+  build.classList.toggle("is-shake", state.buildShakeUntil > now);
+  build.classList.toggle("is-pop", state.buildPopUntil > now);
 
-    state.obstacles = state.obstacles.filter(obstacle => obstacle.x > -60);
-
-    state.obstacleSpawnTimer -= dt;
-    if (state.obstacleSpawnTimer <= 0){
-      const rightmost = state.obstacles.length
-        ? Math.max(...state.obstacles.map(o => o.x))
-        : -9999;
-
-      if (rightmost < state.fieldWidth - 120){
-        const spawnX = findSafeGroundSpawnX(state.fieldWidth + 50, 110, 44, 10);
-        if (spawnX !== null){
-          state.obstacles.push(makeObstacle(spawnX));
-          state.obstacleSpawnTimer = 2.0 + Math.random() * 1.8;
-        } else {
-          state.obstacleSpawnTimer = 0.45;
-        }
-      } else {
-        state.obstacleSpawnTimer = 0.25;
-      }
-    }
-
-    for (const obstacle of state.obstacles){
-      const obstacleHalfHeight = obstacle.size * 0.5;
-      const obstacleCenterY = obstacle.y - obstacleHalfHeight;
-
-      const dx = obstacle.x - state.birdX;
-      const dy = obstacleCenterY - state.birdY;
-
-      const hitX = Math.abs(dx) < 24;
-      const hitY = Math.abs(dy) < (state.birdRadius + obstacleHalfHeight - 4);
-
-      if (hitX && hitY && performance.now() >= state.inputLockedUntil){
-        handleObstacleHit(ts, obstacle.id);
-        return;
-      }
-    }
-  }
-
-  function hasNearbyGroundItem(x, minGap){
-    for (const obstacle of state.obstacles){
-      if (Math.abs(obstacle.x - x) < minGap) return true;
-    }
-    for (const prize of state.prizes){
-      if (Math.abs(prize.x - x) < minGap) return true;
-    }
-    return false;
-  }
-
-  function findSafeGroundSpawnX(baseX, minGap, step = 40, attempts = 8){
-    let x = baseX;
-    for (let i = 0; i < attempts; i++){
-      if (!hasNearbyGroundItem(x, minGap)) return x;
-      x += step;
-    }
-    return null;
-  }
-
-  function handleObstacleHit(ts, obstacleId){
-    state.obstacles = state.obstacles.filter(o => o.id !== obstacleId);
-    registerMistake(ts);
-
-    state.inputLockedUntil = performance.now() + 1000;
-    state.birdSpinUntil = performance.now() + 1000;
-
-    state.birdVY = -120;
-  }
-
-  function renderObstacles(){
-    const layer = document.getElementById("vbObstacles");
-    if (!layer) return;
-
-    layer.innerHTML = state.obstacles.map(obstacle => `
-      <div
-        class="vb-obstacle"
-        style="
-          left:${obstacle.x}px;
-          top:${obstacle.y}px;
-          font-size:${obstacle.size}px;
-        "
-      >
-        ${obstacle.emoji}
+  if (state.bonusShowScore){
+    text.className = "tt-build-text";
+    text.innerHTML = `
+      <div class="tt-bonus-build">
+        <div class="tt-bonus-build-copy">Bonus Complete!</div>
+        <div class="tt-bonus-build-score is-results">
+          <span>Score: ${state.bonusScore}</span>
+          <span>Correct: ${state.bonusCorrectHits}</span>
+          <span>Best Streak: ${state.bonusBestStreak}</span>
+        </div>
       </div>
-    `).join("");
-  }
-
-  function getPrizeSpeed(){
-    return getScrollSpeed();
-  }
-
-  function getPrizeGroundY(){
-    return state.fieldHeight - state.groundHeight - 4;
-  }
-
-  function makePrize(x){
-    return {
-      id: state.nextPrizeId++,
-      x,
-      y: getPrizeGroundY(),
-      size: 56 * state.scale * 0.75,
-      emoji: state.theme?.prizeEmoji || "🐣",
-      speed: getPrizeSpeed()
-    };
-  }
-
-  function updatePrizes(dt, ts){
-    for (const prize of state.prizes){
-      prize.x -= prize.speed * dt;
-      prize.y = getPrizeGroundY();
-    }
-
-    state.prizes = state.prizes.filter(prize => prize.x > -60);
-
-    state.prizeSpawnTimer -= dt;
-    if (state.prizeSpawnTimer <= 0){
-      const rightmostPrize = state.prizes.length
-        ? Math.max(...state.prizes.map(p => p.x))
-        : -9999;
-
-      const rightmostObstacle = state.obstacles.length
-        ? Math.max(...state.obstacles.map(o => o.x))
-        : -9999;
-
-      const blockedByOtherThing =
-        rightmostPrize > state.fieldWidth - 180 ||
-        rightmostObstacle > state.fieldWidth - 180;
-
-      if (!blockedByOtherThing){
-        const spawnX = findSafeGroundSpawnX(state.fieldWidth + 70, 110, 44, 10);
-        if (spawnX !== null){
-          state.prizes.push(makePrize(spawnX));
-          state.prizeSpawnTimer = 5.0 + Math.random() * 3.0;
-        } else {
-          state.prizeSpawnTimer = 0.8;
-        }
-      } else {
-        state.prizeSpawnTimer = 0.6;
-      }
-    }
-
-    for (const prize of state.prizes){
-      const prizeHalfHeight = prize.size * 0.5;
-      const prizeCenterY = prize.y - prizeHalfHeight;
-
-      const dx = prize.x - state.birdX;
-      const dy = prizeCenterY - state.birdY;
-
-      const hitX = Math.abs(dx) < 24;
-      const hitY = Math.abs(dy) < (state.birdRadius + prizeHalfHeight - 6);
-
-      if (hitX && hitY){
-        handlePrizePickup(ts, prize.id, prize.x, prizeCenterY);
-        return;
-      }
-    }
-  }
-
-  function handlePrizePickup(ts, prizeId, x, y){
-    state.prizes = state.prizes.filter(p => p.id !== prizeId);
-    state.prizeAuraUntil = performance.now() + 3500;
-
-    for (let i = 0; i < 10; i++){
-      const angle = (Math.PI * 2 * i) / 10;
-      const speed = 55 + Math.random() * 65;
-      state.particles.push({
-        id: Math.random().toString(36).slice(2),
-        type: "prizeSpark",
-        x,
-        y,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        life: 0.38 + Math.random() * 0.14,
-        age: 0,
-        size: 8 + Math.random() * 5
-      });
-    }
-
-    state.successFlashUntil = Math.max(state.successFlashUntil, ts + 150);
-  }
-
-  function renderPrizes(){
-    const layer = document.getElementById("vbPrizes");
-    if (!layer) return;
-
-    layer.innerHTML = state.prizes.map(prize => `
-      <div
-        class="vb-prize"
-        style="
-          left:${prize.x}px;
-          top:${prize.y}px;
-          font-size:${prize.size}px;
-        "
-      >
-        ${prize.emoji}
-      </div>
-    `).join("");
-  }
-
-  function handleCorrect(){
-    state.progressIndex += 1;
-    state.streak += 1;
-    state.targets = [];
-    state.spawnCooldown = 0.14;
-    updateBuildText();
-    updateStreakPill();
-
-    if (getCurrentPhase() === "done"){
-      finishRun();
-    }
-  }
-
-  function registerMistake(ts){
-    state.streak = 0;
-    state.flashUntil = ts + 160;
-    state.shakeUntil = ts + 260;
-    updateStreakPill();
-
-    const build = document.getElementById("vbBuild");
-    if (build){
-      build.classList.remove("vb-shake");
-      void build.offsetWidth;
-      build.classList.add("vb-shake");
-    }
-  }
-
-  function registerSuccess(ts, targetX, targetY){
-    state.successFlashUntil = ts + 130;
-
-    for (let i = 0; i < 8; i++){
-      const angle = (Math.PI * 2 * i) / 8;
-      const speed = 70 + Math.random() * 55;
-      state.particles.push({
-        id: Math.random().toString(36).slice(2),
-        type: "spark",
-        x: targetX,
-        y: targetY,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        life: 0.24 + Math.random() * 0.08,
-        age: 0,
-        size: 7 + Math.random() * 6
-      });
-    }
-  }
-
-  async function finishRun(){
-    if (completed) return;
-    completed = true;
-    state.running = false;
-
-    try{
-      await window.VerseGameBridge.markCompleted({
-        verseId: ctx.verseId,
-        gameId: GAME_ID,
-        mode: selectedMode
-      });
-    }catch(err){
-      console.error("markCompleted failed", err);
-    }
-
-    renderComplete();
-  }
-
-  function renderFrame(ts){
-    renderBuildShake(ts);
-    renderClouds();
-    renderTargets();
-    renderParticles();
-    renderTrail();
-    renderObstacles();
-    renderPrizes();
-    renderAura();
-    renderBird();
-    renderFlash(ts);
-    renderGroundBands();
-    updateMenuPill();
-  }
-
-  function renderBuildShake(ts){
-    const build = document.getElementById("vbBuild");
-    if (!build) return;
-    if (ts > state.shakeUntil){
-      build.classList.remove("vb-shake");
-    }
-  }
-
-  function renderFlash(ts){
-    const flash = document.getElementById("vbFlash");
-    if (!flash) return;
-
-    if (ts <= state.flashUntil){
-      flash.classList.add("is-on");
-      flash.style.background = "rgba(255, 90, 81, 0.34)";
-      return;
-    }
-
-    if (ts <= state.successFlashUntil){
-      flash.classList.add("is-on");
-      flash.style.background = "rgba(64, 185, 197, 0.26)";
-      return;
-    }
-
-    flash.classList.remove("is-on");
-  }
-
-  function renderBird(){
-    const bird = document.getElementById("vbBird");
-    if (!bird) return;
-
-    let angle = clamp((state.birdVY / 9), -24, 54);
-
-    if (performance.now() < state.birdSpinUntil){
-      angle = ((performance.now() / 1000) * 720) % 360;
-    }
-
-    bird.style.left = `${state.birdX}px`;
-    bird.style.top = `${state.birdY}px`;
-    const scale = state.scale;
-    bird.style.transform = `translate(-50%, -50%) scale(${scale}) scaleX(-1) rotate(${angle}deg)`;
-  }
-
-  function renderAura(){
-    const layer = document.getElementById("vbAura");
-    if (!layer) return;
-
-    if (performance.now() >= state.prizeAuraUntil){
-      layer.innerHTML = "";
-      return;
-    }
-
-    const t = performance.now() / 1000;
-    const radiusX = 42 * state.scale;
-    const radiusY = 24 * state.scale;
-    const sparkles = [];
-    const auraSet = state.auraEmojis?.length ? state.auraEmojis : ["✨","⭐","💫"];
-
-    for (let i = 0; i < auraSet.length; i++){
-      const angle = t * 3.2 + (i * Math.PI * 2 / auraSet.length);
-      const x = state.birdX + Math.cos(angle) * radiusX;
-      const y = state.birdY + Math.sin(angle) * radiusY;
-
-      sparkles.push(`
-        <div
-          class="vb-aura-star"
-          style="
-            left:${x}px;
-            top:${y}px;
-            font-size:${18 + (i % 2) * 4}px;
-          "
-        >${auraSet[i]}</div>
-      `);
-    }
-
-    layer.innerHTML = `
-      <div class="vb-aura-glow" style="
-        left:${state.birdX}px;
-        top:${state.birdY}px;
-        transform: translate(-50%, -50%) scale(${state.scale});
-      "></div>
-      ${sparkles.join("")}
     `;
+    return;
   }
 
-  function renderClouds(){
-    const layer = document.getElementById("vbClouds");
-    if (!layer) return;
-
-    const emoji = state.theme?.cloudEmoji || "☁️";
-
-    layer.innerHTML = state.clouds.map(cloud => `
-      <div class="vb-cloud"
-           style="left:${cloud.x}px; top:${cloud.y}px; font-size:${cloud.size}px; opacity:${cloud.opacity};">
-        ${emoji}
-      </div>
-    `).join("");
-  }
-
-  function renderParticles(){
-    const layer = document.getElementById("vbParticles");
-    if (!layer) return;
-
-    layer.innerHTML = state.particles.map(p => {
-      const alpha = 1 - (p.age / p.life);
-
-      if (p.type === "prizeSpark"){
-        return `
-          <div
-            class="vb-prize-spark"
-            style="
-              left:${p.x}px;
-              top:${p.y}px;
-              font-size:${p.size}px;
-              opacity:${alpha};
-            "
-          >⭐</div>
-        `;
-      }
-
-      if (p.type === "auraPuff"){
-        return `
-          <div class="vb-puff"
-               style="
-                 left:${p.x}px;
-                 top:${p.y}px;
-                 width:${p.size}px;
-                 height:${p.size}px;
-                 opacity:${alpha};
-                 background:rgba(255, 239, 160, 0.92);
-               ">
-          </div>
-        `;
-      }
-
-      const bg = p.type === "spark" ? "#ffffff" : "rgba(255,255,255,0.92)";
-      return `
-        <div class="vb-puff"
-             style="left:${p.x}px; top:${p.y}px; width:${p.size}px; height:${p.size}px; opacity:${alpha}; background:${bg};">
+  if (state.bonusRound){
+    text.className = "tt-build-text";
+    text.innerHTML = `
+      <div class="tt-bonus-build">
+        <div class="tt-bonus-build-targetline">
+          <span class="tt-bonus-build-bullseye">🎯</span>
+          <span class="tt-bonus-build-equals">=</span>
+          <span class="tt-bonus-build-target">${escapeHtml(state.bonusTargetEmoji || "🚗")}</span>
         </div>
-      `;
-    }).join("");
-  }
-
-  function renderTrail(){
-    const layer = document.getElementById("vbTrail");
-    if (!layer) return;
-
-    layer.innerHTML = state.trail.map(t => {
-      const alpha = 1 - (t.age / t.life);
-      return `
-        <div class="vb-trail-dot"
-             style="left:${t.x}px; top:${t.y}px; width:${t.size}px; height:${t.size}px; background:${t.color}; opacity:${alpha};">
+        <div class="tt-bonus-build-score">
+          <span>Score: ${state.bonusScore}</span>
+          <span>Streak: ${state.bonusStreak}</span>
+          <span>Time: ${Math.max(0, Math.ceil(state.bonusTimeLeft / 1000))}</span>
         </div>
-      `;
-    }).join("");
-  }
-
-  function renderTargets(){
-    const layer = document.getElementById("vbTargets");
-    if (!layer) return;
-    layer.innerHTML = state.targets.map(target => `
-      <div class="vb-target" style="left:${target.x}px; top:${target.y}px;">
-        <div class="vb-target-circle" style="background:${target.color}; --circle-size:${target.circleSize}px;"></div>
-        <div class="vb-target-label">${escapeHtml(target.label)}</div>
       </div>
-    `).join("");
+    `;
+    return;
   }
 
-  function updateBuildText(){
-    const el = document.getElementById("vbBuildText");
-    if (!el) return;
+  text.className = `tt-build-text ${state.buildSizeClass} ${selectedMode === "hard" ? "is-hide-unbuilt" : ""}`;
 
-    el.className = `vb-build-text ${state.buildSizeClass}`;
-
-    el.innerHTML = state.segments.map((segment, index) => `
-      <span class="vb-build-word ${index < state.progressIndex ? "is-built" : ""}">
-        ${escapeHtml(segment)}
-      </span>
-    `).join(" ");
+  if (!state.bonusRound && !state.mainDone && state.wordsBuilt === 0 && !state.bookBuilt && !state.referenceBuilt){
+    text.innerHTML = `<div class="tt-build-placeholder">Build the verse one word at a time.<br><strong>Tap the first word to start.</strong></div>`;
+    return;
   }
 
-  function updateMenuPill(){
-    const pill = document.getElementById("vbMenuPill");
-    if (!pill) return;
-    pill.textContent = "☰";
-    pill.setAttribute("aria-label", "Game Menu");
-    pill.onclick = (e) => {
-      e.stopPropagation();
-      openGameMenu();
-    };
+  let html = "";
+  let builtWordsSeen = 0;
+  for (const token of buildTokens){
+    if (token.kind === "space"){
+      html += `<span class="tt-build-gap"> </span>`;
+      continue;
+    }
+    if (token.kind === "word"){
+      const built = builtWordsSeen < state.wordsBuilt;
+      html += `<span class="tt-build-token is-verse ${built ? "is-built" : ""}">${escapeHtml(token.text)}</span>`;
+      builtWordsSeen += 1;
+    } else {
+      const built = builtWordsSeen <= state.wordsBuilt;
+      html += `<span class="tt-build-token is-verse ${built ? "is-built" : ""}">${escapeHtml(token.text)}</span>`;
+    }
   }
 
-  function updateStreakPill(){
-    const pill = document.getElementById("vbStreakPill");
-    if (!pill) return;
-    const tier = getTrailTier();
-    let suffix = "";
-    if (tier >= 4) suffix = " 🌈";
-    else if (tier >= 2) suffix = " ✨";
-    pill.textContent = `Streak: ${state.streak}${suffix}`;
+  if (verseMeta.book){
+    html += `<span class="tt-build-gap"> </span><span class="tt-build-token is-book ${state.bookBuilt ? "is-built" : ""}">${escapeHtml(verseMeta.book)}</span>`;
+  }
+  if (verseMeta.reference){
+    html += `<span class="tt-build-gap"> </span><span class="tt-build-token is-reference ${state.referenceBuilt ? "is-built" : ""}">${escapeHtml(verseMeta.reference)}</span>`;
   }
 
-  function getBuildLengthScore(verseText, book, reference){
-    return String(verseText || "").length
-      + String(book || "").length
-      + String(reference || "").length;
-  }
-
-  function getBuildSizeClass(verseText, book, reference){
-    const score = getBuildLengthScore(verseText, book, reference);
-    if (score >= 136) return "is-small";
-    if (score >= 106) return "is-medium";
-    return "is-normal";
-  }
-
-  function setupReferenceSegments(){
-    const parsed = parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
-    state.referenceMeta = parsed;
-    state.bookLabel = parsed.book || "";
-    state.referenceLabel = parsed.reference || "";
-    state.buildSizeClass = getBuildSizeClass(ctx.verseText, state.bookLabel, state.referenceLabel);
-
-    state.segments = [...state.words];
-    if (state.bookLabel) state.segments.push(state.bookLabel);
-    if (state.referenceLabel) state.segments.push(state.referenceLabel);
-  }
-
-  function getCurrentPhase(){
-    const wordCount = state.words.length;
-    if (state.progressIndex < wordCount) return "words";
-    if (state.progressIndex === wordCount && state.bookLabel) return "book";
-    if (state.progressIndex === wordCount + (state.bookLabel ? 1 : 0) && state.referenceLabel) return "reference";
-    return "done";
-  }
-
-  function getCurrentCorrectLabel(){
-    return state.segments[state.progressIndex] || "";
-  }
-
-  function getDecoyCount(){
-    if (selectedMode === "hard") return 4;
-    if (selectedMode === "medium") return 3;
-    return 2;
-  }
-
-  function getCircleSize(){
-    const base =
-      selectedMode === "hard" ? 26 :
-      selectedMode === "medium" ? 30 : 35;
-
-    return base * state.scale;
-  }
-
-function getScrollSpeed(){
-  const base =
-    selectedMode === "hard" ? 205 :
-    selectedMode === "medium" ? 172 : 140;
-
-  return base * state.scale;
+  text.innerHTML = html;
 }
 
-  function getCorrectSpawnChance(){
-    return 0.70;
+function renderField(){
+  renderRoads();
+  renderItems();
+  renderEffects();
+  renderBonus();
+  renderOverlays();
+}
+
+function renderRoads(){
+  const roads = document.getElementById("ttRoads");
+  const marks = document.getElementById("ttRoadMarks");
+  if (!roads || !marks) return;
+
+  const top = 0;
+  const bottom = state.roadHeight + state.gapHeight;
+  roads.innerHTML = `
+    <div class="tt-road top ${state.roadCrashUntil[0] > performance.now() ? "is-crashing" : ""}" style="top:${top}px;height:${state.roadHeight}px"></div>
+    <div class="tt-road bottom ${state.roadCrashUntil[1] > performance.now() ? "is-crashing" : ""}" style="top:${bottom}px;height:${state.roadHeight}px"></div>
+  `;
+  marks.innerHTML = `
+    <div class="tt-road top" style="top:${top}px;height:${state.roadHeight}px"><div class="tt-road-center-line"></div></div>
+    <div class="tt-road bottom" style="top:${bottom}px;height:${state.roadHeight}px"><div class="tt-road-center-line"></div></div>
+  `;
+}
+
+function renderItems(){
+  const layer = document.getElementById("ttItemsLayer");
+  if (!layer) return;
+  if (state.bonusRound){
+    const html = state.bonusItems.map(item => {
+      const y = roadTopY(item.road);
+      const cls = [
+        "tt-item",
+        item.direction > 0 ? "is-flipped" : "",
+        item.removeAt ? "is-crashing" : "",
+        state.bonusEnding ? "is-exiting" : ""
+      ];
+      const unitCls = ["tt-unit"];
+      if (item.flashWrongUntil > performance.now()) unitCls.push("is-wrong");
+      if (item.vanishUntil > performance.now()) unitCls.push("is-vanish");
+
+      return `
+        <div class="${cls.filter(Boolean).join(" ")}" style="transform:translate3d(${item.x}px, ${y}px, 0);--tt-item-w:${item.width}px;--tt-item-h:${item.height}px;--tt-car-size:${item.carSize}px;--tt-car-hit-h:${item.carHitHeight}px;--tt-car-center-y:${item.slot === "lower" ? 72 : 24}%;--tt-item-tilt:0deg;">
+          <div class="${unitCls.join(" ")}">
+            <button type="button" class="tt-car-btn tt-hit-btn" data-item-id="${item.id}" aria-label="${escapeHtml(item.emoji)}">${item.emoji}</button>
+          </div>
+        </div>
+      `;
+    }).join("");
+
+    layer.innerHTML = html;
+    return;
   }
 
-  function pickSingleLaneY(){
-    const groundTop = state.fieldHeight - state.groundHeight;
-    const spread = 0.22 + (state.scale - 1) * 0.15;
+  const html = state.mainItems.map(item => {
+    const y = roadTopY(item.road);
+    const cls = ["tt-item", item.direction > 0 ? "is-flipped" : "", item.crashing ? "is-crashing" : ""];
+    const unitCls = ["tt-unit"];
+    if (item.flashWrongUntil > performance.now()) unitCls.push("is-wrong");
+    if (item.swerveUntil > performance.now()) unitCls.push("is-swerve");
+    if (item.vanishUntil > performance.now()) unitCls.push("is-vanish");
+    if (item.bonkUntil > performance.now()) unitCls.push("is-bonk");
+    const now = performance.now();
 
-    const lanes = [
-      Math.max(64, groundTop * (0.18 + spread)),
-      Math.max(92, groundTop * 0.50),
-      Math.max(120, groundTop * (0.82 - spread))
-    ];
+    let rideBob = 0;
+    let rideScaleX = 1;
+    let rideScaleY = 1;
 
-    return lanes[Math.floor(Math.random() * lanes.length)];
-  }
+    if (!item.launching && !item.crashing && !(item.vanishUntil > now)){
+      const cycleMs = 1680;
+      const t = (((now + (item.bounceOffset * cycleMs)) % cycleMs) / cycleMs);
 
-  function getDecoysForPhase(phase, correctLabel, count){
-    const out = new Set();
-
-    if (phase === "words"){
-      for (const word of window.VerseGameShell.getFunWordDecoys(correctLabel, state.words, count)){
-        if (out.size >= count) break;
-        out.add(word);
+      if (t < 0.12){
+        const p = t / 0.12;
+        rideBob = 5 * p;
+        rideScaleX = 1 + (0.03 * p);
+        rideScaleY = 1 - (0.05 * p);
+      } else if (t < 0.24){
+        const p = (t - 0.12) / 0.12;
+        rideBob = 5 - (4 * p);
+        rideScaleX = 1.03 - (0.035 * p);
+        rideScaleY = 0.95 + (0.055 * p);
+      } else if (t < 0.36){
+        const p = (t - 0.24) / 0.12;
+        rideBob = 1 + (3 * p);
+        rideScaleX = 0.995 + (0.025 * p);
+        rideScaleY = 1.005 - (0.035 * p);
+      } else if (t < 0.48){
+        const p = (t - 0.36) / 0.12;
+        rideBob = 4 - (4 * p);
+        rideScaleX = 1.02 - (0.02 * p);
+        rideScaleY = 0.97 + (0.03 * p);
+      } else if (t < 0.60){
+        const p = (t - 0.48) / 0.12;
+        rideBob = 5 * p;
+        rideScaleX = 1 + (0.03 * p);
+        rideScaleY = 1 - (0.05 * p);
+      } else if (t < 0.72){
+        const p = (t - 0.60) / 0.12;
+        rideBob = 5 - (4 * p);
+        rideScaleX = 1.03 - (0.035 * p);
+        rideScaleY = 0.95 + (0.055 * p);
+      } else if (t < 0.84){
+        const p = (t - 0.72) / 0.12;
+        rideBob = 1 + (3 * p);
+        rideScaleX = 0.995 + (0.025 * p);
+        rideScaleY = 1.005 - (0.035 * p);
+      } else {
+        const p = (t - 0.84) / 0.16;
+        rideBob = 4 - (4 * p);
+        rideScaleX = 1.02 - (0.02 * p);
+        rideScaleY = 0.97 + (0.03 * p);
       }
+    }
+    const tilt = item.tilt || 0;
 
-      for (const word of shuffle(state.words)){
-        if (out.size >= count) break;
-        if (normalizeWord(word) !== normalizeWord(correctLabel)){
-          out.add(word);
-        }
+    let launchScaleX = 1;
+    let launchScaleY = 1;
+
+    if (item.launching && now < item.launchPhaseUntil){
+      const total = Math.max(1, item.launchPhaseUntil - item.launchStartAt);
+      const t = clamp((now - item.launchStartAt) / total, 0, 1);
+
+      if (t < 0.45){
+        const p = t / 0.45;
+        launchScaleX = 1 - (0.22 * p);
+        launchScaleY = 1 + (0.22 * p);
+      } else {
+        const p = (t - 0.45) / 0.55;
+        launchScaleX = 0.78 + (0.28 * p);
+        launchScaleY = 1.22 - (0.28 * p);
       }
     }
 
-    if (phase === "book"){
-      for (const book of window.VerseGameShell.getBookDecoys(correctLabel, count)){
-        if (out.size >= count) break;
-        out.add(book);
+    return `
+      <div class="${cls.filter(Boolean).join(" ")}" style="transform:translate3d(${item.x}px, ${y + rideBob}px, 0);--tt-item-w:${item.width}px;--tt-item-h:${item.height}px;--tt-word-w:${item.wordWidth}px;--tt-word-h:${item.wordHeight}px;--tt-word-size:${item.wordFont}px;--tt-car-size:${item.carSize}px;--tt-car-hit-h:${item.carHitHeight}px;--tt-car-center-y:${item.carCenterY}%;--tt-word-center-y:${item.wordCenterY}%;--tt-item-tilt:${tilt}deg;">
+        <div class="${unitCls.join(" ")}" style="--tt-launch-scale-x:${(launchScaleX * rideScaleX).toFixed(4)};--tt-launch-scale-y:${(launchScaleY * rideScaleY).toFixed(4)};">
+          <button type="button" class="tt-car-btn tt-hit-btn" data-item-id="${item.id}" aria-label="${escapeHtml(item.label)}">${item.emoji}</button>
+          <button type="button" class="tt-word-btn tt-hit-btn ${item.launching ? "is-launch-fade" : ""}" data-item-id="${item.id}" aria-label="${escapeHtml(item.label)}">${escapeHtml(item.label)}</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  layer.innerHTML = html;
+}
+
+function renderEffects(){
+const layer = document.getElementById("ttEffectsLayer");
+if (!layer) return;
+
+layer.querySelectorAll(".tt-popup").forEach((node) => node.remove());
+
+for (const pop of state.effectPopups){
+  const el = document.createElement("div");
+  el.className = `tt-popup ${pop.good ? "good" : "bad"}`;
+  el.style.left = `${pop.x}px`;
+  el.style.top = `${pop.y}px`;
+  el.textContent = pop.text;
+  layer.appendChild(el);
+}
+}
+
+function spawnCrashBurst(x, y, opts = {}){
+const layer = document.getElementById("ttEffectsLayer");
+if (!layer) return;
+
+const count = opts.count ?? 9;
+const distance = opts.distance ?? 58;
+const jitter = opts.jitter ?? 5;
+const duration = opts.duration ?? 650;
+const cloudSize = opts.cloudSize ?? 74;
+const sizePool = opts.sizePool ?? [8, 9, 10, 12, 15, 18];
+const colors = opts.colors ?? ["#ffffff"];
+const showCloud = opts.showCloud ?? true;
+
+const burst = document.createElement("div");
+burst.className = "tt-crash-burst";
+burst.style.left = `${x}px`;
+burst.style.top = `${y}px`;
+
+let cloud = null;
+if (showCloud){
+  cloud = document.createElement("div");
+  cloud.className = "tt-crash-burst-cloud";
+  cloud.style.setProperty("--tt-crash-cloud-size", `${cloudSize}px`);
+  cloud.style.setProperty("--tt-crash-cloud-dur", `${Math.max(520, duration - 90)}ms`);
+  cloud.innerHTML = CRASH_CLOUD_SVG;
+  burst.appendChild(cloud);
+}
+
+const baseAngle = Math.random() * Math.PI * 2;
+const step = (Math.PI * 2) / count;
+
+for (let i = 0; i < count; i += 1){
+  const angle = baseAngle + step * i + rand(-0.12, 0.12);
+  const dist = distance + rand(-jitter, jitter);
+  const tx = Math.cos(angle) * dist;
+  const ty = Math.sin(angle) * dist;
+  const size = pickRandom(sizePool) + rand(-0.5, 0.5);
+  const grow = rand(1.02, 1.14);
+  const color = colors[i % colors.length];
+
+  const particle = document.createElement("div");
+  particle.className = "tt-crash-particle";
+  particle.style.setProperty("--tt-size", `${size.toFixed(1)}px`);
+  particle.style.setProperty("--tt-dur", `${duration}ms`);
+  particle.style.setProperty("--tt-start-scale", `${rand(0.68, 0.82).toFixed(2)}`);
+  particle.style.setProperty("--tt-end-scale", `${(grow + 0.08).toFixed(2)}`);
+  particle.style.setProperty("--tt-tx", `${tx.toFixed(1)}px`);
+  particle.style.setProperty("--tt-ty", `${ty.toFixed(1)}px`);
+  particle.style.setProperty("--tt-delay", `${Math.round(rand(0, 18))}ms`);
+  particle.style.background = color;
+  burst.appendChild(particle);
+}
+
+layer.appendChild(burst);
+
+requestAnimationFrame(() => {
+  if (cloud) cloud.classList.add("is-live");
+  burst.querySelectorAll(".tt-crash-particle").forEach((particle) => {
+    const delay = Number.parseInt(particle.style.getPropertyValue("--tt-delay"), 10) || 0;
+    window.setTimeout(() => {
+      particle.classList.add("is-live");
+    }, delay);
+  });
+});
+
+window.setTimeout(() => {
+  burst.remove();
+}, duration + 120);
+}
+
+function rand(min, max){
+  return min + Math.random() * (max - min);
+}
+
+function spawnWakePuff(x, y, size = 10){
+  const layer = document.getElementById("ttEffectsLayer");
+  if (!layer) return;
+
+  const puff = document.createElement("div");
+  puff.className = "tt-wake-puff";
+  puff.style.left = `${x}px`;
+  puff.style.top = `${y}px`;
+  puff.style.width = `${size}px`;
+  puff.style.height = `${size}px`;
+  puff.style.marginLeft = `${size / -2}px`;
+  puff.style.marginTop = `${size / -2}px`;
+  layer.appendChild(puff);
+
+  requestAnimationFrame(() => puff.classList.add("is-live"));
+  window.setTimeout(() => puff.remove(), 280);
+}
+
+function fadeBlockingCarsAhead(tappedItem){
+  const now = performance.now();
+  for (const item of state.mainItems){
+    if (item.id === tappedItem.id) continue;
+    if (item.road !== tappedItem.road) continue;
+    if (item.crashing || item.launching) continue;
+
+    const isAhead = tappedItem.direction < 0
+      ? item.x < tappedItem.x
+      : item.x > tappedItem.x;
+
+    if (!isAhead) continue;
+
+    item.vanishUntil = now + 160;
+    item.removeAt = now + 170;
+  }
+}
+
+function startSuccessLaunch(item){
+  const now = performance.now();
+
+  item.launching = true;
+  item.launchStartAt = now;
+  item.launchPhaseUntil = now + 110;
+  item.launchTrailUntil = Infinity;
+  item.launchTrailNextAt = now + 36;
+  item.wordFadeUntil = now + 90;
+
+  item.targetSpeed = Math.max(item.targetSpeed || item.baseSpeed || 120, 900);
+
+  fadeBlockingCarsAhead(item);
+}
+
+function launchTrailPoint(item){
+  const width = item.width || 150;
+  const x = item.x + (width / 2) - (item.direction * width * 0.18);
+  const y = itemCenter(item).y + rand(-4, 4);
+  return { x, y };
+}
+
+function pickBonusTargetEmoji(){
+  return pickRandom(VEHICLES);
+}
+
+function startBonusRound(){
+  state.bonusRound = true;
+  state.bonusShowScore = false;
+  state.bonusItems = [];
+  state.bonusTargetEmoji = state.bonusIntroTarget || pickBonusTargetEmoji();
+  state.bonusTargetLabel = state.bonusTargetEmoji;
+  state.bonusScore = 0;
+  state.bonusCorrectHits = 0;
+  state.bonusWrongHits = 0;
+  state.bonusStreak = 0;
+  state.bonusBestStreak = 0;
+  state.bonusEndsAt = performance.now() + state.bonusRoundDuration;
+  state.bonusTimeLeft = state.bonusRoundDuration;
+  state.bonusNextSpawnAt = performance.now() + 220;
+  state.bonusEnding = false;
+  state.bonusEndingUntil = 0;
+  state.bonusStopSpawn = false;
+}
+
+function makeBonusItem({ road, slot, emoji, speed }){
+  const metrics = getItemMetrics("car");
+  const direction = road === 0 ? -1 : 1;
+  const x = direction < 0 ? state.fieldWidth + metrics.width + 30 : -(metrics.width + 30);
+
+  return {
+    id: state.nextItemId++,
+    road,
+    slot,
+    direction,
+    x,
+    width: metrics.width,
+    height: metrics.height,
+    carSize: metrics.carSize,
+    carHitHeight: metrics.carHitHeight,
+    emoji,
+    isTarget: emoji === state.bonusTargetEmoji,
+    speed,
+    vanishUntil: 0,
+    flashWrongUntil: 0,
+    removeAt: 0
+  };
+}
+
+function spawnBonusTraffic(now){
+  if (state.bonusStopSpawn) return;
+  if (now < state.bonusNextSpawnAt) return;
+
+  const progress = 1 - (state.bonusTimeLeft / state.bonusRoundDuration);
+  const speedBase = 170 + progress * 135;
+  const burstCount = Math.random() < 0.5 ? 2 : 3;
+
+  for (let i = 0; i < burstCount; i += 1){
+    const road = Math.random() < 0.5 ? 0 : 1;
+    const slot = Math.random() < 0.58 ? "upper" : "lower";
+    const emoji = Math.random() < 0.24 ? state.bonusTargetEmoji : pickRandom(VEHICLES);
+    const rawSpeed = speedBase + Math.random() * 90;
+    const speed = cappedBonusSpeed(road, slot, rawSpeed);
+
+    if (bonusLaneHasSpawnRoom(road, slot, 150)){
+      state.bonusItems.push(makeBonusItem({ road, slot, emoji, speed }));
+    }
+  }
+
+  state.bonusNextSpawnAt = now + (220 - progress * 70) + Math.random() * 120;
+}
+
+function bonusLaneHasSpawnRoom(road, slot, minGap){
+  const direction = road === 0 ? -1 : 1;
+  const metrics = getItemMetrics("car");
+  const spawnX = direction < 0 ? state.fieldWidth + metrics.width + 30 : -(metrics.width + 30);
+
+  for (const item of state.bonusItems){
+    if (item.road !== road || item.slot !== slot) continue;
+    if (Math.abs(item.x - spawnX) < minGap) return false;
+  }
+  return true;
+}
+
+function chooseBonusItem(itemId, tappedEl){
+  const item = state.bonusItems.find(x => x.id === itemId);
+  if (!item || item.removeAt || item.vanishUntil) return;
+
+  const layerRect = document.getElementById("ttField")?.getBoundingClientRect();
+  const rect = tappedEl.getBoundingClientRect();
+  const x = rect.left - layerRect.left + rect.width / 2;
+  const y = rect.top - layerRect.top + rect.height / 2;
+
+  if (item.isTarget){
+    item.vanishUntil = performance.now() + 140;
+    item.removeAt = performance.now() + 150;
+    state.bonusCorrectHits += 1;
+    state.bonusStreak += 1;
+    state.bonusBestStreak = Math.max(state.bonusBestStreak, state.bonusStreak);
+    state.bonusScore += 10 + Math.min(40, (state.bonusStreak - 1) * 2);
+    addPopup(x, y, `+${10 + Math.min(40, (state.bonusStreak - 1) * 2)}`, true);
+    spawnBonusSuccessBurst(x, y);
+  } else {
+    const now = performance.now();
+    item.flashWrongUntil = now + 260;
+    item.vanishUntil = now + 140;
+    item.removeAt = now + 150;
+    state.bonusWrongHits += 1;
+    state.bonusStreak = 0;
+    state.bonusScore = Math.max(0, state.bonusScore - 12);
+    addPopup(x, y, "-12", false);
+    spawnCrashBurst(x, y, {
+      count: 8,
+      distance: 52,
+      jitter: 5,
+      duration: 560,
+      cloudSize: 62,
+      sizePool: [7, 8, 10, 12, 14],
+      showCloud: true
+    });
+  }
+}
+
+function cappedBonusSpeed(road, slot, proposedSpeed){
+  const direction = road === 0 ? -1 : 1;
+  const sameLane = state.bonusItems.filter(item =>
+    item.road === road &&
+    item.slot === slot &&
+    !item.removeAt
+  );
+
+  if (!sameLane.length) return proposedSpeed;
+
+  let nearestAhead = null;
+
+  for (const item of sameLane){
+    const isAhead = direction < 0 ? item.x > state.fieldWidth * 0.5 : item.x < state.fieldWidth * 0.5;
+    if (!isAhead) continue;
+
+    if (!nearestAhead){
+      nearestAhead = item;
+      continue;
+    }
+
+    if (direction < 0){
+      if (item.x < nearestAhead.x) nearestAhead = item;
+    } else {
+      if (item.x > nearestAhead.x) nearestAhead = item;
+    }
+  }
+
+  if (!nearestAhead) return proposedSpeed;
+  return Math.min(proposedSpeed, Math.max(120, nearestAhead.speed - 18));
+}
+
+function spawnBonusSuccessBurst(x, y){
+  spawnCrashBurst(x, y, {
+    count: 7,
+    distance: 42,
+    jitter: 4,
+    duration: 420,
+    cloudSize: 0,
+    sizePool: [6, 8, 10, 12],
+    colors: ["#ffd44f", "#ffffff", "#ffd44f", "#ffffff"],
+    showCloud: false
+  });
+}
+
+function finishBonusRound(){
+  const now = performance.now();
+
+  state.bonusStopSpawn = true;
+  state.bonusEnding = true;
+  state.bonusEndingUntil = now +900;
+  state.bonusShowScore = false;
+
+  state.overlayMessage = "Bonus Complete!";
+  state.overlayUntil = now + 900;
+  state.overlayMessage = "Bonus Complete!";
+  state.overlayUntil = now + 1100;
+  state.bonusEndingUntil = now + 1200;
+
+  for (const item of state.bonusItems){
+    item.speed = item.speed || 0;
+    item.vanishUntil = 0;
+    item.flashWrongUntil = 0;
+  }
+}
+
+function renderBonus(){
+  const layer = document.getElementById("ttBonusLayer");
+  if (!layer) return;
+  layer.innerHTML = "";
+}
+
+function renderOverlays(){
+  const overlay = document.getElementById("ttOverlay");
+  const bonusIntro = document.getElementById("ttBonusIntroOverlay");
+  if (!overlay || !bonusIntro) return;
+
+  if (state.overlayUntil > performance.now() && state.overlayMessage){
+    const current = overlay.firstElementChild;
+    if (!current || current.textContent !== state.overlayMessage){
+      overlay.innerHTML = `<div class="tt-overlay-pill is-show">${escapeHtml(state.overlayMessage)}</div>`;
+    }
+  } else {
+    overlay.innerHTML = "";
+  }
+
+  bonusIntro.classList.toggle("is-open", state.bonusIntro && state.bonusIntroUntil > performance.now());
+}
+
+function startLoop(){
+  stopLoop();
+  state.lastTs = 0;
+  state.rafId = requestAnimationFrame(loop);
+}
+
+function stopLoop(){
+  if (state.rafId){
+    cancelAnimationFrame(state.rafId);
+    state.rafId = 0;
+  }
+}
+
+function loop(ts){
+  if (!state.running){
+    state.rafId = 0;
+    return;
+  }
+  if (!state.lastTs) state.lastTs = ts;
+  const dt = Math.min(34, ts - state.lastTs);
+  state.lastTs = ts;
+
+  if (!state.paused){
+    cleanupTransientEffects(ts);
+    if (state.bonusRound) updateBonus(dt, ts);
+    else updateMain(dt, ts);
+    renderHud();
+  }
+
+  state.rafId = requestAnimationFrame(loop);
+}
+
+function cleanupTransientEffects(now){
+  state.effectPopups = state.effectPopups.filter(p => now < p.until);
+  state.bonusItems = state.bonusItems.filter(item => !item.removeAt || now < item.removeAt);
+  state.mainItems = state.mainItems.filter(item => !item.removeAt || now < item.removeAt);
+}
+
+function updateMain(dt, now){
+  if (state.bonusIntro){
+    if (now >= state.bonusIntroUntil){
+      state.bonusIntro = false;
+      startBonusRound();
+    }
+    return;
+  }
+
+  trafficSpawnTick(now);
+
+  const multiplier = trafficSpeedMultiplier();
+  for (const item of state.mainItems){
+
+  item.speed = item.speed || item.baseSpeed;
+
+  if (item.launching){
+    if (now < item.launchPhaseUntil){
+      item.speed = Math.max(item.baseSpeed || 120, 40);
+    } else {
+      item.speed = Math.min(1400, (item.speed || 0) + (2200 * (dt / 1000)));
+      item.x += (item.direction < 0 ? -1 : 1) * item.speed * (dt / 1000);
+
+      if (now >= item.launchTrailNextAt){
+        const wake = launchTrailPoint(item);
+        spawnWakePuff(wake.x, wake.y, rand(8, 14));
+        item.launchTrailNextAt = now + rand(28, 42);
       }
     }
 
-    if (phase === "reference"){
-      for (const ref of window.VerseGameShell.getReferenceDecoys(state.referenceMeta, selectedMode, count + 4)){
-        if (out.size >= count) break;
-        if (normalizeWord(ref) !== normalizeWord(correctLabel)) out.add(ref);
-      }
+    item.tilt = item.direction < 0 ? 10 : -10;
+
+    const offscreen = item.direction < 0
+      ? item.x < -(item.width || 150) - 120
+      : item.x > state.fieldWidth + (item.width || 150) + 120;
+
+    if (offscreen){
+      item.removeAt = now;
     }
 
-    return Array.from(out).slice(0, count);
+    continue;
   }
 
-  function tokenizeVerse(text){
-    return window.VerseGameShell.tokenizeVerseWords(text);
+  item.targetSpeed = (item.baseSpeed || 90) * multiplier;
+  updateItemSpeed(item, dt);
+  if (!item.crashing && !item.vanishUntil){
+    item.x += (item.direction < 0 ? -1 : 1) * item.speed * (dt / 1000);
+  }
+  item.tilt = (item.targetSpeed - item.speed) * 0.06 * (item.direction < 0 ? -1 : 1);
+
   }
 
-  function normalizeWord(value){
-    return window.VerseGameShell.normalizeWord(value);
+  const buffer = 240;
+  state.mainItems = state.mainItems.filter(item => {
+    if (item.removeAt && now >= item.removeAt) return false;
+    if (item.direction < 0 && item.x < -buffer) return false;
+    if (item.direction > 0 && item.x > state.fieldWidth + buffer) return false;
+    return true;
+  });
+
+  if (state.awaitingBonusStart){
+    const launchedRefCarStillExists = state.mainItems.some(item => item.id === state.awaitingBonusItemId);
+    if (!launchedRefCarStillExists){
+      state.awaitingBonusStart = false;
+      state.awaitingBonusItemId = 0;
+      finishMainGame();
+    }
+  }
+}
+
+function trafficSpawnTick(now){
+  if (!state.fieldWidth) return;
+  if (!state.lastSpawnAt){
+    state.lastSpawnAt = now;
+    state.nextSpawnDelay = randomSpawnDelay();
+    return;
+  }
+  if (now - state.lastSpawnAt < state.nextSpawnDelay) return;
+
+  state.lastSpawnAt = now;
+  const delayUsed = state.nextSpawnDelay;
+  state.nextSpawnDelay = randomSpawnDelay();
+
+  const roadOrder = shuffle([0,1]);
+  for (const road of roadOrder){
+    if (!laneHasSpawnRoom(road, 182)) continue;
+    spawnMainItem(road, now, delayUsed);
+    break;
+  }
+}
+
+function spawnMainItem(road, now, delayUsed){
+  const correctLabel = currentTargetLabel();
+  if (!correctLabel) return;
+
+  const roadHasCorrect = state.mainItems.some(item => item.road === road && item.isCorrect && !item.crashing);
+  const shouldTryCorrect = !roadHasCorrect && canSpawnCorrect(now);
+  const spawnCorrect = shouldTryCorrect && (Math.random() < 0.48 || now - state.lastCorrectSpawnAt > 2600);
+
+  const label = spawnCorrect ? correctLabel : nextDecoyLabel(correctLabel);
+  const item = makeMainItem({ road, label, isCorrect: spawnCorrect, delayUsed });
+  state.mainItems.push(item);
+  state.totalSpawned += 1;
+  if (spawnCorrect) state.lastCorrectSpawnAt = now;
+}
+
+function makeMainItem({ road, label, isCorrect, delayUsed }){
+  const direction = road === 0 ? -1 : 1;
+  const metrics = getItemMetrics(label);
+  const x = direction < 0 ? state.fieldWidth + metrics.width + 40 : -(metrics.width + 40);
+  const width = metrics.width;
+  const norm = clamp((delayUsed - 700) / 440, 0, 1);
+  const baseMin = 104;
+  const baseMax = 146;
+  const baseSpeed = baseMin + ((0.25 + norm * 0.75) * (baseMax - baseMin));
+  return {
+    id: state.nextItemId++,
+    road,
+    direction,
+    x,
+    width,
+    label,
+    isCorrect,
+    emoji: pickRandom(VEHICLES),
+    speed: baseSpeed,
+    baseSpeed,
+    targetSpeed: baseSpeed,
+    bounceOffset: Math.random(),
+    height: metrics.height,
+    wordWidth: metrics.wordWidth,
+    wordHeight: metrics.wordHeight,
+    wordFont: metrics.wordFont,
+    carSize: metrics.carSize,
+    carHitHeight: metrics.carHitHeight,
+    carCenterY: metrics.carCenterY,
+    wordCenterY: metrics.wordCenterY,
+    styleClass: DECOY_CLASSES[state.nextItemId % DECOY_CLASSES.length],
+    flashWrongUntil:0,
+    bonkUntil:0,
+    swerveUntil:0,
+    crashing:false,
+    removeAt:0,
+    launching:false,
+    launchStartAt:0,
+    launchPhaseUntil:0,
+    launchTrailNextAt:0,
+    launchTrailUntil:0,
+    wordFadeUntil:0,
+    tilt:0
+  };
+}
+
+function laneHasSpawnRoom(road, minGap){
+  const dir = road === 0 ? -1 : 1;
+  const sampleWidth = estimateItemWidth(currentTargetLabel() || "word");
+  const spawnX = dir < 0 ? state.fieldWidth + sampleWidth + 40 : -(sampleWidth + 40);
+  for (const item of state.mainItems){
+    if (item.road !== road || item.crashing) continue;
+    const dist = Math.abs(item.x - spawnX);
+    if (dist < Math.max(minGap, (item.width || 150) + 24)) return false;
+  }
+  return true;
+}
+
+function canSpawnCorrect(now){
+  if (state.mainItems.filter(item => item.isCorrect && !item.crashing).length >= 2) return false;
+  if (state.totalSpawned < 2) return false;
+  return (now - state.lastCorrectSpawnAt > 1700) || Math.random() < 0.34;
+}
+
+function updateItemSpeed(item, dt){
+  const accelPerSec = 62;
+  const closeGap = 56;
+  const followGap = 98;
+  const releaseGap = 138;
+  const others = state.mainItems.filter(other => other.road === item.road && other.id !== item.id && !other.crashing);
+  let leader = null;
+  let bestGap = Infinity;
+
+  for (const other of others){
+    if (item.direction < 0){
+      if (other.x >= item.x) continue;
+      const gap = item.x - other.x - (other.width || 150);
+      if (gap < bestGap){ bestGap = gap; leader = other; }
+    } else {
+      if (other.x <= item.x) continue;
+      const gap = other.x - item.x - (item.width || 150);
+      if (gap < bestGap){ bestGap = gap; leader = other; }
+    }
   }
 
-  function escapeHtml(str){
-    return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;");
+  let targetSpeed = item.targetSpeed || item.baseSpeed;
+  if (leader){
+    const leaderSpeed = leader.speed || leader.baseSpeed || targetSpeed;
+    if (bestGap < closeGap) targetSpeed = Math.min(targetSpeed, Math.max(leaderSpeed - 14, 52));
+    else if (bestGap < followGap) targetSpeed = Math.min(targetSpeed, leaderSpeed);
+    else if (bestGap < releaseGap) targetSpeed = Math.min(targetSpeed, leaderSpeed + 10);
   }
 
-  const shuffle = window.VerseGameShell.shuffle;
-  const clamp = window.VerseGameShell.clamp;
-  const capitalize = window.VerseGameShell.capitalize;
+  const maxStep = accelPerSec * (dt / 1000);
+  if (item.speed < targetSpeed) item.speed = Math.min(targetSpeed, item.speed + maxStep);
+  else if (item.speed > targetSpeed) item.speed = Math.max(targetSpeed, item.speed - maxStep * 1.45);
+}
 
-  function parseReferenceParts(ref, translation, verseId){
-    return window.VerseGameShell.parseReferenceParts(ref, translation, verseId);
+function chooseMainItem(itemId, tappedEl){
+  const item = state.mainItems.find(x => x.id === itemId);
+  if (item && (item.vanishUntil || item.crashing || item.removeAt)) return;
+  if (!item || state.bonusRound || state.bonusIntro) return;
+  const layerRect = document.getElementById("ttField")?.getBoundingClientRect();
+  const rect = tappedEl.getBoundingClientRect();
+  const x = rect.left - layerRect.left + rect.width / 2;
+  const y = rect.top - layerRect.top + rect.height / 2;
+
+  if (!item.isCorrect){
+    item.flashWrongUntil = performance.now() + 280;
+    state.buildShakeUntil = performance.now() + 260;
+    addPopup(x, y, "✖", false);
+    crashRoad(item.road, item.id);
+    return;
   }
 
+  addPopup(x, y, "✔", true);
+  state.buildPopUntil = performance.now() + 200;
+  startSuccessLaunch(item);
+
+  const target = currentTargetLabel();
+  if (item.label === target){
+    if (state.phase === "words"){
+      state.wordsBuilt += 1;
+      if (state.wordsBuilt >= verseWords.length){
+        state.phase = "book";
+      }
+    } else if (state.phase === "book"){
+      state.bookBuilt = true;
+      state.phase = "reference";
+    } else if (state.phase === "reference"){
+      state.referenceBuilt = true;
+      state.awaitingBonusStart = true;
+      state.awaitingBonusItemId = item.id;
+    }
+    convertOtherCorrectCopies(item.road, target);
+  }
+}
+
+function convertOtherCorrectCopies(chosenRoad, previousTarget){
+  for (const item of state.mainItems){
+    if (!item.isCorrect || item.road === chosenRoad || item.label !== previousTarget || item.crashing) continue;
+    item.isCorrect = false;
+    item.label = nextDecoyLabel(previousTarget);
+    item.styleClass = DECOY_CLASSES[(item.id + 1) % DECOY_CLASSES.length];
+    item.bonkUntil = performance.now() + 260;
+  }
+}
+
+function crashRoad(road, tappedId){
+  const now = performance.now();
+  state.roadCrashUntil[road] = now + 330;
+  const roadItems = state.mainItems.filter(item => item.road === road && !item.crashing);
+  roadItems.sort((a,b) => {
+    if (road === 0) return b.x - a.x; // spawn side to front
+    return a.x - b.x;
+  });
+
+  const tapped = roadItems.find(item => item.id === tappedId);
+  if (!tapped) return;
+
+  const ordered = [tapped, ...roadItems.filter(item => item.id !== tappedId)];
+  ordered.forEach((item, index) => {
+    item.crashing = true;
+    item.swerveUntil = now + 180 + index * 40;
+    item.removeAt = now + 240 + index * 90;
+  const center = itemCenter(item);
+  window.setTimeout(() => {
+    spawnCrashBurst(center.x, center.y, {
+      count: 9,
+      distance: 58,
+      jitter: 5,
+      duration: 650,
+      cloudSize: 74,
+      sizePool: [8, 9, 10, 12, 15, 18]
+    });
+  }, index * 85);
+  });
+}
+
+function finishMainGame(){
+  state.mainDone = true;
+  state.mainItems = [];
+  state.overlayMessage = "BONUS ROUND!";
+  state.overlayUntil = performance.now() + 520;
+  state.bonusIntro = true;
+  state.bonusIntroUntil = performance.now() + 1400;
+  state.bonusIntroTarget = pickBonusTargetEmoji();
+
+  const introTarget = document.getElementById("ttBonusIntroTarget");
+  if (introTarget) introTarget.textContent = state.bonusIntroTarget;
+}
+
+
+function updateBonus(dt, now){
+  if (state.bonusEnding){
+    for (const item of state.bonusItems){
+      item.x += (item.direction < 0 ? -1 : 1) * (item.speed || 520) * (dt / 1000);
+    }
+
+    const buffer = 260;
+    state.bonusItems = state.bonusItems.filter(item => {
+      if (item.direction < 0 && item.x < -buffer) return false;
+      if (item.direction > 0 && item.x > state.fieldWidth + buffer) return false;
+      return true;
+    });
+
+    if (now >= state.bonusEndingUntil){
+      state.bonusRound = false;
+      state.bonusEnding = false;
+      state.bonusShowScore = false;
+      state.running = false;
+      completeGameAndRenderEndScreen();
+    }
+    return;
+  }
+
+  state.bonusTimeLeft = Math.max(0, state.bonusEndsAt - now);
+
+  spawnBonusTraffic(now);
+
+  for (const item of state.bonusItems){
+    if (item.removeAt) continue;
+    item.x += (item.direction < 0 ? -1 : 1) * item.speed * (dt / 1000);
+  }
+
+  const buffer = 240;
+  state.bonusItems = state.bonusItems.filter(item => {
+    if (item.removeAt && now >= item.removeAt) return false;
+    if (item.direction < 0 && item.x < -buffer) return false;
+    if (item.direction > 0 && item.x > state.fieldWidth + buffer) return false;
+    return true;
+  });
+
+  if (state.awaitingBonusStart){
+    const launchedRefCarStillExists = state.mainItems.some(item => item.id === state.awaitingBonusItemId);
+    if (!launchedRefCarStillExists){
+      state.awaitingBonusStart = false;
+      state.awaitingBonusItemId = 0;
+      finishMainGame();
+    }
+  }
+
+  if (state.bonusTimeLeft <= 0){
+    finishBonusRound();
+  }
+}
+
+
+function currentTargetLabel(){
+  if (state.phase === "words") return verseWords[state.wordsBuilt] || "";
+  if (state.phase === "book") return verseMeta.book || "";
+  if (state.phase === "reference") return verseMeta.reference || "";
+  return "";
+}
+
+function nextDecoyLabel(correctLabel){
+  const lowerCorrect = normalizeWord(correctLabel);
+
+  if (state.phase === "words"){
+    if (selectedMode === "easy"){
+      const pool = window.VerseGameShell.getFunWordDecoys(correctLabel, verseWords, 12);
+      return pickRandom(pool) || pickRandom(FUN_DECOYS);
+    }
+
+    const blocked = blockedUpcomingWordLabels(2);
+
+    const versePool = uniqueStrings(
+      verseWords
+        .map(w => String(w || "").trim())
+        .filter(Boolean)
+        .map(normalizeWord)
+    ).filter(word => !blocked.has(word));
+
+    if (versePool.length){
+      return pickRandom(versePool);
+    }
+
+    const fallback = window.VerseGameShell.getFunWordDecoys(correctLabel, verseWords, 12);
+    return pickRandom(fallback) || pickRandom(FUN_DECOYS);
+  }
+
+  if (state.phase === "book"){
+    const pool = window.VerseGameShell.getBookDecoys(correctLabel, 12);
+    return pickRandom(pool) || "Psalm";
+  }
+
+  if (state.phase === "reference"){
+    const pool = window.VerseGameShell
+      .getReferenceDecoys(verseMeta, selectedMode, 8)
+      .filter(ref => normalizeWord(ref) !== lowerCorrect);
+
+    return pickRandom(pool) || "1:1";
+  }
+
+  return pickRandom(FUN_DECOYS);
+}
+
+function blockedUpcomingWordLabels(count = 2){
+  const blocked = new Set();
+
+  for (let i = 0; i <= count; i += 1){
+    const word = verseWords[state.wordsBuilt + i];
+    if (word) blocked.add(normalizeWord(word));
+  }
+
+  return blocked;
+}
+
+function trafficSpeedMultiplier(){
+  if (selectedMode === "easy") return 1;
+
+  const progress = clamp(state.wordsBuilt / Math.max(1, verseWords.length - 1), 0, 1);
+
+  if (selectedMode === "medium"){
+    return state.phase === "words"
+      ? 1.10 + (0.20 * progress)
+      : 1.30;
+  }
+
+  return state.phase === "words"
+    ? 1.15 + (0.30 * progress)
+    : 1.45;
+}
+
+function randomSpawnDelay(){
+  return 720 + Math.random() * 420;
+}
+
+function roadTopY(road){
+  return road === 0 ? 0 : (state.roadHeight + state.gapHeight);
+}
+
+function laneCenterY(road){
+  return roadTopY(road) + (state.roadHeight * 0.5);
+}
+
+function bonusLaneY(lane){
+  const roadTop = state.fieldHeight * 0.18;
+  const roadHeight = state.fieldHeight * 0.56;
+  return lane === "upper"
+    ? roadTop + roadHeight * 0.35
+    : roadTop + roadHeight * 0.65;
+}
+
+function itemCenter(item){
+  const width = item.width || 150;
+  const roadTop = roadTopY(item.road);
+  const height = item.height || state.roadHeight;
+  const carCenterPct = (typeof item.carCenterY === "number" ? item.carCenterY : 25) / 100;
+
+  return {
+    x: item.x + (width / 2),
+    y: roadTop + (height * carCenterPct)
+  };
+}
+
+function addPopup(x, y, text, good){
+  state.effectPopups.push({ x, y, text, good, until: performance.now() + 620 });
+}
+
+function showPhaseOverlay(text){
+  state.overlayMessage = text;
+  state.overlayUntil = performance.now() + 900;
+}
+
+function getItemMetrics(label){
+  const labelLen = String(label || "").length;
+  const roadH = Math.max(110, state.roadHeight || 160);
+
+  const isMobile = state.fieldWidth < 520;
+  const maxByField = Math.max(250, state.fieldWidth * (isMobile ? 0.42 : 0.36));
+  const width = clamp(
+    (isMobile ? state.fieldWidth * 0.42 : state.fieldWidth * 0.285) + labelLen * 8,
+    190,
+    Math.min(430, maxByField)
+  );
+
+  const height = Math.round(roadH);
+  const laneH = roadH * 0.5;
+  const wordWidth = clamp(width * 0.92, 138, width - 4);
+  const wordHeight = clamp(roadH * 0.25, 38, 58);
+  const wordFont = clamp(roadH * 0.17, 17, 30);
+  const carSize = clamp(laneH * 0.78, 56, 126);
+  const carHitHeight = clamp(laneH * 0.82, 46, 92);
+  const carCenterY = 24;
+  const wordCenterY = 74;
+  return { width, height, wordWidth, wordHeight, wordFont, carSize, carHitHeight, carCenterY, wordCenterY };
+}
+
+function estimateItemWidth(label){
+  return getItemMetrics(label).width;
+}
+
+function parseVerseMeta(verseId, fallbackRef){
+  return window.VerseGameShell.parseReferenceParts(
+    fallbackRef,
+    ctx.translation,
+    verseId
+  );
+}
+
+function tokenizeForBuild(text){
+  return window.VerseGameShell.tokenizeVerseForBuild(text);
+}
+
+
+function applyDebugHitboxes(){
+const field = document.getElementById("ttField");
+if (!field) return;
+field.classList.toggle("is-hitbox-debug", !!state.debugHitboxes);
+}
+
+function uniqueStrings(items){
+  const out = [];
+  const seen = new Set();
+  for (const item of items){
+    const key = String(item).toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(item);
+  }
+  return out;
+}
+
+function normalizeWord(value){
+  return window.VerseGameShell.normalizeWord(value);
+}
+
+const shuffle = window.VerseGameShell.shuffle;
+
+function pickRandom(items){
+  if (!items || !items.length) return "";
+  return items[Math.floor(Math.random() * items.length)];
+}
+
+const clamp = window.VerseGameShell.clamp;
+const capitalize = window.VerseGameShell.capitalize;
+
+function escapeHtml(value){
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 })();
