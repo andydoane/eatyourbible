@@ -375,6 +375,24 @@ body{
   }
 }
 
+/* Shared build progress display */
+
+.vm-build-text--progress .is-verse,
+.vm-build-text--progress .is-book,
+.vm-build-text--progress .is-reference{
+  opacity: 0.32;
+}
+
+.vm-build-text--progress .is-built{
+  opacity: 1;
+}
+
+/* Optional hard-mode behavior: hide unbuilt tokens completely */
+.vm-build-text--progress.is-hide-unbuilt .is-verse:not(.is-built),
+.vm-build-text--progress.is-hide-unbuilt .is-book:not(.is-built),
+.vm-build-text--progress.is-hide-unbuilt .is-reference:not(.is-built){
+  opacity: 0;
+}
 
 /* =========================================================
    Shared external game How to Play overlay
