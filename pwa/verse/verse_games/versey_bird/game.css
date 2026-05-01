@@ -125,7 +125,7 @@ body{
 }
 
 .vb-build-word{
-  color: transparent;
+  color: #333333;
   transition: color 160ms ease, opacity 160ms ease;
 }
 
