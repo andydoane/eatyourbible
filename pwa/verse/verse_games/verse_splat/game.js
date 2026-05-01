@@ -12,6 +12,8 @@ const GAME_THEME = {
   accent: "#7f66c6"
 };
 
+const BUILD_AREA = "compact";
+
 const HELP_OVERLAY_ID = "vspHelpOverlay";
 
   const BONUS_TIME_LIMIT_MS = 30000;
@@ -157,33 +159,24 @@ const shuffle = window.VerseGameShell.shuffle;
     return window.VerseGameShell.parseReferenceParts(ref, translation, verseId);
   }
 
-  function getBuildLengthScore(verseText, book, reference){
-    return String(verseText || "").length + String(book || "").length + String(reference || "").length;
-  }
 
-  function getBuildSizeClass(verseText, book, reference){
-    const score = getBuildLengthScore(verseText, book, reference);
-    if (score >= 136) return "is-small";
-    if (score >= 106) return "is-medium";
-    return "is-normal";
-  }
 
   function initVerseData(){
-    state.words = tokenizeVerse(ctx.verseText);
     const parts = parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
+    const buildData = window.VerseGameShell.buildVerseSegments({
+      verseText: ctx.verseText || "",
+      book: parts.book,
+      reference: parts.reference,
+      buildArea: BUILD_AREA
+    });
+
+    state.words = buildData.words;
     state.referenceMeta = parts;
-
-    const wholeBook = String(parts.book || "").trim();
-    state.bookTokens = wholeBook ? [wholeBook] : [];
-
-    state.referenceToken = String(parts.reference || "").trim();
-    state.segments = [...state.words, ...state.bookTokens, ...(state.referenceToken ? [state.referenceToken] : [])];
-
-    state.metaIndices = new Set();
-    for (let i = state.words.length; i < state.words.length + state.bookTokens.length; i++) state.metaIndices.add(i);
-    if (state.referenceToken) state.metaIndices.add(state.segments.length - 1);
-
-    state.buildSizeClass = getBuildSizeClass(ctx.verseText, parts.book, parts.reference);
+    state.bookTokens = buildData.bookLabel ? [buildData.bookLabel] : [];
+    state.referenceToken = buildData.referenceLabel;
+    state.segments = buildData.segments;
+    state.metaIndices = buildData.metaIndices;
+    state.buildSizeClass = buildData.buildSizeClass;
   }
 
   function setScreen(screen){
