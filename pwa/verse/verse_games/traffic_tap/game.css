@@ -152,7 +152,8 @@ body{
 
 .tt-build-text{
   width:100%;
-  height:100%;
+  height:auto;
+  max-height:100%;
 }
 
 .tt-bonus-build{
@@ -175,13 +176,14 @@ body{
 }
 
 .tt-build-text.is-medium{
-  font-size:clamp(17px,4vw,30px);
+  font-size:clamp(18px,4.15vw,31px);
   line-height:1.1;
 }
 
 .tt-build-text.is-small{
-  font-size:clamp(13px,3.35vw,23px);
-  line-height:1.05;
+  font-size:clamp(15px,3.75vw,24px);
+  line-height:1.08;
+}
 }
 
 .tt-build-token{
