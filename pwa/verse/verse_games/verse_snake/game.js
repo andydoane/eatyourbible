@@ -273,37 +273,16 @@ const shuffle = window.VerseGameShell.shuffle;
 
 
 
-  function getWordPhaseCount(){
-    return state.words.length;
-  }
 
-  function hasBookPhase(){
-    return !!state.bookLabel;
-  }
-
-  function hasReferencePhase(){
-    return !!state.referenceLabel;
-  }
 
   function getPhaseForIndex(index){
-    const wordCount = getWordPhaseCount();
-
-    if (index < wordCount){
-      return "words";
-    }
-
-    if (hasBookPhase() && index === wordCount){
-      return "book";
-    }
-
-    if (hasReferencePhase()){
-      const refIndex = wordCount + (hasBookPhase() ? 1 : 0);
-      if (index === refIndex){
-        return "reference";
-      }
-    }
-
-    return "done";
+    return window.VerseGameShell.getPhaseForProgress({
+      progressIndex: index,
+      wordCount: state.words.length,
+      totalSegments: state.segments.length,
+      bookLabel: state.bookLabel,
+      referenceLabel: state.referenceLabel
+    });
   }
 
   function getCurrentPhase(){
