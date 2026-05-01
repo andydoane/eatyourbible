@@ -1460,21 +1460,16 @@ function nextDecoyLabel(correctLabel){
       return pickRandom(pool) || pickRandom(FUN_DECOYS);
     }
 
-    const blocked = blockedUpcomingWordLabels(2);
+    const pool = window.VerseGameShell.getVerseWordDecoys({
+      words: verseWords,
+      correct: correctLabel,
+      targetIndex: state.wordsBuilt,
+      count: 12,
+      avoidNext: 2,
+      fallbackToFun: true
+    });
 
-    const versePool = uniqueStrings(
-      verseWords
-        .map(w => String(w || "").trim())
-        .filter(Boolean)
-        .map(normalizeWord)
-    ).filter(word => !blocked.has(word));
-
-    if (versePool.length){
-      return pickRandom(versePool);
-    }
-
-    const fallback = window.VerseGameShell.getFunWordDecoys(correctLabel, verseWords, 12);
-    return pickRandom(fallback) || pickRandom(FUN_DECOYS);
+    return pickRandom(pool) || pickRandom(FUN_DECOYS);
   }
 
   if (state.phase === "book"){
@@ -1493,16 +1488,7 @@ function nextDecoyLabel(correctLabel){
   return pickRandom(FUN_DECOYS);
 }
 
-function blockedUpcomingWordLabels(count = 2){
-  const blocked = new Set();
 
-  for (let i = 0; i <= count; i += 1){
-    const word = verseWords[state.wordsBuilt + i];
-    if (word) blocked.add(normalizeWord(word));
-  }
-
-  return blocked;
-}
 
 function trafficSpeedMultiplier(){
   if (selectedMode === "easy") return 1;
