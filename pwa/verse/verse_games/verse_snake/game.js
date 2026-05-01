@@ -8,6 +8,8 @@
     accent: "#333333"
   };
 
+  const BUILD_AREA = "large";
+
   const HELP_OVERLAY_ID = "vsHelpOverlay";
 
   let selectedMode = null;
@@ -269,18 +271,7 @@ const shuffle = window.VerseGameShell.shuffle;
     return window.VerseGameShell.parseReferenceParts(ref, translation, verseId);
   }
 
-  function getBuildLengthScore(verseText, book, reference){
-    return String(verseText || "").length
-      + String(book || "").length
-      + String(reference || "").length;
-  }
 
-  function getBuildSizeClass(verseText, book, reference){
-    const score = getBuildLengthScore(verseText, book, reference);
-    if (score >= 136) return "is-small";
-    if (score >= 106) return "is-medium";
-    return "is-normal";
-  }
 
   function getWordPhaseCount(){
     return state.words.length;
@@ -595,23 +586,25 @@ window.VerseGameShell.wireHelp({
       Math.min(state.fieldWidth * 0.5, 420)
     );
 
-    state.words = tokenizeVerse(ctx.verseText);
-
     const refParts = parseReferenceParts(
       ctx.verseRef || launch.ref || "",
       ctx.translation,
       ctx.verseId || launch.verseId || ""
     );
-    state.referenceMeta = refParts;
-    state.bookLabel = refParts.book;
-    state.referenceLabel = refParts.reference;
-    state.buildSizeClass = getBuildSizeClass(ctx.verseText, state.bookLabel, state.referenceLabel);
 
-    state.segments = [
-      ...state.words,
-      ...(state.bookLabel ? [state.bookLabel] : []),
-      ...(state.referenceLabel ? [state.referenceLabel] : [])
-    ];
+    const buildData = window.VerseGameShell.buildVerseSegments({
+      verseText: ctx.verseText || "",
+      book: refParts.book,
+      reference: refParts.reference,
+      buildArea: BUILD_AREA
+    });
+
+    state.words = buildData.words;
+    state.referenceMeta = refParts;
+    state.bookLabel = buildData.bookLabel;
+    state.referenceLabel = buildData.referenceLabel;
+    state.buildSizeClass = buildData.buildSizeClass;
+    state.segments = buildData.segments;
 
     state.progressIndex = 0;
 
