@@ -270,8 +270,8 @@ function renderModeSelect(){
       <div class="vb-root">
         <div class="vb-stage">
           <div class="vb-build-wrap">
-            <div class="vb-build" id="vbBuild">
-              <div class="vb-build-text" id="vbBuildText"></div>
+            <div class="vb-build vm-build vm-build--${BUILD_AREA}" id="vbBuild">
+              <div class="vb-build-text vm-build-text" id="vbBuildText"></div>
             </div>
           </div>
 
@@ -1281,10 +1281,10 @@ function getObstacleGroundY(){
     const el = document.getElementById("vbBuildText");
     if (!el) return;
 
-    el.className = `vb-build-text ${state.buildSizeClass}`;
+    el.className = `vb-build-text vm-build-text vm-build-text--progress ${state.buildSizeClass} ${selectedMode === "hard" ? "is-hide-unbuilt" : ""}`;
 
     el.innerHTML = state.segments.map((segment, index) => `
-      <span class="vb-build-word ${index < state.progressIndex ? "is-built" : ""}">
+      <span class="vb-build-word vm-build-word ${index < state.progressIndex ? "is-built" : ""}">
         ${escapeHtml(segment)}
       </span>
     `).join(" ");
