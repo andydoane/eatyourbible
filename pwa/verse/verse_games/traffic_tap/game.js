@@ -4,11 +4,15 @@ const ctx = await window.VerseGameBridge.getVerseContext();
 
 const GAME_ID = "traffic_tap_external";
 
+
+  
 const GAME_THEME = {
   bg: "#a7cb6f",
   accent: "#a7cb6f"
 };
 
+const BUILD_AREA = "compact";
+  
 const HELP_OVERLAY_ID = "ttHelpOverlay";
 
 const BOOKS = window.VerseGameShell.getBibleBookDecoys();
@@ -45,7 +49,7 @@ const buildData = window.VerseGameShell.buildVerseSegments({
   verseText: ctx.verseText || "",
   book: verseMeta.book,
   reference: verseMeta.reference,
-  buildArea: "compact"
+  buildArea: BUILD_AREA
 });
 const buildTokens = tokenizeForBuild(ctx.verseText || "");
 const verseWords = buildData.words;
