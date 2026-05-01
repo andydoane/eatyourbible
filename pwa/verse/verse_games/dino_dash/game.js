@@ -1631,11 +1631,13 @@ function renderHills(){
   }
 
   function getCurrentProgressPhase(){
-    const wordCount = state.verseWords.length;
-    if (state.progressIndex < wordCount) return "words";
-    if (state.progressIndex === wordCount && state.bookLabel) return "book";
-    if (state.progressIndex === wordCount + (state.bookLabel ? 1 : 0) && state.referenceLabel) return "reference";
-    return "done";
+    return window.VerseGameShell.getPhaseForProgress({
+      progressIndex: state.progressIndex,
+      wordCount: state.verseWords.length,
+      totalSegments: state.buildSegments.length,
+      bookLabel: state.bookLabel,
+      referenceLabel: state.referenceLabel
+    });
   }
 
   function getCurrentCorrectLabel(){
