@@ -1,117 +1,98 @@
 (async function(){
-const app = document.getElementById("app");
-const ctx = await window.VerseGameBridge.getVerseContext();
-
-const GAME_ID = "traffic_tap_external";
+  const app = document.getElementById("app");
+  const ctx = await window.VerseGameBridge.getVerseContext();
+  const GAME_ID = "foodslice";
 
 const GAME_THEME = {
-  bg: "#a7cb6f",
-  accent: "#a7cb6f"
+  bg: "#333333",
+  accent: "#333333"
 };
 
-const HELP_OVERLAY_ID = "ttHelpOverlay";
+const HELP_OVERLAY_ID = "fsHelpOverlay";
+
+  const FOOD_THEMES = [
+    ["🍎","🍐","🍊","🍋","🍌","🍉","🍇","🍓","🫐","🍈","🍒","🥭","🍍","🥥","🥝"],
+    ["🍕","🍔","🍟","🌭","🍿","🥓","🥪","🥨","🌮","🌯","🥗","🥘","🍝","🍜","🍲","🍣","🍱"],
+    ["🍦","🍧","🍨","🍩","🍪","🎂","🍰","🧁","🥧","🍫","🍬","🍭","🍮","🍯"],
+    ["🍞","🥐","🥖","🫓","🥨","🥯","🥞","🧇","🥚","🍳"],
+    ["🥦","🥬","🥕","🌽","🌶️","🫑","🥒","🥑","🍄","🥔","🧅","🧄"],
+    ["🍗","🍖","🥩","🍤","🦀","🦞","🧀","🥚","🥛"]
+  ];
 
 const BOOKS = window.VerseGameShell.getBibleBookDecoys();
-
-const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
   
-const VEHICLES = ["🚗","🚕","🚙","🏎️","🚓","🚌","🚐","🚑","🚒","🚚","🛻"];
-const BONUS_RIVALS = ["🚗","🚕","🚙","🏎️","🚓","🚐","🚚"];
-const DECOY_CLASSES = ["is-deco1","is-deco2","is-deco3","is-deco4","is-deco5"];
-const SPAWN_PATTERNS = [
-  ["upper"],
-  ["lower"],
-  ["upper","lower"],
-  ["lower","upper"],
-  ["upper","upper","lower"],
-  ["lower","lower","upper"]
-];
+const GENERIC_DECOYS = window.VerseGameShell.getFunDecoys();
 
-const CRASH_CLOUD_SVG = `
-<svg viewBox="0 0 26.458333 26.458333" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-  <path fill="currentColor" d="M 12.949771,1.5464282 A 6.0017493,5.3230522 7.1160496 0 0 6.9820601,6.4190471 5.3405872,4.7400094 7.154063 0 0 6.8563886,6.4134999 5.3405872,4.7400094 7.154063 0 0 1.5243277,11.020646 5.3405872,4.7400094 7.154063 0 0 2.4259083,13.677302 4.0181559,3.5662928 7.1540647 0 0 0.66145837,16.583588 4.0181559,3.5662928 7.1540647 0 0 4.6728467,20.261811 4.0181559,3.5662928 7.1540647 0 0 5.1732885,20.243 a 5.3405872,4.7400094 7.154063 0 0 5.2883005,4.342428 5.3405872,4.7400094 7.154063 0 0 3.656255,-1.210431 4.0181559,3.5662928 7.1540647 0 0 3.300558,1.639798 4.0181559,3.5662928 7.1540647 0 0 4.011389,-3.466536 4.0181559,3.5662928 7.1540647 0 0 -0.416848,-1.594767 5.3405872,4.7400094 7.154063 0 0 4.783932,-4.586787 5.3405872,4.7400094 7.154063 0 0 -1.9322,-3.706541 4.0181559,3.5662928 7.1540647 0 0 0.764128,-2.0624453 4.0181559,3.5662928 7.1540647 0 0 -4.011389,-3.6776624 4.0181559,3.5662928 7.1540647 0 0 -1.744813,0.3148283 6.0017493,5.3230522 7.1160496 0 0 -5.92283,-4.6884523 z"/>
-</svg>`;
+  let selectedMode = null;
+  let muted = false;
+  let completionMarked = false;
+  let alreadyCompletedForMode = false;
+  let resizeBound = false;
+  let endScreenUnlockTimer = 0;
 
-let selectedMode = null;
-let muted = false;
-let completionMarked = false;
-let alreadyCompletedForMode = false;
-let resizeBound = false;
-let endScreenUnlockTimer = 0;
-let itemsClickBound = false;
+  const state = {
+    running:false,
+    paused:false,
+    pauseReason:"",
+    rafId:0,
+    lastTs:0,
+    fieldWidth:0,
+    fieldHeight:0,
+    fruitHitSize:96,
+    fruitEmojiSize:56,
+    bombHitSize:84,
+    bombEmojiSize:50,
+    sliceSize:54,
+    sliceEmojiSize:42,
+    theme:pickRandom(FOOD_THEMES),
+    verseMeta:parseVerseMeta(ctx.verseId || "", ctx.verseRef || ""),
+    buildData:null,
+    tokens:tokenizeVerseWithSpaces(ctx.verseText || ""),
+    wordEntries:[],
+    wordsBuilt:0,
+    phase:"words",
+    bookBuilt:false,
+    referenceBuilt:false,
+    buildSizeClass:"is-normal",
+    activeFruit:null,
+    activeBomb:null,
+    activeSlices:[],
+    wrongStreak:0,
+    buildShakeUntil:0,
+    fieldFlashUntil:0,
+    overlayMessage:"",
+    overlayUntil:0,
+    bonusIntroActive:false,
+    bonusIntroUntil:0,
+    bonusRound:false,
+    bonusBannerUntil:0,
+    bonusEndsAt:0,
+    bonusFruits:[],
+    bonusIdCounter:0,
+    bonusCount:0,
+    done:false,
+    bookChoices:[],
+    referenceChoices:[]
+  };
 
-const verseMeta = parseVerseMeta(ctx.verseId || "", ctx.verseRef || "");
-const buildData = window.VerseGameShell.buildVerseSegments({
-  verseText: ctx.verseText || "",
-  book: verseMeta.book,
-  reference: verseMeta.reference
-});
-const buildTokens = tokenizeForBuild(ctx.verseText || "");
-const verseWords = buildData.words;
+  state.buildData = window.VerseGameShell.buildVerseSegments({
+    verseText: ctx.verseText || "",
+    book: state.verseMeta.book,
+    reference: state.verseMeta.reference
+  });
 
-const state = {
-  running:false,
-  paused:false,
-  pauseReason:"",
-  lastTs:0,
-  rafId:0,
-  fieldWidth:0,
-  fieldHeight:0,
-  roadHeight:0,
-  gapHeight:0,
-  mainDone:false,
-  bonusRound:false,
-  bonusIntro:false,
-  bonusIntroUntil:0,
-  buildPopUntil:0,
-  buildShakeUntil:0,
-  overlayMessage:"",
-  overlayUntil:0,
-  buildSizeClass: buildData.buildSizeClass,
-  phase:"words",
-  wordsBuilt:0,
-  bookBuilt:false,
-  referenceBuilt:false,
-  mainItems:[],
-  nextItemId:1,
-  lastSpawnAt:0,
-  nextSpawnDelay:860,
-  totalSpawned:0,
-  lastCorrectSpawnAt:0,
-  roadCrashUntil:[0,0],
-  effectPopups:[],
-  recentCorrectConverted:false,
-  bonusTargetEmoji:"",
-  bonusTargetLabel:"",
-  bonusTimeLeft:0,
-  bonusEndsAt:0,
-  bonusScore:0,
-  bonusCorrectHits:0,
-  bonusWrongHits:0,
-  bonusStreak:0,
-  bonusBestStreak:0,
-  bonusItems:[],
-  bonusNextSpawnAt:0,
-  bonusRoundDuration:20000,
-  bonusIntroTarget:"",
-  debugHitboxes:false,
-  bonusEnding:false,
-  bonusEndingUntil:0,
-  bonusStopSpawn:false,
-  bonusShowScore:false,
-  awaitingBonusStart:false,
-  awaitingBonusItemId:0
-};
+  state.wordEntries = state.buildData.words.map((word) => ({ display: word }));
+  state.buildSizeClass = state.buildData.buildSizeClass;
 
-renderIntro();
+  renderIntro();
 
 function renderIntro(){
   stopLoop();
 
   window.VerseGameShell.renderTitleScreen({
     app,
-    title: "Traffic Tap",
-    icon: "🚗",
+    title: "Food Slice",
+    icon: "🍉",
     helpHtml: helpHtml(),
     helpOverlayId: HELP_OVERLAY_ID,
     theme: GAME_THEME,
@@ -131,130 +112,85 @@ function renderModeSelect(){
     helpHtml: helpHtml(),
     helpOverlayId: HELP_OVERLAY_ID,
     theme: GAME_THEME,
-    backLabel: "Back to Traffic Tap title",
+    backLabel: "Back to Food Slice title",
     onBack: renderIntro,
     onSelect: startGame
   });
 }
 
-function startGame(mode){
-  selectedMode = mode;
-  itemsClickBound = false;
-  completionMarked = false;
-  alreadyCompletedForMode = !!window.VerseGameBridge.wasAlreadyCompleted?.(ctx.verseId, GAME_ID, selectedMode);
+  function startGame(mode){
+    selectedMode = mode;
+    completionMarked = false;
+    alreadyCompletedForMode = !!window.VerseGameBridge.wasAlreadyCompleted?.(ctx.verseId, GAME_ID, selectedMode);
 
-  state.running = true;
-  state.paused = false;
-  state.pauseReason = "";
-  state.lastTs = 0;
-  state.mainDone = false;
-  state.bonusRound = false;
-  state.bonusIntro = false;
-  state.bonusIntroUntil = 0;
-  state.buildPopUntil = 0;
-  state.buildShakeUntil = 0;
-  state.overlayMessage = "";
-  state.overlayUntil = 0;
-  state.phase = "words";
-  state.wordsBuilt = 0;
-  state.bookBuilt = false;
-  state.referenceBuilt = false;
-  state.mainItems = [];
-  state.nextItemId = 1;
-  state.lastSpawnAt = 0;
-  state.nextSpawnDelay = randomSpawnDelay();
-  state.totalSpawned = 0;
-  state.lastCorrectSpawnAt = 0;
-  state.roadCrashUntil = [0,0];
-  state.effectPopups = [];
-  state.recentCorrectConverted = false;
-  state.bonusTargetEmoji = "";
-  state.bonusTargetLabel = "";
-  state.bonusTimeLeft = 0;
-  state.bonusEndsAt = 0;
-  state.bonusScore = 0;
-  state.bonusCorrectHits = 0;
-  state.bonusWrongHits = 0;
-  state.bonusStreak = 0;
-  state.bonusBestStreak = 0;
-  state.bonusItems = [];
-  state.bonusNextSpawnAt = 0;
-  state.bonusRoundDuration = 20000;
-  state.bonusIntroTarget = "";
-  state.bonusShowScore = false;
-  state.bonusEnding = false;
-  state.bonusEndingUntil = 0;
-  state.bonusStopSpawn = false;
-  state.awaitingBonusStart = false;
-  state.awaitingBonusItemId = 0;
+    state.running = true;
+    state.paused = false;
+    state.pauseReason = "";
+    state.lastTs = 0;
+    state.wordsBuilt = 0;
+    state.phase = "words";
+    state.bookBuilt = false;
+    state.referenceBuilt = false;
+    state.activeFruit = null;
+    state.activeBomb = null;
+    state.activeSlices = [];
+    state.wrongStreak = 0;
+    state.buildShakeUntil = 0;
+    state.fieldFlashUntil = 0;
+    state.overlayMessage = "";
+    state.overlayUntil = 0;
+    state.bonusIntroActive = false;
+    state.bonusIntroUntil = 0;
+    state.bonusRound = false;
+    state.bonusBannerUntil = 0;
+    state.bonusEndsAt = 0;
+    state.bonusFruits = [];
+    state.bonusIdCounter = 0;
+    state.bonusCount = 0;
+    state.done = false;
+    state.theme = pickRandom(FOOD_THEMES);
+    state.bookChoices = makeBookChoices(state.verseMeta.book);
+    state.referenceChoices = makeReferenceChoices(state.verseMeta, selectedMode);
 
-  itemsClickBound = false;
-
-  app.innerHTML = `
-    <div class="tt-shell">
-      <div class="tt-stage">
-        <div class="tt-build-wrap">
-          <div class="tt-build" id="ttBuild">
-            <div class="tt-build-text ${state.buildSizeClass}" id="ttBuildText"></div>
+    app.innerHTML = `
+      <div class="fs-shell">
+        <div class="fs-stage">
+          <div class="fs-build-wrap">
+            <div class="fs-build" id="fsBuild">
+              <div class="fs-build-text ${state.buildSizeClass}" id="fsBuildText"></div>
+            </div>
           </div>
-        </div>
-        <div class="tt-field-wrap">
-          <div class="tt-field" id="ttField">
-            <div class="tt-roads" id="ttRoads"></div>
-            <div class="tt-road-mark-layer" id="ttRoadMarks"></div>
-            <div class="tt-items-layer" id="ttItemsLayer"></div>
-            <div class="tt-effects-layer" id="ttEffectsLayer"></div>
-            <div class="tt-bonus-layer" id="ttBonusLayer"></div>
-            <div class="tt-overlay-msg" id="ttOverlay"></div>
-            <div class="tt-bonus-intro-overlay" id="ttBonusIntroOverlay" aria-hidden="true">
-              <div class="tt-bonus-intro-burst"></div>
-              <div class="tt-bonus-intro-content">
-                <div class="tt-bonus-intro-title">BONUS ROUND!</div>
-                <div class="tt-bonus-intro-targetline">
-                  <span class="tt-bonus-intro-bullseye">🎯</span>
-                  <span class="tt-bonus-intro-equals">=</span>
-                  <span class="tt-bonus-intro-target" id="ttBonusIntroTarget">🚗</span>
+          <div class="fs-field-wrap">
+            <div class="fs-field" id="fsField">
+              <div class="fs-play-layer" id="fsPlayLayer"></div>
+              <div class="fs-slice-layer" id="fsSliceLayer"></div>
+              <div class="fs-banner-layer" id="fsBannerLayer"></div>
+              <div class="fs-overlay-msg" id="fsOverlay"></div>
+              <div class="fs-bonus-intro-overlay" id="fsBonusIntroOverlay" aria-hidden="true">
+                <div class="fs-bonus-intro-burst"></div>
+                <div class="fs-bonus-intro-content">
+                  <div class="fs-bonus-intro-title">BONUS ROUND!</div>
+                  <div class="fs-bonus-intro-subtitle">Slice as much food as you can!</div>
                 </div>
               </div>
-            </div>
-            <div class="tt-controls-layer">
-              <button class="tt-corner-pill tt-corner-left" id="ttMenuPill" type="button" aria-label="Game menu">☰</button>
+              <div class="fs-controls-layer">
+                <button class="fs-corner-pill fs-corner-left" id="fsMenuPill" type="button" aria-label="Game menu">☰</button>
+                <div class="fs-corner-pill fs-corner-right" id="fsPhasePill"></div>
+              </div>
             </div>
           </div>
         </div>
+        ${renderHelpOverlay(helpHtml())}
+        ${renderGameMenuOverlay()}
       </div>
-      ${renderHelpOverlay(helpHtml())}
-      ${renderGameMenuOverlay()}
-    </div>
-  `;
+    `;
 
-  wireCommonNav();
-  wireGameInput();
-  recalcField();
-  applyDebugHitboxes();
-  renderHud();
-  startLoop();
-}
-
-async function completeGameAndRenderEndScreen(){
-  let reward = null;
-
-  if (!completionMarked && ctx?.verseId && GAME_ID && selectedMode){
-    completionMarked = true;
-
-    try {
-      reward = await window.VerseGameBridge.markCompleted({
-        verseId: ctx.verseId,
-        gameId: GAME_ID,
-        mode: selectedMode
-      });
-    } catch (err) {
-      console.warn("Could not mark Traffic Tap complete", err);
-    }
+    wireCommonNav();
+    wireGameInput();
+    recalcField();
+    renderHud();
+    startLoop();
   }
-
-  renderEndScreen(reward);
-}
 
 function renderEndScreen(reward){
   stopLoop();
@@ -266,13 +202,11 @@ function renderEndScreen(reward){
     ? `${capitalize(selectedMode)} Complete!`
     : "Complete!";
 
-  const statsText = `Bonus score: ${state.bonusScore} · Best streak: ${state.bonusBestStreak}`;
-
   window.VerseGameShell.renderCompleteScreen({
     app,
-    icon: "🏁",
+    icon: "🍉",
     title: doneText,
-    statsText,
+    statsText: `Bonus slices: ${state.bonusCount}`,
     theme: GAME_THEME,
     playAgainText: "Play Again",
     moreGamesText: "More Games",
@@ -291,37 +225,36 @@ function renderHelpOverlay(body){
   });
 }
 
-function renderGameMenuOverlay(){
-  return `
-    <div class="tt-help-overlay" id="ttGameMenuOverlay" aria-hidden="true">
-      <div class="tt-help-dialog">
-        <div class="tt-help-title">Game Menu</div>
-        <div class="tt-game-menu-actions">
-          <button class="vm-btn" id="ttMenuHowToBtn">How to Play</button>
-          <button class="vm-btn" id="ttMenuMuteBtn">${muted ? "Unmute" : "Mute"}</button>
-          <button class="vm-btn" id="ttMenuExitBtn">Exit Game</button>
-          <button class="vm-btn" id="ttMenuCloseBtn">Close</button>
+  function renderGameMenuOverlay(){
+    return `
+      <div class="fs-help-overlay" id="fsGameMenuOverlay" aria-hidden="true">
+        <div class="fs-help-dialog fs-game-menu-dialog">
+          <div class="fs-help-title">Game Menu</div>
+          <div class="fs-game-menu-actions">
+            <button class="vm-btn" id="fsMenuHowToBtn">How to Play</button>
+            <button class="vm-btn" id="fsMenuMuteBtn">${muted ? "Unmute" : "Mute"}</button>
+            <button class="vm-btn" id="fsMenuExitBtn">Exit Game</button>
+            <button class="vm-btn" id="fsMenuCloseBtn">Close</button>
+          </div>
         </div>
       </div>
-    </div>
-  `;
-}
+    `;
+  }
 
-function helpHtml(){
-  return `Tap the correct moving word to build the verse in order.<br><br>
-    Easy uses fun decoys and steady speed.<br><br>
-    Medium and hard use words from the verse as decoys. Traffic speeds up as you build, with a stronger ramp on hard.<br><br>
-    Wrong taps crash only that road, clearing the lane but keeping your progress.<br><br>
-    After the verse, tap the correct book and then the correct chapter and verse. Then enjoy a quick bonus car hunt.`;
-}
+  function helpHtml(){
+    return `Slice the next correct word to build the verse.<br><br>
+      In easy mode, wrong choices do not remove built words.<br><br>
+      In medium mode, decoys are chosen from other words in the verse, but there is no wrong-slice penalty.<br><br>
+      In hard mode, those same verse-word decoys appear, bombs can show up, and a wrong slice removes two built words.<br><br>
+      After the verse is built, slice the correct book and then the correct chapter and verse. Finish by slicing as much bonus food as you can.`;
+  }
 
-function wireCommonNav(){
-  const menuOverlay = document.getElementById("ttGameMenuOverlay");
-  const menuHowToBtn = document.getElementById("ttMenuHowToBtn");
-  const menuMuteBtn = document.getElementById("ttMenuMuteBtn");
-  const menuExitBtn = document.getElementById("ttMenuExitBtn");
-  const menuCloseBtn = document.getElementById("ttMenuCloseBtn");
-
+  function wireCommonNav(){
+    const menuOverlay = document.getElementById("fsGameMenuOverlay");
+    const menuHowToBtn = document.getElementById("fsMenuHowToBtn");
+    const menuMuteBtn = document.getElementById("fsMenuMuteBtn");
+    const menuExitBtn = document.getElementById("fsMenuExitBtn");
+    const menuCloseBtn = document.getElementById("fsMenuCloseBtn");
 
 window.VerseGameShell.wireHelp({
   id: HELP_OVERLAY_ID,
@@ -330,91 +263,63 @@ window.VerseGameShell.wireHelp({
   onClose: () => setPaused(false, "")
 });
 
-  if (menuHowToBtn) menuHowToBtn.onclick = openHelpFromMenu;
-  if (menuMuteBtn) menuMuteBtn.onclick = () => toggleMute(null, menuMuteBtn);
-  if (menuExitBtn) menuExitBtn.onclick = () => window.VerseGameBridge.exitGame();
-  if (menuCloseBtn) menuCloseBtn.onclick = closeGameMenu;
-  if (menuOverlay) menuOverlay.onclick = (e) => {
-    if (e.target === menuOverlay) closeGameMenu();
-  };
-}
-
-function toggleMute(muteBtn, menuMuteBtn){
-  muted = !muted;
-  if (muteBtn) muteBtn.textContent = muted ? "🔇" : "🔊";
-  if (menuMuteBtn) menuMuteBtn.textContent = muted ? "Unmute" : "Mute";
-}
-
-function wireGameInput(){
-  if (!resizeBound){
-    window.addEventListener("resize", recalcField);
-    resizeBound = true;
+    if (menuHowToBtn) menuHowToBtn.onclick = openHelpFromMenu;
+    if (menuMuteBtn) menuMuteBtn.onclick = () => {
+      muted = !muted;
+      menuMuteBtn.textContent = muted ? "Unmute" : "Mute";
+    };
+    if (menuExitBtn) menuExitBtn.onclick = () => window.VerseGameBridge.exitGame();
+    if (menuCloseBtn) menuCloseBtn.onclick = closeGameMenu;
+    if (menuOverlay) menuOverlay.onclick = (e) => {
+      if (e.target === menuOverlay) closeGameMenu();
+    };
   }
 
-  const menuPill = document.getElementById("ttMenuPill");
-  if (menuPill){
-    const open = (e) => {
-      if (e){
-        if (e.cancelable) e.preventDefault();
-        e.stopPropagation();
+  function wireGameInput(){
+    if (!resizeBound){
+      window.addEventListener("resize", recalcField);
+      resizeBound = true;
+    }
+
+    const menuPill = document.getElementById("fsMenuPill");
+    if (menuPill) {
+      const openFromPill = (e) => {
+        if (e){
+          if (e.cancelable) e.preventDefault();
+          e.stopPropagation();
+        }
+        openGameMenu();
+      };
+      menuPill.onclick = openFromPill;
+      menuPill.onpointerdown = openFromPill;
+      menuPill.ontouchstart = openFromPill;
+    }
+
+    window.onkeydown = (e) => {
+      if (e.key === "Escape" && state.running){
+        if (document.getElementById("fsGameMenuOverlay")?.classList.contains("is-open")) closeGameMenu();
+        else openGameMenu();
       }
-      openGameMenu();
     };
-    menuPill.onclick = open;
-    menuPill.onpointerdown = open;
-    menuPill.ontouchstart = open;
   }
 
-
-  const itemsLayer = document.getElementById("ttItemsLayer");
-  if (itemsLayer && !itemsClickBound){
-    const activateHit = (e) => {
-      const hit = e.target.closest(".tt-hit-btn");
-      if (!hit) return;
-      if (e.cancelable) e.preventDefault();
-      e.stopPropagation();
-      const id = Number(hit.dataset.itemId);
-      if (!Number.isFinite(id)) return;
-      if (state.bonusRound) chooseBonusItem(id, hit);
-      else chooseMainItem(id, hit);
-    };
-    itemsLayer.addEventListener("pointerdown", activateHit);
-    itemsClickBound = true;
-  }
-
-  window.onkeydown = (e) => {
-
-    if (e.key === "d" || e.key === "D"){
-      state.debugHitboxes = !state.debugHitboxes;
-      applyDebugHitboxes();
-      return;
+  function openGameMenu(){
+    const menuOverlay = document.getElementById("fsGameMenuOverlay");
+    if (menuOverlay){
+      setPaused(true, "menu");
+      menuOverlay.classList.add("is-open");
     }
-
-    if (e.key === "Escape" && state.running){
-      if (document.getElementById("ttGameMenuOverlay")?.classList.contains("is-open")) closeGameMenu();
-      else openGameMenu();
-    }
-    if (!state.bonusRound) return;
-  };
-}
-
-function openGameMenu(){
-  const overlay = document.getElementById("ttGameMenuOverlay");
-  if (overlay){
-    setPaused(true, "menu");
-    overlay.classList.add("is-open");
   }
-}
 
-function closeGameMenu(){
-  const overlay = document.getElementById("ttGameMenuOverlay");
-  if (overlay) overlay.classList.remove("is-open");
-  const helpOverlay = document.getElementById("ttHelpOverlay");
-  if (!helpOverlay || !helpOverlay.classList.contains("is-open")) setPaused(false, "");
-}
+  function closeGameMenu(){
+    const menuOverlay = document.getElementById("fsGameMenuOverlay");
+    if (menuOverlay) menuOverlay.classList.remove("is-open");
+    const helpOverlay = document.getElementById("fsHelpOverlay");
+    if (!helpOverlay || !helpOverlay.classList.contains("is-open")) setPaused(false, "");
+  }
 
 function openHelpFromMenu(){
-  const menuOverlay = document.getElementById("ttGameMenuOverlay");
+  const menuOverlay = document.getElementById("fsGameMenuOverlay");
 
   if (menuOverlay) menuOverlay.classList.remove("is-open");
 
@@ -422,6 +327,7 @@ function openHelpFromMenu(){
 
   setPaused(true, "help");
 }
+  
 
 function closeHelpOverlay(){
   window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
@@ -431,1210 +337,605 @@ function closeHelpOverlay(){
 function backToMenuFromHelp(){
   window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
 
-  const menuOverlay = document.getElementById("ttGameMenuOverlay");
+  const menuOverlay = document.getElementById("fsGameMenuOverlay");
   if (menuOverlay) menuOverlay.classList.add("is-open");
 
   setPaused(true, "menu");
 }
 
-function setPaused(paused, reason=""){
-  state.paused = paused;
-  state.pauseReason = paused ? reason : "";
-
-  const field = document.getElementById("ttField");
-  if (field){
-    field.classList.toggle("is-paused", !!paused);
+  function setPaused(paused, reason=""){
+    state.paused = paused;
+    state.pauseReason = paused ? reason : "";
+    if (!paused) state.lastTs = performance.now();
   }
 
-  if (!paused) state.lastTs = performance.now();
-}
+  function recalcField(){
+    const field = document.getElementById("fsField");
+    if (!field) return;
+    const rect = field.getBoundingClientRect();
+    state.fieldWidth = rect.width;
+    state.fieldHeight = rect.height;
+
+    state.fruitHitSize = clamp(state.fieldWidth * 0.27, 108, 182);
+    state.fruitEmojiSize = clamp(state.fieldWidth * 0.155, 62, 102);
+    state.bombHitSize = clamp(state.fieldWidth * 0.19, 84, 134);
+    state.bombEmojiSize = clamp(state.fieldWidth * 0.108, 46, 72);
+    state.sliceSize = clamp(state.fieldWidth * 0.11, 40, 74);
+    state.sliceEmojiSize = clamp(state.fieldWidth * 0.092, 32, 58);
+
+    field.style.setProperty("--fs-fruit-hit", `${state.fruitHitSize}px`);
+    field.style.setProperty("--fs-fruit-emoji", `${state.fruitEmojiSize}px`);
+    field.style.setProperty("--fs-bomb-hit", `${state.bombHitSize}px`);
+    field.style.setProperty("--fs-bomb-emoji", `${state.bombEmojiSize}px`);
+    field.style.setProperty("--fs-slice-size", `${state.sliceSize}px`);
+    field.style.setProperty("--fs-slice-emoji", `${state.sliceEmojiSize}px`);
 
-function recalcField(){
-  const field = document.getElementById("ttField");
-  if (!field) return;
-  const rect = field.getBoundingClientRect();
-  state.fieldWidth = rect.width;
-  state.fieldHeight = rect.height;
-  state.gapHeight = clamp(rect.height * 0.06, 12, 28);
-  state.roadHeight = Math.max(110, (rect.height - state.gapHeight) / 2);
-  renderHud();
-}
-
-function renderHud(){
-  renderBuildArea();
-  renderField();
-}
-
-function renderBuildArea(){
-  const build = document.getElementById("ttBuild");
-  const text = document.getElementById("ttBuildText");
-  if (!build || !text) return;
-
-  const now = performance.now();
-  build.classList.toggle("is-shake", state.buildShakeUntil > now);
-  build.classList.toggle("is-pop", state.buildPopUntil > now);
-
-  if (state.bonusShowScore){
-    text.className = "tt-build-text";
-    text.innerHTML = `
-      <div class="tt-bonus-build">
-        <div class="tt-bonus-build-copy">Bonus Complete!</div>
-        <div class="tt-bonus-build-score is-results">
-          <span>Score: ${state.bonusScore}</span>
-          <span>Correct: ${state.bonusCorrectHits}</span>
-          <span>Best Streak: ${state.bonusBestStreak}</span>
-        </div>
-      </div>
-    `;
-    return;
-  }
-
-  if (state.bonusRound){
-    text.className = "tt-build-text";
-    text.innerHTML = `
-      <div class="tt-bonus-build">
-        <div class="tt-bonus-build-targetline">
-          <span class="tt-bonus-build-bullseye">🎯</span>
-          <span class="tt-bonus-build-equals">=</span>
-          <span class="tt-bonus-build-target">${escapeHtml(state.bonusTargetEmoji || "🚗")}</span>
-        </div>
-        <div class="tt-bonus-build-score">
-          <span>Score: ${state.bonusScore}</span>
-          <span>Streak: ${state.bonusStreak}</span>
-          <span>Time: ${Math.max(0, Math.ceil(state.bonusTimeLeft / 1000))}</span>
-        </div>
-      </div>
-    `;
-    return;
-  }
-
-  text.className = `tt-build-text ${state.buildSizeClass} ${selectedMode === "hard" ? "is-hide-unbuilt" : ""}`;
-
-  if (!state.bonusRound && !state.mainDone && state.wordsBuilt === 0 && !state.bookBuilt && !state.referenceBuilt){
-    text.innerHTML = `<div class="tt-build-placeholder">Build the verse one word at a time.<br><strong>Tap the first word to start.</strong></div>`;
-    return;
-  }
-
-  let html = "";
-  let builtWordsSeen = 0;
-  for (const token of buildTokens){
-    if (token.kind === "space"){
-      html += `<span class="tt-build-gap"> </span>`;
-      continue;
-    }
-    if (token.kind === "word"){
-      const built = builtWordsSeen < state.wordsBuilt;
-      html += `<span class="tt-build-token is-verse ${built ? "is-built" : ""}">${escapeHtml(token.text)}</span>`;
-      builtWordsSeen += 1;
-    } else {
-      const built = builtWordsSeen <= state.wordsBuilt;
-      html += `<span class="tt-build-token is-verse ${built ? "is-built" : ""}">${escapeHtml(token.text)}</span>`;
-    }
-  }
-
-  if (verseMeta.book){
-    html += `<span class="tt-build-gap"> </span><span class="tt-build-token is-book ${state.bookBuilt ? "is-built" : ""}">${escapeHtml(verseMeta.book)}</span>`;
-  }
-  if (verseMeta.reference){
-    html += `<span class="tt-build-gap"> </span><span class="tt-build-token is-reference ${state.referenceBuilt ? "is-built" : ""}">${escapeHtml(verseMeta.reference)}</span>`;
-  }
-
-  text.innerHTML = html;
-}
-
-function renderField(){
-  renderRoads();
-  renderItems();
-  renderEffects();
-  renderBonus();
-  renderOverlays();
-}
-
-function renderRoads(){
-  const roads = document.getElementById("ttRoads");
-  const marks = document.getElementById("ttRoadMarks");
-  if (!roads || !marks) return;
-
-  const top = 0;
-  const bottom = state.roadHeight + state.gapHeight;
-  roads.innerHTML = `
-    <div class="tt-road top ${state.roadCrashUntil[0] > performance.now() ? "is-crashing" : ""}" style="top:${top}px;height:${state.roadHeight}px"></div>
-    <div class="tt-road bottom ${state.roadCrashUntil[1] > performance.now() ? "is-crashing" : ""}" style="top:${bottom}px;height:${state.roadHeight}px"></div>
-  `;
-  marks.innerHTML = `
-    <div class="tt-road top" style="top:${top}px;height:${state.roadHeight}px"><div class="tt-road-center-line"></div></div>
-    <div class="tt-road bottom" style="top:${bottom}px;height:${state.roadHeight}px"><div class="tt-road-center-line"></div></div>
-  `;
-}
-
-function renderItems(){
-  const layer = document.getElementById("ttItemsLayer");
-  if (!layer) return;
-  if (state.bonusRound){
-    const html = state.bonusItems.map(item => {
-      const y = roadTopY(item.road);
-      const cls = [
-        "tt-item",
-        item.direction > 0 ? "is-flipped" : "",
-        item.removeAt ? "is-crashing" : "",
-        state.bonusEnding ? "is-exiting" : ""
-      ];
-      const unitCls = ["tt-unit"];
-      if (item.flashWrongUntil > performance.now()) unitCls.push("is-wrong");
-      if (item.vanishUntil > performance.now()) unitCls.push("is-vanish");
-
-      return `
-        <div class="${cls.filter(Boolean).join(" ")}" style="transform:translate3d(${item.x}px, ${y}px, 0);--tt-item-w:${item.width}px;--tt-item-h:${item.height}px;--tt-car-size:${item.carSize}px;--tt-car-hit-h:${item.carHitHeight}px;--tt-car-center-y:${item.slot === "lower" ? 72 : 24}%;--tt-item-tilt:0deg;">
-          <div class="${unitCls.join(" ")}">
-            <button type="button" class="tt-car-btn tt-hit-btn" data-item-id="${item.id}" aria-label="${escapeHtml(item.emoji)}">${item.emoji}</button>
-          </div>
-        </div>
-      `;
-    }).join("");
-
-    layer.innerHTML = html;
-    return;
-  }
-
-  const html = state.mainItems.map(item => {
-    const y = roadTopY(item.road);
-    const cls = ["tt-item", item.direction > 0 ? "is-flipped" : "", item.crashing ? "is-crashing" : ""];
-    const unitCls = ["tt-unit"];
-    if (item.flashWrongUntil > performance.now()) unitCls.push("is-wrong");
-    if (item.swerveUntil > performance.now()) unitCls.push("is-swerve");
-    if (item.vanishUntil > performance.now()) unitCls.push("is-vanish");
-    if (item.bonkUntil > performance.now()) unitCls.push("is-bonk");
-    const now = performance.now();
-
-    let rideBob = 0;
-    let rideScaleX = 1;
-    let rideScaleY = 1;
-
-    if (!item.launching && !item.crashing && !(item.vanishUntil > now)){
-      const cycleMs = 1680;
-      const t = (((now + (item.bounceOffset * cycleMs)) % cycleMs) / cycleMs);
-
-      if (t < 0.12){
-        const p = t / 0.12;
-        rideBob = 5 * p;
-        rideScaleX = 1 + (0.03 * p);
-        rideScaleY = 1 - (0.05 * p);
-      } else if (t < 0.24){
-        const p = (t - 0.12) / 0.12;
-        rideBob = 5 - (4 * p);
-        rideScaleX = 1.03 - (0.035 * p);
-        rideScaleY = 0.95 + (0.055 * p);
-      } else if (t < 0.36){
-        const p = (t - 0.24) / 0.12;
-        rideBob = 1 + (3 * p);
-        rideScaleX = 0.995 + (0.025 * p);
-        rideScaleY = 1.005 - (0.035 * p);
-      } else if (t < 0.48){
-        const p = (t - 0.36) / 0.12;
-        rideBob = 4 - (4 * p);
-        rideScaleX = 1.02 - (0.02 * p);
-        rideScaleY = 0.97 + (0.03 * p);
-      } else if (t < 0.60){
-        const p = (t - 0.48) / 0.12;
-        rideBob = 5 * p;
-        rideScaleX = 1 + (0.03 * p);
-        rideScaleY = 1 - (0.05 * p);
-      } else if (t < 0.72){
-        const p = (t - 0.60) / 0.12;
-        rideBob = 5 - (4 * p);
-        rideScaleX = 1.03 - (0.035 * p);
-        rideScaleY = 0.95 + (0.055 * p);
-      } else if (t < 0.84){
-        const p = (t - 0.72) / 0.12;
-        rideBob = 1 + (3 * p);
-        rideScaleX = 0.995 + (0.025 * p);
-        rideScaleY = 1.005 - (0.035 * p);
-      } else {
-        const p = (t - 0.84) / 0.16;
-        rideBob = 4 - (4 * p);
-        rideScaleX = 1.02 - (0.02 * p);
-        rideScaleY = 0.97 + (0.03 * p);
-      }
-    }
-    const tilt = item.tilt || 0;
-
-    let launchScaleX = 1;
-    let launchScaleY = 1;
-
-    if (item.launching && now < item.launchPhaseUntil){
-      const total = Math.max(1, item.launchPhaseUntil - item.launchStartAt);
-      const t = clamp((now - item.launchStartAt) / total, 0, 1);
-
-      if (t < 0.45){
-        const p = t / 0.45;
-        launchScaleX = 1 - (0.22 * p);
-        launchScaleY = 1 + (0.22 * p);
-      } else {
-        const p = (t - 0.45) / 0.55;
-        launchScaleX = 0.78 + (0.28 * p);
-        launchScaleY = 1.22 - (0.28 * p);
-      }
-    }
-
-    return `
-      <div class="${cls.filter(Boolean).join(" ")}" style="transform:translate3d(${item.x}px, ${y + rideBob}px, 0);--tt-item-w:${item.width}px;--tt-item-h:${item.height}px;--tt-word-w:${item.wordWidth}px;--tt-word-h:${item.wordHeight}px;--tt-word-size:${item.wordFont}px;--tt-car-size:${item.carSize}px;--tt-car-hit-h:${item.carHitHeight}px;--tt-car-center-y:${item.carCenterY}%;--tt-word-center-y:${item.wordCenterY}%;--tt-item-tilt:${tilt}deg;">
-        <div class="${unitCls.join(" ")}" style="--tt-launch-scale-x:${(launchScaleX * rideScaleX).toFixed(4)};--tt-launch-scale-y:${(launchScaleY * rideScaleY).toFixed(4)};">
-          <button type="button" class="tt-car-btn tt-hit-btn" data-item-id="${item.id}" aria-label="${escapeHtml(item.label)}">${item.emoji}</button>
-          <button type="button" class="tt-word-btn tt-hit-btn ${item.launching ? "is-launch-fade" : ""}" data-item-id="${item.id}" aria-label="${escapeHtml(item.label)}">${escapeHtml(item.label)}</button>
-        </div>
-      </div>
-    `;
-  }).join("");
-
-  layer.innerHTML = html;
-}
-
-function renderEffects(){
-const layer = document.getElementById("ttEffectsLayer");
-if (!layer) return;
-
-layer.querySelectorAll(".tt-popup").forEach((node) => node.remove());
-
-for (const pop of state.effectPopups){
-  const el = document.createElement("div");
-  el.className = `tt-popup ${pop.good ? "good" : "bad"}`;
-  el.style.left = `${pop.x}px`;
-  el.style.top = `${pop.y}px`;
-  el.textContent = pop.text;
-  layer.appendChild(el);
-}
-}
-
-function spawnCrashBurst(x, y, opts = {}){
-const layer = document.getElementById("ttEffectsLayer");
-if (!layer) return;
-
-const count = opts.count ?? 9;
-const distance = opts.distance ?? 58;
-const jitter = opts.jitter ?? 5;
-const duration = opts.duration ?? 650;
-const cloudSize = opts.cloudSize ?? 74;
-const sizePool = opts.sizePool ?? [8, 9, 10, 12, 15, 18];
-const colors = opts.colors ?? ["#ffffff"];
-const showCloud = opts.showCloud ?? true;
-
-const burst = document.createElement("div");
-burst.className = "tt-crash-burst";
-burst.style.left = `${x}px`;
-burst.style.top = `${y}px`;
-
-let cloud = null;
-if (showCloud){
-  cloud = document.createElement("div");
-  cloud.className = "tt-crash-burst-cloud";
-  cloud.style.setProperty("--tt-crash-cloud-size", `${cloudSize}px`);
-  cloud.style.setProperty("--tt-crash-cloud-dur", `${Math.max(520, duration - 90)}ms`);
-  cloud.innerHTML = CRASH_CLOUD_SVG;
-  burst.appendChild(cloud);
-}
-
-const baseAngle = Math.random() * Math.PI * 2;
-const step = (Math.PI * 2) / count;
-
-for (let i = 0; i < count; i += 1){
-  const angle = baseAngle + step * i + rand(-0.12, 0.12);
-  const dist = distance + rand(-jitter, jitter);
-  const tx = Math.cos(angle) * dist;
-  const ty = Math.sin(angle) * dist;
-  const size = pickRandom(sizePool) + rand(-0.5, 0.5);
-  const grow = rand(1.02, 1.14);
-  const color = colors[i % colors.length];
-
-  const particle = document.createElement("div");
-  particle.className = "tt-crash-particle";
-  particle.style.setProperty("--tt-size", `${size.toFixed(1)}px`);
-  particle.style.setProperty("--tt-dur", `${duration}ms`);
-  particle.style.setProperty("--tt-start-scale", `${rand(0.68, 0.82).toFixed(2)}`);
-  particle.style.setProperty("--tt-end-scale", `${(grow + 0.08).toFixed(2)}`);
-  particle.style.setProperty("--tt-tx", `${tx.toFixed(1)}px`);
-  particle.style.setProperty("--tt-ty", `${ty.toFixed(1)}px`);
-  particle.style.setProperty("--tt-delay", `${Math.round(rand(0, 18))}ms`);
-  particle.style.background = color;
-  burst.appendChild(particle);
-}
-
-layer.appendChild(burst);
-
-requestAnimationFrame(() => {
-  if (cloud) cloud.classList.add("is-live");
-  burst.querySelectorAll(".tt-crash-particle").forEach((particle) => {
-    const delay = Number.parseInt(particle.style.getPropertyValue("--tt-delay"), 10) || 0;
-    window.setTimeout(() => {
-      particle.classList.add("is-live");
-    }, delay);
-  });
-});
-
-window.setTimeout(() => {
-  burst.remove();
-}, duration + 120);
-}
-
-function rand(min, max){
-  return min + Math.random() * (max - min);
-}
-
-function spawnWakePuff(x, y, size = 10){
-  const layer = document.getElementById("ttEffectsLayer");
-  if (!layer) return;
-
-  const puff = document.createElement("div");
-  puff.className = "tt-wake-puff";
-  puff.style.left = `${x}px`;
-  puff.style.top = `${y}px`;
-  puff.style.width = `${size}px`;
-  puff.style.height = `${size}px`;
-  puff.style.marginLeft = `${size / -2}px`;
-  puff.style.marginTop = `${size / -2}px`;
-  layer.appendChild(puff);
-
-  requestAnimationFrame(() => puff.classList.add("is-live"));
-  window.setTimeout(() => puff.remove(), 280);
-}
-
-function fadeBlockingCarsAhead(tappedItem){
-  const now = performance.now();
-  for (const item of state.mainItems){
-    if (item.id === tappedItem.id) continue;
-    if (item.road !== tappedItem.road) continue;
-    if (item.crashing || item.launching) continue;
-
-    const isAhead = tappedItem.direction < 0
-      ? item.x < tappedItem.x
-      : item.x > tappedItem.x;
-
-    if (!isAhead) continue;
-
-    item.vanishUntil = now + 160;
-    item.removeAt = now + 170;
-  }
-}
-
-function startSuccessLaunch(item){
-  const now = performance.now();
-
-  item.launching = true;
-  item.launchStartAt = now;
-  item.launchPhaseUntil = now + 110;
-  item.launchTrailUntil = Infinity;
-  item.launchTrailNextAt = now + 36;
-  item.wordFadeUntil = now + 90;
-
-  item.targetSpeed = Math.max(item.targetSpeed || item.baseSpeed || 120, 900);
-
-  fadeBlockingCarsAhead(item);
-}
-
-function launchTrailPoint(item){
-  const width = item.width || 150;
-  const x = item.x + (width / 2) - (item.direction * width * 0.18);
-  const y = itemCenter(item).y + rand(-4, 4);
-  return { x, y };
-}
-
-function pickBonusTargetEmoji(){
-  return pickRandom(VEHICLES);
-}
-
-function startBonusRound(){
-  state.bonusRound = true;
-  state.bonusShowScore = false;
-  state.bonusItems = [];
-  state.bonusTargetEmoji = state.bonusIntroTarget || pickBonusTargetEmoji();
-  state.bonusTargetLabel = state.bonusTargetEmoji;
-  state.bonusScore = 0;
-  state.bonusCorrectHits = 0;
-  state.bonusWrongHits = 0;
-  state.bonusStreak = 0;
-  state.bonusBestStreak = 0;
-  state.bonusEndsAt = performance.now() + state.bonusRoundDuration;
-  state.bonusTimeLeft = state.bonusRoundDuration;
-  state.bonusNextSpawnAt = performance.now() + 220;
-  state.bonusEnding = false;
-  state.bonusEndingUntil = 0;
-  state.bonusStopSpawn = false;
-}
-
-function makeBonusItem({ road, slot, emoji, speed }){
-  const metrics = getItemMetrics("car");
-  const direction = road === 0 ? -1 : 1;
-  const x = direction < 0 ? state.fieldWidth + metrics.width + 30 : -(metrics.width + 30);
-
-  return {
-    id: state.nextItemId++,
-    road,
-    slot,
-    direction,
-    x,
-    width: metrics.width,
-    height: metrics.height,
-    carSize: metrics.carSize,
-    carHitHeight: metrics.carHitHeight,
-    emoji,
-    isTarget: emoji === state.bonusTargetEmoji,
-    speed,
-    vanishUntil: 0,
-    flashWrongUntil: 0,
-    removeAt: 0
-  };
-}
-
-function spawnBonusTraffic(now){
-  if (state.bonusStopSpawn) return;
-  if (now < state.bonusNextSpawnAt) return;
-
-  const progress = 1 - (state.bonusTimeLeft / state.bonusRoundDuration);
-  const speedBase = 170 + progress * 135;
-  const burstCount = Math.random() < 0.5 ? 2 : 3;
-
-  for (let i = 0; i < burstCount; i += 1){
-    const road = Math.random() < 0.5 ? 0 : 1;
-    const slot = Math.random() < 0.58 ? "upper" : "lower";
-    const emoji = Math.random() < 0.24 ? state.bonusTargetEmoji : pickRandom(VEHICLES);
-    const rawSpeed = speedBase + Math.random() * 90;
-    const speed = cappedBonusSpeed(road, slot, rawSpeed);
-
-    if (bonusLaneHasSpawnRoom(road, slot, 150)){
-      state.bonusItems.push(makeBonusItem({ road, slot, emoji, speed }));
-    }
-  }
-
-  state.bonusNextSpawnAt = now + (220 - progress * 70) + Math.random() * 120;
-}
-
-function bonusLaneHasSpawnRoom(road, slot, minGap){
-  const direction = road === 0 ? -1 : 1;
-  const metrics = getItemMetrics("car");
-  const spawnX = direction < 0 ? state.fieldWidth + metrics.width + 30 : -(metrics.width + 30);
-
-  for (const item of state.bonusItems){
-    if (item.road !== road || item.slot !== slot) continue;
-    if (Math.abs(item.x - spawnX) < minGap) return false;
-  }
-  return true;
-}
-
-function chooseBonusItem(itemId, tappedEl){
-  const item = state.bonusItems.find(x => x.id === itemId);
-  if (!item || item.removeAt || item.vanishUntil) return;
-
-  const layerRect = document.getElementById("ttField")?.getBoundingClientRect();
-  const rect = tappedEl.getBoundingClientRect();
-  const x = rect.left - layerRect.left + rect.width / 2;
-  const y = rect.top - layerRect.top + rect.height / 2;
-
-  if (item.isTarget){
-    item.vanishUntil = performance.now() + 140;
-    item.removeAt = performance.now() + 150;
-    state.bonusCorrectHits += 1;
-    state.bonusStreak += 1;
-    state.bonusBestStreak = Math.max(state.bonusBestStreak, state.bonusStreak);
-    state.bonusScore += 10 + Math.min(40, (state.bonusStreak - 1) * 2);
-    addPopup(x, y, `+${10 + Math.min(40, (state.bonusStreak - 1) * 2)}`, true);
-    spawnBonusSuccessBurst(x, y);
-  } else {
-    const now = performance.now();
-    item.flashWrongUntil = now + 260;
-    item.vanishUntil = now + 140;
-    item.removeAt = now + 150;
-    state.bonusWrongHits += 1;
-    state.bonusStreak = 0;
-    state.bonusScore = Math.max(0, state.bonusScore - 12);
-    addPopup(x, y, "-12", false);
-    spawnCrashBurst(x, y, {
-      count: 8,
-      distance: 52,
-      jitter: 5,
-      duration: 560,
-      cloudSize: 62,
-      sizePool: [7, 8, 10, 12, 14],
-      showCloud: true
-    });
-  }
-}
-
-function cappedBonusSpeed(road, slot, proposedSpeed){
-  const direction = road === 0 ? -1 : 1;
-  const sameLane = state.bonusItems.filter(item =>
-    item.road === road &&
-    item.slot === slot &&
-    !item.removeAt
-  );
-
-  if (!sameLane.length) return proposedSpeed;
-
-  let nearestAhead = null;
-
-  for (const item of sameLane){
-    const isAhead = direction < 0 ? item.x > state.fieldWidth * 0.5 : item.x < state.fieldWidth * 0.5;
-    if (!isAhead) continue;
-
-    if (!nearestAhead){
-      nearestAhead = item;
-      continue;
-    }
-
-    if (direction < 0){
-      if (item.x < nearestAhead.x) nearestAhead = item;
-    } else {
-      if (item.x > nearestAhead.x) nearestAhead = item;
-    }
-  }
-
-  if (!nearestAhead) return proposedSpeed;
-  return Math.min(proposedSpeed, Math.max(120, nearestAhead.speed - 18));
-}
-
-function spawnBonusSuccessBurst(x, y){
-  spawnCrashBurst(x, y, {
-    count: 7,
-    distance: 42,
-    jitter: 4,
-    duration: 420,
-    cloudSize: 0,
-    sizePool: [6, 8, 10, 12],
-    colors: ["#ffd44f", "#ffffff", "#ffd44f", "#ffffff"],
-    showCloud: false
-  });
-}
-
-function finishBonusRound(){
-  const now = performance.now();
-
-  state.bonusStopSpawn = true;
-  state.bonusEnding = true;
-  state.bonusEndingUntil = now +900;
-  state.bonusShowScore = false;
-
-  state.overlayMessage = "Bonus Complete!";
-  state.overlayUntil = now + 900;
-  state.overlayMessage = "Bonus Complete!";
-  state.overlayUntil = now + 1100;
-  state.bonusEndingUntil = now + 1200;
-
-  for (const item of state.bonusItems){
-    item.speed = item.speed || 0;
-    item.vanishUntil = 0;
-    item.flashWrongUntil = 0;
-  }
-}
-
-function renderBonus(){
-  const layer = document.getElementById("ttBonusLayer");
-  if (!layer) return;
-  layer.innerHTML = "";
-}
-
-function renderOverlays(){
-  const overlay = document.getElementById("ttOverlay");
-  const bonusIntro = document.getElementById("ttBonusIntroOverlay");
-  if (!overlay || !bonusIntro) return;
-
-  if (state.overlayUntil > performance.now() && state.overlayMessage){
-    const current = overlay.firstElementChild;
-    if (!current || current.textContent !== state.overlayMessage){
-      overlay.innerHTML = `<div class="tt-overlay-pill is-show">${escapeHtml(state.overlayMessage)}</div>`;
-    }
-  } else {
-    overlay.innerHTML = "";
-  }
-
-  bonusIntro.classList.toggle("is-open", state.bonusIntro && state.bonusIntroUntil > performance.now());
-}
-
-function startLoop(){
-  stopLoop();
-  state.lastTs = 0;
-  state.rafId = requestAnimationFrame(loop);
-}
-
-function stopLoop(){
-  if (state.rafId){
-    cancelAnimationFrame(state.rafId);
-    state.rafId = 0;
-  }
-}
-
-function loop(ts){
-  if (!state.running){
-    state.rafId = 0;
-    return;
-  }
-  if (!state.lastTs) state.lastTs = ts;
-  const dt = Math.min(34, ts - state.lastTs);
-  state.lastTs = ts;
-
-  if (!state.paused){
-    cleanupTransientEffects(ts);
-    if (state.bonusRound) updateBonus(dt, ts);
-    else updateMain(dt, ts);
     renderHud();
   }
 
-  state.rafId = requestAnimationFrame(loop);
-}
-
-function cleanupTransientEffects(now){
-  state.effectPopups = state.effectPopups.filter(p => now < p.until);
-  state.bonusItems = state.bonusItems.filter(item => !item.removeAt || now < item.removeAt);
-  state.mainItems = state.mainItems.filter(item => !item.removeAt || now < item.removeAt);
-}
-
-function updateMain(dt, now){
-  if (state.bonusIntro){
-    if (now >= state.bonusIntroUntil){
-      state.bonusIntro = false;
-      startBonusRound();
+  function renderHud(){
+    const phasePill = document.getElementById("fsPhasePill");
+    if (phasePill){
+      phasePill.textContent = state.bonusRound ? `🍽️ ${state.bonusCount}` : getPhaseLabel();
     }
-    return;
+    renderBuildArea();
+    renderField();
   }
 
-  trafficSpawnTick(now);
+  function getPhaseLabel(){
+    if (state.phase === "words") return `${state.wordsBuilt}/${state.wordEntries.length}`;
+    if (state.phase === "book") return "Book";
+    if (state.phase === "reference") return "Reference";
+    return "Ready";
+  }
 
-  const multiplier = trafficSpeedMultiplier();
-  for (const item of state.mainItems){
+  function renderBuildArea(){
+    const build = document.getElementById("fsBuild");
+    const text = document.getElementById("fsBuildText");
+    if (!build || !text) return;
 
-  item.speed = item.speed || item.baseSpeed;
+    build.classList.toggle("is-shake", state.buildShakeUntil > performance.now());
+    text.className = `fs-build-text ${state.buildSizeClass}`;
 
-  if (item.launching){
-    if (now < item.launchPhaseUntil){
-      item.speed = Math.max(item.baseSpeed || 120, 40);
-    } else {
-      item.speed = Math.min(1400, (item.speed || 0) + (2200 * (dt / 1000)));
-      item.x += (item.direction < 0 ? -1 : 1) * item.speed * (dt / 1000);
+    if (state.bonusRound){
+      text.innerHTML = `<div class="fs-bonus-counter">${state.bonusCount}<span class="fs-bonus-label">Bonus slices</span></div>`;
+      return;
+    }
 
-      if (now >= item.launchTrailNextAt){
-        const wake = launchTrailPoint(item);
-        spawnWakePuff(wake.x, wake.y, rand(8, 14));
-        item.launchTrailNextAt = now + rand(28, 42);
+    let html = "";
+    let builtWordsSeen = 0;
+    for (const token of state.tokens){
+      if (token.kind === "space"){
+        html += `<span class="fs-build-gap"> </span>`;
+        continue;
+      }
+      if (token.kind === "word"){
+        const built = builtWordsSeen < state.wordsBuilt;
+        html += `<span class="fs-build-token is-verse ${built ? "is-built" : ""}">${escapeHtml(token.text)}</span>`;
+        builtWordsSeen += 1;
+      } else {
+        const built = builtWordsSeen <= state.wordsBuilt;
+        html += `<span class="fs-build-token is-verse ${built ? "is-built" : ""}">${escapeHtml(token.text)}</span>`;
       }
     }
 
-    item.tilt = item.direction < 0 ? 10 : -10;
-
-    const offscreen = item.direction < 0
-      ? item.x < -(item.width || 150) - 120
-      : item.x > state.fieldWidth + (item.width || 150) + 120;
-
-    if (offscreen){
-      item.removeAt = now;
+    if (state.verseMeta.book){
+      html += `<span class="fs-build-gap"> </span><span class="fs-build-token is-book ${state.bookBuilt ? "is-built" : ""}">${escapeHtml(state.verseMeta.book)}</span>`;
+    }
+    if (state.verseMeta.reference){
+      html += `<span class="fs-build-gap"> </span><span class="fs-build-token is-reference ${state.referenceBuilt ? "is-built" : ""}">${escapeHtml(state.verseMeta.reference)}</span>`;
     }
 
-    continue;
+    text.innerHTML = html;
   }
 
-  item.targetSpeed = (item.baseSpeed || 90) * multiplier;
-  updateItemSpeed(item, dt);
-  if (!item.crashing && !item.vanishUntil){
-    item.x += (item.direction < 0 ? -1 : 1) * item.speed * (dt / 1000);
-  }
-  item.tilt = (item.targetSpeed - item.speed) * 0.06 * (item.direction < 0 ? -1 : 1);
+  function renderField(){
+    const playLayer = document.getElementById("fsPlayLayer");
+    const sliceLayer = document.getElementById("fsSliceLayer");
+    const bannerLayer = document.getElementById("fsBannerLayer");
+    const overlay = document.getElementById("fsOverlay");
+    const bonusIntroOverlay = document.getElementById("fsBonusIntroOverlay");
+    const field = document.getElementById("fsField");
+    if (!playLayer || !sliceLayer || !bannerLayer || !overlay || !field || !bonusIntroOverlay) return;
 
-  }
+    field.classList.toggle("is-flash-bad", state.fieldFlashUntil > performance.now());
 
-  const buffer = 240;
-  state.mainItems = state.mainItems.filter(item => {
-    if (item.removeAt && now >= item.removeAt) return false;
-    if (item.direction < 0 && item.x < -buffer) return false;
-    if (item.direction > 0 && item.x > state.fieldWidth + buffer) return false;
-    return true;
-  });
-
-  if (state.awaitingBonusStart){
-    const launchedRefCarStillExists = state.mainItems.some(item => item.id === state.awaitingBonusItemId);
-    if (!launchedRefCarStillExists){
-      state.awaitingBonusStart = false;
-      state.awaitingBonusItemId = 0;
-      finishMainGame();
+    let playHtml = "";
+    if (state.activeFruit?.alive) playHtml += renderFruitItem(state.activeFruit, false);
+    if (state.activeBomb?.alive) playHtml += renderBombItem(state.activeBomb);
+    for (const bonusFruit of state.bonusFruits){
+      if (bonusFruit?.alive) playHtml += renderFruitItem(bonusFruit, true);
     }
-  }
-}
+    playLayer.innerHTML = playHtml;
 
-function trafficSpawnTick(now){
-  if (!state.fieldWidth) return;
-  if (!state.lastSpawnAt){
-    state.lastSpawnAt = now;
-    state.nextSpawnDelay = randomSpawnDelay();
-    return;
-  }
-  if (now - state.lastSpawnAt < state.nextSpawnDelay) return;
-
-  state.lastSpawnAt = now;
-  const delayUsed = state.nextSpawnDelay;
-  state.nextSpawnDelay = randomSpawnDelay();
-
-  const roadOrder = shuffle([0,1]);
-  for (const road of roadOrder){
-    if (!laneHasSpawnRoom(road, 182)) continue;
-    spawnMainItem(road, now, delayUsed);
-    break;
-  }
-}
-
-function spawnMainItem(road, now, delayUsed){
-  const correctLabel = currentTargetLabel();
-  if (!correctLabel) return;
-
-  const roadHasCorrect = state.mainItems.some(item => item.road === road && item.isCorrect && !item.crashing);
-  const shouldTryCorrect = !roadHasCorrect && canSpawnCorrect(now);
-  const spawnCorrect = shouldTryCorrect && (Math.random() < 0.48 || now - state.lastCorrectSpawnAt > 2600);
-
-  const label = spawnCorrect ? correctLabel : nextDecoyLabel(correctLabel);
-  const item = makeMainItem({ road, label, isCorrect: spawnCorrect, delayUsed });
-  state.mainItems.push(item);
-  state.totalSpawned += 1;
-  if (spawnCorrect) state.lastCorrectSpawnAt = now;
-}
-
-function makeMainItem({ road, label, isCorrect, delayUsed }){
-  const direction = road === 0 ? -1 : 1;
-  const metrics = getItemMetrics(label);
-  const x = direction < 0 ? state.fieldWidth + metrics.width + 40 : -(metrics.width + 40);
-  const width = metrics.width;
-  const norm = clamp((delayUsed - 700) / 440, 0, 1);
-  const baseMin = 104;
-  const baseMax = 146;
-  const baseSpeed = baseMin + ((0.25 + norm * 0.75) * (baseMax - baseMin));
-  return {
-    id: state.nextItemId++,
-    road,
-    direction,
-    x,
-    width,
-    label,
-    isCorrect,
-    emoji: pickRandom(VEHICLES),
-    speed: baseSpeed,
-    baseSpeed,
-    targetSpeed: baseSpeed,
-    bounceOffset: Math.random(),
-    height: metrics.height,
-    wordWidth: metrics.wordWidth,
-    wordHeight: metrics.wordHeight,
-    wordFont: metrics.wordFont,
-    carSize: metrics.carSize,
-    carHitHeight: metrics.carHitHeight,
-    carCenterY: metrics.carCenterY,
-    wordCenterY: metrics.wordCenterY,
-    styleClass: DECOY_CLASSES[state.nextItemId % DECOY_CLASSES.length],
-    flashWrongUntil:0,
-    bonkUntil:0,
-    swerveUntil:0,
-    crashing:false,
-    removeAt:0,
-    launching:false,
-    launchStartAt:0,
-    launchPhaseUntil:0,
-    launchTrailNextAt:0,
-    launchTrailUntil:0,
-    wordFadeUntil:0,
-    tilt:0
-  };
-}
-
-function laneHasSpawnRoom(road, minGap){
-  const dir = road === 0 ? -1 : 1;
-  const sampleWidth = estimateItemWidth(currentTargetLabel() || "word");
-  const spawnX = dir < 0 ? state.fieldWidth + sampleWidth + 40 : -(sampleWidth + 40);
-  for (const item of state.mainItems){
-    if (item.road !== road || item.crashing) continue;
-    const dist = Math.abs(item.x - spawnX);
-    if (dist < Math.max(minGap, (item.width || 150) + 24)) return false;
-  }
-  return true;
-}
-
-function canSpawnCorrect(now){
-  if (state.mainItems.filter(item => item.isCorrect && !item.crashing).length >= 2) return false;
-  if (state.totalSpawned < 2) return false;
-  return (now - state.lastCorrectSpawnAt > 1700) || Math.random() < 0.34;
-}
-
-function updateItemSpeed(item, dt){
-  const accelPerSec = 62;
-  const closeGap = 56;
-  const followGap = 98;
-  const releaseGap = 138;
-  const others = state.mainItems.filter(other => other.road === item.road && other.id !== item.id && !other.crashing);
-  let leader = null;
-  let bestGap = Infinity;
-
-  for (const other of others){
-    if (item.direction < 0){
-      if (other.x >= item.x) continue;
-      const gap = item.x - other.x - (other.width || 150);
-      if (gap < bestGap){ bestGap = gap; leader = other; }
-    } else {
-      if (other.x <= item.x) continue;
-      const gap = other.x - item.x - (item.width || 150);
-      if (gap < bestGap){ bestGap = gap; leader = other; }
-    }
-  }
-
-  let targetSpeed = item.targetSpeed || item.baseSpeed;
-  if (leader){
-    const leaderSpeed = leader.speed || leader.baseSpeed || targetSpeed;
-    if (bestGap < closeGap) targetSpeed = Math.min(targetSpeed, Math.max(leaderSpeed - 14, 52));
-    else if (bestGap < followGap) targetSpeed = Math.min(targetSpeed, leaderSpeed);
-    else if (bestGap < releaseGap) targetSpeed = Math.min(targetSpeed, leaderSpeed + 10);
-  }
-
-  const maxStep = accelPerSec * (dt / 1000);
-  if (item.speed < targetSpeed) item.speed = Math.min(targetSpeed, item.speed + maxStep);
-  else if (item.speed > targetSpeed) item.speed = Math.max(targetSpeed, item.speed - maxStep * 1.45);
-}
-
-function chooseMainItem(itemId, tappedEl){
-  const item = state.mainItems.find(x => x.id === itemId);
-  if (item && (item.vanishUntil || item.crashing || item.removeAt)) return;
-  if (!item || state.bonusRound || state.bonusIntro) return;
-  const layerRect = document.getElementById("ttField")?.getBoundingClientRect();
-  const rect = tappedEl.getBoundingClientRect();
-  const x = rect.left - layerRect.left + rect.width / 2;
-  const y = rect.top - layerRect.top + rect.height / 2;
-
-  if (!item.isCorrect){
-    item.flashWrongUntil = performance.now() + 280;
-    state.buildShakeUntil = performance.now() + 260;
-    addPopup(x, y, "✖", false);
-    crashRoad(item.road, item.id);
-    return;
-  }
-
-  addPopup(x, y, "✔", true);
-  state.buildPopUntil = performance.now() + 200;
-  startSuccessLaunch(item);
-
-  const target = currentTargetLabel();
-  if (item.label === target){
-    if (state.phase === "words"){
-      state.wordsBuilt += 1;
-      if (state.wordsBuilt >= verseWords.length){
-        state.phase = "book";
-      }
-    } else if (state.phase === "book"){
-      state.bookBuilt = true;
-      state.phase = "reference";
-    } else if (state.phase === "reference"){
-      state.referenceBuilt = true;
-      state.awaitingBonusStart = true;
-      state.awaitingBonusItemId = item.id;
-    }
-    convertOtherCorrectCopies(item.road, target);
-  }
-}
-
-function convertOtherCorrectCopies(chosenRoad, previousTarget){
-  for (const item of state.mainItems){
-    if (!item.isCorrect || item.road === chosenRoad || item.label !== previousTarget || item.crashing) continue;
-    item.isCorrect = false;
-    item.label = nextDecoyLabel(previousTarget);
-    item.styleClass = DECOY_CLASSES[(item.id + 1) % DECOY_CLASSES.length];
-    item.bonkUntil = performance.now() + 260;
-  }
-}
-
-function crashRoad(road, tappedId){
-  const now = performance.now();
-  state.roadCrashUntil[road] = now + 330;
-  const roadItems = state.mainItems.filter(item => item.road === road && !item.crashing);
-  roadItems.sort((a,b) => {
-    if (road === 0) return b.x - a.x; // spawn side to front
-    return a.x - b.x;
-  });
-
-  const tapped = roadItems.find(item => item.id === tappedId);
-  if (!tapped) return;
-
-  const ordered = [tapped, ...roadItems.filter(item => item.id !== tappedId)];
-  ordered.forEach((item, index) => {
-    item.crashing = true;
-    item.swerveUntil = now + 180 + index * 40;
-    item.removeAt = now + 240 + index * 90;
-  const center = itemCenter(item);
-  window.setTimeout(() => {
-    spawnCrashBurst(center.x, center.y, {
-      count: 9,
-      distance: 58,
-      jitter: 5,
-      duration: 650,
-      cloudSize: 74,
-      sizePool: [8, 9, 10, 12, 15, 18]
+    playLayer.querySelectorAll("[data-role='fruit']").forEach((el) => {
+      const onActivate = (e) => {
+        if (e){
+          if (e.cancelable) e.preventDefault();
+          e.stopPropagation();
+        }
+        const id = el.dataset.id;
+        if (id === "main") handleMainFruitTap();
+        else handleBonusTap(Number(id));
+      };
+      el.onclick = onActivate;
+      el.onpointerdown = onActivate;
     });
-  }, index * 85);
-  });
-}
 
-function finishMainGame(){
-  state.mainDone = true;
-  state.mainItems = [];
-  state.overlayMessage = "BONUS ROUND!";
-  state.overlayUntil = performance.now() + 520;
-  state.bonusIntro = true;
-  state.bonusIntroUntil = performance.now() + 1400;
-  state.bonusIntroTarget = pickBonusTargetEmoji();
+    playLayer.querySelectorAll("[data-role='bomb']").forEach((el) => {
+      const onActivate = (e) => {
+        if (e){
+          if (e.cancelable) e.preventDefault();
+          e.stopPropagation();
+        }
+        handleBombTap();
+      };
+      el.onclick = onActivate;
+      el.onpointerdown = onActivate;
+    });
 
-  const introTarget = document.getElementById("ttBonusIntroTarget");
-  if (introTarget) introTarget.textContent = state.bonusIntroTarget;
-}
+    sliceLayer.innerHTML = state.activeSlices.filter(Boolean).map((piece) => `
+      <div class="fs-slice-piece ${piece.side}" style="transform:translate(${piece.x}px, ${piece.y}px) translate(-50%, -50%) rotate(${piece.rotation}deg)">
+        <div class="fs-slice-inner">${escapeHtml(piece.fruit || "🍎")}</div>
+      </div>
+    `).join("");
 
+    bannerLayer.innerHTML = (state.bonusRound && performance.now() < state.bonusBannerUntil)
+      ? `<div class="fs-bonus-banner"><div class="fs-bonus-banner-text">Bonus Round!</div></div>`
+      : "";
 
-function updateBonus(dt, now){
-  if (state.bonusEnding){
-    for (const item of state.bonusItems){
-      item.x += (item.direction < 0 ? -1 : 1) * (item.speed || 520) * (dt / 1000);
+    overlay.innerHTML = (state.overlayUntil > performance.now() && state.overlayMessage)
+      ? `<div class="fs-overlay-msg-inner">${escapeHtml(state.overlayMessage)}</div>`
+      : "";
+
+    const showBonusIntro = state.bonusIntroActive && performance.now() < state.bonusIntroUntil;
+    bonusIntroOverlay.classList.toggle("is-open", showBonusIntro);
+    bonusIntroOverlay.setAttribute("aria-hidden", showBonusIntro ? "false" : "true");
+  }
+
+  function renderFruitItem(item, isBonus){
+    const cls = `fs-item ${item.flashWrong ? "is-wrong" : ""} ${item.rejecting ? "is-rejecting" : ""}`;
+    const id = isBonus ? item.id : "main";
+    const wordHtml = isBonus ? "" : `<div class="fs-word-chip">${escapeHtml(item.word || "")}</div>`;
+    return `
+      <div class="${cls}" style="transform:translate(${item.x}px, ${item.y}px) translate(-50%, -50%)">
+        <button class="fs-fruit-btn" data-role="fruit" data-id="${id}" type="button" aria-label="Slice food">
+          <span class="fs-fruit-emoji" style="transform:rotate(${Math.round((item.tilt || 0) + (item.rotation || 0))}deg)">${escapeHtml(item.fruit || "🍎")}</span>
+          ${wordHtml}
+        </button>
+      </div>
+    `;
+  }
+
+  function renderBombItem(item){
+    return `
+      <div class="fs-item ${item.wasHit ? "is-bomb-hit" : ""}" style="transform:translate(${item.x}px, ${item.y}px) translate(-50%, -50%)">
+        <button class="fs-bomb-btn" data-role="bomb" type="button" aria-label="Bomb">
+          <span class="fs-bomb-emoji" style="transform:rotate(${Math.round(item.rotation || 0)}deg)">💣</span>
+        </button>
+      </div>
+    `;
+  }
+
+  function startLoop(){
+    stopLoop();
+    state.lastTs = 0;
+    state.rafId = requestAnimationFrame(frame);
+  }
+
+  function stopLoop(){
+    if (state.rafId){
+      cancelAnimationFrame(state.rafId);
+      state.rafId = 0;
+    }
+  }
+
+  function frame(ts){
+    if (!state.running) return;
+    if (!state.lastTs) state.lastTs = ts;
+    const dt = Math.min(34, ts - state.lastTs);
+    state.lastTs = ts;
+
+    if (!state.paused){
+      step(dt, ts);
+      renderHud();
+    }
+    state.rafId = requestAnimationFrame(frame);
+  }
+
+  function step(dt, now){
+    if (state.bonusIntroActive){
+      if (now >= state.bonusIntroUntil){
+        state.bonusIntroActive = false;
+        state.bonusRound = true;
+        state.bonusBannerUntil = 0;
+        state.bonusEndsAt = performance.now() + 23000;
+        state.bonusFruits = [];
+        state.bonusCount = 0;
+      } else {
+        return;
+      }
     }
 
-    const buffer = 260;
-    state.bonusItems = state.bonusItems.filter(item => {
-      if (item.direction < 0 && item.x < -buffer) return false;
-      if (item.direction > 0 && item.x > state.fieldWidth + buffer) return false;
+    if (!state.bonusRound && !state.activeFruit){
+      spawnMainFruit();
+      maybeSpawnBomb();
+    }
+
+    updateMovingEntity(state.activeFruit, dt);
+    updateMovingEntity(state.activeBomb, dt);
+    state.activeSlices.forEach((piece) => updateMovingEntity(piece, dt));
+    state.activeSlices = state.activeSlices.filter((piece) => piece.alive);
+
+    if (state.activeFruit && state.activeFruit.y > state.fieldHeight + 140) state.activeFruit = null;
+    if (state.activeBomb && state.activeBomb.y > state.fieldHeight + 140) state.activeBomb = null;
+
+    if (state.bonusRound){
+      if (now >= state.bonusBannerUntil && now < state.bonusEndsAt){
+        const targetCount = 2 + Math.floor(Math.random() * 2);
+        const live = state.bonusFruits.filter((item) => item.alive).length;
+        if (live < targetCount) spawnBonusFruit();
+      }
+      state.bonusFruits.forEach((item) => updateMovingEntity(item, dt));
+      state.bonusFruits = state.bonusFruits.filter((item) => item.alive && item.y <= state.fieldHeight + 140);
+      if (now >= state.bonusEndsAt && state.bonusFruits.length === 0 && state.activeSlices.length === 0){
+        finishGame();
+      }
+    }
+  }
+
+  function updateMovingEntity(item, dt){
+    if (!item || !item.alive) return;
+    const stepScale = dt / 16.6667;
+    item.x += item.vx * stepScale;
+    item.y += item.vy * stepScale;
+    item.vy += item.gravity * stepScale;
+    item.rotation += item.spin * stepScale;
+
+    const halfSize = item.kind === "bomb"
+      ? state.bombHitSize * 0.34
+      : state.fruitHitSize * 0.34;
+
+    item.x = clamp(item.x, halfSize, state.fieldWidth - halfSize);
+    if (item.y > state.fieldHeight + Math.max(160, state.fruitHitSize * 1.1)) item.alive = false;
+  }
+
+  function spawnMainFruit(){
+    const target = getCurrentTargetText();
+    const { text, isCorrect } = pickDisplayTextForCurrentPhase(target);
+    state.activeFruit = createFlyingFood({ word:text, isCorrect });
+  }
+
+  function maybeSpawnBomb(){
+    if (selectedMode !== "hard" || state.bonusRound || state.done) return;
+    if (Math.random() >= 0.28) return;
+    state.activeBomb = createFlyingBomb();
+  }
+
+  function createFlyingFood({ word, isCorrect }){
+    const motion = createArcMotion();
+    return {
+      ...motion,
+      fruit: pickRandom(state.theme),
+      word,
+      isCorrect,
+      alive:true,
+      flashWrong:false,
+      rejecting:false,
+      wasTapped:false,
+      tilt:-16 + Math.random() * 32,
+      kind:"fruit"
+    };
+  }
+
+  function createFlyingBomb(){
+    return {
+      ...createArcMotion(true),
+      alive:true,
+      wasTapped:false,
+      wasHit:false,
+      kind:"bomb"
+    };
+  }
+
+  function createArcMotion(isBomb = false){
+    const fieldW = Math.max(320, state.fieldWidth || 320);
+    const fieldH = Math.max(260, state.fieldHeight || 260);
+    const sideInset = Math.max(state.fruitHitSize * 0.46, fieldW * 0.12);
+    const startX = sideInset + Math.random() * Math.max(24, fieldW - sideInset * 2);
+    const peakRatio = fieldW >= 900 ? 0.24 : 0.30;
+    const targetPeakY = fieldH * peakRatio;
+    const startY = fieldH + Math.max(24, state.fruitHitSize * 0.22);
+    const riseDistance = Math.max(fieldH * 0.42, startY - targetPeakY);
+
+    const gravity = fieldH * (isBomb ? 0.00115 : 0.00105);
+    const baseVy = Math.sqrt(2 * gravity * riseDistance);
+    const vy = -(baseVy + (Math.random() * fieldH * 0.00035 - fieldH * 0.000175));
+
+    const horizontalRange = fieldW * (isBomb ? 0.0025 : 0.0022);
+    const vx = (Math.random() * 2 - 1) * horizontalRange;
+    const spin = isBomb ? (-3.4 + Math.random() * 6.8) : (-2.8 + Math.random() * 5.6);
+
+    return { x:startX, y:startY, vx, vy, gravity, rotation:0, spin };
+  }
+
+  function handleMainFruitTap(){
+    const item = state.activeFruit;
+    if (!item || !item.alive || item.wasTapped || state.paused || state.done) return;
+    item.wasTapped = true;
+
+    if (item.isCorrect){
+      createSlicesFrom(item);
+      state.activeFruit = null;
+      state.wrongStreak = 0;
+
+      if (state.phase === "words"){
+        state.wordsBuilt += 1;
+        if (state.wordsBuilt >= state.wordEntries.length){
+          state.phase = "book";
+          state.bookBuilt = false;
+          state.referenceBuilt = false;
+          showOverlay("Now slice the Bible book");
+        }
+      } else if (state.phase === "book"){
+        state.bookBuilt = true;
+        state.phase = "reference";
+        state.referenceBuilt = false;
+        showOverlay("Now slice the chapter and verse");
+      } else if (state.phase === "reference"){
+        state.referenceBuilt = true;
+        startBonusRound();
+      }
+      return;
+    }
+
+    item.flashWrong = true;
+    item.rejecting = true;
+    state.wrongStreak += 1;
+    state.buildShakeUntil = performance.now() + 320;
+    state.fieldFlashUntil = performance.now() + 260;
+    if (selectedMode === "hard" && state.phase === "words"){
+      state.wordsBuilt = Math.max(0, state.wordsBuilt - 2);
+    }
+    setPaused(true, "wrong");
+    renderHud();
+    window.setTimeout(() => {
+      item.alive = false;
+      if (state.activeFruit === item) state.activeFruit = null;
+      if (!state.done) setPaused(false, "");
+      renderHud();
+    }, 320);
+  }
+
+  function handleBombTap(){
+    const bomb = state.activeBomb;
+    if (!bomb || !bomb.alive || bomb.wasTapped || state.paused || state.done || state.bonusRound) return;
+    bomb.wasTapped = true;
+    bomb.wasHit = true;
+    state.wordsBuilt = 0;
+    state.bookBuilt = false;
+    state.referenceBuilt = false;
+    state.buildShakeUntil = performance.now() + 320;
+    state.fieldFlashUntil = performance.now() + 260;
+    setPaused(true, "bomb");
+    renderHud();
+    window.setTimeout(() => {
+      bomb.alive = false;
+      if (state.activeBomb === bomb) state.activeBomb = null;
+      if (!state.done) setPaused(false, "");
+      renderHud();
+    }, 280);
+  }
+
+  function startBonusRound(){
+    state.activeFruit = null;
+    state.activeBomb = null;
+    state.bonusRound = false;
+    state.bonusIntroActive = true;
+    state.bonusIntroUntil = performance.now() + 1700;
+    state.bonusBannerUntil = 0;
+    state.bonusEndsAt = 0;
+    state.bonusFruits = [];
+    state.bonusCount = 0;
+    setPaused(false, "");
+    renderHud();
+  }
+
+  function spawnBonusFruit(){
+    state.bonusIdCounter += 1;
+    state.bonusFruits.push({
+      id: state.bonusIdCounter,
+      ...createArcMotion(),
+      fruit: pickRandom(state.theme),
+      alive:true,
+      wasTapped:false,
+      tilt:-16 + Math.random() * 32,
+      kind:"fruit"
+    });
+  }
+
+  function handleBonusTap(id){
+    const item = state.bonusFruits.find((fruit) => fruit.id === id);
+    if (!item || item.wasTapped || state.paused || !state.bonusRound) return;
+    item.wasTapped = true;
+    item.alive = false;
+    state.bonusCount += 1;
+    createSlicesFrom(item);
+  }
+
+function createSlicesFrom(item){
+  const baseRotation = item.rotation || 0;
+  const splitOffset = state.fruitHitSize * 0.18;
+
+  state.activeSlices.push(
+    {
+      side:"left",
+      fruit:item.fruit,
+      x:item.x - splitOffset,
+      y:item.y,
+      vx:(item.vx || 0) - 1.3,
+      vy:(item.vy || 0) - 1.4,
+      gravity:item.gravity || 0.42,
+      rotation:baseRotation - 10,
+      spin:-3.8,
+      alive:true
+    },
+    {
+      side:"right",
+      fruit:item.fruit,
+      x:item.x + splitOffset,
+      y:item.y,
+      vx:(item.vx || 0) + 1.3,
+      vy:(item.vy || 0) - 1.4,
+      gravity:item.gravity || 0.42,
+      rotation:baseRotation + 10,
+      spin:3.8,
+      alive:true
+    }
+  );
+}
+
+  async function finishGame(){
+    state.running = false;
+    state.done = true;
+    stopLoop();
+
+    let reward = { ok:false, petUnlockTriggered:false };
+    if (!completionMarked && ctx.verseId && selectedMode){
+      completionMarked = true;
+      reward = await window.VerseGameBridge.markCompleted({
+        verseId: ctx.verseId,
+        gameId: GAME_ID,
+        mode: selectedMode
+      });
+    }
+    renderEndScreen(reward);
+  }
+
+  function getCurrentTargetText(){
+    if (state.phase === "book") return state.verseMeta.book || "";
+    if (state.phase === "reference") return state.verseMeta.reference || "";
+    return state.wordEntries[state.wordsBuilt]?.display || "";
+  }
+
+  function pickDisplayTextForCurrentPhase(correct){
+    if (state.phase === "book") return pickPhaseChoice(correct, state.bookChoices);
+    if (state.phase === "reference") return pickPhaseChoice(correct, state.referenceChoices);
+
+    const verseWordsLower = new Set(state.wordEntries.map((entry) => normalizeWord(entry.display)));
+    let wrongPool = [];
+    if (selectedMode === "medium" || selectedMode === "hard"){
+      wrongPool = getVerseDerivedDecoys(state.wordsBuilt, correct);
+    } else {
+      wrongPool = window.VerseGameShell.getFunWordDecoys(
+        correct,
+        state.wordEntries.map((entry) => entry.display),
+        12
+      );
+    }
+
+    const mustUseCorrect = state.wrongStreak >= 2;
+    const useCorrect = mustUseCorrect || Math.random() < 0.6 || !wrongPool.length;
+    if (useCorrect){
+      state.wrongStreak = 0;
+      return { text:correct, isCorrect:true };
+    }
+    state.wrongStreak += 1;
+    return { text:pickRandom(wrongPool), isCorrect:false };
+  }
+
+  function pickPhaseChoice(correct, choicePool){
+    const mustUseCorrect = state.wrongStreak >= 2;
+    const wrongs = (choicePool || []).filter((item) => item !== correct);
+    const useCorrect = mustUseCorrect || Math.random() < 0.6 || !wrongs.length;
+    if (useCorrect){
+      state.wrongStreak = 0;
+      return { text:correct, isCorrect:true };
+    }
+    state.wrongStreak += 1;
+    return { text:pickRandom(wrongs), isCorrect:false };
+  }
+
+  function getVerseDerivedDecoys(targetIndex, correct){
+    const targetNorm = normalizeWord(correct);
+    const candidates = state.wordEntries.filter((entry, idx) => {
+      if (idx === targetIndex) return false;
+      const norm = normalizeWord(entry.display);
+      if (!norm || norm === targetNorm) return false;
+      if (Math.abs(idx - targetIndex) <= 1 && state.wordEntries.length > 4) return false;
       return true;
     });
 
-    if (now >= state.bonusEndingUntil){
-      state.bonusRound = false;
-      state.bonusEnding = false;
-      state.bonusShowScore = false;
-      state.running = false;
-      completeGameAndRenderEndScreen();
-    }
-    return;
-  }
-
-  state.bonusTimeLeft = Math.max(0, state.bonusEndsAt - now);
-
-  spawnBonusTraffic(now);
-
-  for (const item of state.bonusItems){
-    if (item.removeAt) continue;
-    item.x += (item.direction < 0 ? -1 : 1) * item.speed * (dt / 1000);
-  }
-
-  const buffer = 240;
-  state.bonusItems = state.bonusItems.filter(item => {
-    if (item.removeAt && now >= item.removeAt) return false;
-    if (item.direction < 0 && item.x < -buffer) return false;
-    if (item.direction > 0 && item.x > state.fieldWidth + buffer) return false;
-    return true;
-  });
-
-  if (state.awaitingBonusStart){
-    const launchedRefCarStillExists = state.mainItems.some(item => item.id === state.awaitingBonusItemId);
-    if (!launchedRefCarStillExists){
-      state.awaitingBonusStart = false;
-      state.awaitingBonusItemId = 0;
-      finishMainGame();
-    }
-  }
-
-  if (state.bonusTimeLeft <= 0){
-    finishBonusRound();
-  }
-}
-
-
-function currentTargetLabel(){
-  if (state.phase === "words") return verseWords[state.wordsBuilt] || "";
-  if (state.phase === "book") return verseMeta.book || "";
-  if (state.phase === "reference") return verseMeta.reference || "";
-  return "";
-}
-
-function nextDecoyLabel(correctLabel){
-  const lowerCorrect = normalizeWord(correctLabel);
-
-  if (state.phase === "words"){
-    if (selectedMode === "easy"){
-      const pool = window.VerseGameShell.getFunWordDecoys(correctLabel, verseWords, 12);
-      return pickRandom(pool) || pickRandom(FUN_DECOYS);
+    const unique = [];
+    const seen = new Set();
+    for (const entry of candidates){
+      const norm = normalizeWord(entry.display);
+      if (seen.has(norm)) continue;
+      seen.add(norm);
+      unique.push(entry.display);
     }
 
-    const blocked = blockedUpcomingWordLabels(2);
-
-    const versePool = uniqueStrings(
-      verseWords
-        .map(w => String(w || "").trim())
-        .filter(Boolean)
-        .map(normalizeWord)
-    ).filter(word => !blocked.has(word));
-
-    if (versePool.length){
-      return pickRandom(versePool);
-    }
-
-    const fallback = window.VerseGameShell.getFunWordDecoys(correctLabel, verseWords, 12);
-    return pickRandom(fallback) || pickRandom(FUN_DECOYS);
+    const nonTiny = unique.filter((word) => normalizeWord(word).length > 2);
+    const pool = nonTiny.length >= 2 ? nonTiny : unique;
+    return pool.length ? pool : GENERIC_DECOYS.filter((word) => normalizeWord(word) !== targetNorm);
   }
 
-  if (state.phase === "book"){
-    const pool = window.VerseGameShell.getBookDecoys(correctLabel, 12);
-    return pickRandom(pool) || "Psalm";
+  function makeBookChoices(correctBook){
+    const correct = String(correctBook || "").trim();
+    if (!correct) return [];
+
+    const others = window.VerseGameShell.getBookDecoys(correct, 3);
+
+    return shuffle([correct, ...others]).slice(0, 4);
   }
 
-  if (state.phase === "reference"){
-    const pool = window.VerseGameShell
-      .getReferenceDecoys(verseMeta, selectedMode, 8)
-      .filter(ref => normalizeWord(ref) !== lowerCorrect);
+  function makeReferenceChoices(referenceMeta, mode){
+    const correct = String(referenceMeta?.reference || "").trim();
 
-    return pickRandom(pool) || "1:1";
+    if (!correct) return [];
+
+    const decoys = window.VerseGameShell.getReferenceDecoys(referenceMeta, mode, 3);
+
+    return shuffle([
+      correct,
+      ...decoys.filter((ref) => normalizeWord(ref) !== normalizeWord(correct))
+    ]).slice(0, 4);
   }
 
-  return pickRandom(FUN_DECOYS);
-}
-
-function blockedUpcomingWordLabels(count = 2){
-  const blocked = new Set();
-
-  for (let i = 0; i <= count; i += 1){
-    const word = verseWords[state.wordsBuilt + i];
-    if (word) blocked.add(normalizeWord(word));
+  function parseVerseMeta(verseId, fallbackRef){
+    return window.VerseGameShell.parseReferenceParts(
+      fallbackRef,
+      ctx.translation,
+      verseId
+    );
   }
 
-  return blocked;
-}
 
-function trafficSpeedMultiplier(){
-  if (selectedMode === "easy") return 1;
-
-  const progress = clamp(state.wordsBuilt / Math.max(1, verseWords.length - 1), 0, 1);
-
-  if (selectedMode === "medium"){
-    return state.phase === "words"
-      ? 1.10 + (0.20 * progress)
-      : 1.30;
+  function tokenizeVerseWithSpaces(text){
+    return window.VerseGameShell.tokenizeVerseForBuild(text);
   }
 
-  return state.phase === "words"
-    ? 1.15 + (0.30 * progress)
-    : 1.45;
-}
-
-function randomSpawnDelay(){
-  return 720 + Math.random() * 420;
-}
-
-function roadTopY(road){
-  return road === 0 ? 0 : (state.roadHeight + state.gapHeight);
-}
-
-function laneCenterY(road){
-  return roadTopY(road) + (state.roadHeight * 0.5);
-}
-
-function bonusLaneY(lane){
-  const roadTop = state.fieldHeight * 0.18;
-  const roadHeight = state.fieldHeight * 0.56;
-  return lane === "upper"
-    ? roadTop + roadHeight * 0.35
-    : roadTop + roadHeight * 0.65;
-}
-
-function itemCenter(item){
-  const width = item.width || 150;
-  const roadTop = roadTopY(item.road);
-  const height = item.height || state.roadHeight;
-  const carCenterPct = (typeof item.carCenterY === "number" ? item.carCenterY : 25) / 100;
-
-  return {
-    x: item.x + (width / 2),
-    y: roadTop + (height * carCenterPct)
-  };
-}
-
-function addPopup(x, y, text, good){
-  state.effectPopups.push({ x, y, text, good, until: performance.now() + 620 });
-}
-
-function showPhaseOverlay(text){
-  state.overlayMessage = text;
-  state.overlayUntil = performance.now() + 900;
-}
-
-function getItemMetrics(label){
-  const labelLen = String(label || "").length;
-  const roadH = Math.max(110, state.roadHeight || 160);
-
-  const isMobile = state.fieldWidth < 520;
-  const maxByField = Math.max(250, state.fieldWidth * (isMobile ? 0.42 : 0.36));
-  const width = clamp(
-    (isMobile ? state.fieldWidth * 0.42 : state.fieldWidth * 0.285) + labelLen * 8,
-    190,
-    Math.min(430, maxByField)
-  );
-
-  const height = Math.round(roadH);
-  const laneH = roadH * 0.5;
-  const wordWidth = clamp(width * 0.92, 138, width - 4);
-  const wordHeight = clamp(roadH * 0.25, 38, 58);
-  const wordFont = clamp(roadH * 0.17, 17, 30);
-  const carSize = clamp(laneH * 0.78, 56, 126);
-  const carHitHeight = clamp(laneH * 0.82, 46, 92);
-  const carCenterY = 24;
-  const wordCenterY = 74;
-  return { width, height, wordWidth, wordHeight, wordFont, carSize, carHitHeight, carCenterY, wordCenterY };
-}
-
-function estimateItemWidth(label){
-  return getItemMetrics(label).width;
-}
-
-function parseVerseMeta(verseId, fallbackRef){
-  return window.VerseGameShell.parseReferenceParts(
-    fallbackRef,
-    ctx.translation,
-    verseId
-  );
-}
-
-function tokenizeForBuild(text){
-  return window.VerseGameShell.tokenizeVerseForBuild(text);
-}
-
-
-function applyDebugHitboxes(){
-const field = document.getElementById("ttField");
-if (!field) return;
-field.classList.toggle("is-hitbox-debug", !!state.debugHitboxes);
-}
-
-function uniqueStrings(items){
-  const out = [];
-  const seen = new Set();
-  for (const item of items){
-    const key = String(item).toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push(item);
+  function extractWordEntries(tokens){
+    return window.VerseGameShell.extractWordEntries(tokens);
   }
-  return out;
-}
 
-function normalizeWord(value){
-  return window.VerseGameShell.normalizeWord(value);
-}
-
-const shuffle = window.VerseGameShell.shuffle;
-
-function pickRandom(items){
-  if (!items || !items.length) return "";
-  return items[Math.floor(Math.random() * items.length)];
-}
+  function showOverlay(message, duration = 1400){
+    state.overlayMessage = message;
+    state.overlayUntil = performance.now() + duration;
+  }
 
 const clamp = window.VerseGameShell.clamp;
+function pickRandom(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+const shuffle = window.VerseGameShell.shuffle;
 const capitalize = window.VerseGameShell.capitalize;
-
-function escapeHtml(value){
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
+  
+  const normalizeWord = window.VerseGameShell.normalizeWord;
+  function escapeHtml(str){
+    return String(str || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
 })();
