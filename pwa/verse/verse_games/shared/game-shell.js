@@ -80,6 +80,8 @@
     "snorf"
   ]);
 
+  let sharedFunDecoyBag = [];
+
   const SHARED_BIBLE_BOOK_DECOYS = Object.freeze([
     "Genesis",
     "Exodus",
@@ -178,6 +180,68 @@
         return true;
       })
     ).slice(0, desiredCount);
+  }
+
+  function getVerseWordDecoys({
+    words = [],
+    correct = "",
+    targetIndex = -1,
+    count = 6,
+    avoidNext = 2,
+    fallbackToFun = true
+  } = {}){
+    const desiredCount = Math.max(0, Number(count) || 0);
+    const correctNorm = normalizeWord(correct);
+    const safeWords = Array.isArray(words) ? words : [];
+    const safeTargetIndex = Number(targetIndex);
+    const safeAvoidNext = Math.max(0, Number(avoidNext) || 0);
+
+    if (!desiredCount) return [];
+
+    const makeCandidates = (shouldAvoidNextWords) => {
+      const out = [];
+      const used = new Set();
+
+      for (let index = 0; index < safeWords.length; index++){
+        const word = safeWords[index];
+        const key = normalizeWord(word);
+
+        if (!key) continue;
+        if (correctNorm && key === correctNorm) continue;
+        if (used.has(key)) continue;
+
+        if (
+          shouldAvoidNextWords &&
+          Number.isFinite(safeTargetIndex) &&
+          safeTargetIndex >= 0 &&
+          index > safeTargetIndex &&
+          index <= safeTargetIndex + safeAvoidNext
+        ){
+          continue;
+        }
+
+        out.push(word);
+        used.add(key);
+      }
+
+      return out;
+    };
+
+    let candidates = makeCandidates(true);
+
+    if (candidates.length < desiredCount){
+      candidates = makeCandidates(false);
+    }
+
+    if (candidates.length){
+      return shuffle(candidates).slice(0, desiredCount);
+    }
+
+    if (fallbackToFun){
+      return getFunWordDecoys(correct, safeWords, desiredCount);
+    }
+
+    return [];
   }
 
  function shuffle(array){
@@ -815,6 +879,7 @@ function renderCompleteScreen({
     getBibleBookDecoys,
     getBookDecoys,
     getFunWordDecoys,
+    getVerseWordDecoys,
     shuffle,
     clamp,
     capitalize,
