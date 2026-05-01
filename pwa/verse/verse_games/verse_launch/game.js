@@ -276,7 +276,7 @@ function refDecoys(correctRef){
       const built = index < state.progressIndex;
       const meta = state.metaIndices.has(index);
       const removing = state.buildRemoving.has(index);
-      return `<span class="vl-build-word ${built ? "is-built" : ""} ${meta ? "is-meta" : ""} ${removing ? "is-removing" : ""}">${escapeHtml(segment)}</span>`;
+      return `<span class="vl-build-word vm-build-word ${built ? "is-built" : ""} ${meta ? "is-meta" : ""} ${removing ? "is-removing" : ""}">${escapeHtml(segment)}</span>`;
     }).join(" ");
   }
   function formatMode(mode){ return mode ? mode.charAt(0).toUpperCase() + mode.slice(1) : "Mode"; }
@@ -395,7 +395,7 @@ function renderMode(){
     app.innerHTML = `
       <div class="vl-root">
         <div class="vl-stage">
-          <div class="vl-build-wrap"><div class="vl-build ${state.buildRemoving.size ? "vl-shake" : ""}" id="vlBuild"><div class="vl-build-text ${state.buildSizeClass}" id="vlBuildText">${renderBuildText()}</div></div></div>
+          <div class="vl-build-wrap"><div class="vl-build vm-build vm-build--${BUILD_AREA} ${state.buildRemoving.size ? "vl-shake" : ""}" id="vlBuild"><div class="vl-build-text vm-build-text vm-build-text--progress ${state.buildSizeClass} ${state.mode === "hard" ? "is-hide-unbuilt" : ""}" id="vlBuildText">${renderBuildText()}</div></div></div>
           <div class="vl-game-wrap">
             <div class="vl-game-board" id="vlBoard">
               <div class="vl-red-flash" id="vlRedFlash"></div>
