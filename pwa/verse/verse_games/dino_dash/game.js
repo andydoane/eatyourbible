@@ -10,6 +10,8 @@ const GAME_THEME = {
   accent: "#333333"
 };
 
+const BUILD_AREA = "large";
+
 const HELP_OVERLAY_ID = "ddHelpOverlay";
 
 const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
@@ -147,13 +149,18 @@ const BOOKS = window.VerseGameShell.getBibleBookDecoys();
   };
 
   const referenceParts = parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
-  state.bookLabel = referenceParts.book || "";
-  state.referenceLabel = referenceParts.reference || "";
-  state.verseWords = tokenizeVerse(ctx.verseText);
-  state.buildSizeClass = getBuildSizeClass(ctx.verseText, state.bookLabel, state.referenceLabel);
-  state.buildSegments = [...state.verseWords];
-  if (state.bookLabel) state.buildSegments.push(state.bookLabel);
-  if (state.referenceLabel) state.buildSegments.push(state.referenceLabel);
+  const buildData = window.VerseGameShell.buildVerseSegments({
+    verseText: ctx.verseText || "",
+    book: referenceParts.book,
+    reference: referenceParts.reference,
+    buildArea: BUILD_AREA
+  });
+
+  state.bookLabel = buildData.bookLabel;
+  state.referenceLabel = buildData.referenceLabel;
+  state.verseWords = buildData.words;
+  state.buildSizeClass = buildData.buildSizeClass;
+  state.buildSegments = buildData.segments;
 
   renderIntro();
 
@@ -1592,18 +1599,7 @@ function renderHills(){
     }
   }
 
-  function getBuildLengthScore(verseText, book, reference){
-    return String(verseText || "").length
-      + String(book || "").length
-      + String(reference || "").length;
-  }
 
-  function getBuildSizeClass(verseText, book, reference){
-    const score = getBuildLengthScore(verseText, book, reference);
-    if (score >= 136) return "is-small";
-    if (score >= 106) return "is-medium";
-    return "is-normal";
-  }
 
   function updateBuildText(){
     const el = document.getElementById("ddBuildText");
