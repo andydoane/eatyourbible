@@ -915,10 +915,30 @@ window.VerseGameShell.wireHelp({
   }
 
   function pickWordDecoys(correctWord, count){
-    const decoys = window.VerseGameShell.getFunWordDecoys(correctWord, state.words, count);
+    const decoys = selectedMode === "easy"
+      ? window.VerseGameShell.getFunWordDecoys(correctWord, state.words, count)
+      : window.VerseGameShell.getVerseWordDecoys({
+          words: state.words,
+          correct: correctWord,
+          targetIndex: state.progressIndex,
+          count,
+          avoidNext: 2,
+          fallbackToFun: true
+        });
 
     while (decoys.length < count){
-      decoys.push("taco");
+      const fallback = window.VerseGameShell.getFunWordDecoys(correctWord, state.words, count);
+      const seen = new Set([correctWord, ...decoys].map(normalizeWord));
+
+      for (const word of fallback){
+        const key = normalizeWord(word);
+        if (!key || seen.has(key)) continue;
+        decoys.push(word);
+        seen.add(key);
+        if (decoys.length >= count) break;
+      }
+
+      if (decoys.length < count) break;
     }
 
     return decoys.slice(0, count);
