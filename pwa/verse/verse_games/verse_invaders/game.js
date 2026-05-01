@@ -870,9 +870,13 @@ function renderVictory(){
   }
 
   function getCurrentPhase(){
-    if (state.builtCount < verseWords.length) return "words";
-    if (state.builtCount === verseWords.length) return "book";
-    return "reference";
+    return window.VerseGameShell.getPhaseForProgress({
+      progressIndex: state.builtCount,
+      wordCount: verseWords.length,
+      totalSegments: state.queue.length,
+      bookLabel: buildData.bookLabel,
+      referenceLabel: buildData.referenceLabel
+    });
   }
 
   function getDecoysForPhase(phase, correctLabel, count){
