@@ -41,8 +41,14 @@ let endScreenUnlockTimer = 0;
 let itemsClickBound = false;
 
 const verseMeta = parseVerseMeta(ctx.verseId || "", ctx.verseRef || "");
+const buildData = window.VerseGameShell.buildVerseSegments({
+  verseText: ctx.verseText || "",
+  book: verseMeta.book,
+  reference: verseMeta.reference,
+  buildArea: "compact"
+});
 const buildTokens = tokenizeForBuild(ctx.verseText || "");
-const verseWords = buildTokens.filter(t => t.kind === "word").map(t => t.text);
+const verseWords = buildData.words;
 
 const state = {
   running:false,
@@ -62,7 +68,7 @@ const state = {
   buildShakeUntil:0,
   overlayMessage:"",
   overlayUntil:0,
-  buildSizeClass:getBuildSizeClass(ctx.verseText || "", verseMeta.book, verseMeta.reference),
+  buildSizeClass: buildData.buildSizeClass,
   phase:"words",
   wordsBuilt:0,
   bookBuilt:false,
@@ -1589,13 +1595,6 @@ function parseVerseMeta(verseId, fallbackRef){
 
 function tokenizeForBuild(text){
   return window.VerseGameShell.tokenizeVerseForBuild(text);
-}
-
-function getBuildSizeClass(verseText, book, reference){
-  const len = `${verseText || ""} ${book || ""} ${reference || ""}`.trim().length;
-  if (len > 120) return "is-small";
-  if (len > 72) return "is-medium";
-  return "";
 }
 
 function applyDebugHitboxes(){
