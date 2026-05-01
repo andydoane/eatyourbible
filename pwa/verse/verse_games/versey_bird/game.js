@@ -10,6 +10,8 @@ const GAME_THEME = {
   accent: "#333333"
 };
 
+const BUILD_AREA = "large";
+
 const HELP_OVERLAY_ID = "vbHelpOverlay";
 
   const TARGET_COLORS = ["#ff5a51","#ffa351","#ffc751","#40b9c5","#7f66c6","#a7cb6f"];
@@ -1309,29 +1311,23 @@ function getObstacleGroundY(){
     pill.textContent = `Streak: ${state.streak}${suffix}`;
   }
 
-  function getBuildLengthScore(verseText, book, reference){
-    return String(verseText || "").length
-      + String(book || "").length
-      + String(reference || "").length;
-  }
 
-  function getBuildSizeClass(verseText, book, reference){
-    const score = getBuildLengthScore(verseText, book, reference);
-    if (score >= 136) return "is-small";
-    if (score >= 106) return "is-medium";
-    return "is-normal";
-  }
 
   function setupReferenceSegments(){
     const parsed = parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
-    state.referenceMeta = parsed;
-    state.bookLabel = parsed.book || "";
-    state.referenceLabel = parsed.reference || "";
-    state.buildSizeClass = getBuildSizeClass(ctx.verseText, state.bookLabel, state.referenceLabel);
+    const buildData = window.VerseGameShell.buildVerseSegments({
+      verseText: ctx.verseText || "",
+      book: parsed.book,
+      reference: parsed.reference,
+      buildArea: BUILD_AREA
+    });
 
-    state.segments = [...state.words];
-    if (state.bookLabel) state.segments.push(state.bookLabel);
-    if (state.referenceLabel) state.segments.push(state.referenceLabel);
+    state.referenceMeta = parsed;
+    state.words = buildData.words;
+    state.bookLabel = buildData.bookLabel;
+    state.referenceLabel = buildData.referenceLabel;
+    state.buildSizeClass = buildData.buildSizeClass;
+    state.segments = buildData.segments;
   }
 
   function getCurrentPhase(){
