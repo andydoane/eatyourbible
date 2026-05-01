@@ -314,8 +314,9 @@ body{
 /* Large build area profile */
 
 .vm-build.vm-build--large{
-  min-height: 112px;
-  padding: 16px 18px;
+  height: clamp(96px, 14vh, 124px);
+  min-height: clamp(96px, 14vh, 124px);
+  padding: clamp(12px, 2vh, 18px) clamp(14px, 4vw, 20px);
 }
 
 .vm-build--large .vm-build-text{
@@ -339,8 +340,9 @@ body{
 /* Compact build area profile */
 
 .vm-build.vm-build--compact{
-  min-height: 108px;
-  padding: 10px 12px;
+  height: clamp(88px, 12vh, 112px);
+  min-height: clamp(88px, 12vh, 112px);
+  padding: clamp(8px, 1.5vh, 12px) clamp(10px, 3vw, 14px);
 }
 
 .vm-build--compact .vm-build-text{
@@ -361,19 +363,7 @@ body{
   line-height: 1.06;
 }
 
-/* Short-screen adjustment */
 
-@media (max-height: 700px){
-  .vm-build.vm-build--large{
-    min-height: 96px;
-    padding: 12px 14px;
-  }
-
-  .vm-build.vm-build--compact{
-    min-height: 96px;
-    padding: 8px 10px;
-  }
-}
 
 /* Shared build progress display */
 
