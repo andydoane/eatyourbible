@@ -1711,12 +1711,18 @@ function renderHills(){
     const out = new Set();
 
     if (phase === "words"){
-      for (const word of window.VerseGameShell.getFunWordDecoys(correctLabel, state.verseWords, count)){
-        if (out.size >= count) break;
-        out.add(word);
-      }
+      const decoys = selectedMode === "easy"
+        ? window.VerseGameShell.getFunWordDecoys(correctLabel, state.verseWords, count)
+        : window.VerseGameShell.getVerseWordDecoys({
+            words: state.verseWords,
+            correct: correctLabel,
+            targetIndex: state.progressIndex,
+            count,
+            avoidNext: 2,
+            fallbackToFun: true
+          });
 
-      for (const word of shuffle(state.verseWords)){
+      for (const word of decoys){
         if (out.size >= count) break;
         if (normalizeWord(word) !== normalizeWord(correctLabel)) out.add(word);
       }
