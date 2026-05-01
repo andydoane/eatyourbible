@@ -922,38 +922,23 @@ window.VerseGameShell.wireHelp({
   }
 
   function pickWordDecoys(correctWord, count){
-    const safePool = FUNNY_DECOY_WORDS.filter(word => normalizeWord(word) !== normalizeWord(correctWord));
-    const pool = shuffle(Array.from(new Set(safePool)));
+    const decoys = window.VerseGameShell.getFunWordDecoys(correctWord, state.words, count);
 
-    const out = [];
-    for (const word of pool){
-      out.push(word);
-      if (out.length >= count) break;
+    while (decoys.length < count){
+      decoys.push("taco");
     }
 
-    while (out.length < count){
-      out.push("taco");
-    }
-
-    return out;
+    return decoys.slice(0, count);
   }
 
   function pickBookDecoys(correctBook, count){
-    const pool = shuffle(
-      Array.from(new Set(ALL_BIBLE_BOOKS.filter(book => normalizeWord(book) !== normalizeWord(correctBook))))
-    );
+    const decoys = window.VerseGameShell.getBookDecoys(correctBook, count);
 
-    const out = [];
-    for (const book of pool){
-      out.push(book);
-      if (out.length >= count) break;
+    while (decoys.length < count){
+      decoys.push("Psalm");
     }
 
-    while (out.length < count){
-      out.push(correctBook);
-    }
-
-    return out;
+    return decoys.slice(0, count);
   }
 
   function buildReferenceDecoys(correctRef, count){
