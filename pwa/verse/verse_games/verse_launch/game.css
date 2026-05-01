@@ -162,9 +162,22 @@ button,input,select{font:inherit}
 .vl-build-text.is-normal{font-size:clamp(24px,5.8vw,42px);line-height:1.2}
 .vl-build-text.is-medium{font-size:clamp(21px,4.9vw,35px);line-height:1.14}
 .vl-build-text.is-small{font-size:clamp(18px,4.2vw,30px);line-height:1.10}
-.vl-build-word{color:transparent;transition:color 180ms ease,opacity 180ms ease,transform 180ms ease}
-.vl-build-word.is-built{color:var(--vl-dark)}
-.vl-build-word.is-meta.is-built{color:var(--vl-red)}
+.vl-build-word{
+  color:var(--vl-dark);
+  transition:color 180ms ease,opacity 180ms ease,transform 180ms ease;
+}
+
+.vl-build-word.is-built{
+  color:var(--vl-dark);
+}
+
+.vl-build-word.is-meta{
+  color:var(--vl-red);
+}
+
+.vl-build-word.is-meta.is-built{
+  color:var(--vl-red);
+}
 .vl-build-word.is-removing{animation:vlBuildRemove 360ms ease forwards}
 
 .vl-game-wrap{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;padding:0 14px calc(10px + var(--vl-safe-bottom))}
