@@ -181,12 +181,11 @@ const tokenizeVerse = window.VerseGameShell.tokenizeVerseWords;
   }
 
   function easyDecoys(correct){
-    const verseWords = new Set(state.words.map(normalizeWord));
-    return shuffle(FUN_DECOYS.filter(word => !verseWords.has(normalizeWord(word)) && normalizeWord(word) !== normalizeWord(correct)));
+    return window.VerseGameShell.getFunWordDecoys(correct, state.words, 12);
   }
 
   function bookDecoys(correct){
-    return shuffle(BIBLE_BOOKS.filter(book => normalizeWord(book) !== normalizeWord(correct)));
+    return window.VerseGameShell.getBookDecoys(correct, 12);
   }
 
   function refDecoys(correctRef){
