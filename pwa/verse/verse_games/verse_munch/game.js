@@ -235,8 +235,8 @@ app.innerHTML = `
   <div class="vmunch-root">
     <div class="vmunch-stage">
       <div class="vmunch-build-wrap">
-        <div class="vmunch-build" id="vmunchBuild">
-          <div class="vmunch-build-text" id="vmunchBuildText"></div>
+        <div class="vmunch-build vm-build vm-build--${BUILD_AREA}" id="vmunchBuild">
+          <div class="vmunch-build-text vm-build-text" id="vmunchBuildText"></div>
         </div>
       </div>
 
@@ -828,10 +828,10 @@ function backToMenuFromHelp(){
     const el = document.getElementById("vmunchBuildText");
     if (!el) return;
 
-    el.className = `vmunch-build-text ${state.buildSizeClass}`;
+    el.className = `vmunch-build-text vm-build-text vm-build-text--progress ${state.buildSizeClass} ${selectedMode === "hard" ? "is-hide-unbuilt" : ""}`;
 
     el.innerHTML = state.segments.map((segment, index) => `
-      <span class="vmunch-build-word ${index < state.progressIndex ? "is-built" : ""}">
+      <span class="vmunch-build-word vm-build-word ${index < state.progressIndex ? "is-built" : ""}">
         ${escapeHtml(segment)}
       </span>
     `).join(" ");
