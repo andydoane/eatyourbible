@@ -314,9 +314,9 @@ body{
 /* Large build area profile */
 
 .vm-build.vm-build--large{
-  height: clamp(96px, 14vh, 124px);
-  min-height: clamp(96px, 14vh, 124px);
-  padding: clamp(12px, 2vh, 18px) clamp(14px, 4vw, 20px);
+  height: clamp(104px, 15vh, 132px);
+  min-height: clamp(104px, 15vh, 132px);
+  padding: clamp(10px, 1.7vh, 16px) clamp(14px, 4vw, 20px);
 }
 
 .vm-build--large .vm-build-text{
@@ -333,8 +333,8 @@ body{
 }
 
 .vm-build--large .vm-build-text.is-small{
-  font-size: clamp(18px, 4.2vw, 30px);
-  line-height: 1.08;
+  font-size: clamp(16px, 3.8vw, 28px);
+  line-height: 1.06;
 }
 
 /* Compact build area profile */
