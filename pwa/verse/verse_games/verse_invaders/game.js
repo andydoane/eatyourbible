@@ -9,6 +9,8 @@
     accent: "#333333"
   };
 
+  const BUILD_AREA = "compact";
+
   const HELP_OVERLAY_ID = "vinvHelpOverlay";
 
   const LANE_KEYS = ["left", "center", "right"];
@@ -97,7 +99,13 @@ const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
   };
 
   const parsedRef = parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
-  const verseWords = tokenizeVerse(ctx.verseText);
+  const buildData = window.VerseGameShell.buildVerseSegments({
+    verseText: ctx.verseText || "",
+    book: parsedRef.book,
+    reference: parsedRef.reference,
+    buildArea: BUILD_AREA
+  });
+  const verseWords = buildData.words;
 
   renderIntro();
 
@@ -147,8 +155,8 @@ function renderModeSelect(){
     state.buildShakeUntil = 0;
     state.overlayMessage = "";
     state.overlayUntil = 0;
-    state.queue = [...verseWords, parsedRef.book, parsedRef.reference].filter(Boolean);
-    state.buildSizeClass = getBuildSizeClass(ctx.verseText, parsedRef.book, parsedRef.reference);
+    state.queue = buildData.segments;
+    state.buildSizeClass = buildData.buildSizeClass;
     state.builtCount = 0;
     state.phase = "words";
     state.streak = 0;
@@ -430,18 +438,7 @@ function getBuildTokenPhase(index){
   return "is-reference";
 }
 
-function getBuildLengthScore(verseText, book, reference){
-  return String(verseText || "").length
-    + String(book || "").length
-    + String(reference || "").length;
-}
 
-function getBuildSizeClass(verseText, book, reference){
-  const score = getBuildLengthScore(verseText, book, reference);
-  if (score >= 136) return "is-small";
-  if (score >= 106) return "is-medium";
-  return "is-normal";
-}
 
 function renderButtons(){
     const buttons = document.querySelectorAll(".vinv-lane-btn");
