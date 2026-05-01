@@ -11,6 +11,8 @@ const GAME_THEME = {
   accent: "#7f66c6"
 };
 
+const BUILD_AREA = "large";
+
 const HELP_OVERLAY_ID = "vlHelpOverlay";
 
   const ROCKETS = [
@@ -122,15 +124,6 @@ const BIBLE_BOOKS = window.VerseGameShell.getBibleBookDecoys();
     return window.VerseGameShell.parseReferenceParts(ref, translation, verseId);
   }
 
-  function getBuildLengthScore(verseText, book, reference){
-    return String(verseText||"").length + String(book||"").length + String(reference||"").length;
-  }
-  function getBuildSizeClass(verseText, book, reference){
-    const score = getBuildLengthScore(verseText, book, reference);
-    if (score >= 136) return "is-small";
-    if (score >= 106) return "is-medium";
-    return "is-normal";
-  }
 
   await preloadImages([
     ...ROCKETS.map(r => r.src),
@@ -139,16 +132,21 @@ const BIBLE_BOOKS = window.VerseGameShell.getBibleBookDecoys();
   ]);
 
   function initVerseData(){
-    state.words = tokenizeVerse(ctx.verseText);
     const parsed = parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
+    const buildData = window.VerseGameShell.buildVerseSegments({
+      verseText: ctx.verseText || "",
+      book: parsed.book,
+      reference: parsed.reference,
+      buildArea: BUILD_AREA
+    });
+
+    state.words = buildData.words;
     state.referenceMeta = parsed;
-    state.bookLabel = parsed.book || "";
-    state.referenceLabel = parsed.reference || "";
-    state.buildSizeClass = getBuildSizeClass(ctx.verseText, state.bookLabel, state.referenceLabel);
-    state.segments = [...state.words];
-    state.metaIndices = new Set();
-    if (state.bookLabel){ state.metaIndices.add(state.segments.length); state.segments.push(state.bookLabel); }
-    if (state.referenceLabel){ state.metaIndices.add(state.segments.length); state.segments.push(state.referenceLabel); }
+    state.bookLabel = buildData.bookLabel;
+    state.referenceLabel = buildData.referenceLabel;
+    state.buildSizeClass = buildData.buildSizeClass;
+    state.segments = buildData.segments;
+    state.metaIndices = buildData.metaIndices;
     state.progressIndex = 0;
     state.buildRemoving = new Set();
     state.choices = [];
