@@ -215,14 +215,14 @@ const BIBLE_BOOKS = window.VerseGameShell.getBibleBookDecoys();
     return out;
   }
   function verseWordDecoys(correct){
-    const uniqueVerseWords = Array.from(new Set(state.words.map(normalizeWord)));
-    const mapped = [];
-    for (const key of uniqueVerseWords){
-      if (key === normalizeWord(correct)) continue;
-      const original = state.words.find(w => normalizeWord(w) === key);
-      if (original) mapped.push(original);
-    }
-    return shuffle(mapped);
+    return window.VerseGameShell.getVerseWordDecoys({
+      words: state.words,
+      correct,
+      targetIndex: state.progressIndex,
+      count: 12,
+      avoidNext: 2,
+      fallbackToFun: true
+    });
   }
   function easyDecoys(correct){
     return window.VerseGameShell.getFunWordDecoys(correct, state.words, 12);
