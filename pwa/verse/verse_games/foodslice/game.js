@@ -131,9 +131,9 @@ function renderModeSelect(){
     state.pauseReason = "";
     state.lastTs = 0;
     state.wordsBuilt = 0;
-    state.phase = "words";
     state.bookBuilt = false;
     state.referenceBuilt = false;
+    updatePhaseFromProgress();
     state.activeFruit = null;
     state.activeBomb = null;
     state.activeSlices = [];
@@ -390,6 +390,26 @@ function backToMenuFromHelp(){
     if (state.phase === "book") return "Book";
     if (state.phase === "reference") return "Reference";
     return "Ready";
+  }
+
+  function getLinearProgressIndex(){
+    return (
+      state.wordsBuilt +
+      (state.bookBuilt ? 1 : 0) +
+      (state.referenceBuilt ? 1 : 0)
+    );
+  }
+
+  function updatePhaseFromProgress(){
+    const phase = window.VerseGameShell.getPhaseForProgress({
+      progressIndex: getLinearProgressIndex(),
+      wordCount: state.wordEntries.length,
+      totalSegments: state.buildData?.segments?.length || 0,
+      bookLabel: state.verseMeta.book,
+      referenceLabel: state.verseMeta.reference
+    });
+
+    state.phase = phase;
   }
 
   function renderBuildArea(){
@@ -673,23 +693,29 @@ function backToMenuFromHelp(){
       state.activeFruit = null;
       state.wrongStreak = 0;
 
+      const previousPhase = state.phase;
+
       if (state.phase === "words"){
         state.wordsBuilt += 1;
-        if (state.wordsBuilt >= state.wordEntries.length){
-          state.phase = "book";
-          state.bookBuilt = false;
-          state.referenceBuilt = false;
-          showOverlay("Now slice the Bible book");
-        }
       } else if (state.phase === "book"){
         state.bookBuilt = true;
-        state.phase = "reference";
-        state.referenceBuilt = false;
-        showOverlay("Now slice the chapter and verse");
       } else if (state.phase === "reference"){
         state.referenceBuilt = true;
-        startBonusRound();
       }
+
+      updatePhaseFromProgress();
+
+      if (state.phase === "done"){
+        startBonusRound();
+        return;
+      }
+
+      if (previousPhase === "words" && state.phase === "book"){
+        showOverlay("Now slice the Bible book");
+      } else if (previousPhase === "book" && state.phase === "reference"){
+        showOverlay("Now slice the chapter and verse");
+      }
+
       return;
     }
 
@@ -700,6 +726,7 @@ function backToMenuFromHelp(){
     state.fieldFlashUntil = performance.now() + 260;
     if (selectedMode === "hard" && state.phase === "words"){
       state.wordsBuilt = Math.max(0, state.wordsBuilt - 2);
+      updatePhaseFromProgress();
     }
     setPaused(true, "wrong");
     renderHud();
@@ -719,6 +746,7 @@ function backToMenuFromHelp(){
     state.wordsBuilt = 0;
     state.bookBuilt = false;
     state.referenceBuilt = false;
+    updatePhaseFromProgress();
     state.buildShakeUntil = performance.now() + 320;
     state.fieldFlashUntil = performance.now() + 260;
     setPaused(true, "bomb");
@@ -826,7 +854,7 @@ function createSlicesFrom(item){
     if (state.phase === "book") return pickPhaseChoice(correct, state.bookChoices);
     if (state.phase === "reference") return pickPhaseChoice(correct, state.referenceChoices);
 
-    const verseWordsLower = new Set(state.wordEntries.map((entry) => normalizeWord(entry.display)));
+    
     let wrongPool = [];
     if (selectedMode === "medium" || selectedMode === "hard"){
       wrongPool = getVerseDerivedDecoys(state.wordsBuilt, correct);
