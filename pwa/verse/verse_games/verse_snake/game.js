@@ -323,9 +323,9 @@ const shuffle = window.VerseGameShell.shuffle;
       return;
     }
 
-    el.className = `vs-build-text is-verse-layout ${state.buildSizeClass}`;
+    el.className = `vs-build-text vm-build-text vm-build-text--progress is-verse-layout ${state.buildSizeClass} ${selectedMode === "hard" ? "is-hide-unbuilt" : ""}`;
     el.innerHTML = state.segments.map((segment, index) => `
-      <span class="vs-build-word ${index < state.progressIndex ? "is-built" : ""}">
+      <span class="vs-build-word vm-build-word ${index < state.progressIndex ? "is-built" : ""}">
         ${escapeHtml(segment)}
       </span>
     `).join(" ");
@@ -418,8 +418,8 @@ function renderModeSelect(){
       <div class="vs-root">
         <div class="vs-stage">
           <div class="vs-build-wrap">
-            <div class="vs-build" id="vsBuild">
-              <div class="vs-build-text" id="vsBuildText"></div>
+            <div class="vs-build vm-build vm-build--${BUILD_AREA}" id="vsBuild">
+              <div class="vs-build-text vm-build-text" id="vsBuildText"></div>
             </div>
           </div>
 
