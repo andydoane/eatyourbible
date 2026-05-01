@@ -565,8 +565,7 @@ function render(){
   }
 
   function easyDecoys(correct){
-    const taken = new Set([normalizeWord(correct)]);
-    return uniqueLabels(shuffle(FUN_DECOYS).filter(word => !taken.has(normalizeWord(word)))).slice(0, 12);
+    return window.VerseGameShell.getFunWordDecoys(correct, state.words, 12);
   }
 
   function verseWordDecoys(correct){
@@ -575,9 +574,7 @@ function render(){
   }
 
   function bookDecoys(correct){
-    return shuffle(
-      BOOK_DECOY_LABELS.filter(label => normalizeWord(label) !== normalizeWord(correct))
-    ).slice(0, 12);
+    return window.VerseGameShell.getBookDecoys(correct, 12);
   }
 
   function referenceDecoys(correct){
