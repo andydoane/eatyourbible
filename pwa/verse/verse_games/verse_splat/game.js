@@ -596,11 +596,35 @@ function render(){
       return referenceDecoys(correct);
     }
 
-    if (MODE_CONFIG[state.mode].decoyMode === "fun"){
-      return easyDecoys(correct);
+    const out = [];
+    const seen = new Set([normalizeWord(correct)]);
+
+    function addDecoys(list){
+      for (const item of list || []){
+        const key = normalizeWord(item);
+        if (!key || seen.has(key)) continue;
+        seen.add(key);
+        out.push(item);
+        if (out.length >= 2) break;
+      }
     }
 
-    return verseWordDecoys(correct);
+    if (MODE_CONFIG[state.mode].decoyMode === "fun"){
+      addDecoys(easyDecoys(correct));
+      return out;
+    }
+
+    addDecoys(verseWordDecoys(correct));
+
+    if (out.length < 2){
+      addDecoys(easyDecoys(correct));
+    }
+
+    if (out.length < 2){
+      addDecoys(FUN_DECOYS);
+    }
+
+    return out;
   }
 
   function randomColorSet(count, takenColors=[]){
