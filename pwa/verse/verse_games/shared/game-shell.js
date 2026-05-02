@@ -921,6 +921,201 @@ function renderCompleteScreen({
   if (backBtn && typeof onMoreGames === "function") backBtn.onclick = onMoreGames;
 }
 
+  function gameMenuHtml({
+    id = "verseGameMenuOverlay",
+    title = "Game Menu",
+    muted = false,
+    howToText = "How to Play",
+    modeSelectText = "Mode Select",
+    exitText = "Exit Game",
+    closeText = "Close",
+    showModeSelect = true
+  } = {}){
+    const safeId = escapeHtml(id);
+
+    return `
+      <div class="vm-game-menu-overlay" id="${safeId}" aria-hidden="true">
+        <div class="vm-game-menu-panel" role="dialog" aria-modal="true" aria-label="${escapeHtml(title)}">
+          <div class="vm-game-menu-header">
+            <div class="vm-game-menu-title">${escapeHtml(title)}</div>
+
+            <button
+              class="vm-game-menu-mute-btn"
+              id="${safeId}MuteBtn"
+              type="button"
+              aria-label="${muted ? "Unmute" : "Mute"}"
+              title="${muted ? "Unmute" : "Mute"}"
+            >${muted ? "🔇" : "🔊"}</button>
+          </div>
+
+          <div class="vm-game-menu-actions">
+            <button class="vm-btn vm-game-menu-btn" id="${safeId}HowToBtn" type="button">${escapeHtml(howToText)}</button>
+            ${showModeSelect ? `<button class="vm-btn vm-game-menu-btn" id="${safeId}ModeSelectBtn" type="button">${escapeHtml(modeSelectText)}</button>` : ""}
+            <button class="vm-btn vm-game-menu-btn" id="${safeId}ExitBtn" type="button">${escapeHtml(exitText)}</button>
+            <button class="vm-btn vm-game-menu-btn vm-game-menu-close-btn" id="${safeId}CloseBtn" type="button">${escapeHtml(closeText)}</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function wireGameMenu({
+    id = "verseGameMenuOverlay",
+    menuButtonId = "",
+    helpOverlayId = "",
+    closeHelpText = "Close",
+    backHelpText = "Back",
+    isMuted = null,
+    onMuteToggle = null,
+    onHowToPlay = null,
+    onModeSelect = null,
+    onExit = null,
+    onOpen = null,
+    onClose = null,
+    onBackFromHelp = null
+  } = {}){
+    const overlay = document.getElementById(id);
+    const menuButton = menuButtonId ? document.getElementById(menuButtonId) : null;
+
+    const howToBtn = document.getElementById(`${id}HowToBtn`);
+    const modeSelectBtn = document.getElementById(`${id}ModeSelectBtn`);
+    const muteBtn = document.getElementById(`${id}MuteBtn`);
+    const exitBtn = document.getElementById(`${id}ExitBtn`);
+    const closeBtn = document.getElementById(`${id}CloseBtn`);
+
+    const updateMuteButton = () => {
+      if (!muteBtn) return;
+
+      const muted = typeof isMuted === "function" ? !!isMuted() : false;
+      muteBtn.textContent = muted ? "🔇" : "🔊";
+      muteBtn.setAttribute("aria-label", muted ? "Unmute" : "Mute");
+      muteBtn.setAttribute("title", muted ? "Unmute" : "Mute");
+    };
+
+    const openMenu = (event) => {
+      if (event){
+        if (event.cancelable) event.preventDefault();
+        event.stopPropagation();
+      }
+
+      if (typeof onOpen === "function"){
+        onOpen();
+      }
+
+      if (overlay){
+        overlay.classList.add("is-open");
+        overlay.setAttribute("aria-hidden", "false");
+      }
+
+      updateMuteButton();
+    };
+
+    const closeMenu = () => {
+      if (overlay){
+        overlay.classList.remove("is-open");
+        overlay.setAttribute("aria-hidden", "true");
+      }
+
+      if (typeof onClose === "function"){
+        onClose();
+      }
+    };
+
+    const openHelp = () => {
+      if (typeof onHowToPlay === "function"){
+        onHowToPlay();
+        return;
+      }
+
+      if (overlay){
+        overlay.classList.remove("is-open");
+        overlay.setAttribute("aria-hidden", "true");
+      }
+
+      if (helpOverlayId){
+        openHelp(helpOverlayId, "back", backHelpText);
+      }
+    };
+
+    if (menuButton){
+      menuButton.onclick = openMenu;
+      menuButton.onpointerdown = openMenu;
+      menuButton.ontouchstart = openMenu;
+    }
+
+    if (howToBtn){
+      howToBtn.onclick = openHelp;
+    }
+
+    if (modeSelectBtn){
+      modeSelectBtn.onclick = () => {
+        if (overlay){
+          overlay.classList.remove("is-open");
+          overlay.setAttribute("aria-hidden", "true");
+        }
+
+        if (typeof onModeSelect === "function"){
+          onModeSelect();
+        }
+      };
+    }
+
+    if (muteBtn){
+      muteBtn.onclick = () => {
+        if (typeof onMuteToggle === "function"){
+          onMuteToggle();
+        }
+
+        updateMuteButton();
+      };
+    }
+
+    if (exitBtn && typeof onExit === "function"){
+      exitBtn.onclick = onExit;
+    }
+
+    if (closeBtn){
+      closeBtn.onclick = closeMenu;
+    }
+
+    if (overlay){
+      overlay.onclick = (event) => {
+        if (event.target === overlay){
+          closeMenu();
+        }
+      };
+    }
+
+    if (helpOverlayId){
+      wireHelp({
+        id: helpOverlayId,
+        closeText: closeHelpText,
+        onBack: () => {
+          closeHelp(helpOverlayId);
+
+          if (overlay){
+            overlay.classList.add("is-open");
+            overlay.setAttribute("aria-hidden", "false");
+          }
+
+          if (typeof onBackFromHelp === "function"){
+            onBackFromHelp();
+          }
+        },
+        onClose
+      });
+    }
+
+    updateMuteButton();
+
+    return {
+      open: openMenu,
+      close: closeMenu,
+      updateMuteButton
+    };
+  }
+
+
   window.VerseGameShell = {
     escapeHtml,
     getFunDecoys,
@@ -946,6 +1141,8 @@ function renderCompleteScreen({
     openHelp,
     closeHelp,
     wireHelp,
+    gameMenuHtml,
+    wireGameMenu,
     renderTitleScreen,
     renderModeSelect,
     renderCompleteScreen
