@@ -331,16 +331,6 @@ button.vm-complete-icon.is-pet-box:focus-visible{
     drop-shadow(0 0 18px rgba(255,255,255,.52));
 }
 
-.vm-complete-screen.is-pet-unlock button.vm-complete-icon.is-pet-box::after{
-  content: "Tap to open";
-  display: block;
-  margin-top: 10px;
-  font-size: clamp(20px, 5.2vw, 30px);
-  font-weight: 900;
-  color: rgba(255,255,255,.96);
-  text-shadow: 0 3px 0 rgba(0,0,0,.16);
-}
-
 @media (max-height: 700px){
   .vm-complete-screen.is-pet-unlock button.vm-complete-icon.is-pet-box{
     font-size: clamp(92px, 26vh, 150px);
