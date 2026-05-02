@@ -1007,7 +1007,11 @@ function renderCompleteScreen({
       }
 
       if (typeof onOpen === "function"){
-        onOpen();
+        const shouldOpen = onOpen();
+
+        if (shouldOpen === false){
+          return;
+        }
       }
 
       if (overlay){
