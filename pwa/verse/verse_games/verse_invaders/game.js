@@ -230,19 +230,12 @@ function renderHelpOverlay(body){
 }
 
 function renderGameMenuOverlay(){
-  return `
-    <div class="vinv-help-overlay" id="vinvGameMenuOverlay" aria-hidden="true">
-      <div class="vinv-help-dialog vinv-game-menu-dialog">
-        <div class="vinv-help-title vinv-game-menu-title">Game Menu</div>
-        <div class="vinv-game-menu-actions">
-          <button class="vm-btn vinv-game-menu-btn" id="vinvMenuHowToBtn">How to Play</button>
-          <button class="vm-btn vinv-game-menu-btn" id="vinvMenuMuteBtn">${muted ? "Unmute" : "Mute"}</button>
-          <button class="vm-btn vinv-game-menu-btn" id="vinvMenuExitBtn">Exit Game</button>
-          <button class="vm-btn vinv-game-menu-btn" id="vinvMenuCloseBtn">Close</button>
-        </div>
-      </div>
-    </div>
-  `;
+  return window.VerseGameShell.gameMenuHtml({
+    id: "vinvGameMenuOverlay",
+    title: "Game Menu",
+    muted,
+    showModeSelect: true
+  });
 }
 
   function helpHtml(){
@@ -254,46 +247,29 @@ function renderGameMenuOverlay(){
   }
 
 function wireCommonNav(){
-  const menuOverlay = document.getElementById("vinvGameMenuOverlay");
-  const menuHowToBtn = document.getElementById("vinvMenuHowToBtn");
-  const menuMuteBtn = document.getElementById("vinvMenuMuteBtn");
-  const menuExitBtn = document.getElementById("vinvMenuExitBtn");
-  const menuCloseBtn = document.getElementById("vinvMenuCloseBtn");
-
-
-window.VerseGameShell.wireHelp({
-  id: HELP_OVERLAY_ID,
-  closeText: "Close",
-  onBack: backToMenuFromHelp,
-  onClose: () => setPaused(false, "")
-});
-
-  if (menuHowToBtn) {
-    menuHowToBtn.onclick = () => {
-      openHelpFromMenu();
-    };
-  }
-
-if (menuMuteBtn) {
-  menuMuteBtn.onclick = () => {
-    muted = !muted;
-    menuMuteBtn.textContent = muted ? "Unmute" : "Mute";
-  };
-}
-
-  if (menuExitBtn) {
-    menuExitBtn.onclick = () => window.VerseGameBridge.exitGame();
-  }
-
-  if (menuCloseBtn) {
-    menuCloseBtn.onclick = () => closeGameMenu();
-  }
-
-  if (menuOverlay) {
-    menuOverlay.onclick = (e) => {
-      if (e.target === menuOverlay) closeGameMenu();
-    };
-  }
+  window.VerseGameShell.wireGameMenu({
+    id: "vinvGameMenuOverlay",
+    menuButtonId: "vinvModePill",
+    helpOverlayId: HELP_OVERLAY_ID,
+    isMuted: () => muted,
+    onMuteToggle: () => {
+      muted = !muted;
+      return muted;
+    },
+    onHowToPlay: openHelpFromMenu,
+    onModeSelect: () => {
+      setPaused(false, "");
+      stopLoop();
+      renderModeSelect();
+    },
+    onExit: () => {
+      stopLoop();
+      window.VerseGameBridge.exitGame();
+    },
+    onOpen: () => setPaused(true, "menu"),
+    onClose: () => setPaused(false, ""),
+    onBackFromHelp: () => setPaused(true, "menu")
+  });
 }
 
 function setPaused(paused, reason = ""){
@@ -309,14 +285,22 @@ function openGameMenu(){
   if (menuOverlay){
     setPaused(true, "menu");
     menuOverlay.classList.add("is-open");
+    menuOverlay.setAttribute("aria-hidden", "false");
   }
 }
 
 function closeGameMenu(){
   const menuOverlay = document.getElementById("vinvGameMenuOverlay");
+
+  if (menuOverlay && menuOverlay.contains(document.activeElement)){
+    document.activeElement.blur();
+  }
+
   if (menuOverlay){
     menuOverlay.classList.remove("is-open");
+    menuOverlay.setAttribute("aria-hidden", "true");
   }
+
   const helpOverlay = document.getElementById("vinvHelpOverlay");
   if (!helpOverlay || !helpOverlay.classList.contains("is-open")){
     setPaused(false, "");
