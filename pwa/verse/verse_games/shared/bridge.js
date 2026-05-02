@@ -357,9 +357,15 @@ function markCompleted(payload){
   }
 
   function returnToTitle(){
-    const target = buildParentAppUrl({
-      screen: "title"
-    });
+    const params = getParams();
+
+    const target = new URL("../../index.html", window.location.href);
+
+    if (params.verseId){
+      target.searchParams.set("v", params.verseId);
+    }
+
+    target.searchParams.set("screen", "title");
 
     window.location.href = target.href;
   }
