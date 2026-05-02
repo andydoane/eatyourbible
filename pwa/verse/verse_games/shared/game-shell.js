@@ -933,7 +933,7 @@ function renderCompleteScreen({
   gameMessage = "",
   statsText = "",
   statsHtml = "",
-  playAgainText = "PLay Again",
+  playAgainText = "Play Again",
   moreGamesText = "More Games",
   changeVerseText = "Change Verse",
   backLabel = "Back to Practice Games",
