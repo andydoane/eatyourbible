@@ -427,7 +427,7 @@ button.vm-complete-icon.is-pet-box:focus-visible{
   .vm-complete-actions .vm-btn{
     min-height: 58px;
     padding-block: 12px;
-    font-size: clamp(17px, 4.7vw, 22px);
+    font-size: clamp(20px, 5.2vw, 25px);
     border-radius: 999px;
   }
 }
@@ -470,7 +470,7 @@ button.vm-complete-icon.is-pet-box:focus-visible{
   .vm-complete-actions .vm-btn{
     min-height: 52px;
     padding-block: 10px;
-    font-size: clamp(16px, 4.3vw, 20px);
+    font-size: clamp(19px, 5vw, 24px);
   }
 }
 
