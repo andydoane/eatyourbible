@@ -523,6 +523,20 @@ button.vm-complete-icon.is-pet-box:focus-visible{
   }
 }
 
+/* Keep BibloPet box large after general small-screen tightening */
+
+@media (max-height: 700px){
+  .vm-complete-screen.is-pet-unlock button.vm-complete-icon.is-pet-box{
+    font-size: clamp(92px, 26vh, 150px);
+  }
+}
+
+@media (max-height: 620px){
+  .vm-complete-screen.is-pet-unlock button.vm-complete-icon.is-pet-box{
+    font-size: clamp(82px, 24vh, 130px);
+  }
+}
+
 .vm-game-difficulty-icon{
   font-size: clamp(58px, 15vw, 104px);
   line-height: 1;
