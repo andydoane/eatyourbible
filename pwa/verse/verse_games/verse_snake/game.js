@@ -14,6 +14,7 @@
 
   let selectedMode = null;
   let completed = false;
+  let completionResult = null;
   let muted = false;
 
   const TARGET_COLORS = [
@@ -382,6 +383,8 @@ function renderModeSelect(){
     onBack: renderIntroScreen,
     onSelect: (mode) => {
       selectedMode = mode;
+      completed = false;
+      completionResult = null;
       renderGameScreen();
     }
   });
@@ -1361,15 +1364,34 @@ function maybeScheduleFruitSpawn(delayMs = 480){
     `;
   }
 
-function completeCurrentMode(){
-  window.VerseGameBridge.markCompleted({
-    verseId: ctx.verseId,
-    gameId: "verse_snake",
-    mode: selectedMode,
-    progressType: "standard"
-  });
+async function completeCurrentMode(){
+  if (completed) return;
 
   completed = true;
+
+  try {
+    completionResult = await window.VerseGameBridge.completeGameRun({
+      verseId: ctx.verseId,
+      gameId: "verse_snake",
+      mode: selectedMode,
+      stats: {
+        fruitCount: state.fruitCount,
+        progressIndex: state.progressIndex
+      }
+    });
+  } catch (err) {
+    console.error("completeGameRun failed", err);
+    completionResult = {
+      ok: false,
+      alreadyCompleted: false,
+      newlyCompleted: false,
+      reward: {
+        ok: false,
+        petUnlockTriggered: false
+      }
+    };
+  }
+
   renderDone();
 }
 
