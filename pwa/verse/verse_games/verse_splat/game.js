@@ -347,6 +347,36 @@ function nonGameHelpHtml(){
   return `Tap the next correct blob word to build the verse. After the verse, finish the book and then the reference. Wrong taps poof blobs away. In hard mode, wrong taps also remove two built words.`;
 }
 
+function renderHelpOverlay(){
+  return window.VerseGameShell.helpOverlayHtml({
+    id: HELP_OVERLAY_ID,
+    title: "How to Play",
+    body: nonGameHelpHtml(),
+    closeText: "Close"
+  });
+}
+
+function renderGameMenuOverlay(){
+  return window.VerseGameShell.gameMenuHtml({
+    id: "vspGameMenuOverlay",
+    title: "Game Menu",
+    muted,
+    showModeSelect: true
+  });
+}
+
+function syncGameMenuOpenState(){
+  const menuOverlay = $("#vspGameMenuOverlay");
+  if (!menuOverlay) return;
+
+  if (state.menuOpen){
+    menuOverlay.classList.add("is-open");
+    menuOverlay.setAttribute("aria-hidden", "false");
+  } else {
+    menuOverlay.classList.remove("is-open");
+    menuOverlay.setAttribute("aria-hidden", "true");
+  }
+}
 
 function renderIntro(){
   window.VerseGameShell.renderTitleScreen({
@@ -422,7 +452,7 @@ function gameplayShell({ bonus=false }){
         <div class="vsp-board-wrap">
           <div class="vsp-board" id="vspBoard">
             <div class="vsp-board-topbar">
-              <button class="vsp-menu-pill" data-action="open-menu" aria-label="Open game menu">☰</button>
+              <button class="vsp-menu-pill" id="vspMenuPill" data-action="open-menu" aria-label="Open game menu" type="button">☰</button>
               ${bonus ? `<div class="vsp-bonus-timer-chip" id="vspBonusTimerChip">Time ${Math.ceil(state.bonusRemainingMs / 1000)}</div>` : ''}
             </div>
             <div class="vsp-board-main" id="vspBoardMain">
@@ -433,9 +463,11 @@ function gameplayShell({ bonus=false }){
               <div class="vsp-front-effect-layer" id="vspFrontEffectLayer"></div>
               ${bonus && state.bonusIntroVisible ? `<div class="vsp-bonus-intro"><div><div class="vsp-bonus-title">SPLAT TIME!</div><div class="vsp-bonus-copy">Splat as many blobs as you can!</div></div></div>` : ''}
             </div>
-            ${overlayMarkup()}
           </div>
         </div>
+
+        ${renderHelpOverlay()}
+        ${renderGameMenuOverlay()}
       </div>
     `;
   }
@@ -483,14 +515,70 @@ function render(){
 
   function bindScreenEvents(){
     app.querySelectorAll("[data-mode]").forEach(btn => btn.onclick = () => startMode(btn.dataset.mode));
-    app.querySelectorAll("[data-action='open-menu']").forEach(btn => btn.onclick = openMenu);
-    app.querySelectorAll("[data-action='resume-game']").forEach(btn => btn.onclick = closeMenu);
     app.querySelectorAll("[data-action='show-help-intro']").forEach(btn => btn.onclick = () => { state.helpBackMode = false; state.helpOpen = true; render(); });
-    app.querySelectorAll("[data-action='open-help-from-menu']").forEach(btn => btn.onclick = () => { state.helpBackMode = true; state.menuOpen = false; state.helpOpen = true; render(); });
     app.querySelectorAll("[data-action='close-help']").forEach(btn => btn.onclick = closeHelp);
-    app.querySelectorAll("[data-action='toggle-mute']").forEach(btn => btn.onclick = () => { muted = !muted; render(); if (state.screen === "game") afterGameScreenRender(); if (state.screen === "bonus") afterBonusScreenRender(); });
     app.querySelectorAll("[data-action='play-again']").forEach(btn => btn.onclick = () => setScreen("mode"));
     app.querySelectorAll("[data-action='exit-game']").forEach(btn => btn.onclick = () => window.VerseGameBridge.exitGame());
+
+    if (state.screen === "game" || state.screen === "bonus"){
+      wireSharedGameMenu();
+      syncGameMenuOpenState();
+    }
+  }
+
+  function wireSharedGameMenu(){
+    window.VerseGameShell.wireGameMenu({
+      id: "vspGameMenuOverlay",
+      menuButtonId: "vspMenuPill",
+      helpOverlayId: HELP_OVERLAY_ID,
+      isMuted: () => muted,
+      onMuteToggle: () => {
+        muted = !muted;
+        return muted;
+      },
+      onHowToPlay: () => {
+        state.helpBackMode = true;
+        state.menuOpen = false;
+        state.helpOpen = true;
+
+        const menuOverlay = $("#vspGameMenuOverlay");
+        if (menuOverlay){
+          menuOverlay.classList.remove("is-open");
+          menuOverlay.setAttribute("aria-hidden", "true");
+        }
+
+        window.VerseGameShell.openHelp(HELP_OVERLAY_ID, "back", "Back");
+      },
+      onModeSelect: () => {
+        state.menuOpen = false;
+        state.helpOpen = false;
+        state.helpBackMode = false;
+        state.busy = false;
+        stopLoops();
+        setScreen("mode");
+      },
+      onExit: () => {
+        stopLoops();
+        window.VerseGameBridge.exitGame();
+      },
+      onOpen: () => {
+        if (state.busy) return false;
+
+        state.menuOpen = true;
+        state.helpOpen = false;
+        state.helpBackMode = false;
+        stopLoops();
+      },
+      onClose: () => {
+        closeMenu();
+      },
+      onBackFromHelp: () => {
+        state.helpOpen = false;
+        state.menuOpen = true;
+        state.helpBackMode = false;
+        stopLoops();
+      }
+    });
   }
 
   function openMenu(){
@@ -501,19 +589,27 @@ function render(){
 
   function closeMenu(){
     state.menuOpen = false;
-    render();
+    syncGameMenuOpenState();
+
     if (state.screen === "game") afterGameScreenRender();
     if (state.screen === "bonus") afterBonusScreenRender();
   }
 
   function closeHelp(){
     const returnToMenu = state.helpBackMode && (state.screen === "game" || state.screen === "bonus");
+
     state.helpOpen = false;
     state.helpBackMode = false;
+
     if (returnToMenu) {
       state.menuOpen = true;
+      stopLoops();
+      syncGameMenuOpenState();
+      return;
     }
-    render();
+
+    window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
+
     if (state.screen === "game" && !state.menuOpen) afterGameScreenRender();
     if (state.screen === "bonus" && !state.menuOpen) afterBonusScreenRender();
   }
