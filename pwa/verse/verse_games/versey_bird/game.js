@@ -94,6 +94,7 @@ const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
 
   let selectedMode = null;
   let completed = false;
+  let completionResult = null;
   let muted = false;
 
   const state = {
@@ -235,6 +236,7 @@ function renderModeSelect(){
   function startGame(mode){
     selectedMode = mode;
     completed = false;
+    completionResult = null;
     state.theme = pickRandomTheme();
     state.birdEmoji = state.theme.playerEmoji;
     state.auraEmojis = shuffle(AURA_EMOJIS).slice(0, 3);
@@ -1062,13 +1064,26 @@ function getObstacleGroundY(){
     state.running = false;
 
     try{
-      await window.VerseGameBridge.markCompleted({
+      completionResult = await window.VerseGameBridge.completeGameRun({
         verseId: ctx.verseId,
         gameId: GAME_ID,
-        mode: selectedMode
+        mode: selectedMode,
+        stats: {
+          streak: state.streak,
+          progressIndex: state.progressIndex
+        }
       });
     }catch(err){
-      console.error("markCompleted failed", err);
+      console.error("completeGameRun failed", err);
+      completionResult = {
+        ok: false,
+        alreadyCompleted: false,
+        newlyCompleted: false,
+        reward: {
+          ok: false,
+          petUnlockTriggered: false
+        }
+      };
     }
 
     renderComplete();
