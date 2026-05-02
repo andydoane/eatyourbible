@@ -29,6 +29,7 @@ const GENERIC_DECOYS = window.VerseGameShell.getFunDecoys();
   let muted = false;
   let completionMarked = false;
   let alreadyCompletedForMode = false;
+  let completionResult = null;
   let resizeBound = false;
   let endScreenUnlockTimer = 0;
 
@@ -124,6 +125,7 @@ function renderModeSelect(){
   function startGame(mode){
     selectedMode = mode;
     completionMarked = false;
+    completionResult = null;
     alreadyCompletedForMode = !!window.VerseGameBridge.wasAlreadyCompleted?.(ctx.verseId, GAME_ID, selectedMode);
 
     state.running = true;
@@ -836,14 +838,40 @@ function createSlicesFrom(item){
     stopLoop();
 
     let reward = { ok:false, petUnlockTriggered:false };
+
     if (!completionMarked && ctx.verseId && selectedMode){
       completionMarked = true;
-      reward = await window.VerseGameBridge.markCompleted({
-        verseId: ctx.verseId,
-        gameId: GAME_ID,
-        mode: selectedMode
-      });
+
+      try {
+        completionResult = await window.VerseGameBridge.completeGameRun({
+          verseId: ctx.verseId,
+          gameId: GAME_ID,
+          mode: selectedMode,
+          stats: {
+            bonusCount: state.bonusCount,
+            wordsBuilt: state.wordsBuilt,
+            wrongStreak: state.wrongStreak
+          }
+        });
+
+        reward = completionResult.reward;
+      } catch (err) {
+        console.error("completeGameRun failed", err);
+
+        completionResult = {
+          ok: false,
+          alreadyCompleted: alreadyCompletedForMode,
+          newlyCompleted: false,
+          reward: {
+            ok: false,
+            petUnlockTriggered: false
+          }
+        };
+
+        reward = completionResult.reward;
+      }
     }
+
     renderEndScreen(reward);
   }
 
