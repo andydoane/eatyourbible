@@ -1033,13 +1033,37 @@ function renderCompleteScreen({
         </div>
       `;
 
-  app.innerHTML = `
-    <div class="vm-game-screen vm-complete-screen"${styleVarsHtml(theme)}>
+  const backButtonMarkup = petUnlocked
+    ? ""
+    : `
       <button class="vm-game-back-pill no-zoom" id="gameShellCompleteBackBtn" type="button" aria-label="${escapeHtml(backLabel)}">
         ◀
       </button>
+    `;
 
-      ${renderCompleteMedalPill(status, normalizedMode)}
+  const medalPillMarkup = petUnlocked
+    ? ""
+    : renderCompleteMedalPill(status, normalizedMode);
+
+  const finalMessageMarkup = petUnlocked
+    ? ""
+    : messageMarkup;
+
+  const actionButtonsMarkup = petUnlocked
+    ? ""
+    : `
+      <div class="vm-game-actions vm-complete-actions">
+        <button class="vm-btn" id="gameShellPlayAgainBtn" type="button">${escapeHtml(playAgainText)}</button>
+        <button class="vm-btn vm-btn-secondary" id="gameShellMoreGamesBtn" type="button">${escapeHtml(moreGamesText)}</button>
+        <button class="vm-btn vm-btn-secondary" id="gameShellChangeVerseBtn" type="button">${escapeHtml(changeVerseText)}</button>
+      </div>
+    `;
+
+  app.innerHTML = `
+    <div class="vm-game-screen vm-complete-screen ${petUnlocked ? "is-pet-unlock" : ""}"${styleVarsHtml(theme)}>
+      ${backButtonMarkup}
+
+      ${medalPillMarkup}
 
       <div class="vm-game-stage">
         <div class="vm-game-center vm-complete-center">
@@ -1049,13 +1073,9 @@ function renderCompleteScreen({
 
           ${titleMarkup}
 
-          ${messageMarkup}
+          ${finalMessageMarkup}
 
-          <div class="vm-game-actions vm-complete-actions">
-            <button class="vm-btn" id="gameShellPlayAgainBtn" type="button">${escapeHtml(playAgainText)}</button>
-            <button class="vm-btn vm-btn-secondary" id="gameShellMoreGamesBtn" type="button">${escapeHtml(moreGamesText)}</button>
-            <button class="vm-btn vm-btn-secondary" id="gameShellChangeVerseBtn" type="button">${escapeHtml(changeVerseText)}</button>
-          </div>
+          ${actionButtonsMarkup}
         </div>
       </div>
     </div>
