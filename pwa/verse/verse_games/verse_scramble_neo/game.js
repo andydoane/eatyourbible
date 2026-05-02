@@ -86,6 +86,7 @@ const state = {
     completed: false,
     startTime: 0,
     endTime: 0,
+    completionResult: null,
     roundChoices: [],
     redFlashKey: 0,
     boardSeed: 0
@@ -133,6 +134,7 @@ const tokenizeVerse = window.VerseGameShell.tokenizeVerseWords;
     state.roundChoices = [];
     state.busy = false;
     state.completed = false;
+    state.completionResult = null;
     state.boardSeed = 0;
     state.redFlashKey = 0;
   }
@@ -523,11 +525,19 @@ function renderHelpOverlay(){
       if (state.progressIndex >= state.segments.length){
         state.completed = true;
         state.endTime = performance.now();
-        await window.VerseGameBridge.markCompleted({
+
+        state.completionResult = await window.VerseGameBridge.completeGameRun({
           verseId: ctx.verseId,
           gameId: GAME_ID,
-          mode: selectedMode
+          mode: selectedMode,
+          startedAt: state.startTime,
+          stats: {
+            wpm: wordsPerMinute(),
+            timeSecs: Number((totalElapsedMs() / 1000).toFixed(1)),
+            bestStreak: state.bestStreak
+          }
         });
+
         state.busy = false;
         setScreen("end");
         return;
