@@ -1015,6 +1015,10 @@ function renderCompleteScreen({
     };
 
     const closeMenu = () => {
+      if (overlay && overlay.contains(document.activeElement)){
+        document.activeElement.blur();
+      }
+
       if (overlay){
         overlay.classList.remove("is-open");
         overlay.setAttribute("aria-hidden", "true");
