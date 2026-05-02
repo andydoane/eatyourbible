@@ -4632,6 +4632,8 @@ function render(){
     setScreen(Screen.PET_UNLOCK);
   } else if (requestedScreen === "practice" && HAS_VERSE_SELECTION){
     setScreen(Screen.PRACTICE);
+  } else if (requestedScreen === "title"){
+    setScreen(Screen.TITLE);
   } else {
     setScreen(Screen.INTRO);
   }
