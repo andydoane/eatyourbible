@@ -46,6 +46,7 @@ const BIBLE_BOOKS = window.VerseGameShell.getBibleBookDecoys();
     completed:false,
     startTime:0,
     endTime:0,
+    completionResult:null,
     bookLabel:"",
     referenceLabel:"",
     referenceMeta:null,
@@ -156,6 +157,7 @@ const BIBLE_BOOKS = window.VerseGameShell.getBibleBookDecoys();
     state.helpOpen = false;
     state.helpBackMode = false;
     state.completed = false;
+    state.completionResult = null;
     state.medalMessage = "";
     state.medalSubmessage = "";
     state.countdownValue = "";
@@ -734,22 +736,33 @@ window.VerseGameShell.wireGameMenu({
     state.endTime = performance.now();
     state.bonusOutcome = success ? "success" : "crash";
 
-    let alreadyEarned = false;
     try {
-      if (window.VerseGameBridge && typeof window.VerseGameBridge.wasAlreadyCompleted === "function") {
-        alreadyEarned = !!(await window.VerseGameBridge.wasAlreadyCompleted(ctx.verseId, GAME_ID, state.mode));
-      }
+      state.completionResult = await window.VerseGameBridge.completeGameRun({
+        verseId: ctx.verseId,
+        gameId: GAME_ID,
+        mode: state.mode,
+        startedAt: state.startTime,
+        stats: {
+          bonusOutcome: state.bonusOutcome,
+          astroHits: state.astroHits,
+          timeSecs: Number((totalElapsedMs() / 1000).toFixed(1))
+        }
+      });
     } catch (err) {
-      alreadyEarned = false;
+      console.error("completeGameRun failed", err);
+      state.completionResult = {
+        ok: false,
+        alreadyCompleted: false,
+        newlyCompleted: false,
+        reward: {
+          ok: false,
+          petUnlockTriggered: false
+        }
+      };
     }
 
+    const alreadyEarned = !!state.completionResult.alreadyCompleted;
     state.bonusMedalAlreadyEarned = alreadyEarned;
-
-    await window.VerseGameBridge.markCompleted({
-      verseId: ctx.verseId,
-      gameId: GAME_ID,
-      mode: state.mode
-    });
 
     if (success){
       if (alreadyEarned){
@@ -1328,15 +1341,33 @@ function startAstroLoop(){
   async function finishGame(){
     state.completed = true;
     state.endTime = performance.now();
-    let alreadyEarned = false;
+
     try {
-      if (window.VerseGameBridge && typeof window.VerseGameBridge.wasAlreadyCompleted === "function") {
-        alreadyEarned = !!(await window.VerseGameBridge.wasAlreadyCompleted(ctx.verseId, GAME_ID, state.mode));
-      }
+      state.completionResult = await window.VerseGameBridge.completeGameRun({
+        verseId: ctx.verseId,
+        gameId: GAME_ID,
+        mode: state.mode,
+        startedAt: state.startTime,
+        stats: {
+          timeSecs: Number((totalElapsedMs() / 1000).toFixed(1)),
+          progressIndex: state.progressIndex
+        }
+      });
     } catch (err) {
-      alreadyEarned = false;
+      console.error("completeGameRun failed", err);
+      state.completionResult = {
+        ok: false,
+        alreadyCompleted: false,
+        newlyCompleted: false,
+        reward: {
+          ok: false,
+          petUnlockTriggered: false
+        }
+      };
     }
-    await window.VerseGameBridge.markCompleted({ verseId: ctx.verseId, gameId: GAME_ID, mode: state.mode });
+
+    const alreadyEarned = !!state.completionResult.alreadyCompleted;
+
     if (alreadyEarned){
       state.medalMessage = "Great job!";
       state.medalSubmessage = "You finished Verse Launch!";
@@ -1344,6 +1375,7 @@ function startAstroLoop(){
       state.medalMessage = `Well done! You earned a ${getModeMedal(state.mode)}`;
       state.medalSubmessage = "You finished Verse Launch!";
     }
+
     state.busy = false;
     setScreen("end");
   }
