@@ -328,21 +328,19 @@ function renderModeSelect(){
 function renderComplete(){
   stopLoop();
 
-  const doneText = selectedMode
-    ? `${capitalize(selectedMode)} Complete!`
-    : "Complete!";
-
   window.VerseGameShell.renderCompleteScreen({
     app,
-    icon: "🐤",
-    title: doneText,
-    statsText: `Finished ${ctx.verseRef || "the verse"}`,
+    gameIcon: "🐤",
+    mode: selectedMode,
+    verseId: ctx.verseId,
+    gameId: GAME_ID,
+    completion: completionResult,
+    gameMessage: `Finished ${ctx.verseRef || "the verse"}`,
     theme: GAME_THEME,
-    playAgainText: "Play Again",
-    moreGamesText: "More Games",
     backLabel: "Back to Practice Games",
     onPlayAgain: renderModeSelect,
-    onMoreGames: () => window.VerseGameBridge.exitGame()
+    onMoreGames: () => window.VerseGameBridge.exitGame(),
+    onChangeVerse: () => window.VerseGameBridge.returnToTitle()
   });
 }
 
