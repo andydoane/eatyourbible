@@ -706,6 +706,10 @@
     const overlay = document.getElementById(id);
     if (!overlay) return;
 
+    if (overlay.contains(document.activeElement)){
+      document.activeElement.blur();
+    }
+
     overlay.classList.remove("is-open");
     overlay.setAttribute("aria-hidden", "true");
   }
