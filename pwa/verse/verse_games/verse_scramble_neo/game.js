@@ -348,17 +348,19 @@ function renderEnd(){
 
   window.VerseGameShell.renderCompleteScreen({
     app,
-    icon: "🧩",
-    title: `${formatMode(selectedMode)} Complete!`,
-    statsText: `${wpm} WPM · ${timeSecs}s · Best streak: ${state.bestStreak}`,
+    gameIcon: "🧩",
+    mode: selectedMode,
+    verseId: ctx.verseId,
+    gameId: GAME_ID,
+    completion: state.completionResult,
+    gameMessage: `${wpm} WPM · ${timeSecs}s · Best streak: ${state.bestStreak}`,
     theme: GAME_THEME,
-    playAgainText: "Play Again",
-    moreGamesText: "More Games",
     backLabel: "Back to Practice Games",
     onPlayAgain: () => {
       setScreen("mode");
     },
-    onMoreGames: () => window.VerseGameBridge.exitGame()
+    onMoreGames: () => window.VerseGameBridge.exitGame(),
+    onChangeVerse: () => window.VerseGameBridge.returnToTitle()
   });
 }
 
