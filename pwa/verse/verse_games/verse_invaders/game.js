@@ -722,15 +722,17 @@ function renderVictory(){
 
   window.VerseGameShell.renderCompleteScreen({
     app,
-    icon: "🎆",
-    title: "Verse Invaders Complete!",
-    statsText: "",
+    gameIcon: "👾",
+    mode: selectedMode,
+    verseId: ctx.verseId,
+    gameId: GAME_ID,
+    completion: completionResult,
+    gameMessage: "",
     theme: GAME_THEME,
-    playAgainText: "Play Again",
-    moreGamesText: "More Games",
     backLabel: "Back to Practice Games",
     onPlayAgain: renderModeSelect,
-    onMoreGames: () => window.VerseGameBridge.exitGame()
+    onMoreGames: () => window.VerseGameBridge.exitGame(),
+    onChangeVerse: () => window.VerseGameBridge.returnToTitle()
   });
 }
 
