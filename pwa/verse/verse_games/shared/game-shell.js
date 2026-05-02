@@ -198,50 +198,63 @@
 
     if (!desiredCount) return [];
 
-    const makeCandidates = (shouldAvoidNextWords) => {
-      const out = [];
-      const used = new Set();
+    const blocked = new Set();
 
-      for (let index = 0; index < safeWords.length; index++){
-        const word = safeWords[index];
+    if (correctNorm){
+      blocked.add(correctNorm);
+    }
+
+    if (
+      Number.isFinite(safeTargetIndex) &&
+      safeTargetIndex >= 0 &&
+      safeAvoidNext > 0
+    ){
+      for (
+        let index = safeTargetIndex + 1;
+        index <= safeTargetIndex + safeAvoidNext && index < safeWords.length;
+        index += 1
+      ){
+        const nextKey = normalizeWord(safeWords[index]);
+        if (nextKey){
+          blocked.add(nextKey);
+        }
+      }
+    }
+
+    const candidates = [];
+    const used = new Set();
+
+    for (const word of safeWords){
+      const key = normalizeWord(word);
+
+      if (!key) continue;
+      if (blocked.has(key)) continue;
+      if (used.has(key)) continue;
+
+      candidates.push(word);
+      used.add(key);
+    }
+
+    const out = shuffle(candidates).slice(0, desiredCount);
+
+    if (out.length < desiredCount && fallbackToFun){
+      const alreadyUsed = new Set(out.map(normalizeWord));
+
+      for (const word of getFunWordDecoys(correct, safeWords, desiredCount * 2)){
         const key = normalizeWord(word);
 
         if (!key) continue;
-        if (correctNorm && key === correctNorm) continue;
-        if (used.has(key)) continue;
-
-        if (
-          shouldAvoidNextWords &&
-          Number.isFinite(safeTargetIndex) &&
-          safeTargetIndex >= 0 &&
-          index > safeTargetIndex &&
-          index <= safeTargetIndex + safeAvoidNext
-        ){
-          continue;
-        }
+        if (blocked.has(key)) continue;
+        if (alreadyUsed.has(key)) continue;
 
         out.push(word);
-        used.add(key);
+        alreadyUsed.add(key);
+
+        if (out.length >= desiredCount) break;
       }
-
-      return out;
-    };
-
-    let candidates = makeCandidates(true);
-
-    if (candidates.length < desiredCount){
-      candidates = makeCandidates(false);
     }
 
-    if (candidates.length){
-      return shuffle(candidates).slice(0, desiredCount);
-    }
-
-    if (fallbackToFun){
-      return getFunWordDecoys(correct, safeWords, desiredCount);
-    }
-
-    return [];
+    return out.slice(0, desiredCount);
   }
 
  function shuffle(array){
