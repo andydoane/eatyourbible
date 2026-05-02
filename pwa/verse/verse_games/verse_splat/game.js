@@ -479,21 +479,19 @@ function gameplayShell({ bonus=false }){
   }
 
 function renderEndScreen(){
-  const modeName = state.mode
-    ? state.mode.charAt(0).toUpperCase() + state.mode.slice(1)
-    : "Mode";
-
   window.VerseGameShell.renderCompleteScreen({
     app,
-    icon: "🫟",
-    title: `${modeName} Complete!`,
-    statsText: `Bonus blobs splatted: ${state.bonusScore}`,
+    gameIcon: "🫟",
+    mode: state.mode,
+    verseId: ctx.verseId,
+    gameId: GAME_ID,
+    completion: state.completionResult,
+    gameMessage: `Bonus blobs splatted: ${state.bonusScore}`,
     theme: GAME_THEME,
-    playAgainText: "Play Again",
-    moreGamesText: "More Games",
     backLabel: "Back to Practice Games",
     onPlayAgain: () => setScreen("mode"),
-    onMoreGames: () => window.VerseGameBridge.exitGame()
+    onMoreGames: () => window.VerseGameBridge.exitGame(),
+    onChangeVerse: () => window.VerseGameBridge.returnToTitle()
   });
 }
 
