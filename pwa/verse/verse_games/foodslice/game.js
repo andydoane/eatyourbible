@@ -229,19 +229,12 @@ function renderHelpOverlay(body){
 }
 
   function renderGameMenuOverlay(){
-    return `
-      <div class="fs-help-overlay" id="fsGameMenuOverlay" aria-hidden="true">
-        <div class="fs-help-dialog fs-game-menu-dialog">
-          <div class="fs-help-title">Game Menu</div>
-          <div class="fs-game-menu-actions">
-            <button class="vm-btn" id="fsMenuHowToBtn">How to Play</button>
-            <button class="vm-btn" id="fsMenuMuteBtn">${muted ? "Unmute" : "Mute"}</button>
-            <button class="vm-btn" id="fsMenuExitBtn">Exit Game</button>
-            <button class="vm-btn" id="fsMenuCloseBtn">Close</button>
-          </div>
-        </div>
-      </div>
-    `;
+    return window.VerseGameShell.gameMenuHtml({
+      id: "fsGameMenuOverlay",
+      title: "Game Menu",
+      muted,
+      showModeSelect: true
+    });
   }
 
   function helpHtml(){
@@ -253,29 +246,29 @@ function renderHelpOverlay(body){
   }
 
   function wireCommonNav(){
-    const menuOverlay = document.getElementById("fsGameMenuOverlay");
-    const menuHowToBtn = document.getElementById("fsMenuHowToBtn");
-    const menuMuteBtn = document.getElementById("fsMenuMuteBtn");
-    const menuExitBtn = document.getElementById("fsMenuExitBtn");
-    const menuCloseBtn = document.getElementById("fsMenuCloseBtn");
-
-window.VerseGameShell.wireHelp({
-  id: HELP_OVERLAY_ID,
-  closeText: "Close",
-  onBack: backToMenuFromHelp,
-  onClose: () => setPaused(false, "")
-});
-
-    if (menuHowToBtn) menuHowToBtn.onclick = openHelpFromMenu;
-    if (menuMuteBtn) menuMuteBtn.onclick = () => {
-      muted = !muted;
-      menuMuteBtn.textContent = muted ? "Unmute" : "Mute";
-    };
-    if (menuExitBtn) menuExitBtn.onclick = () => window.VerseGameBridge.exitGame();
-    if (menuCloseBtn) menuCloseBtn.onclick = closeGameMenu;
-    if (menuOverlay) menuOverlay.onclick = (e) => {
-      if (e.target === menuOverlay) closeGameMenu();
-    };
+    window.VerseGameShell.wireGameMenu({
+      id: "fsGameMenuOverlay",
+      menuButtonId: "fsMenuPill",
+      helpOverlayId: HELP_OVERLAY_ID,
+      isMuted: () => muted,
+      onMuteToggle: () => {
+        muted = !muted;
+        return muted;
+      },
+      onHowToPlay: openHelpFromMenu,
+      onModeSelect: () => {
+        setPaused(false, "");
+        stopLoop();
+        renderModeSelect();
+      },
+      onExit: () => {
+        stopLoop();
+        window.VerseGameBridge.exitGame();
+      },
+      onOpen: () => setPaused(true, "menu"),
+      onClose: () => setPaused(false, ""),
+      onBackFromHelp: () => setPaused(true, "menu")
+    });
   }
 
   function wireGameInput(){
@@ -311,12 +304,22 @@ window.VerseGameShell.wireHelp({
     if (menuOverlay){
       setPaused(true, "menu");
       menuOverlay.classList.add("is-open");
+      menuOverlay.setAttribute("aria-hidden", "false");
     }
   }
 
   function closeGameMenu(){
     const menuOverlay = document.getElementById("fsGameMenuOverlay");
-    if (menuOverlay) menuOverlay.classList.remove("is-open");
+
+    if (menuOverlay && menuOverlay.contains(document.activeElement)){
+      document.activeElement.blur();
+    }
+
+    if (menuOverlay){
+      menuOverlay.classList.remove("is-open");
+      menuOverlay.setAttribute("aria-hidden", "true");
+    }
+
     const helpOverlay = document.getElementById("fsHelpOverlay");
     if (!helpOverlay || !helpOverlay.classList.contains("is-open")) setPaused(false, "");
   }
