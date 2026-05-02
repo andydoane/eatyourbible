@@ -869,47 +869,192 @@
   }
 
 
+function getModeMedal(mode){
+  if (mode === "easy") return "🥉";
+  if (mode === "medium") return "🥈";
+  if (mode === "hard") return "🥇";
+  return "🏅";
+}
+
+function getModeLabel(mode){
+  if (mode === "easy") return "Easy";
+  if (mode === "medium") return "Medium";
+  if (mode === "hard") return "Hard";
+  return "Game";
+}
+
+function renderCompleteMedalPill(status = {}, currentMode = ""){
+  const medals = [
+    { mode: "easy", emoji: "🥉" },
+    { mode: "medium", emoji: "🥈" },
+    { mode: "hard", emoji: "🥇" }
+  ];
+
+  return `
+    <div class="vm-complete-medal-pill" aria-label="Mode medals">
+      ${medals.map((item) => {
+        const earned = !!status[item.mode];
+        const current = item.mode === currentMode;
+        return `<span class="vm-complete-medal ${earned ? "is-earned" : "is-unearned"} ${current ? "is-current" : ""}" aria-hidden="true">${item.emoji}</span>`;
+      }).join("")}
+    </div>
+  `;
+}
+
+function getCompletionStatusFromBridge({ verseId = "", gameId = "" } = {}){
+  if (
+    window.VerseGameBridge &&
+    typeof window.VerseGameBridge.getGameCompletionStatus === "function"
+  ){
+    try {
+      return window.VerseGameBridge.getGameCompletionStatus({ verseId, gameId });
+    } catch (err) {
+      console.warn("getGameCompletionStatus failed", err);
+    }
+  }
+
+  return {
+    easy: false,
+    medium: false,
+    hard: false
+  };
+}
+
 function renderCompleteScreen({
   app,
   title = "Complete!",
   icon = "🎉",
   iconHtml = "",
+  gameIcon = "",
+  mode = "",
+  verseId = "",
+  gameId = "",
+  completion = null,
+  gameMessage = "",
   statsText = "",
   statsHtml = "",
-  playAgainText = "Play Again",
-  moreGamesText = "More Games",
+  playAgainText = "PLAY AGAIN",
+  moreGamesText = "MORE GAMES",
+  changeVerseText = "CHANGE VERSE",
   backLabel = "Back to Practice Games",
   theme = {},
   onPlayAgain,
-  onMoreGames
+  onMoreGames,
+  onChangeVerse
 } = {}){
   if (!app) return;
 
-  const statsMarkup = statsHtml
-    ? `<div class="vm-game-complete-stats">${statsHtml}</div>`
-    : statsText
-      ? `<div class="vm-game-complete-stats">${escapeHtml(statsText)}</div>`
-      : "";
+  const useStandardComplete = !!(mode || completion || gameMessage || gameId || verseId || gameIcon);
+
+  const status = getCompletionStatusFromBridge({ verseId, gameId });
+  const normalizedMode = String(mode || completion?.mode || "").trim();
+  const modeLabel = getModeLabel(normalizedMode);
+  const medal = getModeMedal(normalizedMode);
+  const alreadyCompleted = !!completion?.alreadyCompleted;
+  const petUnlocked = !!completion?.reward?.petUnlockTriggered;
+
+  const displayIcon = petUnlocked
+    ? "📦"
+    : alreadyCompleted
+      ? (gameIcon || icon)
+      : medal;
+
+  const iconButtonAttrs = petUnlocked
+    ? `button type="button" id="gameShellPetUnlockBtn" aria-label="Open BibloPet box"`
+    : `div aria-hidden="true"`;
+
+  const iconButtonClose = petUnlocked ? "button" : "div";
+
+  const messageMarkup = gameMessage || statsText || statsHtml
+    ? `<div class="vm-game-complete-stats">${statsHtml || escapeHtml(gameMessage || statsText)}</div>`
+    : "";
+
+  if (!useStandardComplete){
+    const oldStatsMarkup = statsHtml
+      ? `<div class="vm-game-complete-stats">${statsHtml}</div>`
+      : statsText
+        ? `<div class="vm-game-complete-stats">${escapeHtml(statsText)}</div>`
+        : "";
+
+    app.innerHTML = `
+      <div class="vm-game-screen"${styleVarsHtml(theme)}>
+        <button class="vm-game-back-pill no-zoom" id="gameShellCompleteBackBtn" type="button" aria-label="${escapeHtml(backLabel)}">
+          ◀
+        </button>
+
+        <div class="vm-game-stage">
+          <div class="vm-game-center">
+            <div class="vm-game-icon" aria-hidden="true">
+              ${iconHtml || escapeHtml(icon)}
+            </div>
+
+            <div class="vm-game-title">${escapeHtml(title)}</div>
+
+            ${oldStatsMarkup}
+
+            <div class="vm-game-actions">
+              <button class="vm-btn" id="gameShellPlayAgainBtn" type="button">${escapeHtml(playAgainText)}</button>
+              <button class="vm-btn vm-btn-secondary" id="gameShellMoreGamesBtn" type="button">${escapeHtml(moreGamesText)}</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const oldPlayAgainBtn = document.getElementById("gameShellPlayAgainBtn");
+    const oldMoreGamesBtn = document.getElementById("gameShellMoreGamesBtn");
+    const oldBackBtn = document.getElementById("gameShellCompleteBackBtn");
+
+    if (oldPlayAgainBtn && typeof onPlayAgain === "function") oldPlayAgainBtn.onclick = onPlayAgain;
+    if (oldMoreGamesBtn && typeof onMoreGames === "function") oldMoreGamesBtn.onclick = onMoreGames;
+    if (oldBackBtn && typeof onMoreGames === "function") oldBackBtn.onclick = onMoreGames;
+
+    return;
+  }
+
+  const titleMarkup = petUnlocked
+    ? `
+      <div class="vm-game-title vm-complete-title">
+        <div>You've unlocked</div>
+        <div>a BibloPet box!</div>
+      </div>
+    `
+    : alreadyCompleted
+      ? `
+        <div class="vm-game-title vm-complete-title">
+          <div>${escapeHtml(modeLabel)} Mode</div>
+          <div>Completed again!</div>
+        </div>
+      `
+      : `
+        <div class="vm-game-title vm-complete-title">
+          <div>You've earned</div>
+          <div>a new medal!</div>
+        </div>
+      `;
 
   app.innerHTML = `
-    <div class="vm-game-screen"${styleVarsHtml(theme)}>
+    <div class="vm-game-screen vm-complete-screen"${styleVarsHtml(theme)}>
       <button class="vm-game-back-pill no-zoom" id="gameShellCompleteBackBtn" type="button" aria-label="${escapeHtml(backLabel)}">
         ◀
       </button>
 
+      ${renderCompleteMedalPill(status, normalizedMode)}
+
       <div class="vm-game-stage">
-        <div class="vm-game-center">
-          <div class="vm-game-icon" aria-hidden="true">
-            ${iconHtml || escapeHtml(icon)}
-          </div>
+        <div class="vm-game-center vm-complete-center">
+          <${iconButtonAttrs} class="vm-game-icon vm-complete-icon ${petUnlocked ? "is-pet-box" : alreadyCompleted ? "is-repeat" : "is-new-medal"}">
+            ${iconHtml && !petUnlocked ? iconHtml : escapeHtml(displayIcon)}
+          </${iconButtonClose}>
 
-          <div class="vm-game-title">${escapeHtml(title)}</div>
+          ${titleMarkup}
 
-          ${statsMarkup}
+          ${messageMarkup}
 
-          <div class="vm-game-actions">
+          <div class="vm-game-actions vm-complete-actions">
             <button class="vm-btn" id="gameShellPlayAgainBtn" type="button">${escapeHtml(playAgainText)}</button>
             <button class="vm-btn vm-btn-secondary" id="gameShellMoreGamesBtn" type="button">${escapeHtml(moreGamesText)}</button>
+            <button class="vm-btn vm-btn-secondary" id="gameShellChangeVerseBtn" type="button">${escapeHtml(changeVerseText)}</button>
           </div>
         </div>
       </div>
@@ -918,11 +1063,29 @@ function renderCompleteScreen({
 
   const playAgainBtn = document.getElementById("gameShellPlayAgainBtn");
   const moreGamesBtn = document.getElementById("gameShellMoreGamesBtn");
+  const changeVerseBtn = document.getElementById("gameShellChangeVerseBtn");
   const backBtn = document.getElementById("gameShellCompleteBackBtn");
+  const petUnlockBtn = document.getElementById("gameShellPetUnlockBtn");
+
+  const changeVerseAction = typeof onChangeVerse === "function"
+    ? onChangeVerse
+    : () => window.VerseGameBridge?.returnToTitle?.();
+
+  const moreGamesAction = typeof onMoreGames === "function"
+    ? onMoreGames
+    : () => window.VerseGameBridge?.exitGame?.();
+
+  const petUnlockAction = () => {
+    if (typeof window.VerseGameBridge?.openPetUnlock === "function"){
+      window.VerseGameBridge.openPetUnlock();
+    }
+  };
 
   if (playAgainBtn && typeof onPlayAgain === "function") playAgainBtn.onclick = onPlayAgain;
-  if (moreGamesBtn && typeof onMoreGames === "function") moreGamesBtn.onclick = onMoreGames;
-  if (backBtn && typeof onMoreGames === "function") backBtn.onclick = onMoreGames;
+  if (moreGamesBtn) moreGamesBtn.onclick = moreGamesAction;
+  if (changeVerseBtn) changeVerseBtn.onclick = changeVerseAction;
+  if (backBtn) backBtn.onclick = moreGamesAction;
+  if (petUnlockBtn) petUnlockBtn.onclick = petUnlockAction;
 }
 
   function gameMenuHtml({
