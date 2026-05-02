@@ -292,7 +292,7 @@ function helpHtml(){
     Find the next correct word and launch it into the verse.<br><br>
     Easy: fun decoys.<br>
     Medium: decoys are other words from the verse.<br>
-    Hard: same as Medium, but wrong launches remove up to 2 built words.<br><br>
+    Hard: same as Medium, with the toughest decoys.<br><br>
     After the verse words, launch the book, then the reference.
   `;
 }
@@ -1459,19 +1459,7 @@ async function handleLaunch(choiceId){
   flashWrongBoard();
   showBuildShake();
 
-  if (state.mode === "hard"){
-    const removeCount = Math.min(2, state.progressIndex);
-    const removing = new Set();
-    for (let i = 0; i < removeCount; i++) removing.add(state.progressIndex - 1 - i);
-    state.buildRemoving = removing;
-    render();
-    showBuildShake();
-    await sleep(360);
-    state.progressIndex = Math.max(0, state.progressIndex - removeCount);
-    state.buildRemoving = new Set();
-  } else {
-    await sleep(260);
-  }
+  await sleep(260);
 
   buildChoices();
   state.busy = false;
