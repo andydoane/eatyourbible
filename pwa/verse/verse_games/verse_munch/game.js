@@ -215,6 +215,7 @@ function renderModeSelect(){
     state.faceBase = getEmotionFace();
     state.faceDisplay = state.faceBase;
     state.faceClasses = new Set();
+    state.lastFaceFile = "";
     state.idleTimer = getIdleDelay();
     state.flyingFood = null;
     state.hitWord = null;
