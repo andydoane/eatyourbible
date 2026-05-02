@@ -399,6 +399,7 @@ function openGameMenu(){
   if (overlay){
     setPaused(true, "menu");
     overlay.classList.add("is-open");
+    overlay.setAttribute("aria-hidden", "false");
   }
 }
 
