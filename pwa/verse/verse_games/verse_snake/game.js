@@ -1494,24 +1494,22 @@ async function completeCurrentMode(){
 function renderDone(){
   stopLoop();
 
-  const doneText = selectedMode
-    ? `${selectedMode.charAt(0).toUpperCase() + selectedMode.slice(1)} Complete!`
-    : "Complete!";
-
   window.VerseGameShell.renderCompleteScreen({
     app,
-    icon: "🎉",
-    title: doneText,
-    statsText: `Fruit eaten: ${state.fruitCount}`,
+    gameIcon: "🐍",
+    mode: selectedMode,
+    verseId: ctx.verseId,
+    gameId: "verse_snake",
+    completion: completionResult,
+    gameMessage: `Fruit eaten: ${state.fruitCount}`,
     theme: GAME_THEME,
-    playAgainText: "Play Again",
-    moreGamesText: "More Games",
     backLabel: "Back to Practice Games",
     onPlayAgain: () => {
       completed = false;
       renderModeSelect();
     },
-    onMoreGames: () => window.VerseGameBridge.exitGame()
+    onMoreGames: () => window.VerseGameBridge.exitGame(),
+    onChangeVerse: () => window.VerseGameBridge.returnToTitle()
   });
 }
 
