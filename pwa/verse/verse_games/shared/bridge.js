@@ -196,6 +196,37 @@ function markCompleted(payload){
     return false;
   }
 
+  function getGameCompletionStatus({
+    verseId = "",
+    gameId = ""
+  } = {}){
+    const safeVerseId = String(verseId || "").trim();
+    const safeGameId = String(gameId || "").trim();
+
+    const empty = {
+      easy: false,
+      medium: false,
+      hard: false
+    };
+
+    if (!safeVerseId || !safeGameId) return empty;
+
+    const loaded = loadProgress();
+    if (!loaded.ok || !loaded.progress) return empty;
+
+    const progress = loaded.progress;
+    const verseProgress = progress.verses?.[safeVerseId];
+    const gameProgress = verseProgress?.games?.[safeGameId];
+
+    if (!gameProgress) return empty;
+
+    return {
+      easy: !!gameProgress.easyCompleted,
+      medium: !!gameProgress.mediumCompleted,
+      hard: !!gameProgress.hardCompleted
+    };
+  }
+
   async function completeGameRun({
     verseId = "",
     gameId = "",
@@ -271,7 +302,79 @@ function markCompleted(payload){
     fallback.searchParams.set("screen", "practice");
     return fallback.href;
   }
-  
+
+
+  function buildParentAppUrl({
+    screen = "",
+    petUnlock = false
+  } = {}){
+    const params = getParams();
+
+    let target;
+
+    try {
+      const raw = params.returnTo || "";
+      target = raw
+        ? new URL(raw, window.location.href)
+        : new URL("../../index.html", window.location.href);
+    } catch (err) {
+      target = new URL("../../index.html", window.location.href);
+    }
+
+    target.searchParams.delete("screen");
+    target.searchParams.delete("petUnlock");
+
+    if (params.verseId){
+      target.searchParams.set("v", params.verseId);
+    }
+
+    if (screen){
+      target.searchParams.set("screen", screen);
+    }
+
+    if (petUnlock && params.verseId){
+      target.searchParams.set("petUnlock", params.verseId);
+    }
+
+    return target;
+  }
+
+  function clearExternalPetUnlockPending(verseId){
+    if (!verseId) return;
+
+    const loaded = loadProgress();
+    if (!loaded.ok || !loaded.progress) return;
+
+    const progress = loaded.progress;
+    const verseProgress = progress.verses?.[verseId];
+
+    if (!verseProgress) return;
+
+    if (verseProgress.externalPetUnlockPending){
+      delete verseProgress.externalPetUnlockPending;
+      saveProgress(progress);
+    }
+  }
+
+  function returnToTitle(){
+    const target = buildParentAppUrl();
+    window.location.href = target.href;
+  }
+
+  function openPetUnlock(){
+    const params = getParams();
+
+    if (params.verseId){
+      clearExternalPetUnlockPending(params.verseId);
+    }
+
+    const target = buildParentAppUrl({
+      petUnlock: true
+    });
+
+    window.location.href = target.href;
+  }
+
 function exitGame(){
   const params = getParams();
 
@@ -309,8 +412,11 @@ function exitGame(){
     getLaunchParams: getParams,
     getVerseContext,
     wasAlreadyCompleted,
+    getGameCompletionStatus,
     markCompleted,
     completeGameRun,
+    returnToTitle,
+    openPetUnlock,
     exitGame
   };
 })();
