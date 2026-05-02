@@ -108,6 +108,7 @@ const BOOK_DECOY_LABELS = window.VerseGameShell.getBibleBookDecoys();
     helpBackMode: false,
     busy: false,
     completed: false,
+    completionResult: null,
     startedAt: 0,
 
     words: [],
@@ -194,6 +195,7 @@ const shuffle = window.VerseGameShell.shuffle;
     state.helpBackMode = false;
     state.busy = false;
     state.completed = false;
+    state.completionResult = null;
     state.progressIndex = 0;
     state.buildRemoving = new Set();
     state.phase = "words";
@@ -1394,13 +1396,37 @@ function spawnWrongFaceParticleBurst(){
 
   async function completeMainGame(){
     stopGameLoop();
-    const wasAlreadyCompleted = typeof window.VerseGameBridge.wasAlreadyCompleted === "function"
-      ? !!window.VerseGameBridge.wasAlreadyCompleted(ctx.verseId, GAME_ID, state.mode)
-      : false;
+
+    try {
+      state.completionResult = await window.VerseGameBridge.completeGameRun({
+        verseId: ctx.verseId,
+        gameId: GAME_ID,
+        mode: state.mode,
+        startedAt: state.startedAt,
+        stats: {
+          bonusScore: state.bonusScore,
+          progressIndex: state.progressIndex
+        }
+      });
+    } catch (err) {
+      console.error("completeGameRun failed", err);
+      state.completionResult = {
+        ok: false,
+        alreadyCompleted: false,
+        newlyCompleted: false,
+        reward: {
+          ok: false,
+          petUnlockTriggered: false
+        }
+      };
+    }
+
+    const wasAlreadyCompleted = !!state.completionResult.alreadyCompleted;
+
     state.medalAlreadyEarned = wasAlreadyCompleted;
-    await window.VerseGameBridge.markCompleted({ verseId: ctx.verseId, gameId: GAME_ID, mode: state.mode });
     state.medalMessage = wasAlreadyCompleted ? `You finished ${state.mode} again.` : `${medalEmojiForMode(state.mode)} earned!`;
     state.medalSubmessage = wasAlreadyCompleted ? "The medal was already yours, but the splats were still worth it." : "Your verse progress, stars, and BibloPet flow have been updated.";
+
     state.bonusIntroVisible = true;
     setScreen("bonus");
     render();
