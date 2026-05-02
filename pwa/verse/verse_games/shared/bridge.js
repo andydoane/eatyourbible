@@ -357,7 +357,10 @@ function markCompleted(payload){
   }
 
   function returnToTitle(){
-    const target = buildParentAppUrl();
+    const target = buildParentAppUrl({
+      screen: "title"
+    });
+
     window.location.href = target.href;
   }
 
