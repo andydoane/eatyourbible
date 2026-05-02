@@ -1034,6 +1034,10 @@ function renderCompleteScreen({
     };
 
     const openHelp = () => {
+      if (overlay && overlay.contains(document.activeElement)){
+        document.activeElement.blur();
+      }
+
       if (typeof onHowToPlay === "function"){
         onHowToPlay();
         return;
