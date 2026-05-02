@@ -241,7 +241,7 @@ function renderHelpOverlay(body){
     return `Slice the next correct word to build the verse.<br><br>
       In easy mode, wrong choices do not remove built words.<br><br>
       In medium mode, decoys are chosen from other words in the verse, but there is no wrong-slice penalty.<br><br>
-      In hard mode, those same verse-word decoys appear, bombs can show up, and a wrong slice removes two built words.<br><br>
+      In hard mode, those same verse-word decoys appear, bombs can show up, and a bomb removes one built word.<br><br>
       After the verse is built, slice the correct book and then the correct chapter and verse. Finish by slicing as much bonus food as you can.`;
   }
 
@@ -727,10 +727,7 @@ function backToMenuFromHelp(){
     state.wrongStreak += 1;
     state.buildShakeUntil = performance.now() + 320;
     state.fieldFlashUntil = performance.now() + 260;
-    if (selectedMode === "hard" && state.phase === "words"){
-      state.wordsBuilt = Math.max(0, state.wordsBuilt - 2);
-      updatePhaseFromProgress();
-    }
+
     setPaused(true, "wrong");
     renderHud();
     window.setTimeout(() => {
@@ -746,9 +743,14 @@ function backToMenuFromHelp(){
     if (!bomb || !bomb.alive || bomb.wasTapped || state.paused || state.done || state.bonusRound) return;
     bomb.wasTapped = true;
     bomb.wasHit = true;
-    state.wordsBuilt = 0;
-    state.bookBuilt = false;
-    state.referenceBuilt = false;
+    if (state.phase === "reference" && state.referenceBuilt){
+      state.referenceBuilt = false;
+    } else if (state.phase === "book" && state.bookBuilt){
+      state.bookBuilt = false;
+    } else if (state.wordsBuilt > 0){
+      state.wordsBuilt = Math.max(0, state.wordsBuilt - 1);
+    }
+
     updatePhaseFromProgress();
     state.buildShakeUntil = performance.now() + 320;
     state.fieldFlashUntil = performance.now() + 260;
