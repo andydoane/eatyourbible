@@ -88,11 +88,11 @@ const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
 const BOOK_DECOY_LABELS = window.VerseGameShell.getBibleBookDecoys();
 
 
-  const MODE_CONFIG = {
-    easy: { speedMultiplier: 1, rollbackCount: 0, decoyMode: "fun" },
-    medium: { speedMultiplier: 1, rollbackCount: 0, decoyMode: "verse" },
-    hard: { speedMultiplier: 1.05, rollbackCount: 2, decoyMode: "verse" }
-  };
+const MODE_CONFIG = {
+  easy: { speedMultiplier: 1, rollbackCount: 0, decoyMode: "fun" },
+  medium: { speedMultiplier: 1, rollbackCount: 0, decoyMode: "verse" },
+  hard: { speedMultiplier: 1.05, rollbackCount: 0, decoyMode: "verse" }
+};
 
   function medalEmojiForMode(mode){
     if (mode === "easy") return "🥉";
@@ -346,7 +346,7 @@ function renderBuildText(){
 
 
 function nonGameHelpHtml(){
-  return `Tap the next correct blob word to build the verse. After the verse, finish the book and then the reference. Wrong taps poof blobs away. In hard mode, wrong taps also remove two built words.`;
+  return `Tap the next correct blob word to build the verse. After the verse, finish the book and then the reference. Wrong taps poof blobs away.`;
 }
 
 function renderHelpOverlay(){
@@ -415,7 +415,7 @@ function overlayMarkup(){
       <div class="vsp-overlay">
         <div class="vsp-overlay-card">
           <div class="vsp-overlay-title">How to Play</div>
-          <div class="vsp-overlay-copy">Tap the next correct blob word to build the verse. After the verse, finish the book and then the reference. Wrong taps poof blobs away. In hard mode, wrong taps also remove two built words.</div>
+          <div class="vsp-overlay-copy">Tap the next correct blob word to build the verse. After the verse, finish the book and then the reference. Wrong taps poof blobs away.</div>
           <div class="vsp-overlay-actions">
             <button class="vm-btn vsp-menu-action" data-action="close-help">${state.helpBackMode ? 'Back' : 'OK'}</button>
           </div>
