@@ -318,9 +318,10 @@ const shuffle = window.VerseGameShell.shuffle;
 
 function helpHtml(){
   return `
-    Easy: no penalty.<br>
-    Medium: lose 2 built items.<br>
-    Hard: lose everything built.<br><br>
+    Steer the snake into the next correct word.<br><br>
+    Easy: fun decoys.<br>
+    Medium: decoys are other words from the verse.<br>
+    Hard: same as Medium, with faster movement and tougher decoys.<br><br>
     After the verse words, collect the book, then the reference.<br><br>
     Grab fruit for fun snake color changes.
   `;
@@ -1416,26 +1417,9 @@ async function completeCurrentMode(){
     queueNextTargets(170, true);
   }
 
-  function applyWrongPenalty(){
-    if (selectedMode === "easy"){
-      return false;
-    }
-
-    if (selectedMode === "medium"){
-      const newIndex = Math.max(0, state.progressIndex - 2);
-      const changed = newIndex !== state.progressIndex;
-      state.progressIndex = newIndex;
-      return changed;
-    }
-
-    if (selectedMode === "hard"){
-      const changed = state.progressIndex !== 0;
-      state.progressIndex = 0;
-      return changed;
-    }
-
-    return false;
-  }
+function applyWrongPenalty(){
+  return false;
+}
 
   function handleWrongTarget(target){
     const now = performance.now();
