@@ -155,19 +155,24 @@ const FUNNY_DECOY_WORDS = window.VerseGameShell.getFunDecoys();
     const menuOverlay = document.getElementById("vsGameMenuOverlay");
     if (!menuOverlay) return;
     setPaused(true, "menu");
-    menuOverlay.classList.add("show");
+    menuOverlay.classList.add("is-open");
     menuOverlay.setAttribute("aria-hidden", "false");
   }
 
   function closeGameMenu(){
     const menuOverlay = document.getElementById("vsGameMenuOverlay");
+
+    if (menuOverlay && menuOverlay.contains(document.activeElement)){
+      document.activeElement.blur();
+    }
+
     if (menuOverlay){
-      menuOverlay.classList.remove("show");
+      menuOverlay.classList.remove("is-open");
       menuOverlay.setAttribute("aria-hidden", "true");
     }
 
     const helpOverlay = document.getElementById("vsHelpOverlay");
-    if (!helpOverlay || !helpOverlay.classList.contains("show")){
+    if (!helpOverlay || !helpOverlay.classList.contains("is-open")){
       setPaused(false, "");
     }
   }
@@ -176,7 +181,7 @@ function openHelpFromMenu(){
   const menuOverlay = document.getElementById("vsGameMenuOverlay");
 
   if (menuOverlay){
-    menuOverlay.classList.remove("show");
+    menuOverlay.classList.remove("is-open");
     menuOverlay.setAttribute("aria-hidden", "true");
   }
 
@@ -196,7 +201,7 @@ function backToMenuFromHelp(){
   const menuOverlay = document.getElementById("vsGameMenuOverlay");
 
   if (menuOverlay){
-    menuOverlay.classList.add("show");
+    menuOverlay.classList.add("is-open");
     menuOverlay.setAttribute("aria-hidden", "false");
   }
 
@@ -330,19 +335,12 @@ function renderHelpOverlay(){
 }
 
   function renderGameMenuOverlay(){
-    return `
-      <div class="vs-help-overlay" id="vsGameMenuOverlay" aria-hidden="true">
-        <div class="vs-help-dialog vs-game-menu-dialog">
-          <div class="vs-help-title vs-game-menu-title">Game Menu</div>
-          <div class="vs-game-menu-actions">
-            <button class="vs-help-close vs-game-menu-btn no-zoom" id="vsMenuHowToBtn" type="button">How to Play</button>
-            <button class="vs-help-close vs-game-menu-btn no-zoom" id="vsMenuMuteBtn" type="button">${muted ? "Unmute" : "Mute"}</button>
-            <button class="vs-help-close vs-game-menu-btn no-zoom" id="vsMenuExitBtn" type="button">Exit Game</button>
-            <button class="vs-help-close vs-game-menu-btn no-zoom" id="vsMenuCloseBtn" type="button">Close</button>
-          </div>
-        </div>
-      </div>
-    `;
+    return window.VerseGameShell.gameMenuHtml({
+      id: "vsGameMenuOverlay",
+      title: "Game Menu",
+      muted,
+      showModeSelect: true
+    });
   }
 
 
@@ -454,11 +452,7 @@ function renderModeSelect(){
     const menuPill = document.getElementById("vsMenuPill");
     const modePill = document.getElementById("vsModePill");
 
-    const menuOverlay = document.getElementById("vsGameMenuOverlay");
-    const menuHowToBtn = document.getElementById("vsMenuHowToBtn");
-    const menuMuteBtn = document.getElementById("vsMenuMuteBtn");
-    const menuExitBtn = document.getElementById("vsMenuExitBtn");
-    const menuCloseBtn = document.getElementById("vsMenuCloseBtn");
+
 
     const turnLeftStart = (e) => {
       if (e) e.preventDefault();
@@ -501,42 +495,28 @@ function renderModeSelect(){
       modePill.textContent = selectedMode ? selectedMode[0].toUpperCase() + selectedMode.slice(1) : "Mode";
     }
 
-window.VerseGameShell.wireHelp({
-  id: HELP_OVERLAY_ID,
-  closeText: "Close",
-  onBack: backToMenuFromHelp,
-  onClose: () => setPaused(false, "")
-});
-
-    if (menuHowToBtn){
-      menuHowToBtn.onclick = () => openHelpFromMenu();
-    }
-
-    if (menuMuteBtn){
-      menuMuteBtn.onclick = () => {
+    window.VerseGameShell.wireGameMenu({
+      id: "vsGameMenuOverlay",
+      menuButtonId: "vsMenuPill",
+      helpOverlayId: HELP_OVERLAY_ID,
+      isMuted: () => muted,
+      onMuteToggle: () => {
         muted = !muted;
-        menuMuteBtn.textContent = muted ? "Unmute" : "Mute";
-      };
-    }
-
-    if (menuExitBtn){
-      menuExitBtn.onclick = () => {
+        return muted;
+      },
+      onHowToPlay: openHelpFromMenu,
+      onModeSelect: () => {
+        setPaused(false, "");
+        renderModeSelect();
+      },
+      onExit: () => {
         stopLoop();
         window.VerseGameBridge.exitGame();
-      };
-    }
-
-    if (menuCloseBtn){
-      menuCloseBtn.onclick = () => closeGameMenu();
-    }
-
-    if (menuOverlay){
-      menuOverlay.onclick = (e) => {
-        if (e.target === menuOverlay){
-          closeGameMenu();
-        }
-      };
-    }
+      },
+      onOpen: () => setPaused(true, "menu"),
+      onClose: () => setPaused(false, ""),
+      onBackFromHelp: () => setPaused(true, "menu")
+    });
 
     window.onkeydown = (e) => {
       if (state.paused) return;
