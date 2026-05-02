@@ -381,88 +381,62 @@ function renderHelpOverlay(){
 }
 
   function renderGameMenuOverlay(){
-    return `
-      <div class="vsn-help-overlay ${state.menuOpen ? "show" : ""}" id="vsnGameMenuOverlay" aria-hidden="${state.menuOpen ? "false" : "true"}">
-        <div class="vsn-help-dialog vsn-game-menu-dialog">
-          <div class="vsn-help-title vsn-game-menu-title">Game Menu</div>
-          <div class="vsn-game-menu-actions">
-            <button class="vsn-game-menu-btn no-zoom" id="vsnMenuHowToBtn" type="button">How to Play</button>
-            <button class="vsn-game-menu-btn no-zoom" id="vsnMenuMuteBtn" type="button">${muted ? "Unmute" : "Mute"}</button>
-            <button class="vsn-game-menu-btn no-zoom" id="vsnMenuExitBtn" type="button">Exit Game</button>
-            <button class="vsn-game-menu-btn no-zoom" id="vsnMenuCloseBtn" type="button">Close</button>
-          </div>
-        </div>
-      </div>`;
+    return window.VerseGameShell.gameMenuHtml({
+      id: "vsnGameMenuOverlay",
+      title: "Game Menu",
+      muted,
+      showModeSelect: true
+    });
   }
 
   function wireGameScreen(){
     const menuPill = document.getElementById("vsnMenuPill");
-    if (menuPill){
-      menuPill.onclick = (e) => {
-        e.stopPropagation();
-        if (state.busy) return;
-        state.menuOpen = true;
-        state.helpOpen = false;
-        state.helpBackMode = false;
-        render();
-      };
-    }
 
     document.querySelectorAll("[data-choice-id]").forEach(btn => {
       btn.onclick = () => handleChoice(btn.dataset.choiceId);
     });
 
-const menuOverlay = document.getElementById("vsnGameMenuOverlay");
-const howTo = document.getElementById("vsnMenuHowToBtn");
-const muteBtn = document.getElementById("vsnMenuMuteBtn");
-const exitBtn = document.getElementById("vsnMenuExitBtn");
-const closeBtn = document.getElementById("vsnMenuCloseBtn");
+    window.VerseGameShell.wireGameMenu({
+      id: "vsnGameMenuOverlay",
+      menuButtonId: "vsnMenuPill",
+      helpOverlayId: HELP_OVERLAY_ID,
+      isMuted: () => muted,
+      onMuteToggle: () => {
+        muted = !muted;
+        return muted;
+      },
+      onHowToPlay: () => {
+        state.menuOpen = false;
+        state.helpOpen = true;
+        state.helpBackMode = true;
 
-    if (howTo) howTo.onclick = () => {
-      state.menuOpen = false;
-      state.helpOpen = true;
-      state.helpBackMode = true;
-
-      if (menuOverlay) menuOverlay.classList.remove("show");
-      window.VerseGameShell.openHelp(HELP_OVERLAY_ID, "back", "Back");
-    };
-
-    if (muteBtn) muteBtn.onclick = () => {
-      muted = !muted;
-      render();
-    };
-
-    if (exitBtn) exitBtn.onclick = () => window.VerseGameBridge.exitGame();
-
-    if (closeBtn) closeBtn.onclick = () => {
-      state.menuOpen = false;
-      render();
-    };
-
-    if (menuOverlay) {
-      menuOverlay.onclick = (e) => {
-        if (e.target === menuOverlay){
-          state.menuOpen = false;
-          render();
+        const menuOverlay = document.getElementById("vsnGameMenuOverlay");
+        if (menuOverlay){
+          menuOverlay.classList.remove("is-open");
+          menuOverlay.setAttribute("aria-hidden", "true");
         }
-      };
-    }
 
-    window.VerseGameShell.wireHelp({
-      id: HELP_OVERLAY_ID,
-      closeText: "Close",
-      onBack: () => {
+        window.VerseGameShell.openHelp(HELP_OVERLAY_ID, "back", "Back");
+      },
+      onModeSelect: () => {
+        state.menuOpen = false;
         state.helpOpen = false;
-        state.menuOpen = true;
         state.helpBackMode = false;
-
-        window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
-
-        const freshMenuOverlay = document.getElementById("vsnGameMenuOverlay");
-        if (freshMenuOverlay) freshMenuOverlay.classList.add("show");
+        setScreen("mode");
+      },
+      onExit: () => window.VerseGameBridge.exitGame(),
+      onOpen: () => {
+        if (state.busy) return;
+        state.menuOpen = true;
+        state.helpOpen = false;
+        state.helpBackMode = false;
       },
       onClose: () => {
+        state.menuOpen = false;
+      },
+      onBackFromHelp: () => {
         state.helpOpen = false;
+        state.menuOpen = true;
         state.helpBackMode = false;
       }
     });
