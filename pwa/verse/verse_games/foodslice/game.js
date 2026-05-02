@@ -203,21 +203,19 @@ function renderEndScreen(reward){
   window.clearTimeout(endScreenUnlockTimer);
   endScreenUnlockTimer = 0;
 
-  const doneText = selectedMode
-    ? `${capitalize(selectedMode)} Complete!`
-    : "Complete!";
-
   window.VerseGameShell.renderCompleteScreen({
     app,
-    icon: "🍉",
-    title: doneText,
-    statsText: `Bonus slices: ${state.bonusCount}`,
+    gameIcon: "🍉",
+    mode: selectedMode,
+    verseId: ctx.verseId,
+    gameId: GAME_ID,
+    completion: completionResult,
+    gameMessage: `Bonus slices: ${state.bonusCount}`,
     theme: GAME_THEME,
-    playAgainText: "Play Again",
-    moreGamesText: "More Games",
     backLabel: "Back to Practice Games",
     onPlayAgain: renderModeSelect,
-    onMoreGames: () => window.VerseGameBridge.exitGame()
+    onMoreGames: () => window.VerseGameBridge.exitGame(),
+    onChangeVerse: () => window.VerseGameBridge.returnToTitle()
   });
 }
 
