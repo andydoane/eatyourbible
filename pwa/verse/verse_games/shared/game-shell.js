@@ -1022,8 +1022,8 @@ function renderCompleteScreen({
     : alreadyCompleted
       ? `
         <div class="vm-game-title vm-complete-title">
-          <div>${escapeHtml(modeLabel)} Mode</div>
-          <div>Completed again!</div>
+          <div>You completed</div>
+          <div>${escapeHtml(modeLabel)} again!</div>
         </div>
       `
       : `
