@@ -96,6 +96,7 @@ const FACE_MAP = {
 
   let selectedMode = null;
   let completed = false;
+  let completionResult = null;
   let muted = false;
   let bonusRunning = false;
 
@@ -204,6 +205,7 @@ function renderModeSelect(){
   function startGame(mode){
     selectedMode = mode;
     completed = false;
+    completionResult = null;
     bonusRunning = false;
     state.running = true;
     state.lastTs = 0;
@@ -760,13 +762,28 @@ function backToMenuFromHelp(){
     state.running = false;
 
     try {
-      await window.VerseGameBridge.markCompleted({
-        verseId:ctx.verseId,
-        gameId:GAME_ID,
-        mode:selectedMode
+      completionResult = await window.VerseGameBridge.completeGameRun({
+        verseId: ctx.verseId,
+        gameId: GAME_ID,
+        mode: selectedMode,
+        stats: {
+          streak: state.streak,
+          emotionLevel: state.emotionLevel,
+          bonusCount: state.bonusCount,
+          progressIndex: state.progressIndex
+        }
       });
     } catch (err) {
-      console.error("markCompleted failed", err);
+      console.error("completeGameRun failed", err);
+      completionResult = {
+        ok: false,
+        alreadyCompleted: false,
+        newlyCompleted: false,
+        reward: {
+          ok: false,
+          petUnlockTriggered: false
+        }
+      };
     }
 
     renderComplete();
