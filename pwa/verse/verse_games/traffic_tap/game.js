@@ -40,6 +40,7 @@ let selectedMode = null;
 let muted = false;
 let completionMarked = false;
 let alreadyCompletedForMode = false;
+let completionResult = null;
 let resizeBound = false;
 let endScreenUnlockTimer = 0;
 let itemsClickBound = false;
@@ -146,6 +147,7 @@ function startGame(mode){
   selectedMode = mode;
   itemsClickBound = false;
   completionMarked = false;
+  completionResult = null;
   alreadyCompletedForMode = !!window.VerseGameBridge.wasAlreadyCompleted?.(ctx.verseId, GAME_ID, selectedMode);
 
   state.running = true;
@@ -248,13 +250,33 @@ async function completeGameAndRenderEndScreen(){
     completionMarked = true;
 
     try {
-      reward = await window.VerseGameBridge.markCompleted({
+      completionResult = await window.VerseGameBridge.completeGameRun({
         verseId: ctx.verseId,
         gameId: GAME_ID,
-        mode: selectedMode
+        mode: selectedMode,
+        stats: {
+          bonusScore: state.bonusScore,
+          bonusCorrectHits: state.bonusCorrectHits,
+          bonusWrongHits: state.bonusWrongHits,
+          bonusBestStreak: state.bonusBestStreak
+        }
       });
+
+      reward = completionResult.reward;
     } catch (err) {
-      console.warn("Could not mark Traffic Tap complete", err);
+      console.warn("Could not complete Traffic Tap run", err);
+
+      completionResult = {
+        ok: false,
+        alreadyCompleted: alreadyCompletedForMode,
+        newlyCompleted: false,
+        reward: {
+          ok: false,
+          petUnlockTriggered: false
+        }
+      };
+
+      reward = completionResult.reward;
     }
   }
 
