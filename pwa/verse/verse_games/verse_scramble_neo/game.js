@@ -370,7 +370,7 @@ function helpHtml(){
     Tap the next correct word as quickly as you can.<br><br>
     Easy: fun decoys.<br>
     Medium: decoys are other words from the verse.<br>
-    Hard: same as Medium, but wrong taps remove two built words.<br><br>
+    Hard: same as Medium, with the toughest decoys.<br><br>
     After the verse words, collect the book, then the reference.
   `;
 }
@@ -564,24 +564,7 @@ function renderHelpOverlay(){
       if (el) el.style.opacity = "0";
     });
 
-    if (selectedMode === "hard"){
-      const removeCount = Math.min(2, state.progressIndex);
-      const removing = new Set();
-      for (let i = 0; i < removeCount; i++) removing.add(state.progressIndex - 1 - i);
-      state.buildRemoving = removing;
-      render();
-      const buildAgain = document.getElementById("vsnBuild");
-      if (buildAgain){
-        buildAgain.classList.remove("vsn-shake");
-        void buildAgain.offsetWidth;
-        buildAgain.classList.add("vsn-shake");
-      }
-      await sleep(380);
-      state.progressIndex = Math.max(0, state.progressIndex - removeCount);
-      state.buildRemoving = new Set();
-    } else {
-      await sleep(360);
-    }
+    await sleep(360);
 
     buildRoundChoices();
     state.busy = false;
