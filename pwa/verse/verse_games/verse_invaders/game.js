@@ -52,6 +52,7 @@ const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
   let selectedMode = null;
   let muted = false;
   let completionMarked = false;
+  let completionResult = null;
   let resizeHandlerBound = false;
 
   const state = {
@@ -145,6 +146,7 @@ function renderModeSelect(){
   function startGame(mode){
     selectedMode = mode;
     completionMarked = false;
+    completionResult = null;
     state.running = true;
     state.lastTs = 0;
     state.paused = false;
@@ -662,11 +664,32 @@ function renderButtons(){
 
     if (!completionMarked){
       completionMarked = true;
-      await window.VerseGameBridge.markCompleted({
-        verseId: ctx.verseId,
-        gameId: GAME_ID,
-        mode: selectedMode
-      });
+
+      try {
+        completionResult = await window.VerseGameBridge.completeGameRun({
+          verseId: ctx.verseId,
+          gameId: GAME_ID,
+          mode: selectedMode,
+          stats: {
+            streak: state.streak,
+            mistakes: state.mistakes,
+            builtCount: state.builtCount,
+            bonusShotsLeft: state.bonusShotsLeft
+          }
+        });
+      } catch (err) {
+        console.error("completeGameRun failed", err);
+
+        completionResult = {
+          ok: false,
+          alreadyCompleted: false,
+          newlyCompleted: false,
+          reward: {
+            ok: false,
+            petUnlockTriggered: false
+          }
+        };
+      }
     }
   }
 
