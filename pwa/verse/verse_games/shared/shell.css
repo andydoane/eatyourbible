@@ -299,9 +299,12 @@ button.vm-complete-icon.is-pet-box{
   background: transparent;
   padding: 0;
   cursor: pointer;
-  font: inherit;
+  font-family: inherit;
+  font-size: clamp(70px, 21vw, 118px);
+  line-height: 1;
   animation: vmCompleteBoxWiggle 1.15s ease-in-out infinite;
 }
+
 
 button.vm-complete-icon.is-pet-box:focus-visible{
   outline: 4px solid rgba(255,255,255,.85);
@@ -325,6 +328,8 @@ button.vm-complete-icon.is-pet-box:focus-visible{
 .vm-complete-actions .vm-btn{
   width: 100%;
 }
+
+
 
 @keyframes vmCompleteMedalPop{
   0%{
@@ -386,6 +391,88 @@ button.vm-complete-icon.is-pet-box:focus-visible{
   }
 }
 
+/* Small-screen completion tightening */
+
+@media (max-height: 700px){
+  .vm-complete-center{
+    width: min(84vw, 390px);
+  }
+
+  .vm-complete-icon{
+    margin-bottom: 8px;
+    font-size: clamp(54px, 16vh, 86px);
+  }
+
+  button.vm-complete-icon.is-pet-box{
+    font-size: clamp(54px, 16vh, 86px);
+  }
+
+  .vm-complete-title{
+    margin-bottom: 8px;
+    gap: 0;
+    font-size: clamp(28px, 7.2vw, 40px);
+    line-height: .96;
+  }
+
+  .vm-game-complete-stats{
+    margin-top: 6px;
+    margin-bottom: 12px;
+    font-size: clamp(17px, 4.8vw, 22px);
+  }
+
+  .vm-complete-actions{
+    gap: 12px;
+  }
+
+  .vm-complete-actions .vm-btn{
+    min-height: 58px;
+    padding-block: 12px;
+    font-size: clamp(17px, 4.7vw, 22px);
+    border-radius: 999px;
+  }
+}
+
+@media (max-height: 620px){
+  .vm-complete-medal-pill{
+    top: 14px;
+    right: 12px;
+    padding: 6px 9px;
+    gap: 3px;
+  }
+
+  .vm-complete-medal{
+    font-size: 18px;
+  }
+
+  .vm-complete-icon{
+    font-size: clamp(46px, 14vh, 72px);
+    margin-bottom: 6px;
+  }
+
+  button.vm-complete-icon.is-pet-box{
+    font-size: clamp(46px, 14vh, 72px);
+  }
+
+  .vm-complete-title{
+    font-size: clamp(25px, 6.8vw, 34px);
+    margin-bottom: 6px;
+  }
+
+  .vm-game-complete-stats{
+    font-size: clamp(16px, 4.4vw, 20px);
+    margin-bottom: 10px;
+  }
+
+  .vm-complete-actions{
+    gap: 10px;
+  }
+
+  .vm-complete-actions .vm-btn{
+    min-height: 52px;
+    padding-block: 10px;
+    font-size: clamp(16px, 4.3vw, 20px);
+  }
+}
 
 .vm-game-difficulty-icon{
   font-size: clamp(58px, 15vw, 104px);
