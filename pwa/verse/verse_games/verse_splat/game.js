@@ -1342,7 +1342,10 @@ function spawnWrongFaceParticleBurst(){
 
   function startBonusLoop(){
     stopBonusLoop();
-    state.bonusStartedAt = 0;
+
+    const elapsedBeforePause = BONUS_TIME_LIMIT_MS - state.bonusRemainingMs;
+    state.bonusStartedAt = performance.now() - Math.max(0, elapsedBeforePause);
+
     state.bonusRafId = requestAnimationFrame(tickBonus);
   }
 
