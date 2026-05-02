@@ -814,3 +814,9 @@ body{
   opacity:0.82;
   transition:opacity 180ms linear;
 }
+
+.tt-field.is-paused .tt-road-center-line,
+.tt-field.is-paused .tt-road-mark-layer,
+.tt-field.is-paused .tt-road-mark-layer *{
+  animation-play-state: paused !important;
+}
