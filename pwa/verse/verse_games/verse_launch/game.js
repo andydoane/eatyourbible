@@ -306,18 +306,25 @@ function renderHelpOverlay(){
 }
 
   function renderGameMenuOverlay(){
-    return `
-      <div class="vl-help-overlay ${state.menuOpen ? "show" : ""}" id="vlGameMenuOverlay" aria-hidden="${state.menuOpen ? "false" : "true"}">
-        <div class="vl-help-dialog">
-          <div class="vl-help-title vl-game-menu-title">Game Menu</div>
-          <div class="vl-game-menu-actions">
-            <button class="vl-game-menu-btn no-zoom" id="vlMenuHowToBtn" type="button">How to Play</button>
-            <button class="vl-game-menu-btn no-zoom" id="vlMenuMuteBtn" type="button">${muted ? "Unmute" : "Mute"}</button>
-            <button class="vl-game-menu-btn no-zoom" id="vlMenuExitBtn" type="button">Exit Game</button>
-            <button class="vl-game-menu-btn no-zoom" id="vlMenuCloseBtn" type="button">Close</button>
-          </div>
-        </div>
-      </div>`;
+    return window.VerseGameShell.gameMenuHtml({
+      id: "vlGameMenuOverlay",
+      title: "Game Menu",
+      muted,
+      showModeSelect: true
+    });
+  }
+
+  function syncGameMenuOpenState(){
+    const menuOverlay = $("#vlGameMenuOverlay");
+    if (!menuOverlay) return;
+
+    if (state.menuOpen){
+      menuOverlay.classList.add("is-open");
+      menuOverlay.setAttribute("aria-hidden", "false");
+    } else {
+      menuOverlay.classList.remove("is-open");
+      menuOverlay.setAttribute("aria-hidden", "true");
+    }
   }
 
   function renderCountdownOverlay(){
@@ -431,6 +438,7 @@ function renderMode(){
         ${renderGameMenuOverlay()}
       </div>`;
     wireGameScreen();
+    syncGameMenuOpenState();
   }
 
   function renderTravel(){
@@ -451,6 +459,7 @@ function renderMode(){
         ${renderGameMenuOverlay()}
       </div>`;
     wireBonusMenuOnly();
+    syncGameMenuOpenState();
   }
 
   function renderAsteroidGame(){
@@ -480,6 +489,7 @@ function renderMode(){
         ${renderGameMenuOverlay()}
       </div>`;
     wireBonusMenuOnly();
+    syncGameMenuOpenState();
     wireAstroControls();
   }
 
@@ -505,53 +515,53 @@ function renderEnd(){
 
   function wireGameScreen(){
     const menuPill = $("#vlMenuPill");
-    if (menuPill) menuPill.onclick = (e) => { e.stopPropagation(); if (state.busy) return; state.menuOpen = true; state.helpOpen = false; state.helpBackMode = false; render(); };
     const prevBtn = $("#vlPrevBtn"), nextBtn = $("#vlNextBtn");
     if (prevBtn) prevBtn.onclick = prevChoice;
     if (nextBtn) nextBtn.onclick = nextChoice;
     document.querySelectorAll("[data-choice-id]").forEach(el => { el.onclick = () => handleLaunch(el.dataset.choiceId); });
 
-const menuOverlay = $("#vlGameMenuOverlay");
-const howTo = $("#vlMenuHowToBtn");
-const muteBtn = $("#vlMenuMuteBtn");
-const exitBtn = $("#vlMenuExitBtn");
-const closeBtn = $("#vlMenuCloseBtn");
-
-if (howTo) howTo.onclick = () => {
-  state.menuOpen = false;
-  state.helpOpen = true;
-  state.helpBackMode = true;
-
-  if (menuOverlay) menuOverlay.classList.remove("show");
-  window.VerseGameShell.openHelp(HELP_OVERLAY_ID, "back", "Back");
-};
-
-if (muteBtn) muteBtn.onclick = () => { muted = !muted; render(); };
-if (exitBtn) exitBtn.onclick = () => window.VerseGameBridge.exitGame();
-if (closeBtn) closeBtn.onclick = () => { state.menuOpen = false; render(); };
-
-if (menuOverlay) menuOverlay.onclick = (e) => {
-  if (e.target === menuOverlay){
+window.VerseGameShell.wireGameMenu({
+  id: "vlGameMenuOverlay",
+  menuButtonId: "vlMenuPill",
+  helpOverlayId: HELP_OVERLAY_ID,
+  isMuted: () => muted,
+  onMuteToggle: () => {
+    muted = !muted;
+    return muted;
+  },
+  onHowToPlay: () => {
     state.menuOpen = false;
-    render();
-  }
-};
+    state.helpOpen = true;
+    state.helpBackMode = true;
 
-window.VerseGameShell.wireHelp({
-  id: HELP_OVERLAY_ID,
-  closeText: "Close",
-  onBack: () => {
+    const menuOverlay = $("#vlGameMenuOverlay");
+    if (menuOverlay){
+      menuOverlay.classList.remove("is-open");
+      menuOverlay.setAttribute("aria-hidden", "true");
+    }
+
+    window.VerseGameShell.openHelp(HELP_OVERLAY_ID, "back", "Back");
+  },
+  onModeSelect: () => {
+    state.menuOpen = false;
     state.helpOpen = false;
-    state.menuOpen = true;
     state.helpBackMode = false;
-
-    window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
-
-    const freshMenuOverlay = $("#vlGameMenuOverlay");
-    if (freshMenuOverlay) freshMenuOverlay.classList.add("show");
+    state.busy = false;
+    setScreen("mode");
+  },
+  onExit: () => window.VerseGameBridge.exitGame(),
+  onOpen: () => {
+    if (state.busy) return;
+    state.menuOpen = true;
+    state.helpOpen = false;
+    state.helpBackMode = false;
   },
   onClose: () => {
+    state.menuOpen = false;
+  },
+  onBackFromHelp: () => {
     state.helpOpen = false;
+    state.menuOpen = true;
     state.helpBackMode = false;
   }
 });
@@ -559,58 +569,56 @@ window.VerseGameShell.wireHelp({
 
   function wireBonusMenuOnly(){
     const menuPill = $("#vlMenuPill");
-    if (menuPill) menuPill.onclick = (e) => {
-      e.stopPropagation();
-      state.menuOpen = true;
-      state.helpOpen = false;
-      state.helpBackMode = false;
-      state.astroMoveDir = 0;
-      render();
-    };
 
-const menuOverlay = $("#vlGameMenuOverlay");
-const howTo = $("#vlMenuHowToBtn");
-const muteBtn = $("#vlMenuMuteBtn");
-const exitBtn = $("#vlMenuExitBtn");
-const closeBtn = $("#vlMenuCloseBtn");
-
-if (howTo) howTo.onclick = () => {
-  state.menuOpen = false;
-  state.helpOpen = true;
-  state.helpBackMode = true;
-  state.astroMoveDir = 0;
-
-  if (menuOverlay) menuOverlay.classList.remove("show");
-  window.VerseGameShell.openHelp(HELP_OVERLAY_ID, "back", "Back");
-};
-
-if (muteBtn) muteBtn.onclick = () => { muted = !muted; render(); };
-if (exitBtn) exitBtn.onclick = () => { stopAstroLoop(); window.VerseGameBridge.exitGame(); };
-if (closeBtn) closeBtn.onclick = () => { state.menuOpen = false; render(); };
-
-if (menuOverlay) menuOverlay.onclick = (e) => {
-  if (e.target === menuOverlay){
+window.VerseGameShell.wireGameMenu({
+  id: "vlGameMenuOverlay",
+  menuButtonId: "vlMenuPill",
+  helpOverlayId: HELP_OVERLAY_ID,
+  isMuted: () => muted,
+  onMuteToggle: () => {
+    muted = !muted;
+    return muted;
+  },
+  onHowToPlay: () => {
     state.menuOpen = false;
-    render();
-  }
-};
-
-window.VerseGameShell.wireHelp({
-  id: HELP_OVERLAY_ID,
-  closeText: "Close",
-  onBack: () => {
-    state.helpOpen = false;
-    state.menuOpen = true;
-    state.helpBackMode = false;
+    state.helpOpen = true;
+    state.helpBackMode = true;
     state.astroMoveDir = 0;
 
-    window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
+    const menuOverlay = $("#vlGameMenuOverlay");
+    if (menuOverlay){
+      menuOverlay.classList.remove("is-open");
+      menuOverlay.setAttribute("aria-hidden", "true");
+    }
 
-    const freshMenuOverlay = $("#vlGameMenuOverlay");
-    if (freshMenuOverlay) freshMenuOverlay.classList.add("show");
+    window.VerseGameShell.openHelp(HELP_OVERLAY_ID, "back", "Back");
+  },
+  onModeSelect: () => {
+    state.menuOpen = false;
+    state.helpOpen = false;
+    state.helpBackMode = false;
+    state.busy = false;
+    state.astroMoveDir = 0;
+    stopAstroLoop();
+    setScreen("mode");
+  },
+  onExit: () => {
+    stopAstroLoop();
+    window.VerseGameBridge.exitGame();
+  },
+  onOpen: () => {
+    state.menuOpen = true;
+    state.helpOpen = false;
+    state.helpBackMode = false;
+    state.astroMoveDir = 0;
   },
   onClose: () => {
+    state.menuOpen = false;
+    state.astroMoveDir = 0;
+  },
+  onBackFromHelp: () => {
     state.helpOpen = false;
+    state.menuOpen = true;
     state.helpBackMode = false;
     state.astroMoveDir = 0;
   }
