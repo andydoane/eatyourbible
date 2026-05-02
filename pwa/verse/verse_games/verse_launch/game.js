@@ -504,17 +504,27 @@ function renderMode(){
 function renderEnd(){
   const timeSecs = (totalElapsedMs() / 1000).toFixed(1);
 
+  let gameMessage = `Time: ${timeSecs}s`;
+
+  if (state.bonusOutcome === "success"){
+    gameMessage = `You reached the moon! Time: ${timeSecs}s`;
+  } else if (state.bonusOutcome === "crash"){
+    gameMessage = `Rocket crashed, but the verse was built. Time: ${timeSecs}s`;
+  }
+
   window.VerseGameShell.renderCompleteScreen({
     app,
-    icon: "🚀",
-    title: `${formatMode(state.mode)} Complete!`,
-    statsText: `Time: ${timeSecs}s`,
+    gameIcon: "🚀",
+    mode: state.mode,
+    verseId: ctx.verseId,
+    gameId: GAME_ID,
+    completion: state.completionResult,
+    gameMessage,
     theme: GAME_THEME,
-    playAgainText: "Play Again",
-    moreGamesText: "More Games",
     backLabel: "Back to Practice Games",
     onPlayAgain: () => setScreen("mode"),
-    onMoreGames: () => window.VerseGameBridge.exitGame()
+    onMoreGames: () => window.VerseGameBridge.exitGame(),
+    onChangeVerse: () => window.VerseGameBridge.returnToTitle()
   });
 }
 
