@@ -988,6 +988,10 @@ function renderCompleteScreen({
     const closeBtn = document.getElementById(`${id}CloseBtn`);
 
     const updateMuteButton = () => {
+      if (overlay && overlay.classList.contains("is-open")){
+        overlay.setAttribute("aria-hidden", "false");
+      }
+
       if (!muteBtn) return;
 
       const muted = typeof isMuted === "function" ? !!isMuted() : false;
@@ -1070,6 +1074,10 @@ function renderCompleteScreen({
 
     if (muteBtn){
       muteBtn.onclick = () => {
+        if (overlay && overlay.classList.contains("is-open")){
+          overlay.setAttribute("aria-hidden", "false");
+        }
+
         if (typeof onMuteToggle === "function"){
           onMuteToggle();
         }
