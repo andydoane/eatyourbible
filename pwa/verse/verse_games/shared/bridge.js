@@ -196,6 +196,69 @@ function markCompleted(payload){
     return false;
   }
 
+  async function completeGameRun({
+    verseId = "",
+    gameId = "",
+    mode = "",
+    startedAt = 0,
+    stats = {},
+    mark = true
+  } = {}){
+    const safeVerseId = String(verseId || "").trim();
+    const safeGameId = String(gameId || "").trim();
+    const safeMode = String(mode || "").trim();
+
+    const elapsedMs = startedAt
+      ? Math.max(0, performance.now() - Number(startedAt))
+      : 0;
+
+    if (!safeVerseId || !safeGameId || !safeMode){
+      return {
+        ok: false,
+        verseId: safeVerseId,
+        gameId: safeGameId,
+        mode: safeMode,
+        alreadyCompleted: false,
+        newlyCompleted: false,
+        elapsedMs,
+        stats,
+        reward: {
+          ok: false,
+          petUnlockTriggered: false
+        }
+      };
+    }
+
+    const alreadyCompleted = wasAlreadyCompleted(
+      safeVerseId,
+      safeGameId,
+      safeMode
+    );
+
+    const reward = mark
+      ? markCompleted({
+          verseId: safeVerseId,
+          gameId: safeGameId,
+          mode: safeMode
+        })
+      : {
+          ok: true,
+          petUnlockTriggered: false
+        };
+
+    return {
+      ok: !!reward.ok,
+      verseId: safeVerseId,
+      gameId: safeGameId,
+      mode: safeMode,
+      alreadyCompleted,
+      newlyCompleted: !alreadyCompleted && !!reward.ok,
+      elapsedMs,
+      stats,
+      reward
+    };
+  }
+
   function buildFallbackReturnUrl(){
     const params = getParams();
   
@@ -247,6 +310,7 @@ function exitGame(){
     getVerseContext,
     wasAlreadyCompleted,
     markCompleted,
+    completeGameRun,
     exitGame
   };
 })();
