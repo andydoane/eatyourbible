@@ -327,6 +327,12 @@ function renderHelpOverlay(){
     }
   }
 
+    function canOpenGameMenu(){
+    if (state.busy) return false;
+    if (state.screen === "travel") return false;
+    return true;
+  }
+
   function renderCountdownOverlay(){
     if (!state.countdownValue) return "";
     return `
@@ -551,7 +557,8 @@ window.VerseGameShell.wireGameMenu({
   },
   onExit: () => window.VerseGameBridge.exitGame(),
   onOpen: () => {
-    if (state.busy) return;
+    if (!canOpenGameMenu()) return false;
+
     state.menuOpen = true;
     state.helpOpen = false;
     state.helpBackMode = false;
@@ -607,6 +614,8 @@ window.VerseGameShell.wireGameMenu({
     window.VerseGameBridge.exitGame();
   },
   onOpen: () => {
+    if (!canOpenGameMenu()) return false;
+
     state.menuOpen = true;
     state.helpOpen = false;
     state.helpBackMode = false;
