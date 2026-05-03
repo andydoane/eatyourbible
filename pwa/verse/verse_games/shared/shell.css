@@ -679,11 +679,11 @@ button.vm-complete-icon.is-pet-box:focus-visible{
 }
 
 .vm-build--compact .vm-build-text.is-normal{
-  font-size: clamp(19px, 4.45vw, 31px);
+  font-size: clamp(19px, 4.8vw, 33px);
 }
 
 .vm-build--compact .vm-build-text.is-medium{
-  font-size: clamp(16px, 3.65vw, 25px);
+  font-size: clamp(16px, 4.1vw, 27px);
   line-height: 1.04;
 }
 
