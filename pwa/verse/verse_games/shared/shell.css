@@ -684,6 +684,32 @@ button.vm-complete-icon.is-pet-box:focus-visible{
   opacity: 0;
 }
 
+.vm-build-space{
+  white-space: pre-wrap;
+}
+
+.vm-build-punct{
+  opacity: .35;
+}
+
+.vm-build-punct.is-built{
+  opacity: 1;
+}
+
+.vm-build-meta{
+  font-weight: 900;
+}
+
+.vm-build-meta--book,
+.vm-build-meta--reference{
+  opacity: .35;
+}
+
+.vm-build-meta--book.is-built,
+.vm-build-meta--reference.is-built{
+  opacity: 1;
+}
+
 /* =========================================================
    Shared external game How to Play overlay
    ========================================================= */
