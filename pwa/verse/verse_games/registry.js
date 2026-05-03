@@ -139,6 +139,20 @@ window.EXTERNAL_VERSE_GAMES = [
     }
   },
 
+    {
+    enabled: true,
+    manifest: {
+      id: "bible_bugs",
+      title: "Bible Bugs",
+      description: "Tap the right bug and let the frog gobble up the verse.",
+      icon: "🐸",
+      launchUrl: "./verse_games/bible_bugs/index.html",
+      visibleInCarousel: false,
+      progressType: "standard",
+      modes: ["easy", "medium", "hard"]
+    }
+  },
+
   {
     enabled: true,
     manifest: {
