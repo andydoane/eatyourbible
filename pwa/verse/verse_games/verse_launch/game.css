@@ -152,33 +152,22 @@ button,input,select{font:inherit}
 }
 .vm-btn:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,.24)}
 
-.vl-build-wrap{flex:0 0 auto;padding:8px 14px 8px}
+.vl-build-wrap{
+  flex:0 0 auto;
+  padding:8px 14px 8px;
+}
+
 .vl-build{
-  position:relative;background:var(--vl-build-bg);color:var(--vl-dark);border-radius:22px;min-height:96px;
-  display:flex;align-items:center;justify-content:center;text-align:center;padding:14px 16px;box-shadow:inset 0 -4px 0 rgba(0,0,0,.10);
-}
-.vl-build.vl-shake{animation:vlBuildShake 320ms ease}
-.vl-build-text{font-size:clamp(24px,5.8vw,42px);font-weight:900;line-height:1.2;width:100%;text-wrap:balance}
-.vl-build-text.is-normal{font-size:clamp(24px,5.8vw,42px);line-height:1.2}
-.vl-build-text.is-medium{font-size:clamp(21px,4.9vw,35px);line-height:1.14}
-.vl-build-text.is-small{font-size:clamp(18px,4.2vw,30px);line-height:1.10}
-.vl-build-word{
-  color:var(--vl-dark);
-  transition:color 180ms ease,opacity 180ms ease,transform 180ms ease;
+  position:relative;
 }
 
-.vl-build-word.is-built{
-  color:var(--vl-dark);
+.vl-build.vl-shake{
+  animation:vlBuildShake 320ms ease;
 }
 
-.vl-build-word.is-meta{
-  color:var(--vl-red);
+.vl-build-word.is-removing{
+  animation:vlBuildRemove 360ms ease forwards;
 }
-
-.vl-build-word.is-meta.is-built{
-  color:var(--vl-red);
-}
-.vl-build-word.is-removing{animation:vlBuildRemove 360ms ease forwards}
 
 .vl-game-wrap{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;padding:0 14px calc(10px + var(--vl-safe-bottom))}
 .vl-game-board{
