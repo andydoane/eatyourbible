@@ -247,13 +247,24 @@ const shuffle = window.VerseGameShell.shuffle;
 
 
 function renderBuildText(){
-  return state.segments.map((segment, index) => {
-    const cls = ["vsp-build-word", "vm-build-word"];
-    if (index < state.progressIndex) cls.push("is-built");
-    if (state.metaIndices.has(index)) cls.push("is-meta");
-    if (state.buildRemoving.has(index)) cls.push("is-removing");
-    return `<span class="${cls.join(" ")}">${escapeHtml(segment)}</span>`;
-  }).join("");
+  return window.VerseGameShell.renderBuildProgressHtml({
+    verseText: ctx.verseText || "",
+    book: state.bookTokens[0] || "",
+    reference: state.referenceToken,
+    progressIndex: state.progressIndex,
+    buildArea: BUILD_AREA,
+    hideUnbuilt: state.mode === "hard",
+    extraClass: "vsp-build-text"
+  });
+}
+
+function applyBuildTextRender(){
+  const buildText = $("#vspBuildText");
+  if (!buildText) return;
+
+  const buildRender = renderBuildText();
+  buildText.className = buildRender.className;
+  buildText.innerHTML = buildRender.html;
 }
 
 
@@ -447,7 +458,15 @@ function gameplayShell({ bonus=false }){
         ${bonus ? '' : `
           <div class="vsp-build-wrap">
             <div class="vsp-build vm-build vm-build--${BUILD_AREA} ${state.shakeKey ? 'is-error' : ''}" id="vspBuild">
-              <div class="vsp-build-text vm-build-text vm-build-text--progress ${state.buildSizeClass} ${state.mode === "hard" ? "is-hide-unbuilt" : ""}" id="vspBuildText">${renderBuildText()}</div>
+              ${(() => {
+  const buildRender = renderBuildText();
+
+  return `
+    <div class="${buildRender.className}" id="vspBuildText">
+      ${buildRender.html}
+    </div>
+  `;
+})()}
             </div>
           </div>
         `}
@@ -933,19 +952,17 @@ function render(){
     const removing = [];
     for (let i = 0; i < actual; i++) removing.push(state.progressIndex - 1 - i);
     state.buildRemoving = new Set(removing);
-    const buildText = $("#vspBuildText");
-    if (buildText) buildText.innerHTML = renderBuildText();
+    applyBuildTextRender();
     await sleep(260);
     state.progressIndex -= actual;
     state.buildRemoving = new Set();
     updatePhase();
-    if (buildText) buildText.innerHTML = renderBuildText();
+    applyBuildTextRender();
   }
 
-  function appendBuildProgress(){
-    const buildText = $("#vspBuildText");
-    if (buildText) buildText.innerHTML = renderBuildText();
-  }
+function appendBuildProgress(){
+  applyBuildTextRender();
+}
 
   function effectNodeAt(x, y, markup, layerSelector="#vspEffectLayer"){
     const layer = $(layerSelector);
