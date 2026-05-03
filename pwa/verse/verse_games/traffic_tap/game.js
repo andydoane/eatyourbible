@@ -52,7 +52,7 @@ const buildData = window.VerseGameShell.buildVerseSegments({
   reference: verseMeta.reference,
   buildArea: BUILD_AREA
 });
-const buildTokens = tokenizeForBuild(ctx.verseText || "");
+
 const verseWords = buildData.words;
 
 const state = {
@@ -557,31 +557,19 @@ function renderBuildArea(){
     return;
   }
 
-  let html = "";
-  let builtWordsSeen = 0;
-  for (const token of buildTokens){
-    if (token.kind === "space"){
-      html += `<span class="tt-build-gap"> </span>`;
-      continue;
-    }
-    if (token.kind === "word"){
-      const built = builtWordsSeen < state.wordsBuilt;
-      html += `<span class="tt-build-token is-verse ${built ? "is-built" : ""}">${escapeHtml(token.text)}</span>`;
-      builtWordsSeen += 1;
-    } else {
-      const built = builtWordsSeen <= state.wordsBuilt;
-      html += `<span class="tt-build-token is-verse ${built ? "is-built" : ""}">${escapeHtml(token.text)}</span>`;
-    }
-  }
+const buildRender = window.VerseGameShell.renderBuildProgressHtml({
+  verseText: ctx.verseText || "",
+  book: verseMeta.book,
+  reference: verseMeta.reference,
+  progressIndex: getLinearProgressIndex(),
+  buildArea: BUILD_AREA,
+  hideUnbuilt: selectedMode === "hard",
+  extraClass: "tt-build-text"
+});
 
-  if (verseMeta.book){
-    html += `<span class="tt-build-gap"> </span><span class="tt-build-token is-book ${state.bookBuilt ? "is-built" : ""}">${escapeHtml(verseMeta.book)}</span>`;
-  }
-  if (verseMeta.reference){
-    html += `<span class="tt-build-gap"> </span><span class="tt-build-token is-reference ${state.referenceBuilt ? "is-built" : ""}">${escapeHtml(verseMeta.reference)}</span>`;
-  }
-
-  text.innerHTML = html;
+text.className = buildRender.className;
+text.innerHTML = buildRender.html;
+  
 }
 
 function renderField(){
@@ -1624,9 +1612,7 @@ function parseVerseMeta(verseId, fallbackRef){
   );
 }
 
-function tokenizeForBuild(text){
-  return window.VerseGameShell.tokenizeVerseForBuild(text);
-}
+
 
 function applyDebugHitboxes(){
 const field = document.getElementById("ttField");
