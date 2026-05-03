@@ -299,22 +299,29 @@ const shuffle = window.VerseGameShell.shuffle;
     return state.segments[state.progressIndex] || "";
   }
 
-  function updateBuildText(){
-    const el = document.getElementById("vsBuildText");
-    if (!el) return;
+function updateBuildText(){
+  const el = document.getElementById("vsBuildText");
+  if (!el) return;
 
-    if (!state.segments.length){
-      el.textContent = "";
-      return;
-    }
-
-    el.className = `vs-build-text vm-build-text vm-build-text--progress is-verse-layout ${state.buildSizeClass} ${selectedMode === "hard" ? "is-hide-unbuilt" : ""}`;
-    el.innerHTML = state.segments.map((segment, index) => `
-      <span class="vs-build-word vm-build-word ${index < state.progressIndex ? "is-built" : ""}">
-        ${escapeHtml(segment)}
-      </span>
-    `).join(" ");
+  if (!state.segments.length){
+    el.textContent = "";
+    return;
   }
+
+  const buildRender = window.VerseGameShell.renderBuildProgressHtml({
+    verseText: ctx.verseText || "",
+    book: state.bookLabel,
+    reference: state.referenceLabel,
+    progressIndex: state.progressIndex,
+    buildArea: BUILD_AREA,
+    hideUnbuilt: selectedMode === "hard",
+    extraClass: "vs-build-text is-verse-layout"
+  });
+
+  el.className = buildRender.className;
+  el.innerHTML = buildRender.html;
+}
+
 
 function helpHtml(){
   return `
