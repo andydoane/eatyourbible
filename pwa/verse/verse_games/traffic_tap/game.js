@@ -74,6 +74,7 @@ const state = {
   overlayMessage:"",
   overlayUntil:0,
   buildSizeClass: buildData.buildSizeClass,
+  buildFitDone:false,
   phase:"words",
   wordsBuilt:0,
   bookBuilt:false,
@@ -160,6 +161,7 @@ function startGame(mode){
   state.bonusIntroUntil = 0;
   state.buildPopUntil = 0;
   state.buildShakeUntil = 0;
+  state.buildFitDone = false;
   state.overlayMessage = "";
   state.overlayUntil = 0;
   state.wordsBuilt = 0;
@@ -517,6 +519,7 @@ function renderBuildArea(){
   build.classList.toggle("is-pop", state.buildPopUntil > now);
 
   if (state.bonusShowScore){
+    clearBuildTextFit(text);
     text.className = "tt-build-text vm-build-text";
     text.innerHTML = `
       <div class="tt-bonus-build">
@@ -532,6 +535,7 @@ function renderBuildArea(){
   }
 
   if (state.bonusRound){
+    clearBuildTextFit(text);
     text.className = "tt-build-text vm-build-text";
     text.innerHTML = `
       <div class="tt-bonus-build">
@@ -553,6 +557,7 @@ function renderBuildArea(){
   text.className = `tt-build-text vm-build-text vm-build-text--progress ${state.buildSizeClass} ${selectedMode === "hard" ? "is-hide-unbuilt" : ""}`;
 
   if (!state.bonusRound && !state.mainDone && state.wordsBuilt === 0 && !state.bookBuilt && !state.referenceBuilt){
+    clearBuildTextFit(text);
     text.innerHTML = `<div class="tt-build-placeholder">Build the verse one word at a time.<br><strong>Tap the first word to start.</strong></div>`;
     return;
   }
@@ -569,7 +574,48 @@ const buildRender = window.VerseGameShell.renderBuildProgressHtml({
 
 text.className = buildRender.className;
 text.innerHTML = buildRender.html;
+
+fitTrafficBuildText();
   
+}
+
+function clearBuildTextFit(text){
+  if (!text) return;
+
+  text.style.fontSize = "";
+  text.style.lineHeight = "";
+  text.style.maxWidth = "";
+  text.style.width = "";
+  text.style.marginLeft = "";
+  text.style.marginRight = "";
+
+  delete text.dataset.vmFitFontSize;
+  delete text.dataset.vmFitMaxWidth;
+  delete text.dataset.vmFitLineHeight;
+  delete text.dataset.vmFitLines;
+  delete text.dataset.vmFitArea;
+}
+
+function fitTrafficBuildText(){
+  if (state.buildFitDone) return;
+
+  requestAnimationFrame(() => {
+    const build = document.getElementById("ttBuild");
+    const text = document.getElementById("ttBuildText");
+
+    if (!build || !text) return;
+    if (state.bonusRound || state.bonusShowScore) return;
+
+    const result = window.VerseGameShell.fitBuildTextOnce({
+      buildEl: build,
+      textEl: text,
+      buildArea: BUILD_AREA
+    });
+
+    if (result){
+      state.buildFitDone = true;
+    }
+  });
 }
 
 function renderField(){
