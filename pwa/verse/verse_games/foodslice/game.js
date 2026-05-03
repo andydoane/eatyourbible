@@ -57,6 +57,7 @@ const GENERIC_DECOYS = window.VerseGameShell.getFunDecoys();
     bookBuilt:false,
     referenceBuilt:false,
     buildSizeClass:"is-normal",
+    buildFitDone:false,
     activeFruit:null,
     activeBomb:null,
     activeSlices:[],
@@ -135,6 +136,7 @@ function renderModeSelect(){
     state.wordsBuilt = 0;
     state.bookBuilt = false;
     state.referenceBuilt = false;
+    state.buildFitDone = false;
     updatePhaseFromProgress();
     state.activeFruit = null;
     state.activeBomb = null;
@@ -415,6 +417,45 @@ function backToMenuFromHelp(){
     state.phase = phase;
   }
 
+  function clearBuildTextFit(text){
+    if (!text) return;
+
+    text.style.fontSize = "";
+    text.style.lineHeight = "";
+    text.style.maxWidth = "";
+    text.style.width = "";
+    text.style.marginLeft = "";
+    text.style.marginRight = "";
+
+    delete text.dataset.vmFitFontSize;
+    delete text.dataset.vmFitMaxWidth;
+    delete text.dataset.vmFitLineHeight;
+    delete text.dataset.vmFitLines;
+    delete text.dataset.vmFitArea;
+  }
+
+  function fitFoodBuildText(){
+    if (state.buildFitDone) return;
+
+    requestAnimationFrame(() => {
+      const build = document.getElementById("fsBuild");
+      const text = document.getElementById("fsBuildText");
+
+      if (!build || !text) return;
+      if (state.bonusRound) return;
+
+      const result = window.VerseGameShell.fitBuildTextOnce({
+        buildEl: build,
+        textEl: text,
+        buildArea: BUILD_AREA
+      });
+
+      if (result){
+        state.buildFitDone = true;
+      }
+    });
+  }
+
   function renderBuildArea(){
     const build = document.getElementById("fsBuild");
     const text = document.getElementById("fsBuildText");
@@ -422,6 +463,7 @@ function backToMenuFromHelp(){
 
     build.classList.toggle("is-shake", state.buildShakeUntil > performance.now());
     if (state.bonusRound){
+      clearBuildTextFit(text);
       text.className = "fs-build-text vm-build-text";
       text.innerHTML = `<div class="fs-bonus-counter">${state.bonusCount}<span class="fs-bonus-label">Bonus slices</span></div>`;
       return;
@@ -439,6 +481,8 @@ function backToMenuFromHelp(){
 
     text.className = buildRender.className;
     text.innerHTML = buildRender.html;
+
+    fitFoodBuildText();
   }
 
   function renderField(){
