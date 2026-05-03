@@ -165,54 +165,9 @@ body{
   flex:0 0 auto;
 }
 
-.vmunch-build{
-  background:#ffffff;
-  color:#333333;
-  border-radius:22px;
-  min-height:var(--vmunch-build-min-height);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:var(--vmunch-build-padding-y) var(--vmunch-build-padding-x);
-  text-align:center;
-  box-shadow:inset 0 -4px 0 rgba(0,0,0,0.08);
-}
-
 .vmunch-build.vb-shake,
 .vmunch-build.vmunch-build-shake{
   animation:vmunchBuildShake 300ms ease;
-}
-
-.vmunch-build-text{
-  font-size:var(--vmunch-build-text-size);
-  font-weight:900;
-  line-height:var(--vmunch-build-line-height);
-  width:100%;
-  text-wrap:balance;
-}
-
-.vmunch-build-text.is-normal{
-  font-size:var(--vmunch-build-text-size);
-  line-height:var(--vmunch-build-line-height);
-}
-
-.vmunch-build-text.is-medium{
-  font-size:clamp(20px, 4.8vw, 34px);
-  line-height:1.14;
-}
-
-.vmunch-build-text.is-small{
-  font-size:clamp(18px, 4.1vw, 29px);
-  line-height:1.10;
-}
-
-.vmunch-build-word{
-  color:#333333;
-  transition:color 160ms ease, opacity 160ms ease;
-}
-
-.vmunch-build-word.is-built{
-  color:#333333;
 }
 
 @keyframes vmunchBuildShake{
@@ -863,11 +818,7 @@ body{
     --vmunch-pills-margin-top:4px;
     --vmunch-pills-margin-bottom:6px;
 
-    --vmunch-build-min-height:88px;
-    --vmunch-build-padding-y:12px;
-    --vmunch-build-padding-x:14px;
-    --vmunch-build-text-size:clamp(18px, 5vw, 26px);
-    --vmunch-build-line-height:1.12;
+
 
     --vmunch-face-stack-max:240px;
     --vmunch-food-size:clamp(30px, 8vw, 44px);
