@@ -139,6 +139,7 @@ const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
     referenceMeta: null,
     segments: [],
     buildSizeClass: "is-normal",
+    buildFitDone: false,
     progressIndex: 0,
     streak: 0,
     flashUntil: 0,
@@ -248,6 +249,7 @@ function renderModeSelect(){
     state.pauseReason = "";
     state.progressIndex = 0;
     state.streak = 0;
+    state.buildFitDone = false;
     state.targets = [];
     state.trail = [];
     state.particles = [];
@@ -1271,6 +1273,27 @@ function getObstacleGroundY(){
     `).join("");
   }
 
+function fitBirdBuildText(){
+  if (state.buildFitDone) return;
+
+  requestAnimationFrame(() => {
+    const build = document.getElementById("vbBuild");
+    const text = document.getElementById("vbBuildText");
+
+    if (!build || !text) return;
+
+    const result = window.VerseGameShell.fitBuildTextOnce({
+      buildEl: build,
+      textEl: text,
+      buildArea: BUILD_AREA
+    });
+
+    if (result){
+      state.buildFitDone = true;
+    }
+  });
+}
+
 function updateBuildText(){
   const el = document.getElementById("vbBuildText");
   if (!el) return;
@@ -1287,6 +1310,8 @@ function updateBuildText(){
 
   el.className = buildRender.className;
   el.innerHTML = buildRender.html;
+
+  fitBirdBuildText();
 }
 
   function updateMenuPill(){
