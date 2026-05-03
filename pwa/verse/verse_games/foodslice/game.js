@@ -427,33 +427,18 @@ function backToMenuFromHelp(){
       return;
     }
 
-    text.className = `fs-build-text vm-build-text vm-build-text--progress ${state.buildSizeClass} ${selectedMode === "hard" ? "is-hide-unbuilt" : ""}`;
+    const buildRender = window.VerseGameShell.renderBuildProgressHtml({
+      verseText: ctx.verseText || "",
+      book: state.verseMeta.book,
+      reference: state.verseMeta.reference,
+      progressIndex: getLinearProgressIndex(),
+      buildArea: BUILD_AREA,
+      hideUnbuilt: selectedMode === "hard",
+      extraClass: "fs-build-text"
+    });
 
-    let html = "";
-    let builtWordsSeen = 0;
-    for (const token of state.tokens){
-      if (token.kind === "space"){
-        html += `<span class="fs-build-gap"> </span>`;
-        continue;
-      }
-      if (token.kind === "word"){
-        const built = builtWordsSeen < state.wordsBuilt;
-        html += `<span class="fs-build-token vm-build-token is-verse ${built ? "is-built" : ""}">${escapeHtml(token.text)}</span>`;
-        builtWordsSeen += 1;
-      } else {
-        const built = builtWordsSeen <= state.wordsBuilt;
-        html += `<span class="fs-build-token vm-build-token is-verse ${built ? "is-built" : ""}">${escapeHtml(token.text)}</span>`;
-      }
-    }
-
-    if (state.verseMeta.book){
-      html += `<span class="fs-build-gap"> </span><span class="fs-build-token vm-build-token is-book ${state.bookBuilt ? "is-built" : ""}">${escapeHtml(state.verseMeta.book)}</span>`;
-    }
-    if (state.verseMeta.reference){
-      html += `<span class="fs-build-gap"> </span><span class="fs-build-token vm-build-token is-reference ${state.referenceBuilt ? "is-built" : ""}">${escapeHtml(state.verseMeta.reference)}</span>`;
-    }
-
-    text.innerHTML = html;
+    text.className = buildRender.className;
+    text.innerHTML = buildRender.html;
   }
 
   function renderField(){
