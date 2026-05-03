@@ -160,47 +160,12 @@ body{overflow:hidden}
   box-sizing:border-box;
 }
 
-.vsp-build-wrap{flex:0 0 auto}
-.vsp-build{
-  background:var(--vsp-build);
-  color:#fff;
-  border-radius:24px;
-  padding:10px 12px;
-  box-shadow:var(--vsp-shadow);
-  min-height:clamp(66px,13vh,104px);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-.vsp-build.is-error{animation:vspShake .28s ease}
-
-
-.vsp-build-text{
-  display:flex;
-  flex-wrap:wrap;
-  justify-content:center;
-  gap:.1em .18em;
-  line-height:1.02;
-  font-weight:800;
-  max-width:100%;
-  text-wrap:balance;
+.vsp-build-wrap{
+  flex:0 0 auto;
 }
 
-.vsp-build-text.is-normal{font-size:clamp(19px,4.5vw,31px)}
-.vsp-build-text.is-medium{font-size:clamp(16px,3.7vw,25px)}
-.vsp-build-text.is-small{font-size:clamp(13px,3.1vw,21px)}
-.vsp-build-word{
-  color:#ffffff;
-  transform:translateY(0);
-  transition:opacity .18s ease, transform .18s ease, color .18s ease;
-}
-
-.vsp-build-word.is-built{
-  color:#ffffff;
-}
-
-.vsp-build-word.is-meta{
-  color:#ffd369;
+.vsp-build.is-error{
+  animation:vspShake .28s ease;
 }
 
 .vsp-build-word.is-removing{
