@@ -404,25 +404,27 @@ function backToMenuFromHelp(){
     renderButtons();
   }
 
-  function renderBuildArea(){
-    const buildText = document.getElementById("vinvBuildText");
-    const build = document.getElementById("vinvBuild");
-    if (!buildText || !build) return;
+function renderBuildArea(){
+  const buildText = document.getElementById("vinvBuildText");
+  const build = document.getElementById("vinvBuild");
+  if (!buildText || !build) return;
 
-    build.classList.toggle("is-shake", state.buildShakeUntil > performance.now());
-    buildText.className = `vinv-build-text vm-build-text vm-build-text--progress ${state.buildSizeClass} ${selectedMode === "hard" ? "is-hide-unbuilt" : ""}`;
-    buildText.innerHTML = state.queue.map((token, index) => {
-      const phaseClass = getBuildTokenPhase(index);
-      const builtClass = index < state.builtCount ? "is-built" : "";
-      return `<span class="vinv-build-token vm-build-token ${phaseClass} ${builtClass}">${escapeHtml(token)}</span>`;
-    }).join(" ");
-  }
+  build.classList.toggle("is-shake", state.buildShakeUntil > performance.now());
 
-function getBuildTokenPhase(index){
-  if (index < verseWords.length) return "is-verse";
-  if (index === verseWords.length) return "is-book";
-  return "is-reference";
+  const buildRender = window.VerseGameShell.renderBuildProgressHtml({
+    verseText: ctx.verseText || "",
+    book: parsedRef.book,
+    reference: parsedRef.reference,
+    progressIndex: state.builtCount,
+    buildArea: BUILD_AREA,
+    hideUnbuilt: selectedMode === "hard",
+    extraClass: "vinv-build-text"
+  });
+
+  buildText.className = buildRender.className;
+  buildText.innerHTML = buildRender.html;
 }
+  
 
 
 
