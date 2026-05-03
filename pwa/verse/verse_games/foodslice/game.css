@@ -101,55 +101,16 @@ body{
   padding:12px var(--fs-side) 10px;
 }
 
-.fs-build{
-  background:var(--fs-build-bg);
-  color:var(--fs-white);
-  border-radius:22px;
-  padding:16px 18px;
-  min-height:108px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  text-align:center;
+.fs-build.is-shake{
+  animation:fsShake 280ms ease;
 }
-
-.fs-build.is-shake{ animation:fsShake 280ms ease; }
-
-.fs-build-text{
-  font-size:clamp(22px,5vw,38px);
-  line-height:1.18;
-  font-weight:900;
-  text-wrap:balance;
-}
-
-.fs-build-text.is-medium{ font-size:clamp(19px,4.4vw,33px); line-height:1.14; }
-.fs-build-text.is-small{ font-size:clamp(17px,3.8vw,28px); line-height:1.10; }
-
-.fs-build-token{
-  color:var(--fs-white);
-  transition:color 150ms ease, opacity 150ms ease, transform 150ms ease;
-}
-
-.fs-build-token.is-built{
-  color:var(--fs-white);
-}
-
-.fs-build-token.is-book,
-.fs-build-token.is-reference{
-  color:var(--fs-build-book);
-}
-
-.fs-build-token.is-book.is-built,
-.fs-build-token.is-reference.is-built{
-  color:var(--fs-build-book);
-}
-.fs-build-gap{ display:inline-block; width:0.35ch; }
 
 .fs-bonus-counter{
   font-size:clamp(34px,10vw,86px);
   line-height:1;
   font-weight:900;
 }
+
 .fs-bonus-label{
   display:block;
   font-size:clamp(16px,4vw,28px);
