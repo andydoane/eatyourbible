@@ -1593,18 +1593,25 @@ function renderHills(){
     }
   }
 
+function updateBuildText(){
+  const el = document.getElementById("ddBuildText");
+  if (!el) return;
 
+  const buildRender = window.VerseGameShell.renderBuildProgressHtml({
+    verseText: ctx.verseText || "",
+    book: state.bookLabel,
+    reference: state.referenceLabel,
+    progressIndex: state.progressIndex,
+    buildArea: BUILD_AREA,
+    hideUnbuilt: selectedMode === "hard",
+    extraClass: "dd-build-text"
+  });
 
-  function updateBuildText(){
-    const el = document.getElementById("ddBuildText");
-    if (!el) return;
+  el.className = buildRender.className;
+  el.innerHTML = buildRender.html;
+}
 
-    el.className = `dd-build-text vm-build-text vm-build-text--progress ${state.buildSizeClass} ${selectedMode === "hard" ? "is-hide-unbuilt" : ""}`;
-
-    el.innerHTML = state.buildSegments.map((segment, index) => `
-      <span class="dd-build-word vm-build-word ${index < state.progressIndex ? "is-built" : ""}">${escapeHtml(segment)}</span>
-    `).join(" ");
-  }
+  
 
   function updateMenuPill(){
     const pill = document.getElementById("ddMenuPill");
