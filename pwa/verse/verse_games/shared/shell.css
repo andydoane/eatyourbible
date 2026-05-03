@@ -624,8 +624,8 @@ button.vm-complete-icon.is-pet-box:focus-visible{
 /* Large build area profile */
 
 .vm-build.vm-build--large{
-  height: clamp(104px, 15vh, 132px);
-  min-height: clamp(104px, 15vh, 132px);
+  height: clamp(112px, 17vh, 156px);
+  min-height: clamp(112px, 17vh, 156px);
   padding: clamp(12px, 1.8vh, 18px) clamp(14px, 4vw, 22px);
 }
 
