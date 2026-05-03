@@ -88,51 +88,6 @@ body{
   flex: 0 0 auto;
 }
 
-.vb-build{
-  background: #ffc751;
-  color: #333333;
-  border-radius: 22px;
-  min-height: 112px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 18px;
-  text-align: center;
-  box-shadow: inset 0 -4px 0 rgba(0,0,0,0.10);
-}
-
-.vb-build-text{
-  font-size: clamp(24px, 5.7vw, 42px);
-  font-weight: 900;
-  line-height: 1.2;
-  width: 100%;
-  text-wrap: balance;
-}
-
-.vb-build-text.is-normal{
-  font-size: clamp(24px, 5.7vw, 42px);
-  line-height: 1.2;
-}
-
-.vb-build-text.is-medium{
-  font-size: clamp(21px, 4.9vw, 35px);
-  line-height: 1.14;
-}
-
-.vb-build-text.is-small{
-  font-size: clamp(18px, 4.2vw, 30px);
-  line-height: 1.10;
-}
-
-.vb-build-word{
-  color: #333333;
-  transition: color 160ms ease, opacity 160ms ease;
-}
-
-.vb-build-word.is-built{
-  color: #333333;
-}
-
 .vb-build.vb-shake{
   animation: vbBuildShake 300ms ease;
 }
