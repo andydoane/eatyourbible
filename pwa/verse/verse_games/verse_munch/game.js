@@ -132,6 +132,7 @@ const FACE_MAP = {
     feedbackBadge:"",
     feedbackUntil:0,
     buildSizeClass:"is-normal",
+    buildFitDone:false,
     reactionFlash:"",
     reactionFlashUntil:0,
     faceScaleBoost:0,
@@ -213,6 +214,7 @@ function renderModeSelect(){
     state.pauseReason = "";
     state.progressIndex = 0;
     state.streak = 0;
+    state.buildFitDone = false;
     state.emotionLevel = 0;
     state.faceBase = getEmotionFace();
     state.faceDisplay = state.faceBase;
@@ -818,6 +820,27 @@ function backToMenuFromHelp(){
     updateMoodPill();
   }
 
+function fitMunchBuildText(){
+  if (state.buildFitDone) return;
+
+  requestAnimationFrame(() => {
+    const build = document.getElementById("vmunchBuild");
+    const text = document.getElementById("vmunchBuildText");
+
+    if (!build || !text) return;
+
+    const result = window.VerseGameShell.fitBuildTextOnce({
+      buildEl: build,
+      textEl: text,
+      buildArea: BUILD_AREA
+    });
+
+    if (result){
+      state.buildFitDone = true;
+    }
+  });
+}
+
 function updateBuildText(){
   const el = document.getElementById("vmunchBuildText");
   if (!el) return;
@@ -834,6 +857,8 @@ function updateBuildText(){
 
   el.className = buildRender.className;
   el.innerHTML = buildRender.html;
+
+  fitMunchBuildText();
 }
 
   function renderBuildShake(ts){
