@@ -119,10 +119,11 @@ const BOOKS = window.VerseGameShell.getBibleBookDecoys();
     nextId: 1,
     progressIndex: 0,
     streak: 0,
-    buildSegments: [],
-    bookLabel: "",
-    referenceLabel: "",
-    buildSizeClass: "is-normal",
+    buildSegments:[],
+    bookLabel:"",
+    referenceLabel:"",
+    buildSizeClass:"is-normal",
+    buildFitDone:false,
     flashUntil: 0,
     successFlashUntil: 0,
     shakeUntil: 0,
@@ -235,6 +236,7 @@ function renderModeSelect(){
     state.progressIndex = 0;
     state.streak = 0;
     state.particles = [];
+    state.buildFitDone = false;
     state.trail = [];
     state.clouds = [];
     state.hillsBack = [];
@@ -1609,9 +1611,30 @@ function updateBuildText(){
 
   el.className = buildRender.className;
   el.innerHTML = buildRender.html;
+
+  fitDinoBuildText();
 }
 
-  
+function fitDinoBuildText(){
+  if (state.buildFitDone) return;
+
+  requestAnimationFrame(() => {
+    const build = document.getElementById("ddBuild");
+    const text = document.getElementById("ddBuildText");
+
+    if (!build || !text) return;
+
+    const result = window.VerseGameShell.fitBuildTextOnce({
+      buildEl: build,
+      textEl: text,
+      buildArea: BUILD_AREA
+    });
+
+    if (result){
+      state.buildFitDone = true;
+    }
+  });
+}
 
   function updateMenuPill(){
     const pill = document.getElementById("ddMenuPill");
