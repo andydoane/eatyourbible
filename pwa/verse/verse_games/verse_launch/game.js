@@ -287,6 +287,18 @@ function refDecoys(correctRef){
       extraClass: "vl-build-text"
     });
   }
+
+function fitBuildText(){
+  requestAnimationFrame(() => {
+    window.VerseGameShell.fitBuildTextOnce({
+      buildEl: document.getElementById("vlBuild"),
+      textEl: document.getElementById("vlBuildText"),
+      buildArea: BUILD_AREA
+    });
+  });
+}
+
+
   function formatMode(mode){ return mode ? mode.charAt(0).toUpperCase() + mode.slice(1) : "Mode"; }
   function totalElapsedMs(){ return Math.max(1, (state.endTime || performance.now()) - state.startTime); }
 
@@ -462,6 +474,7 @@ function renderMode(){
       </div>`;
     wireGameScreen();
     syncGameMenuOpenState();
+    fitBuildText();
   }
 
   function renderTravel(){
