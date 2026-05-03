@@ -73,6 +73,7 @@ const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
     overlayMessage:"",
     overlayUntil:0,
     buildSizeClass:"normal",
+    buildFitDone:false,
     queue:[],
     builtCount:0,
     phase:"words",
@@ -159,6 +160,7 @@ function renderModeSelect(){
     state.overlayUntil = 0;
     state.queue = buildData.segments;
     state.buildSizeClass = buildData.buildSizeClass;
+    state.buildFitDone = false;
     state.builtCount = 0;
     state.phase = "words";
     state.streak = 0;
@@ -404,6 +406,27 @@ function backToMenuFromHelp(){
     renderButtons();
   }
 
+function fitInvadersBuildText(){
+  if (state.buildFitDone) return;
+
+  requestAnimationFrame(() => {
+    const build = document.getElementById("vinvBuild");
+    const text = document.getElementById("vinvBuildText");
+
+    if (!build || !text) return;
+
+    const result = window.VerseGameShell.fitBuildTextOnce({
+      buildEl: build,
+      textEl: text,
+      buildArea: BUILD_AREA
+    });
+
+    if (result){
+      state.buildFitDone = true;
+    }
+  });
+}
+
 function renderBuildArea(){
   const buildText = document.getElementById("vinvBuildText");
   const build = document.getElementById("vinvBuild");
@@ -423,6 +446,8 @@ function renderBuildArea(){
 
   buildText.className = buildRender.className;
   buildText.innerHTML = buildRender.html;
+
+  fitInvadersBuildText();
 }
   
 
