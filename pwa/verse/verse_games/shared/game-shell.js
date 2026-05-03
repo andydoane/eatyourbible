@@ -349,20 +349,20 @@
   function getBuildSizeClass(verseText, book, reference, buildArea = "large"){
     const score = getBuildLengthScore(verseText, book, reference);
 
-  const profiles = {
-    large: {
-      mediumAt: 82,
-      smallAt: 118
-    },
-    compact: {
-      mediumAt: 73,
-      smallAt: 121
-    },
-    none: {
-      mediumAt: Infinity,
-      smallAt: Infinity
-    }
-  };
+    const profiles = {
+      large: {
+        mediumAt: 106,
+        smallAt: 136
+      },
+      compact: {
+        mediumAt: 73,
+        smallAt: 121
+      },
+      none: {
+        mediumAt: Infinity,
+        smallAt: Infinity
+      }
+    };
 
     const profile = profiles[String(buildArea || "large").toLowerCase()] || profiles.large;
 
@@ -403,6 +403,171 @@
       referenceLabel,
       buildArea: area,
       buildSizeClass: getBuildSizeClass(verseText, bookLabel, referenceLabel, area)
+    };
+  }
+
+  function getBuildDisplayTokens({
+    verseText = "",
+    book = "",
+    reference = ""
+  } = {}){
+    const tokens = [];
+    let wordIndex = 0;
+
+    for (const token of tokenizeVerseForBuild(verseText)){
+      if (!token) continue;
+
+      if (token.kind === "word"){
+        tokens.push({
+          kind: "word",
+          text: token.text,
+          wordIndex,
+          segmentIndex: wordIndex,
+          isMeta: false
+        });
+
+        wordIndex += 1;
+        continue;
+      }
+
+      if (token.kind === "space"){
+        tokens.push({
+          kind: "space",
+          text: token.text,
+          wordIndex: null,
+          segmentIndex: Math.max(0, wordIndex - 1),
+          isMeta: false
+        });
+
+        continue;
+      }
+
+      tokens.push({
+        kind: "punct",
+        text: token.text,
+        wordIndex: null,
+        segmentIndex: Math.max(0, wordIndex - 1),
+        isMeta: false
+      });
+    }
+
+    const bookLabel = String(book || "").trim();
+    const referenceLabel = String(reference || "").trim();
+
+    if (bookLabel || referenceLabel){
+      tokens.push({
+        kind: "space",
+        text: " ",
+        wordIndex: null,
+        segmentIndex: Math.max(0, wordIndex - 1),
+        isMeta: false
+      });
+    }
+
+    if (bookLabel){
+      tokens.push({
+        kind: "meta",
+        text: bookLabel,
+        wordIndex: null,
+        segmentIndex: wordIndex,
+        isMeta: true,
+        metaType: "book"
+      });
+
+      wordIndex += 1;
+    }
+
+    if (bookLabel && referenceLabel){
+      tokens.push({
+        kind: "space",
+        text: " ",
+        wordIndex: null,
+        segmentIndex: Math.max(0, wordIndex - 1),
+        isMeta: true
+      });
+    }
+
+    if (referenceLabel){
+      tokens.push({
+        kind: "meta",
+        text: referenceLabel,
+        wordIndex: null,
+        segmentIndex: wordIndex,
+        isMeta: true,
+        metaType: "reference"
+      });
+    }
+
+    return tokens;
+  }
+
+  function isBuildDisplayTokenBuilt(token, progressIndex = 0){
+    const progress = Math.max(0, Number(progressIndex) || 0);
+
+    if (!token) return false;
+
+    if (token.kind === "word" || token.kind === "meta"){
+      return Number(token.segmentIndex) < progress;
+    }
+
+    if (token.kind === "punct"){
+      return Number(token.segmentIndex) < progress;
+    }
+
+    if (token.kind === "space"){
+      return Number(token.segmentIndex) < progress;
+    }
+
+    return false;
+  }
+
+  function renderBuildProgressHtml({
+    verseText = "",
+    book = "",
+    reference = "",
+    progressIndex = 0,
+    buildArea = "large",
+    hideUnbuilt = false,
+    extraClass = ""
+  } = {}){
+    const sizeClass = getBuildSizeClass(verseText, book, reference, buildArea);
+    const classes = [
+      "vm-build-text",
+      "vm-build-text--progress",
+      sizeClass,
+      hideUnbuilt ? "is-hide-unbuilt" : "",
+      extraClass
+    ].filter(Boolean).join(" ");
+
+    const tokens = getBuildDisplayTokens({
+      verseText,
+      book,
+      reference
+    });
+
+    const html = tokens.map((token) => {
+      const built = isBuildDisplayTokenBuilt(token, progressIndex);
+
+      if (token.kind === "space"){
+        return `<span class="vm-build-space ${built ? "is-built" : ""}">${escapeHtml(token.text)}</span>`;
+      }
+
+      if (token.kind === "punct"){
+        return `<span class="vm-build-punct ${built ? "is-built" : ""}">${escapeHtml(token.text)}</span>`;
+      }
+
+      if (token.kind === "meta"){
+        return `<span class="vm-build-word vm-build-meta vm-build-meta--${escapeHtml(token.metaType || "meta")} ${built ? "is-built" : ""}">${escapeHtml(token.text)}</span>`;
+      }
+
+      return `<span class="vm-build-word ${built ? "is-built" : ""}">${escapeHtml(token.text)}</span>`;
+    }).join("");
+
+    return {
+      className: classes,
+      html,
+      buildSizeClass: sizeClass,
+      tokens
     };
   }
 
@@ -1340,6 +1505,8 @@ function renderCompleteScreen({
     getBuildLengthScore,
     getBuildSizeClass,
     buildVerseSegments,
+    getBuildDisplayTokens,
+    renderBuildProgressHtml,
     getPhaseForProgress,
     titleCaseBookFromSlug,
     parseReferenceParts,
