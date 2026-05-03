@@ -258,6 +258,16 @@ function renderBuildText(){
   });
 }
 
+function fitBuildText(){
+  requestAnimationFrame(() => {
+    window.VerseGameShell.fitBuildTextOnce({
+      buildEl: document.getElementById("vsnBuild"),
+      textEl: document.getElementById("vsnBuildText"),
+      buildArea: BUILD_AREA
+    });
+  });
+}
+
 function renderIntro(){
   window.VerseGameShell.renderTitleScreen({
     app,
@@ -340,6 +350,7 @@ function renderMode(){
         ${renderGameMenuOverlay()}
       </div>`;
     wireGameScreen();
+    fitBuildText();
   }
 
   function totalElapsedMs(){
