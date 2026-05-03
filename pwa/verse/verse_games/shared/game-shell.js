@@ -659,8 +659,11 @@ function fitBuildTextOnce({
         ]
       };
 
-  const safeMin = Number.isFinite(Number(min)) ? Number(min) : profile.min;
-  const safeMax = Number.isFinite(Number(max)) ? Number(max) : profile.max;
+const hasCustomMin = min !== null && min !== undefined && Number.isFinite(Number(min));
+const hasCustomMax = max !== null && max !== undefined && Number.isFinite(Number(max));
+
+const safeMin = hasCustomMin ? Number(min) : profile.min;
+const safeMax = hasCustomMax ? Number(max) : profile.max;
   const testCandidates = Array.isArray(candidates) && candidates.length
     ? candidates
     : profile.candidates;
