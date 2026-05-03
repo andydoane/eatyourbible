@@ -66,6 +66,7 @@ const FUNNY_DECOY_WORDS = window.VerseGameShell.getFunDecoys();
     referenceMeta: null,
     segments: [],
     buildSizeClass: "is-normal",
+    buildFitDone: false,
     progressIndex: 0,
     targets: [],
     nextTargetId: 1
@@ -234,6 +235,7 @@ function backToMenuFromHelp(){
     state.referenceMeta = null;
     state.segments = [];
     state.progressIndex = 0;
+    state.buildFitDone = false;
     state.targets = [];
     state.nextTargetId = 1;
   }
@@ -299,12 +301,34 @@ const shuffle = window.VerseGameShell.shuffle;
     return state.segments[state.progressIndex] || "";
   }
 
+function fitSnakeBuildText(){
+  if (state.buildFitDone) return;
+
+  requestAnimationFrame(() => {
+    const build = document.getElementById("vsBuild");
+    const text = document.getElementById("vsBuildText");
+
+    if (!build || !text) return;
+
+    const result = window.VerseGameShell.fitBuildTextOnce({
+      buildEl: build,
+      textEl: text,
+      buildArea: BUILD_AREA
+    });
+
+    if (result){
+      state.buildFitDone = true;
+    }
+  });
+}
+
 function updateBuildText(){
   const el = document.getElementById("vsBuildText");
   if (!el) return;
 
   if (!state.segments.length){
     el.textContent = "";
+    state.buildFitDone = false;
     return;
   }
 
@@ -320,6 +344,8 @@ function updateBuildText(){
 
   el.className = buildRender.className;
   el.innerHTML = buildRender.html;
+
+  fitSnakeBuildText();
 }
 
 
