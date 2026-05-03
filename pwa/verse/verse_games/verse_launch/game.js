@@ -277,12 +277,15 @@ function refDecoys(correctRef){
   }
 
   function renderBuildText(){
-    return state.segments.map((segment, index) => {
-      const built = index < state.progressIndex;
-      const meta = state.metaIndices.has(index);
-      const removing = state.buildRemoving.has(index);
-      return `<span class="vl-build-word vm-build-word ${built ? "is-built" : ""} ${meta ? "is-meta" : ""} ${removing ? "is-removing" : ""}">${escapeHtml(segment)}</span>`;
-    }).join(" ");
+    return window.VerseGameShell.renderBuildProgressHtml({
+      verseText: ctx.verseText || "",
+      book: state.bookLabel,
+      reference: state.referenceLabel,
+      progressIndex: state.progressIndex,
+      buildArea: BUILD_AREA,
+      hideUnbuilt: state.mode === "hard",
+      extraClass: "vl-build-text"
+    });
   }
   function formatMode(mode){ return mode ? mode.charAt(0).toUpperCase() + mode.slice(1) : "Mode"; }
   function totalElapsedMs(){ return Math.max(1, (state.endTime || performance.now()) - state.startTime); }
@@ -413,7 +416,19 @@ function renderMode(){
     app.innerHTML = `
       <div class="vl-root">
         <div class="vl-stage">
-          <div class="vl-build-wrap"><div class="vl-build vm-build vm-build--${BUILD_AREA} ${state.buildRemoving.size ? "vl-shake" : ""}" id="vlBuild"><div class="vl-build-text vm-build-text vm-build-text--progress ${state.buildSizeClass} ${state.mode === "hard" ? "is-hide-unbuilt" : ""}" id="vlBuildText">${renderBuildText()}</div></div></div>
+          ${(() => {
+  const buildRender = renderBuildText();
+
+  return `
+    <div class="vl-build-wrap">
+      <div class="vl-build vm-build vm-build--${BUILD_AREA} ${state.buildRemoving.size ? "vl-shake" : ""}" id="vlBuild">
+        <div class="${buildRender.className}" id="vlBuildText">
+          ${buildRender.html}
+        </div>
+      </div>
+    </div>
+  `;
+})()}
           <div class="vl-game-wrap">
             <div class="vl-game-board" id="vlBoard">
               <div class="vl-red-flash" id="vlRedFlash"></div>
