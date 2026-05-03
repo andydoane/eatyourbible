@@ -644,16 +644,12 @@ button.vm-complete-icon.is-pet-box:focus-visible{
   max-width: 100%;
   max-height: 100%;
   box-sizing: border-box;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: center;
-  gap: .10em .20em;
+  display: block;
   color: var(--vm-build-text);
   font-weight: 900;
   text-align: center;
   text-wrap: balance;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 /* Large build text tiers */
@@ -680,7 +676,6 @@ button.vm-complete-icon.is-pet-box:focus-visible{
 
 .vm-build--compact .vm-build-text{
   line-height: 1.06;
-  gap: .08em .16em;
 }
 
 .vm-build--compact .vm-build-text.is-normal{
