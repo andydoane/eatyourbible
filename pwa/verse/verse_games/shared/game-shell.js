@@ -571,6 +571,210 @@
     };
   }
 
+function countBuildTextLines(textEl){
+  if (!textEl) return 0;
+
+  const tops = [];
+
+  const nodes = Array.from(textEl.children || []);
+  for (const node of nodes){
+    const rects = Array.from(node.getClientRects ? node.getClientRects() : []);
+
+    for (const rect of rects){
+      if (rect.width < 0.5 || rect.height < 0.5) continue;
+
+      const top = Math.round(rect.top);
+      if (!tops.some((existing) => Math.abs(existing - top) <= 2)){
+        tops.push(top);
+      }
+    }
+  }
+
+  return tops.length || 1;
+}
+
+function getBuildTextFitBox(buildEl){
+  if (!buildEl) return { width: 0, height: 0 };
+
+  const style = window.getComputedStyle(buildEl);
+
+  const paddingX =
+    (parseFloat(style.paddingLeft) || 0) +
+    (parseFloat(style.paddingRight) || 0);
+
+  const paddingY =
+    (parseFloat(style.paddingTop) || 0) +
+    (parseFloat(style.paddingBottom) || 0);
+
+  return {
+    width: Math.max(0, buildEl.clientWidth - paddingX),
+    height: Math.max(0, buildEl.clientHeight - paddingY)
+  };
+}
+
+function buildTextOverflows(buildEl, textEl){
+  if (!buildEl || !textEl) return true;
+
+  const box = getBuildTextFitBox(buildEl);
+  const fudge = 1.5;
+
+  return (
+    textEl.scrollWidth > box.width + fudge ||
+    textEl.scrollHeight > box.height + fudge
+  );
+}
+
+function fitBuildTextOnce({
+  buildEl = null,
+  textEl = null,
+  buildArea = "large",
+  min = null,
+  max = null,
+  candidates = null,
+  debug = false
+} = {}){
+  if (!buildEl || !textEl) return null;
+
+  const area = String(buildArea || "large").toLowerCase();
+
+  const profile = area === "compact"
+    ? {
+        min: 11,
+        max: 34,
+        candidates: [
+          { maxWidth: "100%", lineHeight: 1.06 },
+          { maxWidth: "96%", lineHeight: 1.05 },
+          { maxWidth: "92%", lineHeight: 1.04 },
+          { maxWidth: "88%", lineHeight: 1.03 }
+        ]
+      }
+    : {
+        min: 13,
+        max: 46,
+        candidates: [
+          { maxWidth: "100%", lineHeight: 1.10 },
+          { maxWidth: "96%", lineHeight: 1.08 },
+          { maxWidth: "92%", lineHeight: 1.06 },
+          { maxWidth: "88%", lineHeight: 1.05 }
+        ]
+      };
+
+  const safeMin = Number.isFinite(Number(min)) ? Number(min) : profile.min;
+  const safeMax = Number.isFinite(Number(max)) ? Number(max) : profile.max;
+  const testCandidates = Array.isArray(candidates) && candidates.length
+    ? candidates
+    : profile.candidates;
+
+  const previous = {
+    fontSize: textEl.style.fontSize,
+    lineHeight: textEl.style.lineHeight,
+    maxWidth: textEl.style.maxWidth,
+    width: textEl.style.width,
+    marginLeft: textEl.style.marginLeft,
+    marginRight: textEl.style.marginRight
+  };
+
+  let best = null;
+
+  for (const candidate of testCandidates){
+    textEl.style.width = "100%";
+    textEl.style.maxWidth = candidate.maxWidth || "100%";
+    textEl.style.marginLeft = "auto";
+    textEl.style.marginRight = "auto";
+    textEl.style.lineHeight = String(candidate.lineHeight || "");
+
+    let low = safeMin;
+    let high = safeMax;
+    let bestSize = safeMin;
+
+    for (let i = 0; i < 10; i += 1){
+      const mid = (low + high) / 2;
+      textEl.style.fontSize = `${mid}px`;
+
+      if (buildTextOverflows(buildEl, textEl)){
+        high = mid;
+      } else {
+        bestSize = mid;
+        low = mid;
+      }
+    }
+
+    textEl.style.fontSize = `${bestSize}px`;
+
+    const lineCount = countBuildTextLines(textEl);
+    const box = getBuildTextFitBox(buildEl);
+    const verticalFill = box.height
+      ? Math.min(1, textEl.scrollHeight / box.height)
+      : 0;
+
+    const result = {
+      fontSize: Math.floor(bestSize * 10) / 10,
+      maxWidth: candidate.maxWidth || "100%",
+      lineHeight: candidate.lineHeight || "",
+      lineCount,
+      verticalFill,
+      overflows: buildTextOverflows(buildEl, textEl)
+    };
+
+    if (!result.overflows){
+      if (!best){
+        best = result;
+      } else {
+        const sizeDiff = result.fontSize - best.fontSize;
+
+        if (sizeDiff > 0.75){
+          best = result;
+        } else if (Math.abs(sizeDiff) <= 0.75){
+          if (result.lineCount < best.lineCount){
+            best = result;
+          } else if (
+            result.lineCount === best.lineCount &&
+            result.verticalFill > best.verticalFill
+          ){
+            best = result;
+          }
+        }
+      }
+    }
+  }
+
+  if (!best){
+    textEl.style.fontSize = previous.fontSize;
+    textEl.style.lineHeight = previous.lineHeight;
+    textEl.style.maxWidth = previous.maxWidth;
+    textEl.style.width = previous.width;
+    textEl.style.marginLeft = previous.marginLeft;
+    textEl.style.marginRight = previous.marginRight;
+    return null;
+  }
+
+  textEl.style.fontSize = `${best.fontSize}px`;
+  textEl.style.lineHeight = String(best.lineHeight);
+  textEl.style.maxWidth = best.maxWidth;
+  textEl.style.width = "100%";
+  textEl.style.marginLeft = "auto";
+  textEl.style.marginRight = "auto";
+
+  textEl.dataset.vmFitFontSize = String(best.fontSize);
+  textEl.dataset.vmFitMaxWidth = String(best.maxWidth);
+  textEl.dataset.vmFitLineHeight = String(best.lineHeight);
+  textEl.dataset.vmFitLines = String(best.lineCount);
+  textEl.dataset.vmFitArea = area;
+
+  if (debug){
+    console.table({
+      fontSize: best.fontSize,
+      maxWidth: best.maxWidth,
+      lineHeight: best.lineHeight,
+      lineCount: best.lineCount,
+      verticalFill: Math.round(best.verticalFill * 100) + "%",
+      overflows: best.overflows
+    });
+  }
+
+  return best;
+}
+
   function getPhaseForProgress({
     progressIndex = 0,
     wordCount = 0,
@@ -1507,6 +1711,9 @@ function renderCompleteScreen({
     buildVerseSegments,
     getBuildDisplayTokens,
     renderBuildProgressHtml,
+    fitBuildTextOnce,
+    countBuildTextLines,
+    buildTextOverflows,
     getPhaseForProgress,
     titleCaseBookFromSlug,
     parseReferenceParts,
