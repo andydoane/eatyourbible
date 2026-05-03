@@ -571,39 +571,54 @@ button.vm-complete-icon.is-pet-box:focus-visible{
    ========================================================= */
 
 /*
-  Usage in games:
+  Shell-owned build area standard.
 
-  Large build area:
-  <div class="game-build vm-build vm-build--large">
-    <div class="game-build-text vm-build-text is-small">...</div>
-  </div>
+  Games should choose only:
+  - vm-build--large
+  - vm-build--compact
 
-  Compact build area:
-  <div class="game-build vm-build vm-build--compact">
-    <div class="game-build-text vm-build-text is-small">...</div>
-  </div>
+  Games may override colors with CSS variables on a scoped parent, for example:
 
-  The game-specific build class can still own colors, shadows,
-  border radius, animations, etc. These shared classes own sizing,
-  padding, centering, and font tiers.
+  .food-slice-shell{
+    --vm-build-bg: #ffc751;
+    --vm-build-text: #333333;
+    --vm-build-muted: rgba(51,51,51,.30);
+    --vm-build-meta: #7f66c6;
+  }
+
+  The shell owns:
+  - card background
+  - text color
+  - faded/unbuilt color
+  - book/reference color
+  - height
+  - padding
+  - radius
+  - shadow
+  - font sizes
+  - line height
+  - wrapping
 */
 
 .vm-build{
+  --vm-build-bg: #ffffff;
+  --vm-build-text: #333333;
+  --vm-build-muted: rgba(51,51,51,.30);
+  --vm-build-meta: #7f66c6;
+  --vm-build-radius: 24px;
+  --vm-build-shadow: 0 8px 20px rgba(0,0,0,.14);
+
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--vm-build-bg);
+  color: var(--vm-build-text);
+  border-radius: var(--vm-build-radius);
+  box-shadow: var(--vm-build-shadow);
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   overflow: hidden;
-  box-sizing: border-box;
-}
-
-.vm-build-text{
-  width: 100%;
-  height: auto;
-  max-height: 100%;
-  box-sizing: border-box;
-  font-weight: 900;
-  text-wrap: balance;
 }
 
 /* Large build area profile */
@@ -611,103 +626,141 @@ button.vm-complete-icon.is-pet-box:focus-visible{
 .vm-build.vm-build--large{
   height: clamp(104px, 15vh, 132px);
   min-height: clamp(104px, 15vh, 132px);
-  padding: clamp(10px, 1.7vh, 16px) clamp(14px, 4vw, 20px);
-}
-
-.vm-build--large .vm-build-text{
-  line-height: 1.14;
-  transform: translateY(-0.08em);
-}
-
-.vm-build--large .vm-build-text.is-normal{
-  font-size: clamp(24px, 5.8vw, 42px);
-}
-
-.vm-build--large .vm-build-text.is-medium{
-  font-size: clamp(21px, 4.9vw, 35px);
-  line-height: 1.12;
-}
-
-.vm-build--large .vm-build-text.is-small{
-  font-size: clamp(16px, 3.8vw, 28px);
-  line-height: 1.06;
+  padding: clamp(12px, 1.8vh, 18px) clamp(14px, 4vw, 22px);
 }
 
 /* Compact build area profile */
 
 .vm-build.vm-build--compact{
-  height: clamp(88px, 12vh, 112px);
-  min-height: clamp(88px, 12vh, 112px);
-  padding: clamp(8px, 1.5vh, 12px) clamp(10px, 3vw, 14px);
+  height: clamp(70px, 11vh, 96px);
+  min-height: clamp(70px, 11vh, 96px);
+  padding: clamp(8px, 1.4vh, 12px) clamp(10px, 3vw, 14px);
 }
 
+/* Shared build text layout */
+
+.vm-build-text{
+  width: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  box-sizing: border-box;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: .10em .20em;
+  color: var(--vm-build-text);
+  font-weight: 900;
+  text-align: center;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+/* Large build text tiers */
+
+.vm-build--large .vm-build-text{
+  line-height: 1.10;
+}
+
+.vm-build--large .vm-build-text.is-normal{
+  font-size: clamp(24px, 5.4vw, 42px);
+}
+
+.vm-build--large .vm-build-text.is-medium{
+  font-size: clamp(20px, 4.35vw, 33px);
+  line-height: 1.08;
+}
+
+.vm-build--large .vm-build-text.is-small{
+  font-size: clamp(16px, 3.35vw, 25px);
+  line-height: 1.04;
+}
+
+/* Compact build text tiers */
+
 .vm-build--compact .vm-build-text{
-  line-height: 1.12;
+  line-height: 1.06;
+  gap: .08em .16em;
 }
 
 .vm-build--compact .vm-build-text.is-normal{
-  font-size: clamp(22px, 5vw, 38px);
+  font-size: clamp(19px, 4.45vw, 31px);
 }
 
 .vm-build--compact .vm-build-text.is-medium{
-  font-size: clamp(18px, 4.15vw, 31px);
-  line-height: 1.1;
+  font-size: clamp(16px, 3.65vw, 25px);
+  line-height: 1.04;
 }
 
 .vm-build--compact .vm-build-text.is-small{
-  font-size: clamp(15px, 3.75vw, 24px);
-  line-height: 1.06;
+  font-size: clamp(13px, 3.05vw, 21px);
+  line-height: 1.02;
 }
-
-
 
 /* Shared build progress display */
 
+.vm-build-word,
+.vm-build-punct,
+.vm-build-space,
+.vm-build-meta,
+.vm-build-token,
 .vm-build-text--progress .is-verse,
 .vm-build-text--progress .is-book,
-.vm-build-text--progress .is-reference,
-.vm-build-text--progress .vm-build-token,
-.vm-build-text--progress .vm-build-word{
-  opacity: 0.32;
+.vm-build-text--progress .is-reference{
+  color: var(--vm-build-muted);
+  opacity: 1;
+  transition:
+    opacity .18s ease,
+    transform .18s ease,
+    color .18s ease;
 }
 
-.vm-build-text--progress .is-built{
+.vm-build-word.is-built,
+.vm-build-punct.is-built,
+.vm-build-space.is-built,
+.vm-build-token.is-built,
+.vm-build-text--progress .is-verse.is-built{
+  color: var(--vm-build-text);
+  opacity: 1;
+}
+
+.vm-build-meta,
+.vm-build-text--progress .is-book,
+.vm-build-text--progress .is-reference{
+  font-weight: 900;
+}
+
+.vm-build-meta.is-built,
+.vm-build-text--progress .is-book.is-built,
+.vm-build-text--progress .is-reference.is-built{
+  color: var(--vm-build-meta);
   opacity: 1;
 }
 
 /* Hard mode: hide unbuilt tokens completely */
+
+.vm-build-text--progress.is-hide-unbuilt .vm-build-word:not(.is-built),
+.vm-build-text--progress.is-hide-unbuilt .vm-build-punct:not(.is-built),
+.vm-build-text--progress.is-hide-unbuilt .vm-build-meta:not(.is-built),
+.vm-build-text--progress.is-hide-unbuilt .vm-build-token:not(.is-built),
 .vm-build-text--progress.is-hide-unbuilt .is-verse:not(.is-built),
 .vm-build-text--progress.is-hide-unbuilt .is-book:not(.is-built),
-.vm-build-text--progress.is-hide-unbuilt .is-reference:not(.is-built),
-.vm-build-text--progress.is-hide-unbuilt .vm-build-token:not(.is-built),
-.vm-build-text--progress.is-hide-unbuilt .vm-build-word:not(.is-built){
+.vm-build-text--progress.is-hide-unbuilt .is-reference:not(.is-built){
   opacity: 0;
 }
+
+/* Punctuation / spacing */
 
 .vm-build-space{
   white-space: pre-wrap;
 }
 
 .vm-build-punct{
-  opacity: .35;
+  margin-left: -.05em;
 }
 
-.vm-build-punct.is-built{
-  opacity: 1;
-}
-
-.vm-build-meta{
-  font-weight: 900;
-}
-
-.vm-build-meta--book,
-.vm-build-meta--reference{
-  opacity: .35;
-}
-
-.vm-build-meta--book.is-built,
-.vm-build-meta--reference.is-built{
-  opacity: 1;
+.vm-build-text.is-hide-unbuilt .vm-build-space:not(.is-built){
+  opacity: 0;
 }
 
 /* =========================================================
