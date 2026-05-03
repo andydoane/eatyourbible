@@ -119,6 +119,7 @@ const MODE_CONFIG = {
     metaIndices: new Set(),
     progressIndex: 0,
     buildSizeClass: "is-normal",
+    buildFitDone: false,
     buildRemoving: new Set(),
     phase: "words",
 
@@ -197,6 +198,7 @@ const shuffle = window.VerseGameShell.shuffle;
     state.completed = false;
     state.completionResult = null;
     state.progressIndex = 0;
+    state.buildFitDone = false;
     state.buildRemoving = new Set();
     state.phase = "words";
     state.blobs = [];
@@ -255,6 +257,28 @@ function renderBuildText(){
     buildArea: BUILD_AREA,
     hideUnbuilt: state.mode === "hard",
     extraClass: "vsp-build-text"
+  });
+}
+
+function fitSplatBuildText(){
+  if (state.buildFitDone) return;
+
+  requestAnimationFrame(() => {
+    const build = $("#vspBuild");
+    const text = $("#vspBuildText");
+
+    if (!build || !text) return;
+    if (state.screen !== "game") return;
+
+    const result = window.VerseGameShell.fitBuildTextOnce({
+      buildEl: build,
+      textEl: text,
+      buildArea: BUILD_AREA
+    });
+
+    if (result){
+      state.buildFitDone = true;
+    }
   });
 }
 
@@ -1459,6 +1483,7 @@ function spawnWrongFaceParticleBurst(){
 
   function afterGameScreenRender(){
     if (state.menuOpen || state.helpOpen) return;
+    fitSplatBuildText();
     if (!state.blobs.length) spawnInitialField();
     else renderBlobNodes();
     startGameLoop();
