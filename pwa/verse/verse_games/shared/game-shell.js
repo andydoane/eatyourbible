@@ -349,20 +349,20 @@
   function getBuildSizeClass(verseText, book, reference, buildArea = "large"){
     const score = getBuildLengthScore(verseText, book, reference);
 
-    const profiles = {
-      large: {
-        mediumAt: 106,
-        smallAt: 136
-      },
-      compact: {
-        mediumAt: 73,
-        smallAt: 121
-      },
-      none: {
-        mediumAt: Infinity,
-        smallAt: Infinity
-      }
-    };
+  const profiles = {
+    large: {
+      mediumAt: 82,
+      smallAt: 118
+    },
+    compact: {
+      mediumAt: 73,
+      smallAt: 121
+    },
+    none: {
+      mediumAt: Infinity,
+      smallAt: Infinity
+    }
+  };
 
     const profile = profiles[String(buildArea || "large").toLowerCase()] || profiles.large;
 
