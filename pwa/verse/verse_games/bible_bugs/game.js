@@ -39,12 +39,10 @@
   const MAIN_EAT_MS = 420;
 
 const BUG_MOTION = {
-  // Side motion is a ratio of the field width, not pixels.
-  // 0.052 means about 5.2% of the playfield width.
-  sideAmountRatio: 0.052,
-  sideSpeed: 4.0,
-  rotationAmount: 12.5,
-  squishAmount: 0.05
+  sideAmountRatio: 0.03,
+  sideSpeed: 0.55,
+  rotationAmount: 3,
+  squishAmount: 0.02
 };
 
   let selectedMode = null;
@@ -180,11 +178,10 @@ const BUG_MOTION = {
           <div class="bb-field-wrap">
             <div class="bb-field" id="bbField">
               <div class="bb-play-layer" id="bbPlayLayer"></div>
-              <div class="bb-tongue-layer" id="bbTongueLayer"></div>
+              <div class="bb-effects-layer" id="bbEffectsLayer"></div>
               <div class="bb-frog-layer" id="bbFrogLayer">
                 ${renderFrog()}
               </div>
-              <div class="bb-effects-layer" id="bbEffectsLayer"></div>
               <div class="bb-overlay-msg" id="bbOverlay"></div>
               <div class="bb-reaction-layer" id="bbReactionLayer"></div>
               <div class="bb-bonus-intro-overlay" id="bbBonusIntroOverlay" aria-hidden="true">
@@ -914,7 +911,6 @@ function showReaction(type){
   function renderFrame(){
     const field = document.getElementById("bbField");
     const play = document.getElementById("bbPlayLayer");
-    const tongueLayer = document.getElementById("bbTongueLayer");
     const effects = document.getElementById("bbEffectsLayer");
     const reactionLayer = document.getElementById("bbReactionLayer");
     const overlay = document.getElementById("bbOverlay");
@@ -922,15 +918,14 @@ function showReaction(type){
     const statusPill = document.getElementById("bbStatusPill");
     const build = document.getElementById("bbBuild");
 
-    if (!field || !play || !tongueLayer || !effects || !reactionLayer || !overlay || !bonusIntro || !statusPill || !build) return;
+    if (!field || !play || !effects || !reactionLayer || !overlay || !bonusIntro || !statusPill || !build) return;
 
     const now = performance.now();
     field.classList.toggle("is-flash-bad", now < state.fieldFlashUntil);
     build.classList.toggle("is-shake", now < state.buildShakeUntil);
 
     play.innerHTML = renderBugs();
-    tongueLayer.innerHTML = renderTongue(now);
-    effects.innerHTML = renderSpitParticles(now);
+    effects.innerHTML = renderEffects(now);
     reactionLayer.innerHTML = renderReaction(now);
 
     overlay.innerHTML = now < state.overlayUntil && state.overlayMessage
@@ -983,6 +978,11 @@ function renderBugButton(bug, now, isBonus){
   `;
 }
   
+
+
+  function renderEffects(now){
+    return `${renderTongue(now)}${renderSpitParticles(now)}`;
+  }
 
   function renderTongue(now){
     const t = state.tongue;
