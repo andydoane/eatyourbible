@@ -9,11 +9,11 @@
   const GAME_MENU_ID = "bbGameMenuOverlay";
 
   const GAME_THEME = {
-    bg: "#ffffff",
-    accent: "#2f7d49",
-    helpTitleBg: "#2f7d49",
+    bg: "#a7cb6f",
+    accent: "#a7cb6f",
+    helpTitleBg: "#a7cb6f",
     helpTitleColor: "#ffffff",
-    helpCloseBg: "#2f7d49",
+    helpCloseBg: "#a7cb6f",
     helpCloseColor: "#ffffff"
   };
 
@@ -28,9 +28,9 @@
   const BONUS_SECONDS = 20;
 
   const MODE_TIMING = {
-    easy: { fallSeconds: 6.8, nextDelay: 520, reactionMs: 720, missDelay: 520 },
-    medium: { fallSeconds: 5.8, nextDelay: 460, reactionMs: 660, missDelay: 460 },
-    hard: { fallSeconds: 4.9, nextDelay: 420, reactionMs: 600, missDelay: 420 }
+    easy: { fallSeconds: 6.8, nextDelay: 460, reactionMs: 980, missDelay: 520 },
+    medium: { fallSeconds: 5.8, nextDelay: 420, reactionMs: 940, missDelay: 460 },
+    hard: { fallSeconds: 4.9, nextDelay: 380, reactionMs: 900, missDelay: 420 }
   };
 
   const BONUS_BUG_LIFE_MS = 1850;
@@ -366,48 +366,72 @@
     return buildData.segments[state.progressIndex] || "";
   }
 
-  function getChoices(){
-    const target = currentTarget();
-    const phase = state.phase;
-    let decoys = [];
+  function getDecoysForPhase(phase, correctLabel, count){
+    const out = [];
+    const seen = new Set([shell.normalizeWord(correctLabel)]);
 
-    if (phase === "book"){
-      decoys = shell.getBookDecoys(buildData.bookLabel, 2);
+    function addDecoys(list){
+      for (const item of list || []){
+        const key = shell.normalizeWord(item);
+        if (!key || seen.has(key)) continue;
+
+        seen.add(key);
+        out.push(item);
+
+        if (out.length >= count) break;
+      }
+    }
+
+    if (phase === "words"){
+      if (selectedMode === "easy"){
+        addDecoys(shell.getFunWordDecoys(correctLabel, buildData.words, count));
+      } else {
+        addDecoys(shell.getVerseWordDecoys({
+          words: buildData.words,
+          correct: correctLabel,
+          targetIndex: state.progressIndex,
+          count,
+          avoidNext: 2,
+          fallbackToFun: true
+        }));
+
+        if (out.length < count){
+          addDecoys(shell.getFunWordDecoys(correctLabel, buildData.words, count * 2));
+        }
+
+        if (out.length < count){
+          addDecoys(shell.getFunDecoys());
+        }
+      }
+    } else if (phase === "book"){
+      addDecoys(shell.getBookDecoys(correctLabel, count));
     } else if (phase === "reference"){
-      decoys = shell.getReferenceDecoys(parsedRef, selectedMode, 2);
-    } else if (selectedMode === "easy"){
-      decoys = shell.getFunWordDecoys(target, buildData.words, 2);
-    } else {
-      decoys = shell.getVerseWordDecoys({
-        words: buildData.words,
-        correct: target,
-        targetIndex: state.progressIndex,
-        count: 2,
-        avoidNext: 2,
-        fallbackToFun: true
-      });
+      addDecoys(shell.getReferenceDecoys(parsedRef, selectedMode, count + 4));
     }
 
-    const used = new Set([shell.normalizeWord(target)]);
-    const out = [{ text: target, correct:true }];
-
-    for (const decoy of decoys){
-      const key = shell.normalizeWord(decoy);
-      if (!key || used.has(key)) continue;
-      out.push({ text: decoy, correct:false });
-      used.add(key);
-      if (out.length >= 3) break;
+    if (out.length < count){
+      addDecoys(shell.getFunWordDecoys(correctLabel, buildData.words, count * 3));
     }
 
-    for (const decoy of shell.getFunWordDecoys(target, buildData.words, 8)){
-      const key = shell.normalizeWord(decoy);
-      if (!key || used.has(key)) continue;
-      out.push({ text: decoy, correct:false });
-      used.add(key);
-      if (out.length >= 3) break;
+    if (out.length < count){
+      addDecoys(shell.getFunDecoys());
     }
 
-    return shell.shuffle(out).slice(0, 3);
+    return out.slice(0, count);
+  }
+
+  function getChoices(){
+    updatePhase();
+
+    const correctLabel = currentTarget();
+    const phase = state.phase;
+    const decoys = getDecoysForPhase(phase, correctLabel, 2);
+    const labels = shell.shuffle([correctLabel, ...decoys]).slice(0, 3);
+
+    return labels.map((label) => ({
+      text: label,
+      correct: label === correctLabel
+    }));
   }
 
   function spawnWave(){
@@ -526,7 +550,16 @@
 
   function fireTongueToBug(bug, now, duration, isBonus){
     const frog = getFrogPoint();
-    const bugPoint = getBugPoint(bug);
+    const bugPoint = getBugPoint(bug, now, { ignoreEat:true });
+
+    if (bug){
+      bug.eatFromX = bugPoint.x;
+      bug.eatFromY = bugPoint.y;
+      bug.eatToX = frog.x;
+      bug.eatToY = frog.y;
+      bug.eatStartedAt = now;
+      bug.eatDuration = duration;
+    }
 
     state.tongue = {
       fromX: frog.x,
@@ -542,12 +575,27 @@
   function getFrogPoint(){
     return {
       x: state.fieldWidth * 0.5,
-      y: state.fieldHeight * 0.90
+      y: state.fieldHeight * 0.88
     };
   }
 
-  function getBugPoint(bug){
+  function getBugPoint(bug, now = performance.now(), options = {}){
     if (!bug) return { x: state.fieldWidth * 0.5, y: state.fieldHeight * 0.35 };
+
+    if (bug.status === "eating" && !options.ignoreEat && Number.isFinite(bug.eatFromX)){
+      const duration = Math.max(1, Number(bug.eatDuration) || MAIN_EAT_MS);
+      const elapsed = Math.max(0, now - (Number(bug.eatStartedAt) || now));
+      const pullStart = duration * 0.44;
+      const pullWindow = Math.max(1, duration - pullStart);
+      const pullT = shell.clamp((elapsed - pullStart) / pullWindow, 0, 1);
+      const eased = easeInCubic(pullT);
+
+      return {
+        x: bug.eatFromX + (bug.eatToX - bug.eatFromX) * eased,
+        y: bug.eatFromY + (bug.eatToY - bug.eatFromY) * eased
+      };
+    }
+
     return {
       x: (bug.xRatio || 0.5) * state.fieldWidth,
       y: (bug.yRatio || 0.35) * state.fieldHeight
@@ -855,7 +903,7 @@
     const bonusClass = isBonus ? " bb-bug--bonus" : "";
     const popClass = now - bug.bornAt < 260 ? " is-pop" : "";
     const word = isBonus ? "" : `<div class="bb-bug-word">${escapeHtml(bug.text)}</div>`;
-    const disabled = state.waveStatus !== "falling" && !isBonus ? " disabled" : "";
+    const disabled = (!isBonus && state.waveStatus !== "falling") || (isBonus && state.bonusEating) ? " disabled" : "";
 
     return `
       <div class="bb-bug-wrap${bonusClass}${statusClass}${popClass}" style="--bb-x:${p.x}px; --bb-y:${p.y}px;">
@@ -902,8 +950,8 @@
     return `
       <div class="bb-reaction bb-reaction--${isCorrect ? "correct" : "wrong"}">
         <img class="bb-reaction-img" src="${escapeHtml(img)}" alt="${escapeHtml(alt)}" onerror="this.hidden=true;this.nextElementSibling.hidden=false;">
-        <div class="bb-reaction-fallback" hidden>${fallback}</div>
-        <div class="bb-reaction-label">${label}</div>
+        <div class="bb-reaction-fallback" hidden>${escapeHtml(fallback)}</div>
+        <div class="bb-reaction-label">${escapeHtml(label)}</div>
       </div>
     `;
   }
@@ -935,6 +983,7 @@
   }
 
   function easeInQuad(t){ return t * t; }
+  function easeInCubic(t){ return t * t * t; }
   function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
 
   function escapeHtml(value){
