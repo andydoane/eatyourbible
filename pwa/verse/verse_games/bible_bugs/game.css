@@ -477,8 +477,17 @@ body{
 #bbHelpOverlay{
   position:fixed;
   z-index:1000;
-  pointer-events:auto;
   touch-action:manipulation;
+}
+
+#bbGameMenuOverlay:not(.is-open),
+#bbHelpOverlay:not(.is-open){
+  pointer-events:none;
+}
+
+#bbGameMenuOverlay.is-open,
+#bbHelpOverlay.is-open{
+  pointer-events:auto;
 }
 
 #bbGameMenuOverlay *,
@@ -490,4 +499,12 @@ body{
 #bbHelpOverlay button{
   touch-action:manipulation;
   -webkit-tap-highlight-color:transparent;
+}
+
+#bbGameMenuOverlay.is-open{
+  z-index:1001;
+}
+
+#bbHelpOverlay.is-open{
+  z-index:1002;
 }
