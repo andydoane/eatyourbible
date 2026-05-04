@@ -347,12 +347,17 @@ function installMenuTouchFallbacks(){
   });
 }
 
-  function openHelpFromMenu(){
-    const menuOverlay = document.getElementById(GAME_MENU_ID);
-    if (menuOverlay) menuOverlay.classList.remove("is-open");
-    shell.openHelp(HELP_OVERLAY_ID, "back", "Back");
-    setPaused(true, "help");
+function openHelpFromMenu(){
+  const menuOverlay = document.getElementById(GAME_MENU_ID);
+
+  if (menuOverlay){
+    menuOverlay.classList.remove("is-open");
+    menuOverlay.setAttribute("aria-hidden", "true");
   }
+
+  shell.openHelp(HELP_OVERLAY_ID, "back", "Back");
+  setPaused(true, "help");
+}
 
   function setPaused(paused, reason = ""){
     const now = performance.now();
