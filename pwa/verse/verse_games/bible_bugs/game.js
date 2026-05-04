@@ -38,6 +38,13 @@
   const BONUS_EAT_MS = 360;
   const MAIN_EAT_MS = 420;
 
+const BUG_MOTION = {
+  sideAmount: 22,
+  sideSpeed: 2.3,
+  rotationAmount: 5,
+  squishAmount: 0.05
+};
+
   let selectedMode = null;
   let muted = false;
   let completionMarked = false;
@@ -467,7 +474,9 @@
       status: "falling",
       poofAt: 0,
       selected:false,
-      eaten:false
+      eaten:false,
+      motionPhase: Math.random() * Math.PI * 2,
+      jitterSeed: Math.random() * Math.PI * 2
     }));
   }
 
@@ -724,7 +733,9 @@ function showReaction(type){
       bornAt: now,
       expiresAt: now + BONUS_BUG_LIFE_MS,
       status: "bonus",
-      poofAt: 0
+      poofAt: 0,
+      motionPhase: Math.random() * Math.PI * 2,
+      jitterSeed: Math.random() * Math.PI * 2
     };
   }
 
@@ -944,23 +955,30 @@ function showReaction(type){
     return items.join("");
   }
 
-  function renderBugButton(bug, now, isBonus){
-    const p = getBugPoint(bug);
-    const statusClass = bug.status === "poof" ? " is-poof" : bug.status === "eating" ? " is-eating" : "";
-    const bonusClass = isBonus ? " bb-bug--bonus" : "";
-    const popClass = now - bug.bornAt < 260 ? " is-pop" : "";
-    const word = isBonus ? "" : `<div class="bb-bug-word">${escapeHtml(bug.text)}</div>`;
-    const disabled = (!isBonus && state.waveStatus !== "falling") || (isBonus && state.bonusEating) ? " disabled" : "";
+function renderBugButton(bug, now, isBonus){
+  const p = getBugPoint(bug, now);
+  const motion = getBugMotionState(bug, now, isBonus);
+  const statusClass = bug.status === "poof" ? " is-poof" : bug.status === "eating" ? " is-eating" : "";
+  const bonusClass = isBonus ? " bb-bug--bonus" : "";
+  const popClass = now - bug.bornAt < 260 ? " is-pop" : "";
+  const word = isBonus ? "" : `<div class="bb-bug-word">${escapeHtml(bug.text)}</div>`;
+  const disabled = (!isBonus && state.waveStatus !== "falling") || (isBonus && state.bonusEating) ? " disabled" : "";
 
-    return `
-      <div class="bb-bug-wrap${bonusClass}${statusClass}${popClass}" style="--bb-x:${p.x}px; --bb-y:${p.y}px;">
-        <button class="bb-bug-btn" type="button" data-bug-id="${escapeHtml(bug.id)}"${disabled}>
-          <span class="bb-bug-emoji" aria-hidden="true">${escapeHtml(bug.emoji || "🪰")}</span>
-          ${word}
-        </button>
-      </div>
-    `;
-  }
+  const x = p.x + motion.swayX;
+  const y = p.y;
+  const buttonTransform = `rotate(${motion.rotateDeg.toFixed(2)}deg) scale(${motion.scaleX.toFixed(3)}, ${motion.scaleY.toFixed(3)})`;
+
+  return `
+    <div class="bb-bug-wrap${bonusClass}${statusClass}${popClass}" style="--bb-x:${x.toFixed(2)}px; --bb-y:${y.toFixed(2)}px;">
+      <button class="bb-bug-btn" type="button" data-bug-id="${escapeHtml(bug.id)}"${disabled} style="transform:${buttonTransform};">
+        <span class="bb-bug-emoji" aria-hidden="true">${escapeHtml(bug.emoji || "🪰")}</span>
+        ${word}
+      </button>
+    </div>
+  `;
+}
+  
+
 
   function renderEffects(now){
     return `${renderTongue(now)}${renderSpitParticles(now)}`;
@@ -1074,11 +1092,49 @@ function renderReaction(now){
     return label;
   }
 
-  function easeInQuad(t){ return t * t; }
-  function easeInCubic(t){ return t * t * t; }
-  function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
+function getBugMotionState(bug, now = performance.now(), isBonus = false){
+  if (!bug || bug.status === "eating"){
+    return {
+      swayX: 0,
+      rotateDeg: 0,
+      scaleX: 1,
+      scaleY: 1
+    };
+  }
 
-  function escapeHtml(value){
+  const phase = Number(bug.motionPhase) || 0;
+  const jitter = Number(bug.jitterSeed) || 0;
+  const elapsed = Math.max(0, now - (Number(bug.bornAt) || now)) / 1000;
+  const speed = BUG_MOTION.sideSpeed;
+  const amount = BUG_MOTION.sideAmount * (isBonus ? 0.72 : 1);
+
+  const w = elapsed * Math.PI * 2 * speed;
+
+  const swayX =
+    Math.sin(w * 1.8 + phase) * amount * 0.55 +
+    Math.sin(w * 4.8 + phase * 0.7) * amount * 0.22 +
+    Math.sin(w * 8.2 + jitter) * amount * 0.10;
+
+  const rotateDeg =
+    Math.sin(elapsed * 10 + phase) * BUG_MOTION.rotationAmount * 0.75 +
+    Math.sin(elapsed * 21 + phase * 1.2) * BUG_MOTION.rotationAmount * 0.35;
+
+  const squish =
+    Math.sin(elapsed * 7 + phase) * BUG_MOTION.squishAmount;
+
+  return {
+    swayX,
+    rotateDeg,
+    scaleX: 1 + squish,
+    scaleY: 1 - squish
+  };
+}
+
+function easeInQuad(t){ return t * t; }
+function easeInCubic(t){ return t * t * t; }
+function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
+
+function escapeHtml(value){
     return String(value ?? "")
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
