@@ -815,7 +815,8 @@ function finishMainEat(bug){
       duration,
       isBonus: !!isBonus,
       streak: Number(streakForTongue) || 0,
-      lastSparkAt: 0
+      lastSparkAt: 0,
+      wavePhase: Math.random() * Math.PI * 2
     };
   }
 
@@ -1281,10 +1282,9 @@ function renderTongue(now){
   progress = shell.clamp(progress, 0, 1);
 
   const eased = easeOutCubic(progress);
-  const dx = localToX - localFromX;
-  const dy = localToY - localFromY;
-  const length = Math.max(0, Math.hypot(dx, dy) * eased);
-  const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+  const dxFull = localToX - localFromX;
+  const dyFull = localToY - localFromY;
+  const fullLength = Math.max(1, Math.hypot(dxFull, dyFull));
 
   const sparkleTier = getTongueSparkleTier(t.streak);
   const glowClass =
@@ -1294,6 +1294,60 @@ function renderTongue(now){
         ? " bb-tongue--subtle"
         : "";
 
+  const wave = getTongueWaveConfig(t.streak);
+
+  if (wave && fullLength > 4){
+    const visibleToX = localFromX + dxFull * eased;
+    const visibleToY = localFromY + dyFull * eased;
+    const dxVisible = visibleToX - localFromX;
+    const dyVisible = visibleToY - localFromY;
+    const visibleLength = Math.max(1, Math.hypot(dxVisible, dyVisible));
+    const dirX = dxVisible / visibleLength;
+    const dirY = dyVisible / visibleLength;
+    const perpX = -dirY;
+    const perpY = dirX;
+    const fieldMin = Math.max(1, Math.min(state.fieldWidth, state.fieldHeight));
+    const amp = fieldMin * wave.ampRatio * eased;
+    const phase = (Number(t.wavePhase) || 0) + elapsed * wave.speed;
+    const segments = 18;
+    const points = [];
+
+    for (let index = 0; index <= segments; index += 1){
+      const s = index / segments;
+      const baseX = localFromX + dxVisible * s;
+      const baseY = localFromY + dyVisible * s;
+
+      // Envelope keeps the tongue attached cleanly at frog and bug ends.
+      const envelope = Math.sin(Math.PI * s);
+      const wiggle = Math.sin((Math.PI * 2 * wave.waves * s) + phase);
+      const offset = envelope * wiggle * amp;
+
+      points.push({
+        x: baseX + perpX * offset,
+        y: baseY + perpY * offset
+      });
+    }
+
+    const path = points.map((point, index) => {
+      const prefix = index === 0 ? "M" : "L";
+      return `${prefix}${point.x.toFixed(2)} ${point.y.toFixed(2)}`;
+    }).join(" ");
+
+    const tipRadius = shell.clamp(fieldMin * 0.026, 8, 14);
+    const svgClass = `bb-tongue-svg ${wave.tierClass}${glowClass}`;
+
+    return `
+      <svg class="${svgClass}" aria-hidden="true">
+        <path class="bb-tongue-svg-glow" d="${path}"></path>
+        <path class="bb-tongue-svg-line" d="${path}"></path>
+        <circle class="bb-tongue-svg-tip" cx="${visibleToX.toFixed(2)}" cy="${visibleToY.toFixed(2)}" r="${tipRadius.toFixed(2)}"></circle>
+      </svg>
+    `;
+  }
+
+  const length = Math.max(0, fullLength * eased);
+  const angle = Math.atan2(dyFull, dxFull) * 180 / Math.PI;
+
   return `
     <div class="bb-tongue${glowClass}" style="--bb-tongue-x:${localFromX}px; --bb-tongue-y:${localFromY}px; --bb-tongue-l:${length}px; --bb-tongue-a:${angle}deg;">
       <div class="bb-tongue-glow"></div>
@@ -1302,6 +1356,7 @@ function renderTongue(now){
     </div>
   `;
 }
+
 
   function renderSpitParticles(now){
     if (!state.spitParticles.length) return "";
@@ -1320,6 +1375,48 @@ function renderTongue(now){
       return `<span class="bb-spit-dot" style="left:${x}px; top:${y}px; width:${particle.size}px; height:${particle.size}px; opacity:${opacity}; transform:translate(-50%,-50%) scale(${scale});"></span>`;
     }).join("");
   }
+
+function getTongueWaveConfig(streak){
+  const value = Number(streak) || 0;
+
+  if (value >= 15){
+    return {
+      ampRatio: 0.064,
+      waves: 3.35,
+      speed: 0.024,
+      tierClass: "bb-tongue-svg--legendary"
+    };
+  }
+
+  if (value >= 12){
+    return {
+      ampRatio: 0.052,
+      waves: 2.75,
+      speed: 0.021,
+      tierClass: "bb-tongue-svg--strong"
+    };
+  }
+
+  if (value >= 10){
+    return {
+      ampRatio: 0.042,
+      waves: 2.25,
+      speed: 0.019,
+      tierClass: "bb-tongue-svg--medium"
+    };
+  }
+
+  if (value >= 8){
+    return {
+      ampRatio: 0.030,
+      waves: 1.65,
+      speed: 0.017,
+      tierClass: "bb-tongue-svg--gentle"
+    };
+  }
+
+  return null;
+}
 
 function getTongueSparkleTier(streak){
   const value = Number(streak) || 0;

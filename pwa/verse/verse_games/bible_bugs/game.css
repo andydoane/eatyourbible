@@ -337,6 +337,57 @@ body{
   box-shadow:0 2px 0 rgba(0,0,0,0.10);
 }
 
+.bb-tongue-svg{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  overflow:visible;
+  pointer-events:none;
+}
+
+.bb-tongue-svg-line,
+.bb-tongue-svg-glow{
+  fill:none;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+
+.bb-tongue-svg-line{
+  stroke:url(#bbUnusedTongueGradient);
+  stroke:#ff75b8;
+  stroke-width:clamp(7px, 1.7vw, 12px);
+  filter:drop-shadow(0 2px 0 rgba(0,0,0,0.08));
+}
+
+.bb-tongue-svg-glow{
+  stroke:#ffd6ef;
+  stroke-width:clamp(18px, 4.2vw, 34px);
+  opacity:0.48;
+  filter:blur(clamp(6px, 1.6vw, 12px));
+}
+
+.bb-tongue-svg.bb-tongue--rainbow .bb-tongue-svg-glow{
+  stroke:#ffe15e;
+  opacity:0.70;
+}
+
+.bb-tongue-svg.bb-tongue--rainbow .bb-tongue-svg-line{
+  stroke:#ff5ec4;
+}
+
+.bb-tongue-svg-tip{
+  fill:#ff6fb8;
+  filter:drop-shadow(0 2px 0 rgba(0,0,0,0.10));
+}
+
+.bb-tongue-svg.bb-tongue--rainbow .bb-tongue-svg-tip{
+  fill:#ffd34d;
+  filter:
+    drop-shadow(0 0 8px rgba(255,255,255,0.74))
+    drop-shadow(0 2px 0 rgba(0,0,0,0.10));
+}
+
 .bb-spit-dot{
   position:absolute;
   display:block;
