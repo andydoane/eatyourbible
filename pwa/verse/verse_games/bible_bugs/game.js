@@ -265,7 +265,6 @@ function wireCommonNav(){
   });
 
   installMenuTouchFallbacks();
-  installBibleBugsTouchDebug();
 }
 
 function installMenuTouchFallbacks(){
@@ -370,116 +369,6 @@ function installMenuTouchFallbacks(){
   }
 }
 
-function installBibleBugsTouchDebug(){
-  let panel = document.getElementById("bbTouchDebugPanel");
-
-  if (!panel){
-    panel = document.createElement("pre");
-    panel.id = "bbTouchDebugPanel";
-    panel.style.cssText = [
-      "position:fixed",
-      "left:6px",
-      "right:6px",
-      "bottom:6px",
-      "z-index:999999",
-      "max-height:42vh",
-      "overflow:auto",
-      "margin:0",
-      "padding:8px",
-      "border-radius:10px",
-      "background:rgba(0,0,0,0.86)",
-      "color:#fff",
-      "font:11px/1.25 monospace",
-      "white-space:pre-wrap",
-      "pointer-events:none"
-    ].join(";");
-
-    document.body.appendChild(panel);
-  }
-
-  function describeEl(el){
-    if (!el) return "null";
-
-    const id = el.id ? `#${el.id}` : "";
-    const cls = typeof el.className === "string" && el.className.trim()
-      ? "." + el.className.trim().replace(/\s+/g, ".")
-      : "";
-
-    return `${el.tagName || "?"}${id}${cls}`;
-  }
-
-  function updateDebug(eventLabel, event){
-    const help = document.getElementById(HELP_OVERLAY_ID);
-    const menu = document.getElementById(GAME_MENU_ID);
-    const closeBtn = document.getElementById(`${HELP_OVERLAY_ID}CloseBtn`);
-
-    let x = 0;
-    let y = 0;
-
-    if (event){
-      const touch = event.changedTouches?.[0] || event.touches?.[0] || event;
-      x = Math.round(touch.clientX || 0);
-      y = Math.round(touch.clientY || 0);
-    }
-
-    const topEl = event ? document.elementFromPoint(x, y) : null;
-    const target = event?.target || null;
-
-    panel.textContent = [
-      `BB DEBUG ACTIVE ${new Date().toLocaleTimeString()}`,
-      `event: ${eventLabel || "none yet"}`,
-      `xy: ${x}, ${y}`,
-      `target: ${describeEl(target)}`,
-      `elementFromPoint: ${describeEl(topEl)}`,
-      `target closest help close: ${!!target?.closest?.(`#${HELP_OVERLAY_ID}CloseBtn`)}`,
-      `top closest help close: ${!!topEl?.closest?.(`#${HELP_OVERLAY_ID}CloseBtn`)}`,
-      ``,
-      `help exists: ${!!help}`,
-      `help class: ${help?.className || ""}`,
-      `help aria-hidden: ${help?.getAttribute("aria-hidden") || ""}`,
-      `help data-mode: ${help?.dataset?.mode || ""}`,
-      ``,
-      `menu exists: ${!!menu}`,
-      `menu class: ${menu?.className || ""}`,
-      `menu aria-hidden: ${menu?.getAttribute("aria-hidden") || ""}`,
-      ``,
-      `closeBtn exists: ${!!closeBtn}`,
-      `closeBtn text: ${(closeBtn?.textContent || "").trim()}`,
-      `closeBtn rect: ${closeBtn ? JSON.stringify({
-        l: Math.round(closeBtn.getBoundingClientRect().left),
-        t: Math.round(closeBtn.getBoundingClientRect().top),
-        w: Math.round(closeBtn.getBoundingClientRect().width),
-        h: Math.round(closeBtn.getBoundingClientRect().height)
-      }) : "none"}`
-    ].join("\n");
-  }
-
-  updateDebug("installed", null);
-
-  if (!document.documentElement.dataset.bbDebugListeners){
-    document.documentElement.dataset.bbDebugListeners = "1";
-
-    document.addEventListener("touchstart", (event) => {
-      updateDebug("touchstart", event);
-    }, { capture:true, passive:true });
-
-    document.addEventListener("touchend", (event) => {
-      updateDebug("touchend", event);
-    }, { capture:true, passive:true });
-
-    document.addEventListener("pointerdown", (event) => {
-      updateDebug("pointerdown", event);
-    }, { capture:true });
-
-    document.addEventListener("pointerup", (event) => {
-      updateDebug("pointerup", event);
-    }, { capture:true });
-
-    document.addEventListener("click", (event) => {
-      updateDebug("click", event);
-    }, { capture:true });
-  }
-}
 
 function openHelpFromMenu(){
   const menuOverlay = document.getElementById(GAME_MENU_ID);
