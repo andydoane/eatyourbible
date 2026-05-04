@@ -329,7 +329,8 @@ body{
   justify-content:center;
   background:transparent;
   pointer-events:none;
-  animation:bbReactionPop 620ms ease-out both;
+  opacity:0;
+  will-change:transform, opacity;
 }
 
 .bb-reaction-img{
@@ -424,12 +425,7 @@ body{
   100%{ opacity:1; transform:translate(-50%, -50%) scale(1); }
 }
 
-@keyframes bbReactionPop{
-  0%{ opacity:0; transform:translate(-50%, -50%) scale(0.55) rotate(-5deg); }
-  18%{ opacity:1; transform:translate(-50%, -50%) scale(1.12) rotate(3deg); }
-  62%{ opacity:1; transform:translate(-50%, -50%) scale(1) rotate(0deg); }
-  100%{ opacity:0; transform:translate(-50%, -50%) scale(1.08) rotate(0deg); }
-}
+
 
 @keyframes bbBonusOverlay{
   0%{ opacity:0; transform:scale(0.94); }
