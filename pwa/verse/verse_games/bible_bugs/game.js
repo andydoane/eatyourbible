@@ -1180,10 +1180,10 @@ function addBugPoof(bug, now = performance.now()){
     const items = [];
     const now = performance.now();
 
-    for (const bug of state.bugs){
-      if (bug.status === "gone") continue;
-      items.push(renderBugButton(bug, now, false));
-    }
+  for (const bug of state.bugs){
+    if (bug.status === "gone" || bug.status === "poof") continue;
+    items.push(renderBugButton(bug, now, false));
+  }
 
     if (state.bonusBug){
       items.push(renderBugButton(state.bonusBug, now, true));
