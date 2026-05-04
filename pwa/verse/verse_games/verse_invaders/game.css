@@ -500,3 +500,11 @@ body{
   touch-action:manipulation;
   -webkit-tap-highlight-color:transparent;
 }
+
+#bbGameMenuOverlay.is-open{
+  z-index:1001;
+}
+
+#bbHelpOverlay.is-open{
+  z-index:1002;
+}
