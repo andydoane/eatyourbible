@@ -39,12 +39,10 @@
   const MAIN_EAT_MS = 420;
 
 const BUG_MOTION = {
-  // Side motion is a ratio of the field width, not pixels.
-  // 0.052 means about 5.2% of the playfield width.
-  sideAmountRatio: 0.052,
-  sideSpeed: 4.0,
-  rotationAmount: 12.5,
-  squishAmount: 0.05
+  sideAmountRatio: 0.03,
+  sideSpeed: 0.55,
+  rotationAmount: 3,
+  squishAmount: 0.02
 };
 
   let selectedMode = null;
