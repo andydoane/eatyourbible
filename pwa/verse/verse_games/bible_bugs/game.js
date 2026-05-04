@@ -1309,7 +1309,7 @@ function renderTongue(now){
     const fieldMin = Math.max(1, Math.min(state.fieldWidth, state.fieldHeight));
     const amp = fieldMin * wave.ampRatio * eased;
     const phase = (Number(t.wavePhase) || 0) + elapsed * wave.speed;
-    const segments = 18;
+    const segments = 40;
     const points = [];
 
     for (let index = 0; index <= segments; index += 1){
