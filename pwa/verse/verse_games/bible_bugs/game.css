@@ -471,3 +471,23 @@ body{
     font-size:clamp(16px, 4.1vw, 26px);
   }
 }
+
+
+#bbGameMenuOverlay,
+#bbHelpOverlay{
+  position:fixed;
+  z-index:1000;
+  pointer-events:auto;
+  touch-action:manipulation;
+}
+
+#bbGameMenuOverlay *,
+#bbHelpOverlay *{
+  pointer-events:auto;
+}
+
+#bbGameMenuOverlay button,
+#bbHelpOverlay button{
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+}

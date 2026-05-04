@@ -64,6 +64,7 @@ const BUG_MOTION = {
     running:false,
     paused:false,
     pauseReason:"",
+    pausedAt:0,
     rafId:0,
     lastTs:0,
     fieldWidth:0,
@@ -138,6 +139,7 @@ const BUG_MOTION = {
     state.running = true;
     state.paused = false;
     state.pauseReason = "";
+    state.pausedAt = 0;
     state.lastTs = 0;
     state.progressIndex = 0;
     state.buildFitDone = false;
@@ -271,10 +273,92 @@ const BUG_MOTION = {
   }
 
   function setPaused(paused, reason = ""){
-    state.paused = paused;
-    state.pauseReason = paused ? reason : "";
-    if (!paused) state.lastTs = performance.now();
+    const now = performance.now();
+
+    if (paused){
+      if (state.paused){
+        state.pauseReason = reason || state.pauseReason;
+        return;
+      }
+
+      state.paused = true;
+      state.pauseReason = reason;
+      state.pausedAt = now;
+      return;
+    }
+
+    if (!state.paused){
+      state.pauseReason = "";
+      state.pausedAt = 0;
+      state.lastTs = now;
+      return;
+    }
+
+    const pauseDuration = Math.max(0, now - (Number(state.pausedAt) || now));
+    shiftGameTimers(pauseDuration);
+
+    state.paused = false;
+    state.pauseReason = "";
+    state.pausedAt = 0;
+    state.lastTs = now;
   }
+
+function shiftGameTimers(deltaMs){
+  const delta = Number(deltaMs) || 0;
+  if (delta <= 0) return;
+
+  function shiftBugTimes(bug){
+    if (!bug) return;
+
+    if (Number.isFinite(bug.bornAt)) bug.bornAt += delta;
+    if (Number.isFinite(bug.poofAt) && bug.poofAt > 0) bug.poofAt += delta;
+    if (Number.isFinite(bug.eatStartedAt)) bug.eatStartedAt += delta;
+    if (Number.isFinite(bug.expiresAt)) bug.expiresAt += delta;
+  }
+
+  for (const bug of state.bugs){
+    shiftBugTimes(bug);
+  }
+
+  shiftBugTimes(state.bonusBug);
+
+  if (state.tongue && Number.isFinite(state.tongue.startedAt)){
+    state.tongue.startedAt += delta;
+  }
+
+  if (state.reaction){
+    if (Number.isFinite(state.reaction.startedAt)) state.reaction.startedAt += delta;
+    if (Number.isFinite(state.reaction.until)) state.reaction.until += delta;
+  }
+
+  for (const particle of state.spitParticles){
+    if (Number.isFinite(particle.bornAt)) particle.bornAt += delta;
+  }
+
+  for (const action of state.scheduledActions){
+    if (Number.isFinite(action.at)) action.at += delta;
+  }
+
+  if (Number.isFinite(state.buildShakeUntil) && state.buildShakeUntil > 0){
+    state.buildShakeUntil += delta;
+  }
+
+  if (Number.isFinite(state.fieldFlashUntil) && state.fieldFlashUntil > 0){
+    state.fieldFlashUntil += delta;
+  }
+
+  if (Number.isFinite(state.overlayUntil) && state.overlayUntil > 0){
+    state.overlayUntil += delta;
+  }
+
+  if (Number.isFinite(state.bonusIntroUntil) && state.bonusIntroUntil > 0){
+    state.bonusIntroUntil += delta;
+  }
+
+  if (Number.isFinite(state.bonusEndsAt) && state.bonusEndsAt > 0){
+    state.bonusEndsAt += delta;
+  }
+}
 
   function wireGameInput(){
     const field = document.getElementById("bbField");
