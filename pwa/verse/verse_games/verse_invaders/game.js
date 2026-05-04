@@ -324,7 +324,7 @@ function installMenuTouchFallbacks(){
     overlay.setAttribute("aria-hidden", "false");
   });
 
-  wireTouchButton(`${HELP_OVERLAY_ID}CloseBtn`, () => {
+  function closeHelpFromTouch(){
     const helpOverlay = document.getElementById(HELP_OVERLAY_ID);
     const menuOverlay = document.getElementById(GAME_MENU_ID);
     const mode = helpOverlay?.dataset.mode || "close";
@@ -344,7 +344,29 @@ function installMenuTouchFallbacks(){
     } else {
       setPaused(false, "");
     }
-  });
+  }
+
+  wireTouchButton(`${HELP_OVERLAY_ID}CloseBtn`, closeHelpFromTouch);
+
+  if (!document.documentElement.dataset.bbHelpTouchFallbacks){
+    document.documentElement.dataset.bbHelpTouchFallbacks = "1";
+
+    const catchHelpBackTouch = (event) => {
+      const helpOverlay = document.getElementById(HELP_OVERLAY_ID);
+      if (!helpOverlay || !helpOverlay.classList.contains("is-open")) return;
+
+      const button = event.target?.closest?.(`#${HELP_OVERLAY_ID}CloseBtn`);
+      if (!button) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      closeHelpFromTouch();
+    };
+
+    document.addEventListener("touchend", catchHelpBackTouch, { capture:true, passive:false });
+    document.addEventListener("pointerup", catchHelpBackTouch, { capture:true });
+    document.addEventListener("click", catchHelpBackTouch, { capture:true });
+  }
 }
 
 function openHelpFromMenu(){
