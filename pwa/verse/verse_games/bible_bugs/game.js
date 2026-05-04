@@ -46,8 +46,8 @@ const BUG_MOTION = {
 };
 
 const TONGUE_FX = {
-  subtleSparkInterval: 24,
-  rainbowSparkInterval: 14
+  subtleSparkInterval: 12,
+  rainbowSparkInterval: 12
 };
 
   let selectedMode = null;
