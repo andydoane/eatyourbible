@@ -460,7 +460,7 @@
       correct: choice.correct,
       emoji: BUG_EMOJIS[(state.waveId + index) % BUG_EMOJIS.length],
       xRatio: shuffledLanes[index] || LANES[index] || 0.5,
-      startY: -0.16,
+      startY: -0.06,
       endY: 0.76,
       bornAt: now,
       fallMs,
