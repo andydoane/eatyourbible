@@ -45,6 +45,11 @@ const BUG_MOTION = {
   squishAmount: 0.02
 };
 
+const TONGUE_FX = {
+  subtleSparkInterval: 24,
+  rainbowSparkInterval: 14
+};
+
   let selectedMode = null;
   let muted = false;
   let completionMarked = false;
@@ -1281,8 +1286,17 @@ function renderTongue(now){
   const length = Math.max(0, Math.hypot(dx, dy) * eased);
   const angle = Math.atan2(dy, dx) * 180 / Math.PI;
 
+  const sparkleTier = getTongueSparkleTier(t.streak);
+  const glowClass =
+    sparkleTier === "rainbow"
+      ? " bb-tongue--rainbow"
+      : sparkleTier === "subtle"
+        ? " bb-tongue--subtle"
+        : "";
+
   return `
-    <div class="bb-tongue" style="--bb-tongue-x:${localFromX}px; --bb-tongue-y:${localFromY}px; --bb-tongue-l:${length}px; --bb-tongue-a:${angle}deg;">
+    <div class="bb-tongue${glowClass}" style="--bb-tongue-x:${localFromX}px; --bb-tongue-y:${localFromY}px; --bb-tongue-l:${length}px; --bb-tongue-a:${angle}deg;">
+      <div class="bb-tongue-glow"></div>
       <div class="bb-tongue-line"></div>
       <div class="bb-tongue-tip"></div>
     </div>
@@ -1352,7 +1366,9 @@ function updateTongueSparkles(now){
   // Only leave a trail while the tongue is stretching outward.
   if (elapsed < 0 || elapsed > half) return;
 
-  const interval = tier === "rainbow" ? 20 : 34;
+  const interval = tier === "rainbow"
+  ? TONGUE_FX.rainbowSparkInterval
+  : TONGUE_FX.subtleSparkInterval;
   if (tongue.lastSparkAt && now - tongue.lastSparkAt < interval) return;
 
   tongue.lastSparkAt = now;

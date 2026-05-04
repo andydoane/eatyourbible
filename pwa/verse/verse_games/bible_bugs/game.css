@@ -283,6 +283,36 @@ body{
   transform:rotate(var(--bb-tongue-a));
 }
 
+.bb-tongue-glow{
+  position:absolute;
+  left:0;
+  top:50%;
+  width:100%;
+  height:clamp(12px, 2.8vw, 22px);
+  transform:translateY(-50%);
+  border-radius:999px;
+  opacity:0;
+  filter:blur(clamp(7px, 1.8vw, 12px));
+  background:linear-gradient(90deg, rgba(255,214,239,0.9), rgba(255,117,184,0.95));
+  pointer-events:none;
+}
+
+.bb-tongue--subtle .bb-tongue-glow{
+  opacity:0.55;
+}
+
+.bb-tongue--rainbow .bb-tongue-glow{
+  opacity:0.8;
+  background:linear-gradient(
+    90deg,
+    rgba(255,94,196,0.95),
+    rgba(255,211,77,0.95),
+    rgba(94,231,255,0.95),
+    rgba(140,255,122,0.95),
+    rgba(184,121,255,0.95)
+  );
+}
+
 .bb-tongue-line{
   position:absolute;
   left:0;
