@@ -142,8 +142,8 @@ body{
 }
 
 .bb-bug-btn{
-  width:clamp(84px, 23vw, 150px);
-  min-height:clamp(76px, 19vw, 132px);
+  width:clamp(104px, 28vw, 220px);
+  min-height:clamp(92px, 22vw, 152px);
   border:none;
   background:transparent;
   color:var(--bb-white);
@@ -152,7 +152,7 @@ body{
   flex-direction:column;
   align-items:center;
   justify-content:center;
-  gap:clamp(4px, 1.4vw, 8px);
+  gap:clamp(3px, 1.1vw, 7px);
   padding:clamp(4px, 1.3vw, 8px);
   cursor:pointer;
   touch-action:manipulation;
@@ -171,7 +171,7 @@ body{
 }
 
 .bb-bug-word{
-  max-width:min(45vw, 230px);
+  max-width:100%;
   padding:0;
   border-radius:0;
   background:transparent;
@@ -180,7 +180,9 @@ body{
   font-weight:900;
   line-height:1.04;
   text-align:center;
-  overflow-wrap:anywhere;
+  white-space:nowrap;
+  overflow-wrap:normal;
+  word-break:normal;
   text-shadow:0 2px 0 rgba(0,0,0,0.25), 0 0 8px rgba(0,0,0,0.10);
   box-shadow:none;
 }
@@ -481,8 +483,8 @@ body{
   }
 
   .bb-bug-btn{
-    width:clamp(78px, 21vw, 130px);
-    min-height:clamp(68px, 18vw, 112px);
+    width:clamp(98px, 27vw, 190px);
+    min-height:clamp(78px, 19vw, 126px);
   }
 
   .bb-bug-emoji{
