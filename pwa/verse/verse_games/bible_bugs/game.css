@@ -309,6 +309,28 @@ body{
   will-change:transform, opacity;
 }
 
+.bb-poof-dot{
+  position:absolute;
+  display:block;
+  border-radius:999px;
+  background:rgba(255,255,255,0.78);
+  box-shadow:
+    0 0 0 2px rgba(255,255,255,0.18),
+    0 3px 0 rgba(0,0,0,0.08);
+  will-change:transform, opacity;
+  pointer-events:none;
+}
+
+.bb-poof-spark{
+  position:absolute;
+  display:block;
+  color:#ffffff;
+  font-size:clamp(13px, 3.4vw, 22px);
+  line-height:1;
+  text-shadow:0 2px 0 rgba(0,0,0,0.16);
+  will-change:transform, opacity;
+  pointer-events:none;
+}
 
 .bb-overlay-bubble{
   position:absolute;
