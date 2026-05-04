@@ -730,7 +730,6 @@ function shiftGameTimers(deltaMs){
     } else {
       state.mistakes += 1;
       state.buildShakeUntil = now + 320;
-      state.fieldFlashUntil = now + 280;
       addSpitSpray(now);
       showReaction("incorrect");
     }
