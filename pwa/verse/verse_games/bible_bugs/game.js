@@ -39,10 +39,12 @@
   const MAIN_EAT_MS = 420;
 
 const BUG_MOTION = {
-  sideAmount: 12,
-  sideSpeed: 1.5,
-  rotationAmount: 2,
-  squishAmount: 0.04
+  // Side motion is a ratio of the field width, not pixels.
+  // 0.052 means about 5.2% of the playfield width.
+  sideAmountRatio: 0.052,
+  sideSpeed: 4.0,
+  rotationAmount: 12.5,
+  squishAmount: 0.05
 };
 
   let selectedMode = null;
@@ -1103,30 +1105,26 @@ function getBugMotionState(bug, now = performance.now(), isBonus = false){
   }
 
   const phase = Number(bug.motionPhase) || 0;
-  const jitter = Number(bug.jitterSeed) || 0;
   const elapsed = Math.max(0, now - (Number(bug.bornAt) || now)) / 1000;
-  const speed = BUG_MOTION.sideSpeed;
-  const amount = BUG_MOTION.sideAmount * (isBonus ? 0.72 : 1);
 
-  const w = elapsed * Math.PI * 2 * speed;
+  const fieldWidth = Math.max(1, Number(state.fieldWidth) || 1);
+  const amount = fieldWidth * BUG_MOTION.sideAmountRatio * (isBonus ? 0.72 : 1);
 
-  const swayX =
-    Math.sin(w * 1.8 + phase) * amount * 0.55 +
-    Math.sin(w * 4.8 + phase * 0.7) * amount * 0.22 +
-    Math.sin(w * 8.2 + jitter) * amount * 0.10;
+  // Gentle side-to-side from the sampler.
+  const w = elapsed * Math.PI * 2 * BUG_MOTION.sideSpeed;
+  const swayX = Math.sin(w + phase) * amount;
 
-  const rotateDeg =
-    Math.sin(elapsed * 10 + phase) * BUG_MOTION.rotationAmount * 0.75 +
-    Math.sin(elapsed * 21 + phase * 1.2) * BUG_MOTION.rotationAmount * 0.35;
+  // Gentle rotate from the sampler.
+  const rotateDeg = Math.sin(elapsed * 3 + phase) * BUG_MOTION.rotationAmount;
 
-  const squish =
-    Math.sin(elapsed * 7 + phase) * BUG_MOTION.squishAmount;
+  // Gentle pulse from the sampler. This grows/shrinks both axes together.
+  const pulse = Math.sin(elapsed * 4.5 + phase) * BUG_MOTION.squishAmount;
 
   return {
     swayX,
     rotateDeg,
-    scaleX: 1 + squish,
-    scaleY: 1 - squish
+    scaleX: 1 + pulse,
+    scaleY: 1 + pulse
   };
 }
 
