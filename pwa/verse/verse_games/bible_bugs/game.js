@@ -83,7 +83,11 @@ const BUG_MOTION = {
     tongue:null,
     spitParticles:[],
     poofParticles:[],
+    tongueSparkles:[],
     scheduledActions:[],
+    currentStreak:0,
+    maxStreak:0,
+    frogChompUntil:0,
     misses:0,
     mistakes:0,
     correctEaten:0,
@@ -156,7 +160,11 @@ const BUG_MOTION = {
     state.tongue = null;
     state.spitParticles = [];
     state.poofParticles = [];
+    state.tongueSparkles = [];
     state.scheduledActions = [];
+    state.currentStreak = 0;
+    state.maxStreak = 0;
+    state.frogChompUntil = 0;
     state.misses = 0;
     state.mistakes = 0;
     state.correctEaten = 0;
@@ -451,6 +459,18 @@ function shiftGameTimers(deltaMs){
     if (Number.isFinite(particle.bornAt)) particle.bornAt += delta;
   }
 
+  for (const particle of state.tongueSparkles){
+    if (Number.isFinite(particle.bornAt)) particle.bornAt += delta;
+  }
+
+  if (Number.isFinite(state.frogChompUntil) && state.frogChompUntil > 0){
+    state.frogChompUntil += delta;
+  }
+
+  if (state.tongue && Number.isFinite(state.tongue.lastSparkAt)){
+    state.tongue.lastSparkAt += delta;
+  }
+
   for (const action of state.scheduledActions){
     if (Number.isFinite(action.at)) action.at += delta;
   }
@@ -707,42 +727,51 @@ function shiftGameTimers(deltaMs){
       }
     }
 
-    fireTongueToBug(bug, now, MAIN_EAT_MS, false);
+    const tongueStreak = bug.correct ? state.currentStreak + 1 : 0;
+fireTongueToBug(bug, now, MAIN_EAT_MS, false, tongueStreak);
 
     scheduleAction(MAIN_EAT_MS, () => finishMainEat(bug));
   }
 
-  function finishMainEat(bug){
-    const isCorrect = !!bug.correct;
-    const now = performance.now();
+function finishMainEat(bug){
+  const isCorrect = !!bug.correct;
+  const now = performance.now();
 
-    state.tongue = null;
-    state.spitParticles = [];
-    state.bugs = [];
-    state.waveStatus = "resolving";
+  state.tongue = null;
+  state.spitParticles = [];
+  state.bugs = [];
+  state.waveStatus = "resolving";
+  state.frogChompUntil = now + 280;
 
-    if (isCorrect){
-      state.progressIndex = Math.min(buildData.segments.length, state.progressIndex + 1);
-      state.correctEaten += 1;
-      updatePhase();
-      updateBuildText();
-      showReaction("correct");
-    } else {
-      state.mistakes += 1;
-      state.buildShakeUntil = now + 320;
-      addSpitSpray(now);
-      showReaction("incorrect");
-    }
+  if (isCorrect){
+    state.currentStreak += 1;
+    state.maxStreak = Math.max(state.maxStreak, state.currentStreak);
 
-    if (!state.done && !state.bonusMode && !state.bonusIntroActive){
-      spawnWave();
-    }
+    state.progressIndex = Math.min(buildData.segments.length, state.progressIndex + 1);
+    state.correctEaten += 1;
+    updatePhase();
+    updateBuildText();
+    showReaction("correct");
+  } else {
+    state.currentStreak = 0;
+
+    state.mistakes += 1;
+    state.buildShakeUntil = now + 320;
+    addSpitSpray(now);
+    showReaction("incorrect");
   }
+
+  if (!state.done && !state.bonusMode && !state.bonusIntroActive){
+    spawnWave();
+  }
+}
+  
 
   function missCorrectBug(){
     const now = performance.now();
     state.waveStatus = "missed";
     state.misses += 1;
+    state.currentStreak = 0;
     state.fieldFlashUntil = now + 240;
 
     for (const bug of state.bugs){
@@ -759,7 +788,7 @@ function shiftGameTimers(deltaMs){
     });
   }
 
-  function fireTongueToBug(bug, now, duration, isBonus){
+  function fireTongueToBug(bug, now, duration, isBonus, streakForTongue = 0){
     const frog = getFrogPoint();
     const bugPoint = getBugPoint(bug, now, { ignoreEat:true });
 
@@ -779,7 +808,9 @@ function shiftGameTimers(deltaMs){
       toY: bugPoint.y,
       startedAt: now,
       duration,
-      isBonus: !!isBonus
+      isBonus: !!isBonus,
+      streak: Number(streakForTongue) || 0,
+      lastSparkAt: 0
     };
   }
 
@@ -997,6 +1028,9 @@ function addBugPoof(bug, now = performance.now()){
 
     state.poofParticles = state.poofParticles.filter((particle) => now - particle.bornAt < particle.life);
 
+    updateTongueSparkles(now);
+    state.tongueSparkles = state.tongueSparkles.filter((particle) => now - particle.bornAt < particle.life);
+
     if (state.bonusIntroActive && now >= state.bonusIntroUntil){
       startBonusRound();
     }
@@ -1099,6 +1133,7 @@ function addBugPoof(bug, now = performance.now()){
     state.tongue = null;
     state.spitParticles = [];
     state.poofParticles = [];
+    state.tongueSparkles = [];
     state.bugs = [];
 
     if (!completionMarked){
@@ -1153,16 +1188,18 @@ function addBugPoof(bug, now = performance.now()){
     const bonusIntro = document.getElementById("bbBonusIntroOverlay");
     const statusPill = document.getElementById("bbStatusPill");
     const build = document.getElementById("bbBuild");
+    const frog = document.getElementById("bbFrog");
 
-    if (!field || !play || !effects || !frogTongueSlot || !reactionLayer || !overlay || !bonusIntro || !statusPill || !build) return;
+    if (!field || !play || !effects || !frogTongueSlot || !reactionLayer || !overlay || !bonusIntro || !statusPill || !build || !frog) return;
 
     const now = performance.now();
     field.classList.toggle("is-flash-bad", now < state.fieldFlashUntil);
     build.classList.toggle("is-shake", now < state.buildShakeUntil);
+    frog.classList.toggle("is-chomping", now < state.frogChompUntil);
 
     play.innerHTML = renderBugs();
     frogTongueSlot.innerHTML = renderTongue(now);
-    effects.innerHTML = renderSpitParticles(now) + renderPoofParticles(now);
+    effects.innerHTML = renderSpitParticles(now) + renderPoofParticles(now) + renderTongueSparkles(now);
     reactionLayer.innerHTML = renderReaction(now);
 
     overlay.innerHTML = now < state.overlayUntil && state.overlayMessage
@@ -1269,6 +1306,113 @@ function renderTongue(now){
       return `<span class="bb-spit-dot" style="left:${x}px; top:${y}px; width:${particle.size}px; height:${particle.size}px; opacity:${opacity}; transform:translate(-50%,-50%) scale(${scale});"></span>`;
     }).join("");
   }
+
+function getTongueSparkleTier(streak){
+  const value = Number(streak) || 0;
+
+  if (value >= 5) return "rainbow";
+  if (value >= 3) return "subtle";
+
+  return "none";
+}
+
+function getTongueTipPoint(tongue, now){
+  if (!tongue){
+    return {
+      x: state.fieldWidth * 0.5,
+      y: state.fieldHeight * 0.75
+    };
+  }
+
+  const elapsed = now - tongue.startedAt;
+  const half = tongue.duration / 2;
+  let progress = elapsed <= half ? elapsed / half : 1 - ((elapsed - half) / half);
+  progress = shell.clamp(progress, 0, 1);
+
+  const eased = easeOutCubic(progress);
+
+  return {
+    x: tongue.fromX + (tongue.toX - tongue.fromX) * eased,
+    y: tongue.fromY + (tongue.toY - tongue.fromY) * eased,
+    progress,
+    extending: elapsed <= half
+  };
+}
+
+function updateTongueSparkles(now){
+  const tongue = state.tongue;
+  if (!tongue || tongue.isBonus) return;
+
+  const tier = getTongueSparkleTier(tongue.streak);
+  if (tier === "none") return;
+
+  const elapsed = now - tongue.startedAt;
+  const half = tongue.duration / 2;
+
+  // Only leave a trail while the tongue is stretching outward.
+  if (elapsed < 0 || elapsed > half) return;
+
+  const interval = tier === "rainbow" ? 20 : 34;
+  if (tongue.lastSparkAt && now - tongue.lastSparkAt < interval) return;
+
+  tongue.lastSparkAt = now;
+
+  const tip = getTongueTipPoint(tongue, now);
+  const count = tier === "rainbow" ? 3 : 2;
+  const colors = tier === "rainbow"
+    ? ["#ff5ec4", "#ffd34d", "#5ee7ff", "#8cff7a", "#b879ff"]
+    : ["#ffffff", "#ffd6ef", "#ff9bd0"];
+
+  for (let index = 0; index < count; index += 1){
+    const angle = Math.random() * Math.PI * 2;
+    const speed = Math.min(state.fieldWidth, state.fieldHeight) * (0.045 + Math.random() * 0.085);
+    const life = tier === "rainbow"
+      ? 360 + Math.random() * 140
+      : 260 + Math.random() * 100;
+    const size = tier === "rainbow"
+      ? 6 + Math.random() * 7
+      : 3 + Math.random() * 5;
+
+    state.tongueSparkles.push({
+      id: `tongue-spark-${now}-${index}-${Math.random()}`,
+      x: tip.x + (Math.random() - 0.5) * 8,
+      y: tip.y + (Math.random() - 0.5) * 8,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      size,
+      bornAt: now,
+      life,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rainbow: tier === "rainbow",
+      spin: (Math.random() - 0.5) * 220
+    });
+  }
+
+  if (state.tongueSparkles.length > 90){
+    state.tongueSparkles.splice(0, state.tongueSparkles.length - 90);
+  }
+}
+
+function renderTongueSparkles(now){
+  if (!state.tongueSparkles.length) return "";
+
+  return state.tongueSparkles.map((particle) => {
+    const age = Math.max(0, now - particle.bornAt);
+    const t = age / 1000;
+    const lifeT = shell.clamp(age / particle.life, 0, 1);
+    const eased = easeOutCubic(lifeT);
+
+    const x = particle.x + particle.vx * t;
+    const y = particle.y + particle.vy * t;
+    const opacity = Math.max(0, 1 - eased);
+    const scale = particle.rainbow
+      ? 0.65 + eased * 0.75
+      : 0.55 + eased * 0.55;
+    const rotate = (particle.spin || 0) * lifeT;
+
+    return `<span class="bb-tongue-sparkle${particle.rainbow ? " is-rainbow" : ""}" style="left:${x.toFixed(1)}px; top:${y.toFixed(1)}px; width:${particle.size.toFixed(1)}px; height:${particle.size.toFixed(1)}px; background:${escapeHtml(particle.color)}; opacity:${opacity.toFixed(3)}; transform:translate(-50%,-50%) rotate(${rotate.toFixed(1)}deg) scale(${scale.toFixed(3)});"></span>`;
+  }).join("");
+}
 
 function renderPoofParticles(now){
   if (!state.poofParticles.length) return "";

@@ -259,6 +259,11 @@ body{
   filter:drop-shadow(0 7px 0 rgba(0,0,0,0.12));
 }
 
+.bb-frog.is-chomping .bb-frog-img{
+  transform-origin:50% 100%;
+  animation:bbFrogChomp 280ms cubic-bezier(.2, 1.35, .35, 1) both;
+}
+
 .bb-frog-fallback{
   position:relative;
   z-index:3;
@@ -332,6 +337,27 @@ body{
   text-shadow:0 2px 0 rgba(0,0,0,0.16);
   will-change:transform, opacity;
   pointer-events:none;
+}
+
+.bb-tongue-sparkle{
+  position:absolute;
+  display:block;
+  border-radius:999px;
+  background:#ffffff;
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.55),
+    0 0 8px rgba(255,255,255,0.78),
+    0 2px 0 rgba(0,0,0,0.08);
+  will-change:transform, opacity;
+  pointer-events:none;
+}
+
+.bb-tongue-sparkle.is-rainbow{
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,0.65),
+    0 0 10px rgba(255,255,255,0.82),
+    0 0 16px currentColor,
+    0 2px 0 rgba(0,0,0,0.08);
 }
 
 .bb-overlay-bubble{
@@ -451,6 +477,14 @@ body{
 @keyframes bbFrogIdle{
   0%,100%{ transform:translateX(-50%) translateY(0) scale(1); }
   50%{ transform:translateX(-50%) translateY(-0.18rem) scale(1.012); }
+}
+
+@keyframes bbFrogChomp{
+  0%{ transform:scale(1, 1); }
+  28%{ transform:scale(0.94, 1.12) translateY(-0.08rem); }
+  56%{ transform:scale(1.10, 0.88) translateY(0.05rem); }
+  78%{ transform:scale(0.98, 1.04) translateY(-0.02rem); }
+  100%{ transform:scale(1, 1); }
 }
 
 @keyframes bbOverlayPop{
