@@ -239,31 +239,91 @@ const BUG_MOTION = {
       Finish the verse, then eat as many bonus bugs as you can!`;
   }
 
-  function wireCommonNav(){
-    shell.wireGameMenu({
-      id: GAME_MENU_ID,
-      menuButtonId: "bbMenuPill",
-      helpOverlayId: HELP_OVERLAY_ID,
-      isMuted: () => muted,
-      onMuteToggle: () => {
-        muted = !muted;
-        return muted;
-      },
-      onHowToPlay: openHelpFromMenu,
-      onModeSelect: () => {
-        setPaused(false, "");
-        stopLoop();
-        renderModeSelect();
-      },
-      onExit: () => {
-        stopLoop();
-        window.VerseGameBridge.exitGame();
-      },
-      onOpen: () => setPaused(true, "menu"),
-      onClose: () => setPaused(false, ""),
-      onBackFromHelp: () => setPaused(true, "menu")
-    });
+function wireCommonNav(){
+  shell.wireGameMenu({
+    id: GAME_MENU_ID,
+    menuButtonId: "bbMenuPill",
+    helpOverlayId: HELP_OVERLAY_ID,
+    isMuted: () => muted,
+    onMuteToggle: () => {
+      muted = !muted;
+      return muted;
+    },
+    onHowToPlay: openHelpFromMenu,
+    onModeSelect: () => {
+      setPaused(false, "");
+      stopLoop();
+      renderModeSelect();
+    },
+    onExit: () => {
+      stopLoop();
+      window.VerseGameBridge.exitGame();
+    },
+    onOpen: () => setPaused(true, "menu"),
+    onClose: () => setPaused(false, ""),
+    onBackFromHelp: () => setPaused(true, "menu")
+  });
+
+  installMenuTouchFallbacks();
+}
+
+function installMenuTouchFallbacks(){
+  const overlay = document.getElementById(GAME_MENU_ID);
+  if (!overlay || overlay.dataset.bbTouchFallbacks === "1") return;
+
+  overlay.dataset.bbTouchFallbacks = "1";
+
+  function closeMenu(){
+    overlay.classList.remove("is-open");
+    overlay.setAttribute("aria-hidden", "true");
+    setPaused(false, "");
   }
+
+  function wireTouchButton(id, action){
+    const button = document.getElementById(id);
+    if (!button) return;
+
+    button.addEventListener("touchend", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      action();
+    }, { passive:false });
+  }
+
+  wireTouchButton(`${GAME_MENU_ID}HowToBtn`, () => {
+    openHelpFromMenu();
+  });
+
+  wireTouchButton(`${GAME_MENU_ID}ModeSelectBtn`, () => {
+    overlay.classList.remove("is-open");
+    overlay.setAttribute("aria-hidden", "true");
+    setPaused(false, "");
+    stopLoop();
+    renderModeSelect();
+  });
+
+  wireTouchButton(`${GAME_MENU_ID}ExitBtn`, () => {
+    stopLoop();
+    window.VerseGameBridge.exitGame();
+  });
+
+  wireTouchButton(`${GAME_MENU_ID}CloseBtn`, () => {
+    closeMenu();
+  });
+
+  wireTouchButton(`${GAME_MENU_ID}MuteBtn`, () => {
+    muted = !muted;
+
+    const muteButton = document.getElementById(`${GAME_MENU_ID}MuteBtn`);
+    if (muteButton){
+      muteButton.textContent = muted ? "🔇" : "🔊";
+      muteButton.setAttribute("aria-label", muted ? "Unmute" : "Mute");
+      muteButton.setAttribute("title", muted ? "Unmute" : "Mute");
+    }
+
+    overlay.setAttribute("aria-hidden", "false");
+  });
+}
 
   function openHelpFromMenu(){
     const menuOverlay = document.getElementById(GAME_MENU_ID);
