@@ -39,10 +39,10 @@
   const MAIN_EAT_MS = 420;
 
 const BUG_MOTION = {
-  sideAmount: 22,
-  sideSpeed: 2.3,
-  rotationAmount: 5,
-  squishAmount: 0.05
+  sideAmount: 16,
+  sideSpeed: 1.9,
+  rotationAmount: 3.5,
+  squishAmount: 0.035
 };
 
   let selectedMode = null;
