@@ -732,6 +732,7 @@ function shiftGameTimers(deltaMs){
       state.buildShakeUntil = now + 320;
       state.fieldFlashUntil = now + 280;
       addSpitSpray(now);
+      showReaction("incorrect");
     }
 
     if (!state.done && !state.bonusMode && !state.bonusIntroActive){
@@ -1297,8 +1298,9 @@ function renderPoofParticles(now){
 
 function renderReaction(now){
   const reaction = state.reaction;
-  if (!reaction || reaction.type !== "correct" || now >= reaction.until) return "";
+  if (!reaction || now >= reaction.until) return "";
 
+  const isIncorrect = reaction.type === "incorrect";
   const duration = Math.max(1, Number(reaction.duration) || 580);
   const startedAt = Number(reaction.startedAt) || (reaction.until - duration);
   const age = Math.max(0, now - startedAt);
@@ -1310,11 +1312,11 @@ function renderReaction(now){
   if (t < 0.18){
     const popT = easeOutCubic(t / 0.18);
     scale = 0.55 + (1.14 - 0.55) * popT;
-    rotate = -5 + 8 * popT;
+    rotate = isIncorrect ? 5 - 8 * popT : -5 + 8 * popT;
   } else if (t < 0.62){
     const settleT = easeOutCubic((t - 0.18) / 0.44);
     scale = 1.14 + (1 - 1.14) * settleT;
-    rotate = 3 + (0 - 3) * settleT;
+    rotate = isIncorrect ? -3 + (0 + 3) * settleT : 3 + (0 - 3) * settleT;
   } else {
     const fadeT = easeOutCubic((t - 0.62) / 0.38);
     scale = 1 + 0.08 * fadeT;
@@ -1325,16 +1327,22 @@ function renderReaction(now){
   const fadeOut = shell.clamp((t - 0.72) / 0.28, 0, 1);
   const opacity = Math.max(0, fadeIn * (1 - fadeOut));
 
+  const imgSrc = isIncorrect ? IMAGE_PATHS.frogGross : IMAGE_PATHS.frogHappy;
+  const altText = isIncorrect ? "Grossed-out frog" : "Happy frog";
+  const fallback = isIncorrect ? "🐸🤢" : "🐸✨";
+  const typeClass = isIncorrect ? "bb-reaction--incorrect" : "bb-reaction--correct";
+
   return `
     <div
-      class="bb-reaction bb-reaction--correct"
+      class="bb-reaction ${typeClass}"
       style="opacity:${opacity.toFixed(3)}; transform:translate(-50%, -50%) scale(${scale.toFixed(3)}) rotate(${rotate.toFixed(2)}deg);"
     >
-      <img class="bb-reaction-img" src="${escapeHtml(IMAGE_PATHS.frogHappy)}" alt="Happy frog" onerror="this.hidden=true;this.nextElementSibling.hidden=false;">
-      <div class="bb-reaction-fallback" hidden>🐸✨</div>
+      <img class="bb-reaction-img" src="${escapeHtml(imgSrc)}" alt="${altText}" onerror="this.hidden=true;this.nextElementSibling.hidden=false;">
+      <div class="bb-reaction-fallback" hidden>${fallback}</div>
     </div>
   `;
 }
+
 
   function renderFrog(){
     return `
