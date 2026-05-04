@@ -912,20 +912,22 @@ function showReaction(type){
     const field = document.getElementById("bbField");
     const play = document.getElementById("bbPlayLayer");
     const effects = document.getElementById("bbEffectsLayer");
+    const frogTongueSlot = document.getElementById("bbFrogTongueSlot");
     const reactionLayer = document.getElementById("bbReactionLayer");
     const overlay = document.getElementById("bbOverlay");
     const bonusIntro = document.getElementById("bbBonusIntroOverlay");
     const statusPill = document.getElementById("bbStatusPill");
     const build = document.getElementById("bbBuild");
 
-    if (!field || !play || !effects || !reactionLayer || !overlay || !bonusIntro || !statusPill || !build) return;
+    if (!field || !play || !effects || !frogTongueSlot || !reactionLayer || !overlay || !bonusIntro || !statusPill || !build) return;
 
     const now = performance.now();
     field.classList.toggle("is-flash-bad", now < state.fieldFlashUntil);
     build.classList.toggle("is-shake", now < state.buildShakeUntil);
 
     play.innerHTML = renderBugs();
-    effects.innerHTML = renderEffects(now);
+    frogTongueSlot.innerHTML = renderTongue(now);
+    effects.innerHTML = renderSpitParticles(now);
     reactionLayer.innerHTML = renderReaction(now);
 
     overlay.innerHTML = now < state.overlayUntil && state.overlayMessage
@@ -979,32 +981,41 @@ function renderBugButton(bug, now, isBonus){
 }
   
 
+function renderTongue(now){
+  const t = state.tongue;
+  if (!t) return "";
 
-  function renderEffects(now){
-    return `${renderTongue(now)}${renderSpitParticles(now)}`;
-  }
+  const frog = document.getElementById("bbFrog");
+  const field = document.getElementById("bbField");
 
-  function renderTongue(now){
-    const t = state.tongue;
-    if (!t) return "";
+  if (!frog || !field) return "";
 
-    const elapsed = now - t.startedAt;
-    const half = t.duration / 2;
-    let progress = elapsed <= half ? elapsed / half : 1 - ((elapsed - half) / half);
-    progress = shell.clamp(progress, 0, 1);
-    const eased = easeOutCubic(progress);
-    const dx = t.toX - t.fromX;
-    const dy = t.toY - t.fromY;
-    const length = Math.max(0, Math.hypot(dx, dy) * eased);
-    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+  const frogRect = frog.getBoundingClientRect();
+  const fieldRect = field.getBoundingClientRect();
 
-    return `
-      <div class="bb-tongue" style="--bb-tongue-x:${t.fromX}px; --bb-tongue-y:${t.fromY}px; --bb-tongue-l:${length}px; --bb-tongue-a:${angle}deg;">
-        <div class="bb-tongue-line"></div>
-        <div class="bb-tongue-tip"></div>
-      </div>
-    `;
-  }
+  const localFromX = t.fromX - (frogRect.left - fieldRect.left);
+  const localFromY = t.fromY - (frogRect.top - fieldRect.top);
+  const localToX = t.toX - (frogRect.left - fieldRect.left);
+  const localToY = t.toY - (frogRect.top - fieldRect.top);
+
+  const elapsed = now - t.startedAt;
+  const half = t.duration / 2;
+  let progress = elapsed <= half ? elapsed / half : 1 - ((elapsed - half) / half);
+  progress = shell.clamp(progress, 0, 1);
+
+  const eased = easeOutCubic(progress);
+  const dx = localToX - localFromX;
+  const dy = localToY - localFromY;
+  const length = Math.max(0, Math.hypot(dx, dy) * eased);
+  const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+  return `
+    <div class="bb-tongue" style="--bb-tongue-x:${localFromX}px; --bb-tongue-y:${localFromY}px; --bb-tongue-l:${length}px; --bb-tongue-a:${angle}deg;">
+      <div class="bb-tongue-line"></div>
+      <div class="bb-tongue-tip"></div>
+    </div>
+  `;
+}
 
   function renderSpitParticles(now){
     if (!state.spitParticles.length) return "";
@@ -1069,6 +1080,7 @@ function renderReaction(now){
     return `
       <div class="bb-frog" id="bbFrog">
         <img class="bb-lilypad-img" src="${escapeHtml(IMAGE_PATHS.lilyPad)}" alt="" aria-hidden="true" onerror="this.hidden=true;">
+        <div class="bb-frog-tongue-slot" id="bbFrogTongueSlot"></div>
         <img class="bb-frog-img" src="${escapeHtml(IMAGE_PATHS.frogIdle)}" alt="Frog" onerror="this.hidden=true;this.nextElementSibling.hidden=false;">
         <div class="bb-frog-fallback" hidden>🐸</div>
       </div>

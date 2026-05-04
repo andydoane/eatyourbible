@@ -221,6 +221,14 @@ body{
   animation:bbFrogIdle 1800ms ease-in-out infinite;
 }
 
+.bb-frog-tongue-slot{
+  position:absolute;
+  inset:0;
+  z-index:2;
+  pointer-events:none;
+  overflow:visible;
+}
+
 .bb-lilypad-img{
   position:absolute;
   z-index:1;
@@ -237,7 +245,7 @@ body{
 
 .bb-frog-img{
   position:relative;
-  z-index:2;
+  z-index:3;
   display:block;
   width:100%;
   height:auto;
@@ -251,7 +259,7 @@ body{
 
 .bb-frog-fallback{
   position:relative;
-  z-index:2;
+  z-index:3;
   font-size:clamp(52px, 16vw, 98px);
   line-height:1;
   transform:rotate(180deg);
