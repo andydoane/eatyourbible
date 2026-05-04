@@ -2,200 +2,212 @@
   const app = document.getElementById("app");
   const ctx = await window.VerseGameBridge.getVerseContext();
 
-  const GAME_ID = "bible_bugs";
-  const GAME_TITLE = "Bible Bugs";
-  const BUILD_AREA = "compact";
-  const HELP_OVERLAY_ID = "bbHelpOverlay";
-  const GAME_MENU_ID = "bbGameMenuOverlay";
+  const GAME_ID = "verse_invaders";
 
   const GAME_THEME = {
-    bg: "#a7cb6f",
-    accent: "#a7cb6f",
-    helpTitleBg: "#a7cb6f",
-    helpTitleColor: "#ffffff",
-    helpCloseBg: "#a7cb6f",
-    helpCloseColor: "#ffffff"
+    bg: "#333333",
+    accent: "#333333"
   };
 
-  const IMAGE_PATHS = {
-    frogIdle: "./bible_bugs_images/bible_bugs_frog_idle.png",
-    frogHappy: "./bible_bugs_images/bible_bugs_frog_happy.png",
-    frogGross: "./bible_bugs_images/bible_bugs_frog_gross.png",
-    lilyPad: "./bible_bugs_images/bible_bugs_lilypad.png"
+  const BUILD_AREA = "compact";
+
+  const HELP_OVERLAY_ID = "vinvHelpOverlay";
+
+  const LANE_KEYS = ["left", "center", "right"];
+  const LANE_COLORS = [
+    {
+      key: "red",
+      hex: "#ff5a51",
+      alienImg: "./verse_invaders_images/verse_invaders_alien_red.png",
+      alienAlt: "Red alien"
+    },
+    {
+      key: "yellow",
+      hex: "#ffc751",
+      alienImg: "./verse_invaders_images/verse_invaders_alien_yellow.png",
+      alienAlt: "Yellow alien"
+    },
+    {
+      key: "blue",
+      hex: "#40b9c5",
+      alienImg: "./verse_invaders_images/verse_invaders_alien_blue.png",
+      alienAlt: "Blue alien"
+    }
+  ];
+
+  const ABDUCTEE_IMAGES = [
+    "./verse_invaders_images/verse_invaders_abductee_1.png",
+    "./verse_invaders_images/verse_invaders_abductee_2.png"
+  ];
+  const BUTTON_COLOR_ORDER = {
+    left: LANE_COLORS[0],
+    center: LANE_COLORS[1],
+    right: LANE_COLORS[2]
   };
-
-  const BUG_EMOJIS = ["🪰", "🐞", "🐝", "🦟", "🪲", "🐛"];
-  const LANES = [0.18, 0.50, 0.82];
-  const BONUS_SECONDS = 20;
-
-  const MODE_TIMING = {
-    easy: { fallSeconds: 6.8, nextDelay: 0, reactionMs: 620, missDelay: 520 },
-    medium: { fallSeconds: 5.8, nextDelay: 0, reactionMs: 580, missDelay: 460 },
-    hard: { fallSeconds: 4.9, nextDelay: 0, reactionMs: 540, missDelay: 420 }
-  };
-
-  const BONUS_BUG_LIFE_MS = 1850;
-  const BONUS_EAT_MS = 360;
-  const MAIN_EAT_MS = 420;
-
-const BUG_MOTION = {
-  sideAmountRatio: 0.03,
-  sideSpeed: 0.55,
-  rotationAmount: 3,
-  squishAmount: 0.02
-};
+  const CORRECT_EFFECT_POOL = ["alienPop", "starburst", "chrysanthemum", "novaBurst"];
+  const BONUS_FIREWORK_POOL = ["flashRing", "classicFirework", "confettiBloom", "plasmaBurst", "cosmicCrackle"];
+const BOOKS = window.VerseGameShell.getBibleBookDecoys();
+const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
 
   let selectedMode = null;
   let muted = false;
   let completionMarked = false;
   let completionResult = null;
-  let resizeBound = false;
+  let resizeHandlerBound = false;
 
-  const shell = window.VerseGameShell;
-  const parsedRef = shell.parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
-  const buildData = shell.buildVerseSegments({
+  const state = {
+    running:false,
+    rafId:0,
+    lastTs:0,
+    paused:false,
+    pauseReason:"",
+    scale:1,
+    fieldWidth:0,
+    fieldHeight:0,
+    controlsTopY:0,
+    bottomZoneY:0,
+    buttonsLocked:false,
+    activeLane:null,
+    flashBadUntil:0,
+    buildShakeUntil:0,
+    overlayMessage:"",
+    overlayUntil:0,
+    buildSizeClass:"normal",
+    buildFitDone:false,
+    queue:[],
+    builtCount:0,
+    phase:"words",
+    streak:0,
+    mistakes:0,
+    wrongGuessesThisRound:0,
+    roundIndex:0,
+    roundSpeed:0,
+    entities:[],
+    rocket:null,
+    trails:[],
+    effects:[],
+    roundStatus:"idle",
+    scheduledActions:[],
+    bonusMode:false,
+    bonusShotsLeft:0,
+    bonusAutoTimer:0,
+    bonusFinished:false,
+    bonusFireworks:[],
+    modeTiming:{
+      easy:{ start:6.2, step:0 },
+      medium:{ start:5.8, step:-0.08 },
+      hard:{ start:5.1, step:-0.10 }
+    }
+  };
+
+  const parsedRef = parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
+  const buildData = window.VerseGameShell.buildVerseSegments({
     verseText: ctx.verseText || "",
     book: parsedRef.book,
     reference: parsedRef.reference,
     buildArea: BUILD_AREA
   });
-
-  const state = {
-    running:false,
-    paused:false,
-    pauseReason:"",
-    pausedAt:0,
-    rafId:0,
-    lastTs:0,
-    fieldWidth:0,
-    fieldHeight:0,
-    progressIndex:0,
-    buildFitDone:false,
-    buildShakeUntil:0,
-    fieldFlashUntil:0,
-    reaction:null,
-    overlayMessage:"",
-    overlayUntil:0,
-    phase:"words",
-    waveId:0,
-    waveStatus:"idle",
-    bugs:[],
-    tongue:null,
-    spitParticles:[],
-    scheduledActions:[],
-    misses:0,
-    mistakes:0,
-    correctEaten:0,
-    bonusIntroActive:false,
-    bonusIntroUntil:0,
-    bonusMode:false,
-    bonusEndsAt:0,
-    bonusBug:null,
-    bonusBugId:0,
-    bonusEating:false,
-    bugsEaten:0,
-    done:false
-  };
+  const verseWords = buildData.words;
 
   renderIntro();
 
-  function renderIntro(){
-    stopLoop();
 
-    shell.renderTitleScreen({
-      app,
-      title: GAME_TITLE,
-      icon: "🐸",
-      helpHtml: helpHtml(),
-      helpOverlayId: HELP_OVERLAY_ID,
-      theme: GAME_THEME,
-      backLabel: "Back to Practice Games",
-      onBack: () => window.VerseGameBridge.exitGame(),
-      onStart: renderModeSelect
-    });
-  }
+function renderIntro(){
+  stopLoop();
 
-  function renderModeSelect(){
-    stopLoop();
+  window.VerseGameShell.renderTitleScreen({
+    app,
+    title: "Verse Invaders",
+    icon: "👾",
+    helpHtml: helpHtml(),
+    helpOverlayId: HELP_OVERLAY_ID,
+    theme: GAME_THEME,
+    backLabel: "Back to Practice Games",
+    onBack: () => window.VerseGameBridge.exitGame(),
+    onStart: renderModeSelect
+  });
+}
 
-    shell.renderModeSelect({
-      app,
-      title: "Choose Your Difficulty",
-      icon: "🥉🥈🥇",
-      helpHtml: helpHtml(),
-      helpOverlayId: HELP_OVERLAY_ID,
-      theme: GAME_THEME,
-      backLabel: `Back to ${GAME_TITLE} title`,
-      onBack: renderIntro,
-      onSelect: startGame
-    });
-  }
+function renderModeSelect(){
+  stopLoop();
+
+  window.VerseGameShell.renderModeSelect({
+    app,
+    title: "Choose Your Difficulty",
+    icon: "🥉🥈🥇",
+    helpHtml: helpHtml(),
+    helpOverlayId: HELP_OVERLAY_ID,
+    theme: GAME_THEME,
+    backLabel: "Back to Verse Invaders title",
+    onBack: renderIntro,
+    onSelect: startGame
+  });
+}
 
   function startGame(mode){
     selectedMode = mode;
     completionMarked = false;
     completionResult = null;
-
     state.running = true;
+    state.lastTs = 0;
     state.paused = false;
     state.pauseReason = "";
-    state.pausedAt = 0;
-    state.lastTs = 0;
-    state.progressIndex = 0;
-    state.buildFitDone = false;
+    state.buttonsLocked = false;
+    state.activeLane = null;
+    state.flashBadUntil = 0;
     state.buildShakeUntil = 0;
-    state.fieldFlashUntil = 0;
-    state.reaction = null;
     state.overlayMessage = "";
     state.overlayUntil = 0;
+    state.queue = buildData.segments;
+    state.buildSizeClass = buildData.buildSizeClass;
+    state.buildFitDone = false;
+    state.builtCount = 0;
     state.phase = "words";
-    state.waveId = 0;
-    state.waveStatus = "idle";
-    state.bugs = [];
-    state.tongue = null;
-    state.spitParticles = [];
-    state.scheduledActions = [];
-    state.misses = 0;
+    state.streak = 0;
     state.mistakes = 0;
-    state.correctEaten = 0;
-    state.bonusIntroActive = false;
-    state.bonusIntroUntil = 0;
+    state.wrongGuessesThisRound = 0;
+    state.roundIndex = 0;
+    state.entities = [];
+    state.rocket = null;
+    state.trails = [];
+    state.effects = [];
+    state.roundStatus = "idle";
+    state.scheduledActions = [];
     state.bonusMode = false;
-    state.bonusEndsAt = 0;
-    state.bonusBug = null;
-    state.bonusBugId = 0;
-    state.bonusEating = false;
-    state.bugsEaten = 0;
-    state.done = false;
+    state.bonusShotsLeft = 0;
+    state.bonusAutoTimer = 0;
+    state.bonusFinished = false;
+    state.bonusFireworks = [];
+    state.roundSpeed = 0;
 
     app.innerHTML = `
-      <div class="bb-shell">
-        <div class="bb-stage">
-          <div class="bb-build-wrap">
-            <div class="bb-build vm-build vm-build--${BUILD_AREA}" id="bbBuild">
-              <div class="bb-build-text vm-build-text" id="bbBuildText"></div>
+      <div class="vinv-shell">
+        <div class="vinv-stage">
+          <div class="vinv-build-wrap">
+            <div class="vinv-build vm-build vm-build--${BUILD_AREA}" id="vinvBuild">
+              <div class="vinv-build-text vm-build-text" id="vinvBuildText"></div>
             </div>
           </div>
 
-          <div class="bb-field-wrap">
-            <div class="bb-field" id="bbField">
-              <div class="bb-play-layer" id="bbPlayLayer"></div>
-              <div class="bb-effects-layer" id="bbEffectsLayer"></div>
-              <div class="bb-frog-layer" id="bbFrogLayer">
-                ${renderFrog()}
+          <div class="vinv-field-wrap">
+            <div class="vinv-field" id="vinvField">
+              <div class="vinv-lanes" id="vinvLanes"></div>
+              <div class="vinv-entities" id="vinvEntities"></div>
+              <div class="vinv-rockets" id="vinvRockets"></div>
+              <div class="vinv-effects" id="vinvEffects"></div>
+              <div class="vinv-bottom" id="vinvBottom"></div>
+              <div class="vinv-bonus" id="vinvBonus"></div>
+              <div class="vinv-overlay-msg" id="vinvOverlay"></div>
+              <div class="vinv-hud-overlay">
+                <div class="vinv-corner-pill vinv-corner-left" id="vinvModePill"></div>
+                <div class="vinv-corner-pill vinv-corner-right" id="vinvStreakPill"></div>
               </div>
-              <div class="bb-overlay-msg" id="bbOverlay"></div>
-              <div class="bb-reaction-layer" id="bbReactionLayer"></div>
-              <div class="bb-bonus-intro-overlay" id="bbBonusIntroOverlay" aria-hidden="true">
-                <div class="bb-bonus-intro-card">
-                  <div class="bb-bonus-intro-title">BONUS ROUND!</div>
-                  <div class="bb-bonus-intro-subtitle">Eat as many bugs as you can!</div>
-                </div>
-              </div>
-              <div class="bb-hud-layer">
-                <button class="bb-corner-pill bb-corner-left" id="bbMenuPill" type="button" aria-label="Game menu">☰</button>
-                <div class="bb-corner-pill bb-corner-right" id="bbStatusPill"></div>
-              </div>
+            </div>
+
+            <div class="vinv-controls" id="vinvControls">
+              <button class="vinv-lane-btn" data-lane="left"></button>
+              <button class="vinv-lane-btn" data-lane="center"></button>
+              <button class="vinv-lane-btn" data-lane="right"></button>
             </div>
           </div>
         </div>
@@ -208,41 +220,40 @@ const BUG_MOTION = {
     wireCommonNav();
     wireGameInput();
     recalcField();
-    updatePhase();
-    updateBuildText();
-    renderFrame();
-    spawnWave();
+    renderHud();
+    renderStaticField();
+    spawnRound();
     startLoop();
   }
 
-  function renderHelpOverlay(body){
-    return shell.helpOverlayHtml({
-      id: HELP_OVERLAY_ID,
-      title: "How to Play",
-      body,
-      closeText: "Close"
-    });
-  }
+function renderHelpOverlay(body){
+  return window.VerseGameShell.helpOverlayHtml({
+    id: HELP_OVERLAY_ID,
+    body
+  });
+}
 
-  function renderGameMenuOverlay(){
-    return shell.gameMenuHtml({
-      id: GAME_MENU_ID,
-      title: "Game Menu",
-      muted,
-      showModeSelect: true
-    });
-  }
+function renderGameMenuOverlay(){
+  return window.VerseGameShell.gameMenuHtml({
+    id: "vinvGameMenuOverlay",
+    title: "Game Menu",
+    muted,
+    showModeSelect: true
+  });
+}
 
   function helpHtml(){
-    return `Tap the bug with the next word!<br><br>
-      The frog will gobble it up.<br><br>
-      Finish the verse, then eat as many bonus bugs as you can!`;
+    return `Tap the color of the next correct word.<br><br>
+      The three buttons are always red, yellow, and blue from left to right.<br><br>
+      A correct hit explodes and adds the word to the build area.<br><br>
+      A wrong hit resets your streak. After two wrong hits in one round, that set clears and a new one begins.<br><br>
+      If the correct word reaches the buttons, it abducts a human and the streak resets.`;
   }
 
 function wireCommonNav(){
-  shell.wireGameMenu({
-    id: GAME_MENU_ID,
-    menuButtonId: "bbMenuPill",
+  window.VerseGameShell.wireGameMenu({
+    id: "vinvGameMenuOverlay",
+    menuButtonId: "vinvModePill",
     helpOverlayId: HELP_OVERLAY_ID,
     isMuted: () => muted,
     onMuteToggle: () => {
@@ -263,880 +274,1022 @@ function wireCommonNav(){
     onClose: () => setPaused(false, ""),
     onBackFromHelp: () => setPaused(true, "menu")
   });
-
-  installMenuTouchFallbacks();
-  installBibleBugsTouchDebug();
 }
 
-function installMenuTouchFallbacks(){
-  const overlay = document.getElementById(GAME_MENU_ID);
-  if (!overlay || overlay.dataset.bbTouchFallbacks === "1") return;
-
-  overlay.dataset.bbTouchFallbacks = "1";
-
-  function closeMenu(){
-    overlay.classList.remove("is-open");
-    overlay.setAttribute("aria-hidden", "true");
-    setPaused(false, "");
-  }
-
-  function wireTouchButton(id, action){
-    const button = document.getElementById(id);
-    if (!button) return;
-
-    button.addEventListener("touchend", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      action();
-    }, { passive:false });
-  }
-
-  wireTouchButton(`${GAME_MENU_ID}HowToBtn`, () => {
-    openHelpFromMenu();
-  });
-
-  wireTouchButton(`${GAME_MENU_ID}ModeSelectBtn`, () => {
-    overlay.classList.remove("is-open");
-    overlay.setAttribute("aria-hidden", "true");
-    setPaused(false, "");
-    stopLoop();
-    renderModeSelect();
-  });
-
-  wireTouchButton(`${GAME_MENU_ID}ExitBtn`, () => {
-    stopLoop();
-    window.VerseGameBridge.exitGame();
-  });
-
-  wireTouchButton(`${GAME_MENU_ID}CloseBtn`, () => {
-    closeMenu();
-  });
-
-  wireTouchButton(`${GAME_MENU_ID}MuteBtn`, () => {
-    muted = !muted;
-
-    const muteButton = document.getElementById(`${GAME_MENU_ID}MuteBtn`);
-    if (muteButton){
-      muteButton.textContent = muted ? "🔇" : "🔊";
-      muteButton.setAttribute("aria-label", muted ? "Unmute" : "Mute");
-      muteButton.setAttribute("title", muted ? "Unmute" : "Mute");
-    }
-
-    overlay.setAttribute("aria-hidden", "false");
-  });
-
-  function closeHelpFromTouch(){
-    const helpOverlay = document.getElementById(HELP_OVERLAY_ID);
-    const menuOverlay = document.getElementById(GAME_MENU_ID);
-    const mode = helpOverlay?.dataset.mode || "close";
-
-    if (helpOverlay){
-      helpOverlay.classList.remove("is-open");
-      helpOverlay.setAttribute("aria-hidden", "true");
-    }
-
-    if (mode === "back"){
-      if (menuOverlay){
-        menuOverlay.classList.add("is-open");
-        menuOverlay.setAttribute("aria-hidden", "false");
-      }
-
-      setPaused(true, "menu");
-    } else {
-      setPaused(false, "");
-    }
-  }
-
-  wireTouchButton(`${HELP_OVERLAY_ID}CloseBtn`, closeHelpFromTouch);
-
-  if (!document.documentElement.dataset.bbHelpTouchFallbacks){
-    document.documentElement.dataset.bbHelpTouchFallbacks = "1";
-
-    const catchHelpBackTouch = (event) => {
-      const helpOverlay = document.getElementById(HELP_OVERLAY_ID);
-      if (!helpOverlay || !helpOverlay.classList.contains("is-open")) return;
-
-      const button = event.target?.closest?.(`#${HELP_OVERLAY_ID}CloseBtn`);
-      if (!button) return;
-
-      event.preventDefault();
-      event.stopPropagation();
-      closeHelpFromTouch();
-    };
-
-    document.addEventListener("touchend", catchHelpBackTouch, { capture:true, passive:false });
-    document.addEventListener("pointerup", catchHelpBackTouch, { capture:true });
-    document.addEventListener("click", catchHelpBackTouch, { capture:true });
+function setPaused(paused, reason = ""){
+  state.paused = paused;
+  state.pauseReason = paused ? reason : "";
+  if (!paused){
+    state.lastTs = performance.now();
   }
 }
 
-function installBibleBugsTouchDebug(){
-  let panel = document.getElementById("bbTouchDebugPanel");
-
-  if (!panel){
-    panel = document.createElement("pre");
-    panel.id = "bbTouchDebugPanel";
-    panel.style.cssText = [
-      "position:fixed",
-      "left:6px",
-      "right:6px",
-      "bottom:6px",
-      "z-index:999999",
-      "max-height:42vh",
-      "overflow:auto",
-      "margin:0",
-      "padding:8px",
-      "border-radius:10px",
-      "background:rgba(0,0,0,0.86)",
-      "color:#fff",
-      "font:11px/1.25 monospace",
-      "white-space:pre-wrap",
-      "pointer-events:none"
-    ].join(";");
-
-    document.body.appendChild(panel);
-  }
-
-  function describeEl(el){
-    if (!el) return "null";
-
-    const id = el.id ? `#${el.id}` : "";
-    const cls = typeof el.className === "string" && el.className.trim()
-      ? "." + el.className.trim().replace(/\s+/g, ".")
-      : "";
-
-    return `${el.tagName || "?"}${id}${cls}`;
-  }
-
-  function updateDebug(eventLabel, event){
-    const help = document.getElementById(HELP_OVERLAY_ID);
-    const menu = document.getElementById(GAME_MENU_ID);
-    const closeBtn = document.getElementById(`${HELP_OVERLAY_ID}CloseBtn`);
-
-    let x = 0;
-    let y = 0;
-
-    if (event){
-      const touch = event.changedTouches?.[0] || event.touches?.[0] || event;
-      x = Math.round(touch.clientX || 0);
-      y = Math.round(touch.clientY || 0);
-    }
-
-    const topEl = event ? document.elementFromPoint(x, y) : null;
-    const target = event?.target || null;
-
-    panel.textContent = [
-      `BB DEBUG ACTIVE ${new Date().toLocaleTimeString()}`,
-      `event: ${eventLabel || "none yet"}`,
-      `xy: ${x}, ${y}`,
-      `target: ${describeEl(target)}`,
-      `elementFromPoint: ${describeEl(topEl)}`,
-      `target closest help close: ${!!target?.closest?.(`#${HELP_OVERLAY_ID}CloseBtn`)}`,
-      `top closest help close: ${!!topEl?.closest?.(`#${HELP_OVERLAY_ID}CloseBtn`)}`,
-      ``,
-      `help exists: ${!!help}`,
-      `help class: ${help?.className || ""}`,
-      `help aria-hidden: ${help?.getAttribute("aria-hidden") || ""}`,
-      `help data-mode: ${help?.dataset?.mode || ""}`,
-      ``,
-      `menu exists: ${!!menu}`,
-      `menu class: ${menu?.className || ""}`,
-      `menu aria-hidden: ${menu?.getAttribute("aria-hidden") || ""}`,
-      ``,
-      `closeBtn exists: ${!!closeBtn}`,
-      `closeBtn text: ${(closeBtn?.textContent || "").trim()}`,
-      `closeBtn rect: ${closeBtn ? JSON.stringify({
-        l: Math.round(closeBtn.getBoundingClientRect().left),
-        t: Math.round(closeBtn.getBoundingClientRect().top),
-        w: Math.round(closeBtn.getBoundingClientRect().width),
-        h: Math.round(closeBtn.getBoundingClientRect().height)
-      }) : "none"}`
-    ].join("\n");
-  }
-
-  updateDebug("installed", null);
-
-  if (!document.documentElement.dataset.bbDebugListeners){
-    document.documentElement.dataset.bbDebugListeners = "1";
-
-    document.addEventListener("touchstart", (event) => {
-      updateDebug("touchstart", event);
-    }, { capture:true, passive:true });
-
-    document.addEventListener("touchend", (event) => {
-      updateDebug("touchend", event);
-    }, { capture:true, passive:true });
-
-    document.addEventListener("pointerdown", (event) => {
-      updateDebug("pointerdown", event);
-    }, { capture:true });
-
-    document.addEventListener("pointerup", (event) => {
-      updateDebug("pointerup", event);
-    }, { capture:true });
-
-    document.addEventListener("click", (event) => {
-      updateDebug("click", event);
-    }, { capture:true });
+function openGameMenu(){
+  const menuOverlay = document.getElementById("vinvGameMenuOverlay");
+  if (menuOverlay){
+    setPaused(true, "menu");
+    menuOverlay.classList.add("is-open");
+    menuOverlay.setAttribute("aria-hidden", "false");
   }
 }
 
-function openHelpFromMenu(){
-  const menuOverlay = document.getElementById(GAME_MENU_ID);
+function closeGameMenu(){
+  const menuOverlay = document.getElementById("vinvGameMenuOverlay");
+
+  if (menuOverlay && menuOverlay.contains(document.activeElement)){
+    document.activeElement.blur();
+  }
 
   if (menuOverlay){
     menuOverlay.classList.remove("is-open");
     menuOverlay.setAttribute("aria-hidden", "true");
   }
 
-  shell.openHelp(HELP_OVERLAY_ID, "back", "Back");
+  const helpOverlay = document.getElementById("vinvHelpOverlay");
+  if (!helpOverlay || !helpOverlay.classList.contains("is-open")){
+    setPaused(false, "");
+  }
+}
+
+function openHelpFromMenu(){
+  const menuOverlay = document.getElementById("vinvGameMenuOverlay");
+
+  if (menuOverlay) menuOverlay.classList.remove("is-open");
+  window.VerseGameShell.openHelp(HELP_OVERLAY_ID, "back", "Back");
+
   setPaused(true, "help");
 }
 
-  function setPaused(paused, reason = ""){
-    const now = performance.now();
+function closeHelpOverlay(){
+  window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
+  setPaused(false, "");
+}
 
-    if (paused){
-      if (state.paused){
-        state.pauseReason = reason || state.pauseReason;
-        return;
-      }
+function backToMenuFromHelp(){
+  window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
 
-      state.paused = true;
-      state.pauseReason = reason;
-      state.pausedAt = now;
-      return;
-    }
+  const menuOverlay = document.getElementById("vinvGameMenuOverlay");
+  if (menuOverlay) menuOverlay.classList.add("is-open");
 
-    if (!state.paused){
-      state.pauseReason = "";
-      state.pausedAt = 0;
-      state.lastTs = now;
-      return;
-    }
-
-    const pauseDuration = Math.max(0, now - (Number(state.pausedAt) || now));
-    shiftGameTimers(pauseDuration);
-
-    state.paused = false;
-    state.pauseReason = "";
-    state.pausedAt = 0;
-    state.lastTs = now;
-  }
-
-function shiftGameTimers(deltaMs){
-  const delta = Number(deltaMs) || 0;
-  if (delta <= 0) return;
-
-  function shiftBugTimes(bug){
-    if (!bug) return;
-
-    if (Number.isFinite(bug.bornAt)) bug.bornAt += delta;
-    if (Number.isFinite(bug.poofAt) && bug.poofAt > 0) bug.poofAt += delta;
-    if (Number.isFinite(bug.eatStartedAt)) bug.eatStartedAt += delta;
-    if (Number.isFinite(bug.expiresAt)) bug.expiresAt += delta;
-  }
-
-  for (const bug of state.bugs){
-    shiftBugTimes(bug);
-  }
-
-  shiftBugTimes(state.bonusBug);
-
-  if (state.tongue && Number.isFinite(state.tongue.startedAt)){
-    state.tongue.startedAt += delta;
-  }
-
-  if (state.reaction){
-    if (Number.isFinite(state.reaction.startedAt)) state.reaction.startedAt += delta;
-    if (Number.isFinite(state.reaction.until)) state.reaction.until += delta;
-  }
-
-  for (const particle of state.spitParticles){
-    if (Number.isFinite(particle.bornAt)) particle.bornAt += delta;
-  }
-
-  for (const action of state.scheduledActions){
-    if (Number.isFinite(action.at)) action.at += delta;
-  }
-
-  if (Number.isFinite(state.buildShakeUntil) && state.buildShakeUntil > 0){
-    state.buildShakeUntil += delta;
-  }
-
-  if (Number.isFinite(state.fieldFlashUntil) && state.fieldFlashUntil > 0){
-    state.fieldFlashUntil += delta;
-  }
-
-  if (Number.isFinite(state.overlayUntil) && state.overlayUntil > 0){
-    state.overlayUntil += delta;
-  }
-
-  if (Number.isFinite(state.bonusIntroUntil) && state.bonusIntroUntil > 0){
-    state.bonusIntroUntil += delta;
-  }
-
-  if (Number.isFinite(state.bonusEndsAt) && state.bonusEndsAt > 0){
-    state.bonusEndsAt += delta;
-  }
+  setPaused(true, "menu");
 }
 
   function wireGameInput(){
-    const field = document.getElementById("bbField");
-    if (!field) return;
+    if (!resizeHandlerBound){
+      window.addEventListener("resize", recalcField);
+      resizeHandlerBound = true;
+    }
 
-    field.addEventListener("pointerdown", (event) => {
-      const bugButton = event.target.closest("[data-bug-id]");
-      if (!bugButton) return;
-      event.preventDefault();
-      handleBugTap(String(bugButton.dataset.bugId));
+    document.querySelectorAll(".vinv-lane-btn").forEach((btn) => {
+      btn.onclick = () => handleColorPress(btn.dataset.lane);
     });
 
-    if (!resizeBound){
-      resizeBound = true;
-      window.addEventListener("resize", () => {
-        if (!state.running) return;
-        state.buildFitDone = false;
-        recalcField();
-        updateBuildText();
-        renderFrame();
-      }, { passive:true });
-    }
+    window.onkeydown = (e) => {
+      if (!state.running || state.paused) return;
+      if (e.key === "ArrowLeft" || e.key.toLowerCase() === "a") handleColorPress("left");
+      if (e.key === "ArrowDown" || e.key.toLowerCase() === "s") handleColorPress("center");
+      if (e.key === "ArrowRight" || e.key.toLowerCase() === "d") handleColorPress("right");
+    };
   }
 
   function recalcField(){
-    const field = document.getElementById("bbField");
+    const field = document.getElementById("vinvField");
+    const controls = document.getElementById("vinvControls");
     if (!field) return;
-    const rect = field.getBoundingClientRect();
-    state.fieldWidth = rect.width || 320;
-    state.fieldHeight = rect.height || 420;
+
+    const fieldRect = field.getBoundingClientRect();
+    state.fieldWidth = fieldRect.width;
+    state.fieldHeight = fieldRect.height;
+    state.scale = clamp(fieldRect.width / 390, 0.88, 1.45);
+
+    if (controls){
+      const controlsRect = controls.getBoundingClientRect();
+      state.controlsTopY = Math.max(0, controlsRect.top - fieldRect.top);
+      state.bottomZoneY = Math.max(110, state.controlsTopY - 8);
+    } else {
+      state.controlsTopY = Math.max(180, state.fieldHeight - 90);
+      state.bottomZoneY = Math.max(110, state.fieldHeight - 98);
+    }
+
+    state.roundSpeed = getRoundSpeed();
+    renderStaticField();
   }
 
-  function updateBuildText(){
-    const buildText = document.getElementById("bbBuildText");
-    if (!buildText) return;
+  function renderStaticField(){
+    const lanesEl = document.getElementById("vinvLanes");
+    const bottomEl = document.getElementById("vinvBottom");
+    if (!lanesEl || !bottomEl) return;
 
-    const buildRender = shell.renderBuildProgressHtml({
-      verseText: ctx.verseText || "",
-      book: buildData.bookLabel,
-      reference: buildData.referenceLabel,
-      progressIndex: state.progressIndex,
-      buildArea: BUILD_AREA,
-      hideUnbuilt: selectedMode === "hard",
-      extraClass: "bb-build-text"
+    lanesEl.innerHTML = LANE_KEYS.map((lane, index) => `
+      <div class="vinv-lane" style="left:${index * 33.3333}%">
+        <div class="vinv-lane-guide"></div>
+      </div>
+    `).join("");
+
+    bottomEl.innerHTML = "";
+  }
+
+  function renderHud(){
+    const modePill = document.getElementById("vinvModePill");
+    const streakPill = document.getElementById("vinvStreakPill");
+
+    if (modePill){
+      modePill.textContent = "☰";
+      modePill.setAttribute("aria-label", "Game Menu");
+      modePill.onclick = () => {
+        openGameMenu();
+      };
+    }
+
+    if (streakPill) streakPill.textContent = `🔥 ${state.streak}`;
+    renderBuildArea();
+    renderButtons();
+  }
+
+function fitInvadersBuildText(){
+  if (state.buildFitDone) return;
+
+  requestAnimationFrame(() => {
+    const build = document.getElementById("vinvBuild");
+    const text = document.getElementById("vinvBuildText");
+
+    if (!build || !text) return;
+
+    const result = window.VerseGameShell.fitBuildTextOnce({
+      buildEl: build,
+      textEl: text,
+      buildArea: BUILD_AREA
     });
 
-    buildText.className = buildRender.className;
-    buildText.innerHTML = buildRender.html;
+    if (result){
+      state.buildFitDone = true;
+    }
+  });
+}
 
-    fitBibleBugsBuildText();
+function renderBuildArea(){
+  const buildText = document.getElementById("vinvBuildText");
+  const build = document.getElementById("vinvBuild");
+  if (!buildText || !build) return;
+
+  build.classList.toggle("is-shake", state.buildShakeUntil > performance.now());
+
+  const buildRender = window.VerseGameShell.renderBuildProgressHtml({
+    verseText: ctx.verseText || "",
+    book: parsedRef.book,
+    reference: parsedRef.reference,
+    progressIndex: state.builtCount,
+    buildArea: BUILD_AREA,
+    hideUnbuilt: selectedMode === "hard",
+    extraClass: "vinv-build-text"
+  });
+
+  buildText.className = buildRender.className;
+  buildText.innerHTML = buildRender.html;
+
+  fitInvadersBuildText();
+}
+  
+
+
+
+function renderButtons(){
+    const buttons = document.querySelectorAll(".vinv-lane-btn");
+    buttons.forEach((btn) => {
+      const lane = btn.dataset.lane;
+      const fixedColor = buttonLaneToColor(lane);
+      btn.dataset.color = fixedColor.key;
+      btn.textContent = "";
+      btn.setAttribute("aria-label", fixedColor.key.toUpperCase());
+      const shouldDim = state.activeLane && state.activeLane !== lane;
+      btn.classList.toggle("is-dim", !!shouldDim);
+      btn.disabled = state.buttonsLocked || (!state.bonusMode && !hasVisibleEntityForColor(fixedColor.key));
+    });
   }
 
-  function fitBibleBugsBuildText(){
-    if (state.buildFitDone) return;
+  function spawnRound(){
+    if (state.builtCount >= state.queue.length){
+      startBonusRound();
+      return;
+    }
 
-    requestAnimationFrame(() => {
-      const build = document.getElementById("bbBuild");
-      const text = document.getElementById("bbBuildText");
-      if (!build || !text) return;
+    state.roundIndex += 1;
+    state.roundStatus = "falling";
+    state.buttonsLocked = false;
+    state.activeLane = null;
+    state.wrongGuessesThisRound = 0;
+    state.rocket = null;
+    state.trails = [];
+    state.effects = state.effects.filter(effect => effect.kind === "fireworkParticle");
+    state.scheduledActions = [];
+    state.roundSpeed = getRoundSpeed();
 
-      const result = shell.fitBuildTextOnce({
-        buildEl: build,
-        textEl: text,
-        buildArea: BUILD_AREA
+    const correctLabel = state.queue[state.builtCount];
+    state.phase = getCurrentPhase();
+    const decoys = getDecoysForPhase(state.phase, correctLabel, 2);
+    const labels = shuffle([correctLabel, ...decoys]);
+    const colors = shuffle([...LANE_COLORS]);
+
+    state.entities = LANE_KEYS.map((lane, index) => {
+      const label = labels[index];
+      return {
+        id:`entity-${state.roundIndex}-${lane}`,
+        lane,
+        label,
+        correct:label === correctLabel,
+        color:colors[index],
+        x:getLaneCenterX(lane),
+        y:-22 - index * 18,
+        visible:true,
+        status:"falling",
+        motionPhase: Math.random() * Math.PI * 2
+      };
+    });
+    renderHud();
+    renderDynamic();
+  }
+
+  function handleColorPress(buttonLane){
+    if (!state.running) return;
+    if (state.buttonsLocked) return;
+
+    if (state.bonusMode){
+      if (state.bonusShotsLeft <= 0) return;
+      launchBonusRocket(buttonLane);
+      return;
+    }
+
+    const buttonColor = buttonLaneToColor(buttonLane);
+    const target = state.entities.find(item => item.visible && item.color.key === buttonColor.key);
+    if (!target) return;
+
+    state.buttonsLocked = true;
+    state.activeLane = buttonLane;
+
+    const rocketStartX = getLaneCenterX(buttonLane);
+    const rocketStartY = state.controlsTopY - 16;
+    const rocketSpeed = Math.max(420, state.fieldHeight * 1.62);
+    const targetPoint = getEntityHitPoint(target);
+    const intercept = computeIntercept(
+      rocketStartX,
+      rocketStartY,
+      targetPoint.x,
+      targetPoint.y,
+      0,
+      state.roundSpeed,
+      rocketSpeed
+    );
+    const dx = intercept.x - rocketStartX;
+    const dy = intercept.y - rocketStartY;
+    const distance = Math.max(1, Math.hypot(dx, dy));
+    const flightTime = Math.max(0.08, distance / rocketSpeed);
+    const vx = dx / flightTime;
+    const vy = dy / flightTime;
+    const angleDeg = Math.atan2(vy, vx) * 180 / Math.PI + 90;
+
+    state.rocket = {
+      lane: buttonLane,
+      x: rocketStartX,
+      y: rocketStartY,
+      vx,
+      vy,
+      speed: rocketSpeed,
+      targetId: target.id,
+      targetColorKey: target.color.key,
+      resolved:false,
+      white:false,
+      age:0,
+      maxAge: flightTime + 0.12,
+      hitRadius: Math.max(28, 22 * state.scale),
+      angleDeg
+    };
+    renderButtons();
+  }
+
+  function resolveRocketHit(){
+    if (!state.rocket || state.rocket.resolved) return;
+    state.rocket.resolved = true;
+    const target = state.entities.find(item => item.id === state.rocket.targetId);
+    if (!target || !target.visible){
+      unlockAfterDelay(260);
+      return;
+    }
+
+    if (target.correct) handleCorrectHit(target);
+    else handleWrongHit(target);
+  }
+
+  function handleWrongHit(target){
+    state.streak = 0;
+    state.mistakes += 1;
+    state.wrongGuessesThisRound += 1;
+    state.flashBadUntil = performance.now() + 260;
+    state.buildShakeUntil = performance.now() + 280;
+    state.overlayMessage = state.wrongGuessesThisRound >= 2 ? "Too many wrong guesses!" : "Wrong color!";
+    state.overlayUntil = performance.now() + 420;
+    target.visible = false;
+    const targetPoint = getEntityHitPoint(target);
+    addEffect(makeSmokePuffEffect(targetPoint.x, target.y + 28));
+    renderHud();
+    renderDynamic();
+
+    if (state.wrongGuessesThisRound >= 2){
+      state.buttonsLocked = true;
+      state.activeLane = null;
+      scheduleAction(260, () => {
+        state.entities.forEach(item => {
+          if (item.visible) item.status = "fade";
+        });
+        renderDynamic();
+      });
+      scheduleAction(560, () => {
+        state.entities.forEach(item => { item.visible = false; });
+        spawnRound();
+      });
+    } else {
+      unlockAfterDelay(320);
+    }
+  }
+
+  function handleCorrectHit(target){
+    state.streak += 1;
+    state.buttonsLocked = true;
+    renderDynamic();
+
+    scheduleAction(120, () => {
+      const targetPoint = getEntityHitPoint(target);
+      addEffect(makeCorrectHitEffect(targetPoint.x, target.y + 22, target.color.hex, state.streak));
+      target.visible = false;
+
+      state.entities.forEach(item => {
+        if (item.id !== target.id && item.visible){
+          const itemPoint = getEntityHitPoint(item);
+          item.visible = false;
+          addEffect(makeSmokePuffEffect(itemPoint.x, item.y + 28));
+        }
       });
 
-      if (result) state.buildFitDone = true;
+      state.builtCount += 1;
+      renderHud();
+      renderDynamic();
+    });
+
+    scheduleAction(620, async () => {
+      if (state.builtCount >= state.queue.length) await startBonusRound();
+      else spawnRound();
     });
   }
 
-  function clearBuildTextFit(text){
-    if (!text) return;
+  function handleBottomMiss(target){
+    state.streak = 0;
+    state.mistakes += 1;
+    state.buttonsLocked = true;
+    state.activeLane = null;
+    state.overlayMessage = "Abducted!";
+    state.overlayUntil = performance.now() + 720;
+    state.flashBadUntil = performance.now() + 260;
+    state.buildShakeUntil = performance.now() + 280;
 
-    text.style.fontSize = "";
-    text.style.lineHeight = "";
-    text.style.maxWidth = "";
-    text.style.width = "";
-    text.style.marginLeft = "";
-    text.style.marginRight = "";
+    state.entities.forEach(item => {
+      item.visible = false;
+    });
 
-    delete text.dataset.vmFitFontSize;
-    delete text.dataset.vmFitMaxWidth;
-    delete text.dataset.vmFitLineHeight;
-    delete text.dataset.vmFitLines;
-    delete text.dataset.vmFitArea;
+    const targetPoint = getEntityHitPoint(target);
+    addEffect(makeAbductionEffect(targetPoint.x, state.bottomZoneY - 12, target.color));
+    renderHud();
+    renderDynamic();
+
+    scheduleAction(1820, () => {
+      spawnRound();
+    });
   }
 
-  function updatePhase(){
-    state.phase = shell.getPhaseForProgress({
-      progressIndex: state.progressIndex,
-      wordCount: buildData.words.length,
-      totalSegments: buildData.segments.length,
+  function unlockAfterDelay(ms){
+    scheduleAction(ms, () => {
+      state.buttonsLocked = false;
+      state.activeLane = null;
+      state.rocket = null;
+      renderButtons();
+    });
+  }
+
+  async function startBonusRound(){
+    if (state.bonusMode) return;
+    state.bonusMode = true;
+    state.buttonsLocked = false;
+    state.activeLane = null;
+    state.entities = [];
+    state.rocket = null;
+    state.trails = [];
+    state.overlayMessage = "Bonus Fireworks!";
+    state.overlayUntil = performance.now() + 1000;
+    state.bonusShotsLeft = getBonusShots();
+    state.bonusAutoTimer = 0.18;
+    state.bonusFinished = false;
+    renderHud();
+    renderDynamic();
+
+    if (!completionMarked){
+      completionMarked = true;
+
+      try {
+        completionResult = await window.VerseGameBridge.completeGameRun({
+          verseId: ctx.verseId,
+          gameId: GAME_ID,
+          mode: selectedMode,
+          stats: {
+            streak: state.streak,
+            mistakes: state.mistakes,
+            builtCount: state.builtCount,
+            bonusShotsLeft: state.bonusShotsLeft
+          }
+        });
+      } catch (err) {
+        console.error("completeGameRun failed", err);
+
+        completionResult = {
+          ok: false,
+          alreadyCompleted: false,
+          newlyCompleted: false,
+          reward: {
+            ok: false,
+            petUnlockTriggered: false
+          }
+        };
+      }
+    }
+  }
+
+  function launchBonusRocket(buttonLane){
+    state.bonusShotsLeft = Math.max(0, state.bonusShotsLeft - 1);
+    const x = getLaneCenterX(buttonLane);
+    state.bonusFireworks.push({
+      id:`fw-${Date.now()}-${Math.random()}`,
+      x,
+      y:state.controlsTopY - 12,
+      targetY:randBetween(state.fieldHeight * 0.16, state.fieldHeight * 0.48),
+      speed:Math.max(320, state.fieldHeight * 1.4),
+      exploded:false
+    });
+    renderHud();
+  }
+
+  function finishBonusRound(){
+    state.bonusFinished = true;
+    state.buttonsLocked = true;
+    state.activeLane = null;
+    state.overlayMessage = "Great job!";
+    state.overlayUntil = performance.now() + 1500;
+    renderButtons();
+    setTimeout(() => renderVictory(), 900);
+  }
+
+function renderVictory(){
+  stopLoop();
+
+  window.VerseGameShell.renderCompleteScreen({
+    app,
+    gameIcon: "👾",
+    mode: selectedMode,
+    verseId: ctx.verseId,
+    gameId: GAME_ID,
+    completion: completionResult,
+    gameMessage: "",
+    theme: GAME_THEME,
+    backLabel: "Back to Practice Games",
+    onPlayAgain: renderModeSelect,
+    onMoreGames: () => window.VerseGameBridge.exitGame(),
+    onChangeVerse: () => window.VerseGameBridge.returnToTitle()
+  });
+}
+
+  function loop(ts){
+    if (!state.running && !state.bonusMode) return;
+    if (!state.lastTs) state.lastTs = ts;
+    const dt = Math.min(0.032, (ts - state.lastTs) / 1000);
+    state.lastTs = ts;
+
+    if (!state.paused){
+      updateGame(dt, ts);
+    }
+
+    renderDynamic();
+    state.rafId = requestAnimationFrame(loop);
+  }
+
+  function updateGame(dt, ts){
+    state.effects = state.effects.filter(effect => effect.until > ts);
+    state.trails = state.trails.filter(trail => trail.until > ts);
+    processScheduledActions(ts);
+
+    if (state.buildShakeUntil && ts > state.buildShakeUntil) renderHud();
+
+    if (!state.bonusMode){
+      const speed = state.roundSpeed;
+      for (const entity of state.entities){
+        if (!entity.visible || entity.status !== "falling") continue;
+        entity.y += speed * dt;
+        if (entity.correct && entity.y >= state.bottomZoneY - 48){
+          handleBottomMiss(entity);
+          break;
+        }
+      }
+
+      if (state.rocket){
+        state.rocket.age += dt;
+        state.rocket.x += state.rocket.vx * dt;
+        state.rocket.y += state.rocket.vy * dt;
+        addTrail(state.rocket.x, state.rocket.y + 18, state.rocket.white);
+
+        const target = state.entities.find(item => item.id === state.rocket.targetId && item.visible);
+        if (!target){
+          state.rocket = null;
+          unlockAfterDelay(220);
+        } else {
+        const targetPoint = getEntityHitPoint(target, ts);
+        const dx = targetPoint.x - state.rocket.x;
+        const dy = targetPoint.y - state.rocket.y;
+          if (Math.hypot(dx, dy) <= state.rocket.hitRadius || state.rocket.age >= state.rocket.maxAge){
+            resolveRocketHit();
+            state.rocket = null;
+          }
+        }
+      }
+    } else {
+      if (state.bonusShotsLeft > 0){
+        state.bonusAutoTimer -= dt;
+        if (state.bonusAutoTimer <= 0){
+          state.bonusAutoTimer = randBetween(0.26, 0.5);
+          launchBonusRocket(randomFrom(LANE_KEYS));
+        }
+      }
+
+      for (const firework of state.bonusFireworks){
+        if (firework.exploded) continue;
+        firework.y -= firework.speed * dt;
+        addTrail(firework.x, firework.y + 18, true);
+        if (firework.y <= firework.targetY){
+          firework.exploded = true;
+          addEffect(makeBonusFireworkEffect(firework.x, firework.y));
+        }
+      }
+      state.bonusFireworks = state.bonusFireworks.filter(item => !item.exploded);
+
+      if (!state.bonusFinished && state.bonusShotsLeft <= 0 && state.bonusFireworks.length === 0 && !state.effects.some(item => item.kind === "fireworkParticle")){
+        finishBonusRound();
+      }
+    }
+  }
+
+  function renderDynamic(){
+    const entitiesEl = document.getElementById("vinvEntities");
+    const rocketsEl = document.getElementById("vinvRockets");
+    const effectsEl = document.getElementById("vinvEffects");
+    const bonusEl = document.getElementById("vinvBonus");
+    const overlayEl = document.getElementById("vinvOverlay");
+    const field = document.getElementById("vinvField");
+    if (!entitiesEl || !rocketsEl || !effectsEl || !overlayEl || !field || !bonusEl) return;
+
+    const now = performance.now();
+    field.classList.toggle("is-flash-bad", state.flashBadUntil > now);
+
+    entitiesEl.innerHTML = state.entities.map((entity) => {
+      const hidden = entity.visible ? "" : "opacity:0;";
+      const className = entity.status === "fade"
+        ? "is-fade"
+        : entity.status === "correct"
+          ? "is-correct-pause"
+          : "";
+
+      const motion = getEntityMotionState(entity, now);
+
+      return `
+        <div
+          class="vinv-entity ${className}"
+          style="
+            left:${entity.x}px;
+            top:${entity.y}px;
+            ${hidden}
+            transform:translate(calc(-50% + ${motion.swayX.toFixed(1)}px), 0)
+              rotate(${motion.rotateDeg.toFixed(2)}deg)
+              skewX(${motion.skewXDeg.toFixed(2)}deg)
+              scale(${motion.scaleX.toFixed(3)}, ${motion.scaleY.toFixed(3)});
+          "
+        >
+          <div class="vinv-alien">
+            <img
+              class="vinv-alien-img"
+              src="${entity.color.alienImg}"
+              alt="${entity.color.alienAlt}"
+              draggable="false"
+            />
+          </div>
+          <div class="vinv-word" style="color:${entity.color.hex}">${escapeHtml(entity.label)}</div>
+        </div>
+      `;
+    }).join("");
+
+    rocketsEl.innerHTML = `
+      ${state.rocket ? `<div class="vinv-rocket" style="left:${state.rocket.x}px; top:${state.rocket.y}px; transform:translate(-50%,-50%) rotate(${state.rocket.angleDeg.toFixed(1)}deg);">🚀</div>` : ""}
+      ${state.trails.map(trail => `<div class="vinv-trail ${trail.white ? "white" : ""}" style="left:${trail.x}px; top:${trail.y}px; opacity:${trail.opacity}">${trail.icon}</div>`).join("")}
+      ${state.bonusFireworks.map(fw => `<div class="vinv-rocket white" style="left:${fw.x}px; top:${fw.y}px;">⚪</div>`).join("")}
+    `;
+
+    effectsEl.innerHTML = state.effects.map((effect) => renderEffect(effect, now)).join("");
+
+    bonusEl.innerHTML = "";
+    overlayEl.innerHTML = state.overlayUntil > now && state.overlayMessage
+      ? `<div class="vinv-overlay-pill">${escapeHtml(state.overlayMessage)}</div>`
+      : "";
+
+    renderButtons();
+  }
+
+  function getCurrentPhase(){
+    return window.VerseGameShell.getPhaseForProgress({
+      progressIndex: state.builtCount,
+      wordCount: verseWords.length,
+      totalSegments: state.queue.length,
       bookLabel: buildData.bookLabel,
       referenceLabel: buildData.referenceLabel
     });
   }
 
-  function currentTarget(){
-    return buildData.segments[state.progressIndex] || "";
-  }
-
   function getDecoysForPhase(phase, correctLabel, count){
     const out = [];
-    const seen = new Set([shell.normalizeWord(correctLabel)]);
+    const seen = new Set([normalizeWord(correctLabel)]);
 
     function addDecoys(list){
       for (const item of list || []){
-        const key = shell.normalizeWord(item);
+        const key = normalizeWord(item);
         if (!key || seen.has(key)) continue;
-
         seen.add(key);
         out.push(item);
-
         if (out.length >= count) break;
       }
     }
 
     if (phase === "words"){
       if (selectedMode === "easy"){
-        addDecoys(shell.getFunWordDecoys(correctLabel, buildData.words, count));
+        addDecoys(window.VerseGameShell.getFunWordDecoys(correctLabel, verseWords, count));
       } else {
-        addDecoys(shell.getVerseWordDecoys({
-          words: buildData.words,
+        addDecoys(window.VerseGameShell.getVerseWordDecoys({
+          words: verseWords,
           correct: correctLabel,
-          targetIndex: state.progressIndex,
+          targetIndex: state.builtCount,
           count,
           avoidNext: 2,
           fallbackToFun: true
         }));
 
         if (out.length < count){
-          addDecoys(shell.getFunWordDecoys(correctLabel, buildData.words, count * 2));
+          addDecoys(window.VerseGameShell.getFunWordDecoys(correctLabel, verseWords, count));
         }
 
         if (out.length < count){
-          addDecoys(shell.getFunDecoys());
+          addDecoys(FUN_DECOYS);
         }
       }
-    } else if (phase === "book"){
-      addDecoys(shell.getBookDecoys(correctLabel, count));
-    } else if (phase === "reference"){
-      addDecoys(shell.getReferenceDecoys(parsedRef, selectedMode, count + 4));
     }
 
-    if (out.length < count){
-      addDecoys(shell.getFunWordDecoys(correctLabel, buildData.words, count * 3));
+    if (phase === "book"){
+      addDecoys(window.VerseGameShell.getBookDecoys(correctLabel, count));
     }
 
-    if (out.length < count){
-      addDecoys(shell.getFunDecoys());
+    if (phase === "reference"){
+      addDecoys(window.VerseGameShell.getReferenceDecoys(parsedRef, selectedMode, count + 4));
     }
 
     return out.slice(0, count);
   }
 
-  function getChoices(){
-    updatePhase();
-
-    const correctLabel = currentTarget();
-    const phase = state.phase;
-    const decoys = getDecoysForPhase(phase, correctLabel, 2);
-    const labels = shell.shuffle([correctLabel, ...decoys]).slice(0, 3);
-
-    return labels.map((label) => ({
-      text: label,
-      correct: label === correctLabel
-    }));
+  function getRoundSpeed(){
+    const usableDistance = Math.max(180, state.bottomZoneY + 28);
+    const cfg = state.modeTiming[selectedMode] || state.modeTiming.easy;
+    const roundSeconds = clamp(cfg.start + Math.max(0, state.roundIndex - 1) * cfg.step, 2.2, 5.4);
+    return usableDistance / roundSeconds;
   }
 
-  function spawnWave(){
-    updatePhase();
-
-    if (state.phase === "done"){
-      startBonusIntro();
-      return;
-    }
-
-    const now = performance.now();
-    const choices = getChoices();
-    const timing = MODE_TIMING[selectedMode] || MODE_TIMING.medium;
-    const fallMs = timing.fallSeconds * 1000;
-    const shuffledLanes = shell.shuffle(LANES);
-
-    state.waveId += 1;
-    state.waveStatus = "falling";
-    state.tongue = null;
-    state.bugs = choices.map((choice, index) => ({
-      id: `w${state.waveId}-${index}`,
-      text: choice.text,
-      correct: choice.correct,
-      emoji: BUG_EMOJIS[(state.waveId + index) % BUG_EMOJIS.length],
-      xRatio: shuffledLanes[index] || LANES[index] || 0.5,
-      startY: -0.06,
-      endY: 0.76,
-      bornAt: now,
-      fallMs,
-      status: "falling",
-      poofAt: 0,
-      selected:false,
-      eaten:false,
-      motionPhase: Math.random() * Math.PI * 2,
-      jitterSeed: Math.random() * Math.PI * 2
-    }));
+  function getBonusShots(){
+    const max = 12;
+    const penalty = Math.min(8, state.mistakes);
+    return Math.max(4, max - penalty);
   }
 
-  function handleBugTap(id){
-    if (state.paused || state.done || state.bonusIntroActive) return;
+function getLaneCenterX(lane){
+  const index = LANE_KEYS.indexOf(lane);
+  return state.fieldWidth * ((index + 0.5) / 3);
+}
 
-    if (state.bonusMode){
-      handleBonusTap(id);
-      return;
-    }
+function getEntityMotionState(entity, now = performance.now()){
+  const phase = entity.motionPhase || 0;
+  const sway = Math.sin(now * 0.0032 + phase) * 18;
+  const pulse = Math.sin(now * 0.0044 + phase * 0.7);
 
-    if (state.waveStatus !== "falling") return;
-
-    const bug = state.bugs.find((item) => item.id === id);
-    if (!bug || bug.status !== "falling") return;
-
-    const now = performance.now();
-    state.waveStatus = "eating";
-
-    for (const item of state.bugs){
-      if (item.id === id){
-        item.selected = true;
-        item.status = "eating";
-      } else {
-        item.status = "poof";
-        item.poofAt = now;
-      }
-    }
-
-    fireTongueToBug(bug, now, MAIN_EAT_MS, false);
-
-    scheduleAction(MAIN_EAT_MS, () => finishMainEat(bug));
-  }
-
-  function finishMainEat(bug){
-    const isCorrect = !!bug.correct;
-    const now = performance.now();
-
-    state.tongue = null;
-    state.spitParticles = [];
-    state.bugs = [];
-    state.waveStatus = "resolving";
-
-    if (isCorrect){
-      state.progressIndex = Math.min(buildData.segments.length, state.progressIndex + 1);
-      state.correctEaten += 1;
-      updatePhase();
-      updateBuildText();
-      showReaction("correct");
-    } else {
-      state.mistakes += 1;
-      state.buildShakeUntil = now + 320;
-      state.fieldFlashUntil = now + 280;
-      addSpitSpray(now);
-    }
-
-    if (!state.done && !state.bonusMode && !state.bonusIntroActive){
-      spawnWave();
-    }
-  }
-
-  function missCorrectBug(){
-    const now = performance.now();
-    state.waveStatus = "missed";
-    state.misses += 1;
-    state.fieldFlashUntil = now + 240;
-
-    for (const bug of state.bugs){
-      bug.status = "poof";
-      bug.poofAt = now;
-    }
-
-    showOverlay("Poof!", 440);
-
-    const timing = MODE_TIMING[selectedMode] || MODE_TIMING.medium;
-    scheduleAction(timing.missDelay, () => {
-      if (!state.done && !state.bonusMode && !state.bonusIntroActive) spawnWave();
-    });
-  }
-
-  function fireTongueToBug(bug, now, duration, isBonus){
-    const frog = getFrogPoint();
-    const bugPoint = getBugPoint(bug, now, { ignoreEat:true });
-
-    if (bug){
-      bug.eatFromX = bugPoint.x;
-      bug.eatFromY = bugPoint.y;
-      bug.eatToX = frog.x;
-      bug.eatToY = frog.y;
-      bug.eatStartedAt = now;
-      bug.eatDuration = duration;
-    }
-
-    state.tongue = {
-      fromX: frog.x,
-      fromY: frog.y,
-      toX: bugPoint.x,
-      toY: bugPoint.y,
-      startedAt: now,
-      duration,
-      isBonus: !!isBonus
-    };
-  }
-
-  function getFrogPoint(){
-    const field = document.getElementById("bbField");
-    const frogImg = document.querySelector("#bbFrog .bb-frog-img:not([hidden])");
-    const frog = document.getElementById("bbFrog");
-    const target = frogImg || frog;
-
-    if (field && target){
-      const fieldRect = field.getBoundingClientRect();
-      const frogRect = target.getBoundingClientRect();
-
-      return {
-        x: frogRect.left - fieldRect.left + frogRect.width * 0.5,
-        y: frogRect.top - fieldRect.top + frogRect.height * 0.25
-      };
-    }
-
-    return {
-      x: state.fieldWidth * 0.5,
-      y: state.fieldHeight * 0.84
-    };
-  }
-
-  function getBugPoint(bug, now = performance.now(), options = {}){
-    if (!bug) return { x: state.fieldWidth * 0.5, y: state.fieldHeight * 0.35 };
-
-    if (bug.status === "eating" && !options.ignoreEat && Number.isFinite(bug.eatFromX)){
-      const duration = Math.max(1, Number(bug.eatDuration) || MAIN_EAT_MS);
-      const elapsed = Math.max(0, now - (Number(bug.eatStartedAt) || now));
-      const pullStart = duration * 0.44;
-      const pullWindow = Math.max(1, duration - pullStart);
-      const pullT = shell.clamp((elapsed - pullStart) / pullWindow, 0, 1);
-      const eased = easeInCubic(pullT);
-
-      return {
-        x: bug.eatFromX + (bug.eatToX - bug.eatFromX) * eased,
-        y: bug.eatFromY + (bug.eatToY - bug.eatFromY) * eased
-      };
-    }
-
-    return {
-      x: (bug.xRatio || 0.5) * state.fieldWidth,
-      y: (bug.yRatio || 0.35) * state.fieldHeight
-    };
-  }
-
-function showReaction(type){
-  const now = performance.now();
-  const timing = MODE_TIMING[selectedMode] || MODE_TIMING.medium;
-  const duration = Math.max(420, Number(timing.reactionMs) || 580);
-
-  state.reaction = {
-    type,
-    startedAt: now,
-    duration,
-    until: now + duration
+  return {
+    swayX: sway,
+    renderX: entity.x + sway,
+    rotateDeg: Math.sin(now * 0.0032 + phase) * 4.5,
+    skewXDeg: Math.sin(now * 0.0032 + phase) * 3.5,
+    scaleX: 1 + pulse * 0.035,
+    scaleY: 1 - pulse * 0.035
   };
 }
 
-  function showOverlay(message, ms){
-    state.overlayMessage = message;
-    state.overlayUntil = performance.now() + ms;
+function getEntityHitPoint(entity, now = performance.now()){
+  const motion = getEntityMotionState(entity, now);
+  return {
+    x: motion.renderX,
+    y: entity.y + 40
+  };
+}
+
+function laneLabel(lane){
+    if (lane === "left") return "LEFT";
+    if (lane === "center") return "CENTER";
+    return "RIGHT";
   }
 
-  function addSpitSpray(now = performance.now()){
-    const origin = getFrogPoint();
-    const count = 22;
-
-    for (let index = 0; index < count; index += 1){
-      const spread = (Math.random() - 0.5) * Math.PI * 1.05;
-      const baseAngle = -Math.PI / 2 + spread;
-      const speed = Math.min(state.fieldWidth, state.fieldHeight) * (0.32 + Math.random() * 0.42);
-      const life = 360 + Math.random() * 220;
-
-      state.spitParticles.push({
-        id: `spit-${now}-${index}-${Math.random()}`,
-        x: origin.x,
-        y: origin.y,
-        vx: Math.cos(baseAngle) * speed,
-        vy: Math.sin(baseAngle) * speed,
-        size: 4 + Math.random() * 7,
-        bornAt: now,
-        life
-      });
-    }
+  function buttonLaneToColor(lane){
+    return BUTTON_COLOR_ORDER[lane] || BUTTON_COLOR_ORDER.left;
   }
 
-  function scheduleAction(delayMs, fn){
-    state.scheduledActions.push({
-      at: performance.now() + Math.max(0, Number(delayMs) || 0),
-      fn
-    });
+  function hasVisibleEntityForColor(colorKey){
+    return state.entities.some(item => item.visible && item.color.key === colorKey);
   }
 
-  function runScheduledActions(now){
-    const ready = [];
-    state.scheduledActions = state.scheduledActions.filter((action) => {
-      if (now >= action.at){
-        ready.push(action);
-        return false;
+  function computeIntercept(sx, sy, tx, ty, tvx, tvy, projectileSpeed){
+    const rx = tx - sx;
+    const ry = ty - sy;
+    const a = (tvx * tvx + tvy * tvy) - (projectileSpeed * projectileSpeed);
+    const b = 2 * (rx * tvx + ry * tvy);
+    const c = (rx * rx + ry * ry);
+
+    let t = null;
+    if (Math.abs(a) < 0.0001){
+      if (Math.abs(b) > 0.0001) t = -c / b;
+    } else {
+      const disc = b * b - 4 * a * c;
+      if (disc >= 0){
+        const root = Math.sqrt(disc);
+        const t1 = (-b - root) / (2 * a);
+        const t2 = (-b + root) / (2 * a);
+        const candidates = [t1, t2].filter(v => Number.isFinite(v) && v > 0);
+        if (candidates.length) t = Math.min(...candidates);
       }
-      return true;
-    });
-
-    for (const action of ready){
-      try { action.fn(); }
-      catch (err){ console.error("Bible Bugs scheduled action failed", err); }
     }
+
+    if (!Number.isFinite(t) || t <= 0) t = Math.max(0.12, Math.hypot(rx, ry) / projectileSpeed);
+    t = clamp(t, 0.12, 1.35);
+
+    return { x: tx + tvx * t, y: ty + tvy * t, t };
   }
 
-  function startBonusIntro(){
-    if (state.bonusIntroActive || state.bonusMode || state.done) return;
-
-    state.waveStatus = "bonus_intro";
-    state.bugs = [];
-    state.tongue = null;
-    state.reaction = null;
-    state.bonusIntroActive = true;
-    state.bonusIntroUntil = performance.now() + 1700;
-    showOverlay("", 0);
+  function parseReferenceParts(ref, translation, verseId){
+    return window.VerseGameShell.parseReferenceParts(ref, translation, verseId);
   }
 
-  function startBonusRound(){
-    state.bonusIntroActive = false;
-    state.bonusMode = true;
-    state.bonusEndsAt = performance.now() + BONUS_SECONDS * 1000;
-    state.bonusBug = null;
-    state.bonusEating = false;
-    state.bugsEaten = 0;
 
-    updateBuildText();
-    spawnBonusBug();
+  function tokenizeVerse(text){
+    return window.VerseGameShell.tokenizeVerseWords(text);
   }
 
-  function spawnBonusBug(){
-    if (!state.bonusMode || state.done || state.bonusEating || state.bonusBug) return;
+  function normalizeWord(value){
+    return window.VerseGameShell.normalizeWord(value);
+  }
 
-    const now = performance.now();
-    const marginX = 0.16;
-    const marginTop = 0.14;
-    const marginBottom = 0.34;
+  function addTrail(x, y, white){
+    state.trails.push({
+      x,
+      y,
+      icon: white ? "·" : "✨",
+      opacity: white ? 0.85 : 0.95,
+      white:!!white,
+      until: performance.now() + 180
+    });
+    if (state.trails.length > 24) state.trails.shift();
+  }
 
-    state.bonusBugId += 1;
-    state.bonusBug = {
-      id: `b${state.bonusBugId}`,
-      emoji: BUG_EMOJIS[state.bonusBugId % BUG_EMOJIS.length],
-      xRatio: shell.clamp(marginX + Math.random() * (1 - marginX * 2), marginX, 1 - marginX),
-      yRatio: shell.clamp(marginTop + Math.random() * (1 - marginTop - marginBottom), marginTop, 1 - marginBottom),
-      vx: (Math.random() < 0.5 ? -1 : 1) * (0.055 + Math.random() * 0.055),
-      vy: (Math.random() < 0.5 ? -1 : 1) * (0.040 + Math.random() * 0.050),
-      bornAt: now,
-      expiresAt: now + BONUS_BUG_LIFE_MS,
-      status: "bonus",
-      poofAt: 0,
-      motionPhase: Math.random() * Math.PI * 2,
-      jitterSeed: Math.random() * Math.PI * 2
+  function addEffect(effect){
+    state.effects.push(effect);
+    if (state.effects.length > 30) state.effects.shift();
+  }
+
+  function makeSmokePuffEffect(x, y){
+    const born = performance.now();
+    const particles = Array.from({ length: 7 }, (_, i) => ({
+      angle: (Math.PI * 2 * i / 7) + randBetween(-0.24, 0.24),
+      speed: randBetween(6, 18),
+      size: randBetween(12, 24),
+      color: Math.random() < 0.5 ? "rgba(255,255,255,0.72)" : "rgba(210,218,226,0.68)",
+      alpha: randBetween(0.62, 0.92),
+      gravity: randBetween(-1, 2),
+      drift: randBetween(-4, 4),
+      style: "smoke",
+      spin: randBetween(-40, 40)
+    }));
+    return {
+      kind:"particle",
+      group:"smoke",
+      preset:"smokePuff",
+      x,
+      y,
+      born,
+      life:420,
+      until: born + 420,
+      particles,
+      ring:0,
+      center:0
     };
   }
 
-  function handleBonusTap(id){
-    if (!state.bonusMode || state.bonusEating || state.paused || state.done) return;
-    const bug = state.bonusBug;
-    if (!bug || bug.id !== id || bug.status !== "bonus") return;
-
-    const now = performance.now();
-    state.bonusEating = true;
-    bug.status = "eating";
-    state.bugsEaten += 1;
-    fireTongueToBug(bug, now, BONUS_EAT_MS, true);
-
-    scheduleAction(BONUS_EAT_MS, () => {
-      state.tongue = null;
-      state.bonusBug = null;
-      state.bonusEating = false;
-      spawnBonusBug();
-    });
+  function makeCorrectHitEffect(x, y, baseColor, streak){
+    return makeParticleEffect(randomFrom(CORRECT_EFFECT_POOL), x, y, baseColor, streak, "hit");
   }
 
-  function update(dt, now){
-    runScheduledActions(now);
-
-    state.spitParticles = state.spitParticles.filter((particle) => now - particle.bornAt < particle.life);
-
-    if (state.bonusIntroActive && now >= state.bonusIntroUntil){
-      startBonusRound();
-    }
-
-    if (state.waveStatus === "falling"){
-      let correctMissed = false;
-
-      for (const bug of state.bugs){
-        if (bug.status !== "falling") continue;
-        const t = shell.clamp((now - bug.bornAt) / bug.fallMs, 0, 1);
-        bug.yRatio = bug.startY + (bug.endY - bug.startY) * t;
-        if (t >= 1 && bug.correct) correctMissed = true;
-      }
-
-      if (correctMissed) missCorrectBug();
-    }
-
-    updateBonusBug(dt, now);
-
-    if (state.reaction && now >= state.reaction.until){
-      state.reaction = null;
-    }
-
-    if (state.bonusMode && now >= state.bonusEndsAt){
-      if (state.bonusBug && state.bonusBug.status !== "poof"){
-        state.bonusBug.status = "poof";
-        state.bonusBug.poofAt = now;
-      }
-      if (!state.bonusEating && (!state.bonusBug || state.bonusBug.status === "gone")){
-        finishGame();
-      }
-    }
+  function makeBonusFireworkEffect(x, y){
+    const color = randomFrom([LANE_COLORS[0].hex, LANE_COLORS[1].hex, LANE_COLORS[2].hex, "#f28fff", "#ffffff"]);
+    return makeParticleEffect(randomFrom(BONUS_FIREWORK_POOL), x, y, color, 5, "fireworkParticle");
   }
 
-  function updateBonusBug(dt, now){
-    const bug = state.bonusBug;
-    if (!state.bonusMode || !bug) return;
+  function makeParticleEffect(preset, x, y, baseColor, streak, group){
+    const born = performance.now();
+    const strong = streak >= 4;
+    const configMap = {
+      alienPop: { life:620, count: strong ? 16 : 12, speedMin:88, speedMax:162, sizeMin:4, sizeMax:9, gravity:6, ring:0, center:0, style:"dot", shell:false, flash:false, cross:false },
+      starburst: { life:680, count: strong ? 15 : 11, speedMin:96, speedMax:176, sizeMin:5, sizeMax:10, gravity:4, ring:0, center:0, style:"star", shell:false, flash:false, cross:false },
+      chrysanthemum: { life:760, count: strong ? 20 : 16, speedMin:82, speedMax:154, sizeMin:4, sizeMax:8, gravity:3, ring:0, center:0, style:"petal", shell:false, flash:false, cross:false },
+      novaBurst: { life:720, count: strong ? 18 : 14, speedMin:108, speedMax:186, sizeMin:4, sizeMax:10, gravity:5, ring:0, center:0, style:"shard", shell:false, flash:false, cross:false },
 
-    if (bug.status === "bonus"){
-      const fieldRatio = state.fieldWidth && state.fieldHeight ? state.fieldWidth / state.fieldHeight : 0.75;
-      bug.xRatio += bug.vx * dt;
-      bug.yRatio += bug.vy * dt * fieldRatio;
-
-      if (bug.xRatio < 0.12 || bug.xRatio > 0.88){
-        bug.vx *= -1;
-        bug.xRatio = shell.clamp(bug.xRatio, 0.12, 0.88);
-      }
-
-      if (bug.yRatio < 0.14 || bug.yRatio > 0.66){
-        bug.vy *= -1;
-        bug.yRatio = shell.clamp(bug.yRatio, 0.14, 0.66);
-      }
-
-      if (now >= bug.expiresAt){
-        bug.status = "poof";
-        bug.poofAt = now;
+      flashRing: { life:900, count:18, speedMin:92, speedMax:154, sizeMin:5, sizeMax:10, gravity:8, ring:0, center:0, style:"dot", shell:false, flash:false, cross:false },
+      classicFirework: { life:980, count:24, speedMin:102, speedMax:188, sizeMin:4, sizeMax:9, gravity:10, ring:0, center:0, style:"petal", shell:false, flash:false, cross:false },
+      confettiBloom: { life:980, count:22, speedMin:84, speedMax:148, sizeMin:5, sizeMax:10, gravity:14, ring:0, center:0, style:"confetti", shell:false, flash:false, cross:false },
+      plasmaBurst: { life:920, count:20, speedMin:112, speedMax:198, sizeMin:5, sizeMax:11, gravity:6, ring:0, center:0, style:"plasma", shell:false, flash:false, cross:false },
+      cosmicCrackle: { life:1040, count:26, speedMin:74, speedMax:176, sizeMin:3, sizeMax:8, gravity:12, ring:0, center:0, style:"crackle", shell:false, flash:false, cross:false }
+    };
+    const cfg = configMap[preset] || configMap.alienPop;
+    const palette = buildPalette(baseColor, preset);
+    const particles = [];
+    for (let i = 0; i < cfg.count; i++){
+      particles.push({
+        angle: (Math.PI * 2 * i / cfg.count) + randBetween(-0.18, 0.18),
+        speed: randBetween(cfg.speedMin, cfg.speedMax),
+        size: randBetween(cfg.sizeMin, cfg.sizeMax),
+        color: randomFrom(palette),
+        alpha: randBetween(0.82, 1),
+        gravity: cfg.gravity,
+        drift: randBetween(-8, 8),
+        style: cfg.style,
+        spin: randBetween(-220, 220)
+      });
+      if (preset === "cosmicCrackle" && i % 5 === 0){
+        particles.push({
+          angle: (Math.PI * 2 * i / cfg.count) + randBetween(-0.12, 0.12),
+          speed: randBetween(cfg.speedMax * 0.65, cfg.speedMax * 1.05),
+          size: randBetween(2, 4),
+          color: "#ffffff",
+          alpha: 1,
+          gravity: cfg.gravity + 4,
+          drift: randBetween(-10, 10),
+          style: "spark",
+          spin: randBetween(-280, 280)
+        });
       }
     }
-
-    if (bug.status === "poof" && now - bug.poofAt > 260){
-      state.bonusBug = null;
-      if (state.bonusMode && now < state.bonusEndsAt) spawnBonusBug();
-    }
+    return {
+      kind:"particle",
+      group,
+      preset,
+      x,
+      y,
+      born,
+      life: cfg.life,
+      until: born + cfg.life,
+      particles,
+      ring: cfg.ring,
+      center: cfg.center,
+      flash: cfg.flash,
+      shell: cfg.shell,
+      cross: cfg.cross
+    };
   }
 
-  function startLoop(){
-    cancelAnimationFrame(state.rafId);
-    state.lastTs = 0;
-    state.rafId = requestAnimationFrame(loop);
+function makeAbductionEffect(x, y, color){
+  const born = performance.now();
+  return {
+    kind:"abduction",
+    group:"abduction",
+    x,
+    y,
+    born,
+    life:1700,
+    until: born + 1700,
+    colorHex: color.hex,
+    alienImg: color.alienImg,
+    alienAlt: color.alienAlt,
+    abducteeImg: randomFrom(ABDUCTEE_IMAGES)
+  };
+}
+
+  function buildPalette(baseColor, preset){
+    if (preset === "confettiBloom") return ["#ff5a51", "#ffc751", "#40b9c5", "#f28fff", "#ffffff", "#a7cb6f"];
+    if (preset === "plasmaBurst") return [baseColor, lightenColor(baseColor, 0.3), "#ffffff", "#d596ff", "#77f0ff"];
+    if (preset === "cosmicCrackle") return [baseColor, "#ffffff", "#ffd96c", "#8af2ff", "#ff9fe7"];
+    return [baseColor, lightenColor(baseColor, 0.2), lightenColor(baseColor, 0.36), "#ffffff", "#ffe082"];
+  }
+
+  function renderEffect(effect, now){
+    if (effect.kind === "abduction"){
+      const progress = clamp((now - effect.born) / effect.life, 0, 1);
+      const hold = 0.18;
+      const travel = progress <= hold ? 0 : (progress - hold) / (1 - hold);
+
+      const liftDistance = Math.max(state.fieldHeight + 140, state.bottomZoneY + 260);
+      const liftY = -travel * liftDistance;
+
+      const beamOpacity = progress < 0.72
+        ? 0.82
+        : Math.max(0, 0.82 - ((progress - 0.72) / 0.28) * 0.82);
+
+      const wholeOpacity = progress < 0.92
+        ? 1
+        : Math.max(0, 1 - ((progress - 0.92) / 0.08));
+
+      return `
+        <div class="vinv-effect-wrap vinv-abduct-wrap" style="left:${effect.x}px; top:${effect.y}px; transform:translate(-50%,-50%) translateY(${liftY.toFixed(1)}px); opacity:${wholeOpacity.toFixed(3)};">
+          <div class="vinv-beam vinv-beam-abduct" style="opacity:${beamOpacity.toFixed(3)}"></div>
+          <div class="vinv-abduct-stack">
+            <div class="vinv-alien">
+              <img
+                class="vinv-alien-img"
+                src="${effect.alienImg}"
+                alt="${effect.alienAlt}"
+                draggable="false"
+              />
+            </div>
+            <div class="vinv-word" style="color:${effect.colorHex}; visibility:hidden; height:0; margin:0; padding:0;"></div>
+            <div class="vinv-abduct-passenger">
+              <img
+                class="vinv-abductee-img"
+                src="${effect.abducteeImg}"
+                alt="Abductee"
+                draggable="false"
+              />
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    if (effect.kind !== "particle") return "";
+
+    const progress = clamp((now - effect.born) / effect.life, 0, 1);
+    const particleHtml = effect.particles.map((particle) => {
+      const dx = Math.cos(particle.angle) * particle.speed * progress + particle.drift * progress;
+      const dy = Math.sin(particle.angle) * particle.speed * progress + (particle.gravity || 0) * progress * progress * 40;
+      const opacity = clamp((particle.alpha || 1) * (1 - Math.pow(progress, effect.preset === "smokePuff" ? 1.05 : 1.55)), 0, 1);
+      const scale = effect.preset === "smokePuff" ? (0.82 + progress * 0.62) : (0.72 + progress * 0.62);
+      const rotation = (particle.spin || 0) * progress;
+      return `<div class="vinv-particle is-${particle.style}" style="transform:translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) translate(-50%,-50%) rotate(${rotation.toFixed(1)}deg) scale(${scale.toFixed(2)});width:${particle.size.toFixed(1)}px;height:${particle.size.toFixed(1)}px;background:${particle.color};opacity:${opacity.toFixed(3)};"></div>`;
+    }).join("");
+
+    const ringSize = 18 + progress * 84 * (effect.ring || 0);
+    const centerSize = 18 + (effect.center || 0) * 18 + progress * 10;
+    const ring = effect.ring ? `<div class="vinv-effect-ring" style="width:${ringSize.toFixed(1)}px;height:${ringSize.toFixed(1)}px;opacity:${Math.max(0, 0.82 - progress * 0.95).toFixed(3)};border-width:${Math.max(2, 4 - progress * 2).toFixed(1)}px;"></div>` : "";
+    const center = effect.center ? `<div class="vinv-effect-center" style="width:${centerSize.toFixed(1)}px;height:${centerSize.toFixed(1)}px;opacity:${Math.max(0, 0.95 - progress * 1.2).toFixed(3)};"></div>` : "";
+    const flash = effect.flash ? `<div class="vinv-effect-flash" style="width:${(74 + progress * 50).toFixed(1)}px;height:${(74 + progress * 50).toFixed(1)}px;opacity:${Math.max(0, 0.28 - progress * 0.32).toFixed(3)};"></div>` : "";
+    const shell = effect.shell ? `<div class="vinv-effect-shell" style="width:${(42 + progress * 36).toFixed(1)}px;height:${(42 + progress * 36).toFixed(1)}px;opacity:${Math.max(0, 0.3 - progress * 0.36).toFixed(3)};"></div>` : "";
+    const cross = effect.cross ? `<div class="vinv-effect-cross" style="opacity:${Math.max(0, 0.54 - progress * 0.6).toFixed(3)};"></div>` : "";
+
+    return `<div class="vinv-effect-wrap" style="left:${effect.x}px; top:${effect.y}px;">${flash}${shell}${ring}${center}${cross}${particleHtml}</div>`;
+  }
+
+  function lightenColor(hex, amount){
+    const clean = String(hex || "#ffffff").replace("#", "");
+    if (clean.length !== 6) return "#ffffff";
+    const r = parseInt(clean.slice(0, 2), 16);
+    const g = parseInt(clean.slice(2, 4), 16);
+    const b = parseInt(clean.slice(4, 6), 16);
+    const nr = Math.round(r + (255 - r) * amount);
+    const ng = Math.round(g + (255 - g) * amount);
+    const nb = Math.round(b + (255 - b) * amount);
+    return `#${nr.toString(16).padStart(2, "0")}${ng.toString(16).padStart(2, "0")}${nb.toString(16).padStart(2, "0")}`;
+  }
+
+  function scheduleAction(delayMs, fn){
+    state.scheduledActions.push({ at: performance.now() + delayMs, run: fn });
+  }
+
+  function processScheduledActions(ts){
+    if (!state.scheduledActions.length) return;
+    const ready = [];
+    const later = [];
+    for (const action of state.scheduledActions){
+      if (ts >= action.at) ready.push(action);
+      else later.push(action);
+    }
+    state.scheduledActions = later;
+    for (const action of ready) action.run();
   }
 
   function stopLoop(){
@@ -1145,314 +1298,22 @@ function showReaction(type){
     state.running = false;
   }
 
-  function loop(ts){
-    if (!state.running) return;
-
-    if (!state.lastTs) state.lastTs = ts;
-    const dt = Math.min(0.05, Math.max(0, (ts - state.lastTs) / 1000));
-    state.lastTs = ts;
-
-    if (!state.paused){
-      update(dt, ts);
-    }
-
-    renderFrame();
+  function startLoop(){
+    if (state.rafId) cancelAnimationFrame(state.rafId);
     state.rafId = requestAnimationFrame(loop);
   }
 
-  async function finishGame(){
-    if (state.done) return;
-
-    state.done = true;
-    state.bonusMode = false;
-    state.bonusIntroActive = false;
-    state.bonusBug = null;
-    state.tongue = null;
-    state.spitParticles = [];
-    state.bugs = [];
-
-    if (!completionMarked){
-      completionMarked = true;
-      try {
-        completionResult = await window.VerseGameBridge.completeGameRun({
-          verseId: ctx.verseId,
-          gameId: GAME_ID,
-          mode: selectedMode,
-          stats: {
-            correctEaten: state.correctEaten,
-            mistakes: state.mistakes,
-            misses: state.misses,
-            bugsEaten: state.bugsEaten
-          }
-        });
-      } catch (err){
-        console.error("completeGameRun failed", err);
-        completionResult = null;
-      }
-    }
-
-    renderEndScreen();
-  }
-
-  function renderEndScreen(){
-    stopLoop();
-
-    shell.renderCompleteScreen({
-      app,
-      gameIcon: "🐸",
-      mode: selectedMode,
-      verseId: ctx.verseId,
-      gameId: GAME_ID,
-      completion: completionResult,
-      gameMessage: `Bugs eaten: ${state.bugsEaten}`,
-      theme: GAME_THEME,
-      backLabel: "Back to Practice Games",
-      onPlayAgain: renderModeSelect,
-      onMoreGames: () => window.VerseGameBridge.exitGame(),
-      onChangeVerse: () => window.VerseGameBridge.returnToTitle()
-    });
-  }
-
-  function renderFrame(){
-    const field = document.getElementById("bbField");
-    const play = document.getElementById("bbPlayLayer");
-    const effects = document.getElementById("bbEffectsLayer");
-    const frogTongueSlot = document.getElementById("bbFrogTongueSlot");
-    const reactionLayer = document.getElementById("bbReactionLayer");
-    const overlay = document.getElementById("bbOverlay");
-    const bonusIntro = document.getElementById("bbBonusIntroOverlay");
-    const statusPill = document.getElementById("bbStatusPill");
-    const build = document.getElementById("bbBuild");
-
-    if (!field || !play || !effects || !frogTongueSlot || !reactionLayer || !overlay || !bonusIntro || !statusPill || !build) return;
-
-    const now = performance.now();
-    field.classList.toggle("is-flash-bad", now < state.fieldFlashUntil);
-    build.classList.toggle("is-shake", now < state.buildShakeUntil);
-
-    play.innerHTML = renderBugs();
-    frogTongueSlot.innerHTML = renderTongue(now);
-    effects.innerHTML = renderSpitParticles(now);
-    reactionLayer.innerHTML = renderReaction(now);
-
-    overlay.innerHTML = now < state.overlayUntil && state.overlayMessage
-      ? `<div class="bb-overlay-bubble">${escapeHtml(state.overlayMessage)}</div>`
-      : "";
-
-    const showBonusIntro = state.bonusIntroActive && now < state.bonusIntroUntil;
-    bonusIntro.classList.toggle("is-open", showBonusIntro);
-    bonusIntro.setAttribute("aria-hidden", showBonusIntro ? "false" : "true");
-
-    statusPill.textContent = getStatusText(now);
-  }
-
-  function renderBugs(){
-    const items = [];
-    const now = performance.now();
-
-    for (const bug of state.bugs){
-      if (bug.status === "gone") continue;
-      items.push(renderBugButton(bug, now, false));
-    }
-
-    if (state.bonusBug){
-      items.push(renderBugButton(state.bonusBug, now, true));
-    }
-
-    return items.join("");
-  }
-
-function renderBugButton(bug, now, isBonus){
-  const p = getBugPoint(bug, now);
-  const motion = getBugMotionState(bug, now, isBonus);
-  const statusClass = bug.status === "poof" ? " is-poof" : bug.status === "eating" ? " is-eating" : "";
-  const bonusClass = isBonus ? " bb-bug--bonus" : "";
-  const popClass = now - bug.bornAt < 260 ? " is-pop" : "";
-  const word = isBonus ? "" : `<div class="bb-bug-word">${escapeHtml(bug.text)}</div>`;
-  const disabled = (!isBonus && state.waveStatus !== "falling") || (isBonus && state.bonusEating) ? " disabled" : "";
-
-  const x = p.x + motion.swayX;
-  const y = p.y;
-  const buttonTransform = `rotate(${motion.rotateDeg.toFixed(2)}deg) scale(${motion.scaleX.toFixed(3)}, ${motion.scaleY.toFixed(3)})`;
-
-  return `
-    <div class="bb-bug-wrap${bonusClass}${statusClass}${popClass}" style="--bb-x:${x.toFixed(2)}px; --bb-y:${y.toFixed(2)}px;">
-      <button class="bb-bug-btn" type="button" data-bug-id="${escapeHtml(bug.id)}"${disabled} style="transform:${buttonTransform};">
-        <span class="bb-bug-emoji" aria-hidden="true">${escapeHtml(bug.emoji || "🪰")}</span>
-        ${word}
-      </button>
-    </div>
-  `;
-}
-  
-
-function renderTongue(now){
-  const t = state.tongue;
-  if (!t) return "";
-
-  const frog = document.getElementById("bbFrog");
-  const field = document.getElementById("bbField");
-
-  if (!frog || !field) return "";
-
-  const frogRect = frog.getBoundingClientRect();
-  const fieldRect = field.getBoundingClientRect();
-
-  const localFromX = t.fromX - (frogRect.left - fieldRect.left);
-  const localFromY = t.fromY - (frogRect.top - fieldRect.top);
-  const localToX = t.toX - (frogRect.left - fieldRect.left);
-  const localToY = t.toY - (frogRect.top - fieldRect.top);
-
-  const elapsed = now - t.startedAt;
-  const half = t.duration / 2;
-  let progress = elapsed <= half ? elapsed / half : 1 - ((elapsed - half) / half);
-  progress = shell.clamp(progress, 0, 1);
-
-  const eased = easeOutCubic(progress);
-  const dx = localToX - localFromX;
-  const dy = localToY - localFromY;
-  const length = Math.max(0, Math.hypot(dx, dy) * eased);
-  const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-
-  return `
-    <div class="bb-tongue" style="--bb-tongue-x:${localFromX}px; --bb-tongue-y:${localFromY}px; --bb-tongue-l:${length}px; --bb-tongue-a:${angle}deg;">
-      <div class="bb-tongue-line"></div>
-      <div class="bb-tongue-tip"></div>
-    </div>
-  `;
-}
-
-  function renderSpitParticles(now){
-    if (!state.spitParticles.length) return "";
-
-    const gravity = state.fieldHeight * 1.7;
-
-    return state.spitParticles.map((particle) => {
-      const age = Math.max(0, now - particle.bornAt);
-      const t = age / 1000;
-      const lifeT = shell.clamp(age / particle.life, 0, 1);
-      const x = particle.x + particle.vx * t;
-      const y = particle.y + particle.vy * t + 0.5 * gravity * t * t;
-      const opacity = Math.max(0, 1 - lifeT);
-      const scale = 1 - lifeT * 0.35;
-
-      return `<span class="bb-spit-dot" style="left:${x}px; top:${y}px; width:${particle.size}px; height:${particle.size}px; opacity:${opacity}; transform:translate(-50%,-50%) scale(${scale});"></span>`;
-    }).join("");
-  }
-
-function renderReaction(now){
-  const reaction = state.reaction;
-  if (!reaction || reaction.type !== "correct" || now >= reaction.until) return "";
-
-  const duration = Math.max(1, Number(reaction.duration) || 580);
-  const startedAt = Number(reaction.startedAt) || (reaction.until - duration);
-  const age = Math.max(0, now - startedAt);
-  const t = shell.clamp(age / duration, 0, 1);
-
-  let scale = 1;
-  let rotate = 0;
-
-  if (t < 0.18){
-    const popT = easeOutCubic(t / 0.18);
-    scale = 0.55 + (1.14 - 0.55) * popT;
-    rotate = -5 + 8 * popT;
-  } else if (t < 0.62){
-    const settleT = easeOutCubic((t - 0.18) / 0.44);
-    scale = 1.14 + (1 - 1.14) * settleT;
-    rotate = 3 + (0 - 3) * settleT;
-  } else {
-    const fadeT = easeOutCubic((t - 0.62) / 0.38);
-    scale = 1 + 0.08 * fadeT;
-    rotate = 0;
-  }
-
-  const fadeIn = easeOutCubic(shell.clamp(t / 0.12, 0, 1));
-  const fadeOut = shell.clamp((t - 0.72) / 0.28, 0, 1);
-  const opacity = Math.max(0, fadeIn * (1 - fadeOut));
-
-  return `
-    <div
-      class="bb-reaction bb-reaction--correct"
-      style="opacity:${opacity.toFixed(3)}; transform:translate(-50%, -50%) scale(${scale.toFixed(3)}) rotate(${rotate.toFixed(2)}deg);"
-    >
-      <img class="bb-reaction-img" src="${escapeHtml(IMAGE_PATHS.frogHappy)}" alt="Happy frog" onerror="this.hidden=true;this.nextElementSibling.hidden=false;">
-      <div class="bb-reaction-fallback" hidden>🐸✨</div>
-    </div>
-  `;
-}
-
-  function renderFrog(){
-    return `
-      <div class="bb-frog" id="bbFrog">
-        <img class="bb-lilypad-img" src="${escapeHtml(IMAGE_PATHS.lilyPad)}" alt="" aria-hidden="true" onerror="this.hidden=true;">
-        <div class="bb-frog-tongue-slot" id="bbFrogTongueSlot"></div>
-        <img class="bb-frog-img" src="${escapeHtml(IMAGE_PATHS.frogIdle)}" alt="Frog" onerror="this.hidden=true;this.nextElementSibling.hidden=false;">
-        <div class="bb-frog-fallback" hidden>🐸</div>
-      </div>
-    `;
-  }
-
-  function getStatusText(now){
-    if (state.bonusMode){
-      const secondsLeft = Math.max(0, Math.ceil((state.bonusEndsAt - now) / 1000));
-      return `🐞 ${state.bugsEaten} · ${secondsLeft}s`;
-    }
-
-    if (state.bonusIntroActive) return "Bonus!";
-
-    const label = state.phase === "book"
-      ? "Book"
-      : state.phase === "reference"
-        ? "Reference"
-        : `${Math.min(state.progressIndex + 1, buildData.words.length)}/${Math.max(1, buildData.words.length)}`;
-
-    return label;
-  }
-
-function getBugMotionState(bug, now = performance.now(), isBonus = false){
-  if (!bug || bug.status === "eating"){
-    return {
-      swayX: 0,
-      rotateDeg: 0,
-      scaleX: 1,
-      scaleY: 1
-    };
-  }
-
-  const phase = Number(bug.motionPhase) || 0;
-  const elapsed = Math.max(0, now - (Number(bug.bornAt) || now)) / 1000;
-
-  const fieldWidth = Math.max(1, Number(state.fieldWidth) || 1);
-  const amount = fieldWidth * BUG_MOTION.sideAmountRatio * (isBonus ? 0.72 : 1);
-
-  // Gentle side-to-side from the sampler.
-  const w = elapsed * Math.PI * 2 * BUG_MOTION.sideSpeed;
-  const swayX = Math.sin(w + phase) * amount;
-
-  // Gentle rotate from the sampler.
-  const rotateDeg = Math.sin(elapsed * 3 + phase) * BUG_MOTION.rotationAmount;
-
-  // Gentle pulse from the sampler. This grows/shrinks both axes together.
-  const pulse = Math.sin(elapsed * 4.5 + phase) * BUG_MOTION.squishAmount;
-
-  return {
-    swayX,
-    rotateDeg,
-    scaleX: 1 + pulse,
-    scaleY: 1 + pulse
-  };
-}
-
-function easeInQuad(t){ return t * t; }
-function easeInCubic(t){ return t * t * t; }
-function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
-
-function escapeHtml(value){
-    return String(value ?? "")
+const clamp = window.VerseGameShell.clamp;
+function randomFrom(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
+function randBetween(min, max){ return min + Math.random() * (max - min); }
+const capitalize = window.VerseGameShell.capitalize;
+const shuffle = window.VerseGameShell.shuffle;
+  function escapeHtml(value){
+    return String(value || "")
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
+      .replace(/\"/g, "&quot;")
       .replace(/'/g, "&#39;");
   }
 })();
