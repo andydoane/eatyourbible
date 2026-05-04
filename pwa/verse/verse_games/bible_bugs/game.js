@@ -762,7 +762,7 @@ function showReaction(type){
       for (const bug of state.bugs){
         if (bug.status !== "falling") continue;
         const t = shell.clamp((now - bug.bornAt) / bug.fallMs, 0, 1);
-        bug.yRatio = bug.startY + (bug.endY - bug.startY) * easeInQuad(t);
+        bug.yRatio = bug.startY + (bug.endY - bug.startY) * t;
         if (t >= 1 && bug.correct) correctMissed = true;
       }
 
