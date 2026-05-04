@@ -20,7 +20,8 @@
   const IMAGE_PATHS = {
     frogIdle: "./bible_bugs_images/bible_bugs_frog_idle.png",
     frogHappy: "./bible_bugs_images/bible_bugs_frog_happy.png",
-    frogGross: "./bible_bugs_images/bible_bugs_frog_gross.png"
+    frogGross: "./bible_bugs_images/bible_bugs_frog_gross.png",
+    lilyPad: "./bible_bugs_images/bible_bugs_lilypad.png"
   };
 
   const BUG_EMOJIS = ["🪰", "🐞", "🐝", "🦟", "🪲", "🐛"];
@@ -28,9 +29,9 @@
   const BONUS_SECONDS = 20;
 
   const MODE_TIMING = {
-    easy: { fallSeconds: 6.8, nextDelay: 460, reactionMs: 980, missDelay: 520 },
-    medium: { fallSeconds: 5.8, nextDelay: 420, reactionMs: 940, missDelay: 460 },
-    hard: { fallSeconds: 4.9, nextDelay: 380, reactionMs: 900, missDelay: 420 }
+    easy: { fallSeconds: 6.8, nextDelay: 0, reactionMs: 620, missDelay: 520 },
+    medium: { fallSeconds: 5.8, nextDelay: 0, reactionMs: 580, missDelay: 460 },
+    hard: { fallSeconds: 4.9, nextDelay: 0, reactionMs: 540, missDelay: 420 }
   };
 
   const BONUS_BUG_LIFE_MS = 1850;
@@ -72,6 +73,7 @@
     waveStatus:"idle",
     bugs:[],
     tongue:null,
+    spitParticles:[],
     scheduledActions:[],
     misses:0,
     mistakes:0,
@@ -142,6 +144,7 @@
     state.waveStatus = "idle";
     state.bugs = [];
     state.tongue = null;
+    state.spitParticles = [];
     state.scheduledActions = [];
     state.misses = 0;
     state.mistakes = 0;
@@ -451,7 +454,6 @@
     state.waveId += 1;
     state.waveStatus = "falling";
     state.tongue = null;
-    state.reaction = null;
     state.bugs = choices.map((choice, index) => ({
       id: `w${state.waveId}-${index}`,
       text: choice.text,
@@ -505,6 +507,7 @@
     const now = performance.now();
 
     state.tongue = null;
+    state.spitParticles = [];
     state.bugs = [];
     state.waveStatus = "resolving";
 
@@ -514,19 +517,16 @@
       updatePhase();
       updateBuildText();
       showReaction("correct");
-      showOverlay("Yum!", 520);
     } else {
       state.mistakes += 1;
       state.buildShakeUntil = now + 320;
       state.fieldFlashUntil = now + 280;
-      showReaction("wrong");
-      showOverlay("Bleh! Try the next one.", 720);
+      addSpitSpray(now);
     }
 
-    const timing = MODE_TIMING[selectedMode] || MODE_TIMING.medium;
-    scheduleAction(timing.nextDelay + timing.reactionMs, () => {
-      if (!state.done && !state.bonusMode && !state.bonusIntroActive) spawnWave();
-    });
+    if (!state.done && !state.bonusMode && !state.bonusIntroActive){
+      spawnWave();
+    }
   }
 
   function missCorrectBug(){
@@ -573,9 +573,24 @@
   }
 
   function getFrogPoint(){
+    const field = document.getElementById("bbField");
+    const frogImg = document.querySelector("#bbFrog .bb-frog-img:not([hidden])");
+    const frog = document.getElementById("bbFrog");
+    const target = frogImg || frog;
+
+    if (field && target){
+      const fieldRect = field.getBoundingClientRect();
+      const frogRect = target.getBoundingClientRect();
+
+      return {
+        x: frogRect.left - fieldRect.left + frogRect.width * 0.5,
+        y: frogRect.top - fieldRect.top + frogRect.height * 0.25
+      };
+    }
+
     return {
       x: state.fieldWidth * 0.5,
-      y: state.fieldHeight * 0.88
+      y: state.fieldHeight * 0.84
     };
   }
 
@@ -612,6 +627,29 @@
   function showOverlay(message, ms){
     state.overlayMessage = message;
     state.overlayUntil = performance.now() + ms;
+  }
+
+  function addSpitSpray(now = performance.now()){
+    const origin = getFrogPoint();
+    const count = 22;
+
+    for (let index = 0; index < count; index += 1){
+      const spread = (Math.random() - 0.5) * Math.PI * 1.05;
+      const baseAngle = -Math.PI / 2 + spread;
+      const speed = Math.min(state.fieldWidth, state.fieldHeight) * (0.32 + Math.random() * 0.42);
+      const life = 360 + Math.random() * 220;
+
+      state.spitParticles.push({
+        id: `spit-${now}-${index}-${Math.random()}`,
+        x: origin.x,
+        y: origin.y,
+        vx: Math.cos(baseAngle) * speed,
+        vy: Math.sin(baseAngle) * speed,
+        size: 4 + Math.random() * 7,
+        bornAt: now,
+        life
+      });
+    }
   }
 
   function scheduleAction(delayMs, fn){
@@ -705,6 +743,8 @@
 
   function update(dt, now){
     runScheduledActions(now);
+
+    state.spitParticles = state.spitParticles.filter((particle) => now - particle.bornAt < particle.life);
 
     if (state.bonusIntroActive && now >= state.bonusIntroUntil){
       startBonusRound();
@@ -806,6 +846,7 @@
     state.bonusIntroActive = false;
     state.bonusBug = null;
     state.tongue = null;
+    state.spitParticles = [];
     state.bugs = [];
 
     if (!completionMarked){
@@ -867,7 +908,7 @@
     build.classList.toggle("is-shake", now < state.buildShakeUntil);
 
     play.innerHTML = renderBugs();
-    effects.innerHTML = renderTongue(now);
+    effects.innerHTML = renderEffects(now);
     reactionLayer.innerHTML = renderReaction(now);
 
     overlay.innerHTML = now < state.overlayUntil && state.overlayMessage
@@ -915,6 +956,10 @@
     `;
   }
 
+  function renderEffects(now){
+    return `${renderTongue(now)}${renderSpitParticles(now)}`;
+  }
+
   function renderTongue(now){
     const t = state.tongue;
     if (!t) return "";
@@ -937,21 +982,32 @@
     `;
   }
 
+  function renderSpitParticles(now){
+    if (!state.spitParticles.length) return "";
+
+    const gravity = state.fieldHeight * 1.7;
+
+    return state.spitParticles.map((particle) => {
+      const age = Math.max(0, now - particle.bornAt);
+      const t = age / 1000;
+      const lifeT = shell.clamp(age / particle.life, 0, 1);
+      const x = particle.x + particle.vx * t;
+      const y = particle.y + particle.vy * t + 0.5 * gravity * t * t;
+      const opacity = Math.max(0, 1 - lifeT);
+      const scale = 1 - lifeT * 0.35;
+
+      return `<span class="bb-spit-dot" style="left:${x}px; top:${y}px; width:${particle.size}px; height:${particle.size}px; opacity:${opacity}; transform:translate(-50%,-50%) scale(${scale});"></span>`;
+    }).join("");
+  }
+
   function renderReaction(now){
     const reaction = state.reaction;
-    if (!reaction || now >= reaction.until) return "";
-
-    const isCorrect = reaction.type === "correct";
-    const img = isCorrect ? IMAGE_PATHS.frogHappy : IMAGE_PATHS.frogGross;
-    const alt = isCorrect ? "Happy frog" : "Grossed-out frog";
-    const fallback = isCorrect ? "🐸✨" : "🐸🤢";
-    const label = isCorrect ? "Yum!" : "Bleh!";
+    if (!reaction || reaction.type !== "correct" || now >= reaction.until) return "";
 
     return `
-      <div class="bb-reaction bb-reaction--${isCorrect ? "correct" : "wrong"}">
-        <img class="bb-reaction-img" src="${escapeHtml(img)}" alt="${escapeHtml(alt)}" onerror="this.hidden=true;this.nextElementSibling.hidden=false;">
-        <div class="bb-reaction-fallback" hidden>${escapeHtml(fallback)}</div>
-        <div class="bb-reaction-label">${escapeHtml(label)}</div>
+      <div class="bb-reaction bb-reaction--correct">
+        <img class="bb-reaction-img" src="${escapeHtml(IMAGE_PATHS.frogHappy)}" alt="Happy frog" onerror="this.hidden=true;this.nextElementSibling.hidden=false;">
+        <div class="bb-reaction-fallback" hidden>🐸✨</div>
       </div>
     `;
   }
@@ -959,6 +1015,7 @@
   function renderFrog(){
     return `
       <div class="bb-frog" id="bbFrog">
+        <img class="bb-lilypad-img" src="${escapeHtml(IMAGE_PATHS.lilyPad)}" alt="" aria-hidden="true" onerror="this.hidden=true;">
         <img class="bb-frog-img" src="${escapeHtml(IMAGE_PATHS.frogIdle)}" alt="Frog" onerror="this.hidden=true;this.nextElementSibling.hidden=false;">
         <div class="bb-frog-fallback" hidden>🐸</div>
       </div>
