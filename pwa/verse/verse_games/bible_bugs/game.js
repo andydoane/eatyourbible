@@ -82,6 +82,7 @@ const BUG_MOTION = {
     bugs:[],
     tongue:null,
     spitParticles:[],
+    poofParticles:[],
     scheduledActions:[],
     misses:0,
     mistakes:0,
@@ -154,6 +155,7 @@ const BUG_MOTION = {
     state.bugs = [];
     state.tongue = null;
     state.spitParticles = [];
+    state.poofParticles = [];
     state.scheduledActions = [];
     state.misses = 0;
     state.mistakes = 0;
@@ -445,6 +447,10 @@ function shiftGameTimers(deltaMs){
     if (Number.isFinite(particle.bornAt)) particle.bornAt += delta;
   }
 
+  for (const particle of state.poofParticles){
+    if (Number.isFinite(particle.bornAt)) particle.bornAt += delta;
+  }
+
   for (const action of state.scheduledActions){
     if (Number.isFinite(action.at)) action.at += delta;
   }
@@ -695,6 +701,7 @@ function shiftGameTimers(deltaMs){
         item.selected = true;
         item.status = "eating";
       } else {
+        addBugPoof(item, now);
         item.status = "poof";
         item.poofAt = now;
       }
@@ -739,6 +746,7 @@ function shiftGameTimers(deltaMs){
     state.fieldFlashUntil = now + 240;
 
     for (const bug of state.bugs){
+      addBugPoof(bug, now);
       bug.status = "poof";
       bug.poofAt = now;
     }
@@ -837,6 +845,36 @@ function showReaction(type){
     state.overlayMessage = message;
     state.overlayUntil = performance.now() + ms;
   }
+
+function addBugPoof(bug, now = performance.now()){
+  if (!bug) return;
+
+  const point = getBugPoint(bug, now);
+  const count = 12;
+
+  for (let index = 0; index < count; index += 1){
+    const angle = (Math.PI * 2 * index / count) + (Math.random() - 0.5) * 0.45;
+    const speed = Math.min(state.fieldWidth, state.fieldHeight) * (0.16 + Math.random() * 0.18);
+    const life = 320 + Math.random() * 160;
+
+    state.poofParticles.push({
+      id: `poof-${now}-${index}-${Math.random()}`,
+      x: point.x,
+      y: point.y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      size: 9 + Math.random() * 14,
+      bornAt: now,
+      life,
+      spin: (Math.random() - 0.5) * 140,
+      emoji: Math.random() < 0.22 ? "✨" : ""
+    });
+  }
+
+  if (state.poofParticles.length > 80){
+    state.poofParticles.splice(0, state.poofParticles.length - 80);
+  }
+}
 
   function addSpitSpray(now = performance.now()){
     const origin = getFrogPoint();
@@ -957,6 +995,8 @@ function showReaction(type){
 
     state.spitParticles = state.spitParticles.filter((particle) => now - particle.bornAt < particle.life);
 
+    state.poofParticles = state.poofParticles.filter((particle) => now - particle.bornAt < particle.life);
+
     if (state.bonusIntroActive && now >= state.bonusIntroUntil){
       startBonusRound();
     }
@@ -1058,6 +1098,7 @@ function showReaction(type){
     state.bonusBug = null;
     state.tongue = null;
     state.spitParticles = [];
+    state.poofParticles = [];
     state.bugs = [];
 
     if (!completionMarked){
@@ -1121,7 +1162,7 @@ function showReaction(type){
 
     play.innerHTML = renderBugs();
     frogTongueSlot.innerHTML = renderTongue(now);
-    effects.innerHTML = renderSpitParticles(now);
+    effects.innerHTML = renderSpitParticles(now) + renderPoofParticles(now);
     reactionLayer.innerHTML = renderReaction(now);
 
     overlay.innerHTML = now < state.overlayUntil && state.overlayMessage
@@ -1228,6 +1269,31 @@ function renderTongue(now){
       return `<span class="bb-spit-dot" style="left:${x}px; top:${y}px; width:${particle.size}px; height:${particle.size}px; opacity:${opacity}; transform:translate(-50%,-50%) scale(${scale});"></span>`;
     }).join("");
   }
+
+function renderPoofParticles(now){
+  if (!state.poofParticles.length) return "";
+
+  const gravity = state.fieldHeight * 0.32;
+
+  return state.poofParticles.map((particle) => {
+    const age = Math.max(0, now - particle.bornAt);
+    const t = age / 1000;
+    const lifeT = shell.clamp(age / particle.life, 0, 1);
+    const eased = easeOutCubic(lifeT);
+
+    const x = particle.x + particle.vx * t;
+    const y = particle.y + particle.vy * t + 0.5 * gravity * t * t;
+    const opacity = Math.max(0, 1 - eased);
+    const scale = 0.45 + eased * 1.05;
+    const rotate = (particle.spin || 0) * lifeT;
+
+    if (particle.emoji){
+      return `<span class="bb-poof-spark" style="left:${x}px; top:${y}px; opacity:${opacity.toFixed(3)}; transform:translate(-50%,-50%) rotate(${rotate.toFixed(1)}deg) scale(${scale.toFixed(3)});">${particle.emoji}</span>`;
+    }
+
+    return `<span class="bb-poof-dot" style="left:${x}px; top:${y}px; width:${particle.size}px; height:${particle.size}px; opacity:${opacity.toFixed(3)}; transform:translate(-50%,-50%) scale(${scale.toFixed(3)});"></span>`;
+  }).join("");
+}
 
 function renderReaction(now){
   const reaction = state.reaction;
