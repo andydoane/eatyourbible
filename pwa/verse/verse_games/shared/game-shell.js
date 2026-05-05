@@ -21,6 +21,78 @@
     return vars.length ? ` style="${vars.join("; ")};"` : "";
   }
 
+  function getLaunchParams(){
+    try {
+      return window.VerseGameBridge?.getLaunchParams?.() || {};
+    } catch (err) {
+      console.warn("Could not read launch params", err);
+      return {};
+    }
+  }
+
+  function isGameMixLaunch(){
+    return !!getLaunchParams().mix;
+  }
+
+  function getGameMixMode(){
+    const mode = String(getLaunchParams().mode || "").trim();
+    return ["easy", "medium", "hard"].includes(mode) ? mode : "";
+  }
+
+  function showGameMixQuitConfirm({
+    title = "Quit Game Mix?",
+    noText = "No",
+    yesText = "Yes",
+    onConfirm = () => {}
+  } = {}){
+    const existing = document.getElementById("vmGameMixConfirmOverlay");
+    if (existing) existing.remove();
+
+    const overlay = document.createElement("div");
+    overlay.id = "vmGameMixConfirmOverlay";
+    overlay.className = "vm-game-mix-confirm-overlay";
+
+    overlay.innerHTML = `
+      <div class="vm-game-mix-confirm-panel" role="dialog" aria-modal="true" aria-label="${escapeHtml(title)}">
+        <div class="vm-game-mix-confirm-title">${escapeHtml(title)}</div>
+
+        <div class="vm-game-mix-confirm-actions">
+          <button class="vm-btn vm-btn-secondary" id="vmGameMixConfirmNo" type="button">
+            ${escapeHtml(noText)}
+          </button>
+
+          <button class="vm-btn" id="vmGameMixConfirmYes" type="button">
+            ${escapeHtml(yesText)}
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const close = () => {
+      overlay.remove();
+    };
+
+    const noBtn = overlay.querySelector("#vmGameMixConfirmNo");
+    const yesBtn = overlay.querySelector("#vmGameMixConfirmYes");
+
+    if (noBtn) noBtn.onclick = close;
+
+    if (yesBtn){
+      yesBtn.onclick = () => {
+        close();
+        onConfirm();
+      };
+    }
+
+    overlay.addEventListener("click", (event) => {
+      if (event.target === overlay){
+        close();
+      }
+    });
+  }
+
   const SHARED_FUN_DECOYS = Object.freeze([
     "taco",
     "banana",
@@ -1143,6 +1215,22 @@ const safeMax = hasCustomMax ? Number(max) : profile.max;
   } = {}){
     if (!app) return;
 
+    if (isGameMixLaunch() && getGameMixMode() && typeof onStart === "function"){
+      app.innerHTML = `
+        <div class="vm-game-screen"${styleVarsHtml(theme)}>
+          <div class="vm-game-stage">
+            <div class="vm-game-center">
+              <div class="vm-game-icon" aria-hidden="true">🔀</div>
+              <div class="vm-game-title">Loading Game Mix...</div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      setTimeout(() => onStart(), 0);
+      return;
+    }
+
     app.innerHTML = `
       <div class="vm-game-screen"${styleVarsHtml(theme)}>
         <button class="vm-game-back-pill no-zoom" id="gameShellBackBtn" type="button" aria-label="${escapeHtml(backLabel)}">
@@ -1196,6 +1284,24 @@ const safeMax = hasCustomMax ? Number(max) : profile.max;
   } = {}){
     if (!app) return;
 
+    const mixMode = getGameMixMode();
+
+    if (isGameMixLaunch() && mixMode && typeof onSelect === "function"){
+      app.innerHTML = `
+        <div class="vm-game-screen"${styleVarsHtml(theme)}>
+          <div class="vm-game-stage">
+            <div class="vm-game-center">
+              <div class="vm-game-difficulty-icon" aria-hidden="true">🔀</div>
+              <div class="vm-game-title">Starting Game Mix...</div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      setTimeout(() => onSelect(mixMode), 0);
+      return;
+    }
+    
     const modeButtons = modes.map((mode) => `
       <button class="vm-btn" data-game-shell-mode="${escapeHtml(mode.id)}" type="button">
         ${escapeHtml(mode.label)}
@@ -1317,6 +1423,7 @@ function renderCompleteScreen({
   if (!app) return;
 
   const useStandardComplete = !!(mode || completion || gameMessage || gameId || verseId || gameIcon);
+  const gameMix = isGameMixLaunch();
 
   const status = getCompletionStatusFromBridge({ verseId, gameId });
   const normalizedMode = String(mode || completion?.mode || "").trim();
@@ -1423,13 +1530,20 @@ function renderCompleteScreen({
 
   const actionButtonsMarkup = petUnlocked
     ? ""
-    : `
-      <div class="vm-game-actions vm-complete-actions">
-        <button class="vm-btn" id="gameShellPlayAgainBtn" type="button">${escapeHtml(playAgainText)}</button>
-        <button class="vm-btn vm-btn-secondary" id="gameShellMoreGamesBtn" type="button">${escapeHtml(moreGamesText)}</button>
-        <button class="vm-btn vm-btn-secondary" id="gameShellChangeVerseBtn" type="button">${escapeHtml(changeVerseText)}</button>
-      </div>
-    `;
+    : gameMix
+      ? `
+        <div class="vm-game-actions vm-complete-actions">
+          <button class="vm-btn" id="gameShellContinueMixBtn" type="button">Continue Mix</button>
+          <button class="vm-btn vm-btn-secondary" id="gameShellEndMixBtn" type="button">End Mix</button>
+        </div>
+      `
+      : `
+        <div class="vm-game-actions vm-complete-actions">
+          <button class="vm-btn" id="gameShellPlayAgainBtn" type="button">${escapeHtml(playAgainText)}</button>
+          <button class="vm-btn vm-btn-secondary" id="gameShellMoreGamesBtn" type="button">${escapeHtml(moreGamesText)}</button>
+          <button class="vm-btn vm-btn-secondary" id="gameShellChangeVerseBtn" type="button">${escapeHtml(changeVerseText)}</button>
+        </div>
+      `;
 
   app.innerHTML = `
     <div class="vm-game-screen vm-complete-screen ${petUnlocked ? "is-pet-unlock" : ""}"${styleVarsHtml(theme)}>
@@ -1456,6 +1570,8 @@ function renderCompleteScreen({
   const playAgainBtn = document.getElementById("gameShellPlayAgainBtn");
   const moreGamesBtn = document.getElementById("gameShellMoreGamesBtn");
   const changeVerseBtn = document.getElementById("gameShellChangeVerseBtn");
+  const continueMixBtn = document.getElementById("gameShellContinueMixBtn");
+  const endMixBtn = document.getElementById("gameShellEndMixBtn");
   const backBtn = document.getElementById("gameShellCompleteBackBtn");
   const petUnlockBtn = document.getElementById("gameShellPetUnlockBtn");
 
@@ -1468,15 +1584,43 @@ function renderCompleteScreen({
     : () => window.VerseGameBridge?.exitGame?.();
 
   const petUnlockAction = () => {
+    if (gameMix && typeof window.VerseGameBridge?.openPetUnlockFromMix === "function"){
+      window.VerseGameBridge.openPetUnlockFromMix(gameId);
+      return;
+    }
+
     if (typeof window.VerseGameBridge?.openPetUnlock === "function"){
       window.VerseGameBridge.openPetUnlock();
     }
   };
 
+  const endMixAction = () => {
+    showGameMixQuitConfirm({
+      title: "Quit Game Mix?",
+      noText: "No",
+      yesText: "Yes",
+      onConfirm: () => window.VerseGameBridge?.endGameMix?.()
+    });
+  };
+
   if (playAgainBtn && typeof onPlayAgain === "function") playAgainBtn.onclick = onPlayAgain;
   if (moreGamesBtn) moreGamesBtn.onclick = moreGamesAction;
   if (changeVerseBtn) changeVerseBtn.onclick = changeVerseAction;
-  if (backBtn) backBtn.onclick = moreGamesAction;
+
+  if (continueMixBtn){
+    continueMixBtn.onclick = () => {
+      window.VerseGameBridge?.continueGameMix?.(gameId);
+    };
+  }
+
+  if (endMixBtn){
+    endMixBtn.onclick = endMixAction;
+  }
+
+  if (backBtn){
+    backBtn.onclick = gameMix ? endMixAction : moreGamesAction;
+  }
+
   if (petUnlockBtn) petUnlockBtn.onclick = petUnlockAction;
 }
 
@@ -1491,6 +1635,9 @@ function renderCompleteScreen({
     showModeSelect = true
   } = {}){
     const safeId = escapeHtml(id);
+    const gameMix = isGameMixLaunch();
+    const effectiveShowModeSelect = gameMix ? false : showModeSelect;
+    const effectiveExitText = gameMix ? "Exit Game Mix" : exitText;
 
     return `
       <div class="vm-game-menu-overlay" id="${safeId}" aria-hidden="true">
@@ -1509,8 +1656,8 @@ function renderCompleteScreen({
 
           <div class="vm-game-menu-actions">
             <button class="vm-btn vm-game-menu-btn" id="${safeId}HowToBtn" type="button">${escapeHtml(howToText)}</button>
-            ${showModeSelect ? `<button class="vm-btn vm-game-menu-btn" id="${safeId}ModeSelectBtn" type="button">${escapeHtml(modeSelectText)}</button>` : ""}
-            <button class="vm-btn vm-game-menu-btn" id="${safeId}ExitBtn" type="button">${escapeHtml(exitText)}</button>
+            ${effectiveShowModeSelect ? `<button class="vm-btn vm-game-menu-btn" id="${safeId}ModeSelectBtn" type="button">${escapeHtml(modeSelectText)}</button>` : ""}
+            <button class="vm-btn vm-game-menu-btn" id="${safeId}ExitBtn" type="button">${escapeHtml(effectiveExitText)}</button>
             <button class="vm-btn vm-game-menu-btn vm-game-menu-close-btn" id="${safeId}CloseBtn" type="button">${escapeHtml(closeText)}</button>
           </div>
         </div>
@@ -1649,8 +1796,22 @@ function renderCompleteScreen({
       };
     }
 
-    if (exitBtn && typeof onExit === "function"){
-      exitBtn.onclick = onExit;
+    if (exitBtn){
+      exitBtn.onclick = () => {
+        if (isGameMixLaunch()){
+          showGameMixQuitConfirm({
+            title: "Quit Game Mix?",
+            noText: "No",
+            yesText: "Yes",
+            onConfirm: () => window.VerseGameBridge?.endGameMix?.()
+          });
+          return;
+        }
+
+        if (typeof onExit === "function"){
+          onExit();
+        }
+      };
     }
 
     if (closeBtn){

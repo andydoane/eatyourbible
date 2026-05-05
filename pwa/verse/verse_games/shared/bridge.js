@@ -7,7 +7,9 @@
       returnTo: params.get("returnTo") || "../../index.html",
       ref: params.get("ref") || "",
       translation: params.get("translation") || "",
-      source: params.get("source") || ""
+      source: params.get("source") || "",
+      mix: params.get("mix") === "1",
+      mode: params.get("mode") || ""
     };
   }
 
@@ -384,6 +386,57 @@ function markCompleted(payload){
     window.location.href = target.href;
   }
 
+  function clearGameMixState(){
+    try {
+      sessionStorage.removeItem("verseMemoryGameMix");
+    } catch (err) {
+      console.warn("Could not clear Game Mix state from bridge", err);
+    }
+  }
+
+  function continueGameMix(gameId = ""){
+    const params = getParams();
+
+    const target = buildParentAppUrl({
+      screen: "practice"
+    });
+
+    target.searchParams.set("mixNext", "1");
+
+    const safeGameId = String(gameId || "").trim();
+    if (safeGameId){
+      target.searchParams.set("completedGameId", safeGameId);
+    }
+
+    window.location.href = target.href;
+  }
+
+  function endGameMix(){
+    clearGameMixState();
+    returnToTitle();
+  }
+
+  function openPetUnlockFromMix(gameId = ""){
+    const params = getParams();
+
+    if (params.verseId){
+      clearExternalPetUnlockPending(params.verseId);
+    }
+
+    const target = buildParentAppUrl({
+      petUnlock: true
+    });
+
+    target.searchParams.set("mixPetUnlock", "1");
+
+    const safeGameId = String(gameId || "").trim();
+    if (safeGameId){
+      target.searchParams.set("completedGameId", safeGameId);
+    }
+
+    window.location.href = target.href;
+  }
+
 function exitGame(){
   const params = getParams();
 
@@ -426,6 +479,9 @@ function exitGame(){
     completeGameRun,
     returnToTitle,
     openPetUnlock,
+    openPetUnlockFromMix,
+    continueGameMix,
+    endGameMix,
     exitGame
   };
 })();
