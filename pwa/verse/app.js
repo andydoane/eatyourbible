@@ -1838,7 +1838,7 @@ function renderPracticeGameCard(game, verseProgress){
     >
       <div class="practice-game-card-top">
         <div class="practice-game-emoji-wrap" aria-hidden="true">
-          <div class="practice-game-emoji-shadow"></div>
+          
           <div class="practice-game-emoji">${game.icon}</div>
         </div>
 
