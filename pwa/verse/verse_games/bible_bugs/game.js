@@ -700,6 +700,7 @@ function shiftGameTimers(deltaMs){
       poofAt: 0,
       selected:false,
       eaten:false,
+      pullPoofed:false,
       motionPhase: Math.random() * Math.PI * 2,
       jitterSeed: Math.random() * Math.PI * 2
     }));
@@ -804,6 +805,7 @@ function finishMainEat(bug){
       bug.eatToY = frog.y;
       bug.eatStartedAt = now;
       bug.eatDuration = duration;
+      bug.pullPoofed = false;
     }
 
     state.tongue = {
@@ -882,6 +884,57 @@ function showReaction(type){
     state.overlayMessage = message;
     state.overlayUntil = performance.now() + ms;
   }
+
+function updateChosenBugSmokePoofs(now){
+  function maybePoofBug(bug){
+    if (!bug || bug.status !== "eating" || bug.pullPoofed) return;
+
+    const duration = Math.max(1, Number(bug.eatDuration) || MAIN_EAT_MS);
+    const elapsed = Math.max(0, now - (Number(bug.eatStartedAt) || now));
+    const pullStart = duration * 0.44;
+
+    if (elapsed < pullStart) return;
+
+    addBugSmokePoof(bug, now);
+    bug.pullPoofed = true;
+  }
+
+  for (const bug of state.bugs){
+    maybePoofBug(bug);
+  }
+
+  maybePoofBug(state.bonusBug);
+}
+
+function addBugSmokePoof(bug, now = performance.now()){
+  if (!bug) return;
+
+  const point = getBugPoint(bug, now);
+  const count = 14;
+
+  for (let index = 0; index < count; index += 1){
+    const angle = (Math.PI * 2 * index / count) + (Math.random() - 0.5) * 0.6;
+    const speed = Math.min(state.fieldWidth, state.fieldHeight) * (0.12 + Math.random() * 0.16);
+    const life = 260 + Math.random() * 130;
+
+    state.poofParticles.push({
+      id: `smoke-poof-${now}-${index}-${Math.random()}`,
+      x: point.x + (Math.random() - 0.5) * 10,
+      y: point.y + (Math.random() - 0.5) * 10,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      size: 12 + Math.random() * 18,
+      bornAt: now,
+      life,
+      spin: (Math.random() - 0.5) * 90,
+      emoji: ""
+    });
+  }
+
+  if (state.poofParticles.length > 100){
+    state.poofParticles.splice(0, state.poofParticles.length - 100);
+  }
+}
 
 function addBugPoof(bug, now = performance.now()){
   if (!bug) return;
@@ -1003,6 +1056,7 @@ function addBugPoof(bug, now = performance.now()){
       expiresAt: now + BONUS_BUG_LIFE_MS,
       status: "bonus",
       poofAt: 0,
+      pullPoofed:false,
       motionPhase: Math.random() * Math.PI * 2,
       jitterSeed: Math.random() * Math.PI * 2
     };
@@ -1036,6 +1090,8 @@ function addBugPoof(bug, now = performance.now()){
 
     updateTongueSparkles(now);
     state.tongueSparkles = state.tongueSparkles.filter((particle) => now - particle.bornAt < particle.life);
+
+    updateChosenBugSmokePoofs(now);
 
     if (state.bonusIntroActive && now >= state.bonusIntroUntil){
       startBonusRound();
@@ -1309,7 +1365,7 @@ function renderTongue(now){
     const fieldMin = Math.max(1, Math.min(state.fieldWidth, state.fieldHeight));
     const amp = fieldMin * wave.ampRatio * eased;
     const phase = (Number(t.wavePhase) || 0) + elapsed * wave.speed;
-    const segments = 40;
+    const segments = 18;
     const points = [];
 
     for (let index = 0; index <= segments; index += 1){
