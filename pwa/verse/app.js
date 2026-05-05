@@ -4462,6 +4462,7 @@ function screenPractice(idx){
 
       <div class="practice-icons" id="pIcons"></div>
       <div class="practice-desc">${g.desc}</div>
+    </div>
   `;
 
   bindHomePill(wrap);
