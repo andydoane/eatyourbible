@@ -670,7 +670,7 @@
   width: min(100%, 720px);
   max-width: 720px;
   justify-content: flex-start;
-  padding-top: calc(var(--tap) + 8px);
+  padding-top: 0;
 }
 
 .practice-screen h2{
@@ -849,10 +849,10 @@
     padding-right: 12px;
   }
 
-  .practice-screen .practice-content{
-    width: 100%;
-    padding-top: calc(var(--tap) + 4px);
-  }
+.practice-screen .practice-content{
+  width: 100%;
+  padding-top: 0;
+}
 
   .practice-game-card{
     border-width: 7px;
@@ -2351,6 +2351,42 @@ text-wrap: balance;
   .practice-icon.far{
     font-size: 19px;
   }
+}
+
+.practice-title-row{
+  flex: 0 0 auto;
+  width: 100%;
+  display: grid;
+  grid-template-columns: var(--tap) 1fr var(--tap);
+  align-items: center;
+  gap: 10px;
+  margin-bottom: clamp(14px, 3vh, 22px);
+}
+
+.practice-title-row .screen-home-pill{
+  position: static;
+  width: var(--tap);
+  height: var(--tap);
+  min-height: var(--tap);
+  padding: 0;
+  justify-self: start;
+}
+
+.practice-title-row .screen-home-pill .nav-icon{
+  width: 24px;
+  height: 24px;
+}
+
+.practice-title-row h2{
+  margin: 0;
+  min-width: 0;
+  justify-self: center;
+  text-align: center;
+}
+
+.practice-title-spacer{
+  width: var(--tap);
+  height: var(--tap);
 }
 
 /* =========================
