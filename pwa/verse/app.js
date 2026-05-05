@@ -1825,6 +1825,43 @@ function renderPracticeGameMedals(gameProgress){
   `).join("");
 }
 
+function getRandomPracticeGame(practiceGames){
+  const availableGames = Array.isArray(practiceGames)
+    ? practiceGames.filter(game => game && game.source === "external" && game.manifest)
+    : [];
+
+  if (!availableGames.length) return null;
+
+  const randomIndex = Math.floor(Math.random() * availableGames.length);
+  return availableGames[randomIndex];
+}
+
+function renderGameMixCard(){
+  return `
+    <button
+      class="practice-game-card practice-game-mix-card no-zoom"
+      type="button"
+      data-practice-game-mix
+      aria-label="Play Game Mix"
+    >
+      <div class="practice-game-card-top">
+        <div class="practice-game-emoji-wrap" aria-hidden="true">
+          <div class="practice-game-emoji-shadow"></div>
+          <div class="practice-game-emoji">🔀</div>
+        </div>
+
+        <div class="practice-game-title">
+          Game Mix
+        </div>
+      </div>
+
+      <div class="practice-game-card-bottom practice-game-mix-bottom">
+        Surprise me!
+      </div>
+    </button>
+  `;
+}
+
 function renderPracticeGameCard(game, verseProgress){
   const gameProgress = verseProgress?.games?.[game.id];
 
@@ -4487,7 +4524,15 @@ function screenPractice(idx){
   const verseProgress = getVerseProgress(VERSE_ID);
 
   const cardsHtml = practiceGames.length
-    ? practiceGames.map(game => renderPracticeGameCard(game, verseProgress)).join("")
+    ? `
+      ${renderGameMixCard()}
+
+      <div class="practice-pick-heading">
+        Pick a Game
+      </div>
+
+      ${practiceGames.map(game => renderPracticeGameCard(game, verseProgress)).join("")}
+    `
     : `
       <div class="practice-empty-card">
         <div class="practice-empty-title">No Practice Games</div>
@@ -4514,6 +4559,19 @@ function screenPractice(idx){
   `;
 
   bindHomePill(wrap);
+
+  const gameMixBtn = wrap.querySelector("[data-practice-game-mix]");
+  if (gameMixBtn){
+    gameMixBtn.onclick = (e) => {
+      e.stopPropagation();
+
+      const game = getRandomPracticeGame(practiceGames);
+      if (!game) return;
+
+      State.practiceIndex = Math.max(0, practiceGames.findIndex(g => g.id === game.id));
+      launchExternalGame(game.manifest);
+    };
+  }
 
   wrap.querySelectorAll("[data-practice-game-id]").forEach((btn) => {
     btn.onclick = (e) => {

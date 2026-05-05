@@ -783,6 +783,68 @@
   padding: 8px 16px;
 }
 
+.practice-game-mix-card{
+  color: #ffffff;
+}
+
+.practice-game-mix-card .practice-game-card-top{
+  background: linear-gradient(
+    120deg,
+    #ff5a51,
+    #ffc751,
+    #a7cb6f,
+    #40b9c5,
+    #7f66c6,
+    #ff5a51
+  );
+  background-size: 500% 500%;
+  animation: practiceGameMixRainbow 8500ms ease-in-out infinite;
+  color: #ffffff;
+}
+
+.practice-game-mix-card .practice-game-title{
+  max-width: 8ch;
+}
+
+.practice-game-mix-bottom{
+  color: #7f66c6;
+  font-size: clamp(26px, 7vw, 42px);
+  font-weight: 900;
+  line-height: 1;
+  text-align: center;
+}
+
+.practice-pick-heading{
+  width: 100%;
+  margin: clamp(4px, 1.2vh, 10px) 0 clamp(2px, 1vh, 8px);
+  font-size: clamp(24px, 6vw, 38px);
+  font-weight: 900;
+  line-height: 1.05;
+  text-align: center;
+  color: #ffffff;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.16);
+}
+
+@keyframes practiceGameMixRainbow{
+  0%{
+    background-position: 0% 50%;
+  }
+
+  50%{
+    background-position: 100% 50%;
+  }
+
+  100%{
+    background-position: 0% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .practice-game-mix-card .practice-game-card-top{
+    animation: none;
+  }
+}
+
 .practice-card-medal{
   display: inline-flex;
   align-items: center;
