@@ -1631,8 +1631,11 @@ function getExternalPracticeGames(){
     .filter(manifest => manifest && manifest.visibleInCarousel !== false)
     .map(manifest => ({
       id: manifest.id,
-      title: `${manifest.icon || "🎮"} ${manifest.title}`,
+      title: manifest.title || "Practice Game",
+      icon: manifest.icon || "🎮",
       desc: manifest.description || "",
+      cardColor: manifest.cardColor || "#7f66c6",
+      cardTextColor: manifest.cardTextColor || "#ffffff",
       source: "external",
       manifest
     }));
@@ -1802,6 +1805,53 @@ function renderPracticeIconStrip(practiceGames, currentIndex){
 
     return `<span class="${cls}" aria-hidden="true">${icon}</span>`;
   }).join("");
+}
+
+function renderPracticeGameMedals(gameProgress){
+  const medals = [
+    { mode: "easy", label: "Easy", icon: "🥉", earned: !!gameProgress?.easyCompleted },
+    { mode: "medium", label: "Medium", icon: "🥈", earned: !!gameProgress?.mediumCompleted },
+    { mode: "hard", label: "Hard", icon: "🥇", earned: !!gameProgress?.hardCompleted }
+  ];
+
+  return medals.map(medal => `
+    <span
+      class="practice-card-medal ${medal.earned ? "earned" : "unearned"}"
+      aria-label="${medal.label} medal ${medal.earned ? "earned" : "not earned"}"
+      title="${medal.label} medal ${medal.earned ? "earned" : "not earned"}"
+    >
+      ${medal.icon}
+    </span>
+  `).join("");
+}
+
+function renderPracticeGameCard(game, verseProgress){
+  const gameProgress = verseProgress?.games?.[game.id];
+
+  return `
+    <button
+      class="practice-game-card no-zoom"
+      type="button"
+      data-practice-game-id="${game.id}"
+      style="--practice-card-color: ${game.cardColor}; --practice-card-text: ${game.cardTextColor};"
+      aria-label="Play ${game.title}"
+    >
+      <div class="practice-game-card-top">
+        <div class="practice-game-emoji-wrap" aria-hidden="true">
+          <div class="practice-game-emoji-shadow"></div>
+          <div class="practice-game-emoji">${game.icon}</div>
+        </div>
+
+        <div class="practice-game-title">
+          ${game.title}
+        </div>
+      </div>
+
+      <div class="practice-game-card-bottom" aria-label="Progress for ${game.title}">
+        ${renderPracticeGameMedals(gameProgress)}
+      </div>
+    </button>
+  `;
 }
 
 
@@ -4431,104 +4481,67 @@ function screenPracticeGate(idx){
 
 function screenPractice(idx){
   const wrap = document.createElement("div");
-  wrap.className = "title-screen";
+  wrap.className = "title-screen practice-screen";
 
   const practiceGames = getPracticeGames();
-  const safeIndex = practiceGames.length
-    ? Math.max(0, Math.min(State.practiceIndex, practiceGames.length - 1))
-    : 0;
+  const verseProgress = getVerseProgress(VERSE_ID);
 
-  State.practiceIndex = safeIndex;
-
-  const g = practiceGames[safeIndex] || {
-    title: "No Practice Games",
-    desc: "No games are available right now."
-  };
+  const cardsHtml = practiceGames.length
+    ? practiceGames.map(game => renderPracticeGameCard(game, verseProgress)).join("")
+    : `
+      <div class="practice-empty-card">
+        <div class="practice-empty-title">No Practice Games</div>
+        <div class="practice-empty-text">No games are available right now.</div>
+      </div>
+    `;
 
   wrap.innerHTML = `
     ${homePillHtml()}
+
     <div class="title-content practice-content">
       <h2 id="practiceTitle">Practice Games</h2>
 
-      <div class="title-carousel">
-        <button class="carousel-arrow no-zoom" id="pPrev" aria-label="Previous">${SVG_BACK}</button>
-
-        <button class="carousel-main no-zoom" id="pMain">
-          ${g.title}
-        </button>
-
-        <button class="carousel-arrow no-zoom" id="pNext" aria-label="Next">${SVG_FORWARD}</button>
+      <div class="practice-scroll-wrap">
+        <div class="practice-card-list">
+          ${cardsHtml}
+        </div>
       </div>
-
-      <div class="practice-icons" id="pIcons"></div>
-      <div class="practice-desc">${g.desc}</div>
     </div>
+
+    <div class="practice-scroll-vignette" aria-hidden="true"></div>
   `;
 
   bindHomePill(wrap);
 
-  wrap.querySelector("#pPrev").onclick = (e)=>{ e.stopPropagation(); practicePrev(); };
-  wrap.querySelector("#pNext").onclick = (e)=>{ e.stopPropagation(); practiceNext(); };
-  wrap.querySelector("#pMain").onclick = (e)=>{ e.stopPropagation(); practiceRun(); };
+  wrap.querySelectorAll("[data-practice-game-id]").forEach((btn) => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
 
-  const icons = wrap.querySelector("#pIcons");
-  if (icons){
-    icons.innerHTML = renderPracticeIconStrip(practiceGames, State.practiceIndex);
-  }
+      const gameId = btn.dataset.practiceGameId;
+      const game = practiceGames.find(g => g.id === gameId);
+
+      if (!game) return;
+
+      State.practiceIndex = Math.max(0, practiceGames.findIndex(g => g.id === gameId));
+
+      if (game.source === "external"){
+        launchExternalGame(game.manifest);
+        return;
+      }
+
+      console.warn("Practice game is not external and cannot be launched:", game);
+    };
+  });
 
   const practiceTitle = wrap.querySelector("#practiceTitle");
   if (practiceTitle){
-    let longPressTimer = 0;
-    let pointerStartX = 0;
-    let pointerStartY = 0;
-    let longPressTriggered = false;
-    const MOVE_CANCEL_PX = 12;
-
-    const clearLongPressTimer = () => {
-      if (longPressTimer){
-        window.clearTimeout(longPressTimer);
-        longPressTimer = 0;
-      }
-    };
-
-    const cancelLongPress = () => {
-      clearLongPressTimer();
-      longPressTriggered = false;
-    };
-
-    practiceTitle.addEventListener("pointerdown", (e) => {
-      if (e.pointerType === "mouse" && e.button !== 0) return;
-
-      longPressTriggered = false;
-      pointerStartX = e.clientX;
-      pointerStartY = e.clientY;
-      clearLongPressTimer();
-
-      longPressTimer = window.setTimeout(() => {
-        longPressTriggered = true;
-        launchHiddenPracticeGame();
-      }, HIDDEN_PRACTICE_LONG_PRESS_MS);
-    });
-
-    practiceTitle.addEventListener("pointermove", (e) => {
-      if (!longPressTimer) return;
-
-      const dx = Math.abs(e.clientX - pointerStartX);
-      const dy = Math.abs(e.clientY - pointerStartY);
-      if (dx > MOVE_CANCEL_PX || dy > MOVE_CANCEL_PX){
-        cancelLongPress();
-      }
-    });
-
-    practiceTitle.addEventListener("pointerup", cancelLongPress);
-    practiceTitle.addEventListener("pointercancel", cancelLongPress);
-    practiceTitle.addEventListener("pointerleave", cancelLongPress);
-    practiceTitle.addEventListener("contextmenu", (e) => {
-      if (longPressTriggered) e.preventDefault();
+    bindLongPress(practiceTitle, {
+      delay: HIDDEN_PRACTICE_LONG_PRESS_MS,
+      onLongPress: () => launchHiddenPracticeGame()
     });
   }
 
-    return makeSlide({idx, bg:"var(--purple)", navHidden:true, inner: wrap});
+  return makeSlide({idx, bg:"var(--purple)", navHidden:true, inner: wrap});
 }
 
 
