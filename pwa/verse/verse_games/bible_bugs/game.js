@@ -50,6 +50,18 @@ const TONGUE_FX = {
   rainbowSparkInterval: 12
 };
 
+const WATER_FX = {
+  opacity: 0.09,
+  speed: 1.80,
+  spacing: 60,
+  thickness: 8,
+  amplitude: 23,
+  frequency: 3.15,
+  slantDeg: -5,
+  viewSize: 1000,
+  segments: 96
+};
+
   let selectedMode = null;
   let muted = false;
   let completionMarked = false;
@@ -194,6 +206,16 @@ const TONGUE_FX = {
 
           <div class="bb-field-wrap">
             <div class="bb-field" id="bbField">
+              <div class="bb-water-layer" id="bbWaterLayer" aria-hidden="true">
+                <svg class="bb-water-wave-svg" id="bbWaterWaveSvg" viewBox="0 0 1000 1000" preserveAspectRatio="none"></svg>
+                <div class="bb-water-rings" id="bbWaterRings">
+                  <span class="bb-water-ring ring-1"></span>
+                  <span class="bb-water-ring ring-2"></span>
+                  <span class="bb-water-ring ring-3"></span>
+                  <span class="bb-water-ring ring-4"></span>
+                  <span class="bb-water-ring ring-5"></span>
+                </div>
+              </div>
               <div class="bb-play-layer" id="bbPlayLayer"></div>
               <div class="bb-effects-layer" id="bbEffectsLayer"></div>
               <div class="bb-frog-layer" id="bbFrogLayer">
@@ -1242,6 +1264,7 @@ function addBugPoof(bug, now = performance.now()){
 
   function renderFrame(){
     const field = document.getElementById("bbField");
+    const waterSvg = document.getElementById("bbWaterWaveSvg");
     const play = document.getElementById("bbPlayLayer");
     const effects = document.getElementById("bbEffectsLayer");
     const frogTongueSlot = document.getElementById("bbFrogTongueSlot");
@@ -1252,12 +1275,14 @@ function addBugPoof(bug, now = performance.now()){
     const build = document.getElementById("bbBuild");
     const frog = document.getElementById("bbFrog");
 
-    if (!field || !play || !effects || !frogTongueSlot || !reactionLayer || !overlay || !bonusIntro || !statusPill || !build || !frog) return;
+    if (!field || !waterSvg || !play || !effects || !frogTongueSlot || !reactionLayer || !overlay || !bonusIntro || !statusPill || !build || !frog) return;
 
     const now = performance.now();
     field.classList.toggle("is-flash-bad", now < state.fieldFlashUntil);
     build.classList.toggle("is-shake", now < state.buildShakeUntil);
     frog.classList.toggle("is-chomping", now < state.frogChompUntil);
+
+    renderWaterWaves(waterSvg, now);
 
     play.innerHTML = renderBugs();
     frogTongueSlot.innerHTML = renderTongue(now);
@@ -1314,6 +1339,65 @@ function renderBugButton(bug, now, isBonus){
   `;
 }
   
+function renderWaterWaves(svg, now){
+  if (!svg) return;
+
+  const cfg = WATER_FX;
+  const size = cfg.viewSize;
+  const spacing = cfg.spacing;
+  const rows = Math.ceil(size / spacing) + 4;
+
+  // Seamless loop: phase moves from 0 to 2π, then returns to 0.
+  // Because sin(x + 2π) === sin(x), there is no visible jump.
+  const loopMs = 7200 / Math.max(0.1, cfg.speed);
+  const phase = ((now % loopMs) / loopMs) * Math.PI * 2;
+
+  const paths = [];
+
+  for (let row = -2; row < rows; row += 1){
+    const y = row * spacing + 28;
+    const rowPhase = phase + row * 0.72;
+    const alt = row % 2 !== 0;
+    const d = buildWaterSinePath({
+      y,
+      size,
+      amplitude: cfg.amplitude,
+      frequency: cfg.frequency,
+      phase: rowPhase,
+      slantDeg: cfg.slantDeg,
+      segments: cfg.segments
+    });
+
+    paths.push(`<path class="bb-water-wave-path${alt ? " is-alt" : ""}" d="${d}"></path>`);
+  }
+
+  svg.innerHTML = paths.join("");
+}
+
+function buildWaterSinePath({ y, size, amplitude, frequency, phase, slantDeg, segments }){
+  const points = [];
+  const center = size * 0.5;
+  const slant = Math.tan((Number(slantDeg) || 0) * Math.PI / 180);
+
+  for (let index = 0; index <= segments; index += 1){
+    const s = index / segments;
+
+    // Extend beyond the viewBox so the slanted waves do not expose edges.
+    const x = -120 + s * (size + 240);
+    const baseY = y + (x - center) * slant;
+    const wave = Math.sin((Math.PI * 2 * frequency * s) + phase);
+
+    points.push({
+      x,
+      y: baseY + wave * amplitude
+    });
+  }
+
+  return points.map((point, index) => {
+    const prefix = index === 0 ? "M" : "L";
+    return `${prefix}${point.x.toFixed(2)} ${point.y.toFixed(2)}`;
+  }).join(" ");
+}
 
 function renderTongue(now){
   const t = state.tongue;

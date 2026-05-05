@@ -83,6 +83,88 @@ body{
   animation:bbFlashBad 260ms ease;
 }
 
+.bb-water-layer{
+  background:
+    radial-gradient(circle at 50% 34%, rgba(197,249,238,0.22), transparent 38%),
+    linear-gradient(180deg, #9be1e7 0%, #83d1d9 48%, #66bdca 100%);
+}
+
+.bb-water-wave-svg{
+  position:absolute;
+  inset:-10%;
+  width:120%;
+  height:120%;
+  overflow:visible;
+  opacity:0.09;
+  pointer-events:none;
+}
+
+.bb-water-wave-path{
+  fill:none;
+  stroke:#ffffff;
+  stroke-width:8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+  opacity:1;
+  filter:drop-shadow(0 2px 0 rgba(0,0,0,0.035));
+}
+
+.bb-water-wave-path.is-alt{
+  opacity:0.42;
+}
+
+.bb-water-rings{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+}
+
+.bb-water-ring{
+  position:absolute;
+  width:clamp(46px, 12vw, 92px);
+  aspect-ratio:1;
+  border:2px solid rgba(255,255,255,0.34);
+  border-radius:50%;
+  opacity:0;
+  transform:translate(-50%, -50%) scale(0.2);
+  animation:bbWaterRing 4.8s ease-out infinite;
+}
+
+.bb-water-ring.ring-1{
+  left:22%;
+  top:34%;
+  animation-delay:-0.2s;
+}
+
+.bb-water-ring.ring-2{
+  left:68%;
+  top:26%;
+  width:clamp(54px, 14vw, 108px);
+  animation-delay:-1.4s;
+}
+
+.bb-water-ring.ring-3{
+  left:42%;
+  top:58%;
+  width:clamp(48px, 13vw, 96px);
+  animation-delay:-2.6s;
+}
+
+.bb-water-ring.ring-4{
+  left:78%;
+  top:66%;
+  width:clamp(40px, 10vw, 82px);
+  animation-delay:-3.5s;
+}
+
+.bb-water-ring.ring-5{
+  left:18%;
+  top:76%;
+  width:clamp(44px, 11vw, 88px);
+  animation-delay:-4.2s;
+}
+
+.bb-water-layer,
 .bb-play-layer,
 .bb-tongue-layer,
 .bb-effects-layer,
@@ -95,6 +177,7 @@ body{
   inset:0;
 }
 
+.bb-water-layer{ z-index:1; pointer-events:none; overflow:hidden; }
 .bb-play-layer{ z-index:2; }
 .bb-tongue-layer{ z-index:3; pointer-events:none; }
 .bb-frog-layer{ z-index:4; pointer-events:none; }
@@ -566,6 +649,22 @@ body{
   56%{ transform:scale(1.10, 0.88) translateY(0.05rem); }
   78%{ transform:scale(0.98, 1.04) translateY(-0.02rem); }
   100%{ transform:scale(1, 1); }
+}
+
+@keyframes bbWaterRing{
+  0%{
+    opacity:0;
+    transform:translate(-50%, -50%) scale(0.18);
+  }
+
+  12%{
+    opacity:0.52;
+  }
+
+  100%{
+    opacity:0;
+    transform:translate(-50%, -50%) scale(2.1);
+  }
 }
 
 @keyframes bbOverlayPop{
