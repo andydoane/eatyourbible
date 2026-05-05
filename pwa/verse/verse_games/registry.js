@@ -14,22 +14,6 @@ window.EXTERNAL_VERSE_GAMES = [
       modes: ["easy", "medium", "hard"]
     }
   },
-  
-  {
-    enabled: true,
-    manifest: {
-      id: "chain",
-      title: "Verse Launch",
-      description: "Launch the next correct word into the verse.",
-      icon: "🚀",
-      cardColor: "#7f66c6",
-      cardTextColor: "#ffffff",
-      launchUrl: "./verse_games/verse_launch/index.html",
-      visibleInCarousel: true,
-      progressType: "standard",
-      modes: ["easy", "medium", "hard"]
-    }
-  },
 
 {
   enabled: true,
@@ -47,6 +31,23 @@ window.EXTERNAL_VERSE_GAMES = [
   }
 },
 
+  
+  {
+    enabled: true,
+    manifest: {
+      id: "chain",
+      title: "Verse Launch",
+      description: "Launch the next correct word into the verse.",
+      icon: "🚀",
+      cardColor: "#7f66c6",
+      cardTextColor: "#ffffff",
+      launchUrl: "./verse_games/verse_launch/index.html",
+      visibleInCarousel: true,
+      progressType: "standard",
+      modes: ["easy", "medium", "hard"]
+    }
+  },
+  
   {
     enabled: true,
     manifest: {
