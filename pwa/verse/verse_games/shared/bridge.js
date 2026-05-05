@@ -14,6 +14,7 @@
   async function getVerseContext(){
     const params = getParams();
     const verseId = params.verseId;
+    const verseUrl = `../../verse_data/${verseId}.json`;
 
     if (!verseId){
       return {
@@ -26,7 +27,6 @@
     }
 
     try {
-      const verseUrl = `../../verse_data/${verseId}.json`;
       const res = await fetch(verseUrl, { cache: "no-store" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
