@@ -4496,10 +4496,12 @@ function screenPractice(idx){
     `;
 
   wrap.innerHTML = `
-    ${homePillHtml()}
-
     <div class="title-content practice-content">
-      <h2 id="practiceTitle">Practice Games</h2>
+      <div class="practice-title-row">
+        ${homePillHtml()}
+        <h2 id="practiceTitle">Practice Games</h2>
+        <div class="practice-title-spacer" aria-hidden="true"></div>
+      </div>
 
       <div class="practice-scroll-wrap">
         <div class="practice-card-list">
