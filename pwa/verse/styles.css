@@ -655,6 +655,237 @@
   text-wrap: balance;
 }
 
+/* =========================
+   Practice Games Card List
+   ========================= */
+
+.practice-screen{
+  overflow: hidden;
+  padding: calc(18px + var(--safeT)) clamp(14px, 4vw, 24px) 0;
+}
+
+.practice-screen .practice-content{
+  flex: 1;
+  min-height: 0;
+  width: min(100%, 720px);
+  max-width: 720px;
+  justify-content: flex-start;
+  padding-top: calc(var(--tap) + 8px);
+}
+
+.practice-screen h2{
+  flex: 0 0 auto;
+  margin: 0 0 clamp(14px, 3vh, 22px);
+  font-size: clamp(34px, 8vw, 58px);
+  font-weight: 900;
+  line-height: 1.02;
+  text-align: center;
+}
+
+.practice-scroll-wrap{
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 clamp(2px, 1vw, 8px) calc(110px + var(--safeB));
+}
+
+.practice-card-list{
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(14px, 2.8vh, 22px);
+}
+
+.practice-game-card{
+  width: 100%;
+  min-height: clamp(185px, 26vh, 250px);
+  border: 8px solid #ffffff;
+  border-radius: clamp(28px, 7vw, 44px);
+  overflow: hidden;
+  padding: 0;
+  background: transparent;
+  color: var(--practice-card-text, #ffffff);
+  font: inherit;
+  box-shadow: 0 8px 0 rgba(0,0,0,0.24);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.practice-game-card:active{
+  transform: translateY(5px);
+  box-shadow: 0 3px 0 rgba(0,0,0,0.24);
+}
+
+.practice-game-card-top{
+  flex: 3 1 75%;
+  min-height: 0;
+  background: var(--practice-card-color, #7f66c6);
+  color: var(--practice-card-text, #ffffff);
+  display: grid;
+  grid-template-columns: minmax(96px, 34%) 1fr;
+  align-items: center;
+  gap: clamp(8px, 3vw, 20px);
+  padding: clamp(18px, 4.8vw, 34px);
+}
+
+.practice-game-emoji-wrap{
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+}
+
+.practice-game-emoji-shadow{
+  position: absolute;
+  width: clamp(70px, 21vw, 122px);
+  height: clamp(70px, 21vw, 122px);
+  border-radius: 999px;
+  background: rgba(0,0,0,0.22);
+  transform: translate(8px, 10px) scale(0.92);
+  filter: blur(1px);
+}
+
+.practice-game-emoji{
+  position: relative;
+  z-index: 1;
+  font-size: clamp(58px, 18vw, 112px);
+  line-height: 1;
+  filter: drop-shadow(0 6px 0 rgba(0,0,0,0.18));
+}
+
+.practice-game-title{
+  min-width: 0;
+  max-width: 10ch;
+  justify-self: center;
+  font-size: clamp(34px, 9vw, 62px);
+  font-weight: 900;
+  line-height: 0.92;
+  letter-spacing: -0.02em;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.practice-game-card-bottom{
+  flex: 1 1 25%;
+  min-height: clamp(54px, 8vh, 74px);
+  background: #f2f2f2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(18px, 6vw, 38px);
+  padding: 8px 16px;
+}
+
+.practice-card-medal{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(30px, 8vw, 46px);
+  line-height: 1;
+  transition:
+    opacity 160ms ease,
+    filter 160ms ease,
+    transform 160ms ease;
+}
+
+.practice-card-medal.earned{
+  opacity: 1;
+  filter: none;
+}
+
+.practice-card-medal.unearned{
+  opacity: 0.28;
+  filter: grayscale(1);
+}
+
+.practice-empty-card{
+  width: 100%;
+  border-radius: 28px;
+  background: rgba(255,255,255,0.16);
+  padding: 28px 20px;
+  text-align: center;
+}
+
+.practice-empty-title{
+  font-size: clamp(28px, 7vw, 42px);
+  font-weight: 900;
+  line-height: 1.05;
+}
+
+.practice-empty-text{
+  margin-top: 8px;
+  font-size: clamp(17px, 4vw, 22px);
+  font-weight: 800;
+  line-height: 1.25;
+  opacity: 0.9;
+}
+
+.practice-scroll-vignette{
+  pointer-events: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(110px + var(--safeB));
+  z-index: 10;
+  background: linear-gradient(
+    to bottom,
+    rgba(127,102,198,0),
+    rgba(127,102,198,0.92) 72%,
+    rgba(127,102,198,1)
+  );
+}
+
+@media (max-width: 420px){
+  .practice-screen{
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .practice-screen .practice-content{
+    width: 100%;
+    padding-top: calc(var(--tap) + 4px);
+  }
+
+  .practice-game-card{
+    border-width: 7px;
+    min-height: clamp(175px, 25vh, 230px);
+  }
+
+  .practice-game-card-top{
+    grid-template-columns: minmax(86px, 33%) 1fr;
+    padding: 18px 16px;
+  }
+
+  .practice-game-title{
+    font-size: clamp(31px, 8.8vw, 46px);
+  }
+}
+
+@media (max-height: 680px){
+  .practice-screen h2{
+    font-size: clamp(30px, 7vw, 44px);
+    margin-bottom: 12px;
+  }
+
+  .practice-game-card{
+    min-height: 170px;
+  }
+
+  .practice-game-card-bottom{
+    min-height: 50px;
+  }
+
+  .practice-game-emoji{
+    font-size: clamp(52px, 15vw, 88px);
+  }
+}
+
 .title-picker{
   width: 100%;
   max-width: 420px;
