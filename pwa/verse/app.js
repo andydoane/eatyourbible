@@ -1481,7 +1481,8 @@ const Screen = {
   CELEBRATION: "celebration",
   PET_UNLOCK: "pet_unlock",
   PET_STATS: "pet_stats",
-  PRACTICE: "practice"
+  PRACTICE: "practice",
+  GAME_MIX_FINISHED: "game_mix_finished"
 };
 
 function isLearnFlowScreen(screen){
@@ -1643,6 +1644,210 @@ function getExternalPracticeGames(){
 
 function getPracticeGames(){
   return [...BUILTIN_PRACTICE_GAMES, ...getExternalPracticeGames()];
+}
+
+/* =========================
+   Game Mix Session
+   ========================= */
+
+const GAME_MIX_STORAGE_KEY = "verseMemoryGameMix";
+const GAME_MIX_VERSION = 1;
+const GAME_MIX_MODES = ["easy", "medium", "hard"];
+
+function createGameMixState(verseId){
+  return {
+    version: GAME_MIX_VERSION,
+    active: true,
+    verseId: verseId || "",
+    playedGameIds: [],
+    currentGameId: "",
+    currentMode: "",
+    startedAt: Date.now()
+  };
+}
+
+function getGameMixState(){
+  try {
+    const raw = sessionStorage.getItem(GAME_MIX_STORAGE_KEY);
+    if (!raw) return null;
+
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return null;
+    if (parsed.version !== GAME_MIX_VERSION) return null;
+    if (!parsed.active) return null;
+
+    if (!Array.isArray(parsed.playedGameIds)){
+      parsed.playedGameIds = [];
+    }
+
+    return parsed;
+  } catch (err) {
+    console.warn("Could not load Game Mix state", err);
+    return null;
+  }
+}
+
+function saveGameMixState(state){
+  try {
+    sessionStorage.setItem(GAME_MIX_STORAGE_KEY, JSON.stringify(state));
+  } catch (err) {
+    console.warn("Could not save Game Mix state", err);
+  }
+}
+
+function clearGameMixState(){
+  try {
+    sessionStorage.removeItem(GAME_MIX_STORAGE_KEY);
+  } catch (err) {
+    console.warn("Could not clear Game Mix state", err);
+  }
+}
+
+function getEligibleGameMixGames(){
+  return getPracticeGames().filter(game =>
+    game &&
+    game.source === "external" &&
+    game.manifest &&
+    game.id
+  );
+}
+
+function pickRandomFromList(list){
+  if (!Array.isArray(list) || !list.length) return null;
+  return list[Math.floor(Math.random() * list.length)];
+}
+
+function getGameMixModeForGame(gameId){
+  const verseProgress = getVerseProgress(VERSE_ID);
+  const gameProgress = verseProgress?.games?.[gameId];
+
+  if (!gameProgress?.easyCompleted) return "easy";
+  if (!gameProgress?.mediumCompleted) return "medium";
+  if (!gameProgress?.hardCompleted) return "hard";
+
+  return pickRandomFromList(GAME_MIX_MODES) || "easy";
+}
+
+function pickNextGameMixGame(){
+  const state = getGameMixState();
+  if (!state || state.verseId !== VERSE_ID) return null;
+
+  const played = new Set(state.playedGameIds || []);
+  const eligible = getEligibleGameMixGames();
+  const unplayed = eligible.filter(game => !played.has(game.id));
+
+  return pickRandomFromList(unplayed);
+}
+
+function launchGameMixGame(game){
+  if (!game?.manifest) return false;
+
+  let state = getGameMixState();
+
+  if (!state || state.verseId !== VERSE_ID){
+    state = createGameMixState(VERSE_ID);
+  }
+
+  const mode = getGameMixModeForGame(game.id);
+
+  state.currentGameId = game.id;
+  state.currentMode = mode;
+
+  saveGameMixState(state);
+
+  launchExternalGame(game.manifest, {
+    mix: true,
+    mode
+  });
+
+  return true;
+}
+
+function startGameMix(){
+  const eligible = getEligibleGameMixGames();
+
+  if (!eligible.length){
+    showDialog({
+      title: "No games yet",
+      body: "No practice games are available for Game Mix right now.",
+      actions: [dlgBtn("OK", { onClick: closeDialog })]
+    });
+    return;
+  }
+
+  const state = createGameMixState(VERSE_ID);
+  saveGameMixState(state);
+
+  const firstGame = pickRandomFromList(eligible);
+  launchGameMixGame(firstGame);
+}
+
+function recordGameMixCompletedGame(gameId){
+  const state = getGameMixState();
+  if (!state || state.verseId !== VERSE_ID) return null;
+
+  const safeGameId = String(gameId || state.currentGameId || "").trim();
+
+  if (safeGameId && !state.playedGameIds.includes(safeGameId)){
+    state.playedGameIds.push(safeGameId);
+  }
+
+  state.currentGameId = "";
+  state.currentMode = "";
+
+  saveGameMixState(state);
+  return state;
+}
+
+function cleanGameMixUrlParams(){
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.delete("mixNext");
+    url.searchParams.delete("completedGameId");
+    url.searchParams.delete("mixPetUnlock");
+    window.history.replaceState({}, "", url.href);
+  } catch (err) {
+    console.warn("Could not clean Game Mix URL params", err);
+  }
+}
+
+function continueGameMixAfterCompletion(completedGameId){
+  const state = recordGameMixCompletedGame(completedGameId);
+
+  if (!state){
+    clearGameMixState();
+    cleanGameMixUrlParams();
+    setScreen(Screen.TITLE);
+    return true;
+  }
+
+  const nextGame = pickNextGameMixGame();
+
+  if (nextGame){
+    launchGameMixGame(nextGame);
+    return true;
+  }
+
+  cleanGameMixUrlParams();
+  setScreen(Screen.GAME_MIX_FINISHED);
+  return true;
+}
+
+function handleGameMixNextFromUrl(params){
+  if (!params || params.get("mixNext") !== "1") return false;
+
+  const completedGameId = params.get("completedGameId") || "";
+  return continueGameMixAfterCompletion(completedGameId);
+}
+
+function isGameMixPetUnlockRequest(){
+  const params = new URLSearchParams(window.location.search);
+  return params.get("mixPetUnlock") === "1";
+}
+
+function getGameMixCompletedGameIdFromUrl(){
+  const params = new URLSearchParams(window.location.search);
+  return params.get("completedGameId") || "";
 }
 
 function getExternalGameManifestById(gameId){
@@ -1990,7 +2195,8 @@ function screenToIndex(screen){
     Screen.FINAL_RECALL,
     Screen.CELEBRATION,
     Screen.PET_UNLOCK,
-    Screen.PRACTICE
+    Screen.PRACTICE,
+    Screen.GAME_MIX_FINISHED
   ];
   return order.indexOf(screen);
 }
@@ -2193,7 +2399,7 @@ function getReturnToPracticeUrl(){
   return url.href;
 }
 
-function launchExternalGame(manifest){
+function launchExternalGame(manifest, options = {}){
   if (!manifest || !manifest.launchUrl || !VERSE_ID) return;
 
   const params = new URLSearchParams({
@@ -2203,6 +2409,14 @@ function launchExternalGame(manifest){
     returnTo: getReturnToPracticeUrl(),
     source: "verse_memory_app"
   });
+
+  if (options.mix){
+    params.set("mix", "1");
+  }
+
+  if (options.mode){
+    params.set("mode", options.mode);
+  }
 
   window.location.href = `${manifest.launchUrl}?${params.toString()}`;
 }
@@ -3810,8 +4024,12 @@ function screenPetUnlock(idx){
       <div class="pet-unlock-ref">${verseItem ? verseItem.ref : ""}</div>
 
       <div class="celebration-actions">
-        <button class="carousel-main no-zoom" id="btnPetUnlockPractice">Practice Games</button>
-        <button class="carousel-main no-zoom" id="btnPetUnlockVisit">Visit BibloPet</button>
+        <button class="carousel-main no-zoom" id="btnPetUnlockPractice">
+          ${isGameMixPetUnlockRequest() ? "Continue Mix" : "Practice Games"}
+        </button>
+        <button class="carousel-main no-zoom" id="btnPetUnlockVisit">
+          ${isGameMixPetUnlockRequest() ? "Visit BibloPet Zoo" : "Visit BibloPet"}
+        </button>
       </div>
     </div>
   `;
@@ -3822,6 +4040,13 @@ function screenPetUnlock(idx){
       const unlockedVerseId = State.pendingPetUnlockVerseId;
       State.pendingPetUnlockVerseId = null;
       if (unlockedVerseId) State.selectedVerseId = unlockedVerseId;
+
+      if (isGameMixPetUnlockRequest()){
+        const completedGameId = getGameMixCompletedGameIdFromUrl() || getGameMixState()?.currentGameId || "";
+        continueGameMixAfterCompletion(completedGameId);
+        return;
+      }
+
       go(Screen.PRACTICE);
     };
   }
@@ -3832,11 +4057,38 @@ function screenPetUnlock(idx){
       const unlockedVerseId = State.pendingPetUnlockVerseId;
       State.pendingPetUnlockVerseId = null;
       if (unlockedVerseId) State.selectedVerseId = unlockedVerseId;
+
+      if (isGameMixPetUnlockRequest()){
+        clearGameMixState();
+        cleanGameMixUrlParams();
+        go(Screen.PROGRESS);
+        return;
+      }
+
       go(Screen.VERSE_DETAIL);
     };
   }
 
-    bindHomePill(wrap);
+  bindHomePill(wrap);
+
+  if (isGameMixPetUnlockRequest()){
+    const homeBtn = wrap.querySelector("[data-home-pill]");
+    if (homeBtn){
+      homeBtn.onclick = (e) => {
+        e.stopPropagation();
+
+        try {
+          audioEl.pause();
+          audioEl.currentTime = 0;
+        } catch(e){}
+
+        State.pendingPetUnlockVerseId = null;
+        clearGameMixState();
+        cleanGameMixUrlParams();
+        go(Screen.TITLE);
+      };
+    }
+  }
 
   return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
 }
@@ -4564,12 +4816,7 @@ function screenPractice(idx){
   if (gameMixBtn){
     gameMixBtn.onclick = (e) => {
       e.stopPropagation();
-
-      const game = getRandomPracticeGame(practiceGames);
-      if (!game) return;
-
-      State.practiceIndex = Math.max(0, practiceGames.findIndex(g => g.id === game.id));
-      launchExternalGame(game.manifest);
+      startGameMix();
     };
   }
 
@@ -4604,7 +4851,45 @@ function screenPractice(idx){
   return makeSlide({idx, bg:"var(--purple)", navHidden:true, inner: wrap});
 }
 
+function screenGameMixFinished(idx){
+  const wrap = document.createElement("div");
+  wrap.className = "title-screen game-mix-finished-screen";
 
+  wrap.innerHTML = `
+    <div class="game-mix-finished-card">
+      <div class="game-mix-finished-emoji" aria-hidden="true">🎉</div>
+      <div class="game-mix-finished-title">Mix Finished!</div>
+      <div class="game-mix-finished-text">You completed every game.</div>
+
+      <div class="game-mix-finished-actions">
+        <button class="carousel-main no-zoom" id="btnPlayAnotherMix" type="button">
+          Play Another Mix
+        </button>
+
+        <button class="carousel-main no-zoom" id="btnEndMix" type="button">
+          End Mix
+        </button>
+      </div>
+    </div>
+  `;
+
+  const playAnotherBtn = wrap.querySelector("#btnPlayAnotherMix");
+  if (playAnotherBtn){
+    playAnotherBtn.onclick = () => {
+      startGameMix();
+    };
+  }
+
+  const endBtn = wrap.querySelector("#btnEndMix");
+  if (endBtn){
+    endBtn.onclick = () => {
+      clearGameMixState();
+      go(Screen.TITLE);
+    };
+  }
+
+  return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
+}
 
 /* =========================
    7. Main Render
@@ -4632,7 +4917,7 @@ function render(){
 
   const uniq = Array.from(new Set(indicesToRender.filter(i => i !== null && i >= 0)));
   for (const idx of uniq){
-    const screen = ["intro","title","progress","pet_stats","verse_detail","learn_level","practice_gate","learn_instruction","listen","meaning","chunks","echo","hide","final_recall","celebration","pet_unlock","practice","game"][idx];
+    const screen = ["intro","title","progress","pet_stats","verse_detail","learn_level","practice_gate","learn_instruction","listen","meaning","chunks","echo","hide","final_recall","celebration","pet_unlock","practice","game_mix_finished"][idx];
     let slide = null;
     if (screen === Screen.INTRO) slide = screenIntro(idx);
     if (screen === Screen.TITLE) slide = screenTitle(idx);
@@ -4651,6 +4936,7 @@ function render(){
     if (screen === Screen.CELEBRATION) slide = screenCelebration(idx);
     if (screen === Screen.PET_UNLOCK) slide = screenPetUnlock(idx);
     if (screen === Screen.PRACTICE) slide = screenPractice(idx);
+    if (screen === Screen.GAME_MIX_FINISHED) slide = screenGameMixFinished(idx);
     if (slide) app.appendChild(slide);
   }
 
@@ -4700,12 +4986,20 @@ function render(){
   const requestedScreen = params.get("screen");
   const petUnlockVerseId = params.get("petUnlock");
 
+  if (params.get("mixNext") === "1" && HAS_VERSE_SELECTION){
+    const handled = handleGameMixNextFromUrl(params);
+    applyMute();
+    if (handled) return;
+  }
+
   if (petUnlockVerseId){
     State.pendingPetUnlockVerseId = petUnlockVerseId;
     State.selectedVerseId = petUnlockVerseId;
     setScreen(Screen.PET_UNLOCK);
   } else if (requestedScreen === "practice" && HAS_VERSE_SELECTION){
     setScreen(Screen.PRACTICE);
+  } else if (requestedScreen === "progress" && HAS_VERSE_SELECTION){
+    setScreen(Screen.PROGRESS);
   } else if (requestedScreen === "title"){
     setScreen(Screen.TITLE);
   } else {
