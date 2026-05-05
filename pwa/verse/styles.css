@@ -689,6 +689,14 @@
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   padding: 0 clamp(2px, 1vw, 8px) calc(110px + var(--safeB));
+
+  /* Hide scrollbar while keeping scroll */
+  scrollbar-width: none;      /* Firefox */
+  -ms-overflow-style: none;   /* old Edge / IE */
+}
+
+.practice-scroll-wrap::-webkit-scrollbar{
+  display: none;              /* Chrome, Edge, Safari */
 }
 
 .practice-card-list{
@@ -741,13 +749,7 @@
 }
 
 .practice-game-emoji-shadow{
-  position: absolute;
-  width: clamp(70px, 21vw, 122px);
-  height: clamp(70px, 21vw, 122px);
-  border-radius: 999px;
-  background: rgba(0,0,0,0.22);
-  transform: translate(8px, 10px) scale(0.92);
-  filter: blur(1px);
+  display: none;
 }
 
 .practice-game-emoji{
@@ -755,7 +757,7 @@
   z-index: 1;
   font-size: clamp(58px, 18vw, 112px);
   line-height: 1;
-  filter: drop-shadow(0 6px 0 rgba(0,0,0,0.18));
+  text-shadow: 0 5px 0 rgba(0,0,0,0.18);
 }
 
 .practice-game-title{
