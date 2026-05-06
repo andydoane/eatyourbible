@@ -1653,6 +1653,9 @@ function getPracticeGames(){
 const GAME_MIX_STORAGE_KEY = "verseMemoryGameMix";
 const GAME_MIX_VERSION = 1;
 const GAME_MIX_MODES = ["easy", "medium", "hard"];
+const GAME_MIX_LOADING_MIN_MS = 600;
+
+let gameMixLaunchTimer = null;
 
 function createGameMixState(verseId){
   return {
@@ -1717,6 +1720,36 @@ function pickRandomFromList(list){
   return list[Math.floor(Math.random() * list.length)];
 }
 
+function showGameMixLoadingScreen(){
+  if (gameMixLaunchTimer){
+    clearTimeout(gameMixLaunchTimer);
+    gameMixLaunchTimer = null;
+  }
+
+  try {
+    navBar.style.display = "none";
+  } catch(e){}
+
+  app.innerHTML = `
+    <div class="game-mix-loading-screen">
+      <div class="game-mix-loading-card" role="status" aria-live="polite">
+        <div class="game-mix-loading-icon-wrap" aria-hidden="true">
+          <div class="game-mix-loading-rainbow"></div>
+          <img
+            class="game-mix-loading-image"
+            src="${IMG_DIR}verse_mix.png"
+            alt=""
+          >
+        </div>
+
+        <div class="game-mix-loading-text">
+          Loading Mix
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function getGameMixModeForGame(gameId){
   const verseProgress = getVerseProgress(VERSE_ID);
   const gameProgress = verseProgress?.games?.[gameId];
@@ -1755,10 +1788,16 @@ function launchGameMixGame(game){
 
   saveGameMixState(state);
 
-  launchExternalGame(game.manifest, {
-    mix: true,
-    mode
-  });
+  showGameMixLoadingScreen();
+
+  gameMixLaunchTimer = setTimeout(() => {
+    gameMixLaunchTimer = null;
+
+    launchExternalGame(game.manifest, {
+      mix: true,
+      mode
+    });
+  }, GAME_MIX_LOADING_MIN_MS);
 
   return true;
 }
