@@ -41,8 +41,8 @@
 
   function showGameMixQuitConfirm({
     title = "Quit Game Mix?",
-    noText = "No",
-    yesText = "Yes",
+    noText = "Keep Playing",
+    yesText = "Quit Mix",
     onConfirm = () => {}
   } = {}){
     const existing = document.getElementById("vmGameMixConfirmOverlay");
@@ -57,11 +57,11 @@
         <div class="vm-game-mix-confirm-title">${escapeHtml(title)}</div>
 
         <div class="vm-game-mix-confirm-actions">
-          <button class="vm-btn vm-btn-secondary" id="vmGameMixConfirmNo" type="button">
+          <button class="vm-btn vm-btn-secondary vm-game-mix-keep-playing" id="vmGameMixConfirmNo" type="button">
             ${escapeHtml(noText)}
           </button>
 
-          <button class="vm-btn" id="vmGameMixConfirmYes" type="button">
+          <button class="vm-btn vm-game-mix-quit" id="vmGameMixConfirmYes" type="button">
             ${escapeHtml(yesText)}
           </button>
         </div>
@@ -1533,7 +1533,7 @@ function renderCompleteScreen({
     : gameMix
       ? `
         <div class="vm-game-actions vm-complete-actions">
-          <button class="vm-btn" id="gameShellContinueMixBtn" type="button">Continue Mix</button>
+          <button class="vm-btn vm-game-mix-action" id="gameShellContinueMixBtn" type="button">Continue Mix</button>
           <button class="vm-btn vm-btn-secondary" id="gameShellEndMixBtn" type="button">End Mix</button>
         </div>
       `
@@ -1597,8 +1597,8 @@ function renderCompleteScreen({
   const endMixAction = () => {
     showGameMixQuitConfirm({
       title: "Quit Game Mix?",
-      noText: "No",
-      yesText: "Yes",
+      noText: "Keep Playing",
+      yesText: "Quit Mix",
       onConfirm: () => window.VerseGameBridge?.endGameMix?.()
     });
   };
@@ -1801,8 +1801,8 @@ function renderCompleteScreen({
         if (isGameMixLaunch()){
           showGameMixQuitConfirm({
             title: "Quit Game Mix?",
-            noText: "No",
-            yesText: "Yes",
+            noText: "Keep Playing",
+            yesText: "Quit Mix",
             onConfirm: () => window.VerseGameBridge?.endGameMix?.()
           });
           return;
