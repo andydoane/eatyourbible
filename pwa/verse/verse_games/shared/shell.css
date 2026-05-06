@@ -1091,3 +1091,66 @@ button.vm-complete-icon.is-pet-box:focus-visible{
   min-height: 58px;
   font-size: clamp(22px, 5.4vw, 32px);
 }
+
+/* =========================================================
+   Game Mix button polish
+   ========================================================= */
+
+.vm-game-mix-action{
+  color: #ffffff;
+  background: linear-gradient(
+    120deg,
+    #ff5a51,
+    #ffc751,
+    #a7cb6f,
+    #40b9c5,
+    #7f66c6,
+    #ff5a51
+  );
+  background-size: 500% 500%;
+  animation: vmGameMixRainbow 8500ms ease-in-out infinite;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.22);
+}
+
+.vm-game-mix-action:active{
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 rgba(0,0,0,0.25);
+}
+
+.vm-game-mix-confirm-actions .vm-game-mix-keep-playing{
+  background: #a7cb6f;
+  color: #ffffff;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.22);
+}
+
+.vm-game-mix-confirm-actions .vm-game-mix-quit{
+  background: #ff5a51;
+  color: #ffffff;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.22);
+}
+
+.vm-game-mix-confirm-actions .vm-game-mix-keep-playing:active,
+.vm-game-mix-confirm-actions .vm-game-mix-quit:active{
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 rgba(0,0,0,0.22);
+}
+
+@keyframes vmGameMixRainbow{
+  0%{
+    background-position: 0% 50%;
+  }
+
+  50%{
+    background-position: 100% 50%;
+  }
+
+  100%{
+    background-position: 0% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce){
+  .vm-game-mix-action{
+    animation: none;
+  }
+}
