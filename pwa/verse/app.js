@@ -23,6 +23,7 @@ const AUDIO_DIR = "verse_audio/";
 const WORDS_AUDIO_DIR = AUDIO_DIR + "words/";
 const DATA_DIR  = "verse_data/";
 const IMG_DIR   = "verse_images/";
+const PET_IMG_DIR = "pet_images/";
 
 // =========================================================
 // DEBUG fallback: lets the app run offline (file://) without fetch()
@@ -71,6 +72,30 @@ function getTitleZooScene(){
   };
 }
 
+function getBibloPetImageSrcForVerseId(verseId){
+  return `${PET_IMG_DIR}pet_${verseId}.png`;
+}
+
+function bibloPetVisualHtml(verseId, emoji){
+  const safeVerseId = escapeHtml(verseId || "");
+  const safeEmoji = escapeHtml(emoji || "🐾");
+  const imgSrc = escapeHtml(getBibloPetImageSrcForVerseId(verseId));
+
+  return `
+    <span class="biblopet-visual" data-verse-id="${safeVerseId}">
+      <img
+        class="biblopet-img"
+        src="${imgSrc}"
+        alt=""
+        draggable="false"
+        onload="this.classList.add('is-loaded')"
+        onerror="this.classList.add('is-missing')"
+      >
+      <span class="biblopet-emoji-fallback">${safeEmoji}</span>
+    </span>
+  `;
+}
+
 function titleZooPetVisitorHtml(pet){
   if (!pet) return "";
 
@@ -80,7 +105,7 @@ function titleZooPetVisitorHtml(pet){
       title="${escapeHtml(pet.name)}"
       data-verse-id="${escapeHtml(pet.verseId)}"
     >
-      ${escapeHtml(pet.emoji)}
+      ${bibloPetVisualHtml(pet.verseId, pet.emoji)}
     </div>
   `;
 }
@@ -152,7 +177,7 @@ function updateTitleZooPetVisitor(rootEl, pet){
 
   visitor.setAttribute("title", pet.name);
   visitor.setAttribute("data-verse-id", pet.verseId);
-  visitor.textContent = pet.emoji;
+  visitor.innerHTML = bibloPetVisualHtml(pet.verseId, pet.emoji);
 
   updateTitleZooVisitButton(rootEl, pet);
 }
@@ -4526,7 +4551,9 @@ function screenVerseDetail(idx){
                       `
                       : ""
                   }
-                  <div class="pet-emoji pet-emoji-unlocked ${petAnimationClass}">${petEmoji}</div>
+                  <div class="pet-emoji pet-emoji-unlocked ${petAnimationClass}">
+  ${bibloPetVisualHtml(verseId, petEmoji)}
+</div>
                 </div>
 
                 <button class="pet-bg-btn no-zoom" id="btnChangePetBg" type="button">

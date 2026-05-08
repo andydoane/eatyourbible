@@ -2929,6 +2929,71 @@ text-wrap: balance;
    BibloPet Status Animations
    ========================= */
 
+/* =========================
+   BibloPet Image / Emoji Fallback
+   ========================= */
+
+.biblopet-visual{
+  display: inline-grid;
+  place-items: center;
+  width: 1em;
+  height: 1em;
+  line-height: 1;
+}
+
+.biblopet-img,
+.biblopet-emoji-fallback{
+  grid-area: 1 / 1;
+}
+
+.biblopet-img{
+  display: block;
+  width: 1em;
+  height: 1em;
+  max-width: none;
+  max-height: none;
+  object-fit: contain;
+  opacity: 0;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.biblopet-img.is-loaded{
+  opacity: 1;
+}
+
+.biblopet-img.is-loaded + .biblopet-emoji-fallback{
+  display: none;
+}
+
+.biblopet-img.is-missing{
+  display: none;
+}
+
+.biblopet-emoji-fallback{
+  display: block;
+  line-height: 1;
+}
+
+/* Override the generic title-screen image sizing rule for pet images */
+.title-screen .biblopet-img{
+  width: 1em;
+  height: 1em;
+  max-width: none;
+  max-height: none;
+  object-fit: contain;
+}
+
+/* Keep image pets sized like emoji pets on the detail page */
+.pet-emoji .biblopet-img{
+  width: 1em;
+  height: 1em;
+  max-width: none;
+  max-height: none;
+  object-fit: contain;
+}
+
 .pet-stage{
   position: relative;
   overflow: hidden;
