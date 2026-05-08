@@ -59,6 +59,47 @@ const DEBUG_VERSE_JSON = {
 const INTRO_LOGO = IMG_DIR + "eyb_logo_1.png";
 const TITLE_LOGO = IMG_DIR + "memory_verse_title.png";
 
+const TITLE_ZOO_SCENE_COUNT = 7;
+const titleZooSceneIndex = Math.floor(Math.random() * TITLE_ZOO_SCENE_COUNT) + 1;
+
+function getTitleZooScene(){
+  return {
+    bg: `${IMG_DIR}zoo_${titleZooSceneIndex}_bg.jpg`,
+    fg: `${IMG_DIR}zoo_${titleZooSceneIndex}_fg.png`
+  };
+}
+
+function titleZooStripHtml(){
+  const scene = getTitleZooScene();
+
+  return `
+    <button
+      class="title-zoo-strip no-zoom"
+      id="titleZooStrip"
+      type="button"
+      aria-label="Visit BibloPet Zoo"
+    >
+      <img
+        class="title-zoo-layer title-zoo-bg"
+        src="${scene.bg}"
+        alt=""
+        draggable="false"
+        onerror="this.closest('.title-zoo-strip')?.classList.add('is-missing')"
+      >
+
+      <div class="title-zoo-pet-layer" aria-hidden="true"></div>
+
+      <img
+        class="title-zoo-layer title-zoo-fg"
+        src="${scene.fg}"
+        alt=""
+        draggable="false"
+        onerror="this.closest('.title-zoo-strip')?.classList.add('is-missing')"
+      >
+    </button>
+  `;
+}
+
 /* =========================================================
    Inline SVG icons (copied from Ten Commandments / Creed apps)
    ========================================================= */
@@ -3922,6 +3963,8 @@ function screenTitle(idx){
 
       <div class="carousel-dots" id="titleDots"></div>
 
+      ${titleZooStripHtml()}
+
       <div class="title-attribution" style="max-width: 60ch;">
         ${ATTRIBUTION ? ATTRIBUTION : ""}
       </div>
@@ -3933,6 +3976,13 @@ function screenTitle(idx){
   wrap.querySelector("#titleNext").onclick = (e)=>{ e.stopPropagation(); titleNext(); };
   wrap.querySelector("#titleMain").onclick = (e)=>{ e.stopPropagation(); titleRun(); };
 
+  const titleZooStrip = wrap.querySelector("#titleZooStrip");
+  if (titleZooStrip){
+    titleZooStrip.onclick = (e) => {
+      e.stopPropagation();
+      go(Screen.PROGRESS);
+    };
+  }
 
   const titleLogoSecretWrap = wrap.querySelector("#titleLogoSecretWrap");
   const titleLogoSecret = wrap.querySelector("#titleLogoSecret");

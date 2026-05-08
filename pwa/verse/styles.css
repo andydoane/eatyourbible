@@ -519,18 +519,20 @@
     .hint{ font-size: 13px; opacity: 0.85; }
 
     /* ---------- Title screen (Creed/Commandments style) ---------- */
-    .title-screen{
-      position:relative;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      height:100%;
-      padding: 24px 16px;
-      padding-bottom: calc(16px + var(--safeB));
-      background: var(--purple);
-      color: white;
-      text-align:center;
-    }
+.title-screen{
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  height:100%;
+  padding: 24px 16px;
+  padding-bottom: calc(16px + var(--safeB));
+  background: var(--purple);
+  color: white;
+  text-align:center;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
 
     .title-content{
       flex:1;
@@ -1030,6 +1032,75 @@
   font-weight: 800;
   background: rgba(255,255,255,0.95);
   color: #111;
+}
+
+/* =========================
+   Title Page BibloPet Zoo Strip
+   ========================= */
+
+.title-zoo-strip{
+  position: relative;
+  width: 100%;
+  max-width: 700px;
+  aspect-ratio: 16 / 9;
+  margin: clamp(10px, 2.2vh, 18px) auto clamp(8px, 1.8vh, 14px);
+  padding: 0;
+  border: 6px solid rgba(255,255,255,0.92);
+  border-radius: clamp(22px, 5vw, 34px);
+  overflow: hidden;
+  background: rgba(0,0,0,0.22);
+  box-shadow: 0 8px 0 rgba(0,0,0,0.22);
+  cursor: pointer;
+  display: block;
+}
+
+.title-zoo-strip:active{
+  transform: translateY(4px);
+  box-shadow: 0 4px 0 rgba(0,0,0,0.22);
+}
+
+.title-zoo-strip.is-missing{
+  display: none;
+}
+
+.title-zoo-layer,
+.title-zoo-pet-layer{
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.title-zoo-layer{
+  display: block;
+  max-width: none;
+  max-height: none;
+  object-fit: cover;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.title-zoo-bg{
+  z-index: 1;
+}
+
+.title-zoo-pet-layer{
+  z-index: 2;
+  pointer-events: none;
+}
+
+.title-zoo-fg{
+  z-index: 3;
+}
+
+@media (max-height: 740px){
+  .title-zoo-strip{
+    max-width: min(100%, 560px);
+    border-width: 5px;
+    margin-top: 8px;
+    margin-bottom: 8px;
+  }
 }
 
 
