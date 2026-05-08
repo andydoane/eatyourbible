@@ -1140,35 +1140,35 @@
 
 @keyframes titleZooPetWalk{
   0%{
-    transform: translate(-120%, -50%) scaleX(1);
+    transform: translate(-120%, -50%) scaleX(-1);
   }
 
   12%{
-    transform: translate(18vw, -52%) scaleX(1);
+    transform: translate(18vw, -52%) scaleX(-1);
   }
 
   24%{
-    transform: translate(30vw, -48%) scaleX(1);
+    transform: translate(30vw, -48%) scaleX(-1);
   }
 
   38%{
-    transform: translate(42vw, -52%) scaleX(1);
+    transform: translate(42vw, -52%) scaleX(-1);
   }
 
   52%{
-    transform: translate(54vw, -49%) scaleX(1);
+    transform: translate(54vw, -49%) scaleX(-1);
   }
 
   66%{
-    transform: translate(66vw, -52%) scaleX(1);
+    transform: translate(66vw, -52%) scaleX(-1);
   }
 
   78%{
-    transform: translate(82vw, -50%) scaleX(1);
+    transform: translate(82vw, -50%) scaleX(-1);
   }
 
   100%{
-    transform: translate(120vw, -50%) scaleX(1);
+    transform: translate(120vw, -50%) scaleX(-1);
   }
 }
 
@@ -1176,7 +1176,7 @@
   .title-zoo-pet-visitor{
     animation: none;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%) scaleX(-1);
   }
 }
 
