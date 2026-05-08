@@ -134,7 +134,10 @@ function showDialog({title="Notice", body="", bodyHtml="", actions=[]}){
   for (const a of actions) dlgActions.appendChild(a);
   overlay.classList.add("show");
 }
-function closeDialog(){ overlay.classList.remove("show"); }
+function closeDialog(){
+  overlay.classList.remove("show");
+  dlgActions.classList.remove("pet-name-dialog-actions");
+}
 overlay.addEventListener("click", (e)=>{ if (e.target === overlay) closeDialog(); });
 
 function escapeHtml(value){
@@ -4109,6 +4112,8 @@ function screenProgress(idx){
 
 function openPetNameDialog(verseId){
   loadPetNameBlocklist();
+
+  dlgActions.classList.add("pet-name-dialog-actions");
 
   const currentDisplayName = getBibloPetDisplayNameForVerseId(verseId);
   const hasCustomName = hasCustomPetNameForVerseId(verseId);

@@ -2375,6 +2375,39 @@ text-wrap: balance;
   text-align: center;
 }
 
+.pet-name-dialog-actions{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pet-name-dialog-actions .dlg-btn{
+  width: 100%;
+  flex: 0 0 auto;
+  min-height: 54px;
+  height: auto;
+  padding: 12px 16px;
+  white-space: nowrap;
+  font-size: clamp(17px, 4.4vw, 22px);
+}
+
+.pet-name-dialog-actions .dlg-btn:first-child::before{
+  content: "🎲 ";
+}
+
+
+.pet-name-dialog-actions .dlg-btn:nth-child(2){
+  background: #a7cb6f;
+  color: #ffffff;
+}
+
+.pet-name-dialog-actions .dlg-btn:nth-child(3){
+  background: transparent;
+  color: rgba(255,255,255,0.95);
+  border: 2px solid rgba(255,255,255,0.55);
+  box-shadow: none;
+}
+
 .pet-status-card{
   display: grid;
   grid-template-columns: 1fr auto;
