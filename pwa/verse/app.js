@@ -71,6 +71,20 @@ function getTitleZooScene(){
   };
 }
 
+function titleZooPetVisitorHtml(pet){
+  if (!pet) return "";
+
+  return `
+    <div
+      class="title-zoo-pet-visitor"
+      title="${escapeHtml(pet.name)}"
+      data-verse-id="${escapeHtml(pet.verseId)}"
+    >
+      ${escapeHtml(pet.emoji)}
+    </div>
+  `;
+}
+
 function titleZooStripHtml(){
   const scene = getTitleZooScene();
   const pet = getTitleZooPet();
@@ -91,18 +105,7 @@ function titleZooStripHtml(){
       >
 
       <div class="title-zoo-pet-layer" aria-hidden="true">
-        ${
-          pet
-            ? `
-              <div
-                class="title-zoo-pet-visitor"
-                title="${escapeHtml(pet.name)}"
-              >
-                ${pet.emoji}
-              </div>
-            `
-            : ""
-        }
+        ${titleZooPetVisitorHtml(pet)}
       </div>
 
       <img
@@ -131,6 +134,27 @@ function titleZooVisitButtonHtml(){
       Visit ${escapeHtml(pet.name)}
     </button>
   `;
+}
+
+function updateTitleZooVisitButton(rootEl, pet){
+  const btn = rootEl?.querySelector?.("#titleZooVisitBtn");
+  if (!btn || !pet) return;
+
+  btn.setAttribute("data-verse-id", pet.verseId);
+  btn.textContent = `Visit ${pet.name}`;
+}
+
+function updateTitleZooPetVisitor(rootEl, pet){
+  if (!rootEl || !pet) return;
+
+  const visitor = rootEl.querySelector(".title-zoo-pet-visitor");
+  if (!visitor) return;
+
+  visitor.setAttribute("title", pet.name);
+  visitor.setAttribute("data-verse-id", pet.verseId);
+  visitor.textContent = pet.emoji;
+
+  updateTitleZooVisitButton(rootEl, pet);
 }
 
 /* =========================================================
@@ -1222,6 +1246,26 @@ function getUnlockedTitleZooPets(){
     .filter(Boolean);
 }
 
+function chooseTitleZooPet({ avoidVerseId = "" } = {}){
+  const unlockedPets = getUnlockedTitleZooPets();
+
+  if (!unlockedPets.length){
+    titleZooPetVerseId = "";
+    return null;
+  }
+
+  let candidates = unlockedPets;
+
+  if (avoidVerseId && unlockedPets.length > 1){
+    candidates = unlockedPets.filter((pet) => pet.verseId !== avoidVerseId);
+  }
+
+  const randomPet = candidates[Math.floor(Math.random() * candidates.length)];
+  titleZooPetVerseId = randomPet.verseId;
+
+  return randomPet;
+}
+
 function getTitleZooPet(){
   const unlockedPets = getUnlockedTitleZooPets();
 
@@ -1235,10 +1279,27 @@ function getTitleZooPet(){
     return rememberedPet;
   }
 
-  const randomPet = unlockedPets[Math.floor(Math.random() * unlockedPets.length)];
-  titleZooPetVerseId = randomPet.verseId;
+  return chooseTitleZooPet();
+}
 
-  return randomPet;
+function advanceTitleZooPet(){
+  return chooseTitleZooPet({
+    avoidVerseId: titleZooPetVerseId
+  });
+}
+
+function bindTitleZooPetRotation(rootEl){
+  const visitor = rootEl?.querySelector?.(".title-zoo-pet-visitor");
+  if (!visitor) return;
+
+  visitor.addEventListener("animationiteration", () => {
+    if (State.screen !== Screen.TITLE) return;
+
+    const nextPet = advanceTitleZooPet();
+    if (!nextPet) return;
+
+    updateTitleZooPetVisitor(rootEl, nextPet);
+  });
 }
 
 function hasCustomPetNameForVerseId(verseId){
@@ -4071,6 +4132,7 @@ function screenTitle(idx){
     };
   }
 
+    bindTitleZooPetRotation(wrap);
 
   const titleLogoSecretWrap = wrap.querySelector("#titleLogoSecretWrap");
   const titleLogoSecret = wrap.querySelector("#titleLogoSecret");
