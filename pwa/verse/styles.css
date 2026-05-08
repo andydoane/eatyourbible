@@ -1045,7 +1045,7 @@
   aspect-ratio: 16 / 9;
   margin: clamp(10px, 2.2vh, 18px) auto clamp(8px, 1.8vh, 14px);
   padding: 0;
-  border: 6px solid rgba(255,255,255,0.92);
+  border: none;
   border-radius: clamp(22px, 5vw, 34px);
   overflow: hidden;
   background: rgba(0,0,0,0.22);
@@ -1103,7 +1103,6 @@
 @media (max-height: 740px){
   .title-zoo-strip{
     max-width: min(100%, 560px);
-    border-width: 5px;
     margin-top: 8px;
     margin-bottom: 8px;
   }
