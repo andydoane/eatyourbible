@@ -62,6 +62,8 @@ const TITLE_LOGO = IMG_DIR + "memory_verse_title.png";
 const TITLE_ZOO_SCENE_COUNT = 7;
 const titleZooSceneIndex = Math.floor(Math.random() * TITLE_ZOO_SCENE_COUNT) + 1;
 
+let titleZooPetVerseId = "";
+
 function getTitleZooScene(){
   return {
     bg: `${IMG_DIR}zoo_${titleZooSceneIndex}_bg.jpg`,
@@ -71,6 +73,7 @@ function getTitleZooScene(){
 
 function titleZooStripHtml(){
   const scene = getTitleZooScene();
+  const pet = getTitleZooPet();
 
   return `
     <button
@@ -87,7 +90,20 @@ function titleZooStripHtml(){
         onerror="this.closest('.title-zoo-strip')?.classList.add('is-missing')"
       >
 
-      <div class="title-zoo-pet-layer" aria-hidden="true"></div>
+      <div class="title-zoo-pet-layer" aria-hidden="true">
+        ${
+          pet
+            ? `
+              <div
+                class="title-zoo-pet-visitor"
+                title="${escapeHtml(pet.name)}"
+              >
+                ${pet.emoji}
+              </div>
+            `
+            : ""
+        }
+      </div>
 
       <img
         class="title-zoo-layer title-zoo-fg"
@@ -1167,6 +1183,45 @@ function getSavedPetNameForVerseId(verseId){
 
 function getBibloPetDisplayNameForVerseId(verseId){
   return getSavedPetNameForVerseId(verseId) || getBibloPetDefaultNameForVerseId(verseId);
+}
+
+function getUnlockedTitleZooPets(){
+  if (!Array.isArray(VERSE_LIST)) return [];
+
+  return VERSE_LIST
+    .map((item) => {
+      const verseId = item?.id || "";
+      const verseProgress = getVerseProgress(verseId);
+      const unlocked = isBibloPetUnlocked(verseProgress);
+
+      if (!verseId || !unlocked) return null;
+
+      return {
+        verseId,
+        emoji: getBibloPetEmojiForVerseId(verseId),
+        name: getBibloPetDisplayNameForVerseId(verseId)
+      };
+    })
+    .filter(Boolean);
+}
+
+function getTitleZooPet(){
+  const unlockedPets = getUnlockedTitleZooPets();
+
+  if (!unlockedPets.length){
+    titleZooPetVerseId = "";
+    return null;
+  }
+
+  const rememberedPet = unlockedPets.find((pet) => pet.verseId === titleZooPetVerseId);
+  if (rememberedPet){
+    return rememberedPet;
+  }
+
+  const randomPet = unlockedPets[Math.floor(Math.random() * unlockedPets.length)];
+  titleZooPetVerseId = randomPet.verseId;
+
+  return randomPet;
 }
 
 function hasCustomPetNameForVerseId(verseId){
