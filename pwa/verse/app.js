@@ -1029,33 +1029,19 @@ const PET_NAME_FALLBACK_BLOCKLIST = [
 let petNameBlocklist = [...PET_NAME_FALLBACK_BLOCKLIST];
 let petNameBlocklistLoadPromise = null;
 
-const PET_RANDOM_NAMES = [
-  "Bubbles",
+const PET_RANDOM_NAMES_URL = "pet_random_names.json";
+
+// Emergency fallback in case the JSON file fails to load.
+const PET_RANDOM_NAMES_FALLBACK = [
+  "Buddy",
   "Sunny",
   "Pip",
-  "Sprout",
-  "Nibbles",
-  "Peanut",
   "Mochi",
-  "Zippy",
-  "Coco",
-  "Wiggles",
-  "Pebble",
-  "Poppy",
-  "Skippy",
-  "Biscuit",
-  "Pickles",
-  "Tater",
-  "Doodle",
-  "Buttons",
-  "Muffin",
-  "Clover",
-  "Twinkle",
-  "Scooter",
-  "Mango",
-  "Pumpkin",
-  "Jellybean"
+  "Coco"
 ];
+
+let petRandomNames = [...PET_RANDOM_NAMES_FALLBACK];
+let petRandomNamesLoadPromise = null;
 
 function hasAnyTrackedGameCompletion(verseProgress){
   if (!verseProgress || !verseProgress.games) return false;
@@ -1165,6 +1151,74 @@ function extractBlocklistWordsFromJson(json){
     if (typeof value === "string") return [value];
     return [];
   });
+}
+
+function extractRandomPetNamesFromJson(json){
+  if (Array.isArray(json)){
+    return json;
+  }
+
+  if (!json || typeof json !== "object"){
+    return [];
+  }
+
+  const possibleKeys = [
+    "names",
+    "petNames",
+    "randomNames",
+    "list"
+  ];
+
+  for (const key of possibleKeys){
+    if (Array.isArray(json[key])){
+      return json[key];
+    }
+  }
+
+  return Object.values(json).flatMap((value) => {
+    if (Array.isArray(value)) return value;
+    if (typeof value === "string") return [value];
+    return [];
+  });
+}
+
+async function loadPetRandomNames(){
+  if (petRandomNamesLoadPromise){
+    return petRandomNamesLoadPromise;
+  }
+
+  petRandomNamesLoadPromise = fetch(PET_RANDOM_NAMES_URL, { cache: "no-store" })
+    .then((res) => {
+      if (!res.ok){
+        throw new Error(`HTTP ${res.status}`);
+      }
+
+      return res.json();
+    })
+    .then((json) => {
+      const names = extractRandomPetNamesFromJson(json)
+        .map((name) => cleanPetName(name))
+        .filter(Boolean)
+        .filter((name) => !isPetNameBlocked(name));
+
+      petRandomNames = [...new Set([
+        ...names,
+        ...PET_RANDOM_NAMES_FALLBACK.map(cleanPetName).filter(Boolean)
+      ])];
+
+      return petRandomNames;
+    })
+    .catch((err) => {
+      console.warn("Could not load BibloPet random names", err);
+
+      petRandomNames = PET_RANDOM_NAMES_FALLBACK
+        .map(cleanPetName)
+        .filter(Boolean);
+
+      return petRandomNames;
+    });
+
+  return petRandomNamesLoadPromise;
 }
 
 async function loadPetNameBlocklist(){
@@ -1330,8 +1384,8 @@ function savePetNameForVerseId(verseId, rawName){
 }
 
 function getRandomPetName(){
-  if (!PET_RANDOM_NAMES.length) return "Buddy";
-  return PET_RANDOM_NAMES[Math.floor(Math.random() * PET_RANDOM_NAMES.length)];
+  if (!petRandomNames.length) return "Buddy";
+  return petRandomNames[Math.floor(Math.random() * petRandomNames.length)];
 }
 
 function getBibloPetStatusEmoji(verseProgress){
@@ -4312,6 +4366,7 @@ function screenProgress(idx){
 
 function openPetNameDialog(verseId){
   loadPetNameBlocklist();
+  loadPetRandomNames();
 
   dlgActions.classList.add("pet-name-dialog-actions");
 
@@ -4344,18 +4399,21 @@ function openPetNameDialog(verseId){
     actions: [
       dlgBtn("Surprise Name", {
         secondary: true,
-        onClick: () => {
+        onClick: async () => {
           const input = document.getElementById("petNameInput");
           const error = document.getElementById("petNameError");
+
+          if (error){
+            error.textContent = "";
+          }
+
+          await loadPetNameBlocklist();
+          await loadPetRandomNames();
 
           if (input){
             input.value = getRandomPetName();
             input.focus();
             input.select();
-          }
-
-          if (error){
-            error.textContent = "";
           }
         }
       }),
