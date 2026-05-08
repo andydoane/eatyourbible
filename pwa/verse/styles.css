@@ -2976,6 +2976,21 @@ text-wrap: balance;
   line-height: 1;
 }
 
+.progress-row-pet .biblopet-visual,
+.pet-unlock-emoji .biblopet-visual{
+  width: 1em;
+  height: 1em;
+}
+
+.progress-row-pet .biblopet-img,
+.pet-unlock-emoji .biblopet-img{
+  width: 1em;
+  height: 1em;
+  max-width: none;
+  max-height: none;
+  object-fit: contain;
+}
+
 /* Override the generic title-screen image sizing rule for pet images */
 .title-screen .biblopet-img{
   width: 1em;

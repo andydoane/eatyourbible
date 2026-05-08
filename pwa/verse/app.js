@@ -4333,11 +4333,14 @@ function screenProgress(idx){
     const verseProgress = getVerseProgress(item.id);
     const unlocked = isBibloPetUnlocked(verseProgress);
     const petEmoji = unlocked ? getBibloPetEmojiForListItem(item) : "🔒";
+    const petVisual = unlocked
+      ? bibloPetVisualHtml(item.id, petEmoji)
+      : escapeHtml(petEmoji);
     const statusEmoji = unlocked ? getBibloPetStatusEmoji(verseProgress) : "";
 
     return `
       <div class="progress-row" data-verse-id="${item.id}">
-        <div class="progress-row-pet">${petEmoji}</div>
+        <div class="progress-row-pet">${petVisual}</div>
         <div class="progress-row-main">
           <div class="progress-row-ref">${item.ref}</div>
         </div>
@@ -4692,7 +4695,9 @@ function screenPetUnlock(idx){
     ${homePillHtml()}
     <div class="pet-unlock-shell">
       <div class="pet-unlock-card">
-        <div class="pet-unlock-emoji pet-emoji-unlocked">${petEmoji}</div>
+        <div class="pet-unlock-emoji pet-emoji-unlocked">
+          ${bibloPetVisualHtml(verseId, petEmoji)}
+        </div>
       </div>
 
       <div class="pet-unlock-title">BibloPet Unlocked!</div>
