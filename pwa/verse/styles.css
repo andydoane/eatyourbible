@@ -1060,6 +1060,32 @@
   box-shadow: 0 4px 0 rgba(0,0,0,0.22);
 }
 
+.title-zoo-visit-btn{
+  width: min(100%, 420px);
+  min-height: 50px;
+  margin: 2px auto clamp(8px, 1.6vh, 14px);
+  border: none;
+  border-radius: 999px;
+  padding: 12px 18px;
+  background: #ffffff;
+  color: #7f66c6;
+  font: inherit;
+  font-size: clamp(18px, 4.4vw, 24px);
+  font-weight: 900;
+  line-height: 1.05;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.22);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.title-zoo-visit-btn:active{
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 rgba(0,0,0,0.22);
+}
+
 .title-zoo-strip.is-missing{
   display: none;
 }

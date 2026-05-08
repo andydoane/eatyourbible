@@ -116,6 +116,23 @@ function titleZooStripHtml(){
   `;
 }
 
+function titleZooVisitButtonHtml(){
+  const pet = getTitleZooPet();
+
+  if (!pet) return "";
+
+  return `
+    <button
+      class="title-zoo-visit-btn no-zoom"
+      id="titleZooVisitBtn"
+      type="button"
+      data-verse-id="${escapeHtml(pet.verseId)}"
+    >
+      Visit ${escapeHtml(pet.name)}
+    </button>
+  `;
+}
+
 /* =========================================================
    Inline SVG icons (copied from Ten Commandments / Creed apps)
    ========================================================= */
@@ -4020,6 +4037,8 @@ function screenTitle(idx){
 
       ${titleZooStripHtml()}
 
+      ${titleZooVisitButtonHtml()}
+
       <div class="title-attribution" style="max-width: 60ch;">
         ${ATTRIBUTION ? ATTRIBUTION : ""}
       </div>
@@ -4038,6 +4057,20 @@ function screenTitle(idx){
       go(Screen.PROGRESS);
     };
   }
+
+  const titleZooVisitBtn = wrap.querySelector("#titleZooVisitBtn");
+  if (titleZooVisitBtn){
+    titleZooVisitBtn.onclick = (e) => {
+      e.stopPropagation();
+
+      const verseId = titleZooVisitBtn.getAttribute("data-verse-id");
+      if (!verseId) return;
+
+      State.selectedVerseId = verseId;
+      go(Screen.VERSE_DETAIL);
+    };
+  }
+
 
   const titleLogoSecretWrap = wrap.querySelector("#titleLogoSecretWrap");
   const titleLogoSecret = wrap.querySelector("#titleLogoSecret");
