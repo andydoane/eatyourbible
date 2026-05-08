@@ -121,15 +121,30 @@ const dlgTitle = document.getElementById("dlgTitle");
 const dlgBody = document.getElementById("dlgBody");
 const dlgActions = document.getElementById("dlgActions");
 
-function showDialog({title="Notice", body="", actions=[]}){
+function showDialog({title="Notice", body="", bodyHtml="", actions=[]}){
   dlgTitle.textContent = title;
-  dlgBody.textContent = body;
+
+  if (bodyHtml){
+    dlgBody.innerHTML = bodyHtml;
+  } else {
+    dlgBody.textContent = body;
+  }
+
   dlgActions.innerHTML = "";
   for (const a of actions) dlgActions.appendChild(a);
   overlay.classList.add("show");
 }
 function closeDialog(){ overlay.classList.remove("show"); }
 overlay.addEventListener("click", (e)=>{ if (e.target === overlay) closeDialog(); });
+
+function escapeHtml(value){
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
 
 function dlgBtn(label, {secondary=false, onClick}={}){
   const b = document.createElement("button");
@@ -1639,7 +1654,34 @@ async function loadVerseList(){
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     const json = await res.json();
-    VERSE_LIST = Array.isArray(json) ? json.slice() : [];
+    const baseList = Array.isArray(json) ? json.slice() : [];
+
+    const enrichedList = await Promise.all(baseList.map(async (item) => {
+      if (!item?.id) return item;
+
+      // If verse_list.json already has the name, keep it.
+      if (item.biblopetDefaultName){
+        return item;
+      }
+
+      try {
+        const verseRes = await fetch(`${DATA_DIR}${item.id}.json`, { cache: "no-store" });
+        if (!verseRes.ok) throw new Error(`HTTP ${verseRes.status}`);
+
+        const verseJson = await verseRes.json();
+
+        return {
+          ...item,
+          biblopetDefaultName: verseJson.biblopetDefaultName || item.biblopetDefaultName || "",
+          biblopet: verseJson.biblopet || item.biblopet || ""
+        };
+      } catch (err) {
+        console.warn(`Could not load default BibloPet data for ${item.id}`, err);
+        return item;
+      }
+    }));
+
+    VERSE_LIST = enrichedList;
 
     VERSE_LIST.sort((a, b) => {
       const refA = String(a?.ref || "");
@@ -4073,14 +4115,14 @@ function openPetNameDialog(verseId){
 
   showDialog({
     title: hasCustomName ? "Rename your BibloPet" : "Name your BibloPet",
-    body: `
+    bodyHtml: `
       <div class="pet-name-dialog">
         <input
           class="pet-name-input"
           id="petNameInput"
           type="text"
           maxlength="${PET_NAME_MAX_LENGTH}"
-          value="${currentDisplayName.replace(/"/g, "&quot;")}"
+          value="${escapeHtml(currentDisplayName)}"
           autocomplete="off"
           autocapitalize="words"
           spellcheck="false"
