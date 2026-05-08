@@ -901,6 +901,46 @@ function getStandardGameRewardTitle(verseId, gameId, mode){
    BibloPet Helpers
    ========================= */
 
+const PET_NAME_MAX_LENGTH = 16;
+
+const PET_NAME_BLOCKLIST_URL = "biblopet_name_blocklist.json";
+
+// Small emergency fallback. Keep this empty or add a few private entries if desired.
+const PET_NAME_FALLBACK_BLOCKLIST = [
+  // "examplebadword"
+];
+
+let petNameBlocklist = [...PET_NAME_FALLBACK_BLOCKLIST];
+let petNameBlocklistLoadPromise = null;
+
+const PET_RANDOM_NAMES = [
+  "Bubbles",
+  "Sunny",
+  "Pip",
+  "Sprout",
+  "Nibbles",
+  "Peanut",
+  "Mochi",
+  "Zippy",
+  "Coco",
+  "Wiggles",
+  "Pebble",
+  "Poppy",
+  "Skippy",
+  "Biscuit",
+  "Pickles",
+  "Tater",
+  "Doodle",
+  "Buttons",
+  "Muffin",
+  "Clover",
+  "Twinkle",
+  "Scooter",
+  "Mango",
+  "Pumpkin",
+  "Jellybean"
+];
+
 function hasAnyTrackedGameCompletion(verseProgress){
   if (!verseProgress || !verseProgress.games) return false;
 
@@ -949,6 +989,157 @@ function getBibloPetEmojiForVerseId(verseId){
   if (cfg?.verseId === verseId && cfg?.biblopet) return cfg.biblopet;
 
   return "🐾";
+}
+
+function getBibloPetDefaultNameForVerseId(verseId){
+  const item = getVerseListItemById(verseId);
+
+  if (item?.biblopetDefaultName){
+    return String(item.biblopetDefaultName).trim();
+  }
+
+  if (cfg?.verseId === verseId && cfg?.biblopetDefaultName){
+    return String(cfg.biblopetDefaultName).trim();
+  }
+
+  return "BibloPet";
+}
+
+function cleanPetName(value){
+  return String(value ?? "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, PET_NAME_MAX_LENGTH);
+}
+
+function normalizePetNameForBlocklist(value){
+  return String(value ?? "")
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "");
+}
+
+function extractBlocklistWordsFromJson(json){
+  if (Array.isArray(json)){
+    return json;
+  }
+
+  if (!json || typeof json !== "object"){
+    return [];
+  }
+
+  const possibleKeys = [
+    "words",
+    "blocklist",
+    "blocked",
+    "badWords",
+    "profanity",
+    "list"
+  ];
+
+  for (const key of possibleKeys){
+    if (Array.isArray(json[key])){
+      return json[key];
+    }
+  }
+
+  return Object.values(json).flatMap((value) => {
+    if (Array.isArray(value)) return value;
+    if (typeof value === "string") return [value];
+    return [];
+  });
+}
+
+async function loadPetNameBlocklist(){
+  if (petNameBlocklistLoadPromise){
+    return petNameBlocklistLoadPromise;
+  }
+
+  petNameBlocklistLoadPromise = fetch(PET_NAME_BLOCKLIST_URL, { cache: "no-store" })
+    .then((res) => {
+      if (!res.ok){
+        throw new Error(`HTTP ${res.status}`);
+      }
+
+      return res.json();
+    })
+    .then((json) => {
+      const words = extractBlocklistWordsFromJson(json)
+        .map((word) => normalizePetNameForBlocklist(word))
+        .filter(Boolean);
+
+      petNameBlocklist = [...new Set([
+        ...PET_NAME_FALLBACK_BLOCKLIST.map(normalizePetNameForBlocklist).filter(Boolean),
+        ...words
+      ])];
+
+      return petNameBlocklist;
+    })
+    .catch((err) => {
+      console.warn("Could not load BibloPet name blocklist", err);
+
+      petNameBlocklist = PET_NAME_FALLBACK_BLOCKLIST
+        .map(normalizePetNameForBlocklist)
+        .filter(Boolean);
+
+      return petNameBlocklist;
+    });
+
+  return petNameBlocklistLoadPromise;
+}
+
+function isPetNameBlocked(value){
+  const normalized = normalizePetNameForBlocklist(value);
+  if (!normalized) return false;
+
+  return petNameBlocklist.some((blocked) => {
+    const cleanBlocked = normalizePetNameForBlocklist(blocked);
+    return cleanBlocked && normalized.includes(cleanBlocked);
+  });
+}
+
+function getSavedPetNameForVerseId(verseId){
+  const verseProgress = getVerseProgress(verseId);
+  const saved = cleanPetName(verseProgress?.petName || "");
+
+  return saved || "";
+}
+
+function getBibloPetDisplayNameForVerseId(verseId){
+  return getSavedPetNameForVerseId(verseId) || getBibloPetDefaultNameForVerseId(verseId);
+}
+
+function hasCustomPetNameForVerseId(verseId){
+  return !!getSavedPetNameForVerseId(verseId);
+}
+
+function savePetNameForVerseId(verseId, rawName){
+  if (!verseId) return { ok: false, message: "No verse selected." };
+
+  const cleaned = cleanPetName(rawName);
+
+  if (isPetNameBlocked(cleaned)){
+    return {
+      ok: false,
+      message: "Please choose a different name."
+    };
+  }
+
+  updateVerseProgress(verseId, (verseProgress) => {
+    if (cleaned){
+      verseProgress.petName = cleaned;
+    } else {
+      delete verseProgress.petName;
+    }
+  });
+
+  return { ok: true, name: cleaned };
+}
+
+function getRandomPetName(){
+  if (!PET_RANDOM_NAMES.length) return "Buddy";
+  return PET_RANDOM_NAMES[Math.floor(Math.random() * PET_RANDOM_NAMES.length)];
 }
 
 function getBibloPetStatusEmoji(verseProgress){
@@ -3874,6 +4065,96 @@ function screenProgress(idx){
 
 }
 
+function openPetNameDialog(verseId){
+  loadPetNameBlocklist();
+
+  const currentDisplayName = getBibloPetDisplayNameForVerseId(verseId);
+  const hasCustomName = hasCustomPetNameForVerseId(verseId);
+
+  showDialog({
+    title: hasCustomName ? "Rename your BibloPet" : "Name your BibloPet",
+    body: `
+      <div class="pet-name-dialog">
+        <input
+          class="pet-name-input"
+          id="petNameInput"
+          type="text"
+          maxlength="${PET_NAME_MAX_LENGTH}"
+          value="${currentDisplayName.replace(/"/g, "&quot;")}"
+          autocomplete="off"
+          autocapitalize="words"
+          spellcheck="false"
+          aria-label="BibloPet name"
+        >
+
+        <div class="pet-name-hint">
+          Leave blank to use the default name.
+        </div>
+
+        <div class="pet-name-error" id="petNameError" aria-live="polite"></div>
+      </div>
+    `,
+    actions: [
+      dlgBtn("Surprise Name", {
+        secondary: true,
+        onClick: () => {
+          const input = document.getElementById("petNameInput");
+          const error = document.getElementById("petNameError");
+
+          if (input){
+            input.value = getRandomPetName();
+            input.focus();
+            input.select();
+          }
+
+          if (error){
+            error.textContent = "";
+          }
+        }
+      }),
+
+      dlgBtn("Save Name", {
+        onClick: async () => {
+          const input = document.getElementById("petNameInput");
+          const error = document.getElementById("petNameError");
+          const rawName = input ? input.value : "";
+
+          if (error){
+            error.textContent = "";
+          }
+
+          await loadPetNameBlocklist();
+
+          const result = savePetNameForVerseId(verseId, rawName);
+
+          if (!result.ok){
+            if (error){
+              error.textContent = result.message || "Please choose a different name.";
+            }
+            return;
+          }
+
+          closeDialog();
+          render();
+        }
+      }),
+
+      dlgBtn("Cancel", {
+        secondary: true,
+        onClick: closeDialog
+      })
+    ]
+  });
+
+  requestAnimationFrame(() => {
+    const input = document.getElementById("petNameInput");
+    if (input){
+      input.focus();
+      input.select();
+    }
+  });
+}
+
 function screenVerseDetail(idx){
   const verseId = State.selectedVerseId;
   const verseItem = getVerseListItemById(verseId);
@@ -3882,6 +4163,8 @@ function screenVerseDetail(idx){
   const unlocked = isBibloPetUnlocked(verseProgress);
   const mastered = isVerseMastered(verseProgress);
   const petEmoji = unlocked ? getBibloPetEmojiForVerseId(verseId) : "🔒";
+  const petDisplayName = unlocked ? getBibloPetDisplayNameForVerseId(verseId) : "";
+  const petNameButtonText = hasCustomPetNameForVerseId(verseId) ? "Rename Pet" : "Name Pet";
   const statusEmoji = unlocked ? getBibloPetStatusEmoji(verseProgress) : "🔒";
   const statusText = getBibloPetStatusText(verseProgress);
   const petStatus = getBibloPetStatus(verseProgress);
@@ -3954,6 +4237,20 @@ function screenVerseDetail(idx){
           }
         </div>
 
+        ${
+          unlocked
+            ? `
+              <div class="pet-name-card">
+                <div class="pet-name-label">BibloPet Name</div>
+                <div class="pet-name-value">${petDisplayName}</div>
+                <button class="pet-name-btn no-zoom" id="btnRenamePet" type="button">
+                  ${petNameButtonText}
+                </button>
+              </div>
+            `
+            : ""
+        }
+
         <div class="pet-status-card">
           <div class="pet-status-label">BibloPet Status:</div>
           <div class="pet-status-emoji">${statusEmoji}</div>
@@ -3998,6 +4295,13 @@ function screenVerseDetail(idx){
 
       cycleVerseBackground(verseId);
       render();
+    };
+  }
+
+  const btnRenamePet = wrap.querySelector("#btnRenamePet");
+  if (btnRenamePet){
+    btnRenamePet.onclick = () => {
+      openPetNameDialog(verseId);
     };
   }
 
@@ -5002,6 +5306,7 @@ function render(){
 
 (async function init(){
   preloadLearnInstructionImages();
+  loadPetNameBlocklist();
 
   await loadVerseList();
   HAS_VERSE_SELECTION = hasVerseIdInUrl();
