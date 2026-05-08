@@ -59,7 +59,7 @@ const DEBUG_VERSE_JSON = {
 const INTRO_LOGO = IMG_DIR + "eyb_logo_1.png";
 const TITLE_LOGO = IMG_DIR + "memory_verse_title.png";
 
-const TITLE_ZOO_SCENE_COUNT = 7;
+const TITLE_ZOO_SCENE_COUNT = 8;
 const titleZooSceneIndex = Math.floor(Math.random() * TITLE_ZOO_SCENE_COUNT) + 1;
 
 let titleZooPetVerseId = "";
