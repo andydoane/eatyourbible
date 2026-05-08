@@ -72,24 +72,60 @@ function getTitleZooScene(){
   };
 }
 
+const loadedBibloPetImageSrcs = new Set();
+const missingBibloPetImageSrcs = new Set();
+
 function getBibloPetImageSrcForVerseId(verseId){
   return `${PET_IMG_DIR}pet_${verseId}.png`;
+}
+
+function handleBibloPetImageLoad(img){
+  if (!img) return;
+
+  const src = img.getAttribute("src") || "";
+  if (src){
+    loadedBibloPetImageSrcs.add(src);
+    missingBibloPetImageSrcs.delete(src);
+  }
+
+  img.classList.add("is-loaded");
+  img.classList.remove("is-missing");
+}
+
+function handleBibloPetImageError(img){
+  if (!img) return;
+
+  const src = img.getAttribute("src") || "";
+  if (src){
+    missingBibloPetImageSrcs.add(src);
+    loadedBibloPetImageSrcs.delete(src);
+  }
+
+  img.classList.add("is-missing");
+  img.classList.remove("is-loaded");
 }
 
 function bibloPetVisualHtml(verseId, emoji){
   const safeVerseId = escapeHtml(verseId || "");
   const safeEmoji = escapeHtml(emoji || "🐾");
-  const imgSrc = escapeHtml(getBibloPetImageSrcForVerseId(verseId));
+  const rawImgSrc = getBibloPetImageSrcForVerseId(verseId);
+  const imgSrc = escapeHtml(rawImgSrc);
+
+  const cachedClass = loadedBibloPetImageSrcs.has(rawImgSrc)
+    ? " is-loaded"
+    : missingBibloPetImageSrcs.has(rawImgSrc)
+      ? " is-missing"
+      : "";
 
   return `
     <span class="biblopet-visual" data-verse-id="${safeVerseId}">
       <img
-        class="biblopet-img"
+        class="biblopet-img${cachedClass}"
         src="${imgSrc}"
         alt=""
         draggable="false"
-        onload="this.classList.add('is-loaded')"
-        onerror="this.classList.add('is-missing')"
+        onload="handleBibloPetImageLoad(this)"
+        onerror="handleBibloPetImageError(this)"
       >
       <span class="biblopet-emoji-fallback">${safeEmoji}</span>
     </span>
