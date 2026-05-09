@@ -187,6 +187,7 @@ function titleZooPetVisitorHtml(pet){
       class="title-zoo-pet-visitor ${escapeHtml(titleZooPetDirection)} ${escapeHtml(titleZooPetDanceClass)}"
       title="${escapeHtml(pet.name)}"
       data-verse-id="${escapeHtml(pet.verseId)}"
+      style="${escapeHtml(getTitleZooPetFeetStyle(pet))}"
     >
       <div class="title-zoo-pet-motion">
         <div class="title-zoo-pet-rotator">
@@ -289,6 +290,8 @@ function updateTitleZooPetVisitor(rootEl, pet){
 
   visitor.setAttribute("title", pet.name);
   visitor.setAttribute("data-verse-id", pet.verseId);
+
+  applyTitleZooPetFeetStyle(visitor, pet);
 
   visitor.innerHTML = `
     <div class="title-zoo-pet-motion">
@@ -1251,6 +1254,55 @@ function getBibloPetDefaultNameForVerseId(verseId){
   return "BibloPet";
 }
 
+function normalizeBibloPetFeetFromBottom(value){
+  const raw = String(value ?? "").trim();
+
+  const match = raw.match(/^(-?\d+(?:\.\d+)?)%$/);
+  if (!match) return "0%";
+
+  const num = Number(match[1]);
+  if (!Number.isFinite(num)) return "0%";
+
+  const clamped = Math.max(0, Math.min(100, num));
+  return `${clamped}%`;
+}
+
+function getBibloPetFeetFromBottomForVerseId(verseId){
+  const item = getVerseListItemById(verseId);
+
+  if (item?.biblopetFeetFromBottom){
+    return normalizeBibloPetFeetFromBottom(item.biblopetFeetFromBottom);
+  }
+
+  if (cfg?.verseId === verseId && cfg?.biblopetFeetFromBottom){
+    return normalizeBibloPetFeetFromBottom(cfg.biblopetFeetFromBottom);
+  }
+
+  return "0%";
+}
+
+function getTitleZooPetFeetStyle(pet){
+  const feetFromBottom = normalizeBibloPetFeetFromBottom(
+    pet?.feetFromBottom || "0%"
+  );
+
+  return [
+    `--title-zoo-pet-feet-from-bottom: ${feetFromBottom}`,
+    `--title-zoo-pet-ground-shift: calc(-100% + ${feetFromBottom})`
+  ].join("; ");
+}
+
+function applyTitleZooPetFeetStyle(visitor, pet){
+  if (!visitor || !pet) return;
+
+  const feetFromBottom = normalizeBibloPetFeetFromBottom(
+    pet.feetFromBottom || "0%"
+  );
+
+  visitor.style.setProperty("--title-zoo-pet-feet-from-bottom", feetFromBottom);
+  visitor.style.setProperty("--title-zoo-pet-ground-shift", `calc(-100% + ${feetFromBottom})`);
+}
+
 function cleanPetName(value){
   return String(value ?? "")
     .replace(/\s+/g, " ")
@@ -1438,7 +1490,8 @@ function getUnlockedTitleZooPets(){
       return {
         verseId,
         emoji: getBibloPetEmojiForVerseId(verseId),
-        name: getBibloPetDisplayNameForVerseId(verseId)
+        name: getBibloPetDisplayNameForVerseId(verseId),
+        feetFromBottom: getBibloPetFeetFromBottomForVerseId(verseId)
       };
     })
     .filter(Boolean);
@@ -2059,26 +2112,34 @@ async function loadVerseList(){
     const enrichedList = await Promise.all(baseList.map(async (item) => {
       if (!item?.id) return item;
 
-      // If verse_list.json already has the name, keep it.
-      if (item.biblopetDefaultName){
-        return item;
-      }
+const alreadyHasPetData =
+  item.biblopetDefaultName &&
+  item.biblopet &&
+  item.biblopetFeetFromBottom;
 
-      try {
-        const verseRes = await fetch(`${DATA_DIR}${item.id}.json`, { cache: "no-store" });
-        if (!verseRes.ok) throw new Error(`HTTP ${verseRes.status}`);
+if (alreadyHasPetData){
+  return item;
+}
 
-        const verseJson = await verseRes.json();
+try {
+  const verseRes = await fetch(`${DATA_DIR}${item.id}.json`, { cache: "no-store" });
+  if (!verseRes.ok) throw new Error(`HTTP ${verseRes.status}`);
 
-        return {
-          ...item,
-          biblopetDefaultName: verseJson.biblopetDefaultName || item.biblopetDefaultName || "",
-          biblopet: verseJson.biblopet || item.biblopet || ""
-        };
-      } catch (err) {
-        console.warn(`Could not load default BibloPet data for ${item.id}`, err);
-        return item;
-      }
+  const verseJson = await verseRes.json();
+
+  return {
+    ...item,
+    biblopetDefaultName: verseJson.biblopetDefaultName || item.biblopetDefaultName || "",
+    biblopet: verseJson.biblopet || item.biblopet || "",
+    biblopetFeetFromBottom: verseJson.biblopetFeetFromBottom || item.biblopetFeetFromBottom || "0%"
+  };
+} catch (err) {
+  console.warn(`Could not load default BibloPet data for ${item.id}`, err);
+  return {
+    ...item,
+    biblopetFeetFromBottom: item.biblopetFeetFromBottom || "0%"
+  };
+}
     }));
 
     VERSE_LIST = enrichedList;
