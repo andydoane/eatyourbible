@@ -110,6 +110,38 @@ function handleBibloPetImageError(img){
   img.classList.remove("is-loaded");
 }
 
+function preloadBibloPetImageForVerseId(verseId){
+  const src = getBibloPetImageSrcForVerseId(verseId);
+
+  if (!src) return Promise.resolve(false);
+
+  if (loadedBibloPetImageSrcs.has(src)){
+    return Promise.resolve(true);
+  }
+
+  if (missingBibloPetImageSrcs.has(src)){
+    return Promise.resolve(false);
+  }
+
+  return new Promise((resolve) => {
+    const img = new Image();
+
+    img.onload = () => {
+      loadedBibloPetImageSrcs.add(src);
+      missingBibloPetImageSrcs.delete(src);
+      resolve(true);
+    };
+
+    img.onerror = () => {
+      missingBibloPetImageSrcs.add(src);
+      loadedBibloPetImageSrcs.delete(src);
+      resolve(false);
+    };
+
+    img.src = src;
+  });
+}
+
 function bibloPetVisualHtml(verseId, emoji){
   const safeVerseId = escapeHtml(verseId || "");
   const safeEmoji = escapeHtml(emoji || "🐾");
@@ -210,6 +242,20 @@ function updateTitleZooVisitButton(rootEl, pet){
 
   btn.setAttribute("data-verse-id", pet.verseId);
   btn.textContent = `Visit ${pet.name}`;
+}
+
+function restartTitleZooPetAnimation(rootEl){
+  const visitor = rootEl?.querySelector?.(".title-zoo-pet-visitor");
+  if (!visitor) return;
+
+  visitor.classList.add("is-resetting");
+
+  // Force the browser to fully apply "animation: none" before restarting.
+  void visitor.offsetWidth;
+
+  requestAnimationFrame(() => {
+    visitor.classList.remove("is-resetting");
+  });
 }
 
 function updateTitleZooPetVisitor(rootEl, pet){
@@ -1424,7 +1470,9 @@ function bindTitleZooPetRotation(rootEl){
   const visitor = rootEl?.querySelector?.(".title-zoo-pet-visitor");
   if (!visitor) return;
 
-  visitor.addEventListener("animationiteration", (event) => {
+  let rotationInProgress = false;
+
+  visitor.addEventListener("animationend", async (event) => {
     if (State.screen !== Screen.TITLE) return;
 
     const isRoamAnimation =
@@ -1432,11 +1480,28 @@ function bindTitleZooPetRotation(rootEl){
       event.animationName === "titleZooPetRoamFromRight";
 
     if (!isRoamAnimation) return;
+    if (rotationInProgress) return;
+
+    rotationInProgress = true;
 
     const nextPet = advanceTitleZooPet();
-    if (!nextPet) return;
+
+    if (!nextPet){
+      rotationInProgress = false;
+      return;
+    }
+
+    await preloadBibloPetImageForVerseId(nextPet.verseId);
+
+    if (State.screen !== Screen.TITLE){
+      rotationInProgress = false;
+      return;
+    }
 
     updateTitleZooPetVisitor(rootEl, nextPet);
+    restartTitleZooPetAnimation(rootEl);
+
+    rotationInProgress = false;
   });
 }
 
