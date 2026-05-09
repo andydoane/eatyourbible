@@ -1141,7 +1141,7 @@
   filter: drop-shadow(0 7px 0 rgba(0,0,0,0.20));
   user-select: none;
   animation-duration: 5200ms;
-  animation-timing-function: ease-in-out;
+  animation-timing-function: linear;
   animation-iteration-count: infinite;
   will-change: left, transform;
 }
@@ -1168,7 +1168,7 @@
 .title-zoo-pet-bobber{
   display: inline-block;
   transform-origin: center bottom;
-  animation: titleZooPetHopDance 5200ms ease-in-out infinite;
+  animation: titleZooPetHopDance 5200ms linear infinite;
   will-change: transform;
 }
 
@@ -1183,19 +1183,21 @@
 */
 
 @keyframes titleZooPetHopDance{
+  /* ---------- Hop in: three hops over first 24% ---------- */
+
   0%{
     transform: translateY(0) rotate(0deg) scaleX(1) scaleY(1);
   }
 
-  5%{
+  2%{
     transform:
       translateY(0)
       rotate(0deg)
-      scaleX(var(--title-zoo-squish))
-      scaleY(calc(2 - var(--title-zoo-squish)));
+      scaleX(calc(2 - var(--title-zoo-squish)))
+      scaleY(var(--title-zoo-squish));
   }
 
-  10%{
+  4%{
     transform:
       translateY(calc(-1 * var(--title-zoo-hop-height)))
       rotate(1deg)
@@ -1203,19 +1205,19 @@
       scaleY(calc(2 - var(--title-zoo-squeeze)));
   }
 
-  15%{
-    transform: translateY(0) rotate(0deg) scaleX(1) scaleY(1);
-  }
-
-  20%{
+  8%{
     transform:
       translateY(0)
       rotate(0deg)
-      scaleX(var(--title-zoo-squish))
-      scaleY(calc(2 - var(--title-zoo-squish)));
+      scaleX(calc(2 - var(--title-zoo-squish)))
+      scaleY(var(--title-zoo-squish));
   }
 
-  25%{
+  10%{
+    transform: translateY(0) rotate(0deg) scaleX(1) scaleY(1);
+  }
+
+  12%{
     transform:
       translateY(calc(-1 * var(--title-zoo-hop-height)))
       rotate(-1deg)
@@ -1223,35 +1225,65 @@
       scaleY(calc(2 - var(--title-zoo-squeeze)));
   }
 
-  31%{
-    transform: translateY(0) rotate(0deg) scaleX(1) scaleY(1);
-  }
-
-  38%{
-    transform:
-      translateY(calc(-0.12 * var(--title-zoo-hop-height)))
-      rotate(calc(-0.8 * var(--title-zoo-dance-intensity)))
-      scaleX(1.04)
-      scaleY(0.96);
-  }
-
-  46%{
+  16%{
     transform:
       translateY(0)
-      rotate(calc(0.75 * var(--title-zoo-dance-intensity)))
+      rotate(0deg)
       scaleX(calc(2 - var(--title-zoo-squish)))
       scaleY(var(--title-zoo-squish));
   }
 
-  54%{
+  18%{
+    transform: translateY(0) rotate(0deg) scaleX(1) scaleY(1);
+  }
+
+  20%{
     transform:
-      translateY(calc(-0.14 * var(--title-zoo-hop-height)))
-      rotate(calc(-0.6 * var(--title-zoo-dance-intensity)))
+      translateY(calc(-1 * var(--title-zoo-hop-height)))
+      rotate(1deg)
+      scaleX(var(--title-zoo-squeeze))
+      scaleY(calc(2 - var(--title-zoo-squeeze)));
+  }
+
+  24%{
+    transform:
+      translateY(0)
+      rotate(0deg)
+      scaleX(calc(2 - var(--title-zoo-squish)))
+      scaleY(var(--title-zoo-squish));
+  }
+
+  27%{
+    transform: translateY(0) rotate(0deg) scaleX(1) scaleY(1);
+  }
+
+  /* ---------- Center dance from 24% to 76% ---------- */
+
+  34%{
+    transform:
+      translateY(calc(-0.08 * var(--title-zoo-hop-height)))
+      rotate(calc(-0.75 * var(--title-zoo-dance-intensity)))
+      scaleX(1.04)
+      scaleY(0.96);
+  }
+
+  42%{
+    transform:
+      translateY(0)
+      rotate(calc(0.7 * var(--title-zoo-dance-intensity)))
+      scaleX(calc(2 - var(--title-zoo-squish)))
+      scaleY(var(--title-zoo-squish));
+  }
+
+  50%{
+    transform:
+      translateY(calc(-0.10 * var(--title-zoo-hop-height)))
+      rotate(calc(-0.55 * var(--title-zoo-dance-intensity)))
       scaleX(1.03)
       scaleY(0.97);
   }
 
-  62%{
+  58%{
     transform:
       translateY(0)
       rotate(calc(0.45 * var(--title-zoo-dance-intensity)))
@@ -1259,16 +1291,30 @@
       scaleY(var(--title-zoo-squish));
   }
 
-  69%{
+  66%{
+    transform:
+      translateY(calc(-0.06 * var(--title-zoo-hop-height)))
+      rotate(calc(-0.35 * var(--title-zoo-dance-intensity)))
+      scaleX(1.02)
+      scaleY(0.98);
+  }
+
+  73%{
     transform: translateY(0) rotate(0deg) scaleX(1) scaleY(1);
   }
 
-  75%{
+  /* ---------- Hop out: three hops over final 24% ---------- */
+
+  76%{
+    transform: translateY(0) rotate(0deg) scaleX(1) scaleY(1);
+  }
+
+  78%{
     transform:
       translateY(0)
       rotate(0deg)
-      scaleX(var(--title-zoo-squish))
-      scaleY(calc(2 - var(--title-zoo-squish)));
+      scaleX(calc(2 - var(--title-zoo-squish)))
+      scaleY(var(--title-zoo-squish));
   }
 
   80%{
@@ -1279,19 +1325,19 @@
       scaleY(calc(2 - var(--title-zoo-squeeze)));
   }
 
+  84%{
+    transform:
+      translateY(0)
+      rotate(0deg)
+      scaleX(calc(2 - var(--title-zoo-squish)))
+      scaleY(var(--title-zoo-squish));
+  }
+
   86%{
     transform: translateY(0) rotate(0deg) scaleX(1) scaleY(1);
   }
 
-  91%{
-    transform:
-      translateY(0)
-      rotate(0deg)
-      scaleX(var(--title-zoo-squish))
-      scaleY(calc(2 - var(--title-zoo-squish)));
-  }
-
-  96%{
+  88%{
     transform:
       translateY(calc(-1 * var(--title-zoo-hop-height)))
       rotate(-1deg)
@@ -1299,25 +1345,79 @@
       scaleY(calc(2 - var(--title-zoo-squeeze)));
   }
 
-  100%{
+  92%{
+    transform:
+      translateY(0)
+      rotate(0deg)
+      scaleX(calc(2 - var(--title-zoo-squish)))
+      scaleY(var(--title-zoo-squish));
+  }
+
+  94%{
     transform: translateY(0) rotate(0deg) scaleX(1) scaleY(1);
+  }
+
+  96%{
+    transform:
+      translateY(calc(-1 * var(--title-zoo-hop-height)))
+      rotate(1deg)
+      scaleX(var(--title-zoo-squeeze))
+      scaleY(calc(2 - var(--title-zoo-squeeze)));
+  }
+
+  100%{
+    transform:
+      translateY(0)
+      rotate(0deg)
+      scaleX(calc(2 - var(--title-zoo-squish)))
+      scaleY(var(--title-zoo-squish));
   }
 }
 
-/* From left: hop into center, dance, hop off right */
+/* From left:
+   Start -16%.
+   Middle 50%.
+   Distance = 66 percentage points.
+   One third = 22 percentage points.
+
+   Hop landings:
+   8%  -> 6%
+   16% -> 28%
+   24% -> 50%
+*/
 @keyframes titleZooPetRoamFromLeft{
   0%{
     left: -16%;
     transform: translate(-50%, -50%);
   }
 
-  31%{
+  8%{
+    left: 6%;
+    transform: translate(-50%, -50%);
+  }
+
+  16%{
+    left: 28%;
+    transform: translate(-50%, -50%);
+  }
+
+  24%{
     left: 50%;
     transform: translate(-50%, -50%);
   }
 
-  69%{
+  76%{
     left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  84%{
+    left: 72%;
+    transform: translate(-50%, -50%);
+  }
+
+  92%{
+    left: 94%;
     transform: translate(-50%, -50%);
   }
 
@@ -1327,20 +1427,50 @@
   }
 }
 
-/* From right: hop into center, dance, hop off left */
+/* From right:
+   Start 116%.
+   Middle 50%.
+   Distance = 66 percentage points.
+   One third = 22 percentage points.
+
+   Hop landings:
+   8%  -> 94%
+   16% -> 72%
+   24% -> 50%
+*/
 @keyframes titleZooPetRoamFromRight{
   0%{
     left: 116%;
     transform: translate(-50%, -50%);
   }
 
-  31%{
+  8%{
+    left: 94%;
+    transform: translate(-50%, -50%);
+  }
+
+  16%{
+    left: 72%;
+    transform: translate(-50%, -50%);
+  }
+
+  24%{
     left: 50%;
     transform: translate(-50%, -50%);
   }
 
-  69%{
+  76%{
     left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  84%{
+    left: 28%;
+    transform: translate(-50%, -50%);
+  }
+
+  92%{
+    left: 6%;
     transform: translate(-50%, -50%);
   }
 
@@ -1349,6 +1479,7 @@
     transform: translate(-50%, -50%);
   }
 }
+
 
 @media (prefers-reduced-motion: reduce){
   .title-zoo-pet-visitor{
