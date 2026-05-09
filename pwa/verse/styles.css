@@ -1162,24 +1162,87 @@
 .title-zoo-pet-bobber{
   display: inline-block;
   transform-origin: center bottom;
-  animation: titleZooPetHop 620ms ease-in-out infinite;
+  animation: titleZooPetBobCycle 13200ms ease-in-out infinite;
   will-change: transform;
 }
 
-@keyframes titleZooPetHop{
-  0%, 100%{
-    transform: translateY(0) rotate(-1deg);
+/* Full-cycle bob:
+   - more lively while entering
+   - calm while roaming near the middle
+   - lively again while exiting
+*/
+@keyframes titleZooPetBobCycle{
+  0%{
+    transform: translateY(0) rotate(0deg);
   }
 
-  45%{
-    transform: translateY(-9%) rotate(2deg);
+  5%{
+    transform: translateY(-7%) rotate(1.5deg);
+  }
+
+  10%{
+    transform: translateY(0) rotate(0deg);
+  }
+
+  15%{
+    transform: translateY(-6%) rotate(-1.2deg);
+  }
+
+  20%{
+    transform: translateY(0) rotate(0deg);
+  }
+
+  25%{
+    transform: translateY(-4%) rotate(0.8deg);
+  }
+
+  30%{
+    transform: translateY(0) rotate(0deg);
+  }
+
+  38%{
+    transform: translateY(-1.5%) rotate(0.4deg);
+  }
+
+  46%{
+    transform: translateY(0) rotate(0deg);
+  }
+
+  54%{
+    transform: translateY(-1.5%) rotate(-0.4deg);
+  }
+
+  62%{
+    transform: translateY(0) rotate(0deg);
   }
 
   70%{
+    transform: translateY(-1%) rotate(0.3deg);
+  }
+
+  76%{
+    transform: translateY(0) rotate(0deg);
+  }
+
+  82%{
+    transform: translateY(-5%) rotate(1deg);
+  }
+
+  88%{
+    transform: translateY(0) rotate(0deg);
+  }
+
+  94%{
+    transform: translateY(-6%) rotate(-1deg);
+  }
+
+  100%{
     transform: translateY(0) rotate(0deg);
   }
 }
 
+/* From left: always moves generally right.
+   No backwards movement. */
 @keyframes titleZooPetRoamFromLeft{
   0%{
     left: -14%;
@@ -1187,32 +1250,32 @@
   }
 
   16%{
-    left: 34%;
+    left: 28%;
     transform: translate(-50%, -50%);
   }
 
   30%{
-    left: 56%;
+    left: 42%;
     transform: translate(-50%, -50%);
   }
 
   44%{
-    left: 43%;
-    transform: translate(-50%, -50%);
-  }
-
-  58%{
-    left: 62%;
-    transform: translate(-50%, -50%);
-  }
-
-  70%{
     left: 50%;
     transform: translate(-50%, -50%);
   }
 
-  80%{
-    left: 57%;
+  58%{
+    left: 56%;
+    transform: translate(-50%, -50%);
+  }
+
+  70%{
+    left: 62%;
+    transform: translate(-50%, -50%);
+  }
+
+  82%{
+    left: 76%;
     transform: translate(-50%, -50%);
   }
 
@@ -1222,6 +1285,8 @@
   }
 }
 
+/* From right: always moves generally left.
+   No backwards movement. */
 @keyframes titleZooPetRoamFromRight{
   0%{
     left: 114%;
@@ -1229,32 +1294,32 @@
   }
 
   16%{
-    left: 66%;
+    left: 72%;
     transform: translate(-50%, -50%);
   }
 
   30%{
-    left: 44%;
+    left: 58%;
     transform: translate(-50%, -50%);
   }
 
   44%{
-    left: 57%;
-    transform: translate(-50%, -50%);
-  }
-
-  58%{
-    left: 38%;
-    transform: translate(-50%, -50%);
-  }
-
-  70%{
     left: 50%;
     transform: translate(-50%, -50%);
   }
 
-  80%{
-    left: 43%;
+  58%{
+    left: 44%;
+    transform: translate(-50%, -50%);
+  }
+
+  70%{
+    left: 38%;
+    transform: translate(-50%, -50%);
+  }
+
+  82%{
+    left: 24%;
     transform: translate(-50%, -50%);
   }
 
