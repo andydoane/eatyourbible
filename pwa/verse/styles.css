@@ -1632,42 +1632,42 @@
 @keyframes titleZooPetRoamFromLeft{
   0%{
     left: -16%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, var(--title-zoo-pet-ground-shift, -100%));
   }
 
   8%{
     left: 6%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, var(--title-zoo-pet-ground-shift, -100%));
   }
 
   16%{
     left: 28%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, var(--title-zoo-pet-ground-shift, -100%));
   }
 
   24%{
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, var(--title-zoo-pet-ground-shift, -100%));
   }
 
   76%{
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, var(--title-zoo-pet-ground-shift, -100%));
   }
 
   84%{
     left: 72%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, var(--title-zoo-pet-ground-shift, -100%));
   }
 
   92%{
     left: 94%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, var(--title-zoo-pet-ground-shift, -100%));
   }
 
   100%{
     left: 116%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, var(--title-zoo-pet-ground-shift, -100%));
   }
 }
 
