@@ -1166,15 +1166,76 @@
   transform: scaleX(1);
 }
 
-.title-zoo-pet-bobber{
+.title-zoo-pet-motion{
   display: inline-block;
   transform-origin: center bottom;
-  animation: titleZooPetHopDance 5200ms linear 1 both;
+  animation-duration: 5200ms;
+  animation-timing-function: linear;
+  animation-iteration-count: 1;
+  animation-fill-mode: both;
   will-change: transform;
 }
 
-.title-zoo-pet-bobber .biblopet-visual{
+.title-zoo-pet-rotator{
+  display: inline-block;
+  transform-origin: center center;
+  animation-duration: 5200ms;
+  animation-timing-function: linear;
+  animation-iteration-count: 1;
+  animation-fill-mode: both;
+  will-change: transform;
+}
+
+.title-zoo-pet-motion .biblopet-visual{
   transform-origin: center bottom;
+}
+
+.title-zoo-pet-visitor.dance-squish-joy{
+  --title-zoo-dance-hop-height: 36%;
+  --title-zoo-dance-stretch: 1;
+  --title-zoo-dance-squish: 1;
+  --title-zoo-dance-skew: 0deg;
+  --title-zoo-dance-intensity: 0deg;
+}
+
+.title-zoo-pet-visitor.dance-nod{
+  --title-zoo-dance-hop-height: 32%;
+  --title-zoo-dance-stretch: 1.14;
+  --title-zoo-dance-squish: 0.78;
+  --title-zoo-dance-skew: 8deg;
+  --title-zoo-dance-intensity: 10deg;
+}
+
+.title-zoo-pet-visitor.dance-shimmy{
+  --title-zoo-dance-hop-height: 32%;
+  --title-zoo-dance-stretch: 1.19;
+  --title-zoo-dance-squish: 0.78;
+  --title-zoo-dance-skew: 8deg;
+  --title-zoo-dance-intensity: 0deg;
+}
+
+.title-zoo-pet-visitor.dance-squish-joy .title-zoo-pet-motion{
+  animation-name: titleZooPetBodySquishJoy;
+}
+
+.title-zoo-pet-visitor.dance-squish-joy .title-zoo-pet-rotator{
+  animation-name: titleZooPetRotateNone;
+}
+
+.title-zoo-pet-visitor.dance-nod .title-zoo-pet-motion{
+  animation-name: titleZooPetBodyNod;
+}
+
+.title-zoo-pet-visitor.dance-nod .title-zoo-pet-rotator{
+  animation-name: titleZooPetRotateNod;
+}
+
+.title-zoo-pet-visitor.dance-shimmy .title-zoo-pet-motion{
+  animation-name: titleZooPetBodyShimmy;
+}
+
+.title-zoo-pet-visitor.dance-shimmy .title-zoo-pet-rotator{
+  animation-name: titleZooPetRotateShimmy;
 }
 
 .title-zoo-pet-visitor.is-resetting{
@@ -1182,7 +1243,8 @@
   animation: none !important;
 }
 
-.title-zoo-pet-visitor.is-resetting .title-zoo-pet-bobber{
+.title-zoo-pet-visitor.is-resetting .title-zoo-pet-motion,
+.title-zoo-pet-visitor.is-resetting .title-zoo-pet-rotator{
   animation: none !important;
 }
 
@@ -1192,17 +1254,74 @@
    - lively again while exiting
 */
 
-@keyframes titleZooPetHopDance{
-  /* ---------- Hop in: three hops over first 24% ---------- */
+@keyframes titleZooPetRotateNone{
+  0%, 100%{
+    transform: rotate(0deg);
+  }
+}
 
+@keyframes titleZooPetRotateNod{
+  0%, 24%, 76%, 100%{
+    transform: rotate(0deg);
+  }
+
+  36%{
+    transform: rotate(calc(0.25 * var(--title-zoo-dance-intensity)));
+  }
+
+  48%{
+    transform: rotate(calc(-0.2 * var(--title-zoo-dance-intensity)));
+  }
+
+  60%{
+    transform: rotate(calc(0.14 * var(--title-zoo-dance-intensity)));
+  }
+}
+
+@keyframes titleZooPetRotateShimmy{
+  0%, 24%, 76%, 100%{
+    transform: rotate(0deg);
+  }
+
+  30%{
+    transform: rotate(calc(-0.65 * var(--title-zoo-dance-intensity)));
+  }
+
+  36%{
+    transform: rotate(calc(0.65 * var(--title-zoo-dance-intensity)));
+  }
+
+  42%{
+    transform: rotate(calc(-0.65 * var(--title-zoo-dance-intensity)));
+  }
+
+  48%{
+    transform: rotate(calc(0.65 * var(--title-zoo-dance-intensity)));
+  }
+
+  58%{
+    transform: rotate(calc(-0.35 * var(--title-zoo-dance-intensity)));
+  }
+
+  68%{
+    transform: rotate(calc(0.25 * var(--title-zoo-dance-intensity)));
+  }
+}
+
+/* Shared structure:
+   0%–24%   = current three-hop entry
+   24%–76%  = dance
+   76%–100% = current three-hop exit
+*/
+
+@keyframes titleZooPetBodySquishJoy{
   0%{
-    transform: translateY(0) rotate(0deg) scaleX(1) scaleY(1);
+    transform: translateY(0) rotate(0deg) scaleX(1) scaleY(1) skewX(0deg);
   }
 
   2%{
     transform:
       translateY(0)
-      rotate(0deg)
       scaleX(calc(2 - var(--title-zoo-squish)))
       scaleY(var(--title-zoo-squish));
   }
@@ -1210,7 +1329,6 @@
   4%{
     transform:
       translateY(calc(-1 * var(--title-zoo-hop-height)))
-      rotate(1deg)
       scaleX(var(--title-zoo-squeeze))
       scaleY(calc(2 - var(--title-zoo-squeeze)));
   }
@@ -1218,19 +1336,17 @@
   8%{
     transform:
       translateY(0)
-      rotate(0deg)
       scaleX(calc(2 - var(--title-zoo-squish)))
       scaleY(var(--title-zoo-squish));
   }
 
   10%{
-    transform: translateY(0) rotate(0deg) scaleX(1) scaleY(1);
+    transform: translateY(0) scaleX(1) scaleY(1);
   }
 
   12%{
     transform:
       translateY(calc(-1 * var(--title-zoo-hop-height)))
-      rotate(-1deg)
       scaleX(var(--title-zoo-squeeze))
       scaleY(calc(2 - var(--title-zoo-squeeze)));
   }
@@ -1238,19 +1354,17 @@
   16%{
     transform:
       translateY(0)
-      rotate(0deg)
       scaleX(calc(2 - var(--title-zoo-squish)))
       scaleY(var(--title-zoo-squish));
   }
 
   18%{
-    transform: translateY(0) rotate(0deg) scaleX(1) scaleY(1);
+    transform: translateY(0) scaleX(1) scaleY(1);
   }
 
   20%{
     transform:
       translateY(calc(-1 * var(--title-zoo-hop-height)))
-      rotate(1deg)
       scaleX(var(--title-zoo-squeeze))
       scaleY(calc(2 - var(--title-zoo-squeeze)));
   }
@@ -1258,71 +1372,65 @@
   24%{
     transform:
       translateY(0)
-      rotate(0deg)
       scaleX(calc(2 - var(--title-zoo-squish)))
       scaleY(var(--title-zoo-squish));
   }
 
   27%{
-    transform: translateY(0) rotate(0deg) scaleX(1) scaleY(1);
+    transform: translateY(0) scaleX(1) scaleY(1);
   }
 
-  /* ---------- Center dance from 24% to 76% ---------- */
-
-  34%{
-    transform:
-      translateY(calc(-0.08 * var(--title-zoo-hop-height)))
-      rotate(calc(-0.75 * var(--title-zoo-dance-intensity)))
-      scaleX(1.04)
-      scaleY(0.96);
-  }
-
-  42%{
+  33%{
     transform:
       translateY(0)
-      rotate(calc(0.7 * var(--title-zoo-dance-intensity)))
-      scaleX(calc(2 - var(--title-zoo-squish)))
-      scaleY(var(--title-zoo-squish));
+      scaleX(1)
+      scaleY(1)
+      skewX(0deg);
   }
 
-  50%{
+  40%{
     transform:
-      translateY(calc(-0.10 * var(--title-zoo-hop-height)))
-      rotate(calc(-0.55 * var(--title-zoo-dance-intensity)))
-      scaleX(1.03)
-      scaleY(0.97);
+      translateY(calc(-0.52 * var(--title-zoo-dance-hop-height)))
+      scaleX(var(--title-zoo-dance-stretch))
+      scaleY(calc(2 - var(--title-zoo-dance-stretch)))
+      skewX(calc(-0.3 * var(--title-zoo-dance-skew)));
+  }
+
+  48%{
+    transform:
+      translateY(0)
+      scaleX(calc(2 - var(--title-zoo-dance-squish)))
+      scaleY(var(--title-zoo-dance-squish))
+      skewX(calc(0.2 * var(--title-zoo-dance-skew)));
   }
 
   58%{
     transform:
-      translateY(0)
-      rotate(calc(0.45 * var(--title-zoo-dance-intensity)))
-      scaleX(calc(2 - var(--title-zoo-squish)))
-      scaleY(var(--title-zoo-squish));
+      translateY(calc(-0.3 * var(--title-zoo-dance-hop-height)))
+      scaleX(0.96)
+      scaleY(1.04)
+      skewX(calc(-0.15 * var(--title-zoo-dance-skew)));
   }
 
-  66%{
+  68%{
     transform:
-      translateY(calc(-0.06 * var(--title-zoo-hop-height)))
-      rotate(calc(-0.35 * var(--title-zoo-dance-intensity)))
-      scaleX(1.02)
-      scaleY(0.98);
+      translateY(0)
+      scaleX(1.08)
+      scaleY(0.92)
+      skewX(0deg);
   }
 
   73%{
-    transform: translateY(0) rotate(0deg) scaleX(1) scaleY(1);
+    transform: translateY(0) scaleX(1) scaleY(1) skewX(0deg);
   }
 
-  /* ---------- Hop out: three hops over final 24% ---------- */
-
   76%{
-    transform: translateY(0) rotate(0deg) scaleX(1) scaleY(1);
+    transform: translateY(0) scaleX(1) scaleY(1);
   }
 
   78%{
     transform:
       translateY(0)
-      rotate(0deg)
       scaleX(calc(2 - var(--title-zoo-squish)))
       scaleY(var(--title-zoo-squish));
   }
@@ -1330,7 +1438,6 @@
   80%{
     transform:
       translateY(calc(-1 * var(--title-zoo-hop-height)))
-      rotate(1deg)
       scaleX(var(--title-zoo-squeeze))
       scaleY(calc(2 - var(--title-zoo-squeeze)));
   }
@@ -1338,19 +1445,17 @@
   84%{
     transform:
       translateY(0)
-      rotate(0deg)
       scaleX(calc(2 - var(--title-zoo-squish)))
       scaleY(var(--title-zoo-squish));
   }
 
   86%{
-    transform: translateY(0) rotate(0deg) scaleX(1) scaleY(1);
+    transform: translateY(0) scaleX(1) scaleY(1);
   }
 
   88%{
     transform:
       translateY(calc(-1 * var(--title-zoo-hop-height)))
-      rotate(-1deg)
       scaleX(var(--title-zoo-squeeze))
       scaleY(calc(2 - var(--title-zoo-squeeze)));
   }
@@ -1358,19 +1463,17 @@
   92%{
     transform:
       translateY(0)
-      rotate(0deg)
       scaleX(calc(2 - var(--title-zoo-squish)))
       scaleY(var(--title-zoo-squish));
   }
 
   94%{
-    transform: translateY(0) rotate(0deg) scaleX(1) scaleY(1);
+    transform: translateY(0) scaleX(1) scaleY(1);
   }
 
   96%{
     transform:
       translateY(calc(-1 * var(--title-zoo-hop-height)))
-      rotate(1deg)
       scaleX(var(--title-zoo-squeeze))
       scaleY(calc(2 - var(--title-zoo-squeeze)));
   }
@@ -1378,9 +1481,138 @@
   100%{
     transform:
       translateY(0)
-      rotate(0deg)
       scaleX(calc(2 - var(--title-zoo-squish)))
       scaleY(var(--title-zoo-squish));
+  }
+}
+
+@keyframes titleZooPetBodyNod{
+  0%, 27%, 73%, 76%{
+    transform: translateY(0) scaleX(1) scaleY(1);
+  }
+
+  2%, 78%, 91%{
+    transform:
+      translateY(0)
+      scaleX(calc(2 - var(--title-zoo-squish)))
+      scaleY(var(--title-zoo-squish));
+  }
+
+  4%, 12%, 20%, 80%, 88%, 96%{
+    transform:
+      translateY(calc(-1 * var(--title-zoo-hop-height)))
+      scaleX(var(--title-zoo-squeeze))
+      scaleY(calc(2 - var(--title-zoo-squeeze)));
+  }
+
+  8%, 16%, 24%, 84%, 92%, 100%{
+    transform:
+      translateY(0)
+      scaleX(calc(2 - var(--title-zoo-squish)))
+      scaleY(var(--title-zoo-squish));
+  }
+
+  10%, 18%, 86%, 94%{
+    transform: translateY(0) scaleX(1) scaleY(1);
+  }
+
+  34%{
+    transform:
+      translateY(4%)
+      scaleX(1.08)
+      scaleY(0.9);
+  }
+
+  42%{
+    transform:
+      translateY(-8%)
+      scaleX(0.95)
+      scaleY(1.08);
+  }
+
+  52%{
+    transform:
+      translateY(3%)
+      scaleX(1.06)
+      scaleY(0.92);
+  }
+
+  64%{
+    transform:
+      translateY(-4%)
+      scaleX(0.98)
+      scaleY(1.04);
+  }
+}
+
+@keyframes titleZooPetBodyShimmy{
+  0%, 27%, 73%, 76%{
+    transform: translateY(0) scaleX(1) scaleY(1) skewX(0deg);
+  }
+
+  2%, 78%, 91%{
+    transform:
+      translateY(0)
+      scaleX(calc(2 - var(--title-zoo-squish)))
+      scaleY(var(--title-zoo-squish));
+  }
+
+  4%, 12%, 20%, 80%, 88%, 96%{
+    transform:
+      translateY(calc(-1 * var(--title-zoo-hop-height)))
+      scaleX(var(--title-zoo-squeeze))
+      scaleY(calc(2 - var(--title-zoo-squeeze)));
+  }
+
+  8%, 16%, 24%, 84%, 92%, 100%{
+    transform:
+      translateY(0)
+      scaleX(calc(2 - var(--title-zoo-squish)))
+      scaleY(var(--title-zoo-squish));
+  }
+
+  10%, 18%, 86%, 94%{
+    transform: translateY(0) scaleX(1) scaleY(1);
+  }
+
+  32%{
+    transform:
+      translateY(0)
+      scaleX(1.08)
+      scaleY(0.96)
+      skewX(calc(-1 * var(--title-zoo-dance-skew)));
+  }
+
+  40%{
+    transform:
+      translateY(-2%)
+      scaleX(0.96)
+      scaleY(1.04)
+      skewX(var(--title-zoo-dance-skew));
+  }
+
+  48%{
+    transform:
+      translateY(0)
+      scaleX(1.08)
+      scaleY(0.96)
+      skewX(calc(-1 * var(--title-zoo-dance-skew)));
+  }
+
+  56%{
+    transform:
+      translateY(-2%)
+      scaleX(0.96)
+      scaleY(1.04)
+      skewX(var(--title-zoo-dance-skew));
+  }
+
+  66%{
+    transform:
+      translateY(0)
+      scaleX(1)
+      scaleY(1)
+      skewX(0deg);
   }
 }
 
@@ -1498,9 +1730,10 @@
     transform: translate(-50%, -50%);
   }
 
-  .title-zoo-pet-bobber{
-    animation: none;
-  }
+.title-zoo-pet-motion,
+.title-zoo-pet-rotator{
+  animation: none;
+}
 
   .title-zoo-pet-visitor .biblopet-visual{
     transform: scaleX(1);
