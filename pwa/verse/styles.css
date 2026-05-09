@@ -1168,7 +1168,7 @@
 
 .title-zoo-pet-motion{
   display: inline-block;
-  transform-origin: center bottom;
+  transform-origin: center calc(100% - var(--title-zoo-pet-feet-from-bottom, 0%));
   animation-duration: 5200ms;
   animation-timing-function: linear;
   animation-iteration-count: 1;
@@ -1187,7 +1187,7 @@
 }
 
 .title-zoo-pet-motion .biblopet-visual{
-  transform-origin: center bottom;
+  transform-origin: center calc(100% - var(--title-zoo-pet-feet-from-bottom, 0%));
 }
 
 .title-zoo-pet-visitor.dance-squish-joy{
