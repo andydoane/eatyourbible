@@ -1,0 +1,335 @@
+:root{
+  --vj-bg:#221447;
+  --vj-accent:#8df7ff;
+  --vj-yellow:#ffe27a;
+  --vj-pink:#ff7ad9;
+  --vj-purple:#7f66c6;
+  --vj-green:#9dff8d;
+  --vj-red:#ff8fa3;
+  --vj-text:#fff7e8;
+}
+
+*{
+  box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+}
+
+body{
+  margin:0;
+  overflow:hidden;
+  touch-action:manipulation;
+}
+
+.versejam-root{
+  min-height:100svh;
+  width:100%;
+  color:var(--vj-text);
+  background:
+    radial-gradient(circle at 18% 15%, rgba(141,247,255,.22), transparent 28%),
+    radial-gradient(circle at 80% 12%, rgba(255,226,122,.20), transparent 24%),
+    radial-gradient(circle at 50% 115%, rgba(255,122,217,.18), transparent 34%),
+    linear-gradient(145deg,#17122b,#2b1748 56%,#151326);
+  display:flex;
+  align-items:stretch;
+  justify-content:center;
+  padding:12px;
+}
+
+.versejam-stage{
+  width:min(520px,100%);
+  min-height:calc(100svh - 24px);
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.versejam-build-wrap{
+  flex:0 0 auto;
+}
+
+.versejam-build{
+  box-shadow:0 12px 28px rgba(0,0,0,.22), inset 0 0 0 1px rgba(255,255,255,.14);
+}
+
+.versejam-play-wrap{
+  flex:1 1 auto;
+  min-height:0;
+  display:flex;
+}
+
+.versejam-board{
+  position:relative;
+  flex:1 1 auto;
+  min-height:0;
+  overflow:hidden;
+  border-radius:28px;
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.06)),
+    radial-gradient(circle at 30% 10%, rgba(141,247,255,.14), transparent 28%),
+    rgba(0,0,0,.20);
+  box-shadow:0 18px 42px rgba(0,0,0,.25), inset 0 0 0 1px rgba(255,255,255,.15);
+}
+
+.versejam-board::before{
+  content:"";
+  position:absolute;
+  inset:0;
+  opacity:.12;
+  background-image:
+    linear-gradient(rgba(255,255,255,.25) 1px, transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.22) 1px, transparent 1px);
+  background-size:28px 28px;
+  pointer-events:none;
+}
+
+.versejam-particle-layer,
+.versejam-float-layer{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  overflow:hidden;
+  z-index:8;
+}
+
+.versejam-board-content{
+  position:relative;
+  z-index:4;
+  height:100%;
+  display:flex;
+  flex-direction:column;
+  padding:14px;
+}
+
+.versejam-overlay-pills{
+  position:absolute;
+  top:12px;
+  left:12px;
+  right:12px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  pointer-events:none;
+  z-index:10;
+}
+
+.versejam-pill{
+  border:0;
+  border-radius:999px;
+  padding:8px 12px;
+  font-family:inherit;
+  font-size:1rem;
+  font-weight:900;
+  color:#2a1b3d;
+  background:rgba(255,226,122,.96);
+  box-shadow:0 8px 18px rgba(0,0,0,.22), inset 0 0 0 1px rgba(255,255,255,.42);
+  pointer-events:auto;
+}
+
+.versejam-round-pill{
+  background:rgba(141,247,255,.92);
+}
+
+.versejam-main-area{
+  flex:1 1 auto;
+  min-height:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:52px 2px 20px;
+}
+
+.versejam-intro-stack,
+.versejam-button-stack{
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  justify-content:center;
+  gap:10px;
+}
+
+.versejam-intro-stack{
+  max-width:360px;
+}
+
+.versejam-button-stack{
+  max-width:390px;
+}
+
+.versejam-intro-word{
+  align-self:center;
+  min-width:62%;
+  border-radius:22px;
+  padding:14px 18px;
+  text-align:center;
+  font-size:clamp(1.25rem,7vw,2.25rem);
+  line-height:1;
+  font-weight:900;
+  color:#261840;
+  background:linear-gradient(180deg,#fff4a9,#ffe27a);
+  box-shadow:0 14px 24px rgba(0,0,0,.22), inset 0 -5px 0 rgba(0,0,0,.10);
+  transform:scale(.2) rotate(-2deg);
+  opacity:0;
+}
+
+.versejam-intro-word.is-in{
+  animation:vj-pop-in 260ms cubic-bezier(.2,1.45,.35,1) forwards;
+}
+
+.versejam-intro-word.is-out{
+  animation:vj-pop-out 220ms ease-in forwards;
+}
+
+.versejam-word-btn{
+  position:relative;
+  width:100%;
+  border:0;
+  border-radius:24px;
+  padding:15px 16px 17px;
+  font-family:inherit;
+  font-size:clamp(1.18rem,5.8vw,1.8rem);
+  line-height:1.02;
+  font-weight:900;
+  color:#fff7e8;
+  background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.10));
+  box-shadow:0 13px 26px rgba(0,0,0,.24), inset 0 0 0 1px rgba(255,255,255,.18), inset 0 -6px 0 rgba(0,0,0,.12);
+  transform:scale(var(--vj-beat-scale,1));
+  transition:transform 90ms linear, filter 140ms ease, opacity 180ms ease, background 180ms ease;
+  cursor:pointer;
+  overflow:hidden;
+}
+
+.versejam-word-btn::after{
+  content:"";
+  position:absolute;
+  inset:4px;
+  border-radius:20px;
+  border:2px solid transparent;
+  pointer-events:none;
+}
+
+.versejam-word-btn.is-spawning{
+  animation:vj-button-in 240ms cubic-bezier(.2,1.4,.35,1) both;
+}
+
+.versejam-word-btn.is-next{
+  background:linear-gradient(180deg,rgba(141,247,255,.32),rgba(127,102,198,.22));
+  box-shadow:0 0 0 3px rgba(141,247,255,.45),0 0 30px rgba(141,247,255,.22),0 13px 26px rgba(0,0,0,.24),inset 0 -6px 0 rgba(0,0,0,.12);
+}
+
+.versejam-word-btn.is-next::after{
+  border-color:rgba(255,255,255,.72);
+  animation:vj-cue-breathe 650ms ease-in-out infinite alternate;
+}
+
+.versejam-word-btn.is-rainbow-next{
+  background:linear-gradient(90deg,rgba(255,122,217,.38),rgba(255,226,122,.35),rgba(141,247,255,.38),rgba(157,255,141,.35));
+  background-size:260% 100%;
+  animation:vj-rainbow-bg 1.1s linear infinite;
+  box-shadow:0 0 0 4px rgba(255,255,255,.32),0 0 38px rgba(255,122,217,.24),0 13px 26px rgba(0,0,0,.24),inset 0 -6px 0 rgba(0,0,0,.12);
+}
+
+.versejam-word-btn.is-removing{
+  pointer-events:none;
+  animation:vj-remove 250ms ease-in forwards;
+}
+
+.versejam-word-btn.is-wrong{
+  animation:vj-wrong 230ms ease;
+  background:linear-gradient(180deg,rgba(255,143,163,.34),rgba(255,143,163,.14));
+}
+
+.versejam-word-btn:disabled{
+  cursor:default;
+}
+
+.versejam-pixel{
+  position:absolute;
+  width:12px;
+  height:12px;
+  border-radius:3px;
+  background:var(--vj-pcolor,#ffe27a);
+  left:0;
+  top:0;
+  transform:translate(-50%,-50%);
+  animation:vj-pixel 620ms ease-out forwards;
+}
+
+.versejam-beat-ring{
+  position:absolute;
+  right:16px;
+  bottom:16px;
+  width:18px;
+  height:18px;
+  border-radius:999px;
+  background:#ffe27a;
+  box-shadow:0 0 24px rgba(255,226,122,.65);
+  transform:scale(var(--vj-dot-scale,1));
+  transition:transform 80ms linear;
+  z-index:7;
+}
+
+.versejam-float-note{
+  position:absolute;
+  color:rgba(255,255,255,.72);
+  font-weight:900;
+  font-size:1.1rem;
+  animation:vj-float-note 720ms ease-out forwards;
+}
+
+@keyframes vj-pop-in{
+  from{opacity:0; transform:scale(.2) translateY(18px) rotate(-4deg);}
+  to{opacity:1; transform:scale(1) translateY(0) rotate(0);}
+}
+
+@keyframes vj-pop-out{
+  from{opacity:1; transform:scale(1) translateY(0);}
+  to{opacity:0; transform:scale(.2) translateY(-18px) rotate(4deg);}
+}
+
+@keyframes vj-button-in{
+  from{opacity:0; transform:scale(.25) translateY(20px) rotate(-2deg);}
+  to{opacity:1; transform:scale(1) translateY(0) rotate(0);}
+}
+
+@keyframes vj-cue-breathe{
+  from{transform:scale(.985); opacity:.5;}
+  to{transform:scale(1.025); opacity:1;}
+}
+
+@keyframes vj-rainbow-bg{
+  from{background-position:0 50%;}
+  to{background-position:260% 50%;}
+}
+
+@keyframes vj-remove{
+  from{opacity:1; transform:scale(var(--vj-beat-scale,1)); filter:brightness(1.15);}
+  to{opacity:0; transform:scale(.25) rotate(8deg); filter:brightness(2);}
+}
+
+@keyframes vj-wrong{
+  0%,100%{transform:translateX(0) scale(var(--vj-beat-scale,1));}
+  25%{transform:translateX(-8px) scale(var(--vj-beat-scale,1));}
+  75%{transform:translateX(8px) scale(var(--vj-beat-scale,1));}
+}
+
+@keyframes vj-pixel{
+  from{opacity:1; transform:translate(-50%,-50%) scale(1) rotate(0);}
+  to{opacity:0; transform:translate(calc(-50% + var(--vj-dx)),calc(-50% + var(--vj-dy))) scale(.15) rotate(var(--vj-rot));}
+}
+
+@keyframes vj-float-note{
+  from{opacity:0; transform:translateY(12px) scale(.8);}
+  15%{opacity:1;}
+  to{opacity:0; transform:translateY(-48px) scale(1.12);}
+}
+
+@media (max-height:680px){
+  .versejam-root{padding:8px;}
+  .versejam-stage{min-height:calc(100svh - 16px); gap:8px;}
+  .versejam-board-content{padding:10px;}
+  .versejam-main-area{padding-top:44px; padding-bottom:12px;}
+  .versejam-button-stack{gap:7px;}
+  .versejam-word-btn{padding:11px 12px 13px; border-radius:20px;}
+}
