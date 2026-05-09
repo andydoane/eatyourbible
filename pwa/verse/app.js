@@ -66,8 +66,22 @@ const titleZooSceneIndex = Math.floor(Math.random() * TITLE_ZOO_SCENE_COUNT) + 1
 let titleZooPetVerseId = "";
 let titleZooPetDirection = Math.random() < 0.5 ? "from-left" : "from-right";
 
+const TITLE_ZOO_PET_DANCE_CLASSES = [
+  "dance-squish-joy",
+  "dance-nod",
+  "dance-shimmy"
+];
+
+let titleZooPetDanceClass = pickTitleZooPetDanceClass();
+
 function pickTitleZooPetDirection(){
   return Math.random() < 0.5 ? "from-left" : "from-right";
+}
+
+function pickTitleZooPetDanceClass(){
+  return TITLE_ZOO_PET_DANCE_CLASSES[
+    Math.floor(Math.random() * TITLE_ZOO_PET_DANCE_CLASSES.length)
+  ];
 }
 
 function getTitleZooScene(){
@@ -174,12 +188,14 @@ function titleZooPetVisitorHtml(pet){
 
   return `
     <div
-      class="title-zoo-pet-visitor ${escapeHtml(titleZooPetDirection)}"
+      class="title-zoo-pet-visitor ${escapeHtml(titleZooPetDirection)} ${escapeHtml(titleZooPetDanceClass)}"
       title="${escapeHtml(pet.name)}"
       data-verse-id="${escapeHtml(pet.verseId)}"
     >
-      <div class="title-zoo-pet-bobber">
-        ${bibloPetVisualHtml(pet.verseId, pet.emoji)}
+      <div class="title-zoo-pet-motion">
+        <div class="title-zoo-pet-rotator">
+          ${bibloPetVisualHtml(pet.verseId, pet.emoji)}
+        </div>
       </div>
     </div>
   `;
@@ -265,16 +281,24 @@ function updateTitleZooPetVisitor(rootEl, pet){
   if (!visitor) return;
 
   titleZooPetDirection = pickTitleZooPetDirection();
+  titleZooPetDanceClass = pickTitleZooPetDanceClass();
 
-  visitor.classList.remove("from-left", "from-right");
-  visitor.classList.add(titleZooPetDirection);
+  visitor.classList.remove(
+    "from-left",
+    "from-right",
+    ...TITLE_ZOO_PET_DANCE_CLASSES
+  );
+
+  visitor.classList.add(titleZooPetDirection, titleZooPetDanceClass);
 
   visitor.setAttribute("title", pet.name);
   visitor.setAttribute("data-verse-id", pet.verseId);
 
   visitor.innerHTML = `
-    <div class="title-zoo-pet-bobber">
-      ${bibloPetVisualHtml(pet.verseId, pet.emoji)}
+    <div class="title-zoo-pet-motion">
+      <div class="title-zoo-pet-rotator">
+        ${bibloPetVisualHtml(pet.verseId, pet.emoji)}
+      </div>
     </div>
   `;
 
