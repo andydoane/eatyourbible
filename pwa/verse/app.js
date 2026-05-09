@@ -2313,7 +2313,7 @@ const LEARN_LEVEL_OPTIONS = [
 
 const BUILTIN_PRACTICE_GAMES = [];
 
-const HIDDEN_PRACTICE_GAME_ID = "bible_bugs";
+const HIDDEN_PRACTICE_GAME_ID = "verse_jam";
 const HIDDEN_PRACTICE_LONG_PRESS_MS = 2000;
 const HIDDEN_LEARN_COMPLETE_LONG_PRESS_MS = 2000;
 
@@ -2584,12 +2584,20 @@ function getGameMixCompletedGameIdFromUrl(){
 }
 
 function getExternalGameManifestById(gameId){
-  const list = Array.isArray(window.EXTERNAL_VERSE_GAMES) ? window.EXTERNAL_VERSE_GAMES : [];
+  const sources = [
+    window.EXTERNAL_VERSE_GAMES,
+    window.EXTERNAL_VERSE_PLAYGROUND
+  ];
 
-  for (const entry of list){
-    if (!entry || entry.enabled === false) continue;
-    const manifest = entry.manifest;
-    if (manifest && manifest.id === gameId) return manifest;
+  for (const source of sources){
+    const list = Array.isArray(source) ? source : [];
+
+    for (const entry of list){
+      if (!entry || entry.enabled === false) continue;
+
+      const manifest = entry.manifest;
+      if (manifest && manifest.id === gameId) return manifest;
+    }
   }
 
   return null;
