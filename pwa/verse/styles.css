@@ -1126,49 +1126,141 @@
 
 .title-zoo-pet-visitor{
   position: absolute;
-  left: 0;
+  left: -14%;
   top: 68%;
   z-index: 1;
   font-size: clamp(52px, 15vw, 112px);
   line-height: 1;
-  transform: translate(-120%, -50%);
+  transform: translate(-50%, -50%);
   filter: drop-shadow(0 7px 0 rgba(0,0,0,0.20));
   user-select: none;
-  animation: titleZooPetWalk 10500ms ease-in-out infinite;
+  animation-duration: 13200ms;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  will-change: left, transform;
+}
+
+.title-zoo-pet-visitor.from-left{
+  animation-name: titleZooPetRoamFromLeft;
+}
+
+.title-zoo-pet-visitor.from-right{
+  animation-name: titleZooPetRoamFromRight;
+}
+
+/* Pet images face left by default.
+   When entering from the left, the pet moves right, so flip it. */
+.title-zoo-pet-visitor.from-left .biblopet-visual{
+  transform: scaleX(-1);
+}
+
+/* When entering from the right, the pet moves left, so keep it normal. */
+.title-zoo-pet-visitor.from-right .biblopet-visual{
+  transform: scaleX(1);
+}
+
+.title-zoo-pet-bobber{
+  display: inline-block;
+  transform-origin: center bottom;
+  animation: titleZooPetHop 620ms ease-in-out infinite;
   will-change: transform;
 }
 
-@keyframes titleZooPetWalk{
+@keyframes titleZooPetHop{
+  0%, 100%{
+    transform: translateY(0) rotate(-1deg);
+  }
+
+  45%{
+    transform: translateY(-9%) rotate(2deg);
+  }
+
+  70%{
+    transform: translateY(0) rotate(0deg);
+  }
+}
+
+@keyframes titleZooPetRoamFromLeft{
   0%{
-    transform: translate(-120%, -50%) scaleX(-1);
+    left: -14%;
+    transform: translate(-50%, -50%);
   }
 
-  12%{
-    transform: translate(18vw, -52%) scaleX(-1);
+  16%{
+    left: 34%;
+    transform: translate(-50%, -50%);
   }
 
-  24%{
-    transform: translate(30vw, -48%) scaleX(-1);
+  30%{
+    left: 56%;
+    transform: translate(-50%, -50%);
   }
 
-  38%{
-    transform: translate(42vw, -52%) scaleX(-1);
+  44%{
+    left: 43%;
+    transform: translate(-50%, -50%);
   }
 
-  52%{
-    transform: translate(54vw, -49%) scaleX(-1);
+  58%{
+    left: 62%;
+    transform: translate(-50%, -50%);
   }
 
-  66%{
-    transform: translate(66vw, -52%) scaleX(-1);
+  70%{
+    left: 50%;
+    transform: translate(-50%, -50%);
   }
 
-  78%{
-    transform: translate(82vw, -50%) scaleX(-1);
+  80%{
+    left: 57%;
+    transform: translate(-50%, -50%);
   }
 
   100%{
-    transform: translate(120vw, -50%) scaleX(-1);
+    left: 114%;
+    transform: translate(-50%, -50%);
+  }
+}
+
+@keyframes titleZooPetRoamFromRight{
+  0%{
+    left: 114%;
+    transform: translate(-50%, -50%);
+  }
+
+  16%{
+    left: 66%;
+    transform: translate(-50%, -50%);
+  }
+
+  30%{
+    left: 44%;
+    transform: translate(-50%, -50%);
+  }
+
+  44%{
+    left: 57%;
+    transform: translate(-50%, -50%);
+  }
+
+  58%{
+    left: 38%;
+    transform: translate(-50%, -50%);
+  }
+
+  70%{
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+
+  80%{
+    left: 43%;
+    transform: translate(-50%, -50%);
+  }
+
+  100%{
+    left: -14%;
+    transform: translate(-50%, -50%);
   }
 }
 
@@ -1176,7 +1268,15 @@
   .title-zoo-pet-visitor{
     animation: none;
     left: 50%;
-    transform: translate(-50%, -50%) scaleX(-1);
+    transform: translate(-50%, -50%);
+  }
+
+  .title-zoo-pet-bobber{
+    animation: none;
+  }
+
+  .title-zoo-pet-visitor .biblopet-visual{
+    transform: scaleX(1);
   }
 }
 
