@@ -1126,8 +1126,13 @@
 }
 
 .title-zoo-pet-visitor{
+  --title-zoo-hop-height: 32%;
+  --title-zoo-squeeze: 1.09;
+  --title-zoo-squish: 0.65;
+  --title-zoo-dance-intensity: 10deg;
+
   position: absolute;
-  left: -14%;
+  left: -16%;
   top: 68%;
   z-index: 1;
   font-size: 45cqh;
@@ -1135,7 +1140,7 @@
   transform: translate(-50%, -50%);
   filter: drop-shadow(0 7px 0 rgba(0,0,0,0.20));
   user-select: none;
-  animation-duration: 13200ms;
+  animation-duration: 5200ms;
   animation-timing-function: ease-in-out;
   animation-iteration-count: infinite;
   will-change: left, transform;
@@ -1163,8 +1168,12 @@
 .title-zoo-pet-bobber{
   display: inline-block;
   transform-origin: center bottom;
-  animation: titleZooPetBobCycle 13200ms ease-in-out infinite;
+  animation: titleZooPetHopDance 5200ms ease-in-out infinite;
   will-change: transform;
+}
+
+.title-zoo-pet-bobber .biblopet-visual{
+  transform-origin: center bottom;
 }
 
 /* Full-cycle bob:
@@ -1172,160 +1181,171 @@
    - calm while roaming near the middle
    - lively again while exiting
 */
-@keyframes titleZooPetBobCycle{
+
+@keyframes titleZooPetHopDance{
   0%{
-    transform: translateY(0) rotate(0deg);
+    transform: translateY(0) rotate(0deg) scaleX(1) scaleY(1);
   }
 
   5%{
-    transform: translateY(-7%) rotate(1.5deg);
+    transform:
+      translateY(0)
+      rotate(0deg)
+      scaleX(var(--title-zoo-squish))
+      scaleY(calc(2 - var(--title-zoo-squish)));
   }
 
   10%{
-    transform: translateY(0) rotate(0deg);
+    transform:
+      translateY(calc(-1 * var(--title-zoo-hop-height)))
+      rotate(1deg)
+      scaleX(var(--title-zoo-squeeze))
+      scaleY(calc(2 - var(--title-zoo-squeeze)));
   }
 
   15%{
-    transform: translateY(-6%) rotate(-1.2deg);
+    transform: translateY(0) rotate(0deg) scaleX(1) scaleY(1);
   }
 
   20%{
-    transform: translateY(0) rotate(0deg);
+    transform:
+      translateY(0)
+      rotate(0deg)
+      scaleX(var(--title-zoo-squish))
+      scaleY(calc(2 - var(--title-zoo-squish)));
   }
 
   25%{
-    transform: translateY(-4%) rotate(0.8deg);
+    transform:
+      translateY(calc(-1 * var(--title-zoo-hop-height)))
+      rotate(-1deg)
+      scaleX(var(--title-zoo-squeeze))
+      scaleY(calc(2 - var(--title-zoo-squeeze)));
   }
 
-  30%{
-    transform: translateY(0) rotate(0deg);
+  31%{
+    transform: translateY(0) rotate(0deg) scaleX(1) scaleY(1);
   }
 
   38%{
-    transform: translateY(-1.5%) rotate(0.4deg);
+    transform:
+      translateY(calc(-0.12 * var(--title-zoo-hop-height)))
+      rotate(calc(-0.8 * var(--title-zoo-dance-intensity)))
+      scaleX(1.04)
+      scaleY(0.96);
   }
 
   46%{
-    transform: translateY(0) rotate(0deg);
+    transform:
+      translateY(0)
+      rotate(calc(0.75 * var(--title-zoo-dance-intensity)))
+      scaleX(calc(2 - var(--title-zoo-squish)))
+      scaleY(var(--title-zoo-squish));
   }
 
   54%{
-    transform: translateY(-1.5%) rotate(-0.4deg);
+    transform:
+      translateY(calc(-0.14 * var(--title-zoo-hop-height)))
+      rotate(calc(-0.6 * var(--title-zoo-dance-intensity)))
+      scaleX(1.03)
+      scaleY(0.97);
   }
 
   62%{
-    transform: translateY(0) rotate(0deg);
+    transform:
+      translateY(0)
+      rotate(calc(0.45 * var(--title-zoo-dance-intensity)))
+      scaleX(calc(2 - var(--title-zoo-squish)))
+      scaleY(var(--title-zoo-squish));
   }
 
-  70%{
-    transform: translateY(-1%) rotate(0.3deg);
+  69%{
+    transform: translateY(0) rotate(0deg) scaleX(1) scaleY(1);
   }
 
-  76%{
-    transform: translateY(0) rotate(0deg);
+  75%{
+    transform:
+      translateY(0)
+      rotate(0deg)
+      scaleX(var(--title-zoo-squish))
+      scaleY(calc(2 - var(--title-zoo-squish)));
   }
 
-  82%{
-    transform: translateY(-5%) rotate(1deg);
+  80%{
+    transform:
+      translateY(calc(-1 * var(--title-zoo-hop-height)))
+      rotate(1deg)
+      scaleX(var(--title-zoo-squeeze))
+      scaleY(calc(2 - var(--title-zoo-squeeze)));
   }
 
-  88%{
-    transform: translateY(0) rotate(0deg);
+  86%{
+    transform: translateY(0) rotate(0deg) scaleX(1) scaleY(1);
   }
 
-  94%{
-    transform: translateY(-6%) rotate(-1deg);
+  91%{
+    transform:
+      translateY(0)
+      rotate(0deg)
+      scaleX(var(--title-zoo-squish))
+      scaleY(calc(2 - var(--title-zoo-squish)));
+  }
+
+  96%{
+    transform:
+      translateY(calc(-1 * var(--title-zoo-hop-height)))
+      rotate(-1deg)
+      scaleX(var(--title-zoo-squeeze))
+      scaleY(calc(2 - var(--title-zoo-squeeze)));
   }
 
   100%{
-    transform: translateY(0) rotate(0deg);
+    transform: translateY(0) rotate(0deg) scaleX(1) scaleY(1);
   }
 }
 
-/* From left: always moves generally right.
-   No backwards movement. */
+/* From left: hop into center, dance, hop off right */
 @keyframes titleZooPetRoamFromLeft{
   0%{
-    left: -14%;
+    left: -16%;
     transform: translate(-50%, -50%);
   }
 
-  16%{
-    left: 28%;
-    transform: translate(-50%, -50%);
-  }
-
-  30%{
-    left: 42%;
-    transform: translate(-50%, -50%);
-  }
-
-  44%{
+  31%{
     left: 50%;
     transform: translate(-50%, -50%);
   }
 
-  58%{
-    left: 56%;
-    transform: translate(-50%, -50%);
-  }
-
-  70%{
-    left: 62%;
-    transform: translate(-50%, -50%);
-  }
-
-  82%{
-    left: 76%;
+  69%{
+    left: 50%;
     transform: translate(-50%, -50%);
   }
 
   100%{
-    left: 114%;
+    left: 116%;
     transform: translate(-50%, -50%);
   }
 }
 
-/* From right: always moves generally left.
-   No backwards movement. */
+/* From right: hop into center, dance, hop off left */
 @keyframes titleZooPetRoamFromRight{
   0%{
-    left: 114%;
+    left: 116%;
     transform: translate(-50%, -50%);
   }
 
-  16%{
-    left: 72%;
-    transform: translate(-50%, -50%);
-  }
-
-  30%{
-    left: 58%;
-    transform: translate(-50%, -50%);
-  }
-
-  44%{
+  31%{
     left: 50%;
     transform: translate(-50%, -50%);
   }
 
-  58%{
-    left: 44%;
-    transform: translate(-50%, -50%);
-  }
-
-  70%{
-    left: 38%;
-    transform: translate(-50%, -50%);
-  }
-
-  82%{
-    left: 24%;
+  69%{
+    left: 50%;
     transform: translate(-50%, -50%);
   }
 
   100%{
-    left: -14%;
+    left: -16%;
     transform: translate(-50%, -50%);
   }
 }
