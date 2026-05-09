@@ -1142,7 +1142,8 @@
   user-select: none;
   animation-duration: 5200ms;
   animation-timing-function: linear;
-  animation-iteration-count: infinite;
+  animation-iteration-count: 1;
+  animation-fill-mode: both;
   will-change: left, transform;
 }
 
@@ -1168,12 +1169,21 @@
 .title-zoo-pet-bobber{
   display: inline-block;
   transform-origin: center bottom;
-  animation: titleZooPetHopDance 5200ms linear infinite;
+  animation: titleZooPetHopDance 5200ms linear 1 both;
   will-change: transform;
 }
 
 .title-zoo-pet-bobber .biblopet-visual{
   transform-origin: center bottom;
+}
+
+.title-zoo-pet-visitor.is-resetting{
+  opacity: 0;
+  animation: none !important;
+}
+
+.title-zoo-pet-visitor.is-resetting .title-zoo-pet-bobber{
+  animation: none !important;
 }
 
 /* Full-cycle bob:
