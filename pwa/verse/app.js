@@ -67,21 +67,17 @@ let titleZooPetVerseId = "";
 let titleZooPetDirection = Math.random() < 0.5 ? "from-left" : "from-right";
 
 const TITLE_ZOO_PET_DANCE_CLASSES = [
-  "dance-squish-joy",
-  "dance-nod",
-  "dance-shimmy"
+  "dance-nod"
 ];
 
-let titleZooPetDanceClass = pickTitleZooPetDanceClass();
+let titleZooPetDanceClass = "dance-nod";
 
 function pickTitleZooPetDirection(){
   return Math.random() < 0.5 ? "from-left" : "from-right";
 }
 
 function pickTitleZooPetDanceClass(){
-  return TITLE_ZOO_PET_DANCE_CLASSES[
-    Math.floor(Math.random() * TITLE_ZOO_PET_DANCE_CLASSES.length)
-  ];
+  return "dance-nod";
 }
 
 function getTitleZooScene(){
