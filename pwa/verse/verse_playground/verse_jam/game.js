@@ -27,17 +27,126 @@
   const INTRO_WORDS = ["tap", "the", "words", "to", "the", "beat"];
   const BASE_MELODY = [60, 62, 64, 67, 69, 72, 69, 67, 64, 62, 60, 67];
   const PAD_NOTES = [48, 55, 60];
+  const SAMPLE_BASE_URL = "./sounds/";
+
+  const DRUM_LOOPS = {
+    basic: {
+      id: "chip_bounce_basic",
+      bpm: 92,
+      beatsPerBar: 4,
+      stepsPerBeat: 4,
+      lengthBeats: 4,
+      samples: {
+        kick: "kick-10.mp3",
+        snare: "openhat-6.mp3",
+        hat: "hihat-2.mp3",
+        extra: "perc-9.mp3"
+      },
+      events: [
+        { beat: 0, sound: "hat", volume: 0.2 },
+        { beat: 0, sound: "kick", volume: 1 },
+        { beat: 0.5, sound: "hat", volume: 0.2 },
+        { beat: 1, sound: "hat", volume: 0.2 },
+        { beat: 1, sound: "snare", volume: 1 },
+        { beat: 1.5, sound: "hat", volume: 0.2 },
+        { beat: 2, sound: "hat", volume: 0.2 },
+        { beat: 2, sound: "kick", volume: 1 },
+        { beat: 2.5, sound: "hat", volume: 0.2 },
+        { beat: 3, sound: "hat", volume: 0.2 },
+        { beat: 3, sound: "snare", volume: 1 },
+        { beat: 3.5, sound: "hat", volume: 0.2 }
+      ]
+    },
+    middle: {
+      id: "chip_bounce_middle",
+      bpm: 92,
+      beatsPerBar: 4,
+      stepsPerBeat: 4,
+      lengthBeats: 4,
+      samples: {
+        kick: "kick-10.mp3",
+        snare: "openhat-6.mp3",
+        hat: "hihat-2.mp3",
+        extra: "perc-9.mp3"
+      },
+      events: [
+        { beat: 0, sound: "hat", volume: 0.2 },
+        { beat: 0, sound: "kick", volume: 1 },
+        { beat: 0.5, sound: "hat", volume: 0.2 },
+        { beat: 1, sound: "hat", volume: 0.2 },
+        { beat: 1, sound: "snare", volume: 1 },
+        { beat: 1.5, sound: "hat", volume: 0.2 },
+        { beat: 1.5, sound: "kick", volume: 1 },
+        { beat: 2, sound: "hat", volume: 0.2 },
+        { beat: 2, sound: "kick", volume: 1 },
+        { beat: 2.5, sound: "hat", volume: 0.2 },
+        { beat: 3, sound: "hat", volume: 0.2 },
+        { beat: 3, sound: "snare", volume: 1 },
+        { beat: 3.5, sound: "hat", volume: 0.2 },
+        { beat: 3.75, sound: "snare", volume: 1 }
+      ]
+    },
+    final: {
+      id: "chip_bounce_final",
+      bpm: 92,
+      beatsPerBar: 4,
+      stepsPerBeat: 4,
+      lengthBeats: 4,
+      samples: {
+        kick: "kick-10.mp3",
+        snare: "openhat-6.mp3",
+        hat: "hihat-2.mp3",
+        extra: "perc-9.mp3"
+      },
+      events: [
+        { beat: 0, sound: "hat", volume: 0.2 },
+        { beat: 0, sound: "kick", volume: 1 },
+        { beat: 0.5, sound: "hat", volume: 0.2 },
+        { beat: 0.75, sound: "kick", volume: 1 },
+        { beat: 1, sound: "hat", volume: 0.2 },
+        { beat: 1, sound: "kick", volume: 1 },
+        { beat: 1, sound: "snare", volume: 1 },
+        { beat: 1.5, sound: "hat", volume: 0.2 },
+        { beat: 1.75, sound: "kick", volume: 1 },
+        { beat: 2, sound: "hat", volume: 0.2 },
+        { beat: 2.5, sound: "hat", volume: 0.2 },
+        { beat: 2.5, sound: "kick", volume: 1 },
+        { beat: 3, sound: "hat", volume: 0.2 },
+        { beat: 3, sound: "snare", volume: 1 },
+        { beat: 3.5, sound: "extra", volume: 0.7 },
+        { beat: 3.75, sound: "snare", volume: 1 }
+      ]
+    }
+  };
+
   const ROUND_CONFIGS = [
-    { name: "Warmup", bpm: 88, complexity: 0, cue: "soft", explosion: 1, echo: false, pad: false },
-    { name: "Jam", bpm: 88, complexity: 1, cue: "rainbow", explosion: 1.35, echo: true, pad: true },
-    { name: "Faster", bpm: 96, complexity: 2, cue: "rainbow", explosion: 1.55, echo: true, pad: true },
-    { name: "Finale", bpm: 104, complexity: 3, cue: "rainbow", explosion: 1.85, echo: true, pad: true }
+    { name: "Warmup", bpm: 92, loop: "basic", cue: "soft", explosion: 1, echo: false, pad: false },
+    { name: "Jam", bpm: 92, loop: "middle", cue: "rainbow", explosion: 1.35, echo: true, pad: true },
+    { name: "Faster", bpm: 100, loop: "final", cue: "rainbow", explosion: 1.55, echo: true, pad: true },
+    { name: "Finale", bpm: 108, loop: "final", cue: "rainbow", explosion: 1.85, echo: true, pad: true }
   ];
+
+  const CHUNK_RHYTHMS = {
+    1: [[0]],
+    2: [[0, 1]],
+    3: [[0, 1, 2], [0, 2, 3]],
+    4: [[0, 1, 2, 3], [0, 2, 4, 6]],
+    5: [[0, 2, 4, 5, 6], [0, 3, 4, 5, 6], [0, 1, 4, 5, 6]],
+    6: [[0, 1, 2, 4, 5, 6], [0, 1, 3, 4, 5, 6], [0, 2, 4, 5, 6, 7]],
+    7: [[0, 1, 2, 4, 5, 6, 7], [0, 1, 2, 3, 5, 6, 7], [0, 1, 3, 4, 5, 6, 7]],
+    8: [[0, 1, 2, 3, 4, 5, 6, 7], [0, 2, 4, 6, 8, 10, 12, 14]]
+  };
+
+  const PERFECT_BEAT_TOLERANCE = 0.24;
 
   let selectedMode = null;
   let muted = false;
   let audioCtx = null;
   let masterGain = null;
+  let compressor = null;
+  let sampleGain = null;
+  let sampleLoadPromise = null;
+  const sampleBuffers = {};
   let beatTimer = null;
   let padTimer = null;
 
@@ -55,6 +164,8 @@
     chunkIndex: 0,
     roundIndex: 0,
     currentButtons: [],
+    currentRhythmOffsets: [],
+    correctTapBeats: [],
     acceptingInput: false,
     menuOpen: false,
     helpOpen: false,
@@ -150,6 +261,47 @@
 
   function currentRound(){
     return ROUND_CONFIGS[Math.min(state.roundIndex, ROUND_CONFIGS.length - 1)];
+  }
+
+  function currentLoop(){
+    return DRUM_LOOPS[currentRound().loop] || DRUM_LOOPS.basic;
+  }
+
+  function pickPatternForCount(count){
+    const patterns = CHUNK_RHYTHMS[Math.max(1, Math.min(8, count))] || CHUNK_RHYTHMS[4];
+    return patterns[Math.floor(Math.random() * patterns.length)].slice();
+  }
+
+  function measureAlignedLength(offsets){
+    const last = offsets.length ? Math.max(...offsets) : 0;
+    return Math.ceil((last + 1) / 4) * 4;
+  }
+
+  function makeRhythmOffsets(count){
+    if (count <= 8) return pickPatternForCount(count);
+
+    const offsets = [];
+    let remaining = count;
+    let base = 0;
+
+    while (remaining > 0){
+      const take = Math.min(8, remaining);
+      const pattern = pickPatternForCount(take);
+      pattern.forEach(offset => offsets.push(base + offset));
+      base += measureAlignedLength(pattern);
+      remaining -= take;
+    }
+
+    return offsets;
+  }
+
+  function beatPositionNow(){
+    if (!audioCtx || !state.musicStartTime) return 0;
+    return (audioCtx.currentTime - state.musicStartTime) / secondsPerBeat();
+  }
+
+  function nearestBeat(value){
+    return Math.round(value);
   }
 
   function secondsPerBeat(){
@@ -317,20 +469,59 @@
   async function ensureAudio(){
     if (!audioCtx){
       audioCtx = new AudioContext();
+
       masterGain = audioCtx.createGain();
-      masterGain.gain.value = muted ? 0 : 0.45;
-      masterGain.connect(audioCtx.destination);
+      masterGain.gain.value = muted ? 0 : 0.72;
+
+      sampleGain = audioCtx.createGain();
+      sampleGain.gain.value = 1.05;
+
+      compressor = audioCtx.createDynamicsCompressor();
+      compressor.threshold.value = -18;
+      compressor.knee.value = 24;
+      compressor.ratio.value = 8;
+      compressor.attack.value = 0.003;
+      compressor.release.value = 0.18;
+
+      sampleGain.connect(masterGain);
+      masterGain.connect(compressor);
+      compressor.connect(audioCtx.destination);
     }
 
     if (audioCtx.state !== "running"){
       await audioCtx.resume();
     }
+
+    await loadSampleBuffers();
+  }
+
+  async function loadSampleBuffers(){
+    if (!audioCtx) return;
+    if (sampleLoadPromise) return sampleLoadPromise;
+
+    const filenames = [...new Set(Object.values(DRUM_LOOPS).flatMap(loop => Object.values(loop.samples || {})))];
+
+    sampleLoadPromise = Promise.all(filenames.map(async (filename) => {
+      if (!filename || sampleBuffers[filename]) return;
+
+      try {
+        const res = await fetch(`${SAMPLE_BASE_URL}${filename}`, { cache: "force-cache" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const arrayBuffer = await res.arrayBuffer();
+        sampleBuffers[filename] = await audioCtx.decodeAudioData(arrayBuffer);
+      } catch (err){
+        console.warn(`Verse Jam could not load drum sample: ${filename}`, err);
+        sampleBuffers[filename] = null;
+      }
+    }));
+
+    return sampleLoadPromise;
   }
 
   function setMuted(value){
     muted = !!value;
     if (masterGain){
-      masterGain.gain.setValueAtTime(muted ? 0 : 0.45, audioCtx.currentTime);
+      masterGain.gain.setValueAtTime(muted ? 0 : 0.72, audioCtx.currentTime);
     }
   }
 
@@ -356,7 +547,32 @@
     osc.stop(when + duration + 0.03);
   }
 
-  function playDrum(sound, when){
+  function playSample(filename, when, volume = 1){
+    if (!audioCtx || !sampleGain || muted || !filename) return false;
+    const buffer = sampleBuffers[filename];
+    if (!buffer) return false;
+
+    const source = audioCtx.createBufferSource();
+    const gain = audioCtx.createGain();
+
+    source.buffer = buffer;
+    gain.gain.setValueAtTime(Math.max(0, volume), when);
+
+    source.connect(gain);
+    gain.connect(sampleGain);
+    source.start(when);
+    return true;
+  }
+
+  function playDrum(sound, when, volume = 1){
+    const loop = currentLoop();
+    const filename = loop.samples?.[sound];
+
+    if (playSample(filename, when, volume)){
+      return;
+    }
+
+    // Fallback procedural blips if a sample is missing or still loading.
     if (!audioCtx || !masterGain || muted) return;
 
     if (sound === "kick"){
@@ -366,7 +582,7 @@
       osc.frequency.setValueAtTime(120, when);
       osc.frequency.exponentialRampToValueAtTime(48, when + 0.14);
       gain.gain.setValueAtTime(0.0001, when);
-      gain.gain.exponentialRampToValueAtTime(0.22, when + 0.006);
+      gain.gain.exponentialRampToValueAtTime(0.22 * volume, when + 0.006);
       gain.gain.exponentialRampToValueAtTime(0.0001, when + 0.18);
       osc.connect(gain);
       gain.connect(masterGain);
@@ -375,19 +591,28 @@
       return;
     }
 
-    if (sound === "snare" || sound === "hat"){
+    if (sound === "snare" || sound === "hat" || sound === "extra"){
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.type = "square";
-      osc.frequency.setValueAtTime(sound === "snare" ? 185 : 520, when);
+      osc.frequency.setValueAtTime(sound === "snare" ? 185 : sound === "extra" ? 320 : 520, when);
       gain.gain.setValueAtTime(0.0001, when);
-      gain.gain.exponentialRampToValueAtTime(sound === "snare" ? 0.09 : 0.045, when + 0.004);
+      gain.gain.exponentialRampToValueAtTime((sound === "snare" ? 0.09 : 0.045) * volume, when + 0.004);
       gain.gain.exponentialRampToValueAtTime(0.0001, when + (sound === "snare" ? 0.11 : 0.045));
       osc.connect(gain);
       gain.connect(masterGain);
       osc.start(when);
       osc.stop(when + 0.13);
     }
+  }
+
+  function scheduleDrumLoopBar(barStartTime){
+    const loop = currentLoop();
+    const beatSeconds = secondsPerBeat();
+
+    (loop.events || []).forEach((event) => {
+      playDrum(event.sound, barStartTime + event.beat * beatSeconds, event.volume ?? 1);
+    });
   }
 
   function playWordNote(button, opts = {}){
@@ -446,22 +671,9 @@
 
   function scheduleBeat(beatIndex, when){
     const beatInBar = beatIndex % 4;
-    const complexity = currentRound().complexity;
 
-    if (beatInBar === 0) playDrum("kick", when);
-    else if (beatInBar === 2) playDrum(complexity >= 1 ? "snare" : "hat", when);
-    else playDrum("hat", when);
-
-    if (complexity >= 1){
-      playDrum("hat", when + secondsPerBeat() / 2);
-    }
-    if (complexity >= 2 && beatInBar === 3){
-      playDrum("hat", when + secondsPerBeat() * 0.75);
-    }
-    if (complexity >= 3 && beatInBar === 0){
-      playTone({ midi: 72, when: when + secondsPerBeat() * 0.25, duration: 0.08, volume: 0.035, type: "square" });
-      playTone({ midi: 76, when: when + secondsPerBeat() * 0.5, duration: 0.08, volume: 0.035, type: "square" });
-      playTone({ midi: 79, when: when + secondsPerBeat() * 0.75, duration: 0.08, volume: 0.035, type: "square" });
+    if (beatInBar === 0){
+      scheduleDrumLoopBar(when);
     }
 
     const delay = Math.max(0, (when - audioCtx.currentTime) * 1000);
@@ -652,6 +864,8 @@
     state.phase = "spawn_chunk";
     state.acceptingInput = false;
     state.currentButtons = makeChunkButtons();
+    state.currentRhythmOffsets = makeRhythmOffsets(state.currentButtons.length);
+    state.correctTapBeats = [];
 
     if (!state.currentButtons.length){
       await handleRoundOrEnd();
@@ -664,10 +878,19 @@
 
     await sleep(nextMeasureDelayMs());
 
-    for (const button of state.currentButtons){
+    let lastOffset = 0;
+    for (let i = 0; i < state.currentButtons.length; i += 1){
+      const button = state.currentButtons[i];
+      const offset = state.currentRhythmOffsets[i] ?? i;
+      const waitBeats = i === 0 ? offset : Math.max(0, offset - lastOffset);
+
+      if (waitBeats > 0){
+        await sleep(waitBeats * secondsPerBeat() * 1000);
+      }
+
       spawnButton(button);
-      playTone({ midi: button.note, when: audioCtx.currentTime, duration: 0.12, volume: 0.08, type: "triangle" });
-      await sleep(secondsPerBeat() * 1000);
+      playTone({ midi: button.note, when: audioCtx.currentTime, duration: 0.12, volume: 0.11, type: "triangle" });
+      lastOffset = offset;
     }
 
     state.phase = "play_chunk";
@@ -685,7 +908,10 @@
     btn.type = "button";
     btn.textContent = button.label;
     btn.dataset.segmentIndex = String(button.segmentIndex);
-    btn.onclick = () => handleButtonTap(button.id);
+    btn.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      handleButtonTap(button.id);
+    });
     stack.appendChild(btn);
     setTimeout(() => btn.classList.remove("is-spawning"), 280);
     addFloatNote(btn, "♪");
@@ -701,23 +927,78 @@
     });
   }
 
+  function getCorrectSequenceIndex(segmentIndex){
+    const ordered = state.currentButtons
+      .map(item => item.segmentIndex)
+      .sort((a, b) => a - b);
+    return ordered.indexOf(segmentIndex);
+  }
+
+  function recordCorrectTap(button){
+    const sequenceIndex = getCorrectSequenceIndex(button.segmentIndex);
+    const beat = beatPositionNow();
+    state.correctTapBeats.push({ sequenceIndex, beat });
+  }
+
+  function didTapChunkPerfectly(){
+    const taps = state.correctTapBeats
+      .slice()
+      .sort((a, b) => a.sequenceIndex - b.sequenceIndex);
+
+    if (!taps.length) return false;
+
+    const expected = state.currentRhythmOffsets;
+    if (!expected.length || taps.length !== expected.length) return false;
+
+    const firstExpected = expected[0] || 0;
+    const startBeat = nearestBeat(taps[0].beat - firstExpected);
+
+    return taps.every((tap) => {
+      const target = startBeat + (expected[tap.sequenceIndex] ?? tap.sequenceIndex);
+      return Math.abs(tap.beat - target) <= PERFECT_BEAT_TOLERANCE;
+    });
+  }
+
+  function showPerfectSplash(){
+    const board = document.getElementById("versejamBoard");
+    if (!board) return;
+
+    const splash = document.createElement("div");
+    splash.className = "versejam-perfect-splash";
+    splash.textContent = state.roundIndex >= 1 ? "GROOVY!" : "PERFECT!";
+    board.appendChild(splash);
+
+    playTone({ midi: 84, when: audioCtx.currentTime, duration: 0.12, volume: 0.12, type: "square" });
+    playTone({ midi: 88, when: audioCtx.currentTime + 0.08, duration: 0.13, volume: 0.11, type: "square" });
+    playTone({ midi: 91, when: audioCtx.currentTime + 0.16, duration: 0.15, volume: 0.10, type: "square" });
+
+    splash.addEventListener("animationend", () => splash.remove(), { once: true });
+  }
+
   async function handleButtonTap(buttonId){
     if (!state.acceptingInput || state.busy) return;
 
     const button = state.currentButtons.find(item => item.id === buttonId);
     const btnEl = document.getElementById(buttonId);
     if (!button || !btnEl) return;
+    if (btnEl.dataset.vjPressed === "true") return;
+
+    btnEl.dataset.vjPressed = "true";
 
     if (button.segmentIndex !== state.progressIndex){
       btnEl.classList.remove("is-wrong");
       void btnEl.offsetWidth;
       btnEl.classList.add("is-wrong");
       playNoNote();
+      setTimeout(() => {
+        if (btnEl && btnEl.isConnected) btnEl.dataset.vjPressed = "";
+      }, 240);
       return;
     }
 
     state.busy = true;
     button.removing = true;
+    recordCorrectTap(button);
     btnEl.classList.remove("is-next", "is-rainbow-next");
     btnEl.classList.add("is-removing");
     playWordNote(button);
@@ -734,10 +1015,12 @@
 
     const phase = getPhase();
     if (state.currentButtons.length === 0 || phase !== "words"){
+      const perfect = didTapChunkPerfectly();
       if (phase === "words") state.chunkIndex += 1;
       state.busy = false;
       state.acceptingInput = false;
-      await sleep(260);
+      if (perfect) showPerfectSplash();
+      await sleep(perfect ? 560 : 260);
       await startNextPlayableGroup();
       return;
     }

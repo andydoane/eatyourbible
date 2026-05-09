@@ -333,3 +333,38 @@ body{
   .versejam-button-stack{gap:7px;}
   .versejam-word-btn{padding:11px 12px 13px; border-radius:20px;}
 }
+
+.versejam-word-btn{
+  touch-action:manipulation;
+  user-select:none;
+  -webkit-user-select:none;
+}
+
+.versejam-perfect-splash{
+  position:absolute;
+  left:50%;
+  top:50%;
+  z-index:30;
+  pointer-events:none;
+  transform:translate(-50%,-50%) scale(.35) rotate(-5deg);
+  border-radius:28px;
+  padding:18px 26px 20px;
+  font-size:clamp(2rem,13vw,4.25rem);
+  line-height:.9;
+  font-weight:900;
+  letter-spacing:.02em;
+  color:#271841;
+  text-shadow:0 2px 0 rgba(255,255,255,.45);
+  background:linear-gradient(90deg,#ff7ad9,#ffe27a,#8df7ff,#9dff8d,#ff7ad9);
+  background-size:260% 100%;
+  box-shadow:0 20px 48px rgba(0,0,0,.34),0 0 0 5px rgba(255,255,255,.25),inset 0 -8px 0 rgba(0,0,0,.12);
+  animation:vj-perfect-splash 900ms cubic-bezier(.18,1.35,.3,1) forwards;
+}
+
+@keyframes vj-perfect-splash{
+  0%{opacity:0; transform:translate(-50%,-50%) scale(.25) rotate(-9deg); background-position:0 50%;}
+  16%{opacity:1; transform:translate(-50%,-50%) scale(1.12) rotate(3deg);}
+  35%{transform:translate(-50%,-50%) scale(.98) rotate(-2deg);}
+  72%{opacity:1; transform:translate(-50%,-50%) scale(1.02) rotate(1deg); background-position:180% 50%;}
+  100%{opacity:0; transform:translate(-50%,-68%) scale(.72) rotate(7deg); background-position:260% 50%;}
+}
