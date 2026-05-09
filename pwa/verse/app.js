@@ -1424,8 +1424,14 @@ function bindTitleZooPetRotation(rootEl){
   const visitor = rootEl?.querySelector?.(".title-zoo-pet-visitor");
   if (!visitor) return;
 
-  visitor.addEventListener("animationiteration", () => {
+  visitor.addEventListener("animationiteration", (event) => {
     if (State.screen !== Screen.TITLE) return;
+
+    const isRoamAnimation =
+      event.animationName === "titleZooPetRoamFromLeft" ||
+      event.animationName === "titleZooPetRoamFromRight";
+
+    if (!isRoamAnimation) return;
 
     const nextPet = advanceTitleZooPet();
     if (!nextPet) return;
