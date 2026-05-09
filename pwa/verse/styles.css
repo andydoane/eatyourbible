@@ -1137,7 +1137,7 @@
   z-index: 1;
   font-size: 45cqh;
   line-height: 1;
-  transform: translate(-50%, -50%);
+  transform: translate(-50%, var(--title-zoo-pet-ground-shift, -100%));
   filter: drop-shadow(0 7px 0 rgba(0,0,0,0.20));
   user-select: none;
   animation-duration: 5200ms;
@@ -1626,6 +1626,8 @@
    8%  -> 6%
    16% -> 28%
    24% -> 50%
+
+
 */
 @keyframes titleZooPetRoamFromLeft{
   0%{
@@ -1680,45 +1682,47 @@
    16% -> 72%
    24% -> 50%
 */
+
+
 @keyframes titleZooPetRoamFromRight{
   0%{
     left: 116%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, var(--title-zoo-pet-ground-shift, -100%));
   }
 
   8%{
     left: 94%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, var(--title-zoo-pet-ground-shift, -100%));
   }
 
   16%{
     left: 72%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, var(--title-zoo-pet-ground-shift, -100%));
   }
 
   24%{
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, var(--title-zoo-pet-ground-shift, -100%));
   }
 
   76%{
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, var(--title-zoo-pet-ground-shift, -100%));
   }
 
   84%{
     left: 28%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, var(--title-zoo-pet-ground-shift, -100%));
   }
 
   92%{
     left: 6%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, var(--title-zoo-pet-ground-shift, -100%));
   }
 
   100%{
     left: -16%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, var(--title-zoo-pet-ground-shift, -100%));
   }
 }
 
@@ -1727,7 +1731,7 @@
   .title-zoo-pet-visitor{
     animation: none;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, var(--title-zoo-pet-ground-shift, -100%));
   }
 
 .title-zoo-pet-motion,
