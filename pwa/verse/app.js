@@ -64,6 +64,11 @@ const TITLE_ZOO_SCENE_COUNT = 8;
 const titleZooSceneIndex = Math.floor(Math.random() * TITLE_ZOO_SCENE_COUNT) + 1;
 
 let titleZooPetVerseId = "";
+let titleZooPetDirection = Math.random() < 0.5 ? "from-left" : "from-right";
+
+function pickTitleZooPetDirection(){
+  return Math.random() < 0.5 ? "from-left" : "from-right";
+}
 
 function getTitleZooScene(){
   return {
@@ -137,11 +142,13 @@ function titleZooPetVisitorHtml(pet){
 
   return `
     <div
-      class="title-zoo-pet-visitor"
+      class="title-zoo-pet-visitor ${escapeHtml(titleZooPetDirection)}"
       title="${escapeHtml(pet.name)}"
       data-verse-id="${escapeHtml(pet.verseId)}"
     >
-      ${bibloPetVisualHtml(pet.verseId, pet.emoji)}
+      <div class="title-zoo-pet-bobber">
+        ${bibloPetVisualHtml(pet.verseId, pet.emoji)}
+      </div>
     </div>
   `;
 }
@@ -211,9 +218,19 @@ function updateTitleZooPetVisitor(rootEl, pet){
   const visitor = rootEl.querySelector(".title-zoo-pet-visitor");
   if (!visitor) return;
 
+  titleZooPetDirection = pickTitleZooPetDirection();
+
+  visitor.classList.remove("from-left", "from-right");
+  visitor.classList.add(titleZooPetDirection);
+
   visitor.setAttribute("title", pet.name);
   visitor.setAttribute("data-verse-id", pet.verseId);
-  visitor.innerHTML = bibloPetVisualHtml(pet.verseId, pet.emoji);
+
+  visitor.innerHTML = `
+    <div class="title-zoo-pet-bobber">
+      ${bibloPetVisualHtml(pet.verseId, pet.emoji)}
+    </div>
+  `;
 
   updateTitleZooVisitButton(rootEl, pet);
 }
