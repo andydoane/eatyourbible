@@ -149,6 +149,8 @@
   const sampleBuffers = {};
   let beatTimer = null;
   let padTimer = null;
+  let musicGeneration = 0;
+  const activeAudioSources = new Set();
 
   const state = {
     screen: "intro",
@@ -191,6 +193,31 @@
   function clearSleeps(){
     state.sleepIds.forEach(id => clearTimeout(id));
     state.sleepIds = [];
+  }
+
+  function waitUntilAudioTime(targetTime){
+    if (!audioCtx) return Promise.resolve();
+    return sleep(Math.max(0, (targetTime - audioCtx.currentTime) * 1000));
+  }
+
+  function trackAudioSource(source){
+    if (!source) return source;
+
+    activeAudioSources.add(source);
+    source.addEventListener?.("ended", () => {
+      activeAudioSources.delete(source);
+    }, { once: true });
+
+    return source;
+  }
+
+  function stopActiveAudioSources(){
+    activeAudioSources.forEach((source) => {
+      try {
+        source.stop(0);
+      } catch (err){}
+    });
+    activeAudioSources.clear();
   }
 
   function escapeHtml(str){
@@ -543,11 +570,13 @@
 
     osc.connect(gain);
     gain.connect(masterGain);
+    trackAudioSource(osc);
     osc.start(when);
     osc.stop(when + duration + 0.03);
   }
 
-  function playSample(filename, when, volume = 1){
+  function playSample(filename, when, volume = 1, generation = musicGeneration){
+    if (generation !== musicGeneration) return false;
     if (!audioCtx || !sampleGain || muted || !filename) return false;
     const buffer = sampleBuffers[filename];
     if (!buffer) return false;
@@ -560,15 +589,17 @@
 
     source.connect(gain);
     gain.connect(sampleGain);
+    trackAudioSource(source);
     source.start(when);
     return true;
   }
 
-  function playDrum(sound, when, volume = 1){
+  function playDrum(sound, when, volume = 1, generation = musicGeneration){
+    if (generation !== musicGeneration) return;
     const loop = currentLoop();
     const filename = loop.samples?.[sound];
 
-    if (playSample(filename, when, volume)){
+    if (playSample(filename, when, volume, generation)){
       return;
     }
 
@@ -586,6 +617,7 @@
       gain.gain.exponentialRampToValueAtTime(0.0001, when + 0.18);
       osc.connect(gain);
       gain.connect(masterGain);
+      trackAudioSource(osc);
       osc.start(when);
       osc.stop(when + 0.2);
       return;
@@ -601,17 +633,19 @@
       gain.gain.exponentialRampToValueAtTime(0.0001, when + (sound === "snare" ? 0.11 : 0.045));
       osc.connect(gain);
       gain.connect(masterGain);
+      trackAudioSource(osc);
       osc.start(when);
       osc.stop(when + 0.13);
     }
   }
 
-  function scheduleDrumLoopBar(barStartTime){
+  function scheduleDrumLoopBar(barStartTime, generation = musicGeneration){
+    if (generation !== musicGeneration) return;
     const loop = currentLoop();
     const beatSeconds = secondsPerBeat();
 
     (loop.events || []).forEach((event) => {
-      playDrum(event.sound, barStartTime + event.beat * beatSeconds, event.volume ?? 1);
+      playDrum(event.sound, barStartTime + event.beat * beatSeconds, event.volume ?? 1, generation);
     });
   }
 
@@ -633,7 +667,9 @@
     playTone({ midi: 38, when: now + 0.07, duration: 0.13, volume: 0.08, type: "sine" });
   }
 
-  function stopMusic(){
+  function stopMusic({ stopAudio = true } = {}){
+    musicGeneration += 1;
+
     if (beatTimer){
       clearInterval(beatTimer);
       beatTimer = null;
@@ -642,19 +678,25 @@
       clearInterval(padTimer);
       padTimer = null;
     }
+
+    if (stopAudio){
+      stopActiveAudioSources();
+    }
   }
 
-  function startBeatLoop(){
-    stopMusic();
+  function startBeatLoop({ cleanRestart = true } = {}){
+    stopMusic({ stopAudio: cleanRestart });
+    const generation = musicGeneration;
+
     state.beatCount = 0;
-    state.musicStartTime = audioCtx.currentTime + 0.04;
+    state.musicStartTime = audioCtx.currentTime + 0.08;
     state.nextScheduledBeatTime = state.musicStartTime;
 
     const tick = () => {
-      if (!audioCtx) return;
+      if (!audioCtx || generation !== musicGeneration) return;
       const lookAhead = 0.18;
       while (state.nextScheduledBeatTime < audioCtx.currentTime + lookAhead){
-        scheduleBeat(state.beatCount, state.nextScheduledBeatTime);
+        scheduleBeat(state.beatCount, state.nextScheduledBeatTime, generation);
         state.nextScheduledBeatTime += secondsPerBeat();
         state.beatCount += 1;
       }
@@ -664,23 +706,28 @@
     beatTimer = setInterval(tick, 45);
 
     if (currentRound().pad){
-      schedulePad();
-      padTimer = setInterval(schedulePad, secondsPerBeat() * 8 * 1000);
+      schedulePad(generation);
+      padTimer = setInterval(() => schedulePad(generation), secondsPerBeat() * 8 * 1000);
     }
   }
 
-  function scheduleBeat(beatIndex, when){
+  function scheduleBeat(beatIndex, when, generation = musicGeneration){
+    if (generation !== musicGeneration) return;
     const beatInBar = beatIndex % 4;
 
     if (beatInBar === 0){
-      scheduleDrumLoopBar(when);
+      scheduleDrumLoopBar(when, generation);
     }
 
     const delay = Math.max(0, (when - audioCtx.currentTime) * 1000);
-    setTimeout(() => pulseUi(beatInBar === 0), delay);
+    const timeoutId = setTimeout(() => {
+      if (generation === musicGeneration) pulseUi(beatInBar === 0);
+    }, delay);
+    state.sleepIds.push(timeoutId);
   }
 
-  function schedulePad(){
+  function schedulePad(generation = musicGeneration){
+    if (generation !== musicGeneration) return;
     if (!audioCtx || muted || !currentRound().pad) return;
     const when = audioCtx.currentTime + 0.06;
     PAD_NOTES.forEach((midi) => {
@@ -704,13 +751,17 @@
     }, 100);
   }
 
-  function nextMeasureDelayMs(){
-    if (!audioCtx || !state.musicStartTime) return 0;
+  function nextMeasureStartTime(){
+    if (!audioCtx || !state.musicStartTime) return audioCtx?.currentTime || 0;
     const elapsed = Math.max(0, audioCtx.currentTime - state.musicStartTime);
     const beat = elapsed / secondsPerBeat();
     const nextBarBeat = Math.ceil((beat + 0.001) / 4) * 4;
-    const targetTime = state.musicStartTime + nextBarBeat * secondsPerBeat();
-    return Math.max(0, (targetTime - audioCtx.currentTime) * 1000);
+    return state.musicStartTime + nextBarBeat * secondsPerBeat();
+  }
+
+  function nextMeasureDelayMs(){
+    if (!audioCtx || !state.musicStartTime) return 0;
+    return Math.max(0, (nextMeasureStartTime() - audioCtx.currentTime) * 1000);
   }
 
   function renderShellGame(){
@@ -836,28 +887,41 @@
 
     area.innerHTML = `<div class="versejam-intro-stack" id="versejamIntroStack"></div>`;
     const stack = document.getElementById("versejamIntroStack");
+    if (!stack) return;
 
-    await sleep(nextMeasureDelayMs());
+    const introOffsets = makeRhythmOffsets(INTRO_WORDS.length);
+    const startAt = nextMeasureStartTime();
 
-    for (const word of INTRO_WORDS){
-      if (!stack || state.screen !== "game") return;
+    for (let i = 0; i < INTRO_WORDS.length; i += 1){
+      if (state.screen !== "game") return;
+      const offset = introOffsets[i] ?? i;
+      const eventTime = startAt + offset * secondsPerBeat();
+      await waitUntilAudioTime(eventTime);
+
+      if (state.screen !== "game") return;
       const el = document.createElement("div");
       el.className = "versejam-intro-word is-in";
-      el.textContent = word;
+      el.textContent = INTRO_WORDS[i];
       stack.appendChild(el);
-      playTone({ midi: 72 + (stack.children.length % 3) * 2, when: audioCtx.currentTime, duration: 0.12, volume: 0.08, type: "triangle" });
-      await sleep(secondsPerBeat() * 1000);
+      playTone({ midi: 72 + (i % 3) * 2, when: audioCtx.currentTime, duration: 0.12, volume: 0.08, type: "triangle" });
     }
 
-    await sleep(secondsPerBeat() * 2 * 1000);
+    await waitUntilAudioTime(nextMeasureStartTime() + secondsPerBeat() * 2);
 
-    const children = Array.from(stack?.children || []);
-    for (const child of children){
-      child.classList.remove("is-in");
-      child.classList.add("is-out");
+    const children = Array.from(stack.children || []);
+    const outStart = nextMeasureStartTime();
+    for (let i = 0; i < children.length; i += 1){
+      if (state.screen !== "game") return;
+      const offset = introOffsets[i] ?? i;
+      const eventTime = outStart + offset * secondsPerBeat();
+      await waitUntilAudioTime(eventTime);
+
+      children[i].classList.remove("is-in");
+      children[i].classList.add("is-out");
       playTone({ midi: 60, when: audioCtx.currentTime, duration: 0.08, volume: 0.05, type: "triangle" });
-      await sleep(secondsPerBeat() * 1000);
     }
+
+    await waitUntilAudioTime(nextMeasureStartTime());
   }
 
   async function startNextPlayableGroup(){
@@ -876,21 +940,16 @@
     if (!area) return;
     area.innerHTML = `<div class="versejam-button-stack" id="versejamButtonStack"></div>`;
 
-    await sleep(nextMeasureDelayMs());
+    const spawnStart = nextMeasureStartTime();
 
-    let lastOffset = 0;
     for (let i = 0; i < state.currentButtons.length; i += 1){
       const button = state.currentButtons[i];
       const offset = state.currentRhythmOffsets[i] ?? i;
-      const waitBeats = i === 0 ? offset : Math.max(0, offset - lastOffset);
-
-      if (waitBeats > 0){
-        await sleep(waitBeats * secondsPerBeat() * 1000);
-      }
+      await waitUntilAudioTime(spawnStart + offset * secondsPerBeat());
+      if (state.screen !== "game") return;
 
       spawnButton(button);
       playTone({ midi: button.note, when: audioCtx.currentTime, duration: 0.12, volume: 0.11, type: "triangle" });
-      lastOffset = offset;
     }
 
     state.phase = "play_chunk";
@@ -945,17 +1004,24 @@
       .slice()
       .sort((a, b) => a.sequenceIndex - b.sequenceIndex);
 
-    if (!taps.length) return false;
-
     const expected = state.currentRhythmOffsets;
     if (!expected.length || taps.length !== expected.length) return false;
 
+    // One-button groups are allowed to score if the press is close to any beat.
+    if (taps.length === 1){
+      return Math.abs(taps[0].beat - nearestBeat(taps[0].beat)) <= PERFECT_BEAT_TOLERANCE;
+    }
+
+    // For multi-word chunks, compare the rhythm relative to the first tap.
+    // This lets the player wait a measure or two and still get credit for playing
+    // the same pattern back correctly.
+    const firstTapBeat = taps[0].beat;
     const firstExpected = expected[0] || 0;
-    const startBeat = nearestBeat(taps[0].beat - firstExpected);
 
     return taps.every((tap) => {
-      const target = startBeat + (expected[tap.sequenceIndex] ?? tap.sequenceIndex);
-      return Math.abs(tap.beat - target) <= PERFECT_BEAT_TOLERANCE;
+      const actualOffset = tap.beat - firstTapBeat;
+      const expectedOffset = (expected[tap.sequenceIndex] ?? tap.sequenceIndex) - firstExpected;
+      return Math.abs(actualOffset - expectedOffset) <= PERFECT_BEAT_TOLERANCE;
     });
   }
 
