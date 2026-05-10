@@ -209,7 +209,7 @@ const volumeTuning = {
 
 function createAudioGraph(){
   if (audioCtx){
-    if (sampleGain) sampleGain.gain.value = volumeTuning.drumMaster;
+    if (sampleGain) sampleGain.gain.value = 1;
     if (masterGain) masterGain.gain.value = muted ? 0 : 0.72;
     return;
   }
@@ -226,7 +226,7 @@ function createAudioGraph(){
     masterGain.gain.value = muted ? 0 : 0.72;
 
     sampleGain = audioCtx.createGain();
-    sampleGain.gain.value = volumeTuning.drumMaster;
+    sampleGain.gain.value = 1;
 
     compressor = audioCtx.createDynamicsCompressor();
     compressor.threshold.value = -18;
@@ -822,6 +822,10 @@ function makeChunkButtons(){
     return 440 * Math.pow(2, (midi - 69) / 12);
   }
 
+function drumVolume(value = 1){
+  return Math.max(0, value) * volumeTuning.drumMaster;
+}
+
   function playTone({ midi = 60, when = audioCtx?.currentTime || 0, duration = 0.22, volume = 0.16, type = "triangle" } = {}){
     if (!audioCtx || !masterGain || muted) return;
 
@@ -851,7 +855,7 @@ function makeChunkButtons(){
     const gain = audioCtx.createGain();
 
     source.buffer = buffer;
-    gain.gain.setValueAtTime(Math.max(0, volume), when);
+    gain.gain.setValueAtTime(drumVolume(volume), when);
 
     source.connect(gain);
     gain.connect(sampleGain);
@@ -879,7 +883,7 @@ function makeChunkButtons(){
       osc.frequency.setValueAtTime(120, when);
       osc.frequency.exponentialRampToValueAtTime(48, when + 0.14);
       gain.gain.setValueAtTime(0.0001, when);
-      gain.gain.exponentialRampToValueAtTime(0.22 * volume, when + 0.006);
+      gain.gain.exponentialRampToValueAtTime(0.22 * drumVolume(volume), when + 0.006);
       gain.gain.exponentialRampToValueAtTime(0.0001, when + 0.18);
       osc.connect(gain);
       gain.connect(masterGain);
@@ -895,7 +899,7 @@ function makeChunkButtons(){
       osc.type = "square";
       osc.frequency.setValueAtTime(sound === "snare" ? 185 : sound === "extra" ? 320 : 520, when);
       gain.gain.setValueAtTime(0.0001, when);
-      gain.gain.exponentialRampToValueAtTime((sound === "snare" ? 0.09 : 0.045) * volume, when + 0.004);
+      gain.gain.exponentialRampToValueAtTime((sound === "snare" ? 0.09 : 0.045) * drumVolume(volume), when + 0.004);
       gain.gain.exponentialRampToValueAtTime(0.0001, when + (sound === "snare" ? 0.11 : 0.045));
       osc.connect(gain);
       gain.connect(masterGain);
@@ -1264,11 +1268,11 @@ function makeChunkButtons(){
     });
   }
 
-  function applyVolumeTuning(){
-    if (sampleGain && audioCtx){
-      sampleGain.gain.setValueAtTime(volumeTuning.drumMaster, audioCtx.currentTime);
-    }
+function applyVolumeTuning(){
+  if (sampleGain && audioCtx){
+    sampleGain.gain.setValueAtTime(1, audioCtx.currentTime);
   }
+}
 
   function testVolumeSound(kind){
     if (!audioCtx) return;
