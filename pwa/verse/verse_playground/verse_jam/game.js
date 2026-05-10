@@ -146,6 +146,12 @@
 // Let players tap a little before TAP! so a nearly-on-beat press is not ignored.
 const EARLY_INPUT_WINDOW_MS = 250;
 
+// Volume balance
+const COUNTDOWN_BEEP_VOLUME = 0.06;
+const COUNTDOWN_GO_VOLUME = 0.075;
+const ROUND_ONE_WORD_NOTE_VOLUME = 0.26;
+const DEFAULT_WORD_NOTE_VOLUME = 0.18;
+
   let selectedMode = null;
   let muted = false;
   let audioCtx = null;
@@ -784,7 +790,15 @@ function makeChunkButtons(){
     if (!audioCtx) return;
     const now = audioCtx.currentTime;
     const round = currentRound();
-    playTone({ midi: button.note, when: now, duration: 0.22, volume: opts.volume || 0.18, type: state.roundIndex >= 1 ? "square" : "triangle" });
+    const volume = opts.volume || (state.roundIndex === 0 ? ROUND_ONE_WORD_NOTE_VOLUME : DEFAULT_WORD_NOTE_VOLUME);
+
+  playTone({
+    midi: button.note,
+    when: now,
+    duration: 0.22,
+    volume,
+    type: state.roundIndex >= 1 ? "square" : "triangle"
+  });
 
     if (round.echo){
       playTone({ midi: button.note + 12, when: now + secondsPerBeat() / 2, duration: 0.16, volume: 0.075, type: "triangle" });
@@ -896,14 +910,14 @@ function makeChunkButtons(){
     const now = audioCtx.currentTime;
 
     if (step === "go"){
-      playTone({ midi: 72, when: now, duration: 0.11, volume: 0.12, type: "square" });
-      playTone({ midi: 76, when: now + 0.045, duration: 0.12, volume: 0.10, type: "square" });
-      playTone({ midi: 79, when: now + 0.09, duration: 0.14, volume: 0.10, type: "square" });
+      playTone({ midi: 72, when: now, duration: 0.11, volume: COUNTDOWN_GO_VOLUME, type: "square" });
+      playTone({ midi: 76, when: now + 0.045, duration: 0.12, volume: COUNTDOWN_GO_VOLUME * 0.85, type: "square" });
+      playTone({ midi: 79, when: now + 0.09, duration: 0.14, volume: COUNTDOWN_GO_VOLUME * 0.85, type: "square" });
       return;
     }
 
     const midi = step === 3 ? 60 : step === 2 ? 64 : 67;
-    playTone({ midi, when: now, duration: 0.12, volume: 0.105, type: "square" });
+    playTone({ midi, when: now, duration: 0.12, volume: COUNTDOWN_BEEP_VOLUME, type: "square" });
   }
 
   async function runEchoCountdown(){
@@ -1113,7 +1127,7 @@ function makeChunkButtons(){
       playTone({ midi: 72 + (i % 3) * 2, when: audioCtx.currentTime, duration: 0.12, volume: 0.08, type: "triangle" });
     }
 
-    await waitUntilAudioTime(nextMeasureStartTime() + secondsPerBeat() * 2);
+    await waitUntilAudioTime(nextMeasureStartTime());
 
     const children = Array.from(stack.children || []);
     const outStart = nextMeasureStartTime();
@@ -1379,7 +1393,7 @@ function cueNextButton(){
   async function showRoundTransition(){
     const area = document.getElementById("versejamMainArea");
     if (!area) return;
-    const message = state.roundIndex === 1 ? ["nice", "now", "jam"] : ["speed", "it", "up"];
+    const message = state.roundIndex === 1 ? ["nice!", "now", "jam"] : ["speed", "it", "up"];
     area.innerHTML = `<div class="versejam-intro-stack" id="versejamIntroStack"></div>`;
     const stack = document.getElementById("versejamIntroStack");
 
