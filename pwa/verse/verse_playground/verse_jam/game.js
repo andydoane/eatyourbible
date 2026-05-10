@@ -1404,7 +1404,8 @@ function cueNextButton(){
       el.className = "versejam-intro-word is-in";
       el.textContent = word;
       stack.appendChild(el);
-      playTone({ midi: 72 + stack.children.length * 2, when: audioCtx.currentTime, duration: 0.14, volume: 0.09, type: "square" });
+      const transitionNotes = [72, 76, 79]; // C, E, G — same C-centered sound as the main verse notes
+playTone({ midi: transitionNotes[(stack.children.length - 1) % transitionNotes.length], when: audioCtx.currentTime, duration: 0.14, volume: 0.09, type: "square" });
       await sleep(secondsPerBeat() * 1000);
     }
     await sleep(secondsPerBeat() * 2 * 1000);
