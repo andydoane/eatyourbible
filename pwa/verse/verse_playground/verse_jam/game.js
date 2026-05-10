@@ -166,8 +166,28 @@ const EARLY_INPUT_WINDOW_MS = 250;
 // Volume balance
 const COUNTDOWN_BEEP_VOLUME = 0.06;
 const COUNTDOWN_GO_VOLUME = 0.075;
+
+const BUTTON_POP_IN_NOTE_VOLUME = 0.11;
+
 const ROUND_ONE_WORD_NOTE_VOLUME = 0.26;
+
 const DEFAULT_WORD_NOTE_VOLUME = 0.18;
+
+const WORD_NOTE_ECHO_VOLUME = 0.075;
+
+const DRUM_MASTER_VOLUME = 1.05;
+
+// TEMP DEV TOOL: live volume tuning.
+// These start from the constants above, but can be changed with the in-game mixer.
+const volumeTuning = {
+  countdownBeep: COUNTDOWN_BEEP_VOLUME,
+  countdownGo: COUNTDOWN_GO_VOLUME,
+  buttonPopIn: BUTTON_POP_IN_NOTE_VOLUME,
+  roundOneWord: ROUND_ONE_WORD_NOTE_VOLUME,
+  defaultWord: DEFAULT_WORD_NOTE_VOLUME,
+  wordEcho: WORD_NOTE_ECHO_VOLUME,
+  drumMaster: DRUM_MASTER_VOLUME
+};
 
   let selectedMode = null;
   let muted = false;
@@ -187,8 +207,12 @@ const DEFAULT_WORD_NOTE_VOLUME = 0.18;
     return window.AudioContext || window.webkitAudioContext;
   }
 
-  function createAudioGraph(){
-    if (audioCtx) return;
+function createAudioGraph(){
+  if (audioCtx){
+    if (sampleGain) sampleGain.gain.value = volumeTuning.drumMaster;
+    if (masterGain) masterGain.gain.value = muted ? 0 : 0.72;
+    return;
+  }
 
     const AudioCtor = audioContextConstructor();
     if (!AudioCtor){
@@ -202,7 +226,7 @@ const DEFAULT_WORD_NOTE_VOLUME = 0.18;
     masterGain.gain.value = muted ? 0 : 0.72;
 
     sampleGain = audioCtx.createGain();
-    sampleGain.gain.value = 1.05;
+    sampleGain.gain.value = volumeTuning.drumMaster;
 
     compressor = audioCtx.createDynamicsCompressor();
     compressor.threshold.value = -18;
@@ -895,7 +919,7 @@ function makeChunkButtons(){
     if (!audioCtx) return;
     const now = audioCtx.currentTime;
     const round = currentRound();
-    const volume = opts.volume || (state.roundIndex === 0 ? ROUND_ONE_WORD_NOTE_VOLUME : DEFAULT_WORD_NOTE_VOLUME);
+    const volume = opts.volume || (state.roundIndex === 0 ? volumeTuning.roundOneWord : volumeTuning.defaultWord);
 
   playTone({
     midi: button.note,
@@ -906,7 +930,7 @@ function makeChunkButtons(){
   });
 
     if (round.echo){
-      playTone({ midi: button.note + 12, when: now + secondsPerBeat() / 2, duration: 0.16, volume: 0.075, type: "triangle" });
+      playTone({ midi: button.note + 12, when: now + secondsPerBeat() / 2, duration: 0.16, volume: volumeTuning.wordEcho, type: "triangle" });
     }
   }
 
@@ -1015,14 +1039,14 @@ function makeChunkButtons(){
     const now = audioCtx.currentTime;
 
     if (step === "go"){
-      playTone({ midi: 72, when: now, duration: 0.11, volume: COUNTDOWN_GO_VOLUME, type: "square" });
-      playTone({ midi: 76, when: now + 0.045, duration: 0.12, volume: COUNTDOWN_GO_VOLUME * 0.85, type: "square" });
-      playTone({ midi: 79, when: now + 0.09, duration: 0.14, volume: COUNTDOWN_GO_VOLUME * 0.85, type: "square" });
+      playTone({ midi: 72, when: now, duration: 0.11, volume: volumeTuning.countdownGo, type: "square" });
+      playTone({ midi: 76, when: now + 0.045, duration: 0.12, volume: volumeTuning.countdownGo * 0.85, type: "square" });
+      playTone({ midi: 79, when: now + 0.09, duration: 0.14, volume: volumeTuning.countdownGo * 0.85, type: "square" });
       return;
     }
 
     const midi = step === 3 ? 60 : step === 2 ? 64 : 67;
-    playTone({ midi, when: now, duration: 0.12, volume: COUNTDOWN_BEEP_VOLUME, type: "square" });
+    playTone({ midi, when: now, duration: 0.12, volume: volumeTuning.countdownBeep, type: "square" });
   }
 
   async function runEchoCountdown(){
@@ -1112,6 +1136,7 @@ function makeChunkButtons(){
                 <div class="versejam-main-area" id="versejamMainArea"></div>
               </div>
               <div class="versejam-beat-ring" id="versejamBeatRing" aria-hidden="true"></div>
+              ${renderVolumeTuner()}
             </div>
           </div>
         </div>
@@ -1121,6 +1146,7 @@ function makeChunkButtons(){
     `;
 
     wireGameScreen();
+    wireVolumeTuner();
     updateBuildText();
   }
 
@@ -1131,6 +1157,162 @@ function makeChunkButtons(){
       body: helpHtml(),
       closeText: state.helpBackMode ? "Back" : "Close"
     });
+  }
+
+  function renderVolumeTuner(){
+    return `
+      <div class="versejam-volume-tuner" id="verseJamVolumeTuner">
+        <button class="versejam-volume-toggle no-zoom" id="verseJamVolumeToggle" type="button" aria-label="Volume tester">🎚️</button>
+
+        <div class="versejam-volume-panel" id="verseJamVolumePanel" aria-hidden="true">
+          <div class="versejam-volume-title">Volume Test</div>
+
+          ${volumeSliderHtml("countdownBeep", "Countdown 3-2-1", 0, 0.3, 0.005)}
+          ${volumeSliderHtml("countdownGo", "Countdown GO", 0, 0.3, 0.005)}
+          ${volumeSliderHtml("buttonPopIn", "Button pop-in", 0, 0.4, 0.005)}
+          ${volumeSliderHtml("roundOneWord", "Round 1 taps", 0, 0.5, 0.005)}
+          ${volumeSliderHtml("defaultWord", "Later taps", 0, 0.5, 0.005)}
+          ${volumeSliderHtml("wordEcho", "Echo note", 0, 0.3, 0.005)}
+          ${volumeSliderHtml("drumMaster", "Drums", 0, 2, 0.025)}
+
+          <div class="versejam-volume-actions">
+            <button type="button" class="versejam-volume-test" data-vj-test="countdown">Test countdown</button>
+            <button type="button" class="versejam-volume-test" data-vj-test="word">Test word</button>
+            <button type="button" class="versejam-volume-test" data-vj-test="drum">Test drum</button>
+          </div>
+
+          <button type="button" class="versejam-volume-copy" id="verseJamVolumeCopy">Copy settings</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function volumeSliderHtml(key, label, min, max, step){
+    const value = volumeTuning[key];
+
+    return `
+      <label class="versejam-volume-row">
+        <span class="versejam-volume-label">${escapeHtml(label)}</span>
+        <input
+          class="versejam-volume-slider"
+          type="range"
+          min="${min}"
+          max="${max}"
+          step="${step}"
+          value="${value}"
+          data-vj-volume-key="${escapeHtml(key)}"
+        >
+        <span class="versejam-volume-value" data-vj-volume-value="${escapeHtml(key)}">${Number(value).toFixed(3)}</span>
+      </label>
+    `;
+  }
+
+  function wireVolumeTuner(){
+    const root = document.getElementById("verseJamVolumeTuner");
+    if (!root) return;
+
+    const toggle = document.getElementById("verseJamVolumeToggle");
+    const panel = document.getElementById("verseJamVolumePanel");
+    const copyButton = document.getElementById("verseJamVolumeCopy");
+
+    toggle?.addEventListener("click", async () => {
+      await ensureAudio();
+
+      const isOpen = root.classList.toggle("is-open");
+      if (panel) panel.setAttribute("aria-hidden", isOpen ? "false" : "true");
+    });
+
+    root.querySelectorAll("[data-vj-volume-key]").forEach((slider) => {
+      slider.addEventListener("input", () => {
+        const key = slider.dataset.vjVolumeKey;
+        const value = Number(slider.value);
+
+        if (!key || !Number.isFinite(value)) return;
+
+        volumeTuning[key] = value;
+
+        const valueEl = root.querySelector(`[data-vj-volume-value="${key}"]`);
+        if (valueEl) valueEl.textContent = value.toFixed(3);
+
+        applyVolumeTuning();
+      });
+    });
+
+    root.querySelectorAll("[data-vj-test]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        await ensureAudio();
+        testVolumeSound(button.dataset.vjTest);
+      });
+    });
+
+    copyButton?.addEventListener("click", async () => {
+      const text = volumeSettingsText();
+
+      try {
+        await navigator.clipboard.writeText(text);
+        copyButton.textContent = "Copied!";
+        setTimeout(() => {
+          copyButton.textContent = "Copy settings";
+        }, 900);
+      } catch (err){
+        console.log(text);
+        copyButton.textContent = "Logged to console";
+        setTimeout(() => {
+          copyButton.textContent = "Copy settings";
+        }, 1200);
+      }
+    });
+  }
+
+  function applyVolumeTuning(){
+    if (sampleGain && audioCtx){
+      sampleGain.gain.setValueAtTime(volumeTuning.drumMaster, audioCtx.currentTime);
+    }
+  }
+
+  function testVolumeSound(kind){
+    if (!audioCtx) return;
+
+    const now = audioCtx.currentTime;
+
+    if (kind === "countdown"){
+      playTone({ midi: 60, when: now, duration: 0.12, volume: volumeTuning.countdownBeep, type: "square" });
+      playTone({ midi: 64, when: now + 0.18, duration: 0.12, volume: volumeTuning.countdownBeep, type: "square" });
+      playTone({ midi: 67, when: now + 0.36, duration: 0.12, volume: volumeTuning.countdownBeep, type: "square" });
+      playTone({ midi: 72, when: now + 0.58, duration: 0.11, volume: volumeTuning.countdownGo, type: "square" });
+      playTone({ midi: 76, when: now + 0.625, duration: 0.12, volume: volumeTuning.countdownGo * 0.85, type: "square" });
+      playTone({ midi: 79, when: now + 0.67, duration: 0.14, volume: volumeTuning.countdownGo * 0.85, type: "square" });
+      return;
+    }
+
+    if (kind === "word"){
+      playTone({ midi: 60, when: now, duration: 0.18, volume: volumeTuning.buttonPopIn, type: "triangle" });
+      playTone({ midi: 64, when: now + 0.28, duration: 0.22, volume: volumeTuning.roundOneWord, type: "triangle" });
+      playTone({ midi: 67, when: now + 0.6, duration: 0.22, volume: volumeTuning.defaultWord, type: "square" });
+      playTone({ midi: 79, when: now + 0.6 + secondsPerBeat() / 2, duration: 0.16, volume: volumeTuning.wordEcho, type: "triangle" });
+      return;
+    }
+
+    if (kind === "drum"){
+      const generation = musicGeneration;
+      scheduleDrumLoopBar(now + 0.05, generation);
+    }
+  }
+
+  function volumeSettingsText(){
+    return `// Volume balance
+const COUNTDOWN_BEEP_VOLUME = ${volumeTuning.countdownBeep.toFixed(3)};
+const COUNTDOWN_GO_VOLUME = ${volumeTuning.countdownGo.toFixed(3)};
+
+const BUTTON_POP_IN_NOTE_VOLUME = ${volumeTuning.buttonPopIn.toFixed(3)};
+
+const ROUND_ONE_WORD_NOTE_VOLUME = ${volumeTuning.roundOneWord.toFixed(3)};
+
+const DEFAULT_WORD_NOTE_VOLUME = ${volumeTuning.defaultWord.toFixed(3)};
+
+const WORD_NOTE_ECHO_VOLUME = ${volumeTuning.wordEcho.toFixed(3)};
+
+const DRUM_MASTER_VOLUME = ${volumeTuning.drumMaster.toFixed(3)};`;
   }
 
   function renderGameMenuOverlay(){
@@ -1290,7 +1472,7 @@ async function beginRun(mode){
       if (state.screen !== "game") return;
 
       spawnButton(button);
-      playTone({ midi: button.note, when: audioCtx.currentTime, duration: 0.12, volume: 0.11, type: "triangle" });
+      playTone({ midi: button.note, when: audioCtx.currentTime, duration: 0.12, volume: volumeTuning.buttonPopIn, type: "triangle" });
     }
 
     await runEchoCountdown();
@@ -1681,6 +1863,110 @@ playTone({ midi: transitionNotes[(stack.children.length - 1) % transitionNotes.l
     if (state.screen === "end") return renderEnd();
   }
 
+  function installVolumeTunerStyles(){
+    if (document.getElementById("verseJamVolumeTunerStyles")) return;
+
+    const style = document.createElement("style");
+    style.id = "verseJamVolumeTunerStyles";
+    style.textContent = `
+      .versejam-volume-tuner {
+        position: absolute;
+        right: 12px;
+        bottom: 12px;
+        z-index: 30;
+        font-family: inherit;
+      }
+
+      .versejam-volume-toggle {
+        width: 44px;
+        height: 44px;
+        border: 0;
+        border-radius: 999px;
+        background: #ffe27a;
+        color: #221447;
+        font-size: 1.25rem;
+        font-weight: 900;
+        box-shadow: 0 10px 24px rgba(0,0,0,.28), inset 0 -4px 0 rgba(0,0,0,.14);
+      }
+
+      .versejam-volume-panel {
+        display: none;
+        position: absolute;
+        right: 0;
+        bottom: 54px;
+        width: min(330px, calc(100vw - 28px));
+        max-height: min(540px, calc(100vh - 120px));
+        overflow: auto;
+        padding: 14px;
+        border-radius: 18px;
+        background: rgba(28, 18, 55, .96);
+        color: #fff7e8;
+        border: 1px solid rgba(255,255,255,.18);
+        box-shadow: 0 18px 48px rgba(0,0,0,.42);
+      }
+
+      .versejam-volume-tuner.is-open .versejam-volume-panel {
+        display: block;
+      }
+
+      .versejam-volume-title {
+        font-weight: 900;
+        font-size: 1rem;
+        margin-bottom: 10px;
+      }
+
+      .versejam-volume-row {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 5px;
+        margin: 0 0 10px;
+        font-size: .85rem;
+        font-weight: 800;
+      }
+
+      .versejam-volume-label {
+        color: #fff7e8;
+      }
+
+      .versejam-volume-slider {
+        width: 100%;
+      }
+
+      .versejam-volume-value {
+        color: #8df7ff;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+        font-size: .8rem;
+      }
+
+      .versejam-volume-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .versejam-volume-test,
+      .versejam-volume-copy {
+        border: 0;
+        border-radius: 12px;
+        padding: 9px 10px;
+        font-weight: 900;
+        background: rgba(255,255,255,.14);
+        color: #fff7e8;
+      }
+
+      .versejam-volume-copy {
+        width: 100%;
+        margin-top: 8px;
+        background: #8df7ff;
+        color: #221447;
+      }
+    `;
+
+    document.head.appendChild(style);
+  }
+
+  installVolumeTunerStyles();
   installAudioUnlockHandlers();
   setScreen("intro");
 })();
