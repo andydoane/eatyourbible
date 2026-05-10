@@ -139,6 +139,9 @@
 
   const PERFECT_BEAT_TOLERANCE = 0.24;
 
+// Let players tap a little before TAP! so a nearly-on-beat press is not ignored.
+const EARLY_INPUT_WINDOW_MS = 200;
+
   let selectedMode = null;
   let muted = false;
   let audioCtx = null;
@@ -802,14 +805,30 @@
     }
 
     const echoStartTime = countStart + 4 * secondsPerBeat();
+
+    // Start accepting taps a little before the visible TAP! moment.
+    // This prevents a player from being punished for pressing just before the beat.
+    const earlyInputTime = Math.max(
+      audioCtx.currentTime,
+      echoStartTime - EARLY_INPUT_WINDOW_MS / 1000
+    );
+
+    await waitUntilAudioTime(earlyInputTime);
+    if (state.screen !== "game") return;
+
+    // Keep the official rhythm start on the real downbeat for PERFECT/GROOVY timing.
+    state.echoStartBeat = (echoStartTime - state.musicStartTime) / secondsPerBeat();
+
+    // Allow input slightly early, but do not visually say TAP! yet.
+    state.acceptingInput = true;
+    cueNextButton();
+
     await waitUntilAudioTime(echoStartTime);
     if (state.screen !== "game") return;
 
-    state.echoStartBeat = (echoStartTime - state.musicStartTime) / secondsPerBeat();
+    // Now show the visible start cue right on the beat.
     setCueButton("TAP!", "tap");
     state.phase = "play_chunk";
-    state.acceptingInput = true;
-    cueNextButton();
   }
 
   function nextMeasureStartTime(){
