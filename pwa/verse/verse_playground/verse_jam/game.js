@@ -140,7 +140,7 @@
   const PERFECT_BEAT_TOLERANCE = 0.24;
 
 // Let players tap a little before TAP! so a nearly-on-beat press is not ignored.
-const EARLY_INPUT_WINDOW_MS = 200;
+const EARLY_INPUT_WINDOW_MS = 250;
 
   let selectedMode = null;
   let muted = false;
