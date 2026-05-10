@@ -686,11 +686,25 @@ function makeChunkButtons(){
       compressor.connect(audioCtx.destination);
     }
 
-    if (audioCtx.state !== "running"){
-      await audioCtx.resume();
-    }
+  if (audioCtx.state !== "running"){
+    await audioCtx.resume();
+  }
 
-    await loadSampleBuffers();
+  // iPhone/Safari sometimes needs an actual source node to start
+  // during the user gesture, not just resume the AudioContext.
+  try {
+    const unlockOsc = audioCtx.createOscillator();
+    const unlockGain = audioCtx.createGain();
+
+    unlockGain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+    unlockOsc.connect(unlockGain);
+    unlockGain.connect(masterGain);
+
+    unlockOsc.start(audioCtx.currentTime);
+    unlockOsc.stop(audioCtx.currentTime + 0.03);
+  } catch (err){}
+
+  await loadSampleBuffers();
   }
 
   async function loadSampleBuffers(){
@@ -1125,15 +1139,22 @@ function makeChunkButtons(){
 
 async function beginRun(mode){
   selectedMode = mode;
+
+  // IMPORTANT for iPhone/Safari:
+  // Unlock audio immediately from the user's mode-button tap,
+  // before any awaited fetch or other async work.
+  await ensureAudio();
+
   initVerseData();
   chooseActiveBaseMelody();
   state.verseJson = await loadVerseJson();
   state.phase = "intro";
   renderShellGame();
-  await ensureAudio();
   startBeatLoop();
   await runIntroSequence();
+
   if (state.screen !== "game") return;
+
   await startNextPlayableGroup();
 }
 
