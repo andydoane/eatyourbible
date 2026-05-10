@@ -25,6 +25,10 @@
   ];
 
   const INTRO_WORDS = ["tap", "the", "words", "to", "the", "beat"];
+  // Fixed rhythm for: TAP THE WORDS (rest) TO THE BEAT
+  // Q Q Q - | Q Q Q -
+  const INTRO_RHYTHM_OFFSETS = [0, 1, 2, 4, 5, 6];
+
   const BASE_MELODY = [60, 62, 64, 67, 69, 72, 69, 67, 64, 62, 60, 67];
   const PAD_NOTES = [48, 55, 60];
   const SAMPLE_BASE_URL = "./sounds/";
@@ -430,6 +434,127 @@ const EARLY_INPUT_WINDOW_MS = 250;
     return window.VerseGameShell.tokenizeVerseWords(String(value || ""));
   }
 
+function splitReferenceForJamButtons(referenceLabel){
+  const raw = String(referenceLabel || "").trim();
+
+  if (!raw){
+    return {
+      chapterColon: "",
+      verses: ""
+    };
+  }
+
+  // Handles references like:
+  // 3:16
+  // 15:22
+  // 15:3-4
+  // 15:3–4
+  const match = raw.match(/^(.+?:)\s*(.+)$/);
+
+  if (match){
+    return {
+      chapterColon: match[1].trim(),
+      verses: match[2].trim()
+    };
+  }
+
+  // Fallback if the shell ever gives us a reference without a colon.
+  return {
+    chapterColon: raw,
+    verses: ""
+  };
+}
+
+function makeReferenceChunkButtons(){
+  const bookSegmentIndex = state.words.length;
+  const referenceSegmentIndex = state.words.length + 1;
+  const refParts = splitReferenceForJamButtons(state.referenceLabel);
+
+  const buttons = [];
+
+  if (state.bookLabel){
+    buttons.push({
+      id: `vj_btn_${state.roundIndex}_ref_book_${Math.floor(Math.random() * 100000)}`,
+      label: state.bookLabel,
+      segmentIndex: bookSegmentIndex,
+      note: BASE_MELODY[bookSegmentIndex % BASE_MELODY.length] + (state.roundIndex >= 2 ? 12 : 0),
+      kind: "book",
+      sequenceOrder: 0,
+      spawned: false,
+      removing: false
+    });
+  }
+
+  if (refParts.chapterColon){
+    buttons.push({
+      id: `vj_btn_${state.roundIndex}_ref_chapter_${Math.floor(Math.random() * 100000)}`,
+      label: refParts.chapterColon,
+      segmentIndex: referenceSegmentIndex,
+      note: BASE_MELODY[(referenceSegmentIndex + 1) % BASE_MELODY.length] + (state.roundIndex >= 2 ? 12 : 0),
+      kind: "reference_chapter",
+      sequenceOrder: 1,
+      spawned: false,
+      removing: false
+    });
+  }
+
+  if (refParts.verses){
+    buttons.push({
+      id: `vj_btn_${state.roundIndex}_ref_verses_${Math.floor(Math.random() * 100000)}`,
+      label: refParts.verses,
+      segmentIndex: referenceSegmentIndex,
+      note: BASE_MELODY[(referenceSegmentIndex + 2) % BASE_MELODY.length] + (state.roundIndex >= 2 ? 12 : 0),
+      kind: "reference_verses",
+      sequenceOrder: 2,
+      spawned: false,
+      removing: false
+    });
+  }
+
+  return buttons;
+}
+
+function isReferenceJamButton(button){
+  return !!button?.kind && (
+    button.kind === "book" ||
+    button.kind === "reference_chapter" ||
+    button.kind === "reference_verses"
+  );
+}
+
+function getExpectedReferenceJamKind(){
+  const bookSegmentIndex = state.words.length;
+  const referenceSegmentIndex = state.words.length + 1;
+
+  if (state.progressIndex === bookSegmentIndex){
+    return "book";
+  }
+
+  if (state.progressIndex === referenceSegmentIndex){
+    const chapterButtonStillVisible = state.currentButtons.some(
+      button => button.kind === "reference_chapter"
+    );
+
+    if (chapterButtonStillVisible){
+      return "reference_chapter";
+    }
+
+    return "reference_verses";
+  }
+
+  return "";
+}
+
+function isButtonExpected(button){
+  if (!button) return false;
+
+  if (isReferenceJamButton(button)){
+    return button.kind === getExpectedReferenceJamKind();
+  }
+
+  return button.segmentIndex === state.progressIndex;
+}
+
   function buildChunkWordGroups(){
     const echoParts = Array.isArray(state.verseJson?.echoParts)
       ? state.verseJson.echoParts.filter(part => String(part || "").trim())
@@ -460,28 +585,30 @@ const EARLY_INPUT_WINDOW_MS = 250;
     return groups.filter(group => group.count > 0);
   }
 
-  function makeChunkButtons(){
-    const phase = getPhase();
-    const buttons = [];
+function makeChunkButtons(){
+  const phase = getPhase();
+  const buttons = [];
 
-    if (phase === "words"){
-      const groups = buildChunkWordGroups();
-      const group = groups[state.chunkIndex] || { start: state.progressIndex, count: 0 };
-      const start = Math.max(state.progressIndex, group.start);
-      const end = Math.min(group.start + group.count, state.words.length);
+  if (phase === "words"){
+    const groups = buildChunkWordGroups();
+    const group = groups[state.chunkIndex] || { start: state.progressIndex, count: 0 };
+    const start = Math.max(state.progressIndex, group.start);
+    const end = Math.min(group.start + group.count, state.words.length);
 
-      for (let segmentIndex = start; segmentIndex < end; segmentIndex += 1){
-        buttons.push(makeButtonForSegment(segmentIndex));
-      }
-    } else if (phase === "book"){
-      buttons.push(makeButtonForSegment(state.progressIndex));
-    } else if (phase === "reference"){
-      buttons.push(makeButtonForSegment(state.progressIndex));
+    for (let segmentIndex = start; segmentIndex < end; segmentIndex += 1){
+      buttons.push(makeButtonForSegment(segmentIndex));
     }
-
-    const visible = buttons.filter(Boolean);
-    return selectedMode === "advanced" ? shuffle(visible) : visible;
+  } else if (phase === "book"){
+    buttons.push(...makeReferenceChunkButtons());
+  } else if (phase === "reference"){
+    // Normally we should reach reference as part of the combined
+    // book/chapter/verse chunk above. This fallback keeps the app safe.
+    buttons.push(makeButtonForSegment(state.progressIndex));
   }
+
+  const visible = buttons.filter(Boolean);
+  return selectedMode === "advanced" ? shuffle(visible) : visible;
+}
 
   function makeButtonForSegment(segmentIndex){
     const label = state.segments[segmentIndex];
@@ -969,7 +1096,7 @@ const EARLY_INPUT_WINDOW_MS = 250;
     const stack = document.getElementById("versejamIntroStack");
     if (!stack) return;
 
-    const introOffsets = makeRhythmOffsets(INTRO_WORDS.length);
+    const introOffsets = INTRO_RHYTHM_OFFSETS;
     const startAt = nextMeasureStartTime();
 
     for (let i = 0; i < INTRO_WORDS.length; i += 1){
@@ -1061,15 +1188,17 @@ const EARLY_INPUT_WINDOW_MS = 250;
     addFloatNote(btn, "♪");
   }
 
-  function cueNextButton(){
-    document.querySelectorAll(".versejam-word-btn").forEach(btn => {
-      btn.classList.remove("is-next", "is-rainbow-next");
-      const segmentIndex = Number(btn.dataset.segmentIndex);
-      if (segmentIndex === state.progressIndex){
-        btn.classList.add(currentRound().cue === "rainbow" ? "is-rainbow-next" : "is-next");
-      }
-    });
-  }
+function cueNextButton(){
+  document.querySelectorAll(".versejam-word-btn").forEach(btn => {
+    btn.classList.remove("is-next", "is-rainbow-next");
+
+    const button = state.currentButtons.find(item => item.id === btn.id);
+
+    if (isButtonExpected(button)){
+      btn.classList.add(currentRound().cue === "rainbow" ? "is-rainbow-next" : "is-next");
+    }
+  });
+}
 
   function getCorrectSequenceIndex(segmentIndex){
     const ordered = state.currentButtons
@@ -1079,7 +1208,10 @@ const EARLY_INPUT_WINDOW_MS = 250;
   }
 
   function recordCorrectTap(button){
-    const sequenceIndex = getCorrectSequenceIndex(button.segmentIndex);
+    const sequenceIndex = Number.isFinite(button.sequenceOrder)
+      ? button.sequenceOrder
+      : getCorrectSequenceIndex(button.segmentIndex);
+
     const beat = beatPositionNow();
     state.correctTapBeats.push({ sequenceIndex, beat });
   }
@@ -1151,7 +1283,7 @@ const EARLY_INPUT_WINDOW_MS = 250;
 
     btnEl.dataset.vjPressed = "true";
 
-    if (button.segmentIndex !== state.progressIndex){
+    if (!isButtonExpected(button)){
       btnEl.classList.remove("is-wrong");
       void btnEl.offsetWidth;
       btnEl.classList.add("is-wrong");
@@ -1173,23 +1305,42 @@ const EARLY_INPUT_WINDOW_MS = 250;
     await sleep(150);
     btnEl.remove();
 
+  let buildProgressChanged = false;
+
+  if (button.kind === "reference_chapter"){
+    // The shell build area has one combined reference segment.
+    // Tapping the chapter button is part of the musical chunk, but
+    // we wait to advance the build until the verses button is tapped.
+    buildProgressChanged = false;
+  } else {
     state.progressIndex += 1;
+    buildProgressChanged = true;
+  }
+
+  if (buildProgressChanged){
     state.buildFitDone = false;
     updateBuildText();
+  }
 
-    state.currentButtons = state.currentButtons.filter(item => item.id !== buttonId);
+  state.currentButtons = state.currentButtons.filter(item => item.id !== buttonId);
 
-    const phase = getPhase();
-    if (state.currentButtons.length === 0 || phase !== "words"){
-      const perfect = didTapChunkPerfectly();
-      if (phase === "words") state.chunkIndex += 1;
-      state.busy = false;
-      state.acceptingInput = false;
-      if (perfect) showPerfectSplash();
-      await sleep(perfect ? 560 : 260);
-      await startNextPlayableGroup();
-      return;
-    }
+  const phase = getPhase();
+  const stillInReferenceChunk = state.currentButtons.some(isReferenceJamButton);
+
+  if (state.currentButtons.length === 0 || (!stillInReferenceChunk && phase !== "words")){
+    const perfect = didTapChunkPerfectly();
+
+    if (phase === "words") state.chunkIndex += 1;
+
+    state.busy = false;
+    state.acceptingInput = false;
+
+    if (perfect) showPerfectSplash();
+
+    await sleep(perfect ? 560 : 260);
+    await startNextPlayableGroup();
+    return;
+  }
 
     state.busy = false;
     cueNextButton();
