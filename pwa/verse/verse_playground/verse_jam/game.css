@@ -368,3 +368,78 @@ body{
   72%{opacity:1; transform:translate(-50%,-50%) scale(1.02) rotate(1deg); background-position:180% 50%;}
   100%{opacity:0; transform:translate(-50%,-68%) scale(.72) rotate(7deg); background-position:260% 50%;}
 }
+
+.versejam-word-stack{
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  justify-content:center;
+  gap:10px;
+}
+
+.versejam-cue-button{
+  width:100%;
+  border:0;
+  border-radius:999px;
+  padding:12px 18px 14px;
+  font-family:inherit;
+  font-size:clamp(1.12rem,5vw,1.65rem);
+  line-height:1;
+  font-weight:900;
+  letter-spacing:.05em;
+  color:#261840;
+  text-align:center;
+  transform:scale(var(--vj-beat-scale,1));
+  transition:transform 90ms linear, background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+  box-shadow:0 12px 26px rgba(0,0,0,.24), inset 0 -6px 0 rgba(0,0,0,.13), inset 0 0 0 1px rgba(255,255,255,.42);
+  pointer-events:none;
+  user-select:none;
+  -webkit-user-select:none;
+}
+
+.versejam-cue-listen{
+  background:linear-gradient(180deg,#9cf8ff,#55dce8);
+  box-shadow:0 0 0 3px rgba(141,247,255,.28),0 12px 26px rgba(0,0,0,.24), inset 0 -6px 0 rgba(0,0,0,.13);
+}
+
+.versejam-cue-3{
+  background:linear-gradient(180deg,#ff9eb0,#ff426a);
+  color:#fff7e8;
+  text-shadow:0 2px 0 rgba(0,0,0,.2);
+}
+
+.versejam-cue-2{
+  background:linear-gradient(180deg,#ffc077,#ff8b2b);
+  color:#fff7e8;
+  text-shadow:0 2px 0 rgba(0,0,0,.16);
+}
+
+.versejam-cue-1{
+  background:linear-gradient(180deg,#fff4a9,#ffe27a);
+  color:#261840;
+}
+
+.versejam-cue-go,
+.versejam-cue-tap{
+  background:linear-gradient(90deg,#9dff8d,#8df7ff,#ffe27a,#9dff8d);
+  background-size:240% 100%;
+  color:#1e2040;
+  animation:vj-cue-go-rainbow 700ms linear infinite;
+  box-shadow:0 0 0 4px rgba(157,255,141,.28),0 0 34px rgba(157,255,141,.28),0 12px 26px rgba(0,0,0,.24), inset 0 -6px 0 rgba(0,0,0,.13);
+}
+
+.versejam-cue-tap{
+  background:linear-gradient(90deg,#8df7ff,#ff7ad9,#ffe27a,#8df7ff);
+  background-size:260% 100%;
+}
+
+@keyframes vj-cue-go-rainbow{
+  from{background-position:0 50%;}
+  to{background-position:240% 50%;}
+}
+
+@media (max-height:680px){
+  .versejam-word-stack{gap:7px;}
+  .versejam-cue-button{padding:10px 14px 12px;}
+}

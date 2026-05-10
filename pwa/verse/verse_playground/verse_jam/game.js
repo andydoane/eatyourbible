@@ -168,6 +168,7 @@
     currentButtons: [],
     currentRhythmOffsets: [],
     correctTapBeats: [],
+    echoStartBeat: null,
     acceptingInput: false,
     menuOpen: false,
     helpOpen: false,
@@ -737,18 +738,78 @@
 
   function pulseUi(strong){
     const scale = strong ? (state.roundIndex >= 1 ? 1.075 : 1.045) : (state.roundIndex >= 1 ? 1.045 : 1.025);
-    document.querySelectorAll(".versejam-word-btn").forEach((btn) => {
+    document.querySelectorAll(".versejam-word-btn, .versejam-cue-button").forEach((btn) => {
       btn.style.setProperty("--vj-beat-scale", String(scale));
     });
     const dot = document.getElementById("versejamBeatRing");
     if (dot) dot.style.setProperty("--vj-dot-scale", strong ? "1.55" : "1.22");
 
     setTimeout(() => {
-      document.querySelectorAll(".versejam-word-btn").forEach((btn) => {
+      document.querySelectorAll(".versejam-word-btn, .versejam-cue-button").forEach((btn) => {
         btn.style.setProperty("--vj-beat-scale", "1");
       });
       if (dot) dot.style.setProperty("--vj-dot-scale", "1");
     }, 100);
+  }
+
+  function setCueButton(label, cueState = "listen"){
+    const cue = document.getElementById("versejamCueButton");
+    if (!cue) return;
+
+    cue.textContent = label;
+    cue.className = `versejam-cue-button versejam-cue-${cueState}`;
+  }
+
+  function playCountdownTone(step){
+    if (!audioCtx) return;
+
+    const now = audioCtx.currentTime;
+
+    if (step === "go"){
+      playTone({ midi: 72, when: now, duration: 0.11, volume: 0.12, type: "square" });
+      playTone({ midi: 76, when: now + 0.045, duration: 0.12, volume: 0.10, type: "square" });
+      playTone({ midi: 79, when: now + 0.09, duration: 0.14, volume: 0.10, type: "square" });
+      return;
+    }
+
+    const midi = step === 3 ? 60 : step === 2 ? 64 : 67;
+    playTone({ midi, when: now, duration: 0.12, volume: 0.105, type: "square" });
+  }
+
+  async function runEchoCountdown(){
+    state.phase = "countdown";
+    state.acceptingInput = false;
+    state.echoStartBeat = null;
+
+    const countdown = [
+      { label: "3", cue: "3", tone: 3 },
+      { label: "2", cue: "2", tone: 2 },
+      { label: "1", cue: "1", tone: 1 },
+      { label: "GO!", cue: "go", tone: "go" }
+    ];
+
+    const countStart = nextMeasureStartTime();
+
+    for (let i = 0; i < countdown.length; i += 1){
+      if (state.screen !== "game") return;
+
+      await waitUntilAudioTime(countStart + i * secondsPerBeat());
+      if (state.screen !== "game") return;
+
+      const step = countdown[i];
+      setCueButton(step.label, step.cue);
+      playCountdownTone(step.tone);
+    }
+
+    const echoStartTime = countStart + 4 * secondsPerBeat();
+    await waitUntilAudioTime(echoStartTime);
+    if (state.screen !== "game") return;
+
+    state.echoStartBeat = (echoStartTime - state.musicStartTime) / secondsPerBeat();
+    setCueButton("TAP!", "tap");
+    state.phase = "play_chunk";
+    state.acceptingInput = true;
+    cueNextButton();
   }
 
   function nextMeasureStartTime(){
@@ -930,6 +991,7 @@
     state.currentButtons = makeChunkButtons();
     state.currentRhythmOffsets = makeRhythmOffsets(state.currentButtons.length);
     state.correctTapBeats = [];
+    state.echoStartBeat = null;
 
     if (!state.currentButtons.length){
       await handleRoundOrEnd();
@@ -938,7 +1000,13 @@
 
     const area = document.getElementById("versejamMainArea");
     if (!area) return;
-    area.innerHTML = `<div class="versejam-button-stack" id="versejamButtonStack"></div>`;
+    area.innerHTML = `
+      <div class="versejam-button-stack" id="versejamButtonStack">
+        <button class="versejam-cue-button versejam-cue-listen" id="versejamCueButton" type="button" disabled>LISTEN</button>
+        <div class="versejam-word-stack" id="versejamWordStack"></div>
+      </div>
+    `;
+    setCueButton("LISTEN", "listen");
 
     const spawnStart = nextMeasureStartTime();
 
@@ -952,13 +1020,11 @@
       playTone({ midi: button.note, when: audioCtx.currentTime, duration: 0.12, volume: 0.11, type: "triangle" });
     }
 
-    state.phase = "play_chunk";
-    state.acceptingInput = true;
-    cueNextButton();
+    await runEchoCountdown();
   }
 
   function spawnButton(button){
-    const stack = document.getElementById("versejamButtonStack");
+    const stack = document.getElementById("versejamWordStack") || document.getElementById("versejamButtonStack");
     if (!stack) return;
 
     const btn = document.createElement("button");
@@ -999,6 +1065,18 @@
     state.correctTapBeats.push({ sequenceIndex, beat });
   }
 
+  function isNearEchoStartGrid(beat){
+    if (!Number.isFinite(beat)) return false;
+
+    if (!Number.isFinite(state.echoStartBeat)){
+      return Math.abs(beat - nearestBeat(beat)) <= PERFECT_BEAT_TOLERANCE;
+    }
+
+    const delta = beat - state.echoStartBeat;
+    const nearestShiftedMeasure = Math.round(delta / 4) * 4;
+    return Math.abs(delta - nearestShiftedMeasure) <= PERFECT_BEAT_TOLERANCE;
+  }
+
   function didTapChunkPerfectly(){
     const taps = state.correctTapBeats
       .slice()
@@ -1007,16 +1085,19 @@
     const expected = state.currentRhythmOffsets;
     if (!expected.length || taps.length !== expected.length) return false;
 
-    // One-button groups are allowed to score if the press is close to any beat.
+    // One-button groups are allowed to score if the press starts on the
+    // countdown's echo downbeat, or on the same downbeat in a later measure.
     if (taps.length === 1){
-      return Math.abs(taps[0].beat - nearestBeat(taps[0].beat)) <= PERFECT_BEAT_TOLERANCE;
+      return isNearEchoStartGrid(taps[0].beat);
     }
 
-    // For multi-word chunks, compare the rhythm relative to the first tap.
-    // This lets the player wait a measure or two and still get credit for playing
-    // the same pattern back correctly.
+    // For multi-word chunks, require the player to start on the echo downbeat
+    // but allow them to wait full measures before starting. Then compare the
+    // rhythm relative to that first tap.
     const firstTapBeat = taps[0].beat;
     const firstExpected = expected[0] || 0;
+
+    if (!isNearEchoStartGrid(firstTapBeat)) return false;
 
     return taps.every((tap) => {
       const actualOffset = tap.beat - firstTapBeat;
@@ -1286,7 +1367,7 @@
       Tap the next verse word to play its note.<br><br>
       Beginner: words are stacked in order.<br>
       Advanced: words are scrambled.<br><br>
-      The beat keeps going while each chunk appears. The first button of every new chunk starts on beat one of a measure. Correct taps pop into chunky pixels and build the verse above. Wrong taps play a gentle “no” note.
+      The beat keeps going while each chunk appears. First, listen as the words pop in. Then watch the cue button count down: 3, 2, 1, GO! When it says TAP!, echo the rhythm by tapping the next verse word. Correct taps pop into chunky pixels and build the verse above. Wrong taps play a gentle “no” note.
     `;
   }
 
