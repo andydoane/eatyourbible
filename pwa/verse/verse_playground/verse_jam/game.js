@@ -180,7 +180,89 @@ const DEFAULT_WORD_NOTE_VOLUME = 0.18;
   let beatTimer = null;
   let padTimer = null;
   let musicGeneration = 0;
+  let audioUnlocked = false;
   const activeAudioSources = new Set();
+
+  function audioContextConstructor(){
+    return window.AudioContext || window.webkitAudioContext;
+  }
+
+  function createAudioGraph(){
+    if (audioCtx) return;
+
+    const AudioCtor = audioContextConstructor();
+    if (!AudioCtor){
+      console.warn("Verse Jam: Web Audio is not available in this browser.");
+      return;
+    }
+
+    audioCtx = new AudioCtor();
+
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = muted ? 0 : 0.72;
+
+    sampleGain = audioCtx.createGain();
+    sampleGain.gain.value = 1.05;
+
+    compressor = audioCtx.createDynamicsCompressor();
+    compressor.threshold.value = -18;
+    compressor.knee.value = 24;
+    compressor.ratio.value = 8;
+    compressor.attack.value = 0.003;
+    compressor.release.value = 0.18;
+
+    sampleGain.connect(masterGain);
+    masterGain.connect(compressor);
+    compressor.connect(audioCtx.destination);
+  }
+
+  function unlockAudioFromGesture(){
+    createAudioGraph();
+
+    if (!audioCtx || !masterGain) return;
+
+    if (audioCtx.state !== "running"){
+      const resumePromise = audioCtx.resume();
+      if (resumePromise?.catch){
+        resumePromise.catch(err => {
+          console.warn("Verse Jam: audio resume failed", err);
+        });
+      }
+    }
+
+    // iPhone/Safari often unlocks most reliably when a real source node
+    // is started directly inside a user gesture.
+    try {
+      const buffer = audioCtx.createBuffer(1, 1, audioCtx.sampleRate);
+      const source = audioCtx.createBufferSource();
+      const gain = audioCtx.createGain();
+
+      source.buffer = buffer;
+      gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+
+      source.connect(gain);
+      gain.connect(masterGain);
+
+      trackAudioSource(source);
+      source.start(0);
+    } catch (err){}
+
+    audioUnlocked = true;
+
+    // Start loading samples, but do not block the user gesture.
+    loadSampleBuffers();
+  }
+
+  function installAudioUnlockHandlers(){
+    const unlock = () => unlockAudioFromGesture();
+
+    ["pointerdown", "touchstart", "mousedown", "click"].forEach(eventName => {
+      document.addEventListener(eventName, unlock, {
+        capture: true,
+        passive: true
+      });
+    });
+  }
 
   const state = {
     screen: "intro",
@@ -665,46 +747,21 @@ function makeChunkButtons(){
   }
 
   async function ensureAudio(){
-    if (!audioCtx){
-      audioCtx = new AudioContext();
+    createAudioGraph();
 
-      masterGain = audioCtx.createGain();
-      masterGain.gain.value = muted ? 0 : 0.72;
+    if (!audioCtx) return;
 
-      sampleGain = audioCtx.createGain();
-      sampleGain.gain.value = 1.05;
+    unlockAudioFromGesture();
 
-      compressor = audioCtx.createDynamicsCompressor();
-      compressor.threshold.value = -18;
-      compressor.knee.value = 24;
-      compressor.ratio.value = 8;
-      compressor.attack.value = 0.003;
-      compressor.release.value = 0.18;
-
-      sampleGain.connect(masterGain);
-      masterGain.connect(compressor);
-      compressor.connect(audioCtx.destination);
+    if (audioCtx.state !== "running"){
+      try {
+        await audioCtx.resume();
+      } catch (err){
+        console.warn("Verse Jam: audio resume failed in ensureAudio", err);
+      }
     }
 
-  if (audioCtx.state !== "running"){
-    await audioCtx.resume();
-  }
-
-  // iPhone/Safari sometimes needs an actual source node to start
-  // during the user gesture, not just resume the AudioContext.
-  try {
-    const unlockOsc = audioCtx.createOscillator();
-    const unlockGain = audioCtx.createGain();
-
-    unlockGain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
-    unlockOsc.connect(unlockGain);
-    unlockGain.connect(masterGain);
-
-    unlockOsc.start(audioCtx.currentTime);
-    unlockOsc.stop(audioCtx.currentTime + 0.03);
-  } catch (err){}
-
-  loadSampleBuffers();
+    loadSampleBuffers();
   }
 
   async function loadSampleBuffers(){
@@ -1624,5 +1681,6 @@ playTone({ midi: transitionNotes[(stack.children.length - 1) % transitionNotes.l
     if (state.screen === "end") return renderEnd();
   }
 
+  installAudioUnlockHandlers();
   setScreen("intro");
 })();
