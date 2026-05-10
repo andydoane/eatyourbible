@@ -5,7 +5,7 @@ window.EXTERNAL_VERSE_PLAYGROUND = [
       id: "verse_jam",
       title: "Verse Jam",
       description: "Tap each verse chunk like an instrument while the beat plays.",
-      icon: "🎵",
+      icon: "🎹",
       cardColor: "#2b1748",
       cardTextColor: "#ffffff",
       launchUrl: "./verse_playground/verse_jam/index.html",
