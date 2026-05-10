@@ -29,7 +29,24 @@
   // Q Q Q - | Q Q Q -
   const INTRO_RHYTHM_OFFSETS = [0, 1, 2, 4, 5, 6];
 
-  const BASE_MELODY = [60, 62, 64, 67, 69, 72, 69, 67, 64, 62, 60, 67];
+  const BASE_MELODIES = [
+  // Original: gentle rise and return
+  [60, 62, 64, 67, 69, 72, 69, 67, 64, 62, 60, 67],
+
+  // Simple arch
+  [60, 64, 67, 72, 69, 67, 64, 62, 60, 64, 67, 60],
+
+  // Bouncy call-and-response
+  [60, 67, 64, 69, 67, 72, 69, 64, 67, 62, 60, 67],
+
+  // Playful step-up and landing
+  [60, 62, 67, 64, 69, 67, 72, 69, 67, 64, 62, 60],
+
+  // Higher sparkle
+  [67, 69, 72, 69, 67, 64, 67, 72, 69, 67, 64, 60]
+];
+
+const REFERENCE_CADENCE_NOTES = [60, 64, 67];
   const PAD_NOTES = [48, 55, 60];
   const SAMPLE_BASE_URL = "./sounds/";
 
@@ -182,6 +199,7 @@ const DEFAULT_WORD_NOTE_VOLUME = 0.18;
     currentRhythmOffsets: [],
     correctTapBeats: [],
     echoStartBeat: null,
+    activeBaseMelody: BASE_MELODIES[0],
     acceptingInput: false,
     menuOpen: false,
     helpOpen: false,
@@ -336,6 +354,22 @@ const DEFAULT_WORD_NOTE_VOLUME = 0.18;
     return offsets;
   }
 
+function chooseActiveBaseMelody(){
+  const melody = BASE_MELODIES[Math.floor(Math.random() * BASE_MELODIES.length)];
+  state.activeBaseMelody = Array.isArray(melody) ? melody : BASE_MELODIES[0];
+}
+
+function noteForSegment(segmentIndex){
+  const melody = state.activeBaseMelody || BASE_MELODIES[0];
+  const baseNote = melody[segmentIndex % melody.length] || 60;
+  return baseNote + (state.roundIndex >= 2 ? 12 : 0);
+}
+
+function referenceNoteForOrder(sequenceOrder){
+  const baseNote = REFERENCE_CADENCE_NOTES[sequenceOrder % REFERENCE_CADENCE_NOTES.length] || 60;
+  return baseNote + (state.roundIndex >= 2 ? 12 : 0);
+}
+
   function beatPositionNow(){
     if (!audioCtx || !state.musicStartTime) return 0;
     return (audioCtx.currentTime - state.musicStartTime) / secondsPerBeat();
@@ -483,7 +517,7 @@ function makeReferenceChunkButtons(){
       id: `vj_btn_${state.roundIndex}_ref_book_${Math.floor(Math.random() * 100000)}`,
       label: state.bookLabel,
       segmentIndex: bookSegmentIndex,
-      note: BASE_MELODY[bookSegmentIndex % BASE_MELODY.length] + (state.roundIndex >= 2 ? 12 : 0),
+      note: referenceNoteForOrder(0),
       kind: "book",
       sequenceOrder: 0,
       spawned: false,
@@ -496,7 +530,7 @@ function makeReferenceChunkButtons(){
       id: `vj_btn_${state.roundIndex}_ref_chapter_${Math.floor(Math.random() * 100000)}`,
       label: refParts.chapterColon,
       segmentIndex: referenceSegmentIndex,
-      note: BASE_MELODY[(referenceSegmentIndex + 1) % BASE_MELODY.length] + (state.roundIndex >= 2 ? 12 : 0),
+      note: referenceNoteForOrder(1),
       kind: "reference_chapter",
       sequenceOrder: 1,
       spawned: false,
@@ -509,7 +543,7 @@ function makeReferenceChunkButtons(){
       id: `vj_btn_${state.roundIndex}_ref_verses_${Math.floor(Math.random() * 100000)}`,
       label: refParts.verses,
       segmentIndex: referenceSegmentIndex,
-      note: BASE_MELODY[(referenceSegmentIndex + 2) % BASE_MELODY.length] + (state.roundIndex >= 2 ? 12 : 0),
+      note: referenceNoteForOrder(2),
       kind: "reference_verses",
       sequenceOrder: 2,
       spawned: false,
@@ -624,7 +658,7 @@ function makeChunkButtons(){
       id: `vj_btn_${state.roundIndex}_${state.chunkIndex}_${segmentIndex}_${Math.floor(Math.random() * 100000)}`,
       label,
       segmentIndex,
-      note: BASE_MELODY[segmentIndex % BASE_MELODY.length] + (state.roundIndex >= 2 ? 12 : 0),
+      note: noteForSegment(segmentIndex),
       spawned: false,
       removing: false
     };
@@ -1089,18 +1123,19 @@ function makeChunkButtons(){
     state.busy = false;
   }
 
-  async function beginRun(mode){
-    selectedMode = mode;
-    initVerseData();
-    state.verseJson = await loadVerseJson();
-    state.phase = "intro";
-    renderShellGame();
-    await ensureAudio();
-    startBeatLoop();
-    await runIntroSequence();
-    if (state.screen !== "game") return;
-    await startNextPlayableGroup();
-  }
+async function beginRun(mode){
+  selectedMode = mode;
+  initVerseData();
+  chooseActiveBaseMelody();
+  state.verseJson = await loadVerseJson();
+  state.phase = "intro";
+  renderShellGame();
+  await ensureAudio();
+  startBeatLoop();
+  await runIntroSequence();
+  if (state.screen !== "game") return;
+  await startNextPlayableGroup();
+}
 
   async function runIntroSequence(){
     const area = document.getElementById("versejamMainArea");
