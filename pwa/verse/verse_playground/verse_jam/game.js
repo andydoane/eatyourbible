@@ -704,7 +704,7 @@ function makeChunkButtons(){
     unlockOsc.stop(audioCtx.currentTime + 0.03);
   } catch (err){}
 
-  await loadSampleBuffers();
+  loadSampleBuffers();
   }
 
   async function loadSampleBuffers(){
