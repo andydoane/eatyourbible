@@ -164,18 +164,18 @@ const REFERENCE_CADENCE_NOTES = [60, 64, 67];
 const EARLY_INPUT_WINDOW_MS = 250;
 
 // Volume balance
-const COUNTDOWN_BEEP_VOLUME = 0.06;
+const COUNTDOWN_BEEP_VOLUME = 0.060;
 const COUNTDOWN_GO_VOLUME = 0.075;
 
-const BUTTON_POP_IN_NOTE_VOLUME = 0.11;
+const BUTTON_POP_IN_NOTE_VOLUME = 0.400;
 
-const ROUND_ONE_WORD_NOTE_VOLUME = 0.26;
+const ROUND_ONE_WORD_NOTE_VOLUME = 0.260;
 
-const DEFAULT_WORD_NOTE_VOLUME = 0.18;
+const DEFAULT_WORD_NOTE_VOLUME = 0.135;
 
-const WORD_NOTE_ECHO_VOLUME = 0.075;
+const WORD_NOTE_ECHO_VOLUME = 0.165;
 
-const DRUM_MASTER_VOLUME = 1.05;
+const DRUM_MASTER_VOLUME = 2.000;
 
 // TEMP DEV TOOL: live volume tuning.
 // These start from the constants above, but can be changed with the in-game mixer.
@@ -1140,7 +1140,6 @@ function drumVolume(value = 1){
                 <div class="versejam-main-area" id="versejamMainArea"></div>
               </div>
               <div class="versejam-beat-ring" id="versejamBeatRing" aria-hidden="true"></div>
-              ${renderVolumeTuner()}
             </div>
           </div>
         </div>
@@ -1150,7 +1149,6 @@ function drumVolume(value = 1){
     `;
 
     wireGameScreen();
-    wireVolumeTuner();
     updateBuildText();
   }
 
@@ -1970,7 +1968,6 @@ playTone({ midi: transitionNotes[(stack.children.length - 1) % transitionNotes.l
     document.head.appendChild(style);
   }
 
-  installVolumeTunerStyles();
   installAudioUnlockHandlers();
   setScreen("intro");
 })();
