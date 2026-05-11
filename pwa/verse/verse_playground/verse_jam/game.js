@@ -142,9 +142,9 @@ const REFERENCE_CADENCE_NOTES = [60, 64, 67];
 
   const ROUND_CONFIGS = [
     { name: "Warmup", bpm: 92, loop: "basic", cue: "soft", explosion: 1, echo: false, pad: false },
-    { name: "Jam", bpm: 92, loop: "middle", cue: "rainbow", explosion: 1.35, echo: true, pad: true },
-    { name: "Faster", bpm: 100, loop: "final", cue: "rainbow", explosion: 1.55, echo: true, pad: true },
-    { name: "Finale", bpm: 108, loop: "final", cue: "rainbow", explosion: 1.85, echo: true, pad: true }
+    { name: "Jam", bpm: 92, loop: "middle", cue: "rainbow", explosion: 1.35, echo: false, pad: true },
+    { name: "Faster", bpm: 100, loop: "final", cue: "rainbow", explosion: 1.55, echo: false, pad: true },
+    { name: "Finale", bpm: 108, loop: "final", cue: "rainbow", explosion: 1.85, echo: false, pad: true }
   ];
 
   const CHUNK_RHYTHMS = {
@@ -173,7 +173,7 @@ const ROUND_ONE_WORD_NOTE_VOLUME = 0.260;
 
 const DEFAULT_WORD_NOTE_VOLUME = 0.135;
 
-const WORD_NOTE_ECHO_VOLUME = 0.165;
+
 
 const DRUM_MASTER_VOLUME = 2.000;
 
@@ -185,7 +185,7 @@ const volumeTuning = {
   buttonPopIn: BUTTON_POP_IN_NOTE_VOLUME,
   roundOneWord: ROUND_ONE_WORD_NOTE_VOLUME,
   defaultWord: DEFAULT_WORD_NOTE_VOLUME,
-  wordEcho: WORD_NOTE_ECHO_VOLUME,
+  
   drumMaster: DRUM_MASTER_VOLUME
 };
 
