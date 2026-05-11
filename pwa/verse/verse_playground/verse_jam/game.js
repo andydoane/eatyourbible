@@ -1418,10 +1418,11 @@ async function beginRun(mode){
 
     const children = Array.from(stack.children || []);
 
-    // Start popping the words out one beat after the final word appears.
-    // This removes the sometimes-felt extra measure of rest.
-    const lastIntroOffset = introOffsets[INTRO_WORDS.length - 1] ?? (INTRO_WORDS.length - 1);
-    const outStart = startAt + (lastIntroOffset + 1) * secondsPerBeat();
+    // Start popping the words out after the final rest.
+    // Intro rhythm is: tap/the/words/rest/match/my/beat/rest.
+    // Since "beat" lands on offset 6, the disappear phrase should start on offset 8.
+    const introPatternLengthBeats = measureAlignedLength(introOffsets);
+    const outStart = startAt + introPatternLengthBeats * secondsPerBeat();
     for (let i = 0; i < children.length; i += 1){
       if (state.screen !== "game") return;
       const offset = introOffsets[i] ?? i;
