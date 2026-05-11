@@ -4857,3 +4857,11 @@ text-wrap: balance;
   outline-offset: 0 !important;
   background: rgba(0, 255, 0, 0.08) !important;
 }
+
+/* BibloPet detail page: center the actual pet image inside its wrapper */
+.pet-stage .pet-emoji{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 0;
+}
