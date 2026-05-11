@@ -554,38 +554,112 @@ function playRhythmFillerSound(button){
   playClapSound();
 }
 
-function expandShortChunkWithClaps(buttons){
-  const realButtons = buttons.filter(Boolean);
+function randomIntInclusive(min, max){
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
 
-  if (realButtons.length !== 2 && realButtons.length !== 3){
+function makeRhythmFillerButton(sequenceOrder = 0){
+  // Round 1 stays cleaner: only generated clap fillers.
+  if (state.roundIndex === 0){
+    return makeClapButton(sequenceOrder);
+  }
+
+  // Later rounds mix generated clap fillers with recorded voice fillers.
+  // 60% clap keeps the rhythmic clap feel; 40% voice adds excitement.
+  return Math.random() < 0.6
+    ? makeClapButton(sequenceOrder)
+    : makeSoundBitButton(sequenceOrder);
+}
+
+function chooseFillerCountForWordCount(wordCount){
+  if (wordCount === 2){
+    // 2 words: add 1 or 2 fillers, making a 3- or 4-hit pattern.
+    return randomIntInclusive(1, 2);
+  }
+
+  if (wordCount === 3){
+    // 3 words: add 0 or 1 filler, making a 3- or 4-hit pattern.
+    return randomIntInclusive(0, 1);
+  }
+
+  if (wordCount === 4){
+    // 4 words: add 0, 1, or 2 fillers, making a 4-, 5-, or 6-hit pattern.
+    return randomIntInclusive(0, 2);
+  }
+
+  // 5-8 words already have enough rhythmic variety.
+  return 0;
+}
+
+function chooseFillerLayout(wordCount, fillerCount){
+  const key = `${wordCount}_${fillerCount}`;
+
+  const layouts = {
+    // 2 words + 1 filler = 3 hits
+    "2_1": [
+      ["word", "filler", "word"],
+      ["word", "word", "filler"]
+    ],
+
+    // 2 words + 2 fillers = 4 hits
+    "2_2": [
+      ["word", "filler", "word", "filler"],
+      ["word", "word", "filler", "filler"]
+    ],
+
+    // 3 words + 0 filler = 3 hits
+    "3_0": [
+      ["word", "word", "word"]
+    ],
+
+    // 3 words + 1 filler = 4 hits
+    "3_1": [
+      ["word", "filler", "word", "word"],
+      ["word", "word", "word", "filler"]
+    ],
+
+    // 4 words + 0 filler = 4 hits
+    "4_0": [
+      ["word", "word", "word", "word"]
+    ],
+
+    // 4 words + 1 filler = 5 hits
+    "4_1": [
+      ["word", "filler", "word", "word", "word"],
+      ["word", "word", "word", "word", "filler"],
+      ["word", "word", "filler", "word", "word"]
+    ],
+
+    // 4 words + 2 fillers = 6 hits
+    "4_2": [
+      ["word", "filler", "word", "word", "filler", "word"],
+      ["word", "word", "filler", "word", "word", "filler"],
+      ["word", "word", "word", "word", "filler", "filler"]
+    ]
+  };
+
+  const options = layouts[key] || [Array.from({ length: wordCount }, () => "word")];
+  return options[Math.floor(Math.random() * options.length)];
+}
+
+function addRhythmFillersToChunk(buttons){
+  const realButtons = buttons.filter(Boolean);
+  const wordCount = realButtons.length;
+  const fillerCount = chooseFillerCountForWordCount(wordCount);
+
+  if (!fillerCount){
     return realButtons.map((button, index) => ({
       ...button,
       sequenceOrder: Number.isFinite(button.sequenceOrder) ? button.sequenceOrder : index
     }));
   }
 
-  const twoButtonLayouts = [
-    ["word", "clap", "word", "clap"],
-    ["word", "word", "clap", "clap"]
-  ];
-
-  const threeButtonLayouts = [
-    ["word", "clap", "word", "word"],
-    ["word", "word", "word", "clap"]
-  ];
-
-  const layouts = realButtons.length === 2 ? twoButtonLayouts : threeButtonLayouts;
-  const layout = layouts[Math.floor(Math.random() * layouts.length)];
-
+  const layout = chooseFillerLayout(wordCount, fillerCount);
   let wordIndex = 0;
 
   return layout.map((slot, sequenceOrder) => {
-    if (slot === "clap"){
-      // Mix generated clap fillers with recorded shout fillers.
-      // 60% clap keeps the original clap feel; 40% shout adds variety.
-      return Math.random() < 0.6
-        ? makeClapButton(sequenceOrder)
-        : makeSoundBitButton(sequenceOrder);
+    if (slot === "filler"){
+      return makeRhythmFillerButton(sequenceOrder);
     }
 
     const sourceButton = realButtons[wordIndex];
@@ -901,8 +975,8 @@ function makeChunkButtons(){
     buttons.push(makeButtonForSegment(state.progressIndex));
   }
 
-  const sequenced = expandShortChunkWithClaps(buttons);
-  return selectedMode === "advanced" ? shuffle(sequenced) : sequenced;
+    const sequenced = addRhythmFillersToChunk(buttons);
+    return selectedMode === "advanced" ? shuffle(sequenced) : sequenced;
 }
 
   function makeButtonForSegment(segmentIndex){
@@ -1648,11 +1722,11 @@ function cueNextButton(){
 
   const phase = getPhase();
   const stillInReferenceChunk = state.currentButtons.some(isReferenceJamButton);
-  const stillInClapExpandedChunk = state.currentButtons.some(isRhythmFillerButton);
+  const stillInRhythmFillerChunk = state.currentButtons.some(isRhythmFillerButton);
 
   if (
     state.currentButtons.length === 0 ||
-    (!stillInReferenceChunk && !stillInClapExpandedChunk && phase !== "words")
+    (!stillInReferenceChunk && !stillInRhythmFillerChunk && phase !== "words")
   ){
     const perfect = didTapChunkPerfectly();
 
