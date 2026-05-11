@@ -529,7 +529,7 @@ function playSoundBitSound(button){
   const now = audioCtx.currentTime;
   const sound = SOUND_BITS.find(item => item.id === button?.soundBitId);
 
-  if (sound && playSoundBitSample(sound, now, SOUND_BIT_VOLUME)){
+  if (sound && playSoundBitSample(sound, now)){
     return;
   }
 
