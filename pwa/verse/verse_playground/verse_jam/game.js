@@ -451,6 +451,20 @@ function createAudioGraph(){
     return offsets;
   }
 
+function makeCurrentRhythmOffsets(buttons){
+  const ordered = [...buttons].sort((a, b) => {
+    const aOrder = Number.isFinite(a.sequenceOrder) ? a.sequenceOrder : 0;
+    const bOrder = Number.isFinite(b.sequenceOrder) ? b.sequenceOrder : 0;
+    return aOrder - bOrder;
+  });
+
+  if (ordered.length && ordered.every(button => Number.isFinite(button.rhythmOffset))){
+    return ordered.map(button => button.rhythmOffset);
+  }
+
+  return makeRhythmOffsets(buttons.length);
+}
+
 function chooseActiveBaseMelody(){
   const melody = BASE_MELODIES[Math.floor(Math.random() * BASE_MELODIES.length)];
   state.activeBaseMelody = Array.isArray(melody) ? melody : BASE_MELODIES[0];
@@ -618,23 +632,62 @@ function chooseFillerLayout(wordCount, fillerCount){
       ["word", "word", "word", "filler"]
     ],
 
-    // 4 words + 0 filler = 4 hits
+    // 4 words + 0 filler.
+    // Leave these simple; makeRhythmOffsets() can still provide 4-word variety.
     "4_0": [
       ["word", "word", "word", "word"]
     ],
 
-    // 4 words + 1 filler = 5 hits
+    // 4 words + 1 filler = 5 hits with rests.
+    // W = word, F = filler, rest = quarter-note rest.
     "4_1": [
-      ["word", "filler", "word", "word", "word"],
-      ["word", "word", "word", "word", "filler"],
-      ["word", "word", "filler", "word", "word"]
+      // W F W - | W - W -
+      ["word", "filler", "word", "rest", "word", "rest", "word", "rest"],
+
+      // W - W - | W F W -
+      ["word", "rest", "word", "rest", "word", "filler", "word", "rest"],
+
+      // W W - - | W F W -
+      ["word", "word", "rest", "rest", "word", "filler", "word", "rest"],
+
+      // W F - - | W - W -
+      ["word", "filler", "rest", "rest", "word", "rest", "word", "rest"],
+
+      // W F - - | W W W -
+      ["word", "filler", "rest", "rest", "word", "word", "word", "rest"],
+
+      // W - W - | W - W F
+      ["word", "rest", "word", "rest", "word", "rest", "word", "filler"],
+
+      // W - W F | W - W -
+      ["word", "rest", "word", "filler", "word", "rest", "word", "rest"],
+
+      // W W - F | W - W -
+      ["word", "word", "rest", "filler", "word", "rest", "word", "rest"],
+
+      // W - W - | W W - F
+      ["word", "rest", "word", "rest", "word", "word", "rest", "filler"],
+
+      // W W - - | W - W F
+      ["word", "word", "rest", "rest", "word", "rest", "word", "filler"],
+
+      // W W - - | W W - F
+      ["word", "word", "rest", "rest", "word", "word", "rest", "filler"]
     ],
 
-    // 4 words + 2 fillers = 6 hits
+    // 4 words + 2 fillers = 6 hits with rests.
     "4_2": [
-      ["word", "filler", "word", "word", "filler", "word"],
-      ["word", "word", "filler", "word", "word", "filler"],
-      ["word", "word", "word", "word", "filler", "filler"]
+      // W F W F | W - W -
+      ["word", "filler", "word", "filler", "word", "rest", "word", "rest"],
+
+      // W - W - | W F W F
+      ["word", "rest", "word", "rest", "word", "filler", "word", "filler"],
+
+      // W F W - | W F W -
+      ["word", "filler", "word", "rest", "word", "filler", "word", "rest"],
+
+      // W - W F | W - W F
+      ["word", "rest", "word", "filler", "word", "rest", "word", "filler"]
     ]
   };
 
@@ -646,30 +699,42 @@ function addRhythmFillersToChunk(buttons){
   const realButtons = buttons.filter(Boolean);
   const wordCount = realButtons.length;
   const fillerCount = chooseFillerCountForWordCount(wordCount);
-
-  if (!fillerCount){
-    return realButtons.map((button, index) => ({
-      ...button,
-      sequenceOrder: Number.isFinite(button.sequenceOrder) ? button.sequenceOrder : index
-    }));
-  }
-
   const layout = chooseFillerLayout(wordCount, fillerCount);
-  let wordIndex = 0;
 
-  return layout.map((slot, sequenceOrder) => {
+  let wordIndex = 0;
+  let sequenceOrder = 0;
+  const result = [];
+
+  layout.forEach((slot, rhythmOffset) => {
+    if (slot === "rest"){
+      return;
+    }
+
     if (slot === "filler"){
-      return makeRhythmFillerButton(sequenceOrder);
+      result.push({
+        ...makeRhythmFillerButton(sequenceOrder),
+        sequenceOrder,
+        rhythmOffset
+      });
+      sequenceOrder += 1;
+      return;
     }
 
     const sourceButton = realButtons[wordIndex];
     wordIndex += 1;
 
-    return {
+    if (!sourceButton) return;
+
+    result.push({
       ...sourceButton,
-      sequenceOrder
-    };
+      sequenceOrder,
+      rhythmOffset
+    });
+
+    sequenceOrder += 1;
   });
+
+  return result;
 }
 
 function getExpectedSequenceOrder(){
@@ -976,7 +1041,12 @@ function makeChunkButtons(){
   }
 
     const sequenced = addRhythmFillersToChunk(buttons);
-    return selectedMode === "advanced" ? shuffle(sequenced) : sequenced;
+    const visualButtons = selectedMode === "advanced" ? shuffle(sequenced) : sequenced;
+
+    return visualButtons.map((button, visualOrder) => ({
+      ...button,
+      visualOrder
+    }));
 }
 
   function makeButtonForSegment(segmentIndex){
@@ -1515,7 +1585,7 @@ async function beginRun(mode){
     state.phase = "spawn_chunk";
     state.acceptingInput = false;
     state.currentButtons = makeChunkButtons();
-    state.currentRhythmOffsets = makeRhythmOffsets(state.currentButtons.length);
+    state.currentRhythmOffsets = makeCurrentRhythmOffsets(state.currentButtons);
     state.correctTapBeats = [];
     state.echoStartBeat = null;
 
@@ -1536,9 +1606,18 @@ async function beginRun(mode){
 
     const spawnStart = nextMeasureStartTime();
 
-    for (let i = 0; i < state.currentButtons.length; i += 1){
-      const button = state.currentButtons[i];
-      const offset = state.currentRhythmOffsets[i] ?? i;
+    const spawnButtons = [...state.currentButtons].sort((a, b) => {
+      const aOrder = Number.isFinite(a.sequenceOrder) ? a.sequenceOrder : 0;
+      const bOrder = Number.isFinite(b.sequenceOrder) ? b.sequenceOrder : 0;
+      return aOrder - bOrder;
+    });
+
+    for (let i = 0; i < spawnButtons.length; i += 1){
+      const button = spawnButtons[i];
+      const offset = Number.isFinite(button.rhythmOffset)
+        ? button.rhythmOffset
+        : state.currentRhythmOffsets[i] ?? i;
+
       await waitUntilAudioTime(spawnStart + offset * secondsPerBeat());
       if (state.screen !== "game") return;
 
@@ -1564,6 +1643,14 @@ async function beginRun(mode){
     btn.type = "button";
     btn.textContent = button.label;
     btn.dataset.segmentIndex = String(button.segmentIndex);
+
+    btn.style.order = String(
+      Number.isFinite(button.visualOrder)
+        ? button.visualOrder
+        : Number.isFinite(button.sequenceOrder)
+          ? button.sequenceOrder
+          : 0
+    );    
 
     btn.dataset.sequenceOrder = String(button.sequenceOrder ?? "");
     btn.dataset.buttonKind = button.kind || "word";
