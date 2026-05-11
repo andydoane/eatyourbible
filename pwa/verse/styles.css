@@ -4839,3 +4839,21 @@ text-wrap: balance;
   0%, 100% { transform: scale(1, 1); }
   50%      { transform: scale(1.06, 0.94); }
 }
+
+/* TEMP DEBUG: show BibloPet image boundaries */
+.pet-stage .pet-emoji{
+  outline: 4px solid blue !important;
+  outline-offset: 0 !important;
+}
+
+.pet-stage .biblopet-visual{
+  outline: 4px solid red !important;
+  outline-offset: 0 !important;
+  background: rgba(255, 0, 0, 0.08) !important;
+}
+
+.pet-stage .biblopet-img{
+  outline: 4px solid lime !important;
+  outline-offset: 0 !important;
+  background: rgba(0, 255, 0, 0.08) !important;
+}
