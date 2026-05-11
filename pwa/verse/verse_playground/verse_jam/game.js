@@ -48,11 +48,8 @@
 
 const REFERENCE_CADENCE_NOTES = [60, 64, 67];
   const PAD_NOTES = [48, 55, 60];
-  const SAMPLE_BASE_URL = "./verse_jam_sounds/";
 
-  const CLAP_SAMPLE_FILENAME = "verse_jam_clap.mp3";
   const CLAP_BUTTON_LABEL = "👏 👏 👏 👏";
-  const CLAP_VOLUME = 1;
 
   const DRUM_LOOPS = {
     basic: {
@@ -61,12 +58,6 @@ const REFERENCE_CADENCE_NOTES = [60, 64, 67];
       beatsPerBar: 4,
       stepsPerBeat: 4,
       lengthBeats: 4,
-      samples: {
-        kick: "kick-10.mp3",
-        snare: "openhat-6.mp3",
-        hat: "hihat-2.mp3",
-        extra: "perc-9.mp3"
-      },
       events: [
         { beat: 0, sound: "hat", volume: 0.2 },
         { beat: 0, sound: "kick", volume: 1 },
@@ -198,9 +189,6 @@ const volumeTuning = {
   let audioCtx = null;
   let masterGain = null;
   let compressor = null;
-  let sampleGain = null;
-  let sampleLoadPromise = null;
-  const sampleBuffers = {};
   let beatTimer = null;
   let padTimer = null;
   let musicGeneration = 0;
@@ -213,7 +201,6 @@ const volumeTuning = {
 
 function createAudioGraph(){
   if (audioCtx){
-    if (sampleGain) sampleGain.gain.value = 1;
     if (masterGain) masterGain.gain.value = muted ? 0 : 0.72;
     return;
   }
@@ -229,9 +216,6 @@ function createAudioGraph(){
     masterGain = audioCtx.createGain();
     masterGain.gain.value = muted ? 0 : 0.72;
 
-    sampleGain = audioCtx.createGain();
-    sampleGain.gain.value = 1;
-
     compressor = audioCtx.createDynamicsCompressor();
     compressor.threshold.value = -18;
     compressor.knee.value = 24;
@@ -239,7 +223,6 @@ function createAudioGraph(){
     compressor.attack.value = 0.003;
     compressor.release.value = 0.18;
 
-    sampleGain.connect(masterGain);
     masterGain.connect(compressor);
     compressor.connect(audioCtx.destination);
   }
@@ -277,8 +260,6 @@ function createAudioGraph(){
 
     audioUnlocked = true;
 
-    // Start loading samples, but do not block the user gesture.
-    loadSampleBuffers();
   }
 
   function installAudioUnlockHandlers(){
@@ -502,12 +483,7 @@ function playClapSound(){
 
   const now = audioCtx.currentTime;
 
-  // Preferred: use the uploaded clap sample.
-  if (playSample(CLAP_SAMPLE_FILENAME, now, CLAP_VOLUME)){
-    return;
-  }
-
-  // Fallback if the sample has not loaded yet.
+  // Generated chiptune clap.
   playTone({ midi: 72, when: now, duration: 0.055, volume: 0.13, type: "square" });
   playTone({ midi: 84, when: now + 0.025, duration: 0.045, volume: 0.08, type: "square" });
 }
@@ -886,36 +862,6 @@ function makeChunkButtons(){
         console.warn("Verse Jam: audio resume failed in ensureAudio", err);
       }
     }
-
-    loadSampleBuffers();
-  }
-
-  async function loadSampleBuffers(){
-    if (!audioCtx) return;
-    if (sampleLoadPromise) return sampleLoadPromise;
-
-    const filenames = [
-  ...new Set([
-    ...Object.values(DRUM_LOOPS).flatMap(loop => Object.values(loop.samples || {})),
-    CLAP_SAMPLE_FILENAME
-  ])
-];
-
-    sampleLoadPromise = Promise.all(filenames.map(async (filename) => {
-      if (!filename || sampleBuffers[filename]) return;
-
-      try {
-        const res = await fetch(`${SAMPLE_BASE_URL}${filename}`, { cache: "force-cache" });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const arrayBuffer = await res.arrayBuffer();
-        sampleBuffers[filename] = await audioCtx.decodeAudioData(arrayBuffer);
-      } catch (err){
-        console.warn(`Verse Jam could not load drum sample: ${filename}`, err);
-        sampleBuffers[filename] = null;
-      }
-    }));
-
-    return sampleLoadPromise;
   }
 
   function setMuted(value){
@@ -952,35 +898,11 @@ function drumVolume(value = 1){
     osc.stop(when + duration + 0.03);
   }
 
-  function playSample(filename, when, volume = 1, generation = musicGeneration){
-    if (generation !== musicGeneration) return false;
-    if (!audioCtx || !sampleGain || muted || !filename) return false;
-    const buffer = sampleBuffers[filename];
-    if (!buffer) return false;
-
-    const source = audioCtx.createBufferSource();
-    const gain = audioCtx.createGain();
-
-    source.buffer = buffer;
-    gain.gain.setValueAtTime(drumVolume(volume), when);
-
-    source.connect(gain);
-    gain.connect(sampleGain);
-    trackAudioSource(source);
-    source.start(when);
-    return true;
-  }
 
   function playDrum(sound, when, volume = 1, generation = musicGeneration){
     if (generation !== musicGeneration) return;
-    const loop = currentLoop();
-    const filename = loop.samples?.[sound];
 
-    if (playSample(filename, when, volume, generation)){
-      return;
-    }
-
-    // Fallback procedural blips if a sample is missing or still loading.
+    // Generated chiptune drums.
     if (!audioCtx || !masterGain || muted) return;
 
     if (sound === "kick"){
@@ -1373,11 +1295,7 @@ function drumVolume(value = 1){
     });
   }
 
-function applyVolumeTuning(){
-  if (sampleGain && audioCtx){
-    sampleGain.gain.setValueAtTime(1, audioCtx.currentTime);
-  }
-}
+function applyVolumeTuning(){}
 
   function testVolumeSound(kind){
     if (!audioCtx) return;
