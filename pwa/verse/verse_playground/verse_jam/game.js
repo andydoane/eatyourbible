@@ -699,6 +699,14 @@ function addRhythmFillersToChunk(buttons){
   const realButtons = buttons.filter(Boolean);
   const wordCount = realButtons.length;
   const fillerCount = chooseFillerCountForWordCount(wordCount);
+
+  if (!fillerCount){
+    return realButtons.map((button, index) => ({
+      ...button,
+      sequenceOrder: Number.isFinite(button.sequenceOrder) ? button.sequenceOrder : index
+    }));
+  }
+
   const layout = chooseFillerLayout(wordCount, fillerCount);
 
   let wordIndex = 0;
