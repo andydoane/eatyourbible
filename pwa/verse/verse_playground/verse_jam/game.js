@@ -48,7 +48,7 @@
 
 const REFERENCE_CADENCE_NOTES = [60, 64, 67];
   const PAD_NOTES = [48, 55, 60];
-  const SAMPLE_BASE_URL = "./sounds/";
+  const SAMPLE_BASE_URL = "./verse_jam_sounds/";
 
   const CLAP_SAMPLE_FILENAME = "verse_jam_clap.mp3";
   const CLAP_BUTTON_LABEL = "👏 👏 👏 👏";
