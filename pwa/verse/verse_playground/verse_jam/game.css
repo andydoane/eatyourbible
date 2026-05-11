@@ -244,6 +244,18 @@ body{
   cursor:default;
 }
 
+.versejam-word-btn.is-clap-button {
+  letter-spacing: 0.04em;
+  background: linear-gradient(180deg, #fff4a9, #ffc83d);
+}
+
+.versejam-word-btn.is-clap-button.is-next,
+.versejam-word-btn.is-clap-button.is-rainbow-next {
+  box-shadow:
+    0 0 0 4px rgba(255, 226, 122, 0.28),
+    0 0 22px rgba(255, 226, 122, 0.45);
+}
+
 .versejam-pixel{
   position:absolute;
   width:12px;
