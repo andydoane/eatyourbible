@@ -55,11 +55,11 @@ const REFERENCE_CADENCE_NOTES = [60, 64, 67];
   const SOUND_BIT_VOLUME = 0.85;
 
   const SOUND_BITS = [
-    { id: "boom", label: "Boom!", filename: "verse_jam_boom.mp3" },
-    { id: "hey", label: "Hey!", filename: "verse_jam_hey.mp3" },
-    { id: "woo", label: "Woo!", filename: "verse_jam_woo.mp3" },
-    { id: "yeah", label: "Yeah!", filename: "verse_jam_yeah.mp3" },
-    { id: "yo", label: "Yo!", filename: "verse_jam_yo.mp3" }
+    { id: "boom", label: "Boom!", filename: "verse_jam_voice_boom.mp3" },
+    { id: "hey", label: "Hey!", filename: "verse_jam_voice_hey.mp3" },
+    { id: "woo", label: "Woo!", filename: "verse_jam_voice_woo.mp3" },
+    { id: "yeah", label: "Yeah!", filename: "verse_jam_voice_yeah.mp3" },
+    { id: "yo", label: "Yo!", filename: "verse_jam_voice_yo.mp3" }
   ];
 
   const DRUM_LOOPS = {
