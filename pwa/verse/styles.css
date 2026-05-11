@@ -2969,6 +2969,7 @@ text-wrap: balance;
   --pet-roll-right: 200px;
   --pet-hop-side: 140px;
   width: 100%;
+  aspect-ratio: 16 / 9;
   min-height: 190px;
   border-radius: 28px;
   background: rgba(255,255,255,0.92);
@@ -2985,7 +2986,15 @@ text-wrap: balance;
 }
 
 .pet-stage .pet-emoji{
-  font-size: 75cqh;
+  font-size: clamp(80px, 14vw, 106px);
+}
+
+/* Dynamic BibloPet size based on the background width.
+   For a 16:9 background, 42.1875cqw = 75% of the background height. */
+@supports (font-size: 1cqw){
+  .pet-stage .pet-emoji{
+    font-size: 42.1875cqw;
+  }
 }
 
 .pet-emoji-unlocked{
