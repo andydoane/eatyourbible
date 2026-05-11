@@ -1458,7 +1458,7 @@ async function beginRun(mode){
         <div class="versejam-word-stack" id="versejamWordStack"></div>
       </div>
     `;
-    setCueButton("LISTEN", "listen");
+    setCueButton("MATCH THIS BEAT", "listen");
 
     const spawnStart = nextMeasureStartTime();
 
