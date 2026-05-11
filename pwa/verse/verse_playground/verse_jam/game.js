@@ -51,6 +51,17 @@ const REFERENCE_CADENCE_NOTES = [60, 64, 67];
 
   const CLAP_BUTTON_LABEL = "👏 👏 👏 👏";
 
+  const SOUND_BIT_BASE_URL = "./verse_jam_sounds/";
+  const SOUND_BIT_VOLUME = 0.85;
+
+  const SOUND_BITS = [
+    { id: "boom", label: "Boom!", filename: "verse_jam_boom.mp3" },
+    { id: "hey", label: "Hey!", filename: "verse_jam_hey.mp3" },
+    { id: "woo", label: "Woo!", filename: "verse_jam_woo.mp3" },
+    { id: "yeah", label: "Yeah!", filename: "verse_jam_yeah.mp3" },
+    { id: "yo", label: "Yo!", filename: "verse_jam_yo.mp3" }
+  ];
+
   const DRUM_LOOPS = {
     basic: {
       id: "chip_bounce_basic",
@@ -102,12 +113,7 @@ const REFERENCE_CADENCE_NOTES = [60, 64, 67];
       beatsPerBar: 4,
       stepsPerBeat: 4,
       lengthBeats: 4,
-      samples: {
-        kick: "kick-10.mp3",
-        snare: "openhat-6.mp3",
-        hat: "hihat-2.mp3",
-        extra: "perc-9.mp3"
-      },
+
       events: [
         { beat: 0, sound: "hat", volume: 0.2 },
         { beat: 0, sound: "kick", volume: 1 },
@@ -187,6 +193,8 @@ const volumeTuning = {
   let padTimer = null;
   let musicGeneration = 0;
   let audioUnlocked = false;
+  let soundBitLoadPromise = null;
+  const soundBitBuffers = {};
   const activeAudioSources = new Set();
 
   function audioContextConstructor(){
@@ -254,6 +262,8 @@ function createAudioGraph(){
 
     audioUnlocked = true;
 
+    // Load the short shout samples, but do not block the tap gesture.
+    loadSoundBitBuffers();
   }
 
   function installAudioUnlockHandlers(){
@@ -468,8 +478,37 @@ function makeClapButton(sequenceOrder = 0){
   };
 }
 
+function randomSoundBit(){
+  return SOUND_BITS[Math.floor(Math.random() * SOUND_BITS.length)] || SOUND_BITS[0];
+}
+
+function makeSoundBitButton(sequenceOrder = 0){
+  const sound = randomSoundBit();
+
+  return {
+    id: `vj_btn_${state.roundIndex}_${state.chunkIndex}_sound_${sound.id}_${sequenceOrder}_${Math.floor(Math.random() * 100000)}`,
+    label: sound.label,
+    segmentIndex: -1,
+    note: 60,
+    kind: "sound_bit",
+    soundBitId: sound.id,
+    soundBitFilename: sound.filename,
+    sequenceOrder,
+    spawned: false,
+    removing: false
+  };
+}
+
 function isClapButton(button){
   return button?.kind === "clap";
+}
+
+function isSoundBitButton(button){
+  return button?.kind === "sound_bit";
+}
+
+function isRhythmFillerButton(button){
+  return isClapButton(button) || isSoundBitButton(button);
 }
 
 function playClapSound(){
@@ -480,6 +519,30 @@ function playClapSound(){
   // Generated chiptune clap.
   playTone({ midi: 72, when: now, duration: 0.055, volume: 0.13, type: "square" });
   playTone({ midi: 84, when: now + 0.025, duration: 0.045, volume: 0.08, type: "square" });
+}
+
+function playSoundBitSound(button){
+  if (!audioCtx) return;
+
+  const now = audioCtx.currentTime;
+  const sound = SOUND_BITS.find(item => item.id === button?.soundBitId);
+
+  if (sound && playSoundBitSample(sound, now, SOUND_BIT_VOLUME)){
+    return;
+  }
+
+  // Fallback if the MP3 has not loaded yet.
+  playTone({ midi: 79, when: now, duration: 0.075, volume: 0.12, type: "square" });
+  playTone({ midi: 84, when: now + 0.055, duration: 0.085, volume: 0.09, type: "square" });
+}
+
+function playRhythmFillerSound(button){
+  if (isSoundBitButton(button)){
+    playSoundBitSound(button);
+    return;
+  }
+
+  playClapSound();
 }
 
 function expandShortChunkWithClaps(buttons){
@@ -509,7 +572,11 @@ function expandShortChunkWithClaps(buttons){
 
   return layout.map((slot, sequenceOrder) => {
     if (slot === "clap"){
-      return makeClapButton(sequenceOrder);
+      // Mix generated clap fillers with recorded shout fillers.
+      // 60% clap keeps the original clap feel; 40% shout adds variety.
+      return Math.random() < 0.6
+        ? makeClapButton(sequenceOrder)
+        : makeSoundBitButton(sequenceOrder);
     }
 
     const sourceButton = realButtons[wordIndex];
@@ -526,17 +593,18 @@ function getExpectedSequenceOrder(){
   return state.correctTapBeats.length;
 }
 
-function isExpectedClapTap(button){
-  if (!isClapButton(button)) return false;
+function isExpectedFillerTap(button){
+  if (!isRhythmFillerButton(button)) return false;
 
   const expectedOrder = getExpectedSequenceOrder();
 
-  // Since clap buttons look identical, allow any remaining clap button
-  // when the next expected item is a clap.
+  // Filler buttons are playful rhythm hits. If the next expected item
+  // is any filler, allow any remaining filler button.
   return state.currentButtons.some(item =>
-    isClapButton(item) && item.sequenceOrder === expectedOrder
+    isRhythmFillerButton(item) && item.sequenceOrder === expectedOrder
   );
 }
+
 
   function beatPositionNow(){
     if (!audioCtx || !state.musicStartTime) return 0;
@@ -758,8 +826,8 @@ function isButtonExpected(button){
 
   const expectedOrder = getExpectedSequenceOrder();
 
-  if (isClapButton(button)){
-    return isExpectedClapTap(button);
+  if (isRhythmFillerButton(button)){
+    return isExpectedFillerTap(button);
   }
 
   if (Number.isFinite(button.sequenceOrder)){
@@ -856,6 +924,8 @@ function makeChunkButtons(){
         console.warn("Verse Jam: audio resume failed in ensureAudio", err);
       }
     }
+    loadSoundBitBuffers();
+
   }
 
   function setMuted(value){
@@ -871,6 +941,49 @@ function makeChunkButtons(){
 
 function drumVolume(value = 1){
   return Math.max(0, value) * volumeTuning.drumMaster;
+}
+
+async function loadSoundBitBuffers(){
+  if (!audioCtx) return;
+  if (soundBitLoadPromise) return soundBitLoadPromise;
+
+  soundBitLoadPromise = Promise.all(SOUND_BITS.map(async (sound) => {
+    if (!sound?.filename || soundBitBuffers[sound.filename]) return;
+
+    try {
+      const res = await fetch(`${SOUND_BIT_BASE_URL}${sound.filename}`, { cache: "force-cache" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const arrayBuffer = await res.arrayBuffer();
+      soundBitBuffers[sound.filename] = await audioCtx.decodeAudioData(arrayBuffer);
+    } catch (err){
+      console.warn(`Verse Jam could not load sound bit: ${sound.filename}`, err);
+      soundBitBuffers[sound.filename] = null;
+    }
+  }));
+
+  return soundBitLoadPromise;
+}
+
+function playSoundBitSample(sound, when = audioCtx?.currentTime || 0, volume = SOUND_BIT_VOLUME){
+  if (!audioCtx || !masterGain || muted || !sound?.filename) return false;
+
+  const buffer = soundBitBuffers[sound.filename];
+  if (!buffer) return false;
+
+  const source = audioCtx.createBufferSource();
+  const gain = audioCtx.createGain();
+
+  source.buffer = buffer;
+  gain.gain.setValueAtTime(Math.max(0, volume), when);
+
+  source.connect(gain);
+  gain.connect(masterGain);
+
+  trackAudioSource(source);
+  source.start(when);
+
+  return true;
 }
 
   function playTone({ midi = 60, when = audioCtx?.currentTime || 0, duration = 0.22, volume = 0.16, type = "triangle" } = {}){
@@ -1345,8 +1458,8 @@ async function beginRun(mode){
 
       spawnButton(button);
 
-      if (isClapButton(button)){
-        playClapSound();
+      if (isRhythmFillerButton(button)){
+        playRhythmFillerSound(button);
       } else {
         playTone({ midi: button.note, when: audioCtx.currentTime, duration: 0.12, volume: volumeTuning.buttonPopIn, type: "triangle" });
       }
@@ -1360,7 +1473,7 @@ async function beginRun(mode){
     if (!stack) return;
 
     const btn = document.createElement("button");
-    btn.className = `versejam-word-btn is-spawning no-zoom${isClapButton(button) ? " is-clap-button" : ""}`;
+    btn.className = `versejam-word-btn is-spawning no-zoom${isClapButton(button) ? " is-clap-button" : ""}${isSoundBitButton(button) ? " is-sound-bit-button" : ""}`;
     btn.id = button.id;
     btn.type = "button";
     btn.textContent = button.label;
@@ -1375,7 +1488,7 @@ async function beginRun(mode){
     });
     stack.appendChild(btn);
     setTimeout(() => btn.classList.remove("is-spawning"), 280);
-    addFloatNote(btn, isClapButton(button) ? "👏" : "♪");
+    addFloatNote(btn, isClapButton(button) ? "👏" : isSoundBitButton(button) ? "!" : "♪");
   }
 
 function cueNextButton(){
@@ -1487,8 +1600,8 @@ function cueNextButton(){
     recordCorrectTap(button);
     btnEl.classList.remove("is-next", "is-rainbow-next");
     btnEl.classList.add("is-removing");
-    if (isClapButton(button)){
-      playClapSound();
+    if (isRhythmFillerButton(button)){
+      playRhythmFillerSound(button);
     } else {
       playWordNote(button);
     }
@@ -1500,8 +1613,8 @@ function cueNextButton(){
 
   let buildProgressChanged = false;
 
-  if (isClapButton(button)){
-    // Clap buttons are part of the rhythm pattern, but they do not
+  if (isRhythmFillerButton(button)){
+    // Filler buttons are part of the rhythm pattern, but they do not
     // add anything to the verse build area.
     buildProgressChanged = false;
   } else if (button.kind === "reference_chapter"){
@@ -1523,7 +1636,7 @@ function cueNextButton(){
 
   const phase = getPhase();
   const stillInReferenceChunk = state.currentButtons.some(isReferenceJamButton);
-  const stillInClapExpandedChunk = state.currentButtons.some(isClapButton);
+  const stillInClapExpandedChunk = state.currentButtons.some(isRhythmFillerButton);
 
   if (
     state.currentButtons.length === 0 ||
