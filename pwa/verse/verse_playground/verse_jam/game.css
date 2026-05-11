@@ -256,6 +256,22 @@ body{
     0 0 22px rgba(255, 226, 122, 0.45);
 }
 
+.versejam-word-btn.is-sound-bit-button {
+  color: #fff7e8;
+  letter-spacing: 0.03em;
+  text-shadow: 0 2px 0 rgba(0,0,0,.18);
+  background: linear-gradient(180deg, #9dff8d, #28b85f);
+}
+
+.versejam-word-btn.is-sound-bit-button.is-next,
+.versejam-word-btn.is-sound-bit-button.is-rainbow-next {
+  box-shadow:
+    0 0 0 4px rgba(157, 255, 141, 0.28),
+    0 0 24px rgba(157, 255, 141, 0.46),
+    0 13px 26px rgba(0,0,0,.24),
+    inset 0 -6px 0 rgba(0,0,0,.12);
+}
+
 .versejam-pixel{
   position:absolute;
   width:12px;
