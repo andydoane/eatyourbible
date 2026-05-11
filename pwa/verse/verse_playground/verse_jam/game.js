@@ -50,6 +50,10 @@ const REFERENCE_CADENCE_NOTES = [60, 64, 67];
   const PAD_NOTES = [48, 55, 60];
   const SAMPLE_BASE_URL = "./sounds/";
 
+  const CLAP_SAMPLE_FILENAME = "verse_jam_clap.mp3";
+  const CLAP_BUTTON_LABEL = "👏 👏 👏 👏";
+  const CLAP_VOLUME = 1;
+
   const DRUM_LOOPS = {
     basic: {
       id: "chip_bounce_basic",
@@ -476,6 +480,94 @@ function referenceNoteForOrder(sequenceOrder){
   return baseNote + (state.roundIndex >= 2 ? 12 : 0);
 }
 
+function makeClapButton(sequenceOrder = 0){
+  return {
+    id: `vj_btn_${state.roundIndex}_${state.chunkIndex}_clap_${sequenceOrder}_${Math.floor(Math.random() * 100000)}`,
+    label: CLAP_BUTTON_LABEL,
+    segmentIndex: -1,
+    note: 60,
+    kind: "clap",
+    sequenceOrder,
+    spawned: false,
+    removing: false
+  };
+}
+
+function isClapButton(button){
+  return button?.kind === "clap";
+}
+
+function playClapSound(){
+  if (!audioCtx) return;
+
+  const now = audioCtx.currentTime;
+
+  // Preferred: use the uploaded clap sample.
+  if (playSample(CLAP_SAMPLE_FILENAME, now, CLAP_VOLUME)){
+    return;
+  }
+
+  // Fallback if the sample has not loaded yet.
+  playTone({ midi: 72, when: now, duration: 0.055, volume: 0.13, type: "square" });
+  playTone({ midi: 84, when: now + 0.025, duration: 0.045, volume: 0.08, type: "square" });
+}
+
+function expandShortChunkWithClaps(buttons){
+  const realButtons = buttons.filter(Boolean);
+
+  if (realButtons.length !== 2 && realButtons.length !== 3){
+    return realButtons.map((button, index) => ({
+      ...button,
+      sequenceOrder: Number.isFinite(button.sequenceOrder) ? button.sequenceOrder : index
+    }));
+  }
+
+  const twoButtonLayouts = [
+    ["word", "clap", "word", "clap"],
+    ["word", "word", "clap", "clap"]
+  ];
+
+  const threeButtonLayouts = [
+    ["word", "clap", "word", "word"],
+    ["word", "word", "word", "clap"]
+  ];
+
+  const layouts = realButtons.length === 2 ? twoButtonLayouts : threeButtonLayouts;
+  const layout = layouts[Math.floor(Math.random() * layouts.length)];
+
+  let wordIndex = 0;
+
+  return layout.map((slot, sequenceOrder) => {
+    if (slot === "clap"){
+      return makeClapButton(sequenceOrder);
+    }
+
+    const sourceButton = realButtons[wordIndex];
+    wordIndex += 1;
+
+    return {
+      ...sourceButton,
+      sequenceOrder
+    };
+  });
+}
+
+function getExpectedSequenceOrder(){
+  return state.correctTapBeats.length;
+}
+
+function isExpectedClapTap(button){
+  if (!isClapButton(button)) return false;
+
+  const expectedOrder = getExpectedSequenceOrder();
+
+  // Since clap buttons look identical, allow any remaining clap button
+  // when the next expected item is a clap.
+  return state.currentButtons.some(item =>
+    isClapButton(item) && item.sequenceOrder === expectedOrder
+  );
+}
+
   function beatPositionNow(){
     if (!audioCtx || !state.musicStartTime) return 0;
     return (audioCtx.currentTime - state.musicStartTime) / secondsPerBeat();
@@ -694,6 +786,16 @@ function getExpectedReferenceJamKind(){
 function isButtonExpected(button){
   if (!button) return false;
 
+  const expectedOrder = getExpectedSequenceOrder();
+
+  if (isClapButton(button)){
+    return isExpectedClapTap(button);
+  }
+
+  if (Number.isFinite(button.sequenceOrder)){
+    return button.sequenceOrder === expectedOrder;
+  }
+
   if (isReferenceJamButton(button)){
     return button.kind === getExpectedReferenceJamKind();
   }
@@ -752,8 +854,8 @@ function makeChunkButtons(){
     buttons.push(makeButtonForSegment(state.progressIndex));
   }
 
-  const visible = buttons.filter(Boolean);
-  return selectedMode === "advanced" ? shuffle(visible) : visible;
+  const sequenced = expandShortChunkWithClaps(buttons);
+  return selectedMode === "advanced" ? shuffle(sequenced) : sequenced;
 }
 
   function makeButtonForSegment(segmentIndex){
@@ -792,7 +894,12 @@ function makeChunkButtons(){
     if (!audioCtx) return;
     if (sampleLoadPromise) return sampleLoadPromise;
 
-    const filenames = [...new Set(Object.values(DRUM_LOOPS).flatMap(loop => Object.values(loop.samples || {})))];
+    const filenames = [
+  ...new Set([
+    ...Object.values(DRUM_LOOPS).flatMap(loop => Object.values(loop.samples || {})),
+    CLAP_SAMPLE_FILENAME
+  ])
+];
 
     sampleLoadPromise = Promise.all(filenames.map(async (filename) => {
       if (!filename || sampleBuffers[filename]) return;
@@ -1474,7 +1581,12 @@ async function beginRun(mode){
       if (state.screen !== "game") return;
 
       spawnButton(button);
-      playTone({ midi: button.note, when: audioCtx.currentTime, duration: 0.12, volume: volumeTuning.buttonPopIn, type: "triangle" });
+
+      if (isClapButton(button)){
+        playClapSound();
+      } else {
+        playTone({ midi: button.note, when: audioCtx.currentTime, duration: 0.12, volume: volumeTuning.buttonPopIn, type: "triangle" });
+      }
     }
 
     await runEchoCountdown();
@@ -1485,18 +1597,22 @@ async function beginRun(mode){
     if (!stack) return;
 
     const btn = document.createElement("button");
-    btn.className = "versejam-word-btn is-spawning no-zoom";
+    btn.className = `versejam-word-btn is-spawning no-zoom${isClapButton(button) ? " is-clap-button" : ""}`;
     btn.id = button.id;
     btn.type = "button";
     btn.textContent = button.label;
     btn.dataset.segmentIndex = String(button.segmentIndex);
+
+    btn.dataset.sequenceOrder = String(button.sequenceOrder ?? "");
+    btn.dataset.buttonKind = button.kind || "word";
+
     btn.addEventListener("pointerdown", (event) => {
       event.preventDefault();
       handleButtonTap(button.id);
     });
     stack.appendChild(btn);
     setTimeout(() => btn.classList.remove("is-spawning"), 280);
-    addFloatNote(btn, "♪");
+    addFloatNote(btn, isClapButton(button) ? "👏" : "♪");
   }
 
 function cueNextButton(){
@@ -1519,11 +1635,9 @@ function cueNextButton(){
   }
 
   function recordCorrectTap(button){
-    const sequenceIndex = Number.isFinite(button.sequenceOrder)
-      ? button.sequenceOrder
-      : getCorrectSequenceIndex(button.segmentIndex);
-
+    const sequenceIndex = getExpectedSequenceOrder();
     const beat = beatPositionNow();
+
     state.correctTapBeats.push({ sequenceIndex, beat });
   }
 
@@ -1610,7 +1724,12 @@ function cueNextButton(){
     recordCorrectTap(button);
     btnEl.classList.remove("is-next", "is-rainbow-next");
     btnEl.classList.add("is-removing");
-    playWordNote(button);
+    if (isClapButton(button)){
+      playClapSound();
+    } else {
+      playWordNote(button);
+    }
+
     explodeButton(btnEl);
 
     await sleep(150);
@@ -1618,7 +1737,11 @@ function cueNextButton(){
 
   let buildProgressChanged = false;
 
-  if (button.kind === "reference_chapter"){
+  if (isClapButton(button)){
+    // Clap buttons are part of the rhythm pattern, but they do not
+    // add anything to the verse build area.
+    buildProgressChanged = false;
+  } else if (button.kind === "reference_chapter"){
     // The shell build area has one combined reference segment.
     // Tapping the chapter button is part of the musical chunk, but
     // we wait to advance the build until the verses button is tapped.
@@ -1637,8 +1760,12 @@ function cueNextButton(){
 
   const phase = getPhase();
   const stillInReferenceChunk = state.currentButtons.some(isReferenceJamButton);
+  const stillInClapExpandedChunk = state.currentButtons.some(isClapButton);
 
-  if (state.currentButtons.length === 0 || (!stillInReferenceChunk && phase !== "words")){
+  if (
+    state.currentButtons.length === 0 ||
+    (!stillInReferenceChunk && !stillInClapExpandedChunk && phase !== "words")
+  ){
     const perfect = didTapChunkPerfectly();
 
     if (phase === "words") state.chunkIndex += 1;
