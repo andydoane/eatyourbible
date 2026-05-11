@@ -52,7 +52,6 @@ const REFERENCE_CADENCE_NOTES = [60, 64, 67];
   const CLAP_BUTTON_LABEL = "👏 👏 👏 👏";
 
   const SOUND_BIT_BASE_URL = "./verse_jam_sounds/";
-  const SOUND_BIT_VOLUME = 0.85;
 
   const SOUND_BITS = [
     { id: "boom", label: "Boom!", filename: "verse_jam_voice_boom.mp3" },
@@ -168,9 +167,12 @@ const ROUND_ONE_WORD_NOTE_VOLUME = 0.260;
 
 const DEFAULT_WORD_NOTE_VOLUME = 0.135;
 
-
-
 const DRUM_MASTER_VOLUME = 2.000;
+
+// Green voice/shout filler buttons: Boom!, Hey!, Woo!, Yeah!, Yo!
+// 1.0 = original MP3 volume.
+// Try 0.75 if too loud, 1.25 if too quiet.
+const VOICE_SOUND_BIT_VOLUME = 0.500;
 
 // TEMP DEV TOOL: live volume tuning.
 // These start from the constants above, but can be changed with the in-game mixer.
@@ -965,7 +967,7 @@ async function loadSoundBitBuffers(){
   return soundBitLoadPromise;
 }
 
-function playSoundBitSample(sound, when = audioCtx?.currentTime || 0, volume = SOUND_BIT_VOLUME){
+function playSoundBitSample(sound, when = audioCtx?.currentTime || 0, volume = VOICE_SOUND_BIT_VOLUME){
   if (!audioCtx || !masterGain || muted || !sound?.filename) return false;
 
   const buffer = soundBitBuffers[sound.filename];
