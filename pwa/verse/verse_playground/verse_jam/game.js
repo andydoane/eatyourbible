@@ -24,8 +24,8 @@
     { id: "advanced", label: "Advanced" }
   ];
 
-  const INTRO_WORDS = ["tap", "the", "words", "to", "the", "beat"];
-  // Fixed rhythm for: TAP THE WORDS (rest) TO THE BEAT
+  const INTRO_WORDS = ["tap", "the", "words", "match", "my", "beat"];
+  // Fixed rhythm for: TAP THE WORDS (rest) MATCH MY BEAT
   // Q Q Q - | Q Q Q -
   const INTRO_RHYTHM_OFFSETS = [0, 1, 2, 4, 5, 6];
 
@@ -172,7 +172,7 @@ const DRUM_MASTER_VOLUME = 2.000;
 // Green voice/shout filler buttons: Boom!, Hey!, Woo!, Yeah!, Yo!
 // 1.0 = original MP3 volume.
 // Try 0.75 if too loud, 1.25 if too quiet.
-const VOICE_SOUND_BIT_VOLUME = 0.500;
+const VOICE_SOUND_BIT_VOLUME = 0.350;
 
 // TEMP DEV TOOL: live volume tuning.
 // These start from the constants above, but can be changed with the in-game mixer.
@@ -481,11 +481,17 @@ function makeClapButton(sequenceOrder = 0){
 }
 
 function randomSoundBit(){
+  if (state.roundIndex === 0) return null;
+
   return SOUND_BITS[Math.floor(Math.random() * SOUND_BITS.length)] || SOUND_BITS[0];
 }
 
 function makeSoundBitButton(sequenceOrder = 0){
   const sound = randomSoundBit();
+
+  if (!sound){
+    return makeClapButton(sequenceOrder);
+  }
 
   return {
     id: `vj_btn_${state.roundIndex}_${state.chunkIndex}_sound_${sound.id}_${sequenceOrder}_${Math.floor(Math.random() * 100000)}`,
@@ -500,6 +506,7 @@ function makeSoundBitButton(sequenceOrder = 0){
     removing: false
   };
 }
+
 
 function isClapButton(button){
   return button?.kind === "clap";
@@ -1403,16 +1410,18 @@ async function beginRun(mode){
 
       if (state.screen !== "game") return;
       const el = document.createElement("div");
-      el.className = "versejam-intro-word is-in";
+      el.className = `versejam-intro-word is-in${i >= 3 ? " is-response-phrase" : ""}`;
       el.textContent = INTRO_WORDS[i];
       stack.appendChild(el);
       playTone({ midi: 72 + (i % 3) * 2, when: audioCtx.currentTime, duration: 0.12, volume: 0.08, type: "triangle" });
     }
 
-    await waitUntilAudioTime(nextMeasureStartTime());
-
     const children = Array.from(stack.children || []);
-    const outStart = nextMeasureStartTime();
+
+    // Start popping the words out one beat after the final word appears.
+    // This removes the sometimes-felt extra measure of rest.
+    const lastIntroOffset = introOffsets[INTRO_WORDS.length - 1] ?? (INTRO_WORDS.length - 1);
+    const outStart = startAt + (lastIntroOffset + 1) * secondsPerBeat();
     for (let i = 0; i < children.length; i += 1){
       if (state.screen !== "game") return;
       const offset = introOffsets[i] ?? i;
