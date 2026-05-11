@@ -2984,8 +2984,8 @@ text-wrap: balance;
   container-type: size;
 }
 
-.pet-emoji{
-  font-size: clamp(80px, 14vw, 106px);
+.pet-stage .pet-emoji{
+  font-size: 75cqh;
 }
 
 .pet-emoji-unlocked{
