@@ -173,6 +173,12 @@ body{
   opacity:0;
 }
 
+.versejam-intro-word.is-response-phrase{
+  color:#fff7e8;
+  text-shadow:0 2px 0 rgba(0,0,0,.18);
+  background:linear-gradient(180deg,#9dff8d,#28b85f);
+}
+
 .versejam-intro-word.is-in{
   animation:vj-pop-in 260ms cubic-bezier(.2,1.45,.35,1) forwards;
 }
