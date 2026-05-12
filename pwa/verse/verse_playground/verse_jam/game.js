@@ -1866,20 +1866,30 @@ function cueNextButton(){
     if (state.progressIndex >= state.segments.length){
       await markPlaygroundPracticed();
 
-      if (state.roundIndex < ROUND_CONFIGS.length - 1){
-        state.roundIndex += 1;
-        state.progressIndex = 0;
-        state.chunkIndex = 0;
-        state.buildFitDone = false;
-        state.currentButtons = [];
-        state.phase = "intro";
-        updateRoundPill();
-        updateBuildText();
-        startBeatLoop();
-        await showRoundTransition();
-        await startNextPlayableGroup();
-        return;
-      }
+    if (state.roundIndex < currentRoundConfigs().length - 1){
+      // Let the current round finish its measure before the next round's
+      // faster/different beat loop takes over.
+      await waitUntilAudioTime(nextMeasureStartTime());
+
+      state.roundIndex += 1;
+      state.progressIndex = 0;
+      state.chunkIndex = 0;
+      state.buildFitDone = false;
+      state.currentButtons = [];
+      state.phase = "intro";
+
+      updateRoundPill();
+      updateBuildText();
+
+      // Now restart the music cleanly at the new round tempo.
+      startBeatLoop();
+
+      // We already waited for the measure boundary above, so don't make
+      // the transition wait another measure.
+      await showRoundTransition({ alreadyAligned: true });
+      await startNextPlayableGroup();
+      return;
+    }
 
       state.completed = true;
       stopRun();
@@ -1892,14 +1902,16 @@ function cueNextButton(){
     if (pill) pill.textContent = currentRound().name;
   }
 
-  async function showRoundTransition(){
+  async function showRoundTransition({ alreadyAligned = false } = {}){
     const area = document.getElementById("versejamMainArea");
     if (!area) return;
     const message = state.roundIndex === 1 ? ["nice!", "now", "jam"] : ["speed", "it", "up"];
     area.innerHTML = `<div class="versejam-intro-stack" id="versejamIntroStack"></div>`;
     const stack = document.getElementById("versejamIntroStack");
 
-    await sleep(nextMeasureDelayMs());
+    if (!alreadyAligned){
+      await sleep(nextMeasureDelayMs());
+    }
 
     for (const word of message){
       const el = document.createElement("div");
