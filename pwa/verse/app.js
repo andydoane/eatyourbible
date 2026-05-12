@@ -411,6 +411,30 @@ function homePillHtml(label = "Home"){
   `;
 }
 
+function practiceBackPillHtml(label = "Back to Practice"){
+  return `
+    <button class="screen-home-pill no-zoom" data-practice-back-pill type="button" aria-label="${label}">
+      ${SVG_BACK}
+    </button>
+  `;
+}
+
+function bindPracticeBackPill(rootEl){
+  const btn = rootEl?.querySelector?.("[data-practice-back-pill]");
+  if (!btn) return;
+
+  btn.onclick = (e) => {
+    e.stopPropagation();
+
+    try {
+      audioEl.pause();
+      audioEl.currentTime = 0;
+    } catch(e){}
+
+    go(Screen.PRACTICE_HUB);
+  };
+}
+
 function titleHomePillHtml(label = "Home"){
   return `
     <button class="screen-title-pill no-zoom" data-home-pill type="button" aria-label="${label}">
@@ -2833,10 +2857,10 @@ function renderGameMixCard(){
   `;
 }
 
-function renderPracticeHubCard({ id, title, icon, desc, cardColor, cardTextColor }){
+function renderPracticeHubCard({ id, title, icon, cardColor, cardTextColor }){
   return `
     <button
-      class="practice-game-card no-zoom"
+      class="practice-game-card practice-simple-card no-zoom"
       type="button"
       data-practice-hub-choice="${id}"
       style="--practice-card-color: ${cardColor}; --practice-card-text: ${cardTextColor};"
@@ -2851,10 +2875,6 @@ function renderPracticeHubCard({ id, title, icon, desc, cardColor, cardTextColor
           ${title}
         </div>
       </div>
-
-      <div class="practice-game-card-bottom">
-        ${desc}
-      </div>
     </button>
   `;
 }
@@ -2862,7 +2882,7 @@ function renderPracticeHubCard({ id, title, icon, desc, cardColor, cardTextColor
 function renderPlaygroundActivityCard(activity){
   return `
     <button
-      class="practice-game-card no-zoom"
+      class="practice-game-card practice-simple-card no-zoom"
       type="button"
       data-playground-activity-id="${activity.id}"
       style="--practice-card-color: ${activity.cardColor}; --practice-card-text: ${activity.cardTextColor};"
@@ -2877,13 +2897,10 @@ function renderPlaygroundActivityCard(activity){
           ${activity.title}
         </div>
       </div>
-
-      <div class="practice-game-card-bottom">
-        ${activity.desc || "Play with the verse"}
-      </div>
     </button>
   `;
 }
+
 
 function renderPracticeGameCard(game, verseProgress){
   const gameProgress = verseProgress?.games?.[game.id];
@@ -5773,7 +5790,6 @@ function screenPracticeHub(idx){
       id: "games",
       title: "Games",
       icon: "🎮",
-      desc: "Earn medals while practicing",
       cardColor: "#7f66c6",
       cardTextColor: "#ffffff"
     })}
@@ -5781,9 +5797,8 @@ function screenPracticeHub(idx){
     ${renderPracticeHubCard({
       id: "playground",
       title: "Playground",
-      icon: "🎵",
-      desc: "Try fun verse activities",
-      cardColor: "#2b1748",
+      icon: "🛝",
+      cardColor: "#a7cb6f",
       cardTextColor: "#ffffff"
     })}
   `;
@@ -5855,7 +5870,7 @@ function screenPractice(idx){
   wrap.innerHTML = `
     <div class="title-content practice-content">
       <div class="practice-title-row">
-        ${homePillHtml()}
+        ${practiceBackPillHtml()}
         <h2 id="practiceTitle">Practice Games</h2>
         <div class="practice-title-spacer" aria-hidden="true"></div>
       </div>
@@ -5870,7 +5885,7 @@ function screenPractice(idx){
     <div class="practice-scroll-vignette" aria-hidden="true"></div>
   `;
 
-  bindHomePill(wrap);
+  bindPracticeBackPill(wrap);
 
   const gameMixBtn = wrap.querySelector("[data-practice-game-mix]");
   if (gameMixBtn){
@@ -5935,7 +5950,7 @@ function screenPlayground(idx){
   wrap.innerHTML = `
     <div class="title-content practice-content">
       <div class="practice-title-row">
-        ${homePillHtml()}
+        ${practiceBackPillHtml()}
         <h2 id="playgroundTitle">Playground</h2>
         <div class="practice-title-spacer" aria-hidden="true"></div>
       </div>
@@ -5950,7 +5965,7 @@ function screenPlayground(idx){
     <div class="practice-scroll-vignette" aria-hidden="true"></div>
   `;
 
-  bindHomePill(wrap);
+  bindPracticeBackPill(wrap);
 
   wrap.querySelectorAll("[data-playground-activity-id]").forEach((btn) => {
     btn.onclick = (e) => {
