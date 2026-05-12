@@ -7,6 +7,11 @@
   --vj-green:#9dff8d;
   --vj-red:#ff8fa3;
   --vj-text:#fff7e8;
+
+  --vj-stage-max:860px;
+  --vj-button-stack-max:430px;
+  --vj-intro-stack-max:430px;
+
   --vj-page-bg:
     radial-gradient(circle at 18% 15%, rgba(141,247,255,.22), transparent 28%),
     radial-gradient(circle at 80% 12%, rgba(255,226,122,.20), transparent 24%),
@@ -66,7 +71,7 @@ body{
 }
 
 .versejam-stage{
-  width:min(520px,100%);
+  width:min(var(--vj-stage-max),100%);
   min-height:calc(100svh - 24px);
   display:flex;
   flex-direction:column;
@@ -180,11 +185,11 @@ body{
 }
 
 .versejam-intro-stack{
-  max-width:360px;
+  max-width:var(--vj-intro-stack-max);
 }
 
 .versejam-button-stack{
-  max-width:390px;
+  max-width:var(--vj-button-stack-max);
 }
 
 .versejam-intro-word{
@@ -387,6 +392,26 @@ body{
   from{opacity:0; transform:translateY(12px) scale(.8);}
   15%{opacity:1;}
   to{opacity:0; transform:translateY(-48px) scale(1.12);}
+}
+
+@media (min-width:760px){
+  .versejam-root{
+    padding:18px;
+  }
+
+  .versejam-stage{
+    min-height:calc(100svh - 36px);
+    gap:14px;
+  }
+
+  .versejam-board-content{
+    padding:18px;
+  }
+
+  .versejam-main-area{
+    padding-left:24px;
+    padding-right:24px;
+  }
 }
 
 @media (max-height:680px){
