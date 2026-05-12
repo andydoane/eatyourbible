@@ -27,6 +27,13 @@ body{
 }
 
 #app.vm-shell,
+.vm-game-screen,
+.vm-game-stage,
+.vm-game-center{
+  background:transparent;
+}
+
+#app.vm-shell,
 .vm-game-screen{
   background:var(--vj-page-bg);
 }
