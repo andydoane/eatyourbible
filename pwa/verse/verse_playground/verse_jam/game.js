@@ -11,7 +11,7 @@
   const BUILD_AREA = "large";
 
 const GAME_THEME = {
-  bg: "#17122b",
+  bg: "transparent",
   accent: "#8df7ff",
   helpTitleBg: "#8df7ff",
   helpTitleColor: "#221447",
