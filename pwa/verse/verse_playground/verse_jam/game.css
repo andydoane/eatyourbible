@@ -19,30 +19,46 @@
   -webkit-tap-highlight-color:transparent;
 }
 
+html,
+body{
+  min-height:100%;
+  background:var(--vj-page-bg);
+}
+
 body{
   margin:0;
   overflow:hidden;
   touch-action:manipulation;
+}
+
+/* Verse Jam owns the full-screen background.
+   This also neutralizes the shared .vm-shell padding/layout so the shell
+   screens do not sit inside an inset app container. */
+#app.vm-shell{
+  min-height:100dvh;
+  height:100dvh;
+  width:100%;
+  padding:0;
+  display:block;
+  overflow:hidden;
+  text-align:initial;
   background:var(--vj-page-bg);
 }
 
-#app.vm-shell,
+/* Shared title/mode/completion containers should not repaint the gradient.
+   If they repaint it, the same gradient can restart inside the centered
+   container and look like a subtle darker rectangle. */
 .vm-game-screen,
 .vm-game-stage,
 .vm-game-center{
-  background:transparent;
-}
-
-#app.vm-shell,
-.vm-game-screen{
-  background:var(--vj-page-bg);
+  background:transparent !important;
 }
 
 .versejam-root{
   min-height:100svh;
   width:100%;
   color:var(--vj-text);
-  background:var(--vj-page-bg);
+  background:transparent;
   display:flex;
   align-items:stretch;
   justify-content:center;
