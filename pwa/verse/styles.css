@@ -952,6 +952,42 @@
   }
 }
 
+.practice-game-card.practice-simple-card {
+  min-height: 150px;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  background: var(--practice-card-color);
+  color: var(--practice-card-text);
+}
+
+.practice-game-card.practice-simple-card .practice-game-card-top {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px 18px;
+  background: transparent;
+  color: var(--practice-card-text);
+}
+
+.practice-game-card.practice-simple-card .practice-game-emoji-wrap {
+  margin: 0;
+}
+
+.practice-game-card.practice-simple-card .practice-game-title {
+  color: var(--practice-card-text);
+  text-align: center;
+}
+
+.practice-game-card.practice-simple-card .practice-game-card-bottom {
+  display: none;
+}
+
 
 /* =========================
    Game Mix Finished Screen
