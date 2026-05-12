@@ -648,8 +648,8 @@ function getLearnInstructionConfig(key){
     games: {
       image: "verse_games.png",
       title: "Practice the Verse",
-      subtext: "Let's play some games.",
-      button: "Practice Games",
+      subtext: "Choose games or playground activities.",
+      button: "Practice",
       audio: "instructions_games.mp3"
     }
   };
@@ -784,7 +784,7 @@ function continueLearnInstruction(){
       markLearnCompleted(VERSE_ID);
     }
 
-    go(Screen.PRACTICE);
+    go(Screen.PRACTICE_HUB);
   }
 }
 
@@ -2175,7 +2175,9 @@ const Screen = {
   CELEBRATION: "celebration",
   PET_UNLOCK: "pet_unlock",
   PET_STATS: "pet_stats",
+  PRACTICE_HUB: "practice_hub",
   PRACTICE: "practice",
+  PLAYGROUND: "playground",
   GAME_MIX_FINISHED: "game_mix_finished"
 };
 
@@ -2276,8 +2278,8 @@ const State = {
 
 const TITLE_OPTIONS = [
   { id: "learn", label: "Learn the Verse", action: () => go(Screen.LEARN_LEVEL) },
-  { id: "practice", label: "Practice Games", action: () => {
-      if (State.hasLearnedVerse) go(Screen.PRACTICE);
+  { id: "practice", label: "Practice", action: () => {
+      if (State.hasLearnedVerse) go(Screen.PRACTICE_HUB);
       else go(Screen.PRACTICE_GATE);
     }
   },
@@ -2338,6 +2340,29 @@ function getExternalPracticeGames(){
 
 function getPracticeGames(){
   return [...BUILTIN_PRACTICE_GAMES, ...getExternalPracticeGames()];
+}
+
+function getExternalPlaygroundActivities(){
+  const list = Array.isArray(window.EXTERNAL_VERSE_PLAYGROUND) ? window.EXTERNAL_VERSE_PLAYGROUND : [];
+
+  return list
+    .filter(entry => entry && entry.enabled !== false)
+    .map(entry => entry.manifest)
+    .filter(manifest => manifest && manifest.visibleInCarousel !== false)
+    .map(manifest => ({
+      id: manifest.id,
+      title: manifest.title || "Playground Activity",
+      icon: manifest.icon || "🎵",
+      desc: manifest.description || "",
+      cardColor: manifest.cardColor || "#2b1748",
+      cardTextColor: manifest.cardTextColor || "#ffffff",
+      source: "external",
+      manifest
+    }));
+}
+
+function getPlaygroundActivities(){
+  return getExternalPlaygroundActivities();
 }
 
 /* =========================
@@ -2808,6 +2833,58 @@ function renderGameMixCard(){
   `;
 }
 
+function renderPracticeHubCard({ id, title, icon, desc, cardColor, cardTextColor }){
+  return `
+    <button
+      class="practice-game-card no-zoom"
+      type="button"
+      data-practice-hub-choice="${id}"
+      style="--practice-card-color: ${cardColor}; --practice-card-text: ${cardTextColor};"
+      aria-label="${title}"
+    >
+      <div class="practice-game-card-top">
+        <div class="practice-game-emoji-wrap" aria-hidden="true">
+          <div class="practice-game-emoji">${icon}</div>
+        </div>
+
+        <div class="practice-game-title">
+          ${title}
+        </div>
+      </div>
+
+      <div class="practice-game-card-bottom">
+        ${desc}
+      </div>
+    </button>
+  `;
+}
+
+function renderPlaygroundActivityCard(activity){
+  return `
+    <button
+      class="practice-game-card no-zoom"
+      type="button"
+      data-playground-activity-id="${activity.id}"
+      style="--practice-card-color: ${activity.cardColor}; --practice-card-text: ${activity.cardTextColor};"
+      aria-label="Play ${activity.title}"
+    >
+      <div class="practice-game-card-top">
+        <div class="practice-game-emoji-wrap" aria-hidden="true">
+          <div class="practice-game-emoji">${activity.icon}</div>
+        </div>
+
+        <div class="practice-game-title">
+          ${activity.title}
+        </div>
+      </div>
+
+      <div class="practice-game-card-bottom">
+        ${activity.desc || "Play with the verse"}
+      </div>
+    </button>
+  `;
+}
+
 function renderPracticeGameCard(game, verseProgress){
   const gameProgress = verseProgress?.games?.[game.id];
 
@@ -2936,7 +3013,9 @@ function screenToIndex(screen){
     Screen.FINAL_RECALL,
     Screen.CELEBRATION,
     Screen.PET_UNLOCK,
+    Screen.PRACTICE_HUB,
     Screen.PRACTICE,
+    Screen.PLAYGROUND,
     Screen.GAME_MIX_FINISHED
   ];
   return order.indexOf(screen);
@@ -3129,15 +3208,23 @@ function practiceNext(){
   render();
 }
 
-function getReturnToPracticeUrl(){
+function getReturnToScreenUrl(screenName = "practice"){
   const url = new URL("index.html", window.location.href);
 
   if (VERSE_ID) {
     url.searchParams.set("v", VERSE_ID);
   }
 
-  url.searchParams.set("screen", "practice");
+  url.searchParams.set("screen", screenName);
   return url.href;
+}
+
+function getReturnToPracticeUrl(){
+  return getReturnToScreenUrl("practice");
+}
+
+function getReturnToPlaygroundUrl(){
+  return getReturnToScreenUrl("playground");
 }
 
 function launchExternalGame(manifest, options = {}){
@@ -3158,6 +3245,20 @@ function launchExternalGame(manifest, options = {}){
   if (options.mode){
     params.set("mode", options.mode);
   }
+
+  window.location.href = `${manifest.launchUrl}?${params.toString()}`;
+}
+
+function launchExternalPlaygroundActivity(manifest){
+  if (!manifest || !manifest.launchUrl || !VERSE_ID) return;
+
+  const params = new URLSearchParams({
+    verseId: VERSE_ID,
+    ref: VERSE_REF || "",
+    translation: TRANSLATION || "",
+    returnTo: getReturnToPlaygroundUrl(),
+    source: "verse_memory_app"
+  });
 
   window.location.href = `${manifest.launchUrl}?${params.toString()}`;
 }
@@ -4113,7 +4214,9 @@ const show = (
   State.screen !== Screen.CELEBRATION &&
   State.screen !== Screen.LEARN_LEVEL &&
   State.screen !== Screen.PRACTICE_GATE &&
+  State.screen !== Screen.PRACTICE_HUB &&
   State.screen !== Screen.PRACTICE &&
+  State.screen !== Screen.PLAYGROUND &&
   State.screen !== Screen.PROGRESS &&
   State.screen !== Screen.VERSE_DETAIL &&
   State.screen !== Screen.PET_STATS &&
@@ -4881,7 +4984,7 @@ function screenVerseDetail(idx){
     btnDetailPractice.onclick = () => {
       const url = new URL("index.html", window.location.href);
       url.searchParams.set("v", verseId);
-      url.searchParams.set("screen", "practice");
+      url.searchParams.set("screen", "practice_hub");
       window.location.href = url.href;
     };
   }
@@ -4918,7 +5021,7 @@ function screenPetUnlock(idx){
 
       <div class="celebration-actions">
         <button class="carousel-main no-zoom" id="btnPetUnlockPractice">
-          ${isGameMixPetUnlockRequest() ? "Continue Mix" : "Practice Games"}
+          ${isGameMixPetUnlockRequest() ? "Continue Mix" : "Practice"}
         </button>
         <button class="carousel-main no-zoom" id="btnPetUnlockVisit">
           ${isGameMixPetUnlockRequest() ? "Visit BibloPet Zoo" : "Visit BibloPet"}
@@ -4940,7 +5043,7 @@ function screenPetUnlock(idx){
         return;
       }
 
-      go(Screen.PRACTICE);
+      go(Screen.PRACTICE_HUB);
     };
   }
 
@@ -5593,11 +5696,11 @@ function screenCelebration(idx){
     <canvas id="fireworksCanvas"></canvas>
 
     <h2>Great job learning the verse!</h2>
-    <div class="celebration-prompt">Complete Verse Games to unlock a new BibloPet! 🐾</div>
+    <div class="celebration-prompt">Practice the verse to unlock a new BibloPet! 🐾</div>
 
     <div class="celebration-actions">
       <button class="carousel-main no-zoom" id="btnCelebrateTitle">Title Screen</button>
-      <button class="carousel-main no-zoom" id="btnCelebrateGames">Verse Games</button>
+      <button class="carousel-main no-zoom" id="btnCelebrateGames">Practice</button>
     </div>
   `;
 
@@ -5615,7 +5718,7 @@ function screenCelebration(idx){
 
   wrap.querySelector("#btnCelebrateGames").onclick = () => {
     stopFireworks();
-    go(Screen.PRACTICE);
+    go(Screen.PRACTICE_HUB);
   };
 
   return makeSlide({idx, bg:"var(--purple)", navHidden:true, inner: wrap});
@@ -5657,6 +5760,70 @@ function screenPracticeGate(idx){
   }
 
   bindHomePill(wrap);
+
+  return makeSlide({idx, bg:"var(--purple)", navHidden:true, inner: wrap});
+}
+
+function screenPracticeHub(idx){
+  const wrap = document.createElement("div");
+  wrap.className = "title-screen practice-screen";
+
+  const cardsHtml = `
+    ${renderPracticeHubCard({
+      id: "games",
+      title: "Games",
+      icon: "🎮",
+      desc: "Earn medals while practicing",
+      cardColor: "#7f66c6",
+      cardTextColor: "#ffffff"
+    })}
+
+    ${renderPracticeHubCard({
+      id: "playground",
+      title: "Playground",
+      icon: "🎵",
+      desc: "Try fun verse activities",
+      cardColor: "#2b1748",
+      cardTextColor: "#ffffff"
+    })}
+  `;
+
+  wrap.innerHTML = `
+    <div class="title-content practice-content">
+      <div class="practice-title-row">
+        ${homePillHtml()}
+        <h2 id="practiceHubTitle">Practice</h2>
+        <div class="practice-title-spacer" aria-hidden="true"></div>
+      </div>
+
+      <div class="practice-scroll-wrap">
+        <div class="practice-card-list">
+          ${cardsHtml}
+        </div>
+      </div>
+    </div>
+
+    <div class="practice-scroll-vignette" aria-hidden="true"></div>
+  `;
+
+  bindHomePill(wrap);
+
+  wrap.querySelectorAll("[data-practice-hub-choice]").forEach((btn) => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+
+      const choice = btn.dataset.practiceHubChoice;
+
+      if (choice === "games"){
+        go(Screen.PRACTICE);
+        return;
+      }
+
+      if (choice === "playground"){
+        go(Screen.PLAYGROUND);
+      }
+    };
+  });
 
   return makeSlide({idx, bg:"var(--purple)", navHidden:true, inner: wrap});
 }
@@ -5744,6 +5911,68 @@ function screenPractice(idx){
   return makeSlide({idx, bg:"var(--purple)", navHidden:true, inner: wrap});
 }
 
+function screenPlayground(idx){
+  const wrap = document.createElement("div");
+  wrap.className = "title-screen practice-screen";
+
+  const activities = getPlaygroundActivities();
+
+  const cardsHtml = activities.length
+    ? `
+      <div class="practice-pick-heading">
+        Pick an Activity
+      </div>
+
+      ${activities.map(activity => renderPlaygroundActivityCard(activity)).join("")}
+    `
+    : `
+      <div class="practice-empty-card">
+        <div class="practice-empty-title">No Playground Activities</div>
+        <div class="practice-empty-text">No activities are available right now.</div>
+      </div>
+    `;
+
+  wrap.innerHTML = `
+    <div class="title-content practice-content">
+      <div class="practice-title-row">
+        ${homePillHtml()}
+        <h2 id="playgroundTitle">Playground</h2>
+        <div class="practice-title-spacer" aria-hidden="true"></div>
+      </div>
+
+      <div class="practice-scroll-wrap">
+        <div class="practice-card-list">
+          ${cardsHtml}
+        </div>
+      </div>
+    </div>
+
+    <div class="practice-scroll-vignette" aria-hidden="true"></div>
+  `;
+
+  bindHomePill(wrap);
+
+  wrap.querySelectorAll("[data-playground-activity-id]").forEach((btn) => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+
+      const activityId = btn.dataset.playgroundActivityId;
+      const activity = activities.find(item => item.id === activityId);
+
+      if (!activity) return;
+
+      if (activity.source === "external"){
+        launchExternalPlaygroundActivity(activity.manifest);
+        return;
+      }
+
+      console.warn("Playground activity is not external and cannot be launched:", activity);
+    };
+  });
+
+  return makeSlide({idx, bg:"var(--purple)", navHidden:true, inner: wrap});
+}
+
 function screenGameMixFinished(idx){
   const wrap = document.createElement("div");
   wrap.className = "title-screen game-mix-finished-screen";
@@ -5810,7 +6039,7 @@ function render(){
 
   const uniq = Array.from(new Set(indicesToRender.filter(i => i !== null && i >= 0)));
   for (const idx of uniq){
-    const screen = ["intro","title","progress","pet_stats","verse_detail","learn_level","practice_gate","learn_instruction","listen","meaning","chunks","echo","hide","final_recall","celebration","pet_unlock","practice","game_mix_finished"][idx];
+    const screen = ["intro","title","progress","pet_stats","verse_detail","learn_level","practice_gate","learn_instruction","listen","meaning","chunks","echo","hide","final_recall","celebration","pet_unlock","practice_hub","practice","playground","game_mix_finished"][idx];
     let slide = null;
     if (screen === Screen.INTRO) slide = screenIntro(idx);
     if (screen === Screen.TITLE) slide = screenTitle(idx);
@@ -5828,7 +6057,9 @@ function render(){
     if (screen === Screen.FINAL_RECALL) slide = screenFinalRecall(idx);
     if (screen === Screen.CELEBRATION) slide = screenCelebration(idx);
     if (screen === Screen.PET_UNLOCK) slide = screenPetUnlock(idx);
+    if (screen === Screen.PRACTICE_HUB) slide = screenPracticeHub(idx);
     if (screen === Screen.PRACTICE) slide = screenPractice(idx);
+    if (screen === Screen.PLAYGROUND) slide = screenPlayground(idx);
     if (screen === Screen.GAME_MIX_FINISHED) slide = screenGameMixFinished(idx);
     if (slide) app.appendChild(slide);
   }
@@ -5890,8 +6121,12 @@ function render(){
     State.pendingPetUnlockVerseId = petUnlockVerseId;
     State.selectedVerseId = petUnlockVerseId;
     setScreen(Screen.PET_UNLOCK);
+  } else if (requestedScreen === "practice_hub" && HAS_VERSE_SELECTION){
+    setScreen(Screen.PRACTICE_HUB);
   } else if (requestedScreen === "practice" && HAS_VERSE_SELECTION){
     setScreen(Screen.PRACTICE);
+  } else if (requestedScreen === "playground" && HAS_VERSE_SELECTION){
+    setScreen(Screen.PLAYGROUND);
   } else if (requestedScreen === "progress" && HAS_VERSE_SELECTION){
     setScreen(Screen.PROGRESS);
   } else if (requestedScreen === "title"){
