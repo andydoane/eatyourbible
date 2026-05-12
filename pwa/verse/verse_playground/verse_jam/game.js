@@ -312,6 +312,8 @@ function createAudioGraph(){
     menuOpen: false,
     helpOpen: false,
     helpBackMode: false,
+    paused: false,
+    resumeAfterMenu: false,
     busy: false,
     completed: false,
     startTime: 0,
@@ -1372,6 +1374,7 @@ function playSoundBitSample(sound, when = audioCtx?.currentTime || 0, volume = V
 
   async function runEchoCountdown(){
     state.phase = "countdown";
+    if (state.paused) return;
     state.acceptingInput = false;
     state.echoStartBeat = null;
 
@@ -1385,10 +1388,10 @@ function playSoundBitSample(sound, when = audioCtx?.currentTime || 0, volume = V
     const countStart = nextMeasureStartTime();
 
     for (let i = 0; i < countdown.length; i += 1){
-      if (state.screen !== "game") return;
+      if (state.screen !== "game" || state.paused) return;
 
       await waitUntilAudioTime(countStart + i * secondsPerBeat());
-      if (state.screen !== "game") return;
+      if (state.screen !== "game" || state.paused) return;
 
       const step = countdown[i];
       setCueButton(step.label, step.cue);
@@ -1405,7 +1408,7 @@ function playSoundBitSample(sound, when = audioCtx?.currentTime || 0, volume = V
     );
 
     await waitUntilAudioTime(earlyInputTime);
-    if (state.screen !== "game") return;
+    if (state.screen !== "game" || state.paused) return;
 
     // Keep the official rhythm start on the real downbeat for PERFECT/GROOVY timing.
     state.echoStartBeat = (echoStartTime - state.musicStartTime) / secondsPerBeat();
@@ -1415,7 +1418,7 @@ function playSoundBitSample(sound, when = audioCtx?.currentTime || 0, volume = V
     cueNextButton();
 
     await waitUntilAudioTime(echoStartTime);
-    if (state.screen !== "game") return;
+    if (state.screen !== "game" || state.paused) return;
 
     // Now show the visible start cue right on the beat.
     setCueButton("TAP!", "tap");
@@ -1504,6 +1507,7 @@ function playSoundBitSample(sound, when = audioCtx?.currentTime || 0, volume = V
         state.menuOpen = false;
         state.helpOpen = true;
         state.helpBackMode = true;
+        pauseGameForMenu();
         const menuOverlay = document.getElementById("verseJamGameMenuOverlay");
         if (menuOverlay){
           menuOverlay.classList.remove("is-open");
@@ -1523,9 +1527,11 @@ function playSoundBitSample(sound, when = audioCtx?.currentTime || 0, volume = V
         state.menuOpen = true;
         state.helpOpen = false;
         state.helpBackMode = false;
+        pauseGameForMenu();
       },
       onClose: () => {
         state.menuOpen = false;
+        resumeGameFromMenu();
       },
       onBackFromHelp: () => {
         state.helpOpen = false;
@@ -1535,12 +1541,60 @@ function playSoundBitSample(sound, when = audioCtx?.currentTime || 0, volume = V
     });
   }
 
-  function stopRun(){
-    clearSleeps();
-    stopMusic();
-    state.acceptingInput = false;
-    state.busy = false;
-  }
+function shouldPauseGameForMenu(){
+  return (
+    state.screen === "game" &&
+    !state.completed &&
+    !state.paused
+  );
+}
+
+function pauseGameForMenu(){
+  if (!shouldPauseGameForMenu()) return;
+
+  state.paused = true;
+  state.resumeAfterMenu = true;
+  state.acceptingInput = false;
+  state.busy = false;
+
+  // Cancel pending waits/countdowns/spawns/transitions.
+  clearSleeps();
+
+  // Stop drums, pads, currently ringing notes, and scheduled audio.
+  stopMusic();
+}
+
+async function resumeGameFromMenu(){
+  if (!state.paused || !state.resumeAfterMenu) return;
+
+  state.paused = false;
+  state.resumeAfterMenu = false;
+  state.acceptingInput = false;
+  state.busy = false;
+
+  if (state.screen !== "game" || state.completed) return;
+
+  await ensureAudio();
+  if (state.screen !== "game" || state.completed || state.paused) return;
+
+  // Restart the groove cleanly.
+  startBeatLoop();
+
+  // Option A: resume by restarting the current musical prompt/chunk.
+  // Already-built verse text stays built; the current prompt is rebuilt
+  // from the current progressIndex/chunkIndex.
+  await startNextPlayableGroup();
+}
+
+function stopRun(){
+  clearSleeps();
+  stopMusic();
+  state.acceptingInput = false;
+  state.busy = false;
+  state.paused = false;
+  state.resumeAfterMenu = false;
+}
+
 
 async function beginRun(mode){
   selectedMode = mode;
@@ -1576,12 +1630,12 @@ async function beginRun(mode){
     const startAt = nextMeasureStartTime();
 
     for (let i = 0; i < INTRO_WORDS.length; i += 1){
-      if (state.screen !== "game") return;
+      if (state.screen !== "game" || state.paused) return;
       const offset = introOffsets[i] ?? i;
       const eventTime = startAt + offset * secondsPerBeat();
       await waitUntilAudioTime(eventTime);
 
-      if (state.screen !== "game") return;
+      if (state.screen !== "game" || state.paused) return;
       const el = document.createElement("div");
       el.className = `versejam-intro-word is-in${i >= 3 ? " is-response-phrase" : ""}`;
       el.textContent = INTRO_WORDS[i];
@@ -1597,7 +1651,7 @@ async function beginRun(mode){
     const introPatternLengthBeats = measureAlignedLength(introOffsets);
     const outStart = startAt + introPatternLengthBeats * secondsPerBeat();
     for (let i = 0; i < children.length; i += 1){
-      if (state.screen !== "game") return;
+      if (state.screen !== "game" || state.paused) return;
       const offset = introOffsets[i] ?? i;
       const eventTime = outStart + offset * secondsPerBeat();
       await waitUntilAudioTime(eventTime);
@@ -1607,11 +1661,13 @@ async function beginRun(mode){
       playTone({ midi: 60, when: audioCtx.currentTime, duration: 0.08, volume: 0.05, type: "triangle" });
     }
 
-    await waitUntilAudioTime(nextMeasureStartTime());
+    if (state.screen !== "game" || state.paused) return;
+await waitUntilAudioTime(nextMeasureStartTime());
   }
 
   async function startNextPlayableGroup(){
     state.phase = "spawn_chunk";
+    if (state.paused) return;
     state.acceptingInput = false;
     state.currentButtons = makeChunkButtons();
     state.currentRhythmOffsets = makeCurrentRhythmOffsets(state.currentButtons);
@@ -1648,7 +1704,7 @@ async function beginRun(mode){
         : state.currentRhythmOffsets[i] ?? i;
 
       await waitUntilAudioTime(spawnStart + offset * secondsPerBeat());
-      if (state.screen !== "game") return;
+      if (state.screen !== "game" || state.paused) return;
 
       spawnButton(button);
 
@@ -1659,7 +1715,8 @@ async function beginRun(mode){
       }
     }
 
-    await runEchoCountdown();
+    if (state.screen !== "game" || state.paused) return;
+  await runEchoCountdown();
   }
 
   function spawnButton(button){
@@ -1776,8 +1833,8 @@ function cueNextButton(){
     splash.addEventListener("animationend", () => splash.remove(), { once: true });
   }
 
-  async function handleButtonTap(buttonId){
-    if (!state.acceptingInput || state.busy) return;
+async function handleButtonTap(buttonId){
+  if (state.paused || !state.acceptingInput || state.busy) return;
 
     const button = state.currentButtons.find(item => item.id === buttonId);
     const btnEl = document.getElementById(buttonId);
@@ -1903,6 +1960,7 @@ function cueNextButton(){
   }
 
   async function showRoundTransition({ alreadyAligned = false } = {}){
+    if (state.paused) return;
     const area = document.getElementById("versejamMainArea");
     if (!area) return;
     const message = state.roundIndex === 1 ? ["nice!", "now", "jam"] : ["speed", "it", "up"];
@@ -1914,6 +1972,7 @@ function cueNextButton(){
     }
 
     for (const word of message){
+      if (state.screen !== "game" || state.paused) return;
       const el = document.createElement("div");
       el.className = "versejam-intro-word is-in";
       el.textContent = word;
