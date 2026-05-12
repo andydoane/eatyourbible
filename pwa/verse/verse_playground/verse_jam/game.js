@@ -10,14 +10,14 @@
   const HELP_OVERLAY_ID = "verseJamHelpOverlay";
   const BUILD_AREA = "large";
 
-  const GAME_THEME = {
-    bg: "#2b1748",
-    accent: "#8df7ff",
-    helpTitleBg: "#8df7ff",
-    helpTitleColor: "#221447",
-    helpCloseBg: "#ffe27a",
-    helpCloseColor: "#221447"
-  };
+const GAME_THEME = {
+  bg: "#17122b",
+  accent: "#8df7ff",
+  helpTitleBg: "#8df7ff",
+  helpTitleColor: "#221447",
+  helpCloseBg: "#ffe27a",
+  helpCloseColor: "#221447"
+};
 
   const MODES = [
     { id: "beginner", label: "Beginner" },
