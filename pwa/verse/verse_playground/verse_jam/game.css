@@ -7,6 +7,11 @@
   --vj-green:#9dff8d;
   --vj-red:#ff8fa3;
   --vj-text:#fff7e8;
+  --vj-page-bg:
+    radial-gradient(circle at 18% 15%, rgba(141,247,255,.22), transparent 28%),
+    radial-gradient(circle at 80% 12%, rgba(255,226,122,.20), transparent 24%),
+    radial-gradient(circle at 50% 115%, rgba(255,122,217,.18), transparent 34%),
+    linear-gradient(145deg,#17122b,#2b1748 56%,#151326);
 }
 
 *{
@@ -18,17 +23,19 @@ body{
   margin:0;
   overflow:hidden;
   touch-action:manipulation;
+  background:var(--vj-page-bg);
+}
+
+#app.vm-shell,
+.vm-game-screen{
+  background:var(--vj-page-bg);
 }
 
 .versejam-root{
   min-height:100svh;
   width:100%;
   color:var(--vj-text);
-  background:
-    radial-gradient(circle at 18% 15%, rgba(141,247,255,.22), transparent 28%),
-    radial-gradient(circle at 80% 12%, rgba(255,226,122,.20), transparent 24%),
-    radial-gradient(circle at 50% 115%, rgba(255,122,217,.18), transparent 34%),
-    linear-gradient(145deg,#17122b,#2b1748 56%,#151326);
+  background:var(--vj-page-bg);
   display:flex;
   align-items:stretch;
   justify-content:center;
