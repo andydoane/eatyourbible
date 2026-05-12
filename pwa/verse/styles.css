@@ -604,6 +604,82 @@
       box-shadow: 0 2px 0 rgba(0,0,0,0.25);
     }
 
+/* ---------- Title action buttons ---------- */
+
+.title-action-row{
+  width: 100%;
+  max-width: 700px;
+  margin: clamp(10px, 2vh, 16px) auto clamp(8px, 1.6vh, 14px);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(8px, 2vw, 14px);
+}
+
+.title-action-btn{
+  min-width: 0;
+  min-height: clamp(112px, 21vw, 156px);
+  border: none;
+  border-radius: clamp(18px, 4.2vw, 28px);
+  padding: clamp(10px, 2.5vw, 16px) clamp(6px, 2vw, 12px);
+  background: var(--title-action-bg);
+  color: var(--title-action-text);
+  font: inherit;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 7px 0 rgba(0,0,0,0.24);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(6px, 1.4vw, 10px);
+  text-align: center;
+  overflow: hidden;
+}
+
+.title-action-btn:active{
+  transform: translateY(4px);
+  box-shadow: 0 3px 0 rgba(0,0,0,0.24);
+}
+
+.title-action-img{
+  width: clamp(48px, 14vw, 86px);
+  height: clamp(48px, 14vw, 86px);
+  object-fit: contain;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.title-action-label{
+  display: block;
+  font-size: clamp(17px, 4.2vw, 25px);
+  font-weight: 900;
+  line-height: 0.95;
+  color: var(--title-action-text);
+  text-align: center;
+}
+
+@media (max-width: 380px){
+  .title-action-row{
+    gap: 7px;
+  }
+
+  .title-action-btn{
+    min-height: 104px;
+    border-radius: 18px;
+  }
+
+  .title-action-img{
+    width: 48px;
+    height: 48px;
+  }
+
+  .title-action-label{
+    font-size: 16px;
+  }
+}
+
     .practice-icons{
   display:flex;
   justify-content:center;
