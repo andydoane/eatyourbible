@@ -6,7 +6,7 @@
 
   const GAME_ID = "verse_jam";
   const GAME_TITLE = "Verse Jam";
-  const GAME_ICON = "🎵";
+  const GAME_ICON = "🎹";
   const HELP_OVERLAY_ID = "verseJamHelpOverlay";
   const BUILD_AREA = "large";
 
@@ -426,8 +426,13 @@ function createAudioGraph(){
     state.startTime = performance.now();
   }
 
+function selectedModeId(){
+  if (typeof selectedMode === "string") return selectedMode;
+  return selectedMode?.id || "beginner";
+}
+
 function currentRoundConfigs(){
-  return ROUND_CONFIGS_BY_MODE[selectedMode?.id] || ROUND_CONFIGS_BY_MODE.beginner;
+  return ROUND_CONFIGS_BY_MODE[selectedModeId()] || ROUND_CONFIGS_BY_MODE.beginner;
 }
 
 function currentRound(){
@@ -1539,6 +1544,7 @@ function playSoundBitSample(sound, when = audioCtx?.currentTime || 0, volume = V
 
 async function beginRun(mode){
   selectedMode = mode;
+  console.log("Verse Jam selected mode:", selectedMode, "mode id:", selectedModeId(), "starting bpm:", currentRound().bpm);
 
   // IMPORTANT for iPhone/Safari:
   // Unlock audio immediately from the user's mode-button tap,
