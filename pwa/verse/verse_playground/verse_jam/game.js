@@ -134,12 +134,23 @@ const REFERENCE_CADENCE_NOTES = [60, 64, 67];
     }
   };
 
-  const ROUND_CONFIGS = [
+const ROUND_CONFIGS_BY_MODE = {
+  beginner: [
     { name: "Warmup", bpm: 92, loop: "basic", cue: "soft", explosion: 1, echo: false, pad: false },
     { name: "Jam", bpm: 92, loop: "middle", cue: "rainbow", explosion: 1.35, echo: false, pad: true },
     { name: "Faster", bpm: 100, loop: "final", cue: "rainbow", explosion: 1.55, echo: false, pad: true },
     { name: "Finale", bpm: 108, loop: "final", cue: "rainbow", explosion: 1.85, echo: false, pad: true }
-  ];
+  ],
+
+  advanced: [
+    { name: "Warmup", bpm: 100, loop: "basic", cue: "soft", explosion: 1, echo: false, pad: false },
+    { name: "Jam", bpm: 104, loop: "middle", cue: "rainbow", explosion: 1.35, echo: false, pad: true },
+    { name: "Faster", bpm: 112, loop: "final", cue: "rainbow", explosion: 1.55, echo: false, pad: true },
+    { name: "Finale", bpm: 120, loop: "final", cue: "rainbow", explosion: 1.85, echo: false, pad: true }
+  ]
+};
+
+const ROUND_CONFIGS = ROUND_CONFIGS_BY_MODE.beginner;
 
   const CHUNK_RHYTHMS = {
     1: [[0]],
@@ -415,9 +426,14 @@ function createAudioGraph(){
     state.startTime = performance.now();
   }
 
-  function currentRound(){
-    return ROUND_CONFIGS[Math.min(state.roundIndex, ROUND_CONFIGS.length - 1)];
-  }
+function currentRoundConfigs(){
+  return ROUND_CONFIGS_BY_MODE[selectedMode?.id] || ROUND_CONFIGS_BY_MODE.beginner;
+}
+
+function currentRound(){
+  const configs = currentRoundConfigs();
+  return configs[Math.min(state.roundIndex, configs.length - 1)];
+}
 
   function currentLoop(){
     return DRUM_LOOPS[currentRound().loop] || DRUM_LOOPS.basic;
@@ -1049,9 +1065,8 @@ function makeChunkButtons(){
   }
 
     const sequenced = addRhythmFillersToChunk(buttons);
-    const visualButtons = selectedMode === "advanced" ? shuffle(sequenced) : sequenced;
 
-    return visualButtons.map((button, visualOrder) => ({
+    return sequenced.map((button, visualOrder) => ({
       ...button,
       visualOrder
     }));
@@ -1988,8 +2003,8 @@ playTone({ midi: transitionNotes[(stack.children.length - 1) % transitionNotes.l
   function renderMode(){
     window.VerseGameShell.renderModeSelect({
       app,
-      title: "Choose Your Verse Jam Mode",
-      icon: "🎹",
+      title: "Choose Your Speed",
+      icon: "🥁",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       backLabel: "Back to Verse Jam title",
@@ -2022,7 +2037,7 @@ playTone({ midi: transitionNotes[(stack.children.length - 1) % transitionNotes.l
     if (center){
       const note = document.createElement("div");
       note.className = "vm-game-complete-stats";
-      note.textContent = `You played the verse ${ROUND_CONFIGS.length} times · ${seconds}s`;
+      note.textContent = `You played the verse ${currentRoundConfigs().length} times · ${seconds}s`;
       const actions = center.querySelector(".vm-game-actions");
       center.insertBefore(note, actions || null);
     }
@@ -2031,8 +2046,8 @@ playTone({ midi: transitionNotes[(stack.children.length - 1) % transitionNotes.l
   function helpHtml(){
     return `
       Tap the next verse word to play its note.<br><br>
-      Beginner: words are stacked in order.<br>
-      Advanced: words are scrambled.<br><br>
+      Beginner: normal starting speed.<br>
+      Advanced: faster starting speed and faster tempo climb.<br><br>
       The beat keeps going while each chunk appears. First, listen as the words pop in. Then watch the cue button count down: 3, 2, 1, GO! When it says TAP!, echo the rhythm by tapping the next verse word. Correct taps pop into chunky pixels and build the verse above. Wrong taps play a gentle “no” note.
     `;
   }
