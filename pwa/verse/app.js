@@ -4514,7 +4514,7 @@ function screenTitle(idx){
           onerror="this.style.display='none'">
       </div>
     <h2>
-      ${HAS_VERSE_SELECTION ? `${VERSE_REF}` : "Choose a verse..."}
+      ${HAS_VERSE_SELECTION ? `${VERSE_REF}` : "BibloVerse"}
       ${DEBUG_MODE ? " (DEBUG)" : ""}
     </h2>
     
