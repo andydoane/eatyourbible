@@ -4524,7 +4524,7 @@ function screenTitle(idx){
       <div class="title-action-row" aria-label="Main actions">
         ${renderTitleActionButton({
           id: "learn",
-          label: "Learn",
+          label: State.hasLearnedVerse ? "Review" : "Learn",
           image: "button_learn.png",
           color: "#ffc751",
           textColor: "#333333"
