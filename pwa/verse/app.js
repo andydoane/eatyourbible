@@ -2310,6 +2310,27 @@ const TITLE_OPTIONS = [
   { id: "progress", label: "BibloPet Zoo", action: () => go(Screen.PROGRESS) },
 ];
 
+function renderTitleActionButton({ id, label, image, color, textColor }){
+  return `
+    <button
+      class="title-action-btn title-action-${id} no-zoom"
+      type="button"
+      data-title-action="${id}"
+      style="--title-action-bg:${color}; --title-action-text:${textColor};"
+      aria-label="${label}"
+    >
+      <img
+        class="title-action-img"
+        src="${IMG_DIR}${image}"
+        alt=""
+        draggable="false"
+        onerror="this.style.display='none'"
+      >
+      <span class="title-action-label">${label}</span>
+    </button>
+  `;
+}
+
 const LEARN_LEVEL_OPTIONS = [
   {
     label: "Not at all",
@@ -4500,13 +4521,31 @@ function screenTitle(idx){
       <div class="title-picker">
         <select id="versePicker" class="title-picker-select"></select>
       </div>
-      <div class="title-carousel">
-        <button class="carousel-arrow no-zoom" id="titlePrev" aria-label="Previous">${SVG_BACK}</button>
-        <button class="carousel-main no-zoom" id="titleMain">${buttonLabel}</button>
-        <button class="carousel-arrow no-zoom" id="titleNext" aria-label="Next">${SVG_FORWARD}</button>
-      </div>
+      <div class="title-action-row" aria-label="Main actions">
+        ${renderTitleActionButton({
+          id: "learn",
+          label: "Learn",
+          image: "button_learn.png",
+          color: "#ffc751",
+          textColor: "#333333"
+        })}
 
-      <div class="carousel-dots" id="titleDots"></div>
+        ${renderTitleActionButton({
+          id: "practice",
+          label: "Practice",
+          image: "button_practice.png",
+          color: "#ff5a51",
+          textColor: "#ffffff"
+        })}
+
+        ${renderTitleActionButton({
+          id: "pets",
+          label: "Pets",
+          image: "button_pets.png",
+          color: "#a7cb6f",
+          textColor: "#ffffff"
+        })}
+      </div>
 
       ${titleZooStripHtml()}
 
@@ -4518,10 +4557,38 @@ function screenTitle(idx){
     </div>
   `;
 
-  // wire
-  wrap.querySelector("#titlePrev").onclick = (e)=>{ e.stopPropagation(); titlePrev(); };
-  wrap.querySelector("#titleNext").onclick = (e)=>{ e.stopPropagation(); titleNext(); };
-  wrap.querySelector("#titleMain").onclick = (e)=>{ e.stopPropagation(); titleRun(); };
+  // wire title action buttons
+  wrap.querySelectorAll("[data-title-action]").forEach((btn) => {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+
+      if (!HAS_VERSE_SELECTION){
+        showDialog({
+          title: "Pick a verse first 🙂",
+          body: "Choose a verse from the dropdown before you start.",
+          actions: [dlgBtn("OK", { onClick: closeDialog })]
+        });
+        return;
+      }
+
+      const action = btn.dataset.titleAction;
+
+      if (action === "learn"){
+        go(Screen.LEARN_LEVEL);
+        return;
+      }
+
+      if (action === "practice"){
+        if (State.hasLearnedVerse) go(Screen.PRACTICE_HUB);
+        else go(Screen.PRACTICE_GATE);
+        return;
+      }
+
+      if (action === "pets"){
+        go(Screen.PROGRESS);
+      }
+    };
+  });
 
   const titleZooStrip = wrap.querySelector("#titleZooStrip");
   if (titleZooStrip){
@@ -4626,11 +4693,7 @@ function screenTitle(idx){
     };
   }
 
-  // dots
-  const dots = wrap.querySelector("#titleDots");
-  dots.innerHTML = TITLE_OPTIONS.map((_, i) =>
-    `<span class="carousel-dot ${i === State.titleOptionIndex ? "active" : ""}"></span>`
-  ).join("");
+
 
   return makeSlide({idx, bg:"var(--purple)", navHidden:true, inner: wrap});
 }
