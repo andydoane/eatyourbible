@@ -44,14 +44,20 @@ body{
   position: fixed;
   inset: 0;
   overflow: hidden;
-  background: #ffffff;
+  background:
+    radial-gradient(circle at 12% 10%, rgba(255,199,81,.34), transparent 24%),
+    radial-gradient(circle at 86% 18%, rgba(64,185,197,.34), transparent 26%),
+    linear-gradient(145deg, #7f66c6 0%, #40b9c5 100%);
   color: var(--scrub-text);
   touch-action: none;
   user-select: none;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
 }
 
 .scrub-menu-button{
-  position: fixed;
+  position: absolute;
   z-index: 70;
   top: calc(12px + env(safe-area-inset-top));
   left: calc(12px + env(safe-area-inset-left));
@@ -77,10 +83,15 @@ body{
 }
 
 .scrub-stage{
-  position: absolute;
-  inset: 0;
+  position: relative;
+  width: 100%;
+  max-width: 860px;
+  height: 100dvh;
+  min-height: 100dvh;
+  margin: 0 auto;
   overflow: hidden;
   background: #ffffff;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.12), 0 18px 48px rgba(0,0,0,.22);
 }
 
 .scrub-scripture-card{
@@ -106,7 +117,7 @@ body{
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  max-width: 92vw;
+  max-width: min(92%, 760px);
   padding: clamp(7px, 1.4vh, 11px) clamp(18px, 4vw, 28px);
   border-radius: 999px;
   background: #ffffff;
@@ -132,7 +143,7 @@ body{
 
 .scrub-verse-text{
   width: 100%;
-  max-width: 100%;
+  max-width: min(100%, 760px);
   color: var(--scrub-text);
   font-family: "Titan One", "Baloo 2", system-ui, sans-serif;
   font-weight: 400;
@@ -172,7 +183,7 @@ body{
 .scrub-reward-layer{ z-index: 40; }
 
 .scrub-hud{
-  position: fixed;
+  position: absolute;
   z-index: 45;
   top: calc(14px + env(safe-area-inset-top));
   right: calc(12px + env(safe-area-inset-right));
@@ -205,7 +216,7 @@ body{
 }
 
 .scrub-instruction-chip{
-  position: fixed;
+  position: absolute;
   z-index: 44;
   left: 50%;
   bottom: calc(14px + env(safe-area-inset-bottom));
