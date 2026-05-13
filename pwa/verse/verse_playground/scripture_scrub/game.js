@@ -294,14 +294,14 @@
 
     app.innerHTML = `
       <div class="scrub-game" id="scrubGame">
-        <button class="scrub-menu-button no-zoom" id="scrubMenuBtn" type="button" aria-label="Game menu">☰</button>
-
-        <div class="scrub-hud" aria-live="polite">
-          <span id="scrubHudLabel">0%</span>
-          <span class="scrub-progress-track" aria-hidden="true"><span class="scrub-progress-fill" id="scrubProgressFill"></span></span>
-        </div>
-
         <div class="scrub-stage" id="scrubStage">
+          <button class="scrub-menu-button no-zoom" id="scrubMenuBtn" type="button" aria-label="Game menu">☰</button>
+
+          <div class="scrub-hud" aria-live="polite">
+            <span id="scrubHudLabel">0%</span>
+            <span class="scrub-progress-track" aria-hidden="true"><span class="scrub-progress-fill" id="scrubProgressFill"></span></span>
+          </div>
+
           <div class="scrub-scripture-card" id="scrubScriptureCard">
             <div class="scrub-ref-pill" id="scrubRefPill">${escapeHtml(getReferenceDisplay())}</div>
             <div class="scrub-verse-fit-box" id="scrubVerseFitBox">
@@ -313,9 +313,9 @@
           <canvas class="scrub-cover-canvas" id="scrubCoverCanvas" aria-label="Scrub cover"></canvas>
           <div class="scrub-object-layer" id="scrubObjectLayer"></div>
           <div class="scrub-reward-layer" id="scrubRewardLayer"></div>
-        </div>
 
-        <div class="scrub-instruction-chip" id="scrubInstructionChip">${escapeHtml(round.instruction)}</div>
+          <div class="scrub-instruction-chip" id="scrubInstructionChip">${escapeHtml(round.instruction)}</div>
+        </div>
 
         ${window.VerseGameShell.gameMenuHtml({
           id: MENU_OVERLAY_ID,
@@ -359,6 +359,10 @@
     });
 
     fitVerseToScreen();
+
+    if (document.fonts?.ready){
+      document.fonts.ready.then(() => fitVerseToScreen()).catch(() => {});
+    }
 
     resizeHandler = () => {
       fitVerseToScreen();
