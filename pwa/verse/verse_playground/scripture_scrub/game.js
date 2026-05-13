@@ -1658,7 +1658,7 @@
 
     window.VerseGameShell.renderCompleteScreen({
       app,
-      title: "Scripture Scrub Complete!",
+      title: "Great Scrubbing!",
       icon: "🧽",
       statsHtml: `<div>${escapeHtml(scoreLine)}</div><div>Careful Dig Score: ${escapeHtml(score)}</div>`,
       playAgainText: "Try Again",
