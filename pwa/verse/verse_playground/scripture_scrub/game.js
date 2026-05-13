@@ -129,6 +129,50 @@
 
   const STICKER_EMOJIS = ["😀", "⭐", "❤️", "🌈", "🦊", "🐬", "🍇", "🎈", "🧁", "🚀", "🌻", "🦁", "🐢", "🍕"];
 
+  const STICKER_WORDS = [
+    "WOW",
+    "YAY",
+    "JOY",
+    "AMEN",
+    "LOVE",
+    "HOPE",
+    "PEACE",
+    "FUN",
+    "COOL",
+    "SHINE",
+    "GREAT",
+    "SUPER"
+  ];
+
+  const STICKER_STYLES = [
+    { bg: "#ffe3e1", fg: "#ff5a51", border: "#ffffff" },
+    { bg: "#ffe6c9", fg: "#c95b13", border: "#ffffff" },
+    { bg: "#fff1bd", fg: "#7f66c6", border: "#ffffff" },
+    { bg: "#e5f2cf", fg: "#4b742c", border: "#ffffff" },
+    { bg: "#d8f3f6", fg: "#167987", border: "#ffffff" },
+    { bg: "#e7e0ff", fg: "#7f66c6", border: "#ffffff" },
+    { bg: "#ff5a51", fg: "#ffffff", border: "#ffd7d4" },
+    { bg: "#ffa351", fg: "#333333", border: "#ffffff" },
+    { bg: "#ffc751", fg: "#333333", border: "#ffffff" },
+    { bg: "#40b9c5", fg: "#ffffff", border: "#d8f3f6" },
+    { bg: "#7f66c6", fg: "#ffffff", border: "#e7e0ff" }
+  ];
+
+  const STICKER_SHAPES = [
+    "circle",
+    "oval",
+    "tall-oval",
+    "round-rect",
+    "squircle"
+  ];
+
+  const STICKER_BORDERS = [
+    "white",
+    "color",
+    "dashed",
+    "none"
+  ];
+
   let verseJson = null;
   let selectedMode = "easy";
   let currentRoundIndex = 0;
@@ -1103,17 +1147,57 @@
     if (ratio >= currentThreshold()) completeRound();
   }
 
+  function pickStickerDesign(index) {
+    const style = STICKER_STYLES[index % STICKER_STYLES.length];
+    const shape = STICKER_SHAPES[Math.floor(Math.random() * STICKER_SHAPES.length)];
+    const border = STICKER_BORDERS[Math.floor(Math.random() * STICKER_BORDERS.length)];
+
+    return {
+      bg: style.bg,
+      fg: style.fg,
+      borderColor: style.border,
+      shape,
+      border
+    };
+  }
+
+  function shouldUseWordSticker(index) {
+    return index % 3 === 0 || Math.random() < 0.22;
+  }
+
+  function stickerHtml({ content, type }) {
+    const safeContent = escapeHtml(content);
+
+    if (type === "word") {
+      return `
+        <span class="scrub-sticker-face">
+          <span class="scrub-sticker-word">${safeContent}</span>
+          <span class="scrub-sticker-shine" aria-hidden="true"></span>
+          <span class="scrub-sticker-curl" aria-hidden="true"></span>
+        </span>
+      `;
+    }
+
+    return `
+      <span class="scrub-sticker-face">
+        <span class="scrub-sticker-emoji">${safeContent}</span>
+        <span class="scrub-sticker-shine" aria-hidden="true"></span>
+        <span class="scrub-sticker-curl" aria-hidden="true"></span>
+      </span>
+    `;
+  }
+
   function setupStickers(width, height) {
     const layer = document.getElementById("scrubObjectLayer");
     if (!layer) return;
 
     const count = selectedMode === "hard" ? 25 : selectedMode === "medium" ? 21 : 17;
-    const size = getCoverObjectSize("sticker", width);
+    const baseSize = getCoverObjectSize("sticker", width);
     const positions = generateCoverPositions({
       count,
       width,
       height,
-      jitter: 0.18,
+      jitter: 0.16,
       topRatio: 0.16,
       heightRatio: 0.68
     });
@@ -1123,6 +1207,7 @@
     updateProgress(0);
 
     const emojis = shuffle(STICKER_EMOJIS.concat(STICKER_EMOJIS, STICKER_EMOJIS));
+    const words = shuffle(STICKER_WORDS.concat(STICKER_WORDS, STICKER_WORDS));
 
     for (let i = 0; i < count; i += 1) {
       const pos = positions[i] || {
@@ -1130,17 +1215,41 @@
         y: height * (0.18 + Math.random() * 0.62)
       };
 
+      const useWord = shouldUseWordSticker(i);
+      const content = useWord ? words[i % words.length] : emojis[i % emojis.length];
+      const design = pickStickerDesign(i + Math.floor(Math.random() * STICKER_STYLES.length));
+
+      const sizeVariation = useWord
+        ? 1.05 + Math.random() * 0.16
+        : 0.94 + Math.random() * 0.14;
+
+      const stickerWidth = Math.round(baseSize * sizeVariation * (useWord ? 1.18 : 1));
+      const stickerHeight = Math.round(baseSize * sizeVariation * (useWord ? 0.78 : 1));
+
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.className = "scrub-sticker no-zoom";
-      btn.textContent = emojis[i % emojis.length];
-      btn.setAttribute("aria-label", "Peel sticker");
-      btn.style.width = `${size}px`;
-      btn.style.height = `${size}px`;
-      btn.style.fontSize = `${Math.round(size * .62)}px`;
+      btn.className = [
+        "scrub-sticker",
+        "no-zoom",
+        `scrub-sticker-${useWord ? "word" : "emoji"}`,
+        `scrub-sticker-shape-${design.shape}`,
+        `scrub-sticker-border-${design.border}`
+      ].join(" ");
+
+      btn.innerHTML = stickerHtml({
+        content,
+        type: useWord ? "word" : "emoji"
+      });
+
+      btn.setAttribute("aria-label", useWord ? `Peel ${content} sticker` : "Peel sticker");
+      btn.style.width = `${stickerWidth}px`;
+      btn.style.height = `${stickerHeight}px`;
       btn.style.left = `${pos.x}px`;
       btn.style.top = `${pos.y}px`;
       btn.style.setProperty("--scrub-rot", `${Math.round(-14 + Math.random() * 28)}deg`);
+      btn.style.setProperty("--sticker-bg", design.bg);
+      btn.style.setProperty("--sticker-fg", design.fg);
+      btn.style.setProperty("--sticker-border", design.borderColor);
 
       btn.onclick = () => peelSticker(btn);
       btn.onpointerdown = (event) => {
