@@ -11,8 +11,10 @@
   const HELP_OVERLAY_ID = "scriptureScrubHelpOverlay";
   const MENU_OVERLAY_ID = "scriptureScrubMenuOverlay";
 
+  const SCRUB_GRADIENT = "radial-gradient(circle at 12% 10%, rgba(255,199,81,.70), transparent 24%), radial-gradient(circle at 86% 18%, rgba(64,185,197,.55), transparent 26%), linear-gradient(145deg, #7f66c6 0%, #40b9c5 100%)";
+
   const GAME_THEME = {
-    bg: "linear-gradient(145deg, #7f66c6 0%, #40b9c5 100%)",
+    bg: SCRUB_GRADIENT,
     accent: "#40b9c5",
     helpTitleBg: "#40b9c5",
     helpTitleColor: "#ffffff",
@@ -251,7 +253,7 @@
     const roundNumber = currentRoundIndex + 1;
 
     app.innerHTML = `
-      <div class="vm-game-screen scripture-scrub-root" style="--vm-game-accent:#40b9c5; --vm-game-bg:transparent;">
+      <div class="vm-game-screen scripture-scrub-root">
         <button class="vm-game-back-pill no-zoom" id="scrubRoundBackBtn" type="button" aria-label="Back to mode select">◀</button>
         <div class="vm-game-stage scripture-scrub-round-title">
           <div class="vm-game-center">
@@ -313,8 +315,6 @@
           <canvas class="scrub-cover-canvas" id="scrubCoverCanvas" aria-label="Scrub cover"></canvas>
           <div class="scrub-object-layer" id="scrubObjectLayer"></div>
           <div class="scrub-reward-layer" id="scrubRewardLayer"></div>
-
-          <div class="scrub-instruction-chip" id="scrubInstructionChip">${escapeHtml(round.instruction)}</div>
         </div>
 
         ${window.VerseGameShell.gameMenuHtml({
@@ -430,6 +430,8 @@
     text.style.lineHeight = "";
     text.style.maxWidth = "100%";
     text.style.width = "100%";
+    text.style.marginLeft = "auto";
+    text.style.marginRight = "auto";
 
     if (pill){
       pill.style.fontSize = "";
@@ -440,62 +442,174 @@
       if (!boxRect.width || !boxRect.height) return;
 
       const textLength = getVerseText().length;
-      const minSize = textLength > 160 ? 15 : 18;
-      const maxSize = textLength < 65 ? 70 : textLength < 110 ? 58 : 46;
-      const candidates = [
-        { maxWidth: "100%", lineHeight: 1.02 },
-        { maxWidth: "96%", lineHeight: 1.0 },
-        { maxWidth: "92%", lineHeight: .98 },
-        { maxWidth: "88%", lineHeight: .96 }
-      ];
+      const stageWidth = stageEl?.getBoundingClientRect?.().width || boxRect.width;
+      const isDesktopStage = stageWidth >= 700;
+
+      const minSize = textLength > 190 ? 13 : textLength > 140 ? 15 : 17;
+      const maxSize = textLength < 65 ? 76 : textLength < 115 ? 62 : textLength < 180 ? 50 : 42;
+
+      const desiredLines = getDesiredLineRange(textLength, isDesktopStage);
+      const widthCandidates = getVerseWidthCandidates(stageWidth, textLength);
+      const lineHeights = [1.04, 1.0, .96, .92, .88];
 
       let best = null;
 
-      for (const candidate of candidates){
-        text.style.width = "100%";
-        text.style.maxWidth = candidate.maxWidth;
-        text.style.marginLeft = "auto";
-        text.style.marginRight = "auto";
-        text.style.lineHeight = String(candidate.lineHeight);
+      for (const maxWidthPx of widthCandidates){
+        for (const lineHeight of lineHeights){
+          text.style.width = "100%";
+          text.style.maxWidth = `${maxWidthPx}px`;
+          text.style.marginLeft = "auto";
+          text.style.marginRight = "auto";
+          text.style.lineHeight = String(lineHeight);
 
-        let low = minSize;
-        let high = maxSize;
-        let bestSize = minSize;
+          let low = minSize;
+          let high = maxSize;
+          let bestSize = minSize;
 
-        for (let i = 0; i < 12; i += 1){
-          const mid = (low + high) / 2;
-          text.style.fontSize = `${mid}px`;
+          for (let i = 0; i < 13; i += 1){
+            const mid = (low + high) / 2;
+            text.style.fontSize = `${mid}px`;
 
-          if (verseOverflows(box, text)){
-            high = mid;
-          } else {
-            bestSize = mid;
-            low = mid;
+            if (verseOverflows(box, text)){
+              high = mid;
+            } else {
+              bestSize = mid;
+              low = mid;
+            }
           }
-        }
 
-        text.style.fontSize = `${bestSize}px`;
-        const result = {
-          fontSize: Math.floor(bestSize * 10) / 10,
-          lineHeight: candidate.lineHeight,
-          maxWidth: candidate.maxWidth,
-          overflows: verseOverflows(box, text),
-          fill: boxRect.height ? Math.min(1, text.scrollHeight / boxRect.height) : 0
-        };
+          text.style.fontSize = `${bestSize}px`;
 
-        if (!result.overflows && (!best || result.fontSize > best.fontSize || (Math.abs(result.fontSize - best.fontSize) < .75 && result.fill > best.fill))){
-          best = result;
+          if (verseOverflows(box, text)) continue;
+
+          const metrics = getVerseFitMetrics(box, text);
+          const score = scoreVerseFit({
+            metrics,
+            desiredLines,
+            textLength,
+            stageWidth,
+            boxRect,
+            maxWidthPx,
+            fontSize: bestSize
+          });
+
+          const result = {
+            score,
+            fontSize: Math.floor(bestSize * 10) / 10,
+            lineHeight,
+            maxWidthPx,
+            metrics
+          };
+
+          if (!best || result.score > best.score){
+            best = result;
+          }
         }
       }
 
       if (best){
         text.style.fontSize = `${best.fontSize}px`;
         text.style.lineHeight = String(best.lineHeight);
-        text.style.maxWidth = best.maxWidth;
+        text.style.maxWidth = `${best.maxWidthPx}px`;
+        text.style.width = "100%";
         text.dataset.scrubFitFontSize = String(best.fontSize);
-        text.dataset.scrubFitArea = "fullscreen";
+        text.dataset.scrubFitArea = "poster";
+        text.dataset.scrubFitLines = String(best.metrics.lines);
+        text.dataset.scrubFitWidth = String(Math.round(best.metrics.width));
+        text.dataset.scrubFitHeight = String(Math.round(best.metrics.height));
       }
     });
+  }
+
+  function getDesiredLineRange(textLength, isDesktopStage){
+    if (textLength >= 230) return isDesktopStage ? { min: 8, ideal: 10, max: 13 } : { min: 9, ideal: 11, max: 14 };
+    if (textLength >= 170) return isDesktopStage ? { min: 7, ideal: 9, max: 11 } : { min: 8, ideal: 10, max: 12 };
+    if (textLength >= 115) return isDesktopStage ? { min: 5, ideal: 7, max: 9 } : { min: 6, ideal: 8, max: 10 };
+    if (textLength >= 70) return { min: 4, ideal: 5, max: 7 };
+    return { min: 2, ideal: 3, max: 5 };
+  }
+
+  function getVerseWidthCandidates(stageWidth, textLength){
+    const max = Math.min(stageWidth - 36, 760);
+    const desktopLong = stageWidth >= 700 && textLength >= 150;
+    const ratios = desktopLong
+      ? [.86, .80, .74, .68, .62, .56]
+      : [.96, .90, .84, .78, .72, .66];
+
+    const out = [];
+    for (const ratio of ratios){
+      const value = Math.round(clamp(max * ratio, 300, max));
+      if (!out.includes(value)) out.push(value);
+    }
+    return out;
+  }
+
+  function getVerseFitMetrics(box, text){
+    const rects = [];
+    for (const child of Array.from(text.children || [])){
+      for (const rect of Array.from(child.getClientRects ? child.getClientRects() : [])){
+        if (rect.width > .5 && rect.height > .5) rects.push(rect);
+      }
+    }
+
+    if (!rects.length){
+      const textRect = text.getBoundingClientRect();
+      return {
+        lines: 1,
+        width: textRect.width,
+        height: textRect.height,
+        widthFill: box.clientWidth ? textRect.width / box.clientWidth : 0,
+        heightFill: box.clientHeight ? textRect.height / box.clientHeight : 0,
+        aspect: textRect.height ? textRect.width / textRect.height : 1
+      };
+    }
+
+    const lines = [];
+    for (const rect of rects){
+      let line = lines.find((item) => Math.abs(item.top - rect.top) <= 3);
+      if (!line){
+        line = { top: rect.top, left: rect.left, right: rect.right, height: rect.height };
+        lines.push(line);
+      } else {
+        line.left = Math.min(line.left, rect.left);
+        line.right = Math.max(line.right, rect.right);
+        line.height = Math.max(line.height, rect.height);
+      }
+    }
+
+    lines.sort((a, b) => a.top - b.top);
+    const left = Math.min(...lines.map((line) => line.left));
+    const right = Math.max(...lines.map((line) => line.right));
+    const top = Math.min(...lines.map((line) => line.top));
+    const bottom = Math.max(...lines.map((line) => line.top + line.height));
+    const width = Math.max(0, right - left);
+    const height = Math.max(0, bottom - top);
+
+    return {
+      lines: lines.length,
+      width,
+      height,
+      widthFill: box.clientWidth ? width / box.clientWidth : 0,
+      heightFill: box.clientHeight ? height / box.clientHeight : 0,
+      aspect: height ? width / height : 1
+    };
+  }
+
+  function scoreVerseFit({ metrics, desiredLines, textLength, fontSize }){
+    const heightTarget = textLength >= 160 ? .80 : .74;
+    const widthTarget = textLength >= 160 ? .78 : .82;
+    const aspectTarget = textLength >= 160 ? 1.35 : 1.75;
+
+    const heightScore = 34 * (1 - Math.min(1, Math.abs(metrics.heightFill - heightTarget) / .42));
+    const widthScore = 24 * (1 - Math.min(1, Math.abs(metrics.widthFill - widthTarget) / .36));
+    const aspectScore = 18 * (1 - Math.min(1, Math.abs(metrics.aspect - aspectTarget) / 1.4));
+    const lineScore = 24 * (1 - Math.min(1, Math.abs(metrics.lines - desiredLines.ideal) / Math.max(1, desiredLines.ideal)));
+
+    const tooFewLinesPenalty = metrics.lines < desiredLines.min ? (desiredLines.min - metrics.lines) * 18 : 0;
+    const tooManyLinesPenalty = metrics.lines > desiredLines.max ? (metrics.lines - desiredLines.max) * 8 : 0;
+    const tinyPenalty = fontSize < 16 ? 12 : 0;
+
+    return heightScore + widthScore + aspectScore + lineScore - tooFewLinesPenalty - tooManyLinesPenalty - tinyPenalty;
   }
 
   function verseOverflows(box, text){
@@ -796,6 +910,12 @@
     if (fill) fill.style.width = `${pct}%`;
   }
 
+  function getCoverObjectSize(kind, stageWidth){
+    const width = Math.max(320, Number(stageWidth) || 420);
+    if (kind === "sticker") return clamp(width * .16, 88, 145);
+    return clamp(width * .18, 96, 165);
+  }
+
   function setupLeaves(width, height){
     const layer = document.getElementById("scrubObjectLayer");
     if (!layer) return;
@@ -812,8 +932,11 @@
       img.className = "scrub-leaf";
       img.src = IMAGE_BASE + imageBag[i % imageBag.length];
       img.alt = "";
-      img.style.left = `${8 + Math.random() * 84}%`;
-      img.style.top = `${12 + Math.random() * 76}%`;
+      const size = getCoverObjectSize("leaf", width);
+      img.style.width = `${size}px`;
+      img.style.height = `${size}px`;
+      img.style.left = `${10 + Math.random() * 80}%`;
+      img.style.top = `${16 + Math.random() * 66}%`;
       img.style.setProperty("--scrub-rot", `${Math.round(-70 + Math.random() * 140)}deg`);
       const drift = Math.round(-90 + Math.random() * 180);
       img.style.setProperty("--scrub-drift-x", `${drift}px`);
@@ -843,7 +966,8 @@
 
   function rakeLeavesAt(clientX, clientY){
     const leaves = Array.from(document.querySelectorAll(".scrub-leaf:not(.is-raked)"));
-    const hitRadius = selectedMode === "hard" ? 50 : 64;
+    const stageWidth = stageEl?.getBoundingClientRect?.().width || 420;
+    const hitRadius = getCoverObjectSize("leaf", stageWidth) * (selectedMode === "hard" ? .48 : .56);
 
     for (const leaf of leaves){
       const rect = leaf.getBoundingClientRect();
@@ -878,8 +1002,12 @@
       btn.className = "scrub-sticker no-zoom";
       btn.textContent = emojis[i % emojis.length];
       btn.setAttribute("aria-label", "Peel sticker");
+      const size = getCoverObjectSize("sticker", width);
+      btn.style.width = `${size}px`;
+      btn.style.height = `${size}px`;
+      btn.style.fontSize = `${Math.round(size * .62)}px`;
       btn.style.left = `${10 + Math.random() * 80}%`;
-      btn.style.top = `${14 + Math.random() * 72}%`;
+      btn.style.top = `${16 + Math.random() * 66}%`;
       btn.style.setProperty("--scrub-rot", `${Math.round(-18 + Math.random() * 36)}deg`);
       btn.onclick = () => peelSticker(btn);
       btn.onpointerdown = (event) => {
@@ -1002,30 +1130,41 @@
 
     launchSparkles();
 
+    const round = roundConfig();
+    const message = round.kind === "archaeology"
+      ? `Careful Dig Score: ${archaeologyScore ?? 100}`
+      : "Great job!";
+
+    showMiniReward({
+      icon: round.rewardIcon,
+      title: round.rewardTitle,
+      message
+    });
+
     setTimeout(() => {
-      const round = roundConfig();
       if (round.kind === "archaeology"){
-        showRoundReward({
-          title: round.rewardTitle,
-          icon: round.rewardIcon,
-          message: `Careful Dig Score: ${archaeologyScore ?? 100}`,
-          primaryText: "See Results",
-          onPrimary: renderEndScreen
-        });
+        renderEndScreen();
         return;
       }
 
-      showRoundReward({
-        title: round.rewardTitle,
-        icon: round.rewardIcon,
-        message: "You revealed the verse!",
-        primaryText: "Next Cover",
-        onPrimary: () => {
-          currentRoundIndex += 1;
-          renderRoundIntro();
-        }
-      });
-    }, 360);
+      currentRoundIndex += 1;
+      renderRoundIntro();
+    }, round.kind === "archaeology" ? 1750 : 1450);
+  }
+
+  function showMiniReward({ icon = "✨", title = "Great job!", message = "" } = {}){
+    const layer = document.getElementById("scrubRewardLayer");
+    if (!layer) return;
+
+    layer.innerHTML = `
+      <div class="scrub-mini-reward" aria-live="polite">
+        <div class="scrub-mini-reward-icon" aria-hidden="true">${escapeHtml(icon)}</div>
+        <div class="scrub-mini-reward-copy">
+          <div class="scrub-mini-reward-title">${escapeHtml(title)}</div>
+          ${message ? `<div class="scrub-mini-reward-message">${escapeHtml(message)}</div>` : ""}
+        </div>
+      </div>
+    `;
   }
 
   function showRoundReward({ title, icon, message, primaryText, onPrimary }){
