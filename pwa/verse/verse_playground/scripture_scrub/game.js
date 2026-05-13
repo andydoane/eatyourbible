@@ -1165,89 +1165,7 @@
     return index % 4 === 0;
   }
 
-  function debugStickerLayout(label = "Sticker layout debug") {
-    const layer = document.getElementById("scrubObjectLayer");
-    const stage = document.getElementById("scrubStage");
-    if (!layer || !stage) {
-      console.warn("Scripture Scrub sticker debug: missing layer or stage.");
-      return;
-    }
 
-    const stageRect = stage.getBoundingClientRect();
-    const stickers = Array.from(layer.querySelectorAll(".scrub-sticker"));
-
-    const rows = stickers.map((sticker, index) => {
-      const rect = sticker.getBoundingClientRect();
-      const centerX = rect.left + rect.width / 2;
-      const centerY = rect.top + rect.height / 2;
-
-      const overlaps = stickers
-        .map((other, otherIndex) => {
-          if (other === sticker) return null;
-
-          const otherRect = other.getBoundingClientRect();
-          const separated =
-            rect.right < otherRect.left ||
-            rect.left > otherRect.right ||
-            rect.bottom < otherRect.top ||
-            rect.top > otherRect.bottom;
-
-          return separated ? null : otherIndex + 1;
-        })
-        .filter(Boolean);
-
-      const computed = window.getComputedStyle(sticker);
-      const face = sticker.querySelector(".scrub-sticker-face");
-      const faceComputed = face ? window.getComputedStyle(face) : null;
-
-      return {
-        number: index + 1,
-        type: sticker.classList.contains("scrub-sticker-word") ? "word" : "emoji",
-        text: sticker.textContent.trim(),
-        className: sticker.className,
-        isPeeled: sticker.classList.contains("is-peeled"),
-        animationName: computed.animationName,
-        animationPlayState: computed.animationPlayState,
-        transform: computed.transform,
-        faceAnimationName: faceComputed ? faceComputed.animationName : "",
-        faceTransform: faceComputed ? faceComputed.transform : "",
-        jsLeft: sticker.style.left,
-        jsTop: sticker.style.top,
-        jsWidth: sticker.style.width,
-        jsHeight: sticker.style.height,
-        rectLeftInStage: Math.round(rect.left - stageRect.left),
-        rectTopInStage: Math.round(rect.top - stageRect.top),
-        rectRightInStage: Math.round(rect.right - stageRect.left),
-        rectBottomInStage: Math.round(rect.bottom - stageRect.top),
-        rectWidth: Math.round(rect.width),
-        rectHeight: Math.round(rect.height),
-        centerXInStage: Math.round(centerX - stageRect.left),
-        centerYInStage: Math.round(centerY - stageRect.top),
-        clippedLeft: rect.left < stageRect.left,
-        clippedRight: rect.right > stageRect.right,
-        clippedTop: rect.top < stageRect.top,
-        clippedBottom: rect.bottom > stageRect.bottom,
-        overlaps: overlaps.join(", ")
-      };
-    });
-
-    console.group(label);
-    console.log("stage", {
-      width: Math.round(stageRect.width),
-      height: Math.round(stageRect.height),
-      left: Math.round(stageRect.left),
-      top: Math.round(stageRect.top)
-    });
-    console.log("counts", {
-      stickersInDom: stickers.length,
-      objectTotal,
-      objectCleared,
-      selectedMode,
-      threshold: currentThreshold()
-    });
-    console.table(rows);
-    console.groupEnd();
-  }
 
   function generateStickerPositions(count, width, height, stickerSize) {
     const safeCount = Math.max(1, Number(count) || 1);
@@ -1372,10 +1290,6 @@
     const visibleStickers = layer.querySelectorAll(".scrub-sticker").length;
     objectTotal = visibleStickers;
     updateProgress(0);
-
-    requestAnimationFrame(() => {
-      debugStickerLayout("Scripture Scrub stickers after setup");
-    });
   }
 
   function peelSticker(btn){
