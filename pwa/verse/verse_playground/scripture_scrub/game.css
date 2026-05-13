@@ -264,6 +264,11 @@ body{
 .scrub-object-layer{
   z-index: 10;
   perspective: 900px;
+  pointer-events: none;
+}
+
+.scrub-round-stickers .scrub-object-layer{
+  pointer-events: auto;
 }
 .scrub-bible-layer{ z-index: 3; }
 .scrub-reward-layer{ z-index: 40; }
@@ -514,6 +519,7 @@ body{
   touch-action: manipulation;
   will-change: transform, opacity;
   perspective: 700px;
+  box-sizing: border-box;
 }
 
 .scrub-sticker-face{
@@ -522,6 +528,7 @@ body{
   place-items: center;
   width: 100%;
   height: 100%;
+  box-sizing: border-box;
   overflow: hidden;
   background:
     radial-gradient(circle at 28% 22%, rgba(255,255,255,.55), transparent 28%),

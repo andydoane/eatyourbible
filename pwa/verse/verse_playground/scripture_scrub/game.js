@@ -1165,6 +1165,37 @@
     return index % 4 === 0;
   }
 
+  function generateStickerPositions(count, width, height, stickerSize) {
+    const safeCount = Math.max(1, Number(count) || 1);
+    const marginX = Math.max(42, stickerSize * 0.58);
+    const top = Math.max(112, height * 0.14);
+    const bottom = Math.min(height - Math.max(44, stickerSize * 0.48), height * 0.88);
+    const usableW = Math.max(1, width - marginX * 2);
+    const usableH = Math.max(1, bottom - top);
+
+    const cols = width >= 760 ? 5 : 4;
+    const rows = Math.ceil(safeCount / cols);
+    const cellW = usableW / cols;
+    const cellH = usableH / rows;
+
+    const positions = [];
+
+    for (let i = 0; i < safeCount; i += 1) {
+      const row = Math.floor(i / cols);
+      const col = i % cols;
+
+      const x = marginX + cellW * (col + 0.5) + (Math.random() - 0.5) * cellW * 0.22;
+      const y = top + cellH * (row + 0.5) + (Math.random() - 0.5) * cellH * 0.18;
+
+      positions.push({
+        x: clamp(x, marginX, width - marginX),
+        y: clamp(y, top, bottom)
+      });
+    }
+
+    return shuffle(positions);
+  }
+
   function stickerHtml({ content, type }) {
     const safeContent = escapeHtml(content);
 
@@ -1191,16 +1222,9 @@
     const layer = document.getElementById("scrubObjectLayer");
     if (!layer) return;
 
-    const count = selectedMode === "hard" ? 25 : selectedMode === "medium" ? 21 : 17;
+    const count = selectedMode === "hard" ? 24 : selectedMode === "medium" ? 20 : 16;
     const baseSize = getCoverObjectSize("sticker", width);
-    const positions = generateCoverPositions({
-      count,
-      width,
-      height,
-      jitter: 0.14,
-      topRatio: 0.15,
-      heightRatio: 0.70
-    });
+    const positions = generateStickerPositions(count, width, height, baseSize);
 
     objectTotal = count;
     objectCleared = 0;
@@ -1210,24 +1234,21 @@
     const words = shuffle(STICKER_WORDS.concat(STICKER_WORDS, STICKER_WORDS));
 
     for (let i = 0; i < count; i += 1) {
-      const pos = positions[i] || {
-        x: width * (0.12 + Math.random() * 0.76),
-        y: height * (0.18 + Math.random() * 0.62)
-      };
+      const pos = positions[i];
 
       const useWord = shouldUseWordSticker(i);
       const content = useWord ? words[i % words.length] : emojis[i % emojis.length];
       const design = pickStickerDesign(i + Math.floor(Math.random() * STICKER_STYLES.length));
 
       const sizeVariation = useWord
-        ? 1.02 + Math.random() * 0.12
-        : 0.96 + Math.random() * 0.12;
+        ? 0.96 + Math.random() * 0.08
+        : 0.92 + Math.random() * 0.10;
 
-      const stickerWidth = Math.round(baseSize * sizeVariation * (useWord ? 1.22 : 1));
+      const stickerWidth = Math.round(baseSize * sizeVariation * (useWord ? 1.16 : 1));
       const stickerHeight = Math.round(baseSize * sizeVariation * (useWord ? 0.72 : 1));
 
       const emojiSize = Math.round(Math.min(stickerWidth, stickerHeight) * 0.58);
-      const wordSize = Math.round(clamp(stickerHeight * 0.38, 24, 46));
+      const wordSize = Math.round(clamp(stickerHeight * 0.38, 24, 44));
 
       const btn = document.createElement("button");
       btn.type = "button";
@@ -1249,7 +1270,8 @@
       btn.style.height = `${stickerHeight}px`;
       btn.style.left = `${pos.x}px`;
       btn.style.top = `${pos.y}px`;
-      btn.style.setProperty("--scrub-rot", `${Math.round(-14 + Math.random() * 28)}deg`);
+      btn.style.zIndex = String(20 + i);
+      btn.style.setProperty("--scrub-rot", `${Math.round(-11 + Math.random() * 22)}deg`);
       btn.style.setProperty("--sticker-bg", design.bg);
       btn.style.setProperty("--sticker-fg", design.fg);
       btn.style.setProperty("--sticker-border", design.borderColor);
@@ -1263,6 +1285,10 @@
 
       layer.appendChild(btn);
     }
+
+    const visibleStickers = layer.querySelectorAll(".scrub-sticker").length;
+    objectTotal = visibleStickers;
+    updateProgress(0);
   }
 
   function peelSticker(btn){
