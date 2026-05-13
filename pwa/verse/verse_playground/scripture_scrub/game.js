@@ -407,6 +407,16 @@
       backHelpText: "Back",
       isMuted: () => muted,
       onMuteToggle: () => { muted = !muted; },
+      onHowToPlay: () => {
+        const menu = document.getElementById(MENU_OVERLAY_ID);
+
+        if (menu) {
+          menu.classList.remove("is-open");
+          menu.setAttribute("aria-hidden", "true");
+        }
+
+        window.VerseGameShell.openHelp?.(HELP_OVERLAY_ID, "back", "Back");
+      },
       onModeSelect: renderModeSelect,
       onExit: () => window.VerseGameBridge.exitGame(),
       onOpen: () => {
