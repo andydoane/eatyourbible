@@ -182,6 +182,19 @@ body{
 .scrub-bible-layer{ z-index: 3; }
 .scrub-reward-layer{ z-index: 40; }
 
+.scrub-reward-layer:has(.scrub-reward-panel){
+  pointer-events: auto;
+}
+
+.scrub-reward-panel{
+  pointer-events: auto;
+}
+
+.scrub-reward-card,
+.scrub-reward-card *{
+  pointer-events: auto;
+}
+
 .scrub-hud{
   position: absolute;
   z-index: 45;
