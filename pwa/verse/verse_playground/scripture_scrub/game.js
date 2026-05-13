@@ -1,6 +1,10 @@
 (async function(){
   const app = document.getElementById("app");
-  if (app) app.classList.add("vm-shell");
+
+  if (app) {
+    app.classList.remove("vm-shell");
+    app.classList.add("scripture-scrub-app");
+  }
 
   const ctx = await window.VerseGameBridge.getVerseContext();
   const launchParams = window.VerseGameBridge.getLaunchParams?.() || {};
@@ -11,7 +15,7 @@
   const HELP_OVERLAY_ID = "scriptureScrubHelpOverlay";
   const MENU_OVERLAY_ID = "scriptureScrubMenuOverlay";
 
-  const SCRUB_GRADIENT = "radial-gradient(circle at 12% 10%, rgba(255,199,81,.70), transparent 24%), radial-gradient(circle at 86% 18%, rgba(64,185,197,.55), transparent 26%), linear-gradient(145deg, #7f66c6 0%, #40b9c5 100%)";
+  const SCRUB_GRADIENT = "linear-gradient(145deg, #7f66c6 0%, #40b9c5 100%)";
 
   const GAME_THEME = {
     bg: SCRUB_GRADIENT,
@@ -133,6 +137,8 @@
   let stageEl = null;
   let coverCanvas = null;
   let coverCtx = null;
+  let clearMaskCanvas = null;
+  let clearMaskCtx = null;
   let dpr = 1;
   let pointerDown = false;
   let lastPoint = null;
@@ -295,7 +301,7 @@
     const round = roundConfig();
 
     app.innerHTML = `
-      <div class="scrub-game" id="scrubGame">
+      <div class="scrub-game scrub-round-${escapeHtml(round.id)}" id="scrubGame">
         <div class="scrub-stage" id="scrubStage">
           <button class="scrub-menu-button no-zoom" id="scrubMenuBtn" type="button" aria-label="Game menu">☰</button>
 
@@ -628,6 +634,8 @@
     coverCtx.globalCompositeOperation = "source-over";
     coverCtx.clearRect(0, 0, rect.width, rect.height);
 
+    setupClearMask(rect.width, rect.height);
+
     const objectLayer = document.getElementById("scrubObjectLayer");
     const bibleLayer = document.getElementById("scrubBibleLayer");
     if (objectLayer) objectLayer.innerHTML = "";
@@ -657,6 +665,41 @@
 
     if (round.kind === "leaves") setupLeaves(rect.width, rect.height);
     if (round.kind === "stickers") setupStickers(rect.width, rect.height);
+  }
+
+  function setupClearMask(width, height) {
+    clearMaskCanvas = document.createElement("canvas");
+    clearMaskCanvas.width = coverCanvas.width;
+    clearMaskCanvas.height = coverCanvas.height;
+
+    clearMaskCtx = clearMaskCanvas.getContext("2d", { willReadFrequently: true });
+    if (!clearMaskCtx) return;
+
+    clearMaskCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    clearMaskCtx.globalCompositeOperation = "source-over";
+    clearMaskCtx.clearRect(0, 0, width, height);
+    clearMaskCtx.fillStyle = "#000000";
+    clearMaskCtx.fillRect(0, 0, width, height);
+  }
+
+  function eraseClearMask(x, y, radius) {
+    if (!clearMaskCtx) return;
+
+    clearMaskCtx.save();
+    clearMaskCtx.globalCompositeOperation = "destination-out";
+    clearMaskCtx.beginPath();
+    clearMaskCtx.arc(x, y, radius, 0, Math.PI * 2);
+    clearMaskCtx.fill();
+    clearMaskCtx.restore();
+  }
+
+  function clearMaskFully() {
+    if (!clearMaskCanvas || !clearMaskCtx) return;
+
+    clearMaskCtx.save();
+    clearMaskCtx.setTransform(1, 0, 0, 1, 0, 0);
+    clearMaskCtx.clearRect(0, 0, clearMaskCanvas.width, clearMaskCanvas.height);
+    clearMaskCtx.restore();
   }
 
   function drawCoverTexture(texture, width, height){
@@ -689,28 +732,43 @@
     }
   }
 
-  function drawPaint(width, height){
-    coverCtx.fillStyle = "#fff4cf";
+  function drawPaint(width, height) {
+    coverCtx.fillStyle = "#ffeaf4";
     coverCtx.fillRect(0, 0, width, height);
 
     const colors = ["#ff5a51", "#ffa351", "#ffc751", "#a7cb6f", "#40b9c5", "#7f66c6"];
-    for (let i = 0; i < 120; i += 1){
+    const base = Math.min(width, height);
+
+    const splatterCount = Math.round(clamp((width * height) / 5200, 105, 210));
+    const minRadius = clamp(base * 0.045, 28, 56);
+    const maxRadius = clamp(base * 0.135, 78, 152);
+
+    for (let i = 0; i < splatterCount; i += 1) {
       const x = Math.random() * width;
       const y = Math.random() * height;
-      const r = 14 + Math.random() * 58;
+      const r = minRadius + Math.random() * (maxRadius - minRadius);
       const color = colors[Math.floor(Math.random() * colors.length)];
+
       coverCtx.beginPath();
       coverCtx.fillStyle = color;
-      coverCtx.globalAlpha = .9;
+      coverCtx.globalAlpha = 0.92;
       coverCtx.arc(x, y, r, 0, Math.PI * 2);
       coverCtx.fill();
 
-      for (let j = 0; j < 5; j += 1){
+      const dots = 4 + Math.floor(Math.random() * 8);
+      for (let j = 0; j < dots; j += 1) {
         coverCtx.beginPath();
-        coverCtx.arc(x + (Math.random() - .5) * r * 2.6, y + (Math.random() - .5) * r * 2.6, 3 + Math.random() * 11, 0, Math.PI * 2);
+        coverCtx.arc(
+          x + (Math.random() - 0.5) * r * 2.8,
+          y + (Math.random() - 0.5) * r * 2.8,
+          Math.max(5, r * (0.07 + Math.random() * 0.13)),
+          0,
+          Math.PI * 2
+        );
         coverCtx.fill();
       }
     }
+
     coverCtx.globalAlpha = 1;
   }
 
@@ -807,6 +865,8 @@
     coverCtx.fill();
     coverCtx.restore();
 
+    eraseClearMask(x, y, radius);
+
     if (round.id === "mud") drawMudFlick(x, y, radius);
     if (round.id === "paint") drawPaintSmear(x, y, radius);
     if (round.id === "fog") drawCleanWindowShine(x, y, radius);
@@ -874,11 +934,11 @@
     }, delay);
   }
 
-  function measureClearedRatio(){
-    if (!coverCanvas || !coverCtx) return 0;
+  function measureClearedRatio() {
+    if (!clearMaskCanvas || !clearMaskCtx) return 0;
 
-    const width = coverCanvas.width;
-    const height = coverCanvas.height;
+    const width = clearMaskCanvas.width;
+    const height = clearMaskCanvas.height;
     if (!width || !height) return 0;
 
     const step = Math.max(6, Math.round(10 * dpr));
@@ -886,9 +946,10 @@
     let cleared = 0;
 
     try {
-      const data = coverCtx.getImageData(0, 0, width, height).data;
-      for (let y = 0; y < height; y += step){
-        for (let x = 0; x < width; x += step){
+      const data = clearMaskCtx.getImageData(0, 0, width, height).data;
+
+      for (let y = 0; y < height; y += step) {
+        for (let x = 0; x < width; x += step) {
           total += 1;
           const alpha = data[((y * width + x) * 4) + 3];
           if (alpha < 24) cleared += 1;
@@ -910,39 +971,96 @@
     if (fill) fill.style.width = `${pct}%`;
   }
 
-  function getCoverObjectSize(kind, stageWidth){
+  function getCoverObjectSize(kind, stageWidth) {
     const width = Math.max(320, Number(stageWidth) || 420);
-    if (kind === "sticker") return clamp(width * .16, 88, 145);
-    return clamp(width * .18, 96, 165);
+
+    if (kind === "sticker") {
+      return clamp(width * .19, 112, 172);
+    }
+
+    return clamp(width * .24, 136, 220);
   }
 
-  function setupLeaves(width, height){
+  function generateCoverPositions({
+    count,
+    width,
+    height,
+    jitter = 0.28,
+    topRatio = 0.16,
+    heightRatio = 0.68
+  } = {}) {
+    const safeCount = Math.max(1, Number(count) || 1);
+    const usableW = width * 0.86;
+    const usableH = height * heightRatio;
+    const startX = (width - usableW) / 2;
+    const startY = height * topRatio;
+
+    const cols = Math.ceil(Math.sqrt(safeCount * (usableW / Math.max(1, usableH))));
+    const rows = Math.ceil(safeCount / cols);
+    const cellW = usableW / cols;
+    const cellH = usableH / rows;
+
+    const positions = [];
+
+    for (let row = 0; row < rows; row += 1) {
+      for (let col = 0; col < cols; col += 1) {
+        const x = startX + cellW * (col + 0.5) + (Math.random() - 0.5) * cellW * jitter;
+        const y = startY + cellH * (row + 0.5) + (Math.random() - 0.5) * cellH * jitter;
+
+        positions.push({
+          x: clamp(x, width * 0.08, width * 0.92),
+          y: clamp(y, height * 0.12, height * 0.88)
+        });
+      }
+    }
+
+    return shuffle(positions).slice(0, safeCount);
+  }
+
+  function setupLeaves(width, height) {
     const layer = document.getElementById("scrubObjectLayer");
     if (!layer) return;
 
-    const count = selectedMode === "hard" ? 34 : selectedMode === "medium" ? 28 : 22;
+    const count = selectedMode === "hard" ? 46 : selectedMode === "medium" ? 40 : 34;
+    const size = getCoverObjectSize("leaf", width);
+    const positions = generateCoverPositions({
+      count,
+      width,
+      height,
+      jitter: 0.44,
+      topRatio: 0.13,
+      heightRatio: 0.74
+    });
+
     objectTotal = count;
     objectCleared = 0;
     updateProgress(0);
 
-    const imageBag = shuffle(LEAF_IMAGES.concat(LEAF_IMAGES));
+    const imageBag = shuffle(LEAF_IMAGES.concat(LEAF_IMAGES, LEAF_IMAGES, LEAF_IMAGES, LEAF_IMAGES, LEAF_IMAGES));
 
-    for (let i = 0; i < count; i += 1){
+    for (let i = 0; i < count; i += 1) {
+      const pos = positions[i] || {
+        x: width * (0.1 + Math.random() * 0.8),
+        y: height * (0.16 + Math.random() * 0.66)
+      };
+
       const img = document.createElement("img");
       img.className = "scrub-leaf";
       img.src = IMAGE_BASE + imageBag[i % imageBag.length];
       img.alt = "";
-      const size = getCoverObjectSize("leaf", width);
       img.style.width = `${size}px`;
       img.style.height = `${size}px`;
-      img.style.left = `${10 + Math.random() * 80}%`;
-      img.style.top = `${16 + Math.random() * 66}%`;
-      img.style.setProperty("--scrub-rot", `${Math.round(-70 + Math.random() * 140)}deg`);
-      const drift = Math.round(-90 + Math.random() * 180);
+      img.style.left = `${pos.x}px`;
+      img.style.top = `${pos.y}px`;
+      img.style.setProperty("--scrub-rot", `${Math.round(-80 + Math.random() * 160)}deg`);
+
+      const drift = Math.round(-110 + Math.random() * 220);
       img.style.setProperty("--scrub-drift-x", `${drift}px`);
       img.style.setProperty("--scrub-drift-x-end", `${-drift}px`);
       img.style.setProperty("--scrub-fall-ms", `${850 + Math.round(Math.random() * 700)}ms`);
+
       img.dataset.cleared = "0";
+
       img.onerror = () => {
         const fallback = document.createElement("span");
         fallback.className = img.className;
@@ -951,6 +1069,7 @@
         fallback.dataset.cleared = img.dataset.cleared;
         img.replaceWith(fallback);
       };
+
       layer.appendChild(img);
     }
 
@@ -958,22 +1077,24 @@
       if (menuOpen || completionLocked) return;
       rakeLeavesAt(event.clientX, event.clientY);
     };
+
     stageEl.onpointermove = (event) => {
       if (menuOpen || completionLocked) return;
       if (event.buttons || event.pointerType === "touch") rakeLeavesAt(event.clientX, event.clientY);
     };
   }
 
-  function rakeLeavesAt(clientX, clientY){
+  function rakeLeavesAt(clientX, clientY) {
     const leaves = Array.from(document.querySelectorAll(".scrub-leaf:not(.is-raked)"));
     const stageWidth = stageEl?.getBoundingClientRect?.().width || 420;
-    const hitRadius = getCoverObjectSize("leaf", stageWidth) * (selectedMode === "hard" ? .48 : .56);
+    const hitRadius = getCoverObjectSize("leaf", stageWidth) * (selectedMode === "hard" ? .46 : .54);
 
-    for (const leaf of leaves){
+    for (const leaf of leaves) {
       const rect = leaf.getBoundingClientRect();
       const cx = rect.left + rect.width / 2;
       const cy = rect.top + rect.height / 2;
-      if (Math.hypot(cx - clientX, cy - clientY) <= hitRadius){
+
+      if (Math.hypot(cx - clientX, cy - clientY) <= hitRadius) {
         leaf.classList.add("is-raked");
         leaf.dataset.cleared = "1";
         objectCleared += 1;
@@ -982,37 +1103,54 @@
 
     const ratio = objectTotal ? objectCleared / objectTotal : 0;
     updateProgress(ratio);
+
     if (ratio >= currentThreshold()) completeRound();
   }
 
-  function setupStickers(width, height){
+  function setupStickers(width, height) {
     const layer = document.getElementById("scrubObjectLayer");
     if (!layer) return;
 
-    const count = selectedMode === "hard" ? 24 : selectedMode === "medium" ? 20 : 16;
+    const count = selectedMode === "hard" ? 25 : selectedMode === "medium" ? 21 : 17;
+    const size = getCoverObjectSize("sticker", width);
+    const positions = generateCoverPositions({
+      count,
+      width,
+      height,
+      jitter: 0.18,
+      topRatio: 0.16,
+      heightRatio: 0.68
+    });
+
     objectTotal = count;
     objectCleared = 0;
     updateProgress(0);
 
     const emojis = shuffle(STICKER_EMOJIS.concat(STICKER_EMOJIS, STICKER_EMOJIS));
 
-    for (let i = 0; i < count; i += 1){
+    for (let i = 0; i < count; i += 1) {
+      const pos = positions[i] || {
+        x: width * (0.12 + Math.random() * 0.76),
+        y: height * (0.18 + Math.random() * 0.62)
+      };
+
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "scrub-sticker no-zoom";
       btn.textContent = emojis[i % emojis.length];
       btn.setAttribute("aria-label", "Peel sticker");
-      const size = getCoverObjectSize("sticker", width);
       btn.style.width = `${size}px`;
       btn.style.height = `${size}px`;
       btn.style.fontSize = `${Math.round(size * .62)}px`;
-      btn.style.left = `${10 + Math.random() * 80}%`;
-      btn.style.top = `${16 + Math.random() * 66}%`;
-      btn.style.setProperty("--scrub-rot", `${Math.round(-18 + Math.random() * 36)}deg`);
+      btn.style.left = `${pos.x}px`;
+      btn.style.top = `${pos.y}px`;
+      btn.style.setProperty("--scrub-rot", `${Math.round(-14 + Math.random() * 28)}deg`);
+
       btn.onclick = () => peelSticker(btn);
       btn.onpointerdown = (event) => {
         event.stopPropagation();
       };
+
       layer.appendChild(btn);
     }
   }
@@ -1080,10 +1218,12 @@
     completeRound();
   }
 
-  function measureBibleRevealRatio(){
-    const width = coverCanvas.width;
-    const height = coverCanvas.height;
-    if (!width || !height || !bibleRect) return 0;
+  function measureBibleRevealRatio() {
+    if (!clearMaskCanvas || !clearMaskCtx || !bibleRect) return 0;
+
+    const width = clearMaskCanvas.width;
+    const height = clearMaskCanvas.height;
+    if (!width || !height) return 0;
 
     const left = Math.max(0, Math.round(bibleRect.left * dpr));
     const top = Math.max(0, Math.round(bibleRect.top * dpr));
@@ -1095,9 +1235,10 @@
     let cleared = 0;
 
     try {
-      const data = coverCtx.getImageData(0, 0, width, height).data;
-      for (let y = top; y < bottom; y += step){
-        for (let x = left; x < right; x += step){
+      const data = clearMaskCtx.getImageData(0, 0, width, height).data;
+
+      for (let y = top; y < bottom; y += step) {
+        for (let x = left; x < right; x += step) {
           total += 1;
           const alpha = data[((y * width + x) * 4) + 3];
           if (alpha < 36) cleared += 1;
@@ -1120,13 +1261,16 @@
     completionLocked = true;
     pointerDown = false;
 
-    if (coverCtx && coverCanvas && stageEl){
+    if (coverCtx && coverCanvas && stageEl) {
       const rect = stageEl.getBoundingClientRect();
       coverCtx.save();
       coverCtx.globalCompositeOperation = "destination-out";
       coverCtx.fillRect(0, 0, rect.width, rect.height);
       coverCtx.restore();
     }
+
+    clearMaskFully();
+    updateProgress(1);
 
     launchSparkles();
 
@@ -1265,6 +1409,8 @@
     stageEl = null;
     coverCanvas = null;
     coverCtx = null;
+    clearMaskCanvas = null;
+    clearMaskCtx = null;
     pointerDown = false;
     lastPoint = null;
     menuOpen = false;
