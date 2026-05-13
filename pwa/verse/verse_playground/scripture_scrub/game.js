@@ -1257,23 +1257,58 @@
     completionLocked = true;
     pointerDown = false;
 
-    if (coverCtx && coverCanvas && stageEl) {
-      const rect = stageEl.getBoundingClientRect();
+    if (stageEl) stageEl.classList.add("scrub-round-complete");
+
+    animateAutoCleanCover(() => {
+      clearMaskFully();
+      updateProgress(1);
+      clearRemainingObjects();
+      launchSparkles();
+      showNextRoundPill();
+    });
+  }
+
+  function animateAutoCleanCover(onDone = () => { }) {
+    if (!stageEl || !coverCanvas || !coverCtx || coverCanvas.style.display === "none") {
+      setTimeout(onDone, 260);
+      return;
+    }
+
+    const rect = stageEl.getBoundingClientRect();
+    const sweep = document.createElement("div");
+    sweep.className = "scrub-clean-sweep";
+    stageEl.appendChild(sweep);
+
+    const start = performance.now();
+    const duration = 760;
+
+    function frame(now) {
+      const rawProgress = clamp((now - start) / duration, 0, 1);
+      const easedProgress = 1 - Math.pow(1 - rawProgress, 3);
+      const wipeWidth = rect.width * easedProgress;
 
       coverCtx.save();
       coverCtx.globalCompositeOperation = "destination-out";
-      coverCtx.fillRect(0, 0, rect.width, rect.height);
+      coverCtx.clearRect(0, 0, wipeWidth, rect.height);
       coverCtx.restore();
+
+      updateProgress(Math.max(currentThreshold(), easedProgress));
+
+      if (rawProgress < 1) {
+        requestAnimationFrame(frame);
+        return;
+      }
+
+      coverCtx.save();
+      coverCtx.globalCompositeOperation = "destination-out";
+      coverCtx.clearRect(0, 0, rect.width, rect.height);
+      coverCtx.restore();
+
+      sweep.remove();
+      onDone();
     }
 
-    clearMaskFully();
-    updateProgress(1);
-    clearRemainingObjects();
-
-    if (stageEl) stageEl.classList.add("scrub-round-complete");
-
-    launchSparkles();
-    showNextRoundPill();
+    requestAnimationFrame(frame);
   }
 
   function clearRemainingObjects() {
