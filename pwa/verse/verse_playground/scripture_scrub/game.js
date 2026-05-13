@@ -1338,7 +1338,6 @@
       btn.type = "button";
       btn.className = [
         "scrub-sticker",
-        "no-zoom",
         `scrub-sticker-${useWord ? "word" : "emoji"}`,
         `scrub-sticker-shape-${design.shape}`,
         `scrub-sticker-border-${design.border}`

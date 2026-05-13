@@ -505,8 +505,8 @@ body{
   animation: scrubLeafFall var(--scrub-fall-ms, 1100ms) ease-in forwards;
 }
 
-.scrub-sticker{
-  position: absolute;
+.scrub-round-stickers .scrub-object-layer .scrub-sticker{
+  position: absolute !important;
   border: none;
   padding: 0;
   display: grid;
