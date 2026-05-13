@@ -1162,7 +1162,7 @@
   }
 
   function shouldUseWordSticker(index) {
-    return index % 3 === 0 || Math.random() < 0.22;
+    return index % 4 === 0;
   }
 
   function stickerHtml({ content, type }) {
@@ -1197,16 +1197,16 @@
       count,
       width,
       height,
-      jitter: 0.16,
-      topRatio: 0.16,
-      heightRatio: 0.68
+      jitter: 0.14,
+      topRatio: 0.15,
+      heightRatio: 0.70
     });
 
     objectTotal = count;
     objectCleared = 0;
     updateProgress(0);
 
-    const emojis = shuffle(STICKER_EMOJIS.concat(STICKER_EMOJIS, STICKER_EMOJIS));
+    const emojis = shuffle(STICKER_EMOJIS.concat(STICKER_EMOJIS, STICKER_EMOJIS, STICKER_EMOJIS));
     const words = shuffle(STICKER_WORDS.concat(STICKER_WORDS, STICKER_WORDS));
 
     for (let i = 0; i < count; i += 1) {
@@ -1220,11 +1220,14 @@
       const design = pickStickerDesign(i + Math.floor(Math.random() * STICKER_STYLES.length));
 
       const sizeVariation = useWord
-        ? 1.05 + Math.random() * 0.16
-        : 0.94 + Math.random() * 0.14;
+        ? 1.02 + Math.random() * 0.12
+        : 0.96 + Math.random() * 0.12;
 
-      const stickerWidth = Math.round(baseSize * sizeVariation * (useWord ? 1.18 : 1));
-      const stickerHeight = Math.round(baseSize * sizeVariation * (useWord ? 0.78 : 1));
+      const stickerWidth = Math.round(baseSize * sizeVariation * (useWord ? 1.22 : 1));
+      const stickerHeight = Math.round(baseSize * sizeVariation * (useWord ? 0.72 : 1));
+
+      const emojiSize = Math.round(Math.min(stickerWidth, stickerHeight) * 0.58);
+      const wordSize = Math.round(clamp(stickerHeight * 0.38, 24, 46));
 
       const btn = document.createElement("button");
       btn.type = "button";
@@ -1241,7 +1244,7 @@
         type: useWord ? "word" : "emoji"
       });
 
-      btn.setAttribute("aria-label", useWord ? `Peel ${content} sticker` : "Peel sticker");
+      btn.setAttribute("aria-label", useWord ? `Peel ${content} sticker` : `Peel ${content} sticker`);
       btn.style.width = `${stickerWidth}px`;
       btn.style.height = `${stickerHeight}px`;
       btn.style.left = `${pos.x}px`;
@@ -1250,6 +1253,8 @@
       btn.style.setProperty("--sticker-bg", design.bg);
       btn.style.setProperty("--sticker-fg", design.fg);
       btn.style.setProperty("--sticker-border", design.borderColor);
+      btn.style.setProperty("--sticker-emoji-size", `${emojiSize}px`);
+      btn.style.setProperty("--sticker-word-size", `${wordSize}px`);
 
       btn.onclick = () => peelSticker(btn);
       btn.onpointerdown = (event) => {
