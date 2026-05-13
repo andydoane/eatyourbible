@@ -51,6 +51,7 @@
     {
       id: "mud",
       title: "Mud",
+      introTitle: "Wipe off the Mud",
       icon: "🟤",
       intro: "Wipe off the mud.",
       instruction: "Drag to wipe away the mud.",
@@ -62,6 +63,7 @@
     {
       id: "paint",
       title: "Paint Splash",
+      introTitle: "Clean the Paint",
       icon: "🎨",
       intro: "Clean off the paint.",
       instruction: "Drag to scrub away the paint.",
@@ -73,6 +75,7 @@
     {
       id: "fog",
       title: "Foggy Window",
+      introTitle: "Wipe the Fog",
       icon: "🪟",
       intro: "Wipe off the foggy window.",
       instruction: "Drag to clear the fog.",
@@ -84,6 +87,7 @@
     {
       id: "leaves",
       title: "Raking Leaves",
+      introTitle: "Rake the Leaves",
       icon: "🍂",
       intro: "Rake away the leaves.",
       instruction: "Swipe through the leaves to rake them away.",
@@ -94,6 +98,7 @@
     {
       id: "stickers",
       title: "Emoji Stickers",
+      introTitle: "Peel the Stickers",
       icon: "😀",
       intro: "Peel off the stickers, one at a time.",
       instruction: "Tap each sticker to peel it away.",
@@ -104,6 +109,7 @@
     {
       id: "archaeology",
       title: "Archaeology",
+      introTitle: "Find the Bible",
       icon: "🏺",
       intro: "Dig carefully. Find the hidden Bible!",
       instruction: "Dig carefully — clear less dirt for a better score.",
@@ -320,8 +326,7 @@
         <div class="vm-game-stage scripture-scrub-round-title">
           <div class="vm-game-center">
             <div class="vm-game-icon" aria-hidden="true">${escapeHtml(round.icon)}</div>
-            <div class="vm-game-title">${escapeHtml(round.title)}</div>
-            <div class="vm-subtitle">${escapeHtml(round.intro)}</div>
+            <div class="vm-game-title">${escapeHtml(round.introTitle || round.title)}</div>
             <div class="vm-game-actions">
               <button class="vm-btn" id="scrubStartRoundBtn" type="button">Start Round</button>
             </div>
