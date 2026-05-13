@@ -173,6 +173,13 @@
     "none"
   ];
 
+  const STICKER_PEEL_STYLES = [
+    "scrub-sticker-peel-twist",
+    "scrub-sticker-peel-slow-curl",
+    "scrub-sticker-peel-slide-down",
+    "scrub-sticker-peel-wobble"
+  ];
+
   let verseJson = null;
   let selectedMode = "easy";
   let currentRoundIndex = 0;
@@ -1292,12 +1299,21 @@
     updateProgress(0);
   }
 
-  function peelSticker(btn){
-    if (!btn || btn.classList.contains("is-peeled") || menuOpen || completionLocked) return;
+  function peelSticker(btn) {
+    if (!btn || btn.classList.contains("is-peeled") || completionLocked) return;
+
+    STICKER_PEEL_STYLES.forEach((styleName) => {
+      btn.classList.remove(styleName);
+    });
+
+    const peelStyle = STICKER_PEEL_STYLES[Math.floor(Math.random() * STICKER_PEEL_STYLES.length)];
+    btn.classList.add(peelStyle);
     btn.classList.add("is-peeled");
+
     objectCleared += 1;
     const ratio = objectTotal ? objectCleared / objectTotal : 0;
     updateProgress(ratio);
+
     if (ratio >= currentThreshold()) completeRound();
   }
 

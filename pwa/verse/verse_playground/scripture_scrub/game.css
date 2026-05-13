@@ -642,15 +642,54 @@ body{
 
 .scrub-sticker.is-peeled{
   pointer-events: none;
-  animation: scrubStickerPeel 960ms cubic-bezier(.16,.9,.22,1) forwards;
 }
 
-.scrub-sticker.is-peeled .scrub-sticker-face{
-  animation: scrubStickerFacePeel 960ms cubic-bezier(.16,.9,.22,1) forwards;
+.scrub-sticker.is-peeled.scrub-sticker-peel-twist{
+  animation: scrubStickerPeelTwistAway 1100ms cubic-bezier(.14,.85,.3,1) forwards;
 }
 
-.scrub-sticker.is-peeled .scrub-sticker-curl{
-  animation: scrubStickerCurl 960ms cubic-bezier(.16,.9,.22,1) forwards;
+.scrub-sticker.is-peeled.scrub-sticker-peel-twist .scrub-sticker-face{
+  animation: scrubStickerFaceTwist 1100ms cubic-bezier(.14,.85,.3,1) forwards;
+}
+
+.scrub-sticker.is-peeled.scrub-sticker-peel-twist .scrub-sticker-curl{
+  animation: scrubStickerCurlSide 1100ms cubic-bezier(.14,.85,.3,1) forwards;
+}
+
+.scrub-sticker.is-peeled.scrub-sticker-peel-slow-curl{
+  animation: scrubStickerPeelSlowCurl 1450ms cubic-bezier(.18,.72,.22,1) forwards;
+}
+
+.scrub-sticker.is-peeled.scrub-sticker-peel-slow-curl .scrub-sticker-face{
+  animation: scrubStickerFaceSlowCurl 1450ms cubic-bezier(.18,.72,.22,1) forwards;
+}
+
+.scrub-sticker.is-peeled.scrub-sticker-peel-slow-curl .scrub-sticker-curl{
+  animation: scrubStickerCurlSlowLarge 1450ms cubic-bezier(.18,.72,.22,1) forwards;
+}
+
+.scrub-sticker.is-peeled.scrub-sticker-peel-slide-down{
+  animation: scrubStickerPeelSlideDown 980ms cubic-bezier(.2,.8,.22,1) forwards;
+}
+
+.scrub-sticker.is-peeled.scrub-sticker-peel-slide-down .scrub-sticker-face{
+  animation: scrubStickerFaceSlideFold 980ms cubic-bezier(.2,.8,.22,1) forwards;
+}
+
+.scrub-sticker.is-peeled.scrub-sticker-peel-slide-down .scrub-sticker-curl{
+  animation: scrubStickerCurlBottomRoll 980ms cubic-bezier(.2,.8,.22,1) forwards;
+}
+
+.scrub-sticker.is-peeled.scrub-sticker-peel-wobble{
+  animation: scrubStickerPeelWobbleFall 1250ms cubic-bezier(.18,.8,.24,1) forwards;
+}
+
+.scrub-sticker.is-peeled.scrub-sticker-peel-wobble .scrub-sticker-face{
+  animation: scrubStickerFaceWobble 1250ms cubic-bezier(.18,.8,.24,1) forwards;
+}
+
+.scrub-sticker.is-peeled.scrub-sticker-peel-wobble .scrub-sticker-curl{
+  animation: scrubStickerCurlWobble 1250ms cubic-bezier(.18,.8,.24,1) forwards;
 }
 
 .scrub-bible-target{
@@ -774,71 +813,270 @@ body{
   }
 }
 
-@keyframes scrubStickerPeel{
-  0%{
+@keyframes scrubStickerPeelTwistAway {
+  0% {
     opacity: 1;
     transform: translate(-50%, -50%) rotate(var(--scrub-rot, 0deg)) scale(1);
   }
 
-  22%{
+  28% {
     opacity: 1;
-    transform: translate(-50%, -52%) rotate(calc(var(--scrub-rot, 0deg) + 4deg)) scale(1.02);
+    transform: translate(-50%, -50%) rotate(calc(var(--scrub-rot, 0deg) - 16deg)) translate(-26px, -14px) scale(1.02);
   }
 
-  58%{
+  66% {
     opacity: 1;
-    transform: translate(-50%, -42%) rotate(calc(var(--scrub-rot, 0deg) + 24deg)) scale(.96);
+    transform: translate(-50%, -50%) rotate(calc(var(--scrub-rot, 0deg) + 58deg)) translate(52px, 70px) scale(.91);
   }
 
-  100%{
+  100% {
     opacity: 0;
-    transform: translate(-50%, 76vh) rotate(calc(var(--scrub-rot, 0deg) + 96deg)) scale(.72);
+    transform: translate(-50%, -50%) rotate(calc(var(--scrub-rot, 0deg) + 185deg)) translate(90px, 80vh) scale(.62);
   }
 }
 
-@keyframes scrubStickerFacePeel{
-  0%{
-    transform: rotateX(0deg) skewX(0deg);
-    filter: none;
+@keyframes scrubStickerFaceTwist {
+  0% {
+    transform: rotateY(0deg) rotateX(0deg);
   }
 
-  24%{
-    transform: rotateX(18deg) skewX(-4deg);
-    filter: brightness(1.04);
+  36% {
+    transform: rotateY(-24deg) rotateX(18deg);
   }
 
-  56%{
-    transform: rotateX(42deg) skewX(-10deg);
-    filter: brightness(.98);
-  }
-
-  100%{
-    transform: rotateX(64deg) skewX(-14deg);
-    filter: brightness(.94);
+  100% {
+    transform: rotateY(-64deg) rotateX(54deg);
   }
 }
 
-@keyframes scrubStickerCurl{
-  0%{
+@keyframes scrubStickerCurlSide {
+  0% {
     opacity: 0;
     transform: scale(0) rotate(0deg);
   }
 
-  18%{
+  18% {
     opacity: 1;
-    transform: scale(.72) rotate(-8deg);
+    transform: scale(.85) rotate(18deg);
   }
 
-  52%{
+  70% {
     opacity: 1;
-    transform: scale(1.08) rotate(-18deg);
+    transform: scale(1.15) rotate(62deg);
   }
 
-  100%{
+  100% {
     opacity: 0;
-    transform: scale(1.22) rotate(-32deg);
+    transform: scale(1.25) rotate(92deg);
   }
 }
+
+@keyframes scrubStickerPeelSlowCurl {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(var(--scrub-rot, 0deg)) translate(0, 0);
+  }
+
+  22% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(calc(var(--scrub-rot, 0deg) + 3deg)) translate(0, -12px);
+  }
+
+  48% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(calc(var(--scrub-rot, 0deg) + 8deg)) translate(8px, 8px);
+  }
+
+  78% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(calc(var(--scrub-rot, 0deg) + 18deg)) translate(24px, 95px);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(calc(var(--scrub-rot, 0deg) + 42deg)) translate(50px, 78vh) scale(.76);
+  }
+}
+
+@keyframes scrubStickerFaceSlowCurl {
+  0% {
+    transform: rotateX(0deg);
+    filter: none;
+  }
+
+  30% {
+    transform: rotateX(16deg);
+    filter: brightness(1.05);
+  }
+
+  58% {
+    transform: rotateX(46deg);
+    filter: brightness(.98);
+  }
+
+  100% {
+    transform: rotateX(82deg);
+    filter: brightness(.9);
+  }
+}
+
+@keyframes scrubStickerCurlSlowLarge {
+  0% {
+    opacity: 0;
+    transform: scale(0) rotate(0);
+  }
+
+  18% {
+    opacity: 1;
+    transform: scale(.7) rotate(-12deg);
+  }
+
+  46% {
+    opacity: 1;
+    transform: scale(1.25) rotate(-28deg);
+  }
+
+  78% {
+    opacity: 1;
+    transform: scale(1.55) rotate(-44deg);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.72) rotate(-62deg);
+  }
+}
+
+@keyframes scrubStickerPeelSlideDown {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(var(--scrub-rot, 0deg)) translateY(0);
+  }
+
+  24% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(calc(var(--scrub-rot, 0deg) + 2deg)) translateY(-8px);
+  }
+
+  60% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(calc(var(--scrub-rot, 0deg) + 4deg)) translateY(86px);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(calc(var(--scrub-rot, 0deg) + 8deg)) translateY(80vh) scale(.82);
+  }
+}
+
+@keyframes scrubStickerFaceSlideFold {
+  0% {
+    transform: skewY(0deg) rotateX(0);
+  }
+
+  35% {
+    transform: skewY(4deg) rotateX(28deg);
+  }
+
+  100% {
+    transform: skewY(10deg) rotateX(72deg);
+  }
+}
+
+@keyframes scrubStickerCurlBottomRoll {
+  0% {
+    opacity: 0;
+    transform: scale(0) rotate(0);
+  }
+
+  20% {
+    opacity: 1;
+    transform: scale(.8) rotate(-8deg);
+  }
+
+  70% {
+    opacity: 1;
+    transform: scale(1.3) rotate(-54deg);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.4) rotate(-82deg);
+  }
+}
+
+@keyframes scrubStickerPeelWobbleFall {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(var(--scrub-rot, 0deg)) translate(0, 0);
+  }
+
+  18% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(calc(var(--scrub-rot, 0deg) - 7deg)) translate(-12px, -12px);
+  }
+
+  36% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(calc(var(--scrub-rot, 0deg) + 12deg)) translate(18px, 8px);
+  }
+
+  58% {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(calc(var(--scrub-rot, 0deg) - 4deg)) translate(-5px, 58px);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(calc(var(--scrub-rot, 0deg) + 104deg)) translate(60px, 78vh) scale(.7);
+  }
+}
+
+@keyframes scrubStickerFaceWobble {
+  0% {
+    transform: rotateX(0) rotateY(0);
+  }
+
+  25% {
+    transform: rotateX(22deg) rotateY(-10deg);
+  }
+
+  52% {
+    transform: rotateX(48deg) rotateY(12deg);
+  }
+
+  100% {
+    transform: rotateX(74deg) rotateY(-16deg);
+  }
+}
+
+@keyframes scrubStickerCurlWobble {
+  0% {
+    opacity: 0;
+    transform: scale(0) rotate(0);
+  }
+
+  18% {
+    opacity: 1;
+    transform: scale(.8) rotate(-10deg);
+  }
+
+  42% {
+    opacity: 1;
+    transform: scale(1.22) rotate(-36deg);
+  }
+
+  70% {
+    opacity: 1;
+    transform: scale(1.05) rotate(-18deg);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.38) rotate(-55deg);
+  }
+}
+
 
 @keyframes scrubBibleFound{
   0%{ filter: drop-shadow(0 6px 6px rgba(0,0,0,.18)); }
