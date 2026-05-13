@@ -1257,12 +1257,17 @@
     completionLocked = true;
     pointerDown = false;
 
-    if (stageEl) stageEl.classList.add("scrub-round-complete");
+    if (coverCanvas) {
+      coverCanvas.style.pointerEvents = "none";
+    }
 
     animateAutoCleanCover(() => {
       clearMaskFully();
       updateProgress(1);
       clearRemainingObjects();
+
+      if (stageEl) stageEl.classList.add("scrub-round-complete");
+
       launchSparkles();
       showNextRoundPill();
     });
@@ -1270,27 +1275,40 @@
 
   function animateAutoCleanCover(onDone = () => { }) {
     if (!stageEl || !coverCanvas || !coverCtx || coverCanvas.style.display === "none") {
-      setTimeout(onDone, 260);
+      setTimeout(onDone, 360);
       return;
     }
 
     const rect = stageEl.getBoundingClientRect();
+
     const sweep = document.createElement("div");
     sweep.className = "scrub-clean-sweep";
     stageEl.appendChild(sweep);
 
     const start = performance.now();
-    const duration = 760;
+    const duration = 1250;
+    let previousWipeX = 0;
 
     function frame(now) {
       const rawProgress = clamp((now - start) / duration, 0, 1);
-      const easedProgress = 1 - Math.pow(1 - rawProgress, 3);
-      const wipeWidth = rect.width * easedProgress;
+      const easedProgress = rawProgress < 0.5
+        ? 4 * rawProgress * rawProgress * rawProgress
+        : 1 - Math.pow(-2 * rawProgress + 2, 3) / 2;
+
+      const wipeX = rect.width * easedProgress;
+      const bandPadding = 34;
 
       coverCtx.save();
       coverCtx.globalCompositeOperation = "destination-out";
-      coverCtx.clearRect(0, 0, wipeWidth, rect.height);
+      coverCtx.clearRect(
+        Math.max(0, previousWipeX - bandPadding),
+        0,
+        Math.min(rect.width, wipeX - previousWipeX + bandPadding * 2),
+        rect.height
+      );
       coverCtx.restore();
+
+      previousWipeX = Math.max(previousWipeX, wipeX);
 
       updateProgress(Math.max(currentThreshold(), easedProgress));
 
@@ -1304,12 +1322,15 @@
       coverCtx.clearRect(0, 0, rect.width, rect.height);
       coverCtx.restore();
 
-      sweep.remove();
-      onDone();
+      setTimeout(() => {
+        sweep.remove();
+        onDone();
+      }, 120);
     }
 
     requestAnimationFrame(frame);
   }
+
 
   function clearRemainingObjects() {
     const objectLayer = document.getElementById("scrubObjectLayer");
