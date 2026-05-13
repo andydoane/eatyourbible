@@ -1196,10 +1196,21 @@
         })
         .filter(Boolean);
 
+      const computed = window.getComputedStyle(sticker);
+      const face = sticker.querySelector(".scrub-sticker-face");
+      const faceComputed = face ? window.getComputedStyle(face) : null;
+
       return {
         number: index + 1,
         type: sticker.classList.contains("scrub-sticker-word") ? "word" : "emoji",
         text: sticker.textContent.trim(),
+        className: sticker.className,
+        isPeeled: sticker.classList.contains("is-peeled"),
+        animationName: computed.animationName,
+        animationPlayState: computed.animationPlayState,
+        transform: computed.transform,
+        faceAnimationName: faceComputed ? faceComputed.animationName : "",
+        faceTransform: faceComputed ? faceComputed.transform : "",
         jsLeft: sticker.style.left,
         jsTop: sticker.style.top,
         jsWidth: sticker.style.width,
