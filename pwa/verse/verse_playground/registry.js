@@ -13,5 +13,18 @@ window.EXTERNAL_VERSE_PLAYGROUND = [
       progressType: "practice",
       modes: ["beginner", "advanced"]
     }
+  },
+  {
+    enabled: true,
+    manifest: {
+      id: "scripture_scrub",
+      title: "Scripture Scrub",
+      description: "Wipe, rake, peel, and dig to reveal the verse.",
+      icon: "🧽",
+      cardColor: "#40b9c5",
+      cardTextColor: "#ffffff",
+      launchUrl: "./verse_playground/scripture_scrub/index.html",
+      visibleInCarousel: true
+    }
   }
 ];
