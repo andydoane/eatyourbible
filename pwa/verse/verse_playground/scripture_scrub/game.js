@@ -1186,16 +1186,88 @@
 
   function generateStickerPositions(count, width, height, stickerSize) {
     const safeCount = Math.max(1, Number(count) || 1);
-    const marginX = Math.max(42, stickerSize * 0.58);
-    const top = Math.max(112, height * 0.14);
-    const bottom = Math.min(height - Math.max(44, stickerSize * 0.48), height * 0.88);
+
+    const marginX = Math.max(46, stickerSize * 0.62);
+    const top = Math.max(118, height * 0.15);
+    const bottom = Math.min(
+      height - Math.max(58, stickerSize * 0.62),
+      height * 0.90
+    );
+
+    const minDistance = stickerSize * (width >= 760 ? 0.78 : 0.72);
+    const relaxedDistance = stickerSize * 0.58;
+    const maxAttempts = safeCount * 95;
+    const positions = [];
+
+    function randomCandidate() {
+      const verticalBias = Math.random();
+      const yRatio = verticalBias < 0.64
+        ? 0.24 + Math.random() * 0.52
+        : 0.08 + Math.random() * 0.84;
+
+      return {
+        x: marginX + Math.random() * Math.max(1, width - marginX * 2),
+        y: top + yRatio * Math.max(1, bottom - top)
+      };
+    }
+
+    function distanceToClosest(candidate) {
+      if (!positions.length) return Infinity;
+
+      return Math.min(...positions.map((pos) => {
+        const dx = candidate.x - pos.x;
+        const dy = candidate.y - pos.y;
+        return Math.hypot(dx, dy);
+      }));
+    }
+
+    for (let attempt = 0; positions.length < safeCount && attempt < maxAttempts; attempt += 1) {
+      const candidate = randomCandidate();
+      const progress = attempt / maxAttempts;
+      const requiredDistance = minDistance - (minDistance - relaxedDistance) * progress;
+
+      if (distanceToClosest(candidate) >= requiredDistance) {
+        positions.push(candidate);
+      }
+    }
+
+    if (positions.length < safeCount) {
+      const fallback = generateStickerFallbackPositions({
+        count: safeCount - positions.length,
+        width,
+        height,
+        stickerSize,
+        marginX,
+        top,
+        bottom
+      });
+
+      positions.push(...fallback);
+    }
+
+    return shuffle(positions).slice(0, safeCount).map((pos) => ({
+      x: clamp(pos.x, marginX, width - marginX),
+      y: clamp(pos.y, top, bottom)
+    }));
+  }
+
+  function generateStickerFallbackPositions({
+    count,
+    width,
+    height,
+    stickerSize,
+    marginX,
+    top,
+    bottom
+  }) {
+    const safeCount = Math.max(0, Number(count) || 0);
     const usableW = Math.max(1, width - marginX * 2);
     const usableH = Math.max(1, bottom - top);
 
     const cols = width >= 760 ? 5 : 4;
     const rows = Math.ceil(safeCount / cols);
     const cellW = usableW / cols;
-    const cellH = usableH / rows;
+    const cellH = usableH / Math.max(1, rows);
 
     const positions = [];
 
@@ -1203,16 +1275,13 @@
       const row = Math.floor(i / cols);
       const col = i % cols;
 
-      const x = marginX + cellW * (col + 0.5) + (Math.random() - 0.5) * cellW * 0.22;
-      const y = top + cellH * (row + 0.5) + (Math.random() - 0.5) * cellH * 0.18;
-
       positions.push({
-        x: clamp(x, marginX, width - marginX),
-        y: clamp(y, top, bottom)
+        x: marginX + cellW * (col + 0.5) + (Math.random() - 0.5) * cellW * 0.55,
+        y: top + cellH * (row + 0.5) + (Math.random() - 0.5) * cellH * 0.48
       });
     }
 
-    return shuffle(positions);
+    return positions;
   }
 
   function stickerHtml({ content, type }) {
@@ -1260,8 +1329,8 @@
       const design = pickStickerDesign(i + Math.floor(Math.random() * STICKER_STYLES.length));
 
       const sizeVariation = useWord
-        ? 0.96 + Math.random() * 0.08
-        : 0.92 + Math.random() * 0.10;
+        ? 0.92 + Math.random() * 0.16
+        : 0.88 + Math.random() * 0.18;
 
       const stickerWidth = Math.round(baseSize * sizeVariation * (useWord ? 1.16 : 1));
       const stickerHeight = Math.round(baseSize * sizeVariation * (useWord ? 0.72 : 1));
@@ -1288,8 +1357,8 @@
       btn.style.height = `${stickerHeight}px`;
       btn.style.left = `${pos.x}px`;
       btn.style.top = `${pos.y}px`;
-      btn.style.zIndex = String(20 + i);
-      btn.style.setProperty("--scrub-rot", `${Math.round(-11 + Math.random() * 22)}deg`);
+      btn.style.zIndex = String(20 + Math.floor(Math.random() * 40));
+      btn.style.setProperty("--scrub-rot", `${Math.round(-22 + Math.random() * 44)}deg`);
       btn.style.setProperty("--sticker-bg", design.bg);
       btn.style.setProperty("--sticker-fg", design.fg);
       btn.style.setProperty("--sticker-border", design.borderColor);
