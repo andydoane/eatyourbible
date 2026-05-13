@@ -43,8 +43,8 @@
 
   const BRUSH_BY_MODE = {
     easy: 38,
-    medium: 32,
-    hard: 26
+    medium: 38,
+    hard: 38
   };
 
   const ROUNDS = [
