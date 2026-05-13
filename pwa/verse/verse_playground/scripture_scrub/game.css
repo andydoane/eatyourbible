@@ -147,6 +147,29 @@ body{
   white-space: nowrap;
 }
 
+.scrub-ref-pill.is-next-round{
+  padding: 0;
+  border-color: rgba(255,199,81,.78);
+  box-shadow:
+    0 7px 0 rgba(0,0,0,.16),
+    0 0 22px rgba(255,199,81,.55);
+  animation: scrubNextPillPulse 1.05s ease-in-out infinite;
+}
+
+.scrub-next-round-btn{
+  width: 100%;
+  border: 0;
+  border-radius: 999px;
+  padding: clamp(12px, 2vh, 17px) clamp(24px, 5vw, 38px);
+  background: #ffc751;
+  color: #333333;
+  font: inherit;
+  font-family: "Titan One", "Baloo 2", system-ui, sans-serif;
+  font-size: clamp(19px, 5vw, 34px);
+  line-height: 1;
+  cursor: pointer;
+}
+
 .scrub-verse-fit-box{
   width: 100%;
   flex: 1 1 auto;
@@ -175,6 +198,15 @@ body{
 
 .scrub-token-word.is-special{
   color: var(--scrub-special-color, var(--scrub-purple));
+}
+
+.scrub-stage-fog .scrub-scripture-card {
+  filter: blur(1.45px);
+  transition: filter .28s ease;
+}
+
+.scrub-stage-fog.scrub-round-complete .scrub-scripture-card {
+  filter: none;
 }
 
 .scrub-round-stickers .scrub-scripture-card {
@@ -504,6 +536,17 @@ body{
   pointer-events: none;
 }
 
+@keyframes scrubNextPillPulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.055);
+  }
+}
 
 @keyframes scrubMiniRewardPop{
   0%{ opacity: 0; transform: translate(-50%, -44%) scale(.72); }

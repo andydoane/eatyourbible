@@ -264,12 +264,10 @@
         <div class="vm-game-stage scripture-scrub-round-title">
           <div class="vm-game-center">
             <div class="vm-game-icon" aria-hidden="true">${escapeHtml(round.icon)}</div>
-            <div class="vm-pill">Round ${roundNumber} of ${totalRounds()} · ${escapeHtml(modeLabel())}</div>
             <div class="vm-game-title">${escapeHtml(round.title)}</div>
             <div class="vm-subtitle">${escapeHtml(round.intro)}</div>
             <div class="vm-game-actions">
               <button class="vm-btn" id="scrubStartRoundBtn" type="button">Start Round</button>
-              <button class="vm-btn vm-btn-secondary" id="scrubExitBtn" type="button">Back to Playground</button>
             </div>
           </div>
         </div>
@@ -278,7 +276,6 @@
 
     const backBtn = document.getElementById("scrubRoundBackBtn");
     const startBtn = document.getElementById("scrubStartRoundBtn");
-    const exitBtn = document.getElementById("scrubExitBtn");
 
     if (backBtn) backBtn.onclick = currentRoundIndex === 0 ? renderModeSelect : () => {
       currentRoundIndex = Math.max(0, currentRoundIndex - 1);
@@ -286,7 +283,6 @@
     };
 
     if (startBtn) startBtn.onclick = renderRound;
-    if (exitBtn) exitBtn.onclick = () => window.VerseGameBridge.exitGame();
   }
 
   function renderRound(){
@@ -302,7 +298,7 @@
 
     app.innerHTML = `
       <div class="scrub-game scrub-round-${escapeHtml(round.id)}" id="scrubGame">
-        <div class="scrub-stage" id="scrubStage">
+        <div class="scrub-stage scrub-stage-${escapeHtml(round.id)}" id="scrubStage">
           <button class="scrub-menu-button no-zoom" id="scrubMenuBtn" type="button" aria-label="Game menu">☰</button>
 
           <div class="scrub-hud" aria-live="polite">
@@ -1256,13 +1252,14 @@
     return clamp(score, 10, 100);
   }
 
-  function completeRound(){
+  function completeRound() {
     if (completionLocked) return;
     completionLocked = true;
     pointerDown = false;
 
     if (coverCtx && coverCanvas && stageEl) {
       const rect = stageEl.getBoundingClientRect();
+
       coverCtx.save();
       coverCtx.globalCompositeOperation = "destination-out";
       coverCtx.fillRect(0, 0, rect.width, rect.height);
@@ -1271,44 +1268,42 @@
 
     clearMaskFully();
     updateProgress(1);
+    clearRemainingObjects();
+
+    if (stageEl) stageEl.classList.add("scrub-round-complete");
 
     launchSparkles();
+    showNextRoundPill();
+  }
 
+  function clearRemainingObjects() {
+    const objectLayer = document.getElementById("scrubObjectLayer");
+    if (objectLayer) objectLayer.innerHTML = "";
+  }
+
+  function showNextRoundPill() {
     const round = roundConfig();
-    const message = round.kind === "archaeology"
-      ? `Careful Dig Score: ${archaeologyScore ?? 100}`
-      : "Great job!";
+    const pill = document.getElementById("scrubRefPill");
+    if (!pill) return;
 
-    showMiniReward({
-      icon: round.rewardIcon,
-      title: round.rewardTitle,
-      message
-    });
+    const isFinalRound = round.kind === "archaeology";
+    const buttonText = isFinalRound ? "See Results" : "Next Round";
 
-    setTimeout(() => {
-      if (round.kind === "archaeology"){
+    pill.classList.add("is-next-round");
+    pill.innerHTML = `<button class="scrub-next-round-btn no-zoom" id="scrubNextRoundBtn" type="button">${escapeHtml(buttonText)}</button>`;
+
+    const btn = document.getElementById("scrubNextRoundBtn");
+    if (!btn) return;
+
+    btn.onclick = () => {
+      if (isFinalRound) {
         renderEndScreen();
         return;
       }
 
       currentRoundIndex += 1;
       renderRoundIntro();
-    }, round.kind === "archaeology" ? 1750 : 1450);
-  }
-
-  function showMiniReward({ icon = "✨", title = "Great job!", message = "" } = {}){
-    const layer = document.getElementById("scrubRewardLayer");
-    if (!layer) return;
-
-    layer.innerHTML = `
-      <div class="scrub-mini-reward" aria-live="polite">
-        <div class="scrub-mini-reward-icon" aria-hidden="true">${escapeHtml(icon)}</div>
-        <div class="scrub-mini-reward-copy">
-          <div class="scrub-mini-reward-title">${escapeHtml(title)}</div>
-          ${message ? `<div class="scrub-mini-reward-message">${escapeHtml(message)}</div>` : ""}
-        </div>
-      </div>
-    `;
+    };
   }
 
   function showRoundReward({ title, icon, message, primaryText, onPrimary }){
