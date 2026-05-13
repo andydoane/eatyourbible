@@ -1,4 +1,4 @@
-(async function(){
+(async function () {
   const app = document.getElementById("app");
 
   if (app) {
@@ -207,27 +207,27 @@
     ctx.verseId
   );
 
-  function escapeHtml(value){
+  function escapeHtml(value) {
     return window.VerseGameShell.escapeHtml(String(value ?? ""));
   }
 
-  function shuffle(array){
+  function shuffle(array) {
     return window.VerseGameShell.shuffle(array);
   }
 
-  function clamp(value, min, max){
+  function clamp(value, min, max) {
     return window.VerseGameShell.clamp(value, min, max);
   }
 
-  function roundConfig(){
+  function roundConfig() {
     return ROUNDS[currentRoundIndex] || ROUNDS[0];
   }
 
-  function totalRounds(){
+  function totalRounds() {
     return ROUNDS.length;
   }
 
-  function currentThreshold(){
+  function currentThreshold() {
     return MODE_THRESHOLDS[selectedMode] || MODE_THRESHOLDS.easy;
   }
 
@@ -236,17 +236,17 @@
     return currentThreshold();
   }
 
-  function currentBrushRadius(){
+  function currentBrushRadius() {
     return BRUSH_BY_MODE[selectedMode] || BRUSH_BY_MODE.easy;
   }
 
-  function modeLabel(){
+  function modeLabel() {
     if (selectedMode === "hard") return "Hard";
     if (selectedMode === "medium") return "Medium";
     return "Easy";
   }
 
-  async function loadVerseJson(){
+  async function loadVerseJson() {
     const verseId = String(ctx.verseId || launchParams.verseId || "").trim();
     if (!verseId) return null;
 
@@ -260,7 +260,7 @@
     }
   }
 
-  function helpHtml(){
+  function helpHtml() {
     return `
       <p><strong>Reveal the verse!</strong></p>
       <p>Scrub, wipe, rake, peel, and dig through six playful rounds.</p>
@@ -269,7 +269,7 @@
     `;
   }
 
-  function renderTitleScreen(){
+  function renderTitleScreen() {
     window.VerseGameShell.renderTitleScreen({
       app,
       title: GAME_TITLE,
@@ -285,7 +285,7 @@
     });
   }
 
-  function renderModeSelect(){
+  function renderModeSelect() {
     window.VerseGameShell.renderModeSelect({
       app,
       title: "Choose Your Scrub",
@@ -309,7 +309,7 @@
     });
   }
 
-  function renderRoundIntro(){
+  function renderRoundIntro() {
     cleanupRound();
     const round = roundConfig();
     const roundNumber = currentRoundIndex + 1;
@@ -341,7 +341,7 @@
     if (startBtn) startBtn.onclick = renderRound;
   }
 
-  function renderRound(){
+  function renderRound() {
     cleanupRound();
     completionLocked = false;
     pointerDown = false;
@@ -376,15 +376,15 @@
         </div>
 
         ${window.VerseGameShell.gameMenuHtml({
-          id: MENU_OVERLAY_ID,
-          title: "Scripture Scrub",
-          muted,
-          howToText: "How to Play",
-          modeSelectText: "Mode Select",
-          exitText: "Back to Playground",
-          closeText: "Keep Scrubbing",
-          showModeSelect: true
-        })}
+      id: MENU_OVERLAY_ID,
+      title: "Scripture Scrub",
+      muted,
+      howToText: "How to Play",
+      modeSelectText: "Mode Select",
+      exitText: "Back to Playground",
+      closeText: "Keep Scrubbing",
+      showModeSelect: true
+    })}
 
         ${window.VerseGameShell.helpOverlayHtml({ id: HELP_OVERLAY_ID, body: helpHtml() })}
       </div>
@@ -418,8 +418,8 @@
 
     fitVerseToScreen();
 
-    if (document.fonts?.ready){
-      document.fonts.ready.then(() => fitVerseToScreen()).catch(() => {});
+    if (document.fonts?.ready) {
+      document.fonts.ready.then(() => fitVerseToScreen()).catch(() => { });
     }
 
     resizeHandler = () => {
@@ -431,22 +431,22 @@
     setupRoundVisuals(round);
   }
 
-  function getReferenceDisplay(){
+  function getReferenceDisplay() {
     const book = parsedRef.book || "";
     const reference = parsedRef.reference || "";
     const display = [book, reference].filter(Boolean).join(" ").trim();
     return display || ctx.verseRef || ctx.verseId || "Verse";
   }
 
-  function getVerseText(){
+  function getVerseText() {
     return String(ctx.verseText || verseJson?.verseText || "").trim() || "Choose a verse to reveal.";
   }
 
-  function hidePlanEntries(){
+  function hidePlanEntries() {
     return Array.isArray(verseJson?.hidePlan) ? verseJson.hidePlan : [];
   }
 
-  function renderVerseHtml(){
+  function renderVerseHtml() {
     const tokens = window.VerseGameShell.tokenizeVerseForBuild(getVerseText());
     const plan = hidePlanEntries();
     const normalizedPlan = plan
@@ -478,7 +478,7 @@
     }).join("");
   }
 
-  function fitVerseToScreen(){
+  function fitVerseToScreen() {
     const box = document.getElementById("scrubVerseFitBox");
     const text = document.getElementById("scrubVerseText");
     const pill = document.getElementById("scrubRefPill");
@@ -491,7 +491,7 @@
     text.style.marginLeft = "auto";
     text.style.marginRight = "auto";
 
-    if (pill){
+    if (pill) {
       pill.style.fontSize = "";
     }
 
@@ -512,8 +512,8 @@
 
       let best = null;
 
-      for (const maxWidthPx of widthCandidates){
-        for (const lineHeight of lineHeights){
+      for (const maxWidthPx of widthCandidates) {
+        for (const lineHeight of lineHeights) {
           text.style.width = "100%";
           text.style.maxWidth = `${maxWidthPx}px`;
           text.style.marginLeft = "auto";
@@ -524,11 +524,11 @@
           let high = maxSize;
           let bestSize = minSize;
 
-          for (let i = 0; i < 13; i += 1){
+          for (let i = 0; i < 13; i += 1) {
             const mid = (low + high) / 2;
             text.style.fontSize = `${mid}px`;
 
-            if (verseOverflows(box, text)){
+            if (verseOverflows(box, text)) {
               high = mid;
             } else {
               bestSize = mid;
@@ -559,13 +559,13 @@
             metrics
           };
 
-          if (!best || result.score > best.score){
+          if (!best || result.score > best.score) {
             best = result;
           }
         }
       }
 
-      if (best){
+      if (best) {
         text.style.fontSize = `${best.fontSize}px`;
         text.style.lineHeight = String(best.lineHeight);
         text.style.maxWidth = `${best.maxWidthPx}px`;
@@ -579,7 +579,7 @@
     });
   }
 
-  function getDesiredLineRange(textLength, isDesktopStage){
+  function getDesiredLineRange(textLength, isDesktopStage) {
     if (textLength >= 230) return isDesktopStage ? { min: 8, ideal: 10, max: 13 } : { min: 9, ideal: 11, max: 14 };
     if (textLength >= 170) return isDesktopStage ? { min: 7, ideal: 9, max: 11 } : { min: 8, ideal: 10, max: 12 };
     if (textLength >= 115) return isDesktopStage ? { min: 5, ideal: 7, max: 9 } : { min: 6, ideal: 8, max: 10 };
@@ -587,7 +587,7 @@
     return { min: 2, ideal: 3, max: 5 };
   }
 
-  function getVerseWidthCandidates(stageWidth, textLength){
+  function getVerseWidthCandidates(stageWidth, textLength) {
     const max = Math.min(stageWidth - 36, 760);
     const desktopLong = stageWidth >= 700 && textLength >= 150;
     const ratios = desktopLong
@@ -595,22 +595,22 @@
       : [.96, .90, .84, .78, .72, .66];
 
     const out = [];
-    for (const ratio of ratios){
+    for (const ratio of ratios) {
       const value = Math.round(clamp(max * ratio, 300, max));
       if (!out.includes(value)) out.push(value);
     }
     return out;
   }
 
-  function getVerseFitMetrics(box, text){
+  function getVerseFitMetrics(box, text) {
     const rects = [];
-    for (const child of Array.from(text.children || [])){
-      for (const rect of Array.from(child.getClientRects ? child.getClientRects() : [])){
+    for (const child of Array.from(text.children || [])) {
+      for (const rect of Array.from(child.getClientRects ? child.getClientRects() : [])) {
         if (rect.width > .5 && rect.height > .5) rects.push(rect);
       }
     }
 
-    if (!rects.length){
+    if (!rects.length) {
       const textRect = text.getBoundingClientRect();
       return {
         lines: 1,
@@ -623,9 +623,9 @@
     }
 
     const lines = [];
-    for (const rect of rects){
+    for (const rect of rects) {
       let line = lines.find((item) => Math.abs(item.top - rect.top) <= 3);
-      if (!line){
+      if (!line) {
         line = { top: rect.top, left: rect.left, right: rect.right, height: rect.height };
         lines.push(line);
       } else {
@@ -653,7 +653,7 @@
     };
   }
 
-  function scoreVerseFit({ metrics, desiredLines, textLength, fontSize }){
+  function scoreVerseFit({ metrics, desiredLines, textLength, fontSize }) {
     const heightTarget = textLength >= 160 ? .80 : .74;
     const widthTarget = textLength >= 160 ? .78 : .82;
     const aspectTarget = textLength >= 160 ? 1.35 : 1.75;
@@ -670,12 +670,12 @@
     return heightScore + widthScore + aspectScore + lineScore - tooFewLinesPenalty - tooManyLinesPenalty - tinyPenalty;
   }
 
-  function verseOverflows(box, text){
+  function verseOverflows(box, text) {
     const fudge = 2;
     return text.scrollWidth > box.clientWidth + fudge || text.scrollHeight > box.clientHeight + fudge;
   }
 
-  function setupRoundVisuals(round){
+  function setupRoundVisuals(round) {
     if (!coverCanvas || !coverCtx || !stageEl) return;
 
     const rect = stageEl.getBoundingClientRect();
@@ -693,14 +693,14 @@
     if (objectLayer) objectLayer.innerHTML = "";
     if (bibleLayer) bibleLayer.innerHTML = "";
 
-    if (round.kind === "canvas"){
+    if (round.kind === "canvas") {
       drawCoverTexture(round.texture, rect.width, rect.height);
       wireCanvasScrub(round);
       updateProgress(0);
       return;
     }
 
-    if (round.kind === "archaeology"){
+    if (round.kind === "archaeology") {
       placeHiddenBible(rect.width, rect.height);
       drawCoverTexture("dirt", rect.width, rect.height);
       wireCanvasScrub(round);
@@ -754,7 +754,7 @@
     clearMaskCtx.restore();
   }
 
-  function drawCoverTexture(texture, width, height){
+  function drawCoverTexture(texture, width, height) {
     coverCanvas.style.display = "block";
     coverCtx.globalCompositeOperation = "source-over";
     coverCtx.clearRect(0, 0, width, height);
@@ -765,7 +765,7 @@
     drawDirt(width, height);
   }
 
-  function drawMud(width, height){
+  function drawMud(width, height) {
     const gradient = coverCtx.createLinearGradient(0, 0, width, height);
     gradient.addColorStop(0, "#6b3f20");
     gradient.addColorStop(.5, "#8a5429");
@@ -773,7 +773,7 @@
     coverCtx.fillStyle = gradient;
     coverCtx.fillRect(0, 0, width, height);
 
-    for (let i = 0; i < 220; i += 1){
+    for (let i = 0; i < 220; i += 1) {
       const x = Math.random() * width;
       const y = Math.random() * height;
       const r = 5 + Math.random() * 36;
@@ -824,7 +824,7 @@
     coverCtx.globalAlpha = 1;
   }
 
-  function drawFog(width, height){
+  function drawFog(width, height) {
     const gradient = coverCtx.createLinearGradient(0, 0, width, height);
     gradient.addColorStop(0, "rgba(235,250,255,.93)");
     gradient.addColorStop(.5, "rgba(221,241,248,.88)");
@@ -832,7 +832,7 @@
     coverCtx.fillStyle = gradient;
     coverCtx.fillRect(0, 0, width, height);
 
-    for (let i = 0; i < 90; i += 1){
+    for (let i = 0; i < 90; i += 1) {
       const x = Math.random() * width;
       const y = Math.random() * height;
       const rx = 50 + Math.random() * 150;
@@ -848,7 +848,7 @@
     }
   }
 
-  function drawDirt(width, height){
+  function drawDirt(width, height) {
     const gradient = coverCtx.createLinearGradient(0, 0, width, height);
     gradient.addColorStop(0, "#9c733e");
     gradient.addColorStop(.48, "#6f4e2b");
@@ -856,7 +856,7 @@
     coverCtx.fillStyle = gradient;
     coverCtx.fillRect(0, 0, width, height);
 
-    for (let i = 0; i < 520; i += 1){
+    for (let i = 0; i < 520; i += 1) {
       const x = Math.random() * width;
       const y = Math.random() * height;
       const r = 1 + Math.random() * 5;
@@ -867,7 +867,7 @@
     }
   }
 
-  function wireCanvasScrub(round){
+  function wireCanvasScrub(round) {
     coverCanvas.onpointerdown = (event) => {
       if (menuOpen || completionLocked) return;
       event.preventDefault();
@@ -898,7 +898,7 @@
     coverCanvas.onpointerleave = stop;
   }
 
-  function getCanvasPoint(event){
+  function getCanvasPoint(event) {
     const rect = coverCanvas.getBoundingClientRect();
     return {
       x: clamp(event.clientX - rect.left, 0, rect.width),
@@ -906,7 +906,7 @@
     };
   }
 
-  function scrubAt(x, y, radius, round){
+  function scrubAt(x, y, radius, round) {
     if (!coverCtx || !stageEl) return;
     const rect = stageEl.getBoundingClientRect();
 
@@ -926,20 +926,20 @@
     if (x < 0 || x > rect.width || y < 0 || y > rect.height) return;
   }
 
-  function scrubLine(from, to, radius, round){
+  function scrubLine(from, to, radius, round) {
     const distance = Math.hypot(to.x - from.x, to.y - from.y);
     const steps = Math.max(1, Math.ceil(distance / (radius * .55)));
-    for (let i = 0; i <= steps; i += 1){
+    for (let i = 0; i <= steps; i += 1) {
       const t = i / steps;
       scrubAt(from.x + (to.x - from.x) * t, from.y + (to.y - from.y) * t, radius, round);
     }
   }
 
-  function drawMudFlick(x, y, radius){
+  function drawMudFlick(x, y, radius) {
     coverCtx.save();
     coverCtx.globalCompositeOperation = "source-over";
     coverCtx.fillStyle = "rgba(76,43,22,.12)";
-    for (let i = 0; i < 3; i += 1){
+    for (let i = 0; i < 3; i += 1) {
       coverCtx.beginPath();
       coverCtx.arc(x + (Math.random() - .5) * radius * 2.2, y + (Math.random() - .5) * radius * 2.2, 2 + Math.random() * 4, 0, Math.PI * 2);
       coverCtx.fill();
@@ -947,7 +947,7 @@
     coverCtx.restore();
   }
 
-  function drawPaintSmear(x, y, radius){
+  function drawPaintSmear(x, y, radius) {
     coverCtx.save();
     coverCtx.globalCompositeOperation = "source-over";
     coverCtx.globalAlpha = .08;
@@ -958,7 +958,7 @@
     coverCtx.restore();
   }
 
-  function drawCleanWindowShine(x, y, radius){
+  function drawCleanWindowShine(x, y, radius) {
     coverCtx.save();
     coverCtx.globalCompositeOperation = "destination-out";
     coverCtx.globalAlpha = .22;
@@ -968,7 +968,7 @@
     coverCtx.restore();
   }
 
-  function scheduleCoverageCheck(round, immediate = false){
+  function scheduleCoverageCheck(round, immediate = false) {
     if (coverageCheckTimer) return;
 
     const delay = immediate ? 0 : 90;
@@ -977,7 +977,7 @@
       const cleared = measureClearedRatio();
       updateProgress(cleared);
 
-      if (round.kind === "archaeology"){
+      if (round.kind === "archaeology") {
         checkBibleFound(cleared);
         return;
       }
@@ -1015,7 +1015,7 @@
     return total ? cleared / total : 0;
   }
 
-  function updateProgress(ratio){
+  function updateProgress(ratio) {
     const pct = Math.max(0, Math.min(100, Math.round(ratio * 100)));
     const label = document.getElementById("scrubHudLabel");
     const fill = document.getElementById("scrubProgressFill");
@@ -1322,7 +1322,7 @@
     if (ratio >= roundCompletionThreshold()) completeRound();
   }
 
-  function placeHiddenBible(width, height){
+  function placeHiddenBible(width, height) {
     const layer = document.getElementById("scrubBibleLayer");
     if (!layer) return;
 
@@ -1363,7 +1363,7 @@
     layer.appendChild(img);
   }
 
-  function checkBibleFound(clearedRatio){
+  function checkBibleFound(clearedRatio) {
     if (!bibleRect || !coverCanvas || !coverCtx || completionLocked) return;
 
     const revealRatio = measureBibleRevealRatio();
@@ -1409,7 +1409,7 @@
     return total ? cleared / total : 0;
   }
 
-  function calculateArchaeologyScore(clearedRatio){
+  function calculateArchaeologyScore(clearedRatio) {
     const score = Math.round(100 - clamp(clearedRatio, 0, 1) * 80);
     return clamp(score, 10, 100);
   }
@@ -1458,17 +1458,22 @@
         : 1 - Math.pow(-2 * rawProgress + 2, 3) / 2;
 
       const wipeX = rect.width * easedProgress;
-      const bandPadding = 34;
+      const bandPadding = 34 * Math.min(1, rawProgress / 0.28);
+      const clearLeft = Math.max(0, previousWipeX - bandPadding);
+      const clearRight = Math.min(rect.width, wipeX + bandPadding);
+      const clearWidth = Math.max(0, clearRight - clearLeft);
 
-      coverCtx.save();
-      coverCtx.globalCompositeOperation = "destination-out";
-      coverCtx.clearRect(
-        Math.max(0, previousWipeX - bandPadding),
-        0,
-        Math.min(rect.width, wipeX - previousWipeX + bandPadding * 2),
-        rect.height
-      );
-      coverCtx.restore();
+      if (clearWidth > 0.5) {
+        coverCtx.save();
+        coverCtx.globalCompositeOperation = "destination-out";
+        coverCtx.clearRect(
+          clearLeft,
+          0,
+          clearWidth,
+          rect.height
+        );
+        coverCtx.restore();
+      }
 
       previousWipeX = Math.max(previousWipeX, wipeX);
 
@@ -1524,7 +1529,7 @@
     };
   }
 
-  function showRoundReward({ title, icon, message, primaryText, onPrimary }){
+  function showRoundReward({ title, icon, message, primaryText, onPrimary }) {
     const layer = document.getElementById("scrubRewardLayer");
     if (!layer) return;
 
@@ -1548,12 +1553,12 @@
     if (exit) exit.onclick = () => window.VerseGameBridge.exitGame();
   }
 
-  function launchSparkles(){
+  function launchSparkles() {
     const layer = document.getElementById("scrubRewardLayer");
     if (!layer) return;
 
     const icons = ["✨", "⭐", "💫", "🌟"];
-    for (let i = 0; i < 28; i += 1){
+    for (let i = 0; i < 28; i += 1) {
       const sparkle = document.createElement("span");
       sparkle.className = "scrub-sparkle";
       sparkle.textContent = icons[i % icons.length];
@@ -1566,7 +1571,7 @@
     }
   }
 
-  function renderEndScreen(){
+  function renderEndScreen() {
     cleanupRound();
     const score = archaeologyScore ?? 100;
     const scoreLine = score >= 90
@@ -1595,23 +1600,23 @@
     });
   }
 
-  function cleanupRound(){
-    if (coverageCheckTimer){
+  function cleanupRound() {
+    if (coverageCheckTimer) {
       clearTimeout(coverageCheckTimer);
       coverageCheckTimer = null;
     }
 
-    if (resizeHandler){
+    if (resizeHandler) {
       window.removeEventListener("resize", resizeHandler);
       resizeHandler = null;
     }
 
-    if (stageEl){
+    if (stageEl) {
       stageEl.onpointerdown = null;
       stageEl.onpointermove = null;
     }
 
-    if (coverCanvas){
+    if (coverCanvas) {
       coverCanvas.onpointerdown = null;
       coverCanvas.onpointermove = null;
       coverCanvas.onpointerup = null;
