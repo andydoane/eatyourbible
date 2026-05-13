@@ -727,16 +727,18 @@ body{
   position: absolute;
   inset: 0 auto 0 0;
   z-index: 42;
-  width: 42%;
+  width: 38%;
   pointer-events: none;
   background:
     linear-gradient(90deg,
       rgba(255, 255, 255, 0) 0%,
-      rgba(255, 255, 255, .35) 24%,
-      rgba(255, 255, 255, .98) 48%,
-      rgba(255, 255, 255, .58) 64%,
+      rgba(255, 255, 255, .28) 25%,
+      rgba(255, 255, 255, .96) 50%,
+      rgba(255, 255, 255, .48) 68%,
       rgba(255, 255, 255, 0) 100%);
-  transform: translateX(-125%);
+  transform: translateX(-112%) scaleX(.02);
+  transform-origin: left center;
+  clip-path: inset(0 100% 0 0);
   mix-blend-mode: screen;
   filter: drop-shadow(0 0 18px rgba(255,255,255,.85));
   animation: scrubCleanSweepMove 1250ms ease-in-out both;
@@ -744,20 +746,38 @@ body{
 
 @keyframes scrubCleanSweepMove {
   0% {
-    transform: translateX(-125%);
+    transform: translateX(-112%) scaleX(.02);
+    clip-path: inset(0 100% 0 0);
     opacity: 0;
   }
 
-  12% {
+  8% {
+    transform: translateX(-108%) scaleX(.08);
+    clip-path: inset(0 96% 0 0);
+    opacity: 1;
+  }
+
+  22% {
+    transform: translateX(-72%) scaleX(.42);
+    clip-path: inset(0 58% 0 0);
+    opacity: 1;
+  }
+
+  46% {
+    transform: translateX(18%) scaleX(1);
+    clip-path: inset(0 0 0 0);
     opacity: 1;
   }
 
   82% {
+    transform: translateX(205%) scaleX(.92);
+    clip-path: inset(0 0 0 0);
     opacity: 1;
   }
 
   100% {
-    transform: translateX(260%);
+    transform: translateX(286%) scaleX(.25);
+    clip-path: inset(0 0 0 72%);
     opacity: 0;
   }
 }

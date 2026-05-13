@@ -231,6 +231,11 @@
     return MODE_THRESHOLDS[selectedMode] || MODE_THRESHOLDS.easy;
   }
 
+  function roundCompletionThreshold(round = roundConfig()) {
+    if (round?.kind === "leaves" || round?.kind === "stickers") return 1;
+    return currentThreshold();
+  }
+
   function currentBrushRadius(){
     return BRUSH_BY_MODE[selectedMode] || BRUSH_BY_MODE.easy;
   }
@@ -1151,7 +1156,7 @@
     const ratio = objectTotal ? objectCleared / objectTotal : 0;
     updateProgress(ratio);
 
-    if (ratio >= currentThreshold()) completeRound();
+    if (ratio >= roundCompletionThreshold()) completeRound();
   }
 
   function pickStickerDesign(index) {
@@ -1314,7 +1319,7 @@
     const ratio = objectTotal ? objectCleared / objectTotal : 0;
     updateProgress(ratio);
 
-    if (ratio >= currentThreshold()) completeRound();
+    if (ratio >= roundCompletionThreshold()) completeRound();
   }
 
   function placeHiddenBible(width, height){
