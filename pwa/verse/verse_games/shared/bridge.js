@@ -179,6 +179,34 @@ function markCompleted(payload){
   };
 }
 
+  function markVersePracticed({ verseId = "" } = {}) {
+    const safeVerseId = String(verseId || "").trim();
+
+    if (!safeVerseId) {
+      return { ok: false, verseId: safeVerseId };
+    }
+
+    const loaded = loadProgress();
+    if (!loaded.ok || !loaded.progress) {
+      console.warn("markVersePracticed aborted because progress could not be loaded safely.");
+      return { ok: false, verseId: safeVerseId };
+    }
+
+    const progress = loaded.progress;
+
+    if (!progress.verses[safeVerseId]) {
+      progress.verses[safeVerseId] = {
+        learnCompleted: false,
+        games: {}
+      };
+    }
+
+    progress.verses[safeVerseId].lastPracticedAt = Date.now();
+    saveProgress(progress);
+
+    return { ok: true, verseId: safeVerseId };
+  }
+  
   function wasAlreadyCompleted(verseId, gameId, mode){
     if (!verseId || !gameId || !mode) return false;
 
@@ -476,6 +504,7 @@ function exitGame(){
     wasAlreadyCompleted,
     getGameCompletionStatus,
     markCompleted,
+    markVersePracticed,
     completeGameRun,
     returnToTitle,
     openPetUnlock,
