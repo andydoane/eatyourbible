@@ -71,6 +71,23 @@
     }
   })();
 
+  // Debug capture for handwriting issues.
+  // Enable with ?gwDebug=1 or localStorage.setItem("ghostWriterDebug", "1").
+  // Then run this in DevTools after testing:
+  // copy(window.getGhostWriterDebugJson())
+  window.GHOST_WRITER_DEBUG_LOG = Array.isArray(window.GHOST_WRITER_DEBUG_LOG)
+    ? window.GHOST_WRITER_DEBUG_LOG
+    : [];
+
+  window.getGhostWriterDebugJson = function(){
+    return JSON.stringify(window.GHOST_WRITER_DEBUG_LOG || [], null, 2);
+  };
+
+  window.clearGhostWriterDebugLog = function(){
+    window.GHOST_WRITER_DEBUG_LOG = [];
+    return true;
+  };
+
   let ctx = {
     verseId: "",
     verseText: "",
@@ -556,33 +573,92 @@
     return total;
   }
 
+  function strokeBounds(stroke){
+    return computeBounds([stroke || []]);
+  }
+
+  function round4(value){
+    const n = Number(value);
+    if (!Number.isFinite(n)) return 0;
+    return Math.round(n * 10000) / 10000;
+  }
+
   function logGlyphDebug(glyph, rawStrokes){
     const raw = Array.isArray(rawStrokes) ? rawStrokes : [];
-    const suspicious = raw
-      .map((stroke, index) => ({
-        index,
-        points: stroke.length,
-        distance: Math.round(strokeDistance(stroke) * 10000) / 10000
-      }))
-      .filter((item) => item.points <= 1 || item.distance < .012);
+    const keptSet = new Set(glyph.strokes || []);
 
-    if (!DEBUG_GHOST_WRITER && !suspicious.length) return;
+    const rawStrokeDetails = raw.map((stroke, index) => {
+      const bounds = strokeBounds(stroke);
+      const distance = strokeDistance(stroke);
+      const points = stroke?.length || 0;
+      const isTiny = points <= 1 || distance < .012 || (bounds.width <= .045 && bounds.height <= .045);
+
+      return {
+        index,
+        kept: keptSet.has(stroke),
+        points,
+        distance: round4(distance),
+        bounds: {
+          minX: round4(bounds.minX),
+          minY: round4(bounds.minY),
+          maxX: round4(bounds.maxX),
+          maxY: round4(bounds.maxY),
+          width: round4(bounds.width),
+          height: round4(bounds.height)
+        },
+        first: stroke?.[0]
+          ? { x: round4(stroke[0].x), y: round4(stroke[0].y), t: round4(stroke[0].t) }
+          : null,
+        last: stroke?.length
+          ? {
+              x: round4(stroke[stroke.length - 1].x),
+              y: round4(stroke[stroke.length - 1].y),
+              t: round4(stroke[stroke.length - 1].t)
+            }
+          : null,
+        tinyOrTap: isTiny
+      };
+    });
+
+    const suspicious = rawStrokeDetails.filter((item) => item.tinyOrTap);
 
     const summary = {
       char: glyph.char,
+      timestamp: new Date().toISOString(),
+      verseId: ctx.verseId || "",
+      mode: selectedMode,
       rawStrokeCount: raw.length,
       savedStrokeCount: glyph.strokes.length,
+      removedStrokeCount: raw.length - glyph.strokes.length,
+      pointsPerRawStroke: raw.map((stroke) => stroke.length),
       pointsPerSavedStroke: glyph.strokes.map((stroke) => stroke.length),
-      suspiciousRawStrokes: suspicious,
-      bounds: glyph.bounds,
-      widthRatio: glyph.widthRatio,
-      heightRatio: glyph.heightRatio
+      suspiciousRawStrokeIndexes: suspicious.map((item) => item.index),
+      glyphBounds: {
+        minX: round4(glyph.bounds.minX),
+        minY: round4(glyph.bounds.minY),
+        maxX: round4(glyph.bounds.maxX),
+        maxY: round4(glyph.bounds.maxY),
+        width: round4(glyph.bounds.width),
+        height: round4(glyph.bounds.height)
+      },
+      widthRatio: round4(glyph.widthRatio),
+      heightRatio: round4(glyph.heightRatio),
+      rawStrokeDetails
     };
 
+    if (DEBUG_GHOST_WRITER){
+      window.GHOST_WRITER_DEBUG_LOG.push(summary);
+      console.info(`GW_DEBUG ${JSON.stringify(summary)}`);
+    }
+
     if (suspicious.length){
-      console.warn("Ghost Writer glyph had tiny/tap strokes", summary);
-    } else {
-      console.info("Ghost Writer glyph saved", summary);
+      console.warn("Ghost Writer glyph had tiny/tap strokes", {
+        char: summary.char,
+        suspiciousRawStrokeIndexes: summary.suspiciousRawStrokeIndexes,
+        removedStrokeCount: summary.removedStrokeCount,
+        copyCommand: "copy(window.getGhostWriterDebugJson())",
+        summary
+      });
     }
   }
 
