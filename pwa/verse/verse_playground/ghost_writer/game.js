@@ -62,6 +62,15 @@
 
   const app = document.getElementById("app");
 
+  const DEBUG_GHOST_WRITER = (() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return params.get("gwDebug") === "1" || localStorage.getItem("ghostWriterDebug") === "1";
+    } catch (err){
+      return false;
+    }
+  })();
+
   let ctx = {
     verseId: "",
     verseText: "",
@@ -283,6 +292,14 @@
     return !/[A-Z0-9]/.test(char);
   }
 
+  function isAlphaNumericChar(char){
+    return /^[A-Z0-9]$/.test(String(char || ""));
+  }
+
+  function allowsDotStroke(char){
+    return [".", ":", ";", "!", "?"].includes(String(char || ""));
+  }
+
   function charLabel(char){
     if (char === "\"") return "quotation mark";
     if (char === "'") return "apostrophe";
@@ -332,6 +349,7 @@
 
     wireMenu();
     setupDrawingCanvas();
+    fitGuideCharacter();
     updateSaveButton();
 
     document.getElementById("ghostClearBtn")?.addEventListener("click", clearCurrentDrawing);
@@ -484,7 +502,7 @@
   }
 
   function makeGlyph(char, strokes){
-    const copied = (strokes || [])
+    const raw = (strokes || [])
       .map((stroke) => (stroke || []).map((p) => ({
         x: clamp(p.x, 0, 1),
         y: clamp(p.y, 0, 1),
@@ -492,15 +510,80 @@
       })))
       .filter((stroke) => stroke.length);
 
-    const bounds = computeBounds(copied);
+    let filtered = raw;
 
-    return {
+    // Letters and numbers should not accidentally save tap-dots.
+    // Punctuation such as periods, colons, and question marks still needs dots,
+    // so it is allowed to keep single-point / tiny strokes.
+    if (isAlphaNumericChar(char) && !allowsDotStroke(char)){
+      filtered = raw.filter((stroke) => {
+        if (!stroke || stroke.length < 2) return false;
+        return strokeDistance(stroke) >= .012;
+      });
+
+      // If filtering would erase the whole glyph, keep the original data so a
+      // child does not lose a very small but intentional mark.
+      if (!filtered.length && raw.length){
+        filtered = raw;
+      }
+    }
+
+    const bounds = computeBounds(filtered);
+    const glyph = {
       char,
-      strokes: copied,
+      strokes: filtered,
+      rawStrokeCount: raw.length,
+      filteredStrokeCount: filtered.length,
       bounds,
       widthRatio: clamp(bounds.width || .24, .10, .92),
       heightRatio: clamp(bounds.height || .24, .10, .92)
     };
+
+    logGlyphDebug(glyph, raw);
+
+    return glyph;
+  }
+
+  function strokeDistance(stroke){
+    let total = 0;
+    for (let i = 1; i < (stroke?.length || 0); i += 1){
+      const a = stroke[i - 1];
+      const b = stroke[i];
+      const dx = (b.x || 0) - (a.x || 0);
+      const dy = (b.y || 0) - (a.y || 0);
+      total += Math.hypot(dx, dy);
+    }
+    return total;
+  }
+
+  function logGlyphDebug(glyph, rawStrokes){
+    const raw = Array.isArray(rawStrokes) ? rawStrokes : [];
+    const suspicious = raw
+      .map((stroke, index) => ({
+        index,
+        points: stroke.length,
+        distance: Math.round(strokeDistance(stroke) * 10000) / 10000
+      }))
+      .filter((item) => item.points <= 1 || item.distance < .012);
+
+    if (!DEBUG_GHOST_WRITER && !suspicious.length) return;
+
+    const summary = {
+      char: glyph.char,
+      rawStrokeCount: raw.length,
+      savedStrokeCount: glyph.strokes.length,
+      pointsPerSavedStroke: glyph.strokes.map((stroke) => stroke.length),
+      suspiciousRawStrokes: suspicious,
+      bounds: glyph.bounds,
+      widthRatio: glyph.widthRatio,
+      heightRatio: glyph.heightRatio
+    };
+
+    if (suspicious.length){
+      console.warn("Ghost Writer glyph had tiny/tap strokes", summary);
+    } else {
+      console.info("Ghost Writer glyph saved", summary);
+    }
   }
 
   function computeBounds(strokes){
@@ -717,21 +800,35 @@
     const safeWidth = Math.max(120, width);
     const safeHeight = Math.max(120, height);
     const text = state.fullText || "";
-    const maxWidth = safeWidth * .88;
-    const maxHeight = safeHeight * .84;
+    const maxWidth = safeWidth * .94;
+    const maxHeight = safeHeight * .88;
 
-    for (let fontSize = Math.min(54, safeWidth / 12); fontSize >= 16; fontSize -= 2){
+    const dynamicMax = Math.min(
+      safeWidth * .17,
+      safeHeight * .24,
+      132
+    );
+
+    const maxFontSize = Math.max(28, dynamicMax);
+    const minFontSize = 12;
+    let best = null;
+
+    for (let fontSize = maxFontSize; fontSize >= minFontSize; fontSize -= 1){
       const layout = layoutForFontSize(text, fontSize, maxWidth, maxHeight, safeWidth, safeHeight);
-      if (layout.height <= maxHeight){
-        return layout;
+
+      if (!layout.overflows){
+        best = layout;
+        break;
       }
     }
 
-    return layoutForFontSize(text, 16, maxWidth, maxHeight, safeWidth, safeHeight);
+    if (best) return best;
+
+    return layoutForFontSize(text, minFontSize, maxWidth, maxHeight, safeWidth, safeHeight);
   }
 
   function layoutForFontSize(text, fontSize, maxWidth, maxHeight, canvasWidth, canvasHeight){
-    const lineHeight = fontSize * 1.32;
+    const lineHeight = fontSize * 1.24;
     const placements = [];
     const lines = [];
     let line = [];
@@ -745,7 +842,7 @@
 
     const addChar = (char) => {
       const widthUnits = glyphWidthUnits(char);
-      const w = /\s/.test(char) ? fontSize * widthUnits : fontSize * widthUnits;
+      const w = fontSize * widthUnits;
 
       if (line.length && lineWidth + w > maxWidth){
         pushLine();
@@ -768,13 +865,14 @@
         continue;
       }
 
-      const tokenWidth = Array.from(token).reduce((sum, char) => sum + fontSize * glyphWidthUnits(char), 0);
+      const chars = Array.from(token);
+      const tokenWidth = chars.reduce((sum, char) => sum + fontSize * glyphWidthUnits(char), 0);
 
-      if (line.length && lineWidth + tokenWidth > maxWidth){
+      if (line.length && tokenWidth <= maxWidth && lineWidth + tokenWidth > maxWidth){
         pushLine();
       }
 
-      for (const char of Array.from(token)){
+      for (const char of chars){
         addChar(char);
       }
     }
@@ -782,7 +880,7 @@
     if (line.length || !lines.length) pushLine();
 
     const totalHeight = lines.length * lineHeight;
-    let y = Math.max(fontSize * .9, (canvasHeight - totalHeight) / 2 + fontSize * .72);
+    let y = Math.max(fontSize * .9, (canvasHeight - totalHeight) / 2 + fontSize * .76);
 
     for (const currentLine of lines){
       let x = (canvasWidth - currentLine.width) / 2;
@@ -800,12 +898,16 @@
       y += lineHeight;
     }
 
+    const usedWidth = Math.max(...lines.map((l) => l.width), 0);
+
     return {
       placements,
       fontSize,
       lineHeight,
       height: totalHeight,
-      width: Math.max(...lines.map((l) => l.width), 0)
+      width: usedWidth,
+      lineCount: lines.length,
+      overflows: usedWidth > maxWidth + 1 || totalHeight > maxHeight + 1
     };
   }
 
@@ -965,10 +1067,10 @@
       width: rect.width,
       height: rect.height,
       options,
-      speed,
       placements,
       index: 0,
       charStart: performance.now(),
+      speed,
       onDone
     };
 
@@ -1068,6 +1170,56 @@
     }
   }
 
+  function fitGuideCharacter(){
+    const guide = document.getElementById("ghostGuideText");
+    const wrap = document.getElementById("ghostDrawWrap");
+    if (!guide || !wrap) return;
+
+    const char = currentChar();
+    const rect = wrap.getBoundingClientRect();
+    const box = Math.max(1, Math.min(rect.width, rect.height));
+
+    const probe = document.createElement("span");
+    probe.textContent = char || "A";
+    probe.style.position = "absolute";
+    probe.style.left = "-9999px";
+    probe.style.top = "-9999px";
+    probe.style.visibility = "hidden";
+    probe.style.whiteSpace = "nowrap";
+    probe.style.fontFamily = window.getComputedStyle(guide).fontFamily;
+    probe.style.fontWeight = window.getComputedStyle(guide).fontWeight;
+    probe.style.lineHeight = ".92";
+    document.body.appendChild(probe);
+
+    const symbol = isSymbolChar(char);
+    const skinnySymbol = [".", ",", ":", ";", "'", '"'].includes(char);
+    const targetW = box * (symbol ? (skinnySymbol ? .42 : .68) : .86);
+    const targetH = box * (symbol ? .76 : .88);
+    const maxSize = box * (symbol ? 1.18 : 1.28);
+    const minSize = box * .32;
+
+    let low = minSize;
+    let high = maxSize;
+    let best = minSize;
+
+    for (let i = 0; i < 14; i += 1){
+      const mid = (low + high) / 2;
+      probe.style.fontSize = `${mid}px`;
+      const w = probe.offsetWidth || 1;
+      const h = probe.offsetHeight || 1;
+
+      if (w <= targetW && h <= targetH){
+        best = mid;
+        low = mid;
+      } else {
+        high = mid;
+      }
+    }
+
+    document.body.removeChild(probe);
+    guide.style.fontSize = `${Math.round(best)}px`;
+  }
+
   function clearGuideTimer(){
     if (guideTimer){
       clearTimeout(guideTimer);
@@ -1077,6 +1229,7 @@
 
   window.addEventListener("resize", () => {
     if (state.screen === "remix") drawRemixPreview();
+    if (state.screen === "training") fitGuideCharacter();
   });
 
   async function boot(){
