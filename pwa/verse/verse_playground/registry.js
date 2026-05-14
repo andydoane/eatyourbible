@@ -26,5 +26,22 @@ window.EXTERNAL_VERSE_PLAYGROUND = [
       launchUrl: "./verse_playground/scripture_scrub/index.html",
       visibleInCarousel: true
     }
+  },
+  // Add this object to window.EXTERNAL_VERSE_PLAYGROUND in verse_playground/registry.js
+{
+  enabled: true,
+  manifest: {
+    id: "ghost_writer",
+    title: "Ghost Writer",
+    description: "Teach the ghost your handwriting, then watch it write the verse.",
+    icon: "👻",
+    cardColor: "#252733",
+    cardTextColor: "#ffffff",
+    launchUrl: "./verse_playground/ghost_writer/index.html",
+    visibleInCarousel: false,
+    progressType: "practice",
+    modes: ["beginner", "advanced"]
   }
+}
+
 ];
