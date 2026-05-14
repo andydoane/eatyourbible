@@ -987,7 +987,7 @@
     };
   }
 
-  function drawGlyph(c, glyph, x, baselineY, cellW, fontSize, options = {}, partial = 1){
+  function drawGlyph(c, glyph, x, baselineY, cellW, fontSize, options = {}, partial = 1) {
     if (!glyph || !glyph.strokes || !glyph.strokes.length) return;
 
     const preset = REMIX_PRESETS[options.style] || REMIX_PRESETS.ghost;
@@ -1025,50 +1025,97 @@
     c.shadowColor = preset.shadow || "transparent";
     c.shadowBlur = options.style === "ghost" ? fontSize * .16 : fontSize * .04;
 
-    const totalPieces = countStrokePieces(glyph.strokes);
-    const piecesToDraw = Math.max(0, totalPieces * clamp(partial, 0, 1));
-    let drawnPieces = 0;
+    const safePartial = clamp(partial, 0, 1);
+    const strokeUnits = glyph.strokes.map((stroke) => getStrokePlaybackUnits(stroke));
+    const totalUnits = strokeUnits.reduce((sum, units) => sum + units, 0) || 1;
+    let remainingUnits = totalUnits * safePartial;
 
-    for (const stroke of glyph.strokes){
-      if (!stroke.length) continue;
+    for (let strokeIndex = 0; strokeIndex < glyph.strokes.length; strokeIndex += 1) {
+      const stroke = glyph.strokes[strokeIndex];
+      const units = strokeUnits[strokeIndex] || 1;
 
-      if (stroke.length === 1){
-        if (drawnPieces <= piecesToDraw){
+      if (!stroke || !stroke.length) continue;
+
+      if (remainingUnits <= 0) {
+        break;
+      }
+
+      const strokeProgress = clamp(remainingUnits / units, 0, 1);
+
+      if (stroke.length === 1) {
+        if (strokeProgress >= 1) {
           const p = stroke[0];
           c.beginPath();
           c.arc(baseX + p.x * scale, baseY + p.y * scale, c.lineWidth * 1.08, 0, Math.PI * 2);
           c.fill();
         }
-        drawnPieces += 1;
+
+        remainingUnits -= units;
         continue;
       }
 
-      c.beginPath();
-      c.moveTo(baseX + stroke[0].x * scale, baseY + stroke[0].y * scale);
+      drawStrokeProgress(c, stroke, baseX, baseY, scale, strokeProgress);
 
-      for (let i = 1; i < stroke.length; i += 1){
-        if (drawnPieces + 1 > piecesToDraw){
-          const remain = piecesToDraw - drawnPieces;
-          if (remain > 0){
-            const a = stroke[i - 1];
-            const b = stroke[i];
-            const x1 = a.x + (b.x - a.x) * remain;
-            const y1 = a.y + (b.y - a.y) * remain;
-            c.lineTo(baseX + x1 * scale, baseY + y1 * scale);
-          }
-          break;
-        }
+      remainingUnits -= units;
 
-        c.lineTo(baseX + stroke[i].x * scale, baseY + stroke[i].y * scale);
-        drawnPieces += 1;
+      if (strokeProgress < 1) {
+        break;
       }
-
-      c.stroke();
-
-      if (drawnPieces >= piecesToDraw) break;
     }
 
     c.restore();
+  }
+
+  function getStrokePlaybackUnits(stroke) {
+    if (!stroke || !stroke.length) return 1;
+    if (stroke.length === 1) return 1;
+    return Math.max(1, stroke.length - 1);
+  }
+
+  function drawStrokeProgress(c, stroke, baseX, baseY, scale, progress) {
+    const safeProgress = clamp(progress, 0, 1);
+
+    if (!stroke || stroke.length < 2) return;
+
+    const segmentCount = stroke.length - 1;
+    const piecesToDraw = segmentCount * safeProgress;
+
+    if (piecesToDraw <= .08) {
+      return;
+    }
+
+    c.beginPath();
+    c.moveTo(baseX + stroke[0].x * scale, baseY + stroke[0].y * scale);
+
+    let drewAnyLine = false;
+
+    for (let i = 1; i < stroke.length; i += 1) {
+      const previousPieceIndex = i - 1;
+
+      if (previousPieceIndex + 1 <= piecesToDraw) {
+        c.lineTo(baseX + stroke[i].x * scale, baseY + stroke[i].y * scale);
+        drewAnyLine = true;
+        continue;
+      }
+
+      const remain = piecesToDraw - previousPieceIndex;
+
+      if (remain > .08) {
+        const a = stroke[i - 1];
+        const b = stroke[i];
+        const x1 = a.x + (b.x - a.x) * remain;
+        const y1 = a.y + (b.y - a.y) * remain;
+
+        c.lineTo(baseX + x1 * scale, baseY + y1 * scale);
+        drewAnyLine = true;
+      }
+
+      break;
+    }
+
+    if (drewAnyLine) {
+      c.stroke();
+    }
   }
 
   function countStrokePieces(strokes){
