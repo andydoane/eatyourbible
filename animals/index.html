@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Random Animal Pair Picker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 0 20px;
+      line-height: 1.5;
+      background: #f7f7f7;
+      color: #222;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    textarea {
+      width: 100%;
+      height: 300px;
+      padding: 12px;
+      font-size: 16px;
+      box-sizing: border-box;
+      resize: vertical;
+    }
+
+    button {
+      display: block;
+      margin: 20px auto;
+      padding: 12px 24px;
+      font-size: 18px;
+      cursor: pointer;
+      border: none;
+      border-radius: 8px;
+      background: #222;
+      color: white;
+    }
+
+    button:hover {
+      background: #444;
+    }
+
+    .result {
+      margin-top: 24px;
+      padding: 20px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      min-height: 40px;
+    }
+
+    .hint {
+      font-size: 14px;
+      color: #555;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h1>Random Animal Pair Picker</h1>
+
+  <p class="hint">Paste your animal list below, one animal per line. Then press the button to choose two different animals at random.</p>
+
+  <textarea id="animalList" placeholder="Example:\nDog\nCat\nElephant\nTiger\nPenguin">Aardvark
+Abyssinian Cat
+African Buffalo
+African Civet
+African Clawed Frog
+African Elephant
+African Grey Parrot
+African Penguin
+African Tree Toad
+African Wild Dog
+Albatross
+Alligator
+Alpaca
+Amazon River Dolphin
+American Alligator
+American Black Bear
+American Bulldog
+American Cocker Spaniel
+American Crow
+American Eskimo Dog
+American Foxhound
+American Pit Bull Terrier
+American Robin
+American Staffordshire Terrier
+American Toad
+Amur Leopard
+Anaconda
+Anchovy
+Angelfish
+Anglerfish
+Ant
+Anteater
+Antelope
+Ape
+Arctic Fox
+Arctic Hare
+Arctic Wolf
+Armadillo
+Asian Elephant
+Asian Giant Hornet
+Asian Palm Civet
+Asiatic Black Bear
+Atlantic Cod
+Atlantic Puffin
+Axolotl
+Aye-Aye
+Baboon
+Bactrian Camel
+Badger
+Bald Eagle
+Bandicoot
+Barn Owl
+Barnacle
+Barracuda
+Basilisk Lizard
+Basking Shark
+Bass
+Bat
+Beagle
+Bear
+Beaver
+Bed Bug
+Bee
+Beetle
+Beluga Whale
+Bengal Tiger
+Bernese Mountain Dog
+Bichon Frise
+Binturong
+Bird
+Bison
+Black Bear
+Black Mamba
+Black Rhinoceros
+Black Widow Spider
+Blobfish
+Blue Jay
+Blue Poison Dart Frog
+Blue Shark
+Blue Tang
+Blue Whale
+Bobcat
+Bonobo
+Booby
+Border Collie
+Boston Terrier
+Bottlenose Dolphin
+Box Turtle
+Boxer Dog
+Brazilian Terrier
+Brown Bear
+Brown Hyena
+Budgerigar
+Buffalo
+Bull Shark
+Bulldog
+Bullfrog
+Bumblebee
+Burmese Python
+Butterfly
+Caiman
+Camel
+Canada Goose
+Canary
+Capybara
+Caracal
+Cardinal
+Caribou
+Carp
+Cassowary
+Cat
+Caterpillar
+Catfish
+Cavalier King Charles Spaniel
+Centipede
+Chameleon
+Cheetah
+Chicken
+Chihuahua
+Chimpanzee
+Chinchilla
+Chinese Alligator
+Chipmunk
+Clam
+Clownfish
+Coati
+Cobra
+Cockatoo
+Cockroach
+Cod
+Collared Peccary
+Common Frog
+Common Loon
+Common Toad
+Condor
+Constrictor Snake
+Cooper's Hawk
+Coral
+Cormorant
+Cougar
+Cow
+Coyote
+Crab
+Crane
+Crayfish
+Crocodile
+Crow
+Cuckoo
+Cuttlefish
+Dachshund
+Dalmatian
+Darwin's Frog
+Deer
+Desert Tortoise
+Dhole
+Dik-Dik
+Dingo
+Diplodocus
+Discus Fish
+Doberman Pinscher
+Dodo
+Dog
+Dolphin
+Donkey
+Dormouse
+Dragonfly
+Duck
+Dugong
+Dunker
+Dung Beetle
+Eagle
+Earthworm
+Earwig
+Eastern Gorilla
+Eastern Lowland Gorilla
+Echidna
+Electric Eel
+Elephant
+Elephant Seal
+Elk
+Emperor Penguin
+Emu
+English Cocker Spaniel
+English Shepherd
+Ermine
+Falcon
+Fennec Fox
+Ferret
+Fin Whale
+Fire Salamander
+Firefly
+Fish
+Flamingo
+Flatworm
+Flea
+Flounder
+Fly
+Flying Squirrel
+Fossa
+Fox
+French Bulldog
+Frigatebird
+Frilled Lizard
+Frog
+Fruit Bat
+Galapagos Penguin
+Galapagos Tortoise
+Gar
+Gazelle
+Gecko
+Gentoo Penguin
+Gerbil
+German Shepherd
+Gharial
+Giant African Land Snail
+Giant Clam
+Giant Panda
+Giant Schnauzer
+Gibbon
+Gila Monster
+Giraffe
+Glass Frog
+Glowworm
+Goat
+Goblin Shark
+Goldfish
+Goose
+Gopher
+Gorilla
+Grasshopper
+Great Blue Heron
+Great Dane
+Great Pyrenees
+Great White Shark
+Greater Flamingo
+Green Anole
+Green Sea Turtle
+Grey Mouse Lemur
+Grey Reef Shark
+Grey Seal
+Greyhound
+Grizzly Bear
+Grouse
+Guinea Fowl
+Guinea Pig
+Guppy
+Hammerhead Shark
+Hamster
+Hare
+Harpy Eagle
+Havanese
+Hawk
+Hedgehog
+Hermit Crab
+Heron
+Herring
+Highland Cattle
+Hippopotamus
+Hoatzin
+Honey Badger
+Honey Bee
+Horn Shark
+Hornbill
+Horse
+Horseshoe Crab
+Howler Monkey
+Human
+Humboldt Penguin
+Hummingbird
+Humpback Whale
+Hyena
+Ibis
+Ibex
+Iguana
+Impala
+Indian Elephant
+Indian Rhinoceros
+Indian Star Tortoise
+Indochinese Tiger
+Indri
+Insect
+Irish Setter
+Irish Wolfhound
+Jack Russell Terrier
+Jackal
+Jaguar
+Japanese Chin
+Japanese Macaque
+Jellyfish
+Kakapo
+Kangaroo
+Kangaroo Rat
+Keel-Billed Toucan
+Killer Whale
+King Cobra
+King Crab
+King Penguin
+Kingfisher
+Kiwi
+Koala
+Komodo Dragon
+Kookaburra
+Krill
+Labradoodle
+Labrador Retriever
+Ladybug
+Lamprey
+Leafcutter Ant
+Leatherback Sea Turtle
+Leech
+Lemming
+Lemur
+Leopard
+Leopard Cat
+Leopard Seal
+Leopard Tortoise
+Lhasa Apso
+Lion
+Lionfish
+Little Penguin
+Lizard
+Llama
+Lobster
+Locust
+Long-Eared Owl
+Loris
+Louse
+Lynx
+Macaw
+Magellanic Penguin
+Magpie
+Maine Coon
+Malayan Civet
+Malayan Tiger
+Maltese Dog
+Manatee
+Mandrill
+Manta Ray
+Marine Iguana
+Markhor
+Marmoset
+Marmot
+Marsh Frog
+Mastiff
+Mayfly
+Meerkat
+Millipede
+Mink
+Mole
+Molly Fish
+Mongoose
+Monitor Lizard
+Monkey
+Monk Seal
+Moose
+Moray Eel
+Moth
+Mountain Gorilla
+Mountain Lion
+Mouse
+Mule
+Musk Ox
+Narwhal
+Newfoundland Dog
+Newt
+Nightingale
+Nile Crocodile
+No-See-Um
+Numbat
+Nurse Shark
+Ocelot
+Octopus
+Okapi
+Old English Sheepdog
+Olm
+Opossum
+Orangutan
+Orca
+Ostrich
+Otter
+Owl
+Ox
+Oyster
+Pademelon
+Pangolin
+Panther
+Parakeet
+Parrot
+Parrotfish
+Peacock
+Peafowl
+Pekingese
+Pelican
+Penguin
+Peregrine Falcon
+Persian Cat
+Pheasant
+Pig
+Pigeon
+Pika
+Pike
+Piranha
+Platypus
+Poison Dart Frog
+Polar Bear
+Pomeranian
+Pond Skater
+Poodle
+Porcupine
+Porpoise
+Possum
+Prairie Dog
+Prawn
+Praying Mantis
+Proboscis Monkey
+Pufferfish
+Puffin
+Pug
+Puma
+Purple Emperor Butterfly
+Quail
+Quetzal
+Quokka
+Quoll
+Rabbit
+Raccoon
+Ragdoll Cat
+Rat
+Rattlesnake
+Red Fox
+Red Kangaroo
+Red Panda
+Red Squirrel
+Red-Eyed Tree Frog
+Reindeer
+Rhinoceros
+River Dolphin
+River Otter
+Roadrunner
+Robin
+Rockhopper Penguin
+Rooster
+Roseate Spoonbill
+Rottweiler
+Royal Penguin
+Russian Blue Cat
+Saber-Toothed Cat
+Salamander
+Salmon
+Sand Cat
+Sand Dollar
+Saola
+Sardine
+Scorpion
+Sea Anemone
+Sea Dragon
+Sea Lion
+Sea Otter
+Sea Slug
+Sea Snake
+Sea Turtle
+Seahorse
+Seal
+Serval
+Sheep
+Shih Tzu
+Shrimp
+Siamese Cat
+Siberian Husky
+Siberian Tiger
+Skunk
+Sloth
+Slow Loris
+Slug
+Snail
+Snake
+Snow Leopard
+Snowshoe Hare
+Sockeye Salmon
+Somali Cat
+South China Tiger
+Sparrow
+Sperm Whale
+Spider
+Spider Monkey
+Spiny Dogfish
+Sponge
+Squid
+Squirrel
+Sri Lankan Elephant
+Staffordshire Bull Terrier
+Starfish
+Stickleback
+Stingray
+Stoat
+Sturgeon
+Sugar Glider
+Sumatran Elephant
+Sumatran Orangutan
+Sumatran Rhinoceros
+Sumatran Tiger
+Sun Bear
+Swallow
+Swan
+Tang Fish
+Tapir
+Tarantula
+Tasmanian Devil
+Termite
+Tetra
+Thorny Devil
+Tibetan Mastiff
+Tiger
+Tiger Salamander
+Tiger Shark
+Toad
+Tortoise
+Toucan
+Tree Frog
+Tropicbird
+Trout
+Tuna
+Turkey
+Turkish Angora
+Uakari
+Uguisu
+Umbrellabird
+Utonagan
+Vampire Bat
+Vervet Monkey
+Vicuña
+Vinegaroon
+Viper
+Vulture
+Wallaby
+Walrus
+Warthog
+Wasp
+Water Buffalo
+Water Dragon
+Water Vole
+Weasel
+Welsh Corgi
+West Highland Terrier
+Western Gorilla
+Whale
+Whale Shark
+Whippet
+White Rhinoceros
+White Tiger
+Wild Boar
+Wildebeest
+Wolf
+Wolf Spider
+Wolverine
+Wombat
+Woodlouse
+Woodpecker
+Woolly Monkey
+Wrasse
+X-Ray Tetra
+Xerus
+Yak
+Yellow-Eyed Penguin
+Yorkshire Terrier
+Zebra
+Zebra Finch
+Zebra Shark
+Zebu
+Zonkey
+Zorse</textarea>
+
+  <button onclick="chooseTwoAnimals()">Choose Two Animals</button>
+
+  <div id="result" class="result">Your two animals will appear here.</div>
+
+  <script>
+    function chooseTwoAnimals() {
+      const text = document.getElementById('animalList').value;
+
+      // Split by line, trim extra spaces, and remove blank lines.
+      const animals = text
+        .split('\n')
+        .map(animal => animal.trim())
+        .filter(animal => animal.length > 0);
+
+      const result = document.getElementById('result');
+
+      if (animals.length < 2) {
+        result.textContent = 'Please enter at least two animals.';
+        return;
+      }
+
+      const firstIndex = Math.floor(Math.random() * animals.length);
+      let secondIndex = Math.floor(Math.random() * animals.length);
+
+      // Make sure the second animal is different from the first.
+      while (secondIndex === firstIndex) {
+        secondIndex = Math.floor(Math.random() * animals.length);
+      }
+
+      result.textContent = animals[firstIndex] + ' + ' + animals[secondIndex];
+    }
+  </script>
+</body>
+</html>
