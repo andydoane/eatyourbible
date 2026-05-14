@@ -965,6 +965,7 @@
       width: rect.width,
       height: rect.height,
       options,
+      speed,
       placements,
       index: 0,
       charStart: performance.now(),
@@ -993,7 +994,7 @@
     const current = placements[ps.index];
     const glyph = getGlyph(current.char);
     const pieces = glyph ? countStrokePieces(glyph.strokes) : 1;
-    const duration = clamp((180 + pieces * 26) * speed.multiplier, 120, 850);
+    const duration = clamp((180 + pieces * 26) * (ps.speed?.multiplier || 1), 120, 850);
     const progress = clamp((now - ps.charStart) / duration, 0, 1);
 
     clearPlaybackCanvas(ps.c, ps.width, ps.height, ps.options);
