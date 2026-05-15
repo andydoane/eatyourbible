@@ -1521,34 +1521,34 @@
     const totalUnits = strokeUnits.reduce((sum, units) => sum + units, 0) || 1;
     let remainingUnits = totalUnits * safePartial;
 
+    if (remainingUnits <= 0) {
+      const firstStroke = glyph.strokes[0];
+      const firstPoint = firstStroke?.[0];
+
+      return firstPoint ? transformGlyphPoint(firstPoint, metrics) : null;
+    }
+
     for (let strokeIndex = 0; strokeIndex < glyph.strokes.length; strokeIndex += 1) {
       const stroke = glyph.strokes[strokeIndex];
       const units = strokeUnits[strokeIndex] || 1;
 
       if (!stroke || !stroke.length) continue;
 
-      if (remainingUnits <= 0) {
-        break;
+      if (remainingUnits > units) {
+        remainingUnits -= units;
+        continue;
       }
 
       const strokeProgress = clamp(remainingUnits / units, 0, 1);
       const local = getStrokePointAtProgress(stroke, strokeProgress);
 
-      if (local) {
-        return transformGlyphPoint(local, metrics);
-      }
-
-      remainingUnits -= units;
-
-      if (strokeProgress < 1) {
-        break;
-      }
+      return local ? transformGlyphPoint(local, metrics) : null;
     }
 
-    const firstStroke = glyph.strokes[0];
-    const firstPoint = firstStroke?.[0];
+    const lastStroke = glyph.strokes[glyph.strokes.length - 1];
+    const lastPoint = lastStroke?.[lastStroke.length - 1];
 
-    return firstPoint ? transformGlyphPoint(firstPoint, metrics) : null;
+    return lastPoint ? transformGlyphPoint(lastPoint, metrics) : null;
   }
 
   function getGlyphDrawMetrics(glyph, item, options = {}) {
