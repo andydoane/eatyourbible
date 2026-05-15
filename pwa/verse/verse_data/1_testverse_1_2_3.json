@@ -5,11 +5,11 @@
   "verseId": "1_testverse_1_2_3",
   "translation": "ESV",
   "echoParts": [
-    "Ab abb abbb ab?",
-    "Abb ab ab!"
+    "Test verse?",
+    "Test verse!"
   ],
 
-  "verseText": "Ab abb abbb ab? Abb ab ab!",
+  "verseText": "Test verse? Test, verse!",
    "meaning": "Test meaning text",
   "attribution": "Scripture quotations are from The ESV® Bible (The Holy Bible, English Standard Version®), © 2001 by Crossway, a publishing ministry of Good News Publishers. Used by permission. All rights reserved.",
   "hidePlan": [
