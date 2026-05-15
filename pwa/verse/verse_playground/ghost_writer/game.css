@@ -469,6 +469,32 @@ body {
   line-height: 1;
 }
 
+.ghost-remix-section {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border-radius: 22px;
+  background: rgba(0, 0, 0, .16);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .10);
+}
+
+.ghost-section-title {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-height: 26px;
+  color: #ffffff;
+  font-size: clamp(17px, 4.2vw, 22px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: .01em;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, .24);
+}
+
+.ghost-remix-section-actions {
+  margin-top: 2px;
+}
+
 .ghost-options {
   display: grid;
   grid-template-columns: 1fr 1fr;
