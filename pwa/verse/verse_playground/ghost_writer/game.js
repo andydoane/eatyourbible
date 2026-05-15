@@ -235,10 +235,10 @@
       filenameLabel: "square"
     },
     phone: {
-      label: "Phone",
+      label: "Tall",
       width: 1290,
       height: 2796,
-      filenameLabel: "phone"
+      filenameLabel: "tall"
     },
     wide: {
       label: "Wide",
@@ -1011,7 +1011,7 @@
             ${selectSimpleHtml("ghostWobbleSelect", "Wobble", state.remix.wobble, { off: "Off", on: "On" })}
             ${selectOptionHtml("ghostToolSelect", "Tool", state.remix.tool || "pencil", PLAYBACK_TOOLS)}
             ${selectOptionHtml("ghostVaporSelect", "Vapor", state.remix.vapor || "normal", VAPOR_LEVELS)}
-            ${selectOptionHtml("ghostExportSizeSelect", "Image Size", state.remix.exportSize || "square", EXPORT_SIZES)}
+
             ${selectOptionHtml("ghostBorderStyleSelect", "Border Style", state.remix.borderStyle, BORDER_STYLES)}
             ${selectOptionHtml("ghostBorderThicknessSelect", "Border Thickness", state.remix.borderThickness, BORDER_THICKNESS)}
             ${selectOptionHtml("ghostBorderColorSelect", "Border Color", state.remix.borderColor, COLOR_PALETTE)}
@@ -1019,8 +1019,9 @@
 
           <div class="ghost-remix-actions">
             <button class="vm-btn" id="ghostReplayBtn" type="button">Replay</button>
-            <button class="vm-btn vm-btn-secondary" id="ghostSaveImageBtn" type="button">Save as Image</button>
             <button class="vm-btn vm-btn-secondary" id="ghostAgainBtn" type="button">Try Again</button>
+            ${selectOptionHtml("ghostExportSizeSelect", "Download Size", state.remix.exportSize || "square", EXPORT_SIZES)}
+            <button class="vm-btn vm-btn-secondary" id="ghostSaveImageBtn" type="button">Save as Image</button>
             <button class="vm-btn vm-btn-secondary ghost-full" id="ghostBackBtn" type="button">Back to Playground</button>
           </div>
         </div>
