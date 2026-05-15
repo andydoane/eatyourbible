@@ -358,6 +358,15 @@
 
   const REFERENCE_DECORATION_STYLES = ["box", "divider", "underline", "loop", "cloud", "stars"];
 
+  const REFERENCE_DECORATION_OPTIONS = {
+    box: { label: "Box" },
+    divider: { label: "Squiggle Divider" },
+    underline: { label: "Scribble Underline" },
+    loop: { label: "Loopy Circle" },
+    cloud: { label: "Cloud Puff" },
+    stars: { label: "Stars" }
+  };
+
   const REFERENCE_DECORATION = {
     refScale: .62,
     beforeGapLines: .28,
@@ -1226,6 +1235,13 @@
           </div>
 
           <div class="ghost-remix-section">
+            <div class="ghost-section-title">Reference</div>
+            <div class="ghost-options">
+              ${selectOptionHtml("ghostReferenceDesignSelect", "Reference Design", state.referenceDecorationStyle || "box", REFERENCE_DECORATION_OPTIONS)}
+            </div>
+          </div>
+
+          <div class="ghost-remix-section">
             <div class="ghost-section-title">Ghost Effect</div>
             <div class="ghost-options">
               ${selectOptionHtml("ghostToolSelect", "Tool", state.remix.tool || "pencil", PLAYBACK_TOOLS)}
@@ -1331,6 +1347,7 @@
     const wobble = document.getElementById("ghostWobbleSelect");
     const tool = document.getElementById("ghostToolSelect");
     const vapor = document.getElementById("ghostVaporSelect");
+    const referenceDesign = document.getElementById("ghostReferenceDesignSelect");
     const exportSize = document.getElementById("ghostExportSizeSelect");
     const borderStyle = document.getElementById("ghostBorderStyleSelect");
     const borderThickness = document.getElementById("ghostBorderThicknessSelect");
@@ -1346,6 +1363,11 @@
       state.remix.wobble = wobble?.value || state.remix.wobble;
       state.remix.tool = tool?.value || state.remix.tool;
       state.remix.vapor = vapor?.value || state.remix.vapor;
+
+      if (referenceDesign?.value && REFERENCE_DECORATION_STYLES.includes(referenceDesign.value)) {
+        state.referenceDecorationStyle = referenceDesign.value;
+      }
+
       state.remix.exportSize = exportSize?.value || state.remix.exportSize;
       state.remix.borderStyle = borderStyle?.value || state.remix.borderStyle;
       state.remix.borderThickness = borderThickness?.value || state.remix.borderThickness;
@@ -1369,7 +1391,7 @@
       drawRemixPreview();
     };
 
-    [background, textColor, speed, thickness, jitter, wobble, tool, vapor, exportSize, borderStyle, borderThickness, borderColor].forEach((el) => {
+    [background, textColor, speed, thickness, jitter, wobble, tool, vapor, referenceDesign, exportSize, borderStyle, borderThickness, borderColor].forEach((el) => {
       if (el) el.onchange = update;
     });
 
