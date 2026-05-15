@@ -63,7 +63,9 @@
   const PLAYBACK_TOOL = {
     src: "./ghost_writer_images/ghost_writer_pencil.png",
     baseRotationDeg: -8,
-    wobbleDeg: 5,
+    idleWobbleDeg: 1.2,
+    directionWiggleDeg: 4.5,
+    directionWiggleDecay: .82,
     visible: true
   };
 
@@ -1218,6 +1220,8 @@
       speed,
       toolEl,
       lastTip: null,
+      lastDirectionDeg: null,
+      directionWiggle: 0,
       vaporTrail: [],
       onDone
     };
@@ -1381,16 +1385,59 @@
     const tool = ps?.toolEl;
     if (!tool || !tip) return;
 
-    const wobble = moving
-      ? Math.sin(now / 72) * PLAYBACK_TOOL.wobbleDeg + stableNoise(`${tip.x}-${tip.y}-${Math.floor(now / 140)}`) * 2
-      : Math.sin(now / 210) * 1.5;
+    if (moving && Number.isFinite(tip.angleDeg)){
+      if (ps.lastDirectionDeg === null || ps.lastDirectionDeg === undefined){
+        ps.lastDirectionDeg = tip.angleDeg;
+      } else {
+        const delta = shortestAngleDelta(ps.lastDirectionDeg, tip.angleDeg);
 
-    const angle = PLAYBACK_TOOL.baseRotationDeg + tip.angleDeg + wobble;
+        if (Math.abs(delta) > 12){
+          ps.directionWiggle += clamp(
+            delta * .10,
+            -PLAYBACK_TOOL.directionWiggleDeg,
+            PLAYBACK_TOOL.directionWiggleDeg
+          );
+        }
+
+        ps.lastDirectionDeg = tip.angleDeg;
+      }
+    }
+
+    ps.directionWiggle = clamp(
+      (ps.directionWiggle || 0) * PLAYBACK_TOOL.directionWiggleDecay,
+      -PLAYBACK_TOOL.directionWiggleDeg,
+      PLAYBACK_TOOL.directionWiggleDeg
+    );
+
+    const idleWobble = Math.sin(now / 180) * PLAYBACK_TOOL.idleWobbleDeg;
+    const tinyHandJitter = moving
+      ? stableNoise(`${Math.floor(now / 120)}-${tip.x}-${tip.y}`) * .65
+      : 0;
+
+    const angle =
+      PLAYBACK_TOOL.baseRotationDeg +
+      ps.directionWiggle +
+      idleWobble +
+      tinyHandJitter;
 
     tool.style.left = `${tip.x}px`;
     tool.style.top = `${tip.y}px`;
     tool.style.transform = `translateY(-100%) rotate(${angle}deg)`;
     tool.classList.add("is-visible");
+  }
+
+  function shortestAngleDelta(fromDeg, toDeg) {
+    let delta = (toDeg - fromDeg) % 360;
+
+    if (delta > 180) {
+      delta -= 360;
+    }
+
+    if (delta < -180) {
+      delta += 360;
+    }
+
+    return delta;
   }
 
   function addVaporPuff(ps, tip, now) {
