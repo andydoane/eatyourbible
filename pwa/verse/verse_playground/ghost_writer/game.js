@@ -356,6 +356,22 @@
     "-": { yOffset: 0 }
   };
 
+  const REFERENCE_DECORATION_STYLES = ["box", "divider", "underline", "loop", "cloud", "stars"];
+
+  const REFERENCE_DECORATION = {
+    refScale: .62,
+    beforeGapLines: .28,
+    zoneHeightLines: 1,
+    dividerExtraLines: .28,
+    boxPadX: .44,
+    boxPadY: .18,
+    cloudPadX: .54,
+    cloudPadY: .24,
+    loopPadX: .48,
+    loopPadY: .20,
+    starPadX: .95
+  };
+
   const GLYPH_RENDER_PROFILES = {
     ".": {
       widthScale: .34,
@@ -447,8 +463,11 @@
   const state = {
     screen: "intro",
     fullText: "",
+    verseTextOnly: "",
+    referenceText: "",
     displayLines: [],
     requiredChars: [],
+    referenceDecorationStyle: "box",
     currentCharIndex: 0,
     currentStrokes: [],
     currentStroke: null,
@@ -517,12 +536,13 @@
       [parsedRef?.book || "", parsedRef?.reference || ""].filter(Boolean).join(" ")
     );
 
-    const lines = [verse, ref].filter(Boolean);
-
-    state.displayLines = lines.length ? lines : ["WRITE THE VERSE"];
+    state.verseTextOnly = verse || "WRITE THE VERSE";
+    state.referenceText = ref;
+    state.displayLines = ref ? [state.verseTextOnly, ref] : [state.verseTextOnly];
     state.fullText = state.displayLines.join("\n");
     state.requiredChars = extractRequiredChars(state.fullText);
   }
+  
 
   function extractRequiredChars(text) {
     const out = [];
@@ -536,6 +556,11 @@
     }
 
     return out;
+  }
+
+  function chooseReferenceDecorationStyle() {
+    const index = Math.floor(Math.random() * REFERENCE_DECORATION_STYLES.length);
+    return REFERENCE_DECORATION_STYLES[index] || "box";
   }
 
   function helpHtml() {
@@ -600,6 +625,7 @@
     state.glyphs = new Map();
     state.hasDrawnCurrent = false;
     state.practiceMarked = false;
+    state.referenceDecorationStyle = chooseReferenceDecorationStyle();
     state.remix = {
       background: "ghost",
       textColor: "lightGray",
@@ -1438,7 +1464,6 @@
     const contentRect = getCanvasContentRect(width, height, options);
     const safeWidth = Math.max(120, contentRect.width);
     const safeHeight = Math.max(120, contentRect.height);
-    const text = state.fullText || "";
     const maxWidth = safeWidth * .94;
     const maxHeight = safeHeight * .88;
 
@@ -1453,8 +1478,7 @@
     let best = null;
 
     for (let fontSize = maxFontSize; fontSize >= minFontSize; fontSize -= 1) {
-      const layout = layoutForFontSize(
-        text,
+      const layout = layoutVerseAndReferenceForFontSize(
         fontSize,
         maxWidth,
         maxHeight,
@@ -1472,8 +1496,7 @@
 
     if (best) return best;
 
-    return layoutForFontSize(
-      text,
+    return layoutVerseAndReferenceForFontSize(
       minFontSize,
       maxWidth,
       maxHeight,
@@ -1482,6 +1505,191 @@
       contentRect.x,
       contentRect.y
     );
+  }
+
+  function layoutVerseAndReferenceForFontSize(fontSize, maxWidth, maxHeight, canvasWidth, canvasHeight, offsetX = 0, offsetY = 0) {
+    const verseText = state.verseTextOnly || state.fullText || "";
+    const refText = state.referenceText || "";
+    const hasReference = Boolean(refText);
+    const lineHeight = fontSize * 1.24;
+    const referenceStyle = state.referenceDecorationStyle || "box";
+    const refFontSize = Math.max(10, fontSize * REFERENCE_DECORATION.refScale);
+    const referenceZoneHeight = hasReference ? lineHeight * REFERENCE_DECORATION.zoneHeightLines : 0;
+    const referenceGap = hasReference ? lineHeight * REFERENCE_DECORATION.beforeGapLines : 0;
+    const dividerExtra = hasReference && referenceStyle === "divider" ? lineHeight * REFERENCE_DECORATION.dividerExtraLines : 0;
+    const verseMaxHeight = Math.max(40, maxHeight - referenceGap - dividerExtra - referenceZoneHeight);
+
+    const verseLayout = layoutForFontSize(
+      verseText,
+      fontSize,
+      maxWidth,
+      verseMaxHeight,
+      canvasWidth,
+      verseMaxHeight,
+      offsetX,
+      0
+    );
+
+    const totalHeight = verseLayout.height + referenceGap + dividerExtra + referenceZoneHeight;
+    const startY = offsetY + Math.max(fontSize * .9, (canvasHeight - totalHeight) / 2 + fontSize * .76);
+
+    const placements = verseLayout.placements.map((item) => ({
+      ...item,
+      y: item.y + startY - fontSize * .76,
+      section: "verse"
+    }));
+
+    let referenceDecoration = null;
+
+    if (hasReference) {
+      const referenceZoneTop = startY - fontSize * .76 + verseLayout.height + referenceGap + dividerExtra;
+      const referenceBaselineY = referenceZoneTop + referenceZoneHeight * .62;
+      const referenceItems = makeReferenceLinePlacements(
+        refText,
+        refFontSize,
+        maxWidth,
+        canvasWidth,
+        offsetX,
+        referenceBaselineY
+      );
+
+      for (const item of referenceItems.placements) {
+        placements.push(item);
+      }
+
+      referenceDecoration = makeReferenceDecorationLayout({
+        style: referenceStyle,
+        referenceItems,
+        referenceZoneTop,
+        referenceZoneHeight,
+        referenceBaselineY,
+        lineHeight,
+        fontSize,
+        refFontSize,
+        maxWidth,
+        canvasWidth,
+        offsetX
+      });
+    }
+
+    const usedWidth = Math.max(verseLayout.width, referenceDecoration?.width || 0);
+    const overflows = verseLayout.overflows || usedWidth > maxWidth + 1 || totalHeight > maxHeight + 1;
+
+    return {
+      placements,
+      fontSize,
+      lineHeight,
+      height: totalHeight,
+      width: usedWidth,
+      lineCount: verseLayout.lineCount + (hasReference ? 1 : 0),
+      referenceDecoration,
+      overflows
+    };
+  }
+
+  function makeReferenceLinePlacements(text, fontSize, maxWidth, canvasWidth, offsetX, baselineY) {
+    const chars = Array.from(String(text || ""));
+    const items = [];
+    const rawWidth = chars.reduce((sum, char) => sum + fontSize * glyphWidthUnits(char), 0);
+    const safeWidth = Math.min(rawWidth, maxWidth);
+    let scaleDown = rawWidth > maxWidth ? maxWidth / Math.max(1, rawWidth) : 1;
+    const finalFontSize = Math.max(8, fontSize * scaleDown);
+    const finalWidth = chars.reduce((sum, char) => sum + finalFontSize * glyphWidthUnits(char), 0);
+
+    let x = offsetX + (canvasWidth - finalWidth) / 2;
+
+    for (const char of chars) {
+      const w = finalFontSize * glyphWidthUnits(char);
+      items.push({
+        char,
+        x,
+        y: baselineY,
+        w,
+        h: finalFontSize,
+        fontSize: finalFontSize,
+        section: "reference"
+      });
+      x += w;
+    }
+
+    return {
+      placements: items,
+      x: offsetX + (canvasWidth - finalWidth) / 2,
+      y: baselineY,
+      width: safeWidth,
+      finalWidth,
+      fontSize: finalFontSize
+    };
+  }
+
+  function makeReferenceDecorationLayout(info) {
+    const items = info.referenceItems?.placements || [];
+    const visible = items.filter((item) => item && !/\s/.test(item.char));
+    const first = visible[0] || items[0];
+    const last = visible[visible.length - 1] || items[items.length - 1] || first;
+
+    if (!first || !last) return null;
+
+    const refLeft = first.x;
+    const refRight = last.x + last.w;
+    const refCenterX = (refLeft + refRight) / 2;
+    const refWidth = Math.max(20, refRight - refLeft);
+    const style = info.style || "box";
+    const fontSize = info.fontSize;
+    const refFontSize = info.referenceItems.fontSize || info.refFontSize;
+    const zoneTop = info.referenceZoneTop;
+    const zoneHeight = info.referenceZoneHeight;
+    const zoneBottom = zoneTop + zoneHeight;
+    const zoneCenterY = zoneTop + zoneHeight / 2;
+
+    let padX = fontSize * REFERENCE_DECORATION.boxPadX;
+    let padY = fontSize * REFERENCE_DECORATION.boxPadY;
+
+    if (style === "cloud") {
+      padX = fontSize * REFERENCE_DECORATION.cloudPadX;
+      padY = fontSize * REFERENCE_DECORATION.cloudPadY;
+    }
+
+    if (style === "loop") {
+      padX = fontSize * REFERENCE_DECORATION.loopPadX;
+      padY = fontSize * REFERENCE_DECORATION.loopPadY;
+    }
+
+    if (style === "stars") {
+      padX = fontSize * REFERENCE_DECORATION.starPadX;
+      padY = fontSize * .18;
+    }
+
+    const boxW = refWidth + padX * 2;
+    const boxH = Math.min(zoneHeight * .94, Math.max(refFontSize * 1.35, zoneHeight * .74));
+    const boxX = refCenterX - boxW / 2;
+    const boxY = zoneCenterY - boxH / 2;
+
+    const dividerY = zoneTop - info.lineHeight * .15;
+    const dividerW = Math.min(info.maxWidth * .72, Math.max(refWidth * 1.25, fontSize * 5.4));
+    const dividerX = info.offsetX + info.canvasWidth / 2 - dividerW / 2;
+
+    return {
+      type: "referenceDecoration",
+      style,
+      x: boxX,
+      y: boxY,
+      w: boxW,
+      h: boxH,
+      refLeft,
+      refRight,
+      refCenterX,
+      refBaselineY: info.referenceBaselineY,
+      zoneTop,
+      zoneBottom,
+      zoneCenterY,
+      dividerX,
+      dividerY,
+      dividerW,
+      fontSize,
+      refFontSize,
+      width: Math.max(boxW, dividerW)
+    };
   }
 
   function layoutForFontSize(text, fontSize, maxWidth, maxHeight, canvasWidth, canvasHeight, offsetX = 0, offsetY = 0) {
@@ -1652,6 +1860,320 @@
     if (!stroke || !stroke.length) return 1;
     if (stroke.length === 1) return 1;
     return Math.max(1, stroke.length - 1);
+  }
+
+  function drawReferenceDecoration(c, decoration, options = {}, partial = 1) {
+    if (!decoration) return;
+
+    const strokes = getReferenceDecorationStrokes(decoration);
+    if (!strokes.length) return;
+
+    const ink = getInkForOptions(options);
+    const thickness = THICKNESS[options.thickness] || THICKNESS.normal;
+    const fontSize = decoration.fontSize || 44;
+
+    c.save();
+    c.strokeStyle = ink;
+    c.fillStyle = ink;
+    c.lineWidth = Math.max(1.8, fontSize * .045 * thickness.multiplier);
+    c.lineCap = "round";
+    c.lineJoin = "round";
+    c.shadowColor = getShadowForInk(ink, options);
+    c.shadowBlur = getBackgroundKey(options) === "ghost" ? fontSize * .10 : fontSize * .035;
+
+    drawPointStrokesProgress(c, strokes, clamp(partial, 0, 1));
+
+    c.restore();
+  }
+
+  function getReferenceDecorationPieceCount(decoration) {
+    return getReferenceDecorationStrokes(decoration).reduce((sum, stroke) => {
+      return sum + Math.max(1, stroke.length - 1);
+    }, 0) || 1;
+  }
+
+  function getReferenceDecorationTip(decoration, options = {}, partial = 1) {
+    const strokes = getReferenceDecorationStrokes(decoration);
+    const point = getPointFromPointStrokes(strokes, partial);
+
+    if (!point) return null;
+
+    return {
+      x: point.x,
+      y: point.y,
+      angleDeg: point.angleDeg || 0
+    };
+  }
+
+  function getReferenceDecorationStrokes(decoration) {
+    if (!decoration) return [];
+
+    if (decoration.style === "divider") return makeDividerStrokes(decoration);
+    if (decoration.style === "underline") return makeUnderlineStrokes(decoration);
+    if (decoration.style === "loop") return makeLoopStrokes(decoration);
+    if (decoration.style === "cloud") return makeCloudStrokes(decoration);
+    if (decoration.style === "stars") return makeStarStrokes(decoration);
+
+    return makeBoxStrokes(decoration);
+  }
+
+  function drawPointStrokesProgress(c, strokes, progress) {
+    const safeProgress = clamp(progress, 0, 1);
+    const strokeUnits = strokes.map((stroke) => Math.max(1, (stroke?.length || 0) - 1));
+    const totalUnits = strokeUnits.reduce((sum, units) => sum + units, 0) || 1;
+    let remainingUnits = totalUnits * safeProgress;
+
+    for (let strokeIndex = 0; strokeIndex < strokes.length; strokeIndex += 1) {
+      const stroke = strokes[strokeIndex];
+      const units = strokeUnits[strokeIndex] || 1;
+
+      if (!stroke || stroke.length < 2) continue;
+      if (remainingUnits <= 0) break;
+
+      const strokeProgress = clamp(remainingUnits / units, 0, 1);
+      drawRawPointStrokeProgress(c, stroke, strokeProgress);
+      remainingUnits -= units;
+
+      if (strokeProgress < 1) break;
+    }
+  }
+
+  function drawRawPointStrokeProgress(c, stroke, progress) {
+    const safeProgress = clamp(progress, 0, 1);
+    const segmentCount = stroke.length - 1;
+    const piecesToDraw = segmentCount * safeProgress;
+
+    if (piecesToDraw <= .08) return;
+
+    c.beginPath();
+    c.moveTo(stroke[0].x, stroke[0].y);
+
+    let drewAnyLine = false;
+
+    for (let i = 1; i < stroke.length; i += 1) {
+      const previousPieceIndex = i - 1;
+
+      if (previousPieceIndex + 1 <= piecesToDraw) {
+        c.lineTo(stroke[i].x, stroke[i].y);
+        drewAnyLine = true;
+        continue;
+      }
+
+      const remain = piecesToDraw - previousPieceIndex;
+
+      if (remain > .08) {
+        const a = stroke[i - 1];
+        const b = stroke[i];
+        c.lineTo(a.x + (b.x - a.x) * remain, a.y + (b.y - a.y) * remain);
+        drewAnyLine = true;
+      }
+
+      break;
+    }
+
+    if (drewAnyLine) c.stroke();
+  }
+
+  function getPointFromPointStrokes(strokes, progress) {
+    const safeProgress = clamp(progress, 0, 1);
+    const strokeUnits = strokes.map((stroke) => Math.max(1, (stroke?.length || 0) - 1));
+    const totalUnits = strokeUnits.reduce((sum, units) => sum + units, 0) || 1;
+    let remainingUnits = totalUnits * safeProgress;
+
+    for (let strokeIndex = 0; strokeIndex < strokes.length; strokeIndex += 1) {
+      const stroke = strokes[strokeIndex];
+      const units = strokeUnits[strokeIndex] || 1;
+
+      if (!stroke || stroke.length < 2) continue;
+
+      if (remainingUnits > units) {
+        remainingUnits -= units;
+        continue;
+      }
+
+      const strokeProgress = clamp(remainingUnits / units, 0, 1);
+      return getPointOnRawStroke(stroke, strokeProgress);
+    }
+
+    const lastStroke = strokes[strokes.length - 1];
+    return lastStroke?.[lastStroke.length - 1] || null;
+  }
+
+  function getPointOnRawStroke(stroke, progress) {
+    if (!stroke || !stroke.length) return null;
+    if (stroke.length === 1) return stroke[0];
+
+    const safeProgress = clamp(progress, 0, 1);
+    const segmentCount = stroke.length - 1;
+    const pieces = segmentCount * safeProgress;
+    const index = Math.min(segmentCount - 1, Math.floor(pieces));
+    const remain = clamp(pieces - index, 0, 1);
+    const a = stroke[index];
+    const b = stroke[index + 1] || a;
+
+    return {
+      x: a.x + (b.x - a.x) * remain,
+      y: a.y + (b.y - a.y) * remain,
+      angleDeg: Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI
+    };
+  }
+
+  function makeBoxStrokes(d) {
+    const over = d.fontSize * .10;
+    const wobble = d.fontSize * .025;
+    const x1 = d.x - over;
+    const y1 = d.y;
+    const x2 = d.x + d.w + over;
+    const y2 = d.y + d.h;
+
+    return [
+      [
+        { x: x1, y: y1 + wobble },
+        { x: d.x + d.w * .32, y: y1 - wobble },
+        { x: d.x + d.w * .68, y: y1 + wobble },
+        { x: x2, y: y1 }
+      ],
+      [
+        { x: x2 - wobble, y: y1 - over },
+        { x: x2 + wobble, y: d.y + d.h * .50 },
+        { x: x2 - wobble, y: y2 + over }
+      ],
+      [
+        { x: x2, y: y2 - wobble },
+        { x: d.x + d.w * .66, y: y2 + wobble },
+        { x: d.x + d.w * .33, y: y2 - wobble },
+        { x: x1, y: y2 }
+      ],
+      [
+        { x: x1 + wobble, y: y2 + over },
+        { x: x1 - wobble, y: d.y + d.h * .50 },
+        { x: x1 + wobble, y: y1 - over }
+      ]
+    ];
+  }
+
+  function makeDividerStrokes(d) {
+    const points = [];
+    const steps = 44;
+    const amp = Math.max(2, d.fontSize * .035);
+
+    for (let i = 0; i <= steps; i += 1) {
+      const t = i / steps;
+      points.push({
+        x: d.dividerX + d.dividerW * t,
+        y: d.dividerY + Math.sin(t * Math.PI * 18) * amp
+      });
+    }
+
+    return [points];
+  }
+
+  function makeUnderlineStrokes(d) {
+    const strokes = [];
+    const y = d.refBaselineY + d.refFontSize * .22;
+    const left = d.refLeft - d.refFontSize * .18;
+    const right = d.refRight + d.refFontSize * .18;
+
+    for (let pass = 0; pass < 3; pass += 1) {
+      const fromLeft = pass % 2 === 0;
+      const points = [];
+      const steps = 18;
+      const startX = fromLeft ? left : right;
+      const endX = fromLeft ? right : left;
+
+      for (let i = 0; i <= steps; i += 1) {
+        const t = i / steps;
+        points.push({
+          x: startX + (endX - startX) * t,
+          y: y + pass * d.refFontSize * .08 + Math.sin(t * Math.PI * 5) * d.refFontSize * .025
+        });
+      }
+
+      strokes.push(points);
+    }
+
+    return strokes;
+  }
+
+  function makeLoopStrokes(d) {
+    return [
+      makeOvalStroke(d, 0, 0, 1),
+      makeOvalStroke(d, d.fontSize * .025, -d.fontSize * .018, 2)
+    ];
+  }
+
+  function makeOvalStroke(d, offsetX, offsetY, seed) {
+    const points = [];
+    const cx = d.x + d.w / 2 + offsetX;
+    const cy = d.y + d.h / 2 + offsetY;
+    const rx = d.w / 2;
+    const ry = d.h / 2;
+    const steps = 72;
+
+    for (let i = 0; i <= steps; i += 1) {
+      const t = i / steps;
+      const a = t * Math.PI * 2;
+      const wobble = 1 + stableNoise(`loop-${seed}-${i}`) * .035;
+
+      points.push({
+        x: cx + Math.cos(a) * rx * wobble,
+        y: cy + Math.sin(a) * ry * wobble
+      });
+    }
+
+    return points;
+  }
+
+  function makeCloudStrokes(d) {
+    const points = [];
+    const cx = d.x + d.w / 2;
+    const cy = d.y + d.h / 2;
+    const rx = d.w / 2;
+    const ry = d.h / 2;
+    const steps = 96;
+
+    for (let i = 0; i <= steps; i += 1) {
+      const t = i / steps;
+      const a = t * Math.PI * 2;
+      const puff = 1 + Math.sin(a * 8) * .095 + Math.sin(a * 13) * .035;
+
+      points.push({
+        x: cx + Math.cos(a) * rx * puff,
+        y: cy + Math.sin(a) * ry * puff
+      });
+    }
+
+    return [points];
+  }
+
+  function makeStarStrokes(d) {
+    const size = Math.max(12, d.refFontSize * .48);
+    const y = d.refBaselineY - d.refFontSize * .38;
+    const leftX = d.refLeft - d.refFontSize * .72;
+    const rightX = d.refRight + d.refFontSize * .72;
+
+    return [
+      makePentagramStroke(leftX, y, size),
+      makePentagramStroke(rightX, y, size)
+    ];
+  }
+
+  function makePentagramStroke(cx, cy, r) {
+    const order = [0, 2, 4, 1, 3, 0];
+    const outer = [];
+
+    for (let i = 0; i < 5; i += 1) {
+      const a = -Math.PI / 2 + i * Math.PI * 2 / 5;
+      outer.push({
+        x: cx + Math.cos(a) * r,
+        y: cy + Math.sin(a) * r
+      });
+    }
+
+    return order.map((index, i) => ({
+      x: outer[index].x + stableNoise(`star-x-${cx}-${i}`) * r * .035,
+      y: outer[index].y + stableNoise(`star-y-${cy}-${i}`) * r * .035
+    }));
   }
 
   function drawStrokeProgress(c, stroke, baseX, baseY, scale, progress) {
@@ -2316,9 +2838,17 @@
     const layout = makeLayout(width, height, cleanOptions);
     clearPlaybackCanvas(c, width, height, cleanOptions);
 
+    drawLayoutGlyphs(c, layout, cleanOptions, 1);
+
+    if (layout.referenceDecoration) {
+      drawReferenceDecoration(c, layout.referenceDecoration, cleanOptions, 1);
+    }
+  }
+
+  function drawLayoutGlyphs(c, layout, options, partial = 1) {
     let colorIndex = 0;
 
-    for (const item of layout.placements) {
+    for (const item of layout.placements || []) {
       if (/\s/.test(item.char)) continue;
 
       drawGlyph(
@@ -2328,12 +2858,32 @@
         item.y,
         item.w,
         item.fontSize,
-        { ...cleanOptions, _colorIndex: colorIndex },
-        1
+        { ...options, _colorIndex: colorIndex },
+        partial
       );
 
       colorIndex += 1;
     }
+  }
+
+  function drawCompletedPlaybackItem(c, item, options) {
+    if (!item) return;
+
+    if (item.type === "referenceDecoration") {
+      drawReferenceDecoration(c, item.decoration, options, 1);
+      return;
+    }
+
+    drawGlyph(
+      c,
+      getGlyph(item.char),
+      item.x,
+      item.y,
+      item.w,
+      item.fontSize,
+      { ...options, _colorIndex: item.colorIndex || 0 },
+      1
+    );
   }
 
   async function saveGhostWriterImage(options = state.remix) {
@@ -2435,7 +2985,7 @@
     const rect = card.getBoundingClientRect();
     const c = setupCanvasForDpr(canvas, rect.width, rect.height);
     const layout = makeLayout(rect.width, rect.height, options);
-    const placements = buildPlaybackPlacements(layout.placements);
+    const placements = buildPlaybackPlacements(layout);
     const speed = SPEEDS[options.speed] || SPEEDS.normal;
     const toolConfig = getPlaybackToolConfig(options);
     const toolEl = document.getElementById("ghostPlaybackTool");
@@ -2465,8 +3015,8 @@
     playbackRaf = requestAnimationFrame(playbackFrame);
   }
 
-  function buildPlaybackPlacements(allPlacements) {
-    const all = Array.isArray(allPlacements) ? allPlacements : [];
+  function buildPlaybackPlacements(layout) {
+    const all = Array.isArray(layout?.placements) ? layout.placements : [];
     const out = [];
 
     for (let i = 0; i < all.length; i += 1) {
@@ -2482,8 +3032,18 @@
       });
     }
 
+    if (layout?.referenceDecoration) {
+      out.push({
+        type: "referenceDecoration",
+        decoration: layout.referenceDecoration,
+        pauseAfter: 0,
+        colorIndex: out.length
+      });
+    }
+
     return out;
   }
+  
 
   function getPauseAfterPlacement(allPlacements, index) {
     const current = allPlacements[index];
@@ -2540,8 +3100,7 @@
       drawVaporTrail(ps, now);
 
       for (let i = 0; i < ps.index; i += 1) {
-        const item = placements[i];
-        drawGlyph(ps.c, getGlyph(item.char), item.x, item.y, item.w, item.fontSize, { ...ps.options, _colorIndex: item.colorIndex || 0 }, 1);
+        drawCompletedPlaybackItem(ps.c, placements[i], ps.options);
       }
 
       if (ps.lastTip) {
@@ -2570,11 +3129,16 @@
     }
 
     const current = placements[ps.index];
-    const glyph = getGlyph(current.char);
-    const pieces = glyph ? countStrokePieces(glyph.strokes) : 1;
-    const duration = clamp((92 + pieces * 15) * (ps.speed?.multiplier || 1), 65, 480);
+    const isDecoration = current?.type === "referenceDecoration";
+    const glyph = isDecoration ? null : getGlyph(current.char);
+    const pieces = isDecoration ? getReferenceDecorationPieceCount(current.decoration) : (glyph ? countStrokePieces(glyph.strokes) : 1);
+    const duration = isDecoration
+      ? clamp((160 + pieces * 18) * (ps.speed?.multiplier || 1), 180, 900)
+      : clamp((92 + pieces * 15) * (ps.speed?.multiplier || 1), 65, 480);
     const progress = clamp((now - ps.charStart) / duration, 0, 1);
-    const tip = getGlyphPlaybackTip(glyph, current, ps.options, progress);
+    const tip = isDecoration
+      ? getReferenceDecorationTip(current.decoration, ps.options, progress)
+      : getGlyphPlaybackTip(glyph, current, ps.options, progress);
 
     clearPlaybackCanvas(ps.c, ps.width, ps.height, ps.options);
 
@@ -2586,11 +3150,14 @@
     drawVaporTrail(ps, now);
 
     for (let i = 0; i < ps.index; i += 1) {
-      const item = placements[i];
-      drawGlyph(ps.c, getGlyph(item.char), item.x, item.y, item.w, item.fontSize, { ...ps.options, _colorIndex: item.colorIndex || 0 }, 1);
+      drawCompletedPlaybackItem(ps.c, placements[i], ps.options);
     }
 
-    drawGlyph(ps.c, glyph, current.x, current.y, current.w, current.fontSize, { ...ps.options, _colorIndex: current.colorIndex || 0 }, progress);
+    if (isDecoration) {
+      drawReferenceDecoration(ps.c, current.decoration, ps.options, progress);
+    } else {
+      drawGlyph(ps.c, glyph, current.x, current.y, current.w, current.fontSize, { ...ps.options, _colorIndex: current.colorIndex || 0 }, progress);
+    }
 
     if (tip) {
       updatePlaybackTool(ps, tip, now, true);
