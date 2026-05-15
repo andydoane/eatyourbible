@@ -1684,8 +1684,14 @@
       padY = fontSize * .18;
     }
 
-    const boxW = refWidth + padX * 2;
-    const boxH = Math.min(zoneHeight * .94, Math.max(refFontSize * 1.35, zoneHeight * .74));
+    let boxW = refWidth + padX * 2;
+    let boxH = Math.min(zoneHeight * .94, Math.max(refFontSize * 1.35, zoneHeight * .74));
+
+    if (style === "cloud") {
+      boxW = Math.min(info.maxWidth * .92, Math.max(boxW, info.maxWidth * .62));
+      boxH = Math.min(zoneHeight * 1.08, Math.max(refFontSize * 1.65, zoneHeight * .90));
+    }
+
     const boxX = refCenterX - boxW / 2;
     const boxY = zoneCenterY - boxH / 2;
 
@@ -2218,7 +2224,8 @@
         y: d.y,
         w: d.w,
         h: d.h,
-        seed: "cloud"
+        seed: "cloud",
+        stretch: true
       })
     ];
   }
@@ -2279,18 +2286,20 @@
     y,
     w,
     h,
-    seed = "shape"
+    seed = "shape",
+    stretch = false
   }) {
-    const scale = Math.min((w * .985) / sourceWidth, (h * .985) / sourceHeight);
-    const drawW = sourceWidth * scale;
-    const drawH = sourceHeight * scale;
+    const scaleX = stretch ? (w * .985) / sourceWidth : Math.min((w * .985) / sourceWidth, (h * .985) / sourceHeight);
+    const scaleY = stretch ? (h * .985) / sourceHeight : scaleX;
+    const drawW = sourceWidth * scaleX;
+    const drawH = sourceHeight * scaleY;
     const offsetX = x + (w - drawW) / 2;
     const offsetY = y + (h - drawH) / 2;
     const wobble = Math.max(.45, Math.min(drawW, drawH) * .008);
 
     return templatePoints.map((point, index) => ({
-      x: offsetX + point.x * scale + stableNoise(`${seed}-x-${index}`) * wobble,
-      y: offsetY + point.y * scale + stableNoise(`${seed}-y-${index}`) * wobble
+      x: offsetX + point.x * scaleX + stableNoise(`${seed}-x-${index}`) * wobble,
+      y: offsetY + point.y * scaleY + stableNoise(`${seed}-y-${index}`) * wobble
     }));
   }
 
