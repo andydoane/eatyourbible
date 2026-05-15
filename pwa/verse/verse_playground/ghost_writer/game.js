@@ -248,6 +248,64 @@
     }
   };
 
+  const GUIDE_FIT = {
+    letterWidth: .86,
+    letterHeight: .88,
+    symbolWidth: .68,
+    skinnySymbolWidth: .42,
+    symbolHeight: .76,
+    maxLetterSize: 1.28,
+    maxSymbolSize: 1.18,
+    minSize: .32
+  };
+
+  const CENTERED_TRAINING_GUIDES = new Set([".", ",", ":", ";", "'", '"', "-"]);
+
+  const GLYPH_RENDER_PROFILES = {
+    ".": {
+      widthScale: .34,
+      heightScale: .18,
+      verticalAlign: "bottom",
+      yOffset: -.02
+    },
+    ",": {
+      widthScale: .36,
+      heightScale: .26,
+      verticalAlign: "bottom",
+      yOffset: .07
+    },
+    ":": {
+      widthScale: .38,
+      heightScale: .50,
+      verticalAlign: "middle",
+      yOffset: 0
+    },
+    ";": {
+      widthScale: .40,
+      heightScale: .56,
+      verticalAlign: "middle",
+      yOffset: .04
+    },
+    "'": {
+      widthScale: .30,
+      heightScale: .34,
+      verticalAlign: "top",
+      yOffset: .03
+    },
+    "\"": {
+      widthScale: .46,
+      heightScale: .34,
+      verticalAlign: "top",
+      yOffset: .03
+    },
+    "-": {
+      widthScale: .58,
+      heightScale: .24,
+      verticalAlign: "middle",
+      yOffset: 0
+    }
+  };
+
   const app = document.getElementById("app");
 
   const DEBUG_GHOST_WRITER = (() => {
@@ -1186,6 +1244,51 @@
     return clamp(glyph.widthRatio + .16, minimum, .98);
   }
 
+  function getGlyphRenderProfile(char) {
+    return GLYPH_RENDER_PROFILES[String(char || "")] || null;
+  }
+
+  function getGlyphUsableArea(char, fontSize, cellW) {
+    const profile = getGlyphRenderProfile(char);
+    const defaultH = fontSize * 1.04;
+    const defaultW = Math.max(fontSize * .14, cellW * .88);
+
+    if (!profile) {
+      return {
+        usableW: defaultW,
+        usableH: defaultH,
+        verticalAlign: "normal",
+        yOffset: 0
+      };
+    }
+
+    return {
+      usableW: Math.max(fontSize * .10, Math.min(defaultW, fontSize * profile.widthScale)),
+      usableH: Math.max(fontSize * .10, fontSize * profile.heightScale),
+      verticalAlign: profile.verticalAlign || "middle",
+      yOffset: profile.yOffset || 0
+    };
+  }
+
+  function getGlyphBaseYForProfile(baselineY, fontSize, usableH, drawH, profileInfo) {
+    const align = profileInfo?.verticalAlign || "normal";
+    const offset = (profileInfo?.yOffset || 0) * fontSize;
+
+    if (align === "top") {
+      return baselineY - fontSize * .82 + offset;
+    }
+
+    if (align === "middle") {
+      return baselineY - fontSize * .80 + (fontSize * 1.04 - usableH) / 2 + (usableH - drawH) / 2 + offset;
+    }
+
+    if (align === "bottom") {
+      return baselineY - drawH + fontSize * .17 + offset;
+    }
+
+    return baselineY - usableH * .80 + (usableH - drawH) / 2 + offset;
+  }
+
   function makeLayout(width, height, options = {}) {
     const contentRect = getCanvasContentRect(width, height, options);
     const safeWidth = Math.max(120, contentRect.width);
@@ -1329,8 +1432,9 @@
     const wobbleOn = options.wobble === "on";
 
     const bounds = glyph.bounds || computeBounds(glyph.strokes);
-    const usableH = fontSize * 1.04;
-    const usableW = Math.max(fontSize * .14, cellW * .88);
+    const profileInfo = getGlyphUsableArea(glyph.char, fontSize, cellW);
+    const usableH = profileInfo.usableH;
+    const usableW = profileInfo.usableW;
     const scale = Math.min(
       usableW / Math.max(.04, bounds.width),
       usableH / Math.max(.04, bounds.height)
@@ -1339,7 +1443,7 @@
     const drawW = bounds.width * scale;
     const drawH = bounds.height * scale;
     const baseX = x + (cellW - drawW) / 2 - bounds.minX * scale;
-    const baseY = baselineY - usableH * .80 + (usableH - drawH) / 2 - bounds.minY * scale;
+    const baseY = getGlyphBaseYForProfile(baselineY, fontSize, usableH, drawH, profileInfo) - bounds.minY * scale;
 
     const jitterX = jitterOn ? stableNoise(`${glyph.char}-${x}-x`) * fontSize * .08 : 0;
     const jitterY = jitterOn ? stableNoise(`${glyph.char}-${x}-y`) * fontSize * .06 : 0;
@@ -2233,8 +2337,9 @@
     const jitterOn = options.jitter === "on";
     const wobbleOn = options.wobble === "on";
 
-    const usableH = fontSize * 1.04;
-    const usableW = Math.max(fontSize * .14, cellW * .88);
+    const profileInfo = getGlyphUsableArea(glyph.char, fontSize, cellW);
+    const usableH = profileInfo.usableH;
+    const usableW = profileInfo.usableW;
     const scale = Math.min(
       usableW / Math.max(.04, glyphBounds.width),
       usableH / Math.max(.04, glyphBounds.height)
@@ -2243,7 +2348,7 @@
     const drawW = glyphBounds.width * scale;
     const drawH = glyphBounds.height * scale;
     const baseX = x + (cellW - drawW) / 2 - glyphBounds.minX * scale;
-    const baseY = baselineY - usableH * .80 + (usableH - drawH) / 2 - glyphBounds.minY * scale;
+    const baseY = getGlyphBaseYForProfile(baselineY, fontSize, usableH, drawH, profileInfo) - glyphBounds.minY * scale;
 
     const jitterX = jitterOn ? stableNoise(`${glyph.char}-${x}-x`) * fontSize * .08 : 0;
     const jitterY = jitterOn ? stableNoise(`${glyph.char}-${x}-y`) * fontSize * .06 : 0;
@@ -2260,6 +2365,7 @@
       rotation
     };
   }
+
 
   function getStrokePointAtProgress(stroke, progress) {
     const safeProgress = clamp(progress, 0, 1);
@@ -2383,6 +2489,11 @@
     const rect = wrap.getBoundingClientRect();
     const box = Math.max(1, Math.min(rect.width, rect.height));
 
+    guide.style.transform = CENTERED_TRAINING_GUIDES.has(char) ? "translateY(-50%)" : "";
+    guide.style.top = CENTERED_TRAINING_GUIDES.has(char) ? "50%" : "";
+    guide.style.bottom = CENTERED_TRAINING_GUIDES.has(char) ? "auto" : "";
+    guide.style.height = CENTERED_TRAINING_GUIDES.has(char) ? "auto" : "";
+
     const probe = document.createElement("span");
     probe.textContent = char || "A";
     probe.style.position = "absolute";
@@ -2397,10 +2508,10 @@
 
     const symbol = isSymbolChar(char);
     const skinnySymbol = [".", ",", ":", ";", "'", '"'].includes(char);
-    const targetW = box * (symbol ? (skinnySymbol ? .42 : .68) : .86);
-    const targetH = box * (symbol ? .76 : .88);
-    const maxSize = box * (symbol ? 1.18 : 1.28);
-    const minSize = box * .32;
+    const targetW = box * (symbol ? (skinnySymbol ? GUIDE_FIT.skinnySymbolWidth : GUIDE_FIT.symbolWidth) : GUIDE_FIT.letterWidth);
+    const targetH = box * (symbol ? GUIDE_FIT.symbolHeight : GUIDE_FIT.letterHeight);
+    const maxSize = box * (symbol ? GUIDE_FIT.maxSymbolSize : GUIDE_FIT.maxLetterSize);
+    const minSize = box * GUIDE_FIT.minSize;
 
     let low = minSize;
     let high = maxSize;
@@ -2423,6 +2534,7 @@
     document.body.removeChild(probe);
     guide.style.fontSize = `${Math.round(best)}px`;
   }
+
 
   function clearGuideTimer() {
     if (guideTimer) {
