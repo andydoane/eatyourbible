@@ -127,7 +127,7 @@
       imageSrc: "./ghost_writer_images/ghost_writer_bg_grass.png"
     },
     aquaRed: {
-      label: "Aqua Red",
+      label: "Swoosh Red",
       kind: "special",
       value: "#d85b61",
       cardClass: "",
@@ -135,7 +135,7 @@
       imageSrc: "./ghost_writer_images/ghost_writer_bg_aqua_red.jpg"
     },
     aquaOrange: {
-      label: "Aqua Orange",
+      label: "Swoosh Orange",
       kind: "special",
       value: "#d98b4c",
       cardClass: "",
@@ -143,7 +143,7 @@
       imageSrc: "./ghost_writer_images/ghost_writer_bg_aqua_orange.jpg"
     },
     aquaYellow: {
-      label: "Aqua Yellow",
+      label: "Swoosh Yellow",
       kind: "special",
       value: "#d8ba54",
       cardClass: "",
@@ -151,7 +151,7 @@
       imageSrc: "./ghost_writer_images/ghost_writer_bg_aqua_yellow.jpg"
     },
     aquaGreen: {
-      label: "Aqua Green",
+      label: "Swoosh Green",
       kind: "special",
       value: "#5eac74",
       cardClass: "",
@@ -159,7 +159,7 @@
       imageSrc: "./ghost_writer_images/ghost_writer_bg_aqua_green.jpg"
     },
     aquaBlue: {
-      label: "Aqua Blue",
+      label: "Swoosh Blue",
       kind: "special",
       value: "#4d8fcb",
       cardClass: "",
@@ -167,7 +167,7 @@
       imageSrc: "./ghost_writer_images/ghost_writer_bg_aqua_blue.jpg"
     },
     aquaPurple: {
-      label: "Aqua Purple",
+      label: "Swoosh Purple",
       kind: "special",
       value: "#8f71c8",
       cardClass: "",
@@ -1186,27 +1186,50 @@
         </div>
 
         <div class="ghost-remix-scroll">
-          <div class="ghost-options">
-            ${selectBackgroundHtml("ghostBackgroundSelect", "Background", state.remix.background)}
-            ${selectTextColorHtml("ghostTextColorSelect", "Text Color", state.remix.textColor, state.remix.background)}
-            ${selectOptionHtml("ghostSpeedSelect", "Speed", state.remix.speed, SPEEDS)}
-            ${selectOptionHtml("ghostThicknessSelect", "Thickness", state.remix.thickness, THICKNESS)}
-            ${selectSimpleHtml("ghostJitterSelect", "Jitter", state.remix.jitter, { off: "Off", on: "On" })}
-            ${selectSimpleHtml("ghostWobbleSelect", "Wobble", state.remix.wobble, { off: "Off", on: "On" })}
-            ${selectOptionHtml("ghostToolSelect", "Tool", state.remix.tool || "pencil", PLAYBACK_TOOLS)}
-            ${selectOptionHtml("ghostVaporSelect", "Vapor", state.remix.vapor || "normal", VAPOR_LEVELS)}
-
-            ${selectOptionHtml("ghostBorderStyleSelect", "Border Style", state.remix.borderStyle, BORDER_STYLES)}
-            ${selectOptionHtml("ghostBorderThicknessSelect", "Border Thickness", state.remix.borderThickness, BORDER_THICKNESS)}
-            ${selectOptionHtml("ghostBorderColorSelect", "Border Color", state.remix.borderColor, COLOR_PALETTE)}
+          <div class="ghost-remix-section">
+            <div class="ghost-section-title">Background</div>
+            <div class="ghost-options">
+              ${selectBackgroundHtml("ghostBackgroundSelect", "Background", state.remix.background)}
+            </div>
           </div>
 
-          <div class="ghost-remix-actions">
-            <button class="vm-btn" id="ghostReplayBtn" type="button">Replay</button>
-            <button class="vm-btn vm-btn-secondary" id="ghostAgainBtn" type="button">Try Again</button>
-            ${selectOptionHtml("ghostExportSizeSelect", "Download Size", state.remix.exportSize || "square", EXPORT_SIZES)}
-            <button class="vm-btn vm-btn-secondary" id="ghostSaveImageBtn" type="button">Save as Image</button>
-            <button class="vm-btn vm-btn-secondary ghost-full" id="ghostBackBtn" type="button">Back to Playground</button>
+          <div class="ghost-remix-section">
+            <div class="ghost-section-title">Writing</div>
+            <div class="ghost-options">
+              ${selectTextColorHtml("ghostTextColorSelect", "Text Color", state.remix.textColor, state.remix.background)}
+              ${selectOptionHtml("ghostThicknessSelect", "Line Size", state.remix.thickness, THICKNESS)}
+              ${selectSimpleHtml("ghostJitterSelect", "Wiggly Placement", state.remix.jitter, { off: "Off", on: "On" })}
+              ${selectSimpleHtml("ghostWobbleSelect", "Wobble Letters", state.remix.wobble, { off: "Off", on: "On" })}
+            </div>
+          </div>
+
+          <div class="ghost-remix-section">
+            <div class="ghost-section-title">Ghost Effect</div>
+            <div class="ghost-options">
+              ${selectOptionHtml("ghostToolSelect", "Tool", state.remix.tool || "pencil", PLAYBACK_TOOLS)}
+              ${selectOptionHtml("ghostVaporSelect", "Ghost Trail", state.remix.vapor || "normal", VAPOR_LEVELS)}
+              ${selectOptionHtml("ghostSpeedSelect", "Speed", state.remix.speed, SPEEDS)}
+            </div>
+          </div>
+
+          <div class="ghost-remix-section">
+            <div class="ghost-section-title">Border</div>
+            <div class="ghost-options">
+              ${selectOptionHtml("ghostBorderStyleSelect", "Border Style", state.remix.borderStyle, BORDER_STYLES)}
+              ${selectOptionHtml("ghostBorderThicknessSelect", "Border Thickness", state.remix.borderThickness, BORDER_THICKNESS)}
+              ${selectOptionHtml("ghostBorderColorSelect", "Border Color", state.remix.borderColor, COLOR_PALETTE)}
+            </div>
+          </div>
+
+          <div class="ghost-remix-section ghost-remix-section-actions">
+            <div class="ghost-section-title">Actions &amp; Download</div>
+            <div class="ghost-remix-actions">
+              <button class="vm-btn" id="ghostReplayBtn" type="button">Replay</button>
+              <button class="vm-btn vm-btn-secondary" id="ghostAgainBtn" type="button">Try Again</button>
+              ${selectOptionHtml("ghostExportSizeSelect", "Download Size", state.remix.exportSize || "square", EXPORT_SIZES)}
+              <button class="vm-btn vm-btn-secondary" id="ghostSaveImageBtn" type="button">Save as Image</button>
+              <button class="vm-btn vm-btn-secondary ghost-full" id="ghostBackBtn" type="button">Back to Playground</button>
+            </div>
           </div>
         </div>
       </div>
