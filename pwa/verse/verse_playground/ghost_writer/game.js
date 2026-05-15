@@ -60,6 +60,19 @@
     thick: { label: "Thick", multiplier: 1.35 }
   };
 
+  const PLAYBACK_TOOL = {
+    src: "./ghost_writer_images/ghost_writer_pencil.png",
+    baseRotationDeg: -8,
+    wobbleDeg: 5,
+    visible: true
+  };
+
+  const PLAYBACK_PAUSES = {
+    word: 115,
+    punctuation: 175,
+    line: 330
+  };
+
   const app = document.getElementById("app");
 
   const DEBUG_GHOST_WRITER = (() => {
@@ -740,6 +753,13 @@
       <div class="ghost-playback-root">
         <div class="ghost-playback-card ${escapeHtml(preset.cardClass)}" id="ghostPlaybackCard">
           <canvas id="ghostPlaybackCanvas" aria-label="Ghost writing playback"></canvas>
+          <img
+            class="ghost-playback-tool"
+            id="ghostPlaybackTool"
+            src="${escapeHtml(PLAYBACK_TOOL.src)}"
+            alt=""
+            draggable="false"
+          >
           <div class="ghost-playback-label">Ghost writing...</div>
         </div>
       </div>
@@ -1177,12 +1197,13 @@
     }
   }
 
-  function startPlayback(canvas, card, options, onDone){
+  function startPlayback(canvas, card, options, onDone) {
     const rect = card.getBoundingClientRect();
     const c = setupCanvasForDpr(canvas, rect.width, rect.height);
     const layout = makeLayout(rect.width, rect.height);
-    const placements = layout.placements.filter((p) => !/\s/.test(p.char));
+    const placements = buildPlaybackPlacements(layout.placements);
     const speed = SPEEDS[options.speed] || SPEEDS.normal;
+    const toolEl = document.getElementById("ghostPlaybackTool");
 
     playbackState = {
       running: true,
@@ -1193,25 +1214,118 @@
       placements,
       index: 0,
       charStart: performance.now(),
+      pauseUntil: 0,
       speed,
+      toolEl,
+      lastTip: null,
+      vaporTrail: [],
       onDone
     };
 
     clearPlaybackCanvas(c, rect.width, rect.height, options);
+    hidePlaybackTool(playbackState);
     playbackRaf = requestAnimationFrame(playbackFrame);
   }
 
-  function playbackFrame(now){
+  function buildPlaybackPlacements(allPlacements) {
+    const all = Array.isArray(allPlacements) ? allPlacements : [];
+    const out = [];
+
+    for (let i = 0; i < all.length; i += 1) {
+      const item = all[i];
+      if (!item || /\s/.test(item.char)) continue;
+
+      const pauseAfter = getPauseAfterPlacement(all, i);
+
+      out.push({
+        ...item,
+        pauseAfter
+      });
+    }
+
+    return out;
+  }
+
+  function getPauseAfterPlacement(allPlacements, index) {
+    const current = allPlacements[index];
+    if (!current) return 0;
+
+    const char = String(current.char || "");
+    const isPunctuation = /[.,;:!?]/.test(char);
+
+    let sawSpace = false;
+    let next = null;
+
+    for (let i = index + 1; i < allPlacements.length; i += 1) {
+      const item = allPlacements[i];
+      if (!item) continue;
+
+      if (/\s/.test(item.char)) {
+        sawSpace = true;
+        continue;
+      }
+
+      next = item;
+      break;
+    }
+
+    if (!next) {
+      return isPunctuation ? PLAYBACK_PAUSES.punctuation : 0;
+    }
+
+    const lineJump = next.y > current.y + Math.max(8, current.fontSize * .45);
+
+    if (lineJump) {
+      return PLAYBACK_PAUSES.line;
+    }
+
+    if (isPunctuation) {
+      return PLAYBACK_PAUSES.punctuation;
+    }
+
+    if (sawSpace) {
+      return PLAYBACK_PAUSES.word;
+    }
+
+    return 0;
+  }
+  
+  function playbackFrame(now) {
     const ps = playbackState;
     if (!ps || !ps.running) return;
 
     const placements = ps.placements;
 
-    if (ps.index >= placements.length){
+    if (ps.pauseUntil && now < ps.pauseUntil) {
+      clearPlaybackCanvas(ps.c, ps.width, ps.height, ps.options);
+      drawVaporTrail(ps, now);
+
+      for (let i = 0; i < ps.index; i += 1) {
+        const item = placements[i];
+        drawGlyph(ps.c, getGlyph(item.char), item.x, item.y, item.w, item.fontSize, ps.options, 1);
+      }
+
+      if (ps.lastTip) {
+        updatePlaybackTool(ps, ps.lastTip, now, false);
+      }
+
+      playbackRaf = requestAnimationFrame(playbackFrame);
+      return;
+    }
+
+    if (ps.pauseUntil && now >= ps.pauseUntil) {
+      ps.pauseUntil = 0;
+      ps.charStart = now;
+    }
+
+    if (ps.index >= placements.length) {
       drawCompleteText(ps.c, ps.width, ps.height, ps.options);
+      hidePlaybackTool(ps);
+
       const done = ps.onDone;
       playbackState = null;
       playbackRaf = 0;
+
       if (typeof done === "function") done();
       return;
     }
@@ -1219,31 +1333,278 @@
     const current = placements[ps.index];
     const glyph = getGlyph(current.char);
     const pieces = glyph ? countStrokePieces(glyph.strokes) : 1;
-    const duration = clamp((180 + pieces * 26) * (ps.speed?.multiplier || 1), 120, 850);
+    const duration = clamp((92 + pieces * 15) * (ps.speed?.multiplier || 1), 65, 480);
     const progress = clamp((now - ps.charStart) / duration, 0, 1);
+    const tip = getGlyphPlaybackTip(glyph, current, ps.options, progress);
 
     clearPlaybackCanvas(ps.c, ps.width, ps.height, ps.options);
 
-    for (let i = 0; i < ps.index; i += 1){
+    if (tip) {
+      ps.lastTip = tip;
+      addVaporPuff(ps, tip, now);
+    }
+
+    drawVaporTrail(ps, now);
+
+    for (let i = 0; i < ps.index; i += 1) {
       const item = placements[i];
       drawGlyph(ps.c, getGlyph(item.char), item.x, item.y, item.w, item.fontSize, ps.options, 1);
     }
 
     drawGlyph(ps.c, glyph, current.x, current.y, current.w, current.fontSize, ps.options, progress);
 
-    if (progress >= 1){
+    if (tip) {
+      updatePlaybackTool(ps, tip, now, true);
+    }
+
+    if (progress >= 1) {
       ps.index += 1;
-      ps.charStart = now;
+
+      if (current.pauseAfter) {
+        ps.pauseUntil = now + current.pauseAfter;
+      } else {
+        ps.charStart = now;
+      }
     }
 
     playbackRaf = requestAnimationFrame(playbackFrame);
   }
 
+  function hidePlaybackTool(ps) {
+    const tool = ps?.toolEl;
+    if (!tool) return;
+
+    tool.classList.remove("is-visible");
+  }
+
+  function updatePlaybackTool(ps, tip, now, moving) {
+    const tool = ps?.toolEl;
+    if (!tool || !tip) return;
+
+    const wobble = moving
+      ? Math.sin(now / 72) * PLAYBACK_TOOL.wobbleDeg + stableNoise(`${tip.x}-${tip.y}-${Math.floor(now / 140)}`) * 2
+      : Math.sin(now / 210) * 1.5;
+
+    const angle = PLAYBACK_TOOL.baseRotationDeg + tip.angleDeg + wobble;
+
+    tool.style.left = `${tip.x}px`;
+    tool.style.top = `${tip.y}px`;
+    tool.style.transform = `translateY(-100%) rotate(${angle}deg)`;
+    tool.classList.add("is-visible");
+  }
+
+  function addVaporPuff(ps, tip, now) {
+    if (!ps || !tip) return;
+
+    const last = ps.vaporTrail[ps.vaporTrail.length - 1];
+
+    if (last) {
+      const dx = tip.x - last.x;
+      const dy = tip.y - last.y;
+      if (Math.hypot(dx, dy) < 5) {
+        return;
+      }
+    }
+
+    ps.vaporTrail.push({
+      x: tip.x + stableNoise(`vap-x-${now}`) * 4,
+      y: tip.y + stableNoise(`vap-y-${now}`) * 4,
+      born: now,
+      life: 520 + Math.random() * 260,
+      radius: 7 + Math.random() * 13
+    });
+
+    if (ps.vaporTrail.length > 54) {
+      ps.vaporTrail.splice(0, ps.vaporTrail.length - 54);
+    }
+  }
+
+  function drawVaporTrail(ps, now) {
+    if (!ps || !Array.isArray(ps.vaporTrail)) return;
+
+    const c = ps.c;
+    const alive = [];
+
+    c.save();
+    c.globalCompositeOperation = "lighter";
+
+    for (const puff of ps.vaporTrail) {
+      const age = now - puff.born;
+      const t = clamp(age / puff.life, 0, 1);
+
+      if (t >= 1) continue;
+
+      alive.push(puff);
+
+      const alpha = (1 - t) * .18;
+      const radius = puff.radius * (1 + t * 1.7);
+      const driftY = -18 * t;
+      const driftX = stableNoise(`drift-${puff.born}`) * 10 * t;
+
+      const gradient = c.createRadialGradient(
+        puff.x + driftX,
+        puff.y + driftY,
+        0,
+        puff.x + driftX,
+        puff.y + driftY,
+        radius
+      );
+
+      gradient.addColorStop(0, `rgba(235,240,255,${alpha})`);
+      gradient.addColorStop(.55, `rgba(190,200,255,${alpha * .45})`);
+      gradient.addColorStop(1, "rgba(235,240,255,0)");
+
+      c.fillStyle = gradient;
+      c.beginPath();
+      c.arc(puff.x + driftX, puff.y + driftY, radius, 0, Math.PI * 2);
+      c.fill();
+    }
+
+    c.restore();
+
+    ps.vaporTrail = alive;
+  }
+
+  function getGlyphPlaybackTip(glyph, item, options = {}, partial = 1) {
+    if (!glyph || !glyph.strokes || !glyph.strokes.length || !item) return null;
+
+    const metrics = getGlyphDrawMetrics(glyph, item, options);
+    const safePartial = clamp(partial, 0, 1);
+    const strokeUnits = glyph.strokes.map((stroke) => getStrokePlaybackUnits(stroke));
+    const totalUnits = strokeUnits.reduce((sum, units) => sum + units, 0) || 1;
+    let remainingUnits = totalUnits * safePartial;
+
+    for (let strokeIndex = 0; strokeIndex < glyph.strokes.length; strokeIndex += 1) {
+      const stroke = glyph.strokes[strokeIndex];
+      const units = strokeUnits[strokeIndex] || 1;
+
+      if (!stroke || !stroke.length) continue;
+
+      if (remainingUnits <= 0) {
+        break;
+      }
+
+      const strokeProgress = clamp(remainingUnits / units, 0, 1);
+      const local = getStrokePointAtProgress(stroke, strokeProgress);
+
+      if (local) {
+        return transformGlyphPoint(local, metrics);
+      }
+
+      remainingUnits -= units;
+
+      if (strokeProgress < 1) {
+        break;
+      }
+    }
+
+    const firstStroke = glyph.strokes[0];
+    const firstPoint = firstStroke?.[0];
+
+    return firstPoint ? transformGlyphPoint(firstPoint, metrics) : null;
+  }
+
+  function getGlyphDrawMetrics(glyph, item, options = {}) {
+    const glyphBounds = glyph.bounds || computeBounds(glyph.strokes);
+    const fontSize = item.fontSize;
+    const cellW = item.w;
+    const x = item.x;
+    const baselineY = item.y;
+    const jitterOn = options.jitter === "on";
+    const wobbleOn = options.wobble === "on";
+
+    const usableH = fontSize * 1.04;
+    const usableW = Math.max(fontSize * .14, cellW * .88);
+    const scale = Math.min(
+      usableW / Math.max(.04, glyphBounds.width),
+      usableH / Math.max(.04, glyphBounds.height)
+    );
+
+    const drawW = glyphBounds.width * scale;
+    const drawH = glyphBounds.height * scale;
+    const baseX = x + (cellW - drawW) / 2 - glyphBounds.minX * scale;
+    const baseY = baselineY - usableH * .80 + (usableH - drawH) / 2 - glyphBounds.minY * scale;
+
+    const jitterX = jitterOn ? stableNoise(`${glyph.char}-${x}-x`) * fontSize * .08 : 0;
+    const jitterY = jitterOn ? stableNoise(`${glyph.char}-${x}-y`) * fontSize * .06 : 0;
+    const rotation = wobbleOn ? stableNoise(`${glyph.char}-${x}-r`) * .09 : 0;
+
+    return {
+      baseX,
+      baseY,
+      scale,
+      originX: x + cellW / 2,
+      originY: baselineY - fontSize * .36,
+      jitterX,
+      jitterY,
+      rotation
+    };
+  }
+
+  function getStrokePointAtProgress(stroke, progress) {
+    const safeProgress = clamp(progress, 0, 1);
+
+    if (!stroke || !stroke.length) return null;
+
+    if (stroke.length === 1) {
+      return {
+        x: stroke[0].x,
+        y: stroke[0].y,
+        angleDeg: 0
+      };
+    }
+
+    const segmentCount = stroke.length - 1;
+    const pieces = segmentCount * safeProgress;
+
+    if (pieces <= 0) {
+      const a = stroke[0];
+      const b = stroke[1] || a;
+
+      return {
+        x: a.x,
+        y: a.y,
+        angleDeg: Math.atan2((b.y || a.y) - a.y, (b.x || a.x) - a.x) * 180 / Math.PI
+      };
+    }
+
+    const index = Math.min(segmentCount - 1, Math.floor(pieces));
+    const remain = clamp(pieces - index, 0, 1);
+    const a = stroke[index];
+    const b = stroke[index + 1] || a;
+
+    return {
+      x: a.x + ((b.x || a.x) - a.x) * remain,
+      y: a.y + ((b.y || a.y) - a.y) * remain,
+      angleDeg: Math.atan2((b.y || a.y) - a.y, (b.x || a.x) - a.x) * 180 / Math.PI
+    };
+  }
+
+  function transformGlyphPoint(point, metrics) {
+    const rawX = metrics.baseX + point.x * metrics.scale;
+    const rawY = metrics.baseY + point.y * metrics.scale;
+    const dx = rawX - metrics.originX;
+    const dy = rawY - metrics.originY;
+    const cos = Math.cos(metrics.rotation);
+    const sin = Math.sin(metrics.rotation);
+
+    return {
+      x: metrics.originX + metrics.jitterX + dx * cos - dy * sin,
+      y: metrics.originY + metrics.jitterY + dx * sin + dy * cos,
+      angleDeg: (point.angleDeg || 0) + metrics.rotation * 180 / Math.PI
+    };
+  }
+
   function stopPlayback(){
+    if (playbackState){
+      hidePlaybackTool(playbackState);
+    }
+
     if (playbackRaf){
       cancelAnimationFrame(playbackRaf);
       playbackRaf = 0;
     }
+
     playbackState = null;
   }
 

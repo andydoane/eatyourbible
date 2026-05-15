@@ -366,6 +366,28 @@ body{
   display:block;
 }
 
+.ghost-playback-tool {
+  position: absolute;
+  z-index: 3;
+  left: 0;
+  top: 0;
+  width: clamp(58px, 10vw, 108px);
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  transform-origin: 0% 100%;
+  opacity: 0;
+  filter:
+    drop-shadow(0 8px 10px rgba(0, 0, 0, .38)) drop-shadow(0 0 8px rgba(255, 255, 255, .22));
+  transition: opacity .12s ease;
+  will-change: transform, opacity;
+}
+
+.ghost-playback-tool.is-visible {
+  opacity: 1;
+}
+
 .ghost-playback-label{
   position:absolute;
   left:50%;
