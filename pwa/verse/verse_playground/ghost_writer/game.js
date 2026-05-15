@@ -125,6 +125,54 @@
       cardClass: "",
       texture: "image",
       imageSrc: "./ghost_writer_images/ghost_writer_bg_grass.png"
+    },
+    aquaRed: {
+      label: "Aqua Red",
+      kind: "special",
+      value: "#d85b61",
+      cardClass: "",
+      texture: "image",
+      imageSrc: "./ghost_writer_images/ghost_writer_bg_aqua_red.jpg"
+    },
+    aquaOrange: {
+      label: "Aqua Orange",
+      kind: "special",
+      value: "#d98b4c",
+      cardClass: "",
+      texture: "image",
+      imageSrc: "./ghost_writer_images/ghost_writer_bg_aqua_orange.jpg"
+    },
+    aquaYellow: {
+      label: "Aqua Yellow",
+      kind: "special",
+      value: "#d8ba54",
+      cardClass: "",
+      texture: "image",
+      imageSrc: "./ghost_writer_images/ghost_writer_bg_aqua_yellow.jpg"
+    },
+    aquaGreen: {
+      label: "Aqua Green",
+      kind: "special",
+      value: "#5eac74",
+      cardClass: "",
+      texture: "image",
+      imageSrc: "./ghost_writer_images/ghost_writer_bg_aqua_green.jpg"
+    },
+    aquaBlue: {
+      label: "Aqua Blue",
+      kind: "special",
+      value: "#4d8fcb",
+      cardClass: "",
+      texture: "image",
+      imageSrc: "./ghost_writer_images/ghost_writer_bg_aqua_blue.jpg"
+    },
+    aquaPurple: {
+      label: "Aqua Purple",
+      kind: "special",
+      value: "#8f71c8",
+      cardClass: "",
+      texture: "image",
+      imageSrc: "./ghost_writer_images/ghost_writer_bg_aqua_purple.jpg"
     }
   };
 
