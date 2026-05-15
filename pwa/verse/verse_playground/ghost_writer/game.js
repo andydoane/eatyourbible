@@ -1113,37 +1113,6 @@
     );
   }
 
-  function makeLayout(width, height) {
-    const safeWidth = Math.max(120, width);
-    const safeHeight = Math.max(120, height);
-    const text = state.fullText || "";
-    const maxWidth = safeWidth * .94;
-    const maxHeight = safeHeight * .88;
-
-    const dynamicMax = Math.min(
-      safeWidth * .17,
-      safeHeight * .24,
-      132
-    );
-
-    const maxFontSize = Math.max(28, dynamicMax);
-    const minFontSize = 12;
-    let best = null;
-
-    for (let fontSize = maxFontSize; fontSize >= minFontSize; fontSize -= 1) {
-      const layout = layoutForFontSize(text, fontSize, maxWidth, maxHeight, safeWidth, safeHeight);
-
-      if (!layout.overflows) {
-        best = layout;
-        break;
-      }
-    }
-
-    if (best) return best;
-
-    return layoutForFontSize(text, minFontSize, maxWidth, maxHeight, safeWidth, safeHeight);
-  }
-
   function layoutForFontSize(text, fontSize, maxWidth, maxHeight, canvasWidth, canvasHeight, offsetX = 0, offsetY = 0) {
     const lineHeight = fontSize * 1.24;
     const placements = [];
@@ -1201,90 +1170,6 @@
 
     for (const currentLine of lines) {
       let x = offsetX + (canvasWidth - currentLine.width) / 2;
-      for (const item of currentLine.items) {
-        placements.push({
-          char: item.char,
-          x,
-          y,
-          w: item.w,
-          h: fontSize,
-          fontSize
-        });
-        x += item.w;
-      }
-      y += lineHeight;
-    }
-
-    const usedWidth = Math.max(...lines.map((l) => l.width), 0);
-
-    return {
-      placements,
-      fontSize,
-      lineHeight,
-      height: totalHeight,
-      width: usedWidth,
-      lineCount: lines.length,
-      overflows: usedWidth > maxWidth + 1 || totalHeight > maxHeight + 1
-    };
-  }
-
-  function layoutForFontSize(text, fontSize, maxWidth, maxHeight, canvasWidth, canvasHeight) {
-    const lineHeight = fontSize * 1.24;
-    const placements = [];
-    const lines = [];
-    let line = [];
-    let lineWidth = 0;
-
-    const pushLine = () => {
-      lines.push({ items: line, width: lineWidth });
-      line = [];
-      lineWidth = 0;
-    };
-
-    const addChar = (char) => {
-      const widthUnits = glyphWidthUnits(char);
-      const w = fontSize * widthUnits;
-
-      if (line.length && lineWidth + w > maxWidth) {
-        pushLine();
-      }
-
-      line.push({ char, w, fontSize });
-      lineWidth += w;
-    };
-
-    const tokens = String(text || "").match(/\n|\s+|\S+/g) || [];
-
-    for (const token of tokens) {
-      if (token === "\n") {
-        pushLine();
-        continue;
-      }
-
-      if (/^\s+$/.test(token)) {
-        if (line.length) addChar(" ");
-        continue;
-      }
-
-      const chars = Array.from(token);
-      const tokenWidth = chars.reduce((sum, char) => sum + fontSize * glyphWidthUnits(char), 0);
-
-      if (line.length && tokenWidth <= maxWidth && lineWidth + tokenWidth > maxWidth) {
-        pushLine();
-      }
-
-      for (const char of chars) {
-        addChar(char);
-      }
-    }
-
-    if (line.length || !lines.length) pushLine();
-
-    const totalHeight = lines.length * lineHeight;
-    let y = Math.max(fontSize * .9, (canvasHeight - totalHeight) / 2 + fontSize * .76);
-
-    for (const currentLine of lines) {
-      let x = (canvasWidth - currentLine.width) / 2;
       for (const item of currentLine.items) {
         placements.push({
           char: item.char,
@@ -1637,7 +1522,7 @@
     const thicknessConfig = BORDER_THICKNESS[options.borderThickness] || BORDER_THICKNESS.medium;
     const lineWidth = thicknessConfig.size;
     const borderInset = Math.max(14, lineWidth * 2.2);
-    const extraGap = Math.max(18, lineWidth * 2.4);
+    const extraGap = Math.max(26, lineWidth * 3.2);
     const inset = borderInset + extraGap;
 
     return {
