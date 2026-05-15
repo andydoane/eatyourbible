@@ -33,6 +33,7 @@
     brown: { label: "Brown", value: "#a36f44" }
   };
 
+
   const BACKGROUNDS = {
     ghost: {
       label: "Ghost Black",
@@ -50,6 +51,7 @@
     darkGray: { ...COLOR_PALETTE.darkGray, kind: "solid", cardClass: "" },
     lightGray: { ...COLOR_PALETTE.lightGray, kind: "solid", cardClass: "" },
     brown: { ...COLOR_PALETTE.brown, kind: "solid", cardClass: "" },
+
     chalkboard: {
       label: "Chalkboard",
       kind: "special",
@@ -63,6 +65,62 @@
       value: "#fff8e8",
       cardClass: "is-paper",
       texture: "paper"
+    },
+    notebook: {
+      label: "Notebook Paper",
+      kind: "special",
+      value: "#fbfdff",
+      cardClass: "",
+      texture: "notebook"
+    },
+    starryNight: {
+      label: "Starry Night",
+      kind: "special",
+      value: "#071126",
+      cardClass: "",
+      texture: "starryNight"
+    },
+    purpleMist: {
+      label: "Purple Mist",
+      kind: "special",
+      value: "#21142f",
+      cardClass: "",
+      texture: "purpleMist"
+    },
+    treasureMap: {
+      label: "Treasure Map",
+      kind: "special",
+      value: "#d9b874",
+      cardClass: "",
+      texture: "treasureMap"
+    },
+    rainbow: {
+      label: "Rainbow",
+      kind: "special",
+      value: "#f8f1ff",
+      cardClass: "",
+      texture: "rainbow"
+    },
+    wood: {
+      label: "Wood",
+      kind: "special",
+      value: "#8d5a32",
+      cardClass: "",
+      texture: "wood"
+    },
+    crackedStone: {
+      label: "Cracked Stone",
+      kind: "special",
+      value: "#787d83",
+      cardClass: "",
+      texture: "crackedStone"
+    },
+    grass: {
+      label: "Green Grass",
+      kind: "special",
+      value: "#7dbc53",
+      cardClass: "",
+      texture: "grass"
     }
   };
 
@@ -1832,7 +1890,14 @@
     }
 
     if (background.texture === "chalkboard") {
-      c.globalAlpha = .08;
+      const boardGlow = c.createRadialGradient(width * .5, height * .35, 0, width * .5, height * .35, Math.max(width, height) * .72);
+      boardGlow.addColorStop(0, "rgba(255,255,255,.08)");
+      boardGlow.addColorStop(.55, "rgba(255,255,255,.025)");
+      boardGlow.addColorStop(1, "rgba(0,0,0,.16)");
+      c.fillStyle = boardGlow;
+      c.fillRect(0, 0, width, height);
+
+      c.globalAlpha = .07;
       c.strokeStyle = "#ffffff";
       c.lineWidth = 1;
 
@@ -1843,12 +1908,28 @@
         c.stroke();
       }
 
-      c.globalAlpha = .045;
+      c.globalAlpha = .035;
       for (let x = 18; x < width; x += 42) {
         c.beginPath();
         c.moveTo(x + stableNoise(`chalk-v-${x}`) * 3, 0);
         c.lineTo(x + stableNoise(`chalk-v2-${x}`) * 3, height);
         c.stroke();
+      }
+
+      c.globalAlpha = .09;
+      c.fillStyle = "#ffffff";
+
+      for (let i = 0; i < 56; i += 1) {
+        const x = (stableNoise(`chalk-dust-x-${i}`) * .5 + .5) * width;
+        const y = (stableNoise(`chalk-dust-y-${i}`) * .5 + .5) * height;
+        const r = Math.max(10, Math.min(width, height) * (.018 + (stableNoise(`chalk-dust-r-${i}`) * .5 + .5) * .035));
+        const dust = c.createRadialGradient(x, y, 0, x, y, r);
+        dust.addColorStop(0, "rgba(255,255,255,.22)");
+        dust.addColorStop(1, "rgba(255,255,255,0)");
+        c.fillStyle = dust;
+        c.beginPath();
+        c.arc(x, y, r, 0, Math.PI * 2);
+        c.fill();
       }
     }
 
@@ -1860,13 +1941,242 @@
         c.fillRect(0, y, width, 1);
       }
 
-      c.globalAlpha = .12;
-      c.fillStyle = "#7f66c6";
-      c.fillRect(width * .12, 0, 2, height);
-
       c.globalAlpha = .05;
       for (let x = 0; x < width; x += 22) {
         c.fillRect(x, 0, 1, height);
+      }
+    }
+
+    if (background.texture === "notebook") {
+      const paperGlow = c.createLinearGradient(0, 0, 0, height);
+      paperGlow.addColorStop(0, "#ffffff");
+      paperGlow.addColorStop(1, "#eef7ff");
+      c.globalAlpha = 1;
+      c.fillStyle = paperGlow;
+      c.fillRect(0, 0, width, height);
+
+      c.globalAlpha = .24;
+      c.fillStyle = "#80b7e8";
+      const lineGap = Math.max(24, height * .055);
+
+      for (let y = lineGap; y < height; y += lineGap) {
+        c.fillRect(0, y, width, Math.max(1, height * .002));
+      }
+
+      c.globalAlpha = .04;
+      c.fillStyle = "#53606f";
+      for (let i = 0; i < 120; i += 1) {
+        const x = (stableNoise(`notebook-speck-x-${i}`) * .5 + .5) * width;
+        const y = (stableNoise(`notebook-speck-y-${i}`) * .5 + .5) * height;
+        c.fillRect(x, y, 1.5, 1.5);
+      }
+    }
+
+    if (background.texture === "starryNight") {
+      const sky = c.createLinearGradient(0, 0, 0, height);
+      sky.addColorStop(0, "#071126");
+      sky.addColorStop(.55, "#101c3f");
+      sky.addColorStop(1, "#02040b");
+      c.globalAlpha = 1;
+      c.fillStyle = sky;
+      c.fillRect(0, 0, width, height);
+
+      const moonGlow = c.createRadialGradient(width * .78, height * .20, 0, width * .78, height * .20, Math.max(width, height) * .38);
+      moonGlow.addColorStop(0, "rgba(255,255,230,.30)");
+      moonGlow.addColorStop(.42, "rgba(200,215,255,.12)");
+      moonGlow.addColorStop(1, "rgba(255,255,255,0)");
+      c.fillStyle = moonGlow;
+      c.fillRect(0, 0, width, height);
+
+      for (let i = 0; i < 120; i += 1) {
+        const x = (stableNoise(`star-x-${i}`) * .5 + .5) * width;
+        const y = (stableNoise(`star-y-${i}`) * .5 + .5) * height;
+        const r = Math.max(.8, Math.min(width, height) * (.0015 + (stableNoise(`star-r-${i}`) * .5 + .5) * .003));
+        c.globalAlpha = .35 + (stableNoise(`star-a-${i}`) * .5 + .5) * .55;
+        c.fillStyle = "#ffffff";
+        c.beginPath();
+        c.arc(x, y, r, 0, Math.PI * 2);
+        c.fill();
+      }
+    }
+
+    if (background.texture === "purpleMist") {
+      const mistBg = c.createLinearGradient(0, 0, width, height);
+      mistBg.addColorStop(0, "#191221");
+      mistBg.addColorStop(.45, "#2b1742");
+      mistBg.addColorStop(1, "#0e1019");
+      c.globalAlpha = 1;
+      c.fillStyle = mistBg;
+      c.fillRect(0, 0, width, height);
+
+      for (let i = 0; i < 12; i += 1) {
+        const x = (stableNoise(`mist-x-${i}`) * .5 + .5) * width;
+        const y = (stableNoise(`mist-y-${i}`) * .5 + .5) * height;
+        const r = Math.max(width, height) * (.16 + (stableNoise(`mist-r-${i}`) * .5 + .5) * .22);
+        const mist = c.createRadialGradient(x, y, 0, x, y, r);
+        mist.addColorStop(0, "rgba(180,130,255,.18)");
+        mist.addColorStop(.5, "rgba(120,190,230,.07)");
+        mist.addColorStop(1, "rgba(255,255,255,0)");
+        c.globalAlpha = 1;
+        c.fillStyle = mist;
+        c.fillRect(0, 0, width, height);
+      }
+    }
+
+    if (background.texture === "treasureMap") {
+      const parchment = c.createRadialGradient(width * .5, height * .45, 0, width * .5, height * .45, Math.max(width, height) * .72);
+      parchment.addColorStop(0, "#f0d89c");
+      parchment.addColorStop(.62, "#d9b874");
+      parchment.addColorStop(1, "#9e6f38");
+      c.globalAlpha = 1;
+      c.fillStyle = parchment;
+      c.fillRect(0, 0, width, height);
+
+      c.globalAlpha = .12;
+      c.strokeStyle = "#6f451f";
+      c.lineWidth = Math.max(1, Math.min(width, height) * .004);
+
+      for (let i = 0; i < 18; i += 1) {
+        const y = (i + 1) * height / 19;
+        c.beginPath();
+        c.moveTo(width * .05, y + stableNoise(`map-line-a-${i}`) * 12);
+        c.bezierCurveTo(
+          width * .28,
+          y + stableNoise(`map-line-b-${i}`) * 22,
+          width * .62,
+          y + stableNoise(`map-line-c-${i}`) * 22,
+          width * .95,
+          y + stableNoise(`map-line-d-${i}`) * 12
+        );
+        c.stroke();
+      }
+
+      c.globalAlpha = .13;
+      c.fillStyle = "#5f3b1a";
+      for (let i = 0; i < 90; i += 1) {
+        const x = (stableNoise(`map-speck-x-${i}`) * .5 + .5) * width;
+        const y = (stableNoise(`map-speck-y-${i}`) * .5 + .5) * height;
+        const r = Math.max(1.2, Math.min(width, height) * (.002 + (stableNoise(`map-speck-r-${i}`) * .5 + .5) * .006));
+        c.beginPath();
+        c.arc(x, y, r, 0, Math.PI * 2);
+        c.fill();
+      }
+    }
+
+    if (background.texture === "rainbow") {
+      const rainbow = c.createLinearGradient(0, 0, width, height);
+      rainbow.addColorStop(0, "#ff5a51");
+      rainbow.addColorStop(.18, "#ffa351");
+      rainbow.addColorStop(.34, "#ffc751");
+      rainbow.addColorStop(.50, "#a7cb6f");
+      rainbow.addColorStop(.68, "#40b9c5");
+      rainbow.addColorStop(.84, "#7f66c6");
+      rainbow.addColorStop(1, "#ff9bd2");
+      c.globalAlpha = 1;
+      c.fillStyle = rainbow;
+      c.fillRect(0, 0, width, height);
+
+      c.globalAlpha = .24;
+      c.fillStyle = "#ffffff";
+      for (let i = 0; i < 14; i += 1) {
+        const y = (i - 2) * height / 10;
+        c.beginPath();
+        c.ellipse(width * .5, y, width * .78, height * .12, -.24, 0, Math.PI * 2);
+        c.fill();
+      }
+    }
+
+    if (background.texture === "wood") {
+      const wood = c.createLinearGradient(0, 0, width, height);
+      wood.addColorStop(0, "#a36f44");
+      wood.addColorStop(.5, "#7c4d2b");
+      wood.addColorStop(1, "#5d351d");
+      c.globalAlpha = 1;
+      c.fillStyle = wood;
+      c.fillRect(0, 0, width, height);
+
+      c.globalAlpha = .22;
+      c.strokeStyle = "#3e2414";
+      c.lineWidth = Math.max(1, Math.min(width, height) * .004);
+
+      for (let y = 0; y < height; y += Math.max(18, height * .055)) {
+        c.beginPath();
+        c.moveTo(0, y);
+        for (let x = 0; x <= width; x += width / 8) {
+          c.lineTo(x, y + stableNoise(`wood-${x}-${y}`) * height * .018);
+        }
+        c.stroke();
+      }
+
+      c.globalAlpha = .16;
+      for (let i = 0; i < 8; i += 1) {
+        const x = (stableNoise(`knot-x-${i}`) * .5 + .5) * width;
+        const y = (stableNoise(`knot-y-${i}`) * .5 + .5) * height;
+        c.beginPath();
+        c.ellipse(x, y, width * .045, height * .018, stableNoise(`knot-r-${i}`), 0, Math.PI * 2);
+        c.stroke();
+      }
+    }
+
+    if (background.texture === "crackedStone") {
+      const stone = c.createRadialGradient(width * .5, height * .42, 0, width * .5, height * .42, Math.max(width, height) * .72);
+      stone.addColorStop(0, "#a0a6ad");
+      stone.addColorStop(.55, "#777d83");
+      stone.addColorStop(1, "#4b5056");
+      c.globalAlpha = 1;
+      c.fillStyle = stone;
+      c.fillRect(0, 0, width, height);
+
+      c.globalAlpha = .20;
+      c.strokeStyle = "#2d3135";
+      c.lineWidth = Math.max(1.2, Math.min(width, height) * .004);
+
+      for (let i = 0; i < 18; i += 1) {
+        let x = (stableNoise(`crack-x-${i}`) * .5 + .5) * width;
+        let y = (stableNoise(`crack-y-${i}`) * .5 + .5) * height;
+        c.beginPath();
+        c.moveTo(x, y);
+
+        for (let j = 0; j < 4; j += 1) {
+          x += stableNoise(`crack-x-${i}-${j}`) * width * .10;
+          y += stableNoise(`crack-y-${i}-${j}`) * height * .10;
+          c.lineTo(x, y);
+        }
+
+        c.stroke();
+      }
+
+      c.globalAlpha = .10;
+      c.fillStyle = "#ffffff";
+      for (let i = 0; i < 70; i += 1) {
+        const x = (stableNoise(`stone-speck-x-${i}`) * .5 + .5) * width;
+        const y = (stableNoise(`stone-speck-y-${i}`) * .5 + .5) * height;
+        c.fillRect(x, y, 2, 2);
+      }
+    }
+
+    if (background.texture === "grass") {
+      const skyGrass = c.createLinearGradient(0, 0, 0, height);
+      skyGrass.addColorStop(0, "#dff7ff");
+      skyGrass.addColorStop(.48, "#eefdf0");
+      skyGrass.addColorStop(.49, "#92d36d");
+      skyGrass.addColorStop(1, "#3e8c32");
+      c.globalAlpha = 1;
+      c.fillStyle = skyGrass;
+      c.fillRect(0, 0, width, height);
+
+      c.globalAlpha = .25;
+      c.strokeStyle = "#1f6f25";
+      c.lineWidth = Math.max(1, width * .002);
+
+      for (let i = 0; i < 120; i += 1) {
+        const x = (stableNoise(`grass-x-${i}`) * .5 + .5) * width;
+        const baseY = height * (.58 + (stableNoise(`grass-y-${i}`) * .5 + .5) * .38);
+        const bladeH = height * (.025 + (stableNoise(`grass-h-${i}`) * .5 + .5) * .055);
+        c.beginPath();
+        c.moveTo(x, baseY);
+        c.lineTo(x + stableNoise(`grass-lean-${i}`) * width * .014, baseY - bladeH);
+        c.stroke();
       }
     }
 
