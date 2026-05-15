@@ -26,10 +26,10 @@
     orange: { label: "Orange", value: "#ffa351" },
     yellow: { label: "Yellow", value: "#ffc751" },
     green: { label: "Green", value: "#a7cb6f" },
-    teal: { label: "Teal", value: "#40b9c5" },
+    teal: { label: "Blue", value: "#40b9c5" },
     purple: { label: "Purple", value: "#7f66c6" },
     darkGray: { label: "Dark Gray", value: "#333333" },
-    lightGray: { label: "Light Gray", value: "#f2f2f2" },
+    lightGray: { label: "White", value: "#ffffff" },
     brown: { label: "Brown", value: "#a36f44" }
   };
 
@@ -190,18 +190,7 @@
       lifeJitter: 0,
       driftY: 0
     },
-    light: {
-      label: "Light",
-      enabled: true,
-      max: 28,
-      spawnDistance: 9,
-      alpha: .10,
-      radius: 5,
-      radiusJitter: 8,
-      life: 390,
-      lifeJitter: 180,
-      driftY: 12
-    },
+
     normal: {
       label: "Normal",
       enabled: true,
@@ -375,7 +364,7 @@
         <li>Write each uppercase character one time in the big square.</li>
         <li>Beginner keeps a light guide on the page. Advanced flashes the guide, then hides it.</li>
         <li>When every character is ready, tap <strong>Ghost Write!</strong> and watch the verse write itself.</li>
-        <li>After the first ghost writing, replay it with fun styles like chalkboard and crayon.</li>
+        <li>After the first ghost writing, remix it with fun backgrounds, colors, borders, and writing tools.</li>
       </ul>
     `;
   }
@@ -1471,7 +1460,7 @@
   }
 
   function isRainbowAllowedForBackground(backgroundKey) {
-    return backgroundKey === "lightGray" || backgroundKey === "darkGray";
+    return ["ghost", "paper", "lightGray", "darkGray"].includes(backgroundKey);
   }
 
   function isTextColorAllowedForBackground(textColorKey, backgroundKey) {
@@ -1988,7 +1977,7 @@
     tool.style.transform = `translateY(-100%) rotate(${angle}deg)`;
     tool.classList.add("is-visible");
   }
-  
+
 
   function shortestAngleDelta(fromDeg, toDeg) {
     let delta = (toDeg - fromDeg) % 360;
