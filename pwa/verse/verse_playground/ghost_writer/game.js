@@ -223,6 +223,12 @@
     line: 330
   };
 
+  const EXPORT_IMAGE = {
+    width: 1080,
+    height: 1080,
+    filenamePrefix: "ghost-writer"
+  };
+
   const app = document.getElementById("app");
 
   const DEBUG_GHOST_WRITER = (() => {
@@ -991,6 +997,7 @@
 
           <div class="ghost-remix-actions">
             <button class="vm-btn" id="ghostReplayBtn" type="button">Replay</button>
+            <button class="vm-btn vm-btn-secondary" id="ghostSaveImageBtn" type="button">Save as Image</button>
             <button class="vm-btn vm-btn-secondary" id="ghostAgainBtn" type="button">Try Again</button>
             <button class="vm-btn vm-btn-secondary ghost-full" id="ghostBackBtn" type="button">Back to Playground</button>
           </div>
@@ -1115,6 +1122,11 @@
     document.getElementById("ghostReplayBtn")?.addEventListener("click", () => {
       sanitizeRemixOptions(state.remix);
       renderPlayback({ options: { ...state.remix }, markPractice: false, returnTo: "remix" });
+    });
+
+    document.getElementById("ghostSaveImageBtn")?.addEventListener("click", () => {
+      sanitizeRemixOptions(state.remix);
+      saveGhostWriterImage({ ...state.remix });
     });
 
     document.getElementById("ghostAgainBtn")?.addEventListener("click", () => startRun(selectedMode));
@@ -1744,6 +1756,75 @@
 
       colorIndex += 1;
     }
+  }
+
+  function saveGhostWriterImage(options = state.remix) {
+    const cleanOptions = sanitizeRemixOptions({ ...options });
+    const canvas = document.createElement("canvas");
+    canvas.width = EXPORT_IMAGE.width;
+    canvas.height = EXPORT_IMAGE.height;
+
+    const c = canvas.getContext("2d");
+    if (!c) return;
+
+    c.setTransform(1, 0, 0, 1, 0, 0);
+    drawCompleteText(c, EXPORT_IMAGE.width, EXPORT_IMAGE.height, cleanOptions);
+
+    const filename = makeExportFilename();
+
+    if (canvas.toBlob) {
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          downloadCanvasDataUrl(canvas, filename);
+          return;
+        }
+
+        downloadBlob(blob, filename);
+      }, "image/png");
+
+      return;
+    }
+
+    downloadCanvasDataUrl(canvas, filename);
+  }
+
+  function makeExportFilename() {
+    const ref = String(parsedRef?.display || ctx.verseRef || "verse")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 42);
+
+    const suffix = ref || "verse";
+
+    return `${EXPORT_IMAGE.filenamePrefix}-${suffix}.png`;
+  }
+
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.download = filename;
+    link.rel = "noopener";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+    }, 1000);
+  }
+
+  function downloadCanvasDataUrl(canvas, filename) {
+    const link = document.createElement("a");
+
+    link.href = canvas.toDataURL("image/png");
+    link.download = filename;
+    link.rel = "noopener";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
   }
 
   function startPlayback(canvas, card, options, onDone) {
