@@ -261,6 +261,16 @@
 
   const CENTERED_TRAINING_GUIDES = new Set([".", ",", ":", ";", "'", '"', "-"]);
 
+  const GUIDE_RENDER_PROFILES = {
+    ".": { yOffset: -.24 },
+    ",": { yOffset: -.34 },
+    ":": { yOffset: -.02 },
+    ";": { yOffset: -.08 },
+    "'": { yOffset: .10 },
+    "\"": { yOffset: .10 },
+    "-": { yOffset: 0 }
+  };
+
   const GLYPH_RENDER_PROFILES = {
     ".": {
       widthScale: .34,
@@ -581,6 +591,11 @@
   function allowsDotStroke(char) {
     return [".", ":", ";", "!", "?"].includes(String(char || ""));
   }
+
+  function getGuideRenderProfile(char) {
+    return GUIDE_RENDER_PROFILES[String(char || "")] || null;
+  }
+
 
   function charLabel(char) {
     if (char === "\"") return "quotation mark";
@@ -2488,11 +2503,16 @@
     const char = currentChar();
     const rect = wrap.getBoundingClientRect();
     const box = Math.max(1, Math.min(rect.width, rect.height));
+    const centeredGuide = CENTERED_TRAINING_GUIDES.has(char);
+    const guideProfile = getGuideRenderProfile(char);
+    const guideOffsetY = (guideProfile?.yOffset || 0) * box;
 
-    guide.style.transform = CENTERED_TRAINING_GUIDES.has(char) ? "translateY(-50%)" : "";
-    guide.style.top = CENTERED_TRAINING_GUIDES.has(char) ? "50%" : "";
-    guide.style.bottom = CENTERED_TRAINING_GUIDES.has(char) ? "auto" : "";
-    guide.style.height = CENTERED_TRAINING_GUIDES.has(char) ? "auto" : "";
+    guide.style.top = centeredGuide ? "50%" : "";
+    guide.style.bottom = centeredGuide ? "auto" : "";
+    guide.style.height = centeredGuide ? "auto" : "";
+    guide.style.transform = centeredGuide
+      ? `translateY(calc(-50% + ${guideOffsetY}px))`
+      : "";
 
     const probe = document.createElement("span");
     probe.textContent = char || "A";
@@ -2534,6 +2554,7 @@
     document.body.removeChild(probe);
     guide.style.fontSize = `${Math.round(best)}px`;
   }
+
 
 
   function clearGuideTimer() {
