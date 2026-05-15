@@ -3,7 +3,7 @@
 
   const GAME_ID = "ghost_writer";
   const GAME_TITLE = "Ghost Writer";
-  const GAME_ICON = "👻✍️";
+  const GAME_ICON = "👻";
   const HELP_OVERLAY_ID = "ghostWriterHelpOverlay";
   const MENU_OVERLAY_ID = "ghostWriterGameMenuOverlay";
 
@@ -1147,14 +1147,24 @@
             alt=""
             draggable="false"
           >
-          <div class="ghost-playback-label">Ghost writing...</div>
+          <div class="ghost-playback-label" id="ghostPlaybackLabel">Ghost writing...</div>
+          <button class="ghost-playback-remix-btn" id="ghostPlaybackRemixBtn" type="button" aria-label="Open remix screen">
+            🔄 Remix
+          </button>
         </div>
       </div>
     `;
 
     const canvas = document.getElementById("ghostPlaybackCanvas");
     const card = document.getElementById("ghostPlaybackCard");
+    const remixBtn = document.getElementById("ghostPlaybackRemixBtn");
     if (!canvas || !card) return;
+
+    remixBtn?.addEventListener("click", () => {
+      if (returnTo === "remix") {
+        renderRemix();
+      }
+    });
 
     requestAnimationFrame(() => {
       startPlayback(canvas, card, cleanOptions, async () => {
@@ -1163,11 +1173,22 @@
           await markVersePracticed();
         }
 
-        if (returnTo === "remix") renderRemix();
+        showPlaybackRemixButton();
       });
     });
   }
 
+  function showPlaybackRemixButton() {
+    const label = document.getElementById("ghostPlaybackLabel");
+    const remixBtn = document.getElementById("ghostPlaybackRemixBtn");
+
+    if (label) {
+      label.textContent = "Finished!";
+      label.classList.add("is-finished");
+    }
+
+    remixBtn?.classList.add("is-visible");
+  }
 
   function renderRemix() {
     stopPlayback();
