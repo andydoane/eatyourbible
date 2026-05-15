@@ -381,6 +381,15 @@
     starPadX: 1.25
   };
 
+  const REFERENCE_OUTLINE_CACHE = new Map();
+
+  const CLOUD_SVG_VIEWBOX = {
+    width: 105.83333,
+    height: 41.275
+  };
+
+  const CLOUD_SVG_PATH = `M 57.806218,0.29969428 A 6.4331029,6.4259246 0 0 0 52.259651,3.4978984 6.4331029,6.4259246 0 0 0 47.664355,1.5671433 6.4331029,6.4259246 0 0 0 41.750129,5.4909076 6.4331029,6.4259246 0 0 0 35.882001,1.6938834 6.4331029,6.4259246 0 0 0 30.94335,4.0142793 6.4331029,6.4259246 0 0 0 27.231677,2.8345825 6.4331029,6.4259246 0 0 0 21.674078,6.052962 6.4331029,6.4259246 0 0 0 16.337529,3.2148222 6.4331029,6.4259246 0 0 0 9.9043757,9.6406787 a 6.4331029,6.4259246 0 0 0 0.037132,0.5191163 6.4331029,6.4259246 0 0 0 -0.9054294,-0.06479 6.4331029,6.4259246 0 0 0 -6.4330358,6.425994 6.4331029,6.4259246 0 0 0 0.9753071,3.390299 6.4331029,6.4259246 0 0 0 -2.87637701,5.347037 6.4331029,6.4259246 0 0 0 6.43303601,6.425994 6.4331029,6.4259246 0 0 0 1.9264593,-0.302748 6.4331029,6.4259246 0 0 0 -0.045327,0.633098 6.4331029,6.4259246 0 0 0 6.4331651,6.425867 6.4331029,6.4259246 0 0 0 5.891187,-3.862004 6.4331029,6.4259246 0 0 0 5.891167,3.862004 6.4331029,6.4259246 0 0 0 3.643521,-1.143801 6.4331029,6.4259246 0 0 0 5.006813,2.411249 6.4331029,6.4259246 0 0 0 6.165018,-4.595119 6.4331029,6.4259246 0 0 0 5.617326,3.327671 6.4331029,6.4259246 0 0 0 4.171635,-1.538755 6.4331029,6.4259246 0 0 0 5.970228,4.073651 6.4331029,6.4259246 0 0 0 6.164901,-4.595236 6.4331029,6.4259246 0 0 0 5.617453,3.327788 6.4331029,6.4259246 0 0 0 5.0068,-2.411249 6.4331029,6.4259246 0 0 0 3.643514,1.143801 6.4331029,6.4259246 0 0 0 5.256744,-2.74482 6.4331029,6.4259246 0 0 0 5.256747,2.74482 6.4331029,6.4259246 0 0 0 6.389673,-5.818999 6.4331029,6.4259246 0 0 0 3.556285,1.078563 6.4331029,6.4259246 0 0 0 6.433042,-6.425867 6.4331029,6.4259246 0 0 0 -3.71218,-5.822077 6.4331029,6.4259246 0 0 0 2.20702,-4.843177 6.4331029,6.4259246 0 0 0 -6.43304,-6.425977 6.4331029,6.4259246 0 0 0 -0.745953,0.05334 A 6.4331029,6.4259246 0 0 0 90.021227,4.1021007 6.4331029,6.4259246 0 0 0 84.604008,7.0635241 6.4331029,6.4259246 0 0 0 78.238866,1.5672025 6.4331029,6.4259246 0 0 0 73.238008,3.9705315 6.4331029,6.4259246 0 0 0 69.588552,2.8346416 6.4331029,6.4259246 0 0 0 64.17134,5.7963219 6.4331029,6.4259246 0 0 0 57.806198,0.29975343 Z`;
+  
   const GLYPH_RENDER_PROFILES = {
     ".": {
       widthScale: .34,
@@ -2112,88 +2121,177 @@
 
   function makeLoopStrokes(d) {
     return [
-      makeOvalStroke(d, 0, 0, 1),
-      makeOvalStroke(d, d.fontSize * .025, -d.fontSize * .018, 2)
+      makePillLoopStroke(d, {
+        expandX: d.fontSize * .06,
+        expandY: d.fontSize * .04,
+        offsetX: 0,
+        offsetY: 0,
+        seed: "loop-a"
+      }),
+      makePillLoopStroke(d, {
+        expandX: d.fontSize * .095,
+        expandY: d.fontSize * .06,
+        offsetX: d.fontSize * .018,
+        offsetY: -d.fontSize * .012,
+        seed: "loop-b"
+      })
     ];
   }
 
-  function makeOvalStroke(d, offsetX, offsetY, seed) {
+  function makePillLoopStroke(d, {
+    expandX = 0,
+    expandY = 0,
+    offsetX = 0,
+    offsetY = 0,
+    seed = "loop"
+  } = {}) {
+    const x = d.x - expandX + offsetX;
+    const y = d.y - expandY + offsetY;
+    const w = d.w + expandX * 2;
+    const h = d.h + expandY * 2;
+    const r = Math.min(h / 2, w / 2);
+    const left = x;
+    const right = x + w;
+    const top = y;
+    const bottom = y + h;
+    const cxLeft = left + r;
+    const cxRight = right - r;
+    const cy = top + h / 2;
     const points = [];
-    const cx = d.x + d.w / 2 + offsetX;
-    const cy = d.y + d.h / 2 + offsetY;
-    const rx = d.w / 2;
-    const ry = d.h / 2;
-    const steps = 72;
+    const wobble = Math.max(1.1, d.fontSize * .018);
+    let pointIndex = 0;
 
-    for (let i = 0; i <= steps; i += 1) {
-      const t = i / steps;
-      const a = t * Math.PI * 2;
-      const wobble = 1 + stableNoise(`loop-${seed}-${i}`) * .035;
-
+    function pushPoint(px, py) {
       points.push({
-        x: cx + Math.cos(a) * rx * wobble,
-        y: cy + Math.sin(a) * ry * wobble
+        x: px + stableNoise(`${seed}-x-${pointIndex}`) * wobble,
+        y: py + stableNoise(`${seed}-y-${pointIndex}`) * wobble
       });
+      pointIndex += 1;
     }
 
-    return points;
-  }
+    const topSteps = 12;
+    const arcSteps = 18;
+    const bottomSteps = 12;
 
-  function makeCloudStrokes(d) {
-    const cx = d.x + d.w / 2;
-    const cy = d.y + d.h / 2;
-    const rx = d.w / 2;
-    const ry = d.h / 2;
+    for (let i = 0; i <= topSteps; i += 1) {
+      const t = i / topSteps;
+      pushPoint(cxLeft + (cxRight - cxLeft) * t, top);
+    }
 
-    const puffs = [
-      { x: -.86, y: .12, r: .34, a1: .58, a2: 1.56 },
-      { x: -.78, y: -.10, r: .34, a1: .98, a2: 1.82 },
-      { x: -.54, y: -.36, r: .35, a1: 1.12, a2: 1.92 },
-      { x: -.25, y: -.48, r: .36, a1: 1.10, a2: 1.95 },
-      { x: .08, y: -.50, r: .38, a1: 1.10, a2: 1.98 },
-      { x: .42, y: -.42, r: .35, a1: 1.10, a2: 1.95 },
-      { x: .70, y: -.20, r: .34, a1: 1.12, a2: 1.92 },
-      { x: .86, y: .05, r: .34, a1: 1.18, a2: 2.06 },
-      { x: .76, y: .34, r: .32, a1: 1.28, a2: 2.12 },
-      { x: .46, y: .48, r: .34, a1: 1.16, a2: 2.00 },
-      { x: .12, y: .52, r: .36, a1: 1.10, a2: 2.02 },
-      { x: -.24, y: .50, r: .35, a1: 1.10, a2: 2.02 },
-      { x: -.58, y: .42, r: .33, a1: 1.16, a2: 2.00 },
-      { x: -.82, y: .28, r: .32, a1: 1.24, a2: 2.10 }
-    ];
+    for (let i = 1; i <= arcSteps; i += 1) {
+      const t = i / arcSteps;
+      const a = -Math.PI / 2 + t * Math.PI;
+      pushPoint(cxRight + Math.cos(a) * r, cy + Math.sin(a) * r);
+    }
 
-    const points = [];
+    for (let i = 1; i <= bottomSteps; i += 1) {
+      const t = i / bottomSteps;
+      pushPoint(cxRight + (cxLeft - cxRight) * t, bottom);
+    }
 
-    for (let i = 0; i < puffs.length; i += 1) {
-      const puff = puffs[i];
-      const next = puffs[(i + 1) % puffs.length];
-      const steps = 7;
-
-      for (let j = 0; j <= steps; j += 1) {
-        const t = j / steps;
-        const angle = Math.PI * (puff.a1 + (puff.a2 - puff.a1) * t);
-        const localRx = rx * puff.r;
-        const localRy = ry * puff.r * .95;
-        const wobbleX = stableNoise(`cloud-x-${i}-${j}`) * d.fontSize * .018;
-        const wobbleY = stableNoise(`cloud-y-${i}-${j}`) * d.fontSize * .018;
-
-        let x = cx + puff.x * rx + Math.cos(angle) * localRx + wobbleX;
-        let y = cy + puff.y * ry + Math.sin(angle) * localRy + wobbleY;
-
-        if (j === steps && next) {
-          x = cx + next.x * rx + stableNoise(`cloud-join-x-${i}`) * d.fontSize * .012;
-          y = cy + next.y * ry + stableNoise(`cloud-join-y-${i}`) * d.fontSize * .012;
-        }
-
-        points.push({ x, y });
-      }
+    for (let i = 1; i <= arcSteps; i += 1) {
+      const t = i / arcSteps;
+      const a = Math.PI / 2 + t * Math.PI;
+      pushPoint(cxLeft + Math.cos(a) * r, cy + Math.sin(a) * r);
     }
 
     if (points.length) {
       points.push({ ...points[0] });
     }
 
-    return [points];
+    return points;
+  }
+
+  function makeCloudStrokes(d) {
+    const template = getSvgOutlineTemplatePoints(
+      CLOUD_SVG_PATH,
+      CLOUD_SVG_VIEWBOX.width,
+      CLOUD_SVG_VIEWBOX.height,
+      240
+    );
+
+    return [
+      fitSvgTemplateToRect(template, {
+        sourceWidth: CLOUD_SVG_VIEWBOX.width,
+        sourceHeight: CLOUD_SVG_VIEWBOX.height,
+        x: d.x,
+        y: d.y,
+        w: d.w,
+        h: d.h,
+        seed: "cloud"
+      })
+    ];
+  }
+
+  function getSvgOutlineTemplatePoints(pathData, viewWidth, viewHeight, sampleCount = 180) {
+    const cacheKey = `${viewWidth}|${viewHeight}|${sampleCount}|${pathData}`;
+    const cached = REFERENCE_OUTLINE_CACHE.get(cacheKey);
+
+    if (cached) {
+      return cached;
+    }
+
+    const ns = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", `0 0 ${viewWidth} ${viewHeight}`);
+    svg.setAttribute("width", String(viewWidth));
+    svg.setAttribute("height", String(viewHeight));
+    svg.style.position = "absolute";
+    svg.style.left = "-9999px";
+    svg.style.top = "-9999px";
+    svg.style.width = "0";
+    svg.style.height = "0";
+    svg.style.overflow = "hidden";
+    svg.style.pointerEvents = "none";
+    svg.style.opacity = "0";
+
+    const path = document.createElementNS(ns, "path");
+    path.setAttribute("d", pathData);
+    path.setAttribute("fill", "none");
+    path.setAttribute("stroke", "none");
+
+    svg.appendChild(path);
+    document.body.appendChild(svg);
+
+    const totalLength = Math.max(1, path.getTotalLength());
+    const points = [];
+
+    for (let i = 0; i <= sampleCount; i += 1) {
+      const lengthAt = totalLength * (i / sampleCount);
+      const point = path.getPointAtLength(lengthAt);
+
+      points.push({
+        x: point.x,
+        y: point.y
+      });
+    }
+
+    document.body.removeChild(svg);
+    REFERENCE_OUTLINE_CACHE.set(cacheKey, points);
+
+    return points;
+  }
+
+  function fitSvgTemplateToRect(templatePoints, {
+    sourceWidth,
+    sourceHeight,
+    x,
+    y,
+    w,
+    h,
+    seed = "shape"
+  }) {
+    const scale = Math.min((w * .985) / sourceWidth, (h * .985) / sourceHeight);
+    const drawW = sourceWidth * scale;
+    const drawH = sourceHeight * scale;
+    const offsetX = x + (w - drawW) / 2;
+    const offsetY = y + (h - drawH) / 2;
+    const wobble = Math.max(.45, Math.min(drawW, drawH) * .008);
+
+    return templatePoints.map((point, index) => ({
+      x: offsetX + point.x * scale + stableNoise(`${seed}-x-${index}`) * wobble,
+      y: offsetY + point.y * scale + stableNoise(`${seed}-y-${index}`) * wobble
+    }));
   }
 
   function makeStarStrokes(d) {
