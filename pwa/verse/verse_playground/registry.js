@@ -38,7 +38,7 @@ window.EXTERNAL_VERSE_PLAYGROUND = [
     cardColor: "#252733",
     cardTextColor: "#ffffff",
     launchUrl: "./verse_playground/ghost_writer/index.html",
-    visibleInCarousel: false,
+    visibleInCarousel: true,
     progressType: "practice",
     modes: ["beginner", "advanced"]
   }
