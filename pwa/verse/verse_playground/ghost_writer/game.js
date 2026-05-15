@@ -78,7 +78,8 @@
       kind: "special",
       value: "#071126",
       cardClass: "",
-      texture: "starryNight"
+      texture: "image",
+      imageSrc: "./ghost_writer_images/ghost_writer_bg_starry_night.png"
     },
     purpleMist: {
       label: "Purple Mist",
@@ -92,7 +93,8 @@
       kind: "special",
       value: "#d9b874",
       cardClass: "",
-      texture: "treasureMap"
+      texture: "image",
+      imageSrc: "./ghost_writer_images/ghost_writer_bg_treasure_map.png"
     },
     rainbow: {
       label: "Rainbow",
@@ -113,14 +115,16 @@
       kind: "special",
       value: "#787d83",
       cardClass: "",
-      texture: "crackedStone"
+      texture: "image",
+      imageSrc: "./ghost_writer_images/ghost_writer_bg_cracked_stone.png"
     },
     grass: {
       label: "Green Grass",
       kind: "special",
       value: "#7dbc53",
       cardClass: "",
-      texture: "grass"
+      texture: "image",
+      imageSrc: "./ghost_writer_images/ghost_writer_bg_grass.png"
     }
   };
 
@@ -415,6 +419,7 @@
   let guideTimer = null;
   let playbackRaf = 0;
   let playbackState = null;
+  const backgroundImageCache = new Map();
 
   const state = {
     screen: "intro",
@@ -1655,6 +1660,53 @@
     return BACKGROUNDS[key] || BACKGROUNDS.ghost;
   }
 
+  function getBackgroundImage(src) {
+    if (!src) return null;
+
+    if (backgroundImageCache.has(src)) {
+      return backgroundImageCache.get(src);
+    }
+
+    const img = new Image();
+    img.decoding = "async";
+    img.src = src;
+
+    backgroundImageCache.set(src, img);
+
+    img.onload = () => {
+      if (state.screen === "remix") {
+        drawRemixPreview();
+      }
+    };
+
+    return img;
+  }
+
+  function drawCoverImage(c, img, width, height) {
+    if (!img || !img.complete || !img.naturalWidth || !img.naturalHeight) {
+      return false;
+    }
+
+    const imageRatio = img.naturalWidth / img.naturalHeight;
+    const canvasRatio = width / height;
+
+    let sourceX = 0;
+    let sourceY = 0;
+    let sourceW = img.naturalWidth;
+    let sourceH = img.naturalHeight;
+
+    if (imageRatio > canvasRatio) {
+      sourceW = img.naturalHeight * canvasRatio;
+      sourceX = (img.naturalWidth - sourceW) / 2;
+    } else {
+      sourceH = img.naturalWidth / canvasRatio;
+      sourceY = (img.naturalHeight - sourceH) / 2;
+    }
+
+    c.drawImage(img, sourceX, sourceY, sourceW, sourceH, 0, 0, width, height);
+    return true;
+  }
+
   function getTextColorKey(options = {}) {
     return options.textColor || defaultTextColorForBackground(getBackgroundKey(options));
   }
@@ -1879,6 +1931,20 @@
     c.fillStyle = background.value;
     c.fillRect(0, 0, width, height);
 
+    if (background.texture === "image") {
+      const img = getBackgroundImage(background.imageSrc);
+
+      if (!drawCoverImage(c, img, width, height)) {
+        c.fillStyle = background.value;
+        c.fillRect(0, 0, width, height);
+      }
+
+      c.restore();
+
+      drawRemixBorder(c, width, height, options);
+      return;
+    }
+
     if (background.texture === "ghost") {
       c.globalAlpha = .16;
       const glow = c.createRadialGradient(width * .5, height * .18, 0, width * .5, height * .18, Math.max(width, height) * .58);
@@ -1897,24 +1963,7 @@
       c.fillStyle = boardGlow;
       c.fillRect(0, 0, width, height);
 
-      c.globalAlpha = .07;
-      c.strokeStyle = "#ffffff";
-      c.lineWidth = 1;
 
-      for (let y = 20; y < height; y += 34) {
-        c.beginPath();
-        c.moveTo(0, y + stableNoise(`chalk-${y}`) * 4);
-        c.lineTo(width, y + stableNoise(`chalk2-${y}`) * 4);
-        c.stroke();
-      }
-
-      c.globalAlpha = .035;
-      for (let x = 18; x < width; x += 42) {
-        c.beginPath();
-        c.moveTo(x + stableNoise(`chalk-v-${x}`) * 3, 0);
-        c.lineTo(x + stableNoise(`chalk-v2-${x}`) * 3, height);
-        c.stroke();
-      }
 
       c.globalAlpha = .09;
       c.fillStyle = "#ffffff";
@@ -2212,9 +2261,14 @@
     }
   }
 
-  function saveGhostWriterImage(options = state.remix) {
+  async function saveGhostWriterImage(options = state.remix) {
     const cleanOptions = sanitizeRemixOptions({ ...options });
     const size = EXPORT_SIZES[cleanOptions.exportSize || "square"] || EXPORT_SIZES.square;
+    const background = getBackgroundConfig(cleanOptions);
+
+    if (background.texture === "image") {
+      await waitForBackgroundImage(background.imageSrc);
+    }
 
     const canvas = document.createElement("canvas");
     canvas.width = size.width;
@@ -2244,6 +2298,22 @@
     downloadCanvasDataUrl(canvas, filename);
   }
 
+
+  function waitForBackgroundImage(src) {
+    const img = getBackgroundImage(src);
+
+    if (!img) return Promise.resolve();
+    if (img.complete && img.naturalWidth && img.naturalHeight) return Promise.resolve();
+
+    return new Promise((resolve) => {
+      const done = () => resolve();
+
+      img.addEventListener("load", done, { once: true });
+      img.addEventListener("error", done, { once: true });
+
+      setTimeout(done, 1200);
+    });
+  }
 
   function makeExportFilename(size = EXPORT_SIZES.square) {
     const ref = String(parsedRef?.display || ctx.verseRef || "verse")
