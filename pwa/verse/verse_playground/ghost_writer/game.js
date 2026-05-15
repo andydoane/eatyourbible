@@ -1627,7 +1627,7 @@
 
     for (let i = 0; i < ps.index; i += 1) {
       const item = placements[i];
-      drawGlyph(ps.c, getGlyph(item.char), item.x, item.y, item.w, item.fontSize, ps.options, 1);
+      drawGlyph(ps.c, getGlyph(item.char), item.x, item.y, item.w, item.fontSize, { ...ps.options, _colorIndex: item.colorIndex || 0 }, 1);
     }
 
     drawGlyph(ps.c, glyph, current.x, current.y, current.w, current.fontSize, { ...ps.options, _colorIndex: current.colorIndex || 0 }, progress);
