@@ -224,9 +224,28 @@
   };
 
   const EXPORT_IMAGE = {
-    width: 1080,
-    height: 1080,
     filenamePrefix: "ghost-writer"
+  };
+
+  const EXPORT_SIZES = {
+    square: {
+      label: "Square",
+      width: 1080,
+      height: 1080,
+      filenameLabel: "square"
+    },
+    phone: {
+      label: "Phone",
+      width: 1290,
+      height: 2796,
+      filenameLabel: "phone"
+    },
+    wide: {
+      label: "Wide",
+      width: 1920,
+      height: 1080,
+      filenameLabel: "wide"
+    }
   };
 
   const app = document.getElementById("app");
@@ -290,6 +309,7 @@
       borderColor: "lightGray",
       tool: "pencil",
       vapor: "normal",
+      exportSize: "square",
       style: "ghost",
       speed: "normal",
       thickness: "normal",
@@ -434,6 +454,7 @@
       borderColor: "lightGray",
       tool: "pencil",
       vapor: "normal",
+      exportSize: "square",
       style: "ghost",
       speed: "normal",
       thickness: "normal",
@@ -990,6 +1011,7 @@
             ${selectSimpleHtml("ghostWobbleSelect", "Wobble", state.remix.wobble, { off: "Off", on: "On" })}
             ${selectOptionHtml("ghostToolSelect", "Tool", state.remix.tool || "pencil", PLAYBACK_TOOLS)}
             ${selectOptionHtml("ghostVaporSelect", "Vapor", state.remix.vapor || "normal", VAPOR_LEVELS)}
+            ${selectOptionHtml("ghostExportSizeSelect", "Image Size", state.remix.exportSize || "square", EXPORT_SIZES)}
             ${selectOptionHtml("ghostBorderStyleSelect", "Border Style", state.remix.borderStyle, BORDER_STYLES)}
             ${selectOptionHtml("ghostBorderThicknessSelect", "Border Thickness", state.remix.borderThickness, BORDER_THICKNESS)}
             ${selectOptionHtml("ghostBorderColorSelect", "Border Color", state.remix.borderColor, COLOR_PALETTE)}
@@ -1079,6 +1101,7 @@
     const wobble = document.getElementById("ghostWobbleSelect");
     const tool = document.getElementById("ghostToolSelect");
     const vapor = document.getElementById("ghostVaporSelect");
+    const exportSize = document.getElementById("ghostExportSizeSelect");
     const borderStyle = document.getElementById("ghostBorderStyleSelect");
     const borderThickness = document.getElementById("ghostBorderThicknessSelect");
     const borderColor = document.getElementById("ghostBorderColorSelect");
@@ -1093,6 +1116,7 @@
       state.remix.wobble = wobble?.value || state.remix.wobble;
       state.remix.tool = tool?.value || state.remix.tool;
       state.remix.vapor = vapor?.value || state.remix.vapor;
+      state.remix.exportSize = exportSize?.value || state.remix.exportSize;
       state.remix.borderStyle = borderStyle?.value || state.remix.borderStyle;
       state.remix.borderThickness = borderThickness?.value || state.remix.borderThickness;
       state.remix.borderColor = borderColor?.value || state.remix.borderColor;
@@ -1115,7 +1139,7 @@
       drawRemixPreview();
     };
 
-    [background, textColor, speed, thickness, jitter, wobble, tool, vapor, borderStyle, borderThickness, borderColor].forEach((el) => {
+    [background, textColor, speed, thickness, jitter, wobble, tool, vapor, exportSize, borderStyle, borderThickness, borderColor].forEach((el) => {
       if (el) el.onchange = update;
     });
 
@@ -1760,17 +1784,19 @@
 
   function saveGhostWriterImage(options = state.remix) {
     const cleanOptions = sanitizeRemixOptions({ ...options });
+    const size = EXPORT_SIZES[cleanOptions.exportSize || "square"] || EXPORT_SIZES.square;
+
     const canvas = document.createElement("canvas");
-    canvas.width = EXPORT_IMAGE.width;
-    canvas.height = EXPORT_IMAGE.height;
+    canvas.width = size.width;
+    canvas.height = size.height;
 
     const c = canvas.getContext("2d");
     if (!c) return;
 
     c.setTransform(1, 0, 0, 1, 0, 0);
-    drawCompleteText(c, EXPORT_IMAGE.width, EXPORT_IMAGE.height, cleanOptions);
+    drawCompleteText(c, size.width, size.height, cleanOptions);
 
-    const filename = makeExportFilename();
+    const filename = makeExportFilename(size);
 
     if (canvas.toBlob) {
       canvas.toBlob((blob) => {
@@ -1788,7 +1814,8 @@
     downloadCanvasDataUrl(canvas, filename);
   }
 
-  function makeExportFilename() {
+
+  function makeExportFilename(size = EXPORT_SIZES.square) {
     const ref = String(parsedRef?.display || ctx.verseRef || "verse")
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
@@ -1796,9 +1823,11 @@
       .slice(0, 42);
 
     const suffix = ref || "verse";
+    const sizeLabel = size.filenameLabel || "image";
 
-    return `${EXPORT_IMAGE.filenamePrefix}-${suffix}.png`;
+    return `${EXPORT_IMAGE.filenamePrefix}-${suffix}-${sizeLabel}.png`;
   }
+
 
   function downloadBlob(blob, filename) {
     const url = URL.createObjectURL(blob);
