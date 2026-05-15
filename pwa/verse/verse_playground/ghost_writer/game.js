@@ -1063,6 +1063,56 @@
     return clamp(glyph.widthRatio + .16, minimum, .98);
   }
 
+  function makeLayout(width, height, options = {}) {
+    const contentRect = getCanvasContentRect(width, height, options);
+    const safeWidth = Math.max(120, contentRect.width);
+    const safeHeight = Math.max(120, contentRect.height);
+    const text = state.fullText || "";
+    const maxWidth = safeWidth * .94;
+    const maxHeight = safeHeight * .88;
+
+    const dynamicMax = Math.min(
+      safeWidth * .17,
+      safeHeight * .24,
+      132
+    );
+
+    const maxFontSize = Math.max(28, dynamicMax);
+    const minFontSize = 12;
+    let best = null;
+
+    for (let fontSize = maxFontSize; fontSize >= minFontSize; fontSize -= 1) {
+      const layout = layoutForFontSize(
+        text,
+        fontSize,
+        maxWidth,
+        maxHeight,
+        safeWidth,
+        safeHeight,
+        contentRect.x,
+        contentRect.y
+      );
+
+      if (!layout.overflows) {
+        best = layout;
+        break;
+      }
+    }
+
+    if (best) return best;
+
+    return layoutForFontSize(
+      text,
+      minFontSize,
+      maxWidth,
+      maxHeight,
+      safeWidth,
+      safeHeight,
+      contentRect.x,
+      contentRect.y
+    );
+  }
+
   function makeLayout(width, height) {
     const safeWidth = Math.max(120, width);
     const safeHeight = Math.max(120, height);
@@ -1092,6 +1142,90 @@
     if (best) return best;
 
     return layoutForFontSize(text, minFontSize, maxWidth, maxHeight, safeWidth, safeHeight);
+  }
+
+  function layoutForFontSize(text, fontSize, maxWidth, maxHeight, canvasWidth, canvasHeight, offsetX = 0, offsetY = 0) {
+    const lineHeight = fontSize * 1.24;
+    const placements = [];
+    const lines = [];
+    let line = [];
+    let lineWidth = 0;
+
+    const pushLine = () => {
+      lines.push({ items: line, width: lineWidth });
+      line = [];
+      lineWidth = 0;
+    };
+
+    const addChar = (char) => {
+      const widthUnits = glyphWidthUnits(char);
+      const w = fontSize * widthUnits;
+
+      if (line.length && lineWidth + w > maxWidth) {
+        pushLine();
+      }
+
+      line.push({ char, w, fontSize });
+      lineWidth += w;
+    };
+
+    const tokens = String(text || "").match(/\n|\s+|\S+/g) || [];
+
+    for (const token of tokens) {
+      if (token === "\n") {
+        pushLine();
+        continue;
+      }
+
+      if (/^\s+$/.test(token)) {
+        if (line.length) addChar(" ");
+        continue;
+      }
+
+      const chars = Array.from(token);
+      const tokenWidth = chars.reduce((sum, char) => sum + fontSize * glyphWidthUnits(char), 0);
+
+      if (line.length && tokenWidth <= maxWidth && lineWidth + tokenWidth > maxWidth) {
+        pushLine();
+      }
+
+      for (const char of chars) {
+        addChar(char);
+      }
+    }
+
+    if (line.length || !lines.length) pushLine();
+
+    const totalHeight = lines.length * lineHeight;
+    let y = offsetY + Math.max(fontSize * .9, (canvasHeight - totalHeight) / 2 + fontSize * .76);
+
+    for (const currentLine of lines) {
+      let x = offsetX + (canvasWidth - currentLine.width) / 2;
+      for (const item of currentLine.items) {
+        placements.push({
+          char: item.char,
+          x,
+          y,
+          w: item.w,
+          h: fontSize,
+          fontSize
+        });
+        x += item.w;
+      }
+      y += lineHeight;
+    }
+
+    const usedWidth = Math.max(...lines.map((l) => l.width), 0);
+
+    return {
+      placements,
+      fontSize,
+      lineHeight,
+      height: totalHeight,
+      width: usedWidth,
+      lineCount: lines.length,
+      overflows: usedWidth > maxWidth + 1 || totalHeight > maxHeight + 1
+    };
   }
 
   function layoutForFontSize(text, fontSize, maxWidth, maxHeight, canvasWidth, canvasHeight) {
@@ -1488,6 +1622,32 @@
     c.restore();
   }
 
+  function getCanvasContentRect(width, height, options = {}) {
+    const style = options.borderStyle || "none";
+
+    if (style === "none") {
+      return {
+        x: 0,
+        y: 0,
+        width,
+        height
+      };
+    }
+
+    const thicknessConfig = BORDER_THICKNESS[options.borderThickness] || BORDER_THICKNESS.medium;
+    const lineWidth = thicknessConfig.size;
+    const borderInset = Math.max(14, lineWidth * 2.2);
+    const extraGap = Math.max(18, lineWidth * 2.4);
+    const inset = borderInset + extraGap;
+
+    return {
+      x: inset,
+      y: inset,
+      width: Math.max(80, width - inset * 2),
+      height: Math.max(80, height - inset * 2)
+    };
+  }
+
   function roundRectPath(c, x, y, width, height, radius) {
     const r = Math.max(0, Math.min(radius, width / 2, height / 2));
 
@@ -1569,7 +1729,7 @@
 
   function drawCompleteText(c, width, height, options) {
     const cleanOptions = sanitizeRemixOptions({ ...options });
-    const layout = makeLayout(width, height);
+    const layout = makeLayout(width, height, cleanOptions);
     clearPlaybackCanvas(c, width, height, cleanOptions);
 
     let colorIndex = 0;
@@ -1595,7 +1755,7 @@
   function startPlayback(canvas, card, options, onDone) {
     const rect = card.getBoundingClientRect();
     const c = setupCanvasForDpr(canvas, rect.width, rect.height);
-    const layout = makeLayout(rect.width, rect.height);
+    const layout = makeLayout(rect.width, rect.height, options);
     const placements = buildPlaybackPlacements(layout.placements);
     const speed = SPEEDS[options.speed] || SPEEDS.normal;
     const toolEl = document.getElementById("ghostPlaybackTool");
