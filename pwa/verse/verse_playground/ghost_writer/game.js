@@ -136,12 +136,96 @@
   };
 
   const PLAYBACK_TOOL = {
-    src: "./ghost_writer_images/ghost_writer_pencil.png",
     baseRotationDeg: -8,
     idleWobbleDeg: 1.2,
     directionWiggleDeg: 4.5,
     directionWiggleDecay: .82,
     visible: true
+  };
+
+  const PLAYBACK_TOOLS = {
+    pencil: {
+      label: "Pencil",
+      src: "./ghost_writer_images/ghost_writer_pencil.png",
+      className: "is-pencil-tool",
+      baseRotationDeg: -8
+    },
+    chalk: {
+      label: "Chalk",
+      src: "./ghost_writer_images/ghost_writer_chalk.png",
+      className: "is-chalk-tool",
+      baseRotationDeg: -8
+    },
+    crayon: {
+      label: "Crayon",
+      src: "",
+      className: "is-crayon-tool",
+      baseRotationDeg: -8
+    }
+  };
+
+  const CRAYON_TOOL_IMAGES = {
+    red: "./ghost_writer_images/ghost_writer_crayon_red.png",
+    orange: "./ghost_writer_images/ghost_writer_crayon_orange.png",
+    yellow: "./ghost_writer_images/ghost_writer_crayon_yellow.png",
+    green: "./ghost_writer_images/ghost_writer_crayon_green.png",
+    teal: "./ghost_writer_images/ghost_writer_crayon_blue.png",
+    purple: "./ghost_writer_images/ghost_writer_crayon_purple.png",
+    darkGray: "./ghost_writer_images/ghost_writer_crayon_gray.png",
+    lightGray: "./ghost_writer_images/ghost_writer_crayon_white.png",
+    brown: "./ghost_writer_images/ghost_writer_crayon_brown.png",
+    rainbow: "./ghost_writer_images/ghost_writer_crayon_rainbow.png"
+  };
+
+  const VAPOR_LEVELS = {
+    off: {
+      label: "Off",
+      enabled: false,
+      max: 0,
+      spawnDistance: Infinity,
+      alpha: 0,
+      radius: 0,
+      radiusJitter: 0,
+      life: 0,
+      lifeJitter: 0,
+      driftY: 0
+    },
+    light: {
+      label: "Light",
+      enabled: true,
+      max: 28,
+      spawnDistance: 9,
+      alpha: .10,
+      radius: 5,
+      radiusJitter: 8,
+      life: 390,
+      lifeJitter: 180,
+      driftY: 12
+    },
+    normal: {
+      label: "Normal",
+      enabled: true,
+      max: 54,
+      spawnDistance: 5,
+      alpha: .18,
+      radius: 7,
+      radiusJitter: 13,
+      life: 520,
+      lifeJitter: 260,
+      driftY: 18
+    },
+    spooky: {
+      label: "Spooky",
+      enabled: true,
+      max: 86,
+      spawnDistance: 3,
+      alpha: .26,
+      radius: 10,
+      radiusJitter: 18,
+      life: 760,
+      lifeJitter: 360,
+      driftY: 26
+    }
   };
 
   const PLAYBACK_PAUSES = {
@@ -209,6 +293,8 @@
       borderStyle: "none",
       borderThickness: "medium",
       borderColor: "lightGray",
+      tool: "pencil",
+      vapor: "normal",
       style: "ghost",
       speed: "normal",
       thickness: "normal",
@@ -351,6 +437,8 @@
       borderStyle: "none",
       borderThickness: "medium",
       borderColor: "lightGray",
+      tool: "pencil",
+      vapor: "normal",
       style: "ghost",
       speed: "normal",
       thickness: "normal",
@@ -825,6 +913,8 @@
           borderStyle: "none",
           borderThickness: "medium",
           borderColor: "lightGray",
+          tool: "pencil",
+          vapor: "normal",
           style: "ghost",
           speed: "normal",
           thickness: "normal",
@@ -844,15 +934,16 @@
 
     const cleanOptions = sanitizeRemixOptions({ ...options });
     const background = getBackgroundConfig(cleanOptions);
+    const toolConfig = getPlaybackToolConfig(cleanOptions);
 
     app.innerHTML = `
       <div class="ghost-playback-root">
         <div class="ghost-playback-card ${escapeHtml(background.cardClass || "")}" id="ghostPlaybackCard">
           <canvas id="ghostPlaybackCanvas" aria-label="Ghost writing playback"></canvas>
           <img
-            class="ghost-playback-tool"
+            class="ghost-playback-tool ${escapeHtml(toolConfig.className || "")}"
             id="ghostPlaybackTool"
-            src="${escapeHtml(PLAYBACK_TOOL.src)}"
+            src="${escapeHtml(toolConfig.src)}"
             alt=""
             draggable="false"
           >
@@ -902,6 +993,8 @@
             ${selectOptionHtml("ghostThicknessSelect", "Thickness", state.remix.thickness, THICKNESS)}
             ${selectSimpleHtml("ghostJitterSelect", "Jitter", state.remix.jitter, { off: "Off", on: "On" })}
             ${selectSimpleHtml("ghostWobbleSelect", "Wobble", state.remix.wobble, { off: "Off", on: "On" })}
+            ${selectOptionHtml("ghostToolSelect", "Tool", state.remix.tool || "pencil", PLAYBACK_TOOLS)}
+            ${selectOptionHtml("ghostVaporSelect", "Vapor", state.remix.vapor || "normal", VAPOR_LEVELS)}
             ${selectOptionHtml("ghostBorderStyleSelect", "Border Style", state.remix.borderStyle, BORDER_STYLES)}
             ${selectOptionHtml("ghostBorderThicknessSelect", "Border Thickness", state.remix.borderThickness, BORDER_THICKNESS)}
             ${selectOptionHtml("ghostBorderColorSelect", "Border Color", state.remix.borderColor, COLOR_PALETTE)}
@@ -988,6 +1081,8 @@
     const thickness = document.getElementById("ghostThicknessSelect");
     const jitter = document.getElementById("ghostJitterSelect");
     const wobble = document.getElementById("ghostWobbleSelect");
+    const tool = document.getElementById("ghostToolSelect");
+    const vapor = document.getElementById("ghostVaporSelect");
     const borderStyle = document.getElementById("ghostBorderStyleSelect");
     const borderThickness = document.getElementById("ghostBorderThicknessSelect");
     const borderColor = document.getElementById("ghostBorderColorSelect");
@@ -1000,6 +1095,8 @@
       state.remix.thickness = thickness?.value || state.remix.thickness;
       state.remix.jitter = jitter?.value || state.remix.jitter;
       state.remix.wobble = wobble?.value || state.remix.wobble;
+      state.remix.tool = tool?.value || state.remix.tool;
+      state.remix.vapor = vapor?.value || state.remix.vapor;
       state.remix.borderStyle = borderStyle?.value || state.remix.borderStyle;
       state.remix.borderThickness = borderThickness?.value || state.remix.borderThickness;
       state.remix.borderColor = borderColor?.value || state.remix.borderColor;
@@ -1022,7 +1119,7 @@
       drawRemixPreview();
     };
 
-    [background, textColor, speed, thickness, jitter, wobble, borderStyle, borderThickness, borderColor].forEach((el) => {
+    [background, textColor, speed, thickness, jitter, wobble, tool, vapor, borderStyle, borderThickness, borderColor].forEach((el) => {
       if (el) el.onchange = update;
     });
 
@@ -1439,6 +1536,29 @@
     return "rgba(255,255,255,.25)";
   }
 
+  function getCrayonToolSrc(options = {}) {
+    const textColorKey = getTextColorKey(options);
+    const crayonKey = textColorKey === "rainbow" ? "rainbow" : textColorKey;
+
+    return CRAYON_TOOL_IMAGES[crayonKey] || CRAYON_TOOL_IMAGES.red;
+  }
+
+  function getPlaybackToolConfig(options = {}) {
+    const toolKey = options.tool || "pencil";
+    const baseTool = PLAYBACK_TOOLS[toolKey] || PLAYBACK_TOOLS.pencil;
+    const src = toolKey === "crayon" ? getCrayonToolSrc(options) : baseTool.src;
+
+    return {
+      ...PLAYBACK_TOOL,
+      ...baseTool,
+      src
+    };
+  }
+
+  function getVaporConfig(options = {}) {
+    return VAPOR_LEVELS[options.vapor || "normal"] || VAPOR_LEVELS.normal;
+  }
+
   function getBorderColorValue(options = {}) {
     return getColorValue(options.borderColor || "lightGray") || COLOR_PALETTE.lightGray.value;
   }
@@ -1643,6 +1763,7 @@
     const layout = makeLayout(rect.width, rect.height, options);
     const placements = buildPlaybackPlacements(layout.placements);
     const speed = SPEEDS[options.speed] || SPEEDS.normal;
+    const toolConfig = getPlaybackToolConfig(options);
     const toolEl = document.getElementById("ghostPlaybackTool");
 
     playbackState = {
@@ -1656,6 +1777,7 @@
       charStart: performance.now(),
       pauseUntil: 0,
       speed,
+      toolConfig,
       toolEl,
       lastTip: null,
       lastDirectionDeg: null,
@@ -1824,6 +1946,8 @@
     const tool = ps?.toolEl;
     if (!tool || !tip) return;
 
+    const toolConfig = ps.toolConfig || PLAYBACK_TOOL;
+
     if (moving && Number.isFinite(tip.angleDeg)) {
       if (ps.lastDirectionDeg === null || ps.lastDirectionDeg === undefined) {
         ps.lastDirectionDeg = tip.angleDeg;
@@ -1833,8 +1957,8 @@
         if (Math.abs(delta) > 12) {
           ps.directionWiggle += clamp(
             delta * .10,
-            -PLAYBACK_TOOL.directionWiggleDeg,
-            PLAYBACK_TOOL.directionWiggleDeg
+            -toolConfig.directionWiggleDeg,
+            toolConfig.directionWiggleDeg
           );
         }
 
@@ -1843,18 +1967,18 @@
     }
 
     ps.directionWiggle = clamp(
-      (ps.directionWiggle || 0) * PLAYBACK_TOOL.directionWiggleDecay,
-      -PLAYBACK_TOOL.directionWiggleDeg,
-      PLAYBACK_TOOL.directionWiggleDeg
+      (ps.directionWiggle || 0) * toolConfig.directionWiggleDecay,
+      -toolConfig.directionWiggleDeg,
+      toolConfig.directionWiggleDeg
     );
 
-    const idleWobble = Math.sin(now / 180) * PLAYBACK_TOOL.idleWobbleDeg;
+    const idleWobble = Math.sin(now / 180) * toolConfig.idleWobbleDeg;
     const tinyHandJitter = moving
       ? stableNoise(`${Math.floor(now / 120)}-${tip.x}-${tip.y}`) * .65
       : 0;
 
     const angle =
-      PLAYBACK_TOOL.baseRotationDeg +
+      toolConfig.baseRotationDeg +
       ps.directionWiggle +
       idleWobble +
       tinyHandJitter;
@@ -1864,6 +1988,7 @@
     tool.style.transform = `translateY(-100%) rotate(${angle}deg)`;
     tool.classList.add("is-visible");
   }
+  
 
   function shortestAngleDelta(fromDeg, toDeg) {
     let delta = (toDeg - fromDeg) % 360;
@@ -1882,12 +2007,19 @@
   function addVaporPuff(ps, tip, now) {
     if (!ps || !tip) return;
 
+    const vapor = getVaporConfig(ps.options);
+
+    if (!vapor.enabled) {
+      ps.vaporTrail = [];
+      return;
+    }
+
     const last = ps.vaporTrail[ps.vaporTrail.length - 1];
 
     if (last) {
       const dx = tip.x - last.x;
       const dy = tip.y - last.y;
-      if (Math.hypot(dx, dy) < 5) {
+      if (Math.hypot(dx, dy) < vapor.spawnDistance) {
         return;
       }
     }
@@ -1896,17 +2028,19 @@
       x: tip.x + stableNoise(`vap-x-${now}`) * 4,
       y: tip.y + stableNoise(`vap-y-${now}`) * 4,
       born: now,
-      life: 520 + Math.random() * 260,
-      radius: 7 + Math.random() * 13
+      life: vapor.life + Math.random() * vapor.lifeJitter,
+      radius: vapor.radius + Math.random() * vapor.radiusJitter,
+      alpha: vapor.alpha,
+      driftY: vapor.driftY
     });
 
-    if (ps.vaporTrail.length > 54) {
-      ps.vaporTrail.splice(0, ps.vaporTrail.length - 54);
+    if (ps.vaporTrail.length > vapor.max) {
+      ps.vaporTrail.splice(0, ps.vaporTrail.length - vapor.max);
     }
   }
 
   function drawVaporTrail(ps, now) {
-    if (!ps || !Array.isArray(ps.vaporTrail)) return;
+    if (!ps || !Array.isArray(ps.vaporTrail) || !ps.vaporTrail.length) return;
 
     const c = ps.c;
     const alive = [];
@@ -1922,9 +2056,9 @@
 
       alive.push(puff);
 
-      const alpha = (1 - t) * .18;
+      const alpha = (1 - t) * (puff.alpha ?? .18);
       const radius = puff.radius * (1 + t * 1.7);
-      const driftY = -18 * t;
+      const driftY = -(puff.driftY ?? 18) * t;
       const driftX = stableNoise(`drift-${puff.born}`) * 10 * t;
 
       const gradient = c.createRadialGradient(
