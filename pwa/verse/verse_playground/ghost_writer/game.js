@@ -49,15 +49,16 @@
   };
 
   const SPEEDS = {
-    slow: { label: "Slow", multiplier: 1.45 },
-    normal: { label: "Normal", multiplier: 1 },
-    fast: { label: "Fast", multiplier: .62 }
+    slow: { label: "Slow", multiplier: 1.8, pauseMultiplier: 1.8 },
+    normal: { label: "Normal", multiplier: .85, pauseMultiplier: .85 },
+    fast: { label: "Fast", multiplier: .32, pauseMultiplier: .35 }
   };
 
   const THICKNESS = {
     thin: { label: "Thin", multiplier: .78 },
     normal: { label: "Normal", multiplier: 1 },
-    thick: { label: "Thick", multiplier: 1.35 }
+    thick: { label: "Thick", multiplier: 1.35 },
+    superThick: { label: "Super Thick", multiplier: 1.9 }
   };
 
   const PLAYBACK_TOOL = {
@@ -276,25 +277,28 @@
     renderTraining();
   }
 
-  function rootHtml(inner, { wide = false, menu = true } = {}){
+  function rootHtml(inner, { wide = false, menu = true, rootClass = "" } = {}) {
+    const safeRootClass = rootClass ? ` ${escapeHtml(rootClass)}` : "";
+
     return `
-      <div class="ghost-writer-root">
+      <div class="ghost-writer-root${safeRootClass}">
         ${menu ? `<button class="ghost-menu-pill no-zoom" id="ghostMenuPill" type="button" aria-label="Open game menu">☰</button>` : ""}
         <div class="ghost-writer-stage ${wide ? "is-wide" : ""}">
           ${inner}
         </div>
         ${shell().helpOverlayHtml ? shell().helpOverlayHtml({ id: HELP_OVERLAY_ID, title: "How to Play", body: helpHtml(), closeText: "Close" }) : ""}
         ${shell().gameMenuHtml ? shell().gameMenuHtml({
-          id: MENU_OVERLAY_ID,
-          title: "Ghost Writer Menu",
-          muted,
-          showModeSelect: true,
-          exitText: "Back to Playground",
-          modeSelectText: "Mode Select"
-        }) : ""}
+      id: MENU_OVERLAY_ID,
+      title: "Ghost Writer Menu",
+      muted,
+      showModeSelect: true,
+      exitText: "Back to Playground",
+      modeSelectText: "Mode Select"
+    }) : ""}
       </div>
     `;
   }
+  
 
   function wireMenu(){
     if (!shell().wireGameMenu) return;
@@ -783,7 +787,7 @@
     });
   }
 
-  function renderRemix(){
+  function renderRemix() {
     stopPlayback();
     clearGuideTimer();
     state.screen = "remix";
@@ -798,21 +802,23 @@
           <canvas id="ghostRemixCanvas" aria-label="Ghost Writer preview"></canvas>
         </div>
 
-        <div class="ghost-options">
-          ${selectOptionHtml("ghostStyleSelect", "Style", state.remix.style, REMIX_PRESETS)}
-          ${selectOptionHtml("ghostSpeedSelect", "Speed", state.remix.speed, SPEEDS)}
-          ${selectOptionHtml("ghostThicknessSelect", "Thickness", state.remix.thickness, THICKNESS)}
-          ${selectSimpleHtml("ghostJitterSelect", "Jitter", state.remix.jitter, { off: "Off", on: "On" })}
-          ${selectSimpleHtml("ghostWobbleSelect", "Wobble", state.remix.wobble, { off: "Off", on: "On" })}
-        </div>
+        <div class="ghost-remix-scroll">
+          <div class="ghost-options">
+            ${selectOptionHtml("ghostStyleSelect", "Background", state.remix.style, REMIX_PRESETS)}
+            ${selectOptionHtml("ghostSpeedSelect", "Speed", state.remix.speed, SPEEDS)}
+            ${selectOptionHtml("ghostThicknessSelect", "Thickness", state.remix.thickness, THICKNESS)}
+            ${selectSimpleHtml("ghostJitterSelect", "Jitter", state.remix.jitter, { off: "Off", on: "On" })}
+            ${selectSimpleHtml("ghostWobbleSelect", "Wobble", state.remix.wobble, { off: "Off", on: "On" })}
+          </div>
 
-        <div class="ghost-remix-actions">
-          <button class="vm-btn" id="ghostReplayBtn" type="button">Replay</button>
-          <button class="vm-btn vm-btn-secondary" id="ghostAgainBtn" type="button">Try Again</button>
-          <button class="vm-btn vm-btn-secondary ghost-full" id="ghostBackBtn" type="button">Back to Playground</button>
+          <div class="ghost-remix-actions">
+            <button class="vm-btn" id="ghostReplayBtn" type="button">Replay</button>
+            <button class="vm-btn vm-btn-secondary" id="ghostAgainBtn" type="button">Try Again</button>
+            <button class="vm-btn vm-btn-secondary ghost-full" id="ghostBackBtn" type="button">Back to Playground</button>
+          </div>
         </div>
       </div>
-    `, { menu: true, wide: true });
+    `, { menu: true, wide: true, rootClass: "is-remix-screen" });
 
     wireMenu();
     wireRemixControls();
@@ -1365,7 +1371,7 @@
       ps.index += 1;
 
       if (current.pauseAfter) {
-        ps.pauseUntil = now + current.pauseAfter;
+        ps.pauseUntil = now + current.pauseAfter * (ps.speed?.pauseMultiplier || 1);
       } else {
         ps.charStart = now;
       }
