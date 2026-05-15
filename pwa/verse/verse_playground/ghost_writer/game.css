@@ -358,6 +358,10 @@ body{
   background:#fff3d4;
 }
 
+.ghost-playback-card.is-paper {
+  background: #fff8e8;
+}
+
 #ghostPlaybackCanvas{
   position:absolute;
   inset:0;
@@ -457,6 +461,10 @@ body{
 
 .ghost-remix-preview.is-crayon{
   background:#fff3d4;
+}
+
+.ghost-remix-preview.is-paper {
+  background: #fff8e8;
 }
 
 #ghostRemixCanvas{

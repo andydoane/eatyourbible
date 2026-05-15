@@ -21,12 +21,71 @@
     { id: "advanced", label: "🌙 Advanced" }
   ];
 
+  const COLOR_PALETTE = {
+    red: { label: "Red", value: "#ff5a51" },
+    orange: { label: "Orange", value: "#ffa351" },
+    yellow: { label: "Yellow", value: "#ffc751" },
+    green: { label: "Green", value: "#a7cb6f" },
+    teal: { label: "Teal", value: "#40b9c5" },
+    purple: { label: "Purple", value: "#7f66c6" },
+    darkGray: { label: "Dark Gray", value: "#333333" },
+    lightGray: { label: "Light Gray", value: "#f2f2f2" },
+    brown: { label: "Brown", value: "#a36f44" }
+  };
+
+  const BACKGROUNDS = {
+    ghost: {
+      label: "Ghost Black",
+      kind: "special",
+      value: "#050509",
+      cardClass: "",
+      texture: "ghost"
+    },
+    red: { ...COLOR_PALETTE.red, kind: "solid", cardClass: "" },
+    orange: { ...COLOR_PALETTE.orange, kind: "solid", cardClass: "" },
+    yellow: { ...COLOR_PALETTE.yellow, kind: "solid", cardClass: "" },
+    green: { ...COLOR_PALETTE.green, kind: "solid", cardClass: "" },
+    teal: { ...COLOR_PALETTE.teal, kind: "solid", cardClass: "" },
+    purple: { ...COLOR_PALETTE.purple, kind: "solid", cardClass: "" },
+    darkGray: { ...COLOR_PALETTE.darkGray, kind: "solid", cardClass: "" },
+    lightGray: { ...COLOR_PALETTE.lightGray, kind: "solid", cardClass: "" },
+    brown: { ...COLOR_PALETTE.brown, kind: "solid", cardClass: "" },
+    chalkboard: {
+      label: "Chalkboard",
+      kind: "special",
+      value: "#15352d",
+      cardClass: "is-chalkboard",
+      texture: "chalkboard"
+    },
+    paper: {
+      label: "Paper",
+      kind: "special",
+      value: "#fff8e8",
+      cardClass: "is-paper",
+      texture: "paper"
+    }
+  };
+
+  const TEXT_COLORS = {
+    ...COLOR_PALETTE,
+    rainbow: { label: "Rainbow", value: "rainbow" }
+  };
+
+  const RAINBOW_INKS = [
+    "#ff5a51",
+    "#ffa351",
+    "#ffc751",
+    "#a7cb6f",
+    "#40b9c5",
+    "#7f66c6"
+  ];
+
   const REMIX_PRESETS = {
     ghost: {
-      label: "Ghost",
+      label: "Ghost Black",
       cardClass: "",
       background: "#050509",
-      ink: "#ffffff",
+      ink: "#f2f2f2",
       shadow: "rgba(255,255,255,.32)",
       lineCap: "round"
     },
@@ -34,16 +93,16 @@
       label: "Chalkboard",
       cardClass: "is-chalkboard",
       background: "#15352d",
-      ink: "#f4fff4",
+      ink: "#f2f2f2",
       shadow: "rgba(255,255,255,.20)",
       lineCap: "round"
     },
-    crayon: {
-      label: "Crayon",
-      cardClass: "is-crayon",
-      background: "#fff3d4",
-      ink: "#5136a3",
-      shadow: "rgba(81,54,163,.10)",
+    paper: {
+      label: "Paper",
+      cardClass: "is-paper",
+      background: "#fff8e8",
+      ink: "#333333",
+      shadow: "rgba(51,51,51,.10)",
       lineCap: "round"
     }
   };
@@ -130,6 +189,8 @@
     hasDrawnCurrent: false,
     practiceMarked: false,
     remix: {
+      background: "ghost",
+      textColor: "lightGray",
       style: "ghost",
       speed: "normal",
       thickness: "normal",
@@ -267,6 +328,8 @@
     state.hasDrawnCurrent = false;
     state.practiceMarked = false;
     state.remix = {
+      background: "ghost",
+      textColor: "lightGray",
       style: "ghost",
       speed: "normal",
       thickness: "normal",
@@ -736,6 +799,8 @@
     document.getElementById("ghostWriteBtn")?.addEventListener("click", () => {
       renderPlayback({
         options: {
+          background: "ghost",
+          textColor: "lightGray",
           style: "ghost",
           speed: "normal",
           thickness: "normal",
@@ -753,11 +818,12 @@
     clearGuideTimer();
     state.screen = "playback";
 
-    const preset = REMIX_PRESETS[options.style] || REMIX_PRESETS.ghost;
+    const cleanOptions = sanitizeRemixOptions({ ...options });
+    const background = getBackgroundConfig(cleanOptions);
 
     app.innerHTML = `
       <div class="ghost-playback-root">
-        <div class="ghost-playback-card ${escapeHtml(preset.cardClass)}" id="ghostPlaybackCard">
+        <div class="ghost-playback-card ${escapeHtml(background.cardClass || "")}" id="ghostPlaybackCard">
           <canvas id="ghostPlaybackCanvas" aria-label="Ghost writing playback"></canvas>
           <img
             class="ghost-playback-tool"
@@ -776,7 +842,7 @@
     if (!canvas || !card) return;
 
     requestAnimationFrame(() => {
-      startPlayback(canvas, card, options, async () => {
+      startPlayback(canvas, card, cleanOptions, async () => {
         if (markPractice && !state.practiceMarked){
           state.practiceMarked = true;
           await markVersePracticed();
@@ -787,24 +853,27 @@
     });
   }
 
+
   function renderRemix() {
     stopPlayback();
     clearGuideTimer();
     state.screen = "remix";
+    sanitizeRemixOptions(state.remix);
 
-    const preset = REMIX_PRESETS[state.remix.style] || REMIX_PRESETS.ghost;
+    const background = getBackgroundConfig(state.remix);
 
     app.innerHTML = rootHtml(`
       <div class="ghost-card ghost-remix-card">
         <div class="ghost-remix-title">Remix Your Ghost Verse</div>
 
-        <div class="ghost-remix-preview ${escapeHtml(preset.cardClass)}" id="ghostRemixPreview">
+        <div class="ghost-remix-preview ${escapeHtml(background.cardClass || "")}" id="ghostRemixPreview">
           <canvas id="ghostRemixCanvas" aria-label="Ghost Writer preview"></canvas>
         </div>
 
         <div class="ghost-remix-scroll">
           <div class="ghost-options">
-            ${selectOptionHtml("ghostStyleSelect", "Background", state.remix.style, REMIX_PRESETS)}
+            ${selectBackgroundHtml("ghostBackgroundSelect", "Background", state.remix.background)}
+            ${selectTextColorHtml("ghostTextColorSelect", "Text Color", state.remix.textColor, state.remix.background)}
             ${selectOptionHtml("ghostSpeedSelect", "Speed", state.remix.speed, SPEEDS)}
             ${selectOptionHtml("ghostThicknessSelect", "Thickness", state.remix.thickness, THICKNESS)}
             ${selectSimpleHtml("ghostJitterSelect", "Jitter", state.remix.jitter, { off: "Off", on: "On" })}
@@ -823,7 +892,8 @@
     wireMenu();
     wireRemixControls();
     drawRemixPreview();
-  }
+  }  
+
 
   function selectOptionHtml(id, label, value, source){
     const options = Object.entries(source).map(([key, obj]) => {
@@ -853,40 +923,100 @@
     `;
   }
 
-  function wireRemixControls(){
-    const style = document.getElementById("ghostStyleSelect");
+  function selectBackgroundHtml(id, label, value) {
+    const options = Object.entries(BACKGROUNDS).map(([key, obj]) => {
+      const selected = key === value ? " selected" : "";
+      return `<option value="${escapeHtml(key)}"${selected}>${escapeHtml(obj.label || key)}</option>`;
+    }).join("");
+
+    return `
+      <div class="ghost-option">
+        <label for="${escapeHtml(id)}">${escapeHtml(label)}</label>
+        <select id="${escapeHtml(id)}">${options}</select>
+      </div>
+    `;
+  }
+
+  function selectTextColorHtml(id, label, value, backgroundKey) {
+    const options = Object.entries(TEXT_COLORS).map(([key, obj]) => {
+      const selected = key === value ? " selected" : "";
+      const disabled = isTextColorAllowedForBackground(key, backgroundKey) ? "" : " disabled";
+      const note = disabled ? " · unavailable" : "";
+
+      return `<option value="${escapeHtml(key)}"${selected}${disabled}>${escapeHtml(obj.label || key)}${note}</option>`;
+    }).join("");
+
+    return `
+      <div class="ghost-option">
+        <label for="${escapeHtml(id)}">${escapeHtml(label)}</label>
+        <select id="${escapeHtml(id)}">${options}</select>
+      </div>
+    `;
+  }
+
+  function wireRemixControls() {
+    const background = document.getElementById("ghostBackgroundSelect");
+    const textColor = document.getElementById("ghostTextColorSelect");
     const speed = document.getElementById("ghostSpeedSelect");
     const thickness = document.getElementById("ghostThicknessSelect");
     const jitter = document.getElementById("ghostJitterSelect");
     const wobble = document.getElementById("ghostWobbleSelect");
 
     const update = () => {
-      state.remix.style = style?.value || state.remix.style;
+      state.remix.background = background?.value || state.remix.background;
+      state.remix.style = state.remix.background;
+      state.remix.textColor = textColor?.value || state.remix.textColor;
       state.remix.speed = speed?.value || state.remix.speed;
       state.remix.thickness = thickness?.value || state.remix.thickness;
       state.remix.jitter = jitter?.value || state.remix.jitter;
       state.remix.wobble = wobble?.value || state.remix.wobble;
 
-      const preview = document.getElementById("ghostRemixPreview");
-      if (preview){
-        preview.classList.remove("is-chalkboard", "is-crayon");
-        const preset = REMIX_PRESETS[state.remix.style] || REMIX_PRESETS.ghost;
-        if (preset.cardClass) preview.classList.add(preset.cardClass);
+      sanitizeRemixOptions(state.remix);
+
+      if (textColor && textColor.value !== state.remix.textColor) {
+        textColor.value = state.remix.textColor;
       }
+
+      refreshTextColorOptions();
+
+      const preview = document.getElementById("ghostRemixPreview");
+      if (preview) {
+        preview.classList.remove("is-chalkboard", "is-crayon", "is-paper");
+        const backgroundConfig = getBackgroundConfig(state.remix);
+        if (backgroundConfig.cardClass) preview.classList.add(backgroundConfig.cardClass);
+      }
+
       drawRemixPreview();
     };
 
-    [style, speed, thickness, jitter, wobble].forEach((el) => {
+    [background, textColor, speed, thickness, jitter, wobble].forEach((el) => {
       if (el) el.onchange = update;
     });
 
     document.getElementById("ghostReplayBtn")?.addEventListener("click", () => {
+      sanitizeRemixOptions(state.remix);
       renderPlayback({ options: { ...state.remix }, markPractice: false, returnTo: "remix" });
     });
 
     document.getElementById("ghostAgainBtn")?.addEventListener("click", () => startRun(selectedMode));
     document.getElementById("ghostBackBtn")?.addEventListener("click", () => bridge().exitGame?.());
+
+    refreshTextColorOptions();
   }
+
+  function refreshTextColorOptions() {
+    const textColor = document.getElementById("ghostTextColorSelect");
+    if (!textColor) return;
+
+    const backgroundKey = state.remix.background;
+
+    for (const option of Array.from(textColor.options)) {
+      const allowed = isTextColorAllowedForBackground(option.value, backgroundKey);
+      option.disabled = !allowed;
+      option.textContent = `${TEXT_COLORS[option.value]?.label || option.value}${allowed ? "" : " · unavailable"}`;
+    }
+  }
+  
 
   function getGlyph(char){
     return state.glyphs.get(char) || null;
@@ -1018,7 +1148,7 @@
   function drawGlyph(c, glyph, x, baselineY, cellW, fontSize, options = {}, partial = 1) {
     if (!glyph || !glyph.strokes || !glyph.strokes.length) return;
 
-    const preset = REMIX_PRESETS[options.style] || REMIX_PRESETS.ghost;
+    const ink = getInkForOptions(options);
     const thickness = THICKNESS[options.thickness] || THICKNESS.normal;
     const jitterOn = options.jitter === "on";
     const wobbleOn = options.wobble === "on";
@@ -1045,13 +1175,13 @@
     c.rotate(rotation);
     c.translate(-(x + cellW / 2), -(baselineY - fontSize * .36));
 
-    c.strokeStyle = preset.ink;
-    c.fillStyle = preset.ink;
+    c.strokeStyle = ink;
+    c.fillStyle = ink;
     c.lineWidth = Math.max(1.8, fontSize * .075 * thickness.multiplier);
-    c.lineCap = preset.lineCap || "round";
+    c.lineCap = "round";
     c.lineJoin = "round";
-    c.shadowColor = preset.shadow || "transparent";
-    c.shadowBlur = options.style === "ghost" ? fontSize * .16 : fontSize * .04;
+    c.shadowColor = getShadowForInk(ink, options);
+    c.shadowBlur = getBackgroundKey(options) === "ghost" ? fontSize * .16 : fontSize * .045;
 
     const safePartial = clamp(partial, 0, 1);
     const strokeUnits = glyph.strokes.map((stroke) => getStrokePlaybackUnits(stroke));
@@ -1164,44 +1294,182 @@
     return ((h >>> 0) / 4294967295) * 2 - 1;
   }
 
-  function clearPlaybackCanvas(c, width, height, options){
-    const preset = REMIX_PRESETS[options.style] || REMIX_PRESETS.ghost;
+  function getBackgroundKey(options = {}) {
+    return options.background || options.style || "ghost";
+  }
+
+  function getBackgroundConfig(options = {}) {
+    const key = getBackgroundKey(options);
+    return BACKGROUNDS[key] || BACKGROUNDS.ghost;
+  }
+
+  function getTextColorKey(options = {}) {
+    return options.textColor || defaultTextColorForBackground(getBackgroundKey(options));
+  }
+
+  function getColorValue(key) {
+    return COLOR_PALETTE[key]?.value || "";
+  }
+
+  function defaultTextColorForBackground(backgroundKey) {
+    const background = BACKGROUNDS[backgroundKey] || BACKGROUNDS.ghost;
+
+    if (backgroundKey === "lightGray" || backgroundKey === "paper" || backgroundKey === "yellow") {
+      return "darkGray";
+    }
+
+    return "lightGray";
+  }
+
+  function isRainbowAllowedForBackground(backgroundKey) {
+    return backgroundKey === "lightGray" || backgroundKey === "darkGray";
+  }
+
+  function isTextColorAllowedForBackground(textColorKey, backgroundKey) {
+    if (textColorKey === "rainbow") {
+      return isRainbowAllowedForBackground(backgroundKey);
+    }
+
+    const background = BACKGROUNDS[backgroundKey] || BACKGROUNDS.ghost;
+    const textValue = getColorValue(textColorKey);
+
+    if (!textValue) return false;
+
+    return background.kind !== "solid" || background.value.toLowerCase() !== textValue.toLowerCase();
+  }
+
+  function sanitizeRemixOptions(options = state.remix) {
+    const backgroundKey = getBackgroundKey(options);
+    let textColorKey = getTextColorKey(options);
+
+    if (!isTextColorAllowedForBackground(textColorKey, backgroundKey)) {
+      textColorKey = defaultTextColorForBackground(backgroundKey);
+
+      if (!isTextColorAllowedForBackground(textColorKey, backgroundKey)) {
+        textColorKey = backgroundKey === "lightGray" ? "darkGray" : "lightGray";
+      }
+    }
+
+    options.background = backgroundKey;
+    options.textColor = textColorKey;
+    options.style = backgroundKey;
+
+    return options;
+  }
+
+  function getInkForOptions(options = {}) {
+    const backgroundKey = getBackgroundKey(options);
+    const textColorKey = getTextColorKey(options);
+
+    if (textColorKey === "rainbow" && isRainbowAllowedForBackground(backgroundKey)) {
+      const index = Number(options._colorIndex) || 0;
+      return RAINBOW_INKS[index % RAINBOW_INKS.length];
+    }
+
+    return getColorValue(textColorKey) || COLOR_PALETTE.lightGray.value;
+  }
+
+  function getShadowForInk(ink, options = {}) {
+    const backgroundKey = getBackgroundKey(options);
+
+    if (backgroundKey === "lightGray" || backgroundKey === "paper" || backgroundKey === "yellow") {
+      return "rgba(0,0,0,.14)";
+    }
+
+    if (getTextColorKey(options) === "rainbow") {
+      return "rgba(255,255,255,.24)";
+    }
+
+    if (ink === "#333333" || ink === "#a36f44") {
+      return "rgba(0,0,0,.18)";
+    }
+
+    return "rgba(255,255,255,.25)";
+  }
+
+  function clearPlaybackCanvas(c, width, height, options) {
+    const background = getBackgroundConfig(options);
+
     c.save();
-    c.fillStyle = preset.background;
+    c.fillStyle = background.value;
     c.fillRect(0, 0, width, height);
 
-    if (options.style === "chalkboard"){
+    if (background.texture === "ghost") {
+      c.globalAlpha = .16;
+      const glow = c.createRadialGradient(width * .5, height * .18, 0, width * .5, height * .18, Math.max(width, height) * .58);
+      glow.addColorStop(0, "rgba(255,255,255,.42)");
+      glow.addColorStop(.46, "rgba(150,160,255,.16)");
+      glow.addColorStop(1, "rgba(255,255,255,0)");
+      c.fillStyle = glow;
+      c.fillRect(0, 0, width, height);
+    }
+
+    if (background.texture === "chalkboard") {
       c.globalAlpha = .08;
       c.strokeStyle = "#ffffff";
-      for (let y = 20; y < height; y += 34){
+      c.lineWidth = 1;
+
+      for (let y = 20; y < height; y += 34) {
         c.beginPath();
         c.moveTo(0, y + stableNoise(`chalk-${y}`) * 4);
         c.lineTo(width, y + stableNoise(`chalk2-${y}`) * 4);
         c.stroke();
       }
+
+      c.globalAlpha = .045;
+      for (let x = 18; x < width; x += 42) {
+        c.beginPath();
+        c.moveTo(x + stableNoise(`chalk-v-${x}`) * 3, 0);
+        c.lineTo(x + stableNoise(`chalk-v2-${x}`) * 3, height);
+        c.stroke();
+      }
     }
 
-    if (options.style === "crayon"){
-      c.globalAlpha = .10;
-      c.fillStyle = "#7a5120";
-      for (let x = 0; x < width; x += 26){
-        c.fillRect(x, 0, 1, height);
-      }
-      for (let y = 0; y < height; y += 26){
+    if (background.texture === "paper") {
+      c.globalAlpha = .18;
+      c.fillStyle = "#d7b98b";
+
+      for (let y = 32; y < height; y += 32) {
         c.fillRect(0, y, width, 1);
+      }
+
+      c.globalAlpha = .12;
+      c.fillStyle = "#7f66c6";
+      c.fillRect(width * .12, 0, 2, height);
+
+      c.globalAlpha = .05;
+      for (let x = 0; x < width; x += 22) {
+        c.fillRect(x, 0, 1, height);
       }
     }
 
     c.restore();
   }
 
-  function drawCompleteText(c, width, height, options){
-    const layout = makeLayout(width, height);
-    clearPlaybackCanvas(c, width, height, options);
 
-    for (const item of layout.placements){
+
+  function drawCompleteText(c, width, height, options) {
+    const cleanOptions = sanitizeRemixOptions({ ...options });
+    const layout = makeLayout(width, height);
+    clearPlaybackCanvas(c, width, height, cleanOptions);
+
+    let colorIndex = 0;
+
+    for (const item of layout.placements) {
       if (/\s/.test(item.char)) continue;
-      drawGlyph(c, getGlyph(item.char), item.x, item.y, item.w, item.fontSize, options, 1);
+
+      drawGlyph(
+        c,
+        getGlyph(item.char),
+        item.x,
+        item.y,
+        item.w,
+        item.fontSize,
+        { ...cleanOptions, _colorIndex: colorIndex },
+        1
+      );
+
+      colorIndex += 1;
     }
   }
 
@@ -1249,7 +1517,8 @@
 
       out.push({
         ...item,
-        pauseAfter
+        pauseAfter,
+        colorIndex: out.length
       });
     }
 
@@ -1312,7 +1581,7 @@
 
       for (let i = 0; i < ps.index; i += 1) {
         const item = placements[i];
-        drawGlyph(ps.c, getGlyph(item.char), item.x, item.y, item.w, item.fontSize, ps.options, 1);
+        drawGlyph(ps.c, getGlyph(item.char), item.x, item.y, item.w, item.fontSize, { ...ps.options, _colorIndex: item.colorIndex || 0 }, 1);
       }
 
       if (ps.lastTip) {
@@ -1361,7 +1630,7 @@
       drawGlyph(ps.c, getGlyph(item.char), item.x, item.y, item.w, item.fontSize, ps.options, 1);
     }
 
-    drawGlyph(ps.c, glyph, current.x, current.y, current.w, current.fontSize, ps.options, progress);
+    drawGlyph(ps.c, glyph, current.x, current.y, current.w, current.fontSize, { ...ps.options, _colorIndex: current.colorIndex || 0 }, progress);
 
     if (tip) {
       updatePlaybackTool(ps, tip, now, true);
