@@ -1551,7 +1551,8 @@
       canvasWidth,
       verseMaxHeight,
       offsetX,
-      0
+      0,
+      { verticalAlign: "top" }
     );
 
     const totalHeight = verseLayout.height + referenceGap + dividerExtra + referenceZoneHeight;
@@ -1722,10 +1723,11 @@
     };
   }
 
-  function layoutForFontSize(text, fontSize, maxWidth, maxHeight, canvasWidth, canvasHeight, offsetX = 0, offsetY = 0) {
+  function layoutForFontSize(text, fontSize, maxWidth, maxHeight, canvasWidth, canvasHeight, offsetX = 0, offsetY = 0, options = {}) {
     const lineHeight = fontSize * 1.24;
     const placements = [];
     const lines = [];
+    const verticalAlign = options.verticalAlign || "center";
     let line = [];
     let lineWidth = 0;
 
@@ -1775,7 +1777,11 @@
     if (line.length || !lines.length) pushLine();
 
     const totalHeight = lines.length * lineHeight;
-    let y = offsetY + Math.max(fontSize * .9, (canvasHeight - totalHeight) / 2 + fontSize * .76);
+    const startBaseline = verticalAlign === "top"
+      ? offsetY + fontSize * .76
+      : offsetY + Math.max(fontSize * .9, (canvasHeight - totalHeight) / 2 + fontSize * .76);
+
+    let y = startBaseline;
 
     for (const currentLine of lines) {
       let x = offsetX + (canvasWidth - currentLine.width) / 2;
@@ -1805,6 +1811,7 @@
       overflows: usedWidth > maxWidth + 1 || totalHeight > maxHeight + 1
     };
   }
+  
 
   function drawGlyph(c, glyph, x, baselineY, cellW, fontSize, options = {}, partial = 1) {
     if (!glyph || !glyph.strokes || !glyph.strokes.length) return;
