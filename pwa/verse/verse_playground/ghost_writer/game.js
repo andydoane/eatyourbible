@@ -1,9 +1,9 @@
-(function () {
+(function(){
   "use strict";
 
   const GAME_ID = "ghost_writer";
   const GAME_TITLE = "Ghost Writer";
-  const GAME_ICON = "👻";
+  const GAME_ICON = "👻✍️";
   const HELP_OVERLAY_ID = "ghostWriterHelpOverlay";
   const MENU_OVERLAY_ID = "ghostWriterGameMenuOverlay";
 
@@ -26,13 +26,12 @@
     orange: { label: "Orange", value: "#ffa351" },
     yellow: { label: "Yellow", value: "#ffc751" },
     green: { label: "Green", value: "#a7cb6f" },
-    teal: { label: "Blue", value: "#40b9c5" },
+    teal: { label: "Teal", value: "#40b9c5" },
     purple: { label: "Purple", value: "#7f66c6" },
     darkGray: { label: "Dark Gray", value: "#333333" },
-    lightGray: { label: "White", value: "#ffffff" },
+    lightGray: { label: "Light Gray", value: "#f2f2f2" },
     brown: { label: "Brown", value: "#a36f44" }
   };
-
 
   const BACKGROUNDS = {
     ghost: {
@@ -51,7 +50,6 @@
     darkGray: { ...COLOR_PALETTE.darkGray, kind: "solid", cardClass: "" },
     lightGray: { ...COLOR_PALETTE.lightGray, kind: "solid", cardClass: "" },
     brown: { ...COLOR_PALETTE.brown, kind: "solid", cardClass: "" },
-
     chalkboard: {
       label: "Chalkboard",
       kind: "special",
@@ -65,114 +63,6 @@
       value: "#fff8e8",
       cardClass: "is-paper",
       texture: "paper"
-    },
-    notebook: {
-      label: "Notebook Paper",
-      kind: "special",
-      value: "#fbfdff",
-      cardClass: "",
-      texture: "notebook"
-    },
-    starryNight: {
-      label: "Starry Night",
-      kind: "special",
-      value: "#071126",
-      cardClass: "",
-      texture: "image",
-      imageSrc: "./ghost_writer_images/ghost_writer_bg_starry_night.png"
-    },
-    purpleMist: {
-      label: "Purple Mist",
-      kind: "special",
-      value: "#21142f",
-      cardClass: "",
-      texture: "purpleMist"
-    },
-    treasureMap: {
-      label: "Treasure Map",
-      kind: "special",
-      value: "#d9b874",
-      cardClass: "",
-      texture: "image",
-      imageSrc: "./ghost_writer_images/ghost_writer_bg_treasure_map.png"
-    },
-    rainbow: {
-      label: "Rainbow",
-      kind: "special",
-      value: "#f8f1ff",
-      cardClass: "",
-      texture: "rainbow"
-    },
-    wood: {
-      label: "Wood",
-      kind: "special",
-      value: "#8d5a32",
-      cardClass: "",
-      texture: "wood"
-    },
-    crackedStone: {
-      label: "Cracked Stone",
-      kind: "special",
-      value: "#787d83",
-      cardClass: "",
-      texture: "image",
-      imageSrc: "./ghost_writer_images/ghost_writer_bg_cracked_stone.png"
-    },
-    grass: {
-      label: "Green Grass",
-      kind: "special",
-      value: "#7dbc53",
-      cardClass: "",
-      texture: "image",
-      imageSrc: "./ghost_writer_images/ghost_writer_bg_grass.png"
-    },
-    aquaRed: {
-      label: "Swoosh Red",
-      kind: "special",
-      value: "#d85b61",
-      cardClass: "",
-      texture: "image",
-      imageSrc: "./ghost_writer_images/ghost_writer_bg_aqua_red.jpg"
-    },
-    aquaOrange: {
-      label: "Swoosh Orange",
-      kind: "special",
-      value: "#d98b4c",
-      cardClass: "",
-      texture: "image",
-      imageSrc: "./ghost_writer_images/ghost_writer_bg_aqua_orange.jpg"
-    },
-    aquaYellow: {
-      label: "Swoosh Yellow",
-      kind: "special",
-      value: "#d8ba54",
-      cardClass: "",
-      texture: "image",
-      imageSrc: "./ghost_writer_images/ghost_writer_bg_aqua_yellow.jpg"
-    },
-    aquaGreen: {
-      label: "Swoosh Green",
-      kind: "special",
-      value: "#5eac74",
-      cardClass: "",
-      texture: "image",
-      imageSrc: "./ghost_writer_images/ghost_writer_bg_aqua_green.jpg"
-    },
-    aquaBlue: {
-      label: "Swoosh Blue",
-      kind: "special",
-      value: "#4d8fcb",
-      cardClass: "",
-      texture: "image",
-      imageSrc: "./ghost_writer_images/ghost_writer_bg_aqua_blue.jpg"
-    },
-    aquaPurple: {
-      label: "Swoosh Purple",
-      kind: "special",
-      value: "#8f71c8",
-      cardClass: "",
-      texture: "image",
-      imageSrc: "./ghost_writer_images/ghost_writer_bg_aqua_purple.jpg"
     }
   };
 
@@ -190,32 +80,7 @@
     "#7f66c6"
   ];
 
-  const REMIX_PRESETS = {
-    ghost: {
-      label: "Ghost Black",
-      cardClass: "",
-      background: "#050509",
-      ink: "#f2f2f2",
-      shadow: "rgba(255,255,255,.32)",
-      lineCap: "round"
-    },
-    chalkboard: {
-      label: "Chalkboard",
-      cardClass: "is-chalkboard",
-      background: "#15352d",
-      ink: "#f2f2f2",
-      shadow: "rgba(255,255,255,.20)",
-      lineCap: "round"
-    },
-    paper: {
-      label: "Paper",
-      cardClass: "is-paper",
-      background: "#fff8e8",
-      ink: "#333333",
-      shadow: "rgba(51,51,51,.10)",
-      lineCap: "round"
-    }
-  };
+
 
   const SPEEDS = {
     slow: { label: "Slow", multiplier: 1.8, pauseMultiplier: 1.8 },
@@ -230,101 +95,13 @@
     superThick: { label: "Super Thick", multiplier: 1.9 }
   };
 
-  const BORDER_STYLES = {
-    none: { label: "None" },
-    solid: { label: "Solid" },
-    dashed: { label: "Dashed" },
-    dotted: { label: "Dotted" },
-    double: { label: "Double" },
-    glow: { label: "Glow" }
-  };
-
-  const BORDER_THICKNESS = {
-    thin: { label: "Thin", size: 4 },
-    medium: { label: "Medium", size: 8 },
-    thick: { label: "Thick", size: 13 }
-  };
-
   const PLAYBACK_TOOL = {
+    src: "./ghost_writer_images/ghost_writer_pencil.png",
     baseRotationDeg: -8,
     idleWobbleDeg: 1.2,
     directionWiggleDeg: 4.5,
     directionWiggleDecay: .82,
     visible: true
-  };
-
-  const PLAYBACK_TOOLS = {
-    pencil: {
-      label: "Pencil",
-      src: "./ghost_writer_images/ghost_writer_pencil.png",
-      className: "is-pencil-tool",
-      baseRotationDeg: -8
-    },
-    chalk: {
-      label: "Chalk",
-      src: "./ghost_writer_images/ghost_writer_chalk.png",
-      className: "is-chalk-tool",
-      baseRotationDeg: -8
-    },
-    crayon: {
-      label: "Crayon",
-      src: "",
-      className: "is-crayon-tool",
-      baseRotationDeg: -8
-    }
-  };
-
-  const CRAYON_TOOL_IMAGES = {
-    red: "./ghost_writer_images/ghost_writer_crayon_red.png",
-    orange: "./ghost_writer_images/ghost_writer_crayon_orange.png",
-    yellow: "./ghost_writer_images/ghost_writer_crayon_yellow.png",
-    green: "./ghost_writer_images/ghost_writer_crayon_green.png",
-    teal: "./ghost_writer_images/ghost_writer_crayon_blue.png",
-    purple: "./ghost_writer_images/ghost_writer_crayon_purple.png",
-    darkGray: "./ghost_writer_images/ghost_writer_crayon_gray.png",
-    lightGray: "./ghost_writer_images/ghost_writer_crayon_white.png",
-    brown: "./ghost_writer_images/ghost_writer_crayon_brown.png",
-    rainbow: "./ghost_writer_images/ghost_writer_crayon_rainbow.png"
-  };
-
-  const VAPOR_LEVELS = {
-    off: {
-      label: "Off",
-      enabled: false,
-      max: 0,
-      spawnDistance: Infinity,
-      alpha: 0,
-      radius: 0,
-      radiusJitter: 0,
-      life: 0,
-      lifeJitter: 0,
-      driftY: 0
-    },
-
-    normal: {
-      label: "Normal",
-      enabled: true,
-      max: 54,
-      spawnDistance: 5,
-      alpha: .18,
-      radius: 7,
-      radiusJitter: 13,
-      life: 520,
-      lifeJitter: 260,
-      driftY: 18
-    },
-    spooky: {
-      label: "Spooky",
-      enabled: true,
-      max: 86,
-      spawnDistance: 3,
-      alpha: .26,
-      radius: 10,
-      radiusJitter: 18,
-      life: 760,
-      lifeJitter: 360,
-      driftY: 26
-    }
   };
 
   const PLAYBACK_PAUSES = {
@@ -333,106 +110,13 @@
     line: 330
   };
 
-  const EXPORT_IMAGE = {
-    filenamePrefix: "ghost-writer"
-  };
-
-  const EXPORT_SIZES = {
-    square: {
-      label: "Square",
-      width: 1080,
-      height: 1080,
-      filenameLabel: "square"
-    },
-    phone: {
-      label: "Tall",
-      width: 1290,
-      height: 2796,
-      filenameLabel: "tall"
-    },
-    wide: {
-      label: "Wide",
-      width: 1920,
-      height: 1080,
-      filenameLabel: "wide"
-    }
-  };
-
-  const GUIDE_FIT = {
-    letterWidth: .86,
-    letterHeight: .88,
-    symbolWidth: .68,
-    skinnySymbolWidth: .42,
-    symbolHeight: .76,
-    maxLetterSize: 1.28,
-    maxSymbolSize: 1.18,
-    minSize: .32
-  };
-
-  const CENTERED_TRAINING_GUIDES = new Set([".", ",", ":", ";", "'", '"', "-"]);
-
-  const GUIDE_RENDER_PROFILES = {
-    ".": { yOffset: -.24 },
-    ",": { yOffset: -.34 },
-    ":": { yOffset: -.02 },
-    ";": { yOffset: -.08 },
-    "'": { yOffset: .10 },
-    "\"": { yOffset: .10 },
-    "-": { yOffset: 0 }
-  };
-
-  const GLYPH_RENDER_PROFILES = {
-    ".": {
-      widthScale: .34,
-      heightScale: .18,
-      verticalAlign: "bottom",
-      yOffset: -.02
-    },
-    ",": {
-      widthScale: .36,
-      heightScale: .26,
-      verticalAlign: "bottom",
-      yOffset: .07
-    },
-    ":": {
-      widthScale: .38,
-      heightScale: .50,
-      verticalAlign: "middle",
-      yOffset: 0
-    },
-    ";": {
-      widthScale: .40,
-      heightScale: .56,
-      verticalAlign: "middle",
-      yOffset: .04
-    },
-    "'": {
-      widthScale: .30,
-      heightScale: .34,
-      verticalAlign: "top",
-      yOffset: .03
-    },
-    "\"": {
-      widthScale: .46,
-      heightScale: .34,
-      verticalAlign: "top",
-      yOffset: .03
-    },
-    "-": {
-      widthScale: .58,
-      heightScale: .24,
-      verticalAlign: "middle",
-      yOffset: 0
-    }
-  };
-
   const app = document.getElementById("app");
 
   const DEBUG_GHOST_WRITER = (() => {
     try {
       const params = new URLSearchParams(window.location.search);
       return params.get("gwDebug") === "1" || localStorage.getItem("ghostWriterDebug") === "1";
-    } catch (err) {
+    } catch (err){
       return false;
     }
   })();
@@ -445,11 +129,11 @@
     ? window.GHOST_WRITER_DEBUG_LOG
     : [];
 
-  window.getGhostWriterDebugJson = function () {
+  window.getGhostWriterDebugJson = function(){
     return JSON.stringify(window.GHOST_WRITER_DEBUG_LOG || [], null, 2);
   };
 
-  window.clearGhostWriterDebugLog = function () {
+  window.clearGhostWriterDebugLog = function(){
     window.GHOST_WRITER_DEBUG_LOG = [];
     return true;
   };
@@ -467,7 +151,6 @@
   let guideTimer = null;
   let playbackRaf = 0;
   let playbackState = null;
-  const backgroundImageCache = new Map();
 
   const state = {
     screen: "intro",
@@ -483,12 +166,6 @@
     remix: {
       background: "ghost",
       textColor: "lightGray",
-      borderStyle: "none",
-      borderThickness: "medium",
-      borderColor: "lightGray",
-      tool: "pencil",
-      vapor: "normal",
-      exportSize: "square",
       style: "ghost",
       speed: "normal",
       thickness: "normal",
@@ -497,15 +174,15 @@
     }
   };
 
-  function shell() {
+  function shell(){
     return window.VerseGameShell || {};
   }
 
-  function bridge() {
+  function bridge(){
     return window.VerseGameBridge || {};
   }
 
-  function escapeHtml(value) {
+  function escapeHtml(value){
     if (shell().escapeHtml) return shell().escapeHtml(value);
     return String(value ?? "")
       .replace(/&/g, "&amp;")
@@ -515,14 +192,14 @@
       .replace(/'/g, "&#39;");
   }
 
-  function clamp(value, min, max) {
+  function clamp(value, min, max){
     if (shell().clamp) return shell().clamp(value, min, max);
     const n = Number(value);
     if (!Number.isFinite(n)) return min;
     return Math.max(min, Math.min(max, n));
   }
 
-  function normalizeTextForGhost(text) {
+  function normalizeTextForGhost(text){
     return String(text ?? "")
       .replace(/[‘’]/g, "'")
       .replace(/[“”]/g, '"')
@@ -532,7 +209,7 @@
       .toUpperCase();
   }
 
-  function buildFullText() {
+  function buildFullText(){
     parsedRef = shell().parseReferenceParts
       ? shell().parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId)
       : { book: ctx.verseRef || "", reference: "", display: ctx.verseRef || "" };
@@ -549,11 +226,11 @@
     state.requiredChars = extractRequiredChars(state.fullText);
   }
 
-  function extractRequiredChars(text) {
+  function extractRequiredChars(text){
     const out = [];
     const seen = new Set();
 
-    for (const char of String(text || "")) {
+    for (const char of String(text || "")){
       if (/\s/.test(char)) continue;
       if (seen.has(char)) continue;
       seen.add(char);
@@ -563,18 +240,18 @@
     return out;
   }
 
-  function helpHtml() {
+  function helpHtml(){
     return `
       <ul class="ghost-help-list">
         <li>Write each uppercase character one time in the big square.</li>
         <li>Beginner keeps a light guide on the page. Advanced flashes the guide, then hides it.</li>
         <li>When every character is ready, tap <strong>Ghost Write!</strong> and watch the verse write itself.</li>
-        <li>After the first ghost writing, remix it with fun backgrounds, colors, borders, and writing tools.</li>
+        <li>After the first ghost writing, replay it with fun styles like chalkboard and crayon.</li>
       </ul>
     `;
   }
 
-  function renderIntro() {
+  function renderIntro(){
     stopPlayback();
     clearGuideTimer();
     state.screen = "intro";
@@ -594,7 +271,7 @@
     });
   }
 
-  function renderModeSelect() {
+  function renderModeSelect(){
     stopPlayback();
     clearGuideTimer();
     state.screen = "mode";
@@ -613,7 +290,7 @@
     });
   }
 
-  function startRun(mode) {
+  function startRun(mode){
     stopPlayback();
     clearGuideTimer();
 
@@ -628,12 +305,6 @@
     state.remix = {
       background: "ghost",
       textColor: "lightGray",
-      borderStyle: "none",
-      borderThickness: "medium",
-      borderColor: "lightGray",
-      tool: "pencil",
-      vapor: "normal",
-      exportSize: "square",
       style: "ghost",
       speed: "normal",
       thickness: "normal",
@@ -665,9 +336,9 @@
       </div>
     `;
   }
+  
 
-
-  function wireMenu() {
+  function wireMenu(){
     if (!shell().wireGameMenu) return;
 
     shell().wireGameMenu({
@@ -682,33 +353,28 @@
       onModeSelect: () => renderModeSelect(),
       onExit: () => bridge().exitGame?.(),
       onOpen: () => true,
-      onClose: () => { },
-      onBackFromHelp: () => { }
+      onClose: () => {},
+      onBackFromHelp: () => {}
     });
   }
 
-  function currentChar() {
+  function currentChar(){
     return state.requiredChars[state.currentCharIndex] || "";
   }
 
-  function isSymbolChar(char) {
+  function isSymbolChar(char){
     return !/[A-Z0-9]/.test(char);
   }
 
-  function isAlphaNumericChar(char) {
+  function isAlphaNumericChar(char){
     return /^[A-Z0-9]$/.test(String(char || ""));
   }
 
-  function allowsDotStroke(char) {
+  function allowsDotStroke(char){
     return [".", ":", ";", "!", "?"].includes(String(char || ""));
   }
 
-  function getGuideRenderProfile(char) {
-    return GUIDE_RENDER_PROFILES[String(char || "")] || null;
-  }
-
-
-  function charLabel(char) {
+  function charLabel(char){
     if (char === "\"") return "quotation mark";
     if (char === "'") return "apostrophe";
     if (char === ":") return "colon";
@@ -721,7 +387,7 @@
     return char;
   }
 
-  function renderTraining() {
+  function renderTraining(){
     clearGuideTimer();
     state.screen = "training";
 
@@ -763,14 +429,14 @@
     document.getElementById("ghostClearBtn")?.addEventListener("click", clearCurrentDrawing);
     document.getElementById("ghostSaveBtn")?.addEventListener("click", saveCurrentGlyph);
 
-    if (selectedMode === "advanced") {
+    if (selectedMode === "advanced"){
       guideTimer = setTimeout(() => {
         document.getElementById("ghostGuideText")?.classList.add("is-faded");
       }, 950);
     }
   }
 
-  function setupCanvasForDpr(canvas, cssWidth, cssHeight) {
+  function setupCanvasForDpr(canvas, cssWidth, cssHeight){
     const dpr = Math.max(1, window.devicePixelRatio || 1);
     canvas.width = Math.max(1, Math.round(cssWidth * dpr));
     canvas.height = Math.max(1, Math.round(cssHeight * dpr));
@@ -781,7 +447,7 @@
     return c;
   }
 
-  function setupDrawingCanvas() {
+  function setupDrawingCanvas(){
     const canvas = document.getElementById("ghostDrawCanvas");
     const wrap = document.getElementById("ghostDrawWrap");
     if (!canvas || !wrap) return;
@@ -823,7 +489,7 @@
       if (!state.currentStroke) return;
       event.preventDefault?.();
       const stroke = state.currentStroke;
-      if (stroke.length === 1) {
+      if (stroke.length === 1){
         drawTrainingPoint(c, stroke[0], rect.width, rect.height);
       }
       state.currentStroke = null;
@@ -834,7 +500,7 @@
     canvas.onpointerleave = endStroke;
   }
 
-  function drawTrainingPoint(c, point, width, height) {
+  function drawTrainingPoint(c, point, width, height){
     c.save();
     c.fillStyle = "#16171d";
     c.beginPath();
@@ -843,7 +509,7 @@
     c.restore();
   }
 
-  function drawTrainingSegment(c, a, b, width, height) {
+  function drawTrainingSegment(c, a, b, width, height){
     c.save();
     c.strokeStyle = "#16171d";
     c.lineWidth = Math.max(7, width * .022);
@@ -856,25 +522,25 @@
     c.restore();
   }
 
-  function drawAllTrainingStrokes(c, width, height) {
-    for (const stroke of state.currentStrokes) {
+  function drawAllTrainingStrokes(c, width, height){
+    for (const stroke of state.currentStrokes){
       if (!stroke || !stroke.length) continue;
-      if (stroke.length === 1) {
+      if (stroke.length === 1){
         drawTrainingPoint(c, stroke[0], width, height);
         continue;
       }
-      for (let i = 1; i < stroke.length; i += 1) {
+      for (let i = 1; i < stroke.length; i += 1){
         drawTrainingSegment(c, stroke[i - 1], stroke[i], width, height);
       }
     }
   }
 
-  function clearCurrentDrawing() {
+  function clearCurrentDrawing(){
     state.currentStrokes = [];
     state.currentStroke = null;
     state.hasDrawnCurrent = false;
     const canvas = document.getElementById("ghostDrawCanvas");
-    if (canvas) {
+    if (canvas){
       const width = Number(canvas.dataset.cssWidth) || canvas.getBoundingClientRect().width;
       const height = Number(canvas.dataset.cssHeight) || canvas.getBoundingClientRect().height;
       const c = setupCanvasForDpr(canvas, width, height);
@@ -883,13 +549,13 @@
     updateSaveButton();
   }
 
-  function updateSaveButton() {
+  function updateSaveButton(){
     const btn = document.getElementById("ghostSaveBtn");
     if (!btn) return;
     btn.disabled = !state.hasDrawnCurrent;
   }
 
-  function saveCurrentGlyph() {
+  function saveCurrentGlyph(){
     if (!state.hasDrawnCurrent) return;
 
     const char = currentChar();
@@ -901,7 +567,7 @@
     state.currentStroke = null;
     state.hasDrawnCurrent = false;
 
-    if (state.currentCharIndex >= state.requiredChars.length) {
+    if (state.currentCharIndex >= state.requiredChars.length){
       renderReady();
       return;
     }
@@ -909,7 +575,7 @@
     renderTraining();
   }
 
-  function makeGlyph(char, strokes) {
+  function makeGlyph(char, strokes){
     const raw = (strokes || [])
       .map((stroke) => (stroke || []).map((p) => ({
         x: clamp(p.x, 0, 1),
@@ -923,7 +589,7 @@
     // Letters and numbers should not accidentally save tap-dots.
     // Punctuation such as periods, colons, and question marks still needs dots,
     // so it is allowed to keep single-point / tiny strokes.
-    if (isAlphaNumericChar(char) && !allowsDotStroke(char)) {
+    if (isAlphaNumericChar(char) && !allowsDotStroke(char)){
       filtered = raw.filter((stroke) => {
         if (!stroke || stroke.length < 2) return false;
         return strokeDistance(stroke) >= .012;
@@ -931,7 +597,7 @@
 
       // If filtering would erase the whole glyph, keep the original data so a
       // child does not lose a very small but intentional mark.
-      if (!filtered.length && raw.length) {
+      if (!filtered.length && raw.length){
         filtered = raw;
       }
     }
@@ -952,9 +618,9 @@
     return glyph;
   }
 
-  function strokeDistance(stroke) {
+  function strokeDistance(stroke){
     let total = 0;
-    for (let i = 1; i < (stroke?.length || 0); i += 1) {
+    for (let i = 1; i < (stroke?.length || 0); i += 1){
       const a = stroke[i - 1];
       const b = stroke[i];
       const dx = (b.x || 0) - (a.x || 0);
@@ -964,17 +630,17 @@
     return total;
   }
 
-  function strokeBounds(stroke) {
+  function strokeBounds(stroke){
     return computeBounds([stroke || []]);
   }
 
-  function round4(value) {
+  function round4(value){
     const n = Number(value);
     if (!Number.isFinite(n)) return 0;
     return Math.round(n * 10000) / 10000;
   }
 
-  function logGlyphDebug(glyph, rawStrokes) {
+  function logGlyphDebug(glyph, rawStrokes){
     const raw = Array.isArray(rawStrokes) ? rawStrokes : [];
     const keptSet = new Set(glyph.strokes || []);
 
@@ -1002,10 +668,10 @@
           : null,
         last: stroke?.length
           ? {
-            x: round4(stroke[stroke.length - 1].x),
-            y: round4(stroke[stroke.length - 1].y),
-            t: round4(stroke[stroke.length - 1].t)
-          }
+              x: round4(stroke[stroke.length - 1].x),
+              y: round4(stroke[stroke.length - 1].y),
+              t: round4(stroke[stroke.length - 1].t)
+            }
           : null,
         tinyOrTap: isTiny
       };
@@ -1037,12 +703,12 @@
       rawStrokeDetails
     };
 
-    if (DEBUG_GHOST_WRITER) {
+    if (DEBUG_GHOST_WRITER){
       window.GHOST_WRITER_DEBUG_LOG.push(summary);
       console.info(`GW_DEBUG ${JSON.stringify(summary)}`);
     }
 
-    if (suspicious.length) {
+    if (suspicious.length){
       console.warn("Ghost Writer glyph had tiny/tap strokes", {
         char: summary.char,
         suspiciousRawStrokeIndexes: summary.suspiciousRawStrokeIndexes,
@@ -1053,14 +719,14 @@
     }
   }
 
-  function computeBounds(strokes) {
+  function computeBounds(strokes){
     let minX = Infinity;
     let minY = Infinity;
     let maxX = -Infinity;
     let maxY = -Infinity;
 
-    for (const stroke of strokes || []) {
-      for (const p of stroke || []) {
+    for (const stroke of strokes || []){
+      for (const p of stroke || []){
         if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) continue;
         minX = Math.min(minX, p.x);
         minY = Math.min(minY, p.y);
@@ -1069,7 +735,7 @@
       }
     }
 
-    if (!Number.isFinite(minX)) {
+    if (!Number.isFinite(minX)){
       return { minX: .35, minY: .35, maxX: .65, maxY: .65, width: .30, height: .30 };
     }
 
@@ -1089,7 +755,7 @@
     };
   }
 
-  function renderReady() {
+  function renderReady(){
     clearGuideTimer();
     state.screen = "ready";
 
@@ -1110,11 +776,6 @@
         options: {
           background: "ghost",
           textColor: "lightGray",
-          borderStyle: "none",
-          borderThickness: "medium",
-          borderColor: "lightGray",
-          tool: "pencil",
-          vapor: "normal",
           style: "ghost",
           speed: "normal",
           thickness: "normal",
@@ -1127,68 +788,46 @@
     });
   }
 
-  function renderPlayback({ options = state.remix, markPractice = false, returnTo = "remix" } = {}) {
+  function renderPlayback({ options = state.remix, markPractice = false, returnTo = "remix" } = {}){
     stopPlayback();
     clearGuideTimer();
     state.screen = "playback";
 
     const cleanOptions = sanitizeRemixOptions({ ...options });
     const background = getBackgroundConfig(cleanOptions);
-    const toolConfig = getPlaybackToolConfig(cleanOptions);
 
     app.innerHTML = `
       <div class="ghost-playback-root">
         <div class="ghost-playback-card ${escapeHtml(background.cardClass || "")}" id="ghostPlaybackCard">
           <canvas id="ghostPlaybackCanvas" aria-label="Ghost writing playback"></canvas>
           <img
-            class="ghost-playback-tool ${escapeHtml(toolConfig.className || "")}"
+            class="ghost-playback-tool"
             id="ghostPlaybackTool"
-            src="${escapeHtml(toolConfig.src)}"
+            src="${escapeHtml(PLAYBACK_TOOL.src)}"
             alt=""
             draggable="false"
           >
-          <div class="ghost-playback-label" id="ghostPlaybackLabel">Ghost writing...</div>
-          <button class="ghost-playback-remix-btn" id="ghostPlaybackRemixBtn" type="button" aria-label="Open remix screen">
-            🔄 Remix
-          </button>
+          <div class="ghost-playback-label">Ghost writing...</div>
         </div>
       </div>
     `;
 
     const canvas = document.getElementById("ghostPlaybackCanvas");
     const card = document.getElementById("ghostPlaybackCard");
-    const remixBtn = document.getElementById("ghostPlaybackRemixBtn");
     if (!canvas || !card) return;
-
-    remixBtn?.addEventListener("click", () => {
-      if (returnTo === "remix") {
-        renderRemix();
-      }
-    });
 
     requestAnimationFrame(() => {
       startPlayback(canvas, card, cleanOptions, async () => {
-        if (markPractice && !state.practiceMarked) {
+        if (markPractice && !state.practiceMarked){
           state.practiceMarked = true;
           await markVersePracticed();
         }
 
-        showPlaybackRemixButton();
+        if (returnTo === "remix") renderRemix();
       });
     });
   }
 
-  function showPlaybackRemixButton() {
-    const label = document.getElementById("ghostPlaybackLabel");
-    const remixBtn = document.getElementById("ghostPlaybackRemixBtn");
-
-    if (label) {
-      label.textContent = "Finished!";
-      label.classList.add("is-finished");
-    }
-
-    remixBtn?.classList.add("is-visible");
-  }
 
   function renderRemix() {
     stopPlayback();
@@ -1207,50 +846,19 @@
         </div>
 
         <div class="ghost-remix-scroll">
-          <div class="ghost-remix-section">
-            <div class="ghost-section-title">Background</div>
-            <div class="ghost-options">
-              ${selectBackgroundHtml("ghostBackgroundSelect", "Background", state.remix.background)}
-            </div>
+          <div class="ghost-options">
+            ${selectBackgroundHtml("ghostBackgroundSelect", "Background", state.remix.background)}
+            ${selectTextColorHtml("ghostTextColorSelect", "Text Color", state.remix.textColor, state.remix.background)}
+            ${selectOptionHtml("ghostSpeedSelect", "Speed", state.remix.speed, SPEEDS)}
+            ${selectOptionHtml("ghostThicknessSelect", "Thickness", state.remix.thickness, THICKNESS)}
+            ${selectSimpleHtml("ghostJitterSelect", "Jitter", state.remix.jitter, { off: "Off", on: "On" })}
+            ${selectSimpleHtml("ghostWobbleSelect", "Wobble", state.remix.wobble, { off: "Off", on: "On" })}
           </div>
 
-          <div class="ghost-remix-section">
-            <div class="ghost-section-title">Writing</div>
-            <div class="ghost-options">
-              ${selectTextColorHtml("ghostTextColorSelect", "Text Color", state.remix.textColor, state.remix.background)}
-              ${selectOptionHtml("ghostThicknessSelect", "Line Size", state.remix.thickness, THICKNESS)}
-              ${selectSimpleHtml("ghostJitterSelect", "Wiggly Placement", state.remix.jitter, { off: "Off", on: "On" })}
-              ${selectSimpleHtml("ghostWobbleSelect", "Wobble Letters", state.remix.wobble, { off: "Off", on: "On" })}
-            </div>
-          </div>
-
-          <div class="ghost-remix-section">
-            <div class="ghost-section-title">Ghost Effect</div>
-            <div class="ghost-options">
-              ${selectOptionHtml("ghostToolSelect", "Tool", state.remix.tool || "pencil", PLAYBACK_TOOLS)}
-              ${selectOptionHtml("ghostVaporSelect", "Ghost Trail", state.remix.vapor || "normal", VAPOR_LEVELS)}
-              ${selectOptionHtml("ghostSpeedSelect", "Speed", state.remix.speed, SPEEDS)}
-            </div>
-          </div>
-
-          <div class="ghost-remix-section">
-            <div class="ghost-section-title">Border</div>
-            <div class="ghost-options">
-              ${selectOptionHtml("ghostBorderStyleSelect", "Border Style", state.remix.borderStyle, BORDER_STYLES)}
-              ${selectOptionHtml("ghostBorderThicknessSelect", "Border Thickness", state.remix.borderThickness, BORDER_THICKNESS)}
-              ${selectOptionHtml("ghostBorderColorSelect", "Border Color", state.remix.borderColor, COLOR_PALETTE)}
-            </div>
-          </div>
-
-          <div class="ghost-remix-section ghost-remix-section-actions">
-            <div class="ghost-section-title">Actions &amp; Download</div>
-            <div class="ghost-remix-actions">
-              <button class="vm-btn" id="ghostReplayBtn" type="button">Replay</button>
-              <button class="vm-btn vm-btn-secondary" id="ghostAgainBtn" type="button">Try Again</button>
-              ${selectOptionHtml("ghostExportSizeSelect", "Download Size", state.remix.exportSize || "square", EXPORT_SIZES)}
-              <button class="vm-btn vm-btn-secondary" id="ghostSaveImageBtn" type="button">Save as Image</button>
-              <button class="vm-btn vm-btn-secondary ghost-full" id="ghostBackBtn" type="button">Back to Playground</button>
-            </div>
+          <div class="ghost-remix-actions">
+            <button class="vm-btn" id="ghostReplayBtn" type="button">Replay</button>
+            <button class="vm-btn vm-btn-secondary" id="ghostAgainBtn" type="button">Try Again</button>
+            <button class="vm-btn vm-btn-secondary ghost-full" id="ghostBackBtn" type="button">Back to Playground</button>
           </div>
         </div>
       </div>
@@ -1259,10 +867,10 @@
     wireMenu();
     wireRemixControls();
     drawRemixPreview();
-  }
+  }  
 
 
-  function selectOptionHtml(id, label, value, source) {
+  function selectOptionHtml(id, label, value, source){
     const options = Object.entries(source).map(([key, obj]) => {
       const selected = key === value ? " selected" : "";
       return `<option value="${escapeHtml(key)}"${selected}>${escapeHtml(obj.label || key)}</option>`;
@@ -1276,7 +884,7 @@
     `;
   }
 
-  function selectSimpleHtml(id, label, value, source) {
+  function selectSimpleHtml(id, label, value, source){
     const options = Object.entries(source).map(([key, labelText]) => {
       const selected = key === value ? " selected" : "";
       return `<option value="${escapeHtml(key)}"${selected}>${escapeHtml(labelText)}</option>`;
@@ -1328,12 +936,6 @@
     const thickness = document.getElementById("ghostThicknessSelect");
     const jitter = document.getElementById("ghostJitterSelect");
     const wobble = document.getElementById("ghostWobbleSelect");
-    const tool = document.getElementById("ghostToolSelect");
-    const vapor = document.getElementById("ghostVaporSelect");
-    const exportSize = document.getElementById("ghostExportSizeSelect");
-    const borderStyle = document.getElementById("ghostBorderStyleSelect");
-    const borderThickness = document.getElementById("ghostBorderThicknessSelect");
-    const borderColor = document.getElementById("ghostBorderColorSelect");
 
     const update = () => {
       state.remix.background = background?.value || state.remix.background;
@@ -1343,12 +945,6 @@
       state.remix.thickness = thickness?.value || state.remix.thickness;
       state.remix.jitter = jitter?.value || state.remix.jitter;
       state.remix.wobble = wobble?.value || state.remix.wobble;
-      state.remix.tool = tool?.value || state.remix.tool;
-      state.remix.vapor = vapor?.value || state.remix.vapor;
-      state.remix.exportSize = exportSize?.value || state.remix.exportSize;
-      state.remix.borderStyle = borderStyle?.value || state.remix.borderStyle;
-      state.remix.borderThickness = borderThickness?.value || state.remix.borderThickness;
-      state.remix.borderColor = borderColor?.value || state.remix.borderColor;
 
       sanitizeRemixOptions(state.remix);
 
@@ -1368,18 +964,13 @@
       drawRemixPreview();
     };
 
-    [background, textColor, speed, thickness, jitter, wobble, tool, vapor, exportSize, borderStyle, borderThickness, borderColor].forEach((el) => {
+    [background, textColor, speed, thickness, jitter, wobble].forEach((el) => {
       if (el) el.onchange = update;
     });
 
     document.getElementById("ghostReplayBtn")?.addEventListener("click", () => {
       sanitizeRemixOptions(state.remix);
       renderPlayback({ options: { ...state.remix }, markPractice: false, returnTo: "remix" });
-    });
-
-    document.getElementById("ghostSaveImageBtn")?.addEventListener("click", () => {
-      sanitizeRemixOptions(state.remix);
-      saveGhostWriterImage({ ...state.remix });
     });
 
     document.getElementById("ghostAgainBtn")?.addEventListener("click", () => startRun(selectedMode));
@@ -1400,13 +991,13 @@
       option.textContent = `${TEXT_COLORS[option.value]?.label || option.value}${allowed ? "" : " · unavailable"}`;
     }
   }
+  
 
-
-  function getGlyph(char) {
+  function getGlyph(char){
     return state.glyphs.get(char) || null;
   }
 
-  function glyphWidthUnits(char) {
+  function glyphWidthUnits(char){
     if (/\s/.test(char)) return .38;
     const glyph = getGlyph(char);
     if (!glyph) return .65;
@@ -1414,55 +1005,9 @@
     return clamp(glyph.widthRatio + .16, minimum, .98);
   }
 
-  function getGlyphRenderProfile(char) {
-    return GLYPH_RENDER_PROFILES[String(char || "")] || null;
-  }
-
-  function getGlyphUsableArea(char, fontSize, cellW) {
-    const profile = getGlyphRenderProfile(char);
-    const defaultH = fontSize * 1.04;
-    const defaultW = Math.max(fontSize * .14, cellW * .88);
-
-    if (!profile) {
-      return {
-        usableW: defaultW,
-        usableH: defaultH,
-        verticalAlign: "normal",
-        yOffset: 0
-      };
-    }
-
-    return {
-      usableW: Math.max(fontSize * .10, Math.min(defaultW, fontSize * profile.widthScale)),
-      usableH: Math.max(fontSize * .10, fontSize * profile.heightScale),
-      verticalAlign: profile.verticalAlign || "middle",
-      yOffset: profile.yOffset || 0
-    };
-  }
-
-  function getGlyphBaseYForProfile(baselineY, fontSize, usableH, drawH, profileInfo) {
-    const align = profileInfo?.verticalAlign || "normal";
-    const offset = (profileInfo?.yOffset || 0) * fontSize;
-
-    if (align === "top") {
-      return baselineY - fontSize * .82 + offset;
-    }
-
-    if (align === "middle") {
-      return baselineY - fontSize * .80 + (fontSize * 1.04 - usableH) / 2 + (usableH - drawH) / 2 + offset;
-    }
-
-    if (align === "bottom") {
-      return baselineY - drawH + fontSize * .17 + offset;
-    }
-
-    return baselineY - usableH * .80 + (usableH - drawH) / 2 + offset;
-  }
-
-  function makeLayout(width, height, options = {}) {
-    const contentRect = getCanvasContentRect(width, height, options);
-    const safeWidth = Math.max(120, contentRect.width);
-    const safeHeight = Math.max(120, contentRect.height);
+  function makeLayout(width, height){
+    const safeWidth = Math.max(120, width);
+    const safeHeight = Math.max(120, height);
     const text = state.fullText || "";
     const maxWidth = safeWidth * .94;
     const maxHeight = safeHeight * .88;
@@ -1477,19 +1022,10 @@
     const minFontSize = 12;
     let best = null;
 
-    for (let fontSize = maxFontSize; fontSize >= minFontSize; fontSize -= 1) {
-      const layout = layoutForFontSize(
-        text,
-        fontSize,
-        maxWidth,
-        maxHeight,
-        safeWidth,
-        safeHeight,
-        contentRect.x,
-        contentRect.y
-      );
+    for (let fontSize = maxFontSize; fontSize >= minFontSize; fontSize -= 1){
+      const layout = layoutForFontSize(text, fontSize, maxWidth, maxHeight, safeWidth, safeHeight);
 
-      if (!layout.overflows) {
+      if (!layout.overflows){
         best = layout;
         break;
       }
@@ -1497,19 +1033,10 @@
 
     if (best) return best;
 
-    return layoutForFontSize(
-      text,
-      minFontSize,
-      maxWidth,
-      maxHeight,
-      safeWidth,
-      safeHeight,
-      contentRect.x,
-      contentRect.y
-    );
+    return layoutForFontSize(text, minFontSize, maxWidth, maxHeight, safeWidth, safeHeight);
   }
 
-  function layoutForFontSize(text, fontSize, maxWidth, maxHeight, canvasWidth, canvasHeight, offsetX = 0, offsetY = 0) {
+  function layoutForFontSize(text, fontSize, maxWidth, maxHeight, canvasWidth, canvasHeight){
     const lineHeight = fontSize * 1.24;
     const placements = [];
     const lines = [];
@@ -1526,7 +1053,7 @@
       const widthUnits = glyphWidthUnits(char);
       const w = fontSize * widthUnits;
 
-      if (line.length && lineWidth + w > maxWidth) {
+      if (line.length && lineWidth + w > maxWidth){
         pushLine();
       }
 
@@ -1536,13 +1063,13 @@
 
     const tokens = String(text || "").match(/\n|\s+|\S+/g) || [];
 
-    for (const token of tokens) {
-      if (token === "\n") {
+    for (const token of tokens){
+      if (token === "\n"){
         pushLine();
         continue;
       }
 
-      if (/^\s+$/.test(token)) {
+      if (/^\s+$/.test(token)){
         if (line.length) addChar(" ");
         continue;
       }
@@ -1550,11 +1077,11 @@
       const chars = Array.from(token);
       const tokenWidth = chars.reduce((sum, char) => sum + fontSize * glyphWidthUnits(char), 0);
 
-      if (line.length && tokenWidth <= maxWidth && lineWidth + tokenWidth > maxWidth) {
+      if (line.length && tokenWidth <= maxWidth && lineWidth + tokenWidth > maxWidth){
         pushLine();
       }
 
-      for (const char of chars) {
+      for (const char of chars){
         addChar(char);
       }
     }
@@ -1562,11 +1089,11 @@
     if (line.length || !lines.length) pushLine();
 
     const totalHeight = lines.length * lineHeight;
-    let y = offsetY + Math.max(fontSize * .9, (canvasHeight - totalHeight) / 2 + fontSize * .76);
+    let y = Math.max(fontSize * .9, (canvasHeight - totalHeight) / 2 + fontSize * .76);
 
-    for (const currentLine of lines) {
-      let x = offsetX + (canvasWidth - currentLine.width) / 2;
-      for (const item of currentLine.items) {
+    for (const currentLine of lines){
+      let x = (canvasWidth - currentLine.width) / 2;
+      for (const item of currentLine.items){
         placements.push({
           char: item.char,
           x,
@@ -1602,9 +1129,8 @@
     const wobbleOn = options.wobble === "on";
 
     const bounds = glyph.bounds || computeBounds(glyph.strokes);
-    const profileInfo = getGlyphUsableArea(glyph.char, fontSize, cellW);
-    const usableH = profileInfo.usableH;
-    const usableW = profileInfo.usableW;
+    const usableH = fontSize * 1.04;
+    const usableW = Math.max(fontSize * .14, cellW * .88);
     const scale = Math.min(
       usableW / Math.max(.04, bounds.width),
       usableH / Math.max(.04, bounds.height)
@@ -1613,7 +1139,7 @@
     const drawW = bounds.width * scale;
     const drawH = bounds.height * scale;
     const baseX = x + (cellW - drawW) / 2 - bounds.minX * scale;
-    const baseY = getGlyphBaseYForProfile(baselineY, fontSize, usableH, drawH, profileInfo) - bounds.minY * scale;
+    const baseY = baselineY - usableH * .80 + (usableH - drawH) / 2 - bounds.minY * scale;
 
     const jitterX = jitterOn ? stableNoise(`${glyph.char}-${x}-x`) * fontSize * .08 : 0;
     const jitterY = jitterOn ? stableNoise(`${glyph.char}-${x}-y`) * fontSize * .06 : 0;
@@ -1725,18 +1251,18 @@
     }
   }
 
-  function countStrokePieces(strokes) {
+  function countStrokePieces(strokes){
     let total = 0;
-    for (const stroke of strokes || []) {
+    for (const stroke of strokes || []){
       total += Math.max(1, (stroke?.length || 0) - 1);
     }
     return Math.max(1, total);
   }
 
-  function stableNoise(seed) {
+  function stableNoise(seed){
     let h = 2166136261;
     const text = String(seed || "");
-    for (let i = 0; i < text.length; i += 1) {
+    for (let i = 0; i < text.length; i += 1){
       h ^= text.charCodeAt(i);
       h = Math.imul(h, 16777619);
     }
@@ -1750,53 +1276,6 @@
   function getBackgroundConfig(options = {}) {
     const key = getBackgroundKey(options);
     return BACKGROUNDS[key] || BACKGROUNDS.ghost;
-  }
-
-  function getBackgroundImage(src) {
-    if (!src) return null;
-
-    if (backgroundImageCache.has(src)) {
-      return backgroundImageCache.get(src);
-    }
-
-    const img = new Image();
-    img.decoding = "async";
-    img.src = src;
-
-    backgroundImageCache.set(src, img);
-
-    img.onload = () => {
-      if (state.screen === "remix") {
-        drawRemixPreview();
-      }
-    };
-
-    return img;
-  }
-
-  function drawCoverImage(c, img, width, height) {
-    if (!img || !img.complete || !img.naturalWidth || !img.naturalHeight) {
-      return false;
-    }
-
-    const imageRatio = img.naturalWidth / img.naturalHeight;
-    const canvasRatio = width / height;
-
-    let sourceX = 0;
-    let sourceY = 0;
-    let sourceW = img.naturalWidth;
-    let sourceH = img.naturalHeight;
-
-    if (imageRatio > canvasRatio) {
-      sourceW = img.naturalHeight * canvasRatio;
-      sourceX = (img.naturalWidth - sourceW) / 2;
-    } else {
-      sourceH = img.naturalWidth / canvasRatio;
-      sourceY = (img.naturalHeight - sourceH) / 2;
-    }
-
-    c.drawImage(img, sourceX, sourceY, sourceW, sourceH, 0, 0, width, height);
-    return true;
   }
 
   function getTextColorKey(options = {}) {
@@ -1818,7 +1297,15 @@
   }
 
   function isRainbowAllowedForBackground(backgroundKey) {
-    return ["ghost", "paper", "lightGray", "darkGray"].includes(backgroundKey);
+    return [
+      "ghost",
+      "paper",
+      "notebook",
+      "treasureMap",
+      "crackedStone",
+      "lightGray",
+      "darkGray"
+    ].includes(backgroundKey);
   }
 
   function isTextColorAllowedForBackground(textColorKey, backgroundKey) {
@@ -1883,159 +1370,12 @@
     return "rgba(255,255,255,.25)";
   }
 
-  function getCrayonToolSrc(options = {}) {
-    const textColorKey = getTextColorKey(options);
-    const crayonKey = textColorKey === "rainbow" ? "rainbow" : textColorKey;
-
-    return CRAYON_TOOL_IMAGES[crayonKey] || CRAYON_TOOL_IMAGES.red;
-  }
-
-  function getPlaybackToolConfig(options = {}) {
-    const toolKey = options.tool || "pencil";
-    const baseTool = PLAYBACK_TOOLS[toolKey] || PLAYBACK_TOOLS.pencil;
-    const src = toolKey === "crayon" ? getCrayonToolSrc(options) : baseTool.src;
-
-    return {
-      ...PLAYBACK_TOOL,
-      ...baseTool,
-      src
-    };
-  }
-
-  function getVaporConfig(options = {}) {
-    return VAPOR_LEVELS[options.vapor || "normal"] || VAPOR_LEVELS.normal;
-  }
-
-  function getBorderColorValue(options = {}) {
-    return getColorValue(options.borderColor || "lightGray") || COLOR_PALETTE.lightGray.value;
-  }
-
-  function drawRemixBorder(c, width, height, options = {}) {
-    const style = options.borderStyle || "none";
-    if (style === "none") return;
-
-    const thicknessConfig = BORDER_THICKNESS[options.borderThickness] || BORDER_THICKNESS.medium;
-    const borderColor = getBorderColorValue(options);
-    const lineWidth = thicknessConfig.size;
-    const inset = Math.max(14, lineWidth * 2.2);
-    const radius = Math.max(20, Math.min(width, height) * .045);
-    const x = inset;
-    const y = inset;
-    const w = Math.max(1, width - inset * 2);
-    const h = Math.max(1, height - inset * 2);
-
-    c.save();
-    c.strokeStyle = borderColor;
-    c.lineWidth = lineWidth;
-    c.lineJoin = "round";
-    c.lineCap = "round";
-
-    if (style === "dashed") {
-      c.setLineDash([lineWidth * 2.8, lineWidth * 1.7]);
-    }
-
-    if (style === "dotted") {
-      c.setLineDash([lineWidth * .2, lineWidth * 1.8]);
-      c.lineCap = "round";
-    }
-
-    if (style === "glow") {
-      c.shadowColor = borderColor;
-      c.shadowBlur = lineWidth * 3.4;
-      c.globalAlpha = .72;
-      roundRectPath(c, x, y, w, h, radius);
-      c.stroke();
-
-      c.shadowBlur = lineWidth * 1.2;
-      c.globalAlpha = 1;
-      c.lineWidth = Math.max(2, lineWidth * .55);
-      roundRectPath(c, x, y, w, h, radius);
-      c.stroke();
-
-      c.restore();
-      return;
-    }
-
-    if (style === "double") {
-      c.lineWidth = Math.max(2, lineWidth * .55);
-      roundRectPath(c, x, y, w, h, radius);
-      c.stroke();
-
-      const gap = Math.max(7, lineWidth * 1.25);
-      roundRectPath(c, x + gap, y + gap, Math.max(1, w - gap * 2), Math.max(1, h - gap * 2), Math.max(8, radius - gap * .6));
-      c.stroke();
-
-      c.restore();
-      return;
-    }
-
-    roundRectPath(c, x, y, w, h, radius);
-    c.stroke();
-    c.restore();
-  }
-
-  function getCanvasContentRect(width, height, options = {}) {
-    const style = options.borderStyle || "none";
-
-    if (style === "none") {
-      return {
-        x: 0,
-        y: 0,
-        width,
-        height
-      };
-    }
-
-    const thicknessConfig = BORDER_THICKNESS[options.borderThickness] || BORDER_THICKNESS.medium;
-    const lineWidth = thicknessConfig.size;
-    const borderInset = Math.max(14, lineWidth * 2.2);
-    const extraGap = Math.max(26, lineWidth * 3.2);
-    const inset = borderInset + extraGap;
-
-    return {
-      x: inset,
-      y: inset,
-      width: Math.max(80, width - inset * 2),
-      height: Math.max(80, height - inset * 2)
-    };
-  }
-
-  function roundRectPath(c, x, y, width, height, radius) {
-    const r = Math.max(0, Math.min(radius, width / 2, height / 2));
-
-    c.beginPath();
-    c.moveTo(x + r, y);
-    c.lineTo(x + width - r, y);
-    c.quadraticCurveTo(x + width, y, x + width, y + r);
-    c.lineTo(x + width, y + height - r);
-    c.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
-    c.lineTo(x + r, y + height);
-    c.quadraticCurveTo(x, y + height, x, y + height - r);
-    c.lineTo(x, y + r);
-    c.quadraticCurveTo(x, y, x + r, y);
-    c.closePath();
-  }
-
   function clearPlaybackCanvas(c, width, height, options) {
     const background = getBackgroundConfig(options);
 
     c.save();
     c.fillStyle = background.value;
     c.fillRect(0, 0, width, height);
-
-    if (background.texture === "image") {
-      const img = getBackgroundImage(background.imageSrc);
-
-      if (!drawCoverImage(c, img, width, height)) {
-        c.fillStyle = background.value;
-        c.fillRect(0, 0, width, height);
-      }
-
-      c.restore();
-
-      drawRemixBorder(c, width, height, options);
-      return;
-    }
 
     if (background.texture === "ghost") {
       c.globalAlpha = .16;
@@ -2048,29 +1388,23 @@
     }
 
     if (background.texture === "chalkboard") {
-      const boardGlow = c.createRadialGradient(width * .5, height * .35, 0, width * .5, height * .35, Math.max(width, height) * .72);
-      boardGlow.addColorStop(0, "rgba(255,255,255,.08)");
-      boardGlow.addColorStop(.55, "rgba(255,255,255,.025)");
-      boardGlow.addColorStop(1, "rgba(0,0,0,.16)");
-      c.fillStyle = boardGlow;
-      c.fillRect(0, 0, width, height);
+      c.globalAlpha = .08;
+      c.strokeStyle = "#ffffff";
+      c.lineWidth = 1;
 
-
-
-      c.globalAlpha = .09;
-      c.fillStyle = "#ffffff";
-
-      for (let i = 0; i < 56; i += 1) {
-        const x = (stableNoise(`chalk-dust-x-${i}`) * .5 + .5) * width;
-        const y = (stableNoise(`chalk-dust-y-${i}`) * .5 + .5) * height;
-        const r = Math.max(10, Math.min(width, height) * (.018 + (stableNoise(`chalk-dust-r-${i}`) * .5 + .5) * .035));
-        const dust = c.createRadialGradient(x, y, 0, x, y, r);
-        dust.addColorStop(0, "rgba(255,255,255,.22)");
-        dust.addColorStop(1, "rgba(255,255,255,0)");
-        c.fillStyle = dust;
+      for (let y = 20; y < height; y += 34) {
         c.beginPath();
-        c.arc(x, y, r, 0, Math.PI * 2);
-        c.fill();
+        c.moveTo(0, y + stableNoise(`chalk-${y}`) * 4);
+        c.lineTo(width, y + stableNoise(`chalk2-${y}`) * 4);
+        c.stroke();
+      }
+
+      c.globalAlpha = .045;
+      for (let x = 18; x < width; x += 42) {
+        c.beginPath();
+        c.moveTo(x + stableNoise(`chalk-v-${x}`) * 3, 0);
+        c.lineTo(x + stableNoise(`chalk-v2-${x}`) * 3, height);
+        c.stroke();
       }
     }
 
@@ -2082,255 +1416,24 @@
         c.fillRect(0, y, width, 1);
       }
 
+      c.globalAlpha = .12;
+      c.fillStyle = "#7f66c6";
+      c.fillRect(width * .12, 0, 2, height);
+
       c.globalAlpha = .05;
       for (let x = 0; x < width; x += 22) {
         c.fillRect(x, 0, 1, height);
       }
     }
 
-    if (background.texture === "notebook") {
-      const paperGlow = c.createLinearGradient(0, 0, 0, height);
-      paperGlow.addColorStop(0, "#ffffff");
-      paperGlow.addColorStop(1, "#eef7ff");
-      c.globalAlpha = 1;
-      c.fillStyle = paperGlow;
-      c.fillRect(0, 0, width, height);
-
-      c.globalAlpha = .24;
-      c.fillStyle = "#80b7e8";
-      const lineGap = Math.max(24, height * .055);
-
-      for (let y = lineGap; y < height; y += lineGap) {
-        c.fillRect(0, y, width, Math.max(1, height * .002));
-      }
-
-      c.globalAlpha = .04;
-      c.fillStyle = "#53606f";
-      for (let i = 0; i < 120; i += 1) {
-        const x = (stableNoise(`notebook-speck-x-${i}`) * .5 + .5) * width;
-        const y = (stableNoise(`notebook-speck-y-${i}`) * .5 + .5) * height;
-        c.fillRect(x, y, 1.5, 1.5);
-      }
-    }
-
-    if (background.texture === "starryNight") {
-      const sky = c.createLinearGradient(0, 0, 0, height);
-      sky.addColorStop(0, "#071126");
-      sky.addColorStop(.55, "#101c3f");
-      sky.addColorStop(1, "#02040b");
-      c.globalAlpha = 1;
-      c.fillStyle = sky;
-      c.fillRect(0, 0, width, height);
-
-      const moonGlow = c.createRadialGradient(width * .78, height * .20, 0, width * .78, height * .20, Math.max(width, height) * .38);
-      moonGlow.addColorStop(0, "rgba(255,255,230,.30)");
-      moonGlow.addColorStop(.42, "rgba(200,215,255,.12)");
-      moonGlow.addColorStop(1, "rgba(255,255,255,0)");
-      c.fillStyle = moonGlow;
-      c.fillRect(0, 0, width, height);
-
-      for (let i = 0; i < 120; i += 1) {
-        const x = (stableNoise(`star-x-${i}`) * .5 + .5) * width;
-        const y = (stableNoise(`star-y-${i}`) * .5 + .5) * height;
-        const r = Math.max(.8, Math.min(width, height) * (.0015 + (stableNoise(`star-r-${i}`) * .5 + .5) * .003));
-        c.globalAlpha = .35 + (stableNoise(`star-a-${i}`) * .5 + .5) * .55;
-        c.fillStyle = "#ffffff";
-        c.beginPath();
-        c.arc(x, y, r, 0, Math.PI * 2);
-        c.fill();
-      }
-    }
-
-    if (background.texture === "purpleMist") {
-      const mistBg = c.createLinearGradient(0, 0, width, height);
-      mistBg.addColorStop(0, "#191221");
-      mistBg.addColorStop(.45, "#2b1742");
-      mistBg.addColorStop(1, "#0e1019");
-      c.globalAlpha = 1;
-      c.fillStyle = mistBg;
-      c.fillRect(0, 0, width, height);
-
-      for (let i = 0; i < 12; i += 1) {
-        const x = (stableNoise(`mist-x-${i}`) * .5 + .5) * width;
-        const y = (stableNoise(`mist-y-${i}`) * .5 + .5) * height;
-        const r = Math.max(width, height) * (.16 + (stableNoise(`mist-r-${i}`) * .5 + .5) * .22);
-        const mist = c.createRadialGradient(x, y, 0, x, y, r);
-        mist.addColorStop(0, "rgba(180,130,255,.18)");
-        mist.addColorStop(.5, "rgba(120,190,230,.07)");
-        mist.addColorStop(1, "rgba(255,255,255,0)");
-        c.globalAlpha = 1;
-        c.fillStyle = mist;
-        c.fillRect(0, 0, width, height);
-      }
-    }
-
-    if (background.texture === "treasureMap") {
-      const parchment = c.createRadialGradient(width * .5, height * .45, 0, width * .5, height * .45, Math.max(width, height) * .72);
-      parchment.addColorStop(0, "#f0d89c");
-      parchment.addColorStop(.62, "#d9b874");
-      parchment.addColorStop(1, "#9e6f38");
-      c.globalAlpha = 1;
-      c.fillStyle = parchment;
-      c.fillRect(0, 0, width, height);
-
-      c.globalAlpha = .12;
-      c.strokeStyle = "#6f451f";
-      c.lineWidth = Math.max(1, Math.min(width, height) * .004);
-
-      for (let i = 0; i < 18; i += 1) {
-        const y = (i + 1) * height / 19;
-        c.beginPath();
-        c.moveTo(width * .05, y + stableNoise(`map-line-a-${i}`) * 12);
-        c.bezierCurveTo(
-          width * .28,
-          y + stableNoise(`map-line-b-${i}`) * 22,
-          width * .62,
-          y + stableNoise(`map-line-c-${i}`) * 22,
-          width * .95,
-          y + stableNoise(`map-line-d-${i}`) * 12
-        );
-        c.stroke();
-      }
-
-      c.globalAlpha = .13;
-      c.fillStyle = "#5f3b1a";
-      for (let i = 0; i < 90; i += 1) {
-        const x = (stableNoise(`map-speck-x-${i}`) * .5 + .5) * width;
-        const y = (stableNoise(`map-speck-y-${i}`) * .5 + .5) * height;
-        const r = Math.max(1.2, Math.min(width, height) * (.002 + (stableNoise(`map-speck-r-${i}`) * .5 + .5) * .006));
-        c.beginPath();
-        c.arc(x, y, r, 0, Math.PI * 2);
-        c.fill();
-      }
-    }
-
-    if (background.texture === "rainbow") {
-      const rainbow = c.createLinearGradient(0, 0, width, height);
-      rainbow.addColorStop(0, "#ff5a51");
-      rainbow.addColorStop(.18, "#ffa351");
-      rainbow.addColorStop(.34, "#ffc751");
-      rainbow.addColorStop(.50, "#a7cb6f");
-      rainbow.addColorStop(.68, "#40b9c5");
-      rainbow.addColorStop(.84, "#7f66c6");
-      rainbow.addColorStop(1, "#ff9bd2");
-      c.globalAlpha = 1;
-      c.fillStyle = rainbow;
-      c.fillRect(0, 0, width, height);
-
-      c.globalAlpha = .24;
-      c.fillStyle = "#ffffff";
-      for (let i = 0; i < 14; i += 1) {
-        const y = (i - 2) * height / 10;
-        c.beginPath();
-        c.ellipse(width * .5, y, width * .78, height * .12, -.24, 0, Math.PI * 2);
-        c.fill();
-      }
-    }
-
-    if (background.texture === "wood") {
-      const wood = c.createLinearGradient(0, 0, width, height);
-      wood.addColorStop(0, "#a36f44");
-      wood.addColorStop(.5, "#7c4d2b");
-      wood.addColorStop(1, "#5d351d");
-      c.globalAlpha = 1;
-      c.fillStyle = wood;
-      c.fillRect(0, 0, width, height);
-
-      c.globalAlpha = .22;
-      c.strokeStyle = "#3e2414";
-      c.lineWidth = Math.max(1, Math.min(width, height) * .004);
-
-      for (let y = 0; y < height; y += Math.max(18, height * .055)) {
-        c.beginPath();
-        c.moveTo(0, y);
-        for (let x = 0; x <= width; x += width / 8) {
-          c.lineTo(x, y + stableNoise(`wood-${x}-${y}`) * height * .018);
-        }
-        c.stroke();
-      }
-
-      c.globalAlpha = .16;
-      for (let i = 0; i < 8; i += 1) {
-        const x = (stableNoise(`knot-x-${i}`) * .5 + .5) * width;
-        const y = (stableNoise(`knot-y-${i}`) * .5 + .5) * height;
-        c.beginPath();
-        c.ellipse(x, y, width * .045, height * .018, stableNoise(`knot-r-${i}`), 0, Math.PI * 2);
-        c.stroke();
-      }
-    }
-
-    if (background.texture === "crackedStone") {
-      const stone = c.createRadialGradient(width * .5, height * .42, 0, width * .5, height * .42, Math.max(width, height) * .72);
-      stone.addColorStop(0, "#a0a6ad");
-      stone.addColorStop(.55, "#777d83");
-      stone.addColorStop(1, "#4b5056");
-      c.globalAlpha = 1;
-      c.fillStyle = stone;
-      c.fillRect(0, 0, width, height);
-
-      c.globalAlpha = .20;
-      c.strokeStyle = "#2d3135";
-      c.lineWidth = Math.max(1.2, Math.min(width, height) * .004);
-
-      for (let i = 0; i < 18; i += 1) {
-        let x = (stableNoise(`crack-x-${i}`) * .5 + .5) * width;
-        let y = (stableNoise(`crack-y-${i}`) * .5 + .5) * height;
-        c.beginPath();
-        c.moveTo(x, y);
-
-        for (let j = 0; j < 4; j += 1) {
-          x += stableNoise(`crack-x-${i}-${j}`) * width * .10;
-          y += stableNoise(`crack-y-${i}-${j}`) * height * .10;
-          c.lineTo(x, y);
-        }
-
-        c.stroke();
-      }
-
-      c.globalAlpha = .10;
-      c.fillStyle = "#ffffff";
-      for (let i = 0; i < 70; i += 1) {
-        const x = (stableNoise(`stone-speck-x-${i}`) * .5 + .5) * width;
-        const y = (stableNoise(`stone-speck-y-${i}`) * .5 + .5) * height;
-        c.fillRect(x, y, 2, 2);
-      }
-    }
-
-    if (background.texture === "grass") {
-      const skyGrass = c.createLinearGradient(0, 0, 0, height);
-      skyGrass.addColorStop(0, "#dff7ff");
-      skyGrass.addColorStop(.48, "#eefdf0");
-      skyGrass.addColorStop(.49, "#92d36d");
-      skyGrass.addColorStop(1, "#3e8c32");
-      c.globalAlpha = 1;
-      c.fillStyle = skyGrass;
-      c.fillRect(0, 0, width, height);
-
-      c.globalAlpha = .25;
-      c.strokeStyle = "#1f6f25";
-      c.lineWidth = Math.max(1, width * .002);
-
-      for (let i = 0; i < 120; i += 1) {
-        const x = (stableNoise(`grass-x-${i}`) * .5 + .5) * width;
-        const baseY = height * (.58 + (stableNoise(`grass-y-${i}`) * .5 + .5) * .38);
-        const bladeH = height * (.025 + (stableNoise(`grass-h-${i}`) * .5 + .5) * .055);
-        c.beginPath();
-        c.moveTo(x, baseY);
-        c.lineTo(x + stableNoise(`grass-lean-${i}`) * width * .014, baseY - bladeH);
-        c.stroke();
-      }
-    }
-
     c.restore();
-
-    drawRemixBorder(c, width, height, options);
   }
 
 
 
   function drawCompleteText(c, width, height, options) {
     const cleanOptions = sanitizeRemixOptions({ ...options });
-    const layout = makeLayout(width, height, cleanOptions);
+    const layout = makeLayout(width, height);
     clearPlaybackCanvas(c, width, height, cleanOptions);
 
     let colorIndex = 0;
@@ -2353,108 +1456,12 @@
     }
   }
 
-  async function saveGhostWriterImage(options = state.remix) {
-    const cleanOptions = sanitizeRemixOptions({ ...options });
-    const size = EXPORT_SIZES[cleanOptions.exportSize || "square"] || EXPORT_SIZES.square;
-    const background = getBackgroundConfig(cleanOptions);
-
-    if (background.texture === "image") {
-      await waitForBackgroundImage(background.imageSrc);
-    }
-
-    const canvas = document.createElement("canvas");
-    canvas.width = size.width;
-    canvas.height = size.height;
-
-    const c = canvas.getContext("2d");
-    if (!c) return;
-
-    c.setTransform(1, 0, 0, 1, 0, 0);
-    drawCompleteText(c, size.width, size.height, cleanOptions);
-
-    const filename = makeExportFilename(size);
-
-    if (canvas.toBlob) {
-      canvas.toBlob((blob) => {
-        if (!blob) {
-          downloadCanvasDataUrl(canvas, filename);
-          return;
-        }
-
-        downloadBlob(blob, filename);
-      }, "image/png");
-
-      return;
-    }
-
-    downloadCanvasDataUrl(canvas, filename);
-  }
-
-
-  function waitForBackgroundImage(src) {
-    const img = getBackgroundImage(src);
-
-    if (!img) return Promise.resolve();
-    if (img.complete && img.naturalWidth && img.naturalHeight) return Promise.resolve();
-
-    return new Promise((resolve) => {
-      const done = () => resolve();
-
-      img.addEventListener("load", done, { once: true });
-      img.addEventListener("error", done, { once: true });
-
-      setTimeout(done, 1200);
-    });
-  }
-
-  function makeExportFilename(size = EXPORT_SIZES.square) {
-    const ref = String(parsedRef?.display || ctx.verseRef || "verse")
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 42);
-
-    const suffix = ref || "verse";
-    const sizeLabel = size.filenameLabel || "image";
-
-    return `${EXPORT_IMAGE.filenamePrefix}-${suffix}-${sizeLabel}.png`;
-  }
-
-
-  function downloadBlob(blob, filename) {
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-
-    link.href = url;
-    link.download = filename;
-    link.rel = "noopener";
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-
-    setTimeout(() => {
-      URL.revokeObjectURL(url);
-    }, 1000);
-  }
-
-  function downloadCanvasDataUrl(canvas, filename) {
-    const link = document.createElement("a");
-
-    link.href = canvas.toDataURL("image/png");
-    link.download = filename;
-    link.rel = "noopener";
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-  }
-
   function startPlayback(canvas, card, options, onDone) {
     const rect = card.getBoundingClientRect();
     const c = setupCanvasForDpr(canvas, rect.width, rect.height);
-    const layout = makeLayout(rect.width, rect.height, options);
+    const layout = makeLayout(rect.width, rect.height);
     const placements = buildPlaybackPlacements(layout.placements);
     const speed = SPEEDS[options.speed] || SPEEDS.normal;
-    const toolConfig = getPlaybackToolConfig(options);
     const toolEl = document.getElementById("ghostPlaybackTool");
 
     playbackState = {
@@ -2468,7 +1475,6 @@
       charStart: performance.now(),
       pauseUntil: 0,
       speed,
-      toolConfig,
       toolEl,
       lastTip: null,
       lastDirectionDeg: null,
@@ -2545,7 +1551,7 @@
 
     return 0;
   }
-
+  
   function playbackFrame(now) {
     const ps = playbackState;
     if (!ps || !ps.running) return;
@@ -2604,7 +1610,7 @@
 
     for (let i = 0; i < ps.index; i += 1) {
       const item = placements[i];
-      drawGlyph(ps.c, getGlyph(item.char), item.x, item.y, item.w, item.fontSize, { ...ps.options, _colorIndex: item.colorIndex || 0 }, 1);
+      drawGlyph(ps.c, getGlyph(item.char), item.x, item.y, item.w, item.fontSize, ps.options, 1);
     }
 
     drawGlyph(ps.c, glyph, current.x, current.y, current.w, current.fontSize, { ...ps.options, _colorIndex: current.colorIndex || 0 }, progress);
@@ -2637,19 +1643,17 @@
     const tool = ps?.toolEl;
     if (!tool || !tip) return;
 
-    const toolConfig = ps.toolConfig || PLAYBACK_TOOL;
-
-    if (moving && Number.isFinite(tip.angleDeg)) {
-      if (ps.lastDirectionDeg === null || ps.lastDirectionDeg === undefined) {
+    if (moving && Number.isFinite(tip.angleDeg)){
+      if (ps.lastDirectionDeg === null || ps.lastDirectionDeg === undefined){
         ps.lastDirectionDeg = tip.angleDeg;
       } else {
         const delta = shortestAngleDelta(ps.lastDirectionDeg, tip.angleDeg);
 
-        if (Math.abs(delta) > 12) {
+        if (Math.abs(delta) > 12){
           ps.directionWiggle += clamp(
             delta * .10,
-            -toolConfig.directionWiggleDeg,
-            toolConfig.directionWiggleDeg
+            -PLAYBACK_TOOL.directionWiggleDeg,
+            PLAYBACK_TOOL.directionWiggleDeg
           );
         }
 
@@ -2658,18 +1662,18 @@
     }
 
     ps.directionWiggle = clamp(
-      (ps.directionWiggle || 0) * toolConfig.directionWiggleDecay,
-      -toolConfig.directionWiggleDeg,
-      toolConfig.directionWiggleDeg
+      (ps.directionWiggle || 0) * PLAYBACK_TOOL.directionWiggleDecay,
+      -PLAYBACK_TOOL.directionWiggleDeg,
+      PLAYBACK_TOOL.directionWiggleDeg
     );
 
-    const idleWobble = Math.sin(now / 180) * toolConfig.idleWobbleDeg;
+    const idleWobble = Math.sin(now / 180) * PLAYBACK_TOOL.idleWobbleDeg;
     const tinyHandJitter = moving
       ? stableNoise(`${Math.floor(now / 120)}-${tip.x}-${tip.y}`) * .65
       : 0;
 
     const angle =
-      toolConfig.baseRotationDeg +
+      PLAYBACK_TOOL.baseRotationDeg +
       ps.directionWiggle +
       idleWobble +
       tinyHandJitter;
@@ -2679,7 +1683,6 @@
     tool.style.transform = `translateY(-100%) rotate(${angle}deg)`;
     tool.classList.add("is-visible");
   }
-
 
   function shortestAngleDelta(fromDeg, toDeg) {
     let delta = (toDeg - fromDeg) % 360;
@@ -2698,19 +1701,12 @@
   function addVaporPuff(ps, tip, now) {
     if (!ps || !tip) return;
 
-    const vapor = getVaporConfig(ps.options);
-
-    if (!vapor.enabled) {
-      ps.vaporTrail = [];
-      return;
-    }
-
     const last = ps.vaporTrail[ps.vaporTrail.length - 1];
 
     if (last) {
       const dx = tip.x - last.x;
       const dy = tip.y - last.y;
-      if (Math.hypot(dx, dy) < vapor.spawnDistance) {
+      if (Math.hypot(dx, dy) < 5) {
         return;
       }
     }
@@ -2719,19 +1715,17 @@
       x: tip.x + stableNoise(`vap-x-${now}`) * 4,
       y: tip.y + stableNoise(`vap-y-${now}`) * 4,
       born: now,
-      life: vapor.life + Math.random() * vapor.lifeJitter,
-      radius: vapor.radius + Math.random() * vapor.radiusJitter,
-      alpha: vapor.alpha,
-      driftY: vapor.driftY
+      life: 520 + Math.random() * 260,
+      radius: 7 + Math.random() * 13
     });
 
-    if (ps.vaporTrail.length > vapor.max) {
-      ps.vaporTrail.splice(0, ps.vaporTrail.length - vapor.max);
+    if (ps.vaporTrail.length > 54) {
+      ps.vaporTrail.splice(0, ps.vaporTrail.length - 54);
     }
   }
 
   function drawVaporTrail(ps, now) {
-    if (!ps || !Array.isArray(ps.vaporTrail) || !ps.vaporTrail.length) return;
+    if (!ps || !Array.isArray(ps.vaporTrail)) return;
 
     const c = ps.c;
     const alive = [];
@@ -2747,9 +1741,9 @@
 
       alive.push(puff);
 
-      const alpha = (1 - t) * (puff.alpha ?? .18);
+      const alpha = (1 - t) * .18;
       const radius = puff.radius * (1 + t * 1.7);
-      const driftY = -(puff.driftY ?? 18) * t;
+      const driftY = -18 * t;
       const driftX = stableNoise(`drift-${puff.born}`) * 10 * t;
 
       const gradient = c.createRadialGradient(
@@ -2824,9 +1818,8 @@
     const jitterOn = options.jitter === "on";
     const wobbleOn = options.wobble === "on";
 
-    const profileInfo = getGlyphUsableArea(glyph.char, fontSize, cellW);
-    const usableH = profileInfo.usableH;
-    const usableW = profileInfo.usableW;
+    const usableH = fontSize * 1.04;
+    const usableW = Math.max(fontSize * .14, cellW * .88);
     const scale = Math.min(
       usableW / Math.max(.04, glyphBounds.width),
       usableH / Math.max(.04, glyphBounds.height)
@@ -2835,7 +1828,7 @@
     const drawW = glyphBounds.width * scale;
     const drawH = glyphBounds.height * scale;
     const baseX = x + (cellW - drawW) / 2 - glyphBounds.minX * scale;
-    const baseY = getGlyphBaseYForProfile(baselineY, fontSize, usableH, drawH, profileInfo) - glyphBounds.minY * scale;
+    const baseY = baselineY - usableH * .80 + (usableH - drawH) / 2 - glyphBounds.minY * scale;
 
     const jitterX = jitterOn ? stableNoise(`${glyph.char}-${x}-x`) * fontSize * .08 : 0;
     const jitterY = jitterOn ? stableNoise(`${glyph.char}-${x}-y`) * fontSize * .06 : 0;
@@ -2852,7 +1845,6 @@
       rotation
     };
   }
-
 
   function getStrokePointAtProgress(stroke, progress) {
     const safeProgress = clamp(progress, 0, 1);
@@ -2908,12 +1900,12 @@
     };
   }
 
-  function stopPlayback() {
-    if (playbackState) {
+  function stopPlayback(){
+    if (playbackState){
       hidePlaybackTool(playbackState);
     }
 
-    if (playbackRaf) {
+    if (playbackRaf){
       cancelAnimationFrame(playbackRaf);
       playbackRaf = 0;
     }
@@ -2921,7 +1913,7 @@
     playbackState = null;
   }
 
-  function drawRemixPreview() {
+  function drawRemixPreview(){
     const canvas = document.getElementById("ghostRemixCanvas");
     const preview = document.getElementById("ghostRemixPreview");
     if (!canvas || !preview) return;
@@ -2931,14 +1923,14 @@
     drawCompleteText(c, rect.width, rect.height, state.remix);
   }
 
-  async function markVersePracticed() {
+  async function markVersePracticed(){
     const verseId = ctx.verseId;
     if (!verseId) return { ok: false };
 
-    if (typeof bridge().markVersePracticed === "function") {
+    if (typeof bridge().markVersePracticed === "function"){
       try {
         return bridge().markVersePracticed({ verseId });
-      } catch (err) {
+      } catch (err){
         console.warn("Ghost Writer bridge markVersePracticed failed; falling back.", err);
       }
     }
@@ -2951,7 +1943,7 @@
       if (!progress.verses || typeof progress.verses !== "object") progress.verses = {};
       if (!progress.version) progress.version = 1;
 
-      if (!progress.verses[verseId]) {
+      if (!progress.verses[verseId]){
         progress.verses[verseId] = {
           learnCompleted: false,
           games: {}
@@ -2961,13 +1953,13 @@
       progress.verses[verseId].lastPracticedAt = Date.now();
       localStorage.setItem("verseMemoryProgress", JSON.stringify(progress));
       return { ok: true };
-    } catch (err) {
+    } catch (err){
       console.warn("Ghost Writer could not mark verse as practiced", err);
       return { ok: false };
     }
   }
 
-  function fitGuideCharacter() {
+  function fitGuideCharacter(){
     const guide = document.getElementById("ghostGuideText");
     const wrap = document.getElementById("ghostDrawWrap");
     if (!guide || !wrap) return;
@@ -2975,16 +1967,6 @@
     const char = currentChar();
     const rect = wrap.getBoundingClientRect();
     const box = Math.max(1, Math.min(rect.width, rect.height));
-    const centeredGuide = CENTERED_TRAINING_GUIDES.has(char);
-    const guideProfile = getGuideRenderProfile(char);
-    const guideOffsetY = (guideProfile?.yOffset || 0) * box;
-
-    guide.style.top = centeredGuide ? "50%" : "";
-    guide.style.bottom = centeredGuide ? "auto" : "";
-    guide.style.height = centeredGuide ? "auto" : "";
-    guide.style.transform = centeredGuide
-      ? `translateY(calc(-50% + ${guideOffsetY}px))`
-      : "";
 
     const probe = document.createElement("span");
     probe.textContent = char || "A";
@@ -3000,22 +1982,22 @@
 
     const symbol = isSymbolChar(char);
     const skinnySymbol = [".", ",", ":", ";", "'", '"'].includes(char);
-    const targetW = box * (symbol ? (skinnySymbol ? GUIDE_FIT.skinnySymbolWidth : GUIDE_FIT.symbolWidth) : GUIDE_FIT.letterWidth);
-    const targetH = box * (symbol ? GUIDE_FIT.symbolHeight : GUIDE_FIT.letterHeight);
-    const maxSize = box * (symbol ? GUIDE_FIT.maxSymbolSize : GUIDE_FIT.maxLetterSize);
-    const minSize = box * GUIDE_FIT.minSize;
+    const targetW = box * (symbol ? (skinnySymbol ? .42 : .68) : .86);
+    const targetH = box * (symbol ? .76 : .88);
+    const maxSize = box * (symbol ? 1.18 : 1.28);
+    const minSize = box * .32;
 
     let low = minSize;
     let high = maxSize;
     let best = minSize;
 
-    for (let i = 0; i < 14; i += 1) {
+    for (let i = 0; i < 14; i += 1){
       const mid = (low + high) / 2;
       probe.style.fontSize = `${mid}px`;
       const w = probe.offsetWidth || 1;
       const h = probe.offsetHeight || 1;
 
-      if (w <= targetW && h <= targetH) {
+      if (w <= targetW && h <= targetH){
         best = mid;
         low = mid;
       } else {
@@ -3027,10 +2009,8 @@
     guide.style.fontSize = `${Math.round(best)}px`;
   }
 
-
-
-  function clearGuideTimer() {
-    if (guideTimer) {
+  function clearGuideTimer(){
+    if (guideTimer){
       clearTimeout(guideTimer);
       guideTimer = null;
     }
@@ -3041,10 +2021,10 @@
     if (state.screen === "training") fitGuideCharacter();
   });
 
-  async function boot() {
+  async function boot(){
     try {
       ctx = await bridge().getVerseContext?.() || ctx;
-    } catch (err) {
+    } catch (err){
       console.warn("Ghost Writer could not load verse context", err);
     }
 
