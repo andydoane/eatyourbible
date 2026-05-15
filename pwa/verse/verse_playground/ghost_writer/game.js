@@ -1,4 +1,4 @@
-(function(){
+(function () {
   "use strict";
 
   const GAME_ID = "ghost_writer";
@@ -120,6 +120,21 @@
     superThick: { label: "Super Thick", multiplier: 1.9 }
   };
 
+  const BORDER_STYLES = {
+    none: { label: "None" },
+    solid: { label: "Solid" },
+    dashed: { label: "Dashed" },
+    dotted: { label: "Dotted" },
+    double: { label: "Double" },
+    glow: { label: "Glow" }
+  };
+
+  const BORDER_THICKNESS = {
+    thin: { label: "Thin", size: 4 },
+    medium: { label: "Medium", size: 8 },
+    thick: { label: "Thick", size: 13 }
+  };
+
   const PLAYBACK_TOOL = {
     src: "./ghost_writer_images/ghost_writer_pencil.png",
     baseRotationDeg: -8,
@@ -141,7 +156,7 @@
     try {
       const params = new URLSearchParams(window.location.search);
       return params.get("gwDebug") === "1" || localStorage.getItem("ghostWriterDebug") === "1";
-    } catch (err){
+    } catch (err) {
       return false;
     }
   })();
@@ -154,11 +169,11 @@
     ? window.GHOST_WRITER_DEBUG_LOG
     : [];
 
-  window.getGhostWriterDebugJson = function(){
+  window.getGhostWriterDebugJson = function () {
     return JSON.stringify(window.GHOST_WRITER_DEBUG_LOG || [], null, 2);
   };
 
-  window.clearGhostWriterDebugLog = function(){
+  window.clearGhostWriterDebugLog = function () {
     window.GHOST_WRITER_DEBUG_LOG = [];
     return true;
   };
@@ -191,6 +206,9 @@
     remix: {
       background: "ghost",
       textColor: "lightGray",
+      borderStyle: "none",
+      borderThickness: "medium",
+      borderColor: "lightGray",
       style: "ghost",
       speed: "normal",
       thickness: "normal",
@@ -199,15 +217,15 @@
     }
   };
 
-  function shell(){
+  function shell() {
     return window.VerseGameShell || {};
   }
 
-  function bridge(){
+  function bridge() {
     return window.VerseGameBridge || {};
   }
 
-  function escapeHtml(value){
+  function escapeHtml(value) {
     if (shell().escapeHtml) return shell().escapeHtml(value);
     return String(value ?? "")
       .replace(/&/g, "&amp;")
@@ -217,14 +235,14 @@
       .replace(/'/g, "&#39;");
   }
 
-  function clamp(value, min, max){
+  function clamp(value, min, max) {
     if (shell().clamp) return shell().clamp(value, min, max);
     const n = Number(value);
     if (!Number.isFinite(n)) return min;
     return Math.max(min, Math.min(max, n));
   }
 
-  function normalizeTextForGhost(text){
+  function normalizeTextForGhost(text) {
     return String(text ?? "")
       .replace(/[‘’]/g, "'")
       .replace(/[“”]/g, '"')
@@ -234,7 +252,7 @@
       .toUpperCase();
   }
 
-  function buildFullText(){
+  function buildFullText() {
     parsedRef = shell().parseReferenceParts
       ? shell().parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId)
       : { book: ctx.verseRef || "", reference: "", display: ctx.verseRef || "" };
@@ -251,11 +269,11 @@
     state.requiredChars = extractRequiredChars(state.fullText);
   }
 
-  function extractRequiredChars(text){
+  function extractRequiredChars(text) {
     const out = [];
     const seen = new Set();
 
-    for (const char of String(text || "")){
+    for (const char of String(text || "")) {
       if (/\s/.test(char)) continue;
       if (seen.has(char)) continue;
       seen.add(char);
@@ -265,7 +283,7 @@
     return out;
   }
 
-  function helpHtml(){
+  function helpHtml() {
     return `
       <ul class="ghost-help-list">
         <li>Write each uppercase character one time in the big square.</li>
@@ -276,7 +294,7 @@
     `;
   }
 
-  function renderIntro(){
+  function renderIntro() {
     stopPlayback();
     clearGuideTimer();
     state.screen = "intro";
@@ -296,7 +314,7 @@
     });
   }
 
-  function renderModeSelect(){
+  function renderModeSelect() {
     stopPlayback();
     clearGuideTimer();
     state.screen = "mode";
@@ -315,7 +333,7 @@
     });
   }
 
-  function startRun(mode){
+  function startRun(mode) {
     stopPlayback();
     clearGuideTimer();
 
@@ -330,6 +348,9 @@
     state.remix = {
       background: "ghost",
       textColor: "lightGray",
+      borderStyle: "none",
+      borderThickness: "medium",
+      borderColor: "lightGray",
       style: "ghost",
       speed: "normal",
       thickness: "normal",
@@ -361,9 +382,9 @@
       </div>
     `;
   }
-  
 
-  function wireMenu(){
+
+  function wireMenu() {
     if (!shell().wireGameMenu) return;
 
     shell().wireGameMenu({
@@ -378,28 +399,28 @@
       onModeSelect: () => renderModeSelect(),
       onExit: () => bridge().exitGame?.(),
       onOpen: () => true,
-      onClose: () => {},
-      onBackFromHelp: () => {}
+      onClose: () => { },
+      onBackFromHelp: () => { }
     });
   }
 
-  function currentChar(){
+  function currentChar() {
     return state.requiredChars[state.currentCharIndex] || "";
   }
 
-  function isSymbolChar(char){
+  function isSymbolChar(char) {
     return !/[A-Z0-9]/.test(char);
   }
 
-  function isAlphaNumericChar(char){
+  function isAlphaNumericChar(char) {
     return /^[A-Z0-9]$/.test(String(char || ""));
   }
 
-  function allowsDotStroke(char){
+  function allowsDotStroke(char) {
     return [".", ":", ";", "!", "?"].includes(String(char || ""));
   }
 
-  function charLabel(char){
+  function charLabel(char) {
     if (char === "\"") return "quotation mark";
     if (char === "'") return "apostrophe";
     if (char === ":") return "colon";
@@ -412,7 +433,7 @@
     return char;
   }
 
-  function renderTraining(){
+  function renderTraining() {
     clearGuideTimer();
     state.screen = "training";
 
@@ -454,14 +475,14 @@
     document.getElementById("ghostClearBtn")?.addEventListener("click", clearCurrentDrawing);
     document.getElementById("ghostSaveBtn")?.addEventListener("click", saveCurrentGlyph);
 
-    if (selectedMode === "advanced"){
+    if (selectedMode === "advanced") {
       guideTimer = setTimeout(() => {
         document.getElementById("ghostGuideText")?.classList.add("is-faded");
       }, 950);
     }
   }
 
-  function setupCanvasForDpr(canvas, cssWidth, cssHeight){
+  function setupCanvasForDpr(canvas, cssWidth, cssHeight) {
     const dpr = Math.max(1, window.devicePixelRatio || 1);
     canvas.width = Math.max(1, Math.round(cssWidth * dpr));
     canvas.height = Math.max(1, Math.round(cssHeight * dpr));
@@ -472,7 +493,7 @@
     return c;
   }
 
-  function setupDrawingCanvas(){
+  function setupDrawingCanvas() {
     const canvas = document.getElementById("ghostDrawCanvas");
     const wrap = document.getElementById("ghostDrawWrap");
     if (!canvas || !wrap) return;
@@ -514,7 +535,7 @@
       if (!state.currentStroke) return;
       event.preventDefault?.();
       const stroke = state.currentStroke;
-      if (stroke.length === 1){
+      if (stroke.length === 1) {
         drawTrainingPoint(c, stroke[0], rect.width, rect.height);
       }
       state.currentStroke = null;
@@ -525,7 +546,7 @@
     canvas.onpointerleave = endStroke;
   }
 
-  function drawTrainingPoint(c, point, width, height){
+  function drawTrainingPoint(c, point, width, height) {
     c.save();
     c.fillStyle = "#16171d";
     c.beginPath();
@@ -534,7 +555,7 @@
     c.restore();
   }
 
-  function drawTrainingSegment(c, a, b, width, height){
+  function drawTrainingSegment(c, a, b, width, height) {
     c.save();
     c.strokeStyle = "#16171d";
     c.lineWidth = Math.max(7, width * .022);
@@ -547,25 +568,25 @@
     c.restore();
   }
 
-  function drawAllTrainingStrokes(c, width, height){
-    for (const stroke of state.currentStrokes){
+  function drawAllTrainingStrokes(c, width, height) {
+    for (const stroke of state.currentStrokes) {
       if (!stroke || !stroke.length) continue;
-      if (stroke.length === 1){
+      if (stroke.length === 1) {
         drawTrainingPoint(c, stroke[0], width, height);
         continue;
       }
-      for (let i = 1; i < stroke.length; i += 1){
+      for (let i = 1; i < stroke.length; i += 1) {
         drawTrainingSegment(c, stroke[i - 1], stroke[i], width, height);
       }
     }
   }
 
-  function clearCurrentDrawing(){
+  function clearCurrentDrawing() {
     state.currentStrokes = [];
     state.currentStroke = null;
     state.hasDrawnCurrent = false;
     const canvas = document.getElementById("ghostDrawCanvas");
-    if (canvas){
+    if (canvas) {
       const width = Number(canvas.dataset.cssWidth) || canvas.getBoundingClientRect().width;
       const height = Number(canvas.dataset.cssHeight) || canvas.getBoundingClientRect().height;
       const c = setupCanvasForDpr(canvas, width, height);
@@ -574,13 +595,13 @@
     updateSaveButton();
   }
 
-  function updateSaveButton(){
+  function updateSaveButton() {
     const btn = document.getElementById("ghostSaveBtn");
     if (!btn) return;
     btn.disabled = !state.hasDrawnCurrent;
   }
 
-  function saveCurrentGlyph(){
+  function saveCurrentGlyph() {
     if (!state.hasDrawnCurrent) return;
 
     const char = currentChar();
@@ -592,7 +613,7 @@
     state.currentStroke = null;
     state.hasDrawnCurrent = false;
 
-    if (state.currentCharIndex >= state.requiredChars.length){
+    if (state.currentCharIndex >= state.requiredChars.length) {
       renderReady();
       return;
     }
@@ -600,7 +621,7 @@
     renderTraining();
   }
 
-  function makeGlyph(char, strokes){
+  function makeGlyph(char, strokes) {
     const raw = (strokes || [])
       .map((stroke) => (stroke || []).map((p) => ({
         x: clamp(p.x, 0, 1),
@@ -614,7 +635,7 @@
     // Letters and numbers should not accidentally save tap-dots.
     // Punctuation such as periods, colons, and question marks still needs dots,
     // so it is allowed to keep single-point / tiny strokes.
-    if (isAlphaNumericChar(char) && !allowsDotStroke(char)){
+    if (isAlphaNumericChar(char) && !allowsDotStroke(char)) {
       filtered = raw.filter((stroke) => {
         if (!stroke || stroke.length < 2) return false;
         return strokeDistance(stroke) >= .012;
@@ -622,7 +643,7 @@
 
       // If filtering would erase the whole glyph, keep the original data so a
       // child does not lose a very small but intentional mark.
-      if (!filtered.length && raw.length){
+      if (!filtered.length && raw.length) {
         filtered = raw;
       }
     }
@@ -643,9 +664,9 @@
     return glyph;
   }
 
-  function strokeDistance(stroke){
+  function strokeDistance(stroke) {
     let total = 0;
-    for (let i = 1; i < (stroke?.length || 0); i += 1){
+    for (let i = 1; i < (stroke?.length || 0); i += 1) {
       const a = stroke[i - 1];
       const b = stroke[i];
       const dx = (b.x || 0) - (a.x || 0);
@@ -655,17 +676,17 @@
     return total;
   }
 
-  function strokeBounds(stroke){
+  function strokeBounds(stroke) {
     return computeBounds([stroke || []]);
   }
 
-  function round4(value){
+  function round4(value) {
     const n = Number(value);
     if (!Number.isFinite(n)) return 0;
     return Math.round(n * 10000) / 10000;
   }
 
-  function logGlyphDebug(glyph, rawStrokes){
+  function logGlyphDebug(glyph, rawStrokes) {
     const raw = Array.isArray(rawStrokes) ? rawStrokes : [];
     const keptSet = new Set(glyph.strokes || []);
 
@@ -693,10 +714,10 @@
           : null,
         last: stroke?.length
           ? {
-              x: round4(stroke[stroke.length - 1].x),
-              y: round4(stroke[stroke.length - 1].y),
-              t: round4(stroke[stroke.length - 1].t)
-            }
+            x: round4(stroke[stroke.length - 1].x),
+            y: round4(stroke[stroke.length - 1].y),
+            t: round4(stroke[stroke.length - 1].t)
+          }
           : null,
         tinyOrTap: isTiny
       };
@@ -728,12 +749,12 @@
       rawStrokeDetails
     };
 
-    if (DEBUG_GHOST_WRITER){
+    if (DEBUG_GHOST_WRITER) {
       window.GHOST_WRITER_DEBUG_LOG.push(summary);
       console.info(`GW_DEBUG ${JSON.stringify(summary)}`);
     }
 
-    if (suspicious.length){
+    if (suspicious.length) {
       console.warn("Ghost Writer glyph had tiny/tap strokes", {
         char: summary.char,
         suspiciousRawStrokeIndexes: summary.suspiciousRawStrokeIndexes,
@@ -744,14 +765,14 @@
     }
   }
 
-  function computeBounds(strokes){
+  function computeBounds(strokes) {
     let minX = Infinity;
     let minY = Infinity;
     let maxX = -Infinity;
     let maxY = -Infinity;
 
-    for (const stroke of strokes || []){
-      for (const p of stroke || []){
+    for (const stroke of strokes || []) {
+      for (const p of stroke || []) {
         if (!Number.isFinite(p.x) || !Number.isFinite(p.y)) continue;
         minX = Math.min(minX, p.x);
         minY = Math.min(minY, p.y);
@@ -760,7 +781,7 @@
       }
     }
 
-    if (!Number.isFinite(minX)){
+    if (!Number.isFinite(minX)) {
       return { minX: .35, minY: .35, maxX: .65, maxY: .65, width: .30, height: .30 };
     }
 
@@ -780,7 +801,7 @@
     };
   }
 
-  function renderReady(){
+  function renderReady() {
     clearGuideTimer();
     state.screen = "ready";
 
@@ -801,6 +822,9 @@
         options: {
           background: "ghost",
           textColor: "lightGray",
+          borderStyle: "none",
+          borderThickness: "medium",
+          borderColor: "lightGray",
           style: "ghost",
           speed: "normal",
           thickness: "normal",
@@ -813,7 +837,7 @@
     });
   }
 
-  function renderPlayback({ options = state.remix, markPractice = false, returnTo = "remix" } = {}){
+  function renderPlayback({ options = state.remix, markPractice = false, returnTo = "remix" } = {}) {
     stopPlayback();
     clearGuideTimer();
     state.screen = "playback";
@@ -843,7 +867,7 @@
 
     requestAnimationFrame(() => {
       startPlayback(canvas, card, cleanOptions, async () => {
-        if (markPractice && !state.practiceMarked){
+        if (markPractice && !state.practiceMarked) {
           state.practiceMarked = true;
           await markVersePracticed();
         }
@@ -878,6 +902,9 @@
             ${selectOptionHtml("ghostThicknessSelect", "Thickness", state.remix.thickness, THICKNESS)}
             ${selectSimpleHtml("ghostJitterSelect", "Jitter", state.remix.jitter, { off: "Off", on: "On" })}
             ${selectSimpleHtml("ghostWobbleSelect", "Wobble", state.remix.wobble, { off: "Off", on: "On" })}
+            ${selectOptionHtml("ghostBorderStyleSelect", "Border Style", state.remix.borderStyle, BORDER_STYLES)}
+            ${selectOptionHtml("ghostBorderThicknessSelect", "Border Thickness", state.remix.borderThickness, BORDER_THICKNESS)}
+            ${selectOptionHtml("ghostBorderColorSelect", "Border Color", state.remix.borderColor, COLOR_PALETTE)}
           </div>
 
           <div class="ghost-remix-actions">
@@ -892,10 +919,10 @@
     wireMenu();
     wireRemixControls();
     drawRemixPreview();
-  }  
+  }
 
 
-  function selectOptionHtml(id, label, value, source){
+  function selectOptionHtml(id, label, value, source) {
     const options = Object.entries(source).map(([key, obj]) => {
       const selected = key === value ? " selected" : "";
       return `<option value="${escapeHtml(key)}"${selected}>${escapeHtml(obj.label || key)}</option>`;
@@ -909,7 +936,7 @@
     `;
   }
 
-  function selectSimpleHtml(id, label, value, source){
+  function selectSimpleHtml(id, label, value, source) {
     const options = Object.entries(source).map(([key, labelText]) => {
       const selected = key === value ? " selected" : "";
       return `<option value="${escapeHtml(key)}"${selected}>${escapeHtml(labelText)}</option>`;
@@ -961,6 +988,9 @@
     const thickness = document.getElementById("ghostThicknessSelect");
     const jitter = document.getElementById("ghostJitterSelect");
     const wobble = document.getElementById("ghostWobbleSelect");
+    const borderStyle = document.getElementById("ghostBorderStyleSelect");
+    const borderThickness = document.getElementById("ghostBorderThicknessSelect");
+    const borderColor = document.getElementById("ghostBorderColorSelect");
 
     const update = () => {
       state.remix.background = background?.value || state.remix.background;
@@ -970,6 +1000,9 @@
       state.remix.thickness = thickness?.value || state.remix.thickness;
       state.remix.jitter = jitter?.value || state.remix.jitter;
       state.remix.wobble = wobble?.value || state.remix.wobble;
+      state.remix.borderStyle = borderStyle?.value || state.remix.borderStyle;
+      state.remix.borderThickness = borderThickness?.value || state.remix.borderThickness;
+      state.remix.borderColor = borderColor?.value || state.remix.borderColor;
 
       sanitizeRemixOptions(state.remix);
 
@@ -989,7 +1022,7 @@
       drawRemixPreview();
     };
 
-    [background, textColor, speed, thickness, jitter, wobble].forEach((el) => {
+    [background, textColor, speed, thickness, jitter, wobble, borderStyle, borderThickness, borderColor].forEach((el) => {
       if (el) el.onchange = update;
     });
 
@@ -1016,13 +1049,13 @@
       option.textContent = `${TEXT_COLORS[option.value]?.label || option.value}${allowed ? "" : " · unavailable"}`;
     }
   }
-  
 
-  function getGlyph(char){
+
+  function getGlyph(char) {
     return state.glyphs.get(char) || null;
   }
 
-  function glyphWidthUnits(char){
+  function glyphWidthUnits(char) {
     if (/\s/.test(char)) return .38;
     const glyph = getGlyph(char);
     if (!glyph) return .65;
@@ -1030,7 +1063,7 @@
     return clamp(glyph.widthRatio + .16, minimum, .98);
   }
 
-  function makeLayout(width, height){
+  function makeLayout(width, height) {
     const safeWidth = Math.max(120, width);
     const safeHeight = Math.max(120, height);
     const text = state.fullText || "";
@@ -1047,10 +1080,10 @@
     const minFontSize = 12;
     let best = null;
 
-    for (let fontSize = maxFontSize; fontSize >= minFontSize; fontSize -= 1){
+    for (let fontSize = maxFontSize; fontSize >= minFontSize; fontSize -= 1) {
       const layout = layoutForFontSize(text, fontSize, maxWidth, maxHeight, safeWidth, safeHeight);
 
-      if (!layout.overflows){
+      if (!layout.overflows) {
         best = layout;
         break;
       }
@@ -1061,7 +1094,7 @@
     return layoutForFontSize(text, minFontSize, maxWidth, maxHeight, safeWidth, safeHeight);
   }
 
-  function layoutForFontSize(text, fontSize, maxWidth, maxHeight, canvasWidth, canvasHeight){
+  function layoutForFontSize(text, fontSize, maxWidth, maxHeight, canvasWidth, canvasHeight) {
     const lineHeight = fontSize * 1.24;
     const placements = [];
     const lines = [];
@@ -1078,7 +1111,7 @@
       const widthUnits = glyphWidthUnits(char);
       const w = fontSize * widthUnits;
 
-      if (line.length && lineWidth + w > maxWidth){
+      if (line.length && lineWidth + w > maxWidth) {
         pushLine();
       }
 
@@ -1088,13 +1121,13 @@
 
     const tokens = String(text || "").match(/\n|\s+|\S+/g) || [];
 
-    for (const token of tokens){
-      if (token === "\n"){
+    for (const token of tokens) {
+      if (token === "\n") {
         pushLine();
         continue;
       }
 
-      if (/^\s+$/.test(token)){
+      if (/^\s+$/.test(token)) {
         if (line.length) addChar(" ");
         continue;
       }
@@ -1102,11 +1135,11 @@
       const chars = Array.from(token);
       const tokenWidth = chars.reduce((sum, char) => sum + fontSize * glyphWidthUnits(char), 0);
 
-      if (line.length && tokenWidth <= maxWidth && lineWidth + tokenWidth > maxWidth){
+      if (line.length && tokenWidth <= maxWidth && lineWidth + tokenWidth > maxWidth) {
         pushLine();
       }
 
-      for (const char of chars){
+      for (const char of chars) {
         addChar(char);
       }
     }
@@ -1116,9 +1149,9 @@
     const totalHeight = lines.length * lineHeight;
     let y = Math.max(fontSize * .9, (canvasHeight - totalHeight) / 2 + fontSize * .76);
 
-    for (const currentLine of lines){
+    for (const currentLine of lines) {
       let x = (canvasWidth - currentLine.width) / 2;
-      for (const item of currentLine.items){
+      for (const item of currentLine.items) {
         placements.push({
           char: item.char,
           x,
@@ -1276,18 +1309,18 @@
     }
   }
 
-  function countStrokePieces(strokes){
+  function countStrokePieces(strokes) {
     let total = 0;
-    for (const stroke of strokes || []){
+    for (const stroke of strokes || []) {
       total += Math.max(1, (stroke?.length || 0) - 1);
     }
     return Math.max(1, total);
   }
 
-  function stableNoise(seed){
+  function stableNoise(seed) {
     let h = 2166136261;
     const text = String(seed || "");
-    for (let i = 0; i < text.length; i += 1){
+    for (let i = 0; i < text.length; i += 1) {
       h ^= text.charCodeAt(i);
       h = Math.imul(h, 16777619);
     }
@@ -1387,6 +1420,90 @@
     return "rgba(255,255,255,.25)";
   }
 
+  function getBorderColorValue(options = {}) {
+    return getColorValue(options.borderColor || "lightGray") || COLOR_PALETTE.lightGray.value;
+  }
+
+  function drawRemixBorder(c, width, height, options = {}) {
+    const style = options.borderStyle || "none";
+    if (style === "none") return;
+
+    const thicknessConfig = BORDER_THICKNESS[options.borderThickness] || BORDER_THICKNESS.medium;
+    const borderColor = getBorderColorValue(options);
+    const lineWidth = thicknessConfig.size;
+    const inset = Math.max(14, lineWidth * 2.2);
+    const radius = Math.max(20, Math.min(width, height) * .045);
+    const x = inset;
+    const y = inset;
+    const w = Math.max(1, width - inset * 2);
+    const h = Math.max(1, height - inset * 2);
+
+    c.save();
+    c.strokeStyle = borderColor;
+    c.lineWidth = lineWidth;
+    c.lineJoin = "round";
+    c.lineCap = "round";
+
+    if (style === "dashed") {
+      c.setLineDash([lineWidth * 2.8, lineWidth * 1.7]);
+    }
+
+    if (style === "dotted") {
+      c.setLineDash([lineWidth * .2, lineWidth * 1.8]);
+      c.lineCap = "round";
+    }
+
+    if (style === "glow") {
+      c.shadowColor = borderColor;
+      c.shadowBlur = lineWidth * 3.4;
+      c.globalAlpha = .72;
+      roundRectPath(c, x, y, w, h, radius);
+      c.stroke();
+
+      c.shadowBlur = lineWidth * 1.2;
+      c.globalAlpha = 1;
+      c.lineWidth = Math.max(2, lineWidth * .55);
+      roundRectPath(c, x, y, w, h, radius);
+      c.stroke();
+
+      c.restore();
+      return;
+    }
+
+    if (style === "double") {
+      c.lineWidth = Math.max(2, lineWidth * .55);
+      roundRectPath(c, x, y, w, h, radius);
+      c.stroke();
+
+      const gap = Math.max(7, lineWidth * 1.25);
+      roundRectPath(c, x + gap, y + gap, Math.max(1, w - gap * 2), Math.max(1, h - gap * 2), Math.max(8, radius - gap * .6));
+      c.stroke();
+
+      c.restore();
+      return;
+    }
+
+    roundRectPath(c, x, y, w, h, radius);
+    c.stroke();
+    c.restore();
+  }
+
+  function roundRectPath(c, x, y, width, height, radius) {
+    const r = Math.max(0, Math.min(radius, width / 2, height / 2));
+
+    c.beginPath();
+    c.moveTo(x + r, y);
+    c.lineTo(x + width - r, y);
+    c.quadraticCurveTo(x + width, y, x + width, y + r);
+    c.lineTo(x + width, y + height - r);
+    c.quadraticCurveTo(x + width, y + height, x + width - r, y + height);
+    c.lineTo(x + r, y + height);
+    c.quadraticCurveTo(x, y + height, x, y + height - r);
+    c.lineTo(x, y + r);
+    c.quadraticCurveTo(x, y, x + r, y);
+    c.closePath();
+  }
+
   function clearPlaybackCanvas(c, width, height, options) {
     const background = getBackgroundConfig(options);
 
@@ -1444,6 +1561,8 @@
     }
 
     c.restore();
+
+    drawRemixBorder(c, width, height, options);
   }
 
 
@@ -1568,7 +1687,7 @@
 
     return 0;
   }
-  
+
   function playbackFrame(now) {
     const ps = playbackState;
     if (!ps || !ps.running) return;
@@ -1660,13 +1779,13 @@
     const tool = ps?.toolEl;
     if (!tool || !tip) return;
 
-    if (moving && Number.isFinite(tip.angleDeg)){
-      if (ps.lastDirectionDeg === null || ps.lastDirectionDeg === undefined){
+    if (moving && Number.isFinite(tip.angleDeg)) {
+      if (ps.lastDirectionDeg === null || ps.lastDirectionDeg === undefined) {
         ps.lastDirectionDeg = tip.angleDeg;
       } else {
         const delta = shortestAngleDelta(ps.lastDirectionDeg, tip.angleDeg);
 
-        if (Math.abs(delta) > 12){
+        if (Math.abs(delta) > 12) {
           ps.directionWiggle += clamp(
             delta * .10,
             -PLAYBACK_TOOL.directionWiggleDeg,
@@ -1917,12 +2036,12 @@
     };
   }
 
-  function stopPlayback(){
-    if (playbackState){
+  function stopPlayback() {
+    if (playbackState) {
       hidePlaybackTool(playbackState);
     }
 
-    if (playbackRaf){
+    if (playbackRaf) {
       cancelAnimationFrame(playbackRaf);
       playbackRaf = 0;
     }
@@ -1930,7 +2049,7 @@
     playbackState = null;
   }
 
-  function drawRemixPreview(){
+  function drawRemixPreview() {
     const canvas = document.getElementById("ghostRemixCanvas");
     const preview = document.getElementById("ghostRemixPreview");
     if (!canvas || !preview) return;
@@ -1940,14 +2059,14 @@
     drawCompleteText(c, rect.width, rect.height, state.remix);
   }
 
-  async function markVersePracticed(){
+  async function markVersePracticed() {
     const verseId = ctx.verseId;
     if (!verseId) return { ok: false };
 
-    if (typeof bridge().markVersePracticed === "function"){
+    if (typeof bridge().markVersePracticed === "function") {
       try {
         return bridge().markVersePracticed({ verseId });
-      } catch (err){
+      } catch (err) {
         console.warn("Ghost Writer bridge markVersePracticed failed; falling back.", err);
       }
     }
@@ -1960,7 +2079,7 @@
       if (!progress.verses || typeof progress.verses !== "object") progress.verses = {};
       if (!progress.version) progress.version = 1;
 
-      if (!progress.verses[verseId]){
+      if (!progress.verses[verseId]) {
         progress.verses[verseId] = {
           learnCompleted: false,
           games: {}
@@ -1970,13 +2089,13 @@
       progress.verses[verseId].lastPracticedAt = Date.now();
       localStorage.setItem("verseMemoryProgress", JSON.stringify(progress));
       return { ok: true };
-    } catch (err){
+    } catch (err) {
       console.warn("Ghost Writer could not mark verse as practiced", err);
       return { ok: false };
     }
   }
 
-  function fitGuideCharacter(){
+  function fitGuideCharacter() {
     const guide = document.getElementById("ghostGuideText");
     const wrap = document.getElementById("ghostDrawWrap");
     if (!guide || !wrap) return;
@@ -2008,13 +2127,13 @@
     let high = maxSize;
     let best = minSize;
 
-    for (let i = 0; i < 14; i += 1){
+    for (let i = 0; i < 14; i += 1) {
       const mid = (low + high) / 2;
       probe.style.fontSize = `${mid}px`;
       const w = probe.offsetWidth || 1;
       const h = probe.offsetHeight || 1;
 
-      if (w <= targetW && h <= targetH){
+      if (w <= targetW && h <= targetH) {
         best = mid;
         low = mid;
       } else {
@@ -2026,8 +2145,8 @@
     guide.style.fontSize = `${Math.round(best)}px`;
   }
 
-  function clearGuideTimer(){
-    if (guideTimer){
+  function clearGuideTimer() {
+    if (guideTimer) {
       clearTimeout(guideTimer);
       guideTimer = null;
     }
@@ -2038,10 +2157,10 @@
     if (state.screen === "training") fitGuideCharacter();
   });
 
-  async function boot(){
+  async function boot() {
     try {
       ctx = await bridge().getVerseContext?.() || ctx;
-    } catch (err){
+    } catch (err) {
       console.warn("Ghost Writer could not load verse context", err);
     }
 
