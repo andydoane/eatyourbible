@@ -372,13 +372,13 @@
     beforeGapLines: .28,
     zoneHeightLines: 1,
     dividerExtraLines: .28,
-    boxPadX: .44,
-    boxPadY: .18,
-    cloudPadX: .54,
-    cloudPadY: .24,
-    loopPadX: .48,
-    loopPadY: .20,
-    starPadX: .95
+    boxPadX: .40,
+    boxPadY: .16,
+    cloudPadX: .70,
+    cloudPadY: .32,
+    loopPadX: .68,
+    loopPadY: .28,
+    starPadX: 1.25
   };
 
   const GLYPH_RENDER_PROFILES = {
@@ -1157,7 +1157,7 @@
             alt=""
             draggable="false"
           >
-          <div class="ghost-playback-label" id="ghostPlaybackLabel">Ghost writing...</div>
+
           <button class="ghost-playback-remix-btn" id="ghostPlaybackRemixBtn" type="button" aria-label="Open remix screen">
             🔄 Remix
           </button>
@@ -1189,14 +1189,7 @@
   }
 
   function showPlaybackRemixButton() {
-    const label = document.getElementById("ghostPlaybackLabel");
     const remixBtn = document.getElementById("ghostPlaybackRemixBtn");
-
-    if (label) {
-      label.textContent = "Finished!";
-      label.classList.add("is-finished");
-    }
-
     remixBtn?.classList.add("is-visible");
   }
 
@@ -2041,8 +2034,8 @@
   }
 
   function makeBoxStrokes(d) {
-    const over = d.fontSize * .10;
-    const wobble = d.fontSize * .025;
+    const over = d.fontSize * .045;
+    const wobble = d.fontSize * .022;
     const x1 = d.x - over;
     const y1 = d.y;
     const x2 = d.x + d.w + over;
@@ -2092,7 +2085,7 @@
 
   function makeUnderlineStrokes(d) {
     const strokes = [];
-    const y = d.refBaselineY + d.refFontSize * .22;
+    const y = d.refBaselineY + d.refFontSize * .36;
     const left = d.refLeft - d.refFontSize * .18;
     const right = d.refRight + d.refFontSize * .18;
 
@@ -2107,7 +2100,7 @@
         const t = i / steps;
         points.push({
           x: startX + (endX - startX) * t,
-          y: y + pass * d.refFontSize * .08 + Math.sin(t * Math.PI * 5) * d.refFontSize * .025
+          y: y + pass * d.refFontSize * .095 + Math.sin(t * Math.PI * 5) * d.refFontSize * .025
         });
       }
 
@@ -2147,54 +2140,91 @@
   }
 
   function makeCloudStrokes(d) {
-    const points = [];
     const cx = d.x + d.w / 2;
     const cy = d.y + d.h / 2;
     const rx = d.w / 2;
     const ry = d.h / 2;
-    const steps = 96;
 
-    for (let i = 0; i <= steps; i += 1) {
-      const t = i / steps;
-      const a = t * Math.PI * 2;
-      const puff = 1 + Math.sin(a * 8) * .095 + Math.sin(a * 13) * .035;
+    const puffs = [
+      { x: -.86, y: .12, r: .34, a1: .58, a2: 1.56 },
+      { x: -.78, y: -.10, r: .34, a1: .98, a2: 1.82 },
+      { x: -.54, y: -.36, r: .35, a1: 1.12, a2: 1.92 },
+      { x: -.25, y: -.48, r: .36, a1: 1.10, a2: 1.95 },
+      { x: .08, y: -.50, r: .38, a1: 1.10, a2: 1.98 },
+      { x: .42, y: -.42, r: .35, a1: 1.10, a2: 1.95 },
+      { x: .70, y: -.20, r: .34, a1: 1.12, a2: 1.92 },
+      { x: .86, y: .05, r: .34, a1: 1.18, a2: 2.06 },
+      { x: .76, y: .34, r: .32, a1: 1.28, a2: 2.12 },
+      { x: .46, y: .48, r: .34, a1: 1.16, a2: 2.00 },
+      { x: .12, y: .52, r: .36, a1: 1.10, a2: 2.02 },
+      { x: -.24, y: .50, r: .35, a1: 1.10, a2: 2.02 },
+      { x: -.58, y: .42, r: .33, a1: 1.16, a2: 2.00 },
+      { x: -.82, y: .28, r: .32, a1: 1.24, a2: 2.10 }
+    ];
 
-      points.push({
-        x: cx + Math.cos(a) * rx * puff,
-        y: cy + Math.sin(a) * ry * puff
-      });
+    const points = [];
+
+    for (let i = 0; i < puffs.length; i += 1) {
+      const puff = puffs[i];
+      const next = puffs[(i + 1) % puffs.length];
+      const steps = 7;
+
+      for (let j = 0; j <= steps; j += 1) {
+        const t = j / steps;
+        const angle = Math.PI * (puff.a1 + (puff.a2 - puff.a1) * t);
+        const localRx = rx * puff.r;
+        const localRy = ry * puff.r * .95;
+        const wobbleX = stableNoise(`cloud-x-${i}-${j}`) * d.fontSize * .018;
+        const wobbleY = stableNoise(`cloud-y-${i}-${j}`) * d.fontSize * .018;
+
+        let x = cx + puff.x * rx + Math.cos(angle) * localRx + wobbleX;
+        let y = cy + puff.y * ry + Math.sin(angle) * localRy + wobbleY;
+
+        if (j === steps && next) {
+          x = cx + next.x * rx + stableNoise(`cloud-join-x-${i}`) * d.fontSize * .012;
+          y = cy + next.y * ry + stableNoise(`cloud-join-y-${i}`) * d.fontSize * .012;
+        }
+
+        points.push({ x, y });
+      }
+    }
+
+    if (points.length) {
+      points.push({ ...points[0] });
     }
 
     return [points];
   }
 
   function makeStarStrokes(d) {
-    const size = Math.max(12, d.refFontSize * .48);
+    const size = Math.max(12, d.refFontSize * .52);
     const y = d.refBaselineY - d.refFontSize * .38;
-    const leftX = d.refLeft - d.refFontSize * .72;
-    const rightX = d.refRight + d.refFontSize * .72;
+    const gap = d.refFontSize * 1.05;
+    const leftX = d.refLeft - gap;
+    const rightX = d.refRight + gap;
 
     return [
-      makePentagramStroke(leftX, y, size),
-      makePentagramStroke(rightX, y, size)
+      makePentagramStroke(leftX, y, size, "left"),
+      makePentagramStroke(rightX, y, size, "right")
     ];
   }
 
-  function makePentagramStroke(cx, cy, r) {
+  function makePentagramStroke(cx, cy, r, seed = "star") {
     const order = [0, 2, 4, 1, 3, 0];
     const outer = [];
 
     for (let i = 0; i < 5; i += 1) {
       const a = -Math.PI / 2 + i * Math.PI * 2 / 5;
+      const pointR = r * (1 + stableNoise(`${seed}-star-r-${i}`) * .11);
       outer.push({
-        x: cx + Math.cos(a) * r,
-        y: cy + Math.sin(a) * r
+        x: cx + Math.cos(a) * pointR + stableNoise(`${seed}-star-x-${i}`) * r * .12,
+        y: cy + Math.sin(a) * pointR + stableNoise(`${seed}-star-y-${i}`) * r * .12
       });
     }
 
     return order.map((index, i) => ({
-      x: outer[index].x + stableNoise(`star-x-${cx}-${i}`) * r * .035,
-      y: outer[index].y + stableNoise(`star-y-${cy}-${i}`) * r * .035
+      x: outer[index].x + stableNoise(`${seed}-star-line-x-${i}`) * r * .06,
+      y: outer[index].y + stableNoise(`${seed}-star-line-y-${i}`) * r * .06
     }));
   }
 
