@@ -553,7 +553,11 @@
     glyphs: new Map(),
     hasDrawnCurrent: false,
     practiceMarked: false,
-    remix: {
+    remix: makeDefaultRemixOptions()
+  };
+
+  function makeDefaultRemixOptions() {
+    return {
       background: "ghost",
       textColor: "lightGray",
       referenceTextColor: "lightGray",
@@ -569,8 +573,8 @@
       thickness: "normal",
       jitter: "off",
       wobble: "off"
-    }
-  };
+    };
+  }
 
   function shell() {
     return window.VerseGameShell || {};
@@ -707,23 +711,7 @@
     state.hasDrawnCurrent = false;
     state.practiceMarked = false;
     state.referenceDecorationStyle = chooseReferenceDecorationStyle();
-    state.remix = {
-      background: "ghost",
-      textColor: "lightGray",
-      referenceTextColor: "lightGray",
-      referenceDecorationColor: "lightGray",
-      borderStyle: "none",
-      borderThickness: "medium",
-      borderColor: "lightGray",
-      tool: "pencil",
-      vapor: "normal",
-      exportSize: "square",
-      style: "ghost",
-      speed: "normal",
-      thickness: "normal",
-      jitter: "off",
-      wobble: "off"
-    };
+    state.remix = makeDefaultRemixOptions();
 
     renderTraining();
   }
@@ -1126,7 +1114,7 @@
       console.info(`GW_DEBUG ${JSON.stringify(summary)}`);
     }
 
-    if (suspicious.length) {
+    if (DEBUG_GHOST_WRITER && suspicious.length) {
       console.warn("Ghost Writer glyph had tiny/tap strokes", {
         char: summary.char,
         suspiciousRawStrokeIndexes: summary.suspiciousRawStrokeIndexes,
@@ -1191,22 +1179,7 @@
     wireMenu();
     document.getElementById("ghostWriteBtn")?.addEventListener("click", () => {
       renderPlayback({
-        options: {
-          background: "ghost",
-          textColor: "lightGray",
-          referenceTextColor: "lightGray",
-          referenceDecorationColor: "lightGray",
-          borderStyle: "none",
-          borderThickness: "medium",
-          borderColor: "lightGray",
-          tool: "pencil",
-          vapor: "normal",
-          style: "ghost",
-          speed: "normal",
-          thickness: "normal",
-          jitter: "off",
-          wobble: "off"
-        },
+        options: makeDefaultRemixOptions(),
         markPractice: true,
         returnTo: "remix"
       });
@@ -1467,7 +1440,7 @@
 
       const preview = document.getElementById("ghostRemixPreview");
       if (preview) {
-        preview.classList.remove("is-chalkboard", "is-crayon", "is-paper");
+        preview.classList.remove("is-chalkboard", "is-paper");
         const backgroundConfig = getBackgroundConfig(state.remix);
         if (backgroundConfig.cardClass) preview.classList.add(backgroundConfig.cardClass);
       }

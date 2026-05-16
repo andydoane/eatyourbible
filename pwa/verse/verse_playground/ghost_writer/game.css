@@ -1,9 +1,9 @@
 @font-face {
   font-family: "Playwrite US Modern";
   src: url("./ghost_writer_fonts/Playwrite_US_Modern.woff") format("woff");
-  font-weight: 400;
+  font-weight: 100 400;
   font-style: normal;
-  font-display: swap;
+  font-display: block;
 }
 
 :root {
@@ -353,9 +353,7 @@ body {
   background: #15352d;
 }
 
-.ghost-playback-card.is-crayon {
-  background: #fff3d4;
-}
+
 
 .ghost-playback-card.is-paper {
   background: #fff8e8;
@@ -391,24 +389,7 @@ body {
   opacity: 1;
 }
 
-.ghost-playback-label {
-  position: absolute;
-  left: 50%;
-  bottom: 14px;
-  transform: translateX(-50%);
-  z-index: 2;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, .45);
-  color: #fff;
-  padding: 8px 14px;
-  font-weight: 900;
-  font-size: 15px;
-  pointer-events: none;
-}
 
-.ghost-playback-label.is-finished {
-  opacity: .78;
-}
 
 .ghost-playback-remix-btn {
   position: absolute;
@@ -494,9 +475,7 @@ body {
   background: #15352d;
 }
 
-.ghost-remix-preview.is-crayon {
-  background: #fff3d4;
-}
+
 
 .ghost-remix-preview.is-paper {
   background: #fff8e8;
