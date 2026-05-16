@@ -371,6 +371,16 @@
     filenamePrefix: "ghost-writer"
   };
 
+  const EXPORT_VIDEO = {
+    fps: 30,
+    endHoldMs: 700,
+    mimeTypes: [
+      "video/webm;codecs=vp9",
+      "video/webm;codecs=vp8",
+      "video/webm"
+    ]
+  };
+
   const EXPORT_SIZES = {
     square: {
       label: "Square",
@@ -1310,6 +1320,7 @@
               <button class="vm-btn vm-btn-secondary" id="ghostAgainBtn" type="button">Try Again</button>
               ${selectOptionHtml("ghostExportSizeSelect", "Download Size", state.remix.exportSize || "square", EXPORT_SIZES)}
               <button class="vm-btn vm-btn-secondary" id="ghostSaveImageBtn" type="button">Save as Image</button>
+              <button class="vm-btn vm-btn-secondary" id="ghostSaveVideoBtn" type="button">Save Replay Video</button>
               <button class="vm-btn vm-btn-secondary ghost-full" id="ghostBackBtn" type="button">Back to Playground</button>
             </div>
           </div>
@@ -1460,6 +1471,35 @@
     document.getElementById("ghostSaveImageBtn")?.addEventListener("click", () => {
       sanitizeRemixOptions(state.remix);
       saveGhostWriterImage({ ...state.remix });
+    });
+
+    const saveVideoBtn = document.getElementById("ghostSaveVideoBtn");
+
+    if (saveVideoBtn && !isReplayVideoSupported()) {
+      saveVideoBtn.hidden = true;
+    }
+
+    saveVideoBtn?.addEventListener("click", async () => {
+      if (!isReplayVideoSupported()) {
+        saveVideoBtn.hidden = true;
+        return;
+      }
+
+      sanitizeRemixOptions(state.remix);
+
+      const originalText = saveVideoBtn.textContent;
+      saveVideoBtn.disabled = true;
+      saveVideoBtn.textContent = "Making Video...";
+
+      try {
+        await saveGhostWriterReplayVideo({ ...state.remix });
+      } catch (err) {
+        console.warn("Ghost Writer video export failed", err);
+        alert("Sorry, this browser could not save the replay video.");
+      } finally {
+        saveVideoBtn.disabled = false;
+        saveVideoBtn.textContent = originalText || "Save Replay Video";
+      }
     });
 
     document.getElementById("ghostAgainBtn")?.addEventListener("click", () => startRun(selectedMode));
@@ -3425,11 +3465,7 @@
   async function saveGhostWriterImage(options = state.remix) {
     const cleanOptions = sanitizeRemixOptions({ ...options });
     const size = EXPORT_SIZES[cleanOptions.exportSize || "square"] || EXPORT_SIZES.square;
-    const background = getBackgroundConfig(cleanOptions);
-
-    if (background.texture === "image") {
-      await waitForBackgroundImage(background.imageSrc);
-    }
+    await waitForExportAssets(cleanOptions);
 
     const canvas = document.createElement("canvas");
     canvas.width = size.width;
@@ -3459,6 +3495,254 @@
     downloadCanvasDataUrl(canvas, filename);
   }
 
+  function isReplayVideoSupported() {
+    return typeof MediaRecorder !== "undefined"
+      && typeof HTMLCanvasElement !== "undefined"
+      && typeof HTMLCanvasElement.prototype.captureStream === "function";
+  }
+
+  function getBestVideoMimeType() {
+    if (typeof MediaRecorder === "undefined") return "";
+
+    for (const type of EXPORT_VIDEO.mimeTypes) {
+      if (MediaRecorder.isTypeSupported(type)) {
+        return type;
+      }
+    }
+
+    return "";
+  }
+
+  async function saveGhostWriterReplayVideo(options = state.remix) {
+    if (!isReplayVideoSupported()) {
+      throw new Error("Replay video export is not supported in this browser.");
+    }
+
+    const cleanOptions = sanitizeRemixOptions({ ...options });
+    const size = EXPORT_SIZES[cleanOptions.exportSize || "square"] || EXPORT_SIZES.square;
+
+    await waitForExportAssets(cleanOptions);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = size.width;
+    canvas.height = size.height;
+
+    const c = canvas.getContext("2d");
+    if (!c) {
+      throw new Error("Could not create video canvas.");
+    }
+
+    c.setTransform(1, 0, 0, 1, 0, 0);
+
+    const layout = makeLayout(size.width, size.height, cleanOptions);
+    const placements = buildPlaybackPlacements(layout);
+    const speed = SPEEDS[cleanOptions.speed] || SPEEDS.normal;
+
+    const videoState = {
+      running: true,
+      c,
+      width: size.width,
+      height: size.height,
+      options: cleanOptions,
+      placements,
+      index: 0,
+      charStart: performance.now(),
+      pauseUntil: 0,
+      speed,
+      toolConfig: null,
+      toolEl: null,
+      lastTip: null,
+      lastDirectionDeg: null,
+      directionWiggle: 0,
+      vaporTrail: []
+    };
+
+    clearPlaybackCanvas(c, size.width, size.height, cleanOptions);
+
+    const stream = canvas.captureStream(EXPORT_VIDEO.fps);
+    const mimeType = getBestVideoMimeType();
+    const recorderOptions = mimeType ? { mimeType } : undefined;
+    const recorder = new MediaRecorder(stream, recorderOptions);
+    const chunks = [];
+
+    const stopped = new Promise((resolve, reject) => {
+      recorder.ondataavailable = (event) => {
+        if (event.data && event.data.size > 0) {
+          chunks.push(event.data);
+        }
+      };
+
+      recorder.onerror = () => {
+        reject(recorder.error || new Error("Video recorder failed."));
+      };
+
+      recorder.onstop = () => {
+        const type = mimeType || "video/webm";
+        resolve(new Blob(chunks, { type }));
+      };
+    });
+
+    recorder.start();
+
+    await new Promise((resolve) => {
+      function tick(now) {
+        const done = drawReplayVideoFrame(videoState, now);
+
+        if (done) {
+          setTimeout(resolve, EXPORT_VIDEO.endHoldMs);
+          return;
+        }
+
+        requestAnimationFrame(tick);
+      }
+
+      requestAnimationFrame(tick);
+    });
+
+    if (recorder.state !== "inactive") {
+      recorder.stop();
+    }
+
+    const blob = await stopped;
+
+    if (!blob || !blob.size) {
+      throw new Error("No video data was recorded.");
+    }
+
+    downloadBlob(blob, makeExportVideoFilename(size));
+  }
+
+  function drawReplayVideoFrame(ps, now) {
+    if (!ps || !ps.running) return true;
+
+    const placements = ps.placements || [];
+
+    if (ps.pauseUntil && now < ps.pauseUntil) {
+      clearPlaybackCanvas(ps.c, ps.width, ps.height, ps.options);
+      drawVaporTrail(ps, now);
+
+      for (let i = 0; i < ps.index; i += 1) {
+        drawCompletedPlaybackItem(ps.c, placements[i], ps.options);
+      }
+
+      return false;
+    }
+
+    if (ps.pauseUntil && now >= ps.pauseUntil) {
+      ps.pauseUntil = 0;
+      ps.charStart = now;
+    }
+
+    if (ps.index >= placements.length) {
+      drawCompleteText(ps.c, ps.width, ps.height, ps.options);
+      ps.running = false;
+      return true;
+    }
+
+    const current = placements[ps.index];
+    const isDecoration = current?.type === "referenceDecoration";
+    const glyph = isDecoration ? null : getGlyph(current.char);
+    const pieces = isDecoration
+      ? getReferenceDecorationPieceCount(current.decoration)
+      : (glyph ? countStrokePieces(glyph.strokes) : 1);
+
+    const duration = isDecoration
+      ? clamp((160 + pieces * 18) * (ps.speed?.multiplier || 1), 180, 900)
+      : clamp((92 + pieces * 15) * (ps.speed?.multiplier || 1), 65, 480);
+
+    const progress = clamp((now - ps.charStart) / duration, 0, 1);
+    const tip = isDecoration
+      ? getReferenceDecorationTip(current.decoration, ps.options, progress)
+      : getGlyphPlaybackTip(glyph, current, ps.options, progress);
+
+    clearPlaybackCanvas(ps.c, ps.width, ps.height, ps.options);
+
+    if (tip) {
+      ps.lastTip = tip;
+      addVaporPuff(ps, tip, now);
+    }
+
+    drawVaporTrail(ps, now);
+
+    for (let i = 0; i < ps.index; i += 1) {
+      drawCompletedPlaybackItem(ps.c, placements[i], ps.options);
+    }
+
+    if (isDecoration) {
+      drawReferenceDecoration(ps.c, current.decoration, ps.options, progress);
+    } else {
+      drawGlyph(
+        ps.c,
+        glyph,
+        current.x,
+        current.y,
+        current.w,
+        current.fontSize,
+        {
+          ...ps.options,
+          _colorIndex: current.colorIndex || 0,
+          _inkColorKey: current.section === "reference" ? getReferenceTextColorKey(ps.options) : getTextColorKey(ps.options)
+        },
+        progress
+      );
+    }
+
+    if (progress >= 1) {
+      ps.index += 1;
+
+      if (current.pauseAfter) {
+        ps.pauseUntil = now + current.pauseAfter * (ps.speed?.pauseMultiplier || 1);
+      } else {
+        ps.charStart = now;
+      }
+    }
+
+    return false;
+  }
+
+  async function waitForExportAssets(options = {}) {
+    const background = getBackgroundConfig(options);
+
+    if (background.texture === "image") {
+      await waitForBackgroundImage(background.imageSrc);
+    }
+
+    if (isDoodleBorderStyle(options.borderStyle)) {
+      await waitForDoodleBorderImage(options.borderStyle);
+    }
+  }
+
+  function waitForDoodleBorderImage(style) {
+    const doodle = DOODLE_BORDER_SVGS[style];
+    if (!doodle?.src) return Promise.resolve();
+
+    const img = getDoodleBorderImage(doodle.src);
+
+    if (!img) return Promise.resolve();
+    if (img.complete && img.naturalWidth && img.naturalHeight) return Promise.resolve();
+
+    return new Promise((resolve) => {
+      const done = () => resolve();
+
+      img.addEventListener("load", done, { once: true });
+      img.addEventListener("error", done, { once: true });
+
+      setTimeout(done, 1200);
+    });
+  }
+
+  function makeExportVideoFilename(size = EXPORT_SIZES.square) {
+    const ref = String(parsedRef?.display || ctx.verseRef || "verse")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 42);
+
+    const suffix = ref || "verse";
+    const sizeLabel = size.filenameLabel || "video";
+
+    return `${EXPORT_IMAGE.filenamePrefix}-${suffix}-${sizeLabel}.webm`;
+  }
 
   function waitForBackgroundImage(src) {
     const img = getBackgroundImage(src);
