@@ -495,6 +495,8 @@
     remix: {
       background: "ghost",
       textColor: "lightGray",
+      referenceTextColor: "lightGray",
+      referenceDecorationColor: "lightGray",
       borderStyle: "none",
       borderThickness: "medium",
       borderColor: "lightGray",
@@ -647,6 +649,8 @@
     state.remix = {
       background: "ghost",
       textColor: "lightGray",
+      referenceTextColor: "lightGray",
+      referenceDecorationColor: "lightGray",
       borderStyle: "none",
       borderThickness: "medium",
       borderColor: "lightGray",
@@ -1129,6 +1133,8 @@
         options: {
           background: "ghost",
           textColor: "lightGray",
+          referenceTextColor: "lightGray",
+          referenceDecorationColor: "lightGray",
           borderStyle: "none",
           borderThickness: "medium",
           borderColor: "lightGray",
@@ -1240,6 +1246,8 @@
             <div class="ghost-section-title">Reference</div>
             <div class="ghost-options">
               ${selectOptionHtml("ghostReferenceDesignSelect", "Reference Design", state.referenceDecorationStyle || "box", REFERENCE_DECORATION_OPTIONS)}
+              ${selectTextColorHtml("ghostReferenceTextColorSelect", "Reference Text Color", state.remix.referenceTextColor || state.remix.textColor, state.remix.background)}
+              ${selectTextColorHtml("ghostReferenceDecorationColorSelect", "Reference Design Color", state.remix.referenceDecorationColor || state.remix.referenceTextColor || state.remix.textColor, state.remix.background)}
             </div>
           </div>
 
@@ -1350,6 +1358,8 @@
     const tool = document.getElementById("ghostToolSelect");
     const vapor = document.getElementById("ghostVaporSelect");
     const referenceDesign = document.getElementById("ghostReferenceDesignSelect");
+    const referenceTextColor = document.getElementById("ghostReferenceTextColorSelect");
+    const referenceDecorationColor = document.getElementById("ghostReferenceDecorationColorSelect");
     const exportSize = document.getElementById("ghostExportSizeSelect");
     const borderStyle = document.getElementById("ghostBorderStyleSelect");
     const borderThickness = document.getElementById("ghostBorderThicknessSelect");
@@ -1370,6 +1380,9 @@
         state.referenceDecorationStyle = referenceDesign.value;
       }
 
+      state.remix.referenceTextColor = referenceTextColor?.value || state.remix.referenceTextColor || state.remix.textColor;
+      state.remix.referenceDecorationColor = referenceDecorationColor?.value || state.remix.referenceDecorationColor || state.remix.referenceTextColor || state.remix.textColor;
+
       state.remix.exportSize = exportSize?.value || state.remix.exportSize;
       state.remix.borderStyle = borderStyle?.value || state.remix.borderStyle;
       state.remix.borderThickness = borderThickness?.value || state.remix.borderThickness;
@@ -1379,6 +1392,14 @@
 
       if (textColor && textColor.value !== state.remix.textColor) {
         textColor.value = state.remix.textColor;
+      }
+
+      if (referenceTextColor && referenceTextColor.value !== state.remix.referenceTextColor) {
+        referenceTextColor.value = state.remix.referenceTextColor;
+      }
+
+      if (referenceDecorationColor && referenceDecorationColor.value !== state.remix.referenceDecorationColor) {
+        referenceDecorationColor.value = state.remix.referenceDecorationColor;
       }
 
       refreshTextColorOptions();
@@ -1393,7 +1414,7 @@
       drawRemixPreview();
     };
 
-    [background, textColor, speed, thickness, jitter, wobble, tool, vapor, referenceDesign, exportSize, borderStyle, borderThickness, borderColor].forEach((el) => {
+    [background, textColor, speed, thickness, jitter, wobble, tool, vapor, referenceDesign, referenceTextColor, referenceDecorationColor, exportSize, borderStyle, borderThickness, borderColor].forEach((el) => {
       if (el) el.onchange = update;
     });
 
@@ -1414,15 +1435,20 @@
   }
 
   function refreshTextColorOptions() {
-    const textColor = document.getElementById("ghostTextColorSelect");
-    if (!textColor) return;
+    const selects = [
+      document.getElementById("ghostTextColorSelect"),
+      document.getElementById("ghostReferenceTextColorSelect"),
+      document.getElementById("ghostReferenceDecorationColorSelect")
+    ].filter(Boolean);
 
     const backgroundKey = state.remix.background;
 
-    for (const option of Array.from(textColor.options)) {
-      const allowed = isTextColorAllowedForBackground(option.value, backgroundKey);
-      option.disabled = !allowed;
-      option.textContent = `${TEXT_COLORS[option.value]?.label || option.value}${allowed ? "" : " · unavailable"}`;
+    for (const select of selects) {
+      for (const option of Array.from(select.options)) {
+        const allowed = isTextColorAllowedForBackground(option.value, backgroundKey);
+        option.disabled = !allowed;
+        option.textContent = `${TEXT_COLORS[option.value]?.label || option.value}${allowed ? "" : " · unavailable"}`;
+      }
     }
   }
 
@@ -1905,7 +1931,7 @@
     const strokes = getReferenceDecorationStrokes(decoration);
     if (!strokes.length) return;
 
-    const ink = getInkForOptions(options);
+    const ink = getInkForColorKey(getReferenceDecorationColorKey(options), options);
     const thickness = THICKNESS[options.thickness] || THICKNESS.normal;
     const fontSize = decoration.fontSize || 44;
 
@@ -2463,7 +2489,7 @@
   }
 
   function getTextColorKey(options = {}) {
-    return options.textColor || defaultTextColorForBackground(getBackgroundKey(options));
+    return options._inkColorKey || options.textColor || defaultTextColorForBackground(getBackgroundKey(options));
   }
 
   function getColorValue(key) {
@@ -2508,6 +2534,8 @@
   function sanitizeRemixOptions(options = state.remix) {
     const backgroundKey = getBackgroundKey(options);
     let textColorKey = getTextColorKey(options);
+    let referenceTextColorKey = options.referenceTextColor || textColorKey;
+    let referenceDecorationColorKey = options.referenceDecorationColor || referenceTextColorKey;
 
     if (!isTextColorAllowedForBackground(textColorKey, backgroundKey)) {
       textColorKey = defaultTextColorForBackground(backgroundKey);
@@ -2517,23 +2545,53 @@
       }
     }
 
+    if (!isTextColorAllowedForBackground(referenceTextColorKey, backgroundKey)) {
+      referenceTextColorKey = textColorKey;
+
+      if (!isTextColorAllowedForBackground(referenceTextColorKey, backgroundKey)) {
+        referenceTextColorKey = defaultTextColorForBackground(backgroundKey);
+      }
+    }
+
+    if (!isTextColorAllowedForBackground(referenceDecorationColorKey, backgroundKey)) {
+      referenceDecorationColorKey = referenceTextColorKey;
+
+      if (!isTextColorAllowedForBackground(referenceDecorationColorKey, backgroundKey)) {
+        referenceDecorationColorKey = textColorKey;
+      }
+    }
+
     options.background = backgroundKey;
     options.textColor = textColorKey;
+    options.referenceTextColor = referenceTextColorKey;
+    options.referenceDecorationColor = referenceDecorationColorKey;
     options.style = backgroundKey;
 
     return options;
   }
 
   function getInkForOptions(options = {}) {
-    const backgroundKey = getBackgroundKey(options);
-    const textColorKey = getTextColorKey(options);
+    return getInkForColorKey(getTextColorKey(options), options);
+  }
 
-    if (textColorKey === "rainbow" && isRainbowAllowedForBackground(backgroundKey)) {
+  function getReferenceTextColorKey(options = {}) {
+    return options.referenceTextColor || getTextColorKey(options);
+  }
+
+  function getReferenceDecorationColorKey(options = {}) {
+    return options.referenceDecorationColor || getReferenceTextColorKey(options);
+  }
+
+  function getInkForColorKey(colorKey, options = {}) {
+    const backgroundKey = getBackgroundKey(options);
+    const safeColorKey = colorKey || getTextColorKey(options);
+
+    if (safeColorKey === "rainbow" && isRainbowAllowedForBackground(backgroundKey)) {
       const index = Number(options._colorIndex) || 0;
       return RAINBOW_INKS[index % RAINBOW_INKS.length];
     }
 
-    return getColorValue(textColorKey) || COLOR_PALETTE.lightGray.value;
+    return getColorValue(safeColorKey) || COLOR_PALETTE.lightGray.value;
   }
 
   function getShadowForInk(ink, options = {}) {
@@ -3024,7 +3082,11 @@
         item.y,
         item.w,
         item.fontSize,
-        { ...options, _colorIndex: colorIndex },
+        {
+          ...options,
+          _colorIndex: colorIndex,
+          _inkColorKey: item.section === "reference" ? getReferenceTextColorKey(options) : getTextColorKey(options)
+        },
         partial
       );
 
@@ -3047,7 +3109,11 @@
       item.y,
       item.w,
       item.fontSize,
-      { ...options, _colorIndex: item.colorIndex || 0 },
+      {
+        ...options,
+        _colorIndex: item.colorIndex || 0,
+        _inkColorKey: item.section === "reference" ? getReferenceTextColorKey(options) : getTextColorKey(options)
+      },
       1
     );
   }
@@ -3322,7 +3388,20 @@
     if (isDecoration) {
       drawReferenceDecoration(ps.c, current.decoration, ps.options, progress);
     } else {
-      drawGlyph(ps.c, glyph, current.x, current.y, current.w, current.fontSize, { ...ps.options, _colorIndex: current.colorIndex || 0 }, progress);
+      drawGlyph(
+        ps.c,
+        glyph,
+        current.x,
+        current.y,
+        current.w,
+        current.fontSize,
+        {
+          ...ps.options,
+          _colorIndex: current.colorIndex || 0,
+          _inkColorKey: current.section === "reference" ? getReferenceTextColorKey(ps.options) : getTextColorKey(ps.options)
+        },
+        progress
+      );
     }
 
     if (tip) {
