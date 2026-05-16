@@ -108,7 +108,72 @@
       kind: "special",
       value: "#8d5a32",
       cardClass: "",
-      texture: "wood"
+      texture: "image",
+      imageSrc: "./ghost_writer_images/ghost_writer_bg_wood.jpg"
+    },
+    moss: {
+      label: "Moss",
+      kind: "special",
+      value: "#5f8f24",
+      cardClass: "",
+      texture: "image",
+      imageSrc: "./ghost_writer_images/ghost_writer_bg_moss.jpg"
+    },
+    clouds: {
+      label: "Clouds",
+      kind: "special",
+      value: "#bde5ff",
+      cardClass: "",
+      texture: "image",
+      imageSrc: "./ghost_writer_images/ghost_writer_bg_clouds.jpg"
+    },
+    sand: {
+      label: "Sand",
+      kind: "special",
+      value: "#f2c77d",
+      cardClass: "",
+      texture: "image",
+      imageSrc: "./ghost_writer_images/ghost_writer_bg_sand.jpg"
+    },
+    ice: {
+      label: "Ice",
+      kind: "special",
+      value: "#cdefff",
+      cardClass: "",
+      texture: "image",
+      imageSrc: "./ghost_writer_images/ghost_writer_bg_ice.jpg"
+    },
+    rain: {
+      label: "Rain",
+      kind: "special",
+      value: "#0d326b",
+      cardClass: "",
+      texture: "image",
+      imageSrc: "./ghost_writer_images/ghost_writer_bg_rain.jpg"
+    },
+    aurora: {
+      label: "Aurora",
+      kind: "special",
+      value: "#123461",
+      cardClass: "",
+      texture: "image",
+      imageSrc: "./ghost_writer_images/ghost_writer_bg_aurora.jpg"
+    },
+    snow: {
+      label: "Snow",
+      kind: "special",
+      value: "#e8f6ff",
+      cardClass: "",
+      texture: "image",
+      imageSrc: "./ghost_writer_images/ghost_writer_bg_snow.jpg"
+    },
+    water: {
+      label: "Water",
+      kind: "special",
+      value: "#21aee3",
+      cardClass: "",
+      texture: "image",
+      imageSrc: "./ghost_writer_images/ghost_writer_bg_water.jpg"
     },
     crackedStone: {
       label: "Cracked Stone",
