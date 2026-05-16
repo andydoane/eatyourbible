@@ -221,7 +221,12 @@
     doodleFace: { label: "Doodle Faces" },
     doodleCloud: { label: "Doodle Clouds" },
     doodleSwirl: { label: "Doodle Swirls" },
-    doodleSquiggle: { label: "Doodle Squiggles" }
+    doodleSquiggle: { label: "Doodle Squiggles" },
+    doodleAsterisk: { label: "Doodle Asterisks" },
+    doodleBible: { label: "Doodle Bibles" },
+    doodleCrown: { label: "Doodle Crowns" },
+    doodleFlame: { label: "Doodle Flames" },
+    doodleLeaf: { label: "Doodle Leaves" }
   };
 
   const DOODLE_BORDER_SVGS = {
@@ -264,6 +269,26 @@
     doodleSquiggle: {
       label: "Doodle Squiggles",
       src: "./ghost_writer_images/ghost_writer_border_squiggle.svg"
+    },
+    doodleAsterisk: {
+      label: "Doodle Asterisks",
+      src: "./ghost_writer_images/ghost_writer_border_asterisk.svg"
+    },
+    doodleBible: {
+      label: "Doodle Bibles",
+      src: "./ghost_writer_images/ghost_writer_border_bible.svg"
+    },
+    doodleCrown: {
+      label: "Doodle Crowns",
+      src: "./ghost_writer_images/ghost_writer_border_crown.svg"
+    },
+    doodleFlame: {
+      label: "Doodle Flames",
+      src: "./ghost_writer_images/ghost_writer_border_flame.svg"
+    },
+    doodleLeaf: {
+      label: "Doodle Leaves",
+      src: "./ghost_writer_images/ghost_writer_border_leaf.svg"
     }
   };
 
