@@ -1320,7 +1320,7 @@
               <button class="vm-btn vm-btn-secondary" id="ghostAgainBtn" type="button">Try Again</button>
               ${selectOptionHtml("ghostExportSizeSelect", "Download Size", state.remix.exportSize || "square", EXPORT_SIZES)}
               <button class="vm-btn vm-btn-secondary" id="ghostSaveImageBtn" type="button">Save as Image</button>
-              <button class="vm-btn vm-btn-secondary" id="ghostSaveVideoBtn" type="button">Save Replay Video</button>
+              
               <button class="vm-btn vm-btn-secondary ghost-full" id="ghostBackBtn" type="button">Back to Playground</button>
             </div>
           </div>
