@@ -211,7 +211,60 @@
     dashed: { label: "Dashed" },
     dotted: { label: "Dotted" },
     double: { label: "Double" },
-    glow: { label: "Glow" }
+    glow: { label: "Glow" },
+    doodleHeart: { label: "Doodle Hearts" },
+    doodleStar: { label: "Doodle Stars" },
+    doodleCross: { label: "Doodle Crosses" },
+    doodleFlower: { label: "Doodle Flowers" },
+    doodleFish: { label: "Doodle Fish" },
+    doodleBolt: { label: "Doodle Bolts" },
+    doodleFace: { label: "Doodle Faces" },
+    doodleCloud: { label: "Doodle Clouds" },
+    doodleSwirl: { label: "Doodle Swirls" },
+    doodleSquiggle: { label: "Doodle Squiggles" }
+  };
+
+  const DOODLE_BORDER_SVGS = {
+    doodleHeart: {
+      label: "Doodle Hearts",
+      src: "./ghost_writer_images/ghost_writer_border_heart.svg"
+    },
+    doodleStar: {
+      label: "Doodle Stars",
+      src: "./ghost_writer_images/ghost_writer_border_star.svg"
+    },
+    doodleCross: {
+      label: "Doodle Crosses",
+      src: "./ghost_writer_images/ghost_writer_border_cross.svg"
+    },
+    doodleFlower: {
+      label: "Doodle Flowers",
+      src: "./ghost_writer_images/ghost_writer_border_flower.svg"
+    },
+    doodleFish: {
+      label: "Doodle Fish",
+      src: "./ghost_writer_images/ghost_writer_border_fish.svg"
+    },
+    doodleBolt: {
+      label: "Doodle Bolts",
+      src: "./ghost_writer_images/ghost_writer_border_bolt.svg"
+    },
+    doodleFace: {
+      label: "Doodle Faces",
+      src: "./ghost_writer_images/ghost_writer_border_face.svg"
+    },
+    doodleCloud: {
+      label: "Doodle Clouds",
+      src: "./ghost_writer_images/ghost_writer_border_cloud.svg"
+    },
+    doodleSwirl: {
+      label: "Doodle Swirls",
+      src: "./ghost_writer_images/ghost_writer_border_swirl.svg"
+    },
+    doodleSquiggle: {
+      label: "Doodle Squiggles",
+      src: "./ghost_writer_images/ghost_writer_border_squiggle.svg"
+    }
   };
 
   const BORDER_THICKNESS = {
@@ -477,6 +530,8 @@
   let playbackRaf = 0;
   let playbackState = null;
   const backgroundImageCache = new Map();
+  const borderDoodleImageCache = new Map();
+  const tintedBorderDoodleCache = new Map();
 
   const state = {
     screen: "intro",
@@ -2639,9 +2694,140 @@
     return getColorValue(options.borderColor || "lightGray") || COLOR_PALETTE.lightGray.value;
   }
 
+  function isDoodleBorderStyle(style) {
+    return Boolean(DOODLE_BORDER_SVGS[style]);
+  }
+
+  function getDoodleBorderImage(src) {
+    if (!src) return null;
+
+    if (borderDoodleImageCache.has(src)) {
+      return borderDoodleImageCache.get(src);
+    }
+
+    const img = new Image();
+    img.decoding = "async";
+    img.src = src;
+
+    borderDoodleImageCache.set(src, img);
+
+    img.onload = () => {
+      if (state.screen === "remix") {
+        drawRemixPreview();
+      }
+    };
+
+    return img;
+  }
+
+  function getTintedDoodleCanvas(img, color, size) {
+    if (!img || !img.complete || !img.naturalWidth || !img.naturalHeight) return null;
+
+    const safeSize = Math.max(8, Math.round(size));
+    const cacheKey = `${img.src}|${color}|${safeSize}`;
+
+    if (tintedBorderDoodleCache.has(cacheKey)) {
+      return tintedBorderDoodleCache.get(cacheKey);
+    }
+
+    const offscreen = document.createElement("canvas");
+    offscreen.width = safeSize;
+    offscreen.height = safeSize;
+
+    const oc = offscreen.getContext("2d");
+    oc.clearRect(0, 0, safeSize, safeSize);
+    oc.drawImage(img, 0, 0, safeSize, safeSize);
+    oc.globalCompositeOperation = "source-in";
+    oc.fillStyle = color;
+    oc.fillRect(0, 0, safeSize, safeSize);
+    oc.globalCompositeOperation = "source-over";
+
+    tintedBorderDoodleCache.set(cacheKey, offscreen);
+    return offscreen;
+  }
+
+  function getDoodleBorderSizing(width, height, options = {}) {
+    const thicknessConfig = BORDER_THICKNESS[options.borderThickness] || BORDER_THICKNESS.medium;
+    const base = Math.min(width, height);
+    const size = clamp(base * (.052 + thicknessConfig.size * .0026), 28, 88);
+    const spacing = size * 1.22;
+    const inset = Math.max(size * .72, base * .042);
+
+    return { size, spacing, inset };
+  }
+
+  function makeDoodleBorderPositions(x, y, w, h, spacing) {
+    const positions = [];
+    const step = Math.max(18, spacing);
+    const right = x + w;
+    const bottom = y + h;
+
+    for (let px = x; px <= right; px += step) {
+      positions.push({ x: px, y, angle: 0, side: "top" });
+    }
+
+    for (let py = y + step; py <= bottom; py += step) {
+      positions.push({ x: right, y: py, angle: Math.PI / 2, side: "right" });
+    }
+
+    for (let px = right - step; px >= x; px -= step) {
+      positions.push({ x: px, y: bottom, angle: Math.PI, side: "bottom" });
+    }
+
+    for (let py = bottom - step; py >= y + step; py -= step) {
+      positions.push({ x, y: py, angle: -Math.PI / 2, side: "left" });
+    }
+
+    return positions;
+  }
+
+  function drawSvgDoodleBorder(c, width, height, options = {}) {
+    const style = options.borderStyle || "none";
+    const doodle = DOODLE_BORDER_SVGS[style];
+    if (!doodle) return false;
+
+    const img = getDoodleBorderImage(doodle.src);
+    if (!img || !img.complete || !img.naturalWidth || !img.naturalHeight) return true;
+
+    const borderColor = getBorderColorValue(options);
+    const sizing = getDoodleBorderSizing(width, height, options);
+    const stamp = getTintedDoodleCanvas(img, borderColor, sizing.size);
+    if (!stamp) return true;
+
+    const x = sizing.inset;
+    const y = sizing.inset;
+    const w = Math.max(1, width - sizing.inset * 2);
+    const h = Math.max(1, height - sizing.inset * 2);
+    const positions = makeDoodleBorderPositions(x, y, w, h, sizing.spacing);
+
+    c.save();
+
+    for (let i = 0; i < positions.length; i += 1) {
+      const pos = positions[i];
+      const wiggle = sizing.size * .10;
+      const px = pos.x + stableNoise(`${style}-border-x-${i}-${pos.side}`) * wiggle;
+      const py = pos.y + stableNoise(`${style}-border-y-${i}-${pos.side}`) * wiggle;
+      const tilt = stableNoise(`${style}-border-tilt-${i}`) * .18;
+
+      c.save();
+      c.translate(px, py);
+      c.rotate(pos.angle + tilt);
+      c.drawImage(stamp, -sizing.size / 2, -sizing.size / 2, sizing.size, sizing.size);
+      c.restore();
+    }
+
+    c.restore();
+    return true;
+  }
+
   function drawRemixBorder(c, width, height, options = {}) {
     const style = options.borderStyle || "none";
     if (style === "none") return;
+
+    if (isDoodleBorderStyle(style)) {
+      drawSvgDoodleBorder(c, width, height, options);
+      return;
+    }
 
     const thicknessConfig = BORDER_THICKNESS[options.borderThickness] || BORDER_THICKNESS.medium;
     const borderColor = getBorderColorValue(options);
@@ -2717,6 +2903,19 @@
 
     const thicknessConfig = BORDER_THICKNESS[options.borderThickness] || BORDER_THICKNESS.medium;
     const lineWidth = thicknessConfig.size;
+
+    if (isDoodleBorderStyle(style)) {
+      const sizing = getDoodleBorderSizing(width, height, options);
+      const inset = sizing.inset + sizing.size * .72;
+
+      return {
+        x: inset,
+        y: inset,
+        width: Math.max(80, width - inset * 2),
+        height: Math.max(80, height - inset * 2)
+      };
+    }
+
     const borderInset = Math.max(14, lineWidth * 2.2);
     const extraGap = Math.max(26, lineWidth * 3.2);
     const inset = borderInset + extraGap;
