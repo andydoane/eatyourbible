@@ -2738,6 +2738,7 @@
   function isRainbowAllowedForBackground(backgroundKey) {
     return [
       "ghost",
+      "snow",
       "paper",
       "notebook",
       "treasureMap",
