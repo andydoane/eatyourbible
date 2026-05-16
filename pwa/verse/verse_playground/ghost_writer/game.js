@@ -361,6 +361,12 @@
     line: 330
   };
 
+  const LINE_SPACING = {
+    base: 1.24,
+    max: 1.56,
+    extraSpaceUse: .72
+  };
+
   const EXPORT_IMAGE = {
     filenamePrefix: "ghost-writer"
   };
@@ -1612,19 +1618,52 @@
     );
   }
 
+  function getDynamicVerseLineHeightMultiplier({
+    verseLayout,
+    fontSize,
+    maxHeight,
+    referenceGap = 0,
+    dividerExtra = 0,
+    referenceZoneHeight = 0
+  }) {
+    const lineCount = Math.max(1, verseLayout?.lineCount || 1);
+
+    if (lineCount <= 1) {
+      return LINE_SPACING.base;
+    }
+
+    const fixedReferenceHeight = referenceGap + dividerExtra + referenceZoneHeight;
+    const baseTotalHeight = (verseLayout?.height || 0) + fixedReferenceHeight;
+    const extraSpace = Math.max(0, maxHeight - baseTotalHeight);
+
+    if (extraSpace <= 0) {
+      return LINE_SPACING.base;
+    }
+
+    const usableExtra = extraSpace * LINE_SPACING.extraSpaceUse;
+    const maxExtra = (LINE_SPACING.max - LINE_SPACING.base) * fontSize * lineCount;
+    const appliedExtra = Math.min(usableExtra, maxExtra);
+
+    return clamp(
+      LINE_SPACING.base + appliedExtra / Math.max(1, fontSize * lineCount),
+      LINE_SPACING.base,
+      LINE_SPACING.max
+    );
+  }
+
   function layoutVerseAndReferenceForFontSize(fontSize, maxWidth, maxHeight, canvasWidth, canvasHeight, offsetX = 0, offsetY = 0) {
     const verseText = state.verseTextOnly || state.fullText || "";
     const refText = state.referenceText || "";
     const hasReference = Boolean(refText);
-    const lineHeight = fontSize * 1.24;
+    const baseLineHeight = fontSize * LINE_SPACING.base;
     const referenceStyle = state.referenceDecorationStyle || "box";
     const refFontSize = Math.max(10, fontSize * REFERENCE_DECORATION.refScale);
-    const referenceZoneHeight = hasReference ? lineHeight * REFERENCE_DECORATION.zoneHeightLines : 0;
-    const referenceGap = hasReference ? lineHeight * REFERENCE_DECORATION.beforeGapLines : 0;
-    const dividerExtra = hasReference && referenceStyle === "divider" ? lineHeight * REFERENCE_DECORATION.dividerExtraLines : 0;
+    const referenceZoneHeight = hasReference ? baseLineHeight * REFERENCE_DECORATION.zoneHeightLines : 0;
+    const referenceGap = hasReference ? baseLineHeight * REFERENCE_DECORATION.beforeGapLines : 0;
+    const dividerExtra = hasReference && referenceStyle === "divider" ? baseLineHeight * REFERENCE_DECORATION.dividerExtraLines : 0;
     const verseMaxHeight = Math.max(40, maxHeight - referenceGap - dividerExtra - referenceZoneHeight);
 
-    const verseLayout = layoutForFontSize(
+    const baseVerseLayout = layoutForFontSize(
       verseText,
       fontSize,
       maxWidth,
@@ -1633,8 +1672,37 @@
       verseMaxHeight,
       offsetX,
       0,
-      { verticalAlign: "top" }
+      {
+        verticalAlign: "top",
+        lineHeightMultiplier: LINE_SPACING.base
+      }
     );
+
+    const verseLineHeightMultiplier = getDynamicVerseLineHeightMultiplier({
+      verseLayout: baseVerseLayout,
+      fontSize,
+      maxHeight,
+      referenceGap,
+      dividerExtra,
+      referenceZoneHeight
+    });
+
+    const verseLayout = verseLineHeightMultiplier === LINE_SPACING.base
+      ? baseVerseLayout
+      : layoutForFontSize(
+        verseText,
+        fontSize,
+        maxWidth,
+        verseMaxHeight,
+        canvasWidth,
+        verseMaxHeight,
+        offsetX,
+        0,
+        {
+          verticalAlign: "top",
+          lineHeightMultiplier: verseLineHeightMultiplier
+        }
+      );
 
     const totalHeight = verseLayout.height + referenceGap + dividerExtra + referenceZoneHeight;
     const startY = offsetY + Math.max(fontSize * .9, (canvasHeight - totalHeight) / 2 + fontSize * .76);
@@ -1669,7 +1737,7 @@
         referenceZoneTop,
         referenceZoneHeight,
         referenceBaselineY,
-        lineHeight,
+        lineHeight: baseLineHeight,
         fontSize,
         refFontSize,
         maxWidth,
@@ -1684,7 +1752,8 @@
     return {
       placements,
       fontSize,
-      lineHeight,
+      lineHeight: verseLayout.lineHeight,
+      verseLineHeightMultiplier,
       height: totalHeight,
       width: usedWidth,
       lineCount: verseLayout.lineCount + (hasReference ? 1 : 0),
@@ -1805,7 +1874,8 @@
   }
 
   function layoutForFontSize(text, fontSize, maxWidth, maxHeight, canvasWidth, canvasHeight, offsetX = 0, offsetY = 0, options = {}) {
-    const lineHeight = fontSize * 1.24;
+    const lineHeightMultiplier = options.lineHeightMultiplier || LINE_SPACING.base;
+    const lineHeight = fontSize * lineHeightMultiplier;
     const placements = [];
     const lines = [];
     const verticalAlign = options.verticalAlign || "center";
@@ -1886,6 +1956,7 @@
       placements,
       fontSize,
       lineHeight,
+      lineHeightMultiplier,
       height: totalHeight,
       width: usedWidth,
       lineCount: lines.length,
