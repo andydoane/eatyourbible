@@ -1,0 +1,976 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ghost Writer Doodle Border Recorder</title>
+  <style>
+    :root {
+      --bg: #101114;
+      --panel: #20222d;
+      --panel-2: #2b2e3b;
+      --text: #f8f7ff;
+      --muted: rgba(248, 247, 255, .72);
+      --accent: #d8d3ff;
+      --paper: #fbfbff;
+      --ink: #16171d;
+      --shadow: rgba(0, 0, 0, .32);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 50% 8%, rgba(202, 198, 255, .16), transparent 30%),
+        radial-gradient(circle at 14% 18%, rgba(148, 163, 184, .12), transparent 26%),
+        linear-gradient(180deg, #101114 0%, #252733 48%, #111217 100%);
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    .app {
+      width: min(1180px, 100%);
+      margin: 0 auto;
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .top {
+      display: grid;
+      gap: 8px;
+      text-align: center;
+      padding: 14px 10px 4px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(26px, 5vw, 44px);
+      line-height: 1;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-weight: 750;
+      line-height: 1.25;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn,
+    .btn {
+      border: 0;
+      border-radius: 999px;
+      min-height: 44px;
+      padding: 10px 16px;
+      background: rgba(255, 255, 255, .94);
+      color: #1f2028;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 5px 0 rgba(0, 0, 0, .22);
+    }
+
+    .tab-btn[aria-selected="true"] {
+      background: var(--accent);
+    }
+
+    .btn.secondary {
+      background: rgba(255, 255, 255, .22);
+      color: #fff;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), 0 5px 0 rgba(0,0,0,.22);
+    }
+
+    .btn.danger {
+      background: #ffddd9;
+      color: #5b1712;
+    }
+
+    .btn:active,
+    .tab-btn:active {
+      transform: translateY(3px);
+      box-shadow: 0 2px 0 rgba(0, 0, 0, .22);
+    }
+
+    .panel {
+      display: none;
+    }
+
+    .panel.is-active {
+      display: block;
+    }
+
+    .card {
+      border-radius: 28px;
+      background: linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.08));
+      box-shadow: 0 18px 48px var(--shadow), inset 0 0 0 1px rgba(255,255,255,.16);
+      padding: clamp(12px, 2vw, 20px);
+    }
+
+    .draw-grid {
+      display: grid;
+      grid-template-columns: minmax(280px, 460px) minmax(280px, 1fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    @media (max-width: 840px) {
+      .draw-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .draw-box {
+      display: grid;
+      gap: 12px;
+      justify-items: center;
+    }
+
+    .canvas-wrap {
+      position: relative;
+      width: min(100%, 460px);
+      aspect-ratio: 1 / 1;
+      border-radius: 28px;
+      overflow: hidden;
+      background: var(--paper);
+      box-shadow: 0 12px 0 rgba(0,0,0,.24), inset 0 0 0 4px rgba(216, 211, 255, .85);
+      touch-action: none;
+    }
+
+    .canvas-wrap::before {
+      content: "";
+      position: absolute;
+      inset: 10%;
+      border: 2px dashed rgba(0, 0, 0, .10);
+      border-radius: 20px;
+      pointer-events: none;
+    }
+
+    #drawCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-weight: 750;
+      text-align: center;
+      line-height: 1.25;
+    }
+
+    .controls {
+      display: grid;
+      gap: 12px;
+    }
+
+    .control-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    @media (max-width: 520px) {
+      .control-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      border: 0;
+      border-radius: 16px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,.95);
+      color: #1f2028;
+      font-weight: 800;
+    }
+
+    input[type="color"] {
+      height: 44px;
+      padding: 4px;
+    }
+
+    textarea {
+      min-height: 220px;
+      resize: vertical;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      font-weight: 650;
+      line-height: 1.35;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .preview-layout {
+      display: grid;
+      gap: 16px;
+    }
+
+    .preview-controls {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(110px, 1fr));
+      gap: 10px;
+      align-items: end;
+    }
+
+    @media (max-width: 980px) {
+      .preview-controls {
+        grid-template-columns: repeat(3, minmax(110px, 1fr));
+      }
+    }
+
+    @media (max-width: 560px) {
+      .preview-controls {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .preview-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+      align-items: start;
+    }
+
+    @media (max-width: 980px) {
+      .preview-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .ratio-card {
+      display: grid;
+      gap: 8px;
+      justify-items: center;
+      padding: 12px;
+      border-radius: 22px;
+      background: rgba(0,0,0,.18);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.10);
+    }
+
+    .ratio-title {
+      font-size: 18px;
+      font-weight: 950;
+    }
+
+    .preview-canvas-wrap {
+      width: 100%;
+      max-width: 330px;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #050509;
+      box-shadow: 0 10px 24px rgba(0,0,0,.32);
+    }
+
+    .preview-canvas-wrap.square {
+      aspect-ratio: 1 / 1;
+    }
+
+    .preview-canvas-wrap.tall {
+      aspect-ratio: 1290 / 2796;
+      max-width: 230px;
+    }
+
+    .preview-canvas-wrap.wide {
+      aspect-ratio: 16 / 9;
+      max-width: 380px;
+    }
+
+    .previewCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    .mini {
+      font-size: 13px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.25;
+      font-weight: 750;
+    }
+
+    .status {
+      min-height: 20px;
+      color: #d8ffd9;
+      font-weight: 800;
+      font-size: 14px;
+    }
+
+    .empty-note {
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.10);
+      color: var(--muted);
+      font-weight: 800;
+      line-height: 1.3;
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="top">
+      <h1>👻 Ghost Writer Doodle Border Recorder</h1>
+      <div class="subtitle">
+        Draw one reusable doodle, copy its JSON, and preview how it looks repeated around Square, Tall, and Wide borders.
+      </div>
+      <nav class="tabs" aria-label="Doodle recorder tabs">
+        <button class="tab-btn" id="drawTab" type="button" aria-selected="true">✍️ Draw Doodle</button>
+        <button class="tab-btn" id="previewTab" type="button" aria-selected="false">🖼️ Border Preview</button>
+      </nav>
+    </header>
+
+    <section class="panel is-active" id="drawPanel">
+      <div class="card draw-grid">
+        <div class="draw-box">
+          <div class="canvas-wrap">
+            <canvas id="drawCanvas" aria-label="Draw doodle"></canvas>
+          </div>
+          <div class="hint">
+            Draw one simple doodle: star, heart, smiley, cross, flower, etc. Multiple strokes are okay.
+          </div>
+          <div class="button-row">
+            <button class="btn secondary" id="undoBtn" type="button">Undo Stroke</button>
+            <button class="btn danger" id="clearBtn" type="button">Clear</button>
+          </div>
+        </div>
+
+        <div class="controls">
+          <div class="control-grid">
+            <label>
+              Doodle name
+              <input id="nameInput" type="text" value="star" autocomplete="off">
+            </label>
+            <label>
+              Draw color
+              <input id="drawColor" type="color" value="#16171d">
+            </label>
+          </div>
+
+          <div class="button-row">
+            <button class="btn" id="copyJsonBtn" type="button">Copy Doodle JSON</button>
+            <button class="btn secondary" id="downloadJsonBtn" type="button">Download JSON</button>
+          </div>
+
+          <label>
+            Doodle JSON
+            <textarea id="jsonOutput" spellcheck="false"></textarea>
+          </label>
+
+          <div class="button-row">
+            <button class="btn secondary" id="loadJsonBtn" type="button">Load JSON From Box</button>
+          </div>
+
+          <div class="status" id="drawStatus"></div>
+
+          <div class="empty-note">
+            Tip: after drawing, go to <strong>Border Preview</strong>. If it looks too crowded, increase spacing or make the doodle size smaller.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="previewPanel">
+      <div class="card preview-layout">
+        <div class="preview-controls">
+          <label>
+            Border color
+            <input id="borderColor" type="color" value="#ffffff">
+          </label>
+          <label>
+            Background
+            <select id="backgroundSelect">
+              <option value="#050509">Ghost Black</option>
+              <option value="#ffffff">White</option>
+              <option value="#fff8e8">Paper</option>
+              <option value="#15352d">Chalkboard</option>
+              <option value="#7f66c6">Purple</option>
+              <option value="#40b9c5">Blue</option>
+            </select>
+          </label>
+          <label>
+            Doodle size
+            <input id="doodleSize" type="range" min="18" max="90" value="42">
+          </label>
+          <label>
+            Spacing
+            <input id="spacing" type="range" min="8" max="80" value="30">
+          </label>
+          <label>
+            Random wiggle
+            <input id="jitter" type="range" min="0" max="18" value="5">
+          </label>
+          <label>
+            Rotate doodles
+            <select id="rotateSelect">
+              <option value="follow" selected>Follow border</option>
+              <option value="upright">Always upright</option>
+              <option value="random">Random tilt</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="button-row">
+          <button class="btn" id="refreshPreviewBtn" type="button">Refresh Preview</button>
+          <button class="btn secondary" id="copyAllBtn" type="button">Copy JSON Again</button>
+        </div>
+
+        <div class="preview-grid">
+          <div class="ratio-card">
+            <div class="ratio-title">Square</div>
+            <div class="preview-canvas-wrap square">
+              <canvas class="previewCanvas" id="squareCanvas" data-ratio="square"></canvas>
+            </div>
+            <div class="mini">1080 × 1080 style preview</div>
+          </div>
+
+          <div class="ratio-card">
+            <div class="ratio-title">Tall</div>
+            <div class="preview-canvas-wrap tall">
+              <canvas class="previewCanvas" id="tallCanvas" data-ratio="tall"></canvas>
+            </div>
+            <div class="mini">1290 × 2796 style preview</div>
+          </div>
+
+          <div class="ratio-card">
+            <div class="ratio-title">Wide</div>
+            <div class="preview-canvas-wrap wide">
+              <canvas class="previewCanvas" id="wideCanvas" data-ratio="wide"></canvas>
+            </div>
+            <div class="mini">1920 × 1080 style preview</div>
+          </div>
+        </div>
+
+        <div class="status" id="previewStatus"></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const drawCanvas = document.getElementById("drawCanvas");
+    const jsonOutput = document.getElementById("jsonOutput");
+    const nameInput = document.getElementById("nameInput");
+    const drawColor = document.getElementById("drawColor");
+    const drawStatus = document.getElementById("drawStatus");
+    const previewStatus = document.getElementById("previewStatus");
+
+    let strokes = [];
+    let currentStroke = null;
+
+    function clamp(value, min, max) {
+      const n = Number(value);
+      if (!Number.isFinite(n)) return min;
+      return Math.max(min, Math.min(max, n));
+    }
+
+    function round4(value) {
+      return Math.round(Number(value || 0) * 10000) / 10000;
+    }
+
+    function stableNoise(key) {
+      const str = String(key);
+      let hash = 2166136261;
+      for (let i = 0; i < str.length; i += 1) {
+        hash ^= str.charCodeAt(i);
+        hash = Math.imul(hash, 16777619);
+      }
+      const n = (hash >>> 0) / 4294967295;
+      return n * 2 - 1;
+    }
+
+    function setupCanvas(canvas, cssWidth, cssHeight) {
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      canvas.width = Math.max(1, Math.round(cssWidth * dpr));
+      canvas.height = Math.max(1, Math.round(cssHeight * dpr));
+      canvas.dataset.cssWidth = String(cssWidth);
+      canvas.dataset.cssHeight = String(cssHeight);
+      const c = canvas.getContext("2d");
+      c.setTransform(dpr, 0, 0, dpr, 0, 0);
+      return c;
+    }
+
+    function resizeDrawCanvas() {
+      const rect = drawCanvas.parentElement.getBoundingClientRect();
+      setupCanvas(drawCanvas, rect.width, rect.height);
+      redrawDoodle();
+    }
+
+    function getDrawPoint(event) {
+      const rect = drawCanvas.getBoundingClientRect();
+      return {
+        x: clamp((event.clientX - rect.left) / Math.max(1, rect.width), 0, 1),
+        y: clamp((event.clientY - rect.top) / Math.max(1, rect.height), 0, 1),
+        t: Math.round(performance.now())
+      };
+    }
+
+    function drawStroke(c, stroke, width, height, color = drawColor.value) {
+      if (!stroke || !stroke.length) return;
+
+      c.save();
+      c.strokeStyle = color;
+      c.fillStyle = color;
+      c.lineWidth = Math.max(5, width * .018);
+      c.lineCap = "round";
+      c.lineJoin = "round";
+
+      if (stroke.length === 1) {
+        const p = stroke[0];
+        c.beginPath();
+        c.arc(p.x * width, p.y * height, Math.max(3.5, width * .012), 0, Math.PI * 2);
+        c.fill();
+        c.restore();
+        return;
+      }
+
+      c.beginPath();
+      c.moveTo(stroke[0].x * width, stroke[0].y * height);
+
+      for (let i = 1; i < stroke.length; i += 1) {
+        c.lineTo(stroke[i].x * width, stroke[i].y * height);
+      }
+
+      c.stroke();
+      c.restore();
+    }
+
+    function redrawDoodle() {
+      const width = Number(drawCanvas.dataset.cssWidth) || drawCanvas.getBoundingClientRect().width;
+      const height = Number(drawCanvas.dataset.cssHeight) || drawCanvas.getBoundingClientRect().height;
+      const c = drawCanvas.getContext("2d");
+      c.clearRect(0, 0, width, height);
+
+      for (const stroke of strokes) {
+        drawStroke(c, stroke, width, height);
+      }
+
+      updateJsonOutput();
+    }
+
+    function computeBounds(sourceStrokes) {
+      let minX = Infinity;
+      let minY = Infinity;
+      let maxX = -Infinity;
+      let maxY = -Infinity;
+
+      for (const stroke of sourceStrokes || []) {
+        for (const point of stroke || []) {
+          minX = Math.min(minX, point.x);
+          minY = Math.min(minY, point.y);
+          maxX = Math.max(maxX, point.x);
+          maxY = Math.max(maxY, point.y);
+        }
+      }
+
+      if (!Number.isFinite(minX)) {
+        return { minX: .25, minY: .25, maxX: .75, maxY: .75, width: .5, height: .5 };
+      }
+
+      return {
+        minX,
+        minY,
+        maxX,
+        maxY,
+        width: Math.max(.01, maxX - minX),
+        height: Math.max(.01, maxY - minY)
+      };
+    }
+
+    function normalizeDoodle(sourceStrokes) {
+      const bounds = computeBounds(sourceStrokes);
+      const maxDimension = Math.max(bounds.width, bounds.height, .01);
+      const pad = .08;
+      const usable = 1 - pad * 2;
+
+      return (sourceStrokes || []).map((stroke) => {
+        return (stroke || []).map((point) => ({
+          x: round4(pad + ((point.x - bounds.minX) / maxDimension) * usable + ((maxDimension - bounds.width) / maxDimension) * usable / 2),
+          y: round4(pad + ((point.y - bounds.minY) / maxDimension) * usable + ((maxDimension - bounds.height) / maxDimension) * usable / 2)
+        }));
+      });
+    }
+
+    function getDoodleJsonObject() {
+      const normalized = normalizeDoodle(strokes);
+      const bounds = computeBounds(normalized);
+      return {
+        name: String(nameInput.value || "doodle").trim() || "doodle",
+        version: 1,
+        widthRatio: round4(bounds.width),
+        heightRatio: round4(bounds.height),
+        strokes: normalized
+      };
+    }
+
+    function updateJsonOutput() {
+      const obj = getDoodleJsonObject();
+      jsonOutput.value = JSON.stringify(obj, null, 2);
+      saveLocal();
+    }
+
+    function loadFromObject(obj) {
+      if (!obj || !Array.isArray(obj.strokes)) {
+        throw new Error("JSON needs a strokes array.");
+      }
+
+      nameInput.value = obj.name || "doodle";
+      strokes = obj.strokes.map((stroke) => {
+        return (stroke || []).map((point) => ({
+          x: clamp(point.x, 0, 1),
+          y: clamp(point.y, 0, 1),
+          t: Number(point.t) || 0
+        }));
+      }).filter((stroke) => stroke.length);
+
+      redrawDoodle();
+      drawStatus.textContent = "Loaded doodle JSON.";
+      drawPreviewAll();
+    }
+
+    function saveLocal() {
+      try {
+        localStorage.setItem("ghostWriterDoodleRecorder", JSON.stringify({
+          name: nameInput.value,
+          color: drawColor.value,
+          strokes
+        }));
+      } catch (err) {}
+    }
+
+    function loadLocal() {
+      try {
+        const saved = JSON.parse(localStorage.getItem("ghostWriterDoodleRecorder") || "null");
+        if (!saved) return;
+        nameInput.value = saved.name || "star";
+        drawColor.value = saved.color || "#16171d";
+        strokes = Array.isArray(saved.strokes) ? saved.strokes : [];
+      } catch (err) {}
+    }
+
+    drawCanvas.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      drawCanvas.setPointerCapture?.(event.pointerId);
+      currentStroke = [getDrawPoint(event)];
+      strokes.push(currentStroke);
+      redrawDoodle();
+    });
+
+    drawCanvas.addEventListener("pointermove", (event) => {
+      if (!currentStroke) return;
+      event.preventDefault();
+      currentStroke.push(getDrawPoint(event));
+      redrawDoodle();
+    });
+
+    function endStroke(event) {
+      if (!currentStroke) return;
+      event?.preventDefault?.();
+      currentStroke = null;
+      redrawDoodle();
+      drawPreviewAll();
+    }
+
+    drawCanvas.addEventListener("pointerup", endStroke);
+    drawCanvas.addEventListener("pointercancel", endStroke);
+    drawCanvas.addEventListener("pointerleave", endStroke);
+
+    document.getElementById("undoBtn").addEventListener("click", () => {
+      strokes.pop();
+      redrawDoodle();
+      drawPreviewAll();
+    });
+
+    document.getElementById("clearBtn").addEventListener("click", () => {
+      strokes = [];
+      redrawDoodle();
+      drawPreviewAll();
+    });
+
+    document.getElementById("copyJsonBtn").addEventListener("click", async () => {
+      updateJsonOutput();
+      await navigator.clipboard.writeText(jsonOutput.value);
+      drawStatus.textContent = "Copied doodle JSON to clipboard.";
+    });
+
+    document.getElementById("copyAllBtn").addEventListener("click", async () => {
+      updateJsonOutput();
+      await navigator.clipboard.writeText(jsonOutput.value);
+      previewStatus.textContent = "Copied doodle JSON to clipboard.";
+    });
+
+    document.getElementById("downloadJsonBtn").addEventListener("click", () => {
+      updateJsonOutput();
+      const obj = getDoodleJsonObject();
+      const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `ghost_writer_doodle_${obj.name.replace(/[^a-z0-9_-]+/gi, "_").toLowerCase()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      drawStatus.textContent = "Downloaded doodle JSON.";
+    });
+
+    document.getElementById("loadJsonBtn").addEventListener("click", () => {
+      try {
+        loadFromObject(JSON.parse(jsonOutput.value));
+      } catch (err) {
+        drawStatus.textContent = `Could not load JSON: ${err.message}`;
+      }
+    });
+
+    nameInput.addEventListener("input", updateJsonOutput);
+    drawColor.addEventListener("input", () => {
+      redrawDoodle();
+      drawPreviewAll();
+    });
+
+    function setActiveTab(which) {
+      const drawActive = which === "draw";
+      document.getElementById("drawPanel").classList.toggle("is-active", drawActive);
+      document.getElementById("previewPanel").classList.toggle("is-active", !drawActive);
+      document.getElementById("drawTab").setAttribute("aria-selected", drawActive ? "true" : "false");
+      document.getElementById("previewTab").setAttribute("aria-selected", drawActive ? "false" : "true");
+
+      if (!drawActive) {
+        drawPreviewAll();
+      }
+    }
+
+    document.getElementById("drawTab").addEventListener("click", () => setActiveTab("draw"));
+    document.getElementById("previewTab").addEventListener("click", () => setActiveTab("preview"));
+
+    const previewControls = [
+      "borderColor",
+      "backgroundSelect",
+      "doodleSize",
+      "spacing",
+      "jitter",
+      "rotateSelect"
+    ];
+
+    for (const id of previewControls) {
+      document.getElementById(id).addEventListener("input", drawPreviewAll);
+      document.getElementById(id).addEventListener("change", drawPreviewAll);
+    }
+
+    document.getElementById("refreshPreviewBtn").addEventListener("click", drawPreviewAll);
+
+    function drawPreviewAll() {
+      drawPreviewCanvas(document.getElementById("squareCanvas"), 1080, 1080);
+      drawPreviewCanvas(document.getElementById("tallCanvas"), 1290, 2796);
+      drawPreviewCanvas(document.getElementById("wideCanvas"), 1920, 1080);
+    }
+
+    function drawPreviewCanvas(canvas, exportW, exportH) {
+      const wrap = canvas.parentElement;
+      const rect = wrap.getBoundingClientRect();
+      const c = setupCanvas(canvas, rect.width, rect.height);
+      const width = rect.width;
+      const height = rect.height;
+      const bg = document.getElementById("backgroundSelect").value;
+      const borderColor = document.getElementById("borderColor").value;
+      const size = Number(document.getElementById("doodleSize").value) || 42;
+      const spacing = Number(document.getElementById("spacing").value) || 30;
+      const jitter = Number(document.getElementById("jitter").value) || 0;
+      const rotateMode = document.getElementById("rotateSelect").value;
+
+      c.clearRect(0, 0, width, height);
+      drawBackground(c, width, height, bg);
+      drawSampleVerse(c, width, height, bg);
+      drawDoodleBorder(c, width, height, {
+        doodle: getDoodleJsonObject(),
+        color: borderColor,
+        size: size * Math.min(width / 360, height / 360),
+        spacing: spacing * Math.min(width / 360, height / 360),
+        jitter: jitter * Math.min(width / 360, height / 360),
+        rotateMode
+      });
+    }
+
+    function drawBackground(c, width, height, bg) {
+      c.save();
+      c.fillStyle = bg;
+      c.fillRect(0, 0, width, height);
+
+      if (bg === "#050509") {
+        const grad = c.createRadialGradient(width * .5, height * .25, 0, width * .5, height * .25, Math.max(width, height) * .65);
+        grad.addColorStop(0, "rgba(255,255,255,.12)");
+        grad.addColorStop(1, "rgba(255,255,255,0)");
+        c.fillStyle = grad;
+        c.fillRect(0, 0, width, height);
+      }
+
+      if (bg === "#fff8e8") {
+        c.strokeStyle = "rgba(70, 100, 180, .16)";
+        c.lineWidth = 1;
+        for (let y = height * .18; y < height; y += Math.max(14, height * .045)) {
+          c.beginPath();
+          c.moveTo(0, y);
+          c.lineTo(width, y);
+          c.stroke();
+        }
+      }
+
+      if (bg === "#15352d") {
+        c.fillStyle = "rgba(255,255,255,.055)";
+        for (let i = 0; i < 120; i += 1) {
+          c.beginPath();
+          c.arc(
+            width * ((i * 37) % 101) / 101,
+            height * ((i * 53) % 103) / 103,
+            0.8 + (i % 3) * 0.35,
+            0,
+            Math.PI * 2
+          );
+          c.fill();
+        }
+      }
+
+      c.restore();
+    }
+
+    function drawSampleVerse(c, width, height, bg) {
+      const lightBg = bg === "#ffffff" || bg === "#fff8e8";
+      const ink = lightBg ? "rgba(30,31,38,.75)" : "rgba(255,255,255,.82)";
+
+      c.save();
+      c.fillStyle = ink;
+      c.textAlign = "center";
+      c.textBaseline = "middle";
+      c.font = `900 ${Math.max(18, Math.min(width, height) * .075)}px system-ui, sans-serif`;
+      c.fillText("Ghost Writer", width / 2, height * .43);
+      c.font = `800 ${Math.max(12, Math.min(width, height) * .038)}px system-ui, sans-serif`;
+      c.fillText("Doodle Border Preview", width / 2, height * .53);
+      c.restore();
+    }
+
+    function makeBorderPositions(width, height, margin, spacing) {
+      const positions = [];
+      const left = margin;
+      const right = width - margin;
+      const top = margin;
+      const bottom = height - margin;
+      const step = Math.max(10, spacing);
+
+      for (let x = left; x <= right; x += step) {
+        positions.push({ x, y: top, angle: 0, side: "top" });
+      }
+      for (let y = top + step; y <= bottom; y += step) {
+        positions.push({ x: right, y, angle: Math.PI / 2, side: "right" });
+      }
+      for (let x = right - step; x >= left; x -= step) {
+        positions.push({ x, y: bottom, angle: Math.PI, side: "bottom" });
+      }
+      for (let y = bottom - step; y >= top + step; y -= step) {
+        positions.push({ x: left, y, angle: -Math.PI / 2, side: "left" });
+      }
+
+      return positions;
+    }
+
+    function drawDoodleBorder(c, width, height, config) {
+      const doodle = config.doodle;
+      if (!doodle.strokes || !doodle.strokes.length) return;
+
+      const size = config.size;
+      const margin = Math.max(size * .72, Math.min(width, height) * .055);
+      const positions = makeBorderPositions(width, height, margin, config.spacing + size * .72);
+
+      positions.forEach((pos, index) => {
+        const jx = stableNoise(`jx-${index}-${pos.side}`) * config.jitter;
+        const jy = stableNoise(`jy-${index}-${pos.side}`) * config.jitter;
+        let angle = 0;
+
+        if (config.rotateMode === "follow") angle = pos.angle;
+        if (config.rotateMode === "random") angle = stableNoise(`rot-${index}`) * .42;
+
+        drawDoodleAt(c, doodle, pos.x + jx, pos.y + jy, size, angle, config.color, index);
+      });
+    }
+
+    function drawDoodleAt(c, doodle, centerX, centerY, size, angle, color, index) {
+      const strokesToDraw = doodle.strokes || [];
+      c.save();
+      c.translate(centerX, centerY);
+      c.rotate(angle);
+      c.strokeStyle = color;
+      c.fillStyle = color;
+      c.lineWidth = Math.max(1.5, size * .075);
+      c.lineCap = "round";
+      c.lineJoin = "round";
+
+      const scale = size;
+      const offset = -.5 * scale;
+
+      for (const stroke of strokesToDraw) {
+        if (!stroke || !stroke.length) continue;
+
+        if (stroke.length === 1) {
+          c.beginPath();
+          c.arc(offset + stroke[0].x * scale, offset + stroke[0].y * scale, Math.max(1.5, size * .04), 0, Math.PI * 2);
+          c.fill();
+          continue;
+        }
+
+        c.beginPath();
+        c.moveTo(offset + stroke[0].x * scale, offset + stroke[0].y * scale);
+
+        for (let i = 1; i < stroke.length; i += 1) {
+          c.lineTo(offset + stroke[i].x * scale, offset + stroke[i].y * scale);
+        }
+
+        c.stroke();
+      }
+
+      c.restore();
+    }
+
+    window.addEventListener("resize", () => {
+      resizeDrawCanvas();
+      drawPreviewAll();
+    });
+
+    loadLocal();
+    resizeDrawCanvas();
+    updateJsonOutput();
+    drawPreviewAll();
+  </script>
+</body>
+</html>
