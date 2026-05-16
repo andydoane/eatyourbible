@@ -7,7 +7,18 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800;900&family=Playwrite+US+Modern:wght@100..400&display=swap" rel="stylesheet">
+  <link rel="preload" href="./ghost_writer_fonts/Playwrite_US_Modern.woff" as="font" type="font/woff" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    @font-face {
+      font-family: "Playwrite US Modern";
+      src: url("./ghost_writer_fonts/Playwrite_US_Modern.woff") format("woff");
+      font-weight: 100 400;
+      font-style: normal;
+      font-display: block;
+    }
+  </style>
 
   <link rel="stylesheet" href="../../verse_games/shared/shell.css">
   <link rel="stylesheet" href="./game.css" />
