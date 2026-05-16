@@ -2757,29 +2757,89 @@
   }
 
   function makeDoodleBorderPositions(x, y, w, h, spacing) {
-    const positions = [];
-    const step = Math.max(18, spacing);
+    const left = x;
+    const top = y;
     const right = x + w;
     const bottom = y + h;
+    const spanX = Math.max(1, right - left);
+    const spanY = Math.max(1, bottom - top);
+    const targetSpacing = Math.max(18, spacing);
 
-    for (let px = x; px <= right; px += step) {
-      positions.push({ x: px, y, angle: 0, side: "top" });
+    const baseGapCountH = Math.max(1, Math.round(spanX / targetSpacing));
+    const baseGapCountV = Math.max(1, Math.round(spanY / targetSpacing));
+
+    let best = null;
+
+    for (let gapCountH = Math.max(1, baseGapCountH - 2); gapCountH <= baseGapCountH + 2; gapCountH += 1) {
+      for (let gapCountV = Math.max(1, baseGapCountV - 2); gapCountV <= baseGapCountV + 2; gapCountV += 1) {
+        const spacingH = spanX / gapCountH;
+        const spacingV = spanY / gapCountV;
+        const spacingDiff = Math.abs(spacingH - spacingV);
+        const targetPenalty = Math.abs(spacingH - targetSpacing) + Math.abs(spacingV - targetSpacing);
+        const countPenalty = Math.abs(gapCountH - baseGapCountH) + Math.abs(gapCountV - baseGapCountV);
+        const score = spacingDiff * 2.5 + targetPenalty * .6 + countPenalty * 1.2;
+
+        if (!best || score < best.score) {
+          best = {
+            gapCountH,
+            gapCountV,
+            spacingH,
+            spacingV,
+            score
+          };
+        }
+      }
     }
 
-    for (let py = y + step; py <= bottom; py += step) {
-      positions.push({ x: right, y: py, angle: Math.PI / 2, side: "right" });
+    const positions = [];
+    const spacingH = best.spacingH;
+    const spacingV = best.spacingV;
+
+    for (let i = 0; i <= best.gapCountH; i += 1) {
+      positions.push({
+        x: left + spacingH * i,
+        y: top,
+        side: "top",
+        corner: i === 0 || i === best.gapCountH
+      });
     }
 
-    for (let px = right - step; px >= x; px -= step) {
-      positions.push({ x: px, y: bottom, angle: Math.PI, side: "bottom" });
+    for (let i = 1; i <= best.gapCountV; i += 1) {
+      positions.push({
+        x: right,
+        y: top + spacingV * i,
+        side: "right",
+        corner: i === best.gapCountV
+      });
     }
 
-    for (let py = bottom - step; py >= y + step; py -= step) {
-      positions.push({ x, y: py, angle: -Math.PI / 2, side: "left" });
+    for (let i = 1; i <= best.gapCountH; i += 1) {
+      positions.push({
+        x: right - spacingH * i,
+        y: bottom,
+        side: "bottom",
+        corner: i === best.gapCountH
+      });
     }
 
-    return positions;
+    for (let i = 1; i < best.gapCountV; i += 1) {
+      positions.push({
+        x: left,
+        y: bottom - spacingV * i,
+        side: "left",
+        corner: false
+      });
+    }
+
+    return {
+      positions,
+      spacingH,
+      spacingV,
+      gapCountH: best.gapCountH,
+      gapCountV: best.gapCountV
+    };
   }
+
 
   function drawSvgDoodleBorder(c, width, height, options = {}) {
     const style = options.borderStyle || "none";
@@ -2798,20 +2858,21 @@
     const y = sizing.inset;
     const w = Math.max(1, width - sizing.inset * 2);
     const h = Math.max(1, height - sizing.inset * 2);
-    const positions = makeDoodleBorderPositions(x, y, w, h, sizing.spacing);
+    const placement = makeDoodleBorderPositions(x, y, w, h, sizing.spacing);
+    const positions = placement.positions;
 
     c.save();
 
     for (let i = 0; i < positions.length; i += 1) {
       const pos = positions[i];
-      const wiggle = sizing.size * .10;
+      const wiggle = pos.corner ? sizing.size * .04 : sizing.size * .07;
       const px = pos.x + stableNoise(`${style}-border-x-${i}-${pos.side}`) * wiggle;
       const py = pos.y + stableNoise(`${style}-border-y-${i}-${pos.side}`) * wiggle;
-      const tilt = stableNoise(`${style}-border-tilt-${i}`) * .18;
+      const tilt = stableNoise(`${style}-border-tilt-${i}`) * .07;
 
       c.save();
       c.translate(px, py);
-      c.rotate(pos.angle + tilt);
+      c.rotate(tilt);
       c.drawImage(stamp, -sizing.size / 2, -sizing.size / 2, sizing.size, sizing.size);
       c.restore();
     }
