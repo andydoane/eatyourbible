@@ -42,6 +42,20 @@ window.EXTERNAL_VERSE_PLAYGROUND = [
     progressType: "practice",
     modes: ["beginner", "advanced"]
   }
+},
+  {
+  enabled: true,
+  manifest: {
+    id: "verse_clap",
+    title: "Verse Clap",
+    description: "Listen to the verse, then clap once to pop, scare, and wake each word.",
+    icon: "👏",
+    cardColor: "#ff66a3",
+    cardTextColor: "#ffffff",
+    launchUrl: "./verse_playground/verse_clap/index.html",
+    visibleInCarousel: false,
+    progressType: "practice"
+  }
 }
 
 ];
