@@ -393,7 +393,7 @@ body{
 .vt-word-object.is-entering .vt-segment:not(.is-typed):not(.is-hop),
 .vt-word-object.is-entering .vt-tail,
 .vt-word-object.is-exiting .vt-head,
-.vt-word-object.is-exiting .vt-segment:not(.is-typed):not(.is-hop),
+.vt-word-object.is-exiting .vt-segment:not(.is-hop),
 .vt-word-object.is-exiting .vt-tail{
   animation:vt-ripple-wiggle 520ms ease-in-out infinite;
   animation-delay:var(--vt-wave-delay,0ms);

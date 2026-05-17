@@ -788,8 +788,6 @@
     state.transitionLocked = true;
     state.entranceDone = false;
     state.pendingCompleteAfterEntrance = false;
-    state.entranceDone = false;
-    state.pendingCompleteAfterEntrance = false;
 
     main.innerHTML = `
       <button class="vt-popup-scene no-zoom" id="vtPopupScene" type="button" aria-label="Continue">
@@ -854,6 +852,8 @@
     state.justTypedSegmentIndex = -1;
     state.acceptingInput = false;
     state.transitionLocked = true;
+    state.entranceDone = false;
+    state.pendingCompleteAfterEntrance = false;
   }
 
   function renderCurrentItem(animationState = ""){
@@ -923,7 +923,7 @@
         }
 
         renderCurrentItem();
-      }, ENTER_DONE_MS);
+      }, ENTER_DONE_MS - 70);
     }
   }
 
@@ -981,7 +981,7 @@
 
       updateRippleDelays();
 
-      if (performance.now() - startedAt < durationMs + 80){
+      if (performance.now() - startedAt < durationMs - 40){
         requestAnimationFrame(tick);
       }
     };
