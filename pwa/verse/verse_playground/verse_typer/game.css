@@ -183,7 +183,7 @@ body{
   display:flex;
   align-items:center;
   justify-content:center;
-  padding:18px;
+  padding:18px 0;
 }
 
 .vt-word-scene,
@@ -235,6 +235,7 @@ body{
 
 .vt-word-window.is-overflowing {
   justify-content: flex-start;
+  padding-left:2px;
 }
 
 .vt-word-track {
@@ -607,7 +608,7 @@ body{
 @media (max-width:560px){
   .vt-root{padding-left:7px;padding-right:7px;}
   .vt-stage{gap:8px;}
-  .vt-main{padding:10px;}
+  .vt-main{padding:10px 0;}
   .vt-word-object{min-height:clamp(92px,19vh,150px);}
   .vt-head,
   .vt-tail,

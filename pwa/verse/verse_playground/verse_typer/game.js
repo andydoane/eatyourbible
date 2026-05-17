@@ -709,7 +709,7 @@
       return "Type the next word. Tap the caterpillar for a hint.";
     }
 
-    return "Type the caterpillar word.";
+    return "Type the word.";
   }
 
   function renderItemSegments(item){
@@ -764,14 +764,18 @@
     if (!windowEl || !trackEl || !wordEl) return;
 
     const windowRect = windowEl.getBoundingClientRect();
-    const trackRect = trackEl.getBoundingClientRect();
+    const wordRect = wordEl.getBoundingClientRect();
 
     const windowWidth = windowRect.width;
-    const trackWidth = trackEl.scrollWidth || trackRect.width;
+    const wordWidth = Math.max(
+      wordEl.scrollWidth || 0,
+      wordEl.offsetWidth || 0,
+      wordRect.width || 0
+    );
 
-    if (!windowWidth || !trackWidth) return;
+    if (!windowWidth || !wordWidth) return;
 
-    const overflowing = trackWidth > windowWidth;
+    const overflowing = wordWidth > windowWidth + 8;
 
     windowEl.classList.toggle("is-overflowing", overflowing);
 
@@ -786,22 +790,27 @@
       Math.max(0, (state.currentItem.expected || "").length - 1)
     );
 
+    if (targetIndex <= 0){
+      state.wordOffsetX = 0;
+      trackEl.style.transform = "translateX(0px)";
+      return;
+    }
+
     const targetSegment = wordEl.querySelector(`[data-vt-type-index="${targetIndex}"]`);
     if (!targetSegment) return;
 
     const segmentRect = targetSegment.getBoundingClientRect();
-    const wordRect = wordEl.getBoundingClientRect();
 
-    const segmentCenterInTrack =
+    const segmentCenterInWord =
       (segmentRect.left - wordRect.left) +
       (segmentRect.width / 2);
 
-    const desiredCenter = windowWidth * 0.44;
-    const minOffset = Math.min(0, windowWidth - trackWidth - 14);
+    const desiredCenter = windowWidth * 0.54;
+    const minOffset = Math.min(0, windowWidth - wordWidth - 10);
     const maxOffset = 0;
 
     const nextOffset = clampNumber(
-      desiredCenter - segmentCenterInTrack,
+      desiredCenter - segmentCenterInWord,
       minOffset,
       maxOffset
     );
