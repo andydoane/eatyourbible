@@ -154,27 +154,19 @@ body{
 
 .vt-sky span{
   position:absolute;
-  width:clamp(70px,18vw,130px);
-  height:clamp(26px,7vw,42px);
-  border-radius:999px;
-  background:rgba(255,255,255,.62);
-  filter:blur(.1px);
+  width:clamp(86px,22vw,166px);
+  height:clamp(48px,12vw,92px);
+  background:url("./verse_typer_images/verse_typer_cloud.svg") center/contain no-repeat;
+  filter:drop-shadow(0 6px 0 rgba(255,255,255,.18));
 }
 
 .vt-sky span::before,
 .vt-sky span::after{
-  content:"";
-  position:absolute;
-  bottom:12px;
-  border-radius:999px;
-  background:inherit;
+  content:none;
 }
-
-.vt-sky span::before{left:13%;width:40%;height:120%;}
-.vt-sky span::after{right:15%;width:34%;height:105%;}
-.vt-sky span:nth-child(1){left:8%;top:14%;}
-.vt-sky span:nth-child(2){right:10%;top:23%;transform:scale(.82);}
-.vt-sky span:nth-child(3){left:36%;top:6%;transform:scale(.65);}
+.vt-sky span:nth-child(1){left:6%;top:12%;}
+.vt-sky span:nth-child(2){right:7%;top:24%;transform:scale(.82) rotate(2deg);}
+.vt-sky span:nth-child(3){left:38%;top:5%;transform:scale(.62) rotate(-3deg);}
 
 .vt-main{
   position:relative;
