@@ -656,8 +656,10 @@
     const instruction = instructionText();
 
     main.innerHTML = `
-      <div class="vt-word-scene">
-        ${instruction ? `<div class="vt-instruction">${instruction}</div>` : ""}
+      <div class="vt-word-scene ${state.firstWordInstructionShown ? "has-no-instruction" : "has-instruction-slot"}">
+        <div class="vt-instruction-slot">
+          ${instruction ? `<div class="vt-instruction">${instruction}</div>` : ""}
+        </div>
         <button class="vt-word-object ${skin.wordClass} ${enterClass} ${exitClass} ${glowClass} no-zoom" id="vtWordObject" type="button" aria-label="Current word caterpillar">
           ${renderItemSegments(item)}
         </button>
@@ -689,8 +691,6 @@
     if (!state.currentItem) return "";
     if (state.currentItem.kind !== "word") return "";
     if (state.firstWordInstructionShown) return "";
-
-    state.firstWordInstructionShown = true;
 
     if (selectedMode === "advanced"){
       return "Type the next word. Tap the caterpillar for a hint.";
@@ -762,6 +762,11 @@
     playCorrectLetterSound();
 
     const item = state.currentItem;
+    const shouldHideFirstWordInstruction =
+      item?.kind === "word" &&
+      !state.firstWordInstructionShown &&
+      state.typedIndex === 0;
+
     state.correctLetters += 1;
     state.streak += 1;
     state.bestStreak = Math.max(state.bestStreak, state.streak);
@@ -777,6 +782,10 @@
     }
 
     state.typedIndex += 1;
+
+    if (shouldHideFirstWordInstruction){
+      state.firstWordInstructionShown = true;
+    }
 
     if (state.streak > 0 && state.streak % 5 === 0){
       addStreakBadge(state.streak);

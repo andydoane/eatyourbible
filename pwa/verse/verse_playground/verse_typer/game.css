@@ -212,6 +212,17 @@ body{
   box-shadow:0 7px 14px rgba(0,0,0,.13);
 }
 
+.vt-instruction-slot {
+  min-height: clamp(36px, 7.2vw, 48px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vt-word-scene.has-no-instruction .vt-instruction-slot {
+  display: none;
+}
+
 .vt-word-object{
   appearance:none;
   border:0;
@@ -482,7 +493,7 @@ body{
   color:#2f302f;
   background:linear-gradient(180deg,#fff8b5,#ffe15c);
   box-shadow:0 10px 0 rgba(0,0,0,.18),0 0 28px rgba(255,255,255,.42);
-  animation:vt-badge-pop 900ms ease-out forwards;
+  animation:vt-badge-pop 1150ms ease-out forwards;
 }
 
 .vt-sparkle{
@@ -536,10 +547,30 @@ body{
 }
 
 @keyframes vt-badge-pop{
-  0%{opacity:0; transform:translate(-50%,-50%) scale(.4) rotate(-5deg);}
-  18%{opacity:1; transform:translate(-50%,-50%) scale(1.08) rotate(2deg);}
-  72%{opacity:1; transform:translate(-50%,-74%) scale(1) rotate(0);}
-  100%{opacity:0; transform:translate(-50%,-112%) scale(.88) rotate(3deg);}
+  0%{
+    opacity:0;
+    transform:translate(-50%,-50%) scale(.72) rotate(-3deg);
+  }
+
+  14%{
+    opacity:1;
+    transform:translate(-50%,-50%) scale(1.08) rotate(1deg);
+  }
+
+  28%{
+    opacity:1;
+    transform:translate(-50%,-50%) scale(1) rotate(0);
+  }
+
+  78%{
+    opacity:1;
+    transform:translate(-50%,-56%) scale(1) rotate(0);
+  }
+
+  100%{
+    opacity:0;
+    transform:translate(-50%,-66%) scale(.96) rotate(0);
+  }
 }
 
 @keyframes vt-sparkle{
