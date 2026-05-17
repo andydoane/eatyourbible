@@ -156,7 +156,9 @@ body{
   position:absolute;
   width:clamp(86px,22vw,166px);
   height:clamp(48px,12vw,92px);
-  background:url("./verse_typer_images/verse_typer_cloud.svg") center/contain no-repeat;
+  background:rgba(255,255,255,.62);
+  -webkit-mask:url("./verse_typer_images/verse_typer_cloud.svg") center/contain no-repeat;
+  mask:url("./verse_typer_images/verse_typer_cloud.svg") center/contain no-repeat;
   filter:drop-shadow(0 6px 0 rgba(255,255,255,.18));
 }
 
