@@ -763,14 +763,10 @@
 
     if (!windowEl || !trackEl || !wordEl) return;
 
-    const windowRect = windowEl.getBoundingClientRect();
-    const wordRect = wordEl.getBoundingClientRect();
-
-    const windowWidth = windowRect.width;
+    const windowWidth = windowEl.clientWidth;
     const wordWidth = Math.max(
       wordEl.scrollWidth || 0,
-      wordEl.offsetWidth || 0,
-      wordRect.width || 0
+      wordEl.offsetWidth || 0
     );
 
     if (!windowWidth || !wordWidth) return;
@@ -785,37 +781,35 @@
       return;
     }
 
-    const targetIndex = Math.min(
-      state.typedIndex,
-      Math.max(0, (state.currentItem.expected || "").length - 1)
-    );
-
-    if (targetIndex <= 0){
-      state.wordOffsetX = 0;
-      trackEl.style.transform = "translateX(0px)";
-      return;
-    }
-
+    const maxIndex = Math.max(0, (state.currentItem.expected || "").length - 1);
+    const targetIndex = Math.min(state.typedIndex, maxIndex);
     const targetSegment = wordEl.querySelector(`[data-vt-type-index="${targetIndex}"]`);
+
     if (!targetSegment) return;
 
-    const segmentRect = targetSegment.getBoundingClientRect();
+    const segmentLeft = targetSegment.offsetLeft;
+    const segmentRight = segmentLeft + targetSegment.offsetWidth;
 
-    const segmentCenterInWord =
-      (segmentRect.left - wordRect.left) +
-      (segmentRect.width / 2);
+    const leftSafe = Math.max(12, windowWidth * 0.12);
+    const rightSafe = Math.max(82, windowWidth * 0.76);
 
-    const desiredCenter = windowWidth * 0.54;
-    const minOffset = Math.min(0, windowWidth - wordWidth - 10);
-    const maxOffset = 0;
+    const visibleLeft = -state.wordOffsetX;
+    const visibleRight = visibleLeft + windowWidth;
 
-    const nextOffset = clampNumber(
-      desiredCenter - segmentCenterInWord,
-      minOffset,
-      maxOffset
-    );
+    let desiredVisibleLeft = visibleLeft;
 
-    state.wordOffsetX = Math.round(nextOffset);
+    if (segmentRight > visibleLeft + rightSafe){
+      desiredVisibleLeft = segmentRight - rightSafe;
+    } else if (segmentLeft < visibleLeft + leftSafe){
+      desiredVisibleLeft = segmentLeft - leftSafe;
+    }
+
+    const maxVisibleLeft = Math.max(0, wordWidth - windowWidth + 10);
+    desiredVisibleLeft = clampNumber(desiredVisibleLeft, 0, maxVisibleLeft);
+
+    const nextOffset = -Math.round(desiredVisibleLeft);
+
+    state.wordOffsetX = nextOffset;
     trackEl.style.transform = `translateX(${state.wordOffsetX}px)`;
   }
 

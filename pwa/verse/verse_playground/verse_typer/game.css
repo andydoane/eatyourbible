@@ -223,30 +223,33 @@ body{
   display:none;
 }
 
-.vt-word-window {
-  width: 100%;
-  max-width: 100%;
-  min-height: clamp(98px, 21vh, 172px);
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.vt-word-window{
+  width:100%;
+  max-width:100%;
+  min-height:clamp(98px,21vh,172px);
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 
-.vt-word-window.is-overflowing {
-  justify-content: flex-start;
-  padding-left:2px;
+.vt-word-window.is-overflowing{
+  justify-content:flex-start;
 }
 
-.vt-word-track {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-start;
-  width: max-content;
-  max-width: none;
-  transition: transform 260ms cubic-bezier(.2, .9, .25, 1);
-  will-change: transform;
+.vt-word-track{
+  flex:0 0 auto;
+  display:inline-flex;
+  align-items:center;
+  justify-content:flex-start;
+  width:max-content;
+  max-width:none;
+  transition:transform 260ms cubic-bezier(.2,.9,.25,1);
+  will-change:transform;
+}
+
+.vt-word-window.is-overflowing .vt-word-object {
+  padding-left: 2px;
 }
 
 .vt-word-object{
