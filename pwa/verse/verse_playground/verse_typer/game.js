@@ -191,7 +191,7 @@
     const len = Math.max(1, item?.expected?.length || 1);
     const melody = melodyForLength(Math.min(12, len));
     const midi = melody[state.typedIndex % melody.length] || 60;
-    playTone({ midi, duration: 0.13, volume: 0.13, type: state.streak >= 15 ? "square" : "triangle" });
+    playTone({ midi, duration: 0.13, volume: 0.13, type: "triangle" });
   }
 
   function playWrongSound(){
