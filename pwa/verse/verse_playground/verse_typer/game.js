@@ -50,6 +50,11 @@
   let masterGain = null;
   let chunkAudio = null;
 
+  const ENTER_INPUT_MS = 380;
+  const ENTER_DONE_MS = 900;
+  const EXIT_DONE_MS = 1000;
+  const RIPPLE_DELAY_MS = 45;
+
   const state = {
     screen: "intro",
     verseJson: null,
@@ -783,6 +788,8 @@
     state.transitionLocked = true;
     state.entranceDone = false;
     state.pendingCompleteAfterEntrance = false;
+    state.entranceDone = false;
+    state.pendingCompleteAfterEntrance = false;
 
     main.innerHTML = `
       <button class="vt-popup-scene no-zoom" id="vtPopupScene" type="button" aria-label="Continue">
@@ -890,13 +897,17 @@
     renderSparklesOnly();
     scheduleCaterpillarPositionUpdate();
 
+    if (animationState === "enter" || animationState === "exit"){
+      startRippleDelayLoop(animationState === "enter" ? ENTER_DONE_MS : EXIT_DONE_MS, item);
+    }
+
     if (animationState === "enter"){
       setTimeout(() => {
         if (state.screen !== "game" || state.currentItem !== item) return;
 
         state.acceptingInput = true;
         state.transitionLocked = false;
-      }, 260);
+      }, ENTER_INPUT_MS);
 
       setTimeout(() => {
         if (state.screen !== "game" || state.currentItem !== item) return;
@@ -912,7 +923,7 @@
         }
 
         renderCurrentItem();
-      }, 560);
+      }, ENTER_DONE_MS);
     }
   }
 
@@ -962,6 +973,58 @@
     });
   }
 
+  function startRippleDelayLoop(durationMs, item){
+    const startedAt = performance.now();
+
+    const tick = () => {
+      if (state.screen !== "game" || state.currentItem !== item) return;
+
+      updateRippleDelays();
+
+      if (performance.now() - startedAt < durationMs + 80){
+        requestAnimationFrame(tick);
+      }
+    };
+
+    requestAnimationFrame(tick);
+  }
+
+  function updateRippleDelays(){
+    const windowEl = document.getElementById("vtWordWindow");
+    const wordEl = document.getElementById("vtWordObject");
+
+    if (!windowEl || !wordEl) return;
+
+    const windowRect = windowEl.getBoundingClientRect();
+    const parts = Array.from(wordEl.querySelectorAll(".vt-head, .vt-segment, .vt-tail"));
+
+    const visibleParts = parts
+      .map(part => {
+        const rect = part.getBoundingClientRect();
+        return { part, rect };
+      })
+      .filter(({ rect }) => rect.right > windowRect.left && rect.left < windowRect.right)
+      .sort((a, b) => a.rect.left - b.rect.left);
+
+    visibleParts.forEach(({ part }, visibleIndex) => {
+      const nextDelay = `${visibleIndex * RIPPLE_DELAY_MS}ms`;
+
+      if (part.dataset.vtWaveDelay !== nextDelay){
+        part.dataset.vtWaveDelay = nextDelay;
+        part.style.setProperty("--vt-wave-delay", nextDelay);
+      }
+    });
+
+    parts.forEach(part => {
+      if (!visibleParts.some(item => item.part === part)){
+        if (part.dataset.vtWaveDelay !== "0ms"){
+          part.dataset.vtWaveDelay = "0ms";
+          part.style.setProperty("--vt-wave-delay", "0ms");
+        }
+      }
+    });
+  }
+
   function updateCaterpillarPosition(){
     if (state.screen !== "game" || !state.currentItem) return;
 
@@ -986,6 +1049,7 @@
     if (!overflowing){
       state.wordOffsetX = 0;
       trackEl.style.transform = "translateX(0px)";
+      updateRippleDelays();
       return;
     }
 
@@ -1019,6 +1083,7 @@
 
     state.wordOffsetX = nextOffset;
     trackEl.style.transform = `translateX(${state.wordOffsetX}px)`;
+    updateRippleDelays();
   }
 
   function clampNumber(value, min, max){
@@ -1153,7 +1218,7 @@
       if (item.kind === "reference"){
         finishRun();
       }
-    }, 620);
+    }, EXIT_DONE_MS);
   }
 
   async function startChunkReview(chunkIndex){
