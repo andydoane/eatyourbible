@@ -62,6 +62,7 @@
     currentWordIndex: 0,
     currentItem: null,
     typedIndex: 0,
+    wordOffsetX: 0,
     revealed: false,
     firstWordInstructionShown: false,
     justTypedIndex: -1,
@@ -343,6 +344,7 @@
     state.currentWordIndex = 0;
     state.currentItem = null;
     state.typedIndex = 0;
+    state.wordOffsetX = 0;
     state.revealed = false;
     state.firstWordInstructionShown = false;
     state.justTypedIndex = -1;
@@ -637,6 +639,7 @@
   function setCurrentItem(item){
     state.currentItem = item;
     state.typedIndex = 0;
+    state.wordOffsetX = 0;
     state.revealed = false;
     state.justTypedIndex = -1;
     state.justTypedSegmentIndex = -1;
@@ -665,9 +668,13 @@
         <div class="vt-instruction-slot">
           ${instruction ? `<div class="vt-instruction">${instruction}</div>` : ""}
         </div>
-        <button class="vt-word-object ${skin.wordClass} ${enterClass} ${exitClass} ${glowClass} no-zoom" id="vtWordObject" type="button" aria-label="Current word caterpillar">
-          ${renderItemSegments(item)}
-        </button>
+        <div class="vt-word-window" id="vtWordWindow">
+          <div class="vt-word-track" id="vtWordTrack" style="transform:translateX(${state.wordOffsetX}px)">
+            <button class="vt-word-object ${skin.wordClass} ${enterClass} ${exitClass} ${glowClass} no-zoom" id="vtWordObject" type="button" aria-label="Current word caterpillar">
+              ${renderItemSegments(item)}
+            </button>
+          </div>
+        </div>
       </div>
     `;
 
@@ -682,6 +689,7 @@
     }
 
     renderSparklesOnly();
+    scheduleCaterpillarPositionUpdate();
 
     if (animationState === "enter"){
       setTimeout(() => {
@@ -714,7 +722,9 @@
             const isDigit = /\d/.test(char);
             const typed = typedPositions.has(index);
             const just = index === state.justTypedSegmentIndex;
-            return `<span class="vt-segment ${isDigit ? "" : "is-fixed"} ${typed ? "is-typed" : ""} ${just ? "is-hop" : ""}">${escapeHtml(char)}</span>`;
+            const typeIndex = isDigit ? item.digitPositions.indexOf(index) : -1;
+            const dataAttr = typeIndex >= 0 ? ` data-vt-type-index="${typeIndex}"` : "";
+            return `<span class="vt-segment ${isDigit ? "" : "is-fixed"} ${typed ? "is-typed" : ""} ${just ? "is-hop" : ""}"${dataAttr}>${escapeHtml(char)}</span>`;
           }).join("")}
         </span>
         <span class="vt-tail"></span>
@@ -731,11 +741,77 @@
           const typed = index < state.typedIndex;
           const just = index === state.justTypedIndex;
           const visible = !hideUntyped || typed;
-          return `<span class="vt-segment ${typed ? "is-typed" : ""} ${just ? "is-hop" : ""}">${visible ? escapeHtml(letter) : ""}</span>`;
+          return `<span class="vt-segment ${typed ? "is-typed" : ""} ${just ? "is-hop" : ""}" data-vt-type-index="${index}">${visible ? escapeHtml(letter) : ""}</span>`;
         }).join("")}
       </span>
       <span class="vt-tail"></span>
     `;
+  }
+
+  function scheduleCaterpillarPositionUpdate(){
+    requestAnimationFrame(() => {
+      updateCaterpillarPosition();
+    });
+  }
+
+  function updateCaterpillarPosition(){
+    if (state.screen !== "game" || !state.currentItem) return;
+
+    const windowEl = document.getElementById("vtWordWindow");
+    const trackEl = document.getElementById("vtWordTrack");
+    const wordEl = document.getElementById("vtWordObject");
+
+    if (!windowEl || !trackEl || !wordEl) return;
+
+    const windowRect = windowEl.getBoundingClientRect();
+    const trackRect = trackEl.getBoundingClientRect();
+
+    const windowWidth = windowRect.width;
+    const trackWidth = trackEl.scrollWidth || trackRect.width;
+
+    if (!windowWidth || !trackWidth) return;
+
+    const overflowing = trackWidth > windowWidth;
+
+    windowEl.classList.toggle("is-overflowing", overflowing);
+
+    if (!overflowing){
+      state.wordOffsetX = 0;
+      trackEl.style.transform = "translateX(0px)";
+      return;
+    }
+
+    const targetIndex = Math.min(
+      state.typedIndex,
+      Math.max(0, (state.currentItem.expected || "").length - 1)
+    );
+
+    const targetSegment = wordEl.querySelector(`[data-vt-type-index="${targetIndex}"]`);
+    if (!targetSegment) return;
+
+    const segmentRect = targetSegment.getBoundingClientRect();
+    const wordRect = wordEl.getBoundingClientRect();
+
+    const segmentCenterInTrack =
+      (segmentRect.left - wordRect.left) +
+      (segmentRect.width / 2);
+
+    const desiredCenter = windowWidth * 0.44;
+    const minOffset = Math.min(0, windowWidth - trackWidth - 14);
+    const maxOffset = 0;
+
+    const nextOffset = clampNumber(
+      desiredCenter - segmentCenterInTrack,
+      minOffset,
+      maxOffset
+    );
+
+    state.wordOffsetX = Math.round(nextOffset);
+    trackEl.style.transform = `translateX(${state.wordOffsetX}px)`;
+  }
+
+  function clampNumber(value, min, max){
+    return Math.max(min, Math.min(max, value));
   }
 
   function faceHtml(){
@@ -1050,5 +1126,9 @@
   }
 
   document.addEventListener("pointerdown", () => unlockAudio(), { capture: true, passive: true });
+  window.addEventListener("resize", () => {
+    scheduleCaterpillarPositionUpdate();
+  });
+
   setScreen("intro");
 })();
