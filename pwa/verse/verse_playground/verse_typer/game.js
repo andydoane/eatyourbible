@@ -63,6 +63,7 @@
     currentItem: null,
     typedIndex: 0,
     revealed: false,
+    firstWordInstructionShown: false,
     justTypedIndex: -1,
     justTypedSegmentIndex: -1,
     acceptingInput: false,
@@ -343,6 +344,7 @@
     state.currentItem = null;
     state.typedIndex = 0;
     state.revealed = false;
+    state.firstWordInstructionShown = false;
     state.justTypedIndex = -1;
     state.justTypedSegmentIndex = -1;
     state.acceptingInput = false;
@@ -480,6 +482,12 @@
         return muted;
       },
       onHowToPlay: () => {
+        const menuOverlay = document.getElementById("verseTyperGameMenuOverlay");
+        if (menuOverlay){
+          menuOverlay.classList.remove("is-open");
+          menuOverlay.setAttribute("aria-hidden", "true");
+        }
+
         window.VerseGameShell.openHelp(HELP_OVERLAY_ID, "back", "Back");
         state.paused = true;
       },
@@ -645,9 +653,11 @@
     const enterClass = animationState === "enter" ? "is-entering" : "";
     const exitClass = animationState === "exit" ? "is-exiting" : "";
 
+    const instruction = instructionText();
+
     main.innerHTML = `
       <div class="vt-word-scene">
-        <div class="vt-instruction">${instructionText()}</div>
+        ${instruction ? `<div class="vt-instruction">${instruction}</div>` : ""}
         <button class="vt-word-object ${skin.wordClass} ${enterClass} ${exitClass} ${glowClass} no-zoom" id="vtWordObject" type="button" aria-label="Current word caterpillar">
           ${renderItemSegments(item)}
         </button>
@@ -664,7 +674,7 @@
       };
     }
 
-    renderBadgesAndSparkles();
+    renderSparklesOnly();
 
     if (animationState === "enter"){
       setTimeout(() => {
@@ -677,8 +687,15 @@
 
   function instructionText(){
     if (!state.currentItem) return "";
-    if (state.currentItem.kind === "reference") return "Type the numbers. Skip the punctuation!";
-    if (selectedMode === "advanced") return "Type the next word. Tap the caterpillar for a hint.";
+    if (state.currentItem.kind !== "word") return "";
+    if (state.firstWordInstructionShown) return "";
+
+    state.firstWordInstructionShown = true;
+
+    if (selectedMode === "advanced"){
+      return "Type the next word. Tap the caterpillar for a hint.";
+    }
+
     return "Type the caterpillar word.";
   }
 
@@ -852,7 +869,6 @@
           <div class="vt-review-card">
             <div class="vt-review-text">${escapeHtml(chunk.text)}</div>
           </div>
-          <div class="vt-review-note">Listen to this chunk.</div>
         </div>
       `;
     }
@@ -939,20 +955,26 @@
   }
 
   function renderBadgesAndSparkles(){
-    const badgeLayer = document.getElementById("vtBadgeLayer");
-    const sparkleLayer = document.getElementById("vtSparkleLayer");
+    renderBadgesOnly();
+    renderSparklesOnly();
+  }
 
-    if (badgeLayer){
-      badgeLayer.innerHTML = state.badges.map(badge => `
+  function renderBadgesOnly(){
+    const badgeLayer = document.getElementById("vtBadgeLayer");
+    if (!badgeLayer) return;
+
+    badgeLayer.innerHTML = state.badges.map(badge => `
         <div class="vt-streak-badge">${escapeHtml(badge.text)} ✨</div>
       `).join("");
-    }
+  }
 
-    if (sparkleLayer){
-      sparkleLayer.innerHTML = state.sparkles.map(spark => `
+  function renderSparklesOnly(){
+    const sparkleLayer = document.getElementById("vtSparkleLayer");
+    if (!sparkleLayer) return;
+
+    sparkleLayer.innerHTML = state.sparkles.map(spark => `
         <span class="vt-sparkle" style="left:${spark.left}%;top:${spark.top}%;--vt-dx:${spark.dx};--vt-dy:${spark.dy};animation-delay:${spark.delay}ms">✦</span>
       `).join("");
-    }
   }
 
   function correctPercentage(){
