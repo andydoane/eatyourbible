@@ -5,12 +5,12 @@
   "verseId": "1_testverse_1_2_3",
   "translation": "ESV",
   "echoParts": [
-    "Testverse a testingverse?",
-    "Testversetestverse and test!",
-    "Testing this Verse."
+    "Raiment, chariot, and harvest.",
+    "Scourge leopard to seventy!",
+    "Seeking a furnace witness."
   ],
 
-  "verseText": "Testverse a testingverse? Testversetestverse and test! Testing this Verse.",
+  "verseText": "Raiment, chariot, and harvest. Scourge leopard to seventy! Seeking a furnace witness.",
    "meaning": "Test meaning text",
   "attribution": "Scripture quotations are from The ESV® Bible (The Holy Bible, English Standard Version®), © 2001 by Crossway, a publishing ministry of Good News Publishers. Used by permission. All rights reserved.",
   "hidePlan": [
