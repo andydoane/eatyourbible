@@ -655,8 +655,13 @@
 
     const instruction = instructionText();
 
+    const keepInstructionSlot =
+      item.kind === "word" &&
+      item.chunkIndex === 0 &&
+      item.wordIndex === 0;
+
     main.innerHTML = `
-      <div class="vt-word-scene ${state.firstWordInstructionShown ? "has-no-instruction" : "has-instruction-slot"}">
+      <div class="vt-word-scene ${keepInstructionSlot ? "has-instruction-slot" : "has-no-instruction"}">
         <div class="vt-instruction-slot">
           ${instruction ? `<div class="vt-instruction">${instruction}</div>` : ""}
         </div>
@@ -937,11 +942,11 @@
   function addStreakBadge(streak){
     const id = `badge-${Date.now()}-${Math.random()}`;
     state.badges.push({ id, text: `${streak} streak!` });
-    renderBadgesAndSparkles();
+    renderBadgesOnly();
     setTimeout(() => {
       state.badges = state.badges.filter(item => item.id !== id);
-      renderBadgesAndSparkles();
-    }, 950);
+      renderBadgesOnly();
+    }, 1150);
   }
 
   function addSparkles(count){
@@ -957,10 +962,10 @@
       });
       setTimeout(() => {
         state.sparkles = state.sparkles.filter(item => item.id !== id);
-        renderBadgesAndSparkles();
+        renderSparklesOnly();
       }, 780);
     }
-    renderBadgesAndSparkles();
+    renderSparklesOnly();
   }
 
   function renderBadgesAndSparkles(){
