@@ -856,6 +856,23 @@
     state.pendingCompleteAfterEntrance = false;
   }
 
+  function finishEntranceVisual(item) {
+    if (state.screen !== "game" || state.currentItem !== item) return;
+
+    const wordObject = document.getElementById("vtWordObject");
+    if (wordObject) {
+      wordObject.classList.remove("is-entering");
+
+      wordObject.querySelectorAll(".vt-head, .vt-segment, .vt-tail").forEach(part => {
+        part.style.removeProperty("--vt-wave-delay");
+        delete part.dataset.vtWaveDelay;
+      });
+    }
+
+    updateCaterpillarPosition();
+  }
+
+
   function renderCurrentItem(animationState = ""){
     const main = document.getElementById("vtMain");
     if (!main || !state.currentItem) return;
@@ -922,7 +939,7 @@
           return;
         }
 
-        renderCurrentItem();
+        finishEntranceVisual(item);
       }, ENTER_DONE_MS);
     }
   }
