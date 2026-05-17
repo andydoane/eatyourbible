@@ -779,18 +779,48 @@
     state.transitionLocked = true;
 
     main.innerHTML = `
-      <div class="vt-popup-scene">
+      <button class="vt-popup-scene no-zoom" id="vtPopupScene" type="button" aria-label="Continue">
         <div class="vt-popup-card vt-popup-${escapeHtml(variant)}">
           <div class="vt-popup-title">${escapeHtml(title)}</div>
           ${subtitle ? `<div class="vt-popup-subtitle">${escapeHtml(subtitle)}</div>` : ""}
+          <div class="vt-popup-tap">Tap to continue</div>
         </div>
-      </div>
+      </button>
     `;
 
     playPopupSound();
-    await sleep(subtitle ? 1050 : 900);
+
+    await waitForPopupDismiss(3000);
 
     if (state.screen !== "game") return;
+  }
+
+  function waitForPopupDismiss(ms = 3000){
+    return new Promise(resolve => {
+      let done = false;
+      let timeoutId = null;
+
+      const finish = () => {
+        if (done) return;
+        done = true;
+        if (timeoutId) clearTimeout(timeoutId);
+
+        const popup = document.getElementById("vtPopupScene");
+        if (popup){
+          popup.removeEventListener("click", finish);
+          popup.classList.add("is-leaving");
+        }
+
+        setTimeout(resolve, 180);
+      };
+
+      const popup = document.getElementById("vtPopupScene");
+      if (popup){
+        popup.addEventListener("click", finish);
+      }
+
+      timeoutId = setTimeout(finish, ms);
+    });
   }
 
   function playPopupSound() {

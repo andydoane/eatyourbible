@@ -206,15 +206,19 @@ body{
   box-shadow:0 7px 14px rgba(0,0,0,.13);
 }
 
-.vt-popup-scene {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 18px;
-  text-align: center;
-  pointer-events: none;
+.vt-popup-scene{
+  width:100%;
+  height:100%;
+  border:0;
+  background:transparent;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  text-align:center;
+  pointer-events:auto;
+  cursor:pointer;
+  font-family:inherit;
 }
 
 .vt-popup-card {
@@ -226,7 +230,7 @@ body{
   background:
     radial-gradient(circle at 14% 16%, rgba(255, 255, 255, .34), transparent 18%),
     radial-gradient(circle at 88% 18%, rgba(255, 255, 255, .22), transparent 20%),
-    linear-gradient(180deg, #ff9e3d, #ff5a51);
+    linear-gradient(180deg, #7ed957, #3b8f3f);
   text-shadow: 0 5px 0 rgba(0, 0, 0, .18);
   box-shadow:
     0 16px 0 rgba(0, 0, 0, .18),
@@ -234,7 +238,7 @@ body{
     0 0 0 5px rgba(255, 255, 255, .20),
     inset 0 0 0 3px rgba(255, 255, 255, .24);
   transform: translateY(12px) scale(.78) rotate(-3deg);
-  animation: vt-popup-pop 880ms cubic-bezier(.18, 1.35, .3, 1) forwards;
+  animation:vt-popup-pop 420ms cubic-bezier(.18,1.35,.3,1) both;
 }
 
 .vt-popup-title {
@@ -253,18 +257,26 @@ body{
   text-shadow: 0 2px 0 rgba(255, 255, 255, .35);
 }
 
-.vt-popup-book {
-  background:
-    radial-gradient(circle at 14% 16%, rgba(255, 255, 255, .34), transparent 18%),
-    radial-gradient(circle at 88% 18%, rgba(255, 255, 255, .22), transparent 20%),
-    linear-gradient(180deg, #7ed957, #3b8f3f);
+.vt-popup-tap {
+  margin-top: clamp(10px, 2.6vw, 18px);
+  font-family: "Baloo 2", system-ui, sans-serif;
+  font-size: clamp(14px, 3.8vw, 22px);
+  line-height: 1;
+  font-weight: 900;
+  color: rgba(255, 255, 255, .82);
+  text-shadow: 0 2px 0 rgba(0, 0, 0, .12);
 }
 
-.vt-popup-numbers {
+.vt-popup-scene.is-leaving .vt-popup-card {
+  animation: vt-popup-away 180ms ease-in forwards;
+}
+
+.vt-popup-book,
+.vt-popup-numbers{
   background:
-    radial-gradient(circle at 14% 16%, rgba(255, 255, 255, .34), transparent 18%),
-    radial-gradient(circle at 88% 18%, rgba(255, 255, 255, .22), transparent 20%),
-    linear-gradient(180deg, #40b9c5, #3b8f3f);
+    radial-gradient(circle at 14% 16%, rgba(255,255,255,.34), transparent 18%),
+    radial-gradient(circle at 88% 18%, rgba(255,255,255,.22), transparent 20%),
+    linear-gradient(180deg,#7ed957,#3b8f3f);
 }
 
 .vt-popup-hint {
@@ -276,34 +288,41 @@ body{
   text-shadow: 0 3px 0 rgba(255, 255, 255, .35);
 }
 
-.vt-popup-hint .vt-popup-subtitle {
-  color: #3b8f3f;
+.vt-popup-hint .vt-popup-subtitle{
+  color:#3b8f3f;
 }
 
-@keyframes vt-popup-pop {
-  0% {
-    opacity: 0;
-    transform: translateY(20px) scale(.48) rotate(-7deg);
+.vt-popup-hint .vt-popup-tap{
+  color:rgba(47,48,47,.64);
+  text-shadow:0 2px 0 rgba(255,255,255,.35);
+}
+
+@keyframes vt-popup-pop{
+  0%{
+    opacity:0;
+    transform:translateY(20px) scale(.48) rotate(-7deg);
   }
 
-  18% {
-    opacity: 1;
-    transform: translateY(0) scale(1.1) rotate(3deg);
+  58%{
+    opacity:1;
+    transform:translateY(0) scale(1.1) rotate(3deg);
   }
 
-  36% {
-    opacity: 1;
-    transform: translateY(0) scale(.98) rotate(-1deg);
+  100%{
+    opacity:1;
+    transform:translateY(0) scale(1) rotate(0);
+  }
+}
+
+@keyframes vt-popup-away{
+  from{
+    opacity:1;
+    transform:translateY(0) scale(1) rotate(0);
   }
 
-  72% {
-    opacity: 1;
-    transform: translateY(0) scale(1.02) rotate(1deg);
-  }
-
-  100% {
-    opacity: 0;
-    transform: translateY(-18px) scale(.82) rotate(5deg);
+  to{
+    opacity:0;
+    transform:translateY(-18px) scale(.86) rotate(4deg);
   }
 }
 
@@ -727,5 +746,6 @@ body{
   .vt-popup-card{border-radius:26px;padding:16px 22px 18px;}
   .vt-popup-title{font-size:clamp(30px,8.8vw,58px);}
   .vt-popup-subtitle{font-size:clamp(18px,4.8vw,30px);}
+  .vt-popup-tap{font-size:clamp(13px,3.4vw,18px);}
   .vt-key{height:clamp(38px,7.2vh,52px);}
 }
