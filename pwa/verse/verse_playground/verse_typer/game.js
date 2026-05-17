@@ -65,6 +65,9 @@
     wordOffsetX: 0,
     currentMelody: [],
     revealed: false,
+    verseIntroShown: false,
+    bookIntroShown: false,
+    referenceIntroShown: false,
     firstWordInstructionShown: false,
     justTypedIndex: -1,
     justTypedSegmentIndex: -1,
@@ -430,6 +433,9 @@
     state.wordOffsetX = 0;
     state.currentMelody = [];
     state.revealed = false;
+    state.verseIntroShown = false;
+    state.bookIntroShown = false;
+    state.referenceIntroShown = false;
     state.firstWordInstructionShown = false;
     state.justTypedIndex = -1;
     state.justTypedSegmentIndex = -1;
@@ -498,7 +504,7 @@
     resetStats();
     state.screen = "game";
     renderGameShell();
-    startChunkWord(0, 0);
+    startVersePhase();
   }
 
   function renderGameShell(){
@@ -644,6 +650,29 @@
     renderHud();
   }
 
+  async function startVersePhase(){
+    renderKeyboard("letters");
+
+    if (!state.verseIntroShown){
+      state.verseIntroShown = true;
+
+      await showTyperPopup({
+        title: "Type the Word!",
+        variant: "word"
+      });
+
+      if (selectedMode === "advanced"){
+        await showTyperPopup({
+          title: "Letters are Hidden",
+          subtitle: "Tap for a Hint",
+          variant: "hint"
+        });
+      }
+    }
+
+    startChunkWord(0, 0);
+  }
+
   function startChunkWord(chunkIndex, wordIndex){
     const chunk = state.chunks[chunkIndex];
     if (!chunk){
@@ -672,10 +701,21 @@
     renderCurrentItem("enter");
   }
 
-  function startBookPhase(){
+  async function startBookPhase(){
     if (!state.bookWords.length){
       startReferencePhase();
       return;
+    }
+
+    renderKeyboard("letters");
+
+    if (!state.bookIntroShown){
+      state.bookIntroShown = true;
+
+      await showTyperPopup({
+        title: "Type the Book!",
+        variant: "book"
+      });
     }
 
     state.currentWordIndex = 0;
@@ -701,10 +741,21 @@
     renderCurrentItem("enter");
   }
 
-  function startReferencePhase(){
+  async function startReferencePhase(){
     if (!state.referenceExpectedDigits.length){
       finishRun();
       return;
+    }
+
+    renderKeyboard("numbers");
+
+    if (!state.referenceIntroShown){
+      state.referenceIntroShown = true;
+
+      await showTyperPopup({
+        title: "Type the Numbers!",
+        variant: "numbers"
+      });
     }
 
     setCurrentItem({
@@ -719,6 +770,36 @@
     renderKeyboard("numbers");
     renderCurrentItem("enter");
   }
+
+  async function showTyperPopup({ title, subtitle = "", variant = "word" } = {}) {
+    const main = document.getElementById("vtMain");
+    if (!main) return;
+
+    state.acceptingInput = false;
+    state.transitionLocked = true;
+
+    main.innerHTML = `
+      <div class="vt-popup-scene">
+        <div class="vt-popup-card vt-popup-${escapeHtml(variant)}">
+          <div class="vt-popup-title">${escapeHtml(title)}</div>
+          ${subtitle ? `<div class="vt-popup-subtitle">${escapeHtml(subtitle)}</div>` : ""}
+        </div>
+      </div>
+    `;
+
+    playPopupSound();
+    await sleep(subtitle ? 1050 : 900);
+
+    if (state.screen !== "game") return;
+  }
+
+  function playPopupSound() {
+    playTone({ midi: 67, duration: 0.10, volume: 0.075, type: "triangle" });
+    setTimeout(() => {
+      playTone({ midi: 72, duration: 0.13, volume: 0.065, type: "triangle" });
+    }, 58);
+  }
+
 
   function setCurrentItem(item){
     state.currentItem = item;
@@ -743,10 +824,7 @@
 
     const instruction = instructionText();
 
-    const keepInstructionSlot =
-      item.kind === "word" &&
-      item.chunkIndex === 0 &&
-      item.wordIndex === 0;
+    const keepInstructionSlot = false;
 
     main.innerHTML = `
       <div class="vt-word-scene ${keepInstructionSlot ? "has-instruction-slot" : "has-no-instruction"}">
@@ -786,15 +864,7 @@
   }
 
   function instructionText(){
-    if (!state.currentItem) return "";
-    if (state.currentItem.kind !== "word") return "";
-    if (state.firstWordInstructionShown) return "";
-
-    if (selectedMode === "advanced"){
-      return "Type the next word. Tap the caterpillar for a hint.";
-    }
-
-    return "Type the word.";
+    return "";
   }
 
   function renderItemSegments(item){

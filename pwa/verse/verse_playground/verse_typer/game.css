@@ -206,6 +206,107 @@ body{
   box-shadow:0 7px 14px rgba(0,0,0,.13);
 }
 
+.vt-popup-scene {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.vt-popup-card {
+  max-width: min(88%, 620px);
+  border-radius: 34px;
+  padding: clamp(18px, 5vw, 32px) clamp(22px, 6vw, 42px) clamp(20px, 5.4vw, 36px);
+  font-family: "TitanOneLocal", "Baloo 2", system-ui, sans-serif;
+  color: #fff9dc;
+  background:
+    radial-gradient(circle at 14% 16%, rgba(255, 255, 255, .34), transparent 18%),
+    radial-gradient(circle at 88% 18%, rgba(255, 255, 255, .22), transparent 20%),
+    linear-gradient(180deg, #ff9e3d, #ff5a51);
+  text-shadow: 0 5px 0 rgba(0, 0, 0, .18);
+  box-shadow:
+    0 16px 0 rgba(0, 0, 0, .18),
+    0 22px 38px rgba(0, 0, 0, .22),
+    0 0 0 5px rgba(255, 255, 255, .20),
+    inset 0 0 0 3px rgba(255, 255, 255, .24);
+  transform: translateY(12px) scale(.78) rotate(-3deg);
+  animation: vt-popup-pop 880ms cubic-bezier(.18, 1.35, .3, 1) forwards;
+}
+
+.vt-popup-title {
+  font-size: clamp(34px, 10vw, 82px);
+  line-height: .92;
+  letter-spacing: .01em;
+}
+
+.vt-popup-subtitle {
+  margin-top: clamp(8px, 2vw, 14px);
+  font-family: "Baloo 2", system-ui, sans-serif;
+  font-size: clamp(20px, 5.4vw, 38px);
+  line-height: 1;
+  font-weight: 900;
+  color: #2f302f;
+  text-shadow: 0 2px 0 rgba(255, 255, 255, .35);
+}
+
+.vt-popup-book {
+  background:
+    radial-gradient(circle at 14% 16%, rgba(255, 255, 255, .34), transparent 18%),
+    radial-gradient(circle at 88% 18%, rgba(255, 255, 255, .22), transparent 20%),
+    linear-gradient(180deg, #7ed957, #3b8f3f);
+}
+
+.vt-popup-numbers {
+  background:
+    radial-gradient(circle at 14% 16%, rgba(255, 255, 255, .34), transparent 18%),
+    radial-gradient(circle at 88% 18%, rgba(255, 255, 255, .22), transparent 20%),
+    linear-gradient(180deg, #40b9c5, #3b8f3f);
+}
+
+.vt-popup-hint {
+  background:
+    radial-gradient(circle at 14% 16%, rgba(255, 255, 255, .34), transparent 18%),
+    radial-gradient(circle at 88% 18%, rgba(255, 255, 255, .22), transparent 20%),
+    linear-gradient(180deg, #fff4a9, #f7cf5d);
+  color: #2f302f;
+  text-shadow: 0 3px 0 rgba(255, 255, 255, .35);
+}
+
+.vt-popup-hint .vt-popup-subtitle {
+  color: #3b8f3f;
+}
+
+@keyframes vt-popup-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(.48) rotate(-7deg);
+  }
+
+  18% {
+    opacity: 1;
+    transform: translateY(0) scale(1.1) rotate(3deg);
+  }
+
+  36% {
+    opacity: 1;
+    transform: translateY(0) scale(.98) rotate(-1deg);
+  }
+
+  72% {
+    opacity: 1;
+    transform: translateY(0) scale(1.02) rotate(1deg);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateY(-18px) scale(.82) rotate(5deg);
+  }
+}
+
 .vt-instruction-slot{
   min-height:clamp(54px,10vw,72px);
   display:flex;
@@ -623,5 +724,8 @@ body{
   .vt-word-scene,.vt-review-scene{gap:9px;}
   .vt-review-card{min-height:clamp(118px,30vh,220px);padding:16px;}
   .vt-review-text{font-size:clamp(24px,6.6vw,52px);}
+  .vt-popup-card{border-radius:26px;padding:16px 22px 18px;}
+  .vt-popup-title{font-size:clamp(30px,8.8vw,58px);}
+  .vt-popup-subtitle{font-size:clamp(18px,4.8vw,30px);}
   .vt-key{height:clamp(38px,7.2vh,52px);}
 }
