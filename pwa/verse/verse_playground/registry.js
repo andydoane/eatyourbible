@@ -67,7 +67,7 @@ window.EXTERNAL_VERSE_PLAYGROUND = [
     cardColor: "#7ebf4f",
     cardTextColor: "#ffffff",
     launchUrl: "./verse_playground/verse_typer/index.html",
-    visibleInCarousel: false,
+    visibleInCarousel: true,
     progressType: "practice",
     modes: ["beginner", "advanced"]
   }
