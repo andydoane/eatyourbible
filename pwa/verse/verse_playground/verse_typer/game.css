@@ -381,8 +381,8 @@ body{
   transform-origin:center;
 }
 
-.vt-word-object.is-entering{
-  animation:vt-crawl-in 900ms cubic-bezier(.12,.82,.18,1) both;
+.vt-word-object.is-entering {
+  animation: vt-crawl-in 900ms cubic-bezier(.18, .78, .28, 1) both;
 }
 
 .vt-word-object.is-exiting{
@@ -665,7 +665,7 @@ body{
 @keyframes vt-crawl-in{
   0%{opacity:0; transform:translateX(88vw) scale(.98);}
   12%{opacity:1;}
-  74%{opacity:1; transform:translateX(2.2vw) scale(1);}
+  82%{opacity:1; transform:translateX(0) scale(1);}
   100%{opacity:1; transform:translateX(0) scale(1);}
 }
 
