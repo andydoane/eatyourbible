@@ -389,6 +389,75 @@ body{
   animation:vt-crawl-out 620ms ease-in both;
 }
 
+.vt-word-object.is-entering .vt-head,
+.vt-word-object.is-entering .vt-segment,
+.vt-word-object.is-entering .vt-tail,
+.vt-word-object.is-exiting .vt-head,
+.vt-word-object.is-exiting .vt-segment,
+.vt-word-object.is-exiting .vt-tail {
+  animation: vt-ripple-wiggle 520ms ease-in-out infinite;
+}
+
+.vt-word-object.is-entering .vt-head,
+.vt-word-object.is-exiting .vt-head {
+  animation-delay: -80ms;
+}
+
+.vt-word-object.is-entering .vt-segment:nth-child(1),
+.vt-word-object.is-exiting .vt-segment:nth-child(1) {
+  animation-delay: 0ms;
+}
+
+.vt-word-object.is-entering .vt-segment:nth-child(2),
+.vt-word-object.is-exiting .vt-segment:nth-child(2) {
+  animation-delay: 80ms;
+}
+
+.vt-word-object.is-entering .vt-segment:nth-child(3),
+.vt-word-object.is-exiting .vt-segment:nth-child(3) {
+  animation-delay: 160ms;
+}
+
+.vt-word-object.is-entering .vt-segment:nth-child(4),
+.vt-word-object.is-exiting .vt-segment:nth-child(4) {
+  animation-delay: 240ms;
+}
+
+.vt-word-object.is-entering .vt-segment:nth-child(5),
+.vt-word-object.is-exiting .vt-segment:nth-child(5) {
+  animation-delay: 320ms;
+}
+
+.vt-word-object.is-entering .vt-segment:nth-child(6),
+.vt-word-object.is-exiting .vt-segment:nth-child(6) {
+  animation-delay: 400ms;
+}
+
+.vt-word-object.is-entering .vt-segment:nth-child(7),
+.vt-word-object.is-exiting .vt-segment:nth-child(7) {
+  animation-delay: 480ms;
+}
+
+.vt-word-object.is-entering .vt-segment:nth-child(8),
+.vt-word-object.is-exiting .vt-segment:nth-child(8) {
+  animation-delay: 560ms;
+}
+
+.vt-word-object.is-entering .vt-segment:nth-child(9),
+.vt-word-object.is-exiting .vt-segment:nth-child(9) {
+  animation-delay: 640ms;
+}
+
+.vt-word-object.is-entering .vt-segment:nth-child(10),
+.vt-word-object.is-exiting .vt-segment:nth-child(10) {
+  animation-delay: 720ms;
+}
+
+.vt-word-object.is-entering .vt-tail,
+.vt-word-object.is-exiting .vt-tail {
+  animation-delay: 800ms;
+}
+
 .vt-word-object.is-glow .vt-segment:not(.is-typed){
   box-shadow:0 0 0 4px rgba(255,255,255,.22),0 0 18px rgba(255,255,255,.58), inset 0 -8px 0 rgba(0,0,0,.10);
 }
@@ -648,14 +717,31 @@ body{
 }
 
 @keyframes vt-crawl-in{
-  0%{opacity:0; transform:translateX(78vw) rotate(2deg) scale(.98);}
-  62%{opacity:1; transform:translateX(-2vw) rotate(-1deg) scale(1.02);}
-  100%{opacity:1; transform:translateX(0) rotate(0) scale(1);}
+  0%{opacity:0; transform:translateX(78vw) scale(.98);}
+  10%{opacity:1;}
+  72%{opacity:1; transform:translateX(-1.5vw) scale(1);}
+  100%{opacity:1; transform:translateX(0) scale(1);}
 }
 
 @keyframes vt-crawl-out{
-  0%{opacity:1; transform:translateX(0) rotate(0) scale(1);}
-  100%{opacity:0; transform:translateX(-78vw) rotate(-3deg) scale(.96);}
+  0%{opacity:1; transform:translateX(0) scale(1);}
+  100%{opacity:0; transform:translateX(-78vw) scale(.98);}
+}
+
+@keyframes vt-ripple-wiggle {
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(0);
+  }
+
+  30% {
+    transform: translateY(-10px) rotate(-3deg);
+  }
+
+  65% {
+    transform: translateY(5px) rotate(2deg);
+  }
 }
 
 @keyframes vt-segment-hop{
