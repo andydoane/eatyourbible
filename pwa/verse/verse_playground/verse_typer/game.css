@@ -213,7 +213,7 @@ body{
 }
 
 .vt-instruction-slot{
-  min-height:clamp(36px,7.2vw,48px);
+  min-height:clamp(54px,10vw,72px);
   display:flex;
   align-items:center;
   justify-content:center;
