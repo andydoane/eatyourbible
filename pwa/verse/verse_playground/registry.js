@@ -56,6 +56,21 @@ window.EXTERNAL_VERSE_PLAYGROUND = [
     visibleInCarousel: false,
     progressType: "practice"
   }
+},
+  {
+  enabled: true,
+  manifest: {
+    id: "verse_typer",
+    title: "Verse Typer",
+    description: "Type each verse word as a caterpillar wiggles across the screen.",
+    icon: "🐛",
+    cardColor: "#7ebf4f",
+    cardTextColor: "#ffffff",
+    launchUrl: "./verse_playground/verse_typer/index.html",
+    visibleInCarousel: false,
+    progressType: "practice",
+    modes: ["beginner", "advanced"]
+  }
 }
 
 ];
