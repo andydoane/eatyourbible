@@ -73,6 +73,8 @@
     justTypedSegmentIndex: -1,
     acceptingInput: false,
     transitionLocked: false,
+    entranceDone: false,
+    pendingCompleteAfterEntrance: false,
     paused: false,
     startTime: 0,
     correctLetters: 0,
@@ -441,6 +443,8 @@
     state.justTypedSegmentIndex = -1;
     state.acceptingInput = false;
     state.transitionLocked = false;
+    state.entranceDone = false;
+    state.pendingCompleteAfterEntrance = false;
     state.paused = false;
     state.startTime = performance.now();
     state.correctLetters = 0;
@@ -777,6 +781,8 @@
 
     state.acceptingInput = false;
     state.transitionLocked = true;
+    state.entranceDone = false;
+    state.pendingCompleteAfterEntrance = false;
 
     main.innerHTML = `
       <button class="vt-popup-scene no-zoom" id="vtPopupScene" type="button" aria-label="Continue">
@@ -886,8 +892,25 @@
 
     if (animationState === "enter"){
       setTimeout(() => {
+        if (state.screen !== "game" || state.currentItem !== item) return;
+
         state.acceptingInput = true;
         state.transitionLocked = false;
+      }, 260);
+
+      setTimeout(() => {
+        if (state.screen !== "game" || state.currentItem !== item) return;
+
+        state.entranceDone = true;
+        state.acceptingInput = true;
+        state.transitionLocked = false;
+
+        if (state.pendingCompleteAfterEntrance){
+          state.pendingCompleteAfterEntrance = false;
+          completeCurrentItem();
+          return;
+        }
+
         renderCurrentItem();
       }, 560);
     }
@@ -1080,6 +1103,12 @@
       state.acceptingInput = false;
       state.transitionLocked = true;
       playWordDoneSound();
+
+      if (!state.entranceDone){
+        state.pendingCompleteAfterEntrance = true;
+        return;
+      }
+
       setTimeout(() => completeCurrentItem(), 420);
     }
   }
