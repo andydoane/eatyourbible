@@ -63,6 +63,7 @@
     currentItem: null,
     typedIndex: 0,
     wordOffsetX: 0,
+    currentMelody: [],
     revealed: false,
     firstWordInstructionShown: false,
     justTypedIndex: -1,
@@ -170,26 +171,108 @@
     osc.stop(now + duration + 0.04);
   }
 
-  function melodyForLength(length){
-    const melodies = {
-      1: [67],
-      2: [60, 67],
-      3: [60, 64, 67],
-      4: [60, 62, 65, 67],
-      5: [60, 64, 67, 72, 67],
-      6: [60, 62, 64, 67, 69, 72],
-      7: [60, 64, 67, 69, 72, 69, 67],
-      8: [60, 62, 64, 67, 69, 72, 74, 72]
+  function melodyPoolsForLength(length){
+    const pools = {
+      1: [
+        [67],
+        [72],
+        [64],
+        [60],
+        [69]
+      ],
+
+      2: [
+        [60, 67],
+        [64, 67],
+        [67, 72],
+        [72, 67],
+        [60, 64]
+      ],
+
+      3: [
+        [60, 64, 67],
+        [67, 69, 72],
+        [72, 67, 64],
+        [60, 62, 64],
+        [64, 67, 72]
+      ],
+
+      4: [
+        [60, 62, 64, 67],
+        [60, 64, 67, 72],
+        [67, 69, 67, 72],
+        [64, 67, 69, 67],
+        [72, 69, 67, 64]
+      ],
+
+      5: [
+        [60, 62, 64, 67, 72],
+        [60, 64, 67, 69, 72],
+        [67, 69, 72, 69, 67],
+        [64, 67, 69, 67, 72],
+        [72, 69, 67, 64, 60]
+      ],
+
+      6: [
+        [60, 62, 64, 67, 69, 72],
+        [60, 64, 67, 72, 67, 72],
+        [67, 69, 72, 69, 67, 64],
+        [64, 67, 69, 72, 69, 67],
+        [72, 69, 67, 64, 62, 60]
+      ],
+
+      7: [
+        [60, 62, 64, 67, 69, 72, 67],
+        [60, 64, 67, 69, 72, 69, 67],
+        [60, 62, 65, 62, 69, 69, 67],
+        [64, 67, 69, 67, 64, 67, 72],
+        [72, 69, 67, 64, 60, 64, 67]
+      ],
+
+      8: [
+        [60, 62, 64, 67, 69, 72, 69, 67],
+        [60, 64, 67, 72, 67, 69, 67, 72],
+        [67, 69, 72, 71, 72, 69, 67, 64],
+        [64, 67, 69, 72, 69, 67, 64, 60],
+        [72, 69, 67, 64, 60, 62, 64, 67]
+      ],
+
+      9: [
+        [60, 62, 64, 67, 69, 72, 69, 67, 64],
+        [60, 64, 67, 72, 69, 67, 64, 67, 72],
+        [67, 69, 72, 71, 72, 69, 67, 64, 60],
+        [64, 67, 69, 72, 69, 67, 64, 62, 60],
+        [72, 69, 67, 64, 60, 62, 64, 67, 72]
+      ],
+
+      10: [
+        [60, 62, 64, 67, 69, 72, 69, 67, 64, 60],
+        [60, 64, 67, 72, 69, 67, 64, 67, 69, 72],
+        [67, 69, 72, 71, 72, 69, 67, 64, 62, 60],
+        [64, 67, 69, 72, 71, 72, 69, 67, 64, 67],
+        [72, 69, 67, 64, 60, 62, 64, 67, 69, 72]
+      ]
     };
 
-    if (melodies[length]) return melodies[length];
-    return [60, 62, 64, 67, 69, 72, 74, 76, 74, 72, 69, 67];
+    return pools[length] || [];
+  }
+
+  function chooseMelodyForLength(length){
+    const cappedLength = clampNumber(Math.max(1, length || 1), 1, 10);
+    const pool = melodyPoolsForLength(cappedLength);
+
+    if (!pool.length){
+      return [60, 62, 64, 67, 69, 72, 69, 67, 64, 60];
+    }
+
+    return pool[Math.floor(Math.random() * pool.length)].slice();
   }
 
   function playCorrectLetterSound(){
-    const item = state.currentItem;
-    const len = Math.max(1, item?.expected?.length || 1);
-    const melody = melodyForLength(Math.min(12, len));
+    const melody = state.currentMelody.length
+      ? state.currentMelody
+      : chooseMelodyForLength(state.currentItem?.expected?.length || 1);
+
     const midi = melody[state.typedIndex % melody.length] || 60;
     playTone({ midi, duration: 0.13, volume: 0.13, type: "triangle" });
   }
@@ -345,6 +428,7 @@
     state.currentItem = null;
     state.typedIndex = 0;
     state.wordOffsetX = 0;
+    state.currentMelody = [];
     state.revealed = false;
     state.firstWordInstructionShown = false;
     state.justTypedIndex = -1;
@@ -640,6 +724,7 @@
     state.currentItem = item;
     state.typedIndex = 0;
     state.wordOffsetX = 0;
+    state.currentMelody = chooseMelodyForLength((item.expected || "").length);
     state.revealed = false;
     state.justTypedIndex = -1;
     state.justTypedSegmentIndex = -1;
