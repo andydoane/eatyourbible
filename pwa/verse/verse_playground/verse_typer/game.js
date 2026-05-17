@@ -923,7 +923,7 @@
         }
 
         renderCurrentItem();
-      }, ENTER_DONE_MS - 70);
+      }, ENTER_DONE_MS);
     }
   }
 
