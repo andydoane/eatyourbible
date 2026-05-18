@@ -64,6 +64,18 @@
   const AUDIO_DEBUG = false;
   const SILENCE_AUDIO_FILE = "../../verse_audio/silence.mp3";
 
+  // TTS chunks average around -20 dBFS active speech.
+  // These Web Audio levels are intentionally below exact RMS match,
+  // because short tones feel louder/more piercing than speech.
+  const WEB_AUDIO_MASTER_VOLUME = 0.75;
+  const CORRECT_LETTER_VOLUME = 0.48;
+  const WRONG_TONE_VOLUME_1 = 0.40;
+  const WRONG_TONE_VOLUME_2 = 0.30;
+  const WORD_DONE_VOLUME_1 = 0.38;
+  const WORD_DONE_VOLUME_2 = 0.34;
+  const POPUP_TONE_VOLUME_1 = 0.26;
+  const POPUP_TONE_VOLUME_2 = 0.22;
+
   function audioDebug(...args) {
     if (!AUDIO_DEBUG) return;
     console.log("[VerseTyperAudio]", ...args);
@@ -246,7 +258,7 @@
 
   function createAudio(){
     if (audioCtx){
-      if (masterGain) masterGain.gain.value = muted ? 0 : 0.45;
+      if (masterGain) masterGain.gain.value = muted ? 0 : WEB_AUDIO_MASTER_VOLUME;
       return;
     }
 
@@ -255,7 +267,7 @@
 
     audioCtx = new AudioCtor();
     masterGain = audioCtx.createGain();
-    masterGain.gain.value = muted ? 0 : 0.45;
+    masterGain.gain.value = muted ? 0 : WEB_AUDIO_MASTER_VOLUME;
     masterGain.connect(audioCtx.destination);
   }
 
@@ -447,17 +459,17 @@
       : chooseMelodyForLength(state.currentItem?.expected?.length || 1);
 
     const midi = melody[state.typedIndex % melody.length] || 60;
-    playTone({ midi, duration: 0.13, volume: 0.13, type: "triangle" });
+    playTone({ midi, duration: 0.13, volume: CORRECT_LETTER_VOLUME, type: "triangle" });
   }
 
   function playWrongSound(){
-    playTone({ midi: 43, duration: 0.13, volume: 0.12, type: "sine" });
-    setTimeout(() => playTone({ midi: 38, duration: 0.11, volume: 0.09, type: "sine" }), 55);
+    playTone({ midi: 43, duration: 0.13, volume: WRONG_TONE_VOLUME_1, type: "sine" });
+    setTimeout(() => playTone({ midi: 38, duration: 0.11, volume: WRONG_TONE_VOLUME_2, type: "sine" }), 55);
   }
 
   function playWordDoneSound(){
-    playTone({ midi: 72, duration: 0.14, volume: 0.11, type: "triangle" });
-    setTimeout(() => playTone({ midi: 76, duration: 0.18, volume: 0.10, type: "triangle" }), 70);
+    playTone({ midi: 72, duration: 0.14, volume: WORD_DONE_VOLUME_1, type: "triangle" });
+    setTimeout(() => playTone({ midi: 76, duration: 0.18, volume: WORD_DONE_VOLUME_2, type: "triangle" }), 70);
   }
 
   function normalizeLetters(value){
@@ -743,7 +755,7 @@
       onMuteToggle: () => {
         muted = !muted;
         if (masterGain && audioCtx){
-          masterGain.gain.setValueAtTime(muted ? 0 : 0.45, audioCtx.currentTime);
+          masterGain.gain.setValueAtTime(muted ? 0 : WEB_AUDIO_MASTER_VOLUME, audioCtx.currentTime);
         }
         if (chunkAudio) chunkAudio.muted = muted;
         return muted;
@@ -1005,9 +1017,9 @@
   }
 
   function playPopupSound() {
-    playTone({ midi: 67, duration: 0.10, volume: 0.075, type: "triangle" });
+    playTone({ midi: 67, duration: 0.10, volume: POPUP_TONE_VOLUME_1, type: "triangle" });
     setTimeout(() => {
-      playTone({ midi: 72, duration: 0.13, volume: 0.065, type: "triangle" });
+      playTone({ midi: 72, duration: 0.13, volume: POPUP_TONE_VOLUME_2, type: "triangle" });
     }, 58);
   }
 
