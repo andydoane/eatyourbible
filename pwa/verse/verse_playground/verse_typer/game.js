@@ -151,7 +151,10 @@
     audioUnlockPromise = (async () => {
       try {
         if (audioCtx.state !== "running"){
-          await audioCtx.resume?.();
+          await Promise.race([
+            audioCtx.resume?.(),
+            new Promise(resolve => setTimeout(resolve, 350))
+          ]);
         }
 
         const now = audioCtx.currentTime;
@@ -511,8 +514,8 @@
       theme: GAME_THEME,
       backLabel: "Back to Verse Playground",
       onBack: () => window.VerseGameBridge.exitGame(),
-      onStart: async () => {
-        await unlockAudio();
+      onStart: () => {
+        unlockAudio();
         setScreen("mode");
       }
     });
@@ -533,7 +536,7 @@
       modes: MODES,
       onBack: () => setScreen("intro"),
       onSelect: async (mode) => {
-        await unlockAudio();
+        unlockAudio();
         selectedMode = mode === "advanced" ? "advanced" : "beginner";
         await beginRun();
       }
@@ -679,8 +682,8 @@
     `;
 
     wrap.querySelectorAll("[data-vt-key]").forEach(btn => {
-      btn.onclick = async () => {
-        await unlockAudio();
+      btn.onclick = () => {
+        unlockAudio();
         handleKey(btn.dataset.vtKey);
       };
     });
