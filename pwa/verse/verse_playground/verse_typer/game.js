@@ -52,6 +52,7 @@
 
   const ENTER_INPUT_MS = 380;
   const ENTER_DONE_MS = 900;
+  const ENTER_CRAWL_STOP_MS = 780;
   const EXIT_DONE_MS = 1000;
   const RIPPLE_DELAY_MS = 45;
 
@@ -863,7 +864,7 @@
     const wordObject = document.getElementById("vtWordObject");
 
     if (travelLayer) {
-      travelLayer.classList.remove("is-entering");
+      travelLayer.classList.remove("is-entering", "is-crawling");
     }
 
     if (wordObject) {
@@ -1010,9 +1011,16 @@
 
       void travelLayer.offsetWidth;
 
-      travelLayer.classList.add(animationState === "enter" ? "is-entering" : "is-exiting");
+      travelLayer.classList.add(
+        animationState === "enter" ? "is-entering" : "is-exiting",
+        "is-crawling"
+      );
 
-      startRippleDelayLoop(animationState === "enter" ? ENTER_DONE_MS : EXIT_DONE_MS, item);
+      if (animationState === "enter"){
+        setTimeout(() => stopCrawlVisual(item), ENTER_CRAWL_STOP_MS);
+      }
+
+      startRippleDelayLoop(animationState === "enter" ? ENTER_CRAWL_STOP_MS : EXIT_DONE_MS, item);
     });
   }
 
@@ -1031,6 +1039,24 @@
 
     travelLayer.style.setProperty("--vt-enter-x", `${enterX}px`);
     travelLayer.style.setProperty("--vt-exit-x", `${exitX}px`);
+  }
+
+  function stopCrawlVisual(item){
+    if (state.screen !== "game" || state.currentItem !== item) return;
+
+    const travelLayer = document.getElementById("vtTravelLayer");
+    const wordObject = document.getElementById("vtWordObject");
+
+    if (travelLayer){
+      travelLayer.classList.remove("is-crawling");
+    }
+
+    if (wordObject){
+      wordObject.querySelectorAll(".vt-head, .vt-segment, .vt-tail").forEach(part => {
+        part.style.removeProperty("--vt-wave-delay");
+        delete part.dataset.vtWaveDelay;
+      });
+    }
   }
 
   function startRippleDelayLoop(durationMs, item){

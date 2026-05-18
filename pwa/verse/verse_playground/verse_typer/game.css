@@ -403,17 +403,17 @@ body{
   animation:vt-crawl-out 1000ms cubic-bezier(.45,0,.35,1) both;
 }
 
-.vt-travel-layer.is-entering .vt-head,
-.vt-travel-layer.is-entering .vt-segment:not(.is-typed):not(.is-hop),
-.vt-travel-layer.is-entering .vt-tail{
-  animation:vt-ripple-wiggle 520ms ease-in-out 1 both;
-  animation-delay:calc(var(--vt-wave-delay,0ms) - 220ms);
+.vt-travel-layer.is-entering.is-crawling .vt-head,
+.vt-travel-layer.is-entering.is-crawling .vt-segment:not(.is-typed):not(.is-hop),
+.vt-travel-layer.is-entering.is-crawling .vt-tail{
+  animation:vt-ripple-wiggle 480ms ease-in-out infinite;
+  animation-delay:calc(var(--vt-wave-delay,0ms) - 120ms);
 }
 
-.vt-travel-layer.is-exiting .vt-head,
-.vt-travel-layer.is-exiting .vt-segment:not(.is-hop),
-.vt-travel-layer.is-exiting .vt-tail{
-  animation:vt-ripple-wiggle 520ms ease-in-out infinite;
+.vt-travel-layer.is-exiting.is-crawling .vt-head,
+.vt-travel-layer.is-exiting.is-crawling .vt-segment:not(.is-hop),
+.vt-travel-layer.is-exiting.is-crawling .vt-tail{
+  animation:vt-ripple-wiggle 480ms ease-in-out infinite;
   animation-delay:var(--vt-wave-delay,0ms);
 }
 
@@ -691,7 +691,7 @@ body{
 
 @keyframes vt-ripple-wiggle{
   0%,100%{transform:translateY(0) rotate(0);}
-  30%{transform:translateY(-8px) rotate(-2.5deg);}
+  30%{transform:translateY(-9px) rotate(-2.5deg);}
   65%{transform:translateY(4px) rotate(1.5deg);}
 }
 
