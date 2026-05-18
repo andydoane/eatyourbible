@@ -396,7 +396,7 @@ body{
 }
 
 .vt-travel-layer.is-entering{
-  animation:vt-crawl-in 900ms cubic-bezier(.18,.78,.28,1) both;
+  animation:vt-crawl-in 960ms cubic-bezier(.12,.86,.16,1) both;
 }
 
 .vt-travel-layer.is-exiting{

@@ -50,9 +50,9 @@
   let masterGain = null;
   let chunkAudio = null;
 
-  const ENTER_INPUT_MS = 380;
-  const ENTER_DONE_MS = 900;
-  const ENTER_CRAWL_STOP_MS = 780;
+  const ENTER_INPUT_MS = 400;
+  const ENTER_DONE_MS = 960;
+  const ENTER_CRAWL_STOP_MS = 830;
   const EXIT_DONE_MS = 1000;
   const RIPPLE_DELAY_MS = 45;
 
