@@ -443,7 +443,20 @@ body{
   height:clamp(62px,14vw,112px);
   margin-left:0;
   margin-right:clamp(-5px,-.7vw,-2px);
-  background:#f24c43;
+  background:transparent;
+  box-shadow:none;
+  overflow:visible;
+  padding:0;
+}
+
+.vt-head-img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  pointer-events:none;
+  user-select:none;
+  -webkit-user-drag:none;
 }
 
 .vt-tail{

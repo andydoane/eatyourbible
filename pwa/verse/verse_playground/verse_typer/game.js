@@ -1370,17 +1370,26 @@
     return clampNumber(Math.floor(state.streak / 10), 0, 4);
   }
 
-  function tailStageClass(){
+  function tailStageClass() {
     return `is-tail-stage-${streakStage()}`;
   }
 
-  function faceHtml(){
+  function headImageFile() {
+    return `./verse_typer_images/caterpillar_head_${streakStage()}.svg`;
+  }
+
+  function faceHtml() {
+    const stage = streakStage();
+
     return `
-      <span class="vt-ant vt-ant-left"></span>
-      <span class="vt-ant vt-ant-right"></span>
-      <span class="vt-eye vt-eye-left"></span>
-      <span class="vt-eye vt-eye-right"></span>
-      <span class="vt-smile"></span>
+      <img
+        class="vt-head-img"
+        src="${escapeHtml(headImageFile())}"
+        alt=""
+        aria-hidden="true"
+        draggable="false"
+        data-vt-head-stage="${stage}"
+      >
     `;
   }
 
