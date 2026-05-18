@@ -1658,27 +1658,27 @@
     const sparkleChars = ["✦", "✧", "★"];
 
     for (let i = 0; i < count; i += 1){
-      const id = `spark-${Date.now()}-${Math.random()}-${i}`;
       const angle = (-Math.PI / 2) + ((Math.PI * 2) * i / count) + (Math.random() * 0.34 - 0.17);
       const distance = baseDistance * (0.72 + Math.random() * 0.46);
+      const delay = Math.random() * 45;
 
-      state.sparkles.push({
-        id,
-        left: originX.toFixed(1),
-        top: originY.toFixed(1),
-        dx: `${(Math.cos(angle) * distance).toFixed(1)}px`,
-        dy: `${(Math.sin(angle) * distance).toFixed(1)}px`,
-        delay: Math.random() * 45,
-        char: sparkleChars[i % sparkleChars.length]
-      });
+      const spark = document.createElement("span");
+      spark.className = "vt-sparkle";
+      spark.setAttribute("aria-hidden", "true");
+      spark.textContent = sparkleChars[i % sparkleChars.length];
+
+      spark.style.left = `${originX.toFixed(1)}px`;
+      spark.style.top = `${originY.toFixed(1)}px`;
+      spark.style.setProperty("--vt-dx", `${(Math.cos(angle) * distance).toFixed(1)}px`);
+      spark.style.setProperty("--vt-dy", `${(Math.sin(angle) * distance).toFixed(1)}px`);
+      spark.style.animationDelay = `${delay}ms`;
+
+      sparkleLayer.appendChild(spark);
 
       setTimeout(() => {
-        state.sparkles = state.sparkles.filter(item => item.id !== id);
-        renderSparklesOnly();
-      }, 760);
+        spark.remove();
+      }, 820);
     }
-
-    renderSparklesOnly();
   }
 
   function renderBadgesAndSparkles(){
@@ -1696,12 +1696,8 @@
   }
 
   function renderSparklesOnly(){
-    const sparkleLayer = document.getElementById("vtSparkleLayer");
-    if (!sparkleLayer) return;
-
-    sparkleLayer.innerHTML = state.sparkles.map(spark => `
-        <span class="vt-sparkle" style="left:${spark.left}px;top:${spark.top}px;--vt-dx:${spark.dx};--vt-dy:${spark.dy};animation-delay:${spark.delay}ms">${escapeHtml(spark.char || "✦")}</span>
-      `).join("");
+    // Sparkles are appended as live DOM nodes so their CSS animation
+    // does not restart when the caterpillar re-renders.
   }
 
   function correctPercentage(){
