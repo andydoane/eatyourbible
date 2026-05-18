@@ -61,7 +61,7 @@
   const EXIT_DONE_MS = 1000;
   const RIPPLE_DELAY_MS = 45;
 
-  const AUDIO_DEBUG = true;
+  const AUDIO_DEBUG = false;
   const SILENCE_AUDIO_FILE = "../../verse_audio/silence.mp3";
 
   function audioDebug(...args) {
@@ -150,6 +150,9 @@
     chunkAudio = chunkAudioEl;
     return chunkAudioEl;
   }
+
+  // iPadOS Safari may not fully enable Web Audio until an HTML audio element
+  // has successfully played from a user gesture. This silent MP3 primes that path.
 
   function primeHtmlAudio() {
     if (htmlAudioPrimed) return Promise.resolve(true);
