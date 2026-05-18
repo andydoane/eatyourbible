@@ -883,7 +883,7 @@
 
     const item = state.currentItem;
     const glowClass = state.streak >= 20 ? "is-glow-strong" : state.streak >= 10 ? "is-glow" : "";
-    const travelClass = animationState === "enter" ? "is-entering" : animationState === "exit" ? "is-exiting" : "";
+    const travelClass = "";
 
     const instruction = instructionText();
 
@@ -917,10 +917,11 @@
     }
 
     renderSparklesOnly();
-    scheduleCaterpillarPositionUpdate();
 
     if (animationState === "enter" || animationState === "exit"){
-      startRippleDelayLoop(animationState === "enter" ? ENTER_DONE_MS : EXIT_DONE_MS, item);
+      prepareTravelAnimation(animationState, item);
+    } else {
+      scheduleCaterpillarPositionUpdate();
     }
 
     if (animationState === "enter"){
@@ -989,10 +990,47 @@
     `;
   }
 
-  function scheduleCaterpillarPositionUpdate(){
+  function scheduleCaterpillarPositionUpdate(options = {}){
     requestAnimationFrame(() => {
-      updateCaterpillarPosition();
+      updateCaterpillarPosition(options);
     });
+  }
+
+  function prepareTravelAnimation(animationState, item){
+    if (animationState !== "enter" && animationState !== "exit") return;
+
+    requestAnimationFrame(() => {
+      if (state.screen !== "game" || state.currentItem !== item) return;
+
+      updateCaterpillarPosition({ instant: true });
+      updateTravelDistances();
+
+      const travelLayer = document.getElementById("vtTravelLayer");
+      if (!travelLayer) return;
+
+      void travelLayer.offsetWidth;
+
+      travelLayer.classList.add(animationState === "enter" ? "is-entering" : "is-exiting");
+
+      startRippleDelayLoop(animationState === "enter" ? ENTER_DONE_MS : EXIT_DONE_MS, item);
+    });
+  }
+
+  function updateTravelDistances(){
+    const windowEl = document.getElementById("vtWordWindow");
+    const travelLayer = document.getElementById("vtTravelLayer");
+
+    if (!windowEl || !travelLayer) return;
+
+    const windowRect = windowEl.getBoundingClientRect();
+    const travelRect = travelLayer.getBoundingClientRect();
+    const buffer = 28;
+
+    const enterX = Math.ceil(windowRect.right - travelRect.left + buffer);
+    const exitX = Math.floor(windowRect.left - travelRect.right - buffer);
+
+    travelLayer.style.setProperty("--vt-enter-x", `${enterX}px`);
+    travelLayer.style.setProperty("--vt-exit-x", `${exitX}px`);
   }
 
   function startRippleDelayLoop(durationMs, item){
@@ -1047,8 +1085,28 @@
     });
   }
 
-  function updateCaterpillarPosition(){
+  function setTrackTransform(trackEl, value, { instant = false } = {}) {
+    if (!trackEl) return;
+
+    if (instant) {
+      trackEl.classList.add("is-positioning");
+      trackEl.style.transform = value;
+
+      requestAnimationFrame(() => {
+        trackEl.classList.remove("is-positioning");
+      });
+
+      return;
+    }
+
+    trackEl.style.transform = value;
+  }
+
+
+  function updateCaterpillarPosition(options = {}){
     if (state.screen !== "game" || !state.currentItem) return;
+
+    const instant = !!options.instant;
 
     const windowEl = document.getElementById("vtWordWindow");
     const trackEl = document.getElementById("vtWordTrack");
@@ -1070,7 +1128,7 @@
 
     if (!overflowing){
       state.wordOffsetX = 0;
-      trackEl.style.transform = "translateX(0px)";
+      setTrackTransform(trackEl, "translateX(0px)", { instant });
       updateRippleDelays();
       return;
     }
@@ -1104,7 +1162,7 @@
     const nextOffset = -Math.round(desiredVisibleLeft);
 
     state.wordOffsetX = nextOffset;
-    trackEl.style.transform = `translateX(${state.wordOffsetX}px)`;
+    setTrackTransform(trackEl, `translateX(${state.wordOffsetX}px)`, { instant });
     updateRippleDelays();
   }
 
