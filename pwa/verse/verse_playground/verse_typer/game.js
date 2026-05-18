@@ -67,7 +67,7 @@
   // TTS chunks average around -20 dBFS active speech.
   // These Web Audio levels are intentionally below exact RMS match,
   // because short tones feel louder/more piercing than speech.
-  const WEB_AUDIO_MASTER_VOLUME = 0.75;
+  const WEB_AUDIO_MASTER_VOLUME = 0.85;
   const CORRECT_LETTER_VOLUME = 0.48;
   const WRONG_TONE_VOLUME_1 = 0.40;
   const WRONG_TONE_VOLUME_2 = 0.30;
