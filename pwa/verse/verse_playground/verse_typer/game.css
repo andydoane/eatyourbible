@@ -440,7 +440,7 @@ body{
 .vt-head{
   --vt-head-scale:1.22;
   --vt-head-x:6%;
-  --vt-head-y:0%;
+  --vt-head-y:-5%;
   z-index:6;
   width:clamp(62px,14vw,112px);
   height:clamp(62px,14vw,112px);
