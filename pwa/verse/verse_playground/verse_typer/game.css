@@ -438,11 +438,14 @@ body{
 }
 
 .vt-head{
+  --vt-head-scale:1.22;
+  --vt-head-x:6%;
+  --vt-head-y:0%;
   z-index:6;
   width:clamp(62px,14vw,112px);
   height:clamp(62px,14vw,112px);
   margin-left:0;
-  margin-right:clamp(-5px,-.7vw,-2px);
+  margin-right:clamp(-15px,-2.1vw,-7px);
   background:transparent;
   box-shadow:none;
   overflow:visible;
@@ -457,6 +460,8 @@ body{
   pointer-events:none;
   user-select:none;
   -webkit-user-drag:none;
+  transform:translate(var(--vt-head-x),var(--vt-head-y)) scale(var(--vt-head-scale));
+  transform-origin:center center;
 }
 
 .vt-tail{
