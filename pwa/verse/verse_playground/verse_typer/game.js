@@ -1019,8 +1019,8 @@
       state.megaIntroShown = true;
 
       await showTyperPopup({
-        title: "Here Comes the",
-        subtitle: "Mega-pillar!",
+        title: "Mega-pillar!",
+        subtitle: "Here Comes the",
         variant: "mega"
       });
     }
@@ -1657,6 +1657,8 @@
         audio.pause();
         audio.removeAttribute("src");
         audio.load();
+        htmlAudioPrimed = false;
+        htmlAudioPrimePromise = null;
       } catch(err){}
     }
 
@@ -1852,7 +1854,12 @@
       moreGamesText: "More Playground",
       backLabel: "Back to Verse Playground",
       theme: GAME_THEME,
-      onPlayAgain: () => setScreen("mode"),
+      onPlayAgain: () => {
+        setScreen("mode");
+        createChunkAudioElement();
+        primeHtmlAudio();
+        unlockAudio();
+      },
       onMoreGames: () => window.VerseGameBridge.exitGame(),
       onChangeVerse: () => window.VerseGameBridge.returnToTitle()
     });

@@ -279,6 +279,30 @@ body{
     linear-gradient(180deg,#7ed957,#3b8f3f);
 }
 
+.vt-popup-mega {
+  background:
+    radial-gradient(circle at 16% 16%, rgba(255, 255, 255, .38), transparent 18%),
+    radial-gradient(circle at 86% 18%, rgba(255, 255, 255, .24), transparent 20%),
+    radial-gradient(circle at 50% 110%, rgba(255, 255, 255, .22), transparent 28%),
+    linear-gradient(180deg, #ffb347, #ff7b47);
+  color: #fff9dc;
+  box-shadow:
+    0 18px 0 rgba(0, 0, 0, .20),
+    0 26px 42px rgba(0, 0, 0, .25),
+    0 0 0 6px rgba(255, 255, 255, .22),
+    0 0 34px rgba(255, 248, 181, .42),
+    inset 0 0 0 3px rgba(255, 255, 255, .25);
+}
+
+.vt-popup-mega .vt-popup-subtitle {
+  color: #2f302f;
+  text-shadow: 0 2px 0 rgba(255, 255, 255, .35);
+}
+
+.vt-popup-mega .vt-popup-tap {
+  color: rgba(255, 255, 255, .86);
+}
+
 .vt-popup-hint {
   background:
     radial-gradient(circle at 14% 16%, rgba(255, 255, 255, .34), transparent 18%),
@@ -394,6 +418,14 @@ body{
   animation:vt-crawl-out 1000ms cubic-bezier(.45,0,.35,1) both;
 }
 
+.vt-word-object.is-mega-pillar {
+  animation: vt-mega-arrive 520ms ease-out both;
+}
+
+.vt-travel-layer.is-exiting .vt-word-object.is-mega-pillar {
+  animation: none;
+}
+
 .vt-travel-layer.is-entering.is-crawling .vt-head,
 .vt-travel-layer.is-entering.is-crawling .vt-segment:not(.is-typed):not(.is-hop),
 .vt-travel-layer.is-entering.is-crawling .vt-tail{
@@ -416,8 +448,9 @@ body{
   box-shadow:0 0 0 5px rgba(255,255,255,.30),0 0 28px rgba(255,255,255,.85), inset 0 -8px 0 rgba(0,0,0,.10);
 }
 
-.vt-word-object.is-mega-pillar {
-  filter: drop-shadow(0 13px 0 rgba(0, 0, 0, .18));
+.vt-word-object.is-mega-pillar{
+  filter:drop-shadow(0 15px 0 rgba(0,0,0,.18));
+  min-height:clamp(122px,25vh,198px);
 }
 
 .vt-head,
@@ -468,6 +501,31 @@ body{
   transform-origin:center center;
 }
 
+.vt-word-object.is-mega-pillar .vt-head {
+  --vt-head-scale: 1.28;
+  --vt-head-x: 7%;
+  --vt-head-y: -5%;
+  width: clamp(76px, 16.5vw, 132px);
+  height: clamp(76px, 16.5vw, 132px);
+  margin-right: clamp(-19px, -2.5vw, -9px);
+}
+
+.vt-word-object.is-mega-pillar .vt-segment {
+  width: clamp(54px, 12vw, 96px);
+  height: clamp(54px, 12vw, 96px);
+  margin-left: clamp(-6px, -.8vw, -3px);
+  font-size: clamp(27px, 6.2vw, 52px);
+  box-shadow:
+    inset 0 -9px 0 rgba(0, 0, 0, .11),
+    0 0 0 3px rgba(255, 255, 255, .08);
+}
+
+.vt-word-object.is-mega-pillar .vt-tail {
+  width: clamp(42px, 9.4vw, 76px);
+  height: clamp(42px, 9.4vw, 76px);
+  margin-left: clamp(-6px, -.8vw, -3px);
+}
+
 .vt-tail{
   z-index:1;
   width:clamp(34px,8vw,62px);
@@ -515,16 +573,29 @@ body{
   align-items: center;
 }
 
-.vt-space-segment {
-  position: relative;
-  flex: 0 0 auto;
-  width: clamp(20px, 4.8vw, 38px);
-  height: clamp(30px, 7vw, 52px);
-  margin-left: clamp(-4px, -.6vw, -2px);
-  border-radius: 999px;
-  background: linear-gradient(180deg, #fff8b5, #f7cf5d);
-  box-shadow: inset 0 -6px 0 rgba(0, 0, 0, .10), 0 0 0 3px rgba(255, 255, 255, .16);
-  opacity: .96;
+.vt-space-segment{
+  position:relative;
+  flex:0 0 auto;
+  width:clamp(20px,4.8vw,38px);
+  height:clamp(30px,7vw,52px);
+  margin-left:clamp(-4px,-.6vw,-2px);
+  border-radius:999px;
+  background:linear-gradient(180deg,#fff8b5,#f7cf5d);
+  box-shadow:inset 0 -6px 0 rgba(0,0,0,.10),0 0 0 3px rgba(255,255,255,.16);
+  opacity:.96;
+}
+
+.vt-word-object.is-mega-pillar .vt-space-segment{
+  width:clamp(26px,5.8vw,48px);
+  height:clamp(40px,8.8vw,68px);
+  margin-left:clamp(-5px,-.7vw,-3px);
+  background:
+    radial-gradient(circle at 38% 28%, rgba(255,255,255,.55), transparent 22%),
+    linear-gradient(180deg,#fff8b5,#f7cf5d);
+  box-shadow:
+    inset 0 -7px 0 rgba(0,0,0,.10),
+    0 0 0 3px rgba(255,255,255,.18),
+    0 0 16px rgba(255,248,181,.36);
 }
 
 .vt-segment:nth-child(4n+1){background:#7fc84f;}
@@ -732,6 +803,20 @@ body{
   transform:translate(-50%,-50%);
   will-change:transform,opacity;
   animation:vt-sparkle 720ms ease-out forwards;
+}
+
+@keyframes vt-mega-arrive {
+  0% {
+    filter: drop-shadow(0 15px 0 rgba(0, 0, 0, .18)) saturate(1);
+  }
+
+  45% {
+    filter: drop-shadow(0 18px 0 rgba(0, 0, 0, .20)) saturate(1.12) brightness(1.04);
+  }
+
+  100% {
+    filter: drop-shadow(0 15px 0 rgba(0, 0, 0, .18)) saturate(1);
+  }
 }
 
 @keyframes vt-crawl-in{
