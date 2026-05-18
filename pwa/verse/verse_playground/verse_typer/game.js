@@ -859,10 +859,14 @@
   function finishEntranceVisual(item) {
     if (state.screen !== "game" || state.currentItem !== item) return;
 
+    const travelLayer = document.getElementById("vtTravelLayer");
     const wordObject = document.getElementById("vtWordObject");
-    if (wordObject) {
-      wordObject.classList.remove("is-entering");
 
+    if (travelLayer) {
+      travelLayer.classList.remove("is-entering");
+    }
+
+    if (wordObject) {
       wordObject.querySelectorAll(".vt-head, .vt-segment, .vt-tail").forEach(part => {
         part.style.removeProperty("--vt-wave-delay");
         delete part.dataset.vtWaveDelay;
@@ -879,8 +883,7 @@
 
     const item = state.currentItem;
     const glowClass = state.streak >= 20 ? "is-glow-strong" : state.streak >= 10 ? "is-glow" : "";
-    const enterClass = animationState === "enter" ? "is-entering" : "";
-    const exitClass = animationState === "exit" ? "is-exiting" : "";
+    const travelClass = animationState === "enter" ? "is-entering" : animationState === "exit" ? "is-exiting" : "";
 
     const instruction = instructionText();
 
@@ -893,9 +896,11 @@
         </div>
         <div class="vt-word-window" id="vtWordWindow">
           <div class="vt-word-track" id="vtWordTrack" style="transform:translateX(${state.wordOffsetX}px)">
-            <button class="vt-word-object ${skin.wordClass} ${enterClass} ${exitClass} ${glowClass} no-zoom" id="vtWordObject" type="button" aria-label="Current word caterpillar">
-              ${renderItemSegments(item)}
-            </button>
+            <div class="vt-travel-layer ${travelClass}" id="vtTravelLayer">
+              <button class="vt-word-object ${skin.wordClass} ${glowClass} no-zoom" id="vtWordObject" type="button" aria-label="Current word caterpillar">
+                ${renderItemSegments(item)}
+              </button>
+            </div>
           </div>
         </div>
       </div>
