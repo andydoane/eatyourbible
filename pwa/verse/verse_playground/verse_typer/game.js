@@ -49,6 +49,7 @@
   let audioCtx = null;
   let masterGain = null;
   let chunkAudio = null;
+  let chunkAudioEl = null;
   let audioUnlocked = false;
   let audioUnlockPromise = null;
 
@@ -57,6 +58,13 @@
   const ENTER_CRAWL_STOP_MS = 830;
   const EXIT_DONE_MS = 1000;
   const RIPPLE_DELAY_MS = 45;
+
+  const AUDIO_DEBUG = true;
+
+  function audioDebug(...args) {
+    if (!AUDIO_DEBUG) return;
+    console.log("[VerseTyperAudio]", ...args);
+  }
 
   const state = {
     screen: "intro",
@@ -125,6 +133,22 @@
     return window.AudioContext || window.webkitAudioContext;
   }
 
+  function createChunkAudioElement() {
+    if (chunkAudioEl) return chunkAudioEl;
+
+    chunkAudioEl = document.createElement("audio");
+    chunkAudioEl.preload = "auto";
+    chunkAudioEl.playsInline = true;
+    chunkAudioEl.setAttribute("playsinline", "");
+    chunkAudioEl.style.display = "none";
+
+    document.body.appendChild(chunkAudioEl);
+
+    chunkAudio = chunkAudioEl;
+    return chunkAudioEl;
+  }
+
+
   function createAudio(){
     if (audioCtx){
       if (masterGain) masterGain.gain.value = muted ? 0 : 0.45;
@@ -150,12 +174,19 @@
 
     audioUnlockPromise = (async () => {
       try {
+        audioDebug("unlock start", audioCtx.state);
+
         if (audioCtx.state !== "running"){
-          await Promise.race([
-            audioCtx.resume?.(),
-            new Promise(resolve => setTimeout(resolve, 350))
-          ]);
+          try {
+            await audioCtx.resume?.();
+          } catch(err){
+            audioDebug("resume rejected", err);
+          }
         }
+
+        createChunkAudioElement();
+
+        audioDebug("unlock after resume", audioCtx.state);
 
         const now = audioCtx.currentTime;
         const osc = audioCtx.createOscillator();
@@ -171,6 +202,7 @@
         osc.stop(now + 0.03);
 
         audioUnlocked = audioCtx.state === "running";
+        audioDebug("unlock done", { audioUnlocked, state: audioCtx.state });
         return audioUnlocked;
       } catch(err){
         console.warn("Verse Typer audio unlock failed", err);
@@ -515,6 +547,7 @@
       backLabel: "Back to Verse Playground",
       onBack: () => window.VerseGameBridge.exitGame(),
       onStart: () => {
+        createChunkAudioElement();
         unlockAudio();
         setScreen("mode");
       }
@@ -536,6 +569,7 @@
       modes: MODES,
       onBack: () => setScreen("intro"),
       onSelect: async (mode) => {
+        createChunkAudioElement();
         unlockAudio();
         selectedMode = mode === "advanced" ? "advanced" : "beginner";
         await beginRun();
@@ -683,6 +717,7 @@
 
     wrap.querySelectorAll("[data-vt-key]").forEach(btn => {
       btn.onclick = () => {
+        createChunkAudioElement();
         unlockAudio();
         handleKey(btn.dataset.vtKey);
       };
@@ -1376,47 +1411,100 @@
 
   function stopAllAudio(){
     clearSleeps();
-    if (chunkAudio){
-      try { chunkAudio.pause(); } catch(err){}
-      chunkAudio = null;
+
+    const audio = chunkAudioEl || chunkAudio;
+    if (audio){
+      try {
+        audio.pause();
+        audio.removeAttribute("src");
+        audio.load();
+      } catch(err){}
     }
+
+    chunkAudio = chunkAudioEl;
   }
 
   function playChunkAudio(file){
     if (!file) return sleep(900);
 
     return new Promise(resolve => {
+      const audio = createChunkAudioElement();
       let done = false;
-      const finish = () => {
+      let fallbackId = null;
+
+      const cleanup = () => {
+        audio.onended = null;
+        audio.onerror = null;
+        audio.oncanplay = null;
+        audio.oncanplaythrough = null;
+        if (fallbackId) clearTimeout(fallbackId);
+      };
+
+      const finish = (reason = "ended") => {
         if (done) return;
         done = true;
+        cleanup();
+        audioDebug("chunk finish", reason, file);
         resolve();
       };
 
       try {
-        chunkAudio = new Audio(file);
-        chunkAudio.preload = "auto";
-        chunkAudio.playsInline = true;
-        chunkAudio.setAttribute("playsinline", "");
-        chunkAudio.muted = muted;
-        chunkAudio.onended = finish;
-        chunkAudio.onerror = () => {
-          console.warn("Verse Typer chunk audio missing", file);
-          finish();
+        audioDebug("chunk start", file);
+
+        audio.pause();
+        audio.currentTime = 0;
+        audio.muted = muted;
+        audio.src = file;
+        audio.load();
+
+        audio.onended = () => finish("ended");
+
+        audio.onerror = () => {
+          console.warn("Verse Typer chunk audio missing or failed", file, audio.error);
+          finish("error");
         };
 
-        const playPromise = chunkAudio.play();
-        if (playPromise?.catch){
-          playPromise.catch(err => {
-            console.warn("Verse Typer chunk audio could not play", file, err);
-            finish();
+        const tryPlay = () => {
+          audioDebug("chunk tryPlay", {
+            file,
+            readyState: audio.readyState,
+            networkState: audio.networkState,
+            muted: audio.muted
           });
+
+          const playPromise = audio.play();
+
+          if (playPromise?.then){
+            playPromise
+              .then(() => {
+                audioDebug("chunk play resolved", file);
+              })
+              .catch(err => {
+                console.warn("Verse Typer chunk audio could not play", file, err);
+                finish("play rejected");
+              });
+          }
+        };
+
+        if (audio.readyState >= 3){
+          tryPlay();
+        } else {
+          audio.oncanplay = tryPlay;
+          audio.oncanplaythrough = tryPlay;
         }
 
-        setTimeout(finish, 8000);
+        fallbackId = setTimeout(() => {
+          if (!done){
+            console.warn("Verse Typer chunk audio timed out", file, {
+              readyState: audio.readyState,
+              networkState: audio.networkState
+            });
+            finish("timeout");
+          }
+        }, 9000);
       } catch(err){
         console.warn("Verse Typer chunk audio failed", file, err);
-        finish();
+        finish("exception");
       }
     });
   }
@@ -1531,7 +1619,9 @@
     if (screen === "mode") renderMode();
   }
 
-  document.addEventListener("pointerdown", () => unlockAudio(), { capture: true, passive: true });
+  document.addEventListener("pointerdown", () => {
+    createChunkAudioElement();
+  }, { capture: true, passive: true });
   window.addEventListener("resize", () => {
     scheduleCaterpillarPositionUpdate();
   });
