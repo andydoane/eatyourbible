@@ -1140,7 +1140,7 @@
             return `<span class="vt-segment ${isDigit ? "" : "is-fixed"} ${typed ? "is-typed" : ""} ${just ? "is-hop" : ""}"${dataAttr}>${escapeHtml(char)}</span>`;
           }).join("")}
         </span>
-        <span class="vt-tail"></span>
+        <span class="vt-tail ${tailStageClass()}"></span>
       `;
     }
 
@@ -1157,7 +1157,7 @@
           return `<span class="vt-segment ${typed ? "is-typed" : ""} ${just ? "is-hop" : ""}" data-vt-type-index="${index}">${visible ? escapeHtml(letter) : ""}</span>`;
         }).join("")}
       </span>
-      <span class="vt-tail"></span>
+      <span class="vt-tail ${tailStageClass()}"></span>
     `;
   }
 
@@ -1366,6 +1366,14 @@
     return Math.max(min, Math.min(max, value));
   }
 
+  function streakStage(){
+    return clampNumber(Math.floor(state.streak / 10), 0, 4);
+  }
+
+  function tailStageClass(){
+    return `is-tail-stage-${streakStage()}`;
+  }
+
   function faceHtml(){
     return `
       <span class="vt-ant vt-ant-left"></span>
@@ -1395,6 +1403,7 @@
     playCorrectLetterSound();
 
     const item = state.currentItem;
+    const typedTypeIndex = state.typedIndex;
 
     state.correctLetters += 1;
     state.streak += 1;
@@ -1417,7 +1426,7 @@
     }
 
     if (state.streak >= 10){
-      addSparkles(state.streak >= 20 ? 9 : 5);
+      addSparkleBurstFromTypedSegment(typedTypeIndex);
     }
 
     renderHud();
@@ -1631,22 +1640,44 @@
     }, 1150);
   }
 
-  function addSparkles(count){
+  function addSparkleBurstFromTypedSegment(typeIndex){
+    const sparkleLayer = document.getElementById("vtSparkleLayer");
+    const segment = document.querySelector(`[data-vt-type-index="${typeIndex}"]`);
+
+    if (!sparkleLayer || !segment) return;
+
+    const layerRect = sparkleLayer.getBoundingClientRect();
+    const segmentRect = segment.getBoundingClientRect();
+
+    const originX = segmentRect.left + segmentRect.width / 2 - layerRect.left;
+    const originY = segmentRect.top + segmentRect.height / 2 - layerRect.top;
+
+    const stage = streakStage();
+    const count = stage >= 2 ? 10 : 6;
+    const baseDistance = stage >= 2 ? 74 : 52;
+    const sparkleChars = ["✦", "✧", "★"];
+
     for (let i = 0; i < count; i += 1){
       const id = `spark-${Date.now()}-${Math.random()}-${i}`;
+      const angle = (-Math.PI / 2) + ((Math.PI * 2) * i / count) + (Math.random() * 0.34 - 0.17);
+      const distance = baseDistance * (0.72 + Math.random() * 0.46);
+
       state.sparkles.push({
         id,
-        left: 22 + Math.random() * 56,
-        top: 26 + Math.random() * 42,
-        dx: (Math.random() * 90 - 45).toFixed(1) + "px",
-        dy: (-28 - Math.random() * 52).toFixed(1) + "px",
-        delay: Math.random() * 80
+        left: originX.toFixed(1),
+        top: originY.toFixed(1),
+        dx: `${(Math.cos(angle) * distance).toFixed(1)}px`,
+        dy: `${(Math.sin(angle) * distance).toFixed(1)}px`,
+        delay: Math.random() * 45,
+        char: sparkleChars[i % sparkleChars.length]
       });
+
       setTimeout(() => {
         state.sparkles = state.sparkles.filter(item => item.id !== id);
         renderSparklesOnly();
-      }, 780);
+      }, 760);
     }
+
     renderSparklesOnly();
   }
 
@@ -1669,7 +1700,7 @@
     if (!sparkleLayer) return;
 
     sparkleLayer.innerHTML = state.sparkles.map(spark => `
-        <span class="vt-sparkle" style="left:${spark.left}%;top:${spark.top}%;--vt-dx:${spark.dx};--vt-dy:${spark.dy};animation-delay:${spark.delay}ms">✦</span>
+        <span class="vt-sparkle" style="left:${spark.left}px;top:${spark.top}px;--vt-dx:${spark.dx};--vt-dy:${spark.dy};animation-delay:${spark.delay}ms">${escapeHtml(spark.char || "✦")}</span>
       `).join("");
   }
 
