@@ -52,6 +52,7 @@ const REFERENCE_CADENCE_NOTES = [60, 64, 67];
   const CLAP_BUTTON_LABEL = "👏 👏 👏 👏";
 
   const SOUND_BIT_BASE_URL = "./verse_jam_sounds/";
+  const SILENCE_AUDIO_FILE = "../../verse_audio/silence.mp3";
 
   const SOUND_BITS = [
     { id: "boom", label: "Boom!", filename: "verse_jam_voice_boom.mp3" },
@@ -206,12 +207,103 @@ const volumeTuning = {
   let padTimer = null;
   let musicGeneration = 0;
   let audioUnlocked = false;
+  let htmlAudioEl = null;
+  let htmlAudioPrimed = false;
+  let htmlAudioPrimePromise = null;
   let soundBitLoadPromise = null;
   const soundBitBuffers = {};
   const activeAudioSources = new Set();
 
   function audioContextConstructor(){
     return window.AudioContext || window.webkitAudioContext;
+  }
+
+  function createHtmlAudioElement(){
+    if (htmlAudioEl) return htmlAudioEl;
+
+    htmlAudioEl = document.createElement("audio");
+    htmlAudioEl.preload = "auto";
+    htmlAudioEl.playsInline = true;
+    htmlAudioEl.setAttribute("playsinline", "");
+    htmlAudioEl.style.display = "none";
+
+    document.body.appendChild(htmlAudioEl);
+
+    return htmlAudioEl;
+  }
+
+  function primeHtmlAudio(){
+    if (htmlAudioPrimed) return Promise.resolve(true);
+    if (htmlAudioPrimePromise) return htmlAudioPrimePromise;
+
+    const audio = createHtmlAudioElement();
+
+    htmlAudioPrimePromise = new Promise(resolve => {
+      let done = false;
+      let fallbackId = null;
+
+      const cleanup = () => {
+        audio.onended = null;
+        audio.onerror = null;
+        audio.oncanplay = null;
+        audio.oncanplaythrough = null;
+        if (fallbackId) clearTimeout(fallbackId);
+      };
+
+      const finish = (ok) => {
+        if (done) return;
+        done = true;
+        cleanup();
+        htmlAudioPrimed = !!ok;
+        htmlAudioPrimePromise = null;
+        resolve(!!ok);
+      };
+
+      const tryPlay = () => {
+        const playPromise = audio.play();
+
+        if (playPromise?.then){
+          playPromise
+            .then(() => {})
+            .catch(err => {
+              console.warn("Verse Jam: silent audio prime rejected", err);
+              finish(false);
+            });
+        }
+      };
+
+      try {
+        audio.pause();
+        audio.currentTime = 0;
+        audio.muted = false;
+        audio.volume = 0.01;
+        audio.src = SILENCE_AUDIO_FILE;
+        audio.load();
+
+        audio.onended = () => finish(true);
+
+        audio.onerror = () => {
+          console.warn("Verse Jam: silent audio prime failed", SILENCE_AUDIO_FILE, audio.error);
+          finish(false);
+        };
+
+        if (audio.readyState >= 3){
+          tryPlay();
+        } else {
+          audio.oncanplay = tryPlay;
+          audio.oncanplaythrough = tryPlay;
+        }
+
+        fallbackId = setTimeout(() => {
+          finish(false);
+        }, 1800);
+      } catch(err){
+        console.warn("Verse Jam: silent audio prime exception", err);
+        finish(false);
+      }
+    });
+
+    return htmlAudioPrimePromise;
   }
 
 function createAudioGraph(){
@@ -243,6 +335,7 @@ function createAudioGraph(){
   }
 
   function unlockAudioFromGesture(){
+    primeHtmlAudio();
     createAudioGraph();
 
     if (!audioCtx || !masterGain) return;
@@ -280,7 +373,10 @@ function createAudioGraph(){
   }
 
   function installAudioUnlockHandlers(){
-    const unlock = () => unlockAudioFromGesture();
+    const unlock = () => {
+      primeHtmlAudio();
+      unlockAudioFromGesture();
+    };
 
     ["pointerdown", "touchstart", "mousedown", "click"].forEach(eventName => {
       document.addEventListener(eventName, unlock, {
@@ -1094,6 +1190,7 @@ function makeChunkButtons(){
   }
 
   async function ensureAudio(){
+    primeHtmlAudio();
     createAudioGraph();
 
     if (!audioCtx) return;
@@ -2073,7 +2170,11 @@ playTone({ midi: transitionNotes[(stack.children.length - 1) % transitionNotes.l
       theme: GAME_THEME,
       backLabel: "Back to Verse Playground",
       onBack: () => window.VerseGameBridge.exitGame(),
-      onStart: () => setScreen("mode")
+      onStart: () => {
+        primeHtmlAudio();
+        unlockAudioFromGesture();
+        setScreen("mode");
+      }
     });
   }
 
@@ -2089,6 +2190,8 @@ playTone({ midi: transitionNotes[(stack.children.length - 1) % transitionNotes.l
       modes: MODES,
       onBack: () => setScreen("intro"),
       onSelect: (mode) => {
+        primeHtmlAudio();
+        unlockAudioFromGesture();
         state.screen = "game";
         beginRun(mode);
       }
