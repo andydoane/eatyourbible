@@ -74,7 +74,6 @@
     verseIntroShown: false,
     bookIntroShown: false,
     referenceIntroShown: false,
-    firstWordInstructionShown: false,
     justTypedIndex: -1,
     justTypedSegmentIndex: -1,
     acceptingInput: false,
@@ -444,7 +443,6 @@
     state.verseIntroShown = false;
     state.bookIntroShown = false;
     state.referenceIntroShown = false;
-    state.firstWordInstructionShown = false;
     state.justTypedIndex = -1;
     state.justTypedSegmentIndex = -1;
     state.acceptingInput = false;
@@ -884,20 +882,12 @@
 
     const item = state.currentItem;
     const glowClass = state.streak >= 20 ? "is-glow-strong" : state.streak >= 10 ? "is-glow" : "";
-    const travelClass = "";
-
-    const instruction = instructionText();
-
-    const keepInstructionSlot = false;
 
     main.innerHTML = `
-      <div class="vt-word-scene ${keepInstructionSlot ? "has-instruction-slot" : "has-no-instruction"}">
-        <div class="vt-instruction-slot">
-          ${instruction ? `<div class="vt-instruction">${instruction}</div>` : ""}
-        </div>
+      <div class="vt-word-scene">
         <div class="vt-word-window" id="vtWordWindow">
           <div class="vt-word-track" id="vtWordTrack" style="transform:translateX(${state.wordOffsetX}px)">
-            <div class="vt-travel-layer ${travelClass}" id="vtTravelLayer">
+            <div class="vt-travel-layer" id="vtTravelLayer">
               <button class="vt-word-object ${skin.wordClass} ${glowClass} no-zoom" id="vtWordObject" type="button" aria-label="Current word caterpillar">
                 ${renderItemSegments(item)}
               </button>
@@ -951,9 +941,6 @@
     }
   }
 
-  function instructionText(){
-    return "";
-  }
 
   function renderItemSegments(item){
     if (item.kind === "reference"){
@@ -1225,10 +1212,6 @@
     playCorrectLetterSound();
 
     const item = state.currentItem;
-    const shouldHideFirstWordInstruction =
-      item?.kind === "word" &&
-      !state.firstWordInstructionShown &&
-      state.typedIndex === 0;
 
     state.correctLetters += 1;
     state.streak += 1;
@@ -1245,10 +1228,6 @@
     }
 
     state.typedIndex += 1;
-
-    if (shouldHideFirstWordInstruction){
-      state.firstWordInstructionShown = true;
-    }
 
     if (state.streak > 0 && state.streak % 5 === 0){
       addStreakBadge(state.streak);
