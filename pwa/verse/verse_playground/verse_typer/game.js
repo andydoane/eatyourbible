@@ -52,6 +52,8 @@
   let chunkAudioEl = null;
   let audioUnlocked = false;
   let audioUnlockPromise = null;
+  let htmlAudioPrimed = false;
+  let htmlAudioPrimePromise = null;
 
   const ENTER_INPUT_MS = 400;
   const ENTER_DONE_MS = 960;
@@ -60,6 +62,7 @@
   const RIPPLE_DELAY_MS = 45;
 
   const AUDIO_DEBUG = true;
+  const SILENCE_AUDIO_FILE = "../../verse_audio/silence.mp3";
 
   function audioDebug(...args) {
     if (!AUDIO_DEBUG) return;
@@ -148,6 +151,95 @@
     return chunkAudioEl;
   }
 
+  function primeHtmlAudio() {
+    if (htmlAudioPrimed) return Promise.resolve(true);
+    if (htmlAudioPrimePromise) return htmlAudioPrimePromise;
+
+    const audio = createChunkAudioElement();
+
+    htmlAudioPrimePromise = new Promise(resolve => {
+      let done = false;
+      let fallbackId = null;
+
+      const cleanup = () => {
+        audio.onended = null;
+        audio.onerror = null;
+        audio.oncanplay = null;
+        audio.oncanplaythrough = null;
+        if (fallbackId) clearTimeout(fallbackId);
+      };
+
+      const finish = (ok, reason) => {
+        if (done) return;
+        done = true;
+        cleanup();
+        htmlAudioPrimed = !!ok;
+        htmlAudioPrimePromise = null;
+        audioDebug("html audio prime finish", { ok, reason, htmlAudioPrimed });
+        resolve(!!ok);
+      };
+
+      const tryPlay = () => {
+        audioDebug("html audio prime tryPlay", {
+          readyState: audio.readyState,
+          networkState: audio.networkState
+        });
+
+        const playPromise = audio.play();
+
+        if (playPromise?.then) {
+          playPromise
+            .then(() => {
+              audioDebug("html audio prime play resolved");
+            })
+            .catch(err => {
+              console.warn("Verse Typer silent audio prime rejected", err);
+              finish(false, "play rejected");
+            });
+        }
+      };
+
+      try {
+        audioDebug("html audio prime start", SILENCE_AUDIO_FILE);
+
+        audio.pause();
+        audio.currentTime = 0;
+        audio.muted = false;
+        audio.volume = 0.01;
+        audio.src = SILENCE_AUDIO_FILE;
+        audio.load();
+
+        audio.onended = () => finish(true, "ended");
+
+        audio.onerror = () => {
+          console.warn("Verse Typer silent audio prime failed", SILENCE_AUDIO_FILE, audio.error);
+          finish(false, "error");
+        };
+
+        if (audio.readyState >= 3) {
+          tryPlay();
+        } else {
+          audio.oncanplay = tryPlay;
+          audio.oncanplaythrough = tryPlay;
+        }
+
+        fallbackId = setTimeout(() => {
+          if (!done) {
+            audioDebug("html audio prime timeout", {
+              readyState: audio.readyState,
+              networkState: audio.networkState
+            });
+            finish(false, "timeout");
+          }
+        }, 1800);
+      } catch (err) {
+        console.warn("Verse Typer silent audio prime exception", err);
+        finish(false, "exception");
+      }
+    });
+
+    return htmlAudioPrimePromise;
+  }
 
   function createAudio(){
     if (audioCtx){
@@ -548,6 +640,7 @@
       onBack: () => window.VerseGameBridge.exitGame(),
       onStart: () => {
         createChunkAudioElement();
+        primeHtmlAudio();
         unlockAudio();
         setScreen("mode");
       }
@@ -570,6 +663,7 @@
       onBack: () => setScreen("intro"),
       onSelect: async (mode) => {
         createChunkAudioElement();
+        primeHtmlAudio();
         unlockAudio();
         selectedMode = mode === "advanced" ? "advanced" : "beginner";
         await beginRun();
@@ -718,6 +812,7 @@
     wrap.querySelectorAll("[data-vt-key]").forEach(btn => {
       btn.onclick = () => {
         createChunkAudioElement();
+        primeHtmlAudio();
         unlockAudio();
         handleKey(btn.dataset.vtKey);
       };
@@ -882,6 +977,7 @@
       let timeoutId = null;
 
       const finish = () => {
+        primeHtmlAudio();
         unlockAudio();
         if (done) return;
         done = true;
@@ -1454,6 +1550,7 @@
         audio.pause();
         audio.currentTime = 0;
         audio.muted = muted;
+        audio.volume = 1;
         audio.src = file;
         audio.load();
 
