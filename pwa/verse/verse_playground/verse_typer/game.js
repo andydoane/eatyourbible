@@ -99,6 +99,7 @@
     verseIntroShown: false,
     bookIntroShown: false,
     referenceIntroShown: false,
+    megaIntroShown: false,
     justTypedIndex: -1,
     justTypedSegmentIndex: -1,
     acceptingInput: false,
@@ -587,6 +588,56 @@
     return { chars, expected, positions };
   }
 
+  function megaVerseText() {
+    if (state.chunks.length) {
+      return state.chunks.map(chunk => chunk.text).join(" ");
+    }
+
+    return String(state.verseJson?.verseText || ctx.verseText || "");
+  }
+
+  function makeMegaParts(text) {
+    const parts = [];
+    const expected = [];
+    let typeIndex = 0;
+    let lastWasSpace = false;
+
+    String(text || "").split("").forEach(char => {
+      if (/[A-Za-z]/.test(char)) {
+        const letter = normalizeLetters(char);
+        if (!letter) return;
+
+        parts.push({
+          kind: "letter",
+          char: letter,
+          typeIndex
+        });
+
+        expected.push(letter);
+        typeIndex += 1;
+        lastWasSpace = false;
+        return;
+      }
+
+      if (/\s/.test(char) && !lastWasSpace && parts.length) {
+        parts.push({
+          kind: "space"
+        });
+
+        lastWasSpace = true;
+      }
+    });
+
+    while (parts.length && parts[parts.length - 1].kind === "space") {
+      parts.pop();
+    }
+
+    return {
+      parts,
+      expected: expected.join("")
+    };
+  }
+
   async function initRunData(){
     const verseJson = await loadVerseJson();
     const parsed = window.VerseGameShell.parseReferenceParts(
@@ -618,6 +669,7 @@
     state.verseIntroShown = false;
     state.bookIntroShown = false;
     state.referenceIntroShown = false;
+    state.megaIntroShown = false;
     state.justTypedIndex = -1;
     state.justTypedSegmentIndex = -1;
     state.acceptingInput = false;
@@ -932,7 +984,7 @@
 
   async function startReferencePhase(){
     if (!state.referenceExpectedDigits.length){
-      finishRun();
+      startMegaPillarPhase();
       return;
     }
 
@@ -957,6 +1009,39 @@
     });
     setPhaseLabel("Chapter & Verse");
     renderKeyboard("numbers");
+    renderCurrentItem("enter");
+  }
+
+  async function startMegaPillarPhase(){
+    renderKeyboard("letters");
+
+    if (!state.megaIntroShown){
+      state.megaIntroShown = true;
+
+      await showTyperPopup({
+        title: "Here Comes the",
+        subtitle: "Mega-pillar!",
+        variant: "mega"
+      });
+    }
+
+    const mega = makeMegaParts(megaVerseText());
+
+    if (!mega.expected){
+      finishRun();
+      return;
+    }
+
+    setCurrentItem({
+      kind: "mega",
+      display: mega.expected,
+      expected: mega.expected,
+      parts: mega.parts,
+      phase: "mega"
+    });
+
+    setPhaseLabel("Mega-pillar");
+    renderKeyboard("letters");
     renderCurrentItem("enter");
   }
 
@@ -1065,13 +1150,14 @@
 
     const item = state.currentItem;
     const glowClass = state.streak >= 20 ? "is-glow-strong" : state.streak >= 10 ? "is-glow" : "";
+    const megaClass = item.kind === "mega" ? "is-mega-pillar" : "";
 
     main.innerHTML = `
       <div class="vt-word-scene">
         <div class="vt-word-window" id="vtWordWindow">
           <div class="vt-word-track" id="vtWordTrack" style="transform:translateX(${state.wordOffsetX}px)">
             <div class="vt-travel-layer" id="vtTravelLayer">
-              <button class="vt-word-object ${skin.wordClass} ${glowClass} no-zoom" id="vtWordObject" type="button" aria-label="Current word caterpillar">
+              <button class="vt-word-object ${skin.wordClass} ${glowClass} ${megaClass} no-zoom" id="vtWordObject" type="button" aria-label="Current word caterpillar">
                 ${renderItemSegments(item)}
               </button>
             </div>
@@ -1138,6 +1224,25 @@
             const typeIndex = isDigit ? item.digitPositions.indexOf(index) : -1;
             const dataAttr = typeIndex >= 0 ? ` data-vt-type-index="${typeIndex}"` : "";
             return `<span class="vt-segment ${isDigit ? "" : "is-fixed"} ${typed ? "is-typed" : ""} ${just ? "is-hop" : ""}"${dataAttr}>${escapeHtml(char)}</span>`;
+          }).join("")}
+        </span>
+        <span class="vt-tail ${tailStageClass()}"></span>
+      `;
+    }
+
+    if (item.kind === "mega"){
+      return `
+        <span class="vt-head ${state.headShakeUntil > performance.now() ? "is-no" : ""}">${faceHtml()}</span>
+        <span class="vt-body vt-mega-body">
+          ${(item.parts || []).map(part => {
+            if (part.kind === "space"){
+              return `<span class="vt-space-segment" aria-hidden="true"></span>`;
+            }
+
+            const typed = part.typeIndex < state.typedIndex;
+            const just = part.typeIndex === state.justTypedIndex;
+
+            return `<span class="vt-segment ${typed ? "is-typed" : ""} ${just ? "is-hop" : ""}" data-vt-type-index="${part.typeIndex}">${escapeHtml(part.char)}</span>`;
           }).join("")}
         </span>
         <span class="vt-tail ${tailStageClass()}"></span>
@@ -1502,6 +1607,11 @@
       }
 
       if (item.kind === "reference"){
+        startMegaPillarPhase();
+        return;
+      }
+
+      if (item.kind === "mega"){
         finishRun();
       }
     }, EXIT_DONE_MS);
