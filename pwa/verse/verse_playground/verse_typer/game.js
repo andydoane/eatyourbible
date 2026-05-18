@@ -49,6 +49,8 @@
   let audioCtx = null;
   let masterGain = null;
   let chunkAudio = null;
+  let audioUnlocked = false;
+  let audioUnlockPromise = null;
 
   const ENTER_INPUT_MS = 400;
   const ENTER_DONE_MS = 960;
@@ -138,24 +140,45 @@
     masterGain.connect(audioCtx.destination);
   }
 
-  function unlockAudio(){
+  async function unlockAudio(){
     createAudio();
-    if (!audioCtx || !masterGain) return;
+    if (!audioCtx || !masterGain) return false;
 
-    if (audioCtx.state !== "running"){
-      audioCtx.resume?.().catch?.(() => {});
-    }
+    if (audioUnlocked && audioCtx.state === "running") return true;
 
-    try {
-      const buffer = audioCtx.createBuffer(1, 1, audioCtx.sampleRate);
-      const source = audioCtx.createBufferSource();
-      const gain = audioCtx.createGain();
-      source.buffer = buffer;
-      gain.gain.value = 0.0001;
-      source.connect(gain);
-      gain.connect(masterGain);
-      source.start(0);
-    } catch(err){}
+    if (audioUnlockPromise) return audioUnlockPromise;
+
+    audioUnlockPromise = (async () => {
+      try {
+        if (audioCtx.state !== "running"){
+          await audioCtx.resume?.();
+        }
+
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(440, now);
+        gain.gain.setValueAtTime(0.0001, now);
+
+        osc.connect(gain);
+        gain.connect(masterGain);
+        osc.start(now);
+        osc.stop(now + 0.03);
+
+        audioUnlocked = audioCtx.state === "running";
+        return audioUnlocked;
+      } catch(err){
+        console.warn("Verse Typer audio unlock failed", err);
+        audioUnlocked = false;
+        return false;
+      } finally {
+        audioUnlockPromise = null;
+      }
+    })();
+
+    return audioUnlockPromise;
   }
 
   function midiToFreq(midi){
@@ -163,7 +186,17 @@
   }
 
   function playTone({ midi = 60, duration = 0.16, volume = 0.16, type = "triangle" } = {}){
-    if (!audioCtx || !masterGain || muted) return;
+    if (muted) return;
+
+    createAudio();
+    if (!audioCtx || !masterGain) return;
+
+    if (audioCtx.state !== "running"){
+      unlockAudio().then((ok) => {
+        if (ok) playTone({ midi, duration, volume, type });
+      });
+      return;
+    }
 
     const now = audioCtx.currentTime;
     const osc = audioCtx.createOscillator();
@@ -478,8 +511,8 @@
       theme: GAME_THEME,
       backLabel: "Back to Verse Playground",
       onBack: () => window.VerseGameBridge.exitGame(),
-      onStart: () => {
-        unlockAudio();
+      onStart: async () => {
+        await unlockAudio();
         setScreen("mode");
       }
     });
@@ -500,7 +533,7 @@
       modes: MODES,
       onBack: () => setScreen("intro"),
       onSelect: async (mode) => {
-        unlockAudio();
+        await unlockAudio();
         selectedMode = mode === "advanced" ? "advanced" : "beginner";
         await beginRun();
       }
@@ -646,8 +679,8 @@
     `;
 
     wrap.querySelectorAll("[data-vt-key]").forEach(btn => {
-      btn.onclick = () => {
-        unlockAudio();
+      btn.onclick = async () => {
+        await unlockAudio();
         handleKey(btn.dataset.vtKey);
       };
     });
@@ -811,6 +844,7 @@
       let timeoutId = null;
 
       const finish = () => {
+        unlockAudio();
         if (done) return;
         done = true;
         if (timeoutId) clearTimeout(timeoutId);
@@ -1359,6 +1393,8 @@
       try {
         chunkAudio = new Audio(file);
         chunkAudio.preload = "auto";
+        chunkAudio.playsInline = true;
+        chunkAudio.setAttribute("playsinline", "");
         chunkAudio.muted = muted;
         chunkAudio.onended = finish;
         chunkAudio.onerror = () => {
