@@ -71,6 +71,20 @@ window.EXTERNAL_VERSE_PLAYGROUND = [
     progressType: "practice",
     modes: ["beginner", "advanced"]
   }
+},
+  {
+  enabled: true,
+  manifest: {
+    id: "wheel_of_bible",
+    title: "Wheel of Bible",
+    description: "Spin for money, choose letters, and complete missing words from the verse.",
+    icon: "🎡",
+    cardColor: "#ffc751",
+    cardTextColor: "#333333",
+    launchUrl: "./verse_playground/wheel_of_bible/index.html",
+    visibleInCarousel: false,
+    progressType: "practice"
+  }
 }
 
 ];
