@@ -63,6 +63,7 @@
 
   const AUDIO_DEBUG = false;
   const SILENCE_AUDIO_FILE = "../../verse_audio/silence.mp3";
+  const COCOON_IMAGE_FILE = "./verse_typer_images/cocoon.png";
 
   // TTS chunks average around -20 dBFS active speech.
   // These Web Audio levels are intentionally below exact RMS match,
@@ -1108,6 +1109,80 @@
     }, 58);
   }
 
+  function playCocoonOpenSound() {
+    playTone({ midi: 60, duration: 0.10, volume: 0.32, type: "triangle" });
+    setTimeout(() => playTone({ midi: 64, duration: 0.11, volume: 0.34, type: "triangle" }), 82);
+    setTimeout(() => playTone({ midi: 67, duration: 0.12, volume: 0.36, type: "triangle" }), 164);
+    setTimeout(() => playTone({ midi: 72, duration: 0.18, volume: 0.40, type: "triangle" }), 248);
+  }
+
+  function clearKeyboardForFinale() {
+    const wrap = document.getElementById("vtKeyboardWrap");
+    if (!wrap) return;
+
+    wrap.innerHTML = `<div class="vt-finale-keyboard-placeholder" aria-hidden="true"></div>`;
+  }
+
+  async function startCocoonPhase() {
+    state.currentItem = null;
+    state.acceptingInput = false;
+    state.transitionLocked = true;
+    state.entranceDone = false;
+    state.pendingCompleteAfterEntrance = false;
+    state.phaseLabel = "Cocoon";
+    renderHud();
+    clearKeyboardForFinale();
+
+    await showTyperPopup({
+      title: "Tap the",
+      subtitle: "Cocoon!",
+      variant: "book"
+    });
+
+    renderCocoonScene();
+  }
+
+  function renderCocoonScene() {
+    const main = document.getElementById("vtMain");
+    if (!main) return;
+
+    main.innerHTML = `
+      <div class="vt-cocoon-scene">
+        <button class="vt-cocoon-button no-zoom" id="vtCocoonButton" type="button" aria-label="Open the cocoon">
+          <span class="vt-cocoon-hanger" aria-hidden="true">
+            <span class="vt-cocoon-twig"></span>
+            <img class="vt-cocoon-img" src="${escapeHtml(COCOON_IMAGE_FILE)}" alt="">
+          </span>
+        </button>
+        <div class="vt-poof" id="vtPoof" aria-hidden="true">
+          <span></span><span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+    `;
+
+    const cocoonButton = document.getElementById("vtCocoonButton");
+    if (cocoonButton) {
+      cocoonButton.onclick = openCocoon;
+    }
+  }
+
+  function openCocoon() {
+    const cocoonButton = document.getElementById("vtCocoonButton");
+    const poof = document.getElementById("vtPoof");
+
+    if (!cocoonButton || cocoonButton.classList.contains("is-opening")) return;
+
+    cocoonButton.classList.add("is-opening");
+    playCocoonOpenSound();
+
+    setTimeout(() => {
+      if (poof) poof.classList.add("is-active");
+    }, 150);
+
+    setTimeout(() => {
+      finishRun();
+    }, 940);
+  }
 
   function setCurrentItem(item){
     state.currentItem = item;
@@ -1612,7 +1687,7 @@
       }
 
       if (item.kind === "mega"){
-        finishRun();
+        startCocoonPhase();
       }
     }, EXIT_DONE_MS);
   }
