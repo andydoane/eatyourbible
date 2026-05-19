@@ -17,6 +17,9 @@
   const GAME_ID = "wheel_of_bible";
   const GAME_TITLE = "Wheel of Bible";
   const GAME_ICON = "🎡";
+  const WHEEL_BUTTON_IMAGE = "./wheel_of_bible_images/button_wheel.png";
+  const WHEEL_ICON_HTML = `<img class="wob-shell-title-icon" src="${WHEEL_BUTTON_IMAGE}" alt="" draggable="false">`;
+  const WHEEL_BUTTON_HTML = `<img class="wob-wheel-button-img" src="${WHEEL_BUTTON_IMAGE}" alt="" draggable="false">`;
   const HELP_OVERLAY_ID = "wheelOfBibleHelpOverlay";
   const MENU_OVERLAY_ID = "wheelOfBibleGameMenuOverlay";
 
@@ -485,7 +488,7 @@
   function renderIntro(){
     clearTimers(); stopVerseAudio(); state.screen = "intro";
     shell().renderTitleScreen?.({
-      app, title:GAME_TITLE, icon:GAME_ICON, helpHtml:helpHtml(), helpOverlayId:HELP_OVERLAY_ID,
+      app, title:GAME_TITLE, icon:GAME_ICON, iconHtml:WHEEL_ICON_HTML, helpHtml:helpHtml(), helpOverlayId:HELP_OVERLAY_ID,
       startText:"Start", helpText:"How to Play", theme:GAME_THEME, backLabel:"Back to Verse Playground",
       onBack:() => bridge().exitGame?.(),
       onStart:async () => { createVerseAudioElement(); primeHtmlAudio(); unlockAudio(); await beginRun(); }
@@ -556,7 +559,7 @@
     btn.className = "wob-spin-float-button no-zoom";
     btn.type = "button";
     btn.setAttribute("aria-label", "Go spin the wheel");
-    btn.textContent = "🎡";
+    btn.innerHTML = WHEEL_BUTTON_HTML;
     btn.addEventListener("click", () => { stopVerseAudio(); renderSpinScreen(); });
     card.appendChild(btn);
     playGood();
@@ -922,7 +925,7 @@
             <div class="wob-big-title">Nice!</div>
             <div class="wob-subtitle">Challenge Bonus: ${escapeHtml(formatMoney(bonus))}</div>
           </div>
-          <button class="wob-wheel-next-btn no-zoom" id="nextSpinBtn" type="button" aria-label="${state.revealedLetters.size >= state.uniqueLetters.length ? "Final Round" : "Spin Again"}">${state.revealedLetters.size >= state.uniqueLetters.length ? "🏁" : "🎡"}</button>
+          <button class="wob-wheel-next-btn no-zoom" id="nextSpinBtn" type="button" aria-label="${state.revealedLetters.size >= state.uniqueLetters.length ? "Final Round" : "Spin Again"}">${state.revealedLetters.size >= state.uniqueLetters.length ? "🏁" : WHEEL_BUTTON_HTML}</button>
         </div>
       `, { status:"Bonus", rootClass:"is-bonus-screen" });
       wireGameMenu();
@@ -1136,7 +1139,7 @@
     const statsText = `${formatMoney(totalCash())} earned • ${state.finalSolvedWordIndices.size} final words rebuilt`;
     if (shell().renderCompleteScreen){
       shell().renderCompleteScreen({
-        app, title:"Wheel Complete!", icon:"🎡", statsText, playAgainText:"Play Again", moreGamesText:"Back to Playground", backLabel:"Back to Playground", theme:GAME_THEME,
+        app, title:"Wheel Complete!", icon:"🎡", iconHtml:WHEEL_ICON_HTML, statsText, playAgainText:"Play Again", moreGamesText:"Back to Playground", backLabel:"Back to Playground", theme:GAME_THEME,
         onPlayAgain:() => beginRun(), onMoreGames:() => bridge().exitGame?.()
       });
     } else {
