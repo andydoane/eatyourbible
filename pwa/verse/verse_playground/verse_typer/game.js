@@ -1020,8 +1020,7 @@
       state.megaIntroShown = true;
 
       await showTyperPopup({
-        title: "Mega-pillar!",
-        subtitle: "Here Comes the",
+        title: "Mega-pillar<br>Time!",
         variant: "mega"
       });
     }
@@ -1058,7 +1057,7 @@
     main.innerHTML = `
       <button class="vt-popup-scene no-zoom" id="vtPopupScene" type="button" aria-label="Continue">
         <div class="vt-popup-card vt-popup-${escapeHtml(variant)}">
-          <div class="vt-popup-title">${escapeHtml(title)}</div>
+          <div class="vt-popup-title">${escapeHtml(title).replace(/&lt;br&gt;/g, "<br>")}</div>
           ${subtitle ? `<div class="vt-popup-subtitle">${escapeHtml(subtitle)}</div>` : ""}
           <div class="vt-popup-tap">Tap to continue</div>
         </div>
@@ -1134,8 +1133,7 @@
     clearKeyboardForFinale();
 
     await showTyperPopup({
-      title: "Tap the",
-      subtitle: "Cocoon!",
+      title: "Tap the<br>Cocoon!",
       variant: "book"
     });
 

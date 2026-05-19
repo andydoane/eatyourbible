@@ -295,9 +295,6 @@ body{
 }
 
 .vt-popup-mega .vt-popup-subtitle {
-  order: -1;
-  margin-top: 0;
-  margin-bottom: clamp(8px, 2vw, 14px);
   color: #2f302f;
   text-shadow: 0 2px 0 rgba(255, 255, 255, .35);
 }
