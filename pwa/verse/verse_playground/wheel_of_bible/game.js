@@ -542,26 +542,29 @@
     app.innerHTML = rootHtml(`
       <div class="wob-verse-wrap">
         ${verseBoardHtml({ allVisible:true })}
+        <button class="wob-spin-float-button no-zoom is-hidden" id="verseIntroSpinPrompt" type="button" aria-label="Go spin the wheel">
+          ${WHEEL_BUTTON_HTML}
+        </button>
       </div>
     `, { status:"Listen", rootClass:"is-board-screen is-listen-screen" });
-    wireGameMenu(); fitVerseBoardSoon();
+    wireGameMenu();
+    fitVerseBoardSoon();
+
+    document.getElementById("verseIntroSpinPrompt")?.addEventListener("click", () => {
+      stopVerseAudio();
+      renderSpinScreen();
+    });
+
     const played = await tryPlayVerseAudio();
-    await sleep(Math.min(played ? estimateListenMs() : 1800, 2600));
+    await sleep(played ? estimateListenMs() + 350 : 1800);
     showVerseIntroSpinPrompt();
   }
 
   function showVerseIntroSpinPrompt(){
     if (state.screen !== "verseIntro") return;
-    const card = document.querySelector(".wob-card");
-    if (!card || document.getElementById("verseIntroSpinPrompt")) return;
-    const btn = document.createElement("button");
-    btn.id = "verseIntroSpinPrompt";
-    btn.className = "wob-spin-float-button no-zoom";
-    btn.type = "button";
-    btn.setAttribute("aria-label", "Go spin the wheel");
-    btn.innerHTML = WHEEL_BUTTON_HTML;
-    btn.addEventListener("click", () => { stopVerseAudio(); renderSpinScreen(); });
-    card.appendChild(btn);
+    const btn = document.getElementById("verseIntroSpinPrompt");
+    if (!btn) return;
+    btn.classList.remove("is-hidden");
     playGood();
   }
 
@@ -571,7 +574,7 @@
     const step = 360 / WHEEL_VALUES.length;
     return WHEEL_VALUES.map((seg, index) => {
       const angle = index * step + step / 2;
-      return `<div class="wob-wheel-label" style="transform:translate(-50%,-50%) rotate(${angle}deg) translateX(30%);">${escapeHtml(seg.label)}</div>`;
+      return `<div class="wob-wheel-label" style="--label-angle:${angle}deg;">${escapeHtml(seg.label)}</div>`;
     }).join("");
   }
 
@@ -670,7 +673,6 @@
     app.innerHTML = rootHtml(`
       <div class="wob-verse-wrap">
         ${verseBoardHtml({ revealingLetter:letter })}
-        <div class="wob-reference">${escapeHtml(`${matches} ${letter}'s revealed • ${formatMoney(perLetter)} each`)}</div>
         <div class="wob-letter-burst">${escapeHtml(letter)}</div>
       </div>
     `, { status:"Letters Reveal", rootClass:"is-board-screen" });
