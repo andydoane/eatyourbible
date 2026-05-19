@@ -54,6 +54,10 @@
   let audioUnlockPromise = null;
   let htmlAudioPrimed = false;
   let htmlAudioPrimePromise = null;
+  let gameFontReadyPromise = null;
+  let gameAssetPreloadPromise = null;
+
+  const imagePreloadCache = new Map();
 
   const ENTER_INPUT_MS = 400;
   const ENTER_DONE_MS = 960;
@@ -82,6 +86,91 @@
   function audioDebug(...args) {
     if (!AUDIO_DEBUG) return;
     console.log("[VerseTyperAudio]", ...args);
+  }
+
+  function waitForGameFont(timeoutMs = 900) {
+    if (gameFontReadyPromise) return gameFontReadyPromise;
+
+    gameFontReadyPromise = new Promise(resolve => {
+      let done = false;
+      let timeoutId = null;
+
+      const finish = () => {
+        if (done) return;
+        done = true;
+        if (timeoutId) clearTimeout(timeoutId);
+        resolve(true);
+      };
+
+      timeoutId = setTimeout(finish, timeoutMs);
+
+      try {
+        if (!document.fonts?.load) {
+          finish();
+          return;
+        }
+
+        document.fonts.load('1em "TitanOneLocal"')
+          .then(() => document.fonts.ready)
+          .then(finish)
+          .catch(finish);
+      } catch (err) {
+        finish();
+      }
+    });
+
+    return gameFontReadyPromise;
+  }
+
+  function preloadImage(src) {
+    if (!src) return Promise.resolve(false);
+    if (imagePreloadCache.has(src)) return imagePreloadCache.get(src);
+
+    const promise = new Promise(resolve => {
+      const img = new Image();
+      let done = false;
+
+      const finish = (ok) => {
+        if (done) return;
+        done = true;
+        resolve(!!ok);
+      };
+
+      img.onload = async () => {
+        try {
+          if (img.decode) await img.decode();
+        } catch (err) { }
+        finish(true);
+      };
+
+      img.onerror = () => finish(false);
+      img.src = src;
+    });
+
+    imagePreloadCache.set(src, promise);
+    return promise;
+  }
+
+  function headImageFileForStage(stage) {
+    return `./verse_typer_images/caterpillar_head_${stage}.svg`;
+  }
+
+  function preloadHeadImages() {
+    return Promise.all([0, 1, 2, 3, 4].map(stage => preloadImage(headImageFileForStage(stage))));
+  }
+
+  function preloadGameAssets() {
+    if (gameAssetPreloadPromise) return gameAssetPreloadPromise;
+
+    gameAssetPreloadPromise = Promise.allSettled([
+      waitForGameFont(1200),
+      preloadHeadImages(),
+      preloadImage(COCOON_IMAGE_FILE),
+      preloadImage("./verse_typer_images/verse_typer_cloud.svg"),
+      loadButterflySvg()
+    ]);
+
+    return gameAssetPreloadPromise;
   }
 
   const state = {
@@ -697,6 +786,7 @@
     state.butterflySvg = "";
     state.butterflyColors = null;
     state.butterflyFlaps = 0;
+    gameAssetPreloadPromise = null;
   }
 
   function renderIntro(){
@@ -718,6 +808,7 @@
         createChunkAudioElement();
         primeHtmlAudio();
         unlockAudio();
+        preloadGameAssets();
         setScreen("mode");
       }
     });
@@ -741,6 +832,7 @@
         createChunkAudioElement();
         primeHtmlAudio();
         unlockAudio();
+        preloadGameAssets();
         selectedMode = mode === "advanced" ? "advanced" : "beginner";
         await beginRun();
       }
@@ -750,6 +842,8 @@
   async function beginRun(){
     await initRunData();
     resetStats();
+    preloadGameAssets();
+    await waitForGameFont(900);
     state.screen = "game";
     renderGameShell();
     startVersePhase();
@@ -1299,6 +1393,7 @@
       variant: "book"
     });
 
+    await preloadImage(COCOON_IMAGE_FILE);
     renderCocoonScene();
   }
 
@@ -1786,7 +1881,7 @@
   }
 
   function headImageFile() {
-    return `./verse_typer_images/caterpillar_head_${streakStage()}.svg`;
+    return headImageFileForStage(streakStage());
   }
 
   function faceHtml() {
