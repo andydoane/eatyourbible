@@ -514,7 +514,7 @@
         <div class="wob-intro-wheel-wrap"><div class="wob-wheel-shell"><div class="wob-wheel-pointer"></div><div class="wob-wheel" id="introWheel"></div></div></div>
         <div class="wob-intro-words"><span class="wob-intro-word" id="introWord0">WHEEL</span><span class="wob-intro-word" id="introWord1">OF</span><span class="wob-intro-word" id="introWord2">BIBLE!</span></div>
       </div>
-    `, { status:"Get Ready" });
+    `, { status:"Get Ready", rootClass:"is-simple-screen" });
     wireGameMenu();
     document.getElementById("introWheel")?.style.setProperty("--spin-deg", "1080deg");
     for (let i=0; i<3; i+=1){ await sleep(420); document.getElementById(`introWord${i}`)?.classList.add("is-in"); playBeep(i); }
@@ -523,7 +523,13 @@
 
   function renderMeetVerse(){
     state.screen = "meetVerse";
-    app.innerHTML = rootHtml(`<div class="wob-panel"><div class="wob-big-title">Let’s meet today’s verse!</div><button class="wob-btn no-zoom" id="meetVerseBtn" type="button">Meet the Verse</button></div>`, { status:"Today's Verse" });
+    app.innerHTML = rootHtml(`
+      <div class="wob-panel wob-meet-panel">
+        <button class="wob-title-button no-zoom" id="meetVerseBtn" type="button">
+          Let’s meet today’s verse!
+        </button>
+      </div>
+    `, { status:"Today's Verse", rootClass:"is-simple-screen" });
     wireGameMenu();
     document.getElementById("meetVerseBtn")?.addEventListener("click", async () => { await unlockAudio(); await playVerseIntro(); });
   }
@@ -533,16 +539,27 @@
     app.innerHTML = rootHtml(`
       <div class="wob-verse-wrap">
         ${verseBoardHtml({ allVisible:true })}
-        <button class="wob-btn no-zoom" id="skipVerseAudioBtn" type="button">Continue</button>
       </div>
-    `, { status:"Listen" });
+    `, { status:"Listen", rootClass:"is-board-screen is-listen-screen" });
     wireGameMenu(); fitVerseBoardSoon();
-    let continued = false;
-    const continueNow = () => { if (continued) return; continued = true; stopVerseAudio(); renderSpinScreen(); };
-    document.getElementById("skipVerseAudioBtn")?.addEventListener("click", continueNow);
     const played = await tryPlayVerseAudio();
-    await sleep(played ? estimateListenMs() + 450 : 1800);
-    continueNow();
+    await sleep(Math.min(played ? estimateListenMs() : 1800, 2600));
+    showVerseIntroSpinPrompt();
+  }
+
+  function showVerseIntroSpinPrompt(){
+    if (state.screen !== "verseIntro") return;
+    const card = document.querySelector(".wob-card");
+    if (!card || document.getElementById("verseIntroSpinPrompt")) return;
+    const btn = document.createElement("button");
+    btn.id = "verseIntroSpinPrompt";
+    btn.className = "wob-spin-float-button no-zoom";
+    btn.type = "button";
+    btn.setAttribute("aria-label", "Go spin the wheel");
+    btn.textContent = "🎡";
+    btn.addEventListener("click", () => { stopVerseAudio(); renderSpinScreen(); });
+    card.appendChild(btn);
+    playGood();
   }
 
   function referenceLine(){ return [state.verseRef || state.referenceMeta?.display || "", state.translation || ""].filter(Boolean).join(" • "); }
@@ -551,7 +568,7 @@
     const step = 360 / WHEEL_VALUES.length;
     return WHEEL_VALUES.map((seg, index) => {
       const angle = index * step + step / 2;
-      return `<div class="wob-wheel-label" style="transform:rotate(${angle}deg) translateX(-2%);">${escapeHtml(seg.label)}</div>`;
+      return `<div class="wob-wheel-label" style="transform:translate(-50%,-50%) rotate(${angle}deg) translateX(30%);">${escapeHtml(seg.label)}</div>`;
     }).join("");
   }
 
@@ -562,18 +579,21 @@
     app.innerHTML = rootHtml(`
       <div class="wob-panel wob-spin-layout">
         <div class="wob-big-title">Spin the Wheel!</div>
-        <div class="wob-wheel-shell"><div class="wob-wheel-pointer"></div><div class="wob-wheel" id="gameWheel"><div class="wob-wheel-segments">${wheelLabelsHtml()}</div></div></div>
-        <button class="wob-btn no-zoom" id="spinBtn" type="button">Spin</button>
+        <button class="wob-wheel-shell wob-spin-wheel-button no-zoom" id="spinWheelBtn" type="button" aria-label="Spin the wheel">
+          <div class="wob-wheel-pointer"></div>
+          <div class="wob-wheel" id="gameWheel"><div class="wob-wheel-segments">${wheelLabelsHtml()}</div></div>
+        </button>
+        <div class="wob-subtitle wob-tap-wheel-hint">Tap the wheel to spin</div>
       </div>
-    `, { status:"Spin" });
-    wireGameMenu(); document.getElementById("spinBtn")?.addEventListener("click", spinWheel);
+    `, { status:"Spin", rootClass:"is-spin-screen" });
+    wireGameMenu(); document.getElementById("spinWheelBtn")?.addEventListener("click", spinWheel);
   }
 
   async function spinWheel(){
-    const btn = document.getElementById("spinBtn"); if (btn) btn.disabled = true; await unlockAudio();
+    const btn = document.getElementById("spinWheelBtn"); if (btn) btn.disabled = true; await unlockAudio();
     const index = Math.floor(Math.random() * WHEEL_VALUES.length);
     const step = 360 / WHEEL_VALUES.length;
-    const degrees = 360 * 5 + (360 - (index * step + step / 2));
+    const degrees = 360 * 5 + (360 - (index * step + step / 2)) - 90;
     document.getElementById("gameWheel")?.style.setProperty("--spin-deg", `${degrees}deg`);
     for (let i=0; i<22; i+=1) setTimeout(() => playTone({ midi:50 + (i % 3) * 3, duration:.045, volume:.12, type:"square" }), i * 95);
     await sleep(3300);
@@ -650,7 +670,7 @@
         <div class="wob-reference">${escapeHtml(`${matches} ${letter}'s revealed • ${formatMoney(perLetter)} each`)}</div>
         <div class="wob-letter-burst">${escapeHtml(letter)}</div>
       </div>
-    `, { status:"Letters Reveal" });
+    `, { status:"Letters Reveal", rootClass:"is-board-screen" });
     wireGameMenu(); fitVerseBoardSoon(); playPop(0);
     const pops = Math.min(matches, 18);
     for (let i=0; i<pops; i+=1){ setTimeout(() => { playPop(i); showFloatingMoney(formatMoney(perLetter)); }, 560 + i * 95); }
@@ -780,9 +800,8 @@
     app.innerHTML = rootHtml(`
       <div class="wob-verse-wrap">
         ${verseBoardHtml({ challenge })}
-        <div class="wob-reference">Find the wiggling tile!</div>
       </div>
-    `, { status:"Find Tile" });
+    `, { status:"Find Tile", rootClass:"is-board-screen is-find-screen" });
     wireGameMenu(); fitVerseBoardSoon();
     const selector = challenge.type === "reference" ? `[data-ref-kind="${challenge.refKind}"]` : `[data-word-index="${challenge.wordIndex}"]`;
     document.querySelector(selector)?.addEventListener("click", () => renderChallenge(challenge));
@@ -824,32 +843,33 @@
   function drawChallenge(){
     const challenge = state.currentChallenge;
     const choiceClass = challenge.choices.length > 9 || challenge.inputKind === "numbers" ? "is-wide" : "";
+    const showPrompt = challenge.type === "reference";
     app.innerHTML = rootHtml(`
       <div class="wob-word-challenge-root">
         <div class="wob-big-title">${escapeHtml(challenge.title || "Challenge")}</div>
-        <div class="wob-challenge-prompt">${escapeHtml(challenge.prompt || "Build the answer.")}</div>
+        ${showPrompt ? `<div class="wob-challenge-prompt">${escapeHtml(challenge.prompt || "Build the answer.")}</div>` : ""}
         ${challenge.contextHtml ? `<div class="wob-context-card">${challenge.contextHtml}</div>` : ""}
         ${typedChallengeHtml(challenge, state.challengeInputIndex)}
         <div class="wob-choice-grid ${choiceClass}">
           ${challenge.choices.map(letter => `<button class="wob-choice-tile no-zoom ${state.challengeFlash === letter ? (state.challengeBad ? "is-bad" : "is-good") : ""}" data-choice="${escapeHtml(letter)}" type="button">${escapeHtml(letter)}</button>`).join("")}
         </div>
-        <div class="wob-bonus-line">Tap the answer in order</div>
+        <div class="wob-bonus-line">Tap the Letters in Order</div>
       </div>
-    `, { status:"Challenge" });
+    `, { status:"Challenge", rootClass:"is-challenge-screen" });
     wireGameMenu();
     document.querySelectorAll("[data-choice]").forEach(btn => btn.addEventListener("click", () => handleChallengeChoice(btn.dataset.choice || "")));
   }
 
   function typedChallengeHtml(challenge, filledCount){
     if (challenge.type === "reference" && challenge.refKind === "book"){
-      return `<div class="wob-challenge-word ${state.challengeBad ? "is-no" : ""}" id="challengeWord">
+      return `<div class="wob-challenge-word ${state.challengeBad ? "is-no" : ""}" id="challengeWord" style="--challenge-count:${Math.max(1, challenge.expected.length + (challenge.fixedPrefix ? 1 : 0))}">
         ${challenge.fixedPrefix ? `<span class="wob-ref-fixed">${escapeHtml(challenge.fixedPrefix)}</span>` : ""}
         ${lettersToTiles(challenge.displayText, challenge.expected, filledCount, challenge.color)}
       </div>`;
     }
     if (challenge.type === "reference"){
       let digitIndex = 0;
-      return `<div class="wob-challenge-word ${state.challengeBad ? "is-no" : ""}" id="challengeWord">
+      return `<div class="wob-challenge-word ${state.challengeBad ? "is-no" : ""}" id="challengeWord" style="--challenge-count:${Math.max(1, String(challenge.displayText || "").length)}">
         ${Array.from(String(challenge.displayText || "")).map(char => {
           if (/\d/.test(char)){
             const show = digitIndex < filledCount;
@@ -861,7 +881,7 @@
         }).join("")}
       </div>`;
     }
-    return `<div class="wob-challenge-word ${state.challengeBad ? "is-no" : ""}" id="challengeWord">${lettersToTiles(challenge.word.display, challenge.expected, filledCount, challenge.color)}</div>`;
+    return `<div class="wob-challenge-word ${state.challengeBad ? "is-no" : ""}" id="challengeWord" style="--challenge-count:${Math.max(1, challenge.expected.length)}">${lettersToTiles(challenge.word.display, challenge.expected, filledCount, challenge.color)}</div>`;
   }
 
   function lettersToTiles(displayText, expected, filledCount, color){
@@ -896,7 +916,15 @@
       if (challenge.type === "reference") state.refChallengeDone[challenge.refKind] = true;
       const bonus = Math.max(0, Number(challenge.bonus) || 500);
       state.baseCash += bonus; updateHud(); drawChallenge(); await sleep(420);
-      app.innerHTML = rootHtml(`<div class="wob-panel"><div class="wob-big-title">Nice!</div><div class="wob-subtitle">Challenge Bonus: ${escapeHtml(formatMoney(bonus))}</div><button class="wob-btn no-zoom" id="nextSpinBtn" type="button">${state.revealedLetters.size >= state.uniqueLetters.length ? "Final Round" : "Spin Again"}</button></div>`, { status:"Bonus" });
+      app.innerHTML = rootHtml(`
+        <div class="wob-panel wob-bonus-panel">
+          <div class="wob-bonus-center">
+            <div class="wob-big-title">Nice!</div>
+            <div class="wob-subtitle">Challenge Bonus: ${escapeHtml(formatMoney(bonus))}</div>
+          </div>
+          <button class="wob-wheel-next-btn no-zoom" id="nextSpinBtn" type="button" aria-label="${state.revealedLetters.size >= state.uniqueLetters.length ? "Final Round" : "Spin Again"}">${state.revealedLetters.size >= state.uniqueLetters.length ? "🏁" : "🎡"}</button>
+        </div>
+      `, { status:"Bonus", rootClass:"is-bonus-screen" });
       wireGameMenu();
       document.getElementById("nextSpinBtn")?.addEventListener("click", () => { if (state.revealedLetters.size >= state.uniqueLetters.length) renderFinalIntro(); else renderSpinScreen(); });
       return;
@@ -984,7 +1012,15 @@
 
   function renderFinalIntro(){
     clearTimers(); state.screen = "finalIntro";
-    app.innerHTML = rootHtml(`<div class="wob-panel"><div class="wob-big-title">FINAL ROUND!</div><div class="wob-subtitle">One minute to fill in as many missing words as possible.</div><button class="wob-btn no-zoom" id="startFinalBtn" type="button">Start Final Round</button></div>`, { status:"Final Round" });
+    app.innerHTML = rootHtml(`
+      <div class="wob-panel wob-final-intro-panel">
+        <div class="wob-final-intro-center">
+          <div class="wob-big-title">FINAL ROUND!</div>
+          <div class="wob-subtitle">One minute to fill in as many missing words as possible.</div>
+        </div>
+        <button class="wob-btn no-zoom" id="startFinalBtn" type="button">Start Final Round</button>
+      </div>
+    `, { status:"Final Round", rootClass:"is-final-intro-screen" });
     wireGameMenu(); document.getElementById("startFinalBtn")?.addEventListener("click", startFinalRound);
   }
 
@@ -1005,7 +1041,7 @@
         <div class="wob-final-hud"><div class="wob-final-timer"><span id="finalTimer">${escapeHtml(String(state.finalTimeLeft))}</span>s</div><div class="wob-subtitle">Tap words and rebuild them!</div></div>
         ${verseBoardHtml({ finalMode:true })}
       </div>
-    `, { status:"Final Round" });
+    `, { status:"Final Round", rootClass:"is-board-screen is-final-round-screen" });
     wireGameMenu(); fitVerseBoardSoon();
     document.querySelectorAll("[data-word-index]").forEach(btn => btn.addEventListener("click", () => {
       const index = Number(btn.dataset.wordIndex); if (state.finalSolvedWordIndices.has(index)) return; openFinalWord(index);
@@ -1024,14 +1060,13 @@
     const targetCount = Math.max(9, Math.min(24, uniqueCorrect.length + 6));
     if (!active.choices) active.choices = makeChoiceLetters(uniqueCorrect, state.uniqueLetters, targetCount);
     const modal = document.createElement("div"); modal.className = "wob-final-modal"; modal.id = "wobFinalModal";
-    modal.innerHTML = `<div class="wob-final-modal-panel"><button class="wob-btn wob-btn-secondary wob-close-small no-zoom" id="finalCloseBtn" type="button">Close</button><div class="wob-big-title">Type the Word</div>${finalWordHtml(active)}<div class="wob-choice-grid is-wide">${active.choices.map(letter => `<button class="wob-choice-tile no-zoom ${state.finalFlash === letter ? (state.finalBad ? "is-bad" : "is-good") : ""}" data-final-choice="${escapeHtml(letter)}" type="button">${escapeHtml(letter)}</button>`).join("")}</div><div class="wob-bonus-line">Streak: ${escapeHtml(String(state.finalLetterStreak))} • Next: ${escapeHtml(formatMoney((state.finalLetterStreak + 1) * 100))}</div></div>`;
+    modal.innerHTML = `<div class="wob-final-modal-panel"><div class="wob-big-title">Type the Word</div>${finalWordHtml(active)}<div class="wob-choice-grid is-wide">${active.choices.map(letter => `<button class="wob-choice-tile no-zoom ${state.finalFlash === letter ? (state.finalBad ? "is-bad" : "is-good") : ""}" data-final-choice="${escapeHtml(letter)}" type="button">${escapeHtml(letter)}</button>`).join("")}</div><div class="wob-bonus-line">Streak: ${escapeHtml(String(state.finalLetterStreak))} • Next: ${escapeHtml(formatMoney((state.finalLetterStreak + 1) * 100))}</div></div>`;
     document.getElementById("wobFinalModal")?.remove(); document.querySelector(".wob-card")?.appendChild(modal);
-    document.getElementById("finalCloseBtn")?.addEventListener("click", () => modal.remove());
     modal.querySelectorAll("[data-final-choice]").forEach(btn => btn.addEventListener("click", () => handleFinalChoice(btn.dataset.finalChoice || "")));
   }
 
   function finalWordHtml(active){
-    return `<div class="wob-challenge-word ${state.finalBad ? "is-no" : ""}" id="finalWordDisplay">${lettersToTiles(active.word.display, active.expected, state.finalInputIndex, active.word.color)}</div>`;
+    return `<div class="wob-challenge-word ${state.finalBad ? "is-no" : ""}" id="finalWordDisplay" style="--challenge-count:${Math.max(1, active.expected.length)}">${lettersToTiles(active.word.display, active.expected, state.finalInputIndex, active.word.color)}</div>`;
   }
 
   async function handleFinalChoice(letter){
@@ -1055,7 +1090,16 @@
   async function renderMoneyTotalScreen(){
     clearTimers(); state.screen = "moneyTotal";
     const normalTotal = state.baseCash + state.finalCash;
-    app.innerHTML = rootHtml(`<div class="wob-panel"><div class="wob-big-title">Money Total</div><div class="wob-money-total" id="moneyCount">$0</div><div class="wob-prize-list" id="prizeList"></div><button class="wob-btn no-zoom" id="completeBtn" type="button" style="display:none">Complete</button></div>`, { status:"Total" });
+    app.innerHTML = rootHtml(`
+      <div class="wob-panel wob-money-panel">
+        <div class="wob-money-center">
+          <div class="wob-big-title">Money Total</div>
+          <div class="wob-money-total" id="moneyCount">$0</div>
+          <div class="wob-prize-list" id="prizeList"></div>
+        </div>
+        <button class="wob-btn no-zoom" id="completeBtn" type="button" style="display:none">Complete</button>
+      </div>
+    `, { status:"Total", rootClass:"is-money-screen" });
     wireGameMenu(); await animateMoneyCount(document.getElementById("moneyCount"), 0, normalTotal, 1400);
     const prizeList = document.getElementById("prizeList"); let running = normalTotal;
     for (const prize of state.prizeEarnings){
