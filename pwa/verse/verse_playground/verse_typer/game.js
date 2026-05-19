@@ -64,6 +64,8 @@
   const AUDIO_DEBUG = false;
   const SILENCE_AUDIO_FILE = "../../verse_audio/silence.mp3";
   const COCOON_IMAGE_FILE = "./verse_typer_images/cocoon.png";
+  const BUTTERFLY_IMAGE_FILE = "./verse_typer_images/butterfly.svg";
+  const BUTTERFLY_FLAPS_TO_FINISH = 5;
 
   // TTS chunks average around -20 dBFS active speech.
   // These Web Audio levels are intentionally below exact RMS match,
@@ -121,6 +123,9 @@
     phaseLabel: "",
     menuOpen: false,
     completed: false,
+    butterflySvg: "",
+    butterflyColors: null,
+    butterflyFlaps: 0,
     sleepIds: []
   };
 
@@ -689,6 +694,9 @@
     state.keyFlash = "";
     state.keyFlashBad = false;
     state.completed = false;
+    state.butterflySvg = "";
+    state.butterflyColors = null;
+    state.butterflyFlaps = 0;
   }
 
   function renderIntro(){
@@ -1115,11 +1123,165 @@
     setTimeout(() => playTone({ midi: 72, duration: 0.18, volume: 0.40, type: "triangle" }), 248);
   }
 
+  function playFlapSound() {
+    const base = 76 + (state.butterflyFlaps % 3) * 2;
+    playTone({ midi: base, duration: 0.09, volume: 0.28, type: "triangle" });
+    setTimeout(() => playTone({ midi: base + 7, duration: 0.11, volume: 0.24, type: "triangle" }), 52);
+  }
+
+  function playButterflyFlyAwaySound() {
+    playTone({ midi: 72, duration: 0.08, volume: 0.28, type: "triangle" });
+    setTimeout(() => playTone({ midi: 76, duration: 0.08, volume: 0.30, type: "triangle" }), 70);
+    setTimeout(() => playTone({ midi: 79, duration: 0.10, volume: 0.32, type: "triangle" }), 140);
+    setTimeout(() => playTone({ midi: 84, duration: 0.18, volume: 0.34, type: "triangle" }), 220);
+  }
+
   function clearKeyboardForFinale() {
     const wrap = document.getElementById("vtKeyboardWrap");
     if (!wrap) return;
 
     wrap.innerHTML = `<div class="vt-finale-keyboard-placeholder" aria-hidden="true"></div>`;
+  }
+
+  function randomChoice(items) {
+    return items[Math.floor(Math.random() * items.length)];
+  }
+
+  function randomColorExcept(excluded = []) {
+    const colors = [
+      "#ff5a51",
+      "#ffa351",
+      "#ffc751",
+      "#a7cb6f",
+      "#40b9c5",
+      "#7f66c6"
+    ];
+
+    const blocked = new Set(excluded.map(color => String(color).toLowerCase()));
+    const available = colors.filter(color => !blocked.has(color.toLowerCase()));
+
+    return randomChoice(available.length ? available : colors);
+  }
+
+  function makeButterflyColors() {
+    const wingTop = randomColorExcept();
+    const wingBottom = randomColorExcept();
+
+    return {
+      wingTop,
+      wingBottom,
+      bottomDecoration: randomColorExcept([wingBottom]),
+      bigTopDecoration: randomColorExcept([wingTop]),
+      smallTopDecoration: randomColorExcept([wingTop]),
+      bodyColor: randomColorExcept([wingTop, wingBottom]),
+      bodyDarkFirst: Math.random() < 0.5
+    };
+  }
+
+  function setSvgPartColor(svgDoc, id, color) {
+    const el = svgDoc.getElementById(id);
+    if (!el) return;
+
+    el.setAttribute("fill", color);
+
+    const style = el.getAttribute("style") || "";
+    const nextStyle = style
+      .replace(/fill\s*:\s*[^;]+;?/gi, "")
+      .replace(/fill-opacity\s*:\s*[^;]+;?/gi, "")
+      .trim();
+
+    el.setAttribute("style", `${nextStyle ? `${nextStyle};` : ""}fill:${color};fill-opacity:1;`);
+  }
+
+  function colorButterflySvg(svgText) {
+    const parser = new DOMParser();
+    const svgDoc = parser.parseFromString(svgText, "image/svg+xml");
+    const svg = svgDoc.querySelector("svg");
+
+    if (!svg) return svgText;
+
+    const colors = makeButterflyColors();
+    state.butterflyColors = colors;
+
+    svg.classList.add("vt-butterfly-svg");
+    svg.setAttribute("aria-hidden", "true");
+    svg.setAttribute("focusable", "false");
+
+    setSvgPartColor(svgDoc, "antenna", "#333333");
+    setSvgPartColor(svgDoc, "head", "#ffc751");
+    setSvgPartColor(svgDoc, "eye-white", "#ffffff");
+    setSvgPartColor(svgDoc, "eye-pupil", "#333333");
+
+    setSvgPartColor(svgDoc, "wing-top-left", colors.wingTop);
+    setSvgPartColor(svgDoc, "wing-top-right", colors.wingTop);
+
+    setSvgPartColor(svgDoc, "wing-bottom-left", colors.wingBottom);
+    setSvgPartColor(svgDoc, "wing-bottom-right", colors.wingBottom);
+
+    setSvgPartColor(svgDoc, "wing-decoration-bottom-left", colors.bottomDecoration);
+    setSvgPartColor(svgDoc, "wing-decoration-bottom-right", colors.bottomDecoration);
+
+    setSvgPartColor(svgDoc, "wing-decoration-big-top-left", colors.bigTopDecoration);
+    setSvgPartColor(svgDoc, "wing-decoration-big-top-right", colors.bigTopDecoration);
+
+    setSvgPartColor(svgDoc, "wing-decoration-small-top-left", colors.smallTopDecoration);
+    setSvgPartColor(svgDoc, "wing-decoration-small-top-right", colors.smallTopDecoration);
+
+    const bodyColor1 = colors.bodyDarkFirst ? "#333333" : colors.bodyColor;
+    const bodyColor2 = colors.bodyDarkFirst ? colors.bodyColor : "#333333";
+
+    setSvgPartColor(svgDoc, "body-segment-1", bodyColor1);
+    setSvgPartColor(svgDoc, "body-segment-2", bodyColor2);
+
+    return new XMLSerializer().serializeToString(svg);
+  }
+
+  async function loadButterflySvg() {
+    if (state.butterflySvg) return state.butterflySvg;
+
+    try {
+      const res = await fetch(BUTTERFLY_IMAGE_FILE, { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+      const rawSvg = await res.text();
+      state.butterflySvg = colorButterflySvg(rawSvg);
+      return state.butterflySvg;
+    } catch (err) {
+      console.warn("Verse Typer could not load butterfly SVG", err);
+
+      state.butterflySvg = `
+        <svg class="vt-butterfly-svg" viewBox="0 0 220 180" aria-hidden="true" focusable="false">
+          <ellipse cx="78" cy="82" rx="58" ry="42" fill="#ff5a51"/>
+          <ellipse cx="142" cy="82" rx="58" ry="42" fill="#40b9c5"/>
+          <ellipse cx="110" cy="92" rx="18" ry="54" fill="#333333"/>
+          <circle cx="110" cy="42" r="18" fill="#ffc751"/>
+        </svg>
+      `;
+      return state.butterflySvg;
+    }
+  }
+
+  function renderFlapButton() {
+    const wrap = document.getElementById("vtKeyboardWrap");
+    if (!wrap) return;
+
+    wrap.innerHTML = `
+      <div class="vt-flap-wrap">
+        <button class="vt-flap-button no-zoom" id="vtFlapButton" type="button">
+          Flap!
+        </button>
+      </div>
+    `;
+
+    const btn = document.getElementById("vtFlapButton");
+    if (btn) {
+      btn.onclick = () => {
+        createChunkAudioElement();
+        primeHtmlAudio();
+        unlockAudio();
+        flapButterfly();
+      };
+    }
   }
 
   async function startCocoonPhase() {
@@ -1178,8 +1340,79 @@
     }, 150);
 
     setTimeout(() => {
+      renderButterflyScene();
+    }, 760);
+  }
+
+  async function renderButterflyScene() {
+    state.currentItem = null;
+    state.acceptingInput = false;
+    state.transitionLocked = true;
+    state.butterflyFlaps = 0;
+    state.phaseLabel = "Butterfly";
+    renderHud();
+
+    const main = document.getElementById("vtMain");
+    if (!main) return;
+
+    const svg = await loadButterflySvg();
+
+    main.innerHTML = `
+      <div class="vt-butterfly-scene" id="vtButterflyScene">
+        <div class="vt-butterfly-stage" id="vtButterflyStage">
+          ${svg}
+        </div>
+      </div>
+    `;
+
+    renderFlapButton();
+  }
+
+  function flapButterfly() {
+    const scene = document.getElementById("vtButterflyScene");
+    const butterfly = document.querySelector(".vt-butterfly-svg");
+    const btn = document.getElementById("vtFlapButton");
+
+    if (!scene || !butterfly || scene.classList.contains("is-flying-away")) return;
+
+    state.butterflyFlaps += 1;
+    playFlapSound();
+
+    butterfly.classList.remove("is-flapping");
+    void butterfly.getBoundingClientRect();
+    butterfly.classList.add("is-flapping");
+
+    if (btn) {
+      const remaining = Math.max(0, BUTTERFLY_FLAPS_TO_FINISH - state.butterflyFlaps);
+      btn.textContent = remaining > 0 ? "Flap!" : "Fly!";
+    }
+
+    if (state.butterflyFlaps >= BUTTERFLY_FLAPS_TO_FINISH) {
+      setTimeout(() => flyButterflyAway(), 260);
+    }
+  }
+
+  function flyButterflyAway() {
+    const scene = document.getElementById("vtButterflyScene");
+    const butterfly = document.querySelector(".vt-butterfly-svg");
+    const btn = document.getElementById("vtFlapButton");
+
+    if (!scene || !butterfly || scene.classList.contains("is-flying-away")) return;
+
+    scene.classList.add("is-flying-away");
+    butterfly.classList.remove("is-flapping");
+    butterfly.classList.add("is-flying-away");
+
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = "Whee!";
+    }
+
+    playButterflyFlyAwaySound();
+
+    setTimeout(() => {
       finishRun();
-    }, 940);
+    }, 1180);
   }
 
   function setCurrentItem(item){
