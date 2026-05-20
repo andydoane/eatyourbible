@@ -820,33 +820,38 @@
     `;
     card.appendChild(popup);
 
-    await sleep(160);
+    await sleep(520);
 
     const explosions = Math.min(5, 1 + Math.floor(total / 5000));
+    const explosionMs = 950;
+    const pauseMs = 260;
+
     for (let i=0; i<explosions; i+=1){
-      setTimeout(() => spawnDollarExplosion(card, i), i * 210);
+      spawnDollarExplosion(card, i, explosionMs);
+      playPrize();
+      await sleep(explosionMs + pauseMs);
     }
 
-    playPrize();
-    await sleep(900 + explosions * 210);
+    popup.classList.add("is-leaving");
+    await sleep(360);
     popup.remove();
   }
 
-  function spawnDollarExplosion(card, burstIndex = 0){
+  function spawnDollarExplosion(card, burstIndex = 0, durationMs = 950) {
     if (!card) return;
 
-    const count = 18;
-    const baseAngle = -90 + burstIndex * 18 + Math.random() * 18;
+    const count = 20;
+    const baseAngle = -90 + burstIndex * 19;
     const centerX = card.clientWidth / 2;
     const centerY = card.clientHeight / 2;
 
-    for (let i=0; i<count; i+=1){
-      const angle = baseAngle + (360 / count) * i + (Math.random() * 7 - 3.5);
+    for (let i = 0; i < count; i += 1) {
+      const angle = baseAngle + (360 / count) * i + (Math.random() * 4 - 2);
       const radians = angle * Math.PI / 180;
-      const distance = 120 + (i % 3) * 34 + burstIndex * 10 + Math.random() * 18;
+      const distance = 130 + (i % 4) * 26 + burstIndex * 8;
       const dx = Math.cos(radians) * distance;
       const dy = Math.sin(radians) * distance;
-      const rot = angle + 90 + (Math.random() * 50 - 25);
+      const rot = angle + 90 + (Math.random() * 28 - 14);
       const scale = 0.72 + (i % 4) * 0.08;
 
       const bill = document.createElement("img");
@@ -860,9 +865,9 @@
       bill.style.setProperty("--dy", `${dy}px`);
       bill.style.setProperty("--rot", `${rot}deg`);
       bill.style.setProperty("--scale", String(scale));
-      bill.style.setProperty("--delay", `${i * 10}ms`);
+      bill.style.setProperty("--duration", `${durationMs}ms`);
       card.appendChild(bill);
-      setTimeout(() => bill.remove(), 1150);
+      setTimeout(() => bill.remove(), durationMs);
     }
   }
 

@@ -1438,7 +1438,7 @@ button.wob-ref-group {
     inset 0 0 0 4px rgba(255, 255, 255, .55);
   text-align: center;
   pointer-events: none;
-  animation: wobRoundTotalPop 900ms cubic-bezier(.18, 1.35, .3, 1) both;
+  animation: wobRoundTotalPopIn 360ms cubic-bezier(.18, 1.35, .3, 1) both;
 }
 
 .wob-round-total-label {
@@ -1455,23 +1455,36 @@ button.wob-ref-group {
   color: #2f7a32;
 }
 
-@keyframes wobRoundTotalPop {
+.wob-round-total-pop.is-leaving {
+  animation: wobRoundTotalPopOut 340ms ease-in both;
+}
+
+@keyframes wobRoundTotalPopIn {
   0% {
     opacity: 0;
     transform: translate(-50%, -50%) scale(.45) rotate(-8deg);
   }
 
-  18% {
+  70% {
     opacity: 1;
-  }
-
-  55% {
     transform: translate(-50%, -50%) scale(1.08) rotate(3deg);
   }
 
   100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(0);
+  }
+}
+
+@keyframes wobRoundTotalPopOut {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(0);
+  }
+
+  100% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(.94) rotate(0);
+    transform: translate(-50%, -50%) scale(.82) rotate(0);
   }
 }
 
@@ -1484,7 +1497,7 @@ button.wob-ref-group {
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
-  animation: wobDollarFirework 980ms cubic-bezier(.13, .75, .28, 1) var(--delay, 0ms) both;
+  animation: wobDollarFirework var(--duration, 950ms) cubic-bezier(.13, .75, .28, 1) both;
 }
 
 @keyframes wobDollarFirework {
