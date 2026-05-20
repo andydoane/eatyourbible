@@ -68,6 +68,10 @@
     { emoji:"🏆", name:"Golden Trophy", value:3000 }
   ];
 
+  const NORMAL_ROUND_MIN_SELECTED = 6;
+  const NORMAL_ROUND_UNIQUE_RATIO = 0.55;
+  const FINAL_ROUND_HIDE_RATIO = 0.5;
+
   let muted = false;
   let audioCtx = null;
   let masterGain = null;
@@ -110,6 +114,8 @@
     finalStartedAt:0,
     finalTimeLeft:60,
     finalSolvedWordIndices:new Set(),
+    finalHiddenTileKeys:new Set(),
+    finalFilledTileKeys:new Set(),
     finalActiveWord:null,
     finalInputIndex:0,
     finalLetterStreak:0,
@@ -155,7 +161,23 @@
     return `$${Math.max(0, Math.round(Number(value) || 0)).toLocaleString()}`;
   }
 
-  function totalCash(){ return state.baseCash + state.prizeCash + state.finalCash; }
+  function totalCash() { return state.baseCash + state.prizeCash + state.finalCash; }
+
+  function normalRoundTarget() {
+    const total = state.uniqueLetters.length || 0;
+    if (!total) return NORMAL_ROUND_MIN_SELECTED;
+    return Math.min(
+      total,
+      Math.max(
+        NORMAL_ROUND_MIN_SELECTED,
+        Math.ceil(total * NORMAL_ROUND_UNIQUE_RATIO)
+      )
+    );
+  }
+
+  function normalRoundComplete() {
+    return state.uniqueLetters.length > 0 && state.revealedLetters.size >= normalRoundTarget();
+  }
 
   function normalizeLetters(value){
     return String(value || "")
@@ -572,7 +594,7 @@
     state.selectedSpin = null; state.lastSelectedLetter = ""; state.turnCount = 0;
     state.baseCash = 0; state.prizeCash = 0; state.finalCash = 0; state.prizeEarnings = [];
     state.currentChallenge = null; state.challengeInputIndex = 0;
-    state.finalSolvedWordIndices = new Set(); state.finalActiveWord = null; state.finalInputIndex = 0; state.finalLetterStreak = 0;
+    state.finalSolvedWordIndices = new Set(); state.finalHiddenTileKeys = new Set(); state.finalFilledTileKeys = new Set(); state.finalActiveWord = null; state.finalInputIndex = 0; state.finalLetterStreak = 0;
     state.completed = false;
   }
 
@@ -650,7 +672,7 @@
 
   function renderSpinScreen(){
     clearTimers(); state.screen = "spin";
-    if (state.uniqueLetters.length && state.revealedLetters.size >= state.uniqueLetters.length){ renderFinalIntro(); return; }
+    if (normalRoundComplete()){ renderFinalIntro(); return; }
     state.selectedSpin = null;
     app.innerHTML = rootHtml(`
       <div class="wob-panel wob-spin-layout">
@@ -820,7 +842,7 @@
 
     await showRoundTotalPopup(earnings);
 
-    if (state.uniqueLetters.length && state.revealedLetters.size >= state.uniqueLetters.length){ renderFinalIntro(); return; }
+    if (normalRoundComplete()){ renderFinalIntro(); return; }
     const challenge = chooseChallengeTarget();
     if (!challenge){ renderSpinScreen(); return; }
     renderWigglingVerse(challenge);
@@ -1078,7 +1100,38 @@
     };
   }
 
+  function tileKeyFor(wordIndex, letterIndex){
+    return `${wordIndex}-${letterIndex}`;
+  }
+
   function revealedCountForWord(word){ return word.letters.filter(item => item.isLetter && state.revealedLetters.has(item.normalized)).length; }
+
+  function finalMissingItemsForWord(word){
+    if (!word) return [];
+    return word.letters
+      .filter(item => item.isLetter)
+      .filter(item => {
+        const key = tileKeyFor(word.index, item.index);
+        return state.finalHiddenTileKeys.has(key) && !state.finalFilledTileKeys.has(key);
+      });
+  }
+
+  function buildFinalHiddenTiles(){
+    const keys = [];
+    for (const word of state.words){
+      for (const item of word.letters){
+        if (!item.isLetter) continue;
+        keys.push(tileKeyFor(word.index, item.index));
+      }
+    }
+
+    const shuffled = shuffle(keys);
+    const hideCount = Math.floor(shuffled.length * FINAL_ROUND_HIDE_RATIO);
+
+    state.finalHiddenTileKeys = new Set(shuffled.slice(0, hideCount));
+    state.finalFilledTileKeys = new Set();
+    state.finalSolvedWordIndices = new Set();
+  }
   function alphaCountForWord(word){ return word.letters.filter(item => item.isLetter).length; }
 
   function chooseChallengeTarget(){
@@ -1388,7 +1441,7 @@
 
       await showChallengeBonusPopup(bonus);
 
-      if (state.revealedLetters.size >= state.uniqueLetters.length) renderFinalIntro();
+      if (normalRoundComplete()) renderFinalIntro();
       else renderSpinScreen();
 
       return;
@@ -1405,15 +1458,18 @@
             if (token.kind === "punct") return `<span class="wob-punct">${escapeHtml(token.text)}</span>`;
             const word = state.words[token.wordIndex]; if (!word) return "";
             const isChallenge = challenge?.type === "word" && challenge.wordIndex === word.index;
-            const solved = state.finalSolvedWordIndices.has(word.index);
-            const tag = isChallenge || finalMode ? "button" : "span";
+            const finalMissingCount = finalMode ? finalMissingItemsForWord(word).length : 0;
+            const solved = finalMode ? state.finalSolvedWordIndices.has(word.index) : false;
+            const tag = isChallenge || (finalMode && finalMissingCount > 0) ? "button" : "span";
             const attrs = tag === "button" ? `type="button" data-word-index="${word.index}"` : `data-word-index="${word.index}"`;
             return `<${tag} class="wob-word ${isChallenge ? "is-wiggling" : ""} ${solved ? "is-solved" : ""}" ${attrs} style="--word-color:${word.color}">
               ${word.letters.map(item => {
                 if (!item.isLetter) return `<span class="wob-punct">${escapeHtml(item.char)}</span>`;
-                const hidden = finalMode ? true : (!allVisible && !state.revealedLetters.has(item.normalized));
+                const tileKey = tileKeyFor(word.index, item.index);
+                const hidden = finalMode
+                  ? (state.finalHiddenTileKeys.has(tileKey) && !state.finalFilledTileKeys.has(tileKey))
+                  : (!allVisible && !state.revealedLetters.has(item.normalized));
                 const revealing = revealingLetter && item.normalized === revealingLetter ? "is-revealing" : "";
-                const tileKey = `${word.index}-${item.index}`;
                 const animating = animatingLetter && item.normalized === animatingLetter ? "is-pending-reveal" : "";
                 const wiggleTile = isChallenge ? "is-wiggle-tile" : "";
                 return `<span class="wob-tile ${hidden ? "is-hidden" : ""} ${revealing} ${animating} ${wiggleTile}" data-tile-key="${escapeHtml(tileKey)}" data-normalized="${escapeHtml(item.normalized)}" style="--tile-bg:${word.color};--wiggle-delay:${item.index * 70}ms">${hidden ? "" : escapeHtml(item.normalized)}</span>`;
@@ -1483,7 +1539,7 @@
       <div class="wob-panel wob-final-intro-panel">
         <div class="wob-final-intro-center">
           <div class="wob-big-title">FINAL ROUND!</div>
-          <div class="wob-subtitle">One minute to fill in as many missing words as possible.</div>
+          <div class="wob-subtitle">One minute to fill in as many missing letters as possible.</div>
         </div>
         <button class="wob-btn no-zoom" id="startFinalBtn" type="button">Start Final Round</button>
       </div>
@@ -1492,7 +1548,13 @@
   }
 
   function startFinalRound(){
-    state.screen = "finalRound"; state.finalStartedAt = Date.now(); state.finalTimeLeft = 60; state.finalSolvedWordIndices = new Set(); state.finalActiveWord = null; state.finalInputIndex = 0; state.finalLetterStreak = 0;
+    state.screen = "finalRound";
+    state.finalStartedAt = Date.now();
+    state.finalTimeLeft = 60;
+    state.finalActiveWord = null;
+    state.finalInputIndex = 0;
+    state.finalLetterStreak = 0;
+    buildFinalHiddenTiles();
     renderFinalRound();
     finalTimerId = setInterval(() => {
       const elapsed = Math.floor((Date.now() - state.finalStartedAt) / 1000);
@@ -1505,35 +1567,78 @@
   function renderFinalRound(){
     app.innerHTML = rootHtml(`
       <div class="wob-verse-wrap">
-        <div class="wob-final-hud"><div class="wob-final-timer"><span id="finalTimer">${escapeHtml(String(state.finalTimeLeft))}</span>s</div><div class="wob-subtitle">Tap words and rebuild them!</div></div>
+        <div class="wob-final-hud"><div class="wob-final-timer"><span id="finalTimer">${escapeHtml(String(state.finalTimeLeft))}</span>s</div><div class="wob-subtitle">Tap words with missing letters!</div></div>
         ${verseBoardHtml({ finalMode:true })}
       </div>
     `, { status:"Final Round", rootClass:"is-board-screen is-final-round-screen" });
     wireGameMenu(); fitVerseBoardSoon();
-    document.querySelectorAll("[data-word-index]").forEach(btn => btn.addEventListener("click", () => {
+    document.querySelectorAll("button[data-word-index]").forEach(btn => btn.addEventListener("click", () => {
       const index = Number(btn.dataset.wordIndex); if (state.finalSolvedWordIndices.has(index)) return; openFinalWord(index);
     }));
   }
 
   function openFinalWord(wordIndex){
-    const word = state.words[wordIndex]; if (!word || state.finalTimeLeft <= 0) return;
-    state.finalActiveWord = { wordIndex, word, expected:normalizeLetters(word.display).split("") };
-    state.finalInputIndex = 0; state.finalLetterStreak = 0; state.finalFlash = ""; state.finalBad = false; renderFinalModal();
+    const word = state.words[wordIndex];
+    if (!word || state.finalTimeLeft <= 0) return;
+
+    const missingItems = finalMissingItemsForWord(word);
+    if (!missingItems.length) return;
+
+    state.finalActiveWord = {
+      wordIndex,
+      word,
+      missingItems,
+      expected:missingItems.map(item => item.normalized)
+    };
+    state.finalInputIndex = 0;
+    state.finalLetterStreak = 0;
+    state.finalFlash = "";
+    state.finalBad = false;
+    renderFinalModal();
   }
 
   function renderFinalModal(){
     const active = state.finalActiveWord; if (!active) return;
     const uniqueCorrect = Array.from(new Set(active.expected));
-    const targetCount = Math.max(9, Math.min(24, uniqueCorrect.length + 6));
+    const targetCount = Math.max(10, uniqueCorrect.length);
     if (!active.choices) active.choices = makeChoiceLetters(uniqueCorrect, state.uniqueLetters, targetCount);
-    const modal = document.createElement("div"); modal.className = "wob-final-modal"; modal.id = "wobFinalModal";
-    modal.innerHTML = `<div class="wob-final-modal-panel"><div class="wob-big-title">Type the Word</div>${finalWordHtml(active)}<div class="wob-choice-grid is-wide">${active.choices.map(letter => `<button class="wob-choice-tile no-zoom ${state.finalFlash === letter ? (state.finalBad ? "is-bad" : "is-good") : ""}" data-final-choice="${escapeHtml(letter)}" type="button">${escapeHtml(letter)}</button>`).join("")}</div><div class="wob-bonus-line">Streak: ${escapeHtml(String(state.finalLetterStreak))} • Next: ${escapeHtml(formatMoney((state.finalLetterStreak + 1) * 100))}</div></div>`;
-    document.getElementById("wobFinalModal")?.remove(); document.querySelector(".wob-card")?.appendChild(modal);
+
+    const modal = document.createElement("div");
+    modal.className = "wob-final-modal";
+    modal.id = "wobFinalModal";
+    modal.innerHTML = `<div class="wob-final-modal-panel"><div class="wob-big-title">Fill the Blanks</div>${finalWordHtml(active)}<div class="wob-choice-grid is-rowed is-wide">${choiceRowsHtml(active.choices, state.finalFlash, state.finalBad, "final-choice")}</div><div class="wob-bonus-line">Streak: ${escapeHtml(String(state.finalLetterStreak))} • Next: ${escapeHtml(formatMoney((state.finalLetterStreak + 1) * 100))}</div></div>`;
+
+    document.getElementById("wobFinalModal")?.remove();
+    document.querySelector(".wob-card")?.appendChild(modal);
     modal.querySelectorAll("[data-final-choice]").forEach(btn => btn.addEventListener("click", () => handleFinalChoice(btn.dataset.finalChoice || "")));
   }
 
   function finalWordHtml(active){
-    return `<div class="wob-challenge-word ${state.finalBad ? "is-no" : ""}" id="finalWordDisplay" style="--challenge-count:${Math.max(1, active.expected.length)}">${lettersToTiles(active.word.display, active.expected, state.finalInputIndex, active.word.color)}</div>`;
+    const missingIndexByLetterIndex = new Map();
+    active.missingItems.forEach((item, index) => {
+      missingIndexByLetterIndex.set(item.index, index);
+    });
+
+    let alphaIndex = 0;
+    const html = Array.from(String(active.word.display || "")).map(char => {
+      const item = active.word.letters[alphaIndex];
+
+      if (/[A-Za-z]/.test(char)){
+        const missingIndex = item ? missingIndexByLetterIndex.get(item.index) : undefined;
+        const isMissing = missingIndex !== undefined;
+        const show = !isMissing || missingIndex < state.finalInputIndex;
+        const text = show && item ? item.normalized : "";
+
+        alphaIndex += 1;
+
+        return `<span class="wob-tile ${show ? "" : "is-hidden"}" style="--tile-bg:${active.word.color}">${escapeHtml(text)}</span>`;
+      }
+
+      if (/\s/.test(char)) return `<span class="wob-space"> </span>`;
+      return `<span class="wob-punct">${escapeHtml(char)}</span>`;
+    }).join("");
+
+    return `<div class="wob-challenge-word ${state.finalBad ? "is-no" : ""}" id="finalWordDisplay" style="--challenge-count:${Math.max(1, active.word.letters.length)}">${html}</div>`;
   }
 
   async function handleFinalChoice(letter){
@@ -1544,7 +1649,14 @@
     }
     state.finalLetterStreak += 1; const earned = state.finalLetterStreak * 100; state.finalCash += earned; state.finalInputIndex += 1; state.finalFlash = choice; state.finalBad = false; updateHud(); playGood();
     if (state.finalInputIndex >= active.expected.length){
-      state.finalSolvedWordIndices.add(active.wordIndex); document.getElementById("wobFinalModal")?.remove(); state.finalActiveWord = null; renderFinalRound(); return;
+      for (const item of active.missingItems){
+        state.finalFilledTileKeys.add(tileKeyFor(active.word.index, item.index));
+      }
+      state.finalSolvedWordIndices.add(active.wordIndex);
+      document.getElementById("wobFinalModal")?.remove();
+      state.finalActiveWord = null;
+      renderFinalRound();
+      return;
     }
     renderFinalModal();
   }
@@ -1600,7 +1712,7 @@
 
   async function renderComplete(){
     if (state.completed) return; state.completed = true; await markVersePracticed();
-    const statsText = `${formatMoney(totalCash())} earned • ${state.finalSolvedWordIndices.size} final words rebuilt`;
+    const statsText = `${formatMoney(totalCash())} earned • ${state.finalFilledTileKeys.size} final letters filled`;
     if (shell().renderCompleteScreen){
       shell().renderCompleteScreen({
         app, title:"Wheel Complete!", icon:"🎡", iconHtml:WHEEL_ICON_HTML, statsText, playAgainText:"Play Again", moreGamesText:"Back to Playground", backLabel:"Back to Playground", theme:GAME_THEME,
