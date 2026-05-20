@@ -877,12 +877,14 @@
   }
 
   function scaleExplosionPath(path, scale){
+    const finalX = path.x2 * scale;
+    const finalY = path.y2 * scale;
     return {
       ...path,
-      x1:path.x1 * scale,
-      y1:path.y1 * scale,
-      x2:path.x2 * scale,
-      y2:path.y2 * scale
+      x1:finalX * .52,
+      y1:finalY * .52,
+      x2:finalX,
+      y2:finalY
     };
   }
 
@@ -900,7 +902,7 @@
     const angle = -90 + burstIndex * 17 + (360 / count) * i + (Math.random() * 4 - 2);
     const radians = angle * Math.PI / 180;
     const distance1 = 150 + (i % 3) * 34;
-    const distance2 = distance1 + 120 + burstIndex * 12;
+    const distance2 = distance1 + 190 + burstIndex * 18;
     return {
       x1: Math.cos(radians) * distance1,
       y1: Math.sin(radians) * distance1,
@@ -922,8 +924,8 @@
     return {
       x1,
       y1,
-      x2: x1 * 1.48,
-      y2: y1 + 82 + burstIndex * 10,
+      x2: x1 * 1.9,
+      y2: y1 + 120 + burstIndex * 14,
       rot1: side * (95 + lane * 13),
       rot2: side * (190 + lane * 20),
       scale: 0.72 + (i % 4) * 0.07,
@@ -935,7 +937,7 @@
     const angle = -90 + burstIndex * 14 + (360 / count) * i + (Math.random() * 6 - 3);
     const radians = angle * Math.PI / 180;
     const distance1 = 142 + Math.sin(i * 1.7) * 48;
-    const distance2 = distance1 + 105 + (i % 3) * 18;
+    const distance2 = distance1 + 175 + (i % 3) * 22;
     return {
       x1: Math.cos(radians) * distance1,
       y1: Math.sin(radians) * distance1,
