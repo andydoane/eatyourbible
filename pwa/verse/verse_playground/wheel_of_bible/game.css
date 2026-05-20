@@ -920,6 +920,27 @@ button.wob-ref-group {
   grid-template-columns: repeat(auto-fit, minmax(54px, 1fr));
 }
 
+.wob-choice-grid.is-rowed {
+  width: min(100%, 650px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(8px, 1.7vh, 13px);
+}
+
+.wob-choice-row {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  gap: clamp(8px, 2vw, 14px);
+}
+
+.wob-choice-grid.is-rowed .wob-choice-tile {
+  flex: 0 1 clamp(52px, 15vw, 82px);
+  min-width: 0;
+}
+
 .wob-root.is-challenge-screen .wob-choice-grid,
 .wob-final-modal-panel .wob-choice-grid {
   max-width: 100%;
@@ -1189,6 +1210,18 @@ button.wob-ref-group {
 
   .wob-choice-grid {
     gap: 8px;
+  }
+
+  .wob-choice-grid.is-rowed {
+    gap: 7px;
+  }
+
+  .wob-choice-row {
+    gap: 7px;
+  }
+
+  .wob-choice-grid.is-rowed .wob-choice-tile {
+    flex-basis: clamp(46px, 17vw, 68px);
   }
 }
 

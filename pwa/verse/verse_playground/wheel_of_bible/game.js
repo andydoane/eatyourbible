@@ -1066,6 +1066,42 @@
     return `Complete the word: <span class="wob-context-blank">${"_".repeat(Math.max(3, normalizeLetters(word.display).length))}</span>`;
   }
 
+  function hexToRgb(hex){
+    const clean = String(hex || "").trim().replace(/^#/, "");
+    if (!/^[0-9a-f]{6}$/i.test(clean)) return null;
+    return {
+      r:parseInt(clean.slice(0,2), 16),
+      g:parseInt(clean.slice(2,4), 16),
+      b:parseInt(clean.slice(4,6), 16)
+    };
+  }
+
+  function colorDistance(a, b){
+    const ca = hexToRgb(a);
+    const cb = hexToRgb(b);
+    if (!ca || !cb) return 999;
+    const dr = ca.r - cb.r;
+    const dg = ca.g - cb.g;
+    const db = ca.b - cb.b;
+    return Math.sqrt(dr * dr + dg * dg + db * db);
+  }
+
+  function challengeDisplayColor(originalColor){
+    const choiceTileColor = "#fff7db";
+    const color = originalColor || "#ffc751";
+
+    // If the word display is too close to the cream/yellow choice tiles,
+    // switch it to purple so kids can tell the display from the tap targets.
+    if (colorDistance(color, choiceTileColor) < 130) return "#7f66c6";
+
+    // Orange/yellow tiles can still feel close to the choice tiles even when
+    // the raw color distance is not tiny, so move those to purple too.
+    const warmConfusingColors = new Set(["#ffc751", "#ff9e3d", "#ffe382"]);
+    if (warmConfusingColors.has(String(color).toLowerCase())) return "#7f66c6";
+
+    return color;
+  }
+
   function makeWordChallenge(word){
     const expected = normalizeLetters(word.display).split("");
     return {
@@ -1077,7 +1113,7 @@
       title:word.isKeyword ? "Key Word Challenge" : "Word Challenge",
       prompt:"Build the missing word from this part of the verse.",
       contextHtml:findEchoContext(word),
-      color:word.color,
+      color:challengeDisplayColor(word.color),
       bonus:(word.isKeyword ? 900 : 550) + Math.min(800, expected.length * 100)
     };
   }
@@ -1148,13 +1184,54 @@
     return copy;
   }
 
+  function choiceRowPattern(count) {
+    const n = Math.max(0, Number(count) || 0);
+    if (n <= 5) return [n].filter(Boolean);
+    if (n === 6) return [3, 3];
+    if (n === 7) return [4, 3];
+    if (n === 8) return [4, 4];
+    if (n === 9) return [5, 4];
+    if (n === 10) return [5, 5];
+    if (n === 11) return [4, 4, 3];
+    if (n === 12) return [4, 4, 4];
+    if (n === 13) return [5, 4, 4];
+    if (n === 14) return [5, 5, 4];
+    if (n === 15) return [5, 5, 5];
+    if (n === 16) return [4, 4, 4, 4];
+    if (n === 17) return [5, 4, 4, 4];
+    if (n === 18) return [5, 5, 4, 4];
+    if (n === 19) return [5, 5, 5, 4];
+    if (n === 20) return [5, 5, 5, 5];
+
+    const rows = [];
+    let left = n;
+    while (left > 0) {
+      const size = Math.min(5, left);
+      rows.push(size);
+      left -= size;
+    }
+    return rows;
+  }
+
+  function choiceRowsHtml(choices, flashValue, isBad, dataName) {
+    const items = Array.isArray(choices) ? choices : [];
+    const rows = choiceRowPattern(items.length);
+    let offset = 0;
+
+    return rows.map(rowSize => {
+      const row = items.slice(offset, offset + rowSize);
+      offset += rowSize;
+      return `<div class="wob-choice-row">${row.map(letter => `<button class="wob-choice-tile no-zoom ${flashValue === letter ? (isBad ? "is-bad" : "is-good") : ""}" data-${dataName}="${escapeHtml(letter)}" type="button">${escapeHtml(letter)}</button>`).join("")}</div>`;
+    }).join("");
+  }
+
   function renderChallenge(challenge = state.currentChallenge){
     if (!challenge) return renderSpinScreen();
     state.screen = "challenge";
     state.currentChallenge = challenge;
     state.challengeInputIndex = 0; state.challengeFlash = ""; state.challengeBad = false;
     const uniqueCorrect = Array.from(new Set(challenge.expected));
-    const targetCount = challenge.inputKind === "numbers" ? 10 : Math.max(9, Math.min(24, uniqueCorrect.length + 5));
+    const targetCount = challenge.inputKind === "numbers" ? 10 : Math.max(10, uniqueCorrect.length);
     challenge.choices = challenge.inputKind === "numbers"
       ? shuffle(["0","1","2","3","4","5","6","7","8","9"])
       : makeChoiceLetters(uniqueCorrect, state.uniqueLetters, targetCount);
@@ -1171,8 +1248,8 @@
         ${showPrompt ? `<div class="wob-challenge-prompt">${escapeHtml(challenge.prompt || "Build the answer.")}</div>` : ""}
         ${challenge.contextHtml ? `<div class="wob-context-card">${challenge.contextHtml}</div>` : ""}
         ${typedChallengeHtml(challenge, state.challengeInputIndex)}
-        <div class="wob-choice-grid ${choiceClass}">
-          ${challenge.choices.map(letter => `<button class="wob-choice-tile no-zoom ${state.challengeFlash === letter ? (state.challengeBad ? "is-bad" : "is-good") : ""}" data-choice="${escapeHtml(letter)}" type="button">${escapeHtml(letter)}</button>`).join("")}
+        <div class="wob-choice-grid is-rowed ${choiceClass}">
+          ${choiceRowsHtml(challenge.choices, state.challengeFlash, state.challengeBad, "choice")}
         </div>
         <div class="wob-bonus-line">Tap the Letters in Order</div>
       </div>
