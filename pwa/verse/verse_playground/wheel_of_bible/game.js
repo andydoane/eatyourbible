@@ -19,6 +19,7 @@
   const GAME_ICON = "🎡";
   const WHEEL_BUTTON_IMAGE = "./wheel_of_bible_images/button_wheel.png";
   const WHEEL_FACE_IMAGE = "./wheel_of_bible_images/wheel_face.svg";
+  const DOLLAR_BILL_IMAGE = "./wheel_of_bible_images/dollar_bill.png";
   const WHEEL_ICON_HTML = `<img class="wob-shell-title-icon" src="${WHEEL_BUTTON_IMAGE}" alt="" draggable="false">`;
   const WHEEL_BUTTON_HTML = `<img class="wob-wheel-button-img" src="${WHEEL_BUTTON_IMAGE}" alt="" draggable="false">`;
   const HELP_OVERLAY_ID = "wheelOfBibleHelpOverlay";
@@ -318,6 +319,24 @@
     return Array.from(new Set(candidates));
   }
 
+  function getReferenceAudioCandidates(){
+    const json = state.verseJson || {};
+    const candidates = [];
+    const add = (src) => {
+      const clean = String(src || "").trim();
+      if (!clean) return;
+      if (/^https?:\/\//i.test(clean) || clean.startsWith("../")) candidates.push(clean);
+      else if (clean.startsWith("verse_audio/")) candidates.push(`../../${clean}`);
+      else candidates.push(`../../verse_audio/${clean}`);
+    };
+    add(json.referenceAudioFile);
+    add(json.referenceAudio);
+    add(json.refAudio);
+    add(json.refAudioSrc);
+    if (ctx.verseId) add(`${ctx.verseId}_ref.mp3`);
+    return Array.from(new Set(candidates));
+  }
+
   function createVerseAudioElement(){
     if (verseAudioEl) return verseAudioEl;
     verseAudioEl = document.createElement("audio");
@@ -402,24 +421,70 @@
   function playPrize(){ playTone({ midi:72, duration:.10, volume:.25 }); setTimeout(() => playTone({ midi:76, duration:.10, volume:.24 }),70); setTimeout(() => playTone({ midi:84, duration:.18, volume:.28 }),145); }
 
   function stopVerseAudio(){ if (!verseAudioEl) return; try { verseAudioEl.pause(); verseAudioEl.currentTime = 0; } catch(err){} }
-  async function tryPlayVerseAudio(){
+  async function tryPlayAudioCandidatesAndWait(candidates, fallbackMs = 1200){
     const audio = createVerseAudioElement();
-    audio.muted = muted; audio.volume = muted ? 0 : 1;
-    for (const src of getVerseAudioCandidates()){
+    audio.muted = muted;
+    audio.volume = muted ? 0 : 1;
+
+    for (const src of candidates || []){
       try {
-        audio.pause(); audio.currentTime = 0; audio.src = src; audio.load();
+        audio.pause();
+        audio.currentTime = 0;
+        audio.src = src;
+        audio.load();
+
         await new Promise(resolve => {
           let done = false;
-          const finish = () => { if (done) return; done = true; cleanup(); resolve(); };
-          const cleanup = () => { audio.removeEventListener("loadedmetadata", finish); audio.removeEventListener("canplay", finish); audio.removeEventListener("error", finish); };
-          audio.addEventListener("loadedmetadata", finish); audio.addEventListener("canplay", finish); audio.addEventListener("error", finish);
-          setTimeout(finish, 1100);
+          const finish = () => {
+            if (done) return;
+            done = true;
+            cleanup();
+            resolve();
+          };
+          const cleanup = () => {
+            audio.removeEventListener("loadedmetadata", finish);
+            audio.removeEventListener("canplay", finish);
+            audio.removeEventListener("error", finish);
+          };
+          audio.addEventListener("loadedmetadata", finish);
+          audio.addEventListener("canplay", finish);
+          audio.addEventListener("error", finish);
+          setTimeout(finish, 1200);
         });
+
+        const durationMs = Number.isFinite(Number(audio.duration)) && Number(audio.duration) > 0
+          ? clamp(Number(audio.duration) * 1000, 500, 30000)
+          : Math.max(500, Number(fallbackMs) || 1200);
+
         await audio.play();
+
+        await new Promise(resolve => {
+          let done = false;
+          const finish = () => {
+            if (done) return;
+            done = true;
+            cleanup();
+            resolve();
+          };
+          const cleanup = () => {
+            audio.removeEventListener("ended", finish);
+            audio.removeEventListener("error", finish);
+            if (timeoutId) clearTimeout(timeoutId);
+          };
+          audio.addEventListener("ended", finish);
+          audio.addEventListener("error", finish);
+          const timeoutId = setTimeout(finish, durationMs + 900);
+        });
+
         return true;
       } catch(err){}
     }
+
     return false;
+  }
+
+  async function tryPlayVerseAudio(){
+    return tryPlayAudioCandidatesAndWait(getVerseAudioCandidates(), estimateListenMs());
   }
   function estimateListenMs(){
     const wordCount = state.words.length || String(state.verseText || "").split(/\s+/).filter(Boolean).length;
@@ -556,8 +621,12 @@
       renderSpinScreen();
     });
 
-    const played = await tryPlayVerseAudio();
-    await sleep(played ? estimateListenMs() + 350 : 1800);
+    const versePlayed = await tryPlayVerseAudio();
+    if (!versePlayed) await sleep(1800);
+
+    const refPlayed = await tryPlayAudioCandidatesAndWait(getReferenceAudioCandidates(), 1600);
+    if (!refPlayed) await sleep(250);
+
     showVerseIntroSpinPrompt();
   }
 
@@ -669,20 +738,42 @@
     await renderLetterReveal({ letter:selected, matches, earnings, perLetter:value });
   }
 
-  async function renderLetterReveal({ letter, matches, perLetter }){
+  async function renderLetterReveal({ letter, matches, earnings, perLetter }){
     state.screen = "revealLetter";
+
+    // The letter was added before this function. Temporarily hide it so
+    // we can reveal each matching tile one at a time.
+    state.revealedLetters.delete(letter);
+
     app.innerHTML = rootHtml(`
       <div class="wob-verse-wrap">
-        ${verseBoardHtml({ revealingLetter:letter })}
-        <div class="wob-letter-burst">${escapeHtml(letter)}</div>
+        ${verseBoardHtml({ animatingLetter:letter })}
       </div>
     `, { status:"Letters Reveal", rootClass:"is-board-screen" });
-    wireGameMenu(); fitVerseBoardSoon(); playPop(0);
-    const pops = Math.min(matches, 18);
-    for (let i=0; i<pops; i+=1){ setTimeout(() => { playPop(i); showFloatingMoney(formatMoney(perLetter)); }, 560 + i * 95); }
-    await sleep(1250 + pops * 95);
+
+    wireGameMenu();
+    fitVerseBoardSoon();
+    await sleep(80);
+
+    const tiles = Array.from(document.querySelectorAll(`.wob-tile[data-normalized="${letter}"]`));
+    const delayMs = tiles.length > 18 ? 55 : 85;
+
+    for (let i=0; i<tiles.length; i+=1){
+      const tile = tiles[i];
+      tile.textContent = letter;
+      tile.classList.remove("is-hidden");
+      tile.classList.add("is-pop-revealed");
+      playPop(i);
+      showFloatingMoneyAtElement(tile, formatMoney(perLetter));
+      await sleep(delayMs);
+    }
+
+    state.revealedLetters.add(letter);
+    await sleep(260);
     updateHud();
-    await sleep(1100);
+
+    await showRoundTotalPopup(earnings);
+
     if (state.uniqueLetters.length && state.revealedLetters.size >= state.uniqueLetters.length){ renderFinalIntro(); return; }
     const challenge = chooseChallengeTarget();
     if (!challenge){ renderSpinScreen(); return; }
@@ -691,7 +782,88 @@
 
   function showFloatingMoney(text){
     const card = document.querySelector(".wob-card"); if (!card) return;
-    const el = document.createElement("div"); el.className = "wob-floating-money"; el.textContent = text; card.appendChild(el); setTimeout(() => el.remove(), 950);
+    const el = document.createElement("div");
+    el.className = "wob-floating-money";
+    el.textContent = text;
+    card.appendChild(el);
+    setTimeout(() => el.remove(), 950);
+  }
+
+  function showFloatingMoneyAtElement(targetEl, text){
+    const card = document.querySelector(".wob-card");
+    if (!card || !targetEl) return;
+
+    const cardBox = card.getBoundingClientRect();
+    const box = targetEl.getBoundingClientRect();
+    const x = box.left + box.width / 2 - cardBox.left;
+    const y = box.top - cardBox.top;
+
+    const el = document.createElement("div");
+    el.className = "wob-floating-money is-tile-money";
+    el.textContent = text;
+    el.style.left = `${x}px`;
+    el.style.top = `${y}px`;
+    card.appendChild(el);
+    setTimeout(() => el.remove(), 900);
+  }
+
+  async function showRoundTotalPopup(amount){
+    const card = document.querySelector(".wob-card");
+    if (!card) return;
+
+    const total = Math.max(0, Number(amount) || 0);
+    const popup = document.createElement("div");
+    popup.className = "wob-round-total-pop";
+    popup.innerHTML = `
+      <div class="wob-round-total-label">Round Total</div>
+      <div class="wob-round-total-amount">${escapeHtml(formatMoney(total))}</div>
+    `;
+    card.appendChild(popup);
+
+    await sleep(160);
+
+    const explosions = Math.min(5, 1 + Math.floor(total / 5000));
+    for (let i=0; i<explosions; i+=1){
+      setTimeout(() => spawnDollarExplosion(card, i), i * 210);
+    }
+
+    playPrize();
+    await sleep(900 + explosions * 210);
+    popup.remove();
+  }
+
+  function spawnDollarExplosion(card, burstIndex = 0){
+    if (!card) return;
+
+    const count = 18;
+    const baseAngle = -90 + burstIndex * 18 + Math.random() * 18;
+    const centerX = card.clientWidth / 2;
+    const centerY = card.clientHeight / 2;
+
+    for (let i=0; i<count; i+=1){
+      const angle = baseAngle + (360 / count) * i + (Math.random() * 7 - 3.5);
+      const radians = angle * Math.PI / 180;
+      const distance = 120 + (i % 3) * 34 + burstIndex * 10 + Math.random() * 18;
+      const dx = Math.cos(radians) * distance;
+      const dy = Math.sin(radians) * distance;
+      const rot = angle + 90 + (Math.random() * 50 - 25);
+      const scale = 0.72 + (i % 4) * 0.08;
+
+      const bill = document.createElement("img");
+      bill.className = "wob-dollar-bill";
+      bill.src = DOLLAR_BILL_IMAGE;
+      bill.alt = "";
+      bill.draggable = false;
+      bill.style.left = `${centerX}px`;
+      bill.style.top = `${centerY}px`;
+      bill.style.setProperty("--dx", `${dx}px`);
+      bill.style.setProperty("--dy", `${dy}px`);
+      bill.style.setProperty("--rot", `${rot}deg`);
+      bill.style.setProperty("--scale", String(scale));
+      bill.style.setProperty("--delay", `${i * 10}ms`);
+      card.appendChild(bill);
+      setTimeout(() => bill.remove(), 1150);
+    }
   }
 
   function revealedCountForWord(word){ return word.letters.filter(item => item.isLetter && state.revealedLetters.has(item.normalized)).length; }
@@ -938,7 +1110,7 @@
     drawChallenge();
   }
 
-  function verseBoardHtml({ allVisible = false, revealingLetter = "", challenge = null, finalMode = false } = {}){
+  function verseBoardHtml({ allVisible = false, revealingLetter = "", animatingLetter = "", challenge = null, finalMode = false } = {}){
     return `
       <div class="wob-verse-card is-with-reference">
         <div class="wob-verse-board ${finalMode ? "wob-final-board" : ""}" id="wobVerseBoard">
@@ -955,7 +1127,9 @@
                 if (!item.isLetter) return `<span class="wob-punct">${escapeHtml(item.char)}</span>`;
                 const hidden = finalMode ? true : (!allVisible && !state.revealedLetters.has(item.normalized));
                 const revealing = revealingLetter && item.normalized === revealingLetter ? "is-revealing" : "";
-                return `<span class="wob-tile ${hidden ? "is-hidden" : ""} ${revealing}" style="--tile-bg:${word.color}">${hidden ? "" : escapeHtml(item.normalized)}</span>`;
+                const tileKey = `${word.index}-${item.index}`;
+                const animating = animatingLetter && item.normalized === animatingLetter ? "is-pending-reveal" : "";
+                return `<span class="wob-tile ${hidden ? "is-hidden" : ""} ${revealing} ${animating}" data-tile-key="${escapeHtml(tileKey)}" data-normalized="${escapeHtml(item.normalized)}" style="--tile-bg:${word.color}">${hidden ? "" : escapeHtml(item.normalized)}</span>`;
               }).join("")}
             </${tag}>`;
           }).join("")}

@@ -1361,3 +1361,149 @@ button.wob-ref-group {
     transform: translateY(-5px) scale(1.07);
   }
 }
+
+/* =========================
+   Per-tile reveal + round total money burst
+   ========================= */
+
+.wob-tile.is-pending-reveal {
+  will-change: transform;
+}
+
+.wob-tile.is-pop-revealed {
+  animation: wobTilePopReveal 430ms cubic-bezier(.14, 1.38, .28, 1) both;
+}
+
+@keyframes wobTilePopReveal {
+  0% {
+    transform: scale(.38) rotate(-9deg);
+    filter: brightness(1.32);
+  }
+
+  58% {
+    transform: scale(1.28) rotate(6deg);
+    filter: brightness(1.14);
+  }
+
+  100% {
+    transform: scale(1) rotate(0);
+    filter: none;
+  }
+}
+
+.wob-floating-money.is-tile-money {
+  left: 0;
+  top: 0;
+  z-index: 44;
+  transform: translate(-50%, -85%);
+  font-size: clamp(18px, 4.8vw, 34px);
+  color: #2f7a32;
+  text-shadow:
+    0 2px 0 #ffffff,
+    0 4px 0 rgba(0, 0, 0, .16);
+  animation: wobTileMoneyFloat 850ms ease-out both;
+}
+
+@keyframes wobTileMoneyFloat {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -35%) scale(.62);
+  }
+
+  18% {
+    opacity: 1;
+    transform: translate(-50%, -85%) scale(1.06);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -185%) scale(1);
+  }
+}
+
+.wob-round-total-pop {
+  position: absolute;
+  z-index: 48;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(88%, 440px);
+  border-radius: 34px;
+  padding: clamp(18px, 5vw, 30px);
+  color: #332818;
+  background: #fff7db;
+  box-shadow:
+    0 16px 0 rgba(0, 0, 0, .22),
+    0 24px 46px rgba(0, 0, 0, .26),
+    inset 0 0 0 4px rgba(255, 255, 255, .55);
+  text-align: center;
+  pointer-events: none;
+  animation: wobRoundTotalPop 900ms cubic-bezier(.18, 1.35, .3, 1) both;
+}
+
+.wob-round-total-label {
+  font-size: clamp(24px, 6vw, 44px);
+  font-weight: 900;
+  line-height: .95;
+}
+
+.wob-round-total-amount {
+  margin-top: 6px;
+  font-size: clamp(42px, 11vw, 82px);
+  font-weight: 900;
+  line-height: .9;
+  color: #2f7a32;
+}
+
+@keyframes wobRoundTotalPop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(.45) rotate(-8deg);
+  }
+
+  18% {
+    opacity: 1;
+  }
+
+  55% {
+    transform: translate(-50%, -50%) scale(1.08) rotate(3deg);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(.94) rotate(0);
+  }
+}
+
+.wob-dollar-bill {
+  position: absolute;
+  z-index: 47;
+  width: clamp(42px, 10vw, 72px);
+  height: auto;
+  transform: translate(-50%, -50%) scale(.38) rotate(0deg);
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  animation: wobDollarFirework 980ms cubic-bezier(.13, .75, .28, 1) var(--delay, 0ms) both;
+}
+
+@keyframes wobDollarFirework {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(.28) rotate(0deg);
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  72% {
+    opacity: 1;
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(var(--scale, 1)) rotate(var(--rot));
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy) + 38px)) scale(calc(var(--scale, 1) * .9)) rotate(calc(var(--rot) + 28deg));
+  }
+}
