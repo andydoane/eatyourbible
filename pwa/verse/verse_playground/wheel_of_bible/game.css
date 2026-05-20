@@ -169,9 +169,11 @@ body {
 }
 
 .wob-money-pill {
-  background: #fff1a7;
+  background: #2f7a32;
+  color: #ffffff;
   min-width: 112px;
   pointer-events: auto;
+  box-shadow: 0 5px 0 rgba(0, 0, 0, .22), inset 0 -4px 0 rgba(0, 0, 0, .14);
 }
 
 .wob-status-pill {
@@ -381,12 +383,14 @@ body {
    ========================= */
 .wob-spin-layout {
   display: grid;
-  grid-template-rows: auto 1fr auto;
-  gap: 14px;
+  grid-template-rows: 1fr auto;
+  gap: clamp(12px, 2.5vh, 22px);
   width: 100%;
   height: 100%;
   align-items: center;
   justify-items: center;
+  padding-top: clamp(12px, 3vh, 28px);
+  padding-bottom: clamp(8px, 2vh, 18px);
 }
 
 .wob-wheel-shell {
@@ -425,6 +429,10 @@ body {
   overflow: visible;
   transform: rotate(var(--spin-deg));
   transition: transform 3200ms cubic-bezier(.12, .86, .08, 1);
+}
+
+.wob-root.is-spin-screen .wob-wheel {
+  width: min(80vw, 80dvh, 650px);
 }
 
 .wob-wheel::after {
@@ -513,6 +521,53 @@ body {
 /* =========================
    Letter select
    ========================= */
+.wob-letter-select-panel {
+  width: min(100%, 720px);
+  gap: clamp(14px, 3vh, 24px);
+}
+
+.wob-letter-value-wrap {
+  width: min(100%, 690px);
+  display: grid;
+  justify-items: center;
+  gap: clamp(4px, 1vh, 8px);
+}
+
+.wob-letter-value-emoji {
+  font-size: clamp(44px, 12vw, 84px);
+  line-height: .86;
+  filter: drop-shadow(0 5px 0 rgba(0, 0, 0, .22));
+  animation: wobPrizePop 520ms cubic-bezier(.18, 1.45, .28, 1) both;
+}
+
+.wob-letter-value-card {
+  width: 100%;
+  border-radius: 28px;
+  padding: clamp(12px, 3vw, 20px);
+  color: #ffffff;
+  background: #2f7a32;
+  text-align: center;
+  box-shadow:
+    0 10px 0 rgba(0, 0, 0, .22),
+    0 18px 32px rgba(0, 0, 0, .18),
+    inset 0 -7px 0 rgba(0, 0, 0, .13),
+    inset 0 0 0 3px rgba(255, 255, 255, .16);
+}
+
+.wob-letter-value-money {
+  font-size: clamp(46px, 13vw, 92px);
+  font-weight: 900;
+  line-height: .82;
+}
+
+.wob-letter-value-label {
+  margin-top: 5px;
+  font-size: clamp(18px, 4.8vw, 30px);
+  font-weight: 900;
+  line-height: 1;
+  color: rgba(255, 255, 255, .72);
+}
+
 .wob-letter-grid {
   width: min(100%, 690px);
   display: grid;
@@ -908,6 +963,36 @@ button.wob-ref-group {
 .wob-root.is-challenge-screen .wob-challenge-word .wob-tile,
 .wob-final-modal .wob-challenge-word .wob-tile {
   --wob-tile-size: clamp(24px, calc((100vw - 24px) / var(--challenge-count, 9) - 5px), 62px);
+}
+
+.wob-root.is-challenge-screen .wob-challenge-word .wob-tile {
+  background: #2f7a32;
+  color: #ffffff;
+  box-shadow:
+    0 calc(var(--wob-tile-size) * .12) 0 rgba(0, 0, 0, .24),
+    inset 0 calc(var(--wob-tile-size) * -.13) 0 rgba(0, 0, 0, .16),
+    inset 0 0 0 2px rgba(255, 255, 255, .18);
+}
+
+.wob-root.is-challenge-screen .wob-challenge-word .wob-tile.is-hidden {
+  color: transparent;
+  background: #2f7a32;
+}
+
+.wob-root.is-challenge-screen .wob-challenge-word .wob-ref-fixed {
+  min-height: clamp(24px, calc((100vw - 24px) / var(--challenge-count, 9) - 5px), 62px);
+  min-width: clamp(28px, calc((100vw - 24px) / var(--challenge-count, 9) - 5px), 68px);
+  padding: 0 clamp(8px, 1.8vw, 14px);
+  border-radius: calc(var(--wob-tile-size) * .16);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  background: #2f7a32;
+  box-shadow:
+    0 calc(var(--wob-tile-size) * .12) 0 rgba(0, 0, 0, .24),
+    inset 0 calc(var(--wob-tile-size) * -.13) 0 rgba(0, 0, 0, .16),
+    inset 0 0 0 2px rgba(255, 255, 255, .18);
 }
 
 .wob-choice-grid {
@@ -1490,12 +1575,13 @@ button.wob-ref-group {
   width: min(88%, 440px);
   border-radius: 34px;
   padding: clamp(18px, 5vw, 30px);
-  color: #332818;
-  background: #fff7db;
+  color: #ffffff;
+  background: #2f7a32;
   box-shadow:
     0 16px 0 rgba(0, 0, 0, .22),
     0 24px 46px rgba(0, 0, 0, .26),
-    inset 0 0 0 4px rgba(255, 255, 255, .55);
+    inset 0 -8px 0 rgba(0, 0, 0, .14),
+    inset 0 0 0 4px rgba(255, 255, 255, .16);
   text-align: center;
   pointer-events: none;
   animation: wobRoundTotalPopIn 360ms cubic-bezier(.18, 1.35, .3, 1) both;
@@ -1505,6 +1591,7 @@ button.wob-ref-group {
   font-size: clamp(24px, 6vw, 44px);
   font-weight: 900;
   line-height: .95;
+  color: rgba(255, 255, 255, .66);
 }
 
 .wob-round-total-amount {
@@ -1512,7 +1599,7 @@ button.wob-ref-group {
   font-size: clamp(42px, 11vw, 82px);
   font-weight: 900;
   line-height: .9;
-  color: #2f7a32;
+  color: #ffffff;
 }
 
 .wob-round-total-pop.is-leaving {
@@ -1708,19 +1795,20 @@ button.wob-ref-group {
   width: min(88%, 430px);
   border-radius: 34px;
   padding: clamp(18px, 5vw, 30px);
-  color: #332818;
-  background: #fff7db;
+  color: #ffffff;
+  background: #2f7a32;
   box-shadow:
     0 16px 0 rgba(0, 0, 0, .22),
     0 24px 46px rgba(0, 0, 0, .26),
-    inset 0 0 0 4px rgba(255, 255, 255, .55);
+    inset 0 -8px 0 rgba(0, 0, 0, .14),
+    inset 0 0 0 4px rgba(255, 255, 255, .16);
   text-align: center;
   pointer-events: none;
-  animation: wobSpinPopIn 360ms cubic-bezier(.18, 1.35, .3, 1) both;
+  animation: wobCenteredPopIn 360ms cubic-bezier(.18, 1.35, .3, 1) both;
 }
 
 .wob-challenge-bonus-pop.is-leaving {
-  animation: wobSpinPopOut 300ms ease-in both;
+  animation: wobCenteredPopOut 300ms ease-in both;
 }
 
 .wob-challenge-bonus-label {
@@ -1734,7 +1822,36 @@ button.wob-ref-group {
   font-size: clamp(42px, 11vw, 86px);
   font-weight: 900;
   line-height: .9;
-  color: #2f7a32;
+  color: #ffffff;
+}
+
+@keyframes wobCenteredPopIn {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(.45) rotate(-8deg);
+  }
+
+  70% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.08) rotate(3deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(0);
+  }
+}
+
+@keyframes wobCenteredPopOut {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(.82);
+  }
 }
 
 @keyframes wobSpinPopIn {

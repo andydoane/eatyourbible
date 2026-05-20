@@ -676,7 +676,6 @@
     state.selectedSpin = null;
     app.innerHTML = rootHtml(`
       <div class="wob-panel wob-spin-layout">
-        <div class="wob-big-title">Spin the Wheel!</div>
         <button class="wob-wheel-shell wob-spin-wheel-button no-zoom" id="spinWheelBtn" type="button" aria-label="Spin the wheel">
           <div class="wob-wheel-pointer"></div>
           <div class="wob-wheel" id="gameWheel"><img class="wob-wheel-face" src="${WHEEL_FACE_IMAGE}" alt="" draggable="false"></div>
@@ -763,10 +762,18 @@
 
   function renderSelectLetterScreen(){
     state.screen = "selectLetter";
-    const spinLabel = state.selectedSpin?.kind === "prize" ? `${state.selectedSpin.prize.emoji} ${state.selectedSpin.prize.name}: ${formatMoney(state.selectedSpin.value)} per letter` : `${formatMoney(state.selectedSpin?.value || 0)} per letter`;
+    const spinValue = Math.max(0, Number(state.selectedSpin?.value) || 0);
+    const prizeEmoji = state.selectedSpin?.kind === "prize" ? state.selectedSpin.prize?.emoji || "🎁" : "";
+
     app.innerHTML = rootHtml(`
-      <div class="wob-panel">
-        <div class="wob-subtitle">Spin Result: ${escapeHtml(spinLabel)}</div>
+      <div class="wob-panel wob-letter-select-panel">
+        <div class="wob-letter-value-wrap">
+          ${prizeEmoji ? `<div class="wob-letter-value-emoji">${escapeHtml(prizeEmoji)}</div>` : ""}
+          <div class="wob-letter-value-card">
+            <div class="wob-letter-value-money">${escapeHtml(formatMoney(spinValue))}</div>
+            <div class="wob-letter-value-label">per letter</div>
+          </div>
+        </div>
         <div class="wob-letter-grid">
           ${state.uniqueLetters.map(letter => {
             const used = state.revealedLetters.has(letter);
@@ -1235,7 +1242,7 @@
       title:word.isKeyword ? "Key Word Challenge" : "Word Challenge",
       prompt:"Build the missing word from this part of the verse.",
       contextHtml:findEchoContext(word),
-      color:challengeDisplayColor(word.color),
+      color:"#2f7a32",
       bonus:(word.isKeyword ? 900 : 550) + Math.min(800, expected.length * 100)
     };
   }
@@ -1256,21 +1263,21 @@
       return {
         type:"reference", refKind:"book", inputKind:"letters", expected,
         title:"Book Challenge", prompt:"What book is this from?",
-        fixedPrefix:parts.fixedPrefix, displayText:parts.fillText, color:"#fff6d8", bonus:1200 + Math.min(1000, expected.length * 100)
+        fixedPrefix:parts.fixedPrefix, displayText:parts.fillText, color:"#2f7a32", bonus:1200 + Math.min(1000, expected.length * 100)
       };
     }
     if (kind === "chapter"){
       const chapter = String(meta.chapter || "");
       const expected = normalizeDigits(chapter).split("");
       if (!expected.length) return null;
-      return { type:"reference", refKind:"chapter", inputKind:"numbers", expected, title:"Chapter Challenge", prompt:"What chapter is this verse from?", displayText:chapter, color:"#fff6d8", bonus:1000 + expected.length * 300 };
+      return { type:"reference", refKind:"chapter", inputKind:"numbers", expected, title:"Chapter Challenge", prompt:"What chapter is this verse from?", displayText:chapter, color:"#2f7a32", bonus:1000 + expected.length * 300 };
     }
     const verseStart = String(meta.verse || "");
     const verseEnd = meta.verseEnd == null ? "" : String(meta.verseEnd);
     const displayText = verseEnd ? `${verseStart}-${verseEnd}` : verseStart;
     const expected = normalizeDigits(displayText).split("");
     if (!expected.length) return null;
-    return { type:"reference", refKind:"verse", inputKind:"numbers", expected, title:"Verse Number Challenge", prompt:verseEnd ? "What verse numbers are these?" : "What verse number is this?", displayText, color:"#fff6d8", bonus:1000 + expected.length * 300 };
+    return { type:"reference", refKind:"verse", inputKind:"numbers", expected, title:"Verse Number Challenge", prompt:verseEnd ? "What verse numbers are these?" : "What verse number is this?", displayText, color:"#2f7a32", bonus:1000 + expected.length * 300 };
   }
 
   function renderWigglingVerse(challenge){
