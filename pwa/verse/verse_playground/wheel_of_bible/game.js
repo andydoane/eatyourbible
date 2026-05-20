@@ -681,16 +681,62 @@
       playPrize();
     } else playGood();
     state.selectedSpin = result;
-    renderSpinResult(result);
+    await renderSpinResult(result);
   }
 
-  function renderSpinResult(result){
-    const main = document.getElementById("wobMain"); if (!main) return;
-    const prizeMarkup = result.kind === "prize"
-      ? `<div class="wob-spin-result-value wob-prize-pop">🎁</div><div class="wob-spin-result-title">${escapeHtml(result.prize.emoji)} ${escapeHtml(result.prize.name)}</div><div class="wob-spin-result-value">${escapeHtml(formatMoney(result.value))}</div>`
-      : `<div class="wob-spin-result-title">You spun</div><div class="wob-spin-result-value">${escapeHtml(formatMoney(result.value))}</div>`;
-    main.innerHTML = `<div class="wob-panel"><div class="wob-spin-result-card">${prizeMarkup}</div><button class="wob-btn no-zoom" id="chooseLetterBtn" type="button">Choose a Letter</button></div>`;
-    document.getElementById("chooseLetterBtn")?.addEventListener("click", renderSelectLetterScreen);
+  async function renderSpinResult(result){
+    const card = document.querySelector(".wob-card");
+    if (!card){ renderSelectLetterScreen(); return; }
+
+    const overlay = document.createElement("div");
+    overlay.className = "wob-spin-pop-overlay";
+    card.appendChild(overlay);
+
+    if (result.kind === "prize"){
+      overlay.innerHTML = `
+        <div class="wob-spin-pop-card is-prize">
+          <button class="wob-prize-gift-button no-zoom" id="wobPrizeGiftButton" type="button" aria-label="Open prize">
+            🎁
+          </button>
+          <div class="wob-spin-pop-hint">Tap the present!</div>
+        </div>
+      `;
+
+      await new Promise(resolve => {
+        const btn = document.getElementById("wobPrizeGiftButton");
+        if (!btn){ resolve(); return; }
+
+        btn.addEventListener("click", () => {
+          btn.disabled = true;
+          playPrize();
+
+          const popCard = overlay.querySelector(".wob-spin-pop-card");
+          if (popCard){
+            popCard.classList.add("is-opened");
+            popCard.innerHTML = `
+              <div class="wob-open-prize-emoji">${escapeHtml(result.prize.emoji)}</div>
+              <div class="wob-spin-pop-title">${escapeHtml(result.prize.name)}</div>
+              <div class="wob-spin-pop-value">${escapeHtml(formatMoney(result.value))}</div>
+            `;
+          }
+
+          setTimeout(resolve, 1250);
+        }, { once:true });
+      });
+
+      renderSelectLetterScreen();
+      return;
+    }
+
+    overlay.innerHTML = `
+      <div class="wob-spin-pop-card is-cash">
+        <div class="wob-spin-pop-value">${escapeHtml(formatMoney(result.value))}</div>
+      </div>
+    `;
+
+    playGood();
+    await sleep(950);
+    renderSelectLetterScreen();
   }
 
   function renderSelectLetterScreen(){
@@ -805,6 +851,29 @@
     el.style.top = `${y}px`;
     card.appendChild(el);
     setTimeout(() => el.remove(), 900);
+  }
+
+  async function showChallengeBonusPopup(bonus) {
+    const card = document.querySelector(".wob-card");
+    if (!card) { await sleep(1000); return; }
+
+    const amount = Math.max(0, Number(bonus) || 0);
+    const popup = document.createElement("div");
+    popup.className = "wob-challenge-bonus-pop";
+    popup.innerHTML = `
+      <div class="wob-challenge-bonus-label">Nice!</div>
+      <div class="wob-challenge-bonus-amount">+ ${escapeHtml(formatMoney(amount))}</div>
+    `;
+    card.appendChild(popup);
+
+    // Use one quick money burst behind the popup.
+    spawnDollarExplosion(card, 0, 900, "classic");
+    playPrize();
+
+    await sleep(1250);
+    popup.classList.add("is-leaving");
+    await sleep(320);
+    popup.remove();
   }
 
   async function showRoundTotalPopup(amount){
@@ -1313,18 +1382,15 @@
       if (challenge.type === "word") state.challengeHistory.set(challenge.wordIndex, revealedCountForWord(challenge.word));
       if (challenge.type === "reference") state.refChallengeDone[challenge.refKind] = true;
       const bonus = Math.max(0, Number(challenge.bonus) || 500);
-      state.baseCash += bonus; updateHud(); drawChallenge(); await sleep(420);
-      app.innerHTML = rootHtml(`
-        <div class="wob-panel wob-bonus-panel">
-          <div class="wob-bonus-center">
-            <div class="wob-big-title">Nice!</div>
-            <div class="wob-subtitle">Challenge Bonus: ${escapeHtml(formatMoney(bonus))}</div>
-          </div>
-          <button class="wob-wheel-next-btn no-zoom" id="nextSpinBtn" type="button" aria-label="${state.revealedLetters.size >= state.uniqueLetters.length ? "Final Round" : "Spin Again"}">${state.revealedLetters.size >= state.uniqueLetters.length ? "🏁" : WHEEL_BUTTON_HTML}</button>
-        </div>
-      `, { status:"Bonus", rootClass:"is-bonus-screen" });
-      wireGameMenu();
-      document.getElementById("nextSpinBtn")?.addEventListener("click", () => { if (state.revealedLetters.size >= state.uniqueLetters.length) renderFinalIntro(); else renderSpinScreen(); });
+      state.baseCash += bonus;
+      updateHud();
+      drawChallenge();
+
+      await showChallengeBonusPopup(bonus);
+
+      if (state.revealedLetters.size >= state.uniqueLetters.length) renderFinalIntro();
+      else renderSpinScreen();
+
       return;
     }
     drawChallenge();
