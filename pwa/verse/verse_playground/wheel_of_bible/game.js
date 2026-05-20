@@ -1415,7 +1415,8 @@
                 const revealing = revealingLetter && item.normalized === revealingLetter ? "is-revealing" : "";
                 const tileKey = `${word.index}-${item.index}`;
                 const animating = animatingLetter && item.normalized === animatingLetter ? "is-pending-reveal" : "";
-                return `<span class="wob-tile ${hidden ? "is-hidden" : ""} ${revealing} ${animating}" data-tile-key="${escapeHtml(tileKey)}" data-normalized="${escapeHtml(item.normalized)}" style="--tile-bg:${word.color}">${hidden ? "" : escapeHtml(item.normalized)}</span>`;
+                const wiggleTile = isChallenge ? "is-wiggle-tile" : "";
+                return `<span class="wob-tile ${hidden ? "is-hidden" : ""} ${revealing} ${animating} ${wiggleTile}" data-tile-key="${escapeHtml(tileKey)}" data-normalized="${escapeHtml(item.normalized)}" style="--tile-bg:${word.color};--wiggle-delay:${item.index * 70}ms">${hidden ? "" : escapeHtml(item.normalized)}</span>`;
               }).join("")}
             </${tag}>`;
           }).join("")}
@@ -1440,9 +1441,9 @@
     const verseTag = verseClass ? "button" : "span";
 
     return `<span class="wob-ref-board" id="wobReferenceBoard">
-      ${bookText ? `<${bookTag} class="wob-ref-group ${bookClass}" ${bookClass ? 'type="button" data-ref-kind="book"' : ''}><span class="wob-ref-tile is-book">${escapeHtml(bookText)}</span></${bookTag}>` : ""}
-      ${chapter ? `<${chapterTag} class="wob-ref-group ${chapterClass}" ${chapterClass ? 'type="button" data-ref-kind="chapter"' : ''}><span class="wob-ref-tile">${escapeHtml(chapter)}</span></${chapterTag}>` : ""}
-      ${verseText ? `<${verseTag} class="wob-ref-group ${verseClass}" ${verseClass ? 'type="button" data-ref-kind="verse"' : ''}><span class="wob-ref-tile">${escapeHtml(verseText)}</span></${verseTag}>` : ""}
+      ${bookText ? `<${bookTag} class="wob-ref-group ${bookClass}" ${bookClass ? 'type="button" data-ref-kind="book"' : ''}><span class="wob-ref-tile is-book ${bookClass ? "is-wiggle-tile" : ""}" style="--wiggle-delay:0ms">${escapeHtml(bookText)}</span></${bookTag}>` : ""}
+      ${chapter ? `<${chapterTag} class="wob-ref-group ${chapterClass}" ${chapterClass ? 'type="button" data-ref-kind="chapter"' : ''}><span class="wob-ref-tile ${chapterClass ? "is-wiggle-tile" : ""}" style="--wiggle-delay:70ms">${escapeHtml(chapter)}</span></${chapterTag}>` : ""}
+      ${verseText ? `<${verseTag} class="wob-ref-group ${verseClass}" ${verseClass ? 'type="button" data-ref-kind="verse"' : ''}><span class="wob-ref-tile ${verseClass ? "is-wiggle-tile" : ""}" style="--wiggle-delay:140ms">${escapeHtml(verseText)}</span></${verseTag}>` : ""}
     </span>`;
   }
 
