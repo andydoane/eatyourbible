@@ -1117,3 +1117,101 @@ button.wob-ref-group{
   transform-origin: 0 50%;
   transform: rotate(var(--label-angle, 0deg)) translateX(49%) translateY(-50%);
 }
+
+/* =========================
+   Wheel SVG + Meet Verse fixes
+   ========================= */
+
+/* Use the SVG wheel face instead of generated labels. */
+.wob-wheel-shell,
+.wob-spin-wheel-button {
+  overflow: visible;
+}
+
+.wob-wheel-shell::after {
+  z-index: 0;
+}
+
+.wob-wheel {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+
+.wob-wheel::after {
+  display: none;
+}
+
+.wob-wheel-face {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+
+.wob-wheel-segments,
+.wob-wheel-label {
+  display: none !important;
+}
+
+/* Keep the pointer above the wheel. */
+.wob-wheel-pointer {
+  z-index: 20;
+  pointer-events: none;
+}
+
+/* Meet the Verse screen should not reserve extra space at the bottom. */
+.wob-root.is-listen-screen .wob-main {
+  padding-bottom: calc(8px + env(safe-area-inset-bottom));
+}
+
+.wob-verse-wrap {
+  position: relative;
+}
+
+/* Bigger, centered Meet the Verse spin button. */
+.wob-spin-float-button.is-verse-intro {
+  left: 50%;
+  top: 50%;
+  bottom: auto;
+  transform: translate(-50%, -50%);
+  width: clamp(132px, 32vw, 188px);
+  height: clamp(132px, 32vw, 188px);
+  z-index: 46;
+  animation: wobSpinPromptInCentered 420ms cubic-bezier(.18, 1.35, .3, 1) both, wobSpinPromptPulse 1.8s ease-in-out .5s infinite;
+}
+
+.wob-spin-float-button.is-verse-intro.is-hidden {
+  opacity: 0;
+  pointer-events: none;
+  animation: none;
+}
+
+.wob-spin-float-button.is-verse-intro .wob-wheel-button-img {
+  width: 84%;
+  height: 84%;
+}
+
+@keyframes wobSpinPromptInCentered {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(.34) rotate(-16deg);
+  }
+
+  60% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.14) rotate(6deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(0);
+  }
+}

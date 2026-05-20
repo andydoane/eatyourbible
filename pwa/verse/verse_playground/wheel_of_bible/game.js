@@ -18,6 +18,7 @@
   const GAME_TITLE = "Wheel of Bible";
   const GAME_ICON = "🎡";
   const WHEEL_BUTTON_IMAGE = "./wheel_of_bible_images/button_wheel.png";
+  const WHEEL_FACE_IMAGE = "./wheel_of_bible_images/wheel_face.svg";
   const WHEEL_ICON_HTML = `<img class="wob-shell-title-icon" src="${WHEEL_BUTTON_IMAGE}" alt="" draggable="false">`;
   const WHEEL_BUTTON_HTML = `<img class="wob-wheel-button-img" src="${WHEEL_BUTTON_IMAGE}" alt="" draggable="false">`;
   const HELP_OVERLAY_ID = "wheelOfBibleHelpOverlay";
@@ -41,18 +42,18 @@
   ];
 
   const WHEEL_VALUES = [
-    { kind:"cash", label:"$100", value:100 },
-    { kind:"cash", label:"$200", value:200 },
-    { kind:"cash", label:"$300", value:300 },
-    { kind:"cash", label:"$400", value:400 },
-    { kind:"cash", label:"$500", value:500 },
-    { kind:"cash", label:"$600", value:600 },
-    { kind:"cash", label:"$700", value:700 },
     { kind:"cash", label:"$800", value:800 },
-    { kind:"cash", label:"$900", value:900 },
     { kind:"cash", label:"$1000", value:1000 },
     { kind:"prize", label:"PRIZE" },
-    { kind:"prize", label:"PRIZE" }
+    { kind:"cash", label:"$100", value:100 },
+    { kind:"cash", label:"$300", value:300 },
+    { kind:"cash", label:"$500", value:500 },
+    { kind:"cash", label:"$700", value:700 },
+    { kind:"cash", label:"$900", value:900 },
+    { kind:"prize", label:"PRIZE" },
+    { kind:"cash", label:"$200", value:200 },
+    { kind:"cash", label:"$400", value:400 },
+    { kind:"cash", label:"$600", value:600 }
   ];
 
   const PRIZES = [
@@ -514,7 +515,7 @@
     state.screen = "introSequence";
     app.innerHTML = rootHtml(`
       <div class="wob-panel">
-        <div class="wob-intro-wheel-wrap"><div class="wob-wheel-shell"><div class="wob-wheel-pointer"></div><div class="wob-wheel" id="introWheel"></div></div></div>
+        <div class="wob-intro-wheel-wrap"><div class="wob-wheel-shell"><div class="wob-wheel-pointer"></div><div class="wob-wheel" id="introWheel"><img class="wob-wheel-face" src="${WHEEL_FACE_IMAGE}" alt="" draggable="false"></div></div></div>
         <div class="wob-intro-words"><span class="wob-intro-word" id="introWord0">WHEEL</span><span class="wob-intro-word" id="introWord1">OF</span><span class="wob-intro-word" id="introWord2">BIBLE!</span></div>
       </div>
     `, { status:"Get Ready", rootClass:"is-simple-screen" });
@@ -542,7 +543,7 @@
     app.innerHTML = rootHtml(`
       <div class="wob-verse-wrap">
         ${verseBoardHtml({ allVisible:true })}
-        <button class="wob-spin-float-button no-zoom is-hidden" id="verseIntroSpinPrompt" type="button" aria-label="Go spin the wheel">
+        <button class="wob-spin-float-button is-verse-intro no-zoom is-hidden" id="verseIntroSpinPrompt" type="button" aria-label="Go spin the wheel">
           ${WHEEL_BUTTON_HTML}
         </button>
       </div>
@@ -587,7 +588,7 @@
         <div class="wob-big-title">Spin the Wheel!</div>
         <button class="wob-wheel-shell wob-spin-wheel-button no-zoom" id="spinWheelBtn" type="button" aria-label="Spin the wheel">
           <div class="wob-wheel-pointer"></div>
-          <div class="wob-wheel" id="gameWheel"><div class="wob-wheel-segments">${wheelLabelsHtml()}</div></div>
+          <div class="wob-wheel" id="gameWheel"><img class="wob-wheel-face" src="${WHEEL_FACE_IMAGE}" alt="" draggable="false"></div>
         </button>
         <div class="wob-subtitle wob-tap-wheel-hint">Tap the wheel to spin</div>
       </div>
@@ -599,7 +600,7 @@
     const btn = document.getElementById("spinWheelBtn"); if (btn) btn.disabled = true; await unlockAudio();
     const index = Math.floor(Math.random() * WHEEL_VALUES.length);
     const step = 360 / WHEEL_VALUES.length;
-    const degrees = 360 * 5 + (360 - (index * step + step / 2)) - 90;
+    const degrees = 360 * 5 + ((360 - (index * step)) % 360);
     document.getElementById("gameWheel")?.style.setProperty("--spin-deg", `${degrees}deg`);
     for (let i=0; i<22; i+=1) setTimeout(() => playTone({ midi:50 + (i % 3) * 3, duration:.045, volume:.12, type:"square" }), i * 95);
     await sleep(3300);
