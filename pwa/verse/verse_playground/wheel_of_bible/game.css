@@ -1497,26 +1497,27 @@ button.wob-ref-group {
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
-  animation: wobDollarFirework var(--duration, 950ms) cubic-bezier(.13, .75, .28, 1) both;
+  animation: wobDollarFirework var(--duration, 950ms) cubic-bezier(.13, .75, .28, 1) var(--delay, 0ms) both;
 }
 
 @keyframes wobDollarFirework {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(.28) rotate(0deg);
+    transform: translate(-50%, -50%) scale(.25) rotate(0deg);
   }
 
-  12% {
+  9% {
     opacity: 1;
+    transform: translate(-50%, -50%) scale(.72) rotate(calc(var(--rot1) * .25));
   }
 
-  72% {
+  62% {
     opacity: 1;
-    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(var(--scale, 1)) rotate(var(--rot));
+    transform: translate(calc(-50% + var(--x1)), calc(-50% + var(--y1))) scale(var(--scale, 1)) rotate(var(--rot1));
   }
 
   100% {
     opacity: 0;
-    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy) + 38px)) scale(calc(var(--scale, 1) * .9)) rotate(calc(var(--rot) + 28deg));
+    transform: translate(calc(-50% + var(--x2)), calc(-50% + var(--y2))) scale(calc(var(--scale, 1) * .9)) rotate(var(--rot2));
   }
 }

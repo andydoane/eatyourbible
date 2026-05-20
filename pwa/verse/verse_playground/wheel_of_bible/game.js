@@ -823,11 +823,13 @@
     await sleep(520);
 
     const explosions = Math.min(5, 1 + Math.floor(total / 5000));
-    const explosionMs = 950;
-    const pauseMs = 260;
+    const styles = ["classic", "confetti", "popcorn"];
+    const chosenStyle = styles[Math.floor(Math.random() * styles.length)];
+    const explosionMs = chosenStyle === "popcorn" ? 1050 : 950;
+    const pauseMs = 300;
 
     for (let i=0; i<explosions; i+=1){
-      spawnDollarExplosion(card, i, explosionMs);
+      spawnDollarExplosion(card, i, explosionMs, chosenStyle);
       playPrize();
       await sleep(explosionMs + pauseMs);
     }
@@ -837,23 +839,15 @@
     popup.remove();
   }
 
-  function spawnDollarExplosion(card, burstIndex = 0, durationMs = 950) {
+  function spawnDollarExplosion(card, burstIndex = 0, durationMs = 950, style = "classic") {
     if (!card) return;
 
-    const count = 20;
-    const baseAngle = -90 + burstIndex * 19;
+    const count = style === "confetti" ? 26 : (style === "popcorn" ? 28 : 22);
     const centerX = card.clientWidth / 2;
     const centerY = card.clientHeight / 2;
 
     for (let i = 0; i < count; i += 1) {
-      const angle = baseAngle + (360 / count) * i + (Math.random() * 4 - 2);
-      const radians = angle * Math.PI / 180;
-      const distance = 130 + (i % 4) * 26 + burstIndex * 8;
-      const dx = Math.cos(radians) * distance;
-      const dy = Math.sin(radians) * distance;
-      const rot = angle + 90 + (Math.random() * 28 - 14);
-      const scale = 0.72 + (i % 4) * 0.08;
-
+      const path = dollarExplosionPath(style, i, count, burstIndex);
       const bill = document.createElement("img");
       bill.className = "wob-dollar-bill";
       bill.src = DOLLAR_BILL_IMAGE;
@@ -861,14 +855,76 @@
       bill.draggable = false;
       bill.style.left = `${centerX}px`;
       bill.style.top = `${centerY}px`;
-      bill.style.setProperty("--dx", `${dx}px`);
-      bill.style.setProperty("--dy", `${dy}px`);
-      bill.style.setProperty("--rot", `${rot}deg`);
-      bill.style.setProperty("--scale", String(scale));
+      bill.style.setProperty("--x1", `${path.x1}px`);
+      bill.style.setProperty("--y1", `${path.y1}px`);
+      bill.style.setProperty("--x2", `${path.x2}px`);
+      bill.style.setProperty("--y2", `${path.y2}px`);
+      bill.style.setProperty("--rot1", `${path.rot1}deg`);
+      bill.style.setProperty("--rot2", `${path.rot2}deg`);
+      bill.style.setProperty("--scale", String(path.scale));
       bill.style.setProperty("--duration", `${durationMs}ms`);
+      bill.style.setProperty("--delay", `${path.delay || 0}ms`);
       card.appendChild(bill);
-      setTimeout(() => bill.remove(), durationMs);
+      setTimeout(() => bill.remove(), durationMs + (path.delay || 0) + 40);
     }
+  }
+
+  function dollarExplosionPath(style, i, count, burstIndex) {
+    if (style === "confetti") return confettiExplosionPath(i, count, burstIndex);
+    if (style === "popcorn") return popcornExplosionPath(i, count, burstIndex);
+    return classicExplosionPath(i, count, burstIndex);
+  }
+
+  function classicExplosionPath(i, count, burstIndex) {
+    const angle = -90 + burstIndex * 17 + (360 / count) * i + (Math.random() * 4 - 2);
+    const radians = angle * Math.PI / 180;
+    const distance1 = 118 + (i % 3) * 25;
+    const distance2 = distance1 + 70 + burstIndex * 5;
+    return {
+      x1: Math.cos(radians) * distance1,
+      y1: Math.sin(radians) * distance1,
+      x2: Math.cos(radians) * distance2,
+      y2: Math.sin(radians) * distance2,
+      rot1: angle + 90 + (Math.random() * 20 - 10),
+      rot2: angle + 165 + (Math.random() * 24 - 12),
+      scale: 0.76 + (i % 4) * 0.07,
+      delay: 0
+    };
+  }
+
+  function confettiExplosionPath(i, count, burstIndex) {
+    const row = (i % 5) - 2;
+    const side = i % 2 === 0 ? -1 : 1;
+    const lane = Math.floor(i / 2);
+    const x1 = side * (72 + lane * 13);
+    const y1 = row * 30 - 58 + (i % 3) * 8;
+    return {
+      x1,
+      y1,
+      x2: x1 * 1.34,
+      y2: y1 + 46 + burstIndex * 5,
+      rot1: side * (95 + lane * 13),
+      rot2: side * (170 + lane * 18),
+      scale: 0.72 + (i % 4) * 0.07,
+      delay: 0
+    };
+  }
+
+  function popcornExplosionPath(i, count, burstIndex) {
+    const angle = -90 + burstIndex * 14 + (360 / count) * i + (Math.random() * 6 - 3);
+    const radians = angle * Math.PI / 180;
+    const distance1 = 108 + Math.sin(i * 1.7) * 34;
+    const distance2 = distance1 + 58 + (i % 3) * 12;
+    return {
+      x1: Math.cos(radians) * distance1,
+      y1: Math.sin(radians) * distance1,
+      x2: Math.cos(radians) * distance2,
+      y2: Math.sin(radians) * distance2 + 24,
+      rot1: angle + 90 + (Math.random() * 24 - 12),
+      rot2: angle + 180 + (Math.random() * 30 - 15),
+      scale: 0.72 + (i % 4) * 0.07,
+      delay: i * 14
+    };
   }
 
   function revealedCountForWord(word){ return word.letters.filter(item => item.isLetter && state.revealedLetters.has(item.normalized)).length; }
