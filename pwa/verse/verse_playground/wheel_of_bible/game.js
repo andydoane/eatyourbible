@@ -847,7 +847,8 @@
     const centerY = card.clientHeight / 2;
 
     for (let i = 0; i < count; i += 1) {
-      const path = dollarExplosionPath(style, i, count, burstIndex);
+      const scale = dollarExplosionScale(card);
+      const path = dollarExplosionPath(style, i, count, burstIndex, scale);
       const bill = document.createElement("img");
       bill.className = "wob-dollar-bill";
       bill.src = DOLLAR_BILL_IMAGE;
@@ -869,24 +870,44 @@
     }
   }
 
-  function dollarExplosionPath(style, i, count, burstIndex) {
-    if (style === "confetti") return confettiExplosionPath(i, count, burstIndex);
-    if (style === "popcorn") return popcornExplosionPath(i, count, burstIndex);
-    return classicExplosionPath(i, count, burstIndex);
+  function dollarExplosionScale(card){
+    if (!card) return 1.6;
+    const shortSide = Math.min(card.clientWidth || 360, card.clientHeight || 520);
+    return clamp(shortSide / 280, 1.45, 2.35);
+  }
+
+  function scaleExplosionPath(path, scale){
+    return {
+      ...path,
+      x1:path.x1 * scale,
+      y1:path.y1 * scale,
+      x2:path.x2 * scale,
+      y2:path.y2 * scale
+    };
+  }
+
+  function dollarExplosionPath(style, i, count, burstIndex, scale = 1.6) {
+    const path = style === "confetti"
+      ? confettiExplosionPath(i, count, burstIndex)
+      : style === "popcorn"
+        ? popcornExplosionPath(i, count, burstIndex)
+        : classicExplosionPath(i, count, burstIndex);
+
+    return scaleExplosionPath(path, scale);
   }
 
   function classicExplosionPath(i, count, burstIndex) {
     const angle = -90 + burstIndex * 17 + (360 / count) * i + (Math.random() * 4 - 2);
     const radians = angle * Math.PI / 180;
-    const distance1 = 118 + (i % 3) * 25;
-    const distance2 = distance1 + 70 + burstIndex * 5;
+    const distance1 = 150 + (i % 3) * 34;
+    const distance2 = distance1 + 120 + burstIndex * 12;
     return {
       x1: Math.cos(radians) * distance1,
       y1: Math.sin(radians) * distance1,
       x2: Math.cos(radians) * distance2,
       y2: Math.sin(radians) * distance2,
       rot1: angle + 90 + (Math.random() * 20 - 10),
-      rot2: angle + 165 + (Math.random() * 24 - 12),
+      rot2: angle + 180 + (Math.random() * 28 - 14),
       scale: 0.76 + (i % 4) * 0.07,
       delay: 0
     };
@@ -896,15 +917,15 @@
     const row = (i % 5) - 2;
     const side = i % 2 === 0 ? -1 : 1;
     const lane = Math.floor(i / 2);
-    const x1 = side * (72 + lane * 13);
-    const y1 = row * 30 - 58 + (i % 3) * 8;
+    const x1 = side * (115 + lane * 22);
+    const y1 = row * 42 - 82 + (i % 3) * 10;
     return {
       x1,
       y1,
-      x2: x1 * 1.34,
-      y2: y1 + 46 + burstIndex * 5,
+      x2: x1 * 1.48,
+      y2: y1 + 82 + burstIndex * 10,
       rot1: side * (95 + lane * 13),
-      rot2: side * (170 + lane * 18),
+      rot2: side * (190 + lane * 20),
       scale: 0.72 + (i % 4) * 0.07,
       delay: 0
     };
@@ -913,15 +934,15 @@
   function popcornExplosionPath(i, count, burstIndex) {
     const angle = -90 + burstIndex * 14 + (360 / count) * i + (Math.random() * 6 - 3);
     const radians = angle * Math.PI / 180;
-    const distance1 = 108 + Math.sin(i * 1.7) * 34;
-    const distance2 = distance1 + 58 + (i % 3) * 12;
+    const distance1 = 142 + Math.sin(i * 1.7) * 48;
+    const distance2 = distance1 + 105 + (i % 3) * 18;
     return {
       x1: Math.cos(radians) * distance1,
       y1: Math.sin(radians) * distance1,
       x2: Math.cos(radians) * distance2,
-      y2: Math.sin(radians) * distance2 + 24,
+      y2: Math.sin(radians) * distance2 + 38,
       rot1: angle + 90 + (Math.random() * 24 - 12),
-      rot2: angle + 180 + (Math.random() * 30 - 15),
+      rot2: angle + 190 + (Math.random() * 34 - 17),
       scale: 0.72 + (i % 4) * 0.07,
       delay: i * 14
     };

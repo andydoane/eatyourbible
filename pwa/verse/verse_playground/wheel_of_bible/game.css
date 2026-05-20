@@ -1490,8 +1490,8 @@ button.wob-ref-group {
 
 .wob-dollar-bill {
   position: absolute;
-  z-index: 47;
-  width: clamp(42px, 10vw, 72px);
+  z-index: 49;
+  width: clamp(52px, 12vw, 88px);
   height: auto;
   transform: translate(-50%, -50%) scale(.38) rotate(0deg);
   pointer-events: none;
