@@ -1419,8 +1419,8 @@
               }).join("")}
             </${tag}>`;
           }).join("")}
+          ${referenceTilesHtml(challenge)}
         </div>
-        ${referenceTilesHtml(challenge)}
       </div>`;
   }
 
@@ -1430,18 +1430,20 @@
     const chapter = meta.chapter == null ? "" : String(meta.chapter);
     const verseText = meta.verse == null ? "" : (meta.verseEnd ? `${meta.verse}-${meta.verseEnd}` : String(meta.verse));
     if (!bookText && !chapter && !verseText) return "";
+
     const bookClass = challenge?.type === "reference" && challenge.refKind === "book" ? "is-wiggling" : "";
     const chapterClass = challenge?.type === "reference" && challenge.refKind === "chapter" ? "is-wiggling" : "";
     const verseClass = challenge?.type === "reference" && challenge.refKind === "verse" ? "is-wiggling" : "";
+
     const bookTag = bookClass ? "button" : "span";
     const chapterTag = chapterClass ? "button" : "span";
     const verseTag = verseClass ? "button" : "span";
-    return `<div class="wob-ref-board" id="wobReferenceBoard">
-      ${bookText ? `<${bookTag} class="wob-ref-group ${bookClass}" ${bookClass ? 'type="button" data-ref-kind="book"' : ''}>${bookText.split(/\s+/).map(part => `<span class="wob-ref-tile">${escapeHtml(part)}</span>`).join("")}</${bookTag}>` : ""}
+
+    return `<span class="wob-ref-board" id="wobReferenceBoard">
+      ${bookText ? `<${bookTag} class="wob-ref-group ${bookClass}" ${bookClass ? 'type="button" data-ref-kind="book"' : ''}><span class="wob-ref-tile is-book">${escapeHtml(bookText)}</span></${bookTag}>` : ""}
       ${chapter ? `<${chapterTag} class="wob-ref-group ${chapterClass}" ${chapterClass ? 'type="button" data-ref-kind="chapter"' : ''}><span class="wob-ref-tile">${escapeHtml(chapter)}</span></${chapterTag}>` : ""}
-      ${(chapter && verseText) ? `<span class="wob-ref-punct">:</span>` : ""}
       ${verseText ? `<${verseTag} class="wob-ref-group ${verseClass}" ${verseClass ? 'type="button" data-ref-kind="verse"' : ''}><span class="wob-ref-tile">${escapeHtml(verseText)}</span></${verseTag}>` : ""}
-    </div>`;
+    </span>`;
   }
 
   function fitVerseBoardSoon(){
@@ -1452,10 +1454,8 @@
     const board = document.getElementById("wobVerseBoard");
     const card = board?.closest(".wob-verse-card");
     if (!board || !card) return;
-    const ref = document.getElementById("wobReferenceBoard");
     const box = card.getBoundingClientRect();
-    const refH = ref ? ref.getBoundingClientRect().height + 10 : 0;
-    const fitHeight = Math.max(80, box.height - refH);
+    const fitHeight = Math.max(80, box.height);
     const letterCount = state.words.reduce((sum, word) => sum + word.letters.length, 0);
     let size = clamp(Math.sqrt((box.width * fitHeight) / Math.max(24, letterCount)) * 1.38, 18, 56);
     const apply = (tileSize, lineGap) => {
