@@ -843,12 +843,12 @@
     const cardHeight = card.clientHeight || 520;
     const fallDistance = Math.round(cardHeight * .58);
 
+    const lanes = makeShuffledRainLanes(count, cardWidth);
+
     for (let i = 0; i < count; i += 1) {
       const bill = document.createElement("img");
-      const lane = count > 1 ? i / (count - 1) : .5;
-      const jitter = (Math.random() * 54) - 27;
-      const x = clamp(24 + lane * (cardWidth - 48) + jitter, 18, cardWidth - 18);
-      const delay = Math.round((i / count) * rainSpanMs + Math.random() * 120);
+      const x = lanes[i];
+      const delay = Math.round((i / count) * rainSpanMs + Math.random() * 160);
       const drift = (Math.random() * 110) - 55;
       const rotStart = (Math.random() * 80) - 40;
       const rotEnd = rotStart + (Math.random() * 260 - 130);
@@ -873,6 +873,29 @@
     }
 
     return { totalMs: rainSpanMs + fallMs };
+  }
+
+  function makeShuffledRainLanes(count, width) {
+    const safeCount = Math.max(1, Number(count) || 1);
+    const safeWidth = Math.max(120, Number(width) || 360);
+    const edge = 24;
+    const usableWidth = Math.max(60, safeWidth - edge * 2);
+
+    const lanes = [];
+    for (let i = 0; i < safeCount; i += 1) {
+      const lane = safeCount > 1 ? i / (safeCount - 1) : .5;
+      const jitter = (Math.random() * 42) - 21;
+      lanes.push(clamp(edge + lane * usableWidth + jitter, 18, safeWidth - 18));
+    }
+
+    for (let i = lanes.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(Math.random() * (i + 1));
+      const temp = lanes[i];
+      lanes[i] = lanes[j];
+      lanes[j] = temp;
+    }
+
+    return lanes;
   }
 
   function spawnDollarExplosion(card, burstIndex = 0, durationMs = 950, style = "classic") {
