@@ -1215,3 +1215,31 @@ button.wob-ref-group{
     transform: translate(-50%, -50%) scale(1) rotate(0);
   }
 }
+
+/* =========================
+   Force wheel pointer above SVG
+   ========================= */
+
+.wob-wheel-shell {
+  isolation: isolate;
+}
+
+.wob-wheel {
+  position: relative;
+  z-index: 1;
+}
+
+.wob-wheel-pointer {
+  position: absolute;
+  z-index: 999;
+}
+
+.wob-spin-wheel-button .wob-wheel-pointer,
+.wob-intro-wheel-wrap .wob-wheel-pointer {
+  z-index: 999;
+}
+
+.wob-wheel-face {
+  position: absolute;
+  z-index: 1;
+}
