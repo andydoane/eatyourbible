@@ -849,10 +849,18 @@
 
     await showRoundTotalPopup(earnings);
 
-    if (normalRoundComplete()){ renderFinalIntro(); return; }
     const challenge = chooseChallengeTarget();
-    if (!challenge){ renderSpinScreen(); return; }
-    renderWigglingVerse(challenge);
+    if (challenge){
+      renderWigglingVerse(challenge);
+      return;
+    }
+
+    if (normalRoundComplete()){
+      renderFinalIntro();
+      return;
+    }
+
+    renderSpinScreen();
   }
 
   function showFloatingMoney(text){
