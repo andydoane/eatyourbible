@@ -820,23 +820,59 @@
     `;
     card.appendChild(popup);
 
-    await sleep(520);
+    await sleep(420);
 
-    const explosions = Math.min(5, 1 + Math.floor(total / 5000));
-    const styles = ["classic", "confetti", "popcorn"];
-    const chosenStyle = styles[Math.floor(Math.random() * styles.length)];
-    const explosionMs = chosenStyle === "popcorn" ? 1050 : 950;
-    const pauseMs = 300;
+    const rainTiming = spawnDollarRain(card, total);
+    playPrize();
 
-    for (let i=0; i<explosions; i+=1){
-      spawnDollarExplosion(card, i, explosionMs, chosenStyle);
-      playPrize();
-      await sleep(explosionMs + pauseMs);
-    }
+    await sleep(rainTiming.totalMs + 260);
 
     popup.classList.add("is-leaving");
     await sleep(360);
     popup.remove();
+  }
+
+  function spawnDollarRain(card, total) {
+    if (!card) return { totalMs: 0 };
+
+    const safeTotal = Math.max(0, Number(total) || 0);
+    const count = clamp(18 + Math.floor(safeTotal / 500), 18, 78);
+    const rainSpanMs = clamp(900 + Math.floor(safeTotal / 5000) * 650 + count * 18, 1100, 4400);
+    const fallMs = clamp(1200 + Math.floor(count * 7), 1250, 1850);
+    const cardWidth = card.clientWidth || 360;
+    const cardHeight = card.clientHeight || 520;
+    const fallDistance = Math.round(cardHeight * .58);
+
+    for (let i = 0; i < count; i += 1) {
+      const bill = document.createElement("img");
+      const lane = count > 1 ? i / (count - 1) : .5;
+      const jitter = (Math.random() * 54) - 27;
+      const x = clamp(24 + lane * (cardWidth - 48) + jitter, 18, cardWidth - 18);
+      const delay = Math.round((i / count) * rainSpanMs + Math.random() * 120);
+      const drift = (Math.random() * 110) - 55;
+      const rotStart = (Math.random() * 80) - 40;
+      const rotEnd = rotStart + (Math.random() * 260 - 130);
+      const scale = .74 + Math.random() * .34;
+
+      bill.className = "wob-dollar-bill is-dollar-rain";
+      bill.src = DOLLAR_BILL_IMAGE;
+      bill.alt = "";
+      bill.draggable = false;
+      bill.style.left = `${x}px`;
+      bill.style.top = `-82px`;
+      bill.style.setProperty("--drift", `${drift}px`);
+      bill.style.setProperty("--fall", `${fallDistance}px`);
+      bill.style.setProperty("--rot-start", `${rotStart}deg`);
+      bill.style.setProperty("--rot-end", `${rotEnd}deg`);
+      bill.style.setProperty("--scale", String(scale));
+      bill.style.setProperty("--duration", `${fallMs}ms`);
+      bill.style.setProperty("--delay", `${delay}ms`);
+      card.appendChild(bill);
+
+      setTimeout(() => bill.remove(), delay + fallMs + 80);
+    }
+
+    return { totalMs: rainSpanMs + fallMs };
   }
 
   function spawnDollarExplosion(card, burstIndex = 0, durationMs = 950, style = "classic") {

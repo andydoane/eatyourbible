@@ -1497,7 +1497,11 @@ button.wob-ref-group {
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
-  animation: wobDollarFirework var(--duration, 950ms) linear var(--delay, 0ms) both;
+}
+
+.wob-dollar-bill.is-dollar-rain {
+  opacity: 0;
+  animation: wobDollarRain var(--duration, 1500ms) linear var(--delay, 0ms) both;
 }
 
 @keyframes wobDollarFirework {
@@ -1528,5 +1532,29 @@ button.wob-ref-group {
     opacity: 0;
     transform: translate(calc(-50% + var(--x2)),
         calc(-50% + var(--y2))) scale(calc(var(--scale, 1) * .86)) rotate(var(--rot2));
+  }
+}
+
+@keyframes wobDollarRain {
+  0% {
+    opacity: 0;
+    transform:
+      translate(-50%, -50%) translateX(0) translateY(0) scale(calc(var(--scale, 1) * .82)) rotate(var(--rot-start, 0deg));
+  }
+
+  10% {
+    opacity: .92;
+  }
+
+  58% {
+    opacity: .88;
+    transform:
+      translate(-50%, -50%) translateX(calc(var(--drift, 0px) * .58)) translateY(calc(var(--fall, 300px) * .58)) scale(var(--scale, 1)) rotate(calc((var(--rot-start, 0deg) + var(--rot-end, 180deg)) / 2));
+  }
+
+  100% {
+    opacity: 0;
+    transform:
+      translate(-50%, -50%) translateX(var(--drift, 0px)) translateY(var(--fall, 300px)) scale(calc(var(--scale, 1) * .94)) rotate(var(--rot-end, 180deg));
   }
 }
