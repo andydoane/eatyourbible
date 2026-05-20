@@ -1151,13 +1151,17 @@
 
   function chooseChallengeTarget(){
     const progress = state.uniqueLetters.length ? state.revealedLetters.size / state.uniqueLetters.length : 0;
-    if (!state.refChallengeDone.book && state.turnCount >= 2 && state.referenceMeta?.book) return makeReferenceChallenge("book");
-    if (!state.refChallengeDone.chapter && state.turnCount >= 4 && Number.isFinite(Number(state.referenceMeta?.chapter))) return makeReferenceChallenge("chapter");
-    if (!state.refChallengeDone.verse && state.turnCount >= 6 && Number.isFinite(Number(state.referenceMeta?.verse))) return makeReferenceChallenge("verse");
-    if (!state.refChallengeDone.book && progress >= .22 && state.referenceMeta?.book) return makeReferenceChallenge("book");
-    if (!state.refChallengeDone.chapter && progress >= .44 && Number.isFinite(Number(state.referenceMeta?.chapter))) return makeReferenceChallenge("chapter");
-    if (!state.refChallengeDone.verse && progress >= .62 && Number.isFinite(Number(state.referenceMeta?.verse))) return makeReferenceChallenge("verse");
+
+    if (!referenceChallengeAlreadyDone() && (state.turnCount >= 3 || progress >= .33)){
+      const referenceChallenge = makeReferenceComboChallenge();
+      if (referenceChallenge) return referenceChallenge;
+    }
+
     return chooseWordChallenge();
+  }
+
+  function referenceChallengeAlreadyDone(){
+    return !!(state.refChallengeDone.book || state.refChallengeDone.chapter || state.refChallengeDone.verse);
   }
 
   function chooseWordChallenge(){
@@ -1263,29 +1267,107 @@
   }
 
   function makeReferenceChallenge(kind){
+    return makeReferenceStep(kind);
+  }
+
+  function makeReferenceStep(kind){
     const meta = state.referenceMeta || {};
+
     if (kind === "book"){
       const parts = splitBookForChallenge(meta.book || "");
       const expected = normalizeLetters(parts.fillText).split("");
       if (!expected.length) return null;
       return {
-        type:"reference", refKind:"book", inputKind:"letters", expected,
-        title:"Book Challenge", prompt:"What book is this from?",
-        fixedPrefix:parts.fixedPrefix, displayText:parts.fillText, color:"#2f7a32", bonus:1200 + Math.min(1000, expected.length * 100)
+        type:"reference",
+        refKind:"book",
+        inputKind:"letters",
+        expected,
+        title:"Book Challenge",
+        prompt:"What book is this from?",
+        fixedPrefix:parts.fixedPrefix,
+        displayText:parts.fillText,
+        color:"#2f7a32",
+        bonus:1200 + Math.min(1000, expected.length * 100)
       };
     }
+
     if (kind === "chapter"){
       const chapter = String(meta.chapter || "");
       const expected = normalizeDigits(chapter).split("");
       if (!expected.length) return null;
-      return { type:"reference", refKind:"chapter", inputKind:"numbers", expected, title:"Chapter Challenge", prompt:"What chapter is this verse from?", displayText:chapter, color:"#2f7a32", bonus:1000 + expected.length * 300 };
+      return {
+        type:"reference",
+        refKind:"chapter",
+        inputKind:"numbers",
+        expected,
+        title:"Chapter Challenge",
+        prompt:"What chapter is this verse from?",
+        displayText:chapter,
+        color:"#2f7a32",
+        bonus:1000 + expected.length * 300
+      };
     }
+
     const verseStart = String(meta.verse || "");
     const verseEnd = meta.verseEnd == null ? "" : String(meta.verseEnd);
     const displayText = verseEnd ? `${verseStart}-${verseEnd}` : verseStart;
     const expected = normalizeDigits(displayText).split("");
     if (!expected.length) return null;
-    return { type:"reference", refKind:"verse", inputKind:"numbers", expected, title:"Verse Number Challenge", prompt:verseEnd ? "What verse numbers are these?" : "What verse number is this?", displayText, color:"#2f7a32", bonus:1000 + expected.length * 300 };
+
+    return {
+      type:"reference",
+      refKind:"verse",
+      inputKind:"numbers",
+      expected,
+      title:"Verse Number Challenge",
+      prompt:verseEnd ? "What verse numbers are these?" : "What verse number is this?",
+      displayText,
+      color:"#2f7a32",
+      bonus:1000 + expected.length * 300
+    };
+  }
+
+  function makeReferenceComboChallenge(){
+    const steps = ["book", "chapter", "verse"]
+      .map(kind => makeReferenceStep(kind))
+      .filter(Boolean);
+
+    if (!steps.length) return null;
+
+    const challenge = {
+      type:"reference",
+      isReferenceSequence:true,
+      referenceSteps:steps,
+      referenceStepIndex:0,
+      totalBonus:steps.reduce((sum, step) => sum + (Number(step.bonus) || 0), 0)
+    };
+
+    hydrateReferenceSequenceStep(challenge);
+    return challenge;
+  }
+
+  function hydrateReferenceSequenceStep(challenge){
+    if (!challenge?.isReferenceSequence) return challenge;
+
+    const steps = challenge.referenceSteps || [];
+    const index = clamp(challenge.referenceStepIndex || 0, 0, Math.max(0, steps.length - 1));
+    const step = steps[index];
+    if (!step) return challenge;
+
+    challenge.referenceStepIndex = index;
+    challenge.refKind = step.refKind;
+    challenge.inputKind = step.inputKind;
+    challenge.expected = step.expected;
+    challenge.prompt = step.prompt;
+    challenge.fixedPrefix = step.fixedPrefix || "";
+    challenge.displayText = step.displayText || "";
+    challenge.color = step.color || "#2f7a32";
+    challenge.stepBonus = Number(step.bonus) || 0;
+    challenge.bonus = Number(challenge.totalBonus) || challenge.stepBonus;
+    challenge.title = `Reference Challenge ${index + 1}/${steps.length}`;
+    challenge.choices = null;
+
+    return challenge;
   }
 
   function renderWigglingVerse(challenge){
@@ -1364,6 +1446,7 @@
 
   function renderChallenge(challenge = state.currentChallenge){
     if (!challenge) return renderSpinScreen();
+    if (challenge.isReferenceSequence) hydrateReferenceSequenceStep(challenge);
     state.screen = "challenge";
     state.currentChallenge = challenge;
     state.challengeInputIndex = 0; state.challengeFlash = ""; state.challengeBad = false;
@@ -1379,16 +1462,19 @@
     const challenge = state.currentChallenge;
     const choiceClass = challenge.choices.length > 9 || challenge.inputKind === "numbers" ? "is-wide" : "";
     const showPrompt = challenge.type === "reference";
+    const sequenceText = challenge.isReferenceSequence
+      ? `Step ${(challenge.referenceStepIndex || 0) + 1} of ${(challenge.referenceSteps || []).length}`
+      : "";
     app.innerHTML = rootHtml(`
       <div class="wob-word-challenge-root">
         <div class="wob-big-title">${escapeHtml(challenge.title || "Challenge")}</div>
-        ${showPrompt ? `<div class="wob-challenge-prompt">${escapeHtml(challenge.prompt || "Build the answer.")}</div>` : ""}
+        ${showPrompt ? `<div class="wob-challenge-prompt">${sequenceText ? `${escapeHtml(sequenceText)} · ` : ""}${escapeHtml(challenge.prompt || "Build the answer.")}</div>` : ""}
         ${challenge.contextHtml ? `<div class="wob-context-card">${challenge.contextHtml}</div>` : ""}
         ${typedChallengeHtml(challenge, state.challengeInputIndex)}
         <div class="wob-choice-grid is-rowed ${choiceClass}">
           ${choiceRowsHtml(challenge.choices, state.challengeFlash, state.challengeBad, "choice")}
         </div>
-        <div class="wob-bonus-line">Tap the Letters in Order</div>
+        <div class="wob-bonus-line">${challenge.inputKind === "numbers" ? "Tap the Numbers in Order" : "Tap the Letters in Order"}</div>
       </div>
     `, { status:"Challenge", rootClass:"is-challenge-screen" });
     wireGameMenu();
@@ -1447,8 +1533,25 @@
     }
     playGood(); state.challengeFlash = choice; state.challengeBad = false; state.challengeInputIndex += 1;
     if (state.challengeInputIndex >= challenge.expected.length){
-      if (challenge.type === "word") state.challengeHistory.set(challenge.wordIndex, revealedCountForWord(challenge.word));
-      if (challenge.type === "reference") state.refChallengeDone[challenge.refKind] = true;
+      if (challenge.isReferenceSequence){
+        const steps = challenge.referenceSteps || [];
+        const nextIndex = (challenge.referenceStepIndex || 0) + 1;
+
+        if (nextIndex < steps.length){
+          challenge.referenceStepIndex = nextIndex;
+          hydrateReferenceSequenceStep(challenge);
+          renderChallenge(challenge);
+          return;
+        }
+
+        state.refChallengeDone.book = true;
+        state.refChallengeDone.chapter = true;
+        state.refChallengeDone.verse = true;
+      } else {
+        if (challenge.type === "word") state.challengeHistory.set(challenge.wordIndex, revealedCountForWord(challenge.word));
+        if (challenge.type === "reference") state.refChallengeDone[challenge.refKind] = true;
+      }
+
       const bonus = Math.max(0, Number(challenge.bonus) || 500);
       state.baseCash += bonus;
       updateHud();
