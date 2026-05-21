@@ -20,6 +20,7 @@
   const WHEEL_BUTTON_IMAGE = "./wheel_of_bible_images/button_wheel.png";
   const WHEEL_FACE_IMAGE = "./wheel_of_bible_images/wheel_face.svg";
   const DOLLAR_BILL_IMAGE = "./wheel_of_bible_images/dollar_bill.png";
+  const CLOCK_IMAGE = "./wheel_of_bible_images/clock.png";
   const WHEEL_ICON_HTML = `<img class="wob-shell-title-icon" src="${WHEEL_BUTTON_IMAGE}" alt="" draggable="false">`;
   const WHEEL_BUTTON_HTML = `<img class="wob-wheel-button-img" src="${WHEEL_BUTTON_IMAGE}" alt="" draggable="false">`;
   const HELP_OVERLAY_ID = "wheelOfBibleHelpOverlay";
@@ -1899,9 +1900,38 @@
     renderFinalModal();
   }
 
-  function finishFinalRound() {
+  async function finishFinalRound() {
     if (finalTimerId) { clearInterval(finalTimerId); finalTimerId = null; }
-    document.getElementById("wobFinalModal")?.remove(); renderMoneyTotalScreen();
+    document.getElementById("wobFinalModal")?.remove();
+
+    await showTimesUpPopup();
+
+    renderMoneyTotalScreen();
+  }
+
+  async function showTimesUpPopup() {
+    const card = document.querySelector(".wob-card");
+    if (!card) {
+      await sleep(900);
+      return;
+    }
+
+    const popup = document.createElement("div");
+    popup.className = "wob-times-up-overlay";
+    popup.innerHTML = `
+      <div class="wob-times-up-card">
+        <img class="wob-times-up-clock" src="${CLOCK_IMAGE}" alt="" draggable="false">
+        <div class="wob-times-up-title">Time’s Up!</div>
+      </div>
+    `;
+    card.appendChild(popup);
+
+    playPrize();
+    await sleep(1450);
+
+    popup.classList.add("is-leaving");
+    await sleep(320);
+    popup.remove();
   }
 
   async function renderMoneyTotalScreen() {
@@ -1914,7 +1944,7 @@
           <div class="wob-money-total" id="moneyCount">$0</div>
           <div class="wob-prize-list" id="prizeList"></div>
         </div>
-        <button class="wob-btn no-zoom" id="completeBtn" type="button" style="display:none">Complete</button>
+        <button class="wob-btn wob-complete-btn no-zoom" id="completeBtn" type="button" style="display:none">Complete</button>
       </div>
     `, { status: "Total", rootClass: "is-money-screen" });
     wireGameMenu(); await animateMoneyCount(document.getElementById("moneyCount"), 0, normalTotal, 1400);
