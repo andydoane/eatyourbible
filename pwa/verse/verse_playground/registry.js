@@ -46,20 +46,6 @@ window.EXTERNAL_VERSE_PLAYGROUND = [
   {
   enabled: true,
   manifest: {
-    id: "verse_clap",
-    title: "Verse Clap",
-    description: "Listen to the verse, then clap once to pop, scare, and wake each word.",
-    icon: "👏",
-    cardColor: "#ff66a3",
-    cardTextColor: "#ffffff",
-    launchUrl: "./verse_playground/verse_clap/index.html",
-    visibleInCarousel: false,
-    progressType: "practice"
-  }
-},
-  {
-  enabled: true,
-  manifest: {
     id: "verse_typer",
     title: "Verse Typer",
     description: "Type each verse word as a caterpillar wiggles across the screen.",
@@ -82,7 +68,7 @@ window.EXTERNAL_VERSE_PLAYGROUND = [
     cardColor: "#ffc751",
     cardTextColor: "#333333",
     launchUrl: "./verse_playground/wheel_of_bible/index.html",
-    visibleInCarousel: false,
+    visibleInCarousel: true,
     progressType: "practice"
   }
 }
