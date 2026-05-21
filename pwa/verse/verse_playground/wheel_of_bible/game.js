@@ -1,4 +1,4 @@
-(async function(){
+(async function () {
   "use strict";
 
   const app = document.getElementById("app");
@@ -43,29 +43,29 @@
   ];
 
   const WHEEL_VALUES = [
-    { kind:"cash", label:"$800", value:800 },
-    { kind:"cash", label:"$1000", value:1000 },
-    { kind:"prize", label:"PRIZE" },
-    { kind:"cash", label:"$100", value:100 },
-    { kind:"cash", label:"$300", value:300 },
-    { kind:"cash", label:"$500", value:500 },
-    { kind:"cash", label:"$700", value:700 },
-    { kind:"cash", label:"$900", value:900 },
-    { kind:"prize", label:"PRIZE" },
-    { kind:"cash", label:"$200", value:200 },
-    { kind:"cash", label:"$400", value:400 },
-    { kind:"cash", label:"$600", value:600 }
+    { kind: "cash", label: "$800", value: 800 },
+    { kind: "cash", label: "$1000", value: 1000 },
+    { kind: "prize", label: "PRIZE" },
+    { kind: "cash", label: "$100", value: 100 },
+    { kind: "cash", label: "$300", value: 300 },
+    { kind: "cash", label: "$500", value: 500 },
+    { kind: "cash", label: "$700", value: 700 },
+    { kind: "cash", label: "$900", value: 900 },
+    { kind: "prize", label: "PRIZE" },
+    { kind: "cash", label: "$200", value: 200 },
+    { kind: "cash", label: "$400", value: 400 },
+    { kind: "cash", label: "$600", value: 600 }
   ];
 
   const PRIZES = [
-    { emoji:"🎁", name:"Surprise Box", value:1200 },
-    { emoji:"🛴", name:"Scooter", value:1400 },
-    { emoji:"🎮", name:"Game Prize", value:1500 },
-    { emoji:"🚲", name:"Bike", value:1800 },
-    { emoji:"🏰", name:"Castle Trip", value:2000 },
-    { emoji:"🚀", name:"Rocket Ride", value:2200 },
-    { emoji:"🦖", name:"Dino Dig", value:2500 },
-    { emoji:"🏆", name:"Golden Trophy", value:3000 }
+    { emoji: "🎁", name: "Surprise Box", value: 1200 },
+    { emoji: "🛴", name: "Scooter", value: 1400 },
+    { emoji: "🎮", name: "Game Prize", value: 1500 },
+    { emoji: "🚲", name: "Bike", value: 1800 },
+    { emoji: "🏰", name: "Castle Trip", value: 2000 },
+    { emoji: "🚀", name: "Rocket Ride", value: 2200 },
+    { emoji: "🦖", name: "Dino Dig", value: 2500 },
+    { emoji: "🏆", name: "Golden Trophy", value: 3000 }
   ];
 
   const NORMAL_ROUND_MIN_SELECTED = 6;
@@ -85,58 +85,56 @@
   let currentFitRaf = 0;
 
   const state = {
-    screen:"intro",
-    verseJson:null,
-    verseText:ctx.verseText || "",
-    verseRef:ctx.verseRef || "",
-    translation:ctx.translation || "",
-    tokens:[],
-    words:[],
-    uniqueLetters:[],
-    echoParts:[],
-    keywordSet:new Set(),
-    hidePlanWords:[],
-    revealedLetters:new Set(),
-    challengeHistory:new Map(),
-    referenceMeta:null,
-    refChallengeDone:{ book:false, chapter:false, verse:false },
-    selectedSpin:null,
-    lastSelectedLetter:"",
-    turnCount:0,
-    baseCash:0,
-    prizeCash:0,
-    finalCash:0,
-    prizeEarnings:[],
-    currentChallenge:null,
-    challengeInputIndex:0,
-    challengeFlash:"",
-    challengeBad:false,
-    challengeWrongCount:0,
-    challengeAutoFilled:false,
-    finalStartedAt:0,
-    finalTimeLeft:60,
-    finalSolvedWordIndices:new Set(),
-    finalHiddenTileKeys:new Set(),
-    finalFilledTileKeys:new Set(),
-    finalActiveWord:null,
-    finalInputIndex:0,
-    finalLetterStreak:0,
-    finalFlash:"",
-    finalBad:false,
-    completed:false
+    screen: "intro",
+    verseJson: null,
+    verseText: ctx.verseText || "",
+    verseRef: ctx.verseRef || "",
+    translation: ctx.translation || "",
+    tokens: [],
+    words: [],
+    uniqueLetters: [],
+    echoParts: [],
+    keywordSet: new Set(),
+    hidePlanWords: [],
+    revealedLetters: new Set(),
+    challengeHistory: new Map(),
+    referenceMeta: null,
+    refChallengeDone: { book: false, chapter: false, verse: false },
+    selectedSpin: null,
+    lastSelectedLetter: "",
+    turnCount: 0,
+    baseCash: 0,
+    prizeCash: 0,
+    finalCash: 0,
+    prizeEarnings: [],
+    currentChallenge: null,
+    challengeInputIndex: 0,
+    challengeFlash: "",
+    challengeBad: false,
+    finalStartedAt: 0,
+    finalTimeLeft: 60,
+    finalSolvedWordIndices: new Set(),
+    finalHiddenTileKeys: new Set(),
+    finalFilledTileKeys: new Set(),
+    finalActiveWord: null,
+    finalInputIndex: 0,
+    finalLetterStreak: 0,
+    finalFlash: "",
+    finalBad: false,
+    completed: false
   };
 
-  function escapeHtml(value){
+  function escapeHtml(value) {
     if (shell().escapeHtml) return shell().escapeHtml(value);
     return String(value ?? "")
-      .replace(/&/g,"&amp;")
-      .replace(/</g,"&lt;")
-      .replace(/>/g,"&gt;")
-      .replace(/\"/g,"&quot;")
-      .replace(/'/g,"&#39;");
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/\"/g, "&quot;")
+      .replace(/'/g, "&#39;");
   }
 
-  function clamp(value, min, max){
+  function clamp(value, min, max) {
     if (shell().clamp) return shell().clamp(value, min, max);
     const n = Number(value);
     if (!Number.isFinite(n)) return min;
@@ -151,15 +149,15 @@
     sleepIds.push(id);
   });
 
-  function clearSleeps(){ sleepIds.forEach(id => clearTimeout(id)); sleepIds = []; }
+  function clearSleeps() { sleepIds.forEach(id => clearTimeout(id)); sleepIds = []; }
 
-  function clearTimers(){
+  function clearTimers() {
     clearSleeps();
-    if (finalTimerId){ clearInterval(finalTimerId); finalTimerId = null; }
-    if (currentFitRaf){ cancelAnimationFrame(currentFitRaf); currentFitRaf = 0; }
+    if (finalTimerId) { clearInterval(finalTimerId); finalTimerId = null; }
+    if (currentFitRaf) { cancelAnimationFrame(currentFitRaf); currentFitRaf = 0; }
   }
 
-  function formatMoney(value){
+  function formatMoney(value) {
     return `$${Math.max(0, Math.round(Number(value) || 0)).toLocaleString()}`;
   }
 
@@ -196,7 +194,7 @@
     return Array.isArray(challenge.expected) && challenge.expected.length > 1 ? 1 : 0;
   }
 
-  function normalizeLetters(value){
+  function normalizeLetters(value) {
     return String(value || "")
       .normalize("NFKD")
       .replace(/[\u0300-\u036f]/g, "")
@@ -204,11 +202,11 @@
       .replace(/[^A-Z]/g, "");
   }
 
-  function normalizeDigits(value){
+  function normalizeDigits(value) {
     return String(value || "").replace(/[^0-9]/g, "");
   }
 
-  function normalizeWord(value){
+  function normalizeWord(value) {
     if (shell().normalizeWord) return shell().normalizeWord(value);
     return String(value ?? "")
       .trim()
@@ -219,27 +217,27 @@
       .replace(/[^a-z0-9']/gi, "");
   }
 
-  function tokenizeVerse(text){
-    const raw = String(text || "").replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/[–—−]/g,"-");
+  function tokenizeVerse(text) {
+    const raw = String(text || "").replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/[–—−]/g, "-");
     const tokens = [];
     const re = /(\s+|[A-Za-z]+(?:'[A-Za-z]+)?|[0-9]+(?:,[0-9]{3})*|[^\sA-Za-z0-9]+)/g;
     let wordIndex = 0;
 
-    for (const part of raw.match(re) || []){
-      if (/^\s+$/.test(part)) tokens.push({ kind:"space", text:part });
-      else if (/^[A-Za-z]+(?:'[A-Za-z]+)?$/.test(part)) tokens.push({ kind:"word", text:part, wordIndex:wordIndex++ });
-      else if (/^[0-9]+(?:,[0-9]{3})*$/.test(part)) tokens.push({ kind:"word", text:part, wordIndex:wordIndex++, numeric:true });
-      else tokens.push({ kind:"punct", text:part });
+    for (const part of raw.match(re) || []) {
+      if (/^\s+$/.test(part)) tokens.push({ kind: "space", text: part });
+      else if (/^[A-Za-z]+(?:'[A-Za-z]+)?$/.test(part)) tokens.push({ kind: "word", text: part, wordIndex: wordIndex++ });
+      else if (/^[0-9]+(?:,[0-9]{3})*$/.test(part)) tokens.push({ kind: "word", text: part, wordIndex: wordIndex++, numeric: true });
+      else tokens.push({ kind: "punct", text: part });
     }
     return tokens;
   }
 
-  function extractKeywords(json){
+  function extractKeywords(json) {
     const out = new Set();
     const addWord = (value) => {
       const text = String(value || "").trim();
       if (!text) return;
-      for (const part of text.split(/\s+/g)){
+      for (const part of text.split(/\s+/g)) {
         const norm = normalizeWord(part);
         if (norm) out.add(norm);
       }
@@ -248,13 +246,13 @@
     };
 
     const generic = [json?.keywords, json?.keyWords, json?.keywordWords, json?.memoryKeywords, json?.verseKeywords];
-    for (const item of generic){
+    for (const item of generic) {
       if (Array.isArray(item)) item.forEach(addWord);
       else if (typeof item === "string") item.split(/[;,]/g).forEach(addWord);
     }
 
-    if (Array.isArray(json?.hidePlan)){
-      for (const item of json.hidePlan){
+    if (Array.isArray(json?.hidePlan)) {
+      for (const item of json.hidePlan) {
         if (item?.word) addWord(item.word);
       }
     }
@@ -262,70 +260,70 @@
     return out;
   }
 
-  function extractHidePlanWords(json){
+  function extractHidePlanWords(json) {
     if (!Array.isArray(json?.hidePlan)) return [];
     return json.hidePlan
       .map(item => String(item?.word || "").trim())
       .filter(Boolean);
   }
 
-  function parseReference(){
-    if (shell().parseReferenceParts){
+  function parseReference() {
+    if (shell().parseReferenceParts) {
       return shell().parseReferenceParts(state.verseRef, state.translation, ctx.verseId);
     }
     const raw = String(state.verseRef || "").trim();
     const match = raw.match(/^(.*?)\s+(\d+):(\d+)(?:-(\d+))?/);
     return match ? {
-      book:match[1],
-      chapter:Number(match[2]),
-      verse:Number(match[3]),
-      verseEnd:match[4] ? Number(match[4]) : null,
-      reference:match[4] ? `${match[2]}:${match[3]}-${match[4]}` : `${match[2]}:${match[3]}`,
-      display:raw
-    } : { book:raw, chapter:null, verse:null, verseEnd:null, reference:"", display:raw };
+      book: match[1],
+      chapter: Number(match[2]),
+      verse: Number(match[3]),
+      verseEnd: match[4] ? Number(match[4]) : null,
+      reference: match[4] ? `${match[2]}:${match[3]}-${match[4]}` : `${match[2]}:${match[3]}`,
+      display: raw
+    } : { book: raw, chapter: null, verse: null, verseEnd: null, reference: "", display: raw };
   }
 
-  function buildVerseModel(){
+  function buildVerseModel() {
     state.tokens = tokenizeVerse(state.verseText);
     state.words = [];
     state.referenceMeta = parseReference();
 
-    for (const token of state.tokens){
+    for (const token of state.tokens) {
       if (token.kind !== "word") continue;
       const display = token.text;
       const clean = normalizeWord(display);
       const letters = Array.from(display).map((char, index) => ({
         char,
         index,
-        normalized:normalizeLetters(char),
-        isLetter:/^[A-Za-z]$/.test(char)
+        normalized: normalizeLetters(char),
+        isLetter: /^[A-Za-z]$/.test(char)
       }));
       state.words.push({
-        index:token.wordIndex,
+        index: token.wordIndex,
         display,
         clean,
         letters,
-        color:WORD_COLORS[token.wordIndex % WORD_COLORS.length],
-        isKeyword:state.keywordSet.has(clean)
+        color: WORD_COLORS[token.wordIndex % WORD_COLORS.length],
+        isKeyword: state.keywordSet.has(clean)
       });
     }
 
     const unique = new Set();
-    for (const word of state.words){
-      for (const letter of word.letters){
+    for (const word of state.words) {
+      for (const letter of word.letters) {
         if (letter.isLetter && letter.normalized) unique.add(letter.normalized);
       }
     }
     state.uniqueLetters = Array.from(unique).sort();
   }
 
-  async function loadVerseJson(){
+  async function loadVerseJson() {
     if (state.verseJson) return state.verseJson;
     const verseId = ctx.verseId || bridge().getLaunchParams?.()?.verseId || "";
-    if (!verseId){ buildVerseModel(); return null; }
+    if (!verseId) { buildVerseModel(); return null; }
 
     try {
-      const res = await fetch(`../../verse_data/${verseId}.json`, { cache:"no-store" });
+      const res = await fetch(`../../verse_data/${verseId}.json`, { cache: "no-store" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       state.verseJson = await res.json();
       state.verseText = state.verseJson.verseText || state.verseText;
@@ -334,7 +332,7 @@
       state.keywordSet = extractKeywords(state.verseJson);
       state.hidePlanWords = extractHidePlanWords(state.verseJson);
       return state.verseJson;
-    } catch (err){
+    } catch (err) {
       console.warn("Wheel of Bible could not load full verse JSON", err);
       state.keywordSet = new Set();
       state.hidePlanWords = [];
@@ -343,7 +341,7 @@
     }
   }
 
-  function getVerseAudioCandidates(){
+  function getVerseAudioCandidates() {
     const json = state.verseJson || {};
     const candidates = [];
     const add = (src) => {
@@ -358,7 +356,7 @@
     return Array.from(new Set(candidates));
   }
 
-  function getReferenceAudioCandidates(){
+  function getReferenceAudioCandidates() {
     const json = state.verseJson || {};
     const candidates = [];
     const add = (src) => {
@@ -376,7 +374,7 @@
     return Array.from(new Set(candidates));
   }
 
-  function createVerseAudioElement(){
+  function createVerseAudioElement() {
     if (verseAudioEl) return verseAudioEl;
     verseAudioEl = document.createElement("audio");
     verseAudioEl.preload = "auto";
@@ -387,9 +385,9 @@
     return verseAudioEl;
   }
 
-  function audioContextConstructor(){ return window.AudioContext || window.webkitAudioContext; }
-  function createAudio(){
-    if (audioCtx){ if (masterGain) masterGain.gain.value = muted ? 0 : WEB_AUDIO_MASTER_VOLUME; return; }
+  function audioContextConstructor() { return window.AudioContext || window.webkitAudioContext; }
+  function createAudio() {
+    if (audioCtx) { if (masterGain) masterGain.gain.value = muted ? 0 : WEB_AUDIO_MASTER_VOLUME; return; }
     const AudioCtor = audioContextConstructor();
     if (!AudioCtor) return;
     audioCtx = new AudioCtor();
@@ -398,7 +396,7 @@
     masterGain.connect(audioCtx.destination);
   }
 
-  function primeHtmlAudio(){
+  function primeHtmlAudio() {
     if (htmlAudioPrimed) return Promise.resolve(true);
     if (htmlAudioPrimePromise) return htmlAudioPrimePromise;
     const audio = createVerseAudioElement();
@@ -406,25 +404,25 @@
       let done = false, fallbackId = null;
       const cleanup = () => { audio.onended = null; audio.onerror = null; audio.oncanplay = null; audio.oncanplaythrough = null; if (fallbackId) clearTimeout(fallbackId); };
       const finish = ok => { if (done) return; done = true; cleanup(); htmlAudioPrimed = !!ok; htmlAudioPrimePromise = null; resolve(!!ok); };
-      const tryPlay = () => { const p = audio.play(); if (p?.then) p.then(()=>{}).catch(()=>finish(false)); };
+      const tryPlay = () => { const p = audio.play(); if (p?.then) p.then(() => { }).catch(() => finish(false)); };
       try {
         audio.pause(); audio.currentTime = 0; audio.muted = false; audio.volume = 0.01; audio.src = SILENCE_AUDIO_FILE; audio.load();
         audio.onended = () => finish(true); audio.onerror = () => finish(false);
         if (audio.readyState >= 3) tryPlay(); else { audio.oncanplay = tryPlay; audio.oncanplaythrough = tryPlay; }
         fallbackId = setTimeout(() => finish(false), 1800);
-      } catch (err){ finish(false); }
+      } catch (err) { finish(false); }
     });
     return htmlAudioPrimePromise;
   }
 
-  async function unlockAudio(){
+  async function unlockAudio() {
     createAudio(); createVerseAudioElement();
     if (!audioCtx || !masterGain) return false;
     if (audioUnlocked && audioCtx.state === "running") return true;
     if (audioUnlockPromise) return audioUnlockPromise;
     audioUnlockPromise = (async () => {
       try {
-        if (audioCtx.state !== "running"){ try { await audioCtx.resume?.(); } catch(err){} }
+        if (audioCtx.state !== "running") { try { await audioCtx.resume?.(); } catch (err) { } }
         const now = audioCtx.currentTime;
         const osc = audioCtx.createOscillator();
         const gain = audioCtx.createGain();
@@ -432,18 +430,18 @@
         osc.connect(gain); gain.connect(masterGain); osc.start(now); osc.stop(now + 0.03);
         audioUnlocked = audioCtx.state === "running";
         return audioUnlocked;
-      } catch(err){ console.warn("Wheel of Bible audio unlock failed", err); audioUnlocked = false; return false; }
+      } catch (err) { console.warn("Wheel of Bible audio unlock failed", err); audioUnlocked = false; return false; }
       finally { audioUnlockPromise = null; }
     })();
     return audioUnlockPromise;
   }
 
-  function midiToFreq(midi){ return 440 * Math.pow(2, (midi - 69) / 12); }
-  function playTone({ midi = 60, duration = 0.12, volume = 0.18, type = "triangle" } = {}){
+  function midiToFreq(midi) { return 440 * Math.pow(2, (midi - 69) / 12); }
+  function playTone({ midi = 60, duration = 0.12, volume = 0.18, type = "triangle" } = {}) {
     if (muted) return;
     createAudio();
     if (!audioCtx || !masterGain) return;
-    if (audioCtx.state !== "running"){ unlockAudio().then(ok => { if (ok) playTone({ midi, duration, volume, type }); }); return; }
+    if (audioCtx.state !== "running") { unlockAudio().then(ok => { if (ok) playTone({ midi, duration, volume, type }); }); return; }
     const now = audioCtx.currentTime;
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
@@ -453,19 +451,19 @@
     gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
     osc.connect(gain); gain.connect(masterGain); osc.start(now); osc.stop(now + duration + 0.04);
   }
-  function playBeep(index = 0){ playTone({ midi:67 + (index % 3) * 4, duration:.10, volume:.24 }); }
-  function playGood(){ playTone({ midi:72, duration:.10, volume:.28 }); setTimeout(() => playTone({ midi:79, duration:.14, volume:.22 }), 70); }
-  function playBad(){ playTone({ midi:43, duration:.13, volume:.32, type:"sine" }); setTimeout(() => playTone({ midi:38, duration:.12, volume:.24, type:"sine" }), 58); }
-  function playPop(i = 0){ playTone({ midi:64 + (i % 5) * 2, duration:.08, volume:.18 }); }
-  function playPrize(){ playTone({ midi:72, duration:.10, volume:.25 }); setTimeout(() => playTone({ midi:76, duration:.10, volume:.24 }),70); setTimeout(() => playTone({ midi:84, duration:.18, volume:.28 }),145); }
+  function playBeep(index = 0) { playTone({ midi: 67 + (index % 3) * 4, duration: .10, volume: .24 }); }
+  function playGood() { playTone({ midi: 72, duration: .10, volume: .28 }); setTimeout(() => playTone({ midi: 79, duration: .14, volume: .22 }), 70); }
+  function playBad() { playTone({ midi: 43, duration: .13, volume: .32, type: "sine" }); setTimeout(() => playTone({ midi: 38, duration: .12, volume: .24, type: "sine" }), 58); }
+  function playPop(i = 0) { playTone({ midi: 64 + (i % 5) * 2, duration: .08, volume: .18 }); }
+  function playPrize() { playTone({ midi: 72, duration: .10, volume: .25 }); setTimeout(() => playTone({ midi: 76, duration: .10, volume: .24 }), 70); setTimeout(() => playTone({ midi: 84, duration: .18, volume: .28 }), 145); }
 
-  function stopVerseAudio(){ if (!verseAudioEl) return; try { verseAudioEl.pause(); verseAudioEl.currentTime = 0; } catch(err){} }
-  async function tryPlayAudioCandidatesAndWait(candidates, fallbackMs = 1200){
+  function stopVerseAudio() { if (!verseAudioEl) return; try { verseAudioEl.pause(); verseAudioEl.currentTime = 0; } catch (err) { } }
+  async function tryPlayAudioCandidatesAndWait(candidates, fallbackMs = 1200) {
     const audio = createVerseAudioElement();
     audio.muted = muted;
     audio.volume = muted ? 0 : 1;
 
-    for (const src of candidates || []){
+    for (const src of candidates || []) {
       try {
         audio.pause();
         audio.currentTime = 0;
@@ -516,23 +514,23 @@
         });
 
         return true;
-      } catch(err){}
+      } catch (err) { }
     }
 
     return false;
   }
 
-  async function tryPlayVerseAudio(){
+  async function tryPlayVerseAudio() {
     return tryPlayAudioCandidatesAndWait(getVerseAudioCandidates(), estimateListenMs());
   }
-  function estimateListenMs(){
+  function estimateListenMs() {
     const wordCount = state.words.length || String(state.verseText || "").split(/\s+/).filter(Boolean).length;
     const duration = Number(verseAudioEl?.duration);
     if (Number.isFinite(duration) && duration > 1) return clamp(duration * 1000, 3500, 30000);
     return clamp(wordCount * 620, 3500, 18000);
   }
 
-  function helpHtml(){
+  function helpHtml() {
     return `
       <ul class="wob-help-list">
         <li>Spin the wheel to get a dollar amount or a prize.</li>
@@ -543,7 +541,7 @@
     `;
   }
 
-  function rootHtml(inner, { status = "", rootClass = "" } = {}){
+  function rootHtml(inner, { status = "", rootClass = "" } = {}) {
     return `
       <div class="wob-root ${escapeHtml(rootClass)}">
         <div class="wob-stage">
@@ -562,52 +560,52 @@
     `;
   }
 
-  function renderHelpOverlay(){ return shell().helpOverlayHtml ? shell().helpOverlayHtml({ id:HELP_OVERLAY_ID, title:"How to Play", body:helpHtml() }) : ""; }
-  function renderGameMenuOverlay(){ return shell().gameMenuHtml ? shell().gameMenuHtml({ id:MENU_OVERLAY_ID, title:"Wheel of Bible Menu", muted, showModeSelect:false, exitText:"Exit Playground" }) : ""; }
+  function renderHelpOverlay() { return shell().helpOverlayHtml ? shell().helpOverlayHtml({ id: HELP_OVERLAY_ID, title: "How to Play", body: helpHtml() }) : ""; }
+  function renderGameMenuOverlay() { return shell().gameMenuHtml ? shell().gameMenuHtml({ id: MENU_OVERLAY_ID, title: "Wheel of Bible Menu", muted, showModeSelect: false, exitText: "Exit Playground" }) : ""; }
 
-  function wireGameMenu(){
+  function wireGameMenu() {
     if (!shell().wireGameMenu) return;
     shell().wireGameMenu({
-      id:MENU_OVERLAY_ID,
-      menuButtonId:"wobMenuPill",
-      helpOverlayId:HELP_OVERLAY_ID,
-      isMuted:() => muted,
-      onMuteToggle:() => {
+      id: MENU_OVERLAY_ID,
+      menuButtonId: "wobMenuPill",
+      helpOverlayId: HELP_OVERLAY_ID,
+      isMuted: () => muted,
+      onMuteToggle: () => {
         muted = !muted;
         if (masterGain && audioCtx) masterGain.gain.setValueAtTime(muted ? 0 : WEB_AUDIO_MASTER_VOLUME, audioCtx.currentTime);
         if (verseAudioEl) verseAudioEl.muted = muted;
         return muted;
       },
-      onHowToPlay:() => { document.getElementById(MENU_OVERLAY_ID)?.classList.remove("is-open"); shell().openHelp?.(HELP_OVERLAY_ID, "back", "Back"); },
-      onExit:() => { stopVerseAudio(); clearTimers(); bridge().exitGame?.(); }
+      onHowToPlay: () => { document.getElementById(MENU_OVERLAY_ID)?.classList.remove("is-open"); shell().openHelp?.(HELP_OVERLAY_ID, "back", "Back"); },
+      onExit: () => { stopVerseAudio(); clearTimers(); bridge().exitGame?.(); }
     });
   }
 
-  function updateHud(status = ""){
+  function updateHud(status = "") {
     const money = document.getElementById("wobMoneyPill");
     const pill = document.getElementById("wobStatusPill");
     if (money) money.textContent = formatMoney(totalCash());
     if (pill && status) pill.textContent = status;
   }
 
-  function renderIntro(){
+  function renderIntro() {
     clearTimers(); stopVerseAudio(); state.screen = "intro";
     shell().renderTitleScreen?.({
-      app, title:GAME_TITLE, icon:GAME_ICON, iconHtml:WHEEL_ICON_HTML, helpHtml:helpHtml(), helpOverlayId:HELP_OVERLAY_ID,
-      startText:"Start", helpText:"How to Play", theme:GAME_THEME, backLabel:"Back to Verse Playground",
-      onBack:() => bridge().exitGame?.(),
-      onStart:async () => { createVerseAudioElement(); primeHtmlAudio(); unlockAudio(); await beginRun(); }
+      app, title: GAME_TITLE, icon: GAME_ICON, iconHtml: WHEEL_ICON_HTML, helpHtml: helpHtml(), helpOverlayId: HELP_OVERLAY_ID,
+      startText: "Start", helpText: "How to Play", theme: GAME_THEME, backLabel: "Back to Verse Playground",
+      onBack: () => bridge().exitGame?.(),
+      onStart: async () => { createVerseAudioElement(); primeHtmlAudio(); unlockAudio(); await beginRun(); }
     });
   }
 
-  async function beginRun(){
+  async function beginRun() {
     clearTimers(); await loadVerseJson(); buildVerseModel(); resetRunState(); await playIntroSequence();
   }
 
-  function resetRunState(){
+  function resetRunState() {
     state.revealedLetters = new Set();
     state.challengeHistory = new Map();
-    state.refChallengeDone = { book:false, chapter:false, verse:false };
+    state.refChallengeDone = { book: false, chapter: false, verse: false };
     state.selectedSpin = null; state.lastSelectedLetter = ""; state.turnCount = 0;
     state.baseCash = 0; state.prizeCash = 0; state.finalCash = 0; state.prizeEarnings = [];
     state.currentChallenge = null; state.challengeInputIndex = 0; state.challengeWrongCount = 0; state.challengeAutoFilled = false;
@@ -615,21 +613,21 @@
     state.completed = false;
   }
 
-  async function playIntroSequence(){
+  async function playIntroSequence() {
     state.screen = "introSequence";
     app.innerHTML = rootHtml(`
       <div class="wob-panel">
         <div class="wob-intro-wheel-wrap"><div class="wob-wheel-shell"><div class="wob-wheel-pointer"></div><div class="wob-wheel" id="introWheel"><img class="wob-wheel-face" src="${WHEEL_FACE_IMAGE}" alt="" draggable="false"></div></div></div>
         <div class="wob-intro-words"><span class="wob-intro-word" id="introWord0">WHEEL</span><span class="wob-intro-word" id="introWord1">OF</span><span class="wob-intro-word" id="introWord2">BIBLE!</span></div>
       </div>
-    `, { status:"Get Ready", rootClass:"is-simple-screen" });
+    `, { status: "Get Ready", rootClass: "is-simple-screen" });
     wireGameMenu();
     document.getElementById("introWheel")?.style.setProperty("--spin-deg", "1080deg");
-    for (let i=0; i<3; i+=1){ await sleep(420); document.getElementById(`introWord${i}`)?.classList.add("is-in"); playBeep(i); }
+    for (let i = 0; i < 3; i += 1) { await sleep(420); document.getElementById(`introWord${i}`)?.classList.add("is-in"); playBeep(i); }
     await sleep(320); playPrize(); await sleep(900); renderMeetVerse();
   }
 
-  function renderMeetVerse(){
+  function renderMeetVerse() {
     state.screen = "meetVerse";
     app.innerHTML = rootHtml(`
       <div class="wob-panel wob-meet-panel">
@@ -637,21 +635,21 @@
           Let’s meet today’s verse!
         </button>
       </div>
-    `, { status:"Today's Verse", rootClass:"is-simple-screen" });
+    `, { status: "Today's Verse", rootClass: "is-simple-screen" });
     wireGameMenu();
     document.getElementById("meetVerseBtn")?.addEventListener("click", async () => { await unlockAudio(); await playVerseIntro(); });
   }
 
-  async function playVerseIntro(){
+  async function playVerseIntro() {
     state.screen = "verseIntro";
     app.innerHTML = rootHtml(`
       <div class="wob-verse-wrap">
-        ${verseBoardHtml({ allVisible:true })}
+        ${verseBoardHtml({ allVisible: true })}
         <button class="wob-spin-float-button is-verse-intro no-zoom is-hidden" id="verseIntroSpinPrompt" type="button" aria-label="Go spin the wheel">
           ${WHEEL_BUTTON_HTML}
         </button>
       </div>
-    `, { status:"Listen", rootClass:"is-board-screen is-listen-screen" });
+    `, { status: "Listen", rootClass: "is-board-screen is-listen-screen" });
     wireGameMenu();
     fitVerseBoardSoon();
 
@@ -669,7 +667,7 @@
     showVerseIntroSpinPrompt();
   }
 
-  function showVerseIntroSpinPrompt(){
+  function showVerseIntroSpinPrompt() {
     if (state.screen !== "verseIntro") return;
     const btn = document.getElementById("verseIntroSpinPrompt");
     if (!btn) return;
@@ -677,9 +675,9 @@
     playGood();
   }
 
-  function referenceLine(){ return [state.verseRef || state.referenceMeta?.display || "", state.translation || ""].filter(Boolean).join(" • "); }
+  function referenceLine() { return [state.verseRef || state.referenceMeta?.display || "", state.translation || ""].filter(Boolean).join(" • "); }
 
-  function wheelLabelsHtml(){
+  function wheelLabelsHtml() {
     const step = 360 / WHEEL_VALUES.length;
     return WHEEL_VALUES.map((seg, index) => {
       const angle = index * step + step / 2;
@@ -687,9 +685,9 @@
     }).join("");
   }
 
-  function renderSpinScreen(){
+  function renderSpinScreen() {
     clearTimers(); state.screen = "spin";
-    if (normalRoundComplete()){ renderFinalIntro(); return; }
+    if (normalRoundComplete()) { renderFinalIntro(); return; }
     state.selectedSpin = null;
     app.innerHTML = rootHtml(`
       <div class="wob-panel wob-spin-layout">
@@ -699,38 +697,38 @@
         </button>
         <div class="wob-subtitle wob-tap-wheel-hint">Tap the wheel to spin</div>
       </div>
-    `, { status:"Spin", rootClass:"is-spin-screen" });
+    `, { status: "Spin", rootClass: "is-spin-screen" });
     wireGameMenu(); document.getElementById("spinWheelBtn")?.addEventListener("click", spinWheel);
   }
 
-  async function spinWheel(){
+  async function spinWheel() {
     const btn = document.getElementById("spinWheelBtn"); if (btn) btn.disabled = true; await unlockAudio();
     const index = Math.floor(Math.random() * WHEEL_VALUES.length);
     const step = 360 / WHEEL_VALUES.length;
     const degrees = 360 * 5 + ((360 - (index * step)) % 360);
     document.getElementById("gameWheel")?.style.setProperty("--spin-deg", `${degrees}deg`);
-    for (let i=0; i<22; i+=1) setTimeout(() => playTone({ midi:50 + (i % 3) * 3, duration:.045, volume:.12, type:"square" }), i * 95);
+    for (let i = 0; i < 22; i += 1) setTimeout(() => playTone({ midi: 50 + (i % 3) * 3, duration: .045, volume: .12, type: "square" }), i * 95);
     await sleep(3300);
     const raw = WHEEL_VALUES[index];
     let result = { ...raw };
-    if (raw.kind === "prize"){
+    if (raw.kind === "prize") {
       const prize = PRIZES[Math.floor(Math.random() * PRIZES.length)];
-      result = { kind:"prize", label:"PRIZE", value:prize.value, prize };
+      result = { kind: "prize", label: "PRIZE", value: prize.value, prize };
       playPrize();
     } else playGood();
     state.selectedSpin = result;
     await renderSpinResult(result);
   }
 
-  async function renderSpinResult(result){
+  async function renderSpinResult(result) {
     const card = document.querySelector(".wob-card");
-    if (!card){ renderSelectLetterScreen(); return; }
+    if (!card) { renderSelectLetterScreen(); return; }
 
     const overlay = document.createElement("div");
     overlay.className = "wob-spin-pop-overlay";
     card.appendChild(overlay);
 
-    if (result.kind === "prize"){
+    if (result.kind === "prize") {
       overlay.innerHTML = `
         <div class="wob-spin-pop-card is-prize">
           <button class="wob-prize-gift-button no-zoom" id="wobPrizeGiftButton" type="button" aria-label="Open prize">
@@ -742,14 +740,14 @@
 
       await new Promise(resolve => {
         const btn = document.getElementById("wobPrizeGiftButton");
-        if (!btn){ resolve(); return; }
+        if (!btn) { resolve(); return; }
 
         btn.addEventListener("click", () => {
           btn.disabled = true;
           playPrize();
 
           const popCard = overlay.querySelector(".wob-spin-pop-card");
-          if (popCard){
+          if (popCard) {
             popCard.classList.add("is-opened");
             popCard.innerHTML = `
               <div class="wob-open-prize-emoji">${escapeHtml(result.prize.emoji)}</div>
@@ -759,7 +757,7 @@
           }
 
           setTimeout(resolve, 1250);
-        }, { once:true });
+        }, { once: true });
       });
 
       renderSelectLetterScreen();
@@ -777,7 +775,7 @@
     renderSelectLetterScreen();
   }
 
-  function renderSelectLetterScreen(){
+  function renderSelectLetterScreen() {
     state.screen = "selectLetter";
     const spinValue = Math.max(0, Number(state.selectedSpin?.value) || 0);
     const prizeEmoji = state.selectedSpin?.kind === "prize" ? state.selectedSpin.prize?.emoji || "🎁" : "";
@@ -793,27 +791,27 @@
         </div>
         <div class="wob-letter-grid">
           ${state.uniqueLetters.map(letter => {
-            const used = state.revealedLetters.has(letter);
-            return `<button class="wob-letter-choice no-zoom ${used ? "is-used" : ""}" data-letter="${escapeHtml(letter)}" type="button" ${used ? "disabled" : ""}>${escapeHtml(letter)}</button>`;
-          }).join("")}
+      const used = state.revealedLetters.has(letter);
+      return `<button class="wob-letter-choice no-zoom ${used ? "is-used" : ""}" data-letter="${escapeHtml(letter)}" type="button" ${used ? "disabled" : ""}>${escapeHtml(letter)}</button>`;
+    }).join("")}
         </div>
       </div>
-    `, { status:"Choose Letter" });
+    `, { status: "Choose Letter" });
     wireGameMenu();
     document.querySelectorAll("[data-letter]").forEach(btn => btn.addEventListener("click", () => handleLetterChoice(btn.dataset.letter || "")));
   }
 
-  function countUnrevealedLetter(letter){
+  function countUnrevealedLetter(letter) {
     let count = 0;
-    for (const word of state.words){
-      for (const item of word.letters){
+    for (const word of state.words) {
+      for (const item of word.letters) {
         if (item.isLetter && item.normalized === letter && !state.revealedLetters.has(item.normalized)) count += 1;
       }
     }
     return count;
   }
 
-  async function handleLetterChoice(letter){
+  async function handleLetterChoice(letter) {
     const selected = normalizeLetters(letter).charAt(0);
     if (!selected || state.revealedLetters.has(selected)) return;
     await unlockAudio();
@@ -823,14 +821,14 @@
     state.turnCount += 1;
     const value = Math.max(0, Number(state.selectedSpin?.value) || 0);
     const earnings = value * matches;
-    if (state.selectedSpin?.kind === "prize"){
+    if (state.selectedSpin?.kind === "prize") {
       state.prizeCash += earnings;
-      state.prizeEarnings.push({ ...state.selectedSpin.prize, perLetter:value, matches, total:earnings, letter:selected });
+      state.prizeEarnings.push({ ...state.selectedSpin.prize, perLetter: value, matches, total: earnings, letter: selected });
     } else state.baseCash += earnings;
-    await renderLetterReveal({ letter:selected, matches, earnings, perLetter:value });
+    await renderLetterReveal({ letter: selected, matches, earnings, perLetter: value });
   }
 
-  async function renderLetterReveal({ letter, matches, earnings, perLetter }){
+  async function renderLetterReveal({ letter, matches, earnings, perLetter }) {
     state.screen = "revealLetter";
 
     // The letter was added before this function. Temporarily hide it so
@@ -839,9 +837,9 @@
 
     app.innerHTML = rootHtml(`
       <div class="wob-verse-wrap">
-        ${verseBoardHtml({ animatingLetter:letter })}
+        ${verseBoardHtml({ animatingLetter: letter })}
       </div>
-    `, { status:"Letters Reveal", rootClass:"is-board-screen" });
+    `, { status: "Letters Reveal", rootClass: "is-board-screen" });
 
     wireGameMenu();
     fitVerseBoardSoon();
@@ -850,7 +848,7 @@
     const tiles = Array.from(document.querySelectorAll(`.wob-tile[data-normalized="${letter}"]`));
     const delayMs = tiles.length > 18 ? 55 : 85;
 
-    for (let i=0; i<tiles.length; i+=1){
+    for (let i = 0; i < tiles.length; i += 1) {
       const tile = tiles[i];
       tile.textContent = letter;
       tile.classList.remove("is-hidden");
@@ -867,12 +865,12 @@
     await showRoundTotalPopup(earnings);
 
     const challenge = chooseChallengeTarget();
-    if (challenge){
+    if (challenge) {
       renderWigglingVerse(challenge);
       return;
     }
 
-    if (normalRoundComplete()){
+    if (normalRoundComplete()) {
       renderFinalIntro();
       return;
     }
@@ -880,7 +878,7 @@
     renderSpinScreen();
   }
 
-  function showFloatingMoney(text){
+  function showFloatingMoney(text) {
     const card = document.querySelector(".wob-card"); if (!card) return;
     const el = document.createElement("div");
     el.className = "wob-floating-money";
@@ -889,7 +887,7 @@
     setTimeout(() => el.remove(), 950);
   }
 
-  function showFloatingMoneyAtElement(targetEl, text){
+  function showFloatingMoneyAtElement(targetEl, text) {
     const card = document.querySelector(".wob-card");
     if (!card || !targetEl) return;
 
@@ -930,7 +928,7 @@
     popup.remove();
   }
 
-  async function showRoundTotalPopup(amount){
+  async function showRoundTotalPopup(amount) {
     const card = document.querySelector(".wob-card");
     if (!card) return;
 
@@ -1052,21 +1050,21 @@
     }
   }
 
-  function dollarExplosionScale(card){
+  function dollarExplosionScale(card) {
     if (!card) return 1.6;
     const shortSide = Math.min(card.clientWidth || 360, card.clientHeight || 520);
     return clamp(shortSide / 280, 1.45, 2.35);
   }
 
-  function scaleExplosionPath(path, scale){
+  function scaleExplosionPath(path, scale) {
     const finalX = path.x2 * scale;
     const finalY = path.y2 * scale;
     return {
       ...path,
-      x1:finalX * .52,
-      y1:finalY * .52,
-      x2:finalX,
-      y2:finalY
+      x1: finalX * .52,
+      y1: finalY * .52,
+      x2: finalX,
+      y2: finalY
     };
   }
 
@@ -1132,13 +1130,13 @@
     };
   }
 
-  function tileKeyFor(wordIndex, letterIndex){
+  function tileKeyFor(wordIndex, letterIndex) {
     return `${wordIndex}-${letterIndex}`;
   }
 
-  function revealedCountForWord(word){ return word.letters.filter(item => item.isLetter && state.revealedLetters.has(item.normalized)).length; }
+  function revealedCountForWord(word) { return word.letters.filter(item => item.isLetter && state.revealedLetters.has(item.normalized)).length; }
 
-  function finalMissingItemsForWord(word){
+  function finalMissingItemsForWord(word) {
     if (!word) return [];
     return word.letters
       .filter(item => item.isLetter)
@@ -1148,10 +1146,10 @@
       });
   }
 
-  function buildFinalHiddenTiles(){
+  function buildFinalHiddenTiles() {
     const keys = [];
-    for (const word of state.words){
-      for (const item of word.letters){
+    for (const word of state.words) {
+      for (const item of word.letters) {
         if (!item.isLetter) continue;
         keys.push(tileKeyFor(word.index, item.index));
       }
@@ -1164,12 +1162,12 @@
     state.finalFilledTileKeys = new Set();
     state.finalSolvedWordIndices = new Set();
   }
-  function alphaCountForWord(word){ return word.letters.filter(item => item.isLetter).length; }
+  function alphaCountForWord(word) { return word.letters.filter(item => item.isLetter).length; }
 
-  function chooseChallengeTarget(){
+  function chooseChallengeTarget() {
     const progress = state.uniqueLetters.length ? state.revealedLetters.size / state.uniqueLetters.length : 0;
 
-    if (!referenceChallengeAlreadyDone() && (state.turnCount >= 3 || progress >= .33)){
+    if (!referenceChallengeAlreadyDone() && (state.turnCount >= 3 || progress >= .33)) {
       const referenceChallenge = makeReferenceComboChallenge();
       if (referenceChallenge) return referenceChallenge;
     }
@@ -1177,11 +1175,11 @@
     return chooseWordChallenge();
   }
 
-  function referenceChallengeAlreadyDone(){
+  function referenceChallengeAlreadyDone() {
     return !!(state.refChallengeDone.book || state.refChallengeDone.chapter || state.refChallengeDone.verse);
   }
 
-  function chooseWordChallenge(){
+  function chooseWordChallenge() {
     const candidates = state.words.filter(word => {
       const alpha = alphaCountForWord(word);
       if (alpha < 3) return false;
@@ -1189,7 +1187,7 @@
       return true;
     });
     if (!candidates.length) return null;
-    candidates.sort((a,b) => {
+    candidates.sort((a, b) => {
       const ak = a.isKeyword ? 1 : 0, bk = b.isKeyword ? 1 : 0;
       if (bk !== ak) return bk - ak;
       const ar = revealedCountForWord(a), br = revealedCountForWord(b);
@@ -1201,19 +1199,46 @@
     return makeWordChallenge(word);
   }
 
-    challenge.title = "Reference Challenge";
+  function findEchoContext(word) {
+    const target = normalizeWord(word.display);
+    const parts = state.echoParts.length ? state.echoParts : [state.verseText];
 
-  function hexToRgb(hex){
+    const firstLetterBlank = (text) => {
+      const letters = normalizeLetters(text).split("");
+      if (!letters.length) return "___";
+      if (letters.length === 1) return "_";
+      return `${letters[0]}${"_".repeat(Math.max(1, letters.length - 1))}`;
+    };
+
+    for (const part of parts) {
+      const tokens = tokenizeVerse(part);
+      let found = false;
+      const html = tokens.map(token => {
+        if (token.kind === "space") return " ";
+        if (token.kind === "punct") return escapeHtml(token.text);
+        if (!found && normalizeWord(token.text) === target) {
+          found = true;
+          return `<span class="wob-context-blank">${escapeHtml(firstLetterBlank(token.text))}</span>`;
+        }
+        return escapeHtml(token.text);
+      }).join("");
+      if (found) return html;
+    }
+
+    return `Complete the word: <span class="wob-context-blank">${escapeHtml(firstLetterBlank(word.display))}</span>`;
+  }
+
+  function hexToRgb(hex) {
     const clean = String(hex || "").trim().replace(/^#/, "");
     if (!/^[0-9a-f]{6}$/i.test(clean)) return null;
     return {
-      r:parseInt(clean.slice(0,2), 16),
-      g:parseInt(clean.slice(2,4), 16),
-      b:parseInt(clean.slice(4,6), 16)
+      r: parseInt(clean.slice(0, 2), 16),
+      g: parseInt(clean.slice(2, 4), 16),
+      b: parseInt(clean.slice(4, 6), 16)
     };
   }
 
-  function colorDistance(a, b){
+  function colorDistance(a, b) {
     const ca = hexToRgb(a);
     const cb = hexToRgb(b);
     if (!ca || !cb) return 999;
@@ -1223,7 +1248,7 @@
     return Math.sqrt(dr * dr + dg * dg + db * db);
   }
 
-  function challengeDisplayColor(originalColor){
+  function challengeDisplayColor(originalColor) {
     const choiceTileColor = "#fff7db";
     const color = originalColor || "#ffc751";
 
@@ -1239,69 +1264,69 @@
     return color;
   }
 
-  function makeWordChallenge(word){
+  function makeWordChallenge(word) {
     const expected = normalizeLetters(word.display).split("");
     return {
-      type:"word",
-      wordIndex:word.index,
+      type: "word",
+      wordIndex: word.index,
       word,
       expected,
-      prefilledCount:expected.length > 1 ? 1 : 0,
-      inputKind:"letters",
-      title:word.isKeyword ? "Key Word Challenge" : "Word Challenge",
-      prompt:"Build the missing word from this part of the verse.",
-      contextHtml:findEchoContext(word),
-      color:"#2f7a32",
-      bonus:(word.isKeyword ? 900 : 550) + Math.min(800, expected.length * 100)
+      prefilledCount: expected.length > 1 ? 1 : 0,
+      inputKind: "letters",
+      title: word.isKeyword ? "Key Word Challenge" : "Word Challenge",
+      prompt: "Build the missing word from this part of the verse.",
+      contextHtml: findEchoContext(word),
+      color: "#2f7a32",
+      bonus: (word.isKeyword ? 900 : 550) + Math.min(800, expected.length * 100)
     };
   }
 
-  function splitBookForChallenge(book){
+  function splitBookForChallenge(book) {
     const text = String(book || "").trim();
     const match = text.match(/^(\d+)\s+(.+)$/);
-    if (match) return { fixedPrefix:match[1], fillText:match[2] };
-    return { fixedPrefix:"", fillText:text };
+    if (match) return { fixedPrefix: match[1], fillText: match[2] };
+    return { fixedPrefix: "", fillText: text };
   }
 
-  function makeReferenceChallenge(kind){
+  function makeReferenceChallenge(kind) {
     return makeReferenceStep(kind);
   }
 
-  function makeReferenceStep(kind){
+  function makeReferenceStep(kind) {
     const meta = state.referenceMeta || {};
 
-    if (kind === "book"){
+    if (kind === "book") {
       const parts = splitBookForChallenge(meta.book || "");
       const expected = normalizeLetters(parts.fillText).split("");
       if (!expected.length) return null;
       return {
-        type:"reference",
-        refKind:"book",
-        inputKind:"letters",
+        type: "reference",
+        refKind: "book",
+        inputKind: "letters",
         expected,
-        title:"Book Challenge",
-        prompt:"What book is this from?",
-        fixedPrefix:parts.fixedPrefix,
-        displayText:parts.fillText,
-        color:"#2f7a32",
-        bonus:1200 + Math.min(1000, expected.length * 100)
+        title: "Book Challenge",
+        prompt: "What book is this from?",
+        fixedPrefix: parts.fixedPrefix,
+        displayText: parts.fillText,
+        color: "#2f7a32",
+        bonus: 1200 + Math.min(1000, expected.length * 100)
       };
     }
 
-    if (kind === "chapter"){
+    if (kind === "chapter") {
       const chapter = String(meta.chapter || "");
       const expected = normalizeDigits(chapter).split("");
       if (!expected.length) return null;
       return {
-        type:"reference",
-        refKind:"chapter",
-        inputKind:"numbers",
+        type: "reference",
+        refKind: "chapter",
+        inputKind: "numbers",
         expected,
-        title:"Chapter Challenge",
-        prompt:"What chapter is this verse from?",
-        displayText:chapter,
-        color:"#2f7a32",
-        bonus:1000 + expected.length * 300
+        title: "Chapter Challenge",
+        prompt: "What chapter is this verse from?",
+        displayText: chapter,
+        color: "#2f7a32",
+        bonus: 1000 + expected.length * 300
       };
     }
 
@@ -1312,19 +1337,19 @@
     if (!expected.length) return null;
 
     return {
-      type:"reference",
-      refKind:"verse",
-      inputKind:"numbers",
+      type: "reference",
+      refKind: "verse",
+      inputKind: "numbers",
       expected,
-      title:"Verse Number Challenge",
-      prompt:verseEnd ? "What verse numbers are these?" : "What verse number is this?",
+      title: "Verse Number Challenge",
+      prompt: verseEnd ? "What verse numbers are these?" : "What verse number is this?",
       displayText,
-      color:"#2f7a32",
-      bonus:1000 + expected.length * 300
+      color: "#2f7a32",
+      bonus: 1000 + expected.length * 300
     };
   }
 
-  function makeReferenceComboChallenge(){
+  function makeReferenceComboChallenge() {
     const steps = ["book", "chapter", "verse"]
       .map(kind => makeReferenceStep(kind))
       .filter(Boolean);
@@ -1332,19 +1357,19 @@
     if (!steps.length) return null;
 
     const challenge = {
-      type:"reference",
-      isReferenceSequence:true,
-      referenceSteps:steps,
-      referenceStepIndex:0,
-      totalBonus:steps.reduce((sum, step) => sum + (Number(step.bonus) || 0), 0),
-      sequenceEarnedBonus:0
+      type: "reference",
+      isReferenceSequence: true,
+      referenceSteps: steps,
+      referenceStepIndex: 0,
+      totalBonus: steps.reduce((sum, step) => sum + (Number(step.bonus) || 0), 0),
+      sequenceEarnedBonus: 0
     };
 
     hydrateReferenceSequenceStep(challenge);
     return challenge;
   }
 
-  function hydrateReferenceSequenceStep(challenge){
+  function hydrateReferenceSequenceStep(challenge) {
     if (!challenge?.isReferenceSequence) return challenge;
 
     const steps = challenge.referenceSteps || [];
@@ -1362,42 +1387,42 @@
     challenge.color = step.color || "#2f7a32";
     challenge.stepBonus = Number(step.bonus) || 0;
     challenge.bonus = Number(challenge.totalBonus) || challenge.stepBonus;
-    challenge.title = `Reference Challenge ${index + 1}/${steps.length}`;
+    challenge.title = "Reference Challenge";
     challenge.choices = null;
 
     return challenge;
   }
 
-  function renderWigglingVerse(challenge){
+  function renderWigglingVerse(challenge) {
     state.screen = "findWord";
     state.currentChallenge = challenge;
     app.innerHTML = rootHtml(`
       <div class="wob-verse-wrap">
         ${verseBoardHtml({ challenge })}
       </div>
-    `, { status:"Find Tile", rootClass:"is-board-screen is-find-screen" });
+    `, { status: "Find Tile", rootClass: "is-board-screen is-find-screen" });
     wireGameMenu(); fitVerseBoardSoon();
     const selector = challenge.type === "reference" ? `[data-ref-kind="${challenge.refKind}"]` : `[data-word-index="${challenge.wordIndex}"]`;
     document.querySelector(selector)?.addEventListener("click", () => renderChallenge(challenge));
   }
 
-  function makeChoiceLetters(correctLetters, sourceLetters, targetCount = 9){
+  function makeChoiceLetters(correctLetters, sourceLetters, targetCount = 9) {
     const out = [], seen = new Set();
-    for (const letter of correctLetters){ if (!letter || seen.has(letter)) continue; out.push(letter); seen.add(letter); }
+    for (const letter of correctLetters) { if (!letter || seen.has(letter)) continue; out.push(letter); seen.add(letter); }
     const decoys = (sourceLetters || state.uniqueLetters).filter(letter => letter && !seen.has(letter));
     shuffle(decoys);
-    for (const letter of decoys){ if (out.length >= targetCount) break; out.push(letter); seen.add(letter); }
-    while (out.length < targetCount){
+    for (const letter of decoys) { if (out.length >= targetCount) break; out.push(letter); seen.add(letter); }
+    while (out.length < targetCount) {
       const bag = correctLetters.every(ch => /^[0-9]$/.test(ch)) ? "0123456789" : "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
       const letter = bag[Math.floor(Math.random() * bag.length)];
-      if (!seen.has(letter)){ out.push(letter); seen.add(letter); }
+      if (!seen.has(letter)) { out.push(letter); seen.add(letter); }
     }
     return shuffle(out);
   }
 
-  function shuffle(items){
+  function shuffle(items) {
     const copy = Array.isArray(items) ? items.slice() : [];
-    for (let i=copy.length-1; i>0; i-=1){ const j = Math.floor(Math.random()*(i+1)); [copy[i], copy[j]] = [copy[j], copy[i]]; }
+    for (let i = copy.length - 1; i > 0; i -= 1) { const j = Math.floor(Math.random() * (i + 1));[copy[i], copy[j]] = [copy[j], copy[i]]; }
     return copy;
   }
 
@@ -1442,7 +1467,7 @@
     }).join("");
   }
 
-  function renderChallenge(challenge = state.currentChallenge){
+  function renderChallenge(challenge = state.currentChallenge) {
     if (!challenge) return renderSpinScreen();
     if (challenge.isReferenceSequence) hydrateReferenceSequenceStep(challenge);
     state.screen = "challenge";
@@ -1457,13 +1482,13 @@
     const uniqueCorrect = Array.from(new Set(remainingExpected));
     const targetCount = challenge.inputKind === "numbers" ? 10 : Math.max(10, uniqueCorrect.length);
     challenge.choices = challenge.inputKind === "numbers"
-      ? shuffle(["0","1","2","3","4","5","6","7","8","9"])
+      ? shuffle(["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"])
       : makeChoiceLetters(uniqueCorrect, state.uniqueLetters, targetCount);
 
     drawChallenge();
   }
 
-  function drawChallenge(){
+  function drawChallenge() {
     const challenge = state.currentChallenge;
     const choiceClass = challenge.choices.length > 9 || challenge.inputKind === "numbers" ? "is-wide" : "";
     const showPrompt = challenge.type === "reference";
@@ -1482,39 +1507,39 @@
         </div>
         <div class="wob-bonus-line">${challenge.inputKind === "numbers" ? "Tap the Numbers in Order" : "Tap the Letters in Order"}${escapeHtml(missesText)}</div>
       </div>
-    `, { status:"Challenge", rootClass:"is-challenge-screen" });
+    `, { status: "Challenge", rootClass: "is-challenge-screen" });
     wireGameMenu();
     document.querySelectorAll("[data-choice]").forEach(btn => btn.addEventListener("click", () => handleChallengeChoice(btn.dataset.choice || "")));
   }
 
-  function typedChallengeHtml(challenge, filledCount){
-    if (challenge.type === "reference" && challenge.refKind === "book"){
+  function typedChallengeHtml(challenge, filledCount) {
+    if (challenge.type === "reference" && challenge.refKind === "book") {
       return `<div class="wob-challenge-word ${state.challengeBad ? "is-no" : ""}" id="challengeWord" style="--challenge-count:${Math.max(1, challenge.expected.length + (challenge.fixedPrefix ? 1 : 0))}">
         ${challenge.fixedPrefix ? `<span class="wob-ref-fixed">${escapeHtml(challenge.fixedPrefix)}</span>` : ""}
         ${lettersToTiles(challenge.displayText, challenge.expected, filledCount, challenge.color)}
       </div>`;
     }
-    if (challenge.type === "reference"){
+    if (challenge.type === "reference") {
       let digitIndex = 0;
       return `<div class="wob-challenge-word ${state.challengeBad ? "is-no" : ""}" id="challengeWord" style="--challenge-count:${Math.max(1, String(challenge.displayText || "").length)}">
         ${Array.from(String(challenge.displayText || "")).map(char => {
-          if (/\d/.test(char)){
-            const show = digitIndex < filledCount;
-            const text = show ? challenge.expected[digitIndex] : "";
-            digitIndex += 1;
-            return `<span class="wob-tile ${show ? "" : "is-hidden"}" style="--tile-bg:${challenge.color}">${escapeHtml(text)}</span>`;
-          }
-          return `<span class="wob-punct">${escapeHtml(char)}</span>`;
-        }).join("")}
+        if (/\d/.test(char)) {
+          const show = digitIndex < filledCount;
+          const text = show ? challenge.expected[digitIndex] : "";
+          digitIndex += 1;
+          return `<span class="wob-tile ${show ? "" : "is-hidden"}" style="--tile-bg:${challenge.color}">${escapeHtml(text)}</span>`;
+        }
+        return `<span class="wob-punct">${escapeHtml(char)}</span>`;
+      }).join("")}
       </div>`;
     }
     return `<div class="wob-challenge-word ${state.challengeBad ? "is-no" : ""}" id="challengeWord" style="--challenge-count:${Math.max(1, challenge.expected.length)}">${lettersToTiles(challenge.word.display, challenge.expected, filledCount, challenge.color)}</div>`;
   }
 
-  function lettersToTiles(displayText, expected, filledCount, color){
+  function lettersToTiles(displayText, expected, filledCount, color) {
     let alphaIndex = 0;
     return Array.from(String(displayText || "")).map(char => {
-      if (/[A-Za-z]/.test(char)){
+      if (/[A-Za-z]/.test(char)) {
         const show = alphaIndex < filledCount;
         const text = show ? expected[alphaIndex] : "";
         alphaIndex += 1;
@@ -1525,7 +1550,7 @@
     }).join("");
   }
 
-  async function handleChallengeChoice(letter){
+  async function handleChallengeChoice(letter) {
     const challenge = state.currentChallenge;
     if (!challenge) return;
 
@@ -1533,14 +1558,14 @@
     const expected = challenge.expected[state.challengeInputIndex];
     if (!expected) return;
 
-    if (choice !== expected){
+    if (choice !== expected) {
       state.challengeWrongCount += 1;
       state.challengeFlash = choice;
       state.challengeBad = true;
       playBad();
       document.getElementById("challengeWord")?.classList.add("is-no");
 
-      if (state.challengeWrongCount >= 3){
+      if (state.challengeWrongCount >= 3) {
         state.challengeAutoFilled = true;
         state.challengeInputIndex = challenge.expected.length;
         drawChallenge();
@@ -1561,44 +1586,12 @@
     state.challengeBad = false;
     state.challengeInputIndex += 1;
 
-    if (state.challengeInputIndex >= challenge.expected.length){
+    if (state.challengeInputIndex >= challenge.expected.length) {
       await finishChallenge(challenge);
       return;
     }
 
     drawChallenge();
-  }
-
-  function verseBoardHtml({ allVisible = false, revealingLetter = "", animatingLetter = "", challenge = null, finalMode = false } = {}){
-    return `
-      <div class="wob-verse-card is-with-reference">
-        <div class="wob-verse-board ${finalMode ? "wob-final-board" : ""}" id="wobVerseBoard">
-          ${state.tokens.map(token => {
-            if (token.kind === "space") return `<span class="wob-space"> </span>`;
-            if (token.kind === "punct") return `<span class="wob-punct">${escapeHtml(token.text)}</span>`;
-            const word = state.words[token.wordIndex]; if (!word) return "";
-            const isChallenge = challenge?.type === "word" && challenge.wordIndex === word.index;
-            const finalMissingCount = finalMode ? finalMissingItemsForWord(word).length : 0;
-            const solved = finalMode ? state.finalSolvedWordIndices.has(word.index) : false;
-            const tag = isChallenge || (finalMode && finalMissingCount > 0) ? "button" : "span";
-            const attrs = tag === "button" ? `type="button" data-word-index="${word.index}"` : `data-word-index="${word.index}"`;
-            return `<${tag} class="wob-word ${isChallenge ? "is-wiggling" : ""} ${solved ? "is-solved" : ""}" ${attrs} style="--word-color:${word.color}">
-              ${word.letters.map(item => {
-                if (!item.isLetter) return `<span class="wob-punct">${escapeHtml(item.char)}</span>`;
-                const tileKey = tileKeyFor(word.index, item.index);
-                const hidden = finalMode
-                  ? (state.finalHiddenTileKeys.has(tileKey) && !state.finalFilledTileKeys.has(tileKey))
-                  : (!allVisible && !state.revealedLetters.has(item.normalized));
-                const revealing = revealingLetter && item.normalized === revealingLetter ? "is-revealing" : "";
-                const animating = animatingLetter && item.normalized === animatingLetter ? "is-pending-reveal" : "";
-                const wiggleTile = isChallenge ? "is-wiggle-tile" : "";
-                return `<span class="wob-tile ${hidden ? "is-hidden" : ""} ${revealing} ${animating} ${wiggleTile}" data-tile-key="${escapeHtml(tileKey)}" data-normalized="${escapeHtml(item.normalized)}" style="--tile-bg:${word.color};--wiggle-delay:${item.index * 70}ms">${hidden ? "" : escapeHtml(item.normalized)}</span>`;
-              }).join("")}
-            </${tag}>`;
-          }).join("")}
-          ${referenceTilesHtml(challenge)}
-        </div>
-      </div>`;
   }
 
   async function finishChallenge(challenge) {
@@ -1653,7 +1646,39 @@
     else renderSpinScreen();
   }
 
-  function referenceTilesHtml(challenge){
+  function verseBoardHtml({ allVisible = false, revealingLetter = "", animatingLetter = "", challenge = null, finalMode = false } = {}) {
+    return `
+      <div class="wob-verse-card is-with-reference">
+        <div class="wob-verse-board ${finalMode ? "wob-final-board" : ""}" id="wobVerseBoard">
+          ${state.tokens.map(token => {
+      if (token.kind === "space") return `<span class="wob-space"> </span>`;
+      if (token.kind === "punct") return `<span class="wob-punct">${escapeHtml(token.text)}</span>`;
+      const word = state.words[token.wordIndex]; if (!word) return "";
+      const isChallenge = challenge?.type === "word" && challenge.wordIndex === word.index;
+      const finalMissingCount = finalMode ? finalMissingItemsForWord(word).length : 0;
+      const solved = finalMode ? state.finalSolvedWordIndices.has(word.index) : false;
+      const tag = isChallenge || (finalMode && finalMissingCount > 0) ? "button" : "span";
+      const attrs = tag === "button" ? `type="button" data-word-index="${word.index}"` : `data-word-index="${word.index}"`;
+      return `<${tag} class="wob-word ${isChallenge ? "is-wiggling" : ""} ${solved ? "is-solved" : ""}" ${attrs} style="--word-color:${word.color}">
+              ${word.letters.map(item => {
+        if (!item.isLetter) return `<span class="wob-punct">${escapeHtml(item.char)}</span>`;
+        const tileKey = tileKeyFor(word.index, item.index);
+        const hidden = finalMode
+          ? (state.finalHiddenTileKeys.has(tileKey) && !state.finalFilledTileKeys.has(tileKey))
+          : (!allVisible && !state.revealedLetters.has(item.normalized));
+        const revealing = revealingLetter && item.normalized === revealingLetter ? "is-revealing" : "";
+        const animating = animatingLetter && item.normalized === animatingLetter ? "is-pending-reveal" : "";
+        const wiggleTile = isChallenge ? "is-wiggle-tile" : "";
+        return `<span class="wob-tile ${hidden ? "is-hidden" : ""} ${revealing} ${animating} ${wiggleTile}" data-tile-key="${escapeHtml(tileKey)}" data-normalized="${escapeHtml(item.normalized)}" style="--tile-bg:${word.color};--wiggle-delay:${item.index * 70}ms">${hidden ? "" : escapeHtml(item.normalized)}</span>`;
+      }).join("")}
+            </${tag}>`;
+    }).join("")}
+          ${referenceTilesHtml(challenge)}
+        </div>
+      </div>`;
+  }
+
+  function referenceTilesHtml(challenge) {
     const meta = state.referenceMeta || {};
     const bookText = String(meta.book || "").trim();
     const chapter = meta.chapter == null ? "" : String(meta.chapter);
@@ -1675,11 +1700,11 @@
     </span>`;
   }
 
-  function fitVerseBoardSoon(){
+  function fitVerseBoardSoon() {
     if (currentFitRaf) cancelAnimationFrame(currentFitRaf);
     currentFitRaf = requestAnimationFrame(() => { currentFitRaf = 0; fitVerseBoard(); });
   }
-  function fitVerseBoard(){
+  function fitVerseBoard() {
     const board = document.getElementById("wobVerseBoard");
     const card = board?.closest(".wob-verse-card");
     if (!board || !card) return;
@@ -1693,7 +1718,7 @@
       board.style.setProperty("--wob-line-gap", `${lineGap}px`);
     };
     let lineGap = Math.max(6, size * .32);
-    for (let i=0; i<28; i+=1){
+    for (let i = 0; i < 28; i += 1) {
       apply(size, lineGap);
       const over = board.scrollHeight > fitHeight - 2 || board.scrollWidth > box.width - 2;
       if (!over) break;
@@ -1705,7 +1730,7 @@
   window.addEventListener("resize", fitVerseBoardSoon);
   window.addEventListener("orientationchange", () => setTimeout(fitVerseBoardSoon, 250));
 
-  function renderFinalIntro(){
+  function renderFinalIntro() {
     clearTimers(); state.screen = "finalIntro";
     app.innerHTML = rootHtml(`
       <div class="wob-panel wob-final-intro-panel">
@@ -1715,11 +1740,11 @@
         </div>
         <button class="wob-btn no-zoom" id="startFinalBtn" type="button">Start Final Round</button>
       </div>
-    `, { status:"Final Round", rootClass:"is-final-intro-screen" });
+    `, { status: "Final Round", rootClass: "is-final-intro-screen" });
     wireGameMenu(); document.getElementById("startFinalBtn")?.addEventListener("click", startFinalRound);
   }
 
-  function startFinalRound(){
+  function startFinalRound() {
     state.screen = "finalRound";
     state.finalStartedAt = Date.now();
     state.finalTimeLeft = 60;
@@ -1736,20 +1761,20 @@
     }, 250);
   }
 
-  function renderFinalRound(){
+  function renderFinalRound() {
     app.innerHTML = rootHtml(`
       <div class="wob-verse-wrap">
         <div class="wob-final-hud"><div class="wob-final-timer"><span id="finalTimer">${escapeHtml(String(state.finalTimeLeft))}</span>s</div><div class="wob-subtitle">Tap words with missing letters!</div></div>
-        ${verseBoardHtml({ finalMode:true })}
+        ${verseBoardHtml({ finalMode: true })}
       </div>
-    `, { status:"Final Round", rootClass:"is-board-screen is-final-round-screen" });
+    `, { status: "Final Round", rootClass: "is-board-screen is-final-round-screen" });
     wireGameMenu(); fitVerseBoardSoon();
     document.querySelectorAll("button[data-word-index]").forEach(btn => btn.addEventListener("click", () => {
       const index = Number(btn.dataset.wordIndex); if (state.finalSolvedWordIndices.has(index)) return; openFinalWord(index);
     }));
   }
 
-  function openFinalWord(wordIndex){
+  function openFinalWord(wordIndex) {
     const word = state.words[wordIndex];
     if (!word || state.finalTimeLeft <= 0) return;
 
@@ -1760,7 +1785,7 @@
       wordIndex,
       word,
       missingItems,
-      expected:missingItems.map(item => item.normalized)
+      expected: missingItems.map(item => item.normalized)
     };
     state.finalInputIndex = 0;
     state.finalLetterStreak = 0;
@@ -1769,7 +1794,7 @@
     renderFinalModal();
   }
 
-  function renderFinalModal(){
+  function renderFinalModal() {
     const active = state.finalActiveWord; if (!active) return;
     const uniqueCorrect = Array.from(new Set(active.expected));
     const targetCount = Math.max(10, uniqueCorrect.length);
@@ -1785,7 +1810,7 @@
     modal.querySelectorAll("[data-final-choice]").forEach(btn => btn.addEventListener("click", () => handleFinalChoice(btn.dataset.finalChoice || "")));
   }
 
-  function finalWordHtml(active){
+  function finalWordHtml(active) {
     const missingIndexByLetterIndex = new Map();
     active.missingItems.forEach((item, index) => {
       missingIndexByLetterIndex.set(item.index, index);
@@ -1795,7 +1820,7 @@
     const html = Array.from(String(active.word.display || "")).map(char => {
       const item = active.word.letters[alphaIndex];
 
-      if (/[A-Za-z]/.test(char)){
+      if (/[A-Za-z]/.test(char)) {
         const missingIndex = item ? missingIndexByLetterIndex.get(item.index) : undefined;
         const isMissing = missingIndex !== undefined;
         const show = !isMissing || missingIndex < state.finalInputIndex;
@@ -1813,15 +1838,15 @@
     return `<div class="wob-challenge-word ${state.finalBad ? "is-no" : ""}" id="finalWordDisplay" style="--challenge-count:${Math.max(1, active.word.letters.length)}">${html}</div>`;
   }
 
-  async function handleFinalChoice(letter){
+  async function handleFinalChoice(letter) {
     const active = state.finalActiveWord; if (!active || state.finalTimeLeft <= 0) return;
     const choice = normalizeLetters(letter).charAt(0); const expected = active.expected[state.finalInputIndex]; if (!expected) return;
-    if (choice !== expected){
+    if (choice !== expected) {
       state.finalLetterStreak = 0; state.finalFlash = choice; state.finalBad = true; playBad(); renderFinalModal(); await sleep(260); state.finalFlash = ""; state.finalBad = false; renderFinalModal(); return;
     }
     state.finalLetterStreak += 1; const earned = state.finalLetterStreak * 100; state.finalCash += earned; state.finalInputIndex += 1; state.finalFlash = choice; state.finalBad = false; updateHud(); playGood();
-    if (state.finalInputIndex >= active.expected.length){
-      for (const item of active.missingItems){
+    if (state.finalInputIndex >= active.expected.length) {
+      for (const item of active.missingItems) {
         state.finalFilledTileKeys.add(tileKeyFor(active.word.index, item.index));
       }
       state.finalSolvedWordIndices.add(active.wordIndex);
@@ -1833,12 +1858,12 @@
     renderFinalModal();
   }
 
-  function finishFinalRound(){
-    if (finalTimerId){ clearInterval(finalTimerId); finalTimerId = null; }
+  function finishFinalRound() {
+    if (finalTimerId) { clearInterval(finalTimerId); finalTimerId = null; }
     document.getElementById("wobFinalModal")?.remove(); renderMoneyTotalScreen();
   }
 
-  async function renderMoneyTotalScreen(){
+  async function renderMoneyTotalScreen() {
     clearTimers(); state.screen = "moneyTotal";
     const normalTotal = state.baseCash + state.finalCash;
     app.innerHTML = rootHtml(`
@@ -1850,10 +1875,10 @@
         </div>
         <button class="wob-btn no-zoom" id="completeBtn" type="button" style="display:none">Complete</button>
       </div>
-    `, { status:"Total", rootClass:"is-money-screen" });
+    `, { status: "Total", rootClass: "is-money-screen" });
     wireGameMenu(); await animateMoneyCount(document.getElementById("moneyCount"), 0, normalTotal, 1400);
     const prizeList = document.getElementById("prizeList"); let running = normalTotal;
-    for (const prize of state.prizeEarnings){
+    for (const prize of state.prizeEarnings) {
       const card = document.createElement("div"); card.className = "wob-prize-card"; card.textContent = `${prize.emoji} ${prize.name} +${formatMoney(prize.total)}`; prizeList?.appendChild(card);
       playPrize(); await animateMoneyCount(document.getElementById("moneyCount"), running, running + prize.total, 520); running += prize.total; await sleep(160);
     }
@@ -1861,34 +1886,34 @@
     document.getElementById("completeBtn")?.addEventListener("click", renderComplete);
   }
 
-  function animateMoneyCount(el, from, to, ms){
+  function animateMoneyCount(el, from, to, ms) {
     return new Promise(resolve => {
       if (!el) return resolve(); const start = performance.now(); const duration = Math.max(120, Number(ms) || 500);
       const step = now => {
         const t = clamp((now - start) / duration, 0, 1); const eased = 1 - Math.pow(1 - t, 3); const value = from + (to - from) * eased; el.textContent = formatMoney(value);
-        if (t < 1){ if (Math.random() < .18) playTone({ midi:72 + Math.floor(Math.random() * 7), duration:.035, volume:.07 }); requestAnimationFrame(step); }
+        if (t < 1) { if (Math.random() < .18) playTone({ midi: 72 + Math.floor(Math.random() * 7), duration: .035, volume: .07 }); requestAnimationFrame(step); }
         else { el.textContent = formatMoney(to); resolve(); }
       };
       requestAnimationFrame(step);
     });
   }
 
-  async function markVersePracticed(){
-    const verseId = ctx.verseId; if (!verseId) return { ok:false };
-    if (typeof bridge().markVersePracticed === "function"){
+  async function markVersePracticed() {
+    const verseId = ctx.verseId; if (!verseId) return { ok: false };
+    if (typeof bridge().markVersePracticed === "function") {
       try { return bridge().markVersePracticed({ verseId }); }
-      catch(err){ console.warn("Wheel of Bible bridge markVersePracticed failed", err); }
+      catch (err) { console.warn("Wheel of Bible bridge markVersePracticed failed", err); }
     }
-    return { ok:false };
+    return { ok: false };
   }
 
-  async function renderComplete(){
+  async function renderComplete() {
     if (state.completed) return; state.completed = true; await markVersePracticed();
     const statsText = `${formatMoney(totalCash())} earned • ${state.finalFilledTileKeys.size} final letters filled`;
-    if (shell().renderCompleteScreen){
+    if (shell().renderCompleteScreen) {
       shell().renderCompleteScreen({
-        app, title:"Wheel Complete!", icon:"🎡", iconHtml:WHEEL_ICON_HTML, statsText, playAgainText:"Play Again", moreGamesText:"Back to Playground", backLabel:"Back to Playground", theme:GAME_THEME,
-        onPlayAgain:() => beginRun(), onMoreGames:() => bridge().exitGame?.()
+        app, title: "Wheel Complete!", icon: "🎡", iconHtml: WHEEL_ICON_HTML, statsText, playAgainText: "Play Again", moreGamesText: "Back to Playground", backLabel: "Back to Playground", theme: GAME_THEME,
+        onPlayAgain: () => beginRun(), onMoreGames: () => bridge().exitGame?.()
       });
     } else {
       app.innerHTML = `<div class="wob-root"><div class="wob-panel"><div class="wob-big-title">Complete!</div><button class="wob-btn" id="backBtn">Back</button></div></div>`;
