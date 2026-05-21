@@ -73,6 +73,10 @@
   const NORMAL_ROUND_UNIQUE_RATIO = 0.55;
   const FINAL_ROUND_HIDE_RATIO = 0.5;
 
+  // DEBUG: Set to true to enter the Final Round after one selected letter.
+  // Remember to set this back to false before sharing/publishing.
+  const DEBUG_ONE_SPIN_ROUND = true;
+
   let muted = false;
   let audioCtx = null;
   let masterGain = null;
@@ -165,6 +169,8 @@
   function totalCash() { return state.baseCash + state.prizeCash + state.finalCash; }
 
   function normalRoundTarget() {
+    if (DEBUG_ONE_SPIN_ROUND) return 1;
+
     const total = state.uniqueLetters.length || 0;
     if (!total) return NORMAL_ROUND_MIN_SELECTED;
     return Math.min(
