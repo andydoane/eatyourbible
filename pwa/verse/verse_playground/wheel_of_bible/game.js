@@ -1717,7 +1717,8 @@
         const revealing = revealingLetter && item.normalized === revealingLetter ? "is-revealing" : "";
         const animating = animatingLetter && item.normalized === animatingLetter ? "is-pending-reveal" : "";
         const wiggleTile = isChallenge ? "is-wiggle-tile" : "";
-        return `<span class="wob-tile ${hidden ? "is-hidden" : ""} ${revealing} ${animating} ${wiggleTile}" data-tile-key="${escapeHtml(tileKey)}" data-normalized="${escapeHtml(item.normalized)}" style="--tile-bg:${word.color};--wiggle-delay:${item.index * 70}ms">${hidden ? "" : escapeHtml(item.normalized)}</span>`;
+        const tileText = isChallenge ? "?" : (hidden ? "" : item.normalized);
+        return `<span class="wob-tile ${hidden && !isChallenge ? "is-hidden" : ""} ${revealing} ${animating} ${wiggleTile} ${isChallenge ? "is-question-tile" : ""}" data-tile-key="${escapeHtml(tileKey)}" data-normalized="${escapeHtml(item.normalized)}" style="--tile-bg:${word.color};--wiggle-delay:${item.index * 70}ms">${escapeHtml(tileText)}</span>`;
       }).join("")}
             </${tag}>`;
     }).join("")}
@@ -1783,6 +1784,7 @@
     app.innerHTML = rootHtml(`
       <div class="wob-panel wob-final-intro-panel">
         <div class="wob-final-intro-center">
+          <img class="wob-final-intro-wheel" src="${WHEEL_FACE_IMAGE}" alt="" draggable="false">
           <div class="wob-big-title">FINAL ROUND!</div>
           <div class="wob-subtitle">One minute to fill in as many missing letters as possible.</div>
         </div>

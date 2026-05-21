@@ -814,6 +814,11 @@ button.wob-word {
   animation: wobTileReveal 520ms cubic-bezier(.14, 1.3, .28, 1) both;
 }
 
+.wob-tile.is-question-tile {
+  color: #332818;
+  text-shadow: 0 2px 0 rgba(255, 255, 255, .38);
+}
+
 .wob-tile.is-wiggle-tile,
 .wob-ref-tile.is-wiggle-tile {
   animation: wobTileWiggle 860ms ease-in-out var(--wiggle-delay, 0ms) infinite;
@@ -1138,7 +1143,16 @@ button.wob-ref-group {
 /* =========================
    Bonus / final / money screens
    ========================= */
-.wob-bonus-panel,
+.wob-final-intro-wheel {
+  width: clamp(116px, 34vw, 230px);
+  height: auto;
+  display: block;
+  margin: 0 auto clamp(8px, 2vh, 14px);
+  filter: drop-shadow(0 9px 0 rgba(0, 0, 0, .20));
+  animation: wobPrizePop 520ms cubic-bezier(.18, 1.45, .28, 1) both;
+}
+
+   .wob-bonus-panel,
 .wob-final-intro-panel,
 .wob-money-panel {
   width: 100%;
