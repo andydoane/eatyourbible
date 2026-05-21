@@ -27,10 +27,10 @@
   const MENU_OVERLAY_ID = "wheelOfBibleGameMenuOverlay";
 
   const GAME_THEME = {
-    bg: "#ffc751",
-    accent: "#7f4b00",
-    helpTitleBg: "#ffc751",
-    helpTitleColor: "#332818",
+    bg: "#40b9c5",
+    accent: "#2f7a32",
+    helpTitleBg: "#40b9c5",
+    helpTitleColor: "#ffffff",
     helpCloseBg: "#ff5a51",
     helpCloseColor: "#ffffff"
   };
@@ -649,7 +649,7 @@
           Let’s meet today’s verse!
         </button>
       </div>
-    `, { status: "Today's Verse", rootClass: "is-simple-screen" });
+    `, { status: "Today's Verse", rootClass: "is-simple-screen is-meet-screen" });
     wireGameMenu();
     document.getElementById("meetVerseBtn")?.addEventListener("click", async () => { await unlockAudio(); await playVerseIntro(); });
   }

@@ -239,6 +239,24 @@ body {
   color: #ffffff;
 }
 
+.wob-root.is-simple-screen,
+.wob-root.is-final-intro-screen,
+.wob-root.is-money-screen,
+.wob-root.is-bonus-screen {
+  background: #40b9c5;
+}
+
+.wob-root.is-simple-screen .wob-card,
+.wob-root.is-final-intro-screen .wob-card,
+.wob-root.is-money-screen .wob-card,
+.wob-root.is-bonus-screen .wob-card {
+  background:
+    radial-gradient(circle at 20% 18%, rgba(255, 255, 255, .35), transparent 20%),
+    radial-gradient(circle at 80% 8%, rgba(255, 255, 255, .25), transparent 24%),
+    linear-gradient(180deg, rgba(255, 255, 255, .22), rgba(255, 255, 255, .08)),
+    #40b9c5;
+}
+
 .wob-root.is-simple-screen .wob-main,
 .wob-root.is-spin-screen .wob-main,
 .wob-root.is-final-intro-screen .wob-main,
@@ -252,6 +270,34 @@ body {
 /* =========================
    Title / intro / meet verse
    ========================= */
+
+.wob-root.is-meet-screen .wob-card::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  left: 50%;
+  top: 50%;
+  width: 180vmax;
+  height: 180vmax;
+  transform: translate(-50%, -50%);
+  background:
+    repeating-conic-gradient(from 0deg,
+      rgba(0, 0, 0, .15) 0deg,
+      rgba(0, 0, 0, .15) 8deg,
+      rgba(0, 0, 0, 0) 8deg,
+      rgba(0, 0, 0, 0) 16deg);
+  pointer-events: none;
+  animation: wobMeetSunburstSpin 18s linear infinite;
+}
+
+.wob-root.is-meet-screen .wob-main {
+  z-index: 1;
+}
+
+.wob-root.is-meet-screen .wob-title-button {
+  animation: wobMeetButtonGlow 1.55s ease-in-out infinite;
+}
+
 .wob-title-button {
   appearance: none;
   border: 0;
@@ -534,9 +580,10 @@ body {
 }
 
 .wob-letter-value-emoji {
-  font-size: clamp(44px, 12vw, 84px);
-  line-height: .86;
-  filter: drop-shadow(0 5px 0 rgba(0, 0, 0, .22));
+  font-size: clamp(72px, 22vw, 154px);
+  line-height: .78;
+  margin-bottom: clamp(-4px, -1vw, -2px);
+  filter: drop-shadow(0 8px 0 rgba(0, 0, 0, .22));
   animation: wobPrizePop 520ms cubic-bezier(.18, 1.45, .28, 1) both;
 }
 
@@ -2037,5 +2084,36 @@ button.wob-ref-group {
 
   100% {
     transform: scale(1) rotate(0);
+  }
+}
+
+@keyframes wobMeetSunburstSpin {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@keyframes wobMeetButtonGlow {
+
+  0%,
+  100% {
+    box-shadow:
+      0 12px 0 rgba(0, 0, 0, .22),
+      0 20px 40px rgba(0, 0, 0, .18),
+      0 0 0 0 rgba(255, 255, 255, .25);
+    filter: brightness(1);
+  }
+
+  50% {
+    box-shadow:
+      0 12px 0 rgba(0, 0, 0, .22),
+      0 20px 40px rgba(0, 0, 0, .18),
+      0 0 0 12px rgba(255, 255, 255, .16),
+      0 0 38px rgba(255, 255, 255, .65);
+    filter: brightness(1.05);
   }
 }
