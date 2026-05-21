@@ -190,7 +190,14 @@
   }
 
   function challengePrefilledCount(challenge) {
-    if (!challenge || challenge.type !== "word") return 0;
+    if (!challenge) return 0;
+
+    const canShowFirstLetter =
+      challenge.type === "word" ||
+      (challenge.type === "reference" && challenge.refKind === "book");
+
+    if (!canShowFirstLetter) return 0;
+
     return Array.isArray(challenge.expected) && challenge.expected.length > 1 ? 1 : 0;
   }
 
