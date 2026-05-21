@@ -111,6 +111,8 @@
     challengeInputIndex:0,
     challengeFlash:"",
     challengeBad:false,
+    challengeWrongCount:0,
+    challengeAutoFilled:false,
     finalStartedAt:0,
     finalTimeLeft:60,
     finalSolvedWordIndices:new Set(),
@@ -177,6 +179,21 @@
 
   function normalRoundComplete() {
     return state.uniqueLetters.length > 0 && state.revealedLetters.size >= normalRoundTarget();
+  }
+
+  function challengeBonusAfterMistakes(rawBonus, wrongCount, autoFilled) {
+    const base = Math.max(0, Number(rawBonus) || 0);
+    const misses = Math.max(0, Number(wrongCount) || 0);
+
+    if (autoFilled || misses >= 3) return 0;
+    if (misses === 2) return Math.round(base * .5);
+    if (misses === 1) return Math.round(base * .75);
+    return base;
+  }
+
+  function challengePrefilledCount(challenge) {
+    if (!challenge || challenge.type !== "word") return 0;
+    return Array.isArray(challenge.expected) && challenge.expected.length > 1 ? 1 : 0;
   }
 
   function normalizeLetters(value){
@@ -593,7 +610,7 @@
     state.refChallengeDone = { book:false, chapter:false, verse:false };
     state.selectedSpin = null; state.lastSelectedLetter = ""; state.turnCount = 0;
     state.baseCash = 0; state.prizeCash = 0; state.finalCash = 0; state.prizeEarnings = [];
-    state.currentChallenge = null; state.challengeInputIndex = 0;
+    state.currentChallenge = null; state.challengeInputIndex = 0; state.challengeWrongCount = 0; state.challengeAutoFilled = false;
     state.finalSolvedWordIndices = new Set(); state.finalHiddenTileKeys = new Set(); state.finalFilledTileKeys = new Set(); state.finalActiveWord = null; state.finalInputIndex = 0; state.finalLetterStreak = 0;
     state.completed = false;
   }
@@ -1168,9 +1185,7 @@
     const candidates = state.words.filter(word => {
       const alpha = alphaCountForWord(word);
       if (alpha < 3) return false;
-      const revealed = revealedCountForWord(word);
-      const last = state.challengeHistory.get(word.index);
-      if (last !== undefined && revealed <= last) return false;
+      if (state.challengeHistory.has(word.index)) return false;
       return true;
     });
     if (!candidates.length) return null;
@@ -1186,26 +1201,7 @@
     return makeWordChallenge(word);
   }
 
-  function findEchoContext(word){
-    const target = normalizeWord(word.display);
-    const parts = state.echoParts.length ? state.echoParts : [state.verseText];
-    for (const part of parts){
-      const tokens = tokenizeVerse(part);
-      let found = false;
-      const html = tokens.map(token => {
-        if (token.kind === "space") return " ";
-        if (token.kind === "punct") return escapeHtml(token.text);
-        if (!found && normalizeWord(token.text) === target){
-          found = true;
-          const blanks = "_".repeat(Math.max(3, normalizeLetters(token.text).length));
-          return `<span class="wob-context-blank">${escapeHtml(blanks)}</span>`;
-        }
-        return escapeHtml(token.text);
-      }).join("");
-      if (found) return html;
-    }
-    return `Complete the word: <span class="wob-context-blank">${"_".repeat(Math.max(3, normalizeLetters(word.display).length))}</span>`;
-  }
+    challenge.title = "Reference Challenge";
 
   function hexToRgb(hex){
     const clean = String(hex || "").trim().replace(/^#/, "");
@@ -1250,6 +1246,7 @@
       wordIndex:word.index,
       word,
       expected,
+      prefilledCount:expected.length > 1 ? 1 : 0,
       inputKind:"letters",
       title:word.isKeyword ? "Key Word Challenge" : "Word Challenge",
       prompt:"Build the missing word from this part of the verse.",
@@ -1339,7 +1336,8 @@
       isReferenceSequence:true,
       referenceSteps:steps,
       referenceStepIndex:0,
-      totalBonus:steps.reduce((sum, step) => sum + (Number(step.bonus) || 0), 0)
+      totalBonus:steps.reduce((sum, step) => sum + (Number(step.bonus) || 0), 0),
+      sequenceEarnedBonus:0
     };
 
     hydrateReferenceSequenceStep(challenge);
@@ -1449,12 +1447,19 @@
     if (challenge.isReferenceSequence) hydrateReferenceSequenceStep(challenge);
     state.screen = "challenge";
     state.currentChallenge = challenge;
-    state.challengeInputIndex = 0; state.challengeFlash = ""; state.challengeBad = false;
-    const uniqueCorrect = Array.from(new Set(challenge.expected));
+    state.challengeInputIndex = challengePrefilledCount(challenge);
+    state.challengeFlash = "";
+    state.challengeBad = false;
+    state.challengeWrongCount = 0;
+    state.challengeAutoFilled = false;
+
+    const remainingExpected = (challenge.expected || []).slice(state.challengeInputIndex);
+    const uniqueCorrect = Array.from(new Set(remainingExpected));
     const targetCount = challenge.inputKind === "numbers" ? 10 : Math.max(10, uniqueCorrect.length);
     challenge.choices = challenge.inputKind === "numbers"
       ? shuffle(["0","1","2","3","4","5","6","7","8","9"])
       : makeChoiceLetters(uniqueCorrect, state.uniqueLetters, targetCount);
+
     drawChallenge();
   }
 
@@ -1462,19 +1467,20 @@
     const challenge = state.currentChallenge;
     const choiceClass = challenge.choices.length > 9 || challenge.inputKind === "numbers" ? "is-wide" : "";
     const showPrompt = challenge.type === "reference";
-    const sequenceText = challenge.isReferenceSequence
-      ? `Step ${(challenge.referenceStepIndex || 0) + 1} of ${(challenge.referenceSteps || []).length}`
+    const missesText = state.challengeWrongCount > 0
+      ? ` • Misses: ${Math.min(3, state.challengeWrongCount)}/3`
       : "";
+
     app.innerHTML = rootHtml(`
       <div class="wob-word-challenge-root">
         <div class="wob-big-title">${escapeHtml(challenge.title || "Challenge")}</div>
-        ${showPrompt ? `<div class="wob-challenge-prompt">${sequenceText ? `${escapeHtml(sequenceText)} · ` : ""}${escapeHtml(challenge.prompt || "Build the answer.")}</div>` : ""}
+        ${showPrompt ? `<div class="wob-challenge-prompt">${escapeHtml(challenge.prompt || "Build the answer.")}</div>` : ""}
         ${challenge.contextHtml ? `<div class="wob-context-card">${challenge.contextHtml}</div>` : ""}
         ${typedChallengeHtml(challenge, state.challengeInputIndex)}
         <div class="wob-choice-grid is-rowed ${choiceClass}">
           ${choiceRowsHtml(challenge.choices, state.challengeFlash, state.challengeBad, "choice")}
         </div>
-        <div class="wob-bonus-line">${challenge.inputKind === "numbers" ? "Tap the Numbers in Order" : "Tap the Letters in Order"}</div>
+        <div class="wob-bonus-line">${challenge.inputKind === "numbers" ? "Tap the Numbers in Order" : "Tap the Letters in Order"}${escapeHtml(missesText)}</div>
       </div>
     `, { status:"Challenge", rootClass:"is-challenge-screen" });
     wireGameMenu();
@@ -1522,48 +1528,44 @@
   async function handleChallengeChoice(letter){
     const challenge = state.currentChallenge;
     if (!challenge) return;
+
     const choice = challenge.inputKind === "numbers" ? normalizeDigits(letter).charAt(0) : normalizeLetters(letter).charAt(0);
     const expected = challenge.expected[state.challengeInputIndex];
     if (!expected) return;
+
     if (choice !== expected){
-      state.challengeFlash = choice; state.challengeBad = true; playBad();
+      state.challengeWrongCount += 1;
+      state.challengeFlash = choice;
+      state.challengeBad = true;
+      playBad();
       document.getElementById("challengeWord")?.classList.add("is-no");
-      await sleep(300);
-      state.challengeFlash = ""; state.challengeBad = false; drawChallenge(); return;
-    }
-    playGood(); state.challengeFlash = choice; state.challengeBad = false; state.challengeInputIndex += 1;
-    if (state.challengeInputIndex >= challenge.expected.length){
-      if (challenge.isReferenceSequence){
-        const steps = challenge.referenceSteps || [];
-        const nextIndex = (challenge.referenceStepIndex || 0) + 1;
 
-        if (nextIndex < steps.length){
-          challenge.referenceStepIndex = nextIndex;
-          hydrateReferenceSequenceStep(challenge);
-          renderChallenge(challenge);
-          return;
-        }
-
-        state.refChallengeDone.book = true;
-        state.refChallengeDone.chapter = true;
-        state.refChallengeDone.verse = true;
-      } else {
-        if (challenge.type === "word") state.challengeHistory.set(challenge.wordIndex, revealedCountForWord(challenge.word));
-        if (challenge.type === "reference") state.refChallengeDone[challenge.refKind] = true;
+      if (state.challengeWrongCount >= 3){
+        state.challengeAutoFilled = true;
+        state.challengeInputIndex = challenge.expected.length;
+        drawChallenge();
+        await sleep(1200);
+        await finishChallenge(challenge);
+        return;
       }
 
-      const bonus = Math.max(0, Number(challenge.bonus) || 500);
-      state.baseCash += bonus;
-      updateHud();
+      await sleep(300);
+      state.challengeFlash = "";
+      state.challengeBad = false;
       drawChallenge();
-
-      await showChallengeBonusPopup(bonus);
-
-      if (normalRoundComplete()) renderFinalIntro();
-      else renderSpinScreen();
-
       return;
     }
+
+    playGood();
+    state.challengeFlash = choice;
+    state.challengeBad = false;
+    state.challengeInputIndex += 1;
+
+    if (state.challengeInputIndex >= challenge.expected.length){
+      await finishChallenge(challenge);
+      return;
+    }
+
     drawChallenge();
   }
 
@@ -1597,6 +1599,58 @@
           ${referenceTilesHtml(challenge)}
         </div>
       </div>`;
+  }
+
+  async function finishChallenge(challenge) {
+    if (!challenge) return;
+
+    if (challenge.isReferenceSequence) {
+      const stepEarned = challengeBonusAfterMistakes(challenge.stepBonus, state.challengeWrongCount, state.challengeAutoFilled);
+      challenge.sequenceEarnedBonus = (Number(challenge.sequenceEarnedBonus) || 0) + stepEarned;
+
+      const steps = challenge.referenceSteps || [];
+      const nextIndex = (challenge.referenceStepIndex || 0) + 1;
+
+      if (nextIndex < steps.length) {
+        challenge.referenceStepIndex = nextIndex;
+        hydrateReferenceSequenceStep(challenge);
+        renderChallenge(challenge);
+        return;
+      }
+
+      state.refChallengeDone.book = true;
+      state.refChallengeDone.chapter = true;
+      state.refChallengeDone.verse = true;
+
+      const bonus = Math.max(0, Math.round(Number(challenge.sequenceEarnedBonus) || 0));
+      state.baseCash += bonus;
+      updateHud();
+      drawChallenge();
+
+      if (bonus > 0) await showChallengeBonusPopup(bonus);
+      else await sleep(650);
+
+      if (normalRoundComplete()) renderFinalIntro();
+      else renderSpinScreen();
+
+      return;
+    }
+
+    if (challenge.type === "word") state.challengeHistory.set(challenge.wordIndex, revealedCountForWord(challenge.word));
+    if (challenge.type === "reference") state.refChallengeDone[challenge.refKind] = true;
+
+    const rawBonus = Math.max(0, Number(challenge.bonus) || 500);
+    const bonus = challengeBonusAfterMistakes(rawBonus, state.challengeWrongCount, state.challengeAutoFilled);
+
+    state.baseCash += bonus;
+    updateHud();
+    drawChallenge();
+
+    if (bonus > 0) await showChallengeBonusPopup(bonus);
+    else await sleep(650);
+
+    if (normalRoundComplete()) renderFinalIntro();
+    else renderSpinScreen();
   }
 
   function referenceTilesHtml(challenge){
