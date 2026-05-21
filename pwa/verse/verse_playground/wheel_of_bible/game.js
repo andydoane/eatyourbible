@@ -200,8 +200,7 @@
     if (!challenge) return 0;
 
     const canShowFirstLetter =
-      challenge.type === "word" ||
-      (challenge.type === "reference" && challenge.refKind === "book");
+      challenge.type === "reference" && challenge.refKind === "book";
 
     if (!canShowFirstLetter) return 0;
 
