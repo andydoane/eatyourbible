@@ -290,6 +290,39 @@ body {
   animation: wobMeetSunburstSpin 18s linear infinite;
 }
 
+.wob-root.is-meet-screen .wob-card::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  inset: 10px;
+  border-radius: 30px;
+  padding: 12px;
+  background:
+    conic-gradient(from 0deg,
+      #ff5a51 0deg,
+      #ff9e3d 60deg,
+      #ffc751 120deg,
+      #a7cb6f 180deg,
+      #40b9c5 240deg,
+      #7f66c6 300deg,
+      #ff5a51 360deg);
+  pointer-events: none;
+  box-shadow:
+    0 0 0 2px rgba(255, 255, 255, .10),
+    0 0 24px rgba(255, 255, 255, .18);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  animation:
+    wobMeetRainbowSpin 6s linear infinite,
+    wobMeetRainbowPulse 1.8s ease-in-out infinite;
+}
+
 .wob-root.is-meet-screen .wob-main {
   z-index: 1;
 }
@@ -2115,5 +2148,35 @@ button.wob-ref-group {
       0 0 0 12px rgba(255, 255, 255, .16),
       0 0 38px rgba(255, 255, 255, .65);
     filter: brightness(1.05);
+  }
+}
+
+@keyframes wobMeetRainbowSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes wobMeetRainbowPulse {
+
+  0%,
+  100% {
+    opacity: .92;
+    filter: saturate(1) brightness(1);
+    box-shadow:
+      0 0 0 2px rgba(255, 255, 255, .10),
+      0 0 24px rgba(255, 255, 255, .18);
+  }
+
+  50% {
+    opacity: 1;
+    filter: saturate(1.18) brightness(1.08);
+    box-shadow:
+      0 0 0 2px rgba(255, 255, 255, .18),
+      0 0 36px rgba(255, 255, 255, .28);
   }
 }
