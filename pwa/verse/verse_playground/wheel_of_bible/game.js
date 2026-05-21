@@ -741,7 +741,6 @@
           <button class="wob-prize-gift-button no-zoom" id="wobPrizeGiftButton" type="button" aria-label="Open prize">
             🎁
           </button>
-          <div class="wob-spin-pop-hint">Tap the present!</div>
         </div>
       `;
 
@@ -1155,33 +1154,35 @@
 
   function buildFinalHiddenTiles() {
     const allKeys = [];
-    const forcedHiddenKeys = [];
+    const forcedVisibleKeys = new Set();
+    const forcedHiddenKeys = new Set();
     const extraCandidateKeys = [];
 
     for (const word of state.words) {
       const letterItems = word.letters.filter(item => item.isLetter);
-      const letterCount = letterItems.length;
 
       for (const item of letterItems) {
         allKeys.push(tileKeyFor(word.index, item.index));
       }
 
-      if (letterCount === 1) {
-        // One-letter words like "a" or "I" are allowed to be fully missing,
-        // but they are not forced either way.
+      if (letterItems.length === 1) {
+        // One-letter words like "a" or "I" may be fully missing.
         extraCandidateKeys.push(tileKeyFor(word.index, letterItems[0].index));
         continue;
       }
 
-      if (letterCount >= 2) {
+      if (letterItems.length >= 2) {
         const shuffledItems = shuffle(letterItems);
+        const hiddenItem = shuffledItems[0];
+        const visibleItem = shuffledItems[1];
 
-        // Force at least one missing letter.
-        forcedHiddenKeys.push(tileKeyFor(word.index, shuffledItems[0].index));
+        const hiddenKey = tileKeyFor(word.index, hiddenItem.index);
+        const visibleKey = tileKeyFor(word.index, visibleItem.index);
 
-        // Allow more hidden letters, but keep at least one visible letter.
-        const extraItems = shuffledItems.slice(1, Math.max(1, shuffledItems.length - 1));
-        for (const item of extraItems) {
+        forcedHiddenKeys.add(hiddenKey);
+        forcedVisibleKeys.add(visibleKey);
+
+        for (const item of shuffledItems.slice(2)) {
           extraCandidateKeys.push(tileKeyFor(word.index, item.index));
         }
       }
@@ -1192,6 +1193,7 @@
 
     for (const key of shuffle(extraCandidateKeys)) {
       if (hidden.size >= targetHideCount) break;
+      if (forcedVisibleKeys.has(key)) continue;
       hidden.add(key);
     }
 
@@ -1199,6 +1201,8 @@
     state.finalFilledTileKeys = new Set();
     state.finalSolvedWordIndices = new Set();
   }
+  
+
   function alphaCountForWord(word) { return word.letters.filter(item => item.isLetter).length; }
 
   function chooseChallengeTarget() {
@@ -1552,7 +1556,7 @@
   function typedChallengeHtml(challenge, filledCount) {
     if (challenge.type === "reference" && challenge.refKind === "book") {
       return `<div class="wob-challenge-word ${state.challengeBad ? "is-no" : ""}" id="challengeWord" style="--challenge-count:${Math.max(1, challenge.expected.length + (challenge.fixedPrefix ? 1 : 0))}">
-        ${challenge.fixedPrefix ? `<span class="wob-ref-fixed">${escapeHtml(challenge.fixedPrefix)}</span>` : ""}
+        ${challenge.fixedPrefix ? `<span class="wob-tile" style="--tile-bg:${challenge.color}">${escapeHtml(challenge.fixedPrefix)}</span>` : ""}
         ${lettersToTiles(challenge.displayText, challenge.expected, filledCount, challenge.color)}
       </div>`;
     }
