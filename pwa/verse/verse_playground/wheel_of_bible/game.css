@@ -318,9 +318,7 @@ body {
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
   mask-composite: exclude;
-  animation:
-    wobMeetRainbowSpin 6s linear infinite,
-    wobMeetRainbowPulse 1.8s ease-in-out infinite;
+  animation: wobMeetRainbowPulse 1.8s ease-in-out infinite;
 }
 
 .wob-root.is-meet-screen .wob-main {
