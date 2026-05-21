@@ -271,64 +271,53 @@ body {
    Title / intro / meet verse
    ========================= */
 
-.wob-root.is-meet-screen .wob-card::before {
-  content: "";
-  position: absolute;
-  z-index: 0;
-  left: 50%;
-  top: 50%;
-  width: 180vmax;
-  height: 180vmax;
-  transform: translate(-50%, -50%);
-  background:
-    repeating-conic-gradient(from 0deg,
-      rgba(0, 0, 0, .15) 0deg,
-      rgba(0, 0, 0, .15) 8deg,
-      rgba(0, 0, 0, 0) 8deg,
-      rgba(0, 0, 0, 0) 16deg);
-  pointer-events: none;
-  animation: wobMeetSunburstSpin 18s linear infinite;
-}
-
+.wob-root.is-meet-screen .wob-card::before,
 .wob-root.is-meet-screen .wob-card::after {
-  content: "";
-  position: absolute;
-  z-index: 2;
-  inset: 10px;
-  border-radius: 30px;
-  padding: 12px;
-  background:
-    conic-gradient(from 0deg,
-      #ff5a51 0deg,
-      #ff9e3d 60deg,
-      #ffc751 120deg,
-      #a7cb6f 180deg,
-      #40b9c5 240deg,
-      #7f66c6 300deg,
-      #ff5a51 360deg);
-  pointer-events: none;
-  box-shadow:
-    0 0 0 2px rgba(255, 255, 255, .10),
-    0 0 24px rgba(255, 255, 255, .18);
-  -webkit-mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask:
-    linear-gradient(#000 0 0) content-box,
-    linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  animation: wobMeetRainbowPulse 1.8s ease-in-out infinite;
+  content: none;
 }
 
 .wob-root.is-meet-screen .wob-main {
   z-index: 1;
-  padding-left: clamp(34px, 8vw, 74px);
-  padding-right: clamp(34px, 8vw, 74px);
+  padding: calc(54px + env(safe-area-inset-top)) clamp(8px, 2.4vw, 18px) calc(10px + env(safe-area-inset-bottom));
 }
 
-.wob-root.is-meet-screen .wob-title-button {
-  animation: wobMeetButtonGlow 1.55s ease-in-out infinite;
+.wob-root.is-meet-screen .wob-meet-panel {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+}
+
+.wob-marquee-button {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  width: min(100%, 900px);
+  max-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  filter: drop-shadow(0 10px 0 rgba(0, 0, 0, .20));
+  animation: wobMarqueePop 520ms cubic-bezier(.18, 1.35, .3, 1) both;
+}
+
+.wob-marquee-button:active {
+  transform: translateY(5px);
+  filter: drop-shadow(0 5px 0 rgba(0, 0, 0, .20));
+}
+
+.wob-meet-marquee-img {
+  display: block;
+  width: 100%;
+  max-width: min(96vw, 900px);
+  max-height: calc(100dvh - 82px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  height: auto;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .wob-title-button {
@@ -2205,5 +2194,22 @@ button.wob-ref-group {
     box-shadow:
       0 0 0 2px rgba(255, 255, 255, .18),
       0 0 36px rgba(255, 255, 255, .28);
+  }
+}
+
+@keyframes wobMarqueePop {
+  0% {
+    opacity: 0;
+    transform: scale(.78) rotate(-2deg);
+  }
+
+  70% {
+    opacity: 1;
+    transform: scale(1.04) rotate(1deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0);
   }
 }

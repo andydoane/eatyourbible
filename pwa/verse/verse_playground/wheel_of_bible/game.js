@@ -21,6 +21,7 @@
   const WHEEL_FACE_IMAGE = "./wheel_of_bible_images/wheel_face.svg";
   const DOLLAR_BILL_IMAGE = "./wheel_of_bible_images/dollar_bill.png";
   const CLOCK_IMAGE = "./wheel_of_bible_images/clock.png";
+  const MARQUEE_IMAGE = "./wheel_of_bible_images/marquee.svg";
   const WHEEL_ICON_HTML = `<img class="wob-shell-title-icon" src="${WHEEL_BUTTON_IMAGE}" alt="" draggable="false">`;
   const WHEEL_BUTTON_HTML = `<img class="wob-wheel-button-img" src="${WHEEL_BUTTON_IMAGE}" alt="" draggable="false">`;
   const HELP_OVERLAY_ID = "wheelOfBibleHelpOverlay";
@@ -644,8 +645,8 @@
     state.screen = "meetVerse";
     app.innerHTML = rootHtml(`
       <div class="wob-panel wob-meet-panel">
-        <button class="wob-title-button no-zoom" id="meetVerseBtn" type="button">
-          Let’s meet today’s verse!
+        <button class="wob-marquee-button no-zoom" id="meetVerseBtn" type="button" aria-label="Let’s meet today’s verse">
+          <img class="wob-meet-marquee-img" src="${MARQUEE_IMAGE}" alt="Let’s meet today’s verse!" draggable="false">
         </button>
       </div>
     `, { status: "Today's Verse", rootClass: "is-simple-screen is-meet-screen" });
