@@ -1532,6 +1532,19 @@ button.wob-ref-group {
   }
 }
 
+@media (max-width: 390px) {
+  .wob-root.is-meet-screen .wob-main {
+    padding-left: 32px;
+    padding-right: 32px;
+  }
+
+  .wob-root.is-meet-screen .wob-title-button {
+    font-size: clamp(28px, 8.6vw, 38px);
+    padding: 15px 16px;
+    border-radius: 28px;
+  }
+}
+
 /* =========================
    Animations
    ========================= */
