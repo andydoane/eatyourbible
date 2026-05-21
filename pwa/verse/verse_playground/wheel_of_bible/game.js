@@ -1154,18 +1154,48 @@
   }
 
   function buildFinalHiddenTiles() {
-    const keys = [];
+    const allKeys = [];
+    const forcedHiddenKeys = [];
+    const extraCandidateKeys = [];
+
     for (const word of state.words) {
-      for (const item of word.letters) {
-        if (!item.isLetter) continue;
-        keys.push(tileKeyFor(word.index, item.index));
+      const letterItems = word.letters.filter(item => item.isLetter);
+      const letterCount = letterItems.length;
+
+      for (const item of letterItems) {
+        allKeys.push(tileKeyFor(word.index, item.index));
+      }
+
+      if (letterCount === 1) {
+        // One-letter words like "a" or "I" are allowed to be fully missing,
+        // but they are not forced either way.
+        extraCandidateKeys.push(tileKeyFor(word.index, letterItems[0].index));
+        continue;
+      }
+
+      if (letterCount >= 2) {
+        const shuffledItems = shuffle(letterItems);
+
+        // Force at least one missing letter.
+        forcedHiddenKeys.push(tileKeyFor(word.index, shuffledItems[0].index));
+
+        // Allow more hidden letters, but keep at least one visible letter.
+        const extraItems = shuffledItems.slice(1, Math.max(1, shuffledItems.length - 1));
+        for (const item of extraItems) {
+          extraCandidateKeys.push(tileKeyFor(word.index, item.index));
+        }
       }
     }
 
-    const shuffled = shuffle(keys);
-    const hideCount = Math.floor(shuffled.length * FINAL_ROUND_HIDE_RATIO);
+    const targetHideCount = Math.floor(allKeys.length * FINAL_ROUND_HIDE_RATIO);
+    const hidden = new Set(forcedHiddenKeys);
 
-    state.finalHiddenTileKeys = new Set(shuffled.slice(0, hideCount));
+    for (const key of shuffle(extraCandidateKeys)) {
+      if (hidden.size >= targetHideCount) break;
+      hidden.add(key);
+    }
+
+    state.finalHiddenTileKeys = hidden;
     state.finalFilledTileKeys = new Set();
     state.finalSolvedWordIndices = new Set();
   }
@@ -1659,7 +1689,7 @@
         <div class="wob-verse-board ${finalMode ? "wob-final-board" : ""}" id="wobVerseBoard">
           ${state.tokens.map(token => {
       if (token.kind === "space") return `<span class="wob-space"> </span>`;
-      if (token.kind === "punct") return `<span class="wob-punct">${escapeHtml(token.text)}</span>`;
+      if (token.kind === "punct") return "";
       const word = state.words[token.wordIndex]; if (!word) return "";
       const isChallenge = challenge?.type === "word" && challenge.wordIndex === word.index;
       const finalMissingCount = finalMode ? finalMissingItemsForWord(word).length : 0;
@@ -1668,7 +1698,7 @@
       const attrs = tag === "button" ? `type="button" data-word-index="${word.index}"` : `data-word-index="${word.index}"`;
       return `<${tag} class="wob-word ${isChallenge ? "is-wiggling" : ""} ${solved ? "is-solved" : ""}" ${attrs} style="--word-color:${word.color}">
               ${word.letters.map(item => {
-        if (!item.isLetter) return `<span class="wob-punct">${escapeHtml(item.char)}</span>`;
+        if (!item.isLetter) return "";
         const tileKey = tileKeyFor(word.index, item.index);
         const hidden = finalMode
           ? (state.finalHiddenTileKeys.has(tileKey) && !state.finalFilledTileKeys.has(tileKey))
