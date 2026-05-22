@@ -2107,6 +2107,65 @@ function smartLearnTextHtml({ title = "", body = "", extraClass = "" } = {}) {
   `;
 }
 
+const LEARN_CHUNK_COLORS = [
+  "#ff5a51",
+  "#ffa351",
+  "#ffc751",
+  "#a7cb6f",
+  "#40b9c5",
+  "#7f66c6"
+];
+
+function getChunkVisibleCount(learnParts) {
+  const count = Array.isArray(learnParts) ? learnParts.length : 0;
+
+  if (!count) return 0;
+
+  if (State.chunkRunning) {
+    return Math.max(0, Math.min(count, State.chunkIndex + 1));
+  }
+
+  if (State.chunkPassCount > 0) {
+    return count;
+  }
+
+  return 0;
+}
+
+function learnChunkStageHtml(learnParts, visibleCount = 0) {
+  const chunks = Array.isArray(learnParts) && learnParts.length
+    ? learnParts
+    : [{ text: VERSE_TEXT }];
+
+  const fitText = chunks
+    .map((part) => part?.text || "")
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return `
+    <div
+      class="learn-chunk-stage"
+      data-smart-learn-text
+      data-smart-fit-text="${escapeHtml(fitText)}"
+    >
+      <div class="smart-learn-body learn-chunk-body">
+        ${chunks.map((part, i) => {
+    const color = LEARN_CHUNK_COLORS[i % LEARN_CHUNK_COLORS.length];
+    const visibleClass = i < visibleCount ? " is-visible" : "";
+
+    return `
+          <span
+            class="learn-chunk-piece${visibleClass}"
+            style="--chunk-color:${escapeHtml(color)};"
+          >${escapeHtml(part?.text || "")}</span>
+        `;
+  }).join("")}
+      </div>
+    </div>
+  `;
+}
+
 function getSmartLearnLineHeight(textLength, stageRatio) {
   if (stageRatio > 1.35) {
     if (textLength <= 90) return 1.10;
@@ -5723,8 +5782,8 @@ function screenChunks(idx) {
         ${learnInstructionLineHtml("Listen for each chunk.")}
       </div>
 
-      <div class="learn-verse learn-stage learn-stage-card ${getVerseFitClass(chunkText)}">
-        <p class="verse">${chunkText}</p>
+      <div class="learn-verse learn-stage learn-stage-card learn-chunk-stage-card ${getVerseFitClass(VERSE_TEXT)}">
+        ${learnChunkStageHtml(learnParts, getChunkVisibleCount(learnParts))}
       </div>
 
       <div class="learn-coach learn-bottom-zone">
@@ -5761,6 +5820,8 @@ function screenChunks(idx) {
       await startChunkFlow();
     };
   }
+
+  scheduleSmartLearnTextFit(inner);
 
   return makeSlide({ idx, bg: "var(--purple)", navHidden: false, inner });
 }

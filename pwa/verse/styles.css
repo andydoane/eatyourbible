@@ -2612,6 +2612,53 @@
         .learn-layout.learn-screen-echo .learn-stage {
           background: #333333;
         }
+
+        .learn-chunk-stage-card {
+          color: #ffffff;
+        }
+
+        .learn-chunk-stage {
+          --smart-font-size: 40px;
+          --smart-line-height: 1.08;
+
+          width: 100%;
+          margin: 0 auto;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+        }
+
+        .learn-chunk-body {
+          width: 100%;
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          justify-content: center;
+          gap: 0.18em 0.34em;
+          color: #ffffff;
+          font-size: var(--smart-font-size);
+          font-weight: 900;
+          line-height: var(--smart-line-height);
+          text-shadow: none;
+        }
+
+        .learn-chunk-piece {
+          min-width: 0;
+          max-width: 100%;
+          color: var(--chunk-color);
+          opacity: 0;
+          transform: translateY(0.12em) scale(0.98);
+          transition:
+            opacity 180ms ease,
+            transform 180ms ease;
+          overflow-wrap: anywhere;
+        }
+
+        .learn-chunk-piece.is-visible {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
     
         @media (max-height: 700px) {
           .learn-layout.learn-screen {
