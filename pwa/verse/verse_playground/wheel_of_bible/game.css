@@ -598,13 +598,13 @@ body {
   width: min(100%, 690px);
   display: grid;
   justify-items: center;
-  gap: clamp(4px, 1vh, 8px);
+  gap: clamp(14px, 2.5vh, 24px);
 }
 
 .wob-letter-value-emoji {
   font-size: clamp(72px, 22vw, 154px);
   line-height: .78;
-  margin-bottom: clamp(-4px, -1vw, -2px);
+  margin-bottom: 0;
   filter: drop-shadow(0 8px 0 rgba(0, 0, 0, .22));
   animation: wobPrizePop 520ms cubic-bezier(.18, 1.45, .28, 1) both;
 }

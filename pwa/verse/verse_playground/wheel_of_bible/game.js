@@ -187,6 +187,16 @@
     return state.uniqueLetters.length > 0 && state.revealedLetters.size >= normalRoundTarget();
   }
 
+  function finalRoundComplete() {
+    if (!state.finalHiddenTileKeys.size) return false;
+
+    for (const key of state.finalHiddenTileKeys) {
+      if (!state.finalFilledTileKeys.has(key)) return false;
+    }
+
+    return true;
+  }
+
   function challengeBonusAfterMistakes(rawBonus, wrongCount, autoFilled) {
     const base = Math.max(0, Number(rawBonus) || 0);
     const misses = Math.max(0, Number(wrongCount) || 0);
@@ -1258,6 +1268,41 @@
       return `${letters[0]}${"_".repeat(Math.max(1, letters.length - 1))}`;
     };
 
+    const wordCountInText = (text) => tokenizeVerse(text).filter(token => token.kind === "word").length;
+
+    const contextWindowFromVerseText = () => {
+      const tokens = tokenizeVerse(state.verseText || "");
+      const wordTokenPositions = [];
+
+      tokens.forEach((token, index) => {
+        if (token.kind === "word") wordTokenPositions.push(index);
+      });
+
+      const targetWordListIndex = wordTokenPositions.findIndex(tokenIndex => {
+        return normalizeWord(tokens[tokenIndex]?.text || "") === target;
+      });
+
+      if (targetWordListIndex < 0) {
+        return `Complete the word: <span class="wob-context-blank">${escapeHtml(firstLetterBlank(word.display))}</span>`;
+      }
+
+      const startWordListIndex = Math.max(0, targetWordListIndex - 3);
+      const endWordListIndex = Math.min(wordTokenPositions.length - 1, targetWordListIndex + 3);
+      const startTokenIndex = wordTokenPositions[startWordListIndex];
+      const endTokenIndex = wordTokenPositions[endWordListIndex];
+
+      let replaced = false;
+      return tokens.slice(startTokenIndex, endTokenIndex + 1).map(token => {
+        if (token.kind === "space") return " ";
+        if (token.kind === "punct") return escapeHtml(token.text);
+        if (!replaced && normalizeWord(token.text) === target) {
+          replaced = true;
+          return `<span class="wob-context-blank">${escapeHtml(firstLetterBlank(token.text))}</span>`;
+        }
+        return escapeHtml(token.text);
+      }).join("");
+    };
+
     for (const part of parts) {
       const tokens = tokenizeVerse(part);
       let found = false;
@@ -1270,10 +1315,14 @@
         }
         return escapeHtml(token.text);
       }).join("");
-      if (found) return html;
+
+      if (found) {
+        if (wordCountInText(part) >= 3) return html;
+        return contextWindowFromVerseText();
+      }
     }
 
-    return `Complete the word: <span class="wob-context-blank">${escapeHtml(firstLetterBlank(word.display))}</span>`;
+    return contextWindowFromVerseText();
   }
 
   function hexToRgb(hex) {
@@ -1899,20 +1948,27 @@
       for (const item of active.missingItems) {
         state.finalFilledTileKeys.add(tileKeyFor(active.word.index, item.index));
       }
+
       state.finalSolvedWordIndices.add(active.wordIndex);
       document.getElementById("wobFinalModal")?.remove();
       state.finalActiveWord = null;
+
+      if (finalRoundComplete()) {
+        await finishFinalRound({ showTimesUp: false });
+        return;
+      }
+
       renderFinalRound();
       return;
     }
     renderFinalModal();
   }
 
-  async function finishFinalRound() {
+  async function finishFinalRound({ showTimesUp = true } = {}) {
     if (finalTimerId) { clearInterval(finalTimerId); finalTimerId = null; }
     document.getElementById("wobFinalModal")?.remove();
 
-    await showTimesUpPopup();
+    if (showTimesUp) await showTimesUpPopup();
 
     renderMoneyTotalScreen();
   }
