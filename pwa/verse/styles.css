@@ -2493,6 +2493,8 @@
         .learn-layout.learn-screen .learn-stage-smart {
           background: #ffffff;
           color: #333333;
+          padding-top: clamp(24px, 5vw, 48px);
+          padding-bottom: clamp(24px, 5vw, 48px);
         }
 
         .smart-learn-text {

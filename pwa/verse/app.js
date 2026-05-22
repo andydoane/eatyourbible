@@ -2107,34 +2107,57 @@ function smartLearnTextHtml({ title = "", body = "", extraClass = "" } = {}) {
   `;
 }
 
-function getSmartLearnLineHeight(textLength) {
+function getSmartLearnLineHeight(textLength, stageRatio) {
+  if (stageRatio > 1.35) {
+    if (textLength <= 90) return 1.12;
+    if (textLength <= 190) return 1.08;
+    return 1.04;
+  }
+
   if (textLength <= 80) return 1.18;
   if (textLength <= 170) return 1.12;
   return 1.06;
 }
 
 function getSmartLearnMaxWidthEm(textLength, stageRatio) {
-  let maxWidthEm = 24;
-
-  if (textLength <= 70) {
-    maxWidthEm = 18;
-  } else if (textLength <= 140) {
-    maxWidthEm = 26;
-  } else if (textLength <= 240) {
-    maxWidthEm = 34;
-  } else {
-    maxWidthEm = 42;
+  if (stageRatio > 1.55) {
+    if (textLength <= 70) return 30;
+    if (textLength <= 140) return 38;
+    if (textLength <= 240) return 46;
+    return 54;
   }
 
-  if (stageRatio > 1.35) {
-    maxWidthEm += 6;
+  if (stageRatio > 1.2) {
+    if (textLength <= 70) return 24;
+    if (textLength <= 140) return 32;
+    if (textLength <= 240) return 40;
+    return 48;
   }
 
-  if (stageRatio < 0.9) {
-    maxWidthEm -= 3;
+  if (textLength <= 70) return 18;
+  if (textLength <= 140) return 26;
+  if (textLength <= 240) return 34;
+  return 42;
+}
+
+function getSmartLearnMaxFontSize(textLength, stageRatio) {
+  if (stageRatio > 1.55) {
+    if (textLength <= 70) return 58;
+    if (textLength <= 140) return 52;
+    if (textLength <= 240) return 44;
+    return 36;
   }
 
-  return Math.max(16, maxWidthEm);
+  if (stageRatio > 1.2) {
+    if (textLength <= 70) return 68;
+    if (textLength <= 140) return 60;
+    if (textLength <= 240) return 50;
+    return 40;
+  }
+
+  if (textLength > 220) return 62;
+  if (textLength > 140) return 74;
+  return 96;
 }
 
 function fitSmartLearnText(root = document) {
@@ -2155,20 +2178,14 @@ function fitSmartLearnText(root = document) {
     const textLength = bodyText.replace(/\s+/g, " ").trim().length;
     const stageRatio = stageWidth / stageHeight;
 
-    const lineHeight = getSmartLearnLineHeight(textLength);
+    const lineHeight = getSmartLearnLineHeight(textLength, stageRatio);
     const maxWidthEm = getSmartLearnMaxWidthEm(textLength, stageRatio);
 
     block.style.setProperty("--smart-line-height", String(lineHeight));
     block.style.maxWidth = `min(100%, ${maxWidthEm}em)`;
 
     let low = 18;
-    let high = 96;
-
-    if (textLength > 220) {
-      high = 62;
-    } else if (textLength > 140) {
-      high = 74;
-    }
+    let high = getSmartLearnMaxFontSize(textLength, stageRatio);
 
     let best = low;
 
