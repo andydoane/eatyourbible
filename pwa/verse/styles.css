@@ -595,15 +595,16 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: clamp(16px, 3vh, 28px);
+  gap: clamp(14px, 2.5vh, 24px);
 }
 
 .title-sequence-head-stage {
   position: relative;
-  width: min(84vw, 54vh, 560px);
+  width: min(76vw, 48vh, 500px);
   aspect-ratio: 1 / 1;
   transform-origin: center;
-  animation: titleSequenceHeadPop 620ms cubic-bezier(.18, 1.35, .35, 1) both;
+  opacity: 0;
+  animation: titleSequenceHeadPop 620ms cubic-bezier(.18, 1.35, .35, 1) 420ms both;
 }
 
 .title-sequence-face,
@@ -634,7 +635,7 @@
   bottom: 43%;
   transform: translateX(-50%) translateY(-115vh);
   transform-origin: center bottom;
-  animation: titleSequenceBibleDrop 1050ms cubic-bezier(.18, .9, .24, 1.08) 900ms both;
+  animation: titleSequenceBibleDrop 980ms cubic-bezier(.28, .02, .34, 1) 1320ms both;
 }
 
 .title-sequence-face-front {
@@ -649,23 +650,7 @@
   text-wrap: balance;
   opacity: 0;
   transform: scale(0.7);
-  animation: titleSequenceTextPop 520ms cubic-bezier(.18, 1.35, .35, 1) 2600ms both;
-}
-
-.title-sequence-tap-hint {
-  font-size: clamp(16px, 3.2vw, 24px);
-  font-weight: 800;
-  line-height: 1.1;
-  opacity: 0;
-  transform: translateY(8px);
-  transition:
-    opacity 220ms ease,
-    transform 220ms ease;
-}
-
-.title-sequence-screen.is-ready .title-sequence-tap-hint {
-  opacity: 0.86;
-  transform: translateY(0);
+  animation: titleSequenceTextPop 520ms cubic-bezier(.18, 1.35, .35, 1) 2920ms both;
 }
 
 @keyframes titleSequenceHeadPop {
@@ -690,7 +675,7 @@
     transform: translateX(-50%) translateY(-115vh) scaleX(1) scaleY(1);
   }
 
-  72% {
+  76% {
     transform: translateX(-50%) translateY(0) scaleX(1) scaleY(1);
   }
 
@@ -698,8 +683,8 @@
     transform: translateX(-50%) translateY(0) scaleX(1.12) scaleY(0.82);
   }
 
-  92% {
-    transform: translateX(-50%) translateY(0) scaleX(0.94) scaleY(1.08);
+  90% {
+    transform: translateX(-50%) translateY(0) scaleX(0.96) scaleY(1.06);
   }
 
   100% {
@@ -726,11 +711,11 @@
 
 @media (max-height: 700px) {
   .title-sequence-content {
-    gap: 12px;
+    gap: 10px;
   }
 
   .title-sequence-head-stage {
-    width: min(76vw, 48vh, 480px);
+    width: min(70vw, 43vh, 450px);
   }
 
   .title-sequence-message {
@@ -745,6 +730,10 @@
   .title-sequence-message {
     animation-duration: 1ms;
     animation-delay: 0ms;
+  }
+
+  .title-sequence-head-stage {
+    opacity: 1;
   }
 
   .title-sequence-bible {

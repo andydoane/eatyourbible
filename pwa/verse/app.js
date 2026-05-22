@@ -4537,10 +4537,6 @@ function screenTitleSequence(idx) {
       <div class="title-sequence-message">
         Let’s Memorize God’s Word!
       </div>
-
-      <div class="title-sequence-tap-hint">
-        Tap anywhere to continue
-      </div>
     </div>
   `;
 
