@@ -29,7 +29,7 @@ html,
 body {
   min-height: 100%;
   margin: 0;
-  background: #ffc751;
+  background: #40b9c5;
   font-family: "Baloo 2", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
 }
 
@@ -49,13 +49,13 @@ body {
   display: block;
   overflow: hidden;
   text-align: initial;
-  background: transparent;
+  background: #40b9c5;
 }
 
 .vm-game-screen,
 .vm-game-stage,
 .vm-game-center {
-  background: transparent !important;
+  background: #40b9c5 !important;
 }
 
 /* =========================
@@ -66,10 +66,7 @@ body {
   height: 100dvh;
   width: 100%;
   color: #fff;
-  background:
-    radial-gradient(circle at 16% 12%, rgba(255, 255, 255, .34), transparent 23%),
-    radial-gradient(circle at 88% 18%, rgba(255, 255, 255, .22), transparent 21%),
-    linear-gradient(180deg, #ffe382 0%, #ffc751 42%, #ff9e3d 100%);
+  background: #40b9c5;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -95,11 +92,7 @@ body {
   overflow: hidden;
   border-radius: 0;
   box-shadow: none;
-  background:
-    radial-gradient(circle at 20% 18%, rgba(255, 255, 255, .35), transparent 20%),
-    radial-gradient(circle at 80% 8%, rgba(255, 255, 255, .25), transparent 24%),
-    linear-gradient(180deg, rgba(255, 255, 255, .22), rgba(255, 255, 255, .08)),
-    #40b9c5;
+  background: transparent;
 }
 
 .wob-main {
@@ -250,11 +243,7 @@ body {
 .wob-root.is-final-intro-screen .wob-card,
 .wob-root.is-money-screen .wob-card,
 .wob-root.is-bonus-screen .wob-card {
-  background:
-    radial-gradient(circle at 20% 18%, rgba(255, 255, 255, .35), transparent 20%),
-    radial-gradient(circle at 80% 8%, rgba(255, 255, 255, .25), transparent 24%),
-    linear-gradient(180deg, rgba(255, 255, 255, .22), rgba(255, 255, 255, .08)),
-    #40b9c5;
+  background: transparent;
 }
 
 .wob-root.is-simple-screen .wob-main,
@@ -265,6 +254,53 @@ body {
   padding-left: 12px;
   padding-right: 12px;
   padding-bottom: calc(14px + env(safe-area-inset-bottom));
+}
+
+/* =========================
+   Full-page screen backgrounds
+   ========================= */
+
+/* Blue screens */
+.wob-root.is-simple-screen,
+.wob-root.is-meet-screen,
+.wob-root.is-spin-screen,
+.wob-root.is-select-screen,
+.wob-root.is-final-intro-screen,
+.wob-root.is-money-screen,
+.wob-root.is-bonus-screen {
+  background: #40b9c5;
+}
+
+.wob-root.is-simple-screen .wob-card,
+.wob-root.is-meet-screen .wob-card,
+.wob-root.is-spin-screen .wob-card,
+.wob-root.is-select-screen .wob-card,
+.wob-root.is-final-intro-screen .wob-card,
+.wob-root.is-money-screen .wob-card,
+.wob-root.is-bonus-screen .wob-card {
+  background: transparent;
+}
+
+/* White verse-board screens */
+.wob-root.is-board-screen,
+.wob-root.is-listen-screen,
+.wob-root.is-final-round-screen {
+  background: #f2f2f2;
+}
+
+.wob-root.is-board-screen .wob-card,
+.wob-root.is-listen-screen .wob-card,
+.wob-root.is-final-round-screen .wob-card {
+  background: #f2f2f2;
+}
+
+/* Dark challenge screens */
+.wob-root.is-challenge-screen {
+  background: #333333;
+}
+
+.wob-root.is-challenge-screen .wob-card {
+  background: #333333;
 }
 
 /* =========================

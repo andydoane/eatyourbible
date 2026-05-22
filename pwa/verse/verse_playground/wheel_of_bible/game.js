@@ -819,7 +819,7 @@
     }).join("")}
         </div>
       </div>
-    `, { status: "Choose Letter" });
+    `, { status: "Choose Letter", rootClass: "is-select-screen" });
     wireGameMenu();
     document.querySelectorAll("[data-letter]").forEach(btn => btn.addEventListener("click", () => handleLetterChoice(btn.dataset.letter || "")));
   }
