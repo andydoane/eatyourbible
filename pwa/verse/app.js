@@ -2109,9 +2109,9 @@ function smartLearnTextHtml({ title = "", body = "", extraClass = "" } = {}) {
 
 function getSmartLearnLineHeight(textLength, stageRatio) {
   if (stageRatio > 1.35) {
-    if (textLength <= 90) return 1.12;
+    if (textLength <= 90) return 1.10;
     if (textLength <= 190) return 1.08;
-    return 1.04;
+    return 1.05;
   }
 
   if (textLength <= 80) return 1.18;
@@ -2119,45 +2119,54 @@ function getSmartLearnLineHeight(textLength, stageRatio) {
   return 1.06;
 }
 
-function getSmartLearnMaxWidthEm(textLength, stageRatio) {
-  if (stageRatio > 1.55) {
-    if (textLength <= 70) return 30;
-    if (textLength <= 140) return 38;
-    if (textLength <= 240) return 46;
-    return 54;
+function getSmartLearnWidthRatio(textLength, stageRatio) {
+  if (stageRatio > 1.35) {
+    return 0.96;
   }
 
-  if (stageRatio > 1.2) {
-    if (textLength <= 70) return 24;
-    if (textLength <= 140) return 32;
-    if (textLength <= 240) return 40;
-    return 48;
+  if (stageRatio > 1.05) {
+    return 0.93;
   }
 
-  if (textLength <= 70) return 18;
-  if (textLength <= 140) return 26;
-  if (textLength <= 240) return 34;
-  return 42;
+  if (textLength <= 80) {
+    return 0.92;
+  }
+
+  return 0.98;
 }
 
 function getSmartLearnMaxFontSize(textLength, stageRatio) {
-  if (stageRatio > 1.55) {
-    if (textLength <= 70) return 58;
-    if (textLength <= 140) return 52;
-    if (textLength <= 240) return 44;
-    return 36;
+  if (stageRatio > 1.35) {
+    if (textLength <= 70) return 64;
+    if (textLength <= 140) return 58;
+    if (textLength <= 240) return 50;
+    return 42;
   }
 
-  if (stageRatio > 1.2) {
-    if (textLength <= 70) return 68;
-    if (textLength <= 140) return 60;
-    if (textLength <= 240) return 50;
-    return 40;
+  if (stageRatio > 1.05) {
+    if (textLength <= 70) return 74;
+    if (textLength <= 140) return 66;
+    if (textLength <= 240) return 56;
+    return 46;
   }
 
   if (textLength > 220) return 62;
   if (textLength > 140) return 74;
   return 96;
+}
+
+function getElementHorizontalPaddingPx(el) {
+  const styles = window.getComputedStyle(el);
+  const left = parseFloat(styles.paddingLeft) || 0;
+  const right = parseFloat(styles.paddingRight) || 0;
+  return left + right;
+}
+
+function getElementVerticalPaddingPx(el) {
+  const styles = window.getComputedStyle(el);
+  const top = parseFloat(styles.paddingTop) || 0;
+  const bottom = parseFloat(styles.paddingBottom) || 0;
+  return top + bottom;
 }
 
 function fitSmartLearnText(root = document) {
@@ -2174,29 +2183,33 @@ function fitSmartLearnText(root = document) {
 
     if (stageWidth <= 0 || stageHeight <= 0) return;
 
+    const stageContentWidth = Math.max(120, stageWidth - getElementHorizontalPaddingPx(stage));
+    const stageContentHeight = Math.max(120, stageHeight - getElementVerticalPaddingPx(stage));
+
     const bodyText = body.textContent || "";
     const textLength = bodyText.replace(/\s+/g, " ").trim().length;
-    const stageRatio = stageWidth / stageHeight;
+    const stageRatio = stageContentWidth / stageContentHeight;
 
     const lineHeight = getSmartLearnLineHeight(textLength, stageRatio);
-    const maxWidthEm = getSmartLearnMaxWidthEm(textLength, stageRatio);
+    const widthRatio = getSmartLearnWidthRatio(textLength, stageRatio);
+    const targetWidth = Math.floor(stageContentWidth * widthRatio);
 
     block.style.setProperty("--smart-line-height", String(lineHeight));
-    block.style.maxWidth = `min(100%, ${maxWidthEm}em)`;
+    block.style.width = `${targetWidth}px`;
+    block.style.maxWidth = `${targetWidth}px`;
 
     let low = 18;
     let high = getSmartLearnMaxFontSize(textLength, stageRatio);
-
     let best = low;
 
-    for (let i = 0; i < 9; i++) {
+    for (let i = 0; i < 10; i++) {
       const mid = (low + high) / 2;
 
       block.style.setProperty("--smart-font-size", `${mid}px`);
 
       const fits =
-        block.scrollHeight <= stage.clientHeight &&
-        block.scrollWidth <= stage.clientWidth;
+        block.scrollHeight <= stageContentHeight &&
+        block.scrollWidth <= stageContentWidth;
 
       if (fits) {
         best = mid;
