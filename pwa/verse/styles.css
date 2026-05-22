@@ -2531,7 +2531,8 @@
           color: var(--purple);
         }
     
-        .learn-layout.learn-screen-chunks .learn-stage {
+        .learn-layout.learn-screen-chunks .learn-stage,
+        .learn-layout.learn-screen-echo .learn-stage {
           background: #333333;
         }
     
