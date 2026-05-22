@@ -2531,10 +2531,22 @@
         .smart-learn-body .verse {
           margin: 0;
           color: inherit;
-          font-size: inherit;
+          font-size: inherit !important;
           font-weight: inherit;
-          line-height: inherit;
+          line-height: inherit !important;
           text-shadow: none;
+        }
+
+        .smart-learn-text-remove .smart-learn-body,
+        .smart-learn-text-final .smart-learn-body {
+          font-size: var(--smart-font-size);
+          line-height: var(--smart-line-height);
+        }
+
+        .smart-learn-text-remove .smart-learn-body .verse,
+        .smart-learn-text-final .smart-learn-body .verse {
+          font-size: inherit !important;
+          line-height: inherit !important;
         }
 
         .smart-learn-text-remove .smart-learn-body,
