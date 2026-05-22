@@ -2514,7 +2514,7 @@
 
         .smart-learn-title {
           color: #7f66c6;
-          font-size: max(22px, calc(var(--smart-font-size) * 0.58));
+          font-size: clamp(14px, calc(var(--smart-font-size) * 0.48), 32px);
           font-weight: 900;
           line-height: 1.02;
           text-shadow: none;

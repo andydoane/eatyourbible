@@ -2135,8 +2135,19 @@ function getSmartLearnWidthRatio(textLength, stageRatio) {
   return 0.98;
 }
 
-function getSmartLearnMaxFontSize(textLength, stageRatio) {
+function getSmartLearnMaxFontSize(textLength, stageRatio, block) {
+  const isMissingWords =
+    block?.classList?.contains("smart-learn-text-remove") ||
+    block?.classList?.contains("smart-learn-text-final");
+
   if (stageRatio > 1.35) {
+    if (isMissingWords) {
+      if (textLength <= 70) return 82;
+      if (textLength <= 140) return 76;
+      if (textLength <= 240) return 68;
+      return 56;
+    }
+
     if (textLength <= 70) return 64;
     if (textLength <= 140) return 58;
     if (textLength <= 240) return 50;
@@ -2144,10 +2155,23 @@ function getSmartLearnMaxFontSize(textLength, stageRatio) {
   }
 
   if (stageRatio > 1.05) {
+    if (isMissingWords) {
+      if (textLength <= 70) return 88;
+      if (textLength <= 140) return 82;
+      if (textLength <= 240) return 72;
+      return 60;
+    }
+
     if (textLength <= 70) return 74;
     if (textLength <= 140) return 66;
     if (textLength <= 240) return 56;
     return 46;
+  }
+
+  if (isMissingWords) {
+    if (textLength > 220) return 76;
+    if (textLength > 140) return 86;
+    return 104;
   }
 
   if (textLength > 220) return 62;
@@ -2199,7 +2223,7 @@ function fitSmartLearnText(root = document) {
     block.style.maxWidth = `${targetWidth}px`;
 
     let low = 18;
-    let high = getSmartLearnMaxFontSize(textLength, stageRatio);
+    let high = getSmartLearnMaxFontSize(textLength, stageRatio, block);
     let best = low;
 
     for (let i = 0; i < 10; i++) {
