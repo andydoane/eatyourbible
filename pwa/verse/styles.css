@@ -281,6 +281,8 @@
     .learn-instruction-actions .carousel-main {
       width: min(100%, 520px);
       flex: 0 0 auto;
+      font-size: clamp(20px, 4.8vw, 32px);
+      line-height: 1.05;
     }
 
     .learn-instruction-btn {
