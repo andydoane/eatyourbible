@@ -2210,7 +2210,7 @@ function fitSmartLearnText(root = document) {
     const stageContentWidth = Math.max(120, stageWidth - getElementHorizontalPaddingPx(stage));
     const stageContentHeight = Math.max(120, stageHeight - getElementVerticalPaddingPx(stage));
 
-    const bodyText = body.textContent || "";
+    const bodyText = block.getAttribute("data-smart-fit-text") || body.textContent || "";
     const textLength = bodyText.replace(/\s+/g, " ").trim().length;
     const stageRatio = stageContentWidth / stageContentHeight;
 
@@ -5868,7 +5868,11 @@ function screenHide(idx) {
       </div>
 
       <div class="learn-verse learn-stage learn-stage-card learn-stage-smart missing-words-theme ${getVerseFitClass(VERSE_TEXT)}">
-        <div class="smart-learn-text smart-learn-text-remove" data-smart-learn-text>
+        <div
+          class="smart-learn-text smart-learn-text-remove"
+          data-smart-learn-text
+          data-smart-fit-text="${escapeHtml(VERSE_TEXT)}"
+        >
           <div class="smart-learn-title">${escapeHtml(VERSE_REF)}</div>
           <div class="smart-learn-body" id="verseStage"></div>
         </div>
@@ -5951,7 +5955,11 @@ function screenFinalRecall(idx) {
       </div>
 
       <div class="learn-verse learn-stage learn-stage-card learn-stage-smart missing-words-theme ${getVerseFitClass(VERSE_TEXT)}">
-        <div class="smart-learn-text smart-learn-text-final" data-smart-learn-text>
+        <div
+          class="smart-learn-text smart-learn-text-final"
+          data-smart-learn-text
+          data-smart-fit-text="${escapeHtml(VERSE_TEXT)}"
+        >
           <div class="smart-learn-title">${escapeHtml(VERSE_REF)}</div>
           <div class="smart-learn-body" id="finalRecallStage"></div>
         </div>
