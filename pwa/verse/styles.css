@@ -2236,14 +2236,31 @@
       margin: 0 auto;
     }
 
-    /* Zone 1: reference pill band (target ~10%) */
+    .learn-layout button,
+    .learn-layout-instruction button,
+    .learn-menu-dialog button {
+      font-family: "Baloo 2", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    }
+
+    /* Zone 1: short instruction band */
     .learn-ref {
-      flex: 0 0 10%;
-      min-height: 56px;
-      max-height: 96px;
+      flex: 0 0 auto;
+      min-height: 44px;
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 0 8px;
+    }
+
+    .learn-screen-instruction {
+      width: min(100%, 760px);
+      color: rgba(255, 255, 255, 0.96);
+      font-size: clamp(17px, 3.6vw, 28px);
+      font-weight: 900;
+      line-height: 1.05;
+      text-align: center;
+      text-wrap: balance;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
     }
 
     /* Zone 2: verse text band (target ~50%) */
@@ -2697,7 +2714,8 @@
     }
 
     .learn-verse .hintable.underscore {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-family: "Baloo 2", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      letter-spacing: 0.02em;
     }
 
     .learn-verse .revealed-word {

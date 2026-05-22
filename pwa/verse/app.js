@@ -414,6 +414,14 @@ function homePillHtml(label = "Home") {
   `;
 }
 
+function learnInstructionLineHtml(text) {
+  return `
+    <div class="learn-screen-instruction">
+      ${escapeHtml(text)}
+    </div>
+  `;
+}
+
 function practiceBackPillHtml(label = "Back to Practice") {
   return `
     <button class="screen-home-pill no-zoom" data-practice-back-pill type="button" aria-label="${label}">
@@ -5407,7 +5415,7 @@ function screenListen(idx) {
   inner.innerHTML = `
     <div class="learn-layout learn-layout-coach-centered">
       <div class="learn-ref">
-        <div class="verse-ref-pill">${VERSE_REF}</div>
+        ${learnInstructionLineHtml("Listen as the verse is read.")}
       </div>
 
       <div class="learn-verse ${listenDisplayFitClass}">
@@ -5469,7 +5477,7 @@ function screenMeaning(idx) {
   inner.innerHTML = `
     <div class="learn-layout learn-layout-meaning">
       <div class="learn-ref">
-        <div class="verse-ref-pill">${VERSE_REF}</div>
+        ${learnInstructionLineHtml("Read what this verse means.")}
       </div>
 
       <div class="learn-verse learn-verse-meaning">
@@ -5537,7 +5545,7 @@ function screenChunks(idx) {
   inner.innerHTML = `
     <div class="learn-layout learn-layout-coach-centered">
       <div class="learn-ref">
-        <div class="verse-ref-pill">${VERSE_REF}</div>
+        ${learnInstructionLineHtml("Listen for each chunk.")}
       </div>
 
       <div class="learn-verse ${getVerseFitClass(chunkText)}">
@@ -5593,7 +5601,7 @@ function screenEcho(idx) {
   inner.innerHTML = `
     <div class="learn-layout learn-layout-coach-centered">
       <div class="learn-ref">
-        <div class="verse-ref-pill">${VERSE_REF}</div>
+        ${learnInstructionLineHtml("Echo each chunk after it turns yellow.")}
       </div>
 
       <div class="learn-verse ${getVerseFitClass(echoText)} ${State.echoSpeaking ? "echo-green" : ""}">
@@ -5681,7 +5689,7 @@ function screenHide(idx) {
   inner.innerHTML = `
     <div class="learn-layout learn-layout-coach-centered">
       <div class="learn-ref">
-        <div class="verse-ref-pill">${VERSE_REF}</div>
+        ${learnInstructionLineHtml("Say the verse before more words disappear.")}
       </div>
 
       <div class="learn-verse missing-words-theme ${getVerseFitClass(VERSE_TEXT)}">
@@ -5759,7 +5767,7 @@ function screenFinalRecall(idx) {
   inner.innerHTML = `
     <div class="learn-layout learn-layout-coach-centered final-recall-layout">
       <div class="learn-ref">
-        <div class="verse-ref-pill">${VERSE_REF}</div>
+        ${learnInstructionLineHtml("Try the verse with only hints.")}
       </div>
 
       <div class="learn-verse missing-words-theme ${getVerseFitClass(VERSE_TEXT)}">
