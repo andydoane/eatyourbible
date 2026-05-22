@@ -59,6 +59,9 @@ const DEBUG_VERSE_JSON = {
 /* Pick your actual filenames in verse_images/ (safe defaults) */
 const INTRO_LOGO = IMG_DIR + "eyb_logo_1.png";
 const TITLE_LOGO = IMG_DIR + "memory_verse_title.png";
+const TITLE_FACE_FRONT = IMG_DIR + "brain_face_front.svg";
+const TITLE_FACE_BACK = IMG_DIR + "brain_face_back.svg";
+const TITLE_BIBLE = IMG_DIR + "brain_bible.svg";
 
 const TITLE_ZOO_SCENE_COUNT = 8;
 const titleZooSceneIndex = Math.floor(Math.random() * TITLE_ZOO_SCENE_COUNT) + 1;
@@ -2184,6 +2187,7 @@ async function loadVerseList() {
    ========================= */
 const Screen = {
   INTRO: "intro",
+  TITLE_SEQUENCE: "title_sequence",
   TITLE: "title",
   PROGRESS: "progress",
   VERSE_DETAIL: "verse_detail",
@@ -3037,6 +3041,7 @@ function screenToIndex(screen) {
   // order matters for sliding
   const order = [
     Screen.INTRO,
+    Screen.TITLE_SEQUENCE,
     Screen.TITLE,
     Screen.PROGRESS,
     Screen.PET_STATS,
@@ -4249,6 +4254,7 @@ function renderNav() {
   // Always show nav except intro/title? Your other apps hide nav on intro.
   const show = (
     State.screen !== Screen.INTRO &&
+    State.screen !== Screen.TITLE_SEQUENCE &&
     State.screen !== Screen.TITLE &&
     State.screen !== Screen.CELEBRATION &&
     State.screen !== Screen.LEARN_LEVEL &&
@@ -4491,7 +4497,74 @@ function screenIntro(idx) {
     <div class="site">eatyourbible.com</div>
     <div class="hint">Tap anywhere to start</div>
   `;
-  wrap.onclick = () => { go(Screen.TITLE); };
+  wrap.onclick = () => { go(Screen.TITLE_SEQUENCE); };
+  return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
+}
+
+function screenTitleSequence(idx) {
+  const wrap = document.createElement("div");
+  wrap.className = "title-sequence-screen";
+  wrap.setAttribute("aria-label", "Let's Memorize God's Word!");
+
+  wrap.innerHTML = `
+    <div class="title-sequence-content">
+      <div class="title-sequence-head-stage" aria-hidden="true">
+        <img
+          class="title-sequence-face title-sequence-face-back"
+          src="${TITLE_FACE_BACK}"
+          alt=""
+          draggable="false"
+          onerror="this.style.display='none'"
+        >
+
+        <img
+          class="title-sequence-bible"
+          src="${TITLE_BIBLE}"
+          alt=""
+          draggable="false"
+          onerror="this.style.display='none'"
+        >
+
+        <img
+          class="title-sequence-face title-sequence-face-front"
+          src="${TITLE_FACE_FRONT}"
+          alt=""
+          draggable="false"
+          onerror="this.style.display='none'"
+        >
+      </div>
+
+      <div class="title-sequence-message">
+        Let’s Memorize God’s Word!
+      </div>
+
+      <div class="title-sequence-tap-hint">
+        Tap anywhere to continue
+      </div>
+    </div>
+  `;
+
+  let readyForTap = false;
+
+  function makeReadyForTap() {
+    if (readyForTap) return;
+    readyForTap = true;
+    wrap.classList.add("is-ready");
+  }
+
+  wrap.addEventListener("animationend", (e) => {
+    if (e.animationName === "titleSequenceTextPop") {
+      makeReadyForTap();
+    }
+  });
+
+  setTimeout(makeReadyForTap, 3800);
+
+  wrap.onclick = () => {
+    if (!readyForTap) return;
+    go(Screen.TITLE);
+  };
+
   return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
 }
 
@@ -6105,9 +6178,10 @@ function render() {
 
   const uniq = Array.from(new Set(indicesToRender.filter(i => i !== null && i >= 0)));
   for (const idx of uniq) {
-    const screen = ["intro", "title", "progress", "pet_stats", "verse_detail", "learn_level", "practice_gate", "learn_instruction", "listen", "meaning", "chunks", "echo", "hide", "final_recall", "celebration", "pet_unlock", "practice_hub", "practice", "playground", "game_mix_finished"][idx];
+    const screen = ["intro", "title_sequence", "title", "progress", "pet_stats", "verse_detail", "learn_level", "practice_gate", "learn_instruction", "listen", "meaning", "chunks", "echo", "hide", "final_recall", "celebration", "pet_unlock", "practice_hub", "practice", "playground", "game_mix_finished"][idx];
     let slide = null;
     if (screen === Screen.INTRO) slide = screenIntro(idx);
+    if (screen === Screen.TITLE_SEQUENCE) slide = screenTitleSequence(idx);
     if (screen === Screen.TITLE) slide = screenTitle(idx);
     if (screen === Screen.PROGRESS) slide = screenProgress(idx);
     if (screen === Screen.PET_STATS) slide = screenPetStats(idx);
