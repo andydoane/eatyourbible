@@ -2206,6 +2206,58 @@ function learnChunkStageHtml(learnParts, visibleCount = 0) {
   `;
 }
 
+function getEchoChunkStateClass(index) {
+  if (!State.echoRunning && !State.echoDone) {
+    return "is-future";
+  }
+
+  if (State.echoDone) {
+    return "is-completed";
+  }
+
+  if (index < State.echoIndex) {
+    return "is-completed";
+  }
+
+  if (index > State.echoIndex) {
+    return "is-future";
+  }
+
+  return State.echoSpeaking ? "is-echoing" : "is-listening";
+}
+
+function learnEchoStageHtml(learnParts) {
+  const chunks = Array.isArray(learnParts) && learnParts.length
+    ? learnParts
+    : [{ text: VERSE_TEXT }];
+
+  const fitText = chunks
+    .map((part) => part?.text || "")
+    .join(" ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return `
+    <div
+      class="learn-echo-stage"
+      data-smart-learn-text
+      data-smart-fit-text="${escapeHtml(fitText)}"
+    >
+      <div class="smart-learn-body learn-echo-body">
+        ${chunks.map((part, i) => {
+    const stateClass = getEchoChunkStateClass(i);
+
+    return `
+          <span class="learn-echo-piece ${stateClass}">
+            ${escapeHtml(part?.text || "")}
+          </span>
+        `;
+  }).join("")}
+      </div>
+    </div>
+  `;
+}
+
 function getSmartLearnLineHeight(textLength, stageRatio) {
   if (stageRatio > 1.35) {
     if (textLength <= 90) return 1.10;
@@ -5872,7 +5924,6 @@ function screenEcho(idx) {
   inner.style.flexDirection = "column";
   inner.style.height = "100%";
   const learnParts = getLearnAudioParts();
-  const echoText = learnParts[State.echoIndex]?.text || VERSE_TEXT;
 
   inner.innerHTML = `
     <div class="learn-layout learn-screen learn-screen-echo learn-layout-coach-centered">
@@ -5880,8 +5931,8 @@ function screenEcho(idx) {
         ${learnInstructionLineHtml("Echo each chunk after it turns yellow.")}
       </div>
 
-      <div class="learn-verse learn-stage learn-stage-card ${getVerseFitClass(echoText)} ${State.echoSpeaking ? "echo-green" : ""}">
-        <p class="verse">${echoText}</p>
+      <div class="learn-verse learn-stage learn-stage-card learn-echo-stage-card ${getVerseFitClass(VERSE_TEXT)}">
+        ${learnEchoStageHtml(learnParts)}
       </div>
 
       <div class="learn-coach learn-bottom-zone">
@@ -5929,6 +5980,8 @@ function screenEcho(idx) {
       await startEchoFlow();
     };
   }
+
+  scheduleSmartLearnTextFit(inner);
 
   return makeSlide({ idx, bg: "var(--purple)", navHidden: false, inner });
 }
