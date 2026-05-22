@@ -5413,16 +5413,16 @@ function screenListen(idx) {
       : "verse-fit-short";
 
   inner.innerHTML = `
-    <div class="learn-layout learn-layout-coach-centered">
-      <div class="learn-ref">
+    <div class="learn-layout learn-screen learn-screen-listen learn-layout-coach-centered">
+      <div class="learn-ref learn-instruction-line">
         ${learnInstructionLineHtml("Listen as the verse is read.")}
       </div>
 
-      <div class="learn-verse ${listenDisplayFitClass}">
+      <div class="learn-verse learn-stage learn-stage-card ${listenDisplayFitClass}">
         <p class="verse">${listenDisplayText}</p>
       </div>
 
-      <div class="learn-coach">
+      <div class="learn-coach learn-bottom-zone">
         <div>
           <div class="coach-text">${State.listenDone
       ? "Tap the button to read what this verse means."
@@ -5475,19 +5475,19 @@ function screenMeaning(idx) {
   inner.style.height = "100%";
 
   inner.innerHTML = `
-    <div class="learn-layout learn-layout-meaning">
-      <div class="learn-ref">
+    <div class="learn-layout learn-screen learn-screen-meaning learn-layout-meaning">
+      <div class="learn-ref learn-instruction-line">
         ${learnInstructionLineHtml("Read what this verse means.")}
       </div>
 
-      <div class="learn-verse learn-verse-meaning">
+      <div class="learn-verse learn-stage learn-stage-card learn-verse-meaning">
         <div class="meaning-wrap">
           <div class="meaning-title">WHAT IT MEANS</div>
           <p class="verse meaning-text">${VERSE_MEANING}</p>
         </div>
       </div>
 
-      <div class="learn-coach learn-coach-meaning learn-coach-meaning-minimal">
+      <div class="learn-coach learn-bottom-zone learn-coach-meaning learn-coach-meaning-minimal">
         <div class="coach-actions">
           ${State.instructionPlaying
       ? ``
@@ -5543,16 +5543,16 @@ function screenChunks(idx) {
   }
 
   inner.innerHTML = `
-    <div class="learn-layout learn-layout-coach-centered">
-      <div class="learn-ref">
+    <div class="learn-layout learn-screen learn-screen-chunks learn-layout-coach-centered">
+      <div class="learn-ref learn-instruction-line">
         ${learnInstructionLineHtml("Listen for each chunk.")}
       </div>
 
-      <div class="learn-verse ${getVerseFitClass(chunkText)}">
+      <div class="learn-verse learn-stage learn-stage-card ${getVerseFitClass(chunkText)}">
         <p class="verse">${chunkText}</p>
       </div>
 
-      <div class="learn-coach">
+      <div class="learn-coach learn-bottom-zone">
         <div>
           <div class="coach-text">${coachText}</div>
         </div>
@@ -5599,16 +5599,16 @@ function screenEcho(idx) {
   const echoText = learnParts[State.echoIndex]?.text || VERSE_TEXT;
 
   inner.innerHTML = `
-    <div class="learn-layout learn-layout-coach-centered">
-      <div class="learn-ref">
+    <div class="learn-layout learn-screen learn-screen-echo learn-layout-coach-centered">
+      <div class="learn-ref learn-instruction-line">
         ${learnInstructionLineHtml("Echo each chunk after it turns yellow.")}
       </div>
 
-      <div class="learn-verse ${getVerseFitClass(echoText)} ${State.echoSpeaking ? "echo-green" : ""}">
+      <div class="learn-verse learn-stage learn-stage-card ${getVerseFitClass(echoText)} ${State.echoSpeaking ? "echo-green" : ""}">
         <p class="verse">${echoText}</p>
       </div>
 
-      <div class="learn-coach">
+      <div class="learn-coach learn-bottom-zone">
         <div>
           <div class="coach-text">${State.instructionPlaying && State.instructionKey === "echo1"
       ? "Now echo the verse after me."
@@ -5687,16 +5687,16 @@ function screenHide(idx) {
   }
 
   inner.innerHTML = `
-    <div class="learn-layout learn-layout-coach-centered">
-      <div class="learn-ref">
+    <div class="learn-layout learn-screen learn-screen-remove learn-layout-coach-centered">
+      <div class="learn-ref learn-instruction-line">
         ${learnInstructionLineHtml("Say the verse before more words disappear.")}
       </div>
 
-      <div class="learn-verse missing-words-theme ${getVerseFitClass(VERSE_TEXT)}">
+      <div class="learn-verse learn-stage learn-stage-card missing-words-theme ${getVerseFitClass(VERSE_TEXT)}">
         <div id="verseStage"></div>
       </div>
 
-      <div class="learn-coach">
+      <div class="learn-coach learn-bottom-zone">
         <div>
           ${coachBody}
         </div>
@@ -5765,16 +5765,16 @@ function screenFinalRecall(idx) {
   }
 
   inner.innerHTML = `
-    <div class="learn-layout learn-layout-coach-centered final-recall-layout">
-      <div class="learn-ref">
+    <div class="learn-layout learn-screen learn-screen-final learn-layout-coach-centered final-recall-layout">
+      <div class="learn-ref learn-instruction-line">
         ${learnInstructionLineHtml("Try the verse with only hints.")}
       </div>
 
-      <div class="learn-verse missing-words-theme ${getVerseFitClass(VERSE_TEXT)}">
+      <div class="learn-verse learn-stage learn-stage-card missing-words-theme ${getVerseFitClass(VERSE_TEXT)}">
         <div id="finalRecallStage"></div>
       </div>
 
-      <div class="learn-coach">
+      <div class="learn-coach learn-bottom-zone">
         <div>
           ${coachBody}
         </div>
