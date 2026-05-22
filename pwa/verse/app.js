@@ -21,8 +21,8 @@
    ========================================================= */
 const AUDIO_DIR = "verse_audio/";
 const WORDS_AUDIO_DIR = AUDIO_DIR + "words/";
-const DATA_DIR  = "verse_data/";
-const IMG_DIR   = "verse_images/";
+const DATA_DIR = "verse_data/";
+const IMG_DIR = "verse_images/";
 const PET_IMG_DIR = "pet_images/";
 
 // =========================================================
@@ -72,15 +72,15 @@ const TITLE_ZOO_PET_DANCE_CLASSES = [
 
 let titleZooPetDanceClass = "dance-nod";
 
-function pickTitleZooPetDirection(){
+function pickTitleZooPetDirection() {
   return Math.random() < 0.5 ? "from-left" : "from-right";
 }
 
-function pickTitleZooPetDanceClass(){
+function pickTitleZooPetDanceClass() {
   return "dance-nod";
 }
 
-function getTitleZooScene(){
+function getTitleZooScene() {
   return {
     bg: `${IMG_DIR}zoo_${titleZooSceneIndex}_bg.jpg`,
     fg: `${IMG_DIR}zoo_${titleZooSceneIndex}_fg.png`
@@ -90,15 +90,15 @@ function getTitleZooScene(){
 const loadedBibloPetImageSrcs = new Set();
 const missingBibloPetImageSrcs = new Set();
 
-function getBibloPetImageSrcForVerseId(verseId){
+function getBibloPetImageSrcForVerseId(verseId) {
   return `${PET_IMG_DIR}pet_${verseId}.png`;
 }
 
-function handleBibloPetImageLoad(img){
+function handleBibloPetImageLoad(img) {
   if (!img) return;
 
   const src = img.getAttribute("src") || "";
-  if (src){
+  if (src) {
     loadedBibloPetImageSrcs.add(src);
     missingBibloPetImageSrcs.delete(src);
   }
@@ -107,11 +107,11 @@ function handleBibloPetImageLoad(img){
   img.classList.remove("is-missing");
 }
 
-function handleBibloPetImageError(img){
+function handleBibloPetImageError(img) {
   if (!img) return;
 
   const src = img.getAttribute("src") || "";
-  if (src){
+  if (src) {
     missingBibloPetImageSrcs.add(src);
     loadedBibloPetImageSrcs.delete(src);
   }
@@ -120,16 +120,16 @@ function handleBibloPetImageError(img){
   img.classList.remove("is-loaded");
 }
 
-function preloadBibloPetImageForVerseId(verseId){
+function preloadBibloPetImageForVerseId(verseId) {
   const src = getBibloPetImageSrcForVerseId(verseId);
 
   if (!src) return Promise.resolve(false);
 
-  if (loadedBibloPetImageSrcs.has(src)){
+  if (loadedBibloPetImageSrcs.has(src)) {
     return Promise.resolve(true);
   }
 
-  if (missingBibloPetImageSrcs.has(src)){
+  if (missingBibloPetImageSrcs.has(src)) {
     return Promise.resolve(false);
   }
 
@@ -152,7 +152,7 @@ function preloadBibloPetImageForVerseId(verseId){
   });
 }
 
-function bibloPetVisualHtml(verseId, emoji){
+function bibloPetVisualHtml(verseId, emoji) {
   const safeVerseId = escapeHtml(verseId || "");
   const safeEmoji = escapeHtml(emoji || "🐾");
   const rawImgSrc = getBibloPetImageSrcForVerseId(verseId);
@@ -179,7 +179,7 @@ function bibloPetVisualHtml(verseId, emoji){
   `;
 }
 
-function titleZooPetVisitorHtml(pet){
+function titleZooPetVisitorHtml(pet) {
   if (!pet) return "";
 
   return `
@@ -198,7 +198,7 @@ function titleZooPetVisitorHtml(pet){
   `;
 }
 
-function titleZooStripHtml(){
+function titleZooStripHtml() {
   const scene = getTitleZooScene();
   const pet = getTitleZooPet();
 
@@ -232,7 +232,7 @@ function titleZooStripHtml(){
   `;
 }
 
-function titleZooVisitButtonHtml(){
+function titleZooVisitButtonHtml() {
   const pet = getTitleZooPet();
 
   if (!pet) return "";
@@ -249,7 +249,7 @@ function titleZooVisitButtonHtml(){
   `;
 }
 
-function updateTitleZooVisitButton(rootEl, pet){
+function updateTitleZooVisitButton(rootEl, pet) {
   const btn = rootEl?.querySelector?.("#titleZooVisitBtn");
   if (!btn || !pet) return;
 
@@ -257,7 +257,7 @@ function updateTitleZooVisitButton(rootEl, pet){
   btn.textContent = `Visit ${pet.name}`;
 }
 
-function restartTitleZooPetAnimation(rootEl){
+function restartTitleZooPetAnimation(rootEl) {
   const visitor = rootEl?.querySelector?.(".title-zoo-pet-visitor");
   if (!visitor) return;
 
@@ -271,7 +271,7 @@ function restartTitleZooPetAnimation(rootEl){
   });
 }
 
-function updateTitleZooPetVisitor(rootEl, pet){
+function updateTitleZooPetVisitor(rootEl, pet) {
   if (!rootEl || !pet) return;
 
   const visitor = rootEl.querySelector(".title-zoo-pet-visitor");
@@ -366,10 +366,10 @@ const dlgTitle = document.getElementById("dlgTitle");
 const dlgBody = document.getElementById("dlgBody");
 const dlgActions = document.getElementById("dlgActions");
 
-function showDialog({title="Notice", body="", bodyHtml="", actions=[]}){
+function showDialog({ title = "Notice", body = "", bodyHtml = "", actions = [] }) {
   dlgTitle.textContent = title;
 
-  if (bodyHtml){
+  if (bodyHtml) {
     dlgBody.innerHTML = bodyHtml;
   } else {
     dlgBody.textContent = body;
@@ -379,13 +379,13 @@ function showDialog({title="Notice", body="", bodyHtml="", actions=[]}){
   for (const a of actions) dlgActions.appendChild(a);
   overlay.classList.add("show");
 }
-function closeDialog(){
+function closeDialog() {
   overlay.classList.remove("show");
   dlgActions.classList.remove("pet-name-dialog-actions");
 }
-overlay.addEventListener("click", (e)=>{ if (e.target === overlay) closeDialog(); });
+overlay.addEventListener("click", (e) => { if (e.target === overlay) closeDialog(); });
 
-function escapeHtml(value){
+function escapeHtml(value) {
   return String(value ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -394,16 +394,16 @@ function escapeHtml(value){
     .replace(/'/g, "&#39;");
 }
 
-function dlgBtn(label, {secondary=false, onClick}={}){
+function dlgBtn(label, { secondary = false, onClick } = {}) {
   const b = document.createElement("button");
   b.className = "dlg-btn" + (secondary ? " secondary" : "");
   b.type = "button";
   b.textContent = label;
-  b.onclick = onClick || (()=>{});
+  b.onclick = onClick || (() => { });
   return b;
 }
 
-function homePillHtml(label = "Home"){
+function homePillHtml(label = "Home") {
   return `
     <button class="screen-home-pill no-zoom" data-home-pill type="button" aria-label="${label}">
       ${SVG_HOME}
@@ -411,7 +411,7 @@ function homePillHtml(label = "Home"){
   `;
 }
 
-function practiceBackPillHtml(label = "Back to Practice"){
+function practiceBackPillHtml(label = "Back to Practice") {
   return `
     <button class="screen-home-pill no-zoom" data-practice-back-pill type="button" aria-label="${label}">
       ${SVG_BACK}
@@ -419,7 +419,7 @@ function practiceBackPillHtml(label = "Back to Practice"){
   `;
 }
 
-function bindPracticeBackPill(rootEl){
+function bindPracticeBackPill(rootEl) {
   const btn = rootEl?.querySelector?.("[data-practice-back-pill]");
   if (!btn) return;
 
@@ -429,13 +429,13 @@ function bindPracticeBackPill(rootEl){
     try {
       audioEl.pause();
       audioEl.currentTime = 0;
-    } catch(e){}
+    } catch (e) { }
 
     go(Screen.PRACTICE_HUB);
   };
 }
 
-function titleHomePillHtml(label = "Home"){
+function titleHomePillHtml(label = "Home") {
   return `
     <button class="screen-title-pill no-zoom" data-home-pill type="button" aria-label="${label}">
       ${SVG_HOME}
@@ -443,7 +443,7 @@ function titleHomePillHtml(label = "Home"){
   `;
 }
 
-function zooBackPillHtml(label = "Zoo"){
+function zooBackPillHtml(label = "Zoo") {
   return `
     <button class="screen-title-pill no-zoom" data-zoo-back-pill type="button" aria-label="Back to BibloPet Zoo">
       ${SVG_BACK}
@@ -451,7 +451,7 @@ function zooBackPillHtml(label = "Zoo"){
   `;
 }
 
-function bindZooBackPill(rootEl){
+function bindZooBackPill(rootEl) {
   const btn = rootEl?.querySelector?.("[data-zoo-back-pill]");
   if (!btn) return;
 
@@ -461,13 +461,13 @@ function bindZooBackPill(rootEl){
     try {
       audioEl.pause();
       audioEl.currentTime = 0;
-    } catch(e){}
+    } catch (e) { }
 
     go(Screen.PROGRESS);
   };
 }
 
-function bindHomePill(rootEl){
+function bindHomePill(rootEl) {
   const btn = rootEl?.querySelector?.("[data-home-pill]");
   if (!btn) return;
 
@@ -477,14 +477,14 @@ function bindHomePill(rootEl){
     try {
       audioEl.pause();
       audioEl.currentTime = 0;
-    } catch(e){}
+    } catch (e) { }
 
     State.pendingPetUnlockVerseId = null;
     go(Screen.TITLE);
   };
 }
 
-function ensureLearnMenuOverlay(){
+function ensureLearnMenuOverlay() {
   if (document.getElementById("learnMenuOverlay")) return;
 
   const menu = document.createElement("div");
@@ -518,7 +518,7 @@ function ensureLearnMenuOverlay(){
   if (closeBtn) closeBtn.onclick = closeLearnMenu;
 
   const exitBtn = menu.querySelector("#learnMenuExit");
-  if (exitBtn){
+  if (exitBtn) {
     exitBtn.onclick = () => {
       learnMenuPausedAudio = false;
       closeLearnMenu();
@@ -527,7 +527,7 @@ function ensureLearnMenuOverlay(){
   }
 }
 
-function openLearnMenu(){
+function openLearnMenu() {
   ensureLearnMenuOverlay();
 
   const menu = document.getElementById("learnMenuOverlay");
@@ -538,13 +538,13 @@ function openLearnMenu(){
 
   try {
     audioEl.pause();
-  } catch(e){}
+  } catch (e) { }
 
   menu.classList.add("show");
   menu.setAttribute("aria-hidden", "false");
 }
 
-function closeLearnMenu(){
+function closeLearnMenu() {
   const menu = document.getElementById("learnMenuOverlay");
   if (!menu) return;
 
@@ -553,7 +553,7 @@ function closeLearnMenu(){
 
   learnMenuOpen = false;
 
-  if (learnMenuPausedAudio){
+  if (learnMenuPausedAudio) {
     learnMenuPausedAudio = false;
 
     safePlay().catch(() => {
@@ -562,17 +562,17 @@ function closeLearnMenu(){
   }
 }
 
-function getVerseIdFromUrl(){
+function getVerseIdFromUrl() {
   const params = new URLSearchParams(window.location.search);
   return params.get("v") || "john_3_16";
 }
 
-function hasVerseIdInUrl(){
+function hasVerseIdInUrl() {
   const params = new URLSearchParams(window.location.search);
   return !!params.get("v");
 }
 
-function getRequestedVerseIdFromUrl(){
+function getRequestedVerseIdFromUrl() {
   const params = new URLSearchParams(window.location.search);
   return params.get("v") || "";
 }
@@ -585,15 +585,15 @@ let learnMenuOpen = false;
 let learnMenuPausedAudio = false;
 
 let muted = false;
-function applyMute(){
+function applyMute() {
   audioEl.muted = muted;
 }
-function toggleMute(){
+function toggleMute() {
   muted = !muted;
   applyMute();
   // stop current audio immediately
-  try { audioEl.pause(); } catch(e){}
-  try { audioEl.currentTime = 0; } catch(e){}
+  try { audioEl.pause(); } catch (e) { }
+  try { audioEl.currentTime = 0; } catch (e) { }
   renderNav(); // update icon
 }
 
@@ -603,22 +603,22 @@ function safePlay() {
     showDialog({
       title: "Audio can’t play yet",
       body: "Your browser blocked playback. Tap play again (or make sure the mp3 exists).",
-      actions: [dlgBtn("OK", {onClick: closeDialog})]
+      actions: [dlgBtn("OK", { onClick: closeDialog })]
     });
     throw err;
   });
 }
 
-function setAudioSrc(src){
+function setAudioSrc(src) {
   audioEl.src = src;
-  try { audioEl.load(); } catch(e){}
+  try { audioEl.load(); } catch (e) { }
 }
 
-function getRemoveInstructionButtonText(){
+function getRemoveInstructionButtonText() {
   return hideWordsPerRound() > 1 ? "Remove Words" : "Remove a Word";
 }
 
-function getLearnInstructionConfig(key){
+function getLearnInstructionConfig(key) {
   const configs = {
     listen: {
       image: "verse_listen.png",
@@ -694,8 +694,8 @@ const LEARN_INSTRUCTION_KEYS = [
 
 const preloadedInstructionImages = new Set();
 
-function preloadLearnInstructionImages(){
-  for (const key of LEARN_INSTRUCTION_KEYS){
+function preloadLearnInstructionImages() {
+  for (const key of LEARN_INSTRUCTION_KEYS) {
     const cfg = getLearnInstructionConfig(key);
     if (!cfg?.image) continue;
 
@@ -709,7 +709,7 @@ function preloadLearnInstructionImages(){
   }
 }
 
-function startLearnInstruction(key){
+function startLearnInstruction(key) {
   State.learnInstructionKey = key;
   State.learnInstructionReady = false;
   State.learnInstructionAudioStarted = false;
@@ -720,7 +720,7 @@ function startLearnInstruction(key){
   go(Screen.LEARN_INSTRUCTION);
 }
 
-async function playLearnInstructionAudio(){
+async function playLearnInstructionAudio() {
   if (State.screen !== Screen.LEARN_INSTRUCTION) return;
   if (State.learnInstructionAudioStarted) return;
 
@@ -739,7 +739,7 @@ async function playLearnInstructionAudio(){
 
   try {
     await safePlay();
-  } catch(e) {
+  } catch (e) {
     State.instructionPlaying = false;
     State.learnInstructionReady = true;
     render();
@@ -763,7 +763,7 @@ async function playLearnInstructionAudio(){
   render();
 }
 
-function continueLearnInstruction(){
+function continueLearnInstruction() {
   const key = State.learnInstructionKey;
 
   State.learnInstructionReady = false;
@@ -771,40 +771,40 @@ function continueLearnInstruction(){
   State.instructionPlaying = false;
   State.instructionKey = "";
 
-  if (key === "listen"){
+  if (key === "listen") {
     goToListenAndStart();
     return;
   }
 
-  if (key === "meaning"){
+  if (key === "meaning") {
     go(Screen.MEANING);
     return;
   }
 
-  if (key === "chunks1" || key === "chunks2"){
+  if (key === "chunks1" || key === "chunks2") {
     goToChunksAndStart();
     return;
   }
 
-  if (key === "echo1"){
+  if (key === "echo1") {
     goToEchoAndStart();
     return;
   }
 
-  if (key === "remove"){
+  if (key === "remove") {
     goToHideAndStartRound();
     return;
   }
 
-  if (key === "final"){
+  if (key === "final") {
     goToFinalRecallAndStart();
     return;
   }
 
-  if (key === "games"){
+  if (key === "games") {
     State.hasLearnedVerse = true;
 
-    if (VERSE_ID){
+    if (VERSE_ID) {
       markLearnCompleted(VERSE_ID);
     }
 
@@ -834,29 +834,29 @@ const PROGRESS_STORAGE_KEY = "verseMemoryProgress";
 const PROGRESS_VERSION = 1;
 const TRAFFIC_PROGRESS_MIGRATION_VERSION = 1;
 
-function createEmptyProgress(){
+function createEmptyProgress() {
   return {
     version: PROGRESS_VERSION,
     verses: {}
   };
 }
 
-function migrateTrafficProgress(progress){
+function migrateTrafficProgress(progress) {
   if (!progress || typeof progress !== "object") return false;
 
   let changed = false;
 
-  if (!progress.migrations || typeof progress.migrations !== "object"){
+  if (!progress.migrations || typeof progress.migrations !== "object") {
     progress.migrations = {};
     changed = true;
   }
 
-  if (progress.migrations.trafficTapExternal >= TRAFFIC_PROGRESS_MIGRATION_VERSION){
+  if (progress.migrations.trafficTapExternal >= TRAFFIC_PROGRESS_MIGRATION_VERSION) {
     return changed;
   }
 
-  if (progress.verses && typeof progress.verses === "object"){
-    for (const verseId of Object.keys(progress.verses)){
+  if (progress.verses && typeof progress.verses === "object") {
+    for (const verseId of Object.keys(progress.verses)) {
       const verseProgress = progress.verses[verseId];
       if (!verseProgress || typeof verseProgress !== "object") continue;
 
@@ -883,7 +883,7 @@ function migrateTrafficProgress(progress){
   return changed;
 }
 
-function loadProgress(){
+function loadProgress() {
   try {
     const raw = localStorage.getItem(PROGRESS_STORAGE_KEY);
     if (!raw) return createEmptyProgress();
@@ -894,7 +894,7 @@ function loadProgress(){
     if (!parsed.version) parsed.version = PROGRESS_VERSION;
 
     const changed = migrateTrafficProgress(parsed);
-    if (changed){
+    if (changed) {
       saveProgress(parsed);
     }
 
@@ -905,7 +905,7 @@ function loadProgress(){
   }
 }
 
-function saveProgress(progress){
+function saveProgress(progress) {
   try {
     localStorage.setItem(PROGRESS_STORAGE_KEY, JSON.stringify(progress));
   } catch (err) {
@@ -913,17 +913,17 @@ function saveProgress(progress){
   }
 }
 
-function isTrackedGameCompleted(gameId, gameProgress){
+function isTrackedGameCompleted(gameId, gameProgress) {
   if (!gameId || !gameProgress) return false;
 
-  if (gameId === "traffic"){
+  if (gameId === "traffic") {
     return !!(gameProgress.roadCompleted || gameProgress.trailCompleted || gameProgress.riverCompleted);
   }
 
   return !!(gameProgress.easyCompleted || gameProgress.mediumCompleted || gameProgress.hardCompleted);
 }
 
-function getVerseProgress(verseId){
+function getVerseProgress(verseId) {
   const progress = loadProgress();
   const verseProgress = progress.verses[verseId];
 
@@ -935,7 +935,7 @@ function getVerseProgress(verseId){
   };
 }
 
-function updateVerseProgress(verseId, updater){
+function updateVerseProgress(verseId, updater) {
   if (!verseId) return;
 
   const progress = loadProgress();
@@ -951,14 +951,14 @@ function updateVerseProgress(verseId, updater){
   saveProgress(progress);
 }
 
-function markLearnCompleted(verseId){
+function markLearnCompleted(verseId) {
   updateVerseProgress(verseId, (verseProgress) => {
     verseProgress.learnCompleted = true;
     verseProgress.lastPracticedAt = Date.now(); // 👈 ADD THIS
   });
 }
 
-function markStandardGameCompleted(verseId, gameId, mode){
+function markStandardGameCompleted(verseId, gameId, mode) {
   if (!verseId || !gameId || !mode) return;
 
   const progress = loadProgress();
@@ -1019,7 +1019,7 @@ function markStandardGameCompleted(verseId, gameId, mode){
    ========================= */
 
 
-function getExternalTrackedGameIds(){
+function getExternalTrackedGameIds() {
   const list = Array.isArray(window.EXTERNAL_VERSE_GAMES) ? window.EXTERNAL_VERSE_GAMES : [];
 
   return list
@@ -1029,16 +1029,16 @@ function getExternalTrackedGameIds(){
     .map(manifest => manifest.id);
 }
 
-function getTrackedGameIds(){
+function getTrackedGameIds() {
   return getExternalTrackedGameIds();
 }
 
 // Count stars for a single game
-function getGameStars(gameId, gameProgress){
+function getGameStars(gameId, gameProgress) {
   if (!gameProgress) return 0;
 
   // Special case: Traffic Tap uses themes
-  if (gameId === "traffic"){
+  if (gameId === "traffic") {
     let stars = 0;
     if (gameProgress.roadCompleted) stars++;
     if (gameProgress.trailCompleted) stars++;
@@ -1055,7 +1055,7 @@ function getGameStars(gameId, gameProgress){
 }
 
 // Calculate overall verse stars (0–3)
-function getVerseStars(verseProgress){
+function getVerseStars(verseProgress) {
   if (!verseProgress || !verseProgress.games) return 0;
 
   const trackedGameIds = getTrackedGameIds();
@@ -1064,7 +1064,7 @@ function getVerseStars(verseProgress){
   let totalStars = 0;
   let maxStars = trackedGameIds.length * 3;
 
-  for (const gameId of trackedGameIds){
+  for (const gameId of trackedGameIds) {
     const gameProgress = verseProgress.games[gameId];
     totalStars += getGameStars(gameId, gameProgress);
   }
@@ -1074,14 +1074,14 @@ function getVerseStars(verseProgress){
 }
 
 // Convert number → display string
-function starsToString(stars){
+function starsToString(stars) {
   if (stars === 3) return "⭐⭐⭐";
   if (stars === 2) return "⭐⭐☆";
   if (stars === 1) return "⭐☆☆";
   return "☆☆☆";
 }
 
-function getStandardGameMedals(gameProgress){
+function getStandardGameMedals(gameProgress) {
   return [
     gameProgress?.easyCompleted ? "🥉" : "🔒",
     gameProgress?.mediumCompleted ? "🥈" : "🔒",
@@ -1089,17 +1089,17 @@ function getStandardGameMedals(gameProgress){
   ].join(" ");
 }
 
-function getVerseCompletedMedalCount(verseProgress){
+function getVerseCompletedMedalCount(verseProgress) {
   if (!verseProgress || !verseProgress.games) return 0;
 
   let total = 0;
   const trackedGameIds = getTrackedGameIds();
 
-  for (const gameId of trackedGameIds){
+  for (const gameId of trackedGameIds) {
     const gp = verseProgress.games[gameId];
     if (!gp) continue;
 
-    if (gameId === "traffic"){
+    if (gameId === "traffic") {
       if (gp.roadCompleted) total++;
       if (gp.trailCompleted) total++;
       if (gp.riverCompleted) total++;
@@ -1113,19 +1113,19 @@ function getVerseCompletedMedalCount(verseProgress){
   return total;
 }
 
-function canUseCustomPetBackgrounds(verseProgress){
+function canUseCustomPetBackgrounds(verseProgress) {
   return getVerseCompletedMedalCount(verseProgress) >= 5;
 }
 
-function getVerseDetailProgressDisplay(gameId, gameProgress){
-  if (gameId === "traffic"){
+function getVerseDetailProgressDisplay(gameId, gameProgress) {
+  if (gameId === "traffic") {
     return getTrafficThemeSlots(gameProgress);
   }
 
   return getStandardGameMedals(gameProgress);
 }
 
-function getExternalVerseDetailGames(){
+function getExternalVerseDetailGames() {
   const list = Array.isArray(window.EXTERNAL_VERSE_GAMES) ? window.EXTERNAL_VERSE_GAMES : [];
 
   return list
@@ -1138,25 +1138,25 @@ function getExternalVerseDetailGames(){
     }));
 }
 
-function getVerseDetailGames(){
+function getVerseDetailGames() {
   return getExternalVerseDetailGames();
 }
 
-function getStandardModeMedal(mode){
+function getStandardModeMedal(mode) {
   if (mode === "easy") return "🥉";
   if (mode === "medium") return "🥈";
   if (mode === "hard") return "🥇";
   return "🏅";
 }
 
-function getStandardModeLabel(mode){
+function getStandardModeLabel(mode) {
   if (mode === "easy") return "Easy";
   if (mode === "medium") return "Medium";
   if (mode === "hard") return "Hard";
   return "Game";
 }
 
-function wasStandardModeAlreadyCompleted(verseId, gameId, mode){
+function wasStandardModeAlreadyCompleted(verseId, gameId, mode) {
   if (!verseId || !gameId || !mode) return false;
 
   const verseProgress = getVerseProgress(verseId);
@@ -1171,12 +1171,12 @@ function wasStandardModeAlreadyCompleted(verseId, gameId, mode){
   return false;
 }
 
-function getStandardGameRewardTitle(verseId, gameId, mode){
+function getStandardGameRewardTitle(verseId, gameId, mode) {
   const medal = getStandardModeMedal(mode);
   const label = getStandardModeLabel(mode);
   const alreadyEarned = wasStandardModeAlreadyCompleted(verseId, gameId, mode);
 
-  if (alreadyEarned){
+  if (alreadyEarned) {
     return `You finished ${label} again!`;
   }
 
@@ -1214,22 +1214,22 @@ const PET_RANDOM_NAMES_FALLBACK = [
 let petRandomNames = [...PET_RANDOM_NAMES_FALLBACK];
 let petRandomNamesLoadPromise = null;
 
-function hasAnyTrackedGameCompletion(verseProgress){
+function hasAnyTrackedGameCompletion(verseProgress) {
   if (!verseProgress || !verseProgress.games) return false;
 
   const trackedGameIds = getTrackedGameIds();
   if (!trackedGameIds.length) return false;
 
-  for (const gameId of trackedGameIds){
+  for (const gameId of trackedGameIds) {
     const gp = verseProgress.games[gameId];
     if (!gp) continue;
 
-    if (gameId === "traffic"){
-      if (gp.roadCompleted || gp.trailCompleted || gp.riverCompleted){
+    if (gameId === "traffic") {
+      if (gp.roadCompleted || gp.trailCompleted || gp.riverCompleted) {
         return true;
       }
     } else {
-      if (gp.easyCompleted || gp.mediumCompleted || gp.hardCompleted){
+      if (gp.easyCompleted || gp.mediumCompleted || gp.hardCompleted) {
         return true;
       }
     }
@@ -1238,24 +1238,24 @@ function hasAnyTrackedGameCompletion(verseProgress){
   return false;
 }
 
-function isBibloPetUnlocked(verseProgress){
+function isBibloPetUnlocked(verseProgress) {
   if (!verseProgress) return false;
   return !!verseProgress.learnCompleted && hasAnyTrackedGameCompletion(verseProgress);
 }
 
-function getVerseListItemById(verseId){
+function getVerseListItemById(verseId) {
   return VERSE_LIST.find(item => item.id === verseId) || null;
 }
 
-function getBibloPetEmojiForListItem(item){
+function getBibloPetEmojiForListItem(item) {
   return item?.biblopet || "🐾";
 }
 
-function getBibloPetEmojiForCurrentVerse(){
+function getBibloPetEmojiForCurrentVerse() {
   return cfg?.biblopet || "🐾";
 }
 
-function getBibloPetEmojiForVerseId(verseId){
+function getBibloPetEmojiForVerseId(verseId) {
   const item = getVerseListItemById(verseId);
   if (item?.biblopet) return item.biblopet;
 
@@ -1264,21 +1264,21 @@ function getBibloPetEmojiForVerseId(verseId){
   return "🐾";
 }
 
-function getBibloPetDefaultNameForVerseId(verseId){
+function getBibloPetDefaultNameForVerseId(verseId) {
   const item = getVerseListItemById(verseId);
 
-  if (item?.biblopetDefaultName){
+  if (item?.biblopetDefaultName) {
     return String(item.biblopetDefaultName).trim();
   }
 
-  if (cfg?.verseId === verseId && cfg?.biblopetDefaultName){
+  if (cfg?.verseId === verseId && cfg?.biblopetDefaultName) {
     return String(cfg.biblopetDefaultName).trim();
   }
 
   return "BibloPet";
 }
 
-function normalizeBibloPetFeetFromBottom(value){
+function normalizeBibloPetFeetFromBottom(value) {
   const raw = String(value ?? "").trim();
 
   const match = raw.match(/^(-?\d+(?:\.\d+)?)%$/);
@@ -1291,21 +1291,21 @@ function normalizeBibloPetFeetFromBottom(value){
   return `${clamped}%`;
 }
 
-function getBibloPetFeetFromBottomForVerseId(verseId){
+function getBibloPetFeetFromBottomForVerseId(verseId) {
   const item = getVerseListItemById(verseId);
 
-  if (item?.biblopetFeetFromBottom){
+  if (item?.biblopetFeetFromBottom) {
     return normalizeBibloPetFeetFromBottom(item.biblopetFeetFromBottom);
   }
 
-  if (cfg?.verseId === verseId && cfg?.biblopetFeetFromBottom){
+  if (cfg?.verseId === verseId && cfg?.biblopetFeetFromBottom) {
     return normalizeBibloPetFeetFromBottom(cfg.biblopetFeetFromBottom);
   }
 
   return "0%";
 }
 
-function getTitleZooPetFeetStyle(pet){
+function getTitleZooPetFeetStyle(pet) {
   const feetFromBottom = normalizeBibloPetFeetFromBottom(
     pet?.feetFromBottom || "0%"
   );
@@ -1316,7 +1316,7 @@ function getTitleZooPetFeetStyle(pet){
   ].join("; ");
 }
 
-function applyTitleZooPetFeetStyle(visitor, pet){
+function applyTitleZooPetFeetStyle(visitor, pet) {
   if (!visitor || !pet) return;
 
   const feetFromBottom = normalizeBibloPetFeetFromBottom(
@@ -1327,14 +1327,14 @@ function applyTitleZooPetFeetStyle(visitor, pet){
   visitor.style.setProperty("--title-zoo-pet-ground-shift", `calc(-100% + ${feetFromBottom})`);
 }
 
-function cleanPetName(value){
+function cleanPetName(value) {
   return String(value ?? "")
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, PET_NAME_MAX_LENGTH);
 }
 
-function normalizePetNameForBlocklist(value){
+function normalizePetNameForBlocklist(value) {
   return String(value ?? "")
     .toLowerCase()
     .normalize("NFKD")
@@ -1342,12 +1342,12 @@ function normalizePetNameForBlocklist(value){
     .replace(/[^a-z0-9]/g, "");
 }
 
-function extractBlocklistWordsFromJson(json){
-  if (Array.isArray(json)){
+function extractBlocklistWordsFromJson(json) {
+  if (Array.isArray(json)) {
     return json;
   }
 
-  if (!json || typeof json !== "object"){
+  if (!json || typeof json !== "object") {
     return [];
   }
 
@@ -1360,8 +1360,8 @@ function extractBlocklistWordsFromJson(json){
     "list"
   ];
 
-  for (const key of possibleKeys){
-    if (Array.isArray(json[key])){
+  for (const key of possibleKeys) {
+    if (Array.isArray(json[key])) {
       return json[key];
     }
   }
@@ -1373,12 +1373,12 @@ function extractBlocklistWordsFromJson(json){
   });
 }
 
-function extractRandomPetNamesFromJson(json){
-  if (Array.isArray(json)){
+function extractRandomPetNamesFromJson(json) {
+  if (Array.isArray(json)) {
     return json;
   }
 
-  if (!json || typeof json !== "object"){
+  if (!json || typeof json !== "object") {
     return [];
   }
 
@@ -1389,8 +1389,8 @@ function extractRandomPetNamesFromJson(json){
     "list"
   ];
 
-  for (const key of possibleKeys){
-    if (Array.isArray(json[key])){
+  for (const key of possibleKeys) {
+    if (Array.isArray(json[key])) {
       return json[key];
     }
   }
@@ -1402,14 +1402,14 @@ function extractRandomPetNamesFromJson(json){
   });
 }
 
-async function loadPetRandomNames(){
-  if (petRandomNamesLoadPromise){
+async function loadPetRandomNames() {
+  if (petRandomNamesLoadPromise) {
     return petRandomNamesLoadPromise;
   }
 
   petRandomNamesLoadPromise = fetch(PET_RANDOM_NAMES_URL, { cache: "no-store" })
     .then((res) => {
-      if (!res.ok){
+      if (!res.ok) {
         throw new Error(`HTTP ${res.status}`);
       }
 
@@ -1441,14 +1441,14 @@ async function loadPetRandomNames(){
   return petRandomNamesLoadPromise;
 }
 
-async function loadPetNameBlocklist(){
-  if (petNameBlocklistLoadPromise){
+async function loadPetNameBlocklist() {
+  if (petNameBlocklistLoadPromise) {
     return petNameBlocklistLoadPromise;
   }
 
   petNameBlocklistLoadPromise = fetch(PET_NAME_BLOCKLIST_URL, { cache: "no-store" })
     .then((res) => {
-      if (!res.ok){
+      if (!res.ok) {
         throw new Error(`HTTP ${res.status}`);
       }
 
@@ -1479,7 +1479,7 @@ async function loadPetNameBlocklist(){
   return petNameBlocklistLoadPromise;
 }
 
-function isPetNameBlocked(value){
+function isPetNameBlocked(value) {
   const normalized = normalizePetNameForBlocklist(value);
   if (!normalized) return false;
 
@@ -1489,18 +1489,18 @@ function isPetNameBlocked(value){
   });
 }
 
-function getSavedPetNameForVerseId(verseId){
+function getSavedPetNameForVerseId(verseId) {
   const verseProgress = getVerseProgress(verseId);
   const saved = cleanPetName(verseProgress?.petName || "");
 
   return saved || "";
 }
 
-function getBibloPetDisplayNameForVerseId(verseId){
+function getBibloPetDisplayNameForVerseId(verseId) {
   return getSavedPetNameForVerseId(verseId) || getBibloPetDefaultNameForVerseId(verseId);
 }
 
-function getUnlockedTitleZooPets(){
+function getUnlockedTitleZooPets() {
   if (!Array.isArray(VERSE_LIST)) return [];
 
   return VERSE_LIST
@@ -1521,17 +1521,17 @@ function getUnlockedTitleZooPets(){
     .filter(Boolean);
 }
 
-function chooseTitleZooPet({ avoidVerseId = "" } = {}){
+function chooseTitleZooPet({ avoidVerseId = "" } = {}) {
   const unlockedPets = getUnlockedTitleZooPets();
 
-  if (!unlockedPets.length){
+  if (!unlockedPets.length) {
     titleZooPetVerseId = "";
     return null;
   }
 
   let candidates = unlockedPets;
 
-  if (avoidVerseId && unlockedPets.length > 1){
+  if (avoidVerseId && unlockedPets.length > 1) {
     candidates = unlockedPets.filter((pet) => pet.verseId !== avoidVerseId);
   }
 
@@ -1541,29 +1541,29 @@ function chooseTitleZooPet({ avoidVerseId = "" } = {}){
   return randomPet;
 }
 
-function getTitleZooPet(){
+function getTitleZooPet() {
   const unlockedPets = getUnlockedTitleZooPets();
 
-  if (!unlockedPets.length){
+  if (!unlockedPets.length) {
     titleZooPetVerseId = "";
     return null;
   }
 
   const rememberedPet = unlockedPets.find((pet) => pet.verseId === titleZooPetVerseId);
-  if (rememberedPet){
+  if (rememberedPet) {
     return rememberedPet;
   }
 
   return chooseTitleZooPet();
 }
 
-function advanceTitleZooPet(){
+function advanceTitleZooPet() {
   return chooseTitleZooPet({
     avoidVerseId: titleZooPetVerseId
   });
 }
 
-function bindTitleZooPetRotation(rootEl){
+function bindTitleZooPetRotation(rootEl) {
   const visitor = rootEl?.querySelector?.(".title-zoo-pet-visitor");
   if (!visitor) return;
 
@@ -1583,14 +1583,14 @@ function bindTitleZooPetRotation(rootEl){
 
     const nextPet = advanceTitleZooPet();
 
-    if (!nextPet){
+    if (!nextPet) {
       rotationInProgress = false;
       return;
     }
 
     await preloadBibloPetImageForVerseId(nextPet.verseId);
 
-    if (State.screen !== Screen.TITLE){
+    if (State.screen !== Screen.TITLE) {
       rotationInProgress = false;
       return;
     }
@@ -1602,16 +1602,16 @@ function bindTitleZooPetRotation(rootEl){
   });
 }
 
-function hasCustomPetNameForVerseId(verseId){
+function hasCustomPetNameForVerseId(verseId) {
   return !!getSavedPetNameForVerseId(verseId);
 }
 
-function savePetNameForVerseId(verseId, rawName){
+function savePetNameForVerseId(verseId, rawName) {
   if (!verseId) return { ok: false, message: "No verse selected." };
 
   const cleaned = cleanPetName(rawName);
 
-  if (isPetNameBlocked(cleaned)){
+  if (isPetNameBlocked(cleaned)) {
     return {
       ok: false,
       message: "Please choose a different name."
@@ -1619,7 +1619,7 @@ function savePetNameForVerseId(verseId, rawName){
   }
 
   updateVerseProgress(verseId, (verseProgress) => {
-    if (cleaned){
+    if (cleaned) {
       verseProgress.petName = cleaned;
     } else {
       delete verseProgress.petName;
@@ -1629,12 +1629,12 @@ function savePetNameForVerseId(verseId, rawName){
   return { ok: true, name: cleaned };
 }
 
-function getRandomPetName(){
+function getRandomPetName() {
   if (!petRandomNames.length) return "Buddy";
   return petRandomNames[Math.floor(Math.random() * petRandomNames.length)];
 }
 
-function getBibloPetStatusEmoji(verseProgress){
+function getBibloPetStatusEmoji(verseProgress) {
   const status = getBibloPetStatus(verseProgress);
 
   if (status === "happy") return "😀";
@@ -1644,37 +1644,37 @@ function getBibloPetStatusEmoji(verseProgress){
   return "";
 }
 
-function getBibloPetStatusText(verseProgress){
+function getBibloPetStatusText(verseProgress) {
   const status = getBibloPetStatus(verseProgress);
 
-  if (status === "locked"){
+  if (status === "locked") {
     return "Practice more to unlock your BibloPet.";
   }
 
-  if (status === "happy"){
+  if (status === "happy") {
     return "Your BibloPet is happy!";
   }
 
-  if (status === "hungry"){
+  if (status === "hungry") {
     return "Your BibloPet is getting hungry. Practice this verse to feed it!";
   }
 
-  if (status === "sleeping"){
+  if (status === "sleeping") {
     return "Your BibloPet is asleep. Practice to wake it up.";
   }
 
   return "";
 }
 
-function getBibloPetStatus(verseProgress){
+function getBibloPetStatus(verseProgress) {
   if (!isBibloPetUnlocked(verseProgress)) return "locked";
 
   const last = verseProgress.lastPracticedAt;
-    if (!last){
-      // If unlocked but never practiced timestamped,
-      // treat as hungry to encourage first interaction
-      return "hungry";
-    }
+  if (!last) {
+    // If unlocked but never practiced timestamped,
+    // treat as hungry to encourage first interaction
+    return "hungry";
+  }
 
   const now = Date.now();
   const diffDays = (now - last) / (1000 * 60 * 60 * 24);
@@ -1684,7 +1684,7 @@ function getBibloPetStatus(verseProgress){
   return "sleeping";
 }
 
-function getBibloPetStats(){
+function getBibloPetStats() {
   const stats = {
     totalVerses: Array.isArray(VERSE_LIST) ? VERSE_LIST.length : 0,
     unlocked: 0,
@@ -1695,7 +1695,7 @@ function getBibloPetStats(){
 
   if (!Array.isArray(VERSE_LIST)) return stats;
 
-  for (const item of VERSE_LIST){
+  for (const item of VERSE_LIST) {
     const verseProgress = getVerseProgress(item.id);
     const unlocked = isBibloPetUnlocked(verseProgress);
 
@@ -1723,21 +1723,21 @@ const HAPPY_PET_ANIMATIONS = [
   { class: "pet-happy-hop-dance", duration: 18000 }
 ];
 
-function isVerseMastered(verseProgress){
+function isVerseMastered(verseProgress) {
   if (!verseProgress || !verseProgress.games) return false;
 
   const trackedGameIds = getTrackedGameIds();
   if (!trackedGameIds.length) return false;
 
-  for (const gameId of trackedGameIds){
+  for (const gameId of trackedGameIds) {
     const gp = verseProgress.games[gameId];
 
-    if (gameId === "traffic"){
-      if (!gp?.roadCompleted || !gp?.trailCompleted || !gp?.riverCompleted){
+    if (gameId === "traffic") {
+      if (!gp?.roadCompleted || !gp?.trailCompleted || !gp?.riverCompleted) {
         return false;
       }
     } else {
-      if (!gp?.easyCompleted || !gp?.mediumCompleted || !gp?.hardCompleted){
+      if (!gp?.easyCompleted || !gp?.mediumCompleted || !gp?.hardCompleted) {
         return false;
       }
     }
@@ -1746,25 +1746,25 @@ function isVerseMastered(verseProgress){
   return true;
 }
 
-function getVerseBackgroundIndex(verseId){
+function getVerseBackgroundIndex(verseId) {
   const verseProgress = getVerseProgress(verseId);
   return Number.isInteger(verseProgress.bgIndex) ? verseProgress.bgIndex : 0;
 }
 
-function setVerseBackgroundIndex(verseId, index){
+function setVerseBackgroundIndex(verseId, index) {
   updateVerseProgress(verseId, (verseProgress) => {
     verseProgress.bgIndex = index;
   });
 }
 
-function cycleVerseBackground(verseId){
+function cycleVerseBackground(verseId) {
   const current = getVerseBackgroundIndex(verseId);
   const TOTAL_BACKGROUNDS = 24;
   const next = (current + 1) % TOTAL_BACKGROUNDS;
   setVerseBackgroundIndex(verseId, next);
 }
 
-function getVerseBackgroundClass(verseId, verseProgress){
+function getVerseBackgroundClass(verseId, verseProgress) {
   if (!canUseCustomPetBackgrounds(verseProgress)) return "";
 
   const bgIndex = getVerseBackgroundIndex(verseId);
@@ -1802,15 +1802,15 @@ const HUNGRY_FOOD_POOL = [
 
 let hungryFoodTimer = null;
 
-function getRandomHungryFoodPair(){
-  if (HUNGRY_FOOD_POOL.length < 2){
+function getRandomHungryFoodPair() {
+  if (HUNGRY_FOOD_POOL.length < 2) {
     return { left: "🍎", right: "🍞" };
   }
 
   const leftIndex = Math.floor(Math.random() * HUNGRY_FOOD_POOL.length);
   let rightIndex = Math.floor(Math.random() * HUNGRY_FOOD_POOL.length);
 
-  while (rightIndex === leftIndex){
+  while (rightIndex === leftIndex) {
     rightIndex = Math.floor(Math.random() * HUNGRY_FOOD_POOL.length);
   }
 
@@ -1820,14 +1820,14 @@ function getRandomHungryFoodPair(){
   };
 }
 
-function clearHungryFoodCycle(){
-  if (hungryFoodTimer){
+function clearHungryFoodCycle() {
+  if (hungryFoodTimer) {
     clearInterval(hungryFoodTimer);
     hungryFoodTimer = null;
   }
 }
 
-function updateHungryFoodTargets(rootEl){
+function updateHungryFoodTargets(rootEl) {
   const leftEl = rootEl?.querySelector(".pet-hungry-food-target.left");
   const rightEl = rootEl?.querySelector(".pet-hungry-food-target.right");
   if (!leftEl || !rightEl) return;
@@ -1837,7 +1837,7 @@ function updateHungryFoodTargets(rootEl){
   rightEl.textContent = pair.right;
 }
 
-function startHungryFoodCycle(rootEl, petStatus){
+function startHungryFoodCycle(rootEl, petStatus) {
   clearHungryFoodCycle();
 
   if (petStatus !== "hungry") return;
@@ -1845,7 +1845,7 @@ function startHungryFoodCycle(rootEl, petStatus){
   updateHungryFoodTargets(rootEl);
 
   hungryFoodTimer = setInterval(() => {
-    if (!rootEl || !rootEl.isConnected){
+    if (!rootEl || !rootEl.isConnected) {
       clearHungryFoodCycle();
       return;
     }
@@ -1854,7 +1854,7 @@ function startHungryFoodCycle(rootEl, petStatus){
   }, 6000);
 }
 
-function applyPetMotionVars(rootEl){
+function applyPetMotionVars(rootEl) {
   const stage = rootEl?.querySelector(".pet-stage");
   if (!stage) return;
 
@@ -1884,7 +1884,7 @@ function applyPetMotionVars(rootEl){
   stage.style.setProperty("--pet-hop-side", `${hopSide}px`);
 }
 
-function getRandomHappyPetAnimationClass(){
+function getRandomHappyPetAnimationClass() {
   const options = [
     "pet-happy-pace",
     "pet-happy-flip"
@@ -1893,24 +1893,24 @@ function getRandomHappyPetAnimationClass(){
   return options[Math.floor(Math.random() * options.length)];
 }
 
-function getBibloPetAnimationClass(verseId, verseProgress){
+function getBibloPetAnimationClass(verseId, verseProgress) {
   const status = getBibloPetStatus(verseProgress);
 
   if (status === "locked") return "";
 
   // Sleeping = fixed
-  if (status === "sleeping"){
+  if (status === "sleeping") {
     return "pet-sleeping";
   }
 
   // Hungry = pacing with disappearing food targets
-  if (status === "hungry"){
+  if (status === "hungry") {
     return "pet-hungry-pace";
   }
 
   // Happy = controlled system
-  if (status === "happy"){
-    if (State.petAnimPhase === "action"){
+  if (status === "happy") {
+    if (State.petAnimPhase === "action") {
       return State.petAnimActionClass;
     }
 
@@ -1920,10 +1920,10 @@ function getBibloPetAnimationClass(verseId, verseProgress){
   return "";
 }
 
-function startPetAnimationCycle(verseId, verseProgress){
+function startPetAnimationCycle(verseId, verseProgress) {
   const status = getBibloPetStatus(verseProgress);
 
-  if (status !== "happy"){
+  if (status !== "happy") {
     clearPetAnimationCycle();
     State.petAnimPhase = "idle";
     State.petAnimActionClass = "";
@@ -1932,7 +1932,7 @@ function startPetAnimationCycle(verseId, verseProgress){
 
   if (State.petAnimTimer) return;
 
-  function scheduleIdle(){
+  function scheduleIdle() {
     State.petAnimPhase = "idle";
     State.petAnimActionClass = "";
     render();
@@ -1945,7 +1945,7 @@ function startPetAnimationCycle(verseId, verseProgress){
     }, idleTime);
   }
 
-  function scheduleAction(){
+  function scheduleAction() {
     const action =
       HAPPY_PET_ANIMATIONS[Math.floor(Math.random() * HAPPY_PET_ANIMATIONS.length)];
 
@@ -1969,8 +1969,8 @@ function startPetAnimationCycle(verseId, verseProgress){
   }, 0);
 }
 
-function clearPetAnimationCycle(){
-  if (State.petAnimTimer){
+function clearPetAnimationCycle() {
+  if (State.petAnimTimer) {
     clearTimeout(State.petAnimTimer);
     State.petAnimTimer = null;
   }
@@ -1979,7 +1979,7 @@ function clearPetAnimationCycle(){
   State.petAnimActionClass = "";
 }
 
-async function playVerseDetailListen(){
+async function playVerseDetailListen() {
   try {
     setAudioSrc(refAudioFile());
     audioEl.currentTime = 0;
@@ -1998,8 +1998,8 @@ async function playVerseDetailListen(){
 }
 
 // tokenization (copied conceptually from old engine)
-const TokenType = { SPACE:"space", WORD:"word", PUNCT:"punct", OTHER:"other" };
-function tokenize(text){
+const TokenType = { SPACE: "space", WORD: "word", PUNCT: "punct", OTHER: "other" };
+function tokenize(text) {
   const re = /(\s+|[A-Za-z]+(?:'[A-Za-z]+)?|[0-9]+|[^\sA-Za-z0-9]+)/g;
   const raw = text.match(re) || [];
   return raw.map(t => {
@@ -2014,14 +2014,14 @@ function tokenize(text){
 let tokens = [];
 let planResolved = [];
 let planMixed = [];
-function shuffleArray(arr){
-  for (let i = arr.length - 1; i > 0; i--){
+function shuffleArray(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
 }
-function resolveHidePlanToTokenIndices(tokens, plan){
+function resolveHidePlanToTokenIndices(tokens, plan) {
   const wordPositionsByLower = new Map();
   tokens.forEach((tok, idx) => {
     if (tok.type !== TokenType.WORD) return;
@@ -2038,15 +2038,15 @@ function resolveHidePlanToTokenIndices(tokens, plan){
     return { ...item, tokenIndex };
   }).filter(x => Number.isFinite(x.tokenIndex));
 }
-function reshuffleHidePlan(){
+function reshuffleHidePlan() {
   planMixed = shuffleArray([...planResolved]);
 }
 
-function verseIdToRef(verseId, translation){
+function verseIdToRef(verseId, translation) {
   const parts = String(verseId || "").split("_").filter(Boolean);
 
   let nums = [];
-  while (parts.length && /^\d+$/.test(parts[parts.length - 1])){
+  while (parts.length && /^\d+$/.test(parts[parts.length - 1])) {
     nums.unshift(parts.pop());
   }
 
@@ -2063,14 +2063,14 @@ function verseIdToRef(verseId, translation){
   return `${book} ${chapter}:${versePart}${t}`;
 }
 
-function getTitleSubtitle(){
-  if (!HAS_VERSE_SELECTION){
+function getTitleSubtitle() {
+  if (!HAS_VERSE_SELECTION) {
     return "Choose a verse to begin";
   }
   return VERSE_REF;
 }
 
-function getVerseFitClass(text){
+function getVerseFitClass(text) {
   const raw = String(text || "").trim();
 
   if (!raw) return "verse-fit-medium";
@@ -2087,21 +2087,21 @@ function getVerseFitClass(text){
 /* =========================
    4. Verse Loading
    ========================= */
-async function loadVerse(verseId){
-let json;
+async function loadVerse(verseId) {
+  let json;
 
-try {
-  const res = await fetch(`${DATA_DIR}${verseId}.json`, { cache: "no-store" });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  json = await res.json();
-} catch (err) {
-  if (DEBUG_MODE) {
-    console.warn("Fetch failed — using DEBUG_VERSE_JSON instead.", err);
-    json = DEBUG_VERSE_JSON;
-  } else {
-    throw new Error(`Could not load ${DATA_DIR}${verseId}.json (and DEBUG_MODE is off).`);
+  try {
+    const res = await fetch(`${DATA_DIR}${verseId}.json`, { cache: "no-store" });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    json = await res.json();
+  } catch (err) {
+    if (DEBUG_MODE) {
+      console.warn("Fetch failed — using DEBUG_VERSE_JSON instead.", err);
+      json = DEBUG_VERSE_JSON;
+    } else {
+      throw new Error(`Could not load ${DATA_DIR}${verseId}.json (and DEBUG_MODE is off).`);
+    }
   }
-}
 
   cfg = json;
   VERSE_ID = json.verseId;
@@ -2125,7 +2125,7 @@ try {
   State.hasLearnedVerse = !!verseProgress.learnCompleted;
 }
 
-async function loadVerseList(){
+async function loadVerseList() {
   try {
     const res = await fetch(`${DATA_DIR}verse_list.json`, { cache: "no-store" });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -2136,34 +2136,34 @@ async function loadVerseList(){
     const enrichedList = await Promise.all(baseList.map(async (item) => {
       if (!item?.id) return item;
 
-const alreadyHasPetData =
-  item.biblopetDefaultName &&
-  item.biblopet &&
-  item.biblopetFeetFromBottom;
+      const alreadyHasPetData =
+        item.biblopetDefaultName &&
+        item.biblopet &&
+        item.biblopetFeetFromBottom;
 
-if (alreadyHasPetData){
-  return item;
-}
+      if (alreadyHasPetData) {
+        return item;
+      }
 
-try {
-  const verseRes = await fetch(`${DATA_DIR}${item.id}.json`, { cache: "no-store" });
-  if (!verseRes.ok) throw new Error(`HTTP ${verseRes.status}`);
+      try {
+        const verseRes = await fetch(`${DATA_DIR}${item.id}.json`, { cache: "no-store" });
+        if (!verseRes.ok) throw new Error(`HTTP ${verseRes.status}`);
 
-  const verseJson = await verseRes.json();
+        const verseJson = await verseRes.json();
 
-  return {
-    ...item,
-    biblopetDefaultName: verseJson.biblopetDefaultName || item.biblopetDefaultName || "",
-    biblopet: verseJson.biblopet || item.biblopet || "",
-    biblopetFeetFromBottom: verseJson.biblopetFeetFromBottom || item.biblopetFeetFromBottom || "0%"
-  };
-} catch (err) {
-  console.warn(`Could not load default BibloPet data for ${item.id}`, err);
-  return {
-    ...item,
-    biblopetFeetFromBottom: item.biblopetFeetFromBottom || "0%"
-  };
-}
+        return {
+          ...item,
+          biblopetDefaultName: verseJson.biblopetDefaultName || item.biblopetDefaultName || "",
+          biblopet: verseJson.biblopet || item.biblopet || "",
+          biblopetFeetFromBottom: verseJson.biblopetFeetFromBottom || item.biblopetFeetFromBottom || "0%"
+        };
+      } catch (err) {
+        console.warn(`Could not load default BibloPet data for ${item.id}`, err);
+        return {
+          ...item,
+          biblopetFeetFromBottom: item.biblopetFeetFromBottom || "0%"
+        };
+      }
     }));
 
     VERSE_LIST = enrichedList;
@@ -2205,7 +2205,7 @@ const Screen = {
   GAME_MIX_FINISHED: "game_mix_finished"
 };
 
-function isLearnFlowScreen(screen){
+function isLearnFlowScreen(screen) {
   return (
     screen === Screen.LEARN_INSTRUCTION ||
     screen === Screen.LISTEN ||
@@ -2302,7 +2302,8 @@ const State = {
 
 const TITLE_OPTIONS = [
   { id: "learn", label: "Learn the Verse", action: () => go(Screen.LEARN_LEVEL) },
-  { id: "practice", label: "Practice", action: () => {
+  {
+    id: "practice", label: "Practice", action: () => {
       if (State.hasLearnedVerse) go(Screen.PRACTICE_HUB);
       else go(Screen.PRACTICE_GATE);
     }
@@ -2310,7 +2311,7 @@ const TITLE_OPTIONS = [
   { id: "progress", label: "BibloPet Zoo", action: () => go(Screen.PROGRESS) },
 ];
 
-function renderTitleActionButton({ id, label, image, color, textColor }){
+function renderTitleActionButton({ id, label, image, color, textColor }) {
   return `
     <button
       class="title-action-btn title-action-${id} no-zoom"
@@ -2364,7 +2365,7 @@ const HIDDEN_PRACTICE_GAME_ID = "wheel_of_bible";
 const HIDDEN_PRACTICE_LONG_PRESS_MS = 2000;
 const HIDDEN_LEARN_COMPLETE_LONG_PRESS_MS = 2000;
 
-function getExternalPracticeGames(){
+function getExternalPracticeGames() {
   const list = Array.isArray(window.EXTERNAL_VERSE_GAMES) ? window.EXTERNAL_VERSE_GAMES : [];
 
   return list
@@ -2383,11 +2384,11 @@ function getExternalPracticeGames(){
     }));
 }
 
-function getPracticeGames(){
+function getPracticeGames() {
   return [...BUILTIN_PRACTICE_GAMES, ...getExternalPracticeGames()];
 }
 
-function getExternalPlaygroundActivities(){
+function getExternalPlaygroundActivities() {
   const list = Array.isArray(window.EXTERNAL_VERSE_PLAYGROUND) ? window.EXTERNAL_VERSE_PLAYGROUND : [];
 
   return list
@@ -2406,7 +2407,7 @@ function getExternalPlaygroundActivities(){
     }));
 }
 
-function getPlaygroundActivities(){
+function getPlaygroundActivities() {
   return getExternalPlaygroundActivities();
 }
 
@@ -2421,7 +2422,7 @@ const GAME_MIX_LOADING_MIN_MS = 600;
 
 let gameMixLaunchTimer = null;
 
-function createGameMixState(verseId){
+function createGameMixState(verseId) {
   return {
     version: GAME_MIX_VERSION,
     active: true,
@@ -2433,7 +2434,7 @@ function createGameMixState(verseId){
   };
 }
 
-function getGameMixState(){
+function getGameMixState() {
   try {
     const raw = sessionStorage.getItem(GAME_MIX_STORAGE_KEY);
     if (!raw) return null;
@@ -2443,7 +2444,7 @@ function getGameMixState(){
     if (parsed.version !== GAME_MIX_VERSION) return null;
     if (!parsed.active) return null;
 
-    if (!Array.isArray(parsed.playedGameIds)){
+    if (!Array.isArray(parsed.playedGameIds)) {
       parsed.playedGameIds = [];
     }
 
@@ -2454,7 +2455,7 @@ function getGameMixState(){
   }
 }
 
-function saveGameMixState(state){
+function saveGameMixState(state) {
   try {
     sessionStorage.setItem(GAME_MIX_STORAGE_KEY, JSON.stringify(state));
   } catch (err) {
@@ -2462,7 +2463,7 @@ function saveGameMixState(state){
   }
 }
 
-function clearGameMixState(){
+function clearGameMixState() {
   try {
     sessionStorage.removeItem(GAME_MIX_STORAGE_KEY);
   } catch (err) {
@@ -2470,7 +2471,7 @@ function clearGameMixState(){
   }
 }
 
-function getEligibleGameMixGames(){
+function getEligibleGameMixGames() {
   return getPracticeGames().filter(game =>
     game &&
     game.source === "external" &&
@@ -2479,20 +2480,20 @@ function getEligibleGameMixGames(){
   );
 }
 
-function pickRandomFromList(list){
+function pickRandomFromList(list) {
   if (!Array.isArray(list) || !list.length) return null;
   return list[Math.floor(Math.random() * list.length)];
 }
 
-function showGameMixLoadingScreen(){
-  if (gameMixLaunchTimer){
+function showGameMixLoadingScreen() {
+  if (gameMixLaunchTimer) {
     clearTimeout(gameMixLaunchTimer);
     gameMixLaunchTimer = null;
   }
 
   try {
     navBar.style.display = "none";
-  } catch(e){}
+  } catch (e) { }
 
   app.innerHTML = `
     <div class="game-mix-loading-screen">
@@ -2514,7 +2515,7 @@ function showGameMixLoadingScreen(){
   `;
 }
 
-function getGameMixModeForGame(gameId){
+function getGameMixModeForGame(gameId) {
   const verseProgress = getVerseProgress(VERSE_ID);
   const gameProgress = verseProgress?.games?.[gameId];
 
@@ -2525,7 +2526,7 @@ function getGameMixModeForGame(gameId){
   return pickRandomFromList(GAME_MIX_MODES) || "easy";
 }
 
-function pickNextGameMixGame(){
+function pickNextGameMixGame() {
   const state = getGameMixState();
   if (!state || state.verseId !== VERSE_ID) return null;
 
@@ -2536,12 +2537,12 @@ function pickNextGameMixGame(){
   return pickRandomFromList(unplayed);
 }
 
-function launchGameMixGame(game){
+function launchGameMixGame(game) {
   if (!game?.manifest) return false;
 
   let state = getGameMixState();
 
-  if (!state || state.verseId !== VERSE_ID){
+  if (!state || state.verseId !== VERSE_ID) {
     state = createGameMixState(VERSE_ID);
   }
 
@@ -2566,10 +2567,10 @@ function launchGameMixGame(game){
   return true;
 }
 
-function startGameMix(){
+function startGameMix() {
   const eligible = getEligibleGameMixGames();
 
-  if (!eligible.length){
+  if (!eligible.length) {
     showDialog({
       title: "No games yet",
       body: "No practice games are available for Game Mix right now.",
@@ -2585,13 +2586,13 @@ function startGameMix(){
   launchGameMixGame(firstGame);
 }
 
-function recordGameMixCompletedGame(gameId){
+function recordGameMixCompletedGame(gameId) {
   const state = getGameMixState();
   if (!state || state.verseId !== VERSE_ID) return null;
 
   const safeGameId = String(gameId || state.currentGameId || "").trim();
 
-  if (safeGameId && !state.playedGameIds.includes(safeGameId)){
+  if (safeGameId && !state.playedGameIds.includes(safeGameId)) {
     state.playedGameIds.push(safeGameId);
   }
 
@@ -2602,7 +2603,7 @@ function recordGameMixCompletedGame(gameId){
   return state;
 }
 
-function cleanGameMixUrlParams(){
+function cleanGameMixUrlParams() {
   try {
     const url = new URL(window.location.href);
     url.searchParams.delete("mixNext");
@@ -2614,10 +2615,10 @@ function cleanGameMixUrlParams(){
   }
 }
 
-function continueGameMixAfterCompletion(completedGameId){
+function continueGameMixAfterCompletion(completedGameId) {
   const state = recordGameMixCompletedGame(completedGameId);
 
-  if (!state){
+  if (!state) {
     clearGameMixState();
     cleanGameMixUrlParams();
     setScreen(Screen.TITLE);
@@ -2626,7 +2627,7 @@ function continueGameMixAfterCompletion(completedGameId){
 
   const nextGame = pickNextGameMixGame();
 
-  if (nextGame){
+  if (nextGame) {
     launchGameMixGame(nextGame);
     return true;
   }
@@ -2636,33 +2637,33 @@ function continueGameMixAfterCompletion(completedGameId){
   return true;
 }
 
-function handleGameMixNextFromUrl(params){
+function handleGameMixNextFromUrl(params) {
   if (!params || params.get("mixNext") !== "1") return false;
 
   const completedGameId = params.get("completedGameId") || "";
   return continueGameMixAfterCompletion(completedGameId);
 }
 
-function isGameMixPetUnlockRequest(){
+function isGameMixPetUnlockRequest() {
   const params = new URLSearchParams(window.location.search);
   return params.get("mixPetUnlock") === "1";
 }
 
-function getGameMixCompletedGameIdFromUrl(){
+function getGameMixCompletedGameIdFromUrl() {
   const params = new URLSearchParams(window.location.search);
   return params.get("completedGameId") || "";
 }
 
-function getExternalGameManifestById(gameId){
+function getExternalGameManifestById(gameId) {
   const sources = [
     window.EXTERNAL_VERSE_GAMES,
     window.EXTERNAL_VERSE_PLAYGROUND
   ];
 
-  for (const source of sources){
+  for (const source of sources) {
     const list = Array.isArray(source) ? source : [];
 
-    for (const entry of list){
+    for (const entry of list) {
       if (!entry || entry.enabled === false) continue;
 
       const manifest = entry.manifest;
@@ -2673,9 +2674,9 @@ function getExternalGameManifestById(gameId){
   return null;
 }
 
-function launchHiddenPracticeGame(gameId = HIDDEN_PRACTICE_GAME_ID){
+function launchHiddenPracticeGame(gameId = HIDDEN_PRACTICE_GAME_ID) {
   const manifest = getExternalGameManifestById(gameId);
-  if (!manifest){
+  if (!manifest) {
     console.warn(`Hidden practice game not found: ${gameId}`);
     return;
   }
@@ -2685,9 +2686,9 @@ function launchHiddenPracticeGame(gameId = HIDDEN_PRACTICE_GAME_ID){
 
 function bindLongPress(element, {
   delay = 2000,
-  onLongPress = () => {},
+  onLongPress = () => { },
   shouldStart = () => true
-} = {}){
+} = {}) {
   if (!element) return;
 
   let timer = null;
@@ -2696,7 +2697,7 @@ function bindLongPress(element, {
   let startY = 0;
 
   const clearPress = () => {
-    if (timer){
+    if (timer) {
       clearTimeout(timer);
       timer = null;
     }
@@ -2726,7 +2727,7 @@ function bindLongPress(element, {
     const y = point?.clientY ?? startY;
     const dx = x - startX;
     const dy = y - startY;
-    if (Math.hypot(dx, dy) > 12){
+    if (Math.hypot(dx, dy) > 12) {
       clearPress();
     }
   };
@@ -2761,7 +2762,7 @@ function bindLongPress(element, {
   element.addEventListener("mouseleave", endPress, { passive: true });
 
   element.addEventListener("click", (event) => {
-    if (fired){
+    if (fired) {
       event.preventDefault();
       event.stopPropagation();
       fired = false;
@@ -2769,7 +2770,7 @@ function bindLongPress(element, {
   }, true);
 }
 
-function getPracticeGameIcon(game){
+function getPracticeGameIcon(game) {
   if (!game) return "🎮";
 
   const title = String(game.title || "").trim();
@@ -2780,7 +2781,7 @@ function getPracticeGameIcon(game){
   return "🎮";
 }
 
-function getPracticeIconWindow(total, current, maxVisible = 5){
+function getPracticeIconWindow(total, current, maxVisible = 5) {
   if (total <= 0) return [];
 
   const visible = Math.min(maxVisible, total);
@@ -2789,24 +2790,24 @@ function getPracticeIconWindow(total, current, maxVisible = 5){
   let start = current - half;
   let end = start + visible;
 
-  if (start < 0){
+  if (start < 0) {
     start = 0;
     end = visible;
   }
 
-  if (end > total){
+  if (end > total) {
     end = total;
     start = total - visible;
   }
 
   const out = [];
-  for (let i = start; i < end; i++){
+  for (let i = start; i < end; i++) {
     out.push(i);
   }
   return out;
 }
 
-function renderPracticeIconStrip(practiceGames, currentIndex){
+function renderPracticeIconStrip(practiceGames, currentIndex) {
   const windowIndices = getPracticeIconWindow(practiceGames.length, currentIndex, 5);
 
   return windowIndices.map((gameIndex) => {
@@ -2823,7 +2824,7 @@ function renderPracticeIconStrip(practiceGames, currentIndex){
   }).join("");
 }
 
-function renderPracticeGameMedals(gameProgress){
+function renderPracticeGameMedals(gameProgress) {
   const medals = [
     { mode: "easy", label: "Easy", icon: "🥉", earned: !!gameProgress?.easyCompleted },
     { mode: "medium", label: "Medium", icon: "🥈", earned: !!gameProgress?.mediumCompleted },
@@ -2841,7 +2842,7 @@ function renderPracticeGameMedals(gameProgress){
   `).join("");
 }
 
-function getRandomPracticeGame(practiceGames){
+function getRandomPracticeGame(practiceGames) {
   const availableGames = Array.isArray(practiceGames)
     ? practiceGames.filter(game => game && game.source === "external" && game.manifest)
     : [];
@@ -2852,7 +2853,7 @@ function getRandomPracticeGame(practiceGames){
   return availableGames[randomIndex];
 }
 
-function renderGameMixCard(){
+function renderGameMixCard() {
   return `
     <button
       class="practice-game-card practice-game-mix-card no-zoom"
@@ -2878,7 +2879,7 @@ function renderGameMixCard(){
   `;
 }
 
-function renderPracticeHubCard({ id, title, icon, cardColor, cardTextColor }){
+function renderPracticeHubCard({ id, title, icon, cardColor, cardTextColor }) {
   return `
     <button
       class="practice-game-card practice-simple-card no-zoom"
@@ -2900,7 +2901,7 @@ function renderPracticeHubCard({ id, title, icon, cardColor, cardTextColor }){
   `;
 }
 
-function renderPlaygroundActivityCard(activity){
+function renderPlaygroundActivityCard(activity) {
   return `
     <button
       class="practice-game-card practice-simple-card no-zoom"
@@ -2923,7 +2924,7 @@ function renderPlaygroundActivityCard(activity){
 }
 
 
-function renderPracticeGameCard(game, verseProgress){
+function renderPracticeGameCard(game, verseProgress) {
   const gameProgress = verseProgress?.games?.[game.id];
 
   return `
@@ -2953,7 +2954,7 @@ function renderPracticeGameCard(game, verseProgress){
 }
 
 
-function resetLearn(goTitle=false){
+function resetLearn(goTitle = false) {
   const keepLearnLevel = State.learnLevel;
   const keepLearnStartScreen = State.learnStartScreen;
 
@@ -3014,13 +3015,13 @@ function resetLearn(goTitle=false){
   State.finalRecallRevealed = false;
 
   stopFireworks();
-  
+
   cancelLearnAudio();
   if (goTitle) go(Screen.TITLE);
   render();
 }
 
-function startListenInstructionIfNeeded(){
+function startListenInstructionIfNeeded() {
   if (State.screen !== Screen.LISTEN) return;
   if (State.learnLevel !== "not_at_all") return;
   if (State.listenInstructionDone) return;
@@ -3032,7 +3033,7 @@ function startListenInstructionIfNeeded(){
 }
 
 /* Slide navigation */
-function screenToIndex(screen){
+function screenToIndex(screen) {
   // order matters for sliding
   const order = [
     Screen.INTRO,
@@ -3059,10 +3060,10 @@ function screenToIndex(screen){
   return order.indexOf(screen);
 }
 
-function go(nextScreen){
+function go(nextScreen) {
   const from = State.screen;
 
-  if (from === nextScreen){
+  if (from === nextScreen) {
     State.forceSlideForward = false;
     return;
   }
@@ -3070,7 +3071,7 @@ function go(nextScreen){
   const fromIdx = screenToIndex(from);
   const toIdx = screenToIndex(nextScreen);
 
-  if (State.isSliding){
+  if (State.isSliding) {
     State.forceSlideForward = false;
     return;
   }
@@ -3080,13 +3081,13 @@ function go(nextScreen){
   // stop any learn audio/echo sequence when leaving a screen
   cancelLearnAudio();
 
-  if (from === Screen.HIDE && nextScreen !== Screen.HIDE){
+  if (from === Screen.HIDE && nextScreen !== Screen.HIDE) {
     State.sayVerseActive = false;
     State.sayVerseStartedAt = 0;
     State.sayVerseDurationMs = 0;
   }
 
-  if (from === Screen.FINAL_RECALL && nextScreen !== Screen.FINAL_RECALL){
+  if (from === Screen.FINAL_RECALL && nextScreen !== Screen.FINAL_RECALL) {
     State.finalRecallActive = false;
     State.finalRecallStartedAt = 0;
     State.finalRecallDurationMs = 0;
@@ -3113,7 +3114,7 @@ function go(nextScreen){
   State.screen = nextScreen;
   render();
 
-  if (nextScreen === Screen.VERSE_DETAIL){
+  if (nextScreen === Screen.VERSE_DETAIL) {
     setTimeout(() => {
       if (State.screen !== Screen.VERSE_DETAIL) return;
 
@@ -3144,13 +3145,13 @@ function go(nextScreen){
 
 
 /* If you jump directly (no transition), call this */
-function setScreen(screen){
+function setScreen(screen) {
   State.screen = screen;
   State.slideX = screenToIndex(screen);
   render();
 }
 
-function updateSlideTransforms(){
+function updateSlideTransforms() {
   const slides = document.querySelectorAll(".slide");
 
   const forceForward =
@@ -3163,10 +3164,10 @@ function updateSlideTransforms(){
     const idx = Number(slide.dataset.idx || 0);
     let dx;
 
-    if (forceForward){
-      if (idx === State.transitionFromIdx){
+    if (forceForward) {
+      if (idx === State.transitionFromIdx) {
         dx = (State.slideX === State.transitionFromIdx) ? 0 : -100;
-      } else if (idx === State.transitionToIdx){
+      } else if (idx === State.transitionToIdx) {
         dx = (State.slideX === State.transitionFromIdx) ? 100 : 0;
       } else {
         dx = (idx - State.slideX) * 100;
@@ -3180,17 +3181,17 @@ function updateSlideTransforms(){
 }
 
 /* Title carousel controls */
-function titlePrev(){
+function titlePrev() {
   State.titleOptionIndex = (State.titleOptionIndex - 1 + TITLE_OPTIONS.length) % TITLE_OPTIONS.length;
   render();
 }
-function titleNext(){
+function titleNext() {
   State.titleOptionIndex = (State.titleOptionIndex + 1) % TITLE_OPTIONS.length;
   render();
 }
 
-function titleRun(){
-  if (!HAS_VERSE_SELECTION){
+function titleRun() {
+  if (!HAS_VERSE_SELECTION) {
     showDialog({
       title: "Pick a verse first 🙂",
       body: "Choose a verse from the dropdown before you start.",
@@ -3203,17 +3204,17 @@ function titleRun(){
 }
 
 /* Learn level carousel controls */
-function learnLevelPrev(){
+function learnLevelPrev() {
   State.learnLevelIndex = (State.learnLevelIndex - 1 + LEARN_LEVEL_OPTIONS.length) % LEARN_LEVEL_OPTIONS.length;
   render();
 }
 
-function learnLevelNext(){
+function learnLevelNext() {
   State.learnLevelIndex = (State.learnLevelIndex + 1) % LEARN_LEVEL_OPTIONS.length;
   render();
 }
 
-function learnLevelRun(){
+function learnLevelRun() {
   const opt = LEARN_LEVEL_OPTIONS[State.learnLevelIndex];
 
   State.learnLevel = opt.level;
@@ -3221,7 +3222,7 @@ function learnLevelRun(){
 
   resetLearn(false);
 
-  if (State.learnStartScreen === Screen.ECHO){
+  if (State.learnStartScreen === Screen.ECHO) {
     startLearnInstruction("echo1");
     return;
   }
@@ -3230,7 +3231,7 @@ function learnLevelRun(){
 }
 
 /* Practice carousel controls */
-function practicePrev(){
+function practicePrev() {
   const games = getPracticeGames();
   if (!games.length) return;
 
@@ -3238,7 +3239,7 @@ function practicePrev(){
   render();
 }
 
-function practiceNext(){
+function practiceNext() {
   const games = getPracticeGames();
   if (!games.length) return;
 
@@ -3246,7 +3247,7 @@ function practiceNext(){
   render();
 }
 
-function getReturnToScreenUrl(screenName = "practice"){
+function getReturnToScreenUrl(screenName = "practice") {
   const url = new URL("index.html", window.location.href);
 
   if (VERSE_ID) {
@@ -3257,15 +3258,15 @@ function getReturnToScreenUrl(screenName = "practice"){
   return url.href;
 }
 
-function getReturnToPracticeUrl(){
+function getReturnToPracticeUrl() {
   return getReturnToScreenUrl("practice");
 }
 
-function getReturnToPlaygroundUrl(){
+function getReturnToPlaygroundUrl() {
   return getReturnToScreenUrl("playground");
 }
 
-function launchExternalGame(manifest, options = {}){
+function launchExternalGame(manifest, options = {}) {
   if (!manifest || !manifest.launchUrl || !VERSE_ID) return;
 
   const params = new URLSearchParams({
@@ -3276,18 +3277,18 @@ function launchExternalGame(manifest, options = {}){
     source: "verse_memory_app"
   });
 
-  if (options.mix){
+  if (options.mix) {
     params.set("mix", "1");
   }
 
-  if (options.mode){
+  if (options.mode) {
     params.set("mode", options.mode);
   }
 
   window.location.href = `${manifest.launchUrl}?${params.toString()}`;
 }
 
-function launchExternalPlaygroundActivity(manifest){
+function launchExternalPlaygroundActivity(manifest) {
   if (!manifest || !manifest.launchUrl || !VERSE_ID) return;
 
   const params = new URLSearchParams({
@@ -3301,12 +3302,12 @@ function launchExternalPlaygroundActivity(manifest){
   window.location.href = `${manifest.launchUrl}?${params.toString()}`;
 }
 
-function practiceRun(){
+function practiceRun() {
   const games = getPracticeGames();
   const g = games[State.practiceIndex];
   if (!g) return;
 
-  if (g.source === "external"){
+  if (g.source === "external") {
     launchExternalGame(g.manifest);
     return;
   }
@@ -3315,24 +3316,24 @@ function practiceRun(){
 }
 
 /* Build verse display with hidden items */
-function underscoresForWord(word){
+function underscoresForWord(word) {
   if (!word) return "";
   const first = word[0];
   const restLen = Math.max(0, word.length - 1);
   return first + "_".repeat(restLen);
 }
 
-function isTokenHidden(tokenIdx){
+function isTokenHidden(tokenIdx) {
   if (State.revealedTokenIdx.has(tokenIdx)) return false;
   // hidden if it's in first hideCount items of the mixed plan
-  for (let i = 0; i < Math.min(State.hideCount, planMixed.length); i++){
+  for (let i = 0; i < Math.min(State.hideCount, planMixed.length); i++) {
     if (planMixed[i].tokenIndex === tokenIdx) return true;
   }
   return false;
 }
 
-function hideInfoForToken(tokenIdx){
-  for (let i = 0; i < Math.min(State.hideCount, planMixed.length); i++){
+function hideInfoForToken(tokenIdx) {
+  for (let i = 0; i < Math.min(State.hideCount, planMixed.length); i++) {
     const item = planMixed[i];
     if (item.tokenIndex === tokenIdx) return item;
   }
@@ -3341,17 +3342,17 @@ function hideInfoForToken(tokenIdx){
 
 
 
-function verseNode(){
+function verseNode() {
   const p = document.createElement("p");
   p.className = "verse";
-  for (let i = 0; i < tokens.length; i++){
+  for (let i = 0; i < tokens.length; i++) {
     const t = tokens[i];
-    if (t.type === TokenType.SPACE){
+    if (t.type === TokenType.SPACE) {
       p.appendChild(document.createTextNode(t.text));
       continue;
     }
-    if (!isTokenHidden(i)){
-      if (State.revealedTokenIdx.has(i)){
+    if (!isTokenHidden(i)) {
+      if (State.revealedTokenIdx.has(i)) {
         const span = document.createElement("span");
         span.className = "revealed-word";
         span.textContent = t.text;
@@ -3382,31 +3383,31 @@ function verseNode(){
       span.replaceWith(revealed);
 
     };
-      
+
 
     p.appendChild(span);
   }
   return p;
 }
 
-function finalRecallNode(showVerse=false){
+function finalRecallNode(showVerse = false) {
   const p = document.createElement("p");
   p.className = "verse";
 
-  for (let i = 0; i < tokens.length; i++){
+  for (let i = 0; i < tokens.length; i++) {
     const t = tokens[i];
 
-    if (t.type === TokenType.SPACE){
+    if (t.type === TokenType.SPACE) {
       p.appendChild(document.createTextNode(t.text));
       continue;
     }
 
-    if (showVerse){
+    if (showVerse) {
       p.appendChild(document.createTextNode(t.text));
       continue;
     }
 
-    if (t.type === TokenType.WORD){
+    if (t.type === TokenType.WORD) {
       const span = document.createElement("span");
       span.className = "hintable no-zoom underscore";
       span.textContent = underscoresForWord(t.text);
@@ -3420,11 +3421,11 @@ function finalRecallNode(showVerse=false){
   return p;
 }
 
-function instructionAudioFile(key){
+function instructionAudioFile(key) {
   return `${AUDIO_DIR}instructions_${key}.mp3`;
 }
 
-function waitForAudioEnd(){
+function waitForAudioEnd() {
   return new Promise((resolve) => {
     const onEnd = () => {
       audioEl.removeEventListener("ended", onEnd);
@@ -3434,21 +3435,21 @@ function waitForAudioEnd(){
   });
 }
 
-function waitForPausableDelay(ms){
+function waitForPausableDelay(ms) {
   return new Promise((resolve) => {
     let remaining = ms;
     let last = performance.now();
 
-    function tick(){
+    function tick() {
       const now = performance.now();
 
-      if (!learnMenuOpen){
+      if (!learnMenuOpen) {
         remaining -= (now - last);
       }
 
       last = now;
 
-      if (remaining <= 0){
+      if (remaining <= 0) {
         resolve();
         return;
       }
@@ -3460,7 +3461,7 @@ function waitForPausableDelay(ms){
   });
 }
 
-async function playInstruction(key, { doneFlag = null, delayMs = 0, after = null } = {}){
+async function playInstruction(key, { doneFlag = null, delayMs = 0, after = null } = {}) {
   const my = ++echoCancelToken;
 
   State.instructionPlaying = true;
@@ -3469,7 +3470,7 @@ async function playInstruction(key, { doneFlag = null, delayMs = 0, after = null
   render();
 
   try {
-    if (delayMs > 0){
+    if (delayMs > 0) {
       await new Promise(r => setTimeout(r, delayMs));
       if (my !== echoCancelToken) return;
     }
@@ -3484,7 +3485,7 @@ async function playInstruction(key, { doneFlag = null, delayMs = 0, after = null
       showDialog({
         title: "Instruction audio missing",
         body: `Couldn't play: ${file}`,
-        actions: [dlgBtn("OK", {onClick: closeDialog})]
+        actions: [dlgBtn("OK", { onClick: closeDialog })]
       });
       return;
     }
@@ -3492,7 +3493,7 @@ async function playInstruction(key, { doneFlag = null, delayMs = 0, after = null
     await waitForAudioEnd();
     if (my !== echoCancelToken) return;
 
-    if (doneFlag){
+    if (doneFlag) {
       State[doneFlag] = true;
     }
 
@@ -3502,14 +3503,14 @@ async function playInstruction(key, { doneFlag = null, delayMs = 0, after = null
     setAudioSrc(AUDIO_FILE);
     render();
 
-    if (typeof after === "function"){
+    if (typeof after === "function") {
       after();
     }
   } finally {
-    if (my === echoCancelToken){
+    if (my === echoCancelToken) {
       State.instructionPlaying = false;
       State.instructionKey = "";
-      if (State.audioMode === "instruction"){
+      if (State.audioMode === "instruction") {
         State.audioMode = null;
       }
       setAudioSrc(AUDIO_FILE);
@@ -3518,7 +3519,7 @@ async function playInstruction(key, { doneFlag = null, delayMs = 0, after = null
   }
 }
 
-function listenPlay(){
+function listenPlay() {
   State.listenAutoStarting = false;
   State.listenAutoFallbackReady = false;
   State.listenPlaying = true;
@@ -3542,13 +3543,13 @@ function listenPlay(){
       showDialog({
         title: "Reference audio missing",
         body: `Couldn't play: ${refAudioFile()}`,
-        actions: [dlgBtn("OK", {onClick: closeDialog})]
+        actions: [dlgBtn("OK", { onClick: closeDialog })]
       });
     });
 }
 
 audioEl.addEventListener("ended", () => {
-  if (State.screen === Screen.LISTEN && State.audioMode === "listen_ref"){
+  if (State.screen === Screen.LISTEN && State.audioMode === "listen_ref") {
     State.audioMode = "listen_verse";
 
     setAudioSrc(AUDIO_FILE);
@@ -3566,14 +3567,14 @@ audioEl.addEventListener("ended", () => {
         showDialog({
           title: "Verse audio missing",
           body: `Couldn't play: ${AUDIO_FILE}`,
-          actions: [dlgBtn("OK", {onClick: closeDialog})]
+          actions: [dlgBtn("OK", { onClick: closeDialog })]
         });
       });
 
     return;
   }
 
-  if (State.screen === Screen.LISTEN && State.audioMode === "listen_verse"){
+  if (State.screen === Screen.LISTEN && State.audioMode === "listen_verse") {
     State.listenPlaying = false;
     State.audioMode = null;
     State.listenDone = true;
@@ -3582,23 +3583,23 @@ audioEl.addEventListener("ended", () => {
   }
 });
 
-function echoPartFileByIndex(i){
+function echoPartFileByIndex(i) {
   // a, b, c...
   const suffix = String.fromCharCode("a".charCodeAt(0) + i);
   return `${AUDIO_DIR}${VERSE_ID}${suffix}.mp3`;
 }
 
-function refAudioFile(){
+function refAudioFile() {
   return `${AUDIO_DIR}${VERSE_ID}_ref.mp3`;
 }
 
-function getLearnAudioParts(){
+function getLearnAudioParts() {
   const parts = [
     { text: VERSE_REF, file: refAudioFile() }
   ];
 
-  if (ECHO_PARTS.length){
-    for (let i = 0; i < ECHO_PARTS.length; i++){
+  if (ECHO_PARTS.length) {
+    for (let i = 0; i < ECHO_PARTS.length; i++) {
       parts.push({
         text: ECHO_PARTS[i],
         file: echoPartFileByIndex(i)
@@ -3614,7 +3615,7 @@ function getLearnAudioParts(){
   return parts;
 }
 
-function waitForDuration(timeoutMs = 2000){
+function waitForDuration(timeoutMs = 2000) {
   return new Promise((resolve) => {
     // If duration is already known, resolve immediately
     if (isFinite(audioEl.duration) && audioEl.duration > 0) return resolve(audioEl.duration);
@@ -3633,10 +3634,10 @@ function waitForDuration(timeoutMs = 2000){
 
     // Fallback: don’t hang forever
     const timer = setInterval(() => {
-      if (isFinite(audioEl.duration) && audioEl.duration > 0){
+      if (isFinite(audioEl.duration) && audioEl.duration > 0) {
         clearInterval(timer);
         done();
-      } else if (Date.now() - t0 > timeoutMs){
+      } else if (Date.now() - t0 > timeoutMs) {
         clearInterval(timer);
         done();
       }
@@ -3644,30 +3645,30 @@ function waitForDuration(timeoutMs = 2000){
   });
 }
 
-function getSayVersePct(){
+function getSayVersePct() {
   if (!State.sayVerseActive || !State.sayVerseDurationMs) return 1;
 
   const elapsed = performance.now() - State.sayVerseStartedAt;
   return Math.max(0, 1 - elapsed / State.sayVerseDurationMs);
 }
 
-function getFinalRecallPct(){
+function getFinalRecallPct() {
   if (!State.finalRecallActive || !State.finalRecallDurationMs) return 1;
 
   const elapsed = performance.now() - State.finalRecallStartedAt;
   return Math.max(0, 1 - elapsed / State.finalRecallDurationMs);
 }
 
-function runAfterSlide(fn, { timeoutMs = 2200, intervalMs = 50 } = {}){
+function runAfterSlide(fn, { timeoutMs = 2200, intervalMs = 50 } = {}) {
   const startedAt = Date.now();
 
-  function check(){
-    if (!State.isSliding){
+  function check() {
+    if (!State.isSliding) {
       fn();
       return;
     }
 
-    if (Date.now() - startedAt >= timeoutMs){
+    if (Date.now() - startedAt >= timeoutMs) {
       State.isSliding = false;
       State.transitionFromIdx = null;
       State.transitionToIdx = null;
@@ -3686,7 +3687,7 @@ function runAfterSlide(fn, { timeoutMs = 2200, intervalMs = 50 } = {}){
   setTimeout(check, intervalMs);
 }
 
-function goToListenAndStart(){
+function goToListenAndStart() {
   State.listenDone = false;
   State.listenAutoStarting = true;
   State.listenAutoFallbackReady = false;
@@ -3699,7 +3700,7 @@ function goToListenAndStart(){
       State.listenAutoStarting &&
       !State.listenPlaying &&
       !State.listenDone
-    ){
+    ) {
       listenPlay();
     }
   });
@@ -3710,7 +3711,7 @@ function goToListenAndStart(){
       State.listenAutoStarting &&
       !State.listenPlaying &&
       !State.listenDone
-    ){
+    ) {
       State.listenAutoFallbackReady = true;
       render();
     }
@@ -3718,7 +3719,7 @@ function goToListenAndStart(){
 }
 
 
-function goToChunksAndStart(){
+function goToChunksAndStart() {
   State.chunkAutoStarting = true;
   State.chunkAutoFallbackReady = false;
 
@@ -3730,7 +3731,7 @@ function goToChunksAndStart(){
       State.chunkAutoStarting &&
       !State.chunkRunning &&
       State.chunkPassCount < 2
-    ){
+    ) {
       startChunkFlow();
     } else {
       State.chunkAutoStarting = false;
@@ -3745,7 +3746,7 @@ function goToChunksAndStart(){
       State.chunkAutoStarting &&
       !State.chunkRunning &&
       State.chunkPassCount < 2
-    ){
+    ) {
       State.chunkAutoFallbackReady = true;
       render();
     }
@@ -3753,14 +3754,14 @@ function goToChunksAndStart(){
 }
 
 
-function goToEchoAndStart(){
+function goToEchoAndStart() {
   State.echoAutoStarting = true;
   State.echoAutoFallbackReady = false;
 
   go(Screen.ECHO);
 
   runAfterSlide(() => {
-    if (State.screen !== Screen.ECHO){
+    if (State.screen !== Screen.ECHO) {
       State.echoAutoStarting = false;
       State.echoAutoFallbackReady = false;
       render();
@@ -3771,7 +3772,7 @@ function goToEchoAndStart(){
       State.echoAutoStarting &&
       !State.echoRunning &&
       !State.echoDone
-    ){
+    ) {
       startEchoFlow();
     }
   });
@@ -3782,7 +3783,7 @@ function goToEchoAndStart(){
       State.echoAutoStarting &&
       !State.echoRunning &&
       !State.echoDone
-    ){
+    ) {
       State.echoAutoFallbackReady = true;
       render();
     }
@@ -3791,7 +3792,7 @@ function goToEchoAndStart(){
 
 
 
-function goToHideAndStartRound(){
+function goToHideAndStartRound() {
   State.hideAutoStarting = true;
   State.hideAutoFallbackReady = false;
 
@@ -3803,9 +3804,9 @@ function goToHideAndStartRound(){
       State.hideAutoStarting &&
       !State.sayVerseActive &&
       State.hideCount === 0
-    ){
+    ) {
       startHideRound();
-    } else if (State.screen !== Screen.HIDE){
+    } else if (State.screen !== Screen.HIDE) {
       State.hideAutoStarting = false;
       State.hideAutoFallbackReady = false;
       render();
@@ -3818,22 +3819,22 @@ function goToHideAndStartRound(){
       State.hideAutoStarting &&
       !State.sayVerseActive &&
       State.hideCount === 0
-    ){
+    ) {
       State.hideAutoFallbackReady = true;
       render();
     }
   }, 1600);
 }
 
-function hideWordsPerRound(){
+function hideWordsPerRound() {
   return State.learnLevel === "pretty_well" ? 2 : 1;
 }
 
-function hideTimerMultiplier(){
+function hideTimerMultiplier() {
   return 1.3;
 }
 
-function goToFinalRecallAndStart(){
+function goToFinalRecallAndStart() {
   State.finalRecallAutoStarting = true;
   State.finalRecallAutoFallbackReady = false;
 
@@ -3846,9 +3847,9 @@ function goToFinalRecallAndStart(){
       !State.finalRecallActive &&
       !State.finalRecallDone &&
       !State.finalRecallRevealed
-    ){
+    ) {
       startFinalRecallFlow();
-    } else if (State.screen !== Screen.FINAL_RECALL){
+    } else if (State.screen !== Screen.FINAL_RECALL) {
       State.finalRecallAutoStarting = false;
       State.finalRecallAutoFallbackReady = false;
       render();
@@ -3862,21 +3863,21 @@ function goToFinalRecallAndStart(){
       !State.finalRecallActive &&
       !State.finalRecallDone &&
       !State.finalRecallRevealed
-    ){
+    ) {
       State.finalRecallAutoFallbackReady = true;
       render();
     }
   }, 1600);
 }
 
-async function startHideRound(){
+async function startHideRound() {
   if (State.sayVerseActive) return;
   if (State.hideReadyForFinal) return;
 
   State.hideAutoStarting = false;
   State.hideAutoFallbackReady = false;
 
-  if (State.hideCount >= planMixed.length){
+  if (State.hideCount >= planMixed.length) {
     State.hideReadyForFinal = true;
     render();
     return;
@@ -3906,11 +3907,11 @@ async function startHideRound(){
     const pct = getSayVersePct();
     const currentBar = document.getElementById("sayVerseBar");
 
-    if (currentBar){
+    if (currentBar) {
       currentBar.style.width = (pct * 100) + "%";
     }
 
-    if (pct > 0 && State.sayVerseActive && State.screen === Screen.HIDE){
+    if (pct > 0 && State.sayVerseActive && State.screen === Screen.HIDE) {
       requestAnimationFrame(animate);
     }
   };
@@ -3925,7 +3926,7 @@ async function startHideRound(){
   State.sayVerseStartedAt = 0;
   State.sayVerseDurationMs = 0;
 
-  if (State.hideCount >= planMixed.length){
+  if (State.hideCount >= planMixed.length) {
     State.hideReadyForFinal = true;
     render();
     return;
@@ -3934,7 +3935,7 @@ async function startHideRound(){
   render();
 }
 
-async function startFinalRecallFlow(){
+async function startFinalRecallFlow() {
   if (State.finalRecallActive) return;
 
   State.finalRecallAutoStarting = false;
@@ -3966,14 +3967,14 @@ async function startFinalRecallFlow(){
   State.finalRecallDone = true;
   State.hasLearnedVerse = true;
 
-  if (VERSE_ID){
+  if (VERSE_ID) {
     markLearnCompleted(VERSE_ID);
   }
 
   render();
 }
 
-async function startChunkFlow(){
+async function startChunkFlow() {
   if (State.chunkRunning) return;
 
   State.chunkAutoStarting = false;
@@ -3985,7 +3986,7 @@ async function startChunkFlow(){
   await runChunkSequence();
 }
 
-async function runChunkSequence(){
+async function runChunkSequence() {
   const my = ++echoCancelToken;
 
   State.chunkDone = false;
@@ -3997,7 +3998,7 @@ async function runChunkSequence(){
   try {
     const learnParts = getLearnAudioParts();
 
-    for (let i = 0; i < learnParts.length; i++){
+    for (let i = 0; i < learnParts.length; i++) {
       if (my !== echoCancelToken) return;
 
       const part = learnParts[i];
@@ -4009,13 +4010,13 @@ async function runChunkSequence(){
       State.chunkIndex = i;
       render();
 
-      try{
+      try {
         await safePlay();
-      }catch(e){
+      } catch (e) {
         showDialog({
           title: "Learn audio missing",
           body: `Couldn't play: ${file}`,
-          actions: [dlgBtn("OK", {onClick: closeDialog})]
+          actions: [dlgBtn("OK", { onClick: closeDialog })]
         });
         return;
       }
@@ -4041,26 +4042,26 @@ async function runChunkSequence(){
     State.audioMode = null;
     State.chunkDone = true;
     State.chunkPassCount = Math.min(2, State.chunkPassCount + 1);
-    } finally {
-      if (my === echoCancelToken){
-        State.chunkRunning = false;
+  } finally {
+    if (my === echoCancelToken) {
+      State.chunkRunning = false;
 
-        if (State.screen === Screen.CHUNKS && State.chunkPassCount === 1){
-          startLearnInstruction("chunks2");
-          return;
-        }
-
-        if (State.screen === Screen.CHUNKS && State.chunkPassCount >= 2){
-          startLearnInstruction("echo1");
-          return;
-        }
-
-        render();
+      if (State.screen === Screen.CHUNKS && State.chunkPassCount === 1) {
+        startLearnInstruction("chunks2");
+        return;
       }
+
+      if (State.screen === Screen.CHUNKS && State.chunkPassCount >= 2) {
+        startLearnInstruction("echo1");
+        return;
+      }
+
+      render();
     }
+  }
 }
 
-async function startEchoFlow(){
+async function startEchoFlow() {
   if (State.echoRunning) return;
 
   State.echoAutoStarting = false;
@@ -4074,9 +4075,9 @@ async function startEchoFlow(){
 
 let echoCancelToken = 0;
 
-function cancelLearnAudio(){
+function cancelLearnAudio() {
   echoCancelToken++;
-  try { audioEl.pause(); audioEl.currentTime = 0; } catch(e){}
+  try { audioEl.pause(); audioEl.currentTime = 0; } catch (e) { }
 
   State.audioMode = null;
   State.instructionPlaying = false;
@@ -4088,7 +4089,7 @@ function cancelLearnAudio(){
   State.echoSpeaking = false;
 }
 
-async function runEchoSequence(){
+async function runEchoSequence() {
   const my = ++echoCancelToken;
 
   State.echoDone = false;
@@ -4101,7 +4102,7 @@ async function runEchoSequence(){
   try {
     const learnParts = getLearnAudioParts();
 
-    for (let i = 0; i < learnParts.length; i++){
+    for (let i = 0; i < learnParts.length; i++) {
       if (my !== echoCancelToken) return;
 
       const part = learnParts[i];
@@ -4113,13 +4114,13 @@ async function runEchoSequence(){
       State.echoIndex = i;
       render();
 
-      try{
+      try {
         await safePlay();
-      }catch(e){
+      } catch (e) {
         showDialog({
           title: "Learn audio missing",
           body: `Couldn't play: ${file}`,
-          actions: [dlgBtn("OK", {onClick: closeDialog})]
+          actions: [dlgBtn("OK", { onClick: closeDialog })]
         });
         return;
       }
@@ -4160,7 +4161,7 @@ async function runEchoSequence(){
     return;
 
   } finally {
-    if (my === echoCancelToken){
+    if (my === echoCancelToken) {
       State.echoRunning = false;
       State.echoSpeaking = false;
       render();
@@ -4168,20 +4169,20 @@ async function runEchoSequence(){
   }
 }
 
-function stopFireworks(){
-  if (State.fireworksTimer){
+function stopFireworks() {
+  if (State.fireworksTimer) {
     clearInterval(State.fireworksTimer);
     State.fireworksTimer = null;
   }
 }
 
-function startFireworks(canvas){
+function startFireworks(canvas) {
   stopFireworks();
 
   const ctx = canvas.getContext("2d");
   const particles = [];
 
-  function resize(){
+  function resize() {
     canvas.width = canvas.clientWidth * window.devicePixelRatio;
     canvas.height = canvas.clientHeight * window.devicePixelRatio;
     ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
@@ -4190,11 +4191,11 @@ function startFireworks(canvas){
   resize();
   window.addEventListener("resize", resize);
 
-  function burst(){
+  function burst() {
     const x = Math.random() * canvas.clientWidth;
     const y = 80 + Math.random() * (canvas.clientHeight * 0.45);
 
-    for (let i = 0; i < 28; i++){
+    for (let i = 0; i < 28; i++) {
       const angle = (Math.PI * 2 * i) / 28;
       const speed = 2 + Math.random() * 3.5;
       particles.push({
@@ -4210,17 +4211,17 @@ function startFireworks(canvas){
   burst();
   State.fireworksTimer = setInterval(burst, 1400);
 
-  function tick(){
+  function tick() {
     ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
 
-    for (let i = particles.length - 1; i >= 0; i--){
+    for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
       p.x += p.vx;
       p.y += p.vy;
       p.vy += 0.04;
       p.life -= 1;
 
-      if (p.life <= 0){
+      if (p.life <= 0) {
         particles.splice(i, 1);
         continue;
       }
@@ -4234,7 +4235,7 @@ function startFireworks(canvas){
 
     ctx.globalAlpha = 1;
 
-    if (State.screen === Screen.CELEBRATION){
+    if (State.screen === Screen.CELEBRATION) {
       requestAnimationFrame(tick);
     }
   }
@@ -4244,26 +4245,26 @@ function startFireworks(canvas){
 
 
 /* Nav rendering */
-function renderNav(){
+function renderNav() {
   // Always show nav except intro/title? Your other apps hide nav on intro.
-const show = (
-  State.screen !== Screen.INTRO &&
-  State.screen !== Screen.TITLE &&
-  State.screen !== Screen.CELEBRATION &&
-  State.screen !== Screen.LEARN_LEVEL &&
-  State.screen !== Screen.PRACTICE_GATE &&
-  State.screen !== Screen.PRACTICE_HUB &&
-  State.screen !== Screen.PRACTICE &&
-  State.screen !== Screen.PLAYGROUND &&
-  State.screen !== Screen.PROGRESS &&
-  State.screen !== Screen.VERSE_DETAIL &&
-  State.screen !== Screen.PET_STATS &&
-  State.screen !== Screen.PET_UNLOCK &&
-  !isLearnFlowScreen(State.screen)
-);
+  const show = (
+    State.screen !== Screen.INTRO &&
+    State.screen !== Screen.TITLE &&
+    State.screen !== Screen.CELEBRATION &&
+    State.screen !== Screen.LEARN_LEVEL &&
+    State.screen !== Screen.PRACTICE_GATE &&
+    State.screen !== Screen.PRACTICE_HUB &&
+    State.screen !== Screen.PRACTICE &&
+    State.screen !== Screen.PLAYGROUND &&
+    State.screen !== Screen.PROGRESS &&
+    State.screen !== Screen.VERSE_DETAIL &&
+    State.screen !== Screen.PET_STATS &&
+    State.screen !== Screen.PET_UNLOCK &&
+    !isLearnFlowScreen(State.screen)
+  );
 
   navBar.style.display = show ? "flex" : "none";
-  if (!show){
+  if (!show) {
     navBar.innerHTML = "";
     return;
   }
@@ -4285,7 +4286,7 @@ const show = (
     </button>
   `;
 
-const homeBtn = `
+  const homeBtn = `
   <button class="nav-btn no-zoom" id="btnHome" title="Home">
     ${SVG_HOME}
   </button>
@@ -4297,36 +4298,36 @@ const homeBtn = `
     </button>
   `;
 
-// left/back destinations
-const isLearnScreen = isLearnFlowScreen(State.screen);
+  // left/back destinations
+  const isLearnScreen = isLearnFlowScreen(State.screen);
 
-if (State.screen === Screen.TITLE) left = "";
-else if (isLearnScreen) left = homeBtn;
-else left = backBtn;
+  if (State.screen === Screen.TITLE) left = "";
+  else if (isLearnScreen) left = homeBtn;
+  else left = backBtn;
 
-// center label
-if (State.screen === Screen.TITLE) center = "HOME";
-if (State.screen === Screen.PROGRESS) center = "PROGRESS";
-if (State.screen === Screen.PET_STATS) center = "STATS";
-if (State.screen === Screen.VERSE_DETAIL) center = "PROGRESS";
-if (State.screen === Screen.LEARN_LEVEL) center = "LEARN";
-if (State.screen === Screen.PRACTICE_GATE) center = "PRACTICE";
-if (State.screen === Screen.LISTEN) center = "LISTEN TO THE VERSE";
-if (State.screen === Screen.MEANING) center = "WHAT IT MEANS";
-if (State.screen === Screen.CHUNKS) center = "BREAK IT INTO CHUNKS";
-if (State.screen === Screen.ECHO) center = "ECHO THE VERSE";
-if (State.screen === Screen.HIDE) center = "TRY TO SAY THE VERSE";
-if (State.screen === Screen.FINAL_RECALL) center = "FINAL TEST";
-if (State.screen === Screen.PET_UNLOCK) center = "BIBLOPET";
-if (State.screen === Screen.PRACTICE) center = "PRACTICE";
+  // center label
+  if (State.screen === Screen.TITLE) center = "HOME";
+  if (State.screen === Screen.PROGRESS) center = "PROGRESS";
+  if (State.screen === Screen.PET_STATS) center = "STATS";
+  if (State.screen === Screen.VERSE_DETAIL) center = "PROGRESS";
+  if (State.screen === Screen.LEARN_LEVEL) center = "LEARN";
+  if (State.screen === Screen.PRACTICE_GATE) center = "PRACTICE";
+  if (State.screen === Screen.LISTEN) center = "LISTEN TO THE VERSE";
+  if (State.screen === Screen.MEANING) center = "WHAT IT MEANS";
+  if (State.screen === Screen.CHUNKS) center = "BREAK IT INTO CHUNKS";
+  if (State.screen === Screen.ECHO) center = "ECHO THE VERSE";
+  if (State.screen === Screen.HIDE) center = "TRY TO SAY THE VERSE";
+  if (State.screen === Screen.FINAL_RECALL) center = "FINAL TEST";
+  if (State.screen === Screen.PET_UNLOCK) center = "BIBLOPET";
+  if (State.screen === Screen.PRACTICE) center = "PRACTICE";
 
-right = (
-  isLearnScreen ||
-  State.screen === Screen.PROGRESS ||
-  State.screen === Screen.PET_STATS ||
-  State.screen === Screen.VERSE_DETAIL ||
-  State.screen === Screen.PET_UNLOCK
-) ? "" : nextBtn;
+  right = (
+    isLearnScreen ||
+    State.screen === Screen.PROGRESS ||
+    State.screen === Screen.PET_STATS ||
+    State.screen === Screen.VERSE_DETAIL ||
+    State.screen === Screen.PET_UNLOCK
+  ) ? "" : nextBtn;
 
   const rightControls = isLearnScreen
     ? `${right || ""}`
@@ -4347,54 +4348,54 @@ right = (
   if (btnMute) btnMute.onclick = toggleMute;
 
   const btnBack = document.getElementById("btnBack");
-  if (btnBack){
+  if (btnBack) {
     btnBack.onclick = () => {
-        if (State.screen === Screen.LEARN_LEVEL) go(Screen.TITLE);
-        else if (State.screen === Screen.PROGRESS) go(Screen.TITLE);
-        else if (State.screen === Screen.PET_STATS) go(Screen.PROGRESS);
-        else if (State.screen === Screen.VERSE_DETAIL) go(Screen.PROGRESS);
-        else if (State.screen === Screen.PRACTICE_GATE) go(Screen.TITLE);
-        else if (State.screen === Screen.LISTEN) go(Screen.LEARN_LEVEL);
-        else if (State.screen === Screen.MEANING) go(Screen.LISTEN);
-        else if (State.screen === Screen.CHUNKS) go(Screen.MEANING);
-        else if (State.screen === Screen.ECHO){
-          if (State.learnStartScreen === Screen.ECHO) go(Screen.LEARN_LEVEL);
-          else go(Screen.CHUNKS);
-        }
-        else if (State.screen === Screen.HIDE) go(Screen.ECHO);
-        else if (State.screen === Screen.FINAL_RECALL) go(Screen.HIDE);
-        else if (State.screen === Screen.PRACTICE) go(Screen.TITLE);
-        else go(Screen.TITLE);
+      if (State.screen === Screen.LEARN_LEVEL) go(Screen.TITLE);
+      else if (State.screen === Screen.PROGRESS) go(Screen.TITLE);
+      else if (State.screen === Screen.PET_STATS) go(Screen.PROGRESS);
+      else if (State.screen === Screen.VERSE_DETAIL) go(Screen.PROGRESS);
+      else if (State.screen === Screen.PRACTICE_GATE) go(Screen.TITLE);
+      else if (State.screen === Screen.LISTEN) go(Screen.LEARN_LEVEL);
+      else if (State.screen === Screen.MEANING) go(Screen.LISTEN);
+      else if (State.screen === Screen.CHUNKS) go(Screen.MEANING);
+      else if (State.screen === Screen.ECHO) {
+        if (State.learnStartScreen === Screen.ECHO) go(Screen.LEARN_LEVEL);
+        else go(Screen.CHUNKS);
+      }
+      else if (State.screen === Screen.HIDE) go(Screen.ECHO);
+      else if (State.screen === Screen.FINAL_RECALL) go(Screen.HIDE);
+      else if (State.screen === Screen.PRACTICE) go(Screen.TITLE);
+      else go(Screen.TITLE);
     };
   }
 
-const btnHome = document.getElementById("btnHome");
-if (btnHome){
-  btnHome.onclick = () => {
-    if (
-      State.screen === Screen.LISTEN ||
-      State.screen === Screen.MEANING ||
-      State.screen === Screen.CHUNKS ||
-      State.screen === Screen.ECHO ||
-      State.screen === Screen.HIDE ||
-      State.screen === Screen.FINAL_RECALL
-    ){
-      resetLearn(true);
-      return;
-    }
+  const btnHome = document.getElementById("btnHome");
+  if (btnHome) {
+    btnHome.onclick = () => {
+      if (
+        State.screen === Screen.LISTEN ||
+        State.screen === Screen.MEANING ||
+        State.screen === Screen.CHUNKS ||
+        State.screen === Screen.ECHO ||
+        State.screen === Screen.HIDE ||
+        State.screen === Screen.FINAL_RECALL
+      ) {
+        resetLearn(true);
+        return;
+      }
 
-    if (State.screen === Screen.PRACTICE_GATE){
+      if (State.screen === Screen.PRACTICE_GATE) {
+        go(Screen.TITLE);
+        return;
+      }
+
       go(Screen.TITLE);
-      return;
-    }
-
-    go(Screen.TITLE);
-  };
-}
+    };
+  }
 
 
   const btnNext = document.getElementById("btnNext");
-  if (btnNext){
+  if (btnNext) {
     const disabled =
       (State.screen === Screen.LISTEN && (!State.listenDone || State.listenPlaying)) ||
       (State.screen === Screen.ECHO && (!State.echoDone || State.echoRunning)) ||
@@ -4408,13 +4409,13 @@ if (btnHome){
 
       if (State.screen === Screen.TITLE) go(Screen.LEARN_LEVEL);
       else if (State.screen === Screen.LEARN_LEVEL) learnLevelRun();
-      else if (State.screen === Screen.PRACTICE_GATE){
+      else if (State.screen === Screen.PRACTICE_GATE) {
         resetLearn(false);
         go(Screen.LEARN_LEVEL);
       }
       else if (State.screen === Screen.LISTEN) go(Screen.MEANING);
-      else if (State.screen === Screen.MEANING){
-        if (!State.instructionPlaying){
+      else if (State.screen === Screen.MEANING) {
+        if (!State.instructionPlaying) {
           playInstruction("chunks1", {
             doneFlag: "chunksIntroDone",
             after: () => {
@@ -4423,16 +4424,16 @@ if (btnHome){
           });
         }
       }
-      else if (State.screen === Screen.CHUNKS){
+      else if (State.screen === Screen.CHUNKS) {
         if (State.instructionPlaying) return;
         if (State.chunkPassCount >= 2) goToEchoAndStart();
         else if (!State.chunkRunning) startChunkFlow();
       }
       else if (State.screen === Screen.ECHO) goToHideAndStartRound();
-      else if (State.screen === Screen.HIDE){
+      else if (State.screen === Screen.HIDE) {
         if (State.instructionPlaying) return;
 
-        if (State.hideCount >= planMixed.length){
+        if (State.hideCount >= planMixed.length) {
           goToFinalRecallAndStart();
         } else {
           startHideRound();
@@ -4445,13 +4446,13 @@ if (btnHome){
 }
 
 /* Screen builders */
-function makeSlide({idx, bg, navHidden=false, inner}){
+function makeSlide({ idx, bg, navHidden = false, inner }) {
   const learnLayout = inner?.querySelector?.(".learn-layout");
   const learnRef = learnLayout?.querySelector?.(".learn-ref");
   const isInstructionLayout = !!learnLayout?.classList?.contains("learn-layout-instruction");
   const hasLearnMenu = !!learnLayout && !!learnRef && !isInstructionLayout;
 
-  if (hasLearnMenu){
+  if (hasLearnMenu) {
     navHidden = true;
     learnLayout.classList.add("learn-layout-with-menu");
 
@@ -4481,7 +4482,7 @@ function makeSlide({idx, bg, navHidden=false, inner}){
    ========================= */
 
 
-function screenIntro(idx){
+function screenIntro(idx) {
   const wrap = document.createElement("div");
   wrap.className = "quiz-intro";
   wrap.innerHTML = `
@@ -4491,10 +4492,10 @@ function screenIntro(idx){
     <div class="hint">Tap anywhere to start</div>
   `;
   wrap.onclick = () => { go(Screen.TITLE); };
-  return makeSlide({idx, bg: "var(--purple)", navHidden:true, inner: wrap});
+  return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
 }
 
-function screenTitle(idx){
+function screenTitle(idx) {
   const wrap = document.createElement("div");
   wrap.className = "title-screen";
   const opt = TITLE_OPTIONS[State.titleOptionIndex];
@@ -4523,28 +4524,28 @@ function screenTitle(idx){
       </div>
       <div class="title-action-row" aria-label="Main actions">
         ${renderTitleActionButton({
-          id: "learn",
-          label: State.hasLearnedVerse ? "Review" : "Learn",
-          image: "button_learn.png",
-          color: "#ffc751",
-          textColor: "#333333"
-        })}
+    id: "learn",
+    label: State.hasLearnedVerse ? "Review" : "Learn",
+    image: "button_learn.png",
+    color: "#ffc751",
+    textColor: "#333333"
+  })}
 
         ${renderTitleActionButton({
-          id: "practice",
-          label: "Practice",
-          image: "button_practice.png",
-          color: "#ff5a51",
-          textColor: "#ffffff"
-        })}
+    id: "practice",
+    label: "Practice",
+    image: "button_practice.png",
+    color: "#ff5a51",
+    textColor: "#ffffff"
+  })}
 
         ${renderTitleActionButton({
-          id: "pets",
-          label: "Pets",
-          image: "button_pets.png",
-          color: "#a7cb6f",
-          textColor: "#ffffff"
-        })}
+    id: "pets",
+    label: "Pets",
+    image: "button_pets.png",
+    color: "#a7cb6f",
+    textColor: "#ffffff"
+  })}
       </div>
 
       ${titleZooStripHtml()}
@@ -4562,7 +4563,7 @@ function screenTitle(idx){
     btn.onclick = (e) => {
       e.stopPropagation();
 
-      if (!HAS_VERSE_SELECTION){
+      if (!HAS_VERSE_SELECTION) {
         showDialog({
           title: "Pick a verse first 🙂",
           body: "Choose a verse from the dropdown before you start.",
@@ -4573,25 +4574,25 @@ function screenTitle(idx){
 
       const action = btn.dataset.titleAction;
 
-      if (action === "learn"){
+      if (action === "learn") {
         go(Screen.LEARN_LEVEL);
         return;
       }
 
-      if (action === "practice"){
+      if (action === "practice") {
         if (State.hasLearnedVerse) go(Screen.PRACTICE_HUB);
         else go(Screen.PRACTICE_GATE);
         return;
       }
 
-      if (action === "pets"){
+      if (action === "pets") {
         go(Screen.PROGRESS);
       }
     };
   });
 
   const titleZooStrip = wrap.querySelector("#titleZooStrip");
-  if (titleZooStrip){
+  if (titleZooStrip) {
     titleZooStrip.onclick = (e) => {
       e.stopPropagation();
       go(Screen.PROGRESS);
@@ -4599,7 +4600,7 @@ function screenTitle(idx){
   }
 
   const titleZooVisitBtn = wrap.querySelector("#titleZooVisitBtn");
-  if (titleZooVisitBtn){
+  if (titleZooVisitBtn) {
     titleZooVisitBtn.onclick = (e) => {
       e.stopPropagation();
 
@@ -4611,12 +4612,12 @@ function screenTitle(idx){
     };
   }
 
-    bindTitleZooPetRotation(wrap);
+  bindTitleZooPetRotation(wrap);
 
   const titleLogoSecretWrap = wrap.querySelector("#titleLogoSecretWrap");
   const titleLogoSecret = wrap.querySelector("#titleLogoSecret");
 
-  if (titleLogoSecret){
+  if (titleLogoSecret) {
     titleLogoSecret.setAttribute("draggable", "false");
     titleLogoSecret.style.webkitUserDrag = "none";
     titleLogoSecret.style.webkitTouchCallout = "none";
@@ -4646,7 +4647,7 @@ function screenTitle(idx){
   });
 
   const versePicker = wrap.querySelector("#versePicker");
-  if (versePicker){
+  if (versePicker) {
     versePicker.innerHTML = "";
 
     const placeholder = document.createElement("option");
@@ -4656,12 +4657,12 @@ function screenTitle(idx){
     placeholder.selected = !HAS_VERSE_SELECTION;
     versePicker.appendChild(placeholder);
 
-    for (const item of VERSE_LIST){
+    for (const item of VERSE_LIST) {
       const opt = document.createElement("option");
       opt.value = item.id;
       opt.textContent = item.ref;
 
-      if (HAS_VERSE_SELECTION && item.id === VERSE_ID){
+      if (HAS_VERSE_SELECTION && item.id === VERSE_ID) {
         opt.selected = true;
       }
 
@@ -4695,16 +4696,16 @@ function screenTitle(idx){
 
 
 
-  return makeSlide({idx, bg:"var(--purple)", navHidden:true, inner: wrap});
+  return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
 }
 
-function screenProgress(idx){
+function screenProgress(idx) {
   const wrap = document.createElement("div");
   wrap.className = "progress-screen";
 
   const hasVerses = Array.isArray(VERSE_LIST) && VERSE_LIST.length > 0;
 
-  if (!hasVerses){
+  if (!hasVerses) {
     wrap.innerHTML = `
       <div class="progress-shell">
         <div class="biblopet-title-row">
@@ -4768,7 +4769,7 @@ function screenProgress(idx){
   `;
 
   const btnStats = wrap.querySelector("#btnBibloPetStats");
-  if (btnStats){
+  if (btnStats) {
     btnStats.onclick = () => {
       go(Screen.PET_STATS);
     };
@@ -4788,7 +4789,7 @@ function screenProgress(idx){
 
 }
 
-function openPetNameDialog(verseId){
+function openPetNameDialog(verseId) {
   loadPetNameBlocklist();
   loadPetRandomNames();
 
@@ -4827,14 +4828,14 @@ function openPetNameDialog(verseId){
           const input = document.getElementById("petNameInput");
           const error = document.getElementById("petNameError");
 
-          if (error){
+          if (error) {
             error.textContent = "";
           }
 
           await loadPetNameBlocklist();
           await loadPetRandomNames();
 
-          if (input){
+          if (input) {
             input.value = getRandomPetName();
             input.focus();
             input.select();
@@ -4848,7 +4849,7 @@ function openPetNameDialog(verseId){
           const error = document.getElementById("petNameError");
           const rawName = input ? input.value : "";
 
-          if (error){
+          if (error) {
             error.textContent = "";
           }
 
@@ -4856,8 +4857,8 @@ function openPetNameDialog(verseId){
 
           const result = savePetNameForVerseId(verseId, rawName);
 
-          if (!result.ok){
-            if (error){
+          if (!result.ok) {
+            if (error) {
               error.textContent = result.message || "Please choose a different name.";
             }
             return;
@@ -4877,14 +4878,14 @@ function openPetNameDialog(verseId){
 
   requestAnimationFrame(() => {
     const input = document.getElementById("petNameInput");
-    if (input){
+    if (input) {
       input.focus();
       input.select();
     }
   });
 }
 
-function screenVerseDetail(idx){
+function screenVerseDetail(idx) {
   const verseId = State.selectedVerseId;
   const verseItem = getVerseListItemById(verseId);
   const verseProgress = getVerseProgress(verseId);
@@ -4901,7 +4902,7 @@ function screenVerseDetail(idx){
   const petBackgroundClass = unlocked ? getVerseBackgroundClass(verseId, verseProgress) : "";
   const learnStatus = verseProgress.learnCompleted ? "✔" : "";
 
-  function gameRow(label, gameId){
+  function gameRow(label, gameId) {
     const progressDisplay = getVerseDetailProgressDisplay(gameId, verseProgress.games[gameId]);
 
     return `
@@ -4925,31 +4926,28 @@ function screenVerseDetail(idx){
 
       <div class="detail-scroll">
         <div class="pet-card">
-          ${
-            unlocked
-              ? `
+          ${unlocked
+      ? `
                 <div class="pet-stage ${petBackgroundClass}">
-                  ${
-                    petStatus === "sleeping"
-                      ? `
+                  ${petStatus === "sleeping"
+        ? `
                         <div class="pet-sleep-zs" aria-hidden="true">
                           <span>Z</span>
                           <span>Z</span>
                           <span>Z</span>
                         </div>
                       `
-                      : ""
-                  }
-                  ${
-                    petStatus === "hungry"
-                      ? `
+        : ""
+      }
+                  ${petStatus === "hungry"
+        ? `
                         <div class="pet-hungry-food-targets" aria-hidden="true">
                           <span class="pet-hungry-food-target left">🍎</span>
                           <span class="pet-hungry-food-target right">🍞</span>
                         </div>
                       `
-                      : ""
-                  }
+        : ""
+      }
                   <div class="pet-emoji pet-emoji-unlocked ${petAnimationClass}">
   ${bibloPetVisualHtml(verseId, petEmoji)}
 </div>
@@ -4959,18 +4957,17 @@ function screenVerseDetail(idx){
                   Change Background
                 </button>
               `
-              : `
+      : `
                 <div class="pet-stage">
                   <div class="pet-emoji pet-emoji-locked">🔒</div>
                   <div class="pet-locked-text">Practice more to unlock your BibloPet.</div>
                 </div>
               `
-          }
+    }
         </div>
 
-        ${
-          unlocked
-            ? `
+        ${unlocked
+      ? `
               <div class="pet-name-card">
                 <div class="pet-name-label">BibloPet Name</div>
                 <div class="pet-name-value">${petDisplayName}</div>
@@ -4979,8 +4976,8 @@ function screenVerseDetail(idx){
                 </button>
               </div>
             `
-            : ""
-        }
+      : ""
+    }
 
         <div class="pet-status-card">
           <div class="pet-status-label">BibloPet Status:</div>
@@ -4993,15 +4990,14 @@ function screenVerseDetail(idx){
           Listen to the Verse
         </button>
 
-        ${
-          verseProgress.learnCompleted
-            ? `
+        ${verseProgress.learnCompleted
+      ? `
               <button class="detail-listen-btn no-zoom" id="btnDetailPractice" type="button">
                 Practice this verse
               </button>
             `
-            : ""
-        }
+      : ""
+    }
 
         <div class="detail-section">
           ${getVerseDetailGames().map(game => gameRow(game.label, game.id)).join("")}
@@ -5011,11 +5007,11 @@ function screenVerseDetail(idx){
   `;
 
   const btnChangePetBg = wrap.querySelector("#btnChangePetBg");
-  if (btnChangePetBg){
+  if (btnChangePetBg) {
     btnChangePetBg.onclick = () => {
       const medalCount = getVerseCompletedMedalCount(verseProgress);
 
-      if (!canUseCustomPetBackgrounds(verseProgress)){
+      if (!canUseCustomPetBackgrounds(verseProgress)) {
         showDialog({
           title: "Locked",
           body: `Earn 5 total medals on this verse to unlock custom backgrounds for this BibloPet. You currently have ${medalCount}/5.`,
@@ -5030,21 +5026,21 @@ function screenVerseDetail(idx){
   }
 
   const btnRenamePet = wrap.querySelector("#btnRenamePet");
-  if (btnRenamePet){
+  if (btnRenamePet) {
     btnRenamePet.onclick = () => {
       openPetNameDialog(verseId);
     };
   }
 
   const btnDetailListen = wrap.querySelector("#btnDetailListen");
-  if (btnDetailListen){
+  if (btnDetailListen) {
     btnDetailListen.onclick = () => {
       const verseAudioFile = `${AUDIO_DIR}${verseId}.mp3`;
 
       try {
         audioEl.pause();
         audioEl.currentTime = 0;
-      } catch(e){}
+      } catch (e) { }
 
       setAudioSrc(verseAudioFile);
       audioEl.currentTime = 0;
@@ -5060,7 +5056,7 @@ function screenVerseDetail(idx){
   }
 
   const btnDetailPractice = wrap.querySelector("#btnDetailPractice");
-  if (btnDetailPractice){
+  if (btnDetailPractice) {
     btnDetailPractice.onclick = () => {
       const url = new URL("index.html", window.location.href);
       url.searchParams.set("v", verseId);
@@ -5079,7 +5075,7 @@ function screenVerseDetail(idx){
   return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
 }
 
-function screenPetUnlock(idx){
+function screenPetUnlock(idx) {
   const verseId = State.pendingPetUnlockVerseId;
   const verseItem = getVerseListItemById(verseId);
   const petEmoji = getBibloPetEmojiForVerseId(verseId);
@@ -5111,13 +5107,13 @@ function screenPetUnlock(idx){
   `;
 
   const btnPractice = wrap.querySelector("#btnPetUnlockPractice");
-  if (btnPractice){
+  if (btnPractice) {
     btnPractice.onclick = () => {
       const unlockedVerseId = State.pendingPetUnlockVerseId;
       State.pendingPetUnlockVerseId = null;
       if (unlockedVerseId) State.selectedVerseId = unlockedVerseId;
 
-      if (isGameMixPetUnlockRequest()){
+      if (isGameMixPetUnlockRequest()) {
         const completedGameId = getGameMixCompletedGameIdFromUrl() || getGameMixState()?.currentGameId || "";
         continueGameMixAfterCompletion(completedGameId);
         return;
@@ -5128,13 +5124,13 @@ function screenPetUnlock(idx){
   }
 
   const btnVisit = wrap.querySelector("#btnPetUnlockVisit");
-  if (btnVisit){
+  if (btnVisit) {
     btnVisit.onclick = () => {
       const unlockedVerseId = State.pendingPetUnlockVerseId;
       State.pendingPetUnlockVerseId = null;
       if (unlockedVerseId) State.selectedVerseId = unlockedVerseId;
 
-      if (isGameMixPetUnlockRequest()){
+      if (isGameMixPetUnlockRequest()) {
         clearGameMixState();
         cleanGameMixUrlParams();
         go(Screen.PROGRESS);
@@ -5147,16 +5143,16 @@ function screenPetUnlock(idx){
 
   bindHomePill(wrap);
 
-  if (isGameMixPetUnlockRequest()){
+  if (isGameMixPetUnlockRequest()) {
     const homeBtn = wrap.querySelector("[data-home-pill]");
-    if (homeBtn){
+    if (homeBtn) {
       homeBtn.onclick = (e) => {
         e.stopPropagation();
 
         try {
           audioEl.pause();
           audioEl.currentTime = 0;
-        } catch(e){}
+        } catch (e) { }
 
         State.pendingPetUnlockVerseId = null;
         clearGameMixState();
@@ -5169,7 +5165,7 @@ function screenPetUnlock(idx){
   return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
 }
 
-function screenPetStats(idx){
+function screenPetStats(idx) {
   const stats = getBibloPetStats();
 
   const wrap = document.createElement("div");
@@ -5224,7 +5220,7 @@ function screenPetStats(idx){
   return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
 }
 
-function screenLearnLevel(idx){
+function screenLearnLevel(idx) {
   const wrap = document.createElement("div");
   wrap.className = "title-screen learn-level-screen";
 
@@ -5256,12 +5252,12 @@ function screenLearnLevel(idx){
     };
   });
 
-    bindHomePill(wrap);
+  bindHomePill(wrap);
 
-  return makeSlide({ idx, bg:"var(--purple)", navHidden:true, inner: wrap });
+  return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
 }
 
-function screenLearnInstruction(idx){
+function screenLearnInstruction(idx) {
   const cfg = getLearnInstructionConfig(State.learnInstructionKey);
 
   const image = cfg?.image || "verse_listen.png";
@@ -5304,7 +5300,7 @@ function screenLearnInstruction(idx){
   `;
 
   const btn = inner.querySelector("#btnLearnInstructionContinue");
-  if (btn){
+  if (btn) {
     btn.onclick = () => {
       if (!State.learnInstructionReady) return;
       continueLearnInstruction();
@@ -5312,15 +5308,15 @@ function screenLearnInstruction(idx){
   }
 
   runAfterSlide(() => {
-    if (State.screen === Screen.LEARN_INSTRUCTION){
+    if (State.screen === Screen.LEARN_INSTRUCTION) {
       playLearnInstructionAudio();
     }
   });
 
-  return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner});
+  return makeSlide({ idx, bg: "var(--purple)", navHidden: false, inner });
 }
 
-function screenListen(idx){
+function screenListen(idx) {
   const inner = document.createElement("div");
   inner.style.display = "flex";
   inner.style.flexDirection = "column";
@@ -5351,42 +5347,39 @@ function screenListen(idx){
 
       <div class="learn-coach">
         <div>
-          <div class="coach-text">${
-            State.listenDone
-              ? "Tap the button to read what this verse means."
-              : "Listen to the verse."
-          }</div>
+          <div class="coach-text">${State.listenDone
+      ? "Tap the button to read what this verse means."
+      : "Listen to the verse."
+    }</div>
         </div>
 
         <div class="coach-actions">
-          ${
-            (
-              State.listenPlaying ||
-              State.instructionPlaying ||
-              (State.listenAutoStarting && !State.listenAutoFallbackReady)
-            )
-            ? ``
-            : `
+          ${(
+      State.listenPlaying ||
+      State.instructionPlaying ||
+      (State.listenAutoStarting && !State.listenAutoFallbackReady)
+    )
+      ? ``
+      : `
                 <button class="carousel-main no-zoom" id="btnListenPlay" style="max-width:520px;">
-                  ${
-                    State.listenDone
-                      ? "What It Means"
-                      : State.listenAutoFallbackReady
-                        ? "Tap to Play Verse"
-                        : "🔊 Read it to me"
-                  }
+                  ${State.listenDone
+        ? "What It Means"
+        : State.listenAutoFallbackReady
+          ? "Tap to Play Verse"
+          : "🔊 Read it to me"
+      }
                 </button>
               `
-          }
+    }
         </div>
       </div>
     </div>
   `;
 
   const btn = inner.querySelector("#btnListenPlay");
-  if (btn){
+  if (btn) {
     btn.onclick = async () => {
-      if (State.listenDone){
+      if (State.listenDone) {
         startLearnInstruction("meaning");
         return;
       }
@@ -5395,10 +5388,10 @@ function screenListen(idx){
     };
   }
 
-  return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner});
+  return makeSlide({ idx, bg: "var(--purple)", navHidden: false, inner });
 }
 
-function screenMeaning(idx){
+function screenMeaning(idx) {
   const inner = document.createElement("div");
   inner.style.display = "flex";
   inner.style.flexDirection = "column";
@@ -5419,31 +5412,30 @@ function screenMeaning(idx){
 
       <div class="learn-coach learn-coach-meaning learn-coach-meaning-minimal">
         <div class="coach-actions">
-          ${
-            State.instructionPlaying
-              ? ``
-              : `
+          ${State.instructionPlaying
+      ? ``
+      : `
                 <button class="carousel-main no-zoom" id="btnMeaningNext" style="max-width:520px;">
                   Break It Down
                 </button>
               `
-          }
+    }
         </div>
       </div>
     </div>
   `;
 
   const btn = inner.querySelector("#btnMeaningNext");
-  if (btn){
+  if (btn) {
     btn.onclick = () => {
       startLearnInstruction("chunks1");
     };
   }
 
-  return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner});
+  return makeSlide({ idx, bg: "var(--purple)", navHidden: false, inner });
 }
 
-function screenChunks(idx){
+function screenChunks(idx) {
   const inner = document.createElement("div");
   inner.style.display = "flex";
   inner.style.flexDirection = "column";
@@ -5455,20 +5447,20 @@ function screenChunks(idx){
   let coachText = "Listen to each part of the verse one chunk at a time.";
   let buttonLabel = "▶ Start";
 
-  if (State.instructionPlaying && State.instructionKey === "chunks1"){
+  if (State.instructionPlaying && State.instructionKey === "chunks1") {
     coachText = "Let's break the verse down into bite sized chunks.";
-  } else if (State.instructionPlaying && State.instructionKey === "chunks2"){
+  } else if (State.instructionPlaying && State.instructionKey === "chunks2") {
     coachText = "Let's do that one more time.";
     buttonLabel = "One More Time";
-  } else if (State.instructionPlaying && State.instructionKey === "echo1"){
+  } else if (State.instructionPlaying && State.instructionKey === "echo1") {
     coachText = "Now echo the verse after me.";
     buttonLabel = "Echo the Verse";
-  } else if (State.chunkRunning){
+  } else if (State.chunkRunning) {
     coachText = "Listen carefully as each chunk plays.";
-  } else if (State.chunkPassCount === 1){
+  } else if (State.chunkPassCount === 1) {
     coachText = "Listen through the chunks one more time.";
     buttonLabel = "One More Time";
-  } else if (State.chunkPassCount >= 2){
+  } else if (State.chunkPassCount >= 2) {
     coachText = "Tap the button to echo the verse.";
     buttonLabel = "Echo the Verse";
   }
@@ -5489,28 +5481,27 @@ function screenChunks(idx){
         </div>
 
         <div class="coach-actions">
-          ${
-            (
-              State.chunkRunning ||
-              State.instructionPlaying ||
-              (State.chunkAutoStarting && !State.chunkAutoFallbackReady)
-            )
-              ? ``
-              : `
+          ${(
+      State.chunkRunning ||
+      State.instructionPlaying ||
+      (State.chunkAutoStarting && !State.chunkAutoFallbackReady)
+    )
+      ? ``
+      : `
                 <button class="carousel-main no-zoom" id="btnChunks" style="max-width:520px;">
                   ${buttonLabel}
                 </button>
               `
-          }
+    }
         </div>
       </div>
     </div>
   `;
 
   const btn = inner.querySelector("#btnChunks");
-  if (btn){
+  if (btn) {
     btn.onclick = async () => {
-      if (State.chunkPassCount >= 2){
+      if (State.chunkPassCount >= 2) {
         goToEchoAndStart();
         return;
       }
@@ -5519,10 +5510,10 @@ function screenChunks(idx){
     };
   }
 
-  return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner});
+  return makeSlide({ idx, bg: "var(--purple)", navHidden: false, inner });
 }
 
-function screenEcho(idx){
+function screenEcho(idx) {
   const inner = document.createElement("div");
   inner.style.display = "flex";
   inner.style.flexDirection = "column";
@@ -5542,44 +5533,42 @@ function screenEcho(idx){
 
       <div class="learn-coach">
         <div>
-          <div class="coach-text">${
-            State.instructionPlaying && State.instructionKey === "echo1"
-              ? "Now echo the verse after me."
-              : State.instructionPlaying && State.instructionKey === "echo2"
-                ? "Echo the verse one more time."
-                : State.instructionPlaying && State.instructionKey === "remove"
-                  ? "Now, let's remove words from the verse. Try to say the verse out loud each time. If you need a hint, tap that word."
-                  : State.echoDone
-                    ? (hideWordsPerRound() === 2
-                        ? "Tap the button to remove some words."
-                        : "Tap the button to remove the first word.")
-                    : "Repeat each chunk out loud during the pause."
-          }</div>
+          <div class="coach-text">${State.instructionPlaying && State.instructionKey === "echo1"
+      ? "Now echo the verse after me."
+      : State.instructionPlaying && State.instructionKey === "echo2"
+        ? "Echo the verse one more time."
+        : State.instructionPlaying && State.instructionKey === "remove"
+          ? "Now, let's remove words from the verse. Try to say the verse out loud each time. If you need a hint, tap that word."
+          : State.echoDone
+            ? (hideWordsPerRound() === 2
+              ? "Tap the button to remove some words."
+              : "Tap the button to remove the first word.")
+            : "Repeat each chunk out loud during the pause."
+    }</div>
         </div>
 
         <div class="coach-actions">
-          ${
-              (
-                State.echoRunning ||
-                State.instructionPlaying ||
-                (State.echoAutoStarting && !State.echoAutoFallbackReady)
-              )
-              ? ``
-              : `
+          ${(
+      State.echoRunning ||
+      State.instructionPlaying ||
+      (State.echoAutoStarting && !State.echoAutoFallbackReady)
+    )
+      ? ``
+      : `
                 <button class="carousel-main no-zoom" id="btnEcho" style="max-width:520px;">
                   ${State.echoDone ? (hideWordsPerRound() === 2 ? "Remove Words" : "Remove a Word") : "▶ Start Echo"}
                 </button>
               `
-          }
+    }
         </div>
       </div>
     </div>
   `;
 
   const btn = inner.querySelector("#btnEcho");
-  if (btn){
+  if (btn) {
     btn.onclick = async () => {
-      if (State.echoDone){
+      if (State.echoDone) {
         goToHideAndStartRound();
         return;
       }
@@ -5588,11 +5577,11 @@ function screenEcho(idx){
     };
   }
 
-  return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner});
+  return makeSlide({ idx, bg: "var(--purple)", navHidden: false, inner });
 }
 
 
-function screenHide(idx){
+function screenHide(idx) {
   const inner = document.createElement("div");
   inner.style.display = "flex";
   inner.style.flexDirection = "column";
@@ -5611,12 +5600,12 @@ function screenHide(idx){
   const removeAnotherLabel = hideWordsPerRound() === 2 ? "Remove More Words" : "Remove Another";
   let buttonLabel = removeLabel;
 
-  if (State.sayVerseActive){
+  if (State.sayVerseActive) {
     buttonLabel = hiddenNow > 0 ? removeAnotherLabel : removeLabel;
-  } else if (done){
+  } else if (done) {
     coachBody = `<div class="coach-text">Ready to test your progress?</div>`;
     buttonLabel = "Test Your Progress";
-  } else if (hiddenNow > 0){
+  } else if (hiddenNow > 0) {
     buttonLabel = removeAnotherLabel;
   }
 
@@ -5636,14 +5625,13 @@ function screenHide(idx){
         </div>
 
         <div class="coach-actions">
-          ${
-            (
-              State.sayVerseActive ||
-              State.instructionPlaying ||
-              (State.hideAutoStarting && !State.hideAutoFallbackReady)
-            )
-              ? ``
-              : `
+          ${(
+      State.sayVerseActive ||
+      State.instructionPlaying ||
+      (State.hideAutoStarting && !State.hideAutoFallbackReady)
+    )
+      ? ``
+      : `
                 <button
                   class="carousel-main no-zoom"
                   id="btnRemoveWord"
@@ -5652,7 +5640,7 @@ function screenHide(idx){
                   ${buttonLabel}
                 </button>
               `
-          }
+    }
         </div>
       </div>
     </div>
@@ -5661,9 +5649,9 @@ function screenHide(idx){
   inner.querySelector("#verseStage").appendChild(verseNode());
 
   const btnRemove = inner.querySelector("#btnRemoveWord");
-  if (btnRemove){
+  if (btnRemove) {
     btnRemove.onclick = async () => {
-      if (done){
+      if (done) {
         startLearnInstruction("final");
         return;
       }
@@ -5672,10 +5660,10 @@ function screenHide(idx){
     };
   }
 
-  return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner});
+  return makeSlide({ idx, bg: "var(--purple)", navHidden: false, inner });
 }
 
-function screenFinalRecall(idx){
+function screenFinalRecall(idx) {
   const inner = document.createElement("div");
   inner.style.display = "flex";
   inner.style.flexDirection = "column";
@@ -5686,15 +5674,15 @@ function screenFinalRecall(idx){
     ? `<button class="carousel-main no-zoom" id="btnFinalStart" style="max-width:520px;">Begin Test</button>`
     : ``;
 
-  if (State.finalRecallActive){
+  if (State.finalRecallActive) {
     coachBody = `
       <div class="coach-text">Try to say the verse</div>
       <div class="timer-wrap"><div class="timer-bar" id="finalRecallBar" style="width:${getFinalRecallPct() * 100}%"></div></div>
     `;
-  } else if (State.finalRecallDone && !State.finalRecallRevealed){
+  } else if (State.finalRecallDone && !State.finalRecallRevealed) {
     coachBody = `<div class="coach-text">Press below to reveal the verse.</div>`;
     actionHtml = `<button class="carousel-main no-zoom" id="btnFinalReveal" style="max-width:520px;">Reveal Verse</button>`;
-  } else if (State.finalRecallRevealed){
+  } else if (State.finalRecallRevealed) {
     coachBody = `<div class="coach-text">Great job! Now it is practice time.</div>`;
     actionHtml = `<button class="carousel-main no-zoom" id="btnFinalGames" style="max-width:520px;">Practice time</button>`;
   }
@@ -5726,14 +5714,14 @@ function screenFinalRecall(idx){
     .appendChild(finalRecallNode(State.finalRecallRevealed));
 
   const btnFinalStart = inner.querySelector("#btnFinalStart");
-  if (btnFinalStart){
+  if (btnFinalStart) {
     btnFinalStart.onclick = () => {
       startFinalRecallFlow();
     };
   }
 
   const btnFinalReveal = inner.querySelector("#btnFinalReveal");
-  if (btnFinalReveal){
+  if (btnFinalReveal) {
     btnFinalReveal.onclick = () => {
       State.finalRecallRevealed = true;
       render();
@@ -5741,22 +5729,22 @@ function screenFinalRecall(idx){
   }
 
   const btnFinalGames = inner.querySelector("#btnFinalGames");
-if (btnFinalGames){
-  btnFinalGames.onclick = () => {
-    startLearnInstruction("games");
-  };
-}
+  if (btnFinalGames) {
+    btnFinalGames.onclick = () => {
+      startLearnInstruction("games");
+    };
+  }
 
-  if (State.finalRecallActive){
+  if (State.finalRecallActive) {
     const animate = () => {
       const pct = getFinalRecallPct();
       const currentBar = document.getElementById("finalRecallBar");
 
-      if (currentBar){
+      if (currentBar) {
         currentBar.style.width = (pct * 100) + "%";
       }
 
-      if (pct > 0 && State.finalRecallActive){
+      if (pct > 0 && State.finalRecallActive) {
         requestAnimationFrame(animate);
       }
     };
@@ -5764,10 +5752,10 @@ if (btnFinalGames){
     requestAnimationFrame(animate);
   }
 
-  return makeSlide({idx, bg:"var(--purple)", navHidden:false, inner});
+  return makeSlide({ idx, bg: "var(--purple)", navHidden: false, inner });
 }
 
-function screenCelebration(idx){
+function screenCelebration(idx) {
 
   const wrap = document.createElement("div");
   wrap.className = "celebration-screen";
@@ -5786,7 +5774,7 @@ function screenCelebration(idx){
 
   const canvas = wrap.querySelector("#fireworksCanvas");
   setTimeout(() => {
-    if (State.screen === Screen.CELEBRATION){
+    if (State.screen === Screen.CELEBRATION) {
       startFireworks(canvas);
     }
   }, 0);
@@ -5801,10 +5789,10 @@ function screenCelebration(idx){
     go(Screen.PRACTICE_HUB);
   };
 
-  return makeSlide({idx, bg:"var(--purple)", navHidden:true, inner: wrap});
+  return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
 }
 
-function screenPracticeGate(idx){
+function screenPracticeGate(idx) {
   const wrap = document.createElement("div");
   wrap.className = "title-screen learn-level-screen";
 
@@ -5832,7 +5820,7 @@ function screenPracticeGate(idx){
   `;
 
   const btn = wrap.querySelector("#btnPracticeGate");
-  if (btn){
+  if (btn) {
     btn.onclick = () => {
       resetLearn(false);
       go(Screen.LEARN_LEVEL);
@@ -5841,29 +5829,29 @@ function screenPracticeGate(idx){
 
   bindHomePill(wrap);
 
-  return makeSlide({idx, bg:"var(--purple)", navHidden:true, inner: wrap});
+  return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
 }
 
-function screenPracticeHub(idx){
+function screenPracticeHub(idx) {
   const wrap = document.createElement("div");
   wrap.className = "title-screen practice-screen";
 
   const cardsHtml = `
     ${renderPracticeHubCard({
-      id: "games",
-      title: "Games",
-      icon: "🎮",
-      cardColor: "#7f66c6",
-      cardTextColor: "#ffffff"
-    })}
+    id: "games",
+    title: "Games",
+    icon: "🎮",
+    cardColor: "#7f66c6",
+    cardTextColor: "#ffffff"
+  })}
 
     ${renderPracticeHubCard({
-      id: "playground",
-      title: "Playground",
-      icon: "🛝",
-      cardColor: "#a7cb6f",
-      cardTextColor: "#ffffff"
-    })}
+    id: "playground",
+    title: "Playground",
+    icon: "🛝",
+    cardColor: "#a7cb6f",
+    cardTextColor: "#ffffff"
+  })}
   `;
 
   wrap.innerHTML = `
@@ -5892,21 +5880,21 @@ function screenPracticeHub(idx){
 
       const choice = btn.dataset.practiceHubChoice;
 
-      if (choice === "games"){
+      if (choice === "games") {
         go(Screen.PRACTICE);
         return;
       }
 
-      if (choice === "playground"){
+      if (choice === "playground") {
         go(Screen.PLAYGROUND);
       }
     };
   });
 
-  return makeSlide({idx, bg:"var(--purple)", navHidden:true, inner: wrap});
+  return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
 }
 
-function screenPractice(idx){
+function screenPractice(idx) {
   const wrap = document.createElement("div");
   wrap.className = "title-screen practice-screen";
 
@@ -5951,7 +5939,7 @@ function screenPractice(idx){
   bindPracticeBackPill(wrap);
 
   const gameMixBtn = wrap.querySelector("[data-practice-game-mix]");
-  if (gameMixBtn){
+  if (gameMixBtn) {
     gameMixBtn.onclick = (e) => {
       e.stopPropagation();
       startGameMix();
@@ -5969,7 +5957,7 @@ function screenPractice(idx){
 
       State.practiceIndex = Math.max(0, practiceGames.findIndex(g => g.id === gameId));
 
-      if (game.source === "external"){
+      if (game.source === "external") {
         launchExternalGame(game.manifest);
         return;
       }
@@ -5979,17 +5967,17 @@ function screenPractice(idx){
   });
 
   const practiceTitle = wrap.querySelector("#practiceTitle");
-  if (practiceTitle){
+  if (practiceTitle) {
     bindLongPress(practiceTitle, {
       delay: HIDDEN_PRACTICE_LONG_PRESS_MS,
       onLongPress: () => launchHiddenPracticeGame()
     });
   }
 
-  return makeSlide({idx, bg:"var(--purple)", navHidden:true, inner: wrap});
+  return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
 }
 
-function screenPlayground(idx){
+function screenPlayground(idx) {
   const wrap = document.createElement("div");
   wrap.className = "title-screen practice-screen";
 
@@ -6039,7 +6027,7 @@ function screenPlayground(idx){
 
       if (!activity) return;
 
-      if (activity.source === "external"){
+      if (activity.source === "external") {
         launchExternalPlaygroundActivity(activity.manifest);
         return;
       }
@@ -6048,10 +6036,10 @@ function screenPlayground(idx){
     };
   });
 
-  return makeSlide({idx, bg:"var(--purple)", navHidden:true, inner: wrap});
+  return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
 }
 
-function screenGameMixFinished(idx){
+function screenGameMixFinished(idx) {
   const wrap = document.createElement("div");
   wrap.className = "title-screen game-mix-finished-screen";
 
@@ -6074,14 +6062,14 @@ function screenGameMixFinished(idx){
   `;
 
   const playAnotherBtn = wrap.querySelector("#btnPlayAnotherMix");
-  if (playAnotherBtn){
+  if (playAnotherBtn) {
     playAnotherBtn.onclick = () => {
       startGameMix();
     };
   }
 
   const endBtn = wrap.querySelector("#btnEndMix");
-  if (endBtn){
+  if (endBtn) {
     endBtn.onclick = () => {
       clearGameMixState();
       go(Screen.TITLE);
@@ -6094,12 +6082,12 @@ function screenGameMixFinished(idx){
 /* =========================
    7. Main Render
    ========================= */
-function render(){
+function render() {
   let savedDetailScrollTop = 0;
 
-  if (State.screen === Screen.VERSE_DETAIL){
+  if (State.screen === Screen.VERSE_DETAIL) {
     const existingDetailScroll = document.querySelector(".detail-scroll");
-    if (existingDetailScroll){
+    if (existingDetailScroll) {
       savedDetailScrollTop = existingDetailScroll.scrollTop;
     }
   }
@@ -6116,8 +6104,8 @@ function render(){
   }
 
   const uniq = Array.from(new Set(indicesToRender.filter(i => i !== null && i >= 0)));
-  for (const idx of uniq){
-    const screen = ["intro","title","progress","pet_stats","verse_detail","learn_level","practice_gate","learn_instruction","listen","meaning","chunks","echo","hide","final_recall","celebration","pet_unlock","practice_hub","practice","playground","game_mix_finished"][idx];
+  for (const idx of uniq) {
+    const screen = ["intro", "title", "progress", "pet_stats", "verse_detail", "learn_level", "practice_gate", "learn_instruction", "listen", "meaning", "chunks", "echo", "hide", "final_recall", "celebration", "pet_unlock", "practice_hub", "practice", "playground", "game_mix_finished"][idx];
     let slide = null;
     if (screen === Screen.INTRO) slide = screenIntro(idx);
     if (screen === Screen.TITLE) slide = screenTitle(idx);
@@ -6149,10 +6137,10 @@ function render(){
 
   renderNav();
 
-  if (State.screen === Screen.VERSE_DETAIL && savedDetailScrollTop > 0){
+  if (State.screen === Screen.VERSE_DETAIL && savedDetailScrollTop > 0) {
     requestAnimationFrame(() => {
       const newDetailScroll = document.querySelector(".detail-scroll");
-      if (newDetailScroll){
+      if (newDetailScroll) {
         newDetailScroll.scrollTop = savedDetailScrollTop;
       }
     });
@@ -6163,25 +6151,25 @@ function render(){
    8. App Bootstrap
    ========================= */
 
-(async function init(){
+(async function init() {
   preloadLearnInstructionImages();
   loadPetNameBlocklist();
 
   await loadVerseList();
   HAS_VERSE_SELECTION = hasVerseIdInUrl();
 
-  try{
+  try {
     const requestedVerseId = getRequestedVerseIdFromUrl();
 
-    if (requestedVerseId){
+    if (requestedVerseId) {
       await loadVerse(requestedVerseId);
     }
-  }catch(e){
+  } catch (e) {
     console.error(e);
     showDialog({
       title: "Verse JSON not found",
       body: String(e.message || e),
-      actions: [dlgBtn("OK", {onClick: closeDialog})]
+      actions: [dlgBtn("OK", { onClick: closeDialog })]
     });
   }
 
@@ -6189,25 +6177,25 @@ function render(){
   const requestedScreen = params.get("screen");
   const petUnlockVerseId = params.get("petUnlock");
 
-  if (params.get("mixNext") === "1" && HAS_VERSE_SELECTION){
+  if (params.get("mixNext") === "1" && HAS_VERSE_SELECTION) {
     const handled = handleGameMixNextFromUrl(params);
     applyMute();
     if (handled) return;
   }
 
-  if (petUnlockVerseId){
+  if (petUnlockVerseId) {
     State.pendingPetUnlockVerseId = petUnlockVerseId;
     State.selectedVerseId = petUnlockVerseId;
     setScreen(Screen.PET_UNLOCK);
-  } else if (requestedScreen === "practice_hub" && HAS_VERSE_SELECTION){
+  } else if (requestedScreen === "practice_hub" && HAS_VERSE_SELECTION) {
     setScreen(Screen.PRACTICE_HUB);
-  } else if (requestedScreen === "practice" && HAS_VERSE_SELECTION){
+  } else if (requestedScreen === "practice" && HAS_VERSE_SELECTION) {
     setScreen(Screen.PRACTICE);
-  } else if (requestedScreen === "playground" && HAS_VERSE_SELECTION){
+  } else if (requestedScreen === "playground" && HAS_VERSE_SELECTION) {
     setScreen(Screen.PLAYGROUND);
-  } else if (requestedScreen === "progress" && HAS_VERSE_SELECTION){
+  } else if (requestedScreen === "progress" && HAS_VERSE_SELECTION) {
     setScreen(Screen.PROGRESS);
-  } else if (requestedScreen === "title"){
+  } else if (requestedScreen === "title") {
     setScreen(Screen.TITLE);
   } else {
     setScreen(Screen.INTRO);
