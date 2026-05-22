@@ -2514,9 +2514,9 @@
 
         .smart-learn-title {
           color: #7f66c6;
-          font-size: clamp(14px, calc(var(--smart-font-size) * 0.48), 32px);
+          font-size: var(--smart-font-size);
           font-weight: 900;
-          line-height: 1.02;
+          line-height: var(--smart-line-height);
           text-shadow: none;
         }
 
