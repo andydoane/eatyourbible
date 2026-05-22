@@ -2489,9 +2489,58 @@
           padding: clamp(18px, 4vw, 34px);
           box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.08);
         }
+
+        .learn-layout.learn-screen .learn-stage-smart {
+          background: #ffffff;
+          color: #333333;
+        }
+
+        .smart-learn-text {
+          --smart-font-size: 40px;
+          --smart-line-height: 1.12;
+
+          width: 100%;
+          margin: 0 auto;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 0.34em;
+          text-align: center;
+          text-wrap: balance;
+        }
+
+        .smart-learn-title {
+          color: #7f66c6;
+          font-size: max(22px, calc(var(--smart-font-size) * 0.58));
+          font-weight: 900;
+          line-height: 1.02;
+          text-shadow: none;
+        }
+
+        .smart-learn-body {
+          color: #333333;
+          font-size: var(--smart-font-size);
+          font-weight: 900;
+          line-height: var(--smart-line-height);
+          text-shadow: none;
+        }
+
+        .smart-learn-text-placeholder .smart-learn-body {
+          color: #7f66c6;
+        }
+
+        .smart-learn-text-meaning .smart-learn-body {
+          color: #333333;
+        }
     
         .learn-layout.learn-screen .learn-stage>* {
           width: min(100%, 900px);
+          max-width: none;
+        }
+
+        .learn-layout.learn-screen .learn-stage-smart>* {
+          width: 100%;
           max-width: none;
         }
     

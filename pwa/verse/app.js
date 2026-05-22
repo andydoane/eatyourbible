@@ -2095,6 +2095,116 @@ function getVerseFitClass(text) {
   return "verse-fit-extra-long";
 }
 
+function smartLearnTextHtml({ title = "", body = "", extraClass = "" } = {}) {
+  return `
+    <div class="smart-learn-text ${escapeHtml(extraClass)}" data-smart-learn-text>
+      ${title
+      ? `<div class="smart-learn-title">${escapeHtml(title)}</div>`
+      : ``
+    }
+      <div class="smart-learn-body">${escapeHtml(body)}</div>
+    </div>
+  `;
+}
+
+function getSmartLearnLineHeight(textLength) {
+  if (textLength <= 80) return 1.18;
+  if (textLength <= 170) return 1.12;
+  return 1.06;
+}
+
+function getSmartLearnMaxWidthEm(textLength, stageRatio) {
+  let maxWidthEm = 24;
+
+  if (textLength <= 70) {
+    maxWidthEm = 18;
+  } else if (textLength <= 140) {
+    maxWidthEm = 26;
+  } else if (textLength <= 240) {
+    maxWidthEm = 34;
+  } else {
+    maxWidthEm = 42;
+  }
+
+  if (stageRatio > 1.35) {
+    maxWidthEm += 6;
+  }
+
+  if (stageRatio < 0.9) {
+    maxWidthEm -= 3;
+  }
+
+  return Math.max(16, maxWidthEm);
+}
+
+function fitSmartLearnText(root = document) {
+  const blocks = root.querySelectorAll("[data-smart-learn-text]");
+
+  blocks.forEach((block) => {
+    const stage = block.closest(".learn-stage");
+    const body = block.querySelector(".smart-learn-body");
+
+    if (!stage || !body) return;
+
+    const stageWidth = stage.clientWidth;
+    const stageHeight = stage.clientHeight;
+
+    if (stageWidth <= 0 || stageHeight <= 0) return;
+
+    const bodyText = body.textContent || "";
+    const textLength = bodyText.replace(/\s+/g, " ").trim().length;
+    const stageRatio = stageWidth / stageHeight;
+
+    const lineHeight = getSmartLearnLineHeight(textLength);
+    const maxWidthEm = getSmartLearnMaxWidthEm(textLength, stageRatio);
+
+    block.style.setProperty("--smart-line-height", String(lineHeight));
+    block.style.maxWidth = `min(100%, ${maxWidthEm}em)`;
+
+    let low = 18;
+    let high = 96;
+
+    if (textLength > 220) {
+      high = 62;
+    } else if (textLength > 140) {
+      high = 74;
+    }
+
+    let best = low;
+
+    for (let i = 0; i < 9; i++) {
+      const mid = (low + high) / 2;
+
+      block.style.setProperty("--smart-font-size", `${mid}px`);
+
+      const fits =
+        block.scrollHeight <= stage.clientHeight &&
+        block.scrollWidth <= stage.clientWidth;
+
+      if (fits) {
+        best = mid;
+        low = mid;
+      } else {
+        high = mid;
+      }
+    }
+
+    block.style.setProperty("--smart-font-size", `${Math.floor(best)}px`);
+  });
+}
+
+function scheduleSmartLearnTextFit(root) {
+  const run = () => fitSmartLearnText(root);
+
+  requestAnimationFrame(run);
+  setTimeout(run, 120);
+  setTimeout(run, 420);
+
+  if (document.fonts?.ready) {
+    document.fonts.ready.then(run).catch(() => { });
+  }
+}
+
 /* =========================
    4. Verse Loading
    ========================= */
@@ -5418,8 +5528,12 @@ function screenListen(idx) {
         ${learnInstructionLineHtml("Listen as the verse is read.")}
       </div>
 
-      <div class="learn-verse learn-stage learn-stage-card ${listenDisplayFitClass}">
-        <p class="verse">${listenDisplayText}</p>
+      <div class="learn-verse learn-stage learn-stage-card learn-stage-smart ${listenDisplayFitClass}">
+        ${smartLearnTextHtml({
+      title: hasHeardVerse ? VERSE_REF : "",
+      body: listenDisplayText,
+      extraClass: hasHeardVerse ? "smart-learn-text-verse" : "smart-learn-text-placeholder"
+    })}
       </div>
 
       <div class="learn-coach learn-bottom-zone">
@@ -5465,6 +5579,8 @@ function screenListen(idx) {
     };
   }
 
+  scheduleSmartLearnTextFit(inner);
+
   return makeSlide({ idx, bg: "var(--purple)", navHidden: false, inner });
 }
 
@@ -5480,11 +5596,12 @@ function screenMeaning(idx) {
         ${learnInstructionLineHtml("Read what this verse means.")}
       </div>
 
-      <div class="learn-verse learn-stage learn-stage-card learn-verse-meaning">
-        <div class="meaning-wrap">
-          <div class="meaning-title">WHAT IT MEANS</div>
-          <p class="verse meaning-text">${VERSE_MEANING}</p>
-        </div>
+      <div class="learn-verse learn-stage learn-stage-card learn-stage-smart learn-verse-meaning">
+        ${smartLearnTextHtml({
+      title: "What It Means...",
+      body: VERSE_MEANING,
+      extraClass: "smart-learn-text-meaning"
+    })}
       </div>
 
       <div class="learn-coach learn-bottom-zone learn-coach-meaning learn-coach-meaning-minimal">
@@ -5508,6 +5625,8 @@ function screenMeaning(idx) {
       startLearnInstruction("chunks1");
     };
   }
+
+  scheduleSmartLearnTextFit(inner);
 
   return makeSlide({ idx, bg: "var(--purple)", navHidden: false, inner });
 }
