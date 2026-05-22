@@ -2116,6 +2116,44 @@ const LEARN_CHUNK_COLORS = [
   "#7f66c6"
 ];
 
+let learnChunkColorCacheKey = "";
+let learnChunkColorOrder = [];
+
+function shuffleLearnChunkColors(colors) {
+  const arr = colors.slice();
+
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const temp = arr[i];
+    arr[i] = arr[j];
+    arr[j] = temp;
+  }
+
+  return arr;
+}
+
+function getLearnChunkColorOrder(count) {
+  const cacheKey = `${VERSE_ID}::${count}`;
+
+  if (learnChunkColorCacheKey !== cacheKey || learnChunkColorOrder.length < count) {
+    const chosen = [];
+
+    while (chosen.length < count) {
+      const shuffled = shuffleLearnChunkColors(LEARN_CHUNK_COLORS);
+
+      for (const color of shuffled) {
+        if (chosen.length >= count) break;
+        chosen.push(color);
+      }
+    }
+
+    learnChunkColorCacheKey = cacheKey;
+    learnChunkColorOrder = chosen;
+  }
+
+  return learnChunkColorOrder.slice(0, count);
+}
+
 function getChunkVisibleCount(learnParts) {
   const count = Array.isArray(learnParts) ? learnParts.length : 0;
 
@@ -2143,6 +2181,8 @@ function learnChunkStageHtml(learnParts, visibleCount = 0) {
     .replace(/\s+/g, " ")
     .trim();
 
+  const chunkColors = getLearnChunkColorOrder(chunks.length);
+
   return `
     <div
       class="learn-chunk-stage"
@@ -2151,7 +2191,7 @@ function learnChunkStageHtml(learnParts, visibleCount = 0) {
     >
       <div class="smart-learn-body learn-chunk-body">
         ${chunks.map((part, i) => {
-    const color = LEARN_CHUNK_COLORS[i % LEARN_CHUNK_COLORS.length];
+    const color = chunkColors[i];
     const visibleClass = i < visibleCount ? " is-visible" : "";
 
     return `
