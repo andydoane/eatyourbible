@@ -66,7 +66,7 @@ window.EXTERNAL_VERSE_PLAYGROUND = [
     description: "Spin for money, choose letters, and complete missing words from the verse.",
     icon: "🎡",
     cardColor: "#40b9c5",
-    cardTextColor: "#333333",
+    cardTextColor: "#ffffff",
     launchUrl: "./verse_playground/wheel_of_bible/index.html",
     visibleInCarousel: true,
     progressType: "practice"
