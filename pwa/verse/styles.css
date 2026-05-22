@@ -2528,6 +2528,20 @@
           text-shadow: none;
         }
 
+        .smart-learn-body .verse {
+          margin: 0;
+          color: inherit;
+          font-size: inherit;
+          font-weight: inherit;
+          line-height: inherit;
+          text-shadow: none;
+        }
+
+        .smart-learn-text-remove .smart-learn-body,
+        .smart-learn-text-final .smart-learn-body {
+          color: #111111;
+        }
+
         .smart-learn-text-placeholder .smart-learn-body {
           color: #7f66c6;
         }

@@ -3535,6 +3535,8 @@ function verseNode() {
       // replace the blank directly without re-rendering the screen
       span.replaceWith(revealed);
 
+      scheduleSmartLearnTextFit(document);
+
     };
 
 
@@ -5841,8 +5843,11 @@ function screenHide(idx) {
         ${learnInstructionLineHtml("Say the verse before more words disappear.")}
       </div>
 
-      <div class="learn-verse learn-stage learn-stage-card missing-words-theme ${getVerseFitClass(VERSE_TEXT)}">
-        <div id="verseStage"></div>
+      <div class="learn-verse learn-stage learn-stage-card learn-stage-smart missing-words-theme ${getVerseFitClass(VERSE_TEXT)}">
+        <div class="smart-learn-text smart-learn-text-remove" data-smart-learn-text>
+          <div class="smart-learn-title">${escapeHtml(VERSE_REF)}</div>
+          <div class="smart-learn-body" id="verseStage"></div>
+        </div>
       </div>
 
       <div class="learn-coach learn-bottom-zone">
@@ -5873,6 +5878,8 @@ function screenHide(idx) {
   `;
 
   inner.querySelector("#verseStage").appendChild(verseNode());
+
+  scheduleSmartLearnTextFit(inner);
 
   const btnRemove = inner.querySelector("#btnRemoveWord");
   if (btnRemove) {
@@ -5919,8 +5926,11 @@ function screenFinalRecall(idx) {
         ${learnInstructionLineHtml("Try the verse with only hints.")}
       </div>
 
-      <div class="learn-verse learn-stage learn-stage-card missing-words-theme ${getVerseFitClass(VERSE_TEXT)}">
-        <div id="finalRecallStage"></div>
+      <div class="learn-verse learn-stage learn-stage-card learn-stage-smart missing-words-theme ${getVerseFitClass(VERSE_TEXT)}">
+        <div class="smart-learn-text smart-learn-text-final" data-smart-learn-text>
+          <div class="smart-learn-title">${escapeHtml(VERSE_REF)}</div>
+          <div class="smart-learn-body" id="finalRecallStage"></div>
+        </div>
       </div>
 
       <div class="learn-coach learn-bottom-zone">
@@ -5938,6 +5948,8 @@ function screenFinalRecall(idx) {
   inner
     .querySelector("#finalRecallStage")
     .appendChild(finalRecallNode(State.finalRecallRevealed));
+
+  scheduleSmartLearnTextFit(inner);
 
   const btnFinalStart = inner.querySelector("#btnFinalStart");
   if (btnFinalStart) {
