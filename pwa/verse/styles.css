@@ -2716,7 +2716,8 @@ Game Mix Loading Screen
 .learn-echo-piece.is-echoing {
   color: #ffc751;
   opacity: 1;
-  transform: translateY(-0.04em) scale(1.08);
+  transform: translateY(0) scale(1);
+  text-shadow: 0 0 0.35em rgba(255, 199, 81, 0.38);
 }
 
 .learn-echo-piece.is-completed {
