@@ -5722,7 +5722,7 @@ function screenListen(idx) {
     (State.instructionPlaying && State.instructionKey === "meaning");
 
   const listenDisplayText =
-    hasHeardVerse ? VERSE_TEXT : "Listen to the verse.";
+    hasHeardVerse ? VERSE_TEXT : "";
 
   const listenDisplayFitClass =
     hasHeardVerse
