@@ -5996,24 +5996,45 @@ function screenHide(idx) {
   const hiddenNow = Math.min(State.hideCount, planMixed.length);
   const done = hiddenNow >= planMixed.length;
 
-  let coachBody = State.sayVerseActive
-    ? `
-      <div class="coach-text">Say the verse out loud. If you need help, tap a missing word.</div>
-      <div class="timer-wrap"><div class="timer-bar" id="sayVerseBar"></div></div>
-    `
-    : `<div class="coach-text">Tap the button to continue removing words.</div>`;
   const removeLabel = hideWordsPerRound() === 2 ? "Remove Words" : "Remove a Word";
   const removeAnotherLabel = hideWordsPerRound() === 2 ? "Remove More Words" : "Remove Another";
   let buttonLabel = removeLabel;
 
-  if (State.sayVerseActive) {
-    buttonLabel = hiddenNow > 0 ? removeAnotherLabel : removeLabel;
-  } else if (done) {
-    coachBody = `<div class="coach-text">Ready to test your progress?</div>`;
+  if (done) {
     buttonLabel = "Test Your Progress";
   } else if (hiddenNow > 0) {
     buttonLabel = removeAnotherLabel;
   }
+
+  const hideBottomHtml = State.sayVerseActive
+    ? `
+      <div class="learn-progress-action-slot">
+        <div class="learn-bottom-progress" aria-label="Time remaining">
+          <div
+            class="learn-bottom-progress-bar"
+            id="sayVerseBar"
+            style="width:${getSayVersePct() * 100}%"
+          ></div>
+        </div>
+      </div>
+    `
+    : (
+      State.instructionPlaying ||
+      (State.hideAutoStarting && !State.hideAutoFallbackReady)
+    )
+      ? `
+        <div class="learn-progress-action-slot" aria-hidden="true"></div>
+      `
+      : `
+        <div class="learn-progress-action-slot">
+          <button
+            class="carousel-main no-zoom learn-bottom-action-btn"
+            id="btnRemoveWord"
+          >
+            ${buttonLabel}
+          </button>
+        </div>
+      `;
 
   inner.innerHTML = `
     <div class="learn-layout learn-screen learn-screen-remove learn-layout-coach-centered">
@@ -6032,29 +6053,8 @@ function screenHide(idx) {
         </div>
       </div>
 
-      <div class="learn-coach learn-bottom-zone">
-        <div>
-          ${coachBody}
-        </div>
-
-        <div class="coach-actions">
-          ${(
-      State.sayVerseActive ||
-      State.instructionPlaying ||
-      (State.hideAutoStarting && !State.hideAutoFallbackReady)
-    )
-      ? ``
-      : `
-                <button
-                  class="carousel-main no-zoom"
-                  id="btnRemoveWord"
-                  style="max-width:520px;"
-                >
-                  ${buttonLabel}
-                </button>
-              `
-    }
-        </div>
+      <div class="learn-coach learn-bottom-zone learn-progress-bottom-zone">
+        ${hideBottomHtml}
       </div>
     </div>
   `;
@@ -6084,22 +6084,53 @@ function screenFinalRecall(idx) {
   inner.style.flexDirection = "column";
   inner.style.height = "100%";
 
-  let coachBody = `<div class="coach-text">Try saying the entire verse from memory.</div>`;
-  let actionHtml = State.finalRecallAutoFallbackReady
-    ? `<button class="carousel-main no-zoom" id="btnFinalStart" style="max-width:520px;">Begin Test</button>`
-    : ``;
+  let finalBottomHtml = State.finalRecallAutoFallbackReady
+    ? `
+      <div class="learn-progress-action-slot">
+        <button
+          class="carousel-main no-zoom learn-bottom-action-btn"
+          id="btnFinalStart"
+        >
+          Begin Test
+        </button>
+      </div>
+    `
+    : `<div class="learn-progress-action-slot" aria-hidden="true"></div>`;
 
   if (State.finalRecallActive) {
-    coachBody = `
-      <div class="coach-text">Try to say the verse</div>
-      <div class="timer-wrap"><div class="timer-bar" id="finalRecallBar" style="width:${getFinalRecallPct() * 100}%"></div></div>
+    finalBottomHtml = `
+      <div class="learn-progress-action-slot">
+        <div class="learn-bottom-progress" aria-label="Time remaining">
+          <div
+            class="learn-bottom-progress-bar"
+            id="finalRecallBar"
+            style="width:${getFinalRecallPct() * 100}%"
+          ></div>
+        </div>
+      </div>
     `;
   } else if (State.finalRecallDone && !State.finalRecallRevealed) {
-    coachBody = `<div class="coach-text">Press below to reveal the verse.</div>`;
-    actionHtml = `<button class="carousel-main no-zoom" id="btnFinalReveal" style="max-width:520px;">Reveal Verse</button>`;
+    finalBottomHtml = `
+      <div class="learn-progress-action-slot">
+        <button
+          class="carousel-main no-zoom learn-bottom-action-btn"
+          id="btnFinalReveal"
+        >
+          Reveal Verse
+        </button>
+      </div>
+    `;
   } else if (State.finalRecallRevealed) {
-    coachBody = `<div class="coach-text">Great job! Now it is practice time.</div>`;
-    actionHtml = `<button class="carousel-main no-zoom" id="btnFinalGames" style="max-width:520px;">Practice time</button>`;
+    finalBottomHtml = `
+      <div class="learn-progress-action-slot">
+        <button
+          class="carousel-main no-zoom learn-bottom-action-btn"
+          id="btnFinalGames"
+        >
+          Practice time
+        </button>
+      </div>
+    `;
   }
 
   inner.innerHTML = `
@@ -6119,14 +6150,8 @@ function screenFinalRecall(idx) {
         </div>
       </div>
 
-      <div class="learn-coach learn-bottom-zone">
-        <div>
-          ${coachBody}
-        </div>
-
-        <div class="coach-actions">
-          ${actionHtml}
-        </div>
+      <div class="learn-coach learn-bottom-zone learn-progress-bottom-zone">
+        ${finalBottomHtml}
       </div>
     </div>
   `;

@@ -3063,6 +3063,53 @@ Game Mix Loading Screen
   transition: width 120ms linear;
 }
 
+/* ---------- Learn bottom progress/action slot ---------- */
+
+.learn-progress-bottom-zone {
+  flex: 0 0 auto;
+  min-height: clamp(62px, 10vh, 82px);
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.learn-progress-action-slot {
+  width: min(100%, 520px);
+  min-height: clamp(58px, 8.5vh, 72px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+.learn-bottom-action-btn {
+  width: 100%;
+  min-height: clamp(58px, 8.5vh, 72px);
+  margin: 0;
+  font-size: clamp(20px, 4.8vw, 32px);
+  line-height: 1.05;
+}
+
+.learn-bottom-progress {
+  width: 100%;
+  height: clamp(58px, 8.5vh, 72px);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+  overflow: hidden;
+  box-shadow:
+    inset 0 3px 8px rgba(0, 0, 0, 0.24),
+    0 6px 0 rgba(0, 0, 0, 0.18);
+}
+
+.learn-bottom-progress-bar {
+  height: 100%;
+  width: 100%;
+  transform-origin: left center;
+  background: rgba(255, 255, 255, 0.94);
+  transition: width 120ms linear;
+}
+
 /* ---------- Overlay modal ---------- */
 .overlay {
   position: fixed;
