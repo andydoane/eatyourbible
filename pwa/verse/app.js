@@ -2133,25 +2133,16 @@ function shuffleLearnChunkColors(colors) {
 }
 
 function getLearnChunkColorOrder(count) {
-  const cacheKey = `${VERSE_ID}::${count}`;
+  const cacheKey = `${VERSE_ID}`;
 
-  if (learnChunkColorCacheKey !== cacheKey || learnChunkColorOrder.length < count) {
-    const chosen = [];
-
-    while (chosen.length < count) {
-      const shuffled = shuffleLearnChunkColors(LEARN_CHUNK_COLORS);
-
-      for (const color of shuffled) {
-        if (chosen.length >= count) break;
-        chosen.push(color);
-      }
-    }
-
+  if (learnChunkColorCacheKey !== cacheKey || learnChunkColorOrder.length !== LEARN_CHUNK_COLORS.length) {
     learnChunkColorCacheKey = cacheKey;
-    learnChunkColorOrder = chosen;
+    learnChunkColorOrder = shuffleLearnChunkColors(LEARN_CHUNK_COLORS);
   }
 
-  return learnChunkColorOrder.slice(0, count);
+  return Array.from({ length: count }, (_, i) => {
+    return learnChunkColorOrder[i % learnChunkColorOrder.length];
+  });
 }
 
 function getChunkVisibleCount(learnParts) {
@@ -5809,7 +5800,7 @@ function screenMeaning(idx) {
           ${State.instructionPlaying
       ? ``
       : `
-                <button class="carousel-main no-zoom" id="btnMeaningNext" style="max-width:520px;">
+                <button class="carousel-main no-zoom learn-bottom-action-btn learn-remove-action-btn" id="btnMeaningNext" style="max-width:520px;">
                   Break It Down
                 </button>
               `
