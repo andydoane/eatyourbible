@@ -2690,6 +2690,7 @@ Game Mix Loading Screen
   font-weight: 900;
   line-height: var(--smart-line-height);
   text-shadow: none;
+  text-wrap: balance;
 }
 
 .learn-echo-piece {
@@ -2703,6 +2704,7 @@ Game Mix Loading Screen
     opacity 180ms ease,
     transform 180ms ease;
   overflow-wrap: anywhere;
+  text-wrap: balance;
 }
 
 .learn-echo-piece.is-future {
