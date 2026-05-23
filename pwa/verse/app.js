@@ -5936,21 +5936,6 @@ function screenEcho(idx) {
       </div>
 
       <div class="learn-coach learn-bottom-zone">
-        <div>
-          <div class="coach-text">${State.instructionPlaying && State.instructionKey === "echo1"
-      ? "Now echo the verse after me."
-      : State.instructionPlaying && State.instructionKey === "echo2"
-        ? "Echo the verse one more time."
-        : State.instructionPlaying && State.instructionKey === "remove"
-          ? "Now, let's remove words from the verse. Try to say the verse out loud each time. If you need a hint, tap that word."
-          : State.echoDone
-            ? (hideWordsPerRound() === 2
-              ? "Tap the button to remove some words."
-              : "Tap the button to remove the first word.")
-            : "Repeat each chunk out loud during the pause."
-    }</div>
-        </div>
-
         <div class="coach-actions">
           ${(
       State.echoRunning ||
