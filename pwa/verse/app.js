@@ -5744,13 +5744,6 @@ function screenListen(idx) {
       </div>
 
       <div class="learn-coach learn-bottom-zone">
-        <div>
-          <div class="coach-text">${State.listenDone
-      ? "Tap the button to read what this verse means."
-      : "Listen to the verse."
-    }</div>
-        </div>
-
         <div class="coach-actions">
           ${(
       State.listenPlaying ||
@@ -5847,7 +5840,7 @@ function screenChunks(idx) {
   const learnParts = getLearnAudioParts();
   const chunkText = learnParts[State.chunkIndex]?.text || VERSE_TEXT;
 
-  let coachText = "Listen to each part of the verse one chunk at a time.";
+  let coachText = "Listen carefully as each chunk plays.";
   let buttonLabel = "▶ Start";
 
   if (State.instructionPlaying && State.instructionKey === "chunks1") {
