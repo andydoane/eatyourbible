@@ -2594,6 +2594,7 @@ const State = {
   revealedTokenIdx: new Set(),
   hideAutoStarting: false,
   hideAutoFallbackReady: false,
+  hidePoofActive: false,
   sayVerseActive: false,
   sayVerseStartedAt: 0,
   sayVerseDurationMs: 0,
@@ -3317,6 +3318,7 @@ function resetLearn(goTitle = false) {
   State.revealedTokenIdx = new Set();
   State.hideAutoStarting = false;
   State.hideAutoFallbackReady = false;
+  State.hidePoofActive = false;
   State.sayVerseActive = false;
   State.sayVerseStartedAt = 0;
   State.sayVerseDurationMs = 0;
@@ -4152,7 +4154,7 @@ function hideWordsPerRound() {
 }
 
 function hideTimerMultiplier() {
-  return 1.3;
+  return 1.0;
 }
 
 function goToFinalRecallAndStart() {
@@ -4189,6 +4191,32 @@ function goToFinalRecallAndStart() {
       render();
     }
   }, 1600);
+}
+
+function waitMs(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function startHideRoundWithPoof() {
+  if (State.sayVerseActive) return;
+  if (State.hideReadyForFinal) return;
+
+  State.hidePoofActive = true;
+  render();
+
+  await waitMs(120);
+
+  startHideRound().catch((err) => {
+    console.warn("Could not start hide round", err);
+  });
+
+  setTimeout(() => {
+    State.hidePoofActive = false;
+
+    if (State.screen === Screen.HIDE) {
+      render();
+    }
+  }, 520);
 }
 
 async function startHideRound() {
@@ -6011,7 +6039,7 @@ function screenHide(idx) {
         ${learnInstructionLineHtml("Say the verse before more words disappear.")}
       </div>
 
-      <div class="learn-verse learn-stage learn-stage-card learn-stage-smart missing-words-theme ${getVerseFitClass(VERSE_TEXT)}">
+      <div class="learn-verse learn-stage learn-stage-card learn-stage-smart missing-words-theme learn-hide-poof-card ${State.hidePoofActive ? "is-poofing" : ""} ${getVerseFitClass(VERSE_TEXT)}">
         <div
           class="smart-learn-text smart-learn-text-remove"
           data-smart-learn-text
@@ -6019,6 +6047,12 @@ function screenHide(idx) {
         >
           <div class="smart-learn-title">${escapeHtml(VERSE_REF)}</div>
           <div class="smart-learn-body" id="verseStage"></div>
+        </div>
+
+        <div class="learn-hide-poof-overlay" aria-hidden="true">
+          <span class="learn-hide-poof-sparkle sparkle-one">✦</span>
+          <span class="learn-hide-poof-sparkle sparkle-two">✦</span>
+          <span class="learn-hide-poof-sparkle sparkle-three">✦</span>
         </div>
       </div>
 
@@ -6040,7 +6074,7 @@ function screenHide(idx) {
         return;
       }
 
-      await startHideRound();
+      await startHideRoundWithPoof();
     };
   }
 
