@@ -5707,7 +5707,7 @@ function screenLearnInstruction(idx) {
     }
   });
 
-  return makeSlide({ idx, bg: "var(--purple)", navHidden: false, inner });
+  return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner });
 }
 
 function screenListen(idx) {
@@ -5788,7 +5788,7 @@ function screenListen(idx) {
 
   scheduleSmartLearnTextFit(inner);
 
-  return makeSlide({ idx, bg: "var(--purple)", navHidden: false, inner });
+  return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner });
 }
 
 function screenMeaning(idx) {
@@ -5835,7 +5835,7 @@ function screenMeaning(idx) {
 
   scheduleSmartLearnTextFit(inner);
 
-  return makeSlide({ idx, bg: "var(--purple)", navHidden: false, inner });
+  return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner });
 }
 
 function screenChunks(idx) {
@@ -5915,7 +5915,7 @@ function screenChunks(idx) {
 
   scheduleSmartLearnTextFit(inner);
 
-  return makeSlide({ idx, bg: "var(--purple)", navHidden: false, inner });
+  return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner });
 }
 
 function screenEcho(idx) {
@@ -5968,7 +5968,7 @@ function screenEcho(idx) {
 
   scheduleSmartLearnTextFit(inner);
 
-  return makeSlide({ idx, bg: "var(--purple)", navHidden: false, inner });
+  return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner });
 }
 
 
@@ -6060,7 +6060,7 @@ function screenHide(idx) {
     };
   }
 
-  return makeSlide({ idx, bg: "var(--purple)", navHidden: false, inner });
+  return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner });
 }
 
 function screenFinalRecall(idx) {
@@ -6186,7 +6186,7 @@ function screenFinalRecall(idx) {
     requestAnimationFrame(animate);
   }
 
-  return makeSlide({ idx, bg: "var(--purple)", navHidden: false, inner });
+  return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner });
 }
 
 function screenCelebration(idx) {
