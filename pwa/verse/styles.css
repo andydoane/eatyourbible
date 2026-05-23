@@ -3091,6 +3091,11 @@ Game Mix Loading Screen
   line-height: 1.05;
 }
 
+.learn-remove-action-btn {
+  background: #4c3d77;
+  color: #FFFFFF;
+}
+
 .learn-bottom-progress {
   width: min(100%, 480px);
   height: clamp(16px, 2.8vh, 24px);

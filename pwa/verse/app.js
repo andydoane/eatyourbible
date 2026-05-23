@@ -6028,7 +6028,7 @@ function screenHide(idx) {
       : `
         <div class="learn-progress-action-slot">
           <button
-            class="carousel-main no-zoom learn-bottom-action-btn"
+            class="carousel-main no-zoom learn-bottom-action-btn learn-remove-action-btn"
             id="btnRemoveWord"
           >
             ${buttonLabel}
