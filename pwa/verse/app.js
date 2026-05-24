@@ -2503,6 +2503,7 @@ const Screen = {
   INTRO: "intro",
   TITLE_SEQUENCE: "title_sequence",
   TITLE: "title",
+  TODO: "todo",
   PROGRESS: "progress",
   VERSE_DETAIL: "verse_detail",
   LEARN_LEVEL: "learn_level",
@@ -3359,6 +3360,7 @@ function screenToIndex(screen) {
     Screen.INTRO,
     Screen.TITLE_SEQUENCE,
     Screen.TITLE,
+    Screen.TODO,
     Screen.PROGRESS,
     Screen.PET_STATS,
     Screen.VERSE_DETAIL,
@@ -4935,6 +4937,22 @@ function screenTitle(idx) {
       <div class="title-picker">
         <select id="versePicker" class="title-picker-select"></select>
       </div>
+
+      <button
+        class="title-todo-btn no-zoom"
+        id="titleTodoBtn"
+        type="button"
+        aria-label="Open Zoo To-Do"
+      >
+        <img
+          class="title-todo-img"
+          src="${IMG_DIR}button_todo.png"
+          alt="Zoo To-Do"
+          draggable="false"
+          onerror="this.style.display='none'"
+        >
+      </button>
+
       <div class="title-action-row" aria-label="Main actions">
         ${renderTitleActionButton({
     id: "learn",
@@ -4970,6 +4988,15 @@ function screenTitle(idx) {
       </div>
     </div>
   `;
+
+  const titleTodoBtn = wrap.querySelector("#titleTodoBtn");
+  if (titleTodoBtn) {
+    titleTodoBtn.onclick = (e) => {
+      e.stopPropagation();
+      go(Screen.TODO);
+    };
+  }
+
 
   // wire title action buttons
   wrap.querySelectorAll("[data-title-action]").forEach((btn) => {
@@ -5111,6 +5138,35 @@ function screenTitle(idx) {
 
   return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
 }
+
+function screenTodo(idx) {
+  const wrap = document.createElement("div");
+  wrap.className = "todo-screen";
+
+  wrap.innerHTML = `
+    ${homePillHtml("Home")}
+
+    <div class="todo-coming-soon-card">
+      <img
+        class="todo-coming-soon-img"
+        src="${IMG_DIR}button_todo.png"
+        alt="Zoo To-Do"
+        draggable="false"
+        onerror="this.style.display='none'"
+      >
+
+      <div class="todo-coming-soon-title">Coming Soon!</div>
+      <div class="todo-coming-soon-text">
+        Your zookeeper checklist will live here.
+      </div>
+    </div>
+  `;
+
+  bindHomePill(wrap);
+
+  return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
+}
+
 
 function screenProgress(idx) {
   const wrap = document.createElement("div");
@@ -6557,11 +6613,12 @@ function render() {
 
   const uniq = Array.from(new Set(indicesToRender.filter(i => i !== null && i >= 0)));
   for (const idx of uniq) {
-    const screen = ["intro", "title_sequence", "title", "progress", "pet_stats", "verse_detail", "learn_level", "practice_gate", "learn_instruction", "listen", "meaning", "chunks", "echo", "hide", "final_recall", "celebration", "pet_unlock", "practice_hub", "practice", "playground", "game_mix_finished"][idx];
+    const screen = ["intro", "title_sequence", "title", "todo", "progress", "pet_stats", "verse_detail", "learn_level", "practice_gate", "learn_instruction", "listen", "meaning", "chunks", "echo", "hide", "final_recall", "celebration", "pet_unlock", "practice_hub", "practice", "playground", "game_mix_finished"][idx];
     let slide = null;
     if (screen === Screen.INTRO) slide = screenIntro(idx);
     if (screen === Screen.TITLE_SEQUENCE) slide = screenTitleSequence(idx);
     if (screen === Screen.TITLE) slide = screenTitle(idx);
+    if (screen === Screen.TODO) slide = screenTodo(idx);
     if (screen === Screen.PROGRESS) slide = screenProgress(idx);
     if (screen === Screen.PET_STATS) slide = screenPetStats(idx);
     if (screen === Screen.VERSE_DETAIL) slide = screenVerseDetail(idx);

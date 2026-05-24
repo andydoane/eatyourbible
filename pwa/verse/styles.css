@@ -846,6 +846,36 @@ nav#navBar {
 
 /* ---------- Title action buttons ---------- */
 
+.title-todo-btn {
+  width: min(100%, 700px);
+  margin: clamp(12px, 2vh, 18px) auto clamp(8px, 1.4vh, 12px);
+  border: none;
+  border-radius: clamp(18px, 4.2vw, 28px);
+  padding: clamp(8px, 2vw, 14px) clamp(16px, 4vw, 26px);
+  background: #fbf8f6;
+  color: #333333;
+  box-shadow: 0 7px 0 rgba(0, 0, 0, 0.24);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.title-todo-btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.24);
+}
+
+.title-todo-img {
+  width: min(100%, 470px);
+  height: auto;
+  max-height: clamp(42px, 8.5vh, 76px);
+  object-fit: contain;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
 .title-action-row {
   width: 100%;
   max-width: 700px;
@@ -901,6 +931,15 @@ nav#navBar {
 }
 
 @media (max-width: 380px) {
+  .title-todo-btn {
+    border-radius: 18px;
+    padding: 8px 14px;
+  }
+
+  .title-todo-img {
+    max-height: 46px;
+  }
+
   .title-action-row {
     gap: 7px;
   }
@@ -970,6 +1009,58 @@ nav#navBar {
   line-height: 1.25;
   opacity: 0.95;
   text-align: center;
+  text-wrap: balance;
+}
+
+/* =========================
+Zoo To-Do Placeholder
+========================= */
+
+.todo-screen {
+  height: 100%;
+  background: var(--purple);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(24px + var(--safeT)) 18px calc(24px + var(--safeB));
+  text-align: center;
+}
+
+.todo-coming-soon-card {
+  width: min(100%, 640px);
+  border-radius: clamp(26px, 6vw, 42px);
+  background: #fbf8f6;
+  color: #333333;
+  padding: clamp(26px, 7vw, 44px);
+  box-shadow: 0 9px 0 rgba(0, 0, 0, 0.24);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(14px, 3vw, 22px);
+}
+
+.todo-coming-soon-img {
+  width: min(100%, 460px);
+  max-height: 90px;
+  object-fit: contain;
+  display: block;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.todo-coming-soon-title {
+  font-size: clamp(36px, 9vw, 64px);
+  font-weight: 900;
+  line-height: 0.95;
+  color: #7f66c6;
+}
+
+.todo-coming-soon-text {
+  max-width: 18ch;
+  font-size: clamp(20px, 5vw, 30px);
+  font-weight: 900;
+  line-height: 1.08;
   text-wrap: balance;
 }
 
