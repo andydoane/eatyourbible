@@ -785,6 +785,19 @@ nav#navBar {
   object-fit: contain;
 }
 
+.title-logo-secret-wrap {
+  width: min(100%, 700px);
+  display: flex;
+  justify-content: center;
+}
+
+#titleLogoSecret {
+  width: 100%;
+  max-width: 700px;
+  max-height: 30vh;
+  object-fit: contain;
+}
+
 .title-carousel {
   display: flex;
   align-items: center;
