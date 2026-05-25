@@ -5198,21 +5198,11 @@ function todoDevRowHtml(todo = {}) {
 }
 
 function getKnownZooTodoVerseIds(progress) {
-  const ids = new Set();
+  if (!Array.isArray(VERSE_LIST)) return [];
 
-  if (Array.isArray(VERSE_LIST)) {
-    for (const item of VERSE_LIST) {
-      if (item?.id) ids.add(item.id);
-    }
-  }
-
-  if (progress?.verses && typeof progress.verses === "object") {
-    for (const verseId of Object.keys(progress.verses)) {
-      if (verseId) ids.add(verseId);
-    }
-  }
-
-  return [...ids];
+  return VERSE_LIST
+    .map((item) => item?.id || "")
+    .filter(Boolean);
 }
 
 function getMostRecentLearnedAt(progress) {
