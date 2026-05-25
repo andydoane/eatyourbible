@@ -964,8 +964,14 @@ function updateVerseProgress(verseId, updater) {
 
 function markLearnCompleted(verseId) {
   updateVerseProgress(verseId, (verseProgress) => {
+    const now = Date.now();
+
     verseProgress.learnCompleted = true;
-    verseProgress.lastPracticedAt = Date.now(); // 👈 ADD THIS
+    verseProgress.lastPracticedAt = now;
+
+    if (!verseProgress.learnedAt) {
+      verseProgress.learnedAt = now;
+    }
   });
 }
 
@@ -5143,9 +5149,23 @@ function screenTitle(idx) {
   return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
 }
 
-function todoDevRowHtml({ image = "", emoji = "", text = "" }) {
-  const iconHtml = image
-    ? `
+function todoDevRowHtml(todo = {}) {
+  const {
+    type = "",
+    image = "",
+    emoji = "",
+    text = "",
+    verseId = "",
+    petEmoji = "",
+    disabled = false
+  } = todo;
+
+  let iconHtml = "";
+
+  if (type === "feed_pet" || type === "wake_pet") {
+    iconHtml = bibloPetVisualHtml(verseId, petEmoji || "🐾");
+  } else if (image) {
+    iconHtml = `
       <img
         class="todo-dev-row-img"
         src="${escapeHtml(image)}"
@@ -5153,11 +5173,19 @@ function todoDevRowHtml({ image = "", emoji = "", text = "" }) {
         draggable="false"
         onerror="this.style.display='none'"
       >
-    `
-    : `<span class="todo-dev-row-emoji" aria-hidden="true">${escapeHtml(emoji)}</span>`;
+    `;
+  } else {
+    iconHtml = `<span class="todo-dev-row-emoji" aria-hidden="true">${escapeHtml(emoji || "✅")}</span>`;
+  }
 
   return `
-    <button class="todo-dev-row no-zoom" type="button">
+    <button
+      class="todo-dev-row no-zoom ${disabled ? "is-disabled" : ""}"
+      type="button"
+      data-todo-type="${escapeHtml(type)}"
+      data-verse-id="${escapeHtml(verseId)}"
+      ${disabled ? "disabled" : ""}
+    >
       <span class="todo-dev-row-icon">
         ${iconHtml}
       </span>
@@ -5167,6 +5195,126 @@ function todoDevRowHtml({ image = "", emoji = "", text = "" }) {
       </span>
     </button>
   `;
+}
+
+function getKnownZooTodoVerseIds(progress) {
+  const ids = new Set();
+
+  if (Array.isArray(VERSE_LIST)) {
+    for (const item of VERSE_LIST) {
+      if (item?.id) ids.add(item.id);
+    }
+  }
+
+  if (progress?.verses && typeof progress.verses === "object") {
+    for (const verseId of Object.keys(progress.verses)) {
+      if (verseId) ids.add(verseId);
+    }
+  }
+
+  return [...ids];
+}
+
+function getMostRecentLearnedAt(progress) {
+  if (!progress?.verses || typeof progress.verses !== "object") return 0;
+
+  let mostRecent = 0;
+
+  for (const verseProgress of Object.values(progress.verses)) {
+    if (!verseProgress?.learnCompleted) continue;
+
+    // learnedAt is the new accurate field.
+    // lastPracticedAt is a fallback for verses learned before learnedAt existed.
+    const learnedAt = Number(verseProgress.learnedAt || verseProgress.lastPracticedAt || 0);
+
+    if (learnedAt > mostRecent) {
+      mostRecent = learnedAt;
+    }
+  }
+
+  return mostRecent;
+}
+
+function hasAnyLearnedVerse(progress) {
+  if (!progress?.verses || typeof progress.verses !== "object") return false;
+
+  return Object.values(progress.verses).some((verseProgress) => {
+    return !!verseProgress?.learnCompleted;
+  });
+}
+
+function shouldShowLearnNewVerseTodo(progress) {
+  const DAY_MS = 1000 * 60 * 60 * 24;
+
+  if (!hasAnyLearnedVerse(progress)) return true;
+
+  const mostRecentLearnedAt = getMostRecentLearnedAt(progress);
+
+  // If we cannot determine when the last verse was learned,
+  // gently suggest learning a new one.
+  if (!mostRecentLearnedAt) return true;
+
+  return Date.now() - mostRecentLearnedAt >= 7 * DAY_MS;
+}
+
+function generateZooTodos() {
+  const progress = loadProgress();
+  const todos = [];
+  const sleepingTodos = [];
+  const hungryTodos = [];
+
+  const verseIds = getKnownZooTodoVerseIds(progress);
+
+  for (const verseId of verseIds) {
+    const verseProgress = progress?.verses?.[verseId] || {
+      learnCompleted: false,
+      games: {}
+    };
+
+    const status = getBibloPetStatus(verseProgress);
+
+    if (status !== "hungry" && status !== "sleeping") continue;
+
+    const petName = getBibloPetDisplayNameForVerseId(verseId);
+    const petEmoji = getBibloPetEmojiForVerseId(verseId);
+
+    const todo = {
+      type: status === "sleeping" ? "wake_pet" : "feed_pet",
+      verseId,
+      petEmoji,
+      text: status === "sleeping"
+        ? `Wake up ${petName}`
+        : `Feed ${petName}`
+    };
+
+    if (status === "sleeping") {
+      sleepingTodos.push(todo);
+    } else {
+      hungryTodos.push(todo);
+    }
+  }
+
+  todos.push(...sleepingTodos);
+  todos.push(...hungryTodos);
+
+  if (shouldShowLearnNewVerseTodo(progress)) {
+    todos.push({
+      type: "learn_new_verse",
+      image: `${IMG_DIR}clipboard_bible.png`,
+      text: "Learn a New Verse"
+    });
+  }
+
+  if (!todos.length) {
+    todos.push({
+      type: "all_done",
+      emoji: "✅",
+      text: "All Done!",
+      disabled: true
+    });
+  }
+
+  return todos;
 }
 
 function screenTodo(idx) {
@@ -5208,28 +5356,9 @@ function screenTodoDev(idx) {
   const wrap = document.createElement("div");
   wrap.className = "todo-dev-screen";
 
-  const rowsHtml = [
-    todoDevRowHtml({
-      image: `${IMG_DIR}clipboard_bible.png`,
-      text: "Learn a New Verse"
-    }),
-    todoDevRowHtml({
-      emoji: "🦁",
-      text: "Feed Fred"
-    }),
-    todoDevRowHtml({
-      emoji: "🦙",
-      text: "Wake up Pete"
-    }),
-    todoDevRowHtml({
-      emoji: "⭐",
-      text: "Earn a Medal"
-    }),
-    todoDevRowHtml({
-      emoji: "🎮",
-      text: "Play a Game"
-    })
-  ].join("");
+  const rowsHtml = generateZooTodos()
+    .map(todoDevRowHtml)
+    .join("");
 
   wrap.innerHTML = `
     ${homePillHtml("Home")}
