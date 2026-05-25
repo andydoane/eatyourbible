@@ -9,7 +9,14 @@
       translation: params.get("translation") || "",
       source: params.get("source") || "",
       mix: params.get("mix") === "1",
-      mode: params.get("mode") || ""
+      mode: params.get("mode") || "",
+
+      todoSource: params.get("todoSource") || "",
+      todoType: params.get("todoType") || "",
+      todoVerseId: params.get("todoVerseId") || "",
+      todoPetName: params.get("todoPetName") || "",
+      todoPetEmoji: params.get("todoPetEmoji") || "",
+      todoText: params.get("todoText") || ""
     };
   }
 
