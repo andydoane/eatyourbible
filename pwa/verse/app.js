@@ -491,6 +491,7 @@ function bindHomePill(rootEl) {
     } catch (e) { }
 
     State.pendingPetUnlockVerseId = null;
+    State.activeTodo = null;
     go(Screen.TITLE);
   };
 }
@@ -2571,6 +2572,7 @@ const State = {
   finalIntroPromptDone: false,
   selectedVerseId: null,
   pendingPetUnlockVerseId: null,
+  activeTodo: null,
   petAnimationVerseId: null,
   petAnimationStatus: "",
   petAnimationClass: "",
@@ -5307,6 +5309,100 @@ function generateZooTodos() {
   return todos;
 }
 
+function getZooTodoActionText(type, petName) {
+  if (type === "wake_pet") return `Wake up ${petName}`;
+  if (type === "feed_pet") return `Feed ${petName}`;
+  return "";
+}
+
+async function startZooTodo(todoType, verseId) {
+  if (todoType === "learn_new_verse") {
+    showDialog({
+      title: "Coming Soon!",
+      body: "A verse selection screen will live here.",
+      actions: [dlgBtn("OK", { onClick: closeDialog })]
+    });
+    return;
+  }
+
+  if (todoType !== "feed_pet" && todoType !== "wake_pet") return;
+  if (!verseId) return;
+
+  const petName = getBibloPetDisplayNameForVerseId(verseId);
+  const petEmoji = getBibloPetEmojiForVerseId(verseId);
+
+  State.activeTodo = {
+    type: todoType,
+    verseId,
+    petName,
+    petEmoji,
+    text: getZooTodoActionText(todoType, petName)
+  };
+
+  State.selectedVerseId = verseId;
+
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set("v", verseId);
+    history.replaceState(null, "", url.toString());
+
+    await loadVerse(verseId);
+    HAS_VERSE_SELECTION = true;
+
+    go(Screen.PRACTICE_HUB);
+  } catch (err) {
+    console.error(err);
+
+    State.activeTodo = null;
+
+    showDialog({
+      title: "Verse JSON not found",
+      body: `Could not load ${DATA_DIR}${verseId}.json`,
+      actions: [dlgBtn("OK", { onClick: closeDialog })]
+    });
+  }
+}
+
+function bindZooTodoRows(rootEl) {
+  rootEl.querySelectorAll("[data-todo-type]").forEach((btn) => {
+    btn.onclick = async (e) => {
+      e.stopPropagation();
+
+      if (btn.disabled) return;
+
+      const todoType = btn.getAttribute("data-todo-type") || "";
+      const verseId = btn.getAttribute("data-verse-id") || "";
+
+      await startZooTodo(todoType, verseId);
+    };
+  });
+}
+
+function practiceHubHeaderHtml() {
+  const activeTodo = State.activeTodo;
+
+  if (
+    activeTodo &&
+    activeTodo.verseId &&
+    activeTodo.verseId === VERSE_ID &&
+    (activeTodo.type === "feed_pet" || activeTodo.type === "wake_pet")
+  ) {
+    return `
+      <div class="practice-todo-header">
+        <div class="practice-todo-pet" aria-hidden="true">
+          ${bibloPetVisualHtml(activeTodo.verseId, activeTodo.petEmoji || "🐾")}
+        </div>
+
+        <h2 id="practiceHubTitle">
+          ${escapeHtml(activeTodo.text || getZooTodoActionText(activeTodo.type, activeTodo.petName || "BibloPet"))}
+        </h2>
+      </div>
+    `;
+  }
+
+  return `<h2 id="practiceHubTitle">Practice</h2>`;
+}
+
 function screenTodo(idx) {
   const wrap = document.createElement("div");
   wrap.className = "todo-screen";
@@ -5381,6 +5477,7 @@ function screenTodoDev(idx) {
   `;
 
   bindHomePill(wrap);
+  bindZooTodoRows(wrap);
 
   return makeSlide({ idx, bg: "#a7cb6f", navHidden: true, inner: wrap });
 }
@@ -6580,11 +6677,13 @@ function screenPracticeHub(idx) {
   })}
   `;
 
+  const headerHtml = practiceHubHeaderHtml();
+
   wrap.innerHTML = `
     <div class="title-content practice-content">
       <div class="practice-title-row">
         ${homePillHtml()}
-        <h2 id="practiceHubTitle">Practice</h2>
+        ${headerHtml}
         <div class="practice-title-spacer" aria-hidden="true"></div>
       </div>
 
