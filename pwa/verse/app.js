@@ -2512,6 +2512,7 @@ const Screen = {
   TITLE: "title",
   TODO: "todo",
   TODO_DEV: "todo_dev",
+  NEW_VERSE_PICKER: "new_verse_picker",
   PROGRESS: "progress",
   VERSE_DETAIL: "verse_detail",
   LEARN_LEVEL: "learn_level",
@@ -3371,6 +3372,7 @@ function screenToIndex(screen) {
     Screen.TITLE,
     Screen.TODO,
     Screen.TODO_DEV,
+    Screen.NEW_VERSE_PICKER,
     Screen.PROGRESS,
     Screen.PET_STATS,
     Screen.VERSE_DETAIL,
@@ -4639,6 +4641,7 @@ function renderNav() {
     State.screen !== Screen.TITLE &&
     State.screen !== Screen.TODO &&
     State.screen !== Screen.TODO_DEV &&
+    State.screen !== Screen.NEW_VERSE_PICKER &&
     State.screen !== Screen.CELEBRATION &&
     State.screen !== Screen.LEARN_LEVEL &&
     State.screen !== Screen.PRACTICE_GATE &&
@@ -5342,11 +5345,12 @@ function getZooTodoActionText(type, petName) {
 
 async function startZooTodo(todoType, verseId) {
   if (todoType === "learn_new_verse") {
-    showDialog({
-      title: "Coming Soon!",
-      body: "A verse selection screen will live here.",
-      actions: [dlgBtn("OK", { onClick: closeDialog })]
-    });
+    State.activeTodo = {
+      type: "learn_new_verse",
+      text: "Learn a New Verse"
+    };
+
+    go(Screen.NEW_VERSE_PICKER);
     return;
   }
 
@@ -5426,6 +5430,125 @@ function practiceHubHeaderHtml() {
   }
 
   return `<h2 id="practiceHubTitle">Practice</h2>`;
+}
+
+function getUnlearnedVerseListItems() {
+  if (!Array.isArray(VERSE_LIST)) return [];
+
+  return VERSE_LIST.filter((item) => {
+    const verseId = item?.id || "";
+    if (!verseId) return false;
+
+    const verseProgress = getVerseProgress(verseId);
+    return !verseProgress?.learnCompleted;
+  });
+}
+
+function newVersePickerCardHtml(item) {
+  const verseId = item?.id || "";
+  const ref = item?.ref || verseId;
+  const petEmoji = getBibloPetEmojiForVerseId(verseId);
+
+  return `
+    <button
+      class="new-verse-card no-zoom"
+      type="button"
+      data-new-verse-id="${escapeHtml(verseId)}"
+      aria-label="Learn ${escapeHtml(ref)}"
+    >
+      <div class="new-verse-card-pet" aria-hidden="true">
+        ${bibloPetVisualHtml(verseId, petEmoji)}
+      </div>
+
+      <div class="new-verse-card-ref">
+        ${escapeHtml(ref)}
+      </div>
+    </button>
+  `;
+}
+
+async function startLearningNewVerse(verseId) {
+  if (!verseId) return;
+
+  State.activeTodo = null;
+  State.selectedVerseId = verseId;
+  State.learnLevel = "not_at_all";
+  State.learnStartScreen = Screen.LISTEN;
+
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set("v", verseId);
+    history.replaceState(null, "", url.toString());
+
+    await loadVerse(verseId);
+    HAS_VERSE_SELECTION = true;
+
+    resetLearn(false);
+    startLearnInstruction("listen");
+  } catch (err) {
+    console.error(err);
+
+    showDialog({
+      title: "Verse JSON not found",
+      body: `Could not load ${DATA_DIR}${verseId}.json`,
+      actions: [dlgBtn("OK", { onClick: closeDialog })]
+    });
+  }
+}
+
+function screenNewVersePicker(idx) {
+  const wrap = document.createElement("div");
+  wrap.className = "title-screen practice-screen new-verse-picker-screen";
+
+  const unlearnedItems = getUnlearnedVerseListItems();
+
+  const cardsHtml = unlearnedItems.length
+    ? `
+      <div class="practice-pick-heading">
+        Choose a New Verse
+      </div>
+
+      <div class="new-verse-grid">
+        ${unlearnedItems.map(newVersePickerCardHtml).join("")}
+      </div>
+    `
+    : `
+      <div class="practice-empty-card">
+        <div class="practice-empty-title">All Verses Learned!</div>
+        <div class="practice-empty-text">Your BibloPets are doing great.</div>
+      </div>
+    `;
+
+  wrap.innerHTML = `
+    <div class="title-content practice-content">
+      <div class="practice-title-row">
+        ${homePillHtml()}
+        <h2 id="newVersePickerTitle">New Verse</h2>
+        <div class="practice-title-spacer" aria-hidden="true"></div>
+      </div>
+
+      <div class="practice-scroll-wrap">
+        <div class="practice-card-list">
+          ${cardsHtml}
+        </div>
+      </div>
+    </div>
+
+    <div class="practice-scroll-vignette" aria-hidden="true"></div>
+  `;
+
+  bindHomePill(wrap);
+
+  wrap.querySelectorAll("[data-new-verse-id]").forEach((btn) => {
+    btn.onclick = async (e) => {
+      e.stopPropagation();
+
+      const verseId = btn.getAttribute("data-new-verse-id") || "";
+      await startLearningNewVerse(verseId);
+    };
+  });
+
+  return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
 }
 
 function screenTodo(idx) {
@@ -6955,13 +7078,14 @@ function render() {
 
   const uniq = Array.from(new Set(indicesToRender.filter(i => i !== null && i >= 0)));
   for (const idx of uniq) {
-    const screen = ["intro", "title_sequence", "title", "todo", "todo_dev", "progress", "pet_stats", "verse_detail", "learn_level", "practice_gate", "learn_instruction", "listen", "meaning", "chunks", "echo", "hide", "final_recall", "celebration", "pet_unlock", "practice_hub", "practice", "playground", "game_mix_finished"][idx];
+    const screen = ["intro", "title_sequence", "title", "todo", "todo_dev", "new_verse_picker", "progress", "pet_stats", "verse_detail", "learn_level", "practice_gate", "learn_instruction", "listen", "meaning", "chunks", "echo", "hide", "final_recall", "celebration", "pet_unlock", "practice_hub", "practice", "playground", "game_mix_finished"][idx];
     let slide = null;
     if (screen === Screen.INTRO) slide = screenIntro(idx);
     if (screen === Screen.TITLE_SEQUENCE) slide = screenTitleSequence(idx);
     if (screen === Screen.TITLE) slide = screenTitle(idx);
     if (screen === Screen.TODO) slide = screenTodo(idx);
     if (screen === Screen.TODO_DEV) slide = screenTodoDev(idx);
+    if (screen === Screen.NEW_VERSE_PICKER) slide = screenNewVersePicker(idx);
     if (screen === Screen.PROGRESS) slide = screenProgress(idx);
     if (screen === Screen.PET_STATS) slide = screenPetStats(idx);
     if (screen === Screen.VERSE_DETAIL) slide = screenVerseDetail(idx);
@@ -7052,6 +7176,8 @@ function render() {
     setScreen(Screen.TODO);
   } else if (requestedScreen === "todo_dev") {
     setScreen(Screen.TODO_DEV);
+  } else if (requestedScreen === "new_verse_picker") {
+    setScreen(Screen.NEW_VERSE_PICKER);
   } else if (requestedScreen === "title") {
     setScreen(Screen.TITLE);
   } else {

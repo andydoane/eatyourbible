@@ -1074,6 +1074,105 @@ Practice Games Card List
 ========================= */
 
 /* =========================
+New Verse Picker
+========================= */
+
+.new-verse-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: clamp(14px, 3vw, 22px);
+}
+
+.new-verse-card {
+  min-width: 0;
+  min-height: clamp(190px, 30vw, 260px);
+  border: 8px solid #ffffff;
+  border-radius: clamp(28px, 7vw, 44px);
+  overflow: hidden;
+  padding: clamp(12px, 3vw, 20px);
+  background: #fbf8f6;
+  color: #333333;
+  font: inherit;
+  box-shadow: 0 8px 0 rgba(0, 0, 0, 0.24);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(10px, 2.4vw, 18px);
+  text-align: center;
+}
+
+.new-verse-card:active {
+  transform: translateY(5px);
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.24);
+}
+
+.new-verse-card-pet {
+  width: clamp(90px, 24vw, 150px);
+  height: clamp(90px, 24vw, 150px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.new-verse-card-pet .biblopet-visual {
+  width: 100%;
+  height: 100%;
+  font-size: clamp(90px, 24vw, 150px);
+}
+
+.new-verse-card-pet .biblopet-img {
+  width: 1em;
+  height: 1em;
+  max-width: none;
+  max-height: none;
+  object-fit: contain;
+}
+
+.new-verse-card-pet .biblopet-emoji-fallback {
+  font-size: clamp(70px, 19vw, 120px);
+}
+
+.new-verse-card-ref {
+  width: 100%;
+  color: #7f66c6;
+  font-size: clamp(23px, 5.6vw, 38px);
+  font-weight: 900;
+  line-height: 0.98;
+  text-align: center;
+  text-wrap: balance;
+}
+
+@media (max-width: 380px) {
+  .new-verse-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .new-verse-card {
+    min-height: 176px;
+    border-width: 6px;
+    border-radius: 26px;
+    padding: 10px;
+  }
+
+  .new-verse-card-pet {
+    width: 82px;
+    height: 82px;
+  }
+
+  .new-verse-card-pet .biblopet-visual {
+    font-size: 82px;
+  }
+
+  .new-verse-card-ref {
+    font-size: 21px;
+  }
+}
+
+/* =========================
 Zoo To-Do Clipboard Prototype
 ========================= */
 
