@@ -39,6 +39,64 @@
     return ["easy", "medium", "hard"].includes(mode) ? mode : "";
   }
 
+  function isZooTodoLaunchForVerse(verseId = "") {
+    const params = getLaunchParams();
+
+    if (params.todoSource !== "zoo_todo") return false;
+    if (params.todoType !== "feed_pet" && params.todoType !== "wake_pet") return false;
+
+    const safeVerseId = String(verseId || params.verseId || "").trim();
+    const todoVerseId = String(params.todoVerseId || "").trim();
+
+    if (!safeVerseId || !todoVerseId) return false;
+
+    return safeVerseId === todoVerseId;
+  }
+
+  function getZooTodoActionText() {
+    const params = getLaunchParams();
+
+    if (params.todoText) return params.todoText;
+
+    const petName = params.todoPetName || "BibloPet";
+
+    if (params.todoType === "wake_pet") return `You woke up ${petName}!`;
+    if (params.todoType === "feed_pet") return `You fed ${petName}!`;
+
+    return "You helped your BibloPet!";
+  }
+
+  function getZooTodoCompleteTitleMarkup() {
+    return `
+      <div class="vm-game-title vm-complete-title">
+        <div>Zoo To-Do Complete!</div>
+        <div>${escapeHtml(getZooTodoActionText())}</div>
+      </div>
+    `;
+  }
+
+  function getZooTodoCompleteIconHtml(verseId = "") {
+    const params = getLaunchParams();
+    const safeVerseId = String(verseId || params.todoVerseId || params.verseId || "").trim();
+    const safeEmoji = params.todoPetEmoji || "🐾";
+
+    if (!safeVerseId) {
+      return escapeHtml(safeEmoji);
+    }
+
+    const imgSrc = `../../pet_images/pet_${safeVerseId}.png`;
+
+    return `
+      <img
+        src="${escapeHtml(imgSrc)}"
+        alt=""
+        draggable="false"
+        onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';"
+      >
+      <span style="display:none">${escapeHtml(safeEmoji)}</span>
+    `;
+  }
+
   function showGameMixQuitConfirm({
     title = "Quit Game Mix?",
     noText = "Keep Playing",
@@ -1431,12 +1489,19 @@ function renderCompleteScreen({
   const medal = getModeMedal(normalizedMode);
   const alreadyCompleted = !!completion?.alreadyCompleted;
   const petUnlocked = !!completion?.reward?.petUnlockTriggered;
+  const zooTodoComplete = !petUnlocked && isZooTodoLaunchForVerse(verseId);
 
   const displayIcon = petUnlocked
     ? "📦"
-    : alreadyCompleted
-      ? (gameIcon || icon)
-      : medal;
+    : zooTodoComplete
+      ? ""
+      : alreadyCompleted
+        ? (gameIcon || icon)
+        : medal;
+
+  const zooTodoIconHtml = zooTodoComplete
+    ? getZooTodoCompleteIconHtml(verseId)
+    : "";
 
   const iconButtonAttrs = petUnlocked
     ? `button type="button" id="gameShellPetUnlockBtn" aria-label="Open BibloPet box"`
@@ -1446,6 +1511,10 @@ function renderCompleteScreen({
 
   const messageMarkup = gameMessage || statsText || statsHtml
     ? `<div class="vm-game-complete-stats">${statsHtml || escapeHtml(gameMessage || statsText)}</div>`
+    : "";
+
+  const zooTodoMessageMarkup = zooTodoComplete
+    ? `<div class="vm-game-complete-stats">Great job practicing the verse.</div>`
     : "";
 
   if (!useStandardComplete){
@@ -1498,19 +1567,21 @@ function renderCompleteScreen({
         <div>a BibloPet box!</div>
       </div>
     `
-    : alreadyCompleted
-      ? `
-        <div class="vm-game-title vm-complete-title">
-          <div>You completed</div>
-          <div>${escapeHtml(modeLabel)} again!</div>
-        </div>
-      `
-      : `
-        <div class="vm-game-title vm-complete-title">
-          <div>You've earned</div>
-          <div>a new medal!</div>
-        </div>
-      `;
+    : zooTodoComplete
+      ? getZooTodoCompleteTitleMarkup()
+      : alreadyCompleted
+        ? `
+          <div class="vm-game-title vm-complete-title">
+            <div>You completed</div>
+            <div>${escapeHtml(modeLabel)} again!</div>
+          </div>
+        `
+        : `
+          <div class="vm-game-title vm-complete-title">
+            <div>You've earned</div>
+            <div>a new medal!</div>
+          </div>
+        `;
 
   const backButtonMarkup = petUnlocked
     ? ""
@@ -1526,7 +1597,9 @@ function renderCompleteScreen({
 
   const finalMessageMarkup = petUnlocked
     ? ""
-    : messageMarkup;
+    : zooTodoComplete
+      ? zooTodoMessageMarkup
+      : messageMarkup;
 
   const actionButtonsMarkup = petUnlocked
     ? ""
@@ -1553,8 +1626,8 @@ function renderCompleteScreen({
 
       <div class="vm-game-stage">
         <div class="vm-game-center vm-complete-center">
-          <${iconButtonAttrs} class="vm-game-icon vm-complete-icon ${petUnlocked ? "is-pet-box" : alreadyCompleted ? "is-repeat" : "is-new-medal"}">
-            ${iconHtml && !petUnlocked ? iconHtml : escapeHtml(displayIcon)}
+          <${iconButtonAttrs} class="vm-game-icon vm-complete-icon ${petUnlocked ? "is-pet-box" : (alreadyCompleted || zooTodoComplete) ? "is-repeat" : "is-new-medal"}">
+            ${zooTodoComplete ? zooTodoIconHtml : iconHtml && !petUnlocked ? iconHtml : escapeHtml(displayIcon)}
           </${iconButtonClose}>
 
           ${titleMarkup}
