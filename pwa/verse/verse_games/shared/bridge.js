@@ -407,6 +407,22 @@ function markCompleted(payload){
     window.location.href = target.href;
   }
 
+  function openZooTodo() {
+    const params = getParams();
+
+    const target = new URL("../../index.html", window.location.href);
+
+    if (params.verseId) {
+      target.searchParams.set("v", params.verseId);
+    }
+
+    // While Zoo To-Do is still hidden behind the Coming Soon page,
+    // return testers directly to the real clipboard prototype.
+    target.searchParams.set("screen", "todo_dev");
+
+    window.location.href = target.href;
+  }
+
   function openPetUnlock(){
     const params = getParams();
 
@@ -514,6 +530,7 @@ function exitGame(){
     markVersePracticed,
     completeGameRun,
     returnToTitle,
+    openZooTodo,
     openPetUnlock,
     openPetUnlockFromMix,
     continueGameMix,

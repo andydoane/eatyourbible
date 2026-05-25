@@ -70,7 +70,14 @@
     return `
       <div class="vm-game-title vm-complete-title">
         <div>Zoo To-Do Complete!</div>
-        <div>${escapeHtml(getZooTodoActionText())}</div>
+      </div>
+    `;
+  }
+
+  function getZooTodoCompleteSubtitleMarkup() {
+    return `
+      <div class="vm-game-complete-stats">
+        ✅ ${escapeHtml(getZooTodoActionText())}
       </div>
     `;
   }
@@ -1514,7 +1521,7 @@ function renderCompleteScreen({
     : "";
 
   const zooTodoMessageMarkup = zooTodoComplete
-    ? `<div class="vm-game-complete-stats">Great job practicing the verse.</div>`
+    ? getZooTodoCompleteSubtitleMarkup()
     : "";
 
   if (!useStandardComplete){
@@ -1610,13 +1617,21 @@ function renderCompleteScreen({
           <button class="vm-btn vm-btn-secondary" id="gameShellEndMixBtn" type="button">End Mix</button>
         </div>
       `
-      : `
-        <div class="vm-game-actions vm-complete-actions">
-          <button class="vm-btn" id="gameShellPlayAgainBtn" type="button">${escapeHtml(playAgainText)}</button>
-          <button class="vm-btn vm-btn-secondary" id="gameShellMoreGamesBtn" type="button">${escapeHtml(moreGamesText)}</button>
-          <button class="vm-btn vm-btn-secondary" id="gameShellChangeVerseBtn" type="button">${escapeHtml(changeVerseText)}</button>
-        </div>
-      `;
+      : zooTodoComplete
+        ? `
+          <div class="vm-game-actions vm-complete-actions">
+            <button class="vm-btn" id="gameShellCheckZooTodoBtn" type="button">Check Zoo To-Do</button>
+            <button class="vm-btn vm-btn-secondary" id="gameShellMoreGamesBtn" type="button">${escapeHtml(moreGamesText)}</button>
+            <button class="vm-btn vm-btn-secondary" id="gameShellChangeVerseBtn" type="button">${escapeHtml(changeVerseText)}</button>
+          </div>
+        `
+        : `
+          <div class="vm-game-actions vm-complete-actions">
+            <button class="vm-btn" id="gameShellPlayAgainBtn" type="button">${escapeHtml(playAgainText)}</button>
+            <button class="vm-btn vm-btn-secondary" id="gameShellMoreGamesBtn" type="button">${escapeHtml(moreGamesText)}</button>
+            <button class="vm-btn vm-btn-secondary" id="gameShellChangeVerseBtn" type="button">${escapeHtml(changeVerseText)}</button>
+          </div>
+        `;
 
   app.innerHTML = `
     <div class="vm-game-screen vm-complete-screen ${petUnlocked ? "is-pet-unlock" : ""}"${styleVarsHtml(theme)}>
@@ -1641,6 +1656,7 @@ function renderCompleteScreen({
   `;
 
   const playAgainBtn = document.getElementById("gameShellPlayAgainBtn");
+  const checkZooTodoBtn = document.getElementById("gameShellCheckZooTodoBtn");
   const moreGamesBtn = document.getElementById("gameShellMoreGamesBtn");
   const changeVerseBtn = document.getElementById("gameShellChangeVerseBtn");
   const continueMixBtn = document.getElementById("gameShellContinueMixBtn");
@@ -1677,6 +1693,18 @@ function renderCompleteScreen({
   };
 
   if (playAgainBtn && typeof onPlayAgain === "function") playAgainBtn.onclick = onPlayAgain;
+
+  if (checkZooTodoBtn) {
+    checkZooTodoBtn.onclick = () => {
+      if (typeof window.VerseGameBridge?.openZooTodo === "function") {
+        window.VerseGameBridge.openZooTodo();
+        return;
+      }
+
+      moreGamesAction();
+    };
+  }
+
   if (moreGamesBtn) moreGamesBtn.onclick = moreGamesAction;
   if (changeVerseBtn) changeVerseBtn.onclick = changeVerseAction;
 
