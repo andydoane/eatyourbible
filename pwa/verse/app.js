@@ -2504,6 +2504,7 @@ const Screen = {
   TITLE_SEQUENCE: "title_sequence",
   TITLE: "title",
   TODO: "todo",
+  TODO_DEV: "todo_dev",
   PROGRESS: "progress",
   VERSE_DETAIL: "verse_detail",
   LEARN_LEVEL: "learn_level",
@@ -3361,6 +3362,7 @@ function screenToIndex(screen) {
     Screen.TITLE_SEQUENCE,
     Screen.TITLE,
     Screen.TODO,
+    Screen.TODO_DEV,
     Screen.PROGRESS,
     Screen.PET_STATS,
     Screen.VERSE_DETAIL,
@@ -5139,6 +5141,32 @@ function screenTitle(idx) {
   return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
 }
 
+function todoDevRowHtml({ image = "", emoji = "", text = "" }) {
+  const iconHtml = image
+    ? `
+      <img
+        class="todo-dev-row-img"
+        src="${escapeHtml(image)}"
+        alt=""
+        draggable="false"
+        onerror="this.style.display='none'"
+      >
+    `
+    : `<span class="todo-dev-row-emoji" aria-hidden="true">${escapeHtml(emoji)}</span>`;
+
+  return `
+    <button class="todo-dev-row no-zoom" type="button">
+      <span class="todo-dev-row-icon">
+        ${iconHtml}
+      </span>
+
+      <span class="todo-dev-row-text">
+        ${escapeHtml(text)}
+      </span>
+    </button>
+  `;
+}
+
 function screenTodo(idx) {
   const wrap = document.createElement("div");
   wrap.className = "todo-screen";
@@ -5146,7 +5174,7 @@ function screenTodo(idx) {
   wrap.innerHTML = `
     ${homePillHtml("Home")}
 
-    <div class="todo-coming-soon-card">
+    <div class="todo-coming-soon-card" id="todoComingSoonCard">
       <img
         class="todo-coming-soon-img"
         src="${IMG_DIR}button_todo.png"
@@ -5164,7 +5192,76 @@ function screenTodo(idx) {
 
   bindHomePill(wrap);
 
+  bindLongPress(wrap.querySelector("#todoComingSoonCard"), {
+    delay: 1000,
+    onLongPress: () => {
+      go(Screen.TODO_DEV);
+    }
+  });
+
   return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
+}
+
+function screenTodoDev(idx) {
+  const wrap = document.createElement("div");
+  wrap.className = "todo-dev-screen";
+
+  const rowsHtml = [
+    todoDevRowHtml({
+      image: `${IMG_DIR}clipboard_bible.png`,
+      text: "Learn a New Verse"
+    }),
+    todoDevRowHtml({
+      emoji: "🦁",
+      text: "Feed Fred"
+    }),
+    todoDevRowHtml({
+      emoji: "🦙",
+      text: "Wake up Pete"
+    }),
+    todoDevRowHtml({
+      emoji: "⭐",
+      text: "Earn a Medal"
+    }),
+    todoDevRowHtml({
+      emoji: "🎮",
+      text: "Play a Game"
+    })
+  ].join("");
+
+  wrap.innerHTML = `
+    ${homePillHtml("Home")}
+
+    <main class="todo-dev-page">
+      <section class="todo-dev-clipboard" aria-label="Zoo To-Do prototype">
+        <img
+          class="todo-dev-clip"
+          src="${IMG_DIR}clipboard_clip.png"
+          alt=""
+          draggable="false"
+          onerror="this.style.display='none'"
+        >
+
+        <div class="todo-dev-paper">
+          <img
+            class="todo-dev-title-img"
+            src="${IMG_DIR}clipboard_title.png"
+            alt="Zoo To-Do"
+            draggable="false"
+            onerror="this.style.display='none'"
+          >
+
+          <div class="todo-dev-list">
+            ${rowsHtml}
+          </div>
+        </div>
+      </section>
+    </main>
+  `;
+
+  bindHomePill(wrap);
+
+  return makeSlide({ idx, bg: "#a7cb6f", navHidden: true, inner: wrap });
 }
 
 
@@ -6613,12 +6710,13 @@ function render() {
 
   const uniq = Array.from(new Set(indicesToRender.filter(i => i !== null && i >= 0)));
   for (const idx of uniq) {
-    const screen = ["intro", "title_sequence", "title", "todo", "progress", "pet_stats", "verse_detail", "learn_level", "practice_gate", "learn_instruction", "listen", "meaning", "chunks", "echo", "hide", "final_recall", "celebration", "pet_unlock", "practice_hub", "practice", "playground", "game_mix_finished"][idx];
+    const screen = ["intro", "title_sequence", "title", "todo", "todo_dev", "progress", "pet_stats", "verse_detail", "learn_level", "practice_gate", "learn_instruction", "listen", "meaning", "chunks", "echo", "hide", "final_recall", "celebration", "pet_unlock", "practice_hub", "practice", "playground", "game_mix_finished"][idx];
     let slide = null;
     if (screen === Screen.INTRO) slide = screenIntro(idx);
     if (screen === Screen.TITLE_SEQUENCE) slide = screenTitleSequence(idx);
     if (screen === Screen.TITLE) slide = screenTitle(idx);
     if (screen === Screen.TODO) slide = screenTodo(idx);
+    if (screen === Screen.TODO_DEV) slide = screenTodoDev(idx);
     if (screen === Screen.PROGRESS) slide = screenProgress(idx);
     if (screen === Screen.PET_STATS) slide = screenPetStats(idx);
     if (screen === Screen.VERSE_DETAIL) slide = screenVerseDetail(idx);
@@ -6705,6 +6803,10 @@ function render() {
     setScreen(Screen.PLAYGROUND);
   } else if (requestedScreen === "progress" && HAS_VERSE_SELECTION) {
     setScreen(Screen.PROGRESS);
+  } else if (requestedScreen === "todo") {
+    setScreen(Screen.TODO);
+  } else if (requestedScreen === "todo_dev") {
+    setScreen(Screen.TODO_DEV);
   } else if (requestedScreen === "title") {
     setScreen(Screen.TITLE);
   } else {
