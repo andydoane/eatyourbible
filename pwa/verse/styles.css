@@ -1064,6 +1064,11 @@ Zoo To-Do Placeholder
   text-wrap: balance;
 }
 
+.todo-screen .screen-home-pill,
+.todo-dev-screen .screen-home-pill {
+  left: max(18px, calc((100vw - 700px) / 2));
+}
+
 /* =========================
 Practice Games Card List
 ========================= */
