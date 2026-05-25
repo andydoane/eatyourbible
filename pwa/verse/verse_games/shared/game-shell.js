@@ -76,7 +76,7 @@
 
   function getZooTodoCompleteSubtitleMarkup() {
     return `
-      <div class="vm-game-complete-stats">
+      <div class="vm-zoo-todo-complete-subtitle">
         ✅ ${escapeHtml(getZooTodoActionText())}
       </div>
     `;

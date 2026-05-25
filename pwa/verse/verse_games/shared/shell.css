@@ -231,6 +231,16 @@ body{
   text-wrap: balance;
 }
 
+.vm-zoo-todo-complete-subtitle {
+  width: min(100%, 400px);
+  color: rgba(255, 255, 255, 0.98);
+  font-size: clamp(24px, 6.4vw, 34px);
+  font-weight: 900;
+  line-height: 1.05;
+  text-align: center;
+  text-wrap: balance;
+}
+
 /* Shared completion screen v2 */
 
 .vm-complete-screen{
@@ -459,6 +469,12 @@ button.vm-complete-icon.is-pet-box:focus-visible{
     font-size: clamp(17px, 4.8vw, 22px);
   }
 
+  .vm-zoo-todo-complete-subtitle {
+    margin-top: 4px;
+    margin-bottom: 10px;
+    font-size: clamp(22px, 6vw, 30px);
+  }
+
   .vm-complete-actions{
     gap: 12px;
   }
@@ -500,6 +516,11 @@ button.vm-complete-icon.is-pet-box:focus-visible{
   .vm-game-complete-stats{
     font-size: clamp(16px, 4.4vw, 20px);
     margin-bottom: 10px;
+  }
+
+  .vm-zoo-todo-complete-subtitle {
+    font-size: clamp(20px, 5.7vw, 27px);
+    margin-bottom: 8px;
   }
 
   .vm-complete-actions{
