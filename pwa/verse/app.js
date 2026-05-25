@@ -3599,6 +3599,27 @@ function getReturnToPlaygroundUrl() {
   return getReturnToScreenUrl("playground");
 }
 
+function appendZooTodoLaunchParams(params) {
+  if (!params || !State.activeTodo) return;
+
+  const activeTodo = State.activeTodo;
+
+  if (
+    !activeTodo.verseId ||
+    activeTodo.verseId !== VERSE_ID ||
+    (activeTodo.type !== "feed_pet" && activeTodo.type !== "wake_pet")
+  ) {
+    return;
+  }
+
+  params.set("todoSource", "zoo_todo");
+  params.set("todoType", activeTodo.type);
+  params.set("todoVerseId", activeTodo.verseId);
+  params.set("todoPetName", activeTodo.petName || getBibloPetDisplayNameForVerseId(activeTodo.verseId));
+  params.set("todoPetEmoji", activeTodo.petEmoji || getBibloPetEmojiForVerseId(activeTodo.verseId));
+  params.set("todoText", activeTodo.text || getZooTodoActionText(activeTodo.type, activeTodo.petName || "BibloPet"));
+}
+
 function launchExternalGame(manifest, options = {}) {
   if (!manifest || !manifest.launchUrl || !VERSE_ID) return;
 
@@ -3618,6 +3639,8 @@ function launchExternalGame(manifest, options = {}) {
     params.set("mode", options.mode);
   }
 
+  appendZooTodoLaunchParams(params);
+
   window.location.href = `${manifest.launchUrl}?${params.toString()}`;
 }
 
@@ -3631,6 +3654,8 @@ function launchExternalPlaygroundActivity(manifest) {
     returnTo: getReturnToPlaygroundUrl(),
     source: "verse_memory_app"
   });
+
+  appendZooTodoLaunchParams(params);
 
   window.location.href = `${manifest.launchUrl}?${params.toString()}`;
 }
