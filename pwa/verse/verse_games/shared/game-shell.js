@@ -69,7 +69,8 @@
   function getZooTodoCompleteTitleMarkup() {
     return `
       <div class="vm-game-title vm-complete-title">
-        <div>Zoo To-Do Complete!</div>
+        <div>Zoo To-Do</div>
+        <div>Complete!</div>
       </div>
     `;
   }
