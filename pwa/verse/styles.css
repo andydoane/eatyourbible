@@ -1091,7 +1091,7 @@ Zoo To-Do Clipboard Prototype
 }
 
 .todo-dev-clipboard {
-  width: min(100%, 760px);
+  width: min(100%, 700px);
   position: relative;
   margin-top: clamp(44px, 9vw, 74px);
   padding:
@@ -1120,6 +1120,9 @@ Zoo To-Do Clipboard Prototype
   padding:
     clamp(52px, 9vw, 86px) clamp(18px, 5vw, 50px) clamp(28px, 7vw, 56px);
   min-height: 420px;
+  box-shadow:
+    0 6px 0 rgba(0, 0, 0, 0.10),
+    0 12px 18px rgba(0, 0, 0, 0.12);
 }
 
 .todo-dev-title-img {

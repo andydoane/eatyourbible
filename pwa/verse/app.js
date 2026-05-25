@@ -4604,6 +4604,8 @@ function renderNav() {
     State.screen !== Screen.INTRO &&
     State.screen !== Screen.TITLE_SEQUENCE &&
     State.screen !== Screen.TITLE &&
+    State.screen !== Screen.TODO &&
+    State.screen !== Screen.TODO_DEV &&
     State.screen !== Screen.CELEBRATION &&
     State.screen !== Screen.LEARN_LEVEL &&
     State.screen !== Screen.PRACTICE_GATE &&
