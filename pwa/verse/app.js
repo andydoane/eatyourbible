@@ -2574,6 +2574,7 @@ const State = {
   selectedVerseId: null,
   pendingPetUnlockVerseId: null,
   activeTodo: null,
+  pendingZooTodoGameId: "",
   petAnimationVerseId: null,
   petAnimationStatus: "",
   petAnimationClass: "",
@@ -5198,6 +5199,7 @@ function todoDevRowHtml(todo = {}, index = 0) {
     emoji = "",
     text = "",
     verseId = "",
+    gameId = "",
     petEmoji = "",
     disabled = false
   } = todo;
@@ -5228,6 +5230,7 @@ function todoDevRowHtml(todo = {}, index = 0) {
       type="button"
       data-todo-type="${escapeHtml(type)}"
       data-verse-id="${escapeHtml(verseId)}"
+      data-game-id="${escapeHtml(gameId)}"
       ${disabled ? "disabled" : ""}
     >
       <span
@@ -5280,6 +5283,7 @@ function hasAnyLearnedVerse(progress) {
   });
 }
 
+const MAX_ZOO_TODOS = 6;
 const MAX_SLEEPING_ZOO_TODOS = 3;
 const MAX_HUNGRY_ZOO_TODOS = 3;
 
@@ -5290,6 +5294,85 @@ function getZooTodoLastPracticedAt(todo = {}) {
 
 function sortZooTodosOldestFirst(a, b) {
   return getZooTodoLastPracticedAt(a) - getZooTodoLastPracticedAt(b);
+}
+
+function isOfficialVerseId(verseId) {
+  return !!verseId && !!getVerseListItemById(verseId);
+}
+
+function getVerseLearnedAtForTodo(verseProgress = {}) {
+  const value = Number(verseProgress.learnedAt || verseProgress.lastPracticedAt || 0);
+  return Number.isFinite(value) ? value : 0;
+}
+
+function getMostRecentLearnedOfficialVerseId(progress) {
+  if (!progress?.verses || typeof progress.verses !== "object") return "";
+
+  let bestVerseId = "";
+  let bestLearnedAt = 0;
+
+  for (const verseId of getKnownZooTodoVerseIds(progress)) {
+    const verseProgress = progress.verses?.[verseId];
+    if (!verseProgress?.learnCompleted) continue;
+
+    const learnedAt = getVerseLearnedAtForTodo(verseProgress);
+
+    if (learnedAt > bestLearnedAt) {
+      bestLearnedAt = learnedAt;
+      bestVerseId = verseId;
+    }
+  }
+
+  return bestVerseId;
+}
+
+function getZooTodoMedalVerseId(progress) {
+  if (
+    VERSE_ID &&
+    isOfficialVerseId(VERSE_ID) &&
+    progress?.verses?.[VERSE_ID]?.learnCompleted
+  ) {
+    return VERSE_ID;
+  }
+
+  return getMostRecentLearnedOfficialVerseId(progress);
+}
+
+function getMedalTodoGameStars(game, verseProgress) {
+  const gameProgress = verseProgress?.games?.[game?.id];
+  return getGameStars(game?.id, gameProgress);
+}
+
+function getZooTodoGameTitle(game = {}) {
+  return String(game.title || game.id || "Game").trim();
+}
+
+function getMedalSuggestionTodos(progress, verseId) {
+  if (!verseId) return [];
+
+  const verseProgress = progress?.verses?.[verseId];
+  if (!verseProgress?.learnCompleted) return [];
+
+  return getPracticeGames()
+    .filter((game) => game && game.id && game.source === "external" && game.manifest)
+    .map((game) => {
+      const stars = getMedalTodoGameStars(game, verseProgress);
+
+      return {
+        type: "earn_medal",
+        verseId,
+        gameId: game.id,
+        emoji: game.icon || "🏅",
+        text: `Earn a medal in ${getZooTodoGameTitle(game)}`,
+        medalStars: stars,
+        gameTitle: getZooTodoGameTitle(game)
+      };
+    })
+    .filter((todo) => todo.medalStars < 3)
+    .sort((a, b) => {
+      if (a.medalStars !== b.medalStars) return a.medalStars - b.medalStars;
+      return a.gameTitle.localeCompare(b.gameTitle);
+    });
 }
 
 function shouldShowLearnNewVerseTodo(progress) {
@@ -5358,6 +5441,17 @@ function generateZooTodos() {
   todos.push(...sleepingTodos.slice(0, MAX_SLEEPING_ZOO_TODOS));
   todos.push(...hungryTodos.slice(0, MAX_HUNGRY_ZOO_TODOS));
 
+  if (todos.length < MAX_ZOO_TODOS) {
+    const medalVerseId = getZooTodoMedalVerseId(progress);
+    const medalTodos = getMedalSuggestionTodos(progress, medalVerseId);
+
+    todos.push(...medalTodos.slice(0, MAX_ZOO_TODOS - todos.length));
+  }
+
+  if (todos.length > MAX_ZOO_TODOS) {
+    todos.length = MAX_ZOO_TODOS;
+  }
+
   if (!todos.length) {
     todos.push({
       type: "all_done",
@@ -5376,6 +5470,37 @@ function getZooTodoActionText(type, petName) {
   return "";
 }
 
+async function startZooMedalTodo(verseId, gameId) {
+  if (!verseId || !gameId) return;
+
+  const game = getPracticeGames().find((item) => item.id === gameId);
+  if (!game || game.source !== "external" || !game.manifest) return;
+
+  State.activeTodo = null;
+  State.selectedVerseId = verseId;
+
+  try {
+    const url = new URL(window.location.href);
+    url.searchParams.set("v", verseId);
+    history.replaceState(null, "", url.toString());
+
+    await loadVerse(verseId);
+    HAS_VERSE_SELECTION = true;
+
+    State.practiceIndex = Math.max(0, getPracticeGames().findIndex((item) => item.id === gameId));
+
+    launchExternalGame(game.manifest);
+  } catch (err) {
+    console.error(err);
+
+    showDialog({
+      title: "Verse JSON not found",
+      body: `Could not load ${DATA_DIR}${verseId}.json`,
+      actions: [dlgBtn("OK", { onClick: closeDialog })]
+    });
+  }
+}
+
 async function startZooTodo(todoType, verseId) {
   if (todoType === "learn_new_verse") {
     State.activeTodo = {
@@ -5384,6 +5509,13 @@ async function startZooTodo(todoType, verseId) {
     };
 
     go(Screen.NEW_VERSE_PICKER);
+    return;
+  }
+
+  if (todoType === "earn_medal") {
+    const gameId = State.pendingZooTodoGameId || "";
+    State.pendingZooTodoGameId = "";
+    await startZooMedalTodo(verseId, gameId);
     return;
   }
 
@@ -5434,6 +5566,9 @@ function bindZooTodoRows(rootEl) {
 
       const todoType = btn.getAttribute("data-todo-type") || "";
       const verseId = btn.getAttribute("data-verse-id") || "";
+      const gameId = btn.getAttribute("data-game-id") || "";
+
+      State.pendingZooTodoGameId = gameId;
 
       await startZooTodo(todoType, verseId);
     };
