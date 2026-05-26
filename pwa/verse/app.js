@@ -31,6 +31,9 @@ const PET_IMG_DIR = "pet_images/";
 // =========================================================
 const DEBUG_MODE = false;
 
+// Temporary: set to false to bring back the “Let’s Memorize God’s Word!” animation screen.
+const SKIP_TITLE_SEQUENCE = true;
+
 const DEBUG_VERSE_JSON = {
   "verseId": "john_3_16",
   "translation": "ESV",
@@ -4894,7 +4897,9 @@ function screenIntro(idx) {
     <div class="site">eatyourbible.com</div>
     <div class="hint">Tap anywhere to start</div>
   `;
-  wrap.onclick = () => { go(Screen.TITLE_SEQUENCE); };
+  wrap.onclick = () => {
+    go(SKIP_TITLE_SEQUENCE ? Screen.TITLE : Screen.TITLE_SEQUENCE);
+  };
   return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
 }
 
