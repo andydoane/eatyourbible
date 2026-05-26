@@ -5280,6 +5280,18 @@ function hasAnyLearnedVerse(progress) {
   });
 }
 
+const MAX_SLEEPING_ZOO_TODOS = 3;
+const MAX_HUNGRY_ZOO_TODOS = 3;
+
+function getZooTodoLastPracticedAt(todo = {}) {
+  const value = Number(todo.lastPracticedAt || 0);
+  return Number.isFinite(value) ? value : 0;
+}
+
+function sortZooTodosOldestFirst(a, b) {
+  return getZooTodoLastPracticedAt(a) - getZooTodoLastPracticedAt(b);
+}
+
 function shouldShowLearnNewVerseTodo(progress) {
   const DAY_MS = 1000 * 60 * 60 * 24;
 
@@ -5291,7 +5303,7 @@ function shouldShowLearnNewVerseTodo(progress) {
   // gently suggest learning a new one.
   if (!mostRecentLearnedAt) return true;
 
-  return Date.now() - mostRecentLearnedAt >= 7 * DAY_MS;
+  return Date.now() - mostRecentLearnedAt >= 10 * DAY_MS;
 }
 
 function generateZooTodos() {
@@ -5319,6 +5331,7 @@ function generateZooTodos() {
       type: status === "sleeping" ? "wake_pet" : "feed_pet",
       verseId,
       petEmoji,
+      lastPracticedAt: Number(verseProgress?.lastPracticedAt || 0),
       text: status === "sleeping"
         ? `Wake up ${petName}`
         : `Feed ${petName}`
@@ -5331,9 +5344,6 @@ function generateZooTodos() {
     }
   }
 
-  todos.push(...sleepingTodos);
-  todos.push(...hungryTodos);
-
   if (shouldShowLearnNewVerseTodo(progress)) {
     todos.push({
       type: "learn_new_verse",
@@ -5341,6 +5351,12 @@ function generateZooTodos() {
       text: "Learn a New Verse"
     });
   }
+
+  sleepingTodos.sort(sortZooTodosOldestFirst);
+  hungryTodos.sort(sortZooTodosOldestFirst);
+
+  todos.push(...sleepingTodos.slice(0, MAX_SLEEPING_ZOO_TODOS));
+  todos.push(...hungryTodos.slice(0, MAX_HUNGRY_ZOO_TODOS));
 
   if (!todos.length) {
     todos.push({
