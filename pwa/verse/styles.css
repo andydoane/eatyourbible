@@ -1084,12 +1084,6 @@ New Verse Picker
   gap: clamp(14px, 3vw, 22px);
 }
 
-@media (min-width: 640px) {
-  .new-verse-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-}
-
 .new-verse-card {
   min-width: 0;
   min-height: clamp(190px, 30vw, 260px);
