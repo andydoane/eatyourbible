@@ -999,19 +999,29 @@ function markStandardGameCompleted(verseId, gameId, mode) {
     };
   }
 
+  const gameProgress = verseProgress.games[gameId];
+
   if (mode === "easy") {
-    verseProgress.games[gameId].easyCompleted = true;
+    gameProgress.easyCompleted = true;
   }
 
   if (mode === "medium") {
-    verseProgress.games[gameId].mediumCompleted = true;
+    gameProgress.mediumCompleted = true;
   }
 
   if (mode === "hard") {
-    verseProgress.games[gameId].hardCompleted = true;
+    gameProgress.hardCompleted = true;
   }
 
-  verseProgress.lastPracticedAt = Date.now();
+  const now = Date.now();
+  const currentTimesPlayed = Number(gameProgress.timesPlayed || 0);
+
+  gameProgress.timesPlayed = Number.isFinite(currentTimesPlayed)
+    ? currentTimesPlayed + 1
+    : 1;
+
+  gameProgress.lastPlayedAt = now;
+  verseProgress.lastPracticedAt = now;
 
   const isUnlockedNow = isBibloPetUnlocked(verseProgress);
 
@@ -5343,6 +5353,13 @@ function getMedalTodoGameStars(game, verseProgress) {
   return getGameStars(game?.id, gameProgress);
 }
 
+function getMedalTodoTimesPlayed(game, verseProgress) {
+  const gameProgress = verseProgress?.games?.[game?.id];
+  const value = Number(gameProgress?.timesPlayed || 0);
+
+  return Number.isFinite(value) ? value : 0;
+}
+
 function getZooTodoGameTitle(game = {}) {
   return String(game.title || game.id || "Game").trim();
 }
@@ -5357,6 +5374,7 @@ function getMedalSuggestionTodos(progress, verseId) {
     .filter((game) => game && game.id && game.source === "external" && game.manifest)
     .map((game) => {
       const stars = getMedalTodoGameStars(game, verseProgress);
+      const timesPlayed = getMedalTodoTimesPlayed(game, verseProgress);
 
       return {
         type: "earn_medal",
@@ -5365,12 +5383,14 @@ function getMedalSuggestionTodos(progress, verseId) {
         emoji: game.icon || "🏅",
         text: `Earn a medal in ${getZooTodoGameTitle(game)}`,
         medalStars: stars,
+        timesPlayed,
         gameTitle: getZooTodoGameTitle(game)
       };
     })
     .filter((todo) => todo.medalStars < 3)
     .sort((a, b) => {
       if (a.medalStars !== b.medalStars) return a.medalStars - b.medalStars;
+      if (a.timesPlayed !== b.timesPlayed) return a.timesPlayed - b.timesPlayed;
       return a.gameTitle.localeCompare(b.gameTitle);
     });
 }
