@@ -5191,7 +5191,7 @@ function getTodoRowIconColor(index = 0) {
   return TODO_ROW_ICON_COLORS[safeIndex % TODO_ROW_ICON_COLORS.length];
 }
 
-function todoDevRowHtml(todo = {}) {
+function todoDevRowHtml(todo = {}, index = 0) {
   const {
     type = "",
     image = "",
