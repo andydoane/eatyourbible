@@ -5179,6 +5179,18 @@ function screenTitle(idx) {
   return makeSlide({ idx, bg: "var(--purple)", navHidden: true, inner: wrap });
 }
 
+const TODO_ROW_ICON_COLORS = [
+  "#40b9c5",
+  "#a7cb6f",
+  "#ff5a51",
+  "#ffc751"
+];
+
+function getTodoRowIconColor(index = 0) {
+  const safeIndex = Math.max(0, Number(index) || 0);
+  return TODO_ROW_ICON_COLORS[safeIndex % TODO_ROW_ICON_COLORS.length];
+}
+
 function todoDevRowHtml(todo = {}) {
   const {
     type = "",
@@ -5208,6 +5220,8 @@ function todoDevRowHtml(todo = {}) {
     iconHtml = `<span class="todo-dev-row-emoji" aria-hidden="true">${escapeHtml(emoji || "✅")}</span>`;
   }
 
+  const iconColor = getTodoRowIconColor(index);
+
   return `
     <button
       class="todo-dev-row no-zoom ${disabled ? "is-disabled" : ""}"
@@ -5216,7 +5230,10 @@ function todoDevRowHtml(todo = {}) {
       data-verse-id="${escapeHtml(verseId)}"
       ${disabled ? "disabled" : ""}
     >
-      <span class="todo-dev-row-icon">
+      <span
+        class="todo-dev-row-icon"
+        style="--todo-row-icon-bg:${escapeHtml(iconColor)};"
+      >
         ${iconHtml}
       </span>
 

@@ -1277,7 +1277,7 @@ Zoo To-Do Clipboard Prototype
   width: clamp(82px, 20vw, 150px);
   height: clamp(82px, 20vw, 150px);
   border-radius: clamp(16px, 4vw, 26px);
-  background: #a7cb6f;
+  background: var(--todo-row-icon-bg, #a7cb6f);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1310,6 +1310,9 @@ Zoo To-Do Clipboard Prototype
   max-width: none;
   max-height: none;
   object-fit: contain;
+  filter:
+    drop-shadow(0 4px 0 rgba(0, 0, 0, 0.14))
+    drop-shadow(0 7px 10px rgba(0, 0, 0, 0.18));
 }
 
 .todo-dev-row-icon .biblopet-emoji-fallback {
