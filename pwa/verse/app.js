@@ -5033,7 +5033,7 @@ function screenTitle(idx) {
   if (titleTodoBtn) {
     titleTodoBtn.onclick = (e) => {
       e.stopPropagation();
-      go(Screen.TODO);
+      go(Screen.TODO_DEV);
     };
   }
 
