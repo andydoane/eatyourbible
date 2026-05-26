@@ -158,11 +158,21 @@ function markCompleted(payload){
     };
   }
 
-  if (payload.mode === "easy") verseProgress.games[payload.gameId].easyCompleted = true;
-  if (payload.mode === "medium") verseProgress.games[payload.gameId].mediumCompleted = true;
-  if (payload.mode === "hard") verseProgress.games[payload.gameId].hardCompleted = true;
+  const gameProgress = verseProgress.games[payload.gameId];
 
-  verseProgress.lastPracticedAt = Date.now();
+  if (payload.mode === "easy") gameProgress.easyCompleted = true;
+  if (payload.mode === "medium") gameProgress.mediumCompleted = true;
+  if (payload.mode === "hard") gameProgress.hardCompleted = true;
+
+  const now = Date.now();
+  const currentTimesPlayed = Number(gameProgress.timesPlayed || 0);
+
+  gameProgress.timesPlayed = Number.isFinite(currentTimesPlayed)
+    ? currentTimesPlayed + 1
+    : 1;
+
+  gameProgress.lastPlayedAt = now;
+  verseProgress.lastPracticedAt = now;
 
   const isUnlockedNow =
     !!verseProgress.learnCompleted &&
