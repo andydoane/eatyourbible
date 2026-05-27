@@ -59,7 +59,20 @@
     streak: 0,
     bestStreak: 0,
     showingInstruction: false,
-    instructionToken: 0
+    instructionToken: 0,
+    bonusActive: false,
+    bonusStage: "none",
+    bonusRound: 0,
+    bonusPlayerWins: 0,
+    bonusPointerWins: 0,
+    bonusTargetLetter: "",
+    bonusTargetColor: "",
+    bonusTargetShade: "",
+    bonusRoundToken: 0,
+    bonusDeadline: 0,
+    bonusPointerRunning: false,
+    bonusResultText: "",
+    bonusResultKind: ""
   };
 
   function escapeHtml(str){
@@ -89,6 +102,26 @@
     const toHex = value => darken(value).toString(16).padStart(2, "0");
 
     return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+  }
+
+
+  function randomItem(items) {
+    return items[Math.floor(Math.random() * items.length)];
+  }
+
+  function randomBetween(min, max) {
+    return min + Math.random() * (max - min);
+  }
+
+  function bonusBaseTimeMs() {
+    if (selectedMode === "easy") return 20000;
+    if (selectedMode === "medium") return 15000;
+    return 10000;
+  }
+
+  function bonusTimeWithWiggle() {
+    const base = bonusBaseTimeMs();
+    return Math.round(base + randomBetween(-1200, 1200));
   }
 
   function initVerseData(){
@@ -124,6 +157,19 @@
     state.bestStreak = 0;
     state.showingInstruction = false;
     state.instructionToken += 1;
+    state.bonusActive = false;
+    state.bonusStage = "none";
+    state.bonusRound = 0;
+    state.bonusPlayerWins = 0;
+    state.bonusPointerWins = 0;
+    state.bonusTargetLetter = "";
+    state.bonusTargetColor = "";
+    state.bonusTargetShade = "";
+    state.bonusRoundToken += 1;
+    state.bonusDeadline = 0;
+    state.bonusPointerRunning = false;
+    state.bonusResultText = "";
+    state.bonusResultKind = "";
   }
 
   function currentPhase(index = state.progressIndex){
@@ -422,11 +468,10 @@
     return `<span class="vsn-intro-letter" style="--magnet-color:${color}; --magnet-shade:${shade}; --magnet-rot:${rotation}deg; --intro-delay:${delay}ms;">${escapeHtml(ch)}</span>`;
   }
 
-  function renderInstructionHtml(){
-    const lines = ["TAP THE", "LETTERS", "IN ORDER"];
+  function renderInstructionHtml(lines = ["TAP THE", "LETTERS", "IN ORDER"], label = "Tap the letters in order"){
     let letterIndex = 0;
     return `
-      <div class="vsn-instruction-message" id="vsnInstructionMessage" aria-label="Tap the letters in order">
+      <div class="vsn-instruction-message" id="vsnInstructionMessage" aria-label="${escapeHtml(label)}">
         ${lines.map(line => `
           <div class="vsn-instruction-line">
             ${Array.from(line).map(ch => {
@@ -436,6 +481,37 @@
           </div>
         `).join("")}
       </div>`;
+  }
+
+  function renderBonusIntroHtml(){
+    return renderInstructionHtml(
+      ["FIND THE", "RIGHT", "LETTER", "BEFORE", "I DO!"],
+      "Find the right letter before I do"
+    );
+  }
+
+  function renderBonusFindHtml(){
+    return `
+      <div class="vsn-instruction-message vsn-bonus-find-message" id="vsnInstructionMessage" aria-label="Find ${escapeHtml(state.bonusTargetLetter)}">
+        <div class="vsn-instruction-line">
+          ${Array.from("FIND").map((ch, index) => introLetterHtml(ch, index)).join("")}
+        </div>
+        <div class="vsn-instruction-line">
+          <span
+            class="vsn-intro-letter vsn-bonus-find-letter"
+            style="--magnet-color:${state.bonusTargetColor}; --magnet-shade:${state.bonusTargetShade}; --magnet-rot:${Math.round(Math.random() * 12 - 6)}deg; --intro-delay:80ms;"
+          >${escapeHtml(state.bonusTargetLetter)}</span>
+        </div>
+      </div>`;
+  }
+
+  function renderBonusFinalHtml(){
+    const playerWon = state.bonusPlayerWins > state.bonusPointerWins;
+    const lines = playerWon
+      ? ["YOU WIN", `${state.bonusPlayerWins} - ${state.bonusPointerWins}`]
+      : ["I WIN", `${state.bonusPointerWins} - ${state.bonusPlayerWins}`];
+
+    return renderInstructionHtml(lines, playerWon ? "You win" : "I win");
   }
 
   async function runInstructionIntro(token){
@@ -453,10 +529,351 @@
     render();
   }
 
+
+  function startBonusIntro() {
+    state.bonusActive = true;
+    state.bonusStage = "intro";
+    state.bonusRound = 0;
+    state.bonusPlayerWins = 0;
+    state.bonusPointerWins = 0;
+    state.bonusResultText = "";
+    state.bonusResultKind = "";
+    state.bonusRoundToken += 1;
+    state.busy = true;
+    state.tiles = [];
+    render();
+
+    const token = state.bonusRoundToken;
+    runBonusIntro(token);
+  }
+
+  async function runBonusIntro(token) {
+    await sleep(4200);
+    if (!isCurrentBonusToken(token) || state.bonusStage !== "intro") return;
+    const msg = document.getElementById("vsnInstructionMessage");
+    if (msg) {
+      msg.classList.add("is-exiting");
+      await sleep(430);
+    }
+    if (!isCurrentBonusToken(token)) return;
+    startBonusRound();
+  }
+
+  function startBonusRound() {
+    if (state.bonusRound >= 5) {
+      startBonusFinal();
+      return;
+    }
+
+    state.bonusRound += 1;
+    state.bonusStage = "find";
+    state.bonusResultText = "";
+    state.bonusResultKind = "";
+    state.bonusPointerRunning = false;
+    state.bonusRoundToken += 1;
+
+    const color = randomItem(MAGNET_COLORS);
+    state.bonusTargetLetter = randomItem(LETTERS);
+    state.bonusTargetColor = color;
+    state.bonusTargetShade = darkenHexColor(color, 30);
+    state.tiles = [];
+
+    render();
+
+    const token = state.bonusRoundToken;
+    runBonusFindMessage(token);
+  }
+
+  async function runBonusFindMessage(token) {
+    await sleep(1350);
+    if (!isCurrentBonusToken(token) || state.bonusStage !== "find") return;
+    const msg = document.getElementById("vsnInstructionMessage");
+    if (msg) {
+      msg.classList.add("is-exiting");
+      await sleep(360);
+    }
+    if (!isCurrentBonusToken(token)) return;
+
+    state.bonusStage = "round";
+    state.tiles = makeBonusTiles();
+    state.bonusDeadline = performance.now() + bonusTimeWithWiggle();
+    state.busy = false;
+    render();
+  }
+
+  function startBonusFinal() {
+    state.bonusStage = "final";
+    state.bonusResultText = "";
+    state.bonusResultKind = "";
+    state.busy = true;
+    state.tiles = [];
+    state.bonusRoundToken += 1;
+    render();
+
+    const token = state.bonusRoundToken;
+    runBonusFinal(token);
+  }
+
+  async function runBonusFinal(token) {
+    await sleep(2800);
+    if (!isCurrentBonusToken(token) || state.bonusStage !== "final") return;
+    const msg = document.getElementById("vsnInstructionMessage");
+    if (msg) {
+      msg.classList.add("is-exiting");
+      await sleep(430);
+    }
+    if (!isCurrentBonusToken(token)) return;
+    state.bonusActive = false;
+    state.bonusStage = "none";
+    state.busy = false;
+    setScreen("end");
+  }
+
+  function isCurrentBonusToken(token) {
+    return state.screen === "game" &&
+      state.bonusActive &&
+      token === state.bonusRoundToken;
+  }
+
+  function makeBonusTiles() {
+    const targetTile = {
+      id: `vsn_tile_${state.tileSeed++}`,
+      char: state.bonusTargetLetter,
+      source: "bonus-target",
+      isBonusTarget: true,
+      color: state.bonusTargetColor,
+      shade: state.bonusTargetShade,
+      rotation: Math.round(Math.random() * 34 - 17)
+    };
+
+    const tiles = [targetTile];
+    const desiredTotal = 110;
+    const nonTargetLetters = LETTERS.filter(ch => ch !== state.bonusTargetLetter);
+    const nonTargetColors = MAGNET_COLORS.filter(color => color !== state.bonusTargetColor);
+
+    for (let i = 0; i < desiredTotal - 1; i++) {
+      let char;
+      let color;
+
+      if (i < 8 && nonTargetColors.length) {
+        char = state.bonusTargetLetter;
+        color = randomItem(nonTargetColors);
+      } else if (i < 20 && nonTargetLetters.length) {
+        char = randomItem(nonTargetLetters);
+        color = state.bonusTargetColor;
+      } else {
+        char = randomItem(LETTERS);
+        color = randomItem(MAGNET_COLORS);
+
+        if (char === state.bonusTargetLetter && color === state.bonusTargetColor) {
+          color = randomItem(nonTargetColors.length ? nonTargetColors : MAGNET_COLORS);
+          if (color === state.bonusTargetColor) {
+            char = randomItem(nonTargetLetters.length ? nonTargetLetters : LETTERS);
+          }
+        }
+      }
+
+      tiles.push({
+        id: `vsn_tile_${state.tileSeed++}`,
+        char,
+        source: "bonus-decoy",
+        isBonusTarget: false,
+        color,
+        shade: darkenHexColor(color, 30),
+        rotation: Math.round(Math.random() * 34 - 17)
+      });
+    }
+
+    return shuffle(tiles);
+  }
+
+  function renderBonusTargetHtml() {
+    if (state.bonusStage !== "round") return "";
+    return `Find: <span class="vsn-bonus-target-letter" style="color:${state.bonusTargetColor}; -webkit-text-stroke:.05em ${state.bonusTargetColor}; text-shadow:0 .025em 0 rgba(255,255,255,.42), 0 .055em 0 ${state.bonusTargetShade}, 0 .12em .14em rgba(0,0,0,.20);">${escapeHtml(state.bonusTargetLetter)}</span>`;
+  }
+
+  function renderBonusPointerHtml() {
+    if (!state.bonusActive || state.bonusStage !== "round") return "";
+    return `
+      <div class="vsn-bonus-pointer" id="vsnBonusPointer" aria-hidden="true">
+        <img src="./verse_scramble_images/pointer.svg" alt="" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+        <span style="display:none;">👉</span>
+      </div>`;
+  }
+
+  function renderBonusResultHtml() {
+    if (!state.bonusResultText) return "";
+    return `<div class="vsn-bonus-result vsn-bonus-result--${state.bonusResultKind}" id="vsnBonusResult">${escapeHtml(state.bonusResultText)}</div>`;
+  }
+
+  function handleBonusTileTap(btn) {
+    if (state.busy || state.menuOpen || state.helpOpen || state.completed || state.bonusStage !== "round") return;
+
+    const tile = tileObjectForButton(btn);
+    if (!tile || btn.classList.contains("is-used")) return;
+
+    if (tile.isBonusTarget) {
+      resolveBonusRound("player", btn);
+      return;
+    }
+
+    state.bonusDeadline = Math.max(performance.now() + 900, state.bonusDeadline - 1000);
+    shakeElement(btn);
+  }
+
+  async function resolveBonusRound(winner, btn) {
+    if (state.busy || state.bonusStage !== "round") return;
+
+    state.busy = true;
+    state.bonusRoundToken += 1;
+
+    if (winner === "player") {
+      state.bonusPlayerWins += 1;
+      state.bonusResultText = "YOU WON!";
+      state.bonusResultKind = "player";
+    } else {
+      state.bonusPointerWins += 1;
+      state.bonusResultText = "I WON!";
+      state.bonusResultKind = "pointer";
+    }
+
+    if (btn) {
+      btn.classList.add("is-correct", "is-used");
+      btn.disabled = true;
+    }
+
+    const result = document.getElementById("vsnBonusResult");
+    if (result) result.remove();
+
+    const board = document.getElementById("vsnBoard");
+    if (board) {
+      board.insertAdjacentHTML("beforeend", renderBonusResultHtml());
+    }
+
+    await sleep(1500);
+
+    state.busy = false;
+    startBonusRound();
+  }
+
+  function startBonusPointerLoop() {
+    if (!state.bonusActive || state.bonusStage !== "round" || state.bonusPointerRunning) return;
+    state.bonusPointerRunning = true;
+    const token = state.bonusRoundToken;
+    runBonusPointerLoop(token);
+  }
+
+  async function runBonusPointerLoop(token) {
+    const pointer = document.getElementById("vsnBonusPointer");
+    const board = document.getElementById("vsnBoard");
+    if (!pointer || !board) return;
+
+    positionPointerOffscreen(pointer, board);
+    await sleep(80);
+
+    while (isCurrentBonusToken(token) && state.bonusStage === "round" && performance.now() < state.bonusDeadline) {
+      const decoys = visibleBonusButtons(false);
+      if (decoys.length) {
+        movePointerToButton(pointer, board, randomItem(decoys), false);
+      }
+      await sleep(randomBetween(650, 1150));
+    }
+
+    if (!isCurrentBonusToken(token) || state.bonusStage !== "round") return;
+
+    const targetBtn = visibleBonusButtons(true)[0];
+    if (!targetBtn) return;
+
+    movePointerToButton(pointer, board, targetBtn, true);
+    await sleep(520);
+
+    if (!isCurrentBonusToken(token) || state.bonusStage !== "round") return;
+
+    pointer.classList.add("is-tapping");
+    await sleep(360);
+
+    if (!isCurrentBonusToken(token) || state.bonusStage !== "round") return;
+    resolveBonusRound("pointer", targetBtn);
+  }
+
+  function visibleBonusButtons(targetOnly) {
+    return Array.from(document.querySelectorAll(".vsn-magnet"))
+      .filter(btn => {
+        const tile = tileObjectForButton(btn);
+        if (!tile || btn.style.display === "none" || btn.style.visibility === "hidden") return false;
+        return targetOnly ? tile.isBonusTarget : !tile.isBonusTarget;
+      });
+  }
+
+  function positionPointerOffscreen(pointer, board) {
+    const rect = board.getBoundingClientRect();
+    const side = Math.floor(Math.random() * 4);
+    let x = rect.width / 2;
+    let y = rect.height / 2;
+
+    if (side === 0) {
+      x = -80;
+      y = randomBetween(60, rect.height - 60);
+    } else if (side === 1) {
+      x = rect.width + 80;
+      y = randomBetween(60, rect.height - 60);
+    } else if (side === 2) {
+      x = randomBetween(60, rect.width - 60);
+      y = -80;
+    } else {
+      x = randomBetween(60, rect.width - 60);
+      y = rect.height + 80;
+    }
+
+    pointer.classList.add("is-instant");
+    pointer.style.left = `${x}px`;
+    pointer.style.top = `${y}px`;
+    void pointer.offsetWidth;
+    pointer.classList.remove("is-instant");
+  }
+
+  function movePointerToButton(pointer, board, btn, finalMove) {
+    const boardRect = board.getBoundingClientRect();
+    const btnRect = btn.getBoundingClientRect();
+    const x = btnRect.left - boardRect.left + btnRect.width * .5;
+    const y = btnRect.top - boardRect.top + btnRect.height * .5;
+
+    pointer.classList.toggle("is-final", !!finalMove);
+    pointer.classList.remove("is-tapping");
+    pointer.style.left = `${x}px`;
+    pointer.style.top = `${y}px`;
+  }
+
   function renderGame(){
     const buildRender = renderBuildText();
+    const rootBonusClass = state.bonusActive ? "vsn-bonus-active" : "";
+    const targetIsBlank = state.showingInstruction ||
+      state.bonusStage === "intro" ||
+      state.bonusStage === "find" ||
+      state.bonusStage === "final";
+    const targetHtml = state.bonusActive ? renderBonusTargetHtml() : renderTargetHtml();
+    const fieldHtml = state.showingInstruction
+      ? renderInstructionHtml()
+      : state.bonusStage === "intro"
+        ? renderBonusIntroHtml()
+        : state.bonusStage === "find"
+          ? renderBonusFindHtml()
+          : state.bonusStage === "final"
+            ? renderBonusFinalHtml()
+            : state.tiles.map(tile => `
+                  <button
+                    class="vsn-magnet no-zoom is-spawning"
+                    type="button"
+                    id="${tile.id}"
+                    data-tile-id="${tile.id}"
+                    data-char="${escapeHtml(tile.char)}"
+                    style="--magnet-color:${tile.color}; --magnet-shade:${tile.shade}; --magnet-rot:${tile.rotation}deg;"
+                    aria-label="Letter ${escapeHtml(tile.char)}"
+                  >${escapeHtml(tile.char)}</button>
+                `).join("");
+
     app.innerHTML = `
-      <div class="vsn-root vsn-mode-${selectedMode || "easy"}">
+      <div class="vsn-root vsn-mode-${selectedMode || "easy"} ${rootBonusClass}">
         <div class="vsn-stage">
           <div class="vsn-build-wrap">
             <div class="vsn-build vm-build vm-build--${BUILD_AREA}" id="vsnBuild">
@@ -468,23 +885,15 @@
             <div class="vsn-fridge-board" id="vsnBoard">
               <button class="vsn-menu-pill no-zoom" id="vsnMenuPill" aria-label="Game Menu" type="button">☰</button>
 
-              <div class="vsn-target-note ${state.showingInstruction ? "is-blank" : ""}" id="vsnTargetNote" aria-live="polite">
-                <div class="vsn-target-text" id="vsnTargetText">${state.showingInstruction ? "" : renderTargetHtml()}</div>
+              <div class="vsn-target-note ${targetIsBlank ? "is-blank" : ""}" id="vsnTargetNote" aria-live="polite">
+                <div class="vsn-target-text" id="vsnTargetText">${targetIsBlank ? "" : targetHtml}</div>
               </div>
 
               <div class="vsn-letter-field" id="vsnLetterField" aria-label="Scrambled magnet letters">
-                ${state.showingInstruction ? renderInstructionHtml() : state.tiles.map(tile => `
-                  <button
-                    class="vsn-magnet no-zoom is-spawning"
-                    type="button"
-                    id="${tile.id}"
-                    data-tile-id="${tile.id}"
-                    data-char="${escapeHtml(tile.char)}"
-                    style="--magnet-color:${tile.color}; --magnet-shade:${tile.shade}; --magnet-rot:${tile.rotation}deg;"
-                    aria-label="Letter ${escapeHtml(tile.char)}"
-                  >${escapeHtml(tile.char)}</button>
-                `).join("")}
+                ${fieldHtml}
               </div>
+              ${renderBonusPointerHtml()}
+              ${renderBonusResultHtml()}
             </div>
           </div>
         </div>
@@ -499,6 +908,13 @@
     if (state.showingInstruction){
       const token = state.instructionToken;
       runInstructionIntro(token);
+    } else if (state.bonusStage === "round"){
+      requestAnimationFrame(() => {
+        layoutMagnets();
+        requestAnimationFrame(startBonusPointerLoop);
+      });
+    } else if (state.bonusStage === "intro" || state.bonusStage === "find" || state.bonusStage === "final"){
+      // Bonus message animations manage their own timing.
     } else {
       requestAnimationFrame(layoutMagnets);
     }
@@ -622,6 +1038,11 @@
   }
 
   async function handleTileTap(btn){
+    if (state.bonusActive){
+      handleBonusTileTap(btn);
+      return;
+    }
+
     if (state.busy || state.menuOpen || state.helpOpen || state.completed) return;
 
     const tile = tileObjectForButton(btn);
@@ -687,7 +1108,7 @@
         }
       });
       state.busy = false;
-      setScreen("end");
+      startBonusIntro();
       return;
     }
 
