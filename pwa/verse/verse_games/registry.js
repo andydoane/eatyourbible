@@ -5,11 +5,11 @@ window.EXTERNAL_VERSE_GAMES = [
       id: "scramble",
       title: "Verse Scramble",
       description: "Tap the next correct word as fast as you can.",
-      icon: "🧩",
+      icon: "🔄",
       cardColor: "#7f66c6",
       cardTextColor: "#ffffff",
       launchUrl: "./verse_games/verse_scramble_neo/index.html",
-      visibleInCarousel: false,
+      visibleInCarousel: true,
       progressType: "standard",
       modes: ["easy", "medium", "hard"]
     }
