@@ -212,14 +212,14 @@ select{ font:inherit; }
 
 .vsn-magnet{
   position:absolute;
-  width:clamp(58px, 10.8vw, 104px);
-  height:clamp(58px, 10.8vw, 104px);
+  width:clamp(64px, 11.8vw, 116px);
+  height:clamp(64px, 11.8vw, 116px);
   border:0;
   border-radius:999px;
   background:transparent;
   color:var(--magnet-color);
   font-family:"CaprasimoLocal", "Cooper Black", Georgia, serif;
-  font-size:clamp(52px, 9.6vw, 96px);
+  font-size:clamp(58px, 10.6vw, 108px);
   line-height:1;
   text-align:center;
   text-transform:uppercase;
@@ -237,6 +237,24 @@ select{ font:inherit; }
   transform:rotate(var(--magnet-rot));
   will-change:transform, opacity;
   -webkit-text-stroke:1px rgba(0,0,0,.04);
+}
+
+.vsn-mode-easy .vsn-magnet {
+  width: clamp(78px, 15vw, 148px);
+  height: clamp(78px, 15vw, 148px);
+  font-size: clamp(72px, 13.5vw, 136px);
+}
+
+.vsn-mode-medium .vsn-magnet {
+  width: clamp(70px, 13.2vw, 128px);
+  height: clamp(70px, 13.2vw, 128px);
+  font-size: clamp(64px, 12vw, 118px);
+}
+
+.vsn-mode-hard .vsn-magnet {
+  width: clamp(64px, 11.8vw, 116px);
+  height: clamp(64px, 11.8vw, 116px);
+  font-size: clamp(58px, 10.6vw, 108px);
 }
 
 .vsn-magnet.is-spawning{
@@ -390,6 +408,25 @@ select{ font:inherit; }
     height:clamp(48px, 9vw, 80px);
     font-size:clamp(44px, 8vw, 72px);
   }
+
+  .vsn-mode-easy .vsn-magnet {
+    width: clamp(60px, 11.6vw, 98px);
+    height: clamp(60px, 11.6vw, 98px);
+    font-size: clamp(56px, 10.6vw, 90px);
+  }
+
+  .vsn-mode-medium .vsn-magnet {
+    width: clamp(54px, 10.4vw, 88px);
+    height: clamp(54px, 10.4vw, 88px);
+    font-size: clamp(50px, 9.4vw, 80px);
+  }
+
+  .vsn-mode-hard .vsn-magnet {
+    width: clamp(50px, 9.4vw, 82px);
+    height: clamp(50px, 9.4vw, 82px);
+    font-size: clamp(46px, 8.4vw, 74px);
+  }
+
   .vsn-intro-letter{
     width:clamp(36px, 7.2vw, 68px);
     height:clamp(40px, 8vw, 74px);
@@ -416,6 +453,25 @@ select{ font:inherit; }
     height:clamp(50px, 13vw, 64px);
     font-size:clamp(46px, 12vw, 60px);
   }
+
+  .vsn-mode-easy .vsn-magnet {
+    width: clamp(60px, 15.8vw, 78px);
+    height: clamp(60px, 15.8vw, 78px);
+    font-size: clamp(56px, 14.5vw, 72px);
+  }
+
+  .vsn-mode-medium .vsn-magnet {
+    width: clamp(54px, 14vw, 70px);
+    height: clamp(54px, 14vw, 70px);
+    font-size: clamp(50px, 13vw, 64px);
+  }
+
+  .vsn-mode-hard .vsn-magnet {
+    width: clamp(50px, 13vw, 64px);
+    height: clamp(50px, 13vw, 64px);
+    font-size: clamp(46px, 12vw, 60px);
+  }
+
   .vsn-instruction-line{
     gap:2px;
     min-height:clamp(38px, 8vh, 64px);

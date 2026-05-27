@@ -372,7 +372,7 @@
   function renderGame(){
     const buildRender = renderBuildText();
     app.innerHTML = `
-      <div class="vsn-root">
+      <div class="vsn-root vsn-mode-${selectedMode || "easy"}">
         <div class="vsn-stage">
           <div class="vsn-build-wrap">
             <div class="vsn-build vm-build vm-build--${BUILD_AREA}" id="vsnBuild">
