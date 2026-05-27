@@ -18,7 +18,7 @@
 
   const SOUND_TUNING = {
     // Master volume for every generated sound. Try .35 to .75.
-    masterVolume: 0.55,
+    masterVolume: 1.00,
 
     // Individual sound volumes. Try .5 to 1.3 for small adjustments.
     volumes: {
