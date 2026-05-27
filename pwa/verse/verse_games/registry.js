@@ -9,7 +9,7 @@ window.EXTERNAL_VERSE_GAMES = [
       cardColor: "#7f66c6",
       cardTextColor: "#ffffff",
       launchUrl: "./verse_games/verse_scramble_neo/index.html",
-      visibleInCarousel: true,
+      visibleInCarousel: false,
       progressType: "standard",
       modes: ["easy", "medium", "hard"]
     }
