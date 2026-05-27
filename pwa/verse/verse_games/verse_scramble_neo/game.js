@@ -1165,7 +1165,7 @@
       btn.style.left = "0px";
       btn.style.top = "0px";
       btn.style.visibility = "hidden";
-      btn.classList.remove("is-hidden-decoy");
+      btn.classList.remove("is-hidden-decoy", "is-laid-out");
 
       const bw = btn.offsetWidth || 54;
       const bh = btn.offsetHeight || 54;
@@ -1205,6 +1205,7 @@
       btn.style.top = `${chosen.y}px`;
       btn.style.visibility = "visible";
       btn.style.setProperty("--spawn-delay", `${Math.floor(Math.random() * 360)}ms`);
+      btn.classList.add("is-laid-out");
     }
   }
 

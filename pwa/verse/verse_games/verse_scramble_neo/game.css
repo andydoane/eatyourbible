@@ -264,6 +264,11 @@ select{ font:inherit; }
 }
 
 .vsn-magnet.is-spawning{
+  opacity:0;
+  animation:none;
+}
+
+.vsn-magnet.is-spawning.is-laid-out{
   animation:vsnMagnetSpawn .34s cubic-bezier(.2,1.45,.3,1) both;
   animation-delay:var(--spawn-delay, 0ms);
 }
