@@ -689,7 +689,7 @@
 
   function renderBonusTargetHtml() {
     if (state.bonusStage !== "round") return "";
-    return `Find: <span class="vsn-bonus-target-letter" style="color:${state.bonusTargetColor}; -webkit-text-stroke:.05em ${state.bonusTargetColor}; text-shadow:0 .025em 0 rgba(255,255,255,.42), 0 .055em 0 ${state.bonusTargetShade}, 0 .12em .14em rgba(0,0,0,.20);">${escapeHtml(state.bonusTargetLetter)}</span>`;
+    return `Find: <span class="vsn-bonus-target-letter" style="color:${state.bonusTargetColor}; text-shadow:0 .025em 0 rgba(255,255,255,.42), 0 .055em 0 ${state.bonusTargetShade}, 0 .12em .14em rgba(0,0,0,.20);">${escapeHtml(state.bonusTargetLetter)}</span>`;
   }
 
   function renderBonusPointerHtml() {
@@ -1037,6 +1037,34 @@
     el.classList.add("vsn-shake");
   }
 
+  async function animateRemainingLettersFall() {
+    const field = document.getElementById("vsnLetterField");
+    if (!field) return;
+
+    const magnets = Array.from(field.querySelectorAll(".vsn-magnet"))
+      .filter(btn => !btn.classList.contains("is-used") && btn.style.display !== "none");
+
+    if (!magnets.length) return;
+
+    magnets.forEach((btn, index) => {
+      const fallX = Math.round(randomBetween(-70, 70));
+      const fallRot = Math.round(randomBetween(-95, 95));
+      const delay = Math.round(randomBetween(0, 260));
+      const duration = Math.round(randomBetween(620, 900));
+
+      btn.style.setProperty("--fall-x", `${fallX}px`);
+      btn.style.setProperty("--fall-rot", `${fallRot}deg`);
+      btn.style.setProperty("--fall-delay", `${delay}ms`);
+      btn.style.setProperty("--fall-duration", `${duration}ms`);
+      btn.style.zIndex = `${30 + index}`;
+      btn.classList.remove("is-spawning", "is-pressed");
+      btn.classList.add("is-falling");
+      btn.disabled = true;
+    });
+
+    await sleep(1120);
+  }
+
   async function handleTileTap(btn){
     if (state.bonusActive){
       handleBonusTileTap(btn);
@@ -1086,7 +1114,8 @@
       note.classList.add("is-complete");
     }
 
-    await sleep(260);
+    await sleep(180);
+    await animateRemainingLettersFall();
 
     state.targetGroupIndex += 1;
     state.progressIndex = state.currentTarget.startIndex + state.currentTarget.segmentCount;

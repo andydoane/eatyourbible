@@ -236,8 +236,7 @@ select{ font:inherit; }
   filter:drop-shadow(0 .035em 0 rgba(0,0,0,.12));
   transform:rotate(var(--magnet-rot));
   will-change:transform, opacity;
-  -webkit-text-stroke:.05em var(--magnet-color);
-  paint-order:stroke fill;
+  paint-order:normal;
 }
 
 .vsn-mode-easy .vsn-magnet {
@@ -283,6 +282,12 @@ select{ font:inherit; }
   animation:vsnMagnetCorrect .18s ease-out both;
 }
 
+.vsn-magnet.is-falling {
+  pointer-events: none;
+  animation: vsnMagnetFall var(--fall-duration, 760ms) cubic-bezier(.22, .68, .42, 1) both;
+  animation-delay: var(--fall-delay, 0ms);
+}
+
 .vsn-magnet:disabled{
   cursor:default;
 }
@@ -324,8 +329,7 @@ select{ font:inherit; }
     0 .12em .14em rgba(0,0,0,.20);
   filter:drop-shadow(0 .035em 0 rgba(0,0,0,.12));
   transform:rotate(var(--magnet-rot));
-  -webkit-text-stroke:.05em var(--magnet-color);
-  paint-order:stroke fill;
+  paint-order:normal;
   animation:vsnIntroLetterIn .36s cubic-bezier(.2,1.45,.3,1) both;
   animation-delay:var(--intro-delay, 0ms);
 }
@@ -441,6 +445,24 @@ select{ font:inherit; }
   0%{ opacity:1; transform:rotate(var(--magnet-rot)) scale(1); }
   60%{ opacity:1; transform:rotate(var(--magnet-rot)) scale(1.22); }
   100%{ opacity:0; transform:rotate(var(--magnet-rot)) scale(.2); }
+}
+
+@keyframes vsnMagnetFall {
+  0% {
+    opacity: 1;
+    transform: rotate(var(--magnet-rot)) translateY(0) scale(1);
+  }
+
+  18% {
+    opacity: 1;
+    transform: rotate(var(--magnet-rot)) translateY(-10px) scale(1.03);
+  }
+
+  100% {
+    opacity: 0;
+    transform:
+      rotate(calc(var(--magnet-rot) + var(--fall-rot, 60deg))) translate(var(--fall-x, 0px), 120vh) scale(.92);
+  }
 }
 
 @keyframes vsnIntroLetterIn{
@@ -646,9 +668,3 @@ select{ font:inherit; }
   }
 }
 
-/* TEMP TEST: turn off magnet letter strokes */
-.vsn-magnet,
-.vsn-intro-letter,
-.vsn-bonus-target-letter {
-  -webkit-text-stroke: 0 transparent !important;
-}
