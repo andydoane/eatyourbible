@@ -230,13 +230,14 @@ select{ font:inherit; }
   cursor:pointer;
   box-shadow:none;
   text-shadow:
-    0 2px 0 rgba(255,255,255,.42),
-    0 4px 0 rgba(0,0,0,.13),
-    0 9px 10px rgba(0,0,0,.20);
-  filter:drop-shadow(0 3px 0 rgba(0,0,0,.12));
+    0 .025em 0 rgba(255,255,255,.42),
+    0 .055em 0 var(--magnet-shade),
+    0 .12em .14em rgba(0,0,0,.20);
+  filter:drop-shadow(0 .035em 0 rgba(0,0,0,.12));
   transform:rotate(var(--magnet-rot));
   will-change:transform, opacity;
-  -webkit-text-stroke:1px rgba(0,0,0,.04);
+  -webkit-text-stroke:.05em var(--magnet-color);
+  paint-order:stroke fill;
 }
 
 .vsn-mode-easy .vsn-magnet {
@@ -265,10 +266,10 @@ select{ font:inherit; }
 .vsn-magnet.is-pressed{
   transform:rotate(var(--magnet-rot)) translateY(4px) scale(.94);
   text-shadow:
-    0 1px 0 rgba(255,255,255,.38),
-    0 2px 0 rgba(0,0,0,.13),
-    0 5px 7px rgba(0,0,0,.16);
-  filter:drop-shadow(0 1px 0 rgba(0,0,0,.12));
+    0 .018em 0 rgba(255,255,255,.38),
+    0 .035em 0 var(--magnet-shade),
+    0 .075em .10em rgba(0,0,0,.16);
+  filter:drop-shadow(0 .018em 0 rgba(0,0,0,.12));
 }
 
 .vsn-magnet.is-correct{
@@ -312,11 +313,13 @@ select{ font:inherit; }
   line-height:1;
   text-transform:uppercase;
   text-shadow:
-    0 2px 0 rgba(255,255,255,.42),
-    0 4px 0 rgba(0,0,0,.13),
-    0 9px 10px rgba(0,0,0,.20);
-  filter:drop-shadow(0 3px 0 rgba(0,0,0,.12));
+    0 .025em 0 rgba(255,255,255,.42),
+    0 .055em 0 var(--magnet-shade),
+    0 .12em .14em rgba(0,0,0,.20);
+  filter:drop-shadow(0 .035em 0 rgba(0,0,0,.12));
   transform:rotate(var(--magnet-rot));
+  -webkit-text-stroke:.05em var(--magnet-color);
+  paint-order:stroke fill;
   animation:vsnIntroLetterIn .36s cubic-bezier(.2,1.45,.3,1) both;
   animation-delay:var(--intro-delay, 0ms);
 }

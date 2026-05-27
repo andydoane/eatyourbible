@@ -75,6 +75,22 @@
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
+
+  function darkenHexColor(hex, percent = 30) {
+    const clean = String(hex || "").replace("#", "").trim();
+    if (!/^[0-9a-fA-F]{6}$/.test(clean)) return "#000000";
+
+    const amount = Math.max(0, Math.min(100, percent)) / 100;
+    const r = parseInt(clean.slice(0, 2), 16);
+    const g = parseInt(clean.slice(2, 4), 16);
+    const b = parseInt(clean.slice(4, 6), 16);
+
+    const darken = value => Math.max(0, Math.round(value * (1 - amount)));
+    const toHex = value => darken(value).toString(16).padStart(2, "0");
+
+    return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+  }
+
   function initVerseData(){
     const parsed = window.VerseGameShell.parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
     const buildData = window.VerseGameShell.buildVerseSegments({
@@ -260,11 +276,15 @@
       });
     }
 
-    return shuffle(targetTiles.concat(decoys)).map((tile, index) => ({
-      ...tile,
-      color: MAGNET_COLORS[index % MAGNET_COLORS.length],
-      rotation: Math.round(Math.random() * 34 - 17)
-    }));
+    return shuffle(targetTiles.concat(decoys)).map((tile, index) => {
+      const color = MAGNET_COLORS[index % MAGNET_COLORS.length];
+      return {
+        ...tile,
+        color,
+        shade: darkenHexColor(color, 30),
+        rotation: Math.round(Math.random() * 34 - 17)
+      };
+    });
   }
 
   function prepareCurrentTarget(){
@@ -396,9 +416,10 @@
 
   function introLetterHtml(ch, index){
     const color = MAGNET_COLORS[index % MAGNET_COLORS.length];
+    const shade = darkenHexColor(color, 30);
     const rotation = Math.round(Math.random() * 20 - 10);
     const delay = Math.min(520, index * 32);
-    return `<span class="vsn-intro-letter" style="--magnet-color:${color}; --magnet-rot:${rotation}deg; --intro-delay:${delay}ms;">${escapeHtml(ch)}</span>`;
+    return `<span class="vsn-intro-letter" style="--magnet-color:${color}; --magnet-shade:${shade}; --magnet-rot:${rotation}deg; --intro-delay:${delay}ms;">${escapeHtml(ch)}</span>`;
   }
 
   function renderInstructionHtml(){
@@ -459,7 +480,7 @@
                     id="${tile.id}"
                     data-tile-id="${tile.id}"
                     data-char="${escapeHtml(tile.char)}"
-                    style="--magnet-color:${tile.color}; --magnet-rot:${tile.rotation}deg;"
+                    style="--magnet-color:${tile.color}; --magnet-shade:${tile.shade}; --magnet-rot:${tile.rotation}deg;"
                     aria-label="Letter ${escapeHtml(tile.char)}"
                   >${escapeHtml(tile.char)}</button>
                 `).join("")}
