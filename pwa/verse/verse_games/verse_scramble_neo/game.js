@@ -34,6 +34,8 @@
     screen: "intro",
     words: [],
     segments: [],
+    targetGroups: [],
+    targetGroupIndex: 0,
     metaIndices: new Set(),
     progressIndex: 0,
     buildSizeClass: "is-normal",
@@ -90,6 +92,8 @@
     state.referenceMeta = parsed;
     state.buildSizeClass = buildData.buildSizeClass;
     state.progressIndex = 0;
+    state.targetGroups = buildTargetGroups();
+    state.targetGroupIndex = 0;
     state.currentTarget = null;
     state.tiles = [];
     state.letterIndex = 0;
@@ -140,26 +144,85 @@
     return "word";
   }
 
-  function makeTarget(){
-    const phase = currentPhase();
-    const kind = targetKindForPhase(phase);
-    let segmentCount = 1;
 
-    if (phase === "words"){
-      const currentText = state.segments[state.progressIndex] || "";
-      const playable = getPlayableText(currentText, "word");
-      const nextPhase = currentPhase(state.progressIndex + 1);
-      if (playable.length === 1 && nextPhase === "words"){
-        segmentCount = 2;
+  function isVerseWordIndex(index) {
+    return currentPhase(index) === "words";
+  }
+
+  function playableLetterCountAt(index) {
+    return getPlayableText(state.segments[index] || "", "word").length;
+  }
+
+  function isShortVerseWord(index) {
+    const count = playableLetterCountAt(index);
+    return count > 0 && count <= 2;
+  }
+
+  function endsWithStrongBreak(text) {
+    return /[.!?;:]["'”’)\]]*$/.test(String(text || "").trim());
+  }
+
+  function groupCanAcceptPreviousShort(group, index) {
+    return group &&
+      group.startIndex + group.segmentCount === index &&
+      isVerseWordIndex(group.startIndex) &&
+      group.segmentCount < 2;
+  }
+
+  function buildTargetGroups() {
+    const groups = [];
+    let index = 0;
+
+    while (index < state.segments.length) {
+      const phase = currentPhase(index);
+
+      if (phase !== "words") {
+        groups.push({ startIndex: index, segmentCount: 1 });
+        index += 1;
+        continue;
       }
+
+      if (isShortVerseWord(index)) {
+        const currentText = state.segments[index] || "";
+        const nextIndex = index + 1;
+        const hasNextVerseWord = isVerseWordIndex(nextIndex);
+        const shouldPairForward = hasNextVerseWord && !endsWithStrongBreak(currentText);
+
+        if (shouldPairForward) {
+          groups.push({ startIndex: index, segmentCount: 2 });
+          index += 2;
+          continue;
+        }
+
+        const previousGroup = groups[groups.length - 1];
+        if (groupCanAcceptPreviousShort(previousGroup, index)) {
+          previousGroup.segmentCount += 1;
+          index += 1;
+          continue;
+        }
+      }
+
+      groups.push({ startIndex: index, segmentCount: 1 });
+      index += 1;
     }
 
-    const displayText = displayTextForSegments(state.progressIndex, segmentCount);
+    return groups;
+  }
+
+  function makeTarget() {
+    const group = state.targetGroups[state.targetGroupIndex] || {
+      startIndex: state.progressIndex,
+      segmentCount: 1
+    };
+
+    const phase = currentPhase(group.startIndex);
+    const kind = targetKindForPhase(phase);
+    const displayText = displayTextForSegments(group.startIndex, group.segmentCount);
     const playableText = getPlayableText(displayText, kind);
 
     return {
-      startIndex: state.progressIndex,
-      segmentCount,
+      startIndex: group.startIndex,
+      segmentCount: group.segmentCount,
       phase,
       kind,
       displayText,
@@ -583,7 +646,8 @@
 
     await sleep(260);
 
-    state.progressIndex += state.currentTarget.segmentCount;
+    state.targetGroupIndex += 1;
+    state.progressIndex = state.currentTarget.startIndex + state.currentTarget.segmentCount;
     state.targetsCompleted += 1;
     updateBuildArea();
 
