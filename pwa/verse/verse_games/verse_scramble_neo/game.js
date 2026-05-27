@@ -10,86 +10,52 @@
     accent: "#7f66c6"
   };
 
-  const BUILD_AREA = "large";
-
+  const BUILD_AREA = "compact";
   const HELP_OVERLAY_ID = "vsnHelpOverlay";
+
+  const MAGNET_COLORS = [
+    "#fc171a",
+    "#fc7e0e",
+    "#feca02",
+    "#74d025",
+    "#007df4",
+    "#8956d9"
+  ];
+
+  const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+  const DIGITS = "0123456789".split("");
 
   let selectedMode = null;
   let muted = false;
-  let bestWpm = 0;
 
-  const BUTTON_COLORS = [
-    "vsn-color-red",
-    "vsn-color-orange",
-    "vsn-color-yellow",
-    "vsn-color-green",
-    "vsn-color-blue",
-    "vsn-color-pink"
-  ];
-const BUTTON_SHAPES = [
-  "vsn-shape-blob",
-  "vsn-shape-splat",
-  "vsn-shape-pill",
-  "vsn-shape-cloud",
-  "vsn-shape-goo",
-  "vsn-shape-marshmallow",
-  "vsn-shape-puddle",
-  "vsn-shape-jelly",
-  "vsn-shape-soft-boom",
-  "vsn-shape-soft-star",
-  "vsn-shape-squish",
-  "vsn-shape-gumdrop",
-  "vsn-shape-splash",
-  "vsn-shape-melt",
-  "vsn-shape-cushion",
-  "vsn-shape-muffin-top",
-  "vsn-shape-bubble-blob",
-  "vsn-shape-wobble"
-];
+  const shuffle = window.VerseGameShell.shuffle;
 
-const BUTTON_DANCES = [
-  "vsn-dance-bouncey",
-  "vsn-dance-jelly",
-  "vsn-dance-wiggle",
-  "vsn-dance-bobble",
-  "vsn-dance-sway",
-  "vsn-dance-pulse",
-  "vsn-dance-scoot",
-  "vsn-dance-wobble",
-  "vsn-dance-plop",
-  "vsn-dance-noodle",
-  "vsn-dance-squash",
-  "vsn-dance-float"
-];
-
-const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
-
-const BIBLE_BOOKS = window.VerseGameShell.getBibleBookDecoys();
-
-const state = {
+  const state = {
     screen: "intro",
     words: [],
     segments: [],
     metaIndices: new Set(),
     progressIndex: 0,
-    streak: 0,
-    bestStreak: 0,
     buildSizeClass: "is-normal",
-    buildRemoving: new Set(),
     bookLabel: "",
     referenceLabel: "",
     referenceMeta: null,
+    currentTarget: null,
+    tiles: [],
+    letterIndex: 0,
+    tileSeed: 0,
+    busy: false,
+    completed: false,
     menuOpen: false,
     helpOpen: false,
     helpBackMode: false,
-    busy: false,
-    completed: false,
     startTime: 0,
-    endTime: 0,
     completionResult: null,
-    roundChoices: [],
-    redFlashKey: 0,
-    boardSeed: 0
+    correctLetters: 0,
+    wrongTaps: 0,
+    targetsCompleted: 0,
+    streak: 0,
+    bestStreak: 0
   };
 
   function escapeHtml(str){
@@ -101,18 +67,12 @@ const state = {
       .replace(/'/g, "&#39;");
   }
 
-const shuffle = window.VerseGameShell.shuffle;
-
-const tokenizeVerse = window.VerseGameShell.tokenizeVerseWords;
-
-  const parseReferenceParts = window.VerseGameShell.parseReferenceParts;
-
-
-
-  const normalizeWord = window.VerseGameShell.normalizeWord;
+  function sleep(ms){
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
 
   function initVerseData(){
-    const parsed = parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
+    const parsed = window.VerseGameShell.parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
     const buildData = window.VerseGameShell.buildVerseSegments({
       verseText: ctx.verseText || "",
       book: parsed.book,
@@ -121,27 +81,30 @@ const tokenizeVerse = window.VerseGameShell.tokenizeVerseWords;
     });
 
     state.words = buildData.words;
-    state.referenceMeta = parsed;
-    state.bookLabel = buildData.bookLabel;
-    state.referenceLabel = buildData.referenceLabel;
-    state.buildSizeClass = buildData.buildSizeClass;
     state.segments = buildData.segments;
     state.metaIndices = buildData.metaIndices;
+    state.bookLabel = buildData.bookLabel;
+    state.referenceLabel = buildData.referenceLabel;
+    state.referenceMeta = parsed;
+    state.buildSizeClass = buildData.buildSizeClass;
     state.progressIndex = 0;
-    state.streak = 0;
-    state.bestStreak = 0;
-    state.buildRemoving = new Set();
-    state.roundChoices = [];
+    state.currentTarget = null;
+    state.tiles = [];
+    state.letterIndex = 0;
+    state.tileSeed = 0;
     state.busy = false;
     state.completed = false;
     state.completionResult = null;
-    state.boardSeed = 0;
-    state.redFlashKey = 0;
+    state.correctLetters = 0;
+    state.wrongTaps = 0;
+    state.targetsCompleted = 0;
+    state.streak = 0;
+    state.bestStreak = 0;
   }
 
-  function currentPhase(){
+  function currentPhase(index = state.progressIndex){
     return window.VerseGameShell.getPhaseForProgress({
-      progressIndex: state.progressIndex,
+      progressIndex: index,
       wordCount: state.words.length,
       totalSegments: state.segments.length,
       bookLabel: state.bookLabel,
@@ -149,92 +112,98 @@ const tokenizeVerse = window.VerseGameShell.tokenizeVerseWords;
     });
   }
 
-  function currentCorrectLabel(){
-    return state.segments[state.progressIndex] || "";
+  function isPlayableChar(ch, kind){
+    if (!ch) return false;
+    if (kind === "reference") return /[0-9]/.test(ch);
+    if (kind === "book") return /[A-Za-z0-9]/.test(ch);
+    return /[A-Za-z]/.test(ch);
   }
 
-  function uniqueVisibleChoices(correct, decoys){
-    const out = [correct];
-    const seen = new Set([normalizeWord(correct)]);
-    for (const d of decoys){
-      const key = normalizeWord(d);
-      if (!key || seen.has(key)) continue;
-      seen.add(key);
-      out.push(d);
-      if (out.length >= 3) break;
-    }
-    return out;
+  function getPlayableText(displayText, kind){
+    return Array.from(displayText)
+      .filter(ch => isPlayableChar(ch, kind))
+      .join("")
+      .toUpperCase();
   }
 
-  function verseWordDecoys(correct){
-    return window.VerseGameShell.getVerseWordDecoys({
-      words: state.words,
-      correct,
-      targetIndex: state.progressIndex,
-      count: 12,
-      avoidNext: 2,
-      fallbackToFun: true
-    });
+  function displayTextForSegments(startIndex, count){
+    return state.segments.slice(startIndex, startIndex + count).join(" ");
   }
 
-  function easyDecoys(correct){
-    return window.VerseGameShell.getFunWordDecoys(correct, state.words, 12);
+  function targetKindForPhase(phase){
+    if (phase === "book") return "book";
+    if (phase === "reference") return "reference";
+    return "word";
   }
 
-  function bookDecoys(correct){
-    return window.VerseGameShell.getBookDecoys(correct, 12);
-  }
-
-  function refDecoys(correctRef){
-    return shuffle(
-      window.VerseGameShell
-        .getReferenceDecoys(state.referenceMeta, selectedMode, 6)
-        .filter((ref) => normalizeWord(ref) !== normalizeWord(correctRef))
-    );
-  }
-
-  function buildRoundChoices(){
-    const correct = currentCorrectLabel();
+  function makeTarget(){
     const phase = currentPhase();
-    let decoyPool = [];
-    if (phase === "words"){
-      decoyPool = selectedMode === "easy" ? easyDecoys(correct) : verseWordDecoys(correct);
-      if (decoyPool.length < 2) decoyPool = decoyPool.concat(easyDecoys(correct));
-    } else if (phase === "book"){
-      decoyPool = bookDecoys(correct);
-    } else if (phase === "reference"){
-      decoyPool = refDecoys(correct);
-    }
+    const kind = targetKindForPhase(phase);
+    let segmentCount = 1;
 
-    const choices = uniqueVisibleChoices(correct, decoyPool).slice(0, 3);
-    while (choices.length < 3){
-      const fallback = phase === "book" ? bookDecoys(correct) : easyDecoys(correct);
-      for (const item of fallback){
-        if (choices.map(normalizeWord).includes(normalizeWord(item))) continue;
-        choices.push(item);
-        if (choices.length >= 3) break;
+    if (phase === "words"){
+      const currentText = state.segments[state.progressIndex] || "";
+      const playable = getPlayableText(currentText, "word");
+      const nextPhase = currentPhase(state.progressIndex + 1);
+      if (playable.length === 1 && nextPhase === "words"){
+        segmentCount = 2;
       }
     }
 
-    const colors = shuffle(BUTTON_COLORS).slice(0, 3);
-    const shaped = shuffle(BUTTON_SHAPES);
-    const dances = shuffle(BUTTON_DANCES).slice(0, 3);
+    const displayText = displayTextForSegments(state.progressIndex, segmentCount);
+    const playableText = getPlayableText(displayText, kind);
 
-    const perRow = shuffle(choices).map((label, index) => ({
-      id: `choice_${state.boardSeed}_${index}`,
-      label,
-      isCorrect: normalizeWord(label) === normalizeWord(correct),
-      colorClass: colors[index],
-      shapeClass: shaped[index % shaped.length],
-      danceClass: dances[index],
-      rotation: `${[-5,-2,3,5,1,-3][Math.floor(Math.random() * 6)]}deg`
-    }));
-    state.roundChoices = perRow;
-    state.boardSeed += 1;
+    return {
+      startIndex: state.progressIndex,
+      segmentCount,
+      phase,
+      kind,
+      displayText,
+      playableText
+    };
   }
 
-  function streakDancing(){
-    return state.streak >= 3;
+  function allowedDecoyPool(target){
+    const targetChars = new Set(target.playableText.split(""));
+    const basePool = target.kind === "reference" ? DIGITS : LETTERS;
+    return basePool.filter(ch => !targetChars.has(ch));
+  }
+
+  function extraCountForMode(target){
+    if (selectedMode === "easy") return 0;
+    if (selectedMode === "medium") return 3;
+    return 80;
+  }
+
+  function makeTilesForTarget(target){
+    const targetTiles = target.playableText.split("").map(ch => ({
+      id: `vsn_tile_${state.tileSeed++}`,
+      char: ch,
+      source: "target"
+    }));
+
+    const pool = allowedDecoyPool(target);
+    const extraCount = extraCountForMode(target);
+    const decoys = [];
+    for (let i = 0; i < extraCount && pool.length; i++){
+      decoys.push({
+        id: `vsn_tile_${state.tileSeed++}`,
+        char: pool[Math.floor(Math.random() * pool.length)],
+        source: "decoy"
+      });
+    }
+
+    return shuffle(targetTiles.concat(decoys)).map((tile, index) => ({
+      ...tile,
+      color: MAGNET_COLORS[index % MAGNET_COLORS.length],
+      rotation: Math.round(Math.random() * 34 - 17)
+    }));
+  }
+
+  function prepareCurrentTarget(){
+    state.currentTarget = makeTarget();
+    state.letterIndex = 0;
+    state.tiles = makeTilesForTarget(state.currentTarget);
   }
 
   function setScreen(screen){
@@ -242,106 +211,149 @@ const tokenizeVerse = window.VerseGameShell.tokenizeVerseWords;
     render();
   }
 
-  function formatMode(mode){
-    return mode ? mode.charAt(0).toUpperCase() + mode.slice(1) : "Mode";
+  function renderBuildText(){
+    return window.VerseGameShell.renderBuildProgressHtml({
+      verseText: ctx.verseText || "",
+      book: state.bookLabel,
+      reference: state.referenceLabel,
+      progressIndex: state.progressIndex,
+      buildArea: BUILD_AREA,
+      hideUnbuilt: selectedMode === "hard",
+      extraClass: "vsn-build-text"
+    });
   }
 
-function renderBuildText(){
-  return window.VerseGameShell.renderBuildProgressHtml({
-    verseText: ctx.verseText || "",
-    book: state.bookLabel,
-    reference: state.referenceLabel,
-    progressIndex: state.progressIndex,
-    buildArea: BUILD_AREA,
-    hideUnbuilt: selectedMode === "hard",
-    extraClass: "vsn-build-text"
-  });
-}
-
-function fitBuildText(){
-  requestAnimationFrame(() => {
-    window.VerseGameShell.fitBuildTextOnce({
-      buildEl: document.getElementById("vsnBuild"),
-      textEl: document.getElementById("vsnBuildText"),
-      buildArea: BUILD_AREA
+  function fitBuildText(){
+    requestAnimationFrame(() => {
+      window.VerseGameShell.fitBuildTextOnce({
+        buildEl: document.getElementById("vsnBuild"),
+        textEl: document.getElementById("vsnBuildText"),
+        buildArea: BUILD_AREA
+      });
     });
-  });
-}
+  }
 
-function renderIntro(){
-  window.VerseGameShell.renderTitleScreen({
-    app,
-    title: "Verse Scramble",
-    icon: "🧩",
-    helpHtml: helpHtml(),
-    helpOverlayId: HELP_OVERLAY_ID,
-    theme: GAME_THEME,
-    backLabel: "Back to Practice Games",
-    onBack: () => window.VerseGameBridge.exitGame(),
-    onStart: () => setScreen("mode")
-  });
-}
+  function fitTargetText(){
+    requestAnimationFrame(() => {
+      const note = document.getElementById("vsnTargetNote");
+      const text = document.getElementById("vsnTargetText");
+      if (!note || !text) return;
 
-function renderMode(){
-  window.VerseGameShell.renderModeSelect({
-    app,
-    title: "Choose Your Difficulty",
-    icon: "🥉🥈🥇",
-    helpHtml: helpHtml(),
-    helpOverlayId: HELP_OVERLAY_ID,
-    theme: GAME_THEME,
-    backLabel: "Back to Verse Scramble title",
-    onBack: () => setScreen("intro"),
-    onSelect: (mode) => {
-      selectedMode = mode;
-      initVerseData();
-      state.startTime = performance.now();
-      buildRoundChoices();
-      setScreen("game");
-    }
-  });
-}
+      text.style.fontSize = "";
+      const maxPx = Number(getComputedStyle(text).fontSize.replace("px", "")) || 42;
+      const minPx = 18;
+      let size = maxPx;
+      const maxWidth = note.clientWidth - 28;
+      while (size > minPx && text.scrollWidth > maxWidth){
+        size -= 1;
+        text.style.fontSize = `${size}px`;
+      }
+    });
+  }
+
+  function renderTargetHtml(){
+    const target = state.currentTarget;
+    if (!target) return "";
+
+    let playableIndex = 0;
+    return Array.from(target.displayText).map(ch => {
+      if (ch === " ") return `<span class="vsn-target-space"> </span>`;
+
+      if (!isPlayableChar(ch, target.kind)){
+        return `<span class="vsn-target-static">${escapeHtml(ch)}</span>`;
+      }
+
+      const isRevealed = playableIndex < state.letterIndex;
+      const html = `<span class="vsn-target-char ${isRevealed ? "is-revealed" : ""}" data-target-index="${playableIndex}">${escapeHtml(ch.toUpperCase())}</span>`;
+      playableIndex += 1;
+      return html;
+    }).join("");
+  }
+
+  function updateTargetReveal(){
+    const target = state.currentTarget;
+    if (!target) return;
+    document.querySelectorAll("[data-target-index]").forEach(el => {
+      const index = Number(el.getAttribute("data-target-index"));
+      el.classList.toggle("is-revealed", index < state.letterIndex);
+    });
+  }
+
+  function updateBuildArea(){
+    const buildText = document.getElementById("vsnBuildText");
+    if (!buildText) return;
+    const buildRender = renderBuildText();
+    buildText.className = buildRender.className;
+    buildText.innerHTML = buildRender.html;
+    fitBuildText();
+  }
+
+  function renderIntro(){
+    window.VerseGameShell.renderTitleScreen({
+      app,
+      title: "Verse Scramble",
+      icon: "🧩",
+      helpHtml: helpHtml(),
+      helpOverlayId: HELP_OVERLAY_ID,
+      theme: GAME_THEME,
+      backLabel: "Back to Practice Games",
+      onBack: () => window.VerseGameBridge.exitGame(),
+      onStart: () => setScreen("mode")
+    });
+  }
+
+  function renderMode(){
+    window.VerseGameShell.renderModeSelect({
+      app,
+      title: "Choose Your Difficulty",
+      icon: "🥉🥈🥇",
+      helpHtml: helpHtml(),
+      helpOverlayId: HELP_OVERLAY_ID,
+      theme: GAME_THEME,
+      backLabel: "Back to Verse Scramble title",
+      onBack: () => setScreen("intro"),
+      onSelect: (mode) => {
+        selectedMode = mode;
+        initVerseData();
+        state.startTime = performance.now();
+        prepareCurrentTarget();
+        setScreen("game");
+      }
+    });
+  }
 
   function renderGame(){
+    const buildRender = renderBuildText();
     app.innerHTML = `
       <div class="vsn-root">
         <div class="vsn-stage">
           <div class="vsn-build-wrap">
-            <div class="vsn-build vm-build vm-build--${BUILD_AREA} ${state.buildRemoving.size ? "vsn-shake" : ""}" id="vsnBuild">
-              ${(() => {
-  const buildRender = renderBuildText();
-
-  return `
-    <div class="${buildRender.className}" id="vsnBuildText">
-      ${buildRender.html}
-    </div>
-  `;
-})()}
+            <div class="vsn-build vm-build vm-build--${BUILD_AREA}" id="vsnBuild">
+              <div class="${buildRender.className}" id="vsnBuildText">${buildRender.html}</div>
             </div>
           </div>
+
           <div class="vsn-game-wrap">
-            <div class="vsn-game-board" id="vsnBoard">
-              <div class="vsn-red-flash ${state.redFlashKey ? "is-flashing" : ""}" id="vsnRedFlash"></div>
-              <div class="vsn-particle-layer" id="vsnParticleLayer"></div>
-              <div class="vsn-smoke-layer" id="vsnSmokeLayer"></div>
-              <div class="vsn-board-content">
-                <div class="vsn-overlay-pills">
-                  <button class="vsn-pill vsn-menu-pill no-zoom" id="vsnMenuPill" aria-label="Game Menu" type="button">☰</button>
-                  <div class="vsn-pill" id="vsnStreakPill">Streak: ${state.streak}</div>
-                </div>
-                <div class="vsn-main-area" id="vsnMainArea">
-                  ${state.roundChoices.map((choice, index) => `
-                    <div class="vsn-row" data-row="${index}">
-                      <button
-                        class="vsn-choice ${choice.colorClass} ${choice.shapeClass} ${streakDancing() ? choice.danceClass : ""} is-spawning no-zoom"
-                        id="${choice.id}"
-                        data-choice-id="${choice.id}"
-                        type="button"
-                        style="--vsn-rot:${choice.rotation};"
-                      >${escapeHtml(choice.label)}</button>
-                    </div>
-                  `).join("")}
-                </div>
+            <div class="vsn-fridge-board" id="vsnBoard">
+              <button class="vsn-menu-pill no-zoom" id="vsnMenuPill" aria-label="Game Menu" type="button">☰</button>
+
+              <div class="vsn-target-note" id="vsnTargetNote" aria-live="polite">
+                <div class="vsn-target-label">Find the letters</div>
+                <div class="vsn-target-text" id="vsnTargetText">${renderTargetHtml()}</div>
+              </div>
+
+              <div class="vsn-letter-field" id="vsnLetterField" aria-label="Scrambled magnet letters">
+                ${state.tiles.map(tile => `
+                  <button
+                    class="vsn-magnet no-zoom is-spawning"
+                    type="button"
+                    id="${tile.id}"
+                    data-tile-id="${tile.id}"
+                    data-char="${escapeHtml(tile.char)}"
+                    style="--magnet-color:${tile.color}; --magnet-rot:${tile.rotation}deg;"
+                    aria-label="Letter ${escapeHtml(tile.char)}"
+                  >${escapeHtml(tile.char)}</button>
+                `).join("")}
               </div>
             </div>
           </div>
@@ -349,62 +361,48 @@ function renderMode(){
         ${renderHelpOverlay()}
         ${renderGameMenuOverlay()}
       </div>`;
+
     wireGameScreen();
     fitBuildText();
+    fitTargetText();
+    requestAnimationFrame(layoutMagnets);
   }
 
-  function totalElapsedMs(){
-    return Math.max(1, (state.endTime || performance.now()) - state.startTime);
+  function renderEnd(){
+    window.VerseGameShell.renderCompleteScreen({
+      app,
+      gameIcon: "🧩",
+      mode: selectedMode,
+      verseId: ctx.verseId,
+      gameId: GAME_ID,
+      completion: state.completionResult,
+      gameMessage: `${state.targetsCompleted} targets solved · ${state.wrongTaps} wrong taps · Best streak: ${state.bestStreak}`,
+      theme: GAME_THEME,
+      backLabel: "Back to Practice Games",
+      onPlayAgain: () => setScreen("mode"),
+      onMoreGames: () => window.VerseGameBridge.exitGame(),
+      onChangeVerse: () => window.VerseGameBridge.returnToTitle()
+    });
   }
 
-  function wordsPerMinute(){
-    const taps = state.segments.length;
-    const minutes = totalElapsedMs() / 60000;
-    return Math.max(1, Math.round(taps / minutes));
+  function helpHtml(){
+    return `
+      Spell each target by tapping the scrambled magnet letters in order.<br><br>
+      Easy: only the letters you need.<br>
+      Medium: the target letters plus 3 decoy letters.<br>
+      Hard: a fridge full of extra decoy letters.<br><br>
+      Punctuation and spaces appear in the target, but you only tap letters and numbers.
+    `;
   }
 
-function renderEnd(){
-  const wpm = wordsPerMinute();
-  bestWpm = Math.max(bestWpm, wpm);
-  const timeSecs = (totalElapsedMs() / 1000).toFixed(1);
-
-  window.VerseGameShell.renderCompleteScreen({
-    app,
-    gameIcon: "🧩",
-    mode: selectedMode,
-    verseId: ctx.verseId,
-    gameId: GAME_ID,
-    completion: state.completionResult,
-    gameMessage: `${wpm} WPM · ${timeSecs}s · Best streak: ${state.bestStreak}`,
-    theme: GAME_THEME,
-    backLabel: "Back to Practice Games",
-    onPlayAgain: () => {
-      setScreen("mode");
-    },
-    onMoreGames: () => window.VerseGameBridge.exitGame(),
-    onChangeVerse: () => window.VerseGameBridge.returnToTitle()
-  });
-}
-
-
-function helpHtml(){
-  return `
-    Tap the next correct word as quickly as you can.<br><br>
-    Easy: fun decoys.<br>
-    Medium: decoys are other words from the verse.<br>
-    Hard: same as Medium, with the toughest decoys.<br><br>
-    After the verse words, collect the book, then the reference.
-  `;
-}
-
-function renderHelpOverlay(){
-  return window.VerseGameShell.helpOverlayHtml({
-    id: HELP_OVERLAY_ID,
-    title: "How to Play",
-    body: helpHtml(),
-    closeText: state.helpBackMode ? "Back" : "Close"
-  });
-}
+  function renderHelpOverlay(){
+    return window.VerseGameShell.helpOverlayHtml({
+      id: HELP_OVERLAY_ID,
+      title: "How to Play",
+      body: helpHtml(),
+      closeText: state.helpBackMode ? "Back" : "Close"
+    });
+  }
 
   function renderGameMenuOverlay(){
     return window.VerseGameShell.gameMenuHtml({
@@ -416,10 +414,11 @@ function renderHelpOverlay(){
   }
 
   function wireGameScreen(){
-    const menuPill = document.getElementById("vsnMenuPill");
-
-    document.querySelectorAll("[data-choice-id]").forEach(btn => {
-      btn.onclick = () => handleChoice(btn.dataset.choiceId);
+    document.querySelectorAll("[data-tile-id]").forEach(btn => {
+      btn.addEventListener("click", () => handleTileTap(btn));
+      btn.addEventListener("pointerdown", () => btn.classList.add("is-pressed"));
+      btn.addEventListener("pointerup", () => btn.classList.remove("is-pressed"));
+      btn.addEventListener("pointercancel", () => btn.classList.remove("is-pressed"));
     });
 
     window.VerseGameShell.wireGameMenu({
@@ -468,129 +467,185 @@ function renderHelpOverlay(){
     });
   }
 
-  function flashWrongBoard(){
-    const el = document.getElementById("vsnRedFlash");
+  function tileObjectForButton(btn){
+    const tileId = btn && btn.dataset ? btn.dataset.tileId : "";
+    return state.tiles.find(tile => tile.id === tileId);
+  }
+
+  function expectedChar(){
+    const target = state.currentTarget;
+    if (!target) return "";
+    return target.playableText[state.letterIndex] || "";
+  }
+
+  function shakeElement(el){
     if (!el) return;
-    el.classList.remove("is-flashing");
+    el.classList.remove("vsn-shake");
     void el.offsetWidth;
-    el.classList.add("is-flashing");
+    el.classList.add("vsn-shake");
   }
 
-  function spawnParticlesAtButton(buttonEl, type){
-    const layer = document.getElementById(type === "smoke" ? "vsnSmokeLayer" : "vsnParticleLayer");
-    if (!layer || !buttonEl) return;
-    const layerRect = layer.getBoundingClientRect();
-    const rect = buttonEl.getBoundingClientRect();
-    const cx = rect.left - layerRect.left + rect.width / 2;
-    const cy = rect.top - layerRect.top + rect.height / 2;
-
-    if (type === "smoke"){
-      for (let i = 0; i < 9; i++){
-        const puff = document.createElement("div");
-        puff.className = "vsn-smoke";
-        puff.style.left = `${cx + (Math.random() * 34 - 17)}px`;
-        puff.style.top = `${cy + (Math.random() * 18 - 9)}px`;
-        puff.style.setProperty("--sx", `${Math.round(Math.random() * 30 - 15)}px`);
-        puff.style.setProperty("--sy", `${Math.round(-10 - Math.random() * 24)}px`);
-        layer.appendChild(puff);
-        puff.addEventListener("animationend", () => puff.remove(), { once:true });
-      }
-      return;
-    }
-
-    const palette = ["#ffffff", "#ffd54f", "#ff8a65", "#81c784", "#64b5f6", "#f8f8f8"];
-    const count = 18 + Math.floor(Math.random() * 8);
-    for (let i = 0; i < count; i++){
-      const particle = document.createElement("div");
-      particle.className = "vsn-particle";
-      particle.style.left = `${cx}px`;
-      particle.style.top = `${cy}px`;
-      particle.style.setProperty("--dx", `${Math.round(Math.random() * 120 - 60)}px`);
-      particle.style.setProperty("--dy", `${Math.round(Math.random() * 120 - 60)}px`);
-      particle.style.setProperty("--pcolor", palette[i % palette.length]);
-      layer.appendChild(particle);
-      particle.addEventListener("animationend", () => particle.remove(), { once:true });
-    }
-  }
-
-  function spawnSmokeForAll(){
-    state.roundChoices.forEach(choice => {
-      const el = document.getElementById(choice.id);
-      if (el) spawnParticlesAtButton(el, "smoke");
-    });
-  }
-
-  function sleep(ms){
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-
-  async function handleChoice(choiceId){
+  async function handleTileTap(btn){
     if (state.busy || state.menuOpen || state.helpOpen || state.completed) return;
-    const choice = state.roundChoices.find(c => c.id === choiceId);
-    const btn = document.getElementById(choiceId);
-    if (!choice || !btn) return;
-    state.busy = true;
 
-    if (choice.isCorrect){
+    const tile = tileObjectForButton(btn);
+    const expected = expectedChar();
+    if (!tile || !expected || btn.classList.contains("is-used")) return;
+
+    if (tile.char === expected){
+      state.busy = true;
+      state.correctLetters += 1;
       state.streak += 1;
       state.bestStreak = Math.max(state.bestStreak, state.streak);
-      spawnParticlesAtButton(btn, "burst");
-      state.roundChoices.forEach(c => {
-        const el = document.getElementById(c.id);
-        if (!el) return;
-        if (c.id === choiceId){
-          el.classList.add("is-bursting");
-        } else {
-          el.style.opacity = "0";
-        }
-      });
-      await sleep(340);
-      state.progressIndex += 1;
-      if (state.progressIndex >= state.segments.length){
-        state.completed = true;
-        state.endTime = performance.now();
+      state.letterIndex += 1;
 
-        state.completionResult = await window.VerseGameBridge.completeGameRun({
-          verseId: ctx.verseId,
-          gameId: GAME_ID,
-          mode: selectedMode,
-          startedAt: state.startTime,
-          stats: {
-            wpm: wordsPerMinute(),
-            timeSecs: Number((totalElapsedMs() / 1000).toFixed(1)),
-            bestStreak: state.bestStreak
-          }
-        });
+      btn.classList.add("is-correct", "is-used");
+      btn.disabled = true;
+      updateTargetReveal();
 
-        state.busy = false;
-        setScreen("end");
+      await sleep(170);
+      btn.remove();
+
+      if (state.letterIndex >= state.currentTarget.playableText.length){
+        await completeCurrentTarget();
         return;
       }
-      buildRoundChoices();
+
       state.busy = false;
-      render();
       return;
     }
 
+    state.wrongTaps += 1;
     state.streak = 0;
-    spawnSmokeForAll();
-    flashWrongBoard();
-    const build = document.getElementById("vsnBuild");
-    if (build){
-      build.classList.remove("vsn-shake");
-      void build.offsetWidth;
-      build.classList.add("vsn-shake");
+    shakeElement(btn);
+    shakeElement(document.getElementById("vsnBuild"));
+  }
+
+  async function completeCurrentTarget(){
+    const note = document.getElementById("vsnTargetNote");
+    if (note){
+      note.classList.remove("is-complete");
+      void note.offsetWidth;
+      note.classList.add("is-complete");
     }
-    state.roundChoices.forEach(c => {
-      const el = document.getElementById(c.id);
-      if (el) el.style.opacity = "0";
-    });
 
-    await sleep(360);
+    await sleep(260);
 
-    buildRoundChoices();
+    state.progressIndex += state.currentTarget.segmentCount;
+    state.targetsCompleted += 1;
+    updateBuildArea();
+
+    if (state.progressIndex >= state.segments.length){
+      state.completed = true;
+      state.completionResult = await window.VerseGameBridge.completeGameRun({
+        verseId: ctx.verseId,
+        gameId: GAME_ID,
+        mode: selectedMode,
+        startedAt: state.startTime,
+        stats: {
+          correctLetters: state.correctLetters,
+          wrongTaps: state.wrongTaps,
+          targetsCompleted: state.targetsCompleted,
+          bestStreak: state.bestStreak
+        }
+      });
+      state.busy = false;
+      setScreen("end");
+      return;
+    }
+
+    prepareCurrentTarget();
     state.busy = false;
     render();
+  }
+
+  function layoutMagnets(){
+    const field = document.getElementById("vsnLetterField");
+    if (!field) return;
+
+    const rect = field.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return;
+
+    const buttons = Array.from(field.querySelectorAll(".vsn-magnet"));
+    const byId = new Map(buttons.map(btn => [btn.dataset.tileId, btn]));
+
+    const targetTiles = state.tiles.filter(tile => tile.source === "target");
+    const decoyTiles = state.tiles.filter(tile => tile.source === "decoy");
+    const ordered = shuffle(targetTiles).concat(shuffle(decoyTiles));
+    const placed = [];
+    const isHard = selectedMode === "hard";
+
+    for (const tile of ordered){
+      const btn = byId.get(tile.id);
+      if (!btn) continue;
+
+      btn.style.left = "0px";
+      btn.style.top = "0px";
+      btn.style.visibility = "hidden";
+      btn.classList.remove("is-hidden-decoy");
+
+      const bw = btn.offsetWidth || 54;
+      const bh = btn.offsetHeight || 54;
+      const gap = Math.max(4, Math.min(10, rect.width * 0.012));
+      const maxX = Math.max(0, rect.width - bw - 4);
+      const maxY = Math.max(0, rect.height - bh - 4);
+      const tries = tile.source === "target" ? 360 : (isHard ? 90 : 180);
+      let chosen = null;
+
+      for (let i = 0; i < tries; i++){
+        const x = 2 + Math.random() * Math.max(1, maxX - 2);
+        const y = 2 + Math.random() * Math.max(1, maxY - 2);
+        const candidate = { x, y, w: bw, h: bh };
+        const overlaps = placed.some(p => !(
+          candidate.x + candidate.w + gap < p.x ||
+          candidate.x > p.x + p.w + gap ||
+          candidate.y + candidate.h + gap < p.y ||
+          candidate.y > p.y + p.h + gap
+        ));
+        if (!overlaps){
+          chosen = candidate;
+          break;
+        }
+      }
+
+      if (!chosen){
+        if (tile.source === "decoy"){
+          btn.classList.add("is-hidden-decoy");
+          btn.style.display = "none";
+          continue;
+        }
+        chosen = findFallbackSlot(placed, rect, bw, bh, gap);
+      }
+
+      placed.push(chosen);
+      btn.style.left = `${chosen.x}px`;
+      btn.style.top = `${chosen.y}px`;
+      btn.style.visibility = "visible";
+      btn.style.setProperty("--spawn-delay", `${Math.min(360, placed.length * 22)}ms`);
+    }
+  }
+
+  function findFallbackSlot(placed, rect, bw, bh, gap){
+    const stepX = Math.max(8, bw * 0.72);
+    const stepY = Math.max(8, bh * 0.72);
+    for (let y = 2; y <= Math.max(2, rect.height - bh - 2); y += stepY){
+      for (let x = 2; x <= Math.max(2, rect.width - bw - 2); x += stepX){
+        const candidate = { x, y, w: bw, h: bh };
+        const overlaps = placed.some(p => !(
+          candidate.x + candidate.w + gap < p.x ||
+          candidate.x > p.x + p.w + gap ||
+          candidate.y + candidate.h + gap < p.y ||
+          candidate.y > p.y + p.h + gap
+        ));
+        if (!overlaps) return candidate;
+      }
+    }
+    return {
+      x: Math.max(2, Math.random() * Math.max(1, rect.width - bw - 4)),
+      y: Math.max(2, Math.random() * Math.max(1, rect.height - bh - 4)),
+      w: bw,
+      h: bh
+    };
   }
 
   function render(){
@@ -599,6 +654,13 @@ function renderHelpOverlay(){
     if (state.screen === "game") return renderGame();
     if (state.screen === "end") return renderEnd();
   }
+
+  window.addEventListener("resize", () => {
+    if (state.screen === "game"){
+      fitTargetText();
+      layoutMagnets();
+    }
+  });
 
   setScreen("intro");
 })();
