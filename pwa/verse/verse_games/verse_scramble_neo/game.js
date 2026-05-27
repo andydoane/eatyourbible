@@ -1127,8 +1127,8 @@
     const buttons = Array.from(field.querySelectorAll(".vsn-magnet"));
     const byId = new Map(buttons.map(btn => [btn.dataset.tileId, btn]));
 
-    const targetTiles = state.tiles.filter(tile => tile.source === "target");
-    const decoyTiles = state.tiles.filter(tile => tile.source === "decoy");
+    const targetTiles = state.tiles.filter(tile => tile.source === "target" || tile.source === "bonus-target");
+    const decoyTiles = state.tiles.filter(tile => tile.source === "decoy" || tile.source === "bonus-decoy");
     const ordered = shuffle(targetTiles).concat(shuffle(decoyTiles));
     const placed = [];
     const isHard = selectedMode === "hard";
@@ -1167,7 +1167,7 @@
       }
 
       if (!chosen){
-        if (tile.source === "decoy"){
+        if (tile.source === "decoy" || tile.source === "bonus-decoy"){
           btn.classList.add("is-hidden-decoy");
           btn.style.display = "none";
           continue;
