@@ -450,12 +450,12 @@ select{ font:inherit; }
 @keyframes vsnMagnetFall {
   0% {
     opacity: 1;
-    transform: rotate(var(--magnet-rot)) translateY(0) scale(1);
+    transform: translateY(0) rotate(var(--magnet-rot)) scale(1);
   }
 
   100% {
     opacity: .96;
-    transform: rotate(var(--magnet-rot)) translateY(120vh) scale(1);
+    transform: translateY(120vh) rotate(var(--magnet-rot)) scale(1);
   }
 }
 
