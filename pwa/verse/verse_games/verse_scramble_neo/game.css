@@ -300,6 +300,10 @@ select{ font:inherit; }
   animation-delay: var(--fall-delay, 0ms);
 }
 
+.vsn-magnet.is-hinting {
+  animation: vsnTapMeHint 1.15s ease-in-out infinite;
+}
+
 .vsn-magnet:disabled{
   cursor:default;
 }
@@ -468,6 +472,30 @@ select{ font:inherit; }
   100% {
     opacity: .96;
     transform: translateY(120vh) rotate(var(--magnet-rot)) scale(1);
+  }
+}
+
+@keyframes vsnTapMeHint {
+
+  0%,
+  100% {
+    transform: rotate(var(--magnet-rot)) scale(1);
+    filter: drop-shadow(0 .035em 0 rgba(0, 0, 0, .12));
+  }
+
+  22% {
+    transform: rotate(calc(var(--magnet-rot) - 5deg)) scale(1.12);
+    filter: drop-shadow(0 .05em .06em rgba(0, 0, 0, .22));
+  }
+
+  44% {
+    transform: rotate(calc(var(--magnet-rot) + 5deg)) scale(1.12);
+    filter: drop-shadow(0 .05em .06em rgba(0, 0, 0, .22));
+  }
+
+  66% {
+    transform: rotate(var(--magnet-rot)) scale(1.04);
+    filter: drop-shadow(0 .04em .04em rgba(0, 0, 0, .16));
   }
 }
 

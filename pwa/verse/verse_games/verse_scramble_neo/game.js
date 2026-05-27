@@ -27,6 +27,7 @@
 
   let selectedMode = null;
   let muted = false;
+  let easyHintTimer = null;
 
   const shuffle = window.VerseGameShell.shuffle;
 
@@ -125,6 +126,7 @@
   }
 
   function initVerseData(){
+    clearEasyHint();
     const parsed = window.VerseGameShell.parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
     const buildData = window.VerseGameShell.buildVerseSegments({
       verseText: ctx.verseText || "",
@@ -920,7 +922,10 @@
     } else if (state.bonusStage === "intro" || state.bonusStage === "find" || state.bonusStage === "final"){
       // Bonus message animations manage their own timing.
     } else {
-      requestAnimationFrame(layoutMagnets);
+      requestAnimationFrame(() => {
+        layoutMagnets();
+        requestAnimationFrame(scheduleEasyHint);
+      });
     }
   }
 
@@ -1041,6 +1046,55 @@
     el.classList.add("vsn-shake");
   }
 
+  function clearEasyHint() {
+    if (easyHintTimer) {
+      clearTimeout(easyHintTimer);
+      easyHintTimer = null;
+    }
+
+    document.querySelectorAll(".vsn-magnet.is-hinting").forEach(btn => {
+      btn.classList.remove("is-hinting");
+    });
+  }
+
+  function scheduleEasyHint() {
+    clearEasyHint();
+
+    if (selectedMode !== "easy") return;
+    if (state.screen !== "game") return;
+    if (state.bonusActive || state.showingInstruction) return;
+    if (state.busy || state.menuOpen || state.helpOpen || state.completed) return;
+    if (!state.currentTarget) return;
+
+    easyHintTimer = setTimeout(() => {
+      showEasyHint();
+    }, 4000);
+  }
+
+  function showEasyHint() {
+    easyHintTimer = null;
+
+    if (selectedMode !== "easy") return;
+    if (state.screen !== "game") return;
+    if (state.bonusActive || state.showingInstruction) return;
+    if (state.busy || state.menuOpen || state.helpOpen || state.completed) return;
+
+    const expected = expectedChar();
+    if (!expected) return;
+
+    document.querySelectorAll(".vsn-magnet").forEach(btn => {
+      const tile = tileObjectForButton(btn);
+      const shouldHint = tile &&
+        tile.char === expected &&
+        !btn.classList.contains("is-used") &&
+        !btn.disabled &&
+        btn.style.display !== "none" &&
+        btn.style.visibility !== "hidden";
+
+      btn.classList.toggle("is-hinting", !!shouldHint);
+    });
+  }
+
   async function animateRemainingLettersFall() {
     const field = document.getElementById("vsnLetterField");
     if (!field) return;
@@ -1078,6 +1132,7 @@
     if (!tile || !expected || btn.classList.contains("is-used")) return;
 
     if (tile.char === expected){
+      clearEasyHint();
       state.busy = true;
       state.correctLetters += 1;
       state.streak += 1;
@@ -1097,6 +1152,7 @@
       }
 
       state.busy = false;
+      scheduleEasyHint();
       return;
     }
 
@@ -1107,6 +1163,7 @@
   }
 
   async function completeCurrentTarget(){
+    clearEasyHint();
     const note = document.getElementById("vsnTargetNote");
     if (note){
       note.classList.remove("is-complete");
