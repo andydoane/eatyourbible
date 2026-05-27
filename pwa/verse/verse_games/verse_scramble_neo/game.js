@@ -13,6 +13,26 @@
   const BUILD_AREA = "compact";
   const HELP_OVERLAY_ID = "vsnHelpOverlay";
 
+
+  const SILENCE_AUDIO_FILE = "../../verse_audio/silence.mp3";
+
+  const SOUND_TUNING = {
+    // Master volume for every generated sound. Try .35 to .75.
+    masterVolume: 0.55,
+
+    // Individual sound volumes. Try .5 to 1.3 for small adjustments.
+    volumes: {
+      correctLetter: 1.00,  // Tiny Magnet Pop
+      wrongLetter: 0.90,    // Rubber Bump
+      wordComplete: 0.85,   // Mini Fanfare
+      lettersFall: 0.70,    // Fridge Slide
+      messagePop: 0.70,     // Toy Sparkle
+      bonusStart: 0.75,     // Search Start
+      bonusYouWin: 0.85,    // Tiny Fanfare
+      bonusIWin: 0.75       // Gentle Lose
+    }
+  };
+
   const MAGNET_COLORS = [
     "#fc171a",
     "#fc7e0e",
@@ -28,6 +48,10 @@
   let selectedMode = null;
   let muted = false;
   let easyHintTimer = null;
+  let audioCtx = null;
+  let masterGain = null;
+  let silenceAudioEl = null;
+  let audioUnlocked = false;
 
   const shuffle = window.VerseGameShell.shuffle;
 
@@ -123,6 +147,238 @@
   function bonusTimeWithWiggle() {
     const base = bonusBaseTimeMs();
     return Math.round(base + randomBetween(-1200, 1200));
+  }
+
+
+  function getSoundVolume(eventId) {
+    const volume = SOUND_TUNING.volumes[eventId];
+    return typeof volume === "number" ? volume : 1;
+  }
+
+  function getSilenceAudioElement() {
+    if (silenceAudioEl) return silenceAudioEl;
+
+    silenceAudioEl = document.createElement("audio");
+    silenceAudioEl.preload = "auto";
+    silenceAudioEl.playsInline = true;
+    silenceAudioEl.setAttribute("playsinline", "");
+    silenceAudioEl.src = SILENCE_AUDIO_FILE;
+    silenceAudioEl.style.display = "none";
+    document.body.appendChild(silenceAudioEl);
+
+    return silenceAudioEl;
+  }
+
+  function primeHtmlAudio() {
+    try {
+      const audio = getSilenceAudioElement();
+      audio.muted = false;
+      audio.volume = 0.01;
+      audio.currentTime = 0;
+
+      const playPromise = audio.play();
+      if (playPromise && typeof playPromise.then === "function") {
+        playPromise.then(() => {
+          setTimeout(() => {
+            try {
+              audio.pause();
+              audio.currentTime = 0;
+            } catch (err) {
+              // Ignore audio reset errors.
+            }
+          }, 80);
+        }).catch(() => {
+          // iOS may reject this outside a user gesture. We retry on the next tap.
+        });
+      }
+    } catch (err) {
+      // Silent audio unlock is best-effort.
+    }
+  }
+
+  function ensureAudioContext() {
+    if (audioCtx) return audioCtx;
+
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return null;
+
+    audioCtx = new AudioContextClass();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = SOUND_TUNING.masterVolume;
+    masterGain.connect(audioCtx.destination);
+
+    return audioCtx;
+  }
+
+  function unlockAudio() {
+    primeHtmlAudio();
+
+    const ctx = ensureAudioContext();
+    if (!ctx || !masterGain) return;
+
+    if (ctx.state === "suspended") {
+      ctx.resume().catch(() => { });
+    }
+
+    try {
+      const t = ctx.currentTime + 0.01;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(440, t);
+      gain.gain.setValueAtTime(0.0001, t);
+
+      osc.connect(gain);
+      gain.connect(masterGain);
+      osc.start(t);
+      osc.stop(t + 0.03);
+
+      audioUnlocked = true;
+    } catch (err) {
+      // Unlock blip is best-effort.
+    }
+  }
+
+  function soundEnvelope(eventId, start, duration, peak = 0.2, attack = 0.005, release = 0.06) {
+    const ctx = ensureAudioContext();
+    if (!ctx || !masterGain) return null;
+
+    const gain = ctx.createGain();
+    const scaledPeak = Math.max(0.0002, peak * getSoundVolume(eventId));
+
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(scaledPeak, start + attack);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + duration + release);
+    gain.connect(masterGain);
+
+    return gain;
+  }
+
+  function playOsc(eventId, type, freq, start, duration, gain = 0.18, endFreq = null) {
+    const ctx = ensureAudioContext();
+    if (!ctx) return;
+
+    const osc = ctx.createOscillator();
+    const envelope = soundEnvelope(eventId, start, duration, gain);
+    if (!envelope) return;
+
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, start);
+    if (endFreq) {
+      osc.frequency.exponentialRampToValueAtTime(Math.max(1, endFreq), start + duration);
+    }
+
+    osc.connect(envelope);
+    osc.start(start);
+    osc.stop(start + duration + 0.1);
+  }
+
+  function playNoise(eventId, start, duration, gain = 0.12, filterFreq = 900, type = "lowpass") {
+    const ctx = ensureAudioContext();
+    if (!ctx) return;
+
+    const length = Math.max(1, Math.floor(ctx.sampleRate * duration));
+    const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+
+    for (let i = 0; i < length; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+
+    const src = ctx.createBufferSource();
+    const filter = ctx.createBiquadFilter();
+    const envelope = soundEnvelope(eventId, start, duration, gain, 0.002, 0.05);
+    if (!envelope) return;
+
+    src.buffer = buffer;
+    filter.type = type;
+    filter.frequency.value = filterFreq;
+    filter.Q.value = 0.8;
+
+    src.connect(filter);
+    filter.connect(envelope);
+    src.start(start);
+    src.stop(start + duration + 0.08);
+  }
+
+  function playClick(eventId, start, gain = 0.1, freq = 1400) {
+    playNoise(eventId, start, 0.025, gain, freq, "bandpass");
+  }
+
+  function soundCorrectLetter(t) {
+    playOsc("correctLetter", "sine", 520, t, 0.07, 0.12, 850);
+    playClick("correctLetter", t, 0.045, 1600);
+  }
+
+  function soundWrongLetter(t) {
+    playOsc("wrongLetter", "triangle", 220, t, 0.08, 0.10, 170);
+    playOsc("wrongLetter", "triangle", 170, t + 0.07, 0.09, 0.07);
+  }
+
+  function soundWordComplete(t) {
+    playOsc("wordComplete", "sine", 523, t, 0.08, 0.07);
+    playOsc("wordComplete", "sine", 659, t + 0.07, 0.08, 0.07);
+    playOsc("wordComplete", "sine", 784, t + 0.14, 0.12, 0.08);
+    playOsc("wordComplete", "sine", 1046, t + 0.20, 0.16, 0.06);
+  }
+
+  function soundLettersFall(t) {
+    playNoise("lettersFall", t, 0.38, 0.09, 650, "lowpass");
+    playOsc("lettersFall", "sine", 240, t + 0.18, 0.18, 0.035, 110);
+  }
+
+  function soundMessagePop(t) {
+    playOsc("messagePop", "sine", 880, t, 0.05, 0.04);
+    playOsc("messagePop", "sine", 1175, t + 0.04, 0.05, 0.04);
+    playOsc("messagePop", "sine", 1568, t + 0.08, 0.06, 0.035);
+  }
+
+  function soundBonusStart(t) {
+    playOsc("bonusStart", "triangle", 330, t, 0.06, 0.045);
+    playOsc("bonusStart", "triangle", 494, t + 0.055, 0.06, 0.045);
+    playOsc("bonusStart", "triangle", 659, t + 0.11, 0.08, 0.055);
+  }
+
+  function soundBonusYouWin(t) {
+    playOsc("bonusYouWin", "square", 523, t, 0.06, 0.035);
+    playOsc("bonusYouWin", "square", 659, t + 0.06, 0.06, 0.035);
+    playOsc("bonusYouWin", "square", 784, t + 0.12, 0.06, 0.035);
+    playOsc("bonusYouWin", "triangle", 1046, t + 0.18, 0.16, 0.07);
+  }
+
+  function soundBonusIWin(t) {
+    playOsc("bonusIWin", "triangle", 392, t, 0.09, 0.05);
+    playOsc("bonusIWin", "triangle", 294, t + 0.10, 0.13, 0.055);
+  }
+
+  const SOUND_PLAYERS = {
+    correctLetter: soundCorrectLetter,
+    wrongLetter: soundWrongLetter,
+    wordComplete: soundWordComplete,
+    lettersFall: soundLettersFall,
+    messagePop: soundMessagePop,
+    bonusStart: soundBonusStart,
+    bonusYouWin: soundBonusYouWin,
+    bonusIWin: soundBonusIWin
+  };
+
+  function playGameSound(eventId) {
+    if (muted) return;
+
+    unlockAudio();
+
+    const ctx = ensureAudioContext();
+    const player = SOUND_PLAYERS[eventId];
+    if (!ctx || !masterGain || !player) return;
+
+    masterGain.gain.value = SOUND_TUNING.masterVolume;
+
+    try {
+      player(ctx.currentTime + 0.02);
+    } catch (err) {
+      // Sound should never break gameplay.
+    }
   }
 
   function initVerseData(){
@@ -448,6 +704,7 @@
       backLabel: "Back to Verse Scramble title",
       onBack: () => setScreen("intro"),
       onSelect: (mode) => {
+        unlockAudio();
         selectedMode = mode;
         initVerseData();
         state.startTime = performance.now();
@@ -517,6 +774,7 @@
   }
 
   async function runInstructionIntro(token){
+    playGameSound("messagePop");
     await sleep(3400);
     if (state.screen !== "game" || !state.showingInstruction || token !== state.instructionToken) return;
     const msg = document.getElementById("vsnInstructionMessage");
@@ -550,6 +808,7 @@
   }
 
   async function runBonusIntro(token) {
+    playGameSound("messagePop");
     await sleep(4200);
     if (!isCurrentBonusToken(token) || state.bonusStage !== "intro") return;
     const msg = document.getElementById("vsnInstructionMessage");
@@ -587,6 +846,7 @@
   }
 
   async function runBonusFindMessage(token) {
+    playGameSound("bonusStart");
     await sleep(1350);
     if (!isCurrentBonusToken(token) || state.bonusStage !== "find") return;
     const msg = document.getElementById("vsnInstructionMessage");
@@ -617,6 +877,7 @@
   }
 
   async function runBonusFinal(token) {
+    playGameSound("messagePop");
     await sleep(2800);
     if (!isCurrentBonusToken(token) || state.bonusStage !== "final") return;
     const msg = document.getElementById("vsnInstructionMessage");
@@ -709,6 +970,8 @@
   }
 
   function handleBonusTileTap(btn) {
+    unlockAudio();
+
     if (state.busy || state.menuOpen || state.helpOpen || state.bonusStage !== "round") return;
 
     const tile = tileObjectForButton(btn);
@@ -733,10 +996,12 @@
       state.bonusPlayerWins += 1;
       state.bonusResultText = "YOU WON!";
       state.bonusResultKind = "player";
+      playGameSound("bonusYouWin");
     } else {
       state.bonusPointerWins += 1;
       state.bonusResultText = "I WON!";
       state.bonusResultKind = "pointer";
+      playGameSound("bonusIWin");
     }
 
     if (btn) {
@@ -940,7 +1205,10 @@
       gameMessage: `${state.targetsCompleted} targets solved · ${state.wrongTaps} wrong taps · Best streak: ${state.bestStreak}`,
       theme: GAME_THEME,
       backLabel: "Back to Practice Games",
-      onPlayAgain: () => setScreen("mode"),
+      onPlayAgain: () => {
+        unlockAudio();
+        setScreen("mode");
+      },
       onMoreGames: () => window.VerseGameBridge.exitGame(),
       onChangeVerse: () => window.VerseGameBridge.returnToTitle()
     });
@@ -988,6 +1256,7 @@
       helpOverlayId: HELP_OVERLAY_ID,
       isMuted: () => muted,
       onMuteToggle: () => {
+        unlockAudio();
         muted = !muted;
         return muted;
       },
@@ -1104,6 +1373,8 @@
 
     if (!magnets.length) return;
 
+    playGameSound("lettersFall");
+
     magnets.forEach((btn, index) => {
       const delay = Math.round(randomBetween(0, 260));
       const duration = Math.round(randomBetween(680, 920));
@@ -1120,6 +1391,8 @@
   }
 
   async function handleTileTap(btn){
+    unlockAudio();
+
     if (state.bonusActive){
       handleBonusTileTap(btn);
       return;
@@ -1132,6 +1405,7 @@
     if (!tile || !expected || btn.classList.contains("is-used")) return;
 
     if (tile.char === expected){
+      playGameSound("correctLetter");
       clearEasyHint();
       state.busy = true;
       state.correctLetters += 1;
@@ -1156,6 +1430,7 @@
       return;
     }
 
+    playGameSound("wrongLetter");
     state.wrongTaps += 1;
     state.streak = 0;
     shakeElement(btn);
@@ -1164,6 +1439,7 @@
 
   async function completeCurrentTarget(){
     clearEasyHint();
+    playGameSound("wordComplete");
     const note = document.getElementById("vsnTargetNote");
     if (note){
       note.classList.remove("is-complete");
