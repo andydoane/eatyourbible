@@ -645,3 +645,10 @@ select{ font:inherit; }
     width:clamp(8px, 2vw, 14px);
   }
 }
+
+/* TEMP TEST: turn off magnet letter strokes */
+.vsn-magnet,
+.vsn-intro-letter,
+.vsn-bonus-target-letter {
+  -webkit-text-stroke: 0 transparent !important;
+}
