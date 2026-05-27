@@ -210,6 +210,13 @@ select{ font:inherit; }
   overflow:hidden;
 }
 
+.vsn-letter-field.is-message-field {
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+}
+
 .vsn-magnet{
   position:absolute;
   width:clamp(64px, 11.8vw, 116px);

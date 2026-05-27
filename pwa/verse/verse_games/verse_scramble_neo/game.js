@@ -852,6 +852,10 @@
       state.bonusStage === "find" ||
       state.bonusStage === "final";
     const targetHtml = state.bonusActive ? renderBonusTargetHtml() : renderTargetHtml();
+    const isMessageField = state.showingInstruction ||
+      state.bonusStage === "intro" ||
+      state.bonusStage === "find" ||
+      state.bonusStage === "final";
     const fieldHtml = state.showingInstruction
       ? renderInstructionHtml()
       : state.bonusStage === "intro"
@@ -889,7 +893,7 @@
                 <div class="vsn-target-text" id="vsnTargetText">${targetIsBlank ? "" : targetHtml}</div>
               </div>
 
-              <div class="vsn-letter-field" id="vsnLetterField" aria-label="Scrambled magnet letters">
+              <div class="vsn-letter-field ${isMessageField ? "is-message-field" : ""}" id="vsnLetterField" aria-label="Scrambled magnet letters">
                 ${fieldHtml}
               </div>
               ${renderBonusPointerHtml()}
