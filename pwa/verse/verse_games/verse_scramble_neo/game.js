@@ -55,7 +55,9 @@
     wrongTaps: 0,
     targetsCompleted: 0,
     streak: 0,
-    bestStreak: 0
+    bestStreak: 0,
+    showingInstruction: false,
+    instructionToken: 0
   };
 
   function escapeHtml(str){
@@ -100,6 +102,8 @@
     state.targetsCompleted = 0;
     state.streak = 0;
     state.bestStreak = 0;
+    state.showingInstruction = false;
+    state.instructionToken += 1;
   }
 
   function currentPhase(index = state.progressIndex){
@@ -316,10 +320,53 @@
         selectedMode = mode;
         initVerseData();
         state.startTime = performance.now();
-        prepareCurrentTarget();
+        state.showingInstruction = true;
+        state.instructionToken += 1;
+        state.busy = true;
+        state.currentTarget = null;
+        state.tiles = [];
         setScreen("game");
       }
     });
+  }
+
+
+  function introLetterHtml(ch, index){
+    const color = MAGNET_COLORS[index % MAGNET_COLORS.length];
+    const rotation = Math.round(Math.random() * 20 - 10);
+    const delay = Math.min(520, index * 32);
+    return `<span class="vsn-intro-letter" style="--magnet-color:${color}; --magnet-rot:${rotation}deg; --intro-delay:${delay}ms;">${escapeHtml(ch)}</span>`;
+  }
+
+  function renderInstructionHtml(){
+    const lines = ["TAP THE", "LETTERS", "IN ORDER"];
+    let letterIndex = 0;
+    return `
+      <div class="vsn-instruction-message" id="vsnInstructionMessage" aria-label="Tap the letters in order">
+        ${lines.map(line => `
+          <div class="vsn-instruction-line">
+            ${Array.from(line).map(ch => {
+              if (ch === " ") return `<span class="vsn-intro-space"></span>`;
+              return introLetterHtml(ch, letterIndex++);
+            }).join("")}
+          </div>
+        `).join("")}
+      </div>`;
+  }
+
+  async function runInstructionIntro(token){
+    await sleep(3400);
+    if (state.screen !== "game" || !state.showingInstruction || token !== state.instructionToken) return;
+    const msg = document.getElementById("vsnInstructionMessage");
+    if (msg){
+      msg.classList.add("is-exiting");
+      await sleep(430);
+    }
+    if (state.screen !== "game" || token !== state.instructionToken) return;
+    state.showingInstruction = false;
+    state.busy = false;
+    prepareCurrentTarget();
+    render();
   }
 
   function renderGame(){
@@ -337,13 +384,12 @@
             <div class="vsn-fridge-board" id="vsnBoard">
               <button class="vsn-menu-pill no-zoom" id="vsnMenuPill" aria-label="Game Menu" type="button">☰</button>
 
-              <div class="vsn-target-note" id="vsnTargetNote" aria-live="polite">
-                <div class="vsn-target-label">Find the letters</div>
-                <div class="vsn-target-text" id="vsnTargetText">${renderTargetHtml()}</div>
+              <div class="vsn-target-note ${state.showingInstruction ? "is-blank" : ""}" id="vsnTargetNote" aria-live="polite">
+                <div class="vsn-target-text" id="vsnTargetText">${state.showingInstruction ? "" : renderTargetHtml()}</div>
               </div>
 
               <div class="vsn-letter-field" id="vsnLetterField" aria-label="Scrambled magnet letters">
-                ${state.tiles.map(tile => `
+                ${state.showingInstruction ? renderInstructionHtml() : state.tiles.map(tile => `
                   <button
                     class="vsn-magnet no-zoom is-spawning"
                     type="button"
@@ -365,7 +411,13 @@
     wireGameScreen();
     fitBuildText();
     fitTargetText();
-    requestAnimationFrame(layoutMagnets);
+
+    if (state.showingInstruction){
+      const token = state.instructionToken;
+      runInstructionIntro(token);
+    } else {
+      requestAnimationFrame(layoutMagnets);
+    }
   }
 
   function renderEnd(){
