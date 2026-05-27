@@ -1047,13 +1047,9 @@
     if (!magnets.length) return;
 
     magnets.forEach((btn, index) => {
-      const fallX = Math.round(randomBetween(-70, 70));
-      const fallRot = Math.round(randomBetween(-95, 95));
       const delay = Math.round(randomBetween(0, 260));
-      const duration = Math.round(randomBetween(620, 900));
+      const duration = Math.round(randomBetween(680, 920));
 
-      btn.style.setProperty("--fall-x", `${fallX}px`);
-      btn.style.setProperty("--fall-rot", `${fallRot}deg`);
       btn.style.setProperty("--fall-delay", `${delay}ms`);
       btn.style.setProperty("--fall-duration", `${duration}ms`);
       btn.style.zIndex = `${30 + index}`;

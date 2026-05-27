@@ -453,15 +453,9 @@ select{ font:inherit; }
     transform: rotate(var(--magnet-rot)) translateY(0) scale(1);
   }
 
-  18% {
-    opacity: 1;
-    transform: rotate(var(--magnet-rot)) translateY(-10px) scale(1.03);
-  }
-
   100% {
-    opacity: 0;
-    transform:
-      rotate(calc(var(--magnet-rot) + var(--fall-rot, 60deg))) translate(var(--fall-x, 0px), 120vh) scale(.92);
+    opacity: .96;
+    transform: rotate(var(--magnet-rot)) translateY(120vh) scale(1);
   }
 }
 
