@@ -296,7 +296,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Scramble",
-      icon: "🧩",
+      icon: "🔄",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
