@@ -55,6 +55,7 @@
   let masterGain = null;
   let silenceAudioEl = null;
   let audioUnlocked = false;
+  let lastCorrectLetterSoundIndex = -1;
 
   const shuffle = window.VerseGameShell.shuffle;
 
@@ -309,9 +310,109 @@
     playNoise(eventId, start, 0.025, gain, freq, "bandpass");
   }
 
+  function playCorrectLetterVariation(t, params){
+    playOsc(
+      "correctLetter",
+      params.wave,
+      params.start,
+      t,
+      params.dur,
+      params.gain,
+      params.end
+    );
+
+    playClick(
+      "correctLetter",
+      t,
+      params.clickGain,
+      params.clickFreq
+    );
+
+    if (params.second){
+      playOsc(
+        "correctLetter",
+        "sine",
+        params.second.start,
+        t + params.second.delay,
+        params.second.dur,
+        params.second.gain,
+        params.second.end
+      );
+    }
+  }
+
   function soundCorrectLetter(t) {
-    playOsc("correctLetter", "sine", 520, t, 0.07, 0.12, 850);
-    playClick("correctLetter", t, 0.045, 1600);
+    const PENTATONIC_UP = 1.12246;
+
+    const correctLetterVariations = [
+      {
+        name: "Tiny Double Pop",
+        wave: "sine",
+        start: 520,
+        end: 850,
+        dur: 0.065,
+        gain: 0.105,
+        clickGain: 0.038,
+        clickFreq: 1600,
+        second: {
+          start: 780,
+          end: 1040,
+          dur: 0.038,
+          gain: 0.045,
+          delay: 0.034
+        }
+      },
+      {
+        name: "Tiny Double Pop Up",
+        wave: "sine",
+        start: Math.round(520 * PENTATONIC_UP),
+        end: Math.round(850 * PENTATONIC_UP),
+        dur: 0.065,
+        gain: 0.105,
+        clickGain: 0.038,
+        clickFreq: Math.round(1600 * PENTATONIC_UP),
+        second: {
+          start: Math.round(780 * PENTATONIC_UP),
+          end: Math.round(1040 * PENTATONIC_UP),
+          dur: 0.038,
+          gain: 0.045,
+          delay: 0.034
+        }
+      },
+      {
+        name: "Rounder Pop",
+        wave: "sine",
+        start: 500,
+        end: 790,
+        dur: 0.088,
+        gain: 0.13,
+        clickGain: 0.025,
+        clickFreq: 1200,
+        second: false
+      },
+      {
+        name: "Rounder Pop Up",
+        wave: "sine",
+        start: Math.round(500 * PENTATONIC_UP),
+        end: Math.round(790 * PENTATONIC_UP),
+        dur: 0.088,
+        gain: 0.13,
+        clickGain: 0.025,
+        clickFreq: Math.round(1200 * PENTATONIC_UP),
+        second: false
+      }
+    ];
+
+    let index = Math.floor(Math.random() * correctLetterVariations.length);
+
+    if (correctLetterVariations.length > 1){
+      while (index === lastCorrectLetterSoundIndex){
+        index = Math.floor(Math.random() * correctLetterVariations.length);
+      }
+    }
+
+    lastCorrectLetterSoundIndex = index;
+    playCorrectLetterVariation(t, correctLetterVariations[index]);
   }
 
   function soundWrongLetter(t) {
