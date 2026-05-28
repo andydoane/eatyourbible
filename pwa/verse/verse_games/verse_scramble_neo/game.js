@@ -25,7 +25,7 @@
     // These are intentionally higher than 1 because Verse Scramble's generated
     // sound recipes use smaller base oscillator/noise gains than Verse Typer.
     volumes: {
-      correctLetter: 3.60,  // Correct tap pop variations
+      correctLetter: 0.85,  // Verse Typer-style melody tones
       wrongLetter: 3.60,    // Rubber Bump
       wordComplete: 3.40,   // Mini Fanfare
       lettersFall: 2.40,    // Fridge Slide
@@ -56,7 +56,7 @@
   let masterGain = null;
   let silenceAudioEl = null;
   let audioUnlocked = false;
-  let lastCorrectLetterSoundIndex = -1;
+  let currentCorrectMelody = [];
 
   const shuffle = window.VerseGameShell.shuffle;
 
@@ -378,113 +378,118 @@
     });
   }
 
-  function playCorrectLetterVariation(t, params){
-    playOsc(
-      "correctLetter",
-      params.wave,
-      params.start,
-      t,
-      params.dur,
-      params.gain,
-      params.end
-    );
+  function midiToFreq(midi){
+    return 440 * Math.pow(2, (midi - 69) / 12);
+  }
 
-    // Clean oscillator tick instead of random-noise click.
-    playOsc(
-      "correctLetter",
-      "triangle",
-      params.clickFreq,
-      t,
-      0.018,
-      params.clickGain * 0.75,
-      params.clickFreq * 1.08
-    );
+  function melodyPoolsForLength(length){
+    const pools = {
+      1: [
+        [67],
+        [72],
+        [64],
+        [60],
+        [69]
+      ],
 
-    if (params.second){
-      playOsc(
-        "correctLetter",
-        "sine",
-        params.second.start,
-        t + params.second.delay,
-        params.second.dur,
-        params.second.gain,
-        params.second.end
-      );
+      2: [
+        [60, 67],
+        [64, 67],
+        [67, 72],
+        [72, 67],
+        [60, 64]
+      ],
+
+      3: [
+        [60, 64, 67],
+        [67, 69, 72],
+        [72, 67, 64],
+        [60, 62, 64],
+        [64, 67, 72]
+      ],
+
+      4: [
+        [60, 62, 64, 67],
+        [60, 64, 67, 72],
+        [67, 69, 67, 72],
+        [64, 67, 69, 67],
+        [72, 69, 67, 64]
+      ],
+
+      5: [
+        [60, 62, 64, 67, 72],
+        [60, 64, 67, 69, 72],
+        [67, 69, 72, 69, 67],
+        [64, 67, 69, 67, 72],
+        [72, 69, 67, 64, 60]
+      ],
+
+      6: [
+        [60, 62, 64, 67, 69, 72],
+        [60, 64, 67, 72, 67, 72],
+        [67, 69, 72, 69, 67, 64],
+        [64, 67, 69, 72, 69, 67],
+        [72, 69, 67, 64, 62, 60]
+      ],
+
+      7: [
+        [60, 62, 64, 67, 69, 72, 67],
+        [60, 64, 67, 69, 72, 69, 67],
+        [60, 62, 65, 62, 69, 69, 67],
+        [64, 67, 69, 67, 64, 67, 72],
+        [72, 69, 67, 64, 60, 64, 67]
+      ],
+
+      8: [
+        [60, 62, 64, 67, 69, 72, 69, 67],
+        [60, 64, 67, 72, 67, 69, 67, 72],
+        [67, 69, 72, 71, 72, 69, 67, 64],
+        [64, 67, 69, 72, 69, 67, 64, 60],
+        [72, 69, 67, 64, 60, 62, 64, 67]
+      ],
+
+      9: [
+        [60, 62, 64, 67, 69, 72, 69, 67, 64],
+        [60, 64, 67, 72, 69, 67, 64, 67, 72],
+        [67, 69, 72, 71, 72, 69, 67, 64, 60],
+        [64, 67, 69, 72, 69, 67, 64, 62, 60],
+        [72, 69, 67, 64, 60, 62, 64, 67, 72]
+      ],
+
+      10: [
+        [60, 62, 64, 67, 69, 72, 69, 67, 64, 60],
+        [60, 64, 67, 72, 69, 67, 64, 67, 69, 72],
+        [67, 69, 72, 71, 72, 69, 67, 64, 62, 60],
+        [64, 67, 69, 72, 71, 72, 69, 67, 64, 67],
+        [72, 69, 67, 64, 60, 62, 64, 67, 69, 72]
+      ]
+    };
+
+    return pools[length] || [];
+  }
+
+  function chooseCorrectMelodyForLength(length){
+    const cappedLength = Math.max(1, Math.min(10, Math.round(length || 1)));
+    const pool = melodyPoolsForLength(cappedLength);
+
+    if (!pool.length){
+      return [60, 62, 64, 67, 69, 72, 69, 67, 64, 60];
     }
+
+    return pool[Math.floor(Math.random() * pool.length)].slice();
   }
 
   function soundCorrectLetter(t) {
-    const PENTATONIC_UP = 1.12246;
+    const targetLength = state.currentTarget?.playableText?.length || 1;
 
-    const correctLetterVariations = [
-      {
-        name: "Tiny Double Pop",
-        wave: "sine",
-        start: 520,
-        end: 850,
-        dur: 0.065,
-        gain: 0.105,
-        clickGain: 0.038,
-        clickFreq: 1600,
-        second: {
-          start: 780,
-          end: 1040,
-          dur: 0.038,
-          gain: 0.045,
-          delay: 0.034
-        }
-      },
-      {
-        name: "Tiny Double Pop Up",
-        wave: "sine",
-        start: Math.round(520 * PENTATONIC_UP),
-        end: Math.round(850 * PENTATONIC_UP),
-        dur: 0.065,
-        gain: 0.105,
-        clickGain: 0.038,
-        clickFreq: Math.round(1600 * PENTATONIC_UP),
-        second: {
-          start: Math.round(780 * PENTATONIC_UP),
-          end: Math.round(1040 * PENTATONIC_UP),
-          dur: 0.038,
-          gain: 0.045,
-          delay: 0.034
-        }
-      },
-      {
-        name: "Rounder Pop",
-        wave: "sine",
-        start: 500,
-        end: 790,
-        dur: 0.088,
-        gain: 0.13,
-        clickGain: 0.025,
-        clickFreq: 1200,
-        second: false
-      },
-      {
-        name: "Rounder Pop Up",
-        wave: "sine",
-        start: Math.round(500 * PENTATONIC_UP),
-        end: Math.round(790 * PENTATONIC_UP),
-        dur: 0.088,
-        gain: 0.13,
-        clickGain: 0.025,
-        clickFreq: Math.round(1200 * PENTATONIC_UP),
-        second: false
-      }
-    ];
-
-    let index = Math.floor(Math.random() * correctLetterVariations.length);
-
-    if (correctLetterVariations.length > 1){
-      while (index === lastCorrectLetterSoundIndex){
-        index = Math.floor(Math.random() * correctLetterVariations.length);
-      }
+    if (!currentCorrectMelody.length){
+      currentCorrectMelody = chooseCorrectMelodyForLength(targetLength);
     }
 
-    lastCorrectLetterSoundIndex = index;
-    playCorrectLetterVariation(t, correctLetterVariations[index]);
+    const midi = currentCorrectMelody[state.letterIndex % currentCorrectMelody.length] || 60;
+    const freq = midiToFreq(midi);
+
+    playOsc("correctLetter", "triangle", freq, t, 0.13, 0.48);
   }
 
   function soundWrongLetter(t) {
@@ -767,6 +772,7 @@
   function prepareCurrentTarget(){
     state.currentTarget = makeTarget();
     state.letterIndex = 0;
+    currentCorrectMelody = chooseCorrectMelodyForLength(state.currentTarget.playableText.length);
     state.tiles = makeTilesForTarget(state.currentTarget);
   }
 
