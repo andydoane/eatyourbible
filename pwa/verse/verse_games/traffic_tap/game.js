@@ -145,6 +145,8 @@ const state = {
   bonusTruckX:0,
   bonusTruckWidth:0,
   bonusTruckSpeed:0,
+  bonusTruckPending:false,
+  bonusClearStartedAt:0,
   debugHitboxes:false,
   bonusEnding:false,
   bonusEndingUntil:0,
@@ -237,6 +239,8 @@ function startGame(mode){
   state.bonusTruckX = 0;
   state.bonusTruckWidth = 0;
   state.bonusTruckSpeed = 0;
+  state.bonusTruckPending = false;
+  state.bonusClearStartedAt = 0;
   state.bonusShowScore = false;
   state.bonusEnding = false;
   state.bonusEndingUntil = 0;
@@ -952,6 +956,35 @@ function launchTrailPoint(item){
   return { x, y };
 }
 
+  function clearMainTrafficForBonus(dt, now) {
+    if (!state.bonusClearStartedAt) state.bonusClearStartedAt = now;
+
+    const clearSpeed = Math.max(360, 230 * trafficSpeedMultiplier());
+
+    for (const item of state.mainItems) {
+      if (item.removeAt) continue;
+
+      item.crashing = false;
+      item.launching = false;
+      item.vanishUntil = 0;
+      item.flashWrongUntil = 0;
+      item.bonkUntil = 0;
+      item.swerveUntil = 0;
+
+      item.speed = Math.max(item.speed || item.baseSpeed || 120, clearSpeed);
+      item.targetSpeed = item.speed;
+      item.x += (item.direction < 0 ? -1 : 1) * item.speed * (dt / 1000);
+      item.tilt = item.direction < 0 ? 4 : -4;
+    }
+
+    const buffer = 300;
+    state.mainItems = state.mainItems.filter(item => {
+      if (item.direction < 0 && item.x < -buffer) return false;
+      if (item.direction > 0 && item.x > state.fieldWidth + buffer) return false;
+      return true;
+    });
+  }
+
   function bonusTruckMetrics() {
     const metrics = getItemMetrics("car");
     const truckHeight = Math.round(metrics.carSize * 1.14);
@@ -987,13 +1020,12 @@ function launchTrailPoint(item){
   function startBonusTruckIntro(now = performance.now()) {
     const metrics = bonusTruckMetrics();
 
-    state.mainItems = [];
     state.bonusIntro = true;
     state.bonusIntroUntil = Infinity;
     state.bonusIntroTarget = pickBonusTargetEmoji();
     state.bonusTruckWidth = metrics.totalWidth;
     state.bonusTruckX = state.fieldWidth + 28;
-    state.bonusTruckSpeed = (state.fieldWidth + metrics.totalWidth + 80) / 3.05;
+    state.bonusTruckSpeed = Math.round(clamp(130 * trafficSpeedMultiplier(), 120, 190));
     state.overlayMessage = "";
     state.overlayUntil = 0;
 
@@ -1274,6 +1306,18 @@ function cleanupTransientEffects(now){
 }
 
 function updateMain(dt, now){
+  if (state.bonusTruckPending){
+    clearMainTrafficForBonus(dt, now);
+
+    if (!state.mainItems.length){
+      state.bonusTruckPending = false;
+      state.bonusClearStartedAt = 0;
+      startBonusTruckIntro(now);
+    }
+
+    return;
+  }
+
   if (state.bonusIntro){
     state.bonusTruckX -= state.bonusTruckSpeed * (dt / 1000);
 
@@ -1570,7 +1614,18 @@ function crashRoad(road, tappedId){
 
 function finishMainGame(){
   state.mainDone = true;
-  startBonusTruckIntro();
+  state.bonusTruckPending = true;
+  state.bonusClearStartedAt = performance.now();
+  state.overlayMessage = "";
+  state.overlayUntil = 0;
+
+  for (const item of state.mainItems){
+    item.crashing = false;
+    item.vanishUntil = 0;
+    item.flashWrongUntil = 0;
+    item.bonkUntil = 0;
+    item.swerveUntil = 0;
+  }
 }
 
 
