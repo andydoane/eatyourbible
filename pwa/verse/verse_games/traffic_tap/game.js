@@ -19,8 +19,43 @@ const BOOKS = window.VerseGameShell.getBibleBookDecoys();
 
 const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
   
-const VEHICLES = ["🚗","🚕","🚙","🏎️","🚓","🚌","🚐","🚑","🚒","🚚","🛻"];
-const BONUS_RIVALS = ["🚗","🚕","🚙","🏎️","🚓","🚐","🚚"];
+const VEHICLES = [
+  { id:"police", label:"police car", src:"./traffic_tap_images/car_police.svg" },
+  { id:"ambulance", label:"ambulance", src:"./traffic_tap_images/car_ambulance.svg" },
+  { id:"red-sports-car", label:"red car", src:"./traffic_tap_images/car_12.png" },
+  { id:"green-truck", label:"green truck", src:"./traffic_tap_images/car_10.png" },
+  { id:"red-taxi", label:"red taxi", src:"./traffic_tap_images/car_9.png" },
+  { id:"yellow-bus", label:"yellow bus", src:"./traffic_tap_images/car_11.png" },
+  { id:"purple-race-car", label:"purple race car", src:"./traffic_tap_images/car_8.png" },
+  { id:"blue-pickup", label:"blue pickup truck", src:"./traffic_tap_images/car_7.png" },
+  { id:"green-suv", label:"green SUV", src:"./traffic_tap_images/car_4.png" },
+  { id:"orange-van", label:"orange van", src:"./traffic_tap_images/car_3.png" },
+  { id:"gray-van", label:"gray van", src:"./traffic_tap_images/car_2.png" }
+];
+
+const BONUS_RIVALS = VEHICLES;
+const DEFAULT_VEHICLE = VEHICLES[0];
+
+function vehicleLabel(vehicle){
+  if (typeof vehicle === "string") return vehicle;
+  return vehicle?.label || "vehicle";
+}
+
+function vehicleImgHtml(vehicle, className = "tt-car-img"){
+  const v = vehicle || DEFAULT_VEHICLE;
+
+  if (typeof v === "string"){
+    return `<span class="${className}">${escapeHtml(v)}</span>`;
+  }
+
+  return `<img class="${className}" src="${escapeHtml(v.src)}" alt="" draggable="false">`;
+}
+
+function sameVehicle(a, b){
+  if (!a || !b) return false;
+  if (typeof a === "string" || typeof b === "string") return a === b;
+  return a.id === b.id;
+}
 const DECOY_CLASSES = ["is-deco1","is-deco2","is-deco3","is-deco4","is-deco5"];
 const SPAWN_PATTERNS = [
   ["upper"],
@@ -222,7 +257,7 @@ function startGame(mode){
                 <div class="tt-bonus-intro-targetline">
                   <span class="tt-bonus-intro-bullseye">🎯</span>
                   <span class="tt-bonus-intro-equals">=</span>
-                  <span class="tt-bonus-intro-target" id="ttBonusIntroTarget">🚗</span>
+                  <span class="tt-bonus-intro-target" id="ttBonusIntroTarget">${vehicleImgHtml(DEFAULT_VEHICLE, "tt-bonus-target-img")}</span>
                 </div>
               </div>
             </div>
@@ -326,11 +361,8 @@ function renderGameMenuOverlay(){
 }
 
 function helpHtml(){
-  return `Tap the correct moving word to build the verse in order.<br><br>
-    Easy uses fun decoys and steady speed.<br><br>
-    Medium and hard use words from the verse as decoys. Traffic speeds up as you build, with a stronger ramp on hard.<br><br>
-    Wrong taps crash only that road, clearing the lane but keeping your progress.<br><br>
-    After the verse, tap the correct book and then the correct chapter and verse. Then enjoy a quick bonus car hunt.`;
+  return `Add the next word to the verse by tapping its car<br><br>
+After `;
 }
 
 function wireCommonNav(){
@@ -542,7 +574,7 @@ function renderBuildArea(){
         <div class="tt-bonus-build-targetline">
           <span class="tt-bonus-build-bullseye">🎯</span>
           <span class="tt-bonus-build-equals">=</span>
-          <span class="tt-bonus-build-target">${escapeHtml(state.bonusTargetEmoji || "🚗")}</span>
+          <span class="tt-bonus-build-target">${vehicleImgHtml(state.bonusTargetEmoji || DEFAULT_VEHICLE, "tt-bonus-target-img")}</span>
         </div>
         <div class="tt-bonus-build-score">
           <span>Score: ${state.bonusScore}</span>
@@ -656,7 +688,7 @@ function renderItems(){
       return `
         <div class="${cls.filter(Boolean).join(" ")}" style="transform:translate3d(${item.x}px, ${y}px, 0);--tt-item-w:${item.width}px;--tt-item-h:${item.height}px;--tt-car-size:${item.carSize}px;--tt-car-hit-h:${item.carHitHeight}px;--tt-car-center-y:${item.slot === "lower" ? 72 : 24}%;--tt-item-tilt:0deg;">
           <div class="${unitCls.join(" ")}">
-            <button type="button" class="tt-car-btn tt-hit-btn" data-item-id="${item.id}" aria-label="${escapeHtml(item.emoji)}">${item.emoji}</button>
+            <button type="button" class="tt-car-btn tt-hit-btn" data-item-id="${item.id}" aria-label="${escapeHtml(vehicleLabel(item.vehicle))}">${vehicleImgHtml(item.vehicle)}</button>
           </div>
         </div>
       `;
@@ -749,7 +781,7 @@ function renderItems(){
     return `
       <div class="${cls.filter(Boolean).join(" ")}" style="transform:translate3d(${item.x}px, ${y + rideBob}px, 0);--tt-item-w:${item.width}px;--tt-item-h:${item.height}px;--tt-word-w:${item.wordWidth}px;--tt-word-h:${item.wordHeight}px;--tt-word-size:${item.wordFont}px;--tt-car-size:${item.carSize}px;--tt-car-hit-h:${item.carHitHeight}px;--tt-car-center-y:${item.carCenterY}%;--tt-word-center-y:${item.wordCenterY}%;--tt-item-tilt:${tilt}deg;">
         <div class="${unitCls.join(" ")}" style="--tt-launch-scale-x:${(launchScaleX * rideScaleX).toFixed(4)};--tt-launch-scale-y:${(launchScaleY * rideScaleY).toFixed(4)};">
-          <button type="button" class="tt-car-btn tt-hit-btn" data-item-id="${item.id}" aria-label="${escapeHtml(item.label)}">${item.emoji}</button>
+          <button type="button" class="tt-car-btn tt-hit-btn" data-item-id="${item.id}" aria-label="${escapeHtml(`${vehicleLabel(item.vehicle)}: ${item.label}`)}">${vehicleImgHtml(item.vehicle)}</button>
           <button type="button" class="tt-word-btn tt-hit-btn ${item.launching ? "is-launch-fade" : ""}" data-item-id="${item.id}" aria-label="${escapeHtml(item.label)}">${escapeHtml(item.label)}</button>
         </div>
       </div>
@@ -907,52 +939,53 @@ function launchTrailPoint(item){
   return { x, y };
 }
 
-function pickBonusTargetEmoji(){
-  return pickRandom(VEHICLES);
-}
+  function pickBonusTargetEmoji() {
+    return pickRandom(VEHICLES);
+  }
 
-function startBonusRound(){
-  state.bonusRound = true;
-  state.bonusShowScore = false;
-  state.bonusItems = [];
-  state.bonusTargetEmoji = state.bonusIntroTarget || pickBonusTargetEmoji();
-  state.bonusTargetLabel = state.bonusTargetEmoji;
-  state.bonusScore = 0;
-  state.bonusCorrectHits = 0;
-  state.bonusWrongHits = 0;
-  state.bonusStreak = 0;
-  state.bonusBestStreak = 0;
-  state.bonusEndsAt = performance.now() + state.bonusRoundDuration;
-  state.bonusTimeLeft = state.bonusRoundDuration;
-  state.bonusNextSpawnAt = performance.now() + 220;
-  state.bonusEnding = false;
-  state.bonusEndingUntil = 0;
-  state.bonusStopSpawn = false;
-}
+  function startBonusRound() {
+    state.bonusRound = true;
+    state.bonusShowScore = false;
+    state.bonusItems = [];
+    state.bonusTargetEmoji = state.bonusIntroTarget || pickBonusTargetEmoji();
+    state.bonusTargetLabel = vehicleLabel(state.bonusTargetEmoji);
+    state.bonusScore = 0;
+    state.bonusCorrectHits = 0;
+    state.bonusWrongHits = 0;
+    state.bonusStreak = 0;
+    state.bonusBestStreak = 0;
+    state.bonusEndsAt = performance.now() + state.bonusRoundDuration;
+    state.bonusTimeLeft = state.bonusRoundDuration;
+    state.bonusNextSpawnAt = performance.now() + 220;
+    state.bonusEnding = false;
+    state.bonusEndingUntil = 0;
+    state.bonusStopSpawn = false;
+  }
 
-function makeBonusItem({ road, slot, emoji, speed }){
-  const metrics = getItemMetrics("car");
-  const direction = road === 0 ? -1 : 1;
-  const x = direction < 0 ? state.fieldWidth + metrics.width + 30 : -(metrics.width + 30);
+  function makeBonusItem({ road, slot, vehicle, speed }) {
+    const metrics = getItemMetrics("car");
+    const direction = road === 0 ? -1 : 1;
+    const x = direction < 0 ? state.fieldWidth + metrics.width + 30 : -(metrics.width + 30);
 
-  return {
-    id: state.nextItemId++,
-    road,
-    slot,
-    direction,
-    x,
-    width: metrics.width,
-    height: metrics.height,
-    carSize: metrics.carSize,
-    carHitHeight: metrics.carHitHeight,
-    emoji,
-    isTarget: emoji === state.bonusTargetEmoji,
-    speed,
-    vanishUntil: 0,
-    flashWrongUntil: 0,
-    removeAt: 0
-  };
-}
+    return {
+      id: state.nextItemId++,
+      road,
+      slot,
+      direction,
+      x,
+      width: metrics.width,
+      height: metrics.height,
+      carSize: metrics.carSize,
+      carHitHeight: metrics.carHitHeight,
+      vehicle,
+      isTarget: sameVehicle(vehicle, state.bonusTargetEmoji),
+      speed,
+      vanishUntil: 0,
+      flashWrongUntil: 0,
+      removeAt: 0
+    };
+  }
+
 
 function spawnBonusTraffic(now){
   if (state.bonusStopSpawn) return;
@@ -965,12 +998,12 @@ function spawnBonusTraffic(now){
   for (let i = 0; i < burstCount; i += 1){
     const road = Math.random() < 0.5 ? 0 : 1;
     const slot = Math.random() < 0.58 ? "upper" : "lower";
-    const emoji = Math.random() < 0.24 ? state.bonusTargetEmoji : pickRandom(VEHICLES);
+    const vehicle = Math.random() < 0.24 ? state.bonusTargetEmoji : pickRandom(VEHICLES);
     const rawSpeed = speedBase + Math.random() * 90;
     const speed = cappedBonusSpeed(road, slot, rawSpeed);
 
     if (bonusLaneHasSpawnRoom(road, slot, 150)){
-      state.bonusItems.push(makeBonusItem({ road, slot, emoji, speed }));
+      state.bonusItems.push(makeBonusItem({ road, slot, vehicle, speed }));
     }
   }
 
@@ -1278,7 +1311,7 @@ function makeMainItem({ road, label, isCorrect, delayUsed }){
     width,
     label,
     isCorrect,
-    emoji: pickRandom(VEHICLES),
+    vehicle: pickRandom(VEHICLES),
     speed: baseSpeed,
     baseSpeed,
     targetSpeed: baseSpeed,
@@ -1454,7 +1487,7 @@ function finishMainGame(){
   state.bonusIntroTarget = pickBonusTargetEmoji();
 
   const introTarget = document.getElementById("ttBonusIntroTarget");
-  if (introTarget) introTarget.textContent = state.bonusIntroTarget;
+  if (introTarget) introTarget.innerHTML = vehicleImgHtml(state.bonusIntroTarget, "tt-bonus-target-img");
 }
 
 
