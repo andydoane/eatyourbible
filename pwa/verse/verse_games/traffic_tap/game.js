@@ -985,6 +985,14 @@ function launchTrailPoint(item){
     });
   }
 
+  function topLaneRightHalfIsClearForBonusTruck() {
+    return !state.mainItems.some(item =>
+      item.road === 0 &&
+      item.x > state.fieldWidth * 0.5 &&
+      !item.removeAt
+    );
+  }
+
   function bonusTruckMetrics() {
     const metrics = getItemMetrics("car");
     const truckHeight = Math.round(metrics.carSize * 1.14);
@@ -1309,23 +1317,30 @@ function updateMain(dt, now){
   if (state.bonusTruckPending){
     clearMainTrafficForBonus(dt, now);
 
-    if (!state.mainItems.length){
-      state.bonusTruckPending = false;
-      state.bonusClearStartedAt = 0;
+    if (!state.bonusIntro && topLaneRightHalfIsClearForBonusTruck()){
       startBonusTruckIntro(now);
     }
 
-    return;
+    if (!state.bonusIntro){
+      return;
+    }
   }
 
   if (state.bonusIntro){
+    if (state.bonusTruckPending){
+      clearMainTrafficForBonus(dt, now);
+    }
+
     state.bonusTruckX -= state.bonusTruckSpeed * (dt / 1000);
 
     if (state.bonusTruckX < -(state.bonusTruckWidth + 40)){
+      state.bonusTruckPending = false;
       state.bonusIntro = false;
+      state.bonusClearStartedAt = 0;
       state.bonusTruckX = 0;
       state.bonusTruckWidth = 0;
       state.bonusTruckSpeed = 0;
+      state.mainItems = [];
       startBonusRound();
     }
 
