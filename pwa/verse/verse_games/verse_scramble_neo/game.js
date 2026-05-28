@@ -154,9 +154,9 @@
   }
 
   function bonusBaseTimeMs() {
-    if (selectedMode === "easy") return 20000;
-    if (selectedMode === "medium") return 15000;
-    return 10000;
+    if (selectedMode === "easy") return 15000;
+    if (selectedMode === "medium") return 10000;
+    return 7500;
   }
 
   function bonusTimeWithWiggle() {
