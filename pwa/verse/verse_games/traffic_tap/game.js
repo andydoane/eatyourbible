@@ -959,7 +959,7 @@ function launchTrailPoint(item){
   function clearMainTrafficForBonus(dt, now) {
     if (!state.bonusClearStartedAt) state.bonusClearStartedAt = now;
 
-    const clearSpeed = Math.max(360, 230 * trafficSpeedMultiplier());
+    const clearSpeed = Math.max(430, 230 * trafficSpeedMultiplier());
 
     for (const item of state.mainItems) {
       if (item.removeAt) continue;
