@@ -321,11 +321,15 @@
       params.end
     );
 
-    playClick(
+    // Clean oscillator tick instead of random-noise click.
+    playOsc(
       "correctLetter",
+      "triangle",
+      params.clickFreq,
       t,
-      params.clickGain,
-      params.clickFreq
+      0.018,
+      params.clickGain * 0.75,
+      params.clickFreq * 1.08
     );
 
     if (params.second){
