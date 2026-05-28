@@ -21,7 +21,7 @@ html,
 body{
   height:100%;
   margin:0;
-  background:var(--vsn-purple);
+  background:var(--vsn-fridge);
   font-family:"Baloo 2", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   -webkit-user-select:none;
   user-select:none;
@@ -56,7 +56,7 @@ select{ font:inherit; }
   display:flex;
   flex-direction:column;
   overflow:hidden;
-  background:var(--vsn-purple);
+  background:var(--vsn-fridge);
 }
 
 .vsn-stage{
