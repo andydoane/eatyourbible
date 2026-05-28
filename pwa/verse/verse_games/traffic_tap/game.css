@@ -433,8 +433,8 @@ body{
   position: absolute;
   left: 8%;
   right: 8%;
-  top: 10%;
-  bottom: 31%;
+  top: 0;
+  height: 69%;
   display: flex;
   align-items: center;
   justify-content: center;

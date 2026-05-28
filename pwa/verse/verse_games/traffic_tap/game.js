@@ -956,9 +956,10 @@ function launchTrailPoint(item){
     const metrics = getItemMetrics("car");
     const truckHeight = Math.round(metrics.carSize * 1.14);
     const frontWidth = Math.round(truckHeight * 1.5);
-    const targetWidth = Math.round(truckHeight * 1.7);
-    const targetHeight = Math.round(truckHeight * 0.78);
-    const textWidth = Math.round(truckHeight * 2.65);
+    const trailerVisualHeight = Math.round(truckHeight * 0.69);
+    const targetHeight = Math.round(trailerVisualHeight * 0.86);
+    const targetWidth = Math.round(targetHeight * 2.15);
+    const textWidth = Math.round(targetHeight * 3.15);
     const trailerPadding = Math.round(truckHeight * 0.72);
 
     const trailerWidth = Math.round(clamp(
