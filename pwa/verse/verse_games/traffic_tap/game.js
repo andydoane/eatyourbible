@@ -30,7 +30,8 @@ const VEHICLES = [
   { id:"blue-pickup", label:"blue pickup truck", src:"./traffic_tap_images/car_7.png" },
   { id:"green-suv", label:"green SUV", src:"./traffic_tap_images/car_4.png" },
   { id:"orange-van", label:"orange van", src:"./traffic_tap_images/car_3.png" },
-  { id:"gray-van", label:"gray van", src:"./traffic_tap_images/car_2.png" }
+  { id: "gray-van", label: "gray van", src: "./traffic_tap_images/car_2.png" },
+  { id: "yellow-taxi", label: "yellow taxi", src: "./traffic_tap_images/car_1.png" }
 ];
 
 const BONUS_RIVALS = VEHICLES;
@@ -361,8 +362,9 @@ function renderGameMenuOverlay(){
 }
 
 function helpHtml(){
-  return `Add the next word to the verse by tapping its car<br><br>
-After `;
+  return `Add the next word to the verse by tapping its car.<br><br>
+Continue until the verse is finished.<br><br>
+In the bonus round, tap as many of the target vehicle as you can.`;
 }
 
 function wireCommonNav(){
