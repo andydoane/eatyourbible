@@ -1392,7 +1392,7 @@
       verseId: ctx.verseId,
       gameId: GAME_ID,
       completion: state.completionResult,
-      gameMessage: `${state.targetsCompleted} targets solved · ${state.wrongTaps} wrong taps · Best streak: ${state.bestStreak}`,
+      gameMessage: `${state.wrongTaps} Wrong Taps · Best Streak: ${state.bestStreak}`,
       theme: GAME_THEME,
       backLabel: "Back to Practice Games",
       onPlayAgain: () => {
