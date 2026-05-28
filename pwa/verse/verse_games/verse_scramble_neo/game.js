@@ -17,19 +17,22 @@
   const SILENCE_AUDIO_FILE = "../../verse_audio/silence.mp3";
 
   const SOUND_TUNING = {
-    // Master volume for every generated sound. Try .35 to .75.
+    // Master volume for every generated sound.
+    // Keep this at 1.00; use the individual event volumes below for tuning.
     masterVolume: 1.00,
 
-    // Individual sound volumes. Try .5 to 1.3 for small adjustments.
+    // Individual sound volume multipliers.
+    // These are intentionally higher than 1 because Verse Scramble's generated
+    // sound recipes use smaller base oscillator/noise gains than Verse Typer.
     volumes: {
-      correctLetter: 1.00,  // Tiny Magnet Pop
-      wrongLetter: 0.90,    // Rubber Bump
-      wordComplete: 0.85,   // Mini Fanfare
-      lettersFall: 0.70,    // Fridge Slide
-      messagePop: 0.70,     // Toy Sparkle
-      bonusStart: 0.75,     // Search Start
-      bonusYouWin: 0.85,    // Tiny Fanfare
-      bonusIWin: 0.75       // Gentle Lose
+      correctLetter: 3.60,  // Tiny Magnet Pop
+      wrongLetter: 3.60,    // Rubber Bump
+      wordComplete: 3.40,   // Mini Fanfare
+      lettersFall: 2.40,    // Fridge Slide
+      messagePop: 3.80,     // Toy Sparkle
+      bonusStart: 3.20,     // Search Start
+      bonusYouWin: 3.20,    // Tiny Fanfare
+      bonusIWin: 3.20       // Gentle Lose
     }
   };
 
