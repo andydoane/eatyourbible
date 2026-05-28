@@ -1395,11 +1395,8 @@
 
   function helpHtml(){
     return `
-      Spell each target by tapping the scrambled magnet letters in order.<br><br>
-      Easy: only the letters you need.<br>
-      Medium: the target letters plus 3 decoy letters.<br>
-      Hard: a fridge full of extra decoy letters.<br><br>
-      Punctuation and spaces appear in the target, but you only tap letters and numbers.
+      Spell the word in the yellow box by tapping the scrambled magnet letters in order.<br><br>
+      During the bonus round, find each hidden letter before the computer does.
     `;
   }
 
