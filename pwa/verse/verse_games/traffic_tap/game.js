@@ -36,6 +36,11 @@ const VEHICLES = [
 
 const BONUS_RIVALS = VEHICLES;
 const DEFAULT_VEHICLE = VEHICLES[0];
+const BONUS_TRUCK_ASSETS = {
+  front:"./traffic_tap_images/car_truck_front.svg",
+  trailer:"./traffic_tap_images/car_truck_trailer.svg",
+  wheels:"./traffic_tap_images/car_truck_wheels.svg"
+};
 
 function vehicleLabel(vehicle){
   if (typeof vehicle === "string") return vehicle;
@@ -137,6 +142,9 @@ const state = {
   bonusNextSpawnAt:0,
   bonusRoundDuration:20000,
   bonusIntroTarget:"",
+  bonusTruckX:0,
+  bonusTruckWidth:0,
+  bonusTruckSpeed:0,
   debugHitboxes:false,
   bonusEnding:false,
   bonusEndingUntil:0,
@@ -226,6 +234,9 @@ function startGame(mode){
   state.bonusNextSpawnAt = 0;
   state.bonusRoundDuration = 20000;
   state.bonusIntroTarget = "";
+  state.bonusTruckX = 0;
+  state.bonusTruckWidth = 0;
+  state.bonusTruckSpeed = 0;
   state.bonusShowScore = false;
   state.bonusEnding = false;
   state.bonusEndingUntil = 0;
@@ -941,6 +952,54 @@ function launchTrailPoint(item){
   return { x, y };
 }
 
+  function bonusTruckMetrics() {
+    const metrics = getItemMetrics("car");
+    const truckHeight = Math.round(metrics.carSize * 1.14);
+    const frontWidth = Math.round(truckHeight * 1.5);
+    const targetWidth = Math.round(truckHeight * 1.7);
+    const targetHeight = Math.round(truckHeight * 0.78);
+    const textWidth = Math.round(truckHeight * 2.65);
+    const trailerPadding = Math.round(truckHeight * 0.72);
+
+    const trailerWidth = Math.round(clamp(
+      textWidth + targetWidth + trailerPadding,
+      Math.max(280, state.fieldWidth * 0.56),
+      Math.min(560, state.fieldWidth * 0.82)
+    ));
+
+    const overlap = 3;
+    const totalWidth = frontWidth + trailerWidth - overlap;
+    const y = Math.round(roadTopY(0) + (state.roadHeight * 0.24) - (truckHeight / 2));
+
+    return {
+      truckHeight,
+      frontWidth,
+      trailerWidth,
+      targetWidth,
+      targetHeight,
+      overlap,
+      totalWidth,
+      y
+    };
+  }
+
+  function startBonusTruckIntro(now = performance.now()) {
+    const metrics = bonusTruckMetrics();
+
+    state.mainItems = [];
+    state.bonusIntro = true;
+    state.bonusIntroUntil = Infinity;
+    state.bonusIntroTarget = pickBonusTargetEmoji();
+    state.bonusTruckWidth = metrics.totalWidth;
+    state.bonusTruckX = state.fieldWidth + 28;
+    state.bonusTruckSpeed = (state.fieldWidth + metrics.totalWidth + 80) / 3.05;
+    state.overlayMessage = "";
+    state.overlayUntil = 0;
+
+    const introTarget = document.getElementById("ttBonusIntroTarget");
+    if (introTarget) introTarget.innerHTML = vehicleImgHtml(state.bonusIntroTarget, "tt-bonus-target-img");
+  }
+
   function pickBonusTargetEmoji() {
     return pickRandom(VEHICLES);
   }
@@ -1132,7 +1191,30 @@ function finishBonusRound(){
 function renderBonus(){
   const layer = document.getElementById("ttBonusLayer");
   if (!layer) return;
-  layer.innerHTML = "";
+
+  if (!state.bonusIntro){
+    layer.innerHTML = "";
+    return;
+  }
+
+  const metrics = bonusTruckMetrics();
+  const target = state.bonusIntroTarget || DEFAULT_VEHICLE;
+
+  layer.innerHTML = `
+    <div class="tt-bonus-truck" style="transform:translate3d(${state.bonusTruckX}px, ${metrics.y}px, 0); --tt-bonus-truck-h:${metrics.truckHeight}px; --tt-bonus-front-w:${metrics.frontWidth}px; --tt-bonus-trailer-w:${metrics.trailerWidth}px; --tt-bonus-overlap:${metrics.overlap}px; --tt-bonus-target-w:${metrics.targetWidth}px; --tt-bonus-target-h:${metrics.targetHeight}px;">
+      <img class="tt-bonus-truck-front" src="${escapeHtml(BONUS_TRUCK_ASSETS.front)}" alt="" draggable="false">
+      <div class="tt-bonus-trailer-wrap">
+        <img class="tt-bonus-trailer-bg" src="${escapeHtml(BONUS_TRUCK_ASSETS.trailer)}" alt="" draggable="false">
+        <img class="tt-bonus-trailer-wheels is-left" src="${escapeHtml(BONUS_TRUCK_ASSETS.wheels)}" alt="" draggable="false">
+        <img class="tt-bonus-trailer-wheels is-middle" src="${escapeHtml(BONUS_TRUCK_ASSETS.wheels)}" alt="" draggable="false">
+        <img class="tt-bonus-trailer-wheels is-right" src="${escapeHtml(BONUS_TRUCK_ASSETS.wheels)}" alt="" draggable="false">
+        <div class="tt-bonus-trailer-message">
+          <span class="tt-bonus-trailer-text">TAP THIS CAR:</span>
+          ${vehicleImgHtml(target, "tt-bonus-trailer-target-img")}
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 function renderOverlays(){
@@ -1149,7 +1231,7 @@ function renderOverlays(){
     overlay.innerHTML = "";
   }
 
-  bonusIntro.classList.toggle("is-open", state.bonusIntro && state.bonusIntroUntil > performance.now());
+  bonusIntro.classList.toggle("is-open", false);
 }
 
 function startLoop(){
@@ -1192,10 +1274,16 @@ function cleanupTransientEffects(now){
 
 function updateMain(dt, now){
   if (state.bonusIntro){
-    if (now >= state.bonusIntroUntil){
+    state.bonusTruckX -= state.bonusTruckSpeed * (dt / 1000);
+
+    if (state.bonusTruckX < -(state.bonusTruckWidth + 40)){
       state.bonusIntro = false;
+      state.bonusTruckX = 0;
+      state.bonusTruckWidth = 0;
+      state.bonusTruckSpeed = 0;
       startBonusRound();
     }
+
     return;
   }
 
@@ -1481,15 +1569,7 @@ function crashRoad(road, tappedId){
 
 function finishMainGame(){
   state.mainDone = true;
-  state.mainItems = [];
-  state.overlayMessage = "BONUS ROUND!";
-  state.overlayUntil = performance.now() + 520;
-  state.bonusIntro = true;
-  state.bonusIntroUntil = performance.now() + 1400;
-  state.bonusIntroTarget = pickBonusTargetEmoji();
-
-  const introTarget = document.getElementById("ttBonusIntroTarget");
-  if (introTarget) introTarget.innerHTML = vehicleImgHtml(state.bonusIntroTarget, "tt-bonus-target-img");
+  startBonusTruckIntro();
 }
 
 

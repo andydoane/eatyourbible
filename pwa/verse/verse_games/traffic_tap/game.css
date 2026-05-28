@@ -361,6 +361,109 @@ body{
   height: clamp(40px, 10vw, 66px);
 }
 
+.tt-bonus-truck {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: var(--tt-bonus-truck-h, 80px);
+  display: flex;
+  align-items: flex-start;
+  pointer-events: none;
+  z-index: 7;
+  filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.22));
+  will-change: transform;
+}
+
+.tt-bonus-truck-front {
+  display: block;
+  width: var(--tt-bonus-front-w, 120px);
+  height: var(--tt-bonus-truck-h, 80px);
+  object-fit: fill;
+  pointer-events: none;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.tt-bonus-trailer-wrap {
+  position: relative;
+  width: var(--tt-bonus-trailer-w, 360px);
+  height: var(--tt-bonus-truck-h, 80px);
+  margin-left: calc(var(--tt-bonus-overlap, 3px) * -1);
+  pointer-events: none;
+}
+
+.tt-bonus-trailer-bg {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  pointer-events: none;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.tt-bonus-trailer-wheels {
+  position: absolute;
+  top: 0;
+  height: var(--tt-bonus-truck-h, 80px);
+  width: auto;
+  object-fit: contain;
+  pointer-events: none;
+  -webkit-user-drag: none;
+  user-select: none;
+  z-index: 2;
+}
+
+.tt-bonus-trailer-wheels.is-left {
+  left: 4%;
+}
+
+.tt-bonus-trailer-wheels.is-middle {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.tt-bonus-trailer-wheels.is-right {
+  right: 4%;
+}
+
+.tt-bonus-trailer-message {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  top: 10%;
+  bottom: 31%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(8px, 2vw, 16px);
+  z-index: 3;
+  pointer-events: none;
+}
+
+.tt-bonus-trailer-text {
+  color: #333333;
+  font-size: clamp(15px, 3.4vw, 26px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+.tt-bonus-trailer-target-img {
+  display: block;
+  width: var(--tt-bonus-target-w, 120px);
+  height: var(--tt-bonus-target-h, 60px);
+  object-fit: contain;
+  pointer-events: none;
+  -webkit-user-drag: none;
+  user-select: none;
+  filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.18));
+}
+
 .tt-word-btn{
   top:var(--tt-word-center-y, 75%);
   transform:translate(-50%, -50%);
