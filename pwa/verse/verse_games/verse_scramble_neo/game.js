@@ -25,14 +25,15 @@
     // These are intentionally higher than 1 because Verse Scramble's generated
     // sound recipes use smaller base oscillator/noise gains than Verse Typer.
     volumes: {
-      correctLetter: 3.60,  // Tiny Magnet Pop
+      correctLetter: 3.60,  // Correct tap pop variations
       wrongLetter: 3.60,    // Rubber Bump
       wordComplete: 3.40,   // Mini Fanfare
       lettersFall: 2.40,    // Fridge Slide
-      messagePop: 3.80,     // Toy Sparkle
-      bonusStart: 3.20,     // Search Start
-      bonusYouWin: 3.20,    // Tiny Fanfare
-      bonusIWin: 3.20       // Gentle Lose
+      messagePop: 3.60,     // Happy Upturn
+      bonusStart: 3.20,     // Magnet Race
+      bonusYouWin: 3.20,    // Happy Bells
+      bonusIWin: 3.20,      // Soft Slide Down
+      bonusFinal: 3.20      // Little Crown
     }
   };
 
@@ -310,6 +311,73 @@
     playNoise(eventId, start, 0.025, gain, freq, "bandpass");
   }
 
+
+  const TUNE_TEMPO = 0.65;
+
+  const TUNE_NOTES = {
+    C5: 523.25,
+    D5: 587.33,
+    E5: 659.25,
+    G5: 783.99,
+    A5: 880.00,
+    C6: 1046.50,
+    E6: 1318.51
+  };
+
+  const VERSE_SCRAMBLE_TUNES = {
+    titleIntro: [
+      ["C5", 0, 0.065, 0.052],
+      ["E5", 0.06, 0.065, 0.052],
+      ["A5", 0.12, 0.075, 0.05],
+      ["G5", 0.2, 0.13, 0.045]
+    ],
+    bonusStart: [
+      ["D5", 0, 0.05, 0.045],
+      ["E5", 0.055, 0.05, 0.045],
+      ["G5", 0.11, 0.1, 0.05]
+    ],
+    bonusYouWin: [
+      ["C6", 0, 0.07, 0.045],
+      ["G5", 0.06, 0.07, 0.045],
+      ["E6", 0.13, 0.13, 0.05]
+    ],
+    bonusIWin: [
+      ["E5", 0, 0.08, 0.045],
+      ["D5", 0.08, 0.08, 0.045],
+      ["C5", 0.16, 0.13, 0.045]
+    ],
+    bonusFinal: [
+      ["G5", 0, 0.06, 0.04],
+      ["C6", 0.055, 0.07, 0.045],
+      ["E6", 0.12, 0.09, 0.045],
+      ["C6", 0.23, 0.16, 0.05]
+    ]
+  };
+
+  function playTuneNote(eventId, noteName, start, duration, gain, wave = "sine") {
+    const freq = TUNE_NOTES[noteName] || TUNE_NOTES.C5;
+    playOsc(eventId, wave, freq, start, duration, gain, freq * 1.015);
+  }
+
+  function playTune(eventId, tuneName, t) {
+    const tune = VERSE_SCRAMBLE_TUNES[tuneName];
+    if (!tune) return;
+
+    tune.forEach((note, index) => {
+      const [noteName, offset, duration, gain] = note;
+      const wave = index % 3 === 1 ? "triangle" : "sine";
+
+      playTuneNote(
+        eventId,
+        noteName,
+        t + offset / TUNE_TEMPO,
+        duration / TUNE_TEMPO,
+        gain,
+        wave
+      );
+    });
+  }
+
   function playCorrectLetterVariation(t, params){
     playOsc(
       "correctLetter",
@@ -437,27 +505,23 @@
   }
 
   function soundMessagePop(t) {
-    playOsc("messagePop", "sine", 880, t, 0.05, 0.04);
-    playOsc("messagePop", "sine", 1175, t + 0.04, 0.05, 0.04);
-    playOsc("messagePop", "sine", 1568, t + 0.08, 0.06, 0.035);
+    playTune("messagePop", "titleIntro", t);
   }
 
   function soundBonusStart(t) {
-    playOsc("bonusStart", "triangle", 330, t, 0.06, 0.045);
-    playOsc("bonusStart", "triangle", 494, t + 0.055, 0.06, 0.045);
-    playOsc("bonusStart", "triangle", 659, t + 0.11, 0.08, 0.055);
+    playTune("bonusStart", "bonusStart", t);
   }
 
   function soundBonusYouWin(t) {
-    playOsc("bonusYouWin", "square", 523, t, 0.06, 0.035);
-    playOsc("bonusYouWin", "square", 659, t + 0.06, 0.06, 0.035);
-    playOsc("bonusYouWin", "square", 784, t + 0.12, 0.06, 0.035);
-    playOsc("bonusYouWin", "triangle", 1046, t + 0.18, 0.16, 0.07);
+    playTune("bonusYouWin", "bonusYouWin", t);
   }
 
   function soundBonusIWin(t) {
-    playOsc("bonusIWin", "triangle", 392, t, 0.09, 0.05);
-    playOsc("bonusIWin", "triangle", 294, t + 0.10, 0.13, 0.055);
+    playTune("bonusIWin", "bonusIWin", t);
+  }
+
+  function soundBonusFinal(t) {
+    playTune("bonusFinal", "bonusFinal", t);
   }
 
   const SOUND_PLAYERS = {
@@ -468,7 +532,8 @@
     messagePop: soundMessagePop,
     bonusStart: soundBonusStart,
     bonusYouWin: soundBonusYouWin,
-    bonusIWin: soundBonusIWin
+    bonusIWin: soundBonusIWin,
+    bonusFinal: soundBonusFinal
   };
 
   function playGameSound(eventId) {
@@ -985,7 +1050,7 @@
   }
 
   async function runBonusFinal(token) {
-    playGameSound("messagePop");
+    playGameSound("bonusFinal");
     await sleep(2800);
     if (!isCurrentBonusToken(token) || state.bonusStage !== "final") return;
     const msg = document.getElementById("vsnInstructionMessage");
