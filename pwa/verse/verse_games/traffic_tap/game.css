@@ -445,12 +445,14 @@ body{
 
 .tt-bonus-trailer-text {
   color: #333333;
-  font-size: clamp(15px, 3.4vw, 26px);
+  font-size: calc(var(--tt-bonus-target-h, 60px) * 0.5);
   font-weight: 900;
   line-height: 1;
   letter-spacing: 0.02em;
   white-space: nowrap;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.65);
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.75),
+    0 2px 4px rgba(0, 0, 0, 0.18);
 }
 
 .tt-bonus-trailer-target-img {
