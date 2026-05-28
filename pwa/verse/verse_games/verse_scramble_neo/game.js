@@ -1396,6 +1396,7 @@
   function helpHtml(){
     return `
       Spell the word in the yellow box by tapping the scrambled magnet letters in order.<br><br>
+      Continue until you finish the verse.<br><br>
       During the bonus round, find each hidden letter before the computer does.
     `;
   }
