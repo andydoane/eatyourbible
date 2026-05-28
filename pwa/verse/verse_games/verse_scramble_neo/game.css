@@ -377,7 +377,7 @@ select{ font:inherit; }
   gap: clamp(10px, 2vh, 22px);
 }
 
-.vsn-bonus-find-letter {
+.vsn-intro-letter.vsn-bonus-find-letter {
   width: clamp(96px, 18vw, 178px);
   height: clamp(104px, 19vw, 190px);
   font-size: clamp(96px, 17vw, 176px);
@@ -615,7 +615,7 @@ select{ font:inherit; }
   font-size: clamp(32px, 6.1vw, 54px);
 }
 
-.vsn-bonus-find-letter {
+.vsn-intro-letter.vsn-bonus-find-letter {
   width: clamp(74px, 14vw, 128px);
   height: clamp(80px, 15vw, 136px);
   font-size: clamp(74px, 13.2vw, 126px);
@@ -682,7 +682,7 @@ select{ font:inherit; }
   padding: 12px 20px;
 }
 
-.vsn-bonus-find-letter {
+.vsn-intro-letter.vsn-bonus-find-letter {
   width: clamp(68px, 18vw, 92px);
   height: clamp(72px, 19vw, 98px);
   font-size: clamp(66px, 17vw, 88px);
