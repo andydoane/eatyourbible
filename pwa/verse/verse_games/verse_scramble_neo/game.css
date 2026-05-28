@@ -3,7 +3,7 @@
   src:url("./verse_scramble_fonts/Caprasimo-Regular.ttf") format("truetype");
   font-weight:400;
   font-style:normal;
-  font-display:swap;
+  font-display:block;
 }
 
 :root{

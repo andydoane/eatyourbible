@@ -118,6 +118,16 @@
     return new Promise(resolve => setTimeout(resolve, ms));
   }
 
+  async function waitForMagnetFont() {
+    if (!document.fonts || !document.fonts.ready) return;
+
+    try {
+      await document.fonts.load('1em "CaprasimoLocal"');
+      await document.fonts.ready;
+    } catch (err) {
+      // Font loading should never block gameplay if the browser rejects this.
+    }
+  }
 
   function darkenHexColor(hex, percent = 30) {
     const clean = String(hex || "").replace("#", "").trim();
@@ -882,8 +892,9 @@
       theme: GAME_THEME,
       backLabel: "Back to Verse Scramble title",
       onBack: () => setScreen("intro"),
-      onSelect: (mode) => {
+      onSelect: async (mode) => {
         unlockAudio();
+        await waitForMagnetFont();
         selectedMode = mode;
         initVerseData();
         state.startTime = performance.now();
@@ -1376,7 +1387,7 @@
   function renderEnd(){
     window.VerseGameShell.renderCompleteScreen({
       app,
-      gameIcon: "🧩",
+      gameIcon: "🔁",
       mode: selectedMode,
       verseId: ctx.verseId,
       gameId: GAME_ID,
