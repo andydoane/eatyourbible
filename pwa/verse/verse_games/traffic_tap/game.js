@@ -1699,7 +1699,6 @@ function updateBonus(dt, now){
   spawnBonusTraffic(now);
 
   for (const item of state.bonusItems){
-    if (item.removeAt) continue;
     item.x += (item.direction < 0 ? -1 : 1) * item.speed * (dt / 1000);
   }
 
