@@ -1001,15 +1001,16 @@ function launchTrailPoint(item){
     const targetHeight = Math.round(trailerVisualHeight * 0.86);
     const targetWidth = Math.round(targetHeight * 2.15);
     const textWidth = Math.round(targetHeight * 3.15);
-    const trailerPadding = Math.round(truckHeight * 0.72);
+    const trailerPadding = Math.round(truckHeight * 1.2);
 
+    const contentWidth = textWidth + targetWidth + trailerPadding;
     const trailerWidth = Math.round(clamp(
-      textWidth + targetWidth + trailerPadding,
-      Math.max(280, state.fieldWidth * 0.56),
-      Math.min(560, state.fieldWidth * 0.82)
+      contentWidth,
+      380,
+      760
     ));
 
-    const overlap = 3;
+    const overlap = 10;
     const totalWidth = frontWidth + trailerWidth - overlap;
     const y = Math.round(roadTopY(0) + (state.roadHeight * 0.24) - (truckHeight / 2));
 
