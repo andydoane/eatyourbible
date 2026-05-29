@@ -15,6 +15,21 @@
 
   const HELP_OVERLAY_ID = "ttHelpOverlay";
 
+  const SILENCE_AUDIO_FILE = "../../verse_audio/silence.mp3";
+
+  const SOUND_TUNING = {
+    masterVolume: 1.00,
+    volumes: {
+      correctTap: 0.85,
+      wrongTap: 3.40,
+      bonusTap: 1.15,
+      rainbowJackpot: 3.20,
+      truckIntro: 3.00,
+      truckOutro: 3.00
+    }
+  };
+
+
   const BOOKS = window.VerseGameShell.getBibleBookDecoys();
 
   const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
@@ -86,6 +101,10 @@
 
   let selectedMode = null;
   let muted = false;
+  let audioCtx = null;
+  let masterGain = null;
+  let silenceAudioEl = null;
+  let audioUnlocked = false;
   let completionMarked = false;
   let alreadyCompletedForMode = false;
   let completionResult = null;
@@ -168,6 +187,267 @@
     awaitingBonusItemId: 0
   };
 
+  function getSoundVolume(eventId) {
+    const volume = SOUND_TUNING.volumes[eventId];
+    return typeof volume === "number" ? volume : 1;
+  }
+
+  function getSilenceAudioElement() {
+    if (silenceAudioEl) return silenceAudioEl;
+
+    silenceAudioEl = document.createElement("audio");
+    silenceAudioEl.preload = "auto";
+    silenceAudioEl.playsInline = true;
+    silenceAudioEl.setAttribute("playsinline", "");
+    silenceAudioEl.src = SILENCE_AUDIO_FILE;
+    silenceAudioEl.style.display = "none";
+    document.body.appendChild(silenceAudioEl);
+
+    return silenceAudioEl;
+  }
+
+  function primeHtmlAudio() {
+    try {
+      const audio = getSilenceAudioElement();
+      audio.muted = false;
+      audio.volume = 0.01;
+      audio.currentTime = 0;
+
+      const playPromise = audio.play();
+      if (playPromise && typeof playPromise.then === "function") {
+        playPromise.then(() => {
+          setTimeout(() => {
+            try {
+              audio.pause();
+              audio.currentTime = 0;
+            } catch (err) {
+              // Ignore audio reset errors.
+            }
+          }, 80);
+        }).catch(() => {
+          // iOS may reject this outside a user gesture. We retry on the next tap.
+        });
+      }
+    } catch (err) {
+      // Silent audio unlock is best-effort.
+    }
+  }
+
+  function ensureAudioContext() {
+    if (audioCtx) return audioCtx;
+
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return null;
+
+    audioCtx = new AudioContextClass();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = SOUND_TUNING.masterVolume;
+    masterGain.connect(audioCtx.destination);
+
+    return audioCtx;
+  }
+
+  function unlockAudio() {
+    primeHtmlAudio();
+
+    const ctx = ensureAudioContext();
+    if (!ctx || !masterGain) return;
+
+    if (ctx.state === "suspended") {
+      ctx.resume().catch(() => { });
+    }
+
+    try {
+      const t = ctx.currentTime + 0.01;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(440, t);
+      gain.gain.setValueAtTime(0.0001, t);
+
+      osc.connect(gain);
+      gain.connect(masterGain);
+      osc.start(t);
+      osc.stop(t + 0.03);
+
+      audioUnlocked = true;
+    } catch (err) {
+      // Unlock blip is best-effort.
+    }
+  }
+
+  function soundEnvelope(eventId, start, duration, peak = 0.2, attack = 0.005, release = 0.06) {
+    const ctx = ensureAudioContext();
+    if (!ctx || !masterGain) return null;
+
+    const gain = ctx.createGain();
+    const scaledPeak = Math.max(0.0002, peak * getSoundVolume(eventId));
+
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(scaledPeak, start + attack);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + duration + release);
+    gain.connect(masterGain);
+
+    return gain;
+  }
+
+  function playOsc(eventId, type, freq, start, duration, gain = 0.18, endFreq = null) {
+    const ctx = ensureAudioContext();
+    if (!ctx) return;
+
+    const osc = ctx.createOscillator();
+    const envelope = soundEnvelope(eventId, start, duration, gain);
+    if (!envelope) return;
+
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, start);
+    if (endFreq) {
+      osc.frequency.exponentialRampToValueAtTime(Math.max(1, endFreq), start + duration);
+    }
+
+    osc.connect(envelope);
+    osc.start(start);
+    osc.stop(start + duration + 0.1);
+  }
+
+  function playNoise(eventId, start, duration, gain = 0.12, filterFreq = 900, type = "lowpass") {
+    const ctx = ensureAudioContext();
+    if (!ctx) return;
+
+    const length = Math.max(1, Math.floor(ctx.sampleRate * duration));
+    const buffer = ctx.createBuffer(1, length, ctx.sampleRate);
+    const data = buffer.getChannelData(0);
+
+    for (let i = 0; i < length; i += 1) {
+      data[i] = Math.random() * 2 - 1;
+    }
+
+    const src = ctx.createBufferSource();
+    const filter = ctx.createBiquadFilter();
+    const envelope = soundEnvelope(eventId, start, duration, gain, 0.002, 0.05);
+    if (!envelope) return;
+
+    src.buffer = buffer;
+    filter.type = type;
+    filter.frequency.value = filterFreq;
+    filter.Q.value = 0.8;
+
+    src.connect(filter);
+    filter.connect(envelope);
+    src.start(start);
+    src.stop(start + duration + 0.08);
+  }
+
+  const TT_TUNE_TEMPO = 0.65;
+
+  const TT_TUNE_NOTES = {
+    C5: 523.25,
+    D5: 587.33,
+    E5: 659.25,
+    G5: 783.99,
+    A5: 880.00,
+    C6: 1046.50,
+    E6: 1318.51
+  };
+
+  const TT_TUNES = {
+    truckIntro: [
+      ["D5", 0, 0.05, 0.045],
+      ["E5", 0.055, 0.05, 0.045],
+      ["G5", 0.11, 0.1, 0.05]
+    ],
+    truckOutro: [
+      ["C6", 0, 0.07, 0.045],
+      ["G5", 0.06, 0.07, 0.045],
+      ["E6", 0.13, 0.13, 0.05]
+    ],
+    rainbowJackpot: [
+      ["G5", 0, 0.06, 0.04],
+      ["C6", 0.055, 0.07, 0.045],
+      ["E6", 0.12, 0.09, 0.045],
+      ["C6", 0.23, 0.16, 0.05]
+    ]
+  };
+
+  function playTuneNote(eventId, noteName, start, duration, gain, wave = "sine") {
+    const freq = TT_TUNE_NOTES[noteName] || TT_TUNE_NOTES.C5;
+    playOsc(eventId, wave, freq, start, duration, gain, freq * 1.015);
+  }
+
+  function playTune(eventId, tuneName, t) {
+    const tune = TT_TUNES[tuneName];
+    if (!tune) return;
+
+    tune.forEach((note, index) => {
+      const [noteName, offset, duration, gain] = note;
+      const wave = index % 3 === 1 ? "triangle" : "sine";
+
+      playTuneNote(
+        eventId,
+        noteName,
+        t + offset / TT_TUNE_TEMPO,
+        duration / TT_TUNE_TEMPO,
+        gain,
+        wave
+      );
+    });
+  }
+
+  function soundCorrectTap(t) {
+    playOsc("correctTap", "triangle", 659, t, 0.09, 0.30, 784);
+  }
+
+  function soundWrongTap(t) {
+    playOsc("wrongTap", "triangle", 220, t, 0.08, 0.10, 170);
+    playOsc("wrongTap", "triangle", 170, t + 0.07, 0.09, 0.07);
+  }
+
+  function soundBonusTap(t) {
+    playOsc("bonusTap", "sine", 784, t, 0.07, 0.08, 988);
+    playOsc("bonusTap", "triangle", 1046, t + 0.055, 0.08, 0.055, 1318);
+  }
+
+  function soundRainbowJackpot(t) {
+    playTune("rainbowJackpot", "rainbowJackpot", t);
+    playNoise("rainbowJackpot", t, 0.42, 0.08, 1600, "bandpass");
+  }
+
+  function soundTruckIntro(t) {
+    playTune("truckIntro", "truckIntro", t);
+  }
+
+  function soundTruckOutro(t) {
+    playTune("truckOutro", "truckOutro", t);
+  }
+
+  const SOUND_PLAYERS = {
+    correctTap: soundCorrectTap,
+    wrongTap: soundWrongTap,
+    bonusTap: soundBonusTap,
+    rainbowJackpot: soundRainbowJackpot,
+    truckIntro: soundTruckIntro,
+    truckOutro: soundTruckOutro
+  };
+
+  function playGameSound(eventId) {
+    if (muted) return;
+
+    unlockAudio();
+
+    const ctx = ensureAudioContext();
+    const player = SOUND_PLAYERS[eventId];
+    if (!ctx || !masterGain || !player) return;
+
+    masterGain.gain.value = SOUND_TUNING.masterVolume;
+
+    try {
+      player(ctx.currentTime + 0.02);
+    } catch (err) {
+      // Sound should never break gameplay.
+    }
+  }
+
   renderIntro();
 
   function renderIntro() {
@@ -182,7 +462,10 @@
       theme: GAME_THEME,
       backLabel: "Back to Practice Games",
       onBack: () => window.VerseGameBridge.exitGame(),
-      onStart: renderModeSelect
+      onStart: () => {
+        unlockAudio();
+        renderModeSelect();
+      }
     });
   }
 
@@ -198,7 +481,10 @@
       theme: GAME_THEME,
       backLabel: "Back to Traffic Tap title",
       onBack: renderIntro,
-      onSelect: startGame
+      onSelect: (mode) => {
+        unlockAudio();
+        startGame(mode);
+      }
     });
   }
 
@@ -407,6 +693,7 @@ In the bonus round, tap as many of the target vehicle as you can.`;
       isMuted: () => muted,
       onMuteToggle: () => {
         muted = !muted;
+        if (!muted) unlockAudio();
         return muted;
       },
       onHowToPlay: openHelpFromMenu,
@@ -423,6 +710,7 @@ In the bonus round, tap as many of the target vehicle as you can.`;
 
   function toggleMute(muteBtn, menuMuteBtn) {
     muted = !muted;
+    if (!muted) unlockAudio();
     if (muteBtn) muteBtn.textContent = muted ? "🔇" : "🔊";
     if (menuMuteBtn) menuMuteBtn.textContent = muted ? "Unmute" : "Mute";
   }
@@ -455,6 +743,7 @@ In the bonus round, tap as many of the target vehicle as you can.`;
         if (!hit) return;
         if (e.cancelable) e.preventDefault();
         e.stopPropagation();
+        unlockAudio();
         const id = Number(hit.dataset.itemId);
         if (!Number.isFinite(id)) return;
         if (state.bonusRound) chooseBonusItem(id, hit);
@@ -1053,6 +1342,8 @@ In the bonus round, tap as many of the target vehicle as you can.`;
     state.overlayMessage = "";
     state.overlayUntil = 0;
 
+    playGameSound("truckIntro");
+
     const introTarget = document.getElementById("ttBonusIntroTarget");
     if (introTarget) introTarget.innerHTML = vehicleImgHtml(state.bonusIntroTarget, "tt-bonus-target-img");
   }
@@ -1067,6 +1358,9 @@ In the bonus round, tap as many of the target vehicle as you can.`;
     state.bonusTruckSpeed = Math.round(clamp(130 * trafficSpeedMultiplier(), 120, 190));
     state.overlayMessage = "";
     state.overlayUntil = 0;
+
+    playGameSound("truckOutro");
+
   }
 
   function pickBonusTargetEmoji() {
@@ -1219,6 +1513,7 @@ In the bonus round, tap as many of the target vehicle as you can.`;
       state.bonusStreak += 1;
       state.bonusBestStreak = Math.max(state.bonusBestStreak, state.bonusStreak);
       state.bonusScore += points;
+      playGameSound("rainbowJackpot");
       spawnRainbowJackpot(x, y, points);
     } else if (item.isTarget) {
       item.vanishUntil = performance.now() + 140;
@@ -1227,6 +1522,7 @@ In the bonus round, tap as many of the target vehicle as you can.`;
       state.bonusStreak += 1;
       state.bonusBestStreak = Math.max(state.bonusBestStreak, state.bonusStreak);
       state.bonusScore += 1;
+      playGameSound("bonusTap");
       addPopup(x, y, "+1", true);
       spawnBonusSuccessBurst(x, y);
     } else {
@@ -1236,6 +1532,7 @@ In the bonus round, tap as many of the target vehicle as you can.`;
       item.removeAt = now + 150;
       state.bonusWrongHits += 1;
       state.bonusStreak = 0;
+      playGameSound("wrongTap");
       addPopup(x, y, "Nope!", false);
       spawnCrashBurst(x, y, {
         count: 8,
@@ -1721,11 +2018,13 @@ In the bonus round, tap as many of the target vehicle as you can.`;
     if (!item.isCorrect) {
       item.flashWrongUntil = performance.now() + 280;
       state.buildShakeUntil = performance.now() + 260;
+      playGameSound("wrongTap");
       addPopup(x, y, "✖", false);
       crashRoad(item.road, item.id);
       return;
     }
 
+    playGameSound("correctTap");
     addPopup(x, y, "✔", true);
     state.buildPopUntil = performance.now() + 200;
     startSuccessLaunch(item);
