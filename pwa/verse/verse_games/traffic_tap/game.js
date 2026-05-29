@@ -1135,8 +1135,8 @@ function chooseBonusItem(itemId, tappedEl){
     state.bonusCorrectHits += 1;
     state.bonusStreak += 1;
     state.bonusBestStreak = Math.max(state.bonusBestStreak, state.bonusStreak);
-    state.bonusScore += 10 + Math.min(40, (state.bonusStreak - 1) * 2);
-    addPopup(x, y, `+${10 + Math.min(40, (state.bonusStreak - 1) * 2)}`, true);
+    state.bonusScore += 1;
+    addPopup(x, y, "+1", true);
     spawnBonusSuccessBurst(x, y);
   } else {
     const now = performance.now();
@@ -1145,8 +1145,7 @@ function chooseBonusItem(itemId, tappedEl){
     item.removeAt = now + 150;
     state.bonusWrongHits += 1;
     state.bonusStreak = 0;
-    state.bonusScore = Math.max(0, state.bonusScore - 12);
-    addPopup(x, y, "-12", false);
+    addPopup(x, y, "Nope!", false);
     spawnCrashBurst(x, y, {
       count: 8,
       distance: 52,
