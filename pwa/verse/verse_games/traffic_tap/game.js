@@ -700,7 +700,7 @@ function renderItems(){
       if (item.vanishUntil > performance.now()) unitCls.push("is-vanish");
 
       return `
-        <div class="${cls.filter(Boolean).join(" ")}" style="transform:translate3d(${item.x}px, ${y}px, 0);--tt-item-w:${item.width}px;--tt-item-h:${item.height}px;--tt-car-size:${item.carSize}px;--tt-car-hit-h:${item.carHitHeight}px;--tt-car-center-y:${item.slot === "lower" ? 72 : 24}%;--tt-item-tilt:0deg;">
+        <div class="${cls.filter(Boolean).join(" ")}" style="transform:translate3d(${item.x}px, ${y}px, 0);--tt-item-w:${item.width}px;--tt-item-h:${item.height}px;--tt-car-size:${item.carSize}px;--tt-car-hit-h:${item.carHitHeight}px;--tt-car-center-y:${bonusSlotCenterPercent(item.slot)}%;--tt-item-tilt:0deg;">
           <div class="${unitCls.join(" ")}">
             <button type="button" class="tt-car-btn tt-hit-btn" data-item-id="${item.id}" aria-label="${escapeHtml(vehicleLabel(item.vehicle))}">${vehicleImgHtml(item.vehicle)}</button>
           </div>
@@ -1102,6 +1102,25 @@ function launchTrailPoint(item){
   }
 
 
+  function pickBonusSlot() {
+    const r = Math.random();
+
+    if (r < 0.34) return "upper";
+    if (r < 0.67) return "middle";
+    return "lower";
+  }
+
+  function bonusSlotCenterPercent(slot) {
+    if (slot === "upper") return 22;
+    if (slot === "middle") return 49;
+    return 76;
+  }
+
+  function bonusSpawnGap() {
+    const metrics = getItemMetrics("car");
+    return Math.round(clamp(metrics.width * 0.62, 145, 210));
+  }
+
 function spawnBonusTraffic(now){
   if (state.bonusStopSpawn) return;
   if (now < state.bonusNextSpawnAt) return;
@@ -1112,12 +1131,12 @@ function spawnBonusTraffic(now){
 
   for (let i = 0; i < burstCount; i += 1){
     const road = Math.random() < 0.5 ? 0 : 1;
-    const slot = Math.random() < 0.58 ? "upper" : "lower";
+    const slot = pickBonusSlot();
     const vehicle = Math.random() < 0.24 ? state.bonusTargetEmoji : pickRandom(VEHICLES);
     const rawSpeed = speedBase + Math.random() * 90;
     const speed = cappedBonusSpeed(road, slot, rawSpeed);
 
-    if (bonusLaneHasSpawnRoom(road, slot, 150)){
+    if (bonusLaneHasSpawnRoom(road, slot, bonusSpawnGap())){
       state.bonusItems.push(makeBonusItem({ road, slot, vehicle, speed }));
     }
   }
