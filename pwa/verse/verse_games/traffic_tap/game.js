@@ -22,7 +22,7 @@
     masterVolume: 1.00,
     volumes: {
       correctTap: 0.85,
-      zoomLaunch: 0.25,
+      zoomLaunch: 0.10,
       wrongTap: 3.40,
       bonusTap: 1.15,
       rainbowJackpot: 3.20,
