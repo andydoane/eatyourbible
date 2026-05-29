@@ -1254,8 +1254,6 @@ In the bonus round, tap as many of the target vehicle as you can.`;
     const field = document.getElementById("ttField");
     if (!layer || !field) return;
 
-    state.rainbowJackpotStopUntil = performance.now() + 105;
-
     const flash = document.createElement("div");
     flash.className = "tt-rainbow-jackpot-flash";
     field.appendChild(flash);
@@ -1845,9 +1843,6 @@ In the bonus round, tap as many of the target vehicle as you can.`;
 
     state.bonusTimeLeft = Math.max(0, state.bonusEndsAt - now);
 
-    if (now < state.rainbowJackpotStopUntil) {
-      return;
-    }
 
     spawnBonusTraffic(now);
 
