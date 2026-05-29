@@ -370,6 +370,17 @@
     ]
   };
 
+  const BONUS_TAP_MELODY = [
+    ["C5", "E5"],
+    ["D5", "G5"],
+    ["E5", "A5"],
+    ["G5", "C6"],
+    ["A5", "E6"],
+    ["G5", "C6"],
+    ["E5", "A5"],
+    ["D5", "G5"]
+  ];
+
   function playTuneNote(eventId, noteName, start, duration, gain, wave = "sine") {
     const freq = TT_TUNE_NOTES[noteName] || TT_TUNE_NOTES.C5;
     playOsc(eventId, wave, freq, start, duration, gain, freq * 1.015);
@@ -404,8 +415,11 @@
   }
 
   function soundBonusTap(t) {
-    playOsc("bonusTap", "sine", 784, t, 0.07, 0.08, 988);
-    playOsc("bonusTap", "triangle", 1046, t + 0.055, 0.08, 0.055, 1318);
+    const melodyIndex = Math.max(0, state.bonusStreak - 1) % BONUS_TAP_MELODY.length;
+    const [noteA, noteB] = BONUS_TAP_MELODY[melodyIndex];
+
+    playTuneNote("bonusTap", noteA, t, 0.055, 0.075, "sine");
+    playTuneNote("bonusTap", noteB, t + 0.045, 0.075, 0.06, "triangle");
   }
 
   function soundRainbowJackpot(t) {
