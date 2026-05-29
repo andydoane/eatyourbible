@@ -22,7 +22,7 @@
     masterVolume: 1.00,
     volumes: {
       correctTap: 0.85,
-      zoomLaunch: 0.85,
+      zoomLaunch: 0.55,
       wrongTap: 3.40,
       bonusTap: 1.15,
       rainbowJackpot: 3.20,
@@ -2095,6 +2095,7 @@ In the bonus round, tap as many of the target vehicle as you can.`;
       return;
     }
 
+    playGameSound("correctTap");
     playZoomSound();
     addPopup(x, y, "✔", true);
     state.buildPopUntil = performance.now() + 200;
