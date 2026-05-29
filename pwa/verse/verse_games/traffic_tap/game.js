@@ -990,9 +990,9 @@ function launchTrailPoint(item){
     );
   }
 
-  function bonusTruckMetrics() {
+  function bonusTruckMetrics(mode = state.bonusTruckMode || "intro") {
     const metrics = getItemMetrics("car");
-    const truckHeight = Math.round(metrics.carSize * 1.14);
+    const truckHeight = Math.round(metrics.carSize * 1.5);
     const frontWidth = Math.round(truckHeight * 1.5);
     const trailerVisualHeight = Math.round(truckHeight * 0.69);
     const targetHeight = Math.round(trailerVisualHeight * 0.86);
@@ -1009,7 +1009,8 @@ function launchTrailPoint(item){
 
     const overlap = 10;
     const totalWidth = frontWidth + trailerWidth - overlap;
-    const y = Math.round(roadTopY(0) + (state.roadHeight * 0.24) - (truckHeight / 2));
+    const road = mode === "outro" ? 1 : 0;
+    const y = Math.round(roadTopY(road) + (state.roadHeight * 0.5) - (truckHeight / 2));
 
     return {
       truckHeight,
@@ -1024,11 +1025,12 @@ function launchTrailPoint(item){
   }
 
   function startBonusTruckIntro(now = performance.now()) {
-    const metrics = bonusTruckMetrics();
+    state.bonusTruckMode = "intro";
+
+    const metrics = bonusTruckMetrics("intro");
 
     state.bonusIntro = true;
     state.bonusIntroUntil = Infinity;
-    state.bonusTruckMode = "intro";
     state.bonusIntroTarget = pickBonusTargetEmoji();
     state.bonusTruckWidth = metrics.totalWidth;
     state.bonusTruckX = state.fieldWidth + 28;
@@ -1041,9 +1043,10 @@ function launchTrailPoint(item){
   }
 
   function startBonusTruckOutro(now = performance.now()) {
-    const metrics = bonusTruckMetrics();
-
     state.bonusTruckMode = "outro";
+
+    const metrics = bonusTruckMetrics("outro");
+
     state.bonusTruckWidth = metrics.totalWidth;
     state.bonusTruckX = state.fieldWidth + 28;
     state.bonusTruckSpeed = Math.round(clamp(130 * trafficSpeedMultiplier(), 120, 190));
