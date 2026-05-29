@@ -141,6 +141,9 @@
     bonusItems: [],
     bonusNextSpawnAt: 0,
     bonusRoundDuration: 20000,
+    rainbowBusSpawned: false,
+    rainbowBusTapped: false,
+    rainbowBusSpawnAt: 0,
     bonusIntroTarget: "",
     bonusTruckX: 0,
     bonusTruckWidth: 0,
@@ -236,6 +239,9 @@
     state.bonusItems = [];
     state.bonusNextSpawnAt = 0;
     state.bonusRoundDuration = 20000;
+    state.rainbowBusSpawned = false;
+    state.rainbowBusTapped = false;
+    state.rainbowBusSpawnAt = 0;
     state.bonusIntroTarget = "";
     state.bonusTruckX = 0;
     state.bonusTruckWidth = 0;
@@ -351,7 +357,7 @@
       verseId: ctx.verseId,
       gameId: GAME_ID,
       completion: completionResult,
-      gameMessage: `Bonus cars tapped: ${state.bonusScore}`,
+      gameMessage: `Bonus score: ${state.bonusScore}`,
       theme: GAME_THEME,
       backLabel: "Back to Practice Games",
       onPlayAgain: renderModeSelect,
@@ -1059,6 +1065,8 @@ In the bonus round, tap as many of the target vehicle as you can.`;
   }
 
   function startBonusRound() {
+    const now = performance.now();
+
     state.bonusRound = true;
     state.bonusShowScore = false;
     state.bonusItems = [];
@@ -1069,9 +1077,12 @@ In the bonus round, tap as many of the target vehicle as you can.`;
     state.bonusWrongHits = 0;
     state.bonusStreak = 0;
     state.bonusBestStreak = 0;
-    state.bonusEndsAt = performance.now() + state.bonusRoundDuration;
+    state.bonusEndsAt = now + state.bonusRoundDuration;
     state.bonusTimeLeft = state.bonusRoundDuration;
-    state.bonusNextSpawnAt = performance.now() + 220;
+    state.bonusNextSpawnAt = now + 220;
+    state.rainbowBusSpawned = false;
+    state.rainbowBusTapped = false;
+    state.rainbowBusSpawnAt = now + Math.round(clamp(state.bonusRoundDuration * rand(0.35, 0.52), 4500, 10500));
     state.bonusEnding = false;
     state.bonusEndingUntil = 0;
     state.bonusStopSpawn = false;
@@ -1093,7 +1104,9 @@ In the bonus round, tap as many of the target vehicle as you can.`;
       carSize: metrics.carSize,
       carHitHeight: metrics.carHitHeight,
       vehicle,
-      isTarget: sameVehicle(vehicle, state.bonusTargetEmoji),
+      isTarget: !vehicle?.isRainbowBonus && sameVehicle(vehicle, state.bonusTargetEmoji),
+      isRainbowBonus: !!vehicle?.isRainbowBonus,
+      bonusPoints: vehicle?.bonusPoints || 1,
       speed,
       vanishUntil: 0,
       flashWrongUntil: 0,
@@ -1101,9 +1114,48 @@ In the bonus round, tap as many of the target vehicle as you can.`;
     };
   }
 
+  function spawnRainbowBus(now) {
+    if (state.rainbowBusSpawned || state.bonusStopSpawn) return;
+
+    const progress = 1 - (state.bonusTimeLeft / state.bonusRoundDuration);
+    const speedBase = 165 + progress * 95;
+    const rawSpeed = speedBase + Math.random() * 45;
+    const spawnGap = Math.round(getItemMetrics("car").width * 0.82);
+
+    let chosenRoad = Math.random() < 0.5 ? 0 : 1;
+    let chosenSlot = Math.random() < 0.5 ? "upper" : "lower";
+
+    for (let attempt = 0; attempt < 8; attempt += 1) {
+      const road = Math.random() < 0.5 ? 0 : 1;
+      const slot = Math.random() < 0.5 ? "upper" : "lower";
+
+      if (bonusLaneHasSpawnRoom(road, slot, spawnGap)) {
+        chosenRoad = road;
+        chosenSlot = slot;
+        break;
+      }
+    }
+
+    const speed = cappedBonusSpeed(chosenRoad, chosenSlot, rawSpeed);
+
+    state.bonusItems.push(makeBonusItem({
+      road: chosenRoad,
+      slot: chosenSlot,
+      vehicle: RAINBOW_BUS,
+      speed
+    }));
+
+    state.rainbowBusSpawned = true;
+  }
+
 
   function spawnBonusTraffic(now) {
     if (state.bonusStopSpawn) return;
+
+    if (!state.rainbowBusSpawned && (now >= state.rainbowBusSpawnAt || state.bonusTimeLeft <= 8500)) {
+      spawnRainbowBus(now);
+    }
+
     if (now < state.bonusNextSpawnAt) return;
 
     const progress = 1 - (state.bonusTimeLeft / state.bonusRoundDuration);
@@ -1146,7 +1198,20 @@ In the bonus round, tap as many of the target vehicle as you can.`;
     const x = rect.left - layerRect.left + rect.width / 2;
     const y = rect.top - layerRect.top + rect.height / 2;
 
-    if (item.isTarget) {
+    if (item.isRainbowBonus) {
+      const now = performance.now();
+      const points = item.bonusPoints || 10;
+
+      item.vanishUntil = now + 140;
+      item.removeAt = now + 150;
+      state.rainbowBusTapped = true;
+      state.bonusCorrectHits += 1;
+      state.bonusStreak += 1;
+      state.bonusBestStreak = Math.max(state.bonusBestStreak, state.bonusStreak);
+      state.bonusScore += points;
+      addPopup(x, y, `+${points}`, true);
+      spawnBonusSuccessBurst(x, y);
+    } else if (item.isTarget) {
       item.vanishUntil = performance.now() + 140;
       item.removeAt = performance.now() + 150;
       state.bonusCorrectHits += 1;
@@ -1210,6 +1275,13 @@ In the bonus round, tap as many of the target vehicle as you can.`;
   function preventBonusHorizontalOverlap() {
     const lanes = new Map();
     const minGap = Math.round(getItemMetrics("car").width * 0.82);
+    const RAINBOW_BUS = {
+      id: "rainbow-bus",
+      label: "rainbow bus",
+      src: "./traffic_tap_images/car_rainbow_bonus_animated.svg",
+      isRainbowBonus: true,
+      bonusPoints: 10
+    };
 
     for (const item of state.bonusItems) {
       if (item.removeAt) continue;
