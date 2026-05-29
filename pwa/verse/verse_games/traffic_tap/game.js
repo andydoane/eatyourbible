@@ -36,6 +36,13 @@
 
   const BONUS_RIVALS = VEHICLES;
   const DEFAULT_VEHICLE = VEHICLES[0];
+  const RAINBOW_BUS = {
+    id: "rainbow-bus",
+    label: "rainbow bus",
+    src: "./traffic_tap_images/car_rainbow_bonus.svg",
+    isRainbowBonus: true,
+    bonusPoints: 10
+  };
   const BONUS_TRUCK_ASSETS = {
     front: "./traffic_tap_images/car_truck_front.svg",
     trailer: "./traffic_tap_images/car_truck_trailer.svg",
@@ -1275,13 +1282,7 @@ In the bonus round, tap as many of the target vehicle as you can.`;
   function preventBonusHorizontalOverlap() {
     const lanes = new Map();
     const minGap = Math.round(getItemMetrics("car").width * 0.82);
-    const RAINBOW_BUS = {
-      id: "rainbow-bus",
-      label: "rainbow bus",
-      src: "./traffic_tap_images/car_rainbow_bonus.svg",
-      isRainbowBonus: true,
-      bonusPoints: 10
-    };
+
 
     for (const item of state.bonusItems) {
       if (item.removeAt) continue;
