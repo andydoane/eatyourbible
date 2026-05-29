@@ -1278,7 +1278,7 @@ In the bonus round, tap as many of the target vehicle as you can.`;
     const RAINBOW_BUS = {
       id: "rainbow-bus",
       label: "rainbow bus",
-      src: "./traffic_tap_images/car_rainbow_bonus_animated.svg",
+      src: "./traffic_tap_images/car_rainbow_bonus.svg",
       isRainbowBonus: true,
       bonusPoints: 10
     };
