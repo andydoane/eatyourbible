@@ -511,6 +511,35 @@ body{
   filter: drop-shadow(0 3px 5px rgba(0, 0, 0, 0.18));
 }
 
+.tt-bonus-trailer-message.is-results {
+  gap: clamp(10px, 2.2vw, 18px);
+}
+
+.tt-bonus-trailer-times {
+  color: #333333;
+  font-size: calc(var(--tt-bonus-target-h, 60px) * 0.78);
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.65);
+}
+
+.tt-bonus-trailer-score-badge {
+  min-width: 2.4em;
+  padding: 0.1em 0.34em 0.14em;
+  border-radius: 999px;
+  background: #ff5a51;
+  color: #ffc751;
+  font-size: calc(var(--tt-bonus-target-h, 60px) * 0.78);
+  font-weight: 900;
+  line-height: 1;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.18),
+    inset 0 2px 0 rgba(255, 255, 255, 0.22);
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.18);
+}
+
 .tt-word-btn{
   top:var(--tt-word-center-y, 75%);
   transform:translate(-50%, -50%);

@@ -145,6 +145,7 @@ const state = {
   bonusTruckX:0,
   bonusTruckWidth:0,
   bonusTruckSpeed:0,
+  bonusTruckMode:"",
   bonusTruckPending:false,
   bonusClearStartedAt:0,
   debugHitboxes:false,
@@ -239,6 +240,7 @@ function startGame(mode){
   state.bonusTruckX = 0;
   state.bonusTruckWidth = 0;
   state.bonusTruckSpeed = 0;
+  state.bonusTruckMode = "";
   state.bonusTruckPending = false;
   state.bonusClearStartedAt = 0;
   state.bonusShowScore = false;
@@ -349,7 +351,7 @@ function renderEndScreen(reward){
     verseId: ctx.verseId,
     gameId: GAME_ID,
     completion: completionResult,
-    gameMessage: `Bonus score: ${state.bonusScore} · Best streak: ${state.bonusBestStreak}`,
+    gameMessage: `Bonus cars tapped: ${state.bonusScore}`,
     theme: GAME_THEME,
     backLabel: "Back to Practice Games",
     onPlayAgain: renderModeSelect,
@@ -1026,6 +1028,7 @@ function launchTrailPoint(item){
 
     state.bonusIntro = true;
     state.bonusIntroUntil = Infinity;
+    state.bonusTruckMode = "intro";
     state.bonusIntroTarget = pickBonusTargetEmoji();
     state.bonusTruckWidth = metrics.totalWidth;
     state.bonusTruckX = state.fieldWidth + 28;
@@ -1035,6 +1038,17 @@ function launchTrailPoint(item){
 
     const introTarget = document.getElementById("ttBonusIntroTarget");
     if (introTarget) introTarget.innerHTML = vehicleImgHtml(state.bonusIntroTarget, "tt-bonus-target-img");
+  }
+
+  function startBonusTruckOutro(now = performance.now()) {
+    const metrics = bonusTruckMetrics();
+
+    state.bonusTruckMode = "outro";
+    state.bonusTruckWidth = metrics.totalWidth;
+    state.bonusTruckX = state.fieldWidth + 28;
+    state.bonusTruckSpeed = Math.round(clamp(130 * trafficSpeedMultiplier(), 120, 190));
+    state.overlayMessage = "";
+    state.overlayUntil = 0;
   }
 
   function pickBonusTargetEmoji() {
@@ -1208,17 +1222,13 @@ function finishBonusRound(){
 
   state.bonusStopSpawn = true;
   state.bonusEnding = true;
-  state.bonusEndingUntil = now +900;
+  state.bonusEndingUntil = Infinity;
   state.bonusShowScore = false;
 
-  state.overlayMessage = "Bonus Complete!";
-  state.overlayUntil = now + 900;
-  state.overlayMessage = "Bonus Complete!";
-  state.overlayUntil = now + 1100;
-  state.bonusEndingUntil = now + 1200;
+  startBonusTruckOutro(now);
 
   for (const item of state.bonusItems){
-    item.speed = item.speed || 0;
+    item.speed = Math.max(item.speed || 0, 520);
     item.vanishUntil = 0;
     item.flashWrongUntil = 0;
   }
@@ -1228,13 +1238,28 @@ function renderBonus(){
   const layer = document.getElementById("ttBonusLayer");
   if (!layer) return;
 
-  if (!state.bonusIntro){
+  if (!state.bonusIntro && !state.bonusEnding){
     layer.innerHTML = "";
     return;
   }
 
   const metrics = bonusTruckMetrics();
-  const target = state.bonusIntroTarget || DEFAULT_VEHICLE;
+  const target = state.bonusIntroTarget || state.bonusTargetEmoji || DEFAULT_VEHICLE;
+
+  const trailerMessage = state.bonusTruckMode === "outro"
+    ? `
+        <div class="tt-bonus-trailer-message is-results">
+          ${vehicleImgHtml(target, "tt-bonus-trailer-target-img")}
+          <span class="tt-bonus-trailer-times">×</span>
+          <span class="tt-bonus-trailer-score-badge">${state.bonusScore}</span>
+        </div>
+      `
+    : `
+        <div class="tt-bonus-trailer-message">
+          <span class="tt-bonus-trailer-text">TAP THIS CAR:</span>
+          ${vehicleImgHtml(target, "tt-bonus-trailer-target-img")}
+        </div>
+      `;
 
   layer.innerHTML = `
     <div class="tt-bonus-truck" style="transform:translate3d(${state.bonusTruckX}px, ${metrics.y}px, 0); --tt-bonus-truck-h:${metrics.truckHeight}px; --tt-bonus-front-w:${metrics.frontWidth}px; --tt-bonus-trailer-w:${metrics.trailerWidth}px; --tt-bonus-overlap:${metrics.overlap}px; --tt-bonus-target-w:${metrics.targetWidth}px; --tt-bonus-target-h:${metrics.targetHeight}px;">
@@ -1244,10 +1269,7 @@ function renderBonus(){
         <img class="tt-bonus-trailer-wheels is-left" src="${escapeHtml(BONUS_TRUCK_ASSETS.wheels)}" alt="" draggable="false">
         <img class="tt-bonus-trailer-wheels is-middle" src="${escapeHtml(BONUS_TRUCK_ASSETS.wheels)}" alt="" draggable="false">
         <img class="tt-bonus-trailer-wheels is-right" src="${escapeHtml(BONUS_TRUCK_ASSETS.wheels)}" alt="" draggable="false">
-        <div class="tt-bonus-trailer-message">
-          <span class="tt-bonus-trailer-text">TAP THIS CAR:</span>
-          ${vehicleImgHtml(target, "tt-bonus-trailer-target-img")}
-        </div>
+        ${trailerMessage}
       </div>
     </div>
   `;
@@ -1652,10 +1674,17 @@ function updateBonus(dt, now){
       return true;
     });
 
-    if (now >= state.bonusEndingUntil){
+    state.bonusTruckX -= state.bonusTruckSpeed * (dt / 1000);
+
+    if (state.bonusTruckX < -(state.bonusTruckWidth + 40)){
       state.bonusRound = false;
       state.bonusEnding = false;
       state.bonusShowScore = false;
+      state.bonusTruckMode = "";
+      state.bonusTruckX = 0;
+      state.bonusTruckWidth = 0;
+      state.bonusTruckSpeed = 0;
+      state.bonusItems = [];
       state.running = false;
       completeGameAndRenderEndScreen();
     }
