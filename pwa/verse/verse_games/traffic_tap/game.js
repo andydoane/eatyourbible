@@ -1209,7 +1209,7 @@ In the bonus round, tap as many of the target vehicle as you can.`;
 
   function preventBonusHorizontalOverlap() {
     const lanes = new Map();
-    const minGap = Math.round(getItemMetrics("car").width * 0.62);
+    const minGap = Math.round(getItemMetrics("car").width * 0.82);
 
     for (const item of state.bonusItems) {
       if (item.removeAt) continue;
