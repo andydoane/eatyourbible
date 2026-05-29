@@ -22,7 +22,7 @@
     masterVolume: 1.00,
     volumes: {
       correctTap: 0.85,
-      zoomLaunch: 0.10,
+      zoomLaunch: 0.25,
       wrongTap: 3.40,
       bonusTap: 1.15,
       rainbowJackpot: 3.20,
@@ -106,7 +106,8 @@
   let audioCtx = null;
   let masterGain = null;
   let silenceAudioEl = null;
-  let zoomAudioPool = [];
+  let zoomAudioBuffer = null;
+  let zoomAudioLoadPromise = null;
   let audioUnlocked = false;
   let completionMarked = false;
   let alreadyCompletedForMode = false;
@@ -240,33 +241,34 @@
     return clamp(getSoundVolume("zoomLaunch"), 0, 1);
   }
 
-  function getZoomAudioElement() {
-    const audio = document.createElement("audio");
-    audio.preload = "auto";
-    audio.playsInline = true;
-    audio.setAttribute("playsinline", "");
-    audio.src = ZOOM_AUDIO_FILE;
-    audio.style.display = "none";
-    audio.defaultMuted = false;
-    audio.muted = false;
-    audio.volume = getZoomVolume();
-    document.body.appendChild(audio);
+  function loadZoomAudioBuffer() {
+    if (zoomAudioBuffer) return Promise.resolve(zoomAudioBuffer);
+    if (zoomAudioLoadPromise) return zoomAudioLoadPromise;
 
-    return audio;
+    const ctx = ensureAudioContext();
+    if (!ctx) return Promise.resolve(null);
+
+    zoomAudioLoadPromise = fetch(ZOOM_AUDIO_FILE)
+      .then(response => {
+        if (!response.ok) throw new Error(`Could not load ${ZOOM_AUDIO_FILE}`);
+        return response.arrayBuffer();
+      })
+      .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
+      .then(buffer => {
+        zoomAudioBuffer = buffer;
+        return buffer;
+      })
+      .catch(err => {
+        console.warn("Could not decode Traffic Tap zoom sound", err);
+        zoomAudioLoadPromise = null;
+        return null;
+      });
+
+    return zoomAudioLoadPromise;
   }
 
   function primeZoomAudio() {
-    try {
-      if (!zoomAudioPool.length) {
-        zoomAudioPool.push(getZoomAudioElement());
-      }
-
-      for (const audio of zoomAudioPool) {
-        audio.load();
-      }
-    } catch (err) {
-      // Zoom audio preload is best-effort.
-    }
+    loadZoomAudioBuffer();
   }
 
   function playZoomSound() {
@@ -278,25 +280,24 @@
       const volume = getZoomVolume();
       if (volume <= 0) return;
 
-      let audio = zoomAudioPool.find((candidate) => candidate.paused || candidate.ended);
+      const ctx = ensureAudioContext();
+      if (!ctx || !masterGain) return;
 
-      if (!audio) {
-        audio = getZoomAudioElement();
-        zoomAudioPool.push(audio);
+      if (!zoomAudioBuffer) {
+        loadZoomAudioBuffer();
+        return;
       }
 
-      audio.pause();
-      audio.defaultMuted = false;
-      audio.muted = false;
-      audio.volume = volume;
-      audio.currentTime = 0;
+      const source = ctx.createBufferSource();
+      const gain = ctx.createGain();
 
-      const playPromise = audio.play();
-      if (playPromise && typeof playPromise.catch === "function") {
-        playPromise.catch(() => {
-          // Sound should never break gameplay.
-        });
-      }
+      source.buffer = zoomAudioBuffer;
+      gain.gain.setValueAtTime(volume, ctx.currentTime);
+
+      source.connect(gain);
+      gain.connect(masterGain);
+
+      source.start(ctx.currentTime);
     } catch (err) {
       // Sound should never break gameplay.
     }
