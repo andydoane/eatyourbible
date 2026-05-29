@@ -22,7 +22,7 @@
     masterVolume: 1.00,
     volumes: {
       correctTap: 0.85,
-      zoomLaunch: 0.00,
+      zoomLaunch: 0.50,
       wrongTap: 3.40,
       bonusTap: 1.15,
       rainbowJackpot: 3.20,
@@ -236,6 +236,10 @@
     }
   }
 
+  function getZoomVolume() {
+    return clamp(getSoundVolume("zoomLaunch"), 0, 1);
+  }
+
   function getZoomAudioElement() {
     const audio = document.createElement("audio");
     audio.preload = "auto";
@@ -243,6 +247,9 @@
     audio.setAttribute("playsinline", "");
     audio.src = ZOOM_AUDIO_FILE;
     audio.style.display = "none";
+    audio.defaultMuted = false;
+    audio.muted = false;
+    audio.volume = getZoomVolume();
     document.body.appendChild(audio);
 
     return audio;
@@ -268,6 +275,9 @@
     unlockAudio();
 
     try {
+      const volume = getZoomVolume();
+      if (volume <= 0) return;
+
       let audio = zoomAudioPool.find((candidate) => candidate.paused || candidate.ended);
 
       if (!audio) {
@@ -275,7 +285,10 @@
         zoomAudioPool.push(audio);
       }
 
-      audio.volume = clamp(getSoundVolume("zoomLaunch"), 0, 1);
+      audio.pause();
+      audio.defaultMuted = false;
+      audio.muted = false;
+      audio.volume = volume;
       audio.currentTime = 0;
 
       const playPromise = audio.play();
