@@ -588,15 +588,10 @@ function renderBuildArea(){
     text.className = "tt-build-text vm-build-text";
     text.innerHTML = `
       <div class="tt-bonus-build">
-        <div class="tt-bonus-build-targetline">
-          <span class="tt-bonus-build-bullseye">🎯</span>
-          <span class="tt-bonus-build-equals">=</span>
-          <span class="tt-bonus-build-target">${vehicleImgHtml(state.bonusTargetEmoji || DEFAULT_VEHICLE, "tt-bonus-target-img")}</span>
-        </div>
-        <div class="tt-bonus-build-score">
-          <span>Score: ${state.bonusScore}</span>
-          <span>Streak: ${state.bonusStreak}</span>
-          <span>Time: ${Math.max(0, Math.ceil(state.bonusTimeLeft / 1000))}</span>
+        <div class="tt-bonus-score-hud">
+          <span class="tt-bonus-score-target">${vehicleImgHtml(state.bonusTargetEmoji || DEFAULT_VEHICLE, "tt-bonus-target-img")}</span>
+          <span class="tt-bonus-score-times">×</span>
+          <span class="tt-bonus-score-badge">${state.bonusScore}</span>
         </div>
       </div>
     `;
