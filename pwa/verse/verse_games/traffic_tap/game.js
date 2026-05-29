@@ -151,6 +151,7 @@
     rainbowBusSpawned: false,
     rainbowBusTapped: false,
     rainbowBusSpawnAt: 0,
+    rainbowJackpotStopUntil: 0,
     bonusIntroTarget: "",
     bonusTruckX: 0,
     bonusTruckWidth: 0,
@@ -249,6 +250,7 @@
     state.rainbowBusSpawned = false;
     state.rainbowBusTapped = false;
     state.rainbowBusSpawnAt = 0;
+    state.rainbowJackpotStopUntil = 0;
     state.bonusIntroTarget = "";
     state.bonusTruckX = 0;
     state.bonusTruckWidth = 0;
@@ -1090,6 +1092,7 @@ In the bonus round, tap as many of the target vehicle as you can.`;
     state.rainbowBusSpawned = false;
     state.rainbowBusTapped = false;
     state.rainbowBusSpawnAt = now + Math.round(clamp(state.bonusRoundDuration * rand(0.35, 0.52), 4500, 10500));
+    state.rainbowJackpotStopUntil = 0;
     state.bonusEnding = false;
     state.bonusEndingUntil = 0;
     state.bonusStopSpawn = false;
@@ -1216,8 +1219,7 @@ In the bonus round, tap as many of the target vehicle as you can.`;
       state.bonusStreak += 1;
       state.bonusBestStreak = Math.max(state.bonusBestStreak, state.bonusStreak);
       state.bonusScore += points;
-      addPopup(x, y, `+${points}`, true);
-      spawnBonusSuccessBurst(x, y);
+      spawnRainbowJackpot(x, y, points);
     } else if (item.isTarget) {
       item.vanishUntil = performance.now() + 140;
       item.removeAt = performance.now() + 150;
@@ -1245,6 +1247,37 @@ In the bonus round, tap as many of the target vehicle as you can.`;
         showCloud: true
       });
     }
+  }
+
+  function spawnRainbowJackpot(x, y, points = 10) {
+    const layer = document.getElementById("ttEffectsLayer");
+    const field = document.getElementById("ttField");
+    if (!layer || !field) return;
+
+    state.rainbowJackpotStopUntil = performance.now() + 105;
+
+    const flash = document.createElement("div");
+    flash.className = "tt-rainbow-jackpot-flash";
+    field.appendChild(flash);
+
+    const banner = document.createElement("div");
+    banner.className = "tt-rainbow-jackpot-banner";
+    banner.textContent = `+${points}!`;
+    layer.appendChild(banner);
+
+    spawnCrashBurst(x, y, {
+      count: 28,
+      distance: 112,
+      jitter: 18,
+      duration: 920,
+      cloudSize: 116,
+      sizePool: [8, 10, 12, 14, 16, 20, 24],
+      colors: ["#ff5252", "#ff9f1c", "#ffe45e", "#59d65f", "#33c3ff", "#6c63ff", "#c55cff"],
+      showCloud: false
+    });
+
+    window.setTimeout(() => flash.remove(), 760);
+    window.setTimeout(() => banner.remove(), 980);
   }
 
   function cappedBonusSpeed(road, slot, proposedSpeed) {
@@ -1811,6 +1844,10 @@ In the bonus round, tap as many of the target vehicle as you can.`;
     }
 
     state.bonusTimeLeft = Math.max(0, state.bonusEndsAt - now);
+
+    if (now < state.rainbowJackpotStopUntil) {
+      return;
+    }
 
     spawnBonusTraffic(now);
 

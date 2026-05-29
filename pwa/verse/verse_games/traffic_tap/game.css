@@ -635,6 +635,41 @@ body{
 .tt-popup.good{ color:#ffd44f; }
 .tt-popup.bad{ color:#ffb3b3; }
 
+.tt-rainbow-jackpot-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 13;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at center, rgba(255, 228, 94, 0.55) 0 10%, rgba(255, 82, 82, 0.34) 10% 22%, rgba(51, 195, 255, 0.28) 22% 38%, rgba(197, 92, 255, 0.22) 38% 56%, rgba(255, 255, 255, 0) 56% 100%);
+  mix-blend-mode: screen;
+  animation: ttRainbowJackpotFlash 760ms ease-out forwards;
+}
+
+.tt-rainbow-jackpot-banner {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  z-index: 14;
+  transform: translate(-50%, -50%) scale(0.62) rotate(-6deg);
+  pointer-events: none;
+  padding: clamp(10px, 3vw, 18px) clamp(20px, 6vw, 36px);
+  border-radius: 999px;
+  background: linear-gradient(90deg, #ff5252, #ff9f1c, #ffe45e, #59d65f, #33c3ff, #6c63ff, #c55cff);
+  color: #ffffff;
+  font-size: clamp(54px, 15vw, 118px);
+  font-weight: 1000;
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+  text-shadow:
+    0 4px 0 rgba(51, 51, 51, 0.30),
+    0 10px 22px rgba(0, 0, 0, 0.28);
+  box-shadow:
+    0 14px 34px rgba(0, 0, 0, 0.24),
+    inset 0 4px 0 rgba(255, 255, 255, 0.35);
+  animation: ttRainbowJackpotBanner 980ms cubic-bezier(0.12, 0.9, 0.22, 1) forwards;
+}
+
 .tt-overlay-msg{
   display:flex;
   align-items:center;
@@ -833,21 +868,277 @@ body{
 .tt-end-text{ font-size:clamp(17px,4.2vw,24px); font-weight:800; line-height:1.2; }
 .tt-end-lock{ opacity:0.65; }
 
-@keyframes ttRoadDriftLeft{ from{ transform:translateX(0);} to{ transform:translateX(-54px);} }
-@keyframes ttRoadDriftRight{ from{ transform:translateX(-54px);} to{ transform:translateX(0);} }
-@keyframes ttRoadFlash{ 0%,100%{ filter:none; } 50%{ filter:brightness(1.18); } }
-@keyframes ttShake{ 0%,100%{ transform:translateX(0);} 25%{ transform:translateX(-7px);} 50%{ transform:translateX(7px);} 75%{ transform:translateX(-5px);} }
-@keyframes ttPop{ 0%{ transform:scale(1);} 55%{ transform:scale(1.03);} 100%{ transform:scale(1);} }
-@keyframes ttShakeMini{ 0%,100%{ transform:translate(-50%, -50%);} 20%{ transform:translate(calc(-50% - 6px), -50%);} 40%{ transform:translate(calc(-50% + 5px), -50%);} 60%{ transform:translate(calc(-50% - 4px), -50%);} }
-@keyframes ttBurstOut{ from{ opacity:1; transform:scale(1);} to{ opacity:0; transform:scale(0.6);} }
-@keyframes ttCrashPop{ 0%{ opacity:0; transform:translate(-50%, -50%) scale(0.45);} 25%{ opacity:1; transform:translate(-50%, -50%) scale(1.05);} 100%{ opacity:0; transform:translate(-50%, -50%) scale(1.4);} }
-@keyframes ttPopupFloat{ 0%{ opacity:0; transform:translate(-50%, -50%);} 20%{ opacity:1; transform:translate(-50%, calc(-50% - 8px)); } 100%{ opacity:0; transform:translate(-50%, calc(-50% - 36px)); } }
-@keyframes ttOverlayIn{ 0%{ opacity:0; transform:scale(0.88);} 18%{ opacity:1; transform:scale(1.06);} 100%{ opacity:0; transform:scale(1);} }
-@keyframes ttBurstPulse{ from{ transform:scale(1);} to{ transform:scale(1.06);} }
-@keyframes ttBonusLines{ from{ transform:translateX(0);} to{ transform:translateX(-62px);} }
-@keyframes ttPlayerBonk{ 0%,100%{ transform:translate(-50%, -50%) scale(1);} 30%{ transform:translate(-50%, -50%) scale(1.08) rotate(-8deg);} 60%{ transform:translate(-50%, -50%) scale(0.94) rotate(6deg);} }
-@keyframes ttBonk{ 0%,100%{ transform:translate3d(0,0,0);} 25%{ transform:translate3d(-8px,-2px,0);} 50%{ transform:translate3d(6px,2px,0);} 75%{ transform:translate3d(-4px,0,0);} }
-@keyframes ttSwerve{ 0%{ transform:translate3d(0,0,0);} 35%{ transform:translate3d(0,-10px,0) rotate(-4deg);} 70%{ transform:translate3d(0,6px,0) rotate(3deg);} 100%{ transform:translate3d(0,0,0);} }
+@keyframes ttRoadDriftLeft {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-54px);
+  }
+}
+
+@keyframes ttRoadDriftRight {
+  from {
+    transform: translateX(-54px);
+  }
+
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes ttRoadFlash {
+
+  0%,
+  100% {
+    filter: none;
+  }
+
+  50% {
+    filter: brightness(1.18);
+  }
+}
+
+@keyframes ttShake {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-7px);
+  }
+
+  50% {
+    transform: translateX(7px);
+  }
+
+  75% {
+    transform: translateX(-5px);
+  }
+}
+
+@keyframes ttPop {
+  0% {
+    transform: scale(1);
+  }
+
+  55% {
+    transform: scale(1.03);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes ttShakeMini {
+
+  0%,
+  100% {
+    transform: translate(-50%, -50%);
+  }
+
+  20% {
+    transform: translate(calc(-50% - 6px), -50%);
+  }
+
+  40% {
+    transform: translate(calc(-50% + 5px), -50%);
+  }
+
+  60% {
+    transform: translate(calc(-50% - 4px), -50%);
+  }
+}
+
+@keyframes ttBurstOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+@keyframes ttCrashPop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.45);
+  }
+
+  25% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.05);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.4);
+  }
+}
+
+@keyframes ttPopupFloat {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%);
+  }
+
+  20% {
+    opacity: 1;
+    transform: translate(-50%, calc(-50% - 8px));
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% - 36px));
+  }
+}
+
+@keyframes ttRainbowJackpotFlash {
+  0% {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+
+  18% {
+    opacity: 1;
+    transform: scale(1.03);
+  }
+
+  54% {
+    opacity: 0.72;
+    transform: scale(1.08);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.18);
+  }
+}
+
+@keyframes ttRainbowJackpotBanner {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.48) rotate(-10deg);
+  }
+
+  16% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.16) rotate(4deg);
+  }
+
+  30% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.96) rotate(-2deg);
+  }
+
+  58% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.04) rotate(1deg);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.18) rotate(0deg);
+  }
+}
+
+@keyframes ttOverlayIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.88);
+  }
+
+  18% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+@keyframes ttBurstPulse {
+  from {
+    transform: scale(1);
+  }
+
+  to {
+    transform: scale(1.06);
+  }
+}
+
+@keyframes ttBonusLines {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-62px);
+  }
+}
+
+@keyframes ttPlayerBonk {
+
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  30% {
+    transform: translate(-50%, -50%) scale(1.08) rotate(-8deg);
+  }
+
+  60% {
+    transform: translate(-50%, -50%) scale(0.94) rotate(6deg);
+  }
+}
+
+@keyframes ttBonk {
+
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  25% {
+    transform: translate3d(-8px, -2px, 0);
+  }
+
+  50% {
+    transform: translate3d(6px, 2px, 0);
+  }
+
+  75% {
+    transform: translate3d(-4px, 0, 0);
+  }
+}
+
+@keyframes ttSwerve {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+
+  35% {
+    transform: translate3d(0, -10px, 0) rotate(-4deg);
+  }
+
+  70% {
+    transform: translate3d(0, 6px, 0) rotate(3deg);
+  }
+
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+}
 
 @keyframes ttCrashCloudRipple{
   0%{
