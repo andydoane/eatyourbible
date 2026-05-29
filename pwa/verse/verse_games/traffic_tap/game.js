@@ -16,11 +16,13 @@
   const HELP_OVERLAY_ID = "ttHelpOverlay";
 
   const SILENCE_AUDIO_FILE = "../../verse_audio/silence.mp3";
+  const ZOOM_AUDIO_FILE = "./traffic_tap_sounds/sound_zoom.mp3";
 
   const SOUND_TUNING = {
     masterVolume: 1.00,
     volumes: {
       correctTap: 0.85,
+      zoomLaunch: 0.85,
       wrongTap: 3.40,
       bonusTap: 1.15,
       rainbowJackpot: 3.20,
@@ -104,6 +106,7 @@
   let audioCtx = null;
   let masterGain = null;
   let silenceAudioEl = null;
+  let zoomAudioPool = [];
   let audioUnlocked = false;
   let completionMarked = false;
   let alreadyCompletedForMode = false;
@@ -233,6 +236,59 @@
     }
   }
 
+  function getZoomAudioElement() {
+    const audio = document.createElement("audio");
+    audio.preload = "auto";
+    audio.playsInline = true;
+    audio.setAttribute("playsinline", "");
+    audio.src = ZOOM_AUDIO_FILE;
+    audio.style.display = "none";
+    document.body.appendChild(audio);
+
+    return audio;
+  }
+
+  function primeZoomAudio() {
+    try {
+      if (!zoomAudioPool.length) {
+        zoomAudioPool.push(getZoomAudioElement());
+      }
+
+      for (const audio of zoomAudioPool) {
+        audio.load();
+      }
+    } catch (err) {
+      // Zoom audio preload is best-effort.
+    }
+  }
+
+  function playZoomSound() {
+    if (muted) return;
+
+    unlockAudio();
+
+    try {
+      let audio = zoomAudioPool.find((candidate) => candidate.paused || candidate.ended);
+
+      if (!audio) {
+        audio = getZoomAudioElement();
+        zoomAudioPool.push(audio);
+      }
+
+      audio.volume = clamp(getSoundVolume("zoomLaunch"), 0, 1);
+      audio.currentTime = 0;
+
+      const playPromise = audio.play();
+      if (playPromise && typeof playPromise.catch === "function") {
+        playPromise.catch(() => {
+          // Sound should never break gameplay.
+        });
+      }
+    } catch (err) {
+      // Sound should never break gameplay.
+    }
+  }
+
   function ensureAudioContext() {
     if (audioCtx) return audioCtx;
 
@@ -249,6 +305,7 @@
 
   function unlockAudio() {
     primeHtmlAudio();
+    primeZoomAudio();
 
     const ctx = ensureAudioContext();
     if (!ctx || !masterGain) return;
@@ -2038,7 +2095,7 @@ In the bonus round, tap as many of the target vehicle as you can.`;
       return;
     }
 
-    playGameSound("correctTap");
+    playZoomSound();
     addPopup(x, y, "✔", true);
     state.buildPopUntil = performance.now() + 200;
     startSuccessLaunch(item);
