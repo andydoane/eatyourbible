@@ -96,7 +96,7 @@
     ["lower", "lower", "upper"]
   ];
 
-  const CRASH_SCALE = 1.0;
+  const CRASH_SCALE = 2.0;
 
   const CRASH_CLOUD_SVG = `
 <svg viewBox="0 0 26.458333 26.458333" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
