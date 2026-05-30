@@ -15,6 +15,8 @@
   --vl-smoke-good:#ffc751;
   --vl-smoke-warn:#ffa351;
   --vl-smoke-bad:#ff5a51;
+  --vl-starfield-main:url("./verse_launch_images/verse_launch_starfield.svg");
+  --vl-starfield-bonus:url("./verse_launch_images/verse_launch_starfield_bonus.svg");
 }
 
 *{box-sizing:border-box}
@@ -45,6 +47,16 @@ button,input,select{font:inherit}
   display:flex;
   flex-direction:column;
   overflow:hidden;
+}
+
+.vl-root{
+  background:
+    linear-gradient(rgba(0,0,0,.08), rgba(0,0,0,.08)),
+    var(--vl-starfield-main) center center / cover no-repeat,
+    var(--vl-purple);
+}
+
+.vl-mode-shell{
   background:var(--vl-purple);
 }
 
@@ -171,7 +183,17 @@ button,input,select{font:inherit}
 
 .vl-game-wrap{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;padding:0 14px calc(10px + var(--vl-safe-bottom))}
 .vl-game-board{
-  position:relative;flex:1 1 auto;min-height:260px;display:flex;flex-direction:column;border-radius:26px;overflow:hidden;background:var(--vl-purple);
+  position:relative;
+  flex:1 1 auto;
+  min-height:260px;
+  display:flex;
+  flex-direction:column;
+  border-radius:26px;
+  overflow:hidden;
+  background:
+    linear-gradient(rgba(0,0,0,.06), rgba(0,0,0,.06)),
+    var(--vl-starfield-main) center center / cover no-repeat,
+    var(--vl-purple);
 }
 .vl-red-flash{position:absolute;inset:0;background:rgba(255,90,81,0);pointer-events:none;z-index:1}
 .vl-red-flash.is-flashing{animation:vlRedFlash 380ms ease}
@@ -352,11 +374,17 @@ button,input,select{font:inherit}
 }
 
 .vl-travel-screen{
-  background:linear-gradient(to bottom, #333333 0%, #7f66c6 100%);
+  background:
+    linear-gradient(rgba(0,0,0,.12), rgba(0,0,0,.12)),
+    var(--vl-starfield-bonus) center center / cover no-repeat,
+    #11111f;
 }
 
 .vl-asteroid-screen{
-  background:#333333;
+  background:
+    linear-gradient(rgba(0,0,0,.10), rgba(0,0,0,.10)),
+    var(--vl-starfield-bonus) center center / cover no-repeat,
+    #11111f;
 }
 
 .vl-bonus-topbar{
@@ -428,7 +456,7 @@ button,input,select{font:inherit}
 .vl-screen-fade{
   position:absolute;
   inset:0;
-  background:#333333;
+  background:#11111f;
   pointer-events:none;
   opacity:0;
   z-index:20;
