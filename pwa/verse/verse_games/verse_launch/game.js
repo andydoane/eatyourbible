@@ -544,10 +544,18 @@
           <button class="vl-pill vl-menu-pill no-zoom" id="vlMenuPill" type="button" aria-label="Game Menu">☰</button>
         </div>
         <div class="vl-bonus-stage" id="vlTravelStage">
-          <div class="vl-travel-smoke" id="vlTravelSmoke"></div>
           <div class="vl-travel-vignette"></div>
-          <img class="vl-travel-rocket" id="vlTravelRocket" src="${rocket.src}" alt="">
-          <div class="vl-travel-text ${state.bonusTravelTextVisible ? "is-visible" : ""}" id="vlTravelText">Reach the moon! Watch out for asteroids!</div>
+          <div class="vl-travel-rocket-unit vl-flight-unit--blastoff is-blasting" id="vlTravelRocketUnit">
+            <div class="vl-blast-ship">
+              <img class="vl-flight-rocket vl-travel-ship-rocket" id="vlTravelRocket" src="${rocket.src}" alt="">
+              <div class="vl-blast-trail" aria-hidden="true"></div>
+            </div>
+          </div>
+          <div class="vl-travel-text ${state.bonusTravelTextVisible ? "is-visible" : ""}" id="vlTravelText">
+            Reach the moon!<br>
+            Dodge the asteroids.<br>
+            Tap the arrows to steer.
+          </div>
           <div class="vl-screen-fade ${state.bonusFadeActive ? "is-active" : ""}"></div>
         </div>
         ${renderHelpOverlay()}
@@ -1290,38 +1298,41 @@
     setScreen("travel");
     await sleep(220);
 
-    const rocket = $("#vlTravelRocket");
-    const smokeLayer = $("#vlTravelSmoke");
-    if (rocket) {
-      const startBottom = -120;
-      const endBottom = window.innerHeight + 120;
-      rocket.animate(
+    const rocketUnit = $("#vlTravelRocketUnit");
+
+    if (rocketUnit) {
+      const travelDistance = window.innerHeight + 260;
+
+      rocketUnit.animate(
         [
           { transform: "translateX(-50%) translateY(0)" },
-          { transform: `translateX(-50%) translateY(${-endBottom}px)` }
+          { transform: `translateX(-50%) translateY(${-travelDistance}px)` }
         ],
-        { duration: 1600, easing: "cubic-bezier(.15,.6,.2,1)", fill: "forwards" }
+        {
+          duration: 1900,
+          easing: "linear",
+          fill: "forwards"
+        }
       );
     }
 
-    for (let i = 0; i < 20; i++) {
-      const y = window.innerHeight - (i * 34);
-      const x = window.innerWidth / 2;
-      spawnSmoke(x, y, 2, { color: getSmokeTrailColor() });
-      await sleep(42);
-    }
+    await sleep(650);
 
     const travelText = $("#vlTravelText");
     if (travelText) {
       travelText.classList.add("is-visible");
     }
+
     state.bonusTravelTextVisible = true;
-    await sleep(1400);
+
+    // Keep this readable a little longer than before.
+    await sleep(1900);
 
     const fade = document.querySelector(".vl-screen-fade");
     if (fade) {
       fade.classList.add("is-active");
     }
+
     state.bonusFadeActive = true;
     await sleep(430);
 
@@ -1331,6 +1342,7 @@
     startAstroLoop();
   }
 
+  
   function renderAstroEntities() {
     const stage = $("#vlAstroStage");
     const layer = $("#vlSpaceLayer");

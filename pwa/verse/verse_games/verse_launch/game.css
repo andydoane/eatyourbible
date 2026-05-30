@@ -1124,6 +1124,23 @@ select {
   transform: translate(-50%, -50%) scale(1);
 }
 
+.vl-travel-rocket-unit {
+  position: absolute;
+  left: 50%;
+  bottom: -190px;
+  z-index: 2;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.vl-travel-rocket-unit .vl-blast-ship {
+  transform: scale(.92);
+}
+
+.vl-travel-ship-rocket {
+  display: block;
+}
+
 .vl-travel-rocket {
   position: absolute;
   left: 50%;
