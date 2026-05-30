@@ -1023,12 +1023,15 @@
 
   async function animateLaunch(choice, sourceEl) {
     const startX = window.innerWidth / 2;
-    const startY = window.innerHeight + 34;
+    const startY = window.innerHeight + 36;
 
     const unit = document.createElement("div");
     unit.className = "vl-flight-unit vl-flight-unit--blastoff";
     unit.innerHTML = `
-      <img class="vl-flight-rocket" src="${choice.rocket.src}" alt="">
+      <div class="vl-blast-ship">
+        <img class="vl-flight-rocket" src="${choice.rocket.src}" alt="">
+        <div class="vl-blast-trail" aria-hidden="true"></div>
+      </div>
       <div class="vl-flight-label ${choice.rocket.textDark ? "vl-text-dark" : ""}" style="background:${choice.rocket.color}">${escapeHtml(choice.label)}</div>
     `;
     document.body.appendChild(unit);
@@ -1041,40 +1044,23 @@
 
     await sleep(80);
 
-    spawnFixedLaunchSmoke(startX, window.innerHeight - 6, 10, {
-      spreadX: 54,
-      spreadY: 18,
-      size: 30,
-      color: "rgba(255,199,81,.88)"
-    });
+    unit.classList.add("is-blasting");
 
     unit.style.transition = "transform 180ms ease-out";
-    unit.style.transform = "translateY(-74px)";
+    unit.style.transform = "translateY(-82px)";
     await sleep(180);
 
-    const travelDistance = window.innerHeight + unitRect.height + 240;
-    const travelMs = 2000;
+    const travelDistance = window.innerHeight + unitRect.height + 260;
+    const travelMs = 980;
 
     unit.style.transition = `transform ${travelMs}ms cubic-bezier(.16,.62,.18,1), opacity ${travelMs}ms linear`;
     unit.style.transform = `translateY(${-travelDistance}px)`;
     unit.style.opacity = ".98";
 
-    const smokeSteps = 15;
-    for (let i = 0; i < smokeSteps; i++) {
-      const t = i / smokeSteps;
-      const smokeY = window.innerHeight - 10 - (window.innerHeight * 0.82 * t);
-      spawnFixedLaunchSmoke(startX, smokeY, 2, {
-        spreadX: 30,
-        spreadY: 12,
-        size: 20,
-        color: "rgba(255,199,81,.76)"
-      });
-      await sleep(Math.round(travelMs / smokeSteps));
-    }
-
-    await sleep(120);
+    await sleep(travelMs + 80);
     unit.remove();
   }
+
 
   function showBuildShake() {
     const build = $("#vlBuild");
