@@ -996,65 +996,84 @@
     state.countdownValue = "";
   }
 
-  async function animateLaunch(choice, sourceEl) {
-    const sourceRocket = sourceEl?.querySelector(".vl-rocket") || sourceEl;
-    const sourceBubble = sourceEl?.querySelector(".vl-choice-bubble") || sourceEl;
-    const buildRect = $("#vlBuild")?.getBoundingClientRect();
-    if (!sourceRocket || !sourceBubble || !buildRect) return;
+  function spawnFixedLaunchSmoke(x, y, count = 3, options = {}) {
+    const {
+      spreadX = 18,
+      spreadY = 10,
+      size = 22,
+      color = "rgba(255,199,81,.82)"
+    } = options;
 
-    const rocketRect = sourceRocket.getBoundingClientRect();
-    const bubbleRect = sourceBubble.getBoundingClientRect();
-    const smokeLayerRect = ($("#vlSmokeLayer") || document.body).getBoundingClientRect();
+    for (let i = 0; i < count; i++) {
+      const puff = document.createElement("div");
+      puff.className = "vl-smoke-puff";
+      puff.style.position = "fixed";
+      puff.style.left = `${x + (Math.random() * spreadX - spreadX / 2)}px`;
+      puff.style.top = `${y + (Math.random() * spreadY - spreadY / 2)}px`;
+      puff.style.width = `${size}px`;
+      puff.style.height = `${size}px`;
+      puff.style.zIndex = "10001";
+      puff.style.setProperty("--vl-smoke-color", color);
+      puff.style.setProperty("--sx", `${Math.round(Math.random() * 28 - 14)}px`);
+      puff.style.setProperty("--sy", `${Math.round(18 + Math.random() * 30)}px`);
+      document.body.appendChild(puff);
+      puff.addEventListener("animationend", () => puff.remove(), { once: true });
+    }
+  }
+
+  async function animateLaunch(choice, sourceEl) {
+    const startX = window.innerWidth / 2;
+    const startY = window.innerHeight + 34;
+
     const unit = document.createElement("div");
-    unit.className = "vl-flight-unit";
-    unit.innerHTML = `<img class="vl-flight-rocket" src="${choice.rocket.src}" alt=""><div class="vl-flight-label ${choice.rocket.textDark ? "vl-text-dark" : ""}" style="background:${choice.rocket.color}">${escapeHtml(choice.label)}</div>`;
+    unit.className = "vl-flight-unit vl-flight-unit--blastoff";
+    unit.innerHTML = `
+      <img class="vl-flight-rocket" src="${choice.rocket.src}" alt="">
+      <div class="vl-flight-label ${choice.rocket.textDark ? "vl-text-dark" : ""}" style="background:${choice.rocket.color}">${escapeHtml(choice.label)}</div>
+    `;
     document.body.appendChild(unit);
 
     const unitRect = unit.getBoundingClientRect();
-    unit.style.left = `${rocketRect.left + (rocketRect.width / 2) - (unitRect.width / 2)}px`;
-    unit.style.top = `${rocketRect.top - 8}px`;
-
-    const startX = rocketRect.left + rocketRect.width / 2;
-    const startY = rocketRect.top + rocketRect.height / 2;
-    const endX = buildRect.left + buildRect.width / 2;
-    const endY = buildRect.top + buildRect.height / 2;
-
-    const smokeStartX = startX - smokeLayerRect.left;
-    const smokeStartY = startY - smokeLayerRect.top;
-    const smokeBubbleBottom = bubbleRect.bottom - smokeLayerRect.top;
-
-    sourceEl.classList.add("is-hidden-during-flight");
-    spawnSmoke(smokeStartX, smokeBubbleBottom - 4, 5);
-    await sleep(220);
-    spawnSmoke(smokeStartX, smokeBubbleBottom - 6, 8);
-
-    unit.style.transition = "transform 240ms ease, opacity 240ms ease";
-    unit.style.transform = "translate(0,-22px) scale(.98)";
+    unit.style.left = `${startX - unitRect.width / 2}px`;
+    unit.style.top = `${startY}px`;
     unit.style.opacity = "1";
-    await sleep(240);
+    unit.style.transform = "translateY(0)";
 
-    const dx = Math.round(endX - startX);
-    const dy = Math.round(endY - startY);
+    await sleep(80);
 
-    unit.style.transition = "transform 640ms cubic-bezier(.12,.2,.18,1), opacity 640ms linear";
-    unit.style.transform = `translate(${dx}px, ${dy}px) scale(.44)`;
-    unit.style.opacity = ".96";
+    spawnFixedLaunchSmoke(startX, window.innerHeight - 6, 10, {
+      spreadX: 54,
+      spreadY: 18,
+      size: 30,
+      color: "rgba(255,199,81,.88)"
+    });
 
-    const frames = 8;
-    await sleep(40);
-    for (let i = 0; i < frames; i++) {
-      const t = i / frames;
-      spawnSmoke(
-        smokeStartX + dx * t * 0.65,
-        smokeStartY + dy * t * 0.65 + 64,
-        2
-      );
-      await sleep(26);
+    unit.style.transition = "transform 180ms ease-out";
+    unit.style.transform = "translateY(-74px)";
+    await sleep(180);
+
+    const travelDistance = window.innerHeight + unitRect.height + 240;
+    const travelMs = 980;
+
+    unit.style.transition = `transform ${travelMs}ms cubic-bezier(.16,.62,.18,1), opacity ${travelMs}ms linear`;
+    unit.style.transform = `translateY(${-travelDistance}px)`;
+    unit.style.opacity = ".98";
+
+    const smokeSteps = 15;
+    for (let i = 0; i < smokeSteps; i++) {
+      const t = i / smokeSteps;
+      const smokeY = window.innerHeight - 10 - (window.innerHeight * 0.82 * t);
+      spawnFixedLaunchSmoke(startX, smokeY, 2, {
+        spreadX: 30,
+        spreadY: 12,
+        size: 20,
+        color: "rgba(255,199,81,.76)"
+      });
+      await sleep(Math.round(travelMs / smokeSteps));
     }
-    await sleep(640);
+
+    await sleep(120);
     unit.remove();
-    sourceEl.classList.remove("is-hidden-during-flight");
-    spawnFireworks(endX, endY);
   }
 
   function showBuildShake() {
@@ -1621,16 +1640,6 @@
 
     state.busy = true;
 
-    const shouldShowInitialCountdown =
-      !state.hasShownInitialCountdown &&
-      currentPhase() === "words" &&
-      state.progressIndex === 0;
-
-    if (shouldShowInitialCountdown) {
-      state.hasShownInitialCountdown = true;
-      await playLaunchCountdown();
-    }
-
     const liveSourceEl =
       document.querySelector(`.vl-conveyor-choice[data-choice-id="${choiceId}"]`) ||
       document.querySelector(`.vl-main-launcher[data-choice-id="${choiceId}"]`) ||
@@ -1644,6 +1653,17 @@
 
     if (choice.isCorrect) {
       await fadeOutConveyor();
+
+      const shouldShowInitialCountdown =
+        !state.hasShownInitialCountdown &&
+        currentPhase() === "words" &&
+        state.progressIndex === 0;
+
+      if (shouldShowInitialCountdown) {
+        state.hasShownInitialCountdown = true;
+        await playLaunchCountdown();
+      }
+
       await animateLaunch(choice, liveSourceEl);
       state.progressIndex += 1;
 
