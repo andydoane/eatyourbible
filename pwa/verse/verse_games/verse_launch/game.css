@@ -222,7 +222,15 @@ button,input,select{font:inherit}
 }
 .vl-red-flash{position:absolute;inset:0;background:rgba(255,90,81,0);pointer-events:none;z-index:1}
 .vl-red-flash.is-flashing{animation:vlRedFlash 380ms ease}
-.vl-board-content{position:relative;z-index:2;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;padding:14px}
+.vl-board-content{
+  position:relative;
+  z-index:2;
+  flex:1 1 auto;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  padding:14px 0 0;
+}
 .vl-overlay-pills{flex:0 0 auto;display:flex;justify-content:flex-start;align-items:center;gap:10px}
 .vl-pill{border:none;background:rgba(255,255,255,.95);color:var(--vl-dark);border-radius:999px;padding:6px 14px;font-size:16px;font-weight:900;box-shadow:0 4px 0 rgba(0,0,0,.18)}
 .vl-menu-pill{min-width:44px;text-align:center;cursor:pointer}
@@ -233,7 +241,7 @@ button,input,select{font:inherit}
   min-height:0;
   display:flex;
   flex-direction:column;
-  padding:18px 0 14px;
+  padding:18px 0 0;
 }
 
 .vl-flight-space{
