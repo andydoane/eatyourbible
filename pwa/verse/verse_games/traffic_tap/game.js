@@ -86,6 +86,58 @@
     if (typeof a === "string" || typeof b === "string") return a === b;
     return a.id === b.id;
   }
+
+  function trafficTapImageSources() {
+    const vehicleSources = VEHICLES
+      .map(vehicle => typeof vehicle === "string" ? "" : vehicle.src)
+      .filter(Boolean);
+
+    return [...new Set([
+      ...vehicleSources,
+      RAINBOW_BUS.src,
+      BONUS_TRUCK_ASSETS.front,
+      BONUS_TRUCK_ASSETS.trailer,
+      BONUS_TRUCK_ASSETS.wheels
+    ].filter(Boolean))];
+  }
+
+  function preloadTrafficTapImage(src) {
+    if (!src) return Promise.resolve(null);
+
+    const cached = trafficTapImageCache.get(src);
+    if (cached) return cached.promise;
+
+    const img = new Image();
+
+    const promise = new Promise(resolve => {
+      img.onload = () => resolve({ src, ok: true });
+      img.onerror = () => {
+        console.warn("Could not preload Traffic Tap image", src);
+        resolve({ src, ok: false });
+      };
+    });
+
+    img.decoding = "async";
+    img.src = src;
+
+    trafficTapImageCache.set(src, { img, promise });
+
+    return promise;
+  }
+
+  function preloadTrafficTapImages() {
+    if (trafficTapImagePreloadPromise) return trafficTapImagePreloadPromise;
+
+    trafficTapImagePreloadPromise = Promise.all(
+      trafficTapImageSources().map(preloadTrafficTapImage)
+    ).catch(err => {
+      console.warn("Could not preload all Traffic Tap images", err);
+      return [];
+    });
+
+    return trafficTapImagePreloadPromise;
+  }
+
   const DECOY_CLASSES = ["is-deco1", "is-deco2", "is-deco3", "is-deco4", "is-deco5"];
   const SPAWN_PATTERNS = [
     ["upper"],
@@ -112,6 +164,8 @@
   let silenceAudioEl = null;
   let zoomAudioBuffer = null;
   let zoomAudioLoadPromise = null;
+  let trafficTapImagePreloadPromise = null;
+  const trafficTapImageCache = new Map();
   let audioUnlocked = false;
   let completionMarked = false;
   let alreadyCompletedForMode = false;
@@ -537,6 +591,7 @@
     }
   }
 
+  preloadTrafficTapImages();
   renderIntro();
 
   function renderIntro() {
@@ -552,6 +607,7 @@
       backLabel: "Back to Practice Games",
       onBack: () => window.VerseGameBridge.exitGame(),
       onStart: () => {
+        preloadTrafficTapImages();
         unlockAudio();
         renderModeSelect();
       }
@@ -571,6 +627,7 @@
       backLabel: "Back to Traffic Tap title",
       onBack: renderIntro,
       onSelect: (mode) => {
+        preloadTrafficTapImages();
         unlockAudio();
         startGame(mode);
       }
