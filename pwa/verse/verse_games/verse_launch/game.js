@@ -439,6 +439,14 @@
     await sleep(340);
   }
 
+
+  async function fadeOutBonusLaunchButton() {
+    const wrap = document.querySelector(".vl-bonus-launch-wrap");
+    if (!wrap) return;
+    wrap.classList.add("is-fading");
+    await sleep(260);
+  }
+
   function renderIntro() {
     window.VerseGameShell.renderTitleScreen({
       app,
@@ -476,17 +484,10 @@
   function renderGame() {
     const center = getPreviewChoice(0);
 
-    const bonusRocket = getBonusRocket();
     const launcherMarkup = state.bonusReady
       ? `
         <div class="vl-bonus-launch-wrap">
-          <div class="vl-main-launcher no-zoom" data-choice-id="bonus_launch">
-            <div class="vl-rocket-stack">
-              <img class="vl-rocket" src="${bonusRocket.src}" alt="" />
-              <button class="vl-launcher-hitbox no-zoom" data-choice-id="bonus_launch" type="button" aria-label="Launch to space"></button>
-            </div>
-            <button class="vl-star-launch-btn no-zoom" data-choice-id="bonus_launch" type="button">⭐ LAUNCH</button>
-          </div>
+          <button class="vl-star-launch-btn no-zoom" data-choice-id="bonus_launch" type="button">⭐ LAUNCH</button>
         </div>`
       : renderConveyor();
 
@@ -1067,6 +1068,51 @@
     unit.remove();
   }
 
+  async function animateFinalLaunch() {
+    const rocket = getBonusRocket();
+    const startX = window.innerWidth / 2;
+    const startY = window.innerHeight + 36;
+
+    const unit = document.createElement("div");
+    unit.className = "vl-flight-unit vl-flight-unit--blastoff vl-flight-unit--final-blastoff";
+    unit.innerHTML = `
+      <div class="vl-blast-ship">
+        <img class="vl-flight-rocket" src="${rocket.src}" alt="">
+        <div class="vl-blast-trail" aria-hidden="true"></div>
+      </div>
+    `;
+    document.body.appendChild(unit);
+
+    const unitRect = unit.getBoundingClientRect();
+    unit.style.left = `${startX - unitRect.width / 2}px`;
+    unit.style.top = `${startY}px`;
+    unit.style.opacity = "1";
+    unit.style.transform = "translateY(0)";
+
+    await sleep(80);
+
+    unit.classList.add("is-blasting");
+
+    unit.style.transition = "transform 180ms linear";
+    unit.style.transform = "translateY(-82px)";
+    await sleep(180);
+
+    const travelDistance = startY + unitRect.height + 48;
+
+    // Final launch speed.
+    // Higher number = faster rocket.
+    // Lower number = slower rocket.
+    const rocketSpeedPxPerSec = 800;
+    const travelMs = Math.round((travelDistance / rocketSpeedPxPerSec) * 1000);
+
+    unit.style.transition = `transform ${travelMs}ms linear, opacity ${travelMs}ms linear`;
+    unit.style.transform = `translateY(${-travelDistance}px)`;
+    unit.style.opacity = ".98";
+
+    await sleep(travelMs + 80);
+    unit.remove();
+  }
+
 
   function showBuildShake() {
     const build = $("#vlBuild");
@@ -1608,20 +1654,9 @@
 
     if (choiceId === "bonus_launch") {
       state.busy = true;
+      await fadeOutBonusLaunchButton();
       await playLaunchCountdown();
-
-      const liveSourceEl =
-        document.querySelector(`.vl-conveyor-choice[data-choice-id="${choiceId}"]`) ||
-        document.querySelector(`.vl-main-launcher[data-choice-id="${choiceId}"]`) ||
-        document.querySelector(`.vl-launcher-hitbox[data-choice-id="${choiceId}"]`)?.closest(".vl-main-launcher");
-
-      if (!liveSourceEl) {
-        state.busy = false;
-        render();
-        return;
-      }
-
-      await animateBonusLaunch(liveSourceEl);
+      await animateFinalLaunch();
       state.busy = false;
       await startBonusSequence();
       return;

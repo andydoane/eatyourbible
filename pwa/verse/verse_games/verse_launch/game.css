@@ -410,6 +410,15 @@ select {
   display: flex;
   justify-content: center;
   padding: 0 14px calc(16px + var(--vl-safe-bottom));
+  transition:
+    opacity 260ms ease,
+    transform 260ms ease;
+}
+
+.vl-bonus-launch-wrap.is-fading {
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
 }
 
 .vl-countdown-overlay {
