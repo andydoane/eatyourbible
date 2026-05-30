@@ -1051,7 +1051,13 @@
     await sleep(180);
 
     const travelDistance = startY + unitRect.height + 48;
-    const travelMs = 3000;
+
+    // Rocket launch speed.
+    // Higher number = faster rocket.
+    // Lower number = slower rocket.
+    // This keeps the rocket speed consistent across iPhones, iPads, and desktop screens.
+    const rocketSpeedPxPerSec = 400;
+    const travelMs = Math.round((travelDistance / rocketSpeedPxPerSec) * 1000);
 
     unit.style.transition = `transform ${travelMs}ms cubic-bezier(.16,.62,.18,1), opacity ${travelMs}ms linear`;
     unit.style.transform = `translateY(${-travelDistance}px)`;
