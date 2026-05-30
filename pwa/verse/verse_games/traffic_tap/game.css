@@ -419,6 +419,14 @@ body{
   will-change: transform;
 }
 
+.tt-bonus-truck-ride {
+  height: var(--tt-bonus-truck-h, 80px);
+  display: flex;
+  align-items: flex-start;
+  transform-origin: center bottom;
+  will-change: transform;
+}
+
 .tt-bonus-truck-front {
   display: block;
   width: var(--tt-bonus-front-w, 120px);

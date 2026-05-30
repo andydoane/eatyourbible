@@ -1657,15 +1657,7 @@ In the bonus round, tap as many of the target vehicle as you can.`;
       state.bonusStreak = 0;
       playGameSound("wrongTap");
       addPopup(x, y, "Nope!", false);
-      spawnCrashBurst(x, y, {
-        count: 8,
-        distance: 52,
-        jitter: 5,
-        duration: 560,
-        cloudSize: 62,
-        sizePool: [7, 8, 10, 12, 14],
-        showCloud: true
-      });
+      spawnCrashBurst(x, y, crashBurstOptionsForItem(item));
     }
   }
 
@@ -1833,6 +1825,55 @@ In the bonus round, tap as many of the target vehicle as you can.`;
 
     const metrics = bonusTruckMetrics();
     const target = state.bonusIntroTarget || state.bonusTargetEmoji || DEFAULT_VEHICLE;
+    const now = performance.now();
+    const cycleMs = 1680;
+    const t = ((now % cycleMs) / cycleMs);
+
+    let rideBob = 0;
+    let rideScaleX = 1;
+    let rideScaleY = 1;
+
+    if (t < 0.12) {
+      const p = t / 0.12;
+      rideBob = 2.5 * p;
+      rideScaleX = 1 + (0.012 * p);
+      rideScaleY = 1 - (0.018 * p);
+    } else if (t < 0.24) {
+      const p = (t - 0.12) / 0.12;
+      rideBob = 2.5 - (2 * p);
+      rideScaleX = 1.012 - (0.014 * p);
+      rideScaleY = 0.982 + (0.020 * p);
+    } else if (t < 0.36) {
+      const p = (t - 0.24) / 0.12;
+      rideBob = 0.5 + (1.5 * p);
+      rideScaleX = 0.998 + (0.010 * p);
+      rideScaleY = 1.002 - (0.014 * p);
+    } else if (t < 0.48) {
+      const p = (t - 0.36) / 0.12;
+      rideBob = 2 - (2 * p);
+      rideScaleX = 1.008 - (0.008 * p);
+      rideScaleY = 0.988 + (0.012 * p);
+    } else if (t < 0.60) {
+      const p = (t - 0.48) / 0.12;
+      rideBob = 2.5 * p;
+      rideScaleX = 1 + (0.012 * p);
+      rideScaleY = 1 - (0.018 * p);
+    } else if (t < 0.72) {
+      const p = (t - 0.60) / 0.12;
+      rideBob = 2.5 - (2 * p);
+      rideScaleX = 1.012 - (0.014 * p);
+      rideScaleY = 0.982 + (0.020 * p);
+    } else if (t < 0.84) {
+      const p = (t - 0.72) / 0.12;
+      rideBob = 0.5 + (1.5 * p);
+      rideScaleX = 0.998 + (0.010 * p);
+      rideScaleY = 1.002 - (0.014 * p);
+    } else {
+      const p = (t - 0.84) / 0.16;
+      rideBob = 2 - (2 * p);
+      rideScaleX = 1.008 - (0.008 * p);
+      rideScaleY = 0.988 + (0.012 * p);
+    }
 
     const trailerMessage = state.bonusTruckMode === "outro"
       ? `
@@ -1851,13 +1892,15 @@ In the bonus round, tap as many of the target vehicle as you can.`;
 
     layer.innerHTML = `
     <div class="tt-bonus-truck" style="transform:translate3d(${state.bonusTruckX}px, ${metrics.y}px, 0); --tt-bonus-truck-h:${metrics.truckHeight}px; --tt-bonus-front-w:${metrics.frontWidth}px; --tt-bonus-trailer-w:${metrics.trailerWidth}px; --tt-bonus-overlap:${metrics.overlap}px; --tt-bonus-target-w:${metrics.targetWidth}px; --tt-bonus-target-h:${metrics.targetHeight}px;">
-      <img class="tt-bonus-truck-front" src="${escapeHtml(BONUS_TRUCK_ASSETS.front)}" alt="" draggable="false">
-      <div class="tt-bonus-trailer-wrap">
-        <img class="tt-bonus-trailer-bg" src="${escapeHtml(BONUS_TRUCK_ASSETS.trailer)}" alt="" draggable="false">
-        <img class="tt-bonus-trailer-wheels is-left" src="${escapeHtml(BONUS_TRUCK_ASSETS.wheels)}" alt="" draggable="false">
-        <img class="tt-bonus-trailer-wheels is-middle" src="${escapeHtml(BONUS_TRUCK_ASSETS.wheels)}" alt="" draggable="false">
-        <img class="tt-bonus-trailer-wheels is-right" src="${escapeHtml(BONUS_TRUCK_ASSETS.wheels)}" alt="" draggable="false">
-        ${trailerMessage}
+      <div class="tt-bonus-truck-ride" style="transform:translate3d(0, ${rideBob.toFixed(2)}px, 0) scale(${rideScaleX.toFixed(4)}, ${rideScaleY.toFixed(4)});">
+        <img class="tt-bonus-truck-front" src="${escapeHtml(BONUS_TRUCK_ASSETS.front)}" alt="" draggable="false">
+        <div class="tt-bonus-trailer-wrap">
+          <img class="tt-bonus-trailer-bg" src="${escapeHtml(BONUS_TRUCK_ASSETS.trailer)}" alt="" draggable="false">
+          <img class="tt-bonus-trailer-wheels is-left" src="${escapeHtml(BONUS_TRUCK_ASSETS.wheels)}" alt="" draggable="false">
+          <img class="tt-bonus-trailer-wheels is-middle" src="${escapeHtml(BONUS_TRUCK_ASSETS.wheels)}" alt="" draggable="false">
+          <img class="tt-bonus-trailer-wheels is-right" src="${escapeHtml(BONUS_TRUCK_ASSETS.wheels)}" alt="" draggable="false">
+          ${trailerMessage}
+        </div>
       </div>
     </div>
   `;
