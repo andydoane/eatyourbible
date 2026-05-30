@@ -1156,7 +1156,7 @@
           jitter: Math.round(sizeBase * 0.08),
           duration: 620,
           cloudSize: Math.round(sizeBase * 0.88),
-          colors: ["#ffffff", "#ffd54f", "#ff8a65", "#ff5a51"],
+          colors: ["#ffffff"],
           sizePool: [8, 10, 12, 15, 18]
         });
 
