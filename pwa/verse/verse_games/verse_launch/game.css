@@ -194,7 +194,7 @@ button,input,select{font:inherit}
   min-height:0;
   display:flex;
   flex-direction:column;
-  padding:0 0 calc(10px + var(--vl-safe-bottom));
+  padding:0;
 }
 
 .vl-game-board{
@@ -213,7 +213,7 @@ button,input,select{font:inherit}
 
 @media (min-width: 700px){
   .vl-game-wrap{
-    padding:0 14px calc(10px + var(--vl-safe-bottom));
+    padding:0 14px 0;
   }
 
   .vl-game-board{
