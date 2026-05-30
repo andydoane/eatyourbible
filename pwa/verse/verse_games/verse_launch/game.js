@@ -21,8 +21,10 @@ const HELP_OVERLAY_ID = "vlHelpOverlay";
     { key:"yellow", src:"./verse_launch_images/verse_launch_rocket_yellow.png", color:"#ffc751", textDark:true }
   ];
 
-  const ASTEROID_IMAGE_SRC = "./verse_launch_images/verse_launch_asteroid.png";
-  const MOON_IMAGE_SRC = "./verse_launch_images/verse_launch_moon.png";
+  const $ = (s) => document.querySelector(s);
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+  const rand = (min, max) => min + Math.random() * (max - min);
+  const pickRandom = (items) => items[Math.floor(Math.random() * items.length)];
 
 const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
   
@@ -376,6 +378,63 @@ function renderHelpOverlay(){
       </div>`;
   }
 
+
+
+  function conveyorSpeedPxPerSec() {
+    if (state.mode === "easy") return 62;
+    if (state.mode === "hard") return 86;
+    return 74;
+  }
+
+  function renderConveyor() {
+    const choices = state.choices || [];
+    return `
+      <div class="vl-conveyor" id="vlConveyor" aria-label="Tap the next correct word">
+        <div class="vl-conveyor-track" id="vlConveyorTrack">
+          ${choices.map((choice, index) => `
+            <button
+              class="vl-conveyor-choice vl-choice-bubble ${choice.rocket.textDark ? "vl-text-dark" : ""} no-zoom"
+              data-choice-id="${choice.id}"
+              data-slot="${index}"
+              type="button"
+              style="--bubble:${choice.rocket.color}"
+              aria-label="Choose ${escapeHtml(choice.label)}">${escapeHtml(choice.label)}</button>`).join("")}
+        </div>
+      </div>`;
+  }
+
+  function syncConveyorTiming() {
+    requestAnimationFrame(() => {
+      const conveyor = document.getElementById("vlConveyor");
+      if (!conveyor) return;
+
+      const choices = [...conveyor.querySelectorAll(".vl-conveyor-choice")];
+      if (!choices.length) return;
+
+      const rect = conveyor.getBoundingClientRect();
+      const maxChoiceWidth = Math.max(...choices.map(el => el.getBoundingClientRect().width), 220);
+      const sidePad = Math.max(56, maxChoiceWidth * 0.35);
+      const startX = rect.width + sidePad;
+      const endX = -maxChoiceWidth - sidePad;
+      const distance = startX - endX;
+      const durationMs = Math.round((distance / conveyorSpeedPxPerSec()) * 1000);
+
+      choices.forEach((el, index) => {
+        el.style.setProperty("--vl-conveyor-start-x", `${startX}px`);
+        el.style.setProperty("--vl-conveyor-end-x", `${endX}px`);
+        el.style.setProperty("--vl-conveyor-duration", `${durationMs}ms`);
+        el.style.setProperty("--vl-conveyor-delay", `${-Math.round((durationMs / choices.length) * index)}ms`);
+      });
+    });
+  }
+
+  async function fadeOutConveyor() {
+    const track = document.getElementById("vlConveyorTrack");
+    if (!track) return;
+    track.classList.add("is-fading");
+    await sleep(340);
+  }
+
 function renderIntro(){
   window.VerseGameShell.renderTitleScreen({
     app,
@@ -416,14 +475,16 @@ function renderMode(){
     const bonusRocket = getBonusRocket();
     const launcherMarkup = state.bonusReady
       ? `
-        <div class="vl-main-launcher no-zoom" data-choice-id="bonus_launch">
-          <div class="vl-rocket-stack">
-            <img class="vl-rocket" src="${bonusRocket.src}" alt="" />
-            <button class="vl-launcher-hitbox no-zoom" data-choice-id="bonus_launch" type="button" aria-label="Launch to space"></button>
+        <div class="vl-bonus-launch-wrap">
+          <div class="vl-main-launcher no-zoom" data-choice-id="bonus_launch">
+            <div class="vl-rocket-stack">
+              <img class="vl-rocket" src="${bonusRocket.src}" alt="" />
+              <button class="vl-launcher-hitbox no-zoom" data-choice-id="bonus_launch" type="button" aria-label="Launch to space"></button>
+            </div>
+            <button class="vl-star-launch-btn no-zoom" data-choice-id="bonus_launch" type="button">⭐ LAUNCH</button>
           </div>
-          <button class="vl-star-launch-btn no-zoom" data-choice-id="bonus_launch" type="button">⭐ LAUNCH</button>
         </div>`
-      : renderLauncher(center, false);
+      : renderConveyor();
 
     app.innerHTML = `
       <div class="vl-root">
@@ -454,15 +515,7 @@ function renderMode(){
                     ${renderCountdownOverlay()}
                   </div>
                   <div class="vl-launcher-band">
-                    <div class="vl-carousel">
-                      <button class="vl-arrow no-zoom" id="vlPrevBtn" type="button" aria-label="Previous launcher">‹</button>
-                      <div class="vl-main-launcher-wrap">
-                        <div>
-                          ${launcherMarkup}
-                        </div>
-                      </div>
-                      <button class="vl-arrow no-zoom" id="vlNextBtn" type="button" aria-label="Next launcher">›</button>
-                    </div>
+                    ${launcherMarkup}
                   </div>
                 </div>
               </div>
@@ -475,6 +528,7 @@ function renderMode(){
     wireGameScreen();
     syncGameMenuOpenState();
     fitBuildText();
+    syncConveyorTiming();
   }
 
   function renderTravel(){
@@ -988,9 +1042,108 @@ function resetMoonOffscreen(){
     build.classList.remove("vl-shake"); void build.offsetWidth; build.classList.add("vl-shake");
   }
 
+  function spawnWordBurst(x, y, opts = {}) {
+    const layer = document.getElementById("vlFireworkLayer") || document.getElementById("vlSmokeLayer");
+    if (!layer) return;
+
+    const count = opts.count ?? 9;
+    const distance = opts.distance ?? 54;
+    const jitter = opts.jitter ?? 5;
+    const duration = opts.duration ?? 620;
+    const cloudSize = opts.cloudSize ?? 70;
+    const colors = opts.colors ?? ["#ffffff", "#ffd54f", "#ff8a65"];
+    const sizePool = opts.sizePool ?? [8, 10, 12, 15, 18];
+
+    const burst = document.createElement("div");
+    burst.className = "vl-word-burst";
+    burst.style.left = `${x}px`;
+    burst.style.top = `${y}px`;
+
+    const burstBoxSize = Math.max(128, Math.ceil((distance + cloudSize) * 2.05));
+    burst.style.width = `${burstBoxSize}px`;
+    burst.style.height = `${burstBoxSize}px`;
+
+    const cloud = document.createElement("div");
+    cloud.className = "vl-word-burst-cloud";
+    cloud.style.setProperty("--vl-word-burst-cloud-size", `${cloudSize}px`);
+    cloud.style.setProperty("--vl-word-burst-cloud-dur", `${Math.max(500, duration - 90)}ms`);
+    cloud.innerHTML = WORD_BURST_CLOUD_SVG;
+    burst.appendChild(cloud);
+
+    const baseAngle = Math.random() * Math.PI * 2;
+    const step = (Math.PI * 2) / count;
+
+    for (let i = 0; i < count; i++) {
+      const angle = baseAngle + step * i + rand(-0.12, 0.12);
+      const dist = distance + rand(-jitter, jitter);
+      const tx = Math.cos(angle) * dist;
+      const ty = Math.sin(angle) * dist;
+      const size = pickRandom(sizePool) + rand(-0.5, 0.5);
+      const particle = document.createElement("div");
+      particle.className = "vl-word-burst-particle";
+      particle.style.setProperty("--vl-word-burst-size", `${size.toFixed(1)}px`);
+      particle.style.setProperty("--vl-word-burst-dur", `${duration}ms`);
+      particle.style.setProperty("--vl-word-burst-start-scale", `${rand(0.68, 0.82).toFixed(2)}`);
+      particle.style.setProperty("--vl-word-burst-end-scale", `${rand(1.10, 1.24).toFixed(2)}`);
+      particle.style.setProperty("--vl-word-burst-tx", `${tx.toFixed(1)}px`);
+      particle.style.setProperty("--vl-word-burst-ty", `${ty.toFixed(1)}px`);
+      particle.style.setProperty("--vl-word-burst-delay", `${Math.round(rand(0, 18))}ms`);
+      particle.style.background = colors[i % colors.length];
+      burst.appendChild(particle);
+    }
+
+    layer.appendChild(burst);
+
+    requestAnimationFrame(() => {
+      cloud.classList.add("is-live");
+      burst.querySelectorAll(".vl-word-burst-particle").forEach((particle) => {
+        const delay = Number.parseInt(particle.style.getPropertyValue("--vl-word-burst-delay"), 10) || 0;
+        window.setTimeout(() => particle.classList.add("is-live"), delay);
+      });
+    });
+
+    window.setTimeout(() => burst.remove(), duration + 140);
+  }
+
+
   async function animateFailedLaunch(sourceEl){
     const rocket = sourceEl?.querySelector(".vl-rocket");
-    if (!rocket) return;
+    if (!rocket){
+      const rect = sourceEl?.getBoundingClientRect();
+      const layerRect = (document.getElementById("vlFireworkLayer") || document.body).getBoundingClientRect();
+      if (rect){
+        const centerX = rect.left + rect.width / 2 - layerRect.left;
+        const centerY = rect.top + rect.height / 2 - layerRect.top;
+        const sizeBase = Math.max(48, Math.min(rect.width, 96));
+
+        sourceEl.classList.add("is-wrong-choice");
+
+        if (sourceEl.animate){
+          sourceEl.animate(
+            [
+              { filter:"brightness(1)" },
+              { filter:"brightness(1.25)" },
+              { filter:"brightness(1)" }
+            ],
+            { duration:260, easing:"ease" }
+          );
+        }
+
+        spawnWordBurst(centerX, centerY, {
+          count: 9,
+          distance: Math.round(sizeBase * 0.72),
+          jitter: Math.round(sizeBase * 0.08),
+          duration: 620,
+          cloudSize: Math.round(sizeBase * 0.88),
+          colors: ["#ffffff", "#ffd54f", "#ff8a65", "#ff5a51"],
+          sizePool: [8, 10, 12, 15, 18]
+        });
+
+        await sleep(420);
+        sourceEl.classList.remove("is-wrong-choice");
+      }
+      return;
+    }
 
     const rocketRect = rocket.getBoundingClientRect();
     const smokeLayerRect = ($("#vlSmokeLayer") || document.body).getBoundingClientRect();
@@ -1457,6 +1610,7 @@ async function handleLaunch(choiceId){
   }
 
   const liveSourceEl =
+    document.querySelector(`.vl-conveyor-choice[data-choice-id="${choiceId}"]`) ||
     document.querySelector(`.vl-main-launcher[data-choice-id="${choiceId}"]`) ||
     document.querySelector(`.vl-launcher-hitbox[data-choice-id="${choiceId}"]`)?.closest(".vl-main-launcher");
 
@@ -1467,6 +1621,7 @@ async function handleLaunch(choiceId){
   }
 
   if (choice.isCorrect){
+    await fadeOutConveyor();
     await animateLaunch(choice, liveSourceEl);
     state.progressIndex += 1;
 
@@ -1487,11 +1642,9 @@ async function handleLaunch(choiceId){
   flashWrongBoard();
   showBuildShake();
 
-  await sleep(260);
+  await sleep(140);
 
-  buildChoices();
   state.busy = false;
-  render();
 }
 
   function setScreen(screen){ state.screen = screen; render(); }
