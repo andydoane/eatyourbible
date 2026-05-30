@@ -383,11 +383,11 @@
       </div>`;
   }
 
-
+// Conveyor Belt Speed
   function conveyorSpeedPxPerSec() {
-    if (state.mode === "easy") return 62;
-    if (state.mode === "hard") return 86;
-    return 74;
+    if (state.mode === "easy") return 90;
+    if (state.mode === "hard") return 130;
+    return 110;
   }
 
   function renderConveyor() {
