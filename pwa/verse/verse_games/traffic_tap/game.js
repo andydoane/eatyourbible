@@ -22,7 +22,7 @@
     masterVolume: 1.00,
     volumes: {
       correctTap: 0.85,
-      zoomLaunch: 0.10,
+      zoomLaunch: 0.25,
       wrongTap: 3.40,
       bonusTap: 1.15,
       rainbowJackpot: 3.20,
@@ -95,6 +95,8 @@
     ["upper", "upper", "lower"],
     ["lower", "lower", "upper"]
   ];
+
+  const CRASH_SCALE = 1.0;
 
   const CRASH_CLOUD_SVG = `
 <svg viewBox="0 0 26.458333 26.458333" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -1210,6 +1212,27 @@ In the bonus round, tap as many of the target vehicle as you can.`;
     }
   }
 
+  function crashBurstOptionsForItem(item) {
+    const carH = Math.max(46, item?.carHitHeight || item?.carSize || 70);
+    const scale = CRASH_SCALE;
+
+    return {
+      count: 9,
+      distance: Math.round(carH * 0.70 * scale),
+      jitter: Math.round(carH * 0.07 * scale),
+      duration: 650,
+      cloudSize: Math.round(carH * 0.90 * scale),
+      sizePool: [
+        Math.round(carH * 0.10 * scale),
+        Math.round(carH * 0.12 * scale),
+        Math.round(carH * 0.14 * scale),
+        Math.round(carH * 0.17 * scale),
+        Math.round(carH * 0.20 * scale)
+      ],
+      showCloud: true
+    };
+  }
+
   function spawnCrashBurst(x, y, opts = {}) {
     const layer = document.getElementById("ttEffectsLayer");
     if (!layer) return;
@@ -1227,6 +1250,10 @@ In the bonus round, tap as many of the target vehicle as you can.`;
     burst.className = "tt-crash-burst";
     burst.style.left = `${x}px`;
     burst.style.top = `${y}px`;
+
+    const burstBoxSize = Math.max(132, Math.ceil((distance + cloudSize) * 2.05));
+    burst.style.width = `${burstBoxSize}px`;
+    burst.style.height = `${burstBoxSize}px`;
 
     let cloud = null;
     if (showCloud) {
@@ -2167,14 +2194,7 @@ In the bonus round, tap as many of the target vehicle as you can.`;
       item.removeAt = now + 240 + index * 90;
       const center = itemCenter(item);
       window.setTimeout(() => {
-        spawnCrashBurst(center.x, center.y, {
-          count: 9,
-          distance: 58,
-          jitter: 5,
-          duration: 650,
-          cloudSize: 74,
-          sizePool: [8, 9, 10, 12, 15, 18]
-        });
+        spawnCrashBurst(center.x, center.y, crashBurstOptionsForItem(item));
       }, index * 85);
     });
   }
