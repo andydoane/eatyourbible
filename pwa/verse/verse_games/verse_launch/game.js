@@ -1053,7 +1053,7 @@
     await sleep(180);
 
     const travelDistance = window.innerHeight + unitRect.height + 240;
-    const travelMs = 980;
+    const travelMs = 480;
 
     unit.style.transition = `transform ${travelMs}ms cubic-bezier(.16,.62,.18,1), opacity ${travelMs}ms linear`;
     unit.style.transform = `translateY(${-travelDistance}px)`;
