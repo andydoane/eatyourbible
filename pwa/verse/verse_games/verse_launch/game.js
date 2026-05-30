@@ -594,8 +594,12 @@
           <div class="vl-space-layer" id="vlSpaceLayer">
             <img class="vl-moon" id="vlMoon" src="./verse_launch_images/verse_launch_moon.png" alt="">
           </div>
-          <div class="vl-player-trail" id="vlPlayerTrail"></div>
-          <img class="vl-player-rocket" id="vlPlayerRocket" src="${rocket.src}" alt="">
+          <div class="vl-player-unit vl-flight-unit--blastoff is-blasting" id="vlPlayerUnit">
+            <div class="vl-blast-ship vl-player-blast-ship">
+              <img class="vl-player-rocket-img" id="vlPlayerRocket" src="${rocket.src}" alt="">
+              <div class="vl-blast-trail vl-player-blast-trail" id="vlPlayerTrail" aria-hidden="true"></div>
+            </div>
+          </div>
           <div class="vl-space-status">
             <div class="vl-star-counter" id="vlStarCounter" aria-label="Stars collected">
               <img class="vl-star-counter-icon" src="${STAR_IMAGE_SRC}" alt="">
@@ -849,6 +853,56 @@
     if (state.astroHits <= 0) return "#ffc751";
     if (state.astroHits === 1) return "#ffa351";
     return "#ff5a51";
+  }
+
+  function bonusRocketKeyForStarCount(count) {
+    if (count >= 2) return "blue";
+    if (count >= 1) return "yellow";
+    return "red";
+  }
+
+  function bonusTrailVarsForStarCount(count) {
+    if (count >= 3) {
+      return {
+        core: "rgba(255,255,255,1)",
+        mid: "rgba(255,236,120,1)",
+        end: "rgba(100,181,246,0)",
+        glow: "rgba(255,140,200,.78)",
+        rainbow: true
+      };
+    }
+
+    if (count >= 2) {
+      return {
+        core: "rgba(255,255,255,1)",
+        mid: "rgba(100,181,246,.96)",
+        end: "rgba(100,181,246,0)",
+        glow: "rgba(100,181,246,.72)",
+        rainbow: false
+      };
+    }
+
+    if (count >= 1) {
+      return {
+        core: "rgba(255,255,255,1)",
+        mid: "rgba(255,236,120,1)",
+        end: "rgba(255,199,81,0)",
+        glow: "rgba(255,199,81,.74)",
+        rainbow: false
+      };
+    }
+
+    return {
+      core: "rgba(255,255,255,1)",
+      mid: "rgba(255,163,81,.94)",
+      end: "rgba(255,90,81,0)",
+      glow: "rgba(255,199,81,.68)",
+      rainbow: false
+    };
+  }
+
+  function syncBonusRocketUpgrade() {
+    state.bonusRocketColorKey = bonusRocketKeyForStarCount(state.astroStarCount);
   }
 
   function getBonusRocket() {
@@ -1424,45 +1478,31 @@
     startAstroLoop();
   }
 
-  
   function renderAstroEntities() {
     const stage = $("#vlAstroStage");
     const layer = $("#vlSpaceLayer");
+    const unit = $("#vlPlayerUnit");
     const rocket = $("#vlPlayerRocket");
     const moon = $("#vlMoon");
     const trail = $("#vlPlayerTrail");
-    if (!stage || !layer || !rocket || !moon || !trail) return;
+    if (!stage || !layer || !unit || !rocket || !moon || !trail) return;
+
+    syncBonusRocketUpgrade();
 
     const rect = stage.getBoundingClientRect();
     const leftPx = rect.width * state.astroPlayerX;
-    rocket.style.left = `${leftPx}px`;
-    rocket.style.transform = `translateX(-50%) translateY(${-state.astroPlayerLiftPx}px) rotate(${state.astroPlayerTilt + state.astroSpinDeg}deg) scale(${state.astroPlayerScale})`;
 
-    trail.innerHTML = "";
-    const trailColor = getSmokeTrailColor();
-    const baseY = rect.height - 118;
-    const spinOffsetX = Math.sin((state.astroSpinDeg || 0) * (Math.PI / 180)) * 4;
+    rocket.src = getBonusRocket().src;
 
-    for (let i = 0; i < 7; i++) {
-      const puff = document.createElement("div");
-      puff.className = "vl-smoke-puff";
+    const trailVars = bonusTrailVarsForStarCount(state.astroStarCount);
+    trail.style.setProperty("--vl-trail-core", trailVars.core);
+    trail.style.setProperty("--vl-trail-mid", trailVars.mid);
+    trail.style.setProperty("--vl-trail-end", trailVars.end);
+    trail.style.setProperty("--vl-trail-glow", trailVars.glow);
+    trail.classList.toggle("is-rainbow", !!trailVars.rainbow);
 
-      const size = 14 + (i * 3);
-      const driftX = Math.round((Math.random() * 18 - 9) + spinOffsetX);
-      const driftY = Math.round(14 + Math.random() * 14);
-      const xJitter = Math.round(Math.random() * 12 - 6);
-      const yPos = baseY + (i * 12);
-
-      puff.style.left = `${leftPx + xJitter}px`;
-      puff.style.top = `${yPos}px`;
-      puff.style.width = `${size}px`;
-      puff.style.height = `${size}px`;
-      puff.style.opacity = `${Math.max(0.22, 0.72 - (i * 0.07))}`;
-      puff.style.setProperty("--vl-smoke-color", trailColor);
-      puff.style.setProperty("--sx", `${driftX}px`);
-      puff.style.setProperty("--sy", `${driftY}px`);
-      trail.appendChild(puff);
-    }
+    unit.style.left = `${leftPx}px`;
+    unit.style.transform = `translateX(-50%) translateY(${-state.astroPlayerLiftPx}px) rotate(${state.astroPlayerTilt + state.astroSpinDeg}deg) scale(${state.astroPlayerScale})`;
 
     layer.querySelectorAll(".vl-asteroid, .vl-star").forEach(n => n.remove());
 
@@ -1498,6 +1538,8 @@
     moon.style.top = `${state.astroMoonY}px`;
     moon.classList.toggle("is-visible", !!state.astroMoonVisible);
   }
+
+
 
   function asteroidHitTest(stageRect, asteroid) {
     const rocketX = stageRect.width * state.astroPlayerX;
@@ -1555,16 +1597,31 @@
   }
 
   function astroHandleStarCollect(stageRect, star) {
+    const previousRocketKey = bonusRocketKeyForStarCount(state.astroStarCount);
+
     state.astroStarCount += 1;
     state.astroStars = state.astroStars.filter(item => item.id !== star.id);
+    syncBonusRocketUpgrade();
     spawnStarCollectBurst(stageRect, star);
+
+    const nextRocketKey = bonusRocketKeyForStarCount(state.astroStarCount);
+    const upgraded = previousRocketKey !== nextRocketKey || state.astroStarCount === 3;
 
     const counter = $("#vlStarCounter");
     if (counter) {
-      counter.classList.remove("is-pop");
+      counter.classList.remove("is-pop", "is-upgrade");
       void counter.offsetWidth;
-      counter.classList.add("is-pop");
+      counter.classList.add(upgraded ? "is-upgrade" : "is-pop");
     }
+
+    const unit = $("#vlPlayerUnit");
+    if (unit && upgraded) {
+      unit.classList.remove("is-upgrade");
+      void unit.offsetWidth;
+      unit.classList.add("is-upgrade");
+    }
+
+    renderAstroEntities();
   }
 
   async function astroHandleHit() {
@@ -1572,7 +1629,7 @@
     state.astroInvulnerable = true;
     state.astroHits += 1;
 
-    const rocket = $("#vlPlayerRocket");
+    const rocket = $("#vlPlayerUnit");
     const isFatalHit = (state.astroHits >= 3);
 
     state.astroSpinDeg = 0;
@@ -1588,7 +1645,7 @@
 
     if (state.astroHits >= 3) {
       const stage = $("#vlAstroStage")?.getBoundingClientRect();
-      const rocket = $("#vlPlayerRocket");
+      const rocket = $("#vlPlayerUnit");
 
       if (stage) {
         const centerX = stage.width * state.astroPlayerX;
@@ -1782,6 +1839,7 @@
     state.astroAsteroids = [];
     state.astroStars = [];
     state.astroStarCount = 0;
+    state.bonusRocketColorKey = "red";
     state.astroSpawnCooldownMs = 0;
     state.astroStarSpawnCooldownMs = 650;
     state.astroLastSpawnX = -1;
