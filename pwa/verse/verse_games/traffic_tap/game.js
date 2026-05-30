@@ -97,6 +97,7 @@
   ];
 
   const CRASH_SCALE = 1.75;
+  const BONUS_SUCCESS_SCALE = 1.25;
 
   const CRASH_CLOUD_SVG = `
 <svg viewBox="0 0 26.458333 26.458333" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -1636,7 +1637,7 @@ In the bonus round, tap as many of the target vehicle as you can.`;
       state.bonusScore += 1;
       playGameSound("bonusTap");
       addPopup(x, y, "+1", true);
-      spawnBonusSuccessBurst(x, y);
+      spawnBonusSuccessBurst(x, y, item);
     } else {
       const now = performance.now();
       item.flashWrongUntil = now + 260;
@@ -1763,15 +1764,33 @@ In the bonus round, tap as many of the target vehicle as you can.`;
     }
   }
 
-  function spawnBonusSuccessBurst(x, y) {
+  function spawnBonusSuccessBurst(x, y, item) {
+    const carH = Math.max(46, item?.carHitHeight || item?.carSize || 70);
+    const scale = BONUS_SUCCESS_SCALE;
+
     spawnCrashBurst(x, y, {
-      count: 7,
-      distance: 42,
-      jitter: 4,
-      duration: 420,
+      count: 14,
+      distance: Math.round(carH * 0.62 * scale),
+      jitter: Math.round(carH * 0.08 * scale),
+      duration: 520,
       cloudSize: 0,
-      sizePool: [6, 8, 10, 12],
-      colors: ["#ffd44f", "#ffffff", "#ffd44f", "#ffffff"],
+      sizePool: [
+        Math.round(carH * 0.08 * scale),
+        Math.round(carH * 0.10 * scale),
+        Math.round(carH * 0.12 * scale),
+        Math.round(carH * 0.15 * scale),
+        Math.round(carH * 0.18 * scale)
+      ],
+      colors: [
+        "#ff5252",
+        "#ff9f1c",
+        "#ffe45e",
+        "#59d65f",
+        "#33c3ff",
+        "#6c63ff",
+        "#c55cff",
+        "#ffffff"
+      ],
       showCloud: false
     });
   }
