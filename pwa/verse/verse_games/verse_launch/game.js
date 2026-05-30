@@ -1059,7 +1059,7 @@
     const rocketSpeedPxPerSec = 400;
     const travelMs = Math.round((travelDistance / rocketSpeedPxPerSec) * 1000);
 
-    unit.style.transition = `transform ${travelMs}ms cubic-bezier(.16,.62,.18,1), opacity ${travelMs}ms linear`;
+    unit.style.transition = `transform ${travelMs}ms cubic-bezier(.42,0,1,1), opacity ${travelMs}ms linear`;
     unit.style.transform = `translateY(${-travelDistance}px)`;
     unit.style.opacity = ".98";
 
