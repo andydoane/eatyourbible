@@ -375,23 +375,7 @@ select {
 
 .vl-conveyor::before,
 .vl-conveyor::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 48px;
-  pointer-events: none;
-  z-index: 3;
-}
-
-.vl-conveyor::before {
-  left: 0;
-  background: linear-gradient(to right, rgba(0, 0, 0, .24), rgba(0, 0, 0, 0));
-}
-
-.vl-conveyor::after {
-  right: 0;
-  background: linear-gradient(to left, rgba(0, 0, 0, .24), rgba(0, 0, 0, 0));
+  display: none;
 }
 
 .vl-conveyor-track {
