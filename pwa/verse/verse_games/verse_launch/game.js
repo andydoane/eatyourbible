@@ -1046,7 +1046,7 @@
 
     unit.classList.add("is-blasting");
 
-    unit.style.transition = "transform 180ms ease-out";
+    unit.style.transition = "transform 180ms linear";
     unit.style.transform = "translateY(-82px)";
     await sleep(180);
 
@@ -1059,7 +1059,7 @@
     const rocketSpeedPxPerSec = 800;
     const travelMs = Math.round((travelDistance / rocketSpeedPxPerSec) * 1000);
 
-    unit.style.transition = `transform ${travelMs}ms cubic-bezier(.42,0,1,1), opacity ${travelMs}ms linear`;
+    unit.style.transition = `transform ${travelMs}ms linear, opacity ${travelMs}ms linear`;
     unit.style.transform = `translateY(${-travelDistance}px)`;
     unit.style.opacity = ".98";
 
