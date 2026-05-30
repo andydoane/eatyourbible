@@ -1056,7 +1056,7 @@
     // Higher number = faster rocket.
     // Lower number = slower rocket.
     // This keeps the rocket speed consistent across iPhones, iPads, and desktop screens.
-    const rocketSpeedPxPerSec = 400;
+    const rocketSpeedPxPerSec = 600;
     const travelMs = Math.round((travelDistance / rocketSpeedPxPerSec) * 1000);
 
     unit.style.transition = `transform ${travelMs}ms cubic-bezier(.42,0,1,1), opacity ${travelMs}ms linear`;
