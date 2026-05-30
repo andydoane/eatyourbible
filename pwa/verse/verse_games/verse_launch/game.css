@@ -756,16 +756,17 @@ select {
 }
 
 .vl-flight-unit--blastoff{
-  gap:10px;
+  gap:8px;
 }
 
 .vl-blast-ship{
   position:relative;
-  width:112px;
-  height:112px;
+  width:122px;
+  height:172px;
   display:flex;
-  align-items:center;
+  align-items:flex-start;
   justify-content:center;
+  overflow:visible;
 }
 
 .vl-flight-unit--blastoff .vl-flight-rocket {
@@ -778,30 +779,30 @@ select {
 .vl-blast-trail{
   position:absolute;
   left:50%;
-  top:76px;
-  width:34px;
-  height:74px;
-  transform:translateX(-50%) scaleY(.72);
+  top:82px;
+  width:44px;
+  height:96px;
+  transform:translateX(-50%) scaleY(.78);
   transform-origin:top center;
   border-radius:999px;
   background:
-    radial-gradient(circle at 50% 18%, rgba(255,255,255,.95) 0 15%, rgba(255,255,255,0) 35%),
-    linear-gradient(to bottom, rgba(255,230,130,.95), rgba(255,163,81,.72), rgba(255,90,81,0));
-  filter:blur(.2px);
+    radial-gradient(circle at 50% 12%, rgba(255,255,255,1) 0 16%, rgba(255,245,180,.96) 24%, rgba(255,245,180,0) 38%),
+    linear-gradient(to bottom, rgba(255,236,120,1), rgba(255,163,81,.94), rgba(255,90,81,.62), rgba(255,90,81,0));
+  filter:drop-shadow(0 0 10px rgba(255,199,81,.68));
   opacity:0;
   z-index:1;
   pointer-events:none;
 }
 
 .vl-flight-unit--blastoff.is-blasting .vl-blast-trail{
-  opacity:.95;
+  opacity:1;
   animation:vlBlastTrailFlicker 120ms linear infinite alternate;
 }
 
 .vl-flight-unit--blastoff .vl-flight-label {
   display:block;
   max-width:min(78vw, 440px);
-  margin-top:0;
+  margin-top:-4px;
   font-size:clamp(24px, 5vw, 34px);
 }
 
@@ -1019,13 +1020,13 @@ select {
 
 @keyframes vlBlastTrailFlicker {
   0% {
-    transform: translateX(-50%) scaleX(.86) scaleY(.68);
-    opacity: .72;
+    transform: translateX(-50%) scaleX(.82) scaleY(.72);
+    opacity: .78;
   }
 
   100% {
-    transform: translateX(-50%) scaleX(1.08) scaleY(.94);
-    opacity: .98;
+    transform: translateX(-50%) scaleX(1.14) scaleY(1);
+    opacity: 1;
   }
 }
 

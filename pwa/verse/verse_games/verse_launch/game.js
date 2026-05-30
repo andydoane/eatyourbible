@@ -1050,8 +1050,8 @@
     unit.style.transform = "translateY(-82px)";
     await sleep(180);
 
-    const travelDistance = window.innerHeight + unitRect.height + 260;
-    const travelMs = 4000;
+    const travelDistance = startY + unitRect.height + 48;
+    const travelMs = 2000;
 
     unit.style.transition = `transform ${travelMs}ms cubic-bezier(.16,.62,.18,1), opacity ${travelMs}ms linear`;
     unit.style.transform = `translateY(${-travelDistance}px)`;
