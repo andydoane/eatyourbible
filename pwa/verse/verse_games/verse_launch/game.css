@@ -1248,6 +1248,29 @@ select {
   pointer-events: none;
 }
 
+.vl-star {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  transform-origin: center center;
+  z-index: 4;
+  pointer-events: none;
+  filter: drop-shadow(0 0 10px rgba(255, 199, 81, .58));
+}
+
+.vl-star-sparkle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #ffc751;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 7;
+  animation: vlStarSparkle 460ms ease-out forwards;
+}
+
 .vl-space-controls {
   position: absolute;
   left: 0;
@@ -1290,15 +1313,59 @@ select {
   gap: 8px;
 }
 
-.vl-hit-pip {
-  width: 16px;
-  height: 16px;
+.vl-star-counter {
+  min-width: 86px;
+  height: 48px;
+  padding: 4px 12px 4px 8px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, .22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(0, 0, 0, .24);
+  color: #fff;
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: 0 5px 0 rgba(0, 0, 0, .20);
+  backdrop-filter: blur(2px);
 }
 
-.vl-hit-pip.is-on {
-  background: #fff;
+.vl-star-counter.is-pop {
+  animation: vlStarCounterPop 260ms ease;
+}
+
+.vl-star-counter-icon {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+  display: block;
+}
+
+@keyframes vlStarSparkle {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) translate(0, 0) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translate(var(--dx, 0px), var(--dy, 0px)) scale(.18);
+  }
+}
+
+@keyframes vlStarCounterPop {
+  0% {
+    transform: scale(1);
+  }
+
+  45% {
+    transform: scale(1.16);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes vlScreenFadeIn {

@@ -23,6 +23,7 @@
 
   const ASTEROID_IMAGE_SRC = "./verse_launch_images/verse_launch_asteroid.png";
   const MOON_IMAGE_SRC = "./verse_launch_images/verse_launch_moon.png";
+  const STAR_IMAGE_SRC = "./verse_launch_images/verse_launch_star.svg";
 
   const WORD_BURST_CLOUD_SVG = `
 <svg viewBox="0 0 26.458333 26.458333" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -75,8 +76,12 @@
     astroSpinDeg: 0,
     astroSpinMs: 0,
     astroAsteroids: [],
+    astroStars: [],
+    astroStarCount: 0,
     astroSpawnCooldownMs: 0,
+    astroStarSpawnCooldownMs: 0,
     astroLastSpawnX: -1,
+    astroLastStarSpawnX: -1,
     astroDrainPhase: false,
     astroRunning: false,
     astroMoonPhase: false,
@@ -99,8 +104,11 @@
   };
 
   const ASTRO_HITBOX_SCALE = 0.5;
+  const STAR_HITBOX_SCALE = 0.78;
   const ASTRO_BASE_SPEED_VH_PER_SEC = 42;
+  const STAR_BASE_SPEED_VH_PER_SEC = 34;
   const ASTRO_MODE_MULTIPLIER = { easy: 1, medium: 1.18, hard: 1.38 };
+  const STAR_MODE_MULTIPLIER = { easy: 0.92, medium: 1, hard: 1.08 };
 
   const $ = (s) => document.querySelector(s);
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
@@ -141,7 +149,8 @@
   await preloadImages([
     ...ROCKETS.map(r => r.src),
     ASTEROID_IMAGE_SRC,
-    MOON_IMAGE_SRC
+    MOON_IMAGE_SRC,
+    STAR_IMAGE_SRC
   ]);
 
   function initVerseData() {
@@ -190,8 +199,12 @@
     state.astroSpinDeg = 0;
     state.astroSpinMs = 0;
     state.astroAsteroids = [];
+    state.astroStars = [];
+    state.astroStarCount = 0;
     state.astroSpawnCooldownMs = 0;
+    state.astroStarSpawnCooldownMs = 0;
     state.astroLastSpawnX = -1;
+    state.astroLastStarSpawnX = -1;
     state.astroDrainPhase = false;
     state.astroRunning = false;
     state.astroMoonPhase = false;
@@ -584,9 +597,10 @@
           <div class="vl-player-trail" id="vlPlayerTrail"></div>
           <img class="vl-player-rocket" id="vlPlayerRocket" src="${rocket.src}" alt="">
           <div class="vl-space-status">
-            <span class="vl-hit-pip ${state.astroHits >= 1 ? "is-on" : ""}"></span>
-            <span class="vl-hit-pip ${state.astroHits >= 2 ? "is-on" : ""}"></span>
-            <span class="vl-hit-pip ${state.astroHits >= 3 ? "is-on" : ""}"></span>
+            <div class="vl-star-counter" id="vlStarCounter" aria-label="Stars collected">
+              <img class="vl-star-counter-icon" src="${STAR_IMAGE_SRC}" alt="">
+              <span id="vlStarCount">${state.astroStarCount}</span>
+            </div>
           </div>
           <div class="vl-space-controls">
             <button class="vl-space-arrow no-zoom" id="vlLeftBtn" type="button" aria-label="Move left">‹</button>
@@ -912,8 +926,30 @@
     return ASTRO_MODE_MULTIPLIER[state.mode] || 1;
   }
 
+  function modeStarMultiplier() {
+    return STAR_MODE_MULTIPLIER[state.mode] || 1;
+  }
+
   function astroDurationMs() {
     return ASTRO_DURATION_BY_MODE_MS[state.mode] || ASTRO_DURATION_BY_MODE_MS.medium;
+  }
+
+  function starSpeedPxPerSec(viewH) {
+    return (STAR_BASE_SPEED_VH_PER_SEC / 100) * viewH * modeStarMultiplier();
+  }
+
+  function nextStarCooldownMs(stageWidth) {
+    const compactBonus = stageWidth < 420 ? 120 : 0;
+
+    if (state.mode === "easy") {
+      return 1050 + compactBonus + Math.random() * 650;
+    }
+
+    if (state.mode === "hard") {
+      return 1900 + compactBonus + Math.random() * 850;
+    }
+
+    return 1400 + compactBonus + Math.random() * 750;
   }
 
   function maybeSpawnAsteroid(dtMs, stageWidth) {
@@ -972,6 +1008,43 @@
     state.astroLastSpawnX = chosenX;
     state.astroSpawnCooldownMs = stageWidth < 420 ? 420 : stageWidth < 560 ? 340 : 280;
   }
+
+  function maybeSpawnStar(dtMs, stageWidth) {
+    if (state.astroMoonPhase || state.astroDrainPhase) return;
+
+    state.astroStarSpawnCooldownMs = Math.max(0, state.astroStarSpawnCooldownMs - dtMs);
+    if (state.astroStarSpawnCooldownMs > 0) return;
+
+    const size = stageWidth < 420 ? 42 : 48;
+
+    const leftBound = 0.13;
+    const rightBound = 0.87;
+    const candidates = [];
+
+    for (let i = 0; i < 7; i++) {
+      candidates.push(leftBound + ((rightBound - leftBound) * (i / 6)));
+    }
+
+    const source = candidates.filter(x => {
+      return state.astroLastStarSpawnX < 0 || Math.abs(x - state.astroLastStarSpawnX) >= 0.18;
+    });
+
+    const usable = source.length ? source : candidates;
+    const chosenX = usable[Math.floor(Math.random() * usable.length)];
+
+    state.astroStars.push({
+      id: `star_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      x: chosenX,
+      yPx: -size - 20,
+      size,
+      rot: Math.random() * 360,
+      rotSpeed: (Math.random() * 80) - 40
+    });
+
+    state.astroLastStarSpawnX = chosenX;
+    state.astroStarSpawnCooldownMs = nextStarCooldownMs(stageWidth);
+  }
+
 
   function asteroidSpeedPxPerSec(viewH) {
     return (ASTRO_BASE_SPEED_VH_PER_SEC / 100) * viewH * modeAstroMultiplier();
@@ -1391,11 +1464,24 @@
       trail.appendChild(puff);
     }
 
-    layer.querySelectorAll(".vl-asteroid").forEach(n => n.remove());
+    layer.querySelectorAll(".vl-asteroid, .vl-star").forEach(n => n.remove());
+
+    state.astroStars.forEach(star => {
+      const img = document.createElement("img");
+      img.className = "vl-star";
+      img.src = STAR_IMAGE_SRC;
+      img.style.width = `${star.size}px`;
+      img.style.height = `${star.size}px`;
+      img.style.left = `${rect.width * star.x - star.size / 2}px`;
+      img.style.top = `${star.yPx}px`;
+      img.style.transform = `rotate(${star.rot}deg)`;
+      layer.appendChild(img);
+    });
+
     state.astroAsteroids.forEach(ast => {
       const img = document.createElement("img");
       img.className = "vl-asteroid";
-      img.src = "./verse_launch_images/verse_launch_asteroid.png";
+      img.src = ASTEROID_IMAGE_SRC;
       img.style.width = `${ast.size}px`;
       img.style.height = `${ast.size}px`;
       img.style.left = `${rect.width * ast.x - ast.size / 2}px`;
@@ -1403,6 +1489,11 @@
       img.style.transform = `rotate(${ast.rot}deg)`;
       layer.appendChild(img);
     });
+
+    const starCount = document.getElementById("vlStarCount");
+    if (starCount) {
+      starCount.textContent = String(state.astroStarCount);
+    }
 
     moon.style.top = `${state.astroMoonY}px`;
     moon.classList.toggle("is-visible", !!state.astroMoonVisible);
@@ -1421,6 +1512,59 @@
 
     return Math.abs(rocketX - astX) < (rocketW + astW) / 2 &&
       Math.abs(rocketY - astY) < (rocketH + astH) / 2;
+  }
+
+  function starHitTest(stageRect, star) {
+    const rocketX = stageRect.width * state.astroPlayerX;
+    const rocketY = stageRect.height - 118 - 42;
+    const rocketW = 84 * STAR_HITBOX_SCALE;
+    const rocketH = 84 * STAR_HITBOX_SCALE;
+
+    const starW = star.size * STAR_HITBOX_SCALE;
+    const starH = star.size * STAR_HITBOX_SCALE;
+    const starX = stageRect.width * star.x;
+    const starY = star.yPx + star.size / 2;
+
+    return Math.abs(rocketX - starX) < (rocketW + starW) / 2 &&
+      Math.abs(rocketY - starY) < (rocketH + starH) / 2;
+  }
+
+  function spawnStarCollectBurst(stageRect, star) {
+    const layer = $("#vlSpaceLayer");
+    if (!layer) return;
+
+    const x = stageRect.width * star.x;
+    const y = star.yPx + star.size / 2;
+    const count = 12;
+
+    for (let i = 0; i < count; i++) {
+      const sparkle = document.createElement("div");
+      sparkle.className = "vl-star-sparkle";
+
+      const angle = (Math.PI * 2 * i) / count;
+      const distance = 24 + Math.random() * 24;
+
+      sparkle.style.left = `${x}px`;
+      sparkle.style.top = `${y}px`;
+      sparkle.style.setProperty("--dx", `${Math.cos(angle) * distance}px`);
+      sparkle.style.setProperty("--dy", `${Math.sin(angle) * distance}px`);
+
+      layer.appendChild(sparkle);
+      sparkle.addEventListener("animationend", () => sparkle.remove(), { once: true });
+    }
+  }
+
+  function astroHandleStarCollect(stageRect, star) {
+    state.astroStarCount += 1;
+    state.astroStars = state.astroStars.filter(item => item.id !== star.id);
+    spawnStarCollectBurst(stageRect, star);
+
+    const counter = $("#vlStarCounter");
+    if (counter) {
+      counter.classList.remove("is-pop");
+      void counter.offsetWidth;
+      counter.classList.add("is-pop");
+    }
   }
 
   async function astroHandleHit() {
@@ -1523,13 +1667,29 @@
     if (!state.astroMoonPhase) {
       state.astroTimerMs += dtMs;
       maybeSpawnAsteroid(dtMs, rect.width);
+      maybeSpawnStar(dtMs, rect.width);
 
       const fallSpeed = asteroidSpeedPxPerSec(rect.height);
+      const starFallSpeed = starSpeedPxPerSec(rect.height);
+
       state.astroAsteroids.forEach(ast => {
         ast.yPx += fallSpeed * dtSec;
         ast.rot += ast.rotSpeed * dtSec;
       });
+
+      state.astroStars.forEach(star => {
+        star.yPx += starFallSpeed * dtSec;
+        star.rot += star.rotSpeed * dtSec;
+      });
+
       state.astroAsteroids = state.astroAsteroids.filter(ast => ast.yPx < rect.height + ast.size + 20);
+      state.astroStars = state.astroStars.filter(star => star.yPx < rect.height + star.size + 20);
+
+      for (const star of [...state.astroStars]) {
+        if (starHitTest(rect, star)) {
+          astroHandleStarCollect(rect, star);
+        }
+      }
 
       if (!state.astroInvulnerable) {
         for (const ast of state.astroAsteroids) {
@@ -1547,16 +1707,25 @@
       }
     } else {
       const fallSpeed = asteroidSpeedPxPerSec(rect.height);
+      const starFallSpeed = starSpeedPxPerSec(rect.height);
+
       state.astroAsteroids.forEach(ast => {
         ast.yPx += fallSpeed * dtSec;
         ast.rot += ast.rotSpeed * dtSec;
       });
+
+      state.astroStars.forEach(star => {
+        star.yPx += starFallSpeed * dtSec;
+        star.rot += star.rotSpeed * dtSec;
+      });
+
       state.astroAsteroids = state.astroAsteroids.filter(ast => ast.yPx < rect.height + ast.size + 20);
+      state.astroStars = state.astroStars.filter(star => star.yPx < rect.height + star.size + 20);
 
       if (state.astroDrainPhase) {
         state.astroPlayerTilt *= 0.88;
 
-        if (state.astroAsteroids.length === 0) {
+        if (state.astroAsteroids.length === 0 && state.astroStars.length === 0) {
           state.astroDrainPhase = false;
         }
       } else if (!state.astroLandingPhase) {
@@ -1611,8 +1780,12 @@
     state.astroSpinDeg = 0;
     state.astroSpinMs = 0;
     state.astroAsteroids = [];
+    state.astroStars = [];
+    state.astroStarCount = 0;
     state.astroSpawnCooldownMs = 0;
+    state.astroStarSpawnCooldownMs = 650;
     state.astroLastSpawnX = -1;
+    state.astroLastStarSpawnX = -1;
     state.astroDrainPhase = false;
     state.astroMoonPhase = false;
     state.astroMoonDone = false;
