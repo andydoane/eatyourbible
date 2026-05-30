@@ -98,6 +98,7 @@
 
   const CRASH_SCALE = 1.75;
   const BONUS_SUCCESS_SCALE = 1.25;
+  const SUCCESS_LAUNCH_SPEED = 1100;
 
   const CRASH_CLOUD_SVG = `
 <svg viewBox="0 0 26.458333 26.458333" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -1330,12 +1331,14 @@ In the bonus round, tap as many of the target vehicle as you can.`;
     window.setTimeout(() => puff.remove(), 280);
   }
 
-  function fadeBlockingCarsAhead(tappedItem) {
+  function boostCarsAheadForSuccessLaunch(tappedItem) {
     const now = performance.now();
+    const launchSpeed = tappedItem.launchSpeed || SUCCESS_LAUNCH_SPEED;
+
     for (const item of state.mainItems) {
       if (item.id === tappedItem.id) continue;
       if (item.road !== tappedItem.road) continue;
-      if (item.crashing || item.launching) continue;
+      if (item.crashing || item.launching || item.removeAt) continue;
 
       const isAhead = tappedItem.direction < 0
         ? item.x < tappedItem.x
@@ -1343,13 +1346,18 @@ In the bonus round, tap as many of the target vehicle as you can.`;
 
       if (!isAhead) continue;
 
-      item.vanishUntil = now + 160;
-      item.removeAt = now + 170;
+      item.vanishUntil = 0;
+      item.clearAheadUntil = now + 1400;
+      item.clearAheadSpeed = launchSpeed;
+      item.speed = launchSpeed;
+      item.targetSpeed = launchSpeed;
+      item.tilt = item.direction < 0 ? 4 : -4;
     }
   }
 
   function startSuccessLaunch(item) {
     const now = performance.now();
+    const launchSpeed = Math.max(item.speed || item.targetSpeed || item.baseSpeed || 120, SUCCESS_LAUNCH_SPEED);
 
     item.launching = true;
     item.launchStartAt = now;
@@ -1357,10 +1365,12 @@ In the bonus round, tap as many of the target vehicle as you can.`;
     item.launchTrailUntil = Infinity;
     item.launchTrailNextAt = now + 36;
     item.wordFadeUntil = now + 90;
+    item.launchSpeed = launchSpeed;
 
-    item.targetSpeed = Math.max(item.targetSpeed || item.baseSpeed || 120, 900);
+    item.speed = launchSpeed;
+    item.targetSpeed = launchSpeed;
 
-    fadeBlockingCarsAhead(item);
+    boostCarsAheadForSuccessLaunch(item);
   }
 
   function launchTrailPoint(item) {
@@ -1953,7 +1963,8 @@ In the bonus round, tap as many of the target vehicle as you can.`;
         if (now < item.launchPhaseUntil) {
           item.speed = Math.max(item.baseSpeed || 120, 40);
         } else {
-          item.speed = Math.min(1400, (item.speed || 0) + (2200 * (dt / 1000)));
+          item.speed = item.launchSpeed || SUCCESS_LAUNCH_SPEED;
+          item.targetSpeed = item.speed;
           item.x += (item.direction < 0 ? -1 : 1) * item.speed * (dt / 1000);
 
           if (now >= item.launchTrailNextAt) {
@@ -1964,6 +1975,23 @@ In the bonus round, tap as many of the target vehicle as you can.`;
         }
 
         item.tilt = item.direction < 0 ? 10 : -10;
+
+        const offscreen = item.direction < 0
+          ? item.x < -(item.width || 150) - 120
+          : item.x > state.fieldWidth + (item.width || 150) + 120;
+
+        if (offscreen) {
+          item.removeAt = now;
+        }
+
+        continue;
+      }
+
+      if (item.clearAheadUntil && now < item.clearAheadUntil) {
+        item.speed = item.clearAheadSpeed || SUCCESS_LAUNCH_SPEED;
+        item.targetSpeed = item.speed;
+        item.x += (item.direction < 0 ? -1 : 1) * item.speed * (dt / 1000);
+        item.tilt = item.direction < 0 ? 4 : -4;
 
         const offscreen = item.direction < 0
           ? item.x < -(item.width || 150) - 120
@@ -2081,6 +2109,9 @@ In the bonus round, tap as many of the target vehicle as you can.`;
       launchTrailNextAt: 0,
       launchTrailUntil: 0,
       wordFadeUntil: 0,
+      launchSpeed: 0,
+      clearAheadUntil: 0,
+      clearAheadSpeed: 0,
       tilt: 0
     };
   }
