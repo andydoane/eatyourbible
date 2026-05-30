@@ -17,6 +17,7 @@
   --vl-smoke-bad:#ff5a51;
   --vl-starfield-main:url("./verse_launch_images/verse_launch_starfield.svg");
   --vl-starfield-bonus:url("./verse_launch_images/verse_launch_starfield_bonus.svg");
+  --vl-stage-max:840px;
 }
 
 *{box-sizing:border-box}
@@ -60,6 +61,13 @@ button,input,select{font:inherit}
   background:var(--vl-purple);
 }
 
+/* Keep Verse Launch title/mode shell screens app-sized on desktop.
+   This fixes the back button drifting to the far-left edge of wide screens. */
+.vl-shell .vm-game-screen{
+  width:min(100%, var(--vl-stage-max));
+  margin:0 auto;
+}
+
 .vl-mode-shell{
   justify-content:space-between;
 }
@@ -73,7 +81,7 @@ button,input,select{font:inherit}
 }
 
 .vl-mode-stage,.vl-stage{
-  width:100%;max-width:840px;margin:0 auto;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;
+  width:100%;max-width:var(--vl-stage-max);margin:0 auto;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;
 }
 .vl-mode-top{
   flex:1 1 auto;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;
@@ -95,7 +103,7 @@ button,input,select{font:inherit}
 
 .vl-nav{
   width:100%;
-  max-width:840px;
+  max-width:var(--vl-stage-max);
   margin:0 auto;
   min-height:72px;
   padding:10px 14px 0;
@@ -181,19 +189,36 @@ button,input,select{font:inherit}
   animation:vlBuildRemove 360ms ease forwards;
 }
 
-.vl-game-wrap{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;padding:0 14px calc(10px + var(--vl-safe-bottom))}
+.vl-game-wrap{
+  flex:1 1 auto;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  padding:0 0 calc(10px + var(--vl-safe-bottom));
+}
+
 .vl-game-board{
   position:relative;
   flex:1 1 auto;
   min-height:260px;
   display:flex;
   flex-direction:column;
-  border-radius:26px;
+  border-radius:0;
   overflow:hidden;
   background:
     linear-gradient(rgba(0,0,0,.06), rgba(0,0,0,.06)),
     var(--vl-starfield-main) center center / cover no-repeat,
     var(--vl-purple);
+}
+
+@media (min-width: 700px){
+  .vl-game-wrap{
+    padding:0 14px calc(10px + var(--vl-safe-bottom));
+  }
+
+  .vl-game-board{
+    border-radius:26px;
+  }
 }
 .vl-red-flash{position:absolute;inset:0;background:rgba(255,90,81,0);pointer-events:none;z-index:1}
 .vl-red-flash.is-flashing{animation:vlRedFlash 380ms ease}
@@ -388,6 +413,9 @@ button,input,select{font:inherit}
 }
 
 .vl-bonus-topbar{
+  width:100%;
+  max-width:var(--vl-stage-max);
+  margin:0 auto;
   flex:0 0 auto;
   padding:calc(10px + var(--vl-safe-top)) 14px 0;
   display:flex;
@@ -397,6 +425,9 @@ button,input,select{font:inherit}
 
 .vl-bonus-stage{
   position:relative;
+  width:100%;
+  max-width:var(--vl-stage-max);
+  margin:0 auto;
   flex:1 1 auto;
   min-height:0;
   overflow:hidden;
