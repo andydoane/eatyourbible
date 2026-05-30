@@ -92,7 +92,12 @@
 
   let muted = false;
 
-  const ASTRO_DURATION_MS = 30000;
+  const ASTRO_DURATION_BY_MODE_MS = {
+    easy: 15000,
+    medium: 18000,
+    hard: 22000
+  };
+
   const ASTRO_HITBOX_SCALE = 0.5;
   const ASTRO_BASE_SPEED_VH_PER_SEC = 42;
   const ASTRO_MODE_MULTIPLIER = { easy: 1, medium: 1.18, hard: 1.38 };
@@ -907,6 +912,10 @@
     return ASTRO_MODE_MULTIPLIER[state.mode] || 1;
   }
 
+  function astroDurationMs() {
+    return ASTRO_DURATION_BY_MODE_MS[state.mode] || ASTRO_DURATION_BY_MODE_MS.medium;
+  }
+
   function maybeSpawnAsteroid(dtMs, stageWidth) {
     if (state.astroMoonPhase || state.astroDrainPhase) return;
 
@@ -1326,7 +1335,7 @@
     state.bonusTravelTextVisible = true;
 
     // Keep this readable a little longer than before.
-    await sleep(1900);
+    await sleep(3000);
 
     const fade = document.querySelector(".vl-screen-fade");
     if (fade) {
@@ -1531,7 +1540,7 @@
         }
       }
 
-      if (state.astroTimerMs >= ASTRO_DURATION_MS) {
+      if (state.astroTimerMs >= astroDurationMs()) {
         state.astroMoonPhase = true;
         state.astroDrainPhase = true;
         state.astroMoveDir = 0;
