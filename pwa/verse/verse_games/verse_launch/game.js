@@ -99,6 +99,8 @@
 
   const $ = (s) => document.querySelector(s);
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+  const rand = (min, max) => min + Math.random() * (max - min);
+  const pickRandom = (items) => items[Math.floor(Math.random() * items.length)];
 
   function escapeHtml(str) {
     return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#39;");
@@ -968,13 +970,30 @@
   }
 
   async function playLaunchCountdown() {
+    const host =
+      document.querySelector(".vl-flight-space") ||
+      document.querySelector(".vl-bonus-stage") ||
+      document.body;
+
+    const overlay = document.createElement("div");
+    overlay.className = "vl-countdown-overlay";
+    overlay.setAttribute("aria-hidden", "true");
+
+    const box = document.createElement("div");
+    box.className = "vl-countdown-box";
+    overlay.appendChild(box);
+    host.appendChild(overlay);
+
     for (const value of ["3", "2", "1"]) {
-      state.countdownValue = value;
-      render();
+      box.textContent = value;
+      box.classList.remove("is-pop");
+      void box.offsetWidth;
+      box.classList.add("is-pop");
       await sleep(520);
     }
+
+    overlay.remove();
     state.countdownValue = "";
-    render();
   }
 
   async function animateLaunch(choice, sourceEl) {
@@ -1613,6 +1632,7 @@
     }
 
     const liveSourceEl =
+      document.querySelector(`.vl-conveyor-choice[data-choice-id="${choiceId}"]`) ||
       document.querySelector(`.vl-main-launcher[data-choice-id="${choiceId}"]`) ||
       document.querySelector(`.vl-launcher-hitbox[data-choice-id="${choiceId}"]`)?.closest(".vl-main-launcher");
 
