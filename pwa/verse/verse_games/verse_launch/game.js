@@ -385,9 +385,9 @@
 
 // Conveyor Belt Speed
   function conveyorSpeedPxPerSec() {
-    if (state.mode === "easy") return 90;
-    if (state.mode === "hard") return 130;
-    return 110;
+    if (state.mode === "easy") return 100;
+    if (state.mode === "hard") return 140;
+    return 120;
   }
 
   function renderConveyor() {
