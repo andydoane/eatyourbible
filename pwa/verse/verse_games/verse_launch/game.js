@@ -24,6 +24,7 @@
   const ASTEROID_IMAGE_SRC = "./verse_launch_images/verse_launch_asteroid.png";
   const MOON_IMAGE_SRC = "./verse_launch_images/verse_launch_moon.png";
   const STAR_IMAGE_SRC = "./verse_launch_images/verse_launch_star.svg";
+  const RAINBOW_ROCKET_IMAGE_SRC = "./verse_launch_images/verse_images_rainbow_rocket.svg";
 
   const WORD_BURST_CLOUD_SVG = `
 <svg viewBox="0 0 26.458333 26.458333" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -150,7 +151,8 @@
     ...ROCKETS.map(r => r.src),
     ASTEROID_IMAGE_SRC,
     MOON_IMAGE_SRC,
-    STAR_IMAGE_SRC
+    STAR_IMAGE_SRC,
+    RAINBOW_ROCKET_IMAGE_SRC
   ]);
 
   function initVerseData() {
@@ -856,19 +858,36 @@
   }
 
   function bonusRocketKeyForStarCount(count) {
+    if (count >= 4) return "rainbow";
     if (count >= 2) return "blue";
     if (count >= 1) return "yellow";
     return "red";
   }
 
+  function bonusGlowLevelForStarCount(count) {
+    if (count >= 7) return 3;
+    if (count >= 6) return 2;
+    if (count >= 5) return 1;
+    return 0;
+  }
+
   function bonusTrailVarsForStarCount(count) {
+    const glowLevel = bonusGlowLevelForStarCount(count);
+
     if (count >= 3) {
       return {
         core: "rgba(255,255,255,1)",
         mid: "rgba(255,236,120,1)",
         end: "rgba(100,181,246,0)",
-        glow: "rgba(255,140,200,.78)",
-        rainbow: true
+        glow: glowLevel >= 3
+          ? "rgba(255,255,255,1)"
+          : glowLevel >= 2
+            ? "rgba(255,140,200,.96)"
+            : glowLevel >= 1
+              ? "rgba(255,140,200,.88)"
+              : "rgba(255,140,200,.78)",
+        rainbow: true,
+        glowLevel
       };
     }
 
@@ -878,7 +897,8 @@
         mid: "rgba(100,181,246,.96)",
         end: "rgba(100,181,246,0)",
         glow: "rgba(100,181,246,.72)",
-        rainbow: false
+        rainbow: false,
+        glowLevel
       };
     }
 
@@ -888,7 +908,8 @@
         mid: "rgba(255,236,120,1)",
         end: "rgba(255,199,81,0)",
         glow: "rgba(255,199,81,.74)",
-        rainbow: false
+        rainbow: false,
+        glowLevel
       };
     }
 
@@ -897,7 +918,8 @@
       mid: "rgba(255,163,81,.94)",
       end: "rgba(255,90,81,0)",
       glow: "rgba(255,199,81,.68)",
-      rainbow: false
+      rainbow: false,
+      glowLevel
     };
   }
 
@@ -906,6 +928,15 @@
   }
 
   function getBonusRocket() {
+    if (state.bonusRocketColorKey === "rainbow") {
+      return {
+        key: "rainbow",
+        src: RAINBOW_ROCKET_IMAGE_SRC,
+        color: "#ffffff",
+        textDark: false
+      };
+    }
+
     return getRocketByKey(state.bonusRocketColorKey || "red");
   }
 
@@ -1501,6 +1532,11 @@
     trail.style.setProperty("--vl-trail-glow", trailVars.glow);
     trail.classList.toggle("is-rainbow", !!trailVars.rainbow);
 
+    unit.classList.toggle("is-rainbow-rocket", state.bonusRocketColorKey === "rainbow");
+    unit.classList.toggle("is-glow-1", trailVars.glowLevel === 1);
+    unit.classList.toggle("is-glow-2", trailVars.glowLevel === 2);
+    unit.classList.toggle("is-glow-3", trailVars.glowLevel >= 3);
+
     unit.style.left = `${leftPx}px`;
     unit.style.transform = `translateX(-50%) translateY(${-state.astroPlayerLiftPx}px) rotate(${state.astroPlayerTilt + state.astroSpinDeg}deg) scale(${state.astroPlayerScale})`;
 
@@ -1605,7 +1641,12 @@
     spawnStarCollectBurst(stageRect, star);
 
     const nextRocketKey = bonusRocketKeyForStarCount(state.astroStarCount);
-    const upgraded = previousRocketKey !== nextRocketKey || state.astroStarCount === 3;
+    const upgraded =
+      previousRocketKey !== nextRocketKey ||
+      state.astroStarCount === 3 ||
+      state.astroStarCount === 5 ||
+      state.astroStarCount === 6 ||
+      state.astroStarCount === 7;
 
     const counter = $("#vlStarCounter");
     if (counter) {

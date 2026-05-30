@@ -1268,10 +1268,55 @@ select {
   filter: drop-shadow(0 10px 16px rgba(0, 0, 0, .28));
 }
 
+.vl-player-unit.is-rainbow-rocket .vl-player-rocket-img {
+  filter:
+    drop-shadow(0 10px 16px rgba(0, 0, 0, .28))
+    drop-shadow(0 0 8px rgba(255, 199, 81, .62));
+}
+
+.vl-player-unit.is-rainbow-rocket.is-glow-1 .vl-player-rocket-img {
+  filter:
+    drop-shadow(0 10px 16px rgba(0, 0, 0, .28))
+    drop-shadow(0 0 10px rgba(255, 199, 81, .70))
+    drop-shadow(0 0 14px rgba(255, 140, 200, .55));
+}
+
+.vl-player-unit.is-rainbow-rocket.is-glow-2 .vl-player-rocket-img {
+  filter:
+    drop-shadow(0 10px 16px rgba(0, 0, 0, .28))
+    drop-shadow(0 0 12px rgba(255, 199, 81, .78))
+    drop-shadow(0 0 18px rgba(100, 181, 246, .62))
+    drop-shadow(0 0 22px rgba(255, 140, 200, .58));
+}
+
+.vl-player-unit.is-rainbow-rocket.is-glow-3 .vl-player-rocket-img {
+  filter:
+    drop-shadow(0 10px 16px rgba(0, 0, 0, .28))
+    drop-shadow(0 0 14px rgba(255, 255, 255, .86))
+    drop-shadow(0 0 22px rgba(255, 199, 81, .78))
+    drop-shadow(0 0 28px rgba(100, 181, 246, .68))
+    drop-shadow(0 0 34px rgba(255, 140, 200, .66));
+}
+
 .vl-player-blast-trail {
   top: 62px;
   width: 34px;
   height: 78px;
+}
+
+.vl-player-unit.is-glow-1 .vl-player-blast-trail {
+  width: 38px;
+  height: 86px;
+}
+
+.vl-player-unit.is-glow-2 .vl-player-blast-trail {
+  width: 42px;
+  height: 94px;
+}
+
+.vl-player-unit.is-glow-3 .vl-player-blast-trail {
+  width: 46px;
+  height: 104px;
 }
 
 .vl-asteroid {
