@@ -1,4 +1,4 @@
-(async function(){
+(async function () {
   const app = document.getElementById("app");
   if (app) app.classList.add("vm-shell", "vl-shell");
 
@@ -6,85 +6,88 @@
   const GAME_ID = "chain";
   const GAME_TITLE = "Verse Launch";
 
-const GAME_THEME = {
-  bg: "#7f66c6",
-  accent: "#7f66c6"
-};
+  const GAME_THEME = {
+    bg: "#7f66c6",
+    accent: "#7f66c6"
+  };
 
-const BUILD_AREA = "large";
+  const BUILD_AREA = "large";
 
-const HELP_OVERLAY_ID = "vlHelpOverlay";
+  const HELP_OVERLAY_ID = "vlHelpOverlay";
 
   const ROCKETS = [
-    { key:"red", src:"./verse_launch_images/verse_launch_rocket_red.png", color:"#ff5a51", textDark:false },
-    { key:"blue", src:"./verse_launch_images/verse_launch_rocket_blue.png", color:"#64b5f6", textDark:false },
-    { key:"yellow", src:"./verse_launch_images/verse_launch_rocket_yellow.png", color:"#ffc751", textDark:true }
+    { key: "red", src: "./verse_launch_images/verse_launch_rocket_red.png", color: "#ff5a51", textDark: false },
+    { key: "blue", src: "./verse_launch_images/verse_launch_rocket_blue.png", color: "#64b5f6", textDark: false },
+    { key: "yellow", src: "./verse_launch_images/verse_launch_rocket_yellow.png", color: "#ffc751", textDark: true }
   ];
 
-  const $ = (s) => document.querySelector(s);
-  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
-  const rand = (min, max) => min + Math.random() * (max - min);
-  const pickRandom = (items) => items[Math.floor(Math.random() * items.length)];
+  const ASTEROID_IMAGE_SRC = "./verse_launch_images/verse_launch_asteroid.png";
+  const MOON_IMAGE_SRC = "./verse_launch_images/verse_launch_moon.png";
 
-const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
-  
-const BIBLE_BOOKS = window.VerseGameShell.getBibleBookDecoys();
+  const WORD_BURST_CLOUD_SVG = `
+<svg viewBox="0 0 26.458333 26.458333" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <path fill="currentColor" d="M 12.949771,1.5464282 A 6.0017493,5.3230522 7.1160496 0 0 6.9820601,6.4190471 5.3405872,4.7400094 7.154063 0 0 6.8563886,6.4134999 5.3405872,4.7400094 7.154063 0 0 1.5243277,11.020646 5.3405872,4.7400094 7.154063 0 0 2.4259083,13.677302 4.0181559,3.5662928 7.1540647 0 0 0.66145837,16.583588 4.0181559,3.5662928 7.1540647 0 0 4.6728467,20.261811 4.0181559,3.5662928 7.1540647 0 0 5.1732885,20.243 a 5.3405872,4.7400094 7.154063 0 0 5.2883005,4.342428 5.3405872,4.7400094 7.154063 0 0 3.656255,-1.210431 4.0181559,3.5662928 7.1540647 0 0 3.300558,1.639798 4.0181559,3.5662928 7.1540647 0 0 4.011389,-3.466536 4.0181559,3.5662928 7.1540647 0 0 -0.416848,-1.594767 5.3405872,4.7400094 7.154063 0 0 4.783932,-4.586787 5.3405872,4.7400094 7.154063 0 0 -1.9322,-3.706541 4.0181559,3.5662928 7.1540647 0 0 0.764128,-2.0624453 4.0181559,3.5662928 7.1540647 0 0 -4.011389,-3.6776624 4.0181559,3.5662928 7.1540647 0 0 -1.744813,0.3148283 6.0017493,5.3230522 7.1160496 0 0 -5.92283,-4.6884523 z"/>
+</svg>`;
+
+  const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
+
+  const BIBLE_BOOKS = window.VerseGameShell.getBibleBookDecoys();
 
   const state = {
-    screen:"intro",
-    mode:null,
-    words:[],
-    segments:[],
-    metaIndices:new Set(),
-    buildSizeClass:"is-normal",
-    progressIndex:0,
-    buildRemoving:new Set(),
-    choices:[],
-    choiceIndex:0,
-    busy:false,
-    menuOpen:false,
-    helpOpen:false,
-    helpBackMode:false,
-    completed:false,
-    startTime:0,
-    endTime:0,
-    completionResult:null,
-    bookLabel:"",
-    referenceLabel:"",
-    referenceMeta:null,
-    medalMessage:"",
-    medalSubmessage:"",
-    countdownValue:"",
-    bonusReady:false,
-    bonusTravelTextVisible:false,
-    hasShownInitialCountdown:false,
-    bonusFadeActive:false,
-    bonusRocketColorKey:"red",
-    bonusOutcome:"",
-    bonusMedalAlreadyEarned:false,
+    screen: "intro",
+    mode: null,
+    words: [],
+    segments: [],
+    metaIndices: new Set(),
+    buildSizeClass: "is-normal",
+    progressIndex: 0,
+    buildRemoving: new Set(),
+    choices: [],
+    choiceIndex: 0,
+    busy: false,
+    menuOpen: false,
+    helpOpen: false,
+    helpBackMode: false,
+    completed: false,
+    startTime: 0,
+    endTime: 0,
+    completionResult: null,
+    bookLabel: "",
+    referenceLabel: "",
+    referenceMeta: null,
+    medalMessage: "",
+    medalSubmessage: "",
+    countdownValue: "",
+    bonusReady: false,
+    bonusTravelTextVisible: false,
+    hasShownInitialCountdown: false,
+    bonusFadeActive: false,
+    bonusRocketColorKey: "red",
+    bonusOutcome: "",
+    bonusMedalAlreadyEarned: false,
 
-    astroHits:0,
-    astroInvulnerable:false,
-    astroTimerMs:0,
-    astroPlayerX:0.5,
-    astroMoveDir:0,
-    astroPlayerTilt:0,
-    astroSpinDeg:0,
-    astroSpinMs:0,
-    astroAsteroids:[],
-    astroSpawnCooldownMs:0,
-    astroLastSpawnX:-1,
-    astroDrainPhase:false,
-    astroRunning:false,
-    astroMoonPhase:false,
-    astroMoonY:-240,
-    astroMoonVisible:false,
-    astroMoonDone:false,
-    astroLandingPhase:false,
-    astroPlayerLiftPx:0,
-    astroPlayerScale:1,
-    astroLastTs:0,
-    astroRaf:0,
+    astroHits: 0,
+    astroInvulnerable: false,
+    astroTimerMs: 0,
+    astroPlayerX: 0.5,
+    astroMoveDir: 0,
+    astroPlayerTilt: 0,
+    astroSpinDeg: 0,
+    astroSpinMs: 0,
+    astroAsteroids: [],
+    astroSpawnCooldownMs: 0,
+    astroLastSpawnX: -1,
+    astroDrainPhase: false,
+    astroRunning: false,
+    astroMoonPhase: false,
+    astroMoonY: -240,
+    astroMoonVisible: false,
+    astroMoonDone: false,
+    astroLandingPhase: false,
+    astroPlayerLiftPx: 0,
+    astroPlayerScale: 1,
+    astroLastTs: 0,
+    astroRaf: 0,
   };
 
   let muted = false;
@@ -92,27 +95,27 @@ const BIBLE_BOOKS = window.VerseGameShell.getBibleBookDecoys();
   const ASTRO_DURATION_MS = 30000;
   const ASTRO_HITBOX_SCALE = 0.5;
   const ASTRO_BASE_SPEED_VH_PER_SEC = 42;
-  const ASTRO_MODE_MULTIPLIER = { easy:1, medium:1.18, hard:1.38 };
+  const ASTRO_MODE_MULTIPLIER = { easy: 1, medium: 1.18, hard: 1.38 };
 
   const $ = (s) => document.querySelector(s);
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-  function escapeHtml(str){
-    return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&quot;").replace(/'/g,"&#39;");
+  function escapeHtml(str) {
+    return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#39;");
   }
 
   const shuffle = window.VerseGameShell.shuffle;
-  
 
-  function tokenizeVerse(text){
+
+  function tokenizeVerse(text) {
     return window.VerseGameShell.tokenizeVerseWords(text);
   }
 
-  function normalizeWord(value){
+  function normalizeWord(value) {
     return window.VerseGameShell.normalizeWord(value);
   }
 
-  function preloadImages(srcList){
+  function preloadImages(srcList) {
     return Promise.all(
       srcList.map(src => new Promise(resolve => {
         const img = new Image();
@@ -123,7 +126,7 @@ const BIBLE_BOOKS = window.VerseGameShell.getBibleBookDecoys();
     );
   }
 
-  function parseReferenceParts(ref, translation, verseId){
+  function parseReferenceParts(ref, translation, verseId) {
     return window.VerseGameShell.parseReferenceParts(ref, translation, verseId);
   }
 
@@ -134,7 +137,7 @@ const BIBLE_BOOKS = window.VerseGameShell.getBibleBookDecoys();
     MOON_IMAGE_SRC
   ]);
 
-  function initVerseData(){
+  function initVerseData() {
     const parsed = parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
     const buildData = window.VerseGameShell.buildVerseSegments({
       verseText: ctx.verseText || "",
@@ -193,13 +196,13 @@ const BIBLE_BOOKS = window.VerseGameShell.getBibleBookDecoys();
     state.astroPlayerScale = 1;
     state.astroDrainPhase = false;
     state.astroLastTs = 0;
-    if (state.astroRaf){
+    if (state.astroRaf) {
       cancelAnimationFrame(state.astroRaf);
       state.astroRaf = 0;
     }
   }
 
-  function currentPhase(){
+  function currentPhase() {
     return window.VerseGameShell.getPhaseForProgress({
       progressIndex: state.progressIndex,
       wordCount: state.words.length,
@@ -208,12 +211,12 @@ const BIBLE_BOOKS = window.VerseGameShell.getBibleBookDecoys();
       referenceLabel: state.referenceLabel
     });
   }
-  function currentCorrectLabel(){ return state.segments[state.progressIndex] || ""; }
+  function currentCorrectLabel() { return state.segments[state.progressIndex] || ""; }
 
-  function uniqueVisibleChoices(correct, decoys){
+  function uniqueVisibleChoices(correct, decoys) {
     const out = [correct];
     const seen = new Set([normalizeWord(correct)]);
-    for (const d of decoys){
+    for (const d of decoys) {
       const key = normalizeWord(d);
       if (!key || seen.has(key)) continue;
       seen.add(key); out.push(d);
@@ -221,7 +224,7 @@ const BIBLE_BOOKS = window.VerseGameShell.getBibleBookDecoys();
     }
     return out;
   }
-  function verseWordDecoys(correct){
+  function verseWordDecoys(correct) {
     return window.VerseGameShell.getVerseWordDecoys({
       words: state.words,
       correct,
@@ -231,46 +234,46 @@ const BIBLE_BOOKS = window.VerseGameShell.getBibleBookDecoys();
       fallbackToFun: true
     });
   }
-  function easyDecoys(correct){
+  function easyDecoys(correct) {
     return window.VerseGameShell.getFunWordDecoys(correct, state.words, 12);
   }
 
-  function bookDecoys(correct){
+  function bookDecoys(correct) {
     return window.VerseGameShell.getBookDecoys(correct, 12);
   }
 
-function refDecoys(correctRef){
-  return shuffle(
-    window.VerseGameShell
-      .getReferenceDecoys(state.referenceMeta, state.mode, 6)
-      .filter((ref) => normalizeWord(ref) !== normalizeWord(correctRef))
-  );
-}
+  function refDecoys(correctRef) {
+    return shuffle(
+      window.VerseGameShell
+        .getReferenceDecoys(state.referenceMeta, state.mode, 6)
+        .filter((ref) => normalizeWord(ref) !== normalizeWord(correctRef))
+    );
+  }
 
-  function buildChoices(){
+  function buildChoices() {
     const correct = currentCorrectLabel();
     const phase = currentPhase();
     let decoyPool = [];
-    if (phase === "words"){
+    if (phase === "words") {
       decoyPool = state.mode === "easy" ? easyDecoys(correct) : verseWordDecoys(correct);
       if (decoyPool.length < 2) decoyPool = decoyPool.concat(easyDecoys(correct));
-    } else if (phase === "book"){
+    } else if (phase === "book") {
       decoyPool = bookDecoys(correct);
-    } else if (phase === "reference"){
+    } else if (phase === "reference") {
       decoyPool = refDecoys(correct);
     }
-    const labels = uniqueVisibleChoices(correct, decoyPool).slice(0,3);
-    while (labels.length < 3){
+    const labels = uniqueVisibleChoices(correct, decoyPool).slice(0, 3);
+    while (labels.length < 3) {
       const fallback = phase === "book" ? bookDecoys(correct) : easyDecoys(correct);
-      for (const item of fallback){
+      for (const item of fallback) {
         if (labels.map(normalizeWord).includes(normalizeWord(item))) continue;
         labels.push(item);
         if (labels.length >= 3) break;
       }
     }
-    const skins = shuffle(ROCKETS).slice(0,3);
+    const skins = shuffle(ROCKETS).slice(0, 3);
     state.choices = shuffle(labels).map((label, index) => ({
-      id:`choice_${index}_${Date.now()}`,
+      id: `choice_${index}_${Date.now()}`,
       label,
       isCorrect: normalizeWord(label) === normalizeWord(correct),
       rocket: skins[index]
@@ -278,7 +281,7 @@ function refDecoys(correctRef){
     state.choiceIndex = 1;
   }
 
-  function renderBuildText(){
+  function renderBuildText() {
     return window.VerseGameShell.renderBuildProgressHtml({
       verseText: ctx.verseText || "",
       book: state.bookLabel,
@@ -290,41 +293,41 @@ function refDecoys(correctRef){
     });
   }
 
-function fitBuildText(){
-  requestAnimationFrame(() => {
-    window.VerseGameShell.fitBuildTextOnce({
-      buildEl: document.getElementById("vlBuild"),
-      textEl: document.getElementById("vlBuildText"),
-      buildArea: BUILD_AREA
+  function fitBuildText() {
+    requestAnimationFrame(() => {
+      window.VerseGameShell.fitBuildTextOnce({
+        buildEl: document.getElementById("vlBuild"),
+        textEl: document.getElementById("vlBuildText"),
+        buildArea: BUILD_AREA
+      });
     });
-  });
-}
+  }
 
 
-  function formatMode(mode){ return mode ? mode.charAt(0).toUpperCase() + mode.slice(1) : "Mode"; }
-  function totalElapsedMs(){ return Math.max(1, (state.endTime || performance.now()) - state.startTime); }
+  function formatMode(mode) { return mode ? mode.charAt(0).toUpperCase() + mode.slice(1) : "Mode"; }
+  function totalElapsedMs() { return Math.max(1, (state.endTime || performance.now()) - state.startTime); }
 
-function helpHtml(){
-  return `
+  function helpHtml() {
+    return `
     Find the next correct word and launch it into the verse.<br><br>
     Easy: fun decoys.<br>
     Medium: decoys are other words from the verse.<br>
     Hard: same as Medium, with the toughest decoys.<br><br>
     After the verse words, launch the book, then the reference.
   `;
-}
+  }
 
 
-function renderHelpOverlay(){
-  return window.VerseGameShell.helpOverlayHtml({
-    id: HELP_OVERLAY_ID,
-    title: "How to Play",
-    body: helpHtml(),
-    closeText: "Close"
-  });
-}
+  function renderHelpOverlay() {
+    return window.VerseGameShell.helpOverlayHtml({
+      id: HELP_OVERLAY_ID,
+      title: "How to Play",
+      body: helpHtml(),
+      closeText: "Close"
+    });
+  }
 
-  function renderGameMenuOverlay(){
+  function renderGameMenuOverlay() {
     return window.VerseGameShell.gameMenuHtml({
       id: "vlGameMenuOverlay",
       title: "Game Menu",
@@ -333,11 +336,11 @@ function renderHelpOverlay(){
     });
   }
 
-  function syncGameMenuOpenState(){
+  function syncGameMenuOpenState() {
     const menuOverlay = $("#vlGameMenuOverlay");
     if (!menuOverlay) return;
 
-    if (state.menuOpen){
+    if (state.menuOpen) {
       menuOverlay.classList.add("is-open");
       menuOverlay.setAttribute("aria-hidden", "false");
     } else {
@@ -346,13 +349,13 @@ function renderHelpOverlay(){
     }
   }
 
-    function canOpenGameMenu(){
+  function canOpenGameMenu() {
     if (state.busy) return false;
     if (state.screen === "travel") return false;
     return true;
   }
 
-  function renderCountdownOverlay(){
+  function renderCountdownOverlay() {
     if (!state.countdownValue) return "";
     return `
       <div class="vl-countdown-overlay" aria-hidden="true">
@@ -360,13 +363,13 @@ function renderHelpOverlay(){
       </div>`;
   }
 
-  function getPreviewChoice(offset){
+  function getPreviewChoice(offset) {
     if (!state.choices.length) return null;
     const total = state.choices.length;
     return state.choices[(state.choiceIndex + offset + total) % total];
   }
 
-  function renderLauncher(choice, preview=false){
+  function renderLauncher(choice, preview = false) {
     if (!choice) return "";
     return `
       <div class="${preview ? "vl-side-preview" : "vl-main-launcher"} no-zoom" data-choice-id="${choice.id}">
@@ -377,7 +380,6 @@ function renderHelpOverlay(){
         <div class="${preview ? "vl-preview-bubble" : `vl-choice-bubble ${choice.rocket.textDark ? "vl-text-dark" : ""}`}" style="--bubble:${choice.rocket.color}">${escapeHtml(choice.label)}</div>
       </div>`;
   }
-
 
 
   function conveyorSpeedPxPerSec() {
@@ -435,41 +437,41 @@ function renderHelpOverlay(){
     await sleep(340);
   }
 
-function renderIntro(){
-  window.VerseGameShell.renderTitleScreen({
-    app,
-    title: GAME_TITLE,
-    icon: "🚀",
-    helpHtml: helpHtml(),
-    helpOverlayId: HELP_OVERLAY_ID,
-    theme: GAME_THEME,
-    backLabel: "Back to Practice Games",
-    onBack: () => window.VerseGameBridge.exitGame(),
-    onStart: () => setScreen("mode")
-  });
-}
+  function renderIntro() {
+    window.VerseGameShell.renderTitleScreen({
+      app,
+      title: GAME_TITLE,
+      icon: "🚀",
+      helpHtml: helpHtml(),
+      helpOverlayId: HELP_OVERLAY_ID,
+      theme: GAME_THEME,
+      backLabel: "Back to Practice Games",
+      onBack: () => window.VerseGameBridge.exitGame(),
+      onStart: () => setScreen("mode")
+    });
+  }
 
-function renderMode(){
-  window.VerseGameShell.renderModeSelect({
-    app,
-    title: "Choose Your Difficulty",
-    icon: "🥉🥈🥇",
-    helpHtml: helpHtml(),
-    helpOverlayId: HELP_OVERLAY_ID,
-    theme: GAME_THEME,
-    backLabel: "Back to Verse Launch title",
-    onBack: () => setScreen("intro"),
-    onSelect: (mode) => {
-      state.mode = mode;
-      initVerseData();
-      state.startTime = performance.now();
-      buildChoices();
-      setScreen("game");
-    }
-  });
-}
+  function renderMode() {
+    window.VerseGameShell.renderModeSelect({
+      app,
+      title: "Choose Your Difficulty",
+      icon: "🥉🥈🥇",
+      helpHtml: helpHtml(),
+      helpOverlayId: HELP_OVERLAY_ID,
+      theme: GAME_THEME,
+      backLabel: "Back to Verse Launch title",
+      onBack: () => setScreen("intro"),
+      onSelect: (mode) => {
+        state.mode = mode;
+        initVerseData();
+        state.startTime = performance.now();
+        buildChoices();
+        setScreen("game");
+      }
+    });
+  }
 
-  function renderGame(){
+  function renderGame() {
     const center = getPreviewChoice(0);
 
     const bonusRocket = getBonusRocket();
@@ -490,9 +492,9 @@ function renderMode(){
       <div class="vl-root">
         <div class="vl-stage">
           ${(() => {
-  const buildRender = renderBuildText();
+        const buildRender = renderBuildText();
 
-  return `
+        return `
     <div class="vl-build-wrap">
       <div class="vl-build vm-build vm-build--${BUILD_AREA} ${state.buildRemoving.size ? "vl-shake" : ""}" id="vlBuild">
         <div class="${buildRender.className}" id="vlBuildText">
@@ -501,7 +503,7 @@ function renderMode(){
       </div>
     </div>
   `;
-})()}
+      })()}
           <div class="vl-game-wrap">
             <div class="vl-game-board" id="vlBoard">
               <div class="vl-red-flash" id="vlRedFlash"></div>
@@ -531,7 +533,7 @@ function renderMode(){
     syncConveyorTiming();
   }
 
-  function renderTravel(){
+  function renderTravel() {
     const rocket = getBonusRocket();
     app.innerHTML = `
       <div class="vl-travel-screen">
@@ -552,7 +554,7 @@ function renderMode(){
     syncGameMenuOpenState();
   }
 
-  function renderAsteroidGame(){
+  function renderAsteroidGame() {
     const rocket = getBonusRocket();
     app.innerHTML = `
       <div class="vl-asteroid-screen">
@@ -583,167 +585,167 @@ function renderMode(){
     wireAstroControls();
   }
 
-function renderEnd(){
-  const timeSecs = (totalElapsedMs() / 1000).toFixed(1);
+  function renderEnd() {
+    const timeSecs = (totalElapsedMs() / 1000).toFixed(1);
 
-  let gameMessage = `Time: ${timeSecs}s`;
+    let gameMessage = `Time: ${timeSecs}s`;
 
-  if (state.bonusOutcome === "success"){
-    gameMessage = `You reached the moon! Time: ${timeSecs}s`;
-  } else if (state.bonusOutcome === "crash"){
-    gameMessage = `Rocket crashed, but the verse was built. Time: ${timeSecs}s`;
+    if (state.bonusOutcome === "success") {
+      gameMessage = `You reached the moon! Time: ${timeSecs}s`;
+    } else if (state.bonusOutcome === "crash") {
+      gameMessage = `Rocket crashed, but the verse was built. Time: ${timeSecs}s`;
+    }
+
+    window.VerseGameShell.renderCompleteScreen({
+      app,
+      gameIcon: "🚀",
+      mode: state.mode,
+      verseId: ctx.verseId,
+      gameId: GAME_ID,
+      completion: state.completionResult,
+      gameMessage,
+      theme: GAME_THEME,
+      backLabel: "Back to Practice Games",
+      onPlayAgain: () => setScreen("mode"),
+      onMoreGames: () => window.VerseGameBridge.exitGame(),
+      onChangeVerse: () => window.VerseGameBridge.returnToTitle()
+    });
   }
 
-  window.VerseGameShell.renderCompleteScreen({
-    app,
-    gameIcon: "🚀",
-    mode: state.mode,
-    verseId: ctx.verseId,
-    gameId: GAME_ID,
-    completion: state.completionResult,
-    gameMessage,
-    theme: GAME_THEME,
-    backLabel: "Back to Practice Games",
-    onPlayAgain: () => setScreen("mode"),
-    onMoreGames: () => window.VerseGameBridge.exitGame(),
-    onChangeVerse: () => window.VerseGameBridge.returnToTitle()
-  });
-}
+  function prevChoice() { if (state.busy || state.completed || !state.choices.length) return; state.choiceIndex = (state.choiceIndex - 1 + state.choices.length) % state.choices.length; render(); }
+  function nextChoice() { if (state.busy || state.completed || !state.choices.length) return; state.choiceIndex = (state.choiceIndex + 1) % state.choices.length; render(); }
 
-  function prevChoice(){ if (state.busy || state.completed || !state.choices.length) return; state.choiceIndex = (state.choiceIndex - 1 + state.choices.length) % state.choices.length; render(); }
-  function nextChoice(){ if (state.busy || state.completed || !state.choices.length) return; state.choiceIndex = (state.choiceIndex + 1) % state.choices.length; render(); }
-
-  function wireGameScreen(){
+  function wireGameScreen() {
     const menuPill = $("#vlMenuPill");
     const prevBtn = $("#vlPrevBtn"), nextBtn = $("#vlNextBtn");
     if (prevBtn) prevBtn.onclick = prevChoice;
     if (nextBtn) nextBtn.onclick = nextChoice;
     document.querySelectorAll("[data-choice-id]").forEach(el => { el.onclick = () => handleLaunch(el.dataset.choiceId); });
 
-window.VerseGameShell.wireGameMenu({
-  id: "vlGameMenuOverlay",
-  menuButtonId: "vlMenuPill",
-  helpOverlayId: HELP_OVERLAY_ID,
-  isMuted: () => muted,
-  onMuteToggle: () => {
-    muted = !muted;
-    return muted;
-  },
-  onHowToPlay: () => {
-    state.menuOpen = false;
-    state.helpOpen = true;
-    state.helpBackMode = true;
+    window.VerseGameShell.wireGameMenu({
+      id: "vlGameMenuOverlay",
+      menuButtonId: "vlMenuPill",
+      helpOverlayId: HELP_OVERLAY_ID,
+      isMuted: () => muted,
+      onMuteToggle: () => {
+        muted = !muted;
+        return muted;
+      },
+      onHowToPlay: () => {
+        state.menuOpen = false;
+        state.helpOpen = true;
+        state.helpBackMode = true;
 
-    const menuOverlay = $("#vlGameMenuOverlay");
-    if (menuOverlay){
-      menuOverlay.classList.remove("is-open");
-      menuOverlay.setAttribute("aria-hidden", "true");
-    }
+        const menuOverlay = $("#vlGameMenuOverlay");
+        if (menuOverlay) {
+          menuOverlay.classList.remove("is-open");
+          menuOverlay.setAttribute("aria-hidden", "true");
+        }
 
-    window.VerseGameShell.openHelp(HELP_OVERLAY_ID, "back", "Back");
-  },
-  onModeSelect: () => {
-    state.menuOpen = false;
-    state.helpOpen = false;
-    state.helpBackMode = false;
-    state.busy = false;
-    setScreen("mode");
-  },
-  onExit: () => window.VerseGameBridge.exitGame(),
-  onOpen: () => {
-    if (!canOpenGameMenu()) return false;
+        window.VerseGameShell.openHelp(HELP_OVERLAY_ID, "back", "Back");
+      },
+      onModeSelect: () => {
+        state.menuOpen = false;
+        state.helpOpen = false;
+        state.helpBackMode = false;
+        state.busy = false;
+        setScreen("mode");
+      },
+      onExit: () => window.VerseGameBridge.exitGame(),
+      onOpen: () => {
+        if (!canOpenGameMenu()) return false;
 
-    state.menuOpen = true;
-    state.helpOpen = false;
-    state.helpBackMode = false;
-  },
-  onClose: () => {
-    state.menuOpen = false;
-  },
-  onBackFromHelp: () => {
-    state.helpOpen = false;
-    state.menuOpen = true;
-    state.helpBackMode = false;
+        state.menuOpen = true;
+        state.helpOpen = false;
+        state.helpBackMode = false;
+      },
+      onClose: () => {
+        state.menuOpen = false;
+      },
+      onBackFromHelp: () => {
+        state.helpOpen = false;
+        state.menuOpen = true;
+        state.helpBackMode = false;
+      }
+    });
   }
-});
-  }
 
-  function wireBonusMenuOnly(){
+  function wireBonusMenuOnly() {
     const menuPill = $("#vlMenuPill");
 
-window.VerseGameShell.wireGameMenu({
-  id: "vlGameMenuOverlay",
-  menuButtonId: "vlMenuPill",
-  helpOverlayId: HELP_OVERLAY_ID,
-  isMuted: () => muted,
-  onMuteToggle: () => {
-    muted = !muted;
-    return muted;
-  },
-  onHowToPlay: () => {
-    state.menuOpen = false;
-    state.helpOpen = true;
-    state.helpBackMode = true;
-    state.astroMoveDir = 0;
+    window.VerseGameShell.wireGameMenu({
+      id: "vlGameMenuOverlay",
+      menuButtonId: "vlMenuPill",
+      helpOverlayId: HELP_OVERLAY_ID,
+      isMuted: () => muted,
+      onMuteToggle: () => {
+        muted = !muted;
+        return muted;
+      },
+      onHowToPlay: () => {
+        state.menuOpen = false;
+        state.helpOpen = true;
+        state.helpBackMode = true;
+        state.astroMoveDir = 0;
 
-    const menuOverlay = $("#vlGameMenuOverlay");
-    if (menuOverlay){
-      menuOverlay.classList.remove("is-open");
-      menuOverlay.setAttribute("aria-hidden", "true");
-    }
+        const menuOverlay = $("#vlGameMenuOverlay");
+        if (menuOverlay) {
+          menuOverlay.classList.remove("is-open");
+          menuOverlay.setAttribute("aria-hidden", "true");
+        }
 
-    window.VerseGameShell.openHelp(HELP_OVERLAY_ID, "back", "Back");
-  },
-  onModeSelect: () => {
-    state.menuOpen = false;
-    state.helpOpen = false;
-    state.helpBackMode = false;
-    state.busy = false;
-    state.astroMoveDir = 0;
-    stopAstroLoop();
-    setScreen("mode");
-  },
-  onExit: () => {
-    stopAstroLoop();
-    window.VerseGameBridge.exitGame();
-  },
-  onOpen: () => {
-    if (!canOpenGameMenu()) return false;
+        window.VerseGameShell.openHelp(HELP_OVERLAY_ID, "back", "Back");
+      },
+      onModeSelect: () => {
+        state.menuOpen = false;
+        state.helpOpen = false;
+        state.helpBackMode = false;
+        state.busy = false;
+        state.astroMoveDir = 0;
+        stopAstroLoop();
+        setScreen("mode");
+      },
+      onExit: () => {
+        stopAstroLoop();
+        window.VerseGameBridge.exitGame();
+      },
+      onOpen: () => {
+        if (!canOpenGameMenu()) return false;
 
-    state.menuOpen = true;
-    state.helpOpen = false;
-    state.helpBackMode = false;
-    state.astroMoveDir = 0;
-  },
-  onClose: () => {
-    state.menuOpen = false;
-    state.astroMoveDir = 0;
-  },
-  onBackFromHelp: () => {
-    state.helpOpen = false;
-    state.menuOpen = true;
-    state.helpBackMode = false;
-    state.astroMoveDir = 0;
+        state.menuOpen = true;
+        state.helpOpen = false;
+        state.helpBackMode = false;
+        state.astroMoveDir = 0;
+      },
+      onClose: () => {
+        state.menuOpen = false;
+        state.astroMoveDir = 0;
+      },
+      onBackFromHelp: () => {
+        state.helpOpen = false;
+        state.menuOpen = true;
+        state.helpBackMode = false;
+        state.astroMoveDir = 0;
+      }
+    });
+
   }
-});
 
-  }
-
-  function wireAstroControls(){
+  function wireAstroControls() {
     const leftBtn = $("#vlLeftBtn");
     const rightBtn = $("#vlRightBtn");
 
-    function setDir(dir){
+    function setDir(dir) {
       if (!state.astroMoonPhase) state.astroMoveDir = dir;
     }
 
-    function clearDir(dir){
+    function clearDir(dir) {
       if (state.astroMoveDir === dir) state.astroMoveDir = 0;
     }
 
-    [["pointerdown", -1], ["pointerup", -1], ["pointercancel", -1], ["pointerleave", -1]].forEach(() => {});
+    [["pointerdown", -1], ["pointerup", -1], ["pointercancel", -1], ["pointerleave", -1]].forEach(() => { });
 
-    if (leftBtn){
+    if (leftBtn) {
       leftBtn.onpointerdown = (e) => { e.preventDefault(); setDir(-1); };
       leftBtn.onpointerup = (e) => { e.preventDefault(); clearDir(-1); };
       leftBtn.onpointercancel = (e) => { e.preventDefault(); clearDir(-1); };
@@ -751,7 +753,7 @@ window.VerseGameShell.wireGameMenu({
       leftBtn.oncontextmenu = (e) => e.preventDefault();
     }
 
-    if (rightBtn){
+    if (rightBtn) {
       rightBtn.onpointerdown = (e) => { e.preventDefault(); setDir(1); };
       rightBtn.onpointerup = (e) => { e.preventDefault(); clearDir(1); };
       rightBtn.onpointercancel = (e) => { e.preventDefault(); clearDir(1); };
@@ -760,13 +762,13 @@ window.VerseGameShell.wireGameMenu({
     }
   }
 
-  function flashWrongBoard(){
+  function flashWrongBoard() {
     const el = $("#vlRedFlash");
     if (!el) return;
     el.classList.remove("is-flashing"); void el.offsetWidth; el.classList.add("is-flashing");
   }
 
-  function spawnSmoke(x, y, count=8, options={}){
+  function spawnSmoke(x, y, count = 8, options = {}) {
     const layer = $("#vlSmokeLayer") || document.body;
     const {
       spreadX = 30,
@@ -775,7 +777,7 @@ window.VerseGameShell.wireGameMenu({
       color = "rgba(255,255,255,.68)"
     } = options;
 
-    for (let i = 0; i < count; i++){
+    for (let i = 0; i < count; i++) {
       const puff = document.createElement("div");
       puff.className = "vl-smoke-puff";
       puff.style.left = `${x + (Math.random() * spreadX - spreadX / 2)}px`;
@@ -786,15 +788,15 @@ window.VerseGameShell.wireGameMenu({
       puff.style.setProperty("--sx", `${Math.round(Math.random() * 28 - 14)}px`);
       puff.style.setProperty("--sy", `${Math.round(-16 - Math.random() * 26)}px`);
       layer.appendChild(puff);
-      puff.addEventListener("animationend", () => puff.remove(), { once:true });
+      puff.addEventListener("animationend", () => puff.remove(), { once: true });
     }
   }
 
-  function spawnFireworks(x, y){
+  function spawnFireworks(x, y) {
     const layer = $("#vlFireworkLayer") || document.body;
     const palette = ["#ffffff", "#ffd54f", "#ff8a65", "#81c784", "#64b5f6", "#ff8cc8"];
     const count = 28 + Math.floor(Math.random() * 10);
-    for (let i = 0; i < count; i++){
+    for (let i = 0; i < count; i++) {
       const p = document.createElement("div");
       p.className = "vl-firework";
       p.style.left = `${x}px`;
@@ -803,27 +805,27 @@ window.VerseGameShell.wireGameMenu({
       p.style.setProperty("--dy", `${Math.round(Math.random() * 160 - 80)}px`);
       p.style.setProperty("--pcolor", palette[i % palette.length]);
       layer.appendChild(p);
-      p.addEventListener("animationend", () => p.remove(), { once:true });
+      p.addEventListener("animationend", () => p.remove(), { once: true });
     }
   }
 
-  function getModeMedal(mode){ return mode === "easy" ? "🥉" : mode === "medium" ? "🥈" : mode === "hard" ? "🥇" : "🏅"; }
+  function getModeMedal(mode) { return mode === "easy" ? "🥉" : mode === "medium" ? "🥈" : mode === "hard" ? "🥇" : "🏅"; }
 
-  function getRocketByKey(key){
+  function getRocketByKey(key) {
     return ROCKETS.find(r => r.key === key) || ROCKETS[0];
   }
 
-  function getSmokeTrailColor(){
+  function getSmokeTrailColor() {
     if (state.astroHits <= 0) return "#ffc751";
     if (state.astroHits === 1) return "#ffa351";
     return "#ff5a51";
   }
 
-  function getBonusRocket(){
+  function getBonusRocket() {
     return getRocketByKey(state.bonusRocketColorKey || "red");
   }
 
-  async function finalizeBonusOutcome(success){
+  async function finalizeBonusOutcome(success) {
     state.completed = true;
     state.endTime = performance.now();
     state.bonusOutcome = success ? "success" : "crash";
@@ -856,8 +858,8 @@ window.VerseGameShell.wireGameMenu({
     const alreadyEarned = !!state.completionResult.alreadyCompleted;
     state.bonusMedalAlreadyEarned = alreadyEarned;
 
-    if (success){
-      if (alreadyEarned){
+    if (success) {
+      if (alreadyEarned) {
         state.medalMessage = "Mission accomplished!";
         state.medalSubmessage = "You reached the moon again. Try to beat your time!";
       } else {
@@ -865,7 +867,7 @@ window.VerseGameShell.wireGameMenu({
         state.medalSubmessage = "You reached the moon!";
       }
     } else {
-      if (alreadyEarned){
+      if (alreadyEarned) {
         state.medalMessage = "Rocket lost!";
         state.medalSubmessage = "You already earned this medal. Try again for a cleaner run!";
       } else {
@@ -878,23 +880,23 @@ window.VerseGameShell.wireGameMenu({
     setScreen("end");
   }
 
-  function stopAstroLoop(){
-    if (state.astroRaf){
+  function stopAstroLoop() {
+    if (state.astroRaf) {
       cancelAnimationFrame(state.astroRaf);
       state.astroRaf = 0;
     }
     state.astroRunning = false;
   }
 
-  function safeLeftPct(x){
+  function safeLeftPct(x) {
     return Math.max(0.08, Math.min(0.92, x));
   }
 
-  function modeAstroMultiplier(){
+  function modeAstroMultiplier() {
     return ASTRO_MODE_MULTIPLIER[state.mode] || 1;
   }
 
-  function maybeSpawnAsteroid(dtMs, stageWidth){
+  function maybeSpawnAsteroid(dtMs, stageWidth) {
     if (state.astroMoonPhase || state.astroDrainPhase) return;
 
     state.astroSpawnCooldownMs = Math.max(0, state.astroSpawnCooldownMs - dtMs);
@@ -911,7 +913,7 @@ window.VerseGameShell.wireGameMenu({
     const minGapPct = stageWidth < 420 ? 0.26 : stageWidth < 560 ? 0.22 : 0.18;
 
     const candidates = [];
-    for (let i = 0; i < 7; i++){
+    for (let i = 0; i < 7; i++) {
       candidates.push(leftBound + ((rightBound - leftBound) * (i / 6)));
     }
 
@@ -926,9 +928,9 @@ window.VerseGameShell.wireGameMenu({
     usable.forEach(x => {
       const distFromPlayer = Math.abs(x - playerX);
 
-      if (distFromPlayer >= (minGapPct * 0.75)){
+      if (distFromPlayer >= (minGapPct * 0.75)) {
         weightedPool.push(x, x);
-      } else if (distFromPlayer >= (minGapPct * 0.32)){
+      } else if (distFromPlayer >= (minGapPct * 0.32)) {
         weightedPool.push(x, x);
       } else {
         weightedPool.push(x, x, x);
@@ -939,7 +941,7 @@ window.VerseGameShell.wireGameMenu({
     const chosenX = pool[Math.floor(Math.random() * pool.length)];
 
     state.astroAsteroids.push({
-      id:`ast_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      id: `ast_${Date.now()}_${Math.random().toString(36).slice(2)}`,
       x: chosenX,
       yPx: -size - 20,
       size,
@@ -951,22 +953,22 @@ window.VerseGameShell.wireGameMenu({
     state.astroSpawnCooldownMs = stageWidth < 420 ? 420 : stageWidth < 560 ? 340 : 280;
   }
 
-  function asteroidSpeedPxPerSec(viewH){
+  function asteroidSpeedPxPerSec(viewH) {
     return (ASTRO_BASE_SPEED_VH_PER_SEC / 100) * viewH * modeAstroMultiplier();
   }
 
-function resetMoonOffscreen(){
-  const moon = $("#vlMoon");
-  if (moon){
-    const moonHeight = moon.getBoundingClientRect().height || 240;
-    state.astroMoonY = -moonHeight - 24;
-  } else {
-    state.astroMoonY = -340;
+  function resetMoonOffscreen() {
+    const moon = $("#vlMoon");
+    if (moon) {
+      const moonHeight = moon.getBoundingClientRect().height || 240;
+      state.astroMoonY = -moonHeight - 24;
+    } else {
+      state.astroMoonY = -340;
+    }
   }
-}
 
-  async function playLaunchCountdown(){
-    for (const value of ["3","2","1"]){
+  async function playLaunchCountdown() {
+    for (const value of ["3", "2", "1"]) {
       state.countdownValue = value;
       render();
       await sleep(520);
@@ -975,7 +977,7 @@ function resetMoonOffscreen(){
     render();
   }
 
-  async function animateLaunch(choice, sourceEl){
+  async function animateLaunch(choice, sourceEl) {
     const sourceRocket = sourceEl?.querySelector(".vl-rocket") || sourceEl;
     const sourceBubble = sourceEl?.querySelector(".vl-choice-bubble") || sourceEl;
     const buildRect = $("#vlBuild")?.getBoundingClientRect();
@@ -1021,7 +1023,7 @@ function resetMoonOffscreen(){
 
     const frames = 8;
     await sleep(40);
-    for (let i = 0; i < frames; i++){
+    for (let i = 0; i < frames; i++) {
       const t = i / frames;
       spawnSmoke(
         smokeStartX + dx * t * 0.65,
@@ -1036,7 +1038,7 @@ function resetMoonOffscreen(){
     spawnFireworks(endX, endY);
   }
 
-  function showBuildShake(){
+  function showBuildShake() {
     const build = $("#vlBuild");
     if (!build) return;
     build.classList.remove("vl-shake"); void build.offsetWidth; build.classList.add("vl-shake");
@@ -1106,26 +1108,26 @@ function resetMoonOffscreen(){
   }
 
 
-  async function animateFailedLaunch(sourceEl){
+  async function animateFailedLaunch(sourceEl) {
     const rocket = sourceEl?.querySelector(".vl-rocket");
-    if (!rocket){
+    if (!rocket) {
       const rect = sourceEl?.getBoundingClientRect();
       const layerRect = (document.getElementById("vlFireworkLayer") || document.body).getBoundingClientRect();
-      if (rect){
+      if (rect) {
         const centerX = rect.left + rect.width / 2 - layerRect.left;
         const centerY = rect.top + rect.height / 2 - layerRect.top;
         const sizeBase = Math.max(48, Math.min(rect.width, 96));
 
         sourceEl.classList.add("is-wrong-choice");
 
-        if (sourceEl.animate){
+        if (sourceEl.animate) {
           sourceEl.animate(
             [
-              { filter:"brightness(1)" },
-              { filter:"brightness(1.25)" },
-              { filter:"brightness(1)" }
+              { filter: "brightness(1)" },
+              { filter: "brightness(1.25)" },
+              { filter: "brightness(1)" }
             ],
-            { duration:260, easing:"ease" }
+            { duration: 260, easing: "ease" }
           );
         }
 
@@ -1162,7 +1164,7 @@ function resetMoonOffscreen(){
     await sleep(280);
   }
 
-  async function animateBonusLaunch(sourceEl){
+  async function animateBonusLaunch(sourceEl) {
     const rocket = sourceEl?.querySelector(".vl-rocket");
     const button = sourceEl?.querySelector(".vl-star-launch-btn");
     if (!rocket || !button) return;
@@ -1184,9 +1186,9 @@ function resetMoonOffscreen(){
     unit.style.top = `${rocketRect.top - 8}px`;
 
     sourceEl.classList.add("is-hidden-during-flight");
-    spawnSmoke(smokeX, smokeY + 42, 8, { color:getSmokeTrailColor() });
+    spawnSmoke(smokeX, smokeY + 42, 8, { color: getSmokeTrailColor() });
     await sleep(220);
-    spawnSmoke(smokeX, smokeY + 38, 10, { color:getSmokeTrailColor() });
+    spawnSmoke(smokeX, smokeY + 38, 10, { color: getSmokeTrailColor() });
 
     unit.style.transition = "transform 220ms ease, opacity 220ms ease";
     unit.style.transform = "translate(0,-26px) scale(.98)";
@@ -1197,9 +1199,9 @@ function resetMoonOffscreen(){
     unit.style.transform = `translate(0, ${endY}px) scale(.42)`;
     unit.style.opacity = ".96";
 
-    for (let i = 0; i < 16; i++){
+    for (let i = 0; i < 16; i++) {
       const t = i / 16;
-      spawnSmoke(smokeX, smokeY - (window.innerHeight * 0.75 * t), 2, { color:getSmokeTrailColor() });
+      spawnSmoke(smokeX, smokeY - (window.innerHeight * 0.75 * t), 2, { color: getSmokeTrailColor() });
       await sleep(36);
     }
 
@@ -1208,40 +1210,40 @@ function resetMoonOffscreen(){
     sourceEl.classList.remove("is-hidden-during-flight");
   }
 
-  async function startBonusSequence(){
+  async function startBonusSequence() {
     setScreen("travel");
     await sleep(220);
 
     const rocket = $("#vlTravelRocket");
     const smokeLayer = $("#vlTravelSmoke");
-    if (rocket){
+    if (rocket) {
       const startBottom = -120;
       const endBottom = window.innerHeight + 120;
       rocket.animate(
         [
-          { transform:"translateX(-50%) translateY(0)" },
-          { transform:`translateX(-50%) translateY(${-endBottom}px)` }
+          { transform: "translateX(-50%) translateY(0)" },
+          { transform: `translateX(-50%) translateY(${-endBottom}px)` }
         ],
-        { duration:1600, easing:"cubic-bezier(.15,.6,.2,1)", fill:"forwards" }
+        { duration: 1600, easing: "cubic-bezier(.15,.6,.2,1)", fill: "forwards" }
       );
     }
 
-    for (let i = 0; i < 20; i++){
+    for (let i = 0; i < 20; i++) {
       const y = window.innerHeight - (i * 34);
       const x = window.innerWidth / 2;
-      spawnSmoke(x, y, 2, { color:getSmokeTrailColor() });
+      spawnSmoke(x, y, 2, { color: getSmokeTrailColor() });
       await sleep(42);
     }
 
     const travelText = $("#vlTravelText");
-    if (travelText){
+    if (travelText) {
       travelText.classList.add("is-visible");
     }
     state.bonusTravelTextVisible = true;
     await sleep(1400);
 
     const fade = document.querySelector(".vl-screen-fade");
-    if (fade){
+    if (fade) {
       fade.classList.add("is-active");
     }
     state.bonusFadeActive = true;
@@ -1253,7 +1255,7 @@ function resetMoonOffscreen(){
     startAstroLoop();
   }
 
-  function renderAstroEntities(){
+  function renderAstroEntities() {
     const stage = $("#vlAstroStage");
     const layer = $("#vlSpaceLayer");
     const rocket = $("#vlPlayerRocket");
@@ -1271,7 +1273,7 @@ function resetMoonOffscreen(){
     const baseY = rect.height - 118;
     const spinOffsetX = Math.sin((state.astroSpinDeg || 0) * (Math.PI / 180)) * 4;
 
-    for (let i = 0; i < 7; i++){
+    for (let i = 0; i < 7; i++) {
       const puff = document.createElement("div");
       puff.className = "vl-smoke-puff";
 
@@ -1309,7 +1311,7 @@ function resetMoonOffscreen(){
     moon.classList.toggle("is-visible", !!state.astroMoonVisible);
   }
 
-  function asteroidHitTest(stageRect, asteroid){
+  function asteroidHitTest(stageRect, asteroid) {
     const rocketX = stageRect.width * state.astroPlayerX;
     const rocketY = stageRect.height - 118 - 42;
     const rocketW = 84 * ASTRO_HITBOX_SCALE;
@@ -1321,10 +1323,10 @@ function resetMoonOffscreen(){
     const astY = asteroid.yPx + asteroid.size / 2;
 
     return Math.abs(rocketX - astX) < (rocketW + astW) / 2 &&
-           Math.abs(rocketY - astY) < (rocketH + astH) / 2;
+      Math.abs(rocketY - astY) < (rocketH + astH) / 2;
   }
 
-  async function astroHandleHit(){
+  async function astroHandleHit() {
     if (state.astroInvulnerable || state.astroMoonPhase) return;
     state.astroInvulnerable = true;
     state.astroHits += 1;
@@ -1335,19 +1337,19 @@ function resetMoonOffscreen(){
     state.astroSpinDeg = 0;
     state.astroSpinMs = isFatalHit ? 0 : 1000;
 
-    if (rocket){
+    if (rocket) {
       rocket.classList.remove("is-hit", "is-flash", "is-despawned");
       void rocket.offsetWidth;
-      if (!isFatalHit){
+      if (!isFatalHit) {
         rocket.classList.add("is-flash");
       }
     }
 
-    if (state.astroHits >= 3){
+    if (state.astroHits >= 3) {
       const stage = $("#vlAstroStage")?.getBoundingClientRect();
       const rocket = $("#vlPlayerRocket");
 
-      if (stage){
+      if (stage) {
         const centerX = stage.width * state.astroPlayerX;
         const centerY = stage.height - 118;
         const smokeSize = 126;
@@ -1360,7 +1362,7 @@ function resetMoonOffscreen(){
         });
       }
 
-      if (rocket){
+      if (rocket) {
         rocket.classList.add("is-despawned");
       }
       state.astroSpinDeg = 0;
@@ -1377,20 +1379,20 @@ function resetMoonOffscreen(){
     state.astroInvulnerable = false;
   }
 
-  function astroTick(ts){
+  function astroTick(ts) {
     if (!state.astroRunning) return;
     if (!state.astroLastTs) state.astroLastTs = ts;
     const dtMs = Math.min(34, ts - state.astroLastTs);
     state.astroLastTs = ts;
 
     const stage = $("#vlAstroStage");
-    if (!stage){
+    if (!stage) {
       state.astroRaf = requestAnimationFrame(astroTick);
       return;
     }
 
     const rect = stage.getBoundingClientRect();
-    if (state.menuOpen || state.helpOpen){
+    if (state.menuOpen || state.helpOpen) {
       state.astroLastTs = ts;
       renderAstroEntities();
       state.astroRaf = requestAnimationFrame(astroTick);
@@ -1402,26 +1404,26 @@ function resetMoonOffscreen(){
     const targetTilt = state.astroMoveDir === 0 ? 0 : (state.astroMoveDir < 0 ? -12 : 12);
     state.astroPlayerTilt += (targetTilt - state.astroPlayerTilt) * 0.18;
 
-    if (state.astroSpinMs > 0){
+    if (state.astroSpinMs > 0) {
       const spinStep = 360 * dtSec;
       state.astroSpinDeg += spinStep;
       state.astroSpinMs = Math.max(0, state.astroSpinMs - dtMs);
     }
 
-    if (state.astroSpinMs <= 0 && state.astroSpinDeg !== 0){
+    if (state.astroSpinMs <= 0 && state.astroSpinDeg !== 0) {
       state.astroSpinDeg *= 0.82;
-      if (Math.abs(state.astroSpinDeg) < 2){
+      if (Math.abs(state.astroSpinDeg) < 2) {
         state.astroSpinDeg = 0;
       }
     }
 
-    if (state.astroSpinDeg > 180){
+    if (state.astroSpinDeg > 180) {
       state.astroSpinDeg -= 360;
-    } else if (state.astroSpinDeg < -180){
+    } else if (state.astroSpinDeg < -180) {
       state.astroSpinDeg += 360;
     }
 
-    if (!state.astroMoonPhase){
+    if (!state.astroMoonPhase) {
       state.astroTimerMs += dtMs;
       maybeSpawnAsteroid(dtMs, rect.width);
 
@@ -1432,16 +1434,16 @@ function resetMoonOffscreen(){
       });
       state.astroAsteroids = state.astroAsteroids.filter(ast => ast.yPx < rect.height + ast.size + 20);
 
-      if (!state.astroInvulnerable){
-        for (const ast of state.astroAsteroids){
-          if (asteroidHitTest(rect, ast)){
+      if (!state.astroInvulnerable) {
+        for (const ast of state.astroAsteroids) {
+          if (asteroidHitTest(rect, ast)) {
             astroHandleHit();
             break;
           }
         }
       }
 
-      if (state.astroTimerMs >= ASTRO_DURATION_MS){
+      if (state.astroTimerMs >= ASTRO_DURATION_MS) {
         state.astroMoonPhase = true;
         state.astroDrainPhase = true;
         state.astroMoveDir = 0;
@@ -1454,19 +1456,19 @@ function resetMoonOffscreen(){
       });
       state.astroAsteroids = state.astroAsteroids.filter(ast => ast.yPx < rect.height + ast.size + 20);
 
-      if (state.astroDrainPhase){
+      if (state.astroDrainPhase) {
         state.astroPlayerTilt *= 0.88;
 
-        if (state.astroAsteroids.length === 0){
+        if (state.astroAsteroids.length === 0) {
           state.astroDrainPhase = false;
         }
-      } else if (!state.astroLandingPhase){
+      } else if (!state.astroLandingPhase) {
         const moonTargetY = rect.height * 0.14;
         const moonRiseSpeed = rect.height * 0.0038;
 
         state.astroMoonVisible = true;
 
-        if (state.astroMoonY < moonTargetY){
+        if (state.astroMoonY < moonTargetY) {
           state.astroMoonY = Math.min(moonTargetY, state.astroMoonY + moonRiseSpeed);
           state.astroPlayerTilt *= 0.90;
         } else {
@@ -1488,7 +1490,7 @@ function resetMoonOffscreen(){
         const lifted = Math.abs(targetLiftPx - state.astroPlayerLiftPx) < 3;
         const scaled = Math.abs(targetScale - state.astroPlayerScale) < 0.02;
 
-        if (centered && lifted && scaled){
+        if (centered && lifted && scaled) {
           stopAstroLoop();
           finalizeBonusOutcome(true);
           return;
@@ -1500,36 +1502,36 @@ function resetMoonOffscreen(){
     state.astroRaf = requestAnimationFrame(astroTick);
   }
 
-function startAstroLoop(){
-  state.astroRunning = true;
-  state.astroLastTs = 0;
-  state.astroTimerMs = 0;
-  state.astroHits = 0;
-  state.astroInvulnerable = false;
-  state.astroPlayerX = 0.5;
-  state.astroMoveDir = 0;
-  state.astroPlayerTilt = 0;
-  state.astroSpinDeg = 0;
-  state.astroSpinMs = 0;
-  state.astroAsteroids = [];
-  state.astroSpawnCooldownMs = 0;
-  state.astroLastSpawnX = -1;
-  state.astroDrainPhase = false;
-  state.astroMoonPhase = false;
-  state.astroMoonDone = false;
-  state.astroLandingPhase = false;
-  state.astroPlayerLiftPx = 0;
-  state.astroPlayerScale = 1;
+  function startAstroLoop() {
+    state.astroRunning = true;
+    state.astroLastTs = 0;
+    state.astroTimerMs = 0;
+    state.astroHits = 0;
+    state.astroInvulnerable = false;
+    state.astroPlayerX = 0.5;
+    state.astroMoveDir = 0;
+    state.astroPlayerTilt = 0;
+    state.astroSpinDeg = 0;
+    state.astroSpinMs = 0;
+    state.astroAsteroids = [];
+    state.astroSpawnCooldownMs = 0;
+    state.astroLastSpawnX = -1;
+    state.astroDrainPhase = false;
+    state.astroMoonPhase = false;
+    state.astroMoonDone = false;
+    state.astroLandingPhase = false;
+    state.astroPlayerLiftPx = 0;
+    state.astroPlayerScale = 1;
 
-  renderAstroEntities();
-  resetMoonOffscreen();
-  renderAstroEntities();
-  state.astroMoonVisible = false;
+    renderAstroEntities();
+    resetMoonOffscreen();
+    renderAstroEntities();
+    state.astroMoonVisible = false;
 
-  state.astroRaf = requestAnimationFrame(astroTick);
-}
+    state.astroRaf = requestAnimationFrame(astroTick);
+  }
 
-  async function finishGame(){
+  async function finishGame() {
     state.completed = true;
     state.endTime = performance.now();
 
@@ -1559,7 +1561,7 @@ function startAstroLoop(){
 
     const alreadyEarned = !!state.completionResult.alreadyCompleted;
 
-    if (alreadyEarned){
+    if (alreadyEarned) {
       state.medalMessage = "Great job!";
       state.medalSubmessage = "You finished Verse Launch!";
     } else {
@@ -1571,84 +1573,84 @@ function startAstroLoop(){
     setScreen("end");
   }
 
-async function handleLaunch(choiceId){
-  if (state.busy || state.menuOpen || state.helpOpen || state.completed) return;
+  async function handleLaunch(choiceId) {
+    if (state.busy || state.menuOpen || state.helpOpen || state.completed) return;
 
-  if (choiceId === "bonus_launch"){
+    if (choiceId === "bonus_launch") {
+      state.busy = true;
+      await playLaunchCountdown();
+
+      const liveSourceEl =
+        document.querySelector(`.vl-conveyor-choice[data-choice-id="${choiceId}"]`) ||
+        document.querySelector(`.vl-main-launcher[data-choice-id="${choiceId}"]`) ||
+        document.querySelector(`.vl-launcher-hitbox[data-choice-id="${choiceId}"]`)?.closest(".vl-main-launcher");
+
+      if (!liveSourceEl) {
+        state.busy = false;
+        render();
+        return;
+      }
+
+      await animateBonusLaunch(liveSourceEl);
+      state.busy = false;
+      await startBonusSequence();
+      return;
+    }
+
+    const choice = state.choices.find(c => c.id === choiceId);
+    if (!choice) return;
+
     state.busy = true;
-    await playLaunchCountdown();
+
+    const shouldShowInitialCountdown =
+      !state.hasShownInitialCountdown &&
+      currentPhase() === "words" &&
+      state.progressIndex === 0;
+
+    if (shouldShowInitialCountdown) {
+      state.hasShownInitialCountdown = true;
+      await playLaunchCountdown();
+    }
 
     const liveSourceEl =
-      document.querySelector(`.vl-main-launcher[data-choice-id="bonus_launch"]`) ||
-      document.querySelector(`.vl-launcher-hitbox[data-choice-id="bonus_launch"]`)?.closest(".vl-main-launcher");
+      document.querySelector(`.vl-main-launcher[data-choice-id="${choiceId}"]`) ||
+      document.querySelector(`.vl-launcher-hitbox[data-choice-id="${choiceId}"]`)?.closest(".vl-main-launcher");
 
-    if (!liveSourceEl){
+    if (!liveSourceEl) {
       state.busy = false;
       render();
       return;
     }
 
-    await animateBonusLaunch(liveSourceEl);
-    state.busy = false;
-    await startBonusSequence();
-    return;
-  }
+    if (choice.isCorrect) {
+      await fadeOutConveyor();
+      await animateLaunch(choice, liveSourceEl);
+      state.progressIndex += 1;
 
-  const choice = state.choices.find(c => c.id === choiceId);
-  if (!choice) return;
+      if (state.progressIndex >= state.segments.length) {
+        state.bonusReady = true;
+        state.busy = false;
+        render();
+        return;
+      }
 
-  state.busy = true;
-
-  const shouldShowInitialCountdown =
-    !state.hasShownInitialCountdown &&
-    currentPhase() === "words" &&
-    state.progressIndex === 0;
-
-  if (shouldShowInitialCountdown){
-    state.hasShownInitialCountdown = true;
-    await playLaunchCountdown();
-  }
-
-  const liveSourceEl =
-    document.querySelector(`.vl-conveyor-choice[data-choice-id="${choiceId}"]`) ||
-    document.querySelector(`.vl-main-launcher[data-choice-id="${choiceId}"]`) ||
-    document.querySelector(`.vl-launcher-hitbox[data-choice-id="${choiceId}"]`)?.closest(".vl-main-launcher");
-
-  if (!liveSourceEl){
-    state.busy = false;
-    render();
-    return;
-  }
-
-  if (choice.isCorrect){
-    await fadeOutConveyor();
-    await animateLaunch(choice, liveSourceEl);
-    state.progressIndex += 1;
-
-    if (state.progressIndex >= state.segments.length){
-      state.bonusReady = true;
+      buildChoices();
       state.busy = false;
       render();
       return;
     }
 
-    buildChoices();
+    await animateFailedLaunch(liveSourceEl);
+    flashWrongBoard();
+    showBuildShake();
+
+    await sleep(140);
+
     state.busy = false;
-    render();
-    return;
   }
 
-  await animateFailedLaunch(liveSourceEl);
-  flashWrongBoard();
-  showBuildShake();
-
-  await sleep(140);
-
-  state.busy = false;
-}
-
-  function setScreen(screen){ state.screen = screen; render(); }
-  function render(){
+  function setScreen(screen) { state.screen = screen; render(); }
+  function render() {
     if (state.screen === "intro") return renderIntro();
     if (state.screen === "mode") return renderMode();
     if (state.screen === "game") return renderGame();
