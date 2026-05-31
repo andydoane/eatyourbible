@@ -101,7 +101,11 @@
   const astroInput = {
     leftKey: false,
     rightKey: false,
-    pointerDir: 0
+    pointerDir: 0,
+    tiltEnabled: false,
+    tiltPermissionState: "unknown",
+    tiltRawDir: 0,
+    tiltDir: 0
   };
 
   const ASTRO_DURATION_BY_MODE_MS = {
@@ -578,9 +582,7 @@
             </div>
           </div>
           <div class="vl-travel-text ${state.bonusTravelTextVisible ? "is-visible" : ""}" id="vlTravelText">
-            Reach the moon!<br>
-            Dodge the asteroids.<br>
-            Tap the arrows to steer.
+            ${bonusTravelInstructionHtml()}
           </div>
           <div class="vl-screen-fade ${state.bonusFadeActive ? "is-active" : ""}"></div>
         </div>
@@ -1097,6 +1099,107 @@
   }
 
 
+  function clamp(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
+
+  function isLikelyTouchDevice() {
+    return navigator.maxTouchPoints > 0 ||
+      window.matchMedia?.("(pointer: coarse)")?.matches;
+  }
+
+  function hasDeviceOrientationSupport() {
+    return typeof window.DeviceOrientationEvent !== "undefined";
+  }
+
+  function shouldTryTiltControls() {
+    return isLikelyTouchDevice() && hasDeviceOrientationSupport();
+  }
+
+  function bonusTravelInstructionHtml() {
+    if (shouldTryTiltControls()) {
+      if (astroInput.tiltEnabled) {
+        return `
+            Reach the moon!<br>
+            Dodge the asteroids.<br>
+            Tilt to steer, or tap the arrows.
+          `;
+      }
+
+      if (astroInput.tiltPermissionState === "denied") {
+        return `
+            Reach the moon!<br>
+            Dodge the asteroids.<br>
+            Tap the arrows to steer.
+          `;
+      }
+
+      return `
+            Reach the moon!<br>
+            Dodge the asteroids.<br>
+            Tilt to steer, or tap the arrows.
+          `;
+    }
+
+    return `
+            Reach the moon!<br>
+            Dodge the asteroids.<br>
+            Use arrow keys to steer.
+          `;
+  }
+
+  async function requestAstroTiltPermission() {
+    if (!shouldTryTiltControls()) {
+      astroInput.tiltPermissionState = "unavailable";
+      astroInput.tiltEnabled = false;
+      return false;
+    }
+
+    try {
+      if (typeof DeviceOrientationEvent.requestPermission === "function") {
+        const result = await DeviceOrientationEvent.requestPermission();
+        astroInput.tiltPermissionState = result;
+        astroInput.tiltEnabled = result === "granted";
+        return astroInput.tiltEnabled;
+      }
+
+      astroInput.tiltPermissionState = "granted";
+      astroInput.tiltEnabled = true;
+      return true;
+    } catch (err) {
+      console.warn("Tilt permission request failed", err);
+      astroInput.tiltPermissionState = "denied";
+      astroInput.tiltEnabled = false;
+      return false;
+    }
+  }
+
+  function handleAstroOrientation(event) {
+    if (!astroInput.tiltEnabled) return;
+
+    const gamma = Number(event.gamma);
+    if (!Number.isFinite(gamma)) return;
+
+    const deadZone = 3;
+    const maxTilt = 22;
+
+    let targetDir = 0;
+
+    if (Math.abs(gamma) > deadZone) {
+      const adjusted = gamma > 0 ? gamma - deadZone : gamma + deadZone;
+      targetDir = clamp(adjusted / maxTilt, -1, 1);
+    }
+
+    astroInput.tiltRawDir = targetDir;
+    astroInput.tiltDir = (astroInput.tiltDir * 0.78) + (targetDir * 0.22);
+
+    if (Math.abs(astroInput.tiltDir) < 0.08) {
+      astroInput.tiltDir = 0;
+    }
+
+    syncAstroMoveDir();
+  }
+
   function canUseAstroControls() {
     return state.screen === "asteroids" &&
       state.astroRunning &&
@@ -1117,13 +1220,17 @@
         astroInput.rightKey && !astroInput.leftKey ? 1 :
           0;
 
-    state.astroMoveDir = astroInput.pointerDir || keyboardDir;
+    const tiltDir = astroInput.tiltEnabled ? astroInput.tiltDir : 0;
+
+    state.astroMoveDir = astroInput.pointerDir || keyboardDir || tiltDir;
   }
 
   function resetAstroInput() {
     astroInput.leftKey = false;
     astroInput.rightKey = false;
     astroInput.pointerDir = 0;
+    astroInput.tiltRawDir = 0;
+    astroInput.tiltDir = 0;
     state.astroMoveDir = 0;
   }
 
@@ -1182,6 +1289,7 @@
 
   window.addEventListener("keydown", handleAstroKeyDown);
   window.addEventListener("keyup", handleAstroKeyUp);
+  window.addEventListener("deviceorientation", handleAstroOrientation, true);
 
   function modeAstroMultiplier() {
     return ASTRO_MODE_MULTIPLIER[state.mode] || 1;
@@ -2120,6 +2228,9 @@
 
     if (choiceId === "bonus_launch") {
       state.busy = true;
+
+      await requestAstroTiltPermission();
+
       await fadeOutBonusLaunchButton();
       await playLaunchCountdown();
       await animateFinalLaunch();
