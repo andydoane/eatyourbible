@@ -78,9 +78,12 @@
     astroSpinMs: 0,
     astroAsteroids: [],
     astroStars: [],
+    astroProjectiles: [],
     astroStarCount: 0,
     astroSpawnCooldownMs: 0,
     astroStarSpawnCooldownMs: 0,
+    astroProjectileCooldownMs: 0,
+    astroProjectileColorIndex: 0,
     astroLastSpawnX: -1,
     astroLastStarSpawnX: -1,
     astroDrainPhase: false,
@@ -116,10 +119,23 @@
 
   const ASTRO_HITBOX_SCALE = 0.5;
   const STAR_HITBOX_SCALE = 0.78;
+  const PROJECTILE_HITBOX_SCALE = 0.85;
   const ASTRO_BASE_SPEED_VH_PER_SEC = 42;
   const STAR_BASE_SPEED_VH_PER_SEC = 34;
+  const PROJECTILE_BASE_SPEED_VH_PER_SEC = 126;
   const ASTRO_MODE_MULTIPLIER = { easy: 1, medium: 1.18, hard: 1.38 };
   const STAR_MODE_MULTIPLIER = { easy: 0.92, medium: 1, hard: 1.08 };
+  const BLASTER_STAR_COUNT = 5;
+  const PROJECTILE_COOLDOWN_MS = 520;
+  const PROJECTILE_COLORS = [
+    "#ff5a51",
+    "#ffa351",
+    "#ffc751",
+    "#a7cb6f",
+    "#64b5f6",
+    "#7f66c6",
+    "#ff8cc8"
+  ];
 
   const $ = (s) => document.querySelector(s);
   const sleep = (ms) => new Promise(r => setTimeout(r, ms));
@@ -212,9 +228,12 @@
     state.astroSpinMs = 0;
     state.astroAsteroids = [];
     state.astroStars = [];
+    state.astroProjectiles = [];
     state.astroStarCount = 0;
     state.astroSpawnCooldownMs = 0;
     state.astroStarSpawnCooldownMs = 0;
+    state.astroProjectileCooldownMs = 0;
+    state.astroProjectileColorIndex = 0;
     state.astroLastSpawnX = -1;
     state.astroLastStarSpawnX = -1;
     state.astroDrainPhase = false;
@@ -865,10 +884,11 @@
   }
 
   function bonusGlowLevelForStarCount(count) {
-    if (count >= 7) return 3;
-    if (count >= 6) return 2;
-    if (count >= 5) return 1;
     return 0;
+  }
+
+  function bonusBlasterActive() {
+    return state.astroStarCount >= BLASTER_STAR_COUNT;
   }
 
   function bonusTrailVarsForStarCount(count) {
@@ -1129,7 +1149,7 @@
         return `
             Reach the moon!<br>
             Dodge the asteroids.<br>
-            Tilt to steer, or tap the arrows.
+            Tilt to steer.
           `;
       }
 
@@ -1821,14 +1841,12 @@
     trail.classList.toggle("is-rainbow", !!trailVars.rainbow);
 
     unit.classList.toggle("is-rainbow-rocket", state.bonusRocketColorKey === "rainbow");
-    unit.classList.toggle("is-glow-1", trailVars.glowLevel === 1);
-    unit.classList.toggle("is-glow-2", trailVars.glowLevel === 2);
-    unit.classList.toggle("is-glow-3", trailVars.glowLevel >= 3);
+    unit.classList.toggle("is-blaster-active", bonusBlasterActive());
 
     unit.style.left = `${leftPx}px`;
     unit.style.transform = `translateX(-50%) translateY(${-state.astroPlayerLiftPx}px) rotate(${state.astroPlayerTilt + state.astroSpinDeg}deg) scale(${state.astroPlayerScale})`;
 
-    layer.querySelectorAll(".vl-asteroid, .vl-star").forEach(n => n.remove());
+    layer.querySelectorAll(".vl-asteroid, .vl-star, .vl-astro-projectile").forEach(n => n.remove());
 
     state.astroStars.forEach(star => {
       const img = document.createElement("img");
@@ -1841,6 +1859,18 @@
       img.style.transform = `rotate(${star.rot}deg)`;
       layer.appendChild(img);
     });
+
+    state.astroProjectiles.forEach(projectile => {
+      const shot = document.createElement("div");
+      shot.className = "vl-astro-projectile";
+      shot.style.width = `${projectile.size}px`;
+      shot.style.height = `${projectile.size}px`;
+      shot.style.left = `${rect.width * projectile.x - projectile.size / 2}px`;
+      shot.style.top = `${projectile.yPx - projectile.size / 2}px`;
+      shot.style.setProperty("--vl-projectile-color", projectile.color);
+      layer.appendChild(shot);
+    });
+
 
     state.astroAsteroids.forEach(ast => {
       const img = document.createElement("img");
@@ -1879,6 +1909,126 @@
     return Math.abs(rocketX - astX) < (rocketW + astW) / 2 &&
       Math.abs(rocketY - astY) < (rocketH + astH) / 2;
   }
+
+  function projectileSpeedPxPerSec(viewH) {
+    return (PROJECTILE_BASE_SPEED_VH_PER_SEC / 100) * viewH;
+  }
+
+  function maybeFireAstroProjectile(dtMs, stageRect) {
+    if (!bonusBlasterActive()) return;
+    if (state.astroMoonPhase || state.astroDrainPhase || state.astroLandingPhase) return;
+
+    state.astroProjectileCooldownMs = Math.max(0, state.astroProjectileCooldownMs - dtMs);
+    if (state.astroProjectileCooldownMs > 0) return;
+
+    const size = Math.max(12, Math.min(18, stageRect.width * 0.038));
+    const rocketCenterY = stageRect.height - 118 - 42 - state.astroPlayerLiftPx;
+    const noseY = rocketCenterY - 46;
+    const color = PROJECTILE_COLORS[state.astroProjectileColorIndex % PROJECTILE_COLORS.length];
+
+    state.astroProjectileColorIndex += 1;
+
+    state.astroProjectiles.push({
+      id: `projectile_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      x: state.astroPlayerX,
+      yPx: noseY,
+      size,
+      color
+    });
+
+    state.astroProjectileCooldownMs = PROJECTILE_COOLDOWN_MS;
+  }
+
+  function updateAstroProjectiles(dtSec, stageRect) {
+    const speed = projectileSpeedPxPerSec(stageRect.height);
+
+    state.astroProjectiles.forEach(projectile => {
+      projectile.yPx -= speed * dtSec;
+    });
+
+    state.astroProjectiles = state.astroProjectiles.filter(projectile => {
+      return projectile.yPx > -projectile.size - 24;
+    });
+  }
+
+  function projectileHitTest(stageRect, projectile, asteroid) {
+    const projectileX = stageRect.width * projectile.x;
+    const projectileY = projectile.yPx;
+    const projectileW = projectile.size * PROJECTILE_HITBOX_SCALE;
+    const projectileH = projectile.size * PROJECTILE_HITBOX_SCALE;
+
+    const astX = stageRect.width * asteroid.x;
+    const astY = asteroid.yPx + asteroid.size / 2;
+    const astW = asteroid.size * 0.58;
+    const astH = asteroid.size * 0.58;
+
+    return Math.abs(projectileX - astX) < (projectileW + astW) / 2 &&
+      Math.abs(projectileY - astY) < (projectileH + astH) / 2;
+  }
+
+  function spawnAsteroidPopBurst(stageRect, asteroid) {
+    const layer = $("#vlSpaceLayer");
+    if (!layer) return;
+
+    const x = stageRect.width * asteroid.x;
+    const y = asteroid.yPx + asteroid.size / 2;
+    const count = 16;
+    const baseDistance = Math.max(32, asteroid.size * 0.48);
+
+    for (let i = 0; i < count; i++) {
+      const particle = document.createElement("div");
+      particle.className = "vl-asteroid-pop-particle";
+
+      const angle = (Math.PI * 2 * i) / count;
+      const distance = baseDistance * (0.72 + Math.random() * 0.56);
+      const size = Math.max(8, asteroid.size * (0.10 + Math.random() * 0.07));
+      const color = PROJECTILE_COLORS[i % PROJECTILE_COLORS.length];
+
+      particle.style.left = `${x}px`;
+      particle.style.top = `${y}px`;
+      particle.style.width = `${size}px`;
+      particle.style.height = `${size}px`;
+      particle.style.background = color;
+      particle.style.setProperty("--dx", `${Math.cos(angle) * distance}px`);
+      particle.style.setProperty("--dy", `${Math.sin(angle) * distance}px`);
+
+      layer.appendChild(particle);
+      particle.addEventListener("animationend", () => particle.remove(), { once: true });
+    }
+  }
+
+  function handleAstroProjectileCollisions(stageRect) {
+    if (!state.astroProjectiles.length || !state.astroAsteroids.length) return;
+
+    const destroyedProjectileIds = new Set();
+    const destroyedAsteroidIds = new Set();
+
+    for (const projectile of state.astroProjectiles) {
+      if (destroyedProjectileIds.has(projectile.id)) continue;
+
+      for (const asteroid of state.astroAsteroids) {
+        if (destroyedAsteroidIds.has(asteroid.id)) continue;
+
+        if (projectileHitTest(stageRect, projectile, asteroid)) {
+          destroyedProjectileIds.add(projectile.id);
+          destroyedAsteroidIds.add(asteroid.id);
+          spawnAsteroidPopBurst(stageRect, asteroid);
+          break;
+        }
+      }
+    }
+
+    if (!destroyedProjectileIds.size && !destroyedAsteroidIds.size) return;
+
+    state.astroProjectiles = state.astroProjectiles.filter(projectile => {
+      return !destroyedProjectileIds.has(projectile.id);
+    });
+
+    state.astroAsteroids = state.astroAsteroids.filter(asteroid => {
+      return !destroyedAsteroidIds.has(asteroid.id);
+    });
+  }
+
 
   function starHitTest(stageRect, star) {
     const rocketX = stageRect.width * state.astroPlayerX;
@@ -1932,9 +2082,7 @@
     const upgraded =
       previousRocketKey !== nextRocketKey ||
       state.astroStarCount === 3 ||
-      state.astroStarCount === 5 ||
-      state.astroStarCount === 6 ||
-      state.astroStarCount === 7;
+      state.astroStarCount === BLASTER_STAR_COUNT;
 
     const counter = $("#vlStarCounter");
     if (counter) {
@@ -2054,6 +2202,7 @@
       state.astroTimerMs += dtMs;
       maybeSpawnAsteroid(dtMs, rect.width);
       maybeSpawnStar(dtMs, rect.width);
+      maybeFireAstroProjectile(dtMs, rect);
 
       const fallSpeed = asteroidSpeedPxPerSec(rect.height);
       const starFallSpeed = starSpeedPxPerSec(rect.height);
@@ -2068,8 +2217,12 @@
         star.rot += star.rotSpeed * dtSec;
       });
 
+      updateAstroProjectiles(dtSec, rect);
+
       state.astroAsteroids = state.astroAsteroids.filter(ast => ast.yPx < rect.height + ast.size + 20);
       state.astroStars = state.astroStars.filter(star => star.yPx < rect.height + star.size + 20);
+
+      handleAstroProjectileCollisions(rect);
 
       for (const star of [...state.astroStars]) {
         if (starHitTest(rect, star)) {
@@ -2105,8 +2258,12 @@
         star.rot += star.rotSpeed * dtSec;
       });
 
+      updateAstroProjectiles(dtSec, rect);
+
       state.astroAsteroids = state.astroAsteroids.filter(ast => ast.yPx < rect.height + ast.size + 20);
       state.astroStars = state.astroStars.filter(star => star.yPx < rect.height + star.size + 20);
+
+      handleAstroProjectileCollisions(rect);
 
       if (state.astroDrainPhase) {
         state.astroPlayerTilt *= 0.88;
@@ -2167,10 +2324,13 @@
     state.astroSpinMs = 0;
     state.astroAsteroids = [];
     state.astroStars = [];
+    state.astroProjectiles = [];
     state.astroStarCount = 0;
     state.bonusRocketColorKey = "red";
     state.astroSpawnCooldownMs = 0;
     state.astroStarSpawnCooldownMs = 650;
+    state.astroProjectileCooldownMs = 0;
+    state.astroProjectileColorIndex = 0;
     state.astroLastSpawnX = -1;
     state.astroLastStarSpawnX = -1;
     state.astroDrainPhase = false;

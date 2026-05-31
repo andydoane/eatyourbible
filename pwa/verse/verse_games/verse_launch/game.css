@@ -1274,34 +1274,10 @@ select {
 .vl-player-unit.is-rainbow-rocket .vl-player-rocket-img {
   width: calc(var(--vl-player-rocket-size) * var(--vl-rainbow-rocket-scale));
   height: calc(var(--vl-player-rocket-size) * var(--vl-rainbow-rocket-scale));
-  filter:
-    drop-shadow(0 10px 16px rgba(0, 0, 0, .28))
-    drop-shadow(0 0 8px rgba(255, 199, 81, .62));
+  filter: drop-shadow(0 10px 16px rgba(0, 0, 0, .28));
 }
 
-.vl-player-unit.is-rainbow-rocket.is-glow-1 .vl-player-rocket-img {
-  filter:
-    drop-shadow(0 10px 16px rgba(0, 0, 0, .28))
-    drop-shadow(0 0 10px rgba(255, 199, 81, .70))
-    drop-shadow(0 0 14px rgba(255, 140, 200, .55));
-}
 
-.vl-player-unit.is-rainbow-rocket.is-glow-2 .vl-player-rocket-img {
-  filter:
-    drop-shadow(0 10px 16px rgba(0, 0, 0, .28))
-    drop-shadow(0 0 12px rgba(255, 199, 81, .78))
-    drop-shadow(0 0 18px rgba(100, 181, 246, .62))
-    drop-shadow(0 0 22px rgba(255, 140, 200, .58));
-}
-
-.vl-player-unit.is-rainbow-rocket.is-glow-3 .vl-player-rocket-img {
-  filter:
-    drop-shadow(0 10px 16px rgba(0, 0, 0, .28))
-    drop-shadow(0 0 14px rgba(255, 255, 255, .86))
-    drop-shadow(0 0 22px rgba(255, 199, 81, .78))
-    drop-shadow(0 0 28px rgba(100, 181, 246, .68))
-    drop-shadow(0 0 34px rgba(255, 140, 200, .66));
-}
 
 .vl-player-particle-trail {
   position: absolute;
@@ -1361,6 +1337,24 @@ select {
   pointer-events: none;
   z-index: 7;
   animation: vlStarSparkle 460ms ease-out forwards;
+}
+
+.vl-astro-projectile {
+  position: absolute;
+  border-radius: 999px;
+  background: var(--vl-projectile-color, #ffc751);
+  box-shadow: 0 0 8px var(--vl-projectile-color, #ffc751);
+  pointer-events: none;
+  z-index: 6;
+}
+
+.vl-asteroid-pop-particle {
+  position: absolute;
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 7;
+  animation: vlAsteroidPopParticle 420ms ease-out forwards;
 }
 
 .vl-space-controls {
@@ -1432,6 +1426,18 @@ select {
   height: 34px;
   object-fit: contain;
   display: block;
+}
+
+@keyframes vlAsteroidPopParticle {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) translate(0, 0) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translate(var(--dx, 0px), var(--dy, 0px)) scale(.18);
+  }
 }
 
 @keyframes vlStarSparkle {
