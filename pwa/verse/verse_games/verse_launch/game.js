@@ -1981,7 +1981,7 @@
 
       const angle = (Math.PI * 2 * i) / count;
       const distance = baseDistance * (0.72 + Math.random() * 0.56);
-      const size = Math.max(8, asteroid.size * (0.10 + Math.random() * 0.07));
+      const size = Math.max(12, asteroid.size * 0.14);
       const color = PROJECTILE_COLORS[i % PROJECTILE_COLORS.length];
 
       particle.style.left = `${x}px`;
