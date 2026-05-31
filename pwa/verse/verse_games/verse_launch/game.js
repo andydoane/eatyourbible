@@ -139,8 +139,8 @@
   const PROJECTILE_BASE_SPEED_VH_PER_SEC = 126;
   const ASTRO_MODE_MULTIPLIER = { easy: 1, medium: 1.18, hard: 1.38 };
   const STAR_MODE_MULTIPLIER = { easy: 0.92, medium: 1, hard: 1.08 };
-  const BLASTER_STAR_COUNT = 5;
-  const SPREAD_SHOT_STAR_COUNT = 6;
+  const BLASTER_STAR_COUNT = 4;
+  const SPREAD_SHOT_STAR_COUNT = 5;
   const PROJECTILE_COOLDOWN_MS = 520;
   const PROJECTILE_COLORS = [
     "#ff5a51",
@@ -1363,7 +1363,7 @@
   }
 
   function bonusRocketKeyForStarCount(count) {
-    if (count >= 4) return "rainbow";
+    if (count >= 3) return "rainbow";
     if (count >= 2) return "blue";
     if (count >= 1) return "yellow";
     return "red";
