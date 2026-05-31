@@ -586,10 +586,14 @@
     return buttonHeight * CONVEYOR_SHIP_HEIGHT_MULTIPLIER;
   }
 
+  function randomConveyorCorrectDelay() {
+    return 1 + Math.floor(Math.random() * 3);
+  }
+
   function resetConveyorTargetPlanner() {
     state.conveyorCorrectVisible = false;
     state.conveyorSpawnCount = 0;
-    state.conveyorForceCorrectIn = 1;
+    state.conveyorForceCorrectIn = randomConveyorCorrectDelay();
   }
 
   function conveyorVisibleItems() {
@@ -898,7 +902,7 @@
     });
 
     state.conveyorSpawnCount = 1;
-    state.conveyorForceCorrectIn = 1;
+    state.conveyorForceCorrectIn = randomConveyorCorrectDelay();
     state.conveyorCorrectVisible = false;
   }
   
@@ -971,7 +975,7 @@
     removed.forEach(item => {
       if (item.isCorrect) {
         state.conveyorCorrectVisible = false;
-        state.conveyorForceCorrectIn = 1 + Math.floor(Math.random() * 2);
+        state.conveyorForceCorrectIn = randomConveyorCorrectDelay();
       }
 
       const el = document.querySelector(`.vl-conveyor-choice[data-choice-id="${item.id}"]`);
