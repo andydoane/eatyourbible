@@ -384,14 +384,18 @@ select {
 }
 
 .vl-conveyor-choice {
-  --vl-ufo-scale: clamp(.72, 0.42vw + .62, 1);
-  --vl-ufo-base-height: calc(68px * var(--vl-ufo-scale));
-  --vl-ufo-width: min(calc(260px * var(--vl-ufo-scale)), 72vw);
+  --vl-ufo-button-height: clamp(44px, 10.5vw, 68px);
+  --vl-ufo-top-aspect: 1.686;
+  --vl-ufo-top-height: calc(var(--vl-ufo-button-height) * 1.17);
+  --vl-ufo-top-width: calc(var(--vl-ufo-top-height) * var(--vl-ufo-top-aspect));
+  --vl-ufo-button-min-width: calc(var(--vl-ufo-top-width) * 1.5);
+  --vl-ufo-button-max-width: min(78vw, 340px);
 
   position: absolute;
   left: 0;
   top: 60%;
-  min-width: var(--vl-ufo-width);
+  width: max-content;
+  min-width: var(--vl-ufo-button-min-width);
   border: 0;
   padding: 0;
   background: transparent;
@@ -428,8 +432,10 @@ select {
 .vl-ufo-float {
   position: relative;
   display: inline-flex;
-  width: var(--vl-ufo-width);
-  height: calc(var(--vl-ufo-base-height) * 2.10);
+  width: max-content;
+  min-width: var(--vl-ufo-button-min-width);
+  max-width: var(--vl-ufo-button-max-width);
+  height: calc(var(--vl-ufo-button-height) * 2.10);
   align-items: flex-end;
   justify-content: center;
   isolation: isolate;
@@ -440,8 +446,8 @@ select {
 .vl-ufo-top-wrap {
   position: absolute;
   left: 50%;
-  bottom: calc(var(--vl-ufo-base-height) * .93);
-  height: calc(var(--vl-ufo-base-height) * 1.17);
+  bottom: calc(var(--vl-ufo-button-height) * .93);
+  height: var(--vl-ufo-top-height);
   transform: translateX(-50%);
   z-index: 3;
   pointer-events: none;
@@ -456,20 +462,24 @@ select {
 .vl-ufo-base {
   position: relative;
   z-index: 2;
-  width: var(--vl-ufo-width);
-  min-height: var(--vl-ufo-base-height);
-  padding: calc(var(--vl-ufo-base-height) * .16) calc(var(--vl-ufo-base-height) * .38);
+  width: max-content;
+  min-width: var(--vl-ufo-button-min-width);
+  max-width: var(--vl-ufo-button-max-width);
+  height: var(--vl-ufo-button-height);
+  padding: 0 calc(var(--vl-ufo-button-height) * .42);
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   background: linear-gradient(to bottom, #f2f2f2 0%, #e6e6e6 54%, #d4d4d4 100%);
   color: #666666;
-  font-size: clamp(24px, 7.4vw, 36px);
+  font-size: clamp(22px, calc(var(--vl-ufo-button-height) * .52), 35px);
   font-weight: 900;
-  line-height: .98;
+  line-height: .92;
   text-align: center;
-  text-wrap: balance;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   box-shadow:
     0 8px 0 rgba(0, 0, 0, .22),
     0 16px 22px rgba(77, 249, 253, .26);
@@ -493,6 +503,9 @@ select {
   position: relative;
   z-index: 2;
   color: #666666;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .vl-bonus-launch-wrap {
