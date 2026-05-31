@@ -1507,6 +1507,22 @@
     return Math.max(8, asteroid.size * 0.20);
   }
 
+  function bonusRocketBottomOffsetPx() {
+    return bonusRocketVisualSizePx() * 0.5;
+  }
+
+  function astroRocketCenterYPx(stageRect) {
+    const rocketSize = bonusRocketVisualSizePx();
+    return stageRect.height -
+      bonusRocketBottomOffsetPx() -
+      rocketSize / 2 -
+      state.astroPlayerLiftPx;
+  }
+
+  function astroRocketNoseYPx(stageRect) {
+    return astroRocketCenterYPx(stageRect) - bonusRocketVisualSizePx() * 0.55;
+  }
+
   function renderCyanUfoTrail(trail) {
     if (!trail || trail.dataset.ready === "true") return;
 
@@ -2554,11 +2570,10 @@
   }
 
 
-
   function asteroidHitTest(stageRect, asteroid) {
     const rocketSize = bonusRocketVisualSizePx();
     const rocketX = stageRect.width * state.astroPlayerX;
-    const rocketY = stageRect.height - 118 - 42;
+    const rocketY = astroRocketCenterYPx(stageRect);
     const rocketW = rocketSize * ASTRO_HITBOX_SCALE;
     const rocketH = rocketSize * ASTRO_HITBOX_SCALE;
 
@@ -2583,8 +2598,7 @@
     if (state.astroProjectileCooldownMs > 0) return;
 
     const size = bonusProjectileSizePx();
-    const rocketCenterY = stageRect.height - 118 - 42 - state.astroPlayerLiftPx;
-    const noseY = rocketCenterY - 46;
+    const noseY = astroRocketNoseYPx(stageRect);
     const color = PROJECTILE_COLORS[state.astroProjectileColorIndex % PROJECTILE_COLORS.length];
 
     state.astroProjectileColorIndex += 1;
@@ -2704,11 +2718,10 @@
     });
   }
 
-
   function starHitTest(stageRect, star) {
-    const rocketX = stageRect.width * state.astroPlayerX;
-    const rocketY = stageRect.height - 118 - 42;
     const rocketSize = bonusRocketVisualSizePx();
+    const rocketX = stageRect.width * state.astroPlayerX;
+    const rocketY = astroRocketCenterYPx(stageRect);
     const rocketW = rocketSize * STAR_HITBOX_SCALE;
     const rocketH = rocketSize * STAR_HITBOX_SCALE;
 
@@ -2720,6 +2733,7 @@
     return Math.abs(rocketX - starX) < (rocketW + starW) / 2 &&
       Math.abs(rocketY - starY) < (rocketH + starH) / 2;
   }
+  
 
   function spawnStarCollectBurst(stageRect, star) {
     const layer = $("#vlSpaceLayer");
