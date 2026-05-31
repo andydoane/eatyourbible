@@ -443,6 +443,20 @@ select {
   animation-delay: var(--vl-ufo-bob-delay, 0ms);
 }
 
+.vl-ufo-float::after {
+  content: "";
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  bottom: -11px;
+  height: 18px;
+  border-radius: 999px;
+  background: rgba(77, 249, 253, .42);
+  filter: blur(10px);
+  z-index: 1;
+  pointer-events: none;
+}
+
 .vl-ufo-top-wrap {
   position: absolute;
   left: 50%;
@@ -481,22 +495,11 @@ select {
   overflow: hidden;
   text-overflow: ellipsis;
   box-shadow:
-    0 8px 0 rgba(0, 0, 0, .22),
-    0 16px 22px rgba(77, 249, 253, .26);
+    0 8px 0 rgba(0, 0, 0, .22);
 }
 
 .vl-ufo-base::after {
-  content: "";
-  position: absolute;
-  left: 14%;
-  right: 14%;
-  bottom: -11px;
-  height: 18px;
-  border-radius: 999px;
-  background: rgba(77, 249, 253, .42);
-  filter: blur(10px);
-  z-index: -1;
-  pointer-events: none;
+  display: none;
 }
 
 .vl-ufo-word {

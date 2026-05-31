@@ -1065,6 +1065,18 @@
   function makeUfoLaunchClone(sourceEl) {
     const rect = sourceEl.getBoundingClientRect();
     const clone = sourceEl.cloneNode(true);
+    const styles = getComputedStyle(sourceEl);
+
+    [
+      "--vl-ufo-button-height",
+      "--vl-ufo-top-aspect",
+      "--vl-ufo-top-height",
+      "--vl-ufo-top-width",
+      "--vl-ufo-button-min-width",
+      "--vl-ufo-button-max-width"
+    ].forEach(name => {
+      clone.style.setProperty(name, styles.getPropertyValue(name).trim());
+    });
 
     clone.classList.remove("vl-conveyor-choice", "is-selected-launch", "is-fading-choice");
     clone.classList.add("vl-ufo-launch-clone");
