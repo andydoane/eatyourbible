@@ -482,20 +482,14 @@
         220
       );
 
-      const visibleGapPx = Math.max(
-        72,
-        Math.min(140, rect.width * 0.16)
-      );
+      const shipGapPx = maxChoiceWidth;
+      const spacingPx = maxChoiceWidth + shipGapPx;
+      const loopDistancePx = spacingPx * choices.length;
 
-      const spacingPx = maxChoiceWidth + visibleGapPx;
-      const sidePad = Math.max(80, maxChoiceWidth * 0.50);
+      const startX = rect.width + maxChoiceWidth;
+      const endX = startX - loopDistancePx;
 
-      const startX = rect.width + sidePad;
-      const convoyExtraPx = spacingPx * (choices.length - 1);
-      const endX = -maxChoiceWidth - sidePad - convoyExtraPx;
-
-      const distance = startX - endX;
-      const durationMs = Math.round((distance / speed) * 1000);
+      const durationMs = Math.round((loopDistancePx / speed) * 1000);
       const staggerMs = Math.round((spacingPx / speed) * 1000);
 
       choices.forEach((el, index) => {
