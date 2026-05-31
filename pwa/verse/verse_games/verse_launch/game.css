@@ -387,7 +387,7 @@ select {
   position: absolute;
   left: 0;
   top: 42%;
-  min-width: var(--vl-ufo-width);
+  min-width: min(260px, 74vw);
   border: 0;
   padding: 0;
   background: transparent;
