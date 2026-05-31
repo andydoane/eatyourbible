@@ -401,22 +401,18 @@ select {
   background: transparent;
   cursor: pointer;
   z-index: 2;
-  transform: translate(var(--vl-conveyor-start-x, 100vw), -50%);
-  animation: vlConveyorMove var(--vl-conveyor-duration, 8200ms) linear infinite;
-  animation-delay: var(--vl-conveyor-delay, 0ms);
-  animation-fill-mode: backwards;
+  transform: translate3d(var(--vl-conveyor-x, 100vw), -50%, 0);
+  will-change: transform;
   transition: opacity 220ms ease, filter 220ms ease;
 }
 
 .vl-conveyor-track.is-fading .vl-conveyor-choice,
 .vl-conveyor-choice.is-fading-choice {
-  animation-play-state: paused;
   opacity: 0;
   pointer-events: none;
 }
 
 .vl-conveyor-choice.is-selected-launch {
-  animation-play-state: paused;
   z-index: 6;
 }
 
@@ -509,6 +505,17 @@ select {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  opacity: 1;
+  transition: opacity 220ms ease;
+}
+
+.vl-conveyor-track.is-text-hidden .vl-ufo-word,
+.vl-conveyor-choice.is-text-hidden .vl-ufo-word {
+  opacity: 0;
+}
+
+.vl-conveyor-choice:disabled {
+  cursor: default;
 }
 
 .vl-bonus-launch-wrap {

@@ -47,6 +47,16 @@
     buildRemoving: new Set(),
     choices: [],
     choiceIndex: 0,
+
+    conveyorItems: [],
+    conveyorRaf: 0,
+    conveyorLastTs: 0,
+    conveyorNextId: 0,
+    conveyorTextHidden: false,
+    conveyorCorrectVisible: false,
+    conveyorSpawnCount: 0,
+    conveyorForceCorrectIn: 1,
+
     busy: false,
     menuOpen: false,
     helpOpen: false,
@@ -203,6 +213,16 @@
     state.buildRemoving = new Set();
     state.choices = [];
     state.choiceIndex = 0;
+
+    stopConveyorLoop();
+    state.conveyorItems = [];
+    state.conveyorLastTs = 0;
+    state.conveyorNextId = 0;
+    state.conveyorTextHidden = false;
+    state.conveyorCorrectVisible = false;
+    state.conveyorSpawnCount = 0;
+    state.conveyorForceCorrectIn = 1;
+
     state.busy = false;
     state.menuOpen = false;
     state.helpOpen = false;
@@ -441,83 +461,312 @@
     return 135;
   }
 
-  function renderConveyor() {
+  function conveyorShipTopWidthPx() {
+    const buttonHeight = Math.min(68, Math.max(44, window.innerWidth * 0.105));
+    return buttonHeight * 1.17 * 1.686;
+  }
+
+  function resetConveyorTargetPlanner() {
+    state.conveyorCorrectVisible = false;
+    state.conveyorSpawnCount = 0;
+    state.conveyorForceCorrectIn = 1;
+  }
+
+  function conveyorVisibleItems() {
+    return state.conveyorItems.filter(item => !item.removing);
+  }
+
+  function pickConveyorChoiceForSpawn() {
+    if (state.conveyorTextHidden) {
+      return {
+        label: "",
+        isCorrect: false,
+        blank: true
+      };
+    }
+
     const choices = state.choices || [];
+    if (!choices.length) return null;
+
+    const correct = choices.find(choice => choice.isCorrect);
+    const decoys = choices.filter(choice => !choice.isCorrect);
+
+    let selected;
+
+    const maySpawnCorrect =
+      correct &&
+      !state.conveyorCorrectVisible &&
+      state.conveyorSpawnCount > 0 &&
+      state.conveyorForceCorrectIn <= 0;
+
+    if (maySpawnCorrect) {
+      selected = correct;
+    } else {
+      selected = pickRandom(decoys.length ? decoys : choices);
+    }
+
+    if (selected.isCorrect) {
+      state.conveyorCorrectVisible = true;
+      state.conveyorForceCorrectIn = 0;
+    } else if (correct && !state.conveyorCorrectVisible && state.conveyorSpawnCount > 0) {
+      state.conveyorForceCorrectIn -= 1;
+    }
+
+    state.conveyorSpawnCount += 1;
+
+    return {
+      label: selected.label,
+      isCorrect: selected.isCorrect,
+      blank: false
+    };
+  }
+
+  function makeConveyorItem(choiceData, x) {
+    const id = `conveyor_${Date.now()}_${++state.conveyorNextId}`;
+
+    return {
+      id,
+      label: choiceData?.label || "",
+      isCorrect: !!choiceData?.isCorrect,
+      blank: !!choiceData?.blank,
+      x,
+      width: 0,
+      removing: false,
+      bobDelay: -(state.conveyorNextId % 7) * 360
+    };
+  }
+
+  function conveyorItemHtml(item) {
+    const hiddenClass = state.conveyorTextHidden || item.blank ? "is-text-hidden" : "";
+    const label = item.label || "";
+
+    return `
+      <button
+        class="vl-conveyor-choice vl-ufo-choice no-zoom ${hiddenClass}"
+        data-choice-id="${item.id}"
+        type="button"
+        ${state.conveyorTextHidden || item.blank ? "disabled" : ""}
+        aria-label="${label ? `Choose ${escapeHtml(label)}` : "Blank UFO"}"
+        style="--vl-conveyor-x:${item.x}px">
+        <span class="vl-ufo-float" style="--vl-ufo-bob-delay:${item.bobDelay}ms">
+          <span class="vl-ufo-top-wrap" aria-hidden="true">
+            <img class="vl-ufo-top" src="${UFO_TOP_IMAGE_SRC}" alt="">
+          </span>
+          <span class="vl-ufo-base">
+            <span class="vl-ufo-word">${escapeHtml(label)}</span>
+          </span>
+        </span>
+      </button>`;
+  }
+
+  function renderConveyor() {
     return `
       <div class="vl-conveyor" id="vlConveyor" aria-label="Tap the next correct word">
-        <div class="vl-conveyor-track" id="vlConveyorTrack">
-          ${choices.map((choice, index) => `
-            <button
-              class="vl-conveyor-choice vl-ufo-choice no-zoom"
-              data-choice-id="${choice.id}"
-              data-slot="${index}"
-              type="button"
-              aria-label="Choose ${escapeHtml(choice.label)}">
-              <span class="vl-ufo-float" style="--vl-ufo-bob-delay:${index * -420}ms">
-                <span class="vl-ufo-top-wrap" aria-hidden="true">
-                  <img class="vl-ufo-top" src="${UFO_TOP_IMAGE_SRC}" alt="">
-                </span>
-                <span class="vl-ufo-base">
-                  <span class="vl-ufo-word">${escapeHtml(choice.label)}</span>
-                </span>
-              </span>
-            </button>`).join("")}
+        <div class="vl-conveyor-track ${state.conveyorTextHidden ? "is-text-hidden" : ""}" id="vlConveyorTrack">
+          ${state.conveyorItems.map(item => conveyorItemHtml(item)).join("")}
         </div>
       </div>`;
   }
 
-  function syncConveyorTiming() {
-    requestAnimationFrame(() => {
-      const conveyor = document.getElementById("vlConveyor");
-      if (!conveyor) return;
+  function appendConveyorItemDom(item) {
+    const track = document.getElementById("vlConveyorTrack");
+    if (!track) return null;
 
-      const choices = [...conveyor.querySelectorAll(".vl-conveyor-choice")];
-      if (!choices.length) return;
+    const wrap = document.createElement("div");
+    wrap.innerHTML = conveyorItemHtml(item).trim();
 
-      const rect = conveyor.getBoundingClientRect();
-      const speed = conveyorSpeedPxPerSec();
+    const el = wrap.firstElementChild;
+    if (!el) return null;
 
-      const maxChoiceWidth = Math.max(
-        ...choices.map(el => el.getBoundingClientRect().width),
-        220
-      );
+    el.onclick = () => handleLaunch(item.id);
+    track.appendChild(el);
 
-      const shipGapPx = maxChoiceWidth;
-      const spacingPx = maxChoiceWidth + shipGapPx;
-      const loopDistancePx = spacingPx * choices.length;
+    const rect = el.getBoundingClientRect();
+    item.width = rect.width || Math.max(220, conveyorShipTopWidthPx() * 1.5);
 
-      const startX = rect.width + maxChoiceWidth;
-      const endX = startX - loopDistancePx;
+    return el;
+  }
 
-      const durationMs = Math.round((loopDistancePx / speed) * 1000);
-      const staggerMs = Math.round((spacingPx / speed) * 1000);
+  function updateConveyorItemDom(item) {
+    const el = document.querySelector(`.vl-conveyor-choice[data-choice-id="${item.id}"]`);
+    if (!el) return;
 
-      choices.forEach((el, index) => {
-        el.style.setProperty("--vl-conveyor-start-x", `${startX}px`);
-        el.style.setProperty("--vl-conveyor-end-x", `${endX}px`);
-        el.style.setProperty("--vl-conveyor-duration", `${durationMs}ms`);
-        el.style.setProperty("--vl-conveyor-delay", `${staggerMs * index}ms`);
-      });
+    el.style.setProperty("--vl-conveyor-x", `${item.x}px`);
+  }
+
+  function updateConveyorItemLabelDom(item) {
+    const el = document.querySelector(`.vl-conveyor-choice[data-choice-id="${item.id}"]`);
+    if (!el) return;
+
+    const word = el.querySelector(".vl-ufo-word");
+    if (word) word.textContent = item.label || "";
+
+    if (item.label && !state.conveyorTextHidden && !item.blank) {
+      el.disabled = false;
+      el.classList.remove("is-text-hidden");
+      el.setAttribute("aria-label", `Choose ${item.label}`);
+    } else {
+      el.disabled = true;
+      el.classList.add("is-text-hidden");
+      el.setAttribute("aria-label", "Blank UFO");
+    }
+  }
+
+  function removeConveyorItem(itemId) {
+    const index = state.conveyorItems.findIndex(item => item.id === itemId);
+    if (index < 0) return;
+
+    const [item] = state.conveyorItems.splice(index, 1);
+
+    if (item?.isCorrect) {
+      state.conveyorCorrectVisible = false;
+    }
+
+    const el = document.querySelector(`.vl-conveyor-choice[data-choice-id="${itemId}"]`);
+    if (el) el.remove();
+  }
+
+  function setConveyorWordsHidden(hidden) {
+    state.conveyorTextHidden = hidden;
+
+    const track = document.getElementById("vlConveyorTrack");
+    if (track) track.classList.toggle("is-text-hidden", hidden);
+
+    document.querySelectorAll(".vl-conveyor-choice").forEach(el => {
+      el.disabled = hidden;
+      el.classList.toggle("is-text-hidden", hidden);
     });
   }
 
-  async function fadeOutConveyor(exceptChoiceId = "") {
-    const track = document.getElementById("vlConveyorTrack");
-    if (!track) return;
+  function relabelVisibleConveyorItemsForCurrentTarget() {
+    resetConveyorTargetPlanner();
 
-    if (exceptChoiceId) {
-      track.querySelectorAll(".vl-conveyor-choice").forEach(choiceEl => {
-        if (choiceEl.dataset.choiceId === exceptChoiceId) {
-          choiceEl.classList.add("is-selected-launch");
-        } else {
-          choiceEl.classList.add("is-fading-choice");
-        }
-      });
-    } else {
-      track.classList.add("is-fading");
+    const items = conveyorVisibleItems()
+      .filter(item => item.x + (item.width || 0) > 0)
+      .sort((a, b) => a.x - b.x);
+
+    items.forEach(item => {
+      if (item.isCorrect) state.conveyorCorrectVisible = false;
+
+      const choiceData = pickConveyorChoiceForSpawn();
+      if (!choiceData) return;
+
+      item.label = choiceData.label;
+      item.isCorrect = choiceData.isCorrect;
+      item.blank = false;
+
+      updateConveyorItemLabelDom(item);
+    });
+  }
+
+  function spawnConveyorItem() {
+    const conveyor = document.getElementById("vlConveyor");
+    if (!conveyor) return;
+
+    const choiceData = pickConveyorChoiceForSpawn();
+    if (!choiceData) return;
+
+    const rect = conveyor.getBoundingClientRect();
+    const startX = rect.width + conveyorShipTopWidthPx();
+
+    const item = makeConveyorItem(choiceData, startX);
+    state.conveyorItems.push(item);
+
+    appendConveyorItemDom(item);
+  }
+
+  function maybeSpawnConveyorItems() {
+    const conveyor = document.getElementById("vlConveyor");
+    if (!conveyor) return;
+
+    const topGapPx = conveyorShipTopWidthPx();
+    const rect = conveyor.getBoundingClientRect();
+    const spawnX = rect.width + topGapPx;
+
+    let safety = 0;
+
+    while (safety < 5) {
+      safety += 1;
+
+      const visible = conveyorVisibleItems();
+      const rightMost = visible.length
+        ? Math.max(...visible.map(item => item.x + (item.width || 0)))
+        : -Infinity;
+
+      if (visible.length && spawnX - rightMost < topGapPx) break;
+
+      spawnConveyorItem();
+    }
+  }
+
+  function conveyorTick(ts) {
+    if (state.screen !== "game" || state.bonusReady) {
+      stopConveyorLoop();
+      return;
     }
 
-    await sleep(220);
+    const lastTs = state.conveyorLastTs || ts;
+    const dt = Math.min(40, ts - lastTs);
+    state.conveyorLastTs = ts;
+
+    const speed = conveyorSpeedPxPerSec();
+    const topGapPx = conveyorShipTopWidthPx();
+
+    state.conveyorItems.forEach(item => {
+      item.x -= speed * (dt / 1000);
+      updateConveyorItemDom(item);
+    });
+
+    const removed = [];
+
+    state.conveyorItems = state.conveyorItems.filter(item => {
+      const isOffscreen = item.x + (item.width || 0) < -topGapPx;
+      if (isOffscreen) removed.push(item);
+      return !isOffscreen;
+    });
+
+    removed.forEach(item => {
+      if (item.isCorrect) {
+        state.conveyorCorrectVisible = false;
+        state.conveyorForceCorrectIn = 1 + Math.floor(Math.random() * 2);
+      }
+
+      const el = document.querySelector(`.vl-conveyor-choice[data-choice-id="${item.id}"]`);
+      if (el) el.remove();
+    });
+
+    maybeSpawnConveyorItems();
+
+    state.conveyorRaf = requestAnimationFrame(conveyorTick);
+  }
+
+  function startConveyorLoop() {
+    if (state.conveyorRaf) return;
+
+    state.conveyorLastTs = 0;
+    maybeSpawnConveyorItems();
+    state.conveyorRaf = requestAnimationFrame(conveyorTick);
+  }
+
+  function stopConveyorLoop() {
+    if (state.conveyorRaf) {
+      cancelAnimationFrame(state.conveyorRaf);
+      state.conveyorRaf = 0;
+    }
+
+    state.conveyorLastTs = 0;
+  }
+
+  function updateBuildDisplay() {
+    const buildRender = renderBuildText();
+    const buildText = document.getElementById("vlBuildText");
+
+    if (buildText) {
+      buildText.className = buildRender.className;
+      buildText.innerHTML = buildRender.html;
+    }
+
+    fitBuildText();
   }
 
 
@@ -614,7 +863,7 @@
     wireGameScreen();
     syncGameMenuOpenState();
     fitBuildText();
-    syncConveyorTiming();
+    if (!state.bonusReady) startConveyorLoop();
   }
 
   function renderTravel() {
@@ -2551,42 +2800,50 @@
       return;
     }
 
-    const choice = state.choices.find(c => c.id === choiceId);
-    if (!choice) return;
+    const item = state.conveyorItems.find(entry => entry.id === choiceId);
+    if (!item || item.blank || state.conveyorTextHidden) return;
 
     state.busy = true;
 
-    const liveSourceEl =
-      document.querySelector(`.vl-conveyor-choice[data-choice-id="${choiceId}"]`) ||
-      document.querySelector(`.vl-main-launcher[data-choice-id="${choiceId}"]`) ||
-      document.querySelector(`.vl-launcher-hitbox[data-choice-id="${choiceId}"]`)?.closest(".vl-main-launcher");
+    const liveSourceEl = document.querySelector(`.vl-conveyor-choice[data-choice-id="${choiceId}"]`);
 
     if (!liveSourceEl) {
       state.busy = false;
-      render();
       return;
     }
 
-    if (choice.isCorrect) {
-      await fadeOutConveyor(choiceId);
+    if (item.isCorrect) {
+      setConveyorWordsHidden(true);
 
-      await animateLaunch(choice, liveSourceEl);
+      await animateLaunch(item, liveSourceEl);
+
+      removeConveyorItem(choiceId);
+
       state.progressIndex += 1;
+      updateBuildDisplay();
 
       if (state.progressIndex >= state.segments.length) {
         state.bonusReady = true;
+        stopConveyorLoop();
         state.busy = false;
         render();
         return;
       }
 
       buildChoices();
+      relabelVisibleConveyorItemsForCurrentTarget();
+
+      requestAnimationFrame(() => {
+        setConveyorWordsHidden(false);
+      });
+
       state.busy = false;
-      render();
       return;
     }
 
     await animateFailedLaunch(liveSourceEl);
+    removeConveyorItem(choiceId);
+
     flashWrongBoard();
     showBuildShake();
 
@@ -2595,7 +2852,12 @@
     state.busy = false;
   }
 
-  function setScreen(screen) { state.screen = screen; render(); }
+  function setScreen(screen) {
+    if (screen !== "game") stopConveyorLoop();
+    state.screen = screen;
+    render();
+  }
+  
   function render() {
     if (state.screen === "intro") return renderIntro();
     if (state.screen === "mode") return renderMode();
