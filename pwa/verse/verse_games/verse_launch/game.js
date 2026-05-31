@@ -567,6 +567,12 @@
     });
   }
 
+  function conveyorItemsInStream() {
+    return conveyorVisibleItems()
+      .filter(item => item.id && !item.removing)
+      .sort((a, b) => a.x - b.x);
+  }
+
   function conveyorVisibleLabelKeys(exceptItemId = "") {
     const keys = new Set();
 
@@ -596,10 +602,12 @@
 
   function pickConveyorChoiceForSpawn() {
     if (state.conveyorTextHidden) {
+      const label = pickUniqueConveyorDecoy(conveyorVisibleLabelKeys());
+
       return {
-        label: "",
+        label,
         isCorrect: false,
-        blank: true
+        blank: !label
       };
     }
 
@@ -770,14 +778,17 @@
   function relabelVisibleConveyorItemsForCurrentTarget() {
     state.conveyorCorrectVisible = false;
 
-    const items = conveyorItemsOnscreen()
-      .filter(item => item.id && !item.removing)
-      .sort((a, b) => a.x - b.x);
+    const items = conveyorItemsInStream();
 
     const reservedKeys = new Set();
 
     items.forEach(item => {
-      const label = pickUniqueConveyorDecoy(reservedKeys);
+      let label = pickUniqueConveyorDecoy(reservedKeys);
+
+      if (!label) {
+        label = pickUniqueConveyorDecoy(new Set());
+      }
+
       const key = normalizeWord(label);
 
       item.label = label;
