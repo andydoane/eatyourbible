@@ -599,7 +599,7 @@
           <div class="vl-player-unit vl-flight-unit--blastoff is-blasting" id="vlPlayerUnit">
             <div class="vl-blast-ship vl-player-blast-ship">
               <img class="vl-player-rocket-img" id="vlPlayerRocket" src="${rocket.src}" alt="">
-              <div class="vl-blast-trail vl-player-blast-trail" id="vlPlayerTrail" aria-hidden="true"></div>
+              <div class="vl-player-particle-trail" id="vlPlayerTrail" aria-hidden="true"></div>
             </div>
           </div>
           <div class="vl-space-status">
@@ -876,15 +876,13 @@
 
     if (count >= 3) {
       return {
-        core: "rgba(255,255,255,1)",
-        mid: "rgba(255,236,120,1)",
-        end: "rgba(100,181,246,0)",
-        glow: glowLevel >= 3
-          ? "rgba(255,255,255,1)"
+        colors: ["#ffffff", "#ffc751", "#a7cb6f", "#64b5f6", "#7f66c6", "#ff8cc8", "#ff5a51"],
+        glowColor: glowLevel >= 3
+          ? "rgba(255,255,255,.92)"
           : glowLevel >= 2
-            ? "rgba(255,140,200,.96)"
+            ? "rgba(255,140,200,.90)"
             : glowLevel >= 1
-              ? "rgba(255,140,200,.88)"
+              ? "rgba(255,140,200,.84)"
               : "rgba(255,140,200,.78)",
         rainbow: true,
         glowLevel
@@ -893,10 +891,8 @@
 
     if (count >= 2) {
       return {
-        core: "rgba(255,255,255,1)",
-        mid: "rgba(100,181,246,.96)",
-        end: "rgba(100,181,246,0)",
-        glow: "rgba(100,181,246,.72)",
+        colors: ["#ffffff", "#d4fafe", "#9ee7ff", "#64b5f6", "#4b7bec"],
+        glowColor: "rgba(100,181,246,.82)",
         rainbow: false,
         glowLevel
       };
@@ -904,24 +900,20 @@
 
     if (count >= 1) {
       return {
-        core: "rgba(255,255,255,1)",
-        mid: "rgba(255,236,120,1)",
-        end: "rgba(255,199,81,0)",
-        glow: "rgba(255,199,81,.74)",
+        colors: ["#ffffff", "#fff5b8", "#ffe066", "#ffc751", "#ffa351"],
+        glowColor: "rgba(255,199,81,.82)",
         rainbow: false,
         glowLevel
       };
     }
 
     return {
-      core: "rgba(255,255,255,1)",
-      mid: "rgba(255,163,81,.94)",
-      end: "rgba(255,90,81,0)",
-      glow: "rgba(255,199,81,.68)",
+      colors: ["#ffffff", "#ffd0cc", "#ff8a65", "#ff5a51", "#d83e36"],
+      glowColor: "rgba(255,90,81,.82)",
       rainbow: false,
       glowLevel
     };
-  }
+  } 
 
   function syncBonusRocketUpgrade() {
     state.bonusRocketColorKey = bonusRocketKeyForStarCount(state.astroStarCount);
@@ -938,6 +930,105 @@
     }
 
     return getRocketByKey(state.bonusRocketColorKey || "red");
+  }
+
+
+  function pseudoTrailRandom(index, salt) {
+    const n = Math.sin(index * 12.9898 + salt * 78.233) * 43758.5453;
+    return n - Math.floor(n);
+  }
+
+  function readPlayerRocketSizePx() {
+    const unit = $("#vlPlayerUnit");
+    if (!unit) return 84;
+
+    const value = getComputedStyle(unit).getPropertyValue("--vl-player-rocket-size").trim();
+    const parsed = parseFloat(value);
+
+    return Number.isFinite(parsed) ? parsed : 84;
+  }
+
+  function renderPlayerParticleTrail(trail, trailVars) {
+    if (!trail) return;
+
+    const rocketSize = readPlayerRocketSizePx();
+
+    const settings = {
+      particleCount: 35,
+      streamSources: 5,
+      particleSize: rocketSize * 0.25,
+      sizeRandomness: 0,
+      coneSpread: rocketSize * 0.375,
+      trailLength: rocketSize * 1.80,
+      speed: 1.25,
+      trajectoryRandomness: rocketSize * 0.146,
+      glow: rocketSize * 0.115,
+      originWidth: rocketSize * 0.219
+    };
+
+    const glowMultiplier =
+      trailVars.glowLevel >= 3 ? 2.25 :
+        trailVars.glowLevel >= 2 ? 1.75 :
+          trailVars.glowLevel >= 1 ? 1.35 :
+            1;
+
+    const signature = JSON.stringify({
+      rocketSize,
+      colors: trailVars.colors,
+      glowColor: trailVars.glowColor,
+      glowLevel: trailVars.glowLevel,
+      settings
+    });
+
+    if (trail.dataset.signature === signature) return;
+
+    trail.dataset.signature = signature;
+    trail.innerHTML = "";
+
+    const cycles = Math.max(1, Math.ceil(settings.particleCount / settings.streamSources));
+
+    for (let i = 0; i < settings.particleCount; i++) {
+      const particle = document.createElement("span");
+      particle.className = "vl-player-trail-particle";
+
+      const streamIndex = i % settings.streamSources;
+      const streamRatio = settings.streamSources === 1 ? 0.5 : streamIndex / (settings.streamSources - 1);
+      const centeredStream = (streamRatio - 0.5) * 2;
+      const cycle = Math.floor(i / settings.streamSources);
+      const progress = settings.particleCount <= 1 ? 0 : i / (settings.particleCount - 1);
+
+      const r1 = pseudoTrailRandom(i, 1);
+      const r2 = pseudoTrailRandom(i, 2);
+      const r3 = pseudoTrailRandom(i, 3);
+      const r4 = pseudoTrailRandom(i, 4);
+
+      const startX = centeredStream * settings.originWidth * 0.5;
+      const coneX = centeredStream * settings.coneSpread;
+      const wobbleX = (r1 - 0.5) * settings.trajectoryRandomness * 2;
+      const x = startX + coneX + wobbleX;
+
+      const yBase = settings.trailLength * (0.48 + progress * 0.72);
+      const y = yBase + (r2 - 0.5) * settings.trajectoryRandomness;
+
+      const size = Math.max(2, settings.particleSize + (r3 - 0.5) * settings.sizeRandomness * 2);
+      const duration = (820 + r4 * 560) / settings.speed;
+      const delay = -((cycle / cycles) * duration);
+      const color = trailVars.colors[(i + streamIndex) % trailVars.colors.length];
+
+      particle.style.setProperty("--vl-particle-x", `${x.toFixed(1)}px`);
+      particle.style.setProperty("--vl-particle-y", `${y.toFixed(1)}px`);
+      particle.style.setProperty("--vl-particle-size", `${size.toFixed(1)}px`);
+      particle.style.setProperty("--vl-particle-duration", `${duration.toFixed(0)}ms`);
+      particle.style.setProperty("--vl-particle-delay", `${delay.toFixed(0)}ms`);
+      particle.style.setProperty("--vl-particle-color", color);
+      particle.style.setProperty("--vl-particle-glow", `${(settings.glow * glowMultiplier).toFixed(1)}px`);
+      particle.style.setProperty("--vl-particle-glow-color", trailVars.glowColor);
+      particle.style.setProperty("--vl-particle-end-scale", `${(0.28 + r2 * 0.42).toFixed(2)}`);
+      particle.style.setProperty("--vl-particle-rotation", `${(120 + r1 * 280).toFixed(0)}deg`);
+      particle.style.setProperty("--vl-particle-peak-opacity", `${(0.72 + r4 * 0.28).toFixed(2)}`);
+
+      trail.appendChild(particle);
+    }
   }
 
   async function finalizeBonusOutcome(success) {
@@ -1526,10 +1617,7 @@
     rocket.src = getBonusRocket().src;
 
     const trailVars = bonusTrailVarsForStarCount(state.astroStarCount);
-    trail.style.setProperty("--vl-trail-core", trailVars.core);
-    trail.style.setProperty("--vl-trail-mid", trailVars.mid);
-    trail.style.setProperty("--vl-trail-end", trailVars.end);
-    trail.style.setProperty("--vl-trail-glow", trailVars.glow);
+    renderPlayerParticleTrail(trail, trailVars);
     trail.classList.toggle("is-rainbow", !!trailVars.rainbow);
 
     unit.classList.toggle("is-rainbow-rocket", state.bonusRocketColorKey === "rainbow");
