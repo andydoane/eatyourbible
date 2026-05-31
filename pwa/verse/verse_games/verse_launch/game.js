@@ -101,6 +101,8 @@
     astroLastSpawnX: -1,
     astroLastStarSpawnX: -1,
     astroDrainPhase: false,
+    astroDrainFadeMs: 0,
+    astroLandingMessageVisible: false,
     astroRunning: false,
     astroMoonPhase: false,
     astroMoonY: -240,
@@ -267,6 +269,8 @@
     state.astroLastSpawnX = -1;
     state.astroLastStarSpawnX = -1;
     state.astroDrainPhase = false;
+    state.astroDrainFadeMs = 0;
+    state.astroLandingMessageVisible = false;
     state.astroRunning = false;
     state.astroMoonPhase = false;
     state.astroMoonY = -340;
@@ -514,6 +518,15 @@
     return `
       <div class="vl-countdown-overlay" aria-hidden="true">
         <div class="vl-countdown-box is-pop">${escapeHtml(state.countdownValue)}</div>
+      </div>`;
+  }
+
+  function renderAstroLandingOverlay() {
+    if (!state.astroLandingMessageVisible) return "";
+
+    return `
+      <div class="vl-landing-overlay" aria-hidden="true">
+        <div class="vl-landing-box">LANDING</div>
       </div>`;
   }
 
@@ -1122,6 +1135,7 @@
               <span id="vlStarCount">${state.astroStarCount}</span>
             </div>
           </div>
+          ${renderAstroLandingOverlay()}
           ${shouldShowAstroArrowButtons() ? `
             <div class="vl-space-controls">
               <button class="vl-space-arrow no-zoom" id="vlLeftBtn" type="button" aria-label="Move left">‹</button>
@@ -2452,6 +2466,10 @@
 
     layer.querySelectorAll(".vl-asteroid, .vl-star, .vl-astro-projectile").forEach(n => n.remove());
 
+    const drainOpacity = state.astroDrainPhase
+      ? Math.max(0, 1 - state.astroDrainFadeMs / 1300)
+      : 1;
+
     state.astroStars.forEach(star => {
       const img = document.createElement("img");
       img.className = "vl-star";
@@ -2461,6 +2479,7 @@
       img.style.left = `${rect.width * star.x - star.size / 2}px`;
       img.style.top = `${star.yPx}px`;
       img.style.transform = `rotate(${star.rot}deg)`;
+      img.style.opacity = drainOpacity;
       layer.appendChild(img);
     });
 
@@ -2472,6 +2491,7 @@
       shot.style.left = `${rect.width * projectile.x - projectile.size / 2}px`;
       shot.style.top = `${projectile.yPx - projectile.size / 2}px`;
       shot.style.setProperty("--vl-projectile-color", projectile.color);
+      shot.style.opacity = drainOpacity;
       layer.appendChild(shot);
     });
 
@@ -2485,6 +2505,7 @@
       img.style.left = `${rect.width * ast.x - ast.size / 2}px`;
       img.style.top = `${ast.yPx}px`;
       img.style.transform = `rotate(${ast.rot}deg)`;
+      img.style.opacity = drainOpacity;
       layer.appendChild(img);
     });
 
@@ -2860,6 +2881,8 @@
       if (state.astroTimerMs >= astroDurationMs()) {
         state.astroMoonPhase = true;
         state.astroDrainPhase = true;
+        state.astroDrainFadeMs = 0;
+        state.astroLandingMessageVisible = true;
         state.astroMoveDir = 0;
       }
     } else {
@@ -2881,9 +2904,8 @@
       state.astroAsteroids = state.astroAsteroids.filter(ast => ast.yPx < rect.height + ast.size + 20);
       state.astroStars = state.astroStars.filter(star => star.yPx < rect.height + star.size + 20);
 
-      handleAstroProjectileCollisions(rect);
-
       if (state.astroDrainPhase) {
+        state.astroDrainFadeMs += dtMs;
         state.astroPlayerTilt *= 0.88;
 
         if (state.astroAsteroids.length === 0 && state.astroStars.length === 0) {
@@ -2901,6 +2923,7 @@
         } else {
           state.astroMoonDone = true;
           state.astroLandingPhase = true;
+          state.astroLandingMessageVisible = false;
           state.astroMoveDir = 0;
         }
       } else {
@@ -2952,6 +2975,8 @@
     state.astroLastSpawnX = -1;
     state.astroLastStarSpawnX = -1;
     state.astroDrainPhase = false;
+    state.astroDrainFadeMs = 0;
+    state.astroLandingMessageVisible = false;
     state.astroMoonPhase = false;
     state.astroMoonDone = false;
     state.astroLandingPhase = false;

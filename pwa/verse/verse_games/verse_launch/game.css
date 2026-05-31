@@ -600,6 +600,47 @@ select {
   animation: vlCountdownPop 220ms ease;
 }
 
+.vl-landing-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.vl-landing-box {
+  min-width: 190px;
+  padding: 18px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #333333;
+  color: #3dfd3d;
+  border-radius: 0;
+  font-family: "Orbitron", system-ui, sans-serif;
+  font-size: clamp(28px, 7vw, 58px);
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, .28);
+  text-align: center;
+  animation: vlLandingBlink 920ms steps(2, end) infinite;
+}
+
+@keyframes vlLandingBlink {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: .28;
+  }
+}
+
 .vl-flight-layer,
 .vl-smoke-layer,
 .vl-firework-layer {
