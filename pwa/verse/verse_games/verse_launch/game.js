@@ -534,6 +534,8 @@
   }
 
 // Conveyor Belt Speed
+  const CONVEYOR_LIGHTS_ONLY_TRAVELED_THRESHOLD = 0.5;
+
   function conveyorSpeedPxPerSec() {
     if (state.mode === "easy") return 120;
     if (state.mode === "hard") return 150;
@@ -573,12 +575,25 @@
       .sort((a, b) => a.x - b.x);
   }
 
+  function shouldKeepConveyorLightsOnly(item) {
+    const conveyor = document.getElementById("vlConveyor");
+    const rect = conveyor?.getBoundingClientRect();
+
+    if (!rect || !rect.width) return false;
+
+    const width = item.width || 0;
+    const centerX = item.x + width / 2;
+    const traveledRatio = 1 - (centerX / rect.width);
+
+    return traveledRatio >= CONVEYOR_LIGHTS_ONLY_TRAVELED_THRESHOLD;
+  }
+
   function conveyorVisibleLabelKeys(exceptItemId = "") {
     const keys = new Set();
 
     conveyorItemsOnscreen().forEach(item => {
       if (item.id === exceptItemId) return;
-      if (!item.label || item.blank) return;
+      if (!item.label || item.blank || item.lightsOnly) return;
 
       const key = normalizeWord(item.label);
       if (key) keys.add(key);
@@ -665,6 +680,7 @@
       label: choiceData?.label || "",
       isCorrect: !!choiceData?.isCorrect,
       blank: !!choiceData?.blank,
+      lightsOnly: !!choiceData?.lightsOnly,
       x,
       width: 0,
       removing: false,
@@ -674,14 +690,15 @@
 
   function conveyorItemHtml(item) {
     const hiddenClass = state.conveyorTextHidden || item.blank ? "is-text-hidden" : "";
+    const lightsOnlyClass = item.lightsOnly ? "is-lights-only" : "";
     const label = item.label || "";
 
     return `
       <button
-        class="vl-conveyor-choice vl-ufo-choice no-zoom ${hiddenClass}"
+        class="vl-conveyor-choice vl-ufo-choice no-zoom ${hiddenClass} ${lightsOnlyClass}"
         data-choice-id="${item.id}"
         type="button"
-        ${state.conveyorTextHidden || item.blank ? "disabled" : ""}
+        ${state.conveyorTextHidden || item.blank || item.lightsOnly ? "disabled" : ""}
         aria-label="${label ? `Choose ${escapeHtml(label)}` : "Blank UFO"}"
         style="--vl-conveyor-x:${item.x}px">
         <span class="vl-ufo-float" style="--vl-ufo-bob-delay:${item.bobDelay}ms">
@@ -738,14 +755,16 @@
     const word = el.querySelector(".vl-ufo-word");
     if (word) word.textContent = item.label || "";
 
-    if (item.label && !state.conveyorTextHidden && !item.blank) {
+    el.classList.toggle("is-lights-only", !!item.lightsOnly);
+
+    if (item.label && !state.conveyorTextHidden && !item.blank && !item.lightsOnly) {
       el.disabled = false;
       el.classList.remove("is-text-hidden");
       el.setAttribute("aria-label", `Choose ${item.label}`);
     } else {
       el.disabled = true;
-      el.classList.add("is-text-hidden");
-      el.setAttribute("aria-label", "Blank UFO");
+      el.classList.toggle("is-text-hidden", state.conveyorTextHidden || item.blank);
+      el.setAttribute("aria-label", item.lightsOnly ? "UFO lights" : "Blank UFO");
     }
   }
 
@@ -783,6 +802,8 @@
     const reservedKeys = new Set();
 
     items.forEach(item => {
+      const keepLightsOnly = shouldKeepConveyorLightsOnly(item);
+
       let label = pickUniqueConveyorDecoy(reservedKeys);
 
       if (!label) {
@@ -794,8 +815,9 @@
       item.label = label;
       item.isCorrect = false;
       item.blank = !label;
+      item.lightsOnly = keepLightsOnly;
 
-      if (key) reservedKeys.add(key);
+      if (key && !keepLightsOnly) reservedKeys.add(key);
 
       updateConveyorItemLabelDom(item);
     });
@@ -2947,7 +2969,7 @@
     }
 
     const item = state.conveyorItems.find(entry => entry.id === choiceId);
-    if (!item || item.blank || state.conveyorTextHidden) return;
+    if (!item || item.blank || item.lightsOnly || state.conveyorTextHidden) return;
 
     const tappedLabelKey = normalizeWord(item.label);
     const currentCorrectKey = normalizeWord(currentCorrectLabel());

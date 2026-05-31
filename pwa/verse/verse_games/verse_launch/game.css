@@ -524,12 +524,14 @@ select {
 }
 
 .vl-conveyor-track.is-text-hidden .vl-ufo-word,
-.vl-conveyor-choice.is-text-hidden .vl-ufo-word {
+.vl-conveyor-choice.is-text-hidden .vl-ufo-word,
+.vl-conveyor-choice.is-lights-only .vl-ufo-word {
   opacity: 0;
 }
 
 .vl-conveyor-track.is-text-hidden .vl-ufo-lights,
-.vl-conveyor-choice.is-text-hidden .vl-ufo-lights {
+.vl-conveyor-choice.is-text-hidden .vl-ufo-lights,
+.vl-conveyor-choice.is-lights-only .vl-ufo-lights {
   opacity: 1;
 }
 
