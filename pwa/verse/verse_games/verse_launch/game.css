@@ -447,7 +447,7 @@ select {
   align-items: flex-end;
   justify-content: center;
   isolation: isolate;
-  animation: vlUfoFloat 1800ms ease-in-out infinite;
+  animation: vlUfoFloat var(--vl-ufo-bob-duration, 1800ms) ease-in-out infinite;
   animation-delay: var(--vl-ufo-bob-delay, 0ms);
 }
 
@@ -1193,13 +1193,14 @@ select {
 
   0%,
   100% {
-    transform: translateY(0);
+    transform: translateY(0) rotate(calc(var(--vl-ufo-wobble-amount, 1deg) * -1));
   }
 
   50% {
-    transform: translateY(-7px);
+    transform: translateY(calc(var(--vl-ufo-bob-amount, 6px) * -1)) rotate(var(--vl-ufo-wobble-amount, 1deg));
   }
 }
+
 
 @keyframes vlUfoLaunchParticle {
   0% {

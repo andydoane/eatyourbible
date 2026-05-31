@@ -672,8 +672,18 @@
     };
   }
 
+  function makeUfoHoverMotion() {
+    return {
+      bobDelay: Math.round(-Math.random() * 2200),
+      bobDuration: Math.round(1500 + Math.random() * 900),
+      bobAmount: Number((4 + Math.random() * 6).toFixed(1)),
+      wobbleAmount: Number((0.6 + Math.random() * 1.2).toFixed(2))
+    };
+  }
+
   function makeConveyorItem(choiceData, x) {
     const id = `conveyor_${Date.now()}_${++state.conveyorNextId}`;
+    const hover = makeUfoHoverMotion();
 
     return {
       id,
@@ -685,7 +695,10 @@
       x,
       width: 0,
       removing: false,
-      bobDelay: -(state.conveyorNextId % 7) * 360
+      bobDelay: hover.bobDelay,
+      bobDuration: hover.bobDuration,
+      bobAmount: hover.bobAmount,
+      wobbleAmount: hover.wobbleAmount
     };
   }
 
@@ -706,7 +719,7 @@
         ${state.conveyorTextHidden || item.blank || item.lightsOnly ? "disabled" : ""}
         aria-label="${label ? `Choose ${escapeHtml(label)}` : "Blank UFO"}"
         style="--vl-conveyor-x:${item.x}px;${lockedWidthStyle}">
-        <span class="vl-ufo-float" style="--vl-ufo-bob-delay:${item.bobDelay}ms">
+        <span class="vl-ufo-float" style="--vl-ufo-bob-delay:${item.bobDelay}ms;--vl-ufo-bob-duration:${item.bobDuration || 1800}ms;--vl-ufo-bob-amount:${item.bobAmount || 6}px;--vl-ufo-wobble-amount:${item.wobbleAmount || 1}deg">
           <span class="vl-ufo-top-wrap" aria-hidden="true">
             <img class="vl-ufo-top" src="${UFO_TOP_IMAGE_SRC}" alt="">
           </span>
