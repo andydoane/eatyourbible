@@ -144,6 +144,8 @@
   const STAR_MODE_MULTIPLIER = { easy: 0.92, medium: 1, hard: 1.08 };
   const BLASTER_STAR_COUNT = 4;
   const SPREAD_SHOT_STAR_COUNT = 5;
+  const ASTEROID_SHOT_STAR_REWARD = 5;
+  const ASTEROID_REWARD_STAR_SCALE = 0.20;
   const PROJECTILE_COOLDOWN_MS = 520;
   const PROJECTILE_COLORS = [
     "#ff5a51",
@@ -1507,6 +1509,10 @@
     return Math.max(8, asteroid.size * 0.20);
   }
 
+  function bonusAsteroidRewardStarSizePx(asteroid) {
+    return Math.max(8, asteroid.size * ASTEROID_REWARD_STAR_SCALE);
+  }
+
   function bonusRocketBottomOffsetPx() {
     return bonusRocketVisualSizePx() * 0.5;
   }
@@ -2661,28 +2667,66 @@
 
     const x = stageRect.width * asteroid.x;
     const y = asteroid.yPx + asteroid.size / 2;
-    const count = 16;
-    const baseDistance = Math.max(32, asteroid.size * 0.48);
+    const size = bonusAsteroidRewardStarSizePx(asteroid);
+    const baseDistance = Math.max(36, asteroid.size * 0.78);
 
-    for (let i = 0; i < count; i++) {
-      const particle = document.createElement("div");
-      particle.className = "vl-asteroid-pop-particle";
+    const spread = [
+      { x: -1.10, y: -0.58, rot: -32, delay: 0 },
+      { x: -0.55, y: -0.98, rot: -16, delay: 35 },
+      { x: 0.00, y: -1.18, rot: 0, delay: 70 },
+      { x: 0.55, y: -0.98, rot: 16, delay: 35 },
+      { x: 1.10, y: -0.58, rot: 32, delay: 0 }
+    ];
 
-      const angle = (Math.PI * 2 * i) / count;
-      const distance = baseDistance * (0.72 + Math.random() * 0.56);
-      const size = bonusAsteroidExplosionParticleSizePx(asteroid);
-      const color = PROJECTILE_COLORS[i % PROJECTILE_COLORS.length];
+    spread.forEach((item, index) => {
+      const rewardStar = document.createElement("img");
+      rewardStar.className = "vl-asteroid-reward-star";
+      rewardStar.src = STAR_IMAGE_SRC;
+      rewardStar.alt = "";
 
-      particle.style.left = `${x}px`;
-      particle.style.top = `${y}px`;
-      particle.style.width = `${size}px`;
-      particle.style.height = `${size}px`;
-      particle.style.background = color;
-      particle.style.setProperty("--dx", `${Math.cos(angle) * distance}px`);
-      particle.style.setProperty("--dy", `${Math.sin(angle) * distance}px`);
+      const distance = baseDistance * (0.9 + Math.random() * 0.18);
+      const dx = item.x * distance;
+      const dy = item.y * distance;
 
-      layer.appendChild(particle);
-      particle.addEventListener("animationend", () => particle.remove(), { once: true });
+      rewardStar.style.left = `${x}px`;
+      rewardStar.style.top = `${y}px`;
+      rewardStar.style.width = `${size}px`;
+      rewardStar.style.height = `${size}px`;
+      rewardStar.style.setProperty("--dx", `${dx}px`);
+      rewardStar.style.setProperty("--dy", `${dy}px`);
+      rewardStar.style.setProperty("--rot", `${item.rot + (Math.random() * 18 - 9)}deg`);
+      rewardStar.style.animationDelay = `${item.delay}ms`;
+
+      layer.appendChild(rewardStar);
+      rewardStar.addEventListener("animationend", () => rewardStar.remove(), { once: true });
+    });
+  }
+
+  function awardAsteroidShotStars(stageRect, asteroid) {
+    const previousRocketKey = bonusRocketKeyForStarCount(state.astroStarCount);
+
+    state.astroStarCount += ASTEROID_SHOT_STAR_REWARD;
+    syncBonusRocketUpgrade();
+    spawnAsteroidPopBurst(stageRect, asteroid);
+
+    const nextRocketKey = bonusRocketKeyForStarCount(state.astroStarCount);
+    const upgraded =
+      previousRocketKey !== nextRocketKey ||
+      state.astroStarCount >= BLASTER_STAR_COUNT ||
+      state.astroStarCount >= SPREAD_SHOT_STAR_COUNT;
+
+    const counter = $("#vlStarCounter");
+    if (counter) {
+      counter.classList.remove("is-pop", "is-upgrade");
+      void counter.offsetWidth;
+      counter.classList.add(upgraded ? "is-upgrade" : "is-pop");
+    }
+
+    const unit = $("#vlPlayerUnit");
+    if (unit && upgraded) {
+      unit.classList.remove("is-upgrade");
+      void unit.offsetWidth;
+      unit.classList.add("is-upgrade");
     }
   }
 
@@ -2701,7 +2745,7 @@
         if (projectileHitTest(stageRect, projectile, asteroid)) {
           destroyedProjectileIds.add(projectile.id);
           destroyedAsteroidIds.add(asteroid.id);
-          spawnAsteroidPopBurst(stageRect, asteroid);
+          awardAsteroidShotStars(stageRect, asteroid);
           break;
         }
       }

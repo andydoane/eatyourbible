@@ -1621,6 +1621,16 @@ select {
   animation: vlAsteroidPopParticle 420ms ease-out forwards;
 }
 
+.vl-asteroid-reward-star {
+  position: absolute;
+  object-fit: contain;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 7;
+  filter: drop-shadow(0 0 8px rgba(255, 199, 81, .76));
+  animation: vlAsteroidRewardStar 680ms ease-out forwards;
+}
+
 .vl-space-controls {
   position: absolute;
   left: 0;
@@ -1690,6 +1700,23 @@ select {
   height: 34px;
   object-fit: contain;
   display: block;
+}
+
+@keyframes vlAsteroidRewardStar {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) translate(0, 0) scale(.45) rotate(0deg);
+  }
+
+  28% {
+    opacity: 1;
+    transform: translate(-50%, -50%) translate(calc(var(--dx, 0px) * .45), calc(var(--dy, 0px) * .45)) scale(1.15) rotate(calc(var(--rot, 0deg) * .45));
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translate(var(--dx, 0px), var(--dy, 0px)) scale(.3) rotate(var(--rot, 0deg));
+  }
 }
 
 @keyframes vlAsteroidPopParticle {
