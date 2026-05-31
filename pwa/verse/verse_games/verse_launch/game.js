@@ -476,17 +476,20 @@
 
       const rect = conveyor.getBoundingClientRect();
       const maxChoiceWidth = Math.max(...choices.map(el => el.getBoundingClientRect().width), 220);
-      const sidePad = Math.max(56, maxChoiceWidth * 0.35);
+      const sidePad = Math.max(72, maxChoiceWidth * 0.45);
       const startX = rect.width + sidePad;
       const endX = -maxChoiceWidth - sidePad;
       const distance = startX - endX;
       const durationMs = Math.round((distance / conveyorSpeedPxPerSec()) * 1000);
 
+      const gapPx = Math.max(150, maxChoiceWidth * 0.78);
+      const staggerMs = Math.round((gapPx / conveyorSpeedPxPerSec()) * 1000);
+
       choices.forEach((el, index) => {
         el.style.setProperty("--vl-conveyor-start-x", `${startX}px`);
         el.style.setProperty("--vl-conveyor-end-x", `${endX}px`);
         el.style.setProperty("--vl-conveyor-duration", `${durationMs}ms`);
-        el.style.setProperty("--vl-conveyor-delay", `${-Math.round((durationMs / choices.length) * index)}ms`);
+        el.style.setProperty("--vl-conveyor-delay", `${staggerMs * index}ms`);
       });
     });
   }
@@ -1634,7 +1637,7 @@
 
     const targetCenterX = boardRect.left + boardRect.width / 2;
     const targetX = targetCenterX - rect.width / 2;
-    const targetY = boardRect.top - rect.height - 120;
+    const targetY = boardRect.top - rect.height - Math.max(260, boardRect.height * 0.45);
 
     const driftX = targetX - startX;
     const driftY = targetY - startY;
@@ -2539,16 +2542,6 @@
 
     if (choice.isCorrect) {
       await fadeOutConveyor(choiceId);
-
-      const shouldShowInitialCountdown =
-        !state.hasShownInitialCountdown &&
-        currentPhase() === "words" &&
-        state.progressIndex === 0;
-
-      if (shouldShowInitialCountdown) {
-        state.hasShownInitialCountdown = true;
-        await playLaunchCountdown();
-      }
 
       await animateLaunch(choice, liveSourceEl);
       state.progressIndex += 1;

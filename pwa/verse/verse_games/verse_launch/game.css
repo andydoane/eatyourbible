@@ -386,8 +386,8 @@ select {
 .vl-conveyor-choice {
   position: absolute;
   left: 0;
-  top: 58%;
-  min-width: min(260px, 72vw);
+  top: 42%;
+  min-width: var(--vl-ufo-width);
   border: 0;
   padding: 0;
   background: transparent;
@@ -396,6 +396,7 @@ select {
   transform: translate(var(--vl-conveyor-start-x, 100vw), -50%);
   animation: vlConveyorMove var(--vl-conveyor-duration, 8200ms) linear infinite;
   animation-delay: var(--vl-conveyor-delay, 0ms);
+  animation-fill-mode: backwards;
   transition: opacity 220ms ease, filter 220ms ease;
 }
 
@@ -421,10 +422,13 @@ select {
 }
 
 .vl-ufo-float {
-  --vl-ufo-base-height: 68px;
+  --vl-ufo-scale: clamp(.78, 0.34vw + .70, 1);
+  --vl-ufo-base-height: calc(68px * var(--vl-ufo-scale));
+  --vl-ufo-width: min(calc(260px * var(--vl-ufo-scale)), 74vw);
+
   position: relative;
   display: inline-flex;
-  min-width: min(260px, 72vw);
+  min-width: var(--vl-ufo-width);
   height: calc(var(--vl-ufo-base-height) * 2.10);
   align-items: flex-end;
   justify-content: center;
@@ -436,7 +440,7 @@ select {
 .vl-ufo-top-wrap {
   position: absolute;
   left: 50%;
-  bottom: calc(var(--vl-ufo-base-height) * .93);
+  bottom: calc(var(--vl-ufo-base-height) * .91);
   height: calc(var(--vl-ufo-base-height) * 1.17);
   transform: translateX(-50%);
   z-index: 3;
@@ -452,18 +456,18 @@ select {
 .vl-ufo-base {
   position: relative;
   z-index: 2;
-  min-width: min(260px, 72vw);
+  min-width: var(--vl-ufo-width);
   min-height: var(--vl-ufo-base-height);
-  padding: 12px 28px;
+  padding: calc(var(--vl-ufo-base-height) * .16) calc(var(--vl-ufo-base-height) * .38);
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   background: linear-gradient(to bottom, #f2f2f2 0%, #e6e6e6 54%, #d4d4d4 100%);
   color: #666666;
-  font-size: clamp(24px, 4.8vw, 36px);
+  font-size: clamp(26px, 8.2vw, 36px);
   font-weight: 900;
-  line-height: 1.02;
+  line-height: .98;
   text-align: center;
   text-wrap: balance;
   box-shadow:
