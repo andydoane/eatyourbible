@@ -425,6 +425,18 @@ select {
   filter: brightness(1.15);
 }
 
+.vl-conveyor-choice.is-lights-only {
+  width: var(--vl-ufo-locked-width, max-content);
+  min-width: var(--vl-ufo-locked-width, var(--vl-ufo-button-min-width));
+}
+
+.vl-conveyor-choice.is-lights-only .vl-ufo-float,
+.vl-conveyor-choice.is-lights-only .vl-ufo-base {
+  width: var(--vl-ufo-locked-width, max-content);
+  min-width: var(--vl-ufo-locked-width, var(--vl-ufo-button-min-width));
+  max-width: var(--vl-ufo-locked-width, var(--vl-ufo-button-max-width));
+}
+
 .vl-ufo-float {
   position: relative;
   display: inline-flex;

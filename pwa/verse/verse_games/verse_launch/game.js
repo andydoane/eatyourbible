@@ -681,6 +681,7 @@
       isCorrect: !!choiceData?.isCorrect,
       blank: !!choiceData?.blank,
       lightsOnly: !!choiceData?.lightsOnly,
+      lockedWidth: 0,
       x,
       width: 0,
       removing: false,
@@ -693,6 +694,10 @@
     const lightsOnlyClass = item.lightsOnly ? "is-lights-only" : "";
     const label = item.label || "";
 
+    const lockedWidthStyle = item.lockedWidth
+      ? `--vl-ufo-locked-width:${item.lockedWidth}px;`
+      : "";
+
     return `
       <button
         class="vl-conveyor-choice vl-ufo-choice no-zoom ${hiddenClass} ${lightsOnlyClass}"
@@ -700,7 +705,7 @@
         type="button"
         ${state.conveyorTextHidden || item.blank || item.lightsOnly ? "disabled" : ""}
         aria-label="${label ? `Choose ${escapeHtml(label)}` : "Blank UFO"}"
-        style="--vl-conveyor-x:${item.x}px">
+        style="--vl-conveyor-x:${item.x}px;${lockedWidthStyle}">
         <span class="vl-ufo-float" style="--vl-ufo-bob-delay:${item.bobDelay}ms">
           <span class="vl-ufo-top-wrap" aria-hidden="true">
             <img class="vl-ufo-top" src="${UFO_TOP_IMAGE_SRC}" alt="">
@@ -757,6 +762,12 @@
 
     el.classList.toggle("is-lights-only", !!item.lightsOnly);
 
+    if (item.lockedWidth) {
+      el.style.setProperty("--vl-ufo-locked-width", `${item.lockedWidth}px`);
+    } else {
+      el.style.removeProperty("--vl-ufo-locked-width");
+    }
+
     if (item.label && !state.conveyorTextHidden && !item.blank && !item.lightsOnly) {
       el.disabled = false;
       el.classList.remove("is-text-hidden");
@@ -766,6 +777,9 @@
       el.classList.toggle("is-text-hidden", state.conveyorTextHidden || item.blank);
       el.setAttribute("aria-label", item.lightsOnly ? "UFO lights" : "Blank UFO");
     }
+
+    const rect = el.getBoundingClientRect();
+    if (rect.width) item.width = rect.width;
   }
 
   function removeConveyorItem(itemId) {
@@ -803,6 +817,15 @@
 
     items.forEach(item => {
       const keepLightsOnly = shouldKeepConveyorLightsOnly(item);
+      const el = document.querySelector(`.vl-conveyor-choice[data-choice-id="${item.id}"]`);
+
+      if (keepLightsOnly && el) {
+        const rect = el.getBoundingClientRect();
+        item.lockedWidth = rect.width || item.width || 0;
+        item.width = item.lockedWidth || item.width;
+      } else {
+        item.lockedWidth = 0;
+      }
 
       let label = pickUniqueConveyorDecoy(reservedKeys);
 
