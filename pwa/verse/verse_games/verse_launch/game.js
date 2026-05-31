@@ -2531,7 +2531,7 @@
 
     state.astroProjectileColorIndex += 1;
 
-    const spreadXPerSec = projectileSpeedPxPerSec(stageRect.height) * 0.38;
+    const spreadXPerSec = projectileSpeedPxPerSec(stageRect.height) * 0.22;
     const volley = bonusSpreadShotActive()
       ? [-spreadXPerSec, 0, spreadXPerSec]
       : [0];
