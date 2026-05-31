@@ -126,9 +126,9 @@
   };
 
   const ASTRO_DURATION_BY_MODE_MS = {
-    easy: 15000,
-    medium: 18000,
-    hard: 22000
+    easy: 22000,
+    medium: 25500,
+    hard: 30000
   };
 
   const ASTRO_HITBOX_SCALE = 0.5;
@@ -2938,6 +2938,10 @@
     const item = state.conveyorItems.find(entry => entry.id === choiceId);
     if (!item || item.blank || state.conveyorTextHidden) return;
 
+    const tappedLabelKey = normalizeWord(item.label);
+    const currentCorrectKey = normalizeWord(currentCorrectLabel());
+    const tappedIsCorrect = !!tappedLabelKey && tappedLabelKey === currentCorrectKey;
+
     state.busy = true;
 
     const liveSourceEl = document.querySelector(`.vl-conveyor-choice[data-choice-id="${choiceId}"]`);
@@ -2947,7 +2951,8 @@
       return;
     }
 
-    if (item.isCorrect) {
+    if (tappedIsCorrect) {
+      item.isCorrect = true;
       setConveyorWordsHidden(true);
 
       await animateLaunch(item, liveSourceEl);
