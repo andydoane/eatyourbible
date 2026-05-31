@@ -509,9 +509,28 @@ select {
   transition: opacity 220ms ease;
 }
 
+.vl-ufo-lights {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  height: var(--vl-ufo-button-height);
+  width: auto;
+  max-width: 88%;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 220ms ease;
+}
+
 .vl-conveyor-track.is-text-hidden .vl-ufo-word,
 .vl-conveyor-choice.is-text-hidden .vl-ufo-word {
   opacity: 0;
+}
+
+.vl-conveyor-track.is-text-hidden .vl-ufo-lights,
+.vl-conveyor-choice.is-text-hidden .vl-ufo-lights {
+  opacity: 1;
 }
 
 .vl-conveyor-choice:disabled {

@@ -26,6 +26,7 @@
   const STAR_IMAGE_SRC = "./verse_launch_images/verse_launch_star.svg";
   const RAINBOW_ROCKET_IMAGE_SRC = "./verse_launch_images/verse_images_rainbow_rocket.svg";
   const UFO_TOP_IMAGE_SRC = "./verse_launch_images/verse_launch_ship_top.svg";
+  const UFO_LIGHTS_IMAGE_SRC = "./verse_launch_images/verse_launch_ship_lights.svg";
 
   const WORD_BURST_CLOUD_SVG = `
 <svg viewBox="0 0 26.458333 26.458333" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -192,7 +193,8 @@
     MOON_IMAGE_SRC,
     STAR_IMAGE_SRC,
     RAINBOW_ROCKET_IMAGE_SRC,
-    UFO_TOP_IMAGE_SRC
+    UFO_TOP_IMAGE_SRC,
+    UFO_LIGHTS_IMAGE_SRC
   ]);
 
   function initVerseData() {
@@ -306,10 +308,26 @@
       words: state.words,
       correct,
       targetIndex: state.progressIndex,
-      count: 12,
+      count: 24,
       avoidNext: 2,
-      fallbackToFun: true
+      fallbackToFun: false
     });
+  }
+
+  function verseOnlyFallbackDecoys(correct) {
+    const correctKey = normalizeWord(correct);
+    const seen = new Set([correctKey]);
+    const out = [];
+
+    for (const word of state.words) {
+      const key = normalizeWord(word);
+      if (!key || seen.has(key)) continue;
+
+      seen.add(key);
+      out.push(word);
+    }
+
+    return shuffle(out);
   }
   function easyDecoys(correct) {
     return window.VerseGameShell.getFunWordDecoys(correct, state.words, 12);
@@ -333,8 +351,15 @@
     let decoyPool = [];
 
     if (phase === "words") {
-      decoyPool = state.mode === "easy" ? easyDecoys(correct) : verseWordDecoys(correct);
-      if (decoyPool.length < 8) decoyPool = decoyPool.concat(easyDecoys(correct));
+      if (state.mode === "easy") {
+        decoyPool = easyDecoys(correct);
+      } else {
+        decoyPool = verseWordDecoys(correct);
+
+        if (decoyPool.length < 8) {
+          decoyPool = decoyPool.concat(verseOnlyFallbackDecoys(correct));
+        }
+      }
     } else if (phase === "book") {
       decoyPool = bookDecoys(correct);
     } else if (phase === "reference") {
@@ -354,7 +379,17 @@
     }
 
     while (conveyorDecoys.length < 10) {
-      const fallback = phase === "book" ? bookDecoys(correct) : easyDecoys(correct);
+      let fallback = [];
+
+      if (phase === "words") {
+        fallback = state.mode === "easy"
+          ? easyDecoys(correct)
+          : verseOnlyFallbackDecoys(correct);
+      } else if (phase === "book") {
+        fallback = bookDecoys(correct);
+      } else if (phase === "reference") {
+        fallback = refDecoys(correct);
+      }
 
       let added = false;
 
@@ -647,6 +682,7 @@
           </span>
           <span class="vl-ufo-base">
             <span class="vl-ufo-word">${escapeHtml(label)}</span>
+            <img class="vl-ufo-lights" src="${UFO_LIGHTS_IMAGE_SRC}" alt="" aria-hidden="true">
           </span>
         </span>
       </button>`;
