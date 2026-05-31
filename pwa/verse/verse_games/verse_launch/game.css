@@ -1490,7 +1490,7 @@ select {
 }
 
 .vl-player-unit {
-  --vl-player-rocket-size: 84px;
+  --vl-player-rocket-size: clamp(78px, 9.5vw, 104px);
   --vl-rainbow-rocket-scale: 1.31;
 
   position: absolute;
