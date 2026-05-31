@@ -1482,6 +1482,31 @@
     return Number.isFinite(parsed) ? parsed : 84;
   }
 
+  function bonusRocketVisualSizePx() {
+    return readPlayerRocketSizePx();
+  }
+
+  function bonusAsteroidAverageSizePx() {
+    return bonusRocketVisualSizePx() * 0.75;
+  }
+
+  function bonusAsteroidSpawnSizePx() {
+    const average = bonusAsteroidAverageSizePx();
+    return average * rand(0.85, 1.15);
+  }
+
+  function bonusStarSizePx() {
+    return bonusAsteroidAverageSizePx();
+  }
+
+  function bonusProjectileSizePx() {
+    return Math.max(8, bonusAsteroidAverageSizePx() * 0.10);
+  }
+
+  function bonusAsteroidExplosionParticleSizePx(asteroid) {
+    return Math.max(8, asteroid.size * 0.20);
+  }
+
   function renderCyanUfoTrail(trail) {
     if (!trail || trail.dataset.ready === "true") return;
 
@@ -1981,7 +2006,7 @@
     const roll = Math.random();
     if (roll > chancePerSecond * (dtMs / 1000)) return;
 
-    const size = 44 + Math.random() * 22;
+    const size = bonusAsteroidSpawnSizePx();
 
     const leftBound = 0.14;
     const rightBound = 0.86;
@@ -2034,7 +2059,7 @@
     state.astroStarSpawnCooldownMs = Math.max(0, state.astroStarSpawnCooldownMs - dtMs);
     if (state.astroStarSpawnCooldownMs > 0) return;
 
-    const size = stageWidth < 420 ? 42 : 48;
+    const size = bonusStarSizePx();
 
     const leftBound = 0.13;
     const rightBound = 0.87;
@@ -2531,10 +2556,11 @@
 
 
   function asteroidHitTest(stageRect, asteroid) {
+    const rocketSize = bonusRocketVisualSizePx();
     const rocketX = stageRect.width * state.astroPlayerX;
     const rocketY = stageRect.height - 118 - 42;
-    const rocketW = 84 * ASTRO_HITBOX_SCALE;
-    const rocketH = 84 * ASTRO_HITBOX_SCALE;
+    const rocketW = rocketSize * ASTRO_HITBOX_SCALE;
+    const rocketH = rocketSize * ASTRO_HITBOX_SCALE;
 
     const astW = asteroid.size * ASTRO_HITBOX_SCALE;
     const astH = asteroid.size * ASTRO_HITBOX_SCALE;
@@ -2556,7 +2582,7 @@
     state.astroProjectileCooldownMs = Math.max(0, state.astroProjectileCooldownMs - dtMs);
     if (state.astroProjectileCooldownMs > 0) return;
 
-    const size = Math.max(12, Math.min(18, stageRect.width * 0.038));
+    const size = bonusProjectileSizePx();
     const rocketCenterY = stageRect.height - 118 - 42 - state.astroPlayerLiftPx;
     const noseY = rocketCenterY - 46;
     const color = PROJECTILE_COLORS[state.astroProjectileColorIndex % PROJECTILE_COLORS.length];
@@ -2630,7 +2656,7 @@
 
       const angle = (Math.PI * 2 * i) / count;
       const distance = baseDistance * (0.72 + Math.random() * 0.56);
-      const size = Math.max(12, asteroid.size * 0.14);
+      const size = bonusAsteroidExplosionParticleSizePx(asteroid);
       const color = PROJECTILE_COLORS[i % PROJECTILE_COLORS.length];
 
       particle.style.left = `${x}px`;
@@ -2682,8 +2708,9 @@
   function starHitTest(stageRect, star) {
     const rocketX = stageRect.width * state.astroPlayerX;
     const rocketY = stageRect.height - 118 - 42;
-    const rocketW = 84 * STAR_HITBOX_SCALE;
-    const rocketH = 84 * STAR_HITBOX_SCALE;
+    const rocketSize = bonusRocketVisualSizePx();
+    const rocketW = rocketSize * STAR_HITBOX_SCALE;
+    const rocketH = rocketSize * STAR_HITBOX_SCALE;
 
     const starW = star.size * STAR_HITBOX_SCALE;
     const starH = star.size * STAR_HITBOX_SCALE;
