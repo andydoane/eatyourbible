@@ -134,6 +134,7 @@
   const ASTRO_HITBOX_SCALE = 0.5;
   const STAR_HITBOX_SCALE = 0.78;
   const PROJECTILE_HITBOX_SCALE = 0.85;
+  const PROJECTILE_ASTEROID_HITBOX_SCALE = 0.78;
   const ASTRO_BASE_SPEED_VH_PER_SEC = 42;
   const STAR_BASE_SPEED_VH_PER_SEC = 34;
   const PROJECTILE_BASE_SPEED_VH_PER_SEC = 126;
@@ -2576,8 +2577,8 @@
 
     const astX = stageRect.width * asteroid.x;
     const astY = asteroid.yPx + asteroid.size / 2;
-    const astW = asteroid.size * 0.58;
-    const astH = asteroid.size * 0.58;
+    const astW = asteroid.size * PROJECTILE_ASTEROID_HITBOX_SCALE;
+    const astH = asteroid.size * PROJECTILE_ASTEROID_HITBOX_SCALE;
 
     return Math.abs(projectileX - astX) < (projectileW + astW) / 2 &&
       Math.abs(projectileY - astY) < (projectileH + astH) / 2;
