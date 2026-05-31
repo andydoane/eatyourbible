@@ -1500,7 +1500,7 @@
   }
 
   function bonusProjectileSizePx() {
-    return Math.max(8, bonusAsteroidAverageSizePx() * 1.00);
+    return Math.max(8, bonusAsteroidAverageSizePx() * 0.25);
   }
 
   function bonusAsteroidExplosionParticleSizePx(asteroid) {
