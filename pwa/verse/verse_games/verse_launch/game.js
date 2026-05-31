@@ -98,6 +98,12 @@
 
   let muted = false;
 
+  const astroInput = {
+    leftKey: false,
+    rightKey: false,
+    pointerDir: 0
+  };
+
   const ASTRO_DURATION_BY_MODE_MS = {
     easy: 15000,
     medium: 18000,
@@ -771,29 +777,19 @@
     const leftBtn = $("#vlLeftBtn");
     const rightBtn = $("#vlRightBtn");
 
-    function setDir(dir) {
-      if (!state.astroMoonPhase) state.astroMoveDir = dir;
-    }
-
-    function clearDir(dir) {
-      if (state.astroMoveDir === dir) state.astroMoveDir = 0;
-    }
-
-    [["pointerdown", -1], ["pointerup", -1], ["pointercancel", -1], ["pointerleave", -1]].forEach(() => { });
-
     if (leftBtn) {
-      leftBtn.onpointerdown = (e) => { e.preventDefault(); setDir(-1); };
-      leftBtn.onpointerup = (e) => { e.preventDefault(); clearDir(-1); };
-      leftBtn.onpointercancel = (e) => { e.preventDefault(); clearDir(-1); };
-      leftBtn.onpointerleave = (e) => { e.preventDefault(); clearDir(-1); };
+      leftBtn.onpointerdown = (e) => { e.preventDefault(); setAstroPointerDir(-1); };
+      leftBtn.onpointerup = (e) => { e.preventDefault(); clearAstroPointerDir(-1); };
+      leftBtn.onpointercancel = (e) => { e.preventDefault(); clearAstroPointerDir(-1); };
+      leftBtn.onpointerleave = (e) => { e.preventDefault(); clearAstroPointerDir(-1); };
       leftBtn.oncontextmenu = (e) => e.preventDefault();
     }
 
     if (rightBtn) {
-      rightBtn.onpointerdown = (e) => { e.preventDefault(); setDir(1); };
-      rightBtn.onpointerup = (e) => { e.preventDefault(); clearDir(1); };
-      rightBtn.onpointercancel = (e) => { e.preventDefault(); clearDir(1); };
-      rightBtn.onpointerleave = (e) => { e.preventDefault(); clearDir(1); };
+      rightBtn.onpointerdown = (e) => { e.preventDefault(); setAstroPointerDir(1); };
+      rightBtn.onpointerup = (e) => { e.preventDefault(); clearAstroPointerDir(1); };
+      rightBtn.onpointercancel = (e) => { e.preventDefault(); clearAstroPointerDir(1); };
+      rightBtn.onpointerleave = (e) => { e.preventDefault(); clearAstroPointerDir(1); };
       rightBtn.oncontextmenu = (e) => e.preventDefault();
     }
   }
@@ -1091,12 +1087,101 @@
       cancelAnimationFrame(state.astroRaf);
       state.astroRaf = 0;
     }
+
+    resetAstroInput();
     state.astroRunning = false;
   }
 
   function safeLeftPct(x) {
     return Math.max(0.08, Math.min(0.92, x));
   }
+
+
+  function canUseAstroControls() {
+    return state.screen === "asteroids" &&
+      state.astroRunning &&
+      !state.astroMoonPhase &&
+      !state.menuOpen &&
+      !state.helpOpen &&
+      !state.completed;
+  }
+
+  function syncAstroMoveDir() {
+    if (!canUseAstroControls()) {
+      state.astroMoveDir = 0;
+      return;
+    }
+
+    const keyboardDir =
+      astroInput.leftKey && !astroInput.rightKey ? -1 :
+        astroInput.rightKey && !astroInput.leftKey ? 1 :
+          0;
+
+    state.astroMoveDir = astroInput.pointerDir || keyboardDir;
+  }
+
+  function resetAstroInput() {
+    astroInput.leftKey = false;
+    astroInput.rightKey = false;
+    astroInput.pointerDir = 0;
+    state.astroMoveDir = 0;
+  }
+
+  function setAstroPointerDir(dir) {
+    if (!canUseAstroControls()) return;
+    astroInput.pointerDir = dir;
+    syncAstroMoveDir();
+  }
+
+  function clearAstroPointerDir(dir) {
+    if (astroInput.pointerDir === dir) {
+      astroInput.pointerDir = 0;
+    }
+
+    syncAstroMoveDir();
+  }
+
+  function astroKeyboardDirForKey(key) {
+    const normalized = String(key || "").toLowerCase();
+
+    if (normalized === "arrowleft" || normalized === "a") return -1;
+    if (normalized === "arrowright" || normalized === "d") return 1;
+
+    return 0;
+  }
+
+  function handleAstroKeyDown(event) {
+    const dir = astroKeyboardDirForKey(event.key);
+    if (!dir || !canUseAstroControls()) return;
+
+    event.preventDefault();
+
+    if (dir < 0) {
+      astroInput.leftKey = true;
+    } else {
+      astroInput.rightKey = true;
+    }
+
+    syncAstroMoveDir();
+  }
+
+  function handleAstroKeyUp(event) {
+    const dir = astroKeyboardDirForKey(event.key);
+    if (!dir) return;
+
+    event.preventDefault();
+
+    if (dir < 0) {
+      astroInput.leftKey = false;
+    } else {
+      astroInput.rightKey = false;
+    }
+
+    syncAstroMoveDir();
+  }
+
+  window.addEventListener("keydown", handleAstroKeyDown);
+  window.addEventListener("keyup", handleAstroKeyUp);
 
   function modeAstroMultiplier() {
     return ASTRO_MODE_MULTIPLIER[state.mode] || 1;
@@ -1961,7 +2046,7 @@
     state.astroHits = 0;
     state.astroInvulnerable = false;
     state.astroPlayerX = 0.5;
-    state.astroMoveDir = 0;
+    resetAstroInput();
     state.astroPlayerTilt = 0;
     state.astroSpinDeg = 0;
     state.astroSpinMs = 0;
