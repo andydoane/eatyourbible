@@ -1003,17 +1003,25 @@
   function renderCyanUfoTrail(trail) {
     if (!trail || trail.dataset.ready === "true") return;
 
+    const owner = trail.closest(".vl-ufo-launch-clone") || trail.parentElement;
+    const styles = owner ? getComputedStyle(owner) : null;
+    const rawButtonHeight = styles
+      ? parseFloat(styles.getPropertyValue("--vl-ufo-button-height"))
+      : 60;
+
+    const buttonHeight = Number.isFinite(rawButtonHeight) ? rawButtonHeight : 60;
+
     const colors = ["#ffffff", "#b9ffff", "#83fbff", "#4df9fd"];
     const settings = {
-      particleCount: 24,
+      particleCount: 30,
       streamSources: 5,
-      particleSize: 10,
-      coneSpread: 36,
-      trailLength: 108,
+      particleSize: Math.max(13, buttonHeight * 0.25),
+      coneSpread: buttonHeight * 1.05,
+      trailLength: buttonHeight * 2.35,
       speed: 1.28,
-      trajectoryRandomness: 12,
-      glow: 8,
-      originWidth: 18
+      trajectoryRandomness: buttonHeight * 0.26,
+      glow: Math.max(10, buttonHeight * 0.18),
+      originWidth: buttonHeight * 0.48
     };
 
     trail.dataset.ready = "true";
@@ -1040,9 +1048,9 @@
       const wobbleX = (r1 - 0.5) * settings.trajectoryRandomness * 2;
       const x = startX + coneX + wobbleX;
 
-      const yBase = settings.trailLength * (0.35 + progress * 0.78);
+      const yBase = settings.trailLength * (0.22 + progress * 0.86);
       const y = yBase + (r2 - 0.5) * settings.trajectoryRandomness;
-      const size = Math.max(5, settings.particleSize + (r3 - 0.5) * 4);
+      const size = Math.max(8, settings.particleSize + (r3 - 0.5) * buttonHeight * 0.12);
       const duration = (760 + r4 * 520) / settings.speed;
       const delay = -((cycle / cycles) * duration);
       const color = colors[(i + streamIndex) % colors.length];
@@ -1053,10 +1061,10 @@
       particle.style.setProperty("--vl-ufo-particle-duration", `${duration.toFixed(0)}ms`);
       particle.style.setProperty("--vl-ufo-particle-delay", `${delay.toFixed(0)}ms`);
       particle.style.setProperty("--vl-ufo-particle-color", color);
-      particle.style.setProperty("--vl-ufo-particle-glow", `${settings.glow}px`);
-      particle.style.setProperty("--vl-ufo-particle-end-scale", `${(0.28 + r2 * 0.42).toFixed(2)}`);
+      particle.style.setProperty("--vl-ufo-particle-glow", `${settings.glow.toFixed(1)}px`);
+      particle.style.setProperty("--vl-ufo-particle-end-scale", `${(0.30 + r2 * 0.42).toFixed(2)}`);
       particle.style.setProperty("--vl-ufo-particle-rotation", `${(120 + r1 * 280).toFixed(0)}deg`);
-      particle.style.setProperty("--vl-ufo-particle-peak-opacity", `${(0.70 + r4 * 0.30).toFixed(2)}`);
+      particle.style.setProperty("--vl-ufo-particle-peak-opacity", `${(0.74 + r4 * 0.26).toFixed(2)}`);
 
       trail.appendChild(particle);
     }

@@ -851,9 +851,9 @@ select {
 .vl-ufo-launch-trail {
   position: absolute;
   left: 50%;
-  bottom: -18px;
-  width: 130px;
-  height: 140px;
+  top: calc(var(--vl-ufo-button-height, 60px) * 1.58);
+  width: calc(var(--vl-ufo-button-height, 60px) * 2.65);
+  height: calc(var(--vl-ufo-button-height, 60px) * 2.85);
   transform: translateX(-50%);
   pointer-events: none;
   z-index: 1;
