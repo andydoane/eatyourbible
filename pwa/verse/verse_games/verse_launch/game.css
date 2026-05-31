@@ -608,6 +608,13 @@ select {
   align-items: center;
   justify-content: center;
   pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.vl-landing-overlay.is-visible {
+  opacity: 1;
+  visibility: visible;
 }
 
 .vl-landing-box {

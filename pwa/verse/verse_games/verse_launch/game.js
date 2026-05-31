@@ -522,12 +522,21 @@
   }
 
   function renderAstroLandingOverlay() {
-    if (!state.astroLandingMessageVisible) return "";
-
     return `
-      <div class="vl-landing-overlay" aria-hidden="true">
+      <div
+        class="vl-landing-overlay ${state.astroLandingMessageVisible ? "is-visible" : ""}"
+        id="vlLandingOverlay"
+        aria-hidden="${state.astroLandingMessageVisible ? "false" : "true"}">
         <div class="vl-landing-box">LANDING</div>
       </div>`;
+  }
+
+  function syncAstroLandingOverlay() {
+    const overlay = document.getElementById("vlLandingOverlay");
+    if (!overlay) return;
+
+    overlay.classList.toggle("is-visible", !!state.astroLandingMessageVisible);
+    overlay.setAttribute("aria-hidden", state.astroLandingMessageVisible ? "false" : "true");
   }
 
   function getPreviewChoice(offset) {
@@ -2442,6 +2451,7 @@
     const stage = $("#vlAstroStage");
     const layer = $("#vlSpaceLayer");
     const unit = $("#vlPlayerUnit");
+    syncAstroLandingOverlay();
     const rocket = $("#vlPlayerRocket");
     const moon = $("#vlMoon");
     const trail = $("#vlPlayerTrail");
