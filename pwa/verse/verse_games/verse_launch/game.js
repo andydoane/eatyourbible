@@ -56,6 +56,8 @@
     conveyorCorrectVisible: false,
     conveyorSpawnCount: 0,
     conveyorForceCorrectIn: 1,
+    conveyorCorrectLabel: "",
+    conveyorDecoyLabels: [],
 
     busy: false,
     menuOpen: false,
@@ -222,6 +224,8 @@
     state.conveyorCorrectVisible = false;
     state.conveyorSpawnCount = 0;
     state.conveyorForceCorrectIn = 1;
+    state.conveyorCorrectLabel = "";
+    state.conveyorDecoyLabels = [];
 
     state.busy = false;
     state.menuOpen = false;
@@ -327,30 +331,70 @@
     const correct = currentCorrectLabel();
     const phase = currentPhase();
     let decoyPool = [];
+
     if (phase === "words") {
       decoyPool = state.mode === "easy" ? easyDecoys(correct) : verseWordDecoys(correct);
-      if (decoyPool.length < 2) decoyPool = decoyPool.concat(easyDecoys(correct));
+      if (decoyPool.length < 8) decoyPool = decoyPool.concat(easyDecoys(correct));
     } else if (phase === "book") {
       decoyPool = bookDecoys(correct);
     } else if (phase === "reference") {
       decoyPool = refDecoys(correct);
     }
-    const labels = uniqueVisibleChoices(correct, decoyPool).slice(0, 3);
-    while (labels.length < 3) {
+
+    const normalizedCorrect = normalizeWord(correct);
+    const conveyorDecoys = [];
+    const seenDecoys = new Set([normalizedCorrect]);
+
+    for (const label of decoyPool) {
+      const key = normalizeWord(label);
+      if (!key || seenDecoys.has(key)) continue;
+
+      seenDecoys.add(key);
+      conveyorDecoys.push(label);
+    }
+
+    while (conveyorDecoys.length < 10) {
       const fallback = phase === "book" ? bookDecoys(correct) : easyDecoys(correct);
+
+      let added = false;
+
       for (const item of fallback) {
+        const key = normalizeWord(item);
+        if (!key || seenDecoys.has(key)) continue;
+
+        seenDecoys.add(key);
+        conveyorDecoys.push(item);
+        added = true;
+
+        if (conveyorDecoys.length >= 10) break;
+      }
+
+      if (!added) break;
+    }
+
+    const labels = uniqueVisibleChoices(correct, conveyorDecoys).slice(0, 3);
+
+    while (labels.length < 3) {
+      for (const item of conveyorDecoys) {
         if (labels.map(normalizeWord).includes(normalizeWord(item))) continue;
         labels.push(item);
         if (labels.length >= 3) break;
       }
+
+      if (labels.length < 3) break;
     }
+
     const skins = shuffle(ROCKETS).slice(0, 3);
+
     state.choices = shuffle(labels).map((label, index) => ({
       id: `choice_${index}_${Date.now()}`,
       label,
-      isCorrect: normalizeWord(label) === normalizeWord(correct),
-      rocket: skins[index]
+      isCorrect: normalizeWord(label) === normalizedCorrect,
+      rocket: skins[index % skins.length]
     }));
+
+    state.conveyorCorrectLabel = correct;
+    state.conveyorDecoyLabels = conveyorDecoys;
     state.choiceIndex = 1;
   }
 
@@ -476,6 +520,45 @@
     return state.conveyorItems.filter(item => !item.removing);
   }
 
+  function conveyorItemsOnscreen() {
+    const conveyor = document.getElementById("vlConveyor");
+    const rect = conveyor?.getBoundingClientRect();
+
+    if (!rect) return conveyorVisibleItems();
+
+    return conveyorVisibleItems().filter(item => {
+      const width = item.width || 0;
+      return item.x + width > 0 && item.x < rect.width;
+    });
+  }
+
+  function conveyorVisibleLabelKeys(exceptItemId = "") {
+    const keys = new Set();
+
+    conveyorItemsOnscreen().forEach(item => {
+      if (item.id === exceptItemId) return;
+      if (!item.label || item.blank) return;
+
+      const key = normalizeWord(item.label);
+      if (key) keys.add(key);
+    });
+
+    return keys;
+  }
+
+  function pickUniqueConveyorDecoy(reservedKeys = new Set()) {
+    const decoys = shuffle(state.conveyorDecoyLabels || []);
+
+    for (const label of decoys) {
+      const key = normalizeWord(label);
+      if (!key || reservedKeys.has(key)) continue;
+
+      return label;
+    }
+
+    return "";
+  }
+
   function pickConveyorChoiceForSpawn() {
     if (state.conveyorTextHidden) {
       return {
@@ -485,38 +568,48 @@
       };
     }
 
-    const choices = state.choices || [];
-    if (!choices.length) return null;
+    const correctLabel = state.conveyorCorrectLabel || currentCorrectLabel();
+    if (!correctLabel) return null;
 
-    const correct = choices.find(choice => choice.isCorrect);
-    const decoys = choices.filter(choice => !choice.isCorrect);
-
-    let selected;
+    const reservedKeys = conveyorVisibleLabelKeys();
+    const correctKey = normalizeWord(correctLabel);
 
     const maySpawnCorrect =
-      correct &&
       !state.conveyorCorrectVisible &&
       state.conveyorSpawnCount > 0 &&
-      state.conveyorForceCorrectIn <= 0;
+      state.conveyorForceCorrectIn <= 0 &&
+      !reservedKeys.has(correctKey);
+
+    let label = "";
 
     if (maySpawnCorrect) {
-      selected = correct;
+      label = correctLabel;
     } else {
-      selected = pickRandom(decoys.length ? decoys : choices);
+      label = pickUniqueConveyorDecoy(reservedKeys);
     }
 
-    if (selected.isCorrect) {
+    if (!label) {
+      return {
+        label: "",
+        isCorrect: false,
+        blank: true
+      };
+    }
+
+    const isCorrect = normalizeWord(label) === correctKey;
+
+    if (isCorrect) {
       state.conveyorCorrectVisible = true;
       state.conveyorForceCorrectIn = 0;
-    } else if (correct && !state.conveyorCorrectVisible && state.conveyorSpawnCount > 0) {
+    } else if (!state.conveyorCorrectVisible && state.conveyorSpawnCount > 0) {
       state.conveyorForceCorrectIn -= 1;
     }
 
     state.conveyorSpawnCount += 1;
 
     return {
-      label: selected.label,
-      isCorrect: selected.isCorrect,
+      label,
+      isCorrect,
       blank: false
     };
   }
@@ -639,26 +732,32 @@
   }
 
   function relabelVisibleConveyorItemsForCurrentTarget() {
-    resetConveyorTargetPlanner();
+    state.conveyorCorrectVisible = false;
 
-    const items = conveyorVisibleItems()
-      .filter(item => item.x + (item.width || 0) > 0)
+    const items = conveyorItemsOnscreen()
+      .filter(item => item.id && !item.removing)
       .sort((a, b) => a.x - b.x);
 
+    const reservedKeys = new Set();
+
     items.forEach(item => {
-      if (item.isCorrect) state.conveyorCorrectVisible = false;
+      const label = pickUniqueConveyorDecoy(reservedKeys);
+      const key = normalizeWord(label);
 
-      const choiceData = pickConveyorChoiceForSpawn();
-      if (!choiceData) return;
+      item.label = label;
+      item.isCorrect = false;
+      item.blank = !label;
 
-      item.label = choiceData.label;
-      item.isCorrect = choiceData.isCorrect;
-      item.blank = false;
+      if (key) reservedKeys.add(key);
 
       updateConveyorItemLabelDom(item);
     });
-  }
 
+    state.conveyorSpawnCount = 1;
+    state.conveyorForceCorrectIn = 1;
+    state.conveyorCorrectVisible = false;
+  }
+  
   function spawnConveyorItem() {
     const conveyor = document.getElementById("vlConveyor");
     if (!conveyor) return;
@@ -2831,11 +2930,9 @@
       }
 
       buildChoices();
-      relabelVisibleConveyorItemsForCurrentTarget();
 
-      requestAnimationFrame(() => {
-        setConveyorWordsHidden(false);
-      });
+      setConveyorWordsHidden(false);
+      relabelVisibleConveyorItemsForCurrentTarget();
 
       state.busy = false;
       return;
@@ -2857,7 +2954,7 @@
     state.screen = screen;
     render();
   }
-  
+
   function render() {
     if (state.screen === "intro") return renderIntro();
     if (state.screen === "mode") return renderMode();
