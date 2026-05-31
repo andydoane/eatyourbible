@@ -25,6 +25,7 @@
   const MOON_IMAGE_SRC = "./verse_launch_images/verse_launch_moon.png";
   const STAR_IMAGE_SRC = "./verse_launch_images/verse_launch_star.svg";
   const RAINBOW_ROCKET_IMAGE_SRC = "./verse_launch_images/verse_images_rainbow_rocket.svg";
+  const UFO_TOP_IMAGE_SRC = "./verse_launch_images/verse_launch_ship_top.svg";
 
   const WORD_BURST_CLOUD_SVG = `
 <svg viewBox="0 0 26.458333 26.458333" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -178,7 +179,8 @@
     ASTEROID_IMAGE_SRC,
     MOON_IMAGE_SRC,
     STAR_IMAGE_SRC,
-    RAINBOW_ROCKET_IMAGE_SRC
+    RAINBOW_ROCKET_IMAGE_SRC,
+    UFO_TOP_IMAGE_SRC
   ]);
 
   function initVerseData() {
@@ -446,12 +448,20 @@
         <div class="vl-conveyor-track" id="vlConveyorTrack">
           ${choices.map((choice, index) => `
             <button
-              class="vl-conveyor-choice vl-choice-bubble ${choice.rocket.textDark ? "vl-text-dark" : ""} no-zoom"
+              class="vl-conveyor-choice vl-ufo-choice no-zoom"
               data-choice-id="${choice.id}"
               data-slot="${index}"
               type="button"
-              style="--bubble:${choice.rocket.color}"
-              aria-label="Choose ${escapeHtml(choice.label)}">${escapeHtml(choice.label)}</button>`).join("")}
+              aria-label="Choose ${escapeHtml(choice.label)}">
+              <span class="vl-ufo-float" style="--vl-ufo-bob-delay:${index * -420}ms">
+                <span class="vl-ufo-top-wrap" aria-hidden="true">
+                  <img class="vl-ufo-top" src="${UFO_TOP_IMAGE_SRC}" alt="">
+                </span>
+                <span class="vl-ufo-base">
+                  <span class="vl-ufo-word">${escapeHtml(choice.label)}</span>
+                </span>
+              </span>
+            </button>`).join("")}
         </div>
       </div>`;
   }
@@ -481,11 +491,23 @@
     });
   }
 
-  async function fadeOutConveyor() {
+  async function fadeOutConveyor(exceptChoiceId = "") {
     const track = document.getElementById("vlConveyorTrack");
     if (!track) return;
-    track.classList.add("is-fading");
-    await sleep(340);
+
+    if (exceptChoiceId) {
+      track.querySelectorAll(".vl-conveyor-choice").forEach(choiceEl => {
+        if (choiceEl.dataset.choiceId === exceptChoiceId) {
+          choiceEl.classList.add("is-selected-launch");
+        } else {
+          choiceEl.classList.add("is-fading-choice");
+        }
+      });
+    } else {
+      track.classList.add("is-fading");
+    }
+
+    await sleep(220);
   }
 
 
@@ -967,6 +989,95 @@
 
     return Number.isFinite(parsed) ? parsed : 84;
   }
+
+  function renderCyanUfoTrail(trail) {
+    if (!trail || trail.dataset.ready === "true") return;
+
+    const colors = ["#ffffff", "#b9ffff", "#83fbff", "#4df9fd"];
+    const settings = {
+      particleCount: 24,
+      streamSources: 5,
+      particleSize: 10,
+      coneSpread: 36,
+      trailLength: 108,
+      speed: 1.28,
+      trajectoryRandomness: 12,
+      glow: 8,
+      originWidth: 18
+    };
+
+    trail.dataset.ready = "true";
+
+    const cycles = Math.max(1, Math.ceil(settings.particleCount / settings.streamSources));
+
+    for (let i = 0; i < settings.particleCount; i++) {
+      const particle = document.createElement("span");
+      particle.className = "vl-ufo-launch-particle";
+
+      const streamIndex = i % settings.streamSources;
+      const streamRatio = settings.streamSources === 1 ? 0.5 : streamIndex / (settings.streamSources - 1);
+      const centeredStream = (streamRatio - 0.5) * 2;
+      const cycle = Math.floor(i / settings.streamSources);
+      const progress = settings.particleCount <= 1 ? 0 : i / (settings.particleCount - 1);
+
+      const r1 = pseudoTrailRandom(i, 11);
+      const r2 = pseudoTrailRandom(i, 12);
+      const r3 = pseudoTrailRandom(i, 13);
+      const r4 = pseudoTrailRandom(i, 14);
+
+      const startX = centeredStream * settings.originWidth * 0.5;
+      const coneX = centeredStream * settings.coneSpread;
+      const wobbleX = (r1 - 0.5) * settings.trajectoryRandomness * 2;
+      const x = startX + coneX + wobbleX;
+
+      const yBase = settings.trailLength * (0.35 + progress * 0.78);
+      const y = yBase + (r2 - 0.5) * settings.trajectoryRandomness;
+      const size = Math.max(5, settings.particleSize + (r3 - 0.5) * 4);
+      const duration = (760 + r4 * 520) / settings.speed;
+      const delay = -((cycle / cycles) * duration);
+      const color = colors[(i + streamIndex) % colors.length];
+
+      particle.style.setProperty("--vl-ufo-particle-x", `${x.toFixed(1)}px`);
+      particle.style.setProperty("--vl-ufo-particle-y", `${y.toFixed(1)}px`);
+      particle.style.setProperty("--vl-ufo-particle-size", `${size.toFixed(1)}px`);
+      particle.style.setProperty("--vl-ufo-particle-duration", `${duration.toFixed(0)}ms`);
+      particle.style.setProperty("--vl-ufo-particle-delay", `${delay.toFixed(0)}ms`);
+      particle.style.setProperty("--vl-ufo-particle-color", color);
+      particle.style.setProperty("--vl-ufo-particle-glow", `${settings.glow}px`);
+      particle.style.setProperty("--vl-ufo-particle-end-scale", `${(0.28 + r2 * 0.42).toFixed(2)}`);
+      particle.style.setProperty("--vl-ufo-particle-rotation", `${(120 + r1 * 280).toFixed(0)}deg`);
+      particle.style.setProperty("--vl-ufo-particle-peak-opacity", `${(0.70 + r4 * 0.30).toFixed(2)}`);
+
+      trail.appendChild(particle);
+    }
+  }
+
+  function makeUfoLaunchClone(sourceEl) {
+    const rect = sourceEl.getBoundingClientRect();
+    const clone = sourceEl.cloneNode(true);
+
+    clone.classList.remove("vl-conveyor-choice", "is-selected-launch", "is-fading-choice");
+    clone.classList.add("vl-ufo-launch-clone");
+    clone.removeAttribute("data-choice-id");
+    clone.removeAttribute("data-slot");
+    clone.removeAttribute("aria-label");
+    clone.disabled = true;
+
+    clone.style.left = `${rect.left}px`;
+    clone.style.top = `${rect.top}px`;
+    clone.style.width = `${rect.width}px`;
+    clone.style.height = `${rect.height}px`;
+
+    const trail = document.createElement("span");
+    trail.className = "vl-ufo-launch-trail";
+    clone.appendChild(trail);
+    renderCyanUfoTrail(trail);
+
+    document.body.appendChild(clone);
+
+    return { clone, rect };
+  }
+
 
   function renderPlayerParticleTrail(trail, trailVars) {
     if (!trail) return;
@@ -1509,50 +1620,54 @@
   }
 
   async function animateLaunch(choice, sourceEl) {
-    const startX = window.innerWidth / 2;
-    const startY = window.innerHeight + 36;
+    const boardRect = $("#vlBoard")?.getBoundingClientRect();
+    const buildRect = $("#vlBuild")?.getBoundingClientRect();
 
-    const unit = document.createElement("div");
-    unit.className = "vl-flight-unit vl-flight-unit--blastoff";
-    unit.innerHTML = `
-      <div class="vl-blast-ship">
-        <img class="vl-flight-rocket" src="${choice.rocket.src}" alt="">
-        <div class="vl-blast-trail" aria-hidden="true"></div>
-      </div>
-      <div class="vl-flight-label ${choice.rocket.textDark ? "vl-text-dark" : ""}" style="background:${choice.rocket.color}">${escapeHtml(choice.label)}</div>
-    `;
-    document.body.appendChild(unit);
+    if (!sourceEl || !boardRect || !buildRect) return;
 
-    const unitRect = unit.getBoundingClientRect();
-    unit.style.left = `${startX - unitRect.width / 2}px`;
-    unit.style.top = `${startY}px`;
-    unit.style.opacity = "1";
-    unit.style.transform = "translateY(0)";
+    const { clone, rect } = makeUfoLaunchClone(sourceEl);
 
-    await sleep(80);
+    sourceEl.classList.add("is-hidden-during-flight");
 
-    unit.classList.add("is-blasting");
+    const startX = rect.left;
+    const startY = rect.top;
 
-    unit.style.transition = "transform 180ms linear";
-    unit.style.transform = "translateY(-82px)";
-    await sleep(180);
+    const targetCenterX = boardRect.left + boardRect.width / 2;
+    const targetX = targetCenterX - rect.width / 2;
+    const targetY = boardRect.top - rect.height - 120;
 
-    const travelDistance = startY + unitRect.height + 48;
+    const driftX = targetX - startX;
+    const driftY = targetY - startY;
 
-    // Rocket launch speed.
-    // Higher number = faster rocket.
-    // Lower number = slower rocket.
-    // This keeps the rocket speed consistent across iPhones, iPads, and desktop screens.
-    const rocketSpeedPxPerSec = 800;
-    const travelMs = Math.round((travelDistance / rocketSpeedPxPerSec) * 1000);
+    clone.animate(
+      [
+        {
+          transform: "translate3d(0, 0, 0) scale(1) rotate(0deg)",
+          opacity: 1,
+          offset: 0
+        },
+        {
+          transform: `translate3d(${driftX * 0.22}px, ${driftY * 0.18}px, 0) scale(1.03) rotate(-2deg)`,
+          opacity: 1,
+          offset: 0.28
+        },
+        {
+          transform: `translate3d(${driftX}px, ${driftY}px, 0) scale(1.08) rotate(2deg)`,
+          opacity: 1,
+          offset: 1
+        }
+      ],
+      {
+        duration: 760,
+        easing: "cubic-bezier(.42, 0, 1, 1)",
+        fill: "forwards"
+      }
+    );
 
-    unit.style.transition = `transform ${travelMs}ms linear, opacity ${travelMs}ms linear`;
-    unit.style.transform = `translateY(${-travelDistance}px)`;
-    unit.style.opacity = ".98";
-
-    await sleep(travelMs + 80);
-    unit.remove();
+    await sleep(760);
+    clone.remove();
   }
+  
 
   async function animateFinalLaunch() {
     const rocket = getBonusRocket();
@@ -2423,7 +2538,7 @@
     }
 
     if (choice.isCorrect) {
-      await fadeOutConveyor();
+      await fadeOutConveyor(choiceId);
 
       const shouldShowInitialCountdown =
         !state.hasShownInitialCountdown &&

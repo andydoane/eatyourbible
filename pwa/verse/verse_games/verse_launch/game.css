@@ -369,7 +369,7 @@ select {
 .vl-conveyor {
   position: relative;
   width: 100%;
-  height: 150px;
+  height: 190px;
   overflow: hidden;
 }
 
@@ -386,23 +386,109 @@ select {
 .vl-conveyor-choice {
   position: absolute;
   left: 0;
-  top: 50%;
+  top: 58%;
+  min-width: min(260px, 72vw);
+  border: 0;
+  padding: 0;
+  background: transparent;
   cursor: pointer;
   z-index: 2;
   transform: translate(var(--vl-conveyor-start-x, 100vw), -50%);
   animation: vlConveyorMove var(--vl-conveyor-duration, 8200ms) linear infinite;
   animation-delay: var(--vl-conveyor-delay, 0ms);
-  transition: opacity 340ms ease;
+  transition: opacity 220ms ease, filter 220ms ease;
 }
 
-.vl-conveyor-track.is-fading .vl-conveyor-choice {
+.vl-conveyor-track.is-fading .vl-conveyor-choice,
+.vl-conveyor-choice.is-fading-choice {
   animation-play-state: paused;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.vl-conveyor-choice.is-selected-launch {
+  animation-play-state: paused;
+  z-index: 6;
+}
+
+.vl-conveyor-choice.is-hidden-during-flight {
   opacity: 0;
   pointer-events: none;
 }
 
 .vl-conveyor-choice.is-wrong-choice {
   filter: brightness(1.15);
+}
+
+.vl-ufo-float {
+  --vl-ufo-base-height: 68px;
+  position: relative;
+  display: inline-flex;
+  min-width: min(260px, 72vw);
+  height: calc(var(--vl-ufo-base-height) * 2.10);
+  align-items: flex-end;
+  justify-content: center;
+  isolation: isolate;
+  animation: vlUfoFloat 1800ms ease-in-out infinite;
+  animation-delay: var(--vl-ufo-bob-delay, 0ms);
+}
+
+.vl-ufo-top-wrap {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--vl-ufo-base-height) * .93);
+  height: calc(var(--vl-ufo-base-height) * 1.17);
+  transform: translateX(-50%);
+  z-index: 3;
+  pointer-events: none;
+}
+
+.vl-ufo-top {
+  height: 100%;
+  width: auto;
+  display: block;
+}
+
+.vl-ufo-base {
+  position: relative;
+  z-index: 2;
+  min-width: min(260px, 72vw);
+  min-height: var(--vl-ufo-base-height);
+  padding: 12px 28px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(to bottom, #f2f2f2 0%, #e6e6e6 54%, #d4d4d4 100%);
+  color: #666666;
+  font-size: clamp(24px, 4.8vw, 36px);
+  font-weight: 900;
+  line-height: 1.02;
+  text-align: center;
+  text-wrap: balance;
+  box-shadow:
+    0 8px 0 rgba(0, 0, 0, .22),
+    0 16px 22px rgba(77, 249, 253, .26);
+}
+
+.vl-ufo-base::after {
+  content: "";
+  position: absolute;
+  left: 14%;
+  right: 14%;
+  bottom: -11px;
+  height: 18px;
+  border-radius: 999px;
+  background: rgba(77, 249, 253, .42);
+  filter: blur(10px);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.vl-ufo-word {
+  position: relative;
+  z-index: 2;
+  color: #666666;
 }
 
 .vl-bonus-launch-wrap {
@@ -727,6 +813,47 @@ select {
   text-wrap: balance
 }
 
+.vl-ufo-launch-clone {
+  position: fixed;
+  margin: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  pointer-events: none;
+  z-index: 10000;
+  transform-origin: center center;
+}
+
+.vl-ufo-launch-clone .vl-ufo-float {
+  animation: none;
+}
+
+.vl-ufo-launch-trail {
+  position: absolute;
+  left: 50%;
+  bottom: -18px;
+  width: 130px;
+  height: 140px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.vl-ufo-launch-particle {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: var(--vl-ufo-particle-size, 10px);
+  height: var(--vl-ufo-particle-size, 10px);
+  margin-left: calc(var(--vl-ufo-particle-size, 10px) / -2);
+  margin-top: calc(var(--vl-ufo-particle-size, 10px) / -2);
+  border-radius: 999px;
+  background: var(--vl-ufo-particle-color, #4df9fd);
+  opacity: 0;
+  filter: drop-shadow(0 0 var(--vl-ufo-particle-glow, 8px) rgba(77, 249, 253, .86));
+  animation: vlUfoLaunchParticle var(--vl-ufo-particle-duration, 900ms) linear var(--vl-ufo-particle-delay, 0ms) infinite;
+}
+
 .vl-flight-unit {
   position: fixed;
   left: 0;
@@ -1002,6 +1129,34 @@ select {
   }
 }
 
+@keyframes vlUfoFloat {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-7px);
+  }
+}
+
+@keyframes vlUfoLaunchParticle {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(.25) rotate(0deg);
+  }
+
+  10% {
+    opacity: var(--vl-ufo-particle-peak-opacity, .95);
+  }
+
+  100% {
+    opacity: 0;
+    transform:
+      translate(var(--vl-ufo-particle-x, 0px), var(--vl-ufo-particle-y, 100px)) scale(var(--vl-ufo-particle-end-scale, .48)) rotate(var(--vl-ufo-particle-rotation, 120deg));
+  }
+}
 
 @keyframes vlConveyorMove {
   from {
