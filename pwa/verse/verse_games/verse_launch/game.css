@@ -446,7 +446,7 @@ select {
 .vl-ufo-top-wrap {
   position: absolute;
   left: 50%;
-  bottom: calc(var(--vl-ufo-button-height) * .93);
+  bottom: calc(var(--vl-ufo-button-height) * .87);
   height: var(--vl-ufo-top-height);
   transform: translateX(-50%);
   z-index: 3;
