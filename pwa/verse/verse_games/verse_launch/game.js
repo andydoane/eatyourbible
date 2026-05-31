@@ -616,10 +616,12 @@
               <span id="vlStarCount">${state.astroStarCount}</span>
             </div>
           </div>
-          <div class="vl-space-controls">
-            <button class="vl-space-arrow no-zoom" id="vlLeftBtn" type="button" aria-label="Move left">‹</button>
-            <button class="vl-space-arrow no-zoom" id="vlRightBtn" type="button" aria-label="Move right">›</button>
-          </div>
+          ${shouldShowAstroArrowButtons() ? `
+            <div class="vl-space-controls">
+              <button class="vl-space-arrow no-zoom" id="vlLeftBtn" type="button" aria-label="Move left">‹</button>
+              <button class="vl-space-arrow no-zoom" id="vlRightBtn" type="button" aria-label="Move right">›</button>
+            </div>
+          ` : ""}
         </div>
         ${renderHelpOverlay()}
         ${renderGameMenuOverlay()}
@@ -1115,6 +1117,11 @@
   function shouldTryTiltControls() {
     return isLikelyTouchDevice() && hasDeviceOrientationSupport();
   }
+
+  function shouldShowAstroArrowButtons() {
+    return !astroInput.tiltEnabled;
+  }
+
 
   function bonusTravelInstructionHtml() {
     if (shouldTryTiltControls()) {
