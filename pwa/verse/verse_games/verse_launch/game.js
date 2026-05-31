@@ -2663,6 +2663,17 @@
     });
   }
 
+  function asteroidIsHalfVisible(stageRect, asteroid) {
+    const asteroidTop = asteroid.yPx;
+    const asteroidBottom = asteroid.yPx + asteroid.size;
+
+    const visibleTop = Math.max(0, asteroidTop);
+    const visibleBottom = Math.min(stageRect.height, asteroidBottom);
+    const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+
+    return visibleHeight >= asteroid.size * 0.5;
+  }
+
   function projectileHitTest(stageRect, projectile, asteroid) {
     const projectileX = stageRect.width * projectile.x;
     const projectileY = projectile.yPx;
@@ -2758,6 +2769,7 @@
 
       for (const asteroid of state.astroAsteroids) {
         if (destroyedAsteroidIds.has(asteroid.id)) continue;
+        if (!asteroidIsHalfVisible(stageRect, asteroid)) continue;
 
         if (projectileHitTest(stageRect, projectile, asteroid)) {
           destroyedProjectileIds.add(projectile.id);
