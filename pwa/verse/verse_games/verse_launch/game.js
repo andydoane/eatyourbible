@@ -561,16 +561,29 @@
 
 // Conveyor Belt Speed
   const CONVEYOR_LIGHTS_ONLY_TRAVELED_THRESHOLD = 0.5;
+  const CONVEYOR_SHIP_HEIGHT_MULTIPLIER = 2.10;
+  const CONVEYOR_SPEED_SHIP_HEIGHTS_PER_SEC = {
+    easy: 1.20,
+    medium: 1.35,
+    hard: 1.50
+  };
 
   function conveyorSpeedPxPerSec() {
-    if (state.mode === "easy") return 120;
-    if (state.mode === "hard") return 150;
-    return 135;
+    const shipHeightsPerSecond =
+      CONVEYOR_SPEED_SHIP_HEIGHTS_PER_SEC[state.mode] ||
+      CONVEYOR_SPEED_SHIP_HEIGHTS_PER_SEC.medium;
+
+    return conveyorShipHeightPx() * shipHeightsPerSecond;
   }
 
   function conveyorShipTopWidthPx() {
     const buttonHeight = Math.min(68, Math.max(44, window.innerWidth * 0.105));
     return buttonHeight * 1.17 * 1.686;
+  }
+
+  function conveyorShipHeightPx() {
+    const buttonHeight = Math.min(68, Math.max(44, window.innerWidth * 0.105));
+    return buttonHeight * CONVEYOR_SHIP_HEIGHT_MULTIPLIER;
   }
 
   function resetConveyorTargetPlanner() {
