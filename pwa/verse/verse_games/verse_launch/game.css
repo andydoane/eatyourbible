@@ -369,7 +369,7 @@ select {
 .vl-conveyor {
   position: relative;
   width: 100%;
-  height: 190px;
+  height: 230px;
   overflow: hidden;
 }
 
@@ -390,7 +390,7 @@ select {
 
   position: absolute;
   left: 0;
-  top: 54%;
+  top: 60%;
   min-width: var(--vl-ufo-width);
   border: 0;
   padding: 0;
@@ -429,7 +429,7 @@ select {
   position: relative;
   display: inline-flex;
   width: var(--vl-ufo-width);
-  height: calc(var(--vl-ufo-base-height) * 1.95);
+  height: calc(var(--vl-ufo-base-height) * 2.10);
   align-items: flex-end;
   justify-content: center;
   isolation: isolate;
@@ -440,10 +440,10 @@ select {
 .vl-ufo-top-wrap {
   position: absolute;
   left: 50%;
-  bottom: calc(var(--vl-ufo-base-height) * .88);
-  height: calc(var(--vl-ufo-base-height) * 1.06);
+  bottom: calc(var(--vl-ufo-base-height) * .93);
+  height: calc(var(--vl-ufo-base-height) * 1.17);
   transform: translateX(-50%);
-  z-index: 1;
+  z-index: 3;
   pointer-events: none;
 }
 
@@ -455,10 +455,10 @@ select {
 
 .vl-ufo-base {
   position: relative;
-  z-index: 3;
+  z-index: 2;
   width: var(--vl-ufo-width);
   min-height: var(--vl-ufo-base-height);
-  padding: calc(var(--vl-ufo-base-height) * .14) calc(var(--vl-ufo-base-height) * .34);
+  padding: calc(var(--vl-ufo-base-height) * .16) calc(var(--vl-ufo-base-height) * .38);
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
