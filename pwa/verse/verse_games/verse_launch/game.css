@@ -1226,6 +1226,9 @@ select {
 }
 
 .vl-player-unit {
+  --vl-player-rocket-size: 84px;
+  --vl-rainbow-rocket-scale: 1.31;
+
   position: absolute;
   left: 50%;
   bottom: 72px;
@@ -1261,14 +1264,16 @@ select {
 .vl-player-rocket-img {
   position: relative;
   z-index: 2;
-  width: 84px;
-  height: 84px;
+  width: var(--vl-player-rocket-size);
+  height: var(--vl-player-rocket-size);
   object-fit: contain;
   display: block;
   filter: drop-shadow(0 10px 16px rgba(0, 0, 0, .28));
 }
 
 .vl-player-unit.is-rainbow-rocket .vl-player-rocket-img {
+  width: calc(var(--vl-player-rocket-size) * var(--vl-rainbow-rocket-scale));
+  height: calc(var(--vl-player-rocket-size) * var(--vl-rainbow-rocket-scale));
   filter:
     drop-shadow(0 10px 16px rgba(0, 0, 0, .28))
     drop-shadow(0 0 8px rgba(255, 199, 81, .62));
