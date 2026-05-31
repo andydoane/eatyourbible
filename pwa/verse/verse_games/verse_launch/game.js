@@ -475,15 +475,28 @@
       if (!choices.length) return;
 
       const rect = conveyor.getBoundingClientRect();
-      const maxChoiceWidth = Math.max(...choices.map(el => el.getBoundingClientRect().width), 220);
-      const sidePad = Math.max(72, maxChoiceWidth * 0.45);
-      const startX = rect.width + sidePad;
-      const endX = -maxChoiceWidth - sidePad;
-      const distance = startX - endX;
-      const durationMs = Math.round((distance / conveyorSpeedPxPerSec()) * 1000);
+      const speed = conveyorSpeedPxPerSec();
 
-      const gapPx = Math.max(150, maxChoiceWidth * 0.78);
-      const staggerMs = Math.round((gapPx / conveyorSpeedPxPerSec()) * 1000);
+      const maxChoiceWidth = Math.max(
+        ...choices.map(el => el.getBoundingClientRect().width),
+        220
+      );
+
+      const visibleGapPx = Math.max(
+        72,
+        Math.min(140, rect.width * 0.16)
+      );
+
+      const spacingPx = maxChoiceWidth + visibleGapPx;
+      const sidePad = Math.max(80, maxChoiceWidth * 0.50);
+
+      const startX = rect.width + sidePad;
+      const convoyExtraPx = spacingPx * (choices.length - 1);
+      const endX = -maxChoiceWidth - sidePad - convoyExtraPx;
+
+      const distance = startX - endX;
+      const durationMs = Math.round((distance / speed) * 1000);
+      const staggerMs = Math.round((spacingPx / speed) * 1000);
 
       choices.forEach((el, index) => {
         el.style.setProperty("--vl-conveyor-start-x", `${startX}px`);
