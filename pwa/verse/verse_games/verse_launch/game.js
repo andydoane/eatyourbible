@@ -140,6 +140,7 @@
   const ASTRO_MODE_MULTIPLIER = { easy: 1, medium: 1.18, hard: 1.38 };
   const STAR_MODE_MULTIPLIER = { easy: 0.92, medium: 1, hard: 1.08 };
   const BLASTER_STAR_COUNT = 5;
+  const SPREAD_SHOT_STAR_COUNT = 6;
   const PROJECTILE_COOLDOWN_MS = 520;
   const PROJECTILE_COLORS = [
     "#ff5a51",
@@ -1376,6 +1377,10 @@
     return state.astroStarCount >= BLASTER_STAR_COUNT;
   }
 
+  function bonusSpreadShotActive() {
+    return state.astroStarCount >= SPREAD_SHOT_STAR_COUNT;
+  }
+
   function bonusTrailVarsForStarCount(count) {
     const glowLevel = bonusGlowLevelForStarCount(count);
 
@@ -2526,12 +2531,20 @@
 
     state.astroProjectileColorIndex += 1;
 
-    state.astroProjectiles.push({
-      id: `projectile_${Date.now()}_${Math.random().toString(36).slice(2)}`,
-      x: state.astroPlayerX,
-      yPx: noseY,
-      size,
-      color
+    const spreadXPerSec = projectileSpeedPxPerSec(stageRect.height) * 0.38;
+    const volley = bonusSpreadShotActive()
+      ? [-spreadXPerSec, 0, spreadXPerSec]
+      : [0];
+
+    volley.forEach(xVelocityPxPerSec => {
+      state.astroProjectiles.push({
+        id: `projectile_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+        x: state.astroPlayerX,
+        yPx: noseY,
+        size,
+        color,
+        xVelocityPxPerSec
+      });
     });
 
     state.astroProjectileCooldownMs = PROJECTILE_COOLDOWN_MS;
@@ -2542,10 +2555,16 @@
 
     state.astroProjectiles.forEach(projectile => {
       projectile.yPx -= speed * dtSec;
+
+      if (projectile.xVelocityPxPerSec) {
+        projectile.x += (projectile.xVelocityPxPerSec * dtSec) / stageRect.width;
+      }
     });
 
     state.astroProjectiles = state.astroProjectiles.filter(projectile => {
-      return projectile.yPx > -projectile.size - 24;
+      return projectile.yPx > -projectile.size - 24 &&
+        projectile.x > -0.12 &&
+        projectile.x < 1.12;
     });
   }
 
