@@ -384,10 +384,14 @@ select {
 }
 
 .vl-conveyor-choice {
+  --vl-ufo-scale: clamp(.72, 0.42vw + .62, 1);
+  --vl-ufo-base-height: calc(68px * var(--vl-ufo-scale));
+  --vl-ufo-width: min(calc(260px * var(--vl-ufo-scale)), 72vw);
+
   position: absolute;
   left: 0;
-  top: 42%;
-  min-width: min(260px, 74vw);
+  top: 54%;
+  min-width: var(--vl-ufo-width);
   border: 0;
   padding: 0;
   background: transparent;
@@ -422,14 +426,10 @@ select {
 }
 
 .vl-ufo-float {
-  --vl-ufo-scale: clamp(.78, 0.34vw + .70, 1);
-  --vl-ufo-base-height: calc(68px * var(--vl-ufo-scale));
-  --vl-ufo-width: min(calc(260px * var(--vl-ufo-scale)), 74vw);
-
   position: relative;
   display: inline-flex;
-  min-width: var(--vl-ufo-width);
-  height: calc(var(--vl-ufo-base-height) * 2.10);
+  width: var(--vl-ufo-width);
+  height: calc(var(--vl-ufo-base-height) * 1.95);
   align-items: flex-end;
   justify-content: center;
   isolation: isolate;
@@ -440,10 +440,10 @@ select {
 .vl-ufo-top-wrap {
   position: absolute;
   left: 50%;
-  bottom: calc(var(--vl-ufo-base-height) * .91);
-  height: calc(var(--vl-ufo-base-height) * 1.17);
+  bottom: calc(var(--vl-ufo-base-height) * .88);
+  height: calc(var(--vl-ufo-base-height) * 1.06);
   transform: translateX(-50%);
-  z-index: 3;
+  z-index: 1;
   pointer-events: none;
 }
 
@@ -455,17 +455,17 @@ select {
 
 .vl-ufo-base {
   position: relative;
-  z-index: 2;
-  min-width: var(--vl-ufo-width);
+  z-index: 3;
+  width: var(--vl-ufo-width);
   min-height: var(--vl-ufo-base-height);
-  padding: calc(var(--vl-ufo-base-height) * .16) calc(var(--vl-ufo-base-height) * .38);
+  padding: calc(var(--vl-ufo-base-height) * .14) calc(var(--vl-ufo-base-height) * .34);
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   background: linear-gradient(to bottom, #f2f2f2 0%, #e6e6e6 54%, #d4d4d4 100%);
   color: #666666;
-  font-size: clamp(26px, 8.2vw, 36px);
+  font-size: clamp(24px, 7.4vw, 36px);
   font-weight: 900;
   line-height: .98;
   text-align: center;
