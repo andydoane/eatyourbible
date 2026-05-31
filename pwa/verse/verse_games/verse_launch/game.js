@@ -3048,7 +3048,7 @@
       return;
     }
 
-    await animateFailedLaunch(liveSourceEl);
+    animateFailedLaunch(liveSourceEl);
     removeConveyorItem(choiceId);
 
     flashWrongBoard();
