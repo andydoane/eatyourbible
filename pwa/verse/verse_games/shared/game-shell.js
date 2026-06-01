@@ -916,11 +916,13 @@ const safeMax = hasCustomMax ? Number(max) : profile.max;
   return best;
 }
 
-  function getBuildStreakLevel(streak = 0, thresholds = [1, 5, 10, 15, 20]) {
+  const BUILD_STREAK_DEFAULT_THRESHOLDS = [2, 4, 6, 8, 10];
+
+  function getBuildStreakLevel(streak = 0, thresholds = BUILD_STREAK_DEFAULT_THRESHOLDS) {
     const safeStreak = Math.max(0, Number(streak) || 0);
     const safeThresholds = Array.isArray(thresholds) && thresholds.length
       ? thresholds.map(value => Math.max(0, Number(value) || 0))
-      : [1, 5, 10, 15, 20];
+      : BUILD_STREAK_DEFAULT_THRESHOLDS;
 
     let level = 0;
 
@@ -937,7 +939,7 @@ const safeMax = hasCustomMax ? Number(max) : profile.max;
     buildEl = null,
     streak = 0,
     colors = [],
-    thresholds = [1, 5, 10, 15, 20],
+    thresholds = BUILD_STREAK_DEFAULT_THRESHOLDS,
     pulse = false,
     broken = false
   } = {}) {
