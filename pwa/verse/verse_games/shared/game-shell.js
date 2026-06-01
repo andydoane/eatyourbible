@@ -916,6 +916,97 @@ const safeMax = hasCustomMax ? Number(max) : profile.max;
   return best;
 }
 
+  function getBuildStreakLevel(streak = 0, thresholds = [1, 5, 10, 15, 20]) {
+    const safeStreak = Math.max(0, Number(streak) || 0);
+    const safeThresholds = Array.isArray(thresholds) && thresholds.length
+      ? thresholds.map(value => Math.max(0, Number(value) || 0))
+      : [1, 5, 10, 15, 20];
+
+    let level = 0;
+
+    safeThresholds.forEach((threshold, index) => {
+      if (safeStreak >= threshold) {
+        level = index + 1;
+      }
+    });
+
+    return Math.max(0, Math.min(5, level));
+  }
+
+  function updateBuildStreakOverlay({
+    buildEl = null,
+    streak = 0,
+    colors = [],
+    thresholds = [1, 5, 10, 15, 20],
+    pulse = false,
+    broken = false
+  } = {}) {
+    if (!buildEl) return null;
+
+    const safeColors = [
+      colors[0] || "#ffc751",
+      colors[1] || "#a7cb6f",
+      colors[2] || "#64b5f6",
+      colors[3] || "#ff8cc8",
+      colors[4] || "#ffffff"
+    ];
+
+    const level = getBuildStreakLevel(streak, thresholds);
+
+    const computedPosition = window.getComputedStyle(buildEl).position;
+    if (computedPosition === "static") {
+      buildEl.style.position = "relative";
+    }
+
+    let overlay = buildEl.querySelector(":scope > .vm-build-streak-overlay");
+
+    if (!overlay) {
+      overlay = document.createElement("div");
+      overlay.className = "vm-build-streak-overlay";
+      overlay.setAttribute("aria-hidden", "true");
+      buildEl.appendChild(overlay);
+    }
+
+    overlay.classList.remove(
+      "is-level-0",
+      "is-level-1",
+      "is-level-2",
+      "is-level-3",
+      "is-level-4",
+      "is-level-5",
+      "is-pulsing",
+      "is-broken"
+    );
+
+    overlay.classList.add(`is-level-${level}`);
+    overlay.dataset.streak = String(Math.max(0, Number(streak) || 0));
+    overlay.dataset.level = String(level);
+
+    overlay.style.setProperty("--vm-build-streak-color-1", safeColors[0]);
+    overlay.style.setProperty("--vm-build-streak-color-2", safeColors[1]);
+    overlay.style.setProperty("--vm-build-streak-color-3", safeColors[2]);
+    overlay.style.setProperty("--vm-build-streak-color-4", safeColors[3]);
+    overlay.style.setProperty("--vm-build-streak-color-5", safeColors[4]);
+    overlay.style.setProperty("--vm-build-streak-color", safeColors[Math.max(0, level - 1)] || safeColors[0]);
+
+    if (pulse && level > 0) {
+      void overlay.offsetWidth;
+      overlay.classList.add("is-pulsing");
+    }
+
+    if (broken) {
+      void overlay.offsetWidth;
+      overlay.classList.add("is-broken");
+    }
+
+    return {
+      overlay,
+      level,
+      streak: Math.max(0, Number(streak) || 0)
+    };
+  }
+
+
   function getPhaseForProgress({
     progressIndex = 0,
     wordCount = 0,
@@ -1978,6 +2069,8 @@ function renderCompleteScreen({
     getBuildDisplayTokens,
     renderBuildProgressHtml,
     fitBuildTextOnce,
+    getBuildStreakLevel,
+    updateBuildStreakOverlay,
     countBuildTextLines,
     buildTextOverflows,
     getPhaseForProgress,
