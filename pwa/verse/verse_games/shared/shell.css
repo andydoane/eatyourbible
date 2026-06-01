@@ -801,7 +801,8 @@ button.vm-complete-icon.is-pet-box:focus-visible{
   border-radius: inherit;
   box-sizing: border-box;
   opacity: 0;
-  border: 3px solid transparent;
+  --vm-build-streak-border-width: clamp(4px, 0.75vw, 7px);
+  border: var(--vm-build-streak-border-width) solid transparent;
   box-shadow: none;
   overflow: hidden;
   transform: translateZ(0);
@@ -871,7 +872,7 @@ button.vm-complete-icon.is-pet-box:focus-visible{
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
-  padding: 3px;
+  padding: var(--vm-build-streak-border-width);
   mask-composite: exclude;
   -webkit-mask-composite: xor;
   animation: vmBuildStreakSweep 1.65s linear infinite;
@@ -889,7 +890,7 @@ button.vm-complete-icon.is-pet-box:focus-visible{
 .vm-build-streak-overlay.is-level-5::before {
   opacity: 1;
   inset: 0;
-  padding: 3px;
+  padding: var(--vm-build-streak-border-width);
   background:
     linear-gradient(90deg,
       var(--vm-build-streak-color-1),
