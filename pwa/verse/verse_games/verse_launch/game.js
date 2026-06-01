@@ -29,8 +29,12 @@
   const UFO_LIGHTS_IMAGE_SRC = "./verse_launch_images/verse_launch_ship_lights.svg";
 
   const SOUND_BASE_PATH = "./verse_launch_sounds/";
+  const UI_SOUND_BASE_PATH = "../../ui_audio/";
 
   const SOUND_FILES = {
+    uiTap1: `${UI_SOUND_BASE_PATH}ui_sound_pop_1.mp3`,
+    uiTap2: `${UI_SOUND_BASE_PATH}ui_sound_pop_2.mp3`,
+
     correctTap: `${SOUND_BASE_PATH}verse_launch_zoom.mp3`,
     wrongTap: `${SOUND_BASE_PATH}verse_launch_wrong.mp3`,
     wordAdded: `${SOUND_BASE_PATH}verse_launch_collect.mp3`,
@@ -43,24 +47,27 @@
   };
 
   const SOUND_TUNING = {
-    masterVolume: 0.80,
+    masterVolume: 0.90,
     volumes: {
-      correctTap: 0.80,
+      correctTap: 0.50,
       wrongTap: 0.75,
       wordAdded: 0.55,
-      asteroidDestroyed: 0.85,
+      asteroidDestroyed: 0.55,
       playerAsteroidHit: 0.90,
       landingStart: 0.80,
       launchButton: 0.90,
       cutsceneRocketEnter: 0.80,
       starCollected: 0.50,
-      countdownBeep: 0.42,
+      countdownBeep: 0.92,
       countdownFinalBeep: 0.52,
 
       // Generated projectile volley sounds.
       // Tick is the brighter shot, tock is the softer/lower shot.
       projectileTick: 0.12,
-      projectileTock: 0.085
+      projectileTock: 0.085,
+
+      // Shared UI/menu tap sounds.
+      uiTap: 0.45
     }
   };
 
@@ -125,6 +132,7 @@
     bonusRocketColorKey: "red",
     bonusOutcome: "",
     bonusMedalAlreadyEarned: false,
+    uiSoundFlip: false,
 
     astroHits: 0,
     astroInvulnerable: false,
@@ -348,7 +356,7 @@
     });
   }
 
-  async function playGameSound(key) {
+  async function playGameSound(key, volumeKey = key) {
     if (muted) return;
 
     const ctx = getAudioContext();
@@ -365,7 +373,7 @@
       const source = ctx.createBufferSource();
       const gain = ctx.createGain();
 
-      gain.gain.value = soundVolume(key);
+      gain.gain.value = soundVolume(volumeKey);
       source.buffer = buffer;
       source.connect(gain);
       gain.connect(ctx.destination);
@@ -374,6 +382,12 @@
     } catch (err) {
       // Sound should never break gameplay.
     }
+  }
+
+  function playUiTapSound() {
+    const key = state.uiSoundFlip ? "uiTap2" : "uiTap1";
+    state.uiSoundFlip = !state.uiSoundFlip;
+    playGameSound(key, "uiTap");
   }
 
   async function playCountdownBeep(finalBeep = false) {
@@ -513,6 +527,7 @@
     state.bonusRocketColorKey = "red";
     state.bonusOutcome = "";
     state.bonusMedalAlreadyEarned = false;
+    state.uiSoundFlip = false;
 
     state.astroHits = 0;
     state.astroInvulnerable = false;
@@ -1299,6 +1314,7 @@
       onBack: () => window.VerseGameBridge.exitGame(),
       onStart: () => {
         unlockAudio();
+        playUiTapSound();
         setScreen("mode");
       }
     });
@@ -1316,6 +1332,7 @@
       onBack: () => setScreen("intro"),
       onSelect: (mode) => {
         unlockAudio();
+        playUiTapSound();
         state.mode = mode;
         initVerseData();
         state.startTime = performance.now();
@@ -1469,10 +1486,17 @@
       backLabel: "Back to Practice Games",
       onPlayAgain: () => {
         unlockAudio();
+        playUiTapSound();
         setScreen("mode");
       },
-      onMoreGames: () => window.VerseGameBridge.exitGame(),
-      onChangeVerse: () => window.VerseGameBridge.returnToTitle()
+      onMoreGames: () => {
+        playUiTapSound();
+        window.VerseGameBridge.exitGame();
+      },
+      onChangeVerse: () => {
+        playUiTapSound();
+        window.VerseGameBridge.returnToTitle();
+      }
     });
   }
 
@@ -1493,9 +1517,11 @@
       isMuted: () => muted,
       onMuteToggle: () => {
         muted = !muted;
+        if (!muted) playUiTapSound();
         return muted;
       },
       onHowToPlay: () => {
+        playUiTapSound();
         state.menuOpen = false;
         state.helpOpen = true;
         state.helpBackMode = true;
@@ -1509,24 +1535,31 @@
         window.VerseGameShell.openHelp(HELP_OVERLAY_ID, "back", "Back");
       },
       onModeSelect: () => {
+        playUiTapSound();
         state.menuOpen = false;
         state.helpOpen = false;
         state.helpBackMode = false;
         state.busy = false;
         setScreen("mode");
       },
-      onExit: () => window.VerseGameBridge.exitGame(),
+      onExit: () => {
+        playUiTapSound();
+        window.VerseGameBridge.exitGame();
+      },
       onOpen: () => {
         if (!canOpenGameMenu()) return false;
 
+        playUiTapSound();
         state.menuOpen = true;
         state.helpOpen = false;
         state.helpBackMode = false;
       },
       onClose: () => {
+        playUiTapSound();
         state.menuOpen = false;
       },
       onBackFromHelp: () => {
+        playUiTapSound();
         state.helpOpen = false;
         state.menuOpen = true;
         state.helpBackMode = false;
@@ -1544,9 +1577,11 @@
       isMuted: () => muted,
       onMuteToggle: () => {
         muted = !muted;
+        if (!muted) playUiTapSound();
         return muted;
       },
       onHowToPlay: () => {
+        playUiTapSound();
         state.menuOpen = false;
         state.helpOpen = true;
         state.helpBackMode = true;
