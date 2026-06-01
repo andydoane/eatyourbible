@@ -1,2092 +1,1512 @@
-(function(){
-  function escapeHtml(value){
-    return String(value ?? "")
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#39;");
-  }
-
-  function styleVarsHtml(options = {}){
-    const vars = [];
-
-    if (options.bg) vars.push(`--vm-game-bg:${options.bg}`);
-    if (options.accent) vars.push(`--vm-game-accent:${options.accent}`);
-    if (options.helpTitleBg) vars.push(`--vm-game-help-title-bg:${options.helpTitleBg}`);
-    if (options.helpTitleColor) vars.push(`--vm-game-help-title-color:${options.helpTitleColor}`);
-    if (options.helpCloseBg) vars.push(`--vm-game-help-close-bg:${options.helpCloseBg}`);
-    if (options.helpCloseColor) vars.push(`--vm-game-help-close-color:${options.helpCloseColor}`);
-
-    return vars.length ? ` style="${vars.join("; ")};"` : "";
-  }
-
-  function getLaunchParams(){
-    try {
-      return window.VerseGameBridge?.getLaunchParams?.() || {};
-    } catch (err) {
-      console.warn("Could not read launch params", err);
-      return {};
-    }
-  }
-
-  function isGameMixLaunch(){
-    return !!getLaunchParams().mix;
-  }
-
-  function getGameMixMode(){
-    const mode = String(getLaunchParams().mode || "").trim();
-    return ["easy", "medium", "hard"].includes(mode) ? mode : "";
-  }
-
-  function isZooTodoLaunchForVerse(verseId = "") {
-    const params = getLaunchParams();
-
-    if (params.todoSource !== "zoo_todo") return false;
-    if (params.todoType !== "feed_pet" && params.todoType !== "wake_pet") return false;
-
-    const safeVerseId = String(verseId || params.verseId || "").trim();
-    const todoVerseId = String(params.todoVerseId || "").trim();
-
-    if (!safeVerseId || !todoVerseId) return false;
-
-    return safeVerseId === todoVerseId;
-  }
-
-  function getZooTodoActionText() {
-    const params = getLaunchParams();
-
-    if (params.todoText) return params.todoText;
-
-    const petName = params.todoPetName || "BibloPet";
-
-    if (params.todoType === "wake_pet") return `You woke up ${petName}!`;
-    if (params.todoType === "feed_pet") return `You fed ${petName}!`;
-
-    return "You helped your BibloPet!";
-  }
-
-  function getZooTodoCompleteTitleMarkup() {
-    return `
-      <div class="vm-game-title vm-complete-title">
-        <div>Zoo To-Do</div>
-        <div>Complete!</div>
-      </div>
-    `;
-  }
-
-  function getZooTodoCompleteSubtitleMarkup() {
-    return `
-      <div class="vm-zoo-todo-complete-subtitle">
-        ✅ ${escapeHtml(getZooTodoActionText())}
-      </div>
-    `;
-  }
-
-  function getZooTodoCompleteIconHtml(verseId = "") {
-    const params = getLaunchParams();
-    const safeVerseId = String(verseId || params.todoVerseId || params.verseId || "").trim();
-    const safeEmoji = params.todoPetEmoji || "🐾";
-
-    if (!safeVerseId) {
-      return escapeHtml(safeEmoji);
-    }
-
-    const imgSrc = `../../pet_images/pet_${safeVerseId}.png`;
-
-    return `
-      <img
-        src="${escapeHtml(imgSrc)}"
-        alt=""
-        draggable="false"
-        onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';"
-      >
-      <span style="display:none">${escapeHtml(safeEmoji)}</span>
-    `;
-  }
-
-  function showGameMixQuitConfirm({
-    title = "Quit Game Mix?",
-    noText = "Keep Playing",
-    yesText = "Quit Mix",
-    onConfirm = () => {}
-  } = {}){
-    const existing = document.getElementById("vmGameMixConfirmOverlay");
-    if (existing) existing.remove();
-
-    const overlay = document.createElement("div");
-    overlay.id = "vmGameMixConfirmOverlay";
-    overlay.className = "vm-game-mix-confirm-overlay";
-
-    overlay.innerHTML = `
-      <div class="vm-game-mix-confirm-panel" role="dialog" aria-modal="true" aria-label="${escapeHtml(title)}">
-        <div class="vm-game-mix-confirm-title">${escapeHtml(title)}</div>
-
-        <div class="vm-game-mix-confirm-actions">
-          <button class="vm-btn vm-btn-secondary vm-game-mix-keep-playing" id="vmGameMixConfirmNo" type="button">
-            ${escapeHtml(noText)}
-          </button>
-
-          <button class="vm-btn vm-game-mix-quit" id="vmGameMixConfirmYes" type="button">
-            ${escapeHtml(yesText)}
-          </button>
-        </div>
-      </div>
-    `;
-
-    document.body.appendChild(overlay);
-
-    const close = () => {
-      overlay.remove();
-    };
-
-    const noBtn = overlay.querySelector("#vmGameMixConfirmNo");
-    const yesBtn = overlay.querySelector("#vmGameMixConfirmYes");
-
-    if (noBtn) noBtn.onclick = close;
-
-    if (yesBtn){
-      yesBtn.onclick = () => {
-        close();
-        onConfirm();
-      };
-    }
-
-    overlay.addEventListener("click", (event) => {
-      if (event.target === overlay){
-        close();
-      }
-    });
-  }
-
-  const SHARED_FUN_DECOYS = Object.freeze([
-    "taco",
-    "banana",
-    "penguin",
-    "cupcake",
-    "pickle",
-    "waffle",
-    "rocket",
-    "robot",
-    "balloon",
-    "otter",
-    "pretzel",
-    "pancake",
-    "donut",
-    "cookie",
-    "muffin",
-    "noodle",
-    "pizza",
-    "popcorn",
-    "jellybean",
-    "sloth",
-    "blueberry",
-    "melon",
-    "coconut",
-    "burrito",
-    "sundae",
-    "snowman",
-    "rainbow",
-    "unicorn",
-    "dinosaur",
-    "kangaroo",
-    "hamster",
-    "kitten",
-    "puppy",
-    "monkey",
-    "zebra",
-    "narwhal",
-    "pirate",
-    "scooter",
-    "backpack",
-    "firetruck",
-    "yo-yo",
-    "treasure",
-    "volcano",
-    "bubble",
-    "bongo",
-    "slipper",
-    "meatball",
-    "spaghetti",
-    "burger",
-    "brush",
-    "glimmer",
-    "wobble",
-    "dazzle",
-    "bloop",
-    "pibble",
-    "snorf"
-  ]);
-
-  let sharedFunDecoyBag = [];
-
-  const SHARED_BIBLE_BOOK_DECOYS = Object.freeze([
-    "Genesis",
-    "Exodus",
-    "Leviticus",
-    "Numbers",
-    "Joshua",
-    "Judges",
-    "Ruth",
-    "1 Samuel",
-    "2 Samuel",
-    "1 Kings",
-    "2 Kings",
-    "Ezra",
-    "Nehemiah",
-    "Esther",
-    "Job",
-    "Psalm",
-    "Proverbs",
-    "Isaiah",
-    "Jeremiah",
-    "Ezekiel",
-    "Daniel",
-    "Hosea",
-    "Joel",
-    "Amos",
-    "Obadiah",
-    "Jonah",
-    "Micah",
-    "Nahum",
-    "Habakkuk",
-    "Zephaniah",
-    "Haggai",
-    "Zechariah",
-    "Malachi",
-    "Matthew",
-    "Mark",
-    "Luke",
-    "John",
-    "Acts",
-    "Romans",
-    "Galatians",
-    "Ephesians",
-    "Colossians",
-    "1 Timothy",
-    "2 Timothy",
-    "Titus",
-    "Philemon",
-    "Hebrews",
-    "James",
-    "1 Peter",
-    "2 Peter",
-    "1 John",
-    "2 John",
-    "3 John",
-    "Jude",
-    "Revelation"
-  ]);
-
-  function getFunDecoys(){
-    return [...SHARED_FUN_DECOYS];
-  }
-
-  function getBibleBookDecoys(){
-    return [...SHARED_BIBLE_BOOK_DECOYS];
-  }
-
-  function getBookDecoys(correctBook, count = 6){
-    const correctNorm = normalizeWord(correctBook);
-    const desiredCount = Math.max(0, Number(count) || 0);
-
-    if (!desiredCount) return [];
-
-    return shuffle(
-      getBibleBookDecoys().filter((book) => normalizeWord(book) !== correctNorm)
-    ).slice(0, desiredCount);
-  }
-
-  function getFunWordDecoys(correctWord, verseWords = [], count = 6){
-    const correctNorm = normalizeWord(correctWord);
-    const desiredCount = Math.max(0, Number(count) || 0);
-
-    if (!desiredCount) return [];
-
-    const verseWordSet = new Set(
-      (Array.isArray(verseWords) ? verseWords : [])
-        .map(normalizeWord)
-        .filter(Boolean)
-    );
-
-    return shuffle(
-      getFunDecoys().filter((word) => {
-        const key = normalizeWord(word);
-        if (!key) return false;
-        if (key === correctNorm) return false;
-        if (verseWordSet.has(key)) return false;
-        return true;
-      })
-    ).slice(0, desiredCount);
-  }
-
-  function getVerseWordDecoys({
-    words = [],
-    correct = "",
-    targetIndex = -1,
-    count = 6,
-    avoidNext = 2,
-    fallbackToFun = true
-  } = {}){
-    const desiredCount = Math.max(0, Number(count) || 0);
-    const correctNorm = normalizeWord(correct);
-    const safeWords = Array.isArray(words) ? words : [];
-    const safeTargetIndex = Number(targetIndex);
-    const safeAvoidNext = Math.max(0, Number(avoidNext) || 0);
-
-    if (!desiredCount) return [];
-
-    const blocked = new Set();
-
-    if (correctNorm){
-      blocked.add(correctNorm);
-    }
-
-    if (
-      Number.isFinite(safeTargetIndex) &&
-      safeTargetIndex >= 0 &&
-      safeAvoidNext > 0
-    ){
-      for (
-        let index = safeTargetIndex + 1;
-        index <= safeTargetIndex + safeAvoidNext && index < safeWords.length;
-        index += 1
-      ){
-        const nextKey = normalizeWord(safeWords[index]);
-        if (nextKey){
-          blocked.add(nextKey);
-        }
-      }
-    }
-
-    const candidates = [];
-    const used = new Set();
-
-    for (const word of safeWords){
-      const key = normalizeWord(word);
-
-      if (!key) continue;
-      if (blocked.has(key)) continue;
-      if (used.has(key)) continue;
-
-      candidates.push(word);
-      used.add(key);
-    }
-
-    const out = shuffle(candidates).slice(0, desiredCount);
-
-    if (out.length < desiredCount && fallbackToFun){
-      const alreadyUsed = new Set(out.map(normalizeWord));
-
-      for (const word of getFunWordDecoys(correct, safeWords, desiredCount * 2)){
-        const key = normalizeWord(word);
-
-        if (!key) continue;
-        if (blocked.has(key)) continue;
-        if (alreadyUsed.has(key)) continue;
-
-        out.push(word);
-        alreadyUsed.add(key);
-
-        if (out.length >= desiredCount) break;
-      }
-    }
-
-    return out.slice(0, desiredCount);
-  }
-
- function shuffle(array){
-    const copy = Array.isArray(array) ? array.slice() : [];
-
-    for (let i = copy.length - 1; i > 0; i--){
-      const j = Math.floor(Math.random() * (i + 1));
-      [copy[i], copy[j]] = [copy[j], copy[i]];
-    }
-
-    return copy;
-  }
-
-  function clamp(value, min, max){
-    const number = Number(value);
-    const lower = Number(min);
-    const upper = Number(max);
-
-    if (!Number.isFinite(number)) return lower;
-    if (!Number.isFinite(lower) || !Number.isFinite(upper)) return number;
-
-    return Math.max(lower, Math.min(upper, number));
-  }
-
-  function capitalize(value){
-    const text = String(value ?? "");
-    if (!text) return "";
-    return text.charAt(0).toUpperCase() + text.slice(1);
-  }
-
-  function normalizeWord(value){
-    return String(value ?? "")
-      .trim()
-      .replace(/[‘’]/g, "'")
-      .toLowerCase()
-      .replace(/^[^a-z0-9]+/gi, "")
-      .replace(/[^a-z0-9]+$/gi, "")
-      .replace(/[^a-z0-9']/gi, "");
-  }
-
-  function tokenizeVerseWords(text){
-    const normalized = String(text ?? "")
-      .replace(/[‘’]/g, "'")
-      .replace(/[“”]/g, '"')
-      .replace(/[–—−]/g, "-");
-
-    const words = [];
-    const re = /[A-Za-z0-9]+(?:'[A-Za-z0-9]+)?(?:,[0-9]{3})*/g;
-
-    for (const match of normalized.matchAll(re)){
-      const word = match[0];
-      if (word) words.push(word);
-    }
-
-    return words;
-  }
-
-  function tokenizeVerseForBuild(text){
-    const raw = String(text ?? "");
-    const tokens = [];
-    const re = /(\s+|[A-Za-z0-9]+(?:[’'][A-Za-z0-9]+)?(?:,[0-9]{3})*|[^\sA-Za-z0-9]+)/g;
-
-    for (const part of raw.match(re) || []){
-      if (/^\s+$/.test(part)){
-        tokens.push({ kind: "space", text: part });
-      } else if (/^[A-Za-z0-9]+(?:[’'][A-Za-z0-9]+)?(?:,[0-9]{3})*$/.test(part)){
-        tokens.push({ kind: "word", text: part });
-      } else {
-        tokens.push({ kind: "punct", text: part });
-      }
-    }
-
-    return tokens;
-  }
-
-  function extractWordEntries(tokens){
-    return Array.isArray(tokens)
-      ? tokens
-          .filter((token) => token && token.kind === "word")
-          .map((token) => ({ display: token.text }))
-      : [];
-  }
-
-  function getBuildLengthScore(verseText, book, reference){
-    return (
-      String(verseText || "").length +
-      String(book || "").length +
-      String(reference || "").length
-    );
-  }
-
-  function getBuildSizeClass(verseText, book, reference, buildArea = "large"){
-    const score = getBuildLengthScore(verseText, book, reference);
-
-  const profiles = {
-    large: {
-      mediumAt: 82,
-      smallAt: 118
-    },
-    compact: {
-      mediumAt: 73,
-      smallAt: 121
-    },
-    none: {
-      mediumAt: Infinity,
-      smallAt: Infinity
-    }
-  };
-
-    const profile = profiles[String(buildArea || "large").toLowerCase()] || profiles.large;
-
-    if (score >= profile.smallAt) return "is-small";
-    if (score >= profile.mediumAt) return "is-medium";
-    return "is-normal";
-  }
-
-  function buildVerseSegments({
-    verseText = "",
-    book = "",
-    reference = "",
-    buildArea = "large"
-  } = {}){
-    const words = tokenizeVerseWords(verseText);
-    const bookLabel = String(book || "").trim();
-    const referenceLabel = String(reference || "").trim();
-    const area = String(buildArea || "large").toLowerCase();
-
-    const segments = [...words];
-    const metaIndices = new Set();
-
-    if (bookLabel){
-      metaIndices.add(segments.length);
-      segments.push(bookLabel);
-    }
-
-    if (referenceLabel){
-      metaIndices.add(segments.length);
-      segments.push(referenceLabel);
-    }
-
-    return {
-      words,
-      segments,
-      metaIndices,
-      bookLabel,
-      referenceLabel,
-      buildArea: area,
-      buildSizeClass: getBuildSizeClass(verseText, bookLabel, referenceLabel, area)
-    };
-  }
-
-  function getBuildDisplayTokens({
-    verseText = "",
-    book = "",
-    reference = ""
-  } = {}){
-    const tokens = [];
-    let wordIndex = 0;
-
-    for (const token of tokenizeVerseForBuild(verseText)){
-      if (!token) continue;
-
-      if (token.kind === "word"){
-        tokens.push({
-          kind: "word",
-          text: token.text,
-          wordIndex,
-          segmentIndex: wordIndex,
-          isMeta: false
-        });
-
-        wordIndex += 1;
-        continue;
-      }
-
-      if (token.kind === "space"){
-        tokens.push({
-          kind: "space",
-          text: token.text,
-          wordIndex: null,
-          segmentIndex: Math.max(0, wordIndex - 1),
-          isMeta: false
-        });
-
-        continue;
-      }
-
-      tokens.push({
-        kind: "punct",
-        text: token.text,
-        wordIndex: null,
-        segmentIndex: Math.max(0, wordIndex - 1),
-        isMeta: false
-      });
-    }
-
-    const bookLabel = String(book || "").trim();
-    const referenceLabel = String(reference || "").trim();
-
-    if (bookLabel || referenceLabel){
-      tokens.push({
-        kind: "space",
-        text: " ",
-        wordIndex: null,
-        segmentIndex: Math.max(0, wordIndex - 1),
-        isMeta: false
-      });
-    }
-
-    if (bookLabel){
-      tokens.push({
-        kind: "meta",
-        text: bookLabel,
-        wordIndex: null,
-        segmentIndex: wordIndex,
-        isMeta: true,
-        metaType: "book"
-      });
-
-      wordIndex += 1;
-    }
-
-    if (bookLabel && referenceLabel){
-      tokens.push({
-        kind: "space",
-        text: " ",
-        wordIndex: null,
-        segmentIndex: Math.max(0, wordIndex - 1),
-        isMeta: true
-      });
-    }
-
-    if (referenceLabel){
-      tokens.push({
-        kind: "meta",
-        text: referenceLabel,
-        wordIndex: null,
-        segmentIndex: wordIndex,
-        isMeta: true,
-        metaType: "reference"
-      });
-    }
-
-    return tokens;
-  }
-
-  function isBuildDisplayTokenBuilt(token, progressIndex = 0){
-    const progress = Math.max(0, Number(progressIndex) || 0);
-
-    if (!token) return false;
-
-    if (token.kind === "word" || token.kind === "meta"){
-      return Number(token.segmentIndex) < progress;
-    }
-
-    if (token.kind === "punct"){
-      return Number(token.segmentIndex) < progress;
-    }
-
-    if (token.kind === "space"){
-      return Number(token.segmentIndex) < progress;
-    }
-
-    return false;
-  }
-
-  function renderBuildProgressHtml({
-    verseText = "",
-    book = "",
-    reference = "",
-    progressIndex = 0,
-    buildArea = "large",
-    hideUnbuilt = false,
-    extraClass = ""
-  } = {}){
-    const sizeClass = getBuildSizeClass(verseText, book, reference, buildArea);
-    const classes = [
-      "vm-build-text",
-      "vm-build-text--progress",
-      sizeClass,
-      hideUnbuilt ? "is-hide-unbuilt" : "",
-      extraClass
-    ].filter(Boolean).join(" ");
-
-    const tokens = getBuildDisplayTokens({
-      verseText,
-      book,
-      reference
-    });
-
-    const html = tokens.map((token) => {
-      const built = isBuildDisplayTokenBuilt(token, progressIndex);
-
-      if (token.kind === "space"){
-        return `<span class="vm-build-space ${built ? "is-built" : ""}">${escapeHtml(token.text)}</span>`;
-      }
-
-      if (token.kind === "punct"){
-        return `<span class="vm-build-punct ${built ? "is-built" : ""}">${escapeHtml(token.text)}</span>`;
-      }
-
-      if (token.kind === "meta"){
-        return `<span class="vm-build-word vm-build-meta vm-build-meta--${escapeHtml(token.metaType || "meta")} ${built ? "is-built" : ""}">${escapeHtml(token.text)}</span>`;
-      }
-
-      return `<span class="vm-build-word ${built ? "is-built" : ""}">${escapeHtml(token.text)}</span>`;
-    }).join("");
-
-    return {
-      className: classes,
-      html,
-      buildSizeClass: sizeClass,
-      tokens
-    };
-  }
-
-function countBuildTextLines(textEl){
-  if (!textEl) return 0;
-
-  const tops = [];
-
-  const nodes = Array.from(textEl.children || []);
-  for (const node of nodes){
-    const rects = Array.from(node.getClientRects ? node.getClientRects() : []);
-
-    for (const rect of rects){
-      if (rect.width < 0.5 || rect.height < 0.5) continue;
-
-      const top = Math.round(rect.top);
-      if (!tops.some((existing) => Math.abs(existing - top) <= 2)){
-        tops.push(top);
-      }
-    }
-  }
-
-  return tops.length || 1;
+:root {
+  --vm-purple: #7f66c6;
+  --vm-red: #ff5a51;
+  --vm-green: #a7cb6f;
+  --vm-dark: rgba(0, 0, 0, 0.30);
+  --vm-white: #ffffff;
+  --vm-text-dark: #333333;
+  --vm-radius-pill: 999px;
+  --vm-radius-card: 24px;
+  --vm-shadow-btn: 0 6px 0 rgba(0, 0, 0, 0.25);
 }
 
-function getBuildTextFitBox(buildEl){
-  if (!buildEl) return { width: 0, height: 0 };
-
-  const style = window.getComputedStyle(buildEl);
-
-  const paddingX =
-    (parseFloat(style.paddingLeft) || 0) +
-    (parseFloat(style.paddingRight) || 0);
-
-  const paddingY =
-    (parseFloat(style.paddingTop) || 0) +
-    (parseFloat(style.paddingBottom) || 0);
-
-  return {
-    width: Math.max(0, buildEl.clientWidth - paddingX),
-    height: Math.max(0, buildEl.clientHeight - paddingY)
-  };
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
-function buildTextOverflows(buildEl, textEl){
-  if (!buildEl || !textEl) return true;
-
-  const box = getBuildTextFitBox(buildEl);
-  const fudge = 1.5;
-
-  return (
-    textEl.scrollWidth > box.width + fudge ||
-    textEl.scrollHeight > box.height + fudge
-  );
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  font-family: "Baloo 2", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  background: var(--vm-purple);
+  color: var(--vm-white);
 }
 
-function fitBuildTextOnce({
-  buildEl = null,
-  textEl = null,
-  buildArea = "large",
-  min = null,
-  max = null,
-  candidates = null,
-  debug = false
-} = {}){
-  if (!buildEl || !textEl) return null;
-
-  const area = String(buildArea || "large").toLowerCase();
-
-  const profile = area === "compact"
-    ? {
-        min: 11,
-        max: 34,
-        candidates: [
-          { maxWidth: "100%", lineHeight: 1.06 },
-          { maxWidth: "96%", lineHeight: 1.05 },
-          { maxWidth: "92%", lineHeight: 1.04 },
-          { maxWidth: "88%", lineHeight: 1.03 }
-        ]
-      }
-    : {
-        min: 13,
-        max: 46,
-        candidates: [
-          { maxWidth: "100%", lineHeight: 1.10 },
-          { maxWidth: "96%", lineHeight: 1.08 },
-          { maxWidth: "92%", lineHeight: 1.06 },
-          { maxWidth: "88%", lineHeight: 1.05 }
-        ]
-      };
-
-const hasCustomMin = min !== null && min !== undefined && Number.isFinite(Number(min));
-const hasCustomMax = max !== null && max !== undefined && Number.isFinite(Number(max));
-
-const safeMin = hasCustomMin ? Number(min) : profile.min;
-const safeMax = hasCustomMax ? Number(max) : profile.max;
-  const testCandidates = Array.isArray(candidates) && candidates.length
-    ? candidates
-    : profile.candidates;
-
-  const previous = {
-    fontSize: textEl.style.fontSize,
-    lineHeight: textEl.style.lineHeight,
-    maxWidth: textEl.style.maxWidth,
-    width: textEl.style.width,
-    marginLeft: textEl.style.marginLeft,
-    marginRight: textEl.style.marginRight
-  };
-
-  let best = null;
-
-  for (const candidate of testCandidates){
-    textEl.style.width = "100%";
-    textEl.style.maxWidth = candidate.maxWidth || "100%";
-    textEl.style.marginLeft = "auto";
-    textEl.style.marginRight = "auto";
-    textEl.style.lineHeight = String(candidate.lineHeight || "");
-
-    let low = safeMin;
-    let high = safeMax;
-    let bestSize = safeMin;
-
-    for (let i = 0; i < 10; i += 1){
-      const mid = (low + high) / 2;
-      textEl.style.fontSize = `${mid}px`;
-
-      if (buildTextOverflows(buildEl, textEl)){
-        high = mid;
-      } else {
-        bestSize = mid;
-        low = mid;
-      }
-    }
-
-    textEl.style.fontSize = `${bestSize}px`;
-
-    const lineCount = countBuildTextLines(textEl);
-    const box = getBuildTextFitBox(buildEl);
-    const verticalFill = box.height
-      ? Math.min(1, textEl.scrollHeight / box.height)
-      : 0;
-
-    const result = {
-      fontSize: Math.floor(bestSize * 10) / 10,
-      maxWidth: candidate.maxWidth || "100%",
-      lineHeight: candidate.lineHeight || "",
-      lineCount,
-      verticalFill,
-      overflows: buildTextOverflows(buildEl, textEl)
-    };
-
-    if (!result.overflows){
-      if (!best){
-        best = result;
-      } else {
-        const sizeDiff = result.fontSize - best.fontSize;
-
-        if (sizeDiff > 0.75){
-          best = result;
-        } else if (Math.abs(sizeDiff) <= 0.75){
-          if (result.lineCount < best.lineCount){
-            best = result;
-          } else if (
-            result.lineCount === best.lineCount &&
-            result.verticalFill > best.verticalFill
-          ){
-            best = result;
-          }
-        }
-      }
-    }
-  }
-
-  if (!best){
-    textEl.style.fontSize = previous.fontSize;
-    textEl.style.lineHeight = previous.lineHeight;
-    textEl.style.maxWidth = previous.maxWidth;
-    textEl.style.width = previous.width;
-    textEl.style.marginLeft = previous.marginLeft;
-    textEl.style.marginRight = previous.marginRight;
-    return null;
-  }
-
-  textEl.style.fontSize = `${best.fontSize}px`;
-  textEl.style.lineHeight = String(best.lineHeight);
-  textEl.style.maxWidth = best.maxWidth;
-  textEl.style.width = "100%";
-  textEl.style.marginLeft = "auto";
-  textEl.style.marginRight = "auto";
-
-  textEl.dataset.vmFitFontSize = String(best.fontSize);
-  textEl.dataset.vmFitMaxWidth = String(best.maxWidth);
-  textEl.dataset.vmFitLineHeight = String(best.lineHeight);
-  textEl.dataset.vmFitLines = String(best.lineCount);
-  textEl.dataset.vmFitArea = area;
-
-  if (debug){
-    console.table({
-      fontSize: best.fontSize,
-      maxWidth: best.maxWidth,
-      lineHeight: best.lineHeight,
-      lineCount: best.lineCount,
-      verticalFill: Math.round(best.verticalFill * 100) + "%",
-      overflows: best.overflows
-    });
-  }
-
-  return best;
+body {
+  overflow: hidden;
 }
 
-  const BUILD_STREAK_DEFAULT_THRESHOLDS = [1, 2, 3, 4, 5];
-
-  function getBuildStreakLevel(streak = 0, thresholds = BUILD_STREAK_DEFAULT_THRESHOLDS) {
-    const safeStreak = Math.max(0, Number(streak) || 0);
-    const safeThresholds = Array.isArray(thresholds) && thresholds.length
-      ? thresholds.map(value => Math.max(0, Number(value) || 0))
-      : BUILD_STREAK_DEFAULT_THRESHOLDS;
-
-    let level = 0;
-
-    safeThresholds.forEach((threshold, index) => {
-      if (safeStreak >= threshold) {
-        level = index + 1;
-      }
-    });
-
-    return Math.max(0, Math.min(5, level));
-  }
-
-  function updateBuildStreakOverlay({
-    buildEl = null,
-    streak = 0,
-    colors = [],
-    thresholds = BUILD_STREAK_DEFAULT_THRESHOLDS,
-    pulse = false,
-    broken = false
-  } = {}) {
-    if (!buildEl) return null;
-
-    const safeColors = [
-      colors[0] || "#ffc751",
-      colors[1] || "#a7cb6f",
-      colors[2] || "#64b5f6",
-      colors[3] || "#ff8cc8",
-      colors[4] || "#ffffff"
-    ];
-
-    const level = getBuildStreakLevel(streak, thresholds);
-
-    const computedPosition = window.getComputedStyle(buildEl).position;
-    if (computedPosition === "static") {
-      buildEl.style.position = "relative";
-    }
-
-    let overlay = buildEl.querySelector(":scope > .vm-build-streak-overlay");
-
-    if (!overlay) {
-      overlay = document.createElement("div");
-      overlay.className = "vm-build-streak-overlay";
-      overlay.setAttribute("aria-hidden", "true");
-      buildEl.appendChild(overlay);
-    }
-
-    overlay.classList.remove(
-      "is-level-0",
-      "is-level-1",
-      "is-level-2",
-      "is-level-3",
-      "is-level-4",
-      "is-level-5",
-      "is-pulsing",
-      "is-broken"
-    );
-
-    overlay.classList.add(`is-level-${level}`);
-    overlay.dataset.streak = String(Math.max(0, Number(streak) || 0));
-    overlay.dataset.level = String(level);
-
-    overlay.style.setProperty("--vm-build-streak-color-1", safeColors[0]);
-    overlay.style.setProperty("--vm-build-streak-color-2", safeColors[1]);
-    overlay.style.setProperty("--vm-build-streak-color-3", safeColors[2]);
-    overlay.style.setProperty("--vm-build-streak-color-4", safeColors[3]);
-    overlay.style.setProperty("--vm-build-streak-color-5", safeColors[4]);
-    overlay.style.setProperty("--vm-build-streak-color", safeColors[Math.max(0, level - 1)] || safeColors[0]);
-
-    if (pulse && level > 0) {
-      void overlay.offsetWidth;
-      overlay.classList.add("is-pulsing");
-    }
-
-    if (broken) {
-      void overlay.offsetWidth;
-      overlay.classList.add("is-broken");
-    }
-
-    return {
-      overlay,
-      level,
-      streak: Math.max(0, Number(streak) || 0)
-    };
-  }
-
-
-  function getPhaseForProgress({
-    progressIndex = 0,
-    wordCount = 0,
-    totalSegments = 0,
-    bookLabel = "",
-    referenceLabel = "",
-    hasBook = null,
-    hasReference = null
-  } = {}){
-    const index = Math.max(0, Number(progressIndex) || 0);
-    const words = Math.max(0, Number(wordCount) || 0);
-    const total = Math.max(words, Number(totalSegments) || 0);
-
-    const book = hasBook === null ? !!String(bookLabel || "").trim() : !!hasBook;
-    const reference = hasReference === null ? !!String(referenceLabel || "").trim() : !!hasReference;
-
-    if (index < words) return "words";
-
-    let cursor = words;
-
-    if (book){
-      if (index === cursor) return "book";
-      cursor += 1;
-    }
-
-    if (reference){
-      if (index === cursor) return "reference";
-      cursor += 1;
-    }
-
-    if (index < total) return "reference";
-
-    return "done";
-  }
-
-  function titleCaseBookFromSlug(slug){
-    const smallWords = new Set(["of", "the"]);
-
-    return String(slug ?? "")
-      .replace(/\.json$/i, "")
-      .split("_")
-      .filter(Boolean)
-      .map((part, index) => {
-        const lower = part.toLowerCase();
-        if (index > 0 && smallWords.has(lower)) return lower;
-        return lower.charAt(0).toUpperCase() + lower.slice(1);
-      })
-      .join(" ");
-  }
-
-  function stripTranslationFromReference(ref, translation){
-    let raw = String(ref ?? "").trim();
-    const trans = String(translation ?? "").trim();
-
-    const knownTranslations = [
-      "ESV", "NIV", "NLT", "KJV", "NKJV", "CSB", "HCSB", "NASB", "NASB95",
-      "LSB", "AMP", "RSV", "NRSV", "NRSVUE", "NET", "MSG", "GW", "CEV",
-      "GNT", "ERV", "ICB"
-    ];
-
-    const stripCode = (text, code) => {
-      const escaped = String(code).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      return String(text)
-        .replace(new RegExp(`\\s*\\(${escaped}\\)\\s*$`, "i"), "")
-        .replace(new RegExp(`\\s+${escaped}\\s*$`, "i"), "")
-        .replace(new RegExp(`\\s*[-–—]\\s*${escaped}\\s*$`, "i"), "")
-        .trim();
-    };
-
-    if (trans) raw = stripCode(raw, trans);
-    for (const code of knownTranslations){
-      raw = stripCode(raw, code);
-    }
-
-    return raw.trim();
-  }
-
-  function parseReferenceParts(ref, translation, verseId){
-    const rawId = String(verseId ?? "")
-      .trim()
-      .replace(/\.json$/i, "")
-      .replace(/[–—−]/g, "-");
-
-    if (rawId){
-      const parts = rawId.split("_").filter(Boolean);
-      const nums = [];
-
-      while (parts.length && /^\d+$/.test(parts[parts.length - 1])){
-        nums.unshift(Number(parts.pop()));
-      }
-
-      if (parts.length && nums.length >= 2){
-        const book = titleCaseBookFromSlug(parts.join("_"));
-        const chapter = nums[0];
-        const verse = nums[1];
-        const verseEnd = nums.length >= 3 ? nums[2] : null;
-        const reference = verseEnd ? `${chapter}:${verse}-${verseEnd}` : `${chapter}:${verse}`;
-
-        return {
-          book,
-          chapter,
-          verse,
-          verseEnd,
-          reference,
-          display: `${book} ${reference}`
-        };
-      }
-    }
-
-    const rawRef = stripTranslationFromReference(ref, translation).replace(/[–—−]/g, "-");
-
-    const match = rawRef.match(/^(.*?)\s+(\d+):(\d+)(?:-(?:(\d+):)?(\d+))?\s*$/);
-    if (match){
-      const book = match[1].trim();
-      const chapter = Number(match[2]);
-      const verse = Number(match[3]);
-      const endChapter = match[4] ? Number(match[4]) : null;
-      const verseEnd = match[5] ? Number(match[5]) : null;
-
-      const reference = verseEnd
-        ? endChapter && endChapter !== chapter
-          ? `${chapter}:${verse}-${endChapter}:${verseEnd}`
-          : `${chapter}:${verse}-${verseEnd}`
-        : `${chapter}:${verse}`;
-
-      return {
-        book,
-        chapter,
-        verse,
-        verseEnd,
-        reference,
-        display: `${book} ${reference}`
-      };
-    }
-
-    const lastSpace = rawRef.lastIndexOf(" ");
-    if (lastSpace > 0){
-      const book = rawRef.slice(0, lastSpace).trim();
-      const reference = rawRef.slice(lastSpace + 1).trim();
-
-      return {
-        book,
-        chapter: null,
-        verse: null,
-        verseEnd: null,
-        reference,
-        display: rawRef
-      };
-    }
-
-    return {
-      book: rawRef,
-      chapter: null,
-      verse: null,
-      verseEnd: null,
-      reference: "",
-      display: rawRef
-    };
-  }
-
-  function getReferenceDecoys(referenceMeta, mode = "easy", count = 6){
-    const chapter = Number(referenceMeta?.chapter);
-    const verse = Number(referenceMeta?.verse);
-    const verseEnd = referenceMeta?.verseEnd == null ? null : Number(referenceMeta.verseEnd);
-    const correct = String(referenceMeta?.reference ?? "").trim();
-    const difficulty = String(mode || "easy").toLowerCase();
-    const desiredCount = Math.max(0, Number(count) || 0);
-
-    if (!desiredCount) return [];
-
-    const hasParsedReference =
-      Number.isFinite(chapter) &&
-      chapter >= 1 &&
-      Number.isFinite(verse) &&
-      verse >= 1;
-
-    const span =
-      Number.isFinite(verseEnd) && verseEnd > verse
-        ? verseEnd - verse
-        : 0;
-
-    const formatReference = (rawChapter, rawVerse) => {
-      const safeChapter = Math.max(1, Math.floor(Number(rawChapter) || 1));
-      const safeVerse = Math.max(1, Math.floor(Number(rawVerse) || 1));
-
-      return span > 0
-        ? `${safeChapter}:${safeVerse}-${safeVerse + span}`
-        : `${safeChapter}:${safeVerse}`;
-    };
-
-    const addCandidate = (set, candidate) => {
-      const text = String(candidate ?? "").trim();
-      if (!text) return;
-      if (text === correct) return;
-      set.add(text);
-    };
-
-    const fallbackRefs = [
-      "1:1",
-      "3:16",
-      "8:28",
-      "23:4",
-      "4:12",
-      "5:13",
-      "6:27",
-      "10:10",
-      "12:2",
-      "15:3"
-    ];
-
-    const out = new Set();
-
-    if (!hasParsedReference){
-      for (const ref of fallbackRefs){
-        addCandidate(out, ref);
-        if (out.size >= desiredCount) return [...out];
-      }
-      return [...out].slice(0, desiredCount);
-    }
-
-    if (difficulty === "medium" || difficulty === "hard"){
-      const offsets = [
-        [0, -1],
-        [0, 1],
-        [-1, 0],
-        [1, 0],
-        [-1, -1],
-        [-1, 1],
-        [1, -1],
-        [1, 1],
-        [0, -2],
-        [0, 2],
-        [-2, 0],
-        [2, 0]
-      ];
-
-      for (const [chapterOffset, verseOffset] of offsets){
-        addCandidate(out, formatReference(chapter + chapterOffset, verse + verseOffset));
-        if (out.size >= desiredCount) return [...out];
-      }
-    }
-
-    let tries = 0;
-    while (out.size < desiredCount && tries < 200){
-      tries += 1;
-
-      const randomChapter = 1 + Math.floor(Math.random() * 28);
-      const randomVerse = 1 + Math.floor(Math.random() * 40);
-
-      addCandidate(out, formatReference(randomChapter, randomVerse));
-    }
-
-    for (const ref of fallbackRefs){
-      addCandidate(out, ref);
-      if (out.size >= desiredCount) break;
-    }
-
-    return [...out].slice(0, desiredCount);
-  }
-  
-  function helpOverlayHtml({
-    id = "verseGameHelpOverlay",
-    title = "How to Play",
-    body = "",
-    closeText = "Close"
-  } = {}){
-    return `
-      <div class="vm-game-help-overlay" id="${escapeHtml(id)}" aria-hidden="true">
-        <div class="vm-game-help-panel">
-          <div class="vm-game-help-title">${escapeHtml(title)}</div>
-
-          <div class="vm-game-help-body-wrap">
-            <div class="vm-game-help-body">${body}</div>
-          </div>
-
-          <div class="vm-game-help-actions">
-            <button class="vm-btn" id="${escapeHtml(id)}CloseBtn" type="button">${escapeHtml(closeText)}</button>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  function openHelp(id = "verseGameHelpOverlay", mode = "close", closeText = "Close"){
-    const overlay = document.getElementById(id);
-    const closeBtn = document.getElementById(`${id}CloseBtn`);
-
-    if (!overlay) return;
-
-    overlay.classList.add("is-open");
-    overlay.setAttribute("aria-hidden", "false");
-    overlay.dataset.mode = mode;
-
-    if (closeBtn) closeBtn.textContent = closeText;
-  }
-
-  function closeHelp(id = "verseGameHelpOverlay"){
-    const overlay = document.getElementById(id);
-    if (!overlay) return;
-
-    if (overlay.contains(document.activeElement)){
-      document.activeElement.blur();
-    }
-
-    overlay.classList.remove("is-open");
-    overlay.setAttribute("aria-hidden", "true");
-  }
-
-  function wireHelp({
-    id = "verseGameHelpOverlay",
-    triggerId = "helpBtn",
-    onBack = null,
-    onClose = null,
-    closeText = "Close"
-  } = {}){
-    const trigger = document.getElementById(triggerId);
-    const overlay = document.getElementById(id);
-    const closeBtn = document.getElementById(`${id}CloseBtn`);
-
-    if (trigger){
-      trigger.onclick = () => {
-        openHelp(id, "close", closeText);
-      };
-    }
-
-    const closeAction = () => {
-      const mode = overlay?.dataset.mode || "close";
-
-      if (mode === "back" && typeof onBack === "function"){
-        onBack();
-        return;
-      }
-
-      closeHelp(id);
-
-      if (typeof onClose === "function"){
-        onClose();
-      }
-    };
-
-    if (closeBtn) closeBtn.onclick = closeAction;
-
-    if (overlay){
-      overlay.onclick = (e) => {
-        if (e.target === overlay) closeAction();
-      };
-    }
-  }
-
-  function renderTitleScreen({
-    app,
-    title,
-    icon = "🎮",
-    iconHtml = "",
-    helpHtml = "",
-    helpOverlayId = "verseGameHelpOverlay",
-    startText = "Start",
-    helpText = "How to Play",
-    backLabel = "Back",
-    theme = {},
-    onBack,
-    onStart
-  } = {}){
-    if (!app) return;
-
-    if (isGameMixLaunch() && getGameMixMode() && typeof onStart === "function"){
-      app.innerHTML = `
-        <div class="vm-game-screen"${styleVarsHtml(theme)}>
-          <div class="vm-game-stage">
-            <div class="vm-game-center">
-              <div class="vm-game-icon" aria-hidden="true">🔀</div>
-              <div class="vm-game-title">Loading Game Mix...</div>
-            </div>
-          </div>
-        </div>
-      `;
-
-      setTimeout(() => onStart(), 0);
-      return;
-    }
-
-    app.innerHTML = `
-      <div class="vm-game-screen"${styleVarsHtml(theme)}>
-        <button class="vm-game-back-pill no-zoom" id="gameShellBackBtn" type="button" aria-label="${escapeHtml(backLabel)}">
-          ◀
-        </button>
-
-        <div class="vm-game-stage">
-          <div class="vm-game-center">
-            <div class="vm-game-icon" aria-hidden="true">
-              ${iconHtml || escapeHtml(icon)}
-            </div>
-
-            <div class="vm-game-title">${escapeHtml(title)}</div>
-
-            <div class="vm-game-actions">
-              <button class="vm-btn" id="gameShellStartBtn" type="button">${escapeHtml(startText)}</button>
-              <button class="vm-btn vm-btn-secondary" id="helpBtn" type="button">${escapeHtml(helpText)}</button>
-            </div>
-          </div>
-        </div>
-
-        ${helpOverlayHtml({ id: helpOverlayId, body: helpHtml })}
-      </div>
-    `;
-
-    const backBtn = document.getElementById("gameShellBackBtn");
-    const startBtn = document.getElementById("gameShellStartBtn");
-
-    if (backBtn && typeof onBack === "function") backBtn.onclick = onBack;
-    if (startBtn && typeof onStart === "function") startBtn.onclick = onStart;
-
-    wireHelp({ id: helpOverlayId, triggerId: "helpBtn" });
-  }
-
-  function renderModeSelect({
-    app,
-    title = "Choose Your Difficulty",
-    icon = "🥉🥈🥇",
-    iconHtml = "",
-    helpHtml = "",
-    helpOverlayId = "verseGameHelpOverlay",
-    backLabel = "Back to title",
-    theme = {},
-    modes = [
-      { id: "easy", label: "🥉 Easy" },
-      { id: "medium", label: "🥈 Medium" },
-      { id: "hard", label: "🥇 Hard" }
-    ],
-    onBack,
-    onSelect
-  } = {}){
-    if (!app) return;
-
-    const mixMode = getGameMixMode();
-
-    if (isGameMixLaunch() && mixMode && typeof onSelect === "function"){
-      app.innerHTML = `
-        <div class="vm-game-screen"${styleVarsHtml(theme)}>
-          <div class="vm-game-stage">
-            <div class="vm-game-center">
-              <div class="vm-game-difficulty-icon" aria-hidden="true">🔀</div>
-              <div class="vm-game-title">Starting Game Mix...</div>
-            </div>
-          </div>
-        </div>
-      `;
-
-      setTimeout(() => onSelect(mixMode), 0);
-      return;
-    }
-    
-    const modeButtons = modes.map((mode) => `
-      <button class="vm-btn" data-game-shell-mode="${escapeHtml(mode.id)}" type="button">
-        ${escapeHtml(mode.label)}
-      </button>
-    `).join("");
-
-    app.innerHTML = `
-      <div class="vm-game-screen"${styleVarsHtml(theme)}>
-        <button class="vm-game-back-pill no-zoom" id="gameShellModeBackBtn" type="button" aria-label="${escapeHtml(backLabel)}">
-          ◀
-        </button>
-
-        <div class="vm-game-stage">
-          <div class="vm-game-center">
-            <div class="vm-game-difficulty-icon" aria-hidden="true">
-              ${iconHtml || escapeHtml(icon)}
-            </div>
-
-            <div class="vm-game-title">${escapeHtml(title)}</div>
-
-            <div class="vm-game-actions">
-              ${modeButtons}
-            </div>
-          </div>
-        </div>
-
-        ${helpOverlayHtml({ id: helpOverlayId, body: helpHtml })}
-      </div>
-    `;
-
-    const backBtn = document.getElementById("gameShellModeBackBtn");
-    if (backBtn && typeof onBack === "function") backBtn.onclick = onBack;
-
-    document.querySelectorAll("[data-game-shell-mode]").forEach((btn) => {
-      btn.onclick = () => {
-        if (typeof onSelect === "function"){
-          onSelect(btn.dataset.gameShellMode);
-        }
-      };
-    });
-
-    wireHelp({ id: helpOverlayId, triggerId: "helpBtn" });
-  }
-
-
-function getModeMedal(mode){
-  if (mode === "easy") return "🥉";
-  if (mode === "medium") return "🥈";
-  if (mode === "hard") return "🥇";
-  return "🏅";
+.vm-shell {
+  min-height: 100vh;
+  padding: 18px 16px 22px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
-function getModeLabel(mode){
-  if (mode === "easy") return "Easy";
-  if (mode === "medium") return "Medium";
-  if (mode === "hard") return "Hard";
-  return "Game";
+.vm-pill {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.95);
+  color: #111;
+  border-radius: var(--vm-radius-pill);
+  padding: 8px 16px;
+  font-weight: 900;
+  font-size: 15px;
 }
 
-function renderCompleteMedalPill(status = {}, currentMode = ""){
-  const medals = [
-    { mode: "easy", emoji: "🥉" },
-    { mode: "medium", emoji: "🥈" },
-    { mode: "hard", emoji: "🥇" }
-  ];
-
-  return `
-    <div class="vm-complete-medal-pill" aria-label="Mode medals">
-      ${medals.map((item) => {
-        const earned = !!status[item.mode];
-        const current = item.mode === currentMode;
-        return `<span class="vm-complete-medal ${earned ? "is-earned" : "is-unearned"} ${current ? "is-current" : ""}" aria-hidden="true">${item.emoji}</span>`;
-      }).join("")}
-    </div>
-  `;
+.vm-card {
+  width: min(100%, 760px);
+  background: rgba(0, 0, 0, 0.30);
+  border-radius: var(--vm-radius-card);
+  padding: 18px;
 }
 
-function getCompletionStatusFromBridge({ verseId = "", gameId = "" } = {}){
-  if (
-    window.VerseGameBridge &&
-    typeof window.VerseGameBridge.getGameCompletionStatus === "function"
-  ){
-    try {
-      return window.VerseGameBridge.getGameCompletionStatus({ verseId, gameId });
-    } catch (err) {
-      console.warn("getGameCompletionStatus failed", err);
-    }
-  }
-
-  return {
-    easy: false,
-    medium: false,
-    hard: false
-  };
+.vm-btn {
+  border: none;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--vm-purple);
+  padding: 14px 18px;
+  font: inherit;
+  font-weight: 900;
+  font-size: 18px;
+  box-shadow: var(--vm-shadow-btn);
+  cursor: pointer;
 }
 
-function renderCompleteScreen({
-  app,
-  title = "Complete!",
-  icon = "🎉",
-  iconHtml = "",
-  gameIcon = "",
-  mode = "",
-  verseId = "",
-  gameId = "",
-  completion = null,
-  gameMessage = "",
-  statsText = "",
-  statsHtml = "",
-  playAgainText = "Play Again",
-  moreGamesText = "More Games",
-  changeVerseText = "Change Verse",
-  backLabel = "Back to Practice Games",
-  theme = {},
-  onPlayAgain,
-  onMoreGames,
-  onChangeVerse
-} = {}){
-  if (!app) return;
-
-  const useStandardComplete = !!(mode || completion || gameMessage || gameId || verseId || gameIcon);
-  const gameMix = isGameMixLaunch();
-
-  const status = getCompletionStatusFromBridge({ verseId, gameId });
-  const normalizedMode = String(mode || completion?.mode || "").trim();
-  const modeLabel = getModeLabel(normalizedMode);
-  const medal = getModeMedal(normalizedMode);
-  const alreadyCompleted = !!completion?.alreadyCompleted;
-  const petUnlocked = !!completion?.reward?.petUnlockTriggered;
-  const zooTodoComplete = !petUnlocked && isZooTodoLaunchForVerse(verseId);
-
-  const displayIcon = petUnlocked
-    ? "📦"
-    : zooTodoComplete
-      ? ""
-      : alreadyCompleted
-        ? (gameIcon || icon)
-        : medal;
-
-  const zooTodoIconHtml = zooTodoComplete
-    ? getZooTodoCompleteIconHtml(verseId)
-    : "";
-
-  const iconButtonAttrs = petUnlocked
-    ? `button type="button" id="gameShellPetUnlockBtn" aria-label="Open BibloPet box"`
-    : `div aria-hidden="true"`;
-
-  const iconButtonClose = petUnlocked ? "button" : "div";
-
-  const messageMarkup = gameMessage || statsText || statsHtml
-    ? `<div class="vm-game-complete-stats">${statsHtml || escapeHtml(gameMessage || statsText)}</div>`
-    : "";
-
-  const zooTodoMessageMarkup = zooTodoComplete
-    ? getZooTodoCompleteSubtitleMarkup()
-    : "";
-
-  if (!useStandardComplete){
-    const oldStatsMarkup = statsHtml
-      ? `<div class="vm-game-complete-stats">${statsHtml}</div>`
-      : statsText
-        ? `<div class="vm-game-complete-stats">${escapeHtml(statsText)}</div>`
-        : "";
-
-    app.innerHTML = `
-      <div class="vm-game-screen"${styleVarsHtml(theme)}>
-        <button class="vm-game-back-pill no-zoom" id="gameShellCompleteBackBtn" type="button" aria-label="${escapeHtml(backLabel)}">
-          ◀
-        </button>
-
-        <div class="vm-game-stage">
-          <div class="vm-game-center">
-            <div class="vm-game-icon" aria-hidden="true">
-              ${iconHtml || escapeHtml(icon)}
-            </div>
-
-            <div class="vm-game-title">${escapeHtml(title)}</div>
-
-            ${oldStatsMarkup}
-
-            <div class="vm-game-actions">
-              <button class="vm-btn" id="gameShellPlayAgainBtn" type="button">${escapeHtml(playAgainText)}</button>
-              <button class="vm-btn vm-btn-secondary" id="gameShellMoreGamesBtn" type="button">${escapeHtml(moreGamesText)}</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    `;
-
-    const oldPlayAgainBtn = document.getElementById("gameShellPlayAgainBtn");
-    const oldMoreGamesBtn = document.getElementById("gameShellMoreGamesBtn");
-    const oldBackBtn = document.getElementById("gameShellCompleteBackBtn");
-
-    if (oldPlayAgainBtn && typeof onPlayAgain === "function") oldPlayAgainBtn.onclick = onPlayAgain;
-    if (oldMoreGamesBtn && typeof onMoreGames === "function") oldMoreGamesBtn.onclick = onMoreGames;
-    if (oldBackBtn && typeof onMoreGames === "function") oldBackBtn.onclick = onMoreGames;
-
-    return;
-  }
-
-  const titleMarkup = petUnlocked
-    ? `
-      <div class="vm-game-title vm-complete-title">
-        <div>You've unlocked</div>
-        <div>a BibloPet box!</div>
-      </div>
-    `
-    : zooTodoComplete
-      ? getZooTodoCompleteTitleMarkup()
-      : alreadyCompleted
-        ? `
-          <div class="vm-game-title vm-complete-title">
-            <div>You completed</div>
-            <div>${escapeHtml(modeLabel)} again!</div>
-          </div>
-        `
-        : `
-          <div class="vm-game-title vm-complete-title">
-            <div>You've earned</div>
-            <div>a new medal!</div>
-          </div>
-        `;
-
-  const backButtonMarkup = petUnlocked
-    ? ""
-    : `
-      <button class="vm-game-back-pill no-zoom" id="gameShellCompleteBackBtn" type="button" aria-label="${escapeHtml(backLabel)}">
-        ◀
-      </button>
-    `;
-
-  const medalPillMarkup = petUnlocked
-    ? ""
-    : renderCompleteMedalPill(status, normalizedMode);
-
-  const finalMessageMarkup = petUnlocked
-    ? ""
-    : zooTodoComplete
-      ? zooTodoMessageMarkup
-      : messageMarkup;
-
-  const actionButtonsMarkup = petUnlocked
-    ? ""
-    : gameMix
-      ? `
-        <div class="vm-game-actions vm-complete-actions">
-          <button class="vm-btn vm-game-mix-action" id="gameShellContinueMixBtn" type="button">Continue Mix</button>
-          <button class="vm-btn vm-btn-secondary" id="gameShellEndMixBtn" type="button">End Mix</button>
-        </div>
-      `
-      : zooTodoComplete
-        ? `
-          <div class="vm-game-actions vm-complete-actions">
-            <button class="vm-btn" id="gameShellCheckZooTodoBtn" type="button">Check Zoo To-Do</button>
-            <button class="vm-btn vm-btn-secondary" id="gameShellMoreGamesBtn" type="button">${escapeHtml(moreGamesText)}</button>
-            <button class="vm-btn vm-btn-secondary" id="gameShellChangeVerseBtn" type="button">${escapeHtml(changeVerseText)}</button>
-          </div>
-        `
-        : `
-          <div class="vm-game-actions vm-complete-actions">
-            <button class="vm-btn" id="gameShellPlayAgainBtn" type="button">${escapeHtml(playAgainText)}</button>
-            <button class="vm-btn vm-btn-secondary" id="gameShellMoreGamesBtn" type="button">${escapeHtml(moreGamesText)}</button>
-            <button class="vm-btn vm-btn-secondary" id="gameShellChangeVerseBtn" type="button">${escapeHtml(changeVerseText)}</button>
-          </div>
-        `;
-
-  app.innerHTML = `
-    <div class="vm-game-screen vm-complete-screen ${petUnlocked ? "is-pet-unlock" : ""}"${styleVarsHtml(theme)}>
-      ${backButtonMarkup}
-
-      ${medalPillMarkup}
-
-      <div class="vm-game-stage">
-        <div class="vm-game-center vm-complete-center">
-          <${iconButtonAttrs} class="vm-game-icon vm-complete-icon ${petUnlocked ? "is-pet-box" : (alreadyCompleted || zooTodoComplete) ? "is-repeat" : "is-new-medal"}">
-            ${zooTodoComplete ? zooTodoIconHtml : iconHtml && !petUnlocked ? iconHtml : escapeHtml(displayIcon)}
-          </${iconButtonClose}>
-
-          ${titleMarkup}
-
-          ${finalMessageMarkup}
-
-          ${actionButtonsMarkup}
-        </div>
-      </div>
-    </div>
-  `;
-
-  const playAgainBtn = document.getElementById("gameShellPlayAgainBtn");
-  const checkZooTodoBtn = document.getElementById("gameShellCheckZooTodoBtn");
-  const moreGamesBtn = document.getElementById("gameShellMoreGamesBtn");
-  const changeVerseBtn = document.getElementById("gameShellChangeVerseBtn");
-  const continueMixBtn = document.getElementById("gameShellContinueMixBtn");
-  const endMixBtn = document.getElementById("gameShellEndMixBtn");
-  const backBtn = document.getElementById("gameShellCompleteBackBtn");
-  const petUnlockBtn = document.getElementById("gameShellPetUnlockBtn");
-
-  const changeVerseAction = typeof onChangeVerse === "function"
-    ? onChangeVerse
-    : () => window.VerseGameBridge?.returnToTitle?.();
-
-  const moreGamesAction = typeof onMoreGames === "function"
-    ? onMoreGames
-    : () => window.VerseGameBridge?.exitGame?.();
-
-  const petUnlockAction = () => {
-    if (gameMix && typeof window.VerseGameBridge?.openPetUnlockFromMix === "function"){
-      window.VerseGameBridge.openPetUnlockFromMix(gameId);
-      return;
-    }
-
-    if (typeof window.VerseGameBridge?.openPetUnlock === "function"){
-      window.VerseGameBridge.openPetUnlock();
-    }
-  };
-
-  const endMixAction = () => {
-    showGameMixQuitConfirm({
-      title: "Quit Game Mix?",
-      noText: "Keep Playing",
-      yesText: "Quit Mix",
-      onConfirm: () => window.VerseGameBridge?.endGameMix?.()
-    });
-  };
-
-  if (playAgainBtn && typeof onPlayAgain === "function") playAgainBtn.onclick = onPlayAgain;
-
-  if (checkZooTodoBtn) {
-    checkZooTodoBtn.onclick = () => {
-      if (typeof window.VerseGameBridge?.openZooTodo === "function") {
-        window.VerseGameBridge.openZooTodo();
-        return;
-      }
-
-      moreGamesAction();
-    };
-  }
-
-  if (moreGamesBtn) moreGamesBtn.onclick = moreGamesAction;
-  if (changeVerseBtn) changeVerseBtn.onclick = changeVerseAction;
-
-  if (continueMixBtn){
-    continueMixBtn.onclick = () => {
-      window.VerseGameBridge?.continueGameMix?.(gameId);
-    };
-  }
-
-  if (endMixBtn){
-    endMixBtn.onclick = endMixAction;
-  }
-
-  if (backBtn){
-    backBtn.onclick = gameMix ? endMixAction : moreGamesAction;
-  }
-
-  if (petUnlockBtn) petUnlockBtn.onclick = petUnlockAction;
+.vm-btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
 }
 
-  function gameMenuHtml({
-    id = "verseGameMenuOverlay",
-    title = "Game Menu",
-    muted = false,
-    howToText = "How to Play",
-    modeSelectText = "Mode Select",
-    exitText = "Exit Game",
-    closeText = "Close",
-    showModeSelect = true
-  } = {}){
-    const safeId = escapeHtml(id);
-    const gameMix = isGameMixLaunch();
-    const effectiveShowModeSelect = gameMix ? false : showModeSelect;
-    const effectiveExitText = gameMix ? "Exit Game Mix" : exitText;
+.vm-btn-dark {
+  background: rgba(0, 0, 0, 0.30);
+  color: #fff;
+}
 
-    return `
-      <div class="vm-game-menu-overlay" id="${safeId}" aria-hidden="true">
-        <div class="vm-game-menu-panel" role="dialog" aria-modal="true" aria-label="${escapeHtml(title)}">
-          <div class="vm-game-menu-header">
-            <div class="vm-game-menu-title">${escapeHtml(title)}</div>
+.vm-stack {
+  width: min(100%, 820px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
 
-            <button
-              class="vm-game-menu-mute-btn"
-              id="${safeId}MuteBtn"
-              type="button"
-              aria-label="${muted ? "Unmute" : "Mute"}"
-              title="${muted ? "Unmute" : "Mute"}"
-            >${muted ? "🔇" : "🔊"}</button>
-          </div>
+.vm-title {
+  font-size: clamp(26px, 6vw, 42px);
+  font-weight: 900;
+  line-height: 1.05;
+}
 
-          <div class="vm-game-menu-actions">
-            <button class="vm-btn vm-game-menu-btn" id="${safeId}HowToBtn" type="button">${escapeHtml(howToText)}</button>
-            ${effectiveShowModeSelect ? `<button class="vm-btn vm-game-menu-btn" id="${safeId}ModeSelectBtn" type="button">${escapeHtml(modeSelectText)}</button>` : ""}
-            <button class="vm-btn vm-game-menu-btn" id="${safeId}ExitBtn" type="button">${escapeHtml(effectiveExitText)}</button>
-            <button class="vm-btn vm-game-menu-btn vm-game-menu-close-btn" id="${safeId}CloseBtn" type="button">${escapeHtml(closeText)}</button>
-          </div>
-        </div>
-      </div>
-    `;
+.vm-subtitle {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.2;
+  opacity: 0.96;
+}
+
+.vm-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(100%, 360px);
+}
+
+.vm-nav {
+  width: min(100%, 820px);
+  margin-top: auto;
+  padding-top: 12px;
+  display: flex;
+  justify-content: center;
+}
+
+/* =========================================================
+   Shared external game title / mode select screens
+   ========================================================= */
+
+.vm-game-screen {
+  min-height: 100dvh;
+  height: 100dvh;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  background: var(--vm-game-bg, var(--vm-purple));
+  color: var(--vm-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding:
+    calc(18px + env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom));
+}
+
+.vm-game-stage {
+  width: min(100%, 520px);
+  min-height: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vm-game-back-pill {
+  position: absolute;
+  z-index: 5;
+  top: calc(14px + env(safe-area-inset-top));
+  left: calc(14px + env(safe-area-inset-left));
+  min-width: 58px;
+  min-height: 42px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--vm-game-accent, var(--vm-purple));
+  font: inherit;
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1;
+  box-shadow: var(--vm-shadow-btn);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.vm-game-back-pill:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
+}
+
+.vm-game-center {
+  width: min(100%, 440px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(14px, 2.4vh, 22px);
+  text-align: center;
+}
+
+.vm-game-icon {
+  font-size: clamp(68px, 18vw, 118px);
+  line-height: 0.95;
+  filter: drop-shadow(0 5px 0 rgba(0, 0, 0, 0.18));
+}
+
+.vm-game-icon img {
+  display: block;
+  width: clamp(92px, 34vw, 180px);
+  max-width: 100%;
+  height: auto;
+}
+
+.vm-game-title {
+  font-size: clamp(34px, 8vw, 58px);
+  font-weight: 900;
+  line-height: 0.98;
+  text-wrap: balance;
+}
+
+.vm-game-actions {
+  width: min(100%, 360px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 4px;
+}
+
+.vm-game-actions .vm-btn {
+  width: 100%;
+  min-height: clamp(58px, 9vh, 74px);
+  font-size: clamp(22px, 5.4vw, 32px);
+}
+
+.vm-game-actions .vm-btn.vm-btn-secondary {
+  background: rgba(0, 0, 0, 0.30);
+  color: #ffffff;
+}
+
+
+.vm-game-complete-stats {
+  width: min(100%, 380px);
+  color: rgba(255, 255, 255, 0.96);
+  font-size: clamp(20px, 4.8vw, 28px);
+  font-weight: 900;
+  line-height: 1.15;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.vm-zoo-todo-complete-subtitle {
+  width: min(100%, 400px);
+  color: rgba(255, 255, 255, 0.98);
+  font-size: clamp(24px, 6.4vw, 34px);
+  font-weight: 900;
+  line-height: 1.05;
+  text-align: center;
+  text-wrap: balance;
+}
+
+/* Shared completion screen v2 */
+
+.vm-complete-screen {
+  position: relative;
+}
+
+.vm-complete-medal-pill {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 8;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .92);
+  box-shadow: 0 7px 0 rgba(0, 0, 0, .22);
+  line-height: 1;
+}
+
+.vm-complete-medal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: clamp(20px, 5vw, 30px);
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, .16));
+  transform-origin: center;
+}
+
+.vm-complete-medal.is-unearned {
+  opacity: .28;
+  filter: grayscale(1);
+}
+
+.vm-complete-medal.is-earned {
+  opacity: 1;
+}
+
+.vm-complete-medal.is-current {
+  transform: scale(1.12);
+}
+
+.vm-complete-center {
+  width: min(82vw, 420px);
+}
+
+.vm-complete-icon {
+  margin-bottom: clamp(10px, 2.5vh, 18px);
+  font-size: clamp(70px, 21vw, 118px);
+  line-height: 1;
+  filter: drop-shadow(0 7px 0 rgba(0, 0, 0, .22));
+}
+
+.vm-complete-icon.is-new-medal {
+  animation: vmCompleteMedalPop .72s ease-out both, vmCompleteMedalGlow 1.8s ease-in-out infinite;
+}
+
+.vm-complete-icon.is-repeat {
+  animation: vmCompleteIconPop .52s ease-out both;
+}
+
+button.vm-complete-icon.is-pet-box {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: clamp(70px, 21vw, 118px);
+  line-height: 1;
+  animation: vmCompleteBoxWiggle 1.15s ease-in-out infinite;
+}
+
+
+button.vm-complete-icon.is-pet-box:focus-visible {
+  outline: 4px solid rgba(255, 255, 255, .85);
+  outline-offset: 8px;
+  border-radius: 18px;
+}
+
+
+/* BibloPet unlock completion variant */
+
+.vm-complete-screen.is-pet-unlock .vm-complete-center {
+  width: min(88vw, 460px);
+}
+
+.vm-complete-screen.is-pet-unlock .vm-complete-title {
+  margin-top: clamp(10px, 2vh, 18px);
+  margin-bottom: 0;
+}
+
+.vm-complete-screen.is-pet-unlock button.vm-complete-icon.is-pet-box {
+  font-size: clamp(110px, 34vw, 190px);
+  filter:
+    drop-shadow(0 9px 0 rgba(0, 0, 0, .22)) drop-shadow(0 0 18px rgba(255, 255, 255, .52));
+}
+
+@media (max-height: 700px) {
+  .vm-complete-screen.is-pet-unlock button.vm-complete-icon.is-pet-box {
+    font-size: clamp(92px, 26vh, 150px);
   }
 
-  function wireGameMenu({
-    id = "verseGameMenuOverlay",
-    menuButtonId = "",
-    helpOverlayId = "",
-    closeHelpText = "Close",
-    backHelpText = "Back",
-    isMuted = null,
-    onMuteToggle = null,
-    onHowToPlay = null,
-    onModeSelect = null,
-    onExit = null,
-    onOpen = null,
-    onClose = null,
-    onBackFromHelp = null
-  } = {}){
-    const overlay = document.getElementById(id);
-    const menuButton = menuButtonId ? document.getElementById(menuButtonId) : null;
+  .vm-complete-screen.is-pet-unlock .vm-complete-title {
+    font-size: clamp(30px, 7.4vw, 44px);
+  }
+}
 
-    const howToBtn = document.getElementById(`${id}HowToBtn`);
-    const modeSelectBtn = document.getElementById(`${id}ModeSelectBtn`);
-    const muteBtn = document.getElementById(`${id}MuteBtn`);
-    const exitBtn = document.getElementById(`${id}ExitBtn`);
-    const closeBtn = document.getElementById(`${id}CloseBtn`);
-
-    const updateMuteButton = () => {
-      if (overlay && overlay.classList.contains("is-open")){
-        overlay.setAttribute("aria-hidden", "false");
-      }
-
-      if (!muteBtn) return;
-
-      const muted = typeof isMuted === "function" ? !!isMuted() : false;
-      muteBtn.textContent = muted ? "🔇" : "🔊";
-      muteBtn.setAttribute("aria-label", muted ? "Unmute" : "Mute");
-      muteBtn.setAttribute("title", muted ? "Unmute" : "Mute");
-    };
-
-    const openMenu = (event) => {
-      if (event){
-        if (event.cancelable) event.preventDefault();
-        event.stopPropagation();
-      }
-
-      if (typeof onOpen === "function"){
-        const shouldOpen = onOpen();
-
-        if (shouldOpen === false){
-          return;
-        }
-      }
-
-      if (overlay){
-        overlay.classList.add("is-open");
-        overlay.setAttribute("aria-hidden", "false");
-      }
-
-      updateMuteButton();
-    };
-
-    const closeMenu = () => {
-      if (overlay && overlay.contains(document.activeElement)){
-        document.activeElement.blur();
-      }
-
-      if (overlay){
-        overlay.classList.remove("is-open");
-        overlay.setAttribute("aria-hidden", "true");
-      }
-
-      if (typeof onClose === "function"){
-        onClose();
-      }
-    };
-
-    const openHelp = () => {
-      if (overlay && overlay.contains(document.activeElement)){
-        document.activeElement.blur();
-      }
-
-      if (typeof onHowToPlay === "function"){
-        onHowToPlay();
-        return;
-      }
-
-      if (overlay){
-        overlay.classList.remove("is-open");
-        overlay.setAttribute("aria-hidden", "true");
-      }
-
-      if (helpOverlayId){
-        openHelp(helpOverlayId, "back", backHelpText);
-      }
-    };
-
-    if (menuButton){
-      menuButton.onclick = openMenu;
-      menuButton.onpointerdown = openMenu;
-      menuButton.ontouchstart = openMenu;
-    }
-
-    if (howToBtn){
-      howToBtn.onclick = openHelp;
-    }
-
-    if (modeSelectBtn){
-      modeSelectBtn.onclick = () => {
-        if (overlay){
-          overlay.classList.remove("is-open");
-          overlay.setAttribute("aria-hidden", "true");
-        }
-
-        if (typeof onModeSelect === "function"){
-          onModeSelect();
-        }
-      };
-    }
-
-    if (muteBtn){
-      muteBtn.onclick = () => {
-        if (overlay && overlay.classList.contains("is-open")){
-          overlay.setAttribute("aria-hidden", "false");
-        }
-
-        if (typeof onMuteToggle === "function"){
-          onMuteToggle();
-        }
-
-        updateMuteButton();
-      };
-    }
-
-    if (exitBtn){
-      exitBtn.onclick = () => {
-        if (isGameMixLaunch()){
-          showGameMixQuitConfirm({
-            title: "Quit Game Mix?",
-            noText: "Keep Playing",
-            yesText: "Quit Mix",
-            onConfirm: () => window.VerseGameBridge?.endGameMix?.()
-          });
-          return;
-        }
-
-        if (typeof onExit === "function"){
-          onExit();
-        }
-      };
-    }
-
-    if (closeBtn){
-      closeBtn.onclick = closeMenu;
-    }
-
-    if (overlay){
-      overlay.onclick = (event) => {
-        if (event.target === overlay){
-          closeMenu();
-        }
-      };
-    }
-
-    if (helpOverlayId){
-      wireHelp({
-        id: helpOverlayId,
-        closeText: closeHelpText,
-        onBack: () => {
-          closeHelp(helpOverlayId);
-
-          if (overlay){
-            overlay.classList.add("is-open");
-            overlay.setAttribute("aria-hidden", "false");
-          }
-
-          if (typeof onBackFromHelp === "function"){
-            onBackFromHelp();
-          }
-        },
-        onClose
-      });
-    }
-
-    updateMuteButton();
-
-    return {
-      open: openMenu,
-      close: closeMenu,
-      updateMuteButton
-    };
+@media (max-height: 620px) {
+  .vm-complete-screen.is-pet-unlock button.vm-complete-icon.is-pet-box {
+    font-size: clamp(82px, 24vh, 130px);
   }
 
+  .vm-complete-screen.is-pet-unlock .vm-complete-title {
+    font-size: clamp(27px, 7vw, 38px);
+  }
+}
 
-  window.VerseGameShell = {
-    escapeHtml,
-    getFunDecoys,
-    getBibleBookDecoys,
-    getBookDecoys,
-    getFunWordDecoys,
-    getVerseWordDecoys,
-    shuffle,
-    clamp,
-    capitalize,
-    normalizeWord,
-    tokenizeVerseWords,
-    tokenizeVerseForBuild,
-    extractWordEntries,
-    getBuildLengthScore,
-    getBuildSizeClass,
-    buildVerseSegments,
-    getBuildDisplayTokens,
-    renderBuildProgressHtml,
-    fitBuildTextOnce,
-    getBuildStreakLevel,
-    updateBuildStreakOverlay,
-    countBuildTextLines,
-    buildTextOverflows,
-    getPhaseForProgress,
-    titleCaseBookFromSlug,
-    parseReferenceParts,
-    getReferenceDecoys,
-    helpOverlayHtml,
-    openHelp,
-    closeHelp,
-    wireHelp,
-    gameMenuHtml,
-    wireGameMenu,
-    renderTitleScreen,
-    renderModeSelect,
-    renderCompleteScreen
-  };
-})();
+.vm-complete-title {
+  display: grid;
+  gap: 2px;
+  margin-bottom: clamp(10px, 2vh, 16px);
+  line-height: .98;
+}
+
+.vm-complete-actions {
+  width: 100%;
+  display: grid;
+  gap: clamp(14px, 2.3vh, 20px);
+}
+
+.vm-complete-actions .vm-btn {
+  width: 100%;
+}
+
+
+
+@keyframes vmCompleteMedalPop {
+  0% {
+    transform: scale(.4) rotate(-12deg);
+    opacity: 0;
+  }
+
+  65% {
+    transform: scale(1.12) rotate(4deg);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1) rotate(0);
+    opacity: 1;
+  }
+}
+
+@keyframes vmCompleteIconPop {
+  0% {
+    transform: scale(.72);
+    opacity: 0;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes vmCompleteMedalGlow {
+
+  0%,
+  100% {
+    filter:
+      drop-shadow(0 7px 0 rgba(0, 0, 0, .22)) drop-shadow(0 0 0 rgba(255, 255, 255, 0));
+  }
+
+  50% {
+    filter:
+      drop-shadow(0 7px 0 rgba(0, 0, 0, .22)) drop-shadow(0 0 18px rgba(255, 255, 255, .78));
+  }
+}
+
+@keyframes vmCompleteBoxWiggle {
+
+  0%,
+  100% {
+    transform: rotate(0deg) translateY(0);
+  }
+
+  12% {
+    transform: rotate(-5deg) translateY(-2px);
+  }
+
+  24% {
+    transform: rotate(5deg) translateY(0);
+  }
+
+  36% {
+    transform: rotate(-4deg) translateY(-1px);
+  }
+
+  48% {
+    transform: rotate(4deg) translateY(0);
+  }
+
+  60% {
+    transform: rotate(0deg) translateY(0);
+  }
+}
+
+/* Small-screen completion tightening */
+
+@media (max-height: 700px) {
+  .vm-complete-center {
+    width: min(84vw, 390px);
+  }
+
+  .vm-complete-icon {
+    margin-bottom: 8px;
+    font-size: clamp(54px, 16vh, 86px);
+  }
+
+  button.vm-complete-icon.is-pet-box {
+    font-size: clamp(54px, 16vh, 86px);
+  }
+
+  .vm-complete-title {
+    margin-bottom: 8px;
+    gap: 0;
+    font-size: clamp(28px, 7.2vw, 40px);
+    line-height: .96;
+  }
+
+  .vm-game-complete-stats {
+    margin-top: 6px;
+    margin-bottom: 12px;
+    font-size: clamp(17px, 4.8vw, 22px);
+  }
+
+  .vm-zoo-todo-complete-subtitle {
+    margin-top: 4px;
+    margin-bottom: 10px;
+    font-size: clamp(22px, 6vw, 30px);
+  }
+
+  .vm-complete-actions {
+    gap: 12px;
+  }
+
+  .vm-complete-actions .vm-btn {
+    min-height: 58px;
+    padding-block: 12px;
+    font-size: clamp(20px, 5.2vw, 25px);
+    border-radius: 999px;
+  }
+}
+
+@media (max-height: 620px) {
+  .vm-complete-medal-pill {
+    top: 14px;
+    right: 12px;
+    padding: 6px 9px;
+    gap: 3px;
+  }
+
+  .vm-complete-medal {
+    font-size: 18px;
+  }
+
+  .vm-complete-icon {
+    font-size: clamp(46px, 14vh, 72px);
+    margin-bottom: 6px;
+  }
+
+  button.vm-complete-icon.is-pet-box {
+    font-size: clamp(46px, 14vh, 72px);
+  }
+
+  .vm-complete-title {
+    font-size: clamp(25px, 6.8vw, 34px);
+    margin-bottom: 6px;
+  }
+
+  .vm-game-complete-stats {
+    font-size: clamp(16px, 4.4vw, 20px);
+    margin-bottom: 10px;
+  }
+
+  .vm-zoo-todo-complete-subtitle {
+    font-size: clamp(20px, 5.7vw, 27px);
+    margin-bottom: 8px;
+  }
+
+  .vm-complete-actions {
+    gap: 10px;
+  }
+
+  .vm-complete-actions .vm-btn {
+    min-height: 52px;
+    padding-block: 10px;
+    font-size: clamp(19px, 5vw, 24px);
+  }
+}
+
+/* Keep BibloPet box large after general small-screen tightening */
+
+@media (max-height: 700px) {
+  .vm-complete-screen.is-pet-unlock button.vm-complete-icon.is-pet-box {
+    font-size: clamp(92px, 26vh, 150px);
+  }
+}
+
+@media (max-height: 620px) {
+  .vm-complete-screen.is-pet-unlock button.vm-complete-icon.is-pet-box {
+    font-size: clamp(82px, 24vh, 130px);
+  }
+}
+
+.vm-game-difficulty-icon {
+  font-size: clamp(58px, 15vw, 104px);
+  line-height: 1;
+  filter: drop-shadow(0 5px 0 rgba(0, 0, 0, 0.18));
+  white-space: nowrap;
+}
+
+@media (min-width: 700px) {
+  .vm-game-stage {
+    width: min(100%, 560px);
+  }
+
+  .vm-game-center {
+    width: min(100%, 460px);
+  }
+}
+
+@media (max-height: 620px) {
+  .vm-game-center {
+    gap: 10px;
+  }
+
+  .vm-game-icon {
+    font-size: clamp(54px, 15vh, 82px);
+  }
+
+  .vm-game-difficulty-icon {
+    font-size: clamp(50px, 13vh, 76px);
+  }
+
+  .vm-game-title {
+    font-size: clamp(30px, 7vh, 44px);
+  }
+
+  .vm-game-actions .vm-btn {
+    min-height: 54px;
+  }
+}
+
+
+
+/* =========================================================
+   Shared in-game build area profiles
+   ========================================================= */
+
+/*
+  Shell-owned build area standard.
+
+  Games should choose only:
+  - vm-build--large
+  - vm-build--compact
+
+  Games may override colors with CSS variables on a scoped parent, for example:
+
+  .food-slice-shell{
+    --vm-build-bg: #ffc751;
+    --vm-build-text: #333333;
+    --vm-build-muted: rgba(51,51,51,.30);
+    --vm-build-meta: #7f66c6;
+  }
+
+  The shell owns:
+  - card background
+  - text color
+  - faded/unbuilt color
+  - book/reference color
+  - height
+  - padding
+  - radius
+  - shadow
+  - font sizes
+  - line height
+  - wrapping
+*/
+
+.vm-build {
+  --vm-build-bg: #ffffff;
+  --vm-build-text: #333333;
+  --vm-build-muted: rgba(51, 51, 51, .30);
+  --vm-build-meta: #7f66c6;
+  --vm-build-radius: 24px;
+  --vm-build-shadow: 0 8px 20px rgba(0, 0, 0, .14);
+
+  width: 100%;
+  box-sizing: border-box;
+  background: var(--vm-build-bg);
+  color: var(--vm-build-text);
+  border-radius: var(--vm-build-radius);
+  box-shadow: var(--vm-build-shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  overflow: hidden;
+}
+
+/* Large build area profile */
+
+.vm-build.vm-build--large {
+  height: clamp(112px, 17vh, 156px);
+  min-height: clamp(112px, 17vh, 156px);
+  padding: clamp(12px, 1.8vh, 18px) clamp(14px, 4vw, 22px);
+}
+
+/* Compact build area profile */
+
+.vm-build.vm-build--compact {
+  height: clamp(70px, 11vh, 96px);
+  min-height: clamp(70px, 11vh, 96px);
+  padding: clamp(8px, 1.4vh, 12px) clamp(10px, 3vw, 14px);
+}
+
+/* Shared build text layout */
+
+.vm-build-text {
+  width: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  box-sizing: border-box;
+  display: block;
+  color: var(--vm-build-text);
+  font-weight: 900;
+  text-align: center;
+  text-wrap: balance;
+  overflow-wrap: break-word;
+}
+
+/* Large build text tiers */
+
+.vm-build--large .vm-build-text {
+  line-height: 1.10;
+}
+
+.vm-build--large .vm-build-text.is-normal {
+  font-size: clamp(24px, 5.4vw, 42px);
+}
+
+.vm-build--large .vm-build-text.is-medium {
+  font-size: clamp(20px, 4.35vw, 33px);
+  line-height: 1.08;
+}
+
+.vm-build--large .vm-build-text.is-small {
+  font-size: clamp(16px, 3.35vw, 25px);
+  line-height: 1.04;
+}
+
+/* Compact build text tiers */
+
+.vm-build--compact .vm-build-text {
+  line-height: 1.06;
+}
+
+.vm-build--compact .vm-build-text.is-normal {
+  font-size: clamp(19px, 4.8vw, 33px);
+}
+
+.vm-build--compact .vm-build-text.is-medium {
+  font-size: clamp(16px, 4.1vw, 27px);
+  line-height: 1.04;
+}
+
+.vm-build--compact .vm-build-text.is-small {
+  font-size: clamp(13px, 3.05vw, 21px);
+  line-height: 1.02;
+}
+
+/* Shared build progress display */
+
+.vm-build-word,
+.vm-build-punct,
+.vm-build-space,
+.vm-build-meta,
+.vm-build-token,
+.vm-build-text--progress .is-verse,
+.vm-build-text--progress .is-book,
+.vm-build-text--progress .is-reference {
+  color: var(--vm-build-muted);
+  opacity: 1;
+  transition:
+    opacity .18s ease,
+    transform .18s ease,
+    color .18s ease;
+}
+
+.vm-build-word.is-built,
+.vm-build-punct.is-built,
+.vm-build-space.is-built,
+.vm-build-token.is-built,
+.vm-build-text--progress .is-verse.is-built {
+  color: var(--vm-build-text);
+  opacity: 1;
+}
+
+.vm-build-meta,
+.vm-build-text--progress .is-book,
+.vm-build-text--progress .is-reference {
+  font-weight: 900;
+}
+
+.vm-build-meta.is-built,
+.vm-build-text--progress .is-book.is-built,
+.vm-build-text--progress .is-reference.is-built {
+  color: var(--vm-build-meta);
+  opacity: 1;
+}
+
+/* Hard mode: hide unbuilt tokens completely */
+
+.vm-build-text--progress.is-hide-unbuilt .vm-build-word:not(.is-built),
+.vm-build-text--progress.is-hide-unbuilt .vm-build-punct:not(.is-built),
+.vm-build-text--progress.is-hide-unbuilt .vm-build-meta:not(.is-built),
+.vm-build-text--progress.is-hide-unbuilt .vm-build-token:not(.is-built),
+.vm-build-text--progress.is-hide-unbuilt .is-verse:not(.is-built),
+.vm-build-text--progress.is-hide-unbuilt .is-book:not(.is-built),
+.vm-build-text--progress.is-hide-unbuilt .is-reference:not(.is-built) {
+  opacity: 0;
+}
+
+/* Punctuation / spacing */
+
+.vm-build-space {
+  white-space: pre-wrap;
+}
+
+.vm-build-punct {
+  margin-left: -.05em;
+}
+
+.vm-build-text.is-hide-unbuilt .vm-build-space:not(.is-built) {
+  opacity: 0;
+}
+
+
+/* =========================================================
+   Shared build streak overlay
+   ========================================================= */
+
+.vm-build-streak-overlay {
+  --vm-build-streak-color-1: #ffc751;
+  --vm-build-streak-color-2: #a7cb6f;
+  --vm-build-streak-color-3: #64b5f6;
+  --vm-build-streak-color-4: #ff8cc8;
+  --vm-build-streak-color-5: #ffffff;
+  --vm-build-streak-color: var(--vm-build-streak-color-1);
+
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  border-radius: inherit;
+  box-sizing: border-box;
+  opacity: 0;
+  --vm-build-streak-border-width: clamp(4px, 0.75vw, 7px);
+  border: var(--vm-build-streak-border-width) solid transparent;
+  box-shadow: none;
+  overflow: hidden;
+  transform: translateZ(0);
+}
+
+.vm-build-streak-overlay::before,
+.vm-build-streak-overlay::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.vm-build-streak-overlay.is-level-0 {
+  opacity: 0;
+}
+
+.vm-build-streak-overlay.is-level-1 {
+  opacity: 1;
+  border-color: var(--vm-build-streak-color-1);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, .32),
+    0 0 8px color-mix(in srgb, var(--vm-build-streak-color-1) 55%, transparent);
+}
+
+.vm-build-streak-overlay.is-level-2 {
+  opacity: 1;
+  border-color: var(--vm-build-streak-color-2);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, .36),
+    0 0 12px color-mix(in srgb, var(--vm-build-streak-color-2) 62%, transparent);
+}
+
+.vm-build-streak-overlay.is-level-3 {
+  opacity: 1;
+  border-color: var(--vm-build-streak-color-3);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, .42),
+    0 0 16px color-mix(in srgb, var(--vm-build-streak-color-3) 70%, transparent);
+  animation: vmBuildStreakBreathe 1.45s ease-in-out infinite;
+}
+
+.vm-build-streak-overlay.is-level-4 {
+  opacity: 1;
+  border-color: var(--vm-build-streak-color-4);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, .48),
+    0 0 18px color-mix(in srgb, var(--vm-build-streak-color-4) 74%, transparent);
+  animation: vmBuildStreakBreathe 1.28s ease-in-out infinite;
+}
+
+.vm-build-streak-overlay.is-level-4::before {
+  opacity: 1;
+  inset: -2px;
+  background:
+    linear-gradient(90deg,
+      transparent 0%,
+      transparent 36%,
+      color-mix(in srgb, var(--vm-build-streak-color-4) 88%, white) 50%,
+      transparent 64%,
+      transparent 100%);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  padding: var(--vm-build-streak-border-width);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+  animation: vmBuildStreakSweep 1.65s linear infinite;
+}
+
+.vm-build-streak-overlay.is-level-5 {
+  opacity: 1;
+  border-color: transparent;
+background:
+    linear-gradient(transparent, transparent) padding-box,
+    linear-gradient(90deg,
+      var(--vm-build-streak-color-1),
+      var(--vm-build-streak-color-2),
+      var(--vm-build-streak-color-3),
+      var(--vm-build-streak-color-4),
+      var(--vm-build-streak-color-5),
+      var(--vm-build-streak-color-1)) border-box;
+  background-size: 100% 100%, 220% 100%;
+  background-position: 0 0, 0% 50%;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, .50),
+    0 0 18px color-mix(in srgb, var(--vm-build-streak-color-3) 58%, transparent),
+    0 0 24px color-mix(in srgb, var(--vm-build-streak-color-4) 52%, transparent);
+  animation:
+    vmBuildStreakBreathe 1.15s ease-in-out infinite,
+    vmBuildStreakRainbowBorder 1.8s linear infinite;
+}
+
+.vm-build-streak-overlay.is-level-5::before {
+  opacity: 1;
+  inset: -2px;
+  background:
+    linear-gradient(90deg,
+      transparent 0%,
+      transparent 32%,
+      var(--vm-build-streak-color-1) 40%,
+      var(--vm-build-streak-color-2) 46%,
+      var(--vm-build-streak-color-3) 52%,
+      var(--vm-build-streak-color-4) 58%,
+      var(--vm-build-streak-color-5) 64%,
+      transparent 72%,
+      transparent 100%);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  padding: var(--vm-build-streak-border-width);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+  animation: vmBuildStreakSweep 1.25s linear infinite;
+}
+
+
+
+.vm-build-streak-overlay.is-pulsing {
+  animation: vmBuildStreakPulse 320ms ease-out both;
+}
+
+.vm-build-streak-overlay.is-level-3.is-pulsing,
+.vm-build-streak-overlay.is-level-4.is-pulsing {
+  animation:
+    vmBuildStreakPulse 320ms ease-out both,
+    vmBuildStreakBreathe 1.25s ease-in-out infinite;
+}
+
+.vm-build-streak-overlay.is-level-5.is-pulsing {
+  animation:
+    vmBuildStreakPulse 320ms ease-out both,
+    vmBuildStreakBreathe 1.15s ease-in-out infinite,
+    vmBuildStreakRainbowBorder 1.8s linear infinite;
+}
+
+.vm-build-streak-overlay.is-broken {
+  opacity: 1;
+  border-color: #ff5a51;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, .35),
+    0 0 16px rgba(255, 90, 81, .68);
+  animation: vmBuildStreakBreak 280ms ease-out both;
+}
+
+@keyframes vmBuildStreakRainbowGlow {
+
+  0%,
+  100% {
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, .58),
+      0 0 10px color-mix(in srgb, var(--vm-build-streak-color-1) 62%, transparent),
+      0 0 16px color-mix(in srgb, var(--vm-build-streak-color-3) 58%, transparent),
+      0 0 22px color-mix(in srgb, var(--vm-build-streak-color-4) 54%, transparent);
+  }
+
+  33% {
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, .58),
+      0 0 10px color-mix(in srgb, var(--vm-build-streak-color-2) 62%, transparent),
+      0 0 16px color-mix(in srgb, var(--vm-build-streak-color-4) 58%, transparent),
+      0 0 22px color-mix(in srgb, var(--vm-build-streak-color-5) 54%, transparent);
+  }
+
+  66% {
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, .58),
+      0 0 10px color-mix(in srgb, var(--vm-build-streak-color-3) 62%, transparent),
+      0 0 16px color-mix(in srgb, var(--vm-build-streak-color-5) 58%, transparent),
+      0 0 22px color-mix(in srgb, var(--vm-build-streak-color-1) 54%, transparent);
+  }
+}
+
+@keyframes vmBuildStreakPulse {
+  0% {
+    transform: scale(.988);
+    filter: brightness(1);
+  }
+
+  48% {
+    transform: scale(1.015);
+    filter: brightness(1.45);
+  }
+
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+@keyframes vmBuildStreakBreathe {
+
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+
+  50% {
+    filter: brightness(1.24);
+  }
+}
+
+@keyframes vmBuildStreakSweep {
+  0% {
+    transform: translateX(-120%);
+  }
+
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+@keyframes vmBuildStreakRainbowBorder {
+  0% {
+    background-position: 0 0, 0% 50%;
+  }
+
+  100% {
+    background-position: 0 0, 220% 50%;
+  }
+}
+
+@keyframes vmBuildStreakRainbow {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  100% {
+    background-position: 220% 50%;
+  }
+}
+
+@keyframes vmBuildStreakMaxGlow {
+
+  0%,
+  100% {
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, .62),
+      0 0 20px color-mix(in srgb, var(--vm-build-streak-color-1) 58%, transparent),
+      0 0 28px color-mix(in srgb, var(--vm-build-streak-color-5) 72%, transparent);
+  }
+
+  25% {
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, .62),
+      0 0 20px color-mix(in srgb, var(--vm-build-streak-color-2) 58%, transparent),
+      0 0 28px color-mix(in srgb, var(--vm-build-streak-color-5) 72%, transparent);
+  }
+
+  50% {
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, .62),
+      0 0 20px color-mix(in srgb, var(--vm-build-streak-color-3) 58%, transparent),
+      0 0 28px color-mix(in srgb, var(--vm-build-streak-color-5) 72%, transparent);
+  }
+
+  75% {
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, .62),
+      0 0 20px color-mix(in srgb, var(--vm-build-streak-color-4) 58%, transparent),
+      0 0 28px color-mix(in srgb, var(--vm-build-streak-color-5) 72%, transparent);
+  }
+}
+
+@keyframes vmBuildStreakFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  100% {
+    background-position: 220% 50%;
+  }
+}
+
+@keyframes vmBuildStreakBreak {
+  0% {
+    opacity: 1;
+    transform: scale(1.012);
+    filter: brightness(1.3);
+  }
+
+  55% {
+    opacity: 1;
+    transform: scale(.992);
+    filter: brightness(1.8);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .vm-build-streak-overlay,
+  .vm-build-streak-overlay::before,
+  .vm-build-streak-overlay::after {
+    animation: none !important;
+  }
+}
+
+
+/* =========================================================
+   Shared external game How to Play overlay
+   ========================================================= */
+
+.vm-game-help-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding:
+    calc(18px + env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom));
+  background: rgba(0, 0, 0, 0.46);
+}
+
+.vm-game-help-overlay.is-open {
+  display: flex;
+}
+
+.vm-game-help-panel {
+  width: min(100%, 520px);
+  max-height: 100%;
+  background: #ffffff;
+  color: var(--vm-text-dark);
+  border-radius: 28px;
+  padding: clamp(18px, 4vw, 26px);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 10px 0 rgba(0, 0, 0, 0.22);
+}
+
+.vm-game-help-title {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--vm-game-help-title-bg, var(--vm-game-accent, var(--vm-purple)));
+  color: var(--vm-game-help-title-color, #ffffff);
+  border-radius: 999px;
+  padding: 10px 22px;
+  font-size: clamp(28px, 6.5vw, 44px);
+  font-weight: 900;
+  line-height: 1;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.vm-game-help-body-wrap {
+  position: relative;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.vm-game-help-body {
+  max-height: min(52vh, 460px);
+  min-height: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+  font-size: clamp(20px, 4.8vw, 28px);
+  font-weight: 800;
+  line-height: 1.18;
+  text-align: center;
+  text-wrap: balance;
+  padding: 4px 18px 26px 4px;
+}
+
+.vm-game-help-body-wrap::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 34px;
+  pointer-events: none;
+  background: linear-gradient(to bottom,
+      rgba(255, 255, 255, 0),
+      rgba(255, 255, 255, 0.96));
+}
+
+.vm-game-help-actions {
+  flex: 0 0 auto;
+  width: min(100%, 360px);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.vm-game-help-actions .vm-btn {
+  width: 100%;
+  min-height: 58px;
+  font-size: clamp(22px, 5vw, 30px);
+  background: var(--vm-game-help-close-bg, var(--vm-purple));
+  color: var(--vm-game-help-close-color, #ffffff);
+  box-shadow: none;
+}
+
+.vm-game-help-actions .vm-btn:active {
+  box-shadow: none;
+}
+
+@media (max-height: 620px) {
+  .vm-game-help-panel {
+    border-radius: 24px;
+    padding: 16px;
+    gap: 10px;
+  }
+
+  .vm-game-help-title {
+    font-size: clamp(24px, 6.6vh, 34px);
+    padding: 8px 18px;
+  }
+
+  .vm-game-help-body {
+    max-height: min(46vh, 360px);
+    font-size: clamp(15px, 3.7vh, 20px);
+    line-height: 1.18;
+    padding-right: 18px;
+  }
+
+  .vm-game-help-actions .vm-btn {
+    min-height: 52px;
+  }
+}
+
+/* =========================================================
+   Shared in-game menu overlay
+   ========================================================= */
+
+.vm-game-menu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 56;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding:
+    calc(18px + env(safe-area-inset-top)) 16px calc(18px + env(safe-area-inset-bottom));
+  background: rgba(0, 0, 0, 0.46);
+}
+
+.vm-game-menu-overlay.is-open {
+  display: flex;
+}
+
+.vm-game-menu-panel {
+  width: min(92vw, 480px);
+  max-height: 100%;
+  background: #ffffff;
+  color: var(--vm-text-dark);
+  border-radius: 28px;
+  padding: clamp(18px, 4vw, 28px);
+  box-shadow: 0 10px 0 rgba(0, 0, 0, 0.22);
+  display: flex;
+  flex-direction: column;
+  gap: clamp(14px, 3vw, 20px);
+}
+
+.vm-game-menu-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+}
+
+.vm-game-menu-title {
+  grid-column: 2;
+  justify-self: center;
+  color: var(--vm-game-accent, var(--vm-purple));
+  padding: 4px 10px;
+  font-size: clamp(30px, 6.8vw, 46px);
+  font-weight: 900;
+  line-height: 1;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.vm-game-menu-mute-btn {
+  grid-column: 3;
+  justify-self: end;
+  width: clamp(44px, 10vw, 56px);
+  height: clamp(44px, 10vw, 56px);
+  border: none;
+  border-radius: 999px;
+  background: rgba(127, 102, 198, 0.12);
+  color: var(--vm-game-accent, var(--vm-purple));
+  font: inherit;
+  font-size: clamp(22px, 5vw, 30px);
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.vm-game-menu-mute-btn:active {
+  transform: translateY(2px);
+}
+
+.vm-game-menu-actions {
+  width: min(100%, 380px);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.vm-game-menu-actions .vm-game-menu-btn {
+  width: 100%;
+  min-height: clamp(54px, 8vh, 66px);
+  background: var(--vm-game-accent, var(--vm-purple));
+  color: #ffffff;
+  font-size: clamp(22px, 5vw, 30px);
+  box-shadow: none;
+}
+
+.vm-game-menu-actions .vm-game-menu-btn:active {
+  box-shadow: none;
+}
+
+.vm-game-menu-actions .vm-game-menu-close-btn {
+  background: #4d4d4d;
+  color: #f2f2f2;
+}
+
+@media (min-width: 760px) {
+  .vm-game-menu-panel {
+    width: min(44vw, 540px);
+    padding: 30px;
+  }
+
+  .vm-game-menu-actions {
+    width: min(100%, 420px);
+  }
+}
+
+@media (max-height: 620px) {
+  .vm-game-menu-panel {
+    border-radius: 24px;
+    padding: 16px;
+    gap: 10px;
+  }
+
+  .vm-game-menu-title {
+    font-size: clamp(24px, 6.4vh, 34px);
+    padding: 2px 8px;
+  }
+
+  .vm-game-menu-actions {
+    gap: 10px;
+  }
+
+  .vm-game-menu-actions .vm-game-menu-btn {
+    min-height: 50px;
+    font-size: clamp(18px, 4.6vh, 24px);
+  }
+
+  .vm-game-menu-mute-btn {
+    width: 44px;
+    height: 44px;
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 420px) {
+  .vm-complete-medal-pill {
+    top: 19px;
+    right: 14px;
+    padding: 7px 10px;
+    gap: 4px;
+  }
+
+  .vm-complete-medal {
+    font-size: 20px;
+  }
+}
+
+/* =========================================================
+   Game Mix quit confirmation
+   ========================================================= */
+
+.vm-game-mix-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.vm-game-mix-confirm-panel {
+  width: min(92vw, 420px);
+  border-radius: 28px;
+  background: #ffffff;
+  color: var(--vm-purple);
+  padding: 22px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+  text-align: center;
+}
+
+.vm-game-mix-confirm-title {
+  font-size: clamp(30px, 7vw, 44px);
+  font-weight: 900;
+  line-height: 1.05;
+  margin-bottom: 18px;
+  text-wrap: balance;
+}
+
+.vm-game-mix-confirm-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.vm-game-mix-confirm-actions .vm-btn {
+  width: 100%;
+  min-height: 58px;
+  font-size: clamp(22px, 5.4vw, 32px);
+}
+
+/* =========================================================
+   Game Mix button polish
+   ========================================================= */
+
+.vm-game-mix-action {
+  color: #ffffff;
+  background: linear-gradient(120deg,
+      #ff5a51,
+      #ffc751,
+      #a7cb6f,
+      #40b9c5,
+      #7f66c6,
+      #ff5a51);
+  background-size: 500% 500%;
+  animation: vmGameMixRainbow 8500ms ease-in-out infinite;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.22);
+}
+
+.vm-game-mix-action:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
+}
+
+.vm-game-mix-confirm-actions .vm-game-mix-keep-playing {
+  background: #a7cb6f;
+  color: #ffffff;
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.22);
+}
+
+.vm-game-mix-confirm-actions .vm-game-mix-quit {
+  background: #ff5a51;
+  color: #ffffff;
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.22);
+}
+
+.vm-game-mix-confirm-actions .vm-game-mix-keep-playing:active,
+.vm-game-mix-confirm-actions .vm-game-mix-quit:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.22);
+}
+
+@keyframes vmGameMixRainbow {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vm-game-mix-action {
+    animation: none;
+  }
+}
