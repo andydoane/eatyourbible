@@ -79,6 +79,14 @@
   const PROJECTILE_TOCK_FREQ_END = 820;
   const PROJECTILE_FIRE_SOUND_MS = 58;
 
+  const BUILD_STREAK_COLORS = [
+    "#ffc751", // 1+ yellow
+    "#a7cb6f", // 5+ green
+    "#64b5f6", // 10+ blue
+    "#ff8cc8", // 15+ pink
+    "#ffffff"  // 20+ white/rainbow energy
+  ];
+
   const WORD_BURST_CLOUD_SVG = `
 <svg viewBox="0 0 26.458333 26.458333" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <path fill="currentColor" d="M 12.949771,1.5464282 A 6.0017493,5.3230522 7.1160496 0 0 6.9820601,6.4190471 5.3405872,4.7400094 7.154063 0 0 6.8563886,6.4134999 5.3405872,4.7400094 7.154063 0 0 1.5243277,11.020646 5.3405872,4.7400094 7.154063 0 0 2.4259083,13.677302 4.0181559,3.5662928 7.1540647 0 0 0.66145837,16.583588 4.0181559,3.5662928 7.1540647 0 0 4.6728467,20.261811 4.0181559,3.5662928 7.1540647 0 0 5.1732885,20.243 a 5.3405872,4.7400094 7.154063 0 0 5.2883005,4.342428 5.3405872,4.7400094 7.154063 0 0 3.656255,-1.210431 4.0181559,3.5662928 7.1540647 0 0 3.300558,1.639798 4.0181559,3.5662928 7.1540647 0 0 4.011389,-3.466536 4.0181559,3.5662928 7.1540647 0 0 -0.416848,-1.594767 5.3405872,4.7400094 7.154063 0 0 4.783932,-4.586787 5.3405872,4.7400094 7.154063 0 0 -1.9322,-3.706541 4.0181559,3.5662928 7.1540647 0 0 0.764128,-2.0624453 4.0181559,3.5662928 7.1540647 0 0 -4.011389,-3.6776624 4.0181559,3.5662928 7.1540647 0 0 -1.744813,0.3148283 6.0017493,5.3230522 7.1160496 0 0 -5.92283,-4.6884523 z"/>
@@ -132,6 +140,7 @@
     bonusRocketColorKey: "red",
     bonusOutcome: "",
     bonusMedalAlreadyEarned: false,
+    correctStreak: 0,
     uiSoundFlip: false,
 
     astroHits: 0,
@@ -527,6 +536,7 @@
     state.bonusRocketColorKey = "red";
     state.bonusOutcome = "";
     state.bonusMedalAlreadyEarned = false;
+    state.correctStreak = 0;
     state.uiSoundFlip = false;
 
     state.astroHits = 0;
@@ -741,6 +751,18 @@
     });
   }
 
+  function syncBuildStreakOverlay({ pulse = false, broken = false } = {}) {
+    const buildEl = document.getElementById("vlBuild");
+    if (!buildEl || !window.VerseGameShell.updateBuildStreakOverlay) return;
+
+    window.VerseGameShell.updateBuildStreakOverlay({
+      buildEl,
+      streak: state.correctStreak,
+      colors: BUILD_STREAK_COLORS,
+      pulse,
+      broken
+    });
+  }
 
   function formatMode(mode) { return mode ? mode.charAt(0).toUpperCase() + mode.slice(1) : "Mode"; }
   function totalElapsedMs() { return Math.max(1, (state.endTime || performance.now()) - state.startTime); }
@@ -1292,6 +1314,7 @@
     }
 
     fitBuildText();
+    syncBuildStreakOverlay();
   }
 
 
@@ -1394,6 +1417,7 @@
     wireGameScreen();
     syncGameMenuOpenState();
     fitBuildText();
+    syncBuildStreakOverlay();
     if (!state.bonusReady) startConveyorLoop();
   }
 
@@ -3527,8 +3551,10 @@
 
       removeConveyorItem(choiceId);
 
+      state.correctStreak += 1;
       state.progressIndex += 1;
       updateBuildDisplay();
+      syncBuildStreakOverlay({ pulse: true });
       playGameSound("wordAdded");
 
       if (state.progressIndex >= state.segments.length) {
@@ -3549,6 +3575,9 @@
     }
 
     playGameSound("wrongTap");
+    state.correctStreak = 0;
+    syncBuildStreakOverlay({ broken: true });
+
     animateFailedLaunch(liveSourceEl);
     removeConveyorItem(choiceId);
 
