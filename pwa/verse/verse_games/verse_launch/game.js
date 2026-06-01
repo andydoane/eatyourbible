@@ -80,12 +80,14 @@
   const PROJECTILE_FIRE_SOUND_MS = 58;
 
   const BUILD_STREAK_COLORS = [
-    "#ffc751", // 1+ yellow
-    "#a7cb6f", // 5+ green
-    "#64b5f6", // 10+ blue
-    "#ff8cc8", // 15+ pink
-    "#ffffff"  // 20+ white/rainbow energy
+    "#ffc751", // level 1
+    "#a7cb6f", // level 2
+    "#64b5f6", // level 3
+    "#ff8cc8", // level 4
+    "#ffffff"  // level 5
   ];
+
+  const BUILD_STREAK_THRESHOLDS = [2, 4, 6, 8, 10];
 
   const WORD_BURST_CLOUD_SVG = `
 <svg viewBox="0 0 26.458333 26.458333" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -759,6 +761,7 @@
       buildEl,
       streak: state.correctStreak,
       colors: BUILD_STREAK_COLORS,
+      thresholds: BUILD_STREAK_THRESHOLDS,
       pulse,
       broken
     });
