@@ -1596,6 +1596,7 @@
         window.VerseGameShell.openHelp(HELP_OVERLAY_ID, "back", "Back");
       },
       onModeSelect: () => {
+        playUiTapSound();
         state.menuOpen = false;
         state.helpOpen = false;
         state.helpBackMode = false;
@@ -1605,22 +1606,26 @@
         setScreen("mode");
       },
       onExit: () => {
+        playUiTapSound();
         stopAstroLoop();
         window.VerseGameBridge.exitGame();
       },
       onOpen: () => {
         if (!canOpenGameMenu()) return false;
 
+        playUiTapSound();
         state.menuOpen = true;
         state.helpOpen = false;
         state.helpBackMode = false;
         state.astroMoveDir = 0;
       },
       onClose: () => {
+        playUiTapSound();
         state.menuOpen = false;
         state.astroMoveDir = 0;
       },
       onBackFromHelp: () => {
+        playUiTapSound();
         state.helpOpen = false;
         state.menuOpen = true;
         state.helpBackMode = false;
