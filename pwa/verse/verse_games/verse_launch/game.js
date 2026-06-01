@@ -55,12 +55,22 @@
       cutsceneRocketEnter: 0.80,
       starCollected: 0.50,
       countdownBeep: 0.42,
-      countdownFinalBeep: 0.52
+      countdownFinalBeep: 0.52,
+
+      // Generated projectile volley sounds.
+      // Tick is the brighter shot, tock is the softer/lower shot.
+      projectileTick: 0.12,
+      projectileTock: 0.085
     }
   };
 
   const COUNTDOWN_BEEP_C4 = 261.63;
   const COUNTDOWN_BEEP_C5 = 523.25;
+  const PROJECTILE_TICK_FREQ_START = 880;
+  const PROJECTILE_TICK_FREQ_END = 1180;
+  const PROJECTILE_TOCK_FREQ_START = 620;
+  const PROJECTILE_TOCK_FREQ_END = 820;
+  const PROJECTILE_FIRE_SOUND_MS = 58;
 
   const WORD_BURST_CLOUD_SVG = `
 <svg viewBox="0 0 26.458333 26.458333" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -132,6 +142,7 @@
     astroStarSpawnCooldownMs: 0,
     astroProjectileCooldownMs: 0,
     astroProjectileColorIndex: 0,
+    astroProjectileSoundFlip: false,
     astroLastSpawnX: -1,
     astroLastStarSpawnX: -1,
     astroDrainPhase: false,
@@ -398,6 +409,47 @@
     }
   }
 
+  async function playProjectileFireSound() {
+    if (muted) return;
+
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    try {
+      if (ctx.state === "suspended") {
+        await ctx.resume();
+      }
+
+      const isTock = state.astroProjectileSoundFlip;
+      state.astroProjectileSoundFlip = !state.astroProjectileSoundFlip;
+
+      const now = ctx.currentTime;
+      const durationSec = PROJECTILE_FIRE_SOUND_MS / 1000;
+      const volumeKey = isTock ? "projectileTock" : "projectileTick";
+      const startFreq = isTock ? PROJECTILE_TOCK_FREQ_START : PROJECTILE_TICK_FREQ_START;
+      const endFreq = isTock ? PROJECTILE_TOCK_FREQ_END : PROJECTILE_TICK_FREQ_END;
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(startFreq, now);
+      osc.frequency.exponentialRampToValueAtTime(endFreq, now + durationSec);
+
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, soundVolume(volumeKey)), now + 0.008);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + durationSec);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + durationSec + 0.02);
+    } catch (err) {
+      // Sound should never break gameplay.
+    }
+  }
+
   function parseReferenceParts(ref, translation, verseId) {
     return window.VerseGameShell.parseReferenceParts(ref, translation, verseId);
   }
@@ -478,6 +530,7 @@
     state.astroStarSpawnCooldownMs = 0;
     state.astroProjectileCooldownMs = 0;
     state.astroProjectileColorIndex = 0;
+    state.astroProjectileSoundFlip = false;
     state.astroLastSpawnX = -1;
     state.astroLastStarSpawnX = -1;
     state.astroDrainPhase = false;
@@ -2864,6 +2917,8 @@
         xVelocityPxPerSec
       });
     });
+
+    playProjectileFireSound();
 
     state.astroProjectileCooldownMs = PROJECTILE_COOLDOWN_MS;
   }
