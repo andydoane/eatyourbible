@@ -672,6 +672,8 @@ button.vm-complete-icon.is-pet-box:focus-visible {
 /* Shared build text layout */
 
 .vm-build-text {
+  position: relative;
+  z-index: 8;
   width: 100%;
   max-width: 100%;
   max-height: 100%;
@@ -891,7 +893,7 @@ button.vm-complete-icon.is-pet-box:focus-visible {
   opacity: 1;
   border-color: transparent;
 background:
-    linear-gradient(rgba(255,255,255,0), rgba(255,255,255,0)) padding-box,
+    linear-gradient(var(--vm-build-bg, #ffffff), var(--vm-build-bg, #ffffff)) padding-box,
     linear-gradient(90deg,
       var(--vm-build-streak-color-1),
       var(--vm-build-streak-color-2),
