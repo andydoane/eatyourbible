@@ -881,8 +881,18 @@ button.vm-complete-icon.is-pet-box:focus-visible{
 .vm-build-streak-overlay.is-level-5 {
   opacity: 1;
   border-color: transparent;
+  background: none;
+  box-shadow:
+    0 0 18px color-mix(in srgb, var(--vm-build-streak-color-3) 58%, transparent),
+    0 0 24px color-mix(in srgb, var(--vm-build-streak-color-4) 52%, transparent);
+  animation: vmBuildStreakBreathe 1.15s ease-in-out infinite;
+}
+
+.vm-build-streak-overlay.is-level-5::before {
+  opacity: 1;
+  inset: 0;
+  padding: var(--vm-build-streak-border-width);
   background:
-    linear-gradient(var(--vm-build-bg, #ffffff), var(--vm-build-bg, #ffffff)) padding-box,
     linear-gradient(
       90deg,
       var(--vm-build-streak-color-1),
@@ -891,24 +901,26 @@ button.vm-complete-icon.is-pet-box:focus-visible{
       var(--vm-build-streak-color-4),
       var(--vm-build-streak-color-5),
       var(--vm-build-streak-color-1)
-    ) border-box;
-  background-size: 100% 100%, 220% 100%;
-  background-position: 0 0, 0% 50%;
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, .50),
-    0 0 18px color-mix(in srgb, var(--vm-build-streak-color-3) 58%, transparent),
-    0 0 24px color-mix(in srgb, var(--vm-build-streak-color-4) 52%, transparent);
-  animation:
-    vmBuildStreakBreathe 1.15s ease-in-out infinite,
-    vmBuildStreakRainbowBorder 1.8s linear infinite;
+    );
+  background-size: 220% 100%;
+  background-position: 0% 50%;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+  animation: vmBuildStreakRainbow 1.8s linear infinite;
 }
 
-.vm-build-streak-overlay.is-level-5::before {
+.vm-build-streak-overlay.is-level-5::after {
   opacity: 1;
   inset: -2px;
+  padding: var(--vm-build-streak-border-width);
   background:
-    linear-gradient(
-      90deg,
+    linear-gradient(90deg,
       transparent 0%,
       transparent 32%,
       var(--vm-build-streak-color-1) 40%,
@@ -917,21 +929,17 @@ button.vm-complete-icon.is-pet-box:focus-visible{
       var(--vm-build-streak-color-4) 58%,
       var(--vm-build-streak-color-5) 64%,
       transparent 72%,
-      transparent 100%
-    );
+      transparent 100%);
   mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
-  padding: var(--vm-build-streak-border-width);
   mask-composite: exclude;
   -webkit-mask-composite: xor;
   animation: vmBuildStreakSweep 1.25s linear infinite;
 }
-
-
 
 .vm-build-streak-overlay.is-pulsing {
   animation: vmBuildStreakPulse 320ms ease-out both;
@@ -947,8 +955,7 @@ button.vm-complete-icon.is-pet-box:focus-visible{
 .vm-build-streak-overlay.is-level-5.is-pulsing {
   animation:
     vmBuildStreakPulse 320ms ease-out both,
-    vmBuildStreakBreathe 1.15s ease-in-out infinite,
-    vmBuildStreakRainbowBorder 1.8s linear infinite;
+    vmBuildStreakBreathe 1.15s ease-in-out infinite;
 }
 
 .vm-build-streak-overlay.is-broken {
