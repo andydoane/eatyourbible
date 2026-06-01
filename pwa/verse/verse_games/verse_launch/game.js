@@ -892,8 +892,12 @@
   function randomConveyorCorrectDelay() {
     const roll = Math.random();
 
-    if (roll < 0.60) return 1;
-    if (roll < 0.90) return 2;
+    // Number of forced decoys before the correct word can spawn.
+    // 0 = correct can be the next new UFO.
+    // 3 = longest wait, used rarely.
+    if (roll < 0.40) return 0;
+    if (roll < 0.75) return 1;
+    if (roll < 0.95) return 2;
     return 3;
   }
 
