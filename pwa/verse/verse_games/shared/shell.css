@@ -882,33 +882,60 @@ button.vm-complete-icon.is-pet-box:focus-visible{
   opacity: 1;
   border-color: var(--vm-build-streak-color-5);
   box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, .58),
-    0 0 22px color-mix(in srgb, var(--vm-build-streak-color-5) 82%, transparent);
-  animation: vmBuildStreakBreathe 1.05s ease-in-out infinite;
+    inset 0 0 0 1px rgba(255, 255, 255, .62),
+    0 0 20px color-mix(in srgb, var(--vm-build-streak-color-1) 58%, transparent),
+    0 0 28px color-mix(in srgb, var(--vm-build-streak-color-5) 72%, transparent);
+  animation:
+    vmBuildStreakBreathe 980ms ease-in-out infinite,
+    vmBuildStreakMaxGlow 2.2s linear infinite;
 }
 
 .vm-build-streak-overlay.is-level-5::before {
   opacity: 1;
-  inset: 0;
-  padding: var(--vm-build-streak-border-width);
+  inset: -2px;
   background:
     linear-gradient(90deg,
-      var(--vm-build-streak-color-1),
-      var(--vm-build-streak-color-2),
-      var(--vm-build-streak-color-3),
-      var(--vm-build-streak-color-4),
-      var(--vm-build-streak-color-5),
-      var(--vm-build-streak-color-1));
-  background-size: 220% 100%;
+      transparent 0%,
+      transparent 30%,
+      color-mix(in srgb, var(--vm-build-streak-color-5) 90%, white) 43%,
+      var(--vm-build-streak-color-3) 50%,
+      color-mix(in srgb, var(--vm-build-streak-color-5) 90%, white) 57%,
+      transparent 70%,
+      transparent 100%);
   mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
   -webkit-mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
+  padding: var(--vm-build-streak-border-width);
   mask-composite: exclude;
   -webkit-mask-composite: xor;
-  animation: vmBuildStreakFlow 1.1s linear infinite;
+  animation: vmBuildStreakSweep 1.05s linear infinite;
+}
+
+.vm-build-streak-overlay.is-level-5::after {
+  opacity: 1;
+  inset: -2px;
+  background:
+    linear-gradient(90deg,
+      transparent 0%,
+      transparent 34%,
+      color-mix(in srgb, var(--vm-build-streak-color-2) 86%, white) 48%,
+      var(--vm-build-streak-color-4) 52%,
+      color-mix(in srgb, var(--vm-build-streak-color-2) 86%, white) 58%,
+      transparent 72%,
+      transparent 100%);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  padding: var(--vm-build-streak-border-width);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+  animation: vmBuildStreakSweep 1.35s linear infinite reverse;
 }
 
 .vm-build-streak-overlay.is-pulsing {
@@ -916,11 +943,17 @@ button.vm-complete-icon.is-pet-box:focus-visible{
 }
 
 .vm-build-streak-overlay.is-level-3.is-pulsing,
-.vm-build-streak-overlay.is-level-4.is-pulsing,
-.vm-build-streak-overlay.is-level-5.is-pulsing {
+.vm-build-streak-overlay.is-level-4.is-pulsing {
   animation:
     vmBuildStreakPulse 320ms ease-out both,
     vmBuildStreakBreathe 1.25s ease-in-out infinite;
+}
+
+.vm-build-streak-overlay.is-level-5.is-pulsing {
+  animation:
+    vmBuildStreakPulse 320ms ease-out both,
+    vmBuildStreakBreathe 980ms ease-in-out infinite,
+    vmBuildStreakMaxGlow 2.2s linear infinite;
 }
 
 .vm-build-streak-overlay.is-broken {
@@ -968,6 +1001,38 @@ button.vm-complete-icon.is-pet-box:focus-visible{
 
   100% {
     transform: translateX(120%);
+  }
+}
+
+@keyframes vmBuildStreakMaxGlow {
+
+  0%,
+  100% {
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, .62),
+      0 0 20px color-mix(in srgb, var(--vm-build-streak-color-1) 58%, transparent),
+      0 0 28px color-mix(in srgb, var(--vm-build-streak-color-5) 72%, transparent);
+  }
+
+  25% {
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, .62),
+      0 0 20px color-mix(in srgb, var(--vm-build-streak-color-2) 58%, transparent),
+      0 0 28px color-mix(in srgb, var(--vm-build-streak-color-5) 72%, transparent);
+  }
+
+  50% {
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, .62),
+      0 0 20px color-mix(in srgb, var(--vm-build-streak-color-3) 58%, transparent),
+      0 0 28px color-mix(in srgb, var(--vm-build-streak-color-5) 72%, transparent);
+  }
+
+  75% {
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, .62),
+      0 0 20px color-mix(in srgb, var(--vm-build-streak-color-4) 58%, transparent),
+      0 0 28px color-mix(in srgb, var(--vm-build-streak-color-5) 72%, transparent);
   }
 }
 
