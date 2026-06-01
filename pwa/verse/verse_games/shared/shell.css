@@ -891,7 +891,7 @@ button.vm-complete-icon.is-pet-box:focus-visible {
   opacity: 1;
   border-color: transparent;
 background:
-    linear-gradient(transparent, transparent) padding-box,
+    linear-gradient(rgba(255,255,255,0), rgba(255,255,255,0)) padding-box,
     linear-gradient(90deg,
       var(--vm-build-streak-color-1),
       var(--vm-build-streak-color-2),
