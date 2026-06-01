@@ -892,7 +892,7 @@ button.vm-complete-icon.is-pet-box:focus-visible {
 .vm-build-streak-overlay.is-level-5 {
   opacity: 1;
   border-color: transparent;
-background:
+  background:
     linear-gradient(var(--vm-build-bg, #ffffff), var(--vm-build-bg, #ffffff)) padding-box,
     linear-gradient(90deg,
       var(--vm-build-streak-color-1),
@@ -907,9 +907,7 @@ background:
     inset 0 0 0 1px rgba(255, 255, 255, .50),
     0 0 18px color-mix(in srgb, var(--vm-build-streak-color-3) 58%, transparent),
     0 0 24px color-mix(in srgb, var(--vm-build-streak-color-4) 52%, transparent);
-  animation:
-    vmBuildStreakBreathe 1.15s ease-in-out infinite,
-    vmBuildStreakRainbowBorder 1.8s linear infinite;
+  animation: vmBuildStreakRainbowBorder 1.8s linear infinite;
 }
 
 .vm-build-streak-overlay.is-level-5::before {
@@ -954,7 +952,6 @@ background:
 .vm-build-streak-overlay.is-level-5.is-pulsing {
   animation:
     vmBuildStreakPulse 320ms ease-out both,
-    vmBuildStreakBreathe 1.15s ease-in-out infinite,
     vmBuildStreakRainbowBorder 1.8s linear infinite;
 }
 
