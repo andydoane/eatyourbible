@@ -87,7 +87,7 @@
     "#ffffff"  // level 5
   ];
 
-  const BUILD_STREAK_THRESHOLDS = [2, 4, 6, 8, 10];
+  
 
   const WORD_BURST_CLOUD_SVG = `
 <svg viewBox="0 0 26.458333 26.458333" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -761,7 +761,7 @@
       buildEl,
       streak: state.correctStreak,
       colors: BUILD_STREAK_COLORS,
-      thresholds: BUILD_STREAK_THRESHOLDS,
+      
       pulse,
       broken
     });
