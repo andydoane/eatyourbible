@@ -916,7 +916,7 @@ const safeMax = hasCustomMax ? Number(max) : profile.max;
   return best;
 }
 
-  const BUILD_STREAK_DEFAULT_THRESHOLDS = [1, 2, 3, 4, 5];
+  const BUILD_STREAK_DEFAULT_THRESHOLDS = [1, 3, 5, 7, 9];
 
   function getBuildStreakLevel(streak = 0, thresholds = BUILD_STREAK_DEFAULT_THRESHOLDS) {
     const safeStreak = Math.max(0, Number(streak) || 0);
