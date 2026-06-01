@@ -880,15 +880,27 @@ button.vm-complete-icon.is-pet-box:focus-visible{
 
 .vm-build-streak-overlay.is-level-5 {
   opacity: 1;
-  border-color: var(--vm-build-streak-color-5);
+  border-color: transparent;
+  background:
+    linear-gradient(var(--vm-build-bg, #ffffff), var(--vm-build-bg, #ffffff)) padding-box,
+    linear-gradient(
+      90deg,
+      var(--vm-build-streak-color-1),
+      var(--vm-build-streak-color-2),
+      var(--vm-build-streak-color-3),
+      var(--vm-build-streak-color-4),
+      var(--vm-build-streak-color-5),
+      var(--vm-build-streak-color-1)
+    ) border-box;
+  background-size: 100% 100%, 220% 100%;
+  background-position: 0 0, 0% 50%;
   box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, .58),
-    0 0 10px color-mix(in srgb, var(--vm-build-streak-color-1) 62%, transparent),
-    0 0 16px color-mix(in srgb, var(--vm-build-streak-color-3) 58%, transparent),
-    0 0 22px color-mix(in srgb, var(--vm-build-streak-color-4) 54%, transparent);
+    inset 0 0 0 1px rgba(255, 255, 255, .50),
+    0 0 18px color-mix(in srgb, var(--vm-build-streak-color-3) 58%, transparent),
+    0 0 24px color-mix(in srgb, var(--vm-build-streak-color-4) 52%, transparent);
   animation:
     vmBuildStreakBreathe 1.15s ease-in-out infinite,
-    vmBuildStreakRainbowGlow 1.8s linear infinite;
+    vmBuildStreakRainbowBorder 1.8s linear infinite;
 }
 
 .vm-build-streak-overlay.is-level-5::before {
@@ -898,11 +910,13 @@ button.vm-complete-icon.is-pet-box:focus-visible{
     linear-gradient(
       90deg,
       transparent 0%,
-      transparent 36%,
-      color-mix(in srgb, var(--vm-build-streak-color-1) 88%, white) 43%,
-      color-mix(in srgb, var(--vm-build-streak-color-3) 90%, white) 50%,
-      color-mix(in srgb, var(--vm-build-streak-color-4) 88%, white) 57%,
-      transparent 64%,
+      transparent 32%,
+      var(--vm-build-streak-color-1) 40%,
+      var(--vm-build-streak-color-2) 46%,
+      var(--vm-build-streak-color-3) 52%,
+      var(--vm-build-streak-color-4) 58%,
+      var(--vm-build-streak-color-5) 64%,
+      transparent 72%,
       transparent 100%
     );
   mask:
@@ -934,7 +948,7 @@ button.vm-complete-icon.is-pet-box:focus-visible{
   animation:
     vmBuildStreakPulse 320ms ease-out both,
     vmBuildStreakBreathe 1.15s ease-in-out infinite,
-    vmBuildStreakRainbowGlow 1.8s linear infinite;
+    vmBuildStreakRainbowBorder 1.8s linear infinite;
 }
 
 .vm-build-streak-overlay.is-broken {
@@ -1010,6 +1024,16 @@ button.vm-complete-icon.is-pet-box:focus-visible{
 
   100% {
     transform: translateX(120%);
+  }
+}
+
+@keyframes vmBuildStreakRainbowBorder {
+  0% {
+    background-position: 0 0, 0% 50%;
+  }
+
+  100% {
+    background-position: 0 0, 220% 50%;
   }
 }
 
