@@ -3395,12 +3395,12 @@
 
     if (choiceId === "bonus_launch") {
       state.busy = true;
-      playGameSound("launchButton");
 
       await requestAstroTiltPermission();
 
       await fadeOutBonusLaunchButton();
       await playLaunchCountdown();
+      playGameSound("launchButton");
       await animateFinalLaunch();
       state.busy = false;
       await startBonusSequence();
