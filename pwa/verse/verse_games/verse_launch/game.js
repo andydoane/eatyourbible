@@ -28,6 +28,40 @@
   const UFO_TOP_IMAGE_SRC = "./verse_launch_images/verse_launch_ship_top.svg";
   const UFO_LIGHTS_IMAGE_SRC = "./verse_launch_images/verse_launch_ship_lights.svg";
 
+  const SOUND_BASE_PATH = "./verse_launch_sounds/";
+
+  const SOUND_FILES = {
+    correctTap: `${SOUND_BASE_PATH}verse_launch_zoom.mp3`,
+    wrongTap: `${SOUND_BASE_PATH}verse_launch_wrong.mp3`,
+    wordAdded: `${SOUND_BASE_PATH}verse_launch_collect.mp3`,
+    asteroidDestroyed: `${SOUND_BASE_PATH}verse_launch_explode.mp3`,
+    playerAsteroidHit: `${SOUND_BASE_PATH}verse_launch_explode_2.mp3`,
+    landingStart: `${SOUND_BASE_PATH}verse_launch_land.mp3`,
+    launchButton: `${SOUND_BASE_PATH}verse_launch_launch.mp3`,
+    cutsceneRocketEnter: `${SOUND_BASE_PATH}verse_launch_launch_2.mp3`,
+    starCollected: `${SOUND_BASE_PATH}verse_launch_collect.mp3`
+  };
+
+  const SOUND_TUNING = {
+    masterVolume: 0.80,
+    volumes: {
+      correctTap: 0.80,
+      wrongTap: 0.75,
+      wordAdded: 0.55,
+      asteroidDestroyed: 0.85,
+      playerAsteroidHit: 0.90,
+      landingStart: 0.80,
+      launchButton: 0.90,
+      cutsceneRocketEnter: 0.80,
+      starCollected: 0.50,
+      countdownBeep: 0.42,
+      countdownFinalBeep: 0.52
+    }
+  };
+
+  const COUNTDOWN_BEEP_C4 = 261.63;
+  const COUNTDOWN_BEEP_C5 = 523.25;
+
   const WORD_BURST_CLOUD_SVG = `
 <svg viewBox="0 0 26.458333 26.458333" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <path fill="currentColor" d="M 12.949771,1.5464282 A 6.0017493,5.3230522 7.1160496 0 0 6.9820601,6.4190471 5.3405872,4.7400094 7.154063 0 0 6.8563886,6.4134999 5.3405872,4.7400094 7.154063 0 0 1.5243277,11.020646 5.3405872,4.7400094 7.154063 0 0 2.4259083,13.677302 4.0181559,3.5662928 7.1540647 0 0 0.66145837,16.583588 4.0181559,3.5662928 7.1540647 0 0 4.6728467,20.261811 4.0181559,3.5662928 7.1540647 0 0 5.1732885,20.243 a 5.3405872,4.7400094 7.154063 0 0 5.2883005,4.342428 5.3405872,4.7400094 7.154063 0 0 3.656255,-1.210431 4.0181559,3.5662928 7.1540647 0 0 3.300558,1.639798 4.0181559,3.5662928 7.1540647 0 0 4.011389,-3.466536 4.0181559,3.5662928 7.1540647 0 0 -0.416848,-1.594767 5.3405872,4.7400094 7.154063 0 0 4.783932,-4.586787 5.3405872,4.7400094 7.154063 0 0 -1.9322,-3.706541 4.0181559,3.5662928 7.1540647 0 0 0.764128,-2.0624453 4.0181559,3.5662928 7.1540647 0 0 -4.011389,-3.6776624 4.0181559,3.5662928 7.1540647 0 0 -1.744813,0.3148283 6.0017493,5.3230522 7.1160496 0 0 -5.92283,-4.6884523 z"/>
@@ -117,6 +151,12 @@
 
   let muted = false;
 
+  let audioCtx = null;
+  let silenceAudio = null;
+  let audioUnlocked = false;
+  const soundBuffers = new Map();
+  const soundBufferPromises = new Map();
+
   const astroInput = {
     leftKey: false,
     rightKey: false,
@@ -186,6 +226,176 @@
         img.src = src;
       }))
     );
+  }
+
+  function getAudioContext() {
+    if (!audioCtx) {
+      const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextCtor) return null;
+      audioCtx = new AudioContextCtor();
+    }
+
+    return audioCtx;
+  }
+
+  function ensureSilenceAudio() {
+    if (silenceAudio) return silenceAudio;
+
+    silenceAudio = new Audio("../../verse_audio/silence.mp3");
+    silenceAudio.preload = "auto";
+    silenceAudio.loop = false;
+    silenceAudio.volume = 0.001;
+    silenceAudio.setAttribute("playsinline", "true");
+
+    return silenceAudio;
+  }
+
+  async function unlockAudio() {
+    const ctx = getAudioContext();
+    if (!ctx) return false;
+
+    try {
+      const silent = ensureSilenceAudio();
+      silent.currentTime = 0;
+
+      const silentPlay = silent.play();
+      if (silentPlay && typeof silentPlay.catch === "function") {
+        silentPlay.catch(() => { });
+      }
+    } catch (err) {
+      // Best effort only.
+    }
+
+    try {
+      if (ctx.state === "suspended") {
+        await ctx.resume();
+      }
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      gain.gain.value = 0.0001;
+      osc.frequency.value = 440;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start();
+      osc.stop(ctx.currentTime + 0.03);
+
+      audioUnlocked = true;
+      preloadSoundBuffers();
+
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  function soundVolume(key) {
+    const master = Number(SOUND_TUNING.masterVolume);
+    const individual = Number(SOUND_TUNING.volumes[key]);
+
+    const safeMaster = Number.isFinite(master) ? master : 1;
+    const safeIndividual = Number.isFinite(individual) ? individual : 1;
+
+    return Math.max(0, Math.min(1, safeMaster * safeIndividual));
+  }
+
+  async function loadSoundBuffer(key) {
+    const ctx = getAudioContext();
+    const src = SOUND_FILES[key];
+
+    if (!ctx || !src) return null;
+    if (soundBuffers.has(key)) return soundBuffers.get(key);
+    if (soundBufferPromises.has(key)) return soundBufferPromises.get(key);
+
+    const promise = fetch(src)
+      .then(response => {
+        if (!response.ok) throw new Error(`Unable to load sound: ${src}`);
+        return response.arrayBuffer();
+      })
+      .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
+      .then(buffer => {
+        soundBuffers.set(key, buffer);
+        return buffer;
+      })
+      .catch(err => {
+        console.warn(err);
+        return null;
+      })
+      .finally(() => {
+        soundBufferPromises.delete(key);
+      });
+
+    soundBufferPromises.set(key, promise);
+    return promise;
+  }
+
+  function preloadSoundBuffers() {
+    Object.keys(SOUND_FILES).forEach(key => {
+      loadSoundBuffer(key);
+    });
+  }
+
+  async function playGameSound(key) {
+    if (muted) return;
+
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    try {
+      if (ctx.state === "suspended") {
+        await ctx.resume();
+      }
+
+      const buffer = await loadSoundBuffer(key);
+      if (!buffer) return;
+
+      const source = ctx.createBufferSource();
+      const gain = ctx.createGain();
+
+      gain.gain.value = soundVolume(key);
+      source.buffer = buffer;
+      source.connect(gain);
+      gain.connect(ctx.destination);
+
+      source.start(0);
+    } catch (err) {
+      // Sound should never break gameplay.
+    }
+  }
+
+  async function playCountdownBeep(finalBeep = false) {
+    if (muted) return;
+
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    try {
+      if (ctx.state === "suspended") {
+        await ctx.resume();
+      }
+
+      const now = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const volumeKey = finalBeep ? "countdownFinalBeep" : "countdownBeep";
+
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(finalBeep ? COUNTDOWN_BEEP_C5 : COUNTDOWN_BEEP_C4, now);
+
+      gain.gain.setValueAtTime(0.0001, now);
+      gain.gain.exponentialRampToValueAtTime(Math.max(0.0001, soundVolume(volumeKey)), now + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.16);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.18);
+    } catch (err) {
+      // Best effort only.
+    }
   }
 
   function parseReferenceParts(ref, translation, verseId) {
@@ -1034,7 +1244,10 @@
       theme: GAME_THEME,
       backLabel: "Back to Practice Games",
       onBack: () => window.VerseGameBridge.exitGame(),
-      onStart: () => setScreen("mode")
+      onStart: () => {
+        unlockAudio();
+        setScreen("mode");
+      }
     });
   }
 
@@ -1049,6 +1262,7 @@
       backLabel: "Back to Verse Launch title",
       onBack: () => setScreen("intro"),
       onSelect: (mode) => {
+        unlockAudio();
         state.mode = mode;
         initVerseData();
         state.startTime = performance.now();
@@ -1200,7 +1414,10 @@
       gameMessage,
       theme: GAME_THEME,
       backLabel: "Back to Practice Games",
-      onPlayAgain: () => setScreen("mode"),
+      onPlayAgain: () => {
+        unlockAudio();
+        setScreen("mode");
+      },
       onMoreGames: () => window.VerseGameBridge.exitGame(),
       onChangeVerse: () => window.VerseGameBridge.returnToTitle()
     });
@@ -2163,8 +2380,12 @@
       box.classList.remove("is-pop");
       void box.offsetWidth;
       box.classList.add("is-pop");
+      playCountdownBeep(false);
       await sleep(520);
     }
+
+    playCountdownBeep(true);
+    await sleep(220);
 
     overlay.remove();
     state.countdownValue = "";
@@ -2467,6 +2688,8 @@
     setScreen("travel");
     await sleep(220);
 
+    playGameSound("cutsceneRocketEnter");
+
     const rocketUnit = $("#vlTravelRocketUnit");
 
     if (rocketUnit) {
@@ -2731,6 +2954,8 @@
   }
 
   function awardAsteroidShotStars(stageRect, asteroid) {
+    playGameSound("asteroidDestroyed");
+
     const previousRocketKey = bonusRocketKeyForStarCount(state.astroStarCount);
 
     state.astroStarCount += ASTEROID_SHOT_STAR_REWARD;
@@ -2834,6 +3059,8 @@
   }
 
   function astroHandleStarCollect(stageRect, star) {
+    playGameSound("starCollected");
+
     const previousRocketKey = bonusRocketKeyForStarCount(state.astroStarCount);
 
     state.astroStarCount += 1;
@@ -2866,6 +3093,9 @@
 
   async function astroHandleHit() {
     if (state.astroInvulnerable || state.astroMoonPhase) return;
+
+    playGameSound("playerAsteroidHit");
+
     state.astroInvulnerable = true;
     state.astroHits += 1;
 
@@ -3008,6 +3238,7 @@
         state.astroDrainFadeMs = 0;
         state.astroLandingMessageVisible = true;
         state.astroMoveDir = 0;
+        playGameSound("landingStart");
       }
     } else {
       const fallSpeed = asteroidSpeedPxPerSec(rect.height);
@@ -3160,8 +3391,11 @@
   async function handleLaunch(choiceId) {
     if (state.busy || state.menuOpen || state.helpOpen || state.completed) return;
 
+    unlockAudio();
+
     if (choiceId === "bonus_launch") {
       state.busy = true;
+      playGameSound("launchButton");
 
       await requestAstroTiltPermission();
 
@@ -3192,6 +3426,7 @@
     if (tappedIsCorrect) {
       item.isCorrect = true;
       setConveyorWordsHidden(true);
+      playGameSound("correctTap");
 
       await animateLaunch(item, liveSourceEl);
 
@@ -3199,6 +3434,7 @@
 
       state.progressIndex += 1;
       updateBuildDisplay();
+      playGameSound("wordAdded");
 
       if (state.progressIndex >= state.segments.length) {
         state.bonusReady = true;
@@ -3217,6 +3453,7 @@
       return;
     }
 
+    playGameSound("wrongTap");
     animateFailedLaunch(liveSourceEl);
     removeConveyorItem(choiceId);
 
