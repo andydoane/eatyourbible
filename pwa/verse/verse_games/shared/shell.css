@@ -883,8 +883,12 @@ button.vm-complete-icon.is-pet-box:focus-visible{
   border-color: var(--vm-build-streak-color-5);
   box-shadow:
     inset 0 0 0 1px rgba(255, 255, 255, .58),
-    0 0 20px color-mix(in srgb, var(--vm-build-streak-color-5) 78%, transparent);
-  animation: vmBuildStreakBreathe 1.15s ease-in-out infinite;
+    0 0 10px color-mix(in srgb, var(--vm-build-streak-color-1) 62%, transparent),
+    0 0 16px color-mix(in srgb, var(--vm-build-streak-color-3) 58%, transparent),
+    0 0 22px color-mix(in srgb, var(--vm-build-streak-color-4) 54%, transparent);
+  animation:
+    vmBuildStreakBreathe 1.15s ease-in-out infinite,
+    vmBuildStreakRainbowGlow 1.8s linear infinite;
 }
 
 .vm-build-streak-overlay.is-level-5::before {
@@ -893,14 +897,14 @@ button.vm-complete-icon.is-pet-box:focus-visible{
   background:
     linear-gradient(
       90deg,
-      var(--vm-build-streak-color-1) 0%,
-      var(--vm-build-streak-color-2) 22%,
-      var(--vm-build-streak-color-3) 44%,
-      var(--vm-build-streak-color-4) 66%,
-      var(--vm-build-streak-color-5) 82%,
-      var(--vm-build-streak-color-1) 100%
+      transparent 0%,
+      transparent 36%,
+      color-mix(in srgb, var(--vm-build-streak-color-1) 88%, white) 43%,
+      color-mix(in srgb, var(--vm-build-streak-color-3) 90%, white) 50%,
+      color-mix(in srgb, var(--vm-build-streak-color-4) 88%, white) 57%,
+      transparent 64%,
+      transparent 100%
     );
-  background-size: 220% 100%;
   mask:
     linear-gradient(#000 0 0) content-box,
     linear-gradient(#000 0 0);
@@ -910,7 +914,7 @@ button.vm-complete-icon.is-pet-box:focus-visible{
   padding: var(--vm-build-streak-border-width);
   mask-composite: exclude;
   -webkit-mask-composite: xor;
-  animation: vmBuildStreakRainbow 1.4s linear infinite;
+  animation: vmBuildStreakSweep 1.25s linear infinite;
 }
 
 
@@ -929,7 +933,8 @@ button.vm-complete-icon.is-pet-box:focus-visible{
 .vm-build-streak-overlay.is-level-5.is-pulsing {
   animation:
     vmBuildStreakPulse 320ms ease-out both,
-    vmBuildStreakBreathe 1.15s ease-in-out infinite;
+    vmBuildStreakBreathe 1.15s ease-in-out infinite,
+    vmBuildStreakRainbowGlow 1.8s linear infinite;
 }
 
 .vm-build-streak-overlay.is-broken {
@@ -939,6 +944,34 @@ button.vm-complete-icon.is-pet-box:focus-visible{
     inset 0 0 0 1px rgba(255, 255, 255, .35),
     0 0 16px rgba(255, 90, 81, .68);
   animation: vmBuildStreakBreak 280ms ease-out both;
+}
+
+@keyframes vmBuildStreakRainbowGlow {
+
+  0%,
+  100% {
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, .58),
+      0 0 10px color-mix(in srgb, var(--vm-build-streak-color-1) 62%, transparent),
+      0 0 16px color-mix(in srgb, var(--vm-build-streak-color-3) 58%, transparent),
+      0 0 22px color-mix(in srgb, var(--vm-build-streak-color-4) 54%, transparent);
+  }
+
+  33% {
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, .58),
+      0 0 10px color-mix(in srgb, var(--vm-build-streak-color-2) 62%, transparent),
+      0 0 16px color-mix(in srgb, var(--vm-build-streak-color-4) 58%, transparent),
+      0 0 22px color-mix(in srgb, var(--vm-build-streak-color-5) 54%, transparent);
+  }
+
+  66% {
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, .58),
+      0 0 10px color-mix(in srgb, var(--vm-build-streak-color-3) 62%, transparent),
+      0 0 16px color-mix(in srgb, var(--vm-build-streak-color-5) 58%, transparent),
+      0 0 22px color-mix(in srgb, var(--vm-build-streak-color-1) 54%, transparent);
+  }
 }
 
 @keyframes vmBuildStreakPulse {
