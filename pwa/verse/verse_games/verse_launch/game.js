@@ -890,7 +890,11 @@
   }
 
   function randomConveyorCorrectDelay() {
-    return 1 + Math.floor(Math.random() * 3);
+    const roll = Math.random();
+
+    if (roll < 0.60) return 1;
+    if (roll < 0.90) return 2;
+    return 3;
   }
 
   function resetConveyorTargetPlanner() {
