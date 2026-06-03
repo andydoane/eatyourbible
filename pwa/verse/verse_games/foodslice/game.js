@@ -1007,9 +1007,10 @@
     const baseRotation = item.rotation || 0;
 
     const split = getSliceSplitMotion(sliceAngle);
-    const splitOffset = state.fruitHitSize * 0.18;
-    const splitSpeed = 1.55;
-    const lift = -1.15;
+    const splitBurst = getSliceBurstTuning();
+    const splitOffset = state.fruitHitSize * splitBurst.offsetScale;
+    const splitSpeed = splitBurst.speed;
+    const lift = splitBurst.lift;
 
     state.activeSlices.push(
       {
@@ -1020,8 +1021,8 @@
         vx: (item.vx || 0) + split.nx * splitSpeed,
         vy: (item.vy || 0) + split.ny * splitSpeed + lift,
         gravity: item.gravity || 0.42,
-        rotation: baseRotation - 10 + split.rotationNudge,
-        spin: -3.8 + split.spinNudge,
+        rotation: baseRotation - 10 + split.rotationNudge - splitBurst.rotationJitter,
+        spin: -3.8 + split.spinNudge - splitBurst.spinJitter,
         alive: true
       },
       {
@@ -1032,8 +1033,8 @@
         vx: (item.vx || 0) - split.nx * splitSpeed,
         vy: (item.vy || 0) - split.ny * splitSpeed + lift,
         gravity: item.gravity || 0.42,
-        rotation: baseRotation + 10 + split.rotationNudge,
-        spin: 3.8 + split.spinNudge,
+        rotation: baseRotation + 10 + split.rotationNudge + splitBurst.rotationJitter,
+        spin: 3.8 + split.spinNudge + splitBurst.spinJitter,
         alive: true
       }
     );
@@ -1049,6 +1050,16 @@
       ny,
       rotationNudge: (sliceAngle - 90) * 0.18,
       spinNudge: (sliceAngle - 90) * 0.025
+    };
+  }
+
+  function getSliceBurstTuning() {
+    return {
+      offsetScale: 0.14 + Math.random() * 0.10,
+      speed: 1.2 + Math.random() * 0.9,
+      lift: -0.75 - Math.random() * 0.85,
+      rotationJitter: Math.random() * 8,
+      spinJitter: Math.random() * 1.1
     };
   }
 
