@@ -1002,38 +1002,56 @@
   }
 
   function createSlicesFrom(item) {
-    createSliceEffectFrom(item);
-
+    const sliceEffect = createSliceEffectFrom(item);
+    const sliceAngle = sliceEffect?.rotation ?? 90;
     const baseRotation = item.rotation || 0;
+
+    const split = getSliceSplitMotion(sliceAngle);
     const splitOffset = state.fruitHitSize * 0.18;
+    const splitSpeed = 1.55;
+    const lift = -1.15;
 
     state.activeSlices.push(
       {
         side: "left",
         fruit: item.fruit,
-        x: item.x - splitOffset,
-        y: item.y,
-        vx: (item.vx || 0) - 1.3,
-        vy: (item.vy || 0) - 1.4,
+        x: item.x + split.nx * splitOffset,
+        y: item.y + split.ny * splitOffset,
+        vx: (item.vx || 0) + split.nx * splitSpeed,
+        vy: (item.vy || 0) + split.ny * splitSpeed + lift,
         gravity: item.gravity || 0.42,
-        rotation: baseRotation - 10,
-        spin: -3.8,
+        rotation: baseRotation - 10 + split.rotationNudge,
+        spin: -3.8 + split.spinNudge,
         alive: true
       },
       {
         side: "right",
         fruit: item.fruit,
-        x: item.x + splitOffset,
-        y: item.y,
-        vx: (item.vx || 0) + 1.3,
-        vy: (item.vy || 0) - 1.4,
+        x: item.x - split.nx * splitOffset,
+        y: item.y - split.ny * splitOffset,
+        vx: (item.vx || 0) - split.nx * splitSpeed,
+        vy: (item.vy || 0) - split.ny * splitSpeed + lift,
         gravity: item.gravity || 0.42,
-        rotation: baseRotation + 10,
-        spin: 3.8,
+        rotation: baseRotation + 10 + split.rotationNudge,
+        spin: 3.8 + split.spinNudge,
         alive: true
       }
     );
   }
+
+  function getSliceSplitMotion(sliceAngle) {
+    const normalAngle = (sliceAngle + 90) * Math.PI / 180;
+    const nx = Math.cos(normalAngle);
+    const ny = Math.sin(normalAngle);
+
+    return {
+      nx,
+      ny,
+      rotationNudge: (sliceAngle - 90) * 0.18,
+      spinNudge: (sliceAngle - 90) * 0.025
+    };
+  }
+
 
   function createSliceEffectFrom(item) {
     if (!item) return;
@@ -1058,14 +1076,18 @@
       });
     }
 
-    state.activeSliceEffects.push({
+    const effect = {
       x: item.x,
       y: item.y + yOffset,
       rotation: baseAngle,
       createdAt,
       duration: SLICE_EFFECT_TUNING.duration,
       dots
-    });
+    };
+
+    state.activeSliceEffects.push(effect);
+
+    return effect;
   }
 
   function renderSliceEffect(effect) {
