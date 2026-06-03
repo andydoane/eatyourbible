@@ -331,6 +331,30 @@ body {
   transform-origin: center center;
 }
 
+.fs-fruit-trail {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.fs-trail-dot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: calc(var(--fs-fruit-emoji) * var(--trail-dot-size));
+  height: calc(var(--fs-fruit-emoji) * var(--trail-dot-size));
+  border-radius: 999px;
+  background: var(--trail-dot-color);
+  box-shadow:
+    0 0 calc(var(--fs-fruit-emoji) * 0.16 * var(--trail-dot-glow)) var(--trail-dot-color),
+    0 0 calc(var(--fs-fruit-emoji) * 0.32 * var(--trail-dot-glow)) rgba(255, 255, 255, 0.28);
+  will-change: transform, opacity;
+}
+
 .fs-word-chip {
   min-width: min(52vw, 250px);
   max-width: min(68vw, 340px);

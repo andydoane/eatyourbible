@@ -55,6 +55,23 @@
     minSwooshGapMs: 85
   };
 
+  const TRAIL_TUNING = {
+    maxPoints: 13,
+    minPointDistance: 10,
+    white: {
+      colors: ["#ffffff"],
+      glow: 0.42,
+      sizeMin: 0.055,
+      sizeMax: 0.18
+    },
+    snow: {
+      colors: ["#7ed1ff", "#ffffff"],
+      glow: 0.78,
+      sizeMin: 0.06,
+      sizeMax: 0.2
+    }
+  };
+
   const FS_BOMB_CLOUD_SVG = `
 <svg viewBox="0 0 26.458333 26.458333" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <path fill="currentColor" d="M 12.949771,1.5464282 A 6.0017493,5.3230522 7.1160496 0 0 6.9820601,6.4190471 5.3405872,4.7400094 7.154063 0 0 6.8563886,6.4134999 5.3405872,4.7400094 7.154063 0 0 1.5243277,11.020646 5.3405872,4.7400094 7.154063 0 0 2.4259083,13.677302 4.0181559,3.5662928 7.1540647 0 0 0.66145837,16.583588 4.0181559,3.5662928 7.1540647 0 0 4.6728467,20.261811 4.0181559,3.5662928 7.1540647 0 0 5.1732885,20.243 a 5.3405872,4.7400094 7.154063 0 0 5.2883005,4.342428 5.3405872,4.7400094 7.154063 0 0 3.656255,-1.210431 4.0181559,3.5662928 7.1540647 0 0 3.300558,1.639798 4.0181559,3.5662928 7.1540647 0 0 4.011389,-3.466536 4.0181559,3.5662928 7.1540647 0 0 -0.416848,-1.594767 5.3405872,4.7400094 7.154063 0 0 4.783932,-4.586787 5.3405872,4.7400094 7.154063 0 0 -1.9322,-3.706541 4.0181559,3.5662928 7.1540647 0 0 0.764128,-2.0624453 4.0181559,3.5662928 7.1540647 0 0 -4.011389,-3.6776624 4.0181559,3.5662928 7.1540647 0 0 -1.744813,0.3148283 6.0017493,5.3230522 7.1160496 0 0 -5.92283,-4.6884523 z"/>
@@ -120,6 +137,7 @@
     activeMessageSlices: [],
     activeSliceEffects: [],
     wrongStreak: 0,
+    correctStreak: 0,
     buildShakeUntil: 0,
     fieldFlashUntil: 0,
     messageSequence: null,
@@ -203,6 +221,7 @@
     state.activeMessageSlices = [];
     state.activeSliceEffects = [];
     state.wrongStreak = 0;
+    state.correctStreak = 0;
     state.buildShakeUntil = 0;
     state.fieldFlashUntil = 0;
     state.messageSequence = createMessageSequence("intro");
@@ -622,8 +641,11 @@
     const cls = `fs-item ${item.flashWrong ? "is-wrong" : ""} ${item.rejecting ? "is-rejecting" : ""}`;
     const id = isBonus ? item.id : "main";
     const wordHtml = isBonus ? "" : `<div class="fs-word-chip">${escapeHtml(item.word || "")}</div>`;
+    const trailHtml = !isBonus ? renderFruitTrail(item) : "";
+
     return `
       <div class="${cls}" style="transform:translate(${item.x}px, ${item.y}px) translate(-50%, -50%)">
+        ${trailHtml}
         <button class="fs-fruit-btn" data-role="fruit" data-id="${id}" type="button" aria-label="Slice food">
           <span class="fs-fruit-emoji" style="transform:rotate(${Math.round((item.tilt || 0) + (item.rotation || 0))}deg)">${escapeHtml(item.fruit || "🍎")}</span>
           ${wordHtml}
@@ -733,6 +755,11 @@
       : state.fruitHitSize * 0.34;
 
     item.x = clamp(item.x, halfSize, state.fieldWidth - halfSize);
+
+    if (item.kind === "fruit" && item.trailLevel > 0) {
+      updateTrailPoints(item);
+    }
+
     if (item.y > state.fieldHeight + Math.max(160, state.fruitHitSize * 1.1)) item.alive = false;
   }
 
@@ -788,6 +815,8 @@
 
   function createFlyingFood({ word, isCorrect }) {
     const motion = createArcMotion();
+    const trailLevel = getTrailLevelForStreak(state.correctStreak);
+
     return {
       ...motion,
       fruit: pickRandom(state.theme),
@@ -798,7 +827,9 @@
       rejecting: false,
       wasTapped: false,
       tilt: -16 + Math.random() * 32,
-      kind: "fruit"
+      kind: "fruit",
+      trailLevel,
+      trailPoints: []
     };
   }
 
@@ -810,6 +841,69 @@
       wasHit: false,
       kind: "bomb"
     };
+  }
+
+
+  function getTrailLevelForStreak(streak) {
+    if (streak >= 4) return 2;
+    if (streak >= 2) return 1;
+    return 0;
+  }
+
+  function getTrailStyleForLevel(level) {
+    if (level >= 2) return TRAIL_TUNING.snow;
+    if (level >= 1) return TRAIL_TUNING.white;
+    return null;
+  }
+
+  function updateTrailPoints(item) {
+    if (!item.trailPoints) item.trailPoints = [];
+
+    const last = item.trailPoints[item.trailPoints.length - 1];
+    const minDistance = TRAIL_TUNING.minPointDistance;
+    const dx = last ? item.x - last.x : minDistance + 1;
+    const dy = last ? item.y - last.y : minDistance + 1;
+
+    if (!last || Math.hypot(dx, dy) >= minDistance) {
+      item.trailPoints.push({
+        x: item.x,
+        y: item.y
+      });
+
+      while (item.trailPoints.length > TRAIL_TUNING.maxPoints) {
+        item.trailPoints.shift();
+      }
+    }
+  }
+
+  function renderFruitTrail(item) {
+    const style = getTrailStyleForLevel(item.trailLevel);
+    const points = item.trailPoints || [];
+    if (!style || points.length < 2) return "";
+
+    const dots = points.map((point, index) => {
+      const progress = points.length <= 1 ? 1 : index / (points.length - 1);
+      const opacity = 0.08 + progress * 0.84;
+      const sizeScale = style.sizeMin + progress * (style.sizeMax - style.sizeMin);
+      const color = style.colors[index % style.colors.length];
+      const relX = point.x - item.x;
+      const relY = point.y - item.y;
+
+      return `
+        <span
+          class="fs-trail-dot"
+          style="
+            --trail-dot-size:${sizeScale.toFixed(3)};
+            --trail-dot-color:${color};
+            --trail-dot-glow:${style.glow};
+            opacity:${opacity.toFixed(3)};
+            transform:translate(${relX.toFixed(1)}px, ${relY.toFixed(1)}px) translate(-50%, -50%);
+          "
+        ></span>
+      `;
+    }).join("");
+
+    return `<div class="fs-fruit-trail" aria-hidden="true">${dots}</div>`;
   }
 
   function createMessageSequence(kind) {
@@ -951,6 +1045,7 @@
       createSlicesFrom(item);
       state.activeFruit = null;
       state.wrongStreak = 0;
+      state.correctStreak += 1;
 
       if (state.phase === "words") {
         state.wordsBuilt += 1;
@@ -976,6 +1071,7 @@
     item.flashWrong = true;
     item.rejecting = true;
     state.wrongStreak += 1;
+    state.correctStreak = 0;
     state.buildShakeUntil = performance.now() + 320;
     state.fieldFlashUntil = performance.now() + 260;
 
@@ -1010,6 +1106,7 @@
     }
 
     updatePhaseFromProgress();
+    state.correctStreak = 0;
     state.buildShakeUntil = performance.now() + 320;
     state.fieldFlashUntil = performance.now() + 260;
     setPaused(true, "bomb");
@@ -1029,6 +1126,7 @@
     state.activeSlices = [];
     state.activeMessageSlices = [];
     state.activeSliceEffects = [];
+    state.correctStreak = 0;
     state.messagePill = null;
     state.messageSequence = createMessageSequence("bonus");
     state.bonusRound = false;
