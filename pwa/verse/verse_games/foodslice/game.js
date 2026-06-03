@@ -1,29 +1,29 @@
-(async function(){
+(async function () {
   const app = document.getElementById("app");
   const ctx = await window.VerseGameBridge.getVerseContext();
   const GAME_ID = "foodslice";
 
-const GAME_THEME = {
-  bg: "#333333",
-  accent: "#333333"
-};
+  const GAME_THEME = {
+    bg: "#333333",
+    accent: "#333333"
+  };
 
-const BUILD_AREA = "large";
-  
-const HELP_OVERLAY_ID = "fsHelpOverlay";
+  const BUILD_AREA = "large";
+
+  const HELP_OVERLAY_ID = "fsHelpOverlay";
 
   const FOOD_THEMES = [
-    ["🍎","🍐","🍊","🍋","🍌","🍉","🍇","🍓","🫐","🍈","🍒","🥭","🍍","🥥","🥝"],
-    ["🍕","🍔","🍟","🌭","🍿","🥓","🥪","🥨","🌮","🌯","🥗","🥘","🍝","🍜","🍲","🍣","🍱"],
-    ["🍦","🍧","🍨","🍩","🍪","🎂","🍰","🧁","🥧","🍫","🍬","🍭","🍮","🍯"],
-    ["🍞","🥐","🥖","🫓","🥨","🥯","🥞","🧇","🥚","🍳"],
-    ["🥦","🥬","🥕","🌽","🌶️","🫑","🥒","🥑","🍄","🥔","🧅","🧄"],
-    ["🍗","🍖","🥩","🍤","🦀","🦞","🧀","🥚","🥛"]
+    ["🍎", "🍐", "🍊", "🍋", "🍌", "🍉", "🍇", "🍓", "🫐", "🍈", "🍒", "🥭", "🍍", "🥥", "🥝"],
+    ["🍕", "🍔", "🍟", "🌭", "🍿", "🥓", "🥪", "🥨", "🌮", "🌯", "🥗", "🥘", "🍝", "🍜", "🍲", "🍣", "🍱"],
+    ["🍦", "🍧", "🍨", "🍩", "🍪", "🎂", "🍰", "🧁", "🥧", "🍫", "🍬", "🍭", "🍮", "🍯"],
+    ["🍞", "🥐", "🥖", "🫓", "🥨", "🥯", "🥞", "🧇", "🥚", "🍳"],
+    ["🥦", "🥬", "🥕", "🌽", "🌶️", "🫑", "🥒", "🥑", "🍄", "🥔", "🧅", "🧄"],
+    ["🍗", "🍖", "🥩", "🍤", "🦀", "🦞", "🧀", "🥚", "🥛"]
   ];
 
-const BOOKS = window.VerseGameShell.getBibleBookDecoys();
-  
-const GENERIC_DECOYS = window.VerseGameShell.getFunDecoys();
+  const BOOKS = window.VerseGameShell.getBibleBookDecoys();
+
+  const GENERIC_DECOYS = window.VerseGameShell.getFunDecoys();
 
   let selectedMode = null;
   let muted = false;
@@ -34,49 +34,49 @@ const GENERIC_DECOYS = window.VerseGameShell.getFunDecoys();
   let endScreenUnlockTimer = 0;
 
   const state = {
-    running:false,
-    paused:false,
-    pauseReason:"",
-    rafId:0,
-    lastTs:0,
-    fieldWidth:0,
-    fieldHeight:0,
-    fruitHitSize:96,
-    fruitEmojiSize:56,
-    bombHitSize:84,
-    bombEmojiSize:50,
-    sliceSize:54,
-    sliceEmojiSize:42,
-    theme:pickRandom(FOOD_THEMES),
-    verseMeta:parseVerseMeta(ctx.verseId || "", ctx.verseRef || ""),
-    buildData:null,
-    tokens:tokenizeVerseWithSpaces(ctx.verseText || ""),
-    wordEntries:[],
-    wordsBuilt:0,
-    phase:"words",
-    bookBuilt:false,
-    referenceBuilt:false,
-    buildSizeClass:"is-normal",
-    buildFitDone:false,
-    activeFruit:null,
-    activeBomb:null,
-    activeSlices:[],
-    wrongStreak:0,
-    buildShakeUntil:0,
-    fieldFlashUntil:0,
-    overlayMessage:"",
-    overlayUntil:0,
-    bonusIntroActive:false,
-    bonusIntroUntil:0,
-    bonusRound:false,
-    bonusBannerUntil:0,
-    bonusEndsAt:0,
-    bonusFruits:[],
-    bonusIdCounter:0,
-    bonusCount:0,
-    done:false,
-    bookChoices:[],
-    referenceChoices:[]
+    running: false,
+    paused: false,
+    pauseReason: "",
+    rafId: 0,
+    lastTs: 0,
+    fieldWidth: 0,
+    fieldHeight: 0,
+    fruitHitSize: 96,
+    fruitEmojiSize: 56,
+    bombHitSize: 84,
+    bombEmojiSize: 50,
+    sliceSize: 54,
+    sliceEmojiSize: 42,
+    theme: pickRandom(FOOD_THEMES),
+    verseMeta: parseVerseMeta(ctx.verseId || "", ctx.verseRef || ""),
+    buildData: null,
+    tokens: tokenizeVerseWithSpaces(ctx.verseText || ""),
+    wordEntries: [],
+    wordsBuilt: 0,
+    phase: "words",
+    bookBuilt: false,
+    referenceBuilt: false,
+    buildSizeClass: "is-normal",
+    buildFitDone: false,
+    activeFruit: null,
+    activeBomb: null,
+    activeSlices: [],
+    wrongStreak: 0,
+    buildShakeUntil: 0,
+    fieldFlashUntil: 0,
+    overlayMessage: "",
+    overlayUntil: 0,
+    messageSequence: null,
+    messagePill: null,
+    bonusRound: false,
+    bonusBannerUntil: 0,
+    bonusEndsAt: 0,
+    bonusFruits: [],
+    bonusIdCounter: 0,
+    bonusCount: 0,
+    done: false,
+    bookChoices: [],
+    referenceChoices: []
   };
 
   state.buildData = window.VerseGameShell.buildVerseSegments({
@@ -91,39 +91,39 @@ const GENERIC_DECOYS = window.VerseGameShell.getFunDecoys();
 
   renderIntro();
 
-function renderIntro(){
-  stopLoop();
+  function renderIntro() {
+    stopLoop();
 
-  window.VerseGameShell.renderTitleScreen({
-    app,
-    title: "Food Slice",
-    icon: "🍉",
-    helpHtml: helpHtml(),
-    helpOverlayId: HELP_OVERLAY_ID,
-    theme: GAME_THEME,
-    backLabel: "Back to Practice Games",
-    onBack: () => window.VerseGameBridge.exitGame(),
-    onStart: renderModeSelect
-  });
-}
+    window.VerseGameShell.renderTitleScreen({
+      app,
+      title: "Food Slice",
+      icon: "🍉",
+      helpHtml: helpHtml(),
+      helpOverlayId: HELP_OVERLAY_ID,
+      theme: GAME_THEME,
+      backLabel: "Back to Practice Games",
+      onBack: () => window.VerseGameBridge.exitGame(),
+      onStart: renderModeSelect
+    });
+  }
 
-function renderModeSelect(){
-  stopLoop();
+  function renderModeSelect() {
+    stopLoop();
 
-  window.VerseGameShell.renderModeSelect({
-    app,
-    title: "Choose Your Difficulty",
-    icon: "🥉🥈🥇",
-    helpHtml: helpHtml(),
-    helpOverlayId: HELP_OVERLAY_ID,
-    theme: GAME_THEME,
-    backLabel: "Back to Food Slice title",
-    onBack: renderIntro,
-    onSelect: startGame
-  });
-}
+    window.VerseGameShell.renderModeSelect({
+      app,
+      title: "Choose Your Difficulty",
+      icon: "🥉🥈🥇",
+      helpHtml: helpHtml(),
+      helpOverlayId: HELP_OVERLAY_ID,
+      theme: GAME_THEME,
+      backLabel: "Back to Food Slice title",
+      onBack: renderIntro,
+      onSelect: startGame
+    });
+  }
 
-  function startGame(mode){
+  function startGame(mode) {
     selectedMode = mode;
     completionMarked = false;
     completionResult = null;
@@ -146,8 +146,8 @@ function renderModeSelect(){
     state.fieldFlashUntil = 0;
     state.overlayMessage = "";
     state.overlayUntil = 0;
-    state.bonusIntroActive = false;
-    state.bonusIntroUntil = 0;
+    state.messageSequence = createMessageSequence("intro");
+    state.messagePill = null;
     state.bonusRound = false;
     state.bonusBannerUntil = 0;
     state.bonusEndsAt = 0;
@@ -173,13 +173,6 @@ function renderModeSelect(){
               <div class="fs-slice-layer" id="fsSliceLayer"></div>
               <div class="fs-banner-layer" id="fsBannerLayer"></div>
               <div class="fs-overlay-msg" id="fsOverlay"></div>
-              <div class="fs-bonus-intro-overlay" id="fsBonusIntroOverlay" aria-hidden="true">
-                <div class="fs-bonus-intro-burst"></div>
-                <div class="fs-bonus-intro-content">
-                  <div class="fs-bonus-intro-title">BONUS ROUND!</div>
-                  <div class="fs-bonus-intro-subtitle">Slice as much food as you can!</div>
-                </div>
-              </div>
               <div class="fs-controls-layer">
                 <button class="fs-corner-pill fs-corner-left" id="fsMenuPill" type="button" aria-label="Game menu">☰</button>
                 <div class="fs-corner-pill fs-corner-right" id="fsPhasePill"></div>
@@ -199,38 +192,38 @@ function renderModeSelect(){
     startLoop();
   }
 
-function renderEndScreen(reward){
-  stopLoop();
+  function renderEndScreen(reward) {
+    stopLoop();
 
-  window.clearTimeout(endScreenUnlockTimer);
-  endScreenUnlockTimer = 0;
+    window.clearTimeout(endScreenUnlockTimer);
+    endScreenUnlockTimer = 0;
 
-  window.VerseGameShell.renderCompleteScreen({
-    app,
-    gameIcon: "🍉",
-    mode: selectedMode,
-    verseId: ctx.verseId,
-    gameId: GAME_ID,
-    completion: completionResult,
-    gameMessage: `Bonus slices: ${state.bonusCount}`,
-    theme: GAME_THEME,
-    backLabel: "Back to Practice Games",
-    onPlayAgain: renderModeSelect,
-    onMoreGames: () => window.VerseGameBridge.exitGame(),
-    onChangeVerse: () => window.VerseGameBridge.returnToTitle()
-  });
-}
+    window.VerseGameShell.renderCompleteScreen({
+      app,
+      gameIcon: "🍉",
+      mode: selectedMode,
+      verseId: ctx.verseId,
+      gameId: GAME_ID,
+      completion: completionResult,
+      gameMessage: `Bonus slices: ${state.bonusCount}`,
+      theme: GAME_THEME,
+      backLabel: "Back to Practice Games",
+      onPlayAgain: renderModeSelect,
+      onMoreGames: () => window.VerseGameBridge.exitGame(),
+      onChangeVerse: () => window.VerseGameBridge.returnToTitle()
+    });
+  }
 
-function renderHelpOverlay(body){
-  return window.VerseGameShell.helpOverlayHtml({
-    id: HELP_OVERLAY_ID,
-    title: "How to Play",
-    body,
-    closeText: "Close"
-  });
-}
+  function renderHelpOverlay(body) {
+    return window.VerseGameShell.helpOverlayHtml({
+      id: HELP_OVERLAY_ID,
+      title: "How to Play",
+      body,
+      closeText: "Close"
+    });
+  }
 
-  function renderGameMenuOverlay(){
+  function renderGameMenuOverlay() {
     return window.VerseGameShell.gameMenuHtml({
       id: "fsGameMenuOverlay",
       title: "Game Menu",
@@ -239,7 +232,7 @@ function renderHelpOverlay(body){
     });
   }
 
-  function helpHtml(){
+  function helpHtml() {
     return `Slice the next correct word to build the verse.<br><br>
       In easy mode, wrong choices do not remove built words.<br><br>
       In medium mode, decoys are chosen from other words in the verse, but there is no wrong-slice penalty.<br><br>
@@ -247,7 +240,7 @@ function renderHelpOverlay(body){
       After the verse is built, slice the correct book and then the correct chapter and verse. Finish by slicing as much bonus food as you can.`;
   }
 
-  function wireCommonNav(){
+  function wireCommonNav() {
     window.VerseGameShell.wireGameMenu({
       id: "fsGameMenuOverlay",
       menuButtonId: "fsMenuPill",
@@ -273,8 +266,8 @@ function renderHelpOverlay(body){
     });
   }
 
-  function wireGameInput(){
-    if (!resizeBound){
+  function wireGameInput() {
+    if (!resizeBound) {
       window.addEventListener("resize", recalcField);
       resizeBound = true;
     }
@@ -282,7 +275,7 @@ function renderHelpOverlay(body){
     const menuPill = document.getElementById("fsMenuPill");
     if (menuPill) {
       const openFromPill = (e) => {
-        if (e){
+        if (e) {
           if (e.cancelable) e.preventDefault();
           e.stopPropagation();
         }
@@ -294,30 +287,30 @@ function renderHelpOverlay(body){
     }
 
     window.onkeydown = (e) => {
-      if (e.key === "Escape" && state.running){
+      if (e.key === "Escape" && state.running) {
         if (document.getElementById("fsGameMenuOverlay")?.classList.contains("is-open")) closeGameMenu();
         else openGameMenu();
       }
     };
   }
 
-  function openGameMenu(){
+  function openGameMenu() {
     const menuOverlay = document.getElementById("fsGameMenuOverlay");
-    if (menuOverlay){
+    if (menuOverlay) {
       setPaused(true, "menu");
       menuOverlay.classList.add("is-open");
       menuOverlay.setAttribute("aria-hidden", "false");
     }
   }
 
-  function closeGameMenu(){
+  function closeGameMenu() {
     const menuOverlay = document.getElementById("fsGameMenuOverlay");
 
-    if (menuOverlay && menuOverlay.contains(document.activeElement)){
+    if (menuOverlay && menuOverlay.contains(document.activeElement)) {
       document.activeElement.blur();
     }
 
-    if (menuOverlay){
+    if (menuOverlay) {
       menuOverlay.classList.remove("is-open");
       menuOverlay.setAttribute("aria-hidden", "true");
     }
@@ -326,38 +319,38 @@ function renderHelpOverlay(body){
     if (!helpOverlay || !helpOverlay.classList.contains("is-open")) setPaused(false, "");
   }
 
-function openHelpFromMenu(){
-  const menuOverlay = document.getElementById("fsGameMenuOverlay");
+  function openHelpFromMenu() {
+    const menuOverlay = document.getElementById("fsGameMenuOverlay");
 
-  if (menuOverlay) menuOverlay.classList.remove("is-open");
+    if (menuOverlay) menuOverlay.classList.remove("is-open");
 
-  window.VerseGameShell.openHelp(HELP_OVERLAY_ID, "back", "Back");
+    window.VerseGameShell.openHelp(HELP_OVERLAY_ID, "back", "Back");
 
-  setPaused(true, "help");
-}
-  
+    setPaused(true, "help");
+  }
 
-function closeHelpOverlay(){
-  window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
-  setPaused(false, "");
-}
 
-function backToMenuFromHelp(){
-  window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
+  function closeHelpOverlay() {
+    window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
+    setPaused(false, "");
+  }
 
-  const menuOverlay = document.getElementById("fsGameMenuOverlay");
-  if (menuOverlay) menuOverlay.classList.add("is-open");
+  function backToMenuFromHelp() {
+    window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
 
-  setPaused(true, "menu");
-}
+    const menuOverlay = document.getElementById("fsGameMenuOverlay");
+    if (menuOverlay) menuOverlay.classList.add("is-open");
 
-  function setPaused(paused, reason=""){
+    setPaused(true, "menu");
+  }
+
+  function setPaused(paused, reason = "") {
     state.paused = paused;
     state.pauseReason = paused ? reason : "";
     if (!paused) state.lastTs = performance.now();
   }
 
-  function recalcField(){
+  function recalcField() {
     const field = document.getElementById("fsField");
     if (!field) return;
     const rect = field.getBoundingClientRect();
@@ -381,23 +374,23 @@ function backToMenuFromHelp(){
     renderHud();
   }
 
-  function renderHud(){
+  function renderHud() {
     const phasePill = document.getElementById("fsPhasePill");
-    if (phasePill){
+    if (phasePill) {
       phasePill.textContent = state.bonusRound ? `🍽️ ${state.bonusCount}` : getPhaseLabel();
     }
     renderBuildArea();
     renderField();
   }
 
-  function getPhaseLabel(){
+  function getPhaseLabel() {
     if (state.phase === "words") return `${state.wordsBuilt}/${state.wordEntries.length}`;
     if (state.phase === "book") return "Book";
     if (state.phase === "reference") return "Reference";
     return "Ready";
   }
 
-  function getLinearProgressIndex(){
+  function getLinearProgressIndex() {
     return (
       state.wordsBuilt +
       (state.bookBuilt ? 1 : 0) +
@@ -405,7 +398,7 @@ function backToMenuFromHelp(){
     );
   }
 
-  function updatePhaseFromProgress(){
+  function updatePhaseFromProgress() {
     const phase = window.VerseGameShell.getPhaseForProgress({
       progressIndex: getLinearProgressIndex(),
       wordCount: state.wordEntries.length,
@@ -417,7 +410,7 @@ function backToMenuFromHelp(){
     state.phase = phase;
   }
 
-  function clearBuildTextFit(text){
+  function clearBuildTextFit(text) {
     if (!text) return;
 
     text.style.fontSize = "";
@@ -434,7 +427,7 @@ function backToMenuFromHelp(){
     delete text.dataset.vmFitArea;
   }
 
-  function fitFoodBuildText(){
+  function fitFoodBuildText() {
     if (state.buildFitDone) return;
 
     requestAnimationFrame(() => {
@@ -450,19 +443,19 @@ function backToMenuFromHelp(){
         buildArea: BUILD_AREA
       });
 
-      if (result){
+      if (result) {
         state.buildFitDone = true;
       }
     });
   }
 
-  function renderBuildArea(){
+  function renderBuildArea() {
     const build = document.getElementById("fsBuild");
     const text = document.getElementById("fsBuildText");
     if (!build || !text) return;
 
     build.classList.toggle("is-shake", state.buildShakeUntil > performance.now());
-    if (state.bonusRound){
+    if (state.bonusRound) {
       clearBuildTextFit(text);
       text.className = "fs-build-text vm-build-text";
       text.innerHTML = `<div class="fs-bonus-counter">${state.bonusCount}<span class="fs-bonus-label">Bonus slices</span></div>`;
@@ -485,28 +478,28 @@ function backToMenuFromHelp(){
     fitFoodBuildText();
   }
 
-  function renderField(){
+  function renderField() {
     const playLayer = document.getElementById("fsPlayLayer");
     const sliceLayer = document.getElementById("fsSliceLayer");
     const bannerLayer = document.getElementById("fsBannerLayer");
     const overlay = document.getElementById("fsOverlay");
-    const bonusIntroOverlay = document.getElementById("fsBonusIntroOverlay");
     const field = document.getElementById("fsField");
-    if (!playLayer || !sliceLayer || !bannerLayer || !overlay || !field || !bonusIntroOverlay) return;
+    if (!playLayer || !sliceLayer || !bannerLayer || !overlay || !field) return;
 
     field.classList.toggle("is-flash-bad", state.fieldFlashUntil > performance.now());
 
     let playHtml = "";
+    if (state.messagePill?.alive) playHtml += renderMessagePill(state.messagePill);
     if (state.activeFruit?.alive) playHtml += renderFruitItem(state.activeFruit, false);
     if (state.activeBomb?.alive) playHtml += renderBombItem(state.activeBomb);
-    for (const bonusFruit of state.bonusFruits){
+    for (const bonusFruit of state.bonusFruits) {
       if (bonusFruit?.alive) playHtml += renderFruitItem(bonusFruit, true);
     }
     playLayer.innerHTML = playHtml;
 
     playLayer.querySelectorAll("[data-role='fruit']").forEach((el) => {
       const onActivate = (e) => {
-        if (e){
+        if (e) {
           if (e.cancelable) e.preventDefault();
           e.stopPropagation();
         }
@@ -520,7 +513,7 @@ function backToMenuFromHelp(){
 
     playLayer.querySelectorAll("[data-role='bomb']").forEach((el) => {
       const onActivate = (e) => {
-        if (e){
+        if (e) {
           if (e.cancelable) e.preventDefault();
           e.stopPropagation();
         }
@@ -544,12 +537,10 @@ function backToMenuFromHelp(){
       ? `<div class="fs-overlay-msg-inner">${escapeHtml(state.overlayMessage)}</div>`
       : "";
 
-    const showBonusIntro = state.bonusIntroActive && performance.now() < state.bonusIntroUntil;
-    bonusIntroOverlay.classList.toggle("is-open", showBonusIntro);
-    bonusIntroOverlay.setAttribute("aria-hidden", showBonusIntro ? "false" : "true");
+
   }
 
-  function renderFruitItem(item, isBonus){
+  function renderFruitItem(item, isBonus) {
     const cls = `fs-item ${item.flashWrong ? "is-wrong" : ""} ${item.rejecting ? "is-rejecting" : ""}`;
     const id = isBonus ? item.id : "main";
     const wordHtml = isBonus ? "" : `<div class="fs-word-chip">${escapeHtml(item.word || "")}</div>`;
@@ -563,7 +554,7 @@ function backToMenuFromHelp(){
     `;
   }
 
-  function renderBombItem(item){
+  function renderBombItem(item) {
     return `
       <div class="fs-item ${item.wasHit ? "is-bomb-hit" : ""}" style="transform:translate(${item.x}px, ${item.y}px) translate(-50%, -50%)">
         <button class="fs-bomb-btn" data-role="bomb" type="button" aria-label="Bomb">
@@ -573,47 +564,51 @@ function backToMenuFromHelp(){
     `;
   }
 
-  function startLoop(){
+  function renderMessagePill(item) {
+    const scale = getMessagePillScale(item);
+    const tilt = Math.round((item.tilt || 0) + (item.rotation || 0));
+    return `
+      <div class="fs-message-item" style="transform:translate(${item.x}px, ${item.y}px) translate(-50%, -50%) rotate(${tilt}deg) scale(${scale})">
+        <div class="fs-message-pill" style="background:${item.bg}; color:${item.color};">
+          ${escapeHtml(item.text)}
+        </div>
+      </div>
+    `;
+  }
+
+  function startLoop() {
     stopLoop();
     state.lastTs = 0;
     state.rafId = requestAnimationFrame(frame);
   }
 
-  function stopLoop(){
-    if (state.rafId){
+  function stopLoop() {
+    if (state.rafId) {
       cancelAnimationFrame(state.rafId);
       state.rafId = 0;
     }
   }
 
-  function frame(ts){
+  function frame(ts) {
     if (!state.running) return;
     if (!state.lastTs) state.lastTs = ts;
     const dt = Math.min(34, ts - state.lastTs);
     state.lastTs = ts;
 
-    if (!state.paused){
+    if (!state.paused) {
       step(dt, ts);
       renderHud();
     }
     state.rafId = requestAnimationFrame(frame);
   }
 
-  function step(dt, now){
-    if (state.bonusIntroActive){
-      if (now >= state.bonusIntroUntil){
-        state.bonusIntroActive = false;
-        state.bonusRound = true;
-        state.bonusBannerUntil = 0;
-        state.bonusEndsAt = performance.now() + 23000;
-        state.bonusFruits = [];
-        state.bonusCount = 0;
-      } else {
-        return;
-      }
+  function step(dt, now) {
+    if (state.messageSequence) {
+      stepMessageSequence(dt, now);
+      return;
     }
 
-    if (!state.bonusRound && !state.activeFruit){
+    if (!state.bonusRound && !state.activeFruit) {
       spawnMainFruit();
       maybeSpawnBomb();
     }
@@ -626,21 +621,21 @@ function backToMenuFromHelp(){
     if (state.activeFruit && state.activeFruit.y > state.fieldHeight + 140) state.activeFruit = null;
     if (state.activeBomb && state.activeBomb.y > state.fieldHeight + 140) state.activeBomb = null;
 
-    if (state.bonusRound){
-      if (now >= state.bonusBannerUntil && now < state.bonusEndsAt){
+    if (state.bonusRound) {
+      if (now >= state.bonusBannerUntil && now < state.bonusEndsAt) {
         const targetCount = 2 + Math.floor(Math.random() * 2);
         const live = state.bonusFruits.filter((item) => item.alive).length;
         if (live < targetCount) spawnBonusFruit();
       }
       state.bonusFruits.forEach((item) => updateMovingEntity(item, dt));
       state.bonusFruits = state.bonusFruits.filter((item) => item.alive && item.y <= state.fieldHeight + 140);
-      if (now >= state.bonusEndsAt && state.bonusFruits.length === 0 && state.activeSlices.length === 0){
+      if (now >= state.bonusEndsAt && state.bonusFruits.length === 0 && state.activeSlices.length === 0) {
         finishGame();
       }
     }
   }
 
-  function updateMovingEntity(item, dt){
+  function updateMovingEntity(item, dt) {
     if (!item || !item.alive) return;
     const stepScale = dt / 16.6667;
     item.x += item.vx * stepScale;
@@ -656,45 +651,147 @@ function backToMenuFromHelp(){
     if (item.y > state.fieldHeight + Math.max(160, state.fruitHitSize * 1.1)) item.alive = false;
   }
 
-  function spawnMainFruit(){
+  function spawnMainFruit() {
     const target = getCurrentTargetText();
     const { text, isCorrect } = pickDisplayTextForCurrentPhase(target);
-    state.activeFruit = createFlyingFood({ word:text, isCorrect });
+    state.activeFruit = createFlyingFood({ word: text, isCorrect });
   }
 
-  function maybeSpawnBomb(){
+  function maybeSpawnBomb() {
     if (selectedMode !== "hard" || state.bonusRound || state.done) return;
     if (Math.random() >= 0.28) return;
     state.activeBomb = createFlyingBomb();
   }
 
-  function createFlyingFood({ word, isCorrect }){
+  function createFlyingFood({ word, isCorrect }) {
     const motion = createArcMotion();
     return {
       ...motion,
       fruit: pickRandom(state.theme),
       word,
       isCorrect,
-      alive:true,
-      flashWrong:false,
-      rejecting:false,
-      wasTapped:false,
-      tilt:-16 + Math.random() * 32,
-      kind:"fruit"
+      alive: true,
+      flashWrong: false,
+      rejecting: false,
+      wasTapped: false,
+      tilt: -16 + Math.random() * 32,
+      kind: "fruit"
     };
   }
 
-  function createFlyingBomb(){
+  function createFlyingBomb() {
     return {
       ...createArcMotion(true),
-      alive:true,
-      wasTapped:false,
-      wasHit:false,
-      kind:"bomb"
+      alive: true,
+      wasTapped: false,
+      wasHit: false,
+      kind: "bomb"
     };
   }
 
-  function createArcMotion(isBomb = false){
+  function createMessageSequence(kind) {
+    const bonusColors = ["#ff5a51", "#ffa351", "#ffc751", "#a7cb6f", "#40b9c5", "#7f66c6"];
+    const steps = kind === "bonus"
+      ? ["SLICE", "ALL", "THE", "FOOD!"].map((text, index) => {
+        const bg = bonusColors[index % bonusColors.length];
+        return {
+          text,
+          bg,
+          color: bg === "#ffc751" ? "#333333" : "#ffffff"
+        };
+      })
+      : [
+        { text: "TAP", bg: "#ff5a51", color: "#ffc751" },
+        { text: "TO", bg: "#ff5a51", color: "#ffc751" },
+        { text: "SLICE!", bg: "#ff5a51", color: "#ffc751" },
+        { text: "GO!", bg: "#a7cb6f", color: "#ffffff" }
+      ];
+
+    return {
+      kind,
+      steps,
+      index: 0,
+      nextAt: 0
+    };
+  }
+
+  function stepMessageSequence(dt, now) {
+    if (!state.messageSequence) return;
+
+    if (!state.messagePill && now >= state.messageSequence.nextAt) {
+      const step = state.messageSequence.steps[state.messageSequence.index];
+      if (!step) {
+        finishMessageSequence();
+        return;
+      }
+      state.messagePill = createMessagePill(step);
+      state.messageSequence.index += 1;
+    }
+
+    updateMessagePill(state.messagePill, dt, now);
+
+    if (state.messagePill && !state.messagePill.alive) {
+      state.messagePill = null;
+      state.messageSequence.nextAt = now + 110;
+    }
+  }
+
+  function finishMessageSequence() {
+    const kind = state.messageSequence?.kind || "intro";
+    state.messageSequence = null;
+    state.messagePill = null;
+
+    if (kind === "bonus") {
+      beginBonusGameplay();
+    }
+  }
+
+  function createMessagePill(step) {
+    const motion = createArcMotion(false);
+    motion.spin = (-0.45 + Math.random() * 0.9);
+
+    return {
+      ...motion,
+      text: step.text,
+      bg: step.bg,
+      color: step.color,
+      alive: true,
+      kind: "message",
+      tilt: -5 + Math.random() * 10,
+      hasPausedAtApex: false,
+      pauseUntil: 0,
+      popUntil: 0
+    };
+  }
+
+  function updateMessagePill(item, dt, now) {
+    if (!item || !item.alive) return;
+
+    if (!item.hasPausedAtApex && item.vy >= 0) {
+      item.hasPausedAtApex = true;
+      item.pauseUntil = now + 360;
+      item.popUntil = now + 180;
+    }
+
+    if (item.hasPausedAtApex && now < item.pauseUntil) {
+      item.rotation += item.spin * (dt / 16.6667);
+      return;
+    }
+
+    updateMovingEntity(item, dt);
+  }
+
+  function getMessagePillScale(item) {
+    if (!item?.popUntil) return 1;
+
+    const now = performance.now();
+    if (now >= item.popUntil) return 1;
+
+    const progress = 1 - ((item.popUntil - now) / 180);
+    return 1 + Math.sin(progress * Math.PI) * 0.16;
+  }
+
+  function createArcMotion(isBomb = false) {
     const fieldW = Math.max(320, state.fieldWidth || 320);
     const fieldH = Math.max(260, state.fieldHeight || 260);
     const sideInset = Math.max(state.fruitHitSize * 0.46, fieldW * 0.12);
@@ -712,39 +809,39 @@ function backToMenuFromHelp(){
     const vx = (Math.random() * 2 - 1) * horizontalRange;
     const spin = isBomb ? (-3.4 + Math.random() * 6.8) : (-2.8 + Math.random() * 5.6);
 
-    return { x:startX, y:startY, vx, vy, gravity, rotation:0, spin };
+    return { x: startX, y: startY, vx, vy, gravity, rotation: 0, spin };
   }
 
-  function handleMainFruitTap(){
+  function handleMainFruitTap() {
     const item = state.activeFruit;
     if (!item || !item.alive || item.wasTapped || state.paused || state.done) return;
     item.wasTapped = true;
 
-    if (item.isCorrect){
+    if (item.isCorrect) {
       createSlicesFrom(item);
       state.activeFruit = null;
       state.wrongStreak = 0;
 
       const previousPhase = state.phase;
 
-      if (state.phase === "words"){
+      if (state.phase === "words") {
         state.wordsBuilt += 1;
-      } else if (state.phase === "book"){
+      } else if (state.phase === "book") {
         state.bookBuilt = true;
-      } else if (state.phase === "reference"){
+      } else if (state.phase === "reference") {
         state.referenceBuilt = true;
       }
 
       updatePhaseFromProgress();
 
-      if (state.phase === "done"){
+      if (state.phase === "done") {
         startBonusRound();
         return;
       }
 
-      if (previousPhase === "words" && state.phase === "book"){
+      if (previousPhase === "words" && state.phase === "book") {
         showOverlay("Now slice the Bible book");
-      } else if (previousPhase === "book" && state.phase === "reference"){
+      } else if (previousPhase === "book" && state.phase === "reference") {
         showOverlay("Now slice the chapter and verse");
       }
 
@@ -767,16 +864,16 @@ function backToMenuFromHelp(){
     }, 320);
   }
 
-  function handleBombTap(){
+  function handleBombTap() {
     const bomb = state.activeBomb;
     if (!bomb || !bomb.alive || bomb.wasTapped || state.paused || state.done || state.bonusRound) return;
     bomb.wasTapped = true;
     bomb.wasHit = true;
-    if (state.phase === "reference" && state.referenceBuilt){
+    if (state.phase === "reference" && state.referenceBuilt) {
       state.referenceBuilt = false;
-    } else if (state.phase === "book" && state.bookBuilt){
+    } else if (state.phase === "book" && state.bookBuilt) {
       state.bookBuilt = false;
-    } else if (state.wordsBuilt > 0){
+    } else if (state.wordsBuilt > 0) {
       state.wordsBuilt = Math.max(0, state.wordsBuilt - 1);
     }
 
@@ -793,12 +890,13 @@ function backToMenuFromHelp(){
     }, 280);
   }
 
-  function startBonusRound(){
+  function startBonusRound() {
     state.activeFruit = null;
     state.activeBomb = null;
+    state.activeSlices = [];
+    state.messagePill = null;
+    state.messageSequence = createMessageSequence("bonus");
     state.bonusRound = false;
-    state.bonusIntroActive = true;
-    state.bonusIntroUntil = performance.now() + 1700;
     state.bonusBannerUntil = 0;
     state.bonusEndsAt = 0;
     state.bonusFruits = [];
@@ -807,20 +905,28 @@ function backToMenuFromHelp(){
     renderHud();
   }
 
-  function spawnBonusFruit(){
+  function beginBonusGameplay() {
+    state.bonusRound = true;
+    state.bonusBannerUntil = 0;
+    state.bonusEndsAt = performance.now() + 23000;
+    state.bonusFruits = [];
+    state.bonusCount = 0;
+  }
+
+  function spawnBonusFruit() {
     state.bonusIdCounter += 1;
     state.bonusFruits.push({
       id: state.bonusIdCounter,
       ...createArcMotion(),
       fruit: pickRandom(state.theme),
-      alive:true,
-      wasTapped:false,
-      tilt:-16 + Math.random() * 32,
-      kind:"fruit"
+      alive: true,
+      wasTapped: false,
+      tilt: -16 + Math.random() * 32,
+      kind: "fruit"
     });
   }
 
-  function handleBonusTap(id){
+  function handleBonusTap(id) {
     const item = state.bonusFruits.find((fruit) => fruit.id === id);
     if (!item || item.wasTapped || state.paused || !state.bonusRound) return;
     item.wasTapped = true;
@@ -829,46 +935,46 @@ function backToMenuFromHelp(){
     createSlicesFrom(item);
   }
 
-function createSlicesFrom(item){
-  const baseRotation = item.rotation || 0;
-  const splitOffset = state.fruitHitSize * 0.18;
+  function createSlicesFrom(item) {
+    const baseRotation = item.rotation || 0;
+    const splitOffset = state.fruitHitSize * 0.18;
 
-  state.activeSlices.push(
-    {
-      side:"left",
-      fruit:item.fruit,
-      x:item.x - splitOffset,
-      y:item.y,
-      vx:(item.vx || 0) - 1.3,
-      vy:(item.vy || 0) - 1.4,
-      gravity:item.gravity || 0.42,
-      rotation:baseRotation - 10,
-      spin:-3.8,
-      alive:true
-    },
-    {
-      side:"right",
-      fruit:item.fruit,
-      x:item.x + splitOffset,
-      y:item.y,
-      vx:(item.vx || 0) + 1.3,
-      vy:(item.vy || 0) - 1.4,
-      gravity:item.gravity || 0.42,
-      rotation:baseRotation + 10,
-      spin:3.8,
-      alive:true
-    }
-  );
-}
+    state.activeSlices.push(
+      {
+        side: "left",
+        fruit: item.fruit,
+        x: item.x - splitOffset,
+        y: item.y,
+        vx: (item.vx || 0) - 1.3,
+        vy: (item.vy || 0) - 1.4,
+        gravity: item.gravity || 0.42,
+        rotation: baseRotation - 10,
+        spin: -3.8,
+        alive: true
+      },
+      {
+        side: "right",
+        fruit: item.fruit,
+        x: item.x + splitOffset,
+        y: item.y,
+        vx: (item.vx || 0) + 1.3,
+        vy: (item.vy || 0) - 1.4,
+        gravity: item.gravity || 0.42,
+        rotation: baseRotation + 10,
+        spin: 3.8,
+        alive: true
+      }
+    );
+  }
 
-  async function finishGame(){
+  async function finishGame() {
     state.running = false;
     state.done = true;
     stopLoop();
 
-    let reward = { ok:false, petUnlockTriggered:false };
+    let reward = { ok: false, petUnlockTriggered: false };
 
-    if (!completionMarked && ctx.verseId && selectedMode){
+    if (!completionMarked && ctx.verseId && selectedMode) {
       completionMarked = true;
 
       try {
@@ -904,19 +1010,19 @@ function createSlicesFrom(item){
     renderEndScreen(reward);
   }
 
-  function getCurrentTargetText(){
+  function getCurrentTargetText() {
     if (state.phase === "book") return state.verseMeta.book || "";
     if (state.phase === "reference") return state.verseMeta.reference || "";
     return state.wordEntries[state.wordsBuilt]?.display || "";
   }
 
-  function pickDisplayTextForCurrentPhase(correct){
+  function pickDisplayTextForCurrentPhase(correct) {
     if (state.phase === "book") return pickPhaseChoice(correct, state.bookChoices);
     if (state.phase === "reference") return pickPhaseChoice(correct, state.referenceChoices);
 
-    
+
     let wrongPool = [];
-    if (selectedMode === "medium" || selectedMode === "hard"){
+    if (selectedMode === "medium" || selectedMode === "hard") {
       wrongPool = getVerseDerivedDecoys(state.wordsBuilt, correct);
     } else {
       wrongPool = window.VerseGameShell.getFunWordDecoys(
@@ -928,27 +1034,27 @@ function createSlicesFrom(item){
 
     const mustUseCorrect = state.wrongStreak >= 2;
     const useCorrect = mustUseCorrect || Math.random() < 0.6 || !wrongPool.length;
-    if (useCorrect){
+    if (useCorrect) {
       state.wrongStreak = 0;
-      return { text:correct, isCorrect:true };
+      return { text: correct, isCorrect: true };
     }
     state.wrongStreak += 1;
-    return { text:pickRandom(wrongPool), isCorrect:false };
+    return { text: pickRandom(wrongPool), isCorrect: false };
   }
 
-  function pickPhaseChoice(correct, choicePool){
+  function pickPhaseChoice(correct, choicePool) {
     const mustUseCorrect = state.wrongStreak >= 2;
     const wrongs = (choicePool || []).filter((item) => item !== correct);
     const useCorrect = mustUseCorrect || Math.random() < 0.6 || !wrongs.length;
-    if (useCorrect){
+    if (useCorrect) {
       state.wrongStreak = 0;
-      return { text:correct, isCorrect:true };
+      return { text: correct, isCorrect: true };
     }
     state.wrongStreak += 1;
-    return { text:pickRandom(wrongs), isCorrect:false };
+    return { text: pickRandom(wrongs), isCorrect: false };
   }
 
-  function getVerseDerivedDecoys(targetIndex, correct){
+  function getVerseDerivedDecoys(targetIndex, correct) {
     return window.VerseGameShell.getVerseWordDecoys({
       words: state.wordEntries.map((entry) => entry.display),
       correct,
@@ -959,7 +1065,7 @@ function createSlicesFrom(item){
     });
   }
 
-  function makeBookChoices(correctBook){
+  function makeBookChoices(correctBook) {
     const correct = String(correctBook || "").trim();
     if (!correct) return [];
 
@@ -968,7 +1074,7 @@ function createSlicesFrom(item){
     return shuffle([correct, ...others]).slice(0, 4);
   }
 
-  function makeReferenceChoices(referenceMeta, mode){
+  function makeReferenceChoices(referenceMeta, mode) {
     const correct = String(referenceMeta?.reference || "").trim();
 
     if (!correct) return [];
@@ -981,7 +1087,7 @@ function createSlicesFrom(item){
     ]).slice(0, 4);
   }
 
-  function parseVerseMeta(verseId, fallbackRef){
+  function parseVerseMeta(verseId, fallbackRef) {
     return window.VerseGameShell.parseReferenceParts(
       fallbackRef,
       ctx.translation,
@@ -990,26 +1096,26 @@ function createSlicesFrom(item){
   }
 
 
-  function tokenizeVerseWithSpaces(text){
+  function tokenizeVerseWithSpaces(text) {
     return window.VerseGameShell.tokenizeVerseForBuild(text);
   }
 
-  function extractWordEntries(tokens){
+  function extractWordEntries(tokens) {
     return window.VerseGameShell.extractWordEntries(tokens);
   }
 
-  function showOverlay(message, duration = 1400){
+  function showOverlay(message, duration = 1400) {
     state.overlayMessage = message;
     state.overlayUntil = performance.now() + duration;
   }
 
-const clamp = window.VerseGameShell.clamp;
-function pickRandom(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
-const shuffle = window.VerseGameShell.shuffle;
-const capitalize = window.VerseGameShell.capitalize;
-  
+  const clamp = window.VerseGameShell.clamp;
+  function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+  const shuffle = window.VerseGameShell.shuffle;
+  const capitalize = window.VerseGameShell.capitalize;
+
   const normalizeWord = window.VerseGameShell.normalizeWord;
-  function escapeHtml(str){
+  function escapeHtml(str) {
     return String(str || "")
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
