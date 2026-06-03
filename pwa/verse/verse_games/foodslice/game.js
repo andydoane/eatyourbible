@@ -61,6 +61,7 @@
     sparkleDuration: 520,
     sparkleSpawnGapMs: 105,
     maxSparkles: 18,
+    uniquePalette: ["#ff5a51", "#ffa351", "#ffc751", "#a7cb6f", "#40b9c5", "#7f66c6"],
     white: {
       colors: ["#ffffff"],
       glow: 0.42,
@@ -72,6 +73,17 @@
       glow: 0.78,
       sizeMin: 0.06,
       sizeMax: 0.2
+    },
+    rainbow: {
+      colors: ["#ff5a51", "#ffa351", "#ffc751", "#a7cb6f", "#40b9c5", "#7f66c6"],
+      glow: 0.82,
+      sizeMin: 0.065,
+      sizeMax: 0.21
+    },
+    unique: {
+      glow: 0.84,
+      sizeMin: 0.07,
+      sizeMax: 0.22
     },
     sparkle: {
       colors: ["#ffffff", "#7ed1ff"],
@@ -830,6 +842,8 @@
   function createFlyingFood({ word, isCorrect }) {
     const motion = createArcMotion();
     const trailLevel = getTrailLevelForStreak(state.correctStreak);
+    const trailAccentColor = trailLevel >= 5 ? pickUniqueTrailAccentColor() : "";
+    const trailColors = getTrailColorsForLevel(trailLevel, trailAccentColor);
 
     return {
       ...motion,
@@ -843,6 +857,8 @@
       tilt: -16 + Math.random() * 32,
       kind: "fruit",
       trailLevel,
+      trailAccentColor,
+      trailColors,
       trailPoints: [],
       lastTrailSparkleAt: 0
     };
@@ -860,6 +876,8 @@
 
 
   function getTrailLevelForStreak(streak) {
+    if (streak >= 11) return 5;
+    if (streak >= 9) return 4;
     if (streak >= 6) return 3;
     if (streak >= 4) return 2;
     if (streak >= 2) return 1;
@@ -867,9 +885,30 @@
   }
 
   function getTrailStyleForLevel(level) {
+    if (level >= 5) return TRAIL_TUNING.unique;
+    if (level >= 4) return TRAIL_TUNING.rainbow;
     if (level >= 2) return TRAIL_TUNING.snow;
     if (level >= 1) return TRAIL_TUNING.white;
     return null;
+  }
+
+  function getTrailColorsForLevel(level, accentColor = "") {
+    if (level >= 5) return [accentColor || pickRandom(TRAIL_TUNING.uniquePalette), "#ffffff"];
+    if (level >= 4) return TRAIL_TUNING.rainbow.colors;
+    if (level >= 2) return TRAIL_TUNING.snow.colors;
+    if (level >= 1) return TRAIL_TUNING.white.colors;
+    return [];
+  }
+
+  function pickUniqueTrailAccentColor() {
+    const used = new Set();
+
+    if (state.activeFruit?.alive && state.activeFruit.trailAccentColor) {
+      used.add(state.activeFruit.trailAccentColor);
+    }
+
+    const available = TRAIL_TUNING.uniquePalette.filter((color) => !used.has(color));
+    return pickRandom(available.length ? available : TRAIL_TUNING.uniquePalette);
   }
 
   function updateTrailPoints(item) {
@@ -908,6 +947,7 @@
     item.lastTrailSparkleAt = now;
 
     const sparkleStyle = TRAIL_TUNING.sparkle;
+    const sparkleColors = item.trailColors?.length ? item.trailColors : sparkleStyle.colors;
     const sizeScale = sparkleStyle.sizeMin + Math.random() * (sparkleStyle.sizeMax - sparkleStyle.sizeMin);
     const offset = state.fruitEmojiSize * 0.18;
     const x = anchor.x + (-offset + Math.random() * offset * 2);
@@ -918,7 +958,7 @@
       y,
       sizeScale,
       rotation: Math.random() * 90,
-      color: pickRandom(sparkleStyle.colors),
+      color: pickRandom(sparkleColors),
       glow: sparkleStyle.glow,
       createdAt: now,
       duration: TRAIL_TUNING.sparkleDuration
@@ -930,11 +970,13 @@
     const points = item.trailPoints || [];
     if (!style || points.length < 2) return "";
 
+    const colors = item.trailColors?.length ? item.trailColors : style.colors;
+
     const dots = points.map((point, index) => {
       const progress = points.length <= 1 ? 1 : index / (points.length - 1);
       const opacity = 0.08 + progress * 0.84;
       const sizeScale = style.sizeMin + progress * (style.sizeMax - style.sizeMin);
-      const color = style.colors[index % style.colors.length];
+      const color = colors[index % colors.length] || "#ffffff";
       const relX = point.x - item.x;
       const relY = point.y - item.y;
 
