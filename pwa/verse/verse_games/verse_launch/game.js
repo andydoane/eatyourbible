@@ -1973,10 +1973,16 @@
       "--vl-ufo-top-aspect",
       "--vl-ufo-top-height",
       "--vl-ufo-top-width",
+      "--vl-ufo-bottom-aspect",
+      "--vl-ufo-bottom-width",
+      "--vl-ufo-bottom-height",
+      "--vl-ufo-bottom-visible-height",
+      "--vl-ufo-bottom-rise",
       "--vl-ufo-button-min-width",
       "--vl-ufo-button-max-width"
     ].forEach(name => {
-      clone.style.setProperty(name, styles.getPropertyValue(name).trim());
+      const value = styles.getPropertyValue(name).trim();
+      if (value) clone.style.setProperty(name, value);
     });
 
     clone.classList.remove("vl-conveyor-choice", "is-selected-launch", "is-fading-choice");
