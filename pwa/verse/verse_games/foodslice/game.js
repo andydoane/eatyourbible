@@ -1039,15 +1039,15 @@
     if (!item) return;
 
     const createdAt = performance.now();
-    const baseAngle = -26 + Math.random() * 52;
+    const baseAngle = 74 + Math.random() * 32;
     const yOffset = item.word ? -state.fruitHitSize * 0.08 : 0;
     const dotCount = 5;
     const dots = [];
 
     for (let i = 0; i < dotCount; i += 1) {
       const side = i % 2 === 0 ? -1 : 1;
-      const spread = 22 + Math.random() * 54;
-      const lift = -44 + Math.random() * 88;
+      const spread = 18 + Math.random() * 40;
+      const lift = -36 + Math.random() * 72;
 
       dots.push({
         dx: side * spread,

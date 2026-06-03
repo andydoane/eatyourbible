@@ -355,8 +355,8 @@ body {
   position: absolute;
   left: 0;
   top: 0;
-  width: clamp(108px, 25vw, 168px);
-  height: clamp(16px, 4vw, 24px);
+  width: calc(var(--fs-fruit-emoji) * 1.22);
+  height: calc(var(--fs-fruit-emoji) * 0.16);
   background: linear-gradient(90deg,
       transparent 0%,
       rgba(255, 255, 255, 0.94) 16%,
