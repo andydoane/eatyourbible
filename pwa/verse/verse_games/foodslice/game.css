@@ -343,6 +343,44 @@ body {
   animation: fsBombHit 280ms ease;
 }
 
+.fs-slice-effect {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.fs-slice-slash {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: clamp(108px, 25vw, 168px);
+  height: clamp(16px, 4vw, 24px);
+  background: linear-gradient(90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.94) 16%,
+      #ffffff 50%,
+      rgba(255, 255, 255, 0.94) 84%,
+      transparent 100%);
+  clip-path: polygon(0% 50%, 13% 22%, 50% 0%, 87% 22%, 100% 50%, 87% 78%, 50% 100%, 13% 78%);
+  filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.86));
+  transform-origin: center center;
+  will-change: transform, opacity;
+}
+
+.fs-juice-dot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--dot-size);
+  height: var(--dot-size);
+  border-radius: 999px;
+  background: var(--dot-color);
+  box-shadow: 0 0 8px rgba(255, 199, 81, 0.75);
+  will-change: transform, opacity;
+}
+
 .fs-slice-piece {
   position: absolute;
   left: 0;

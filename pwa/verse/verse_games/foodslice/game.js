@@ -15,6 +15,13 @@
   const BONUS_DURATION_MS = 24000;
   const BONUS_STAGE_MS = BONUS_DURATION_MS / 3;
 
+  const SLICE_EFFECT_TUNING = {
+    duration: 240,
+    slashDuration: 170,
+    dotDuration: 360,
+    colors: ["#ffc751", "#ffa351", "#ff5a51"]
+  };
+
   const FOOD_THEMES = [
     ["🍎", "🍐", "🍊", "🍋", "🍌", "🍉", "🍇", "🍓", "🫐", "🍈", "🍒", "🥭", "🍍", "🥥", "🥝"],
     ["🍕", "🍔", "🍟", "🌭", "🍿", "🥓", "🥪", "🥨", "🌮", "🌯", "🥗", "🥘", "🍝", "🍜", "🍲", "🍣", "🍱"],
@@ -64,6 +71,7 @@
     activeFruit: null,
     activeBomb: null,
     activeSlices: [],
+    activeSliceEffects: [],
     wrongStreak: 0,
     buildShakeUntil: 0,
     fieldFlashUntil: 0,
@@ -143,6 +151,7 @@
     state.activeFruit = null;
     state.activeBomb = null;
     state.activeSlices = [];
+    state.activeSliceEffects = [];
     state.wrongStreak = 0;
     state.buildShakeUntil = 0;
     state.fieldFlashUntil = 0;
@@ -522,11 +531,15 @@
       el.onpointerdown = onActivate;
     });
 
-    sliceLayer.innerHTML = state.activeSlices.filter(Boolean).map((piece) => `
+    const slicePiecesHtml = state.activeSlices.filter(Boolean).map((piece) => `
       <div class="fs-slice-piece ${piece.side}" style="transform:translate(${piece.x}px, ${piece.y}px) translate(-50%, -50%) rotate(${piece.rotation}deg)">
         <div class="fs-slice-inner">${escapeHtml(piece.fruit || "🍎")}</div>
       </div>
     `).join("");
+
+    const sliceEffectsHtml = state.activeSliceEffects.filter(Boolean).map(renderSliceEffect).join("");
+
+    sliceLayer.innerHTML = slicePiecesHtml + sliceEffectsHtml;
 
     bannerLayer.innerHTML = (state.bonusRound && performance.now() < state.bonusBannerUntil)
       ? `<div class="fs-bonus-banner"><div class="fs-bonus-banner-text">Bonus Round!</div></div>`
@@ -614,6 +627,7 @@
     updateMovingEntity(state.activeBomb, dt);
     state.activeSlices.forEach((piece) => updateMovingEntity(piece, dt));
     state.activeSlices = state.activeSlices.filter((piece) => piece.alive);
+    state.activeSliceEffects = state.activeSliceEffects.filter((effect) => now - effect.createdAt < effect.duration);
 
     if (state.activeFruit && state.activeFruit.y > state.fieldHeight + 140) state.activeFruit = null;
     if (state.activeBomb && state.activeBomb.y > state.fieldHeight + 140) state.activeBomb = null;
@@ -920,6 +934,7 @@
     state.activeFruit = null;
     state.activeBomb = null;
     state.activeSlices = [];
+    state.activeSliceEffects = [];
     state.messagePill = null;
     state.messageSequence = createMessageSequence("bonus");
     state.bonusRound = false;
@@ -987,6 +1002,8 @@
   }
 
   function createSlicesFrom(item) {
+    createSliceEffectFrom(item);
+
     const baseRotation = item.rotation || 0;
     const splitOffset = state.fruitHitSize * 0.18;
 
@@ -1017,6 +1034,89 @@
       }
     );
   }
+
+  function createSliceEffectFrom(item) {
+    if (!item) return;
+
+    const createdAt = performance.now();
+    const baseAngle = -26 + Math.random() * 52;
+    const yOffset = item.word ? -state.fruitHitSize * 0.08 : 0;
+    const dotCount = 5;
+    const dots = [];
+
+    for (let i = 0; i < dotCount; i += 1) {
+      const side = i % 2 === 0 ? -1 : 1;
+      const spread = 22 + Math.random() * 54;
+      const lift = -44 + Math.random() * 88;
+
+      dots.push({
+        dx: side * spread,
+        dy: lift,
+        size: 5 + Math.random() * 6,
+        delay: 22 + Math.random() * 46,
+        color: SLICE_EFFECT_TUNING.colors[i % SLICE_EFFECT_TUNING.colors.length]
+      });
+    }
+
+    state.activeSliceEffects.push({
+      x: item.x,
+      y: item.y + yOffset,
+      rotation: baseAngle,
+      createdAt,
+      duration: SLICE_EFFECT_TUNING.duration,
+      dots
+    });
+  }
+
+  function renderSliceEffect(effect) {
+    const now = performance.now();
+    const age = Math.max(0, now - effect.createdAt);
+    const slashProgress = clamp(age / SLICE_EFFECT_TUNING.slashDuration, 0, 1);
+    const slashOpacity = slashProgress < 0.22
+      ? slashProgress / 0.22
+      : 1 - ((slashProgress - 0.22) / 0.78);
+    const slashScaleX = 0.16 + Math.sin(slashProgress * Math.PI * 0.72) * 1.04;
+    const slashScaleY = 0.82 + Math.sin(slashProgress * Math.PI) * 0.18;
+
+    const dotsHtml = effect.dots.map((dot) => {
+      const dotAge = Math.max(0, age - dot.delay);
+      const dotProgress = clamp(dotAge / SLICE_EFFECT_TUNING.dotDuration, 0, 1);
+      const dotOpacity = dotProgress <= 0
+        ? 0
+        : dotProgress < 0.2
+          ? dotProgress / 0.2
+          : 1 - ((dotProgress - 0.2) / 0.8);
+      const dotX = dot.dx * dotProgress;
+      const dotY = dot.dy * dotProgress + 18 * dotProgress * dotProgress;
+      const dotScale = 0.75 - dotProgress * 0.55;
+
+      return `
+        <span
+          class="fs-juice-dot"
+          style="
+            --dot-size:${dot.size}px;
+            --dot-color:${dot.color};
+            opacity:${Math.max(0, dotOpacity).toFixed(3)};
+            transform:translate(${dotX.toFixed(1)}px, ${dotY.toFixed(1)}px) translate(-50%, -50%) scale(${Math.max(0.15, dotScale).toFixed(3)});
+          "
+        ></span>
+      `;
+    }).join("");
+
+    return `
+      <div class="fs-slice-effect" style="transform:translate(${effect.x}px, ${effect.y}px)">
+        <span
+          class="fs-slice-slash"
+          style="
+            opacity:${Math.max(0, slashOpacity).toFixed(3)};
+            transform:translate(-50%, -50%) rotate(${effect.rotation.toFixed(1)}deg) scale(${Math.max(0.05, slashScaleX).toFixed(3)}, ${slashScaleY.toFixed(3)});
+          "
+        ></span>
+        ${dotsHtml}
+      </div>
+    `;
+  }
+
 
   async function finishGame() {
     state.running = false;
