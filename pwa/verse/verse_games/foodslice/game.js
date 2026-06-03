@@ -22,6 +22,11 @@
     colors: ["#ffc751", "#ffa351", "#ff5a51"]
   };
 
+  const FS_BOMB_CLOUD_SVG = `
+<svg viewBox="0 0 26.458333 26.458333" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <path fill="currentColor" d="M 12.949771,1.5464282 A 6.0017493,5.3230522 7.1160496 0 0 6.9820601,6.4190471 5.3405872,4.7400094 7.154063 0 0 6.8563886,6.4134999 5.3405872,4.7400094 7.154063 0 0 1.5243277,11.020646 5.3405872,4.7400094 7.154063 0 0 2.4259083,13.677302 4.0181559,3.5662928 7.1540647 0 0 0.66145837,16.583588 4.0181559,3.5662928 7.1540647 0 0 4.6728467,20.261811 4.0181559,3.5662928 7.1540647 0 0 5.1732885,20.243 a 5.3405872,4.7400094 7.154063 0 0 5.2883005,4.342428 5.3405872,4.7400094 7.154063 0 0 3.656255,-1.210431 4.0181559,3.5662928 7.1540647 0 0 3.300558,1.639798 4.0181559,3.5662928 7.1540647 0 0 4.011389,-3.466536 4.0181559,3.5662928 7.1540647 0 0 -0.416848,-1.594767 5.3405872,4.7400094 7.154063 0 0 4.783932,-4.586787 5.3405872,4.7400094 7.154063 0 0 -1.9322,-3.706541 4.0181559,3.5662928 7.1540647 0 0 0.764128,-2.0624453 4.0181559,3.5662928 7.1540647 0 0 -4.011389,-3.6776624 4.0181559,3.5662928 7.1540647 0 0 -1.744813,0.3148283 6.0017493,5.3230522 7.1160496 0 0 -5.92283,-4.6884523 z"/>
+</svg>`;
+
   const FOOD_THEMES = [
     ["🍎", "🍐", "🍊", "🍋", "🍌", "🍉", "🍇", "🍓", "🫐", "🍈", "🍒", "🥭", "🍍", "🥥", "🥝"],
     ["🍕", "🍔", "🍟", "🌭", "🍿", "🥓", "🥪", "🥨", "🌮", "🌯", "🥗", "🥘", "🍝", "🍜", "🍲", "🍣", "🍱"],
@@ -181,6 +186,7 @@
             <div class="fs-field" id="fsField">
               <div class="fs-play-layer" id="fsPlayLayer"></div>
               <div class="fs-slice-layer" id="fsSliceLayer"></div>
+              <div class="fs-bomb-burst-layer" id="fsBombBurstLayer"></div>
               <div class="fs-banner-layer" id="fsBannerLayer"></div>
               <div class="fs-controls-layer">
                 <button class="fs-corner-pill fs-corner-left" id="fsMenuPill" type="button" aria-label="Game menu">☰</button>
@@ -907,8 +913,15 @@
   function handleBombTap() {
     const bomb = state.activeBomb;
     if (!bomb || !bomb.alive || bomb.wasTapped || state.paused || state.done || state.bonusRound) return;
+
+    const burstX = bomb.x;
+    const burstY = bomb.y;
+
     bomb.wasTapped = true;
     bomb.wasHit = true;
+    bomb.alive = false;
+    state.activeBomb = null;
+
     if (state.phase === "reference" && state.referenceBuilt) {
       state.referenceBuilt = false;
     } else if (state.phase === "book" && state.bookBuilt) {
@@ -922,12 +935,12 @@
     state.fieldFlashUntil = performance.now() + 260;
     setPaused(true, "bomb");
     renderHud();
+    spawnBombBurst(burstX, burstY);
+
     window.setTimeout(() => {
-      bomb.alive = false;
-      if (state.activeBomb === bomb) state.activeBomb = null;
       if (!state.done) setPaused(false, "");
       renderHud();
-    }, 280);
+    }, 320);
   }
 
   function startBonusRound() {
@@ -1061,6 +1074,88 @@
       rotationJitter: Math.random() * 8,
       spinJitter: Math.random() * 1.1
     };
+  }
+
+  function spawnBombBurst(x, y, opts = {}) {
+    const layer = document.getElementById("fsBombBurstLayer");
+    if (!layer) return;
+
+    const count = opts.count ?? 11;
+    const distance = opts.distance ?? Math.max(44, state.bombEmojiSize * 0.96);
+    const jitter = opts.jitter ?? Math.max(4, state.bombEmojiSize * 0.09);
+    const duration = opts.duration ?? 650;
+    const cloudSize = opts.cloudSize ?? Math.max(62, state.bombEmojiSize * 1.45);
+    const colors = opts.colors ?? ["#ffffff", "#ffc751", "#ffa351", "#ff5a51"];
+    const sizePool = opts.sizePool ?? [
+      state.bombEmojiSize * 0.12,
+      state.bombEmojiSize * 0.16,
+      state.bombEmojiSize * 0.20,
+      state.bombEmojiSize * 0.24
+    ];
+
+    const burst = document.createElement("div");
+    burst.className = "fs-bomb-burst";
+    burst.style.left = `${x}px`;
+    burst.style.top = `${y}px`;
+
+    const burstBoxSize = Math.max(132, Math.ceil((distance + cloudSize) * 2.05));
+    burst.style.width = `${burstBoxSize}px`;
+    burst.style.height = `${burstBoxSize}px`;
+
+    const shockwave = document.createElement("div");
+    shockwave.className = "fs-bomb-shockwave";
+    shockwave.style.setProperty("--fs-bomb-shockwave-size", `${Math.max(70, state.bombEmojiSize * 1.65)}px`);
+    shockwave.style.setProperty("--fs-bomb-shockwave-dur", "430ms");
+    burst.appendChild(shockwave);
+
+    const cloud = document.createElement("div");
+    cloud.className = "fs-bomb-burst-cloud";
+    cloud.style.setProperty("--fs-bomb-burst-cloud-size", `${cloudSize}px`);
+    cloud.style.setProperty("--fs-bomb-burst-cloud-dur", `${Math.max(500, duration - 90)}ms`);
+    cloud.innerHTML = FS_BOMB_CLOUD_SVG;
+    burst.appendChild(cloud);
+
+    const baseAngle = Math.random() * Math.PI * 2;
+    const step = (Math.PI * 2) / count;
+
+    for (let i = 0; i < count; i += 1) {
+      const angle = baseAngle + step * i + randomBetween(-0.12, 0.12);
+      const dist = distance + randomBetween(-jitter, jitter);
+      const tx = Math.cos(angle) * dist;
+      const ty = Math.sin(angle) * dist;
+      const size = pickRandom(sizePool) + randomBetween(-0.5, 0.5);
+
+      const particle = document.createElement("div");
+      particle.className = "fs-bomb-burst-particle";
+      particle.style.setProperty("--fs-bomb-burst-size", `${Math.max(5, size).toFixed(1)}px`);
+      particle.style.setProperty("--fs-bomb-burst-dur", `${duration}ms`);
+      particle.style.setProperty("--fs-bomb-burst-start-scale", `${randomBetween(0.68, 0.82).toFixed(2)}`);
+      particle.style.setProperty("--fs-bomb-burst-end-scale", `${randomBetween(1.10, 1.24).toFixed(2)}`);
+      particle.style.setProperty("--fs-bomb-burst-tx", `${tx.toFixed(1)}px`);
+      particle.style.setProperty("--fs-bomb-burst-ty", `${ty.toFixed(1)}px`);
+      particle.style.setProperty("--fs-bomb-burst-delay", `${Math.round(randomBetween(0, 18))}ms`);
+      particle.style.background = colors[i % colors.length];
+
+      burst.appendChild(particle);
+    }
+
+    layer.appendChild(burst);
+
+    requestAnimationFrame(() => {
+      shockwave.classList.add("is-live");
+      cloud.classList.add("is-live");
+
+      burst.querySelectorAll(".fs-bomb-burst-particle").forEach((particle) => {
+        const delay = Number.parseInt(particle.style.getPropertyValue("--fs-bomb-burst-delay"), 10) || 0;
+        window.setTimeout(() => particle.classList.add("is-live"), delay);
+      });
+    });
+
+    window.setTimeout(() => burst.remove(), duration + 160);
+  }
+
+  function randomBetween(min, max) {
+    return min + Math.random() * (max - min);
   }
 
 
