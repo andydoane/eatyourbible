@@ -144,7 +144,6 @@ body {
 .fs-play-layer,
 .fs-slice-layer,
 .fs-banner-layer,
-.fs-overlay-msg,
 .fs-controls-layer,
 .fs-bonus-intro-overlay {
   position: absolute;
@@ -172,8 +171,7 @@ body {
 }
 
 .fs-slice-layer,
-.fs-banner-layer,
-.fs-overlay-msg {
+.fs-banner-layer {
   pointer-events: none;
 }
 
@@ -362,21 +360,7 @@ body {
   box-shadow: 0 8px 0 rgba(0, 0, 0, 0.22);
 }
 
-.fs-overlay-msg {
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding-top: 62px;
-}
 
-.fs-overlay-msg-inner {
-  background: rgba(255, 255, 255, 0.96);
-  color: #333333;
-  border-radius: 999px;
-  padding: 8px 14px;
-  font-weight: 900;
-  font-size: clamp(14px, 3vw, 18px);
-}
 
 .fs-bonus-intro-overlay {
   display: flex;

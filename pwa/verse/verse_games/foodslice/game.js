@@ -64,8 +64,6 @@
     wrongStreak: 0,
     buildShakeUntil: 0,
     fieldFlashUntil: 0,
-    overlayMessage: "",
-    overlayUntil: 0,
     messageSequence: null,
     messagePill: null,
     bonusRound: false,
@@ -144,8 +142,6 @@
     state.wrongStreak = 0;
     state.buildShakeUntil = 0;
     state.fieldFlashUntil = 0;
-    state.overlayMessage = "";
-    state.overlayUntil = 0;
     state.messageSequence = createMessageSequence("intro");
     state.messagePill = null;
     state.bonusRound = false;
@@ -172,7 +168,6 @@
               <div class="fs-play-layer" id="fsPlayLayer"></div>
               <div class="fs-slice-layer" id="fsSliceLayer"></div>
               <div class="fs-banner-layer" id="fsBannerLayer"></div>
-              <div class="fs-overlay-msg" id="fsOverlay"></div>
               <div class="fs-controls-layer">
                 <button class="fs-corner-pill fs-corner-left" id="fsMenuPill" type="button" aria-label="Game menu">☰</button>
                 <div class="fs-corner-pill fs-corner-right" id="fsPhasePill"></div>
@@ -482,9 +477,8 @@
     const playLayer = document.getElementById("fsPlayLayer");
     const sliceLayer = document.getElementById("fsSliceLayer");
     const bannerLayer = document.getElementById("fsBannerLayer");
-    const overlay = document.getElementById("fsOverlay");
     const field = document.getElementById("fsField");
-    if (!playLayer || !sliceLayer || !bannerLayer || !overlay || !field) return;
+    if (!playLayer || !sliceLayer || !bannerLayer || !field) return;
 
     field.classList.toggle("is-flash-bad", state.fieldFlashUntil > performance.now());
 
@@ -533,9 +527,7 @@
       ? `<div class="fs-bonus-banner"><div class="fs-bonus-banner-text">Bonus Round!</div></div>`
       : "";
 
-    overlay.innerHTML = (state.overlayUntil > performance.now() && state.overlayMessage)
-      ? `<div class="fs-overlay-msg-inner">${escapeHtml(state.overlayMessage)}</div>`
-      : "";
+
 
 
   }
@@ -822,8 +814,6 @@
       state.activeFruit = null;
       state.wrongStreak = 0;
 
-      const previousPhase = state.phase;
-
       if (state.phase === "words") {
         state.wordsBuilt += 1;
       } else if (state.phase === "book") {
@@ -837,12 +827,6 @@
       if (state.phase === "done") {
         startBonusRound();
         return;
-      }
-
-      if (previousPhase === "words" && state.phase === "book") {
-        showOverlay("Now slice the Bible book");
-      } else if (previousPhase === "book" && state.phase === "reference") {
-        showOverlay("Now slice the chapter and verse");
       }
 
       return;
@@ -1104,10 +1088,7 @@
     return window.VerseGameShell.extractWordEntries(tokens);
   }
 
-  function showOverlay(message, duration = 1400) {
-    state.overlayMessage = message;
-    state.overlayUntil = performance.now() + duration;
-  }
+
 
   const clamp = window.VerseGameShell.clamp;
   function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
