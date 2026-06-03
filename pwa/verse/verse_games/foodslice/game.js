@@ -893,7 +893,7 @@
   }
 
   function getTrailColorsForLevel(level, accentColor = "") {
-    if (level >= 5) return [accentColor || pickRandom(TRAIL_TUNING.uniquePalette), "#ffffff"];
+    if (level >= 5) return [accentColor || pickRandom(TRAIL_TUNING.uniquePalette)];
     if (level >= 4) return TRAIL_TUNING.rainbow.colors;
     if (level >= 2) return TRAIL_TUNING.snow.colors;
     if (level >= 1) return TRAIL_TUNING.white.colors;
