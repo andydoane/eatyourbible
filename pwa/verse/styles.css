@@ -1489,6 +1489,13 @@ Zoo To-Do Clipboard Prototype
   padding: 8px 16px;
 }
 
+.practice-game-card-top,
+.practice-game-card-bottom {
+  width: 100%;
+  align-self: stretch;
+  min-width: 100%;
+}
+
 .practice-game-mix-card {
   color: #ffffff;
 }
