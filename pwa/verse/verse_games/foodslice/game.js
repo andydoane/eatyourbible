@@ -1070,22 +1070,7 @@
     const createdAt = performance.now();
     const baseAngle = Math.random() * 180;
     const yOffset = item.word ? -state.fruitHitSize * 0.08 : 0;
-    const dotCount = 5;
-    const dots = [];
-
-    for (let i = 0; i < dotCount; i += 1) {
-      const side = i % 2 === 0 ? -1 : 1;
-      const spread = 18 + Math.random() * 40;
-      const lift = -36 + Math.random() * 72;
-
-      dots.push({
-        dx: side * spread,
-        dy: lift,
-        size: 5 + Math.random() * 6,
-        delay: 22 + Math.random() * 46,
-        color: SLICE_EFFECT_TUNING.colors[i % SLICE_EFFECT_TUNING.colors.length]
-      });
-    }
+    const dots = createSliceParticleFan(baseAngle);
 
     const effect = {
       x: item.x,
@@ -1100,6 +1085,40 @@
 
     return effect;
   }
+
+  function createSliceParticleFan(sliceAngle) {
+    const particles = [];
+    const sideAngles = [-26, 0, 26];
+
+    for (let side = -1; side <= 1; side += 2) {
+      sideAngles.forEach((fanOffset, index) => {
+        const angle = sliceAngle + (side * 90) + fanOffset + (-5 + Math.random() * 10);
+        const distanceScale = 0.38 + index * 0.12 + Math.random() * 0.1;
+        const sizeScale = 0.055 + Math.random() * 0.05;
+        const radians = angle * Math.PI / 180;
+
+        particles.push({
+          dx: Math.cos(radians) * distanceScale,
+          dy: Math.sin(radians) * distanceScale,
+          sizeScale,
+          delay: 12 + Math.random() * 42,
+          color: SLICE_EFFECT_TUNING.colors[particles.length % SLICE_EFFECT_TUNING.colors.length]
+        });
+      });
+    }
+
+    return particles;
+  }
+
+  function getParticleTravelPixels(dot, progress) {
+    const travel = state.fruitEmojiSize || 72;
+
+    return {
+      x: dot.dx * travel * progress,
+      y: dot.dy * travel * progress + travel * 0.18 * progress * progress
+    };
+  }
+
 
   function renderSliceEffect(effect) {
     const now = performance.now();
@@ -1119,18 +1138,17 @@
         : dotProgress < 0.2
           ? dotProgress / 0.2
           : 1 - ((dotProgress - 0.2) / 0.8);
-      const dotX = dot.dx * dotProgress;
-      const dotY = dot.dy * dotProgress + 18 * dotProgress * dotProgress;
-      const dotScale = 0.75 - dotProgress * 0.55;
+      const dotTravel = getParticleTravelPixels(dot, dotProgress);
+      const dotScale = 0.95 - dotProgress * 0.65;
 
       return `
         <span
           class="fs-juice-dot"
           style="
-            --dot-size:${dot.size}px;
+            --dot-size-scale:${dot.sizeScale.toFixed(3)};
             --dot-color:${dot.color};
             opacity:${Math.max(0, dotOpacity).toFixed(3)};
-            transform:translate(${dotX.toFixed(1)}px, ${dotY.toFixed(1)}px) translate(-50%, -50%) scale(${Math.max(0.15, dotScale).toFixed(3)});
+            transform:translate(${dotTravel.x.toFixed(1)}px, ${dotTravel.y.toFixed(1)}px) translate(-50%, -50%) scale(${Math.max(0.18, dotScale).toFixed(3)});
           "
         ></span>
       `;

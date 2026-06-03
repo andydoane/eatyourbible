@@ -373,11 +373,11 @@ body {
   position: absolute;
   left: 0;
   top: 0;
-  width: var(--dot-size);
-  height: var(--dot-size);
+  width: calc(var(--fs-fruit-emoji) * var(--dot-size-scale));
+  height: calc(var(--fs-fruit-emoji) * var(--dot-size-scale));
   border-radius: 999px;
   background: var(--dot-color);
-  box-shadow: 0 0 8px rgba(255, 199, 81, 0.75);
+  box-shadow: 0 0 calc(var(--fs-fruit-emoji) * 0.08) rgba(255, 199, 81, 0.75);
   will-change: transform, opacity;
 }
 
