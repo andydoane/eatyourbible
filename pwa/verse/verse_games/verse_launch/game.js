@@ -866,8 +866,8 @@
   const CONVEYOR_SHIP_HEIGHT_MULTIPLIER = 2.10;
   const CONVEYOR_SPEED_SHIP_HEIGHTS_PER_SEC = {
     easy: 1.20,
-    medium: 1.35,
-    hard: 1.50
+    medium: 1.50,
+    hard: 1.80
   };
 
   function conveyorSpeedPxPerSec() {
