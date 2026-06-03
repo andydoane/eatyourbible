@@ -26,6 +26,7 @@
 
   const SOUND_FILES = {
     bomb: `${SOUND_BASE_PATH}food_slice_bomb.mp3`,
+    wrong: `${SOUND_BASE_PATH}food_slice_wrong.mp3`,
 
     slice1: `${SOUND_BASE_PATH}food_slice_slice_1.mp3`,
     slice2: `${SOUND_BASE_PATH}food_slice_slice_2.mp3`,
@@ -47,6 +48,7 @@
     masterVolume: 0.85,
     volumes: {
       bomb: 0.9,
+      wrong: 0.65,
       slice: 0.72,
       swoosh: 0.42
     },
@@ -940,6 +942,9 @@
 
       return;
     }
+
+    playRandomSliceSound();
+    playGameSound("wrong");
 
     item.flashWrong = true;
     item.rejecting = true;
