@@ -117,6 +117,7 @@
     activeFruit: null,
     activeBomb: null,
     activeSlices: [],
+    activeMessageSlices: [],
     activeSliceEffects: [],
     wrongStreak: 0,
     buildShakeUntil: 0,
@@ -199,6 +200,7 @@
     state.activeFruit = null;
     state.activeBomb = null;
     state.activeSlices = [];
+    state.activeMessageSlices = [];
     state.activeSliceEffects = [];
     state.wrongStreak = 0;
     state.buildShakeUntil = 0;
@@ -582,15 +584,30 @@
       el.onpointerdown = onActivate;
     });
 
+
+    playLayer.querySelectorAll("[data-role='message-pill']").forEach((el) => {
+      const onActivate = (e) => {
+        if (e) {
+          if (e.cancelable) e.preventDefault();
+          e.stopPropagation();
+        }
+        handleMessagePillTap(el);
+      };
+      el.onclick = onActivate;
+      el.onpointerdown = onActivate;
+    });
+
     const slicePiecesHtml = state.activeSlices.filter(Boolean).map((piece) => `
       <div class="fs-slice-piece ${piece.side}" style="transform:translate(${piece.x}px, ${piece.y}px) translate(-50%, -50%) rotate(${piece.rotation}deg)">
         <div class="fs-slice-inner">${escapeHtml(piece.fruit || "🍎")}</div>
       </div>
     `).join("");
 
+    const messageSlicePiecesHtml = state.activeMessageSlices.filter(Boolean).map(renderMessageSlicePiece).join("");
+
     const sliceEffectsHtml = state.activeSliceEffects.filter(Boolean).map(renderSliceEffect).join("");
 
-    sliceLayer.innerHTML = slicePiecesHtml + sliceEffectsHtml;
+    sliceLayer.innerHTML = slicePiecesHtml + messageSlicePiecesHtml + sliceEffectsHtml;
 
     bannerLayer.innerHTML = (state.bonusRound && performance.now() < state.bonusBannerUntil)
       ? `<div class="fs-bonus-banner"><div class="fs-bonus-banner-text">Bonus Round!</div></div>`
@@ -629,7 +646,11 @@
     const scale = getMessagePillScale(item);
     const tilt = Math.round((item.tilt || 0) + (item.rotation || 0));
     return `
-      <div class="fs-message-item" style="transform:translate(${item.x}px, ${item.y}px) translate(-50%, -50%) rotate(${tilt}deg) scale(${scale})">
+      <div
+        class="fs-message-item"
+        data-role="message-pill"
+        style="transform:translate(${item.x}px, ${item.y}px) translate(-50%, -50%) rotate(${tilt}deg) scale(${scale})"
+      >
         <div class="fs-message-pill" style="background:${item.bg}; color:${item.color};">
           ${escapeHtml(item.text)}
         </div>
@@ -678,6 +699,8 @@
     updateMovingEntity(state.activeBomb, dt);
     state.activeSlices.forEach((piece) => updateMovingEntity(piece, dt));
     state.activeSlices = state.activeSlices.filter((piece) => piece.alive);
+    state.activeMessageSlices.forEach((piece) => updateMovingEntity(piece, dt));
+    state.activeMessageSlices = state.activeMessageSlices.filter((piece) => piece.alive);
     state.activeSliceEffects = state.activeSliceEffects.filter((effect) => now - effect.createdAt < effect.duration);
 
     if (state.activeFruit && state.activeFruit.y > state.fieldHeight + 140) state.activeFruit = null;
@@ -817,6 +840,10 @@
 
   function stepMessageSequence(dt, now) {
     if (!state.messageSequence) return;
+
+    state.activeMessageSlices.forEach((piece) => updateMovingEntity(piece, dt));
+    state.activeMessageSlices = state.activeMessageSlices.filter((piece) => piece.alive);
+    state.activeSliceEffects = state.activeSliceEffects.filter((effect) => now - effect.createdAt < effect.duration);
 
     if (!state.messagePill && now >= state.messageSequence.nextAt) {
       const step = state.messageSequence.steps[state.messageSequence.index];
@@ -1000,6 +1027,7 @@
     state.activeFruit = null;
     state.activeBomb = null;
     state.activeSlices = [];
+    state.activeMessageSlices = [];
     state.activeSliceEffects = [];
     state.messagePill = null;
     state.messageSequence = createMessageSequence("bonus");
@@ -1068,6 +1096,134 @@
     playRandomSliceSound();
     createSlicesFrom(item);
   }
+
+  function handleMessagePillTap(el) {
+    const item = state.messagePill;
+    if (!item || !item.alive || item.wasTapped || state.paused || state.done) return;
+
+    const field = document.getElementById("fsField");
+    const pill = el?.querySelector(".fs-message-pill");
+    if (!field || !pill) return;
+
+    const fieldRect = field.getBoundingClientRect();
+    const pillRect = pill.getBoundingClientRect();
+    const styles = window.getComputedStyle(pill);
+
+    const x = pillRect.left - fieldRect.left + pillRect.width / 2;
+    const y = pillRect.top - fieldRect.top + pillRect.height / 2;
+    const rotation = Math.round((item.tilt || 0) + (item.rotation || 0));
+
+    item.wasTapped = true;
+
+    playRandomSliceSound();
+
+    const effect = createSliceEffectFrom({
+      x,
+      y,
+      kind: "message"
+    });
+
+    createMessageSlicesFromPill({
+      item,
+      x,
+      y,
+      width: pillRect.width,
+      height: pillRect.height,
+      rotation,
+      fontSize: styles.fontSize,
+      letterSpacing: styles.letterSpacing,
+      bg: item.bg,
+      color: item.color,
+      sliceAngle: effect?.rotation ?? 90
+    });
+
+    item.alive = false;
+    state.messagePill = null;
+
+    if (state.messageSequence) {
+      state.messageSequence.nextAt = performance.now() + 90;
+    }
+
+    renderHud();
+  }
+
+  function createMessageSlicesFromPill(data) {
+    const split = getSliceSplitMotion(data.sliceAngle);
+    const splitBurst = getSliceBurstTuning();
+    const splitOffset = Math.max(14, data.width * 0.09);
+    const splitSpeed = splitBurst.speed * 0.85;
+    const lift = splitBurst.lift * 0.7;
+    const baseRotation = data.rotation || 0;
+
+    state.activeMessageSlices.push(
+      {
+        side: "left",
+        text: data.item.text,
+        bg: data.bg,
+        color: data.color,
+        width: data.width,
+        height: data.height,
+        fontSize: data.fontSize,
+        letterSpacing: data.letterSpacing,
+        x: data.x + split.nx * splitOffset,
+        y: data.y + split.ny * splitOffset,
+        vx: split.nx * splitSpeed,
+        vy: split.ny * splitSpeed + lift,
+        gravity: 0.42,
+        rotation: baseRotation - 6 + split.rotationNudge - splitBurst.rotationJitter,
+        spin: -2.8 + split.spinNudge - splitBurst.spinJitter,
+        alive: true,
+        kind: "message-slice"
+      },
+      {
+        side: "right",
+        text: data.item.text,
+        bg: data.bg,
+        color: data.color,
+        width: data.width,
+        height: data.height,
+        fontSize: data.fontSize,
+        letterSpacing: data.letterSpacing,
+        x: data.x - split.nx * splitOffset,
+        y: data.y - split.ny * splitOffset,
+        vx: -split.nx * splitSpeed,
+        vy: -split.ny * splitSpeed + lift,
+        gravity: 0.42,
+        rotation: baseRotation + 6 + split.rotationNudge + splitBurst.rotationJitter,
+        spin: 2.8 + split.spinNudge + splitBurst.spinJitter,
+        alive: true,
+        kind: "message-slice"
+      }
+    );
+  }
+
+  function renderMessageSlicePiece(piece) {
+    return `
+      <div
+        class="fs-message-slice-piece ${piece.side}"
+        style="
+          width:${piece.width.toFixed(1)}px;
+          height:${piece.height.toFixed(1)}px;
+          transform:translate(${piece.x}px, ${piece.y}px) translate(-50%, -50%) rotate(${piece.rotation}deg);
+        "
+      >
+        <div
+          class="fs-message-pill fs-message-slice-pill"
+          style="
+            width:${piece.width.toFixed(1)}px;
+            height:${piece.height.toFixed(1)}px;
+            background:${piece.bg};
+            color:${piece.color};
+            font-size:${piece.fontSize};
+            letter-spacing:${piece.letterSpacing};
+          "
+        >
+          ${escapeHtml(piece.text)}
+        </div>
+      </div>
+    `;
+  }
+
 
   function createSlicesFrom(item) {
     const sliceEffect = createSliceEffectFrom(item);

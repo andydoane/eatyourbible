@@ -251,8 +251,11 @@ body {
 }
 
 .fs-message-item {
-  pointer-events: none;
+  pointer-events: auto;
   transform-origin: center center;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .fs-message-pill {
@@ -461,6 +464,36 @@ body {
   transform: translate(var(--fs-bomb-burst-tx, 0px), var(--fs-bomb-burst-ty, 0px)) scale(var(--fs-bomb-burst-end-scale, 1.12));
 }
 
+
+.fs-message-slice-piece {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  overflow: hidden;
+  will-change: transform;
+}
+
+.fs-message-slice-pill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 0.95;
+  box-sizing: border-box;
+  transform-origin: center center;
+}
+
+.fs-message-slice-piece.left .fs-message-slice-pill {
+  clip-path: inset(0 50% 0 0);
+}
+
+.fs-message-slice-piece.right .fs-message-slice-pill {
+  clip-path: inset(0 0 0 50%);
+}
 
 .fs-slice-piece {
   position: absolute;
