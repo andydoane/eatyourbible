@@ -22,6 +22,37 @@
     colors: ["#ffc751", "#ffa351", "#ff5a51"]
   };
 
+  const SOUND_BASE_PATH = "./food_slice_sounds/";
+
+  const SOUND_FILES = {
+    bomb: `${SOUND_BASE_PATH}food_slice_bomb.mp3`,
+
+    slice1: `${SOUND_BASE_PATH}food_slice_slice_1.mp3`,
+    slice2: `${SOUND_BASE_PATH}food_slice_slice_2.mp3`,
+    slice3: `${SOUND_BASE_PATH}food_slice_slice_3.mp3`,
+    slice4: `${SOUND_BASE_PATH}food_slice_slice_4.mp3`,
+    slice5: `${SOUND_BASE_PATH}food_slice_slice_5.mp3`,
+
+    swoosh1: `${SOUND_BASE_PATH}food_slice_swoosh_1.mp3`,
+    swoosh2: `${SOUND_BASE_PATH}food_slice_swoosh_2.mp3`,
+    swoosh3: `${SOUND_BASE_PATH}food_slice_swoosh_3.mp3`
+  };
+
+  const SOUND_GROUPS = {
+    slice: ["slice1", "slice2", "slice3", "slice4", "slice5"],
+    swoosh: ["swoosh1", "swoosh2", "swoosh3"]
+  };
+
+  const SOUND_TUNING = {
+    masterVolume: 0.85,
+    volumes: {
+      bomb: 0.9,
+      slice: 0.72,
+      swoosh: 0.42
+    },
+    minSwooshGapMs: 85
+  };
+
   const FS_BOMB_CLOUD_SVG = `
 <svg viewBox="0 0 26.458333 26.458333" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <path fill="currentColor" d="M 12.949771,1.5464282 A 6.0017493,5.3230522 7.1160496 0 0 6.9820601,6.4190471 5.3405872,4.7400094 7.154063 0 0 6.8563886,6.4134999 5.3405872,4.7400094 7.154063 0 0 1.5243277,11.020646 5.3405872,4.7400094 7.154063 0 0 2.4259083,13.677302 4.0181559,3.5662928 7.1540647 0 0 0.66145837,16.583588 4.0181559,3.5662928 7.1540647 0 0 4.6728467,20.261811 4.0181559,3.5662928 7.1540647 0 0 5.1732885,20.243 a 5.3405872,4.7400094 7.154063 0 0 5.2883005,4.342428 5.3405872,4.7400094 7.154063 0 0 3.656255,-1.210431 4.0181559,3.5662928 7.1540647 0 0 3.300558,1.639798 4.0181559,3.5662928 7.1540647 0 0 4.011389,-3.466536 4.0181559,3.5662928 7.1540647 0 0 -0.416848,-1.594767 5.3405872,4.7400094 7.154063 0 0 4.783932,-4.586787 5.3405872,4.7400094 7.154063 0 0 -1.9322,-3.706541 4.0181559,3.5662928 7.1540647 0 0 0.764128,-2.0624453 4.0181559,3.5662928 7.1540647 0 0 -4.011389,-3.6776624 4.0181559,3.5662928 7.1540647 0 0 -1.744813,0.3148283 6.0017493,5.3230522 7.1160496 0 0 -5.92283,-4.6884523 z"/>
@@ -42,6 +73,14 @@
 
   let selectedMode = null;
   let muted = false;
+  let audioCtx = null;
+  let audioUnlocked = false;
+  let silenceAudio = null;
+  let lastSliceSound = "";
+  let lastSwooshSound = "";
+  let lastSwooshAt = 0;
+  const soundBuffers = new Map();
+  const soundBufferPromises = new Map();
   let completionMarked = false;
   let alreadyCompletedForMode = false;
   let completionResult = null;
@@ -139,6 +178,8 @@
   }
 
   function startGame(mode) {
+    void unlockAudio();
+
     selectedMode = mode;
     completionMarked = false;
     completionResult = null;
@@ -263,6 +304,7 @@
       isMuted: () => muted,
       onMuteToggle: () => {
         muted = !muted;
+        if (!muted) void unlockAudio();
         return muted;
       },
       onHowToPlay: openHelpFromMenu,
@@ -294,6 +336,7 @@
           if (e.cancelable) e.preventDefault();
           e.stopPropagation();
         }
+        void unlockAudio();
         openGameMenu();
       };
       menuPill.onclick = openFromPill;
@@ -672,6 +715,7 @@
     const target = getCurrentTargetText();
     const { text, isCorrect } = pickDisplayTextForCurrentPhase(target);
     state.activeFruit = createFlyingFood({ word: text, isCorrect });
+    playRandomSwooshSound();
   }
 
   function maybeSpawnBomb() {
@@ -801,6 +845,8 @@
   }
 
   function createMessagePill(step) {
+    playRandomSwooshSound();
+
     const motion = createArcMotion(false);
     motion.spin = (-0.45 + Math.random() * 0.9);
 
@@ -872,6 +918,7 @@
     item.wasTapped = true;
 
     if (item.isCorrect) {
+      playRandomSliceSound();
       createSlicesFrom(item);
       state.activeFruit = null;
       state.wrongStreak = 0;
@@ -935,6 +982,7 @@
     state.fieldFlashUntil = performance.now() + 260;
     setPaused(true, "bomb");
     renderHud();
+    playGameSound("bomb");
     spawnBombBurst(burstX, burstY);
 
     window.setTimeout(() => {
@@ -1003,6 +1051,7 @@
       tilt: -16 + Math.random() * 32,
       kind: "fruit"
     });
+    playRandomSwooshSound();
   }
 
   function handleBonusTap(id) {
@@ -1011,6 +1060,7 @@
     item.wasTapped = true;
     item.alive = false;
     state.bonusCount += 1;
+    playRandomSliceSound();
     createSlicesFrom(item);
   }
 
@@ -1401,6 +1451,176 @@
     return window.VerseGameShell.extractWordEntries(tokens);
   }
 
+  function getAudioContext() {
+    if (!audioCtx) {
+      const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextCtor) return null;
+      audioCtx = new AudioContextCtor();
+    }
+
+    return audioCtx;
+  }
+
+  function ensureSilenceAudio() {
+    if (silenceAudio) return silenceAudio;
+
+    silenceAudio = new Audio("../../verse_audio/silence.mp3");
+    silenceAudio.preload = "auto";
+    silenceAudio.loop = false;
+    silenceAudio.volume = 0.001;
+    silenceAudio.setAttribute("playsinline", "true");
+
+    return silenceAudio;
+  }
+
+  async function unlockAudio() {
+    const ctx = getAudioContext();
+    if (!ctx) return false;
+
+    try {
+      const silent = ensureSilenceAudio();
+      silent.currentTime = 0;
+
+      const silentPlay = silent.play();
+      if (silentPlay && typeof silentPlay.catch === "function") {
+        silentPlay.catch(() => { });
+      }
+    } catch (err) {
+      // Best effort only.
+    }
+
+    try {
+      if (ctx.state === "suspended") {
+        await ctx.resume();
+      }
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      gain.gain.value = 0.0001;
+      osc.frequency.value = 440;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start();
+      osc.stop(ctx.currentTime + 0.03);
+
+      audioUnlocked = true;
+      preloadSoundBuffers();
+
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  function soundVolume(key) {
+    const master = Number(SOUND_TUNING.masterVolume);
+    const individual = Number(SOUND_TUNING.volumes[key]);
+
+    const safeMaster = Number.isFinite(master) ? master : 1;
+    const safeIndividual = Number.isFinite(individual) ? individual : 1;
+
+    return Math.max(0, Math.min(1, safeMaster * safeIndividual));
+  }
+
+  async function loadSoundBuffer(key) {
+    const ctx = getAudioContext();
+    const src = SOUND_FILES[key];
+
+    if (!ctx || !src) return null;
+    if (soundBuffers.has(key)) return soundBuffers.get(key);
+    if (soundBufferPromises.has(key)) return soundBufferPromises.get(key);
+
+    const promise = fetch(src)
+      .then(response => {
+        if (!response.ok) throw new Error(`Unable to load sound: ${src}`);
+        return response.arrayBuffer();
+      })
+      .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
+      .then(buffer => {
+        soundBuffers.set(key, buffer);
+        return buffer;
+      })
+      .catch(err => {
+        console.warn(err);
+        return null;
+      })
+      .finally(() => {
+        soundBufferPromises.delete(key);
+      });
+
+    soundBufferPromises.set(key, promise);
+    return promise;
+  }
+
+  function preloadSoundBuffers() {
+    Object.keys(SOUND_FILES).forEach(key => {
+      loadSoundBuffer(key);
+    });
+  }
+
+  async function playGameSound(key, volumeKey = key) {
+    if (muted) return;
+
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    try {
+      if (!audioUnlocked || ctx.state === "suspended") {
+        await unlockAudio();
+      }
+
+      const buffer = await loadSoundBuffer(key);
+      if (!buffer) return;
+
+      const source = ctx.createBufferSource();
+      const gain = ctx.createGain();
+
+      gain.gain.value = soundVolume(volumeKey);
+      source.buffer = buffer;
+      source.connect(gain);
+      gain.connect(ctx.destination);
+
+      source.start(0);
+    } catch (err) {
+      // Sound should never break gameplay.
+    }
+  }
+
+  function pickRandomSoundKey(group, previousKey) {
+    const choices = SOUND_GROUPS[group] || [];
+    if (!choices.length) return "";
+
+    if (choices.length === 1) return choices[0];
+
+    let next = pickRandom(choices);
+    while (next === previousKey) {
+      next = pickRandom(choices);
+    }
+
+    return next;
+  }
+
+  function playRandomSliceSound() {
+    const key = pickRandomSoundKey("slice", lastSliceSound);
+    if (!key) return;
+
+    lastSliceSound = key;
+    playGameSound(key, "slice");
+  }
+
+  function playRandomSwooshSound() {
+    const now = performance.now();
+    if (now - lastSwooshAt < SOUND_TUNING.minSwooshGapMs) return;
+
+    const key = pickRandomSoundKey("swoosh", lastSwooshSound);
+    if (!key) return;
+
+    lastSwooshAt = now;
+    lastSwooshSound = key;
+    playGameSound(key, "swoosh");
+  }
 
 
   const clamp = window.VerseGameShell.clamp;
