@@ -27,6 +27,7 @@
   const RAINBOW_ROCKET_IMAGE_SRC = "./verse_launch_images/verse_images_rainbow_rocket.svg";
   const UFO_TOP_IMAGE_SRC = "./verse_launch_images/verse_launch_ship_top.svg";
   const UFO_LIGHTS_IMAGE_SRC = "./verse_launch_images/verse_launch_ship_lights.svg";
+  const UFO_BOTTOM_IMAGE_SRC = "./verse_launch_images/verse_launch_ship_bottom.svg";
 
   const SOUND_BASE_PATH = "./verse_launch_sounds/";
   const UI_SOUND_BASE_PATH = "../../ui_audio/";
@@ -487,7 +488,8 @@
     STAR_IMAGE_SRC,
     RAINBOW_ROCKET_IMAGE_SRC,
     UFO_TOP_IMAGE_SRC,
-    UFO_LIGHTS_IMAGE_SRC
+    UFO_LIGHTS_IMAGE_SRC,
+    UFO_BOTTOM_IMAGE_SRC
   ]);
 
   function initVerseData() {
@@ -1073,6 +1075,9 @@
         <span class="vl-ufo-float" style="--vl-ufo-bob-delay:${item.bobDelay}ms;--vl-ufo-bob-duration:${item.bobDuration || 1800}ms;--vl-ufo-bob-amount:${item.bobAmount || 6}px;--vl-ufo-wobble-amount:${item.wobbleAmount || 1}deg">
           <span class="vl-ufo-top-wrap" aria-hidden="true">
             <img class="vl-ufo-top" src="${UFO_TOP_IMAGE_SRC}" alt="">
+          </span>
+          <span class="vl-ufo-bottom-wrap" aria-hidden="true">
+            <img class="vl-ufo-bottom" src="${UFO_BOTTOM_IMAGE_SRC}" alt="">
           </span>
           <span class="vl-ufo-base">
             <span class="vl-ufo-word">${escapeHtml(label)}</span>
