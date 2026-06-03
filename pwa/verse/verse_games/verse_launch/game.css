@@ -405,7 +405,11 @@ select {
   background: transparent;
   cursor: pointer;
   z-index: 2;
-  transform: translate3d(var(--vl-conveyor-x, 100vw), -50%, 0);
+  transform: translate3d(
+    var(--vl-conveyor-x, 100vw),
+    calc(-50% - var(--vl-ufo-bottom-rise)),
+    0
+  );
   will-change: transform;
   transition: opacity 220ms ease, filter 220ms ease;
 }
@@ -451,7 +455,7 @@ select {
   align-items: flex-end;
   justify-content: center;
   isolation: isolate;
-  transform: translateY(calc(var(--vl-ufo-bottom-rise) * -1));
+
   animation: vlUfoFloat var(--vl-ufo-bob-duration, 1800ms) ease-in-out infinite;
   animation-delay: var(--vl-ufo-bob-delay, 0ms);
 }
@@ -489,7 +493,7 @@ select {
 .vl-ufo-bottom-wrap {
   position: absolute;
   left: 50%;
-  bottom: -2px;
+  bottom: calc((var(--vl-ufo-bottom-rise) - 2px) * -1);
   width: var(--vl-ufo-bottom-width);
   height: var(--vl-ufo-bottom-height);
   transform: translateX(-50%);
