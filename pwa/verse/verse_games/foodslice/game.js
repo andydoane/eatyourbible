@@ -1085,7 +1085,7 @@
     const jitter = opts.jitter ?? Math.max(4, state.bombEmojiSize * 0.09);
     const duration = opts.duration ?? 650;
     const cloudSize = opts.cloudSize ?? Math.max(62, state.bombEmojiSize * 1.45);
-    const colors = opts.colors ?? ["#ffffff", "#ffc751", "#ffa351", "#ff5a51"];
+    const colors = opts.colors ?? ["#ffffff"];
     const sizePool = opts.sizePool ?? [
       state.bombEmojiSize * 0.12,
       state.bombEmojiSize * 0.16,
@@ -1104,7 +1104,7 @@
 
     const shockwave = document.createElement("div");
     shockwave.className = "fs-bomb-shockwave";
-    shockwave.style.setProperty("--fs-bomb-shockwave-size", `${Math.max(70, state.bombEmojiSize * 1.65)}px`);
+    shockwave.style.setProperty("--fs-bomb-shockwave-size", `${Math.max(96, state.bombEmojiSize * 2.35)}px`);
     shockwave.style.setProperty("--fs-bomb-shockwave-dur", "430ms");
     burst.appendChild(shockwave);
 
