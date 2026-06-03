@@ -401,8 +401,7 @@ body {
       transparent 100%);
   transform-origin: 0% 50%;
   opacity: 0;
-  animation: fsFireworkRay var(--fw-duration) cubic-bezier(0.1, 0.76, 0.2, 1) forwards;
-  animation-delay: var(--fw-delay);
+  transform-origin: 0% 50%;
 }
 
 .fs-firework-ray.is-short {
@@ -420,8 +419,7 @@ body {
   border-radius: 999px;
   background: var(--fw-color);
   opacity: 0;
-  animation: fsFireworkDot var(--fw-duration) cubic-bezier(0.13, 0.74, 0.22, 1) forwards;
-  animation-delay: var(--fw-delay);
+  transform-origin: center center;
 }
 
 .fs-firework-spark {
@@ -432,8 +430,7 @@ body {
   background: var(--fw-color);
   clip-path: polygon(50% 0%, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0% 50%, 38% 38%);
   opacity: 0;
-  animation: fsFireworkSpark var(--fw-duration) ease-out forwards;
-  animation-delay: var(--fw-delay);
+  transform-origin: center center;
 }
 
 .fs-firework-center {
