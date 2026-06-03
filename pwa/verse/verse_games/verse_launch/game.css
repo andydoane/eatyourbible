@@ -391,7 +391,7 @@ select {
   --vl-ufo-bottom-aspect: 4.08;
   --vl-ufo-bottom-width: var(--vl-ufo-top-width);
   --vl-ufo-bottom-height: calc(var(--vl-ufo-bottom-width) / var(--vl-ufo-bottom-aspect));
-  --vl-ufo-bottom-rise: calc(var(--vl-ufo-bottom-height) * 0.68);
+  --vl-ufo-bottom-visible-height: calc(var(--vl-ufo-bottom-height) * 0.68);
   --vl-ufo-button-min-width: calc(var(--vl-ufo-top-width) * 1.5);
   --vl-ufo-button-max-width: min(78vw, 340px);
 
@@ -407,7 +407,7 @@ select {
   z-index: 2;
   transform: translate3d(
     var(--vl-conveyor-x, 100vw),
-    calc(-50% - var(--vl-ufo-bottom-rise)),
+    calc(-50% - var(--vl-ufo-bottom-visible-height)),
     0
   );
   will-change: transform;
@@ -493,7 +493,7 @@ select {
 .vl-ufo-bottom-wrap {
   position: absolute;
   left: 50%;
-  bottom: calc((var(--vl-ufo-bottom-rise) - 2px) * -1);
+  bottom: calc((var(--vl-ufo-bottom-height) * -1) + 2px);
   width: var(--vl-ufo-bottom-width);
   height: var(--vl-ufo-bottom-height);
   transform: translateX(-50%);
