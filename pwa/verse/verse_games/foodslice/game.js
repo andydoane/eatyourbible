@@ -656,9 +656,46 @@
 
   function maybeSpawnBomb() {
     if (selectedMode !== "hard" || state.bonusRound || state.done) return;
+    if (!state.activeFruit?.alive) return;
     if (Math.random() >= 0.28) return;
+
     state.activeBomb = createFlyingBomb();
+    keepBombAwayFromFruit(state.activeBomb, state.activeFruit);
   }
+
+  function keepBombAwayFromFruit(bomb, fruit) {
+    if (!bomb || !fruit) return;
+
+    const fieldW = Math.max(320, state.fieldWidth || 320);
+    const safeDistance = Math.max(
+      state.fruitHitSize * 0.72,
+      state.bombHitSize * 0.9,
+      fieldW * 0.24
+    );
+
+    const currentDistance = Math.abs(bomb.x - fruit.x);
+    if (currentDistance >= safeDistance) return;
+
+    const pushDirection = fruit.x < fieldW / 2 ? 1 : -1;
+    const preferredX = fruit.x + safeDistance * pushDirection;
+    const fallbackX = fruit.x - safeDistance * pushDirection;
+    const bombHalfSize = state.bombHitSize * 0.42;
+    const minX = bombHalfSize;
+    const maxX = fieldW - bombHalfSize;
+
+    if (preferredX >= minX && preferredX <= maxX) {
+      bomb.x = preferredX;
+    } else {
+      bomb.x = clamp(fallbackX, minX, maxX);
+    }
+
+    if (Math.abs(bomb.x - fruit.x) < safeDistance * 0.72) {
+      bomb.x = fruit.x < fieldW / 2 ? maxX : minX;
+    }
+
+    bomb.vx += bomb.x > fruit.x ? 0.65 : -0.65;
+  }
+
 
   function createFlyingFood({ word, isCorrect }) {
     const motion = createArcMotion();
