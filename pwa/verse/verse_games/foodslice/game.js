@@ -93,6 +93,20 @@
     }
   };
 
+  const FIREWORK_TUNING = {
+    triggerStreak: 15,
+    duration: 660,
+    sizeScale: 1.24,
+    mainRays: 18,
+    shortRays: 10,
+    sparkles: 17,
+    rayThicknessScale: 0.11,
+    glow: 0.42,
+    rainbowChance: 0.5,
+    fallbackColor: "#40b9c5",
+    rainbowColors: ["#ff5a51", "#ffa351", "#ffc751", "#a7cb6f", "#40b9c5", "#7f66c6"]
+  };
+
   const FS_BOMB_CLOUD_SVG = `
 <svg viewBox="0 0 26.458333 26.458333" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <path fill="currentColor" d="M 12.949771,1.5464282 A 6.0017493,5.3230522 7.1160496 0 0 6.9820601,6.4190471 5.3405872,4.7400094 7.154063 0 0 6.8563886,6.4134999 5.3405872,4.7400094 7.154063 0 0 1.5243277,11.020646 5.3405872,4.7400094 7.154063 0 0 2.4259083,13.677302 4.0181559,3.5662928 7.1540647 0 0 0.66145837,16.583588 4.0181559,3.5662928 7.1540647 0 0 4.6728467,20.261811 4.0181559,3.5662928 7.1540647 0 0 5.1732885,20.243 a 5.3405872,4.7400094 7.154063 0 0 5.2883005,4.342428 5.3405872,4.7400094 7.154063 0 0 3.656255,-1.210431 4.0181559,3.5662928 7.1540647 0 0 3.300558,1.639798 4.0181559,3.5662928 7.1540647 0 0 4.011389,-3.466536 4.0181559,3.5662928 7.1540647 0 0 -0.416848,-1.594767 5.3405872,4.7400094 7.154063 0 0 4.783932,-4.586787 5.3405872,4.7400094 7.154063 0 0 -1.9322,-3.706541 4.0181559,3.5662928 7.1540647 0 0 0.764128,-2.0624453 4.0181559,3.5662928 7.1540647 0 0 -4.011389,-3.6776624 4.0181559,3.5662928 7.1540647 0 0 -1.744813,0.3148283 6.0017493,5.3230522 7.1160496 0 0 -5.92283,-4.6884523 z"/>
@@ -158,6 +172,7 @@
     activeMessageSlices: [],
     activeSliceEffects: [],
     activeTrailSparkles: [],
+    activeFireworks: [],
     wrongStreak: 0,
     correctStreak: 0,
     buildShakeUntil: 0,
@@ -243,6 +258,7 @@
     state.activeMessageSlices = [];
     state.activeSliceEffects = [];
     state.activeTrailSparkles = [];
+    state.activeFireworks = [];
     state.wrongStreak = 0;
     state.correctStreak = 0;
     state.buildShakeUntil = 0;
@@ -649,9 +665,11 @@
 
     const trailSparklesHtml = state.activeTrailSparkles.filter(Boolean).map(renderTrailSparkle).join("");
 
+    const fireworksHtml = state.activeFireworks.filter(Boolean).map(renderFirework).join("");
+
     const sliceEffectsHtml = state.activeSliceEffects.filter(Boolean).map(renderSliceEffect).join("");
 
-    sliceLayer.innerHTML = slicePiecesHtml + messageSlicePiecesHtml + trailSparklesHtml + sliceEffectsHtml;
+    sliceLayer.innerHTML = slicePiecesHtml + messageSlicePiecesHtml + trailSparklesHtml + fireworksHtml + sliceEffectsHtml;
 
     bannerLayer.innerHTML = (state.bonusRound && performance.now() < state.bonusBannerUntil)
       ? `<div class="fs-bonus-banner"><div class="fs-bonus-banner-text">Bonus Round!</div></div>`
@@ -749,6 +767,7 @@
     state.activeMessageSlices.forEach((piece) => updateMovingEntity(piece, dt));
     state.activeMessageSlices = state.activeMessageSlices.filter((piece) => piece.alive);
     state.activeTrailSparkles = state.activeTrailSparkles.filter((sparkle) => now - sparkle.createdAt < sparkle.duration);
+    state.activeFireworks = state.activeFireworks.filter((firework) => now - firework.createdAt < firework.duration);
     state.activeSliceEffects = state.activeSliceEffects.filter((effect) => now - effect.createdAt < effect.duration);
 
     if (state.activeFruit && state.activeFruit.y > state.fieldHeight + 140) state.activeFruit = null;
@@ -1050,6 +1069,7 @@
     state.activeMessageSlices.forEach((piece) => updateMovingEntity(piece, dt));
     state.activeMessageSlices = state.activeMessageSlices.filter((piece) => piece.alive);
     state.activeTrailSparkles = state.activeTrailSparkles.filter((sparkle) => now - sparkle.createdAt < sparkle.duration);
+    state.activeFireworks = state.activeFireworks.filter((firework) => now - firework.createdAt < firework.duration);
     state.activeSliceEffects = state.activeSliceEffects.filter((effect) => now - effect.createdAt < effect.duration);
 
     if (!state.messagePill && now >= state.messageSequence.nextAt) {
@@ -1155,7 +1175,13 @@
 
     if (item.isCorrect) {
       playRandomSliceSound();
-      createSlicesFrom(item);
+
+      if (state.correctStreak >= FIREWORK_TUNING.triggerStreak - 1) {
+        createFireworkFrom(item);
+      } else {
+        createSlicesFrom(item);
+      }
+
       state.activeFruit = null;
       state.wrongStreak = 0;
       state.correctStreak += 1;
@@ -1240,6 +1266,7 @@
     state.activeMessageSlices = [];
     state.activeSliceEffects = [];
     state.activeTrailSparkles = [];
+    state.activeFireworks = [];
     state.correctStreak = 0;
     state.messagePill = null;
     state.messageSequence = createMessageSequence("bonus");
@@ -1434,6 +1461,194 @@
         </div>
       </div>
     `;
+  }
+
+
+  function createFireworkFrom(item) {
+    const sliceEffect = createSliceEffectFrom(item);
+    const colors = getFireworkColors(item);
+    const baseSize = state.fruitEmojiSize * FIREWORK_TUNING.sizeScale;
+    const rayThickness = Math.max(3, state.fruitEmojiSize * FIREWORK_TUNING.rayThicknessScale);
+    const createdAt = performance.now();
+
+    state.activeFireworks.push({
+      x: item.x,
+      y: item.y,
+      colors,
+      baseSize,
+      rayThickness,
+      createdAt,
+      duration: FIREWORK_TUNING.duration,
+      mainRays: makeFireworkRays({
+        count: FIREWORK_TUNING.mainRays,
+        colors,
+        baseSize,
+        rayThickness,
+        long: true
+      }),
+      shortRays: makeFireworkRays({
+        count: FIREWORK_TUNING.shortRays,
+        colors,
+        baseSize,
+        rayThickness,
+        long: false
+      }),
+      sparkles: makeFireworkSparkles({
+        count: FIREWORK_TUNING.sparkles,
+        colors,
+        baseSize,
+        rayThickness
+      })
+    });
+
+    return sliceEffect;
+  }
+
+  function getFireworkColors(item) {
+    if (Math.random() < FIREWORK_TUNING.rainbowChance) {
+      return FIREWORK_TUNING.rainbowColors;
+    }
+
+    return [
+      item.trailAccentColor || item.trailColors?.[0] || FIREWORK_TUNING.fallbackColor,
+      "#ffffff"
+    ];
+  }
+
+  function makeFireworkRays({ count, colors, baseSize, rayThickness, long }) {
+    const angleOffset = Math.random() * 360;
+    const rays = [];
+
+    for (let i = 0; i < count; i += 1) {
+      const spread = 360 / Math.max(1, count);
+      const angle = angleOffset + spread * i + (-4 + Math.random() * 8);
+      const length = long
+        ? baseSize * (0.72 + Math.random() * 0.32)
+        : baseSize * (0.34 + Math.random() * 0.24);
+      const start = baseSize * (long ? 0.06 + Math.random() * 0.1 : 0.03 + Math.random() * 0.1);
+      const thickness = rayThickness * (long ? 0.72 + Math.random() * 0.4 : 0.46 + Math.random() * 0.34);
+      const delay = long ? Math.random() * 35 : 20 + Math.random() * 70;
+
+      rays.push({
+        angle,
+        length,
+        start,
+        thickness,
+        color: colors[i % colors.length],
+        delay
+      });
+    }
+
+    return rays;
+  }
+
+  function makeFireworkSparkles({ count, colors, baseSize, rayThickness }) {
+    const sparkles = [];
+
+    for (let i = 0; i < count; i += 1) {
+      sparkles.push({
+        angle: Math.random() * 360,
+        distance: baseSize * (0.45 + Math.random() * 0.83),
+        size: rayThickness * (0.72 + Math.random() * 0.83),
+        color: Math.random() < 0.22 ? "#ffffff" : pickRandom(colors),
+        delay: 40 + Math.random() * 90,
+        isSpark: Math.random() < 0.45
+      });
+    }
+
+    return sparkles;
+  }
+
+  function renderFirework(firework) {
+    const age = performance.now() - firework.createdAt;
+    const progress = clamp(age / firework.duration, 0, 1);
+    const duration = firework.duration;
+    const centerSize = firework.rayThickness * 2.4;
+    const centerOpacity = progress < 0.12
+      ? progress / 0.12
+      : Math.max(0, 1 - ((progress - 0.12) / 0.88));
+
+    const mainRaysHtml = firework.mainRays.map((ray) => renderFireworkRay(ray, duration, true)).join("");
+    const shortRaysHtml = firework.shortRays.map((ray) => renderFireworkRay(ray, duration, false)).join("");
+    const sparklesHtml = firework.sparkles.map((sparkle) => renderFireworkSparkle(sparkle, duration)).join("");
+
+    return `
+      <div
+        class="fs-firework"
+        style="transform:translate(${firework.x.toFixed(1)}px, ${firework.y.toFixed(1)}px) translate(-50%, -50%);"
+      >
+        <span
+          class="fs-firework-center"
+          style="
+            width:${centerSize.toFixed(1)}px;
+            height:${centerSize.toFixed(1)}px;
+            margin-left:${(-centerSize / 2).toFixed(1)}px;
+            margin-top:${(-centerSize / 2).toFixed(1)}px;
+            --fw-color:${firework.colors[0] || "#ffffff"};
+            --fw-duration:${Math.min(duration, 680)}ms;
+            opacity:${centerOpacity.toFixed(3)};
+          "
+        ></span>
+        ${mainRaysHtml}
+        ${shortRaysHtml}
+        ${sparklesHtml}
+      </div>
+    `;
+  }
+
+  function renderFireworkRay(ray, duration, isMain) {
+    return `
+      <span
+        class="fs-firework-ray ${isMain ? "is-main" : "is-short"}"
+        style="
+          --fw-angle:${ray.angle.toFixed(1)}deg;
+          --fw-length:${ray.length.toFixed(1)}px;
+          --fw-start:${ray.start.toFixed(1)}px;
+          --fw-thickness:${ray.thickness.toFixed(1)}px;
+          --fw-color:${ray.color};
+          --fw-duration:${duration}ms;
+          --fw-delay:${ray.delay.toFixed(0)}ms;
+          filter:
+            drop-shadow(0 0 ${(ray.thickness * (0.7 + FIREWORK_TUNING.glow * 1.5)).toFixed(1)}px ${ray.color})
+            drop-shadow(0 0 ${(ray.thickness * (1.8 + FIREWORK_TUNING.glow * 4)).toFixed(1)}px ${hexToRgba(ray.color, 0.24 + FIREWORK_TUNING.glow * 0.35)});
+        "
+      ></span>
+    `;
+  }
+
+  function renderFireworkSparkle(sparkle, duration) {
+    const cls = sparkle.isSpark ? "fs-firework-spark" : "fs-firework-dot";
+
+    return `
+      <span
+        class="${cls}"
+        style="
+          --fw-angle:${sparkle.angle.toFixed(1)}deg;
+          --fw-distance:${sparkle.distance.toFixed(1)}px;
+          --fw-dot-size:${sparkle.size.toFixed(1)}px;
+          --fw-color:${sparkle.color};
+          --fw-duration:${duration}ms;
+          --fw-delay:${sparkle.delay.toFixed(0)}ms;
+          filter:
+            drop-shadow(0 0 ${(sparkle.size * (0.8 + FIREWORK_TUNING.glow * 1.7)).toFixed(1)}px ${sparkle.color})
+            drop-shadow(0 0 ${(sparkle.size * (1.8 + FIREWORK_TUNING.glow * 3.4)).toFixed(1)}px ${hexToRgba(sparkle.color, 0.26 + FIREWORK_TUNING.glow * 0.36)});
+        "
+      ></span>
+    `;
+  }
+
+  function hexToRgba(hex, alpha) {
+    const clean = String(hex || "#ffffff").replace("#", "");
+    const normalized = clean.length === 3
+      ? clean.split("").map((ch) => ch + ch).join("")
+      : clean.padEnd(6, "f").slice(0, 6);
+    const value = parseInt(normalized, 16);
+
+    const r = (value >> 16) & 255;
+    const g = (value >> 8) & 255;
+    const b = value & 255;
+
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   }
 
 
