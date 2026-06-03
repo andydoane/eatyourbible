@@ -58,6 +58,9 @@
   const TRAIL_TUNING = {
     maxPoints: 13,
     minPointDistance: 10,
+    sparkleDuration: 520,
+    sparkleSpawnGapMs: 105,
+    maxSparkles: 18,
     white: {
       colors: ["#ffffff"],
       glow: 0.42,
@@ -69,6 +72,12 @@
       glow: 0.78,
       sizeMin: 0.06,
       sizeMax: 0.2
+    },
+    sparkle: {
+      colors: ["#ffffff", "#7ed1ff"],
+      sizeMin: 0.11,
+      sizeMax: 0.2,
+      glow: 0.88
     }
   };
 
@@ -136,6 +145,7 @@
     activeSlices: [],
     activeMessageSlices: [],
     activeSliceEffects: [],
+    activeTrailSparkles: [],
     wrongStreak: 0,
     correctStreak: 0,
     buildShakeUntil: 0,
@@ -220,6 +230,7 @@
     state.activeSlices = [];
     state.activeMessageSlices = [];
     state.activeSliceEffects = [];
+    state.activeTrailSparkles = [];
     state.wrongStreak = 0;
     state.correctStreak = 0;
     state.buildShakeUntil = 0;
@@ -624,9 +635,11 @@
 
     const messageSlicePiecesHtml = state.activeMessageSlices.filter(Boolean).map(renderMessageSlicePiece).join("");
 
+    const trailSparklesHtml = state.activeTrailSparkles.filter(Boolean).map(renderTrailSparkle).join("");
+
     const sliceEffectsHtml = state.activeSliceEffects.filter(Boolean).map(renderSliceEffect).join("");
 
-    sliceLayer.innerHTML = slicePiecesHtml + messageSlicePiecesHtml + sliceEffectsHtml;
+    sliceLayer.innerHTML = slicePiecesHtml + messageSlicePiecesHtml + trailSparklesHtml + sliceEffectsHtml;
 
     bannerLayer.innerHTML = (state.bonusRound && performance.now() < state.bonusBannerUntil)
       ? `<div class="fs-bonus-banner"><div class="fs-bonus-banner-text">Bonus Round!</div></div>`
@@ -723,6 +736,7 @@
     state.activeSlices = state.activeSlices.filter((piece) => piece.alive);
     state.activeMessageSlices.forEach((piece) => updateMovingEntity(piece, dt));
     state.activeMessageSlices = state.activeMessageSlices.filter((piece) => piece.alive);
+    state.activeTrailSparkles = state.activeTrailSparkles.filter((sparkle) => now - sparkle.createdAt < sparkle.duration);
     state.activeSliceEffects = state.activeSliceEffects.filter((effect) => now - effect.createdAt < effect.duration);
 
     if (state.activeFruit && state.activeFruit.y > state.fieldHeight + 140) state.activeFruit = null;
@@ -829,7 +843,8 @@
       tilt: -16 + Math.random() * 32,
       kind: "fruit",
       trailLevel,
-      trailPoints: []
+      trailPoints: [],
+      lastTrailSparkleAt: 0
     };
   }
 
@@ -845,6 +860,7 @@
 
 
   function getTrailLevelForStreak(streak) {
+    if (streak >= 6) return 3;
     if (streak >= 4) return 2;
     if (streak >= 2) return 1;
     return 0;
@@ -873,7 +889,40 @@
       while (item.trailPoints.length > TRAIL_TUNING.maxPoints) {
         item.trailPoints.shift();
       }
+
+      maybeSpawnTrailSparkle(item);
     }
+  }
+
+  function maybeSpawnTrailSparkle(item) {
+    if (!item || item.trailLevel < 3) return;
+
+    const now = performance.now();
+    if (now - (item.lastTrailSparkleAt || 0) < TRAIL_TUNING.sparkleSpawnGapMs) return;
+    if (state.activeTrailSparkles.length >= TRAIL_TUNING.maxSparkles) return;
+
+    const points = item.trailPoints || [];
+    const anchor = points.length > 2 ? points[points.length - 2] : points[points.length - 1];
+    if (!anchor) return;
+
+    item.lastTrailSparkleAt = now;
+
+    const sparkleStyle = TRAIL_TUNING.sparkle;
+    const sizeScale = sparkleStyle.sizeMin + Math.random() * (sparkleStyle.sizeMax - sparkleStyle.sizeMin);
+    const offset = state.fruitEmojiSize * 0.18;
+    const x = anchor.x + (-offset + Math.random() * offset * 2);
+    const y = anchor.y + (-offset + Math.random() * offset * 2);
+
+    state.activeTrailSparkles.push({
+      x,
+      y,
+      sizeScale,
+      rotation: Math.random() * 90,
+      color: pickRandom(sparkleStyle.colors),
+      glow: sparkleStyle.glow,
+      createdAt: now,
+      duration: TRAIL_TUNING.sparkleDuration
+    });
   }
 
   function renderFruitTrail(item) {
@@ -904,6 +953,27 @@
     }).join("");
 
     return `<div class="fs-fruit-trail" aria-hidden="true">${dots}</div>`;
+  }
+
+  function renderTrailSparkle(sparkle) {
+    const age = performance.now() - sparkle.createdAt;
+    const progress = Math.max(0, Math.min(1, age / sparkle.duration));
+    const pop = Math.sin(progress * Math.PI);
+    const opacity = Math.max(0, (1 - progress) * 0.92);
+    const scale = 0.55 + pop * 0.72;
+
+    return `
+      <span
+        class="fs-trail-sparkle"
+        style="
+          --trail-sparkle-size:${sparkle.sizeScale.toFixed(3)};
+          --trail-sparkle-color:${sparkle.color};
+          --trail-sparkle-glow:${sparkle.glow};
+          opacity:${opacity.toFixed(3)};
+          transform:translate(${sparkle.x.toFixed(1)}px, ${sparkle.y.toFixed(1)}px) translate(-50%, -50%) rotate(${sparkle.rotation.toFixed(1)}deg) scale(${scale.toFixed(3)});
+        "
+      ></span>
+    `;
   }
 
   function createMessageSequence(kind) {
@@ -937,6 +1007,7 @@
 
     state.activeMessageSlices.forEach((piece) => updateMovingEntity(piece, dt));
     state.activeMessageSlices = state.activeMessageSlices.filter((piece) => piece.alive);
+    state.activeTrailSparkles = state.activeTrailSparkles.filter((sparkle) => now - sparkle.createdAt < sparkle.duration);
     state.activeSliceEffects = state.activeSliceEffects.filter((effect) => now - effect.createdAt < effect.duration);
 
     if (!state.messagePill && now >= state.messageSequence.nextAt) {
@@ -1126,6 +1197,7 @@
     state.activeSlices = [];
     state.activeMessageSlices = [];
     state.activeSliceEffects = [];
+    state.activeTrailSparkles = [];
     state.correctStreak = 0;
     state.messagePill = null;
     state.messageSequence = createMessageSequence("bonus");
