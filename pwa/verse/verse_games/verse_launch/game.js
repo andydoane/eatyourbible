@@ -772,11 +772,8 @@
 
   function helpHtml() {
     return `
-    Find the next correct word and launch it into the verse.<br><br>
-    Easy: fun decoys.<br>
-    Medium: decoys are other words from the verse.<br>
-    Hard: same as Medium, with the toughest decoys.<br><br>
-    After the verse words, launch the book, then the reference.
+    Tap the next correct word to launch it into the verse.<br><br>
+    After the verse, steer your rocket to avoid the asteroids and make it to the moon!
   `;
   }
 
