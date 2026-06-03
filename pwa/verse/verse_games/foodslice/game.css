@@ -132,8 +132,8 @@ body {
 }
 
 .fs-bonus-score-x {
-  color: #ffffff;
-  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.22);
+  color: #333333;
+  text-shadow: none;
 }
 
 .fs-bonus-score-pill {
