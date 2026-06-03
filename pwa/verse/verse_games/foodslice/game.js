@@ -12,6 +12,9 @@
 
   const HELP_OVERLAY_ID = "fsHelpOverlay";
 
+  const BONUS_DURATION_MS = 24000;
+  const BONUS_STAGE_MS = BONUS_DURATION_MS / 3;
+
   const FOOD_THEMES = [
     ["🍎", "🍐", "🍊", "🍋", "🍌", "🍉", "🍇", "🍓", "🫐", "🍈", "🍒", "🥭", "🍍", "🥥", "🥝"],
     ["🍕", "🍔", "🍟", "🌭", "🍿", "🥓", "🥪", "🥨", "🌮", "🌯", "🥗", "🥘", "🍝", "🍜", "🍲", "🍣", "🍱"],
@@ -68,6 +71,7 @@
     messagePill: null,
     bonusRound: false,
     bonusBannerUntil: 0,
+    bonusStartedAt: 0,
     bonusEndsAt: 0,
     bonusFruits: [],
     bonusIdCounter: 0,
@@ -146,6 +150,7 @@
     state.messagePill = null;
     state.bonusRound = false;
     state.bonusBannerUntil = 0;
+    state.bonusStartedAt = 0;
     state.bonusEndsAt = 0;
     state.bonusFruits = [];
     state.bonusIdCounter = 0;
@@ -452,8 +457,8 @@
     build.classList.toggle("is-shake", state.buildShakeUntil > performance.now());
     if (state.bonusRound) {
       clearBuildTextFit(text);
-      text.className = "fs-build-text vm-build-text";
-      text.innerHTML = `<div class="fs-bonus-counter">${state.bonusCount}<span class="fs-bonus-label">Bonus slices</span></div>`;
+      text.className = "fs-build-text vm-build-text fs-bonus-build-text";
+      text.innerHTML = renderBonusCounterHtml();
       return;
     }
 
@@ -615,7 +620,7 @@
 
     if (state.bonusRound) {
       if (now >= state.bonusBannerUntil && now < state.bonusEndsAt) {
-        const targetCount = 2 + Math.floor(Math.random() * 2);
+        const targetCount = getBonusTargetLiveCount(now);
         const live = state.bonusFruits.filter((item) => item.alive).length;
         if (live < targetCount) spawnBonusFruit();
       }
@@ -882,6 +887,7 @@
     state.messageSequence = createMessageSequence("bonus");
     state.bonusRound = false;
     state.bonusBannerUntil = 0;
+    state.bonusStartedAt = 0;
     state.bonusEndsAt = 0;
     state.bonusFruits = [];
     state.bonusCount = 0;
@@ -890,12 +896,36 @@
   }
 
   function beginBonusGameplay() {
+    const now = performance.now();
+
     state.bonusRound = true;
     state.bonusBannerUntil = 0;
-    state.bonusEndsAt = performance.now() + 23000;
+    state.bonusStartedAt = now;
+    state.bonusEndsAt = now + BONUS_DURATION_MS;
     state.bonusFruits = [];
     state.bonusCount = 0;
   }
+
+  function getBonusTargetLiveCount(now) {
+    const elapsed = Math.max(0, now - state.bonusStartedAt);
+
+    if (elapsed < BONUS_STAGE_MS) return 1;
+    if (elapsed < BONUS_STAGE_MS * 2) return 2;
+    return 3;
+  }
+
+  function renderBonusCounterHtml() {
+    const displayScore = state.bonusCount > 99 ? "99+" : String(state.bonusCount);
+
+    return `
+      <div class="fs-bonus-score-line" aria-label="Bonus slices ${escapeHtml(displayScore)}">
+        <span class="fs-bonus-score-emoji" aria-hidden="true">🍎</span>
+        <span class="fs-bonus-score-x" aria-hidden="true">x</span>
+        <span class="fs-bonus-score-pill">${escapeHtml(displayScore)}</span>
+      </div>
+    `;
+  }
+
 
   function spawnBonusFruit() {
     state.bonusIdCounter += 1;

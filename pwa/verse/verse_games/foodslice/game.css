@@ -109,16 +109,46 @@ body {
   animation: fsShake 280ms ease;
 }
 
-.fs-bonus-counter {
-  font-size: clamp(34px, 10vw, 86px);
-  line-height: 1;
-  font-weight: 900;
+.fs-bonus-build-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.fs-bonus-label {
-  display: block;
-  font-size: clamp(16px, 4vw, 28px);
-  margin-top: 8px;
+.fs-bonus-score-line {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(8px, 2.4vw, 18px);
+  font-size: clamp(32px, 9vw, 78px);
+  font-weight: 900;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.fs-bonus-score-emoji {
+  line-height: 1;
+  filter: drop-shadow(0 5px 0 rgba(0, 0, 0, 0.2));
+}
+
+.fs-bonus-score-x {
+  color: #ffffff;
+  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.22);
+}
+
+.fs-bonus-score-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.55em;
+  height: 1.18em;
+  padding: 0 0.22em;
+  border-radius: 0.34em;
+  background: #ff5a51;
+  color: #ffc751;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 7px 0 rgba(0, 0, 0, 0.22);
+  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.18);
 }
 
 .fs-field-wrap {
