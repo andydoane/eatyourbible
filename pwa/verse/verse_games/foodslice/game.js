@@ -1094,7 +1094,7 @@
       sideAngles.forEach((fanOffset, index) => {
         const angle = sliceAngle + (side * 90) + fanOffset + (-5 + Math.random() * 10);
         const distanceScale = 0.38 + index * 0.12 + Math.random() * 0.1;
-        const sizeScale = 0.055 + Math.random() * 0.05;
+        const sizeScale = 0.075 + Math.random() * 0.06;
         const radians = angle * Math.PI / 180;
 
         particles.push({
