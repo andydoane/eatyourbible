@@ -1057,7 +1057,7 @@
     if (!item) return;
 
     const createdAt = performance.now();
-    const baseAngle = 74 + Math.random() * 32;
+    const baseAngle = Math.random() * 180;
     const yOffset = item.word ? -state.fruitHitSize * 0.08 : 0;
     const dotCount = 5;
     const dots = [];
