@@ -158,6 +158,10 @@ body {
   pointer-events: none;
 }
 
+.tb-tower-layer.is-frenzy {
+  pointer-events: auto;
+}
+
 .tb-warning-layer {
   z-index: 2;
   pointer-events: none;
@@ -385,7 +389,7 @@ body {
   padding: 0 10px;
   line-height: 1.05;
   box-shadow: 0 6px 0 rgba(0, 0, 0, .14);
-  transition: transform 380ms cubic-bezier(.2, .8, .2, 1), bottom 380ms cubic-bezier(.2, .8, .2, 1), width 380ms cubic-bezier(.2, .8, .2, 1), font-size 380ms cubic-bezier(.2, .8, .2, 1);
+  transition: transform 380ms cubic-bezier(.2, .8, .2, 1), bottom 380ms cubic-bezier(.2, .8, .2, 1), width 380ms cubic-bezier(.2, .8, .2, 1), height 380ms cubic-bezier(.2, .8, .2, 1), font-size 380ms cubic-bezier(.2, .8, .2, 1);
   will-change: transform, bottom;
 }
 
@@ -406,6 +410,17 @@ body {
 .tb-tower-brick.is-collapsing {
   transition: none;
   will-change: transform, bottom, opacity;
+}
+
+.tb-tower-layer.is-frenzy .tb-tower-brick {
+  pointer-events: auto;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tb-tower-layer.is-frenzy .tb-tower-brick:active {
+  filter: brightness(1.08);
 }
 
 .tb-warning-overlay {

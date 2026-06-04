@@ -104,6 +104,8 @@
     done: false,
     frenzyActive: false,
     frenzyInputLockedUntil: 0,
+    frenzyBreakSeq: 0,
+    frenzyDropDelays: {},
 
     pendingCorrectLabel: "",
     pendingCorrectType: "word",
@@ -158,7 +160,7 @@
       overlayMessage: "", overlayTone: "", overlayStartedAt: 0, overlayUntil: 0,
       warningLevel: 0, warningOverlayLevel: 0, warningOverlayStartedAt: 0, warningOverlayUntil: 0, hadWarning2BeforePlacement: false, beltRespawnLockUntil: 0, beltNeedsFreshSpawn: false, collapseTriggered: false, collapseEndsAt: 0, collapseStartedAt: 0, collapseDir: 1, collapseBasePose: null, lastStableTowerPose: null, pendingPreCollapsePose: null, collapseBurstFired: {}, collapseDebugFramesLeft: 0,
       stream: [], streamId: 0, fx: [], enteringBrick: null, enteringId: 0,
-      done: false, frenzyActive: false, frenzyInputLockedUntil: 0, pendingCorrectLabel: "", pendingCorrectType: "word",
+      done: false, frenzyActive: false, frenzyInputLockedUntil: 0, frenzyBreakSeq: 0, frenzyDropDelays: {}, pendingCorrectLabel: "", pendingCorrectType: "word",
       pendingCorrectVisible: 0, spawnIndex: 0
     });
     updatePhaseFromProgress(0);
@@ -627,6 +629,7 @@
 
   function renderTower(layer) {
     const now = performance.now();
+    layer.classList.toggle("is-frenzy", state.frenzyActive);
     const towerShellClass = ["tb-tower-shell"];
     if (!state.collapseTriggered) {
       if (state.towerShakeUntil > now) towerShellClass.push("tb-tower-shake");
@@ -724,7 +727,14 @@
         });
       }
 
-      html += `<div class="${cls.join(" ")}" style="bottom:${bottom}px;width:${width}px;height:${height}px;font-size:${fontSize}px;opacity:${opacity.toFixed(3)};transform:translateX(calc(-50% + ${offsetX}px)) rotate(${rot}deg)">${escapeHtml(brick.label)}</div>`;
+      const frenzyDelay = state.frenzyActive && state.frenzyDropDelays
+        ? Number(state.frenzyDropDelays[i] || 0)
+        : 0;
+      const frenzyAttrs = state.frenzyActive
+        ? ` data-frenzy-index="${i}" role="button" aria-label="Break ${escapeHtml(brick.label)} brick"`
+        : "";
+
+      html += `<div class="${cls.join(" ")}" ${frenzyAttrs} style="bottom:${bottom}px;width:${width}px;height:${height}px;font-size:${fontSize}px;opacity:${opacity.toFixed(3)};transform:translateX(calc(-50% + ${offsetX}px)) rotate(${rot}deg);transition-delay:${frenzyDelay}ms;">${escapeHtml(brick.label)}</div>`;
 
 
       cumulativeBottom += height + clamp(state.brickHeight * 0.07, 4, 8);
@@ -748,6 +758,22 @@
 
     html += `</div>`;
     layer.innerHTML = html;
+
+    if (state.frenzyActive) {
+      layer.querySelectorAll("[data-frenzy-index]").forEach((el) => {
+        const index = Number(el.dataset.frenzyIndex);
+        const onBreak = (e) => {
+          if (e) {
+            if (e.cancelable) e.preventDefault();
+            e.stopPropagation();
+          }
+          handleFrenzyTap(index);
+        };
+
+        el.onclick = onBreak;
+        el.onpointerdown = onBreak;
+      });
+    }
 
     logCollapseFrame(now, debugRenderedBricks);
 
@@ -946,6 +972,8 @@
     state.enteringBrick = null;
     state.frenzyActive = false;
     state.frenzyInputLockedUntil = 0;
+    state.frenzyBreakSeq = 0;
+    state.frenzyDropDelays = {};
     state.pendingCorrectVisible = 0;
     seedPendingCorrect();
     state.stream = [];
@@ -1475,6 +1503,37 @@
     state.pendingPreCollapsePose = null;
   }
 
+  function getTowerBrickRenderInfo(index, count = state.progress.length) {
+    const safeIndex = clamp(index, 0, Math.max(0, count - 1));
+    const lean = getVisualLean();
+    const maxLeanPx = Math.min(state.fieldWidth * 0.065, 46);
+
+    let cumulativeBottom = 0;
+
+    for (let i = 0; i < safeIndex; i++) {
+      const level = i;
+      const scale = Math.max(0.54, Math.pow(0.95, level));
+      const height = Math.max(34, state.brickHeight * 0.9 * scale);
+      cumulativeBottom += height + clamp(state.brickHeight * 0.07, 4, 8);
+    }
+
+    const level = safeIndex;
+    const t = count <= 1 ? 0 : level / Math.max(1, count - 1);
+    const curve = Math.pow(t, 1.55);
+    const scale = Math.max(0.54, Math.pow(0.95, level));
+    const height = Math.max(34, state.brickHeight * 0.9 * scale);
+    const baseOffsetX = count <= 1 ? 0 : lean * maxLeanPx * curve;
+    const sway = getBrickWarningSway(performance.now(), safeIndex, count);
+
+    return {
+      x: state.fieldWidth * 0.5 + baseOffsetX + sway.x,
+      y: state.fieldHeight - (towerBaseBottom() + cumulativeBottom + height * 0.5),
+      scale,
+      height,
+      bottom: cumulativeBottom
+    };
+  }
+
   function addSmoke(x, y) {
     state.fx.push({ x, y, until: performance.now() + 420, scale: 1, kind: "smoke" });
   }
@@ -1508,21 +1567,36 @@
   }
 
   function startDestroyFrenzy() {
+    const now = performance.now();
+
     state.frenzyActive = true;
-    state.overlayMessage = "Tap to Destroy the Tower!";
+    state.frenzyInputLockedUntil = now + 250;
+    state.frenzyBreakSeq = 0;
+    state.frenzyDropDelays = {};
+
+    state.overlayMessage = "BREAK\nTHE BRICKS!";
     state.overlayTone = "";
-    state.overlayStartedAt = performance.now();
-    state.overlayUntil = performance.now() + 999999;
+    state.overlayStartedAt = now;
+    state.overlayUntil = now + 999999;
+
     state.stream = [];
     state.pendingCorrectVisible = 0;
     state.enteringBrick = null;
+    state.warningLevel = 0;
+    state.warningOverlayLevel = 0;
+    state.warningOverlayStartedAt = 0;
+    state.warningOverlayUntil = 0;
   }
 
-  function handleFrenzyTap() {
+  function handleFrenzyTap(index = null) {
     const now = performance.now();
     if (!state.frenzyActive) return;
     if (now < state.frenzyInputLockedUntil) return;
     if (!state.progress.length) return;
+
+    const breakIndex = Number.isFinite(index)
+      ? clamp(Math.round(index), 0, state.progress.length - 1)
+      : state.progress.length - 1;
 
     if (state.overlayMessage) {
       state.overlayMessage = "";
@@ -1531,34 +1605,30 @@
       state.overlayUntil = 0;
     }
 
-    const topIndex = state.progress.length - 1;
+    const breakInfo = getTowerBrickRenderInfo(breakIndex, state.progress.length);
+    addChunkBurst(breakInfo.x, breakInfo.y, Math.max(0.95, breakInfo.scale));
 
-    let cumulativeBottom = 0;
-    for (let i = 0; i < topIndex; i++) {
-      const level = i;
-      const scale = Math.max(0.54, Math.pow(0.95, level));
-      const height = Math.max(34, state.brickHeight * 0.9 * scale);
-      cumulativeBottom += height + clamp(state.brickHeight * 0.07, 4, 8);
+    state.progress.splice(breakIndex, 1);
+    state.frenzyBreakSeq += 1;
+    state.frenzyDropDelays = {};
+
+    for (let i = breakIndex; i < state.progress.length; i++) {
+      state.frenzyDropDelays[i] = Math.min((i - breakIndex) * 45, 270);
     }
 
-    const level = topIndex;
-    const t = state.progress.length <= 1 ? 0 : level / Math.max(1, state.progress.length - 1);
-    const curve = Math.pow(t, 1.55);
-    const scale = Math.max(0.54, Math.pow(0.95, level));
-    const height = Math.max(34, state.brickHeight * 0.9 * scale);
-    const lean = getVisualLean();
-    const maxLeanPx = Math.min(state.fieldWidth * 0.065, 46);
-    const offsetX = state.progress.length <= 1 ? 0 : lean * maxLeanPx * curve;
+    const longestDelay = state.progress.length > breakIndex
+      ? Math.min((state.progress.length - 1 - breakIndex) * 45, 270)
+      : 0;
 
-    const burstX = state.fieldWidth * 0.5 + offsetX;
-    const burstY = state.fieldHeight - (towerBaseBottom() + cumulativeBottom + height * 0.5);
-
-    addChunkBurst(burstX, burstY, Math.max(0.95, scale));
-    state.progress.pop();
+    state.towerSettleUntil = now + longestDelay + 260;
+    state.frenzyInputLockedUntil = now + longestDelay + 330;
 
     if (!state.progress.length) {
       state.frenzyActive = false;
+      state.frenzyDropDelays = {};
       state.overlayMessage = "";
+      state.overlayTone = "";
+      state.overlayStartedAt = 0;
       state.overlayUntil = 0;
       state.frenzyInputLockedUntil = performance.now() + 350;
 
