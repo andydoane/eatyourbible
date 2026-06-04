@@ -173,6 +173,7 @@ body {
 
 .fs-play-layer,
 .fs-slice-layer,
+.fs-firework-layer,
 .fs-bomb-burst-layer,
 .fs-banner-layer,
 .fs-controls-layer,
@@ -187,6 +188,11 @@ body {
 
 .fs-slice-layer {
   z-index: 2;
+}
+
+.fs-firework-layer {
+  z-index: 3;
+  contain: layout paint;
 }
 
 .fs-bomb-burst-layer {
@@ -206,6 +212,7 @@ body {
 }
 
 .fs-slice-layer,
+.fs-firework-layer,
 .fs-bomb-burst-layer,
 .fs-banner-layer {
   pointer-events: none;
@@ -377,6 +384,7 @@ body {
   height: 1px;
   pointer-events: none;
   z-index: 3;
+  contain: layout paint;
 }
 
 .fs-firework-ray,
@@ -401,7 +409,8 @@ body {
       transparent 100%);
   transform-origin: 0% 50%;
   opacity: 0;
-  transform-origin: 0% 50%;
+  animation: fsFireworkRay var(--fw-duration) cubic-bezier(0.1, 0.76, 0.2, 1) forwards;
+  animation-delay: var(--fw-delay);
 }
 
 .fs-firework-ray.is-short {
@@ -420,6 +429,8 @@ body {
   background: var(--fw-color);
   opacity: 0;
   transform-origin: center center;
+  animation: fsFireworkDot var(--fw-duration) cubic-bezier(0.13, 0.74, 0.22, 1) forwards;
+  animation-delay: var(--fw-delay);
 }
 
 .fs-firework-spark {
@@ -431,6 +442,8 @@ body {
   clip-path: polygon(50% 0%, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0% 50%, 38% 38%);
   opacity: 0;
   transform-origin: center center;
+  animation: fsFireworkSpark var(--fw-duration) ease-out forwards;
+  animation-delay: var(--fw-delay);
 }
 
 .fs-firework-center {
@@ -516,14 +529,17 @@ body {
 
 @keyframes fsFireworkCenter {
   0% {
+    opacity: 0;
     transform: scale(0.2);
   }
 
   12% {
+    opacity: 1;
     transform: scale(1.15);
   }
 
   100% {
+    opacity: 0;
     transform: scale(0.36);
   }
 }

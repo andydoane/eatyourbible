@@ -172,7 +172,6 @@
     activeMessageSlices: [],
     activeSliceEffects: [],
     activeTrailSparkles: [],
-    activeFireworks: [],
     wrongStreak: 0,
     correctStreak: 0,
     buildShakeUntil: 0,
@@ -258,7 +257,6 @@
     state.activeMessageSlices = [];
     state.activeSliceEffects = [];
     state.activeTrailSparkles = [];
-    state.activeFireworks = [];
     state.wrongStreak = 0;
     state.correctStreak = 0;
     state.buildShakeUntil = 0;
@@ -289,6 +287,7 @@
             <div class="fs-field" id="fsField">
               <div class="fs-play-layer" id="fsPlayLayer"></div>
               <div class="fs-slice-layer" id="fsSliceLayer"></div>
+              <div class="fs-firework-layer" id="fsFireworkLayer"></div>
               <div class="fs-bomb-burst-layer" id="fsBombBurstLayer"></div>
               <div class="fs-banner-layer" id="fsBannerLayer"></div>
               <div class="fs-controls-layer">
@@ -665,11 +664,9 @@
 
     const trailSparklesHtml = state.activeTrailSparkles.filter(Boolean).map(renderTrailSparkle).join("");
 
-    const fireworksHtml = state.activeFireworks.filter(Boolean).map(renderFirework).join("");
-
     const sliceEffectsHtml = state.activeSliceEffects.filter(Boolean).map(renderSliceEffect).join("");
 
-    sliceLayer.innerHTML = slicePiecesHtml + messageSlicePiecesHtml + trailSparklesHtml + fireworksHtml + sliceEffectsHtml;
+    sliceLayer.innerHTML = slicePiecesHtml + messageSlicePiecesHtml + trailSparklesHtml + sliceEffectsHtml;
 
     bannerLayer.innerHTML = (state.bonusRound && performance.now() < state.bonusBannerUntil)
       ? `<div class="fs-bonus-banner"><div class="fs-bonus-banner-text">Bonus Round!</div></div>`
@@ -767,7 +764,6 @@
     state.activeMessageSlices.forEach((piece) => updateMovingEntity(piece, dt));
     state.activeMessageSlices = state.activeMessageSlices.filter((piece) => piece.alive);
     state.activeTrailSparkles = state.activeTrailSparkles.filter((sparkle) => now - sparkle.createdAt < sparkle.duration);
-    state.activeFireworks = state.activeFireworks.filter((firework) => now - firework.createdAt < firework.duration);
     state.activeSliceEffects = state.activeSliceEffects.filter((effect) => now - effect.createdAt < effect.duration);
 
     if (state.activeFruit && state.activeFruit.y > state.fieldHeight + 140) state.activeFruit = null;
@@ -1069,7 +1065,6 @@
     state.activeMessageSlices.forEach((piece) => updateMovingEntity(piece, dt));
     state.activeMessageSlices = state.activeMessageSlices.filter((piece) => piece.alive);
     state.activeTrailSparkles = state.activeTrailSparkles.filter((sparkle) => now - sparkle.createdAt < sparkle.duration);
-    state.activeFireworks = state.activeFireworks.filter((firework) => now - firework.createdAt < firework.duration);
     state.activeSliceEffects = state.activeSliceEffects.filter((effect) => now - effect.createdAt < effect.duration);
 
     if (!state.messagePill && now >= state.messageSequence.nextAt) {
@@ -1266,7 +1261,6 @@
     state.activeMessageSlices = [];
     state.activeSliceEffects = [];
     state.activeTrailSparkles = [];
-    state.activeFireworks = [];
     state.correctStreak = 0;
     state.messagePill = null;
     state.messageSequence = createMessageSequence("bonus");
@@ -1466,19 +1460,21 @@
 
   function createFireworkFrom(item) {
     const sliceEffect = createSliceEffectFrom(item);
+    const layer = document.getElementById("fsFireworkLayer");
+    if (!layer) return sliceEffect;
+
     const colors = getFireworkColors(item);
     const baseSize = state.fruitEmojiSize * FIREWORK_TUNING.sizeScale;
     const rayThickness = Math.max(3, state.fruitEmojiSize * FIREWORK_TUNING.rayThicknessScale);
-    const createdAt = performance.now();
+    const duration = FIREWORK_TUNING.duration;
 
-    state.activeFireworks.push({
+    const firework = {
       x: item.x,
       y: item.y,
       colors,
       baseSize,
       rayThickness,
-      createdAt,
-      duration: FIREWORK_TUNING.duration,
+      duration,
       mainRays: makeFireworkRays({
         count: FIREWORK_TUNING.mainRays,
         colors,
@@ -1499,7 +1495,18 @@
         baseSize,
         rayThickness
       })
-    });
+    };
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "fs-firework";
+    wrapper.style.transform = `translate(${firework.x.toFixed(1)}px, ${firework.y.toFixed(1)}px) translate(-50%, -50%)`;
+    wrapper.innerHTML = renderFireworkDom(firework);
+
+    layer.appendChild(wrapper);
+
+    window.setTimeout(() => {
+      wrapper.remove();
+    }, duration + 220);
 
     return sliceEffect;
   }
@@ -1559,61 +1566,44 @@
     return sparkles;
   }
 
-  function renderFirework(firework) {
-    const age = performance.now() - firework.createdAt;
-    const progress = clamp(age / firework.duration, 0, 1);
+  function renderFireworkDom(firework) {
     const duration = firework.duration;
     const centerSize = firework.rayThickness * 2.4;
-    const centerOpacity = progress < 0.12
-      ? progress / 0.12
-      : Math.max(0, 1 - ((progress - 0.12) / 0.88));
 
-    const mainRaysHtml = firework.mainRays.map((ray) => renderFireworkRay(ray, duration, true, age)).join("");
-    const shortRaysHtml = firework.shortRays.map((ray) => renderFireworkRay(ray, duration, false, age)).join("");
-    const sparklesHtml = firework.sparkles.map((sparkle) => renderFireworkSparkle(sparkle, duration, age)).join("");
+    const mainRaysHtml = firework.mainRays.map((ray) => renderFireworkRayDom(ray, duration, true)).join("");
+    const shortRaysHtml = firework.shortRays.map((ray) => renderFireworkRayDom(ray, duration, false)).join("");
+    const sparklesHtml = firework.sparkles.map((sparkle) => renderFireworkSparkleDom(sparkle, duration)).join("");
 
     return `
-      <div
-        class="fs-firework"
-        style="transform:translate(${firework.x.toFixed(1)}px, ${firework.y.toFixed(1)}px) translate(-50%, -50%);"
-      >
-        <span
-          class="fs-firework-center"
-          style="
-            width:${centerSize.toFixed(1)}px;
-            height:${centerSize.toFixed(1)}px;
-            margin-left:${(-centerSize / 2).toFixed(1)}px;
-            margin-top:${(-centerSize / 2).toFixed(1)}px;
-            --fw-color:${firework.colors[0] || "#ffffff"};
-            --fw-duration:${Math.min(duration, 680)}ms;
-            opacity:${centerOpacity.toFixed(3)};
-          "
-        ></span>
-        ${mainRaysHtml}
-        ${shortRaysHtml}
-        ${sparklesHtml}
-      </div>
+      <span
+        class="fs-firework-center"
+        style="
+          width:${centerSize.toFixed(1)}px;
+          height:${centerSize.toFixed(1)}px;
+          margin-left:${(-centerSize / 2).toFixed(1)}px;
+          margin-top:${(-centerSize / 2).toFixed(1)}px;
+          --fw-color:${firework.colors[0] || "#ffffff"};
+          --fw-duration:${Math.min(duration, 680)}ms;
+        "
+      ></span>
+      ${mainRaysHtml}
+      ${shortRaysHtml}
+      ${sparklesHtml}
     `;
   }
 
-  function renderFireworkRay(ray, duration, isMain, age) {
-    const rayAge = Math.max(0, age - ray.delay);
-    const progress = clamp(rayAge / duration, 0, 1);
-    const opacity = getFireworkFadeOpacity(progress);
-    const startTravel = ray.start * 0.14;
-    const travel = startTravel + (ray.start - startTravel) * easeOutCubic(progress);
-    const scaleX = 0.12 + progress * 0.88;
-    const scaleY = 0.55 + progress * 0.45;
-
+  function renderFireworkRayDom(ray, duration, isMain) {
     return `
       <span
         class="fs-firework-ray ${isMain ? "is-main" : "is-short"}"
         style="
+          --fw-angle:${ray.angle.toFixed(1)}deg;
           --fw-length:${ray.length.toFixed(1)}px;
+          --fw-start:${ray.start.toFixed(1)}px;
           --fw-thickness:${ray.thickness.toFixed(1)}px;
           --fw-color:${ray.color};
-          opacity:${opacity.toFixed(3)};
-          transform:rotate(${ray.angle.toFixed(1)}deg) translateX(${travel.toFixed(1)}px) scaleX(${scaleX.toFixed(3)}) scaleY(${scaleY.toFixed(3)});
+          --fw-duration:${duration}ms;
+          --fw-delay:${ray.delay.toFixed(0)}ms;
           filter:
             drop-shadow(0 0 ${(ray.thickness * (0.7 + FIREWORK_TUNING.glow * 1.5)).toFixed(1)}px ${ray.color})
             drop-shadow(0 0 ${(ray.thickness * (1.8 + FIREWORK_TUNING.glow * 4)).toFixed(1)}px ${hexToRgba(ray.color, 0.24 + FIREWORK_TUNING.glow * 0.35)});
@@ -1622,23 +1612,19 @@
     `;
   }
 
-  function renderFireworkSparkle(sparkle, duration, age) {
+  function renderFireworkSparkleDom(sparkle, duration) {
     const cls = sparkle.isSpark ? "fs-firework-spark" : "fs-firework-dot";
-    const sparkleAge = Math.max(0, age - sparkle.delay);
-    const progress = clamp(sparkleAge / duration, 0, 1);
-    const opacity = getFireworkFadeOpacity(progress);
-    const distance = sparkle.distance * easeOutCubic(progress);
-    const scale = 0.32 + progress * 0.76;
-    const extraRotation = sparkle.isSpark ? 45 + progress * 90 : 0;
 
     return `
       <span
         class="${cls}"
         style="
+          --fw-angle:${sparkle.angle.toFixed(1)}deg;
+          --fw-distance:${sparkle.distance.toFixed(1)}px;
           --fw-dot-size:${sparkle.size.toFixed(1)}px;
           --fw-color:${sparkle.color};
-          opacity:${opacity.toFixed(3)};
-          transform:rotate(${sparkle.angle.toFixed(1)}deg) translateX(${distance.toFixed(1)}px) rotate(${extraRotation.toFixed(1)}deg) scale(${scale.toFixed(3)});
+          --fw-duration:${duration}ms;
+          --fw-delay:${sparkle.delay.toFixed(0)}ms;
           filter:
             drop-shadow(0 0 ${(sparkle.size * (0.8 + FIREWORK_TUNING.glow * 1.7)).toFixed(1)}px ${sparkle.color})
             drop-shadow(0 0 ${(sparkle.size * (1.8 + FIREWORK_TUNING.glow * 3.4)).toFixed(1)}px ${hexToRgba(sparkle.color, 0.26 + FIREWORK_TUNING.glow * 0.36)});
@@ -1646,18 +1632,7 @@
       ></span>
     `;
   }
-
-  function getFireworkFadeOpacity(progress) {
-    if (progress <= 0) return 0;
-    if (progress < 0.14) return progress / 0.14;
-    if (progress < 0.55) return 1 - ((progress - 0.14) / 0.41) * 0.18;
-    if (progress < 0.78) return 0.82 - ((progress - 0.55) / 0.23) * 0.48;
-    return Math.max(0, 0.34 - ((progress - 0.78) / 0.22) * 0.34);
-  }
-
-  function easeOutCubic(progress) {
-    return 1 - Math.pow(1 - clamp(progress, 0, 1), 3);
-  }
+  
 
 
   function hexToRgba(hex, alpha) {
