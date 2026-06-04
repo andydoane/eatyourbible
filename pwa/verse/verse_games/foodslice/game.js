@@ -350,11 +350,8 @@
   }
 
   function helpHtml() {
-    return `Slice the next correct word to build the verse.<br><br>
-      In easy mode, wrong choices do not remove built words.<br><br>
-      In medium mode, decoys are chosen from other words in the verse, but there is no wrong-slice penalty.<br><br>
-      In hard mode, those same verse-word decoys appear, bombs can show up, and a bomb removes one built word.<br><br>
-      After the verse is built, slice the correct book and then the correct chapter and verse. Finish by slicing as much bonus food as you can.`;
+    return `Tap to slice the food of each correct word.<br><br>
+      When the verse is finished, slice as much food as you can during the bonus round.`;
   }
 
   function wireCommonNav() {
