@@ -4,7 +4,7 @@
   const GAME_ID = "tower_bible";
 
   const GAME_THEME = {
-    bg: "#40b9c5",
+    bg: "#a0dce2",
     accent: "#40b9c5"
   };
 
@@ -642,28 +642,62 @@
   }
 
   function renderConveyor(layer) {
-    if (state.introActive) {
-      layer.innerHTML = "";
-      return;
-    }
-
     const laneBottom = clamp(state.fieldWidth * 0.055, 24, 42);
+    const groundHeight = laneBottom + state.laneHeight;
+    const tuftHeight = clamp(state.brickHeight * 1.35, 72, 120);
 
     let html = `
-      <div class="tb-conveyor-lane" style="left:${state.lanePadX}px;right:${state.lanePadX}px;bottom:${laneBottom}px;height:${state.laneHeight}px;">
+      <div class="tb-conveyor-ground" style="height:${groundHeight}px;">
+        <div class="tb-grass-overlay"></div>
+      </div>
+
+      <img
+        class="tb-grass-tuft tb-grass-tuft-left"
+        src="tower_bible_images/tower_bible_grass_tuft_1.svg"
+        alt=""
+        aria-hidden="true"
+        style="bottom:${groundHeight - 2}px;height:${tuftHeight}px;"
+      >
+
+      <img
+        class="tb-grass-tuft tb-grass-tuft-center"
+        src="tower_bible_images/tower_bible_grass_tuft_2.svg"
+        alt=""
+        aria-hidden="true"
+        style="bottom:${groundHeight - 2}px;height:${tuftHeight * 0.9}px;"
+      >
+
+      <img
+        class="tb-grass-tuft tb-grass-tuft-right"
+        src="tower_bible_images/tower_bible_grass_tuft_1.svg"
+        alt=""
+        aria-hidden="true"
+        style="bottom:${groundHeight - 2}px;height:${tuftHeight * 1.05}px;"
+      >
     `;
-    for (const brick of state.stream) {
-      const tappable = isBrickTappable(brick) && !state.collapseTriggered && !state.enteringBrick;
-      const classes = ["tb-choice-brick"];
-      if (brick.kind === "book") classes.push("is-book");
-      if (brick.kind === "reference") classes.push("is-ref");
-      if (brick.flashWrong) classes.push("is-wrong");
+
+    if (!state.introActive) {
       html += `
-        <button class="${classes.join(" ")}" data-id="${brick.id}" style="left:${brick.left}px;width:${state.brickWidth}px;height:${state.brickHeight}px;font-size:${brick.fontSize}px;opacity:${brickVisualOpacity(brick).toFixed(3)};" aria-label="${brick.isCorrect ? "Correct brick" : "Brick"}">${escapeHtml(brick.label)}</button>`;
+        <div class="tb-conveyor-lane" style="left:${state.lanePadX}px;right:${state.lanePadX}px;bottom:${laneBottom}px;height:${state.laneHeight}px;">
+      `;
+
+      for (const brick of state.stream) {
+        const tappable = isBrickTappable(brick) && !state.collapseTriggered && !state.enteringBrick;
+        const classes = ["tb-choice-brick"];
+        if (brick.kind === "book") classes.push("is-book");
+        if (brick.kind === "reference") classes.push("is-ref");
+        if (brick.flashWrong) classes.push("is-wrong");
+        html += `
+          <button class="${classes.join(" ")}" data-id="${brick.id}" style="left:${brick.left}px;width:${state.brickWidth}px;height:${state.brickHeight}px;font-size:${brick.fontSize}px;opacity:${brickVisualOpacity(brick).toFixed(3)};" aria-label="${brick.isCorrect ? "Correct brick" : "Brick"}">${escapeHtml(brick.label)}</button>`;
+      }
+
+      html += `
+        </div>`;
     }
-    html += `
-      </div>`;
+
     layer.innerHTML = html;
+
+    if (state.introActive) return;
 
     layer.querySelectorAll("[data-id]").forEach((el) => {
       const id = Number(el.dataset.id);

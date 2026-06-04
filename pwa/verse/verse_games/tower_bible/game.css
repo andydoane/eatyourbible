@@ -1,5 +1,13 @@
+@font-face {
+  font-family: "TitanOne";
+  src: url("../../verse_fonts/TitanOne.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: block;
+}
+
 :root {
-  --tb-bg: #40b9c5;
+  --tb-bg: #a0dce2;
   --tb-purple: #7f66c6;
   --tb-dark: #333333;
   --tb-white: #ffffff;
@@ -7,6 +15,7 @@
   --tb-red: #ff5a51;
   --tb-green: #a7cb6f;
   --tb-blue: #40b9c5;
+  --tb-game-font: "TitanOne", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --tb-stage-max: 900px;
 }
 
@@ -39,7 +48,7 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  background: #40b9c5;
+  background: var(--tb-bg);
 }
 
 
@@ -117,7 +126,7 @@ body {
   flex: 1 1 auto;
   min-height: 320px;
   overflow: hidden;
-  background: transparent;
+  background: var(--tb-bg);
 }
 
 .tb-cloud {
@@ -228,8 +237,52 @@ body {
   right: clamp(10px, 2.8vw, 18px);
 }
 
+.tb-conveyor-ground {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--tb-green);
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.tb-grass-overlay {
+  position: absolute;
+  inset: 0;
+  background-image: url("tower_bible_images/tower_bible_grass_overlay.png");
+  background-repeat: no-repeat;
+  background-position: top center;
+  background-size: 100% 100%;
+  opacity: 1;
+  pointer-events: none;
+}
+
+.tb-grass-tuft {
+  position: absolute;
+  width: auto;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.tb-grass-tuft-left {
+  left: 8%;
+}
+
+.tb-grass-tuft-center {
+  left: 49%;
+  transform: translateX(-50%);
+}
+
+.tb-grass-tuft-right {
+  right: 7%;
+  transform: scaleX(-1);
+}
+
 .tb-conveyor-lane {
   position: absolute;
+  z-index: 2;
 }
 
 .tb-center-indicator-wrap {
@@ -345,12 +398,14 @@ body {
   padding: 0 clamp(12px, 2vw, 16px);
   border: none;
   border-radius: 10px;
-  background: rgba(255, 255, 255, .96);
-  color: #111;
-  font: inherit;
-  font-weight: 900;
+  background: rgba(0, 0, 0, .50);
+  color: #ffffff;
+  font-family: var(--tb-game-font);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: .035em;
   line-height: 1.05;
-  box-shadow: 0 6px 0 rgba(0, 0, 0, .18);
+  box-shadow: none;
   white-space: nowrap;
   transition: opacity 220ms ease, transform 120ms ease, background 120ms ease;
   cursor: pointer;
@@ -358,14 +413,10 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-.tb-choice-brick.is-book {
-  background: #ffc751;
-  color: #333;
-}
-
+.tb-choice-brick.is-book,
 .tb-choice-brick.is-ref {
-  background: #ffefb5;
-  color: #333;
+  background: rgba(0, 0, 0, .50);
+  color: #ffffff;
 }
 
 .tb-choice-brick.is-wrong {
