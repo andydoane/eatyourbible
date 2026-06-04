@@ -279,7 +279,6 @@ body {
     0 20px 48px rgba(0, 0, 0, .30),
     0 0 0 5px rgba(255, 255, 255, .18),
     inset 0 -8px 0 rgba(0, 0, 0, .12);
-  animation: tbTimingPopup 850ms cubic-bezier(.18, 1.35, .3, 1) forwards;
 }
 
 .tb-center-overlay-msg.is-early {

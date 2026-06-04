@@ -77,6 +77,7 @@
     guideFlashUntil: 0,
     overlayMessage: "",
     overlayTone: "",
+    overlayStartedAt: 0,
     overlayUntil: 0,
     warningLevel: 0,
     hadWarning2BeforePlacement: false,
@@ -151,7 +152,7 @@
       running: true, paused: false, pauseReason: "", lastTs: 0,
       progress: [], phase: "words", wordIndex: 0,
       towerShakeUntil: 0, towerSettleUntil: 0, guideFlashUntil: 0,
-      overlayMessage: "", overlayTone: "", overlayUntil: 0,
+      overlayMessage: "", overlayTone: "", overlayStartedAt: 0, overlayUntil: 0,
       warningLevel: 0, hadWarning2BeforePlacement: false, beltRespawnLockUntil: 0, beltNeedsFreshSpawn: false, collapseTriggered: false, collapseEndsAt: 0, collapseStartedAt: 0, collapseDir: 1, collapseBasePose: null, lastStableTowerPose: null, pendingPreCollapsePose: null, collapseBurstFired: {}, collapseDebugFramesLeft: 0,
       stream: [], streamId: 0, fx: [], enteringBrick: null, enteringId: 0,
       done: false, frenzyActive: false, frenzyInputLockedUntil: 0, pendingCorrectLabel: "", pendingCorrectType: "word",
@@ -481,9 +482,44 @@
     if (!state.overlayMessage || now >= state.overlayUntil) return;
 
     const toneClass = state.overlayTone ? ` is-timing is-${state.overlayTone}` : "";
+    const startedAt = state.overlayStartedAt || now;
+    const duration = Math.max(1, state.overlayUntil - startedAt);
+    const t = clamp((now - startedAt) / duration, 0, 1);
+
+    let opacity = 1;
+    let scale = 1;
+    let y = -50;
+    let rot = 0;
+
+    if (state.overlayTone) {
+      if (t < 0.16) {
+        const p = t / 0.16;
+        opacity = p;
+        scale = lerp(0.25, 1.12, p);
+        rot = lerp(-9, 3, p);
+      } else if (t < 0.35) {
+        const p = (t - 0.16) / 0.19;
+        opacity = 1;
+        scale = lerp(1.12, 0.98, p);
+        rot = lerp(3, -2, p);
+      } else if (t < 0.72) {
+        const p = (t - 0.35) / 0.37;
+        opacity = 1;
+        scale = lerp(0.98, 1.02, p);
+        rot = lerp(-2, 1, p);
+      } else {
+        const p = (t - 0.72) / 0.28;
+        opacity = 1 - p;
+        scale = lerp(1.02, 0.72, p);
+        y = lerp(-50, -68, p);
+        rot = lerp(1, 7, p);
+      }
+    }
+
+    const bgPos = state.overlayTone === "perfect" ? `${Math.round(t * 260)}% 50%` : "50% 50%";
 
     layer.innerHTML += `
-      <div class="tb-center-overlay-msg${toneClass}">
+      <div class="tb-center-overlay-msg${toneClass}" style="opacity:${opacity.toFixed(3)};transform:translate(-50%, ${y.toFixed(1)}%) scale(${scale.toFixed(3)}) rotate(${rot.toFixed(1)}deg);background-position:${bgPos};">
         ${formatOverlayMessage(state.overlayMessage)}
       </div>`;
   }
@@ -1350,6 +1386,7 @@
     state.frenzyActive = true;
     state.overlayMessage = "Tap to Destroy the Tower!";
     state.overlayTone = "";
+    state.overlayStartedAt = performance.now();
     state.overlayUntil = performance.now() + 999999;
     state.stream = [];
     state.pendingCorrectVisible = 0;
@@ -1365,6 +1402,7 @@
     if (state.overlayMessage) {
       state.overlayMessage = "";
       state.overlayTone = "";
+      state.overlayStartedAt = 0;
       state.overlayUntil = 0;
     }
 
@@ -1453,9 +1491,11 @@
   }
 
   function showOverlay(message, duration = 1400, tone = "") {
+    const now = performance.now();
     state.overlayMessage = message;
     state.overlayTone = tone;
-    state.overlayUntil = performance.now() + duration;
+    state.overlayStartedAt = now;
+    state.overlayUntil = now + duration;
   }
 
   function getVerseDerivedDecoys(targetIndex, correct) {
