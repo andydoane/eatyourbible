@@ -455,7 +455,7 @@
 
   function renderGuide(layer) {
     const laneTop = state.laneY - state.laneHeight / 2;
-    const indicatorHeight = state.laneHeight / 3;
+    const indicatorHeight = state.laneHeight * 0.25;
 
     layer.innerHTML = `
       <div class="tb-center-indicator-wrap" style="left:${state.guideCenterX}px;top:${laneTop}px;height:${state.laneHeight}px;--tb-indicator-height:${indicatorHeight}px;">
@@ -471,7 +471,6 @@
           alt=""
           aria-hidden="true"
         >
-        <div class="tb-center-indicator-line" style="height:${state.laneHeight}px;"></div>
       </div>`;
   }
 
