@@ -704,7 +704,7 @@
         opacity = Math.max(0, opacity * (1 - fallEase * 0.84));
       }
 
-      else if (state.warningLevel > 0) {
+      else {
         const sway = getBrickWarningSway(now, i, count);
         offsetX += sway.x;
         rot += sway.rot;
@@ -737,7 +737,7 @@
         const curve = Math.pow(t, 1.55);
         const liveBaseOffsetX = count <= 1 ? 0 : lean * maxLeanPx * curve;
         const liveBaseRot = count <= 2 ? 0 : lean * 1.15 * Math.pow(t, 1.7);
-        const sway = state.warningLevel > 0 ? getBrickWarningSway(now, i, count) : { x: 0, rot: 0 };
+        const sway = getBrickWarningSway(now, i, count);
 
         return {
           offsetX: liveBaseOffsetX + sway.x,
@@ -1303,7 +1303,16 @@
   }
 
   function getBrickWarningSway(now, index, count) {
-    if (state.warningLevel <= 0 || count <= 1) {
+    if (count < 3) {
+      return { x: 0, rot: 0 };
+    }
+
+    const leanScore = getLeanScore();
+    const leanMag = Math.abs(leanScore);
+    const thresholds = THRESHOLDS[selectedMode || "easy"];
+    const softStart = Math.max(2.5, thresholds.warn1 * 0.36);
+
+    if (leanMag < softStart) {
       return { x: 0, rot: 0 };
     }
 
@@ -1312,14 +1321,30 @@
     const midWeight = Math.pow(heightT, 0.9);
     const leanDir = Math.sign(getVisualLean()) || 1;
 
-    const levelStrength = state.warningLevel >= 2 ? 1 : 0.58;
-    const speed = state.warningLevel >= 2 ? 95 : 165;
+    let levelStrength = 0.24;
+    let speed = 235;
+    let maxRotBase = 1.15;
+
+    if (state.warningLevel >= 2) {
+      levelStrength = 1;
+      speed = 95;
+      maxRotBase = 3.4;
+    } else if (state.warningLevel === 1) {
+      levelStrength = 0.58;
+      speed = 165;
+      maxRotBase = 1.7;
+    } else {
+      const softT = clamp((leanMag - softStart) / Math.max(1, thresholds.warn1 - softStart), 0, 1);
+      levelStrength = lerp(0.16, 0.36, softT);
+      speed = lerp(255, 205, softT);
+      maxRotBase = lerp(0.7, 1.2, softT);
+    }
 
     const wave = Math.sin(now / speed + heightT * 1.55);
     const counterWave = Math.sin(now / (speed * 1.37) + heightT * 2.35);
 
     const maxX = clamp(state.fieldWidth * 0.025, 8, 18) * levelStrength;
-    const maxRot = (state.warningLevel >= 2 ? 3.4 : 1.7) * levelStrength;
+    const maxRot = maxRotBase * levelStrength;
 
     const x = (wave * maxX * topWeight) + (counterWave * maxX * 0.22 * midWeight);
     const rot = (wave * maxRot * topWeight) + (leanDir * counterWave * maxRot * 0.18 * midWeight);
