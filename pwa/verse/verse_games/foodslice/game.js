@@ -778,7 +778,7 @@
       state.bonusFruits.forEach((item) => updateMovingEntity(item, dt));
       state.bonusFruits = state.bonusFruits.filter((item) => item.alive && item.y <= state.fieldHeight + 140);
       if (now >= state.bonusEndsAt && state.bonusFruits.length === 0 && state.activeSlices.length === 0) {
-        finishGame();
+        startBonusScoreOutro();
       }
     }
   }
@@ -1035,21 +1035,46 @@
 
   function createMessageSequence(kind) {
     const bonusColors = ["#ff5a51", "#ffa351", "#ffc751", "#a7cb6f", "#40b9c5", "#7f66c6"];
-    const steps = kind === "bonus"
-      ? ["SLICE", "ALL", "THE", "FOOD!"].map((text, index) => {
+
+    let steps;
+
+    if (kind === "bonus") {
+      steps = ["SLICE", "ALL", "THE", "FOOD!"].map((text, index) => {
         const bg = bonusColors[index % bonusColors.length];
         return {
           text,
           bg,
           color: bg === "#ffc751" ? "#333333" : "#ffffff"
         };
-      })
-      : [
+      });
+    } else if (kind === "scoreOutro") {
+      const displayScore = state.bonusCount > 99 ? "99+" : String(state.bonusCount);
+
+      steps = [
+        {
+          text: "SCORE",
+          bg: "#7f66c6",
+          color: "#ffffff",
+          fireworksAtApex: true,
+          outroRole: "label"
+        },
+        {
+          text: displayScore,
+          bg: "#ff5a51",
+          color: "#ffc751",
+          fireworksAtApex: true,
+          outroRole: "score",
+          endsGameOnSlice: true
+        }
+      ];
+    } else {
+      steps = [
         { text: "TAP", bg: "#ff5a51", color: "#ffc751" },
         { text: "TO", bg: "#ff5a51", color: "#ffc751" },
         { text: "SLICE!", bg: "#ff5a51", color: "#ffc751" },
         { text: "GO!", bg: "#a7cb6f", color: "#ffffff" }
       ];
+    }
 
     return {
       kind,
@@ -1068,11 +1093,18 @@
     state.activeSliceEffects = state.activeSliceEffects.filter((effect) => now - effect.createdAt < effect.duration);
 
     if (!state.messagePill && now >= state.messageSequence.nextAt) {
-      const step = state.messageSequence.steps[state.messageSequence.index];
+      let step = state.messageSequence.steps[state.messageSequence.index];
+
+      if (!step && state.messageSequence.kind === "scoreOutro") {
+        state.messageSequence.index = 1;
+        step = state.messageSequence.steps[state.messageSequence.index];
+      }
+
       if (!step) {
         finishMessageSequence();
         return;
       }
+
       state.messagePill = createMessagePill(step);
       state.messageSequence.index += 1;
     }
@@ -1110,6 +1142,10 @@
       kind: "message",
       tilt: -5 + Math.random() * 10,
       hasPausedAtApex: false,
+      hasTriggeredFireworks: false,
+      fireworksAtApex: !!step.fireworksAtApex,
+      outroRole: step.outroRole || "",
+      endsGameOnSlice: !!step.endsGameOnSlice,
       pauseUntil: 0,
       popUntil: 0
     };
@@ -1118,28 +1154,16 @@
   function updateMessagePill(item, dt, now) {
     if (!item || !item.alive) return;
 
-    if (!item.hasPausedAtApex && item.vy >= 0) {
-      item.hasPausedAtApex = true;
-      item.pauseUntil = now + 360;
-      item.popUntil = now + 180;
-    }
-
-    if (item.hasPausedAtApex && now < item.pauseUntil) {
-      item.rotation += item.spin * (dt / 16.6667);
-      return;
+    if (item.fireworksAtApex && !item.hasTriggeredFireworks && item.vy >= 0) {
+      item.hasTriggeredFireworks = true;
+      triggerScoreOutroFireworks(item);
     }
 
     updateMovingEntity(item, dt);
   }
 
   function getMessagePillScale(item) {
-    if (!item?.popUntil) return 1;
-
-    const now = performance.now();
-    if (now >= item.popUntil) return 1;
-
-    const progress = 1 - ((item.popUntil - now) / 180);
-    return 1 + Math.sin(progress * Math.PI) * 0.16;
+    return 1;
   }
 
   function createArcMotion(isBomb = false) {
@@ -1285,6 +1309,21 @@
     state.bonusCount = 0;
   }
 
+  function startBonusScoreOutro() {
+    state.activeFruit = null;
+    state.activeBomb = null;
+    state.bonusFruits = [];
+    state.activeSlices = [];
+    state.activeMessageSlices = [];
+    state.activeSliceEffects = [];
+    state.activeTrailSparkles = [];
+    state.messagePill = null;
+    state.messageSequence = createMessageSequence("scoreOutro");
+    state.bonusBannerUntil = 0;
+    setPaused(false, "");
+    renderHud();
+  }
+
   function getBonusTargetLiveCount(now) {
     const elapsed = Math.max(0, now - state.bonusStartedAt);
 
@@ -1373,7 +1412,12 @@
     item.alive = false;
     state.messagePill = null;
 
-    if (state.messageSequence) {
+    if (item.endsGameOnSlice) {
+      state.messageSequence = null;
+      window.setTimeout(() => {
+        finishGame();
+      }, 420);
+    } else if (state.messageSequence) {
       state.messageSequence.nextAt = performance.now() + 90;
     }
 
@@ -1460,17 +1504,25 @@
 
   function createFireworkFrom(item) {
     const sliceEffect = createSliceEffectFrom(item);
-    const layer = document.getElementById("fsFireworkLayer");
-    if (!layer) return sliceEffect;
+    spawnFireworkAt({
+      x: item.x,
+      y: item.y,
+      colors: getFireworkColors(item)
+    });
+    return sliceEffect;
+  }
 
-    const colors = getFireworkColors(item);
+  function spawnFireworkAt({ x, y, colors }) {
+    const layer = document.getElementById("fsFireworkLayer");
+    if (!layer) return;
+
     const baseSize = state.fruitEmojiSize * FIREWORK_TUNING.sizeScale;
     const rayThickness = Math.max(3, state.fruitEmojiSize * FIREWORK_TUNING.rayThicknessScale);
     const duration = FIREWORK_TUNING.duration;
 
     const firework = {
-      x: item.x,
-      y: item.y,
+      x,
+      y,
       colors,
       baseSize,
       rayThickness,
@@ -1507,8 +1559,6 @@
     window.setTimeout(() => {
       wrapper.remove();
     }, duration + 220);
-
-    return sliceEffect;
   }
 
   function getFireworkColors(item) {
@@ -1518,6 +1568,38 @@
 
     return [
       item.trailAccentColor || item.trailColors?.[0] || FIREWORK_TUNING.fallbackColor,
+      "#ffffff"
+    ];
+  }
+
+
+  function triggerScoreOutroFireworks(item) {
+    if (!item) return;
+
+    const leftX = state.fieldWidth * 0.27 + (-state.fruitEmojiSize * 0.25 + Math.random() * state.fruitEmojiSize * 0.5);
+    const rightX = state.fieldWidth * 0.73 + (-state.fruitEmojiSize * 0.25 + Math.random() * state.fruitEmojiSize * 0.5);
+    const y = clamp(item.y - state.fruitEmojiSize * 0.18, state.fruitEmojiSize * 0.8, state.fieldHeight - state.fruitEmojiSize * 0.8);
+
+    spawnFireworkAt({
+      x: leftX,
+      y,
+      colors: getCelebrationFireworkColors()
+    });
+
+    spawnFireworkAt({
+      x: rightX,
+      y,
+      colors: getCelebrationFireworkColors()
+    });
+  }
+
+  function getCelebrationFireworkColors() {
+    if (Math.random() < 0.5) {
+      return FIREWORK_TUNING.rainbowColors;
+    }
+
+    return [
+      pickRandom(FIREWORK_TUNING.rainbowColors),
       "#ffffff"
     ];
   }
