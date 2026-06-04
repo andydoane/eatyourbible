@@ -95,7 +95,7 @@
 
   const FIREWORK_TUNING = {
     triggerStreak: 3,
-    duration: 660,
+    duration: 330,
     sizeScale: 1.24,
     mainRays: 18,
     shortRays: 10,
