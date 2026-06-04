@@ -268,6 +268,10 @@ body {
   animation: tbCenterIndicatorBottom 900ms ease-in-out infinite alternate;
 }
 
+.tb-center-indicator-wrap.is-intro-reveal {
+  animation: tbIntroIndicatorReveal 720ms cubic-bezier(.18, 1.35, .28, 1) both;
+}
+
 .tb-center-overlay-msg {
   position: absolute;
   left: 50%;
@@ -979,6 +983,32 @@ body {
   100% {
     opacity: 0;
     transform: scale(.18);
+  }
+}
+
+@keyframes tbIntroIndicatorReveal {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scale(.35);
+    filter: brightness(1.4);
+  }
+
+  45% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.18);
+    filter: brightness(1.25);
+  }
+
+  70% {
+    opacity: 1;
+    transform: translateX(-50%) scale(.94);
+    filter: brightness(1.08);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+    filter: brightness(1);
   }
 }
 

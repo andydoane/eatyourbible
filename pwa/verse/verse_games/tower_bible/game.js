@@ -33,6 +33,21 @@
 
   const DEBUG_COLLAPSE = false;
 
+  const INTRO_SEQUENCE = [
+    { type: "brick", label: "TAP" },
+    { type: "brick", label: "THE" },
+    { type: "brick", label: "CORRECT" },
+    { type: "brick", label: "WORDS!" },
+    { type: "pause", ms: 650 },
+    { type: "brick", label: "TIME" },
+    { type: "brick", label: "YOUR" },
+    { type: "brick", label: "TAPS" },
+    { type: "brick", label: "CAREFULLY!" },
+    { type: "pause", ms: 650 },
+    { type: "guide", ms: 950 },
+    { type: "break", ms: 260 }
+  ];
+
   const STREAK_CELEBRATION_TUNING = {
     milestones: [5, 10, 15, 20],
     colors: {
@@ -106,6 +121,14 @@
     progress: [],
     phase: "words",
     wordIndex: 0,
+
+    introActive: false,
+    introStepIndex: 0,
+    introNextAt: 0,
+    introBreaking: false,
+    introBreakNextAt: 0,
+    introGuideVisible: true,
+    introGuidePoppedAt: 0,
 
     towerShakeUntil: 0,
     towerSettleUntil: 0,
@@ -195,6 +218,7 @@
     Object.assign(state, {
       running: true, paused: false, pauseReason: "", lastTs: 0,
       progress: [], phase: "words", wordIndex: 0,
+      introActive: true, introStepIndex: 0, introNextAt: 0, introBreaking: false, introBreakNextAt: 0, introGuideVisible: false, introGuidePoppedAt: 0,
       towerShakeUntil: 0, towerSettleUntil: 0, guideFlashUntil: 0,
       overlayMessage: "", overlayTone: "", overlayStartedAt: 0, overlayUntil: 0,
       warningLevel: 0, warningOverlayLevel: 0, warningOverlayStartedAt: 0, warningOverlayUntil: 0, hadWarning2BeforePlacement: false, beltRespawnLockUntil: 0, beltNeedsFreshSpawn: false, collapseTriggered: false, collapseEndsAt: 0, collapseStartedAt: 0, collapseDir: 1, collapseBasePose: null, lastStableTowerPose: null, pendingPreCollapsePose: null, collapseBurstFired: {}, collapseDebugFramesLeft: 0,
@@ -236,7 +260,7 @@
     wireCommonNav();
     wireGameInput();
     recalcField();
-    fillInitialStream();
+    startIntroSequence();
     renderHud();
     startLoop();
   }
@@ -445,6 +469,7 @@
   }
 
   function currentPhaseLabel() {
+    if (state.introActive) return "Watch";
     if (state.frenzyActive) return "Destroy!";
     if (state.done) return "Done";
     if (state.phase === "words") return `${state.wordIndex}/${wordEntries.length}`;
@@ -504,11 +529,21 @@
   }
 
   function renderGuide(layer) {
+    if (state.introActive && !state.introGuideVisible) {
+      layer.innerHTML = "";
+      return;
+    }
+
     const laneTop = state.laneY - state.laneHeight / 2;
     const indicatorHeight = state.laneHeight * 0.25;
+    const revealClass = state.introActive &&
+      state.introGuideVisible &&
+      performance.now() - state.introGuidePoppedAt < 900
+      ? " is-intro-reveal"
+      : "";
 
     layer.innerHTML = `
-      <div class="tb-center-indicator-wrap" style="left:${state.guideCenterX}px;top:${laneTop}px;height:${state.laneHeight}px;--tb-indicator-height:${indicatorHeight}px;">
+      <div class="tb-center-indicator-wrap${revealClass}" style="left:${state.guideCenterX}px;top:${laneTop}px;height:${state.laneHeight}px;--tb-indicator-height:${indicatorHeight}px;">
         <img
           class="tb-center-indicator tb-center-indicator-top"
           src="tower_bible_images/tower_bible_center_indicator.svg"
@@ -607,6 +642,11 @@
   }
 
   function renderConveyor(layer) {
+    if (state.introActive) {
+      layer.innerHTML = "";
+      return;
+    }
+
     const laneBottom = clamp(state.fieldWidth * 0.055, 24, 42);
 
     let html = `
@@ -918,6 +958,12 @@
 
   function step(dt, now) {
     if (state.done) return;
+
+    if (state.introActive) {
+      stepIntro(dt, now);
+      return;
+    }
+
     if (state.frenzyActive) return;
 
     if (state.collapseTriggered) {
@@ -1623,6 +1669,193 @@
     state.pendingCorrectVisible = 0;
     state.beltNeedsFreshSpawn = true;
     state.beltRespawnLockUntil = performance.now() + 520;
+  }
+
+  function startIntroSequence() {
+    const now = performance.now();
+
+    state.introActive = true;
+    state.introStepIndex = 0;
+    state.introNextAt = now + 250;
+    state.introBreaking = false;
+    state.introBreakNextAt = 0;
+    state.introGuideVisible = false;
+    state.introGuidePoppedAt = 0;
+
+    state.progress = [];
+    state.stream = [];
+    state.fx = [];
+    state.enteringBrick = null;
+    state.pendingCorrectVisible = 0;
+    state.warningLevel = 0;
+    state.warningOverlayLevel = 0;
+    state.warningOverlayStartedAt = 0;
+    state.warningOverlayUntil = 0;
+    resetCorrectStreak();
+  }
+
+  function stepIntro(dt, now) {
+    if (state.enteringBrick) {
+      stepIntroEntering(dt);
+      return;
+    }
+
+    if (state.introBreaking) {
+      stepIntroBreaking(now);
+      return;
+    }
+
+    if (now < state.introNextAt) return;
+
+    const step = INTRO_SEQUENCE[state.introStepIndex];
+
+    if (!step) {
+      finishIntroSequence();
+      return;
+    }
+
+    state.introStepIndex += 1;
+
+    if (step.type === "brick") {
+      startIntroBrick(step.label);
+      state.introNextAt = now + 360;
+      return;
+    }
+
+    if (step.type === "pause") {
+      state.introNextAt = now + step.ms;
+      return;
+    }
+
+    if (step.type === "guide") {
+      state.introGuideVisible = true;
+      state.introGuidePoppedAt = now;
+      state.towerSettleUntil = now + 320;
+      state.introNextAt = now + step.ms;
+      return;
+    }
+
+    if (step.type === "break") {
+      state.introBreaking = true;
+      state.introBreakNextAt = now + step.ms;
+      return;
+    }
+
+    state.introNextAt = now + 250;
+  }
+
+  function startIntroBrick(label) {
+    const now = performance.now();
+    const width = state.towerWidth * 0.76;
+    const height = state.brickHeight * 0.9;
+    const fontSize = Math.max(14, state.brickHeight * 0.33);
+    const fromWidth = state.brickWidth;
+    const fromHeight = state.brickHeight;
+    const fromFontSize = clamp(state.brickHeight * 0.34, 18, 28);
+
+    state.enteringBrick = {
+      id: ++state.enteringId,
+      label,
+      kind: "word",
+      zone: 0,
+      isIntro: true,
+      progress: 0,
+
+      fromLeft: (state.fieldWidth * 0.5) - (fromWidth * 0.5),
+      toLeft: (state.fieldWidth * 0.5) - (width * 0.5),
+      left: (state.fieldWidth * 0.5) - (fromWidth * 0.5),
+
+      fromBottom: laneBottomOffset() + state.laneHeight * 0.35,
+      toBottom: towerBaseBottom(),
+      bottom: laneBottomOffset() + state.laneHeight * 0.35,
+
+      fromWidth,
+      toWidth: width,
+      width: fromWidth,
+
+      fromHeight,
+      toHeight: height,
+      height: fromHeight,
+
+      fromFontSize,
+      toFontSize: fontSize,
+      fontSize: fromFontSize,
+
+      fromXOffset: 0,
+      toXOffset: 0,
+      xOffset: 0,
+
+      toRot: 0,
+      rot: 0
+    };
+
+    state.towerSettleUntil = now + 220;
+  }
+
+  function stepIntroEntering(dt) {
+    const e = state.enteringBrick;
+    if (!e) return;
+
+    e.progress = clamp(e.progress + dt / 330, 0, 1);
+    const eased = easeOutBack(e.progress);
+    e.left = lerp(e.fromLeft, e.toLeft, eased);
+    e.bottom = lerp(e.fromBottom, e.toBottom, eased);
+    e.width = lerp(e.fromWidth, e.toWidth, eased);
+    e.height = lerp(e.fromHeight, e.toHeight, eased);
+    e.fontSize = lerp(e.fromFontSize, e.toFontSize, eased);
+    e.rot = lerp(0, e.toRot, eased);
+
+    if (e.progress >= 1) {
+      state.progress.unshift({ label: e.label, kind: "word", zone: 0, isIntro: true });
+      state.enteringBrick = null;
+      state.towerSettleUntil = performance.now() + 220;
+    }
+  }
+
+  function stepIntroBreaking(now) {
+    if (now < state.introBreakNextAt) return;
+
+    if (!state.progress.length) {
+      finishIntroSequence();
+      return;
+    }
+
+    const topIndex = state.progress.length - 1;
+    const breakInfo = getTowerBrickRenderInfo(topIndex, state.progress.length);
+
+    addChunkBurst(breakInfo.x, breakInfo.y, Math.max(0.9, breakInfo.scale * 0.95));
+    state.progress.pop();
+    state.towerSettleUntil = now + 180;
+    state.introBreakNextAt = now + 170;
+  }
+
+  function finishIntroSequence() {
+    state.introActive = false;
+    state.introStepIndex = 0;
+    state.introNextAt = 0;
+    state.introBreaking = false;
+    state.introBreakNextAt = 0;
+    state.introGuideVisible = true;
+    state.introGuidePoppedAt = 0;
+
+    state.progress = [];
+    state.stream = [];
+    state.fx = [];
+    state.enteringBrick = null;
+    state.warningLevel = 0;
+    state.warningOverlayLevel = 0;
+    state.warningOverlayStartedAt = 0;
+    state.warningOverlayUntil = 0;
+    state.hadWarning2BeforePlacement = false;
+    state.beltRespawnLockUntil = 0;
+    state.beltNeedsFreshSpawn = false;
+
+    updatePhaseFromProgress(0);
+    seedPendingCorrect();
+    fillInitialStream();
+
+    state.lastTs = performance.now();
+    renderHud();
   }
 
   function startDestroyFrenzy() {
