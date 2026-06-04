@@ -557,7 +557,9 @@ body {
   min-width: min(52vw, 250px);
   max-width: min(68vw, 340px);
   color: #ffffff;
-  padding: 0;
+  padding: 0.08em 0.42em 0.12em;
+  border-radius: 999px;
+  background: rgba(51, 51, 51, 0.72);
   font-size: clamp(21px, 4.6vw, 31px);
   font-weight: 900;
   line-height: 1.08;
