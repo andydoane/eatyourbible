@@ -396,7 +396,7 @@ body {
   padding: 0 clamp(12px, 2vw, 16px);
   border: none;
   border-radius: 10px;
-  background: rgba(0, 0, 0, .50);
+  background: #536537;
   color: #ffffff;
   font-family: var(--tb-game-font);
   font-weight: 400;
@@ -413,7 +413,7 @@ body {
 
 .tb-choice-brick.is-book,
 .tb-choice-brick.is-ref {
-  background: rgba(0, 0, 0, .50);
+  background: #536537;
   color: #ffffff;
 }
 
