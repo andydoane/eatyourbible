@@ -558,13 +558,21 @@ body {
   max-width: min(68vw, 340px);
   color: #ffffff;
   padding: 0.08em 0.42em 0.12em;
-  border-radius: 999px;
-  background: rgba(51, 51, 51, 0.72);
   font-size: clamp(21px, 4.6vw, 31px);
   font-weight: 900;
   line-height: 1.08;
   text-align: center;
   text-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
+}
+
+.fs-word-chip::before {
+  content: "";
+  position: absolute;
+  inset: -0.06em -0.18em;
+  z-index: -1;
+  border-radius: 999px;
+  background: rgba(51, 51, 51, 0.72);
+  filter: blur(5px);
 }
 
 .fs-item.is-wrong .fs-word-chip,
