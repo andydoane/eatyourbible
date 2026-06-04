@@ -17,6 +17,12 @@
 
   const SILENCE_AUDIO_FILE = "../../verse_audio/silence.mp3";
   const ZOOM_AUDIO_FILE = "./traffic_tap_sounds/sound_zoom.mp3";
+  const UI_SOUND_BASE_PATH = "../../ui_audio/";
+
+  const UI_SOUND_FILES = {
+    uiTap1: `${UI_SOUND_BASE_PATH}ui_sound_pop_1.mp3`,
+    uiTap2: `${UI_SOUND_BASE_PATH}ui_sound_pop_2.mp3`
+  };
 
   const SOUND_TUNING = {
     masterVolume: 1.00,
@@ -27,7 +33,8 @@
       bonusTap: 1.15,
       rainbowJackpot: 3.20,
       truckIntro: 3.00,
-      truckOutro: 3.00
+      truckOutro: 3.00,
+      uiTap: 0.45
     }
   };
 
@@ -166,6 +173,10 @@
   let zoomAudioLoadPromise = null;
   let trafficTapImagePreloadPromise = null;
   const trafficTapImageCache = new Map();
+  let uiSoundFlip = false;
+  let lastUiSoundAt = 0;
+  const uiSoundBuffers = new Map();
+  const uiSoundBufferPromises = new Map();
   let audioUnlocked = false;
   let completionMarked = false;
   let alreadyCompletedForMode = false;
@@ -361,6 +372,84 @@
     }
   }
 
+  function loadUiSoundBuffer(key) {
+    if (uiSoundBuffers.has(key)) return Promise.resolve(uiSoundBuffers.get(key));
+    if (uiSoundBufferPromises.has(key)) return uiSoundBufferPromises.get(key);
+
+    const ctx = ensureAudioContext();
+    const src = UI_SOUND_FILES[key];
+
+    if (!ctx || !src) return Promise.resolve(null);
+
+    const promise = fetch(src)
+      .then(response => {
+        if (!response.ok) throw new Error(`Could not load ${src}`);
+        return response.arrayBuffer();
+      })
+      .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
+      .then(buffer => {
+        uiSoundBuffers.set(key, buffer);
+        return buffer;
+      })
+      .catch(err => {
+        console.warn("Could not decode Traffic Tap UI sound", err);
+        return null;
+      })
+      .finally(() => {
+        uiSoundBufferPromises.delete(key);
+      });
+
+    uiSoundBufferPromises.set(key, promise);
+    return promise;
+  }
+
+  function preloadUiSoundBuffers() {
+    Object.keys(UI_SOUND_FILES).forEach(loadUiSoundBuffer);
+  }
+
+  async function playUiBufferSound(key, volumeKey = "uiTap") {
+    if (muted) return;
+
+    try {
+      const ctx = ensureAudioContext();
+      if (!ctx || !masterGain) return;
+
+      if (ctx.state === "suspended") {
+        await ctx.resume();
+      }
+
+      const buffer = await loadUiSoundBuffer(key);
+      if (!buffer) return;
+
+      const source = ctx.createBufferSource();
+      const gain = ctx.createGain();
+
+      source.buffer = buffer;
+      gain.gain.setValueAtTime(clamp(getSoundVolume(volumeKey), 0, 1), ctx.currentTime);
+
+      source.connect(gain);
+      gain.connect(masterGain);
+
+      source.start(ctx.currentTime);
+    } catch (err) {
+      // UI sound should never break navigation.
+    }
+  }
+
+  function playUiTapSound() {
+    if (muted) return;
+
+    const now = performance.now();
+    if (now - lastUiSoundAt < 80) return;
+    lastUiSoundAt = now;
+
+    unlockAudio();
+
+    const key = uiSoundFlip ? "uiTap2" : "uiTap1";
+    uiSoundFlip = !uiSoundFlip;
+    playUiBufferSound(key, "uiTap");
+  }
+
   function ensureAudioContext() {
     if (audioCtx) return audioCtx;
 
@@ -378,6 +467,7 @@
   function unlockAudio() {
     primeHtmlAudio();
     primeZoomAudio();
+    preloadUiSoundBuffers();
 
     const ctx = ensureAudioContext();
     if (!ctx || !masterGain) return;
@@ -609,6 +699,7 @@
       onStart: () => {
         preloadTrafficTapImages();
         unlockAudio();
+        playUiTapSound();
         renderModeSelect();
       }
     });
@@ -625,10 +716,14 @@
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
       backLabel: "Back to Traffic Tap title",
-      onBack: renderIntro,
+      onBack: () => {
+        playUiTapSound();
+        renderIntro();
+      },
       onSelect: (mode) => {
         preloadTrafficTapImages();
         unlockAudio();
+        playUiTapSound();
         startGame(mode);
       }
     });
@@ -801,9 +896,19 @@
       gameMessage: `Bonus score: ${state.bonusScore}`,
       theme: GAME_THEME,
       backLabel: "Back to Practice Games",
-      onPlayAgain: renderModeSelect,
-      onMoreGames: () => window.VerseGameBridge.exitGame(),
-      onChangeVerse: () => window.VerseGameBridge.returnToTitle()
+      onPlayAgain: () => {
+        unlockAudio();
+        playUiTapSound();
+        renderModeSelect();
+      },
+      onMoreGames: () => {
+        playUiTapSound();
+        window.VerseGameBridge.exitGame();
+      },
+      onChangeVerse: () => {
+        playUiTapSound();
+        window.VerseGameBridge.returnToTitle();
+      }
     });
   }
 
@@ -839,24 +944,46 @@ In the bonus round, tap as many of the target vehicle as you can.`;
       isMuted: () => muted,
       onMuteToggle: () => {
         muted = !muted;
-        if (!muted) unlockAudio();
+        if (!muted) {
+          unlockAudio();
+          playUiTapSound();
+        }
         return muted;
       },
-      onHowToPlay: openHelpFromMenu,
+      onHowToPlay: () => {
+        playUiTapSound();
+        openHelpFromMenu();
+      },
       onModeSelect: () => {
+        playUiTapSound();
         setPaused(false, "");
         renderModeSelect();
       },
-      onExit: () => window.VerseGameBridge.exitGame(),
-      onOpen: () => setPaused(true, "menu"),
-      onClose: () => setPaused(false, ""),
-      onBackFromHelp: () => setPaused(true, "menu")
+      onExit: () => {
+        playUiTapSound();
+        window.VerseGameBridge.exitGame();
+      },
+      onOpen: () => {
+        playUiTapSound();
+        setPaused(true, "menu");
+      },
+      onClose: () => {
+        playUiTapSound();
+        setPaused(false, "");
+      },
+      onBackFromHelp: () => {
+        playUiTapSound();
+        setPaused(true, "menu");
+      }
     });
   }
 
   function toggleMute(muteBtn, menuMuteBtn) {
     muted = !muted;
-    if (!muted) unlockAudio();
+    if (!muted) {
+      unlockAudio();
+      playUiTapSound();
+    }
     if (muteBtn) muteBtn.textContent = muted ? "🔇" : "🔊";
     if (menuMuteBtn) menuMuteBtn.textContent = muted ? "Unmute" : "Mute";
   }
@@ -874,6 +1001,7 @@ In the bonus round, tap as many of the target vehicle as you can.`;
           if (e.cancelable) e.preventDefault();
           e.stopPropagation();
         }
+        playUiTapSound();
         openGameMenu();
       };
       menuPill.onclick = open;
