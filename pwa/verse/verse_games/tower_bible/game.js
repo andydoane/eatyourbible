@@ -885,6 +885,13 @@
       state.towerSettleUntil = performance.now() + 220;
 
       advancePhaseAfterPlacement();
+
+      if (state.frenzyActive || state.done) {
+        state.warningLevel = 0;
+        state.hadWarning2BeforePlacement = false;
+        return;
+      }
+
       state.hadWarning2BeforePlacement = prevWarningLevel >= 2;
       updateWarnings();
 
@@ -1304,6 +1311,11 @@
   }
 
   function updateWarnings() {
+    if (state.frenzyActive || state.done) {
+      state.warningLevel = 0;
+      return;
+    }
+
     const mag = Math.abs(getLeanScore());
     const t = THRESHOLDS[selectedMode || "easy"];
     let level = 0;
