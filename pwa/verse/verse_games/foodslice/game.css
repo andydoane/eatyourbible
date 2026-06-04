@@ -384,7 +384,6 @@ body {
   height: 1px;
   pointer-events: none;
   z-index: 3;
-  contain: layout paint;
 }
 
 .fs-firework-ray,
