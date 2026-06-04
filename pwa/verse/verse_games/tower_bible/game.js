@@ -455,10 +455,10 @@
 
   function renderGuide(layer) {
     const laneTop = state.laneY - state.laneHeight / 2;
-    const laneBottom = state.laneY + state.laneHeight / 2;
+    const indicatorHeight = state.laneHeight / 3;
 
     layer.innerHTML = `
-      <div class="tb-center-indicator-wrap" style="left:${state.guideCenterX}px;top:${laneTop}px;height:${state.laneHeight}px;">
+      <div class="tb-center-indicator-wrap" style="left:${state.guideCenterX}px;top:${laneTop}px;height:${state.laneHeight}px;--tb-indicator-height:${indicatorHeight}px;">
         <img
           class="tb-center-indicator tb-center-indicator-top"
           src="tower_bible_images/tower_bible_center_indicator.svg"

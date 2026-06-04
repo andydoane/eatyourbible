@@ -225,8 +225,9 @@ body {
 .tb-center-indicator {
   position: absolute;
   left: 50%;
-  width: 100%;
-  height: auto;
+  width: auto;
+  height: var(--tb-indicator-height);
+  max-width: clamp(42px, 10vw, 72px);
   transform: translateX(-50%);
   filter: drop-shadow(0 5px 0 rgba(0, 0, 0, .18)) drop-shadow(0 10px 14px rgba(0, 0, 0, .16));
 }
