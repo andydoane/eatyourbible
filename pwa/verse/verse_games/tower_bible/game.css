@@ -267,16 +267,14 @@ body {
 }
 
 .tb-grass-tuft-left {
-  left: 8%;
+  transform: none;
 }
 
-.tb-grass-tuft-center {
-  left: 49%;
-  transform: translateX(-50%);
+.tb-grass-tuft-mid {
+  transform: none;
 }
 
 .tb-grass-tuft-right {
-  right: 7%;
   transform: scaleX(-1);
 }
 

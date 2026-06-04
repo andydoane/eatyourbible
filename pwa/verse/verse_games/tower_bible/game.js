@@ -644,7 +644,8 @@
   function renderConveyor(layer) {
     const laneBottom = clamp(state.fieldWidth * 0.055, 24, 42);
     const groundHeight = laneBottom + state.laneHeight;
-    const tuftHeight = clamp(state.brickHeight * 1.35, 72, 120);
+    const tuftHeight = state.brickHeight * 0.42;
+    const rightBrickEdge = state.fieldWidth * 0.5 + (state.towerWidth * 0.76) * 0.5;
 
     let html = `
       <div class="tb-conveyor-ground" style="height:${groundHeight}px;">
@@ -656,15 +657,15 @@
         src="tower_bible_images/tower_bible_grass_tuft_1.svg"
         alt=""
         aria-hidden="true"
-        style="bottom:${groundHeight - 2}px;height:${tuftHeight}px;"
+        style="left:${-tuftHeight * 0.5}px;bottom:${groundHeight - 1}px;height:${tuftHeight}px;"
       >
 
       <img
-        class="tb-grass-tuft tb-grass-tuft-center"
+        class="tb-grass-tuft tb-grass-tuft-mid"
         src="tower_bible_images/tower_bible_grass_tuft_2.svg"
         alt=""
         aria-hidden="true"
-        style="bottom:${groundHeight - 2}px;height:${tuftHeight * 0.9}px;"
+        style="left:${rightBrickEdge + tuftHeight}px;bottom:${groundHeight - 1}px;height:${tuftHeight}px;"
       >
 
       <img
@@ -672,7 +673,7 @@
         src="tower_bible_images/tower_bible_grass_tuft_1.svg"
         alt=""
         aria-hidden="true"
-        style="bottom:${groundHeight - 2}px;height:${tuftHeight * 1.05}px;"
+        style="right:${-tuftHeight * 0.5}px;bottom:${groundHeight - 1}px;height:${tuftHeight}px;"
       >
     `;
 
