@@ -878,6 +878,7 @@
         : [];
 
       const prevWarningLevel = state.warningLevel;
+      const prevLeanScore = getLeanScore();
 
       state.progress.unshift({ label: e.label, kind: e.kind, zone: e.zone });
       state.enteringBrick = null;
@@ -893,7 +894,7 @@
       }
 
       state.hadWarning2BeforePlacement = prevWarningLevel >= 2;
-      updateWarnings();
+      updateWarnings(prevLeanScore);
 
       if (!state.done) {
         state.pendingCorrectVisible = state.stream.filter((brick) => brick.isCorrect).length;
@@ -1310,23 +1311,28 @@
     return { x, rot };
   }
 
-  function updateWarnings() {
+  function updateWarnings(prevLeanScore = null) {
     if (state.frenzyActive || state.done) {
       state.warningLevel = 0;
       return;
     }
 
-    const mag = Math.abs(getLeanScore());
+    const leanScore = getLeanScore();
+    const mag = Math.abs(leanScore);
     const t = THRESHOLDS[selectedMode || "easy"];
     let level = 0;
     if (mag >= t.warn2) level = 2;
     else if (mag >= t.warn1) level = 1;
     state.warningLevel = level;
 
+    const prevMag = Number.isFinite(prevLeanScore) ? Math.abs(prevLeanScore) : mag;
+    const madeLeanWorseBy = mag - prevMag;
+
     if (
       selectedMode !== "easy" &&
       mag >= t.collapse &&
       state.hadWarning2BeforePlacement &&
+      madeLeanWorseBy >= 1 &&
       !state.collapseTriggered
     ) {
       triggerCollapse();
