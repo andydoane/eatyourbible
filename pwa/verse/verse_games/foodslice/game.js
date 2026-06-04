@@ -752,7 +752,7 @@
       return;
     }
 
-    if (!state.bonusRound && !state.activeFruit) {
+    if (!state.done && !state.bonusRound && !state.activeFruit) {
       spawnMainFruit();
       maybeSpawnBomb();
     }
@@ -777,7 +777,7 @@
       }
       state.bonusFruits.forEach((item) => updateMovingEntity(item, dt));
       state.bonusFruits = state.bonusFruits.filter((item) => item.alive && item.y <= state.fieldHeight + 140);
-      if (now >= state.bonusEndsAt && state.bonusFruits.length === 0 && state.activeSlices.length === 0) {
+      if (!state.done && now >= state.bonusEndsAt && state.bonusFruits.length === 0 && state.activeSlices.length === 0) {
         startBonusScoreOutro();
       }
     }
@@ -1413,6 +1413,7 @@
     state.messagePill = null;
 
     if (item.endsGameOnSlice) {
+      state.done = true;
       state.messageSequence = null;
       window.setTimeout(() => {
         finishGame();
