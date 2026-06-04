@@ -159,6 +159,7 @@ body {
 }
 
 .tb-tower-layer.is-frenzy {
+  z-index: 8;
   pointer-events: auto;
 }
 
