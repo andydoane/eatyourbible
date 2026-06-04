@@ -145,6 +145,7 @@ body {
 .tb-conveyor-layer,
 .tb-enter-layer,
 .tb-smoke-layer,
+.tb-popup-layer,
 .tb-guide-layer,
 .tb-controls-layer,
 .tb-warning-layer {
@@ -178,6 +179,11 @@ body {
 
 .tb-smoke-layer {
   z-index: 6;
+  pointer-events: none;
+}
+
+.tb-popup-layer {
+  z-index: 9;
   pointer-events: none;
 }
 

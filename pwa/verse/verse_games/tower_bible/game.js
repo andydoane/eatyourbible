@@ -174,6 +174,7 @@
               <div class="tb-conveyor-layer" id="tbConveyorLayer"></div>
               <div class="tb-enter-layer" id="tbEnterLayer"></div>
               <div class="tb-smoke-layer" id="tbSmokeLayer"></div>
+              <div class="tb-popup-layer" id="tbPopupLayer"></div>
               <div id="tbDebugLayer" style="position:absolute;left:8px;bottom:8px;z-index:20;pointer-events:none;"></div>
               <div class="tb-controls-layer">
                 <button class="tb-corner-pill tb-corner-left" id="tbMenuPill" type="button" aria-label="Game menu">☰</button>
@@ -441,15 +442,16 @@
     const conveyorLayer = document.getElementById("tbConveyorLayer");
     const enterLayer = document.getElementById("tbEnterLayer");
     const smokeLayer = document.getElementById("tbSmokeLayer");
+    const popupLayer = document.getElementById("tbPopupLayer");
     const warningLayer = document.getElementById("tbWarningLayer");
     const debugLayer = document.getElementById("tbDebugLayer");
-    if (!towerLayer || !guideLayer || !conveyorLayer || !enterLayer || !smokeLayer || !warningLayer) return;
+    if (!towerLayer || !guideLayer || !conveyorLayer || !enterLayer || !smokeLayer || !popupLayer || !warningLayer) return;
 
     renderTower(towerLayer);
     renderGuide(guideLayer);
     renderConveyor(conveyorLayer);
     renderEnteringBrick(enterLayer);
-    renderOverlayMessage(guideLayer);
+    renderOverlayMessage(popupLayer);
     renderEffects(smokeLayer);
     renderWarning(warningLayer);
     renderDebug(debugLayer);
@@ -479,7 +481,11 @@
   function renderOverlayMessage(layer) {
     const now = performance.now();
     if (!layer) return;
-    if (!state.overlayMessage || now >= state.overlayUntil) return;
+
+    if (!state.overlayMessage || now >= state.overlayUntil) {
+      layer.innerHTML = "";
+      return;
+    }
 
     const toneClass = state.overlayTone ? ` is-timing is-${state.overlayTone}` : "";
     const startedAt = state.overlayStartedAt || now;
@@ -518,7 +524,7 @@
 
     const bgPos = state.overlayTone === "perfect" ? `${Math.round(t * 260)}% 50%` : "50% 50%";
 
-    layer.innerHTML += `
+    layer.innerHTML = `
       <div class="tb-center-overlay-msg${toneClass}" style="opacity:${opacity.toFixed(3)};transform:translate(-50%, ${y.toFixed(1)}%) scale(${scale.toFixed(3)}) rotate(${rot.toFixed(1)}deg);background-position:${bgPos};">
         ${formatOverlayMessage(state.overlayMessage)}
       </div>`;
