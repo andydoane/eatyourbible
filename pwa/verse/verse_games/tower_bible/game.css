@@ -255,20 +255,50 @@ body {
   left: 50%;
   top: 42%;
   transform: translate(-50%, -50%);
+  min-width: min(58vw, 260px);
   max-width: min(82vw, 720px);
-  padding: 12px 18px;
+  padding: 14px 20px 16px;
   background: rgba(0, 0, 0, .45);
-  border-radius: 18px;
+  border-radius: 22px;
   color: #ffc751;
   font-weight: 900;
   font-size: clamp(30px, 7vw, 56px);
-  line-height: 1.02;
+  line-height: .92;
+  letter-spacing: .02em;
   text-align: center;
+  white-space: pre-line;
   text-shadow:
     0 3px 0 rgba(0, 0, 0, .28),
     0 8px 18px rgba(0, 0, 0, .22);
   pointer-events: none;
   z-index: 7;
+}
+
+.tb-center-overlay-msg.is-timing {
+  box-shadow:
+    0 20px 48px rgba(0, 0, 0, .30),
+    0 0 0 5px rgba(255, 255, 255, .18),
+    inset 0 -8px 0 rgba(0, 0, 0, .12);
+  animation: tbTimingPopup 850ms cubic-bezier(.18, 1.35, .3, 1) forwards;
+}
+
+.tb-center-overlay-msg.is-early {
+  background: linear-gradient(180deg, #7bd7ff, #2ca6ff);
+  color: #ffffff;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, .18);
+}
+
+.tb-center-overlay-msg.is-late {
+  background: linear-gradient(180deg, #ffb57a, #ff5c7c);
+  color: #ffffff;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, .18);
+}
+
+.tb-center-overlay-msg.is-perfect {
+  color: #271841;
+  text-shadow: 0 2px 0 rgba(255, 255, 255, .45);
+  background: linear-gradient(90deg, #ff7ad9, #ffe27a, #8df7ff, #9dff8d, #ff7ad9);
+  background-size: 260% 100%;
 }
 
 .tb-choice-brick {
@@ -654,6 +684,35 @@ body {
 
   100% {
     transform: translateX(-50%) scaleY(-1) translateY(3px);
+  }
+}
+
+@keyframes tbTimingPopup {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(.25) rotate(-9deg);
+    background-position: 0 50%;
+  }
+
+  16% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.12) rotate(3deg);
+  }
+
+  35% {
+    transform: translate(-50%, -50%) scale(.98) rotate(-2deg);
+  }
+
+  72% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.02) rotate(1deg);
+    background-position: 180% 50%;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -68%) scale(.72) rotate(7deg);
+    background-position: 260% 50%;
   }
 }
 

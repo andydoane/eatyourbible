@@ -76,6 +76,7 @@
     towerSettleUntil: 0,
     guideFlashUntil: 0,
     overlayMessage: "",
+    overlayTone: "",
     overlayUntil: 0,
     warningLevel: 0,
     hadWarning2BeforePlacement: false,
@@ -150,7 +151,7 @@
       running: true, paused: false, pauseReason: "", lastTs: 0,
       progress: [], phase: "words", wordIndex: 0,
       towerShakeUntil: 0, towerSettleUntil: 0, guideFlashUntil: 0,
-      overlayMessage: "", overlayUntil: 0,
+      overlayMessage: "", overlayTone: "", overlayUntil: 0,
       warningLevel: 0, hadWarning2BeforePlacement: false, beltRespawnLockUntil: 0, beltNeedsFreshSpawn: false, collapseTriggered: false, collapseEndsAt: 0, collapseStartedAt: 0, collapseDir: 1, collapseBasePose: null, lastStableTowerPose: null, pendingPreCollapsePose: null, collapseBurstFired: {}, collapseDebugFramesLeft: 0,
       stream: [], streamId: 0, fx: [], enteringBrick: null, enteringId: 0,
       done: false, frenzyActive: false, frenzyInputLockedUntil: 0, pendingCorrectLabel: "", pendingCorrectType: "word",
@@ -479,9 +480,11 @@
     if (!layer) return;
     if (!state.overlayMessage || now >= state.overlayUntil) return;
 
+    const toneClass = state.overlayTone ? ` is-timing is-${state.overlayTone}` : "";
+
     layer.innerHTML += `
-      <div class="tb-center-overlay-msg">
-        ${escapeHtml(state.overlayMessage)}
+      <div class="tb-center-overlay-msg${toneClass}">
+        ${formatOverlayMessage(state.overlayMessage)}
       </div>`;
   }
 
@@ -1006,6 +1009,8 @@
 
     const zone = getTapZone(brick);
     const visual = 0;
+    const timingOverlay = getTimingOverlayForZone(zone);
+    showOverlay(timingOverlay.message, 850, timingOverlay.tone);
     state.stream = state.stream.filter((b) => b.id !== id);
     state.pendingCorrectVisible = state.stream.filter((b) => b.isCorrect).length;
 
@@ -1076,6 +1081,26 @@
     if (normalized <= centerHalf) return 0;
     if (normalized < slightHalf) return 1;
     return 2;
+  }
+
+  function getTimingOverlayForZone(zone) {
+    if (zone <= -2) {
+      return { message: "TOO\nEARLY!", tone: "early" };
+    }
+
+    if (zone === -1) {
+      return { message: "A LITTLE\nEARLY!", tone: "early" };
+    }
+
+    if (zone === 0) {
+      return { message: "PERFECT!", tone: "perfect" };
+    }
+
+    if (zone === 1) {
+      return { message: "A LITTLE\nLATE!", tone: "late" };
+    }
+
+    return { message: "TOO\nLATE!", tone: "late" };
   }
 
   function seedPendingCorrect() {
@@ -1324,6 +1349,7 @@
   function startDestroyFrenzy() {
     state.frenzyActive = true;
     state.overlayMessage = "Tap to Destroy the Tower!";
+    state.overlayTone = "";
     state.overlayUntil = performance.now() + 999999;
     state.stream = [];
     state.pendingCorrectVisible = 0;
@@ -1338,6 +1364,7 @@
 
     if (state.overlayMessage) {
       state.overlayMessage = "";
+      state.overlayTone = "";
       state.overlayUntil = 0;
     }
 
@@ -1425,7 +1452,11 @@
     renderEndScreen(reward);
   }
 
-  function showOverlay(message, duration = 1400) { state.overlayMessage = message; state.overlayUntil = performance.now() + duration; }
+  function showOverlay(message, duration = 1400, tone = "") {
+    state.overlayMessage = message;
+    state.overlayTone = tone;
+    state.overlayUntil = performance.now() + duration;
+  }
 
   function getVerseDerivedDecoys(targetIndex, correct) {
     return window.VerseGameShell.getVerseWordDecoys({
@@ -1494,6 +1525,9 @@
     return window.VerseGameShell.normalizeWord(value);
   }
 
+  function formatOverlayMessage(str) {
+    return escapeHtml(str).replace(/\n/g, "<br>");
+  }
 
   function escapeHtml(str) { return String(str || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#39;"); }
 
