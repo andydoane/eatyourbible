@@ -886,6 +886,12 @@
     render();
   }
 
+  function clearMenuAndHelpState(){
+    state.menuOpen = false;
+    state.helpOpen = false;
+    state.helpBackMode = false;
+  }
+
   function renderBuildText(){
     return window.VerseGameShell.renderBuildProgressHtml({
       verseText: ctx.verseText || "",
@@ -1077,6 +1083,7 @@
     if (state.screen !== "game" || token !== state.instructionToken) return;
     state.showingInstruction = false;
     state.busy = false;
+    clearMenuAndHelpState();
     prepareCurrentTarget();
     render();
   }
@@ -1109,6 +1116,7 @@
       await sleep(430);
     }
     if (!isCurrentBonusToken(token)) return;
+    clearMenuAndHelpState();
     startBonusRound();
   }
 
@@ -1148,6 +1156,7 @@
     }
     if (!isCurrentBonusToken(token)) return;
 
+    clearMenuAndHelpState();
     state.bonusStage = "round";
     state.tiles = makeBonusTiles();
     state.bonusDeadline = performance.now() + bonusTimeWithWiggle();
@@ -1178,6 +1187,7 @@
       await sleep(430);
     }
     if (!isCurrentBonusToken(token)) return;
+    clearMenuAndHelpState();
     state.bonusActive = false;
     state.bonusStage = "none";
     state.busy = false;
