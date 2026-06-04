@@ -106,6 +106,7 @@
     frenzyInputLockedUntil: 0,
     frenzyBreakSeq: 0,
     frenzyDropDelays: {},
+    frenzyDropMotion: {},
 
     pendingCorrectLabel: "",
     pendingCorrectType: "word",
@@ -160,7 +161,7 @@
       overlayMessage: "", overlayTone: "", overlayStartedAt: 0, overlayUntil: 0,
       warningLevel: 0, warningOverlayLevel: 0, warningOverlayStartedAt: 0, warningOverlayUntil: 0, hadWarning2BeforePlacement: false, beltRespawnLockUntil: 0, beltNeedsFreshSpawn: false, collapseTriggered: false, collapseEndsAt: 0, collapseStartedAt: 0, collapseDir: 1, collapseBasePose: null, lastStableTowerPose: null, pendingPreCollapsePose: null, collapseBurstFired: {}, collapseDebugFramesLeft: 0,
       stream: [], streamId: 0, fx: [], enteringBrick: null, enteringId: 0,
-      done: false, frenzyActive: false, frenzyInputLockedUntil: 0, frenzyBreakSeq: 0, frenzyDropDelays: {}, pendingCorrectLabel: "", pendingCorrectType: "word",
+      done: false, frenzyActive: false, frenzyInputLockedUntil: 0, frenzyBreakSeq: 0, frenzyDropDelays: {}, frenzyDropMotion: {}, pendingCorrectLabel: "", pendingCorrectType: "word",
       pendingCorrectVisible: 0, spawnIndex: 0
     });
     updatePhaseFromProgress(0);
@@ -727,14 +728,28 @@
         });
       }
 
-      const frenzyDelay = state.frenzyActive && state.frenzyDropDelays
-        ? Number(state.frenzyDropDelays[i] || 0)
-        : 0;
+      const dropMotion = state.frenzyActive && state.frenzyDropMotion
+        ? state.frenzyDropMotion[i]
+        : null;
+
+      if (dropMotion) {
+        const delay = Number(dropMotion.delay || 0);
+        const duration = Number(dropMotion.duration || 360);
+        const rawT = clamp((now - dropMotion.startedAt - delay) / duration, 0, 1);
+        const easedT = rawT <= 0 ? 0 : 1 - Math.pow(1 - rawT, 3);
+
+        bottom += dropMotion.fromBottomOffset * (1 - easedT);
+
+        if (rawT >= 1) {
+          delete state.frenzyDropMotion[i];
+        }
+      }
+
       const frenzyAttrs = state.frenzyActive
         ? ` data-frenzy-index="${i}" role="button" aria-label="Break ${escapeHtml(brick.label)} brick"`
         : "";
 
-      html += `<div class="${cls.join(" ")}" ${frenzyAttrs} style="bottom:${bottom}px;width:${width}px;height:${height}px;font-size:${fontSize}px;opacity:${opacity.toFixed(3)};transform:translateX(calc(-50% + ${offsetX}px)) rotate(${rot}deg);transition-delay:${frenzyDelay}ms;">${escapeHtml(brick.label)}</div>`;
+      html += `<div class="${cls.join(" ")}" ${frenzyAttrs} style="bottom:${bottom}px;width:${width}px;height:${height}px;font-size:${fontSize}px;opacity:${opacity.toFixed(3)};transform:translateX(calc(-50% + ${offsetX}px)) rotate(${rot}deg);">${escapeHtml(brick.label)}</div>`;
 
 
       cumulativeBottom += height + clamp(state.brickHeight * 0.07, 4, 8);
@@ -974,6 +989,7 @@
     state.frenzyInputLockedUntil = 0;
     state.frenzyBreakSeq = 0;
     state.frenzyDropDelays = {};
+    state.frenzyDropMotion = {};
     state.pendingCorrectVisible = 0;
     seedPendingCorrect();
     state.stream = [];
@@ -1573,6 +1589,7 @@
     state.frenzyInputLockedUntil = now + 250;
     state.frenzyBreakSeq = 0;
     state.frenzyDropDelays = {};
+    state.frenzyDropMotion = {};
 
     state.overlayMessage = "BREAK\nTHE BRICKS!";
     state.overlayTone = "";
@@ -1594,9 +1611,10 @@
     if (now < state.frenzyInputLockedUntil) return;
     if (!state.progress.length) return;
 
+    const oldCount = state.progress.length;
     const breakIndex = Number.isFinite(index)
-      ? clamp(Math.round(index), 0, state.progress.length - 1)
-      : state.progress.length - 1;
+      ? clamp(Math.round(index), 0, oldCount - 1)
+      : oldCount - 1;
 
     if (state.overlayMessage) {
       state.overlayMessage = "";
@@ -1605,27 +1623,43 @@
       state.overlayUntil = 0;
     }
 
-    const breakInfo = getTowerBrickRenderInfo(breakIndex, state.progress.length);
+    const breakInfo = getTowerBrickRenderInfo(breakIndex, oldCount);
+    const oldInfos = state.progress.map((brick, i) => getTowerBrickRenderInfo(i, oldCount));
+
     addChunkBurst(breakInfo.x, breakInfo.y, Math.max(0.95, breakInfo.scale));
 
     state.progress.splice(breakIndex, 1);
     state.frenzyBreakSeq += 1;
     state.frenzyDropDelays = {};
+    state.frenzyDropMotion = {};
 
-    for (let i = breakIndex; i < state.progress.length; i++) {
-      state.frenzyDropDelays[i] = Math.min((i - breakIndex) * 45, 270);
+    const newCount = state.progress.length;
+
+    for (let i = breakIndex; i < newCount; i++) {
+      const oldInfo = oldInfos[i + 1];
+      const newInfo = getTowerBrickRenderInfo(i, newCount);
+      const delay = Math.min((i - breakIndex) * 48, 280);
+
+      state.frenzyDropDelays[i] = delay;
+      state.frenzyDropMotion[i] = {
+        startedAt: now,
+        delay,
+        duration: 360,
+        fromBottomOffset: oldInfo ? oldInfo.bottom - newInfo.bottom : 0
+      };
     }
 
-    const longestDelay = state.progress.length > breakIndex
-      ? Math.min((state.progress.length - 1 - breakIndex) * 45, 270)
+    const longestDelay = newCount > breakIndex
+      ? Math.min((newCount - 1 - breakIndex) * 48, 280)
       : 0;
 
-    state.towerSettleUntil = now + longestDelay + 260;
-    state.frenzyInputLockedUntil = now + longestDelay + 330;
+    state.towerSettleUntil = now + longestDelay + 360;
+    state.frenzyInputLockedUntil = now + longestDelay + 430;
 
     if (!state.progress.length) {
       state.frenzyActive = false;
       state.frenzyDropDelays = {};
+      state.frenzyDropMotion = {};
       state.overlayMessage = "";
       state.overlayTone = "";
       state.overlayStartedAt = 0;
