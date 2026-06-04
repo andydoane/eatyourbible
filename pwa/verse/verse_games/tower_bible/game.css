@@ -306,6 +306,18 @@ body {
   background-size: 260% 100%;
 }
 
+.tb-center-overlay-msg.is-warning1 {
+  background: linear-gradient(180deg, #ffe27a, #ffc751);
+  color: #3b2a12;
+  text-shadow: 0 2px 0 rgba(255, 255, 255, .38);
+}
+
+.tb-center-overlay-msg.is-warning2 {
+  background: linear-gradient(180deg, #ff7a66, #ff2f4f);
+  color: #ffffff;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, .22);
+}
+
 .tb-choice-brick {
   position: absolute;
   top: 50%;

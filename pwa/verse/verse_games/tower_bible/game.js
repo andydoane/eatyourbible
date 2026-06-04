@@ -482,14 +482,34 @@
     const now = performance.now();
     if (!layer) return;
 
-    if (!state.overlayMessage || now >= state.overlayUntil) {
+    const hasTimingOverlay = state.overlayMessage && now < state.overlayUntil;
+
+    let message = "";
+    let tone = "";
+    let startedAt = state.overlayStartedAt || now;
+    let duration = Math.max(1, state.overlayUntil - startedAt);
+
+    if (hasTimingOverlay) {
+      message = state.overlayMessage;
+      tone = state.overlayTone;
+    } else if (!state.collapseTriggered && !state.done && !state.frenzyActive && state.warningLevel >= 2) {
+      message = "ABOUT\nTO FALL!";
+      tone = "warning2";
+      startedAt = now - (now % 700);
+      duration = 700;
+    } else if (!state.collapseTriggered && !state.done && !state.frenzyActive && state.warningLevel === 1) {
+      message = "TOWER IS\nLEANING!";
+      tone = "warning1";
+      startedAt = now - (now % 1100);
+      duration = 1100;
+    }
+
+    if (!message) {
       layer.innerHTML = "";
       return;
     }
 
-    const toneClass = state.overlayTone ? ` is-timing is-${state.overlayTone}` : "";
-    const startedAt = state.overlayStartedAt || now;
-    const duration = Math.max(1, state.overlayUntil - startedAt);
+    const toneClass = tone ? ` is-timing is-${tone}` : "";
     const t = clamp((now - startedAt) / duration, 0, 1);
 
     let opacity = 1;
@@ -497,7 +517,13 @@
     let y = -50;
     let rot = 0;
 
-    if (state.overlayTone) {
+    if (tone === "warning1") {
+      scale = 1 + Math.sin(now / 175) * 0.025;
+      rot = Math.sin(now / 260) * 0.8;
+    } else if (tone === "warning2") {
+      scale = 1 + Math.sin(now / 95) * 0.045;
+      rot = Math.sin(now / 120) * 1.7;
+    } else if (tone) {
       if (t < 0.16) {
         const p = t / 0.16;
         opacity = p;
@@ -522,9 +548,9 @@
       }
     }
 
-    const bgPos = state.overlayTone === "perfect" ? `${Math.round(t * 260)}% 50%` : "50% 50%";
+    const bgPos = tone === "perfect" ? `${Math.round(t * 260)}% 50%` : "50% 50%";
 
-    layer.innerHTML = `<div class="tb-center-overlay-msg${toneClass}" style="opacity:${opacity.toFixed(3)};transform:translate(-50%, ${y.toFixed(1)}%) scale(${scale.toFixed(3)}) rotate(${rot.toFixed(1)}deg);background-position:${bgPos};">${formatOverlayMessage(state.overlayMessage)}</div>`;
+    layer.innerHTML = `<div class="tb-center-overlay-msg${toneClass}" style="opacity:${opacity.toFixed(3)};transform:translate(-50%, ${y.toFixed(1)}%) scale(${scale.toFixed(3)}) rotate(${rot.toFixed(1)}deg);background-position:${bgPos};">${formatOverlayMessage(message)}</div>`;
   }
 
   function renderConveyor(layer) {
@@ -688,11 +714,7 @@
 
       html += `<div class="${cls.join(" ")}" style="bottom:${bottom}px;width:${width}px;height:${height}px;font-size:${fontSize}px;opacity:${opacity.toFixed(3)};transform:translateX(calc(-50% + ${offsetX}px)) rotate(${rot}deg)">${escapeHtml(brick.label)}</div>`;
 
-      if (!state.collapseTriggered && i === 0 && showBottomWarningOverlay(now)) {
-        const warningClass = state.warningLevel >= 2 ? "tb-warning-overlay danger" : "tb-warning-overlay";
-        const warningText = state.warningLevel >= 2 ? "WARNING!" : "WARNING";
-        html += `<div class="${warningClass}" style="bottom:${bottom}px;width:${width}px;height:${height}px;font-size:${fontSize}px;transform:translateX(calc(-50% + ${offsetX}px)) rotate(${rot}deg)">${warningText}</div>`;
-      }
+
       cumulativeBottom += height + clamp(state.brickHeight * 0.07, 4, 8);
     }
 
