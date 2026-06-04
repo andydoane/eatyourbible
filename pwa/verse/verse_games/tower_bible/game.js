@@ -524,10 +524,7 @@
 
     const bgPos = state.overlayTone === "perfect" ? `${Math.round(t * 260)}% 50%` : "50% 50%";
 
-    layer.innerHTML = `
-      <div class="tb-center-overlay-msg${toneClass}" style="opacity:${opacity.toFixed(3)};transform:translate(-50%, ${y.toFixed(1)}%) scale(${scale.toFixed(3)}) rotate(${rot.toFixed(1)}deg);background-position:${bgPos};">
-        ${formatOverlayMessage(state.overlayMessage)}
-      </div>`;
+    layer.innerHTML = `<div class="tb-center-overlay-msg${toneClass}" style="opacity:${opacity.toFixed(3)};transform:translate(-50%, ${y.toFixed(1)}%) scale(${scale.toFixed(3)}) rotate(${rot.toFixed(1)}deg);background-position:${bgPos};">${formatOverlayMessage(state.overlayMessage)}</div>`;
   }
 
   function renderConveyor(layer) {
@@ -1127,11 +1124,11 @@
 
   function getTimingOverlayForZone(zone) {
     if (zone <= -2) {
-      return { message: "TOO\nEARLY!", tone: "early" };
+      return { message: "TOO\nLATE!", tone: "late" };
     }
 
     if (zone === -1) {
-      return { message: "A LITTLE\nEARLY!", tone: "early" };
+      return { message: "A LITTLE\nLATE!", tone: "late" };
     }
 
     if (zone === 0) {
@@ -1139,10 +1136,10 @@
     }
 
     if (zone === 1) {
-      return { message: "A LITTLE\nLATE!", tone: "late" };
+      return { message: "A LITTLE\nEARLY!", tone: "early" };
     }
 
-    return { message: "TOO\nLATE!", tone: "late" };
+    return { message: "TOO\nEARLY!", tone: "early" };
   }
 
   function seedPendingCorrect() {
