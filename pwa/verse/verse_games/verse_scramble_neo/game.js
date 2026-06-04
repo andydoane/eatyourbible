@@ -15,6 +15,12 @@
 
 
   const SILENCE_AUDIO_FILE = "../../verse_audio/silence.mp3";
+  const UI_SOUND_BASE_PATH = "../../ui_audio/";
+
+  const UI_SOUND_FILES = {
+    uiTap1: `${UI_SOUND_BASE_PATH}ui_sound_pop_1.mp3`,
+    uiTap2: `${UI_SOUND_BASE_PATH}ui_sound_pop_2.mp3`
+  };
 
   const SOUND_TUNING = {
     // Master volume for every generated sound.
@@ -33,7 +39,8 @@
       bonusStart: 3.20,     // Magnet Race
       bonusYouWin: 3.20,    // Happy Bells
       bonusIWin: 3.20,      // Soft Slide Down
-      bonusFinal: 3.20      // Little Crown
+      bonusFinal: 3.20,     // Little Crown
+      uiTap: 0.45           // Shared UI pop sounds
     }
   };
 
@@ -57,6 +64,10 @@
   let silenceAudioEl = null;
   let audioUnlocked = false;
   let currentCorrectMelody = [];
+  let uiSoundFlip = false;
+
+  const uiSoundBuffers = new Map();
+  const uiSoundBufferPromises = new Map();
 
   const shuffle = window.VerseGameShell.shuffle;
 
@@ -250,6 +261,7 @@
       osc.stop(t + 0.03);
 
       audioUnlocked = true;
+      preloadUiSounds();
     } catch (err) {
       // Unlock blip is best-effort.
     }
@@ -321,6 +333,89 @@
     playNoise(eventId, start, 0.025, gain, freq, "bandpass");
   }
 
+
+  function preloadUiSounds() {
+    Object.keys(UI_SOUND_FILES).forEach(key => {
+      loadUiSoundBuffer(key);
+    });
+  }
+
+  function loadUiSoundBuffer(key) {
+    if (uiSoundBuffers.has(key)) {
+      return Promise.resolve(uiSoundBuffers.get(key));
+    }
+
+    if (uiSoundBufferPromises.has(key)) {
+      return uiSoundBufferPromises.get(key);
+    }
+
+    const url = UI_SOUND_FILES[key];
+    if (!url) return Promise.resolve(null);
+
+    const promise = fetch(url)
+      .then(response => {
+        if (!response.ok) throw new Error(`Unable to load UI sound: ${key}`);
+        return response.arrayBuffer();
+      })
+      .then(arrayBuffer => {
+        const ctx = ensureAudioContext();
+        if (!ctx) return null;
+        return ctx.decodeAudioData(arrayBuffer);
+      })
+      .then(buffer => {
+        if (buffer) uiSoundBuffers.set(key, buffer);
+        return buffer;
+      })
+      .catch(() => null);
+
+    uiSoundBufferPromises.set(key, promise);
+    return promise;
+  }
+
+  function playBufferedUiSound(key, eventId = "uiTap", allowWhenMuted = false) {
+    if (muted && !allowWhenMuted) return;
+
+    unlockAudio();
+
+    const ctx = ensureAudioContext();
+    if (!ctx || !masterGain) return;
+
+    masterGain.gain.value = SOUND_TUNING.masterVolume;
+
+    const startBuffer = buffer => {
+      if (!buffer) return;
+      if (muted && !allowWhenMuted) return;
+
+      try {
+        const source = ctx.createBufferSource();
+        const gain = ctx.createGain();
+
+        source.buffer = buffer;
+        gain.gain.value = getSoundVolume(eventId);
+
+        source.connect(gain);
+        gain.connect(masterGain);
+
+        source.start(ctx.currentTime + 0.01);
+      } catch (err) {
+        // UI sounds should never break gameplay.
+      }
+    };
+
+    const existingBuffer = uiSoundBuffers.get(key);
+    if (existingBuffer) {
+      startBuffer(existingBuffer);
+      return;
+    }
+
+    loadUiSoundBuffer(key).then(startBuffer);
+  }
+
+  function playUiTapSound(allowWhenMuted = false) {
+    const key = uiSoundFlip ? "uiTap2" : "uiTap1";
+    uiSoundFlip = !uiSoundFlip;
+    playBufferedUiSound(key, "uiTap", allowWhenMuted);
+  }
 
   const TUNE_TEMPO = 0.65;
 
@@ -878,7 +973,10 @@
       theme: GAME_THEME,
       backLabel: "Back to Practice Games",
       onBack: () => window.VerseGameBridge.exitGame(),
-      onStart: () => setScreen("mode")
+      onStart: () => {
+        playUiTapSound();
+        setScreen("mode");
+      }
     });
   }
 
@@ -891,9 +989,13 @@
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
       backLabel: "Back to Verse Scramble title",
-      onBack: () => setScreen("intro"),
+      onBack: () => {
+        playUiTapSound();
+        setScreen("intro");
+      },
       onSelect: async (mode) => {
         unlockAudio();
+        playUiTapSound();
         await waitForMagnetFont();
         selectedMode = mode;
         initVerseData();
@@ -1397,10 +1499,17 @@
       backLabel: "Back to Practice Games",
       onPlayAgain: () => {
         unlockAudio();
+        playUiTapSound();
         setScreen("mode");
       },
-      onMoreGames: () => window.VerseGameBridge.exitGame(),
-      onChangeVerse: () => window.VerseGameBridge.returnToTitle()
+      onMoreGames: () => {
+        playUiTapSound();
+        window.VerseGameBridge.exitGame();
+      },
+      onChangeVerse: () => {
+        playUiTapSound();
+        window.VerseGameBridge.returnToTitle();
+      }
     });
   }
 
@@ -1445,10 +1554,18 @@
       isMuted: () => muted,
       onMuteToggle: () => {
         unlockAudio();
+
+        const wasMuted = muted;
         muted = !muted;
+
+        if (wasMuted) {
+          playUiTapSound(true);
+        }
+
         return muted;
       },
       onHowToPlay: () => {
+        playUiTapSound();
         state.menuOpen = false;
         state.helpOpen = true;
         state.helpBackMode = true;
@@ -1462,22 +1579,29 @@
         window.VerseGameShell.openHelp(HELP_OVERLAY_ID, "back", "Back");
       },
       onModeSelect: () => {
+        playUiTapSound();
         state.menuOpen = false;
         state.helpOpen = false;
         state.helpBackMode = false;
         setScreen("mode");
       },
-      onExit: () => window.VerseGameBridge.exitGame(),
+      onExit: () => {
+        playUiTapSound();
+        window.VerseGameBridge.exitGame();
+      },
       onOpen: () => {
         if (state.busy) return;
+        playUiTapSound();
         state.menuOpen = true;
         state.helpOpen = false;
         state.helpBackMode = false;
       },
       onClose: () => {
+        playUiTapSound();
         state.menuOpen = false;
       },
       onBackFromHelp: () => {
+        playUiTapSound();
         state.helpOpen = false;
         state.menuOpen = true;
         state.helpBackMode = false;
