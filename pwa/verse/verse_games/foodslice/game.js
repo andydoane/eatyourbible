@@ -36,7 +36,10 @@
 
     swoosh1: `${SOUND_BASE_PATH}food_slice_swoosh_1.mp3`,
     swoosh2: `${SOUND_BASE_PATH}food_slice_swoosh_2.mp3`,
-    swoosh3: `${SOUND_BASE_PATH}food_slice_swoosh_3.mp3`
+    swoosh3: `${SOUND_BASE_PATH}food_slice_swoosh_3.mp3`,
+
+    uiTap1: "../../ui_audio/ui_sound_pop_1.mp3",
+    uiTap2: "../../ui_audio/ui_sound_pop_2.mp3"
   };
 
   const SOUND_GROUPS = {
@@ -50,7 +53,8 @@
       bomb: 0.9,
       wrong: 0.65,
       slice: 0.72,
-      swoosh: 0.42
+      swoosh: 0.42,
+      uiTap: 0.45
     },
     minSwooshGapMs: 85
   };
@@ -133,6 +137,8 @@
   let lastSliceSound = "";
   let lastSwooshSound = "";
   let lastSwooshAt = 0;
+  let uiSoundFlip = false;
+  let lastUiTapAt = 0;
   const soundBuffers = new Map();
   const soundBufferPromises = new Map();
   let completionMarked = false;
@@ -213,8 +219,16 @@
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
       backLabel: "Back to Practice Games",
-      onBack: () => window.VerseGameBridge.exitGame(),
-      onStart: renderModeSelect
+      onBack: () => {
+        void unlockAudio();
+        playUiTapSound();
+        window.VerseGameBridge.exitGame();
+      },
+      onStart: () => {
+        void unlockAudio();
+        playUiTapSound();
+        renderModeSelect();
+      }
     });
   }
 
@@ -229,8 +243,16 @@
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
       backLabel: "Back to Food Slice title",
-      onBack: renderIntro,
-      onSelect: startGame
+      onBack: () => {
+        void unlockAudio();
+        playUiTapSound();
+        renderIntro();
+      },
+      onSelect: (mode) => {
+        void unlockAudio();
+        playUiTapSound();
+        startGame(mode);
+      }
     });
   }
 
@@ -325,9 +347,21 @@
       gameMessage: `Bonus slices: ${state.bonusCount}`,
       theme: GAME_THEME,
       backLabel: "Back to Practice Games",
-      onPlayAgain: renderModeSelect,
-      onMoreGames: () => window.VerseGameBridge.exitGame(),
-      onChangeVerse: () => window.VerseGameBridge.returnToTitle()
+      onPlayAgain: () => {
+        void unlockAudio();
+        playUiTapSound();
+        renderModeSelect();
+      },
+      onMoreGames: () => {
+        void unlockAudio();
+        playUiTapSound();
+        window.VerseGameBridge.exitGame();
+      },
+      onChangeVerse: () => {
+        void unlockAudio();
+        playUiTapSound();
+        window.VerseGameBridge.returnToTitle();
+      }
     });
   }
 
@@ -362,22 +396,39 @@
       isMuted: () => muted,
       onMuteToggle: () => {
         muted = !muted;
-        if (!muted) void unlockAudio();
+        if (!muted) {
+          void unlockAudio();
+          playUiTapSound();
+        }
         return muted;
       },
-      onHowToPlay: openHelpFromMenu,
+      onHowToPlay: () => {
+        playUiTapSound();
+        openHelpFromMenu();
+      },
       onModeSelect: () => {
+        playUiTapSound();
         setPaused(false, "");
         stopLoop();
         renderModeSelect();
       },
       onExit: () => {
+        playUiTapSound();
         stopLoop();
         window.VerseGameBridge.exitGame();
       },
-      onOpen: () => setPaused(true, "menu"),
-      onClose: () => setPaused(false, ""),
-      onBackFromHelp: () => setPaused(true, "menu")
+      onOpen: () => {
+        playUiTapSound();
+        setPaused(true, "menu");
+      },
+      onClose: () => {
+        playUiTapSound();
+        setPaused(false, "");
+      },
+      onBackFromHelp: () => {
+        playUiTapSound();
+        setPaused(true, "menu");
+      }
     });
   }
 
@@ -395,6 +446,7 @@
           e.stopPropagation();
         }
         void unlockAudio();
+        playUiTapSound();
         openGameMenu();
       };
       menuPill.onclick = openFromPill;
@@ -447,11 +499,13 @@
 
 
   function closeHelpOverlay() {
+    playUiTapSound();
     window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
     setPaused(false, "");
   }
 
   function backToMenuFromHelp() {
+    playUiTapSound();
     window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
 
     const menuOverlay = document.getElementById("fsGameMenuOverlay");
@@ -2267,6 +2321,16 @@
 
     return next;
   }
+
+  function playUiTapSound() {
+    const now = performance.now();
+    if (now - lastUiTapAt < 70) return;
+
+    lastUiTapAt = now;
+    uiSoundFlip = !uiSoundFlip;
+    playGameSound(uiSoundFlip ? "uiTap1" : "uiTap2", "uiTap");
+  }
+
 
   function playRandomSliceSound() {
     const key = pickRandomSoundKey("slice", lastSliceSound);
