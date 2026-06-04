@@ -94,12 +94,12 @@
   };
 
   const FIREWORK_TUNING = {
-    triggerStreak: 3,
-    duration: 330,
+    triggerStreak: 15,
+    duration: 430,
     sizeScale: 1.24,
-    mainRays: 18,
-    shortRays: 10,
-    sparkles: 17,
+    mainRays: 12,
+    shortRays: 6,
+    sparkles: 8,
     rayThicknessScale: 0.11,
     glow: 0.42,
     rainbowChance: 0.5,
