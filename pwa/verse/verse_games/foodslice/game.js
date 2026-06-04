@@ -111,6 +111,14 @@
     rainbowColors: ["#ff5a51", "#ffa351", "#ffc751", "#a7cb6f", "#40b9c5", "#7f66c6"]
   };
 
+  const DECOY_TUNING = {
+    baseCorrectChance: 0.6,
+    softLimitCorrectStreak: 2,
+    softLimitCorrectChance: 0.35,
+    hardLimitCorrectStreak: 3,
+    maxWrongChoicesInRow: 2
+  };
+
   const FS_BOMB_CLOUD_SVG = `
 <svg viewBox="0 0 26.458333 26.458333" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <path fill="currentColor" d="M 12.949771,1.5464282 A 6.0017493,5.3230522 7.1160496 0 0 6.9820601,6.4190471 5.3405872,4.7400094 7.154063 0 0 6.8563886,6.4134999 5.3405872,4.7400094 7.154063 0 0 1.5243277,11.020646 5.3405872,4.7400094 7.154063 0 0 2.4259083,13.677302 4.0181559,3.5662928 7.1540647 0 0 0.66145837,16.583588 4.0181559,3.5662928 7.1540647 0 0 4.6728467,20.261811 4.0181559,3.5662928 7.1540647 0 0 5.1732885,20.243 a 5.3405872,4.7400094 7.154063 0 0 5.2883005,4.342428 5.3405872,4.7400094 7.154063 0 0 3.656255,-1.210431 4.0181559,3.5662928 7.1540647 0 0 3.300558,1.639798 4.0181559,3.5662928 7.1540647 0 0 4.011389,-3.466536 4.0181559,3.5662928 7.1540647 0 0 -0.416848,-1.594767 5.3405872,4.7400094 7.154063 0 0 4.783932,-4.586787 5.3405872,4.7400094 7.154063 0 0 -1.9322,-3.706541 4.0181559,3.5662928 7.1540647 0 0 0.764128,-2.0624453 4.0181559,3.5662928 7.1540647 0 0 -4.011389,-3.6776624 4.0181559,3.5662928 7.1540647 0 0 -1.744813,0.3148283 6.0017493,5.3230522 7.1160496 0 0 -5.92283,-4.6884523 z"/>
@@ -180,6 +188,7 @@
     activeTrailSparkles: [],
     wrongStreak: 0,
     correctStreak: 0,
+    correctChoiceStreak: 0,
     buildShakeUntil: 0,
     fieldFlashUntil: 0,
     messageSequence: null,
@@ -281,6 +290,7 @@
     state.activeTrailSparkles = [];
     state.wrongStreak = 0;
     state.correctStreak = 0;
+    state.correctChoiceStreak = 0;
     state.buildShakeUntil = 0;
     state.fieldFlashUntil = 0;
     state.messageSequence = createMessageSequence("intro");
@@ -2099,27 +2109,41 @@
       );
     }
 
-    const mustUseCorrect = state.wrongStreak >= 2;
-    const useCorrect = mustUseCorrect || Math.random() < 0.6 || !wrongPool.length;
-    if (useCorrect) {
-      state.wrongStreak = 0;
-      return { text: correct, isCorrect: true };
-    }
-    state.wrongStreak += 1;
-    return { text: pickRandom(wrongPool), isCorrect: false };
+    return pickCorrectOrDecoy(correct, wrongPool);
   }
 
   function pickPhaseChoice(correct, choicePool) {
-    const mustUseCorrect = state.wrongStreak >= 2;
     const wrongs = (choicePool || []).filter((item) => item !== correct);
-    const useCorrect = mustUseCorrect || Math.random() < 0.6 || !wrongs.length;
+    return pickCorrectOrDecoy(correct, wrongs);
+  }
+
+  function pickCorrectOrDecoy(correct, wrongPool) {
+    const wrongs = (wrongPool || []).filter(Boolean);
+    const mustUseCorrect = state.wrongStreak >= DECOY_TUNING.maxWrongChoicesInRow;
+    const mustUseDecoy = state.correctChoiceStreak >= DECOY_TUNING.hardLimitCorrectStreak && wrongs.length > 0;
+
+    let correctChance = DECOY_TUNING.baseCorrectChance;
+    if (state.correctChoiceStreak >= DECOY_TUNING.softLimitCorrectStreak) {
+      correctChance = DECOY_TUNING.softLimitCorrectChance;
+    }
+
+    const useCorrect = !mustUseDecoy && (
+      mustUseCorrect ||
+      Math.random() < correctChance ||
+      !wrongs.length
+    );
+
     if (useCorrect) {
       state.wrongStreak = 0;
+      state.correctChoiceStreak += 1;
       return { text: correct, isCorrect: true };
     }
+
     state.wrongStreak += 1;
+    state.correctChoiceStreak = 0;
     return { text: pickRandom(wrongs), isCorrect: false };
   }
+
 
   function getVerseDerivedDecoys(targetIndex, correct) {
     return window.VerseGameShell.getVerseWordDecoys({
