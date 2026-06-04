@@ -429,9 +429,9 @@ body {
 .tb-tower-shell {
   position: absolute;
   left: 50%;
-  bottom: calc(clamp(24px, 5vw, 42px) + clamp(94px, 16vw, 126px) + 10px);
+  bottom: calc(clamp(24px, 5vw, 42px) + clamp(94px, 16vw, 126px) - 1px);
   width: min(86vw, 560px);
-  height: calc(100% - (clamp(24px, 5vw, 42px) + clamp(94px, 16vw, 126px) + 46px));
+  height: calc(100% - (clamp(24px, 5vw, 42px) + clamp(94px, 16vw, 126px) + 35px));
   transform: translateX(-50%);
 }
 
@@ -443,29 +443,72 @@ body {
   align-items: center;
   justify-content: center;
   border-radius: 10px;
-  background: #ffffff;
-  color: #111;
-  font-weight: 900;
+  overflow: hidden;
+  background: #c98a49;
+  color: rgba(0, 0, 0, .35);
+  font-family: var(--tb-game-font);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: .035em;
   text-align: center;
   padding: 0 10px;
   line-height: 1.05;
-  box-shadow: 0 6px 0 rgba(0, 0, 0, .14);
+  box-shadow: none;
   transition: transform 380ms cubic-bezier(.2, .8, .2, 1), bottom 380ms cubic-bezier(.2, .8, .2, 1), width 380ms cubic-bezier(.2, .8, .2, 1), height 380ms cubic-bezier(.2, .8, .2, 1), font-size 380ms cubic-bezier(.2, .8, .2, 1);
   will-change: transform, bottom;
 }
 
-.tb-tower-brick.book {
-  background: #ffc751;
-  color: #333;
-}
-
+.tb-tower-brick.book,
 .tb-tower-brick.ref {
-  background: #ffefb5;
-  color: #333;
+  background: #c98a49;
+  color: rgba(0, 0, 0, .35);
 }
 
 .tb-tower-brick.capstone {
-  box-shadow: 0 8px 0 rgba(0, 0, 0, .18);
+  box-shadow: none;
+}
+
+.tb-tower-brick::before,
+.tb-enter-brick::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: url("tower_bible_images/tower_bible_brick_texture.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 100% 100%;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.tb-tower-brick::after,
+.tb-enter-brick::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    linear-gradient(to bottom,
+      rgba(255, 255, 255, .16) 0%,
+      rgba(255, 255, 255, .16) 6%,
+      rgba(255, 255, 255, 0) 6%,
+      rgba(255, 255, 255, 0) 94%,
+      rgba(0, 0, 0, .25) 94%,
+      rgba(0, 0, 0, .25) 100%);
+  pointer-events: none;
+}
+
+.tb-texture-flip-x::before {
+  transform: scaleX(-1);
+}
+
+.tb-texture-flip-y::before {
+  transform: scaleY(-1);
+}
+
+.tb-texture-flip-both::before {
+  transform: scale(-1, -1);
 }
 
 .tb-tower-brick.is-collapsing {
@@ -533,24 +576,24 @@ body {
   align-items: center;
   justify-content: center;
   border-radius: 10px;
-  background: #ffffff;
-  color: #111;
-  font-weight: 900;
+  overflow: hidden;
+  background: #c98a49;
+  color: rgba(0, 0, 0, .35);
+  font-family: var(--tb-game-font);
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: .035em;
   text-align: center;
   padding: 0 10px;
   line-height: 1.05;
-  box-shadow: 0 6px 0 rgba(0, 0, 0, .14);
+  box-shadow: none;
   pointer-events: none;
 }
 
-.tb-enter-brick.book {
-  background: #ffc751;
-  color: #333;
-}
-
+.tb-enter-brick.book,
 .tb-enter-brick.ref {
-  background: #ffefb5;
-  color: #333;
+  background: #c98a49;
+  color: rgba(0, 0, 0, .35);
 }
 
 .tb-tower-settle {

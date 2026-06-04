@@ -723,7 +723,7 @@
       return;
     }
 
-    const cls = ["tb-enter-brick"];
+    const cls = ["tb-enter-brick", e.textureClass || "tb-texture-normal"];
     if (e.kind === "book") cls.push("book");
     if (e.kind === "reference") cls.push("ref");
 
@@ -783,7 +783,7 @@
       const baseOffsetX = frozenPose ? frozenPose.offsetX : liveBaseOffsetX;
       const baseRot = frozenPose ? frozenPose.rot : liveBaseRot;
 
-      const cls = ["tb-tower-brick"];
+      const cls = ["tb-tower-brick", brick.textureClass || "tb-texture-normal"];
       let opacity = Math.max(0.72, 1 - level * 0.02);
       let bottom = cumulativeBottom;
       let offsetX = baseOffsetX;
@@ -867,7 +867,7 @@
       html += `<div class="${cls.join(" ")}" ${frenzyAttrs} style="bottom:${bottom}px;width:${width}px;height:${height}px;font-size:${fontSize}px;opacity:${opacity.toFixed(3)};transform:translateX(calc(-50% + ${offsetX}px)) rotate(${rot}deg);">${escapeHtml(brick.label)}</div>`;
 
 
-      cumulativeBottom += height + clamp(state.brickHeight * 0.07, 4, 8);
+      cumulativeBottom += height - 1;
     }
 
     if (!state.collapseTriggered) {
@@ -1052,7 +1052,12 @@
       const prevWarningLevel = state.warningLevel;
       const prevLeanScore = getLeanScore();
 
-      state.progress.unshift({ label: e.label, kind: e.kind, zone: e.zone });
+      state.progress.unshift({
+        label: e.label,
+        kind: e.kind,
+        zone: e.zone,
+        textureClass: e.textureClass || getRandomBrickTextureClass()
+      });
       state.enteringBrick = null;
 
       state.towerSettleUntil = performance.now() + 220;
@@ -1290,6 +1295,7 @@
       label: brick.label,
       kind: brick.kind,
       zone,
+      textureClass: getRandomBrickTextureClass(),
       progress: 0,
 
       fromLeft: startLeft,
@@ -1654,7 +1660,7 @@
       const level = i;
       const scale = Math.max(0.54, Math.pow(0.95, level));
       const height = Math.max(34, state.brickHeight * 0.9 * scale);
-      cumulativeBottom += height + clamp(state.brickHeight * 0.07, 4, 8);
+      cumulativeBottom += height - 1;
     }
 
     const level = safeIndex;
@@ -1793,6 +1799,7 @@
       label,
       kind: "word",
       zone: 0,
+      textureClass: getRandomBrickTextureClass(),
       isIntro: true,
       progress: 0,
 
@@ -1841,7 +1848,13 @@
     e.rot = lerp(0, e.toRot, eased);
 
     if (e.progress >= 1) {
-      state.progress.unshift({ label: e.label, kind: "word", zone: 0, isIntro: true });
+      state.progress.unshift({
+        label: e.label,
+        kind: "word",
+        zone: 0,
+        isIntro: true,
+        textureClass: e.textureClass || getRandomBrickTextureClass()
+      });
       state.enteringBrick = null;
       state.towerSettleUntil = performance.now() + 220;
     }
@@ -2331,7 +2344,7 @@
   }
 
   function laneBottomOffset() { return clamp(state.fieldWidth * 0.055, 24, 42); }
-  function towerBaseBottom() { return laneBottomOffset() + state.laneHeight + 10; }
+  function towerBaseBottom() { return laneBottomOffset() + state.laneHeight - 1; }
 
   function getTowerShellRotation(now) {
     return 0;
@@ -2357,6 +2370,17 @@
 
   function randomBetween(min, max) {
     return min + Math.random() * (max - min);
+  }
+
+  function getRandomBrickTextureClass() {
+    const variants = [
+      "tb-texture-normal",
+      "tb-texture-flip-x",
+      "tb-texture-flip-y",
+      "tb-texture-flip-both"
+    ];
+
+    return variants[Math.floor(Math.random() * variants.length)];
   }
 
   function lerp(a, b, t) { return a + (b - a) * t; }
