@@ -257,6 +257,10 @@ body {
   will-change: transform;
 }
 
+.fs-item {
+  isolation: isolate;
+}
+
 .fs-message-item {
   pointer-events: auto;
   transform-origin: center center;
@@ -303,6 +307,8 @@ body {
 }
 
 .fs-fruit-btn {
+  position: relative;
+  z-index: 1;
   width: var(--fs-fruit-hit);
   min-width: var(--fs-fruit-hit);
   min-height: var(--fs-fruit-hit);
@@ -327,6 +333,8 @@ body {
 }
 
 .fs-fruit-emoji {
+  position: relative;
+  z-index: 2;
   font-size: var(--fs-fruit-emoji);
 }
 
@@ -544,6 +552,8 @@ body {
 }
 
 .fs-word-chip {
+  position: relative;
+  z-index: 2;
   min-width: min(52vw, 250px);
   max-width: min(68vw, 340px);
   color: #ffffff;
