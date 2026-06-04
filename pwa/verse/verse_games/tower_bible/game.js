@@ -33,6 +33,41 @@
 
   const DEBUG_COLLAPSE = false;
 
+  const STREAK_CELEBRATION_TUNING = {
+    milestones: [5, 10, 15, 20],
+    colors: {
+      rainbow: ["#ff5a51", "#ffa351", "#ffc751", "#a7cb6f", "#40b9c5", "#7f66c6", "#ff7ad9"],
+      yellowStar: ["#ffc751", "#ffe27a"],
+      white: ["#ffffff", "#fff6d7"]
+    },
+    byStreak: {
+      5: {
+        duration: 1300,
+        particleCount: 34,
+        shapeMode: "confetti",
+        fireworkPairs: 0
+      },
+      10: {
+        duration: 1700,
+        particleCount: 52,
+        shapeMode: "confetti",
+        fireworkPairs: 1
+      },
+      15: {
+        duration: 2100,
+        particleCount: 70,
+        shapeMode: "yellowStarsWhiteConfetti",
+        fireworkPairs: 1
+      },
+      20: {
+        duration: 2600,
+        particleCount: 94,
+        shapeMode: "rainbowStarsConfetti",
+        fireworkPairs: 2
+      }
+    }
+  };
+
   let selectedMode = null;
   let muted = false;
   let completionMarked = false;
@@ -111,7 +146,10 @@
     pendingCorrectLabel: "",
     pendingCorrectType: "word",
     pendingCorrectVisible: 0,
-    spawnIndex: 0
+    spawnIndex: 0,
+
+    correctStreak: 0,
+    streakMilestonesShown: {}
   };
 
   renderIntro();
@@ -162,7 +200,8 @@
       warningLevel: 0, warningOverlayLevel: 0, warningOverlayStartedAt: 0, warningOverlayUntil: 0, hadWarning2BeforePlacement: false, beltRespawnLockUntil: 0, beltNeedsFreshSpawn: false, collapseTriggered: false, collapseEndsAt: 0, collapseStartedAt: 0, collapseDir: 1, collapseBasePose: null, lastStableTowerPose: null, pendingPreCollapsePose: null, collapseBurstFired: {}, collapseDebugFramesLeft: 0,
       stream: [], streamId: 0, fx: [], enteringBrick: null, enteringId: 0,
       done: false, frenzyActive: false, frenzyInputLockedUntil: 0, frenzyBreakSeq: 0, frenzyDropDelays: {}, frenzyDropMotion: {}, pendingCorrectLabel: "", pendingCorrectType: "word",
-      pendingCorrectVisible: 0, spawnIndex: 0
+      pendingCorrectVisible: 0, spawnIndex: 0,
+      correctStreak: 0, streakMilestonesShown: {}
     });
     updatePhaseFromProgress(0);
     seedPendingCorrect();
@@ -181,6 +220,7 @@
               <div class="tb-enter-layer" id="tbEnterLayer"></div>
               <div class="tb-smoke-layer" id="tbSmokeLayer"></div>
               <div class="tb-popup-layer" id="tbPopupLayer"></div>
+              <div class="tb-celebration-layer" id="tbCelebrationLayer"></div>
               <div id="tbDebugLayer" style="position:absolute;left:8px;bottom:8px;z-index:20;pointer-events:none;"></div>
               <div class="tb-controls-layer">
                 <button class="tb-corner-pill tb-corner-left" id="tbMenuPill" type="button" aria-label="Game menu">☰</button>
@@ -991,6 +1031,7 @@
     state.frenzyDropDelays = {};
     state.frenzyDropMotion = {};
     state.pendingCorrectVisible = 0;
+    resetCorrectStreak();
     seedPendingCorrect();
     state.stream = [];
     fillInitialStream();
@@ -1132,6 +1173,7 @@
     if (!brick || !isBrickTappable(brick)) return;
 
     if (!brick.isCorrect) {
+      resetCorrectStreak();
       brick.flashWrong = true;
       brick.flashWrongUntil = performance.now() + 260;
       state.towerShakeUntil = performance.now() + 300;
@@ -1144,6 +1186,7 @@
     const visual = 0;
     const timingOverlay = getTimingOverlayForZone(zone);
     showOverlay(timingOverlay.message, 850, timingOverlay.tone);
+    registerCorrectStreak();
     state.stream = state.stream.filter((b) => b.id !== id);
     state.pendingCorrectVisible = state.stream.filter((b) => b.isCorrect).length;
 
@@ -1719,6 +1762,260 @@
     renderEndScreen(reward);
   }
 
+  function registerCorrectStreak() {
+    state.correctStreak += 1;
+
+    const streak = state.correctStreak;
+    if (!STREAK_CELEBRATION_TUNING.milestones.includes(streak)) return;
+    if (state.streakMilestonesShown[streak]) return;
+
+    state.streakMilestonesShown[streak] = true;
+    triggerStreakCelebration(streak);
+  }
+
+  function resetCorrectStreak() {
+    state.correctStreak = 0;
+    state.streakMilestonesShown = {};
+  }
+
+  function triggerStreakCelebration(streak) {
+    const layer = document.getElementById("tbCelebrationLayer");
+    if (!layer) return;
+
+    const config = STREAK_CELEBRATION_TUNING.byStreak[streak];
+    if (!config) return;
+
+    const brick = Math.max(36, state.brickHeight || 58);
+    const duration = config.duration;
+    const group = document.createElement("div");
+    group.className = `tb-streak-celebration is-streak-${streak}`;
+    group.style.setProperty("--tb-streak-duration", `${duration}ms`);
+    group.style.setProperty("--tb-brick-height", `${brick}px`);
+
+    group.innerHTML = `
+      <div class="tb-streak-text" style="font-size:${clamp(brick * 0.58, 30, 58).toFixed(1)}px;">
+        ${streak} IN A ROW!
+      </div>
+      <div class="tb-confetti-shower">
+        ${renderStreakConfetti(streak, config, brick)}
+      </div>
+      ${renderStreakFireworks(streak, config, brick)}
+    `;
+
+    layer.appendChild(group);
+
+    window.setTimeout(() => {
+      group.remove();
+    }, duration + 900);
+  }
+
+  function renderStreakConfetti(streak, config, brick) {
+    const pieces = [];
+    const count = config.particleCount;
+    const duration = config.duration;
+
+    for (let i = 0; i < count; i++) {
+      const piece = makeStreakConfettiPiece(streak, config, brick, i);
+      pieces.push(`
+        <span
+          class="tb-confetti-piece ${piece.shapeClass}"
+          style="
+            --tb-confetti-x:${piece.x.toFixed(2)}%;
+            --tb-confetti-y:${piece.y.toFixed(1)}px;
+            --tb-confetti-size:${piece.size.toFixed(1)}px;
+            --tb-confetti-fall:${piece.fall.toFixed(1)}px;
+            --tb-confetti-drift:${piece.drift.toFixed(1)}px;
+            --tb-confetti-spin:${piece.spin.toFixed(1)}deg;
+            --tb-confetti-color:${piece.color};
+            --tb-confetti-duration:${duration + piece.durationExtra}ms;
+            --tb-confetti-delay:${piece.delay.toFixed(0)}ms;
+          "
+        ></span>
+      `);
+    }
+
+    return pieces.join("");
+  }
+
+  function makeStreakConfettiPiece(streak, config, brick, index) {
+    const rainbow = STREAK_CELEBRATION_TUNING.colors.rainbow;
+    const yellowStar = STREAK_CELEBRATION_TUNING.colors.yellowStar;
+    const white = STREAK_CELEBRATION_TUNING.colors.white;
+
+    let shapeClass = "is-confetti";
+    let color = pickRandom(rainbow);
+
+    if (config.shapeMode === "yellowStarsWhiteConfetti") {
+      const isStar = Math.random() < 0.42;
+      shapeClass = isStar ? "is-star" : "is-confetti";
+      color = isStar ? pickRandom(yellowStar) : pickRandom(white);
+    } else if (config.shapeMode === "rainbowStarsConfetti") {
+      const isStar = Math.random() < 0.38;
+      shapeClass = isStar ? "is-star" : "is-confetti";
+      color = pickRandom(rainbow);
+    }
+
+    const sizeBase = shapeClass === "is-star"
+      ? randomBetween(brick * 0.24, brick * 0.42)
+      : randomBetween(brick * 0.13, brick * 0.27);
+
+    return {
+      x: randomBetween(0, 100),
+      y: randomBetween(-brick * 1.7, -brick * 0.25),
+      size: sizeBase,
+      fall: state.fieldHeight + randomBetween(brick * 1.4, brick * 4.2),
+      drift: randomBetween(-brick * 1.4, brick * 1.4),
+      spin: randomBetween(220, 900) * (Math.random() < 0.5 ? -1 : 1),
+      delay: randomBetween(0, Math.max(90, config.duration * 0.34)),
+      durationExtra: Math.round(randomBetween(0, config.duration * 0.26)),
+      color,
+      shapeClass
+    };
+  }
+
+  function renderStreakFireworks(streak, config, brick) {
+    if (!config.fireworkPairs) return "";
+
+    const colors = streak >= 20
+      ? STREAK_CELEBRATION_TUNING.colors.rainbow
+      : streak >= 15
+        ? ["#ffc751", "#ffe27a", "#ffffff"]
+        : STREAK_CELEBRATION_TUNING.colors.rainbow;
+
+    const centerX = state.fieldWidth * 0.5;
+    const textY = clamp(state.fieldHeight * 0.18, brick * 1.25, brick * 2.6);
+    const sideOffset = clamp(state.fieldWidth * 0.25, brick * 2.0, brick * 4.6);
+    const size = brick * (streak >= 20 ? 1.65 : streak >= 15 ? 1.45 : 1.22);
+
+    const fireworks = [
+      renderStreakFireworkDom(centerX - sideOffset, textY, size, colors, 0),
+      renderStreakFireworkDom(centerX + sideOffset, textY, size, colors, 70)
+    ];
+
+    if (config.fireworkPairs >= 2) {
+      const lowerY = textY + brick * 1.15;
+      const wideOffset = clamp(state.fieldWidth * 0.34, brick * 2.8, brick * 6.1);
+      fireworks.push(renderStreakFireworkDom(centerX - wideOffset, lowerY, size * 0.82, colors, 210));
+      fireworks.push(renderStreakFireworkDom(centerX + wideOffset, lowerY, size * 0.82, colors, 270));
+    }
+
+    return fireworks.join("");
+  }
+
+  function renderStreakFireworkDom(x, y, size, colors, delayBase = 0) {
+    const duration = 520;
+    const rayThickness = Math.max(3, size * 0.085);
+    const mainRays = makeStreakFireworkRays(12, colors, size, rayThickness, true);
+    const shortRays = makeStreakFireworkRays(6, colors, size, rayThickness, false);
+    const sparkles = makeStreakFireworkSparkles(8, colors, size, rayThickness);
+
+    const raysHtml = mainRays.map((ray) => renderStreakFireworkRay(ray, duration, delayBase, true)).join("")
+      + shortRays.map((ray) => renderStreakFireworkRay(ray, duration, delayBase, false)).join("");
+
+    const sparklesHtml = sparkles.map((sparkle) => renderStreakFireworkSparkle(sparkle, duration, delayBase)).join("");
+    const centerSize = rayThickness * 2.4;
+
+    return `
+      <div class="tb-streak-firework" style="left:${x.toFixed(1)}px;top:${y.toFixed(1)}px;">
+        <span
+          class="tb-streak-firework-center"
+          style="
+            width:${centerSize.toFixed(1)}px;
+            height:${centerSize.toFixed(1)}px;
+            margin-left:${(-centerSize / 2).toFixed(1)}px;
+            margin-top:${(-centerSize / 2).toFixed(1)}px;
+            --tb-fw-color:${colors[0] || "#ffffff"};
+            --tb-fw-duration:${duration}ms;
+            --tb-fw-delay:${delayBase}ms;
+          "
+        ></span>
+        ${raysHtml}
+        ${sparklesHtml}
+      </div>
+    `;
+  }
+
+  function makeStreakFireworkRays(count, colors, baseSize, rayThickness, long) {
+    const angleOffset = Math.random() * 360;
+    const rays = [];
+
+    for (let i = 0; i < count; i++) {
+      const spread = 360 / Math.max(1, count);
+      const angle = angleOffset + spread * i + randomBetween(-4, 4);
+      const length = long
+        ? baseSize * randomBetween(0.72, 1.04)
+        : baseSize * randomBetween(0.34, 0.58);
+      const start = baseSize * (long ? randomBetween(0.06, 0.16) : randomBetween(0.03, 0.13));
+      const thickness = rayThickness * (long ? randomBetween(0.72, 1.12) : randomBetween(0.46, 0.8));
+      const delay = long ? randomBetween(0, 35) : randomBetween(20, 90);
+
+      rays.push({
+        angle,
+        length,
+        start,
+        thickness,
+        color: colors[i % colors.length],
+        delay
+      });
+    }
+
+    return rays;
+  }
+
+  function makeStreakFireworkSparkles(count, colors, baseSize, rayThickness) {
+    const sparkles = [];
+
+    for (let i = 0; i < count; i++) {
+      sparkles.push({
+        angle: Math.random() * 360,
+        distance: baseSize * randomBetween(0.45, 1.28),
+        size: rayThickness * randomBetween(0.72, 1.55),
+        color: Math.random() < 0.22 ? "#ffffff" : pickRandom(colors),
+        delay: randomBetween(40, 130),
+        isSpark: Math.random() < 0.45
+      });
+    }
+
+    return sparkles;
+  }
+
+  function renderStreakFireworkRay(ray, duration, delayBase, isMain) {
+    return `
+      <span
+        class="tb-streak-firework-ray ${isMain ? "is-main" : "is-short"}"
+        style="
+          --tb-fw-angle:${ray.angle.toFixed(1)}deg;
+          --tb-fw-length:${ray.length.toFixed(1)}px;
+          --tb-fw-start:${ray.start.toFixed(1)}px;
+          --tb-fw-thickness:${ray.thickness.toFixed(1)}px;
+          --tb-fw-color:${ray.color};
+          --tb-fw-duration:${duration}ms;
+          --tb-fw-delay:${(delayBase + ray.delay).toFixed(0)}ms;
+          filter:drop-shadow(0 0 ${(ray.thickness * 1.4).toFixed(1)}px ${ray.color});
+        "
+      ></span>
+    `;
+  }
+
+  function renderStreakFireworkSparkle(sparkle, duration, delayBase) {
+    const cls = sparkle.isSpark ? "tb-streak-firework-spark" : "tb-streak-firework-dot";
+
+    return `
+      <span
+        class="${cls}"
+        style="
+          --tb-fw-angle:${sparkle.angle.toFixed(1)}deg;
+          --tb-fw-distance:${sparkle.distance.toFixed(1)}px;
+          --tb-fw-dot-size:${sparkle.size.toFixed(1)}px;
+          --tb-fw-color:${sparkle.color};
+          --tb-fw-duration:${duration}ms;
+          --tb-fw-delay:${(delayBase + sparkle.delay).toFixed(0)}ms;
+          filter:drop-shadow(0 0 ${(sparkle.size * 1.6).toFixed(1)}px ${sparkle.color});
+        "
+      ></span>
+    `;
+  }
+
   function showOverlay(message, duration = 1400, tone = "") {
     const now = performance.now();
     state.overlayMessage = message;
@@ -1788,6 +2085,10 @@
       return Math.sin(now / 120) * 2.4;
     }
     return 0;
+  }
+
+  function randomBetween(min, max) {
+    return min + Math.random() * (max - min);
   }
 
   function lerp(a, b, t) { return a + (b - a) * t; }

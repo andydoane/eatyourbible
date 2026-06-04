@@ -146,6 +146,7 @@ body {
 .tb-enter-layer,
 .tb-smoke-layer,
 .tb-popup-layer,
+.tb-celebration-layer,
 .tb-guide-layer,
 .tb-controls-layer,
 .tb-warning-layer {
@@ -190,6 +191,12 @@ body {
 .tb-popup-layer {
   z-index: 9;
   pointer-events: none;
+}
+
+.tb-celebration-layer {
+  z-index: 11;
+  pointer-events: none;
+  overflow: hidden;
 }
 
 .tb-controls-layer {
@@ -698,6 +705,281 @@ body {
 .tb-end-lock {
   opacity: .72;
   pointer-events: none;
+}
+
+.tb-streak-celebration {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.tb-streak-text {
+  position: absolute;
+  left: 50%;
+  top: max(58px, 12%);
+  transform: translate(-50%, -50%) scale(.4);
+  color: #ffffff;
+  font-weight: 1000;
+  letter-spacing: .035em;
+  white-space: nowrap;
+  text-align: center;
+  -webkit-text-stroke: 2px #111111;
+  text-shadow:
+    0 3px 0 #111111,
+    0 8px 16px rgba(0, 0, 0, .34),
+    0 0 18px rgba(255, 255, 255, .42);
+  opacity: 0;
+  animation: tbStreakTextPop var(--tb-streak-duration) cubic-bezier(.18, 1.35, .28, 1) forwards;
+  z-index: 3;
+}
+
+.tb-confetti-shower {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.tb-confetti-piece {
+  position: absolute;
+  left: var(--tb-confetti-x);
+  top: var(--tb-confetti-y);
+  width: var(--tb-confetti-size);
+  height: calc(var(--tb-confetti-size) * 1.55);
+  background: var(--tb-confetti-color);
+  border-radius: 3px;
+  opacity: 0;
+  transform: translate(-50%, -50%) rotate(0deg);
+  animation: tbConfettiFall var(--tb-confetti-duration) linear forwards;
+  animation-delay: var(--tb-confetti-delay);
+  will-change: transform, opacity;
+}
+
+.tb-confetti-piece.is-star {
+  width: calc(var(--tb-confetti-size) * 1.08);
+  height: calc(var(--tb-confetti-size) * 1.08);
+  border-radius: 0;
+  clip-path: polygon(50% 0%, 62% 36%, 100% 50%, 62% 64%, 50% 100%, 38% 64%, 0% 50%, 38% 36%);
+  filter:
+    drop-shadow(0 0 calc(var(--tb-confetti-size) * .35) var(--tb-confetti-color)) drop-shadow(0 3px 0 rgba(0, 0, 0, .18));
+}
+
+.tb-streak-firework {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.tb-streak-firework-ray,
+.tb-streak-firework-dot,
+.tb-streak-firework-spark,
+.tb-streak-firework-center {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.tb-streak-firework-ray {
+  height: var(--tb-fw-thickness);
+  width: var(--tb-fw-length);
+  border-radius: 999px;
+  background: linear-gradient(90deg,
+      transparent 0%,
+      var(--tb-fw-color) 28%,
+      var(--tb-fw-color) 76%,
+      transparent 100%);
+  transform-origin: 0% 50%;
+  opacity: 0;
+  animation: tbStreakFireworkRay var(--tb-fw-duration) cubic-bezier(0.1, 0.76, 0.2, 1) forwards;
+  animation-delay: var(--tb-fw-delay);
+}
+
+.tb-streak-firework-ray.is-short {
+  background: linear-gradient(90deg,
+      transparent 0%,
+      var(--tb-fw-color) 16%,
+      var(--tb-fw-color) 100%);
+}
+
+.tb-streak-firework-dot {
+  width: var(--tb-fw-dot-size);
+  height: var(--tb-fw-dot-size);
+  margin-left: calc(var(--tb-fw-dot-size) / -2);
+  margin-top: calc(var(--tb-fw-dot-size) / -2);
+  border-radius: 999px;
+  background: var(--tb-fw-color);
+  opacity: 0;
+  transform-origin: center center;
+  animation: tbStreakFireworkDot var(--tb-fw-duration) cubic-bezier(0.13, 0.74, 0.22, 1) forwards;
+  animation-delay: var(--tb-fw-delay);
+}
+
+.tb-streak-firework-spark {
+  width: var(--tb-fw-dot-size);
+  height: var(--tb-fw-dot-size);
+  margin-left: calc(var(--tb-fw-dot-size) / -2);
+  margin-top: calc(var(--tb-fw-dot-size) / -2);
+  background: var(--tb-fw-color);
+  clip-path: polygon(50% 0%, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0% 50%, 38% 38%);
+  opacity: 0;
+  transform-origin: center center;
+  animation: tbStreakFireworkSpark var(--tb-fw-duration) ease-out forwards;
+  animation-delay: var(--tb-fw-delay);
+}
+
+.tb-streak-firework-center {
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow:
+    0 0 calc(var(--tb-brick-height) * .13) #ffffff,
+    0 0 calc(var(--tb-brick-height) * .34) var(--tb-fw-color);
+  animation: tbStreakFireworkCenter var(--tb-fw-duration) ease-out forwards;
+  animation-delay: var(--tb-fw-delay);
+}
+
+@keyframes tbStreakTextPop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(.35) rotate(-5deg);
+  }
+
+  10% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.14) rotate(2deg);
+  }
+
+  22% {
+    transform: translate(-50%, -50%) scale(.98) rotate(-1deg);
+  }
+
+  72% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.02) rotate(0deg);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -72%) scale(.84) rotate(4deg);
+  }
+}
+
+@keyframes tbConfettiFall {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) translateX(0) translateY(0) rotate(0deg);
+  }
+
+  8% {
+    opacity: 1;
+  }
+
+  82% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform:
+      translate(-50%, -50%) translateX(var(--tb-confetti-drift)) translateY(var(--tb-confetti-fall)) rotate(var(--tb-confetti-spin));
+  }
+}
+
+@keyframes tbStreakFireworkRay {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--tb-fw-angle)) translateX(calc(var(--tb-fw-start) * .14)) scaleX(.12) scaleY(.55);
+  }
+
+  14% {
+    opacity: 1;
+  }
+
+  55% {
+    opacity: .82;
+  }
+
+  78% {
+    opacity: .34;
+  }
+
+  100% {
+    opacity: 0;
+    transform: rotate(var(--tb-fw-angle)) translateX(var(--tb-fw-start)) scaleX(1) scaleY(1);
+  }
+}
+
+@keyframes tbStreakFireworkDot {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--tb-fw-angle)) translateX(calc(var(--tb-fw-distance) * .08)) scale(.32);
+  }
+
+  18% {
+    opacity: 1;
+  }
+
+  58% {
+    opacity: .72;
+  }
+
+  82% {
+    opacity: .28;
+  }
+
+  100% {
+    opacity: 0;
+    transform: rotate(var(--tb-fw-angle)) translateX(var(--tb-fw-distance)) scale(1.08);
+  }
+}
+
+@keyframes tbStreakFireworkSpark {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--tb-fw-angle)) translateX(calc(var(--tb-fw-distance) * .08)) rotate(45deg) scale(.2);
+  }
+
+  22% {
+    opacity: 1;
+  }
+
+  58% {
+    opacity: .72;
+  }
+
+  82% {
+    opacity: .28;
+  }
+
+  100% {
+    opacity: 0;
+    transform: rotate(var(--tb-fw-angle)) translateX(var(--tb-fw-distance)) rotate(135deg) scale(1);
+  }
+}
+
+@keyframes tbStreakFireworkCenter {
+  0% {
+    opacity: 0;
+    transform: scale(.25);
+  }
+
+  12% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+
+  45% {
+    opacity: .7;
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(.18);
+  }
 }
 
 @keyframes tbCenterIndicatorTop {
