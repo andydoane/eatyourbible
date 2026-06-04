@@ -80,6 +80,9 @@
     overlayStartedAt: 0,
     overlayUntil: 0,
     warningLevel: 0,
+    warningOverlayLevel: 0,
+    warningOverlayStartedAt: 0,
+    warningOverlayUntil: 0,
     hadWarning2BeforePlacement: false,
     beltRespawnLockUntil: 0,
     beltNeedsFreshSpawn: false,
@@ -153,7 +156,7 @@
       progress: [], phase: "words", wordIndex: 0,
       towerShakeUntil: 0, towerSettleUntil: 0, guideFlashUntil: 0,
       overlayMessage: "", overlayTone: "", overlayStartedAt: 0, overlayUntil: 0,
-      warningLevel: 0, hadWarning2BeforePlacement: false, beltRespawnLockUntil: 0, beltNeedsFreshSpawn: false, collapseTriggered: false, collapseEndsAt: 0, collapseStartedAt: 0, collapseDir: 1, collapseBasePose: null, lastStableTowerPose: null, pendingPreCollapsePose: null, collapseBurstFired: {}, collapseDebugFramesLeft: 0,
+      warningLevel: 0, warningOverlayLevel: 0, warningOverlayStartedAt: 0, warningOverlayUntil: 0, hadWarning2BeforePlacement: false, beltRespawnLockUntil: 0, beltNeedsFreshSpawn: false, collapseTriggered: false, collapseEndsAt: 0, collapseStartedAt: 0, collapseDir: 1, collapseBasePose: null, lastStableTowerPose: null, pendingPreCollapsePose: null, collapseBurstFired: {}, collapseDebugFramesLeft: 0,
       stream: [], streamId: 0, fx: [], enteringBrick: null, enteringId: 0,
       done: false, frenzyActive: false, frenzyInputLockedUntil: 0, pendingCorrectLabel: "", pendingCorrectType: "word",
       pendingCorrectVisible: 0, spawnIndex: 0
@@ -492,16 +495,23 @@
     if (hasTimingOverlay) {
       message = state.overlayMessage;
       tone = state.overlayTone;
-    } else if (!state.collapseTriggered && !state.done && !state.frenzyActive && state.warningLevel >= 2) {
-      message = "ABOUT\nTO FALL!";
-      tone = "warning2";
-      startedAt = now - (now % 700);
-      duration = 700;
-    } else if (!state.collapseTriggered && !state.done && !state.frenzyActive && state.warningLevel === 1) {
-      message = "TOWER IS\nLEANING!";
-      tone = "warning1";
-      startedAt = now - (now % 1100);
-      duration = 1100;
+    } else if (
+      !state.collapseTriggered &&
+      !state.done &&
+      !state.frenzyActive &&
+      state.warningOverlayLevel > 0 &&
+      now < state.warningOverlayUntil
+    ) {
+      if (state.warningOverlayLevel >= 2) {
+        message = "ABOUT\nTO FALL!";
+        tone = "warning2";
+      } else {
+        message = "TOWER IS\nLEANING!";
+        tone = "warning1";
+      }
+
+      startedAt = state.warningOverlayStartedAt || now;
+      duration = Math.max(1, state.warningOverlayUntil - startedAt);
     }
 
     if (!message) {
@@ -889,6 +899,9 @@
 
       if (state.frenzyActive || state.done) {
         state.warningLevel = 0;
+        state.warningOverlayLevel = 0;
+        state.warningOverlayStartedAt = 0;
+        state.warningOverlayUntil = 0;
         state.hadWarning2BeforePlacement = false;
         return;
       }
@@ -924,6 +937,9 @@
     state.phase = "words";
     state.wordIndex = 0;
     state.warningLevel = 0;
+    state.warningOverlayLevel = 0;
+    state.warningOverlayStartedAt = 0;
+    state.warningOverlayUntil = 0;
     state.hadWarning2BeforePlacement = false;
     state.beltRespawnLockUntil = 0;
     state.beltNeedsFreshSpawn = false;
@@ -1314,9 +1330,13 @@
   function updateWarnings(prevLeanScore = null) {
     if (state.frenzyActive || state.done) {
       state.warningLevel = 0;
+      state.warningOverlayLevel = 0;
+      state.warningOverlayStartedAt = 0;
+      state.warningOverlayUntil = 0;
       return;
     }
 
+    const previousWarningLevel = state.warningLevel;
     const leanScore = getLeanScore();
     const mag = Math.abs(leanScore);
     const t = THRESHOLDS[selectedMode || "easy"];
@@ -1324,6 +1344,14 @@
     if (mag >= t.warn2) level = 2;
     else if (mag >= t.warn1) level = 1;
     state.warningLevel = level;
+
+    if (level > 0 && level !== previousWarningLevel) {
+      showWarningOverlay(level);
+    } else if (level === 0) {
+      state.warningOverlayLevel = 0;
+      state.warningOverlayStartedAt = 0;
+      state.warningOverlayUntil = 0;
+    }
 
     const prevMag = Number.isFinite(prevLeanScore) ? Math.abs(prevLeanScore) : mag;
     const madeLeanWorseBy = mag - prevMag;
@@ -1568,6 +1596,13 @@
     state.overlayTone = tone;
     state.overlayStartedAt = now;
     state.overlayUntil = now + duration;
+  }
+
+  function showWarningOverlay(level) {
+    const now = performance.now();
+    state.warningOverlayLevel = level;
+    state.warningOverlayStartedAt = now;
+    state.warningOverlayUntil = now + (level >= 2 ? 2300 : 2100);
   }
 
   function getVerseDerivedDecoys(targetIndex, correct) {
