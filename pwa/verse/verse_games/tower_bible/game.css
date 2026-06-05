@@ -412,9 +412,9 @@ body {
   background: #536537;
   color: #ffffff;
   font-family: var(--tb-belt-font);
-  font-weight: 400;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: .035em;
+  letter-spacing: .015em;
   line-height: 1.05;
   box-shadow: none;
   white-space: nowrap;
@@ -460,9 +460,9 @@ body {
   background: #c98a49;
   color: rgba(0, 0, 0, .35);
   font-family: var(--tb-game-font);
-  font-weight: 800;
+  font-weight: 400;
   text-transform: uppercase;
-  letter-spacing: .015em;
+  letter-spacing: .035em;
   text-align: center;
   padding: 0 10px;
   line-height: 1.05;
