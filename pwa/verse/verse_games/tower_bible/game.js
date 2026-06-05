@@ -33,6 +33,13 @@
 
   const DEBUG_COLLAPSE = false;
 
+  const BRICK_BREAK_TUNING = {
+    particleCount: 11,
+    minSizePctOfBrickHeight: 0.12,
+    maxSizePctOfBrickHeight: 0.26,
+    colors: ["#6f4320", "#87532b", "#9b6436", "#b67643", "#c98a49", "#7f4d28"]
+  };
+
   const INTRO_SEQUENCE = [
     { type: "brick", label: "TAP" },
     { type: "brick", label: "THE" },
@@ -939,7 +946,7 @@
         const t = 1 - life;
         const x = fx.x + (fx.dx || 0) * t;
         const y = fx.y + (fx.dy || 0) * t + 18 * t * t;
-        html += `<div class="tb-chunk-puff" style="left:${x}px;top:${y}px;width:${fx.size}px;height:${fx.size}px;opacity:${life.toFixed(3)};transform:translate(-50%,-50%) rotate(${fx.rot}deg);"></div>`;
+        html += `<div class="tb-chunk-puff" style="left:${x}px;top:${y}px;width:${fx.size}px;height:${fx.size}px;opacity:${life.toFixed(3)};background:${fx.color || "#9b6436"};transform:translate(-50%,-50%) rotate(${fx.rot}deg);"></div>`;
       } else {
         const scale = fx.scale || 1;
         html += `<div class="tb-smoke-puff" style="left:${fx.x}px;top:${fx.y}px;transform:translate(-50%,-50%) scale(${scale});"></div>`;
@@ -1697,18 +1704,26 @@
 
   function addChunkBurst(x, y, scale = 1) {
     const now = performance.now();
-    for (let i = 0; i < 7; i++) {
-      const angle = (Math.PI * 2 * i) / 7 + Math.random() * 0.35;
-      const speed = 26 + Math.random() * 34;
+    const count = BRICK_BREAK_TUNING.particleCount;
+    const minSize = state.brickHeight * BRICK_BREAK_TUNING.minSizePctOfBrickHeight;
+    const maxSize = state.brickHeight * BRICK_BREAK_TUNING.maxSizePctOfBrickHeight;
+
+    for (let i = 0; i < count; i++) {
+      const angle = (Math.PI * 2 * i) / count + Math.random() * 0.45;
+      const speed = 22 + Math.random() * 38;
+      const size = (minSize + Math.random() * (maxSize - minSize)) * scale;
+      const color = BRICK_BREAK_TUNING.colors[Math.floor(Math.random() * BRICK_BREAK_TUNING.colors.length)];
+
       state.fx.push({
         kind: "chunk",
         x,
         y,
         dx: Math.cos(angle) * speed,
         dy: Math.sin(angle) * speed - 8,
-        size: (10 + Math.random() * 10) * scale,
-        rot: (Math.random() * 60) - 30,
-        until: now + 360 + Math.random() * 120
+        size,
+        color,
+        rot: (Math.random() * 80) - 40,
+        until: now + 380 + Math.random() * 130
       });
     }
   }
