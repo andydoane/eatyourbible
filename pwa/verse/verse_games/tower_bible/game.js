@@ -935,7 +935,9 @@
       return;
     }
 
-    const laneTop = state.laneY - state.laneHeight / 2;
+    const laneBottom = clamp(state.fieldWidth * 0.055, 24, 42);
+    const groundHeight = laneBottom + state.laneHeight;
+    const laneTop = state.fieldHeight - groundHeight;
     const indicatorHeight = state.laneHeight * 0.25;
     const revealClass = state.introActive &&
       state.introGuideVisible &&
@@ -944,7 +946,7 @@
       : "";
 
     layer.innerHTML = `
-      <div class="tb-center-indicator-wrap${revealClass}" style="left:${state.guideCenterX}px;top:${laneTop}px;height:${state.laneHeight}px;--tb-indicator-height:${indicatorHeight}px;">
+      <div class="tb-center-indicator-wrap${revealClass}" style="left:${state.guideCenterX}px;top:${laneTop}px;height:${groundHeight}px;--tb-indicator-height:${indicatorHeight}px;">
         <img
           class="tb-center-indicator tb-center-indicator-top"
           src="tower_bible_images/tower_bible_center_indicator.svg"
@@ -1080,7 +1082,7 @@
 
     if (!state.introActive) {
       html += `
-        <div class="tb-conveyor-lane" style="left:${state.lanePadX}px;right:${state.lanePadX}px;bottom:${laneBottom}px;height:${state.laneHeight}px;">
+        <div class="tb-conveyor-lane" style="left:${state.lanePadX}px;right:${state.lanePadX}px;bottom:0;height:${groundHeight}px;">
       `;
 
       for (const brick of state.stream) {
