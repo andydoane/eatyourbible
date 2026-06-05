@@ -52,7 +52,7 @@
   };
 
   const SOUND_TUNING = {
-    debug: true,
+    debug: false,
     masterVolume: 1.00,
     volumes: {
       correctWord: 3.40,     // Verse Scramble wordComplete generated sound
