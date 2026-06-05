@@ -52,6 +52,7 @@
   };
 
   const SOUND_TUNING = {
+    debug: true,
     masterVolume: 1.00,
     volumes: {
       correctWord: 3.40,     // Verse Scramble wordComplete generated sound
@@ -680,12 +681,22 @@
   }
 
   function playGeneratedSound(eventId) {
-    if (muted) return;
+    if (muted) {
+      if (SOUND_TUNING.debug) console.log("[TowerBibleSound] muted generated", eventId);
+      return;
+    }
 
     unlockAudio();
 
     const ctx = ensureAudioContext();
-    if (!ctx || !masterGain) return;
+    if (!ctx || !masterGain) {
+      if (SOUND_TUNING.debug) console.warn("[TowerBibleSound] no audio context for", eventId);
+      return;
+    }
+
+    if (SOUND_TUNING.debug) {
+      console.log("[TowerBibleSound] generated", eventId, "ctx:", ctx.state);
+    }
 
     masterGain.gain.value = SOUND_TUNING.masterVolume;
 
@@ -714,21 +725,35 @@
       return audioBufferPromises.get(url);
     }
 
+    if (SOUND_TUNING.debug) {
+      console.log("[TowerBibleSound] loading", url);
+    }
+
     const promise = fetch(url)
       .then((response) => {
-        if (!response.ok) throw new Error(`Unable to load sound: ${url}`);
+        if (!response.ok) throw new Error(`Unable to load sound: ${url} (${response.status})`);
         return response.arrayBuffer();
       })
       .then((arrayBuffer) => {
         const ctx = ensureAudioContext();
-        if (!ctx) return null;
+        if (!ctx) throw new Error("No AudioContext available");
         return ctx.decodeAudioData(arrayBuffer);
       })
       .then((buffer) => {
-        if (buffer) audioBuffers.set(url, buffer);
+        if (buffer) {
+          audioBuffers.set(url, buffer);
+          if (SOUND_TUNING.debug) {
+            console.log("[TowerBibleSound] loaded", url);
+          }
+        }
         return buffer;
       })
-      .catch(() => null);
+      .catch((err) => {
+        if (SOUND_TUNING.debug) {
+          console.warn("[TowerBibleSound] failed", url, err);
+        }
+        return null;
+      });
 
     audioBufferPromises.set(url, promise);
     return promise;
@@ -780,6 +805,10 @@
   }
 
   function playGameSound(eventId) {
+    if (SOUND_TUNING.debug) {
+      console.log("[TowerBibleSound] request", eventId);
+    }
+
     if (eventId === "correctWord" || eventId === "wrongWord") {
       playGeneratedSound(eventId);
       return;
@@ -787,6 +816,11 @@
 
     playBufferedSound(TOWER_SOUND_FILES[eventId], eventId);
   }
+
+  window.tbTestSound = function tbTestSound(eventId = "brickLand") {
+    unlockAudio();
+    playGameSound(eventId);
+  };
 
   function setPaused(paused, reason = "") {
     state.paused = paused;
