@@ -20,9 +20,9 @@
     hard: [0.20, 0.20, 0.20, 0.20, 0.20]
   };
   const BELT_SPEED_BRICK_HEIGHTS_PER_SECOND = {
-    easy: 1.85,
-    medium: 2.12,
-    hard: 2.38
+    easy: 2.5,
+    medium: 3.25,
+    hard: 4
   };
 
   const THRESHOLDS = {
