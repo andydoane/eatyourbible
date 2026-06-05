@@ -179,7 +179,7 @@ body {
 }
 
 .tb-guide-layer {
-  z-index: 3;
+  z-index: 6;
   pointer-events: none;
 }
 
@@ -298,6 +298,7 @@ body {
   height: var(--tb-indicator-height);
   max-width: clamp(42px, 10vw, 72px);
   transform: translateX(-50%);
+  filter: brightness(1.15) contrast(1.18);
 }
 
 .tb-center-indicator-top {
