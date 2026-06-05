@@ -41,17 +41,17 @@
   };
 
   const INTRO_SEQUENCE = [
-    { type: "brick", label: "TAP" },
-    { type: "brick", label: "THE" },
-    { type: "brick", label: "CORRECT" },
-    { type: "brick", label: "WORDS!" },
-    { type: "pause", ms: 650 },
-    { type: "brick", label: "TIME" },
-    { type: "brick", label: "YOUR" },
-    { type: "brick", label: "TAPS" },
-    { type: "brick", label: "CAREFULLY!" },
-    { type: "pause", ms: 650 },
-    { type: "guide", ms: 950 },
+    { type: "brick", label: "TAP", textureClass: "tb-intro-green" },
+    { type: "brick", label: "THE", textureClass: "tb-intro-green" },
+    { type: "brick", label: "CORRECT", textureClass: "tb-intro-green" },
+    { type: "brick", label: "WORDS!", textureClass: "tb-intro-green" },
+    { type: "pause", ms: 900 },
+    { type: "brick", label: "TIME", textureClass: "tb-intro-red" },
+    { type: "brick", label: "YOUR", textureClass: "tb-intro-red" },
+    { type: "brick", label: "TAPS", textureClass: "tb-intro-red" },
+    { type: "brick", label: "CAREFULLY!", textureClass: "tb-intro-red" },
+    { type: "pause", ms: 900 },
+    { type: "guide", ms: 1150 },
     { type: "break", ms: 260 }
   ];
 
@@ -1784,8 +1784,8 @@
     state.introStepIndex += 1;
 
     if (step.type === "brick") {
-      startIntroBrick(step.label);
-      state.introNextAt = now + 360;
+      startIntroBrick(step.label, step.textureClass);
+      state.introNextAt = now + 560;
       return;
     }
 
@@ -1811,7 +1811,7 @@
     state.introNextAt = now + 250;
   }
 
-  function startIntroBrick(label) {
+  function startIntroBrick(label, textureClass = "tb-intro-green") {
     const now = performance.now();
     const width = state.towerWidth * 0.76;
     const height = state.brickHeight * 0.9;
@@ -1825,7 +1825,7 @@
       label,
       kind: "word",
       zone: 0,
-      textureClass: getRandomBrickTextureClass(),
+      textureClass,
       isIntro: true,
       progress: 0,
 
@@ -1864,7 +1864,7 @@
     const e = state.enteringBrick;
     if (!e) return;
 
-    e.progress = clamp(e.progress + dt / 330, 0, 1);
+    e.progress = clamp(e.progress + dt / 520, 0, 1);
     const eased = easeOutBack(e.progress);
     e.left = lerp(e.fromLeft, e.toLeft, eased);
     e.bottom = lerp(e.fromBottom, e.toBottom, eased);
