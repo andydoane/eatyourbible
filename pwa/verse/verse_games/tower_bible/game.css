@@ -131,6 +131,7 @@ body {
 
 .tb-cloud {
   position: absolute;
+  left: 0;
   width: auto;
   opacity: .5;
   pointer-events: none;
@@ -1083,29 +1084,21 @@ body {
 
 @keyframes tbCloudFrontDrift {
   0% {
-    transform: translateX(115vw);
-  }
-
-  72% {
-    transform: translateX(-45vw);
+    transform: translateX(calc(100vw + 40px));
   }
 
   100% {
-    transform: translateX(-45vw);
+    transform: translateX(calc(-100% - 40px));
   }
 }
 
 @keyframes tbCloudBackDrift {
   0% {
-    transform: translateX(-45vw);
-  }
-
-  76% {
-    transform: translateX(115vw);
+    transform: translateX(calc(-100% - 40px));
   }
 
   100% {
-    transform: translateX(115vw);
+    transform: translateX(calc(100vw + 40px));
   }
 }
 
