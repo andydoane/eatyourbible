@@ -235,9 +235,19 @@
         <div class="tb-stage">
           <div class="tb-field-wrap">
             <div class="tb-field" id="tbField">
-              <div class="tb-cloud c1">☁️</div>
-              <div class="tb-cloud c2">☁️</div>
+              <img
+                class="tb-cloud tb-cloud-back"
+                src="tower_bible_images/tower_bible_cloud_1.svg"
+                alt=""
+                aria-hidden="true"
+              >
               <div class="tb-tower-layer" id="tbTowerLayer"></div>
+              <img
+                class="tb-cloud tb-cloud-front"
+                src="tower_bible_images/tower_bible_cloud_2.svg"
+                alt=""
+                aria-hidden="true"
+              >
               <div class="tb-warning-layer" id="tbWarningLayer"></div>
               <div class="tb-guide-layer" id="tbGuideLayer"></div>
               <div class="tb-conveyor-layer" id="tbConveyorLayer"></div>
@@ -445,6 +455,7 @@
 
     state.brickWidth = clamp(state.fieldWidth * 0.27, 130, 188);
     state.brickHeight = clamp(state.fieldWidth * 0.11, 58, 78);
+    field.style.setProperty("--tb-live-brick-height", `${state.brickHeight}px`);
     state.brickGap = clamp(state.brickWidth * 1.08, 150, 236);
     state.brickStep = state.brickWidth + state.brickGap;
     state.guideWidth = state.brickWidth;
