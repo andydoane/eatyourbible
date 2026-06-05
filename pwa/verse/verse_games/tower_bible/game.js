@@ -1173,7 +1173,7 @@
       const level = i;
       const t = count <= 1 ? 0 : level / Math.max(1, count - 1);
       const curve = Math.pow(t, 1.55);
-      const scale = Math.max(0.54, Math.pow(0.95, level));
+      const scale = Math.max(0.26, Math.pow(0.95, level));
       const width = state.towerWidth * 0.76 * scale;
       const height = Math.max(34, state.brickHeight * 0.9 * scale);
       const fontSize = Math.max(13, state.brickHeight * 0.33 * scale);
@@ -2050,7 +2050,7 @@
 
     for (let i = 0; i < safeIndex; i++) {
       const level = i;
-      const scale = Math.max(0.54, Math.pow(0.95, level));
+      const scale = Math.max(0.26, Math.pow(0.95, level));
       const height = Math.max(34, state.brickHeight * 0.9 * scale);
       cumulativeBottom += height - 1;
     }
@@ -2058,7 +2058,7 @@
     const level = safeIndex;
     const t = count <= 1 ? 0 : level / Math.max(1, count - 1);
     const curve = Math.pow(t, 1.55);
-    const scale = Math.max(0.54, Math.pow(0.95, level));
+    const scale = Math.max(0.26, Math.pow(0.95, level));
     const height = Math.max(34, state.brickHeight * 0.9 * scale);
     const baseOffsetX = count <= 1 ? 0 : lean * maxLeanPx * curve;
     const sway = getBrickWarningSway(performance.now(), safeIndex, count);
