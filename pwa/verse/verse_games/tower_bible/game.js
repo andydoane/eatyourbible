@@ -19,10 +19,10 @@
     medium: [0.10, 0.20, 0.40, 0.20, 0.10],
     hard: [0.20, 0.20, 0.20, 0.20, 0.20]
   };
-  const BELT_SPEED_FACTORS = {
-    easy: 0.92,
-    medium: 1.04,
-    hard: 1.18
+  const BELT_SPEED_BRICK_HEIGHTS_PER_SECOND = {
+    easy: 1.85,
+    medium: 2.12,
+    hard: 2.38
   };
 
   const THRESHOLDS = {
@@ -850,8 +850,8 @@
     state.guideRightX = state.guideCenterX + state.guideWidth / 2;
     state.towerWidth = Math.min(state.fieldWidth * 0.86, 560);
 
-    const effectiveStep = clamp(state.brickStep, 310, 390);
-    state.beltSpeed = effectiveStep * BELT_SPEED_FACTORS[selectedMode || "easy"];
+    const speedInBrickHeights = BELT_SPEED_BRICK_HEIGHTS_PER_SECOND[selectedMode || "easy"];
+    state.beltSpeed = state.brickHeight * speedInBrickHeights;
 
     renderHud();
   }
@@ -1083,7 +1083,7 @@
         if (brick.kind === "reference") classes.push("is-ref");
         if (brick.flashWrong) classes.push("is-wrong");
         html += `
-          <button class="${classes.join(" ")}" data-id="${brick.id}" style="left:${brick.left}px;width:${state.brickWidth}px;height:${state.brickHeight}px;font-size:${brick.fontSize}px;opacity:${brickVisualOpacity(brick).toFixed(3)};" aria-label="${brick.isCorrect ? "Correct brick" : "Brick"}">${escapeHtml(brick.label)}</button>`;
+          <button class="${classes.join(" ")}" data-id="${brick.id}" style="left:${Math.round(brick.left)}px;width:${state.brickWidth}px;height:${state.brickHeight}px;font-size:${brick.fontSize}px;opacity:${brickVisualOpacity(brick).toFixed(3)};" aria-label="${brick.isCorrect ? "Correct brick" : "Brick"}">${escapeHtml(brick.label)}</button>`;
       }
 
       html += `
