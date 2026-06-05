@@ -780,6 +780,7 @@
     const collapseDropMs = 900;
 
     const shellRot = getTowerShellRotation(now);
+    const enteringTowerLift = getEnteringTowerLift();
     let html = `<div class="${towerShellClass.join(" ")}" id="tbTowerShell" style="transform:translateX(-50%) rotate(${shellRot}deg);">`;
 
     let cumulativeBottom = 0;
@@ -803,7 +804,7 @@
 
       const cls = ["tb-tower-brick", brick.textureClass || "tb-texture-normal"];
       let opacity = Math.max(0.72, 1 - level * 0.02);
-      let bottom = cumulativeBottom;
+      let bottom = cumulativeBottom + enteringTowerLift;
       let offsetX = baseOffsetX;
       let rot = baseRot;
 
@@ -2407,6 +2408,26 @@
     ];
 
     return variants[Math.floor(Math.random() * variants.length)];
+  }
+
+  function getEnteringTowerLift() {
+    const e = state.enteringBrick;
+
+    if (!e) return 0;
+    if (state.collapseTriggered || state.frenzyActive) return 0;
+    if (!state.progress.length) return 0;
+
+    const targetHeight = Number(e.toHeight || 0);
+    if (!targetHeight) return 0;
+
+    const p = clamp(Number(e.progress || 0), 0, 1);
+    const eased = easeOutCubic(p);
+
+    return Math.max(0, targetHeight - 1) * eased;
+  }
+
+  function easeOutCubic(x) {
+    return 1 - Math.pow(1 - x, 3);
   }
 
   function lerp(a, b, t) { return a + (b - a) * t; }
