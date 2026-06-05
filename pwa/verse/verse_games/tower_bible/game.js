@@ -57,7 +57,7 @@
     volumes: {
       correctWord: 3.40,     // Verse Scramble wordComplete generated sound
       wrongWord: 3.60,       // Verse Scramble wrongLetter generated sound
-      brickLand: 0.75,
+      brickLand: 0.55,
       warning: 0.78,
       dangerWarning: 0.88,
       collapse: 0.90,
