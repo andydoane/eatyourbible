@@ -33,6 +33,39 @@
 
   const DEBUG_COLLAPSE = false;
 
+  const SILENCE_AUDIO_FILE = "../../verse_audio/silence.mp3";
+  const UI_SOUND_BASE_PATH = "../../ui_audio/";
+  const TOWER_SOUND_BASE_PATH = "tower_bible_sounds/";
+
+  const UI_SOUND_FILES = {
+    uiTap1: `${UI_SOUND_BASE_PATH}ui_sound_pop_1.mp3`,
+    uiTap2: `${UI_SOUND_BASE_PATH}ui_sound_pop_2.mp3`
+  };
+
+  const TOWER_SOUND_FILES = {
+    brickLand: `${TOWER_SOUND_BASE_PATH}tower_bible_land.mp3`,
+    warning: `${TOWER_SOUND_BASE_PATH}tower_bible_warning_1.mp3`,
+    dangerWarning: `${TOWER_SOUND_BASE_PATH}tower_bible_warning_2.mp3`,
+    collapse: `${TOWER_SOUND_BASE_PATH}tower_bible_collapse.mp3`,
+    brickBreak: `${TOWER_SOUND_BASE_PATH}tower_bible_break.mp3`,
+    streak: `${TOWER_SOUND_BASE_PATH}tower_bible_success.mp3`
+  };
+
+  const SOUND_TUNING = {
+    masterVolume: 1.00,
+    volumes: {
+      correctWord: 3.40,     // Verse Scramble wordComplete generated sound
+      wrongWord: 3.60,       // Verse Scramble wrongLetter generated sound
+      brickLand: 0.75,
+      warning: 0.78,
+      dangerWarning: 0.88,
+      collapse: 0.90,
+      brickBreak: 0.82,
+      streak: 0.90,
+      uiTap: 0.45
+    }
+  };
+
   const BRICK_BREAK_TUNING = {
     particleCount: 11,
     minSizePctOfBrickHeight: 0.12,
@@ -97,6 +130,15 @@
   let completionResult = null;
   let resizeBound = false;
   let endScreenUnlockTimer = 0;
+
+  let audioCtx = null;
+  let masterGain = null;
+  let silenceAudioEl = null;
+  let audioUnlocked = false;
+  let uiSoundFlip = false;
+
+  const audioBuffers = new Map();
+  const audioBufferPromises = new Map();
 
   const verseMeta = parseVerseMeta(ctx.verseId || "", ctx.verseRef || "");
   const verseTokens = tokenizeVerse(ctx.verseText || "");
@@ -195,8 +237,15 @@
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
       backLabel: "Back to Practice Games",
-      onBack: () => window.VerseGameBridge.exitGame(),
-      onStart: renderModeSelect
+      onBack: () => {
+        playUiTapSound();
+        window.VerseGameBridge.exitGame();
+      },
+      onStart: () => {
+        unlockAudio();
+        playUiTapSound();
+        renderModeSelect();
+      }
     });
   }
 
@@ -211,8 +260,15 @@
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
       backLabel: "Back to Tower of Bible title",
-      onBack: renderIntro,
-      onSelect: startGame
+      onBack: () => {
+        playUiTapSound();
+        renderIntro();
+      },
+      onSelect: (mode) => {
+        unlockAudio();
+        playUiTapSound();
+        startGame(mode);
+      }
     });
   }
 
@@ -302,9 +358,19 @@
       gameMessage,
       theme: GAME_THEME,
       backLabel: "Back to Practice Games",
-      onPlayAgain: renderModeSelect,
-      onMoreGames: () => window.VerseGameBridge.exitGame(),
-      onChangeVerse: () => window.VerseGameBridge.returnToTitle()
+      onPlayAgain: () => {
+        unlockAudio();
+        playUiTapSound();
+        renderModeSelect();
+      },
+      onMoreGames: () => {
+        playUiTapSound();
+        window.VerseGameBridge.exitGame();
+      },
+      onChangeVerse: () => {
+        playUiTapSound();
+        window.VerseGameBridge.returnToTitle();
+      }
     });
   }
 
@@ -340,22 +406,44 @@
       helpOverlayId: HELP_OVERLAY_ID,
       isMuted: () => muted,
       onMuteToggle: () => {
+        unlockAudio();
+
+        const wasMuted = muted;
         muted = !muted;
+
+        if (wasMuted) {
+          playUiTapSound(true);
+        }
+
         return muted;
       },
-      onHowToPlay: openHelpFromMenu,
+      onHowToPlay: () => {
+        playUiTapSound();
+        openHelpFromMenu();
+      },
       onModeSelect: () => {
+        playUiTapSound();
         setPaused(false, "");
         stopLoop();
         renderModeSelect();
       },
       onExit: () => {
+        playUiTapSound();
         stopLoop();
         window.VerseGameBridge.exitGame();
       },
-      onOpen: () => setPaused(true, "menu"),
-      onClose: () => setPaused(false, ""),
-      onBackFromHelp: () => setPaused(true, "menu")
+      onOpen: () => {
+        playUiTapSound();
+        setPaused(true, "menu");
+      },
+      onClose: () => {
+        playUiTapSound();
+        setPaused(false, "");
+      },
+      onBackFromHelp: () => {
+        playUiTapSound();
+        setPaused(true, "menu");
+      }
     });
   }
 
@@ -397,6 +485,8 @@
   }
 
   function openGameMenu() {
+    playUiTapSound();
+
     const menuOverlay = document.getElementById("tbGameMenuOverlay");
     if (menuOverlay) {
       setPaused(true, "menu");
@@ -405,6 +495,8 @@
     }
   }
   function closeGameMenu() {
+    playUiTapSound();
+
     const menuOverlay = document.getElementById("tbGameMenuOverlay");
 
     if (menuOverlay && menuOverlay.contains(document.activeElement)) {
@@ -421,6 +513,8 @@
   }
 
   function openHelpFromMenu() {
+    playUiTapSound();
+
     const menuOverlay = document.getElementById("tbGameMenuOverlay");
 
     if (menuOverlay) menuOverlay.classList.remove("is-open");
@@ -431,12 +525,15 @@
   }
 
   function closeHelpOverlay() {
+    playUiTapSound();
     window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
     setPaused(false, "");
   }
 
 
   function backToMenuFromHelp() {
+    playUiTapSound();
+
     window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
 
     const menuOverlay = document.getElementById("tbGameMenuOverlay");
@@ -445,6 +542,251 @@
     setPaused(true, "menu");
   }
 
+  function getSoundVolume(eventId) {
+    const volume = SOUND_TUNING.volumes[eventId];
+    return typeof volume === "number" ? volume : 1;
+  }
+
+  function getSilenceAudioElement() {
+    if (silenceAudioEl) return silenceAudioEl;
+
+    silenceAudioEl = document.createElement("audio");
+    silenceAudioEl.preload = "auto";
+    silenceAudioEl.playsInline = true;
+    silenceAudioEl.setAttribute("playsinline", "");
+    silenceAudioEl.src = SILENCE_AUDIO_FILE;
+    silenceAudioEl.style.display = "none";
+    document.body.appendChild(silenceAudioEl);
+
+    return silenceAudioEl;
+  }
+
+  function primeHtmlAudio() {
+    try {
+      const audio = getSilenceAudioElement();
+      audio.muted = false;
+      audio.volume = 0.01;
+      audio.currentTime = 0;
+
+      const playPromise = audio.play();
+      if (playPromise && typeof playPromise.then === "function") {
+        playPromise.then(() => {
+          setTimeout(() => {
+            try {
+              audio.pause();
+              audio.currentTime = 0;
+            } catch (err) {
+              // Ignore audio reset errors.
+            }
+          }, 80);
+        }).catch(() => {
+          // iOS may reject this outside a user gesture. We retry on the next tap.
+        });
+      }
+    } catch (err) {
+      // Silent audio unlock is best-effort.
+    }
+  }
+
+  function ensureAudioContext() {
+    if (audioCtx) return audioCtx;
+
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContextClass) return null;
+
+    audioCtx = new AudioContextClass();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = SOUND_TUNING.masterVolume;
+    masterGain.connect(audioCtx.destination);
+
+    return audioCtx;
+  }
+
+  function unlockAudio() {
+    primeHtmlAudio();
+
+    const ctx = ensureAudioContext();
+    if (!ctx || !masterGain) return;
+
+    if (ctx.state === "suspended") {
+      ctx.resume().catch(() => { });
+    }
+
+    try {
+      const t = ctx.currentTime + 0.01;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(440, t);
+      gain.gain.setValueAtTime(0.0001, t);
+
+      osc.connect(gain);
+      gain.connect(masterGain);
+      osc.start(t);
+      osc.stop(t + 0.03);
+
+      audioUnlocked = true;
+      preloadAudioFiles();
+    } catch (err) {
+      // Unlock blip is best-effort.
+    }
+  }
+
+  function soundEnvelope(eventId, start, duration, peak = 0.2, attack = 0.005, release = 0.06) {
+    const ctx = ensureAudioContext();
+    if (!ctx || !masterGain) return null;
+
+    const gain = ctx.createGain();
+    const scaledPeak = Math.max(0.0002, peak * getSoundVolume(eventId));
+
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(scaledPeak, start + attack);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + duration + release);
+    gain.connect(masterGain);
+
+    return gain;
+  }
+
+  function playOsc(eventId, type, freq, start, duration, gain = 0.18, endFreq = null) {
+    const ctx = ensureAudioContext();
+    if (!ctx) return;
+
+    const osc = ctx.createOscillator();
+    const envelope = soundEnvelope(eventId, start, duration, gain);
+    if (!envelope) return;
+
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, start);
+    if (endFreq) {
+      osc.frequency.exponentialRampToValueAtTime(Math.max(1, endFreq), start + duration);
+    }
+
+    osc.connect(envelope);
+    osc.start(start);
+    osc.stop(start + duration + 0.1);
+  }
+
+  function soundCorrectWord(t) {
+    playOsc("correctWord", "sine", 523, t, 0.08, 0.07);
+    playOsc("correctWord", "sine", 659, t + 0.07, 0.08, 0.07);
+    playOsc("correctWord", "sine", 784, t + 0.14, 0.12, 0.08);
+    playOsc("correctWord", "sine", 1046, t + 0.20, 0.16, 0.06);
+  }
+
+  function soundWrongWord(t) {
+    playOsc("wrongWord", "triangle", 220, t, 0.08, 0.10, 170);
+    playOsc("wrongWord", "triangle", 170, t + 0.07, 0.09, 0.07);
+  }
+
+  function playGeneratedSound(eventId) {
+    if (muted) return;
+
+    unlockAudio();
+
+    const ctx = ensureAudioContext();
+    if (!ctx || !masterGain) return;
+
+    masterGain.gain.value = SOUND_TUNING.masterVolume;
+
+    const t = ctx.currentTime + 0.01;
+
+    if (eventId === "correctWord") {
+      soundCorrectWord(t);
+    } else if (eventId === "wrongWord") {
+      soundWrongWord(t);
+    }
+  }
+
+  function preloadAudioFiles() {
+    Object.values(UI_SOUND_FILES).forEach((url) => loadAudioBuffer(url));
+    Object.values(TOWER_SOUND_FILES).forEach((url) => loadAudioBuffer(url));
+  }
+
+  function loadAudioBuffer(url) {
+    if (!url) return Promise.resolve(null);
+
+    if (audioBuffers.has(url)) {
+      return Promise.resolve(audioBuffers.get(url));
+    }
+
+    if (audioBufferPromises.has(url)) {
+      return audioBufferPromises.get(url);
+    }
+
+    const promise = fetch(url)
+      .then((response) => {
+        if (!response.ok) throw new Error(`Unable to load sound: ${url}`);
+        return response.arrayBuffer();
+      })
+      .then((arrayBuffer) => {
+        const ctx = ensureAudioContext();
+        if (!ctx) return null;
+        return ctx.decodeAudioData(arrayBuffer);
+      })
+      .then((buffer) => {
+        if (buffer) audioBuffers.set(url, buffer);
+        return buffer;
+      })
+      .catch(() => null);
+
+    audioBufferPromises.set(url, promise);
+    return promise;
+  }
+
+  function playBufferedSound(url, eventId, allowWhenMuted = false) {
+    if (muted && !allowWhenMuted) return;
+
+    unlockAudio();
+
+    const ctx = ensureAudioContext();
+    if (!ctx || !masterGain || !url) return;
+
+    masterGain.gain.value = SOUND_TUNING.masterVolume;
+
+    const startBuffer = (buffer) => {
+      if (!buffer) return;
+      if (muted && !allowWhenMuted) return;
+
+      try {
+        const source = ctx.createBufferSource();
+        const gain = ctx.createGain();
+
+        source.buffer = buffer;
+        gain.gain.value = getSoundVolume(eventId);
+
+        source.connect(gain);
+        gain.connect(masterGain);
+
+        source.start(ctx.currentTime + 0.01);
+      } catch (err) {
+        // Sounds should never break gameplay.
+      }
+    };
+
+    const existingBuffer = audioBuffers.get(url);
+    if (existingBuffer) {
+      startBuffer(existingBuffer);
+      return;
+    }
+
+    loadAudioBuffer(url).then(startBuffer);
+  }
+
+  function playUiTapSound(allowWhenMuted = false) {
+    const key = uiSoundFlip ? "uiTap2" : "uiTap1";
+    uiSoundFlip = !uiSoundFlip;
+    playBufferedSound(UI_SOUND_FILES[key], "uiTap", allowWhenMuted);
+  }
+
+  function playGameSound(eventId) {
+    if (eventId === "correctWord" || eventId === "wrongWord") {
+      playGeneratedSound(eventId);
+      return;
+    }
+
+    playBufferedSound(TOWER_SOUND_FILES[eventId], eventId);
+  }
 
   function setPaused(paused, reason = "") {
     state.paused = paused;
@@ -1077,6 +1419,7 @@
         zone: e.zone,
         textureClass: e.textureClass || getRandomBrickTextureClass()
       });
+      playGameSound("brickLand");
       state.enteringBrick = null;
 
       state.towerSettleUntil = performance.now() + 220;
@@ -1278,6 +1621,7 @@
     if (!brick || !isBrickTappable(brick)) return;
 
     if (!brick.isCorrect) {
+      playGameSound("wrongWord");
       resetCorrectStreak();
       brick.flashWrong = true;
       brick.flashWrongUntil = performance.now() + 260;
@@ -1286,6 +1630,8 @@
       clearStreamWithBurst();
       return;
     }
+
+    playGameSound("correctWord");
 
     const zone = getTapZone(brick);
     const visual = 0;
@@ -1564,6 +1910,7 @@
     state.warningLevel = level;
 
     if (level > 0 && level !== previousWarningLevel) {
+      playGameSound(level >= 2 ? "dangerWarning" : "warning");
       showWarningOverlay(level);
     } else if (level === 0) {
       state.warningOverlayLevel = 0;
@@ -1588,6 +1935,8 @@
   function triggerCollapse() {
     const lean = getVisualLean();
     const count = state.progress.length;
+
+    playGameSound("collapse");
 
     state.collapseTriggered = true;
     state.collapseStartedAt = performance.now();
@@ -1882,6 +2231,7 @@
         isIntro: true,
         textureClass: e.textureClass || getRandomBrickTextureClass()
       });
+      playGameSound("brickLand");
       state.enteringBrick = null;
       state.towerSettleUntil = performance.now() + 220;
     }
@@ -1898,6 +2248,7 @@
     const topIndex = state.progress.length - 1;
     const breakInfo = getTowerBrickRenderInfo(topIndex, state.progress.length);
 
+    playGameSound("brickBreak");
     addChunkBurst(breakInfo.x, breakInfo.y, Math.max(0.9, breakInfo.scale * 0.95));
     state.progress.pop();
     state.towerSettleUntil = now + 180;
@@ -1977,6 +2328,7 @@
     const breakInfo = getTowerBrickRenderInfo(breakIndex, oldCount);
     const oldInfos = state.progress.map((brick, i) => getTowerBrickRenderInfo(i, oldCount));
 
+    playGameSound("brickBreak");
     addChunkBurst(breakInfo.x, breakInfo.y, Math.max(0.95, breakInfo.scale));
 
     state.progress.splice(breakIndex, 1);
@@ -2092,6 +2444,8 @@
 
     const config = STREAK_CELEBRATION_TUNING.byStreak[streak];
     if (!config) return;
+
+    playGameSound("streak");
 
     const brick = Math.max(36, state.brickHeight || 58);
     const duration = config.duration;

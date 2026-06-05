@@ -237,7 +237,7 @@ body {
 }
 
 .tb-corner-right {
-  right: clamp(10px, 2.8vw, 18px);
+  display: none;
 }
 
 .tb-conveyor-ground {
