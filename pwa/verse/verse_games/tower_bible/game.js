@@ -822,6 +822,13 @@
     playGameSound(eventId);
   };
 
+  window.tbSetBeltSpeed = function tbSetBeltSpeed(brickHeightsPerSecond = 2.12) {
+    state.beltSpeed = state.brickHeight * brickHeightsPerSecond;
+    console.log(
+      `[TowerBible] belt speed set to ${brickHeightsPerSecond} brick-heights/sec = ${Math.round(state.beltSpeed)} px/sec`
+    );
+  };
+
   function setPaused(paused, reason = "") {
     state.paused = paused;
     state.pauseReason = paused ? reason : "";
