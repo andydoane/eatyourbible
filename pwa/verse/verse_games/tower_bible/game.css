@@ -495,12 +495,12 @@ body {
 
 .tb-tower-brick.tb-intro-green::before,
 .tb-enter-brick.tb-intro-green::before {
-  background-image: url("tower_bible_images/tower_brick_texture_green.png");
+  background-image: url("tower_bible_images/tower_bible_brick_texture_green.png");
 }
 
 .tb-tower-brick.tb-intro-red::before,
 .tb-enter-brick.tb-intro-red::before {
-  background-image: url("tower_bible_images/tower_brick_texture_red.png");
+  background-image: url("tower_bible_images/tower_bible_brick_texture_red.png");
 }
 
 .tb-tower-brick::after,
