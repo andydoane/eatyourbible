@@ -20,9 +20,9 @@
     hard: [0.20, 0.20, 0.20, 0.20, 0.20]
   };
   const BELT_SPEED_BRICK_HEIGHTS_PER_SECOND = {
-    easy: 2.5,
-    medium: 3.25,
-    hard: 4
+    easy: 2.75,
+    medium: 3.50,
+    hard: 4.25
   };
 
   const THRESHOLDS = {
@@ -1090,7 +1090,7 @@
         if (brick.kind === "reference") classes.push("is-ref");
         if (brick.flashWrong) classes.push("is-wrong");
         html += `
-          <button class="${classes.join(" ")}" data-id="${brick.id}" style="left:${Math.round(brick.left)}px;width:${state.brickWidth}px;height:${state.brickHeight}px;font-size:${brick.fontSize}px;opacity:${brickVisualOpacity(brick).toFixed(3)};" aria-label="${brick.isCorrect ? "Correct brick" : "Brick"}">${escapeHtml(brick.label)}</button>`;
+          <button class="${classes.join(" ")}" data-id="${brick.id}" style="left:${Math.round(brick.left)}px;width:${state.brickWidth}px;height:${state.brickHeight}px;font-size:${brick.fontSize}px;" aria-label="${brick.isCorrect ? "Correct brick" : "Brick"}">${escapeHtml(brick.label)}</button>`;
       }
 
       html += `
@@ -1627,24 +1627,7 @@
     return clamp(state.brickWidth * 0.145 - Math.max(0, len - 8) * 0.22, 14, 24);
   }
 
-  function brickVisualOpacity(brick) {
-    const laneLeft = state.lanePadX;
-    const laneRight = state.fieldWidth - state.lanePadX;
-    const edgeFade = clamp(state.fieldWidth * 0.12, 46, 118);
-    const center = brick.center;
 
-    if (center <= laneLeft + edgeFade) {
-      const t = clamp((center - laneLeft) / edgeFade, 0, 1);
-      return lerp(0.18, 0.98, t);
-    }
-
-    if (center >= laneRight - edgeFade) {
-      const t = clamp((laneRight - center) / edgeFade, 0, 1);
-      return lerp(0.18, 0.98, t);
-    }
-
-    return 0.98;
-  }
 
   function isBrickTappable(brick) {
     return brick.left < state.fieldWidth && (brick.left + brick.width) > 0;
