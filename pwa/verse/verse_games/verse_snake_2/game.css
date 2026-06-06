@@ -144,7 +144,7 @@ body{
 }
 
 .vsl-build-tail-space {
-  flex: 0 0 clamp(5rem, 24vw, 12rem);
+  flex: 0 0 clamp(3rem, 16vw, 8rem);
   pointer-events: none;
 }
 

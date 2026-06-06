@@ -963,16 +963,22 @@
     const prompt = document.getElementById("vslBuildPrompt");
     if (!track || !line || !prompt) return;
 
-    const overflow = Math.max(0, track.scrollWidth - line.clientWidth);
-    if (overflow <= 0){
-      track.style.setProperty("--vsl-build-shift", "0px");
-      return;
-    }
-
     const promptCenter = prompt.offsetLeft + prompt.offsetWidth / 2;
-    const targetX = line.clientWidth * 0.74;
-    const rawShift = targetX - promptCenter;
-    const shift = clamp(rawShift, -overflow, 0);
+    const promptRight = prompt.offsetLeft + prompt.offsetWidth;
+    const targetX = line.clientWidth * 0.72;
+
+    const leftPadding = parseFloat(getComputedStyle(track).paddingLeft) || 0;
+    const rightSafe = Math.max(18, line.clientWidth * 0.045);
+
+    const maxShift = 0;
+    const minShiftForLeftPadding = -leftPadding;
+    const minShiftForPromptRight = (line.clientWidth - rightSafe) - promptRight;
+    const desiredShift = targetX - promptCenter;
+
+    const shift = Math.min(
+      maxShift,
+      Math.max(desiredShift, minShiftForLeftPadding, minShiftForPromptRight)
+    );
 
     track.style.setProperty("--vsl-build-shift", `${shift.toFixed(1)}px`);
   }
