@@ -237,10 +237,13 @@ body{
   stroke-linejoin: round;
 }
 
-.vsl-snake-head{
-  fill: #a7cb6f;
-  stroke: rgba(70,104,34,0.30);
-  stroke-width: 2;
+.vsl-snake-head-art,
+.vsl-snake-head-art svg{
+  overflow: visible;
+  pointer-events: none;
+}
+
+.vsl-snake-head-art{
   filter: drop-shadow(0 5px 3px rgba(0,0,0,0.26));
 }
 

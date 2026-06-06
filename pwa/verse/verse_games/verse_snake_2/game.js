@@ -30,6 +30,18 @@
   const FRUIT_EMOJIS = ["🍎","🍓","🍇","🍊","🍉","🍒","🍑","🍍","🥝","🍋"];
   const SNAKE_STYLES = ["default", "berry", "ocean", "sun", "lava", "ice"];
 
+  const SNAKE_HEAD_ASSET = "./verse_snake_images/verse_snake_head_1.svg";
+  const SNAKE_HEAD_COLORS = {
+    default: "#a7cb6f",
+    berry: "#cf7ba0",
+    ocean: "#60cfd8",
+    sun: "#ffd66f",
+    lava: "#ff8c5f",
+    ice: "#d8f7ff"
+  };
+
+  let snakeHeadSvgPromise = null;
+
   const BACTERIA_ASSETS = {
     compact: "./verse_snake_images/verse_snake_bacteria_compact.svg",
     normal: "./verse_snake_images/verse_snake_bacteria_normal.svg",
@@ -228,12 +240,8 @@
                   <path class="vsl-snake-body" id="vslSnakeBody" d=""></path>
                   <path class="vsl-snake-body-2" id="vslSnakeBodyStripe" d=""></path>
                   <g id="vslSnakeHeadGroup">
-                    <circle class="vsl-snake-head" id="vslSnakeHead" cx="0" cy="0" r="22"></circle>
-                    <circle class="vsl-snake-eye" id="vslSnakeEyeLeft" cx="-8" cy="-6" r="5"></circle>
-                    <circle class="vsl-snake-eye" id="vslSnakeEyeRight" cx="8" cy="-6" r="5"></circle>
-                    <circle class="vsl-snake-pupil" id="vslSnakePupilLeft" cx="-8" cy="-6" r="2.1"></circle>
-                    <circle class="vsl-snake-pupil" id="vslSnakePupilRight" cx="8" cy="-6" r="2.1"></circle>
                     <path class="vsl-snake-tongue" id="vslSnakeTongue" d=""></path>
+                    <g class="vsl-snake-head-art" id="vslSnakeHeadArt"></g>
                   </g>
                 </g>
               </svg>
@@ -371,6 +379,7 @@
     state.segments = buildData.segments;
 
     state.snakeLengthPx = Math.max(240, Math.min(Math.min(state.fieldWidth, state.fieldHeight) * 0.72, 560));
+    hydrateSnakeHead();
     seedTrail();
     updateBuildHud();
     spawnEncounter();
@@ -1264,8 +1273,53 @@
     }
   }
 
+  function hydrateSnakeHead() {
+    const holder = document.getElementById("vslSnakeHeadArt");
+    if (!holder || holder.dataset.loaded === "true" || holder.dataset.loaded === "loading") return;
+
+    holder.dataset.loaded = "loading";
+
+    loadSnakeHeadSvg().then((svgText) => {
+      if (!holder.isConnected) return;
+
+      const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
+      const svg = doc.querySelector("svg");
+      if (!svg) {
+        holder.dataset.loaded = "";
+        return;
+      }
+
+      svg.setAttribute("x", "-22");
+      svg.setAttribute("y", "-22");
+      svg.setAttribute("width", "44");
+      svg.setAttribute("height", "44");
+      svg.setAttribute("aria-hidden", "true");
+      svg.classList.add("vsl-snake-head-svg");
+
+      holder.innerHTML = "";
+      holder.appendChild(document.importNode(svg, true));
+      holder.dataset.loaded = "true";
+      applySnakeStyle();
+    }).catch(() => {
+      holder.dataset.loaded = "";
+    });
+  }
+
+  function loadSnakeHeadSvg() {
+    if (!snakeHeadSvgPromise) {
+      snakeHeadSvgPromise = fetch(SNAKE_HEAD_ASSET).then((res) => {
+        if (!res.ok) throw new Error(`Could not load ${SNAKE_HEAD_ASSET}`);
+        return res.text();
+      });
+    }
+
+    return snakeHeadSvgPromise;
+  }
+
   function drawSnake(){
     applySnakeStyle();
+    hydrateSnakeHead();
+
     const body = document.getElementById("vslSnakeBody");
     const stripe = document.getElementById("vslSnakeBodyStripe");
     const headGroup = document.getElementById("vslSnakeHeadGroup");
@@ -1311,7 +1365,14 @@
   function applySnakeStyle(){
     const group = document.getElementById("vslSnakeGroup");
     if (!group) return;
+
     group.className.baseVal = `vsl-snake-style-${state.snakeStyle}`;
+
+    const color = SNAKE_HEAD_COLORS[state.snakeStyle] || SNAKE_HEAD_COLORS.default;
+    const headShape = document.querySelector("#vslSnakeHeadArt #head");
+    if (headShape){
+      headShape.style.fill = color;
+    }
   }
 
   function maybeRecenterWorld(){
