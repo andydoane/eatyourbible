@@ -899,44 +899,81 @@
     });
   }
 
-  function updateBuildHud(){
+  function updateBuildHud() {
     const track = document.getElementById("vslBuildTrack");
     if (!track) return;
 
     const current = getCurrentCorrectLabel();
     const built = state.segments.slice(0, state.progressIndex);
-    const visibleBuilt = built.slice(-4);
-    const fadePrefix = built.length > visibleBuilt.length;
-    const isHard = selectedMode === "hard";
-    const meta = `${state.referenceMeta?.book || state.bookLabel || ""} ${state.referenceMeta?.reference || state.referenceLabel || ""}`.trim();
+    const visibleBuilt = built.slice(-12);
+    const showPrefix = built.length > visibleBuilt.length;
 
-    const builtHtml = visibleBuilt.map((word, index) => {
-      const className = index < Math.max(0, visibleBuilt.length - 2) ? "vsl-build-fade" : "vsl-build-context";
-      return `<span class="${className}">${escapeHtml(word)}</span>`;
+    const builtHtml = visibleBuilt.map((word) => {
+      return `<span class="vsl-build-built">${escapeHtml(word)}</span>`;
     }).join("");
 
-    const prefix = fadePrefix ? `<span class="vsl-build-fade">…</span>` : "";
+    const prefix = showPrefix ? `<span class="vsl-build-built">…</span>` : "";
     const currentHtml = current
-      ? (isHard ? `<span class="vsl-build-blank" aria-label="blank"></span>` : `<span class="vsl-build-current">${escapeHtml(current)}</span>`)
-      : `<span class="vsl-build-current">Done!</span>`;
+      ? buildCurrentPromptHtml(current)
+      : `<span class="vsl-build-current is-easy" id="vslBuildPrompt">DONE!</span>`;
 
     track.innerHTML = `
       ${prefix}
       ${builtHtml}
       ${currentHtml}
-      <span class="vsl-build-meta">${escapeHtml(meta)} • ${Math.min(state.progressIndex + 1, state.segments.length)}/${state.segments.length}</span>
     `;
 
     updateBuildHudShift();
+  }
+  
+  function buildCurrentPromptHtml(word) {
+    const cleanWord = String(word || "").trim();
+    const mode = selectedMode || "medium";
+
+    if (mode === "easy") {
+      return `<span class="vsl-build-current is-easy" id="vslBuildPrompt">${escapeHtml(cleanWord.toUpperCase())}</span>`;
+    }
+
+    if (mode === "medium") {
+      const firstLetter = cleanWord.charAt(0).toUpperCase();
+      const lineCh = getPromptLineLength(cleanWord);
+      return `
+        <span class="vsl-build-current is-medium" id="vslBuildPrompt">
+          <span class="vsl-build-first-letter">${escapeHtml(firstLetter)}</span><span class="vsl-build-line-fill" style="--vsl-line-ch:${lineCh}ch"></span>
+        </span>
+      `;
+    }
+
+    const lineCh = getPromptLineLength(cleanWord);
+    return `
+      <span class="vsl-build-current is-hard" id="vslBuildPrompt">
+        <span class="vsl-build-line-fill" style="--vsl-line-ch:${lineCh}ch"></span>
+      </span>
+    `;
+  }
+
+  function getPromptLineLength(word) {
+    return Math.max(2.4, Math.min(String(word || "").length * 0.72, 7.5));
   }
 
   function updateBuildHudShift(){
     const track = document.getElementById("vslBuildTrack");
     const line = document.getElementById("vslBuildLine");
-    if (!track || !line) return;
-    const overflow = track.scrollWidth - line.clientWidth;
-    const shift = overflow > 0 ? -overflow : 0;
-    track.style.setProperty("--vsl-build-shift", `${shift}px`);
+    const prompt = document.getElementById("vslBuildPrompt");
+    if (!track || !line || !prompt) return;
+
+    const overflow = Math.max(0, track.scrollWidth - line.clientWidth);
+    if (overflow <= 0){
+      track.style.setProperty("--vsl-build-shift", "0px");
+      return;
+    }
+
+    const promptCenter = prompt.offsetLeft + prompt.offsetWidth / 2;
+    const targetX = line.clientWidth * 0.76;
+    const rawShift = targetX - promptCenter;
+    const shift = clamp(rawShift, -overflow, 0);
+
+    track.style.setProperty("--vsl-build-shift", `${shift.toFixed(1)}px`);
   }
 
   function renderTargets(){

@@ -115,7 +115,8 @@ body{
 }
 
 .vsl-build-track{
-  width: 100%;
+  width: max-content;
+  min-width: 100%;
   display: flex;
   align-items: baseline;
   gap: 0.42em;
@@ -131,33 +132,39 @@ body{
   transition: transform 260ms ease;
 }
 
-.vsl-build-fade{
-  opacity: 0.26;
-}
-
-.vsl-build-context{
-  opacity: 0.58;
-}
-
-.vsl-build-current{
+.vsl-build-built{
   opacity: 1;
   color: #ffffff;
 }
 
-.vsl-build-blank{
-  display: inline-flex;
-  min-width: 2.6em;
-  border-bottom: 0.16em solid rgba(255,255,255,0.92);
-  transform: translateY(-0.1em);
+.vsl-build-current{
+  opacity: 1;
+  color: #333333;
+  text-shadow: none;
 }
 
-.vsl-build-meta{
-  margin-left: auto;
-  padding-left: 1.2rem;
-  font-size: 0.48em;
-  font-weight: 800;
-  opacity: 0.78;
-  flex: 0 0 auto;
+.vsl-build-current.is-easy{
+  letter-spacing: 0.02em;
+}
+
+.vsl-build-current.is-medium,
+.vsl-build-current.is-hard{
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.05em;
+}
+
+.vsl-build-first-letter{
+  color: #333333;
+}
+
+.vsl-build-line-fill{
+  display: inline-block;
+  width: var(--vsl-line-ch, 4ch);
+  height: 0.18em;
+  border-radius: 999px;
+  background: #333333;
+  transform: translateY(-0.08em);
 }
 
 .vsl-field-wrap{
@@ -442,9 +449,7 @@ button.vsl-pill{
     gap: 0.32em;
   }
 
-  .vsl-build-meta{
-    display: none;
-  }
+
 
   .vsl-pill{
     min-width: 2.45rem;
