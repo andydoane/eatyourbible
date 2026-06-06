@@ -453,12 +453,22 @@
     state.camera.y = state.head.y - state.fieldHeight / 2;
   }
 
-  function updatePatternLayer(){
+  function updatePatternLayer() {
     const layer = document.getElementById("vslPatternLayer");
     if (!layer) return;
-    const tile = Math.max(120, Math.min(230, state.fieldWidth * 0.26));
-    const x = -mod(state.camera.x, tile);
-    const y = -mod(state.camera.y, tile);
+
+    const head = document.getElementById("vslSnakeHead");
+    const headRadius = head ? Number(head.getAttribute("r")) || 22 : 22;
+    const headHeight = headRadius * 2;
+
+    const tileHeight = headHeight / 0.14;
+    const tileWidth = tileHeight * (471.133 / 408.010);
+
+    const x = -mod(state.camera.x, tileWidth);
+    const y = -mod(state.camera.y, tileHeight);
+
+    layer.style.setProperty("--vsl-pattern-w", `${tileWidth.toFixed(1)}px`);
+    layer.style.setProperty("--vsl-pattern-h", `${tileHeight.toFixed(1)}px`);
     layer.style.setProperty("--vsl-pattern-x", `${x.toFixed(1)}px`);
     layer.style.setProperty("--vsl-pattern-y", `${y.toFixed(1)}px`);
   }

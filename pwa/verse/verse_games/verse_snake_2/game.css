@@ -181,12 +181,12 @@ body{
   cursor: crosshair;
 }
 
-.vsl-pattern-layer{
+.vsl-pattern-layer {
   position: absolute;
-  inset: -25%;
+  inset: calc(-1 * var(--vsl-pattern-h, 314px));
   background-image: url("./verse_snake_images/verse_snake_pattern_hex.svg");
   background-repeat: repeat;
-  background-size: clamp(8rem, 18vw, 14rem) auto;
+  background-size: var(--vsl-pattern-w, 363px) var(--vsl-pattern-h, 314px);
   opacity: 0.15;
   pointer-events: none;
   transform: translate3d(var(--vsl-pattern-x, 0px), var(--vsl-pattern-y, 0px), 0);
@@ -250,21 +250,20 @@ body{
   stroke-linejoin: round;
 }
 
-.vsl-snake-style-berry .vsl-snake-body,
-.vsl-snake-style-berry .vsl-snake-head{ stroke-color: #c85f8a; fill: #cf7ba0; }
-.vsl-snake-style-berry .vsl-snake-body{ stroke: #cf7ba0; }
-.vsl-snake-style-ocean .vsl-snake-body,
-.vsl-snake-style-ocean .vsl-snake-head{ stroke-color: #40b9c5; fill: #60cfd8; }
-.vsl-snake-style-ocean .vsl-snake-body{ stroke: #60cfd8; }
-.vsl-snake-style-sun .vsl-snake-body,
-.vsl-snake-style-sun .vsl-snake-head{ stroke-color: #ffc751; fill: #ffd66f; }
-.vsl-snake-style-sun .vsl-snake-body{ stroke: #ffd66f; }
-.vsl-snake-style-lava .vsl-snake-body,
-.vsl-snake-style-lava .vsl-snake-head{ stroke-color: #ff754d; fill: #ff8c5f; }
-.vsl-snake-style-lava .vsl-snake-body{ stroke: #ff8c5f; }
-.vsl-snake-style-ice .vsl-snake-body,
-.vsl-snake-style-ice .vsl-snake-head{ stroke-color: #c8f0ff; fill: #d8f7ff; }
-.vsl-snake-style-ice .vsl-snake-body{ stroke: #d8f7ff; }
+.vsl-snake-style-berry .vsl-snake-body{ stroke: #cf7ba0; fill: none; }
+.vsl-snake-style-berry .vsl-snake-head{ fill: #cf7ba0; stroke: #c85f8a; }
+
+.vsl-snake-style-ocean .vsl-snake-body{ stroke: #60cfd8; fill: none; }
+.vsl-snake-style-ocean .vsl-snake-head{ fill: #60cfd8; stroke: #40b9c5; }
+
+.vsl-snake-style-sun .vsl-snake-body{ stroke: #ffd66f; fill: none; }
+.vsl-snake-style-sun .vsl-snake-head{ fill: #ffd66f; stroke: #ffc751; }
+
+.vsl-snake-style-lava .vsl-snake-body{ stroke: #ff8c5f; fill: none; }
+.vsl-snake-style-lava .vsl-snake-head{ fill: #ff8c5f; stroke: #ff754d; }
+
+.vsl-snake-style-ice .vsl-snake-body{ stroke: #d8f7ff; fill: none; }
+.vsl-snake-style-ice .vsl-snake-head{ fill: #d8f7ff; stroke: #c8f0ff; }
 
 .vsl-overlay-pills{
   position: absolute;
