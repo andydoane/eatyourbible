@@ -183,14 +183,14 @@ body{
 
 .vsl-pattern-layer {
   position: absolute;
-  inset: calc(-1 * var(--vsl-pattern-h, 314px));
+  inset: 0;
   background-image: url("./verse_snake_images/verse_snake_pattern_hex.svg");
   background-repeat: repeat;
   background-size: var(--vsl-pattern-w, 363px) var(--vsl-pattern-h, 314px);
+  background-position: var(--vsl-pattern-x, 0px) var(--vsl-pattern-y, 0px);
   opacity: 0.15;
   pointer-events: none;
-  transform: translate3d(var(--vsl-pattern-x, 0px), var(--vsl-pattern-y, 0px), 0);
-  will-change: transform;
+  will-change: background-position;
 }
 
 .vsl-world-layer,
