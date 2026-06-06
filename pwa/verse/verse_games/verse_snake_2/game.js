@@ -37,12 +37,12 @@
   };
 
   const BACTERIA_PALETTE = [
-    { name: "red", body: "#ff5a51", dark: "#cc4841" },
-    { name: "orange", body: "#ffa351", dark: "#cc8241" },
-    { name: "yellow", body: "#ffc751", dark: "#cc9f41" },
-    { name: "green", body: "#a7cb6f", dark: "#86a259" },
-    { name: "blue", body: "#40b9c5", dark: "#33949e" },
-    { name: "purple", body: "#7f66c6", dark: "#66529e" }
+    { name: "red", body: "#ff5a51", dark: "#cc4841", text: "#ffffff" },
+    { name: "orange", body: "#ffa351", dark: "#cc8241", text: "#ffffff" },
+    { name: "yellow", body: "#ffc751", dark: "#cc9f41", text: "#11151d" },
+    { name: "green", body: "#a7cb6f", dark: "#86a259", text: "#ffffff" },
+    { name: "blue", body: "#40b9c5", dark: "#33949e", text: "#ffffff" },
+    { name: "purple", body: "#7f66c6", dark: "#66529e", text: "#ffffff" }
   ];
 
   const bacteriaSvgCache = new Map();
@@ -988,7 +988,7 @@
     }
 
     if (mode === "medium") {
-      const firstLetter = cleanWord.charAt(0).toUpperCase();
+      const firstLetter = cleanWord.charAt(0);
       const lineCh = getPromptLineLength(cleanWord);
       return `
         <span class="vsl-build-current is-medium" id="vslBuildPrompt">
@@ -1043,6 +1043,7 @@
       el.className = `vsl-word-target is-${target.bacteriaVariant || "normal"}`;
       el.style.setProperty("--vsl-bacteria-body", palette.body);
       el.style.setProperty("--vsl-bacteria-dark", palette.dark);
+      el.style.setProperty("--vsl-bacteria-text", palette.text || "#ffffff");
       el.querySelector(".vsl-bacteria-label").textContent = target.word;
 
       hydrateBacteriaTarget(el, target);
