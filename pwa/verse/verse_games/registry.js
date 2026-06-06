@@ -190,5 +190,20 @@ window.EXTERNAL_VERSE_GAMES = [
       progressType: "standard",
       modes: ["easy", "medium", "hard"]
     }
-  }
+  },
+  {
+    enabled: true,
+    manifest: {
+      id: "verse_snake_2",
+      title: "Verse Slither",
+      description: "Guide the snake through a scrolling world to collect the verse.",
+      icon: "🐍",
+      cardColor: "#090c14",
+      cardTextColor: "#ffffff",
+      launchUrl: "./verse_games/verse_snake_2/index.html",
+      visibleInCarousel: false,
+      progressType: "standard",
+      modes: ["easy", "medium", "hard"]
+    }
+  },
 ];
