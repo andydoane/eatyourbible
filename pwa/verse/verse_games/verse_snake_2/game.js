@@ -901,31 +901,59 @@
 
   function updateBuildHud() {
     const track = document.getElementById("vslBuildTrack");
+    const line = document.getElementById("vslBuildLine");
     if (!track) return;
 
     const current = getCurrentCorrectLabel();
     const built = state.segments.slice(0, state.progressIndex);
-    const visibleBuilt = built.slice(-12);
-    const showPrefix = built.length > visibleBuilt.length;
+    const maxContextWords = Math.min(built.length, 14);
 
-    const builtHtml = visibleBuilt.map((word) => {
-      return `<span class="vsl-build-built">${escapeHtml(word)}</span>`;
-    }).join("");
-
-    const prefix = showPrefix ? `<span class="vsl-build-built">…</span>` : "";
     const currentHtml = current
       ? buildCurrentPromptHtml(current)
       : `<span class="vsl-build-current is-easy" id="vslBuildPrompt">DONE!</span>`;
 
-    track.innerHTML = `
-      ${prefix}
-      ${builtHtml}
-      ${currentHtml}
-      <span class="vsl-build-tail-space" aria-hidden="true"></span>
-    `;
+    const renderCandidate = (visibleCount) => {
+      const visibleBuilt = visibleCount > 0 ? built.slice(-visibleCount) : [];
+      const showPrefix = built.length > visibleCount;
+
+      const prefix = showPrefix
+        ? `<span class="vsl-build-built">…</span>`
+        : "";
+
+      const builtHtml = visibleBuilt.map((word) => {
+        return `<span class="vsl-build-built">${escapeHtml(word)}</span>`;
+      }).join("");
+
+      track.innerHTML = `
+        ${prefix}
+        ${builtHtml}
+        ${currentHtml}
+      `;
+
+      track.style.setProperty("--vsl-build-shift", "0px");
+    };
+
+    renderCandidate(maxContextWords);
+
+    if (!line) return;
+
+    const safeWidth = Math.max(0, line.clientWidth - 8);
+
+    for (let visibleCount = maxContextWords; visibleCount >= 0; visibleCount--) {
+      renderCandidate(visibleCount);
+
+      if (track.scrollWidth <= safeWidth) {
+        break;
+      }
+    }
+
+    if (track.scrollWidth > safeWidth) {
+      renderCandidate(0);
+    }
 
     updateBuildHudShift();
   }
+  
   
   function buildCurrentPromptHtml(word) {
     const cleanWord = String(word || "").trim();
@@ -957,31 +985,12 @@
     return Math.max(2.4, Math.min(String(word || "").length * 0.72, 7.5));
   }
 
-  function updateBuildHudShift(){
+  function updateBuildHudShift() {
     const track = document.getElementById("vslBuildTrack");
-    const line = document.getElementById("vslBuildLine");
-    const prompt = document.getElementById("vslBuildPrompt");
-    if (!track || !line || !prompt) return;
-
-    const promptCenter = prompt.offsetLeft + prompt.offsetWidth / 2;
-    const promptRight = prompt.offsetLeft + prompt.offsetWidth;
-    const targetX = line.clientWidth * 0.72;
-
-    const leftPadding = parseFloat(getComputedStyle(track).paddingLeft) || 0;
-    const rightSafe = Math.max(18, line.clientWidth * 0.045);
-
-    const maxShift = 0;
-    const minShiftForLeftPadding = -leftPadding;
-    const minShiftForPromptRight = (line.clientWidth - rightSafe) - promptRight;
-    const desiredShift = targetX - promptCenter;
-
-    const shift = Math.min(
-      maxShift,
-      Math.max(desiredShift, minShiftForLeftPadding, minShiftForPromptRight)
-    );
-
-    track.style.setProperty("--vsl-build-shift", `${shift.toFixed(1)}px`);
+    if (!track) return;
+    track.style.setProperty("--vsl-build-shift", "0px");
   }
+  
 
   function renderTargets(){
     const layer = document.getElementById("vslTargetLayer");

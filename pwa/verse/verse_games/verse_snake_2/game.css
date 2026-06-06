@@ -115,21 +115,21 @@ body{
 }
 
 .vsl-build-track{
-  width: max-content;
-  min-width: 100%;
+  width: 100%;
+  min-width: 0;
   display: flex;
   align-items: baseline;
   gap: 0.42em;
   padding-inline: max(1rem, env(safe-area-inset-left)) max(1rem, env(safe-area-inset-right));
   white-space: nowrap;
+  overflow: hidden;
   font-family: "Baloo 2", system-ui, sans-serif;
   font-size: clamp(1.18rem, 4.5vw, 2.15rem);
   font-weight: 900;
   line-height: 1;
   color: #ffffff;
   text-shadow: 0 2px 5px rgba(0,0,0,0.10);
-  transform: translateX(var(--vsl-build-shift, 0px));
-  transition: transform 260ms ease;
+  transform: none;
 }
 
 .vsl-build-built{
@@ -143,9 +143,8 @@ body{
   text-shadow: none;
 }
 
-.vsl-build-tail-space {
-  flex: 0 0 clamp(3rem, 16vw, 8rem);
-  pointer-events: none;
+.vsl-build-tail-space{
+  display: none;
 }
 
 .vsl-build-current.is-easy{
