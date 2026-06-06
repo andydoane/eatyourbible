@@ -306,6 +306,7 @@ button.vsl-pill{
 
 .vsl-target-layer,
 .vsl-fruit-layer,
+.vsl-pickup-pop-layer,
 .vsl-arrow-layer{
   position: absolute;
   inset: 0;
@@ -362,6 +363,32 @@ button.vsl-pill{
   font-size: clamp(1.55rem, 7vw, 2.2rem);
   transform: translate(-50%, -50%);
   will-change: transform;
+}
+
+.vsl-pickup-pop {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 18;
+  padding: 0.42rem 0.82rem;
+  border-radius: 999px;
+  color: #ffffff;
+  font-family: "Baloo 2", system-ui, sans-serif;
+  font-weight: 900;
+  font-size: clamp(1rem, 4.6vw, 1.45rem);
+  line-height: 1;
+  white-space: nowrap;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.18);
+  will-change: transform, opacity;
+}
+
+.vsl-pickup-pop.is-correct {
+  background: #4fb85f;
+}
+
+.vsl-pickup-pop.is-wrong {
+  background: #e64b4b;
 }
 
 .vsl-arrow{

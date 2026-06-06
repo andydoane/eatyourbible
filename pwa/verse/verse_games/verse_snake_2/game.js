@@ -20,7 +20,7 @@
     pairSeparationScreen: { easy: 0.20, medium: 0.23, hard: 0.26 },
     pairRoamScreen: { easy: 0.10, medium: 0.12, hard: 0.14 },
     targetMinScreenDistance: 0.95,
-    wrongFleeSpeed: 92,
+    wrongFleeSpeeds: { easy: 54, medium: 72, hard: 92 },
     wrongFleeMaxScreenDistance: 1.22,
     encounterMaxDistanceScreens: 1.1,
     patternScrollFactor: 1.35,
@@ -44,6 +44,7 @@
     flashText: "",
     flashUntil: 0,
     happyUntil: 0,
+    pickupPops: [],
     snakeStyle: "default",
     snakeStyleIndex: 0,
     fruitCount: 0,
@@ -201,6 +202,7 @@
 
               <div class="vsl-fruit-layer" id="vslFruitLayer"></div>
               <div class="vsl-target-layer" id="vslTargetLayer"></div>
+              <div class="vsl-pickup-pop-layer" id="vslPickupPopLayer"></div>
               <div class="vsl-arrow-layer"><div class="vsl-arrow" id="vslArrow"></div></div>
               <div class="vsl-flash-message" id="vslFlashMessage"></div>
 
@@ -307,6 +309,7 @@
     state.flashText = "";
     state.flashUntil = 0;
     state.happyUntil = 0;
+    state.pickupPops = [];
     state.snakeStyle = "default";
     state.snakeStyleIndex = 0;
     state.fruitCount = 0;
@@ -396,6 +399,7 @@
       drawSnake();
       renderTargets();
       renderFruit();
+      renderPickupPops(ts);
       renderArrow();
       renderFlash(ts);
       state.rafId = requestAnimationFrame(tick);
@@ -410,6 +414,10 @@
 
   function getCurrentTurnRate(){
     return SLITHER_TUNING.turnRate[selectedMode] || SLITHER_TUNING.turnRate.medium;
+  }
+
+  function getWrongFleeSpeed() {
+    return SLITHER_TUNING.wrongFleeSpeeds[selectedMode] || SLITHER_TUNING.wrongFleeSpeeds.medium;
   }
 
   function seedTrail(){
@@ -699,8 +707,9 @@
 
     for (const target of state.targets){
       if (target.fleeing){
-        target.x += Math.cos(target.fleeAngle) * SLITHER_TUNING.wrongFleeSpeed * (dt / 1000);
-        target.y += Math.sin(target.fleeAngle) * SLITHER_TUNING.wrongFleeSpeed * (dt / 1000);
+        const fleeSpeed = getWrongFleeSpeed();
+        target.x += Math.cos(target.fleeAngle) * fleeSpeed * (dt / 1000);
+        target.y += Math.sin(target.fleeAngle) * fleeSpeed * (dt / 1000);
         const distFromPlayer = Math.hypot(target.x - state.head.x, target.y - state.head.y);
         const maxDist = Math.max(state.fieldWidth, state.fieldHeight) * SLITHER_TUNING.wrongFleeMaxScreenDistance;
         if (distFromPlayer >= maxDist){
@@ -799,7 +808,14 @@
     }
   }
 
-  function handleCorrectTarget(){
+  function handleCorrectTarget(target){
+    showPickupPop({
+      text: target.word,
+      kind: "correct",
+      x: target.x,
+      y: target.y
+    });
+
     state.progressIndex += 1;
     state.targets = [];
     state.encounter = null;
@@ -817,8 +833,16 @@
   function handleWrongTarget(target, ts){
     target.hit = true;
     target.wrongHitUntil = ts + 320;
-    state.flashText = "Try again!";
-    state.flashUntil = ts + 700;
+
+    showPickupPop({
+      text: "OOPS!",
+      kind: "wrong",
+      x: target.x,
+      y: target.y
+    });
+
+    state.flashText = "";
+    state.flashUntil = 0;
 
     setTimeout(() => {
       if (!state.running || completed) return;
@@ -938,6 +962,61 @@
       el.style.transform = `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px) translate(-50%, -50%)`;
       el.classList.toggle("is-wrong-hit", performance.now() < target.wrongHitUntil);
     }
+  }
+
+  function showPickupPop({ text, kind, x, y }) {
+    state.pickupPops.push({
+      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      text,
+      kind,
+      x,
+      y,
+      bornAt: performance.now(),
+      duration: 720
+    });
+  }
+
+  function renderPickupPops(ts) {
+    const layer = document.getElementById("vslPickupPopLayer");
+    if (!layer) return;
+
+    state.pickupPops = state.pickupPops.filter((pop) => ts - pop.bornAt < pop.duration);
+    const activeIds = new Set(state.pickupPops.map((pop) => pop.id));
+
+    for (const child of [...layer.children]) {
+      if (!activeIds.has(child.dataset.id)) child.remove();
+    }
+
+    for (const pop of state.pickupPops) {
+      let el = layer.querySelector(`[data-id="${pop.id}"]`);
+      if (!el) {
+        el = document.createElement("div");
+        el.className = `vsl-pickup-pop is-${pop.kind}`;
+        el.dataset.id = pop.id;
+        el.textContent = pop.text;
+        layer.appendChild(el);
+      }
+
+      const age = ts - pop.bornAt;
+      const t = Math.min(1, age / pop.duration);
+      const p = worldToScreen(pop);
+      const lift = 42 * easeOutCubic(t);
+      const scale = 0.76 + 0.24 * easeOutBack(Math.min(1, t * 2.4));
+      const opacity = t > 0.68 ? 1 - ((t - 0.68) / 0.32) : 1;
+
+      el.style.opacity = opacity.toFixed(3);
+      el.style.transform = `translate(${p.x.toFixed(1)}px, ${(p.y - lift).toFixed(1)}px) translate(-50%, -50%) scale(${scale.toFixed(3)})`;
+    }
+  }
+
+  function easeOutCubic(t) {
+    return 1 - Math.pow(1 - t, 3);
+  }
+
+  function easeOutBack(t) {
+    const c1 = 1.70158;
+    const c3 = c1 + 1;
+    return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
   }
 
   function renderFruit(){
