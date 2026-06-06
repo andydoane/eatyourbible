@@ -22,6 +22,8 @@
     targetMinScreenDistance: 0.95,
     wrongFleeSpeed: 92,
     wrongFleeMaxScreenDistance: 1.22,
+    encounterMaxDistanceScreens: 1.85,
+    patternScrollFactor: 1.35,
     fruitChance: 0.62
   };
 
@@ -381,6 +383,7 @@
 
       if (!state.paused){
         updateMotion(dt);
+        keepObjectiveWithinRange();
         updateEncounter(dt, ts);
         updateFruit(dt, ts);
         checkCollisions(ts);
@@ -461,16 +464,17 @@
     const headRadius = head ? Number(head.getAttribute("r")) || 22 : 22;
     const headHeight = headRadius * 2;
 
-    const tileHeight = headHeight / 0.14;
-    const tileWidth = tileHeight * (471.133 / 408.010);
+    const tileHeight = Math.round(headHeight / 0.14);
+    const tileWidth = Math.round(tileHeight * (471.133 / 408.010));
+    const scrollFactor = SLITHER_TUNING.patternScrollFactor || 1;
 
-    const x = -mod(state.camera.x, tileWidth);
-    const y = -mod(state.camera.y, tileHeight);
+    const x = -Math.round(mod(state.camera.x * scrollFactor, tileWidth));
+    const y = -Math.round(mod(state.camera.y * scrollFactor, tileHeight));
 
-    layer.style.setProperty("--vsl-pattern-w", `${tileWidth.toFixed(1)}px`);
-    layer.style.setProperty("--vsl-pattern-h", `${tileHeight.toFixed(1)}px`);
-    layer.style.setProperty("--vsl-pattern-x", `${x.toFixed(1)}px`);
-    layer.style.setProperty("--vsl-pattern-y", `${y.toFixed(1)}px`);
+    layer.style.setProperty("--vsl-pattern-w", `${tileWidth}px`);
+    layer.style.setProperty("--vsl-pattern-h", `${tileHeight}px`);
+    layer.style.setProperty("--vsl-pattern-x", `${x}px`);
+    layer.style.setProperty("--vsl-pattern-y", `${y}px`);
   }
 
   function worldToScreen(p){
@@ -605,6 +609,79 @@
     });
 
     maybeSpawnFruit(false);
+  }
+
+  function keepObjectiveWithinRange() {
+    const maxDist = Math.max(state.fieldWidth, state.fieldHeight) * (SLITHER_TUNING.encounterMaxDistanceScreens || 1.85);
+
+    if (state.encounter && !state.encounter.collapsed) {
+      const dx = state.encounter.baseCenter.x - state.head.x;
+      const dy = state.encounter.baseCenter.y - state.head.y;
+      const dist = Math.hypot(dx, dy);
+
+      if (dist > maxDist) {
+        const ux = dx / dist;
+        const uy = dy / dist;
+        const newBase = {
+          x: state.head.x + ux * maxDist,
+          y: state.head.y + uy * maxDist
+        };
+
+        const moveX = newBase.x - state.encounter.baseCenter.x;
+        const moveY = newBase.y - state.encounter.baseCenter.y;
+
+        state.encounter.baseCenter.x += moveX;
+        state.encounter.baseCenter.y += moveY;
+        state.encounter.center.x += moveX;
+        state.encounter.center.y += moveY;
+
+        for (const target of state.targets) {
+          if (target.fleeing) continue;
+          target.anchorX += moveX;
+          target.anchorY += moveY;
+        }
+
+        if (state.fruit) {
+          const fruitDist = Math.hypot(state.fruit.x - state.head.x, state.fruit.y - state.head.y);
+          if (fruitDist > maxDist * 1.1) {
+            state.fruit.x += moveX;
+            state.fruit.y += moveY;
+          }
+        }
+      }
+
+      return;
+    }
+
+    const correct = state.targets.find((target) => target.isCorrect);
+    if (!correct || correct.fleeing) return;
+
+    const anchor = correct.freeAnchor || correct;
+    const dx = anchor.x - state.head.x;
+    const dy = anchor.y - state.head.y;
+    const dist = Math.hypot(dx, dy);
+
+    if (dist > maxDist) {
+      const ux = dx / dist;
+      const uy = dy / dist;
+      const newAnchor = {
+        x: state.head.x + ux * maxDist,
+        y: state.head.y + uy * maxDist
+      };
+
+      const moveX = newAnchor.x - anchor.x;
+      const moveY = newAnchor.y - anchor.y;
+
+      if (correct.freeAnchor) {
+        correct.freeAnchor.x += moveX;
+        correct.freeAnchor.y += moveY;
+      }
+
+      correct.x += moveX;
+      correct.y += moveY;
+      correct.anchorX += moveX;
+      correct.anchorY += moveY;
+    }
   }
 
   function updateEncounter(dt, ts){
