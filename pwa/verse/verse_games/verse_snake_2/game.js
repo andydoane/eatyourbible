@@ -41,6 +41,7 @@
   };
 
   let snakeHeadSvgPromise = null;
+  const SNAKE_HEAD_COLLISION_RADIUS = 20;
 
   const BACTERIA_ASSETS = {
     compact: "./verse_snake_images/verse_snake_bacteria_compact.svg",
@@ -814,7 +815,7 @@
   function checkFruitCollision(){
     if (!state.fruit) return;
     const d = Math.hypot(state.head.x - state.fruit.x, state.head.y - state.fruit.y);
-    if (d <= state.fruit.r + 22){
+    if (d <= state.fruit.r + SNAKE_HEAD_COLLISION_RADIUS){
       state.fruit = null;
       state.fruitCount += 1;
       state.snakeStyleIndex = (state.snakeStyleIndex + 1 + Math.floor(Math.random() * 2)) % SNAKE_STYLES.length;
@@ -828,7 +829,7 @@
     for (const target of [...state.targets]){
       if (target.hit) continue;
       const d = Math.hypot(state.head.x - target.x, state.head.y - target.y);
-      if (d <= target.r + 23){
+      if (d <= target.r + SNAKE_HEAD_COLLISION_RADIUS){
         if (target.isCorrect){
           handleCorrectTarget(target);
         } else {
