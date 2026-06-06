@@ -329,27 +329,113 @@ button.vsl-pill{
   position: absolute;
   left: 0;
   top: 0;
-  min-width: clamp(4.5rem, 14vw, 7.6rem);
-  max-width: min(16rem, 58vw);
-  padding: 0.58rem 1rem;
-  border-radius: 999px;
+  width: clamp(7.3rem, 28vw, 11.2rem);
+  height: clamp(4.25rem, 15vw, 6.25rem);
   color: #11151d;
-  background: #fff4cf;
-  border: 0.18rem solid rgba(255,255,255,0.84);
-  box-shadow: 0 10px 24px rgba(0,0,0,0.30);
   font-family: "Baloo 2", system-ui, sans-serif;
   font-weight: 900;
-  font-size: clamp(1.05rem, 4.2vw, 1.55rem);
   line-height: 1;
   text-align: center;
   white-space: nowrap;
   transform: translate(-50%, -50%);
   will-change: transform;
+  filter: drop-shadow(0 10px 14px rgba(0,0,0,0.26));
+}
+
+.vsl-word-target.is-compact{
+  width: clamp(5.9rem, 22vw, 8.5rem);
+}
+
+.vsl-word-target.is-normal{
+  width: clamp(7.3rem, 28vw, 11.2rem);
+}
+
+.vsl-word-target.is-long{
+  width: clamp(9.7rem, 38vw, 15.4rem);
+}
+
+.vsl-bacteria-art,
+.vsl-bacteria-art svg{
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.vsl-bacteria-art svg{
+  overflow: visible;
+}
+
+.vsl-bacteria-label{
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  top: 50%;
+  width: 72%;
+  transform: translate(-50%, -50%);
+  color: #11151d;
+  font-size: clamp(1rem, 3.8vw, 1.48rem);
+  line-height: 1;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.22);
+  pointer-events: none;
+}
+
+.vsl-word-target.is-compact .vsl-bacteria-label{
+  width: 64%;
+}
+
+.vsl-word-target.is-long .vsl-bacteria-label{
+  width: 78%;
+  font-size: clamp(0.9rem, 3.4vw, 1.32rem);
+}
+
+.vsl-bacteria-art [id^="light_hair_"],
+.vsl-bacteria-art [id*="light_hair_"],
+.vsl-bacteria-art [id^="dark_hair_"],
+.vsl-bacteria-art [id*="dark_hair_"]{
+  transform-box: fill-box;
+  transform-origin: center center;
+  animation-name: vslHairWiggle;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+
+.vsl-bacteria-art #body{
+  fill: var(--vsl-bacteria-body, #a7cb6f);
+}
+
+.vsl-word-target.is-bacteria-missing{
+  min-width: clamp(4.5rem, 14vw, 7.6rem);
+  height: auto;
+  padding: 0.58rem 1rem;
+  border-radius: 999px;
+  background: #fff4cf;
+  border: 0.18rem solid rgba(255,255,255,0.84);
+}
+
+.vsl-word-target.is-bacteria-missing .vsl-bacteria-label{
+  position: static;
+  transform: none;
+  width: auto;
+}
+
+@keyframes vslHairWiggle{
+  from{ transform: rotate(-5deg); }
+  to{ transform: rotate(5deg); }
 }
 
 .vsl-word-target.is-wrong-hit{
   animation: vslWrongShake 340ms ease;
-  background: #ffd2d2;
+}
+
+.vsl-word-target.is-wrong-hit .vsl-bacteria-art{
+  filter: brightness(1.12) saturate(1.2);
 }
 
 @keyframes vslWrongShake{

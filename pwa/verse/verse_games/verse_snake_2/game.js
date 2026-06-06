@@ -30,6 +30,23 @@
   const FRUIT_EMOJIS = ["🍎","🍓","🍇","🍊","🍉","🍒","🍑","🍍","🥝","🍋"];
   const SNAKE_STYLES = ["default", "berry", "ocean", "sun", "lava", "ice"];
 
+  const BACTERIA_ASSETS = {
+    compact: "./verse_snake_images/verse_snake_bacteria_compact.svg",
+    normal: "./verse_snake_images/verse_snake_bacteria_normal.svg",
+    long: "./verse_snake_images/verse_snake_bacteria_long.svg"
+  };
+
+  const BACTERIA_PALETTE = [
+    { name: "red", body: "#ff5a51", dark: "#cc4841" },
+    { name: "orange", body: "#ffa351", dark: "#cc8241" },
+    { name: "yellow", body: "#ffc751", dark: "#cc9f41" },
+    { name: "green", body: "#a7cb6f", dark: "#86a259" },
+    { name: "blue", body: "#40b9c5", dark: "#33949e" },
+    { name: "purple", body: "#7f66c6", dark: "#66529e" }
+  ];
+
+  const bacteriaSvgCache = new Map();
+
   let selectedMode = null;
   let muted = false;
   let completed = false;
@@ -594,12 +611,17 @@
     );
     const sideAngle = angle + Math.PI / 2 + (Math.random() < 0.5 ? 0 : Math.PI);
 
+    const targetColors = getTwoDifferentBacteriaColors();
+
     state.targets = shuffle(choices).map((choice, index) => {
       const sign = index === 0 ? -1 : 1;
+      const palette = targetColors[index] || BACTERIA_PALETTE[index % BACTERIA_PALETTE.length];
       return {
         id: state.nextTargetId++,
         word: choice.word,
         isCorrect: choice.isCorrect,
+        bacteriaVariant: getBacteriaVariant(choice.word),
+        bacteriaPalette: palette,
         x: center.x + Math.cos(sideAngle) * separation * 0.5 * sign,
         y: center.y + Math.sin(sideAngle) * separation * 0.5 * sign,
         anchorX: center.x,
@@ -993,30 +1015,118 @@
     track.style.setProperty("--vsl-build-shift", "0px");
   }
   
-
-  function renderTargets(){
+  function renderTargets() {
     const layer = document.getElementById("vslTargetLayer");
     if (!layer) return;
 
     const activeIds = new Set(state.targets.map((target) => String(target.id)));
-    for (const child of [...layer.children]){
+    for (const child of [...layer.children]) {
       if (!activeIds.has(child.dataset.id)) child.remove();
     }
 
-    for (const target of state.targets){
+    for (const target of state.targets) {
       let el = layer.querySelector(`[data-id="${target.id}"]`);
-      if (!el){
+
+      if (!el) {
         el = document.createElement("div");
-        el.className = "vsl-word-target";
+        el.className = `vsl-word-target is-${target.bacteriaVariant || "normal"}`;
         el.dataset.id = String(target.id);
-        el.textContent = target.word;
+        el.dataset.asset = "";
+        el.innerHTML = `
+          <div class="vsl-bacteria-art" aria-hidden="true"></div>
+          <div class="vsl-bacteria-label"></div>
+        `;
         layer.appendChild(el);
       }
+
+      const palette = target.bacteriaPalette || BACTERIA_PALETTE[0];
+      el.className = `vsl-word-target is-${target.bacteriaVariant || "normal"}`;
+      el.style.setProperty("--vsl-bacteria-body", palette.body);
+      el.style.setProperty("--vsl-bacteria-dark", palette.dark);
+      el.querySelector(".vsl-bacteria-label").textContent = target.word;
+
+      hydrateBacteriaTarget(el, target);
 
       const p = worldToScreen(target);
       el.style.transform = `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px) translate(-50%, -50%)`;
       el.classList.toggle("is-wrong-hit", performance.now() < target.wrongHitUntil);
     }
+  }
+
+  function getBacteriaVariant(word) {
+    const len = String(word || "").trim().length;
+    if (len <= 4) return "compact";
+    if (len <= 9) return "normal";
+    return "long";
+  }
+
+  function getTwoDifferentBacteriaColors() {
+    const firstIndex = Math.floor(Math.random() * BACTERIA_PALETTE.length);
+    let secondIndex = Math.floor(Math.random() * BACTERIA_PALETTE.length);
+
+    if (secondIndex === firstIndex) {
+      secondIndex = (secondIndex + 1 + Math.floor(Math.random() * (BACTERIA_PALETTE.length - 1))) % BACTERIA_PALETTE.length;
+    }
+
+    return [BACTERIA_PALETTE[firstIndex], BACTERIA_PALETTE[secondIndex]];
+  }
+
+  function hydrateBacteriaTarget(el, target) {
+    const art = el.querySelector(".vsl-bacteria-art");
+    if (!art) return;
+
+    const variant = target.bacteriaVariant || getBacteriaVariant(target.word);
+    const assetUrl = BACTERIA_ASSETS[variant] || BACTERIA_ASSETS.normal;
+    const palette = target.bacteriaPalette || BACTERIA_PALETTE[0];
+    const assetKey = `${assetUrl}|${palette.name}`;
+
+    if (el.dataset.asset === assetKey) return;
+    el.dataset.asset = assetKey;
+    art.innerHTML = "";
+
+    loadBacteriaSvg(assetUrl).then((svgText) => {
+      if (el.dataset.asset !== assetKey) return;
+
+      art.innerHTML = svgText;
+      const svg = art.querySelector("svg");
+      if (!svg) return;
+
+      svg.setAttribute("aria-hidden", "true");
+      svg.classList.add("vsl-bacteria-svg");
+
+      const body = svg.querySelector("#body");
+      if (body) body.style.fill = palette.body;
+
+      svg.querySelectorAll('[id^="light_hair_"], [id*="light_hair_"]').forEach((hair, index) => {
+        hair.style.stroke = palette.body;
+        hair.style.animationDelay = `${-(index % 9) * 0.075}s`;
+        hair.style.animationDuration = `${0.58 + (index % 5) * 0.055}s`;
+      });
+
+      svg.querySelectorAll('[id^="dark_hair_"], [id*="dark_hair_"]').forEach((hair, index) => {
+        hair.style.stroke = palette.dark;
+        hair.style.animationDelay = `${-(index % 11) * 0.065}s`;
+        hair.style.animationDuration = `${0.62 + (index % 6) * 0.05}s`;
+      });
+    }).catch(() => {
+      art.innerHTML = "";
+      el.classList.add("is-bacteria-missing");
+    });
+  }
+
+  function loadBacteriaSvg(assetUrl) {
+    if (!bacteriaSvgCache.has(assetUrl)) {
+      bacteriaSvgCache.set(
+        assetUrl,
+        fetch(assetUrl)
+          .then((res) => {
+            if (!res.ok) throw new Error(`Could not load ${assetUrl}`);
+            return res.text();
+          })
+      );
+    }
+
+    return bacteriaSvgCache.get(assetUrl);
   }
 
   function showPickupPop({ text, kind, x, y }) {
