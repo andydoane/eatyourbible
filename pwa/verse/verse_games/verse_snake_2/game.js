@@ -937,17 +937,19 @@
 
     if (!line) return;
 
-    const safeWidth = Math.max(0, line.clientWidth - 8);
+    const fitsBuildLine = () => {
+      return track.scrollWidth <= track.clientWidth + 2;
+    };
 
     for (let visibleCount = maxContextWords; visibleCount >= 0; visibleCount--) {
       renderCandidate(visibleCount);
 
-      if (track.scrollWidth <= safeWidth) {
+      if (fitsBuildLine()) {
         break;
       }
     }
 
-    if (track.scrollWidth > safeWidth) {
+    if (!fitsBuildLine()) {
       renderCandidate(0);
     }
 
