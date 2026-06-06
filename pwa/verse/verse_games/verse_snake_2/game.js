@@ -22,7 +22,7 @@
     targetMinScreenDistance: 0.95,
     wrongFleeSpeed: 92,
     wrongFleeMaxScreenDistance: 1.22,
-    encounterMaxDistanceScreens: 1.85,
+    encounterMaxDistanceScreens: 1.1,
     patternScrollFactor: 1.35,
     fruitChance: 0.62
   };
