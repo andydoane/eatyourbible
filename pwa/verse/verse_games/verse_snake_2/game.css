@@ -143,6 +143,11 @@ body{
   text-shadow: none;
 }
 
+.vsl-build-tail-space {
+  flex: 0 0 clamp(5rem, 24vw, 12rem);
+  pointer-events: none;
+}
+
 .vsl-build-current.is-easy{
   letter-spacing: 0.02em;
 }
@@ -161,10 +166,10 @@ body{
 .vsl-build-line-fill{
   display: inline-block;
   width: var(--vsl-line-ch, 4ch);
-  height: 0.18em;
-  border-radius: 999px;
-  background: #333333;
-  transform: translateY(-0.08em);
+  height: 0.86em;
+  border-bottom: 0.13em solid #333333;
+  border-radius: 0;
+  transform: translateY(0.02em);
 }
 
 .vsl-field-wrap{

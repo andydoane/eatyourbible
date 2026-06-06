@@ -921,6 +921,7 @@
       ${prefix}
       ${builtHtml}
       ${currentHtml}
+      <span class="vsl-build-tail-space" aria-hidden="true"></span>
     `;
 
     updateBuildHudShift();
@@ -969,7 +970,7 @@
     }
 
     const promptCenter = prompt.offsetLeft + prompt.offsetWidth / 2;
-    const targetX = line.clientWidth * 0.76;
+    const targetX = line.clientWidth * 0.74;
     const rawShift = targetX - promptCenter;
     const shift = clamp(rawShift, -overflow, 0);
 
