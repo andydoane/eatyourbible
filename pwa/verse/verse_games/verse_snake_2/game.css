@@ -222,7 +222,7 @@ body{
 
 .vsl-snake-body{
   fill: none;
-  stroke: #a7cb6f;
+  stroke: var(--vsl-snake-body-color, #a7cb6f);
   stroke-width: var(--vsl-body-width, 34px);
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -231,10 +231,16 @@ body{
 
 .vsl-snake-body-2{
   fill: none;
-  stroke: rgba(73,105,30,0.18);
+  stroke: var(--vsl-snake-stripe-color, rgba(73,105,30,0.18));
   stroke-width: var(--vsl-stripe-width, 18px);
   stroke-linecap: round;
   stroke-linejoin: round;
+  stroke-dasharray: none;
+}
+
+#vslSnakeGroup.is-dotted .vsl-snake-body-2{
+  stroke-dasharray: 0.01px calc(var(--vsl-stripe-width, 18px) * 1.65);
+  stroke-linecap: round;
 }
 
 .vsl-snake-head-art,
@@ -265,20 +271,17 @@ body{
   stroke-linejoin: round;
 }
 
-.vsl-snake-style-berry .vsl-snake-body{ stroke: #cf7ba0; fill: none; }
-.vsl-snake-style-berry .vsl-snake-head{ fill: #cf7ba0; stroke: #c85f8a; }
+#vslSnakeGroup.is-special-glow .vsl-snake-body{
+  filter:
+    drop-shadow(0 5px 3px rgba(0,0,0,0.24))
+    drop-shadow(0 0 12px var(--vsl-snake-glow-color, rgba(255,255,255,0)));
+}
 
-.vsl-snake-style-ocean .vsl-snake-body{ stroke: #60cfd8; fill: none; }
-.vsl-snake-style-ocean .vsl-snake-head{ fill: #60cfd8; stroke: #40b9c5; }
-
-.vsl-snake-style-sun .vsl-snake-body{ stroke: #ffd66f; fill: none; }
-.vsl-snake-style-sun .vsl-snake-head{ fill: #ffd66f; stroke: #ffc751; }
-
-.vsl-snake-style-lava .vsl-snake-body{ stroke: #ff8c5f; fill: none; }
-.vsl-snake-style-lava .vsl-snake-head{ fill: #ff8c5f; stroke: #ff754d; }
-
-.vsl-snake-style-ice .vsl-snake-body{ stroke: #d8f7ff; fill: none; }
-.vsl-snake-style-ice .vsl-snake-head{ fill: #d8f7ff; stroke: #c8f0ff; }
+#vslSnakeGroup.is-special-glow .vsl-snake-head-art{
+  filter:
+    drop-shadow(0 5px 3px rgba(0,0,0,0.26))
+    drop-shadow(0 0 14px var(--vsl-snake-glow-color, rgba(255,255,255,0)));
+}
 
 #vslSnakeGroup.is-boosting .vsl-snake-body {
   filter:

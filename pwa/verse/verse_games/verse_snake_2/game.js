@@ -28,17 +28,101 @@
   };
 
   const FRUIT_EMOJIS = ["🍎","🍓","🍇","🍊","🍉","🍒","🍑","🍍","🥝","🍋"];
-  const SNAKE_STYLES = ["default", "berry", "ocean", "sun", "lava", "ice"];
+  const SNAKE_STYLE_DEFS = [
+    {
+      id: "default",
+      body: "#a7cb6f",
+      stripe: "rgba(73,105,30,0.18)",
+      head: "#a7cb6f"
+    },
+    {
+      id: "red",
+      body: "#ff5a51",
+      stripe: "rgba(153,34,28,0.30)",
+      head: "#ff5a51"
+    },
+    {
+      id: "orange",
+      body: "#ffa351",
+      stripe: "rgba(168,82,20,0.30)",
+      head: "#ffa351"
+    },
+    {
+      id: "yellow",
+      body: "#ffc751",
+      stripe: "rgba(172,126,20,0.32)",
+      head: "#ffc751"
+    },
+    {
+      id: "blue",
+      body: "#40b9c5",
+      stripe: "rgba(17,92,104,0.30)",
+      head: "#40b9c5"
+    },
+    {
+      id: "purple",
+      body: "#7f66c6",
+      stripe: "rgba(54,35,112,0.32)",
+      head: "#7f66c6"
+    },
+    {
+      id: "fire",
+      pulseColors: ["#ff5a51", "#ffa351", "#ffc751", "#ffa351"],
+      stripe: "rgba(255,255,255,0.30)",
+      head: "#ff8c5f",
+      glow: "rgba(255,140,95,0.62)"
+    },
+    {
+      id: "ice",
+      pulseColors: ["#40b9c5", "#d8f7ff", "#ffffff", "#a9f5ff"],
+      stripe: "rgba(255,255,255,0.52)",
+      head: "#d8f7ff",
+      glow: "rgba(169,245,255,0.58)"
+    },
+    {
+      id: "polka",
+      body: "#7f66c6",
+      stripe: "#ffc751",
+      head: "#7f66c6",
+      dotted: true
+    },
+    {
+      id: "cow",
+      body: "#ffffff",
+      stripe: "#11151d",
+      head: "#ffffff",
+      dotted: true
+    },
+    {
+      id: "randomDot",
+      body: "#40b9c5",
+      stripe: "#ffc751",
+      head: "#40b9c5",
+      dotted: true,
+      randomDotted: true
+    },
+    {
+      id: "rainbow",
+      pulseColors: ["#ff5a51", "#ffa351", "#ffc751", "#a7cb6f", "#40b9c5", "#7f66c6"],
+      stripe: "rgba(255,255,255,0.42)",
+      head: "#a7cb6f",
+      glow: "rgba(255,255,255,0.50)"
+    }
+  ];
+
+  const SNAKE_STYLES = SNAKE_STYLE_DEFS.map((style) => style.id);
+
+  const SNAKE_RANDOM_DOT_COLORS = [
+    "#ff5a51",
+    "#ffa351",
+    "#ffc751",
+    "#a7cb6f",
+    "#40b9c5",
+    "#7f66c6",
+    "#ffffff"
+  ];
 
   const SNAKE_HEAD_ASSET = "./verse_snake_images/verse_snake_head_1.svg";
-  const SNAKE_HEAD_COLORS = {
-    default: "#a7cb6f",
-    berry: "#cf7ba0",
-    ocean: "#60cfd8",
-    sun: "#ffd66f",
-    lava: "#ff8c5f",
-    ice: "#d8f7ff"
-  };
 
   let snakeHeadSvgPromise = null;
   const SNAKE_HEAD_COLLISION_RADIUS = 20;
@@ -57,7 +141,7 @@
   const GAMEPLAY_SCALE_TUNING = {
     speedMinScale: 0.85,
     spawnDistanceMinScale: 0.92,
-    worldSpeedMultiplier: 2.00,
+    worldSpeedMultiplier: 1.65,
     pairSeparationBacteriaRatio: 2.85,
     pairSeparationMinHeadRatio: 3.2,
     pairSeparationMaxHeadRatio: 5.0,
@@ -160,6 +244,7 @@
     burstEffects: [],
     snakeStyle: "default",
     snakeStyleIndex: 0,
+    snakeRandomDotStyle: null,
     fruitCount: 0,
     orbs: [],
     boostActiveUntil: 0,
@@ -447,6 +532,7 @@
     state.burstEffects = [];
     state.snakeStyle = "default";
     state.snakeStyleIndex = 0;
+    state.snakeRandomDotStyle = null;
     state.fruitCount = 0;
     state.orbs = [];
     state.boostActiveUntil = 0;
@@ -1334,8 +1420,7 @@
     if (d <= state.fruit.r + getSnakeHeadCollisionRadius()){
       state.fruit = null;
       state.fruitCount += 1;
-      state.snakeStyleIndex = (state.snakeStyleIndex + 1 + Math.floor(Math.random() * 2)) % SNAKE_STYLES.length;
-      state.snakeStyle = SNAKE_STYLES[state.snakeStyleIndex];
+      advanceSnakeStyle();
       state.headPopUntil = performance.now() + 340;
       applySnakeStyle();
     }
@@ -2204,16 +2289,71 @@
     return out;
   }
 
-  function applySnakeStyle(){
+  function advanceSnakeStyle() {
+    state.snakeStyleIndex = Math.min(state.snakeStyleIndex + 1, SNAKE_STYLES.length - 1);
+    state.snakeStyle = SNAKE_STYLES[state.snakeStyleIndex];
+
+    if (state.snakeStyle === "randomDot") {
+      state.snakeRandomDotStyle = makeRandomDottedSnakeStyle();
+    }
+  }
+
+  function makeRandomDottedSnakeStyle() {
+    const body = SNAKE_RANDOM_DOT_COLORS[Math.floor(Math.random() * SNAKE_RANDOM_DOT_COLORS.length)];
+    let stripe = body;
+
+    for (let i = 0; i < 8 && stripe === body; i++) {
+      stripe = SNAKE_RANDOM_DOT_COLORS[Math.floor(Math.random() * SNAKE_RANDOM_DOT_COLORS.length)];
+    }
+
+    return {
+      body,
+      stripe,
+      head: body
+    };
+  }
+
+  function getSnakeStyleDef() {
+    return SNAKE_STYLE_DEFS.find((style) => style.id === state.snakeStyle) || SNAKE_STYLE_DEFS[0];
+  }
+
+  function getPulseColor(colors, speedMs = 430) {
+    if (!colors || !colors.length) return null;
+    const now = performance.now();
+    const index = Math.floor(now / speedMs) % colors.length;
+    return colors[index];
+  }
+
+  function applySnakeStyle() {
     const group = document.getElementById("vslSnakeGroup");
     if (!group) return;
 
-    group.className.baseVal = `vsl-snake-style-${state.snakeStyle}`;
+    const def = getSnakeStyleDef();
+    const randomDot = def.randomDotted
+      ? (state.snakeRandomDotStyle || makeRandomDottedSnakeStyle())
+      : null;
 
-    const color = SNAKE_HEAD_COLORS[state.snakeStyle] || SNAKE_HEAD_COLORS.default;
+    if (def.randomDotted && !state.snakeRandomDotStyle) {
+      state.snakeRandomDotStyle = randomDot;
+    }
+
+    const pulseColor = def.pulseColors ? getPulseColor(def.pulseColors) : null;
+    const bodyColor = randomDot?.body || pulseColor || def.body || "#a7cb6f";
+    const stripeColor = randomDot?.stripe || def.stripe || "rgba(73,105,30,0.18)";
+    const headColor = randomDot?.head || pulseColor || def.head || bodyColor;
+
+    group.classList.toggle("is-dotted", !!def.dotted);
+    group.classList.toggle("is-pulsing", !!def.pulseColors);
+    group.classList.toggle("is-special-glow", !!def.glow);
+
+    group.style.setProperty("--vsl-snake-body-color", bodyColor);
+    group.style.setProperty("--vsl-snake-stripe-color", stripeColor);
+    group.style.setProperty("--vsl-snake-head-color", headColor);
+    group.style.setProperty("--vsl-snake-glow-color", def.glow || "rgba(255,255,255,0)");
+
     const headShape = document.querySelector("#vslSnakeHeadArt #head");
-    if (headShape){
-      headShape.style.fill = color;
+    if (headShape) {
+      headShape.style.fill = headColor;
     }
   }
 
