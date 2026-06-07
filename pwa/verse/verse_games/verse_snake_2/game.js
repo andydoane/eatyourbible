@@ -43,6 +43,17 @@
   let snakeHeadSvgPromise = null;
   const SNAKE_HEAD_COLLISION_RADIUS = 20;
 
+  const VISUAL_SCALE_TUNING = {
+    desktopFieldWidth: 840,
+    phoneFieldWidth: 390,
+    minScale: 0.92,
+    desktopHeadPx: 44,
+    bacteriaHeightRatio: 2.25,
+    compactWidthRatio: 1.36,
+    normalWidthRatio: 1.80,
+    longWidthRatio: 2.48
+  };
+
   const YUCK_BODY_TUNING = {
     durationMs: 520,
     attackMs: 55,
@@ -102,6 +113,8 @@
     fruitCount: 0,
     fieldWidth: 1,
     fieldHeight: 1,
+    visualScale: 1,
+    headSizePx: 44,
     camera: { x: 0, y: 0 },
     pointer: { x: 0, y: -140, active: false },
     head: { x: 0, y: 0, angle: -Math.PI / 2, speed: 130 },
@@ -430,6 +443,83 @@
     state.fieldWidth = Math.max(1, rect.width);
     state.fieldHeight = Math.max(1, rect.height);
     svg.setAttribute("viewBox", `0 0 ${state.fieldWidth} ${state.fieldHeight}`);
+
+    updateVisualScaleVars(field);
+  }
+
+  function updateVisualScaleVars(field) {
+    const width = state.fieldWidth || VISUAL_SCALE_TUNING.desktopFieldWidth;
+    const t = clamp(
+      (width - VISUAL_SCALE_TUNING.phoneFieldWidth) /
+      (VISUAL_SCALE_TUNING.desktopFieldWidth - VISUAL_SCALE_TUNING.phoneFieldWidth),
+      0,
+      1
+    );
+
+    state.visualScale = VISUAL_SCALE_TUNING.minScale + (1 - VISUAL_SCALE_TUNING.minScale) * t;
+    state.headSizePx = VISUAL_SCALE_TUNING.desktopHeadPx * state.visualScale;
+
+    const head = getSnakeHeadSize();
+    const targetH = head * VISUAL_SCALE_TUNING.bacteriaHeightRatio;
+
+    field.style.setProperty("--vsl-scale", state.visualScale.toFixed(4));
+    field.style.setProperty("--vsl-head-size", `${head.toFixed(2)}px`);
+    field.style.setProperty("--vsl-body-width", `${(head * 34 / 44).toFixed(2)}px`);
+    field.style.setProperty("--vsl-stripe-width", `${(head * 18 / 44).toFixed(2)}px`);
+
+    field.style.setProperty("--vsl-target-h", `${targetH.toFixed(2)}px`);
+    field.style.setProperty("--vsl-target-compact-w", `${(targetH * VISUAL_SCALE_TUNING.compactWidthRatio).toFixed(2)}px`);
+    field.style.setProperty("--vsl-target-normal-w", `${(targetH * VISUAL_SCALE_TUNING.normalWidthRatio).toFixed(2)}px`);
+    field.style.setProperty("--vsl-target-long-w", `${(targetH * VISUAL_SCALE_TUNING.longWidthRatio).toFixed(2)}px`);
+
+    field.style.setProperty("--vsl-target-font", `${(head * 0.54).toFixed(2)}px`);
+    field.style.setProperty("--vsl-target-long-font", `${(head * 0.48).toFixed(2)}px`);
+
+    field.style.setProperty("--vsl-fruit-size", `${(head * 1.30).toFixed(2)}px`);
+    field.style.setProperty("--vsl-fruit-font", `${(head * 0.80).toFixed(2)}px`);
+    field.style.setProperty("--vsl-arrow-size", `${(head * 1.74).toFixed(2)}px`);
+
+    syncSnakeHeadSvgSize();
+
+    for (const target of [...state.targets, ...state.escapingTargets]) {
+      target.r = estimateTargetRadius(target.word);
+    }
+
+    if (state.fruit) {
+      state.fruit.r = getFruitRadius();
+    }
+  }
+
+  function getVisualScale() {
+    return state.visualScale || 1;
+  }
+
+  function getSnakeHeadSize() {
+    return state.headSizePx || VISUAL_SCALE_TUNING.desktopHeadPx;
+  }
+
+  function getSnakeHeadCollisionRadius() {
+    return SNAKE_HEAD_COLLISION_RADIUS * getVisualScale();
+  }
+
+  function getFruitRadius() {
+    return getSnakeHeadSize() * 0.59;
+  }
+
+  function getTargetMetrics(word) {
+    const variant = getBacteriaVariant(word);
+    const h = getSnakeHeadSize() * VISUAL_SCALE_TUNING.bacteriaHeightRatio;
+    const ratio = variant === "compact"
+      ? VISUAL_SCALE_TUNING.compactWidthRatio
+      : variant === "long"
+        ? VISUAL_SCALE_TUNING.longWidthRatio
+        : VISUAL_SCALE_TUNING.normalWidthRatio;
+
+    return {
+      variant,
+      h,
+      w: h * ratio
+    };
   }
 
   function startLoop(){
@@ -555,9 +645,7 @@
     const layer = document.getElementById("vslPatternLayer");
     if (!layer) return;
 
-    const head = document.getElementById("vslSnakeHead");
-    const headRadius = head ? Number(head.getAttribute("r")) || 22 : 22;
-    const headHeight = headRadius * 2;
+    const headHeight = getSnakeHeadSize();
 
     const tileHeight = Math.round(headHeight / 0.14);
     const tileWidth = Math.round(tileHeight * (471.133 / 408.010));
@@ -856,7 +944,7 @@
     state.fruit = {
       x: state.head.x + dx * along + Math.cos(angle + Math.PI / 2) * side,
       y: state.head.y + dy * along + Math.sin(angle + Math.PI / 2) * side,
-      r: 26,
+      r: getFruitRadius(),
       emoji: FRUIT_EMOJIS[Math.floor(Math.random() * FRUIT_EMOJIS.length)],
       phase: Math.random() * Math.PI * 2
     };
@@ -875,7 +963,7 @@
   function checkFruitCollision(){
     if (!state.fruit) return;
     const d = Math.hypot(state.head.x - state.fruit.x, state.head.y - state.fruit.y);
-    if (d <= state.fruit.r + SNAKE_HEAD_COLLISION_RADIUS){
+    if (d <= state.fruit.r + getSnakeHeadCollisionRadius()){
       state.fruit = null;
       state.fruitCount += 1;
       state.snakeStyleIndex = (state.snakeStyleIndex + 1 + Math.floor(Math.random() * 2)) % SNAKE_STYLES.length;
@@ -889,7 +977,7 @@
     for (const target of [...state.targets]){
       if (target.hit) continue;
       const d = Math.hypot(state.head.x - target.x, state.head.y - target.y);
-      if (d <= target.r + SNAKE_HEAD_COLLISION_RADIUS){
+      if (d <= target.r + getSnakeHeadCollisionRadius()){
         if (target.isCorrect){
           handleCorrectTarget(target);
         } else {
@@ -1274,7 +1362,7 @@
       }
 
       const p = worldToScreen(effect);
-      el.style.transform = `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px) translate(-50%, -50%)`;
+      el.style.transform = `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px) translate(-50%, -50%) scale(${getVisualScale().toFixed(3)})`;
     }
   }
 
@@ -1559,10 +1647,7 @@
         return;
       }
 
-      svg.setAttribute("x", "-22");
-      svg.setAttribute("y", "-22");
-      svg.setAttribute("width", "44");
-      svg.setAttribute("height", "44");
+      syncSnakeHeadSvgSize(svg);
       svg.setAttribute("aria-hidden", "true");
       svg.classList.add("vsl-snake-head-svg");
 
@@ -1573,6 +1658,19 @@
     }).catch(() => {
       holder.dataset.loaded = "";
     });
+  }
+
+  function syncSnakeHeadSvgSize(svgEl) {
+    const svg = svgEl || document.querySelector("#vslSnakeHeadArt svg");
+    if (!svg) return;
+
+    const size = getSnakeHeadSize();
+    const half = size / 2;
+
+    svg.setAttribute("x", `${(-half).toFixed(2)}`);
+    svg.setAttribute("y", `${(-half).toFixed(2)}`);
+    svg.setAttribute("width", `${size.toFixed(2)}`);
+    svg.setAttribute("height", `${size.toFixed(2)}`);
   }
 
   function loadSnakeHeadSvg() {
@@ -1612,7 +1710,16 @@
       headArt.setAttribute("transform", `scale(${headPulse})`);
     }
 
-    tongue.setAttribute("d", "M 0 -21 L 0 -36 M 0 -36 L -7 -44 M 0 -36 L 7 -44");
+    const r = getSnakeHeadSize() / 2;
+    const tongueBase = -r * 0.95;
+    const tongueStem = -r * 1.64;
+    const tongueTip = -r * 2.0;
+    const tongueFork = r * 0.32;
+
+    tongue.setAttribute(
+      "d",
+      `M 0 ${tongueBase.toFixed(1)} L 0 ${tongueStem.toFixed(1)} M 0 ${tongueStem.toFixed(1)} L ${(-tongueFork).toFixed(1)} ${tongueTip.toFixed(1)} M 0 ${tongueStem.toFixed(1)} L ${tongueFork.toFixed(1)} ${tongueTip.toFixed(1)}`
+    );
   }
 
   function buildBodyPath(points){
@@ -1782,7 +1889,8 @@
   }
 
   function estimateTargetRadius(word){
-    return clamp(36 + String(word || "").length * 6.8, 52, 118);
+    const metrics = getTargetMetrics(word);
+    return Math.hypot(metrics.w, metrics.h) * 0.34;
   }
 
   function modeLabel(){
