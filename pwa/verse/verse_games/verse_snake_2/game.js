@@ -220,12 +220,12 @@
     doubleTapMaxMovePx: 110,
     mouseDoubleTapMaxMovePx: 180
   };
-  
+
   const BONUS_TUNING = {
     durationMs: 20000,
     activeMiniSnakes: 10,
-    miniScale: 0.52,
-    miniLengthHeads: 4.2,
+    miniScale: 0.68,
+    miniLengthHeads: 4.5,
     miniSpeedMin: 86,
     miniSpeedMax: 132,
     miniTurnRate: 1.9,
@@ -1512,6 +1512,7 @@
     const lengthPx = headSize * BONUS_TUNING.miniLengthHeads * scale;
     const width = headSize * 0.74 * scale;
     const stripeWidth = headSize * 0.38 * scale;
+    const headRadius = width * 0.58;
     const colors = getTwoDifferentMiniSnakeColors();
     const pos = getMiniSnakeSpawnPoint();
     const angle = Math.random() * Math.PI * 2;
@@ -1527,6 +1528,7 @@
       lengthPx,
       width,
       stripeWidth,
+      headRadius,
       bodyColor: colors.body,
       dotColor: colors.dot,
       trail: []
@@ -1668,18 +1670,44 @@
         const dots = document.createElementNS("http://www.w3.org/2000/svg", "path");
         dots.classList.add("vsl-mini-snake-dots");
 
-        const nose = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        nose.classList.add("vsl-mini-snake-nose");
+        const head = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        head.classList.add("vsl-mini-snake-head");
+
+        const headShape = document.createElementNS("http://www.w3.org/2000/svg", "ellipse");
+        headShape.classList.add("vsl-mini-snake-head-shape");
+
+        const eyeL = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        eyeL.classList.add("vsl-mini-snake-eye", "is-left");
+
+        const eyeR = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        eyeR.classList.add("vsl-mini-snake-eye", "is-right");
+
+        const pupilL = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        pupilL.classList.add("vsl-mini-snake-pupil", "is-left");
+
+        const pupilR = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        pupilR.classList.add("vsl-mini-snake-pupil", "is-right");
+
+        head.appendChild(headShape);
+        head.appendChild(eyeL);
+        head.appendChild(eyeR);
+        head.appendChild(pupilL);
+        head.appendChild(pupilR);
 
         group.appendChild(body);
         group.appendChild(dots);
-        group.appendChild(nose);
+        group.appendChild(head);
         layer.appendChild(group);
       }
 
       const body = group.querySelector(".vsl-mini-snake-body");
       const dots = group.querySelector(".vsl-mini-snake-dots");
-      const nose = group.querySelector(".vsl-mini-snake-nose");
+      const headGroup = group.querySelector(".vsl-mini-snake-head");
+      const headShape = group.querySelector(".vsl-mini-snake-head-shape");
+      const eyeL = group.querySelector(".vsl-mini-snake-eye.is-left");
+      const eyeR = group.querySelector(".vsl-mini-snake-eye.is-right");
+      const pupilL = group.querySelector(".vsl-mini-snake-pupil.is-left");
+      const pupilR = group.querySelector(".vsl-mini-snake-pupil.is-right");
 
       const screenTrail = snake.trail.map(worldToScreen);
       const d = buildBodyPath(screenTrail);
@@ -1694,10 +1722,39 @@
       dots.style.strokeWidth = snake.stripeWidth.toFixed(2);
       dots.style.strokeDasharray = `0.01 ${Math.max(6, snake.stripeWidth * 1.65).toFixed(2)}`;
 
-      nose.setAttribute("cx", head.x.toFixed(1));
-      nose.setAttribute("cy", head.y.toFixed(1));
-      nose.setAttribute("r", (snake.width * 0.36).toFixed(2));
-      nose.style.fill = snake.bodyColor;
+      if (headGroup && headShape && eyeL && eyeR && pupilL && pupilR){
+        const angleDeg = (snake.angle * 180 / Math.PI).toFixed(1);
+        const r = snake.headRadius;
+        const eyeRSize = r * 0.20;
+        const pupilRSize = r * 0.095;
+
+        headGroup.setAttribute(
+          "transform",
+          `translate(${head.x.toFixed(1)} ${head.y.toFixed(1)}) rotate(${angleDeg})`
+        );
+
+        headShape.setAttribute("cx", "0");
+        headShape.setAttribute("cy", "0");
+        headShape.setAttribute("rx", (r * 1.12).toFixed(2));
+        headShape.setAttribute("ry", (r * 0.88).toFixed(2));
+        headShape.style.fill = snake.bodyColor;
+
+        eyeL.setAttribute("cx", (r * 0.28).toFixed(2));
+        eyeL.setAttribute("cy", (-r * 0.34).toFixed(2));
+        eyeL.setAttribute("r", eyeRSize.toFixed(2));
+
+        eyeR.setAttribute("cx", (r * 0.28).toFixed(2));
+        eyeR.setAttribute("cy", (r * 0.34).toFixed(2));
+        eyeR.setAttribute("r", eyeRSize.toFixed(2));
+
+        pupilL.setAttribute("cx", (r * 0.34).toFixed(2));
+        pupilL.setAttribute("cy", (-r * 0.34).toFixed(2));
+        pupilL.setAttribute("r", pupilRSize.toFixed(2));
+
+        pupilR.setAttribute("cx", (r * 0.34).toFixed(2));
+        pupilR.setAttribute("cy", (r * 0.34).toFixed(2));
+        pupilR.setAttribute("r", pupilRSize.toFixed(2));
+      }
     }
   }
 

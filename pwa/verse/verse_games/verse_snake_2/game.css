@@ -237,9 +237,23 @@ body{
   stroke-linecap: round;
 }
 
-.vsl-mini-snake-nose {
-  stroke: rgba(255, 255, 255, 0.46);
+.vsl-mini-snake-head{
+  pointer-events: none;
+}
+
+.vsl-mini-snake-head-shape{
+  stroke: rgba(255,255,255,0.46);
   stroke-width: 1.5;
+}
+
+.vsl-mini-snake-eye{
+  fill: #ffffff;
+  stroke: rgba(20,24,32,0.55);
+  stroke-width: 0.65;
+}
+
+.vsl-mini-snake-pupil{
+  fill: #11151d;
 }
 
 .vsl-snake-body{
