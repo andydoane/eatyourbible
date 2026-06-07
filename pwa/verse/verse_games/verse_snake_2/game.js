@@ -46,7 +46,7 @@
   const VISUAL_SCALE_TUNING = {
     desktopFieldWidth: 840,
     phoneFieldWidth: 390,
-    minScale: 0.84,
+    minScale: 0.80,
     desktopHeadPx: 44,
     bacteriaHeightRatio: 2.25,
     compactWidthRatio: 1.36,
