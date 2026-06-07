@@ -111,6 +111,14 @@
     spinRate: 980
   };
 
+  const BOOST_TUNING = {
+    durationMs: 1800,
+    cooldownMs: 6000,
+    speedMultiplier: 1.65,
+    doubleTapWindowMs: 310,
+    doubleTapMaxMovePx: 34
+  };
+
   const BACTERIA_ASSETS = {
     compact: "./verse_snake_images/verse_snake_bacteria_compact.svg",
     normal: "./verse_snake_images/verse_snake_bacteria_normal.svg",
@@ -153,6 +161,13 @@
     snakeStyleIndex: 0,
     fruitCount: 0,
     orbs: [],
+    boostActiveUntil: 0,
+    boostCooldownUntil: 0,
+    boostStartedAt: 0,
+    boostCooldownStartedAt: 0,
+    lastTapAt: 0,
+    lastTapX: 0,
+    lastTapY: 0,
     fieldWidth: 1,
     fieldHeight: 1,
     visualScale: 1,
@@ -306,7 +321,12 @@
 
               <div class="vsl-overlay-pills">
                 <button class="vsl-pill vsl-menu-pill no-zoom" id="vslMenuPill" aria-label="Game Menu" type="button">☰</button>
-                <div class="vsl-pill vsl-mode-pill" id="vslModePill">${modeLabel()}</div>
+                <div class="vsl-boost-meter is-ready" id="vslBoostMeter" aria-label="Speed boost ready">
+                  <span class="vsl-boost-icon" aria-hidden="true">⚡</span>
+                  <span class="vsl-boost-track" aria-hidden="true">
+                    <span class="vsl-boost-fill" id="vslBoostFill"></span>
+                  </span>
+                </div>
               </div>
 
               <div class="vsl-orb-layer" id="vslOrbLayer"></div>
@@ -368,6 +388,7 @@
         e.preventDefault();
         field.setPointerCapture?.(e.pointerId);
         updatePointer(e.clientX, e.clientY);
+        handleBoostTap(e.clientX, e.clientY);
       });
 
       field.addEventListener("pointermove", (e) => {
@@ -427,6 +448,13 @@
     state.snakeStyleIndex = 0;
     state.fruitCount = 0;
     state.orbs = [];
+    state.boostActiveUntil = 0;
+    state.boostCooldownUntil = 0;
+    state.boostStartedAt = 0;
+    state.boostCooldownStartedAt = 0;
+    state.lastTapAt = 0;
+    state.lastTapX = 0;
+    state.lastTapY = 0;
     state.camera.x = 0;
     state.camera.y = 0;
     state.pointer.x = 0;
@@ -655,6 +683,7 @@
       renderBurstEffects(ts);
       renderPickupPops(ts);
       renderArrow();
+      renderBoostMeter(ts);
       renderFlash(ts);
       state.rafId = requestAnimationFrame(tick);
     }
@@ -662,9 +691,85 @@
     state.rafId = requestAnimationFrame(tick);
   }
 
+  function isBoostActive(now = performance.now()) {
+    return now < state.boostActiveUntil;
+  }
+
+  function isBoostReady(now = performance.now()) {
+    return now >= state.boostActiveUntil && now >= state.boostCooldownUntil;
+  }
+
+  function handleBoostTap(clientX, clientY) {
+    const now = performance.now();
+    const dt = now - state.lastTapAt;
+    const move = Math.hypot(clientX - state.lastTapX, clientY - state.lastTapY);
+
+    const isDoubleTap =
+      dt > 0 &&
+      dt <= BOOST_TUNING.doubleTapWindowMs &&
+      move <= BOOST_TUNING.doubleTapMaxMovePx;
+
+    state.lastTapAt = now;
+    state.lastTapX = clientX;
+    state.lastTapY = clientY;
+
+    if (isDoubleTap) {
+      activateBoost(now);
+    }
+  }
+
+  function activateBoost(now = performance.now()) {
+    if (!state.running || state.paused || completed) return;
+    if (!isBoostReady(now)) return;
+
+    state.boostStartedAt = now;
+    state.boostActiveUntil = now + BOOST_TUNING.durationMs;
+    state.boostCooldownStartedAt = now;
+    state.boostCooldownUntil = now + BOOST_TUNING.durationMs + BOOST_TUNING.cooldownMs;
+  }
+
+  function getBoostMeterValue(now = performance.now()) {
+    if (isBoostActive(now)) {
+      return clamp((state.boostActiveUntil - now) / BOOST_TUNING.durationMs, 0, 1);
+    }
+
+    if (now < state.boostCooldownUntil) {
+      const cooldownStart = state.boostActiveUntil || state.boostCooldownStartedAt;
+      return clamp((now - cooldownStart) / BOOST_TUNING.cooldownMs, 0, 1);
+    }
+
+    return 1;
+  }
+
+  function renderBoostMeter(ts) {
+    const meter = document.getElementById("vslBoostMeter");
+    const fill = document.getElementById("vslBoostFill");
+    if (!meter || !fill) return;
+
+    const value = getBoostMeterValue(ts);
+    const active = isBoostActive(ts);
+    const ready = isBoostReady(ts);
+
+    fill.style.transform = `scaleX(${value.toFixed(3)})`;
+
+    meter.classList.toggle("is-ready", ready);
+    meter.classList.toggle("is-boosting", active);
+    meter.classList.toggle("is-charging", !ready && !active);
+
+    meter.setAttribute(
+      "aria-label",
+      active
+        ? "Speed boost active"
+        : ready
+          ? "Speed boost ready"
+          : "Speed boost recharging"
+    );
+  }
+
   function getCurrentSpeed(){
     const baseSpeed = SLITHER_TUNING.speeds[selectedMode] || SLITHER_TUNING.speeds.medium;
-    return baseSpeed * getSpeedScale();
+    const boostMultiplier = isBoostActive() ? BOOST_TUNING.speedMultiplier : 1;
+    return baseSpeed * getSpeedScale() * boostMultiplier;
   }
 
   function getCurrentTurnRate(){
@@ -1947,7 +2052,10 @@
     const stripe = document.getElementById("vslSnakeBodyStripe");
     const headGroup = document.getElementById("vslSnakeHeadGroup");
     const tongue = document.getElementById("vslSnakeTongue");
-    if (!body || !stripe || !headGroup || !tongue) return;
+    const group = document.getElementById("vslSnakeGroup");
+    if (!body || !stripe || !headGroup || !tongue || !group) return;
+
+    group.classList.toggle("is-boosting", isBoostActive());
 
     const screenTrail = state.trail.map(worldToScreen);
     const d = buildBodyPath(screenTrail);
