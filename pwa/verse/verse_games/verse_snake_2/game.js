@@ -858,7 +858,7 @@
 
     const headHeight = getSnakeHeadSize();
 
-    const tileHeight = Math.round(headHeight / 0.12);
+    const tileHeight = Math.round(headHeight / 0.21);
     const tileWidth = Math.round(tileHeight * (471.133 / 408.010));
     const scrollFactor = SLITHER_TUNING.patternScrollFactor || 1;
 
