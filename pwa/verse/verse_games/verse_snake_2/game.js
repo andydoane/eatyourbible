@@ -122,6 +122,21 @@
     "#ffffff"
   ];
 
+  const SNAKE_SPECIAL_STYLE_IDS = [
+    "fire",
+    "ice",
+    "polka",
+    "cow",
+    "randomDot",
+    "rainbow"
+  ];
+
+  const FRUIT_STYLE_TUNING = {
+    fruitPerWordRatio: 0.45,
+    minFruitForRainbow: 6,
+    maxFruitForRainbow: 11
+  };
+
   const SNAKE_HEAD_ASSET = "./verse_snake_images/verse_snake_head_1.svg";
 
   let snakeHeadSvgPromise = null;
@@ -2290,11 +2305,63 @@
   }
 
   function advanceSnakeStyle() {
-    state.snakeStyleIndex = Math.min(state.snakeStyleIndex + 1, SNAKE_STYLES.length - 1);
-    state.snakeStyle = SNAKE_STYLES[state.snakeStyleIndex];
+    const rainbowIndex = SNAKE_STYLES.indexOf("rainbow");
+    const fruitGoal = getFruitNeededForRainbow();
 
+    if (rainbowIndex < 0) {
+      state.snakeStyleIndex = Math.min(state.snakeStyleIndex + 1, SNAKE_STYLES.length - 1);
+      state.snakeStyle = SNAKE_STYLES[state.snakeStyleIndex];
+      refreshSnakeSpecialStyle();
+      return;
+    }
+
+    if (state.fruitCount <= fruitGoal) {
+      const progressIndex = Math.ceil(state.fruitCount * rainbowIndex / fruitGoal);
+      const nextIndex = Math.max(state.snakeStyleIndex + 1, progressIndex);
+
+      state.snakeStyleIndex = clamp(nextIndex, 0, rainbowIndex);
+      state.snakeStyle = SNAKE_STYLES[state.snakeStyleIndex];
+      refreshSnakeSpecialStyle();
+      return;
+    }
+
+    state.snakeStyle = pickRandomSpecialSnakeStyle();
+    state.snakeStyleIndex = SNAKE_STYLES.indexOf(state.snakeStyle);
+    refreshSnakeSpecialStyle();
+  }
+
+  function getFruitNeededForRainbow() {
+    const wordCount = state.words?.length || state.segments?.length || 18;
+    return clamp(
+      Math.round(wordCount * FRUIT_STYLE_TUNING.fruitPerWordRatio),
+      FRUIT_STYLE_TUNING.minFruitForRainbow,
+      FRUIT_STYLE_TUNING.maxFruitForRainbow
+    );
+  }
+
+  function pickRandomSpecialSnakeStyle() {
+    const options = SNAKE_SPECIAL_STYLE_IDS.filter((id) => SNAKE_STYLES.includes(id));
+
+    if (!options.length) {
+      return "rainbow";
+    }
+
+    let next = options[Math.floor(Math.random() * options.length)];
+
+    if (options.length > 1) {
+      for (let i = 0; i < 8 && next === state.snakeStyle; i++) {
+        next = options[Math.floor(Math.random() * options.length)];
+      }
+    }
+
+    return next;
+  }
+
+  function refreshSnakeSpecialStyle() {
     if (state.snakeStyle === "randomDot") {
       state.snakeRandomDotStyle = makeRandomDottedSnakeStyle();
+    } else {
+      state.snakeRandomDotStyle = null;
     }
   }
 
