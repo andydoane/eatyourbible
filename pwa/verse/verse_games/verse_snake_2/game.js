@@ -73,6 +73,28 @@
     maxBonusHeads: 4.5
   };
 
+  const ORB_TUNING = {
+    targetCount: 14,
+    minSizeHeadRatio: 0.10,
+    maxSizeHeadRatio: 0.50,
+    minGrowthHeads: 0.05,
+    maxGrowthHeads: 0.20,
+    pathStart: 0.12,
+    pathEnd: 0.88,
+    sideSpreadScreens: 0.22,
+    collectPopDuration: 360
+  };
+
+  const ORB_COLORS = [
+    "#ffd66f",
+    "#ffc751",
+    "#a7cb6f",
+    "#40b9c5",
+    "#7f66c6",
+    "#ff8c5f",
+    "#ffffff"
+  ];
+
   const YUCK_BODY_TUNING = {
     durationMs: 520,
     attackMs: 55,
@@ -130,6 +152,7 @@
     snakeStyle: "default",
     snakeStyleIndex: 0,
     fruitCount: 0,
+    orbs: [],
     fieldWidth: 1,
     fieldHeight: 1,
     visualScale: 1,
@@ -286,6 +309,7 @@
                 <div class="vsl-pill vsl-mode-pill" id="vslModePill">${modeLabel()}</div>
               </div>
 
+              <div class="vsl-orb-layer" id="vslOrbLayer"></div>
               <div class="vsl-fruit-layer" id="vslFruitLayer"></div>
               <div class="vsl-target-layer" id="vslTargetLayer"></div>
               <div class="vsl-effect-layer" id="vslEffectLayer"></div>
@@ -402,6 +426,7 @@
     state.snakeStyle = "default";
     state.snakeStyleIndex = 0;
     state.fruitCount = 0;
+    state.orbs = [];
     state.camera.x = 0;
     state.camera.y = 0;
     state.pointer.x = 0;
@@ -452,6 +477,7 @@
     spawnEncounter();
     maybeSpawnFruit(true);
     renderTargets();
+    renderOrbs();
     renderFruit();
     drawSnake();
   }
@@ -511,6 +537,10 @@
 
     for (const target of [...state.targets, ...state.escapingTargets]) {
       target.r = estimateTargetRadius(target.word);
+    }
+
+    for (const orb of state.orbs) {
+      syncOrbSize(orb);
     }
 
     if (state.fruit) {
@@ -609,6 +639,7 @@
         keepObjectiveWithinRange();
         updateEncounter(dt, ts);
         updateEscapingTargets(dt, ts);
+        updateOrbs(dt, ts);
         updateFruit(dt, ts);
         checkCollisions(ts);
         maybeRecenterWorld();
@@ -619,6 +650,7 @@
       updateBuildHudShift();
       drawSnake();
       renderTargets();
+      renderOrbs();
       renderFruit();
       renderBurstEffects(ts);
       renderPickupPops(ts);
@@ -872,6 +904,7 @@
       };
     });
 
+    spawnOrbsForEncounter();
     maybeSpawnFruit(false);
   }
 
@@ -1014,6 +1047,142 @@
     b.y += uy * push;
   }
 
+  function getOrbRadius(sizeRatio) {
+    return getSnakeHeadSize() * sizeRatio * 0.5;
+  }
+
+  function getOrbGrowthHeads(sizeRatio) {
+    const t = clamp(
+      (sizeRatio - ORB_TUNING.minSizeHeadRatio) /
+      Math.max(0.001, ORB_TUNING.maxSizeHeadRatio - ORB_TUNING.minSizeHeadRatio),
+      0,
+      1
+    );
+
+    return ORB_TUNING.minGrowthHeads +
+      (ORB_TUNING.maxGrowthHeads - ORB_TUNING.minGrowthHeads) * t;
+  }
+
+  function syncOrbSize(orb) {
+    orb.r = getOrbRadius(orb.sizeRatio);
+    orb.sizePx = orb.r * 2;
+    orb.growthHeads = getOrbGrowthHeads(orb.sizeRatio);
+  }
+
+  function spawnOrbsForEncounter() {
+    if (!state.encounter) return;
+
+    const start = { x: state.head.x, y: state.head.y };
+    const end = state.encounter.baseCenter || state.encounter.center;
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const distance = Math.hypot(dx, dy);
+
+    if (distance < getSnakeHeadSize() * 4) {
+      state.orbs = [];
+      return;
+    }
+
+    const ux = dx / distance;
+    const uy = dy / distance;
+    const sideX = -uy;
+    const sideY = ux;
+    const spread = Math.min(state.fieldWidth, state.fieldHeight) * ORB_TUNING.sideSpreadScreens;
+
+    const count = ORB_TUNING.targetCount;
+    const orbs = [];
+
+    for (let i = 0; i < count; i++) {
+      const pathT = randRange(ORB_TUNING.pathStart, ORB_TUNING.pathEnd);
+      const side = randRange(-spread, spread);
+      const jitter = randRange(-getSnakeHeadSize() * 1.8, getSnakeHeadSize() * 1.8);
+      const sizeRatio = randRange(ORB_TUNING.minSizeHeadRatio, ORB_TUNING.maxSizeHeadRatio);
+
+      const orb = {
+        id: `${Date.now()}-${i}-${Math.random().toString(16).slice(2)}`,
+        x: start.x + dx * pathT + sideX * side + ux * jitter,
+        y: start.y + dy * pathT + sideY * side + uy * jitter,
+        sizeRatio,
+        color: ORB_COLORS[Math.floor(Math.random() * ORB_COLORS.length)],
+        phase: Math.random() * Math.PI * 2,
+        collectedAt: 0
+      };
+
+      syncOrbSize(orb);
+      orbs.push(orb);
+    }
+
+    state.orbs = orbs;
+  }
+
+  function updateOrbs(dt, ts) {
+    if (!state.orbs.length) return;
+
+    for (const orb of state.orbs) {
+      orb.phase += dt / 1000;
+    }
+
+    state.orbs = state.orbs.filter((orb) => {
+      return !orb.collectedAt || ts - orb.collectedAt < ORB_TUNING.collectPopDuration;
+    });
+  }
+
+  function checkOrbCollisions(ts) {
+    if (!state.orbs.length) return;
+
+    for (const orb of state.orbs) {
+      if (orb.collectedAt) continue;
+
+      const d = Math.hypot(state.head.x - orb.x, state.head.y - orb.y);
+      if (d <= orb.r + getSnakeHeadCollisionRadius()) {
+        orb.collectedAt = ts;
+        growSnakeByHeadLengths(orb.growthHeads);
+        state.headPopUntil = performance.now() + 180;
+      }
+    }
+  }
+
+  function renderOrbs() {
+    const layer = document.getElementById("vslOrbLayer");
+    if (!layer) return;
+
+    const activeIds = new Set(state.orbs.map((orb) => String(orb.id)));
+
+    for (const child of [...layer.children]) {
+      if (!activeIds.has(child.dataset.id)) child.remove();
+    }
+
+    for (const orb of state.orbs) {
+      let el = layer.querySelector(`[data-id="${orb.id}"]`);
+
+      if (!el) {
+        el = document.createElement("div");
+        el.className = "vsl-orb";
+        el.dataset.id = orb.id;
+        el.innerHTML = `<span></span>`;
+        layer.appendChild(el);
+      }
+
+      const p = worldToScreen(orb);
+      const bob = Math.sin(orb.phase * 2.4) * getSnakeHeadSize() * 0.06;
+      const pulse = 1 + Math.sin(orb.phase * 3.2) * 0.08;
+
+      let collectScale = 1;
+      let opacity = 1;
+
+      if (orb.collectedAt) {
+        const t = clamp((performance.now() - orb.collectedAt) / ORB_TUNING.collectPopDuration, 0, 1);
+        collectScale = 1 + easeOutCubic(t) * 1.8;
+        opacity = 1 - t;
+      }
+
+      el.style.setProperty("--vsl-orb-size", `${orb.sizePx.toFixed(2)}px`);
+      el.style.setProperty("--vsl-orb-color", orb.color);
+      el.style.opacity = opacity.toFixed(3);
+      el.style.transform = `translate(${p.x.toFixed(1)}px, ${(p.y + bob).toFixed(1)}px) translate(-50%, -50%) scale(${(pulse * collectScale).toFixed(3)})`;
+    }
+  }
+
   function maybeSpawnFruit(force){
     if (state.fruit) return;
     if (!force && Math.random() > SLITHER_TUNING.fruitChance) return;
@@ -1040,6 +1209,7 @@
   }
 
   function checkCollisions(ts){
+    checkOrbCollisions(ts);
     checkFruitCollision();
     checkTargetCollision(ts);
   }

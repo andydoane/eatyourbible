@@ -320,6 +320,7 @@ button.vsl-pill{
 }
 
 .vsl-target-layer,
+.vsl-orb-layer,
 .vsl-fruit-layer,
 .vsl-effect-layer,
 .vsl-pickup-pop-layer,
@@ -453,6 +454,48 @@ button.vsl-pill{
   40%{ margin-left: 0.55rem; }
   60%{ margin-left: -0.35rem; }
   80%{ margin-left: 0.35rem; }
+}
+
+.vsl-orb {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 8;
+  width: var(--vsl-orb-size, 14px);
+  height: var(--vsl-orb-size, 14px);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 35% 28%,
+      rgba(255, 255, 255, 0.98) 0 12%,
+      rgba(255, 255, 255, 0.68) 13% 24%,
+      var(--vsl-orb-color, #ffd66f) 38%,
+      rgba(255, 255, 255, 0.05) 72%);
+  box-shadow:
+    0 0 calc(var(--vsl-orb-size, 14px) * 0.75) var(--vsl-orb-color, #ffd66f),
+    0 0 calc(var(--vsl-orb-size, 14px) * 1.35) rgba(255, 255, 255, 0.18);
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.vsl-orb span {
+  position: absolute;
+  inset: -45%;
+  border-radius: inherit;
+  background: radial-gradient(circle, var(--vsl-orb-color, #ffd66f), transparent 62%);
+  opacity: 0.22;
+  animation: vslOrbGlow 900ms ease-in-out infinite alternate;
+}
+
+@keyframes vslOrbGlow {
+  from {
+    transform: scale(0.82);
+    opacity: 0.16;
+  }
+
+  to {
+    transform: scale(1.18);
+    opacity: 0.32;
+  }
 }
 
 .vsl-fruit{
