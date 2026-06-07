@@ -233,6 +233,8 @@
     miniTurnRate: 1.9,
     spawnPaddingScreens: 0.42,
     despawnPaddingScreens: 0.72,
+    offscreenPaddingHeads: 3.2,
+    entryGraceMs: 1400,
     collisionSampleStep: 3
   };
 
@@ -1517,7 +1519,7 @@
     const headRadius = width * 0.58;
     const colors = getTwoDifferentMiniSnakeColors();
     const pos = getMiniSnakeSpawnPoint();
-    const angle = Math.random() * Math.PI * 2;
+    const angle = pos.angle;
 
     const snake = {
       id: state.nextMiniSnakeId++,
@@ -1527,6 +1529,7 @@
       speed: randRange(BONUS_TUNING.miniSpeedMin, BONUS_TUNING.miniSpeedMax) * getSpeedScale() * getWorldSpeedMultiplier(),
       turnPhase: Math.random() * Math.PI * 2,
       turnWobble: randRange(0.8, 1.35),
+      entryGraceUntil: performance.now() + BONUS_TUNING.entryGraceMs,
       lengthPx,
       width,
       stripeWidth,
@@ -1553,14 +1556,38 @@
   }
 
   function getMiniSnakeSpawnPoint() {
-    const angle = Math.random() * Math.PI * 2;
-    const minR = Math.min(state.fieldWidth, state.fieldHeight) * 0.36;
-    const maxR = Math.max(state.fieldWidth, state.fieldHeight) * BONUS_TUNING.spawnPaddingScreens;
-    const r = randRange(minR, maxR);
+    const pad = getSnakeHeadSize() * BONUS_TUNING.offscreenPaddingHeads;
+    const edge = Math.floor(Math.random() * 4);
+
+    let screenX = 0;
+    let screenY = 0;
+
+    if (edge === 0) {
+      // top
+      screenX = randRange(-pad, state.fieldWidth + pad);
+      screenY = -pad;
+    } else if (edge === 1) {
+      // right
+      screenX = state.fieldWidth + pad;
+      screenY = randRange(-pad, state.fieldHeight + pad);
+    } else if (edge === 2) {
+      // bottom
+      screenX = randRange(-pad, state.fieldWidth + pad);
+      screenY = state.fieldHeight + pad;
+    } else {
+      // left
+      screenX = -pad;
+      screenY = randRange(-pad, state.fieldHeight + pad);
+    }
+
+    const targetScreenX = randRange(state.fieldWidth * 0.24, state.fieldWidth * 0.76);
+    const targetScreenY = randRange(state.fieldHeight * 0.24, state.fieldHeight * 0.76);
+    const angle = Math.atan2(targetScreenY - screenY, targetScreenX - screenX);
 
     return {
-      x: state.head.x + Math.cos(angle) * r,
-      y: state.head.y + Math.sin(angle) * r
+      x: state.camera.x + screenX,
+      y: state.camera.y + screenY,
+      angle
     };
   }
 
@@ -1581,7 +1608,9 @@
     const seconds = dt / 1000;
     snake.turnPhase += seconds * snake.turnWobble;
 
-    const wander = Math.sin(snake.turnPhase * 1.9) * BONUS_TUNING.miniTurnRate;
+    const entering = performance.now() < snake.entryGraceUntil;
+    const entryWanderScale = entering ? 0.35 : 1;
+    const wander = Math.sin(snake.turnPhase * 1.9) * BONUS_TUNING.miniTurnRate * entryWanderScale;
     snake.angle += wander * seconds;
 
     snake.x += Math.cos(snake.angle) * snake.speed * seconds;
@@ -1611,6 +1640,10 @@
   }
 
   function isMiniSnakeTooFar(snake) {
+    if (performance.now() < snake.entryGraceUntil) {
+      return false;
+    }
+
     const dist = Math.hypot(snake.x - state.head.x, snake.y - state.head.y);
     const maxDist = screenDiagonal() * BONUS_TUNING.despawnPaddingScreens * getWorldDistanceMultiplier();
     return dist > maxDist;
