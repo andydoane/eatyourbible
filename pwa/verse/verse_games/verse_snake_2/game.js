@@ -42,6 +42,15 @@
 
   let snakeHeadSvgPromise = null;
   const SNAKE_HEAD_COLLISION_RADIUS = 20;
+  const YUCK_BODY_TUNING = {
+    durationMs: 520,
+    attackMs: 55,
+    holdMs: 95,
+    amplitudePx: 11,
+    waveStep: 2,
+    headRampPoints: 3,
+    tailFalloffPoints: 18
+  };
 
   const BACTERIA_ASSETS = {
     compact: "./verse_snake_images/verse_snake_bacteria_compact.svg",
@@ -1486,12 +1495,73 @@
 
   function buildBodyPath(points){
     if (!points.length) return "";
+
     const simplified = simplifyTrail(points, 9);
-    let d = `M ${simplified[0].x.toFixed(1)} ${simplified[0].y.toFixed(1)}`;
-    for (let i = 1; i < simplified.length; i++){
-      d += ` L ${simplified[i].x.toFixed(1)} ${simplified[i].y.toFixed(1)}`;
+    const visualPoints = applyYuckBodyZigZag(simplified);
+
+    let d = `M ${visualPoints[0].x.toFixed(1)} ${visualPoints[0].y.toFixed(1)}`;
+    for (let i = 1; i < visualPoints.length; i++){
+      d += ` L ${visualPoints[i].x.toFixed(1)} ${visualPoints[i].y.toFixed(1)}`;
     }
+
     return d;
+  }
+
+  function getYuckBodyIntensity() {
+    if (!state.yuckStartedAt || performance.now() >= state.yuckUntil) return 0;
+
+    const elapsed = performance.now() - state.yuckStartedAt;
+    const duration = YUCK_BODY_TUNING.durationMs;
+    const attack = YUCK_BODY_TUNING.attackMs;
+    const hold = YUCK_BODY_TUNING.holdMs;
+
+    if (elapsed <= attack) {
+      const t = clamp(elapsed / attack, 0, 1);
+      return easeOutCubic(t);
+    }
+
+    if (elapsed <= hold) {
+      return 1;
+    }
+
+    const decayT = clamp((elapsed - hold) / Math.max(1, duration - hold), 0, 1);
+    return Math.pow(1 - decayT, 2);
+  }
+
+  function applyYuckBodyZigZag(points) {
+    const intensity = getYuckBodyIntensity();
+    if (intensity <= 0 || points.length < 3) return points;
+
+    const now = performance.now();
+    const amp = YUCK_BODY_TUNING.amplitudePx * intensity;
+    const waveStep = YUCK_BODY_TUNING.waveStep;
+    const headRampPoints = YUCK_BODY_TUNING.headRampPoints;
+    const tailFalloffPoints = YUCK_BODY_TUNING.tailFalloffPoints;
+
+    return points.map((point, index) => {
+      if (index === 0) return point;
+
+      const prev = points[Math.max(0, index - 1)];
+      const next = points[Math.min(points.length - 1, index + 1)];
+      const dx = next.x - prev.x;
+      const dy = next.y - prev.y;
+      const len = Math.hypot(dx, dy) || 1;
+
+      const normalX = -dy / len;
+      const normalY = dx / len;
+
+      const wave = Math.floor(index / waveStep) % 2 === 0 ? 1 : -1;
+      const headRamp = clamp(index / Math.max(1, headRampPoints), 0, 1);
+      const tailFalloff = clamp(1 - (index / Math.max(1, tailFalloffPoints)), 0, 1);
+      const shimmer = Math.sin((now - state.yuckStartedAt) / 34 + index * 0.85) * 0.22;
+
+      const offset = amp * headRamp * tailFalloff * (wave + shimmer);
+
+      return {
+        x: point.x + normalX * offset,
+        y: point.y + normalY * offset
+      };
+    });
   }
 
   function simplifyTrail(points, minDistance){
