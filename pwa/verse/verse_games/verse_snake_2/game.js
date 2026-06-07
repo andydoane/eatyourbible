@@ -2317,11 +2317,63 @@
     return SNAKE_STYLE_DEFS.find((style) => style.id === state.snakeStyle) || SNAKE_STYLE_DEFS[0];
   }
 
-  function getPulseColor(colors, speedMs = 430) {
-    if (!colors || !colors.length) return null;
+  function getPulseColor(colors, speedMs = 620) {
+    if (!colors || colors.length === 0) return null;
+    if (colors.length === 1) return colors[0];
+
     const now = performance.now();
-    const index = Math.floor(now / speedMs) % colors.length;
-    return colors[index];
+    const cycle = now / speedMs;
+    const index = Math.floor(cycle) % colors.length;
+    const nextIndex = (index + 1) % colors.length;
+    const localT = cycle - Math.floor(cycle);
+
+    const easedT = smoothstep(localT);
+
+    return mixHexColors(colors[index], colors[nextIndex], easedT);
+  }
+
+  function smoothstep(t) {
+    const x = clamp(t, 0, 1);
+    return x * x * (3 - 2 * x);
+  }
+
+  function mixHexColors(a, b, t) {
+    const ca = hexToRgb(a);
+    const cb = hexToRgb(b);
+
+    if (!ca || !cb) {
+      return t < 0.5 ? a : b;
+    }
+
+    const x = clamp(t, 0, 1);
+    const r = Math.round(ca.r + (cb.r - ca.r) * x);
+    const g = Math.round(ca.g + (cb.g - ca.g) * x);
+    const bl = Math.round(ca.b + (cb.b - ca.b) * x);
+
+    return `rgb(${r}, ${g}, ${bl})`;
+  }
+
+  function hexToRgb(value) {
+    const raw = String(value || "").trim();
+
+    if (!raw.startsWith("#")) return null;
+
+    let hex = raw.slice(1);
+
+    if (hex.length === 3) {
+      hex = hex.split("").map((ch) => ch + ch).join("");
+    }
+
+    if (hex.length !== 6) return null;
+
+    const num = Number.parseInt(hex, 16);
+    if (Number.isNaN(num)) return null;
+
+    return {
+      r: (num >> 16) & 255,
+      g: (num >> 8) & 255,
+      b: num & 255
+    };
   }
 
   function applySnakeStyle() {
