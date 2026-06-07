@@ -321,6 +321,7 @@ button.vsl-pill{
 
 .vsl-target-layer,
 .vsl-fruit-layer,
+.vsl-effect-layer,
 .vsl-pickup-pop-layer,
 .vsl-arrow-layer{
   position: absolute;
@@ -464,6 +465,125 @@ button.vsl-pill{
   font-size: clamp(1.55rem, 7vw, 2.2rem);
   transform: translate(-50%, -50%);
   will-change: transform;
+}
+
+.vsl-correct-burst {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 17;
+  width: 9rem;
+  height: 9rem;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.vsl-burst-cloud {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 5rem;
+  height: 4rem;
+  transform: translate(-50%, -50%) scale(0.35);
+  opacity: 0;
+}
+
+.vsl-correct-burst.is-live .vsl-burst-cloud {
+  animation: vslBurstCloud 560ms ease-out forwards;
+}
+
+.vsl-burst-cloud span {
+  position: absolute;
+  display: block;
+  border-radius: 999px;
+  background: #ffd66f;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+}
+
+.vsl-burst-cloud span:nth-child(1) {
+  width: 58%;
+  height: 58%;
+  left: 21%;
+  top: 21%;
+}
+
+.vsl-burst-cloud span:nth-child(2) {
+  width: 42%;
+  height: 42%;
+  left: 5%;
+  top: 28%;
+}
+
+.vsl-burst-cloud span:nth-child(3) {
+  width: 46%;
+  height: 46%;
+  right: 4%;
+  top: 24%;
+}
+
+.vsl-burst-cloud span:nth-child(4) {
+  width: 38%;
+  height: 38%;
+  left: 28%;
+  top: 4%;
+}
+
+.vsl-burst-cloud span:nth-child(5) {
+  width: 40%;
+  height: 40%;
+  left: 31%;
+  bottom: 3%;
+}
+
+.vsl-burst-star {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  color: var(--vsl-star-color, #ffffff);
+  font-size: var(--vsl-star-size, 16px);
+  line-height: 1;
+  transform: translate(-50%, -50%) scale(0.45) rotate(0deg);
+  opacity: 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.22);
+  will-change: transform, opacity;
+}
+
+.vsl-correct-burst.is-live .vsl-burst-star {
+  animation: vslBurstStar 640ms cubic-bezier(0.12, 0.75, 0.22, 1) forwards;
+  animation-delay: var(--vsl-star-delay, 0ms);
+}
+
+@keyframes vslBurstCloud {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.20);
+  }
+
+  18% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.35);
+  }
+}
+
+@keyframes vslBurstStar {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.35) rotate(0deg);
+  }
+
+  15% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform:
+      translate(-50%, -50%) translate(var(--vsl-star-tx, 0px), var(--vsl-star-ty, 0px)) scale(1.05) rotate(var(--vsl-star-rotate, 160deg));
+  }
 }
 
 .vsl-pickup-pop {
