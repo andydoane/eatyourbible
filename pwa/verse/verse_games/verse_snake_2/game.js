@@ -211,12 +211,17 @@
     spinRate: 980
   };
 
-  const BOOST_TUNING = {
-    durationMs: 2000,
-    cooldownMs: 4000,
-    speedMultiplier: 2.00,
-    doubleTapWindowMs: 310,
-    doubleTapMaxMovePx: 34
+  const BONUS_TUNING = {
+    durationMs: 20000,
+    activeMiniSnakes: 10,
+    miniScale: 0.52,
+    miniLengthHeads: 4.2,
+    miniSpeedMin: 86,
+    miniSpeedMax: 132,
+    miniTurnRate: 1.9,
+    spawnPaddingScreens: 0.42,
+    despawnPaddingScreens: 0.72,
+    collisionSampleStep: 3
   };
 
   const BACTERIA_ASSETS = {
@@ -261,6 +266,13 @@
     snakeStyleIndex: 0,
     snakeRandomDotStyle: null,
     fruitCount: 0,
+    bonusActive: false,
+    bonusPlayed: false,
+    bonusStartedAt: 0,
+    bonusEndsAt: 0,
+    bonusScore: 0,
+    miniSnakes: [],
+    nextMiniSnakeId: 1,
     orbs: [],
     boostActiveUntil: 0,
     boostCooldownUntil: 0,
@@ -439,6 +451,7 @@
               <div class="vsl-flash-message" id="vslFlashMessage"></div>
 
               <svg class="vsl-svg" id="vslSvg" aria-hidden="true">
+                <g id="vslMiniSnakeLayer"></g>
                 <g id="vslSnakeGroup" class="vsl-snake-style-default">
                   <path class="vsl-snake-body" id="vslSnakeBody" d=""></path>
                   <path class="vsl-snake-body-2" id="vslSnakeBodyStripe" d=""></path>
@@ -549,6 +562,13 @@
     state.snakeStyleIndex = 0;
     state.snakeRandomDotStyle = null;
     state.fruitCount = 0;
+    state.bonusActive = false;
+    state.bonusPlayed = false;
+    state.bonusStartedAt = 0;
+    state.bonusEndsAt = 0;
+    state.bonusScore = 0;
+    state.miniSnakes = [];
+    state.nextMiniSnakeId = 1;
     state.orbs = [];
     state.boostActiveUntil = 0;
     state.boostCooldownUntil = 0;
@@ -575,6 +595,8 @@
     state.fruit = null;
     state.nextTargetId = 1;
     state.lastSpawnAngle = -Math.PI / 2;
+    const miniLayer = document.getElementById("vslMiniSnakeLayer");
+    if (miniLayer) miniLayer.innerHTML = "";
   }
 
   function initializeGame(){
@@ -774,19 +796,27 @@
 
       if (!state.paused){
         updateMotion(dt);
-        keepObjectiveWithinRange();
-        updateEncounter(dt, ts);
-        updateEscapingTargets(dt, ts);
-        updateOrbs(dt, ts);
-        updateFruit(dt, ts);
-        checkCollisions(ts);
-        maybeRecenterWorld();
+
+        if (state.bonusActive){
+          updateBonusRound(dt, ts);
+          checkBonusSnakeCollisions(ts);
+          maybeRecenterWorld();
+        } else {
+          keepObjectiveWithinRange();
+          updateEncounter(dt, ts);
+          updateEscapingTargets(dt, ts);
+          updateOrbs(dt, ts);
+          updateFruit(dt, ts);
+          checkCollisions(ts);
+          maybeRecenterWorld();
+        }
       }
 
       updateCamera();
       updatePatternLayer();
       updateBuildHudShift();
       drawSnake();
+      renderMiniSnakes();
       renderTargets();
       renderOrbs();
       renderFruit();
@@ -1398,6 +1428,265 @@
     }
   }
 
+  function startBonusRound() {
+    const now = performance.now();
+
+    state.bonusActive = true;
+    state.bonusPlayed = true;
+    state.bonusStartedAt = now;
+    state.bonusEndsAt = now + BONUS_TUNING.durationMs;
+    state.bonusScore = 0;
+
+    state.encounter = null;
+    state.targets = [];
+    state.escapingTargets = [];
+    state.fruit = null;
+    state.orbs = [];
+    state.pickupPops = [];
+
+    spawnBonusMiniSnakes();
+    updateBonusHud(now);
+
+    state.flashText = "BONUS ROUND!";
+    state.flashUntil = now + 1100;
+  }
+
+  function updateBonusRound(dt, ts) {
+    if (!state.bonusActive) return;
+
+    if (ts >= state.bonusEndsAt) {
+      endBonusRound();
+      return;
+    }
+
+    while (state.miniSnakes.length < BONUS_TUNING.activeMiniSnakes) {
+      state.miniSnakes.push(createMiniSnake());
+    }
+
+    for (const snake of state.miniSnakes) {
+      updateMiniSnake(snake, dt);
+    }
+
+    state.miniSnakes = state.miniSnakes.filter((snake) => !isMiniSnakeTooFar(snake));
+
+    while (state.miniSnakes.length < BONUS_TUNING.activeMiniSnakes) {
+      state.miniSnakes.push(createMiniSnake());
+    }
+
+    updateBonusHud(ts);
+  }
+
+  function endBonusRound() {
+    state.bonusActive = false;
+    state.miniSnakes = [];
+    renderMiniSnakes();
+    updateBuildHud();
+    completeGameAfterBonus();
+  }
+
+  function spawnBonusMiniSnakes() {
+    state.miniSnakes = [];
+
+    for (let i = 0; i < BONUS_TUNING.activeMiniSnakes; i++) {
+      state.miniSnakes.push(createMiniSnake());
+    }
+  }
+
+  function createMiniSnake() {
+    const headSize = getSnakeHeadSize();
+    const scale = BONUS_TUNING.miniScale;
+    const lengthPx = headSize * BONUS_TUNING.miniLengthHeads * scale;
+    const width = headSize * 0.74 * scale;
+    const stripeWidth = headSize * 0.38 * scale;
+    const colors = getTwoDifferentMiniSnakeColors();
+    const pos = getMiniSnakeSpawnPoint();
+    const angle = Math.random() * Math.PI * 2;
+
+    const snake = {
+      id: state.nextMiniSnakeId++,
+      x: pos.x,
+      y: pos.y,
+      angle,
+      speed: randRange(BONUS_TUNING.miniSpeedMin, BONUS_TUNING.miniSpeedMax) * getSpeedScale() * getWorldSpeedMultiplier(),
+      turnPhase: Math.random() * Math.PI * 2,
+      turnWobble: randRange(0.8, 1.35),
+      lengthPx,
+      width,
+      stripeWidth,
+      bodyColor: colors.body,
+      dotColor: colors.dot,
+      trail: []
+    };
+
+    seedMiniSnakeTrail(snake);
+    return snake;
+  }
+
+  function getTwoDifferentMiniSnakeColors() {
+    const colors = SNAKE_RANDOM_DOT_COLORS;
+    const body = colors[Math.floor(Math.random() * colors.length)];
+    let dot = body;
+
+    for (let i = 0; i < 8 && dot === body; i++) {
+      dot = colors[Math.floor(Math.random() * colors.length)];
+    }
+
+    return { body, dot };
+  }
+
+  function getMiniSnakeSpawnPoint() {
+    const angle = Math.random() * Math.PI * 2;
+    const minR = Math.min(state.fieldWidth, state.fieldHeight) * 0.36;
+    const maxR = Math.max(state.fieldWidth, state.fieldHeight) * BONUS_TUNING.spawnPaddingScreens;
+    const r = randRange(minR, maxR);
+
+    return {
+      x: state.head.x + Math.cos(angle) * r,
+      y: state.head.y + Math.sin(angle) * r
+    };
+  }
+
+  function seedMiniSnakeTrail(snake) {
+    snake.trail = [];
+    const step = Math.max(4, snake.width * 0.38);
+    const backAngle = snake.angle + Math.PI;
+
+    for (let d = 0; d <= snake.lengthPx; d += step) {
+      snake.trail.push({
+        x: snake.x + Math.cos(backAngle) * d,
+        y: snake.y + Math.sin(backAngle) * d
+      });
+    }
+  }
+
+  function updateMiniSnake(snake, dt) {
+    const seconds = dt / 1000;
+    snake.turnPhase += seconds * snake.turnWobble;
+
+    const wander = Math.sin(snake.turnPhase * 1.9) * BONUS_TUNING.miniTurnRate;
+    snake.angle += wander * seconds;
+
+    snake.x += Math.cos(snake.angle) * snake.speed * seconds;
+    snake.y += Math.sin(snake.angle) * snake.speed * seconds;
+
+    snake.trail.unshift({ x: snake.x, y: snake.y });
+    trimMiniSnakeTrail(snake);
+  }
+
+  function trimMiniSnakeTrail(snake) {
+    let total = 0;
+    const trimmed = [];
+
+    for (let i = 0; i < snake.trail.length; i++) {
+      const p = snake.trail[i];
+      trimmed.push(p);
+
+      if (i > 0) {
+        const prev = snake.trail[i - 1];
+        total += Math.hypot(p.x - prev.x, p.y - prev.y);
+      }
+
+      if (total >= snake.lengthPx) break;
+    }
+
+    snake.trail = trimmed;
+  }
+
+  function isMiniSnakeTooFar(snake) {
+    const dist = Math.hypot(snake.x - state.head.x, snake.y - state.head.y);
+    const maxDist = screenDiagonal() * BONUS_TUNING.despawnPaddingScreens * getWorldDistanceMultiplier();
+    return dist > maxDist;
+  }
+
+  function checkBonusSnakeCollisions(ts) {
+    if (!state.bonusActive || !state.miniSnakes.length) return;
+
+    const headRadius = getSnakeHeadCollisionRadius();
+
+    for (const snake of [...state.miniSnakes]) {
+      const hitRadius = headRadius + snake.width * 0.55;
+
+      for (let i = 0; i < snake.trail.length; i += BONUS_TUNING.collisionSampleStep) {
+        const p = snake.trail[i];
+        const d = Math.hypot(state.head.x - p.x, state.head.y - p.y);
+
+        if (d <= hitRadius) {
+          eatMiniSnake(snake, p, ts);
+          break;
+        }
+      }
+    }
+  }
+
+  function eatMiniSnake(snake, hitPoint, ts) {
+    state.bonusScore += 1;
+    state.headPopUntil = performance.now() + 180;
+
+    showCorrectBurst(hitPoint.x, hitPoint.y);
+
+    state.miniSnakes = state.miniSnakes.filter((item) => item.id !== snake.id);
+    state.miniSnakes.push(createMiniSnake());
+
+    updateBonusHud(ts);
+  }
+
+  function renderMiniSnakes() {
+    const layer = document.getElementById("vslMiniSnakeLayer");
+    if (!layer) return;
+
+    const activeIds = new Set(state.miniSnakes.map((snake) => String(snake.id)));
+
+    for (const child of [...layer.children]) {
+      if (!activeIds.has(child.dataset.id)) child.remove();
+    }
+
+    for (const snake of state.miniSnakes) {
+      let group = layer.querySelector(`[data-id="${snake.id}"]`);
+
+      if (!group) {
+        group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        group.classList.add("vsl-mini-snake");
+        group.dataset.id = snake.id;
+
+        const body = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        body.classList.add("vsl-mini-snake-body");
+
+        const dots = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        dots.classList.add("vsl-mini-snake-dots");
+
+        const nose = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        nose.classList.add("vsl-mini-snake-nose");
+
+        group.appendChild(body);
+        group.appendChild(dots);
+        group.appendChild(nose);
+        layer.appendChild(group);
+      }
+
+      const body = group.querySelector(".vsl-mini-snake-body");
+      const dots = group.querySelector(".vsl-mini-snake-dots");
+      const nose = group.querySelector(".vsl-mini-snake-nose");
+
+      const screenTrail = snake.trail.map(worldToScreen);
+      const d = buildBodyPath(screenTrail);
+      const head = worldToScreen(snake);
+
+      body.setAttribute("d", d);
+      body.style.stroke = snake.bodyColor;
+      body.style.strokeWidth = snake.width.toFixed(2);
+
+      dots.setAttribute("d", d);
+      dots.style.stroke = snake.dotColor;
+      dots.style.strokeWidth = snake.stripeWidth.toFixed(2);
+      dots.style.strokeDasharray = `0.01 ${Math.max(6, snake.stripeWidth * 1.65).toFixed(2)}`;
+
+      nose.setAttribute("cx", head.x.toFixed(1));
+      nose.setAttribute("cy", head.y.toFixed(1));
+      nose.setAttribute("r", (snake.width * 0.36).toFixed(2));
+      nose.style.fill = snake.bodyColor;
+    }
+  }
+
   function maybeSpawnFruit(force){
     if (state.fruit) return;
     if (!force && Math.random() > SLITHER_TUNING.fruitChance) return;
@@ -1560,7 +1849,19 @@
 
   function finishGame(){
     if (completed) return;
+
+    if (!state.bonusPlayed){
+      startBonusRound();
+      return;
+    }
+
+    completeGameAfterBonus();
+  }
+
+  function completeGameAfterBonus(){
+    if (completed) return;
     completed = true;
+    state.bonusActive = false;
     completionResult = null;
 
     if (window.VerseGameBridge.completeGameRun){
@@ -1570,6 +1871,7 @@
         mode: selectedMode,
         stats: {
           fruitCount: state.fruitCount,
+          bonusScore: state.bonusScore,
           progressIndex: state.progressIndex
         }
       });
@@ -1587,7 +1889,7 @@
       verseId: ctx.verseId,
       gameId: GAME_ID,
       completion: completionResult,
-      gameMessage: `Fruit eaten: ${state.fruitCount}`,
+      gameMessage: `Fruit eaten: ${state.fruitCount} • Bonus snakes caught: ${state.bonusScore}`,
       theme: GAME_THEME,
       backLabel: "Back to Practice Games",
       onPlayAgain: () => {
@@ -1597,6 +1899,23 @@
       onMoreGames: () => window.VerseGameBridge.exitGame(),
       onChangeVerse: () => window.VerseGameBridge.returnToTitle()
     });
+  }
+
+  function updateBonusHud(ts = performance.now()) {
+    const track = document.getElementById("vslBuildTrack");
+    if (!track) return;
+
+    const remainingMs = Math.max(0, state.bonusEndsAt - ts);
+    const seconds = Math.ceil(remainingMs / 1000);
+
+    track.innerHTML = `
+      <span class="vsl-build-built">BONUS ROUND</span>
+      <span class="vsl-build-current is-easy" id="vslBuildPrompt">${seconds}</span>
+      <span class="vsl-build-built">CAUGHT ${state.bonusScore}</span>
+    `;
+
+    track.style.setProperty("--vsl-build-shift", "0px");
+    updateBuildHudShift();
   }
 
   function updateBuildHud() {
@@ -2038,6 +2357,10 @@
   function renderArrow(){
     const arrow = document.getElementById("vslArrow");
     if (!arrow) return;
+    if (state.bonusActive) {
+      arrow.classList.remove("is-visible");
+      return;
+    }
     const target = getArrowTargetPoint();
     if (!target){
       arrow.classList.remove("is-visible");

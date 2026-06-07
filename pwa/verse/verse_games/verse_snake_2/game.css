@@ -220,6 +220,28 @@ body{
   pointer-events: none;
 }
 
+.vsl-mini-snake {
+  pointer-events: none;
+  opacity: 0.96;
+  filter: drop-shadow(0 4px 3px rgba(0, 0, 0, 0.20));
+}
+
+.vsl-mini-snake-body,
+.vsl-mini-snake-dots {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.vsl-mini-snake-dots {
+  stroke-linecap: round;
+}
+
+.vsl-mini-snake-nose {
+  stroke: rgba(255, 255, 255, 0.46);
+  stroke-width: 1.5;
+}
+
 .vsl-snake-body{
   fill: none;
   stroke: var(--vsl-snake-body-color, #a7cb6f);
