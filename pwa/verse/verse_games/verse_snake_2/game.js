@@ -138,8 +138,10 @@
   };
 
   const SNAKE_HEAD_ASSET = "./verse_snake_images/verse_snake_head_1.svg";
+  const MINI_SNAKE_HEAD_ASSET = "./verse_snake_images/vese_snake_head_small.svg";
 
   let snakeHeadSvgPromise = null;
+  let miniSnakeHeadSvgPromise = null;
   const SNAKE_HEAD_COLLISION_RADIUS = 20;
 
   const VISUAL_SCALE_TUNING = {
@@ -1646,6 +1648,47 @@
     updateBonusHud(ts);
   }
 
+  function hydrateMiniSnakeHead(headGroup, snake) {
+    if (!headGroup || headGroup.dataset.loaded === "true" || headGroup.dataset.loaded === "loading") return;
+
+    headGroup.dataset.loaded = "loading";
+
+    loadMiniSnakeHeadSvg().then((svgText) => {
+      if (!headGroup.isConnected) return;
+
+      const doc = new DOMParser().parseFromString(svgText, "image/svg+xml");
+      const svg = doc.querySelector("svg");
+
+      if (!svg) {
+        headGroup.dataset.loaded = "";
+        return;
+      }
+
+      const size = snake.width * 1.55;
+      const half = size / 2;
+
+      svg.setAttribute("x", `${(-half).toFixed(2)}`);
+      svg.setAttribute("y", `${(-half).toFixed(2)}`);
+      svg.setAttribute("width", `${size.toFixed(2)}`);
+      svg.setAttribute("height", `${size.toFixed(2)}`);
+      svg.setAttribute("aria-hidden", "true");
+      svg.classList.add("vsl-mini-snake-head-svg");
+
+      const imported = document.importNode(svg, true);
+      const headShape = imported.querySelector("#head");
+
+      if (headShape) {
+        headShape.style.fill = snake.bodyColor;
+      }
+
+      headGroup.innerHTML = "";
+      headGroup.appendChild(imported);
+      headGroup.dataset.loaded = "true";
+    }).catch(() => {
+      headGroup.dataset.loaded = "";
+    });
+  }
+
   function renderMiniSnakes() {
     const layer = document.getElementById("vslMiniSnakeLayer");
     if (!layer) return;
@@ -1673,27 +1716,6 @@
         const head = document.createElementNS("http://www.w3.org/2000/svg", "g");
         head.classList.add("vsl-mini-snake-head");
 
-        const headShape = document.createElementNS("http://www.w3.org/2000/svg", "ellipse");
-        headShape.classList.add("vsl-mini-snake-head-shape");
-
-        const eyeL = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        eyeL.classList.add("vsl-mini-snake-eye", "is-left");
-
-        const eyeR = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        eyeR.classList.add("vsl-mini-snake-eye", "is-right");
-
-        const pupilL = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        pupilL.classList.add("vsl-mini-snake-pupil", "is-left");
-
-        const pupilR = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        pupilR.classList.add("vsl-mini-snake-pupil", "is-right");
-
-        head.appendChild(headShape);
-        head.appendChild(eyeL);
-        head.appendChild(eyeR);
-        head.appendChild(pupilL);
-        head.appendChild(pupilR);
-
         group.appendChild(body);
         group.appendChild(dots);
         group.appendChild(head);
@@ -1703,11 +1725,6 @@
       const body = group.querySelector(".vsl-mini-snake-body");
       const dots = group.querySelector(".vsl-mini-snake-dots");
       const headGroup = group.querySelector(".vsl-mini-snake-head");
-      const headShape = group.querySelector(".vsl-mini-snake-head-shape");
-      const eyeL = group.querySelector(".vsl-mini-snake-eye.is-left");
-      const eyeR = group.querySelector(".vsl-mini-snake-eye.is-right");
-      const pupilL = group.querySelector(".vsl-mini-snake-pupil.is-left");
-      const pupilR = group.querySelector(".vsl-mini-snake-pupil.is-right");
 
       const screenTrail = snake.trail.map(worldToScreen);
       const d = buildBodyPath(screenTrail);
@@ -1722,38 +1739,20 @@
       dots.style.strokeWidth = snake.stripeWidth.toFixed(2);
       dots.style.strokeDasharray = `0.01 ${Math.max(6, snake.stripeWidth * 1.65).toFixed(2)}`;
 
-      if (headGroup && headShape && eyeL && eyeR && pupilL && pupilR){
-        const angleDeg = (snake.angle * 180 / Math.PI).toFixed(1);
-        const r = snake.headRadius;
-        const eyeRSize = r * 0.20;
-        const pupilRSize = r * 0.095;
+      if (headGroup) {
+        const angleDeg = (snake.angle * 180 / Math.PI + 90).toFixed(1);
+
+        hydrateMiniSnakeHead(headGroup, snake);
 
         headGroup.setAttribute(
           "transform",
           `translate(${head.x.toFixed(1)} ${head.y.toFixed(1)}) rotate(${angleDeg})`
         );
 
-        headShape.setAttribute("cx", "0");
-        headShape.setAttribute("cy", "0");
-        headShape.setAttribute("rx", (r * 1.12).toFixed(2));
-        headShape.setAttribute("ry", (r * 0.88).toFixed(2));
-        headShape.style.fill = snake.bodyColor;
-
-        eyeL.setAttribute("cx", (r * 0.28).toFixed(2));
-        eyeL.setAttribute("cy", (-r * 0.34).toFixed(2));
-        eyeL.setAttribute("r", eyeRSize.toFixed(2));
-
-        eyeR.setAttribute("cx", (r * 0.28).toFixed(2));
-        eyeR.setAttribute("cy", (r * 0.34).toFixed(2));
-        eyeR.setAttribute("r", eyeRSize.toFixed(2));
-
-        pupilL.setAttribute("cx", (r * 0.34).toFixed(2));
-        pupilL.setAttribute("cy", (-r * 0.34).toFixed(2));
-        pupilL.setAttribute("r", pupilRSize.toFixed(2));
-
-        pupilR.setAttribute("cx", (r * 0.34).toFixed(2));
-        pupilR.setAttribute("cy", (r * 0.34).toFixed(2));
-        pupilR.setAttribute("r", pupilRSize.toFixed(2));
+        const headShape = headGroup.querySelector("#head");
+        if (headShape) {
+          headShape.style.fill = snake.bodyColor;
+        }
       }
     }
   }
@@ -2545,6 +2544,17 @@
     }
 
     return snakeHeadSvgPromise;
+  }
+
+  function loadMiniSnakeHeadSvg() {
+    if (!miniSnakeHeadSvgPromise) {
+      miniSnakeHeadSvgPromise = fetch(MINI_SNAKE_HEAD_ASSET).then((res) => {
+        if (!res.ok) throw new Error(`Could not load ${MINI_SNAKE_HEAD_ASSET}`);
+        return res.text();
+      });
+    }
+
+    return miniSnakeHeadSvgPromise;
   }
 
   function drawSnake(){
