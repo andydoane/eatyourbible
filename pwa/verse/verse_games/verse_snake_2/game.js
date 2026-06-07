@@ -68,6 +68,11 @@
     targetSwayHeadRatio: 0.41
   };
 
+  const TAIL_LENGTH_TUNING = {
+    defaultHeads: 10.75,
+    maxBonusHeads: 4.5
+  };
+
   const YUCK_BODY_TUNING = {
     durationMs: 520,
     attackMs: 55,
@@ -134,6 +139,7 @@
     head: { x: 0, y: 0, angle: -Math.PI / 2, speed: 130 },
     trail: [],
     snakeLengthPx: 440,
+    snakeBonusLengthHeads: 0,
     words: [],
     bookLabel: "",
     referenceLabel: "",
@@ -406,6 +412,7 @@
     state.head.angle = -Math.PI / 2;
     state.head.speed = getCurrentSpeed();
     state.trail = [];
+    state.snakeBonusLengthHeads = 0;
     state.progressIndex = 0;
     state.encounter = null;
     state.targets = [];
@@ -437,7 +444,8 @@
     state.referenceMeta = refParts;
     state.segments = buildData.segments;
 
-    state.snakeLengthPx = Math.max(240, Math.min(Math.min(state.fieldWidth, state.fieldHeight) * 0.72, 560));
+    state.snakeBonusLengthHeads = 0;
+    syncSnakeLengthFromHeads(true);
     hydrateSnakeHead();
     seedTrail();
     updateBuildHud();
@@ -499,6 +507,7 @@
     field.style.setProperty("--vsl-pickup-lift", `${(head * 0.95).toFixed(2)}`);
 
     syncSnakeHeadSvgSize();
+    syncSnakeLengthFromHeads(false);
 
     for (const target of [...state.targets, ...state.escapingTargets]) {
       target.r = estimateTargetRadius(target.word);
@@ -529,6 +538,36 @@
 
   function getSnakeHeadSize() {
     return state.headSizePx || VISUAL_SCALE_TUNING.desktopHeadPx;
+  }
+
+  function getTotalSnakeLengthHeads() {
+    return TAIL_LENGTH_TUNING.defaultHeads + state.snakeBonusLengthHeads;
+  }
+
+  function syncSnakeLengthFromHeads(forceTrim) {
+    const nextLength = getSnakeHeadSize() * getTotalSnakeLengthHeads();
+    const wasLonger = nextLength < state.snakeLengthPx;
+
+    state.snakeLengthPx = nextLength;
+
+    if ((forceTrim || wasLonger) && state.trail.length) {
+      trimTrail();
+    }
+  }
+
+  function growSnakeByHeadLengths(amountHeads) {
+    const amount = Math.max(0, Number(amountHeads) || 0);
+    state.snakeBonusLengthHeads = clamp(
+      state.snakeBonusLengthHeads + amount,
+      0,
+      TAIL_LENGTH_TUNING.maxBonusHeads
+    );
+    syncSnakeLengthFromHeads(false);
+  }
+
+  function resetSnakeBonusLength() {
+    state.snakeBonusLengthHeads = 0;
+    syncSnakeLengthFromHeads(true);
   }
 
   function getSnakeHeadCollisionRadius() {
@@ -1109,6 +1148,7 @@
     target.wrongHitUntil = ts + 320;
 
     triggerSnakeYuck(target);
+    resetSnakeBonusLength();
 
     showPickupPop({
       text: "OOPS!",
