@@ -138,7 +138,7 @@
   };
 
   const SNAKE_HEAD_ASSET = "./verse_snake_images/verse_snake_head_1.svg";
-  const MINI_SNAKE_HEAD_ASSET = "./verse_snake_images/vese_snake_head_small.svg";
+  const MINI_SNAKE_HEAD_ASSET = "./verse_snake_images/verse_snake_head_small.svg";
 
   let snakeHeadSvgPromise = null;
   let miniSnakeHeadSvgPromise = null;
