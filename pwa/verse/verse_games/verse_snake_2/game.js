@@ -57,6 +57,7 @@
   const GAMEPLAY_SCALE_TUNING = {
     speedMinScale: 0.85,
     spawnDistanceMinScale: 0.92,
+    worldSpeedMultiplier: 1.25,
     pairSeparationBacteriaRatio: 2.85,
     pairSeparationMinHeadRatio: 3.2,
     pairSeparationMaxHeadRatio: 5.0,
@@ -594,6 +595,14 @@
     return GAMEPLAY_SCALE_TUNING.spawnDistanceMinScale + (1 - GAMEPLAY_SCALE_TUNING.spawnDistanceMinScale) * visualScale;
   }
 
+  function getWorldSpeedMultiplier() {
+    return GAMEPLAY_SCALE_TUNING.worldSpeedMultiplier || 1;
+  }
+
+  function getWorldDistanceMultiplier() {
+    return getWorldSpeedMultiplier();
+  }
+
   function getSnakeHeadSize() {
     return state.headSizePx || VISUAL_SCALE_TUNING.desktopHeadPx;
   }
@@ -769,7 +778,7 @@
   function getCurrentSpeed(){
     const baseSpeed = SLITHER_TUNING.speeds[selectedMode] || SLITHER_TUNING.speeds.medium;
     const boostMultiplier = isBoostActive() ? BOOST_TUNING.speedMultiplier : 1;
-    return baseSpeed * getSpeedScale() * boostMultiplier;
+    return baseSpeed * getSpeedScale() * getWorldSpeedMultiplier() * boostMultiplier;
   }
 
   function getCurrentTurnRate(){
@@ -778,7 +787,7 @@
 
   function getWrongFleeSpeed() {
     const baseSpeed = SLITHER_TUNING.wrongFleeSpeeds[selectedMode] || SLITHER_TUNING.wrongFleeSpeeds.medium;
-    return baseSpeed * getSpeedScale();
+    return baseSpeed * getSpeedScale() * getWorldSpeedMultiplier();
   }
 
   function seedTrail(){
@@ -957,7 +966,7 @@
     let angle = randomAngleAwayFrom(state.lastSpawnAngle);
     const scale = Math.max(state.fieldWidth, state.fieldHeight);
     const modeFactor = SLITHER_TUNING.spawnDistanceScreens[selectedMode] || 1.32;
-    const distance = scale * (modeFactor + Math.random() * 0.28) * getSpawnDistanceScale();
+    const distance = scale * (modeFactor + Math.random() * 0.28) * getSpawnDistanceScale() * getWorldDistanceMultiplier();
     const center = {
       x: state.head.x + Math.cos(angle) * distance,
       y: state.head.y + Math.sin(angle) * distance
@@ -1014,7 +1023,7 @@
   }
 
   function keepObjectiveWithinRange() {
-    const maxDist = Math.max(state.fieldWidth, state.fieldHeight) * (SLITHER_TUNING.encounterMaxDistanceScreens || 1.85) * getDistanceScale();
+    const maxDist = Math.max(state.fieldWidth, state.fieldHeight) * (SLITHER_TUNING.encounterMaxDistanceScreens || 1.85) * getDistanceScale() * getWorldDistanceMultiplier();
 
     if (state.encounter && !state.encounter.collapsed) {
       const dx = state.encounter.baseCenter.x - state.head.x;
@@ -1110,7 +1119,7 @@
         target.x += Math.cos(target.fleeAngle) * fleeSpeed * (dt / 1000);
         target.y += Math.sin(target.fleeAngle) * fleeSpeed * (dt / 1000);
         const distFromPlayer = Math.hypot(target.x - state.head.x, target.y - state.head.y);
-        const maxDist = Math.max(state.fieldWidth, state.fieldHeight) * SLITHER_TUNING.wrongFleeMaxScreenDistance * getDistanceScale();
+        const maxDist = Math.max(state.fieldWidth, state.fieldHeight) * SLITHER_TUNING.wrongFleeMaxScreenDistance * getDistanceScale() * getWorldDistanceMultiplier();
         if (distFromPlayer >= maxDist){
           target.fleeing = false;
           target.freeAnchor = { x: target.x, y: target.y };
@@ -1192,7 +1201,7 @@
     const uy = dy / distance;
     const sideX = -uy;
     const sideY = ux;
-    const spread = Math.min(state.fieldWidth, state.fieldHeight) * ORB_TUNING.sideSpreadScreens;
+    const spread = Math.min(state.fieldWidth, state.fieldHeight) * ORB_TUNING.sideSpreadScreens * getWorldDistanceMultiplier();
 
     const count = ORB_TUNING.targetCount;
     const orbs = [];
@@ -1294,7 +1303,7 @@
 
     const targetPoint = state.encounter ? state.encounter.center : state.head;
     const along = 0.35 + Math.random() * 0.45;
-    const side = (Math.random() * 2 - 1) * Math.min(state.fieldWidth, state.fieldHeight) * 0.30;
+    const side = (Math.random() * 2 - 1) * Math.min(state.fieldWidth, state.fieldHeight) * 0.30 * getWorldDistanceMultiplier();
     const dx = targetPoint.x - state.head.x;
     const dy = targetPoint.y - state.head.y;
     const angle = Math.atan2(dy, dx);
@@ -1370,7 +1379,7 @@
   function updateEscapingTargets(dt, ts) {
     if (!state.escapingTargets.length) return;
 
-    const speed = DECOY_ESCAPE_TUNING.speedPxPerSecond * getSpeedScale();
+    const speed = DECOY_ESCAPE_TUNING.speedPxPerSecond * getSpeedScale() * getWorldSpeedMultiplier();
     const seconds = dt / 1000;
 
     for (const target of state.escapingTargets) {
