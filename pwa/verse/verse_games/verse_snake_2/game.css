@@ -477,67 +477,58 @@ button.vsl-pill{
   left: 0;
   top: 0;
   z-index: 17;
-  width: 9rem;
-  height: 9rem;
+  width: 10.5rem;
+  height: 10.5rem;
   pointer-events: none;
   will-change: transform;
 }
 
-.vsl-burst-cloud {
+.vsl-burst-flash {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 5rem;
-  height: 4rem;
-  transform: translate(-50%, -50%) scale(0.35);
+  width: 4.2rem;
+  height: 4.2rem;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.86);
+  transform: translate(-50%, -50%) scale(0.1);
+  opacity: 0;
+  box-shadow: 0 0 26px rgba(255, 214, 111, 0.72);
+}
+
+.vsl-correct-burst.is-live .vsl-burst-flash {
+  animation: vslBurstFlash 250ms ease-out forwards;
+}
+
+.vsl-burst-cloud {
+  position: absolute;
+  inset: 0;
+  transform: scale(0.55);
   opacity: 0;
 }
 
 .vsl-correct-burst.is-live .vsl-burst-cloud {
-  animation: vslBurstCloud 560ms ease-out forwards;
+  animation: vslBurstCloudShell 640ms ease-out forwards;
 }
 
-.vsl-burst-cloud span {
+.vsl-burst-puff {
   position: absolute;
-  display: block;
+  left: 50%;
+  top: 50%;
+  width: var(--vsl-puff-size, 42px);
+  height: var(--vsl-puff-size, 42px);
   border-radius: 999px;
-  background: #ffd66f;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+  background: var(--vsl-puff-color, #ffd66f);
+  box-shadow:
+    inset 0 6px 0 rgba(255, 255, 255, 0.22),
+    0 6px 14px rgba(0, 0, 0, 0.18);
+  transform: translate(-50%, -50%) scale(0.25);
+  opacity: 0;
 }
 
-.vsl-burst-cloud span:nth-child(1) {
-  width: 58%;
-  height: 58%;
-  left: 21%;
-  top: 21%;
-}
-
-.vsl-burst-cloud span:nth-child(2) {
-  width: 42%;
-  height: 42%;
-  left: 5%;
-  top: 28%;
-}
-
-.vsl-burst-cloud span:nth-child(3) {
-  width: 46%;
-  height: 46%;
-  right: 4%;
-  top: 24%;
-}
-
-.vsl-burst-cloud span:nth-child(4) {
-  width: 38%;
-  height: 38%;
-  left: 28%;
-  top: 4%;
-}
-
-.vsl-burst-cloud span:nth-child(5) {
-  width: 40%;
-  height: 40%;
-  left: 31%;
-  bottom: 3%;
+.vsl-correct-burst.is-live .vsl-burst-puff {
+  animation: vslBurstPuff 620ms cubic-bezier(0.12, 0.75, 0.22, 1) forwards;
+  animation-delay: var(--vsl-puff-delay, 0ms);
 }
 
 .vsl-burst-star {
@@ -547,40 +538,99 @@ button.vsl-pill{
   color: var(--vsl-star-color, #ffffff);
   font-size: var(--vsl-star-size, 16px);
   line-height: 1;
-  transform: translate(-50%, -50%) scale(0.45) rotate(0deg);
+  transform: translate(-50%, -50%) scale(0.25) rotate(0deg);
   opacity: 0;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.22);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.24);
   will-change: transform, opacity;
 }
 
 .vsl-correct-burst.is-live .vsl-burst-star {
-  animation: vslBurstStar 640ms cubic-bezier(0.12, 0.75, 0.22, 1) forwards;
+  animation: vslBurstStar 700ms cubic-bezier(0.12, 0.75, 0.22, 1) forwards;
   animation-delay: var(--vsl-star-delay, 0ms);
 }
 
-@keyframes vslBurstCloud {
+.vsl-burst-whoosh {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1.8rem;
+  height: 0.42rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.14);
+  transform: translate(-50%, -50%) rotate(var(--vsl-whoosh-rotate, 0deg)) scaleX(0.2);
+  opacity: 0;
+}
+
+.vsl-correct-burst.is-live .vsl-burst-whoosh {
+  animation: vslBurstWhoosh 520ms ease-out forwards;
+  animation-delay: var(--vsl-whoosh-delay, 0ms);
+}
+
+@keyframes vslBurstFlash {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.20);
+    transform: translate(-50%, -50%) scale(0.1);
   }
 
-  18% {
+  32% {
     opacity: 1;
   }
 
   100% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(1.35);
+    transform: translate(-50%, -50%) scale(1.25);
+  }
+}
+
+@keyframes vslBurstCloudShell {
+  0% {
+    opacity: 1;
+    transform: scale(0.5) rotate(-4deg);
+  }
+
+  35% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.05) rotate(5deg);
+  }
+}
+
+@keyframes vslBurstPuff {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.25);
+  }
+
+  14% {
+    opacity: 1;
+  }
+
+  68% {
+    opacity: 0.92;
+  }
+
+  100% {
+    opacity: 0;
+    transform:
+      translate(-50%, -50%) translate(var(--vsl-puff-tx, 0px), var(--vsl-puff-ty, 0px)) scale(1.08);
   }
 }
 
 @keyframes vslBurstStar {
   0% {
     opacity: 0;
-    transform: translate(-50%, -50%) scale(0.35) rotate(0deg);
+    transform: translate(-50%, -50%) scale(0.3) rotate(0deg);
   }
 
-  15% {
+  16% {
+    opacity: 1;
+  }
+
+  76% {
     opacity: 1;
   }
 
@@ -590,6 +640,25 @@ button.vsl-pill{
       translate(-50%, -50%) translate(var(--vsl-star-tx, 0px), var(--vsl-star-ty, 0px)) scale(1.05) rotate(var(--vsl-star-rotate, 160deg));
   }
 }
+
+@keyframes vslBurstWhoosh {
+  0% {
+    opacity: 0;
+    transform:
+      translate(-50%, -50%) rotate(var(--vsl-whoosh-rotate, 0deg)) scaleX(0.2);
+  }
+
+  20% {
+    opacity: 0.8;
+  }
+
+  100% {
+    opacity: 0;
+    transform:
+      translate(-50%, -50%) translate(var(--vsl-whoosh-tx, 0px), var(--vsl-whoosh-ty, 0px)) rotate(var(--vsl-whoosh-rotate, 0deg)) scaleX(1.25);
+  }
+}
+
 
 .vsl-pickup-pop {
   position: absolute;

@@ -1153,20 +1153,45 @@
   
 
   function showCorrectBurst(x, y) {
-    const colors = ["#ff5a51", "#ffa351", "#ffc751", "#a7cb6f", "#40b9c5", "#7f66c6", "#ffffff"];
-    const count = 12;
+    const starColors = ["#ff5a51", "#ffa351", "#ffc751", "#a7cb6f", "#40b9c5", "#7f66c6", "#ffffff"];
+    const cloudColors = ["#ffd66f", "#ffc751", "#ffe08a", "#ffa351"];
     const particles = [];
+    const puffs = [];
+    const whooshes = [];
 
-    for (let i = 0; i < count; i++) {
-      const angle = (Math.PI * 2 * i / count) + randRange(-0.16, 0.16);
-      const distance = randRange(42, 74);
+    for (let i = 0; i < 14; i++) {
+      const angle = (Math.PI * 2 * i / 14) + randRange(-0.18, 0.18);
+      const distance = randRange(18, 46);
+      puffs.push({
+        tx: Math.cos(angle) * distance,
+        ty: Math.sin(angle) * distance * 0.78,
+        size: randRange(28, 54),
+        color: cloudColors[i % cloudColors.length],
+        delay: Math.round(randRange(0, 55))
+      });
+    }
+
+    for (let i = 0; i < 18; i++) {
+      const angle = (Math.PI * 2 * i / 18) + randRange(-0.14, 0.14);
+      const distance = randRange(48, 92);
       particles.push({
         tx: Math.cos(angle) * distance,
         ty: Math.sin(angle) * distance,
-        size: randRange(12, 20),
-        rotate: randRange(-220, 220),
-        color: colors[i % colors.length],
-        delay: Math.round(randRange(0, 45))
+        size: randRange(10, 22),
+        rotate: randRange(-260, 260),
+        color: starColors[i % starColors.length],
+        delay: Math.round(randRange(20, 95))
+      });
+    }
+
+    for (let i = 0; i < 7; i++) {
+      const angle = (Math.PI * 2 * i / 7) + randRange(-0.25, 0.25);
+      const distance = randRange(36, 72);
+      whooshes.push({
+        tx: Math.cos(angle) * distance,
+        ty: Math.sin(angle) * distance,
+        rotate: angle * 180 / Math.PI + randRange(-28, 28),
+        delay: Math.round(randRange(0, 70))
       });
     }
 
@@ -1175,8 +1200,10 @@
       x,
       y,
       bornAt: performance.now(),
-      duration: 680,
-      particles
+      duration: 760,
+      puffs,
+      particles,
+      whooshes
     });
   }
 
@@ -1199,12 +1226,34 @@
         el.className = "vsl-correct-burst";
         el.dataset.id = effect.id;
         el.innerHTML = `
-          <div class="vsl-burst-cloud" aria-hidden="true">
-            <span></span><span></span><span></span><span></span><span></span>
-          </div>
+          <div class="vsl-burst-flash" aria-hidden="true"></div>
+          <div class="vsl-burst-cloud" aria-hidden="true"></div>
         `;
 
-        for (const particle of effect.particles) {
+        const cloud = el.querySelector(".vsl-burst-cloud");
+
+        for (const puff of effect.puffs || []) {
+          const puffEl = document.createElement("span");
+          puffEl.className = "vsl-burst-puff";
+          puffEl.style.setProperty("--vsl-puff-tx", `${puff.tx.toFixed(1)}px`);
+          puffEl.style.setProperty("--vsl-puff-ty", `${puff.ty.toFixed(1)}px`);
+          puffEl.style.setProperty("--vsl-puff-size", `${puff.size.toFixed(1)}px`);
+          puffEl.style.setProperty("--vsl-puff-color", puff.color);
+          puffEl.style.setProperty("--vsl-puff-delay", `${puff.delay}ms`);
+          cloud.appendChild(puffEl);
+        }
+
+        for (const whoosh of effect.whooshes || []) {
+          const whooshEl = document.createElement("span");
+          whooshEl.className = "vsl-burst-whoosh";
+          whooshEl.style.setProperty("--vsl-whoosh-tx", `${whoosh.tx.toFixed(1)}px`);
+          whooshEl.style.setProperty("--vsl-whoosh-ty", `${whoosh.ty.toFixed(1)}px`);
+          whooshEl.style.setProperty("--vsl-whoosh-rotate", `${whoosh.rotate.toFixed(1)}deg`);
+          whooshEl.style.setProperty("--vsl-whoosh-delay", `${whoosh.delay}ms`);
+          el.appendChild(whooshEl);
+        }
+
+        for (const particle of effect.particles || []) {
           const star = document.createElement("span");
           star.className = "vsl-burst-star";
           star.textContent = "★";
