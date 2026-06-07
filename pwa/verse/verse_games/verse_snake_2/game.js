@@ -54,6 +54,20 @@
     longWidthRatio: 2.48
   };
 
+  const GAMEPLAY_SCALE_TUNING = {
+    speedMinScale: 0.85,
+    spawnDistanceMinScale: 0.92,
+    pairSeparationBacteriaRatio: 1.85,
+    pairSeparationMinHeadRatio: 3.2,
+    pairSeparationMaxHeadRatio: 5.0,
+    targetPaddingHeadRatio: 0.42,
+    roamHeadRatio: 2.0,
+    roamMinHeadRatio: 1.25,
+    roamMaxHeadRatio: 2.65,
+    targetPulseHeadRatio: 0.27,
+    targetSwayHeadRatio: 0.41
+  };
+
   const YUCK_BODY_TUNING = {
     durationMs: 520,
     attackMs: 55,
@@ -494,6 +508,20 @@
     return state.visualScale || 1;
   }
 
+  function getDistanceScale() {
+    return getVisualScale();
+  }
+
+  function getSpeedScale() {
+    const visualScale = getVisualScale();
+    return GAMEPLAY_SCALE_TUNING.speedMinScale + (1 - GAMEPLAY_SCALE_TUNING.speedMinScale) * visualScale;
+  }
+
+  function getSpawnDistanceScale() {
+    const visualScale = getVisualScale();
+    return GAMEPLAY_SCALE_TUNING.spawnDistanceMinScale + (1 - GAMEPLAY_SCALE_TUNING.spawnDistanceMinScale) * visualScale;
+  }
+
   function getSnakeHeadSize() {
     return state.headSizePx || VISUAL_SCALE_TUNING.desktopHeadPx;
   }
@@ -559,7 +587,8 @@
   }
 
   function getCurrentSpeed(){
-    return SLITHER_TUNING.speeds[selectedMode] || SLITHER_TUNING.speeds.medium;
+    const baseSpeed = SLITHER_TUNING.speeds[selectedMode] || SLITHER_TUNING.speeds.medium;
+    return baseSpeed * getSpeedScale();
   }
 
   function getCurrentTurnRate(){
@@ -567,7 +596,8 @@
   }
 
   function getWrongFleeSpeed() {
-    return SLITHER_TUNING.wrongFleeSpeeds[selectedMode] || SLITHER_TUNING.wrongFleeSpeeds.medium;
+    const baseSpeed = SLITHER_TUNING.wrongFleeSpeeds[selectedMode] || SLITHER_TUNING.wrongFleeSpeeds.medium;
+    return baseSpeed * getSpeedScale();
   }
 
   function seedTrail(){
@@ -746,7 +776,7 @@
     let angle = randomAngleAwayFrom(state.lastSpawnAngle);
     const scale = Math.max(state.fieldWidth, state.fieldHeight);
     const modeFactor = SLITHER_TUNING.spawnDistanceScreens[selectedMode] || 1.32;
-    const distance = scale * (modeFactor + Math.random() * 0.28);
+    const distance = scale * (modeFactor + Math.random() * 0.28) * getSpawnDistanceScale();
     const center = {
       x: state.head.x + Math.cos(angle) * distance,
       y: state.head.y + Math.sin(angle) * distance
@@ -762,10 +792,12 @@
       collapsed: false
     };
 
+    const normalTargetH = getSnakeHeadSize() * VISUAL_SCALE_TUNING.bacteriaHeightRatio;
+    const modeSeparationFactor = (SLITHER_TUNING.pairSeparationScreen[selectedMode] || 0.23) / 0.23;
     const separation = clamp(
-      Math.min(state.fieldWidth, state.fieldHeight) * (SLITHER_TUNING.pairSeparationScreen[selectedMode] || 0.23),
-      106,
-      190
+      normalTargetH * GAMEPLAY_SCALE_TUNING.pairSeparationBacteriaRatio * modeSeparationFactor,
+      getSnakeHeadSize() * GAMEPLAY_SCALE_TUNING.pairSeparationMinHeadRatio,
+      getSnakeHeadSize() * GAMEPLAY_SCALE_TUNING.pairSeparationMaxHeadRatio
     );
     const sideAngle = angle + Math.PI / 2 + (Math.random() < 0.5 ? 0 : Math.PI);
 
@@ -800,7 +832,7 @@
   }
 
   function keepObjectiveWithinRange() {
-    const maxDist = Math.max(state.fieldWidth, state.fieldHeight) * (SLITHER_TUNING.encounterMaxDistanceScreens || 1.85);
+    const maxDist = Math.max(state.fieldWidth, state.fieldHeight) * (SLITHER_TUNING.encounterMaxDistanceScreens || 1.85) * getDistanceScale();
 
     if (state.encounter && !state.encounter.collapsed) {
       const dx = state.encounter.baseCenter.x - state.head.x;
@@ -876,8 +908,13 @@
     if (!state.targets.length) return;
 
     const encounter = state.encounter;
-    const scale = Math.min(state.fieldWidth, state.fieldHeight);
-    const roam = clamp(scale * (SLITHER_TUNING.pairRoamScreen[selectedMode] || 0.12), 44, 110);
+    const headSize = getSnakeHeadSize();
+    const modeRoamFactor = (SLITHER_TUNING.pairRoamScreen[selectedMode] || 0.12) / 0.12;
+    const roam = clamp(
+      headSize * GAMEPLAY_SCALE_TUNING.roamHeadRatio * modeRoamFactor,
+      headSize * GAMEPLAY_SCALE_TUNING.roamMinHeadRatio,
+      headSize * GAMEPLAY_SCALE_TUNING.roamMaxHeadRatio
+    );
 
     if (encounter && !encounter.collapsed){
       encounter.driftPhase += dt / 1000;
@@ -891,7 +928,7 @@
         target.x += Math.cos(target.fleeAngle) * fleeSpeed * (dt / 1000);
         target.y += Math.sin(target.fleeAngle) * fleeSpeed * (dt / 1000);
         const distFromPlayer = Math.hypot(target.x - state.head.x, target.y - state.head.y);
-        const maxDist = Math.max(state.fieldWidth, state.fieldHeight) * SLITHER_TUNING.wrongFleeMaxScreenDistance;
+        const maxDist = Math.max(state.fieldWidth, state.fieldHeight) * SLITHER_TUNING.wrongFleeMaxScreenDistance * getDistanceScale();
         if (distFromPlayer >= maxDist){
           target.fleeing = false;
           target.freeAnchor = { x: target.x, y: target.y };
@@ -901,9 +938,9 @@
 
       target.phase += dt / 1000;
       const center = target.freeAnchor || (encounter ? encounter.center : { x: target.anchorX, y: target.anchorY });
-      const pulse = Math.sin(target.phase * 1.8) * 12;
+      const pulse = Math.sin(target.phase * 1.8) * headSize * GAMEPLAY_SCALE_TUNING.targetPulseHeadRatio;
       const side = target.baseOffset + pulse;
-      const sway = Math.sin(target.phase * 2.7) * 18;
+      const sway = Math.sin(target.phase * 2.7) * headSize * GAMEPLAY_SCALE_TUNING.targetSwayHeadRatio;
       const a = target.offsetAngle;
       target.x = center.x + Math.cos(a) * side + Math.cos(a + Math.PI / 2) * sway;
       target.y = center.y + Math.sin(a) * side + Math.sin(a + Math.PI / 2) * sway;
@@ -916,7 +953,10 @@
     if (state.targets.length < 2) return;
     const a = state.targets[0];
     const b = state.targets[1];
-    const minDist = Math.max(a.r + b.r + 18, Math.min(state.fieldWidth, state.fieldHeight) * 0.18);
+    const minDist = Math.max(
+      a.r + b.r + getSnakeHeadSize() * GAMEPLAY_SCALE_TUNING.targetPaddingHeadRatio,
+      getSnakeHeadSize() * GAMEPLAY_SCALE_TUNING.pairSeparationMinHeadRatio
+    );
     const dx = b.x - a.x;
     const dy = b.y - a.y;
     const d = Math.hypot(dx, dy) || 1;
@@ -1011,7 +1051,7 @@
   function updateEscapingTargets(dt, ts) {
     if (!state.escapingTargets.length) return;
 
-    const speed = DECOY_ESCAPE_TUNING.speedPxPerSecond;
+    const speed = DECOY_ESCAPE_TUNING.speedPxPerSecond * getSpeedScale();
     const seconds = dt / 1000;
 
     for (const target of state.escapingTargets) {
