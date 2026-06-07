@@ -42,6 +42,17 @@
 
   let snakeHeadSvgPromise = null;
   const SNAKE_HEAD_COLLISION_RADIUS = 20;
+
+  const YUCK_BODY_TUNING = {
+    durationMs: 520,
+    attackMs: 55,
+    holdMs: 95,
+    amplitudePx: 11,
+    waveStep: 2,
+    headRampPoints: 3,
+    tailFalloffPoints: 18
+  };
+
   const DECOY_ESCAPE_TUNING = {
     durationMs: 620,
     speedPxPerSecond: 760,
