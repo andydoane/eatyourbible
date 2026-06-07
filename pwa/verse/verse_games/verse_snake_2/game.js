@@ -74,7 +74,12 @@
     flashText: "",
     flashUntil: 0,
     happyUntil: 0,
+    headPopUntil: 0,
+    yuckUntil: 0,
+    yuckStartedAt: 0,
+    yuckVector: { x: 0, y: 0 },
     pickupPops: [],
+    burstEffects: [],
     snakeStyle: "default",
     snakeStyleIndex: 0,
     fruitCount: 0,
@@ -232,6 +237,7 @@
 
               <div class="vsl-fruit-layer" id="vslFruitLayer"></div>
               <div class="vsl-target-layer" id="vslTargetLayer"></div>
+              <div class="vsl-effect-layer" id="vslEffectLayer"></div>
               <div class="vsl-pickup-pop-layer" id="vslPickupPopLayer"></div>
               <div class="vsl-arrow-layer"><div class="vsl-arrow" id="vslArrow"></div></div>
               <div class="vsl-flash-message" id="vslFlashMessage"></div>
@@ -335,7 +341,12 @@
     state.flashText = "";
     state.flashUntil = 0;
     state.happyUntil = 0;
+    state.headPopUntil = 0;
+    state.yuckUntil = 0;
+    state.yuckStartedAt = 0;
+    state.yuckVector = { x: 0, y: 0 };
     state.pickupPops = [];
+    state.burstEffects = [];
     state.snakeStyle = "default";
     state.snakeStyleIndex = 0;
     state.fruitCount = 0;
@@ -426,6 +437,7 @@
       drawSnake();
       renderTargets();
       renderFruit();
+      renderBurstEffects(ts);
       renderPickupPops(ts);
       renderArrow();
       renderFlash(ts);
@@ -456,6 +468,13 @@
   }
 
   function updateMotion(dt){
+    const now = performance.now();
+
+    if (now < state.yuckUntil){
+      updateYuckMotion(dt, now);
+      return;
+    }
+
     const aimAngle = Math.atan2(state.pointer.y, state.pointer.x);
     const diff = angleDelta(state.head.angle, aimAngle);
     const maxTurn = getCurrentTurnRate() * (dt / 1000);
@@ -464,6 +483,26 @@
 
     state.head.x += Math.cos(state.head.angle) * state.head.speed * (dt / 1000);
     state.head.y += Math.sin(state.head.angle) * state.head.speed * (dt / 1000);
+
+    state.trail.unshift({ x: state.head.x, y: state.head.y });
+    trimTrail();
+  }
+
+  function updateYuckMotion(dt, now) {
+    const elapsed = now - state.yuckStartedAt;
+    const t = Math.min(1, elapsed / 520);
+    const wobble = Math.sin(t * Math.PI * 5) * 0.42 * (1 - t);
+    const recoilStrength = elapsed < 180 ? 92 : 36;
+
+    state.head.angle += wobble * (dt / 1000) * 10;
+
+    state.head.x += state.yuckVector.x * recoilStrength * (dt / 1000);
+    state.head.y += state.yuckVector.y * recoilStrength * (dt / 1000);
+
+    if (elapsed >= 180) {
+      state.head.x += Math.cos(state.head.angle) * getCurrentSpeed() * 0.32 * (dt / 1000);
+      state.head.y += Math.sin(state.head.angle) * getCurrentSpeed() * 0.32 * (dt / 1000);
+    }
 
     state.trail.unshift({ x: state.head.x, y: state.head.y });
     trimTrail();
@@ -820,7 +859,7 @@
       state.fruitCount += 1;
       state.snakeStyleIndex = (state.snakeStyleIndex + 1 + Math.floor(Math.random() * 2)) % SNAKE_STYLES.length;
       state.snakeStyle = SNAKE_STYLES[state.snakeStyleIndex];
-      state.happyUntil = performance.now() + 320;
+      state.headPopUntil = performance.now() + 340;
       applySnakeStyle();
     }
   }
@@ -841,6 +880,8 @@
   }
 
   function handleCorrectTarget(target){
+    showCorrectBurst(target.x, target.y);
+
     showPickupPop({
       text: target.word,
       kind: "correct",
@@ -851,7 +892,7 @@
     state.progressIndex += 1;
     state.targets = [];
     state.encounter = null;
-    state.happyUntil = performance.now() + 380;
+    state.headPopUntil = performance.now() + 260;
     updateBuildHud();
 
     if (state.progressIndex >= state.segments.length){
@@ -865,6 +906,8 @@
   function handleWrongTarget(target, ts){
     target.hit = true;
     target.wrongHitUntil = ts + 320;
+
+    triggerSnakeYuck(target);
 
     showPickupPop({
       text: "OOPS!",
@@ -1025,6 +1068,101 @@
     track.style.setProperty("--vsl-build-shift", "0px");
   }
   
+  function triggerSnakeYuck(target) {
+    const dx = state.head.x - target.x;
+    const dy = state.head.y - target.y;
+    const d = Math.hypot(dx, dy) || 1;
+
+    state.yuckStartedAt = performance.now();
+    state.yuckUntil = state.yuckStartedAt + 520;
+    state.yuckVector = {
+      x: dx / d,
+      y: dy / d
+    };
+    state.headPopUntil = state.yuckStartedAt + 260;
+  }
+
+  function showCorrectBurst(x, y) {
+    const colors = ["#ff5a51", "#ffa351", "#ffc751", "#a7cb6f", "#40b9c5", "#7f66c6", "#ffffff"];
+    const count = 12;
+    const particles = [];
+
+    for (let i = 0; i < count; i++) {
+      const angle = (Math.PI * 2 * i / count) + randRange(-0.16, 0.16);
+      const distance = randRange(42, 74);
+      particles.push({
+        tx: Math.cos(angle) * distance,
+        ty: Math.sin(angle) * distance,
+        size: randRange(12, 20),
+        rotate: randRange(-220, 220),
+        color: colors[i % colors.length],
+        delay: Math.round(randRange(0, 45))
+      });
+    }
+
+    state.burstEffects.push({
+      id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      x,
+      y,
+      bornAt: performance.now(),
+      duration: 680,
+      particles
+    });
+  }
+
+  function renderBurstEffects(ts) {
+    const layer = document.getElementById("vslEffectLayer");
+    if (!layer) return;
+
+    state.burstEffects = state.burstEffects.filter((effect) => ts - effect.bornAt < effect.duration);
+    const activeIds = new Set(state.burstEffects.map((effect) => effect.id));
+
+    for (const child of [...layer.children]) {
+      if (!activeIds.has(child.dataset.id)) child.remove();
+    }
+
+    for (const effect of state.burstEffects) {
+      let el = layer.querySelector(`[data-id="${effect.id}"]`);
+
+      if (!el) {
+        el = document.createElement("div");
+        el.className = "vsl-correct-burst";
+        el.dataset.id = effect.id;
+        el.innerHTML = `
+          <div class="vsl-burst-cloud" aria-hidden="true">
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+        `;
+
+        for (const particle of effect.particles) {
+          const star = document.createElement("span");
+          star.className = "vsl-burst-star";
+          star.textContent = "★";
+          star.style.setProperty("--vsl-star-tx", `${particle.tx.toFixed(1)}px`);
+          star.style.setProperty("--vsl-star-ty", `${particle.ty.toFixed(1)}px`);
+          star.style.setProperty("--vsl-star-size", `${particle.size.toFixed(1)}px`);
+          star.style.setProperty("--vsl-star-rotate", `${particle.rotate.toFixed(1)}deg`);
+          star.style.setProperty("--vsl-star-color", particle.color);
+          star.style.setProperty("--vsl-star-delay", `${particle.delay}ms`);
+          el.appendChild(star);
+        }
+
+        layer.appendChild(el);
+
+        requestAnimationFrame(() => {
+          el.classList.add("is-live");
+        });
+      }
+
+      const p = worldToScreen(effect);
+      el.style.transform = `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px) translate(-50%, -50%)`;
+    }
+  }
+
+  function randRange(min, max) {
+    return min + Math.random() * (max - min);
+  }
+
   function renderTargets() {
     const layer = document.getElementById("vslTargetLayer");
     if (!layer) return;
@@ -1333,8 +1471,16 @@
     stripe.setAttribute("d", d);
 
     const head = worldToScreen(state.head);
-    const pulse = performance.now() < state.happyUntil ? 1.08 : 1;
-    headGroup.setAttribute("transform", `translate(${head.x.toFixed(1)} ${head.y.toFixed(1)}) rotate(${(state.head.angle * 180 / Math.PI + 90).toFixed(1)}) scale(${pulse})`);
+    const now = performance.now();
+    const headPulse = now < state.headPopUntil ? 1.14 : 1;
+    const headArt = document.getElementById("vslSnakeHeadArt");
+
+    headGroup.setAttribute("transform", `translate(${head.x.toFixed(1)} ${head.y.toFixed(1)}) rotate(${(state.head.angle * 180 / Math.PI + 90).toFixed(1)})`);
+
+    if (headArt){
+      headArt.setAttribute("transform", `scale(${headPulse})`);
+    }
+
     tongue.setAttribute("d", "M 0 -21 L 0 -36 M 0 -36 L -7 -44 M 0 -36 L 7 -44");
   }
 
