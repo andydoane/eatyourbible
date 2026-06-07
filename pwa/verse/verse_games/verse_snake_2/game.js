@@ -211,6 +211,16 @@
     spinRate: 980
   };
 
+  const BOOST_TUNING = {
+    durationMs: 2000,
+    cooldownMs: 4000,
+    speedMultiplier: 2.00,
+    doubleTapWindowMs: 380,
+    doubleTapMinGapMs: 40,
+    doubleTapMaxMovePx: 110,
+    mouseDoubleTapMaxMovePx: 180
+  };
+  
   const BONUS_TUNING = {
     durationMs: 20000,
     activeMiniSnakes: 10,
@@ -502,7 +512,7 @@
         e.preventDefault();
         field.setPointerCapture?.(e.pointerId);
         updatePointer(e.clientX, e.clientY);
-        handleBoostTap(e.clientX, e.clientY);
+        handleBoostTap(e.clientX, e.clientY, e.pointerType);
       });
 
       field.addEventListener("pointermove", (e) => {
@@ -839,15 +849,19 @@
     return now >= state.boostActiveUntil && now >= state.boostCooldownUntil;
   }
 
-  function handleBoostTap(clientX, clientY) {
+  function handleBoostTap(clientX, clientY, pointerType = "touch") {
     const now = performance.now();
     const dt = now - state.lastTapAt;
     const move = Math.hypot(clientX - state.lastTapX, clientY - state.lastTapY);
 
+    const maxMove = pointerType === "mouse"
+      ? BOOST_TUNING.mouseDoubleTapMaxMovePx
+      : BOOST_TUNING.doubleTapMaxMovePx;
+
     const isDoubleTap =
-      dt > 0 &&
+      dt >= BOOST_TUNING.doubleTapMinGapMs &&
       dt <= BOOST_TUNING.doubleTapWindowMs &&
-      move <= BOOST_TUNING.doubleTapMaxMovePx;
+      move <= maxMove;
 
     state.lastTapAt = now;
     state.lastTapX = clientX;
