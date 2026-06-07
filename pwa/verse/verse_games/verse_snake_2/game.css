@@ -665,12 +665,12 @@ button.vsl-pill{
   left: 0;
   top: 0;
   z-index: 18;
-  padding: 0.42rem 0.82rem;
+  padding: var(--vsl-pickup-pad-y, 0.42rem) var(--vsl-pickup-pad-x, 0.82rem);
   border-radius: 999px;
   color: #ffffff;
   font-family: "Baloo 2", system-ui, sans-serif;
   font-weight: 900;
-  font-size: clamp(1rem, 4.6vw, 1.45rem);
+  font-size: var(--vsl-pickup-font, 1.45rem);
   line-height: 1;
   white-space: nowrap;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);

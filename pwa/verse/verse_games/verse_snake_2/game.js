@@ -493,6 +493,11 @@
     field.style.setProperty("--vsl-fruit-font", `${(head * 0.80).toFixed(2)}px`);
     field.style.setProperty("--vsl-arrow-size", `${(head * 1.74).toFixed(2)}px`);
 
+    field.style.setProperty("--vsl-pickup-font", `${(head * 0.56).toFixed(2)}px`);
+    field.style.setProperty("--vsl-pickup-pad-y", `${(head * 0.17).toFixed(2)}px`);
+    field.style.setProperty("--vsl-pickup-pad-x", `${(head * 0.34).toFixed(2)}px`);
+    field.style.setProperty("--vsl-pickup-lift", `${(head * 0.95).toFixed(2)}`);
+
     syncSnakeHeadSvgSize();
 
     for (const target of [...state.targets, ...state.escapingTargets]) {
@@ -1573,7 +1578,7 @@
       const age = ts - pop.bornAt;
       const t = Math.min(1, age / pop.duration);
       const p = worldToScreen(pop);
-      const lift = 42 * easeOutCubic(t);
+      const lift = getSnakeHeadSize() * 0.95 * easeOutCubic(t);
       const scale = 0.76 + 0.24 * easeOutBack(Math.min(1, t * 2.4));
       const opacity = t > 0.68 ? 1 - ((t - 0.68) / 0.32) : 1;
 
