@@ -94,6 +94,7 @@
     yuckUntil: 0,
     yuckStartedAt: 0,
     yuckVector: { x: 0, y: 0 },
+    yuckTrailSnapshot: null,
     pickupPops: [],
     burstEffects: [],
     snakeStyle: "default",
@@ -362,6 +363,7 @@
     state.yuckUntil = 0;
     state.yuckStartedAt = 0;
     state.yuckVector = { x: 0, y: 0 };
+    state.yuckTrailSnapshot = null;
     state.pickupPops = [];
     state.burstEffects = [];
     state.snakeStyle = "default";
@@ -1140,13 +1142,15 @@
     const d = Math.hypot(dx, dy) || 1;
 
     state.yuckStartedAt = performance.now();
-    state.yuckUntil = state.yuckStartedAt + 520;
+    state.yuckUntil = state.yuckStartedAt + YUCK_BODY_TUNING.durationMs;
     state.yuckVector = {
       x: dx / d,
       y: dy / d
     };
     state.headPopUntil = state.yuckStartedAt + 260;
+    captureYuckTrailSnapshot();
   }
+  
 
   function showCorrectBurst(x, y) {
     const colors = ["#ff5a51", "#ffa351", "#ffc751", "#a7cb6f", "#40b9c5", "#7f66c6", "#ffffff"];
@@ -1576,6 +1580,16 @@
     return d;
   }
 
+  function captureYuckTrailSnapshot() {
+    const simplified = simplifyTrail(state.trail, 9);
+    if (simplified.length < 3) {
+      state.yuckTrailSnapshot = null;
+      return;
+    }
+
+    state.yuckTrailSnapshot = makeYuckZigZagPose(simplified);
+  }
+
   function getYuckBodyIntensity() {
     if (!state.yuckStartedAt || performance.now() >= state.yuckUntil) return 0;
 
@@ -1597,18 +1611,14 @@
     return Math.pow(1 - decayT, 2);
   }
 
-  function applyYuckBodyZigZag(points) {
-    const intensity = getYuckBodyIntensity();
-    if (intensity <= 0 || points.length < 3) return points;
-
-    const now = performance.now();
-    const amp = YUCK_BODY_TUNING.amplitudePx * intensity;
+  function makeYuckZigZagPose(points) {
+    const amp = YUCK_BODY_TUNING.amplitudePx;
     const waveStep = YUCK_BODY_TUNING.waveStep;
     const headRampPoints = YUCK_BODY_TUNING.headRampPoints;
     const tailFalloffPoints = YUCK_BODY_TUNING.tailFalloffPoints;
 
     return points.map((point, index) => {
-      if (index === 0) return point;
+      if (index === 0) return { ...point };
 
       const prev = points[Math.max(0, index - 1)];
       const next = points[Math.min(points.length - 1, index + 1)];
@@ -1622,13 +1632,31 @@
       const wave = Math.floor(index / waveStep) % 2 === 0 ? 1 : -1;
       const headRamp = clamp(index / Math.max(1, headRampPoints), 0, 1);
       const tailFalloff = clamp(1 - (index / Math.max(1, tailFalloffPoints)), 0, 1);
-      const shimmer = Math.sin((now - state.yuckStartedAt) / 34 + index * 0.85) * 0.22;
-
-      const offset = amp * headRamp * tailFalloff * (wave + shimmer);
+      const offset = amp * headRamp * tailFalloff * wave;
 
       return {
         x: point.x + normalX * offset,
         y: point.y + normalY * offset
+      };
+    });
+  }
+
+  function applyYuckBodyZigZag(points) {
+    const intensity = getYuckBodyIntensity();
+    if (intensity <= 0 || points.length < 3 || !state.yuckTrailSnapshot) {
+      if (intensity <= 0) state.yuckTrailSnapshot = null;
+      return points;
+    }
+
+    const snapshotScreen = state.yuckTrailSnapshot.map(worldToScreen);
+
+    return points.map((point, index) => {
+      const snap = snapshotScreen[Math.min(index, snapshotScreen.length - 1)];
+      if (!snap) return point;
+
+      return {
+        x: point.x + (snap.x - point.x) * intensity,
+        y: point.y + (snap.y - point.y) * intensity
       };
     });
   }
@@ -1669,6 +1697,9 @@
     state.head.x = 0;
     state.head.y = 0;
     state.trail = state.trail.map((p) => ({ x: p.x - ox, y: p.y - oy }));
+    if (state.yuckTrailSnapshot) {
+      state.yuckTrailSnapshot = state.yuckTrailSnapshot.map((p) => ({ x: p.x - ox, y: p.y - oy }));
+    }
     for (const target of state.targets){
       target.x -= ox;
       target.y -= oy;
