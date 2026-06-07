@@ -1713,17 +1713,22 @@
         const dots = document.createElementNS("http://www.w3.org/2000/svg", "path");
         dots.classList.add("vsl-mini-snake-dots");
 
+        const tongue = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        tongue.classList.add("vsl-mini-snake-tongue");
+
         const head = document.createElementNS("http://www.w3.org/2000/svg", "g");
         head.classList.add("vsl-mini-snake-head");
 
         group.appendChild(body);
         group.appendChild(dots);
+        group.appendChild(tongue);
         group.appendChild(head);
         layer.appendChild(group);
       }
 
       const body = group.querySelector(".vsl-mini-snake-body");
       const dots = group.querySelector(".vsl-mini-snake-dots");
+      const tongue = group.querySelector(".vsl-mini-snake-tongue");
       const headGroup = group.querySelector(".vsl-mini-snake-head");
 
       const screenTrail = snake.trail.map(worldToScreen);
@@ -1741,6 +1746,26 @@
 
       if (headGroup) {
         const angleDeg = (snake.angle * 180 / Math.PI + 90).toFixed(1);
+        const r = snake.headRadius || snake.width * 0.58;
+
+        if (tongue) {
+          const tongueBase = -r * 0.92;
+          const tongueStem = -r * 1.52;
+          const tongueTip = -r * 1.86;
+          const tongueFork = r * 0.22;
+
+          tongue.setAttribute(
+            "transform",
+            `translate(${head.x.toFixed(1)} ${head.y.toFixed(1)}) rotate(${angleDeg})`
+          );
+
+          tongue.setAttribute(
+            "d",
+            `M 0 ${tongueBase.toFixed(1)} L 0 ${tongueStem.toFixed(1)} M 0 ${tongueStem.toFixed(1)} L ${(-tongueFork).toFixed(1)} ${tongueTip.toFixed(1)} M 0 ${tongueStem.toFixed(1)} L ${tongueFork.toFixed(1)} ${tongueTip.toFixed(1)}`
+          );
+
+          tongue.style.strokeWidth = Math.max(1.2, r * 0.22).toFixed(2);
+        }
 
         hydrateMiniSnakeHead(headGroup, snake);
 

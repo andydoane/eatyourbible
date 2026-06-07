@@ -237,23 +237,27 @@ body{
   stroke-linecap: round;
 }
 
-.vsl-mini-snake-head{
+.vsl-mini-snake-head,
+.vsl-mini-snake-head svg {
+  overflow: visible;
   pointer-events: none;
 }
 
-.vsl-mini-snake-head-shape{
-  stroke: rgba(255,255,255,0.46);
-  stroke-width: 1.5;
+.vsl-mini-snake-head {
+  filter: drop-shadow(0 3px 2px rgba(0, 0, 0, 0.22));
 }
 
-.vsl-mini-snake-eye{
-  fill: #ffffff;
-  stroke: rgba(20,24,32,0.55);
-  stroke-width: 0.65;
+.vsl-mini-snake-head-svg {
+  display: block;
+  overflow: visible;
 }
 
-.vsl-mini-snake-pupil{
-  fill: #11151d;
+.vsl-mini-snake-tongue {
+  fill: none;
+  stroke: #ff5a51;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.95;
 }
 
 .vsl-snake-body{
