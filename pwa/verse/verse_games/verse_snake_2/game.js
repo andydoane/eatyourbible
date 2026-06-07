@@ -42,14 +42,10 @@
 
   let snakeHeadSvgPromise = null;
   const SNAKE_HEAD_COLLISION_RADIUS = 20;
-  const YUCK_BODY_TUNING = {
-    durationMs: 520,
-    attackMs: 55,
-    holdMs: 95,
-    amplitudePx: 11,
-    waveStep: 2,
-    headRampPoints: 3,
-    tailFalloffPoints: 18
+  const DECOY_ESCAPE_TUNING = {
+    durationMs: 620,
+    speedPxPerSecond: 760,
+    spinRate: 980
   };
 
   const BACTERIA_ASSETS = {
@@ -107,6 +103,7 @@
     progressIndex: 0,
     encounter: null,
     targets: [],
+    escapingTargets: [],
     fruit: null,
     nextTargetId: 1,
     lastSpawnAngle: -Math.PI / 2
@@ -372,6 +369,7 @@
     state.progressIndex = 0;
     state.encounter = null;
     state.targets = [];
+    state.escapingTargets = [];
     state.fruit = null;
     state.nextTargetId = 1;
     state.lastSpawnAngle = -Math.PI / 2;
@@ -435,6 +433,7 @@
         updateMotion(dt);
         keepObjectiveWithinRange();
         updateEncounter(dt, ts);
+        updateEscapingTargets(dt, ts);
         updateFruit(dt, ts);
         checkCollisions(ts);
         maybeRecenterWorld();
@@ -888,8 +887,55 @@
     }
   }
 
+  function launchDecoyEscape(correctTarget) {
+    const decoy = state.targets.find((target) => target.id !== correctTarget.id && !target.isCorrect);
+    if (!decoy) return;
+
+    const dx = decoy.x - state.head.x;
+    const dy = decoy.y - state.head.y;
+    const d = Math.hypot(dx, dy) || 1;
+    const now = performance.now();
+
+    state.escapingTargets.push({
+      ...decoy,
+      hit: true,
+      escaping: true,
+      escapeAngle: Math.atan2(dy, dx),
+      escapeStartedAt: now,
+      escapeUntil: now + DECOY_ESCAPE_TUNING.durationMs,
+      escapeSpin: Math.random() < 0.5 ? -1 : 1
+    });
+  }
+
+  function updateEscapingTargets(dt, ts) {
+    if (!state.escapingTargets.length) return;
+
+    const speed = DECOY_ESCAPE_TUNING.speedPxPerSecond;
+    const seconds = dt / 1000;
+
+    for (const target of state.escapingTargets) {
+      target.x += Math.cos(target.escapeAngle) * speed * seconds;
+      target.y += Math.sin(target.escapeAngle) * speed * seconds;
+    }
+
+    const margin = Math.max(state.fieldWidth, state.fieldHeight) * 0.35;
+
+    state.escapingTargets = state.escapingTargets.filter((target) => {
+      if (ts >= target.escapeUntil) return false;
+
+      const p = worldToScreen(target);
+      return (
+        p.x > -margin &&
+        p.x < state.fieldWidth + margin &&
+        p.y > -margin &&
+        p.y < state.fieldHeight + margin
+      );
+    });
+  }
+
   function handleCorrectTarget(target){
     showCorrectBurst(target.x, target.y);
+    launchDecoyEscape(target);
 
     showPickupPop({
       text: target.word,
@@ -1176,12 +1222,13 @@
     const layer = document.getElementById("vslTargetLayer");
     if (!layer) return;
 
-    const activeIds = new Set(state.targets.map((target) => String(target.id)));
+    const visibleTargets = [...state.targets, ...state.escapingTargets];
+    const activeIds = new Set(visibleTargets.map((target) => String(target.id)));
     for (const child of [...layer.children]) {
       if (!activeIds.has(child.dataset.id)) child.remove();
     }
 
-    for (const target of state.targets) {
+    for (const target of visibleTargets) {
       let el = layer.querySelector(`[data-id="${target.id}"]`);
 
       if (!el) {
@@ -1206,8 +1253,19 @@
       hydrateBacteriaTarget(el, target);
 
       const p = worldToScreen(target);
-      el.style.transform = `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px) translate(-50%, -50%)`;
+      let extraTransform = "";
+
+      if (target.escaping){
+        const age = performance.now() - target.escapeStartedAt;
+        const t = clamp(age / DECOY_ESCAPE_TUNING.durationMs, 0, 1);
+        const spin = target.escapeSpin * DECOY_ESCAPE_TUNING.spinRate * t;
+        const scale = 1 - t * 0.34;
+        extraTransform = ` rotate(${spin.toFixed(1)}deg) scale(${scale.toFixed(3)})`;
+      }
+
+      el.style.transform = `translate(${p.x.toFixed(1)}px, ${p.y.toFixed(1)}px) translate(-50%, -50%)${extraTransform}`;
       el.classList.toggle("is-wrong-hit", performance.now() < target.wrongHitUntil);
+      el.classList.toggle("is-escaping", !!target.escaping);
     }
   }
 
