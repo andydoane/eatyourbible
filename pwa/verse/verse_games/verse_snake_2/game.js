@@ -112,9 +112,9 @@
   };
 
   const BOOST_TUNING = {
-    durationMs: 1800,
-    cooldownMs: 6000,
-    speedMultiplier: 1.65,
+    durationMs: 2000,
+    cooldownMs: 4000,
+    speedMultiplier: 2.00,
     doubleTapWindowMs: 310,
     doubleTapMaxMovePx: 34
   };
@@ -858,7 +858,7 @@
 
     const headHeight = getSnakeHeadSize();
 
-    const tileHeight = Math.round(headHeight / 0.07);
+    const tileHeight = Math.round(headHeight / 0.12);
     const tileWidth = Math.round(tileHeight * (471.133 / 408.010));
     const scrollFactor = SLITHER_TUNING.patternScrollFactor || 1;
 
