@@ -57,7 +57,7 @@
   const GAMEPLAY_SCALE_TUNING = {
     speedMinScale: 0.85,
     spawnDistanceMinScale: 0.92,
-    worldSpeedMultiplier: 1.25,
+    worldSpeedMultiplier: 2.00,
     pairSeparationBacteriaRatio: 2.85,
     pairSeparationMinHeadRatio: 3.2,
     pairSeparationMaxHeadRatio: 5.0,
