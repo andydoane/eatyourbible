@@ -139,6 +139,7 @@
 
   const SNAKE_HEAD_ASSET = "./verse_snake_images/verse_snake_head_1.svg";
   const MINI_SNAKE_HEAD_ASSET = "./verse_snake_images/verse_snake_head_small.svg";
+  const BONUS_SNAKE_ICON_ASSET = "./verse_snake_images/verse_snake_icon.png";
 
   let snakeHeadSvgPromise = null;
   let miniSnakeHeadSvgPromise = null;
@@ -2030,11 +2031,19 @@
   }
 
   function updateBonusHud(ts = performance.now()) {
+    const line = document.getElementById("vslBuildLine");
     const track = document.getElementById("vslBuildTrack");
     if (!track) return;
 
+    if (line) {
+      line.classList.add("is-bonus");
+    }
+
     track.innerHTML = `
-      <span class="vsl-build-current is-easy" id="vslBuildPrompt">🐍 x ${state.bonusScore}</span>
+      <span class="vsl-bonus-score" id="vslBuildPrompt">
+        <img class="vsl-bonus-score-icon" src="${BONUS_SNAKE_ICON_ASSET}" alt="" aria-hidden="true">
+        <span class="vsl-bonus-score-text">x ${state.bonusScore}</span>
+      </span>
     `;
 
     track.style.setProperty("--vsl-build-shift", "0px");
@@ -2042,6 +2051,10 @@
   }
 
   function updateBuildHud() {
+    const line = document.getElementById("vslBuildLine");
+    if (line) {
+      line.classList.remove("is-bonus");
+    }
     const track = document.getElementById("vslBuildTrack");
     const line = document.getElementById("vslBuildLine");
     if (!track) return;

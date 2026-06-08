@@ -114,6 +114,38 @@ body{
   box-shadow: 0 8px 18px rgba(0,0,0,0.30);
 }
 
+.vsl-build-line.is-bonus {
+  background: #ffc751;
+}
+
+.vsl-build-line.is-bonus .vsl-build-track {
+  justify-content: center;
+  align-items: center;
+  color: #333333;
+  text-shadow: none;
+}
+
+.vsl-bonus-score {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.34em;
+  color: #333333;
+  line-height: 1;
+}
+
+.vsl-bonus-score-icon {
+  width: 1.35em;
+  height: 1.35em;
+  object-fit: contain;
+  display: block;
+}
+
+.vsl-bonus-score-text {
+  color: #333333;
+  font-weight: 900;
+}
+
 .vsl-build-track{
   box-sizing: border-box;
   width: 100%;
