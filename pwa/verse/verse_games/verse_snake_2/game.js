@@ -2033,13 +2033,8 @@
     const track = document.getElementById("vslBuildTrack");
     if (!track) return;
 
-    const remainingMs = Math.max(0, state.bonusEndsAt - ts);
-    const seconds = Math.ceil(remainingMs / 1000);
-
     track.innerHTML = `
-      <span class="vsl-build-built">BONUS ROUND</span>
-      <span class="vsl-build-current is-easy" id="vslBuildPrompt">${seconds}</span>
-      <span class="vsl-build-built">CAUGHT ${state.bonusScore}</span>
+      <span class="vsl-build-current is-easy" id="vslBuildPrompt">🐍 x ${state.bonusScore}</span>
     `;
 
     track.style.setProperty("--vsl-build-shift", "0px");
