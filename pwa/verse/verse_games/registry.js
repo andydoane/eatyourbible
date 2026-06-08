@@ -85,7 +85,7 @@ window.EXTERNAL_VERSE_GAMES = [
     manifest: {
       id: "verse_snake",
       title: "Verse Snake",
-      description: "Steer the snake to eat the next correct word.",
+      description: "Steer a snake to eat the words.",
       icon: "🐍",
       cardColor: "#333333",
       cardTextColor: "#ffffff",
@@ -187,21 +187,6 @@ window.EXTERNAL_VERSE_GAMES = [
       cardTextColor: "#FFFFFF",
       launchUrl: "./verse_games/verse_splat/index.html",
       visibleInCarousel: true,
-      progressType: "standard",
-      modes: ["easy", "medium", "hard"]
-    }
-  },
-  {
-    enabled: true,
-    manifest: {
-      id: "verse_snake_2",
-      title: "Verse Slither",
-      description: "Guide the snake through a scrolling world to collect the verse.",
-      icon: "🐍",
-      cardColor: "#090c14",
-      cardTextColor: "#ffffff",
-      launchUrl: "./verse_games/verse_snake_2/index.html",
-      visibleInCarousel: false,
       progressType: "standard",
       modes: ["easy", "medium", "hard"]
     }
