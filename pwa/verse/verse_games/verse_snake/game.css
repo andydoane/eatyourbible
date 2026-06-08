@@ -228,7 +228,7 @@ body{
 .vsl-pattern-layer {
   position: absolute;
   inset: 0;
-  background-image: url("./verse_snake_images/verse_snake_pattern_hex.svg");
+  background-image: var(--vsl-pattern-image, url("./verse_snake_images/verse_snake_pattern_hex.svg"));
   background-repeat: repeat;
   background-size: var(--vsl-pattern-w, 363px) var(--vsl-pattern-h, 314px);
   background-position: var(--vsl-pattern-x, 0px) var(--vsl-pattern-y, 0px);

@@ -152,6 +152,12 @@
   const MINI_SNAKE_HEAD_ASSET = "./verse_snake_images/verse_snake_head_small.svg";
   const BONUS_SNAKE_ICON_ASSET = "./verse_snake_images/verse_snake_icon.png";
 
+  const PATTERN_ASSETS = [
+    "./verse_snake_images/verse_snake_pattern_hex.svg",
+    "./verse_snake_images/verse_snake_pattern_oval.svg",
+    "./verse_snake_images/verse_snake_pattern_square.svg"
+  ];
+
   const SOUND_BASE_PATH = "./verse_snake_sounds/";
   const UI_SOUND_BASE_PATH = "../../ui_audio/";
   const SILENCE_SOUND_PATH = "../../verse_audio/silence.mp3";
@@ -350,6 +356,7 @@
     snakeStyleIndex: 0,
     snakeRandomDotStyle: null,
     fruitCount: 0,
+    patternAsset: PATTERN_ASSETS[0],
     bonusActive: false,
     bonusPlayed: false,
     bonusEnding: false,
@@ -842,6 +849,7 @@
     state.snakeStyleIndex = 0;
     state.snakeRandomDotStyle = null;
     state.fruitCount = 0;
+    state.patternAsset = PATTERN_ASSETS[Math.floor(Math.random() * PATTERN_ASSETS.length)];
     state.bonusActive = false;
     state.bonusPlayed = false;
     state.bonusEnding = false;
@@ -1313,6 +1321,7 @@
     const x = -Math.round(mod(state.camera.x * scrollFactor, tileWidth));
     const y = -Math.round(mod(state.camera.y * scrollFactor, tileHeight));
 
+    layer.style.setProperty("--vsl-pattern-image", `url("${state.patternAsset}")`);
     layer.style.setProperty("--vsl-pattern-w", `${tileWidth}px`);
     layer.style.setProperty("--vsl-pattern-h", `${tileHeight}px`);
     layer.style.setProperty("--vsl-pattern-x", `${x}px`);
