@@ -236,6 +236,9 @@
     despawnPaddingScreens: 0.72,
     offscreenPaddingHeads: 3.2,
     entryGraceMs: 1400,
+    exitSpeedMultiplier: 1.35,
+    exitMaxMs: 1700,
+    resultPauseMs: 1500,
     collisionSampleStep: 3
   };
 
@@ -283,9 +286,14 @@
     fruitCount: 0,
     bonusActive: false,
     bonusPlayed: false,
+    bonusEnding: false,
+    bonusExitStartedAt: 0,
+    bonusExitResultAt: 0,
+    bonusExitCamera: null,
     bonusStartedAt: 0,
     bonusEndsAt: 0,
     bonusScore: 0,
+    snakeHidden: false,
     miniSnakes: [],
     nextMiniSnakeId: 1,
     orbs: [],
@@ -579,9 +587,14 @@
     state.fruitCount = 0;
     state.bonusActive = false;
     state.bonusPlayed = false;
+    state.bonusEnding = false;
+    state.bonusExitStartedAt = 0;
+    state.bonusExitResultAt = 0;
+    state.bonusExitCamera = null;
     state.bonusStartedAt = 0;
     state.bonusEndsAt = 0;
     state.bonusScore = 0;
+    state.snakeHidden = false;
     state.miniSnakes = [];
     state.nextMiniSnakeId = 1;
     state.orbs = [];
@@ -810,20 +823,24 @@
       syncFieldMetrics();
 
       if (!state.paused){
-        updateMotion(dt);
-
-        if (state.bonusActive){
-          updateBonusRound(dt, ts);
-          checkBonusSnakeCollisions(ts);
-          maybeRecenterWorld();
+        if (state.bonusEnding){
+          updateBonusExit(dt, ts);
         } else {
-          keepObjectiveWithinRange();
-          updateEncounter(dt, ts);
-          updateEscapingTargets(dt, ts);
-          updateOrbs(dt, ts);
-          updateFruit(dt, ts);
-          checkCollisions(ts);
-          maybeRecenterWorld();
+          updateMotion(dt);
+
+          if (state.bonusActive){
+            updateBonusRound(dt, ts);
+            checkBonusSnakeCollisions(ts);
+            maybeRecenterWorld();
+          } else {
+            keepObjectiveWithinRange();
+            updateEncounter(dt, ts);
+            updateEscapingTargets(dt, ts);
+            updateOrbs(dt, ts);
+            updateFruit(dt, ts);
+            checkCollisions(ts);
+            maybeRecenterWorld();
+          }
         }
       }
 
@@ -1007,6 +1024,12 @@
   }
 
   function updateCamera(){
+    if (state.bonusEnding && state.bonusExitCamera){
+      state.camera.x = state.bonusExitCamera.x;
+      state.camera.y = state.bonusExitCamera.y;
+      return;
+    }
+
     state.camera.x = state.head.x - state.fieldWidth / 2;
     state.camera.y = state.head.y - state.fieldHeight / 2;
   }
@@ -1496,11 +1519,96 @@
   }
 
   function endBonusRound() {
+    startBonusExit();
+  }
+
+  function startBonusExit() {
+    const now = performance.now();
+
     state.bonusActive = false;
+    state.bonusEnding = true;
+    state.bonusExitStartedAt = now;
+    state.bonusExitResultAt = 0;
+    state.bonusExitCamera = {
+      x: state.camera.x,
+      y: state.camera.y
+    };
+
     state.miniSnakes = [];
+    state.targets = [];
+    state.escapingTargets = [];
+    state.orbs = [];
+    state.fruit = null;
+    state.pickupPops = [];
+    state.burstEffects = [];
+
+    state.boostActiveUntil = 0;
+    state.boostCooldownUntil = 0;
+    state.pointer.active = false;
+
     renderMiniSnakes();
-    updateBuildHud();
-    completeGameAfterBonus();
+    renderTargets();
+    renderOrbs();
+    renderFruit();
+    updateBonusHud(now);
+  }
+
+  function updateBonusExit(dt, ts) {
+    if (!state.bonusExitResultAt) {
+      updateBonusExitMotion(dt);
+
+      const elapsed = ts - state.bonusExitStartedAt;
+      const offscreen = isPlayerSnakeOffscreen();
+
+      if (offscreen || elapsed >= BONUS_TUNING.exitMaxMs) {
+        showBonusResult(ts);
+      }
+
+      return;
+    }
+
+    if (ts >= state.bonusExitResultAt + BONUS_TUNING.resultPauseMs) {
+      completeGameAfterBonus();
+    }
+  }
+
+  function updateBonusExitMotion(dt) {
+    const seconds = dt / 1000;
+    const speed = getCurrentSpeed() * BONUS_TUNING.exitSpeedMultiplier;
+
+    state.head.speed = speed;
+    state.head.x += Math.cos(state.head.angle) * speed * seconds;
+    state.head.y += Math.sin(state.head.angle) * speed * seconds;
+
+    state.trail.unshift({ x: state.head.x, y: state.head.y });
+    trimTrail();
+  }
+
+  function isPlayerSnakeOffscreen() {
+    const head = worldToScreen(state.head);
+    const margin = getSnakeHeadSize() * 2.4;
+
+    return (
+      head.x < -margin ||
+      head.x > state.fieldWidth + margin ||
+      head.y < -margin ||
+      head.y > state.fieldHeight + margin
+    );
+  }
+
+  function showBonusResult(ts) {
+    state.bonusExitResultAt = ts;
+    state.snakeHidden = true;
+    state.trail = [];
+
+    state.flashText = formatBonusResultText();
+    state.flashUntil = ts + BONUS_TUNING.resultPauseMs;
+  }
+
+  function formatBonusResultText() {
+    const count = state.bonusScore;
+    const noun = count === 1 ? "snake" : "snakes";
+    return `You ate ${count} ${noun}!`;
   }
 
   function spawnBonusMiniSnakes() {
@@ -1991,6 +2099,7 @@
     if (completed) return;
     completed = true;
     state.bonusActive = false;
+    state.bonusEnding = false;
     completionResult = null;
 
     if (window.VerseGameBridge.completeGameRun){
@@ -2635,6 +2744,14 @@
     const group = document.getElementById("vslSnakeGroup");
     if (!body || !stripe || !headGroup || !tongue || !group) return;
 
+    if (state.snakeHidden){
+      group.style.display = "none";
+      body.setAttribute("d", "");
+      stripe.setAttribute("d", "");
+      return;
+    }
+
+    group.style.display = "";
     group.classList.toggle("is-boosting", isBoostActive());
 
     const screenTrail = state.trail.map(worldToScreen);
