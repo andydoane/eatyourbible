@@ -27,7 +27,18 @@
     fruitChance: 0.62
   };
 
-  const FRUIT_EMOJIS = ["🍎","🍓","🍇","🍊","🍉","🍒","🍑","🍍","🥝","🍋"];
+  const FRUIT_IMAGES = [
+    "./verse_snake_images/verse_snake_fruit_1.png",
+    "./verse_snake_images/verse_snake_fruit_2.png",
+    "./verse_snake_images/verse_snake_fruit_3.png",
+    "./verse_snake_images/verse_snake_fruit_4.png",
+    "./verse_snake_images/verse_snake_fruit_5.png",
+    "./verse_snake_images/verse_snake_fruit_6.png",
+    "./verse_snake_images/verse_snake_fruit_7.png",
+    "./verse_snake_images/verse_snake_fruit_8.png",
+    "./verse_snake_images/verse_snake_fruit_9.png",
+    "./verse_snake_images/verse_snake_fruit_10.png"
+  ];
   const SNAKE_STYLE_DEFS = [
     {
       id: "default",
@@ -2220,7 +2231,7 @@
       x: state.head.x + dx * along + Math.cos(angle + Math.PI / 2) * side,
       y: state.head.y + dy * along + Math.sin(angle + Math.PI / 2) * side,
       r: getFruitRadius(),
-      emoji: FRUIT_EMOJIS[Math.floor(Math.random() * FRUIT_EMOJIS.length)],
+      image: FRUIT_IMAGES[Math.floor(Math.random() * FRUIT_IMAGES.length)],
       phase: Math.random() * Math.PI * 2
     };
   }
@@ -2893,12 +2904,22 @@
     if (!layer) return;
     layer.innerHTML = "";
     if (!state.fruit) return;
+
     const el = document.createElement("div");
     el.className = "vsl-fruit";
-    el.textContent = state.fruit.emoji;
+
+    const img = document.createElement("img");
+    img.className = "vsl-fruit-img";
+    img.src = state.fruit.image;
+    img.alt = "";
+    img.setAttribute("aria-hidden", "true");
+
+    el.appendChild(img);
+
     const p = worldToScreen(state.fruit);
-    const bob = Math.sin(state.fruit.phase * 2.2) * 4;
+    const bob = Math.sin(state.fruit.phase * 2.2) * getSnakeHeadSize() * 0.09;
     el.style.transform = `translate(${p.x.toFixed(1)}px, ${(p.y + bob).toFixed(1)}px) translate(-50%, -50%)`;
+
     layer.appendChild(el);
   }
 
