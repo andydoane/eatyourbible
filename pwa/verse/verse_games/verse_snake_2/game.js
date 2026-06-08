@@ -3,8 +3,8 @@
   const launch = window.VerseGameBridge.getLaunchParams();
   const ctx = await window.VerseGameBridge.getVerseContext();
 
-  const GAME_ID = "verse_snake_2";
-  const GAME_TITLE = "Verse Slither";
+  const GAME_ID = "verse_snake";
+  const GAME_TITLE = "Verse Snake";
   const HELP_OVERLAY_ID = "vslHelpOverlay";
 
   const GAME_THEME = {
