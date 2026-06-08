@@ -407,8 +407,8 @@
   function helpHtml(){
     return `
       <p>Guide the snake by pointing where you want it to slither.</p>
-      <p>Follow the arrow to find each word pair. Eat the correct next word to build the verse.</p>
-      <p>Fruit changes your snake color for fun.</p>
+      <p>Follow the arrow to the words and eat the correct one.</p>
+      <p>Double tap for a speed boost. Eat fruit to change color. Eat orbs to grow your tail.</p>
     `;
   }
 
