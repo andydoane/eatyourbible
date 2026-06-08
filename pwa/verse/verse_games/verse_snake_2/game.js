@@ -2422,7 +2422,7 @@
       verseId: ctx.verseId,
       gameId: GAME_ID,
       completion: completionResult,
-      gameMessage: `Fruit eaten: ${state.fruitCount} • Bonus snakes caught: ${state.bonusScore}`,
+      gameMessage: `Bonus Score: ${state.bonusScore}`,
       theme: GAME_THEME,
       backLabel: "Back to Practice Games",
       onPlayAgain: () => {
