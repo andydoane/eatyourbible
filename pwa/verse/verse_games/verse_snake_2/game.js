@@ -141,8 +141,63 @@
   const MINI_SNAKE_HEAD_ASSET = "./verse_snake_images/verse_snake_head_small.svg";
   const BONUS_SNAKE_ICON_ASSET = "./verse_snake_images/verse_snake_icon.png";
 
+  const SOUND_BASE_PATH = "./verse_snake_sounds/";
+  const UI_SOUND_BASE_PATH = "../../ui_audio/";
+  const SILENCE_SOUND_PATH = "../../verse_audio/silence.mp3";
+
+  const SOUND_FILES = {
+    uiTap1: `${UI_SOUND_BASE_PATH}ui_sound_pop_1.mp3`,
+    uiTap2: `${UI_SOUND_BASE_PATH}ui_sound_pop_2.mp3`,
+
+    correctWord: `${SOUND_BASE_PATH}verse_snake_correct.mp3`,
+    wrongWord: `${SOUND_BASE_PATH}verse_snake_wrong.mp3`,
+    fruit: `${SOUND_BASE_PATH}verse_snake_fruit.mp3`,
+    boostStart: `${SOUND_BASE_PATH}verse_snake_boost.mp3`,
+    bonusStart: `${SOUND_BASE_PATH}verse_snake_bonus_start.mp3`,
+    miniSnakeEat: `${SOUND_BASE_PATH}verse_snake_eat.mp3`,
+    bonusResult: `${SOUND_BASE_PATH}verse_snake_bonus_result.mp3`,
+
+    // Generated with Web Audio instead of an mp3.
+    orb: null,
+
+    // Not currently used.
+    boostReady: null,
+    verseComplete: null
+  };
+
+  const SOUND_VOLUMES = {
+    uiTap1: 0.55,
+    uiTap2: 0.55,
+    correctWord: 0.78,
+    wrongWord: 0.72,
+    fruit: 0.70,
+    orb: 0.48,
+    boostStart: 0.70,
+    boostReady: 0.52,
+    bonusStart: 0.78,
+    miniSnakeEat: 0.62,
+    bonusResult: 0.78,
+    verseComplete: 0.78
+  };
+
   let snakeHeadSvgPromise = null;
   let miniSnakeHeadSvgPromise = null;
+  let audioContext = null;
+  let audioUnlocked = false;
+  let silenceAudio = null;
+  let uiTapToggle = false;
+  let orbToneIndex = 0;
+  const soundBuffers = new Map();
+  const soundLoadPromises = new Map();
+
+  const ORB_TONE_TUNING = {
+    volume: 0.115,
+    duration: 0.145,
+    attack: 0.012,
+    release: 0.115,
+    detuneCents: 5,
+    notes: [72, 74, 76, 79, 81, 84] // C5, D5, E5, G5, A5, C6
+  };
   const SNAKE_HEAD_COLLISION_RADIUS = 20;
 
   const VISUAL_SCALE_TUNING = {
@@ -301,6 +356,7 @@
     boostCooldownUntil: 0,
     boostStartedAt: 0,
     boostCooldownStartedAt: 0,
+    boostReadySoundPlayed: true,
     lastTapAt: 0,
     lastTapX: 0,
     lastTapY: 0,
@@ -356,6 +412,172 @@
     });
   }
 
+  function getAudioContext() {
+    if (!audioContext) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return null;
+      audioContext = new AudioCtx();
+    }
+
+    return audioContext;
+  }
+
+  function unlockAudio() {
+    if (audioUnlocked) return Promise.resolve(true);
+
+    const ctx = getAudioContext();
+    const tasks = [];
+
+    try {
+      if (!silenceAudio) {
+        silenceAudio = new Audio(SILENCE_SOUND_PATH);
+        silenceAudio.preload = "auto";
+        silenceAudio.volume = 0.001;
+        silenceAudio.muted = false;
+      }
+
+      silenceAudio.currentTime = 0;
+      tasks.push(silenceAudio.play().catch(() => { }));
+    } catch (_) { }
+
+    if (ctx) {
+      if (ctx.state === "suspended") {
+        tasks.push(ctx.resume().catch(() => { }));
+      }
+
+      try {
+        const source = ctx.createOscillator();
+        const gain = ctx.createGain();
+        gain.gain.value = 0.0001;
+        source.connect(gain);
+        gain.connect(ctx.destination);
+        source.start(0);
+        source.stop(ctx.currentTime + 0.03);
+      } catch (_) { }
+    }
+
+    audioUnlocked = true;
+    preloadSoundBuffers();
+
+    return Promise.all(tasks).then(() => true).catch(() => true);
+  }
+
+  function loadSoundBuffer(key) {
+    const src = SOUND_FILES[key];
+
+    if (!src) return Promise.resolve(null);
+    if (soundBuffers.has(key)) return Promise.resolve(soundBuffers.get(key));
+    if (soundLoadPromises.has(key)) return soundLoadPromises.get(key);
+
+    const ctx = getAudioContext();
+    if (!ctx) return Promise.resolve(null);
+
+    const promise = fetch(src)
+      .then((res) => {
+        if (!res.ok) throw new Error(`Sound not found: ${src}`);
+        return res.arrayBuffer();
+      })
+      .then((arrayBuffer) => ctx.decodeAudioData(arrayBuffer))
+      .then((buffer) => {
+        soundBuffers.set(key, buffer);
+        return buffer;
+      })
+      .catch(() => null);
+
+    soundLoadPromises.set(key, promise);
+    return promise;
+  }
+
+  function preloadSoundBuffers() {
+    Object.keys(SOUND_FILES).forEach((key) => {
+      if (SOUND_FILES[key]) loadSoundBuffer(key);
+    });
+  }
+
+  function playGameSound(key, volumeScale = 1) {
+    if (muted || !audioUnlocked) return;
+
+    const ctx = getAudioContext();
+    if (!ctx || !SOUND_FILES[key]) return;
+
+    loadSoundBuffer(key).then((buffer) => {
+      if (!buffer || muted) return;
+
+      if (ctx.state === "suspended") {
+        ctx.resume().catch(() => { });
+      }
+
+      const source = ctx.createBufferSource();
+      const gain = ctx.createGain();
+
+      source.buffer = buffer;
+      gain.gain.value = (SOUND_VOLUMES[key] ?? 0.7) * volumeScale;
+
+      source.connect(gain);
+      gain.connect(ctx.destination);
+      source.start(0);
+    });
+  }
+
+  function midiToFreq(note) {
+    return 440 * Math.pow(2, (note - 69) / 12);
+  }
+
+  function playOrbTone(sizeRatio = 0.25) {
+    if (muted || !audioUnlocked) return;
+
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    if (ctx.state === "suspended") {
+      ctx.resume().catch(() => { });
+    }
+
+    const notes = ORB_TONE_TUNING.notes;
+    const note = notes[orbToneIndex % notes.length];
+    orbToneIndex += 1;
+
+    const sizeBoost = clamp(
+      (sizeRatio - ORB_TUNING.minSizeHeadRatio) /
+      Math.max(0.001, ORB_TUNING.maxSizeHeadRatio - ORB_TUNING.minSizeHeadRatio),
+      0,
+      1
+    );
+
+    const now = ctx.currentTime;
+    const duration = ORB_TONE_TUNING.duration + sizeBoost * 0.035;
+    const volume = ORB_TONE_TUNING.volume + sizeBoost * 0.035;
+    const freq = midiToFreq(note);
+
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(freq, now);
+    osc.detune.setValueAtTime((Math.random() * 2 - 1) * ORB_TONE_TUNING.detuneCents, now);
+
+    gain.gain.setValueAtTime(0.0001, now);
+    gain.gain.exponentialRampToValueAtTime(volume, now + ORB_TONE_TUNING.attack);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration + ORB_TONE_TUNING.release);
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.start(now);
+    osc.stop(now + duration + ORB_TONE_TUNING.release + 0.02);
+  }
+
+
+  function playUiTapSound() {
+    uiTapToggle = !uiTapToggle;
+    playGameSound(uiTapToggle ? "uiTap1" : "uiTap2");
+  }
+
+  function unlockAndTap() {
+    unlockAudio();
+    playUiTapSound();
+  }
+
   function stopLoop(){
     state.running = false;
     if (state.rafId){
@@ -386,6 +608,7 @@
   }
 
   function openGameMenu(){
+    unlockAndTap();
     const menuOverlay = document.getElementById("vslGameMenuOverlay");
     if (!menuOverlay) return;
     setPaused(true, "menu");
@@ -394,6 +617,7 @@
   }
 
   function openHelpFromMenu(){
+    unlockAndTap();
     const menuOverlay = document.getElementById("vslGameMenuOverlay");
     if (menuOverlay){
       menuOverlay.classList.remove("is-open");
@@ -413,8 +637,14 @@
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
       backLabel: "Back to Practice Games",
-      onBack: () => window.VerseGameBridge.exitGame(),
-      onStart: renderModeSelect
+      onBack: () => {
+        unlockAndTap();
+        window.VerseGameBridge.exitGame();
+      },
+      onStart: () => {
+        unlockAndTap();
+        renderModeSelect();
+      }
     });
   }
 
@@ -428,8 +658,12 @@
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
       backLabel: `Back to ${GAME_TITLE} title`,
-      onBack: renderIntroScreen,
+      onBack: () => {
+        unlockAndTap();
+        renderIntroScreen();
+      },
       onSelect: (mode) => {
+        unlockAndTap();
         selectedMode = mode;
         completed = false;
         completionResult = null;
@@ -524,6 +758,7 @@
       field.addEventListener("pointerdown", (e) => {
         if (state.paused) return;
         e.preventDefault();
+        unlockAudio();
         field.setPointerCapture?.(e.pointerId);
         updatePointer(e.clientX, e.clientY);
         handleBoostTap(e.clientX, e.clientY, e.pointerType);
@@ -550,21 +785,31 @@
       helpOverlayId: HELP_OVERLAY_ID,
       isMuted: () => muted,
       onMuteToggle: () => {
+        unlockAudio();
         muted = !muted;
+        if (!muted) playUiTapSound();
         return muted;
       },
       onHowToPlay: openHelpFromMenu,
       onModeSelect: () => {
+        unlockAndTap();
         setPaused(false, "");
         renderModeSelect();
       },
       onExit: () => {
+        unlockAndTap();
         stopLoop();
         window.VerseGameBridge.exitGame();
       },
       onOpen: () => setPaused(true, "menu"),
-      onClose: () => setPaused(false, ""),
-      onBackFromHelp: () => setPaused(true, "menu")
+      onClose: () => {
+        unlockAndTap();
+        setPaused(false, "");
+      },
+      onBackFromHelp: () => {
+        unlockAndTap();
+        setPaused(true, "menu");
+      }
     });
   }
 
@@ -603,6 +848,8 @@
     state.boostCooldownUntil = 0;
     state.boostStartedAt = 0;
     state.boostCooldownStartedAt = 0;
+    state.boostReadySoundPlayed = true;
+    orbToneIndex = 0;
     state.lastTapAt = 0;
     state.lastTapX = 0;
     state.lastTapY = 0;
@@ -903,6 +1150,9 @@
     state.boostActiveUntil = now + BOOST_TUNING.durationMs;
     state.boostCooldownStartedAt = now;
     state.boostCooldownUntil = now + BOOST_TUNING.durationMs + BOOST_TUNING.cooldownMs;
+    state.boostReadySoundPlayed = false;
+
+    playGameSound("boostStart");
   }
 
   function getBoostMeterValue(now = performance.now()) {
@@ -932,6 +1182,10 @@
     meter.classList.toggle("is-ready", ready);
     meter.classList.toggle("is-boosting", active);
     meter.classList.toggle("is-charging", !ready && !active);
+
+    if (ready && !state.boostReadySoundPlayed){
+      state.boostReadySoundPlayed = true;
+    }
 
     meter.setAttribute(
       "aria-label",
@@ -1426,6 +1680,7 @@
         orb.collectedAt = ts;
         growSnakeByHeadLengths(orb.growthHeads);
         state.headPopUntil = performance.now() + 180;
+        playOrbTone(orb.sizeRatio);
       }
     }
   }
@@ -1473,6 +1728,8 @@
 
   function startBonusRound() {
     const now = performance.now();
+
+    playGameSound("bonusStart");
 
     state.bonusActive = true;
     state.bonusPlayed = true;
@@ -1605,6 +1862,7 @@
     state.flashText = "";
     state.flashUntil = 0;
 
+    playGameSound("bonusResult");
     renderBonusResult(true);
   }
 
@@ -1803,6 +2061,7 @@
   function eatMiniSnake(snake, hitPoint, ts) {
     state.bonusScore += 1;
     state.headPopUntil = performance.now() + 180;
+    playGameSound("miniSnakeEat");
 
     showCorrectBurst(hitPoint.x, hitPoint.y);
 
@@ -1983,6 +2242,7 @@
     if (d <= state.fruit.r + getSnakeHeadCollisionRadius()){
       state.fruit = null;
       state.fruitCount += 1;
+      playGameSound("fruit");
       advanceSnakeStyle();
       state.headPopUntil = performance.now() + 340;
       applySnakeStyle();
@@ -2051,6 +2311,7 @@
   }
 
   function handleCorrectTarget(target){
+    playGameSound("correctWord");
     showCorrectBurst(target.x, target.y);
     launchDecoyEscape(target);
 
@@ -2076,6 +2337,7 @@
   }
 
   function handleWrongTarget(target, ts){
+    playGameSound("wrongWord");
     target.hit = true;
     target.wrongHitUntil = ts + 320;
 
@@ -2151,6 +2413,8 @@
 
   function renderDone(){
     stopLoop();
+    playGameSound("verseComplete");
+
     window.VerseGameShell.renderCompleteScreen({
       app,
       gameIcon: "🐍",
@@ -2162,11 +2426,18 @@
       theme: GAME_THEME,
       backLabel: "Back to Practice Games",
       onPlayAgain: () => {
+        unlockAndTap();
         completed = false;
         renderModeSelect();
       },
-      onMoreGames: () => window.VerseGameBridge.exitGame(),
-      onChangeVerse: () => window.VerseGameBridge.returnToTitle()
+      onMoreGames: () => {
+        unlockAndTap();
+        window.VerseGameBridge.exitGame();
+      },
+      onChangeVerse: () => {
+        unlockAndTap();
+        window.VerseGameBridge.returnToTitle();
+      }
     });
   }
 
