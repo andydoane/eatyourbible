@@ -220,7 +220,7 @@
   const VISUAL_SCALE_TUNING = {
     desktopFieldWidth: 840,
     phoneFieldWidth: 390,
-    minScale: 0.75,
+    minScale: 0.66,
     desktopHeadPx: 44,
     bacteriaHeightRatio: 2.25,
     compactWidthRatio: 1.36,
@@ -231,7 +231,7 @@
   const GAMEPLAY_SCALE_TUNING = {
     speedMinScale: 0.85,
     spawnDistanceMinScale: 0.92,
-    worldSpeedMultiplier: 1.65,
+    worldSpeedMultiplier: 1.50,
     pairSeparationBacteriaRatio: 2.85,
     pairSeparationMinHeadRatio: 3.2,
     pairSeparationMaxHeadRatio: 5.0,
@@ -245,7 +245,7 @@
 
   const TAIL_LENGTH_TUNING = {
     defaultHeads: 10.75,
-    maxBonusHeads: 10.75
+    maxBonusHeads: 15.75
   };
 
   const ORB_TUNING = {
