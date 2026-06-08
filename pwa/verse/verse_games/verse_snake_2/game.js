@@ -2121,8 +2121,10 @@
     if (completed) return;
     completed = true;
     state.bonusActive = false;
-    state.bonusEnding = false;
-    renderBonusResult(false);
+
+    // Keep bonusEnding true and keep the bonus result visible until the
+    // completion screen replaces the game. This prevents one last camera-follow
+    // frame from slipping in before renderDone().
     completionResult = null;
 
     if (window.VerseGameBridge.completeGameRun){
@@ -2138,7 +2140,13 @@
       });
     }
 
-    setTimeout(renderDone, 220);
+    stopLoop();
+
+    setTimeout(() => {
+      state.bonusEnding = false;
+      renderBonusResult(false);
+      renderDone();
+    }, 220);
   }
 
   function renderDone(){
