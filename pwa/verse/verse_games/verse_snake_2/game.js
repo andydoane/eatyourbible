@@ -2051,12 +2051,13 @@
   }
 
   function updateBuildHud() {
+    const track = document.getElementById("vslBuildTrack");
     const line = document.getElementById("vslBuildLine");
+
     if (line) {
       line.classList.remove("is-bonus");
     }
-    const track = document.getElementById("vslBuildTrack");
-    const line = document.getElementById("vslBuildLine");
+
     if (!track) return;
 
     const current = getCurrentCorrectLabel();
