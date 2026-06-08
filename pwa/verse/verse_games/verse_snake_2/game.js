@@ -238,7 +238,7 @@
     entryGraceMs: 1400,
     exitSpeedMultiplier: 1.35,
     exitMaxMs: 1700,
-    resultPauseMs: 1500,
+    resultPauseMs: 2600,
     collisionSampleStep: 3
   };
 
@@ -472,6 +472,7 @@
               <div class="vsl-pickup-pop-layer" id="vslPickupPopLayer"></div>
               <div class="vsl-arrow-layer"><div class="vsl-arrow" id="vslArrow"></div></div>
               <div class="vsl-flash-message" id="vslFlashMessage"></div>
+              <div class="vsl-bonus-result" id="vslBonusResult" aria-live="polite"></div>
 
               <svg class="vsl-svg" id="vslSvg" aria-hidden="true">
                 <g id="vslMiniSnakeLayer"></g>
@@ -1601,14 +1602,35 @@
     state.snakeHidden = true;
     state.trail = [];
 
-    state.flashText = formatBonusResultText();
-    state.flashUntil = ts + BONUS_TUNING.resultPauseMs;
+    state.flashText = "";
+    state.flashUntil = 0;
+
+    renderBonusResult(true);
   }
 
   function formatBonusResultText() {
     const count = state.bonusScore;
     const noun = count === 1 ? "snake" : "snakes";
     return `You ate ${count} ${noun}!`;
+  }
+
+  function renderBonusResult(visible) {
+    const el = document.getElementById("vslBonusResult");
+    if (!el) return;
+
+    if (!visible) {
+      el.classList.remove("is-visible");
+      el.innerHTML = "";
+      return;
+    }
+
+    el.innerHTML = `
+      <div class="vsl-bonus-result-card">
+        ${escapeHtml(formatBonusResultText())}
+      </div>
+    `;
+
+    el.classList.add("is-visible");
   }
 
   function spawnBonusMiniSnakes() {
@@ -2100,6 +2122,7 @@
     completed = true;
     state.bonusActive = false;
     state.bonusEnding = false;
+    renderBonusResult(false);
     completionResult = null;
 
     if (window.VerseGameBridge.completeGameRun){
