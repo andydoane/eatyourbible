@@ -228,22 +228,10 @@ body{
   overflow: visible;
 }
 
-/* Diagnostic: do not apply CSS transforms to the SVG wing group.
-   The SVG file's built-in transform positions the wing. */
+/* The SVG file's built-in transform positions the wing.
+   Do not animate this group with CSS transform, because that overrides
+   the SVG transform matrix and makes the wing disappear. */
 .vb2-bird #bird_wing_group{
-}
-
-/* Diagnostic: make the wing unmistakable while testing. */
-.vb2-bird #bird_wing{
-  opacity: 1 !important;
-  fill: #00ff00 !important;
-  fill-opacity: 1 !important;
-}
-
-/* Keep the wing highlight visible if this path is present. */
-.vb2-bird #path276{
-  fill: #ffffff !important;
-  fill-opacity: 0.45 !important;
 }
 
 .vb2-bird.is-hidden{
