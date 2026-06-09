@@ -416,3 +416,18 @@ body{
     left: 10px;
   }
 }
+
+@media (max-width: 640px) {
+  .vb2-field-wrap {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .vb2-field {
+    border-radius: 0;
+  }
+
+  .vb2-menu-pill {
+    left: 10px;
+  }
+}
