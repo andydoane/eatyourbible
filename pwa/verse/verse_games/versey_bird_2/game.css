@@ -98,7 +98,22 @@ body{
 
 .vb2-bg-clouds{
   z-index: 1;
-  display: none;
+  overflow: hidden;
+}
+
+.vb2-bg-cloud{
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--w);
+  height: var(--h);
+  transform: translate(-50%, -50%);
+  background-image: var(--cloud-img);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: var(--opacity);
+  filter: blur(0.1px);
 }
 
 .vb2-hills{

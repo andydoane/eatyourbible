@@ -127,6 +127,9 @@
     birdSpinUntil: 0,
     birdFlapUntil: 0,
     birdHidden: false,
+    bgClouds: [],
+    nextBgCloudId: 1,
+    bgCloudCooldown: 0,
     poofs: [],
     wordCloud: null,
     nextCloudId: 1,
@@ -292,6 +295,9 @@
     state.birdSpinUntil = 0;
     state.birdFlapUntil = 0;
     state.birdHidden = false;
+    state.bgClouds = [];
+    state.nextBgCloudId = 1;
+    state.bgCloudCooldown = 0.65;
     state.poofs = [];
     state.wordCloud = null;
     state.nextCloudId = 1;
@@ -632,6 +638,7 @@
     if (!state.layout) return;
 
     updateWorldScroll(dt);
+    updateBackgroundClouds(dt);
     updatePoofs(dt);
 
     if (state.phase === "intro"){
@@ -706,6 +713,52 @@
     if (state.birdY > layout.height + layout.unit * 1.6 || ts - state.crashStartedAt > 1700){
       showBonusResult();
     }
+  }
+
+  function updateBackgroundClouds(dt) {
+    if (!state.layout) return;
+
+    state.bgCloudCooldown -= dt;
+    if (state.bgCloudCooldown <= 0) {
+      spawnBackgroundCloud();
+      state.bgCloudCooldown = 2.8 + Math.random() * 3.2;
+    }
+
+    const baseSpeed = getActiveWorldSpeed();
+    for (const cloud of state.bgClouds) {
+      cloud.x -= baseSpeed * cloud.speedMult * dt;
+      cloud.age += dt;
+    }
+
+    state.bgClouds = state.bgClouds.filter(cloud => {
+      return cloud.x > -cloud.w * 0.75 && cloud.age < 30;
+    });
+  }
+
+  function spawnBackgroundCloud() {
+    const layout = state.layout;
+    if (!layout) return;
+
+    const keys = Object.keys(CLOUD_SHAPES);
+    const shapeKey = keys[Math.floor(Math.random() * keys.length)];
+    const shape = CLOUD_SHAPES[shapeKey];
+    const h = layout.unit * (0.68 + Math.random() * 0.46);
+    const w = h * shape.aspect;
+    const minY = layout.playTop + layout.unit * 0.25;
+    const maxY = Math.max(minY, layout.groundY - layout.hillH * 0.62);
+    const y = minY + Math.random() * (maxY - minY);
+
+    state.bgClouds.push({
+      id: state.nextBgCloudId++,
+      shapeKey,
+      x: layout.width + w * 0.75,
+      y,
+      w,
+      h,
+      opacity: 0.11 + Math.random() * 0.13,
+      speedMult: 0.22 + Math.random() * 0.18,
+      age: 0
+    });
   }
 
   function updatePoofs(dt){
@@ -941,6 +994,7 @@
 
   function render(ts){
     renderBackground();
+    renderBackgroundClouds();
     renderPoofs();
     renderWordCloud(ts);
     renderPipes();
@@ -956,6 +1010,27 @@
     field.style.setProperty("--vb2-ground-x", `${state.worldX}px`);
     field.style.setProperty("--vb2-hill-x", `${state.worldX}px`);
     field.style.setProperty("--vb2-cloud-x", `${state.cloudBgX}px`);
+  }
+
+  function renderBackgroundClouds() {
+    const layer = document.getElementById("vb2BgClouds");
+    if (!layer || !state.layout) return;
+
+    layer.innerHTML = state.bgClouds.map(cloud => {
+      const shape = CLOUD_SHAPES[cloud.shapeKey];
+      return `
+        <div class="vb2-bg-cloud"
+             style="
+               --x:${cloud.x}px;
+               --y:${cloud.y}px;
+               --w:${cloud.w}px;
+               --h:${cloud.h}px;
+               --opacity:${cloud.opacity};
+               --cloud-img:url('${IMAGE_PATH}${shape.image}');
+             ">
+        </div>
+      `;
+    }).join("");
   }
 
   function renderPoofs(){
