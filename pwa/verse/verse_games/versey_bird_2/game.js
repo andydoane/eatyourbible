@@ -115,6 +115,7 @@
     phaseStartedAt: 0,
     introStartedAt: 0,
     bonusStartedAt: 0,
+    bonusIntroUnlockAt: 0,
     crashStartedAt: 0,
     worldX: 0,
     cloudBgX: 0,
@@ -285,6 +286,7 @@
     state.phaseStartedAt = 0;
     state.introStartedAt = 0;
     state.bonusStartedAt = 0;
+    state.bonusIntroUnlockAt = 0;
     state.crashStartedAt = 0;
     state.worldX = 0;
     state.cloudBgX = 0;
@@ -340,6 +342,7 @@
   function enterBonusIntroPhase(){
     state.phase = "bonusIntro";
     state.phaseStartedAt = performance.now();
+    state.bonusIntroUnlockAt = state.phaseStartedAt + 1350;
     state.wordCloud = null;
     state.bonusPipes = [];
     state.pipeCooldown = 0;
@@ -351,6 +354,7 @@
     state.phase = "bonus";
     state.phaseStartedAt = performance.now();
     state.bonusStartedAt = state.phaseStartedAt;
+    state.bonusIntroUnlockAt = 0;
     state.bonusPipes = [];
     state.nextPipeId = 1;
     state.pipeCooldown = 0.9;
@@ -500,6 +504,7 @@
     if (state.paused) return;
 
     if (state.phase === "bonusIntro"){
+      if (now < state.bonusIntroUnlockAt) return;
       enterBonusPhase();
       return;
     }
@@ -739,7 +744,7 @@
     const layout = state.layout;
     if (!layout) return;
 
-    const keys = Object.keys(CLOUD_SHAPES);
+    const keys = ["compact", "normal"];
     const shapeKey = keys[Math.floor(Math.random() * keys.length)];
     const shape = CLOUD_SHAPES[shapeKey];
     const heightU = getBackgroundCloudHeightU();
