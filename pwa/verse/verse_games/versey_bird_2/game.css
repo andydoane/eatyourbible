@@ -231,11 +231,12 @@ body{
 .vb2-bird #bird_wing_group{
   transform-box: fill-box;
   transform-origin: 64% 28%;
-  transition: transform 160ms ease-out;
 }
 
+/* Temporarily disabled while testing wing visibility.
+   CSS transforms can override the SVG's built-in transform matrix. */
 .vb2-bird.is-flapping #bird_wing_group{
-  transform: rotate(-28deg);
+  transform: none;
 }
 
 .vb2-bird.is-hidden{

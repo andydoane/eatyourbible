@@ -1190,9 +1190,22 @@
     const wing = root.querySelector("#bird_wing");
     const tail = root.querySelector("#bird_tail");
 
-    if (body) body.style.fill = state.birdColor.primary;
-    if (wing) wing.style.fill = state.birdColor.secondary;
-    if (tail) tail.style.fill = state.birdColor.secondary;
+    applySvgFill(body, state.birdColor.primary);
+    applySvgFill(wing, state.birdColor.secondary);
+    applySvgFill(tail, state.birdColor.secondary);
+  }
+
+  function applySvgFill(el, color){
+    if (!el) return;
+
+    el.style.fill = color;
+    el.setAttribute("fill", color);
+
+    const children = el.querySelectorAll("path, polygon, circle, ellipse, rect");
+    for (const child of children){
+      child.style.fill = color;
+      child.setAttribute("fill", color);
+    }
   }
 
   async function finishRun(){
