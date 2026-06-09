@@ -664,7 +664,7 @@
   }
 
   function updateWorldScroll(dt){
-    const speed = getWorldSpeed();
+    const speed = getActiveWorldSpeed();
     state.worldX -= speed * dt;
     state.cloudBgX -= speed * dt;
   }
@@ -906,10 +906,12 @@
   function spawnPipePair(){
     const layout = state.layout;
     const gap = getBonusGap();
+    const capOverlap = Math.max(1, layout.unit * 0.035);
+    const groundClearance = layout.unit * 0.10;
     const safeTop = layout.playTop + gap * 0.5 + layout.unit * 0.3;
-    const safeBottom = layout.groundY - gap * 0.5 - layout.unit * 0.25;
+    const safeBottom = layout.groundY - groundClearance - layout.pipeCapH + capOverlap - gap * 0.5;
     const gapY = safeTop >= safeBottom
-      ? (layout.playTop + layout.groundY) * 0.5
+      ? safeBottom
       : safeTop + Math.random() * (safeBottom - safeTop);
 
     state.bonusPipes.push({
@@ -1370,6 +1372,14 @@
 
   function getWorldSpeed(){
     return getDifficulty().worldSpeedU * state.layout.unit;
+  }
+
+  function getActiveWorldSpeed(){
+    if (state.phase === "bonus" || state.phase === "bonusCrash"){
+      return getBonusSpeed();
+    }
+
+    return getWorldSpeed();
   }
 
   function getBonusSpeed(){
