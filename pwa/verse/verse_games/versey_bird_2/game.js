@@ -1235,19 +1235,19 @@
 
     const launchX = worldSpeed * 0.32;
     const launchY = getDifficulty().flapU * unit;
-    const exhaustX = -launchX;
+    const exhaustX = -launchX * 0.35;
     const exhaustY = -launchY;
     const length = Math.hypot(exhaustX, exhaustY) || 1;
     const dirX = exhaustX / length;
     const dirY = exhaustY / length;
 
-    const baseX = state.birdX - unit * 0.42;
+    const baseX = state.birdX;
     const baseY = state.birdY + unit * 0.18;
 
     const puffs = [
-      { distanceU: 0.22, sizeU: 0.16, life: 0.24, speedU: 0.55 },
-      { distanceU: 0.48, sizeU: 0.27, life: 0.32, speedU: 0.40 },
-      { distanceU: 0.78, sizeU: 0.40, life: 0.40, speedU: 0.25 }
+      { distanceU: 0.14, sizeU: 0.16, life: 0.24, speedU: 0.55 },
+      { distanceU: 0.42, sizeU: 0.27, life: 0.32, speedU: 0.40 },
+      { distanceU: 0.74, sizeU: 0.40, life: 0.40, speedU: 0.25 }
     ];
 
     for (const puff of puffs){
