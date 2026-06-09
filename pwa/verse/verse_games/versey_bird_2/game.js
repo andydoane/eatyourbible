@@ -1231,15 +1231,10 @@
     if (!state.layout) return;
 
     const unit = state.layout.unit;
-    const worldSpeed = getActiveWorldSpeed();
-
-    const launchX = worldSpeed * 0.32;
-    const launchY = getDifficulty().flapU * unit;
-    const exhaustX = launchX * 0.35;
-    const exhaustY = -launchY;
-    const length = Math.hypot(exhaustX, exhaustY) || 1;
-    const dirX = exhaustX / length;
-    const dirY = exhaustY / length;
+    const exhaustAngleDeg = -45;
+    const exhaustAngleRad = exhaustAngleDeg * Math.PI / 180;
+    const dirX = Math.sin(exhaustAngleRad);
+    const dirY = Math.cos(exhaustAngleRad);
 
     const baseX = state.birdX;
     const baseY = state.birdY + unit * 0.18;
