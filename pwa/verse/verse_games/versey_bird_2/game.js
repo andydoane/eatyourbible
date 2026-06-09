@@ -128,6 +128,7 @@
     birdSpinUntil: 0,
     birdFlapUntil: 0,
     birdHidden: false,
+    birdTrail: [],
     bgClouds: [],
     nextBgCloudId: 1,
     bgCloudCooldown: 0,
@@ -297,6 +298,7 @@
     state.birdSpinUntil = 0;
     state.birdFlapUntil = 0;
     state.birdHidden = false;
+    state.birdTrail = [];
     state.bgClouds = [];
     state.nextBgCloudId = 1;
     state.bgCloudCooldown = 0.65;
@@ -604,6 +606,9 @@
     state.birdY = state.layout.playTop + (state.layout.playBottom - state.layout.playTop) * 0.48;
     state.birdVY = 0;
     state.birdAngle = 0;
+    state.birdTrail = [
+      { x: state.birdX, y: state.birdY, age: 0 }
+    ];
   }
 
   function startLoop(){
@@ -701,6 +706,7 @@
         state.birdVY = Math.min(0, state.birdVY) * -0.12;
       }
     }
+    updateBirdTrail(dt);
 
     state.birdAngle = clamp(state.birdVY / (layout.unit * 0.13), -24, 56);
   }
@@ -1227,24 +1233,66 @@
     return clamp(base * 0.76, 15, 27);
   }
 
-  function addFlapTrail() {
+  function updateBirdTrail(dt) {
+    if (!state.layout) return;
+
+    for (const point of state.birdTrail) {
+      point.age += dt;
+    }
+
+    state.birdTrail.unshift({
+      x: state.birdX,
+      y: state.birdY,
+      age: 0
+    });
+
+    state.birdTrail = state.birdTrail
+      .filter(point => point.age <= 0.35)
+      .slice(0, 18);
+  }
+
+  function getBirdTrailSample(targetAge) {
+    if (!state.birdTrail.length) return null;
+
+    let best = state.birdTrail[0];
+    let bestDelta = Math.abs(best.age - targetAge);
+
+    for (const point of state.birdTrail) {
+      const delta = Math.abs(point.age - targetAge);
+      if (delta < bestDelta) {
+        best = point;
+        bestDelta = delta;
+      }
+    }
+
+    return best;
+  }
+
+  function addFlapTrail(){
     if (!state.layout) return;
 
     const unit = state.layout.unit;
+    const speed = getActiveWorldSpeed();
     const trail = [
-      { xU: -0.52, yU: 0.18, sizeU: 0.42, life: 0.30 },
-      { xU: -0.82, yU: 0.14, sizeU: 0.30, life: 0.36 },
-      { xU: -1.08, yU: 0.09, sizeU: 0.22, life: 0.42 },
-      { xU: -1.30, yU: 0.04, sizeU: 0.15, life: 0.48 }
+      { age: 0.08, sizeU: 0.34, life: 0.26 },
+      { age: 0.16, sizeU: 0.25, life: 0.34 },
+      { age: 0.24, sizeU: 0.17, life: 0.42 }
     ];
 
-    for (const puff of trail) {
+    for (const puff of trail){
+      const sample = getBirdTrailSample(puff.age);
+      if (!sample) continue;
+
       addPoof(
-        state.birdX + puff.xU * unit,
-        state.birdY + puff.yU * unit,
+        sample.x - speed * puff.age * 0.38,
+        sample.y,
         puff.sizeU,
         puff.life
       );
+    }
+
+    if (state.birdTrail.length < 3){
+      addPoof(state.birdX - unit * 0.52, state.birdY + unit * 0.18, 0.34, 0.28);
     }
   }
 
