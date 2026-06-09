@@ -742,11 +742,15 @@
     const keys = Object.keys(CLOUD_SHAPES);
     const shapeKey = keys[Math.floor(Math.random() * keys.length)];
     const shape = CLOUD_SHAPES[shapeKey];
-    const h = layout.unit * (0.68 + Math.random() * 0.46);
+    const heightU = getBackgroundCloudHeightU();
+    const h = layout.unit * heightU;
     const w = h * shape.aspect;
     const minY = layout.playTop + layout.unit * 0.25;
     const maxY = Math.max(minY, layout.groundY - layout.hillH * 0.62);
     const y = minY + Math.random() * (maxY - minY);
+    const opacity = heightU >= 1.55
+      ? 0.07 + Math.random() * 0.08
+      : 0.11 + Math.random() * 0.13;
 
     state.bgClouds.push({
       id: state.nextBgCloudId++,
@@ -755,10 +759,24 @@
       y,
       w,
       h,
-      opacity: 0.11 + Math.random() * 0.13,
+      opacity,
       speedMult: 0.22 + Math.random() * 0.18,
       age: 0
     });
+  }
+
+  function getBackgroundCloudHeightU() {
+    const roll = Math.random();
+
+    if (roll < 0.70) {
+      return 0.65 + Math.random() * 0.50;
+    }
+
+    if (roll < 0.95) {
+      return 1.15 + Math.random() * 0.50;
+    }
+
+    return 1.65 + Math.random() * 0.35;
   }
 
   function updatePoofs(dt){
