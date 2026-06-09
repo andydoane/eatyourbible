@@ -98,11 +98,7 @@ body{
 
 .vb2-bg-clouds{
   z-index: 1;
-  opacity: 0.32;
-  background-image: url("./versey_bird_images/versey_bird_cloud_normal.svg"), url("./versey_bird_images/versey_bird_cloud_compact.svg"), url("./versey_bird_images/versey_bird_cloud_long.svg");
-  background-repeat: repeat-x, repeat-x, repeat-x;
-  background-size: auto 12%, auto 8%, auto 10%;
-  background-position: var(--vb2-cloud-x) 13%, calc(var(--vb2-cloud-x) * 1.35) 34%, calc(var(--vb2-cloud-x) * 0.78) 55%;
+  display: none;
 }
 
 .vb2-hills{
