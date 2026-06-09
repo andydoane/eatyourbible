@@ -249,6 +249,16 @@ body{
 .vb2-bird #bird_wing_group{
 }
 
+.vb2-bird #vb2_wing_animator{
+  transform-box: fill-box;
+  transform-origin: 58% 38%;
+  transition: transform 115ms ease-out;
+}
+
+.vb2-bird.is-flapping #vb2_wing_animator{
+  transform: rotate(-24deg);
+}
+
 .vb2-bird.is-hidden{
   display: none;
 }

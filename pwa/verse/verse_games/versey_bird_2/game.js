@@ -518,7 +518,7 @@
     if (!state.layout) return;
     state.birdVY = getDifficulty().flapU * state.layout.unit;
     state.birdFlapUntil = performance.now() + 160;
-    addPoof(state.birdX - state.layout.unit * 0.55, state.birdY + state.layout.unit * 0.18, 0.44, 0.34);
+    addFlapTrail();
   }
 
   function installResize(){
@@ -1227,6 +1227,27 @@
     return clamp(base * 0.76, 15, 27);
   }
 
+  function addFlapTrail() {
+    if (!state.layout) return;
+
+    const unit = state.layout.unit;
+    const trail = [
+      { xU: -0.52, yU: 0.18, sizeU: 0.42, life: 0.30 },
+      { xU: -0.82, yU: 0.14, sizeU: 0.30, life: 0.36 },
+      { xU: -1.08, yU: 0.09, sizeU: 0.22, life: 0.42 },
+      { xU: -1.30, yU: 0.04, sizeU: 0.15, life: 0.48 }
+    ];
+
+    for (const puff of trail) {
+      addPoof(
+        state.birdX + puff.xU * unit,
+        state.birdY + puff.yU * unit,
+        puff.sizeU,
+        puff.life
+      );
+    }
+  }
+
   function addPoof(x, y, sizeU, life){
     if (!state.layout) return;
     state.poofs.push({
@@ -1279,10 +1300,22 @@
 
     if (birdSvgText){
       bird.innerHTML = birdSvgText;
+      prepareWingAnimator(bird);
       recolorBirdSvg(bird);
     } else {
       bird.innerHTML = `<img src="${IMAGE_PATH}versey_bird_bird.svg" alt="">`;
     }
+  }
+
+  function prepareWingAnimator(root) {
+    const wingGroup = root.querySelector("#bird_wing_group");
+    if (!wingGroup || wingGroup.parentNode?.id === "vb2_wing_animator") return;
+
+    const wrapper = document.createElementNS("http://www.w3.org/2000/svg", "g");
+    wrapper.setAttribute("id", "vb2_wing_animator");
+
+    wingGroup.parentNode.insertBefore(wrapper, wingGroup);
+    wrapper.appendChild(wingGroup);
   }
 
   function recolorBirdSvg(root){
