@@ -1036,15 +1036,15 @@
     const stripB = document.getElementById("vb2HillStripB");
     if (!stripA || !stripB || !state.layout) return;
 
-    const hillW = Math.ceil(state.layout.hillH * 10);
-    const overlap = 2;
+    const hillW = Math.ceil(state.layout.hillH * 10) + 4;
+    const overlap = 6;
     const loopW = hillW - overlap;
     const x = ((state.worldX % loopW) + loopW) % loopW - loopW;
 
-    stripA.style.transform = `translateX(${Math.round(x)}px)`;
-    stripB.style.transform = `translateX(${Math.round(x + loopW)}px)`;
+    stripA.style.transform = `translateX(${x}px)`;
+    stripB.style.transform = `translateX(${x + loopW}px)`;
   }
-  
+
   function renderBackground(){
     const field = document.getElementById("vb2Field");
     if (!field || !state.layout) return;
