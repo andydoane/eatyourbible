@@ -1018,9 +1018,9 @@
 
       pieces.push(`
         <div class="vb2-pipe-piece" style="--x:${pipe.x}px; --pipe-w:${layout.pipeW}px; top:0px; height:${topPieceH}px;"></div>
-        <div class="vb2-pipe-cap" style="--x:${pipe.x}px; --pipe-w:${layout.pipeW * 1.16}px; top:${gapTop - capH + capOverlap}px; height:${capH}px;"></div>
+        <div class="vb2-pipe-cap vb2-pipe-cap--top" style="--x:${pipe.x}px; --pipe-w:${layout.pipeW}px; top:${gapTop - capH + capOverlap}px; height:${capH}px;"></div>
         <div class="vb2-pipe-piece" style="--x:${pipe.x}px; --pipe-w:${layout.pipeW}px; top:${bottomPieceTop}px; height:${bottomPieceH}px;"></div>
-        <div class="vb2-pipe-cap" style="--x:${pipe.x}px; --pipe-w:${layout.pipeW * 1.16}px; top:${gapBottom - capOverlap}px; height:${capH}px;"></div>
+        <div class="vb2-pipe-cap vb2-pipe-cap--bottom" style="--x:${pipe.x}px; --pipe-w:${layout.pipeW}px; top:${gapBottom - capOverlap}px; height:${capH}px;"></div>
       `);
     }
 

@@ -247,7 +247,6 @@ body{
   position: absolute;
   left: var(--x);
   width: var(--pipe-w);
-  background-size: 100% 100%;
   background-repeat: no-repeat;
   background-position: center;
   transform: translateX(-50%);
@@ -256,10 +255,21 @@ body{
 
 .vb2-pipe-piece{
   background-image: url("./versey_bird_images/versey_bird_pipe.svg");
+  background-size: 100% auto;
+  background-repeat: repeat-y;
 }
 
 .vb2-pipe-cap{
   background-image: url("./versey_bird_images/versey_bird_pipe_cap.svg");
+  background-size: 100% 100%;
+}
+
+.vb2-pipe-cap--top{
+  transform: translateX(-50%) scaleY(-1);
+}
+
+.vb2-pipe-cap--bottom{
+  transform: translateX(-50%);
 }
 
 .vb2-intro-layer{
