@@ -339,6 +339,10 @@ body{
   pointer-events: auto;
 }
 
+.vb2-result-layer[hidden]{
+  display: none;
+}
+
 .vb2-result-card{
   width: min(88%, 420px);
   border-radius: 28px;
