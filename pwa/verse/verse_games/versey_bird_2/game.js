@@ -128,7 +128,6 @@
     birdSpinUntil: 0,
     birdFlapUntil: 0,
     birdHidden: false,
-    birdTrail: [],
     bgClouds: [],
     nextBgCloudId: 1,
     bgCloudCooldown: 0,
@@ -298,7 +297,6 @@
     state.birdSpinUntil = 0;
     state.birdFlapUntil = 0;
     state.birdHidden = false;
-    state.birdTrail = [];
     state.bgClouds = [];
     state.nextBgCloudId = 1;
     state.bgCloudCooldown = 0.65;
@@ -606,9 +604,6 @@
     state.birdY = state.layout.playTop + (state.layout.playBottom - state.layout.playTop) * 0.48;
     state.birdVY = 0;
     state.birdAngle = 0;
-    state.birdTrail = [
-      { x: state.birdX, y: state.birdY, age: 0 }
-    ];
   }
 
   function startLoop(){
@@ -706,8 +701,6 @@
         state.birdVY = Math.min(0, state.birdVY) * -0.12;
       }
     }
-    updateBirdTrail(dt);
-
     state.birdAngle = clamp(state.birdVY / (layout.unit * 0.13), -24, 56);
   }
 
@@ -793,6 +786,7 @@
   function updatePoofs(dt){
     for (const poof of state.poofs){
       poof.age += dt;
+      poof.x += (poof.vx || 0) * dt;
       poof.x -= getWorldSpeed() * dt * 0.55;
       poof.y += poof.vy * dt;
     }
@@ -1233,77 +1227,50 @@
     return clamp(base * 0.76, 15, 27);
   }
 
-  function updateBirdTrail(dt) {
-    if (!state.layout) return;
-
-    for (const point of state.birdTrail) {
-      point.age += dt;
-    }
-
-    state.birdTrail.unshift({
-      x: state.birdX,
-      y: state.birdY,
-      age: 0
-    });
-
-    state.birdTrail = state.birdTrail
-      .filter(point => point.age <= 0.35)
-      .slice(0, 18);
-  }
-
-  function getBirdTrailSample(targetAge) {
-    if (!state.birdTrail.length) return null;
-
-    let best = state.birdTrail[0];
-    let bestDelta = Math.abs(best.age - targetAge);
-
-    for (const point of state.birdTrail) {
-      const delta = Math.abs(point.age - targetAge);
-      if (delta < bestDelta) {
-        best = point;
-        bestDelta = delta;
-      }
-    }
-
-    return best;
-  }
-
   function addFlapTrail(){
     if (!state.layout) return;
 
     const unit = state.layout.unit;
-    const speed = getActiveWorldSpeed();
-    const trail = [
-      { age: 0.08, sizeU: 0.34, life: 0.26 },
-      { age: 0.16, sizeU: 0.25, life: 0.34 },
-      { age: 0.24, sizeU: 0.17, life: 0.42 }
+    const worldSpeed = getActiveWorldSpeed();
+
+    const launchX = worldSpeed * 0.32;
+    const launchY = getDifficulty().flapU * unit;
+    const exhaustX = -launchX;
+    const exhaustY = -launchY;
+    const length = Math.hypot(exhaustX, exhaustY) || 1;
+    const dirX = exhaustX / length;
+    const dirY = exhaustY / length;
+
+    const baseX = state.birdX - unit * 0.42;
+    const baseY = state.birdY + unit * 0.18;
+
+    const puffs = [
+      { distanceU: 0.22, sizeU: 0.16, life: 0.24, speedU: 0.55 },
+      { distanceU: 0.48, sizeU: 0.27, life: 0.32, speedU: 0.40 },
+      { distanceU: 0.78, sizeU: 0.40, life: 0.40, speedU: 0.25 }
     ];
 
-    for (const puff of trail){
-      const sample = getBirdTrailSample(puff.age);
-      if (!sample) continue;
-
+    for (const puff of puffs){
       addPoof(
-        sample.x - speed * puff.age * 0.38,
-        sample.y,
+        baseX + dirX * puff.distanceU * unit,
+        baseY + dirY * puff.distanceU * unit,
         puff.sizeU,
-        puff.life
+        puff.life,
+        dirX * puff.speedU * unit,
+        dirY * puff.speedU * unit
       );
-    }
-
-    if (state.birdTrail.length < 3){
-      addPoof(state.birdX - unit * 0.52, state.birdY + unit * 0.18, 0.34, 0.28);
     }
   }
 
-  function addPoof(x, y, sizeU, life){
+  function addPoof(x, y, sizeU, life, vx = 0, vy = null){
     if (!state.layout) return;
     state.poofs.push({
       id: Math.random().toString(36).slice(2),
       x,
       y,
       size: sizeU * state.layout.unit,
-      vy: (Math.random() - 0.5) * state.layout.unit * 0.25,
+      vx,
+      vy: vy === null ? (Math.random() - 0.5) * state.layout.unit * 0.25 : vy,
       life,
       age: 0
     });
