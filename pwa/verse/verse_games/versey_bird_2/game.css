@@ -123,8 +123,9 @@ body{
   bottom: calc(var(--vb2-ground-h) - 2px);
   background-image: url("./versey_bird_images/versey_bird_hill.svg");
   background-repeat: repeat-x;
-  background-size: auto 100%;
+  background-size: auto calc(100% + 1px);
   background-position: var(--vb2-hill-x) 100%;
+  transform: translateZ(0);
 }
 
 .vb2-ground{
