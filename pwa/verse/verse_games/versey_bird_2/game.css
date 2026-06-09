@@ -86,6 +86,7 @@ body{
 .vb2-ground,
 .vb2-poofs,
 .vb2-word-clouds,
+.vb2-obstacles,
 .vb2-pipes,
 .vb2-bird-layer,
 .vb2-intro-layer,
@@ -168,6 +169,49 @@ body{
 
 .vb2-word-clouds{
   z-index: 9;
+}
+
+.vb2-obstacles {
+  z-index: 10;
+}
+
+.vb2-obstacle {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--w);
+  height: var(--h);
+  transform: translate(-50%, -50%);
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+  will-change: left, top, transform;
+}
+
+.vb2-obstacle--bee {
+  background-image: url("./versey_bird_images/versey_bird_bee.svg");
+  filter: drop-shadow(0 5px 0 rgba(0, 0, 0, 0.10));
+}
+
+.vb2-obstacle--boulder {
+  background-image: url("./versey_bird_images/versey_bird_boulder.png");
+  filter: drop-shadow(0 5px 0 rgba(0, 0, 0, 0.12));
+}
+
+.vb2-obstacle.is-hit {
+  animation: vb2WrongPoof 260ms ease-out forwards;
+}
+
+.vb2-bee-trail-dot {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--size);
+  height: var(--size);
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.74);
+  box-shadow: 0 0 0 1px rgba(51, 83, 90, 0.10) inset;
 }
 
 .vb2-cloud-token{

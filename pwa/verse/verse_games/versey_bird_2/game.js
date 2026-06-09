@@ -67,7 +67,10 @@
       bonusRampU: 0.090,
       bonusStartGapU: 5.05,
       bonusMinGapU: 3.85,
-      bonusPipeEveryU: 5.45
+      bonusPipeEveryU: 5.45,
+      obstacleCloudMin: 4,
+      obstacleCloudMax: 5,
+      obstacleBeeChance: 0.35
     },
     medium: {
       worldSpeedU: 2.55,
@@ -79,7 +82,10 @@
       bonusRampU: 0.115,
       bonusStartGapU: 4.70,
       bonusMinGapU: 3.45,
-      bonusPipeEveryU: 5.10
+      bonusPipeEveryU: 5.10,
+      obstacleCloudMin: 3,
+      obstacleCloudMax: 4,
+      obstacleBeeChance: 0.50
     },
     hard: {
       worldSpeedU: 2.85,
@@ -91,7 +97,10 @@
       bonusRampU: 0.145,
       bonusStartGapU: 4.35,
       bonusMinGapU: 3.10,
-      bonusPipeEveryU: 4.85
+      bonusPipeEveryU: 4.85,
+      obstacleCloudMin: 2,
+      obstacleCloudMax: 3,
+      obstacleBeeChance: 0.60
     }
   };
 
@@ -132,6 +141,11 @@
     nextBgCloudId: 1,
     bgCloudCooldown: 0,
     poofs: [],
+    obstacles: [],
+    beeTrailDots: [],
+    nextObstacleId: 1,
+    nextBeeTrailDotId: 1,
+    obstacleCloudCountdown: 0,
     wordCloud: null,
     nextCloudId: 1,
     cloudCooldown: 0,
@@ -181,7 +195,7 @@
   function gameHelpHtml(){
     return `
       Tap or click to flap.<br><br>
-      Collect the next correct word cloud. Avoid decoy clouds.<br><br>
+      Collect the next correct word cloud. Avoid decoy clouds, bees, and boulders.<br><br>
       Missing a correct word resets your streak in Medium and Hard only.<br><br>
       After the verse is built, fly through as many pipes as you can.
     `;
@@ -254,6 +268,7 @@
 
               <div class="vb2-poofs" id="vb2Poofs"></div>
               <div class="vb2-word-clouds" id="vb2WordClouds"></div>
+              <div class="vb2-obstacles" id="vb2Obstacles"></div>
               <div class="vb2-pipes" id="vb2Pipes"></div>
               <div class="vb2-bird-layer"><div class="vb2-bird" id="vb2Bird"></div></div>
               <div class="vb2-intro-layer" id="vb2IntroLayer"></div>
@@ -304,6 +319,11 @@
     state.nextBgCloudId = 1;
     state.bgCloudCooldown = 0.65;
     state.poofs = [];
+    state.obstacles = [];
+    state.beeTrailDots = [];
+    state.nextObstacleId = 1;
+    state.nextBeeTrailDotId = 1;
+    state.obstacleCloudCountdown = getNextObstacleCloudCountdown();
     state.wordCloud = null;
     state.nextCloudId = 1;
     state.cloudCooldown = 0;
@@ -338,6 +358,9 @@
     state.phase = "verse";
     state.phaseStartedAt = performance.now();
     state.wordCloud = null;
+    state.obstacles = [];
+    state.beeTrailDots = [];
+    state.obstacleCloudCountdown = getNextObstacleCloudCountdown();
     state.cloudCooldown = 0.25;
     state.birdHidden = false;
   }
@@ -347,6 +370,8 @@
     state.phaseStartedAt = performance.now();
     state.bonusIntroUnlockAt = state.phaseStartedAt + 1350;
     state.wordCloud = null;
+    state.obstacles = [];
+    state.beeTrailDots = [];
     state.bonusPipes = [];
     state.pipeCooldown = 0;
     state.birdHidden = true;
@@ -661,6 +686,7 @@
     if (state.phase === "verse"){
       updateBird(dt, false);
       updateVerseCloud(dt, ts);
+      updateObstacles(dt, ts);
       return;
     }
 
@@ -847,7 +873,8 @@
     const layout = state.layout;
     const h = shape.heightU * layout.unit;
     const w = h * shape.aspect;
-    const laneY = layout.lanes[Math.floor(Math.random() * layout.lanes.length)];
+    const laneIndex = Math.floor(Math.random() * layout.lanes.length);
+    const laneY = layout.lanes[laneIndex];
     const hitPadding = getDifficulty().hitPaddingU * layout.unit;
 
     state.wordCloud = {
@@ -857,6 +884,7 @@
       correct: label === correctLabel,
       x: layout.cloudSpawnX,
       y: clamp(laneY, layout.playTop + h * 0.52, layout.playBottom - h * 0.28),
+      laneIndex,
       w,
       h,
       shapeKey,
@@ -866,6 +894,170 @@
       collected: false,
       collectAt: 0
     };
+
+    tickObstacleCloudRhythm();
+  }
+
+  function getNextObstacleCloudCountdown() {
+    const difficulty = getDifficulty();
+    const min = difficulty.obstacleCloudMin || 3;
+    const max = difficulty.obstacleCloudMax || min;
+    return min + Math.floor(Math.random() * (max - min + 1));
+  }
+
+  function tickObstacleCloudRhythm() {
+    if (state.phase !== "verse" || !state.layout) return;
+
+    state.obstacleCloudCountdown -= 1;
+    if (state.obstacleCloudCountdown > 0) return;
+
+    if (!hasRecentObstacleNearSpawn()) {
+      spawnObstacle();
+    }
+
+    state.obstacleCloudCountdown = getNextObstacleCloudCountdown();
+  }
+
+  function hasRecentObstacleNearSpawn() {
+    if (!state.layout) return true;
+    const minX = state.layout.width - state.layout.unit * 0.15;
+    return state.obstacles.some(obstacle => !obstacle.hit && obstacle.x > minX);
+  }
+
+  function spawnObstacle() {
+    if (!state.layout) return;
+
+    const difficulty = getDifficulty();
+    const type = Math.random() < difficulty.obstacleBeeChance ? "bee" : "boulder";
+
+    if (type === "bee") {
+      spawnBeeObstacle();
+    } else {
+      spawnBoulderObstacle();
+    }
+  }
+
+  function spawnBoulderObstacle() {
+    const layout = state.layout;
+    const h = layout.unit;
+    const w = h * 1.48;
+    const bottomY = layout.groundY + h * 0.135;
+    const y = bottomY - h * 0.5;
+
+    state.obstacles.push({
+      id: state.nextObstacleId++,
+      type: "boulder",
+      x: layout.width + layout.unit * 4.0,
+      y,
+      baseY: y,
+      w,
+      h,
+      hitRadius: h * 0.43,
+      age: 0,
+      hit: false,
+      hitAt: 0
+    });
+  }
+
+  function spawnBeeObstacle() {
+    const layout = state.layout;
+    const h = layout.unit;
+    const w = h * 1.02;
+    const laneIndex = chooseBeeLaneIndex();
+    const baseY = layout.lanes[laneIndex];
+
+    state.obstacles.push({
+      id: state.nextObstacleId++,
+      type: "bee",
+      x: layout.width + layout.unit * 4.2,
+      y: baseY,
+      baseY,
+      laneIndex,
+      w,
+      h,
+      hitRadius: h * 0.38,
+      age: 0,
+      wavePhase: Math.random() * Math.PI * 2,
+      trailCooldown: 0,
+      hit: false,
+      hitAt: 0
+    });
+  }
+
+  function chooseBeeLaneIndex() {
+    const layout = state.layout;
+    if (!layout) return 1;
+
+    const lanes = layout.lanes.map((_, index) => index);
+    const cloudLaneIndex = state.wordCloud && Number.isFinite(state.wordCloud.laneIndex)
+      ? state.wordCloud.laneIndex
+      : -1;
+
+    const openLanes = lanes.filter(index => index !== cloudLaneIndex);
+    const choices = openLanes.length ? openLanes : lanes;
+    return choices[Math.floor(Math.random() * choices.length)];
+  }
+
+  function updateObstacles(dt, ts) {
+    const layout = state.layout;
+    if (!layout) return;
+
+    const speed = getWorldSpeed();
+
+    for (const obstacle of state.obstacles) {
+      obstacle.age += dt;
+      obstacle.x -= speed * dt;
+
+      if (obstacle.type === "bee") {
+        const amplitude = layout.unit * 0.32;
+        obstacle.y = obstacle.baseY + Math.sin(obstacle.age * 6.1 + obstacle.wavePhase) * amplitude;
+        obstacle.trailCooldown -= dt;
+
+        if (!obstacle.hit && obstacle.trailCooldown <= 0) {
+          addBeeTrailDot(obstacle);
+          obstacle.trailCooldown = 0.075;
+        }
+      }
+
+      if (!obstacle.hit && circlesOverlap(state.birdX, state.birdY, layout.birdRadius, obstacle.x, obstacle.y, obstacle.hitRadius)) {
+        hitObstacle(obstacle, ts);
+      }
+    }
+
+    for (const dot of state.beeTrailDots) {
+      dot.age += dt;
+      dot.x -= speed * dt;
+    }
+
+    state.obstacles = state.obstacles.filter(obstacle => {
+      if (obstacle.hit && ts - obstacle.hitAt > 270) return false;
+      return obstacle.x > -layout.unit * 2.2;
+    });
+
+    state.beeTrailDots = state.beeTrailDots.filter(dot => dot.age < dot.life && dot.x > -layout.unit);
+  }
+
+  function addBeeTrailDot(bee) {
+    if (!state.layout) return;
+
+    state.beeTrailDots.push({
+      id: state.nextBeeTrailDotId++,
+      x: bee.x + bee.w * 0.34,
+      y: bee.y + (Math.random() - 0.5) * state.layout.unit * 0.18,
+      size: state.layout.unit * (0.08 + Math.random() * 0.035),
+      life: 0.44,
+      age: 0
+    });
+  }
+
+  function hitObstacle(obstacle, ts) {
+    obstacle.hit = true;
+    obstacle.hitAt = ts;
+    state.streak = 0;
+    state.birdSpinUntil = ts + 620;
+    state.shakeUntil = ts + 260;
+    addBurst(obstacle.x, obstacle.y, obstacle.type === "bee" ? 5 : 6);
+    flash("rgba(255, 90, 81, 0.25)", 130);
   }
 
   function chooseCorrectOrDecoy(){
@@ -1024,6 +1216,7 @@
     renderBackgroundClouds();
     renderPoofs();
     renderWordCloud(ts);
+    renderObstacles();
     renderPipes();
     renderBird(ts);
     renderIntroLayer(ts);
@@ -1117,6 +1310,43 @@
         <div class="vb2-cloud-word">${escapeHtml(cloud.label)}</div>
       </div>
     `;
+  }
+
+  function renderObstacles() {
+    const layer = document.getElementById("vb2Obstacles");
+    if (!layer || !state.layout) return;
+
+    const dotsHtml = state.beeTrailDots.map(dot => {
+      const p = clamp(dot.age / dot.life, 0, 1);
+      const opacity = 1 - p;
+      const size = dot.size * (1 - p * 0.18);
+      return `
+        <div class="vb2-bee-trail-dot"
+             style="
+               --x:${dot.x}px;
+               --y:${dot.y}px;
+               --size:${size}px;
+               opacity:${opacity};
+             ">
+        </div>
+      `;
+    }).join("");
+
+    const obstacleHtml = state.obstacles.map(obstacle => {
+      const hitClass = obstacle.hit ? " is-hit" : "";
+      return `
+        <div class="vb2-obstacle vb2-obstacle--${obstacle.type}${hitClass}"
+             style="
+               --x:${obstacle.x}px;
+               --y:${obstacle.y}px;
+               --w:${obstacle.w}px;
+               --h:${obstacle.h}px;
+             ">
+        </div>
+      `;
+    }).join("");
+
+    layer.innerHTML = dotsHtml + obstacleHtml;
   }
 
   function renderPipes(){
