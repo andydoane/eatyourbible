@@ -228,15 +228,22 @@ body{
   overflow: visible;
 }
 
+/* Diagnostic: do not apply CSS transforms to the SVG wing group.
+   The SVG file's built-in transform positions the wing. */
 .vb2-bird #bird_wing_group{
-  transform-box: fill-box;
-  transform-origin: 64% 28%;
 }
 
-/* Temporarily disabled while testing wing visibility.
-   CSS transforms can override the SVG's built-in transform matrix. */
-.vb2-bird.is-flapping #bird_wing_group{
-  transform: none;
+/* Diagnostic: make the wing unmistakable while testing. */
+.vb2-bird #bird_wing{
+  opacity: 1 !important;
+  fill: #00ff00 !important;
+  fill-opacity: 1 !important;
+}
+
+/* Keep the wing highlight visible if this path is present. */
+.vb2-bird #path276{
+  fill: #ffffff !important;
+  fill-opacity: 0.45 !important;
 }
 
 .vb2-bird.is-hidden{
