@@ -244,7 +244,10 @@
           <div class="vb2-field-wrap">
             <div class="vb2-field" id="vb2Field">
               <div class="vb2-bg-clouds" id="vb2BgClouds"></div>
-              <div class="vb2-hills" id="vb2Hills"></div>
+              <div class="vb2-hills" id="vb2Hills">
+                <div class="vb2-hill-strip" id="vb2HillStripA"></div>
+                <div class="vb2-hill-strip" id="vb2HillStripB"></div>
+              </div>
               <div class="vb2-ground" id="vb2Ground"></div>
 
               <button class="vb2-menu-pill" id="vb2MenuPill" aria-label="Game Menu">☰</button>
@@ -584,6 +587,7 @@
     document.documentElement.style.setProperty("--vb2-last-unit", `${unit}px`);
     field.style.setProperty("--vb2-ground-h", `${groundH}px`);
     field.style.setProperty("--vb2-hill-h", `${hillH}px`);
+    field.style.setProperty("--vb2-hill-w", `${Math.ceil(hillH * 10)}px`);
 
     if (!state.birdX || state.birdX > width){
       state.birdX = state.layout.birdX;
@@ -1027,12 +1031,27 @@
     renderBuildShake(ts);
   }
 
+  function renderHillStrips() {
+    const stripA = document.getElementById("vb2HillStripA");
+    const stripB = document.getElementById("vb2HillStripB");
+    if (!stripA || !stripB || !state.layout) return;
+
+    const hillW = Math.ceil(state.layout.hillH * 10);
+    const overlap = 2;
+    const loopW = hillW - overlap;
+    const x = ((state.worldX % loopW) + loopW) % loopW - loopW;
+
+    stripA.style.transform = `translateX(${Math.round(x)}px)`;
+    stripB.style.transform = `translateX(${Math.round(x + loopW)}px)`;
+  }
+  
   function renderBackground(){
     const field = document.getElementById("vb2Field");
     if (!field || !state.layout) return;
+
     field.style.setProperty("--vb2-ground-x", `${state.worldX}px`);
-    field.style.setProperty("--vb2-hill-x", `${state.worldX}px`);
     field.style.setProperty("--vb2-cloud-x", `${state.cloudBgX}px`);
+    renderHillStrips();
   }
 
   function renderBackgroundClouds() {
