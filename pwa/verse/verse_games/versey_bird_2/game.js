@@ -587,7 +587,7 @@
     document.documentElement.style.setProperty("--vb2-last-unit", `${unit}px`);
     field.style.setProperty("--vb2-ground-h", `${groundH}px`);
     field.style.setProperty("--vb2-hill-h", `${hillH}px`);
-    field.style.setProperty("--vb2-hill-w", `${Math.ceil(hillH * 10)}px`);
+    field.style.setProperty("--vb2-hill-w", `${Math.ceil(hillH * 10 + 4)}px`);
 
     if (!state.birdX || state.birdX > width){
       state.birdX = state.layout.birdX;
@@ -1036,13 +1036,11 @@
     const stripB = document.getElementById("vb2HillStripB");
     if (!stripA || !stripB || !state.layout) return;
 
-    const hillW = Math.ceil(state.layout.hillH * 10) + 12;
-    const overlap = 14;
+    const hillW = Math.ceil(state.layout.hillH * 10 + 4);
+    const overlap = 6;
     const loopW = hillW - overlap;
     const x = ((state.worldX % loopW) + loopW) % loopW - loopW;
 
-    stripA.style.width = `${hillW}px`;
-    stripB.style.width = `${hillW}px`;
     stripA.style.transform = `translateX(${x}px)`;
     stripB.style.transform = `translateX(${x + loopW}px)`;
   }
