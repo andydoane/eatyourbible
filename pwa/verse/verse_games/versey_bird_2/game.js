@@ -1235,7 +1235,7 @@
 
     const launchX = worldSpeed * 0.32;
     const launchY = getDifficulty().flapU * unit;
-    const exhaustX = -launchX * 0.35;
+    const exhaustX = launchX * 0.35;
     const exhaustY = -launchY;
     const length = Math.hypot(exhaustX, exhaustY) || 1;
     const dirX = exhaustX / length;
