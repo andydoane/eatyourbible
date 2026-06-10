@@ -114,7 +114,8 @@ body{
   background-repeat: no-repeat;
   background-position: center;
   opacity: var(--opacity);
-  filter: blur(0.1px);
+  /* TEMP PERF TEST */
+  /* filter: blur(0.1px); */
 }
 
 .vb2-hills{
@@ -190,12 +191,14 @@ body{
 
 .vb2-obstacle--bee {
   background-image: url("./versey_bird_images/versey_bird_bee.svg");
-  filter: drop-shadow(0 5px 0 rgba(0, 0, 0, 0.10));
+  /* TEMP PERF TEST */
+  /* filter: drop-shadow(0 5px 0 rgba(0, 0, 0, 0.10)); */
 }
 
 .vb2-obstacle--boulder {
   background-image: url("./versey_bird_images/versey_bird_boulder.png");
-  filter: drop-shadow(0 5px 0 rgba(0, 0, 0, 0.12));
+  /* TEMP PERF TEST */
+  /* filter: drop-shadow(0 5px 0 rgba(0, 0, 0, 0.12)); */
 }
 
 .vb2-obstacle.is-hit {
@@ -243,9 +246,10 @@ body{
   background-size: contain;
   background-repeat: no-repeat;
   background-position: center;
-  filter: drop-shadow(0 7px 0 rgba(0,0,0,0.10));
-  animation: vb2CloudHappyDance 1120ms ease-in-out infinite;
-  will-change: left, top, transform;
+  /* TEMP PERF TEST: disabled drop-shadow + happy dance */
+  /* filter: drop-shadow(0 7px 0 rgba(0,0,0,0.10)); */
+  /* animation: vb2CloudHappyDance 1120ms ease-in-out infinite; */
+  will-change: transform;
 }
 
 @keyframes vb2CloudHappyDance {
