@@ -206,7 +206,11 @@
     flashUntil: 0,
     flashColor: "rgba(255,255,255,0.3)",
     shakeUntil: 0,
-    skidCooldown: 0
+    skidCooldown: 0,
+    fpsFrames: 0,
+    fpsLastAt: 0,
+    fpsValue: 0,
+    fpsLow: 999
   };
 
   setupReferenceSegments();
@@ -311,6 +315,7 @@
               <div class="vb2-intro-layer" id="vb2IntroLayer"></div>
               <div class="vb2-flash" id="vb2Flash"></div>
               <div class="vb2-result-layer" id="vb2ResultLayer" hidden></div>
+              <div class="vb2-fps-counter" id="vb2FpsCounter">FPS --</div>
             </div>
           </div>
         </div>
@@ -380,6 +385,10 @@
     state.flashColor = "rgba(255,255,255,0.3)";
     state.shakeUntil = 0;
     state.skidCooldown = 0;
+    state.fpsFrames = 0;
+    state.fpsLastAt = 0;
+    state.fpsValue = 0;
+    state.fpsLow = 999;
   }
 
   function enterIntroPhase(){
@@ -1297,6 +1306,7 @@
     renderIntroLayer(ts);
     renderFlash(ts);
     renderBuildShake(ts);
+    renderFpsCounter(ts);
   }
 
   function renderHillStrips() {
@@ -1587,6 +1597,35 @@
     } else {
       flash.classList.remove("is-on");
     }
+  }
+
+  function renderFpsCounter(ts) {
+    const counter = document.getElementById("vb2FpsCounter");
+    if (!counter) return;
+
+    if (!state.fpsLastAt) {
+      state.fpsLastAt = ts;
+      state.fpsFrames = 0;
+      return;
+    }
+
+    state.fpsFrames += 1;
+
+    const elapsed = ts - state.fpsLastAt;
+    if (elapsed < 500) return;
+
+    const fps = Math.round((state.fpsFrames * 1000) / elapsed);
+    state.fpsValue = fps;
+
+    if (fps > 0) {
+      state.fpsLow = Math.min(state.fpsLow, fps);
+    }
+
+    const lowText = state.fpsLow === 999 ? "--" : state.fpsLow;
+    counter.textContent = `FPS ${state.fpsValue} / LOW ${lowText}`;
+
+    state.fpsFrames = 0;
+    state.fpsLastAt = ts;
   }
 
   function renderBuildShake(ts){
