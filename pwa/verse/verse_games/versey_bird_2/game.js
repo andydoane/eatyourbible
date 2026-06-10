@@ -2008,7 +2008,7 @@
 
     const buildH = build ? build.getBoundingClientRect().height : 72;
     const pipeH = clamp(buildH - 8, 42, 74);
-    const fontSize = pipeH * 0.45;
+    const fontSize = pipeH * 0.75;
 
     el.className = "vb2-build-text vm-build-text vb2-bonus-score-build";
     el.innerHTML = `
