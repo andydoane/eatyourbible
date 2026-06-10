@@ -569,3 +569,9 @@ body{
     left: 10px;
   }
 }
+
+/*  MAKE DEBUG OBVIOUS */
+
+.vb2-field {
+  background: hotpink;
+}
