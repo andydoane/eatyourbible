@@ -1369,7 +1369,7 @@
     for (const pipe of state.bonusPipes){
       const gapTop = pipe.gapY - pipe.gap * 0.5;
       const gapBottom = pipe.gapY + pipe.gap * 0.5;
-      const topPieceH = Math.max(layout.pipeMinH, gapTop + 2);
+      const topPieceH = Math.max(0, gapTop + 2);
       const bottomPieceTop = gapBottom - 2;
       const bottomPieceH = Math.max(layout.pipeMinH, layout.groundY - bottomPieceTop + 4);
       const capOverlap = Math.max(1, layout.unit * 0.035);
