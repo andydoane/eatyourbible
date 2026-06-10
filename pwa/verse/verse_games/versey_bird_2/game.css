@@ -210,8 +210,7 @@ body{
   height: var(--size);
   border-radius: 999px;
   transform: translate(-50%, -50%);
-  background: rgba(255, 255, 255, 0.74);
-  box-shadow: 0 0 0 1px rgba(51, 83, 90, 0.10) inset;
+  background: rgba(20, 20, 20, 0.88);
 }
 
 .vb2-cloud-token{

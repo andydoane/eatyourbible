@@ -1003,20 +1003,24 @@
     if (!layout) return;
 
     const speed = getWorldSpeed();
+    const beeSpeed = speed * 1.5;
 
     for (const obstacle of state.obstacles) {
       obstacle.age += dt;
-      obstacle.x -= speed * dt;
 
       if (obstacle.type === "bee") {
-        const amplitude = layout.unit * 0.32;
+        obstacle.x -= beeSpeed * dt;
+
+        const amplitude = layout.unit * 0.36;
         obstacle.y = obstacle.baseY + Math.sin(obstacle.age * 6.1 + obstacle.wavePhase) * amplitude;
         obstacle.trailCooldown -= dt;
 
         if (!obstacle.hit && obstacle.trailCooldown <= 0) {
           addBeeTrailDot(obstacle);
-          obstacle.trailCooldown = 0.075;
+          obstacle.trailCooldown = 0.045;
         }
+      } else {
+        obstacle.x -= speed * dt;
       }
 
       if (!obstacle.hit && circlesOverlap(state.birdX, state.birdY, layout.birdRadius, obstacle.x, obstacle.y, obstacle.hitRadius)) {
@@ -1042,10 +1046,10 @@
 
     state.beeTrailDots.push({
       id: state.nextBeeTrailDotId++,
-      x: bee.x + bee.w * 0.34,
-      y: bee.y + (Math.random() - 0.5) * state.layout.unit * 0.18,
-      size: state.layout.unit * (0.08 + Math.random() * 0.035),
-      life: 0.44,
+      x: bee.x + bee.w * 0.28,
+      y: bee.y + (Math.random() - 0.5) * state.layout.unit * 0.10,
+      size: state.layout.unit * (0.055 + Math.random() * 0.025),
+      life: 1.65,
       age: 0
     });
   }
@@ -1318,8 +1322,8 @@
 
     const dotsHtml = state.beeTrailDots.map(dot => {
       const p = clamp(dot.age / dot.life, 0, 1);
-      const opacity = 1 - p;
-      const size = dot.size * (1 - p * 0.18);
+      const opacity = 0.72 * (1 - p);
+      const size = dot.size * (1 - p * 0.10);
       return `
         <div class="vb2-bee-trail-dot"
              style="
