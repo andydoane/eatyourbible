@@ -6,10 +6,14 @@
   const GAME_ID = "versey_bird_2";
   const GAME_TITLE = "Versey Bird";
   const GAME_THEME = { bg: "#333333", accent: "#333333" };
-  const BUILD_AREA = "large";
+  const BUILD_AREA = "compact";
   const HELP_OVERLAY_ID = "vb2HelpOverlay";
   const MENU_OVERLAY_ID = "vb2GameMenuOverlay";
   const IMAGE_PATH = "./versey_bird_images/";
+  const TARGET_FIELD_UNITS_WIDE = 6.75;
+  const MIN_UNIT = 42;
+  const MAX_UNIT = 116;
+  const MAX_UNIT_BY_HEIGHT = 0.19;
 
   const BIRD_COLORS = [
     { name: "yellow", primary: "#ffc751", secondary: "#a68235" },
@@ -571,8 +575,9 @@
     const width = Math.max(1, rect.width);
     const height = Math.max(1, rect.height);
 
-    const rawBirdH = Math.min(height * 0.145, width * 0.17);
-    const birdH = clamp(rawBirdH, 42, 74);
+    const widthBasedUnit = width / TARGET_FIELD_UNITS_WIDE;
+    const heightBasedMaxUnit = height * MAX_UNIT_BY_HEIGHT;
+    const birdH = clamp(widthBasedUnit, MIN_UNIT, Math.min(MAX_UNIT, heightBasedMaxUnit));
     const unit = birdH;
     const birdAspect = 155 / 136;
     const groundH = clamp(unit * 1.28, height * 0.14, height * 0.20);
