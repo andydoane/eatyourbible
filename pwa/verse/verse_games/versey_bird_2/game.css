@@ -244,7 +244,34 @@ body{
   background-repeat: no-repeat;
   background-position: center;
   filter: drop-shadow(0 7px 0 rgba(0,0,0,0.10));
+  animation: vb2CloudHappyDance 1120ms ease-in-out infinite;
   will-change: left, top, transform;
+}
+
+@keyframes vb2CloudHappyDance {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg) scale(1);
+  }
+
+  18% {
+    transform: translate(-50%, -50%) rotate(-4deg) scale(1.035);
+  }
+
+  34% {
+    transform: translate(-50%, -50%) rotate(0deg) scale(1);
+  }
+
+  58% {
+    transform: translate(-50%, -50%) rotate(4deg) scale(1.035);
+  }
+
+  74% {
+    transform: translate(-50%, -50%) rotate(0deg) scale(1);
+  }
+
+  100% {
+    transform: translate(-50%, -50%) rotate(0deg) scale(1);
+  }
 }
 
 .vb2-cloud-token.is-correct.vb2-collected{
