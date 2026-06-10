@@ -80,6 +80,18 @@
     }
   };
 
+  const BONUS_INTRO_DURATION_MS = 4600;
+
+  const BONUS_WORDS = [
+    { text: "BONUS", line: 0, delay: 0.15 },
+    { text: "ROUND", line: 0, delay: 0.65 },
+    { text: "WATCH", line: 1, delay: 1.45 },
+    { text: "OUT", line: 1, delay: 1.85 },
+    { text: "FOR", line: 1, delay: 2.20 },
+    { text: "THE", line: 1, delay: 2.55 },
+    { text: "PIPES", line: 1, delay: 2.90 }
+  ];
+
   const INTRO_WORDS = [
     { text: "TAP", line: 0, delay: 0.15 },
     { text: "TO", line: 0, delay: 0.55 },
@@ -418,33 +430,36 @@
     state.birdHidden = false;
   }
 
-  function enterBonusIntroPhase(){
+  function enterBonusIntroPhase() {
     state.phase = "bonusIntro";
     state.phaseStartedAt = performance.now();
-    state.bonusIntroUnlockAt = state.phaseStartedAt + 1350;
+    state.bonusIntroUnlockAt = 0;
     state.wordCloud = null;
     state.obstacles = [];
     state.beeTrailDots = [];
     state.bonusPipes = [];
+    state.nextPipeId = 1;
     state.pipeCooldown = 0;
-    state.birdHidden = true;
-    state.birdVY = 0;
+    state.pipesCleared = 0;
+    state.bonusElapsed = 0;
+    state.resultShown = false;
+    state.birdHidden = false;
+    updateBuildText();
   }
 
-  function enterBonusPhase(){
+  function enterBonusPhase() {
     state.phase = "bonus";
     state.phaseStartedAt = performance.now();
     state.bonusStartedAt = state.phaseStartedAt;
     state.bonusIntroUnlockAt = 0;
     state.bonusPipes = [];
     state.nextPipeId = 1;
-    state.pipeCooldown = 0.9;
+    state.pipeCooldown = 0.55;
     state.pipesCleared = 0;
     state.bonusElapsed = 0;
     state.resultShown = false;
     state.birdHidden = false;
-    resetBird();
-    flap();
+    updateBuildText();
   }
 
   function enterBonusCrashPhase(){
@@ -584,13 +599,7 @@
 
     if (state.paused) return;
 
-    if (state.phase === "bonusIntro"){
-      if (now < state.bonusIntroUnlockAt) return;
-      enterBonusPhase();
-      return;
-    }
-
-    if (state.phase === "intro" || state.phase === "verse" || state.phase === "bonus"){
+    if (state.phase === "intro" || state.phase === "verse" || state.phase === "bonusIntro" || state.phase === "bonus"){
       flap();
     }
   }
@@ -753,6 +762,12 @@
     }
 
     if (state.phase === "bonusIntro"){
+      updateBird(dt, false);
+
+      if (ts - state.phaseStartedAt > BONUS_INTRO_DURATION_MS){
+        enterBonusPhase();
+      }
+
       return;
     }
 
@@ -1259,6 +1274,7 @@
       if (!pipe.passed && pipe.x + layout.pipeW * 0.5 < state.birdX){
         pipe.passed = true;
         state.pipesCleared += 1;
+        updateBuildText();
       }
     }
 
@@ -1564,12 +1580,8 @@
     }
 
     if (state.phase === "bonusIntro"){
-      layer.innerHTML = `
-        <div class="vb2-bonus-ready">
-          <div class="vb2-bonus-ready-title">DON’T HIT THE PIPES.</div><br>
-          <div class="vb2-bonus-ready-subtitle">Tap to start bonus flight</div>
-        </div>
-      `;
+      const elapsed = (ts - state.phaseStartedAt) / 1000;
+      layer.innerHTML = BONUS_WORDS.map((word, index) => renderFlyingIntroWord(word, index, elapsed)).join("");
       return;
     }
 
@@ -1989,9 +2001,41 @@
     renderComplete();
   }
 
+  function renderBonusScoreBuild() {
+    const el = document.getElementById("vb2BuildText");
+    if (!el) return;
+
+    const unit = state.layout ? state.layout.unit : 64;
+    const pipeH = clamp(unit * 0.72, 42, 72);
+    const pipeW = clamp(unit * 3.55, 190, 360);
+    const fontSize = clamp(pipeH * 0.62, 25, 46);
+
+    el.className = "vb2-build-text vm-build-text vb2-bonus-score-build";
+    el.innerHTML = `
+      <div class="vb2-bonus-pipe-score"
+           style="
+             --bonus-pipe-h:${pipeH}px;
+             --bonus-pipe-w:${pipeW}px;
+             --bonus-score-font:${fontSize}px;
+           "
+           aria-label="Pipes cleared ${state.pipesCleared}">
+        <div class="vb2-bonus-pipe-cap vb2-bonus-pipe-cap--left"></div>
+        <div class="vb2-bonus-pipe-body"></div>
+        <div class="vb2-bonus-pipe-cap vb2-bonus-pipe-cap--right"></div>
+        <div class="vb2-bonus-pipe-score-number">${state.pipesCleared}</div>
+      </div>
+    `;
+  }
+
+
   function updateBuildText(){
     const el = document.getElementById("vb2BuildText");
     if (!el) return;
+
+    if (state.phase === "bonusIntro" || state.phase === "bonus" || state.phase === "bonusCrash"){
+      renderBonusScoreBuild();
+      return;
+    }
 
     const buildRender = window.VerseGameShell.renderBuildProgressHtml({
       verseText: ctx.verseText || "",
