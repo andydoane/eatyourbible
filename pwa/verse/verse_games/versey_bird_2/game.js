@@ -1389,10 +1389,15 @@
     }).join("");
   }
 
-  function renderWordCloud(ts){
+  function renderWordCloud(ts) {
     const layer = document.getElementById("vb2WordClouds");
-    if (!layer || !state.wordCloud) {
-      if (layer) layer.innerHTML = "";
+    if (!layer || !state.layout) return;
+
+    if (!state.wordCloud) {
+      if (layer.innerHTML) {
+        layer.innerHTML = "";
+        delete layer.dataset.cloudRenderKey;
+      }
       return;
     }
 
@@ -1400,26 +1405,42 @@
     const shape = CLOUD_SHAPES[cloud.shapeKey];
     const collectedClass = cloud.collected ? " vb2-collected" : "";
     const correctnessClass = cloud.correct ? " is-correct" : " is-decoy";
+    const renderKey = [
+      cloud.id,
+      cloud.label,
+      cloud.shapeKey,
+      cloud.correct ? "correct" : "decoy",
+      cloud.collected ? "collected" : "active"
+    ].join("|");
+
+    let token = layer.firstElementChild;
+
+    if (!token || layer.dataset.cloudRenderKey !== renderKey) {
+      layer.dataset.cloudRenderKey = renderKey;
+      layer.innerHTML = `
+        <div class="vb2-cloud-token${correctnessClass}${collectedClass}">
+          <div class="vb2-cloud-word">${escapeHtml(cloud.label)}</div>
+        </div>
+      `;
+      token = layer.firstElementChild;
+    }
+
+    if (!token) return;
+
     const wordSize = getWordFontSize(cloud);
     const danceDelay = cloud.collected ? "0ms" : `${-((ts + cloud.id * 173) % 1120)}ms`;
 
-    layer.innerHTML = `
-      <div class="vb2-cloud-token${correctnessClass}${collectedClass}"
-           style="
-             left:${cloud.x}px;
-             top:${cloud.y}px;
-             --cloud-w:${cloud.w}px;
-             --cloud-h:${cloud.h}px;
-             --cloud-img:url('${IMAGE_PATH}${shape.image}');
-             --text-x:${cloud.textX}%;
-             --text-y:${cloud.textY}%;
-             --word-size:${wordSize}px;
-             animation-delay:${danceDelay};
-           ">
-        <div class="vb2-cloud-word">${escapeHtml(cloud.label)}</div>
-      </div>
-    `;
+    token.style.left = `${cloud.x}px`;
+    token.style.top = `${cloud.y}px`;
+    token.style.setProperty("--cloud-w", `${cloud.w}px`);
+    token.style.setProperty("--cloud-h", `${cloud.h}px`);
+    token.style.setProperty("--cloud-img", `url('${IMAGE_PATH}${shape.image}')`);
+    token.style.setProperty("--text-x", `${cloud.textX}%`);
+    token.style.setProperty("--text-y", `${cloud.textY}%`);
+    token.style.setProperty("--word-size", `${wordSize}px`);
+    token.style.animationDelay = danceDelay;
   }
+  
 
   function renderObstacles() {
     const layer = document.getElementById("vb2Obstacles");
