@@ -1062,12 +1062,15 @@
         const currentBeeSpeed = obstacle.hit ? speed * 4.4 : beeSpeed;
         const amplitude = obstacle.hit ? layout.unit * 1.05 : layout.unit * 0.36;
         const waveRate = obstacle.hit ? 15.5 : 6.1;
+        const wildWiggle = obstacle.hit
+          ? Math.sin(obstacle.age * 28 + obstacle.wavePhase) * amplitude * 0.28
+          : 0;
         const extraLift = obstacle.hit ? -hitElapsed * layout.unit * 1.15 : 0;
 
         obstacle.x -= currentBeeSpeed * dt;
         obstacle.y = obstacle.baseY
           + Math.sin(obstacle.age * waveRate + obstacle.wavePhase) * amplitude
-          + Math.sin(obstacle.age * 28 + obstacle.wavePhase) * amplitude * 0.28
+          + wildWiggle
           + extraLift;
 
         obstacle.trailCooldown -= dt;
