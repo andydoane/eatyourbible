@@ -14,6 +14,7 @@
   const MIN_UNIT = 42;
   const MAX_UNIT = 116;
   const MAX_UNIT_BY_HEIGHT = 0.19;
+  const DECOY_CLOUD_HITBOX_SCALE = 0.80;
 
   const BIRD_COLORS = [
     { name: "yellow", primary: "#ffc751", secondary: "#a68235" },
@@ -875,6 +876,7 @@
     const label = (shouldBeCorrect || decoys.length === 0)
       ? correctLabel
       : decoys[Math.floor(Math.random() * decoys.length)];
+    const isCorrectCloud = label === correctLabel;
 
     const shapeKey = getCloudShapeKey(label);
     const shape = CLOUD_SHAPES[shapeKey];
@@ -884,12 +886,16 @@
     const laneIndex = Math.floor(Math.random() * layout.lanes.length);
     const laneY = layout.lanes[laneIndex];
     const hitPadding = getDifficulty().hitPaddingU * layout.unit;
+    const baseHitRadius = Math.max(w * 0.34, h * 0.54) + hitPadding;
+    const hitRadius = isCorrectCloud
+      ? baseHitRadius
+      : baseHitRadius * DECOY_CLOUD_HITBOX_SCALE;
 
     state.wordCloud = {
       id: state.nextCloudId++,
       label,
       phase,
-      correct: label === correctLabel,
+      correct: isCorrectCloud,
       x: layout.cloudSpawnX,
       y: clamp(laneY, layout.playTop + h * 0.52, layout.playBottom - h * 0.28),
       laneIndex,
@@ -898,7 +904,7 @@
       shapeKey,
       textX: shape.textX,
       textY: shape.textY,
-      hitRadius: Math.max(w * 0.34, h * 0.54) + hitPadding,
+      hitRadius,
       collected: false,
       collectAt: 0
     };
