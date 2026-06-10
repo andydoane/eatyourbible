@@ -205,7 +205,8 @@
     resultShown: false,
     flashUntil: 0,
     flashColor: "rgba(255,255,255,0.3)",
-    shakeUntil: 0
+    shakeUntil: 0,
+    skidCooldown: 0
   };
 
   setupReferenceSegments();
@@ -378,6 +379,7 @@
     state.flashUntil = 0;
     state.flashColor = "rgba(255,255,255,0.3)";
     state.shakeUntil = 0;
+    state.skidCooldown = 0;
   }
 
   function enterIntroPhase(){
@@ -766,6 +768,7 @@
         enterBonusCrashPhase();
       } else {
         state.birdVY = Math.min(0, state.birdVY) * -0.12;
+        updateGroundSkidDust(dt);
       }
     }
     state.birdAngle = clamp(state.birdVY / (layout.unit * 0.13), -24, 56);
@@ -1720,6 +1723,49 @@
       grow: 0.36,
       jitter: 0.30
     });
+  }
+
+  function updateGroundSkidDust(dt) {
+    if (!state.layout || state.birdHidden) return;
+    if (state.phase !== "intro" && state.phase !== "verse") return;
+
+    state.skidCooldown -= dt;
+    if (state.skidCooldown > 0) return;
+
+    addGroundSkidDust();
+    state.skidCooldown = 0.065 + Math.random() * 0.035;
+  }
+
+  function addGroundSkidDust() {
+    if (!state.layout) return;
+
+    const unit = state.layout.unit;
+    const dustCount = 2 + Math.floor(Math.random() * 2);
+    const originX = state.birdX - unit * 0.44;
+    const originY = state.layout.groundY - unit * 0.18;
+    const colors = PARTICLE_COLORS.brown;
+
+    for (let i = 0; i < dustCount; i++) {
+      const size = unit * randomBetween(0.10, 0.22);
+      const vx = -unit * randomBetween(0.65, 1.45);
+      const vy = -unit * randomBetween(0.18, 0.62);
+      const color = colors[Math.floor(Math.random() * colors.length)];
+
+      state.poofs.push({
+        id: Math.random().toString(36).slice(2),
+        x: originX + (Math.random() - 0.5) * unit * 0.28,
+        y: originY + (Math.random() - 0.5) * unit * 0.08,
+        size,
+        vx,
+        vy,
+        color,
+        ringColor: "rgba(255,255,255,0.16)",
+        grow: 0.95,
+        opacity: 0.72,
+        life: randomBetween(0.24, 0.42),
+        age: 0
+      });
+    }
   }
 
   function addPipeBurst(){
