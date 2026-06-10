@@ -1545,8 +1545,10 @@
     const opacity = t < 0 || t > travel ? 0 : 1;
     const size = clamp(layout.unit * 0.42, 18, 34);
 
+    const phraseClass = word.line === 0 ? " is-first-phrase" : " is-second-phrase";
+
     return `
-      <div class="vb2-flying-word" style="--x:${x}px; --y:${y}px; --tilt:${tilt}deg; --size:${size}px; opacity:${opacity};">
+      <div class="vb2-flying-word${phraseClass}" style="--x:${x}px; --y:${y}px; --tilt:${tilt}deg; --size:${size}px; opacity:${opacity};">
         ${escapeHtml(word.text)}
       </div>
     `;

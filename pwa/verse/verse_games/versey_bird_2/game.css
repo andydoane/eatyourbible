@@ -403,6 +403,18 @@ body{
   white-space: nowrap;
 }
 
+.vb2-flying-word.is-first-phrase {
+  background: #71c163;
+  color: #ffffff;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.14);
+}
+
+.vb2-flying-word.is-second-phrase {
+  background: #ff5a51;
+  color: #ffffff;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.14);
+}
+
 .vb2-bonus-ready{
   position: absolute;
   left: 50%;
