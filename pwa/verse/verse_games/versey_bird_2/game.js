@@ -2006,9 +2006,9 @@
     if (!el) return;
 
     const unit = state.layout ? state.layout.unit : 64;
-    const pipeH = clamp(unit * 0.72, 42, 72);
-    const pipeW = clamp(unit * 3.55, 190, 360);
-    const fontSize = clamp(pipeH * 0.62, 25, 46);
+    const pipeH = clamp(unit * 0.74, 44, 72);
+    const pipeW = clamp(unit * 4.25, 270, 390);
+    const fontSize = clamp(pipeH * 0.68, 28, 48);
 
     el.className = "vb2-build-text vm-build-text vb2-bonus-score-build";
     el.innerHTML = `
@@ -2019,8 +2019,8 @@
              --bonus-score-font:${fontSize}px;
            "
            aria-label="Pipes cleared ${state.pipesCleared}">
-        <div class="vb2-bonus-pipe-cap vb2-bonus-pipe-cap--left"></div>
         <div class="vb2-bonus-pipe-body"></div>
+        <div class="vb2-bonus-pipe-cap vb2-bonus-pipe-cap--left"></div>
         <div class="vb2-bonus-pipe-cap vb2-bonus-pipe-cap--right"></div>
         <div class="vb2-bonus-pipe-score-number">${state.pipesCleared}</div>
       </div>

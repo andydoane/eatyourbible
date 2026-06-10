@@ -53,42 +53,61 @@ body{
 }
 
 .vb2-bonus-pipe-score {
+  --bonus-cap-w: calc(var(--bonus-pipe-h) * 0.60);
   position: relative;
   width: var(--bonus-pipe-w);
   height: var(--bonus-pipe-h);
-  display: grid;
-  grid-template-columns: calc(var(--bonus-pipe-h) * 0.58) 1fr calc(var(--bonus-pipe-h) * 0.58);
-  align-items: stretch;
   filter: drop-shadow(0 5px 0 rgba(0, 0, 0, 0.14));
 }
 
-.vb2-bonus-pipe-cap,
 .vb2-bonus-pipe-body {
+  position: absolute;
+  z-index: 1;
+  left: calc(var(--bonus-cap-w) * 0.52);
+  right: calc(var(--bonus-cap-w) * 0.52);
+  top: calc(var(--bonus-pipe-h) * 0.16);
+  bottom: calc(var(--bonus-pipe-h) * 0.16);
+  background-image: url("./versey_bird_images/versey_bird_pipe.svg");
   background-repeat: no-repeat;
   background-position: center;
+  background-size: 100% 100%;
 }
 
 .vb2-bonus-pipe-cap {
-  position: relative;
+  position: absolute;
   z-index: 2;
+  top: 0;
+  width: var(--bonus-cap-w);
+  height: var(--bonus-pipe-h);
+}
+
+.vb2-bonus-pipe-cap::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--bonus-pipe-h);
+  height: calc(var(--bonus-pipe-h) * 0.38);
   background-image: url("./versey_bird_images/versey_bird_pipe_cap.svg");
+  background-repeat: no-repeat;
+  background-position: center;
   background-size: 100% 100%;
 }
 
 .vb2-bonus-pipe-cap--left {
-  transform: rotate(-90deg) scale(1.08);
+  left: 0;
+}
+
+.vb2-bonus-pipe-cap--left::before {
+  transform: translate(-50%, -50%) rotate(-90deg);
 }
 
 .vb2-bonus-pipe-cap--right {
-  transform: rotate(90deg) scale(1.08);
+  right: 0;
 }
 
-.vb2-bonus-pipe-body {
-  position: relative;
-  z-index: 1;
-  margin: calc(var(--bonus-pipe-h) * 0.08) calc(var(--bonus-pipe-h) * -0.03);
-  background-image: url("./versey_bird_images/versey_bird_pipe.svg");
-  background-size: 100% 100%;
+.vb2-bonus-pipe-cap--right::before {
+  transform: translate(-50%, -50%) rotate(90deg);
 }
 
 .vb2-bonus-pipe-score-number {
