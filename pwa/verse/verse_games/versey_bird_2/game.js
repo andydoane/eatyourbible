@@ -74,6 +74,7 @@
       bonusPipeEveryU: 5.45,
       obstacleCloudMin: 4,
       obstacleCloudMax: 5,
+      obstacleCloudChoices: [4, 4, 5],
       obstacleBeeChance: 0.35
     },
     medium: {
@@ -89,6 +90,7 @@
       bonusPipeEveryU: 5.10,
       obstacleCloudMin: 3,
       obstacleCloudMax: 4,
+      obstacleCloudChoices: [3, 3, 4],
       obstacleBeeChance: 0.50
     },
     hard: {
@@ -104,6 +106,7 @@
       bonusPipeEveryU: 4.85,
       obstacleCloudMin: 2,
       obstacleCloudMax: 3,
+      obstacleCloudChoices: [2, 2, 3],
       obstacleBeeChance: 0.60
     }
   };
@@ -905,6 +908,12 @@
 
   function getNextObstacleCloudCountdown() {
     const difficulty = getDifficulty();
+    const choices = difficulty.obstacleCloudChoices;
+
+    if (Array.isArray(choices) && choices.length) {
+      return choices[Math.floor(Math.random() * choices.length)];
+    }
+
     const min = difficulty.obstacleCloudMin || 3;
     const max = difficulty.obstacleCloudMax || min;
     return min + Math.floor(Math.random() * (max - min + 1));
