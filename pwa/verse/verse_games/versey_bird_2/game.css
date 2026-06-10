@@ -53,71 +53,33 @@ body{
 }
 
 .vb2-bonus-pipe-score {
-  --bonus-cap-w: calc(var(--bonus-pipe-h) * 0.60);
   position: relative;
-  width: var(--bonus-pipe-w);
-  height: var(--bonus-pipe-h);
+  height: calc(100% - 8px);
+  max-height: 74px;
+  max-width: 96%;
+  aspect-ratio: 866 / 333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.vb2-bonus-pipe-score-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+  pointer-events: none;
   filter: drop-shadow(0 5px 0 rgba(0, 0, 0, 0.14));
-}
-
-.vb2-bonus-pipe-body {
-  position: absolute;
-  z-index: 1;
-  left: calc(var(--bonus-cap-w) * 0.52);
-  right: calc(var(--bonus-cap-w) * 0.52);
-  top: calc(var(--bonus-pipe-h) * 0.16);
-  bottom: calc(var(--bonus-pipe-h) * 0.16);
-  background-image: url("./versey_bird_images/versey_bird_pipe.svg");
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: 100% 100%;
-}
-
-.vb2-bonus-pipe-cap {
-  position: absolute;
-  z-index: 2;
-  top: 0;
-  width: var(--bonus-cap-w);
-  height: var(--bonus-pipe-h);
-}
-
-.vb2-bonus-pipe-cap::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: var(--bonus-pipe-h);
-  height: calc(var(--bonus-pipe-h) * 0.38);
-  background-image: url("./versey_bird_images/versey_bird_pipe_cap.svg");
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: 100% 100%;
-}
-
-.vb2-bonus-pipe-cap--left {
-  left: 0;
-}
-
-.vb2-bonus-pipe-cap--left::before {
-  transform: translate(-50%, -50%) rotate(-90deg);
-}
-
-.vb2-bonus-pipe-cap--right {
-  right: 0;
-}
-
-.vb2-bonus-pipe-cap--right::before {
-  transform: translate(-50%, -50%) rotate(90deg);
 }
 
 .vb2-bonus-pipe-score-number {
   position: absolute;
-  z-index: 3;
-  inset: 0;
-  display: grid;
-  place-items: center;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
   color: #ffffff;
-  font-size: var(--bonus-score-font);
+  font-size: calc((100% - 8px) * 0.45);
   font-weight: 900;
   line-height: 1;
   font-variant-numeric: tabular-nums;
