@@ -328,7 +328,6 @@ body{
   background-repeat: no-repeat;
   background-position: center;
   transform: translateX(-50%);
-  filter: drop-shadow(5px 5px 0 rgba(0,0,0,0.10));
 }
 
 .vb2-pipe-piece{

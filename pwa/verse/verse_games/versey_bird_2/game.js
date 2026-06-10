@@ -1322,7 +1322,7 @@
 
     const dotsHtml = state.beeTrailDots.map(dot => {
       const p = clamp(dot.age / dot.life, 0, 1);
-      const opacity = 0.72 * (1 - p);
+      const opacity = 0.50 * (1 - p);
       const size = dot.size * (1 - p * 0.10);
       return `
         <div class="vb2-bee-trail-dot"
