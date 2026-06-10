@@ -1401,6 +1401,7 @@
     const collectedClass = cloud.collected ? " vb2-collected" : "";
     const correctnessClass = cloud.correct ? " is-correct" : " is-decoy";
     const wordSize = getWordFontSize(cloud);
+    const danceDelay = cloud.collected ? "0ms" : `${-((ts + cloud.id * 173) % 1120)}ms`;
 
     layer.innerHTML = `
       <div class="vb2-cloud-token${correctnessClass}${collectedClass}"
@@ -1413,6 +1414,7 @@
              --text-x:${cloud.textX}%;
              --text-y:${cloud.textY}%;
              --word-size:${wordSize}px;
+             animation-delay:${danceDelay};
            ">
         <div class="vb2-cloud-word">${escapeHtml(cloud.label)}</div>
       </div>
