@@ -210,7 +210,10 @@
     fpsFrames: 0,
     fpsLastAt: 0,
     fpsValue: 0,
-    fpsLow: 999
+    fpsLow: 999,
+    fpsWorkTotal: 0,
+    fpsWorkMax: 0,
+    fpsWorkAvg: 0
   };
 
   setupReferenceSegments();
@@ -389,6 +392,9 @@
     state.fpsLastAt = 0;
     state.fpsValue = 0;
     state.fpsLow = 999;
+    state.fpsWorkTotal = 0;
+    state.fpsWorkMax = 0;
+    state.fpsWorkAvg = 0;
   }
 
   function enterIntroPhase(){
@@ -698,8 +704,9 @@
     state.running = false;
   }
 
-  function tick(ts){
-    if (!state.running){
+
+  function tick(ts) {
+    if (!state.running) {
       state.rafId = 0;
       return;
     }
@@ -708,11 +715,18 @@
     const dt = Math.min(0.033, Math.max(0, (ts - state.lastTs) / 1000));
     state.lastTs = ts;
 
-    if (!state.paused){
+    const workStart = performance.now();
+
+    if (!state.paused) {
       update(dt, ts);
     }
 
     render(ts);
+
+    const workMs = performance.now() - workStart;
+    state.fpsWorkTotal += workMs;
+    state.fpsWorkMax = Math.max(state.fpsWorkMax, workMs);
+
     state.rafId = requestAnimationFrame(tick);
   }
 
@@ -1606,6 +1620,8 @@
     if (!state.fpsLastAt) {
       state.fpsLastAt = ts;
       state.fpsFrames = 0;
+      state.fpsWorkTotal = 0;
+      state.fpsWorkMax = 0;
       return;
     }
 
@@ -1615,17 +1631,23 @@
     if (elapsed < 500) return;
 
     const fps = Math.round((state.fpsFrames * 1000) / elapsed);
+    const workAvg = state.fpsFrames > 0 ? state.fpsWorkTotal / state.fpsFrames : 0;
+    const workMax = state.fpsWorkMax;
+
     state.fpsValue = fps;
+    state.fpsWorkAvg = workAvg;
 
     if (fps > 0) {
       state.fpsLow = Math.min(state.fpsLow, fps);
     }
 
     const lowText = state.fpsLow === 999 ? "--" : state.fpsLow;
-    counter.textContent = `FPS ${state.fpsValue} / LOW ${lowText}`;
+    counter.textContent = `FPS ${state.fpsValue} / LOW ${lowText} / WORK ${workAvg.toFixed(1)} / MAX ${workMax.toFixed(1)}ms`;
 
     state.fpsFrames = 0;
     state.fpsLastAt = ts;
+    state.fpsWorkTotal = 0;
+    state.fpsWorkMax = 0;
   }
 
   function renderBuildShake(ts){
