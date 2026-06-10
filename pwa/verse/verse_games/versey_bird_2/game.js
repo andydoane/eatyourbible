@@ -2003,11 +2003,20 @@
 
   function renderBonusScoreBuild() {
     const el = document.getElementById("vb2BuildText");
+    const build = document.getElementById("vb2Build");
     if (!el) return;
+
+    const buildH = build ? build.getBoundingClientRect().height : 72;
+    const pipeH = clamp(buildH - 8, 42, 74);
+    const fontSize = pipeH * 0.45;
 
     el.className = "vb2-build-text vm-build-text vb2-bonus-score-build";
     el.innerHTML = `
       <div class="vb2-bonus-pipe-score"
+           style="
+             --bonus-pipe-h:${pipeH}px;
+             --bonus-score-font:${fontSize}px;
+           "
            aria-label="Pipes cleared ${state.pipesCleared}">
         <img
           class="vb2-bonus-pipe-score-img"
