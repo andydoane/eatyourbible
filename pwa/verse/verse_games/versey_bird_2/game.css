@@ -202,6 +202,27 @@ body{
   animation: vb2WrongPoof 260ms ease-out forwards;
 }
 
+.vb2-obstacle--bee.is-hit {
+  animation: vb2BeeWildExit 900ms ease-out forwards;
+}
+
+@keyframes vb2BeeWildExit {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+
+  45% {
+    transform: translate(-50%, -50%) rotate(32deg) scale(1.08);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translate(-50%, -50%) rotate(-70deg) scale(0.70);
+    opacity: 0;
+  }
+}
+
 .vb2-bee-trail-dot {
   position: absolute;
   left: var(--x);
@@ -274,6 +295,17 @@ body{
   background: var(--poof-color, rgba(255,255,255,0.78));
   box-shadow: 0 0 0 2px var(--poof-ring-color, rgba(255,255,255,0.30)) inset;
   will-change: left, top, width, height, opacity;
+}
+
+.vb2-poof--image {
+  border-radius: 0;
+  background: transparent;
+  background-image: var(--poof-img);
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
+  box-shadow: none;
+  will-change: left, top, width, height, opacity, transform;
 }
 
 .vb2-bird-layer{

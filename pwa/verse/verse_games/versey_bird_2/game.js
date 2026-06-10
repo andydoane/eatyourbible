@@ -15,6 +15,7 @@
   const MAX_UNIT = 116;
   const MAX_UNIT_BY_HEIGHT = 0.19;
   const DECOY_CLOUD_HITBOX_SCALE = 0.80;
+  const LIGHTNING_PARTICLE_IMAGE = "versey_bird_lightning.svg";
   const PARTICLE_COLORS = {
     rainbow: [
       "#ff5a51",
@@ -855,6 +856,7 @@
       poof.x += (poof.vx || 0) * dt;
       poof.x -= getWorldSpeed() * dt * 0.55;
       poof.y += poof.vy * dt;
+      poof.rotation = (poof.rotation || 0) + (poof.spin || 0) * dt;
     }
     state.poofs = state.poofs.filter(poof => poof.age < poof.life);
   }
@@ -1056,10 +1058,18 @@
       obstacle.age += dt;
 
       if (obstacle.type === "bee") {
-        obstacle.x -= beeSpeed * dt;
+        const hitElapsed = obstacle.hit ? Math.max(0, (ts - obstacle.hitAt) / 1000) : 0;
+        const currentBeeSpeed = obstacle.hit ? speed * 4.4 : beeSpeed;
+        const amplitude = obstacle.hit ? layout.unit * 1.05 : layout.unit * 0.36;
+        const waveRate = obstacle.hit ? 15.5 : 6.1;
+        const extraLift = obstacle.hit ? -hitElapsed * layout.unit * 1.15 : 0;
 
-        const amplitude = layout.unit * 0.36;
-        obstacle.y = obstacle.baseY + Math.sin(obstacle.age * 6.1 + obstacle.wavePhase) * amplitude;
+        obstacle.x -= currentBeeSpeed * dt;
+        obstacle.y = obstacle.baseY
+          + Math.sin(obstacle.age * waveRate + obstacle.wavePhase) * amplitude
+          + Math.sin(obstacle.age * 28 + obstacle.wavePhase) * amplitude * 0.28
+          + extraLift;
+
         obstacle.trailCooldown -= dt;
 
         if (!obstacle.hit && obstacle.trailCooldown <= 0) {
@@ -1081,7 +1091,10 @@
     }
 
     state.obstacles = state.obstacles.filter(obstacle => {
-      if (obstacle.hit && ts - obstacle.hitAt > 270) return false;
+      if (obstacle.hit) {
+        const keepMs = obstacle.type === "bee" ? 900 : 270;
+        if (ts - obstacle.hitAt > keepMs) return false;
+      }
       return obstacle.x > -layout.unit * 2.2;
     });
 
@@ -1110,7 +1123,7 @@
     if (obstacle.type === "boulder") {
       addBoulderBurst(obstacle);
     } else {
-      addBurst(obstacle.x, obstacle.y, 5);
+      addBeeLightningBurst(obstacle);
     }
     flash("rgba(255, 90, 81, 0.25)", 130);
   }
@@ -1333,6 +1346,24 @@
       const grow = Number.isFinite(poof.grow) ? poof.grow : 0.65;
       const size = poof.size * (1 + p * grow);
       const opacity = (poof.opacity || 1) * (1 - p);
+      const rotation = poof.rotation || 0;
+
+      if (poof.image) {
+        return `
+          <div class="vb2-poof vb2-poof--image"
+               style="
+                 left:${poof.x}px;
+                 top:${poof.y}px;
+                 width:${size}px;
+                 height:${size}px;
+                 opacity:${opacity};
+                 transform: translate(-50%, -50%) rotate(${rotation}deg);
+                 --poof-img:url('${IMAGE_PATH}${poof.image}');
+               ">
+          </div>
+        `;
+      }
+
       const color = poof.color || "rgba(255,255,255,0.78)";
       const ringColor = poof.ringColor || "rgba(255,255,255,0.30)";
 
@@ -1605,6 +1636,8 @@
     const life = options.life || [0.34, 0.62];
     const grow = Number.isFinite(options.grow) ? options.grow : 0.18;
     const jitter = Number.isFinite(options.jitter) ? options.jitter : 0.22;
+    const image = options.image || "";
+    const spinU = options.spinU || [0, 0];
     const startAngle = Math.random() * Math.PI * 2;
 
     for (let i = 0; i < count; i++){
@@ -1623,6 +1656,9 @@
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed,
         color,
+        image,
+        rotation: Math.random() * 360,
+        spin: randomBetween(spinU[0], spinU[1]) * (Math.random() < 0.5 ? -1 : 1),
         ringColor: "rgba(255,255,255,0.24)",
         grow,
         opacity: options.opacity || 1,
@@ -1692,6 +1728,32 @@
       life: [0.38, 0.68],
       grow: 0.16,
       jitter: 0.20
+    });
+  }
+
+  function addBeeLightningBurst(obstacle) {
+    addParticleBurst(state.birdX, state.birdY, {
+      count: 15,
+      image: LIGHTNING_PARTICLE_IMAGE,
+      sizeU: [0.18, 0.34],
+      speedU: [2.5, 5.4],
+      life: [0.34, 0.66],
+      grow: -0.10,
+      jitter: 0.28,
+      spinU: [360, 820],
+      opacity: 0.95
+    });
+
+    addParticleBurst(obstacle.x, obstacle.y, {
+      count: 7,
+      image: LIGHTNING_PARTICLE_IMAGE,
+      sizeU: [0.12, 0.24],
+      speedU: [1.8, 3.8],
+      life: [0.26, 0.48],
+      grow: -0.08,
+      jitter: 0.40,
+      spinU: [420, 900],
+      opacity: 0.88
     });
   }
 
