@@ -80,7 +80,8 @@
     }
   };
 
-  const BONUS_INTRO_DURATION_MS = 4600;
+  const FLYING_WORD_TRAVEL_SECONDS = 3.0;
+  const FLYING_MESSAGE_GRACE_SECONDS = 0.25;
 
   const BONUS_WORDS = [
     { text: "BONUS", line: 0, delay: 0.15 },
@@ -748,9 +749,12 @@
 
     if (state.phase === "intro"){
       updateBird(dt, false);
-      if (ts - state.introStartedAt > 5200){
+
+      const elapsed = (ts - state.introStartedAt) / 1000;
+      if (isFlyingMessageComplete(INTRO_WORDS, elapsed)){
         enterVersePhase();
       }
+
       return;
     }
 
@@ -764,7 +768,8 @@
     if (state.phase === "bonusIntro"){
       updateBird(dt, false);
 
-      if (ts - state.phaseStartedAt > BONUS_INTRO_DURATION_MS){
+      const elapsed = (ts - state.phaseStartedAt) / 1000;
+      if (isFlyingMessageComplete(BONUS_WORDS, elapsed)){
         enterBonusPhase();
       }
 
@@ -1588,12 +1593,29 @@
     layer.innerHTML = "";
   }
 
-  function renderFlyingIntroWord(word, index, elapsed){
+  function isFlyingMessageComplete(words, elapsed) {
+    if (!Array.isArray(words) || words.length === 0) return true;
+
+    const lastDelay = words.reduce((latest, word) => {
+      return Math.max(latest, Number(word.delay) || 0);
+    }, 0);
+
+    return elapsed >= lastDelay + FLYING_WORD_TRAVEL_SECONDS + FLYING_MESSAGE_GRACE_SECONDS;
+  }
+
+  function getFlyingWordWidth(word, size) {
+    const text = String(word && word.text ? word.text : "");
+    return text.length * size * 0.72 + size * 1.70;
+  }
+
+  function renderFlyingIntroWord(word, index, elapsed) {
     const layout = state.layout;
     const t = elapsed - word.delay;
-    const travel = 3.0;
-    const startX = layout.width + layout.unit * (2.1 + index * 0.18);
-    const endX = -layout.unit * 2.0;
+    const travel = FLYING_WORD_TRAVEL_SECONDS;
+    const size = clamp(layout.unit * 0.42, 18, 34);
+    const wordW = getFlyingWordWidth(word, size);
+    const startX = layout.width + wordW * 0.5 + layout.unit * (0.65 + index * 0.18);
+    const endX = -(wordW * 0.5 + layout.unit * 0.25);
     const progress = clamp(t / travel, 0, 1);
     const x = startX + (endX - startX) * progress;
     const baseY = word.line === 0
@@ -1602,7 +1624,6 @@
     const y = baseY + Math.sin((t * 5.4) + index) * layout.unit * 0.18;
     const tilt = Math.sin((t * 4.2) + index) * 5;
     const opacity = t < 0 || t > travel ? 0 : 1;
-    const size = clamp(layout.unit * 0.42, 18, 34);
 
     const phraseClass = word.line === 0 ? " is-first-phrase" : " is-second-phrase";
 
