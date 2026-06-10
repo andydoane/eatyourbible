@@ -271,8 +271,9 @@ body{
   position: absolute;
   border-radius: 999px;
   transform: translate(-50%, -50%);
-  background: rgba(255,255,255,0.78);
-  box-shadow: 0 0 0 2px rgba(255,255,255,0.30) inset;
+  background: var(--poof-color, rgba(255,255,255,0.78));
+  box-shadow: 0 0 0 2px var(--poof-ring-color, rgba(255,255,255,0.30)) inset;
+  will-change: left, top, width, height, opacity;
 }
 
 .vb2-bird-layer{

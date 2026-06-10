@@ -15,6 +15,33 @@
   const MAX_UNIT = 116;
   const MAX_UNIT_BY_HEIGHT = 0.19;
   const DECOY_CLOUD_HITBOX_SCALE = 0.80;
+  const PARTICLE_COLORS = {
+    rainbow: [
+      "#ff5a51",
+      "#ff9f43",
+      "#ffc751",
+      "#7ed957",
+      "#38bdf8",
+      "#7f66c6",
+      "#ff7ab6"
+    ],
+    white: [
+      "rgba(255,255,255,0.96)",
+      "rgba(245,252,255,0.92)"
+    ],
+    brown: [
+      "#8a5a32",
+      "#a86f3d",
+      "#c58a4a",
+      "#6f4728"
+    ],
+    green: [
+      "#4ade80",
+      "#22c55e",
+      "#86efac",
+      "#16a34a"
+    ]
+  };
 
   const BIRD_COLORS = [
     { name: "yellow", primary: "#ffc751", secondary: "#a68235" },
@@ -1080,7 +1107,11 @@
     state.streak = 0;
     state.birdSpinUntil = ts + 620;
     state.shakeUntil = ts + 260;
-    addBurst(obstacle.x, obstacle.y, obstacle.type === "bee" ? 5 : 6);
+    if (obstacle.type === "boulder") {
+      addBoulderBurst(obstacle);
+    } else {
+      addBurst(obstacle.x, obstacle.y, 5);
+    }
     flash("rgba(255, 90, 81, 0.25)", 130);
   }
 
@@ -1129,7 +1160,7 @@
     state.streak += 1;
     state.bestStreak = Math.max(state.bestStreak, state.streak);
     state.progressIndex += 1;
-    addBurst(cloud.x, cloud.y, 7);
+    addCorrectCloudBurst(cloud);
     flash("rgba(120, 220, 190, 0.25)", 110);
     updateBuildText();
 
@@ -1150,7 +1181,7 @@
     state.streak = 0;
     state.birdSpinUntil = ts + 620;
     state.shakeUntil = ts + 260;
-    addBurst(cloud.x, cloud.y, 5);
+    addWrongCloudBurst(cloud);
     flash("rgba(255, 90, 81, 0.25)", 130);
 
     setTimeout(() => {
@@ -1193,6 +1224,7 @@
 
     for (const pipe of state.bonusPipes){
       if (pipeHitsBird(pipe)){
+        addPipeBurst();
         enterBonusCrashPhase();
         break;
       }
@@ -1298,10 +1330,24 @@
 
     layer.innerHTML = state.poofs.map(poof => {
       const p = clamp(poof.age / poof.life, 0, 1);
-      const size = poof.size * (1 + p * 0.65);
-      const opacity = 1 - p;
+      const grow = Number.isFinite(poof.grow) ? poof.grow : 0.65;
+      const size = poof.size * (1 + p * grow);
+      const opacity = (poof.opacity || 1) * (1 - p);
+      const color = poof.color || "rgba(255,255,255,0.78)";
+      const ringColor = poof.ringColor || "rgba(255,255,255,0.30)";
+
       return `
-        <div class="vb2-poof" style="left:${poof.x}px; top:${poof.y}px; width:${size}px; height:${size}px; opacity:${opacity};"></div>
+        <div class="vb2-poof"
+             style="
+               left:${poof.x}px;
+               top:${poof.y}px;
+               width:${size}px;
+               height:${size}px;
+               opacity:${opacity};
+               --poof-color:${color};
+               --poof-ring-color:${ringColor};
+             ">
+        </div>
       `;
     }).join("");
   }
@@ -1530,7 +1576,7 @@
     }
   }
 
-  function addPoof(x, y, sizeU, life, vx = 0, vy = null){
+  function addPoof(x, y, sizeU, life, vx = 0, vy = null, color = "rgba(255,255,255,0.78)"){
     if (!state.layout) return;
     state.poofs.push({
       id: Math.random().toString(36).slice(2),
@@ -1539,24 +1585,114 @@
       size: sizeU * state.layout.unit,
       vx,
       vy: vy === null ? (Math.random() - 0.5) * state.layout.unit * 0.25 : vy,
+      color,
+      ringColor: "rgba(255,255,255,0.30)",
+      grow: 0.65,
+      opacity: 1,
       life,
       age: 0
     });
   }
 
-  function addBurst(x, y, count){
+  function addParticleBurst(x, y, options = {}){
     if (!state.layout) return;
+
+    const unit = state.layout.unit;
+    const count = options.count || 12;
+    const colors = options.colors || PARTICLE_COLORS.white;
+    const sizeU = options.sizeU || [0.10, 0.20];
+    const speedU = options.speedU || [1.8, 3.8];
+    const life = options.life || [0.34, 0.62];
+    const grow = Number.isFinite(options.grow) ? options.grow : 0.18;
+    const jitter = Number.isFinite(options.jitter) ? options.jitter : 0.22;
+    const startAngle = Math.random() * Math.PI * 2;
+
     for (let i = 0; i < count; i++){
+      const evenAngle = startAngle + (Math.PI * 2 * i) / count;
+      const angle = evenAngle + (Math.random() - 0.5) * jitter;
+      const speed = randomBetween(speedU[0], speedU[1]) * unit;
+      const size = randomBetween(sizeU[0], sizeU[1]) * unit;
+      const particleLife = randomBetween(life[0], life[1]);
+      const color = colors[Math.floor(Math.random() * colors.length)];
+
       state.poofs.push({
         id: Math.random().toString(36).slice(2),
-        x: x + (Math.random() - 0.5) * state.layout.unit * 0.7,
-        y: y + (Math.random() - 0.5) * state.layout.unit * 0.45,
-        size: state.layout.unit * (0.16 + Math.random() * 0.20),
-        vy: (Math.random() - 0.65) * state.layout.unit * 0.8,
-        life: 0.24 + Math.random() * 0.16,
+        x,
+        y,
+        size,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        color,
+        ringColor: "rgba(255,255,255,0.24)",
+        grow,
+        opacity: options.opacity || 1,
+        life: particleLife,
         age: 0
       });
     }
+  }
+
+  function randomBetween(min, max){
+    return min + Math.random() * (max - min);
+  }
+
+  function addBurst(x, y, count){
+    addParticleBurst(x, y, {
+      count,
+      colors: PARTICLE_COLORS.white,
+      sizeU: [0.11, 0.22],
+      speedU: [1.4, 3.2],
+      life: [0.28, 0.48],
+      grow: 0.45
+    });
+  }
+
+  function addCorrectCloudBurst(cloud){
+    addParticleBurst(cloud.x, cloud.y, {
+      count: 18,
+      colors: PARTICLE_COLORS.rainbow,
+      sizeU: [0.10, 0.21],
+      speedU: [2.1, 4.6],
+      life: [0.42, 0.72],
+      grow: 0.12,
+      jitter: 0.18
+    });
+  }
+
+  function addWrongCloudBurst(cloud){
+    addParticleBurst(cloud.x, cloud.y, {
+      count: 11,
+      colors: PARTICLE_COLORS.white,
+      sizeU: [0.07, 0.14],
+      speedU: [1.5, 3.0],
+      life: [0.30, 0.52],
+      grow: 0.20,
+      jitter: 0.22
+    });
+  }
+
+  function addBoulderBurst(obstacle){
+    addParticleBurst(obstacle.x, obstacle.y, {
+      count: 16,
+      colors: PARTICLE_COLORS.brown,
+      sizeU: [0.18, 0.36],
+      speedU: [1.3, 3.2],
+      life: [0.44, 0.78],
+      grow: 0.36,
+      jitter: 0.30
+    });
+  }
+
+  function addPipeBurst(){
+    addParticleBurst(state.birdX, state.birdY, {
+      count: 17,
+      colors: PARTICLE_COLORS.green,
+      sizeU: [0.11, 0.23],
+      speedU: [2.0, 4.2],
+      life: [0.38, 0.68],
+      grow: 0.16,
+      jitter: 0.20
+    });
   }
 
   function flash(color, ms){
