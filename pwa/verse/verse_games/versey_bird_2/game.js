@@ -10,6 +10,40 @@
   const HELP_OVERLAY_ID = "vb2HelpOverlay";
   const MENU_OVERLAY_ID = "vb2GameMenuOverlay";
   const IMAGE_PATH = "./versey_bird_images/";
+  const SOUND_BASE_PATH = "./versey_bird_sounds/";
+  const UI_SOUND_BASE_PATH = "../../ui_audio/";
+
+  const SOUND_FILES = {
+    uiTap1: `${UI_SOUND_BASE_PATH}ui_sound_pop_1.mp3`,
+    uiTap2: `${UI_SOUND_BASE_PATH}ui_sound_pop_2.mp3`,
+
+    flap1: `${SOUND_BASE_PATH}versey_bird_flap_1.mp3`,
+    flap2: `${SOUND_BASE_PATH}versey_bird_flap_2.mp3`,
+    flap3: `${SOUND_BASE_PATH}versey_bird_flap_3.mp3`,
+    flap4: `${SOUND_BASE_PATH}versey_bird_flap_4.mp3`,
+    boulder: `${SOUND_BASE_PATH}versey_bird_boulder.mp3`,
+    correct: `${SOUND_BASE_PATH}versey_bird_correct.mp3`,
+    pipeCleared: `${SOUND_BASE_PATH}versey_bird_pipe_cleared.mp3`,
+    pipeCrash: `${SOUND_BASE_PATH}versey_bird_pipe_crash.mp3`,
+    streak: `${SOUND_BASE_PATH}versey_bird_streak.mp3`,
+    wrong: `${SOUND_BASE_PATH}versey_bird_wrong.mp3`,
+    beeHit: `${SOUND_BASE_PATH}versey_bird_bee_hit.mp3`
+  };
+
+  const SOUND_TUNING = {
+    masterVolume: 0.82,
+    volumes: {
+      uiTap: 0.45,
+      flap: 0.40,
+      correct: 0.58,
+      wrong: 0.62,
+      beeHit: 0.70,
+      boulder: 0.72,
+      pipeCleared: 0.58,
+      pipeCrash: 0.78,
+      streak: 0.68
+    }
+  };
   const TARGET_FIELD_UNITS_WIDE = 6.75;
   const MIN_UNIT = 42;
   const MAX_UNIT = 116;
@@ -164,6 +198,13 @@
   let completionResult = null;
   let muted = false;
   let birdSvgText = "";
+  let audioCtx = null;
+  let silenceAudio = null;
+  let audioUnlocked = false;
+  let uiSoundFlip = false;
+  let lastFlapSound = "";
+  const soundBuffers = new Map();
+  const soundBufferPromises = new Map();
 
   const state = {
     running: false,
@@ -243,8 +284,165 @@
   };
 
   setupReferenceSegments();
+  ensureSilenceAudio();
   renderIntro();
   preloadBirdSvg();
+
+  function getAudioContext() {
+    if (!audioCtx) {
+      const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextCtor) return null;
+      audioCtx = new AudioContextCtor();
+    }
+
+    return audioCtx;
+  }
+
+  function ensureSilenceAudio() {
+    if (silenceAudio) return silenceAudio;
+
+    silenceAudio = new Audio("../../verse_audio/silence.mp3");
+    silenceAudio.preload = "auto";
+    silenceAudio.loop = false;
+    silenceAudio.volume = 0.001;
+    silenceAudio.setAttribute("playsinline", "true");
+
+    return silenceAudio;
+  }
+
+  async function unlockAudio() {
+    const ctx = getAudioContext();
+    if (!ctx) return false;
+
+    try {
+      const silent = ensureSilenceAudio();
+      silent.currentTime = 0;
+
+      const silentPlay = silent.play();
+      if (silentPlay && typeof silentPlay.catch === "function") {
+        silentPlay.catch(() => { });
+      }
+    } catch (err) {
+      // Best effort only.
+    }
+
+    try {
+      if (ctx.state === "suspended") {
+        await ctx.resume();
+      }
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      gain.gain.value = 0.0001;
+      osc.frequency.value = 440;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start();
+      osc.stop(ctx.currentTime + 0.03);
+
+      audioUnlocked = true;
+      preloadSoundBuffers();
+
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  function soundVolume(key) {
+    const master = Number(SOUND_TUNING.masterVolume);
+    const individual = Number(SOUND_TUNING.volumes[key]);
+
+    const safeMaster = Number.isFinite(master) ? master : 1;
+    const safeIndividual = Number.isFinite(individual) ? individual : 1;
+
+    return Math.max(0, Math.min(1, safeMaster * safeIndividual));
+  }
+
+  async function loadSoundBuffer(key) {
+    const ctx = getAudioContext();
+    const src = SOUND_FILES[key];
+
+    if (!ctx || !src) return null;
+    if (soundBuffers.has(key)) return soundBuffers.get(key);
+    if (soundBufferPromises.has(key)) return soundBufferPromises.get(key);
+
+    const promise = fetch(src)
+      .then(response => {
+        if (!response.ok) throw new Error(`Unable to load sound: ${src}`);
+        return response.arrayBuffer();
+      })
+      .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
+      .then(buffer => {
+        soundBuffers.set(key, buffer);
+        return buffer;
+      })
+      .catch(err => {
+        console.warn(err);
+        return null;
+      })
+      .finally(() => {
+        soundBufferPromises.delete(key);
+      });
+
+    soundBufferPromises.set(key, promise);
+    return promise;
+  }
+
+  function preloadSoundBuffers() {
+    Object.keys(SOUND_FILES).forEach(key => {
+      loadSoundBuffer(key);
+    });
+  }
+
+  async function playGameSound(key, volumeKey = key) {
+    if (muted) return;
+
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    try {
+      if (ctx.state === "suspended") {
+        await ctx.resume();
+      }
+
+      const buffer = await loadSoundBuffer(key);
+      if (!buffer) return;
+
+      const source = ctx.createBufferSource();
+      const gain = ctx.createGain();
+
+      gain.gain.value = soundVolume(volumeKey);
+      source.buffer = buffer;
+      source.connect(gain);
+      gain.connect(ctx.destination);
+
+      source.start(0);
+    } catch (err) {
+      // Sound should never break gameplay.
+    }
+  }
+
+  function playUiTapSound() {
+    const key = uiSoundFlip ? "uiTap2" : "uiTap1";
+    uiSoundFlip = !uiSoundFlip;
+    playGameSound(key, "uiTap");
+  }
+
+  function playRandomFlapSound() {
+    const keys = ["flap1", "flap2", "flap3", "flap4"];
+    let choices = keys.filter(key => key !== lastFlapSound);
+
+    if (!choices.length) {
+      choices = keys;
+    }
+
+    const key = choices[Math.floor(Math.random() * choices.length)];
+    lastFlapSound = key;
+    playGameSound(key, "flap");
+  }
 
   function introHelpHtml(){
     return `
@@ -284,8 +482,16 @@
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
       backLabel: "Back to Practice Games",
-      onBack: () => window.VerseGameBridge.exitGame(),
-      onStart: renderModeSelect
+      onBack: () => {
+        void unlockAudio();
+        playUiTapSound();
+        window.VerseGameBridge.exitGame();
+      },
+      onStart: () => {
+        void unlockAudio();
+        playUiTapSound();
+        renderModeSelect();
+      }
     });
   }
 
@@ -302,8 +508,16 @@
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
       backLabel: "Back to Versey Bird title",
-      onBack: renderIntro,
-      onSelect: startGame
+      onBack: () => {
+        void unlockAudio();
+        playUiTapSound();
+        renderIntro();
+      },
+      onSelect: (mode) => {
+        void unlockAudio();
+        playUiTapSound();
+        startGame(mode);
+      }
     });
   }
 
@@ -568,18 +782,47 @@
       helpOverlayId: HELP_OVERLAY_ID,
       isMuted: () => muted,
       onMuteToggle: () => {
-        muted = !muted;
+        void unlockAudio();
+
+        const nextMuted = !muted;
+        if (!nextMuted) {
+          playUiTapSound();
+        }
+
+        muted = nextMuted;
         return muted;
       },
-      onHowToPlay: openHelpFromMenu,
+      onHowToPlay: () => {
+        void unlockAudio();
+        playUiTapSound();
+        openHelpFromMenu();
+      },
       onModeSelect: () => {
+        void unlockAudio();
+        playUiTapSound();
         setPaused(false, "");
         renderModeSelect();
       },
-      onExit: () => window.VerseGameBridge.exitGame(),
-      onOpen: () => setPaused(true, "menu"),
-      onClose: () => setPaused(false, ""),
-      onBackFromHelp: () => setPaused(true, "menu")
+      onExit: () => {
+        void unlockAudio();
+        playUiTapSound();
+        window.VerseGameBridge.exitGame();
+      },
+      onOpen: () => {
+        void unlockAudio();
+        playUiTapSound();
+        setPaused(true, "menu");
+      },
+      onClose: () => {
+        void unlockAudio();
+        playUiTapSound();
+        setPaused(false, "");
+      },
+      onBackFromHelp: () => {
+        void unlockAudio();
+        playUiTapSound();
+        setPaused(true, "menu");
+      }
     });
   }
 
@@ -622,6 +865,8 @@
     if (now - state.lastInputAt < 70) return;
     state.lastInputAt = now;
 
+    void unlockAudio();
+
     if (state.paused) return;
 
     if (state.phase === "intro" || state.phase === "verse" || state.phase === "bonusIntro" || state.phase === "bonus"){
@@ -634,6 +879,7 @@
     state.birdVY = getDifficulty().flapU * state.layout.unit;
     state.birdFlapUntil = performance.now() + 160;
     addFlapTrail();
+    playRandomFlapSound();
 
     if (state.phase === "verse" && state.streak >= 16){
       cycleBirdColor();
@@ -1346,8 +1592,10 @@
     state.birdSpinUntil = ts + 620;
     state.shakeUntil = ts + 260;
     if (obstacle.type === "boulder") {
+      playGameSound("boulder");
       addBoulderBurst(obstacle);
     } else {
+      playGameSound("beeHit");
       addBeeLightningBurst(obstacle);
     }
     flash("rgba(255, 90, 81, 0.25)", 130);
@@ -1395,9 +1643,20 @@
   function collectCorrectCloud(cloud, ts){
     cloud.collected = true;
     cloud.collectAt = ts;
+
+    const previousTrailLevel = getBirdTrailLevel();
+
     state.streak += 1;
     state.bestStreak = Math.max(state.bestStreak, state.streak);
     state.progressIndex += 1;
+
+    const nextTrailLevel = getBirdTrailLevel();
+
+    playGameSound("correct");
+    if (nextTrailLevel > previousTrailLevel) {
+      playGameSound("streak");
+    }
+
     addCorrectCloudBurst(cloud);
     flash("rgba(120, 220, 190, 0.25)", 110);
     updateBuildText();
@@ -1420,6 +1679,7 @@
     clearBirdTrail();
     state.birdSpinUntil = ts + 620;
     state.shakeUntil = ts + 260;
+    playGameSound("wrong");
     addWrongCloudBurst(cloud);
     flash("rgba(255, 90, 81, 0.25)", 130);
 
@@ -1457,6 +1717,7 @@
       if (!pipe.passed && pipe.x + layout.pipeW * 0.5 < state.birdX){
         pipe.passed = true;
         state.pipesCleared += 1;
+        playGameSound("pipeCleared");
         updateBuildText();
       }
     }
@@ -1465,6 +1726,7 @@
 
     for (const pipe of state.bonusPipes){
       if (pipeHitsBird(pipe)){
+        playGameSound("pipeCrash");
         addPipeBurst();
         enterBonusCrashPhase();
         break;
