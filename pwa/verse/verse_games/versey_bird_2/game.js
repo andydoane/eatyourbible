@@ -179,6 +179,7 @@
     cloudBgX: 0,
     layout: null,
     birdColor: BIRD_COLORS[0],
+    birdColorCycleIndex: 0,
     birdX: 0,
     birdY: 0,
     birdVY: 0,
@@ -192,8 +193,11 @@
     poofs: [],
     obstacles: [],
     beeTrailDots: [],
+    birdTrailDots: [],
+    birdTrailSparkles: [],
     nextObstacleId: 1,
     nextBeeTrailDotId: 1,
+    nextBirdTrailId: 1,
     obstacleCloudCountdown: 0,
     wordCloud: null,
     nextCloudId: 1,
@@ -220,6 +224,8 @@
     flashColor: "rgba(255,255,255,0.3)",
     shakeUntil: 0,
     skidCooldown: 0,
+    birdTrailCooldown: 0,
+    birdSparkleCooldown: 0,
     fpsFrames: 0,
     fpsLastAt: 0,
     fpsValue: 0,
@@ -327,6 +333,7 @@
               <div class="vb2-word-clouds" id="vb2WordClouds"></div>
               <div class="vb2-obstacles" id="vb2Obstacles"></div>
               <div class="vb2-pipes" id="vb2Pipes"></div>
+              <div class="vb2-bird-trail-layer" id="vb2BirdTrailLayer"></div>
               <div class="vb2-bird-layer"><div class="vb2-bird" id="vb2Bird"></div></div>
               <div class="vb2-intro-layer" id="vb2IntroLayer"></div>
               <div class="vb2-flash" id="vb2Flash"></div>
@@ -367,7 +374,8 @@
     state.worldX = 0;
     state.cloudBgX = 0;
     state.layout = null;
-    state.birdColor = BIRD_COLORS[Math.floor(Math.random() * BIRD_COLORS.length)];
+    state.birdColorCycleIndex = Math.floor(Math.random() * BIRD_COLORS.length);
+    state.birdColor = BIRD_COLORS[state.birdColorCycleIndex];
     state.birdVY = 0;
     state.birdAngle = 0;
     state.birdSpinUntil = 0;
@@ -379,8 +387,11 @@
     state.poofs = [];
     state.obstacles = [];
     state.beeTrailDots = [];
+    state.birdTrailDots = [];
+    state.birdTrailSparkles = [];
     state.nextObstacleId = 1;
     state.nextBeeTrailDotId = 1;
+    state.nextBirdTrailId = 1;
     state.obstacleCloudCountdown = getNextObstacleCloudCountdown();
     state.wordCloud = null;
     state.nextCloudId = 1;
@@ -401,6 +412,8 @@
     state.flashColor = "rgba(255,255,255,0.3)";
     state.shakeUntil = 0;
     state.skidCooldown = 0;
+    state.birdTrailCooldown = 0;
+    state.birdSparkleCooldown = 0;
     state.fpsFrames = 0;
     state.fpsLastAt = 0;
     state.fpsValue = 0;
@@ -417,6 +430,7 @@
     state.wordCloud = null;
     state.bonusPipes = [];
     state.birdHidden = false;
+    clearBirdTrail();
     resetBird();
   }
 
@@ -445,6 +459,7 @@
     state.bonusElapsed = 0;
     state.resultShown = false;
     state.birdHidden = false;
+    clearBirdTrail();
     updateBuildText();
   }
 
@@ -460,6 +475,7 @@
     state.bonusElapsed = 0;
     state.resultShown = false;
     state.birdHidden = false;
+    clearBirdTrail();
     updateBuildText();
   }
 
@@ -610,6 +626,10 @@
     state.birdVY = getDifficulty().flapU * state.layout.unit;
     state.birdFlapUntil = performance.now() + 160;
     addFlapTrail();
+
+    if (state.phase === "verse" && state.streak >= 16){
+      cycleBirdColor();
+    }
   }
 
   function installResize(){
@@ -746,6 +766,7 @@
     updateWorldScroll(dt);
     updateBackgroundClouds(dt);
     updatePoofs(dt);
+    updateBirdTrail(dt);
 
     if (state.phase === "intro"){
       updateBird(dt, false);
@@ -905,6 +926,122 @@
       poof.rotation = (poof.rotation || 0) + (poof.spin || 0) * dt;
     }
     state.poofs = state.poofs.filter(poof => poof.age < poof.life);
+  }
+
+  function getBirdTrailLevel() {
+    if (state.phase !== "verse") return 0;
+    if (state.streak >= 16) return 4;
+    if (state.streak >= 12) return 3;
+    if (state.streak >= 8) return 2;
+    if (state.streak >= 4) return 1;
+    return 0;
+  }
+
+  function clearBirdTrail() {
+    state.birdTrailDots = [];
+    state.birdTrailSparkles = [];
+    state.birdTrailCooldown = 0;
+    state.birdSparkleCooldown = 0;
+  }
+
+  function updateBirdTrail(dt) {
+    if (!state.layout) return;
+
+    const level = getBirdTrailLevel();
+    if (level <= 0 || state.birdHidden) {
+      clearBirdTrail();
+      return;
+    }
+
+    const speed = getWorldSpeed();
+
+    for (const dot of state.birdTrailDots) {
+      dot.age += dt;
+      dot.x -= speed * dt;
+      dot.x += dot.vx * dt;
+      dot.y += dot.vy * dt;
+    }
+
+    for (const sparkle of state.birdTrailSparkles) {
+      sparkle.age += dt;
+      sparkle.x -= speed * dt;
+      sparkle.x += sparkle.vx * dt;
+      sparkle.y += sparkle.vy * dt;
+      sparkle.rotation += sparkle.spin * dt;
+    }
+
+    state.birdTrailCooldown -= dt;
+    if (state.birdTrailCooldown <= 0) {
+      addBirdTrailDot(level);
+      state.birdTrailCooldown = level >= 3 ? 0.034 : 0.044;
+    }
+
+    if (level >= 2) {
+      state.birdSparkleCooldown -= dt;
+      if (state.birdSparkleCooldown <= 0) {
+        addBirdTrailSparkle(level);
+        state.birdSparkleCooldown = level >= 4 ? 0.075 : 0.13;
+      }
+    }
+
+    state.birdTrailDots = state.birdTrailDots.filter(dot => {
+      return dot.age < dot.life && dot.x > -dot.size * 2.2;
+    });
+
+    state.birdTrailSparkles = state.birdTrailSparkles.filter(sparkle => {
+      return sparkle.age < sparkle.life && sparkle.x > -sparkle.size * 2.2;
+    });
+  }
+
+  function addBirdTrailDot(level) {
+    if (!state.layout) return;
+
+    const unit = state.layout.unit;
+    const isRainbow = level >= 3;
+    const colors = isRainbow
+      ? PARTICLE_COLORS.rainbow
+      : ["rgba(255,255,255,0.88)", "rgba(245,252,255,0.78)"];
+
+    const color = colors[state.nextBirdTrailId % colors.length];
+    const sizeMin = isRainbow ? 0.13 : 0.10;
+    const sizeMax = isRainbow ? 0.22 : 0.18;
+
+    state.birdTrailDots.push({
+      id: state.nextBirdTrailId++,
+      x: state.birdX - unit * 0.48 + randomBetween(-0.06, 0.08) * unit,
+      y: state.birdY + randomBetween(-0.26, 0.26) * unit,
+      vx: randomBetween(-0.18, 0.04) * unit,
+      vy: randomBetween(-0.15, 0.15) * unit,
+      size: randomBetween(sizeMin, sizeMax) * unit,
+      color,
+      opacity: isRainbow ? 0.86 : 0.72,
+      life: 3.2,
+      age: 0
+    });
+  }
+
+  function addBirdTrailSparkle(level) {
+    if (!state.layout) return;
+
+    const unit = state.layout.unit;
+    const colors = level >= 4
+      ? PARTICLE_COLORS.rainbow
+      : ["#ffc751", "#ffe58a", "#fff4b8"];
+
+    state.birdTrailSparkles.push({
+      id: state.nextBirdTrailId++,
+      x: state.birdX - unit * randomBetween(0.42, 0.78),
+      y: state.birdY + randomBetween(-0.36, 0.36) * unit,
+      vx: randomBetween(-0.16, 0.06) * unit,
+      vy: randomBetween(-0.26, 0.26) * unit,
+      size: randomBetween(0.11, level >= 4 ? 0.22 : 0.18) * unit,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rotation: Math.random() * 360,
+      spin: randomBetween(-260, 260),
+      opacity: level >= 4 ? 0.92 : 0.86,
+      life: randomBetween(0.48, 0.78),
+      age: 0
+    });
   }
 
   function updateVerseCloud(dt, ts){
@@ -1167,6 +1304,7 @@
     obstacle.hit = true;
     obstacle.hitAt = ts;
     state.streak = 0;
+    clearBirdTrail();
     state.birdSpinUntil = ts + 620;
     state.shakeUntil = ts + 260;
     if (obstacle.type === "boulder") {
@@ -1241,6 +1379,7 @@
     cloud.collected = true;
     cloud.collectAt = ts;
     state.streak = 0;
+    clearBirdTrail();
     state.birdSpinUntil = ts + 620;
     state.shakeUntil = ts + 260;
     addWrongCloudBurst(cloud);
@@ -1257,6 +1396,7 @@
   function missCorrectCloud(ts){
     if (selectedMode !== "easy"){
       state.streak = 0;
+      clearBirdTrail();
       state.shakeUntil = ts + 220;
       flash("rgba(255, 199, 81, 0.24)", 120);
     }
@@ -1334,6 +1474,7 @@
     renderBackground();
     renderBackgroundClouds();
     renderPoofs();
+    renderBirdTrail();
     renderWordCloud(ts);
     renderObstacles();
     renderPipes();
@@ -1432,6 +1573,53 @@
         </div>
       `;
     }).join("");
+  }
+
+  function renderBirdTrail() {
+    const layer = document.getElementById("vb2BirdTrailLayer");
+    if (!layer || !state.layout) return;
+
+    if (!state.birdTrailDots.length && !state.birdTrailSparkles.length) {
+      if (layer.innerHTML) layer.innerHTML = "";
+      return;
+    }
+
+    const dotsHtml = state.birdTrailDots.map(dot => {
+      const p = clamp(dot.age / dot.life, 0, 1);
+      const size = dot.size * (1 - p * 0.32);
+      const opacity = dot.opacity * (1 - p);
+      return `
+        <div class="vb2-bird-trail-dot"
+             style="
+               --x:${dot.x}px;
+               --y:${dot.y}px;
+               --size:${size}px;
+               --trail-color:${dot.color};
+               opacity:${opacity};
+             ">
+        </div>
+      `;
+    }).join("");
+
+    const sparklesHtml = state.birdTrailSparkles.map(sparkle => {
+      const p = clamp(sparkle.age / sparkle.life, 0, 1);
+      const size = sparkle.size * (1 - p * 0.18);
+      const opacity = sparkle.opacity * (1 - p);
+      return `
+        <div class="vb2-bird-trail-sparkle"
+             style="
+               --x:${sparkle.x}px;
+               --y:${sparkle.y}px;
+               --size:${size}px;
+               --sparkle-color:${sparkle.color};
+               --rotation:${sparkle.rotation}deg;
+               opacity:${opacity};
+             ">
+        </div>
+      `;
+    }).join("");
+
+    layer.innerHTML = dotsHtml + sparklesHtml;
   }
 
   function renderWordCloud(ts) {
@@ -1943,6 +2131,18 @@
     }
   }
 
+  function cycleBirdColor() {
+    if (!BIRD_COLORS.length) return;
+
+    state.birdColorCycleIndex = (state.birdColorCycleIndex + 1) % BIRD_COLORS.length;
+    state.birdColor = BIRD_COLORS[state.birdColorCycleIndex];
+
+    const bird = document.getElementById("vb2Bird");
+    if (bird) {
+      recolorBirdSvg(bird);
+    }
+  }
+  
   function renderBirdAsset(){
     const bird = document.getElementById("vb2Bird");
     if (!bird) return;

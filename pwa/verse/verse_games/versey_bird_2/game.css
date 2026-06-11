@@ -147,6 +147,7 @@ body{
 .vb2-word-clouds,
 .vb2-obstacles,
 .vb2-pipes,
+.vb2-bird-trail-layer,
 .vb2-bird-layer,
 .vb2-intro-layer,
 .vb2-flash,
@@ -410,6 +411,45 @@ body{
   will-change: left, top, width, height, opacity, transform;
 }
 
+.vb2-bird-trail-layer {
+  z-index: 7;
+}
+
+.vb2-bird-trail-dot {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--size);
+  height: var(--size);
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+  background: var(--trail-color);
+  box-shadow: 0 0 8px var(--trail-color);
+  will-change: left, top, width, height, opacity;
+}
+
+.vb2-bird-trail-sparkle {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--size);
+  height: var(--size);
+  transform: translate(-50%, -50%) rotate(var(--rotation));
+  background: var(--sparkle-color);
+  clip-path: polygon(50% 0%,
+      61% 34%,
+      98% 35%,
+      68% 56%,
+      79% 91%,
+      50% 70%,
+      21% 91%,
+      32% 56%,
+      2% 35%,
+      39% 34%);
+  filter: drop-shadow(0 0 6px var(--sparkle-color));
+  will-change: left, top, width, height, opacity, transform;
+}
+
 .vb2-bird-layer{
   z-index: 12;
 }
@@ -431,11 +471,7 @@ body{
   overflow: visible;
 }
 
-/* The SVG file's built-in transform positions the wing.
-   Do not animate this group with CSS transform, because that overrides
-   the SVG transform matrix and makes the wing disappear. */
-.vb2-bird #bird_wing_group{
-}
+
 
 .vb2-bird #vb2_wing_animator{
   transform-box: fill-box;
@@ -498,7 +534,7 @@ body{
   background: rgba(255,255,255,0.96);
   color: #33535a;
   font-family: "VB2 Titan One", system-ui, sans-serif;
-    font-weight: 400;
+  font-weight: 400;
   font-size: var(--size);
   line-height: 1;
   box-shadow: 0 5px 0 rgba(0,0,0,0.14);
