@@ -2508,7 +2508,11 @@ async function loadVerseList() {
     VERSE_LIST.sort((a, b) => {
       const refA = String(a?.ref || "");
       const refB = String(b?.ref || "");
-      return refA.localeCompare(refB);
+
+      return refA.localeCompare(refB, undefined, {
+        numeric: true,
+        sensitivity: "base"
+      });
     });
   } catch (err) {
     console.warn("Could not load verse_list.json", err);
