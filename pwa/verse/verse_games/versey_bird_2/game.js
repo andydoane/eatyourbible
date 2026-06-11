@@ -1840,7 +1840,7 @@
     const current = words[index];
     if (!current) return 0;
 
-    const pillGap = size * 1.35;
+    const pillGap = size * 1.1;
     let offset = 0;
 
     for (let i = 0; i < index; i += 1) {
