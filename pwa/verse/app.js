@@ -2659,14 +2659,18 @@ const TITLE_OPTIONS = [
   { id: "progress", label: "BibloPet Zoo", action: () => go(Screen.PROGRESS) },
 ];
 
-function renderTitleActionButton({ id, label, image, color, textColor }) {
+function renderTitleActionButton({ id, label, image, color, textColor, disabled = false }) {
+  const disabledClass = disabled ? " is-disabled" : "";
+  const disabledAttr = disabled ? " disabled" : "";
+  const ariaDisabled = disabled ? ` aria-disabled="true"` : "";
+
   return `
     <button
-      class="title-action-btn title-action-${id} no-zoom"
+      class="title-action-btn title-action-${id} no-zoom${disabledClass}"
       type="button"
       data-title-action="${id}"
       style="--title-action-bg:${color}; --title-action-text:${textColor};"
-      aria-label="${label}"
+      aria-label="${label}"${ariaDisabled}${disabledAttr}
     >
       <img
         class="title-action-img"
@@ -5027,7 +5031,8 @@ function screenTitle(idx) {
     label: "Practice",
     image: "button_practice.png",
     color: "#ff5a51",
-    textColor: "#ffffff"
+    textColor: "#ffffff",
+    disabled: HAS_VERSE_SELECTION && !State.hasLearnedVerse
   })}
 
         ${renderTitleActionButton({
