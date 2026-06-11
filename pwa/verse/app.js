@@ -5068,6 +5068,13 @@ function screenTitle(idx) {
     btn.onclick = (e) => {
       e.stopPropagation();
 
+      const action = btn.dataset.titleAction;
+
+      if (action === "pets") {
+        go(Screen.PROGRESS);
+        return;
+      }
+
       if (!HAS_VERSE_SELECTION) {
         showDialog({
           title: "Pick a verse first 🙂",
@@ -5076,8 +5083,6 @@ function screenTitle(idx) {
         });
         return;
       }
-
-      const action = btn.dataset.titleAction;
 
       if (action === "learn") {
         go(Screen.LEARN_LEVEL);
@@ -5088,10 +5093,6 @@ function screenTitle(idx) {
         if (State.hasLearnedVerse) go(Screen.PRACTICE_HUB);
         else go(Screen.PRACTICE_GATE);
         return;
-      }
-
-      if (action === "pets") {
-        go(Screen.PROGRESS);
       }
     };
   });
