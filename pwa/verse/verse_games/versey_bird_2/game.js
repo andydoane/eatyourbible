@@ -1806,13 +1806,13 @@
 
     if (state.phase === "intro"){
       const elapsed = (ts - state.introStartedAt) / 1000;
-      layer.innerHTML = INTRO_WORDS.map((word, index) => renderFlyingIntroWord(word, index, elapsed)).join("");
+      layer.innerHTML = INTRO_WORDS.map((word, index) => renderFlyingIntroWord(INTRO_WORDS, word, index, elapsed)).join("");
       return;
     }
 
     if (state.phase === "bonusIntro"){
       const elapsed = (ts - state.phaseStartedAt) / 1000;
-      layer.innerHTML = BONUS_WORDS.map((word, index) => renderFlyingIntroWord(word, index, elapsed)).join("");
+      layer.innerHTML = BONUS_WORDS.map((word, index) => renderFlyingIntroWord(BONUS_WORDS, word, index, elapsed)).join("");
       return;
     }
 
@@ -1834,13 +1834,33 @@
     return text.length * size * 0.72 + size * 1.70;
   }
 
-  function renderFlyingIntroWord(word, index, elapsed) {
+  function getFlyingWordLineOffset(words, index, size) {
+    if (!Array.isArray(words)) return 0;
+
+    const current = words[index];
+    if (!current) return 0;
+
+    const pillGap = size * 1.35;
+    let offset = 0;
+
+    for (let i = 0; i < index; i += 1) {
+      const previous = words[i];
+      if (!previous || previous.line !== current.line) continue;
+
+      offset += getFlyingWordWidth(previous, size) + pillGap;
+    }
+
+    return offset;
+  }
+
+  function renderFlyingIntroWord(words, word, index, elapsed) {
     const layout = state.layout;
     const t = elapsed - word.delay;
     const travel = FLYING_WORD_TRAVEL_SECONDS;
     const size = clamp(layout.unit * 0.42, 18, 34);
     const wordW = getFlyingWordWidth(word, size);
-    const startX = layout.width + wordW * 0.5 + layout.unit * (0.65 + index * 0.18);
+    const lineOffset = getFlyingWordLineOffset(words, index, size);
+    const startX = layout.width + wordW * 0.5 + layout.unit * 0.65 + lineOffset;
     const endX = -(wordW * 0.5 + layout.unit * 0.25);
     const progress = clamp(t / travel, 0, 1);
     const x = startX + (endX - startX) * progress;
