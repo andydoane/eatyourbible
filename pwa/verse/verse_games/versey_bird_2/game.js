@@ -117,7 +117,9 @@
       obstacleCloudMin: 4,
       obstacleCloudMax: 5,
       obstacleCloudChoices: [4, 4, 5],
-      obstacleBeeChance: 0.35
+      obstacleBeeChance: 0.35,
+      streakSpeedBoostsU: [0, 0.07, 0.15, 0.23, 0.31],
+      streakSpeedEaseU: 1.0
     },
     medium: {
       worldSpeedU: 2.55,
@@ -133,7 +135,9 @@
       obstacleCloudMin: 3,
       obstacleCloudMax: 4,
       obstacleCloudChoices: [3, 3, 4],
-      obstacleBeeChance: 0.50
+      obstacleBeeChance: 0.50,
+      streakSpeedBoostsU: [0, 0.12, 0.25, 0.37, 0.50],
+      streakSpeedEaseU: 1.35
     },
     hard: {
       worldSpeedU: 2.85,
@@ -149,7 +153,9 @@
       obstacleCloudMin: 2,
       obstacleCloudMax: 3,
       obstacleCloudChoices: [2, 2, 3],
-      obstacleBeeChance: 0.60
+      obstacleBeeChance: 0.60,
+      streakSpeedBoostsU: [0, 0.17, 0.33, 0.49, 0.65],
+      streakSpeedEaseU: 1.7
     }
   };
 
@@ -226,6 +232,7 @@
     skidCooldown: 0,
     birdTrailCooldown: 0,
     birdSparkleCooldown: 0,
+    streakSpeedBoostU: 0,
     fpsFrames: 0,
     fpsLastAt: 0,
     fpsValue: 0,
@@ -414,6 +421,7 @@
     state.skidCooldown = 0;
     state.birdTrailCooldown = 0;
     state.birdSparkleCooldown = 0;
+    state.streakSpeedBoostU = 0;
     state.fpsFrames = 0;
     state.fpsLastAt = 0;
     state.fpsValue = 0;
@@ -763,6 +771,7 @@
   function update(dt, ts){
     if (!state.layout) return;
 
+    updateStreakSpeedBoost(dt);
     updateWorldScroll(dt);
     updateBackgroundClouds(dt);
     updatePoofs(dt);
@@ -806,6 +815,35 @@
     if (state.phase === "bonusCrash"){
       updateCrash(dt, ts);
     }
+  }
+
+  function updateStreakSpeedBoost(dt) {
+    if (!state.layout) return;
+
+    const target = getStreakSpeedBoostTargetU();
+    const ease = getDifficulty().streakSpeedEaseU || 1.25;
+    const step = ease * dt;
+    const current = state.streakSpeedBoostU || 0;
+
+    if (current < target) {
+      state.streakSpeedBoostU = Math.min(target, current + step);
+    } else if (current > target) {
+      state.streakSpeedBoostU = Math.max(target, current - step * 1.65);
+    }
+  }
+
+  function getStreakSpeedBoostTargetU() {
+    if (state.phase !== "verse") return 0;
+
+    const boosts = getDifficulty().streakSpeedBoostsU || [0];
+    const level = getBirdTrailLevel();
+
+    return boosts[Math.min(level, boosts.length - 1)] || 0;
+  }
+
+  function getVerseWorldSpeedU() {
+    const d = getDifficulty();
+    return d.worldSpeedU + (state.streakSpeedBoostU || 0);
   }
 
   function updateWorldScroll(dt){
@@ -1367,7 +1405,7 @@
     setTimeout(() => {
       if (state.wordCloud && state.wordCloud.id === cloud.id){
         state.wordCloud = null;
-        state.cloudCooldown = getDifficulty().cloudGapU / Math.max(1, getDifficulty().worldSpeedU);
+        state.cloudCooldown = getDifficulty().cloudGapU / Math.max(1, getVerseWorldSpeedU());
         if (getCurrentPhase() === "done"){
           enterBonusIntroPhase();
         }
@@ -2142,7 +2180,7 @@
       recolorBirdSvg(bird);
     }
   }
-  
+
   function renderBirdAsset(){
     const bird = document.getElementById("vb2Bird");
     if (!bird) return;
@@ -2385,7 +2423,7 @@
   }
 
   function getWorldSpeed(){
-    return getDifficulty().worldSpeedU * state.layout.unit;
+    return getVerseWorldSpeedU() * state.layout.unit;
   }
 
   function getActiveWorldSpeed(){
