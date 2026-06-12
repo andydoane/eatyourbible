@@ -34,7 +34,7 @@
     masterVolume: 0.82,
     volumes: {
       uiTap: 0.45,
-      flap: 0.20,
+      flap: 0.15,
       correct: 0.58,
       wrong: 0.62,
       beeHit: 0.70,
