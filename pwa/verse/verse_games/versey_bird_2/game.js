@@ -2206,30 +2206,24 @@
 
   function getWordFontSize(cloud){
     const label = String(cloud.label || "");
-    const base = cloud.h * 0.32;
-    const textSafeWidth = cloud.w * 0.80;
+    const targetSize = clamp(state.layout.unit * 0.43, 20, 36);
+    const textSafeWidth = getCloudTextSafeWidth(cloud);
     const visualWeight = getCloudTextVisualWeight(label);
+    const fittedSize = textSafeWidth / Math.max(1, visualWeight);
 
-    let idealSize;
-    let minSize;
-    let maxSize;
+    return clamp(Math.min(targetSize, fittedSize), 15, targetSize);
+  }
 
+  function getCloudTextSafeWidth(cloud){
     if (cloud.shapeKey === "compact"){
-      idealSize = base * 1.18;
-      minSize = 17;
-      maxSize = 36;
-    } else if (cloud.shapeKey === "normal"){
-      idealSize = base * 1.04;
-      minSize = 16;
-      maxSize = 33;
-    } else {
-      idealSize = base * 0.92;
-      minSize = 14;
-      maxSize = 30;
+      return cloud.w * 0.78;
     }
 
-    const fittedSize = textSafeWidth / Math.max(1, visualWeight);
-    return clamp(Math.min(idealSize, fittedSize), minSize, maxSize);
+    if (cloud.shapeKey === "normal"){
+      return cloud.w * 0.80;
+    }
+
+    return cloud.w * 0.82;
   }
 
   function getCloudTextVisualWeight(label){
@@ -2745,7 +2739,7 @@
   function getCloudShapeKey(label){
     const len = String(label || "").length;
     if (len <= 4) return "compact";
-    if (len <= 9) return "normal";
+    if (len <= 8) return "normal";
     return "long";
   }
 
