@@ -2205,11 +2205,58 @@
   }
 
   function getWordFontSize(cloud){
-    const len = String(cloud.label || "").length;
+    const label = String(cloud.label || "");
     const base = cloud.h * 0.32;
-    if (len <= 4) return clamp(base * 1.10, 18, 34);
-    if (len <= 9) return clamp(base * 0.94, 17, 31);
-    return clamp(base * 0.76, 15, 27);
+    const textSafeWidth = cloud.w * 0.78;
+    const visualWeight = getCloudTextVisualWeight(label);
+
+    let idealSize;
+    let minSize;
+    let maxSize;
+
+    if (cloud.shapeKey === "compact"){
+      idealSize = base * 1.18;
+      minSize = 17;
+      maxSize = 36;
+    } else if (cloud.shapeKey === "normal"){
+      idealSize = base * 1.04;
+      minSize = 16;
+      maxSize = 33;
+    } else {
+      idealSize = base * 0.92;
+      minSize = 14;
+      maxSize = 30;
+    }
+
+    const fittedSize = textSafeWidth / Math.max(1, visualWeight);
+    return clamp(Math.min(idealSize, fittedSize), minSize, maxSize);
+  }
+
+  function getCloudTextVisualWeight(label){
+    const text = String(label || "").trim();
+    if (!text) return 1;
+
+    let weight = 0;
+
+    for (const char of text){
+      if (/[ilI1!'.,:;]/.test(char)){
+        weight += 0.34;
+      } else if (/[fjtJr]/.test(char)){
+        weight += 0.48;
+      } else if (/[mwMW@#]/.test(char)){
+        weight += 0.98;
+      } else if (/[A-Z]/.test(char)){
+        weight += 0.74;
+      } else if (/[0-9]/.test(char)){
+        weight += 0.64;
+      } else if (/\s/.test(char)){
+        weight += 0.34;
+      } else {
+        weight += 0.60;
+      }
+    }
+
+    return weight;
   }
 
   function addFlapTrail(){
