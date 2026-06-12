@@ -1692,6 +1692,8 @@
   }
 
   function missCorrectCloud(ts){
+    playGameSound("wrong");
+
     if (selectedMode !== "easy"){
       state.streak = 0;
       clearBirdTrail();
