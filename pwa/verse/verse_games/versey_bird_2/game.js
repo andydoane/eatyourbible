@@ -2207,7 +2207,7 @@
   function getWordFontSize(cloud){
     const label = String(cloud.label || "");
     const base = cloud.h * 0.32;
-    const textSafeWidth = cloud.w * 0.78;
+    const textSafeWidth = cloud.w * 0.80;
     const visualWeight = getCloudTextVisualWeight(label);
 
     let idealSize;
