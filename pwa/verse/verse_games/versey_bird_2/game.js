@@ -94,21 +94,21 @@
     compact: {
       image: "versey_bird_cloud_compact.svg",
       aspect: 290 / 225,
-      heightU: 1.22,
+      heightU: 0.85,
       textX: 50.0,
       textY: 54.8
     },
     normal: {
       image: "versey_bird_cloud_normal.svg",
       aspect: 380 / 225,
-      heightU: 1.28,
+      heightU: 0.85,
       textX: 49.7,
       textY: 52.1
     },
     long: {
       image: "versey_bird_cloud_long.svg",
       aspect: 560 / 225,
-      heightU: 1.34,
+      heightU: 0.85,
       textX: 49.5,
       textY: 55.4
     }
@@ -1963,7 +1963,7 @@
     if (!token) return;
 
     const wordSize = getWordFontSize(cloud);
-    const danceDelay = cloud.collected ? "0ms" : `${-((ts + cloud.id * 173) % 1120)}ms`;
+    const danceDelay = cloud.collected ? "0ms" : `${-((ts + cloud.id * 389) % 3600)}ms`;
 
     token.style.left = `${cloud.x}px`;
     token.style.top = `${cloud.y}px`;
@@ -2206,12 +2206,12 @@
 
   function getWordFontSize(cloud){
     const label = String(cloud.label || "");
-    const targetSize = clamp(state.layout.unit * 0.43, 20, 36);
+    const targetSize = clamp(cloud.h * 0.48, 16, 31);
     const textSafeWidth = getCloudTextSafeWidth(cloud);
     const visualWeight = getCloudTextVisualWeight(label);
     const fittedSize = textSafeWidth / Math.max(1, visualWeight);
 
-    return clamp(Math.min(targetSize, fittedSize), 15, targetSize);
+    return clamp(Math.min(targetSize, fittedSize), 13, targetSize);
   }
 
   function getCloudTextSafeWidth(cloud){

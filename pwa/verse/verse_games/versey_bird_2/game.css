@@ -320,7 +320,7 @@ body{
   background-repeat: no-repeat;
   background-position: center;
   filter: drop-shadow(0 7px 0 rgba(0,0,0,0.10));
-  animation: vb2CloudHappyDance 1120ms ease-in-out infinite;
+  animation: vb2CloudHappyDance 3600ms ease-in-out infinite;
   will-change: transform;
 }
 
@@ -329,20 +329,16 @@ body{
     transform: translate(-50%, -50%) rotate(0deg) scale(1);
   }
 
-  18% {
-    transform: translate(-50%, -50%) rotate(-4deg) scale(1.035);
+  25% {
+    transform: translate(-50%, -50%) rotate(-1.4deg) scale(1.012);
   }
 
-  34% {
+  50% {
     transform: translate(-50%, -50%) rotate(0deg) scale(1);
   }
 
-  58% {
-    transform: translate(-50%, -50%) rotate(4deg) scale(1.035);
-  }
-
-  74% {
-    transform: translate(-50%, -50%) rotate(0deg) scale(1);
+  75% {
+    transform: translate(-50%, -50%) rotate(1.4deg) scale(1.012);
   }
 
   100% {
