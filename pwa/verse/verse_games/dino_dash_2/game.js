@@ -1482,12 +1482,7 @@
     if (!layer) return;
     layer.innerHTML = state.obstacles.map(item => {
       if (item.type === "flag"){
-        return `
-          <div class="dd2-flag" style="--x:${item.x}px;--y:${item.y}px;--w:${item.w}px;--h:${item.h}px;">
-            <div class="dd2-flag-pole"></div>
-            <div class="dd2-flag-cloth"></div>
-          </div>
-        `;
+        return `<div class="dd2-flag" style="--x:${item.x}px;--y:${item.y}px;--w:${item.w}px;--h:${item.h}px;background-image:url('${IMAGE_PATH}${item.image}');"></div>`;
       }
       const cls = `dd2-obstacle dd2-obstacle--${item.type} dd2-obstacle--${item.key}${item.hit ? " is-hit" : ""}`;
       return `<div class="${cls}" style="--x:${item.x}px;--y:${item.y}px;--w:${item.w}px;--h:${item.h}px;background-image:url('${IMAGE_PATH}${item.image}');"></div>`;
