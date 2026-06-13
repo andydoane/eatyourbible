@@ -194,13 +194,13 @@ window.EXTERNAL_VERSE_GAMES = [
     {
     enabled: true,
     manifest: {
-      id: "versey_bird_2",
-      title: "Verse Bird 2",
+      id: "dino_dash_2",
+      title: "Dino Dash 2",
       description: "Tap the next correct word as fast as you can.",
       icon: "🔄",
       cardColor: "#7f66c6",
       cardTextColor: "#ffffff",
-      launchUrl: "./verse_games/versey_bird_2/index.html",
+      launchUrl: "./verse_games/dino_dash_2/index.html",
       visibleInCarousel: false,
       progressType: "standard",
       modes: ["easy", "medium", "hard"]
