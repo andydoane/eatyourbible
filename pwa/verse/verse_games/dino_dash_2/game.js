@@ -1555,19 +1555,21 @@
     field.style.setProperty("--dd2-hill-x", `${state.hillX}px`);
     field.style.setProperty("--dd2-back-hill-x", `${state.backHillX}px`);
 
+    const hillOverlapPx = 2;
+
     const hillW = Math.ceil(state.layout.hillH * 10 + 4);
     const hillOffset = ((-state.hillX % hillW) + hillW) % hillW;
     const hillA = document.getElementById("dd2HillA");
     const hillB = document.getElementById("dd2HillB");
     if (hillA) hillA.style.transform = `translateX(${-hillOffset}px)`;
-    if (hillB) hillB.style.transform = `translateX(${hillW - hillOffset}px)`;
+    if (hillB) hillB.style.transform = `translateX(${hillW - hillOffset - hillOverlapPx}px)`;
 
     const backHillW = Math.ceil(state.layout.backHillH * 10 + 4);
     const backHillOffset = ((-state.backHillX % backHillW) + backHillW) % backHillW;
     const backHillA = document.getElementById("dd2BackHillA");
     const backHillB = document.getElementById("dd2BackHillB");
     if (backHillA) backHillA.style.transform = `translateX(${-backHillOffset}px)`;
-    if (backHillB) backHillB.style.transform = `translateX(${backHillW - backHillOffset}px)`;
+    if (backHillB) backHillB.style.transform = `translateX(${backHillW - backHillOffset - hillOverlapPx}px)`;
   }
 
   function renderTablets(ts){
