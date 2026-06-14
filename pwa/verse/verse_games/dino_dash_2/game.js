@@ -6,7 +6,7 @@
   const GAME_ID = "dino_dash";
   const GAME_TITLE = "Dino Dash";
   const GAME_THEME = { bg: "#333333", accent: "#333333" };
-  const BUILD_AREA = "compact";
+  const BUILD_AREA = "normal";
   const HELP_OVERLAY_ID = "dd2HelpOverlay";
   const MENU_OVERLAY_ID = "dd2GameMenuOverlay";
   const IMAGE_PATH = "./dino_dash_images/";
