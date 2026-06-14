@@ -21,6 +21,7 @@
   const FLYING_MESSAGE_GRACE_SECONDS = 0.25;
   const TABLET_HEIGHT_U = 0.52;
   const FLAG_FINISH_SECONDS = 30;
+  const FLAG_CLEAR_RUNWAY_SECONDS = 1.55;
 
   const DINO_COLORS = [
     { name: "yellow", primary: "#ffc751", secondary: "#a68235" },
@@ -145,8 +146,8 @@
   ];
 
   const AIR_OBSTACLES = [
-    { key: "bee", image: "dino_dash_bee.svg", heightU: 0.54 },
-    { key: "bird", image: "dino_dash_bird.svg", heightU: 0.60 }
+    { key: "bee", image: "dino_dash_bee.svg", heightU: 0.54, speedMult: 1.18 },
+    { key: "bird", image: "dino_dash_bird.svg", heightU: 0.60, speedMult: 1.25 }
   ];
 
   const PARTICLE_COLORS = {
@@ -216,6 +217,8 @@
     spawnPause: 0,
     fallStartedAt: 0,
     respawnAt: 0,
+    bonusFinishTriggered: false,
+    bonusFlagAt: 0,
     bonusFlagSpawned: false,
     bonusFinished: false,
     feet: 0,
@@ -396,6 +399,8 @@
     state.spawnPause = 0;
     state.fallStartedAt = 0;
     state.respawnAt = 0;
+    state.bonusFinishTriggered = false;
+    state.bonusFlagAt = 0;
     state.bonusFlagSpawned = false;
     state.bonusFinished = false;
     state.feet = 0;
@@ -438,6 +443,8 @@
     state.spawnCooldown = 0.35;
     state.bonusDistanceU = 0;
     state.feet = 0;
+    state.bonusFinishTriggered = false;
+    state.bonusFlagAt = 0;
     state.bonusFlagSpawned = false;
     state.bonusFinished = false;
     updateBuildText();
@@ -451,6 +458,8 @@
     state.spawnCooldown = 0.35;
     state.bonusDistanceU = 0;
     state.feet = 0;
+    state.bonusFinishTriggered = false;
+    state.bonusFlagAt = 0;
     state.bonusFlagSpawned = false;
     state.bonusFinished = false;
     updateBuildText();
@@ -727,11 +736,23 @@
     if (state.phase === "bonus"){
       state.bonusDistanceU += getActiveWorldSpeedU() * dt;
       state.feet = Math.floor(state.bonusDistanceU * 14);
-      if (!state.bonusFlagSpawned && (ts - state.bonusStartedAt) / 1000 >= FLAG_FINISH_SECONDS){
-        spawnFlag();
+
+      const bonusElapsed = (ts - state.bonusStartedAt) / 1000;
+
+      if (!state.bonusFinishTriggered && bonusElapsed >= FLAG_FINISH_SECONDS){
+        state.bonusFinishTriggered = true;
+        state.bonusFlagAt = ts + FLAG_CLEAR_RUNWAY_SECONDS * 1000;
+        state.spawnCooldown = 0;
+      }
+
+      if (state.bonusFinishTriggered){
+        if (!state.bonusFlagSpawned && ts >= state.bonusFlagAt){
+          spawnFlag();
+        }
       } else {
         updateSpawn(dt, true);
       }
+
       updateObstacles(dt, ts);
       updateBuildText();
       return;
@@ -988,6 +1009,7 @@
       h,
       hitW: w * 0.72,
       hitH: h * 0.58,
+      speedMult: data.speedMult || 1,
       wavePhase: Math.random() * Math.PI * 2,
       flapTimer: Math.random() * 0.7,
       hit: false,
@@ -1048,8 +1070,9 @@
   function updateObstacles(dt, ts){
     const speed = getActiveWorldSpeedU() * state.layout.unit;
     for (const item of state.obstacles){
+      const itemSpeed = speed * (item.type === "air" ? item.speedMult || 1 : 1);
       item.age += dt;
-      item.x -= speed * dt;
+      item.x -= itemSpeed * dt;
 
       if (item.type === "air"){
         if (item.key === "bee"){
