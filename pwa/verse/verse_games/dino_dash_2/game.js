@@ -201,8 +201,7 @@
     dinoAngle: 0,
     dinoHidden: false,
     dinoSpinUntil: 0,
-    runStyle: 3,
-    jumpStyle: 1,
+
     jumpsUsed: 0,
     landingSquashUntil: 0,
     worldX: 0,
@@ -563,11 +562,6 @@
     }, { passive: false });
 
     window.addEventListener("keydown", event => {
-      if (event.code === "Digit1" || event.code === "Digit2" || event.code === "Digit3"){
-        const style = Number(event.code.replace("Digit", ""));
-        state.runStyle = style;
-        return;
-      }
 
       if (event.code !== "Space" && event.code !== "ArrowUp") return;
       if (!state.field) return;
@@ -1682,44 +1676,21 @@
   }
 
   function getDinoRunCycle(ts){
-    const duration = state.runStyle === 2 ? 360 : state.runStyle === 3 ? 440 : 560;
+    const duration = 440;
     return ((ts || 0) % duration) / duration;
   }
 
-  function getDinoRunPose(cycle){
+  function getDinoRunPose(cycle) {
     const unit = state.layout.unit;
     const wave = Math.sin(cycle * Math.PI * 2);
-    const snap = Math.sign(wave || 1) * Math.pow(Math.abs(wave), 0.42);
-
-    if (state.runStyle === 2){
-      return {
-        frontLeg: snap * 28,
-        rearLeg: -snap * 28,
-        bob: Math.abs(wave) * unit * 0.014,
-        bodyTilt: wave * 1.1,
-        scaleX: 1,
-        scaleY: 1
-      };
-    }
-
-    if (state.runStyle === 3){
-      return {
-        frontLeg: wave * 34,
-        rearLeg: -wave * 34,
-        bob: Math.sin(cycle * Math.PI * 4) * unit * 0.026,
-        bodyTilt: Math.sin(cycle * Math.PI * 4) * 1.4,
-        scaleX: 1 + Math.abs(wave) * 0.018,
-        scaleY: 1 - Math.abs(wave) * 0.012
-      };
-    }
 
     return {
-      frontLeg: wave * 20,
-      rearLeg: -wave * 20,
-      bob: Math.sin(cycle * Math.PI * 2) * unit * 0.014,
-      bodyTilt: 0,
-      scaleX: 1,
-      scaleY: 1
+      frontLeg: wave * 34,
+      rearLeg: -wave * 34,
+      bob: Math.sin(cycle * Math.PI * 4) * unit * 0.026,
+      bodyTilt: Math.sin(cycle * Math.PI * 4) * 1.4,
+      scaleX: 1 + Math.abs(wave) * 0.018,
+      scaleY: 1 - Math.abs(wave) * 0.012
     };
   }
 
