@@ -1668,7 +1668,7 @@
     const squashY = squashActive ? 0.955 : 1;
     const spin = ts < state.dinoSpinUntil
       ? ` rotate(${((ts - state.phaseStartedAt) * 0.9) % 360}deg)`
-      : ` rotate(${airborne ? 0 : pose.bodyTilt}deg)`;
+      : ` rotate(${pose.bodyTilt}deg)`;
 
     el.style.setProperty("--dino-w", `${state.layout.dinoW}px`);
     el.style.setProperty("--dino-h", `${state.layout.dinoH}px`);
@@ -1728,10 +1728,10 @@
 
     if (isDoubleJump) {
       return {
-        frontLeg: 38,
-        rearLeg: 28,
+        frontLeg: -38,
+        rearLeg: -28,
         bob: 0,
-        bodyTilt: 0,
+        bodyTilt: -5,
         scaleX: 1,
         scaleY: 1
       };
