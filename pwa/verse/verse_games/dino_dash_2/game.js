@@ -199,6 +199,7 @@
     landingSquashUntil: 0,
     worldX: 0,
     hillX: 0,
+    backHillX: 0,
     nextItemId: 1,
     tablets: [],
     obstacles: [],
@@ -319,6 +320,10 @@
 
           <div class="dd2-field-wrap">
             <div class="dd2-field" id="dd2Field">
+              <div class="dd2-back-hills" id="dd2BackHills">
+                <div class="dd2-back-hill-strip" id="dd2BackHillA"></div>
+                <div class="dd2-back-hill-strip" id="dd2BackHillB"></div>
+              </div>
               <div class="dd2-hills" id="dd2Hills">
                 <div class="dd2-hill-strip" id="dd2HillA"></div>
                 <div class="dd2-hill-strip" id="dd2HillB"></div>
@@ -374,6 +379,7 @@
     state.landingSquashUntil = 0;
     state.worldX = 0;
     state.hillX = 0;
+    state.backHillX = 0;
     state.nextItemId = 1;
     state.tablets = [];
     state.obstacles = [];
@@ -594,6 +600,7 @@
     const groundH = clamp(unit * 0.64, height * 0.12, height * 0.20);
     const groundTop = height - groundH;
     const hillH = unit * 1.55;
+    const backHillH = hillH * 2;
     const dinoH = unit;
     const dinoW = dinoH * dinoAspect;
     const dinoGroundY = groundTop - dinoH * 0.5 + unit * 0.025;
@@ -613,6 +620,7 @@
       groundH,
       groundTop,
       hillH,
+      backHillH,
       playTop,
       lanes: {
         ground: groundTop - TABLET_HEIGHT_U * unit * 0.50,
@@ -627,7 +635,9 @@
 
     field.style.setProperty("--dd2-ground-h", `${groundH}px`);
     field.style.setProperty("--dd2-hill-h", `${hillH}px`);
+    field.style.setProperty("--dd2-back-hill-h", `${backHillH}px`);
     field.style.setProperty("--dd2-hill-w", `${Math.ceil(hillH * 10 + 4)}px`);
+    field.style.setProperty("--dd2-back-hill-w", `${Math.ceil(backHillH * 10 + 4)}px`);
 
     state.dinoX = state.layout.dinoX;
     if (!state.dinoY) state.dinoY = dinoGroundY;
@@ -753,7 +763,8 @@
   function updateWorldScroll(dt){
     const speed = getActiveWorldSpeedU() * state.layout.unit;
     state.worldX -= speed * dt;
-    state.hillX -= speed * 0.42 * dt;
+    state.hillX -= speed * dt;
+    state.backHillX -= speed * 0.5 * dt;
   }
 
   function updateDino(dt, ts){
@@ -1458,13 +1469,21 @@
     if (!field || !state.layout) return;
     field.style.setProperty("--dd2-ground-x", `${state.worldX}px`);
     field.style.setProperty("--dd2-hill-x", `${state.hillX}px`);
+    field.style.setProperty("--dd2-back-hill-x", `${state.backHillX}px`);
 
     const hillW = Math.ceil(state.layout.hillH * 10 + 4);
-    const offset = ((state.hillX % hillW) + hillW) % hillW;
+    const hillOffset = ((state.hillX % hillW) + hillW) % hillW;
     const hillA = document.getElementById("dd2HillA");
     const hillB = document.getElementById("dd2HillB");
-    if (hillA) hillA.style.transform = `translateX(${-offset}px)`;
-    if (hillB) hillB.style.transform = `translateX(${hillW - offset}px)`;
+    if (hillA) hillA.style.transform = `translateX(${-hillOffset}px)`;
+    if (hillB) hillB.style.transform = `translateX(${hillW - hillOffset}px)`;
+
+    const backHillW = Math.ceil(state.layout.backHillH * 10 + 4);
+    const backHillOffset = ((state.backHillX % backHillW) + backHillW) % backHillW;
+    const backHillA = document.getElementById("dd2BackHillA");
+    const backHillB = document.getElementById("dd2BackHillB");
+    if (backHillA) backHillA.style.transform = `translateX(${-backHillOffset}px)`;
+    if (backHillB) backHillB.style.transform = `translateX(${backHillW - backHillOffset}px)`;
   }
 
   function renderTablets(ts){
