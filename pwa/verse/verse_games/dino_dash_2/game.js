@@ -183,6 +183,7 @@
     layout: null,
     lastTs: 0,
     lastInputAt: 0,
+    pausedRenderTs: 0,
     phaseStartedAt: 0,
     introStartedAt: 0,
     bonusStartedAt: 0,
@@ -358,6 +359,7 @@
     state.pauseReason = "";
     state.phase = "intro";
     state.lastTs = 0;
+    state.pausedRenderTs = 0;
     state.phaseStartedAt = 0;
     state.introStartedAt = 0;
     state.bonusStartedAt = 0;
@@ -1525,6 +1527,13 @@
   function renderDino(ts){
     const el = document.getElementById("dd2Dino");
     if (!el || !state.layout) return;
+
+    if (state.paused){
+      if (!state.pausedRenderTs) state.pausedRenderTs = ts || performance.now();
+      ts = state.pausedRenderTs;
+    } else {
+      state.pausedRenderTs = 0;
+    }
 
     const runCycle = ((ts || 0) % 520) / 520;
     const runSwing = Math.sin(runCycle * Math.PI * 2);
