@@ -971,15 +971,19 @@
   function spawnFlag(){
     if (state.bonusFlagSpawned) return;
     const layout = state.layout;
+    const h = layout.unit;
+    const w = h * 0.88;
+
     state.bonusFlagSpawned = true;
     state.obstacles.push({
       id: state.nextItemId++,
       type: "flag",
       key: "flag",
+      image: "dino_dash_flag.png",
       x: layout.flagSpawnX,
-      y: layout.groundTop - layout.unit * 0.80,
-      w: layout.unit * 0.78,
-      h: layout.unit * 1.60,
+      y: layout.groundTop - h * 0.5,
+      w,
+      h,
       hit: false,
       age: 0
     });
