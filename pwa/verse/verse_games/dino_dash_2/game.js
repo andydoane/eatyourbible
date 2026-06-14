@@ -696,7 +696,7 @@
       updateSpawn(dt, false);
       updateTablets(dt, ts);
       updateObstacles(dt, ts);
-      if (getCurrentPhase() === "done" && state.tablets.length === 0){
+      if (getCurrentPhase() === "done" && state.tablets.length === 0 && state.obstacles.length === 0){
         enterBonusIntroPhase();
       }
       return;
