@@ -201,7 +201,7 @@
     dinoAngle: 0,
     dinoHidden: false,
     dinoSpinUntil: 0,
-    runStyle: 1,
+    runStyle: 3,
     jumpStyle: 1,
     jumpsUsed: 0,
     landingSquashUntil: 0,
@@ -385,7 +385,7 @@
     state.dinoAngle = 0;
     state.dinoHidden = false;
     state.dinoSpinUntil = 0;
-    state.runStyle = 1;
+    state.runStyle = 3;
     state.jumpStyle = 1;
     state.jumpsUsed = 0;
     state.landingSquashUntil = 0;
@@ -1667,7 +1667,9 @@
     const squashActive = ts < state.landingSquashUntil;
     const squashX = squashActive ? 1.055 : 1;
     const squashY = squashActive ? 0.955 : 1;
-    const spin = ts < state.dinoSpinUntil ? ` rotate(${((ts - state.phaseStartedAt) * 0.9) % 360}deg)` : ` rotate(${state.dinoAngle + pose.bodyTilt}deg)`;
+    const spin = ts < state.dinoSpinUntil
+      ? ` rotate(${((ts - state.phaseStartedAt) * 0.9) % 360}deg)`
+      : ` rotate(${airborne ? 0 : pose.bodyTilt}deg)`;
 
     el.style.setProperty("--dino-w", `${state.layout.dinoW}px`);
     el.style.setProperty("--dino-h", `${state.layout.dinoH}px`);
@@ -1681,8 +1683,17 @@
   }
 
   function getDinoRunCycle(ts){
-    const duration = state.runStyle === 2 ? 360 : state.runStyle === 3 ? 460 : 560;
+    const baseDuration = state.runStyle === 2 ? 360 : state.runStyle === 3 ? 440 : 560;
+    const speedRatio = getDinoAnimationSpeedRatio();
+    const duration = baseDuration / speedRatio;
     return ((ts || 0) % duration) / duration;
+  }
+
+  function getDinoAnimationSpeedRatio(){
+    const d = getDifficulty();
+    const baseSpeed = state.phase === "bonus" ? d.bonusStartSpeedU : d.worldSpeedU;
+    const activeSpeed = getActiveWorldSpeedU();
+    return clamp(activeSpeed / Math.max(0.1, baseSpeed), 0.92, 1.75);
   }
 
   function getDinoRunPose(cycle){
@@ -1692,10 +1703,10 @@
 
     if (state.runStyle === 2){
       return {
-        frontLeg: snap * 24,
-        rearLeg: -snap * 24,
-        bob: Math.abs(wave) * unit * 0.012,
-        bodyTilt: wave * 1.2,
+        frontLeg: snap * 28,
+        rearLeg: -snap * 28,
+        bob: Math.abs(wave) * unit * 0.014,
+        bodyTilt: wave * 1.1,
         scaleX: 1,
         scaleY: 1
       };
@@ -1703,18 +1714,18 @@
 
     if (state.runStyle === 3){
       return {
-        frontLeg: wave * 22,
-        rearLeg: -wave * 22,
-        bob: Math.sin(cycle * Math.PI * 4) * unit * 0.025,
-        bodyTilt: Math.sin(cycle * Math.PI * 4) * 1.8,
+        frontLeg: wave * 34,
+        rearLeg: -wave * 34,
+        bob: Math.sin(cycle * Math.PI * 4) * unit * 0.026,
+        bodyTilt: Math.sin(cycle * Math.PI * 4) * 1.4,
         scaleX: 1 + Math.abs(wave) * 0.018,
         scaleY: 1 - Math.abs(wave) * 0.012
       };
     }
 
     return {
-      frontLeg: wave * 16,
-      rearLeg: -wave * 16,
+      frontLeg: wave * 20,
+      rearLeg: -wave * 20,
       bob: Math.sin(cycle * Math.PI * 2) * unit * 0.014,
       bodyTilt: 0,
       scaleX: 1,
@@ -1723,35 +1734,36 @@
   }
 
   function getDinoJumpPose(){
-    const vyU = state.layout ? state.dinoVY / state.layout.unit : 0;
-
     if (state.jumpStyle === 2){
-      if (vyU < -1.2){
-        return { frontLeg: -30, rearLeg: 28, bob: 0, bodyTilt: -3, scaleX: 1, scaleY: 1 };
-      }
-      if (vyU > 1.2){
-        return { frontLeg: -10, rearLeg: 16, bob: 0, bodyTilt: 5, scaleX: 1.015, scaleY: 0.99 };
-      }
-      return { frontLeg: -20, rearLeg: 20, bob: 0, bodyTilt: 0, scaleX: 1, scaleY: 1 };
+      return {
+        frontLeg: -34,
+        rearLeg: 34,
+        bob: 0,
+        bodyTilt: 0,
+        scaleX: 1,
+        scaleY: 1
+      };
     }
 
     if (state.jumpStyle === 3){
-      if (vyU < -1.2){
-        return { frontLeg: -20, rearLeg: 30, bob: -state.layout.unit * 0.01, bodyTilt: -5, scaleX: 0.985, scaleY: 1.025 };
-      }
-      if (vyU > 1.2){
-        return { frontLeg: 8, rearLeg: 18, bob: state.layout.unit * 0.01, bodyTilt: 7, scaleX: 1.035, scaleY: 0.975 };
-      }
-      return { frontLeg: -12, rearLeg: 14, bob: 0, bodyTilt: 1, scaleX: 1, scaleY: 1 };
+      return {
+        frontLeg: -18,
+        rearLeg: 30,
+        bob: 0,
+        bodyTilt: 0,
+        scaleX: 1,
+        scaleY: 1
+      };
     }
 
-    if (vyU < -1.2){
-      return { frontLeg: -24, rearLeg: 24, bob: 0, bodyTilt: -2, scaleX: 1, scaleY: 1 };
-    }
-    if (vyU > 1.2){
-      return { frontLeg: -8, rearLeg: 18, bob: 0, bodyTilt: 4, scaleX: 1, scaleY: 1 };
-    }
-    return { frontLeg: -18, rearLeg: 20, bob: 0, bodyTilt: 0, scaleX: 1, scaleY: 1 };
+    return {
+      frontLeg: -38,
+      rearLeg: -28,
+      bob: 0,
+      bodyTilt: 0,
+      scaleX: 1,
+      scaleY: 1
+    };
   }
 
   function renderFlyingWords(ts){
