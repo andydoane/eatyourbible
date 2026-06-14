@@ -438,6 +438,7 @@
     state.bonusFlagSpawned = false;
     state.bonusFinished = false;
     updateBuildText();
+    refreshLayoutAfterBuildChange({ resetDinoPosition: true });
   }
 
   function enterBonusPhase(){
@@ -451,6 +452,7 @@
     state.bonusFlagSpawned = false;
     state.bonusFinished = false;
     updateBuildText();
+    refreshLayoutAfterBuildChange({ resetDinoPosition: true });
   }
 
   function enterFallPhase(){
@@ -584,6 +586,14 @@
     if (!state.resizeHandler) return;
     window.removeEventListener("resize", state.resizeHandler);
     state.resizeHandler = null;
+  }
+
+  function refreshLayoutAfterBuildChange({ resetDinoPosition = false } = {}) {
+    requestAnimationFrame(() => {
+      recalcLayout();
+      if (resetDinoPosition) resetDino();
+      state.lastTs = 0;
+    });
   }
 
   function recalcLayout(){
