@@ -6,7 +6,7 @@
   const GAME_ID = "dino_dash";
   const GAME_TITLE = "Dino Dash";
   const GAME_THEME = { bg: "#333333", accent: "#333333" };
-  const BUILD_AREA = "normal";
+  const BUILD_AREA = "large";
   const HELP_OVERLAY_ID = "dd2HelpOverlay";
   const MENU_OVERLAY_ID = "dd2GameMenuOverlay";
   const IMAGE_PATH = "./dino_dash_images/";
@@ -438,7 +438,6 @@
     state.bonusFlagSpawned = false;
     state.bonusFinished = false;
     updateBuildText();
-    refreshLayoutAfterBuildChange({ resetDinoPosition: true });
   }
 
   function enterBonusPhase(){
@@ -452,7 +451,6 @@
     state.bonusFlagSpawned = false;
     state.bonusFinished = false;
     updateBuildText();
-    refreshLayoutAfterBuildChange({ resetDinoPosition: true });
   }
 
   function enterFallPhase(){
@@ -588,13 +586,7 @@
     state.resizeHandler = null;
   }
 
-  function refreshLayoutAfterBuildChange({ resetDinoPosition = false } = {}) {
-    requestAnimationFrame(() => {
-      recalcLayout();
-      if (resetDinoPosition) resetDino();
-      state.lastTs = 0;
-    });
-  }
+
 
   function recalcLayout(){
     const field = document.getElementById("dd2Field");
