@@ -71,6 +71,7 @@
       jumpU: -6.85,
       doubleJumpU: -6.65,
       patternGapU: 3.10,
+      bonusMinPatternSeconds: 1.25,
       bonusStartSpeedU: 2.25,
       bonusRampU: 0.095,
       obstacleChance: 0.36,
@@ -85,6 +86,7 @@
       jumpU: -7.10,
       doubleJumpU: -6.90,
       patternGapU: 2.78,
+      bonusMinPatternSeconds: 1.18,
       bonusStartSpeedU: 2.50,
       bonusRampU: 0.125,
       obstacleChance: 0.45,
@@ -99,6 +101,7 @@
       jumpU: -7.35,
       doubleJumpU: -7.15,
       patternGapU: 2.48,
+      bonusMinPatternSeconds: 1.10,
       bonusStartSpeedU: 2.82,
       bonusRampU: 0.155,
       obstacleChance: 0.54,
@@ -821,12 +824,20 @@
       spawnVersePattern();
     }
 
-    state.spawnCooldown = getPatternSpacingSeconds();
+    state.spawnCooldown = bonusOnly ? getBonusPatternSpacingSeconds() : getPatternSpacingSeconds();
   }
 
   function getPatternSpacingSeconds(){
     const speedU = Math.max(1, getActiveWorldSpeedU());
     return getDifficulty().patternGapU / speedU;
+  }
+
+  function getBonusPatternSpacingSeconds(){
+    const d = getDifficulty();
+    const speedU = Math.max(1, getActiveWorldSpeedU());
+    const distanceSeconds = d.patternGapU / speedU;
+    const variedSeconds = distanceSeconds * randomBetween(0.92, 1.12);
+    return Math.max(d.bonusMinPatternSeconds || 1.15, variedSeconds);
   }
 
   function spawnVersePattern(){
