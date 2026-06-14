@@ -566,7 +566,6 @@
       if (event.code === "Digit1" || event.code === "Digit2" || event.code === "Digit3"){
         const style = Number(event.code.replace("Digit", ""));
         state.runStyle = style;
-        state.jumpStyle = style;
         return;
       }
 
@@ -1683,17 +1682,8 @@
   }
 
   function getDinoRunCycle(ts){
-    const baseDuration = state.runStyle === 2 ? 360 : state.runStyle === 3 ? 440 : 560;
-    const speedRatio = getDinoAnimationSpeedRatio();
-    const duration = baseDuration / speedRatio;
+    const duration = state.runStyle === 2 ? 360 : state.runStyle === 3 ? 440 : 560;
     return ((ts || 0) % duration) / duration;
-  }
-
-  function getDinoAnimationSpeedRatio(){
-    const d = getDifficulty();
-    const baseSpeed = state.phase === "bonus" ? d.bonusStartSpeedU : d.worldSpeedU;
-    const activeSpeed = getActiveWorldSpeedU();
-    return clamp(activeSpeed / Math.max(0.1, baseSpeed), 0.92, 1.75);
   }
 
   function getDinoRunPose(cycle){
@@ -1733,22 +1723,13 @@
     };
   }
 
-  function getDinoJumpPose(){
-    if (state.jumpStyle === 2){
-      return {
-        frontLeg: -34,
-        rearLeg: 34,
-        bob: 0,
-        bodyTilt: 0,
-        scaleX: 1,
-        scaleY: 1
-      };
-    }
+  function getDinoJumpPose() {
+    const isDoubleJump = state.jumpsUsed >= 2;
 
-    if (state.jumpStyle === 3){
+    if (isDoubleJump) {
       return {
-        frontLeg: -18,
-        rearLeg: 30,
+        frontLeg: 38,
+        rearLeg: 28,
         bob: 0,
         bodyTilt: 0,
         scaleX: 1,
@@ -1757,8 +1738,8 @@
     }
 
     return {
-      frontLeg: -38,
-      rearLeg: -28,
+      frontLeg: 34,
+      rearLeg: -34,
       bob: 0,
       bodyTilt: 0,
       scaleX: 1,
