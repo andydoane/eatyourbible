@@ -20,6 +20,8 @@
   const FLYING_WORD_TRAVEL_SECONDS = 3.0;
   const FLYING_MESSAGE_GRACE_SECONDS = 0.25;
   const TABLET_HEIGHT_U = 0.52;
+  const TABLET_FLOAT_AMPLITUDE_U = 0.075;
+  const TABLET_FLOAT_RATE = 2.15;
   const FLAG_FINISH_SECONDS = 30;
   const FLAG_CLEAR_RUNWAY_SECONDS = 1.55;
 
@@ -945,6 +947,9 @@
       lane,
       x: layout.spawnX + xOffset,
       y,
+      baseY: y,
+      age: Math.random() * 10,
+      wavePhase: Math.random() * Math.PI * 2,
       w,
       h,
       shapeKey,
@@ -1066,7 +1071,10 @@
   function updateTablets(dt, ts){
     const speed = getActiveWorldSpeedU() * state.layout.unit;
     for (const tablet of state.tablets){
+      tablet.age += dt;
       tablet.x -= speed * dt;
+      tablet.y = tablet.baseY + Math.sin(tablet.age * TABLET_FLOAT_RATE + tablet.wavePhase) * state.layout.unit * TABLET_FLOAT_AMPLITUDE_U;
+
       if (!tablet.collected && rectsOverlap(getDinoHitbox(), getTabletHitbox(tablet))){
         if (tablet.correct) collectCorrectTablet(tablet, ts);
         else collectDecoyTablet(tablet, ts);
