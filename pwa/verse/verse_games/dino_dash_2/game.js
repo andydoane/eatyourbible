@@ -1775,13 +1775,28 @@
 
   function recolorDinoSvg(root){
     if (!root || !state.dinoColor) return;
+
     for (const id of DINO_PRIMARY_PART_IDS){
       const part = root.querySelector(`#${cssEscape(id)}`);
-      if (part) part.setAttribute("fill", state.dinoColor.primary);
+      setSvgPartFill(part, state.dinoColor.primary);
     }
+
     for (const id of DINO_SECONDARY_PART_IDS){
       const part = root.querySelector(`#${cssEscape(id)}`);
-      if (part) part.setAttribute("fill", state.dinoColor.secondary);
+      setSvgPartFill(part, state.dinoColor.secondary);
+    }
+  }
+
+  function setSvgPartFill(part, color){
+    if (!part || !color) return;
+
+    part.setAttribute("fill", color);
+
+    const style = part.getAttribute("style") || "";
+    if (style.includes("fill:")){
+      part.setAttribute("style", style.replace(/fill\s*:\s*[^;]+/g, `fill:${color}`));
+    } else {
+      part.setAttribute("style", `${style}${style && !style.trim().endsWith(";") ? ";" : ""}fill:${color};`);
     }
   }
 
