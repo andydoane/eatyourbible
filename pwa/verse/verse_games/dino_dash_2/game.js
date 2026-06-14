@@ -871,8 +871,8 @@
 
     if (pairedRoll < d.pairedChance){
       if (Math.random() < 0.45){
-        spawnGroundObstacle();
-        spawnCorrectTablet(chooseAirWordLane());
+        const obstacle = spawnGroundObstacle();
+        spawnCorrectTablet(chooseAirWordLane(), getObstaclePairWordOffset(obstacle));
       } else if (Math.random() < 0.50){
         spawnGapObstacle();
         spawnCorrectTablet(chooseAirWordLane());
@@ -914,14 +914,14 @@
     spawnTablet(label, label === correctLabel, phase, lane);
   }
 
-  function spawnCorrectTablet(lane){
+  function spawnCorrectTablet(lane, xOffset = 0){
     const phase = getCurrentPhase();
     if (phase === "done") return;
-    spawnTablet(getCurrentCorrectLabel(), true, phase, lane);
+    spawnTablet(getCurrentCorrectLabel(), true, phase, lane, xOffset);
     rememberSpawn(true);
   }
 
-  function spawnTablet(label, correct, phase, lane){
+  function spawnTablet(label, correct, phase, lane, xOffset = 0){
     const shapeKey = getTabletShapeKey(label);
     const shape = TABLET_SHAPES[shapeKey];
     const layout = state.layout;
@@ -935,7 +935,7 @@
       correct,
       phase,
       lane,
-      x: layout.spawnX,
+      x: layout.spawnX + xOffset,
       y,
       w,
       h,
@@ -952,7 +952,7 @@
     const w = h * getNaturalObstacleAspect(data.key);
     const y = layout.groundTop - h * 0.5 + h * data.offsetRatio;
 
-    state.obstacles.push({
+    const obstacle = {
       id: state.nextItemId++,
       type: "ground",
       key: data.key,
@@ -965,7 +965,15 @@
       hitH: h * data.hitH,
       hit: false,
       age: 0
-    });
+    };
+
+    state.obstacles.push(obstacle);
+    return obstacle;
+  }
+
+  function getObstaclePairWordOffset(obstacle) {
+    if (!obstacle || !obstacle.w) return 0;
+    return randomBetween(-obstacle.w, obstacle.w);
   }
 
   function spawnGapObstacle(){
