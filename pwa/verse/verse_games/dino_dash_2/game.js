@@ -67,9 +67,9 @@
   const DIFFICULTY = {
     easy: {
       worldSpeedU: 2.05,
-      gravityU: 15.0,
-      jumpU: -5.55,
-      doubleJumpU: -5.35,
+      gravityU: 15.5,
+      jumpU: -6.85,
+      doubleJumpU: -6.65,
       patternGapU: 3.10,
       bonusStartSpeedU: 2.25,
       bonusRampU: 0.095,
@@ -81,9 +81,9 @@
     },
     medium: {
       worldSpeedU: 2.32,
-      gravityU: 16.0,
-      jumpU: -5.80,
-      doubleJumpU: -5.55,
+      gravityU: 16.5,
+      jumpU: -7.10,
+      doubleJumpU: -6.90,
       patternGapU: 2.78,
       bonusStartSpeedU: 2.50,
       bonusRampU: 0.125,
@@ -95,9 +95,9 @@
     },
     hard: {
       worldSpeedU: 2.62,
-      gravityU: 17.0,
-      jumpU: -6.00,
-      doubleJumpU: -5.75,
+      gravityU: 17.5,
+      jumpU: -7.35,
+      doubleJumpU: -7.15,
       patternGapU: 2.48,
       bonusStartSpeedU: 2.82,
       bonusRampU: 0.155,
@@ -607,8 +607,9 @@
     const dinoW = dinoH * dinoAspect;
     const dinoGroundY = groundTop - dinoH * 0.5 + unit * 0.025;
     const playTop = unit * 0.45;
-    const middleY = groundTop - unit * 1.28;
-    const topY = Math.max(playTop + unit * 0.36, groundTop - unit * 2.05);
+    const groundTabletY = groundTop - TABLET_HEIGHT_U * unit * 1.05;
+    const middleY = groundTop - unit * 1.50;
+    const topY = Math.max(playTop + unit * 0.36, groundTop - unit * 3.00);
     const airClearanceY = groundTop - unit * 1.02;
 
     state.layout = {
@@ -625,7 +626,7 @@
       backHillH,
       playTop,
       lanes: {
-        ground: groundTop - TABLET_HEIGHT_U * unit * 0.50,
+        ground: groundTabletY,
         middle: middleY,
         top: topY
       },
