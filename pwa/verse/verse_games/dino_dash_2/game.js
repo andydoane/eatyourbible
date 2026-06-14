@@ -865,6 +865,11 @@
     const phase = getCurrentPhase();
     if (phase === "done") return;
 
+    if (shouldForceStandaloneDecoy()){
+      spawnTabletForPhase(phase, { forceDecoy: true });
+      return;
+    }
+
     const d = getDifficulty();
     const pairedRoll = Math.random();
     const obstacleRoll = Math.random();
@@ -903,10 +908,13 @@
     else spawnGapObstacle();
   }
 
-  function spawnTabletForPhase(phase){
+  function spawnTabletForPhase(phase, options = {}){
     const correctLabel = getCurrentCorrectLabel();
-    const shouldBeCorrect = chooseCorrectOrDecoy();
     const decoys = getDecoysForPhase(phase, correctLabel, 4);
+    const shouldBeCorrect = chooseCorrectOrDecoy({
+      forceDecoy: !!options.forceDecoy,
+      canSpawnDecoy: decoys.length > 0
+    });
     const label = (shouldBeCorrect || decoys.length === 0)
       ? correctLabel
       : decoys[Math.floor(Math.random() * decoys.length)];
@@ -1186,7 +1194,12 @@
     return Math.abs(a.x - b.x) * 2 < (a.w + b.w) && Math.abs(a.y - b.y) * 2 < (a.h + b.h);
   }
 
-  function chooseCorrectOrDecoy(){
+  function chooseCorrectOrDecoy({ forceDecoy = false, canSpawnDecoy = true } = {}){
+    if (!canSpawnDecoy){
+      rememberSpawn(true);
+      return true;
+    }
+
     if (state.forceCorrectNext){
       state.forceCorrectNext = false;
       rememberSpawn(true);
@@ -1195,14 +1208,40 @@
 
     const decoyRun = countRun(false);
     const correctRun = countRun(true);
-    let decoyChance = 0.28;
+
+    if (forceDecoy && decoyRun < 2){
+      rememberSpawn(false);
+      return false;
+    }
+
+    let decoyChance = 0.30;
+    const recent = state.spawnHistory.slice(-8);
+    const recentCorrect = recent.filter(Boolean).length;
+    const recentRatio = recent.length ? recentCorrect / recent.length : 0;
+
     if (decoyRun >= 2) decoyChance = 0;
-    else if (correctRun >= 4) decoyChance = 0.62;
-    else if (correctRun >= 3) decoyChance = 0.42;
+    else if (correctRun >= 4) decoyChance = 0.82;
+    else if (correctRun >= 3) decoyChance = 0.66;
+    else if (recent.length >= 6 && recentRatio >= 0.75) decoyChance = 0.72;
+    else if (recent.length >= 6 && recentRatio >= 0.62) decoyChance = 0.52;
+    else if (recent.length >= 6 && recentRatio <= 0.35) decoyChance = 0.10;
 
     const isCorrect = !(Math.random() < decoyChance);
     rememberSpawn(isCorrect);
     return isCorrect;
+  }
+
+  function shouldForceStandaloneDecoy() {
+    if (state.forceCorrectNext) return false;
+
+    const recent = state.spawnHistory.slice(-6);
+    if (recent.length < 4) return false;
+
+    const recentCorrect = recent.filter(Boolean).length;
+    if (countRun(true) >= 4) return true;
+    if (recent.length >= 6 && recentCorrect >= 5) return true;
+
+    return false;
   }
 
   function rememberSpawn(isCorrect){
