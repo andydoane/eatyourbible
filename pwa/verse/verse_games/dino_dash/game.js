@@ -757,7 +757,7 @@
 
   function maybeStartBackflip() {
     if (state.phase !== "verse") return;
-    if (state.streak < 10) return;
+    if (state.streak < 5) return;
 
     const d = getDifficulty();
     const expectedAirSeconds = (2 * Math.abs(d.jumpU)) / Math.max(0.1, d.gravityU);
