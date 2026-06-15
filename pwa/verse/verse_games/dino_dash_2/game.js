@@ -10,6 +10,22 @@
   const HELP_OVERLAY_ID = "dd2HelpOverlay";
   const MENU_OVERLAY_ID = "dd2GameMenuOverlay";
   const IMAGE_PATH = "./dino_dash_images/";
+  const SOUND_BASE_PATH = "./dino_dash_sounds/";
+  const UI_SOUND_BASE_PATH = "../../ui_audio/";
+  const SILENCE_PATH = "../../verse_audio/silence.mp3";
+
+  const SOUND_FILES = {
+    collision: "dino_dash_collision.mp3",
+    correct: "dino_dash_correct.mp3",
+    fall: "dino_dash_fall.mp3",
+    finish: "dino_dash_finish.mp3",
+    jump: "dino_dash_jump.mp3",
+    jump2: "dino_dash_jump_2.mp3",
+    streak: "dino_dash_streak.mp3",
+    wrong: "dino_dash_wrong.mp3",
+    uiPop1: "ui_sound_pop_1.mp3",
+    uiPop2: "ui_sound_pop_2.mp3"
+  };
   const DINO_IMAGE_CANDIDATES = ["dino_dash_dinosaur.svg", "dino_dash_dinosuar.svg"];
 
   const TARGET_FIELD_UNITS_WIDE = 4.35;
@@ -169,6 +185,11 @@
   let completionResult = null;
   let muted = false;
   let dinoSvgText = "";
+  let audioCtx = null;
+  let audioUnlocked = false;
+  let audioPreloadStarted = false;
+  let uiPopToggle = false;
+  const audioBuffers = new Map();
 
   const referenceParts = window.VerseGameShell.parseReferenceParts(ctx.verseRef, ctx.translation, ctx.verseId);
   const buildData = window.VerseGameShell.buildVerseSegments({
@@ -287,7 +308,10 @@
       theme: GAME_THEME,
       backLabel: "Back to Practice Games",
       onBack: () => window.VerseGameBridge.exitGame(),
-      onStart: renderModeSelect
+      onStart: () => {
+        playUiSound();
+        renderModeSelect();
+      }
     });
   }
 
@@ -304,8 +328,15 @@
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
       backLabel: "Back to Dino Dash title",
-      onBack: renderIntro,
-      onSelect: startGame
+      onBack: () => {
+        playUiSound();
+        renderIntro();
+      },
+      onSelect: mode => {
+        playUiSound();
+        unlockAudio();
+        startGame(mode);
+      }
     });
   }
 
@@ -317,6 +348,7 @@
     completed = false;
     completionResult = null;
     resetStateForRun();
+    preloadSounds();
 
     app.innerHTML = `
       <div class="dd2-root">
@@ -472,6 +504,7 @@
 
   function enterFallPhase(){
     if (state.phase === "fall" || !state.layout) return;
+    playSound("fall");
     state.phase = "fall";
     state.fallStartedAt = performance.now();
     state.respawnAt = state.fallStartedAt + 1050;
@@ -485,6 +518,7 @@
 
   function finishBonus(){
     if (state.bonusFinished) return;
+    playSound("finish");
     state.bonusFinished = true;
     state.phase = "bonusResult";
     state.running = false;
@@ -497,6 +531,105 @@
     state.obstacles = [];
     state.particles = [];
     state.dust = [];
+  }
+
+  function getAudioContext() {
+    if (audioCtx) return audioCtx;
+    const AudioCtor = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtor) return null;
+    audioCtx = new AudioCtor();
+    return audioCtx;
+  }
+
+  function preloadSounds() {
+    if (audioPreloadStarted) return;
+    audioPreloadStarted = true;
+
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    for (const [key, file] of Object.entries(SOUND_FILES)) {
+      loadSoundBuffer(key, getSoundUrl(key, file));
+    }
+  }
+
+  function getSoundUrl(key, file) {
+    return key.startsWith("uiPop") ? `${UI_SOUND_BASE_PATH}${file}` : `${SOUND_BASE_PATH}${file}`;
+  }
+
+  async function loadSoundBuffer(key, url) {
+    if (audioBuffers.has(key)) return audioBuffers.get(key);
+
+    try {
+      const ctx = getAudioContext();
+      if (!ctx) return null;
+
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`Could not load ${url}`);
+
+      const arrayBuffer = await response.arrayBuffer();
+      const buffer = await ctx.decodeAudioData(arrayBuffer);
+      audioBuffers.set(key, buffer);
+      return buffer;
+    } catch (err) {
+      console.warn("Dino Dash sound failed to load:", key, err);
+      audioBuffers.set(key, null);
+      return null;
+    }
+  }
+
+  async function unlockAudio() {
+    if (audioUnlocked) return;
+
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    try {
+      if (ctx.state === "suspended") await ctx.resume();
+
+      const silence = new Audio(SILENCE_PATH);
+      silence.muted = true;
+      silence.playsInline = true;
+      silence.volume = 0;
+      await silence.play().catch(() => { });
+
+      audioUnlocked = true;
+      preloadSounds();
+    } catch (err) {
+      console.warn("Dino Dash audio unlock failed", err);
+    }
+  }
+
+  async function playSound(key, options = {}) {
+    if (muted) return;
+
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    if (ctx.state === "suspended") {
+      ctx.resume().catch(() => { });
+    }
+
+    const file = SOUND_FILES[key];
+    if (!file) return;
+
+    const buffer = audioBuffers.get(key) || await loadSoundBuffer(key, getSoundUrl(key, file));
+    if (!buffer) return;
+
+    const source = ctx.createBufferSource();
+    const gain = ctx.createGain();
+
+    source.buffer = buffer;
+    gain.gain.value = options.volume ?? 0.85;
+
+    source.connect(gain);
+    gain.connect(ctx.destination);
+    source.start(0);
+  }
+
+  function playUiSound() {
+    uiPopToggle = !uiPopToggle;
+    playSound(uiPopToggle ? "uiPop1" : "uiPop2", { volume: 0.55 });
   }
 
   function renderHelpOverlay(body){
@@ -525,14 +658,22 @@
       isMuted: () => muted,
       onMuteToggle: () => {
         muted = !muted;
+        if (!muted) playUiSound();
         return muted;
       },
-      onHowToPlay: openHelpFromMenu,
+      onHowToPlay: () => {
+        playUiSound();
+        openHelpFromMenu();
+      },
       onModeSelect: () => {
+        playUiSound();
         setPaused(false, "");
         renderModeSelect();
       },
-      onExit: () => window.VerseGameBridge.exitGame(),
+      onExit: () => {
+        playUiSound();
+        window.VerseGameBridge.exitGame();
+      },
       onOpen: () => setPaused(true, "menu"),
       onClose: () => setPaused(false, ""),
       onBackFromHelp: () => setPaused(true, "menu")
@@ -571,6 +712,7 @@
   }
 
   function handleInput(){
+    unlockAudio();
     const now = performance.now();
     if (now - state.lastInputAt < 70) return;
     state.lastInputAt = now;
@@ -584,6 +726,9 @@
   function jump(){
     if (!state.layout) return;
     if (state.jumpsUsed >= 2) return;
+
+    const isDoubleJump = state.jumpsUsed === 1;
+    playSound(isDoubleJump ? "jump2" : "jump");
 
     state.dinoVY = (state.jumpsUsed === 0 ? getDifficulty().jumpU : getDifficulty().doubleJumpU) * state.layout.unit;
     state.jumpsUsed += 1;
@@ -1132,6 +1277,7 @@
   }
 
   function collectCorrectTablet(tablet, ts){
+    playSound("correct");
     tablet.collected = true;
     tablet.collectAt = ts;
     const oldLevel = getTrailLevel();
@@ -1139,12 +1285,16 @@
     state.bestStreak = Math.max(state.bestStreak, state.streak);
     state.progressIndex += 1;
     addParticleBurst(tablet.x, tablet.y, PARTICLE_COLORS.rainbow, 18, 0.06, 0.18);
-    if (getTrailLevel() > oldLevel) addParticleBurst(state.dinoX, state.dinoY, PARTICLE_COLORS.green, 20, 0.04, 0.16);
+    if (getTrailLevel() > oldLevel){
+      playSound("streak");
+      addParticleBurst(state.dinoX, state.dinoY, PARTICLE_COLORS.green, 20, 0.04, 0.16);
+    }
     flash("rgba(120, 220, 190, 0.24)", 110);
     updateBuildText();
   }
 
   function collectDecoyTablet(tablet, ts){
+    playSound("wrong");
     tablet.collected = true;
     tablet.collectAt = ts;
     state.streak = 0;
@@ -1166,6 +1316,7 @@
   }
 
   function hitObstacle(item, ts){
+    playSound("collision");
     item.hit = true;
     state.streak = 0;
     clearTrail();
@@ -1846,7 +1997,10 @@
     `;
     const button = document.getElementById("dd2ContinueButton");
     if (button){
-      button.addEventListener("click", () => finishRun());
+      button.addEventListener("click", () => {
+        playUiSound();
+        finishRun();
+      });
       button.focus({ preventScroll: true });
     }
   }
