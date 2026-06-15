@@ -504,6 +504,12 @@
 
   function enterFallPhase(){
     if (state.phase === "fall" || !state.layout) return;
+
+    if (state.phase === "bonus"){
+      finishBonus({ sound: "fall" });
+      return;
+    }
+
     playSound("fall");
     state.phase = "fall";
     state.fallStartedAt = performance.now();
@@ -516,9 +522,9 @@
     flash("rgba(255, 90, 81, 0.24)", 140);
   }
 
-  function finishBonus(){
+  function finishBonus({ sound = "finish" } = {}){
     if (state.bonusFinished) return;
-    playSound("finish");
+    if (sound) playSound(sound);
     state.bonusFinished = true;
     state.phase = "bonusResult";
     state.running = false;
@@ -1316,14 +1322,20 @@
   }
 
   function hitObstacle(item, ts){
-    playSound("collision");
     item.hit = true;
     state.streak = 0;
     clearTrail();
-    state.dinoSpinUntil = ts + 600;
     state.shakeUntil = ts + 260;
     addParticleBurst(item.x, item.y, item.type === "air" ? PARTICLE_COLORS.white : PARTICLE_COLORS.brown, 16, 0.06, 0.20);
     flash("rgba(255, 90, 81, 0.25)", 130);
+
+    if (state.phase === "bonus"){
+      finishBonus({ sound: "collision" });
+      return;
+    }
+
+    playSound("collision");
+    state.dinoSpinUntil = ts + 600;
   }
 
   function gapCatchesDino(gap){
@@ -1946,11 +1958,39 @@
     }
   }
 
+  function getBonusProgress() {
+    if (state.phase === "bonusIntro") return 0;
+    if (state.phase !== "bonus" || !state.bonusStartedAt) return 0;
+
+    const elapsed = Math.max(0, (performance.now() - state.bonusStartedAt) / 1000);
+    return clamp(elapsed / FLAG_FINISH_SECONDS, 0, 1);
+  }
+
   function updateBuildText(){
     const el = document.getElementById("dd2BuildText");
     if (!el) return;
 
-    if (state.phase === "bonus" || state.phase === "bonusResult"){
+    if (state.phase === "bonusIntro" || state.phase === "bonus"){
+      const progress = getBonusProgress();
+      const progressPercent = Math.round(progress * 100);
+
+      el.className = "dd2-build-text vm-build-text dd2-bonus-progress-build";
+      el.style.setProperty("--dd2-bonus-progress", progress);
+      el.innerHTML = `
+        <div class="dd2-bonus-progress" aria-label="Bonus progress ${progressPercent}%">
+          <div class="dd2-bonus-progress-icons">
+            <div class="dd2-bonus-progress-head" aria-hidden="true"></div>
+            <div class="dd2-bonus-progress-flag" aria-hidden="true"></div>
+          </div>
+          <div class="dd2-bonus-progress-bar" aria-hidden="true">
+            <div class="dd2-bonus-progress-fill"></div>
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    if (state.phase === "bonusResult"){
       el.className = "dd2-build-text vm-build-text dd2-feet-build";
       el.innerHTML = `<span class="dd2-feet-label">Feet</span><span class="dd2-feet-number">${state.feet}</span>`;
       return;
