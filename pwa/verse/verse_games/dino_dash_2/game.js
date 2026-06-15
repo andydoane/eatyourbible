@@ -1459,7 +1459,7 @@
 
   function getTabletFontSize(tablet){
     const label = String(tablet.label || "");
-    const targetSize = clamp(tablet.h * 0.42, 15, 29);
+    const targetSize = clamp(tablet.h * 0.54, 17, 40);
     const textSafeWidth = tablet.w * TABLET_SHAPES[tablet.shapeKey].textWidth;
     const visualWeight = getTextVisualWeight(label);
     const fittedSize = textSafeWidth / Math.max(1, visualWeight);
