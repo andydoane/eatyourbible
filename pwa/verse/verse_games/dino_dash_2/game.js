@@ -44,7 +44,6 @@
   const DINO_COLORS = [
     { name: "yellow", primary: "#ffc751", secondary: "#a68235" },
     { name: "red", primary: "#ff5a51", secondary: "#a63b35" },
-    { name: "green", primary: "#a7cb6f", secondary: "#6d8448" },
     { name: "purple", primary: "#7f66c6", secondary: "#534281" },
     { name: "black", primary: "#4d4d4d", secondary: "#333333" },
     { name: "orange", primary: "#ffa351", secondary: "#a66a35" },
@@ -245,6 +244,8 @@
     bonusFlagAt: 0,
     bonusFlagSpawned: false,
     bonusFinished: false,
+    bonusCrashed: false,
+    bonusResultProgress: 0,
     feet: 0,
     bonusDistanceU: 0,
     streakSpeedBoostU: 0,
@@ -440,6 +441,8 @@
     state.bonusFlagAt = 0;
     state.bonusFlagSpawned = false;
     state.bonusFinished = false;
+    state.bonusCrashed = false;
+    state.bonusResultProgress = 0;
     state.feet = 0;
     state.bonusDistanceU = 0;
     state.streakSpeedBoostU = 0;
@@ -506,7 +509,7 @@
     if (state.phase === "fall" || !state.layout) return;
 
     if (state.phase === "bonus"){
-      finishBonus({ sound: "fall" });
+      finishBonus({ sound: "fall", crashed: true });
       return;
     }
 
@@ -522,11 +525,14 @@
     flash("rgba(255, 90, 81, 0.24)", 140);
   }
 
-  function finishBonus({ sound = "finish" } = {}){
+  function finishBonus({ sound = "finish", crashed = false } = {}){
     if (state.bonusFinished) return;
+    state.bonusResultProgress = getBonusProgress();
+    state.bonusCrashed = crashed;
     if (sound) playSound(sound);
     state.bonusFinished = true;
     state.phase = "bonusResult";
+    updateBuildText();
     state.running = false;
     stopLoop();
     showBonusResult();
@@ -1330,7 +1336,7 @@
     flash("rgba(255, 90, 81, 0.25)", 130);
 
     if (state.phase === "bonus"){
-      finishBonus({ sound: "collision" });
+      finishBonus({ sound: "collision", crashed: true });
       return;
     }
 
@@ -1960,6 +1966,7 @@
 
   function getBonusProgress() {
     if (state.phase === "bonusIntro") return 0;
+    if (state.phase === "bonusResult") return clamp(state.bonusResultProgress || 0, 0, 1);
     if (state.phase !== "bonus" || !state.bonusStartedAt) return 0;
 
     const elapsed = Math.max(0, (performance.now() - state.bonusStartedAt) / 1000);
@@ -1970,7 +1977,7 @@
     const el = document.getElementById("dd2BuildText");
     if (!el) return;
 
-    if (state.phase === "bonusIntro" || state.phase === "bonus"){
+    if (state.phase === "bonusIntro" || state.phase === "bonus" || state.phase === "bonusResult"){
       const progress = getBonusProgress();
       const progressPercent = Math.round(progress * 100);
 
@@ -1990,11 +1997,7 @@
       return;
     }
 
-    if (state.phase === "bonusResult"){
-      el.className = "dd2-build-text vm-build-text dd2-feet-build";
-      el.innerHTML = `<span class="dd2-feet-label">Feet</span><span class="dd2-feet-number">${state.feet}</span>`;
-      return;
-    }
+
 
     const buildRender = window.VerseGameShell.renderBuildProgressHtml({
       verseText: ctx.verseText || "",
@@ -2028,9 +2031,11 @@
     const layer = document.getElementById("dd2ResultLayer");
     if (!layer) return;
     layer.hidden = false;
+    const title = state.bonusCrashed ? "You crashed!" : "You made it!";
+
     layer.innerHTML = `
       <div class="dd2-result-card" role="dialog" aria-live="polite" aria-label="Bonus result">
-        <h2 class="dd2-result-title">You made it!</h2>
+        <h2 class="dd2-result-title">${title}</h2>
         <p class="dd2-result-stat">You ran ${state.feet} feet.</p>
         <button class="dd2-result-button" id="dd2ContinueButton" type="button">Continue</button>
       </div>
