@@ -1955,7 +1955,9 @@
     const layout = state.layout;
     const t = elapsed - word.delay;
     const travel = FLYING_WORD_TRAVEL_SECONDS;
-    const size = clamp(layout.unit * 0.20, 18, 36);
+    const baseSize = layout.unit * 0.22;
+    const widthCap = layout.width * 0.055;
+    const size = clamp(Math.min(baseSize, widthCap), 18, 44);
     const wordW = getFlyingWordWidth(word, size);
     const lineOffset = getFlyingWordLineOffset(words, index, size);
     const startX = layout.width + wordW * 0.5 + layout.unit * 0.40 + lineOffset;
