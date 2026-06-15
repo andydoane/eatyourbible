@@ -208,21 +208,7 @@ body{
   background-position: var(--vb2-ground-x) 100%;
 }
 
-.vb2-fps-counter {
-  position: absolute;
-  z-index: 25;
-  top: 16px;
-  right: 14px;
-  padding: 7px 10px 8px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.62);
-  color: #ffffff;
-  font-size: 12px;
-  font-weight: 900;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-  pointer-events: none;
-}
+
 
 .vb2-menu-pill{
   position: absolute;

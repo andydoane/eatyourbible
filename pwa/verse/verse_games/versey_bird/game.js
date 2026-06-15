@@ -273,14 +273,7 @@
     skidCooldown: 0,
     birdTrailCooldown: 0,
     birdSparkleCooldown: 0,
-    streakSpeedBoostU: 0,
-    fpsFrames: 0,
-    fpsLastAt: 0,
-    fpsValue: 0,
-    fpsLow: 999,
-    fpsWorkTotal: 0,
-    fpsWorkMax: 0,
-    fpsWorkAvg: 0
+    streakSpeedBoostU: 0
   };
 
   setupReferenceSegments();
@@ -559,7 +552,7 @@
               <div class="vb2-intro-layer" id="vb2IntroLayer"></div>
               <div class="vb2-flash" id="vb2Flash"></div>
               <div class="vb2-result-layer" id="vb2ResultLayer" hidden></div>
-              <div class="vb2-fps-counter" id="vb2FpsCounter">FPS --</div>
+
             </div>
           </div>
         </div>
@@ -999,17 +992,11 @@
     const dt = Math.min(0.033, Math.max(0, (ts - state.lastTs) / 1000));
     state.lastTs = ts;
 
-    const workStart = performance.now();
-
     if (!state.paused) {
       update(dt, ts);
     }
 
     render(ts);
-
-    const workMs = performance.now() - workStart;
-    state.fpsWorkTotal += workMs;
-    state.fpsWorkMax = Math.max(state.fpsWorkMax, workMs);
 
     state.rafId = requestAnimationFrame(tick);
   }
@@ -1784,7 +1771,7 @@
     renderIntroLayer(ts);
     renderFlash(ts);
     renderBuildShake(ts);
-    renderFpsCounter(ts);
+
   }
 
   function renderHillStrips() {
@@ -2156,42 +2143,6 @@
     }
   }
 
-  function renderFpsCounter(ts) {
-    const counter = document.getElementById("vb2FpsCounter");
-    if (!counter) return;
-
-    if (!state.fpsLastAt) {
-      state.fpsLastAt = ts;
-      state.fpsFrames = 0;
-      state.fpsWorkTotal = 0;
-      state.fpsWorkMax = 0;
-      return;
-    }
-
-    state.fpsFrames += 1;
-
-    const elapsed = ts - state.fpsLastAt;
-    if (elapsed < 500) return;
-
-    const fps = Math.round((state.fpsFrames * 1000) / elapsed);
-    const workAvg = state.fpsFrames > 0 ? state.fpsWorkTotal / state.fpsFrames : 0;
-    const workMax = state.fpsWorkMax;
-
-    state.fpsValue = fps;
-    state.fpsWorkAvg = workAvg;
-
-    if (fps > 0) {
-      state.fpsLow = Math.min(state.fpsLow, fps);
-    }
-
-    const lowText = state.fpsLow === 999 ? "--" : state.fpsLow;
-    counter.textContent = `FPS ${state.fpsValue} / LOW ${lowText} / WORK ${workAvg.toFixed(1)} / MAX ${workMax.toFixed(1)}ms`;
-
-    state.fpsFrames = 0;
-    state.fpsLastAt = ts;
-    state.fpsWorkTotal = 0;
-    state.fpsWorkMax = 0;
-  }
 
   function renderBuildShake(ts){
     const build = document.getElementById("vb2Build");
