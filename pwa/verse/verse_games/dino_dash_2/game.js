@@ -1081,8 +1081,9 @@
     const label = (shouldBeCorrect || decoys.length === 0)
       ? correctLabel
       : decoys[Math.floor(Math.random() * decoys.length)];
-    const lane = chooseWordLane();
-    spawnTablet(label, label === correctLabel, phase, lane);
+    const isCorrect = label === correctLabel;
+    const lane = chooseWordLane(isCorrect);
+    spawnTablet(label, isCorrect, phase, lane);
   }
 
   function spawnCorrectTablet(lane, xOffset = 0){
@@ -1439,10 +1440,18 @@
     return total;
   }
 
-  function chooseWordLane(){
+  function chooseWordLane(isCorrect = true){
     const roll = Math.random();
-    if (roll < 0.34) return "ground";
-    if (roll < 0.34 + getDifficulty().topWordChance) return "top";
+    const topChance = getDifficulty().topWordChance;
+
+    if (isCorrect){
+      if (roll < 0.15) return "ground";
+      if (roll < 0.15 + topChance) return "top";
+      return "middle";
+    }
+
+    if (roll < 0.55) return "ground";
+    if (roll < 0.55 + topChance) return "top";
     return "middle";
   }
 
