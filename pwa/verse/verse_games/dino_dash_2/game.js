@@ -221,6 +221,8 @@
     dinoAngle: 0,
     dinoHidden: false,
     dinoSpinUntil: 0,
+    dinoBackflipStartedAt: 0,
+    dinoBackflipDuration: 0,
 
     jumpsUsed: 0,
     landingSquashUntil: 0,
@@ -417,6 +419,8 @@
     state.dinoAngle = 0;
     state.dinoHidden = false;
     state.dinoSpinUntil = 0;
+    state.dinoBackflipStartedAt = 0;
+    state.dinoBackflipDuration = 0;
     state.runStyle = 3;
     state.jumpStyle = 1;
     state.jumpsUsed = 0;
@@ -742,9 +746,36 @@
     const isDoubleJump = state.jumpsUsed === 1;
     playSound(isDoubleJump ? "jump2" : "jump");
 
+    if (!isDoubleJump) maybeStartBackflip();
+
     state.dinoVY = (state.jumpsUsed === 0 ? getDifficulty().jumpU : getDifficulty().doubleJumpU) * state.layout.unit;
     state.jumpsUsed += 1;
     addJumpDust();
+  }
+
+  function maybeStartBackflip() {
+    if (state.phase !== "verse") return;
+    if (state.streak < 10) return;
+
+    const d = getDifficulty();
+    const expectedAirSeconds = (2 * Math.abs(d.jumpU)) / Math.max(0.1, d.gravityU);
+
+    state.dinoBackflipStartedAt = performance.now();
+    state.dinoBackflipDuration = clamp(expectedAirSeconds * 1000, 620, 950);
+  }
+
+  function getDinoBackflipAngle(ts) {
+    if (!state.dinoBackflipStartedAt || !state.dinoBackflipDuration) return 0;
+
+    const t = clamp((ts - state.dinoBackflipStartedAt) / state.dinoBackflipDuration, 0, 1);
+    if (t >= 1) return 0;
+
+    return -360 * easeOutCubic(t);
+  }
+
+  function easeOutCubic(t) {
+    const safe = clamp(t, 0, 1);
+    return 1 - Math.pow(1 - safe, 3);
   }
 
   function installResize(){
@@ -828,6 +859,8 @@
     state.dinoY = state.layout.dinoGroundY;
     state.dinoVY = 0;
     state.dinoAngle = 0;
+    state.dinoBackflipStartedAt = 0;
+    state.dinoBackflipDuration = 0;
     state.jumpsUsed = 0;
     state.dinoHidden = false;
   }
@@ -976,6 +1009,8 @@
       state.dinoY = layout.dinoGroundY;
       state.dinoVY = 0;
       state.jumpsUsed = 0;
+      state.dinoBackflipStartedAt = 0;
+      state.dinoBackflipDuration = 0;
       if (!wasGrounded){
         state.landingSquashUntil = ts + 160;
         addLandingDust();
@@ -1838,9 +1873,10 @@
     const squashActive = ts < state.landingSquashUntil;
     const squashX = squashActive ? 1.055 : 1;
     const squashY = squashActive ? 0.955 : 1;
+    const backflipAngle = getDinoBackflipAngle(ts);
     const spin = ts < state.dinoSpinUntil
       ? ` rotate(${((ts - state.phaseStartedAt) * 0.9) % 360}deg)`
-      : ` rotate(${pose.bodyTilt}deg)`;
+      : ` rotate(${pose.bodyTilt + backflipAngle}deg)`;
 
     el.style.setProperty("--dino-w", `${state.layout.dinoW}px`);
     el.style.setProperty("--dino-h", `${state.layout.dinoH}px`);
