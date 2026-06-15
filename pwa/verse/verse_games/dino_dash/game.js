@@ -240,6 +240,7 @@
     nextTrailId: 1,
     spawnCooldown: 0,
     spawnPause: 0,
+    doubleJumpSignSpawned: false,
     fallStartedAt: 0,
     respawnAt: 0,
     bonusFinishTriggered: false,
@@ -439,6 +440,7 @@
     state.nextTrailId = 1;
     state.spawnCooldown = 0.4;
     state.spawnPause = 0;
+    state.doubleJumpSignSpawned = false;
     state.fallStartedAt = 0;
     state.respawnAt = 0;
     state.bonusFinishTriggered = false;
@@ -1039,12 +1041,20 @@
 
     if (bonusOnly){
       spawnBonusPattern();
+    } else if (!state.doubleJumpSignSpawned){
+      spawnDoubleJumpSign();
     } else {
       spawnVersePattern();
     }
 
     state.spawnCooldown = bonusOnly ? getBonusPatternSpacingSeconds() : getPatternSpacingSeconds();
   }
+
+  state.spawnCooldown = bonusOnly
+    ? getBonusPatternSpacingSeconds()
+    : state.doubleJumpSignSpawned && state.obstacles.some(item => item.key === "double-jump-sign")
+      ? getPatternSpacingSeconds() * 1.35
+      : getPatternSpacingSeconds();
 
   function getPatternSpacingSeconds(){
     const speedU = Math.max(1, getActiveWorldSpeedU());
@@ -1104,6 +1114,29 @@
     if (roll < 0.50) spawnGroundObstacle();
     else if (roll < 0.78) spawnAirObstacle();
     else spawnGapObstacle();
+  }
+
+  function spawnDoubleJumpSign() {
+    const layout = state.layout;
+    const h = 1.05 * layout.unit;
+    const w = h * (884 / 970);
+    const y = layout.groundTop - h * 0.5 + h * 0.103;
+
+    state.doubleJumpSignSpawned = true;
+    state.obstacles.push({
+      id: state.nextItemId++,
+      type: "ground",
+      key: "double-jump-sign",
+      image: "dino_dash_double_jump.png",
+      x: layout.spawnX,
+      y,
+      w,
+      h,
+      hitW: w * 0.62,
+      hitH: h * 0.76,
+      hit: false,
+      age: 0
+    });
   }
 
   function spawnTabletForPhase(phase, options = {}){
