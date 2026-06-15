@@ -1243,7 +1243,7 @@
     }
 
     state.tablets = state.tablets.filter(tablet => {
-      if (tablet.collected) return ts - tablet.collectAt < 240;
+      if (tablet.collected) return ts - tablet.collectAt < 150;
       if (tablet.x < state.layout.offscreenX){
         if (tablet.correct) missCorrectTablet(ts);
         return false;

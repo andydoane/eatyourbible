@@ -363,7 +363,7 @@ body{
 }
 
 .dd2-tablet.is-collected{
-  animation: dd2TabletPop 240ms ease-out forwards;
+  animation: dd2TabletPop 150ms ease-out forwards;
 }
 
 @keyframes dd2TabletLazyDance{
@@ -376,8 +376,8 @@ body{
 
 @keyframes dd2TabletPop{
   0%{ transform: translate(-50%, -50%) scale(1); opacity: 1; }
-  55%{ transform: translate(-50%, -50%) scale(1.10); opacity: 1; }
-  100%{ transform: translate(-50%, -50%) scale(0.74); opacity: 0; }
+  45%{ transform: translate(-50%, -50%) scale(1.06); opacity: 0.72; }
+  100%{ transform: translate(-50%, -50%) scale(0.62); opacity: 0; }
 }
 
 .dd2-tablet-word{
