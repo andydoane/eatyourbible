@@ -1157,12 +1157,12 @@ function backToMenuFromHelp(){
     if (!isActiveRun(runToken)) return false;
 
     const chewSteps = [
-      { face: "😀", hold: 0.12 },
-      { face: "😐", hold: 0.14 },
-      { face: "😀", hold: 0.12 },
-      { face: "😐", hold: 0.14 },
-      { face: "😀", hold: 0.12 },
-      { face: "😐", hold: 0.20 }
+      { face: "😀", hold: 0.22 },
+      { face: "😐", hold: 0.24 },
+      { face: "😀", hold: 0.22 },
+      { face: "😐", hold: 0.24 },
+      { face: "😀", hold: 0.22 },
+      { face: "😐", hold: 0.30 }
     ];
 
     state.flyingFood = null;
