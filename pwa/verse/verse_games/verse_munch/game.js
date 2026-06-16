@@ -1511,44 +1511,47 @@ function updateBuildText(){
     state.beltHidden = false;
 
     if (selectedMode === "hard") {
-      state.beltForceCorrectIn = 2;
+      state.beltForceCorrectIn = getStartingCorrectDelay("hard");
     } else if (selectedMode === "medium") {
-      state.beltForceCorrectIn = 1;
+      state.beltForceCorrectIn = getStartingCorrectDelay("medium");
     } else {
-      state.beltForceCorrectIn = 0;
+      state.beltForceCorrectIn = getStartingCorrectDelay("easy");
     }
   }
 
   function getBeltConfig() {
+    const chipHeight = 56;
+    const phoneBoost = state.fieldWidth && state.fieldWidth < 430 ? 0.92 : 1;
+
     if (selectedMode === "hard") {
       return {
-        speed: Math.max(108, state.fieldWidth * 0.28),
-        gap: 76,
+        speed: chipHeight * 2.35 * phoneBoost,
+        gap: 112,
         minWidth: 92,
         maxCorrectVisible: 1,
-        correctDelayMin: 2,
-        correctDelayMax: 3
+        decoyCount: 10,
+        correctDelayMode: "hard"
       };
     }
 
     if (selectedMode === "medium") {
       return {
-        speed: Math.max(92, state.fieldWidth * 0.24),
-        gap: 68,
+        speed: chipHeight * 1.95 * phoneBoost,
+        gap: 100,
         minWidth: 98,
         maxCorrectVisible: 1,
-        correctDelayMin: 1,
-        correctDelayMax: 2
+        decoyCount: 8,
+        correctDelayMode: "medium"
       };
     }
 
     return {
-      speed: Math.max(74, state.fieldWidth * 0.20),
-      gap: 60,
+      speed: chipHeight * 1.55 * phoneBoost,
+      gap: 90,
       minWidth: 108,
       maxCorrectVisible: 2,
-      correctDelayMin: 0,
-      correctDelayMax: 1
+      decoyCount: 4,
+      correctDelayMode: "easy"
     };
   }
 
@@ -1601,11 +1604,11 @@ function updateBuildText(){
     let label = correctLabel;
 
     if (!makeCorrect) {
-      const decoys = getDecoysForPhase(phase, correctLabel, selectedMode === "easy" ? 4 : 8);
+      const decoys = getDecoysForPhase(phase, correctLabel, cfg.decoyCount);
       label = randomFrom(decoys.length ? decoys : FUN_DECOYS);
       state.beltForceCorrectIn -= 1;
     } else {
-      state.beltForceCorrectIn = randomInt(cfg.correctDelayMin, cfg.correctDelayMax);
+      state.beltForceCorrectIn = getNextCorrectDelay(cfg.correctDelayMode);
     }
 
     const width = estimateBeltItemWidth(label, cfg);
@@ -1681,6 +1684,39 @@ function updateBuildText(){
 
   function randomInt(min, max) {
     return Math.floor(min + Math.random() * (max - min + 1));
+  }
+
+  function getNextCorrectDelay(mode) {
+    const roll = Math.random();
+
+    if (mode === "hard") {
+      if (roll < 0.18) return 1;
+      if (roll < 0.58) return 2;
+      return 3;
+    }
+
+    if (mode === "medium") {
+      if (roll < 0.28) return 0;
+      if (roll < 0.72) return 1;
+      return 2;
+    }
+
+    if (roll < 0.58) return 0;
+    return 1;
+  }
+
+  function getStartingCorrectDelay(mode) {
+    const roll = Math.random();
+
+    if (mode === "hard") {
+      return roll < 0.65 ? 1 : 2;
+    }
+
+    if (mode === "medium") {
+      return roll < 0.75 ? 0 : 1;
+    }
+
+    return 0;
   }
 
   function getDecoysForPhase(phase, correctLabel, count){
