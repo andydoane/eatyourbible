@@ -211,6 +211,27 @@ const FACE_MAP = {
   "is-react-victory-wiggle"
 ];
 
+  const NO_SPEW_WORDS = new Set([
+    "god",
+    "lord",
+    "jesus",
+    "christ",
+    "savior",
+    "saviour",
+    "son",
+    "father",
+    "spirit",
+    "holy",
+    "lamb",
+    "word",
+    "scripture",
+    "scriptures",
+    "messiah",
+    "redeemer",
+    "king",
+    "blood"
+  ]);
+
   let selectedMode = null;
   let completed = false;
   let completionResult = null;
@@ -776,6 +797,7 @@ function backToMenuFromHelp(){
 
     const currentCorrect = getCurrentCorrectLabel();
     const isCorrect = normalizeWord(item.label) === normalizeWord(currentCorrect);
+    const useDizzyWrongReaction = !isCorrect && shouldUseDizzyWrongReaction(item.label);
     const feedPoint = getBeltFeedPoint();
 
     item.tapped = true;
@@ -819,7 +841,7 @@ function backToMenuFromHelp(){
         return;
       }
     } else {
-      if (!await playWrongWordReaction(item.label, runToken)) return;
+      if (!await playWrongWordReaction(item.label, runToken, useDizzyWrongReaction)) return;
       if (!isActiveRun(runToken)) return;
 
       state.streak = 0;
@@ -827,7 +849,7 @@ function backToMenuFromHelp(){
       state.faceBase = getEmotionFace();
       state.faceDisplay = state.faceBase;
       state.faceClasses = new Set();
-      state.feedbackBadge = "Yuck!";
+      state.feedbackBadge = useDizzyWrongReaction ? "Not that one!" : "Yuck!";
       state.feedbackUntil = performance.now() + 650;
       state.buildShakeUntil = performance.now() + 280;
     }
@@ -950,11 +972,17 @@ function backToMenuFromHelp(){
     return await waitSeconds(totalDuration, runToken);
   }
 
-  async function playWrongWordReaction(label, runToken) {
+  async function playWrongWordReaction(label, runToken, useDizzyReaction = false) {
     if (!isActiveRun(runToken)) return false;
 
     state.reactionFlash = "is-flash-negative";
-    state.reactionFlashUntil = performance.now() + 760;
+    state.reactionFlashUntil = performance.now() + (useDizzyReaction ? 560 : 760);
+
+    if (useDizzyReaction){
+      state.faceDisplay = "😵‍💫";
+      state.faceClasses = new Set(["is-react-head-no-hard"]);
+      return await waitSeconds(0.68, runToken);
+    }
 
     state.faceDisplay = "🤢";
     state.faceClasses = new Set(["is-react-barf-bounce"]);
@@ -1041,6 +1069,13 @@ function backToMenuFromHelp(){
     return chars.length ? chars : ["?"];
   }
 
+  function shouldUseDizzyWrongReaction(label) {
+    const normalized = normalizeWord(label);
+    const possessiveBase = normalized.endsWith("s") ? normalized.slice(0, -1) : normalized;
+
+    return NO_SPEW_WORDS.has(normalized) || NO_SPEW_WORDS.has(possessiveBase);
+  }
+  
   async function playMouthOpenAnimation(runToken) {
     if (!isActiveRun(runToken)) return false;
 
