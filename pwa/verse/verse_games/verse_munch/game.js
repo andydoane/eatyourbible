@@ -768,7 +768,7 @@ function backToMenuFromHelp(){
 
     const currentCorrect = getCurrentCorrectLabel();
     const isCorrect = normalizeWord(item.label) === normalizeWord(currentCorrect);
-    const beltCenter = getBeltItemCenter(item);
+    const feedPoint = getBeltFeedPoint();
 
     item.tapped = true;
     state.inputLocked = true;
@@ -780,8 +780,8 @@ function backToMenuFromHelp(){
     const feedItem = {
       label: item.label,
       food: item.food,
-      startX: beltCenter.x,
-      startY: beltCenter.y
+      startX: feedPoint.x,
+      startY: feedPoint.y
     };
 
     if (!await playWordFeedAnimation(feedItem, runToken)) return;
@@ -906,10 +906,8 @@ function backToMenuFromHelp(){
 
     renderFrame(performance.now());
 
-    if (!await waitSeconds(0.26, runToken)) return false;
+    if (!await waitSeconds(0.34, runToken)) return false;
     if (!isActiveRun(runToken)) return false;
-
-    state.feedingWord = null;
 
     chars.forEach((char, index) => {
       const centeredIndex = index - (chars.length - 1) / 2;
@@ -1197,13 +1195,7 @@ function backToMenuFromHelp(){
   function seedBackground(){
     const bg = document.getElementById("vmunchBg");
     if (!bg) return;
-    const bubbleCount = state.fieldWidth < 420 ? 8 : 12;
-    let html = "";
-    for (let i = 0; i < bubbleCount; i++){
-      const size = 18 + Math.random() * 82;
-      html += `<div class="bubble" style="width:${size}px;height:${size}px;left:${Math.random() * 100}%;top:${Math.random() * 100}%;opacity:${0.04 + Math.random() * 0.10};transform:translate(-50%,-50%);"></div>`;
-    }
-    bg.innerHTML = html;
+    bg.innerHTML = "";
   }
 
   function renderFrame(ts){
@@ -1306,7 +1298,7 @@ function updateBuildText(){
     }
 
     if (!state.beltItems.length) {
-      layer.innerHTML = `<div class="vmunch-belt-empty">Watch for the next word…</div>`;
+      layer.innerHTML = "";
       return;
     }
 
@@ -1614,6 +1606,26 @@ function updateBuildText(){
 
     return {
       x: layerRect.left - fieldRect.left + item.x + item.width * 0.5,
+      y: layerRect.top - fieldRect.top + layerRect.height * 0.5
+    };
+  }
+
+  function getBeltFeedPoint() {
+    const layer = document.getElementById("vmunchBeltLayer");
+    const field = document.getElementById("vmunchField");
+
+    if (!layer || !field) {
+      return {
+        x: state.fieldWidth * 0.5,
+        y: state.fieldHeight * 0.82
+      };
+    }
+
+    const layerRect = layer.getBoundingClientRect();
+    const fieldRect = field.getBoundingClientRect();
+
+    return {
+      x: layerRect.left - fieldRect.left + layerRect.width * 0.5,
       y: layerRect.top - fieldRect.top + layerRect.height * 0.5
     };
   }
