@@ -511,6 +511,8 @@ function wireCommonNav(){
     onClose: () => setPaused(false, ""),
     onBackFromHelp: () => setPaused(true, "menu")
   });
+
+  wireMobileGameMenuFallbacks();
 }
 
 function setPaused(paused, reason = ""){
@@ -520,6 +522,54 @@ function setPaused(paused, reason = ""){
     state.lastTs = performance.now();
   }
 }
+
+  function wireMobileGameMenuFallbacks() {
+    const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    if (!isTouchDevice) return;
+
+    const bindTouchEnd = (id, handler) => {
+      const btn = document.getElementById(id);
+      if (!btn || btn.dataset.vmunchTouchFallback === "1") return;
+
+      btn.dataset.vmunchTouchFallback = "1";
+
+      btn.addEventListener("touchend", (event) => {
+        if (event.cancelable) event.preventDefault();
+        event.stopPropagation();
+        handler();
+      }, { passive: false });
+    };
+
+    bindTouchEnd("vmunchGameMenuOverlayCloseBtn", () => {
+      closeGameMenu();
+    });
+
+    bindTouchEnd("vmunchGameMenuOverlayHowToBtn", () => {
+      openHelpFromMenu();
+    });
+
+    bindTouchEnd("vmunchGameMenuOverlayModeSelectBtn", () => {
+      cancelActiveRun();
+      setPaused(false, "");
+      renderModeSelect();
+    });
+
+    bindTouchEnd("vmunchGameMenuOverlayExitBtn", () => {
+      cancelActiveRun();
+      window.VerseGameBridge.exitGame();
+    });
+
+    bindTouchEnd("vmunchGameMenuOverlayMuteBtn", () => {
+      muted = !muted;
+
+      const muteBtn = document.getElementById("vmunchGameMenuOverlayMuteBtn");
+      if (muteBtn) {
+        muteBtn.textContent = muted ? "🔇" : "🔊";
+        muteBtn.setAttribute("aria-label", muted ? "Unmute" : "Mute");
+        muteBtn.setAttribute("title", muted ? "Unmute" : "Mute");
+      }
+    });
+  }
 
   function cancelActiveRun() {
     state.runToken += 1;
@@ -1521,12 +1571,11 @@ function updateBuildText(){
 
   function getBeltConfig() {
     const chipHeight = 56;
-    const phoneBoost = state.fieldWidth && state.fieldWidth < 430 ? 0.92 : 1;
 
     if (selectedMode === "hard") {
       return {
-        speed: chipHeight * 2.35 * phoneBoost,
-        gap: 112,
+        speed: chipHeight * 4.35,
+        gap: 98,
         minWidth: 92,
         maxCorrectVisible: 1,
         decoyCount: 10,
@@ -1536,8 +1585,8 @@ function updateBuildText(){
 
     if (selectedMode === "medium") {
       return {
-        speed: chipHeight * 1.95 * phoneBoost,
-        gap: 100,
+        speed: chipHeight * 3.35,
+        gap: 92,
         minWidth: 98,
         maxCorrectVisible: 1,
         decoyCount: 8,
@@ -1546,8 +1595,8 @@ function updateBuildText(){
     }
 
     return {
-      speed: chipHeight * 1.55 * phoneBoost,
-      gap: 90,
+      speed: chipHeight * 2.45,
+      gap: 86,
       minWidth: 108,
       maxCorrectVisible: 2,
       decoyCount: 4,

@@ -218,6 +218,23 @@ body{
   z-index:24;
 }
 
+.vm-game-menu-overlay {
+  z-index: 1000;
+  pointer-events: auto;
+  touch-action: auto;
+}
+
+.vm-game-menu-panel,
+.vm-game-menu-panel * {
+  pointer-events: auto;
+}
+
+.vm-game-menu-mute-btn,
+.vm-game-menu-actions .vm-game-menu-btn {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
 .vmunch-overlay-pills{
   display:flex;
   justify-content:space-between;
