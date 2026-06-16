@@ -247,6 +247,8 @@ const FACE_MAP = {
     idleTimer:0,
     flyingFood:null,
     hitWord:null,
+    feedingWord:null,
+    flyingLetters:[],
     trails:[],
     particles:[],
     confetti:[],
@@ -349,6 +351,8 @@ function renderModeSelect(){
     state.idleTimer = getIdleDelay();
     state.flyingFood = null;
     state.hitWord = null;
+    state.feedingWord = null;
+    state.flyingLetters = [];
     state.trails = [];
     state.particles = [];
     state.confetti = [];
@@ -510,6 +514,8 @@ function setPaused(paused, reason = ""){
   function resetActiveGameplayVisuals() {
     state.flyingFood = null;
     state.hitWord = null;
+    state.feedingWord = null;
+    state.flyingLetters = [];
     state.trails = [];
     state.particles = [];
     state.confetti = [];
@@ -668,16 +674,52 @@ function backToMenuFromHelp(){
     }, 640);
   }
 
-  function updateFlyingFood(dt){
+  function updateFlyingFood(dt) {
     const food = state.flyingFood;
-    if (!food) return;
-    food.elapsed += dt;
-    const t = clamp(food.elapsed / food.duration, 0, 1);
-    const eased = easeOutCubic(t);
-    food.x = lerp(food.startX, food.endX, eased);
-    food.y = lerp(food.startY, food.endY, eased);
-    food.scale = lerp(food.startScale, food.endScale, eased);
-    if (t >= 1 && food.active) food.active = false;
+    if (food) {
+      food.elapsed += dt;
+      const t = clamp(food.elapsed / food.duration, 0, 1);
+      const eased = easeOutCubic(t);
+      food.x = lerp(food.startX, food.endX, eased);
+      food.y = lerp(food.startY, food.endY, eased);
+      food.scale = lerp(food.startScale, food.endScale, eased);
+      if (t >= 1 && food.active) food.active = false;
+    }
+
+    for (const letter of state.flyingLetters) {
+      letter.age += dt;
+
+      if (letter.mode === "feed") {
+        if (letter.age < 0) {
+          letter.x = letter.startX;
+          letter.y = letter.startY;
+          letter.opacity = 0;
+          continue;
+        }
+
+        const t = clamp(letter.age / letter.duration, 0, 1);
+        const eased = easeOutCubic(t);
+        const arc = Math.sin(t * Math.PI) * letter.arc;
+
+        letter.x = lerp(letter.startX, letter.endX, eased);
+        letter.y = lerp(letter.startY, letter.endY, eased) - arc;
+        letter.scale = lerp(1.08, 0.62, eased);
+        letter.opacity = t < 0.96 ? 1 : 1 - ((t - 0.96) / 0.04);
+        letter.rotation = lerp(letter.startRotation, letter.endRotation, eased);
+      } else if (letter.mode === "spew") {
+        letter.x += letter.vx * dt;
+        letter.y += letter.vy * dt;
+        letter.vy += letter.gravity * dt;
+        letter.rotation += letter.spin * dt;
+        letter.opacity = 1 - clamp(letter.age / letter.life, 0, 1);
+        letter.scale = lerp(1, 0.62, clamp(letter.age / letter.life, 0, 1));
+      }
+    }
+
+    state.flyingLetters = state.flyingLetters.filter(letter => {
+      if (letter.mode === "feed") return letter.age < letter.duration + 0.06;
+      return letter.age < letter.life;
+    });
   }
 
   function updateTrails(dt){
@@ -726,37 +768,14 @@ function backToMenuFromHelp(){
 
     const currentCorrect = getCurrentCorrectLabel();
     const isCorrect = normalizeWord(item.label) === normalizeWord(currentCorrect);
+    const beltCenter = getBeltItemCenter(item);
 
-    if (!isCorrect) {
-      item.tapped = true;
-      item.wrongUntil = performance.now() + 380;
-      item.removeAt = performance.now() + 430;
-
-      state.streak = 0;
-      state.emotionLevel = clamp(state.emotionLevel - 1, -3, 3);
-      state.faceBase = getEmotionFace();
-      state.faceDisplay = randomFrom(["🤨", "🤢", "😵‍💫"]);
-      state.faceClasses = new Set(["is-react-negative"]);
-      state.feedbackBadge = "Try again!";
-      state.feedbackUntil = performance.now() + 520;
-      spawnMissParticles();
-
-      renderFrame(performance.now());
-      return;
-    }
-
+    item.tapped = true;
     state.inputLocked = true;
     state.beltHidden = true;
     state.faceClasses = new Set();
-
-    const beltCenter = getBeltItemCenter(item);
-    state.hitWord = {
-      text: item.label,
-      x: beltCenter.x,
-      y: beltCenter.y,
-      age: 0,
-      life: 0.42
-    };
+    state.feedbackBadge = "";
+    state.feedbackUntil = 0;
 
     const feedItem = {
       label: item.label,
@@ -765,32 +784,49 @@ function backToMenuFromHelp(){
       startY: beltCenter.y
     };
 
-    if (!await playFoodLaunchAnimation(feedItem, runToken)) return;
+    if (!await playWordFeedAnimation(feedItem, runToken)) return;
     if (!await playMouthOpenAnimation(runToken)) return;
     if (!await playChewAnimation(runToken)) return;
-    if (!await playAnticipationAnimation(runToken)) return;
-    if (!await playReactionAnimation(true, runToken)) return;
-    if (!isActiveRun(runToken)) return;
 
-    state.progressIndex += 1;
-    state.streak += 1;
-    spawnSuccessParticles();
+    if (isCorrect) {
+      if (!await playAnticipationAnimation(runToken)) return;
+      if (!await playReactionAnimation(true, runToken)) return;
+      if (!isActiveRun(runToken)) return;
 
-    state.emotionLevel = clamp(state.emotionLevel + 1, -3, 3);
-    state.faceBase = getEmotionFace();
-    state.faceDisplay = state.faceBase;
-    state.faceClasses = new Set();
-    state.feedbackBadge = "Correct!";
-    state.feedbackUntil = performance.now() + 650;
-    state.hitWord = null;
-    state.beltHidden = false;
+      state.progressIndex += 1;
+      state.streak += 1;
+      spawnSuccessParticles();
 
-    if (getCurrentPhase() === "done") {
-      if (!await startBonusRound(runToken)) return;
-      await finishRun(runToken);
-      return;
+      state.emotionLevel = clamp(state.emotionLevel + 1, -3, 3);
+      state.faceBase = getEmotionFace();
+      state.faceDisplay = state.faceBase;
+      state.faceClasses = new Set();
+      state.feedbackBadge = "Correct!";
+      state.feedbackUntil = performance.now() + 650;
+
+      if (getCurrentPhase() === "done") {
+        state.beltHidden = false;
+        if (!await startBonusRound(runToken)) return;
+        await finishRun(runToken);
+        return;
+      }
+    } else {
+      if (!await playWrongWordReaction(item.label, runToken)) return;
+      if (!isActiveRun(runToken)) return;
+
+      state.streak = 0;
+      state.emotionLevel = clamp(state.emotionLevel - 1, -3, 3);
+      state.faceBase = getEmotionFace();
+      state.faceDisplay = state.faceBase;
+      state.faceClasses = new Set();
+      state.feedbackBadge = "Yuck!";
+      state.feedbackUntil = performance.now() + 650;
+      state.buildShakeUntil = performance.now() + 280;
     }
 
+    state.feedingWord = null;
+    state.flyingLetters = [];
+    state.beltHidden = false;
     resetBeltForCurrentStep();
     state.inputLocked = false;
     state.idleTimer = getIdleDelay();
@@ -843,6 +879,157 @@ function backToMenuFromHelp(){
     }
 
     return await waitSeconds(launchDuration * 0.84, runToken);
+  }
+
+  async function playWordFeedAnimation(item, runToken) {
+    if (!isActiveRun(runToken)) return false;
+
+    const startPoint = {
+      x: Number.isFinite(item.startX) ? item.startX : getFoodStartPoint().x,
+      y: Number.isFinite(item.startY) ? item.startY : getFoodStartPoint().y
+    };
+
+    const mouth = getMouthPoint();
+    const chars = getFeedCharacters(item.label);
+    const spacing = clamp(34 - chars.length * 1.1, 18, 34);
+    const baseDuration = getTiming().launch + 0.08;
+    const stagger = selectedMode === "hard" ? 0.035 : selectedMode === "medium" ? 0.045 : 0.055;
+
+    state.flyingFood = null;
+    state.hitWord = null;
+    state.flyingLetters = [];
+    state.feedingWord = {
+      text: item.label,
+      x: startPoint.x,
+      y: startPoint.y
+    };
+
+    renderFrame(performance.now());
+
+    if (!await waitSeconds(0.26, runToken)) return false;
+    if (!isActiveRun(runToken)) return false;
+
+    state.feedingWord = null;
+
+    chars.forEach((char, index) => {
+      const centeredIndex = index - (chars.length - 1) / 2;
+      const letterStartX = startPoint.x + centeredIndex * spacing;
+      const letterStartY = startPoint.y;
+      const delay = index * stagger;
+
+      state.flyingLetters.push({
+        mode: "feed",
+        char,
+        startX: letterStartX,
+        startY: letterStartY,
+        endX: mouth.x + (Math.random() * 18 - 9),
+        endY: mouth.y + (Math.random() * 10 - 5),
+        x: letterStartX,
+        y: letterStartY,
+        age: -delay,
+        duration: baseDuration,
+        arc: 44 + Math.random() * 22,
+        opacity: 0,
+        scale: 1,
+        startRotation: -8 + Math.random() * 16,
+        endRotation: -16 + Math.random() * 32,
+        rotation: 0
+      });
+    });
+
+    const totalDuration = baseDuration + Math.max(0, chars.length - 1) * stagger + 0.08;
+    return await waitSeconds(totalDuration, runToken);
+  }
+
+  async function playWrongWordReaction(label, runToken) {
+    if (!isActiveRun(runToken)) return false;
+
+    state.reactionFlash = "is-flash-negative";
+    state.reactionFlashUntil = performance.now() + 760;
+
+    state.faceDisplay = "🤢";
+    state.faceClasses = new Set(["is-react-barf-bounce"]);
+    if (!await waitSeconds(0.28, runToken)) return false;
+
+    state.faceDisplay = "🤮";
+    state.faceClasses = new Set(["is-react-barf-bounce"]);
+
+    spawnWordSpewLetters(label);
+    spawnGreenSpewParticles();
+
+    return await waitSeconds(0.62, runToken);
+  }
+
+  function spawnWordSpewLetters(label) {
+    const mouth = getMouthPoint();
+    const chars = getFeedCharacters(label);
+    const count = Math.max(chars.length, 1);
+
+    chars.forEach((char, index) => {
+      const spread = count <= 1 ? 0.5 : index / (count - 1);
+      const angle = Math.PI * (0.12 + spread * 0.76) + (Math.random() * 0.18 - 0.09);
+      const speed = 180 + Math.random() * 130;
+
+      state.flyingLetters.push({
+        mode: "spew",
+        char,
+        x: mouth.x + (Math.random() * 18 - 9),
+        y: mouth.y + (Math.random() * 10 - 5),
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        gravity: 360 + Math.random() * 180,
+        age: 0,
+        life: 0.78 + Math.random() * 0.24,
+        opacity: 1,
+        scale: 1,
+        rotation: -20 + Math.random() * 40,
+        spin: -240 + Math.random() * 480
+      });
+    });
+  }
+
+  function spawnGreenSpewParticles() {
+    const mouth = getMouthPoint();
+    const colors = ["#9cff5f", "#64d947", "#caff7a", "#48b85f", "#dfffb4"];
+
+    for (let i = 0; i < 22; i++) {
+      const angle = Math.PI * (0.10 + Math.random() * 0.82);
+      const speed = 80 + Math.random() * 250;
+
+      state.particles.push({
+        type: "dot",
+        x: mouth.x + (Math.random() * 22 - 11),
+        y: mouth.y + (Math.random() * 14 - 7),
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        gravity: 260 + Math.random() * 180,
+        age: 0,
+        life: 0.48 + Math.random() * 0.34,
+        size: 7 + Math.random() * 12,
+        color: randomFrom(colors)
+      });
+    }
+
+    for (let i = 0; i < 8; i++) {
+      state.particles.push({
+        type: "spark",
+        value: randomFrom(["🤢", "💚", "🟢"]),
+        x: mouth.x + (Math.random() * 20 - 10),
+        y: mouth.y + (Math.random() * 12 - 6),
+        vx: -120 + Math.random() * 240,
+        vy: 30 + Math.random() * 180,
+        gravity: 320,
+        age: 0,
+        life: 0.42 + Math.random() * 0.22,
+        size: 14 + Math.random() * 10,
+        color: "#9cff5f"
+      });
+    }
+  }
+
+  function getFeedCharacters(label) {
+    const chars = Array.from(String(label || "")).filter(char => char.trim());
+    return chars.length ? chars : ["?"];
   }
 
   async function playMouthOpenAnimation(runToken) {
@@ -921,15 +1108,8 @@ function backToMenuFromHelp(){
         spawnReactionSparkles();
       }
     } else {
-      const negativeOptions = [
-        { face: "🤮", cls: "is-react-negative" },
-        { face: "🤢", cls: "is-react-barf-bounce" },
-        { face: "😵‍💫", cls: "is-react-head-no-hard" }
-      ];
-
-      const choice = randomFrom(negativeOptions);
-      state.faceDisplay = choice.face;
-      state.faceClasses = new Set([choice.cls]);
+      state.faceDisplay = "🤮";
+      state.faceClasses = new Set(["is-react-barf-bounce"]);
     }
 
     return await waitSeconds(getTiming().reaction, runToken);
@@ -1152,24 +1332,49 @@ function updateBuildText(){
     }).join("");
   }
 
-  function renderFlight(){
+  function renderFlight() {
     const layer = document.getElementById("vmunchFoodFlight");
     if (!layer) return;
+
     let html = "";
-    if (state.flyingFood){
+
+    if (state.flyingFood) {
       html += `
         <div class="vmunch-flying-food" style="left:${state.flyingFood.x}px;top:${state.flyingFood.y}px;transform:translate(-50%,-50%) scale(${state.flyingFood.scale});">
           ${escapeHtml(state.flyingFood.emoji)}
         </div>
       `;
     }
-    if (state.hitWord){
+
+    if (state.feedingWord) {
+      html += `
+        <div class="vmunch-feed-word" style="left:${state.feedingWord.x}px;top:${state.feedingWord.y}px;">
+          ${escapeHtml(state.feedingWord.text)}
+        </div>
+      `;
+    }
+
+    if (state.hitWord) {
       html += `
         <div class="vmunch-hit-word" style="left:${state.hitWord.x}px;top:${state.hitWord.y}px;transform:translate(-50%,-50%);">
           ${escapeHtml(state.hitWord.text)}
         </div>
       `;
     }
+
+    html += state.flyingLetters.map((letter) => {
+      const cls = letter.mode === "spew" ? "vmunch-spew-letter" : "vmunch-flying-letter";
+      const opacity = Number.isFinite(letter.opacity) ? letter.opacity : 1;
+      const scale = Number.isFinite(letter.scale) ? letter.scale : 1;
+      const rotation = Number.isFinite(letter.rotation) ? letter.rotation : 0;
+
+      return `
+        <div class="${cls}" style="left:${letter.x}px;top:${letter.y}px;opacity:${opacity};transform:translate(-50%,-50%) rotate(${rotation}deg) scale(${scale});">
+          ${escapeHtml(letter.char)}
+        </div>
+      `;
+    }).join("");
+
     layer.innerHTML = html;
   }
 
