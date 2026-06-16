@@ -236,6 +236,10 @@ const FACE_MAP = {
     emotionLevel:0,
     carouselItems:[],
     carouselIndex:0,
+    beltItems:[],
+    beltNextId:1,
+    beltForceCorrectIn:0,
+    beltHidden:false,
     inputLocked:false,
     faceBase:"😐",
     faceDisplay:"😐",
@@ -283,10 +287,10 @@ function modeHelpHtml(){
 
 function gameHelpHtml(){
   return `
-    Rotate the selector with the arrows.<br><br>
-    Tap the word to feed it upward.<br><br>
-    The face emotion changes only after each reaction finishes.<br><br>
-    Wrong picks reset your streak but never end the run.
+    Watch the moving word belt.<br><br>
+    Tap the correct word when it slides by.<br><br>
+    Correct words build the verse and feed Versey Monster.<br><br>
+    Wrong taps only make Versey Monster a little annoyed. They never end the run.
   `;
 }
 
@@ -355,8 +359,12 @@ function renderModeSelect(){
     state.faceScaleBoost = 0;
     state.bonusCount = 0;
     state.buildShakeUntil = 0;
+    state.beltItems = [];
+    state.beltNextId = 1;
+    state.beltForceCorrectIn = 0;
+    state.beltHidden = false;
     state.inputLocked = false;
-    buildCarouselForCurrentStep();
+    resetBeltForCurrentStep();
 
 app.innerHTML = `
   <div class="vmunch-root">
@@ -394,12 +402,8 @@ app.innerHTML = `
             </div>
 
             <div class="vmunch-carousel-zone">
-              <div class="vmunch-carousel-shell">
-                <div class="vmunch-carousel-row">
-                  <button class="vmunch-arrow-btn" id="vmunchPrevBtn" aria-label="Previous choice">‹</button>
-                  <button class="vmunch-choice-btn" id="vmunchChoiceBtn" type="button"></button>
-                  <button class="vmunch-arrow-btn" id="vmunchNextBtn" aria-label="Next choice">›</button>
-                </div>
+              <div class="vmunch-belt-shell">
+                <div class="vmunch-belt-track" id="vmunchBeltLayer" aria-label="Moving word choices"></div>
               </div>
             </div>
           </div>
@@ -515,6 +519,8 @@ function setPaused(paused, reason = ""){
     state.reactionFlashUntil = 0;
     state.faceScaleBoost = 0;
     state.faceClasses = new Set();
+    state.beltItems = [];
+    state.beltHidden = false;
   }
 
 function openGameMenu(){
@@ -564,25 +570,19 @@ function backToMenuFromHelp(){
 }
 
   function wireGameInput(){
-    const prevBtn = document.getElementById("vmunchPrevBtn");
-    const nextBtn = document.getElementById("vmunchNextBtn");
-    const choiceBtn = document.getElementById("vmunchChoiceBtn");
+    const beltLayer = document.getElementById("vmunchBeltLayer");
 
-    prevBtn.addEventListener("pointerup", (e) => {
-      e.preventDefault();
-      if (state.paused) return;
-      rotateCarousel(-1);
-    });
-    nextBtn.addEventListener("pointerup", (e) => {
-      e.preventDefault();
-      if (state.paused) return;
-      rotateCarousel(1);
-    });
-    choiceBtn.addEventListener("pointerup", (e) => {
-      e.preventDefault();
-      if (state.paused) return;
-      handleCenteredSelection();
-    });
+    if (beltLayer){
+      beltLayer.addEventListener("pointerup", (e) => {
+        e.preventDefault();
+        if (state.paused || state.inputLocked) return;
+
+        const chip = e.target.closest(".vmunch-belt-chip");
+        if (!chip) return;
+
+        handleBeltItemSelection(chip.dataset.itemId);
+      });
+    }
 
     if (!state.resizeListenerActive){
       window.addEventListener("resize", recalcField);
@@ -591,15 +591,10 @@ function backToMenuFromHelp(){
 
     window.onkeydown = (e) => {
       if (!state.running || state.inputLocked || state.paused) return;
-      if (e.key === "ArrowLeft"){
+
+      if (e.key === "Escape"){
         e.preventDefault();
-        rotateCarousel(-1);
-      } else if (e.key === "ArrowRight"){
-        e.preventDefault();
-        rotateCarousel(1);
-      } else if (e.key === "Enter" || e.key === " "){
-        e.preventDefault();
-        handleCenteredSelection();
+        openGameMenu();
       }
     };
   }
@@ -637,6 +632,7 @@ function backToMenuFromHelp(){
 
     if (!state.paused){
       updateIdle(dt);
+      updateBelt(dt);
       updateFlyingFood(dt);
       updateTrails(dt);
       updateParticles(dt);
@@ -721,58 +717,81 @@ function backToMenuFromHelp(){
     renderFrame(performance.now());
   }
 
-  async function handleCenteredSelection(){
-    if (!state.running || state.inputLocked || !state.carouselItems.length) return;
+  async function handleBeltItemSelection(itemId) {
+    if (!state.running || state.inputLocked || !state.beltItems.length) return;
 
     const runToken = state.runToken;
-    const item = state.carouselItems[state.carouselIndex];
-    if (!item) return;
-
-    state.inputLocked = true;
-    state.faceClasses = new Set();
+    const item = state.beltItems.find(entry => String(entry.id) === String(itemId));
+    if (!item || item.tapped) return;
 
     const currentCorrect = getCurrentCorrectLabel();
     const isCorrect = normalizeWord(item.label) === normalizeWord(currentCorrect);
+
+    if (!isCorrect) {
+      item.tapped = true;
+      item.wrongUntil = performance.now() + 380;
+      item.removeAt = performance.now() + 430;
+
+      state.streak = 0;
+      state.emotionLevel = clamp(state.emotionLevel - 1, -3, 3);
+      state.faceBase = getEmotionFace();
+      state.faceDisplay = randomFrom(["🤨", "🤢", "😵‍💫"]);
+      state.faceClasses = new Set(["is-react-negative"]);
+      state.feedbackBadge = "Try again!";
+      state.feedbackUntil = performance.now() + 520;
+      spawnMissParticles();
+
+      renderFrame(performance.now());
+      return;
+    }
+
+    state.inputLocked = true;
+    state.beltHidden = true;
+    state.faceClasses = new Set();
+
+    const beltCenter = getBeltItemCenter(item);
     state.hitWord = {
-      text:item.label,
-      x:getChoiceCenterX(),
-      y:getChoiceCenterY(),
-      age:0,
-      life:0.42
+      text: item.label,
+      x: beltCenter.x,
+      y: beltCenter.y,
+      age: 0,
+      life: 0.42
     };
 
-    if (!await playFoodLaunchAnimation(item, runToken)) return;
+    const feedItem = {
+      label: item.label,
+      food: item.food,
+      startX: beltCenter.x,
+      startY: beltCenter.y
+    };
+
+    if (!await playFoodLaunchAnimation(feedItem, runToken)) return;
     if (!await playMouthOpenAnimation(runToken)) return;
     if (!await playChewAnimation(runToken)) return;
     if (!await playAnticipationAnimation(runToken)) return;
-    if (!await playReactionAnimation(isCorrect, runToken)) return;
+    if (!await playReactionAnimation(true, runToken)) return;
     if (!isActiveRun(runToken)) return;
 
-    if (isCorrect){
-      state.progressIndex += 1;
-      state.streak += 1;
-      spawnSuccessParticles();
-    } else {
-      state.streak = 0;
-      state.buildShakeUntil = performance.now() + 280;
-      spawnMissParticles();
-    }
+    state.progressIndex += 1;
+    state.streak += 1;
+    spawnSuccessParticles();
 
-    state.emotionLevel = clamp(state.emotionLevel + (isCorrect ? 1 : -1), -3, 3);
+    state.emotionLevel = clamp(state.emotionLevel + 1, -3, 3);
     state.faceBase = getEmotionFace();
     state.faceDisplay = state.faceBase;
     state.faceClasses = new Set();
-    state.feedbackBadge = isCorrect ? "Correct!" : "Nope!";
+    state.feedbackBadge = "Correct!";
     state.feedbackUntil = performance.now() + 650;
     state.hitWord = null;
+    state.beltHidden = false;
 
-    if (getCurrentPhase() === "done"){
+    if (getCurrentPhase() === "done") {
       if (!await startBonusRound(runToken)) return;
       await finishRun(runToken);
       return;
     }
 
-    buildCarouselForCurrentStep();
+    resetBeltForCurrentStep();
     state.inputLocked = false;
     state.idleTimer = getIdleDelay();
     renderFrame(performance.now());
@@ -783,15 +802,20 @@ function backToMenuFromHelp(){
     if (!isActiveRun(runToken)) return false;
 
     const launchDuration = getTiming().launch;
+    const startPoint = {
+      x: Number.isFinite(item.startX) ? item.startX : getFoodStartPoint().x,
+      y: Number.isFinite(item.startY) ? item.startY : getFoodStartPoint().y
+    };
+
     state.flyingFood = {
       emoji: item.food,
       label: item.label,
-      startX: getFoodStartPoint().x,
-      startY: getFoodStartPoint().y,
+      startX: startPoint.x,
+      startY: startPoint.y,
       endX: getMouthPoint().x,
       endY: getMouthPoint().y,
-      x: getFoodStartPoint().x,
-      y: getFoodStartPoint().y,
+      x: startPoint.x,
+      y: startPoint.y,
       startScale: 1,
       endScale: 2,
       scale: 1,
@@ -807,8 +831,8 @@ function backToMenuFromHelp(){
         state.trails.push({
           id: Math.random().toString(36).slice(2),
           emoji: randomFrom(TRAIL_EMOJIS),
-          x: getFoodStartPoint().x,
-          y: getFoodStartPoint().y,
+          x: startPoint.x,
+          y: startPoint.y,
           vx: -40 + Math.random() * 80,
           vy: -60 - Math.random() * 50,
           age: 0,
@@ -1007,7 +1031,7 @@ function backToMenuFromHelp(){
     updateBuildText();
     renderBuildShake(ts);
     renderFace();
-    renderSelector();
+    renderBelt(ts);
     renderFlight();
     renderTrails();
     renderParticles();
@@ -1092,24 +1116,40 @@ function updateBuildText(){
     }
   }
 
-  function renderSelector(){
-    const row = document.querySelector(".vmunch-carousel-row");
-    const choiceBtn = document.getElementById("vmunchChoiceBtn");
-    const prevBtn = document.getElementById("vmunchPrevBtn");
-    const nextBtn = document.getElementById("vmunchNextBtn");
-    if (!choiceBtn) return;
+  function renderBelt(ts) {
+    const layer = document.getElementById("vmunchBeltLayer");
+    if (!layer) return;
 
-    const item = state.carouselItems[state.carouselIndex];
-    choiceBtn.textContent = item ? item.label : "";
-
-    const locked = state.inputLocked || bonusRunning || !item;
-    choiceBtn.disabled = locked;
-    prevBtn.disabled = locked;
-    nextBtn.disabled = locked;
-
-    if (row){
-      row.classList.toggle("is-hidden", locked);
+    if (state.inputLocked || bonusRunning || state.beltHidden) {
+      layer.innerHTML = "";
+      return;
     }
+
+    if (!state.beltItems.length) {
+      layer.innerHTML = `<div class="vmunch-belt-empty">Watch for the next word…</div>`;
+      return;
+    }
+
+    layer.innerHTML = state.beltItems.map((item) => {
+      const isWrong = item.wrongUntil && ts < item.wrongUntil;
+      const isHidden = item.tapped && !isWrong;
+      const classes = [
+        "vmunch-belt-chip",
+        item.isCorrect ? "is-correct" : "",
+        isWrong ? "is-wrong" : "",
+        isHidden ? "is-hidden" : ""
+      ].filter(Boolean).join(" ");
+
+      return `
+        <button
+          class="${classes}"
+          type="button"
+          data-item-id="${item.id}"
+          style="--x:${item.x}px;width:${item.width}px;"
+          aria-label="${escapeHtml(item.label)}"
+        >${escapeHtml(item.label)}</button>
+      `;
+    }).join("");
   }
 
   function renderFlight(){
@@ -1217,6 +1257,164 @@ function updateBuildText(){
       type:phase === "words" ? "word" : phase === "book" ? "book" : "reference"
     }));
     state.carouselIndex = Math.floor(Math.random() * state.carouselItems.length);
+  }
+
+  function resetBeltForCurrentStep() {
+    state.beltItems = [];
+    state.beltNextId = 1;
+    state.beltHidden = false;
+
+    if (selectedMode === "hard") {
+      state.beltForceCorrectIn = 2;
+    } else if (selectedMode === "medium") {
+      state.beltForceCorrectIn = 1;
+    } else {
+      state.beltForceCorrectIn = 0;
+    }
+  }
+
+  function getBeltConfig() {
+    if (selectedMode === "hard") {
+      return {
+        speed: Math.max(108, state.fieldWidth * 0.28),
+        gap: 62,
+        minWidth: 92,
+        maxWidth: 210,
+        maxCorrectVisible: 1,
+        correctDelayMin: 2,
+        correctDelayMax: 3
+      };
+    }
+
+    if (selectedMode === "medium") {
+      return {
+        speed: Math.max(92, state.fieldWidth * 0.24),
+        gap: 54,
+        minWidth: 98,
+        maxWidth: 220,
+        maxCorrectVisible: 1,
+        correctDelayMin: 1,
+        correctDelayMax: 2
+      };
+    }
+
+    return {
+      speed: Math.max(74, state.fieldWidth * 0.20),
+      gap: 44,
+      minWidth: 108,
+      maxWidth: 235,
+      maxCorrectVisible: 2,
+      correctDelayMin: 0,
+      correctDelayMax: 1
+    };
+  }
+
+  function updateBelt(dt) {
+    if (state.inputLocked || bonusRunning || state.beltHidden) return;
+    if (getCurrentPhase() === "done") return;
+
+    const cfg = getBeltConfig();
+    const now = performance.now();
+
+    for (const item of state.beltItems) {
+      item.x -= cfg.speed * dt;
+    }
+
+    state.beltItems = state.beltItems.filter(item => {
+      if (item.removeAt && now > item.removeAt) return false;
+      return item.x + item.width > -24;
+    });
+
+    let guard = 0;
+    while (shouldAddBeltItem(cfg) && guard < 4) {
+      spawnBeltItem(cfg);
+      guard += 1;
+    }
+  }
+
+  function shouldAddBeltItem(cfg) {
+    if (!state.fieldWidth) return false;
+    if (!state.beltItems.length) return true;
+
+    const rightEdge = Math.max(...state.beltItems.map(item => item.x + item.width));
+    return rightEdge < state.fieldWidth + cfg.gap;
+  }
+
+  function spawnBeltItem(cfg) {
+    const phase = getCurrentPhase();
+    if (phase === "done") return;
+
+    const correctLabel = getCurrentCorrectLabel();
+    const visibleCorrectCount = state.beltItems.filter(item => {
+      return item.isCorrect && !item.tapped && item.x + item.width > 0 && item.x < state.fieldWidth;
+    }).length;
+
+    let makeCorrect = false;
+
+    if (visibleCorrectCount < cfg.maxCorrectVisible && state.beltForceCorrectIn <= 0) {
+      makeCorrect = true;
+    }
+
+    let label = correctLabel;
+
+    if (!makeCorrect) {
+      const decoys = getDecoysForPhase(phase, correctLabel, selectedMode === "easy" ? 4 : 8);
+      label = randomFrom(decoys.length ? decoys : FUN_DECOYS);
+      state.beltForceCorrectIn -= 1;
+    } else {
+      state.beltForceCorrectIn = randomInt(cfg.correctDelayMin, cfg.correctDelayMax);
+    }
+
+    const width = estimateBeltItemWidth(label, cfg);
+    const currentRightEdge = state.beltItems.length
+      ? Math.max(...state.beltItems.map(item => item.x + item.width))
+      : state.fieldWidth + 18;
+
+    const x = Math.max(state.fieldWidth + 18, currentRightEdge + cfg.gap);
+    const foods = shuffle(FOOD_EMOJIS);
+
+    state.beltItems.push({
+      id: state.beltNextId++,
+      label,
+      isCorrect: makeCorrect,
+      kind: phase,
+      food: foods[0],
+      x,
+      width,
+      tapped: false,
+      wrongUntil: 0,
+      removeAt: 0
+    });
+  }
+
+  function estimateBeltItemWidth(label, cfg) {
+    const text = String(label || "");
+    const rough = 44 + text.length * 16;
+    return clamp(rough, cfg.minWidth, cfg.maxWidth);
+  }
+
+  function getBeltItemCenter(item) {
+    const layer = document.getElementById("vmunchBeltLayer");
+    const field = document.getElementById("vmunchField");
+
+    if (!layer || !field) {
+      return {
+        x: item.x + item.width * 0.5,
+        y: state.fieldHeight * 0.82
+      };
+    }
+
+    const layerRect = layer.getBoundingClientRect();
+    const fieldRect = field.getBoundingClientRect();
+
+    return {
+      x: layerRect.left - fieldRect.left + item.x + item.width * 0.5,
+      y: layerRect.top - fieldRect.top + layerRect.height * 0.5
+    };
+  }
+
+  function randomInt(min, max) {
+    return Math.floor(min + Math.random() * (max - min + 1));
   }
 
   function getDecoysForPhase(phase, correctLabel, count){
@@ -1462,9 +1660,11 @@ function spawnChewCrumbs(isSecondary = false){
   }
 
   function getCurrentFoodEmoji(){
-    const item = state.carouselItems[state.carouselIndex];
-    if (!item) return bonusRunning ? FOOD_EMOJIS[state.bonusCount % FOOD_EMOJIS.length] : FOOD_EMOJIS[state.progressIndex % FOOD_EMOJIS.length];
-    return item.food;
+    if (bonusRunning){
+      return FOOD_EMOJIS[state.bonusCount % FOOD_EMOJIS.length];
+    }
+
+    return FOOD_EMOJIS[state.progressIndex % FOOD_EMOJIS.length];
   }
 
   function getFoodStartPoint(){
