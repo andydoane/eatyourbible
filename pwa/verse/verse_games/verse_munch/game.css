@@ -214,6 +214,10 @@ body{
   pointer-events:none;
 }
 
+.vmunch-food-flight{
+  z-index:24;
+}
+
 .vmunch-overlay-pills{
   display:flex;
   justify-content:space-between;
@@ -661,7 +665,6 @@ body{
   text-shadow:
     0 6px 0 rgba(62, 44, 119, 0.42),
     0 0 18px rgba(255, 255, 255, 0.22);
-  animation: vmunchFeedWordPop 260ms cubic-bezier(.2, .9, .22, 1.2) both;
   white-space: nowrap;
 }
 

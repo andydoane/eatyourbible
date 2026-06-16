@@ -686,6 +686,14 @@ function backToMenuFromHelp(){
       if (t >= 1 && food.active) food.active = false;
     }
 
+    if (state.feedingWord){
+      state.feedingWord.age += dt;
+      const popT = clamp(state.feedingWord.age / 0.24, 0, 1);
+      const easedPop = easeOutBack(popT);
+      state.feedingWord.opacity = popT < 1 ? popT : 1;
+      state.feedingWord.scale = lerp(0.72, 1, easedPop);
+    }
+
     for (const letter of state.flyingLetters) {
       letter.age += dt;
 
@@ -901,7 +909,10 @@ function backToMenuFromHelp(){
     state.feedingWord = {
       text: item.label,
       x: startPoint.x,
-      y: startPoint.y
+      y: startPoint.y,
+      age:0,
+      opacity:0,
+      scale:0.72
     };
 
     renderFrame(performance.now());
@@ -1339,8 +1350,11 @@ function updateBuildText(){
     }
 
     if (state.feedingWord) {
+      const opacity = Number.isFinite(state.feedingWord.opacity) ? state.feedingWord.opacity : 1;
+      const scale = Number.isFinite(state.feedingWord.scale) ? state.feedingWord.scale : 1;
+
       html += `
-        <div class="vmunch-feed-word" style="left:${state.feedingWord.x}px;top:${state.feedingWord.y}px;">
+        <div class="vmunch-feed-word" style="left:${state.feedingWord.x}px;top:${state.feedingWord.y}px;opacity:${opacity};transform:translate(-50%,-50%) scale(${scale});">
           ${escapeHtml(state.feedingWord.text)}
         </div>
       `;
@@ -1952,6 +1966,11 @@ function getMouthPoint(){
 const clamp = window.VerseGameShell.clamp;
 function lerp(a, b, t){ return a + (b - a) * t; }
 function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
+  function easeOutBack(t) {
+    const c1 = 1.70158;
+    const c3 = c1 + 1;
+    return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+  }
 const capitalize = window.VerseGameShell.capitalize;
 function randomFrom(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
 function waitSeconds(seconds, runToken){
