@@ -868,9 +868,9 @@ function backToMenuFromHelp(){
     if (!await playWordFeedAnimation(feedItem, runToken)) return;
     if (!await playMouthClosedReceiveAnimation(runToken)) return;
     if (!await playChewAnimation(runToken)) return;
+    if (!await playAnticipationAnimation(runToken)) return;
 
     if (isCorrect) {
-      if (!await playAnticipationAnimation(runToken)) return;
       if (!await playReactionAnimation(true, runToken)) return;
       if (!isActiveRun(runToken)) return;
 
@@ -1205,10 +1205,10 @@ function backToMenuFromHelp(){
       if (!isActiveRun(runToken)) return false;
 
       state.faceClasses = new Set([tiltClass, "is-anticipation-lean-in"]);
-      if (!await waitSeconds(0.32, runToken)) return false;
+      if (!await waitSeconds(0.28, runToken)) return false;
 
       state.faceClasses = new Set([tiltClass]);
-      if (!await waitSeconds(0.12, runToken)) return false;
+      if (!await waitSeconds(0.10, runToken)) return false;
     }
 
     state.faceClasses = new Set();
