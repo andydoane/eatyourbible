@@ -1156,21 +1156,33 @@ function backToMenuFromHelp(){
   async function playChewAnimation(runToken) {
     if (!isActiveRun(runToken)) return false;
 
-    const chewFaces = ["😀", "😐", "😀", "😐", "😀", "😐"];
-    const chewDuration = getTiming().chew;
-    const stepDuration = chewDuration / chewFaces.length;
+    const chewSteps = [
+      { face: "😀", hold: 0.12 },
+      { face: "😬", hold: 0.14 },
+      { face: "😀", hold: 0.12 },
+      { face: "😬", hold: 0.14 },
+      { face: "😀", hold: 0.12 },
+      { face: "😬", hold: 0.20 }
+    ];
 
-    state.faceClasses = new Set(["is-chew"]);
     state.flyingFood = null;
     spawnChewCrumbs();
 
-    for (let i = 0; i < chewFaces.length; i++) {
+    for (let i = 0; i < chewSteps.length; i++) {
       if (!isActiveRun(runToken)) return false;
 
-      state.faceDisplay = chewFaces[i];
-      if (i === 3) spawnChewCrumbs(true);
+      const step = chewSteps[i];
 
-      if (!await waitSeconds(stepDuration, runToken)) return false;
+      state.faceDisplay = step.face;
+      state.faceClasses = new Set(["is-chew"]);
+
+      if (i === 2 || i === 4) {
+        spawnChewCrumbs(true);
+      }
+
+      renderFrame(performance.now());
+
+      if (!await waitSeconds(step.hold, runToken)) return false;
     }
 
     return true;
