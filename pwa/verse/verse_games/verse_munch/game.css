@@ -112,6 +112,11 @@ body{
   background:#a7cb6f;
 }
 
+.vmunch-root.is-flash-streak,
+.vmunch-mode-shell.is-flash-streak{
+  background:#c9ef63;
+}
+
 .vmunch-root.is-flash-negative,
 .vmunch-mode-shell.is-flash-negative{
   background:#ff5a51;
@@ -204,6 +209,7 @@ body{
 }
 
 .vmunch-bg,
+.vmunch-streak-sunburst,
 .vmunch-trails,
 .vmunch-particles,
 .vmunch-food-flight,
@@ -212,6 +218,29 @@ body{
   position:absolute;
   inset:0;
   pointer-events:none;
+}
+
+.vmunch-streak-sunburst {
+  inset: -38%;
+  z-index: 2;
+  opacity: 0;
+  background: url("verse_munch_images/verse_munch_sunburst.svg") center / contain no-repeat;
+  transform-origin: 50% 50%;
+}
+
+.vmunch-streak-sunburst.is-active {
+  opacity: 0.15;
+  animation: vmunchStreakSunburstSpin 1300ms linear infinite;
+}
+
+@keyframes vmunchStreakSunburstSpin {
+  from {
+    transform: rotate(0deg) scale(1.08);
+  }
+
+  to {
+    transform: rotate(360deg) scale(1.08);
+  }
 }
 
 .vmunch-food-flight{

@@ -59,6 +59,7 @@ const FACE_MAP = {
   // positives
   "☺️":"munch_positive_1.png",
   "😋":"munch_positive_2.png",
+  "🤩":"munch_positive_3.png",
 
   // mouth open (all map to same)
   "😄":"munch_mouth_open.png",
@@ -280,6 +281,7 @@ const FACE_MAP = {
     buildFitDone:false,
     reactionFlash:"",
     reactionFlashUntil:0,
+    streakSunburstUntil:0,
     faceScaleBoost:0,
     bonusCount:0,
     buildShakeUntil:0,
@@ -294,10 +296,9 @@ const FACE_MAP = {
 
 function introHelpHtml(){
   return `
-    Use the left and right arrows to rotate the selector.<br><br>
-    Tap the centered word to feed it to the face.<br><br>
-    Correct picks build the verse and grow your streak. Wrong picks only reset your streak.<br><br>
-    After the full verse is built, munch the book, then the chapter and verse.
+    Words will scroll by along the bottom.<br><br>
+    Tap a word to feed it to Versey Monster.<br><br>
+    Feed him the next correct word of the verse and he'll be happy. Any other words will make him mad!
   `;
 }
 
@@ -311,10 +312,9 @@ function modeHelpHtml(){
 
 function gameHelpHtml(){
   return `
-    Watch the moving word belt.<br><br>
-    Tap the correct word when it slides by.<br><br>
-    Correct words build the verse and feed Versey Monster.<br><br>
-    Wrong taps only make Versey Monster a little annoyed. They never end the run.
+    Words will scroll by along the bottom.<br><br>
+    Tap a word to feed it to Versey Monster.<br><br>
+    Feed him the next correct word of the verse and he'll be happy. Any other words will make him mad!
   `;
 }
 
@@ -382,6 +382,7 @@ function renderModeSelect(){
     state.feedbackUntil = 0;
     state.reactionFlash = "";
     state.reactionFlashUntil = 0;
+    state.streakSunburstUntil = 0;
     state.faceScaleBoost = 0;
     state.bonusCount = 0;
     state.buildShakeUntil = 0;
@@ -409,6 +410,7 @@ app.innerHTML = `
       <div class="vmunch-field-wrap">
         <div class="vmunch-field" id="vmunchField">
           <div class="vmunch-bg" id="vmunchBg"></div>
+          <div class="vmunch-streak-sunburst" id="vmunchStreakSunburst"></div>
           <div class="vmunch-trails" id="vmunchTrails"></div>
           <div class="vmunch-particles" id="vmunchParticles"></div>
           <div class="vmunch-food-flight" id="vmunchFoodFlight"></div>
@@ -595,6 +597,7 @@ function setPaused(paused, reason = ""){
     state.feedbackUntil = 0;
     state.reactionFlash = "";
     state.reactionFlashUntil = 0;
+    state.streakSunburstUntil = 0;
     state.faceScaleBoost = 0;
     state.faceClasses = new Set();
     state.beltItems = [];
@@ -871,7 +874,10 @@ function backToMenuFromHelp(){
     if (!await playAnticipationAnimation(runToken)) return;
 
     if (isCorrect) {
-      if (!await playReactionAnimation(true, runToken)) return;
+      const nextStreak = state.streak + 1;
+      const isStreakMilestone = nextStreak > 0 && nextStreak % 3 === 0;
+
+      if (!await playReactionAnimation(true, runToken, isStreakMilestone)) return;
       if (!isActiveRun(runToken)) return;
 
       state.progressIndex += 1;
@@ -1215,28 +1221,41 @@ function backToMenuFromHelp(){
     return true;
   }
 
-  async function playReactionAnimation(isCorrect, runToken) {
+  async function playReactionAnimation(isCorrect, runToken, isStreakMilestone = false) {
     if (!isActiveRun(runToken)) return false;
 
-    state.reactionFlash = isCorrect ? "is-flash-positive" : "is-flash-negative";
-    state.reactionFlashUntil = performance.now() + (getTiming().reaction * 1000);
+    const reactionDuration = getTiming().reaction;
+    const now = performance.now();
+
+    state.reactionFlash = isCorrect
+      ? isStreakMilestone ? "is-flash-streak" : "is-flash-positive"
+      : "is-flash-negative";
+
+    state.reactionFlashUntil = now + (reactionDuration * 1000);
 
     if (isCorrect) {
-      const reaction = randomFrom(HAPPY_REACTIONS);
-      state.faceDisplay = reaction;
-
-      const animClass = randomFrom(POSITIVE_REACTIONS);
-      state.faceClasses = new Set([animClass]);
-
-      if (animClass === "is-react-sparkle-pop") {
+      if (isStreakMilestone) {
+        state.faceDisplay = "🤩";
+        state.faceClasses = new Set(["is-react-sparkle-pop"]);
+        state.streakSunburstUntil = now + (reactionDuration * 1000) + 320;
         spawnReactionSparkles();
+      } else {
+        const reaction = randomFrom(HAPPY_REACTIONS);
+        state.faceDisplay = reaction;
+
+        const animClass = randomFrom(POSITIVE_REACTIONS);
+        state.faceClasses = new Set([animClass]);
+
+        if (animClass === "is-react-sparkle-pop") {
+          spawnReactionSparkles();
+        }
       }
     } else {
       state.faceDisplay = "🤮";
       state.faceClasses = new Set(["is-react-barf-bounce"]);
     }
 
-    return await waitSeconds(getTiming().reaction, runToken);
+    return await waitSeconds(reactionDuration, runToken);
   }
 
   async function startBonusRound(runToken) {
@@ -1326,6 +1345,7 @@ function backToMenuFromHelp(){
 
   function renderFrame(ts){
     renderReactionFlash(ts);
+    renderStreakSunburst(ts);
     updateBuildText();
     renderBuildShake(ts);
     renderFace();
@@ -1533,11 +1553,18 @@ function updateBuildText(){
     const root = document.querySelector(".vmunch-root, .vmunch-mode-shell");
     if (!root) return;
 
-    root.classList.remove("is-flash-positive", "is-flash-negative");
+    root.classList.remove("is-flash-positive", "is-flash-streak", "is-flash-negative");
 
     if (state.reactionFlash && ts < state.reactionFlashUntil){
       root.classList.add(state.reactionFlash);
     }
+  }
+
+  function renderStreakSunburst(ts){
+    const layer = document.getElementById("vmunchStreakSunburst");
+    if (!layer) return;
+
+    layer.classList.toggle("is-active", ts < state.streakSunburstUntil);
   }
 
   function renderFeedback(ts){
