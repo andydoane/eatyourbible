@@ -255,7 +255,9 @@ const FACE_MAP = {
     faceScaleBoost:0,
     bonusCount:0,
     buildShakeUntil:0,
-    lastFaceFile:""
+    lastFaceFile:"",
+    runToken:0,
+    resizeListenerActive:false
   };
 
   setupReferenceSegments();
@@ -321,6 +323,9 @@ function renderModeSelect(){
 }
 
   function startGame(mode){
+    state.runToken += 1;
+    const runToken = state.runToken;
+
     selectedMode = mode;
     completed = false;
     completionResult = null;
@@ -465,10 +470,14 @@ function wireCommonNav(){
     },
     onHowToPlay: openHelpFromMenu,
     onModeSelect: () => {
+      cancelActiveRun();
       setPaused(false, "");
       renderModeSelect();
     },
-    onExit: () => window.VerseGameBridge.exitGame(),
+    onExit: () => {
+      cancelActiveRun();
+      window.VerseGameBridge.exitGame();
+    },
     onOpen: () => setPaused(true, "menu"),
     onClose: () => setPaused(false, ""),
     onBackFromHelp: () => setPaused(true, "menu")
@@ -482,6 +491,31 @@ function setPaused(paused, reason = ""){
     state.lastTs = performance.now();
   }
 }
+
+  function cancelActiveRun() {
+    state.runToken += 1;
+    state.running = false;
+    state.inputLocked = false;
+    bonusRunning = false;
+  }
+
+  function isActiveRun(token) {
+    return state.running && token === state.runToken;
+  }
+
+  function resetActiveGameplayVisuals() {
+    state.flyingFood = null;
+    state.hitWord = null;
+    state.trails = [];
+    state.particles = [];
+    state.confetti = [];
+    state.feedbackBadge = "";
+    state.feedbackUntil = 0;
+    state.reactionFlash = "";
+    state.reactionFlashUntil = 0;
+    state.faceScaleBoost = 0;
+    state.faceClasses = new Set();
+  }
 
 function openGameMenu(){
   const menuOverlay = document.getElementById("vmunchGameMenuOverlay");
@@ -550,7 +584,11 @@ function backToMenuFromHelp(){
       handleCenteredSelection();
     });
 
-    window.addEventListener("resize", recalcField);
+    if (!state.resizeListenerActive){
+      window.addEventListener("resize", recalcField);
+      state.resizeListenerActive = true;
+    }
+
     window.onkeydown = (e) => {
       if (!state.running || state.inputLocked || state.paused) return;
       if (e.key === "ArrowLeft"){
@@ -573,10 +611,19 @@ function backToMenuFromHelp(){
 
   function stopLoop(){
     state.running = false;
+    state.runToken += 1;
+    resetActiveGameplayVisuals();
+
     if (state.rafId){
       cancelAnimationFrame(state.rafId);
       state.rafId = 0;
     }
+
+    if (state.resizeListenerActive){
+      window.removeEventListener("resize", recalcField);
+      state.resizeListenerActive = false;
+    }
+
     window.onkeydown = null;
   }
 
@@ -676,6 +723,8 @@ function backToMenuFromHelp(){
 
   async function handleCenteredSelection(){
     if (!state.running || state.inputLocked || !state.carouselItems.length) return;
+
+    const runToken = state.runToken;
     const item = state.carouselItems[state.carouselIndex];
     if (!item) return;
 
@@ -692,11 +741,12 @@ function backToMenuFromHelp(){
       life:0.42
     };
 
-    await playFoodLaunchAnimation(item);
-    await playMouthOpenAnimation();
-    await playChewAnimation();
-    await playAnticipationAnimation();
-    await playReactionAnimation(isCorrect);
+    if (!await playFoodLaunchAnimation(item, runToken)) return;
+    if (!await playMouthOpenAnimation(runToken)) return;
+    if (!await playChewAnimation(runToken)) return;
+    if (!await playAnticipationAnimation(runToken)) return;
+    if (!await playReactionAnimation(isCorrect, runToken)) return;
+    if (!isActiveRun(runToken)) return;
 
     if (isCorrect){
       state.progressIndex += 1;
@@ -717,8 +767,8 @@ function backToMenuFromHelp(){
     state.hitWord = null;
 
     if (getCurrentPhase() === "done"){
-      await startBonusRound();
-      await finishRun();
+      if (!await startBonusRound(runToken)) return;
+      await finishRun(runToken);
       return;
     }
 
@@ -728,54 +778,62 @@ function backToMenuFromHelp(){
     renderFrame(performance.now());
   }
 
-  async function playFoodLaunchAnimation(item){
+
+  async function playFoodLaunchAnimation(item, runToken) {
+    if (!isActiveRun(runToken)) return false;
+
     const launchDuration = getTiming().launch;
     state.flyingFood = {
-      emoji:item.food,
-      label:item.label,
-      startX:getFoodStartPoint().x,
-      startY:getFoodStartPoint().y,
-      endX:getMouthPoint().x,
-      endY:getMouthPoint().y,
-      x:getFoodStartPoint().x,
-      y:getFoodStartPoint().y,
-      startScale:1,
-      endScale:2,
-      scale:1,
-      elapsed:0,
-      duration:launchDuration,
-      active:true
+      emoji: item.food,
+      label: item.label,
+      startX: getFoodStartPoint().x,
+      startY: getFoodStartPoint().y,
+      endX: getMouthPoint().x,
+      endY: getMouthPoint().y,
+      x: getFoodStartPoint().x,
+      y: getFoodStartPoint().y,
+      startScale: 1,
+      endScale: 2,
+      scale: 1,
+      elapsed: 0,
+      duration: launchDuration,
+      active: true
     };
 
     const trailTier = getTrailTier();
-    if (trailTier > 0){
+    if (trailTier > 0) {
       const trailCount = 4 + trailTier * 2;
-      for (let i = 0; i < trailCount; i++){
+      for (let i = 0; i < trailCount; i++) {
         state.trails.push({
-          id:Math.random().toString(36).slice(2),
-          emoji:randomFrom(TRAIL_EMOJIS),
-          x:getFoodStartPoint().x,
-          y:getFoodStartPoint().y,
-          vx:-40 + Math.random() * 80,
-          vy:-60 - Math.random() * 50,
-          age:0,
-          life:0.42 + trailTier * 0.08,
-          size:16 + trailTier * 3 + Math.random() * 8
+          id: Math.random().toString(36).slice(2),
+          emoji: randomFrom(TRAIL_EMOJIS),
+          x: getFoodStartPoint().x,
+          y: getFoodStartPoint().y,
+          vx: -40 + Math.random() * 80,
+          vy: -60 - Math.random() * 50,
+          age: 0,
+          life: 0.42 + trailTier * 0.08,
+          size: 16 + trailTier * 3 + Math.random() * 8
         });
       }
     }
 
-    await waitSeconds(launchDuration * 0.84);
+    return await waitSeconds(launchDuration * 0.84, runToken);
   }
 
-  async function playMouthOpenAnimation(){
+  async function playMouthOpenAnimation(runToken) {
+    if (!isActiveRun(runToken)) return false;
+
     state.faceDisplay = getOpenMouthFace();
     state.faceClasses = new Set(["is-open"]);
-    await waitSeconds(getTiming().mouthOpen);
+
+    return await waitSeconds(getTiming().mouthOpen, runToken);
   }
 
-  async function playChewAnimation(){
-    const chewFaces = ["😀","😐","😀","😐","😀","😐"];
+  async function playChewAnimation(runToken) {
+    if (!isActiveRun(runToken)) return false;
+
+    const chewFaces = ["😀", "😐", "😀", "😐", "😀", "😐"];
     const chewDuration = getTiming().chew;
     const stepDuration = chewDuration / chewFaces.length;
 
@@ -783,15 +841,22 @@ function backToMenuFromHelp(){
     state.flyingFood = null;
     spawnChewCrumbs();
 
-    for (let i = 0; i < chewFaces.length; i++){
+    for (let i = 0; i < chewFaces.length; i++) {
+      if (!isActiveRun(runToken)) return false;
+
       state.faceDisplay = chewFaces[i];
       if (i === 3) spawnChewCrumbs(true);
-      await waitSeconds(stepDuration);
+
+      if (!await waitSeconds(stepDuration, runToken)) return false;
     }
+
+    return true;
   }
 
-  async function playAnticipationAnimation(){
-    const faces = ["😕","🫤","😐","🤨"];
+  async function playAnticipationAnimation(runToken) {
+    if (!isActiveRun(runToken)) return false;
+
+    const faces = ["😕", "🫤", "😐", "🤨"];
     const face = randomFrom(faces);
     state.faceDisplay = face;
 
@@ -801,29 +866,34 @@ function backToMenuFromHelp(){
       "is-tilt-left-strong"
     ];
 
-    for (const tiltClass of steps){
+    for (const tiltClass of steps) {
+      if (!isActiveRun(runToken)) return false;
+
       state.faceClasses = new Set([tiltClass, "is-anticipation-lean-in"]);
-      await waitSeconds(0.32);
+      if (!await waitSeconds(0.32, runToken)) return false;
 
       state.faceClasses = new Set([tiltClass]);
-      await waitSeconds(0.12);
+      if (!await waitSeconds(0.12, runToken)) return false;
     }
 
     state.faceClasses = new Set();
+    return true;
   }
 
-  async function playReactionAnimation(isCorrect){
+  async function playReactionAnimation(isCorrect, runToken) {
+    if (!isActiveRun(runToken)) return false;
+
     state.reactionFlash = isCorrect ? "is-flash-positive" : "is-flash-negative";
     state.reactionFlashUntil = performance.now() + (getTiming().reaction * 1000);
 
-    if (isCorrect){
+    if (isCorrect) {
       const reaction = randomFrom(HAPPY_REACTIONS);
       state.faceDisplay = reaction;
 
       const animClass = randomFrom(POSITIVE_REACTIONS);
       state.faceClasses = new Set([animClass]);
 
-      if (animClass === "is-react-sparkle-pop"){
+      if (animClass === "is-react-sparkle-pop") {
         spawnReactionSparkles();
       }
     } else {
@@ -838,47 +908,55 @@ function backToMenuFromHelp(){
       state.faceClasses = new Set([choice.cls]);
     }
 
-    await waitSeconds(getTiming().reaction);
+    return await waitSeconds(getTiming().reaction, runToken);
   }
 
+  async function startBonusRound(runToken) {
+    if (!isActiveRun(runToken)) return false;
+    if (bonusRunning) return true;
 
-  
-  async function startBonusRound(){
-    if (bonusRunning) return;
     bonusRunning = true;
     state.inputLocked = true;
 
-    for (let i = 0; i < 5; i++){
+    for (let i = 0; i < 5; i++) {
+      if (!isActiveRun(runToken)) return false;
+
       state.bonusCount = i + 1;
       const bonusItem = {
-        label:"bonus",
-        food:FOOD_EMOJIS[i % FOOD_EMOJIS.length]
+        label: "bonus",
+        food: FOOD_EMOJIS[i % FOOD_EMOJIS.length]
       };
       state.faceScaleBoost = 1 + (i + 1) * 0.08;
-      await playFoodLaunchAnimation(bonusItem);
-      await playMouthOpenAnimation();
-      await playChewAnimation();
+
+      if (!await playFoodLaunchAnimation(bonusItem, runToken)) return false;
+      if (!await playMouthOpenAnimation(runToken)) return false;
+      if (!await playChewAnimation(runToken)) return false;
 
       const bonusAnimClass = randomFrom(POSITIVE_REACTIONS);
       state.faceDisplay = randomFrom(HAPPY_REACTIONS);
       state.faceClasses = new Set([bonusAnimClass, "is-bonus"]);
 
-      if (bonusAnimClass === "is-react-sparkle-pop"){
+      if (bonusAnimClass === "is-react-sparkle-pop") {
         spawnReactionSparkles();
       }
 
       spawnSuccessParticles(true);
-      await waitSeconds(getTiming().bonusReaction);
+      if (!await waitSeconds(getTiming().bonusReaction, runToken)) return false;
     }
+
+    if (!isActiveRun(runToken)) return false;
 
     spawnConfettiBurst();
     state.faceDisplay = "🥳";
     state.faceClasses = new Set(["is-react-victory-wiggle", "is-bonus"]);
-    await waitSeconds(0.9);
+
+    return await waitSeconds(0.9, runToken);
   }
 
-  async function finishRun(){
+  async function finishRun(runToken) {
+    if (!isActiveRun(runToken)) return;
     if (completed) return;
+
     completed = true;
     state.running = false;
 
@@ -906,6 +984,8 @@ function backToMenuFromHelp(){
         }
       };
     }
+
+    if (!completed) return;
 
     renderComplete();
   }
@@ -1457,7 +1537,35 @@ function lerp(a, b, t){ return a + (b - a) * t; }
 function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
 const capitalize = window.VerseGameShell.capitalize;
 function randomFrom(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
-function waitSeconds(seconds){ return new Promise(resolve => setTimeout(resolve, seconds * 1000)); }
+function waitSeconds(seconds, runToken){
+  return new Promise(resolve => {
+    const targetMs = Math.max(0, seconds * 1000);
+    let elapsedMs = 0;
+    let lastTs = performance.now();
+
+    function step(ts){
+      if (!isActiveRun(runToken)){
+        resolve(false);
+        return;
+      }
+
+      if (!state.paused){
+        elapsedMs += ts - lastTs;
+      }
+
+      lastTs = ts;
+
+      if (elapsedMs >= targetMs){
+        resolve(true);
+        return;
+      }
+
+      requestAnimationFrame(step);
+    }
+
+    requestAnimationFrame(step);
+  });
+}
 
 const shuffle = window.VerseGameShell.shuffle;
 
