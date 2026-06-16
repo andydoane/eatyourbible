@@ -67,6 +67,7 @@ const FACE_MAP = {
 
   // chew
   "😀":"munch_chew_open.png",
+  "😬":"munch_chew_closed.png",
 
   // anticipation
   "😕":"munch_anticipation_1.png",
@@ -865,7 +866,7 @@ function backToMenuFromHelp(){
     };
 
     if (!await playWordFeedAnimation(feedItem, runToken)) return;
-    if (!await playMouthOpenAnimation(runToken)) return;
+    if (!await playMouthClosedReceiveAnimation(runToken)) return;
     if (!await playChewAnimation(runToken)) return;
 
     if (isCorrect) {
@@ -987,10 +988,16 @@ function backToMenuFromHelp(){
       scale:0.72
     };
 
+    state.faceDisplay = getOpenMouthFace();
+    state.faceClasses = new Set(["is-open"]);
+
     renderFrame(performance.now());
 
     if (!await waitSeconds(0.34, runToken)) return false;
     if (!isActiveRun(runToken)) return false;
+
+    state.faceClasses = new Set();
+    renderFrame(performance.now());
 
     chars.forEach((char, index) => {
       const centeredIndex = index - (chars.length - 1) / 2;
@@ -1133,6 +1140,17 @@ function backToMenuFromHelp(){
     state.faceClasses = new Set(["is-open"]);
 
     return await waitSeconds(getTiming().mouthOpen, runToken);
+  }
+
+  async function playMouthClosedReceiveAnimation(runToken) {
+    if (!isActiveRun(runToken)) return false;
+
+    state.faceDisplay = "😬";
+    state.faceClasses = new Set();
+
+    renderFrame(performance.now());
+
+    return await waitSeconds(0.18, runToken);
   }
 
   async function playChewAnimation(runToken) {
