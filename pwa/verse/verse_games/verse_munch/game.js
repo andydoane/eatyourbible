@@ -2014,32 +2014,88 @@ function updateBuildText(){
   }
 
 function spawnChewCrumbs(isSecondary = false){
-  const center = getMouthPoint();
-  const crumbColors = ["#f6dfa6", "#f7c96d", "#fff4cf", "#f4b66a", "#ffffff"];
-  const countPerSide = isSecondary ? 4 : 6;
-  const s = state.scale || 1;
+  const sources = getChewCrumbSources();
+  const crumbColors = ["#ffffff", "#fff7dc", "#ffeab0", "#f6dfa6"];
+  const countPerSide = isSecondary ? 4 : 7;
 
-  for (const dir of [-1, 1]){
+  for (const source of sources){
     for (let i = 0; i < countPerSide; i++){
-      const speedX = (90 + Math.random() * (isSecondary ? 60 : 90)) * s;
-      const speedY = (45 + Math.random() * 70) * s;
+      const angle = source.baseAngle + (Math.random() * 0.86 - 0.43);
+      const speed = source.headSize * (isSecondary
+        ? 0.72 + Math.random() * 0.46
+        : 0.88 + Math.random() * 0.62
+      );
+
+      const size = source.headSize * (isSecondary
+        ? 0.035 + Math.random() * 0.035
+        : 0.045 + Math.random() * 0.05
+      );
 
       state.particles.push({
         type: "dot",
-        x: center.x + dir * (6 + Math.random() * 8) * s,
-        y: center.y + (Math.random() * 12 - 4) * s,
-        vx: dir * speedX,
-        vy: -speedY,
-        gravity: (240 + Math.random() * 80) * s,
+        x: source.x + (Math.random() * source.headSize * 0.018 - source.headSize * 0.009),
+        y: source.y + (Math.random() * source.headSize * 0.018 - source.headSize * 0.009),
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        gravity: source.headSize * (0.82 + Math.random() * 0.28),
         age: 0,
-        life: 0.34 + Math.random() * 0.18,
-        size: (6 + Math.random() * 7) * s,
+        life: isSecondary ? 0.38 + Math.random() * 0.16 : 0.46 + Math.random() * 0.20,
+        size,
         color: randomFrom(crumbColors)
       });
     }
   }
 }
 
+  function getChewCrumbSources() {
+    const face = document.getElementById("vmunchFace");
+    const field = document.getElementById("vmunchField");
+
+    if (!face || !field) {
+      const fallback = getMouthPoint();
+      const headSize = Math.max(80, Math.min(state.fieldWidth, state.fieldHeight) * 0.22);
+
+      return [
+        {
+          x: fallback.x - headSize * 0.20,
+          y: fallback.y,
+          headSize,
+          baseAngle: Math.PI
+        },
+        {
+          x: fallback.x + headSize * 0.20,
+          y: fallback.y,
+          headSize,
+          baseAngle: 0
+        }
+      ];
+    }
+
+    const faceRect = face.getBoundingClientRect();
+    const fieldRect = field.getBoundingClientRect();
+    const headSize = Math.min(faceRect.width, faceRect.height);
+
+    const faceLeft = faceRect.left - fieldRect.left;
+    const faceTop = faceRect.top - fieldRect.top;
+
+    const y = faceTop + faceRect.height * 0.64;
+
+    return [
+      {
+        x: faceLeft + faceRect.width * 0.30,
+        y,
+        headSize,
+        baseAngle: Math.PI
+      },
+      {
+        x: faceLeft + faceRect.width * 0.70,
+        y,
+        headSize,
+        baseAngle: 0
+      }
+    ];
+  }
+  
   function spawnConfettiBurst(){
     const centerX = state.fieldWidth * 0.5;
     const centerY = state.fieldHeight * 0.32;
