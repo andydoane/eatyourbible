@@ -1235,7 +1235,7 @@ function backToMenuFromHelp(){
 
     if (isCorrect) {
       if (isStreakMilestone) {
-        state.faceDisplay = "🤩";
+        state.faceDisplay = "😁";
         state.faceClasses = new Set(["is-react-sparkle-pop"]);
         state.streakSunburstUntil = now + (reactionDuration * 1000) + 320;
         spawnReactionSparkles();
