@@ -59,6 +59,7 @@ const FACE_MAP = {
   // positives
   "☺️":"munch_positive_1.png",
   "😋":"munch_positive_2.png",
+  "🌈": "verse_munch_rainbow_eyes.svg",
   "🤩":"munch_positive_3.png",
 
   // mouth open (all map to same)
@@ -875,9 +876,9 @@ function backToMenuFromHelp(){
 
     if (isCorrect) {
       const nextStreak = state.streak + 1;
-      const isStreakMilestone = nextStreak > 0 && nextStreak % 3 === 0;
+      const streakTier = getStreakMilestoneTier(nextStreak);
 
-      if (!await playReactionAnimation(true, runToken, isStreakMilestone)) return;
+      if (!await playReactionAnimation(true, runToken, streakTier)) return;
       if (!isActiveRun(runToken)) return;
 
       state.progressIndex += 1;
@@ -1139,6 +1140,86 @@ function backToMenuFromHelp(){
     return NO_SPEW_WORDS.has(normalized) || NO_SPEW_WORDS.has(possessiveBase);
   }
   
+  function getStreakMilestoneTier(streak) {
+    if (streak < 3 || streak % 3 !== 0) return 0;
+    if (streak >= 9) return 3;
+    if (streak >= 6) return 2;
+    return 1;
+  }
+
+  function getStreakFlashClass(streakTier) {
+    if (streakTier >= 3) return "is-flash-streak-rainbow";
+    if (streakTier === 2) return "is-flash-streak-2";
+    return "is-flash-streak-1";
+  }
+
+  function spawnStreakRainbowCircleBurst(streakTier) {
+    const metrics = getMonsterFaceMetrics();
+    const centerX = metrics.centerX;
+    const centerY = metrics.centerY;
+    const headSize = metrics.headSize;
+
+    const palette = [
+      "#ff5f6d",
+      "#ff9f43",
+      "#ffe66d",
+      "#6bd66b",
+      "#46c6ff",
+      "#6d83ff",
+      "#b36cff",
+      "#ff79c6"
+    ];
+
+    const count = streakTier >= 3 ? 18 : streakTier === 2 ? 14 : 10;
+    const sizeMin = headSize * (streakTier >= 3 ? 0.10 : streakTier === 2 ? 0.09 : 0.08);
+    const sizeMax = headSize * (streakTier >= 3 ? 0.17 : streakTier === 2 ? 0.15 : 0.13);
+    const speedMin = headSize * (streakTier >= 3 ? 1.25 : streakTier === 2 ? 1.10 : 0.95);
+    const speedMax = headSize * (streakTier >= 3 ? 2.05 : streakTier === 2 ? 1.75 : 1.45);
+
+    for (let i = 0; i < count; i++) {
+      const angle = (-Math.PI / 2) + (i / count) * Math.PI * 2 + (Math.random() * 0.12 - 0.06);
+      const speed = speedMin + Math.random() * (speedMax - speedMin);
+      const size = sizeMin + Math.random() * (sizeMax - sizeMin);
+
+      state.particles.push({
+        type: "dot",
+        x: centerX,
+        y: centerY,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        gravity: headSize * 1.05,
+        age: 0,
+        life: 0.56 + Math.random() * 0.16,
+        size,
+        color: palette[i % palette.length]
+      });
+    }
+  }
+
+  function getMonsterFaceMetrics() {
+    const face = document.getElementById("vmunchFace");
+    const field = document.getElementById("vmunchField");
+
+    if (!face || !field) {
+      const fallbackHeadSize = Math.max(80, Math.min(state.fieldWidth, state.fieldHeight) * 0.22);
+      return {
+        centerX: state.fieldWidth * 0.5,
+        centerY: state.fieldHeight * 0.44,
+        headSize: fallbackHeadSize
+      };
+    }
+
+    const faceRect = face.getBoundingClientRect();
+    const fieldRect = field.getBoundingClientRect();
+    const headSize = Math.min(faceRect.width, faceRect.height);
+
+    return {
+      centerX: faceRect.left - fieldRect.left + faceRect.width * 0.5,
+      centerY: faceRect.top - fieldRect.top + faceRect.height * 0.5,
+      headSize
+    };
+  }
+
   async function playMouthOpenAnimation(runToken) {
     if (!isActiveRun(runToken)) return false;
 
@@ -1221,34 +1302,52 @@ function backToMenuFromHelp(){
     return true;
   }
 
-  async function playReactionAnimation(isCorrect, runToken, isStreakMilestone = false) {
+  async function playReactionAnimation(isCorrect, runToken, streakTier = 0) {
     if (!isActiveRun(runToken)) return false;
 
     const reactionDuration = getTiming().reaction;
     const now = performance.now();
 
-    state.reactionFlash = isCorrect
-      ? isStreakMilestone ? "is-flash-streak" : "is-flash-positive"
-      : "is-flash-negative";
+    if (isCorrect) {
+      state.reactionFlash = streakTier > 0
+        ? getStreakFlashClass(streakTier)
+        : "is-flash-positive";
+    } else {
+      state.reactionFlash = "is-flash-negative";
+    }
 
     state.reactionFlashUntil = now + (reactionDuration * 1000);
 
     if (isCorrect) {
-      if (isStreakMilestone) {
-        state.faceDisplay = "😁";
-        state.faceClasses = new Set(["is-react-sparkle-pop"]);
-        state.streakSunburstUntil = now + (reactionDuration * 1000) + 320;
-        spawnReactionSparkles();
-      } else {
-        const reaction = randomFrom(HAPPY_REACTIONS);
-        state.faceDisplay = reaction;
+      if (streakTier > 0) {
+        state.streakSunburstUntil = now + (reactionDuration * 1000) + 220;
 
-        const animClass = randomFrom(POSITIVE_REACTIONS);
-        state.faceClasses = new Set([animClass]);
-
-        if (animClass === "is-react-sparkle-pop") {
-          spawnReactionSparkles();
+        if (streakTier >= 3) {
+          state.faceDisplay = "🌈";
+          state.faceClasses = new Set(["is-react-victory-wiggle"]);
+        } else if (streakTier === 2) {
+          state.faceDisplay = "😁";
+          state.faceClasses = new Set(["is-react-hop"]);
+        } else {
+          state.faceDisplay = "😁";
+          state.faceClasses = new Set(["is-react-jelly"]);
         }
+
+        if (!await waitSeconds(reactionDuration, runToken)) return false;
+        if (!isActiveRun(runToken)) return false;
+
+        spawnStreakRainbowCircleBurst(streakTier);
+        return true;
+      }
+
+      const reaction = randomFrom(HAPPY_REACTIONS);
+      state.faceDisplay = reaction;
+
+      const animClass = randomFrom(POSITIVE_REACTIONS);
+      state.faceClasses = new Set([animClass]);
+
+      if (animClass === "is-react-sparkle-pop") {
+        spawnReactionSparkles();
       }
     } else {
       state.faceDisplay = "🤮";
@@ -1553,7 +1652,13 @@ function updateBuildText(){
     const root = document.querySelector(".vmunch-root, .vmunch-mode-shell");
     if (!root) return;
 
-    root.classList.remove("is-flash-positive", "is-flash-streak", "is-flash-negative");
+    root.classList.remove(
+      "is-flash-positive",
+      "is-flash-streak-1",
+      "is-flash-streak-2",
+      "is-flash-streak-rainbow",
+      "is-flash-negative"
+    );
 
     if (state.reactionFlash && ts < state.reactionFlashUntil){
       root.classList.add(state.reactionFlash);

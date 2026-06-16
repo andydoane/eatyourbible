@@ -112,14 +112,40 @@ body{
   background:#a7cb6f;
 }
 
-.vmunch-root.is-flash-streak,
-.vmunch-mode-shell.is-flash-streak{
+.vmunch-root.is-flash-streak-1,
+.vmunch-mode-shell.is-flash-streak-1{
   background:#c9ef63;
+}
+
+.vmunch-root.is-flash-streak-2,
+.vmunch-mode-shell.is-flash-streak-2{
+  background:#40b9c5;
+}
+
+.vmunch-root.is-flash-streak-rainbow,
+.vmunch-mode-shell.is-flash-streak-rainbow{
+  background:linear-gradient(
+    90deg,
+    #ff5f6d 0%,
+    #ffb347 18%,
+    #fff36d 36%,
+    #6fe36c 54%,
+    #55c7ff 72%,
+    #b57cff 88%,
+    #ff79c6 100%
+  );
+  background-size:250% 250%;
+  animation:vmunchRainbowFlashShift 900ms linear infinite;
 }
 
 .vmunch-root.is-flash-negative,
 .vmunch-mode-shell.is-flash-negative{
   background:#ff5a51;
+}
+
+@keyframes vmunchRainbowFlashShift{
+  0%{ background-position:0% 50%; }
+  100%{ background-position:100% 50%; }
 }
 
 .vmunch-stage,
