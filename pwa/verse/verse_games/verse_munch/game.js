@@ -77,11 +77,128 @@ const FACE_MAP = {
 };
 
 
+  const FACE_IMAGE_PATH = "verse_munch_images/";
+  const FACE_FALLBACK_FILE = "munch_neutral.png";
+  const faceImageCache = new Map();
+
+  function getFaceSrc(file){
+    return `${FACE_IMAGE_PATH}${file}`;
+  }
+
   function preloadFaceImages(){
-    Object.values(FACE_MAP).forEach(file => {
+    const files = Array.from(new Set([
+      ...Object.values(FACE_MAP),
+      FACE_FALLBACK_FILE
+    ].filter(Boolean)));
+
+    files.forEach(file => {
+      if (faceImageCache.has(file)) return;
+
       const img = new Image();
-      img.src = `verse_munch_images/${file}`;
+      const record = {
+        file,
+        img,
+        loaded:false,
+        failed:false
+      };
+
+      faceImageCache.set(file, record);
+
+      img.onload = () => {
+        record.loaded = true;
+      };
+
+      img.onerror = () => {
+        record.failed = true;
+      };
+
+      img.decoding = "async";
+      img.src = getFaceSrc(file);
     });
+  }
+
+  function getSafeFaceFile(faceKey){
+    const file = FACE_MAP[faceKey] || FACE_FALLBACK_FILE;
+    const record = faceImageCache.get(file);
+
+    if (record && record.failed){
+      return FACE_FALLBACK_FILE;
+    }
+
+    return file || FACE_FALLBACK_FILE;
+  }
+
+  function ensureFaceLayers(face){
+    const existingLayers = Array.from(face.querySelectorAll(".vmunch-face-layer"));
+
+    if (existingLayers.length === 2){
+      return existingLayers;
+    }
+
+    face.innerHTML = "";
+    face.dataset.activeLayer = "0";
+
+    for (let i = 0; i < 2; i++){
+      const img = document.createElement("img");
+      img.className = i === 0 ? "vmunch-face-layer is-active" : "vmunch-face-layer";
+      img.dataset.faceLayer = String(i);
+      img.dataset.faceFile = FACE_FALLBACK_FILE;
+      img.alt = "";
+      img.draggable = false;
+      img.src = getFaceSrc(FACE_FALLBACK_FILE);
+      face.appendChild(img);
+    }
+
+    return Array.from(face.querySelectorAll(".vmunch-face-layer"));
+  }
+
+  function swapFaceLayer(face, file){
+    const layers = ensureFaceLayers(face);
+    const activeIndex = face.dataset.activeLayer === "1" ? 1 : 0;
+    const nextIndex = activeIndex === 0 ? 1 : 0;
+    const currentImg = layers[activeIndex];
+    const nextImg = layers[nextIndex];
+    const safeFile = file || FACE_FALLBACK_FILE;
+    const src = getFaceSrc(safeFile);
+
+    if (currentImg && currentImg.dataset.faceFile === safeFile){
+      return;
+    }
+
+    function activateNextLayer(){
+      requestAnimationFrame(() => {
+        nextImg.classList.add("is-active");
+
+        if (currentImg){
+          currentImg.classList.remove("is-active");
+        }
+
+        face.dataset.activeLayer = String(nextIndex);
+      });
+    }
+
+    function useFallbackFace(){
+      if (safeFile === FACE_FALLBACK_FILE) return;
+
+      const record = faceImageCache.get(safeFile);
+      if (record){
+        record.failed = true;
+      }
+
+      swapFaceLayer(face, FACE_FALLBACK_FILE);
+    }
+
+    nextImg.onload = activateNextLayer;
+    nextImg.onerror = useFallbackFace;
+    nextImg.dataset.faceFile = safeFile;
+
+    if (nextImg.getAttribute("src") !== src){
+      nextImg.src = src;
+    }
+
+    if (nextImg.complete && nextImg.naturalWidth > 0){
+      activateNextLayer();
+    }
   }
 
   const TRAIL_EMOJIS = ["✨","⭐","💫","🫧","🌟"];
@@ -874,16 +991,16 @@ function updateBuildText(){
 
     face.className = "vmunch-face";
     for (const cls of state.faceClasses) face.classList.add(cls);
-    const file = FACE_MAP[state.faceDisplay] || "";
+
+    ensureFaceLayers(face);
+
+    const file = getSafeFaceFile(state.faceDisplay);
 
     if (file !== state.lastFaceFile){
-      if (file){
-        face.innerHTML = `<img src="verse_munch_images/${file}" alt="">`;
-      } else {
-        face.innerHTML = "";
-      }
+      swapFaceLayer(face, file);
       state.lastFaceFile = file;
     }
+
     face.style.transform = state.faceScaleBoost > 0 ? `scale(${state.faceScaleBoost})` : "";
 
     if (foodDisplay){
