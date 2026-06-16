@@ -223,7 +223,7 @@ body{
   min-height:0;
   display:flex;
   flex-direction:column;
-  padding:0 var(--vmunch-side-padding) calc(10px + env(safe-area-inset-bottom));
+  padding:0;
 }
 
 .vmunch-field{
@@ -247,24 +247,38 @@ body{
 }
 
 .vmunch-streak-sunburst {
-  inset: -38%;
+  inset: 0;
   z-index: 2;
   opacity: 0;
+  overflow: hidden;
+  transform-origin: 50% 50%;
+}
+
+.vmunch-streak-sunburst::before {
+  content: "";
+  position: absolute;
+  inset: -38%;
   background: url("verse_munch_images/verse_munch_sunburst.svg") center / contain no-repeat;
   transform-origin: 50% 50%;
 }
 
 .vmunch-streak-sunburst.is-active {
   opacity: 0.15;
+}
+
+.vmunch-streak-sunburst.is-active::before {
   animation: vmunchStreakSunburstSpin 1300ms linear infinite;
 }
 
 .vmunch-root.is-flash-streak-rainbow .vmunch-streak-sunburst.is-active {
+  opacity: 0.15;
+}
+
+.vmunch-root.is-flash-streak-rainbow .vmunch-streak-sunburst.is-active::before {
   background: none;
   background-color: #ffffff;
   -webkit-mask: url("verse_munch_images/verse_munch_sunburst.svg") center / contain no-repeat;
   mask: url("verse_munch_images/verse_munch_sunburst.svg") center / contain no-repeat;
-  opacity: 0.15;
 }
 
 @keyframes vmunchStreakSunburstSpin {
