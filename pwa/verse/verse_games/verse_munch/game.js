@@ -1277,9 +1277,8 @@ function updateBuildText(){
     if (selectedMode === "hard") {
       return {
         speed: Math.max(108, state.fieldWidth * 0.28),
-        gap: 62,
+        gap: 76,
         minWidth: 92,
-        maxWidth: 210,
         maxCorrectVisible: 1,
         correctDelayMin: 2,
         correctDelayMax: 3
@@ -1289,9 +1288,8 @@ function updateBuildText(){
     if (selectedMode === "medium") {
       return {
         speed: Math.max(92, state.fieldWidth * 0.24),
-        gap: 54,
+        gap: 68,
         minWidth: 98,
-        maxWidth: 220,
         maxCorrectVisible: 1,
         correctDelayMin: 1,
         correctDelayMax: 2
@@ -1300,9 +1298,8 @@ function updateBuildText(){
 
     return {
       speed: Math.max(74, state.fieldWidth * 0.20),
-      gap: 44,
+      gap: 60,
       minWidth: 108,
-      maxWidth: 235,
       maxCorrectVisible: 2,
       correctDelayMin: 0,
       correctDelayMax: 1
@@ -1389,8 +1386,11 @@ function updateBuildText(){
 
   function estimateBeltItemWidth(label, cfg) {
     const text = String(label || "");
-    const rough = 44 + text.length * 16;
-    return clamp(rough, cfg.minWidth, cfg.maxWidth);
+    const basePadding = 48;
+    const perCharacter = 19;
+    const rough = basePadding + text.length * perCharacter;
+
+    return Math.max(cfg.minWidth, rough);
   }
 
   function getBeltItemCenter(item) {
