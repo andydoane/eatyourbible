@@ -899,7 +899,6 @@ function backToMenuFromHelp(){
 
       state.progressIndex += 1;
       state.streak += 1;
-      spawnSuccessParticles();
 
       state.emotionLevel = clamp(state.emotionLevel + 1, -3, 3);
       state.faceBase = getEmotionFace();
@@ -1349,6 +1348,8 @@ function backToMenuFromHelp(){
           state.faceClasses = new Set(["is-react-jelly"]);
         }
 
+        spawnSuccessParticles();
+
         if (!await waitSeconds(reactionDuration, runToken)) return false;
         if (!isActiveRun(runToken)) return false;
 
@@ -1361,6 +1362,8 @@ function backToMenuFromHelp(){
 
       const animClass = randomFrom(POSITIVE_REACTIONS);
       state.faceClasses = new Set([animClass]);
+
+      spawnSuccessParticles();
 
       if (animClass === "is-react-sparkle-pop") {
         spawnReactionSparkles();
