@@ -12,7 +12,7 @@
   const BUILD_AREA = "compact";
 
   const HELP_OVERLAY_ID = "vmunchHelpOverlay";
-  const VMUNCH_DEBUG_VERSION = "VMUNCH v5.1";
+  const VMUNCH_DEBUG_VERSION = "VMUNCH v5.2";
 
 const BOOKS = window.VerseGameShell.getBibleBookDecoys();
   
@@ -985,9 +985,6 @@ function backToMenuFromHelp(){
     const item = state.bonusFoodItems.find(entry => String(entry.id) === String(itemId));
     if (!item || item.tapped) return;
 
-    if (!item.isTarget) {
-      return;
-    }
     if (!item.isTarget) {
       item.tapped = true;
 
