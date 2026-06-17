@@ -28,7 +28,7 @@ const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
     };
   });
 
-  const BONUS_INTRO_DURATION = 1.55;
+  const BONUS_INTRO_DURATION = 2.4;
   const HAPPY_REACTIONS = ["😋","☺️","😁"];
   const SAD_REACTIONS = ["🤮","🤢","😵‍💫"];
   const ANTICIPATION_FACES = ["😕","🫤","😐"];
@@ -301,6 +301,7 @@ const FACE_MAP = {
     bonusPhase:"",
     bonusTargetFruit:null,
     bonusIntroText:"",
+    bonusIntroShown:false,
     buildShakeUntil:0,
     lastFaceFile:"",
     runToken:0,
@@ -407,6 +408,7 @@ function renderModeSelect(){
     state.bonusPhase = "";
     state.bonusTargetFruit = null;
     state.bonusIntroText = "";
+    state.bonusIntroShown = false;
     state.buildShakeUntil = 0;
     state.beltItems = [];
     state.beltNextId = 1;
@@ -966,8 +968,7 @@ function backToMenuFromHelp(){
       state.faceClasses = new Set();
 
       if (getCurrentPhase() === "done") {
-        state.beltHidden = false;
-        if (!await startBonusRound(runToken)) return;
+        state.beltHidden = true;
         await finishRun(runToken);
         return;
       }
@@ -1470,6 +1471,12 @@ function backToMenuFromHelp(){
   async function finishRun(runToken) {
     if (!isActiveRun(runToken)) return;
     if (completed) return;
+
+    if (!state.bonusIntroShown) {
+      const bonusIntroOk = await startBonusRound(runToken);
+      if (!bonusIntroOk) return;
+      state.bonusIntroShown = true;
+    }
 
     completed = true;
     state.running = false;
