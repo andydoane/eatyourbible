@@ -46,7 +46,7 @@
   --vmunch-build-text-size:clamp(22px, 5.4vw, 40px);
   --vmunch-build-line-height:1.2;
 
-  --vmunch-face-stack-max:380px;
+  --vmunch-face-stack-max:clamp(360px, 52vw, 520px);
   --vmunch-food-size:clamp(48px, 11vw, 76px);
   --vmunch-face-font-size:calc(var(--vmunch-face-stack-max) * 0.72);
 
@@ -818,14 +818,16 @@ body{
 
 .vmunch-feedback-badge{
   position:absolute;
-  top:64%;
+  top:var(--vmunch-feedback-top, 64%);
   left:50%;
   transform:translate(-50%, -50%);
   z-index:26;
+  max-width:calc(100% - 28px);
+  box-sizing:border-box;
   border-radius:999px;
-  padding:10px 20px 12px;
+  padding:clamp(8px, 0.18em, 14px) clamp(16px, 0.42em, 30px) clamp(10px, 0.22em, 16px);
   font-family:"Titan One", system-ui, sans-serif;
-  font-size:clamp(30px, 8vw, 62px);
+  font-size:var(--vmunch-feedback-font-size, clamp(30px, 8vw, 62px));
   font-weight:400;
   line-height:1;
   letter-spacing:0.03em;

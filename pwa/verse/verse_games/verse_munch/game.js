@@ -741,6 +741,40 @@ function backToMenuFromHelp(){
     state.fieldHeight = rect.height;
     const t = clamp((rect.width - 360) / (920 - 360), 0, 1);
     state.scale = 1 + t * 0.25;
+
+    updateFeedbackLayoutMetrics();
+  }
+
+  function updateFeedbackLayoutMetrics() {
+    const field = document.getElementById("vmunchField");
+    const face = document.getElementById("vmunchFace");
+    const belt = document.querySelector(".vmunch-belt-shell");
+
+    if (!field || !face || !belt) return;
+
+    const fieldRect = field.getBoundingClientRect();
+    const faceRect = face.getBoundingClientRect();
+    const beltRect = belt.getBoundingClientRect();
+
+    const faceBottom = faceRect.bottom - fieldRect.top;
+    const beltTop = beltRect.top - fieldRect.top;
+    const gapHeight = Math.max(0, beltTop - faceBottom);
+
+    const hasUsefulGap = gapHeight >= 46;
+    const feedbackTop = hasUsefulGap
+      ? faceBottom + gapHeight * 0.5
+      : state.fieldHeight * 0.64;
+
+    const widthBasedSize = state.fieldWidth * 0.115;
+    const gapBasedSize = hasUsefulGap ? gapHeight * 0.48 : state.fieldHeight * 0.09;
+    const feedbackFontSize = clamp(
+      Math.min(widthBasedSize, gapBasedSize),
+      30,
+      82
+    );
+
+    field.style.setProperty("--vmunch-feedback-top", `${Math.round(feedbackTop)}px`);
+    field.style.setProperty("--vmunch-feedback-font-size", `${Math.round(feedbackFontSize)}px`);
   }
 
   function updateIdle(dt){
