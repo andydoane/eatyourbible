@@ -1456,6 +1456,13 @@ function backToMenuFromHelp(){
     if (!isActiveRun(runToken)) return false;
     if (bonusRunning) return true;
 
+    state.flyingFood = null;
+    state.hitWord = null;
+    state.feedingWord = null;
+    state.flyingLetters = [];
+    state.trails = [];
+    state.particles = [];
+
     bonusRunning = true;
     state.inputLocked = true;
     state.beltHidden = true;
@@ -1478,6 +1485,10 @@ function backToMenuFromHelp(){
 
     state.bonusPhase = "playing";
     state.bonusIntroText = "";
+    state.flyingFood = null;
+    state.hitWord = null;
+    state.feedingWord = null;
+    state.flyingLetters = [];
     state.beltHidden = false;
     state.faceBase = getEmotionFace();
     state.faceDisplay = state.faceBase;
