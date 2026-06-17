@@ -12,6 +12,7 @@
   const BUILD_AREA = "compact";
 
   const HELP_OVERLAY_ID = "vmunchHelpOverlay";
+  const VMUNCH_DEBUG_VERSION = "VMUNCH v5.1";
 
 const BOOKS = window.VerseGameShell.getBibleBookDecoys();
   
@@ -455,6 +456,7 @@ app.innerHTML = `
       <div class="vmunch-field-wrap">
         <div class="vmunch-field" id="vmunchField">
         <div class="vmunch-bg" id="vmunchBg"></div>
+        <div class="vmunch-debug-pill" id="vmunchDebugPill">${escapeHtml(VMUNCH_DEBUG_VERSION)}</div>
         <div class="vmunch-streak-sunburst" id="vmunchStreakSunburst"></div>
         <div class="vmunch-behind-face-particles" id="vmunchBehindFaceParticles"></div>
         <div class="vmunch-trails" id="vmunchTrails"></div>
