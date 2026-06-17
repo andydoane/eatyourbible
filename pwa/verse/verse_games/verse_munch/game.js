@@ -12,7 +12,7 @@
   const BUILD_AREA = "compact";
 
   const HELP_OVERLAY_ID = "vmunchHelpOverlay";
-  const VMUNCH_DEBUG_VERSION = "VMUNCH v5.7";
+  const VMUNCH_DEBUG_VERSION = "VMUNCH v5.8";
 
 const BOOKS = window.VerseGameShell.getBibleBookDecoys();
   
@@ -31,7 +31,7 @@ const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
 
   const BONUS_INTRO_DURATION = 2.4;
   const BONUS_PLAY_DURATION = 20;
-  const BONUS_SCORE_REVEAL_DURATION = 2.15;
+  const BONUS_SCORE_CONTINUE_ARM_DELAY = 0.55;
   const BONUS_TARGET_CHANCE = 0.4;
   const BONUS_FORCE_TARGET_AFTER = 3;
   const BONUS_POOF_CLOUD_SVG = `
@@ -1724,6 +1724,69 @@ function backToMenuFromHelp(){
     return await waitSeconds(reactionDuration, runToken);
   }
 
+  function waitForBonusScoreContinue(runToken) {
+    return new Promise((resolve) => {
+      const field = document.getElementById("vmunchField");
+      const target = field || window;
+      let done = false;
+      let armed = false;
+      let rafId = 0;
+
+      const cleanup = () => {
+        target.removeEventListener("pointerdown", onPointerDown);
+        window.removeEventListener("keydown", onKeyDown);
+
+        if (rafId) {
+          cancelAnimationFrame(rafId);
+          rafId = 0;
+        }
+      };
+
+      const finish = (ok) => {
+        if (done) return;
+
+        done = true;
+        cleanup();
+        resolve(ok);
+      };
+
+      const onPointerDown = (event) => {
+        if (!armed) return;
+        if (state.bonusPhase !== "score") return;
+
+        if (event.cancelable) event.preventDefault();
+        finish(isActiveRun(runToken));
+      };
+
+      const onKeyDown = (event) => {
+        if (!armed) return;
+        if (state.bonusPhase !== "score") return;
+        if (event.key !== "Enter" && event.key !== " ") return;
+
+        event.preventDefault();
+        finish(isActiveRun(runToken));
+      };
+
+      const checkStillActive = () => {
+        if (!isActiveRun(runToken) || state.bonusPhase !== "score") {
+          finish(false);
+          return;
+        }
+
+        rafId = requestAnimationFrame(checkStillActive);
+      };
+
+      window.setTimeout(() => {
+        armed = true;
+      }, BONUS_SCORE_CONTINUE_ARM_DELAY * 1000);
+
+      target.addEventListener("pointerdown", onPointerDown, { passive: false });
+      window.addEventListener("keydown", onKeyDown);
+
+      rafId = requestAnimationFrame(checkStillActive);
+    });
+  }
+
   async function startBonusRound(runToken) {
     if (!isActiveRun(runToken)) return false;
     if (bonusRunning) return true;
@@ -1793,7 +1856,7 @@ function backToMenuFromHelp(){
 
     renderFrame(performance.now());
 
-    if (!await waitSeconds(BONUS_SCORE_REVEAL_DURATION, runToken)) return false;
+    if (!await waitForBonusScoreContinue(runToken)) return false;
     if (!isActiveRun(runToken)) return false;
 
     state.bonusPhase = "";
@@ -2257,6 +2320,7 @@ function updateBuildText(){
           <span class="vmunch-bonus-score-x" aria-hidden="true">x</span>
           <span class="vmunch-bonus-score-number">${escapeHtml(displayScore)}</span>
         </div>
+        <div class="vmunch-bonus-continue-prompt">TAP TO CONTINUE</div>
       </div>
     `;
   }

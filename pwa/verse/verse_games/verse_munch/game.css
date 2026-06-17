@@ -458,6 +458,19 @@ body.vmunch-page-flash-streak-rainbow::before {
   text-align: center;
 }
 
+.vmunch-bonus-continue-prompt {
+  font-family: "Titan One", system-ui, sans-serif;
+  color: #ffffff;
+  font-size: clamp(18px, 4.5vw, 34px);
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-shadow:
+    0 4px 0 rgba(62, 44, 119, 0.42),
+    0 0 18px rgba(255, 255, 255, 0.24);
+  animation: vmunchBonusContinuePulse 920ms ease-in-out infinite;
+}
+
 .vmunch-bonus-score-card.is-celebrating .vmunch-bonus-score-line {
   animation: vmunchBonusScoreLinePulse 920ms cubic-bezier(.2, .88, .24, 1) both;
 }
@@ -538,6 +551,20 @@ body.vmunch-page-flash-streak-rainbow::before {
 
   100% {
     transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes vmunchBonusContinuePulse {
+
+  0%,
+  100% {
+    opacity: 0.72;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
   }
 }
 
