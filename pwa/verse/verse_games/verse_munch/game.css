@@ -253,6 +253,7 @@ body.vmunch-page-flash-streak-rainbow::before {
 .vmunch-trails,
 .vmunch-particles,
 .vmunch-bonus-poofs,
+.vmunch-bonus-score-pops,
 .vmunch-food-flight,
 .vmunch-feedback,
 .vmunch-confetti{
@@ -312,6 +313,10 @@ body.vmunch-page-flash-streak-rainbow::before {
 
 .vmunch-bonus-poofs {
   z-index: 32;
+}
+
+.vmunch-bonus-score-pops {
+  z-index: 33;
 }
 
 .vmunch-feedback {
@@ -944,6 +949,37 @@ body.vmunch-page-flash-streak-rainbow::before {
   transform: translate(var(--vmunch-poof-tx, 0px), var(--vmunch-poof-ty, 0px)) scale(var(--vmunch-poof-end-scale, 1.12));
 }
 
+.vmunch-bonus-score-pop {
+  position: absolute;
+  left: 0;
+  top: 0;
+  transform: translate(-50%, -10%) scale(0.72);
+  opacity: 0;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+  font-family: "Titan One", system-ui, sans-serif;
+  font-size: clamp(28px, 6vw, 42px);
+  line-height: 1;
+  letter-spacing: 0.02em;
+  text-shadow: 0 4px 0 rgba(0, 0, 0, 0.22);
+  will-change: transform, opacity;
+}
+
+.vmunch-bonus-score-pop.is-positive {
+  color: #ffffff;
+  -webkit-text-stroke: 2px #7aa249;
+}
+
+.vmunch-bonus-score-pop.is-negative {
+  color: #ffc751;
+  -webkit-text-stroke: 2px #ff5a51;
+}
+
+.vmunch-bonus-score-pop.is-live {
+  animation: vmunchBonusScoreFloat 760ms cubic-bezier(.2, .84, .24, 1) forwards;
+}
+
 @keyframes vmunchBonusPoofCloudRipple {
   0% {
     opacity: 0;
@@ -973,6 +1009,25 @@ body.vmunch-page-flash-streak-rainbow::before {
   100% {
     opacity: 0;
     transform: translate(-50%, -50%) scale(1.08);
+  }
+}
+
+@keyframes vmunchBonusScoreFloat {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -10%) scale(0.72);
+  }
+
+  18% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.08);
+  }
+
+  100% {
+    opacity: 0;
+    transform:
+      translate(calc(-50% + var(--vmunch-score-pop-drift-x, 0px)),
+        calc(-50% - var(--vmunch-score-pop-rise, 52px))) scale(0.96);
   }
 }
 

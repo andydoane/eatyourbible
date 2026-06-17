@@ -12,7 +12,7 @@
   const BUILD_AREA = "compact";
 
   const HELP_OVERLAY_ID = "vmunchHelpOverlay";
-  const VMUNCH_DEBUG_VERSION = "VMUNCH v5.8";
+  const VMUNCH_DEBUG_VERSION = "VMUNCH v.5.9";
 
 const BOOKS = window.VerseGameShell.getBibleBookDecoys();
   
@@ -465,6 +465,7 @@ app.innerHTML = `
         <div class="vmunch-trails" id="vmunchTrails"></div>
         <div class="vmunch-particles" id="vmunchParticles"></div>
         <div class="vmunch-bonus-poofs" id="vmunchBonusPoofs"></div>
+        <div class="vmunch-bonus-score-pops" id="vmunchBonusScorePops"></div>
           <div class="vmunch-food-flight" id="vmunchFoodFlight"></div>
           <div class="vmunch-feedback" id="vmunchFeedback"></div>
           <div class="vmunch-bonus-hud" id="vmunchBonusHud"></div>
@@ -1010,10 +1011,25 @@ function backToMenuFromHelp(){
       return;
     }
 
+    if (!item.isTarget) {
+      item.tapped = true;
+      state.bonusCount = Math.max(0, state.bonusCount - 1);
+
+      const poofPoint = getBonusFoodChipCenter(chipEl);
+      spawnBonusWrongPoof(poofPoint.x, poofPoint.y, item.size);
+      spawnBonusScorePop(poofPoint.x, poofPoint.y - item.size * 0.20, "-1", "negative");
+      playBonusWrongFaceFlash();
+
+      renderFrame(performance.now());
+      return;
+    }
+
     item.tapped = true;
     state.bonusCount += 1;
 
     const startPoint = getBonusFoodChipCenter(chipEl);
+    spawnBonusScorePop(startPoint.x, startPoint.y - item.size * 0.20, "+1", "positive");
+
     const feedItem = {
       fruit: item.fruit,
       size: item.size,
@@ -1047,6 +1063,33 @@ function backToMenuFromHelp(){
       x: chipRect.left - fieldRect.left + chipRect.width * 0.5,
       y: chipRect.top - fieldRect.top + chipRect.height * 0.5
     };
+  }
+
+
+  function spawnBonusScorePop(x, y, text, type = "positive") {
+    const layer = document.getElementById("vmunchBonusScorePops");
+    if (!layer) return;
+
+    const pop = document.createElement("div");
+    const driftX = Math.round(-10 + Math.random() * 20);
+    const rise = Math.round(44 + Math.random() * 12);
+
+    pop.className = `vmunch-bonus-score-pop is-${type}`;
+    pop.style.left = `${x}px`;
+    pop.style.top = `${y}px`;
+    pop.style.setProperty("--vmunch-score-pop-drift-x", `${driftX}px`);
+    pop.style.setProperty("--vmunch-score-pop-rise", `${rise}px`);
+    pop.textContent = text;
+
+    layer.appendChild(pop);
+
+    requestAnimationFrame(() => {
+      pop.classList.add("is-live");
+    });
+
+    window.setTimeout(() => {
+      pop.remove();
+    }, 760);
   }
 
   function spawnBonusWrongPoof(x, y, fruitSize) {
@@ -2270,7 +2313,7 @@ function updateBuildText(){
       return;
     }
 
-    const introText = state.bonusIntroText || "VERSEY MONSTER WANTS…";
+    const introText = state.bonusIntroText || "FEED ME!";
     const introKey = `${introText}|${state.bonusTargetFruit.id}`;
 
     if (layer.dataset.vmunchBonusIntroKey === introKey) return;
