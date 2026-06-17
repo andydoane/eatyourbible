@@ -86,12 +86,14 @@ body{
   -webkit-touch-callout:none;
 }
 
-#app.vm-shell{
-  min-height:100dvh;
-  height:100dvh;
-  padding:0;
-  display:block;
-  overflow:hidden;
+#app.vm-shell {
+  position: relative;
+  z-index: 1;
+  min-height: 100dvh;
+  height: 100dvh;
+  padding: 0;
+  display: block;
+  overflow: hidden;
 }
 
 .vmunch-root,
@@ -109,18 +111,15 @@ body{
 
 
 
-.vmunch-root.is-flash-streak-1,
-.vmunch-mode-shell.is-flash-streak-1{
+body.vmunch-page-flash-streak-1{
   background:#c9ef63;
 }
 
-.vmunch-root.is-flash-streak-2,
-.vmunch-mode-shell.is-flash-streak-2{
+body.vmunch-page-flash-streak-2{
   background:#40b9c5;
 }
 
-.vmunch-root.is-flash-streak-rainbow,
-.vmunch-mode-shell.is-flash-streak-rainbow{
+body.vmunch-page-flash-streak-rainbow{
   background:linear-gradient(
     90deg,
     #ff5f6d 0%,
@@ -135,7 +134,27 @@ body{
   animation:vmunchRainbowFlashShift 900ms linear infinite;
 }
 
+body.vmunch-page-flash-streak-1::before,
+body.vmunch-page-flash-streak-2::before,
+body.vmunch-page-flash-streak-rainbow::before {
+  content: "";
+  position: fixed;
+  inset: -42vmax;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.16;
+  background: url("verse_munch_images/verse_munch_sunburst.svg") center / contain no-repeat;
+  transform-origin: 50% 50%;
+  animation: vmunchStreakSunburstSpin 1300ms linear infinite;
+}
 
+body.vmunch-page-flash-streak-rainbow::before {
+  opacity: 0.18;
+  background: none;
+  background-color: #ffffff;
+  -webkit-mask: url("verse_munch_images/verse_munch_sunburst.svg") center / contain no-repeat;
+  mask: url("verse_munch_images/verse_munch_sunburst.svg") center / contain no-repeat;
+}
 
 @keyframes vmunchRainbowFlashShift{
   0%{ background-position:0% 50%; }

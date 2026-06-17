@@ -697,6 +697,7 @@ function backToMenuFromHelp(){
     state.running = false;
     state.runToken += 1;
     resetActiveGameplayVisuals();
+    clearPageStreakFlash();
 
     if (state.rafId){
       cancelAnimationFrame(state.rafId);
@@ -1718,26 +1719,43 @@ function updateBuildText(){
 
   function renderReactionFlash(ts){
     const root = document.querySelector(".vmunch-root, .vmunch-mode-shell");
-    if (!root) return;
 
-    root.classList.remove(
-      "is-flash-positive",
-      "is-flash-streak-1",
-      "is-flash-streak-2",
-      "is-flash-streak-rainbow",
-      "is-flash-negative"
-    );
-
-    if (state.reactionFlash && ts < state.reactionFlashUntil){
-      root.classList.add(state.reactionFlash);
+    if (root){
+      root.classList.remove(
+        "is-flash-positive",
+        "is-flash-streak-1",
+        "is-flash-streak-2",
+        "is-flash-streak-rainbow",
+        "is-flash-negative"
+      );
     }
+
+    clearPageStreakFlash();
+
+    const streakActiveUntil = Math.max(state.reactionFlashUntil, state.streakSunburstUntil);
+
+    if (state.reactionFlash && ts < streakActiveUntil){
+      const pageClass = state.reactionFlash.replace("is-flash-", "vmunch-page-flash-");
+
+      if (pageClass.startsWith("vmunch-page-flash-streak")){
+        document.body.classList.add(pageClass);
+      }
+    }
+  }
+
+  function clearPageStreakFlash(){
+    document.body.classList.remove(
+      "vmunch-page-flash-streak-1",
+      "vmunch-page-flash-streak-2",
+      "vmunch-page-flash-streak-rainbow"
+    );
   }
 
   function renderStreakSunburst(ts){
     const layer = document.getElementById("vmunchStreakSunburst");
     if (!layer) return;
 
-    layer.classList.toggle("is-active", ts < state.streakSunburstUntil);
+    layer.classList.remove("is-active");
   }
 
   function renderFeedback(ts){
