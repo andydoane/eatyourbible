@@ -252,6 +252,7 @@ body.vmunch-page-flash-streak-rainbow::before {
 .vmunch-behind-face-particles,
 .vmunch-trails,
 .vmunch-particles,
+.vmunch-bonus-poofs,
 .vmunch-food-flight,
 .vmunch-feedback,
 .vmunch-confetti{
@@ -307,6 +308,10 @@ body.vmunch-page-flash-streak-rainbow::before {
 
 .vmunch-behind-face-particles{
   z-index:2;
+}
+
+.vmunch-bonus-poofs {
+  z-index: 32;
 }
 
 .vmunch-feedback {
@@ -914,6 +919,11 @@ body.vmunch-page-flash-streak-rainbow::before {
 .vmunch-face.is-react-head-no-hard{
   animation:vmunchReactHeadNoHard 520ms cubic-bezier(.2,.84,.2,1) both;
 }
+
+.vmunch-face.is-bonus-wrong-soft {
+  animation: vmunchBonusWrongSoft 440ms cubic-bezier(.2, .84, .2, 1) both;
+}
+
 .vmunch-face.is-react-yum-tilt{
   animation: vmunchReactYumTilt 520ms cubic-bezier(.2,.88,.24,1) both;
 }
@@ -1423,6 +1433,32 @@ body.vmunch-page-flash-streak-rainbow::before {
   48%{ transform:translateY(0) rotate(8deg) scale(1); }
   60%{ transform:translateY(-1px) rotate(-6deg) scale(1); }
   100%{ transform:translateY(0) rotate(0deg) scale(1); }
+}
+
+@keyframes vmunchBonusWrongSoft {
+  0% {
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
+
+  18% {
+    transform: translateY(-1px) rotate(-5deg) scale(1.01);
+  }
+
+  38% {
+    transform: translateY(0) rotate(4deg) scale(1.005);
+  }
+
+  58% {
+    transform: translateY(-1px) rotate(-3deg) scale(1);
+  }
+
+  78% {
+    transform: translateY(0) rotate(2deg) scale(1);
+  }
+
+  100% {
+    transform: translateY(0) rotate(0deg) scale(1);
+  }
 }
 
 @keyframes vmunchReactYumTilt{

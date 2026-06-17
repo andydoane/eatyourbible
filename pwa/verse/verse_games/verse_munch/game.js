@@ -12,7 +12,7 @@
   const BUILD_AREA = "compact";
 
   const HELP_OVERLAY_ID = "vmunchHelpOverlay";
-  const VMUNCH_DEBUG_VERSION = "VMUNCH v5.2";
+  const VMUNCH_DEBUG_VERSION = "VMUNCH v5.3";
 
 const BOOKS = window.VerseGameShell.getBibleBookDecoys();
   
@@ -461,6 +461,7 @@ app.innerHTML = `
         <div class="vmunch-behind-face-particles" id="vmunchBehindFaceParticles"></div>
         <div class="vmunch-trails" id="vmunchTrails"></div>
         <div class="vmunch-particles" id="vmunchParticles"></div>
+        <div class="vmunch-bonus-poofs" id="vmunchBonusPoofs"></div>
           <div class="vmunch-food-flight" id="vmunchFoodFlight"></div>
           <div class="vmunch-feedback" id="vmunchFeedback"></div>
           <div class="vmunch-bonus-hud" id="vmunchBonusHud"></div>
@@ -1032,7 +1033,7 @@ function backToMenuFromHelp(){
   }
 
   function spawnBonusWrongPoof(x, y, fruitSize) {
-    const layer = document.getElementById("vmunchParticles");
+    const layer = document.getElementById("vmunchBonusPoofs");
     if (!layer) return;
 
     const size = clamp(fruitSize || 72, 46, 100);
@@ -1112,7 +1113,7 @@ function backToMenuFromHelp(){
     if (state.bonusEating) return;
 
     state.faceDisplay = "🤨";
-    state.faceClasses = new Set(["is-react-head-no-hard"]);
+    state.faceClasses = new Set(["is-bonus-wrong-soft"]);
 
     window.setTimeout(() => {
       if (state.bonusPhase !== "playing") return;
@@ -1122,7 +1123,7 @@ function backToMenuFromHelp(){
       state.faceDisplay = state.faceBase;
       state.faceClasses = new Set();
       renderFrame(performance.now());
-    }, 260);
+    }, 440);
   }
 
   async function processBonusFeedQueue(runToken) {
