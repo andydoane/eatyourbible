@@ -653,11 +653,17 @@ body.vmunch-page-flash-streak-rainbow::before {
   border: none;
   background: transparent;
   box-shadow: none;
-  cursor: default;
+  cursor: pointer;
   transform: translate(var(--x), -50%) rotate(var(--tilt));
   touch-action: manipulation;
-  pointer-events: none;
+  pointer-events: auto;
   will-change: transform;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.vmunch-bonus-food-chip.is-hidden{
+  opacity:0;
+  pointer-events:none;
 }
 
 .vmunch-bonus-food-img {
@@ -906,6 +912,16 @@ body.vmunch-page-flash-streak-rainbow::before {
 .vmunch-flying-food{
   z-index:8;
   font-size:clamp(28px, 7.4vw, 46px);
+}
+
+.vmunch-bonus-flying-fruit{
+  position:absolute;
+  z-index:14;
+  object-fit:contain;
+  pointer-events:none;
+  user-select:none;
+  filter:drop-shadow(0 8px 0 rgba(0,0,0,0.14));
+  will-change:transform, opacity;
 }
 
 .vmunch-hit-word{
