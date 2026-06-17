@@ -296,6 +296,10 @@ body{
   z-index:2;
 }
 
+.vmunch-feedback {
+  z-index: 30;
+}
+
 .vm-game-menu-overlay {
   z-index: 1000;
   pointer-events: auto;

@@ -1711,13 +1711,21 @@ function updateBuildText(){
   function renderFeedback(ts){
     const layer = document.getElementById("vmunchFeedback");
     if (!layer) return;
+
     if (!state.feedbackBadge || ts > state.feedbackUntil){
-      layer.innerHTML = "";
+      if (layer.dataset.vmunchFeedbackKey){
+        layer.innerHTML = "";
+        layer.dataset.vmunchFeedbackKey = "";
+      }
       return;
     }
 
     const typeClass = state.feedbackType ? ` is-${state.feedbackType}` : "";
+    const feedbackKey = `${state.feedbackType}|${state.feedbackBadge}`;
 
+    if (layer.dataset.vmunchFeedbackKey === feedbackKey) return;
+
+    layer.dataset.vmunchFeedbackKey = feedbackKey;
     layer.innerHTML = `<div class="vmunch-feedback-badge${typeClass}">${escapeHtml(state.feedbackBadge)}</div>`;
   }
 
