@@ -12,7 +12,7 @@
   const BUILD_AREA = "compact";
 
   const HELP_OVERLAY_ID = "vmunchHelpOverlay";
-  const VMUNCH_DEBUG_VERSION = "VMUNCH v5.4";
+  const VMUNCH_DEBUG_VERSION = "VMUNCH v5.5";
 
 const BOOKS = window.VerseGameShell.getBibleBookDecoys();
   
@@ -998,6 +998,7 @@ function backToMenuFromHelp(){
 
     if (!item.isTarget) {
       item.tapped = true;
+      state.bonusCount = Math.max(0, state.bonusCount - 1);
 
       const poofPoint = getBonusFoodChipCenter(chipEl);
       spawnBonusWrongPoof(poofPoint.x, poofPoint.y, item.size);
