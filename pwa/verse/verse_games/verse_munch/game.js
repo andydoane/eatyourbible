@@ -1805,13 +1805,22 @@ function updateBuildText(){
     if (!layer) return;
 
     if (state.bonusPhase !== "intro" || !state.bonusTargetFruit) {
-      layer.innerHTML = "";
+      if (layer.dataset.vmunchBonusIntroKey) {
+        layer.innerHTML = "";
+        layer.dataset.vmunchBonusIntroKey = "";
+      }
       return;
     }
 
+    const introText = state.bonusIntroText || "VERSEY MONSTER WANTS…";
+    const introKey = `${introText}|${state.bonusTargetFruit.id}`;
+
+    if (layer.dataset.vmunchBonusIntroKey === introKey) return;
+
+    layer.dataset.vmunchBonusIntroKey = introKey;
     layer.innerHTML = `
       <div class="vmunch-bonus-intro-card">
-        <div class="vmunch-bonus-intro-title">${escapeHtml(state.bonusIntroText || "VERSEY MONSTER WANTS…")}</div>
+        <div class="vmunch-bonus-intro-title">${escapeHtml(introText)}</div>
         <img
           class="vmunch-bonus-intro-fruit"
           src="${escapeHtml(state.bonusTargetFruit.src)}"
