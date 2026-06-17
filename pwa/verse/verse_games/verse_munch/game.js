@@ -12,7 +12,7 @@
   const BUILD_AREA = "compact";
 
   const HELP_OVERLAY_ID = "vmunchHelpOverlay";
-  const VMUNCH_DEBUG_VERSION = "VMUNCH v5.6";
+  const VMUNCH_DEBUG_VERSION = "VMUNCH v5.7";
 
 const BOOKS = window.VerseGameShell.getBibleBookDecoys();
   
@@ -1789,6 +1789,8 @@ function backToMenuFromHelp(){
     state.faceDisplay = "🥳";
     state.faceClasses = new Set();
 
+    triggerBonusScoreCelebration();
+
     renderFrame(performance.now());
 
     if (!await waitSeconds(BONUS_SCORE_REVEAL_DURATION, runToken)) return false;
@@ -2243,7 +2245,7 @@ function updateBuildText(){
 
     layer.dataset.vmunchBonusScoreKey = scoreKey;
     layer.innerHTML = `
-      <div class="vmunch-bonus-score-card">
+      <div class="vmunch-bonus-score-card is-celebrating">
         <div class="vmunch-bonus-score-title">BONUS BITES!</div>
         <div class="vmunch-bonus-score-line" aria-label="Bonus bites ${escapeHtml(displayScore)}">
           <img
@@ -2668,6 +2670,22 @@ function updateBuildText(){
     }
 
     return out.slice(0, count);
+  }
+
+  function triggerBonusScoreCelebration() {
+    const now = performance.now();
+
+    state.reactionFlash = "is-flash-streak-rainbow";
+    state.reactionFlashUntil = now + 1050;
+    state.streakSunburstUntil = now + 1050;
+
+    spawnConfettiBurst();
+    spawnSuccessParticles(true);
+
+    window.setTimeout(() => {
+      if (state.bonusPhase !== "score") return;
+      spawnSuccessParticles(true);
+    }, 360);
   }
 
   function spawnSuccessParticles(isBonus = false) {

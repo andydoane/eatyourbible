@@ -458,6 +458,18 @@ body.vmunch-page-flash-streak-rainbow::before {
   text-align: center;
 }
 
+.vmunch-bonus-score-card.is-celebrating .vmunch-bonus-score-line {
+  animation: vmunchBonusScoreLinePulse 920ms cubic-bezier(.2, .88, .24, 1) both;
+}
+
+.vmunch-bonus-score-card.is-celebrating .vmunch-bonus-score-fruit {
+  animation: vmunchBonusScoreFruitPop 980ms cubic-bezier(.2, .88, .24, 1) both;
+}
+
+.vmunch-bonus-score-card.is-celebrating .vmunch-bonus-score-number {
+  animation: vmunchBonusScoreNumberBounce 760ms cubic-bezier(.2, .88, .24, 1) both;
+}
+
 @keyframes vmunchBonusScorePop {
   0% {
     opacity: 0;
@@ -471,6 +483,60 @@ body.vmunch-page-flash-streak-rainbow::before {
 
   100% {
     opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes vmunchBonusScoreLinePulse {
+  0% {
+    transform: scale(0.92);
+  }
+
+  46% {
+    transform: scale(1.12);
+  }
+
+  72% {
+    transform: scale(0.98);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes vmunchBonusScoreFruitPop {
+  0% {
+    transform: rotate(-10deg) scale(0.72);
+  }
+
+  42% {
+    transform: rotate(8deg) scale(1.18);
+  }
+
+  68% {
+    transform: rotate(-4deg) scale(0.98);
+  }
+
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+@keyframes vmunchBonusScoreNumberBounce {
+  0% {
+    transform: translateY(10px) scale(0.72);
+  }
+
+  48% {
+    transform: translateY(-5px) scale(1.2);
+  }
+
+  76% {
+    transform: translateY(2px) scale(0.96);
+  }
+
+  100% {
     transform: translateY(0) scale(1);
   }
 }
