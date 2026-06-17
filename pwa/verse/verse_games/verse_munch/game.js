@@ -278,6 +278,7 @@ const FACE_MAP = {
     particles: [],
     confetti: [],
     feedbackBadge:"",
+    feedbackType:"",
     feedbackUntil:0,
     buildSizeClass:"is-normal",
     buildFitDone:false,
@@ -382,6 +383,7 @@ function renderModeSelect(){
     state.particles = [];
     state.confetti = [];
     state.feedbackBadge = "";
+    state.feedbackType = "";
     state.feedbackUntil = 0;
     state.reactionFlash = "";
     state.reactionFlashUntil = 0;
@@ -599,6 +601,7 @@ function setPaused(paused, reason = ""){
     state.particles = [];
     state.confetti = [];
     state.feedbackBadge = "";
+    state.feedbackType = "";
     state.feedbackUntil = 0;
     state.reactionFlash = "";
     state.reactionFlashUntil = 0;
@@ -876,6 +879,7 @@ function backToMenuFromHelp(){
     state.beltHidden = true;
     state.faceClasses = new Set();
     state.feedbackBadge = "";
+    state.feedbackType = "";
     state.feedbackUntil = 0;
 
     const feedItem = {
@@ -904,8 +908,6 @@ function backToMenuFromHelp(){
       state.faceBase = getEmotionFace();
       state.faceDisplay = state.faceBase;
       state.faceClasses = new Set();
-      state.feedbackBadge = "Correct!";
-      state.feedbackUntil = performance.now() + 650;
 
       if (getCurrentPhase() === "done") {
         state.beltHidden = false;
@@ -922,8 +924,6 @@ function backToMenuFromHelp(){
       state.faceBase = getEmotionFace();
       state.faceDisplay = state.faceBase;
       state.faceClasses = new Set();
-      state.feedbackBadge = useDizzyWrongReaction ? "Not that one!" : "Yuck!";
-      state.feedbackUntil = performance.now() + 650;
       state.buildShakeUntil = performance.now() + 280;
     }
 
@@ -1056,6 +1056,7 @@ function backToMenuFromHelp(){
 
     state.reactionFlash = "is-flash-negative";
     state.reactionFlashUntil = performance.now() + (useDizzyReaction ? 560 : 760);
+    showReactionPopup(false);
 
     if (useDizzyReaction){
       state.faceDisplay = "😵‍💫";
@@ -1348,6 +1349,7 @@ function backToMenuFromHelp(){
           state.faceClasses = new Set(["is-react-jelly"]);
         }
 
+        showReactionPopup(true);
         spawnSuccessParticles();
 
         if (!await waitSeconds(reactionDuration, runToken)) return false;
@@ -1363,6 +1365,7 @@ function backToMenuFromHelp(){
       const animClass = randomFrom(POSITIVE_REACTIONS);
       state.faceClasses = new Set([animClass]);
 
+      showReactionPopup(true);
       spawnSuccessParticles();
 
       if (animClass === "is-react-sparkle-pop") {
@@ -1712,7 +1715,10 @@ function updateBuildText(){
       layer.innerHTML = "";
       return;
     }
-    layer.innerHTML = `<div class="vmunch-feedback-badge">${escapeHtml(state.feedbackBadge)}</div>`;
+
+    const typeClass = state.feedbackType ? ` is-${state.feedbackType}` : "";
+
+    layer.innerHTML = `<div class="vmunch-feedback-badge${typeClass}">${escapeHtml(state.feedbackBadge)}</div>`;
   }
 
   function getCurrentPhase(){
@@ -2227,6 +2233,21 @@ function spawnChewCrumbs(isSecondary = false){
     return EMOTION_LABEL[String(state.emotionLevel)] || "Calm";
   }
 
+  function showReactionPopup(isCorrect) {
+    state.feedbackBadge = isCorrect
+      ? randomFrom(["YUM!", "MMM!"])
+      : randomFrom(["GROSS!", "BLEH!", "YUCK!"]);
+
+    state.feedbackType = isCorrect ? "positive" : "negative";
+    state.feedbackUntil = performance.now() + 760;
+  }
+
+  function clearReactionPopup() {
+    state.feedbackBadge = "";
+    state.feedbackType = "";
+    state.feedbackUntil = 0;
+  }
+
   function getIdleVariants(){
     if (state.emotionLevel >= 2) return ["is-idle-bob", "is-idle-sway", "is-idle-wiggle"];
     if (state.emotionLevel <= -2) return ["is-idle-blink", "is-idle-sway"];
@@ -2258,7 +2279,7 @@ function spawnChewCrumbs(isSecondary = false){
   function updateMoodPill(){
     const pill = document.getElementById("vmunchMoodPill");
     if (!pill) return;
-    pill.textContent = getMoodLabel();
+    pill.textContent = `MOOD: ${getMoodLabel()}`;
   }
 
   function getTrailTier(){
