@@ -273,9 +273,10 @@ const FACE_MAP = {
     hitWord:null,
     feedingWord:null,
     flyingLetters:[],
-    trails:[],
-    particles:[],
-    confetti:[],
+    trails: [],
+    behindFaceParticles: [],
+    particles: [],
+    confetti: [],
     feedbackBadge:"",
     feedbackUntil:0,
     buildSizeClass:"is-normal",
@@ -377,6 +378,7 @@ function renderModeSelect(){
     state.feedingWord = null;
     state.flyingLetters = [];
     state.trails = [];
+    state.behindFaceParticles = [];
     state.particles = [];
     state.confetti = [];
     state.feedbackBadge = "";
@@ -410,10 +412,11 @@ app.innerHTML = `
 
       <div class="vmunch-field-wrap">
         <div class="vmunch-field" id="vmunchField">
-          <div class="vmunch-bg" id="vmunchBg"></div>
-          <div class="vmunch-streak-sunburst" id="vmunchStreakSunburst"></div>
-          <div class="vmunch-trails" id="vmunchTrails"></div>
-          <div class="vmunch-particles" id="vmunchParticles"></div>
+        <div class="vmunch-bg" id="vmunchBg"></div>
+        <div class="vmunch-streak-sunburst" id="vmunchStreakSunburst"></div>
+        <div class="vmunch-behind-face-particles" id="vmunchBehindFaceParticles"></div>
+        <div class="vmunch-trails" id="vmunchTrails"></div>
+        <div class="vmunch-particles" id="vmunchParticles"></div>
           <div class="vmunch-food-flight" id="vmunchFoodFlight"></div>
           <div class="vmunch-feedback" id="vmunchFeedback"></div>
           <div class="vmunch-confetti" id="vmunchConfetti"></div>
@@ -592,6 +595,7 @@ function setPaused(paused, reason = ""){
     state.feedingWord = null;
     state.flyingLetters = [];
     state.trails = [];
+    state.behindFaceParticles = [];
     state.particles = [];
     state.confetti = [];
     state.feedbackBadge = "";
@@ -717,6 +721,7 @@ function backToMenuFromHelp(){
       updateBelt(dt);
       updateFlyingFood(dt);
       updateTrails(dt);
+      updateBehindFaceParticles(dt);
       updateParticles(dt);
       updateConfetti(dt);
     }
@@ -813,6 +818,17 @@ function backToMenuFromHelp(){
       part.y += part.vy * dt;
     }
     state.trails = state.trails.filter(part => part.age < part.life);
+  }
+
+  function updateBehindFaceParticles(dt) {
+    for (const p of state.behindFaceParticles) {
+      p.age += dt;
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      p.vy += p.gravity * dt;
+    }
+
+    state.behindFaceParticles = state.behindFaceParticles.filter(p => p.age < p.life);
   }
 
   function updateParticles(dt){
@@ -1450,6 +1466,7 @@ function backToMenuFromHelp(){
     renderFace();
     renderBelt(ts);
     renderFlight();
+    renderBehindFaceParticles();
     renderTrails();
     renderParticles();
     renderConfetti();
@@ -1624,6 +1641,19 @@ function updateBuildText(){
     layer.innerHTML = state.trails.map((part) => {
       const alpha = 1 - (part.age / part.life);
       return `<div class="vmunch-spark" style="left:${part.x}px;top:${part.y}px;opacity:${alpha};transform:translate(-50%,-50%) scale(${part.size / 24});">${part.emoji}</div>`;
+    }).join("");
+  }
+
+  function renderBehindFaceParticles() {
+    const layer = document.getElementById("vmunchBehindFaceParticles");
+    if (!layer) return;
+
+    layer.innerHTML = state.behindFaceParticles.map((p) => {
+      const t = clamp(p.age / p.life, 0, 1);
+      const alpha = 1 - t;
+      const scale = lerp(1.08, 0.72, t);
+
+      return `<div class="vmunch-trail-particle" style="left:${p.x}px;top:${p.y}px;width:${p.size}px;height:${p.size}px;opacity:${alpha};transform:translate(-50%,-50%) scale(${scale});background:${p.color};"></div>`;
     }).join("");
   }
 
@@ -1974,22 +2004,45 @@ function updateBuildText(){
     return out.slice(0, count);
   }
 
-  function spawnSuccessParticles(isBonus = false){
-    const center = getMouthPoint();
-    const count = isBonus ? 18 : 12;
-    for (let i = 0; i < count; i++){
-      state.particles.push({
-        type:Math.random() < 0.5 ? "spark" : "dot",
-        value:randomFrom(TRAIL_EMOJIS),
-        x:center.x + (Math.random() * 24 - 12),
-        y:center.y + (Math.random() * 24 - 12),
-        vx:-140 + Math.random() * 280,
-        vy:-180 + Math.random() * 160,
-        gravity:220,
-        age:0,
-        life:0.75 + Math.random() * 0.25,
-        size:12 + Math.random() * 16,
-        color:randomFrom(["#ffc751", "#ff5a51", "#40b9c5", "#a7cb6f", "#ffffff"])
+  function spawnSuccessParticles(isBonus = false) {
+    const metrics = getMonsterFaceMetrics();
+    const centerX = metrics.centerX;
+    const centerY = metrics.centerY;
+    const headSize = metrics.headSize;
+
+    const palette = [
+      "#ff5f6d",
+      "#ff9f43",
+      "#ffe66d",
+      "#6bd66b",
+      "#46c6ff",
+      "#6d83ff",
+      "#b36cff",
+      "#ff79c6"
+    ];
+
+    const count = isBonus ? 18 : 14;
+    const sizeMin = headSize * (isBonus ? 0.085 : 0.07);
+    const sizeMax = headSize * (isBonus ? 0.145 : 0.12);
+    const speedMin = headSize * (isBonus ? 0.98 : 0.82);
+    const speedMax = headSize * (isBonus ? 1.62 : 1.38);
+
+    for (let i = 0; i < count; i++) {
+      const angle = (-Math.PI / 2) + (i / count) * Math.PI * 2 + (Math.random() * 0.16 - 0.08);
+      const speed = speedMin + Math.random() * (speedMax - speedMin);
+      const size = sizeMin + Math.random() * (sizeMax - sizeMin);
+
+      state.behindFaceParticles.push({
+        type: "dot",
+        x: centerX + (Math.random() * headSize * 0.035 - headSize * 0.0175),
+        y: centerY + (Math.random() * headSize * 0.035 - headSize * 0.0175),
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        gravity: headSize * 0.56,
+        age: 0,
+        life: isBonus ? 0.72 + Math.random() * 0.18 : 0.62 + Math.random() * 0.16,
+        size,
+        color: palette[i % palette.length]
       });
     }
   }
@@ -2095,7 +2148,7 @@ function spawnChewCrumbs(isSecondary = false){
       }
     ];
   }
-  
+
   function spawnConfettiBurst(){
     const centerX = state.fieldWidth * 0.5;
     const centerY = state.fieldHeight * 0.32;
