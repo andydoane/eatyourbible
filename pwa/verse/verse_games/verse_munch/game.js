@@ -440,11 +440,13 @@ app.innerHTML = `
         <div class="vmunch-particles" id="vmunchParticles"></div>
           <div class="vmunch-food-flight" id="vmunchFoodFlight"></div>
           <div class="vmunch-feedback" id="vmunchFeedback"></div>
-          <div class="vmunch-bonus-intro" id="vmunchBonusIntro"></div>
+          <div class="vmunch-bonus-hud" id="vmunchBonusHud"></div>
           <div class="vmunch-confetti" id="vmunchConfetti"></div>
 
           <div class="vmunch-main">
             <div class="vmunch-face-zone">
+              <div class="vmunch-bonus-intro" id="vmunchBonusIntro"></div>
+
               <div class="vmunch-face-stack">
                 <div class="vmunch-face-glow"></div>
                 <div class="vmunch-face" id="vmunchFace"></div>
@@ -1454,11 +1456,19 @@ function backToMenuFromHelp(){
     if (!await waitSeconds(BONUS_INTRO_DURATION, runToken)) return false;
     if (!isActiveRun(runToken)) return false;
 
-    state.bonusPhase = "";
+    state.bonusPhase = "hud-test";
     state.bonusIntroText = "";
     state.faceBase = getEmotionFace();
     state.faceDisplay = state.faceBase;
     state.faceClasses = new Set();
+
+    renderFrame(performance.now());
+
+    if (!await waitSeconds(1.05, runToken)) return false;
+    if (!isActiveRun(runToken)) return false;
+
+    state.bonusPhase = "";
+    state.bonusIntroText = "";
     state.beltHidden = false;
     state.inputLocked = false;
     bonusRunning = false;
@@ -1531,6 +1541,7 @@ function backToMenuFromHelp(){
     renderConfetti();
     renderFeedback(ts);
     renderBonusIntro();
+    renderBonusHud();
     updateMenuPill();
     updateMoodPill();
   }
@@ -1585,7 +1596,14 @@ function updateBuildText(){
   function renderFace(){
     const face = document.getElementById("vmunchFace");
     const foodDisplay = document.getElementById("vmunchFoodDisplay");
+    const faceStack = document.querySelector(".vmunch-face-stack");
     if (!face) return;
+
+    const bonusIntroActive = state.bonusPhase === "intro";
+
+    if (faceStack) {
+      faceStack.classList.toggle("is-hidden-for-bonus-intro", bonusIntroActive);
+    }
 
     face.className = "vmunch-face";
     for (const cls of state.faceClasses) face.classList.add(cls);
@@ -1827,6 +1845,44 @@ function updateBuildText(){
           alt=""
           draggable="false"
         >
+      </div>
+    `;
+  }
+
+  function renderBonusHud() {
+    const layer = document.getElementById("vmunchBonusHud");
+    if (!layer) return;
+
+    const shouldShowHud = state.bonusTargetFruit && (
+      state.bonusPhase === "hud-test" ||
+      state.bonusPhase === "playing" ||
+      state.bonusPhase === "score"
+    );
+
+    if (!shouldShowHud) {
+      if (layer.dataset.vmunchBonusHudKey) {
+        layer.innerHTML = "";
+        layer.dataset.vmunchBonusHudKey = "";
+      }
+      return;
+    }
+
+    const displayScore = state.bonusCount > 99 ? "99+" : String(state.bonusCount);
+    const hudKey = `${state.bonusTargetFruit.id}|${displayScore}`;
+
+    if (layer.dataset.vmunchBonusHudKey === hudKey) return;
+
+    layer.dataset.vmunchBonusHudKey = hudKey;
+    layer.innerHTML = `
+      <div class="vmunch-bonus-hud-card" aria-label="Bonus bites ${escapeHtml(displayScore)}">
+        <img
+          class="vmunch-bonus-hud-fruit"
+          src="${escapeHtml(state.bonusTargetFruit.src)}"
+          alt=""
+          draggable="false"
+        >
+        <span class="vmunch-bonus-hud-x" aria-hidden="true">x</span>
+        <span class="vmunch-bonus-hud-score">${escapeHtml(displayScore)}</span>
       </div>
     `;
   }
