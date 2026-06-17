@@ -29,6 +29,9 @@ const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
   });
 
   const BONUS_INTRO_DURATION = 2.4;
+  const BONUS_PLAY_DURATION = 20;
+  const BONUS_TARGET_CHANCE = 0.4;
+  const BONUS_FORCE_TARGET_AFTER = 3;
   const HAPPY_REACTIONS = ["😋","☺️","😁"];
   const SAD_REACTIONS = ["🤮","🤢","😵‍💫"];
   const ANTICIPATION_FACES = ["😕","🫤","😐"];
@@ -302,6 +305,10 @@ const FACE_MAP = {
     bonusTargetFruit:null,
     bonusIntroText:"",
     bonusIntroShown:false,
+    bonusFoodItems:[],
+    bonusFoodNextId:1,
+    bonusFoodSpawnTimer:0,
+    bonusNonTargetStreak:0,
     buildShakeUntil:0,
     lastFaceFile:"",
     runToken:0,
@@ -409,6 +416,10 @@ function renderModeSelect(){
     state.bonusTargetFruit = null;
     state.bonusIntroText = "";
     state.bonusIntroShown = false;
+    state.bonusFoodItems = [];
+    state.bonusFoodNextId = 1;
+    state.bonusFoodSpawnTimer = 0;
+    state.bonusNonTargetStreak = 0;
     state.buildShakeUntil = 0;
     state.beltItems = [];
     state.beltNextId = 1;
@@ -632,6 +643,10 @@ function setPaused(paused, reason = ""){
     state.bonusPhase = "";
     state.bonusTargetFruit = null;
     state.bonusIntroText = "";
+    state.bonusFoodItems = [];
+    state.bonusFoodNextId = 1;
+    state.bonusFoodSpawnTimer = 0;
+    state.bonusNonTargetStreak = 0;
     state.faceClasses = new Set();
     state.beltItems = [];
     state.beltHidden = false;
@@ -747,6 +762,7 @@ function backToMenuFromHelp(){
 
     if (!state.paused){
       updateIdle(dt);
+      updateBonusFoodBelt(dt);
       updateBelt(dt);
       updateFlyingFood(dt);
       updateTrails(dt);
@@ -1445,6 +1461,10 @@ function backToMenuFromHelp(){
     state.beltHidden = true;
     state.bonusCount = 0;
     state.bonusTargetFruit = chooseBonusTargetFruit();
+    state.bonusFoodItems = [];
+    state.bonusFoodNextId = 1;
+    state.bonusFoodSpawnTimer = 0;
+    state.bonusNonTargetStreak = 0;
     state.bonusPhase = "intro";
     state.bonusIntroText = "VERSEY MONSTER WANTS…";
     state.faceDisplay = "😕";
@@ -1456,19 +1476,23 @@ function backToMenuFromHelp(){
     if (!await waitSeconds(BONUS_INTRO_DURATION, runToken)) return false;
     if (!isActiveRun(runToken)) return false;
 
-    state.bonusPhase = "hud-test";
+    state.bonusPhase = "playing";
     state.bonusIntroText = "";
+    state.beltHidden = false;
     state.faceBase = getEmotionFace();
     state.faceDisplay = state.faceBase;
     state.faceClasses = new Set();
 
     renderFrame(performance.now());
 
-    if (!await waitSeconds(1.05, runToken)) return false;
+    if (!await waitSeconds(BONUS_PLAY_DURATION, runToken)) return false;
     if (!isActiveRun(runToken)) return false;
 
     state.bonusPhase = "";
     state.bonusIntroText = "";
+    state.bonusFoodItems = [];
+    state.bonusFoodSpawnTimer = 0;
+    state.bonusNonTargetStreak = 0;
     state.beltHidden = false;
     state.inputLocked = false;
     bonusRunning = false;
@@ -1631,6 +1655,39 @@ function updateBuildText(){
   function renderBelt(ts) {
     const layer = document.getElementById("vmunchBeltLayer");
     if (!layer) return;
+
+    if (state.bonusPhase === "playing") {
+      if (!state.bonusFoodItems.length) {
+        layer.innerHTML = "";
+        return;
+      }
+
+      layer.innerHTML = state.bonusFoodItems.map((item) => {
+        const classes = [
+          "vmunch-bonus-food-chip",
+          item.isTarget ? "is-target" : ""
+        ].filter(Boolean).join(" ");
+
+        return `
+          <button
+            class="${classes}"
+            type="button"
+            data-bonus-food-id="${item.id}"
+            style="--x:${item.x}px;--size:${item.size}px;--tilt:${item.tilt}deg;"
+            aria-label="${escapeHtml(item.fruit.label)}"
+          >
+            <img
+              class="vmunch-bonus-food-img"
+              src="${escapeHtml(item.fruit.src)}"
+              alt=""
+              draggable="false"
+            >
+          </button>
+        `;
+      }).join("");
+
+      return;
+    }
 
     if (state.inputLocked || bonusRunning || state.beltHidden) {
       layer.innerHTML = "";
@@ -1973,6 +2030,83 @@ function updateBuildText(){
       decoyCount: 4,
       correctDelayMode: "easy"
     };
+  }
+
+  function updateBonusFoodBelt(dt) {
+    if (state.bonusPhase !== "playing") return;
+
+    const cfg = getBonusFoodBeltConfig();
+
+    for (const item of state.bonusFoodItems) {
+      item.x -= cfg.speed * dt;
+    }
+
+    state.bonusFoodItems = state.bonusFoodItems.filter(item => {
+      return item.x + item.size > -40;
+    });
+
+    state.bonusFoodSpawnTimer -= dt;
+
+    let guard = 0;
+    while (state.bonusFoodSpawnTimer <= 0 && guard < 3) {
+      spawnBonusFoodItem(cfg);
+      state.bonusFoodSpawnTimer += randomBonusSpawnDelay();
+      guard += 1;
+    }
+  }
+
+  function getBonusFoodBeltConfig() {
+    return {
+      speed: 245,
+      gap: 70,
+      size: clamp(state.fieldWidth * 0.13, 58, 86)
+    };
+  }
+
+  function randomBonusSpawnDelay() {
+    return 0.42 + Math.random() * 0.22;
+  }
+
+  function spawnBonusFoodItem(cfg) {
+    if (!state.bonusTargetFruit) return;
+
+    const beltWidth = getBonusBeltWidth();
+    const forceTarget = state.bonusNonTargetStreak >= BONUS_FORCE_TARGET_AFTER;
+    const makeTarget = forceTarget || Math.random() < BONUS_TARGET_CHANCE;
+
+    let fruit = state.bonusTargetFruit;
+
+    if (!makeTarget) {
+      const decoys = BONUS_FRUITS.filter(entry => entry.id !== state.bonusTargetFruit.id);
+      fruit = randomFrom(decoys);
+      state.bonusNonTargetStreak += 1;
+    } else {
+      state.bonusNonTargetStreak = 0;
+    }
+
+    const currentRightEdge = state.bonusFoodItems.length
+      ? Math.max(...state.bonusFoodItems.map(item => item.x + item.size))
+      : beltWidth + 18;
+
+    const x = Math.max(beltWidth + 18, currentRightEdge + cfg.gap);
+
+    state.bonusFoodItems.push({
+      id: state.bonusFoodNextId++,
+      fruit,
+      isTarget: fruit.id === state.bonusTargetFruit.id,
+      x,
+      size: cfg.size + Math.random() * 8,
+      tilt: -8 + Math.random() * 16,
+      tapped: false
+    });
+  }
+
+  function getBonusBeltWidth() {
+    const layer = document.getElementById("vmunchBeltLayer");
+    if (!layer) return state.fieldWidth || 360;
+
+    const rect = layer.getBoundingClientRect();
+    return rect.width || state.fieldWidth || 360;
   }
 
   function updateBelt(dt) {
