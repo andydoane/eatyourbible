@@ -12,7 +12,7 @@
   const BUILD_AREA = "compact";
 
   const HELP_OVERLAY_ID = "vmunchHelpOverlay";
-  const VMUNCH_DEBUG_VERSION = "VMUNCH v5.3";
+  const VMUNCH_DEBUG_VERSION = "VMUNCH v5.4";
 
 const BOOKS = window.VerseGameShell.getBibleBookDecoys();
   
@@ -317,6 +317,7 @@ const FACE_MAP = {
     bonusFeedQueue:[],
     bonusEating:false,
     bonusFlyingFruit:null,
+    bonusEatToken:0,
     buildShakeUntil:0,
     lastFaceFile:"",
     runToken:0,
@@ -431,6 +432,7 @@ function renderModeSelect(){
     state.bonusFeedQueue = [];
     state.bonusEating = false;
     state.bonusFlyingFruit = null;
+    state.bonusEatToken = 0;
     state.buildShakeUntil = 0;
     state.beltItems = [];
     state.beltNextId = 1;
@@ -663,6 +665,7 @@ function setPaused(paused, reason = ""){
     state.bonusFeedQueue = [];
     state.bonusEating = false;
     state.bonusFlyingFruit = null;
+    state.bonusEatToken = 0;
     state.faceClasses = new Set();
     state.beltItems = [];
     state.beltHidden = false;
@@ -718,15 +721,22 @@ function backToMenuFromHelp(){
     const beltLayer = document.getElementById("vmunchBeltLayer");
 
     if (beltLayer){
+      beltLayer.addEventListener("pointerdown", (e) => {
+        if (state.paused) return;
+        if (state.bonusPhase !== "playing") return;
+
+        const bonusChip = e.target.closest(".vmunch-bonus-food-chip");
+        if (!bonusChip) return;
+
+        e.preventDefault();
+        handleBonusFoodSelection(bonusChip.dataset.bonusFoodId, bonusChip);
+      });
+
       beltLayer.addEventListener("pointerup", (e) => {
         e.preventDefault();
         if (state.paused) return;
 
         if (state.bonusPhase === "playing") {
-          const bonusChip = e.target.closest(".vmunch-bonus-food-chip");
-          if (!bonusChip) return;
-
-          handleBonusFoodSelection(bonusChip.dataset.bonusFoodId, bonusChip);
           return;
         }
 
@@ -1008,8 +1018,12 @@ function backToMenuFromHelp(){
       startY: startPoint.y
     };
 
-    state.bonusFeedQueue.push(feedItem);
-    processBonusFeedQueue(state.runToken);
+    state.bonusFeedQueue = [];
+    state.bonusEatToken += 1;
+    state.bonusEating = false;
+    state.bonusFlyingFruit = null;
+
+    playBonusFruitEatAnimation(feedItem, state.runToken, state.bonusEatToken);
     renderFrame(performance.now());
   }
 
@@ -1139,8 +1153,11 @@ function backToMenuFromHelp(){
     state.bonusEating = false;
   }
 
-  async function playBonusFruitEatAnimation(feedItem, runToken) {
+  async function playBonusFruitEatAnimation(feedItem, runToken, eatToken = state.bonusEatToken) {
     if (!isActiveRun(runToken) || state.bonusPhase !== "playing") return false;
+    if (eatToken !== state.bonusEatToken) return false;
+
+    state.bonusEating = true;
 
     const mouth = getMouthPoint();
     const flightDuration = 0.24;
@@ -1169,16 +1186,21 @@ function backToMenuFromHelp(){
 
     if (!await waitSeconds(flightDuration, runToken)) return false;
     if (!isActiveRun(runToken) || state.bonusPhase !== "playing") return false;
+    if (eatToken !== state.bonusEatToken) return false;
 
     state.bonusFlyingFruit = null;
     spawnChewCrumbs(false);
 
     if (!await waitSeconds(0.08, runToken)) return false;
     if (!isActiveRun(runToken) || state.bonusPhase !== "playing") return false;
+    if (eatToken !== state.bonusEatToken) return false;
 
     state.faceBase = "😐";
     state.faceDisplay = state.faceBase;
     state.faceClasses = new Set();
+    if (state.bonusFeedQueue.length === 0) {
+      state.bonusEating = false;
+    }
 
     renderFrame(performance.now());
 
@@ -1722,6 +1744,7 @@ function backToMenuFromHelp(){
     state.bonusFeedQueue = [];
     state.bonusEating = false;
     state.bonusFlyingFruit = null;
+    state.bonusEatToken += 1;
     state.bonusPhase = "intro";
     state.bonusIntroText = "VERSEY MONSTER WANTS…";
     state.faceDisplay = "😕";
