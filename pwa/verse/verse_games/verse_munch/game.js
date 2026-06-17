@@ -12,7 +12,7 @@
   const BUILD_AREA = "compact";
 
   const HELP_OVERLAY_ID = "vmunchHelpOverlay";
-  const VMUNCH_DEBUG_VERSION = "VMUNCH v5.5";
+  const VMUNCH_DEBUG_VERSION = "VMUNCH v5.6";
 
 const BOOKS = window.VerseGameShell.getBibleBookDecoys();
   
@@ -31,6 +31,7 @@ const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
 
   const BONUS_INTRO_DURATION = 2.4;
   const BONUS_PLAY_DURATION = 20;
+  const BONUS_SCORE_REVEAL_DURATION = 2.15;
   const BONUS_TARGET_CHANCE = 0.4;
   const BONUS_FORCE_TARGET_AFTER = 3;
   const BONUS_POOF_CLOUD_SVG = `
@@ -472,6 +473,7 @@ app.innerHTML = `
           <div class="vmunch-main">
             <div class="vmunch-face-zone">
               <div class="vmunch-bonus-intro" id="vmunchBonusIntro"></div>
+              <div class="vmunch-bonus-score-reveal" id="vmunchBonusScoreReveal"></div>
 
               <div class="vmunch-face-stack">
                 <div class="vmunch-face-glow"></div>
@@ -1773,7 +1775,7 @@ function backToMenuFromHelp(){
     if (!await waitSeconds(BONUS_PLAY_DURATION, runToken)) return false;
     if (!isActiveRun(runToken)) return false;
 
-    state.bonusPhase = "";
+    state.bonusPhase = "score";
     state.bonusIntroText = "";
     state.bonusFoodItems = [];
     state.bonusFoodSpawnTimer = 0;
@@ -1781,6 +1783,20 @@ function backToMenuFromHelp(){
     state.bonusFeedQueue = [];
     state.bonusEating = false;
     state.bonusFlyingFruit = null;
+    state.bonusEatToken += 1;
+    state.beltHidden = true;
+    state.inputLocked = true;
+    state.faceDisplay = "🥳";
+    state.faceClasses = new Set();
+
+    renderFrame(performance.now());
+
+    if (!await waitSeconds(BONUS_SCORE_REVEAL_DURATION, runToken)) return false;
+    if (!isActiveRun(runToken)) return false;
+
+    state.bonusPhase = "";
+    state.bonusIntroText = "";
+    state.bonusTargetFruit = null;
     state.beltHidden = false;
     state.inputLocked = false;
     bonusRunning = false;
@@ -1853,6 +1869,7 @@ function backToMenuFromHelp(){
     renderConfetti();
     renderFeedback(ts);
     renderBonusIntro();
+    renderBonusScoreReveal();
     renderBonusHud();
     updateMenuPill();
     updateMoodPill();
@@ -1911,10 +1928,10 @@ function updateBuildText(){
     const faceStack = document.querySelector(".vmunch-face-stack");
     if (!face) return;
 
-    const bonusIntroActive = state.bonusPhase === "intro";
+    const bonusFaceCardActive = state.bonusPhase === "intro" || state.bonusPhase === "score";
 
     if (faceStack) {
-      faceStack.classList.toggle("is-hidden-for-bonus-intro", bonusIntroActive);
+      faceStack.classList.toggle("is-hidden-for-bonus-intro", bonusFaceCardActive);
     }
 
     face.className = "vmunch-face";
@@ -2203,6 +2220,41 @@ function updateBuildText(){
           alt=""
           draggable="false"
         >
+      </div>
+    `;
+  }
+
+  function renderBonusScoreReveal() {
+    const layer = document.getElementById("vmunchBonusScoreReveal");
+    if (!layer) return;
+
+    if (state.bonusPhase !== "score" || !state.bonusTargetFruit) {
+      if (layer.dataset.vmunchBonusScoreKey) {
+        layer.innerHTML = "";
+        layer.dataset.vmunchBonusScoreKey = "";
+      }
+      return;
+    }
+
+    const displayScore = state.bonusCount > 99 ? "99+" : String(state.bonusCount);
+    const scoreKey = `${state.bonusTargetFruit.id}|${displayScore}`;
+
+    if (layer.dataset.vmunchBonusScoreKey === scoreKey) return;
+
+    layer.dataset.vmunchBonusScoreKey = scoreKey;
+    layer.innerHTML = `
+      <div class="vmunch-bonus-score-card">
+        <div class="vmunch-bonus-score-title">BONUS BITES!</div>
+        <div class="vmunch-bonus-score-line" aria-label="Bonus bites ${escapeHtml(displayScore)}">
+          <img
+            class="vmunch-bonus-score-fruit"
+            src="${escapeHtml(state.bonusTargetFruit.src)}"
+            alt=""
+            draggable="false"
+          >
+          <span class="vmunch-bonus-score-x" aria-hidden="true">x</span>
+          <span class="vmunch-bonus-score-number">${escapeHtml(displayScore)}</span>
+        </div>
       </div>
     `;
   }
