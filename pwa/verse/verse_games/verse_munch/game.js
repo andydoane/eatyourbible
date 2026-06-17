@@ -1068,7 +1068,7 @@ function backToMenuFromHelp(){
     if (!await waitSeconds(0.08, runToken)) return false;
     if (!isActiveRun(runToken) || state.bonusPhase !== "playing") return false;
 
-    state.faceBase = getEmotionFace();
+    state.faceBase = "😐";
     state.faceDisplay = state.faceBase;
     state.faceClasses = new Set();
 
@@ -1632,7 +1632,7 @@ function backToMenuFromHelp(){
     state.feedingWord = null;
     state.flyingLetters = [];
     state.beltHidden = false;
-    state.faceBase = getEmotionFace();
+    state.faceBase = "😐";
     state.faceDisplay = state.faceBase;
     state.faceClasses = new Set();
 
