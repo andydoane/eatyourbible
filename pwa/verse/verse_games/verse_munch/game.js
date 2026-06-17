@@ -32,6 +32,10 @@ const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
   const BONUS_PLAY_DURATION = 20;
   const BONUS_TARGET_CHANCE = 0.4;
   const BONUS_FORCE_TARGET_AFTER = 3;
+  const BONUS_POOF_CLOUD_SVG = `
+<svg viewBox="0 0 26.458333 26.458333" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <path fill="currentColor" d="M 12.949771,1.5464282 A 6.0017493,5.3230522 7.1160496 0 0 6.9820601,6.4190471 5.3405872,4.7400094 7.154063 0 0 6.8563886,6.4134999 5.3405872,4.7400094 7.154063 0 0 1.5243277,11.020646 5.3405872,4.7400094 7.154063 0 0 2.4259083,13.677302 4.0181559,3.5662928 7.1540647 0 0 0.66145837,16.583588 4.0181559,3.5662928 7.1540647 0 0 4.6728467,20.261811 4.0181559,3.5662928 7.1540647 0 0 5.1732885,20.243 a 5.3405872,4.7400094 7.154063 0 0 5.2883005,4.342428 5.3405872,4.7400094 7.154063 0 0 3.656255,-1.210431 4.0181559,3.5662928 7.1540647 0 0 3.300558,1.639798 4.0181559,3.5662928 7.1540647 0 0 4.011389,-3.466536 4.0181559,3.5662928 7.1540647 0 0 -0.416848,-1.594767 5.3405872,4.7400094 7.154063 0 0 4.783932,-4.586787 5.3405872,4.7400094 7.154063 0 0 -1.9322,-3.706541 4.0181559,3.5662928 7.1540647 0 0 0.764128,-2.0624453 4.0181559,3.5662928 7.1540647 0 0 -4.011389,-3.6776624 4.0181559,3.5662928 7.1540647 0 0 -1.744813,0.3148283 6.0017493,5.3230522 7.1160496 0 0 -5.92283,-4.6884523 z"/>
+</svg>`;
   const HAPPY_REACTIONS = ["😋","☺️","😁"];
   const SAD_REACTIONS = ["🤮","🤢","😵‍💫"];
   const ANTICIPATION_FACES = ["😕","🫤","😐"];
@@ -982,6 +986,16 @@ function backToMenuFromHelp(){
     if (!item.isTarget) {
       return;
     }
+    if (!item.isTarget) {
+      item.tapped = true;
+
+      const poofPoint = getBonusFoodChipCenter(chipEl);
+      spawnBonusWrongPoof(poofPoint.x, poofPoint.y, item.size);
+      playBonusWrongFaceFlash();
+
+      renderFrame(performance.now());
+      return;
+    }
 
     item.tapped = true;
     state.bonusCount += 1;
@@ -1016,6 +1030,100 @@ function backToMenuFromHelp(){
       x: chipRect.left - fieldRect.left + chipRect.width * 0.5,
       y: chipRect.top - fieldRect.top + chipRect.height * 0.5
     };
+  }
+
+  function spawnBonusWrongPoof(x, y, fruitSize) {
+    const layer = document.getElementById("vmunchParticles");
+    if (!layer) return;
+
+    const size = clamp(fruitSize || 72, 46, 100);
+    const duration = 560;
+    const distance = Math.round(size * 0.78);
+    const jitter = Math.round(size * 0.08);
+    const cloudSize = Math.round(size * 1.08);
+    const count = 9;
+    const sizePool = [
+      size * 0.08,
+      size * 0.10,
+      size * 0.12,
+      size * 0.15,
+      size * 0.17
+    ];
+
+    const burst = document.createElement("div");
+    burst.className = "vmunch-bonus-poof";
+    burst.style.left = `${x}px`;
+    burst.style.top = `${y}px`;
+
+    const burstBoxSize = Math.max(116, Math.ceil((distance + cloudSize) * 2.05));
+    burst.style.width = `${burstBoxSize}px`;
+    burst.style.height = `${burstBoxSize}px`;
+
+    const cloud = document.createElement("div");
+    cloud.className = "vmunch-bonus-poof-cloud";
+    cloud.style.setProperty("--vmunch-poof-cloud-size", `${cloudSize}px`);
+    cloud.style.setProperty("--vmunch-poof-cloud-dur", `${Math.max(480, duration - 80)}ms`);
+    cloud.innerHTML = BONUS_POOF_CLOUD_SVG;
+    burst.appendChild(cloud);
+
+    const baseAngle = Math.random() * Math.PI * 2;
+    const step = (Math.PI * 2) / count;
+
+    for (let i = 0; i < count; i += 1) {
+      const angle = baseAngle + step * i + (-0.12 + Math.random() * 0.24);
+      const dist = distance + (-jitter + Math.random() * jitter * 2);
+      const tx = Math.cos(angle) * dist;
+      const ty = Math.sin(angle) * dist;
+      const particleSize = randomFrom(sizePool) + (-0.5 + Math.random());
+      const grow = 1.10 + Math.random() * 0.12;
+
+      const particle = document.createElement("div");
+      particle.className = "vmunch-bonus-poof-particle";
+      particle.style.setProperty("--vmunch-poof-size", `${particleSize.toFixed(1)}px`);
+      particle.style.setProperty("--vmunch-poof-dur", `${duration}ms`);
+      particle.style.setProperty("--vmunch-poof-start-scale", `${(0.68 + Math.random() * 0.14).toFixed(2)}`);
+      particle.style.setProperty("--vmunch-poof-end-scale", `${grow.toFixed(2)}`);
+      particle.style.setProperty("--vmunch-poof-tx", `${tx.toFixed(1)}px`);
+      particle.style.setProperty("--vmunch-poof-ty", `${ty.toFixed(1)}px`);
+      particle.style.setProperty("--vmunch-poof-delay", `${Math.round(Math.random() * 18)}ms`);
+      burst.appendChild(particle);
+    }
+
+    layer.appendChild(burst);
+
+    requestAnimationFrame(() => {
+      cloud.classList.add("is-live");
+
+      burst.querySelectorAll(".vmunch-bonus-poof-particle").forEach((particle) => {
+        const delay = Number.parseInt(particle.style.getPropertyValue("--vmunch-poof-delay"), 10) || 0;
+
+        window.setTimeout(() => {
+          particle.classList.add("is-live");
+        }, delay);
+      });
+    });
+
+    window.setTimeout(() => {
+      burst.remove();
+    }, duration + 140);
+  }
+
+  function playBonusWrongFaceFlash() {
+    if (state.bonusPhase !== "playing") return;
+    if (state.bonusEating) return;
+
+    state.faceDisplay = "🤨";
+    state.faceClasses = new Set(["is-react-head-no-hard"]);
+
+    window.setTimeout(() => {
+      if (state.bonusPhase !== "playing") return;
+      if (state.bonusEating) return;
+
+      state.faceBase = "😐";
+      state.faceDisplay = state.faceBase;
+      state.faceClasses = new Set();
+      renderFrame(performance.now());
+    }, 260);
   }
 
   async function processBonusFeedQueue(runToken) {
