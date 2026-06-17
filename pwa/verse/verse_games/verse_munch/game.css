@@ -107,10 +107,7 @@ body{
   transition:background-color 120ms ease;
 }
 
-.vmunch-root.is-flash-positive,
-.vmunch-mode-shell.is-flash-positive{
-  background:#a7cb6f;
-}
+
 
 .vmunch-root.is-flash-streak-1,
 .vmunch-mode-shell.is-flash-streak-1{
@@ -138,10 +135,7 @@ body{
   animation:vmunchRainbowFlashShift 900ms linear infinite;
 }
 
-.vmunch-root.is-flash-negative,
-.vmunch-mode-shell.is-flash-negative{
-  background:#ff5a51;
-}
+
 
 @keyframes vmunchRainbowFlashShift{
   0%{ background-position:0% 50%; }

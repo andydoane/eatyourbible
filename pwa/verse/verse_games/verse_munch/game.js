@@ -1088,8 +1088,8 @@ function backToMenuFromHelp(){
   async function playWrongWordReaction(label, runToken, useDizzyReaction = false) {
     if (!isActiveRun(runToken)) return false;
 
-    state.reactionFlash = "is-flash-negative";
-    state.reactionFlashUntil = performance.now() + (useDizzyReaction ? 560 : 760);
+    state.reactionFlash = "";
+    state.reactionFlashUntil = 0;
     showReactionPopup(false);
 
     if (useDizzyReaction){
@@ -1358,15 +1358,13 @@ function backToMenuFromHelp(){
     const reactionDuration = getTiming().reaction;
     const now = performance.now();
 
-    if (isCorrect) {
-      state.reactionFlash = streakTier > 0
-        ? getStreakFlashClass(streakTier)
-        : "is-flash-positive";
+    if (isCorrect && streakTier > 0) {
+      state.reactionFlash = getStreakFlashClass(streakTier);
+      state.reactionFlashUntil = now + (reactionDuration * 1000);
     } else {
-      state.reactionFlash = "is-flash-negative";
+      state.reactionFlash = "";
+      state.reactionFlashUntil = 0;
     }
-
-    state.reactionFlashUntil = now + (reactionDuration * 1000);
 
     if (isCorrect) {
       if (streakTier > 0) {
