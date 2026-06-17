@@ -18,6 +18,17 @@ const BOOKS = window.VerseGameShell.getBibleBookDecoys();
 const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
   
   const FOOD_EMOJIS = ["🍎","🍇","🍓","🍉","🍊","🍒","🍍","🥝","🍋","🥨","🧀","🥕"];
+  const BONUS_FRUITS = Array.from({ length: 10 }, (_, index) => {
+    const number = index + 1;
+
+    return {
+      id: `fruit_${number}`,
+      src: `verse_munch_images/verse_munch_fruit_${number}.png`,
+      label: `fruit ${number}`
+    };
+  });
+
+  const BONUS_INTRO_DURATION = 1.55;
   const HAPPY_REACTIONS = ["😋","☺️","😁"];
   const SAD_REACTIONS = ["🤮","🤢","😵‍💫"];
   const ANTICIPATION_FACES = ["😕","🫤","😐"];
@@ -287,6 +298,9 @@ const FACE_MAP = {
     streakSunburstUntil:0,
     faceScaleBoost:0,
     bonusCount:0,
+    bonusPhase:"",
+    bonusTargetFruit:null,
+    bonusIntroText:"",
     buildShakeUntil:0,
     lastFaceFile:"",
     runToken:0,
@@ -390,6 +404,9 @@ function renderModeSelect(){
     state.streakSunburstUntil = 0;
     state.faceScaleBoost = 0;
     state.bonusCount = 0;
+    state.bonusPhase = "";
+    state.bonusTargetFruit = null;
+    state.bonusIntroText = "";
     state.buildShakeUntil = 0;
     state.beltItems = [];
     state.beltNextId = 1;
@@ -421,6 +438,7 @@ app.innerHTML = `
         <div class="vmunch-particles" id="vmunchParticles"></div>
           <div class="vmunch-food-flight" id="vmunchFoodFlight"></div>
           <div class="vmunch-feedback" id="vmunchFeedback"></div>
+          <div class="vmunch-bonus-intro" id="vmunchBonusIntro"></div>
           <div class="vmunch-confetti" id="vmunchConfetti"></div>
 
           <div class="vmunch-main">
@@ -607,6 +625,9 @@ function setPaused(paused, reason = ""){
     state.reactionFlashUntil = 0;
     state.streakSunburstUntil = 0;
     state.faceScaleBoost = 0;
+    state.bonusPhase = "";
+    state.bonusTargetFruit = null;
+    state.bonusIntroText = "";
     state.faceClasses = new Set();
     state.beltItems = [];
     state.beltHidden = false;
@@ -1418,40 +1439,32 @@ function backToMenuFromHelp(){
 
     bonusRunning = true;
     state.inputLocked = true;
+    state.beltHidden = true;
+    state.bonusCount = 0;
+    state.bonusTargetFruit = chooseBonusTargetFruit();
+    state.bonusPhase = "intro";
+    state.bonusIntroText = "VERSEY MONSTER WANTS…";
+    state.faceDisplay = "😕";
+    state.faceClasses = new Set(["is-anticipation-lean-in"]);
+    state.faceScaleBoost = 0;
 
-    for (let i = 0; i < 5; i++) {
-      if (!isActiveRun(runToken)) return false;
+    renderFrame(performance.now());
 
-      state.bonusCount = i + 1;
-      const bonusItem = {
-        label: "bonus",
-        food: FOOD_EMOJIS[i % FOOD_EMOJIS.length]
-      };
-      state.faceScaleBoost = 1 + (i + 1) * 0.08;
-
-      if (!await playFoodLaunchAnimation(bonusItem, runToken)) return false;
-      if (!await playMouthOpenAnimation(runToken)) return false;
-      if (!await playChewAnimation(runToken)) return false;
-
-      const bonusAnimClass = randomFrom(POSITIVE_REACTIONS);
-      state.faceDisplay = randomFrom(HAPPY_REACTIONS);
-      state.faceClasses = new Set([bonusAnimClass, "is-bonus"]);
-
-      if (bonusAnimClass === "is-react-sparkle-pop") {
-        spawnReactionSparkles();
-      }
-
-      spawnSuccessParticles(true);
-      if (!await waitSeconds(getTiming().bonusReaction, runToken)) return false;
-    }
-
+    if (!await waitSeconds(BONUS_INTRO_DURATION, runToken)) return false;
     if (!isActiveRun(runToken)) return false;
 
-    spawnConfettiBurst();
-    state.faceDisplay = "🥳";
-    state.faceClasses = new Set(["is-react-victory-wiggle", "is-bonus"]);
+    state.bonusPhase = "";
+    state.bonusIntroText = "";
+    state.faceBase = getEmotionFace();
+    state.faceDisplay = state.faceBase;
+    state.faceClasses = new Set();
+    state.beltHidden = false;
+    state.inputLocked = false;
+    bonusRunning = false;
 
-    return await waitSeconds(0.9, runToken);
+    renderFrame(performance.now());
+
+    return true;
   }
 
   async function finishRun(runToken) {
@@ -1510,6 +1523,7 @@ function backToMenuFromHelp(){
     renderParticles();
     renderConfetti();
     renderFeedback(ts);
+    renderBonusIntro();
     updateMenuPill();
     updateMoodPill();
   }
@@ -1777,6 +1791,32 @@ function updateBuildText(){
 
     layer.dataset.vmunchFeedbackKey = feedbackKey;
     layer.innerHTML = `<div class="vmunch-feedback-badge${typeClass}">${escapeHtml(state.feedbackBadge)}</div>`;
+  }
+
+  function renderBonusIntro() {
+    const layer = document.getElementById("vmunchBonusIntro");
+    if (!layer) return;
+
+    if (state.bonusPhase !== "intro" || !state.bonusTargetFruit) {
+      layer.innerHTML = "";
+      return;
+    }
+
+    layer.innerHTML = `
+      <div class="vmunch-bonus-intro-card">
+        <div class="vmunch-bonus-intro-title">${escapeHtml(state.bonusIntroText || "VERSEY MONSTER WANTS…")}</div>
+        <img
+          class="vmunch-bonus-intro-fruit"
+          src="${escapeHtml(state.bonusTargetFruit.src)}"
+          alt=""
+          draggable="false"
+        >
+      </div>
+    `;
+  }
+
+  function chooseBonusTargetFruit() {
+    return randomFrom(BONUS_FRUITS);
   }
 
   function getCurrentPhase(){
