@@ -193,7 +193,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v1.8",
+      debugBadge: "v1.9",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -322,7 +322,7 @@
 
   function helpHtml() {
     return `Tap the color of the next correct word.<br><br>
-      The three buttons are always red, yellow, and blue from left to right.<br><br>
+      Easy and Medium pick three colors for the whole game. Hard changes the colors every round.<br><br>
       A correct hit explodes and adds the word to the build area.<br><br>
       A wrong hit resets your streak. After two wrong hits in one round, that set clears and a new one begins.<br><br>
       If the correct word reaches the buttons, it abducts a human and the streak resets.`;
@@ -578,9 +578,16 @@
     state.phase = getCurrentPhase();
     const decoys = getDecoysForPhase(state.phase, correctLabel, 2);
     const labels = shuffle([correctLabel, ...decoys]);
-    const roundColors = shuffle([...LANE_COLORS]).slice(0, 3);
+
+    const shouldPickNewColors = selectedMode === "hard" || !state.buttonColors;
+    const roundColors = shouldPickNewColors
+      ? shuffle([...LANE_COLORS]).slice(0, 3)
+      : LANE_KEYS.map(lane => state.buttonColors[lane]);
+
     const entityColors = shuffle([...roundColors]);
-    const buttonColors = shuffle([...roundColors]);
+    const buttonColors = shouldPickNewColors
+      ? shuffle([...roundColors])
+      : LANE_KEYS.map(lane => state.buttonColors[lane]);
 
     state.buttonColors = {
       left: buttonColors[0],
