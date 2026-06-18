@@ -12,7 +12,7 @@
   const BUILD_AREA = "compact";
 
   const HELP_OVERLAY_ID = "vmunchHelpOverlay";
-  const VMUNCH_DEBUG_VERSION = "VMUNCH v5.14";
+  const VMUNCH_DEBUG_VERSION = "VMUNCH v5.15";
 
 const BOOKS = window.VerseGameShell.getBibleBookDecoys();
   
@@ -2700,13 +2700,23 @@ function updateBuildText(){
     }
 
     const displayScore = state.bonusCount > 99 ? "99+" : String(state.bonusCount);
-    const hudKey = `${state.bonusTargetFruit.id}|${displayScore}`;
+    const displayMultiplier = Math.max(1, Number(state.bonusMultiplier) || 1);
+    const multiplierLabel = `${displayMultiplier}X`;
+    const multiplierClass = displayMultiplier >= 3 ? "is-three" : "is-two";
+    const multiplierAria = displayMultiplier > 1
+      ? `, ${displayMultiplier} times multiplier`
+      : "";
+    const multiplierBadgeHtml = displayMultiplier > 1
+      ? `<span class="vmunch-bonus-hud-multiplier ${multiplierClass}">${escapeHtml(multiplierLabel)}</span>`
+      : "";
+
+    const hudKey = `${state.bonusTargetFruit.id}|${displayScore}|${displayMultiplier}`;
 
     if (layer.dataset.vmunchBonusHudKey === hudKey) return;
 
     layer.dataset.vmunchBonusHudKey = hudKey;
     layer.innerHTML = `
-      <div class="vmunch-bonus-hud-card" aria-label="Bonus bites ${escapeHtml(displayScore)}">
+      <div class="vmunch-bonus-hud-card" aria-label="Bonus bites ${escapeHtml(displayScore)}${escapeHtml(multiplierAria)}">
         <img
           class="vmunch-bonus-hud-fruit"
           src="${escapeHtml(state.bonusTargetFruit.src)}"
@@ -2715,6 +2725,7 @@ function updateBuildText(){
         >
         <span class="vmunch-bonus-hud-x" aria-hidden="true">x</span>
         <span class="vmunch-bonus-hud-score">${escapeHtml(displayScore)}</span>
+        ${multiplierBadgeHtml}
       </div>
     `;
   }

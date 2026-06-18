@@ -616,6 +616,76 @@ body.vmunch-page-flash-streak-rainbow::before {
   text-align:center;
 }
 
+.vmunch-bonus-hud-multiplier {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: clamp(42px, 9vw, 58px);
+  min-height: clamp(30px, 6.4vw, 42px);
+  padding: 3px 9px 4px;
+  margin-left: 2px;
+  border-radius: 999px;
+  box-sizing: border-box;
+  font-family: "Titan One", system-ui, sans-serif;
+  font-size: clamp(21px, 5vw, 34px);
+  line-height: 1;
+  letter-spacing: 0.03em;
+  color: #ffffff;
+  text-shadow: 0 3px 0 rgba(0, 0, 0, 0.20);
+  box-shadow:
+    0 5px 0 rgba(0, 0, 0, 0.18),
+    0 0 16px rgba(255, 255, 255, 0.20);
+  transform-origin: 50% 50%;
+  animation: vmunchBonusHudMultiplierPop 380ms cubic-bezier(.2, .88, .24, 1) both;
+}
+
+.vmunch-bonus-hud-multiplier.is-two {
+  background: #40b9c5;
+}
+
+.vmunch-bonus-hud-multiplier.is-three {
+  background: linear-gradient(90deg,
+      #ff5f6d 0%,
+      #ffb347 18%,
+      #fff36d 36%,
+      #6fe36c 54%,
+      #55c7ff 72%,
+      #b57cff 88%,
+      #ff79c6 100%);
+  background-size: 220% 220%;
+  color: #ffffff;
+  animation:
+    vmunchBonusHudMultiplierPop 380ms cubic-bezier(.2, .88, .24, 1) both,
+    vmunchBonusHudMultiplierRainbow 900ms linear infinite;
+}
+
+@keyframes vmunchBonusHudMultiplierPop {
+  0% {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.72);
+  }
+
+  62% {
+    opacity: 1;
+    transform: translateY(0) scale(1.16);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes vmunchBonusHudMultiplierRainbow {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
 @keyframes vmunchBonusIntroPop{
   0%{
     opacity:0;
