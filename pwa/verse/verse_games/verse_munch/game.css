@@ -959,21 +959,21 @@ body.vmunch-page-flash-streak-rainbow::before {
   user-select: none;
   white-space: nowrap;
   font-family: "Titan One", system-ui, sans-serif;
-  font-size: clamp(28px, 6vw, 42px);
+  font-size: var(--vmunch-score-pop-font-size, 36px);
   line-height: 1;
   letter-spacing: 0.02em;
-  text-shadow: 0 4px 0 rgba(0, 0, 0, 0.22);
+  text-shadow: 0 var(--vmunch-score-pop-shadow-size, 4px) 0 rgba(0, 0, 0, 0.22);
   will-change: transform, opacity;
 }
 
 .vmunch-bonus-score-pop.is-positive {
   color: #ffffff;
-  -webkit-text-stroke: 2px #7aa249;
+  -webkit-text-stroke: var(--vmunch-score-pop-stroke-size, 2px) #7aa249;
 }
 
 .vmunch-bonus-score-pop.is-negative {
   color: #ffc751;
-  -webkit-text-stroke: 2px #ff5a51;
+  -webkit-text-stroke: var(--vmunch-score-pop-stroke-size, 2px) #ff5a51;
 }
 
 .vmunch-bonus-score-pop.is-live {

@@ -12,7 +12,7 @@
   const BUILD_AREA = "compact";
 
   const HELP_OVERLAY_ID = "vmunchHelpOverlay";
-  const VMUNCH_DEBUG_VERSION = "VMUNCH v.5.9";
+  const VMUNCH_DEBUG_VERSION = "VMUNCH v.5.10";
 
 const BOOKS = window.VerseGameShell.getBibleBookDecoys();
   
@@ -1005,19 +1005,7 @@ function backToMenuFromHelp(){
 
       const poofPoint = getBonusFoodChipCenter(chipEl);
       spawnBonusWrongPoof(poofPoint.x, poofPoint.y, item.size);
-      playBonusWrongFaceFlash();
-
-      renderFrame(performance.now());
-      return;
-    }
-
-    if (!item.isTarget) {
-      item.tapped = true;
-      state.bonusCount = Math.max(0, state.bonusCount - 1);
-
-      const poofPoint = getBonusFoodChipCenter(chipEl);
-      spawnBonusWrongPoof(poofPoint.x, poofPoint.y, item.size);
-      spawnBonusScorePop(poofPoint.x, poofPoint.y - item.size * 0.20, "-1", "negative");
+      spawnBonusScorePop(poofPoint.x, poofPoint.y - item.size * 0.20, "-1", "negative", item.size);
       playBonusWrongFaceFlash();
 
       renderFrame(performance.now());
@@ -1028,7 +1016,7 @@ function backToMenuFromHelp(){
     state.bonusCount += 1;
 
     const startPoint = getBonusFoodChipCenter(chipEl);
-    spawnBonusScorePop(startPoint.x, startPoint.y - item.size * 0.20, "+1", "positive");
+    spawnBonusScorePop(startPoint.x, startPoint.y - item.size * 0.20, "+1", "positive", item.size);
 
     const feedItem = {
       fruit: item.fruit,
@@ -1066,17 +1054,26 @@ function backToMenuFromHelp(){
   }
 
 
-  function spawnBonusScorePop(x, y, text, type = "positive") {
+  function spawnBonusScorePop(x, y, text, type = "positive", fruitSize = 72) {
     const layer = document.getElementById("vmunchBonusScorePops");
     if (!layer) return;
 
+    const size = clamp(fruitSize || 72, 48, 104);
+    const fontSize = clamp(size * 0.52, 26, 46);
+    const strokeSize = clamp(size * 0.028, 1.5, 2.6);
+    const shadowSize = clamp(size * 0.055, 2.5, 5);
+    const driftMax = size * 0.18;
+    const driftX = Math.round(-driftMax + Math.random() * driftMax * 2);
+    const rise = Math.round(size * (0.66 + Math.random() * 0.12));
+
     const pop = document.createElement("div");
-    const driftX = Math.round(-10 + Math.random() * 20);
-    const rise = Math.round(44 + Math.random() * 12);
 
     pop.className = `vmunch-bonus-score-pop is-${type}`;
     pop.style.left = `${x}px`;
     pop.style.top = `${y}px`;
+    pop.style.setProperty("--vmunch-score-pop-font-size", `${fontSize.toFixed(1)}px`);
+    pop.style.setProperty("--vmunch-score-pop-stroke-size", `${strokeSize.toFixed(1)}px`);
+    pop.style.setProperty("--vmunch-score-pop-shadow-size", `${shadowSize.toFixed(1)}px`);
     pop.style.setProperty("--vmunch-score-pop-drift-x", `${driftX}px`);
     pop.style.setProperty("--vmunch-score-pop-rise", `${rise}px`);
     pop.textContent = text;
