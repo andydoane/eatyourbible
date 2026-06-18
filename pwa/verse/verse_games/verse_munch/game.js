@@ -12,7 +12,7 @@
   const BUILD_AREA = "compact";
 
   const HELP_OVERLAY_ID = "vmunchHelpOverlay";
-  const VMUNCH_DEBUG_VERSION = "VMUNCH v.5.12";
+  const VMUNCH_DEBUG_VERSION = "VMUNCH v.5.13";
 
 const BOOKS = window.VerseGameShell.getBibleBookDecoys();
   
@@ -47,6 +47,7 @@ const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
     chew1: `${SOUND_BASE_PATH}verse_munch_chew_1.mp3`,
     chew2: `${SOUND_BASE_PATH}verse_munch_chew_2.mp3`,
     chew3: `${SOUND_BASE_PATH}verse_munch_chew_3.mp3`,
+    chomp: `${SOUND_BASE_PATH}verse_munch_chomp.mp3`,
     correct: `${SOUND_BASE_PATH}verse_munch_correct.mp3`,
     spew: `${SOUND_BASE_PATH}verse_munch_spew.mp3`,
     dizzy: `${SOUND_BASE_PATH}verse_munch_dizzy.mp3`,
@@ -62,6 +63,7 @@ const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
       uiTap: 0.45,
       wordTap: 0.48,
       chew: 0.58,
+      chomp: 0.64,
       correct: 0.70,
       spew: 0.74,
       dizzy: 0.70,
@@ -1897,6 +1899,7 @@ function backToMenuFromHelp(){
     state.faceDisplay = "😬";
     state.faceClasses = new Set();
 
+    playGameSound("chomp");
     renderFrame(performance.now());
 
     return await waitSeconds(0.18, runToken);
