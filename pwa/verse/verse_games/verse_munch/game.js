@@ -12,7 +12,7 @@
   const BUILD_AREA = "compact";
 
   const HELP_OVERLAY_ID = "vmunchHelpOverlay";
-  const VMUNCH_DEBUG_VERSION = "VMUNCH v.5.10";
+  const VMUNCH_DEBUG_VERSION = "VMUNCH v.5.11";
 
 const BOOKS = window.VerseGameShell.getBibleBookDecoys();
   
@@ -34,6 +34,44 @@ const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
   const BONUS_SCORE_CONTINUE_ARM_DELAY = 0.55;
   const BONUS_TARGET_CHANCE = 0.4;
   const BONUS_FORCE_TARGET_AFTER = 3;
+
+  const SOUND_BASE_PATH = "./verse_munch_files/";
+  const UI_SOUND_BASE_PATH = "../../ui_audio/";
+
+  const SOUND_FILES = {
+    uiTap1: `${UI_SOUND_BASE_PATH}ui_sound_pop_1.mp3`,
+    uiTap2: `${UI_SOUND_BASE_PATH}ui_sound_pop_2.mp3`,
+
+    wordTap1: `${SOUND_BASE_PATH}verse_munch_tap_1.mp3`,
+    wordTap2: `${SOUND_BASE_PATH}verse_munch_tap_2.mp3`,
+    chew1: `${SOUND_BASE_PATH}verse_munch_chew_1.mp3`,
+    chew2: `${SOUND_BASE_PATH}verse_munch_chew_2.mp3`,
+    chew3: `${SOUND_BASE_PATH}verse_munch_chew_3.mp3`,
+    correct: `${SOUND_BASE_PATH}verse_munch_correct.mp3`,
+    spew: `${SOUND_BASE_PATH}verse_munch_spew.mp3`,
+    dizzy: `${SOUND_BASE_PATH}verse_munch_dizzy.mp3`,
+    streak: `${SOUND_BASE_PATH}verse_munch_streak.mp3`,
+    bonusStart: `${SOUND_BASE_PATH}verse_munch_bonus_start.mp3`,
+    bonusResult: `${SOUND_BASE_PATH}verse_munch_bonus_result.mp3`,
+    wrongFruit: `${SOUND_BASE_PATH}verse_munch_wrong_fruit.mp3`
+  };
+
+  const SOUND_TUNING = {
+    masterVolume: 0.90,
+    volumes: {
+      uiTap: 0.45,
+      wordTap: 0.48,
+      chew: 0.58,
+      correct: 0.70,
+      spew: 0.74,
+      dizzy: 0.70,
+      streak: 0.78,
+      bonusStart: 0.82,
+      bonusResult: 0.86,
+      wrongFruit: 0.74
+    }
+  };
+
   const BONUS_POOF_CLOUD_SVG = `
 <svg viewBox="0 0 26.458333 26.458333" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <path fill="currentColor" d="M 12.949771,1.5464282 A 6.0017493,5.3230522 7.1160496 0 0 6.9820601,6.4190471 5.3405872,4.7400094 7.154063 0 0 6.8563886,6.4134999 5.3405872,4.7400094 7.154063 0 0 1.5243277,11.020646 5.3405872,4.7400094 7.154063 0 0 2.4259083,13.677302 4.0181559,3.5662928 7.1540647 0 0 0.66145837,16.583588 4.0181559,3.5662928 7.1540647 0 0 4.6728467,20.261811 4.0181559,3.5662928 7.1540647 0 0 5.1732885,20.243 a 5.3405872,4.7400094 7.154063 0 0 5.2883005,4.342428 5.3405872,4.7400094 7.154063 0 0 3.656255,-1.210431 4.0181559,3.5662928 7.1540647 0 0 3.300558,1.639798 4.0181559,3.5662928 7.1540647 0 0 4.011389,-3.466536 4.0181559,3.5662928 7.1540647 0 0 -0.416848,-1.594767 5.3405872,4.7400094 7.154063 0 0 4.783932,-4.586787 5.3405872,4.7400094 7.154063 0 0 -1.9322,-3.706541 4.0181559,3.5662928 7.1540647 0 0 0.764128,-2.0624453 4.0181559,3.5662928 7.1540647 0 0 -4.011389,-3.6776624 4.0181559,3.5662928 7.1540647 0 0 -1.744813,0.3148283 6.0017493,5.3230522 7.1160496 0 0 -5.92283,-4.6884523 z"/>
@@ -261,6 +299,15 @@ const FACE_MAP = {
   let muted = false;
   let bonusRunning = false;
 
+  let audioCtx = null;
+  let silenceAudio = null;
+  let audioUnlocked = false;
+  let uiSoundFlip = false;
+  let wordTapSoundFlip = false;
+  let chewSoundIndex = 0;
+  const soundBuffers = new Map();
+  const soundBufferPromises = new Map();
+
   const state = {
     running:false,
     rafId:0,
@@ -325,6 +372,162 @@ const FACE_MAP = {
     resizeListenerActive:false
   };
 
+  function getAudioContext() {
+    if (!audioCtx) {
+      const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextCtor) return null;
+      audioCtx = new AudioContextCtor();
+    }
+
+    return audioCtx;
+  }
+
+  function ensureSilenceAudio() {
+    if (silenceAudio) return silenceAudio;
+
+    silenceAudio = new Audio("../../verse_audio/silence.mp3");
+    silenceAudio.preload = "auto";
+    silenceAudio.loop = false;
+    silenceAudio.volume = 0.001;
+    silenceAudio.setAttribute("playsinline", "true");
+
+    return silenceAudio;
+  }
+
+  async function unlockAudio() {
+    const ctx = getAudioContext();
+    if (!ctx) return false;
+
+    try {
+      const silent = ensureSilenceAudio();
+      silent.currentTime = 0;
+
+      const silentPlay = silent.play();
+      if (silentPlay && typeof silentPlay.catch === "function") {
+        silentPlay.catch(() => { });
+      }
+    } catch (err) {
+      // Best effort only.
+    }
+
+    try {
+      if (ctx.state === "suspended") {
+        await ctx.resume();
+      }
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      gain.gain.value = 0.0001;
+      osc.frequency.value = 440;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start();
+      osc.stop(ctx.currentTime + 0.03);
+
+      audioUnlocked = true;
+      preloadSoundBuffers();
+
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  function soundVolume(key) {
+    const master = Number(SOUND_TUNING.masterVolume);
+    const individual = Number(SOUND_TUNING.volumes[key]);
+
+    const safeMaster = Number.isFinite(master) ? master : 1;
+    const safeIndividual = Number.isFinite(individual) ? individual : 1;
+
+    return Math.max(0, Math.min(1, safeMaster * safeIndividual));
+  }
+
+  async function loadSoundBuffer(key) {
+    const ctx = getAudioContext();
+    const src = SOUND_FILES[key];
+
+    if (!ctx || !src) return null;
+    if (soundBuffers.has(key)) return soundBuffers.get(key);
+    if (soundBufferPromises.has(key)) return soundBufferPromises.get(key);
+
+    const promise = fetch(src)
+      .then(response => {
+        if (!response.ok) throw new Error(`Unable to load sound: ${src}`);
+        return response.arrayBuffer();
+      })
+      .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
+      .then(buffer => {
+        soundBuffers.set(key, buffer);
+        return buffer;
+      })
+      .catch(err => {
+        console.warn(err);
+        return null;
+      })
+      .finally(() => {
+        soundBufferPromises.delete(key);
+      });
+
+    soundBufferPromises.set(key, promise);
+    return promise;
+  }
+
+  function preloadSoundBuffers() {
+    Object.keys(SOUND_FILES).forEach(key => {
+      loadSoundBuffer(key);
+    });
+  }
+
+  async function playGameSound(key, volumeKey = key) {
+    if (muted) return;
+
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    try {
+      if (ctx.state === "suspended") {
+        await ctx.resume();
+      }
+
+      const buffer = await loadSoundBuffer(key);
+      if (!buffer) return;
+
+      const source = ctx.createBufferSource();
+      const gain = ctx.createGain();
+
+      gain.gain.value = soundVolume(volumeKey);
+      source.buffer = buffer;
+      source.connect(gain);
+      gain.connect(ctx.destination);
+
+      source.start(0);
+    } catch (err) {
+      // Sound should never break gameplay.
+    }
+  }
+
+  function playUiTapSound() {
+    const key = uiSoundFlip ? "uiTap2" : "uiTap1";
+    uiSoundFlip = !uiSoundFlip;
+    playGameSound(key, "uiTap");
+  }
+
+  function playWordTapSound() {
+    const key = wordTapSoundFlip ? "wordTap2" : "wordTap1";
+    wordTapSoundFlip = !wordTapSoundFlip;
+    playGameSound(key, "wordTap");
+  }
+
+  function playChewSound() {
+    const chewKeys = ["chew1", "chew2", "chew3"];
+    const key = chewKeys[chewSoundIndex % chewKeys.length];
+    chewSoundIndex += 1;
+    playGameSound(key, "chew");
+  }
+
   setupReferenceSegments();
   renderIntro();
   preloadFaceImages();
@@ -364,8 +567,15 @@ function renderIntro(){
     helpOverlayId: HELP_OVERLAY_ID,
     theme: GAME_THEME,
     backLabel: "Back to Practice Games",
-    onBack: () => window.VerseGameBridge.exitGame(),
-    onStart: renderModeSelect
+    onBack: () => {
+      playUiTapSound();
+      window.VerseGameBridge.exitGame();
+    },
+    onStart: () => {
+      unlockAudio();
+      playUiTapSound();
+      renderModeSelect();
+    }
   });
 }
 
@@ -380,8 +590,15 @@ function renderModeSelect(){
     helpOverlayId: HELP_OVERLAY_ID,
     theme: GAME_THEME,
     backLabel: "Back to Verse Munch title",
-    onBack: renderIntro,
-    onSelect: startGame
+    onBack: () => {
+      playUiTapSound();
+      renderIntro();
+    },
+    onSelect: (mode) => {
+      unlockAudio();
+      playUiTapSound();
+      startGame(mode);
+    }
   });
 }
 
@@ -522,9 +739,18 @@ function renderComplete(){
     gameMessage: `Bonus bites: ${state.bonusCount}`,
     theme: GAME_THEME,
     backLabel: "Back to Practice Games",
-    onPlayAgain: renderModeSelect,
-    onMoreGames: () => window.VerseGameBridge.exitGame(),
-    onChangeVerse: () => window.VerseGameBridge.returnToTitle()
+    onPlayAgain: () => {
+      playUiTapSound();
+      renderModeSelect();
+    },
+    onMoreGames: () => {
+      playUiTapSound();
+      window.VerseGameBridge.exitGame();
+    },
+    onChangeVerse: () => {
+      playUiTapSound();
+      window.VerseGameBridge.returnToTitle();
+    }
   });
 }
 
@@ -555,21 +781,36 @@ function wireCommonNav(){
     isMuted: () => muted,
     onMuteToggle: () => {
       muted = !muted;
+      if (!muted) playUiTapSound();
       return muted;
     },
-    onHowToPlay: openHelpFromMenu,
+    onHowToPlay: () => {
+      playUiTapSound();
+      openHelpFromMenu();
+    },
     onModeSelect: () => {
+      playUiTapSound();
       cancelActiveRun();
       setPaused(false, "");
       renderModeSelect();
     },
     onExit: () => {
+      playUiTapSound();
       cancelActiveRun();
       window.VerseGameBridge.exitGame();
     },
-    onOpen: () => setPaused(true, "menu"),
-    onClose: () => setPaused(false, ""),
-    onBackFromHelp: () => setPaused(true, "menu")
+    onOpen: () => {
+      playUiTapSound();
+      setPaused(true, "menu");
+    },
+    onClose: () => {
+      playUiTapSound();
+      setPaused(false, "");
+    },
+    onBackFromHelp: () => {
+      playUiTapSound();
+      setPaused(true, "menu");
+    }
   });
 
   wireMobileGameMenuFallbacks();
@@ -601,26 +842,31 @@ function setPaused(paused, reason = ""){
     };
 
     bindTouchEnd("vmunchGameMenuOverlayCloseBtn", () => {
+      playUiTapSound();
       closeGameMenu();
     });
 
     bindTouchEnd("vmunchGameMenuOverlayHowToBtn", () => {
+      playUiTapSound();
       openHelpFromMenu();
     });
 
     bindTouchEnd("vmunchGameMenuOverlayModeSelectBtn", () => {
+      playUiTapSound();
       cancelActiveRun();
       setPaused(false, "");
       renderModeSelect();
     });
 
     bindTouchEnd("vmunchGameMenuOverlayExitBtn", () => {
+      playUiTapSound();
       cancelActiveRun();
       window.VerseGameBridge.exitGame();
     });
 
     bindTouchEnd("vmunchGameMenuOverlayMuteBtn", () => {
       muted = !muted;
+      if (!muted) playUiTapSound();
 
       const muteBtn = document.getElementById("vmunchGameMenuOverlayMuteBtn");
       if (muteBtn) {
@@ -1003,6 +1249,8 @@ function backToMenuFromHelp(){
       item.tapped = true;
       state.bonusCount = Math.max(0, state.bonusCount - 1);
 
+      playGameSound("wrongFruit");
+
       const poofPoint = getBonusFoodChipCenter(chipEl);
       spawnBonusWrongPoof(poofPoint.x, poofPoint.y, item.size);
       spawnBonusScorePop(poofPoint.x, poofPoint.y - item.size * 0.20, "-1", "negative", item.size);
@@ -1014,6 +1262,8 @@ function backToMenuFromHelp(){
 
     item.tapped = true;
     state.bonusCount += 1;
+
+    playWordTapSound();
 
     const startPoint = getBonusFoodChipCenter(chipEl);
     spawnBonusScorePop(startPoint.x, startPoint.y - item.size * 0.20, "+1", "positive", item.size);
@@ -1238,6 +1488,8 @@ function backToMenuFromHelp(){
     if (!isActiveRun(runToken) || state.bonusPhase !== "playing") return false;
     if (eatToken !== state.bonusEatToken) return false;
 
+    playChewSound();
+
     state.faceBase = "😐";
     state.faceDisplay = state.faceBase;
     state.faceClasses = new Set();
@@ -1256,6 +1508,9 @@ function backToMenuFromHelp(){
     const runToken = state.runToken;
     const item = state.beltItems.find(entry => String(entry.id) === String(itemId));
     if (!item || item.tapped) return;
+
+    unlockAudio();
+    playWordTapSound();
 
     const currentCorrect = getCurrentCorrectLabel();
     const isCorrect = normalizeWord(item.label) === normalizeWord(currentCorrect);
@@ -1285,6 +1540,8 @@ function backToMenuFromHelp(){
     if (isCorrect) {
       const nextStreak = state.streak + 1;
       const streakTier = getStreakMilestoneTier(nextStreak);
+
+      playGameSound("correct");
 
       if (!await playReactionAnimation(true, runToken, streakTier)) return;
       if (!isActiveRun(runToken)) return;
@@ -1446,6 +1703,7 @@ function backToMenuFromHelp(){
     showReactionPopup(false);
 
     if (useDizzyReaction){
+      playGameSound("dizzy");
       state.faceDisplay = "😵‍💫";
       state.faceClasses = new Set(["is-react-head-no-hard"]);
       return await waitSeconds(0.68, runToken);
@@ -1458,6 +1716,7 @@ function backToMenuFromHelp(){
     state.faceDisplay = "🤮";
     state.faceClasses = new Set(["is-react-barf-bounce"]);
 
+    playGameSound("spew");
     spawnWordSpewLetters(label);
     spawnGreenSpewParticles();
 
@@ -1666,6 +1925,10 @@ function backToMenuFromHelp(){
       state.faceDisplay = step.face;
       state.faceClasses = new Set(["is-chew"]);
 
+      if (step.face === "😐") {
+        playChewSound();
+      }
+
       if (i === 2 || i === 4) {
         spawnChewCrumbs(true);
       }
@@ -1722,6 +1985,7 @@ function backToMenuFromHelp(){
     if (isCorrect) {
       if (streakTier > 0) {
         state.streakSunburstUntil = now + (reactionDuration * 1000) + 220;
+        playGameSound("streak");
 
         if (streakTier >= 3) {
           state.faceDisplay = "🌈";
@@ -1795,6 +2059,7 @@ function backToMenuFromHelp(){
         if (state.bonusPhase !== "score") return;
 
         if (event.cancelable) event.preventDefault();
+        playUiTapSound();
         finish(isActiveRun(runToken));
       };
 
@@ -1804,6 +2069,7 @@ function backToMenuFromHelp(){
         if (event.key !== "Enter" && event.key !== " ") return;
 
         event.preventDefault();
+        playUiTapSound();
         finish(isActiveRun(runToken));
       };
 
@@ -1857,6 +2123,7 @@ function backToMenuFromHelp(){
     state.faceClasses = new Set(["is-anticipation-lean-in"]);
     state.faceScaleBoost = 0;
 
+    playGameSound("bonusStart");
     renderFrame(performance.now());
 
     if (!await waitSeconds(BONUS_INTRO_DURATION, runToken)) return false;
@@ -1892,6 +2159,7 @@ function backToMenuFromHelp(){
     state.faceDisplay = "🥳";
     state.faceClasses = new Set();
 
+    playGameSound("bonusResult");
     triggerBonusScoreCelebration();
 
     renderFrame(performance.now());
