@@ -12,7 +12,7 @@
   const BUILD_AREA = "compact";
 
   const HELP_OVERLAY_ID = "vmunchHelpOverlay";
-  const VMUNCH_DEBUG_VERSION = "VMUNCH v.5.11";
+  const VMUNCH_DEBUG_VERSION = "VMUNCH v.5.12";
 
 const BOOKS = window.VerseGameShell.getBibleBookDecoys();
   
