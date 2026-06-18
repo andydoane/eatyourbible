@@ -240,6 +240,33 @@ body {
   -webkit-user-drag: none;
 }
 
+.vinv-alien-svg {
+  display: block;
+  width: clamp(62px, 15vw, 118px);
+  height: auto;
+  filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.18));
+  pointer-events: none;
+  user-select: none;
+}
+
+.vinv-alien-svg svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.vinv-alien-svg [id="alien_body"],
+.vinv-alien-svg [id="left_antenna_group"] path,
+.vinv-alien-svg [id="right_antenna_group"] path,
+.vinv-alien-svg [id="arms_group"] path,
+.vinv-alien-svg [id="left_eyelid_top"],
+.vinv-alien-svg [id="left_eyelid_bottom"],
+.vinv-alien-svg [id="right_eyelid_top"],
+.vinv-alien-svg [id="right_eyelid_bottom"] {
+  fill: var(--vinv-alien-color, #ffc751) !important;
+}
+
 .vinv-word {
   margin-top: 6px;
   font-weight: 900;

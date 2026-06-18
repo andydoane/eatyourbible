@@ -12,6 +12,7 @@
   const BUILD_AREA = "compact";
 
   const HELP_OVERLAY_ID = "vinvHelpOverlay";
+  const ALIEN_SVG_URL = "./verse_invaders_images/verse_invaders_alien.svg";
 
   const LANE_KEYS = ["left", "center", "right"];
   const LANE_COLORS = [
@@ -54,6 +55,7 @@
   let completionMarked = false;
   let completionResult = null;
   let resizeHandlerBound = false;
+  let alienSvgTemplate = "";
 
   const state = {
     running: false,
@@ -109,8 +111,53 @@
   });
   const verseWords = buildData.words;
 
+  await preloadAlienSvg();
   renderIntro();
 
+
+  async function preloadAlienSvg() {
+    try {
+      const response = await fetch(ALIEN_SVG_URL, { cache: "force-cache" });
+      if (!response.ok) throw new Error(`Could not load alien SVG: ${response.status}`);
+
+      const svgText = await response.text();
+      if (!svgText.includes("<svg")) throw new Error("Alien SVG did not contain an <svg> tag.");
+
+      alienSvgTemplate = svgText
+        .replace(/<\?xml[\s\S]*?\?>/g, "")
+        .replace(/<!DOCTYPE[\s\S]*?>/gi, "")
+        .trim();
+    } catch (err) {
+      console.warn("Verse Invaders SVG alien fallback active:", err);
+      alienSvgTemplate = "";
+    }
+  }
+
+  function renderAlienHtml(color, altText = "Alien", extraClass = "") {
+    const colorHex = color?.hex || "#ffc751";
+
+    if (alienSvgTemplate) {
+      return `
+            <div
+              class="vinv-alien-svg ${extraClass}"
+              role="img"
+              aria-label="${escapeHtml(altText)}"
+              style="--vinv-alien-color:${colorHex};"
+            >
+              ${alienSvgTemplate}
+            </div>
+      `;
+    }
+
+    return `
+            <img
+              class="vinv-alien-img"
+              src="${color.alienImg}"
+              alt="${escapeHtml(color.alienAlt || altText)}"
+              draggable="false"
+            />
+    `;
+  }
 
   function renderIntro() {
     stopLoop();
@@ -118,7 +165,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v1.2",
+      debugBadge: "v1.3",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -890,12 +937,7 @@
           "
         >
           <div class="vinv-alien">
-            <img
-              class="vinv-alien-img"
-              src="${entity.color.alienImg}"
-              alt="${entity.color.alienAlt}"
-              draggable="false"
-            />
+            ${renderAlienHtml(entity.color, entity.color.alienAlt)}
           </div>
           <div class="vinv-word" style="color:${entity.color.hex}">${escapeHtml(entity.label)}</div>
         </div>
@@ -1231,12 +1273,11 @@
           <div class="vinv-beam vinv-beam-abduct" style="opacity:${beamOpacity.toFixed(3)}"></div>
           <div class="vinv-abduct-stack">
             <div class="vinv-alien">
-              <img
-                class="vinv-alien-img"
-                src="${effect.alienImg}"
-                alt="${effect.alienAlt}"
-                draggable="false"
-              />
+              ${renderAlienHtml({
+                hex: effect.colorHex,
+                alienImg: effect.alienImg,
+                alienAlt: effect.alienAlt
+              }, effect.alienAlt, "vinv-alien-svg--abduct")}
             </div>
             <div class="vinv-word" style="color:${effect.colorHex}; visibility:hidden; height:0; margin:0; padding:0;"></div>
             <div class="vinv-abduct-passenger">
