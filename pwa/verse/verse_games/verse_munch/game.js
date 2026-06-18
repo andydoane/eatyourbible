@@ -12,7 +12,7 @@
   const BUILD_AREA = "compact";
 
   const HELP_OVERLAY_ID = "vmunchHelpOverlay";
-    const VMUNCH_DEBUG_VERSION = "VMUNCH v5.16";
+    const VMUNCH_DEBUG_VERSION = "VMUNCH v5.17";
 
 const BOOKS = window.VerseGameShell.getBibleBookDecoys();
   
@@ -33,7 +33,7 @@ const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
   const BONUS_PLAY_DURATION = 20;
   const BONUS_SCORE_CONTINUE_ARM_DELAY = 0.55;
   const BONUS_TARGET_CHANCE = 0.4;
-  const BONUS_FORCE_TARGET_AFTER = 3;
+  const BONUS_FORCE_TARGET_AFTER = 2;
 
   const SOUND_BASE_PATH = "./verse_munch_sounds/";
   const UI_SOUND_BASE_PATH = "../../ui_audio/";
@@ -2851,8 +2851,10 @@ function updateBuildText(){
   }
 
   function getBonusFoodBeltConfig() {
+    const beltWidth = getBonusBeltWidth();
+
     return {
-      speed: 245,
+      speed: clamp(beltWidth * 0.34, 145, 245),
       gap: 70,
       size: clamp(state.fieldWidth * 0.13, 58, 86)
     };
