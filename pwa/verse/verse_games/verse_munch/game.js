@@ -567,7 +567,6 @@ function renderIntro(){
     app,
     title: "Verse Munch",
     iconHtml: `<img src="verse_munch_images/munch_positive_2.png" alt="" draggable="false">`,
-    debugBadge: "VMUNCH v5.17",
     helpHtml: introHelpHtml(),
     helpOverlayId: HELP_OVERLAY_ID,
     theme: GAME_THEME,
