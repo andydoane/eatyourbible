@@ -35,7 +35,7 @@ const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
   const BONUS_TARGET_CHANCE = 0.4;
   const BONUS_FORCE_TARGET_AFTER = 3;
 
-  const SOUND_BASE_PATH = "./verse_munch_files/";
+  const SOUND_BASE_PATH = "./verse_munch_sounds/";
   const UI_SOUND_BASE_PATH = "../../ui_audio/";
 
   const SOUND_FILES = {
@@ -2118,7 +2118,7 @@ function backToMenuFromHelp(){
     state.bonusFlyingFruit = null;
     state.bonusEatToken += 1;
     state.bonusPhase = "intro";
-    state.bonusIntroText = "VERSEY MONSTER WANTS…";
+    state.bonusIntroText = "FEED ME!";
     state.faceDisplay = "😕";
     state.faceClasses = new Set(["is-anticipation-lean-in"]);
     state.faceScaleBoost = 0;
