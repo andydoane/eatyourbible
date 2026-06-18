@@ -85,6 +85,7 @@
     roundIndex: 0,
     roundSpeed: 0,
     entities: [],
+    entityRenderSignature: "",
     rocket: null,
     trails: [],
     effects: [],
@@ -165,7 +166,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v1.3",
+      debugBadge: "v1.4",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -216,6 +217,7 @@
     state.wrongGuessesThisRound = 0;
     state.roundIndex = 0;
     state.entities = [];
+    state.entityRenderSignature = "";
     state.rocket = null;
     state.trails = [];
     state.effects = [];
@@ -565,6 +567,7 @@
         motionPhase: Math.random() * Math.PI * 2
       };
     });
+    state.entityRenderSignature = "";
     renderHud();
     renderDynamic();
   }
@@ -713,6 +716,7 @@
     state.entities.forEach(item => {
       item.visible = false;
     });
+    state.entityRenderSignature = "";
 
     const targetPoint = getEntityHitPoint(target);
     addEffect(makeAbductionEffect(targetPoint.x, state.bottomZoneY - 12, target.color));
@@ -913,36 +917,14 @@
     const now = performance.now();
     field.classList.toggle("is-flash-bad", state.flashBadUntil > now);
 
-    entitiesEl.innerHTML = state.entities.map((entity) => {
-      const hidden = entity.visible ? "" : "opacity:0;";
-      const className = entity.status === "fade"
-        ? "is-fade"
-        : entity.status === "correct"
-          ? "is-correct-pause"
-          : "";
+    const entityRenderSignature = getEntityRenderSignature();
 
-      const motion = getEntityMotionState(entity, now);
+    if (state.entityRenderSignature !== entityRenderSignature) {
+      entitiesEl.innerHTML = state.entities.map((entity) => renderEntityHtml(entity, now)).join("");
+      state.entityRenderSignature = entityRenderSignature;
+    }
 
-      return `
-        <div
-          class="vinv-entity ${className}"
-          style="
-            left:${entity.x}px;
-            top:${entity.y}px;
-            ${hidden}
-            transform:translate(calc(-50% + ${motion.swayX.toFixed(1)}px), 0)
-              rotate(${motion.rotateDeg.toFixed(2)}deg)
-              skewX(${motion.skewXDeg.toFixed(2)}deg)
-              scale(${motion.scaleX.toFixed(3)}, ${motion.scaleY.toFixed(3)});
-          "
-        >
-          <div class="vinv-alien">
-            ${renderAlienHtml(entity.color, entity.color.alienAlt)}
-          </div>
-          <div class="vinv-word" style="color:${entity.color.hex}">${escapeHtml(entity.label)}</div>
-        </div>
-      `;
-    }).join("");
+    updateEntityElements(entitiesEl, now);
 
     rocketsEl.innerHTML = `
       ${state.rocket ? `<div class="vinv-rocket" style="left:${state.rocket.x}px; top:${state.rocket.y}px; transform:translate(-50%,-50%) rotate(${state.rocket.angleDeg.toFixed(1)}deg);">🚀</div>` : ""}
@@ -956,6 +938,61 @@
     overlayEl.innerHTML = state.overlayUntil > now && state.overlayMessage
       ? `<div class="vinv-overlay-pill">${escapeHtml(state.overlayMessage)}</div>`
       : "";
+  }
+
+  function getEntityRenderSignature() {
+    return state.entities.map((entity) => {
+      return `${entity.id}:${entity.color.key}:${entity.label}`;
+    }).join("|");
+  }
+
+  function getEntityClassName(entity) {
+    if (entity.status === "fade") return "is-fade";
+    if (entity.status === "correct") return "is-correct-pause";
+    return "";
+  }
+
+  function getEntityStyle(entity, now = performance.now()) {
+    const hidden = entity.visible ? "" : "opacity:0;";
+    const motion = getEntityMotionState(entity, now);
+
+    return `
+      left:${entity.x}px;
+      top:${entity.y}px;
+      ${hidden}
+      transform:translate(calc(-50% + ${motion.swayX.toFixed(1)}px), 0)
+        rotate(${motion.rotateDeg.toFixed(2)}deg)
+        skewX(${motion.skewXDeg.toFixed(2)}deg)
+        scale(${motion.scaleX.toFixed(3)}, ${motion.scaleY.toFixed(3)});
+    `;
+  }
+
+  function renderEntityHtml(entity, now = performance.now()) {
+    const className = getEntityClassName(entity);
+
+    return `
+        <div
+          class="vinv-entity ${className}"
+          data-entity-id="${escapeHtml(entity.id)}"
+          style="${getEntityStyle(entity, now)}"
+        >
+          <div class="vinv-alien">
+            ${renderAlienHtml(entity.color, entity.color.alienAlt)}
+          </div>
+          <div class="vinv-word" style="color:${entity.color.hex}">${escapeHtml(entity.label)}</div>
+        </div>
+    `;
+  }
+
+  function updateEntityElements(entitiesEl, now = performance.now()) {
+    state.entities.forEach((entity) => {
+      const entityEl = entitiesEl.querySelector(`[data-entity-id="${entity.id}"]`);
+      if (!entityEl) return;
+
+      const className = getEntityClassName(entity);
+      entityEl.className = className ? `vinv-entity ${className}` : "vinv-entity";
+      entityEl.setAttribute("style", getEntityStyle(entity, now));
+    });
   }
 
   function getCurrentPhase() {
