@@ -118,7 +118,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v1.1",
+      debugBadge: "v1.2",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -914,8 +914,6 @@
     overlayEl.innerHTML = state.overlayUntil > now && state.overlayMessage
       ? `<div class="vinv-overlay-pill">${escapeHtml(state.overlayMessage)}</div>`
       : "";
-
-    renderButtons();
   }
 
   function getCurrentPhase() {
