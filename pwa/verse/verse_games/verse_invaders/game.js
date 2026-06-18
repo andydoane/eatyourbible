@@ -127,6 +127,8 @@
       alienSvgTemplate = svgText
         .replace(/<\?xml[\s\S]*?\?>/g, "")
         .replace(/<!DOCTYPE[\s\S]*?>/gi, "")
+        .replace(/begin="5s"/g, 'begin="0.35s"')
+        .replace(/dur="5s"/g, 'dur="2.6s"')
         .trim();
     } catch (err) {
       console.warn("Verse Invaders SVG alien fallback active:", err);
@@ -166,7 +168,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v1.4",
+      debugBadge: "v1.5",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
