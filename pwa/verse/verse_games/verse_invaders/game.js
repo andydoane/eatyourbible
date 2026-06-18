@@ -118,6 +118,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
+      debugBadge: "v1.1",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -371,8 +372,20 @@
       state.bottomZoneY = Math.max(110, state.fieldHeight - 98);
     }
 
+    state.entities.forEach((entity) => {
+      entity.x = getLaneCenterX(entity.lane);
+    });
+
+    if (state.rocket) {
+      state.rocket.x = getLaneCenterX(state.rocket.lane);
+    }
+
     state.roundSpeed = getRoundSpeed();
+    state.buildFitDone = false;
+
     renderStaticField();
+    renderBuildArea();
+    renderDynamic();
   }
 
   function renderStaticField() {
