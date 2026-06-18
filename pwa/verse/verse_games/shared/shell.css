@@ -170,6 +170,27 @@ body {
   box-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
 }
 
+.vm-game-debug-badge {
+  position: absolute;
+  z-index: 6;
+  top: calc(14px + env(safe-area-inset-top));
+  right: calc(14px + env(safe-area-inset-right));
+  max-width: calc(100vw - 96px);
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: rgba(17, 24, 39, 0.92);
+  color: #ffffff;
+  border: 2px solid rgba(255, 255, 255, 0.88);
+  box-shadow: 0 5px 0 rgba(0, 0, 0, 0.24);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+}
+
 .vm-game-center {
   width: min(100%, 440px);
   display: flex;

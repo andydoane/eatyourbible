@@ -1369,10 +1369,14 @@ const safeMax = hasCustomMax ? Number(max) : profile.max;
     helpText = "How to Play",
     backLabel = "Back",
     theme = {},
+    debugBadge = "",
     onBack,
     onStart
   } = {}){
     if (!app) return;
+    const debugBadgeMarkup = debugBadge
+      ? `<div class="vm-game-debug-badge">${escapeHtml(debugBadge)}</div>`
+      : "";
 
     if (isGameMixLaunch() && getGameMixMode() && typeof onStart === "function"){
       app.innerHTML = `
@@ -1392,6 +1396,8 @@ const safeMax = hasCustomMax ? Number(max) : profile.max;
 
     app.innerHTML = `
       <div class="vm-game-screen"${styleVarsHtml(theme)}>
+        ${debugBadgeMarkup}
+
         <button class="vm-game-back-pill no-zoom" id="gameShellBackBtn" type="button" aria-label="${escapeHtml(backLabel)}">
           ◀
         </button>
