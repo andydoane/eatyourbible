@@ -19,9 +19,11 @@
   --vinv-build-bg: #ffffff;
   --vinv-text-dark: #333333;
   --vinv-red: #ff5a51;
+  --vinv-orange: #ffa351;
   --vinv-yellow: #ffc751;
-  --vinv-blue: #40b9c5;
   --vinv-green: #a7cb6f;
+  --vinv-blue: #40b9c5;
+  --vinv-purple: #7f66c6;
   --vinv-white: #ffffff;
   --vinv-side: 14px;
   --vinv-stage-max: 860px;
@@ -517,13 +519,28 @@ body {
   color: #ffffff;
 }
 
+.vinv-lane-btn[data-color="orange"] {
+  background: var(--vinv-orange);
+  color: #333333;
+}
+
 .vinv-lane-btn[data-color="yellow"] {
   background: var(--vinv-yellow);
   color: #333333;
 }
 
+.vinv-lane-btn[data-color="green"] {
+  background: var(--vinv-green);
+  color: #333333;
+}
+
 .vinv-lane-btn[data-color="blue"] {
   background: var(--vinv-blue);
+  color: #ffffff;
+}
+
+.vinv-lane-btn[data-color="purple"] {
+  background: var(--vinv-purple);
   color: #ffffff;
 }
 

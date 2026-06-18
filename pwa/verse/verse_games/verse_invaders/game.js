@@ -23,16 +23,34 @@
       alienAlt: "Red alien"
     },
     {
+      key: "orange",
+      hex: "#ffa351",
+      alienImg: "./verse_invaders_images/verse_invaders_alien_yellow.png",
+      alienAlt: "Orange alien"
+    },
+    {
       key: "yellow",
       hex: "#ffc751",
       alienImg: "./verse_invaders_images/verse_invaders_alien_yellow.png",
       alienAlt: "Yellow alien"
     },
     {
+      key: "green",
+      hex: "#a7cb6f",
+      alienImg: "./verse_invaders_images/verse_invaders_alien_blue.png",
+      alienAlt: "Green alien"
+    },
+    {
       key: "blue",
       hex: "#40b9c5",
       alienImg: "./verse_invaders_images/verse_invaders_alien_blue.png",
       alienAlt: "Blue alien"
+    },
+    {
+      key: "purple",
+      hex: "#7f66c6",
+      alienImg: "./verse_invaders_images/verse_invaders_alien_red.png",
+      alienAlt: "Purple alien"
     }
   ];
 
@@ -70,6 +88,7 @@
     bottomZoneY: 0,
     buttonsLocked: false,
     activeLane: null,
+    buttonColors: null,
     flashBadUntil: 0,
     buildShakeUntil: 0,
     overlayMessage: "",
@@ -174,7 +193,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v1.7",
+      debugBadge: "v1.8",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -211,6 +230,7 @@
     state.pauseReason = "";
     state.buttonsLocked = false;
     state.activeLane = null;
+    state.buttonColors = null;
     state.flashBadUntil = 0;
     state.buildShakeUntil = 0;
     state.overlayMessage = "";
@@ -558,7 +578,15 @@
     state.phase = getCurrentPhase();
     const decoys = getDecoysForPhase(state.phase, correctLabel, 2);
     const labels = shuffle([correctLabel, ...decoys]);
-    const colors = shuffle([...LANE_COLORS]);
+    const roundColors = shuffle([...LANE_COLORS]).slice(0, 3);
+    const entityColors = shuffle([...roundColors]);
+    const buttonColors = shuffle([...roundColors]);
+
+    state.buttonColors = {
+      left: buttonColors[0],
+      center: buttonColors[1],
+      right: buttonColors[2]
+    };
 
     state.entities = LANE_KEYS.map((lane, index) => {
       const label = labels[index];
@@ -567,7 +595,7 @@
         lane,
         label,
         correct: label === correctLabel,
-        color: colors[index],
+        color: entityColors[index],
         x: getLaneCenterX(lane),
         y: -22 - index * 18,
         visible: true,
@@ -1111,7 +1139,7 @@
   }
 
   function buttonLaneToColor(lane) {
-    return BUTTON_COLOR_ORDER[lane] || BUTTON_COLOR_ORDER.left;
+    return state.buttonColors?.[lane] || BUTTON_COLOR_ORDER[lane] || BUTTON_COLOR_ORDER.left;
   }
 
   function hasVisibleEntityForColor(colorKey) {
@@ -1208,7 +1236,7 @@
   }
 
   function makeBonusFireworkEffect(x, y) {
-    const color = randomFrom([LANE_COLORS[0].hex, LANE_COLORS[1].hex, LANE_COLORS[2].hex, "#f28fff", "#ffffff"]);
+    const color = randomFrom([...LANE_COLORS.map(item => item.hex), "#f28fff", "#ffffff"]);
     return makeParticleEffect(randomFrom(BONUS_FIREWORK_POOL), x, y, color, 5, "fireworkParticle");
   }
 
@@ -1292,7 +1320,7 @@
   }
 
   function buildPalette(baseColor, preset) {
-    if (preset === "confettiBloom") return ["#ff5a51", "#ffc751", "#40b9c5", "#f28fff", "#ffffff", "#a7cb6f"];
+    if (preset === "confettiBloom") return ["#ff5a51", "#ffa351", "#ffc751", "#a7cb6f", "#40b9c5", "#7f66c6", "#f28fff", "#ffffff"];
     if (preset === "plasmaBurst") return [baseColor, lightenColor(baseColor, 0.3), "#ffffff", "#d596ff", "#77f0ff"];
     if (preset === "cosmicCrackle") return [baseColor, "#ffffff", "#ffd96c", "#8af2ff", "#ff9fe7"];
     return [baseColor, lightenColor(baseColor, 0.2), lightenColor(baseColor, 0.36), "#ffffff", "#ffe082"];
