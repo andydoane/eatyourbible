@@ -135,9 +135,10 @@
     }
   }
 
-  function renderAlienHtml(color, altText = "Alien", extraClass = "", blinkDelay = 0.35) {
+  function renderAlienHtml(color, altText = "Alien", extraClass = "", blinkDelay = 0.35, partDelay = 0) {
     const colorHex = color?.hex || "#ffc751";
     const safeBlinkDelay = clamp(Number(blinkDelay) || 0.35, 0.12, 1.4);
+    const safePartDelay = clamp(Number(partDelay) || 0, -2, 0);
 
     if (alienSvgTemplate) {
       const staggeredSvg = alienSvgTemplate.replace(
@@ -150,7 +151,7 @@
               class="vinv-alien-svg ${extraClass}"
               role="img"
               aria-label="${escapeHtml(altText)}"
-              style="--vinv-alien-color:${colorHex};"
+              style="--vinv-alien-color:${colorHex}; --vinv-part-delay:${safePartDelay.toFixed(2)}s;"
             >
               ${staggeredSvg}
             </div>
@@ -173,7 +174,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v1.6",
+      debugBadge: "v1.7",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -572,7 +573,8 @@
         visible: true,
         status: "falling",
         motionPhase: Math.random() * Math.PI * 2,
-        blinkDelay: randBetween(0.12, 1.15)
+        blinkDelay: randBetween(0.12, 1.15),
+        partDelay: randBetween(-1.8, 0)
       };
     });
     state.entityRenderSignature = "";
@@ -950,7 +952,7 @@
 
   function getEntityRenderSignature() {
     return state.entities.map((entity) => {
-      return `${entity.id}:${entity.color.key}:${entity.label}:${entity.blinkDelay}`;
+      return `${entity.id}:${entity.color.key}:${entity.label}:${entity.blinkDelay}:${entity.partDelay}`;
     }).join("|");
   }
 
@@ -985,7 +987,7 @@
           style="${getEntityStyle(entity, now)}"
         >
           <div class="vinv-alien">
-            ${renderAlienHtml(entity.color, entity.color.alienAlt, "", entity.blinkDelay)}
+            ${renderAlienHtml(entity.color, entity.color.alienAlt, "", entity.blinkDelay, entity.partDelay)}
           </div>
           <div class="vinv-word" style="color:${entity.color.hex}">${escapeHtml(entity.label)}</div>
         </div>

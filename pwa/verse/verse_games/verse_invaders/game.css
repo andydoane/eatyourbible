@@ -272,6 +272,46 @@ body {
   fill: var(--vinv-alien-color, #ffc751) !important;
 }
 
+.vinv-alien-svg [id="left_antenna_group"]>path:nth-of-type(1),
+.vinv-alien-svg [id="right_antenna_group"]>path:nth-of-type(1),
+.vinv-alien-svg [id="arms_group"]>path:nth-of-type(1) {
+  animation: vinvAlienPartFrameA 2s steps(1, end) infinite;
+  animation-delay: var(--vinv-part-delay, 0s);
+}
+
+.vinv-alien-svg [id="left_antenna_group"]>path:nth-of-type(2),
+.vinv-alien-svg [id="right_antenna_group"]>path:nth-of-type(2),
+.vinv-alien-svg [id="arms_group"]>path:nth-of-type(2) {
+  animation: vinvAlienPartFrameB 2s steps(1, end) infinite;
+  animation-delay: var(--vinv-part-delay, 0s);
+}
+
+@keyframes vinvAlienPartFrameA {
+
+  0%,
+  49.99% {
+    opacity: 1;
+  }
+
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes vinvAlienPartFrameB {
+
+  0%,
+  49.99% {
+    opacity: 0;
+  }
+
+  50%,
+  100% {
+    opacity: 1;
+  }
+}
+
 .vinv-word {
   margin-top: 6px;
   font-weight: 900;
