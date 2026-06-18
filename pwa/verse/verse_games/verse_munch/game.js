@@ -12,7 +12,7 @@
   const BUILD_AREA = "compact";
 
   const HELP_OVERLAY_ID = "vmunchHelpOverlay";
-  const VMUNCH_DEBUG_VERSION = "VMUNCH v.5.13";
+  const VMUNCH_DEBUG_VERSION = "VMUNCH v5.14";
 
 const BOOKS = window.VerseGameShell.getBibleBookDecoys();
   
@@ -63,9 +63,9 @@ const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
       uiTap: 0.45,
       wordTap: 0.48,
       chew: 0.58,
-      chomp: 0.64,
+      chomp: 0.50,
       correct: 0.70,
-      spew: 0.74,
+      spew: 0.50,
       dizzy: 0.70,
       streak: 0.78,
       bonusStart: 0.82,
@@ -356,6 +356,8 @@ const FACE_MAP = {
     streakSunburstUntil:0,
     faceScaleBoost:0,
     bonusCount:0,
+    bonusCorrectStreak:0,
+    bonusMultiplier:1,
     bonusPhase:"",
     bonusTargetFruit:null,
     bonusIntroText:"",
@@ -641,6 +643,8 @@ function renderModeSelect(){
     state.streakSunburstUntil = 0;
     state.faceScaleBoost = 0;
     state.bonusCount = 0;
+    state.bonusCorrectStreak = 0;
+    state.bonusMultiplier = 1;
     state.bonusPhase = "";
     state.bonusTargetFruit = null;
     state.bonusIntroText = "";
@@ -1250,6 +1254,8 @@ function backToMenuFromHelp(){
     if (!item.isTarget) {
       item.tapped = true;
       state.bonusCount = Math.max(0, state.bonusCount - 1);
+      state.bonusCorrectStreak = 0;
+      state.bonusMultiplier = 1;
 
       playGameSound("wrongFruit");
 
@@ -1263,12 +1269,28 @@ function backToMenuFromHelp(){
     }
 
     item.tapped = true;
-    state.bonusCount += 1;
+    state.bonusCorrectStreak += 1;
+    state.bonusMultiplier = getBonusMultiplierForStreak(state.bonusCorrectStreak);
+
+    const awardedPoints = state.bonusMultiplier;
+    state.bonusCount += awardedPoints;
 
     playWordTapSound();
 
+    if (state.bonusCorrectStreak === 5) {
+      triggerBonusMultiplierMilestone(2);
+    } else if (state.bonusCorrectStreak === 10) {
+      triggerBonusMultiplierMilestone(3);
+    }
+
     const startPoint = getBonusFoodChipCenter(chipEl);
-    spawnBonusScorePop(startPoint.x, startPoint.y - item.size * 0.20, "+1", "positive", item.size);
+    spawnBonusScorePop(
+      startPoint.x,
+      startPoint.y - item.size * 0.20,
+      `+${awardedPoints}`,
+      "positive",
+      item.size
+    );
 
     const feedItem = {
       fruit: item.fruit,
@@ -1817,6 +1839,27 @@ function backToMenuFromHelp(){
     return "is-flash-streak-1";
   }
 
+  function getBonusMultiplierForStreak(streak) {
+    if (streak >= 10) return 3;
+    if (streak >= 5) return 2;
+    return 1;
+  }
+
+  function triggerBonusMultiplierMilestone(multiplier) {
+    const now = performance.now();
+    const streakTier = multiplier >= 3 ? 3 : 2;
+
+    state.reactionFlash = getStreakFlashClass(streakTier);
+    state.reactionFlashUntil = now + 820;
+    state.streakSunburstUntil = now + 1040;
+
+    state.feedbackBadge = `${multiplier}X`;
+    state.feedbackType = "positive";
+    state.feedbackUntil = now + 900;
+
+    playGameSound("streak");
+  }
+
   function spawnStreakRainbowCircleBurst(streakTier) {
     const metrics = getMonsterFaceMetrics();
     const centerX = metrics.centerX;
@@ -2111,6 +2154,8 @@ function backToMenuFromHelp(){
     state.inputLocked = true;
     state.beltHidden = true;
     state.bonusCount = 0;
+    state.bonusCorrectStreak = 0;
+    state.bonusMultiplier = 1;
     state.bonusTargetFruit = chooseBonusTargetFruit();
     state.bonusFoodItems = [];
     state.bonusFoodNextId = 1;
