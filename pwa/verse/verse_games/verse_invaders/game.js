@@ -1,4 +1,4 @@
-(async function(){
+(async function () {
   const app = document.getElementById("app");
   const ctx = await window.VerseGameBridge.getVerseContext();
 
@@ -46,8 +46,8 @@
   };
   const CORRECT_EFFECT_POOL = ["alienPop", "starburst", "chrysanthemum", "novaBurst"];
   const BONUS_FIREWORK_POOL = ["flashRing", "classicFirework", "confettiBloom", "plasmaBurst", "cosmicCrackle"];
-const BOOKS = window.VerseGameShell.getBibleBookDecoys();
-const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
+  const BOOKS = window.VerseGameShell.getBibleBookDecoys();
+  const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
 
   let selectedMode = null;
   let muted = false;
@@ -56,47 +56,47 @@ const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
   let resizeHandlerBound = false;
 
   const state = {
-    running:false,
-    rafId:0,
-    lastTs:0,
-    paused:false,
-    pauseReason:"",
-    scale:1,
-    fieldWidth:0,
-    fieldHeight:0,
-    controlsTopY:0,
-    bottomZoneY:0,
-    buttonsLocked:false,
-    activeLane:null,
-    flashBadUntil:0,
-    buildShakeUntil:0,
-    overlayMessage:"",
-    overlayUntil:0,
-    buildSizeClass:"normal",
-    buildFitDone:false,
-    queue:[],
-    builtCount:0,
-    phase:"words",
-    streak:0,
-    mistakes:0,
-    wrongGuessesThisRound:0,
-    roundIndex:0,
-    roundSpeed:0,
-    entities:[],
-    rocket:null,
-    trails:[],
-    effects:[],
-    roundStatus:"idle",
-    scheduledActions:[],
-    bonusMode:false,
-    bonusShotsLeft:0,
-    bonusAutoTimer:0,
-    bonusFinished:false,
-    bonusFireworks:[],
-    modeTiming:{
-      easy:{ start:6.2, step:0 },
-      medium:{ start:5.8, step:-0.08 },
-      hard:{ start:5.1, step:-0.10 }
+    running: false,
+    rafId: 0,
+    lastTs: 0,
+    paused: false,
+    pauseReason: "",
+    scale: 1,
+    fieldWidth: 0,
+    fieldHeight: 0,
+    controlsTopY: 0,
+    bottomZoneY: 0,
+    buttonsLocked: false,
+    activeLane: null,
+    flashBadUntil: 0,
+    buildShakeUntil: 0,
+    overlayMessage: "",
+    overlayUntil: 0,
+    buildSizeClass: "normal",
+    buildFitDone: false,
+    queue: [],
+    builtCount: 0,
+    phase: "words",
+    streak: 0,
+    mistakes: 0,
+    wrongGuessesThisRound: 0,
+    roundIndex: 0,
+    roundSpeed: 0,
+    entities: [],
+    rocket: null,
+    trails: [],
+    effects: [],
+    roundStatus: "idle",
+    scheduledActions: [],
+    bonusMode: false,
+    bonusShotsLeft: 0,
+    bonusAutoTimer: 0,
+    bonusFinished: false,
+    bonusFireworks: [],
+    modeTiming: {
+      easy: { start: 6.2, step: 0 },
+      medium: { start: 5.8, step: -0.08 },
+      hard: { start: 5.1, step: -0.10 }
     }
   };
 
@@ -112,39 +112,39 @@ const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
   renderIntro();
 
 
-function renderIntro(){
-  stopLoop();
+  function renderIntro() {
+    stopLoop();
 
-  window.VerseGameShell.renderTitleScreen({
-    app,
-    title: "Verse Invaders",
-    icon: "👾",
-    helpHtml: helpHtml(),
-    helpOverlayId: HELP_OVERLAY_ID,
-    theme: GAME_THEME,
-    backLabel: "Back to Practice Games",
-    onBack: () => window.VerseGameBridge.exitGame(),
-    onStart: renderModeSelect
-  });
-}
+    window.VerseGameShell.renderTitleScreen({
+      app,
+      title: "Verse Invaders",
+      icon: "👾",
+      helpHtml: helpHtml(),
+      helpOverlayId: HELP_OVERLAY_ID,
+      theme: GAME_THEME,
+      backLabel: "Back to Practice Games",
+      onBack: () => window.VerseGameBridge.exitGame(),
+      onStart: renderModeSelect
+    });
+  }
 
-function renderModeSelect(){
-  stopLoop();
+  function renderModeSelect() {
+    stopLoop();
 
-  window.VerseGameShell.renderModeSelect({
-    app,
-    title: "Choose Your Difficulty",
-    icon: "🥉🥈🥇",
-    helpHtml: helpHtml(),
-    helpOverlayId: HELP_OVERLAY_ID,
-    theme: GAME_THEME,
-    backLabel: "Back to Verse Invaders title",
-    onBack: renderIntro,
-    onSelect: startGame
-  });
-}
+    window.VerseGameShell.renderModeSelect({
+      app,
+      title: "Choose Your Difficulty",
+      icon: "🥉🥈🥇",
+      helpHtml: helpHtml(),
+      helpOverlayId: HELP_OVERLAY_ID,
+      theme: GAME_THEME,
+      backLabel: "Back to Verse Invaders title",
+      onBack: renderIntro,
+      onSelect: startGame
+    });
+  }
 
-  function startGame(mode){
+  function startGame(mode) {
     selectedMode = mode;
     completionMarked = false;
     completionResult = null;
@@ -226,23 +226,23 @@ function renderModeSelect(){
     startLoop();
   }
 
-function renderHelpOverlay(body){
-  return window.VerseGameShell.helpOverlayHtml({
-    id: HELP_OVERLAY_ID,
-    body
-  });
-}
+  function renderHelpOverlay(body) {
+    return window.VerseGameShell.helpOverlayHtml({
+      id: HELP_OVERLAY_ID,
+      body
+    });
+  }
 
-function renderGameMenuOverlay(){
-  return window.VerseGameShell.gameMenuHtml({
-    id: "vinvGameMenuOverlay",
-    title: "Game Menu",
-    muted,
-    showModeSelect: true
-  });
-}
+  function renderGameMenuOverlay() {
+    return window.VerseGameShell.gameMenuHtml({
+      id: "vinvGameMenuOverlay",
+      title: "Game Menu",
+      muted,
+      showModeSelect: true
+    });
+  }
 
-  function helpHtml(){
+  function helpHtml() {
     return `Tap the color of the next correct word.<br><br>
       The three buttons are always red, yellow, and blue from left to right.<br><br>
       A correct hit explodes and adds the word to the build area.<br><br>
@@ -250,92 +250,92 @@ function renderGameMenuOverlay(){
       If the correct word reaches the buttons, it abducts a human and the streak resets.`;
   }
 
-function wireCommonNav(){
-  window.VerseGameShell.wireGameMenu({
-    id: "vinvGameMenuOverlay",
-    menuButtonId: "vinvModePill",
-    helpOverlayId: HELP_OVERLAY_ID,
-    isMuted: () => muted,
-    onMuteToggle: () => {
-      muted = !muted;
-      return muted;
-    },
-    onHowToPlay: openHelpFromMenu,
-    onModeSelect: () => {
+  function wireCommonNav() {
+    window.VerseGameShell.wireGameMenu({
+      id: "vinvGameMenuOverlay",
+      menuButtonId: "vinvModePill",
+      helpOverlayId: HELP_OVERLAY_ID,
+      isMuted: () => muted,
+      onMuteToggle: () => {
+        muted = !muted;
+        return muted;
+      },
+      onHowToPlay: openHelpFromMenu,
+      onModeSelect: () => {
+        setPaused(false, "");
+        stopLoop();
+        renderModeSelect();
+      },
+      onExit: () => {
+        stopLoop();
+        window.VerseGameBridge.exitGame();
+      },
+      onOpen: () => setPaused(true, "menu"),
+      onClose: () => setPaused(false, ""),
+      onBackFromHelp: () => setPaused(true, "menu")
+    });
+  }
+
+  function setPaused(paused, reason = "") {
+    state.paused = paused;
+    state.pauseReason = paused ? reason : "";
+    if (!paused) {
+      state.lastTs = performance.now();
+    }
+  }
+
+  function openGameMenu() {
+    const menuOverlay = document.getElementById("vinvGameMenuOverlay");
+    if (menuOverlay) {
+      setPaused(true, "menu");
+      menuOverlay.classList.add("is-open");
+      menuOverlay.setAttribute("aria-hidden", "false");
+    }
+  }
+
+  function closeGameMenu() {
+    const menuOverlay = document.getElementById("vinvGameMenuOverlay");
+
+    if (menuOverlay && menuOverlay.contains(document.activeElement)) {
+      document.activeElement.blur();
+    }
+
+    if (menuOverlay) {
+      menuOverlay.classList.remove("is-open");
+      menuOverlay.setAttribute("aria-hidden", "true");
+    }
+
+    const helpOverlay = document.getElementById("vinvHelpOverlay");
+    if (!helpOverlay || !helpOverlay.classList.contains("is-open")) {
       setPaused(false, "");
-      stopLoop();
-      renderModeSelect();
-    },
-    onExit: () => {
-      stopLoop();
-      window.VerseGameBridge.exitGame();
-    },
-    onOpen: () => setPaused(true, "menu"),
-    onClose: () => setPaused(false, ""),
-    onBackFromHelp: () => setPaused(true, "menu")
-  });
-}
-
-function setPaused(paused, reason = ""){
-  state.paused = paused;
-  state.pauseReason = paused ? reason : "";
-  if (!paused){
-    state.lastTs = performance.now();
-  }
-}
-
-function openGameMenu(){
-  const menuOverlay = document.getElementById("vinvGameMenuOverlay");
-  if (menuOverlay){
-    setPaused(true, "menu");
-    menuOverlay.classList.add("is-open");
-    menuOverlay.setAttribute("aria-hidden", "false");
-  }
-}
-
-function closeGameMenu(){
-  const menuOverlay = document.getElementById("vinvGameMenuOverlay");
-
-  if (menuOverlay && menuOverlay.contains(document.activeElement)){
-    document.activeElement.blur();
+    }
   }
 
-  if (menuOverlay){
-    menuOverlay.classList.remove("is-open");
-    menuOverlay.setAttribute("aria-hidden", "true");
+  function openHelpFromMenu() {
+    const menuOverlay = document.getElementById("vinvGameMenuOverlay");
+
+    if (menuOverlay) menuOverlay.classList.remove("is-open");
+    window.VerseGameShell.openHelp(HELP_OVERLAY_ID, "back", "Back");
+
+    setPaused(true, "help");
   }
 
-  const helpOverlay = document.getElementById("vinvHelpOverlay");
-  if (!helpOverlay || !helpOverlay.classList.contains("is-open")){
+  function closeHelpOverlay() {
+    window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
     setPaused(false, "");
   }
-}
 
-function openHelpFromMenu(){
-  const menuOverlay = document.getElementById("vinvGameMenuOverlay");
+  function backToMenuFromHelp() {
+    window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
 
-  if (menuOverlay) menuOverlay.classList.remove("is-open");
-  window.VerseGameShell.openHelp(HELP_OVERLAY_ID, "back", "Back");
+    const menuOverlay = document.getElementById("vinvGameMenuOverlay");
+    if (menuOverlay) menuOverlay.classList.add("is-open");
 
-  setPaused(true, "help");
-}
+    setPaused(true, "menu");
+  }
 
-function closeHelpOverlay(){
-  window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
-  setPaused(false, "");
-}
-
-function backToMenuFromHelp(){
-  window.VerseGameShell.closeHelp(HELP_OVERLAY_ID);
-
-  const menuOverlay = document.getElementById("vinvGameMenuOverlay");
-  if (menuOverlay) menuOverlay.classList.add("is-open");
-
-  setPaused(true, "menu");
-}
-
-  function wireGameInput(){
-    if (!resizeHandlerBound){
+  function wireGameInput() {
+    if (!resizeHandlerBound) {
       window.addEventListener("resize", recalcField);
       resizeHandlerBound = true;
     }
@@ -352,7 +352,7 @@ function backToMenuFromHelp(){
     };
   }
 
-  function recalcField(){
+  function recalcField() {
     const field = document.getElementById("vinvField");
     const controls = document.getElementById("vinvControls");
     if (!field) return;
@@ -362,7 +362,7 @@ function backToMenuFromHelp(){
     state.fieldHeight = fieldRect.height;
     state.scale = clamp(fieldRect.width / 390, 0.88, 1.45);
 
-    if (controls){
+    if (controls) {
       const controlsRect = controls.getBoundingClientRect();
       state.controlsTopY = Math.max(0, controlsRect.top - fieldRect.top);
       state.bottomZoneY = Math.max(110, state.controlsTopY - 8);
@@ -375,7 +375,7 @@ function backToMenuFromHelp(){
     renderStaticField();
   }
 
-  function renderStaticField(){
+  function renderStaticField() {
     const lanesEl = document.getElementById("vinvLanes");
     const bottomEl = document.getElementById("vinvBottom");
     if (!lanesEl || !bottomEl) return;
@@ -389,11 +389,11 @@ function backToMenuFromHelp(){
     bottomEl.innerHTML = "";
   }
 
-  function renderHud(){
+  function renderHud() {
     const modePill = document.getElementById("vinvModePill");
     const streakPill = document.getElementById("vinvStreakPill");
 
-    if (modePill){
+    if (modePill) {
       modePill.textContent = "☰";
       modePill.setAttribute("aria-label", "Game Menu");
       modePill.onclick = () => {
@@ -406,54 +406,54 @@ function backToMenuFromHelp(){
     renderButtons();
   }
 
-function fitInvadersBuildText(){
-  if (state.buildFitDone) return;
+  function fitInvadersBuildText() {
+    if (state.buildFitDone) return;
 
-  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      const build = document.getElementById("vinvBuild");
+      const text = document.getElementById("vinvBuildText");
+
+      if (!build || !text) return;
+
+      const result = window.VerseGameShell.fitBuildTextOnce({
+        buildEl: build,
+        textEl: text,
+        buildArea: BUILD_AREA
+      });
+
+      if (result) {
+        state.buildFitDone = true;
+      }
+    });
+  }
+
+  function renderBuildArea() {
+    const buildText = document.getElementById("vinvBuildText");
     const build = document.getElementById("vinvBuild");
-    const text = document.getElementById("vinvBuildText");
+    if (!buildText || !build) return;
 
-    if (!build || !text) return;
+    build.classList.toggle("is-shake", state.buildShakeUntil > performance.now());
 
-    const result = window.VerseGameShell.fitBuildTextOnce({
-      buildEl: build,
-      textEl: text,
-      buildArea: BUILD_AREA
+    const buildRender = window.VerseGameShell.renderBuildProgressHtml({
+      verseText: ctx.verseText || "",
+      book: parsedRef.book,
+      reference: parsedRef.reference,
+      progressIndex: state.builtCount,
+      buildArea: BUILD_AREA,
+      hideUnbuilt: selectedMode === "hard",
+      extraClass: "vinv-build-text"
     });
 
-    if (result){
-      state.buildFitDone = true;
-    }
-  });
-}
+    buildText.className = buildRender.className;
+    buildText.innerHTML = buildRender.html;
 
-function renderBuildArea(){
-  const buildText = document.getElementById("vinvBuildText");
-  const build = document.getElementById("vinvBuild");
-  if (!buildText || !build) return;
-
-  build.classList.toggle("is-shake", state.buildShakeUntil > performance.now());
-
-  const buildRender = window.VerseGameShell.renderBuildProgressHtml({
-    verseText: ctx.verseText || "",
-    book: parsedRef.book,
-    reference: parsedRef.reference,
-    progressIndex: state.builtCount,
-    buildArea: BUILD_AREA,
-    hideUnbuilt: selectedMode === "hard",
-    extraClass: "vinv-build-text"
-  });
-
-  buildText.className = buildRender.className;
-  buildText.innerHTML = buildRender.html;
-
-  fitInvadersBuildText();
-}
-  
+    fitInvadersBuildText();
+  }
 
 
 
-function renderButtons(){
+
+  function renderButtons() {
     const buttons = document.querySelectorAll(".vinv-lane-btn");
     buttons.forEach((btn) => {
       const lane = btn.dataset.lane;
@@ -467,8 +467,8 @@ function renderButtons(){
     });
   }
 
-  function spawnRound(){
-    if (state.builtCount >= state.queue.length){
+  function spawnRound() {
+    if (state.builtCount >= state.queue.length) {
       startBonusRound();
       return;
     }
@@ -493,15 +493,15 @@ function renderButtons(){
     state.entities = LANE_KEYS.map((lane, index) => {
       const label = labels[index];
       return {
-        id:`entity-${state.roundIndex}-${lane}`,
+        id: `entity-${state.roundIndex}-${lane}`,
         lane,
         label,
-        correct:label === correctLabel,
-        color:colors[index],
-        x:getLaneCenterX(lane),
-        y:-22 - index * 18,
-        visible:true,
-        status:"falling",
+        correct: label === correctLabel,
+        color: colors[index],
+        x: getLaneCenterX(lane),
+        y: -22 - index * 18,
+        visible: true,
+        status: "falling",
         motionPhase: Math.random() * Math.PI * 2
       };
     });
@@ -509,11 +509,11 @@ function renderButtons(){
     renderDynamic();
   }
 
-  function handleColorPress(buttonLane){
+  function handleColorPress(buttonLane) {
     if (!state.running) return;
     if (state.buttonsLocked) return;
 
-    if (state.bonusMode){
+    if (state.bonusMode) {
       if (state.bonusShotsLeft <= 0) return;
       launchBonusRocket(buttonLane);
       return;
@@ -556,9 +556,9 @@ function renderButtons(){
       speed: rocketSpeed,
       targetId: target.id,
       targetColorKey: target.color.key,
-      resolved:false,
-      white:false,
-      age:0,
+      resolved: false,
+      white: false,
+      age: 0,
       maxAge: flightTime + 0.12,
       hitRadius: Math.max(28, 22 * state.scale),
       angleDeg
@@ -566,11 +566,11 @@ function renderButtons(){
     renderButtons();
   }
 
-  function resolveRocketHit(){
+  function resolveRocketHit() {
     if (!state.rocket || state.rocket.resolved) return;
     state.rocket.resolved = true;
     const target = state.entities.find(item => item.id === state.rocket.targetId);
-    if (!target || !target.visible){
+    if (!target || !target.visible) {
       unlockAfterDelay(260);
       return;
     }
@@ -579,7 +579,7 @@ function renderButtons(){
     else handleWrongHit(target);
   }
 
-  function handleWrongHit(target){
+  function handleWrongHit(target) {
     state.streak = 0;
     state.mistakes += 1;
     state.wrongGuessesThisRound += 1;
@@ -593,7 +593,7 @@ function renderButtons(){
     renderHud();
     renderDynamic();
 
-    if (state.wrongGuessesThisRound >= 2){
+    if (state.wrongGuessesThisRound >= 2) {
       state.buttonsLocked = true;
       state.activeLane = null;
       scheduleAction(260, () => {
@@ -611,7 +611,7 @@ function renderButtons(){
     }
   }
 
-  function handleCorrectHit(target){
+  function handleCorrectHit(target) {
     state.streak += 1;
     state.buttonsLocked = true;
     renderDynamic();
@@ -622,7 +622,7 @@ function renderButtons(){
       target.visible = false;
 
       state.entities.forEach(item => {
-        if (item.id !== target.id && item.visible){
+        if (item.id !== target.id && item.visible) {
           const itemPoint = getEntityHitPoint(item);
           item.visible = false;
           addEffect(makeSmokePuffEffect(itemPoint.x, item.y + 28));
@@ -640,7 +640,7 @@ function renderButtons(){
     });
   }
 
-  function handleBottomMiss(target){
+  function handleBottomMiss(target) {
     state.streak = 0;
     state.mistakes += 1;
     state.buttonsLocked = true;
@@ -664,7 +664,7 @@ function renderButtons(){
     });
   }
 
-  function unlockAfterDelay(ms){
+  function unlockAfterDelay(ms) {
     scheduleAction(ms, () => {
       state.buttonsLocked = false;
       state.activeLane = null;
@@ -673,7 +673,7 @@ function renderButtons(){
     });
   }
 
-  async function startBonusRound(){
+  async function startBonusRound() {
     if (state.bonusMode) return;
     state.bonusMode = true;
     state.buttonsLocked = false;
@@ -689,7 +689,7 @@ function renderButtons(){
     renderHud();
     renderDynamic();
 
-    if (!completionMarked){
+    if (!completionMarked) {
       completionMarked = true;
 
       try {
@@ -720,21 +720,21 @@ function renderButtons(){
     }
   }
 
-  function launchBonusRocket(buttonLane){
+  function launchBonusRocket(buttonLane) {
     state.bonusShotsLeft = Math.max(0, state.bonusShotsLeft - 1);
     const x = getLaneCenterX(buttonLane);
     state.bonusFireworks.push({
-      id:`fw-${Date.now()}-${Math.random()}`,
+      id: `fw-${Date.now()}-${Math.random()}`,
       x,
-      y:state.controlsTopY - 12,
-      targetY:randBetween(state.fieldHeight * 0.16, state.fieldHeight * 0.48),
-      speed:Math.max(320, state.fieldHeight * 1.4),
-      exploded:false
+      y: state.controlsTopY - 12,
+      targetY: randBetween(state.fieldHeight * 0.16, state.fieldHeight * 0.48),
+      speed: Math.max(320, state.fieldHeight * 1.4),
+      exploded: false
     });
     renderHud();
   }
 
-  function finishBonusRound(){
+  function finishBonusRound() {
     state.bonusFinished = true;
     state.buttonsLocked = true;
     state.activeLane = null;
@@ -744,32 +744,32 @@ function renderButtons(){
     setTimeout(() => renderVictory(), 900);
   }
 
-function renderVictory(){
-  stopLoop();
+  function renderVictory() {
+    stopLoop();
 
-  window.VerseGameShell.renderCompleteScreen({
-    app,
-    gameIcon: "👾",
-    mode: selectedMode,
-    verseId: ctx.verseId,
-    gameId: GAME_ID,
-    completion: completionResult,
-    gameMessage: "",
-    theme: GAME_THEME,
-    backLabel: "Back to Practice Games",
-    onPlayAgain: renderModeSelect,
-    onMoreGames: () => window.VerseGameBridge.exitGame(),
-    onChangeVerse: () => window.VerseGameBridge.returnToTitle()
-  });
-}
+    window.VerseGameShell.renderCompleteScreen({
+      app,
+      gameIcon: "👾",
+      mode: selectedMode,
+      verseId: ctx.verseId,
+      gameId: GAME_ID,
+      completion: completionResult,
+      gameMessage: "",
+      theme: GAME_THEME,
+      backLabel: "Back to Practice Games",
+      onPlayAgain: renderModeSelect,
+      onMoreGames: () => window.VerseGameBridge.exitGame(),
+      onChangeVerse: () => window.VerseGameBridge.returnToTitle()
+    });
+  }
 
-  function loop(ts){
+  function loop(ts) {
     if (!state.running && !state.bonusMode) return;
     if (!state.lastTs) state.lastTs = ts;
     const dt = Math.min(0.032, (ts - state.lastTs) / 1000);
     state.lastTs = ts;
 
-    if (!state.paused){
+    if (!state.paused) {
       updateGame(dt, ts);
     }
 
@@ -777,71 +777,71 @@ function renderVictory(){
     state.rafId = requestAnimationFrame(loop);
   }
 
-  function updateGame(dt, ts){
+  function updateGame(dt, ts) {
     state.effects = state.effects.filter(effect => effect.until > ts);
     state.trails = state.trails.filter(trail => trail.until > ts);
     processScheduledActions(ts);
 
     if (state.buildShakeUntil && ts > state.buildShakeUntil) renderHud();
 
-    if (!state.bonusMode){
+    if (!state.bonusMode) {
       const speed = state.roundSpeed;
-      for (const entity of state.entities){
+      for (const entity of state.entities) {
         if (!entity.visible || entity.status !== "falling") continue;
         entity.y += speed * dt;
-        if (entity.correct && entity.y >= state.bottomZoneY - 48){
+        if (entity.correct && entity.y >= state.bottomZoneY - 48) {
           handleBottomMiss(entity);
           break;
         }
       }
 
-      if (state.rocket){
+      if (state.rocket) {
         state.rocket.age += dt;
         state.rocket.x += state.rocket.vx * dt;
         state.rocket.y += state.rocket.vy * dt;
         addTrail(state.rocket.x, state.rocket.y + 18, state.rocket.white);
 
         const target = state.entities.find(item => item.id === state.rocket.targetId && item.visible);
-        if (!target){
+        if (!target) {
           state.rocket = null;
           unlockAfterDelay(220);
         } else {
-        const targetPoint = getEntityHitPoint(target, ts);
-        const dx = targetPoint.x - state.rocket.x;
-        const dy = targetPoint.y - state.rocket.y;
-          if (Math.hypot(dx, dy) <= state.rocket.hitRadius || state.rocket.age >= state.rocket.maxAge){
+          const targetPoint = getEntityHitPoint(target, ts);
+          const dx = targetPoint.x - state.rocket.x;
+          const dy = targetPoint.y - state.rocket.y;
+          if (Math.hypot(dx, dy) <= state.rocket.hitRadius || state.rocket.age >= state.rocket.maxAge) {
             resolveRocketHit();
             state.rocket = null;
           }
         }
       }
     } else {
-      if (state.bonusShotsLeft > 0){
+      if (state.bonusShotsLeft > 0) {
         state.bonusAutoTimer -= dt;
-        if (state.bonusAutoTimer <= 0){
+        if (state.bonusAutoTimer <= 0) {
           state.bonusAutoTimer = randBetween(0.26, 0.5);
           launchBonusRocket(randomFrom(LANE_KEYS));
         }
       }
 
-      for (const firework of state.bonusFireworks){
+      for (const firework of state.bonusFireworks) {
         if (firework.exploded) continue;
         firework.y -= firework.speed * dt;
         addTrail(firework.x, firework.y + 18, true);
-        if (firework.y <= firework.targetY){
+        if (firework.y <= firework.targetY) {
           firework.exploded = true;
           addEffect(makeBonusFireworkEffect(firework.x, firework.y));
         }
       }
       state.bonusFireworks = state.bonusFireworks.filter(item => !item.exploded);
 
-      if (!state.bonusFinished && state.bonusShotsLeft <= 0 && state.bonusFireworks.length === 0 && !state.effects.some(item => item.kind === "fireworkParticle")){
+      if (!state.bonusFinished && state.bonusShotsLeft <= 0 && state.bonusFireworks.length === 0 && !state.effects.some(item => item.kind === "fireworkParticle")) {
         finishBonusRound();
       }
     }
   }
 
-  function renderDynamic(){
+  function renderDynamic() {
     const entitiesEl = document.getElementById("vinvEntities");
     const rocketsEl = document.getElementById("vinvRockets");
     const effectsEl = document.getElementById("vinvEffects");
@@ -905,7 +905,7 @@ function renderVictory(){
     renderButtons();
   }
 
-  function getCurrentPhase(){
+  function getCurrentPhase() {
     return window.VerseGameShell.getPhaseForProgress({
       progressIndex: state.builtCount,
       wordCount: verseWords.length,
@@ -915,12 +915,12 @@ function renderVictory(){
     });
   }
 
-  function getDecoysForPhase(phase, correctLabel, count){
+  function getDecoysForPhase(phase, correctLabel, count) {
     const out = [];
     const seen = new Set([normalizeWord(correctLabel)]);
 
-    function addDecoys(list){
-      for (const item of list || []){
+    function addDecoys(list) {
+      for (const item of list || []) {
         const key = normalizeWord(item);
         if (!key || seen.has(key)) continue;
         seen.add(key);
@@ -929,8 +929,8 @@ function renderVictory(){
       }
     }
 
-    if (phase === "words"){
-      if (selectedMode === "easy"){
+    if (phase === "words") {
+      if (selectedMode === "easy") {
         addDecoys(window.VerseGameShell.getFunWordDecoys(correctLabel, verseWords, count));
       } else {
         addDecoys(window.VerseGameShell.getVerseWordDecoys({
@@ -942,83 +942,83 @@ function renderVictory(){
           fallbackToFun: true
         }));
 
-        if (out.length < count){
+        if (out.length < count) {
           addDecoys(window.VerseGameShell.getFunWordDecoys(correctLabel, verseWords, count));
         }
 
-        if (out.length < count){
+        if (out.length < count) {
           addDecoys(FUN_DECOYS);
         }
       }
     }
 
-    if (phase === "book"){
+    if (phase === "book") {
       addDecoys(window.VerseGameShell.getBookDecoys(correctLabel, count));
     }
 
-    if (phase === "reference"){
+    if (phase === "reference") {
       addDecoys(window.VerseGameShell.getReferenceDecoys(parsedRef, selectedMode, count + 4));
     }
 
     return out.slice(0, count);
   }
 
-  function getRoundSpeed(){
+  function getRoundSpeed() {
     const usableDistance = Math.max(180, state.bottomZoneY + 28);
     const cfg = state.modeTiming[selectedMode] || state.modeTiming.easy;
     const roundSeconds = clamp(cfg.start + Math.max(0, state.roundIndex - 1) * cfg.step, 2.2, 5.4);
     return usableDistance / roundSeconds;
   }
 
-  function getBonusShots(){
+  function getBonusShots() {
     const max = 12;
     const penalty = Math.min(8, state.mistakes);
     return Math.max(4, max - penalty);
   }
 
-function getLaneCenterX(lane){
-  const index = LANE_KEYS.indexOf(lane);
-  return state.fieldWidth * ((index + 0.5) / 3);
-}
+  function getLaneCenterX(lane) {
+    const index = LANE_KEYS.indexOf(lane);
+    return state.fieldWidth * ((index + 0.5) / 3);
+  }
 
-function getEntityMotionState(entity, now = performance.now()){
-  const phase = entity.motionPhase || 0;
-  const sway = Math.sin(now * 0.0032 + phase) * 18;
-  const pulse = Math.sin(now * 0.0044 + phase * 0.7);
+  function getEntityMotionState(entity, now = performance.now()) {
+    const phase = entity.motionPhase || 0;
+    const sway = Math.sin(now * 0.0032 + phase) * 18;
+    const pulse = Math.sin(now * 0.0044 + phase * 0.7);
 
-  return {
-    swayX: sway,
-    renderX: entity.x + sway,
-    rotateDeg: Math.sin(now * 0.0032 + phase) * 4.5,
-    skewXDeg: Math.sin(now * 0.0032 + phase) * 3.5,
-    scaleX: 1 + pulse * 0.035,
-    scaleY: 1 - pulse * 0.035
-  };
-}
+    return {
+      swayX: sway,
+      renderX: entity.x + sway,
+      rotateDeg: Math.sin(now * 0.0032 + phase) * 4.5,
+      skewXDeg: Math.sin(now * 0.0032 + phase) * 3.5,
+      scaleX: 1 + pulse * 0.035,
+      scaleY: 1 - pulse * 0.035
+    };
+  }
 
-function getEntityHitPoint(entity, now = performance.now()){
-  const motion = getEntityMotionState(entity, now);
-  return {
-    x: motion.renderX,
-    y: entity.y + 40
-  };
-}
+  function getEntityHitPoint(entity, now = performance.now()) {
+    const motion = getEntityMotionState(entity, now);
+    return {
+      x: motion.renderX,
+      y: entity.y + 40
+    };
+  }
 
-function laneLabel(lane){
+  function laneLabel(lane) {
     if (lane === "left") return "LEFT";
     if (lane === "center") return "CENTER";
     return "RIGHT";
   }
 
-  function buttonLaneToColor(lane){
+  function buttonLaneToColor(lane) {
     return BUTTON_COLOR_ORDER[lane] || BUTTON_COLOR_ORDER.left;
   }
 
-  function hasVisibleEntityForColor(colorKey){
+  function hasVisibleEntityForColor(colorKey) {
     return state.entities.some(item => item.visible && item.color.key === colorKey);
   }
 
-  function computeIntercept(sx, sy, tx, ty, tvx, tvy, projectileSpeed){
+  function computeIntercept(sx, sy, tx, ty, tvx, tvy, projectileSpeed) {
     const rx = tx - sx;
     const ry = ty - sy;
     const a = (tvx * tvx + tvy * tvy) - (projectileSpeed * projectileSpeed);
@@ -1026,11 +1026,11 @@ function laneLabel(lane){
     const c = (rx * rx + ry * ry);
 
     let t = null;
-    if (Math.abs(a) < 0.0001){
+    if (Math.abs(a) < 0.0001) {
       if (Math.abs(b) > 0.0001) t = -c / b;
     } else {
       const disc = b * b - 4 * a * c;
-      if (disc >= 0){
+      if (disc >= 0) {
         const root = Math.sqrt(disc);
         const t1 = (-b - root) / (2 * a);
         const t2 = (-b + root) / (2 * a);
@@ -1045,37 +1045,37 @@ function laneLabel(lane){
     return { x: tx + tvx * t, y: ty + tvy * t, t };
   }
 
-  function parseReferenceParts(ref, translation, verseId){
+  function parseReferenceParts(ref, translation, verseId) {
     return window.VerseGameShell.parseReferenceParts(ref, translation, verseId);
   }
 
 
-  function tokenizeVerse(text){
+  function tokenizeVerse(text) {
     return window.VerseGameShell.tokenizeVerseWords(text);
   }
 
-  function normalizeWord(value){
+  function normalizeWord(value) {
     return window.VerseGameShell.normalizeWord(value);
   }
 
-  function addTrail(x, y, white){
+  function addTrail(x, y, white) {
     state.trails.push({
       x,
       y,
       icon: white ? "·" : "✨",
       opacity: white ? 0.85 : 0.95,
-      white:!!white,
+      white: !!white,
       until: performance.now() + 180
     });
     if (state.trails.length > 24) state.trails.shift();
   }
 
-  function addEffect(effect){
+  function addEffect(effect) {
     state.effects.push(effect);
     if (state.effects.length > 30) state.effects.shift();
   }
 
-  function makeSmokePuffEffect(x, y){
+  function makeSmokePuffEffect(x, y) {
     const born = performance.now();
     const particles = Array.from({ length: 7 }, (_, i) => ({
       angle: (Math.PI * 2 * i / 7) + randBetween(-0.24, 0.24),
@@ -1089,48 +1089,48 @@ function laneLabel(lane){
       spin: randBetween(-40, 40)
     }));
     return {
-      kind:"particle",
-      group:"smoke",
-      preset:"smokePuff",
+      kind: "particle",
+      group: "smoke",
+      preset: "smokePuff",
       x,
       y,
       born,
-      life:420,
+      life: 420,
       until: born + 420,
       particles,
-      ring:0,
-      center:0
+      ring: 0,
+      center: 0
     };
   }
 
-  function makeCorrectHitEffect(x, y, baseColor, streak){
+  function makeCorrectHitEffect(x, y, baseColor, streak) {
     return makeParticleEffect(randomFrom(CORRECT_EFFECT_POOL), x, y, baseColor, streak, "hit");
   }
 
-  function makeBonusFireworkEffect(x, y){
+  function makeBonusFireworkEffect(x, y) {
     const color = randomFrom([LANE_COLORS[0].hex, LANE_COLORS[1].hex, LANE_COLORS[2].hex, "#f28fff", "#ffffff"]);
     return makeParticleEffect(randomFrom(BONUS_FIREWORK_POOL), x, y, color, 5, "fireworkParticle");
   }
 
-  function makeParticleEffect(preset, x, y, baseColor, streak, group){
+  function makeParticleEffect(preset, x, y, baseColor, streak, group) {
     const born = performance.now();
     const strong = streak >= 4;
     const configMap = {
-      alienPop: { life:620, count: strong ? 16 : 12, speedMin:88, speedMax:162, sizeMin:4, sizeMax:9, gravity:6, ring:0, center:0, style:"dot", shell:false, flash:false, cross:false },
-      starburst: { life:680, count: strong ? 15 : 11, speedMin:96, speedMax:176, sizeMin:5, sizeMax:10, gravity:4, ring:0, center:0, style:"star", shell:false, flash:false, cross:false },
-      chrysanthemum: { life:760, count: strong ? 20 : 16, speedMin:82, speedMax:154, sizeMin:4, sizeMax:8, gravity:3, ring:0, center:0, style:"petal", shell:false, flash:false, cross:false },
-      novaBurst: { life:720, count: strong ? 18 : 14, speedMin:108, speedMax:186, sizeMin:4, sizeMax:10, gravity:5, ring:0, center:0, style:"shard", shell:false, flash:false, cross:false },
+      alienPop: { life: 620, count: strong ? 16 : 12, speedMin: 88, speedMax: 162, sizeMin: 4, sizeMax: 9, gravity: 6, ring: 0, center: 0, style: "dot", shell: false, flash: false, cross: false },
+      starburst: { life: 680, count: strong ? 15 : 11, speedMin: 96, speedMax: 176, sizeMin: 5, sizeMax: 10, gravity: 4, ring: 0, center: 0, style: "star", shell: false, flash: false, cross: false },
+      chrysanthemum: { life: 760, count: strong ? 20 : 16, speedMin: 82, speedMax: 154, sizeMin: 4, sizeMax: 8, gravity: 3, ring: 0, center: 0, style: "petal", shell: false, flash: false, cross: false },
+      novaBurst: { life: 720, count: strong ? 18 : 14, speedMin: 108, speedMax: 186, sizeMin: 4, sizeMax: 10, gravity: 5, ring: 0, center: 0, style: "shard", shell: false, flash: false, cross: false },
 
-      flashRing: { life:900, count:18, speedMin:92, speedMax:154, sizeMin:5, sizeMax:10, gravity:8, ring:0, center:0, style:"dot", shell:false, flash:false, cross:false },
-      classicFirework: { life:980, count:24, speedMin:102, speedMax:188, sizeMin:4, sizeMax:9, gravity:10, ring:0, center:0, style:"petal", shell:false, flash:false, cross:false },
-      confettiBloom: { life:980, count:22, speedMin:84, speedMax:148, sizeMin:5, sizeMax:10, gravity:14, ring:0, center:0, style:"confetti", shell:false, flash:false, cross:false },
-      plasmaBurst: { life:920, count:20, speedMin:112, speedMax:198, sizeMin:5, sizeMax:11, gravity:6, ring:0, center:0, style:"plasma", shell:false, flash:false, cross:false },
-      cosmicCrackle: { life:1040, count:26, speedMin:74, speedMax:176, sizeMin:3, sizeMax:8, gravity:12, ring:0, center:0, style:"crackle", shell:false, flash:false, cross:false }
+      flashRing: { life: 900, count: 18, speedMin: 92, speedMax: 154, sizeMin: 5, sizeMax: 10, gravity: 8, ring: 0, center: 0, style: "dot", shell: false, flash: false, cross: false },
+      classicFirework: { life: 980, count: 24, speedMin: 102, speedMax: 188, sizeMin: 4, sizeMax: 9, gravity: 10, ring: 0, center: 0, style: "petal", shell: false, flash: false, cross: false },
+      confettiBloom: { life: 980, count: 22, speedMin: 84, speedMax: 148, sizeMin: 5, sizeMax: 10, gravity: 14, ring: 0, center: 0, style: "confetti", shell: false, flash: false, cross: false },
+      plasmaBurst: { life: 920, count: 20, speedMin: 112, speedMax: 198, sizeMin: 5, sizeMax: 11, gravity: 6, ring: 0, center: 0, style: "plasma", shell: false, flash: false, cross: false },
+      cosmicCrackle: { life: 1040, count: 26, speedMin: 74, speedMax: 176, sizeMin: 3, sizeMax: 8, gravity: 12, ring: 0, center: 0, style: "crackle", shell: false, flash: false, cross: false }
     };
     const cfg = configMap[preset] || configMap.alienPop;
     const palette = buildPalette(baseColor, preset);
     const particles = [];
-    for (let i = 0; i < cfg.count; i++){
+    for (let i = 0; i < cfg.count; i++) {
       particles.push({
         angle: (Math.PI * 2 * i / cfg.count) + randBetween(-0.18, 0.18),
         speed: randBetween(cfg.speedMin, cfg.speedMax),
@@ -1142,7 +1142,7 @@ function laneLabel(lane){
         style: cfg.style,
         spin: randBetween(-220, 220)
       });
-      if (preset === "cosmicCrackle" && i % 5 === 0){
+      if (preset === "cosmicCrackle" && i % 5 === 0) {
         particles.push({
           angle: (Math.PI * 2 * i / cfg.count) + randBetween(-0.12, 0.12),
           speed: randBetween(cfg.speedMax * 0.65, cfg.speedMax * 1.05),
@@ -1157,7 +1157,7 @@ function laneLabel(lane){
       }
     }
     return {
-      kind:"particle",
+      kind: "particle",
       group,
       preset,
       x,
@@ -1174,32 +1174,32 @@ function laneLabel(lane){
     };
   }
 
-function makeAbductionEffect(x, y, color){
-  const born = performance.now();
-  return {
-    kind:"abduction",
-    group:"abduction",
-    x,
-    y,
-    born,
-    life:1700,
-    until: born + 1700,
-    colorHex: color.hex,
-    alienImg: color.alienImg,
-    alienAlt: color.alienAlt,
-    abducteeImg: randomFrom(ABDUCTEE_IMAGES)
-  };
-}
+  function makeAbductionEffect(x, y, color) {
+    const born = performance.now();
+    return {
+      kind: "abduction",
+      group: "abduction",
+      x,
+      y,
+      born,
+      life: 1700,
+      until: born + 1700,
+      colorHex: color.hex,
+      alienImg: color.alienImg,
+      alienAlt: color.alienAlt,
+      abducteeImg: randomFrom(ABDUCTEE_IMAGES)
+    };
+  }
 
-  function buildPalette(baseColor, preset){
+  function buildPalette(baseColor, preset) {
     if (preset === "confettiBloom") return ["#ff5a51", "#ffc751", "#40b9c5", "#f28fff", "#ffffff", "#a7cb6f"];
     if (preset === "plasmaBurst") return [baseColor, lightenColor(baseColor, 0.3), "#ffffff", "#d596ff", "#77f0ff"];
     if (preset === "cosmicCrackle") return [baseColor, "#ffffff", "#ffd96c", "#8af2ff", "#ff9fe7"];
     return [baseColor, lightenColor(baseColor, 0.2), lightenColor(baseColor, 0.36), "#ffffff", "#ffe082"];
   }
 
-  function renderEffect(effect, now){
-    if (effect.kind === "abduction"){
+  function renderEffect(effect, now) {
+    if (effect.kind === "abduction") {
       const progress = clamp((now - effect.born) / effect.life, 0, 1);
       const hold = 0.18;
       const travel = progress <= hold ? 0 : (progress - hold) / (1 - hold);
@@ -1264,7 +1264,7 @@ function makeAbductionEffect(x, y, color){
     return `<div class="vinv-effect-wrap" style="left:${effect.x}px; top:${effect.y}px;">${flash}${shell}${ring}${center}${cross}${particleHtml}</div>`;
   }
 
-  function lightenColor(hex, amount){
+  function lightenColor(hex, amount) {
     const clean = String(hex || "#ffffff").replace("#", "");
     if (clean.length !== 6) return "#ffffff";
     const r = parseInt(clean.slice(0, 2), 16);
@@ -1276,15 +1276,15 @@ function makeAbductionEffect(x, y, color){
     return `#${nr.toString(16).padStart(2, "0")}${ng.toString(16).padStart(2, "0")}${nb.toString(16).padStart(2, "0")}`;
   }
 
-  function scheduleAction(delayMs, fn){
+  function scheduleAction(delayMs, fn) {
     state.scheduledActions.push({ at: performance.now() + delayMs, run: fn });
   }
 
-  function processScheduledActions(ts){
+  function processScheduledActions(ts) {
     if (!state.scheduledActions.length) return;
     const ready = [];
     const later = [];
-    for (const action of state.scheduledActions){
+    for (const action of state.scheduledActions) {
       if (ts >= action.at) ready.push(action);
       else later.push(action);
     }
@@ -1292,23 +1292,23 @@ function makeAbductionEffect(x, y, color){
     for (const action of ready) action.run();
   }
 
-  function stopLoop(){
+  function stopLoop() {
     if (state.rafId) cancelAnimationFrame(state.rafId);
     state.rafId = 0;
     state.running = false;
   }
 
-  function startLoop(){
+  function startLoop() {
     if (state.rafId) cancelAnimationFrame(state.rafId);
     state.rafId = requestAnimationFrame(loop);
   }
 
-const clamp = window.VerseGameShell.clamp;
-function randomFrom(arr){ return arr[Math.floor(Math.random() * arr.length)]; }
-function randBetween(min, max){ return min + Math.random() * (max - min); }
-const capitalize = window.VerseGameShell.capitalize;
-const shuffle = window.VerseGameShell.shuffle;
-  function escapeHtml(value){
+  const clamp = window.VerseGameShell.clamp;
+  function randomFrom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+  function randBetween(min, max) { return min + Math.random() * (max - min); }
+  const capitalize = window.VerseGameShell.capitalize;
+  const shuffle = window.VerseGameShell.shuffle;
+  function escapeHtml(value) {
     return String(value || "")
       .replace(/&/g, "&amp;")
       .replace(/</g, "&lt;")
