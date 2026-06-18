@@ -12,7 +12,7 @@
   const BUILD_AREA = "compact";
 
   const HELP_OVERLAY_ID = "vmunchHelpOverlay";
-  const VMUNCH_DEBUG_VERSION = "VMUNCH v5.15";
+    const VMUNCH_DEBUG_VERSION = "VMUNCH v5.16";
 
 const BOOKS = window.VerseGameShell.getBibleBookDecoys();
   
@@ -2682,8 +2682,8 @@ function updateBuildText(){
   }
 
   function renderBonusHud() {
-    const layer = document.getElementById("vmunchBonusHud");
-    if (!layer) return;
+    const fieldLayer = document.getElementById("vmunchBonusHud");
+    const moodPill = document.getElementById("vmunchMoodPill");
 
     const shouldShowHud = state.bonusTargetFruit && (
       state.bonusPhase === "hud-test" ||
@@ -2691,10 +2691,17 @@ function updateBuildText(){
       state.bonusPhase === "score"
     );
 
+    if (fieldLayer) {
+      fieldLayer.innerHTML = "";
+      fieldLayer.dataset.vmunchBonusHudKey = "";
+    }
+
+    if (!moodPill) return;
+
     if (!shouldShowHud) {
-      if (layer.dataset.vmunchBonusHudKey) {
-        layer.innerHTML = "";
-        layer.dataset.vmunchBonusHudKey = "";
+      if (moodPill.classList.contains("is-bonus-hud-pill")) {
+        moodPill.classList.remove("is-bonus-hud-pill");
+        moodPill.dataset.vmunchBonusHudKey = "";
       }
       return;
     }
@@ -2712,10 +2719,12 @@ function updateBuildText(){
 
     const hudKey = `${state.bonusTargetFruit.id}|${displayScore}|${displayMultiplier}`;
 
-    if (layer.dataset.vmunchBonusHudKey === hudKey) return;
+    moodPill.classList.add("is-bonus-hud-pill");
 
-    layer.dataset.vmunchBonusHudKey = hudKey;
-    layer.innerHTML = `
+    if (moodPill.dataset.vmunchBonusHudKey === hudKey) return;
+
+    moodPill.dataset.vmunchBonusHudKey = hudKey;
+    moodPill.innerHTML = `
       <div class="vmunch-bonus-hud-card" aria-label="Bonus bites ${escapeHtml(displayScore)}${escapeHtml(multiplierAria)}">
         <img
           class="vmunch-bonus-hud-fruit"
@@ -3385,6 +3394,17 @@ function spawnChewCrumbs(isSecondary = false){
   function updateMoodPill(){
     const pill = document.getElementById("vmunchMoodPill");
     if (!pill) return;
+
+    const bonusHudActive = state.bonusTargetFruit && (
+      state.bonusPhase === "hud-test" ||
+      state.bonusPhase === "playing" ||
+      state.bonusPhase === "score"
+    );
+
+    if (bonusHudActive) return;
+
+    pill.classList.remove("is-bonus-hud-pill");
+    pill.dataset.vmunchBonusHudKey = "";
     pill.textContent = `MOOD: ${getMoodLabel()}`;
   }
 
