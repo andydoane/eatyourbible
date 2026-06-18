@@ -323,26 +323,7 @@ body.vmunch-page-flash-streak-rainbow::before {
   z-index: 30;
 }
 
-.vmunch-debug-pill {
-  position: absolute;
-  top: clamp(8px, 2vw, 16px);
-  left: 50%;
-  z-index: 80;
-  transform: translateX(-50%);
-  padding: 5px 12px;
-  border-radius: 999px;
-  background: #111827;
-  color: #ffffff;
-  border: 2px solid rgba(255, 255, 255, 0.88);
-  box-shadow: 0 5px 0 rgba(0, 0, 0, 0.24);
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-size: 13px;
-  font-weight: 900;
-  letter-spacing: 0.03em;
-  line-height: 1;
-  pointer-events: none;
-  user-select: none;
-}
+
 
 .vmunch-bonus-intro{
   position:absolute;

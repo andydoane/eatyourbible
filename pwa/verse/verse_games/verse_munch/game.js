@@ -63,14 +63,14 @@ const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
       uiTap: 0.45,
       wordTap: 0.48,
       chew: 0.58,
-      chomp: 0.50,
-      correct: 0.70,
+      chomp: 0.36,
+      correct: 0.53,
       spew: 0.50,
       dizzy: 0.70,
-      streak: 0.78,
-      bonusStart: 0.82,
-      bonusResult: 0.86,
-      wrongFruit: 0.74
+      streak: 0.63,
+      bonusStart: 0.71,
+      bonusResult: 0.72,
+      wrongFruit: 0.65
     }
   };
 
@@ -567,6 +567,7 @@ function renderIntro(){
     app,
     title: "Verse Munch",
     iconHtml: `<img src="verse_munch_images/munch_positive_2.png" alt="" draggable="false">`,
+    debugBadge: "VMUNCH v5.17",
     helpHtml: introHelpHtml(),
     helpOverlayId: HELP_OVERLAY_ID,
     theme: GAME_THEME,
@@ -682,7 +683,7 @@ app.innerHTML = `
       <div class="vmunch-field-wrap">
         <div class="vmunch-field" id="vmunchField">
         <div class="vmunch-bg" id="vmunchBg"></div>
-        <div class="vmunch-debug-pill" id="vmunchDebugPill">${escapeHtml(VMUNCH_DEBUG_VERSION)}</div>
+
         <div class="vmunch-streak-sunburst" id="vmunchStreakSunburst"></div>
         <div class="vmunch-behind-face-particles" id="vmunchBehindFaceParticles"></div>
         <div class="vmunch-trails" id="vmunchTrails"></div>
