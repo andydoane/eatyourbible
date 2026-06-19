@@ -426,7 +426,7 @@ body {
 .vinv-tutorial-card {
   position: absolute;
   left: 50%;
-  top: 53%;
+  top: 50%;
   width: min(calc(100% - 32px), 560px);
   transform: translate(-50%, -50%);
   padding: clamp(14px, 3vw, 22px) clamp(16px, 4vw, 30px);

@@ -211,7 +211,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v3.7",
+      debugBadge: "v3.8",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -477,10 +477,12 @@
       state.bottomZoneY = Math.max(110, state.fieldHeight - 98);
     }
 
+    const tutorialLayout = state.tutorialMode ? getTutorialLayout() : null;
+
     state.entities.forEach((entity) => {
       entity.x = getLaneCenterX(entity.lane);
-      if (state.tutorialMode) {
-        entity.y = clamp(state.fieldHeight * 0.31, 92, 180);
+      if (tutorialLayout) {
+        entity.y = tutorialLayout.alienY;
       }
     });
 
@@ -590,6 +592,23 @@
     });
   }
 
+  function getTutorialLayout() {
+    const unit = getAlienUnit();
+    const gap = clamp(unit * 0.18, 10, 22);
+    const cardHeight = clamp(state.fieldWidth * 0.24, 86, 126);
+    const groupHeight = unit + gap + cardHeight;
+    const desiredCenterY = state.fieldHeight * 0.48;
+    const minTop = 18;
+    const maxTop = Math.max(minTop, state.fieldHeight - groupHeight - 18);
+    const groupTop = clamp(desiredCenterY - groupHeight / 2, minTop, maxTop);
+
+    return {
+      alienY: groupTop,
+      cardY: groupTop + unit + gap + cardHeight / 2
+    };
+  }
+
+
   function startTutorialRound() {
     state.tutorialMode = true;
     state.tutorialMessageVisible = true;
@@ -608,7 +627,7 @@
       right: BUTTON_COLOR_ORDER.right
     };
 
-    const tutorialY = clamp(state.fieldHeight * 0.31, 92, 180);
+    const tutorialLayout = getTutorialLayout();
 
     state.entities = LANE_KEYS.map((lane, index) => {
       const color = state.buttonColors[lane];
@@ -620,7 +639,7 @@
         correct: true,
         color,
         x: getLaneCenterX(lane),
-        y: tutorialY,
+        y: tutorialLayout.alienY,
         visible: true,
         status: "hover",
         motionPhase: index * 1.9,
@@ -1142,8 +1161,13 @@
   function renderTutorialHtml() {
     if (!state.tutorialMode) return "";
 
+    const tutorialLayout = getTutorialLayout();
+
     return `
-      <div class="vinv-tutorial-card ${state.tutorialMessageVisible ? "" : "is-hidden"}">
+      <div
+        class="vinv-tutorial-card ${state.tutorialMessageVisible ? "" : "is-hidden"}"
+        style="top:${tutorialLayout.cardY.toFixed(1)}px;"
+      >
         Tap the buttons to shoot the aliens.
       </div>
     `;
