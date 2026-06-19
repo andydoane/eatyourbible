@@ -128,6 +128,7 @@
     scheduledActions: [],
     tutorialMode: false,
     tutorialMessageVisible: false,
+    tutorialRenderSignature: "",
     bonusMode: false,
     bonusShotsLeft: 0,
     bonusAutoTimer: 0,
@@ -211,7 +212,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v3.10",
+      debugBadge: "v3.11",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -271,6 +272,7 @@
     state.scheduledActions = [];
     state.tutorialMode = false;
     state.tutorialMessageVisible = false;
+    state.tutorialRenderSignature = "";
     state.bonusMode = false;
     state.bonusShotsLeft = 0;
     state.bonusAutoTimer = 0;
@@ -635,6 +637,7 @@
   function startTutorialRound() {
     state.tutorialMode = true;
     state.tutorialMessageVisible = true;
+    state.tutorialRenderSignature = "";
     state.roundStatus = "tutorialEntering";
     state.buttonsLocked = true;
     state.activeLane = null;
@@ -853,6 +856,7 @@
       scheduleAction(820, () => {
         state.tutorialMode = false;
         state.tutorialMessageVisible = false;
+        state.tutorialRenderSignature = "";
         state.entities = [];
         state.entityRenderSignature = "";
         state.rocket = null;
@@ -1185,21 +1189,34 @@
     effectsEl.innerHTML = state.effects.map((effect) => renderEffect(effect, now)).join("");
 
     bonusEl.innerHTML = "";
-    tutorialEl.innerHTML = renderTutorialHtml();
+    renderTutorialLayer(tutorialEl);
     overlayEl.innerHTML = state.overlayUntil > now && state.overlayMessage
       ? `<div class="vinv-overlay-pill">${escapeHtml(state.overlayMessage)}</div>`
       : "";
   }
 
-  function renderTutorialHtml() {
-    if (!state.tutorialMode) return "";
+  function renderTutorialLayer(tutorialEl) {
+    if (!state.tutorialMode) {
+      if (state.tutorialRenderSignature !== "off") {
+        tutorialEl.innerHTML = "";
+        state.tutorialRenderSignature = "off";
+      }
+      return;
+    }
 
     const tutorialLayout = getTutorialLayout();
+    const cardY = tutorialLayout.cardY.toFixed(1);
+    const isHidden = state.tutorialMessageVisible ? "" : "is-hidden";
+    const isEntering = state.roundStatus === "tutorialEntering" ? "is-entering" : "";
+    const signature = `${cardY}:${isHidden}:${isEntering}`;
 
-    return `
+    if (state.tutorialRenderSignature === signature) return;
+
+    state.tutorialRenderSignature = signature;
+    tutorialEl.innerHTML = `
       <div
-        class="vinv-tutorial-card ${state.tutorialMessageVisible ? "" : "is-hidden"} ${state.roundStatus === "tutorialEntering" ? "is-entering" : ""}"
-        style="top:${tutorialLayout.cardY.toFixed(1)}px;"
+        class="vinv-tutorial-card ${isHidden} ${isEntering}"
+        style="top:${cardY}px;"
       >
         Tap the buttons to shoot the aliens.
       </div>
