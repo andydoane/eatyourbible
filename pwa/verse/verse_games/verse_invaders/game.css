@@ -407,10 +407,10 @@ body {
   position: absolute;
   left: 0;
   top: 0;
-  color: #ffffff;
+  color: rgba(255, 255, 255, 0.78);
   filter:
-    drop-shadow(0 2px 0 rgba(255, 255, 255, 0.22))
-    drop-shadow(0 6px 10px rgba(0, 0, 0, 0.18));
+    drop-shadow(0 1px 0 rgba(255, 255, 255, 0.12))
+    drop-shadow(0 4px 8px rgba(0, 0, 0, 0.12));
   pointer-events: none;
   z-index: 2;
 }

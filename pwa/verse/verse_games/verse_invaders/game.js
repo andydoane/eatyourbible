@@ -199,7 +199,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v2.4",
+      debugBadge: "v2.5",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1297,14 +1297,14 @@
     const count = 9;
     const baseAngle = Math.random() * Math.PI * 2;
     const step = (Math.PI * 2) / count;
-    const distance = unit * 1.22;
-    const jitter = unit * 0.12;
+    const distance = unit * 0.61;
+    const jitter = unit * 0.06;
     const sizePool = [
-      unit * 0.18,
-      unit * 0.21,
-      unit * 0.25,
-      unit * 0.3,
-      unit * 0.35
+      unit * 0.09,
+      unit * 0.105,
+      unit * 0.125,
+      unit * 0.15,
+      unit * 0.175
     ];
 
     const dots = Array.from({ length: count }, (_, i) => {
@@ -1330,7 +1330,7 @@
       born,
       life,
       until: born + life + 120,
-      cloudSize: unit * 1.58,
+      cloudSize: unit * 0.79,
       dots
     };
   }
@@ -1481,19 +1481,19 @@
       let cloudScale = 0.14;
 
       if (progress < 0.1) {
-        cloudOpacity = progress / 0.1;
+        cloudOpacity = (progress / 0.1) * 0.62;
         cloudScale = 0.14 + (1.06 - 0.14) * (progress / 0.1);
       } else if (progress < 0.22) {
-        cloudOpacity = 1;
+        cloudOpacity = 0.62;
         cloudScale = 1.06 + (0.97 - 1.06) * ((progress - 0.1) / 0.12);
       } else if (progress < 0.48) {
-        cloudOpacity = 1 + (0.86 - 1) * ((progress - 0.22) / 0.26);
+        cloudOpacity = 0.62 + (0.48 - 0.62) * ((progress - 0.22) / 0.26);
         cloudScale = 0.97 + (1.02 - 0.97) * ((progress - 0.22) / 0.26);
       } else if (progress < 0.72) {
-        cloudOpacity = 0.86 + (0.34 - 0.86) * ((progress - 0.48) / 0.24);
+        cloudOpacity = 0.48 + (0.18 - 0.48) * ((progress - 0.48) / 0.24);
         cloudScale = 1.02 + (1.06 - 1.02) * ((progress - 0.48) / 0.24);
       } else {
-        cloudOpacity = Math.max(0, 0.34 * (1 - ((progress - 0.72) / 0.28)));
+        cloudOpacity = Math.max(0, 0.18 * (1 - ((progress - 0.72) / 0.28)));
         cloudScale = 1.06 + (1.08 - 1.06) * ((progress - 0.72) / 0.28);
       }
 
@@ -1502,7 +1502,7 @@
         const eased = 1 - Math.pow(1 - localProgress, 3);
         const dx = dot.tx * eased;
         const dy = dot.ty * eased;
-        const opacity = clamp(1 - localProgress, 0, 1);
+        const opacity = clamp((1 - localProgress) * 0.58, 0, 0.58);
         const scale = dot.startScale + (dot.endScale - dot.startScale) * eased;
 
         return `
