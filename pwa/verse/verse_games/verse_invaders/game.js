@@ -84,6 +84,8 @@
   const BONUS_SWARM_DURATION_MS = 20000;
   const BONUS_SPAWN_START_SEC = 1.05;
   const BONUS_SPAWN_END_SEC = 0.48;
+  const BONUS_SPEED_START_MULTIPLIER = 1.0;
+  const BONUS_SPEED_END_MULTIPLIER = 1.35;
   const BONUS_MODE_SPEED_MULTIPLIERS = {
     easy: 1,
     medium: 1.12,
@@ -232,7 +234,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v3.22",
+      debugBadge: "v3.23",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
