@@ -58,6 +58,12 @@
     "./verse_invaders_images/verse_invaders_abductee_1.png",
     "./verse_invaders_images/verse_invaders_abductee_2.png"
   ];
+
+  const POOF_CLOUD_SVG = `
+<svg viewBox="0 0 26.458333 26.458333" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <path fill="currentColor" d="M 12.949771,1.5464282 A 6.0017493,5.3230522 7.1160496 0 0 6.9820601,6.4190471 5.3405872,4.7400094 7.154063 0 0 6.8563886,6.4134999 5.3405872,4.7400094 7.154063 0 0 1.5243277,11.020646 5.3405872,4.7400094 7.154063 0 0 2.4259083,13.677302 4.0181559,3.5662928 7.1540647 0 0 0.66145837,16.583588 4.0181559,3.5662928 7.1540647 0 0 4.6728467,20.261811 4.0181559,3.5662928 7.1540647 0 0 5.1732885,20.243 a 5.3405872,4.7400094 7.154063 0 0 5.2883005,4.342428 5.3405872,4.7400094 7.154063 0 0 3.656255,-1.210431 4.0181559,3.5662928 7.1540647 0 0 3.300558,1.639798 4.0181559,3.5662928 7.1540647 0 0 4.011389,-3.466536 4.0181559,3.5662928 7.1540647 0 0 -0.416848,-1.594767 5.3405872,4.7400094 7.154063 0 0 4.783932,-4.586787 5.3405872,4.7400094 7.154063 0 0 -1.9322,-3.706541 4.0181559,3.5662928 7.1540647 0 0 0.764128,-2.0624453 4.0181559,3.5662928 7.1540647 0 0 -4.011389,-3.6776624 4.0181559,3.5662928 7.1540647 0 0 -1.744813,0.3148283 6.0017493,5.3230522 7.1160496 0 0 -5.92283,-4.6884523 z"/>
+</svg>`;
+
   const BUTTON_COLOR_ORDER = {
     left: LANE_COLORS[0],
     center: LANE_COLORS[1],
@@ -193,7 +199,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v2.3",
+      debugBadge: "v2.4",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1287,15 +1293,35 @@
   function makePoofEffect(x, y) {
     const born = performance.now();
     const unit = getAlienUnit();
-    const life = 620;
+    const life = 650;
+    const count = 9;
+    const baseAngle = Math.random() * Math.PI * 2;
+    const step = (Math.PI * 2) / count;
+    const distance = unit * 1.22;
+    const jitter = unit * 0.12;
+    const sizePool = [
+      unit * 0.18,
+      unit * 0.21,
+      unit * 0.25,
+      unit * 0.3,
+      unit * 0.35
+    ];
 
-    const dots = Array.from({ length: 9 }, (_, i) => ({
-      angle: (Math.PI * 2 * i / 9) + randBetween(-0.34, 0.34),
-      distance: randBetween(unit * 0.16, unit * 0.42),
-      size: randBetween(unit * 0.11, unit * 0.22),
-      alpha: randBetween(0.58, 0.92),
-      color: Math.random() < 0.55 ? "rgba(255,255,255,0.94)" : "rgba(215,224,232,0.9)"
-    }));
+    const dots = Array.from({ length: count }, (_, i) => {
+      const angle = baseAngle + step * i + randBetween(-0.12, 0.12);
+      const dist = distance + randBetween(-jitter, jitter);
+
+      return {
+        angle,
+        tx: Math.cos(angle) * dist,
+        ty: Math.sin(angle) * dist,
+        size: randomFrom(sizePool) + randBetween(-0.5, 0.5),
+        startScale: randBetween(0.68, 0.82),
+        endScale: randBetween(1.1, 1.22),
+        delay: randBetween(0, 18),
+        color: "#ffffff"
+      };
+    });
 
     return {
       kind: "poof",
@@ -1303,8 +1329,8 @@
       y,
       born,
       life,
-      until: born + life,
-      cloudSize: unit * 1.05,
+      until: born + life + 120,
+      cloudSize: unit * 1.58,
       dots
     };
   }
@@ -1450,24 +1476,44 @@
 
     if (effect.kind === "poof") {
       const progress = clamp((now - effect.born) / effect.life, 0, 1);
-      const cloudOpacity = progress < 0.76
-        ? 1 - progress * 0.36
-        : Math.max(0, 0.72 - ((progress - 0.76) / 0.24) * 0.72);
+
+      let cloudOpacity = 0;
+      let cloudScale = 0.14;
+
+      if (progress < 0.1) {
+        cloudOpacity = progress / 0.1;
+        cloudScale = 0.14 + (1.06 - 0.14) * (progress / 0.1);
+      } else if (progress < 0.22) {
+        cloudOpacity = 1;
+        cloudScale = 1.06 + (0.97 - 1.06) * ((progress - 0.1) / 0.12);
+      } else if (progress < 0.48) {
+        cloudOpacity = 1 + (0.86 - 1) * ((progress - 0.22) / 0.26);
+        cloudScale = 0.97 + (1.02 - 0.97) * ((progress - 0.22) / 0.26);
+      } else if (progress < 0.72) {
+        cloudOpacity = 0.86 + (0.34 - 0.86) * ((progress - 0.48) / 0.24);
+        cloudScale = 1.02 + (1.06 - 1.02) * ((progress - 0.48) / 0.24);
+      } else {
+        cloudOpacity = Math.max(0, 0.34 * (1 - ((progress - 0.72) / 0.28)));
+        cloudScale = 1.06 + (1.08 - 1.06) * ((progress - 0.72) / 0.28);
+      }
 
       const dotHtml = effect.dots.map((dot) => {
-        const travel = Math.sin(progress * Math.PI * 0.72);
-        const dx = Math.cos(dot.angle) * dot.distance * travel;
-        const dy = Math.sin(dot.angle) * dot.distance * travel - effect.cloudSize * 0.08 * progress;
-        const opacity = clamp(dot.alpha * (1 - Math.pow(progress, 1.4)), 0, 1);
-        const scale = 0.56 + progress * 0.78;
+        const localProgress = clamp((now - effect.born - dot.delay) / effect.life, 0, 1);
+        const eased = 1 - Math.pow(1 - localProgress, 3);
+        const dx = dot.tx * eased;
+        const dy = dot.ty * eased;
+        const opacity = clamp(1 - localProgress, 0, 1);
+        const scale = dot.startScale + (dot.endScale - dot.startScale) * eased;
 
         return `
           <div
             class="vinv-poof-dot"
             style="
-              transform:translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) translate(-50%,-50%) scale(${scale.toFixed(2)});
               width:${dot.size.toFixed(1)}px;
               height:${dot.size.toFixed(1)}px;
+              margin-left:${(dot.size / -2).toFixed(1)}px;
+              margin-top:${(dot.size / -2).toFixed(1)}px;
+              transform:translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) scale(${scale.toFixed(2)});
               background:${dot.color};
               opacity:${opacity.toFixed(3)};
             "
@@ -1483,12 +1529,10 @@
               width:${effect.cloudSize.toFixed(1)}px;
               height:${effect.cloudSize.toFixed(1)}px;
               opacity:${cloudOpacity.toFixed(3)};
+              transform:translate(-50%, -50%) scale(${cloudScale.toFixed(3)});
             "
           >
-            <span class="vinv-poof-lobe vinv-poof-lobe--one"></span>
-            <span class="vinv-poof-lobe vinv-poof-lobe--two"></span>
-            <span class="vinv-poof-lobe vinv-poof-lobe--three"></span>
-            <span class="vinv-poof-lobe vinv-poof-lobe--four"></span>
+            ${POOF_CLOUD_SVG}
           </div>
           ${dotHtml}
         </div>

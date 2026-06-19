@@ -407,50 +407,22 @@ body {
   position: absolute;
   left: 0;
   top: 0;
-  transform: translate(-50%, -50%) scale(0.55);
-  animation: vinvPoofCloud 620ms ease-out forwards;
+  color: #ffffff;
+  filter:
+    drop-shadow(0 2px 0 rgba(255, 255, 255, 0.22))
+    drop-shadow(0 6px 10px rgba(0, 0, 0, 0.18));
   pointer-events: none;
   z-index: 2;
 }
 
-.vinv-poof-lobe {
-  position: absolute;
+.vinv-poof-cloud svg {
+  width: 100%;
+  height: 100%;
   display: block;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.96);
-  filter:
-    drop-shadow(0 4px 0 rgba(0, 0, 0, 0.16))
-    drop-shadow(0 0 14px rgba(255, 255, 255, 0.28));
 }
 
-.vinv-poof-lobe--one {
-  width: 54%;
-  height: 48%;
-  left: 6%;
-  top: 34%;
-}
-
-.vinv-poof-lobe--two {
-  width: 56%;
-  height: 54%;
-  left: 23%;
-  top: 12%;
-  background: rgba(238, 243, 248, 0.96);
-}
-
-.vinv-poof-lobe--three {
-  width: 54%;
-  height: 48%;
-  left: 43%;
-  top: 34%;
-}
-
-.vinv-poof-lobe--four {
-  width: 62%;
-  height: 42%;
-  left: 19%;
-  top: 52%;
-  background: rgba(218, 226, 234, 0.94);
+.vinv-poof-cloud path {
+  fill: currentColor;
 }
 
 .vinv-poof-dot {
@@ -458,7 +430,7 @@ body {
   left: 0;
   top: 0;
   border-radius: 999px;
-  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.1));
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.28));
   pointer-events: none;
   z-index: 1;
 }
