@@ -425,6 +425,7 @@ body {
   width: calc(var(--vinv-abduct-unit, var(--vinv-alien-size)) * 1.45);
   height: calc(var(--vinv-abduct-unit, var(--vinv-alien-size)) * 2.9);
   pointer-events: none;
+  transform: translateX(-50%);
 }
 
 .vinv-abduct-alien {
