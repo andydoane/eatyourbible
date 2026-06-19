@@ -82,10 +82,10 @@
   const ROUND_ADVANCE_AFTER_CORRECT_MS = CORRECT_HIT_IMPACT_DELAY_MS + STRONG_ALIEN_BURST_LIFE_MS + ROUND_ADVANCE_BUFFER_MS;
   const ABDUCTION_LIFE_MS = 1850;
   const BONUS_SWARM_DURATION_MS = 20000;
-  const BONUS_SPAWN_START_SEC = 1.35;
-  const BONUS_SPAWN_END_SEC = 0.72;
-  const BONUS_SPEED_START_MULTIPLIER = 0.78;
-  const BONUS_SPEED_END_MULTIPLIER = 1.0;
+  const BONUS_SPAWN_START_SEC = 1.05;
+  const BONUS_SPAWN_END_SEC = 0.48;
+  const BONUS_SPEED_START_MULTIPLIER = 1.0;
+  const BONUS_SPEED_END_MULTIPLIER = 1.35;
   const BOOKS = window.VerseGameShell.getBibleBookDecoys();
   const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
 
@@ -229,7 +229,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v3.20",
+      debugBadge: "v3.21",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1341,7 +1341,19 @@
     const multiplier = BONUS_SPEED_START_MULTIPLIER +
       (BONUS_SPEED_END_MULTIPLIER - BONUS_SPEED_START_MULTIPLIER) * progress;
 
-    return getRoundSpeed() * multiplier;
+    return getHardBaselineSpeed() * multiplier;
+  }
+
+  function getHardBaselineSpeed() {
+    const usableDistance = Math.max(180, state.bottomZoneY + 28);
+    const hardCfg = state.modeTiming.hard;
+    const roundSeconds = clamp(
+      hardCfg.start + Math.max(0, state.roundIndex - 1) * hardCfg.step,
+      2.2,
+      5.4
+    );
+
+    return usableDistance / roundSeconds;
   }
 
   function finishBonusRound() {
