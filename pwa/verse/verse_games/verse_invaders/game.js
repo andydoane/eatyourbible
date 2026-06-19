@@ -82,10 +82,10 @@
   const ROUND_ADVANCE_AFTER_CORRECT_MS = CORRECT_HIT_IMPACT_DELAY_MS + STRONG_ALIEN_BURST_LIFE_MS + ROUND_ADVANCE_BUFFER_MS;
   const ABDUCTION_LIFE_MS = 1850;
   const BONUS_SWARM_DURATION_MS = 20000;
-  const BONUS_SPAWN_START_SEC = 0.82;
-  const BONUS_SPAWN_END_SEC = 0.34;
-  const BONUS_SPEED_START_FACTOR = 0.36;
-  const BONUS_SPEED_END_FACTOR = 0.82;
+  const BONUS_SPAWN_START_SEC = 1.35;
+  const BONUS_SPAWN_END_SEC = 0.72;
+  const BONUS_SPEED_START_MULTIPLIER = 0.78;
+  const BONUS_SPEED_END_MULTIPLIER = 1.0;
   const BOOKS = window.VerseGameShell.getBibleBookDecoys();
   const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
 
@@ -227,7 +227,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v3.14",
+      debugBadge: "v3.15",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -905,6 +905,7 @@
         state.entityRenderSignature = "";
         state.rocket = null;
         state.trails = [];
+        state.buttonColors = null;
         spawnRound();
       });
     }
@@ -1197,10 +1198,11 @@
 
   function spawnBonusAlien() {
     const colors = getBonusAvailableSpawnColors();
-    if (!colors.length) return;
+    const lanes = getBonusAvailableSpawnLanes();
+    if (!colors.length || !lanes.length) return;
 
     const color = randomFrom(colors);
-    const lane = randomFrom(LANE_KEYS);
+    const lane = randomFrom(lanes);
     const index = state.bonusSpawnCount++;
 
     state.entities.push({
@@ -1226,11 +1228,27 @@
     const buttonColors = LANE_KEYS.map(lane => buttonLaneToColor(lane));
     const used = new Set(
       state.entities
-        .filter(entity => entity.visible && entity.status === "bonus")
+        .filter(entity =>
+          entity.visible &&
+          (entity.status === "bonus" || entity.status === "bonusTargeted")
+        )
         .map(entity => entity.color.key)
     );
 
     return buttonColors.filter(color => !used.has(color.key));
+  }
+
+  function getBonusAvailableSpawnLanes() {
+    const used = new Set(
+      state.entities
+        .filter(entity =>
+          entity.visible &&
+          (entity.status === "bonus" || entity.status === "bonusTargeted")
+        )
+        .map(entity => entity.lane)
+    );
+
+    return LANE_KEYS.filter(lane => !used.has(lane));
   }
 
   function resolveBonusRocketHit(rocket) {
@@ -1292,8 +1310,10 @@
 
   function getBonusFallSpeed() {
     const progress = getBonusProgress();
-    const factor = BONUS_SPEED_START_FACTOR + (BONUS_SPEED_END_FACTOR - BONUS_SPEED_START_FACTOR) * progress;
-    return Math.max(160, state.fieldHeight * factor);
+    const multiplier = BONUS_SPEED_START_MULTIPLIER +
+      (BONUS_SPEED_END_MULTIPLIER - BONUS_SPEED_START_MULTIPLIER) * progress;
+
+    return getRoundSpeed() * multiplier;
   }
 
   function finishBonusRound() {
