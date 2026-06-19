@@ -208,7 +208,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v2.9",
+      debugBadge: "v3.0",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -747,9 +747,7 @@
 
       state.entities.forEach(item => {
         if (item.id !== target.id && item.visible) {
-          const itemPoint = getEntityHitPoint(item);
-          item.visible = false;
-          addEffect(makePoofEffect(itemPoint.x, item.y + 28));
+          item.status = "crtVanish";
         }
       });
 
@@ -1037,6 +1035,7 @@
   function getEntityClassName(entity) {
     if (entity.status === "fade") return "is-fade";
     if (entity.status === "correct") return "is-correct-pause";
+    if (entity.status === "crtVanish") return "is-crt-vanish";
     return "";
   }
 
