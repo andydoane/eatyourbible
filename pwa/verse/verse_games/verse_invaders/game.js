@@ -229,7 +229,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v3.19",
+      debugBadge: "v3.20",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1356,6 +1356,8 @@
     state.trails = [];
     state.overlayMessage = "";
     state.overlayUntil = 0;
+    state.tutorialRenderSignature = "";
+    state.bonusIntroRenderSignature = "";
     renderHud();
     renderDynamic();
   }
@@ -1366,6 +1368,13 @@
     state.bonusRevealVisible = false;
     state.bonusMode = false;
     state.buttonsLocked = true;
+
+    const tutorialEl = document.getElementById("vinvTutorial");
+    if (tutorialEl) {
+      tutorialEl.classList.remove("is-bonus-reveal");
+      tutorialEl.innerHTML = "";
+    }
+
     renderVictory();
   }
 
@@ -1511,24 +1520,27 @@
     effectsEl.innerHTML = state.effects.map((effect) => renderEffect(effect, now)).join("");
 
     bonusEl.innerHTML = "";
-    if (state.tutorialMode) {
+    tutorialEl.classList.toggle("is-bonus-reveal", state.bonusRevealVisible);
+    overlayEl.classList.remove("is-bonus-reveal");
+
+    if (state.bonusRevealVisible) {
+      if (!tutorialEl.querySelector(".vinv-bonus-reveal")) {
+        tutorialEl.innerHTML = renderBonusRevealHtml();
+      }
+
+      const revealCard = tutorialEl.querySelector(".vinv-bonus-reveal");
+      if (revealCard) {
+        revealCard.onclick = continueFromBonusReveal;
+      }
+    } else if (state.tutorialMode) {
       renderTutorialLayer(tutorialEl);
     } else {
       renderBonusIntroLayer(tutorialEl);
     }
-    overlayEl.classList.toggle("is-bonus-reveal", state.bonusRevealVisible);
 
-    if (state.bonusRevealVisible) {
-      overlayEl.innerHTML = renderBonusRevealHtml();
-      const revealCard = overlayEl.querySelector(".vinv-bonus-reveal");
-      if (revealCard) {
-        revealCard.onclick = continueFromBonusReveal;
-      }
-    } else {
-      overlayEl.innerHTML = state.overlayUntil > now && state.overlayMessage
-        ? `<div class="vinv-overlay-pill">${escapeHtml(state.overlayMessage)}</div>`
-        : "";
-    }
+    overlayEl.innerHTML = state.overlayUntil > now && state.overlayMessage
+      ? `<div class="vinv-overlay-pill">${escapeHtml(state.overlayMessage)}</div>`
+      : "";
   }
 
   function renderBonusRevealHtml() {

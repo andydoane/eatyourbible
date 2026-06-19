@@ -622,6 +622,11 @@ body {
   z-index: 2;
 }
 
+.vinv-tutorial.is-bonus-reveal {
+  z-index: 8;
+  pointer-events: auto;
+}
+
 .vinv-tutorial-card {
   position: absolute;
   left: 50%;
