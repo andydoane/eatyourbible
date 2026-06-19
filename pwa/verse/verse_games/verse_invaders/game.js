@@ -70,7 +70,7 @@
     right: LANE_COLORS[2]
   };
   const ALIEN_BURST_CHUNK_SHAPE = "rounded";
-  const BONUS_FIREWORK_POOL = ["flashRing", "classicFirework", "confettiBloom", "plasmaBurst", "cosmicCrackle"];
+
   const CORRECT_HIT_IMPACT_DELAY_MS = 120;
   const ALIEN_BURST_LIFE_MS = 680;
   const STRONG_ALIEN_BURST_LIFE_MS = 760;
@@ -151,11 +151,10 @@
     bonusAutoTimer: 0,
     bonusSpawnCount: 0,
     bonusRockets: [],
-    bonusShotsLeft: 0,
     bonusFinished: false,
     bonusRevealVisible: false,
     bonusFinalScore: 0,
-    bonusFireworks: [],
+    bonusMaxMultiplier: 1,
     modeTiming: {
       easy: { start: 6.2, step: 0 },
       medium: { start: 5.8, step: -0.08 },
@@ -234,7 +233,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v3.23",
+      debugBadge: "v3.24",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -307,11 +306,10 @@
     state.bonusAutoTimer = 0;
     state.bonusSpawnCount = 0;
     state.bonusRockets = [];
-    state.bonusShotsLeft = 0;
     state.bonusFinished = false;
     state.bonusRevealVisible = false;
     state.bonusFinalScore = 0;
-    state.bonusFireworks = [];
+    state.bonusMaxMultiplier = 1;
     state.roundSpeed = 0;
 
     app.innerHTML = `
@@ -1099,43 +1097,16 @@
     state.bonusAutoTimer = 0.18;
     state.bonusSpawnCount = 0;
     state.bonusRockets = [];
-    state.bonusShotsLeft = 0;
     state.bonusFinished = false;
-    state.bonusFireworks = [];
+    state.bonusRevealVisible = false;
+    state.bonusFinalScore = 0;
+    state.bonusMaxMultiplier = 1;
 
     spawnBonusAlien();
     renderHud();
     renderDynamic();
 
-    if (!completionMarked) {
-      completionMarked = true;
 
-      try {
-        completionResult = await window.VerseGameBridge.completeGameRun({
-          verseId: ctx.verseId,
-          gameId: GAME_ID,
-          mode: selectedMode,
-          stats: {
-            streak: state.streak,
-            mistakes: state.mistakes,
-            builtCount: state.builtCount,
-            bonusShotsLeft: state.bonusShotsLeft
-          }
-        });
-      } catch (err) {
-        console.error("completeGameRun failed", err);
-
-        completionResult = {
-          ok: false,
-          alreadyCompleted: false,
-          newlyCompleted: false,
-          reward: {
-            ok: false,
-            petUnlockTriggered: false
-          }
-        };
-      }
-    }
   }
 
   function handleBonusColorPress(buttonLane) {
@@ -1297,6 +1268,7 @@
     const multiplier = getBonusMultiplier();
     const points = multiplier;
 
+    state.bonusMaxMultiplier = Math.max(state.bonusMaxMultiplier, multiplier);
     state.bonusScore += points;
     addEffect(makeCorrectHitEffect(targetPoint.x, target.y + 22, target.color.hex, state.bonusCleanStreak));
     addEffect(makeScorePopupEffect(targetPoint.x, target.y + 8, `+${points}`, "plus"));
@@ -1383,7 +1355,44 @@
     renderDynamic();
   }
 
-  function continueFromBonusReveal() {
+  async function markGameComplete() {
+    if (completionMarked) return completionResult;
+
+    completionMarked = true;
+
+    try {
+      completionResult = await window.VerseGameBridge.completeGameRun({
+        verseId: ctx.verseId,
+        gameId: GAME_ID,
+        mode: selectedMode,
+        stats: {
+          streak: state.streak,
+          mistakes: state.mistakes,
+          builtCount: state.builtCount,
+          bonusScore: state.bonusFinalScore,
+          bonusCleanStreak: state.bonusCleanStreak,
+          bonusMaxMultiplier: state.bonusMaxMultiplier
+        }
+      });
+    } catch (err) {
+      console.error("completeGameRun failed", err);
+
+      completionResult = {
+        ok: false,
+        alreadyCompleted: false,
+        newlyCompleted: false,
+        reward: {
+          ok: false,
+          petUnlockTriggered: false
+        }
+      };
+    }
+
+    return completionResult;
+  }
+
+
+  async function continueFromBonusReveal() {
     if (!state.bonusRevealVisible) return;
 
     state.bonusRevealVisible = false;
@@ -1396,6 +1405,7 @@
       tutorialEl.innerHTML = "";
     }
 
+    await markGameComplete();
     renderVictory();
   }
 
@@ -1530,12 +1540,7 @@
         ></div>
       `).join("")}
 
-      ${state.bonusFireworks.map(fw => `
-        <div
-          class="vinv-shot-core vinv-shot-core--bonus"
-          style="left:${fw.x}px; top:${fw.y}px; --vinv-shot-color:${fw.colorHex || "#ffffff"};"
-        ></div>
-      `).join("")}
+
     `;
 
     effectsEl.innerHTML = state.effects.map((effect) => renderEffect(effect, now)).join("");
@@ -2033,10 +2038,6 @@
     };
   }
 
-  function makeBonusFireworkEffect(x, y) {
-    const color = randomFrom([...LANE_COLORS.map(item => item.hex), "#f28fff", "#ffffff"]);
-    return makeParticleEffect(randomFrom(BONUS_FIREWORK_POOL), x, y, color, 5, "fireworkParticle");
-  }
 
   function makeParticleEffect(preset, x, y, baseColor, streak, group) {
     const born = performance.now();
