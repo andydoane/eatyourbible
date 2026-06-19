@@ -263,7 +263,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v3.27",
+      debugBadge: "v3.28",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1911,7 +1911,9 @@
   function getRoundSpeed() {
     const usableDistance = Math.max(180, state.bottomZoneY + 28);
     const cfg = state.modeTiming[selectedMode] || state.modeTiming.easy;
-    const roundSeconds = clamp(cfg.start + Math.max(0, state.roundIndex - 1) * cfg.step, 2.2, 5.4);
+    const streakRamp = Math.max(0, state.streak);
+    const roundSeconds = clamp(cfg.start + streakRamp * cfg.step, 2.2, 5.4);
+
     return usableDistance / roundSeconds;
   }
 
