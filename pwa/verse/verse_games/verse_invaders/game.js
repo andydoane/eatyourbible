@@ -193,7 +193,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v2.1",
+      debugBadge: "v2.2",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -698,7 +698,7 @@
     state.overlayUntil = performance.now() + 420;
     target.visible = false;
     const targetPoint = getEntityHitPoint(target);
-    addEffect(makeSmokePuffEffect(targetPoint.x, target.y + 28));
+    addEffect(makePoofEffect(targetPoint.x, target.y + 28));
     renderHud();
     renderDynamic();
 
@@ -734,7 +734,7 @@
         if (item.id !== target.id && item.visible) {
           const itemPoint = getEntityHitPoint(item);
           item.visible = false;
-          addEffect(makeSmokePuffEffect(itemPoint.x, item.y + 28));
+          addEffect(makePoofEffect(itemPoint.x, item.y + 28));
         }
       });
 
@@ -1284,8 +1284,29 @@
     };
   }
 
-  function makeCorrectHitEffect(x, y, baseColor, streak) {
-    return makeParticleEffect(randomFrom(CORRECT_EFFECT_POOL), x, y, baseColor, streak, "hit");
+  function makePoofEffect(x, y) {
+    const born = performance.now();
+    const unit = getAlienUnit();
+    const life = 620;
+
+    const dots = Array.from({ length: 9 }, (_, i) => ({
+      angle: (Math.PI * 2 * i / 9) + randBetween(-0.34, 0.34),
+      distance: randBetween(unit * 0.16, unit * 0.42),
+      size: randBetween(unit * 0.11, unit * 0.22),
+      alpha: randBetween(0.58, 0.92),
+      color: Math.random() < 0.55 ? "rgba(255,255,255,0.94)" : "rgba(215,224,232,0.9)"
+    }));
+
+    return {
+      kind: "poof",
+      x,
+      y,
+      born,
+      life,
+      until: born + life,
+      cloudSize: unit * 1.05,
+      dots
+    };
   }
 
   function makeBonusFireworkEffect(x, y) {
@@ -1419,6 +1440,48 @@
               />
             </div>
           </div>
+        </div>
+      `;
+    }
+
+    if (effect.kind === "poof") {
+      const progress = clamp((now - effect.born) / effect.life, 0, 1);
+      const cloudOpacity = progress < 0.76
+        ? 1 - progress * 0.36
+        : Math.max(0, 0.72 - ((progress - 0.76) / 0.24) * 0.72);
+
+      const dotHtml = effect.dots.map((dot) => {
+        const travel = Math.sin(progress * Math.PI * 0.72);
+        const dx = Math.cos(dot.angle) * dot.distance * travel;
+        const dy = Math.sin(dot.angle) * dot.distance * travel - effect.cloudSize * 0.08 * progress;
+        const opacity = clamp(dot.alpha * (1 - Math.pow(progress, 1.4)), 0, 1);
+        const scale = 0.56 + progress * 0.78;
+
+        return `
+          <div
+            class="vinv-poof-dot"
+            style="
+              transform:translate(${dx.toFixed(1)}px,${dy.toFixed(1)}px) translate(-50%,-50%) scale(${scale.toFixed(2)});
+              width:${dot.size.toFixed(1)}px;
+              height:${dot.size.toFixed(1)}px;
+              background:${dot.color};
+              opacity:${opacity.toFixed(3)};
+            "
+          ></div>
+        `;
+      }).join("");
+
+      return `
+        <div class="vinv-effect-wrap vinv-poof-wrap" style="left:${effect.x}px; top:${effect.y}px;">
+          <div
+            class="vinv-poof-cloud"
+            style="
+              width:${effect.cloudSize.toFixed(1)}px;
+              height:${effect.cloudSize.toFixed(1)}px;
+              opacity:${cloudOpacity.toFixed(3)};
+            "
+          ></div>
+          ${dotHtml}
         </div>
       `;
     }

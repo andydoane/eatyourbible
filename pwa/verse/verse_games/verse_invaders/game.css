@@ -407,15 +407,26 @@ body {
   position: absolute;
   left: 0;
   top: 0;
-  transform: translate(-50%, -50%) scale(0.72);
+  transform: translate(-50%, -50%) scale(0.55);
   border-radius: 999px;
   background:
-    radial-gradient(circle at 34% 45%, rgba(255, 255, 255, 0.9) 0 20%, transparent 21%),
-    radial-gradient(circle at 50% 32%, rgba(235, 240, 245, 0.88) 0 22%, transparent 23%),
-    radial-gradient(circle at 66% 46%, rgba(255, 255, 255, 0.9) 0 20%, transparent 21%),
-    radial-gradient(circle at 50% 60%, rgba(215, 224, 232, 0.82) 0 28%, transparent 29%);
-  filter: drop-shadow(0 4px 0 rgba(0, 0, 0, 0.12));
-  animation: vinvPoofCloud 520ms ease-out forwards;
+    radial-gradient(circle at 30% 54%, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.96) 21%, transparent 22%),
+    radial-gradient(circle at 46% 35%, rgba(238, 243, 248, 0.96) 0%, rgba(238, 243, 248, 0.96) 24%, transparent 25%),
+    radial-gradient(circle at 64% 52%, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.96) 22%, transparent 23%),
+    radial-gradient(circle at 50% 67%, rgba(218, 226, 234, 0.94) 0%, rgba(218, 226, 234, 0.94) 31%, transparent 32%);
+  filter:
+    drop-shadow(0 4px 0 rgba(0, 0, 0, 0.16))
+    drop-shadow(0 0 14px rgba(255, 255, 255, 0.28));
+  animation: vinvPoofCloud 620ms ease-out forwards;
+  pointer-events: none;
+}
+
+.vinv-poof-dot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 999px;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.1));
   pointer-events: none;
 }
 
