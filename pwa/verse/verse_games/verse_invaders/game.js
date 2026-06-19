@@ -193,7 +193,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v1.9",
+      debugBadge: "v2.0",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -664,6 +664,7 @@
       speed: rocketSpeed,
       targetId: target.id,
       targetColorKey: target.color.key,
+      colorHex: buttonColor.hex,
       resolved: false,
       white: false,
       age: 0,
@@ -832,12 +833,15 @@
   function launchBonusRocket(buttonLane) {
     state.bonusShotsLeft = Math.max(0, state.bonusShotsLeft - 1);
     const x = getLaneCenterX(buttonLane);
+    const shotColor = buttonLaneToColor(buttonLane);
+
     state.bonusFireworks.push({
       id: `fw-${Date.now()}-${Math.random()}`,
       x,
       y: state.controlsTopY - 12,
       targetY: randBetween(state.fieldHeight * 0.16, state.fieldHeight * 0.48),
       speed: Math.max(320, state.fieldHeight * 1.4),
+      colorHex: shotColor.hex,
       exploded: false
     });
     renderHud();
@@ -908,7 +912,7 @@
         state.rocket.age += dt;
         state.rocket.x += state.rocket.vx * dt;
         state.rocket.y += state.rocket.vy * dt;
-        addTrail(state.rocket.x, state.rocket.y + 18, state.rocket.white);
+        addTrail(state.rocket.x, state.rocket.y + 18, state.rocket.colorHex);
 
         const target = state.entities.find(item => item.id === state.rocket.targetId && item.visible);
         if (!target) {
@@ -936,7 +940,7 @@
       for (const firework of state.bonusFireworks) {
         if (firework.exploded) continue;
         firework.y -= firework.speed * dt;
-        addTrail(firework.x, firework.y + 18, true);
+        addTrail(firework.x, firework.y + 18, firework.colorHex || "#ffffff", true);
         if (firework.y <= firework.targetY) {
           firework.exploded = true;
           addEffect(makeBonusFireworkEffect(firework.x, firework.y));
@@ -972,9 +976,33 @@
     updateEntityElements(entitiesEl, now);
 
     rocketsEl.innerHTML = `
-      ${state.rocket ? `<div class="vinv-rocket" style="left:${state.rocket.x}px; top:${state.rocket.y}px; transform:translate(-50%,-50%) rotate(${state.rocket.angleDeg.toFixed(1)}deg);">🚀</div>` : ""}
-      ${state.trails.map(trail => `<div class="vinv-trail ${trail.white ? "white" : ""}" style="left:${trail.x}px; top:${trail.y}px; opacity:${trail.opacity}">${trail.icon}</div>`).join("")}
-      ${state.bonusFireworks.map(fw => `<div class="vinv-rocket white" style="left:${fw.x}px; top:${fw.y}px;">⚪</div>`).join("")}
+      ${state.rocket ? `
+        <div
+          class="vinv-shot-core"
+          style="left:${state.rocket.x}px; top:${state.rocket.y}px; --vinv-shot-color:${state.rocket.colorHex || "#ffffff"};"
+        ></div>
+      ` : ""}
+
+      ${state.trails.map(trail => `
+        <div
+          class="vinv-shot-trail-dot ${trail.white ? "white" : ""}"
+          style="
+            left:${trail.x}px;
+            top:${trail.y}px;
+            width:${trail.size}px;
+            height:${trail.size}px;
+            opacity:${trail.opacity};
+            --vinv-shot-color:${trail.colorHex};
+          "
+        ></div>
+      `).join("")}
+
+      ${state.bonusFireworks.map(fw => `
+        <div
+          class="vinv-shot-core vinv-shot-core--bonus"
+          style="left:${fw.x}px; top:${fw.y}px; --vinv-shot-color:${fw.colorHex || "#ffffff"};"
+        ></div>
+      `).join("")}
     `;
 
     effectsEl.innerHTML = state.effects.map((effect) => renderEffect(effect, now)).join("");
@@ -1193,16 +1221,23 @@
     return window.VerseGameShell.normalizeWord(value);
   }
 
-  function addTrail(x, y, white) {
+  function addTrail(x, y, colorHex = "#ffffff", white = false) {
+    const baseColor = colorHex || "#ffffff";
+    const colorChoices = white
+      ? ["#ffffff", baseColor, lightenColor(baseColor, 0.18)]
+      : [baseColor, lightenColor(baseColor, 0.18), lightenColor(baseColor, 0.34)];
+
     state.trails.push({
-      x,
-      y,
-      icon: white ? "·" : "✨",
-      opacity: white ? 0.85 : 0.95,
+      x: x + randBetween(-3, 3),
+      y: y + randBetween(-3, 4),
+      colorHex: randomFrom(colorChoices),
+      size: randBetween(5, 12),
+      opacity: white ? randBetween(0.48, 0.78) : randBetween(0.54, 0.9),
       white: !!white,
-      until: performance.now() + 180
+      until: performance.now() + randBetween(190, 290)
     });
-    if (state.trails.length > 24) state.trails.shift();
+
+    if (state.trails.length > 42) state.trails.shift();
   }
 
   function addEffect(effect) {

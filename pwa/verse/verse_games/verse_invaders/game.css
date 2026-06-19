@@ -561,21 +561,33 @@ body {
   opacity: 0.98;
 }
 
-.vinv-rocket {
+.vinv-shot-core,
+.vinv-shot-trail-dot {
   position: absolute;
   transform: translate(-50%, -50%);
-  font-size: clamp(22px, 5vw, 34px);
+  border-radius: 999px;
+  background: var(--vinv-shot-color, #ffffff);
+  pointer-events: none;
 }
 
-.vinv-rocket.white {
-  filter: grayscale(1) brightness(1.7);
+.vinv-shot-core {
+  width: clamp(16px, 4.4vw, 25px);
+  height: clamp(16px, 4.4vw, 25px);
+  box-shadow:
+    0 0 0 3px rgba(255, 255, 255, 0.18),
+    0 0 14px var(--vinv-shot-color, #ffffff),
+    0 0 24px var(--vinv-shot-color, #ffffff);
 }
 
-.vinv-trail {
-  position: absolute;
-  transform: translate(-50%, -50%);
-  font-size: clamp(14px, 3vw, 20px);
-  opacity: 0.9;
+.vinv-shot-core--bonus {
+  width: clamp(13px, 3.6vw, 21px);
+  height: clamp(13px, 3.6vw, 21px);
+}
+
+.vinv-shot-trail-dot {
+  box-shadow:
+    0 0 8px var(--vinv-shot-color, #ffffff),
+    0 0 14px rgba(255, 255, 255, 0.16);
 }
 
 .vinv-overlay-msg {
