@@ -148,6 +148,8 @@
     bonusRockets: [],
     bonusShotsLeft: 0,
     bonusFinished: false,
+    bonusRevealVisible: false,
+    bonusFinalScore: 0,
     bonusFireworks: [],
     modeTiming: {
       easy: { start: 6.2, step: 0 },
@@ -227,7 +229,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v3.17",
+      debugBadge: "v3.18",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -302,6 +304,8 @@
     state.bonusRockets = [];
     state.bonusShotsLeft = 0;
     state.bonusFinished = false;
+    state.bonusRevealVisible = false;
+    state.bonusFinalScore = 0;
     state.bonusFireworks = [];
     state.roundSpeed = 0;
 
@@ -479,6 +483,15 @@
 
     window.onkeydown = (e) => {
       if (!state.running || state.paused) return;
+
+      if (state.bonusRevealVisible) {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          continueFromBonusReveal();
+        }
+        return;
+      }
+
       if (e.key === "ArrowLeft" || e.key.toLowerCase() === "a") handleColorPress("left");
       if (e.key === "ArrowDown" || e.key.toLowerCase() === "s") handleColorPress("center");
       if (e.key === "ArrowRight" || e.key.toLowerCase() === "d") handleColorPress("right");
@@ -1334,15 +1347,27 @@
 
   function finishBonusRound() {
     state.bonusFinished = true;
+    state.bonusRevealVisible = true;
+    state.bonusFinalScore = state.bonusScore;
     state.buttonsLocked = true;
     state.activeLane = null;
     state.entities = [];
     state.entityRenderSignature = "";
     state.bonusRockets = [];
-    state.overlayMessage = "Great job!";
-    state.overlayUntil = performance.now() + 1500;
-    renderButtons();
-    setTimeout(() => renderVictory(), 900);
+    state.trails = [];
+    state.overlayMessage = "";
+    state.overlayUntil = 0;
+    renderHud();
+    renderDynamic();
+  }
+
+  function continueFromBonusReveal() {
+    if (!state.bonusRevealVisible) return;
+
+    state.bonusRevealVisible = false;
+    state.bonusMode = false;
+    state.buttonsLocked = true;
+    renderVictory();
   }
 
   function renderVictory() {
@@ -1492,10 +1517,41 @@
     } else {
       renderBonusIntroLayer(tutorialEl);
     }
-    overlayEl.innerHTML = state.overlayUntil > now && state.overlayMessage
-      ? `<div class="vinv-overlay-pill">${escapeHtml(state.overlayMessage)}</div>`
-      : "";
+    if (state.bonusRevealVisible) {
+      overlayEl.innerHTML = renderBonusRevealHtml();
+      const revealCard = overlayEl.querySelector(".vinv-bonus-reveal");
+      if (revealCard) {
+        revealCard.onclick = continueFromBonusReveal;
+      }
+    } else {
+      overlayEl.innerHTML = state.overlayUntil > now && state.overlayMessage
+        ? `<div class="vinv-overlay-pill">${escapeHtml(state.overlayMessage)}</div>`
+        : "";
+    }
   }
+
+  function renderBonusRevealHtml() {
+    return `
+      <button class="vinv-bonus-reveal" type="button" aria-label="Bonus score ${state.bonusFinalScore}. Tap to continue.">
+        <div class="vinv-bonus-reveal-title">Bonus Score!</div>
+
+        <div class="vinv-bonus-reveal-row">
+          <img
+            class="vinv-bonus-reveal-alien"
+            src="./verse_invaders_images/verse_invaders_alien_yellow.png"
+            alt=""
+            aria-hidden="true"
+            draggable="false"
+          />
+          <span class="vinv-bonus-reveal-times">×</span>
+          <span class="vinv-bonus-reveal-score">${state.bonusFinalScore}</span>
+        </div>
+
+        <div class="vinv-bonus-reveal-prompt">Tap to continue</div>
+      </button>
+    `;
+  }
+
 
   function renderTutorialLayer(tutorialEl) {
     if (!state.tutorialMode) {
