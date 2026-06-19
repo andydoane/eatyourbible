@@ -193,7 +193,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v2.0",
+      debugBadge: "v2.1",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1221,17 +1221,23 @@
     return window.VerseGameShell.normalizeWord(value);
   }
 
+  function getAlienUnit() {
+    const width = state.fieldWidth || window.innerWidth || 390;
+    return clamp(width * 0.15, 62, 118);
+  }
+
   function addTrail(x, y, colorHex = "#ffffff", white = false) {
+    const unit = getAlienUnit();
     const baseColor = colorHex || "#ffffff";
     const colorChoices = white
       ? ["#ffffff", baseColor, lightenColor(baseColor, 0.18)]
       : [baseColor, lightenColor(baseColor, 0.18), lightenColor(baseColor, 0.34)];
 
     state.trails.push({
-      x: x + randBetween(-3, 3),
-      y: y + randBetween(-3, 4),
+      x: x + randBetween(unit * -0.035, unit * 0.035),
+      y: y + randBetween(unit * -0.035, unit * 0.045),
       colorHex: randomFrom(colorChoices),
-      size: randBetween(5, 12),
+      size: randBetween(unit * 0.06, unit * 0.13),
       opacity: white ? randBetween(0.48, 0.78) : randBetween(0.54, 0.9),
       white: !!white,
       until: performance.now() + randBetween(190, 290)
@@ -1247,17 +1253,20 @@
 
   function makeSmokePuffEffect(x, y) {
     const born = performance.now();
-    const particles = Array.from({ length: 7 }, (_, i) => ({
-      angle: (Math.PI * 2 * i / 7) + randBetween(-0.24, 0.24),
-      speed: randBetween(6, 18),
-      size: randBetween(12, 24),
-      color: Math.random() < 0.5 ? "rgba(255,255,255,0.72)" : "rgba(210,218,226,0.68)",
-      alpha: randBetween(0.62, 0.92),
-      gravity: randBetween(-1, 2),
-      drift: randBetween(-4, 4),
+    const unit = getAlienUnit();
+    const life = 540;
+    const particles = Array.from({ length: 10 }, (_, i) => ({
+      angle: (Math.PI * 2 * i / 10) + randBetween(-0.28, 0.28),
+      speed: randBetween(unit * 0.16, unit * 0.34),
+      size: randBetween(unit * 0.11, unit * 0.24),
+      color: Math.random() < 0.5 ? "rgba(255,255,255,0.84)" : "rgba(210,218,226,0.78)",
+      alpha: randBetween(0.6, 0.9),
+      gravity: randBetween(-0.6, 1.4),
+      drift: randBetween(unit * -0.08, unit * 0.08),
       style: "smoke",
-      spin: randBetween(-40, 40)
+      spin: randBetween(-60, 60)
     }));
+
     return {
       kind: "particle",
       group: "smoke",
@@ -1265,11 +1274,13 @@
       x,
       y,
       born,
-      life: 420,
-      until: born + 420,
+      life,
+      until: born + life,
       particles,
       ring: 0,
-      center: 0
+      center: 0,
+      cloud: true,
+      cloudSize: unit * 0.78
     };
   }
 
@@ -1299,12 +1310,14 @@
     };
     const cfg = configMap[preset] || configMap.alienPop;
     const palette = buildPalette(baseColor, preset);
+    const unit = getAlienUnit();
+    const particleScale = group === "hit" ? unit / 42 : unit / 86;
     const particles = [];
     for (let i = 0; i < cfg.count; i++) {
       particles.push({
         angle: (Math.PI * 2 * i / cfg.count) + randBetween(-0.18, 0.18),
         speed: randBetween(cfg.speedMin, cfg.speedMax),
-        size: randBetween(cfg.sizeMin, cfg.sizeMax),
+        size: randBetween(cfg.sizeMin, cfg.sizeMax) * particleScale,
         color: randomFrom(palette),
         alpha: randBetween(0.82, 1),
         gravity: cfg.gravity,
@@ -1316,7 +1329,7 @@
         particles.push({
           angle: (Math.PI * 2 * i / cfg.count) + randBetween(-0.12, 0.12),
           speed: randBetween(cfg.speedMax * 0.65, cfg.speedMax * 1.05),
-          size: randBetween(2, 4),
+          size: randBetween(2, 4) * particleScale,
           color: "#ffffff",
           alpha: 1,
           gravity: cfg.gravity + 4,
@@ -1413,6 +1426,10 @@
     if (effect.kind !== "particle") return "";
 
     const progress = clamp((now - effect.born) / effect.life, 0, 1);
+    const poofCloud = effect.cloud
+      ? `<div class="vinv-poof-cloud" style="width:${effect.cloudSize.toFixed(1)}px;height:${effect.cloudSize.toFixed(1)}px;"></div>`
+      : "";
+
     const particleHtml = effect.particles.map((particle) => {
       const dx = Math.cos(particle.angle) * particle.speed * progress + particle.drift * progress;
       const dy = Math.sin(particle.angle) * particle.speed * progress + (particle.gravity || 0) * progress * progress * 40;
@@ -1430,7 +1447,7 @@
     const shell = effect.shell ? `<div class="vinv-effect-shell" style="width:${(42 + progress * 36).toFixed(1)}px;height:${(42 + progress * 36).toFixed(1)}px;opacity:${Math.max(0, 0.3 - progress * 0.36).toFixed(3)};"></div>` : "";
     const cross = effect.cross ? `<div class="vinv-effect-cross" style="opacity:${Math.max(0, 0.54 - progress * 0.6).toFixed(3)};"></div>` : "";
 
-    return `<div class="vinv-effect-wrap" style="left:${effect.x}px; top:${effect.y}px;">${flash}${shell}${ring}${center}${cross}${particleHtml}</div>`;
+    return `<div class="vinv-effect-wrap" style="left:${effect.x}px; top:${effect.y}px;">${flash}${shell}${ring}${center}${cross}${poofCloud}${particleHtml}</div>`;
   }
 
   function lightenColor(hex, amount) {
