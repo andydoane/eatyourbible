@@ -91,6 +91,36 @@
     medium: 1.12,
     hard: 1.25
   };
+  const STREAK_MILESTONE_CONFIG = {
+    4: {
+      tone: "red",
+      bg: "#ff5a51",
+      text: "#ffffff",
+      rainbow: false,
+      burst: false
+    },
+    8: {
+      tone: "blue",
+      bg: "#40b9c5",
+      text: "#ffffff",
+      rainbow: false,
+      burst: false
+    },
+    12: {
+      tone: "rainbow",
+      bg: "#ffffff",
+      text: "#333333",
+      rainbow: true,
+      burst: false
+    },
+    16: {
+      tone: "rainbow",
+      bg: "#ffffff",
+      text: "#333333",
+      rainbow: true,
+      burst: true
+    }
+  };
   const BOOKS = window.VerseGameShell.getBibleBookDecoys();
   const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
 
@@ -233,7 +263,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v3.24",
+      debugBadge: "v3.25",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -984,6 +1014,7 @@
     scheduleAction(CORRECT_HIT_IMPACT_DELAY_MS, () => {
       const targetPoint = getEntityHitPoint(target);
       addEffect(makeCorrectHitEffect(targetPoint.x, target.y + 22, target.color.hex, state.streak));
+      showStreakMilestone(state.streak);
       target.visible = false;
 
       state.entities.forEach(item => {
@@ -1002,6 +1033,83 @@
       else spawnRound();
     });
   }
+
+  function showStreakMilestone(streak) {
+    const config = STREAK_MILESTONE_CONFIG[streak];
+    if (!config || state.bonusMode || state.tutorialMode) return;
+
+    const x = state.fieldWidth / 2;
+    const y = clamp(state.fieldHeight * 0.34, 118, state.bottomZoneY - 120);
+
+    if (config.burst) {
+      addEffect(makeStreakMilestoneBurstEffect(x, y));
+    }
+
+    addEffect(makeStreakMilestonePopupEffect(x, y, streak, config));
+  }
+
+  function makeStreakMilestonePopupEffect(x, y, streak, config) {
+    const born = performance.now();
+    const life = 980;
+
+    return {
+      kind: "streakMilestone",
+      x,
+      y,
+      streak,
+      tone: config.tone,
+      bg: config.bg,
+      textColor: config.text,
+      rainbow: config.rainbow,
+      born,
+      life,
+      until: born + life
+    };
+  }
+
+  function makeStreakMilestoneBurstEffect(x, y) {
+    const born = performance.now();
+    const unit = getAlienUnit();
+    const life = 1050;
+    const count = 34;
+    const palette = ["#ff5a51", "#ffa351", "#ffc751", "#a7cb6f", "#40b9c5", "#7f66c6", "#ffffff"];
+    const styles = ["dot", "star", "shard", "confetti", "petal"];
+
+    const particles = Array.from({ length: count }, (_, i) => {
+      const angle = (Math.PI * 2 * i / count) + randBetween(-0.16, 0.16);
+      const distanceScale = unit / 42;
+
+      return {
+        angle,
+        speed: randBetween(160, 310) * distanceScale,
+        size: randBetween(7, 15) * distanceScale,
+        color: randomFrom(palette),
+        alpha: randBetween(0.82, 1),
+        gravity: randBetween(4, 10),
+        drift: randBetween(-16, 16),
+        style: randomFrom(styles),
+        spin: randBetween(-360, 360)
+      };
+    });
+
+    return {
+      kind: "particle",
+      group: "hit",
+      preset: "streakRainbowBurst",
+      x,
+      y,
+      born,
+      life,
+      until: born + life,
+      particles,
+      ring: 0,
+      center: 0,
+      flash: true,
+      shell: false,
+      cross: false
+    };
+  }
+
 
   function handleBottomMiss(target) {
     state.streak = 0;
@@ -2225,6 +2333,32 @@
         </div>
       `;
     }
+
+    if (effect.kind === "streakMilestone") {
+      const progress = clamp((now - effect.born) / effect.life, 0, 1);
+      const opacity = progress < 0.72 ? 1 : Math.max(0, 1 - ((progress - 0.72) / 0.28));
+      const rise = -18 * progress;
+      const scale = progress < 0.2
+        ? 0.56 + (1.12 - 0.56) * (progress / 0.2)
+        : 1.12 + (1 - 1.12) * Math.min(1, (progress - 0.2) / 0.18);
+
+      return `
+        <div
+          class="vinv-streak-milestone ${effect.rainbow ? "is-rainbow" : ""} is-${effect.tone}"
+          style="
+            left:${effect.x}px;
+            top:${effect.y}px;
+            --vinv-streak-bg:${effect.bg};
+            --vinv-streak-text:${effect.textColor};
+            opacity:${opacity.toFixed(3)};
+            transform:translate(-50%, -50%) translateY(${rise.toFixed(1)}px) scale(${scale.toFixed(3)});
+          "
+        >
+          ${effect.streak} IN A ROW!
+        </div>
+      `;
+    }
+
 
 
     if (effect.kind === "poof") {

@@ -513,6 +513,64 @@ body {
   color: #ff5a51;
 }
 
+.vinv-streak-milestone {
+  position: absolute;
+  z-index: 7;
+  pointer-events: none;
+  padding: clamp(10px, 2.8vw, 18px) clamp(18px, 5vw, 34px);
+  border-radius: 999px;
+  background: var(--vinv-streak-bg, #ff5a51);
+  color: var(--vinv-streak-text, #ffffff);
+  font-family: "Titan One", "Baloo 2", system-ui, sans-serif;
+  font-size: clamp(28px, 8vw, 66px);
+  line-height: 1;
+  letter-spacing: 0.035em;
+  text-align: center;
+  white-space: nowrap;
+  text-shadow:
+    0 3px 0 rgba(0, 0, 0, 0.16),
+    0 0 16px rgba(255, 255, 255, 0.22);
+  box-shadow:
+    0 8px 0 rgba(0, 0, 0, 0.18),
+    0 18px 34px rgba(0, 0, 0, 0.22);
+  will-change: transform, opacity;
+}
+
+.vinv-streak-milestone.is-rainbow {
+  color: #333333;
+  background:
+    linear-gradient(90deg,
+      #ff5a51 0%,
+      #ffa351 16%,
+      #ffc751 32%,
+      #a7cb6f 50%,
+      #40b9c5 68%,
+      #7f66c6 84%,
+      #ff5a51 100%);
+  background-size: 220% 100%;
+  text-shadow:
+    0 2px 0 rgba(255, 255, 255, 0.58),
+    0 0 14px rgba(255, 255, 255, 0.34);
+  animation: vinvStreakRainbowPulse 620ms ease-in-out infinite;
+}
+
+@keyframes vinvStreakRainbowPulse {
+  0% {
+    background-position: 0% 50%;
+    filter: saturate(1) brightness(1);
+  }
+
+  50% {
+    background-position: 100% 50%;
+    filter: saturate(1.18) brightness(1.08);
+  }
+
+  100% {
+    background-position: 0% 50%;
+    filter: saturate(1) brightness(1);
+  }
+}
+
 .vinv-bonus-reveal {
   position: absolute;
   left: 50%;
