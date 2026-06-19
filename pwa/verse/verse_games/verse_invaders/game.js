@@ -263,7 +263,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v3.26",
+      debugBadge: "v3.27",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1452,7 +1452,7 @@
     const usableDistance = Math.max(180, state.bottomZoneY + 28);
     const hardCfg = state.modeTiming.hard;
     const roundSeconds = clamp(
-      hardCfg.start + Math.max(0, state.roundIndex - 1) * hardCfg.step,
+      hardCfg.start,
       2.2,
       5.4
     );
