@@ -419,6 +419,31 @@ body {
   word-break: break-word;
 }
 
+.vinv-entity.is-bonus-alien .vinv-word {
+  display: none;
+}
+
+.vinv-score-popup {
+  position: absolute;
+  z-index: 6;
+  pointer-events: none;
+  font-family: "Titan One", "Baloo 2", system-ui, sans-serif;
+  font-size: clamp(28px, 8vw, 62px);
+  line-height: 1;
+  text-shadow:
+    0 4px 0 rgba(0, 0, 0, 0.22),
+    0 8px 18px rgba(0, 0, 0, 0.22);
+  will-change: transform, opacity;
+}
+
+.vinv-score-popup.is-plus {
+  color: #ffffff;
+}
+
+.vinv-score-popup.is-minus {
+  color: #ff5a51;
+}
+
 .vinv-tutorial {
   z-index: 2;
 }

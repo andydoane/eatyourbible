@@ -81,6 +81,11 @@
   const ROUND_ADVANCE_AFTER_TWO_WRONGS_MS = POOF_LIFE_MS + POOF_EXTRA_FADE_MS + ROUND_ADVANCE_BUFFER_MS;
   const ROUND_ADVANCE_AFTER_CORRECT_MS = CORRECT_HIT_IMPACT_DELAY_MS + STRONG_ALIEN_BURST_LIFE_MS + ROUND_ADVANCE_BUFFER_MS;
   const ABDUCTION_LIFE_MS = 1850;
+  const BONUS_SWARM_DURATION_MS = 20000;
+  const BONUS_SPAWN_START_SEC = 0.82;
+  const BONUS_SPAWN_END_SEC = 0.34;
+  const BONUS_SPEED_START_FACTOR = 0.36;
+  const BONUS_SPEED_END_FACTOR = 0.82;
   const BOOKS = window.VerseGameShell.getBibleBookDecoys();
   const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
 
@@ -134,8 +139,14 @@
     bonusIntroMessage: "",
     bonusIntroRenderSignature: "",
     bonusMode: false,
-    bonusShotsLeft: 0,
+    bonusScore: 0,
+    bonusCleanStreak: 0,
+    bonusStartedAt: 0,
+    bonusEndsAt: 0,
     bonusAutoTimer: 0,
+    bonusSpawnCount: 0,
+    bonusRockets: [],
+    bonusShotsLeft: 0,
     bonusFinished: false,
     bonusFireworks: [],
     modeTiming: {
@@ -216,7 +227,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v3.13",
+      debugBadge: "v3.14",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -282,8 +293,14 @@
     state.bonusIntroMessage = "";
     state.bonusIntroRenderSignature = "";
     state.bonusMode = false;
-    state.bonusShotsLeft = 0;
+    state.bonusScore = 0;
+    state.bonusCleanStreak = 0;
+    state.bonusStartedAt = 0;
+    state.bonusEndsAt = 0;
     state.bonusAutoTimer = 0;
+    state.bonusSpawnCount = 0;
+    state.bonusRockets = [];
+    state.bonusShotsLeft = 0;
     state.bonusFinished = false;
     state.bonusFireworks = [];
     state.roundSpeed = 0;
@@ -534,7 +551,16 @@
       };
     }
 
-    if (streakPill) streakPill.textContent = `🔥 ${state.streak}`;
+    if (streakPill) {
+      if (state.bonusMode) {
+        const multiplier = getBonusMultiplier();
+        streakPill.textContent = multiplier > 1
+          ? `⭐ ${state.bonusScore} · ${multiplier}x`
+          : `⭐ ${state.bonusScore}`;
+      } else {
+        streakPill.textContent = `🔥 ${state.streak}`;
+      }
+    }
     renderBuildArea();
     renderButtons();
   }
@@ -764,8 +790,7 @@
     if (state.buttonsLocked) return;
 
     if (state.bonusMode) {
-      if (state.bonusShotsLeft <= 0) return;
-      launchBonusRocket(buttonLane);
+      handleBonusColorPress(buttonLane);
       return;
     }
 
@@ -1017,6 +1042,8 @@
   async function startBonusRound() {
     if (state.bonusMode) return;
 
+    const now = performance.now();
+
     state.bonusIntroMode = false;
     state.bonusIntroMessage = "";
     state.bonusIntroRenderSignature = "";
@@ -1024,13 +1051,24 @@
     state.buttonsLocked = false;
     state.activeLane = null;
     state.entities = [];
+    state.entityRenderSignature = "";
     state.rocket = null;
     state.trails = [];
-    state.overlayMessage = "Bonus Fireworks!";
-    state.overlayUntil = performance.now() + 1000;
-    state.bonusShotsLeft = getBonusShots();
+    state.effects = state.effects.filter(effect => effect.until > now);
+    state.overlayMessage = "";
+    state.overlayUntil = 0;
+    state.bonusScore = 0;
+    state.bonusCleanStreak = 0;
+    state.bonusStartedAt = now;
+    state.bonusEndsAt = now + BONUS_SWARM_DURATION_MS;
     state.bonusAutoTimer = 0.18;
+    state.bonusSpawnCount = 0;
+    state.bonusRockets = [];
+    state.bonusShotsLeft = 0;
     state.bonusFinished = false;
+    state.bonusFireworks = [];
+
+    spawnBonusAlien();
     renderHud();
     renderDynamic();
 
@@ -1065,27 +1103,206 @@
     }
   }
 
-  function launchBonusRocket(buttonLane) {
-    state.bonusShotsLeft = Math.max(0, state.bonusShotsLeft - 1);
-    const x = getLaneCenterX(buttonLane);
-    const shotColor = buttonLaneToColor(buttonLane);
+  function handleBonusColorPress(buttonLane) {
+    if (state.bonusFinished) return;
 
-    state.bonusFireworks.push({
-      id: `fw-${Date.now()}-${Math.random()}`,
-      x,
-      y: state.controlsTopY - 12,
-      targetY: randBetween(state.fieldHeight * 0.16, state.fieldHeight * 0.48),
-      speed: Math.max(320, state.fieldHeight * 1.4),
-      colorHex: shotColor.hex,
-      exploded: false
+    const buttonColor = buttonLaneToColor(buttonLane);
+    const target = getBonusTargetForColor(buttonColor.key);
+
+    if (!target) {
+      applyBonusPenalty(getLaneCenterX(buttonLane), state.controlsTopY - 18);
+      return;
+    }
+
+    target.locked = true;
+    target.status = "bonusTargeted";
+
+    const rocketStartX = getLaneCenterX(buttonLane);
+    const rocketStartY = state.controlsTopY - 16;
+    const targetPoint = getEntityHitPoint(target);
+    const rocketSpeed = Math.max(620, state.fieldHeight * 2.15);
+    const dx = targetPoint.x - rocketStartX;
+    const dy = targetPoint.y - rocketStartY;
+    const distance = Math.max(1, Math.hypot(dx, dy));
+    const flightTime = clamp(distance / rocketSpeed, 0.08, 0.36);
+
+    state.bonusRockets.push({
+      id: `bonus-rocket-${Date.now()}-${Math.random()}`,
+      lane: buttonLane,
+      targetId: target.id,
+      x: rocketStartX,
+      y: rocketStartY,
+      vx: dx / flightTime,
+      vy: dy / flightTime,
+      age: 0,
+      maxAge: flightTime,
+      colorHex: buttonColor.hex
     });
+
+    renderDynamic();
+  }
+
+  function getBonusTargetForColor(colorKey) {
+    return state.entities.find(item =>
+      item.visible &&
+      !item.locked &&
+      item.status === "bonus" &&
+      item.color.key === colorKey
+    );
+  }
+
+  function updateBonusSwarm(dt, ts) {
+    if (state.bonusFinished) return;
+
+    if (ts >= state.bonusEndsAt) {
+      finishBonusRound();
+      return;
+    }
+
+    state.bonusAutoTimer -= dt;
+    if (state.bonusAutoTimer <= 0) {
+      spawnBonusAlien();
+      state.bonusAutoTimer = getBonusSpawnIntervalSec();
+    }
+
+    const fallSpeed = getBonusFallSpeed();
+
+    state.entities.forEach((entity) => {
+      if (!entity.visible || entity.status !== "bonus") return;
+
+      entity.y += fallSpeed * dt;
+
+      if (entity.y >= state.bottomZoneY - 48) {
+        handleBonusAbduction(entity);
+      }
+    });
+
+    state.bonusRockets.forEach((rocket) => {
+      rocket.age += dt;
+      rocket.x += rocket.vx * dt;
+      rocket.y += rocket.vy * dt;
+      addTrail(rocket.x, rocket.y + 16, rocket.colorHex);
+
+      if (rocket.age >= rocket.maxAge) {
+        rocket.done = true;
+        resolveBonusRocketHit(rocket);
+      }
+    });
+
+    state.bonusRockets = state.bonusRockets.filter(rocket => !rocket.done);
+    state.entities = state.entities.filter(entity => entity.visible || entity.locked);
+
     renderHud();
+  }
+
+  function spawnBonusAlien() {
+    const colors = getBonusAvailableSpawnColors();
+    if (!colors.length) return;
+
+    const color = randomFrom(colors);
+    const lane = randomFrom(LANE_KEYS);
+    const index = state.bonusSpawnCount++;
+
+    state.entities.push({
+      id: `bonus-${index}-${Date.now()}`,
+      lane,
+      label: "",
+      correct: true,
+      color,
+      x: getLaneCenterX(lane),
+      y: -getAlienUnit() * randBetween(0.45, 0.9),
+      visible: true,
+      locked: false,
+      status: "bonus",
+      motionPhase: Math.random() * Math.PI * 2,
+      blinkDelay: randBetween(0.12, 1.15),
+      partDelay: randBetween(-1.8, 0)
+    });
+
+    state.entityRenderSignature = "";
+  }
+
+  function getBonusAvailableSpawnColors() {
+    const buttonColors = LANE_KEYS.map(lane => buttonLaneToColor(lane));
+    const used = new Set(
+      state.entities
+        .filter(entity => entity.visible && entity.status === "bonus")
+        .map(entity => entity.color.key)
+    );
+
+    return buttonColors.filter(color => !used.has(color.key));
+  }
+
+  function resolveBonusRocketHit(rocket) {
+    const target = state.entities.find(entity => entity.id === rocket.targetId);
+
+    if (!target || !target.visible) return;
+
+    const targetPoint = getEntityHitPoint(target);
+    target.visible = false;
+    target.locked = false;
+
+    state.bonusCleanStreak += 1;
+    const multiplier = getBonusMultiplier();
+    const points = multiplier;
+
+    state.bonusScore += points;
+    addEffect(makeCorrectHitEffect(targetPoint.x, target.y + 22, target.color.hex, state.bonusCleanStreak));
+    addEffect(makeScorePopupEffect(targetPoint.x, target.y + 8, `+${points}`, "plus"));
+
+    state.entityRenderSignature = "";
+    renderHud();
+  }
+
+  function handleBonusAbduction(entity) {
+    if (!entity || !entity.visible) return;
+
+    entity.visible = false;
+    entity.locked = false;
+
+    const targetPoint = getEntityHitPoint(entity);
+    addEffect(makeAbductionEffect(targetPoint.x, state.bottomZoneY - 12, entity.color));
+    applyBonusPenalty(targetPoint.x, state.bottomZoneY - 34);
+
+    state.entityRenderSignature = "";
+  }
+
+  function applyBonusPenalty(x, y) {
+    state.bonusScore -= 1;
+    state.bonusCleanStreak = 0;
+    addEffect(makeScorePopupEffect(x, y, "-1", "minus"));
+    renderHud();
+  }
+
+  function getBonusMultiplier() {
+    if (state.bonusCleanStreak >= 10) return 3;
+    if (state.bonusCleanStreak >= 5) return 2;
+    return 1;
+  }
+
+  function getBonusProgress() {
+    if (!state.bonusStartedAt || !state.bonusEndsAt) return 0;
+    return clamp((performance.now() - state.bonusStartedAt) / BONUS_SWARM_DURATION_MS, 0, 1);
+  }
+
+  function getBonusSpawnIntervalSec() {
+    const progress = getBonusProgress();
+    return BONUS_SPAWN_START_SEC + (BONUS_SPAWN_END_SEC - BONUS_SPAWN_START_SEC) * progress;
+  }
+
+  function getBonusFallSpeed() {
+    const progress = getBonusProgress();
+    const factor = BONUS_SPEED_START_FACTOR + (BONUS_SPEED_END_FACTOR - BONUS_SPEED_START_FACTOR) * progress;
+    return Math.max(160, state.fieldHeight * factor);
   }
 
   function finishBonusRound() {
     state.bonusFinished = true;
     state.buttonsLocked = true;
     state.activeLane = null;
+    state.entities = [];
+    state.entityRenderSignature = "";
+    state.bonusRockets = [];
     state.overlayMessage = "Great job!";
     state.overlayUntil = performance.now() + 1500;
     renderButtons();
@@ -1168,28 +1385,7 @@
         }
       }
     } else {
-      if (state.bonusShotsLeft > 0) {
-        state.bonusAutoTimer -= dt;
-        if (state.bonusAutoTimer <= 0) {
-          state.bonusAutoTimer = randBetween(0.26, 0.5);
-          launchBonusRocket(randomFrom(LANE_KEYS));
-        }
-      }
-
-      for (const firework of state.bonusFireworks) {
-        if (firework.exploded) continue;
-        firework.y -= firework.speed * dt;
-        addTrail(firework.x, firework.y + 18, firework.colorHex || "#ffffff", true);
-        if (firework.y <= firework.targetY) {
-          firework.exploded = true;
-          addEffect(makeBonusFireworkEffect(firework.x, firework.y));
-        }
-      }
-      state.bonusFireworks = state.bonusFireworks.filter(item => !item.exploded);
-
-      if (!state.bonusFinished && state.bonusShotsLeft <= 0 && state.bonusFireworks.length === 0 && !state.effects.some(item => item.group === "fireworkParticle")) {
-        finishBonusRound();
-      }
+      updateBonusSwarm(dt, ts);
     }
   }
 
@@ -1234,6 +1430,13 @@
             opacity:${trail.opacity};
             --vinv-shot-color:${trail.colorHex};
           "
+        ></div>
+      `).join("")}
+
+      ${state.bonusRockets.map(rocket => `
+        <div
+          class="vinv-shot-core vinv-shot-core--bonus"
+          style="left:${rocket.x}px; top:${rocket.y}px; --vinv-shot-color:${rocket.colorHex || "#ffffff"};"
         ></div>
       `).join("")}
 
@@ -1341,6 +1544,8 @@
     if (state.tutorialMode && state.roundStatus === "tutorialEntering" && entity.id.startsWith("tutorial-")) {
       return "is-tutorial-enter";
     }
+
+    if (entity.status === "bonus" || entity.status === "bonusTargeted") return "is-bonus-alien";
 
     if (entity.status === "fade") return "is-fade";
     if (entity.status === "correct") return "is-correct-pause";
@@ -1571,8 +1776,25 @@
 
   function addEffect(effect) {
     state.effects.push(effect);
-    if (state.effects.length > 30) state.effects.shift();
+    if (state.effects.length > 70) state.effects.shift();
   }
+
+  function makeScorePopupEffect(x, y, text, tone) {
+    const born = performance.now();
+    const life = 820;
+
+    return {
+      kind: "scorePopup",
+      x,
+      y,
+      text,
+      tone,
+      born,
+      life,
+      until: born + life
+    };
+  }
+
 
   function makePoofEffect(x, y) {
     const born = performance.now();
@@ -1854,7 +2076,29 @@
       `;
     }
 
-    
+    if (effect.kind === "scorePopup") {
+      const progress = clamp((now - effect.born) / effect.life, 0, 1);
+      const lift = -34 * progress;
+      const opacity = progress < 0.75 ? 1 : Math.max(0, 1 - ((progress - 0.75) / 0.25));
+      const scale = progress < 0.18
+        ? 0.72 + (1.14 - 0.72) * (progress / 0.18)
+        : 1.14 + (1 - 1.14) * Math.min(1, (progress - 0.18) / 0.18);
+
+      return `
+        <div
+          class="vinv-score-popup ${effect.tone === "minus" ? "is-minus" : "is-plus"}"
+          style="
+            left:${effect.x}px;
+            top:${effect.y}px;
+            opacity:${opacity.toFixed(3)};
+            transform:translate(-50%, -50%) translateY(${lift.toFixed(1)}px) scale(${scale.toFixed(3)});
+          "
+        >
+          ${escapeHtml(effect.text)}
+        </div>
+      `;
+    }
+
 
     if (effect.kind === "poof") {
       const progress = clamp((now - effect.born) / effect.life, 0, 1);
