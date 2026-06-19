@@ -126,6 +126,8 @@
     effects: [],
     roundStatus: "idle",
     scheduledActions: [],
+    tutorialMode: false,
+    tutorialMessageVisible: false,
     bonusMode: false,
     bonusShotsLeft: 0,
     bonusAutoTimer: 0,
@@ -209,7 +211,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v3.6",
+      debugBadge: "v3.7",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -267,6 +269,8 @@
     state.effects = [];
     state.roundStatus = "idle";
     state.scheduledActions = [];
+    state.tutorialMode = false;
+    state.tutorialMessageVisible = false;
     state.bonusMode = false;
     state.bonusShotsLeft = 0;
     state.bonusAutoTimer = 0;
@@ -298,6 +302,7 @@
               <div class="vinv-effects" id="vinvEffects"></div>
               <div class="vinv-bottom" id="vinvBottom"></div>
               <div class="vinv-bonus" id="vinvBonus"></div>
+              <div class="vinv-tutorial" id="vinvTutorial"></div>
               <div class="vinv-overlay-msg" id="vinvOverlay"></div>
               <div class="vinv-hud-overlay">
                 <div class="vinv-corner-pill vinv-corner-left" id="vinvModePill"></div>
@@ -323,7 +328,7 @@
     recalcField();
     renderHud();
     renderStaticField();
-    spawnRound();
+    startTutorialRound();
     startLoop();
   }
 
@@ -474,6 +479,9 @@
 
     state.entities.forEach((entity) => {
       entity.x = getLaneCenterX(entity.lane);
+      if (state.tutorialMode) {
+        entity.y = clamp(state.fieldHeight * 0.31, 92, 180);
+      }
     });
 
     if (state.rocket) {
@@ -576,9 +584,56 @@
       btn.setAttribute("aria-label", fixedColor.key.toUpperCase());
       const shouldDim = state.activeLane && state.activeLane !== lane;
       btn.classList.toggle("is-dim", !!shouldDim);
-      btn.disabled = state.buttonsLocked || (!state.bonusMode && !hasVisibleEntityForColor(fixedColor.key));
+
+      const needsMatchingAlien = !state.bonusMode && !hasVisibleEntityForColor(fixedColor.key);
+      btn.disabled = state.buttonsLocked || needsMatchingAlien;
     });
   }
+
+  function startTutorialRound() {
+    state.tutorialMode = true;
+    state.tutorialMessageVisible = true;
+    state.roundStatus = "tutorial";
+    state.buttonsLocked = false;
+    state.activeLane = null;
+    state.rocket = null;
+    state.trails = [];
+    state.effects = state.effects.filter(effect => effect.until > performance.now());
+    state.scheduledActions = [];
+    state.roundSpeed = 0;
+
+    state.buttonColors = {
+      left: BUTTON_COLOR_ORDER.left,
+      center: BUTTON_COLOR_ORDER.center,
+      right: BUTTON_COLOR_ORDER.right
+    };
+
+    const tutorialY = clamp(state.fieldHeight * 0.31, 92, 180);
+
+    state.entities = LANE_KEYS.map((lane, index) => {
+      const color = state.buttonColors[lane];
+
+      return {
+        id: `tutorial-${lane}`,
+        lane,
+        label: "",
+        correct: true,
+        color,
+        x: getLaneCenterX(lane),
+        y: tutorialY,
+        visible: true,
+        status: "hover",
+        motionPhase: index * 1.9,
+        blinkDelay: randBetween(0.12, 1.15),
+        partDelay: randBetween(-1.8, 0)
+      };
+    });
+
+    state.entityRenderSignature = "";
+    renderHud();
+    renderDynamic();
+  }
+
 
   function spawnRound() {
     if (state.builtCount >= state.queue.length) {
@@ -707,9 +762,54 @@
       return;
     }
 
+    if (state.tutorialMode) {
+      handleTutorialHit(target);
+      return;
+    }
+
     if (target.correct) handleCorrectHit(target);
     else handleWrongHit(target);
   }
+
+  function handleTutorialHit(target) {
+    if (!target || !target.visible) {
+      unlockAfterDelay(180);
+      return;
+    }
+
+    if (state.tutorialMessageVisible) {
+      state.tutorialMessageVisible = false;
+    }
+
+    const targetPoint = getEntityHitPoint(target);
+    addEffect(makeCorrectHitEffect(targetPoint.x, target.y + 22, target.color.hex, 1));
+
+    target.visible = false;
+    state.rocket = null;
+    state.buttonsLocked = false;
+    state.activeLane = null;
+
+    renderHud();
+    renderDynamic();
+
+    const tutorialDone = !state.entities.some(item => item.visible);
+
+    if (tutorialDone) {
+      state.buttonsLocked = true;
+      state.activeLane = null;
+
+      scheduleAction(820, () => {
+        state.tutorialMode = false;
+        state.tutorialMessageVisible = false;
+        state.entities = [];
+        state.entityRenderSignature = "";
+        state.rocket = null;
+        state.trails = [];
+        spawnRound();
+      });
+    }
+  }
+
 
   function handleWrongHit(target) {
     state.streak = 0;
@@ -983,9 +1083,10 @@
     const rocketsEl = document.getElementById("vinvRockets");
     const effectsEl = document.getElementById("vinvEffects");
     const bonusEl = document.getElementById("vinvBonus");
+    const tutorialEl = document.getElementById("vinvTutorial");
     const overlayEl = document.getElementById("vinvOverlay");
     const field = document.getElementById("vinvField");
-    if (!entitiesEl || !rocketsEl || !effectsEl || !overlayEl || !field || !bonusEl) return;
+    if (!entitiesEl || !rocketsEl || !effectsEl || !overlayEl || !field || !bonusEl || !tutorialEl) return;
 
     const now = performance.now();
     field.classList.toggle("is-flash-bad", state.flashBadUntil > now);
@@ -1032,10 +1133,22 @@
     effectsEl.innerHTML = state.effects.map((effect) => renderEffect(effect, now)).join("");
 
     bonusEl.innerHTML = "";
+    tutorialEl.innerHTML = renderTutorialHtml();
     overlayEl.innerHTML = state.overlayUntil > now && state.overlayMessage
       ? `<div class="vinv-overlay-pill">${escapeHtml(state.overlayMessage)}</div>`
       : "";
   }
+
+  function renderTutorialHtml() {
+    if (!state.tutorialMode) return "";
+
+    return `
+      <div class="vinv-tutorial-card ${state.tutorialMessageVisible ? "" : "is-hidden"}">
+        Tap the buttons to shoot the aliens.
+      </div>
+    `;
+  }
+
 
   function getEntityRenderSignature() {
     return state.entities.map((entity) => {

@@ -165,6 +165,7 @@ body {
 .vinv-effects,
 .vinv-bottom,
 .vinv-bonus,
+.vinv-tutorial,
 .vinv-overlay-msg,
 .vinv-hud-overlay {
   position: absolute;
@@ -416,6 +417,37 @@ body {
   line-height: 1.06;
   text-shadow: 0 2px 0 rgba(0, 0, 0, 0.20);
   word-break: break-word;
+}
+
+.vinv-tutorial {
+  z-index: 2;
+}
+
+.vinv-tutorial-card {
+  position: absolute;
+  left: 50%;
+  top: 53%;
+  width: min(calc(100% - 32px), 560px);
+  transform: translate(-50%, -50%);
+  padding: clamp(14px, 3vw, 22px) clamp(16px, 4vw, 30px);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.96);
+  color: #333333;
+  font-family: "Titan One", "Baloo 2", system-ui, sans-serif;
+  font-size: clamp(22px, 5vw, 42px);
+  line-height: 1.08;
+  text-align: center;
+  text-wrap: balance;
+  box-shadow:
+    0 8px 0 rgba(0, 0, 0, 0.18),
+    0 14px 24px rgba(0, 0, 0, 0.18);
+  opacity: 1;
+  transition: opacity 260ms ease, transform 260ms ease;
+}
+
+.vinv-tutorial-card.is-hidden {
+  opacity: 0;
+  transform: translate(-50%, -54%) scale(0.96);
 }
 
 .vinv-abduct-wrap {
