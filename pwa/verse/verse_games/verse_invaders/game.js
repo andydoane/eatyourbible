@@ -69,7 +69,7 @@
     center: LANE_COLORS[1],
     right: LANE_COLORS[2]
   };
-  const ALIEN_BURST_CHUNK_SHAPES = ["blob", "shard", "diamond"];
+  const ALIEN_BURST_CHUNK_SHAPE = "rounded";
   const BONUS_FIREWORK_POOL = ["flashRing", "classicFirework", "confettiBloom", "plasmaBurst", "cosmicCrackle"];
   const BOOKS = window.VerseGameShell.getBibleBookDecoys();
   const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
@@ -199,7 +199,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v2.6",
+      debugBadge: "v2.7",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1364,7 +1364,7 @@
         ty: Math.sin(angle) * distance,
         size,
         color: randomFrom(palette),
-        shape: randomFrom(ALIEN_BURST_CHUNK_SHAPES),
+        shape: ALIEN_BURST_CHUNK_SHAPE,
         spin: randBetween(-260, 260),
         startScale: randBetween(0.68, 0.9),
         endScale: randBetween(1.02, 1.28),

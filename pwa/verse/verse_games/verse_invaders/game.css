@@ -431,23 +431,15 @@ body {
 }
 
 .vinv-alien-burst-piece {
-  border-radius: 999px;
+  border-radius: 38%;
   box-shadow:
     0 2px 0 rgba(0, 0, 0, 0.16),
     0 0 10px rgba(255, 255, 255, 0.18);
   z-index: 2;
 }
 
-.vinv-alien-burst-piece.is-blob {
-  border-radius: 999px 999px 999px 70%;
-}
-
-.vinv-alien-burst-piece.is-shard {
-  clip-path: polygon(50% 0%, 100% 48%, 50% 100%, 0% 48%);
-}
-
-.vinv-alien-burst-piece.is-diamond {
-  clip-path: polygon(50% 0%, 92% 50%, 50% 100%, 8% 50%);
+.vinv-alien-burst-piece.is-rounded {
+  border-radius: 38%;
 }
 
 .vinv-alien-burst-spark {
