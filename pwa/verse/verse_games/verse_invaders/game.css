@@ -219,6 +219,17 @@ body {
   right: 12px;
 }
 
+.vinv-bonus-score-pill {
+  min-width: 0;
+  padding: 7px 14px;
+  font-family: "Titan One", "Baloo 2", system-ui, sans-serif;
+  font-size: clamp(16px, 4.2vw, 22px);
+  letter-spacing: 0.01em;
+  box-shadow:
+    0 4px 0 rgba(0, 0, 0, 0.16),
+    0 8px 16px rgba(0, 0, 0, 0.16);
+}
+
 .vinv-entity {
   position: absolute;
   width: min(29vw, 170px);
