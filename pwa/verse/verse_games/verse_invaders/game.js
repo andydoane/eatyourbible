@@ -263,7 +263,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v3.25",
+      debugBadge: "v3.26",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1039,7 +1039,7 @@
     if (!config || state.bonusMode || state.tutorialMode) return;
 
     const x = state.fieldWidth / 2;
-    const y = clamp(state.fieldHeight * 0.34, 118, state.bottomZoneY - 120);
+    const y = clamp(state.bottomZoneY / 2, 118, Math.max(118, state.bottomZoneY - 80));
 
     if (config.burst) {
       addEffect(makeStreakMilestoneBurstEffect(x, y));
@@ -1313,8 +1313,23 @@
     const lanes = getBonusAvailableSpawnLanes();
     if (!colors.length || !lanes.length) return;
 
-    const color = randomFrom(colors);
-    const lane = randomFrom(lanes);
+    const safeOptions = [];
+    const fallbackOptions = [];
+
+    colors.forEach((color) => {
+      lanes.forEach((lane) => {
+        const option = { color, lane };
+        fallbackOptions.push(option);
+
+        if (buttonLaneToColor(lane).key !== color.key) {
+          safeOptions.push(option);
+        }
+      });
+    });
+
+    const choice = randomFrom(safeOptions.length ? safeOptions : fallbackOptions);
+    const color = choice.color;
+    const lane = choice.lane;
     const index = state.bonusSpawnCount++;
 
     state.entities.push({
