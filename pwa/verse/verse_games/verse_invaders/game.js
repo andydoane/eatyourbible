@@ -130,6 +130,9 @@
     tutorialMessageVisible: false,
     tutorialGoVisible: false,
     tutorialRenderSignature: "",
+    bonusIntroMode: false,
+    bonusIntroMessage: "",
+    bonusIntroRenderSignature: "",
     bonusMode: false,
     bonusShotsLeft: 0,
     bonusAutoTimer: 0,
@@ -213,7 +216,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v3.12",
+      debugBadge: "v3.13",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -275,6 +278,9 @@
     state.tutorialMessageVisible = false;
     state.tutorialGoVisible = false;
     state.tutorialRenderSignature = "";
+    state.bonusIntroMode = false;
+    state.bonusIntroMessage = "";
+    state.bonusIntroRenderSignature = "";
     state.bonusMode = false;
     state.bonusShotsLeft = 0;
     state.bonusAutoTimer = 0;
@@ -695,7 +701,7 @@
 
   function spawnRound() {
     if (state.builtCount >= state.queue.length) {
-      startBonusRound();
+      startBonusIntro();
       return;
     }
 
@@ -933,8 +939,8 @@
       renderDynamic();
     });
 
-    scheduleAction(ROUND_ADVANCE_AFTER_CORRECT_MS, async () => {
-      if (state.builtCount >= state.queue.length) await startBonusRound();
+    scheduleAction(ROUND_ADVANCE_AFTER_CORRECT_MS, () => {
+      if (state.builtCount >= state.queue.length) startBonusIntro();
       else spawnRound();
     });
   }
@@ -972,8 +978,48 @@
     });
   }
 
+  function startBonusIntro() {
+    if (state.bonusIntroMode || state.bonusMode) return;
+
+    state.bonusIntroMode = true;
+    state.bonusIntroMessage = "Shoot the aliens!";
+    state.bonusIntroRenderSignature = "";
+    state.buttonsLocked = true;
+    state.activeLane = null;
+    state.entities = [];
+    state.entityRenderSignature = "";
+    state.rocket = null;
+    state.trails = [];
+    state.effects = state.effects.filter(effect => effect.until > performance.now());
+
+    renderHud();
+    renderDynamic();
+
+    scheduleAction(2000, () => {
+      if (!state.bonusIntroMode) return;
+
+      state.bonusIntroMessage = "Go!";
+      state.bonusIntroRenderSignature = "";
+      renderDynamic();
+    });
+
+    scheduleAction(3300, () => {
+      if (!state.bonusIntroMode) return;
+
+      state.bonusIntroMode = false;
+      state.bonusIntroMessage = "";
+      state.bonusIntroRenderSignature = "";
+      startBonusRound();
+    });
+  }
+
+
   async function startBonusRound() {
     if (state.bonusMode) return;
+
+    state.bonusIntroMode = false;
+    state.bonusIntroMessage = "";
+    state.bonusIntroRenderSignature = "";
     state.bonusMode = true;
     state.buttonsLocked = false;
     state.activeLane = null;
@@ -1202,7 +1248,11 @@
     effectsEl.innerHTML = state.effects.map((effect) => renderEffect(effect, now)).join("");
 
     bonusEl.innerHTML = "";
-    renderTutorialLayer(tutorialEl);
+    if (state.tutorialMode) {
+      renderTutorialLayer(tutorialEl);
+    } else {
+      renderBonusIntroLayer(tutorialEl);
+    }
     overlayEl.innerHTML = state.overlayUntil > now && state.overlayMessage
       ? `<div class="vinv-overlay-pill">${escapeHtml(state.overlayMessage)}</div>`
       : "";
@@ -1246,6 +1296,39 @@
       </div>
     `;
   }
+
+  function renderBonusIntroLayer(introEl) {
+    if (!state.bonusIntroMode) {
+      if (state.bonusIntroRenderSignature !== "off") {
+        introEl.innerHTML = "";
+        state.bonusIntroRenderSignature = "off";
+      }
+      return;
+    }
+
+    const message = state.bonusIntroMessage || "";
+    const signature = `bonus-intro:${message}`;
+
+    if (state.bonusIntroRenderSignature === signature) return;
+
+    state.bonusIntroRenderSignature = signature;
+
+    if (message === "Go!") {
+      introEl.innerHTML = `
+        <div class="vinv-tutorial-go vinv-bonus-intro-go">
+          Go!
+        </div>
+      `;
+      return;
+    }
+
+    introEl.innerHTML = `
+      <div class="vinv-tutorial-card vinv-bonus-intro-card">
+        ${escapeHtml(message)}
+      </div>
+    `;
+  }
+
 
 
   function getEntityRenderSignature() {

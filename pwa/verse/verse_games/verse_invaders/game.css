@@ -539,6 +539,43 @@ body {
   }
 }
 
+.vinv-bonus-intro-card {
+  top: 50%;
+  width: min(calc(100% - 32px), 620px);
+  animation: vinvBonusIntroCardPop 2000ms ease-in-out both;
+}
+
+.vinv-bonus-intro-go {
+  animation: vinvTutorialGoPop 1300ms ease-in-out both;
+}
+
+@keyframes vinvBonusIntroCardPop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.72);
+  }
+
+  12% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.04);
+  }
+
+  22% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  82% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.92);
+  }
+}
+
 .vinv-abduct-wrap {
   z-index: 3;
 }
