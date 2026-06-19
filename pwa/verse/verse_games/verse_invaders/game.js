@@ -71,6 +71,15 @@
   };
   const ALIEN_BURST_CHUNK_SHAPE = "rounded";
   const BONUS_FIREWORK_POOL = ["flashRing", "classicFirework", "confettiBloom", "plasmaBurst", "cosmicCrackle"];
+  const CORRECT_HIT_IMPACT_DELAY_MS = 120;
+  const ALIEN_BURST_LIFE_MS = 680;
+  const STRONG_ALIEN_BURST_LIFE_MS = 760;
+  const POOF_LIFE_MS = 650;
+  const POOF_EXTRA_FADE_MS = 120;
+  const ROUND_ADVANCE_BUFFER_MS = 90;
+  const ROUND_CLEAR_FADE_MS = 260;
+  const ROUND_ADVANCE_AFTER_TWO_WRONGS_MS = POOF_LIFE_MS + POOF_EXTRA_FADE_MS + ROUND_ADVANCE_BUFFER_MS;
+  const ROUND_ADVANCE_AFTER_CORRECT_MS = CORRECT_HIT_IMPACT_DELAY_MS + STRONG_ALIEN_BURST_LIFE_MS + ROUND_ADVANCE_BUFFER_MS;
   const BOOKS = window.VerseGameShell.getBibleBookDecoys();
   const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
 
@@ -199,7 +208,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v2.8",
+      debugBadge: "v2.9",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -576,7 +585,7 @@
     state.wrongGuessesThisRound = 0;
     state.rocket = null;
     state.trails = [];
-    state.effects = state.effects.filter(effect => effect.kind === "fireworkParticle");
+    state.effects = state.effects.filter(effect => effect.until > performance.now());
     state.scheduledActions = [];
     state.roundSpeed = getRoundSpeed();
 
@@ -711,13 +720,13 @@
     if (state.wrongGuessesThisRound >= 2) {
       state.buttonsLocked = true;
       state.activeLane = null;
-      scheduleAction(260, () => {
+      scheduleAction(ROUND_CLEAR_FADE_MS, () => {
         state.entities.forEach(item => {
           if (item.visible) item.status = "fade";
         });
         renderDynamic();
       });
-      scheduleAction(560, () => {
+      scheduleAction(ROUND_ADVANCE_AFTER_TWO_WRONGS_MS, () => {
         state.entities.forEach(item => { item.visible = false; });
         spawnRound();
       });
@@ -731,7 +740,7 @@
     state.buttonsLocked = true;
     renderDynamic();
 
-    scheduleAction(120, () => {
+    scheduleAction(CORRECT_HIT_IMPACT_DELAY_MS, () => {
       const targetPoint = getEntityHitPoint(target);
       addEffect(makeCorrectHitEffect(targetPoint.x, target.y + 22, target.color.hex, state.streak));
       target.visible = false;
@@ -749,7 +758,7 @@
       renderDynamic();
     });
 
-    scheduleAction(620, async () => {
+    scheduleAction(ROUND_ADVANCE_AFTER_CORRECT_MS, async () => {
       if (state.builtCount >= state.queue.length) await startBonusRound();
       else spawnRound();
     });
@@ -1293,7 +1302,7 @@
   function makePoofEffect(x, y) {
     const born = performance.now();
     const unit = getAlienUnit();
-    const life = 650;
+    const life = POOF_LIFE_MS;
     const count = 9;
     const baseAngle = Math.random() * Math.PI * 2;
     const step = (Math.PI * 2) / count;
@@ -1329,7 +1338,7 @@
       y,
       born,
       life,
-      until: born + life + 120,
+      until: born + life + POOF_EXTRA_FADE_MS,
       cloudSize: unit * 0.79,
       dots
     };
@@ -1343,7 +1352,7 @@
     const born = performance.now();
     const unit = getAlienUnit();
     const strong = streak >= 4;
-    const life = strong ? 760 : 680;
+    const life = strong ? STRONG_ALIEN_BURST_LIFE_MS : ALIEN_BURST_LIFE_MS;
     const chunkCount = strong ? 16 : 12;
     const sparkCount = strong ? 7 : 5;
     const palette = [
