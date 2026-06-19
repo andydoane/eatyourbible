@@ -211,7 +211,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v3.9",
+      debugBadge: "v3.10",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -676,7 +676,7 @@
     renderHud();
     renderDynamic();
 
-    scheduleAction(880, () => {
+    scheduleAction(1120, () => {
       if (!state.tutorialMode) return;
 
       state.roundStatus = "tutorial";
