@@ -208,7 +208,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v3.0",
+      debugBadge: "v3.1",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -908,7 +908,10 @@
     state.trails = state.trails.filter(trail => trail.until > ts);
     processScheduledActions(ts);
 
-    if (state.buildShakeUntil && ts > state.buildShakeUntil) renderHud();
+    if (state.buildShakeUntil && ts > state.buildShakeUntil) {
+      state.buildShakeUntil = 0;
+      renderHud();
+    }
 
     if (!state.bonusMode) {
       const speed = state.roundSpeed;
@@ -961,7 +964,7 @@
       }
       state.bonusFireworks = state.bonusFireworks.filter(item => !item.exploded);
 
-      if (!state.bonusFinished && state.bonusShotsLeft <= 0 && state.bonusFireworks.length === 0 && !state.effects.some(item => item.kind === "fireworkParticle")) {
+      if (!state.bonusFinished && state.bonusShotsLeft <= 0 && state.bonusFireworks.length === 0 && !state.effects.some(item => item.group === "fireworkParticle")) {
         finishBonusRound();
       }
     }
@@ -1263,39 +1266,6 @@
   function addEffect(effect) {
     state.effects.push(effect);
     if (state.effects.length > 30) state.effects.shift();
-  }
-
-  function makeSmokePuffEffect(x, y) {
-    const born = performance.now();
-    const unit = getAlienUnit();
-    const life = 540;
-    const particles = Array.from({ length: 10 }, (_, i) => ({
-      angle: (Math.PI * 2 * i / 10) + randBetween(-0.28, 0.28),
-      speed: randBetween(unit * 0.16, unit * 0.34),
-      size: randBetween(unit * 0.11, unit * 0.24),
-      color: Math.random() < 0.5 ? "rgba(255,255,255,0.84)" : "rgba(210,218,226,0.78)",
-      alpha: randBetween(0.6, 0.9),
-      gravity: randBetween(-0.6, 1.4),
-      drift: randBetween(unit * -0.08, unit * 0.08),
-      style: "smoke",
-      spin: randBetween(-60, 60)
-    }));
-
-    return {
-      kind: "particle",
-      group: "smoke",
-      preset: "smokePuff",
-      x,
-      y,
-      born,
-      life,
-      until: born + life,
-      particles,
-      ring: 0,
-      center: 0,
-      cloud: true,
-      cloudSize: unit * 0.78
-    };
   }
 
   function makePoofEffect(x, y) {
