@@ -199,7 +199,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v2.7",
+      debugBadge: "v2.8",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1603,7 +1603,8 @@
 
     if (effect.kind === "alienBurst") {
       const progress = clamp((now - effect.born) / effect.life, 0, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
+      const travel = 1 - Math.pow(1 - progress, 1.55);
+      const pop = 1 - Math.pow(1 - progress, 3);
       const fade = clamp(1 - Math.pow(progress, 1.35), 0, 1);
       const unit = effect.unit || getAlienUnit();
 
@@ -1616,10 +1617,10 @@
       const ringSize = unit * (0.32 + ringProgress * 1.15);
 
       const chunkHtml = effect.chunks.map((chunk) => {
-        const dx = chunk.tx * eased;
-        const dy = chunk.ty * eased + chunk.gravity * progress * progress;
+        const dx = chunk.tx * travel;
+        const dy = chunk.ty * travel + chunk.gravity * progress * progress;
         const rotation = chunk.spin * progress;
-        const scale = chunk.startScale + (chunk.endScale - chunk.startScale) * eased;
+        const scale = chunk.startScale + (chunk.endScale - chunk.startScale) * pop;
         const opacity = clamp(fade * 0.96, 0, 0.96);
 
         return `
@@ -1639,10 +1640,10 @@
       }).join("");
 
       const sparkHtml = effect.sparks.map((spark) => {
-        const sparkProgress = clamp(progress / 0.72, 0, 1);
-        const sparkEase = 1 - Math.pow(1 - sparkProgress, 2);
-        const dx = spark.tx * sparkEase;
-        const dy = spark.ty * sparkEase;
+        const sparkProgress = clamp(progress / 0.84, 0, 1);
+        const sparkTravel = 1 - Math.pow(1 - sparkProgress, 1.45);
+        const dx = spark.tx * sparkTravel;
+        const dy = spark.ty * sparkTravel;
         const opacity = clamp((1 - sparkProgress) * 0.82, 0, 0.82);
         const rotation = spark.spin * sparkProgress;
 
