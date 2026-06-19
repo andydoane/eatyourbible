@@ -69,7 +69,7 @@
     center: LANE_COLORS[1],
     right: LANE_COLORS[2]
   };
-  const CORRECT_EFFECT_POOL = ["alienPop", "starburst", "chrysanthemum", "novaBurst"];
+  const ALIEN_BURST_CHUNK_SHAPES = ["blob", "shard", "diamond"];
   const BONUS_FIREWORK_POOL = ["flashRing", "classicFirework", "confettiBloom", "plasmaBurst", "cosmicCrackle"];
   const BOOKS = window.VerseGameShell.getBibleBookDecoys();
   const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
@@ -199,7 +199,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v2.5",
+      debugBadge: "v2.6",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1336,7 +1336,69 @@
   }
 
   function makeCorrectHitEffect(x, y, baseColor, streak) {
-    return makeParticleEffect(randomFrom(CORRECT_EFFECT_POOL), x, y, baseColor, streak, "hit");
+    return makeAlienBurstEffect(x, y, baseColor, streak);
+  }
+
+  function makeAlienBurstEffect(x, y, baseColor, streak) {
+    const born = performance.now();
+    const unit = getAlienUnit();
+    const strong = streak >= 4;
+    const life = strong ? 760 : 680;
+    const chunkCount = strong ? 16 : 12;
+    const sparkCount = strong ? 7 : 5;
+    const palette = [
+      baseColor,
+      lightenColor(baseColor, 0.18),
+      lightenColor(baseColor, 0.36),
+      "#ffffff"
+    ];
+
+    const chunks = Array.from({ length: chunkCount }, (_, i) => {
+      const angle = (Math.PI * 2 * i / chunkCount) + randBetween(-0.18, 0.18);
+      const distance = randBetween(unit * 0.48, unit * 0.92);
+      const size = randBetween(unit * 0.13, unit * 0.26);
+
+      return {
+        angle,
+        tx: Math.cos(angle) * distance,
+        ty: Math.sin(angle) * distance,
+        size,
+        color: randomFrom(palette),
+        shape: randomFrom(ALIEN_BURST_CHUNK_SHAPES),
+        spin: randBetween(-260, 260),
+        startScale: randBetween(0.68, 0.9),
+        endScale: randBetween(1.02, 1.28),
+        gravity: randBetween(unit * 0.08, unit * 0.18)
+      };
+    });
+
+    const sparks = Array.from({ length: sparkCount }, (_, i) => {
+      const angle = (Math.PI * 2 * i / sparkCount) + randBetween(-0.26, 0.26);
+      const distance = randBetween(unit * 0.36, unit * 0.72);
+      const size = randBetween(unit * 0.045, unit * 0.075);
+
+      return {
+        angle,
+        tx: Math.cos(angle) * distance,
+        ty: Math.sin(angle) * distance,
+        size,
+        spin: randBetween(-180, 180)
+      };
+    });
+
+    return {
+      kind: "alienBurst",
+      group: "hit",
+      x,
+      y,
+      born,
+      life,
+      until: born + life,
+      baseColor,
+      unit,
+      chunks,
+      sparks
+    };
   }
 
   function makeBonusFireworkEffect(x, y) {
@@ -1535,6 +1597,91 @@
             ${POOF_CLOUD_SVG}
           </div>
           ${dotHtml}
+        </div>
+      `;
+    }
+
+    if (effect.kind === "alienBurst") {
+      const progress = clamp((now - effect.born) / effect.life, 0, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const fade = clamp(1 - Math.pow(progress, 1.35), 0, 1);
+      const unit = effect.unit || getAlienUnit();
+
+      const flashProgress = clamp(progress / 0.28, 0, 1);
+      const flashOpacity = Math.max(0, 0.82 - flashProgress * 0.82);
+      const flashSize = unit * (0.34 + flashProgress * 0.72);
+
+      const ringProgress = clamp(progress / 0.48, 0, 1);
+      const ringOpacity = Math.max(0, 0.62 - ringProgress * 0.62);
+      const ringSize = unit * (0.32 + ringProgress * 1.15);
+
+      const chunkHtml = effect.chunks.map((chunk) => {
+        const dx = chunk.tx * eased;
+        const dy = chunk.ty * eased + chunk.gravity * progress * progress;
+        const rotation = chunk.spin * progress;
+        const scale = chunk.startScale + (chunk.endScale - chunk.startScale) * eased;
+        const opacity = clamp(fade * 0.96, 0, 0.96);
+
+        return `
+          <div
+            class="vinv-alien-burst-piece is-${chunk.shape}"
+            style="
+              width:${chunk.size.toFixed(1)}px;
+              height:${chunk.size.toFixed(1)}px;
+              margin-left:${(chunk.size / -2).toFixed(1)}px;
+              margin-top:${(chunk.size / -2).toFixed(1)}px;
+              background:${chunk.color};
+              opacity:${opacity.toFixed(3)};
+              transform:translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) rotate(${rotation.toFixed(1)}deg) scale(${scale.toFixed(2)});
+            "
+          ></div>
+        `;
+      }).join("");
+
+      const sparkHtml = effect.sparks.map((spark) => {
+        const sparkProgress = clamp(progress / 0.72, 0, 1);
+        const sparkEase = 1 - Math.pow(1 - sparkProgress, 2);
+        const dx = spark.tx * sparkEase;
+        const dy = spark.ty * sparkEase;
+        const opacity = clamp((1 - sparkProgress) * 0.82, 0, 0.82);
+        const rotation = spark.spin * sparkProgress;
+
+        return `
+          <div
+            class="vinv-alien-burst-spark"
+            style="
+              width:${spark.size.toFixed(1)}px;
+              height:${spark.size.toFixed(1)}px;
+              margin-left:${(spark.size / -2).toFixed(1)}px;
+              margin-top:${(spark.size / -2).toFixed(1)}px;
+              opacity:${opacity.toFixed(3)};
+              transform:translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) rotate(${rotation.toFixed(1)}deg);
+            "
+          ></div>
+        `;
+      }).join("");
+
+      return `
+        <div class="vinv-effect-wrap vinv-alien-burst-wrap" style="left:${effect.x}px; top:${effect.y}px;">
+          <div
+            class="vinv-alien-burst-flash"
+            style="
+              width:${flashSize.toFixed(1)}px;
+              height:${flashSize.toFixed(1)}px;
+              opacity:${flashOpacity.toFixed(3)};
+            "
+          ></div>
+          <div
+            class="vinv-alien-burst-ring"
+            style="
+              width:${ringSize.toFixed(1)}px;
+              height:${ringSize.toFixed(1)}px;
+              opacity:${ringOpacity.toFixed(3)};
+              border-color:${effect.baseColor};
+            "
+          ></div>
+          ${chunkHtml}
+          ${sparkHtml}
         </div>
       `;
     }
