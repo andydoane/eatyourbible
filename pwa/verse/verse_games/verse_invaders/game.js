@@ -128,6 +128,7 @@
     scheduledActions: [],
     tutorialMode: false,
     tutorialMessageVisible: false,
+    tutorialGoVisible: false,
     tutorialRenderSignature: "",
     bonusMode: false,
     bonusShotsLeft: 0,
@@ -212,7 +213,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v3.11",
+      debugBadge: "v3.12",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -272,6 +273,7 @@
     state.scheduledActions = [];
     state.tutorialMode = false;
     state.tutorialMessageVisible = false;
+    state.tutorialGoVisible = false;
     state.tutorialRenderSignature = "";
     state.bonusMode = false;
     state.bonusShotsLeft = 0;
@@ -637,6 +639,7 @@
   function startTutorialRound() {
     state.tutorialMode = true;
     state.tutorialMessageVisible = true;
+    state.tutorialGoVisible = false;
     state.tutorialRenderSignature = "";
     state.roundStatus = "tutorialEntering";
     state.buttonsLocked = true;
@@ -853,9 +856,19 @@
       state.buttonsLocked = true;
       state.activeLane = null;
 
-      scheduleAction(820, () => {
+      scheduleAction(720, () => {
+        if (!state.tutorialMode) return;
+
+        state.tutorialGoVisible = true;
+        state.tutorialMessageVisible = false;
+        state.tutorialRenderSignature = "";
+        renderDynamic();
+      });
+
+      scheduleAction(2300, () => {
         state.tutorialMode = false;
         state.tutorialMessageVisible = false;
+        state.tutorialGoVisible = false;
         state.tutorialRenderSignature = "";
         state.entities = [];
         state.entityRenderSignature = "";
@@ -1208,11 +1221,22 @@
     const cardY = tutorialLayout.cardY.toFixed(1);
     const isHidden = state.tutorialMessageVisible ? "" : "is-hidden";
     const isEntering = state.roundStatus === "tutorialEntering" ? "is-entering" : "";
-    const signature = `${cardY}:${isHidden}:${isEntering}`;
+    const goVisible = state.tutorialGoVisible ? "go" : "no-go";
+    const signature = `${cardY}:${isHidden}:${isEntering}:${goVisible}`;
 
     if (state.tutorialRenderSignature === signature) return;
 
     state.tutorialRenderSignature = signature;
+
+    if (state.tutorialGoVisible) {
+      tutorialEl.innerHTML = `
+        <div class="vinv-tutorial-go">
+          Go!
+        </div>
+      `;
+      return;
+    }
+
     tutorialEl.innerHTML = `
       <div
         class="vinv-tutorial-card ${isHidden} ${isEntering}"
