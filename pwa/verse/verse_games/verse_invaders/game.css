@@ -439,7 +439,7 @@ body {
 .vinv-abduct-cone {
   position: absolute;
   left: 50%;
-  top: calc(var(--vinv-abduct-unit, var(--vinv-alien-size)) * 0.58);
+  top: calc(var(--vinv-abduct-unit, var(--vinv-alien-size)) * 0.48);
   width: var(--vinv-abduct-beam-width, calc(var(--vinv-alien-size) * 1.02));
   height: var(--vinv-abduct-beam-height, calc(var(--vinv-alien-size) * 1.72));
   transform-origin: center top;
