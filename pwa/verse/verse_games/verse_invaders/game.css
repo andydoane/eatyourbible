@@ -1180,6 +1180,11 @@ body {
   justify-content: center;
 }
 
+.vinv-overlay-msg.is-bonus-reveal {
+  z-index: 7;
+  pointer-events: auto;
+}
+
 .vinv-overlay-pill {
   background: rgba(255, 255, 255, 0.96);
   color: #333333;

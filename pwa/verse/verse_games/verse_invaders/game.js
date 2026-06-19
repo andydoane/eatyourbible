@@ -229,7 +229,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v3.18",
+      debugBadge: "v3.19",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1145,7 +1145,6 @@
     }
 
     target.locked = true;
-    target.status = "bonusTargeted";
 
     const rocketStartX = getLaneCenterX(buttonLane);
     const rocketStartY = state.controlsTopY - 16;
@@ -1352,7 +1351,7 @@
     state.buttonsLocked = true;
     state.activeLane = null;
     state.entities = [];
-    state.entityRenderSignature = "";
+    state.entityRenderSignature = "__force_bonus_reveal_clear__";
     state.bonusRockets = [];
     state.trails = [];
     state.overlayMessage = "";
@@ -1517,6 +1516,8 @@
     } else {
       renderBonusIntroLayer(tutorialEl);
     }
+    overlayEl.classList.toggle("is-bonus-reveal", state.bonusRevealVisible);
+
     if (state.bonusRevealVisible) {
       overlayEl.innerHTML = renderBonusRevealHtml();
       const revealCard = overlayEl.querySelector(".vinv-bonus-reveal");
