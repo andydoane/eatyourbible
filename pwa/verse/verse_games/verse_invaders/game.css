@@ -408,17 +408,49 @@ body {
   left: 0;
   top: 0;
   transform: translate(-50%, -50%) scale(0.55);
+  animation: vinvPoofCloud 620ms ease-out forwards;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.vinv-poof-lobe {
+  position: absolute;
+  display: block;
   border-radius: 999px;
-  background:
-    radial-gradient(circle at 30% 54%, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.96) 21%, transparent 22%),
-    radial-gradient(circle at 46% 35%, rgba(238, 243, 248, 0.96) 0%, rgba(238, 243, 248, 0.96) 24%, transparent 25%),
-    radial-gradient(circle at 64% 52%, rgba(255, 255, 255, 0.96) 0%, rgba(255, 255, 255, 0.96) 22%, transparent 23%),
-    radial-gradient(circle at 50% 67%, rgba(218, 226, 234, 0.94) 0%, rgba(218, 226, 234, 0.94) 31%, transparent 32%);
+  background: rgba(255, 255, 255, 0.96);
   filter:
     drop-shadow(0 4px 0 rgba(0, 0, 0, 0.16))
     drop-shadow(0 0 14px rgba(255, 255, 255, 0.28));
-  animation: vinvPoofCloud 620ms ease-out forwards;
-  pointer-events: none;
+}
+
+.vinv-poof-lobe--one {
+  width: 54%;
+  height: 48%;
+  left: 6%;
+  top: 34%;
+}
+
+.vinv-poof-lobe--two {
+  width: 56%;
+  height: 54%;
+  left: 23%;
+  top: 12%;
+  background: rgba(238, 243, 248, 0.96);
+}
+
+.vinv-poof-lobe--three {
+  width: 54%;
+  height: 48%;
+  left: 43%;
+  top: 34%;
+}
+
+.vinv-poof-lobe--four {
+  width: 62%;
+  height: 42%;
+  left: 19%;
+  top: 52%;
+  background: rgba(218, 226, 234, 0.94);
 }
 
 .vinv-poof-dot {
@@ -428,6 +460,7 @@ body {
   border-radius: 999px;
   filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.1));
   pointer-events: none;
+  z-index: 1;
 }
 
 .vinv-particle.is-dot,

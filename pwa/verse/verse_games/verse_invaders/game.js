@@ -193,7 +193,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v2.2",
+      debugBadge: "v2.3",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1309,6 +1309,10 @@
     };
   }
 
+  function makeCorrectHitEffect(x, y, baseColor, streak) {
+    return makeParticleEffect(randomFrom(CORRECT_EFFECT_POOL), x, y, baseColor, streak, "hit");
+  }
+
   function makeBonusFireworkEffect(x, y) {
     const color = randomFrom([...LANE_COLORS.map(item => item.hex), "#f28fff", "#ffffff"]);
     return makeParticleEffect(randomFrom(BONUS_FIREWORK_POOL), x, y, color, 5, "fireworkParticle");
@@ -1480,7 +1484,12 @@
               height:${effect.cloudSize.toFixed(1)}px;
               opacity:${cloudOpacity.toFixed(3)};
             "
-          ></div>
+          >
+            <span class="vinv-poof-lobe vinv-poof-lobe--one"></span>
+            <span class="vinv-poof-lobe vinv-poof-lobe--two"></span>
+            <span class="vinv-poof-lobe vinv-poof-lobe--three"></span>
+            <span class="vinv-poof-lobe vinv-poof-lobe--four"></span>
+          </div>
           ${dotHtml}
         </div>
       `;
