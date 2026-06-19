@@ -84,8 +84,11 @@
   const BONUS_SWARM_DURATION_MS = 20000;
   const BONUS_SPAWN_START_SEC = 1.05;
   const BONUS_SPAWN_END_SEC = 0.48;
-  const BONUS_SPEED_START_MULTIPLIER = 1.0;
-  const BONUS_SPEED_END_MULTIPLIER = 1.35;
+  const BONUS_MODE_SPEED_MULTIPLIERS = {
+    easy: 1,
+    medium: 1.12,
+    hard: 1.25
+  };
   const BOOKS = window.VerseGameShell.getBibleBookDecoys();
   const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
 
@@ -229,7 +232,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v3.21",
+      debugBadge: "v3.22",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -1333,15 +1336,19 @@
 
   function getBonusSpawnIntervalSec() {
     const progress = getBonusProgress();
-    return BONUS_SPAWN_START_SEC + (BONUS_SPAWN_END_SEC - BONUS_SPAWN_START_SEC) * progress;
+    const baseInterval = BONUS_SPAWN_START_SEC + (BONUS_SPAWN_END_SEC - BONUS_SPAWN_START_SEC) * progress;
+    const modeMultiplier = BONUS_MODE_SPEED_MULTIPLIERS[selectedMode] || 1;
+
+    return baseInterval / modeMultiplier;
   }
 
   function getBonusFallSpeed() {
     const progress = getBonusProgress();
-    const multiplier = BONUS_SPEED_START_MULTIPLIER +
+    const rampMultiplier = BONUS_SPEED_START_MULTIPLIER +
       (BONUS_SPEED_END_MULTIPLIER - BONUS_SPEED_START_MULTIPLIER) * progress;
+    const modeMultiplier = BONUS_MODE_SPEED_MULTIPLIERS[selectedMode] || 1;
 
-    return getHardBaselineSpeed() * multiplier;
+    return getHardBaselineSpeed() * rampMultiplier * modeMultiplier;
   }
 
   function getHardBaselineSpeed() {
