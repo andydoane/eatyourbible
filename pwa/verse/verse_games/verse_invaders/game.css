@@ -416,51 +416,58 @@ body {
   word-break: break-word;
 }
 
-.vinv-abduct-passenger {
-  margin-top: 8px;
-  line-height: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.vinv-abductee-img {
-  display: block;
-  width: clamp(42px, 10vw, 78px);
-  height: auto;
-  pointer-events: none;
-  user-select: none;
-  -webkit-user-drag: none;
-}
-
 .vinv-abduct-wrap {
   z-index: 3;
 }
 
-.vinv-abduct-stack {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.vinv-abduct-group {
   position: relative;
+  width: calc(var(--vinv-abduct-unit, var(--vinv-alien-size)) * 1.45);
+  height: calc(var(--vinv-abduct-unit, var(--vinv-alien-size)) * 2.9);
+  pointer-events: none;
 }
 
-.vinv-beam {
+.vinv-abduct-alien {
   position: absolute;
-  transform: translate(-50%, -50%);
-  text-align: center;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  z-index: 3;
 }
 
-.vinv-beam {
-  width: clamp(36px, 8vw, 68px);
-  height: 118px;
-  border-radius: 999px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 245, 160, 0.8), rgba(255, 255, 255, 0));
-  animation: vinvBeam 260ms ease-in-out infinite alternate;
+.vinv-abduct-cone {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--vinv-abduct-unit, var(--vinv-alien-size)) * 0.58);
+  width: var(--vinv-abduct-beam-width, calc(var(--vinv-alien-size) * 1.02));
+  height: var(--vinv-abduct-beam-height, calc(var(--vinv-alien-size) * 1.72));
+  transform-origin: center top;
+  clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+  background:
+    radial-gradient(ellipse at center, rgba(255, 255, 255, 0.5), rgba(255, 245, 160, 0.2) 44%, rgba(255, 245, 160, 0) 72%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.52), rgba(255, 236, 124, 0.34), rgba(255, 255, 255, 0));
+  filter:
+    drop-shadow(0 0 calc(var(--vinv-abduct-unit, var(--vinv-alien-size)) * 0.12) rgba(255, 245, 160, 0.46))
+    drop-shadow(0 0 calc(var(--vinv-abduct-unit, var(--vinv-alien-size)) * 0.18) rgba(255, 255, 255, 0.22));
+  z-index: 1;
 }
 
-.vinv-beam-abduct {
-  top: 32px;
-  left: 0;
+.vinv-abduct-passenger {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--vinv-abduct-unit, var(--vinv-alien-size)) * 1.84);
+  line-height: 1;
+  z-index: 2;
+}
+
+.vinv-abductee-img {
+  display: block;
+  width: var(--vinv-abductee-size, clamp(42px, 10vw, 78px));
+  height: auto;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: drop-shadow(0 3px 0 rgba(0, 0, 0, 0.16));
 }
 
 .vinv-entity.is-fade {
@@ -1009,15 +1016,7 @@ body {
   }
 }
 
-@keyframes vinvBeam {
-  from {
-    opacity: 0.45;
-  }
 
-  to {
-    opacity: 0.9;
-  }
-}
 
 @keyframes vinvOverlayPop {
   0% {

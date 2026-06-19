@@ -80,6 +80,7 @@
   const ROUND_CLEAR_FADE_MS = 260;
   const ROUND_ADVANCE_AFTER_TWO_WRONGS_MS = POOF_LIFE_MS + POOF_EXTRA_FADE_MS + ROUND_ADVANCE_BUFFER_MS;
   const ROUND_ADVANCE_AFTER_CORRECT_MS = CORRECT_HIT_IMPACT_DELAY_MS + STRONG_ALIEN_BURST_LIFE_MS + ROUND_ADVANCE_BUFFER_MS;
+  const ABDUCTION_LIFE_MS = 1850;
   const BOOKS = window.VerseGameShell.getBibleBookDecoys();
   const FUN_DECOYS = window.VerseGameShell.getFunDecoys();
 
@@ -208,7 +209,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v3.1",
+      debugBadge: "v3.2",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -778,13 +779,12 @@
     state.entityRenderSignature = "";
 
     const targetPoint = getEntityHitPoint(target);
-    addEffect(makeAbductionEffect(targetPoint.x, state.bottomZoneY - 12, target.color));
+    addEffect(makeAbductionEffect(targetPoint.x, state.bottomZoneY - 12, target.color, () => {
+      spawnRound();
+    }));
+
     renderHud();
     renderDynamic();
-
-    scheduleAction(1820, () => {
-      spawnRound();
-    });
   }
 
   function unlockAfterDelay(ms) {
@@ -904,6 +904,7 @@
   }
 
   function updateGame(dt, ts) {
+    completeExpiredEffects(ts);
     state.effects = state.effects.filter(effect => effect.until > ts);
     state.trails = state.trails.filter(trail => trail.until > ts);
     processScheduledActions(ts);
@@ -1448,20 +1449,25 @@
     };
   }
 
-  function makeAbductionEffect(x, y, color) {
+  function makeAbductionEffect(x, y, color, onDone) {
     const born = performance.now();
+    const unit = getAlienUnit();
+
     return {
       kind: "abduction",
       group: "abduction",
       x,
       y,
       born,
-      life: 1700,
-      until: born + 1700,
+      life: ABDUCTION_LIFE_MS,
+      until: born + ABDUCTION_LIFE_MS,
       colorHex: color.hex,
       alienImg: color.alienImg,
       alienAlt: color.alienAlt,
-      abducteeImg: randomFrom(ABDUCTEE_IMAGES)
+      abducteeImg: randomFrom(ABDUCTEE_IMAGES),
+      unit,
+      onDone,
+      done: false
     };
   }
 
@@ -1473,35 +1479,64 @@
   }
 
   function renderEffect(effect, now) {
+
     if (effect.kind === "abduction") {
       const progress = clamp((now - effect.born) / effect.life, 0, 1);
-      const hold = 0.18;
-      const travel = progress <= hold ? 0 : (progress - hold) / (1 - hold);
+      const powerOnProgress = clamp(progress / 0.16, 0, 1);
+      const ascendProgress = clamp((progress - 0.16) / 0.84, 0, 1);
+      const ascendEase = ascendProgress * ascendProgress * (3 - 2 * ascendProgress);
 
-      const liftDistance = Math.max(state.fieldHeight + 140, state.bottomZoneY + 260);
-      const liftY = -travel * liftDistance;
+      const unit = effect.unit || getAlienUnit();
+      const liftDistance = Math.max(effect.y + unit * 3.1, state.fieldHeight + unit * 1.6);
+      const liftY = -ascendEase * liftDistance;
 
-      const beamOpacity = progress < 0.72
-        ? 0.82
-        : Math.max(0, 0.82 - ((progress - 0.72) / 0.28) * 0.82);
+      const beamOpacity = progress < 0.82
+        ? 0.84 * powerOnProgress
+        : Math.max(0, 0.84 - ((progress - 0.82) / 0.18) * 0.84);
 
-      const wholeOpacity = progress < 0.92
+      const wholeOpacity = progress < 0.9
         ? 1
-        : Math.max(0, 1 - ((progress - 0.92) / 0.08));
+        : Math.max(0, 1 - ((progress - 0.9) / 0.1));
+
+      const beamPulse = 0.94 + Math.sin(now * 0.018) * 0.035;
+      const abducteeFloat = Math.sin(now * 0.01) * unit * 0.035;
 
       return `
-        <div class="vinv-effect-wrap vinv-abduct-wrap" style="left:${effect.x}px; top:${effect.y}px; transform:translate(-50%,-50%) translateY(${liftY.toFixed(1)}px); opacity:${wholeOpacity.toFixed(3)};">
-          <div class="vinv-beam vinv-beam-abduct" style="opacity:${beamOpacity.toFixed(3)}"></div>
-          <div class="vinv-abduct-stack">
-            <div class="vinv-alien">
+        <div
+          class="vinv-effect-wrap vinv-abduct-wrap"
+          style="
+            left:${effect.x}px;
+            top:${effect.y}px;
+            --vinv-alien-size:${unit.toFixed(1)}px;
+            --vinv-abduct-unit:${unit.toFixed(1)}px;
+            --vinv-abductee-size:${(unit * 0.6).toFixed(1)}px;
+            --vinv-abduct-beam-height:${(unit * 1.72).toFixed(1)}px;
+            --vinv-abduct-beam-width:${(unit * 1.02).toFixed(1)}px;
+            transform:translate(-50%,-50%) translateY(${liftY.toFixed(1)}px);
+            opacity:${wholeOpacity.toFixed(3)};
+          "
+        >
+          <div class="vinv-abduct-group">
+            <div class="vinv-abduct-alien">
               ${renderAlienHtml({
-                hex: effect.colorHex,
-                alienImg: effect.alienImg,
-                alienAlt: effect.alienAlt
-              }, effect.alienAlt, "vinv-alien-svg--abduct")}
+        hex: effect.colorHex,
+        alienImg: effect.alienImg,
+        alienAlt: effect.alienAlt
+      }, effect.alienAlt, "vinv-alien-svg--abduct")}
             </div>
-            <div class="vinv-word" style="color:${effect.colorHex}; visibility:hidden; height:0; margin:0; padding:0;"></div>
-            <div class="vinv-abduct-passenger">
+
+            <div
+              class="vinv-abduct-cone"
+              style="
+                opacity:${beamOpacity.toFixed(3)};
+                transform:translateX(-50%) scaleX(${beamPulse.toFixed(3)});
+              "
+            ></div>
+
+            <div
+              class="vinv-abduct-passenger"
+              style="transform:translate(-50%, ${abducteeFloat.toFixed(1)}px);"
+            >
               <img
                 class="vinv-abductee-img"
                 src="${effect.abducteeImg}"
@@ -1513,6 +1548,8 @@
         </div>
       `;
     }
+
+    
 
     if (effect.kind === "poof") {
       const progress = clamp((now - effect.born) / effect.life, 0, 1);
@@ -1702,6 +1739,17 @@
     const ng = Math.round(g + (255 - g) * amount);
     const nb = Math.round(b + (255 - b) * amount);
     return `#${nr.toString(16).padStart(2, "0")}${ng.toString(16).padStart(2, "0")}${nb.toString(16).padStart(2, "0")}`;
+  }
+
+  function completeExpiredEffects(ts) {
+    state.effects.forEach((effect) => {
+      if (effect.until > ts) return;
+      if (effect.done) return;
+      if (typeof effect.onDone !== "function") return;
+
+      effect.done = true;
+      effect.onDone();
+    });
   }
 
   function scheduleAction(delayMs, fn) {
