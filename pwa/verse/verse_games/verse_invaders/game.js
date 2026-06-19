@@ -209,7 +209,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v3.4",
+      debugBadge: "v3.5",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -285,6 +285,13 @@
 
           <div class="vinv-field-wrap">
             <div class="vinv-field" id="vinvField">
+              <img
+                class="vinv-starfield"
+                src="./verse_invaders_images/verse_invaders_starfield_twinkling.svg"
+                alt=""
+                aria-hidden="true"
+                draggable="false"
+              />
               <div class="vinv-lanes" id="vinvLanes"></div>
               <div class="vinv-entities" id="vinvEntities"></div>
               <div class="vinv-rockets" id="vinvRockets"></div>
