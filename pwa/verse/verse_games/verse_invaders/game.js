@@ -211,7 +211,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v3.8",
+      debugBadge: "v3.9",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -592,6 +592,29 @@
     });
   }
 
+  function getTutorialAlienColors() {
+    const fixedButtonColors = [
+      BUTTON_COLOR_ORDER.left,
+      BUTTON_COLOR_ORDER.center,
+      BUTTON_COLOR_ORDER.right
+    ];
+
+    const shiftedLeft = [
+      BUTTON_COLOR_ORDER.center,
+      BUTTON_COLOR_ORDER.right,
+      BUTTON_COLOR_ORDER.left
+    ];
+
+    const shiftedRight = [
+      BUTTON_COLOR_ORDER.right,
+      BUTTON_COLOR_ORDER.left,
+      BUTTON_COLOR_ORDER.center
+    ];
+
+    return Math.random() < 0.5 ? shiftedLeft : shiftedRight;
+  }
+
+
   function getTutorialLayout() {
     const unit = getAlienUnit();
     const gap = clamp(unit * 0.18, 10, 22);
@@ -612,8 +635,8 @@
   function startTutorialRound() {
     state.tutorialMode = true;
     state.tutorialMessageVisible = true;
-    state.roundStatus = "tutorial";
-    state.buttonsLocked = false;
+    state.roundStatus = "tutorialEntering";
+    state.buttonsLocked = true;
     state.activeLane = null;
     state.rocket = null;
     state.trails = [];
@@ -628,9 +651,10 @@
     };
 
     const tutorialLayout = getTutorialLayout();
+    const tutorialAlienColors = getTutorialAlienColors();
 
     state.entities = LANE_KEYS.map((lane, index) => {
-      const color = state.buttonColors[lane];
+      const color = tutorialAlienColors[index];
 
       return {
         id: `tutorial-${lane}`,
@@ -651,6 +675,15 @@
     state.entityRenderSignature = "";
     renderHud();
     renderDynamic();
+
+    scheduleAction(880, () => {
+      if (!state.tutorialMode) return;
+
+      state.roundStatus = "tutorial";
+      state.buttonsLocked = false;
+      renderHud();
+      renderDynamic();
+    });
   }
 
 
@@ -1165,7 +1198,7 @@
 
     return `
       <div
-        class="vinv-tutorial-card ${state.tutorialMessageVisible ? "" : "is-hidden"}"
+        class="vinv-tutorial-card ${state.tutorialMessageVisible ? "" : "is-hidden"} ${state.roundStatus === "tutorialEntering" ? "is-entering" : ""}"
         style="top:${tutorialLayout.cardY.toFixed(1)}px;"
       >
         Tap the buttons to shoot the aliens.
@@ -1181,6 +1214,10 @@
   }
 
   function getEntityClassName(entity) {
+    if (state.tutorialMode && state.roundStatus === "tutorialEntering" && entity.id.startsWith("tutorial-")) {
+      return "is-tutorial-enter";
+    }
+
     if (entity.status === "fade") return "is-fade";
     if (entity.status === "correct") return "is-correct-pause";
     if (entity.status === "crtVanish") return "is-crt-vanish";
