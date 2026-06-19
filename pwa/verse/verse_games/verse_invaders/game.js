@@ -227,7 +227,7 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v3.16",
+      debugBadge: "v3.17",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
@@ -556,9 +556,21 @@
 
       if (state.bonusMode) {
         const multiplier = getBonusMultiplier();
-        streakPill.textContent = multiplier > 1
-          ? `⭐ ${state.bonusScore} ${multiplier}x`
-          : `⭐ ${state.bonusScore}`;
+        const multiplierHtml = multiplier > 1
+          ? `<span class="vinv-bonus-score-multiplier is-x${multiplier}">${multiplier}x</span>`
+          : "";
+
+        streakPill.innerHTML = `
+          <img
+            class="vinv-bonus-score-icon"
+            src="./verse_invaders_images/verse_invaders_alien_yellow.png"
+            alt=""
+            aria-hidden="true"
+            draggable="false"
+          />
+          <span class="vinv-bonus-score-value">${state.bonusScore}</span>
+          ${multiplierHtml}
+        `;
         streakPill.setAttribute("aria-label", `Bonus score ${state.bonusScore}${multiplier > 1 ? `, ${multiplier} times multiplier` : ""}`);
       } else {
         streakPill.textContent = `🔥 ${state.streak}`;
