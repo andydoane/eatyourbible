@@ -411,7 +411,7 @@
       app,
       title: GAME_TITLE,
       icon: "🐸",
-            debugBadge: "BB 4.0",
+            debugBadge: "BB 4.1",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
@@ -518,13 +518,7 @@
             <div class="bb-field" id="bbField">
               <div class="bb-water-layer" id="bbWaterLayer" aria-hidden="true">
                 <svg class="bb-water-wave-svg" id="bbWaterWaveSvg" viewBox="0 0 1000 1000" preserveAspectRatio="none"></svg>
-                <div class="bb-water-rings" id="bbWaterRings">
-                  <span class="bb-water-ring ring-1"></span>
-                  <span class="bb-water-ring ring-2"></span>
-                  <span class="bb-water-ring ring-3"></span>
-                  <span class="bb-water-ring ring-4"></span>
-                  <span class="bb-water-ring ring-5"></span>
-                </div>
+
               </div>
               <div class="bb-play-layer" id="bbPlayLayer"></div>
               <div class="bb-effects-layer" id="bbEffectsLayer"></div>

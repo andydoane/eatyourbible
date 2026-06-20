@@ -131,56 +131,7 @@ body {
   opacity: 0.42;
 }
 
-.bb-water-rings {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
 
-.bb-water-ring {
-  position: absolute;
-  width: clamp(46px, 12vw, 92px);
-  aspect-ratio: 1;
-  border: 2px solid rgba(255, 255, 255, 0.34);
-  border-radius: 50%;
-  opacity: 0;
-  transform: translate(-50%, -50%) scale(0.2);
-  animation: bbWaterRing 4.8s ease-out infinite;
-}
-
-.bb-water-ring.ring-1 {
-  left: 22%;
-  top: 34%;
-  animation-delay: -0.2s;
-}
-
-.bb-water-ring.ring-2 {
-  left: 68%;
-  top: 26%;
-  width: clamp(54px, 14vw, 108px);
-  animation-delay: -1.4s;
-}
-
-.bb-water-ring.ring-3 {
-  left: 42%;
-  top: 58%;
-  width: clamp(48px, 13vw, 96px);
-  animation-delay: -2.6s;
-}
-
-.bb-water-ring.ring-4 {
-  left: 78%;
-  top: 66%;
-  width: clamp(40px, 10vw, 82px);
-  animation-delay: -3.5s;
-}
-
-.bb-water-ring.ring-5 {
-  left: 18%;
-  top: 76%;
-  width: clamp(44px, 11vw, 88px);
-  animation-delay: -4.2s;
-}
 
 .bb-water-layer,
 .bb-play-layer,
