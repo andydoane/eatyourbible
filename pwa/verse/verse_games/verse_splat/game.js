@@ -1138,7 +1138,7 @@ function viewportCenterPx(layerSelector="#vspFrontEffectLayer"){
         w: wide ? size * rand(1.18, 1.70) : size,
         h: wide ? size * rand(0.72, 1.08) : size * rand(0.88, 1.18),
         color: adjustHexColor(blob.color, shadeAmount),
-        opacity: rand(0.40, 0.64),
+        opacity: rand(0.85, 1.00),
         rot: rand(-180, 180),
         shape,
         blobImg
