@@ -1304,19 +1304,11 @@
     }
   }
 
-
   function handleBonusTap(id) {
     if (!state.bonusMode || state.bonusEating || state.paused || state.done) return;
 
     const bug = state.bonusBugs.find((item) => item.id === id);
     if (!bug || bug.status !== "bonus") return;
-
-    const now = performance.now();
-    state.bonusEating = true;
-    bug.status = "eating";
-    state.bugsEaten += 1;
-
-    fireTongueToBug(bug, now, BONUS_EAT_MS, true);
 
     const now = performance.now();
     const scorePoint = getBugPoint(bug, now, { ignoreEat: true });
@@ -1337,6 +1329,7 @@
       scheduleBonusSpawn(120 + Math.random() * 260);
     });
   }
+
 
   function update(dt, now) {
     runScheduledActions(now);
