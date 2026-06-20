@@ -481,7 +481,7 @@ function renderIntro(){
   window.VerseGameShell.renderTitleScreen({
     app,
     title: GAME_TITLE,
-    debugBadge: "VS 1.6",
+    debugBadge: "VS 1.7",
     icon: "🫟",
     helpHtml: nonGameHelpHtml(),
     helpOverlayId: HELP_OVERLAY_ID,
@@ -1121,63 +1121,53 @@ function viewportCenterPx(layerSelector="#vspFrontEffectLayer"){
     const center = blobCenterPx(blob, "#vspPaintLayer");
     const bounds = currentBounds();
     const boardMin = Math.max(1, Math.min(bounds.width, bounds.height));
-    const boardScale = clamp(boardMin / 390, 0.82, 1.55);
-    const mainCount = staticPaintSplatsPerCorrectTap();
-    const dotCount = Math.floor(rand(3, 5));
-    const baseSpread = Math.max(blob.width, blob.height) * rand(0.34, 0.48) + boardMin * 0.035;
+    const svgShape = STATIC_PAINT_BLOB_SHAPES[Math.floor(Math.random() * STATIC_PAINT_BLOB_SHAPES.length)] || STATIC_PAINT_BLOB_SHAPES[0];
+    const centerSize = Math.max(1, blob.height * 0.85);
     const baseAngle = rand(0, Math.PI * 2);
+    const circleCount = 6;
+    const spread = clamp(blob.height * 1.05 + boardMin * 0.045, 58, 150);
 
-    function pushPaintMark({ angle, distance, size, wide, shape, blobImg = null }) {
-      const x = clamp(center.x + Math.cos(angle) * distance, 0, bounds.width);
-      const y = clamp(center.y + Math.sin(angle) * distance, 0, bounds.height);
-      const shadeAmount = Math.random() < 0.5 ? rand(0.04, 0.12) : -rand(0.04, 0.12);
-
+    function pushPaintMark({ x, y, w, h, shape, blobImg = null, opacity = 1, rot = 0 }) {
       state.paintSplats.push({
-        xRatio: bounds.width ? x / bounds.width : 0.5,
-        yRatio: bounds.height ? y / bounds.height : 0.5,
-        w: wide ? size * rand(1.18, 1.70) : size,
-        h: wide ? size * rand(0.72, 1.08) : size * rand(0.88, 1.18),
-        color: adjustHexColor(blob.color, shadeAmount),
-        opacity: rand(0.85, 1.00),
-        rot: rand(-180, 180),
+        xRatio: bounds.width ? clamp(x, 0, bounds.width) / bounds.width : 0.5,
+        yRatio: bounds.height ? clamp(y, 0, bounds.height) / bounds.height : 0.5,
+        w,
+        h,
+        color: blob.color,
+        opacity,
+        rot,
         shape,
         blobImg
       });
     }
 
-    for (let i = 0; i < mainCount; i++) {
-      const angle = baseAngle + ((Math.PI * 2) / mainCount) * i + rand(-0.38, 0.38);
-      const distance = rand(baseSpread * 0.22, baseSpread * 1.05);
-      const size = clamp(boardMin * rand(0.050, 0.085) * boardScale, 22, 72);
-      const wide = Math.random() < 0.42;
-      const svgShape = STATIC_PAINT_BLOB_SHAPES[Math.floor(Math.random() * STATIC_PAINT_BLOB_SHAPES.length)] || STATIC_PAINT_BLOB_SHAPES[0];
+    pushPaintMark({
+      x: center.x,
+      y: center.y,
+      w: centerSize,
+      h: centerSize,
+      shape: "svg",
+      blobImg: svgShape,
+      opacity: 1,
+      rot: rand(-180, 180)
+    });
+
+    for (let i = 0; i < circleCount; i++) {
+      const angle = baseAngle + ((Math.PI * 2) / circleCount) * i + rand(-0.28, 0.28);
+      const distance = rand(spread * 0.45, spread * 1.12);
+      const dotSize = clamp(blob.height * rand(0.16, 0.34), 14, 46);
+      const x = center.x + Math.cos(angle) * distance;
+      const y = center.y + Math.sin(angle) * distance;
 
       pushPaintMark({
-        angle,
-        distance,
-        size,
-        wide,
-        shape: "svg",
-        blobImg: svgShape
+        x,
+        y,
+        w: dotSize * rand(0.92, 1.18),
+        h: dotSize * rand(0.92, 1.18),
+        shape: "dot",
+        opacity: rand(0.85, 1.00),
+        rot: 0
       });
-    }
-
-    for (let i = 0; i < dotCount; i++) {
-      const angle = baseAngle + ((Math.PI * 2) / dotCount) * i + rand(-0.55, 0.55);
-      const distance = rand(baseSpread * 0.45, baseSpread * 1.32);
-      const size = clamp(boardMin * rand(0.022, 0.045) * boardScale, 9, 34);
-
-      pushPaintMark({
-        angle,
-        distance,
-        size,
-        wide: Math.random() < 0.22,
-        shape: "dot"
-      });
-    }
-
-    while (state.paintSplats.length > MAX_STATIC_PAINT_SPLATS) {
-      state.paintSplats.shift();
     }
 
     renderStaticPaintSplats();
