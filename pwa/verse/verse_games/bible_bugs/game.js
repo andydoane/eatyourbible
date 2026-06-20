@@ -151,7 +151,7 @@
       app,
       title: GAME_TITLE,
       icon: "🐸",
-      debugBadge: "BB 1.9",
+      debugBadge: "BB 2.0",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
@@ -1254,39 +1254,6 @@
   }
 
 
-  function spawnBonusBug() {
-    if (!state.bonusMode || state.done) return;
-
-    const now = performance.now();
-    const marginX = 0.16;
-    const marginTop = 0.14;
-    const marginBottom = 0.34;
-
-    while (state.bonusBugs.length < BONUS_MAX_BUGS) {
-      state.bonusBugId += 1;
-
-      const imgSrc = BONUS_GOOD_BUG_IMAGE_PATHS[state.bonusBugId % BONUS_GOOD_BUG_IMAGE_PATHS.length];
-
-      state.bonusBugs.push({
-        id: `b${state.bonusBugId}`,
-        kind: "good",
-        imgSrc,
-        emoji: BUG_EMOJIS[state.bonusBugId % BUG_EMOJIS.length],
-        xRatio: shell.clamp(marginX + Math.random() * (1 - marginX * 2), marginX, 1 - marginX),
-        yRatio: shell.clamp(marginTop + Math.random() * (1 - marginTop - marginBottom), marginTop, 1 - marginBottom),
-        vx: (Math.random() < 0.5 ? -1 : 1) * (0.055 + Math.random() * 0.055),
-        vy: (Math.random() < 0.5 ? -1 : 1) * (0.040 + Math.random() * 0.050),
-        bornAt: now,
-        expiresAt: now + BONUS_BUG_LIFE_MS,
-        status: "bonus",
-        poofAt: 0,
-        pullPoofed: false,
-        motionPhase: Math.random() * Math.PI * 2,
-        jitterSeed: Math.random() * Math.PI * 2
-      });
-    }
-  }
-
   function handleBonusTap(id) {
     if (!state.bonusMode || state.bonusEating || state.paused || state.done) return;
 
@@ -1385,7 +1352,7 @@
     }
 
     state.bonusBugs = state.bonusBugs.filter((bug) => {
-      return !(bug.status === "poof" && now - bug.poofAt > 260);
+      return !(bug.status === "poof" && now - bug.poofAt > 560);
     });
 
     if (state.bonusMode && now < state.bonusEndsAt && !state.bonusEating) {
@@ -1565,6 +1532,9 @@
     const bonusClass = isBonus ? " bb-bug--bonus" : "";
     const popClass = now - bug.bornAt < 260 ? " is-pop" : "";
     const word = isBonus || isTutorial ? "" : `<div class="bb-bug-word">${escapeHtml(bug.text)}</div>`;
+    const bonusRipple = isBonus && bug.status === "poof"
+      ? `<span class="bb-bonus-ripple" aria-hidden="true"><span></span><span></span><span></span></span>`
+      : "";
 
     let bugVisual = "";
 
@@ -1590,6 +1560,7 @@
           ${word}
           ${bugVisual}
         </button>
+        ${bonusRipple}
       </div>
     `;
   }
