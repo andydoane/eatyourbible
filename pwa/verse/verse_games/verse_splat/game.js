@@ -18,6 +18,7 @@ const HELP_OVERLAY_ID = "vspHelpOverlay";
 
   const BONUS_TIME_LIMIT_MS = 30000;
   const CORRECT_TAP_LOCK_MS = 180;
+  const MAX_STATIC_PAINT_SPLATS = 60;
   let muted = false;
 
   const $ = (s, root=document) => root.querySelector(s);
@@ -156,6 +157,7 @@ const MODE_CONFIG = {
 
     blobs: [],
     nextBlobId: 1,
+    paintSplats: [],
     wrongCountThisField: 0,
     rafId: 0,
     lastTs: 0,
@@ -234,6 +236,7 @@ const shuffle = window.VerseGameShell.shuffle;
     state.phase = "words";
     state.blobs = [];
     state.nextBlobId = 1;
+    state.paintSplats = [];
     state.wrongCountThisField = 0;
     state.lastTs = 0;
     state.inputLockedUntil = 0;
@@ -450,7 +453,7 @@ function renderIntro(){
   window.VerseGameShell.renderTitleScreen({
     app,
     title: GAME_TITLE,
-    debugBadge: "VS 1.3",
+    debugBadge: "VS 1.4",
     icon: "🫟",
     helpHtml: nonGameHelpHtml(),
     helpOverlayId: HELP_OVERLAY_ID,
@@ -533,6 +536,7 @@ function gameplayShell({ bonus=false }){
               ${bonus ? `<div class="vsp-bonus-timer-chip" id="vspBonusTimerChip">Time ${Math.ceil(state.bonusRemainingMs / 1000)}</div>` : ''}
             </div>
             <div class="vsp-board-main" id="vspBoardMain">
+              <div class="vsp-paint-layer" id="vspPaintLayer"></div>
               <div class="vsp-flash-layer ${state.flashKey ? 'is-active' : ''}" id="vspFlashLayer"></div>
               <div class="vsp-back-effect-layer" id="vspBackEffectLayer"></div>
               <div class="vsp-blob-layer" id="vspBlobLayer"></div>
@@ -1077,6 +1081,69 @@ function viewportCenterPx(layerSelector="#vspFrontEffectLayer"){
   };
 }
 
+  function staticPaintSplatsPerCorrectTap() {
+    const opportunities = Math.max(1, state.segments.length || 1);
+    return clamp(Math.floor(MAX_STATIC_PAINT_SPLATS / opportunities), 2, 5);
+  }
+
+  function addStaticPaintSplats(blob) {
+    const layer = $("#vspPaintLayer");
+    if (!layer || !blob) return;
+
+    const center = blobCenterPx(blob, "#vspPaintLayer");
+    const bounds = currentBounds();
+    const count = staticPaintSplatsPerCorrectTap();
+    const baseSpread = Math.max(blob.width, blob.height) * 0.24;
+
+    for (let i = 0; i < count; i++) {
+      const angle = rand(0, Math.PI * 2);
+      const distance = rand(0, baseSpread);
+      const x = clamp(center.x + Math.cos(angle) * distance, 0, bounds.width);
+      const y = clamp(center.y + Math.sin(angle) * distance, 0, bounds.height);
+      const size = clamp(blob.height * rand(0.14, 0.34), 10, 38);
+      const wide = Math.random() < 0.42;
+      const shape = Math.random() < 0.34 ? "blob" : "dot";
+      const shadeAmount = Math.random() < 0.5 ? rand(0.04, 0.12) : -rand(0.04, 0.12);
+
+      state.paintSplats.push({
+        xRatio: bounds.width ? x / bounds.width : 0.5,
+        yRatio: bounds.height ? y / bounds.height : 0.5,
+        w: wide ? size * rand(1.25, 1.85) : size,
+        h: wide ? size * rand(0.72, 1.04) : size * rand(0.88, 1.18),
+        color: adjustHexColor(blob.color, shadeAmount),
+        opacity: rand(0.42, 0.66),
+        rot: rand(-38, 38),
+        shape
+      });
+    }
+
+    while (state.paintSplats.length > MAX_STATIC_PAINT_SPLATS) {
+      state.paintSplats.shift();
+    }
+
+    renderStaticPaintSplats();
+  }
+
+  function renderStaticPaintSplats() {
+    const layer = $("#vspPaintLayer");
+    if (!layer) return;
+
+    layer.innerHTML = state.paintSplats.map((splat) => `
+      <span class="vsp-static-paint-splat is-${splat.shape}"
+        style="
+          left:${(splat.xRatio * 100).toFixed(2)}%;
+          top:${(splat.yRatio * 100).toFixed(2)}%;
+          width:${splat.w.toFixed(1)}px;
+          height:${splat.h.toFixed(1)}px;
+          background:${splat.color};
+          opacity:${splat.opacity.toFixed(2)};
+          transform:translate(-50%, -50%) rotate(${splat.rot.toFixed(1)}deg);
+        ">
+      </span>
+    `).join("");
+  }
+
+
   function spawnParticleBurst(blob, centerOverride=null, layerSelector="#vspBackEffectLayer"){
     const center = centerOverride || blobCenterPx(blob, layerSelector);
     const fill = blob.color;
@@ -1232,6 +1299,7 @@ function spawnWrongFaceParticleBurst(){
     if (state.busy) return;
     state.busy = true;
     state.inputLockedUntil = performance.now() + CORRECT_TAP_LOCK_MS;
+    addStaticPaintSplats(blob);
     spawnSplatEffect(blob);
     spawnParticleBurst(blob);
     removeBlobById(blob.id);

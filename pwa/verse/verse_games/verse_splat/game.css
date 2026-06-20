@@ -220,7 +220,8 @@ body{overflow:hidden}
 .vsp-menu-pill:active{transform:translateY(1px)}
 .vsp-board-main{position:absolute;inset:0;min-height:0;touch-action:none}
 
-.vsp-back-effect-layer,.vsp-blob-layer,.vsp-effect-layer,.vsp-flash-layer,.vsp-front-effect-layer{position:absolute;inset:0}
+.vsp-paint-layer,.vsp-back-effect-layer,.vsp-blob-layer,.vsp-effect-layer,.vsp-flash-layer,.vsp-front-effect-layer{position:absolute;inset:0}
+.vsp-paint-layer{z-index:1;pointer-events:none}
 .vsp-back-effect-layer{z-index:2;pointer-events:none}
 .vsp-blob-layer{z-index:3;pointer-events:none}
 .vsp-effect-layer{z-index:4;pointer-events:none}
@@ -314,6 +315,18 @@ body{overflow:hidden}
 
 .vsp-blob.is-spawning .vsp-blob-body{animation:vspBlobPop .28s ease}
 .vsp-blob.is-hit{pointer-events:none}
+
+
+.vsp-static-paint-splat {
+  position: absolute;
+  display: block;
+  border-radius: 999px;
+  pointer-events: none;
+}
+
+.vsp-static-paint-splat.is-blob {
+  border-radius: 58% 42% 49% 51% / 46% 55% 45% 54%;
+}
 
 .vsp-effect{position:absolute;left:0;top:0;pointer-events:none;transform:translate(-50%,-50%)}
 
