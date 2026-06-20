@@ -14,6 +14,59 @@
   const HELP_OVERLAY_ID = "vinvHelpOverlay";
   const ALIEN_SVG_URL = "./verse_invaders_images/verse_invaders_alien.svg";
 
+  const SOUND_BASE_PATH = "./verse_invaders_sounds/";
+  const UI_SOUND_BASE_PATH = "../../ui_audio/";
+
+  const SOUND_FILES = {
+    uiTap1: `${UI_SOUND_BASE_PATH}ui_sound_pop_1.mp3`,
+    uiTap2: `${UI_SOUND_BASE_PATH}ui_sound_pop_2.mp3`,
+
+    rocketLaunch: `${SOUND_BASE_PATH}verse_invaders_launch.mp3`,
+    correctHit: `${SOUND_BASE_PATH}verse_invaders_correct.mp3`,
+    wrongHit: `${SOUND_BASE_PATH}verse_invaders_wrong.mp3`,
+    abduction: `${SOUND_BASE_PATH}verse_invaders_abduction.mp3`,
+
+    streak4: `${SOUND_BASE_PATH}verse_invaders_streak.mp3`,
+    streak8: `${SOUND_BASE_PATH}verse_invaders_streak.mp3`,
+    streak12: `${SOUND_BASE_PATH}verse_invaders_streak.mp3`,
+    streak16: `${SOUND_BASE_PATH}verse_invaders_streak.mp3`,
+
+    bonusStart: `${SOUND_BASE_PATH}verse_invaders_bonus_start.mp3`,
+    bonusPop1: `${SOUND_BASE_PATH}verse_invaders_pop_1.mp3`,
+    bonusPop2: `${SOUND_BASE_PATH}verse_invaders_pop_2.mp3`,
+    bonusPop3: `${SOUND_BASE_PATH}verse_invaders_pop_3.mp3`,
+    bonusPop4: `${SOUND_BASE_PATH}verse_invaders_pop_4.mp3`,
+    bonusPop5: `${SOUND_BASE_PATH}verse_invaders_pop_5.mp3`,
+    bonusPenalty: `${SOUND_BASE_PATH}verse_invaders_wrong.mp3`,
+    bonusMultiplierUp: `${SOUND_BASE_PATH}verse_invaders_streak.mp3`,
+    bonusReveal: `${SOUND_BASE_PATH}verse_invaders_bonus_result.mp3`
+  };
+
+  const BONUS_POP_SOUND_KEYS = ["bonusPop1", "bonusPop2", "bonusPop3", "bonusPop4", "bonusPop5"];
+
+  const SOUND_TUNING = {
+    masterVolume: 0.90,
+    volumes: {
+      uiTap: 0.45,
+
+      rocketLaunch: 0.62,
+      correctHit: 0.70,
+      wrongHit: 0.72,
+      abduction: 0.78,
+
+      streak4: 0.58,
+      streak8: 0.66,
+      streak12: 0.74,
+      streak16: 0.84,
+
+      bonusStart: 0.78,
+      bonusHit: 0.62,
+      bonusPenalty: 0.72,
+      bonusMultiplierUp: 0.80,
+      bonusReveal: 0.82
+    }
+  };
+
   const LANE_KEYS = ["left", "center", "right"];
   const LANE_COLORS = [
     {
@@ -130,6 +183,11 @@
   let completionResult = null;
   let resizeHandlerBound = false;
   let alienSvgTemplate = "";
+  let audioCtx = null;
+  let silenceAudio = null;
+  let audioUnlocked = false;
+  const soundBuffers = new Map();
+  const soundBufferPromises = new Map();
 
   const state = {
     running: false,
@@ -185,6 +243,7 @@
     bonusRevealVisible: false,
     bonusFinalScore: 0,
     bonusMaxMultiplier: 1,
+    uiSoundFlip: false,
     modeTiming: {
       easy: { start: 6.2, step: 0 },
       medium: { start: 5.8, step: -0.08 },
@@ -223,6 +282,154 @@
       alienSvgTemplate = "";
     }
   }
+
+  function getAudioContext() {
+    if (!audioCtx) {
+      const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextCtor) return null;
+      audioCtx = new AudioContextCtor();
+    }
+
+    return audioCtx;
+  }
+
+  function ensureSilenceAudio() {
+    if (silenceAudio) return silenceAudio;
+
+    silenceAudio = new Audio("../../verse_audio/silence.mp3");
+    silenceAudio.preload = "auto";
+    silenceAudio.loop = false;
+    silenceAudio.volume = 0.001;
+    silenceAudio.setAttribute("playsinline", "true");
+
+    return silenceAudio;
+  }
+
+  async function unlockAudio() {
+    const ctx = getAudioContext();
+    if (!ctx) return false;
+
+    try {
+      const silent = ensureSilenceAudio();
+      silent.currentTime = 0;
+
+      const silentPlay = silent.play();
+      if (silentPlay && typeof silentPlay.catch === "function") {
+        silentPlay.catch(() => { });
+      }
+    } catch (err) {
+      // Best effort only.
+    }
+
+    try {
+      if (ctx.state === "suspended") {
+        await ctx.resume();
+      }
+
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      gain.gain.value = 0.0001;
+      osc.frequency.value = 440;
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start();
+      osc.stop(ctx.currentTime + 0.03);
+
+      audioUnlocked = true;
+      preloadSoundBuffers();
+
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
+
+  function soundVolume(key) {
+    const master = Number(SOUND_TUNING.masterVolume);
+    const individual = Number(SOUND_TUNING.volumes[key]);
+
+    const safeMaster = Number.isFinite(master) ? master : 1;
+    const safeIndividual = Number.isFinite(individual) ? individual : 1;
+
+    return Math.max(0, Math.min(1, safeMaster * safeIndividual));
+  }
+
+  async function loadSoundBuffer(key) {
+    const ctx = getAudioContext();
+    const src = SOUND_FILES[key];
+
+    if (!ctx || !src) return null;
+    if (soundBuffers.has(key)) return soundBuffers.get(key);
+    if (soundBufferPromises.has(key)) return soundBufferPromises.get(key);
+
+    const promise = fetch(src)
+      .then(response => {
+        if (!response.ok) throw new Error(`Unable to load sound: ${src}`);
+        return response.arrayBuffer();
+      })
+      .then(arrayBuffer => ctx.decodeAudioData(arrayBuffer))
+      .then(buffer => {
+        soundBuffers.set(key, buffer);
+        return buffer;
+      })
+      .catch(err => {
+        console.warn(err);
+        return null;
+      })
+      .finally(() => {
+        soundBufferPromises.delete(key);
+      });
+
+    soundBufferPromises.set(key, promise);
+    return promise;
+  }
+
+  function preloadSoundBuffers() {
+    Object.keys(SOUND_FILES).forEach(key => {
+      loadSoundBuffer(key);
+    });
+  }
+
+  async function playGameSound(key, volumeKey = key) {
+    if (muted) return;
+
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    try {
+      if (ctx.state === "suspended") {
+        await ctx.resume();
+      }
+
+      const buffer = await loadSoundBuffer(key);
+      if (!buffer) return;
+
+      const source = ctx.createBufferSource();
+      const gain = ctx.createGain();
+
+      gain.gain.value = soundVolume(volumeKey);
+      source.buffer = buffer;
+      source.connect(gain);
+      gain.connect(ctx.destination);
+
+      source.start(0);
+    } catch (err) {
+      // Sound should never break gameplay.
+    }
+  }
+
+  function playUiTapSound() {
+    const key = state.uiSoundFlip ? "uiTap2" : "uiTap1";
+    state.uiSoundFlip = !state.uiSoundFlip;
+    playGameSound(key, "uiTap");
+  }
+
+  function playRandomBonusPopSound() {
+    playGameSound(randomFrom(BONUS_POP_SOUND_KEYS), "bonusHit");
+  }
+
 
   function renderAlienHtml(color, altText = "Alien", extraClass = "", blinkDelay = 0.35, partDelay = 0) {
     const colorHex = color?.hex || "#ffc751";
@@ -263,14 +470,18 @@
     window.VerseGameShell.renderTitleScreen({
       app,
       title: "Verse Invaders",
-      debugBadge: "v3.28",
+      debugBadge: "v3.29",
       icon: "👾",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
       backLabel: "Back to Practice Games",
       onBack: () => window.VerseGameBridge.exitGame(),
-      onStart: renderModeSelect
+      onStart: () => {
+        unlockAudio();
+        playUiTapSound();
+        renderModeSelect();
+      }
     });
   }
 
@@ -285,8 +496,15 @@
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
       backLabel: "Back to Verse Invaders title",
-      onBack: renderIntro,
-      onSelect: startGame
+      onBack: () => {
+        playUiTapSound();
+        renderIntro();
+      },
+      onSelect: (mode) => {
+        unlockAudio();
+        playUiTapSound();
+        startGame(mode);
+      }
     });
   }
 
@@ -340,6 +558,7 @@
     state.bonusRevealVisible = false;
     state.bonusFinalScore = 0;
     state.bonusMaxMultiplier = 1;
+    state.uiSoundFlip = false;
     state.roundSpeed = 0;
 
     app.innerHTML = `
@@ -413,11 +632,9 @@
   }
 
   function helpHtml() {
-    return `Tap the color of the next correct word.<br><br>
-      Easy and Medium pick three colors for the whole game. Hard changes the colors every round.<br><br>
-      A correct hit explodes and adds the word to the build area.<br><br>
-      A wrong hit resets your streak. After two wrong hits in one round, that set clears and a new one begins.<br><br>
-      If the correct word reaches the buttons, it abducts a human and the streak resets.`;
+    return `Tap a color button to shoot the alien of that color.<br><br>
+      Shoot the next word of the verse. Continue until you finish the verse.<br><br>
+      Then see how many alien you can shoot down in the bonus round.`;
   }
 
   function wireCommonNav() {
@@ -430,19 +647,30 @@
         muted = !muted;
         return muted;
       },
-      onHowToPlay: openHelpFromMenu,
+      onHowToPlay: () => {
+        playUiTapSound();
+        openHelpFromMenu();
+      },
       onModeSelect: () => {
+        playUiTapSound();
         setPaused(false, "");
         stopLoop();
         renderModeSelect();
       },
       onExit: () => {
+        playUiTapSound();
         stopLoop();
         window.VerseGameBridge.exitGame();
       },
       onOpen: () => setPaused(true, "menu"),
-      onClose: () => setPaused(false, ""),
-      onBackFromHelp: () => setPaused(true, "menu")
+      onClose: () => {
+        playUiTapSound();
+        setPaused(false, "");
+      },
+      onBackFromHelp: () => {
+        playUiTapSound();
+        setPaused(true, "menu");
+      }
     });
   }
 
@@ -593,6 +821,7 @@
       modePill.textContent = "☰";
       modePill.setAttribute("aria-label", "Game Menu");
       modePill.onclick = () => {
+        playUiTapSound();
         openGameMenu();
       };
     }
@@ -743,6 +972,7 @@
     state.effects = state.effects.filter(effect => effect.until > performance.now());
     state.scheduledActions = [];
     state.roundSpeed = 0;
+    playGameSound("bonusStart");
 
     state.buttonColors = {
       left: BUTTON_COLOR_ORDER.left,
@@ -860,6 +1090,8 @@
     const target = state.entities.find(item => item.visible && item.color.key === buttonColor.key);
     if (!target) return;
 
+    playGameSound("rocketLaunch");
+
     state.buttonsLocked = true;
     state.activeLane = buttonLane;
 
@@ -933,6 +1165,7 @@
     }
 
     const targetPoint = getEntityHitPoint(target);
+    playGameSound("correctHit");
     addEffect(makeCorrectHitEffect(targetPoint.x, target.y + 22, target.color.hex, 1));
 
     target.visible = false;
@@ -983,6 +1216,7 @@
     state.overlayMessage = state.wrongGuessesThisRound >= 2 ? "Too many wrong guesses!" : "Wrong color!";
     state.overlayUntil = performance.now() + 420;
     target.visible = false;
+    playGameSound("wrongHit");
     const targetPoint = getEntityHitPoint(target);
     addEffect(makePoofEffect(targetPoint.x, target.y + 28));
     renderHud();
@@ -1013,6 +1247,7 @@
 
     scheduleAction(CORRECT_HIT_IMPACT_DELAY_MS, () => {
       const targetPoint = getEntityHitPoint(target);
+      playGameSound("correctHit");
       addEffect(makeCorrectHitEffect(targetPoint.x, target.y + 22, target.color.hex, state.streak));
       showStreakMilestone(state.streak);
       target.visible = false;
@@ -1040,6 +1275,7 @@
 
     const x = state.fieldWidth / 2;
     const y = clamp(state.bottomZoneY / 2, 118, Math.max(118, state.bottomZoneY - 80));
+    playGameSound(`streak${streak}`, `streak${streak}`);
 
     if (config.burst) {
       addEffect(makeStreakMilestoneBurstEffect(x, y));
@@ -1127,6 +1363,7 @@
     state.entityRenderSignature = "";
 
     const targetPoint = getEntityHitPoint(target);
+    playGameSound("abduction");
     addEffect(makeAbductionEffect(targetPoint.x, state.bottomZoneY - 12, target.color, () => {
       spawnRound();
     }));
@@ -1157,6 +1394,8 @@
     state.rocket = null;
     state.trails = [];
     state.effects = state.effects.filter(effect => effect.until > performance.now());
+
+    playGameSound("bonusStart");
 
     renderHud();
     renderDynamic();
@@ -1229,6 +1468,7 @@
     }
 
     target.locked = true;
+    playGameSound("rocketLaunch");
 
     const rocketStartX = getLaneCenterX(buttonLane);
     const rocketStartY = state.controlsTopY - 16;
@@ -1387,9 +1627,17 @@
     target.visible = false;
     target.locked = false;
 
+    const previousMultiplier = getBonusMultiplier();
+
     state.bonusCleanStreak += 1;
     const multiplier = getBonusMultiplier();
     const points = multiplier;
+
+    playRandomBonusPopSound();
+
+    if (multiplier > previousMultiplier) {
+      playGameSound("bonusMultiplierUp");
+    }
 
     state.bonusMaxMultiplier = Math.max(state.bonusMaxMultiplier, multiplier);
     state.bonusScore += points;
@@ -1414,6 +1662,8 @@
   }
 
   function applyBonusPenalty(x, y) {
+    playGameSound("bonusPenalty");
+
     state.bonusScore -= 1;
     state.bonusCleanStreak = 0;
     addEffect(makeScorePopupEffect(x, y, "-1", "minus"));
@@ -1474,6 +1724,7 @@
     state.overlayUntil = 0;
     state.tutorialRenderSignature = "";
     state.bonusIntroRenderSignature = "";
+    playGameSound("bonusReveal");
     renderHud();
     renderDynamic();
   }
@@ -1518,6 +1769,8 @@
   async function continueFromBonusReveal() {
     if (!state.bonusRevealVisible) return;
 
+    playUiTapSound();
+
     state.bonusRevealVisible = false;
     state.bonusMode = false;
     state.buttonsLocked = true;
@@ -1545,9 +1798,18 @@
       gameMessage: "",
       theme: GAME_THEME,
       backLabel: "Back to Practice Games",
-      onPlayAgain: renderModeSelect,
-      onMoreGames: () => window.VerseGameBridge.exitGame(),
-      onChangeVerse: () => window.VerseGameBridge.returnToTitle()
+      onPlayAgain: () => {
+        playUiTapSound();
+        renderModeSelect();
+      },
+      onMoreGames: () => {
+        playUiTapSound();
+        window.VerseGameBridge.exitGame();
+      },
+      onChangeVerse: () => {
+        playUiTapSound();
+        window.VerseGameBridge.returnToTitle();
+      }
     });
   }
 
