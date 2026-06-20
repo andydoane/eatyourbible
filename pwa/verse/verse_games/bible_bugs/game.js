@@ -125,11 +125,11 @@
       tongue: 0.48,
       pop: 0.52,
       correct: 0.58,
-      incorrect: 0.62,
-      streak: 0.64,
+      incorrect: 0.28,
+      streak: 0.68,
       bonusStart: 0.70,
       bonusEnd: 0.72,
-      stinkBug: 0.64
+      stinkBug: 0.57
     }
   };
 
