@@ -446,6 +446,11 @@ body {
   -webkit-user-drag: none;
 }
 
+.bb-bug--stink .bb-bug-img {
+  filter:
+    drop-shadow(0 4px 0 rgba(0, 0, 0, 0.16)) drop-shadow(0 0 12px rgba(119, 214, 75, 0.72));
+}
+
 .bb-bug--bonus .bb-bug-btn {
   position: relative;
   z-index: 2;

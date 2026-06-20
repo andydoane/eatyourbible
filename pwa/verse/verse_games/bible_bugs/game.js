@@ -38,6 +38,8 @@
   ];
 
   const BONUS_GOOD_BUG_IMAGE_PATHS = BUG_IMAGE_PATHS.filter((_, index) => index !== 7);
+  const BONUS_STINK_BUG_IMAGE_PATH = BUG_IMAGE_PATHS[7];
+  const BONUS_STINK_CHANCE = 0.22;
 
   const BUG_EMOJIS = ["🪰", "🐞", "🐝", "🦟", "🪲", "🐛"];
   const LANES = [0.18, 0.50, 0.82];
@@ -157,7 +159,7 @@
       app,
       title: GAME_TITLE,
       icon: "🐸",
-      debugBadge: "BB 2.5",
+      debugBadge: "BB 2.6",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
@@ -1295,13 +1297,25 @@
 
       state.bonusBugId += 1;
 
-      const imgSrc = BONUS_GOOD_BUG_IMAGE_PATHS[state.bonusBugId % BONUS_GOOD_BUG_IMAGE_PATHS.length];
+      const activeStinkExists = state.bonusBugs.some((bug) => {
+        return bug && bug.kind === "stink" && bug.status === "bonus";
+      });
+
+      const shouldSpawnStink = !activeStinkExists
+        && state.bonusBugId > 4
+        && Math.random() < BONUS_STINK_CHANCE;
+
+      const kind = shouldSpawnStink ? "stink" : "good";
+      const imgSrc = shouldSpawnStink
+        ? BONUS_STINK_BUG_IMAGE_PATH
+        : BONUS_GOOD_BUG_IMAGE_PATHS[state.bonusBugId % BONUS_GOOD_BUG_IMAGE_PATHS.length];
+
       const spot = getBonusSpawnSpot(marginX, marginTop, marginBottom);
       const extraLife = Math.random() * BONUS_BUG_EXTRA_LIFE_MS;
 
       state.bonusBugs.push({
         id: `b${state.bonusBugId}`,
-        kind: "good",
+        kind,
         imgSrc,
         emoji: BUG_EMOJIS[state.bonusBugId % BUG_EMOJIS.length],
         xRatio: spot.xRatio,
@@ -1328,6 +1342,34 @@
 
     const now = performance.now();
     const scorePoint = getBugPoint(bug, now, { ignoreEat: true });
+
+    if (bug.kind === "stink") {
+      state.bonusEating = true;
+      bug.status = "poof";
+      bug.poofAt = now;
+
+      state.bonusScore = Math.max(0, state.bonusScore - 1);
+      state.bonusCorrectStreak = 0;
+      state.bonusMultiplier = 1;
+      state.fieldFlashUntil = now + 260;
+      state.frogChompUntil = now + 320;
+      state.reaction = {
+        type: "incorrect",
+        startedAt: now,
+        duration: 760,
+        until: now + 760
+      };
+
+      addBonusScorePop(scorePoint.x, scorePoint.y - 18, "-1", "negative");
+
+      scheduleAction(560, () => {
+        state.bonusBugs = state.bonusBugs.filter((item) => item.id !== bug.id);
+        state.bonusEating = false;
+        scheduleBonusSpawn(160 + Math.random() * 320);
+      });
+
+      return;
+    }
 
     state.bonusEating = true;
     bug.status = "eating";
@@ -1630,7 +1672,7 @@
     const motion = getBugMotionState(bug, now, isBonus);
     const isTutorial = !!bug.tutorial;
     const statusClass = bug.status === "poof" ? " is-poof" : bug.status === "eating" ? " is-eating" : "";
-    const bonusClass = isBonus ? " bb-bug--bonus" : "";
+    const bonusClass = isBonus ? ` bb-bug--bonus${bug.kind === "stink" ? " bb-bug--stink" : ""}` : "";
     const popClass = now - bug.bornAt < 260 ? " is-pop" : "";
     const word = isBonus || isTutorial ? "" : `<div class="bb-bug-word">${escapeHtml(bug.text)}</div>`;
 
