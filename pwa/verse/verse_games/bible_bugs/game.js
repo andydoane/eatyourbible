@@ -40,6 +40,12 @@
   const BONUS_GOOD_BUG_IMAGE_PATHS = BUG_IMAGE_PATHS.filter((_, index) => index !== 7);
   const BONUS_STINK_BUG_IMAGE_PATH = BUG_IMAGE_PATHS[7];
   const BONUS_STINK_CHANCE = 0.22;
+  const BONUS_STINK_IDLE_INTERVAL_MS = 150;
+  const BONUS_STINK_SWATCHES = [
+    { fill: "#6d7638", edge: "#5d572c", glow: "rgba(109, 118, 56, 0.40)" },
+    { fill: "#716636", edge: "#5d572c", glow: "rgba(113, 102, 54, 0.40)" },
+    { fill: "#5d572c", edge: "#4b4723", glow: "rgba(93, 87, 44, 0.36)" }
+  ];
 
   const BUG_EMOJIS = ["🪰", "🐞", "🐝", "🦟", "🪲", "🐛"];
   const LANES = [0.18, 0.50, 0.82];
@@ -181,7 +187,7 @@
       app,
       title: GAME_TITLE,
       icon: "🐸",
-      debugBadge: "BB 2.7",
+      debugBadge: "BB 2.8",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
@@ -525,6 +531,7 @@
       if (Number.isFinite(bug.poofAt) && bug.poofAt > 0) bug.poofAt += delta;
       if (Number.isFinite(bug.eatStartedAt)) bug.eatStartedAt += delta;
       if (Number.isFinite(bug.expiresAt)) bug.expiresAt += delta;
+      if (Number.isFinite(bug.nextStinkAt) && bug.nextStinkAt > 0) bug.nextStinkAt += delta;
     }
 
     for (const bug of state.bugs) {
@@ -1171,33 +1178,77 @@
     return 1;
   }
 
-  function addStinkCloud(x, y, now = performance.now()) {
-    const count = 11;
-    const baseSize = Math.max(10, Math.min(state.fieldWidth, state.fieldHeight) * 0.035);
+  function getRandomStinkSwatch() {
+    return BONUS_STINK_SWATCHES[Math.floor(Math.random() * BONUS_STINK_SWATCHES.length)] || BONUS_STINK_SWATCHES[0];
+  }
+
+  function maybeEmitAmbientStink(bug, now = performance.now()) {
+    if (!bug || bug.kind !== "stink" || bug.status !== "bonus") return;
+    if (now < (Number(bug.nextStinkAt) || 0)) return;
+
+    const point = getBugPoint(bug, now, { ignoreEat: true });
+
+    addStinkCloud(point.x, point.y - 4, now, {
+      count: 2 + (Math.random() < 0.35 ? 1 : 0),
+      minSize: 4,
+      maxSize: 8,
+      lifeMin: 480,
+      lifeMax: 760,
+      spreadX: 12,
+      spreadY: 8,
+      speedMin: 0.05,
+      speedMax: 0.10,
+      verticalLift: 16,
+      kind: "ambient"
+    });
+
+    bug.nextStinkAt = now + BONUS_STINK_IDLE_INTERVAL_MS + Math.random() * 110;
+  }
+
+  function addStinkCloud(x, y, now = performance.now(), options = {}) {
+    const count = Math.max(1, Number(options.count) || 11);
+    const minField = Math.min(state.fieldWidth || 320, state.fieldHeight || 420);
+    const minSize = Number(options.minSize) || Math.max(8, minField * 0.030);
+    const maxSize = Number(options.maxSize) || Math.max(14, minField * 0.055);
+    const lifeMin = Number(options.lifeMin) || 720;
+    const lifeMax = Number(options.lifeMax) || 1080;
+    const spreadX = Number(options.spreadX) || 22;
+    const spreadY = Number(options.spreadY) || 18;
+    const speedMin = Number(options.speedMin) || 0.10;
+    const speedMax = Number(options.speedMax) || 0.18;
+    const verticalLift = Number(options.verticalLift) || 22;
+    const kind = options.kind || "burst";
 
     for (let index = 0; index < count; index += 1) {
       const angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 1.5;
-      const speed = Math.min(state.fieldWidth, state.fieldHeight) * (0.10 + Math.random() * 0.18);
-      const size = baseSize * (0.72 + Math.random() * 0.82);
-      const life = 720 + Math.random() * 360;
+      const speed = minField * (speedMin + Math.random() * (speedMax - speedMin));
+      const size = minSize + Math.random() * Math.max(1, maxSize - minSize);
+      const life = lifeMin + Math.random() * Math.max(1, lifeMax - lifeMin);
+      const swatch = getRandomStinkSwatch();
 
       state.stinkParticles.push({
         id: `stink-${now}-${index}-${Math.random()}`,
-        x: x + (Math.random() - 0.5) * 22,
-        y: y + (Math.random() - 0.5) * 18,
+        x: x + (Math.random() - 0.5) * spreadX,
+        y: y + (Math.random() - 0.5) * spreadY,
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed,
         size,
         bornAt: now,
         life,
-        wobble: Math.random() * Math.PI * 2
+        wobble: Math.random() * Math.PI * 2,
+        lift: verticalLift,
+        fill: swatch.fill,
+        edge: swatch.edge,
+        glow: swatch.glow,
+        kind
       });
     }
 
-    if (state.stinkParticles.length > 80) {
-      state.stinkParticles.splice(0, state.stinkParticles.length - 80);
+    if (state.stinkParticles.length > 100) {
+      state.stinkParticles.splice(0, state.stinkParticles.length - 100);
     }
   }
+
 
 
   function addBonusScorePop(x, y, label = "+1", kind = "positive") {
@@ -1385,7 +1436,8 @@
         poofAt: 0,
         pullPoofed: false,
         motionPhase: Math.random() * Math.PI * 2,
-        jitterSeed: Math.random() * Math.PI * 2
+        jitterSeed: Math.random() * Math.PI * 2,
+        nextStinkAt: kind === "stink" ? now + 90 + Math.random() * 140 : 0
       });
     }
   }
@@ -1526,6 +1578,8 @@
           bug.vy *= -1;
           bug.yRatio = shell.clamp(bug.yRatio, 0.14, 0.66);
         }
+
+        maybeEmitAmbientStink(bug, now);
 
         if (now >= bug.expiresAt) {
           bug.status = "poof";
@@ -1985,18 +2039,26 @@
 
     return state.stinkParticles.map((particle) => {
       const age = Math.max(0, now - particle.bornAt);
-      const t = age / 1000;
       const lifeT = shell.clamp(age / particle.life, 0, 1);
       const eased = easeOutCubic(lifeT);
-      const wobble = Math.sin(particle.wobble + age * 0.012) * 10;
+      const wobble = Math.sin(particle.wobble + age * 0.012) * (particle.kind === "ambient" ? 5 : 10);
+      const t = age / 1000;
       const x = particle.x + particle.vx * t + wobble;
-      const y = particle.y + particle.vy * t - eased * 22;
-      const scale = 0.45 + eased * 1.35;
-      const opacity = lifeT < 0.68 ? 0.88 : Math.max(0, 0.88 * (1 - ((lifeT - 0.68) / 0.32)));
+      const y = particle.y + particle.vy * t - eased * (particle.lift || 22);
+      const scale = particle.kind === "ambient"
+        ? 0.65 + eased * 0.75
+        : 0.45 + eased * 1.25;
+      const opacityBase = particle.kind === "ambient" ? 0.68 : 0.88;
+      const opacity = lifeT < 0.68
+        ? opacityBase
+        : Math.max(0, opacityBase * (1 - ((lifeT - 0.68) / 0.32)));
 
-      return `<span class="bb-stink-dot" style="left:${x.toFixed(1)}px; top:${y.toFixed(1)}px; width:${particle.size.toFixed(1)}px; height:${particle.size.toFixed(1)}px; opacity:${opacity.toFixed(3)}; transform:translate(-50%,-50%) scale(${scale.toFixed(3)});"></span>`;
+      const kindClass = particle.kind === "ambient" ? " is-ambient" : "";
+
+      return `<span class="bb-stink-dot${kindClass}" style="left:${x.toFixed(1)}px; top:${y.toFixed(1)}px; width:${particle.size.toFixed(1)}px; height:${particle.size.toFixed(1)}px; opacity:${opacity.toFixed(3)}; transform:translate(-50%,-50%) scale(${scale.toFixed(3)}); --bb-stink-fill:${particle.fill}; --bb-stink-edge:${particle.edge}; --bb-stink-glow:${particle.glow};"></span>`;
     }).join("");
   }
+
 
 
   function renderSpitParticles(now) {

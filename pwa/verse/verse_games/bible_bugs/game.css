@@ -693,13 +693,23 @@ body {
   display: block;
   border-radius: 999px;
   background:
-    radial-gradient(circle at 35% 30%, rgba(235, 255, 198, 0.92), rgba(139, 224, 78, 0.72) 48%, rgba(62, 157, 49, 0.30) 100%);
+    radial-gradient(circle at 35% 30%,
+      rgba(255, 255, 255, 0.34) 0%,
+      var(--bb-stink-fill, #6d7638) 58%,
+      var(--bb-stink-edge, #5d572c) 100%);
   box-shadow:
-    0 0 0 2px rgba(224, 255, 168, 0.28),
-    0 0 14px rgba(119, 214, 75, 0.56),
-    0 3px 0 rgba(0, 0, 0, 0.10);
+    0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 0 12px var(--bb-stink-glow, rgba(109, 118, 56, 0.40)),
+    0 2px 0 rgba(0, 0, 0, 0.10);
   will-change: transform, opacity;
   pointer-events: none;
+}
+
+.bb-stink-dot.is-ambient {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 0 8px var(--bb-stink-glow, rgba(109, 118, 56, 0.32)),
+    0 1px 0 rgba(0, 0, 0, 0.08);
 }
 
 .bb-poof-spark {
