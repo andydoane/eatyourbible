@@ -48,6 +48,9 @@
     { fill: "#5d572c", edge: "#4b4723", glow: "rgba(93, 87, 44, 0.36)" }
   ];
 
+  // Change this back to "fancy" if we want the old gradient/shadow post-tap burst again.
+  const BONUS_STINK_BURST_STYLE = "simple";
+
   const BUG_EMOJIS = ["🪰", "🐞", "🐝", "🦟", "🪲", "🐛"];
   const LANES = [0.18, 0.50, 0.82];
   const BONUS_SECONDS = 20;
@@ -193,7 +196,7 @@
       app,
       title: GAME_TITLE,
       icon: "🐸",
-      debugBadge: "BB 3.7",
+      debugBadge: "BB 3.8",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
@@ -1245,6 +1248,10 @@
       const size = minSize + Math.random() * Math.max(1, maxSize - minSize);
       const life = lifeMin + Math.random() * Math.max(1, lifeMax - lifeMin);
       const swatch = getRandomStinkSwatch();
+      const styleType = kind === "burst" ? BONUS_STINK_BURST_STYLE : "fancy";
+      const opacityFactor = styleType === "simple"
+        ? 0.46 + Math.random() * 0.34
+        : 1;
 
       state.stinkParticles.push({
         id: `stink-${now}-${index}-${Math.random()}`,
@@ -1260,6 +1267,8 @@
         fill: swatch.fill,
         edge: swatch.edge,
         glow: swatch.glow,
+        opacityFactor,
+        styleType,
         kind
       });
     }
@@ -2137,13 +2146,16 @@
         ? 0.65 + eased * 0.75
         : 0.45 + eased * 1.25;
       const opacityBase = particle.kind === "ambient" ? 0.68 : 0.88;
-      const opacity = lifeT < 0.68
+      const opacityRaw = lifeT < 0.68
         ? opacityBase
         : Math.max(0, opacityBase * (1 - ((lifeT - 0.68) / 0.32)));
+      const opacityFactor = Number.isFinite(particle.opacityFactor) ? particle.opacityFactor : 1;
+      const opacity = Math.max(0, Math.min(1, opacityRaw * opacityFactor));
 
       const kindClass = particle.kind === "ambient" ? " is-ambient" : "";
+      const styleClass = particle.styleType === "simple" ? " is-simple" : "";
 
-      return `<span class="bb-stink-dot${kindClass}" style="left:${x.toFixed(1)}px; top:${y.toFixed(1)}px; width:${particle.size.toFixed(1)}px; height:${particle.size.toFixed(1)}px; opacity:${opacity.toFixed(3)}; transform:translate(-50%,-50%) scale(${scale.toFixed(3)}); --bb-stink-fill:${particle.fill}; --bb-stink-edge:${particle.edge}; --bb-stink-glow:${particle.glow};"></span>`;
+      return `<span class="bb-stink-dot${kindClass}${styleClass}" style="left:${x.toFixed(1)}px; top:${y.toFixed(1)}px; width:${particle.size.toFixed(1)}px; height:${particle.size.toFixed(1)}px; opacity:${opacity.toFixed(3)}; transform:translate(-50%,-50%) scale(${scale.toFixed(3)}); --bb-stink-fill:${particle.fill}; --bb-stink-edge:${particle.edge}; --bb-stink-glow:${particle.glow};"></span>`;
     }).join("");
   }
 

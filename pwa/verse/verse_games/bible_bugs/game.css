@@ -811,6 +811,11 @@ body {
     0 1px 0 rgba(0, 0, 0, 0.08);
 }
 
+.bb-stink-dot.is-simple {
+  background: var(--bb-stink-fill, #6d7638);
+  box-shadow: none;
+}
+
 .bb-poof-spark {
   position: absolute;
   display: block;
