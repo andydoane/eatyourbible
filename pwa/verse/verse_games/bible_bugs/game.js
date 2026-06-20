@@ -51,6 +51,8 @@
   };
 
   const BONUS_BUG_LIFE_MS = 1850;
+  const BONUS_BUG_EXTRA_LIFE_MS = 950;
+  const BONUS_INITIAL_STAGGER_MS = [0, 360, 780];
   const BONUS_EAT_MS = 360;
   const MAIN_EAT_MS = 420;
   const TUTORIAL_EAT_MS = 420;
@@ -151,7 +153,7 @@
       app,
       title: GAME_TITLE,
       icon: "🐸",
-      debugBadge: "BB 2.1",
+      debugBadge: "BB 2.2",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
@@ -1186,8 +1188,21 @@
     state.bugsEaten = 0;
 
     updateBuildText();
-    spawnBonusBug();
+
+    for (const delay of BONUS_INITIAL_STAGGER_MS) {
+      scheduleBonusSpawn(delay);
+    }
   }
+
+  function scheduleBonusSpawn(delayMs = 0) {
+    scheduleAction(delayMs, () => {
+      if (!state.bonusMode || state.done || state.paused) return;
+      if (performance.now() >= state.bonusEndsAt) return;
+
+      spawnBonusBug(1);
+    });
+  }
+
 
   function getBonusSpawnSpot(marginX, marginTop, marginBottom) {
     const fieldWidth = state.fieldWidth || 320;
@@ -1218,19 +1233,24 @@
     return fallback || { xRatio: 0.5, yRatio: 0.35 };
   }
 
-  function spawnBonusBug() {
+  function spawnBonusBug(count = 1) {
     if (!state.bonusMode || state.done) return;
 
     const now = performance.now();
     const marginX = 0.16;
     const marginTop = 0.14;
     const marginBottom = 0.34;
+    const spawnCount = Math.max(1, Number(count) || 1);
 
-    while (state.bonusBugs.length < BONUS_MAX_BUGS) {
+    for (let index = 0; index < spawnCount; index += 1) {
+      if (state.bonusBugs.length >= BONUS_MAX_BUGS) return;
+      if (now >= state.bonusEndsAt) return;
+
       state.bonusBugId += 1;
 
       const imgSrc = BONUS_GOOD_BUG_IMAGE_PATHS[state.bonusBugId % BONUS_GOOD_BUG_IMAGE_PATHS.length];
       const spot = getBonusSpawnSpot(marginX, marginTop, marginBottom);
+      const extraLife = Math.random() * BONUS_BUG_EXTRA_LIFE_MS;
 
       state.bonusBugs.push({
         id: `b${state.bonusBugId}`,
@@ -1243,7 +1263,7 @@
         vy: (Math.random() < 0.5 ? -1 : 1) * (0.040 + Math.random() * 0.050),
         baseRotateDeg: -24 + Math.random() * 48,
         bornAt: now,
-        expiresAt: now + BONUS_BUG_LIFE_MS,
+        expiresAt: now + BONUS_BUG_LIFE_MS + extraLife,
         status: "bonus",
         poofAt: 0,
         pullPoofed: false,
@@ -1271,7 +1291,7 @@
       state.tongue = null;
       state.bonusBugs = state.bonusBugs.filter((item) => item.id !== bug.id);
       state.bonusEating = false;
-      spawnBonusBug();
+      scheduleBonusSpawn(120 + Math.random() * 260);
     });
   }
 
@@ -1355,8 +1375,8 @@
       return !(bug.status === "poof" && now - bug.poofAt > 560);
     });
 
-    if (state.bonusMode && now < state.bonusEndsAt && !state.bonusEating) {
-      spawnBonusBug();
+    if (state.bonusMode && now < state.bonusEndsAt && !state.bonusEating && state.bonusBugs.length < BONUS_MAX_BUGS) {
+      scheduleBonusSpawn(140 + Math.random() * 360);
     }
   }
 
