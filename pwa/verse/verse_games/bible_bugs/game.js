@@ -48,8 +48,9 @@
     { fill: "#5d572c", edge: "#4b4723", glow: "rgba(93, 87, 44, 0.36)" }
   ];
 
-  // Change this back to "fancy" if we want the old gradient/shadow post-tap burst again.
+  // Change these back to "fancy" if we want the old gradient/shadow stink bubbles again.
   const BONUS_STINK_BURST_STYLE = "simple";
+  const BONUS_STINK_AMBIENT_STYLE = "simple";
 
   const BUG_EMOJIS = ["🪰", "🐞", "🐝", "🦟", "🪲", "🐛"];
   const LANES = [0.18, 0.50, 0.82];
@@ -196,7 +197,7 @@
       app,
       title: GAME_TITLE,
       icon: "🐸",
-      debugBadge: "BB 3.8",
+      debugBadge: "BB 3.9",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
@@ -1248,7 +1249,7 @@
       const size = minSize + Math.random() * Math.max(1, maxSize - minSize);
       const life = lifeMin + Math.random() * Math.max(1, lifeMax - lifeMin);
       const swatch = getRandomStinkSwatch();
-      const styleType = kind === "burst" ? BONUS_STINK_BURST_STYLE : "fancy";
+      const styleType = kind === "burst" ? BONUS_STINK_BURST_STYLE : BONUS_STINK_AMBIENT_STYLE;
       const opacityFactor = styleType === "simple"
         ? 0.46 + Math.random() * 0.34
         : 1;
