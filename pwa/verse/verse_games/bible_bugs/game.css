@@ -217,7 +217,7 @@ body {
 }
 
 .bb-overlay-msg {
-  z-index: 60;
+  z-index: 80;
   pointer-events: none;
 }
 

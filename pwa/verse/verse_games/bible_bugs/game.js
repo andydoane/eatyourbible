@@ -191,7 +191,7 @@
       app,
       title: GAME_TITLE,
       icon: "🐸",
-      debugBadge: "BB 3.0",
+      debugBadge: "BB 3.1",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
@@ -1790,7 +1790,7 @@
     frogTongueSlot.innerHTML = renderTongue(now);
     effects.innerHTML = renderStinkParticles(now) + renderSpitParticles(now) + renderPoofParticles(now) + renderTongueSparkles(now) + renderBonusScorePops(now);
     reactionLayer.innerHTML = renderReaction(now);
-    bonusScoreRevealLayer.innerHTML = renderBonusScoreReveal();
+    bonusScoreRevealLayer.innerHTML = "";
 
     renderOverlay(now, overlay);
 
@@ -1804,6 +1804,17 @@
 
   function renderOverlay(now, overlay) {
     if (!overlay) return;
+
+    if (state.bonusScoreRevealActive) {
+      const key = `bonus-score-reveal|${state.bonusScore}|${state.bugsEaten}|${state.bonusMultiplier}`;
+
+      if (state.overlayRenderKey !== key) {
+        state.overlayRenderKey = key;
+        overlay.innerHTML = renderBonusScoreReveal();
+      }
+
+      return;
+    }
 
     const isVisible = now < state.overlayUntil && !!state.overlayMessage;
     const key = isVisible
