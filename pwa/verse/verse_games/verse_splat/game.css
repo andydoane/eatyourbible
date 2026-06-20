@@ -351,6 +351,10 @@ body{overflow:hidden}
   animation:vspSplatSvgPop .59s cubic-bezier(.18,.9,.16,1) forwards, vspSplatSvgFade .32s linear .95s forwards;
 }
 
+.vsp-splat-svg.is-quick {
+  animation: vspSplatSvgPop .28s cubic-bezier(.18, .9, .16, 1) forwards, vspSplatSvgFade .18s linear .24s forwards;
+}
+
 .vsp-splat-svg.is-wrong-face{
   width:var(--wrong-splat-size);
 }

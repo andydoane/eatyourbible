@@ -481,7 +481,7 @@ function renderIntro(){
   window.VerseGameShell.renderTitleScreen({
     app,
     title: GAME_TITLE,
-    debugBadge: "VS 1.7",
+    debugBadge: "VS 1.8",
     icon: "🫟",
     helpHtml: nonGameHelpHtml(),
     helpOverlayId: HELP_OVERLAY_ID,
@@ -1259,11 +1259,11 @@ function viewportCenterPx(layerSelector="#vspFrontEffectLayer"){
     const finalScale = rand(0.92, 1.08).toFixed(3);
     const popScale = (parseFloat(finalScale) * 1.12).toFixed(3);
     const markup = `
-      <div class="vsp-splat-svg" style="color:${fill};--splat-rot:${rotation}deg;--splat-scale-final:${finalScale};--splat-scale-pop:${popScale};">
+      <div class="vsp-splat-svg is-quick" style="color:${fill};--splat-rot:${rotation}deg;--splat-scale-final:${finalScale};--splat-scale-pop:${popScale};">
         ${SPLAT_SVG}
       </div>`;
     const node = effectNodeAt(center.x, center.y, markup, layerSelector);
-    if (node) setTimeout(() => node.remove(), 1400);
+    if (node) setTimeout(() => node.remove(), 620);
   }
 
   function spawnPoofEffect(blob){
