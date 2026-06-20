@@ -604,6 +604,13 @@ body {
   animation: bbGoPop 1500ms ease both;
 }
 
+.bb-overlay-bubble.is-tutorial {
+  font-size: clamp(30px, 8.6vw, 58px);
+  line-height: 0.95;
+  padding: clamp(12px, 3.2vw, 18px) clamp(18px, 5.4vw, 34px);
+  white-space: normal;
+}
+
 .bb-reaction {
   position: absolute;
   left: 50%;

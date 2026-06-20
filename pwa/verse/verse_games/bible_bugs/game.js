@@ -135,7 +135,7 @@
       app,
       title: GAME_TITLE,
       icon: "🐸",
-      debugBadge: "BB 1.4",
+      debugBadge: "BB 1.5",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
@@ -734,7 +734,7 @@
       jitterSeed: Math.random() * Math.PI * 2
     };
 
-    showOverlay("Tap the bug to eat it!", 60000);
+    showOverlay("TAP THE BUG\nTO EAT IT!", 60000, "is-tutorial");
   }
 
   function handleTutorialTap(id) {
@@ -1429,7 +1429,7 @@
 
     const overlayClass = state.overlayClass ? ` ${escapeHtml(state.overlayClass)}` : "";
 
-    overlay.innerHTML = `<div class="bb-overlay-bubble${overlayClass}">${escapeHtml(state.overlayMessage)}</div>`;
+    overlay.innerHTML = `<div class="bb-overlay-bubble${overlayClass}">${escapeHtml(state.overlayMessage).replace(/\n/g, "<br>")}</div>`;
   }
 
 
