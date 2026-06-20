@@ -96,6 +96,7 @@
     overlayMessage: "",
     overlayUntil: 0,
     overlayClass: "",
+    overlayRenderKey: "",
     tutorialActive: false,
     tutorialStep: "",
     tutorialBug: null,
@@ -134,7 +135,7 @@
       app,
       title: GAME_TITLE,
       icon: "🐸",
-      debugBadge: "BB 1.3",
+      debugBadge: "BB 1.4",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
@@ -178,6 +179,7 @@
     state.overlayMessage = "";
     state.overlayUntil = 0;
     state.overlayClass = "";
+    state.overlayRenderKey = "";
     state.tutorialActive = false;
     state.tutorialStep = "";
     state.tutorialBug = null;
@@ -747,6 +749,7 @@
     state.overlayMessage = "";
     state.overlayUntil = 0;
     state.overlayClass = "";
+    state.overlayRenderKey = "";
     state.waveStatus = "tutorial_eating";
     state.frogChompUntil = now + 280;
 
@@ -781,6 +784,7 @@
     state.overlayMessage = "";
     state.overlayUntil = 0;
     state.overlayClass = "";
+    state.overlayRenderKey = "";
 
     if (!state.done && !state.bonusMode && !state.bonusIntroActive) {
       spawnWave();
@@ -1008,6 +1012,7 @@
     state.overlayMessage = message;
     state.overlayUntil = performance.now() + ms;
     state.overlayClass = extraClass;
+    state.overlayRenderKey = "";
   }
 
   function updateChosenBugSmokePoofs(now) {
@@ -1396,11 +1401,7 @@
     effects.innerHTML = renderSpitParticles(now) + renderPoofParticles(now) + renderTongueSparkles(now);
     reactionLayer.innerHTML = renderReaction(now);
 
-    const overlayClass = state.overlayClass ? ` ${escapeHtml(state.overlayClass)}` : "";
-
-    overlay.innerHTML = now < state.overlayUntil && state.overlayMessage
-      ? `<div class="bb-overlay-bubble${overlayClass}">${escapeHtml(state.overlayMessage)}</div>`
-      : "";
+    renderOverlay(now, overlay);
 
     const showBonusIntro = state.bonusIntroActive && now < state.bonusIntroUntil;
     bonusIntro.classList.toggle("is-open", showBonusIntro);
@@ -1408,6 +1409,29 @@
 
     statusPill.textContent = getStatusText(now);
   }
+
+  function renderOverlay(now, overlay) {
+    if (!overlay) return;
+
+    const isVisible = now < state.overlayUntil && !!state.overlayMessage;
+    const key = isVisible
+      ? `${state.overlayMessage}|${state.overlayClass}|visible`
+      : "hidden";
+
+    if (state.overlayRenderKey === key) return;
+
+    state.overlayRenderKey = key;
+
+    if (!isVisible) {
+      overlay.innerHTML = "";
+      return;
+    }
+
+    const overlayClass = state.overlayClass ? ` ${escapeHtml(state.overlayClass)}` : "";
+
+    overlay.innerHTML = `<div class="bb-overlay-bubble${overlayClass}">${escapeHtml(state.overlayMessage)}</div>`;
+  }
+
 
   function renderBugs() {
     const items = [];
