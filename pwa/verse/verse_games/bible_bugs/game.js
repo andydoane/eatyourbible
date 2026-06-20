@@ -141,6 +141,8 @@
     bonusBugId: 0,
     bonusEating: false,
     bonusScore: 0,
+    bonusCorrectStreak: 0,
+    bonusMultiplier: 1,
     bonusScorePops: [],
     bugsEaten: 0,
     done: false
@@ -155,7 +157,7 @@
       app,
       title: GAME_TITLE,
       icon: "🐸",
-      debugBadge: "BB 2.3",
+      debugBadge: "BB 2.4",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
@@ -226,6 +228,8 @@
     state.bonusBugId = 0;
     state.bonusEating = false;
     state.bonusScore = 0;
+    state.bonusCorrectStreak = 0;
+    state.bonusMultiplier = 1;
     state.bonusScorePops = [];
     state.bugsEaten = 0;
     state.done = false;
@@ -1129,6 +1133,16 @@
     }
   }
 
+  function getBonusMultiplierForStreak(streak) {
+    const value = Number(streak) || 0;
+
+    if (value >= 10) return 3;
+    if (value >= 5) return 2;
+
+    return 1;
+  }
+
+
   function addBonusScorePop(x, y, label = "+1", kind = "positive") {
     const now = performance.now();
 
@@ -1215,6 +1229,8 @@
     state.bonusBugs = [];
     state.bonusEating = false;
     state.bonusScore = 0;
+    state.bonusCorrectStreak = 0;
+    state.bonusMultiplier = 1;
     state.bonusScorePops = [];
     state.bugsEaten = 0;
 
@@ -1316,11 +1332,16 @@
     state.bonusEating = true;
     bug.status = "eating";
     state.bugsEaten += 1;
-    state.bonusScore += 1;
 
-    addBonusScorePop(scorePoint.x, scorePoint.y - 18, "+1", "positive");
+    state.bonusCorrectStreak += 1;
+    state.bonusMultiplier = getBonusMultiplierForStreak(state.bonusCorrectStreak);
 
-    fireTongueToBug(bug, now, BONUS_EAT_MS, true);
+    const awardedPoints = state.bonusMultiplier;
+    state.bonusScore += awardedPoints;
+
+    addBonusScorePop(scorePoint.x, scorePoint.y - 18, `+${awardedPoints}`, "positive");
+
+    fireTongueToBug(bug, now, BONUS_EAT_MS, true, state.bonusCorrectStreak);
 
     scheduleAction(BONUS_EAT_MS, () => {
       state.tongue = null;

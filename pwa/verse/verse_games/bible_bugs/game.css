@@ -612,25 +612,29 @@ body {
 .bb-bonus-score-pop {
   position: absolute;
   display: block;
-  min-width: clamp(44px, 10vw, 62px);
-  padding: clamp(4px, 1.2vw, 7px) clamp(8px, 2.3vw, 12px);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.96);
-  color: #5f4ab1;
+  padding: 0;
+  background: transparent;
+  color: #ffe15e;
   font-family: "Titan One", "Baloo 2", system-ui, sans-serif;
-  font-size: clamp(24px, 6vw, 42px);
+  font-size: clamp(30px, 7.4vw, 54px);
   font-weight: 400;
   line-height: 1;
   text-align: center;
-  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.16);
-  text-shadow: none;
+  text-shadow:
+    0 5px 0 rgba(62, 44, 119, 0.52),
+    0 0 12px rgba(255, 255, 255, 0.38),
+    0 0 20px rgba(255, 225, 94, 0.42);
+  filter: drop-shadow(0 5px 0 rgba(0, 0, 0, 0.16));
   pointer-events: none;
   will-change: transform, opacity;
 }
 
 .bb-bonus-score-pop.is-negative {
-  color: #ffffff;
-  background: rgba(255, 90, 81, 0.96);
+  color: #ff5a51;
+  text-shadow:
+    0 5px 0 rgba(62, 44, 119, 0.52),
+    0 0 12px rgba(255, 255, 255, 0.30);
+  filter: drop-shadow(0 5px 0 rgba(0, 0, 0, 0.16));
 }
 
 .bb-tongue-sparkle {
