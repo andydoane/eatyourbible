@@ -153,6 +153,7 @@
     bonusBugs: [],
     bonusBugId: 0,
     bonusEating: false,
+    bonusSpawnPendingCount: 0,
     bonusScore: 0,
     bonusCorrectStreak: 0,
     bonusMultiplier: 1,
@@ -192,7 +193,7 @@
       app,
       title: GAME_TITLE,
       icon: "🐸",
-      debugBadge: "BB 3.6",
+      debugBadge: "BB 3.7",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
@@ -265,6 +266,7 @@
     state.bonusBugs = [];
     state.bonusBugId = 0;
     state.bonusEating = false;
+    state.bonusSpawnPendingCount = 0;
     state.bonusScore = 0;
     state.bonusCorrectStreak = 0;
     state.bonusMultiplier = 1;
@@ -350,9 +352,9 @@
   }
 
   function helpHtml() {
-    return `Tap the bug with the next word!<br><br>
-      The frog will gobble it up.<br><br>
-      Finish the verse, then eat as many bonus bugs as you can!`;
+    return `Eat bugs to add words to the verse.<br><br>
+      Tap the bug with the correct words unti you finish the verse.<br><br>
+      During the bonus round, eat as many bugs as you can. Watch out for stink bugs!`;
   }
 
   function wireCommonNav() {
@@ -1354,6 +1356,7 @@
     state.bonusEndsAt = performance.now() + BONUS_SECONDS * 1000;
     state.bonusBugs = [];
     state.bonusEating = false;
+    state.bonusSpawnPendingCount = 0;
     state.bonusScore = 0;
     state.bonusCorrectStreak = 0;
     state.bonusMultiplier = 1;
@@ -1368,10 +1371,24 @@
     }
   }
 
+  function getBonusSpawnSlotCount() {
+    return state.bonusBugs.length + Math.max(0, Number(state.bonusSpawnPendingCount) || 0);
+  }
+
   function scheduleBonusSpawn(delayMs = 0) {
+    if (!state.bonusMode || state.done) return;
+    if (performance.now() >= state.bonusEndsAt) return;
+    if (getBonusSpawnSlotCount() >= BONUS_MAX_BUGS) return;
+
+    state.bonusSpawnPendingCount += 1;
+
     scheduleAction(delayMs, () => {
+      state.bonusSpawnPendingCount = Math.max(0, state.bonusSpawnPendingCount - 1);
+
       if (!state.bonusMode || state.done || state.paused) return;
       if (performance.now() >= state.bonusEndsAt) return;
+      if (state.bonusEating) return;
+      if (state.bonusBugs.length >= BONUS_MAX_BUGS) return;
 
       spawnBonusBug(1);
     });
@@ -1604,7 +1621,7 @@
       return !(bug.status === "poof" && now - bug.poofAt > 560);
     });
 
-    if (state.bonusMode && now < state.bonusEndsAt && !state.bonusEating && state.bonusBugs.length < BONUS_MAX_BUGS) {
+    if (state.bonusMode && now < state.bonusEndsAt && !state.bonusEating && getBonusSpawnSlotCount() < BONUS_MAX_BUGS) {
       scheduleBonusSpawn(140 + Math.random() * 360);
     }
   }
@@ -1646,6 +1663,7 @@
     state.bonusMode = false;
     state.bonusIntroActive = false;
     state.bonusBugs = [];
+    state.bonusSpawnPendingCount = 0;
     state.tongue = null;
     state.spitParticles = [];
     state.poofParticles = [];
