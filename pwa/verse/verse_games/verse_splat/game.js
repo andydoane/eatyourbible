@@ -21,17 +21,17 @@ const HELP_OVERLAY_ID = "vspHelpOverlay";
   const MAX_STATIC_PAINT_SPLATS = 96;
 
   const STATIC_PAINT_BLOB_SHAPES = [
-    "./verse_splat_images/verse_spalt_paint_blob_1.svg",
-    "./verse_splat_images/verse_spalt_paint_blob_2.svg",
-    "./verse_splat_images/verse_spalt_paint_blob_3.svg",
-    "./verse_splat_images/verse_spalt_paint_blob_4.svg",
-    "./verse_splat_images/verse_spalt_paint_blob_5.svg",
-    "./verse_splat_images/verse_spalt_paint_blob_6.svg",
-    "./verse_splat_images/verse_spalt_paint_blob_7.svg",
-    "./verse_splat_images/verse_spalt_paint_blob_8.svg",
-    "./verse_splat_images/verse_spalt_paint_blob_9.svg",
-    "./verse_splat_images/verse_spalt_paint_blob_10.svg",
-    "./verse_splat_images/verse_spalt_paint_blob_11.svg"
+    "./verse_splat_images/verse_splat_paint_blob_1.svg",
+    "./verse_splat_images/verse_splat_paint_blob_2.svg",
+    "./verse_splat_images/verse_splat_paint_blob_3.svg",
+    "./verse_splat_images/verse_splat_paint_blob_4.svg",
+    "./verse_splat_images/verse_splat_paint_blob_5.svg",
+    "./verse_splat_images/verse_splat_paint_blob_6.svg",
+    "./verse_splat_images/verse_splat_paint_blob_7.svg",
+    "./verse_splat_images/verse_splat_paint_blob_8.svg",
+    "./verse_splat_images/verse_splat_paint_blob_9.svg",
+    "./verse_splat_images/verse_splat_paint_blob_10.svg",
+    "./verse_splat_images/verse_splat_paint_blob_11.svg"
   ];
 
   let muted = false;
