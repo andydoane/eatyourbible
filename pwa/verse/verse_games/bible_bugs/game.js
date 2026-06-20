@@ -151,7 +151,7 @@
       app,
       title: GAME_TITLE,
       icon: "🐸",
-      debugBadge: "BB 1.8",
+      debugBadge: "BB 1.9",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
@@ -1189,6 +1189,71 @@
     spawnBonusBug();
   }
 
+  function getBonusSpawnSpot(marginX, marginTop, marginBottom) {
+    const fieldWidth = state.fieldWidth || 320;
+    const fieldHeight = state.fieldHeight || 420;
+    const minDistance = Math.max(92, Math.min(fieldWidth, fieldHeight) * 0.34);
+    let fallback = null;
+
+    for (let attempt = 0; attempt < 28; attempt += 1) {
+      const spot = {
+        xRatio: shell.clamp(marginX + Math.random() * (1 - marginX * 2), marginX, 1 - marginX),
+        yRatio: shell.clamp(marginTop + Math.random() * (1 - marginTop - marginBottom), marginTop, 1 - marginBottom)
+      };
+
+      if (!fallback) fallback = spot;
+
+      const tooClose = state.bonusBugs.some((bug) => {
+        if (!bug || bug.status === "poof") return false;
+
+        const dx = (spot.xRatio - bug.xRatio) * fieldWidth;
+        const dy = (spot.yRatio - bug.yRatio) * fieldHeight;
+
+        return Math.hypot(dx, dy) < minDistance;
+      });
+
+      if (!tooClose) return spot;
+    }
+
+    return fallback || { xRatio: 0.5, yRatio: 0.35 };
+  }
+
+  function spawnBonusBug() {
+    if (!state.bonusMode || state.done) return;
+
+    const now = performance.now();
+    const marginX = 0.16;
+    const marginTop = 0.14;
+    const marginBottom = 0.34;
+
+    while (state.bonusBugs.length < BONUS_MAX_BUGS) {
+      state.bonusBugId += 1;
+
+      const imgSrc = BONUS_GOOD_BUG_IMAGE_PATHS[state.bonusBugId % BONUS_GOOD_BUG_IMAGE_PATHS.length];
+      const spot = getBonusSpawnSpot(marginX, marginTop, marginBottom);
+
+      state.bonusBugs.push({
+        id: `b${state.bonusBugId}`,
+        kind: "good",
+        imgSrc,
+        emoji: BUG_EMOJIS[state.bonusBugId % BUG_EMOJIS.length],
+        xRatio: spot.xRatio,
+        yRatio: spot.yRatio,
+        vx: (Math.random() < 0.5 ? -1 : 1) * (0.055 + Math.random() * 0.055),
+        vy: (Math.random() < 0.5 ? -1 : 1) * (0.040 + Math.random() * 0.050),
+        baseRotateDeg: -24 + Math.random() * 48,
+        bornAt: now,
+        expiresAt: now + BONUS_BUG_LIFE_MS,
+        status: "bonus",
+        poofAt: 0,
+        pullPoofed: false,
+        motionPhase: Math.random() * Math.PI * 2,
+        jitterSeed: Math.random() * Math.PI * 2
+      });
+    }
+  }
+
+
   function spawnBonusBug() {
     if (!state.bonusMode || state.done) return;
 
@@ -1515,7 +1580,9 @@
 
     const x = p.x + motion.swayX;
     const y = p.y;
-    const buttonTransform = `rotate(${motion.rotateDeg.toFixed(2)}deg) scale(${motion.scaleX.toFixed(3)}, ${motion.scaleY.toFixed(3)})`;
+    const baseRotateDeg = Number(bug.baseRotateDeg) || 0;
+    const rotateDeg = baseRotateDeg + motion.rotateDeg;
+    const buttonTransform = `rotate(${rotateDeg.toFixed(2)}deg) scale(${motion.scaleX.toFixed(3)}, ${motion.scaleY.toFixed(3)})`;
 
     return `
       <div class="bb-bug-wrap${bonusClass}${statusClass}${popClass}" style="--bb-x:${x.toFixed(2)}px; --bb-y:${y.toFixed(2)}px;">
