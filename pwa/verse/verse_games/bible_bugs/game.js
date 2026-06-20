@@ -151,7 +151,7 @@
       app,
       title: GAME_TITLE,
       icon: "🐸",
-      debugBadge: "BB 1.7",
+      debugBadge: "BB 1.8",
       helpHtml: helpHtml(),
       helpOverlayId: HELP_OVERLAY_ID,
       theme: GAME_THEME,
@@ -1500,9 +1500,15 @@
     const bonusClass = isBonus ? " bb-bug--bonus" : "";
     const popClass = now - bug.bornAt < 260 ? " is-pop" : "";
     const word = isBonus || isTutorial ? "" : `<div class="bb-bug-word">${escapeHtml(bug.text)}</div>`;
-    const bugVisual = isBonus && bug.imgSrc
-      ? `<img class="bb-bug-img" src="${escapeHtml(bug.imgSrc)}" alt="" aria-hidden="true" onerror="this.hidden=true;this.nextElementSibling.hidden=false;"><span class="bb-bug-emoji bb-bug-emoji--fallback" hidden aria-hidden="true">${escapeHtml(bug.emoji || "🪰")}</span>`
-      : `<span class="bb-bug-emoji" aria-hidden="true">${escapeHtml(bug.emoji || "🪰")}</span>`;
+
+    let bugVisual = "";
+
+    if (isBonus && bug.imgSrc) {
+      bugVisual = `<img class="bb-bug-img" src="${escapeHtml(bug.imgSrc)}" alt="" aria-hidden="true">`;
+    } else {
+      bugVisual = `<span class="bb-bug-emoji" aria-hidden="true">${escapeHtml(bug.emoji || "🪰")}</span>`;
+    }
+
     const disabled = isTutorial
       ? state.tutorialStep !== "waiting" ? " disabled" : ""
       : (!isBonus && state.waveStatus !== "falling") || (isBonus && state.bonusEating) ? " disabled" : "";
@@ -1512,14 +1518,16 @@
     const buttonTransform = `rotate(${motion.rotateDeg.toFixed(2)}deg) scale(${motion.scaleX.toFixed(3)}, ${motion.scaleY.toFixed(3)})`;
 
     return `
-    <div class="bb-bug-wrap${bonusClass}${statusClass}${popClass}" style="--bb-x:${x.toFixed(2)}px; --bb-y:${y.toFixed(2)}px;">
-    <button class="bb-bug-btn" type="button" data-bug-id="${escapeHtml(bug.id)}"${disabled} style="transform:${buttonTransform};">
-      ${word}
-      ${bugVisual}
-    </button>
-    </div>
-  `;
+      <div class="bb-bug-wrap${bonusClass}${statusClass}${popClass}" style="--bb-x:${x.toFixed(2)}px; --bb-y:${y.toFixed(2)}px;">
+        <button class="bb-bug-btn" type="button" data-bug-id="${escapeHtml(bug.id)}"${disabled} style="transform:${buttonTransform};">
+          ${word}
+          ${bugVisual}
+        </button>
+      </div>
+    `;
   }
+
+  
 
   function renderWaterWaves(svg, now) {
     if (!svg) return;

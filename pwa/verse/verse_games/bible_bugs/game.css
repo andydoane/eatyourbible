@@ -361,9 +361,7 @@ body {
   -webkit-user-drag: none;
 }
 
-.bb-bug-emoji--fallback {
-  font-size: clamp(44px, 13vw, 82px);
-}
+
 
 .bb-frog {
   position: absolute;
