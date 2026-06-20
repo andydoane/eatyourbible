@@ -45,25 +45,25 @@
   const BONUS_POP_SOUND_KEYS = ["bonusPop1", "bonusPop2", "bonusPop3", "bonusPop4", "bonusPop5"];
 
   const SOUND_TUNING = {
-    masterVolume: 0.90,
+    masterVolume: 0.74,
     volumes: {
       uiTap: 0.45,
 
-      rocketLaunch: 0.62,
+      rocketLaunch: 0.14,
       correctHit: 0.70,
-      wrongHit: 0.72,
-      abduction: 0.78,
+      wrongHit: 0.30,
+      abduction: 0.47,
 
-      streak4: 0.58,
-      streak8: 0.66,
-      streak12: 0.74,
-      streak16: 0.84,
+      streak4: 0.41,
+      streak8: 0.41,
+      streak12: 0.41,
+      streak16: 0.74,
 
-      bonusStart: 0.78,
+      bonusStart: 0.57,
       bonusHit: 0.62,
-      bonusPenalty: 0.72,
-      bonusMultiplierUp: 0.80,
-      bonusReveal: 0.82
+      bonusPenalty: 0.58,
+      bonusMultiplierUp: 0.44,
+      bonusReveal: 0.51
     }
   };
 
